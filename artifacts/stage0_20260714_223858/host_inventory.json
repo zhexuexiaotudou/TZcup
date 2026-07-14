@@ -1,0 +1,68 @@
+{
+    "generated_at":  "2026-07-14T14:38:59.5500906Z",
+    "operating_system":  {
+                             "Caption":  "Microsoft Windows 11 家庭版 中文版",
+                             "Version":  "10.0.26200",
+                             "BuildNumber":  "26200",
+                             "OSArchitecture":  "64-bit"
+                         },
+    "computer":  {
+                     "Manufacturer":  "Micro-Star International Co., Ltd.",
+                     "Model":  "Vector 17 HX A13VHG",
+                     "TotalPhysicalMemory":  31897587712
+                 },
+    "gpu":  [
+                {
+                    "Name":  "GameViewer Virtual Display Adapter",
+                    "DriverVersion":  "15.6.5.199",
+                    "AdapterRAM":  null,
+                    "CurrentHorizontalResolution":  null,
+                    "CurrentVerticalResolution":  null
+                },
+                {
+                    "Name":  "Todesk Virtual Display Adapter",
+                    "DriverVersion":  "16.44.2.509",
+                    "AdapterRAM":  null,
+                    "CurrentHorizontalResolution":  1920,
+                    "CurrentVerticalResolution":  1080
+                },
+                {
+                    "Name":  "NVIDIA GeForce RTX 4080 Laptop GPU",
+                    "DriverVersion":  "32.0.15.9579",
+                    "AdapterRAM":  4293918720,
+                    "CurrentHorizontalResolution":  2560,
+                    "CurrentVerticalResolution":  1600
+                },
+                {
+                    "Name":  "Intel(R) UHD Graphics",
+                    "DriverVersion":  "32.0.101.6129",
+                    "AdapterRAM":  2147479552,
+                    "CurrentHorizontalResolution":  null,
+                    "CurrentVerticalResolution":  null
+                }
+            ],
+    "nvidia_smi":  "NVIDIA GeForce RTX 4080 Laptop GPU, 595.79, 12282 MiB",
+    "workspace_drive":  {
+                            "Name":  "F",
+                            "Used":  641680887808,
+                            "Free":  382526201856
+                        },
+    "docker":  {
+                   "ServerVersion":  "29.5.2",
+                   "OperatingSystem":  "Docker Desktop",
+                   "OSType":  "linux",
+                   "Architecture":  "x86_64",
+                   "NCPU":  32,
+                   "MemTotal":  15550377984
+               },
+    "image":  {
+                  "Id":  "sha256:7ccdad83b9cc7ee40447d9e75e3866f4e74a7f9d018c662f4ec43234603c9e99",
+                  "RepoTags":  [
+                                   "tzcup/sanitation-jazzy:stage0"
+                               ],
+                  "Created":  "2026-07-14T14:35:50.714908613Z",
+                  "Architecture":  "amd64",
+                  "Os":  "linux",
+                  "Size":  1560609613
+              }
+}

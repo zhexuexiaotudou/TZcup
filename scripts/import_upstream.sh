@@ -4,40 +4,40 @@ set -euo pipefail
 WS="${SANITATION_WS:-$HOME/sanitation_ws}"
 mkdir -p "$WS/src"
 
-clone_or_update() {
+clone_pinned() {
   local url="$1"
-  local branch="$2"
+  local revision="$2"
   local dst="$3"
+
   if [[ -d "$dst/.git" ]]; then
-    git -C "$dst" fetch --all --tags --prune
-    git -C "$dst" checkout "$branch"
-    git -C "$dst" pull --ff-only
+    if [[ -n "$(git -C "$dst" status --porcelain)" ]]; then
+      echo "ERROR: refusing to alter dirty third-party checkout: $dst" >&2
+      return 3
+    fi
+  elif [[ -e "$dst" ]]; then
+    echo "ERROR: destination exists but is not a git repository: $dst" >&2
+    return 3
   else
-    git clone --depth 1 --branch "$branch" "$url" "$dst"
+    git clone --filter=blob:none --no-checkout "$url" "$dst"
   fi
+
+  git -C "$dst" fetch --depth 1 origin "$revision"
+  git -C "$dst" checkout --detach FETCH_HEAD
+  local actual
+  actual="$(git -C "$dst" rev-parse HEAD)"
+  if [[ "$actual" != "$revision" ]]; then
+    echo "ERROR: revision mismatch for $dst: expected $revision, got $actual" >&2
+    return 4
+  fi
+  printf '%s %s\n' "$actual" "$dst"
 }
 
-clone_or_update \
+clone_pinned \
   https://github.com/linorobot/linorobot2.git \
-  jazzy \
+  b96aa42fbfa4390a77e0aab90935fe55d66d04ba \
   "$WS/src/linorobot2"
 
-COV_URL=https://github.com/open-navigation/opennav_coverage.git
-COV_DST="$WS/src/opennav_coverage"
-
-choose_branch() {
-  for b in jazzy-v2 v1.2.1-devel main; do
-    if git ls-remote --exit-code --heads "$COV_URL" "$b" >/dev/null 2>&1; then
-      echo "$b"
-      return 0
-    fi
-  done
-  return 1
-}
-
-COV_BRANCH="$(choose_branch)"
-echo "OpenNav Coverage branch: $COV_BRANCH"
-clone_or_update "$COV_URL" "$COV_BRANCH" "$COV_DST"
-
-git -C "$WS/src/linorobot2" rev-parse HEAD
-git -C "$COV_DST" rev-parse HEAD
+clone_pinned \
+  https://github.com/open-navigation/opennav_coverage.git \
+  224118081c4c8de651f1db621053ab873b08f13d \
+  "$WS/src/opennav_coverage"

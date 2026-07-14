@@ -2,8 +2,8 @@ repositories:
   linorobot2:
     type: git
     url: https://github.com/linorobot/linorobot2.git
-    version: jazzy
+    version: b96aa42fbfa4390a77e0aab90935fe55d66d04ba
   opennav_coverage:
     type: git
     url: https://github.com/open-navigation/opennav_coverage.git
-    version: jazzy-v2
+    version: 224118081c4c8de651f1db621053ab873b08f13d

@@ -1,0 +1,36 @@
+FROM osrf/ros:jazzy-desktop-full
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG ROS_APT_MIRROR=https://mirrors.ustc.edu.cn/ros2/ubuntu
+
+RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
+    --mount=type=cache,target=/var/lib/apt/lists,sharing=locked \
+    sed -i "s|http://packages.ros.org/ros2/ubuntu|${ROS_APT_MIRROR}|g" /etc/apt/sources.list.d/ros2.sources \
+    && sed -i 's/^Types: deb deb-src$/Types: deb/' /etc/apt/sources.list.d/ros2.sources \
+    && apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 update \
+    && apt-get -o Acquire::Retries=5 -o Acquire::http::Timeout=30 -o Acquire::https::Timeout=30 install -y --fix-missing --no-install-recommends \
+        build-essential \
+        cmake \
+        git \
+        graphviz \
+        jq \
+        python3-colcon-common-extensions \
+        python3-pip \
+        python3-rosdep \
+        python3-vcstool \
+        rsync \
+        ros-jazzy-cv-bridge \
+        ros-jazzy-navigation2 \
+        ros-jazzy-nav2-bringup \
+        ros-jazzy-robot-localization \
+        ros-jazzy-ros-gz \
+        ros-jazzy-rqt-graph \
+        ros-jazzy-slam-toolbox \
+        ros-jazzy-teleop-twist-keyboard \
+        ros-jazzy-tf2-tools \
+        ros-jazzy-vision-msgs \
+        ros-jazzy-xacro \
+    && (apt-get -o Acquire::Retries=5 install -y --no-install-recommends ros-jazzy-fields2cover || true)
+
+SHELL ["/bin/bash", "-lc"]
+WORKDIR /work

@@ -1,0 +1,27 @@
+{
+  "verified_at_utc": "2026-07-14T14:12:00Z",
+  "repositories": {
+    "linorobot2": {
+      "url": "https://github.com/linorobot/linorobot2.git",
+      "selected_branch": "jazzy",
+      "commit": "b96aa42fbfa4390a77e0aab90935fe55d66d04ba",
+      "license": "Apache-2.0"
+    },
+    "opennav_coverage": {
+      "url": "https://github.com/open-navigation/opennav_coverage.git",
+      "selected_branch": "jazzy-v2",
+      "commit": "224118081c4c8de651f1db621053ab873b08f13d",
+      "rejected_candidates": {
+        "v1.2.1-devel": "branch not present on remote at verification time",
+        "main": "available at 03979cca414f5db9d09212675dc3e01aa54ba53b but lower priority than jazzy-v2"
+      },
+      "license": "Apache-2.0"
+    },
+    "fields2cover": {
+      "preferred_source": "Ubuntu package ros-jazzy-fields2cover",
+      "source_repository": "https://github.com/Fields2Cover/Fields2Cover.git",
+      "observed_main_commit": "0ce7fcce82f3f79f773699448769bcd679c739bc",
+      "license": "BSD-3-Clause"
+    }
+  }
+}

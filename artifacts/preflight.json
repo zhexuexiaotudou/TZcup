@@ -1,0 +1,90 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-07-14T14:38:59.300989+00:00",
+  "target_profile": "Ubuntu 24.04 + ROS 2 Jazzy + Gazebo Harmonic",
+  "success": true,
+  "execution_context": {
+    "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "container": true,
+    "wsl_distro_name": null,
+    "display": null
+  },
+  "os_release": {
+    "PRETTY_NAME": "Ubuntu 24.04.4 LTS",
+    "NAME": "Ubuntu",
+    "VERSION_ID": "24.04",
+    "VERSION": "24.04.4 LTS (Noble Numbat)",
+    "VERSION_CODENAME": "noble",
+    "ID": "ubuntu",
+    "ID_LIKE": "debian",
+    "HOME_URL": "https://www.ubuntu.com/",
+    "SUPPORT_URL": "https://help.ubuntu.com/",
+    "BUG_REPORT_URL": "https://bugs.launchpad.net/ubuntu/",
+    "PRIVACY_POLICY_URL": "https://www.ubuntu.com/legal/terms-and-policies/privacy-policy",
+    "UBUNTU_CODENAME": "noble",
+    "LOGO": "ubuntu-logo"
+  },
+  "commands": {
+    "python3": "/usr/bin/python3",
+    "ros2": "/opt/ros/jazzy/bin/ros2",
+    "gz": "/opt/ros/jazzy/opt/gz_tools_vendor/bin/gz",
+    "colcon": "/usr/bin/colcon",
+    "rosdep": "/usr/bin/rosdep",
+    "vcs": "/usr/bin/vcs",
+    "nvidia-smi": null
+  },
+  "checks": {
+    "ubuntu_24_04": true,
+    "ros_jazzy_setup": true,
+    "ros2_available": true,
+    "gazebo_available": true,
+    "ros_gz_available": true,
+    "python3_available": true,
+    "colcon_available": true,
+    "rosdep_available": true,
+    "vcs_available": true
+  },
+  "blockers": [],
+  "warnings": [
+    "No DISPLAY or WAYLAND_DISPLAY detected; GUI evidence cannot be collected here.",
+    "No NVIDIA GPU was exposed; CPU/software rendering may be used for headless checks."
+  ],
+  "probes": {
+    "ros_package_count": {
+      "command": "source /opt/ros/jazzy/setup.bash >/dev/null 2>&1 && ros2 pkg list | wc -l",
+      "returncode": 0,
+      "stdout": "410",
+      "stderr": ""
+    },
+    "gazebo_version": {
+      "command": "gz sim --versions || gz --versions",
+      "returncode": 0,
+      "stdout": "8.11.0",
+      "stderr": ""
+    },
+    "ros_gz_sim": {
+      "command": "source /opt/ros/jazzy/setup.bash >/dev/null 2>&1 && ros2 pkg prefix ros_gz_sim",
+      "returncode": 0,
+      "stdout": "/opt/ros/jazzy",
+      "stderr": ""
+    },
+    "gpu": {
+      "command": "nvidia-smi --query-gpu=name,driver_version,memory.total --format=csv,noheader",
+      "returncode": 127,
+      "stdout": "",
+      "stderr": "bash: line 1: nvidia-smi: command not found"
+    },
+    "disk": {
+      "command": "df -B1 --output=source,size,used,avail,pcent,target . | tail -n 1",
+      "returncode": 0,
+      "stdout": "F:\\            1024207089664 641680818176 382526271488  63% /work",
+      "stderr": ""
+    },
+    "memory": {
+      "command": "free -b | sed -n '1,2p'",
+      "returncode": 0,
+      "stdout": "total        used        free      shared  buff/cache   available\nMem:     15550377984  1675681792 12937691136     3960832  1186500608 13874696192",
+      "stderr": ""
+    }
+  }
+}
