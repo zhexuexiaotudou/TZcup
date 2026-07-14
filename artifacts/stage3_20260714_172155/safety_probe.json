@@ -1,0 +1,13 @@
+{
+  "success": true,
+  "command_passed": true,
+  "emergency_stop_zeroed": true,
+  "resume_after_release": true,
+  "stale_command_zeroed": true,
+  "sample_counts": {
+    "pass": 15,
+    "stop": 23,
+    "resume": 22,
+    "timeout": 27
+  }
+}

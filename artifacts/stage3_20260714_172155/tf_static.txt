@@ -1,0 +1,162 @@
+transforms:
+- header:
+    stamp:
+      sec: 0
+      nanosec: 0
+    frame_id: base_link
+  child_frame_id: arm_mount_link
+  transform:
+    translation:
+      x: 0.1
+      y: 0.0
+      z: 0.32
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 0
+      nanosec: 0
+    frame_id: base_footprint
+  child_frame_id: base_link
+  transform:
+    translation:
+      x: 0.0
+      y: 0.0
+      z: 0.16
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 0
+      nanosec: 0
+    frame_id: camera_link
+  child_frame_id: camera_depth_link
+  transform:
+    translation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 0
+      nanosec: 0
+    frame_id: base_link
+  child_frame_id: camera_link
+  transform:
+    translation:
+      x: 0.53
+      y: 0.0
+      z: 0.22
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 0
+      nanosec: 0
+    frame_id: base_link
+  child_frame_id: cleaning_footprint_link
+  transform:
+    translation:
+      x: 0.55
+      y: 0.0
+      z: -0.155
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 0
+      nanosec: 0
+    frame_id: base_link
+  child_frame_id: dust_bin_link
+  transform:
+    translation:
+      x: -0.18
+      y: 0.0
+      z: 0.25
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 0
+      nanosec: 0
+    frame_id: base_link
+  child_frame_id: imu_link
+  transform:
+    translation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 0
+      nanosec: 0
+    frame_id: base_link
+  child_frame_id: laser
+  transform:
+    translation:
+      x: 0.12
+      y: 0.0
+      z: 0.48
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 0
+      nanosec: 0
+    frame_id: base_link
+  child_frame_id: left_brush_link
+  transform:
+    translation:
+      x: 0.58
+      y: 0.23
+      z: -0.14
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+- header:
+    stamp:
+      sec: 0
+      nanosec: 0
+    frame_id: base_link
+  child_frame_id: right_brush_link
+  transform:
+    translation:
+      x: 0.58
+      y: -0.23
+      z: -0.14
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+---

@@ -1,0 +1,18 @@
+[WARN] [ros2bag]: Positional "topics" argument deprecated. Please use optional "--topics" argument instead.
+stdin is not a terminal device. Keyboard handling disabled.[INFO] [1784049800.323045993] [rosbag2_recorder]: Press SPACE for pausing/resuming
+[INFO] [1784049800.323057660] [rosbag2_recorder]: Event publisher thread: Started
+[INFO] [1784049800.328145307] [rosbag2_recorder]: Starting recording to '/work/artifacts/stage3_20260714_172155/navigation_bag'
+[INFO] [1784049801.110538922] [rosbag2_recorder]: Subscribed to topic '/tf_static'
+[INFO] [1784049801.202062959] [rosbag2_recorder]: Subscribed to topic '/tf'
+[INFO] [1784049801.383482600] [rosbag2_recorder]: Subscribed to topic '/scan'
+[INFO] [1784049801.940954906] [rosbag2_recorder]: Subscribed to topic '/odom'
+[INFO] [1784049802.053974027] [rosbag2_recorder]: Subscribed to topic '/cmd_vel'
+[INFO] [1784049802.054291463] [rosbag2_recorder]: Listening for topics...
+[INFO] [1784049802.054502789] [rosbag2_recorder]: Recording...
+[INFO] [1784049802.054364109] [rosbag2_recorder]: Topics discovery started.
+[INFO] [1784049803.656128029] [rosbag2_recorder]: Subscribed to topic '/amcl_pose'
+[INFO] [1784049993.629696666] [rosbag2_recorder]: Topics discovery stopped.
+[INFO] [1784049993.630002200] [rosbag2_recorder]: Pausing recording.
+[INFO] [1784049993.630262914] [rosbag2_cpp]: Writing remaining messages from cache to the bag. It may take a while
+[INFO] [1784049993.650716389] [rosbag2_recorder]: Recording stopped
+[INFO] [1784049993.654798721] [rosbag2_recorder]: Event publisher thread: Exited

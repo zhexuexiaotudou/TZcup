@@ -95,4 +95,33 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage1_doc
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage2_docker.ps1
 ```
 
-下一步：进入 Stage 3，补齐 SLAM Toolbox、地图保存、AMCL/Nav2、安全速度门控和自动导航证据。
+## Stage 3：SLAM、定位、Nav2 与安全
+
+状态：运行门已通过；定位精度仍是进入 Stage 4 前必须显式携带的风险。
+
+已完成：
+
+- 新增 `sanitation_navigation`，提供 SLAM Toolbox、地图保存、AMCL/Nav2、Regulated Pure Pursuit、车辆 footprint、keepout filter 与 speed filter 配置。
+- 解决 Gazebo LiDAR 作用域帧与 URDF `laser` 帧不一致的问题，SLAM 能持续消费真实 `/scan`。
+- 实际生成并保存 194×64、0.05 m/px 的 SLAM 地图。
+- 新增 `sanitation_safety` 高优先级速度门：Nav2 统一输出到 `/cmd_vel_nav`，仅速度门可向车辆发布 `/cmd_vel`。
+- 实际执行 10 点 `NavigateThroughPoses`，action 状态为 `SUCCEEDED`，并记录 node/topic/action/service、TF、AMCL、里程计与 rosbag。
+- 隔离验证急停：正常指令放行、急停归零、释放后恢复、上游失联 0.5 秒后归零全部通过。
+- 构建与新增测试通过；导航包 lint、XML 和 3 个速度门单元测试均通过。
+
+证据与边界：
+
+- `artifacts/stage3_20260714_172155/stage3_summary.json`
+- `artifacts/stage3_20260714_172155/navigation_probe.json`
+- `artifacts/stage3_20260714_172155/safety_probe.json`
+- `artifacts/stage3_20260714_172155/slam_map.yaml`
+- `artifacts/stage3_20260714_172155/navigation_bag/metadata.yaml`
+- action 虽成功，但终点 AMCL 与里程计平面距离相差 1.806 m，且 controller 日志出现 2 次 progress failure；该结果只能证明导航闭环可运行，不能证明定位精度达标。
+
+复现命令：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage3_docker.ps1
+```
+
+下一步：进入 Stage 4，先建立可审计的 Boustrophedon 路径与覆盖指标，再决定是否允许真实 Nav2 覆盖任务受当前 AMCL 漂移影响。

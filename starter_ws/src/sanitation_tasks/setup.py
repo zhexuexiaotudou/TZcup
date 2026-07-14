@@ -25,6 +25,8 @@ setup(
         "console_scripts": [
             "sanitation_smoke_check = sanitation_tasks.smoke_check:main",
             "sanitation_runtime_probe = sanitation_tasks.runtime_probe:main",
+            "sanitation_navigation_probe = sanitation_tasks.navigation_probe:main",
+            "sanitation_safety_probe = sanitation_tasks.safety_probe:main",
         ],
     },
 )

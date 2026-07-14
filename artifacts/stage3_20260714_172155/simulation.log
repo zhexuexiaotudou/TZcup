@@ -1,0 +1,60 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-07-14-17-22-45-514969-9a6722a76368-155
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [gazebo-1]: process started with pid [226]
+[INFO] [robot_state_publisher-2]: process started with pid [227]
+[INFO] [create-3]: process started with pid [228]
+[INFO] [parameter_bridge-4]: process started with pid [229]
+[INFO] [static_transform_publisher-5]: process started with pid [230]
+[INFO] [command_timeout-6]: process started with pid [231]
+[INFO] [ekf_node-7]: process started with pid [232]
+[static_transform_publisher-5] [INFO] [1784049786.834403851] [lidar_scoped_frame_bridge]: Spinning until stopped - publishing transform
+[static_transform_publisher-5] translation: ('0.000000', '0.000000', '0.000000')
+[static_transform_publisher-5] rotation: ('0.000000', '0.000000', '0.000000', '1.000000')
+[static_transform_publisher-5] from 'laser' to 'sanitation_vehicle/base_footprint/sanitation_gpu_lidar'
+[create-3] [INFO] [1784049786.845977710] [ros_gz_sim]: Requesting list of world names.
+[ekf_node-7] [INFO] [1784049786.929319842] [ekf_filter_node]: Waiting for clock to start...
+[parameter_bridge-4] [INFO] [1784049786.967594382] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/clock (gz.msgs.Clock) -> /clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784049786.977733485] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/cmd_vel (gz.msgs.Twist) -> /cmd_vel (geometry_msgs/msg/Twist)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784049786.995597030] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/cmd_vel (geometry_msgs/msg/Twist) -> /cmd_vel (gz.msgs.Twist)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784049786.996546473] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/odom/unfiltered (gz.msgs.Odometry) -> /odom/unfiltered (nav_msgs/msg/Odometry)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784049787.008954146] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/imu/data (gz.msgs.IMU) -> /imu/data (sensor_msgs/msg/Imu)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784049787.020254276] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/joint_states (gz.msgs.Model) -> /joint_states (sensor_msgs/msg/JointState)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784049787.021247835] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/scan (gz.msgs.LaserScan) -> /scan (sensor_msgs/msg/LaserScan)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784049787.022226002] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/camera_info (gz.msgs.CameraInfo) -> /camera/camera_info (sensor_msgs/msg/CameraInfo)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784049787.023231996] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/image (gz.msgs.Image) -> /camera/image (sensor_msgs/msg/Image)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784049787.024186648] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/depth_image (gz.msgs.Image) -> /camera/depth_image (sensor_msgs/msg/Image)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784049787.025036834] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/points (gz.msgs.PointCloudPacked) -> /camera/points (sensor_msgs/msg/PointCloud2)] (Lazy 0)
+[robot_state_publisher-2] [INFO] [1784049787.190874639] [robot_state_publisher]: Robot initialized
+[create-3] [INFO] [1784049787.753872084] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-3] [INFO] [1784049787.765314363] [ros_gz_sim]: Entity creation successful.
+[INFO] [create-3]: process has finished cleanly [pid 228]
+[parameter_bridge-4] [INFO] [1784049804.440535291] [ros_gz_bridge]: Passing message from ROS geometry_msgs/msg/Twist to Gazebo gz.msgs.Twist (showing msg only once per type)
+[ekf_node-7] [INFO] [1784050019.591874984] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[robot_state_publisher-2] [INFO] [1784050019.591893337] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[parameter_bridge-4] [INFO] [1784050019.591894570] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[command_timeout-6] Traceback (most recent call last):
+[command_timeout-6]   File "/work/.work/stage1_20260714_154523/install/linorobot2_gazebo/lib/linorobot2_gazebo/command_timeout", line 33, in <module>
+[static_transform_publisher-5] [INFO] [1784050019.591998672] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[command_timeout-6]     sys.exit(load_entry_point('linorobot2-gazebo', 'console_scripts', 'command_timeout')())
+[command_timeout-6]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[command_timeout-6]   File "/work/.work/stage1_20260714_154523/build/linorobot2_gazebo/linorobot2_gazebo/command_timeout.py", line 61, in main
+[command_timeout-6]     rclpy.spin(command_timeout)
+[command_timeout-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 247, in spin
+[command_timeout-6]     executor.spin_once()
+[command_timeout-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+[command_timeout-6]     self._spin_once_impl(timeout_sec)
+[command_timeout-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+[command_timeout-6]     handler, entity, node = self.wait_for_ready_callbacks(
+[command_timeout-6]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[command_timeout-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+[command_timeout-6]     return next(self._cb_iter)
+[command_timeout-6]            ^^^^^^^^^^^^^^^^^^^
+[command_timeout-6]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+[command_timeout-6]     raise ExternalShutdownException()
+[command_timeout-6] rclpy.executors.ExternalShutdownException
+[INFO] [gazebo-1]: process has finished cleanly [pid 226]
+[INFO] [parameter_bridge-4]: process has finished cleanly [pid 229]
+[INFO] [static_transform_publisher-5]: process has finished cleanly [pid 230]
+[INFO] [robot_state_publisher-2]: process has finished cleanly [pid 227]
+[INFO] [ekf_node-7]: process has finished cleanly [pid 232]
+[ERROR] [command_timeout-6]: process has died [pid 231, exit code 1, cmd '/work/.work/stage1_20260714_154523/install/linorobot2_gazebo/lib/linorobot2_gazebo/command_timeout --ros-args -r __node:=command_timeout'].

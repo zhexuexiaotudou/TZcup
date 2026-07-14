@@ -1,0 +1,13 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-07-14-17-22-45-536921-9a6722a76368-156
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [async_slam_toolbox_node-1]: process started with pid [191]
+[async_slam_toolbox_node-1] [INFO] [1784049768.047089433] [slam_toolbox]: Node using stack size 40000000
+[async_slam_toolbox_node-1] [INFO] [1784049768.047408300] [slam_toolbox]: Configuring
+[async_slam_toolbox_node-1] [INFO] [1784049768.212590924] [slam_toolbox]: Using solver plugin solver_plugins::CeresSolver
+[async_slam_toolbox_node-1] [INFO] [1784049768.212741917] [slam_toolbox]: CeresSolver: Using SCHUR_JACOBI preconditioner.
+[INFO] [launch.user]: [LifecycleLaunch] Slamtoolbox node is activating.
+[async_slam_toolbox_node-1] [INFO] [1784049768.311244082] [slam_toolbox]: Activating
+[async_slam_toolbox_node-1] Registering sensor: [Custom Described Lidar]
+[async_slam_toolbox_node-1] [INFO] [1784049795.355690414] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[async_slam_toolbox_node-1] Unregistering sensor: Custom Described Lidar
+[INFO] [async_slam_toolbox_node-1]: process has finished cleanly [pid 191]
