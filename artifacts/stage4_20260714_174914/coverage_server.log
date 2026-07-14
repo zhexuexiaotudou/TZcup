@@ -1,0 +1,35 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-07-14-17-50-02-116027-f4f630bfdeb2-119
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [opennav_coverage-1]: process started with pid [143]
+[INFO] [lifecycle_manager-2]: process started with pid [144]
+[lifecycle_manager-2] [INFO] [1784051403.411180293] [coverage_lifecycle_manager]: Creating
+[lifecycle_manager-2] [INFO] [1784051403.464803003] [coverage_lifecycle_manager]: [34m[1mCreating and initializing lifecycle service clients[0m[0m
+[lifecycle_manager-2] [INFO] [1784051404.358625160] [coverage_lifecycle_manager]: [34m[1mStarting managed nodes bringup...[0m[0m
+[lifecycle_manager-2] [INFO] [1784051404.358662301] [coverage_lifecycle_manager]: [34m[1mConfiguring coverage_server[0m[0m
+[opennav_coverage-1] [INFO] [1784051404.359663540] [coverage_server]: 
+[opennav_coverage-1] 	coverage_server lifecycle node launched. 
+[opennav_coverage-1] 	Waiting on external lifecycle transitions to activate
+[opennav_coverage-1] 	See https://design.ros2.org/articles/node_lifecycle.html for more information.
+[opennav_coverage-1] [INFO] [1784051404.359822592] [coverage_server]: Creating coverage_server
+[opennav_coverage-1] [INFO] [1784051404.359990009] [coverage_server]: Configuring coverage_server
+[opennav_coverage-1] [WARN] [1784051404.362344625] [coverage_server]: default_custom_order was not set! If using Custom Route mode, the custom order must be set per-request!
+[lifecycle_manager-2] [INFO] [1784051404.448712412] [coverage_lifecycle_manager]: [34m[1mActivating coverage_server[0m[0m
+[opennav_coverage-1] [INFO] [1784051404.448855284] [coverage_server]: Activating coverage_server
+[opennav_coverage-1] [INFO] [1784051404.489975033] [coverage_server]: Creating bond (coverage_server) to lifecycle manager.
+[lifecycle_manager-2] [INFO] [1784051404.614863475] [coverage_lifecycle_manager]: Server coverage_server connected with bond.
+[lifecycle_manager-2] [INFO] [1784051404.614902987] [coverage_lifecycle_manager]: [34m[1mManaged nodes are active[0m[0m
+[lifecycle_manager-2] [INFO] [1784051404.614907235] [coverage_lifecycle_manager]: [34m[1mCreating bond timer...[0m[0m
+[opennav_coverage-1] [INFO] [1784051406.432531870] [coverage_server]: Generating coverage path in map frame for zone with 5 outer nodes and 0 inner polygons.
+[lifecycle_manager-2] [INFO] [1784051476.605090684] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[lifecycle_manager-2] [INFO] [1784051476.605183502] [coverage_lifecycle_manager]: Running Nav2 LifecycleManager rcl preshutdown (coverage_lifecycle_manager)
+[lifecycle_manager-2] [INFO] [1784051476.605257955] [coverage_lifecycle_manager]: [34m[1mTerminating bond timer...[0m[0m
+[opennav_coverage-1] [INFO] [1784051476.605113651] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[opennav_coverage-1] [INFO] [1784051476.605162428] [coverage_server]: Running Nav2 LifecycleNode rcl preshutdown (coverage_server)
+[opennav_coverage-1] [INFO] [1784051476.605206313] [coverage_server]: Deactivating coverage_server
+[opennav_coverage-1] [INFO] [1784051476.605278730] [coverage_server]: Destroying bond (coverage_server) to lifecycle manager.
+[opennav_coverage-1] [INFO] [1784051476.616305006] [coverage_server]: Cleaning up coverage_server
+[lifecycle_manager-2] [INFO] [1784051476.623917130] [coverage_lifecycle_manager]: Destroying coverage_lifecycle_manager
+[opennav_coverage-1] [INFO] [1784051476.626052163] [coverage_server]: Destroying bond (coverage_server) to lifecycle manager.
+[opennav_coverage-1] [INFO] [1784051476.627818311] [coverage_server]: Destroying
+[INFO] [lifecycle_manager-2]: process has finished cleanly [pid 144]
+[INFO] [opennav_coverage-1]: process has finished cleanly [pid 143]

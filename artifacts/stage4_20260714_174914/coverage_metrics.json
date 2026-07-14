@@ -1,0 +1,53 @@
+{
+  "success": true,
+  "mission_id": "demo_coverage_001",
+  "planner": "OpenNav Coverage + Fields2Cover",
+  "route_type": "BOUSTROPHEDON",
+  "path_type": "DUBIN",
+  "operation_width_m": 0.65,
+  "swath_count": 12,
+  "turn_count": 11,
+  "nav_path_pose_count": 2140,
+  "planning_time_sec": 0.0,
+  "metrics": {
+    "resolution_m": 0.1,
+    "target_area_m2": 128.00000000000003,
+    "covered_area_m2": 124.80000000000003,
+    "missed_area_m2": 3.200000000000003,
+    "repeated_area_m2": 3.190000000000001,
+    "coverage_rate": 0.975,
+    "miss_rate": 0.025,
+    "repeat_rate": 0.024921875,
+    "gross_swept_area_m2": 127.99000000000002,
+    "metric_basis": "planned_fields2cover_swaths_rasterized",
+    "swath_endpoint_compatibility_repair": true,
+    "path_length_m": 213.49408925046083,
+    "estimated_total_time_sec": 213.59650157163463,
+    "effective_cleaning_efficiency_m2_s": 0.5842792324861434,
+    "recovery_count": 0
+  },
+  "brush_schedule": {
+    "swath_components_on": 12,
+    "turn_components_off": 11
+  },
+  "nav2_handoff": {
+    "accepted": true,
+    "execution_started": true,
+    "full_plan_pose_count": 2140,
+    "handoff_path_pose_count": 180,
+    "handoff_start_pose_index": 1140,
+    "amcl_reference_xy": [
+      0.0,
+      0.0
+    ],
+    "bounded_duration_sec": 20.0,
+    "bounded_cancel_requested": true,
+    "completed_during_window": false,
+    "terminal_status": null,
+    "terminal_error_code": null,
+    "odom_displacement_m": 7.392795482795894,
+    "brush_enabled_during_window": true,
+    "brush_disabled_on_exit": true
+  },
+  "execution_boundary": "The full coverage path was generated, while only a bounded path prefix was handed to Nav2 for physical integration evidence; coverage metrics are planned, not empirical, because Stage 3 localization endpoint error is material."
+}

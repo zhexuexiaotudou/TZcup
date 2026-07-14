@@ -17,6 +17,8 @@
 
 Docker 的 headless GPU 成功已经覆盖真实 Gazebo 物理、传感器和 ROS 话题闭环，但不能替代 GUI 交互与截图验收。若要在本机完成 Stage 2–4 的完整图形验收，需要新装 Ubuntu 24.04 WSLg，预计额外占用约 15–30 GB，并需要下载 ROS 2、Gazebo 与第三方依赖。
 
+Stage 4 已在同一 headless GPU 通道完成 OpenNav Coverage/Fields2Cover 规划、Nav2 180 点受控执行窗、清扫刷开关、指标 JSON 与 rosbag 验收。GUI 缺口不阻塞计算与运行证据，但仍是人工视觉验收项。
+
 ## 第三方锁定
 
 精确版本见 `repos/locked_revisions.json`。2026-07-14 远端核查发现：

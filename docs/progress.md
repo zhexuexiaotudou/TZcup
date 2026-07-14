@@ -124,4 +124,33 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage2_doc
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage3_docker.ps1
 ```
 
-下一步：进入 Stage 4，先建立可审计的 Boustrophedon 路径与覆盖指标，再决定是否允许真实 Nav2 覆盖任务受当前 AMCL 漂移影响。
+## Stage 4：覆盖规划、指标与受控执行交接
+
+状态：评审门已通过；项目按主提示词停在 Stage 4，不进入感知训练或 J6 量化。
+
+已完成：
+
+- 新增 `sanitation_coverage`，集成 OpenNav Coverage 与 Fields2Cover，使用 Boustrophedon 路由、Dubins 转弯和 0.65 m 作业宽度。
+- 对 16 m × 8 m、128 m² 示例区域生成 12 条作业带、11 个转弯和 2140 个稠密 Nav2 路径点；总路径长度 213.494 m。
+- 以 0.10 m 栅格审计计划覆盖：覆盖 124.80 m²，覆盖率 97.5%，漏扫率 2.5%，重复率 2.492%。这些是规划几何指标，不是实车经验覆盖率。
+- 发现并兼容 OpenNav `PathComponents` 中退化的 swath end point；兼容层只用相邻 turn 首点及最终路径点重建端点，原始与修复后数据均写入证据。
+- 根据 AMCL 当前位姿选择完整覆盖路径的最近点，从 2140 点计划中截取 180 点执行窗交给 Nav2；action 被接受并持续执行，20 秒内里程计位移 7.393 m，随后主动取消。
+- 清扫刷在执行窗内开启、退出时关闭；完整路径的作业带/转弯刷控计划记录为 12 个开启段和 11 个关闭段。
+- 记录 coverage server、Nav2、Gazebo、node/topic/action/service、rosbag、完整路径 JSON 与指标 JSON；Stage 4 新增测试 3/3 通过，累计 293 tests、0 errors、0 failures、44 skipped。
+
+证据与边界：
+
+- `artifacts/stage4_20260714_174914/stage4_summary.json`
+- `artifacts/stage4_20260714_174914/coverage_metrics.json`
+- `artifacts/stage4_20260714_174914/coverage_path.json`
+- `artifacts/stage4_20260714_174914/coverage_bag/metadata.yaml`
+- 受 Stage 3 终点定位差 1.806 m 影响，只执行与取消局部路径窗以验证接口和物理运动；97.5% 覆盖率不能解释为完整覆盖任务已经实跑完成。
+- 当前主机没有 Ubuntu 24.04/WSLg 图形环境，因此没有伪造 Gazebo/RViz GUI 截图；headless Ogre2、ROS 图谱、JSON 与 rosbag 是本轮可复核证据。
+
+复现命令：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_docker.ps1
+```
+
+评审边界：优先修正定位一致性并完整回放覆盖任务；是否进入感知与 J6 阶段由人工评审后另行决定。

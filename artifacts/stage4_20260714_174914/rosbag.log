@@ -1,0 +1,17 @@
+[WARN] [ros2bag]: Positional "topics" argument deprecated. Please use optional "--topics" argument instead.
+stdin is not a terminal device. Keyboard handling disabled.[INFO] [1784051404.769830794] [rosbag2_recorder]: Press SPACE for pausing/resuming
+[INFO] [1784051404.769840220] [rosbag2_recorder]: Event publisher thread: Started
+[INFO] [1784051404.774446101] [rosbag2_recorder]: Starting recording to '/work/artifacts/stage4_20260714_174914/coverage_bag'
+[INFO] [1784051405.955448143] [rosbag2_recorder]: Subscribed to topic '/coverage_server/swaths'
+[INFO] [1784051405.955847351] [rosbag2_recorder]: Listening for topics...
+[INFO] [1784051405.956192082] [rosbag2_recorder]: Recording...
+[INFO] [1784051405.955876897] [rosbag2_recorder]: Topics discovery started.
+[INFO] [1784051406.898582796] [rosbag2_recorder]: Subscribed to topic '/brush_enabled'
+[INFO] [1784051407.828808396] [rosbag2_recorder]: Subscribed to topic '/amcl_pose'
+[INFO] [1784051409.279793734] [rosbag2_recorder]: Subscribed to topic '/cmd_vel'
+[INFO] [1784051430.026631481] [rosbag2_recorder]: Subscribed to topic '/odom'
+[INFO] [1784051464.809965910] [rosbag2_recorder]: Topics discovery stopped.
+[INFO] [1784051464.810373828] [rosbag2_recorder]: Pausing recording.
+[INFO] [1784051464.810689073] [rosbag2_cpp]: Writing remaining messages from cache to the bag. It may take a while
+[INFO] [1784051464.833874266] [rosbag2_recorder]: Recording stopped
+[INFO] [1784051464.846126080] [rosbag2_recorder]: Event publisher thread: Exited
