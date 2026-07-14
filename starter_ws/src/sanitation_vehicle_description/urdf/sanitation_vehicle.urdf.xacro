@@ -1,0 +1,148 @@
+<?xml version="1.0"?>
+<robot name="sanitation_vehicle" xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <!-- Reuse maintained Linorobot2 macros without modifying upstream source. -->
+  <xacro:include filename="$(find linorobot2_description)/urdf/mech/base.urdf.xacro"/>
+  <xacro:include filename="$(find linorobot2_description)/urdf/mech/wheel.urdf.xacro"/>
+  <xacro:include filename="$(find linorobot2_description)/urdf/sensors/plugins.urdf.xacro"/>
+  <xacro:include filename="$(find linorobot2_description)/urdf/sensors/imu.urdf.xacro"/>
+  <xacro:include filename="$(find linorobot2_description)/urdf/sensors/generic_laser.urdf.xacro"/>
+  <xacro:include filename="$(find linorobot2_description)/urdf/sensors/depth_sensor.urdf.xacro"/>
+  <xacro:include filename="$(find linorobot2_description)/urdf/controllers/skid_steer.urdf.xacro"/>
+
+  <!-- Baseline geometry; replace with measured real vehicle values later. -->
+  <xacro:property name="base_length" value="1.15"/>
+  <xacro:property name="base_width" value="0.72"/>
+  <xacro:property name="base_height" value="0.28"/>
+  <xacro:property name="base_mass" value="80.0"/>
+  <xacro:property name="wheel_radius" value="0.14"/>
+  <xacro:property name="wheel_width" value="0.08"/>
+  <xacro:property name="wheel_pos_x" value="0.38"/>
+  <xacro:property name="wheel_pos_y" value="0.40"/>
+  <xacro:property name="wheel_pos_z" value="-0.02"/>
+  <xacro:property name="wheel_mass" value="3.0"/>
+  <xacro:property name="cleaning_width" value="0.65"/>
+
+  <xacro:base
+    length="${base_length}"
+    width="${base_width}"
+    height="${base_height}"
+    mass="${base_mass}"
+    wheel_radius="${wheel_radius}"
+    wheel_pos_z="${wheel_pos_z}"
+    mesh_file=""
+  />
+
+  <xacro:wheel side="front_left" radius="${wheel_radius}" width="${wheel_width}"
+    pos_x="${wheel_pos_x}" pos_y="${wheel_pos_y}" pos_z="${wheel_pos_z}"
+    mass="${wheel_mass}" mesh_file=""/>
+  <xacro:wheel side="front_right" radius="${wheel_radius}" width="${wheel_width}"
+    pos_x="${wheel_pos_x}" pos_y="${-wheel_pos_y}" pos_z="${wheel_pos_z}"
+    mass="${wheel_mass}" mesh_file=""/>
+  <xacro:wheel side="rear_left" radius="${wheel_radius}" width="${wheel_width}"
+    pos_x="${-wheel_pos_x}" pos_y="${wheel_pos_y}" pos_z="${wheel_pos_z}"
+    mass="${wheel_mass}" mesh_file=""/>
+  <xacro:wheel side="rear_right" radius="${wheel_radius}" width="${wheel_width}"
+    pos_x="${-wheel_pos_x}" pos_y="${-wheel_pos_y}" pos_z="${wheel_pos_z}"
+    mass="${wheel_mass}" mesh_file=""/>
+
+  <xacro:imu/>
+
+  <xacro:generic_laser>
+    <origin xyz="0.12 0 0.48" rpy="0 0 0"/>
+  </xacro:generic_laser>
+
+  <xacro:depth_sensor>
+    <origin xyz="0.53 0 0.22" rpy="0 0 0"/>
+  </xacro:depth_sensor>
+
+  <xacro:diff_drive_controller
+    wheel_separation="${wheel_pos_y * 2.0}"
+    wheel_radius="${wheel_radius}"
+  />
+
+  <!-- 40 L bin: 0.50 * 0.40 * 0.20 = 0.040 m^3. -->
+  <link name="dust_bin_link">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry><box size="0.50 0.40 0.20"/></geometry>
+      <material name="bin_green"><color rgba="0.12 0.42 0.22 1.0"/></material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0"/>
+      <geometry><box size="0.50 0.40 0.20"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="8.0"/>
+      <inertia ixx="0.133" ixy="0" ixz="0" iyy="0.193" iyz="0" izz="0.273"/>
+    </inertial>
+  </link>
+  <joint name="dust_bin_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="dust_bin_link"/>
+    <origin xyz="-0.18 0 0.25" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Side brushes are fixed visual/collision placeholders in Stage 2.
+       Codex should add controllable joints/cleaning semantics later. -->
+  <link name="left_brush_link">
+    <visual>
+      <geometry><cylinder radius="0.14" length="0.03"/></geometry>
+      <material name="brush_dark"><color rgba="0.08 0.08 0.08 1.0"/></material>
+    </visual>
+    <collision><geometry><cylinder radius="0.14" length="0.03"/></geometry></collision>
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="0.00495" ixy="0" ixz="0" iyy="0.00495" iyz="0" izz="0.0098"/>
+    </inertial>
+  </link>
+  <joint name="left_brush_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="left_brush_link"/>
+    <origin xyz="0.58 0.23 -0.14" rpy="0 0 0"/>
+  </joint>
+
+  <link name="right_brush_link">
+    <visual>
+      <geometry><cylinder radius="0.14" length="0.03"/></geometry>
+      <material name="brush_dark"/>
+    </visual>
+    <collision><geometry><cylinder radius="0.14" length="0.03"/></geometry></collision>
+    <inertial>
+      <mass value="1.0"/>
+      <inertia ixx="0.00495" ixy="0" ixz="0" iyy="0.00495" iyz="0" izz="0.0098"/>
+    </inertial>
+  </link>
+  <joint name="right_brush_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="right_brush_link"/>
+    <origin xyz="0.58 -0.23 -0.14" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Non-colliding visualization of the nominal cleaning footprint. -->
+  <link name="cleaning_footprint_link">
+    <visual>
+      <origin xyz="0 0 0"/>
+      <geometry><box size="0.32 ${cleaning_width} 0.005"/></geometry>
+      <material name="cleaning_zone"><color rgba="0.1 0.8 0.3 0.18"/></material>
+    </visual>
+  </link>
+  <joint name="cleaning_footprint_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="cleaning_footprint_link"/>
+    <origin xyz="0.55 0 -0.155" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Mounting point reserved for a future manipulator. -->
+  <link name="arm_mount_link"/>
+  <joint name="arm_mount_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="arm_mount_link"/>
+    <origin xyz="0.10 0 0.32" rpy="0 0 0"/>
+  </joint>
+
+  <gazebo reference="cleaning_footprint_link">
+    <transparency>0.82</transparency>
+  </gazebo>
+
+</robot>

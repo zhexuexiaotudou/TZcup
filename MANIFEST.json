@@ -1,0 +1,142 @@
+[
+  {
+    "path": "CODEX_MASTER_PROMPT.md",
+    "bytes": 6809
+  },
+  {
+    "path": "COMPETITION_REQUIREMENTS.md",
+    "bytes": 3286
+  },
+  {
+    "path": "EVALUATION_PLAN.md",
+    "bytes": 1736
+  },
+  {
+    "path": "PROJECT_SPEC.md",
+    "bytes": 4488
+  },
+  {
+    "path": "README_FIRST.md",
+    "bytes": 2971
+  },
+  {
+    "path": "STAGE_GATES.md",
+    "bytes": 2846
+  },
+  {
+    "path": "THIRD_PARTY_SELECTION.md",
+    "bytes": 2401
+  },
+  {
+    "path": "repos/simulation.repos",
+    "bytes": 235
+  },
+  {
+    "path": "scripts/bootstrap_jazzy.sh",
+    "bytes": 1006
+  },
+  {
+    "path": "scripts/build_ws.sh",
+    "bytes": 368
+  },
+  {
+    "path": "scripts/check_env.sh",
+    "bytes": 1737
+  },
+  {
+    "path": "scripts/collect_evidence.sh",
+    "bytes": 775
+  },
+  {
+    "path": "scripts/import_upstream.sh",
+    "bytes": 996
+  },
+  {
+    "path": "scripts/install_starter.sh",
+    "bytes": 259
+  },
+  {
+    "path": "scripts/run_baseline.sh",
+    "bytes": 235
+  },
+  {
+    "path": "starter_ws/src/sanitation_bringup/CMakeLists.txt",
+    "bytes": 191
+  },
+  {
+    "path": "starter_ws/src/sanitation_bringup/config/.gitkeep",
+    "bytes": 0
+  },
+  {
+    "path": "starter_ws/src/sanitation_bringup/launch/sim.launch.py",
+    "bytes": 1827
+  },
+  {
+    "path": "starter_ws/src/sanitation_bringup/package.xml",
+    "bytes": 715
+  },
+  {
+    "path": "starter_ws/src/sanitation_tasks/config/demo_area.yaml",
+    "bytes": 268
+  },
+  {
+    "path": "starter_ws/src/sanitation_tasks/config/mission_schema.json",
+    "bytes": 1221
+  },
+  {
+    "path": "starter_ws/src/sanitation_tasks/package.xml",
+    "bytes": 634
+  },
+  {
+    "path": "starter_ws/src/sanitation_tasks/resource/sanitation_tasks",
+    "bytes": 0
+  },
+  {
+    "path": "starter_ws/src/sanitation_tasks/sanitation_tasks/__init__.py",
+    "bytes": 0
+  },
+  {
+    "path": "starter_ws/src/sanitation_tasks/sanitation_tasks/smoke_check.py",
+    "bytes": 2015
+  },
+  {
+    "path": "starter_ws/src/sanitation_tasks/setup.cfg",
+    "bytes": 101
+  },
+  {
+    "path": "starter_ws/src/sanitation_tasks/setup.py",
+    "bytes": 847
+  },
+  {
+    "path": "starter_ws/src/sanitation_vehicle_description/CMakeLists.txt",
+    "bytes": 206
+  },
+  {
+    "path": "starter_ws/src/sanitation_vehicle_description/launch/display.launch.py",
+    "bytes": 1139
+  },
+  {
+    "path": "starter_ws/src/sanitation_vehicle_description/package.xml",
+    "bytes": 682
+  },
+  {
+    "path": "starter_ws/src/sanitation_vehicle_description/rviz/.gitkeep",
+    "bytes": 0
+  },
+  {
+    "path": "starter_ws/src/sanitation_vehicle_description/urdf/sanitation_vehicle.urdf.xacro",
+    "bytes": 5722
+  },
+  {
+    "path": "starter_ws/src/sanitation_worlds/CMakeLists.txt",
+    "bytes": 183
+  },
+  {
+    "path": "starter_ws/src/sanitation_worlds/package.xml",
+    "bytes": 425
+  },
+  {
+    "path": "starter_ws/src/sanitation_worlds/worlds/sanitation_test_world.sdf",
+    "bytes": 7325
+  }
+]

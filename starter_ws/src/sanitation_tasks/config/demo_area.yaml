@@ -1,0 +1,14 @@
+frame_id: map
+mission_id: demo_coverage_001
+mode: coverage
+robot_width_m: 0.72
+operation_width_m: 0.65
+min_turning_radius_m: 0.40
+route_type: BOUSTROPHEDON
+path_type: DUBIN
+allow_overlap: true
+polygon:
+  - [-6.0, -4.0]
+  - [10.0, -4.0]
+  - [10.0, 4.0]
+  - [-6.0, 4.0]
