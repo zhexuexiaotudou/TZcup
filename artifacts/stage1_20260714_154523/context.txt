@@ -1,0 +1,4 @@
+Stage 1 reproducible build
+started_at_utc=2026-07-14T15:45:57Z
+workspace=/work/.work/stage1_20260714_154523
+pack_root=/work

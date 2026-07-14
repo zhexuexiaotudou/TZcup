@@ -2,6 +2,7 @@
 build/
 install/
 log/
+.work/
 
 # Python caches
 __pycache__/
@@ -17,4 +18,3 @@ artifacts/**/metadata.yaml
 .idea/
 .DS_Store
 Thumbs.db
-

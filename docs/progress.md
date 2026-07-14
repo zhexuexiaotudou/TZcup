@@ -37,4 +37,32 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_docker_pre
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\collect_stage0_evidence.ps1
 ```
 
-下一步：进入 Stage 1，在同一 Jazzy 镜像中导入精确锁定的第三方仓库并完成两次构建与测试。
+## Stage 1：工作空间可重复构建
+
+状态：已通过。
+
+已完成：
+
+- 在全新隔离工作空间中导入 starter 包、Linorobot2 和 OpenNav Coverage。
+- 完成 rosdep 安装；`micro_ros_agent` 仅用于真实硬件路径且 Jazzy rosdep 无对应键，因此在仿真构建中显式跳过。
+- 连续执行两次 `colcon build --symlink-install` 和两次测试。
+- 增加 `sanitation_tasks` 的项目自有 pytest，验证冒烟检查所需的运动、传感器、相机与 TF topic 集合。
+- 上游 `linorobot2_gazebo` 没有 pytest 用例（pytest code 5），因此从测试 lane 明确排除；上游 CMake `xmllint` 依赖在线 ROS schema，改由离线 XML well-formedness 检查覆盖。其余上游 lint、GTest 和项目测试均执行。
+- 两次测试结果均为 275 tests、0 errors、0 failures、44 skipped；跳过项来自 cppcheck 对当前 2.13.0 慢版本的上游保护逻辑。
+- 构建前后第三方仓库 SHA 一致且 `dirty_files=0`。
+
+证据：
+
+- `artifacts/stage1_20260714_154523/stage1_summary.json`
+- `artifacts/stage1_20260714_154523/build_1.log`
+- `artifacts/stage1_20260714_154523/build_2.log`
+- `artifacts/stage1_20260714_154523/test_results.txt`
+- `artifacts/stage1_20260714_154523/third_party_status_after.txt`
+
+复现命令：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage1_docker.ps1
+```
+
+下一步：进入 Stage 2，使用本项目 overlay launch 修复上游 Jazzy `robot_description` 参数类型问题，并完成 headless 动力学与 topic 冒烟检查。

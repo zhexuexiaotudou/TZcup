@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-07-14T14:38:59.300989+00:00",
+  "generated_at_utc": "2026-07-14T15:05:54.288513+00:00",
   "target_profile": "Ubuntu 24.04 + ROS 2 Jazzy + Gazebo Harmonic",
   "success": true,
   "execution_context": {
@@ -77,13 +77,13 @@
     "disk": {
       "command": "df -B1 --output=source,size,used,avail,pcent,target . | tail -n 1",
       "returncode": 0,
-      "stdout": "F:\\            1024207089664 641680818176 382526271488  63% /work",
+      "stdout": "F:\\            1024207089664 642699485184 381507604480  63% /work",
       "stderr": ""
     },
     "memory": {
       "command": "free -b | sed -n '1,2p'",
       "returncode": 0,
-      "stdout": "total        used        free      shared  buff/cache   available\nMem:     15550377984  1675681792 12937691136     3960832  1186500608 13874696192",
+      "stdout": "total        used        free      shared  buff/cache   available\nMem:     15550377984  1710338048 11321450496     3936256  2770595840 13840039936",
       "stderr": ""
     }
   }

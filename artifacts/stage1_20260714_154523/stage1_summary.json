@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-07-14T15:58:32.806009+00:00",
+  "success": true,
+  "workspace": "/work/.work/stage1_20260714_154523",
+  "builds_completed": 2,
+  "tests_passed": true,
+  "third_party_repositories": {
+    "linorobot2": {
+      "commit": "b96aa42fbfa4390a77e0aab90935fe55d66d04ba",
+      "dirty": false
+    },
+    "opennav_coverage": {
+      "commit": "224118081c4c8de651f1db621053ab873b08f13d",
+      "dirty": false
+    }
+  },
+  "package_count": 16,
+  "artifacts": [
+    "apt_update.log",
+    "build_1.log",
+    "build_2.log",
+    "commands.log",
+    "context.txt",
+    "import_upstream.log",
+    "install_starter.log",
+    "packages.txt",
+    "rosdep_update.log",
+    "test_results.txt",
+    "third_party_status_after.txt",
+    "third_party_status_before.txt"
+  ]
+}

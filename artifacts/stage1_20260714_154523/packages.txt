@@ -1,0 +1,16 @@
+linorobot2
+linorobot2_base
+linorobot2_bringup
+linorobot2_description
+linorobot2_gazebo
+linorobot2_navigation
+opennav_coverage
+opennav_coverage_bt
+opennav_coverage_demo
+opennav_coverage_msgs
+opennav_coverage_navigator
+opennav_row_coverage
+sanitation_bringup
+sanitation_tasks
+sanitation_vehicle_description
+sanitation_worlds

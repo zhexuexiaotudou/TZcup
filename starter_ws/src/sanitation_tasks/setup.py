@@ -20,6 +20,7 @@ setup(
     maintainer_email="team@example.com",
     description="Mission configuration and automated checks.",
     license="Apache-2.0",
+    tests_require=["pytest"],
     entry_points={
         "console_scripts": [
             "sanitation_smoke_check = sanitation_tasks.smoke_check:main",

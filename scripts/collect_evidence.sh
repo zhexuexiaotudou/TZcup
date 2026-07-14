@@ -2,8 +2,10 @@
 set -euo pipefail
 
 WS="${SANITATION_WS:-$HOME/sanitation_ws}"
+set +u
 source /opt/ros/jazzy/setup.bash
 source "$WS/install/setup.bash"
+set -u
 
 STAMP="$(date +%Y%m%d_%H%M%S)"
 OUT="$WS/artifacts/snapshot_$STAMP"

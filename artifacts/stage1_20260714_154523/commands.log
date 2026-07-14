@@ -1,0 +1,4 @@
+$ bash /work/scripts/install_starter.sh
+$ bash /work/scripts/import_upstream.sh
+$ bash --noprofile --norc -c export\ SANITATION_WS=\'/work/.work/stage1_20260714_154523\'\;\ bash\ \'/work/scripts/build_ws.sh\'
+$ bash --noprofile --norc -c export\ SANITATION_WS=\'/work/.work/stage1_20260714_154523\'\;\ bash\ \'/work/scripts/build_ws.sh\'

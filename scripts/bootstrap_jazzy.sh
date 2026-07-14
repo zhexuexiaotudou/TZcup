@@ -7,7 +7,9 @@ if [[ ! -f /opt/ros/jazzy/setup.bash ]]; then
   exit 2
 fi
 
+set +u
 source /opt/ros/jazzy/setup.bash
+set -u
 
 sudo apt-get update
 sudo apt-get install -y \

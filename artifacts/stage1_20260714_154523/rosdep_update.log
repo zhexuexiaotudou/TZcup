@@ -1,0 +1,34 @@
+rosdep update attempt 1/3
+/usr/bin/rosdep:6: DeprecationWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html
+  from pkg_resources import load_entry_point
+Warning: running 'rosdep update' as root is not recommended.
+  You should run 'sudo rosdep fix-permissions' and invoke 'rosdep update' again without sudo.
+reading in sources list data from /etc/ros/rosdep/sources.list.d
+Hit https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/osx-homebrew.yaml
+Hit https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/base.yaml
+Hit https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/python.yaml
+Hit https://raw.githubusercontent.com/ros/rosdistro/master/rosdep/ruby.yaml
+Hit https://raw.githubusercontent.com/ros/rosdistro/master/releases/fuerte.yaml
+Query rosdistro index https://raw.githubusercontent.com/ros/rosdistro/master/index-v4.yaml
+Skip distro "ardent" different from requested "jazzy"
+Skip distro "bouncy" different from requested "jazzy"
+Skip distro "crystal" different from requested "jazzy"
+Skip distro "dashing" different from requested "jazzy"
+Skip distro "eloquent" different from requested "jazzy"
+Skip distro "foxy" different from requested "jazzy"
+Skip distro "galactic" different from requested "jazzy"
+Skip distro "groovy" different from requested "jazzy"
+Skip distro "humble" different from requested "jazzy"
+Skip distro "hydro" different from requested "jazzy"
+Skip distro "indigo" different from requested "jazzy"
+Skip distro "iron" different from requested "jazzy"
+Skip distro "jade" different from requested "jazzy"
+Add distro "jazzy"
+Skip distro "kilted" different from requested "jazzy"
+Skip distro "kinetic" different from requested "jazzy"
+Skip distro "lunar" different from requested "jazzy"
+Skip distro "lyrical" different from requested "jazzy"
+Skip distro "melodic" different from requested "jazzy"
+Skip distro "noetic" different from requested "jazzy"
+Skip distro "rolling" different from requested "jazzy"
+updated cache in /root/.ros/rosdep/sources.cache

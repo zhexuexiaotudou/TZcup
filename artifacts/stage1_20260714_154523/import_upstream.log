@@ -1,0 +1,10 @@
+Cloning into '/work/.work/stage1_20260714_154523/src/linorobot2'...
+From https://github.com/linorobot/linorobot2
+ * branch            b96aa42fbfa4390a77e0aab90935fe55d66d04ba -> FETCH_HEAD
+HEAD is now at b96aa42 Merge pull request #225 from linorobot/224-installer-fix
+b96aa42fbfa4390a77e0aab90935fe55d66d04ba /work/.work/stage1_20260714_154523/src/linorobot2
+Cloning into '/work/.work/stage1_20260714_154523/src/opennav_coverage'...
+From https://github.com/open-navigation/opennav_coverage
+ * branch            224118081c4c8de651f1db621053ab873b08f13d -> FETCH_HEAD
+HEAD is now at 2241180 Add task time, per-pose velocity/direction, and NSwathModified swath objective (jazzy) (#121)
+224118081c4c8de651f1db621053ab873b08f13d /work/.work/stage1_20260714_154523/src/opennav_coverage
