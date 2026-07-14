@@ -19,4 +19,3 @@ $mount = "${packRoot}:/work"
 if ($LASTEXITCODE -ne 0) {
     throw "Stage 1 container build failed with exit code $LASTEXITCODE"
 }
-
