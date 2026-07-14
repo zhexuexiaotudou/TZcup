@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-07-14T16:35:29.007974+00:00",
+  "success": true,
+  "workspace": "/work/.work/stage1_20260714_154523",
+  "headless": true,
+  "render_engine": "ogre2",
+  "gpu_passthrough": true,
+  "urdf_valid": true,
+  "world_sdf_valid": true,
+  "runtime_probe": {
+    "success": true,
+    "timeout_sec": 120.0,
+    "motion_sec": 5.0,
+    "message_counts": {
+      "/clock": 5694,
+      "/odom/unfiltered": 301,
+      "/odom": 301,
+      "/imu/data": 302,
+      "/joint_states": 5239,
+      "/scan": 61,
+      "/camera/color/camera_info": 92,
+      "/camera/color/image_raw": 71,
+      "/camera/depth/image_rect_raw": 81,
+      "/camera/depth/color/points": 45,
+      "/tf": 421,
+      "/tf_static": 1
+    },
+    "missing_topics": [],
+    "start_xy_m": [
+      1.5849807933695918e-19,
+      -2.085145487479523e-39
+    ],
+    "end_xy_m": [
+      1.1872500000021942,
+      1.0667062517891531e-16
+    ],
+    "displacement_m": 1.1872500000021942,
+    "motion_threshold_m": 0.01,
+    "topics_ok": true,
+    "motion_ok": true
+  },
+  "artifacts": [
+    "build.log",
+    "check_urdf.log",
+    "check_vehicle_sdf.log",
+    "check_world_sdf.log",
+    "gpu.txt",
+    "gz_topics.txt",
+    "nodes.txt",
+    "runtime_probe.json",
+    "runtime_probe.log",
+    "sanitation_vehicle.urdf",
+    "simulation.log",
+    "test.log",
+    "test_results.txt",
+    "topics.txt"
+  ]
+}

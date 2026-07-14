@@ -65,4 +65,34 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\collect_stage0
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage1_docker.ps1
 ```
 
-下一步：进入 Stage 2，使用本项目 overlay launch 修复上游 Jazzy `robot_description` 参数类型问题，并完成 headless 动力学与 topic 冒烟检查。
+## Stage 2：车辆 URDF、场景与运行闭环
+
+状态：headless GPU 验收已通过；GUI 截图仍需原生 Ubuntu 24.04 或 WSLg 复核。
+
+已完成：
+
+- 重写本项目 `sim.launch.py`，在 Jazzy 上以字符串参数加载 `robot_description`，组合 Gazebo server、可选 GUI、实体生成、ROS-Gazebo bridge、EKF 与命令超时保护。
+- 建立参数化 4WD 清扫车：0.65 m 清扫 footprint、40 L 尘箱、四轮、双刷、LiDAR、RGB-D、IMU 与 `arm_mount_link`。
+- 移除上游模型级重复 Sensors system，消除同一场景被创建两次导致的 Ogre2 重复材质和崩溃。
+- 使用 Gazebo Harmonic Ogre2 headless rendering 和 Docker NVIDIA GPU passthrough 实际运行仿真。
+- 静态验证 URDF、由 URDF 转换的 SDF 和场景 SDF。
+- 新增运行探针，订阅时钟、TF、双路里程计、关节、IMU、LiDAR、RGB、深度和点云，并发送 5 秒速度指令验证实际动力学位移。
+- Stage 2 实测 12/12 类话题均有消息；车辆位移 1.18725 m，阈值 0.01 m；仿真在证据采集期间保持存活。
+- 给 launch 清理增加有上限的 INT/TERM/KILL 阶梯，避免 Gazebo 子进程造成 CI 假卡死。
+
+证据：
+
+- `artifacts/stage2_20260714_163402/stage2_summary.json`
+- `artifacts/stage2_20260714_163402/runtime_probe.json`
+- `artifacts/stage2_20260714_163402/simulation.log`
+- `artifacts/stage2_20260714_163402/nodes.txt`
+- `artifacts/stage2_20260714_163402/topics.txt`
+- `artifacts/stage2_20260714_163402/gz_topics.txt`
+
+复现命令：
+
+```powershell
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage2_docker.ps1
+```
+
+下一步：进入 Stage 3，补齐 SLAM Toolbox、地图保存、AMCL/Nav2、安全速度门控和自动导航证据。

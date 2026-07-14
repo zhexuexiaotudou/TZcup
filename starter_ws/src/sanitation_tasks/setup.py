@@ -24,6 +24,7 @@ setup(
     entry_points={
         "console_scripts": [
             "sanitation_smoke_check = sanitation_tasks.smoke_check:main",
+            "sanitation_runtime_probe = sanitation_tasks.runtime_probe:main",
         ],
     },
 )

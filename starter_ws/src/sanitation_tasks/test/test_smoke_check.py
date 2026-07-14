@@ -12,5 +12,6 @@ def test_required_camera_topics_are_namespaced_consistently():
     assert camera_topics == {
         "/camera/color/camera_info",
         "/camera/color/image_raw",
+        "/camera/depth/color/points",
         "/camera/depth/image_rect_raw",
     }

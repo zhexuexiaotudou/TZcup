@@ -15,6 +15,7 @@ REQUIRED_TOPICS = {
     "/camera/color/image_raw",
     "/camera/color/camera_info",
     "/camera/depth/image_rect_raw",
+    "/camera/depth/color/points",
     "/tf",
     "/tf_static",
 }

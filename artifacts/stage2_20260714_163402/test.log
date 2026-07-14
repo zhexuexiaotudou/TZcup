@@ -1,0 +1,15 @@
+Starting >>> sanitation_tasks
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-7.4.4, pluggy-1.4.0
+cachedir: /work/.work/stage1_20260714_154523/build/sanitation_tasks/.pytest_cache
+rootdir: /work/.work/stage1_20260714_154523/src/sanitation_tasks
+plugins: ament-copyright-0.17.5, ament-xmllint-0.17.5, launch-testing-ros-0.26.12, ament-pep257-0.17.5, ament-lint-0.17.5, ament-flake8-0.17.5, launch-testing-3.4.11, typeguard-4.1.5, colcon-core-0.21.0
+collected 2 items
+
+test/test_smoke_check.py ..                                              [100%]
+
+- generated xml file: /work/.work/stage1_20260714_154523/build/sanitation_tasks/pytest.xml -
+============================== 2 passed in 0.59s ===============================
+Finished <<< sanitation_tasks [4.44s]
+
+Summary: 1 package finished [5.90s]

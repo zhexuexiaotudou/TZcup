@@ -20,6 +20,8 @@ RUN --mount=type=cache,target=/var/cache/apt,sharing=locked \
         python3-rosdep \
         python3-vcstool \
         rsync \
+        xauth \
+        xvfb \
         ros-jazzy-cv-bridge \
         ros-jazzy-navigation2 \
         ros-jazzy-nav2-bringup \

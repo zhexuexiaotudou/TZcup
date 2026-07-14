@@ -12,10 +12,10 @@
 
 不在 Windows 原生环境混装 ROS/Gazebo，也不降级到 Humble/Fortress。当前采用两层推进：
 
-1. Docker 中固定 Ubuntu 24.04 + ROS 2 Jazzy + Gazebo Harmonic，完成可重复构建、静态检查和可行的 headless 测试；
-2. Stage 2 的 GUI、传感器、TF、车辆动力学和截图证据，必须在 Ubuntu 24.04 原生或 Ubuntu 24.04 WSLg 环境复核。
+1. Docker 中固定 Ubuntu 24.04 + ROS 2 Jazzy + Gazebo Harmonic，并通过 NVIDIA GPU passthrough 完成可重复构建、Ogre2 headless 渲染、传感器、TF 和车辆动力学验收；
+2. GUI 交互和截图证据仍需在 Ubuntu 24.04 原生或 Ubuntu 24.04 WSLg 环境复核。
 
-Docker 的 headless 成功不能替代真实 GUI 和车辆动力学验收。若要在本机完成 Stage 2–4 的完整图形验收，需要新装 Ubuntu 24.04 WSLg，预计额外占用约 15–30 GB，并需要下载 ROS 2、Gazebo 与第三方依赖。
+Docker 的 headless GPU 成功已经覆盖真实 Gazebo 物理、传感器和 ROS 话题闭环，但不能替代 GUI 交互与截图验收。若要在本机完成 Stage 2–4 的完整图形验收，需要新装 Ubuntu 24.04 WSLg，预计额外占用约 15–30 GB，并需要下载 ROS 2、Gazebo 与第三方依赖。
 
 ## 第三方锁定
 
