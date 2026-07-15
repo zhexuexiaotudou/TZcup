@@ -14,8 +14,8 @@ Stage4T 已完成转向瞬态矩阵、运行包络、measurement covariance、EK
 - 基线：`b7734801d775740dccf6ce16a12f6e739b2e8136`
 - 分支：`agent/stage4t-transient-ekf-localization`
 - 独立工作树：`F:\Project\TZcup-stage4t`
-- PR：发布门完成后回填
-- CI：本地 `py scripts/ci_fast.py` 已通过；远端 CI 在 PR 发布后回填
+- PR：[#7 advance Stage4T transient EKF and localization gates](https://github.com/zhexuexiaotudou/TZcup/pull/7)
+- CI：本地 `py scripts/ci_fast.py` 已通过；远端 `fast-validation` 首轮通过（[run 29426652881](https://github.com/zhexuexiaotudou/TZcup/actions/runs/29426652881)），合并前以 PR 最新提交检查保持绿色为准
 
 ## Stage4S 旧失败与转向瞬态
 
