@@ -44,4 +44,3 @@ jobs:
           Get-ChildItem scripts -Filter *.ps1 | ForEach-Object {
             [void][scriptblock]::Create((Get-Content -LiteralPath $_.FullName -Raw))
           }
-
