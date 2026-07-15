@@ -32,7 +32,7 @@
 
 ### 1. `problem_verified`：问题已核实
 
-读取项目规则、当前分支和工作区状态，核对 `README_FIRST.md`、`PROJECT_SPEC.md`、`STAGE_GATES.md` 与 `docs/progress.md`。尽可能复现问题或确认现状，并把验收条件写清楚。缺少会改变结果的关键选择时才向用户询问。
+读取项目规则、当前分支和工作区状态，核对 `README.md`、`README_FIRST.md`、`PROJECT_SPEC.md`、`STAGE_GATES.md` 与 `docs/progress.md`。尽可能复现问题或确认现状，并把验收条件写清楚。缺少会改变结果的关键选择时才向用户询问。
 
 ### 2. `isolated_workspace_ready`：隔离工作区已建立
 
