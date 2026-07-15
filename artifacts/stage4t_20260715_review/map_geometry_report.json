@@ -1,0 +1,337 @@
+{
+  "schema_version": 1,
+  "comparison_resolutions_m": [
+    0.05,
+    0.02
+  ],
+  "rigid_registration_completed_before_metrics": true,
+  "candidates": {
+    "005": {
+      "mapping": {
+        "success": true,
+        "route_completed": true,
+        "waypoints_completed": 10,
+        "waypoint_count": 10,
+        "trajectory_sample_count": 2456,
+        "map_update_count": 191,
+        "final_map": {
+          "stamp_sec": 383.7,
+          "width_cells": 662,
+          "height_cells": 325,
+          "resolution_m": 0.05000000074505806,
+          "known_cells": 61349,
+          "free_cells": 60535,
+          "occupied_cells": 814,
+          "unknown_cells": 153801,
+          "known_area_m2": 153.37250457085673,
+          "span_x_m": 33.100000493228436,
+          "span_y_m": 16.25000024214387
+        },
+        "route": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            15.0,
+            0.0
+          ],
+          [
+            15.0,
+            7.0
+          ],
+          [
+            8.0,
+            8.0
+          ],
+          [
+            -6.0,
+            8.0
+          ],
+          [
+            -6.0,
+            -8.0
+          ],
+          [
+            8.0,
+            -8.0
+          ],
+          [
+            15.0,
+            -8.0
+          ],
+          [
+            0.0,
+            -8.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        "feedback_topic": "/odom",
+        "ground_truth_used_for_control": false,
+        "ground_truth_evaluation_sample_count": 2455
+      },
+      "quality": {
+        "map_yaml": "/stage4t/artifacts/stage4t_mapping_20260715_124457/map_005/slam_map.yaml",
+        "map_image": "/stage4t/artifacts/stage4t_mapping_20260715_124457/map_005/slam_map.pgm",
+        "resolution_m": 0.05,
+        "width_cells": 662,
+        "height_cells": 325,
+        "span_x_m": 33.1,
+        "span_y_m": 16.25,
+        "occupied_cells": 814,
+        "free_cells": 60535,
+        "unknown_cells": 153801,
+        "known_cells": 61349,
+        "known_area_m2": 153.37250000000003,
+        "resolution_pass": true,
+        "span_pass": true,
+        "known_area_pass": true,
+        "slam_quality_pass": true
+      },
+      "geometry": {
+        "schema_version": 1,
+        "map_resolution_m": 0.05,
+        "rigid_alignment": {
+          "x_m": 7.845142877235124,
+          "y_m": -0.12733273076326643,
+          "yaw_rad": -0.007944424539577291,
+          "source": "optimized SDF fixed-obstacle boundary to SLAM occupied boundary",
+          "method": "Powell robust truth-boundary to SLAM-boundary registration",
+          "initial_alignment": {
+            "x_m": 8.0,
+            "y_m": 0.0,
+            "yaw_rad": 0.0
+          },
+          "initial_objective_m": 0.2046196541582194,
+          "final_objective_m": 0.13162864821684858,
+          "optimizer_success": true,
+          "optimizer_message": "Optimization terminated successfully."
+        },
+        "truth_source": "starter_ws\\src\\sanitation_worlds\\worlds\\sanitation_test_world.sdf",
+        "truth_box_count": 4,
+        "truth_boxes": [
+          {
+            "name": "corridor_wall_left",
+            "x": 15.0,
+            "y": 3.2,
+            "yaw": 0.0,
+            "size_x": 10.0,
+            "size_y": 0.25,
+            "size_z": 0.9
+          },
+          {
+            "name": "corridor_wall_right",
+            "x": 15.0,
+            "y": 1.6,
+            "yaw": 0.0,
+            "size_x": 10.0,
+            "size_y": 0.25,
+            "size_z": 0.9
+          },
+          {
+            "name": "trash_bin_obstacle",
+            "x": 2.0,
+            "y": 3.0,
+            "yaw": 0.0,
+            "size_x": 0.7,
+            "size_y": 0.7,
+            "size_z": 0.9
+          },
+          {
+            "name": "cardboard_box_obstacle",
+            "x": 8.0,
+            "y": -1.0,
+            "yaw": 0.25,
+            "size_x": 0.9,
+            "size_y": 0.7,
+            "size_z": 0.7
+          }
+        ],
+        "known_area_m2": 153.37250000000003,
+        "unknown_ratio": 0.714854752498257,
+        "straight_line_angle_error_deg": {
+          "sample_count": 4,
+          "rmse": 29.886658448516332,
+          "p95": 51.52800499858678,
+          "max": 59.25277368415998
+        },
+        "occupancy_iou": 0.16515151515151516,
+        "boundary_chamfer_distance_m": 0.0940254336797417,
+        "boundary_rmse_m": 0.2320538943887607,
+        "boundary_p95_m": 0.2692582403567252,
+        "loop_ghosting_occupied_cells": 16,
+        "loop_ghosting_ratio": 0.019656019656019656
+      }
+    },
+    "002": {
+      "mapping": {
+        "success": true,
+        "route_completed": true,
+        "waypoints_completed": 10,
+        "waypoint_count": 10,
+        "trajectory_sample_count": 2417,
+        "map_update_count": 192,
+        "final_map": {
+          "stamp_sec": 383.7,
+          "width_cells": 1661,
+          "height_cells": 829,
+          "resolution_m": 0.019999999552965164,
+          "known_cells": 185073,
+          "free_cells": 183294,
+          "occupied_cells": 1779,
+          "unknown_cells": 1191896,
+          "known_area_m2": 74.02919669063691,
+          "span_x_m": 33.21999925747514,
+          "span_y_m": 16.57999962940812
+        },
+        "route": [
+          [
+            0.0,
+            0.0
+          ],
+          [
+            15.0,
+            0.0
+          ],
+          [
+            15.0,
+            7.0
+          ],
+          [
+            8.0,
+            8.0
+          ],
+          [
+            -6.0,
+            8.0
+          ],
+          [
+            -6.0,
+            -8.0
+          ],
+          [
+            8.0,
+            -8.0
+          ],
+          [
+            15.0,
+            -8.0
+          ],
+          [
+            0.0,
+            -8.0
+          ],
+          [
+            0.0,
+            0.0
+          ]
+        ],
+        "feedback_topic": "/odom",
+        "ground_truth_used_for_control": false,
+        "ground_truth_evaluation_sample_count": 2394,
+        "exit_codes": {
+          "mapping_probe": 0,
+          "map_save": 0,
+          "map_quality": 2
+        }
+      },
+      "quality": {
+        "map_yaml": "/stage4t/artifacts/stage4t_mapping_20260715_124457/map_002/slam_map.yaml",
+        "map_image": "/stage4t/artifacts/stage4t_mapping_20260715_124457/map_002/slam_map.pgm",
+        "resolution_m": 0.02,
+        "width_cells": 1661,
+        "height_cells": 829,
+        "span_x_m": 33.22,
+        "span_y_m": 16.580000000000002,
+        "occupied_cells": 1780,
+        "free_cells": 183709,
+        "unknown_cells": 1191480,
+        "known_cells": 185489,
+        "known_area_m2": 74.1956,
+        "resolution_pass": true,
+        "span_pass": true,
+        "known_area_pass": false,
+        "slam_quality_pass": false
+      },
+      "geometry": {
+        "schema_version": 1,
+        "map_resolution_m": 0.02,
+        "rigid_alignment": {
+          "x_m": 7.733532667364714,
+          "y_m": -0.2623934563139139,
+          "yaw_rad": -0.00425595766466847,
+          "source": "optimized SDF fixed-obstacle boundary to SLAM occupied boundary",
+          "method": "Powell robust truth-boundary to SLAM-boundary registration",
+          "initial_alignment": {
+            "x_m": 8.0,
+            "y_m": 0.0,
+            "yaw_rad": 0.0
+          },
+          "initial_objective_m": 0.24683340344789045,
+          "final_objective_m": 0.1262251087848552,
+          "optimizer_success": true,
+          "optimizer_message": "Optimization terminated successfully."
+        },
+        "truth_source": "starter_ws\\src\\sanitation_worlds\\worlds\\sanitation_test_world.sdf",
+        "truth_box_count": 4,
+        "truth_boxes": [
+          {
+            "name": "corridor_wall_left",
+            "x": 15.0,
+            "y": 3.2,
+            "yaw": 0.0,
+            "size_x": 10.0,
+            "size_y": 0.25,
+            "size_z": 0.9
+          },
+          {
+            "name": "corridor_wall_right",
+            "x": 15.0,
+            "y": 1.6,
+            "yaw": 0.0,
+            "size_x": 10.0,
+            "size_y": 0.25,
+            "size_z": 0.9
+          },
+          {
+            "name": "trash_bin_obstacle",
+            "x": 2.0,
+            "y": 3.0,
+            "yaw": 0.0,
+            "size_x": 0.7,
+            "size_y": 0.7,
+            "size_z": 0.9
+          },
+          {
+            "name": "cardboard_box_obstacle",
+            "x": 8.0,
+            "y": -1.0,
+            "yaw": 0.25,
+            "size_x": 0.9,
+            "size_y": 0.7,
+            "size_z": 0.7
+          }
+        ],
+        "known_area_m2": 74.1956,
+        "unknown_ratio": 0.865291811217246,
+        "straight_line_angle_error_deg": {
+          "sample_count": 4,
+          "rmse": 30.08891100175051,
+          "p95": 48.1076812192749,
+          "max": 50.95024827784807
+        },
+        "occupancy_iou": 0.06265364427612784,
+        "boundary_chamfer_distance_m": 0.08787566085770034,
+        "boundary_rmse_m": 0.13709139325422343,
+        "boundary_p95_m": 0.320624390837628,
+        "loop_ghosting_occupied_cells": 174,
+        "loop_ghosting_ratio": 0.09775280898876404
+      }
+    }
+  },
+  "selected_map": "005",
+  "pass": true
+}

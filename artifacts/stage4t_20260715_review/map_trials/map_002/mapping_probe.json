@@ -1,0 +1,71 @@
+{
+  "success": true,
+  "route_completed": true,
+  "waypoints_completed": 10,
+  "waypoint_count": 10,
+  "trajectory_sample_count": 2417,
+  "map_update_count": 192,
+  "final_map": {
+    "stamp_sec": 383.7,
+    "width_cells": 1661,
+    "height_cells": 829,
+    "resolution_m": 0.019999999552965164,
+    "known_cells": 185073,
+    "free_cells": 183294,
+    "occupied_cells": 1779,
+    "unknown_cells": 1191896,
+    "known_area_m2": 74.02919669063691,
+    "span_x_m": 33.21999925747514,
+    "span_y_m": 16.57999962940812
+  },
+  "route": [
+    [
+      0.0,
+      0.0
+    ],
+    [
+      15.0,
+      0.0
+    ],
+    [
+      15.0,
+      7.0
+    ],
+    [
+      8.0,
+      8.0
+    ],
+    [
+      -6.0,
+      8.0
+    ],
+    [
+      -6.0,
+      -8.0
+    ],
+    [
+      8.0,
+      -8.0
+    ],
+    [
+      15.0,
+      -8.0
+    ],
+    [
+      0.0,
+      -8.0
+    ],
+    [
+      0.0,
+      0.0
+    ]
+  ],
+  "feedback_topic": "/odom",
+  "ground_truth_used_for_control": false,
+  "ground_truth_evaluation_sample_count": 2394,
+  "exit_codes": {
+    "mapping_probe": 0,
+    "map_save": 0,
+    "map_quality": 2
+  }
+}

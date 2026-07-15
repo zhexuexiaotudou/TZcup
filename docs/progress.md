@@ -1,5 +1,30 @@
 # 项目推进记录
 
+## Stage4T：转向瞬态、EKF 融合与定位恢复
+
+状态：到达可复核失败边界；未通过 Stage4T，未进入 Stage5A。
+
+已完成：
+
+- 固定时长瞬态 `200/200`、闭环航向 `120/120`；实际 `/cmd_vel` 积分、完整逐 trial 指标和重复性均保留，GT 控制违规为 0。
+- precision/coverage 运行包络真实输出越界为 0；0.60 rad/s stress 失败原样保留且默认禁用。
+- 原始全零 covariance topic 保留；项目 measurement adapter 发布非零 YAML 化 wheel/IMU covariance，真实 core smoke 通过。
+- A/B/C/D 各 5 次同动作集消融完成，选择 EKF-B；可选 chassis yaw-rate controller 记录为 `not_needed`。
+- 0.05/0.02 m 地图均以 selected EKF 自动闭环路线重建，0.05 m 质量门通过并选中；SDF 刚体配准几何指标、overlay、keepout/speed masks 和建图 MCAP 均保留。
+- Oracle 正式 10-seed 达到 10/10 导航成功、TF 全连续、粒子退化 0，但 XY RMSE P50/P95/max 为 `0.08397/0.14848/0.16972 m`，超过 `0.05 m` 硬门。
+
+当前边界：
+
+- 第一真实失败层为 `oracle_localization_pass`，根因指向 SLAM 地图的非刚性几何误差与稀疏场景 AMCL 匹配精度。
+- 按 Stage4T 停止条件，没有执行 realistic 全量 10-seed、完整 Coverage、20-seed 动态障碍、30 次急停或完整任务 rosbag replay。
+- `READY_FOR_GPT_REVIEW_STAGE4T=false`，`READY_FOR_STAGE5A=false`；`competition_efficiency_pass=false`，理论效率仍为 `1053 m²/h`。
+
+复核入口：
+
+- `GPT_REVIEW_STAGE4T.md`
+- `artifacts/stage4t_20260715_review/stage4t_summary.json`
+- `artifacts/stage4t_20260715_review/MANIFEST.json`
+
 ## Stage4S：运动模型标定与定位闭环
 
 状态：已到达可复核失败边界，未通过 Stage4S，未进入 Stage5A。

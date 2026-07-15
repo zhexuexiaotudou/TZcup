@@ -1,0 +1,190 @@
+{
+  "schema_version": 1,
+  "trial_count": 120,
+  "required_trial_count": 120,
+  "matrix": [
+    {
+      "target_heading_rad": -6.283185307179586,
+      "thermal_state": "cold",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "ground_truth_used_for_control": false,
+      "feedback_sources": [
+        "imu_angular_velocity_integral"
+      ],
+      "ground_truth_heading_error_deg": {
+        "mean": 0.7123069521562941,
+        "max": 0.8754276156972258
+      },
+      "tracking_pass": true
+    },
+    {
+      "target_heading_rad": -6.283185307179586,
+      "thermal_state": "hot",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "ground_truth_used_for_control": false,
+      "feedback_sources": [
+        "imu_angular_velocity_integral"
+      ],
+      "ground_truth_heading_error_deg": {
+        "mean": 0.6829947584673787,
+        "max": 0.7539829861780247
+      },
+      "tracking_pass": true
+    },
+    {
+      "target_heading_rad": -3.141592653589793,
+      "thermal_state": "cold",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "ground_truth_used_for_control": false,
+      "feedback_sources": [
+        "imu_angular_velocity_integral"
+      ],
+      "ground_truth_heading_error_deg": {
+        "mean": 0.699871351498839,
+        "max": 0.7384927551366267
+      },
+      "tracking_pass": true
+    },
+    {
+      "target_heading_rad": -3.141592653589793,
+      "thermal_state": "hot",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "ground_truth_used_for_control": false,
+      "feedback_sources": [
+        "imu_angular_velocity_integral"
+      ],
+      "ground_truth_heading_error_deg": {
+        "mean": 0.7122622694676246,
+        "max": 0.7635671772471839
+      },
+      "tracking_pass": true
+    },
+    {
+      "target_heading_rad": -1.5707963267948966,
+      "thermal_state": "cold",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "ground_truth_used_for_control": false,
+      "feedback_sources": [
+        "imu_angular_velocity_integral"
+      ],
+      "ground_truth_heading_error_deg": {
+        "mean": 0.7037278651512054,
+        "max": 0.7884690898946164
+      },
+      "tracking_pass": true
+    },
+    {
+      "target_heading_rad": -1.5707963267948966,
+      "thermal_state": "hot",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "ground_truth_used_for_control": false,
+      "feedback_sources": [
+        "imu_angular_velocity_integral"
+      ],
+      "ground_truth_heading_error_deg": {
+        "mean": 0.6269693009197858,
+        "max": 0.7296350105993129
+      },
+      "tracking_pass": true
+    },
+    {
+      "target_heading_rad": 1.5707963267948966,
+      "thermal_state": "cold",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "ground_truth_used_for_control": false,
+      "feedback_sources": [
+        "imu_angular_velocity_integral"
+      ],
+      "ground_truth_heading_error_deg": {
+        "mean": 0.7209062966608559,
+        "max": 0.7866611658307802
+      },
+      "tracking_pass": true
+    },
+    {
+      "target_heading_rad": 1.5707963267948966,
+      "thermal_state": "hot",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "ground_truth_used_for_control": false,
+      "feedback_sources": [
+        "imu_angular_velocity_integral"
+      ],
+      "ground_truth_heading_error_deg": {
+        "mean": 0.6385391627257586,
+        "max": 0.6878632157444088
+      },
+      "tracking_pass": true
+    },
+    {
+      "target_heading_rad": 3.141592653589793,
+      "thermal_state": "cold",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "ground_truth_used_for_control": false,
+      "feedback_sources": [
+        "imu_angular_velocity_integral"
+      ],
+      "ground_truth_heading_error_deg": {
+        "mean": 0.7168597695088228,
+        "max": 0.7353002833595814
+      },
+      "tracking_pass": true
+    },
+    {
+      "target_heading_rad": 3.141592653589793,
+      "thermal_state": "hot",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "ground_truth_used_for_control": false,
+      "feedback_sources": [
+        "imu_angular_velocity_integral"
+      ],
+      "ground_truth_heading_error_deg": {
+        "mean": 0.6852473343681517,
+        "max": 0.8994966389088442
+      },
+      "tracking_pass": true
+    },
+    {
+      "target_heading_rad": 6.283185307179586,
+      "thermal_state": "cold",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "ground_truth_used_for_control": false,
+      "feedback_sources": [
+        "imu_angular_velocity_integral"
+      ],
+      "ground_truth_heading_error_deg": {
+        "mean": 0.6980627847440357,
+        "max": 0.773933065730572
+      },
+      "tracking_pass": true
+    },
+    {
+      "target_heading_rad": 6.283185307179586,
+      "thermal_state": "hot",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "ground_truth_used_for_control": false,
+      "feedback_sources": [
+        "imu_angular_velocity_integral"
+      ],
+      "ground_truth_heading_error_deg": {
+        "mean": 0.6851337597843317,
+        "max": 0.7569213844032808
+      },
+      "tracking_pass": true
+    }
+  ],
+  "matrix_complete": true,
+  "ground_truth_control_violation_count": 0,
+  "closed_loop_tracking_pass": true
+}

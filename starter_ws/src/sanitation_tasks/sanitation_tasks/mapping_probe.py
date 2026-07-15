@@ -28,9 +28,10 @@ class MappingProbe(Node):
         self.declare_parameter("trajectory_path", "/tmp/mapping_trajectory.csv")
         self.declare_parameter("route_json", json.dumps(DEFAULT_ROUTE))
         self.declare_parameter("route_file", "")
-        self.declare_parameter("command_topic", "/cmd_vel")
-        self.declare_parameter("max_linear_speed", 0.75)
-        self.declare_parameter("max_angular_speed", 0.9)
+        self.declare_parameter("feedback_topic", "/odom")
+        self.declare_parameter("command_topic", "/cmd_vel_gate")
+        self.declare_parameter("max_linear_speed", 0.30)
+        self.declare_parameter("max_angular_speed", 0.25)
         self.declare_parameter("waypoint_tolerance", 0.25)
         self.declare_parameter("timeout_sec", 300.0)
         route_file = self.get_parameter("route_file").value
@@ -38,18 +39,32 @@ class MappingProbe(Node):
         self.index = 0
         self.pose = None
         self.samples = []
+        self.truth_samples = []
         self.map_snapshots = []
         self.publisher = self.create_publisher(
             Twist, self.get_parameter("command_topic").value, 10
         )
+        self.create_subscription(
+            Odometry,
+            str(self.get_parameter("feedback_topic").value),
+            self._feedback,
+            20,
+        )
         self.create_subscription(Odometry, "/ground_truth/odom", self._truth, 20)
         self.create_subscription(OccupancyGrid, "/map", self._map, 10)
 
-    def _truth(self, message):
+    def _feedback(self, message):
         pose = message.pose.pose
         stamp = message.header.stamp.sec + message.header.stamp.nanosec * 1e-9
         self.pose = (pose.position.x, pose.position.y, yaw_from_quaternion(pose.orientation), stamp)
         self.samples.append(self.pose)
+
+    def _truth(self, message):
+        pose = message.pose.pose
+        stamp = message.header.stamp.sec + message.header.stamp.nanosec * 1e-9
+        self.truth_samples.append(
+            (pose.position.x, pose.position.y, yaw_from_quaternion(pose.orientation), stamp)
+        )
 
     def _map(self, message):
         data = message.data
@@ -111,11 +126,14 @@ class MappingProbe(Node):
             "map_update_count": len(self.map_snapshots),
             "final_map": self.map_snapshots[-1] if self.map_snapshots else None,
             "route": self.route,
+            "feedback_topic": str(self.get_parameter("feedback_topic").value),
+            "ground_truth_used_for_control": str(self.get_parameter("feedback_topic").value) == "/ground_truth/odom",
+            "ground_truth_evaluation_sample_count": len(self.truth_samples),
         }
         with open(self.get_parameter("trajectory_path").value, "w", newline="", encoding="utf-8") as stream:
             writer = csv.writer(stream)
             writer.writerow(["stamp_sec", "x_m", "y_m", "yaw_rad"])
-            writer.writerows((stamp, x, y, yaw) for x, y, yaw, stamp in self.samples)
+            writer.writerows((stamp, x, y, yaw) for x, y, yaw, stamp in self.truth_samples)
         with open(self.get_parameter("output_path").value, "w", encoding="utf-8") as stream:
             json.dump(report, stream, ensure_ascii=False, indent=2)
             stream.write("\n")

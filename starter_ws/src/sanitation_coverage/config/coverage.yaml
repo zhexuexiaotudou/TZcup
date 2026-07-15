@@ -17,3 +17,5 @@ coverage_server:
     default_path_type: DUBIN
     default_path_continuity_type: CONTINUOUS
     default_turn_point_distance: 0.10
+    # FollowPath and the final velocity gate enforce this ceiling.
+    max_turn_angular_velocity: 0.35

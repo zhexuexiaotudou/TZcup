@@ -1,11 +1,14 @@
 amcl:
   ros__parameters:
     use_sim_time: true
-    alpha1: 0.35
-    alpha2: 0.35
-    alpha3: 0.50
-    alpha4: 0.50
-    alpha5: 0.20
+    # Stage4T selected-EKF calibration: avoid injecting the broad generic
+    # differential-drive motion noise that made an exact Oracle odom lane
+    # diverge in the sparse part of the map.
+    alpha1: 0.001
+    alpha2: 0.001
+    alpha3: 0.002
+    alpha4: 0.002
+    alpha5: 0.001
     base_frame_id: base_footprint
     global_frame_id: map
     odom_frame_id: odom
@@ -21,9 +24,9 @@ amcl:
     transform_tolerance: 0.5
     update_min_a: 0.02
     update_min_d: 0.02
-    laser_z_hit: 0.95
-    laser_z_rand: 0.05
-    laser_sigma_hit: 0.10
+    laser_z_hit: 0.30
+    laser_z_rand: 0.70
+    laser_sigma_hit: 0.30
     do_beamskip: false
     set_initial_pose: true
     initial_pose:
@@ -75,7 +78,7 @@ controller_server:
       min_lookahead_dist: 0.30
       max_lookahead_dist: 0.90
       lookahead_time: 1.5
-      rotate_to_heading_angular_vel: 0.65
+      rotate_to_heading_angular_vel: 0.35
       transform_tolerance: 0.2
       use_velocity_scaled_lookahead_dist: true
       min_approach_linear_velocity: 0.05
@@ -223,7 +226,7 @@ behavior_server:
     robot_base_frame: base_footprint
     transform_tolerance: 0.2
     simulate_ahead_time: 2.0
-    max_rotational_vel: 0.8
+    max_rotational_vel: 0.35
     min_rotational_vel: 0.2
     rotational_acc_lim: 1.8
 
@@ -245,8 +248,8 @@ velocity_smoother:
     smoothing_frequency: 20.0
     scale_velocities: false
     feedback: OPEN_LOOP
-    max_velocity: [0.50, 0.0, 1.20]
-    min_velocity: [-0.15, 0.0, -1.20]
+    max_velocity: [0.45, 0.0, 0.35]
+    min_velocity: [-0.15, 0.0, -0.35]
     max_accel: [0.60, 0.0, 1.80]
     max_decel: [-0.90, 0.0, -2.20]
     odom_topic: odom

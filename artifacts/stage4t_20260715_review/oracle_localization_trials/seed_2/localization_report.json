@@ -1,0 +1,1071 @@
+{
+  "schema_version": 1,
+  "estimate_frame": "map",
+  "truth_frame": "map_gt",
+  "alignment": "world_to_map translation (+8, 0), zero yaw; map and map_gt axes explicitly coincident",
+  "sample_count": 447,
+  "estimate_sample_count": 454,
+  "truth_sample_count": 4319,
+  "dropped_estimate_count": 7,
+  "sync_error_sec": {
+    "rmse": 0.001891935079361568,
+    "p50": 0.0,
+    "p95": 0.0,
+    "max": 0.03999999999999915
+  },
+  "xy_error_m": {
+    "rmse": 0.12253013262383128,
+    "p50": 0.1212874441154911,
+    "p95": 0.16704666140510557,
+    "max": 0.21312473618842923
+  },
+  "yaw_error_rad": {
+    "rmse": 0.021018597200706562,
+    "p50": 0.02302432785111952,
+    "p95": 0.027300541349005003,
+    "max": 0.02888351047265214
+  },
+  "particle_filter": {
+    "update_count": 0,
+    "particle_count_min": null,
+    "particle_count_max": null,
+    "spread_m": {
+      "rmse": null,
+      "p50": null,
+      "p95": null,
+      "max": null
+    },
+    "degenerate_update_count": 0
+  },
+  "tf_continuity": {
+    "map_to_odom_sample_count": 870,
+    "gap_sec": {
+      "rmse": 0.1,
+      "p50": 0.10000000000000142,
+      "p95": 0.10000000000000853,
+      "max": 0.10000000000000853
+    },
+    "continuous": true
+  },
+  "competition_localization_pass": false,
+  "navigation": {
+    "success": true,
+    "waypoint_count": 10,
+    "status": 4,
+    "status_expected": 4,
+    "feedback_samples": [
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      },
+      {
+        "poses_remaining": 10,
+        "recoveries": 0,
+        "distance_remaining_m": 0.0
+      }
+    ],
+    "recoveries_max": 0,
+    "final_odom_xy_m": [
+      0.06040376887349019,
+      -0.29312707612371236
+    ],
+    "final_amcl_xy_m": [
+      -0.01137179490785074,
+      -0.10201643862280367
+    ],
+    "amcl_covariance_trace_xy": 0.015258674178171026
+  },
+  "navigation_exit_code": 0,
+  "evaluator_exit_code": 2
+}

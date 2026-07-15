@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "high_speed_open_loop_stress_pass": false,
+  "stress_profile_default_enabled": false,
+  "precision_profile_pass": true,
+  "coverage_profile_pass": true,
+  "actual_cmd_limit_violations": 0,
+  "profiles": {
+    "precision": {
+      "schema_version": 1,
+      "profile_name": "precision_mapping",
+      "max_linear_velocity": 0.3,
+      "max_angular_velocity": 0.25,
+      "requested_sample_count": 580,
+      "actual_sample_count": 639,
+      "requested_cmd_limit_violations": 0,
+      "actual_cmd_limit_violations": 0,
+      "observed_actual_max_linear_velocity": 0.0,
+      "observed_actual_max_angular_velocity": 0.25,
+      "profile_pass": true
+    },
+    "coverage": {
+      "schema_version": 1,
+      "profile_name": "localization_coverage",
+      "max_linear_velocity": 0.45,
+      "max_angular_velocity": 0.35,
+      "requested_sample_count": 961,
+      "actual_sample_count": 1016,
+      "requested_cmd_limit_violations": 0,
+      "actual_cmd_limit_violations": 0,
+      "observed_actual_max_linear_velocity": 0.0,
+      "observed_actual_max_angular_velocity": 0.35,
+      "profile_pass": true
+    }
+  },
+  "pass": true
+}

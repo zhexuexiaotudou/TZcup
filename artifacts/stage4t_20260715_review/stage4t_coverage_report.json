@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "executed": false,
+  "competition_evidence": false,
+  "success": false,
+  "blocked_by": "realistic_localization_pass",
+  "reason": "Full Coverage, dynamic-obstacle, filter, emergency-stop, and replay gates were not run after localization failure."
+}

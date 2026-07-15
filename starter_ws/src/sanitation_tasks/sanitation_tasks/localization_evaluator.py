@@ -7,9 +7,10 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import rclpy
-from geometry_msgs.msg import PoseWithCovarianceStamped
+from geometry_msgs.msg import PoseArray, PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
+from tf2_msgs.msg import TFMessage
 
 from .evaluation import (
     assert_comparable_frames,
@@ -31,8 +32,12 @@ class LocalizationEvaluator(Node):
         self.declare_parameter("rmse_threshold_m", 0.05)
         self.estimates = []
         self.truths = []
+        self.particle_spreads = []
+        self.tf_stamps = []
         self.create_subscription(PoseWithCovarianceStamped, "/amcl_pose", self._estimate, 20)
         self.create_subscription(Odometry, "/ground_truth/odom", self._truth, 20)
+        self.create_subscription(PoseArray, "/particle_cloud", self._particles, 10)
+        self.create_subscription(TFMessage, "/tf", self._tf, 50)
 
     def _estimate(self, message):
         assert_comparable_frames(message.header.frame_id, "map_gt", {("map", "map_gt")})
@@ -45,6 +50,19 @@ class LocalizationEvaluator(Node):
         pose = message.pose.pose
         stamp = message.header.stamp.sec + message.header.stamp.nanosec * 1e-9
         self.truths.append((stamp, pose.position.x, pose.position.y, yaw_from_quaternion(pose.orientation)))
+
+    def _particles(self, message):
+        if not message.poses:
+            return
+        mean_x = sum(pose.position.x for pose in message.poses) / len(message.poses)
+        mean_y = sum(pose.position.y for pose in message.poses) / len(message.poses)
+        spread = math.sqrt(sum((pose.position.x - mean_x) ** 2 + (pose.position.y - mean_y) ** 2 for pose in message.poses) / len(message.poses))
+        self.particle_spreads.append((len(message.poses), spread))
+
+    def _tf(self, message):
+        for transform in message.transforms:
+            if transform.header.frame_id == "map" and transform.child_frame_id == "odom":
+                self.tf_stamps.append(transform.header.stamp.sec + transform.header.stamp.nanosec * 1e-9)
 
     def run(self):
         started = time.monotonic()
@@ -77,6 +95,7 @@ class LocalizationEvaluator(Node):
         figure.savefig(self.get_parameter("plot_path").value, dpi=160)
         plt.close(figure)
         xy_summary = summarize(xy_errors)
+        tf_gaps = [current - previous for previous, current in zip(self.tf_stamps, self.tf_stamps[1:]) if current >= previous]
         report = {
             "schema_version": 1,
             "estimate_frame": "map",
@@ -89,6 +108,18 @@ class LocalizationEvaluator(Node):
             "sync_error_sec": summarize(sync_errors),
             "xy_error_m": xy_summary,
             "yaw_error_rad": summarize(yaw_errors),
+            "particle_filter": {
+                "update_count": len(self.particle_spreads),
+                "particle_count_min": min((item[0] for item in self.particle_spreads), default=None),
+                "particle_count_max": max((item[0] for item in self.particle_spreads), default=None),
+                "spread_m": summarize([item[1] for item in self.particle_spreads]),
+                "degenerate_update_count": sum(item[1] < 1.0e-4 for item in self.particle_spreads),
+            },
+            "tf_continuity": {
+                "map_to_odom_sample_count": len(self.tf_stamps),
+                "gap_sec": summarize(tf_gaps),
+                "continuous": bool(self.tf_stamps and (max(tf_gaps, default=0.0) <= 0.5)),
+            },
             "competition_localization_pass": bool(len(pairs) >= 20 and xy_summary["rmse"] is not None and xy_summary["rmse"] <= self.get_parameter("rmse_threshold_m").value),
         }
         with open(self.get_parameter("output_path").value, "w", encoding="utf-8") as stream:

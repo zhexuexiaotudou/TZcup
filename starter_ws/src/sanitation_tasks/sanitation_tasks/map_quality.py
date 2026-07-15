@@ -15,8 +15,9 @@ def inspect_map(yaml_path):
     occupied_threshold = float(metadata.get("occupied_thresh", 0.65))
     free_threshold = float(metadata.get("free_thresh", 0.25))
     probabilities = [(value / 255.0 if negate else (255 - value) / 255.0) for value in pixels]
-    occupied = sum(value >= occupied_threshold for value in probabilities)
-    free = sum(value <= free_threshold for value in probabilities)
+    explicit_unknown = [pixel == 205 for pixel in pixels]
+    occupied = sum((not is_unknown) and value >= occupied_threshold for value, is_unknown in zip(probabilities, explicit_unknown))
+    free = sum((not is_unknown) and value <= free_threshold for value, is_unknown in zip(probabilities, explicit_unknown))
     unknown = len(pixels) - occupied - free
     resolution = float(metadata["resolution"])
     width, height = image.size

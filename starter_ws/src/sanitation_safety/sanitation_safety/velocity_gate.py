@@ -13,6 +13,8 @@ class VelocityGateState:
     emergency_stopped: bool = False
     command_timeout_sec: float = 0.5
     last_command_monotonic: float | None = None
+    max_linear_velocity: float = 0.45
+    max_angular_velocity: float = 0.35
 
     def output(self, linear_x: float, angular_z: float, now: float):
         timed_out = (
@@ -21,7 +23,10 @@ class VelocityGateState:
         )
         if self.emergency_stopped or timed_out:
             return 0.0, 0.0
-        return linear_x, angular_z
+        return (
+            max(-self.max_linear_velocity, min(self.max_linear_velocity, linear_x)),
+            max(-self.max_angular_velocity, min(self.max_angular_velocity, angular_z)),
+        )
 
 
 class VelocityGate(Node):
@@ -29,8 +34,19 @@ class VelocityGate(Node):
         super().__init__("velocity_gate")
         self.declare_parameter("command_timeout_sec", 0.5)
         self.declare_parameter("input_topic", "/cmd_vel_gate")
+        self.declare_parameter("profile_name", "localization_coverage")
+        self.declare_parameter("max_linear_velocity", 0.45)
+        self.declare_parameter("max_angular_velocity", 0.35)
         timeout = float(self.get_parameter("command_timeout_sec").value)
-        self.state = VelocityGateState(command_timeout_sec=timeout)
+        self.state = VelocityGateState(
+            command_timeout_sec=timeout,
+            max_linear_velocity=float(
+                self.get_parameter("max_linear_velocity").value
+            ),
+            max_angular_velocity=float(
+                self.get_parameter("max_angular_velocity").value
+            ),
+        )
         self.last_command = Twist()
         self.publisher = self.create_publisher(Twist, "/cmd_vel", 10)
         self.create_subscription(
