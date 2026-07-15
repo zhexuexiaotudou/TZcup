@@ -9,6 +9,11 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 
+# Local secrets
+.env
+.env.*
+!.env.example
+
 # ROS bag payloads are evidence but are too large for normal Git history.
 artifacts/**/*.db3
 artifacts/**/metadata.yaml
