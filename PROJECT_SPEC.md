@@ -48,11 +48,16 @@ flowchart LR
 
 ### 3.1 底盘与传感器
 
-- `/cmd_vel` — `geometry_msgs/msg/Twist`
-- `/odom` — `nav_msgs/msg/Odometry`
+- `/cmd_vel_gate` — `geometry_msgs/msg/Twist`，Nav2/任务侧进入最终安全门的命令
+- `/cmd_vel` — `geometry_msgs/msg/Twist`，仅由最终安全门向车辆发布
+- `/odom/unfiltered` — `nav_msgs/msg/Odometry`，保留的原始轮速里程计
+- `/measurements/wheel_odom` — `nav_msgs/msg/Odometry`，规范 frame 并注入非零 covariance 的轮速量测
+- `/measurements/imu` — `sensor_msgs/msg/Imu`，规范 frame 并注入非零 covariance 的 IMU 量测
+- `/odom` — `nav_msgs/msg/Odometry`，selected EKF 的融合输出
+- `/ground_truth/odom` — `nav_msgs/msg/Odometry`，仅用于评分；除显式 `oracle_only` 隔离通道外不得参与控制
 - `/tf`, `/tf_static`
 - `/scan` — `sensor_msgs/msg/LaserScan`
-- `/imu/data` — `sensor_msgs/msg/Imu`
+- `/imu/data` — `sensor_msgs/msg/Imu`，永久保留的原始 IMU topic
 - `/camera/color/image_raw`
 - `/camera/color/camera_info`
 - `/camera/depth/image_rect_raw`

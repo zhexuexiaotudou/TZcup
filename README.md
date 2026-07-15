@@ -4,20 +4,15 @@
 
 Stage4T 已完成 200 组固定时长瞬态、120 组闭环航向、A/B/C/D 各 5 次 EKF 消融、非零 measurement covariance、双分辨率重建图和正式 Oracle 10-seed 定位。0.25/0.35 rad/s 运行包络与闭环航向通过，0.60 rad/s 开环 stress 失败被保留；最终选择 EKF-B。选中 0.05 m 地图后，Oracle 10/10 次导航成功，但 XY RMSE P50/P95/max 为 0.08397/0.14848/0.16972 m，未达到 0.05 m 硬门，因此 `READY_FOR_GPT_REVIEW_STAGE4T=false`、`READY_FOR_STAGE5A=false`，realistic 全量与完整 Coverage 按协议阻断。发布与审计见 [PR #7](https://github.com/zhexuexiaotudou/TZcup/pull/7)、[`GPT_REVIEW_STAGE4T.md`](GPT_REVIEW_STAGE4T.md) 与 [`artifacts/stage4t_20260715_review/`](artifacts/stage4t_20260715_review/)；原始 MCAP 和失败调优 artifact 在用户确认前保留。
 
-## Stage4S 运动标定复核边界（2026-07-15）
-
-Stage4S 已完成专用 Gazebo ground truth 身份自证、开环 13 段实验台、轮半径/轮距粗细网格以及摩擦/WheelSlip 最小扫描。当前选择 `drive_wheel_radius=0.14 m`、`drive_wheel_separation=1.22 m`；直线、低速正反整圈和四个圆弧半径均通过车体跟踪门槛，但高速 `0.60 rad/s` 正转整圈的车体 yaw 误差为 `19.1825°`，超过 `18°` 门槛。
-
-因此首个失败层为 `layer_1_body_command_tracking`，`READY_FOR_GPT_REVIEW_STAGE4S=false`、`READY_FOR_STAGE5A=false`。本轮没有越级执行 EKF 消融、重建图、10-seed AMCL 或完整 Coverage，也没有开始垃圾感知、J6 量化或实板部署。完整事实、失败网格、可回放 MCAP 和 SHA-256 清单见 [`GPT_REVIEW_STAGE4S.md`](GPT_REVIEW_STAGE4S.md) 与 [`artifacts/stage4s_20260715_review/`](artifacts/stage4s_20260715_review/)；发布入口为 [PR #6](https://github.com/zhexuexiaotudou/TZcup/pull/6)，远端 `fast-validation` 已通过。
-
 本仓库用于构建、验证和交付基于 ROS 2 Jazzy、Gazebo Harmonic、Nav2、SLAM Toolbox、OpenNav Coverage 与 Fields2Cover 的智慧环卫无人清扫车仿真系统。项目强调可复现构建、真实运行证据、阶段门禁和明确的能力边界。
 
 ## 当前状态
 
-- Stage 0–4 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证。
-- Stage 3 已证明 SLAM、Nav2 和安全速度门闭环可运行，但终点 AMCL 与里程计平面距离仍相差 1.806 m。
-- Stage 4 已生成 0.65 m 作业宽度的覆盖路径；97.5% 是规划几何覆盖率，不代表完整覆盖任务已经实跑完成。
-- 当前尚未完成完整覆盖回放、障碍恢复和 Gazebo/RViz GUI 验收；进入感知训练或 J6 量化前需要人工评审。
+- Stage 0–4T 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；当前车辆参数为 0.14 m 轮半径、1.22 m 有效轮距，融合配置选择 EKF-B。
+- precision mapping 与 localization/coverage 包络分别限制为 0.30/0.25 和 0.45/0.35 m/s、rad/s；0.60 rad/s stress 默认禁用且仍失败。
+- 0.05 m 地图通过基础质量门，但 Oracle 10-seed 的 XY RMSE P50/P95/max 为 0.08397/0.14848/0.16972 m，第一失败层为 `oracle_localization_pass`。
+- realistic 全量定位、完整 Coverage、动态障碍、完整任务急停与 rosbag 回放按停止条件未执行；理论清扫效率仍为 1053 m²/h，未达到 3500 m²/h。
+- 原生 Ubuntu/WSLg 下的 Gazebo/RViz GUI 验收仍未完成；进入感知训练或 J6 量化前必须先解决定位硬门。
 - 详细证据、复现命令和已知边界以 [`docs/progress.md`](docs/progress.md) 为准。
 
 ## 快速开始
@@ -42,6 +37,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage1_doc
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage2_docker.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage3_docker.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_docker.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4t_core_smoke_docker.ps1
 ```
 
 ## 开发工作流
@@ -88,4 +84,4 @@ python scripts/ci_fast.py
 
 ## 最近同步
 
-2026-07-15：中文项目入口和逐提交 README 门禁已上线；`neat-freak` 已将新入口补入问题核实清单，项目运行状态仍以 Stage 4 评审边界为准。
+2026-07-15：Stage4T 已由 [PR #7](https://github.com/zhexuexiaotudou/TZcup/pull/7) 合并到 `main@2412300192d6f4204e0049e55c06ba69353377ba`；合并树的真实 Gazebo core smoke 再验通过 covariance、运行包络与最终速度门（实际越界 0），但 Oracle 定位硬门仍失败，`READY_FOR_GPT_REVIEW_STAGE4T=false`。
