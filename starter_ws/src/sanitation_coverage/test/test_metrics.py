@@ -1,8 +1,17 @@
 from sanitation_coverage.metrics import (
+    empirical_swept_metrics,
     path_length,
     raster_coverage_metrics,
     repair_degenerate_swaths,
 )
+
+
+def test_empirical_metrics_use_brush_on_ground_truth_points():
+    polygon = [(0.0, 0.0), (2.0, 0.0), (2.0, 1.0), (0.0, 1.0)]
+    points = [(index * 0.1, index * 0.1, 0.5) for index in range(21)]
+    metrics = empirical_swept_metrics(polygon, points, 1.0, resolution=0.1)
+    assert metrics["coverage_rate"] > 0.9
+    assert metrics["metric_basis"].startswith("gazebo_ground_truth")
 
 
 def test_path_length():

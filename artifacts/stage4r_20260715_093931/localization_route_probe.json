@@ -1,0 +1,35 @@
+{
+  "success": false,
+  "route_completed": true,
+  "waypoints_completed": 6,
+  "waypoint_count": 6,
+  "trajectory_sample_count": 2196,
+  "map_update_count": 0,
+  "final_map": null,
+  "route": [
+    [
+      0.0,
+      0.0
+    ],
+    [
+      8.0,
+      0.0
+    ],
+    [
+      8.0,
+      6.0
+    ],
+    [
+      12.0,
+      6.0
+    ],
+    [
+      12.0,
+      0.0
+    ],
+    [
+      0.0,
+      0.0
+    ]
+  ]
+}

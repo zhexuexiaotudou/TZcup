@@ -1,0 +1,143 @@
+Starting >>> sanitation_safety
+Starting >>> sanitation_tasks
+Starting >>> sanitation_coverage
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-7.4.4, pluggy-1.4.0
+cachedir: /work/.work/stage1_20260714_154523/build/sanitation_safety/.pytest_cache
+rootdir: /work/.work/stage1_20260714_154523/src/sanitation_safety
+plugins: ament-copyright-0.17.5, ament-xmllint-0.17.5, launch-testing-ros-0.26.12, ament-pep257-0.17.5, ament-lint-0.17.5, ament-flake8-0.17.5, launch-testing-3.4.11, typeguard-4.1.5, colcon-core-0.21.0
+collected 3 items
+
+test/test_velocity_gate.py ...                                           [100%]
+
+- generated xml file: /work/.work/stage1_20260714_154523/build/sanitation_safety/pytest.xml -
+============================== 3 passed in 0.81s ===============================
+Finished <<< sanitation_safety [6.43s]
+Starting >>> sanitation_navigation
+UpdateCTestConfiguration  from :/work/.work/stage1_20260714_154523/build/sanitation_navigation/CTestConfiguration.ini
+Parse Config file:/work/.work/stage1_20260714_154523/build/sanitation_navigation/CTestConfiguration.ini
+   Site: 53b6e714bf8c
+   Build name: (empty)
+ Add coverage exclude regular expressions.
+Create new tag: 20260715-0329 - Experimental
+UpdateCTestConfiguration  from :/work/.work/stage1_20260714_154523/build/sanitation_navigation/CTestConfiguration.ini
+Parse Config file:/work/.work/stage1_20260714_154523/build/sanitation_navigation/CTestConfiguration.ini
+Test project /work/.work/stage1_20260714_154523/build/sanitation_navigation
+Constructing a list of tests
+Done constructing a list of tests
+Updating test list for fixtures
+Added 0 tests to meet fixture requirements
+Checking test dependency graph...
+Checking test dependency graph end
+test 1
+    Start 1: copyright
+
+1: Test command: /usr/bin/python3 "-u" "/opt/ros/jazzy/share/ament_cmake_test/cmake/run_test.py" "/work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/copyright.xunit.xml" "--package-name" "sanitation_navigation" "--output-file" "/work/.work/stage1_20260714_154523/build/sanitation_navigation/ament_copyright/copyright.txt" "--command" "/opt/ros/jazzy/bin/ament_copyright" "--xunit-file" "/work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/copyright.xunit.xml"
+1: Working Directory: /work/.work/stage1_20260714_154523/src/sanitation_navigation
+1: Test timeout computed to be: 200
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-7.4.4, pluggy-1.4.0
+cachedir: /work/.work/stage1_20260714_154523/build/sanitation_tasks/.pytest_cache
+rootdir: /work/.work/stage1_20260714_154523/src/sanitation_tasks
+plugins: ament-copyright-0.17.5, ament-xmllint-0.17.5, launch-testing-ros-0.26.12, ament-pep257-0.17.5, ament-lint-0.17.5, ament-flake8-0.17.5, launch-testing-3.4.11, typeguard-4.1.5, colcon-core-0.21.0
+collected 5 items
+
+test/test_evaluation.py ...                                              [ 60%]
+test/test_smoke_check.py ..                                              [100%]
+
+- generated xml file: /work/.work/stage1_20260714_154523/build/sanitation_tasks/pytest.xml -
+============================== 5 passed in 0.83s ===============================
+Finished <<< sanitation_tasks [7.82s]
+1: -- run_test.py: invoking following command in '/work/.work/stage1_20260714_154523/src/sanitation_navigation':
+1:  - /opt/ros/jazzy/bin/ament_copyright --xunit-file /work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/copyright.xunit.xml
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-7.4.4, pluggy-1.4.0
+cachedir: /work/.work/stage1_20260714_154523/build/sanitation_coverage/.pytest_cache
+rootdir: /work/.work/stage1_20260714_154523/src/sanitation_coverage
+plugins: ament-copyright-0.17.5, ament-xmllint-0.17.5, launch-testing-ros-0.26.12, ament-pep257-0.17.5, ament-lint-0.17.5, ament-flake8-0.17.5, launch-testing-3.4.11, typeguard-4.1.5, colcon-core-0.21.0
+collected 4 items
+
+test/test_metrics.py ....                                                [100%]
+
+- generated xml file: /work/.work/stage1_20260714_154523/build/sanitation_coverage/pytest.xml -
+============================== 4 passed in 0.16s ===============================
+Finished <<< sanitation_coverage [8.66s]
+1: No problems found, checked 2 files
+1: -- run_test.py: return code 0
+1: -- run_test.py: verify result file '/work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/copyright.xunit.xml'
+1/5 Test #1: copyright ........................   Passed    2.70 sec
+test 2
+    Start 2: flake8
+
+2: Test command: /usr/bin/python3 "-u" "/opt/ros/jazzy/share/ament_cmake_test/cmake/run_test.py" "/work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/flake8.xunit.xml" "--package-name" "sanitation_navigation" "--output-file" "/work/.work/stage1_20260714_154523/build/sanitation_navigation/ament_flake8/flake8.txt" "--command" "/opt/ros/jazzy/bin/ament_flake8" "--xunit-file" "/work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/flake8.xunit.xml"
+2: Working Directory: /work/.work/stage1_20260714_154523/src/sanitation_navigation
+2: Test timeout computed to be: 60
+2: -- run_test.py: invoking following command in '/work/.work/stage1_20260714_154523/src/sanitation_navigation':
+2:  - /opt/ros/jazzy/bin/ament_flake8 --xunit-file /work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/flake8.xunit.xml
+2: 
+2: 2 files checked
+2: No problems found
+2: 
+2: Checked files:
+2: 
+2: * ./launch/navigation.launch.py
+2: * ./launch/slam.launch.py
+2: -- run_test.py: return code 0
+2: -- run_test.py: verify result file '/work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/flake8.xunit.xml'
+2/5 Test #2: flake8 ...........................   Passed    3.05 sec
+test 3
+    Start 3: lint_cmake
+
+3: Test command: /usr/bin/python3 "-u" "/opt/ros/jazzy/share/ament_cmake_test/cmake/run_test.py" "/work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/lint_cmake.xunit.xml" "--package-name" "sanitation_navigation" "--output-file" "/work/.work/stage1_20260714_154523/build/sanitation_navigation/ament_lint_cmake/lint_cmake.txt" "--command" "/opt/ros/jazzy/bin/ament_lint_cmake" "--xunit-file" "/work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/lint_cmake.xunit.xml"
+3: Working Directory: /work/.work/stage1_20260714_154523/src/sanitation_navigation
+3: Test timeout computed to be: 60
+3: -- run_test.py: invoking following command in '/work/.work/stage1_20260714_154523/src/sanitation_navigation':
+3:  - /opt/ros/jazzy/bin/ament_lint_cmake --xunit-file /work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/lint_cmake.xunit.xml
+3: 
+3: No problems found
+3: -- run_test.py: return code 0
+3: -- run_test.py: verify result file '/work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/lint_cmake.xunit.xml'
+3/5 Test #3: lint_cmake .......................   Passed    2.61 sec
+test 4
+    Start 4: pep257
+
+4: Test command: /usr/bin/python3 "-u" "/opt/ros/jazzy/share/ament_cmake_test/cmake/run_test.py" "/work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/pep257.xunit.xml" "--package-name" "sanitation_navigation" "--output-file" "/work/.work/stage1_20260714_154523/build/sanitation_navigation/ament_pep257/pep257.txt" "--command" "/opt/ros/jazzy/bin/ament_pep257" "--xunit-file" "/work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/pep257.xunit.xml"
+4: Working Directory: /work/.work/stage1_20260714_154523/src/sanitation_navigation
+4: Test timeout computed to be: 60
+4: -- run_test.py: invoking following command in '/work/.work/stage1_20260714_154523/src/sanitation_navigation':
+4:  - /opt/ros/jazzy/bin/ament_pep257 --xunit-file /work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/pep257.xunit.xml
+4: checking ./launch/navigation.launch.py
+4: checking ./launch/slam.launch.py
+4: No problems found
+4: -- run_test.py: return code 0
+4: -- run_test.py: verify result file '/work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/pep257.xunit.xml'
+4/5 Test #4: pep257 ...........................   Passed    2.63 sec
+test 5
+    Start 5: xmllint
+
+5: Test command: /usr/bin/python3 "-u" "/opt/ros/jazzy/share/ament_cmake_test/cmake/run_test.py" "/work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/xmllint.xunit.xml" "--package-name" "sanitation_navigation" "--output-file" "/work/.work/stage1_20260714_154523/build/sanitation_navigation/ament_xmllint/xmllint.txt" "--command" "/opt/ros/jazzy/bin/ament_xmllint" "--xunit-file" "/work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/xmllint.xunit.xml"
+5: Working Directory: /work/.work/stage1_20260714_154523/src/sanitation_navigation
+5: Test timeout computed to be: 60
+5: -- run_test.py: invoking following command in '/work/.work/stage1_20260714_154523/src/sanitation_navigation':
+5:  - /opt/ros/jazzy/bin/ament_xmllint --xunit-file /work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/xmllint.xunit.xml
+5: File 'package.xml' is valid
+5: 
+5: No problems found
+5: -- run_test.py: return code 0
+5: -- run_test.py: verify result file '/work/.work/stage1_20260714_154523/build/sanitation_navigation/test_results/sanitation_navigation/xmllint.xunit.xml'
+5/5 Test #5: xmllint ..........................   Passed    2.68 sec
+
+100% tests passed, 0 tests failed out of 5
+
+Label Time Summary:
+copyright     =   2.70 sec*proc (1 test)
+flake8        =   3.05 sec*proc (1 test)
+lint_cmake    =   2.61 sec*proc (1 test)
+linter        =  13.67 sec*proc (5 tests)
+pep257        =   2.63 sec*proc (1 test)
+xmllint       =   2.68 sec*proc (1 test)
+
+Total Test time (real) =  13.73 sec
+Finished <<< sanitation_navigation [14.8s]
+
+Summary: 4 packages finished [22.9s]

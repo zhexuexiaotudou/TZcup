@@ -1,0 +1,18 @@
+transforms:
+- header:
+    stamp:
+      sec: 1784083623
+      nanosec: 747633583
+    frame_id: laser
+  child_frame_id: sanitation_vehicle/base_footprint/sanitation_gpu_lidar
+  transform:
+    translation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+    rotation:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      w: 1.0
+---

@@ -1,360 +1,284 @@
+import csv
 import json
 import math
 import time
 from pathlib import Path
 
-from ament_index_python.packages import get_package_share_directory
 from action_msgs.msg import GoalStatus
+from ament_index_python.packages import get_package_share_directory
+from geometry_msgs.msg import PoseStamped
 from lifecycle_msgs.srv import GetState
-from geometry_msgs.msg import PoseWithCovarianceStamped
-from nav2_msgs.action import FollowPath
+from nav2_msgs.action import FollowPath, NavigateToPose
 from nav_msgs.msg import Odometry, Path as NavPath
 from opennav_coverage_msgs.action import ComputeCoveragePath
 from opennav_coverage_msgs.msg import Coordinate, Coordinates
 import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
+from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Bool
 import yaml
 
 from sanitation_coverage.metrics import (
+    empirical_swept_metrics,
     path_length,
     raster_coverage_metrics,
     repair_degenerate_swaths,
 )
 
 
+def yaw_from_quaternion(q):
+    return math.atan2(2.0 * (q.w * q.z + q.x * q.y), 1.0 - 2.0 * (q.y * q.y + q.z * q.z))
+
+
 class CoverageProbe(Node):
-    def __init__(self) -> None:
+    """Plan and execute every coverage component, then score actual GT sweep."""
+
+    def __init__(self):
         super().__init__("sanitation_coverage_probe")
-        default_config = Path(
-            get_package_share_directory("sanitation_tasks")
-        ) / "config" / "demo_area.yaml"
+        default_config = Path(get_package_share_directory("sanitation_tasks")) / "config" / "demo_area.yaml"
         self.declare_parameter("config_path", str(default_config))
         self.declare_parameter("output_path", "coverage_metrics.json")
         self.declare_parameter("path_output_path", "coverage_path.json")
-        self.declare_parameter("handoff_duration_sec", 20.0)
-        self.coverage_client = ActionClient(
-            self, ComputeCoveragePath, "/compute_coverage_path"
-        )
+        self.declare_parameter("trajectory_output_path", "coverage_trajectory.csv")
+        self.declare_parameter("component_retry_limit", 1)
+        self.declare_parameter("minimum_component_timeout_sec", 45.0)
+        self.coverage_client = ActionClient(self, ComputeCoveragePath, "/compute_coverage_path")
         self.follow_client = ActionClient(self, FollowPath, "/follow_path")
-        self.controller_state_client = self.create_client(
-            GetState, "/controller_server/get_state"
-        )
+        self.navigate_client = ActionClient(self, NavigateToPose, "/navigate_to_pose")
+        self.controller_state_client = self.create_client(GetState, "/controller_server/get_state")
         self.brush_publisher = self.create_publisher(Bool, "/brush_enabled", 10)
-        self.last_odom = None
-        self.last_amcl_pose = None
-        self.create_subscription(Odometry, "/odom", self._on_odom, 10)
-        self.create_subscription(
-            PoseWithCovarianceStamped, "/amcl_pose", self._on_amcl_pose, 10
-        )
+        self.brush_enabled = False
+        self.truth_samples = []
+        self.brush_samples = []
+        self.minimum_scan_range = math.inf
+        self.collision_events = 0
+        self._collision_active = False
+        self.create_subscription(Odometry, "/ground_truth/odom", self._on_truth, 20)
+        self.create_subscription(LaserScan, "/scan", self._on_scan, 10)
 
-    def _on_odom(self, message) -> None:
-        self.last_odom = message
+    def _on_truth(self, message):
+        pose = message.pose.pose
+        stamp = message.header.stamp.sec + message.header.stamp.nanosec * 1e-9
+        yaw = yaw_from_quaternion(pose.orientation)
+        sample = (stamp, pose.position.x, pose.position.y, yaw, self.brush_enabled)
+        self.truth_samples.append(sample)
+        if self.brush_enabled:
+            # Cleaning footprint is 0.55 m forward of base_footprint in URDF.
+            self.brush_samples.append((stamp, pose.position.x + 0.55 * math.cos(yaw), pose.position.y + 0.55 * math.sin(yaw)))
 
-    def _on_amcl_pose(self, message) -> None:
-        self.last_amcl_pose = message
+    def _on_scan(self, message):
+        finite = [value for value in message.ranges if math.isfinite(value)]
+        if not finite:
+            return
+        minimum = min(finite)
+        self.minimum_scan_range = min(self.minimum_scan_range, minimum)
+        collision_now = minimum < 0.12
+        if collision_now and not self._collision_active:
+            self.collision_events += 1
+        self._collision_active = collision_now
 
-    def run(self) -> int:
-        config_path = Path(str(self.get_parameter("config_path").value))
-        config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+    def _set_brush(self, enabled):
+        self.brush_enabled = bool(enabled)
+        self.brush_publisher.publish(Bool(data=self.brush_enabled))
+
+    def run(self):
+        config = yaml.safe_load(Path(self.get_parameter("config_path").value).read_text(encoding="utf-8"))
         polygon = [[float(x), float(y)] for x, y in config["polygon"]]
-        operation_width = float(config["operation_width_m"])
-
-        if not self.coverage_client.wait_for_server(timeout_sec=60.0):
-            return self._write_error("coverage_action_timeout")
-
-        goal = ComputeCoveragePath.Goal()
-        goal.generate_headland = False
-        goal.generate_route = True
-        goal.generate_path = True
-        goal.frame_id = str(config["frame_id"])
-        coordinates = Coordinates()
-        closed_polygon = polygon if polygon[0] == polygon[-1] else polygon + [polygon[0]]
-        coordinates.coordinates = [
-            Coordinate(axis1=float(x), axis2=float(y)) for x, y in closed_polygon
-        ]
-        goal.polygons = [coordinates]
-
-        send_future = self.coverage_client.send_goal_async(goal)
-        rclpy.spin_until_future_complete(self, send_future, timeout_sec=30.0)
-        goal_handle = send_future.result() if send_future.done() else None
-        if goal_handle is None or not goal_handle.accepted:
-            return self._write_error("coverage_goal_rejected")
-
-        result_future = goal_handle.get_result_async()
-        rclpy.spin_until_future_complete(self, result_future, timeout_sec=120.0)
-        if not result_future.done():
-            return self._write_error("coverage_result_timeout")
-        wrapped = result_future.result()
-        result = wrapped.result
-        if wrapped.status != GoalStatus.STATUS_SUCCEEDED or result.error_code != 0:
-            return self._write_error(
-                "coverage_planning_failed",
-                {"status": int(wrapped.status), "error_code": int(result.error_code)},
-            )
-
-        raw_swaths = [
-            (
-                (float(swath.start.x), float(swath.start.y)),
-                (float(swath.end.x), float(swath.end.y)),
-            )
-            for swath in result.coverage_path.swaths
-        ]
-        turns = [
-            [
-                (float(pose.pose.position.x), float(pose.pose.position.y))
-                for pose in turn.poses
-            ]
-            for turn in result.coverage_path.turns
-        ]
-        nav_points = [
-            (float(pose.pose.position.x), float(pose.pose.position.y))
-            for pose in result.nav_path.poses
-        ]
-        swaths, swath_endpoints_repaired = repair_degenerate_swaths(
-            raw_swaths, turns, nav_points
-        )
-        metrics = raster_coverage_metrics(
-            polygon, swaths, operation_width, resolution=0.10
-        )
-        total_path_length = path_length(nav_points)
-        task_time = float(result.task_time)
-        estimated_time = task_time if task_time > 0.0 else total_path_length / 0.35
-        metrics.update(
-            {
-                "metric_basis": "planned_fields2cover_swaths_rasterized",
-                "swath_endpoint_compatibility_repair": swath_endpoints_repaired,
-                "path_length_m": total_path_length,
-                "estimated_total_time_sec": estimated_time,
-                "effective_cleaning_efficiency_m2_s": (
-                    metrics["covered_area_m2"] / estimated_time
-                    if estimated_time > 0.0
-                    else 0.0
-                ),
-                "recovery_count": 0,
-            }
-        )
-
-        schedule = []
+        width = float(config["operation_width_m"])
+        planning = self._plan(config, polygon)
+        if "error" in planning:
+            return self._write_report({"success": False, **planning})
+        raw_swaths, turns, nav_points, result = planning["raw_swaths"], planning["turns"], planning["nav_points"], planning["result"]
+        swaths, repaired = repair_degenerate_swaths(raw_swaths, turns, nav_points)
+        planned_metrics = raster_coverage_metrics(polygon, swaths, width, resolution=0.10)
+        planned_metrics.update({
+            "metric_basis": "planned_fields2cover_swaths_rasterized",
+            "path_length_m": path_length(nav_points),
+            "swath_endpoint_compatibility_repair": repaired,
+        })
+        components = []
         for index, swath in enumerate(swaths):
-            schedule.append(
-                {
-                    "component": "swath",
-                    "index": index,
-                    "brush_enabled": True,
-                    "length_m": math.dist(*swath),
-                }
-            )
+            components.append({"kind": "swath", "index": index, "brush": True, "points": self._interpolate(*swath)})
             if index < len(turns):
-                schedule.append(
-                    {
-                        "component": "turn",
-                        "index": index,
-                        "brush_enabled": False,
-                        "length_m": path_length(turns[index]),
-                    }
-                )
+                components.append({"kind": "turn", "index": index, "brush": False, "points": turns[index]})
 
-        handoff = self._handoff(result.nav_path)
         path_report = {
             "frame_id": result.nav_path.header.frame_id,
-            "operation_width_m": operation_width,
-            "route_type": str(config["route_type"]),
-            "path_type": str(config["path_type"]),
-            "nav_path": nav_points,
-            "swaths": swaths,
-            "raw_swaths": raw_swaths,
-            "swath_endpoint_compatibility_repair": swath_endpoints_repaired,
+            "operation_width_m": width,
+            "route_type": str(config["route_type"]), "path_type": str(config["path_type"]),
+            "nav_path": nav_points, "swaths": swaths, "raw_swaths": raw_swaths,
             "turns": turns,
-            "brush_schedule": schedule,
+            "component_count": len(components),
+            "execution_strategy": "NavigateToPose to first swath, then one FollowPath action per swath/turn; no path truncation",
         }
-        path_output = Path(str(self.get_parameter("path_output_path").value))
-        path_output.parent.mkdir(parents=True, exist_ok=True)
-        path_output.write_text(
-            json.dumps(path_report, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
+        self._write_json(self.get_parameter("path_output_path").value, path_report)
 
+        execution_started_wall = time.monotonic()
+        transit = self._navigate_to(components[0]["points"][0]) if components else {"success": False, "error": "no_components"}
+        component_results = []
+        if transit["success"]:
+            for component in components:
+                component_results.append(self._follow_component(component))
+                if not component_results[-1]["success"]:
+                    break
+        self._set_brush(False)
+        execution_duration = time.monotonic() - execution_started_wall
+        complete = bool(components and transit["success"] and len(component_results) == len(components) and all(item["success"] for item in component_results))
+        empirical = empirical_swept_metrics(polygon, self.brush_samples, width, resolution=0.10)
+        actual_path_points = [(sample[1], sample[2]) for sample in self.truth_samples]
+        actual_path_length = path_length(actual_path_points)
+        empirical.update({
+            "actual_path_length_m": actual_path_length,
+            "actual_duration_sec": execution_duration,
+            "gross_efficiency_m2_h": empirical["covered_area_m2"] / execution_duration * 3600.0 if execution_duration > 0 else 0.0,
+            "net_efficiency_m2_h": empirical["covered_area_m2"] / execution_duration * 3600.0 if execution_duration > 0 else 0.0,
+        })
+        empirical_pass = complete and empirical["coverage_rate"] >= 0.90
+        safety_pass = self.collision_events == 0
+        recovery_count = sum(item["retries"] for item in component_results) + int(transit.get("retries", 0))
+        efficiency_pass = empirical["net_efficiency_m2_h"] >= 3500.0
+        self._write_trajectory()
         report = {
-            "success": bool(
-                swaths
-                and nav_points
-                and handoff["accepted"]
-                and handoff["execution_started"]
-            ),
+            "schema_version": 2,
             "mission_id": str(config["mission_id"]),
             "planner": "OpenNav Coverage + Fields2Cover",
-            "route_type": str(config["route_type"]),
-            "path_type": str(config["path_type"]),
-            "operation_width_m": operation_width,
-            "swath_count": len(swaths),
-            "turn_count": len(turns),
+            "planning_success": True,
+            "transit_to_start_success": transit["success"],
+            "full_execution_success": complete,
+            "empirical_coverage_success": empirical_pass,
+            "safety_success": safety_pass,
+            "competition_efficiency_pass": efficiency_pass,
+            "success": bool(complete and empirical_pass and safety_pass and not self.brush_enabled),
+            "operation_width_m": width,
+            "swath_count": len(swaths), "turn_count": len(turns),
             "nav_path_pose_count": len(nav_points),
-            "planning_time_sec": (
-                float(result.planning_time.sec)
-                + float(result.planning_time.nanosec) / 1.0e9
-            ),
-            "metrics": metrics,
-            "brush_schedule": {
-                "swath_components_on": len(swaths),
-                "turn_components_off": len(turns),
-            },
-            "nav2_handoff": handoff,
-            "execution_boundary": (
-                "The full coverage path was generated, while only a bounded path prefix was "
-                "handed to Nav2 for physical integration evidence; coverage metrics are "
-                "planned, not empirical, because Stage 3 localization endpoint error is "
-                "material."
-            ),
+            "component_count": len(components), "component_results": component_results,
+            "transit_to_start": transit,
+            "planned_metrics": planned_metrics,
+            "empirical_metrics": empirical,
+            "recovery_count": recovery_count,
+            "collision_count": self.collision_events,
+            "minimum_lidar_range_m": self.minimum_scan_range if math.isfinite(self.minimum_scan_range) else None,
+            "brush_disabled_on_exit": not self.brush_enabled,
+            "execution_boundary": "All path components were required to terminate SUCCEEDED; no 180-pose shortcut or bounded cancellation is accepted.",
         }
         return self._write_report(report)
 
-    def _handoff(self, nav_path):
-        if not self._wait_controller_active():
-            return {"accepted": False, "error": "controller_inactive"}
-        if not self._wait_sim_time(1.5):
-            return {"accepted": False, "error": "simulation_time_not_settled"}
-        if not self.follow_client.wait_for_server(timeout_sec=30.0):
-            return {"accepted": False, "error": "follow_path_timeout"}
+    def _plan(self, config, polygon):
+        if not self.coverage_client.wait_for_server(timeout_sec=60.0):
+            return {"error": "coverage_action_timeout"}
+        goal = ComputeCoveragePath.Goal()
+        goal.generate_headland = False; goal.generate_route = True; goal.generate_path = True
+        goal.frame_id = str(config["frame_id"])
+        closed = polygon if polygon[0] == polygon[-1] else polygon + [polygon[0]]
+        coordinates = Coordinates(); coordinates.coordinates = [Coordinate(axis1=x, axis2=y) for x, y in closed]
+        goal.polygons = [coordinates]
+        future = self.coverage_client.send_goal_async(goal)
+        rclpy.spin_until_future_complete(self, future, timeout_sec=30.0)
+        handle = future.result() if future.done() else None
+        if handle is None or not handle.accepted:
+            return {"error": "coverage_goal_rejected"}
+        result_future = handle.get_result_async(); rclpy.spin_until_future_complete(self, result_future, timeout_sec=120.0)
+        if not result_future.done():
+            return {"error": "coverage_result_timeout"}
+        wrapped = result_future.result(); result = wrapped.result
+        if wrapped.status != GoalStatus.STATUS_SUCCEEDED or result.error_code != 0:
+            return {"error": "coverage_planning_failed", "status": int(wrapped.status), "error_code": int(result.error_code)}
+        raw_swaths = [((float(item.start.x), float(item.start.y)), (float(item.end.x), float(item.end.y))) for item in result.coverage_path.swaths]
+        turns = [[(float(pose.pose.position.x), float(pose.pose.position.y)) for pose in turn.poses] for turn in result.coverage_path.turns]
+        nav_points = [(float(pose.pose.position.x), float(pose.pose.position.y)) for pose in result.nav_path.poses]
+        return {"raw_swaths": raw_swaths, "turns": turns, "nav_points": nav_points, "result": result}
 
-        goal = FollowPath.Goal()
-        # RPP prunes a looping coverage plan to the globally nearest repeated
-        # segment. Sending a bounded prefix avoids pruning the entire plan and
-        # provides a deterministic physical integration check while Stage 3
-        # localization remains outside the acceptance tolerance.
-        reference = self.last_amcl_pose.pose.pose.position
-        closest_index = min(
-            range(len(nav_path.poses)),
-            key=lambda index: math.hypot(
-                nav_path.poses[index].pose.position.x - reference.x,
-                nav_path.poses[index].pose.position.y - reference.y,
-            ),
-        )
-        execution_path = NavPath()
-        execution_path.header = nav_path.header
-        execution_path.poses = nav_path.poses[
-            closest_index : min(closest_index + 180, len(nav_path.poses))
-        ]
+    @staticmethod
+    def _interpolate(start, end, spacing=0.10):
+        length = math.dist(start, end)
+        count = max(2, int(math.ceil(length / spacing)) + 1)
+        return [(start[0] + (end[0] - start[0]) * index / (count - 1), start[1] + (end[1] - start[1]) * index / (count - 1)) for index in range(count)]
 
-        # The coverage request can complete before the simulated TF buffer has
-        # retained the path's original timestamp. A zero stamp requests the
-        # latest transform and avoids an immediate past-extrapolation abort.
-        execution_path.header.stamp.sec = 0
-        execution_path.header.stamp.nanosec = 0
-        for pose in execution_path.poses:
-            pose.header.stamp.sec = 0
-            pose.header.stamp.nanosec = 0
-        goal.path = execution_path
-        goal.controller_id = "FollowPath"
-        goal.goal_checker_id = "goal_checker"
-        goal.progress_checker_id = "progress_checker"
-        send_future = self.follow_client.send_goal_async(goal)
-        rclpy.spin_until_future_complete(self, send_future, timeout_sec=10.0)
-        goal_handle = send_future.result() if send_future.done() else None
-        if goal_handle is None or not goal_handle.accepted:
-            return {"accepted": False, "error": "follow_path_rejected"}
+    def _path_message(self, points):
+        path = NavPath(); path.header.frame_id = "map"
+        if len(points) == 1: points = [points[0], points[0]]
+        for index, (x, y) in enumerate(points):
+            next_point = points[min(index + 1, len(points) - 1)]
+            previous = points[max(0, index - 1)]
+            yaw = math.atan2(next_point[1] - previous[1], next_point[0] - previous[0])
+            pose = PoseStamped(); pose.header.frame_id = "map"
+            pose.pose.position.x = float(x); pose.pose.position.y = float(y)
+            pose.pose.orientation.z = math.sin(yaw / 2.0); pose.pose.orientation.w = math.cos(yaw / 2.0)
+            path.poses.append(pose)
+        return path
 
-        start_xy = self._odom_xy()
-        result_future = goal_handle.get_result_async()
-        duration = float(self.get_parameter("handoff_duration_sec").value)
-        deadline = time.monotonic() + duration
-        while rclpy.ok() and not result_future.done() and time.monotonic() < deadline:
-            self.brush_publisher.publish(Bool(data=True))
-            rclpy.spin_once(self, timeout_sec=0.1)
-        bounded_cancel = not result_future.done()
-        if bounded_cancel:
-            cancel_future = goal_handle.cancel_goal_async()
-            rclpy.spin_until_future_complete(self, cancel_future, timeout_sec=5.0)
-        self.brush_publisher.publish(Bool(data=False))
-        end_xy = self._odom_xy()
-        displacement = None
-        if start_xy is not None and end_xy is not None:
-            displacement = math.dist(start_xy, end_xy)
-        terminal_status = None
-        terminal_error_code = None
-        if result_future.done():
-            wrapped = result_future.result()
-            terminal_status = int(wrapped.status)
-            terminal_error_code = int(getattr(wrapped.result, "error_code", 0))
-        execution_started = bool(
-            bounded_cancel or (displacement is not None and displacement > 0.05)
-        )
-        return {
-            "accepted": True,
-            "execution_started": execution_started,
-            "full_plan_pose_count": len(nav_path.poses),
-            "handoff_path_pose_count": len(execution_path.poses),
-            "handoff_start_pose_index": closest_index,
-            "amcl_reference_xy": [float(reference.x), float(reference.y)],
-            "bounded_duration_sec": duration,
-            "bounded_cancel_requested": bounded_cancel,
-            "completed_during_window": result_future.done(),
-            "terminal_status": terminal_status,
-            "terminal_error_code": terminal_error_code,
-            "odom_displacement_m": displacement,
-            "brush_enabled_during_window": True,
-            "brush_disabled_on_exit": True,
-        }
+    def _navigate_to(self, point):
+        self._set_brush(False)
+        if not self._wait_controller_active() or not self.navigate_client.wait_for_server(timeout_sec=30.0):
+            return {"success": False, "error": "navigate_server_unavailable", "retries": 0}
+        goal = NavigateToPose.Goal(); goal.pose = self._path_message([point]).poses[0]
+        return self._run_action(self.navigate_client, goal, False, 180.0)
+
+    def _follow_component(self, component):
+        goal = FollowPath.Goal(); goal.path = self._path_message(component["points"])
+        goal.controller_id = "FollowPath"; goal.goal_checker_id = "goal_checker"; goal.progress_checker_id = "progress_checker"
+        timeout = max(self.get_parameter("minimum_component_timeout_sec").value, path_length(component["points"]) / 0.10 + 30.0)
+        result = self._run_action(self.follow_client, goal, component["brush"], timeout)
+        result.update({"kind": component["kind"], "index": component["index"], "brush_enabled": component["brush"], "path_pose_count": len(component["points"]), "planned_length_m": path_length(component["points"])})
+        return result
+
+    def _run_action(self, client, goal, brush, timeout):
+        retry_limit = int(self.get_parameter("component_retry_limit").value)
+        attempts = []
+        for attempt in range(retry_limit + 1):
+            self._set_brush(brush)
+            send = client.send_goal_async(goal); rclpy.spin_until_future_complete(self, send, timeout_sec=10.0)
+            handle = send.result() if send.done() else None
+            if handle is None or not handle.accepted:
+                attempts.append({"attempt": attempt + 1, "accepted": False})
+                continue
+            result_future = handle.get_result_async(); deadline = time.monotonic() + timeout
+            while rclpy.ok() and not result_future.done() and time.monotonic() < deadline:
+                self._set_brush(brush); rclpy.spin_once(self, timeout_sec=0.05); time.sleep(0.02)
+            if not result_future.done():
+                cancel = handle.cancel_goal_async(); rclpy.spin_until_future_complete(self, cancel, timeout_sec=5.0)
+                attempts.append({"attempt": attempt + 1, "accepted": True, "timeout": True})
+                continue
+            wrapped = result_future.result(); error_code = int(getattr(wrapped.result, "error_code", 0))
+            succeeded = wrapped.status == GoalStatus.STATUS_SUCCEEDED and error_code == 0
+            attempts.append({"attempt": attempt + 1, "accepted": True, "terminal_status": int(wrapped.status), "error_code": error_code, "succeeded": succeeded})
+            if succeeded:
+                self._set_brush(False if brush else brush)
+                return {"success": True, "retries": attempt, "attempts": attempts}
+        self._set_brush(False)
+        return {"success": False, "retries": max(0, len(attempts) - 1), "attempts": attempts}
 
     def _wait_controller_active(self):
-        if not self.controller_state_client.wait_for_service(timeout_sec=60.0):
-            return False
+        if not self.controller_state_client.wait_for_service(timeout_sec=60.0): return False
         deadline = time.monotonic() + 60.0
         while rclpy.ok() and time.monotonic() < deadline:
-            future = self.controller_state_client.call_async(GetState.Request())
-            rclpy.spin_until_future_complete(self, future, timeout_sec=2.0)
-            if future.done() and future.result().current_state.label == "active":
-                return True
-            rclpy.spin_once(self, timeout_sec=0.2)
+            future = self.controller_state_client.call_async(GetState.Request()); rclpy.spin_until_future_complete(self, future, timeout_sec=2.0)
+            if future.done() and future.result().current_state.label == "active": return True
         return False
 
-    def _wait_sim_time(self, minimum_sec):
-        """Wait for odom/TF history to advance beyond AMCL's initial samples."""
-        deadline = time.monotonic() + 30.0
-        while rclpy.ok() and time.monotonic() < deadline:
-            rclpy.spin_once(self, timeout_sec=0.1)
-            if self.last_odom is None or self.last_amcl_pose is None:
-                continue
-            stamp = self.last_odom.header.stamp
-            stamp_sec = float(stamp.sec) + float(stamp.nanosec) / 1.0e9
-            if stamp_sec >= minimum_sec:
-                return True
-        return False
+    def _write_trajectory(self):
+        output = Path(self.get_parameter("trajectory_output_path").value); output.parent.mkdir(parents=True, exist_ok=True)
+        with output.open("w", newline="", encoding="utf-8") as stream:
+            writer = csv.writer(stream); writer.writerow(["stamp_sec", "base_x_m", "base_y_m", "yaw_rad", "brush_enabled"]); writer.writerows(self.truth_samples)
 
-    def _odom_xy(self):
-        if self.last_odom is None:
-            return None
-        position = self.last_odom.pose.pose.position
-        return [float(position.x), float(position.y)]
-
-    def _write_error(self, error, extra=None):
-        report = {"success": False, "error": error}
-        if extra:
-            report.update(extra)
-        return self._write_report(report)
+    @staticmethod
+    def _write_json(path, data):
+        output = Path(path); output.parent.mkdir(parents=True, exist_ok=True); output.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
     def _write_report(self, report):
-        output = Path(str(self.get_parameter("output_path").value))
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(
-            json.dumps(report, ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
+        self._write_json(self.get_parameter("output_path").value, report)
         self.get_logger().info(json.dumps(report, ensure_ascii=False))
-        return 0 if report["success"] else 2
+        return 0 if report.get("success") else 2
 
 
-def main(args=None) -> None:
-    rclpy.init(args=args)
-    node = CoverageProbe()
-    try:
-        code = node.run()
+def main(args=None):
+    rclpy.init(args=args); node = CoverageProbe()
+    try: code = node.run()
     finally:
-        node.destroy_node()
-        rclpy.shutdown()
+        node._set_brush(False); node.destroy_node(); rclpy.shutdown()
     raise SystemExit(code)
 
 
-if __name__ == "__main__":
-    main()
+if __name__ == "__main__": main()

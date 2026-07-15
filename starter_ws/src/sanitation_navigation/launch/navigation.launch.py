@@ -40,6 +40,8 @@ def generate_launch_description():
     use_sim_time = LaunchConfiguration('use_sim_time')
     params_file = LaunchConfiguration('params_file')
     map_file = LaunchConfiguration('map_file')
+    keepout_map = LaunchConfiguration('keepout_map')
+    speed_map = LaunchConfiguration('speed_map')
 
     localization_nodes = [
         Node(
@@ -77,7 +79,7 @@ def generate_launch_description():
             executable='map_server',
             name='keepout_filter_mask_server',
             output='screen',
-            parameters=[params_file, {'yaml_filename': map_file}],
+            parameters=[params_file, {'yaml_filename': keepout_map}],
             remappings=[('map', 'keepout_filter_mask')],
         ),
         Node(
@@ -92,7 +94,7 @@ def generate_launch_description():
             executable='map_server',
             name='speed_filter_mask_server',
             output='screen',
-            parameters=[params_file, {'yaml_filename': map_file}],
+            parameters=[params_file, {'yaml_filename': speed_map}],
             remappings=[('map', 'speed_filter_mask')],
         ),
         Node(
@@ -118,6 +120,8 @@ def generate_launch_description():
             DeclareLaunchArgument('rviz', default_value='false'),
             DeclareLaunchArgument('params_file', default_value=nav2_params),
             DeclareLaunchArgument('map_file', default_value=default_map),
+            DeclareLaunchArgument('keepout_map', default_value=default_map),
+            DeclareLaunchArgument('speed_map', default_value=default_map),
             *localization_nodes,
             GroupAction(
                 [

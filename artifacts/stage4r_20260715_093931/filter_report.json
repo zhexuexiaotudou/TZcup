@@ -1,0 +1,32 @@
+{
+  "keepout": {
+    "mask_polygon": [
+      2.0,
+      1.0,
+      4.0,
+      3.0
+    ],
+    "goal_crossed_polygon_direct_line": true,
+    "navigation_succeeded": false,
+    "violation_sample_count": 0,
+    "minimum_distance_m": 6.368550463105959,
+    "keepout_pass": false
+  },
+  "speed_zone": {
+    "polygon": [
+      -2.0,
+      -2.0,
+      2.0,
+      2.0
+    ],
+    "navigation_succeeded": false,
+    "mean_speed_m_s": {
+      "before": null,
+      "inside": null,
+      "after": null
+    },
+    "speed_limit_messages": [],
+    "speed_compliance_pass": false
+  },
+  "success": false
+}

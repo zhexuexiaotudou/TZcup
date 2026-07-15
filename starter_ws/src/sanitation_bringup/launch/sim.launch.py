@@ -112,12 +112,32 @@ def generate_launch_description():
                     "/camera/image@sensor_msgs/msg/Image[gz.msgs.Image",
                     "/camera/depth_image@sensor_msgs/msg/Image[gz.msgs.Image",
                     "/camera/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked",
+                    "/world/sanitation_test_world/dynamic_pose/info@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V",
+                    "/world_overview/image@sensor_msgs/msg/Image[gz.msgs.Image",
                 ],
                 remappings=[
                     ("/camera/camera_info", "/camera/color/camera_info"),
                     ("/camera/image", "/camera/color/image_raw"),
                     ("/camera/depth_image", "/camera/depth/image_rect_raw"),
                     ("/camera/points", "/camera/depth/color/points"),
+                    (
+                        "/world/sanitation_test_world/dynamic_pose/info",
+                        "/ground_truth/dynamic_pose",
+                    ),
+                ],
+            ),
+            Node(
+                package="sanitation_tasks",
+                executable="sanitation_ground_truth_adapter",
+                name="ground_truth_adapter",
+                output="screen",
+                parameters=[
+                    {
+                        "use_sim_time": sim_time_parameter,
+                        "world_to_map_x": 8.0,
+                        "world_to_map_y": 0.0,
+                        "world_to_map_yaw": 0.0,
+                    }
                 ],
             ),
             Node(

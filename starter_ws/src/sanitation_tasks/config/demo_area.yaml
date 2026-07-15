@@ -8,7 +8,7 @@ route_type: BOUSTROPHEDON
 path_type: DUBIN
 allow_overlap: true
 polygon:
-  - [-6.0, -4.0]
-  - [10.0, -4.0]
-  - [10.0, 4.0]
-  - [-6.0, 4.0]
+  - [-2.0, -4.0]
+  - [6.0, -4.0]
+  - [6.0, 4.0]
+  - [-2.0, 4.0]
