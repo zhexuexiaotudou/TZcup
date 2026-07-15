@@ -1,0 +1,46 @@
+name: 开发工作流
+
+"on":
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: development-workflow-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fast-validation:
+    name: fast-validation
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install validation dependencies
+        run: python -m pip install --disable-pip-version-check pytest PyYAML
+
+      - name: Run fast project validation
+        run: python scripts/ci_fast.py
+
+      - name: Parse Bash scripts
+        run: bash -n scripts/*.sh
+
+      - name: Parse PowerShell scripts
+        shell: pwsh
+        run: |
+          Get-ChildItem scripts -Filter *.ps1 | ForEach-Object {
+            [void][scriptblock]::Create((Get-Content -LiteralPath $_.FullName -Raw))
+          }
