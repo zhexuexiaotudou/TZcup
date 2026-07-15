@@ -20,6 +20,18 @@ def generate_launch_description():
     spawn_x = LaunchConfiguration("spawn_x")
     spawn_y = LaunchConfiguration("spawn_y")
     spawn_yaw = LaunchConfiguration("spawn_yaw")
+    enable_command_timeout = LaunchConfiguration("enable_command_timeout")
+    enable_ekf = LaunchConfiguration("enable_ekf")
+    physical_wheel_radius = LaunchConfiguration("physical_wheel_radius")
+    physical_track_width = LaunchConfiguration("physical_track_width")
+    drive_wheel_radius = LaunchConfiguration("drive_wheel_radius")
+    drive_wheel_separation = LaunchConfiguration("drive_wheel_separation")
+    wheel_mu_longitudinal = LaunchConfiguration("wheel_mu_longitudinal")
+    wheel_mu_lateral = LaunchConfiguration("wheel_mu_lateral")
+    slip_compliance_longitudinal = LaunchConfiguration("slip_compliance_longitudinal")
+    slip_compliance_lateral = LaunchConfiguration("slip_compliance_lateral")
+    enable_wheel_slip = LaunchConfiguration("enable_wheel_slip")
+    world_file = LaunchConfiguration("world_file")
 
     gz_launch = PathJoinSubstitution(
         [FindPackageShare("ros_gz_sim"), "launch", "gz_sim.launch.py"]
@@ -39,7 +51,21 @@ def generate_launch_description():
     )
 
     robot_description = ParameterValue(
-        Command(["xacro ", urdf_path]),
+        Command(
+            [
+                "xacro ",
+                urdf_path,
+                " physical_wheel_radius:=", physical_wheel_radius,
+                " physical_track_width:=", physical_track_width,
+                " drive_wheel_radius:=", drive_wheel_radius,
+                " drive_wheel_separation:=", drive_wheel_separation,
+                " wheel_mu_longitudinal:=", wheel_mu_longitudinal,
+                " wheel_mu_lateral:=", wheel_mu_lateral,
+                " slip_compliance_longitudinal:=", slip_compliance_longitudinal,
+                " slip_compliance_lateral:=", slip_compliance_lateral,
+                " enable_wheel_slip:=", enable_wheel_slip,
+            ]
+        ),
         value_type=str,
     )
     sim_time_parameter = ParameterValue(use_sim_time, value_type=bool)
@@ -55,10 +81,22 @@ def generate_launch_description():
             DeclareLaunchArgument("spawn_x", default_value="-8.0"),
             DeclareLaunchArgument("spawn_y", default_value="0.0"),
             DeclareLaunchArgument("spawn_yaw", default_value="0.0"),
+            DeclareLaunchArgument("enable_command_timeout", default_value="true"),
+            DeclareLaunchArgument("enable_ekf", default_value="true"),
+            DeclareLaunchArgument("physical_wheel_radius", default_value="0.14"),
+            DeclareLaunchArgument("physical_track_width", default_value="0.80"),
+            DeclareLaunchArgument("drive_wheel_radius", default_value="0.14"),
+            DeclareLaunchArgument("drive_wheel_separation", default_value="0.80"),
+            DeclareLaunchArgument("wheel_mu_longitudinal", default_value="1.0"),
+            DeclareLaunchArgument("wheel_mu_lateral", default_value="1.0"),
+            DeclareLaunchArgument("slip_compliance_longitudinal", default_value="0.0"),
+            DeclareLaunchArgument("slip_compliance_lateral", default_value="0.0"),
+            DeclareLaunchArgument("enable_wheel_slip", default_value="false"),
+            DeclareLaunchArgument("world_file", default_value=world_path),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(gz_launch),
                 launch_arguments={
-                    "gz_args": [" -r -s ", headless_rendering, " ", world_path]
+                    "gz_args": [" -r -s ", headless_rendering, " ", world_file]
                 }.items(),
             ),
             IncludeLaunchDescription(
@@ -105,6 +143,7 @@ def generate_launch_description():
                     "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
                     "/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist",
                     "/odom/unfiltered@nav_msgs/msg/Odometry[gz.msgs.Odometry",
+                    "/ground_truth/model_odom_raw@nav_msgs/msg/Odometry[gz.msgs.Odometry",
                     "/imu/data@sensor_msgs/msg/Imu[gz.msgs.IMU",
                     "/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model",
                     "/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan",
@@ -137,6 +176,8 @@ def generate_launch_description():
                         "world_to_map_x": 8.0,
                         "world_to_map_y": 0.0,
                         "world_to_map_yaw": 0.0,
+                        "expected_source_frame": "world",
+                        "expected_child_frame": "sanitation_vehicle/base_footprint",
                     }
                 ],
             ),
@@ -169,6 +210,7 @@ def generate_launch_description():
                 executable="command_timeout",
                 name="command_timeout",
                 output="screen",
+                condition=IfCondition(enable_command_timeout),
             ),
             Node(
                 package="robot_localization",
@@ -177,6 +219,7 @@ def generate_launch_description():
                 output="screen",
                 parameters=[{"use_sim_time": sim_time_parameter}, ekf_config],
                 remappings=[("odometry/filtered", "/odom")],
+                condition=IfCondition(enable_ekf),
             ),
         ]
     )

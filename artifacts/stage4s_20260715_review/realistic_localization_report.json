@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "stage": "Stage4S-8 realistic localization",
+  "executed": false,
+  "status": "blocked_by_first_failed_layer",
+  "first_failed_layer": "layer_1_body_command_tracking",
+  "required_precondition": "map geometry gate pass",
+  "reason": "No new calibrated map or selected EKF exists, so 10-seed AMCL evidence would be invalid.",
+  "success": false
+}

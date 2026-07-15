@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "executed": false,
+  "eligible_after_selected_drive_validation": true,
+  "reason": "Per Stage4S ordering, friction/WheelSlip is scanned only if body command tracking remains invalid after drive radius/separation fitting.",
+  "grid": []
+}

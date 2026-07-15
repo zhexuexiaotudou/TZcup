@@ -1,0 +1,7 @@
+[INFO] [1784096245.806359906] [motion_fit_probe]: fit action start: stationary duration=3.000s sim_time=8.780
+[INFO] [1784096248.849190056] [motion_fit_probe]: fit action start: positive_360 duration=25.133s sim_time=11.780
+[INFO] [1784096275.312456556] [motion_fit_probe]: fit action start: rest_positive duration=3.000s sim_time=36.920
+[INFO] [1784096278.482944773] [motion_fit_probe]: fit action start: negative_360 duration=25.133s sim_time=39.920
+[INFO] [1784096304.844706734] [motion_fit_probe]: fit action start: rest_negative duration=3.000s sim_time=65.060
+[INFO] [1784096307.979370750] [motion_fit_probe]: fit probe schedule complete
+[INFO] [1784096308.010862542] [motion_fit_probe]: fit report written: /stage4s/artifacts/stage4s_fit_20260715_060547/separation_grid/1p20.json; complete=True

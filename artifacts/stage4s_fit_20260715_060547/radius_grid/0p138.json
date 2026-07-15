@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "mode": "radius",
+  "drive_wheel_radius": 0.138,
+  "drive_wheel_separation": 0.8,
+  "sample_count": 1550,
+  "complete": true,
+  "expected_distance_m": 5.0,
+  "gt_distance_m": 5.057302001530916,
+  "raw_distance_m": 4.9869999999881465,
+  "body_distance_error_pct": 1.146040030618316,
+  "raw_vs_truth_error_pct": 1.3901088272262154
+}

@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "selection_mode": "model_scoped_gazebo_odometry_publisher",
+  "selection_topic": "/ground_truth/model_odom_raw",
+  "expected_source_frame": "world",
+  "expected_child_frame": "sanitation_vehicle/base_footprint",
+  "legacy_pose_v_used_for_output": false,
+  "fail_closed": true,
+  "sample_count": 3223,
+  "failures": [],
+  "thresholds": {
+    "spawn_position_error_m": 0.005,
+    "spawn_yaw_error_rad": 0.005,
+    "stationary_drift_m": 0.002,
+    "turn_magnitude_error_rad": 0.005,
+    "map_transform_error_m": 1e-06,
+    "map_transform_yaw_error_rad": 1e-06,
+    "index0_identity_position_error_m": 0.005,
+    "index0_identity_yaw_error_rad": 0.005
+  },
+  "measurements": {
+    "spawn_position_error_m": 2.8051896707556957e-18,
+    "spawn_yaw_error_rad": 2.084602655984213e-18,
+    "stationary_drift_m": 1.3970781015130283e-18,
+    "forward_distance_m": 0.998925668864798,
+    "positive_turn_rad": 1.5693486446419493,
+    "negative_turn_rad": -1.5695676266968341,
+    "map_transform_position_error": {
+      "rmse": 0.0,
+      "p50": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    },
+    "map_transform_yaw_error": {
+      "rmse": 2.5407702997529945e-17,
+      "p50": 0.0,
+      "p95": 1.3877787807814457e-17,
+      "max": 2.220446049250313e-16
+    },
+    "legacy_index0_position_error": {
+      "rmse": 0.000691716638385175,
+      "p50": 0.0,
+      "p95": 0.002000000000000668,
+      "max": 0.004000000000003112
+    },
+    "legacy_index0_yaw_error": {
+      "rmse": 0.0010536920815294695,
+      "p50": 0.0,
+      "p95": 0.0023721701107512093,
+      "max": 0.004397667540151362
+    },
+    "imu_positive_yaw_rate_median": 0.1370779859488991,
+    "imu_negative_yaw_rate_median": -0.13726910087603453,
+    "sync_error_sec": {
+      "rmse": 0.0,
+      "p50": 0.0,
+      "p95": 0.0,
+      "max": 0.0
+    }
+  },
+  "checks": {
+    "spawn_position": true,
+    "spawn_yaw": true,
+    "stationary_drift": true,
+    "positive_90_sign_and_magnitude": true,
+    "negative_90_sign_and_magnitude": true,
+    "entity_selection_unchanged": true,
+    "map_transform_position": true,
+    "map_transform_yaw": true,
+    "legacy_index0_matches_model_pose_this_run": true,
+    "imu_turn_sign": true
+  },
+  "hard_checks": [
+    "spawn_position",
+    "spawn_yaw",
+    "stationary_drift",
+    "positive_90_sign_and_magnitude",
+    "negative_90_sign_and_magnitude",
+    "entity_selection_unchanged",
+    "map_transform_position",
+    "map_transform_yaw"
+  ],
+  "success": true,
+  "artifacts": {
+    "transform_inventory": "/stage4s/artifacts/stage4s_gt_20260715_051547/ground_truth_transform_inventory.json",
+    "trajectory_csv": "/stage4s/artifacts/stage4s_gt_20260715_051547/ground_truth_identity_trajectory.csv"
+  }
+}

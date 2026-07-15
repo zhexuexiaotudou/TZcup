@@ -1,0 +1,5 @@
+[INFO] [1784100331.481095017] [motion_fit_probe]: fit action start: stationary duration=3.000s sim_time=5.200
+[INFO] [1784100334.452385572] [motion_fit_probe]: fit action start: positive_360_high_speed duration=10.472s sim_time=8.200
+[INFO] [1784100345.044517812] [motion_fit_probe]: fit action start: rest duration=3.000s sim_time=18.680
+[INFO] [1784100348.075684606] [motion_fit_probe]: fit probe schedule complete
+[INFO] [1784100348.094355222] [motion_fit_probe]: fit report written: /stage4s/artifacts/stage4s_friction_20260715_072313/cases/mu_lat_0p80.json; complete=True

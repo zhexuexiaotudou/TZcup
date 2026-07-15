@@ -1,0 +1,10 @@
+vehicle_dynamics:
+  physical_wheel_radius: 0.14
+  physical_track_width: 0.8
+  drive_wheel_radius: 0.14
+  drive_wheel_separation: 1.22
+  wheel_mu_longitudinal: 1.0
+  wheel_mu_lateral: 1.0
+  slip_compliance_longitudinal: 0.0
+  slip_compliance_lateral: 0.0
+  enable_wheel_slip: false

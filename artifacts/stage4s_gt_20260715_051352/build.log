@@ -1,0 +1,26 @@
+Starting >>> sanitation_safety
+Starting >>> sanitation_worlds
+Starting >>> sanitation_vehicle_description
+Starting >>> sanitation_tasks
+Starting >>> sanitation_coverage
+CMake Error: The current CMakeCache.txt directory /base/.work/stage1_20260714_154523/build/sanitation_worlds/CMakeCache.txt is different than the directory /work/.work/stage1_20260714_154523/build/sanitation_worlds where CMakeCache.txt was created. This may result in binaries being created in the wrong place. If you are not sure, reedit the CMakeCache.txt
+CMake Error: The source directory "/work/.work/stage1_20260714_154523/src/sanitation_worlds" does not exist.
+Specify --help for usage, or press the help button on the CMake GUI.
+gmake: *** [Makefile:226: cmake_check_build_system] Error 1
+--- stderr: sanitation_worlds
+CMake Error: The current CMakeCache.txt directory /base/.work/stage1_20260714_154523/build/sanitation_worlds/CMakeCache.txt is different than the directory /work/.work/stage1_20260714_154523/build/sanitation_worlds where CMakeCache.txt was created. This may result in binaries being created in the wrong place. If you are not sure, reedit the CMakeCache.txt
+CMake Error: The source directory "/work/.work/stage1_20260714_154523/src/sanitation_worlds" does not exist.
+Specify --help for usage, or press the help button on the CMake GUI.
+gmake: *** [Makefile:226: cmake_check_build_system] Error 1
+---
+Failed   <<< sanitation_worlds [4.77s, exited with code 2]
+Aborted  <<< sanitation_coverage [4.21s]
+Aborted  <<< sanitation_vehicle_description [4.63s]
+Aborted  <<< sanitation_tasks [4.45s]
+Aborted  <<< sanitation_safety [5.08s]
+
+Summary: 0 packages finished [6.58s]
+  1 package failed: sanitation_worlds
+  4 packages aborted: sanitation_coverage sanitation_safety sanitation_tasks sanitation_vehicle_description
+  1 package had stderr output: sanitation_worlds
+  2 packages not processed

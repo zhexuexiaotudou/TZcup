@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "valid_for_parameter_selection": false,
+  "reason": "The runner used the wall clock while commands and sensor evidence used simulation time. At real-time factor below 1.0, nominal action durations were truncated in simulation time (for example 25.0 s became 21.84 s).",
+  "superseded_by": "pending corrected simulation-clock rerun",
+  "preserved_for_audit": true
+}

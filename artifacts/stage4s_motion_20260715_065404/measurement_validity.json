@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "valid_for_parameter_selection": false,
+  "reason": "The timing basis is valid, but the open-loop schedule accumulated pose in the obstacle-bearing sanitation world. The vehicle collided with scene geometry during the later radius-2 m circles, rectangle and figure-eight segments.",
+  "evidence": {
+    "forward_and_low_speed_turn_segments_valid": true,
+    "circle_r2_right_truth_motion_near_zero": true,
+    "trajectory_plot": "motion_calibration_trajectory.png"
+  },
+  "superseded_by": "pending obstacle-free calibration-world rerun",
+  "preserved_for_audit": true
+}

@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "executed": false,
+  "status": "unchanged_boundary",
+  "theoretical_capacity_m2_per_h": 1053.0,
+  "inputs": {
+    "brush_width_m": 0.65,
+    "speed_m_per_s": 0.45
+  },
+  "competition_target_m2_per_h": 3500.0,
+  "competition_efficiency_pass": false,
+  "reason": "Stage4S did not alter the independent mechanical efficiency boundary."
+}

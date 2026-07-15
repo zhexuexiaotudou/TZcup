@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "first_failed_layer": "layer_1_body_command_tracking",
+  "ground_truth_valid": true,
+  "body_command_tracking_valid": false,
+  "raw_odom_valid": true,
+  "imu_valid": true,
+  "ekf_valid": false,
+  "recommended_next_action": "Fit drive radius/separation first; scan contact friction/slip only if command tracking remains invalid."
+}

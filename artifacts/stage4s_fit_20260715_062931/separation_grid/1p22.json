@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "mode": "separation",
+  "drive_wheel_radius": 0.14,
+  "drive_wheel_separation": 1.22,
+  "sample_count": 2965,
+  "complete": true,
+  "positive": {
+    "expected_yaw_rad": 6.283185307179586,
+    "gt_yaw_rad": 6.263638403698666,
+    "raw_yaw_rad": 6.271249974908711,
+    "body_yaw_error_deg": 1.1199550720063145,
+    "raw_vs_truth_error_deg": 0.4361109057988806
+  },
+  "negative": {
+    "expected_yaw_rad": -6.283185307179586,
+    "gt_yaw_rad": -6.260081111524579,
+    "raw_yaw_rad": -6.268749974920058,
+    "body_yaw_error_deg": 1.3237729000763885,
+    "raw_vs_truth_error_deg": 0.49668928573638277
+  },
+  "mean_body_yaw_error_deg": 1.2218639860413516,
+  "mean_raw_vs_truth_error_deg": 0.4664000957676317,
+  "left_right_asymmetry_deg": 0.2038178280700741
+}

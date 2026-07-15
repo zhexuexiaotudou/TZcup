@@ -5,15 +5,34 @@
   <xacro:include filename="$(find linorobot2_description)/urdf/sensors/imu.urdf.xacro"/>
   <xacro:include filename="$(find linorobot2_description)/urdf/controllers/skid_steer.urdf.xacro"/>
 
+  <!-- Stage4S separates physical geometry from the DiffDrive estimator / command
+       model. Defaults reproduce the Stage4R vehicle exactly. -->
+  <xacro:arg name="physical_wheel_radius" default="0.14"/>
+  <xacro:arg name="physical_track_width" default="0.80"/>
+  <xacro:arg name="drive_wheel_radius" default="0.14"/>
+  <xacro:arg name="drive_wheel_separation" default="0.80"/>
+  <xacro:arg name="wheel_mu_longitudinal" default="1.0"/>
+  <xacro:arg name="wheel_mu_lateral" default="1.0"/>
+  <xacro:arg name="slip_compliance_longitudinal" default="0.0"/>
+  <xacro:arg name="slip_compliance_lateral" default="0.0"/>
+  <xacro:arg name="enable_wheel_slip" default="false"/>
+
   <!-- Baseline geometry; replace with measured real vehicle values later. -->
   <xacro:property name="base_length" value="1.15"/>
   <xacro:property name="base_width" value="0.72"/>
   <xacro:property name="base_height" value="0.28"/>
   <xacro:property name="base_mass" value="80.0"/>
-  <xacro:property name="wheel_radius" value="0.14"/>
+  <xacro:property name="physical_wheel_radius" value="$(arg physical_wheel_radius)"/>
+  <xacro:property name="physical_track_width" value="$(arg physical_track_width)"/>
+  <xacro:property name="drive_wheel_radius" value="$(arg drive_wheel_radius)"/>
+  <xacro:property name="drive_wheel_separation" value="$(arg drive_wheel_separation)"/>
+  <xacro:property name="wheel_mu_longitudinal" value="$(arg wheel_mu_longitudinal)"/>
+  <xacro:property name="wheel_mu_lateral" value="$(arg wheel_mu_lateral)"/>
+  <xacro:property name="slip_compliance_longitudinal" value="$(arg slip_compliance_longitudinal)"/>
+  <xacro:property name="slip_compliance_lateral" value="$(arg slip_compliance_lateral)"/>
   <xacro:property name="wheel_width" value="0.08"/>
   <xacro:property name="wheel_pos_x" value="0.38"/>
-  <xacro:property name="wheel_pos_y" value="0.40"/>
+  <xacro:property name="wheel_pos_y" value="${physical_track_width / 2.0}"/>
   <xacro:property name="wheel_pos_z" value="-0.02"/>
   <xacro:property name="wheel_mass" value="3.0"/>
   <xacro:property name="cleaning_width" value="0.65"/>
@@ -44,30 +63,30 @@
   <joint name="base_to_footprint" type="fixed">
     <parent link="base_footprint"/>
     <child link="base_link"/>
-    <origin xyz="0 0 ${wheel_radius - wheel_pos_z}" rpy="0 0 0"/>
+    <origin xyz="0 0 ${physical_wheel_radius - wheel_pos_z}" rpy="0 0 0"/>
   </joint>
 
   <xacro:macro name="sanitation_wheel" params="side pos_x pos_y red green blue">
     <link name="${side}_wheel_link">
       <visual>
         <origin rpy="${pi / 2.0} 0 0"/>
-        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <geometry><cylinder radius="${physical_wheel_radius}" length="${wheel_width}"/></geometry>
         <material name="${side}_wheel_material">
           <color rgba="${red} ${green} ${blue} 1.0"/>
         </material>
       </visual>
       <collision>
         <origin rpy="${pi / 2.0} 0 0"/>
-        <geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry>
+        <geometry><cylinder radius="${physical_wheel_radius}" length="${wheel_width}"/></geometry>
       </collision>
       <inertial>
         <mass value="${wheel_mass}"/>
         <inertia
-          ixx="${(wheel_mass / 12.0) * (3.0 * wheel_radius**2 + wheel_width**2)}"
+          ixx="${(wheel_mass / 12.0) * (3.0 * physical_wheel_radius**2 + wheel_width**2)}"
           ixy="0" ixz="0"
-          iyy="${0.5 * wheel_mass * wheel_radius**2}"
+          iyy="${0.5 * wheel_mass * physical_wheel_radius**2}"
           iyz="0"
-          izz="${(wheel_mass / 12.0) * (3.0 * wheel_radius**2 + wheel_width**2)}"/>
+          izz="${(wheel_mass / 12.0) * (3.0 * physical_wheel_radius**2 + wheel_width**2)}"/>
       </inertial>
     </link>
     <joint name="${side}_wheel_joint" type="continuous">
@@ -76,6 +95,10 @@
       <child link="${side}_wheel_link"/>
       <origin xyz="${pos_x} ${pos_y} ${wheel_pos_z}" rpy="0 0 0"/>
     </joint>
+    <gazebo reference="${side}_wheel_link">
+      <mu1>${wheel_mu_longitudinal}</mu1>
+      <mu2>${wheel_mu_lateral}</mu2>
+    </gazebo>
   </xacro:macro>
 
   <xacro:sanitation_wheel side="front_left" pos_x="${wheel_pos_x}" pos_y="${wheel_pos_y}"
@@ -169,9 +192,46 @@
   </gazebo>
 
   <xacro:diff_drive_controller
-    wheel_separation="${wheel_pos_y * 2.0}"
-    wheel_radius="${wheel_radius}"
+    wheel_separation="${drive_wheel_separation}"
+    wheel_radius="${drive_wheel_radius}"
   />
+
+  <!-- Disabled by default so the split-parameter baseline exactly preserves
+       Stage4R contact behavior. It is enabled only for an explicit slip scan. -->
+  <xacro:if value="$(arg enable_wheel_slip)">
+    <gazebo>
+      <plugin filename="gz-sim-wheel-slip-system" name="gz::sim::systems::WheelSlip">
+        <xacro:macro name="slip_wheel" params="link_name">
+          <wheel link_name="${link_name}">
+            <wheel_radius>${physical_wheel_radius}</wheel_radius>
+            <slip_compliance_lateral>${slip_compliance_lateral}</slip_compliance_lateral>
+            <slip_compliance_longitudinal>${slip_compliance_longitudinal}</slip_compliance_longitudinal>
+            <wheel_normal_force>250.0</wheel_normal_force>
+          </wheel>
+        </xacro:macro>
+        <xacro:slip_wheel link_name="front_left_wheel_link"/>
+        <xacro:slip_wheel link_name="front_right_wheel_link"/>
+        <xacro:slip_wheel link_name="rear_left_wheel_link"/>
+        <xacro:slip_wheel link_name="rear_right_wheel_link"/>
+      </plugin>
+    </gazebo>
+  </xacro:if>
+
+  <!-- Model-scoped Gazebo truth. Unlike the world Pose_V bridge, this topic
+       has one producer bound to this model and preserves an explicit frame
+       identity all the way into ROS. It is evaluation-only and must never be
+       fused into the realistic odometry / localization lane. -->
+  <gazebo>
+    <plugin
+      filename="gz-sim-odometry-publisher-system"
+      name="gz::sim::systems::OdometryPublisher">
+      <odom_publish_frequency>50</odom_publish_frequency>
+      <odom_topic>/ground_truth/model_odom_raw</odom_topic>
+      <odom_frame>world</odom_frame>
+      <robot_base_frame>sanitation_vehicle/base_footprint</robot_base_frame>
+      <dimensions>2</dimensions>
+    </plugin>
+  </gazebo>
 
   <!-- 40 L bin: 0.50 * 0.40 * 0.20 = 0.040 m^3. -->
   <link name="dust_bin_link">
