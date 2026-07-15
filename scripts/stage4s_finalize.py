@@ -73,6 +73,12 @@ def main():
         "schema_version": 1,
         "baseline_commit": "413b6ebfb16d40e00a820c1dcf8cb5c87c90e566",
         "branch": "agent/stage4s-motion-calibration",
+        "pull_request": "https://github.com/zhexuexiaotudou/TZcup/pull/6",
+        "ci": {
+            "status": "pass",
+            "check": "fast-validation",
+            "url": "https://github.com/zhexuexiaotudou/TZcup/actions/runs/29398931666/job/87298758826",
+        },
         "ground_truth_identity_pass": bool(gt.get("success")),
         "selected_vehicle_dynamics": yaml.safe_load(
             (FRICTION / "selected_vehicle_dynamics.yaml").read_text(encoding="utf-8")
@@ -199,8 +205,8 @@ Stage4S 在首个失败层 `layer_1_body_command_tracking` 停止。专用 Gazeb
 
 - 基线：`413b6ebfb16d40e00a820c1dcf8cb5c87c90e566`
 - 分支：`agent/stage4s-motion-calibration`
-- PR：提交后补录
-- CI：本地门禁执行后补录；远端 CI 随 PR 验证
+- PR：`https://github.com/zhexuexiaotudou/TZcup/pull/6`
+- CI：`fast-validation` 已通过；`https://github.com/zhexuexiaotudou/TZcup/actions/runs/29398931666/job/87298758826`
 
 ## Ground truth 身份
 

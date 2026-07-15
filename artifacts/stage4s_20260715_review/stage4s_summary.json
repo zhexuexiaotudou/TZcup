@@ -2,6 +2,12 @@
   "schema_version": 1,
   "baseline_commit": "413b6ebfb16d40e00a820c1dcf8cb5c87c90e566",
   "branch": "agent/stage4s-motion-calibration",
+  "pull_request": "https://github.com/zhexuexiaotudou/TZcup/pull/6",
+  "ci": {
+    "status": "pass",
+    "check": "fast-validation",
+    "url": "https://github.com/zhexuexiaotudou/TZcup/actions/runs/29398931666/job/87298758826"
+  },
   "ground_truth_identity_pass": true,
   "selected_vehicle_dynamics": {
     "physical_wheel_radius": 0.14,

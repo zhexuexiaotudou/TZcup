@@ -4,7 +4,7 @@
 
 Stage4S 已完成专用 Gazebo ground truth 身份自证、开环 13 段实验台、轮半径/轮距粗细网格以及摩擦/WheelSlip 最小扫描。当前选择 `drive_wheel_radius=0.14 m`、`drive_wheel_separation=1.22 m`；直线、低速正反整圈和四个圆弧半径均通过车体跟踪门槛，但高速 `0.60 rad/s` 正转整圈的车体 yaw 误差为 `19.1825°`，超过 `18°` 门槛。
 
-因此首个失败层为 `layer_1_body_command_tracking`，`READY_FOR_GPT_REVIEW_STAGE4S=false`、`READY_FOR_STAGE5A=false`。本轮没有越级执行 EKF 消融、重建图、10-seed AMCL 或完整 Coverage，也没有开始垃圾感知、J6 量化或实板部署。完整事实、失败网格、可回放 MCAP 和 SHA-256 清单见 [`GPT_REVIEW_STAGE4S.md`](GPT_REVIEW_STAGE4S.md) 与 [`artifacts/stage4s_20260715_review/`](artifacts/stage4s_20260715_review/)。
+因此首个失败层为 `layer_1_body_command_tracking`，`READY_FOR_GPT_REVIEW_STAGE4S=false`、`READY_FOR_STAGE5A=false`。本轮没有越级执行 EKF 消融、重建图、10-seed AMCL 或完整 Coverage，也没有开始垃圾感知、J6 量化或实板部署。完整事实、失败网格、可回放 MCAP 和 SHA-256 清单见 [`GPT_REVIEW_STAGE4S.md`](GPT_REVIEW_STAGE4S.md) 与 [`artifacts/stage4s_20260715_review/`](artifacts/stage4s_20260715_review/)；发布入口为 [PR #6](https://github.com/zhexuexiaotudou/TZcup/pull/6)，远端 `fast-validation` 已通过。
 
 本仓库用于构建、验证和交付基于 ROS 2 Jazzy、Gazebo Harmonic、Nav2、SLAM Toolbox、OpenNav Coverage 与 Fields2Cover 的智慧环卫无人清扫车仿真系统。项目强调可复现构建、真实运行证据、阶段门禁和明确的能力边界。
 
