@@ -15,7 +15,9 @@ Stage4T 已完成转向瞬态矩阵、运行包络、measurement covariance、EK
 - 分支：`agent/stage4t-transient-ekf-localization`
 - 独立工作树：`F:\Project\TZcup-stage4t`
 - PR：[#7 advance Stage4T transient EKF and localization gates](https://github.com/zhexuexiaotudou/TZcup/pull/7)
-- CI：本地 `py scripts/ci_fast.py` 已通过；远端 `fast-validation` 首轮通过（[run 29426652881](https://github.com/zhexuexiaotudou/TZcup/actions/runs/29426652881)），合并前以 PR 最新提交检查保持绿色为准
+- CI：本地 `py scripts/ci_fast.py` 已通过；PR 最新提交的远端 `fast-validation` 通过（[run 29427301500](https://github.com/zhexuexiaotudou/TZcup/actions/runs/29427301500)）
+- main：merge commit `2412300192d6f4204e0049e55c06ba69353377ba`；回滚点 `b7734801d775740dccf6ce16a12f6e739b2e8136`
+- 合并后验收：远端 main tree 的真实 Gazebo core smoke 再验通过 covariance、运行包络与最终速度门，实际速度越界 0；17.9 MiB MCAP 含 49,437 条消息且元数据可读
 
 ## Stage4S 旧失败与转向瞬态
 
@@ -105,3 +107,4 @@ Stage4T 已完成转向瞬态矩阵、运行包络、measurement covariance、EK
 - `artifacts/stage4t_20260715_review/map_geometry_report.json`
 - `artifacts/stage4t_20260715_review/transient_response_report.json`
 - `artifacts/stage4t_20260715_review/ekf_ablation_report.json`
+- `artifacts/stage4t_20260715_review/deployment_verification.json`

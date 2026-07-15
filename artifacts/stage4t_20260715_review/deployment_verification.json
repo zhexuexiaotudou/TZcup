@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "verified_at_utc": "2026-07-15T15:39:57.7481763+00:00",
+  "deployment_target": "approved local ROS 2 Jazzy / Gazebo Harmonic Docker simulator",
+  "remote_main_commit": "2412300192d6f4204e0049e55c06ba69353377ba",
+  "source_tree": "cc9698b3167b37999592613db73f3e08af79cbcc",
+  "rollback_commit": "b7734801d775740dccf6ce16a12f6e739b2e8136",
+  "docker_image_id": "sha256:34244dd61ddda8bfd1562551c70c063c0cfd1ad1b9a7624975e7b2bb08f64857",
+  "artifact_source": "F:/Project/TZcup-stage4t-deploy-tree-cc9698b/artifacts/stage4t_core_smoke_20260715_153030",
+  "scope": "merged-main core smoke; full Stage4T matrices remain in the committed review artifact",
+  "real_gazebo_executed": true,
+  "covariance_pass": true,
+  "operational_envelope_pass": true,
+  "actual_cmd_limit_violations": 0,
+  "high_speed_open_loop_stress_pass": false,
+  "rosbag": {
+    "storage_id": "mcap",
+    "size_mib": 17.9,
+    "message_count": 49437,
+    "metadata_readable": true,
+    "ros_distro": "jazzy"
+  },
+  "production_verification_pass": true
+}

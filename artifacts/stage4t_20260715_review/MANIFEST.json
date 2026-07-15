@@ -1,9 +1,9 @@
 {
   "schema_version": 1,
-  "generated_at_utc": "2026-07-15T15:04:48.919998+00:00",
+  "generated_at_utc": "2026-07-15T15:39:57.7481763+00:00",
   "hash_basis": "git_archive_bytes_lf_normalized_for_utf8_text",
   "self_excluded": "MANIFEST.json",
-  "file_count": 381,
+  "file_count": 382,
   "files": [
     {
       "path": "angular_rate_trials/fixed_cold_0p10_r0.json",
@@ -1609,6 +1609,11 @@
       "path": "closed_loop_heading_report.json",
       "size_bytes": 5272,
       "sha256": "a79359e16c9a30d58ad3fb357a4373064ee4a494f8d8f87ca00c8421e582661a"
+    },
+    {
+      "path": "deployment_verification.json",
+      "size_bytes": 1045,
+      "sha256": "996b4658d08ec01eec7dcd2d20fea81be6e4571e7aa394b73a8b60ec3b23a338"
     },
     {
       "path": "ekf_ablation_report.json",

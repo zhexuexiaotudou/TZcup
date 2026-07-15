@@ -25,6 +25,12 @@
 - `artifacts/stage4t_20260715_review/stage4t_summary.json`
 - `artifacts/stage4t_20260715_review/MANIFEST.json`
 
+发布与合并后验证：
+
+- [PR #7](https://github.com/zhexuexiaotudou/TZcup/pull/7) 的最新 `fast-validation` 已通过，随后按仓库 merge-commit 策略合入 `main@2412300192d6f4204e0049e55c06ba69353377ba`；回滚点为 `b7734801d775740dccf6ce16a12f6e739b2e8136`。
+- 远端 main tree `cc9698b3167b37999592613db73f3e08af79cbcc` 已在独立部署副本中执行真实 Gazebo core smoke：covariance 与运行包络均通过，实际速度越界为 0，MCAP 为 17.9 MiB、49,437 条消息且元数据可读。
+- 合并后 core smoke 不改变 Stage4T 停止结论：0.60 rad/s stress 仍失败，完整瞬态/EKF/地图/Oracle 证据继续以复核目录为准。
+
 ## Stage4S：运动模型标定与定位闭环
 
 状态：已到达可复核失败边界，未通过 Stage4S，未进入 Stage5A。

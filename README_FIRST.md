@@ -32,7 +32,7 @@
 - `THIRD_PARTY_SELECTION.md`：第三方仓库选择理由和许可边界
 - `AGENTS.md`：项目级 Agent 规则和开发门禁
 - `docs/development-workflow.md`：统一命名的“开发工作流”，覆盖分支、PR、CI、部署、真实验收和收尾
-- `docs/progress.md`：Stage 0–4 的真实运行证据、当前边界和复现命令
+- `docs/progress.md`：Stage 0–4T 的真实运行证据、当前边界和复现命令
 - `scripts/`：环境检查、拉取依赖、构建、运行和证据采集脚本
 - `starter_ws/src/`：可直接放进 ROS 2 工作空间的项目骨架
 
@@ -98,8 +98,10 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 - ROS Topic 冒烟检查
 - SLAM Toolbox、AMCL、Nav2、keepout/speed filter 和急停速度门
 - OpenNav Coverage + Fields2Cover 覆盖规划、指标 JSON 和 rosbag 证据
+- raw measurement、非零 covariance adapter、EKF A/B/C/D 消融与双分辨率地图几何评估
+- precision mapping、localization/coverage 和默认禁用 stress 三套运行包络
 - 后续动态障碍、感知和 J6 接口的明确阶段门
 
 ## 5. 重要说明
 
-当前 Windows 主机已通过 Docker Desktop、Ubuntu 24.04 / ROS 2 Jazzy 容器和 NVIDIA GPU passthrough 完成 Stage 0–4 的 headless 构建与运行验证，真实日志、JSON、地图、轨迹图和 rosbag 位于 `artifacts/`。该结果不能替代原生 Ubuntu 24.04 或 WSLg 下的 Gazebo/RViz GUI 验收；完整覆盖回放、障碍恢复和定位一致性等剩余边界以 `docs/progress.md` 与 `GPT_REVIEW_STAGE4.md` 为准。
+当前 Windows 主机已通过 Docker Desktop、Ubuntu 24.04 / ROS 2 Jazzy 容器和 NVIDIA GPU passthrough 完成 Stage 0–4T 的 headless 构建与运行验证，真实日志、JSON、地图、轨迹图和 rosbag 位于 `artifacts/`。该结果不能替代原生 Ubuntu 24.04 或 WSLg 下的 Gazebo/RViz GUI 验收；Stage4T 的第一失败层是 Oracle 定位 XY RMSE 硬门，realistic 全量与完整 Coverage 因此前置失败而未执行。当前边界以 `docs/progress.md` 与 `GPT_REVIEW_STAGE4T.md` 为准。
