@@ -25,6 +25,7 @@ from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node, SetRemap
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
@@ -42,6 +43,11 @@ def generate_launch_description():
     map_file = LaunchConfiguration('map_file')
     keepout_map = LaunchConfiguration('keepout_map')
     speed_map = LaunchConfiguration('speed_map')
+    max_linear_velocity = LaunchConfiguration('max_linear_velocity')
+    max_angular_velocity = LaunchConfiguration('max_angular_velocity')
+    initial_pose_x = LaunchConfiguration('initial_pose_x')
+    initial_pose_y = LaunchConfiguration('initial_pose_y')
+    initial_pose_yaw = LaunchConfiguration('initial_pose_yaw')
 
     localization_nodes = [
         Node(
@@ -56,7 +62,11 @@ def generate_launch_description():
             executable='amcl',
             name='amcl',
             output='screen',
-            parameters=[params_file],
+            parameters=[params_file, {
+                'initial_pose.x': ParameterValue(initial_pose_x, value_type=float),
+                'initial_pose.y': ParameterValue(initial_pose_y, value_type=float),
+                'initial_pose.yaw': ParameterValue(initial_pose_yaw, value_type=float),
+            }],
         ),
         Node(
             package='nav2_lifecycle_manager',
@@ -122,6 +132,12 @@ def generate_launch_description():
             DeclareLaunchArgument('map_file', default_value=default_map),
             DeclareLaunchArgument('keepout_map', default_value=default_map),
             DeclareLaunchArgument('speed_map', default_value=default_map),
+            DeclareLaunchArgument('operational_profile', default_value='localization_coverage'),
+            DeclareLaunchArgument('max_linear_velocity', default_value='0.45'),
+            DeclareLaunchArgument('max_angular_velocity', default_value='0.35'),
+            DeclareLaunchArgument('initial_pose_x', default_value='0.0'),
+            DeclareLaunchArgument('initial_pose_y', default_value='0.0'),
+            DeclareLaunchArgument('initial_pose_yaw', default_value='0.0'),
             *localization_nodes,
             GroupAction(
                 [
@@ -144,7 +160,12 @@ def generate_launch_description():
                 executable='velocity_gate',
                 name='velocity_gate',
                 output='screen',
-                parameters=[{'use_sim_time': use_sim_time}],
+                parameters=[{
+                    'use_sim_time': use_sim_time,
+                    'profile_name': LaunchConfiguration('operational_profile'),
+                    'max_linear_velocity': ParameterValue(max_linear_velocity, value_type=float),
+                    'max_angular_velocity': ParameterValue(max_angular_velocity, value_type=float),
+                }],
             ),
             Node(
                 package='rviz2',

@@ -33,6 +33,9 @@ class NavigationProbe(Node):
         super().__init__("sanitation_navigation_probe")
         self.declare_parameter("timeout_sec", 300.0)
         self.declare_parameter("output_path", "navigation_probe.json")
+        self.declare_parameter("initial_pose_x", 0.0)
+        self.declare_parameter("initial_pose_y", 0.0)
+        self.declare_parameter("initial_pose_yaw", 0.0)
         self.action_client = ActionClient(
             self, NavigateThroughPoses, "/navigate_through_poses"
         )
@@ -59,11 +62,17 @@ class NavigationProbe(Node):
     def _publish_initial_pose(self) -> None:
         message = PoseWithCovarianceStamped()
         message.header.frame_id = "map"
-        message.header.stamp = self.get_clock().now().to_msg()
-        message.pose.pose.orientation.w = 1.0
-        message.pose.covariance[0] = 0.04
-        message.pose.covariance[7] = 0.04
-        message.pose.covariance[35] = 0.07
+        # A zero stamp requests the latest odom transform.  Stamping with
+        # "now" raced a 20 Hz odom broadcaster by one sample and AMCL rejected
+        # otherwise-correct known-start poses as future extrapolations.
+        yaw = float(self.get_parameter("initial_pose_yaw").value)
+        message.pose.pose.position.x = float(self.get_parameter("initial_pose_x").value)
+        message.pose.pose.position.y = float(self.get_parameter("initial_pose_y").value)
+        message.pose.pose.orientation.z = math.sin(yaw / 2.0)
+        message.pose.pose.orientation.w = math.cos(yaw / 2.0)
+        message.pose.covariance[0] = 0.000001
+        message.pose.covariance[7] = 0.000001
+        message.pose.covariance[35] = 0.00003
         self.initial_pose_publisher.publish(message)
 
     def _feedback(self, message) -> None:

@@ -1,0 +1,184 @@
+{
+  "schema_version": 1,
+  "comparison_protocol": "same calibrated vehicle, Stage4T action set, seeds 0..N-1",
+  "required_repeats_per_candidate": 5,
+  "candidate_definitions": {
+    "A": "wheel vx + IMU vyaw; no wheel vy/vyaw",
+    "B": "wheel vx + validated IMU yaw/vyaw",
+    "C": "wheel vx/vy/vyaw + IMU vyaw (Stage4S behavior)",
+    "D": "wheel vx/vyaw without IMU"
+  },
+  "candidates": {
+    "A": {
+      "trial_count": 5,
+      "xy_error_m": {
+        "rmse": 0.1720318597289415,
+        "p95": 0.2915832312349148,
+        "max": 0.2915887783789186
+      },
+      "yaw_error_rad": {
+        "rmse": 0.0153165440315016,
+        "p95": 0.026243164718306074,
+        "max": 0.03292398867606616
+      },
+      "closure_error_m": {
+        "rmse": 0.05356647796252856,
+        "p95": 0.07355332401470209,
+        "max": 0.07362145186481255
+      },
+      "multi_speed_yaw_stability_rad": {
+        "rmse": 0.020731950788441603,
+        "p95": 0.027710984525295478,
+        "max": 0.03292398867606616
+      },
+      "left_right_symmetry_rad": {
+        "rmse": 0.13799175631238503,
+        "p95": 0.1825054970318935,
+        "max": 0.18995754504897855
+      },
+      "all_trials_complete": true
+    },
+    "B": {
+      "trial_count": 5,
+      "xy_error_m": {
+        "rmse": 0.1711899909908336,
+        "p95": 0.2915354842859363,
+        "max": 0.2915988853499309
+      },
+      "yaw_error_rad": {
+        "rmse": 0.010087206034169129,
+        "p95": 0.021772131578325048,
+        "max": 0.033726822921038124
+      },
+      "closure_error_m": {
+        "rmse": 0.052912474270455465,
+        "p95": 0.07122918061573606,
+        "max": 0.07125036698074141
+      },
+      "multi_speed_yaw_stability_rad": {
+        "rmse": 0.014097071681555239,
+        "p95": 0.025873580978135458,
+        "max": 0.033726822921038124
+      },
+      "left_right_symmetry_rad": {
+        "rmse": 0.13230937396290982,
+        "p95": 0.17706389163361552,
+        "max": 0.18809572688345044
+      },
+      "all_trials_complete": true
+    },
+    "C": {
+      "trial_count": 5,
+      "xy_error_m": {
+        "rmse": 0.1702413695242787,
+        "p95": 0.2915387698002546,
+        "max": 0.29159895472534964
+      },
+      "yaw_error_rad": {
+        "rmse": 0.013536297641578912,
+        "p95": 0.022740728311276416,
+        "max": 0.03339109110048444
+      },
+      "closure_error_m": {
+        "rmse": 0.055247358092445714,
+        "p95": 0.07678782868613682,
+        "max": 0.0768234541641291
+      },
+      "multi_speed_yaw_stability_rad": {
+        "rmse": 0.018029433410293835,
+        "p95": 0.023056591785493696,
+        "max": 0.03339109110048444
+      },
+      "left_right_symmetry_rad": {
+        "rmse": 0.1239363717769153,
+        "p95": 0.16552015365181325,
+        "max": 0.16594416404201784
+      },
+      "all_trials_complete": true
+    },
+    "D": {
+      "trial_count": 5,
+      "xy_error_m": {
+        "rmse": 0.30113356468570357,
+        "p95": 0.5700757738098488,
+        "max": 0.5891551541392209
+      },
+      "yaw_error_rad": {
+        "rmse": 0.05809777014388617,
+        "p95": 0.13254865512734915,
+        "max": 0.14743107914310416
+      },
+      "closure_error_m": {
+        "rmse": 0.12104633230486878,
+        "p95": 0.13919052070974774,
+        "max": 0.13935985529266637
+      },
+      "multi_speed_yaw_stability_rad": {
+        "rmse": 0.07878639706753073,
+        "p95": 0.13702413791993676,
+        "max": 0.14743107914310416
+      },
+      "left_right_symmetry_rad": {
+        "rmse": 0.008977772384329936,
+        "p95": 0.01530007800180384,
+        "max": 0.0300000813437582
+      },
+      "all_trials_complete": true
+    }
+  },
+  "selected_candidate": "B",
+  "selection_order": [
+    "realistic ground-truth XY error",
+    "closure residual",
+    "multi-speed stability",
+    "left-right symmetry",
+    "real-vehicle portability"
+  ],
+  "selection_trace": [
+    {
+      "criterion": "xy_error_m",
+      "best": 0.1702413695242787,
+      "equivalence_tolerance": 0.01,
+      "remaining": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "criterion": "closure_error_m",
+      "best": 0.052912474270455465,
+      "equivalence_tolerance": 0.01,
+      "remaining": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    {
+      "criterion": "multi_speed_yaw_stability_rad",
+      "best": 0.014097071681555239,
+      "equivalence_tolerance": 0.005,
+      "remaining": [
+        "B",
+        "C"
+      ]
+    },
+    {
+      "criterion": "left_right_symmetry_rad",
+      "best": 0.1239363717769153,
+      "equivalence_tolerance": 0.03,
+      "remaining": [
+        "B",
+        "C"
+      ]
+    }
+  ],
+  "portability_preference": [
+    "A",
+    "B",
+    "C",
+    "D"
+  ],
+  "ablation_complete": true
+}

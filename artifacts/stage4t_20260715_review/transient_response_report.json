@@ -1,0 +1,1915 @@
+{
+  "schema_version": 1,
+  "stage4s_high_speed_failure_preserved": true,
+  "stage4s_high_speed_body_yaw_error_deg": 19.1825,
+  "stage4s_body_yaw_gate_deg": 18.0,
+  "trial_count": 200,
+  "required_trial_count": 200,
+  "all_trials_retained": true,
+  "matrix": [
+    {
+      "angular_rate_rad_s": -0.6,
+      "thermal_state": "cold",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": -4.370776738034147,
+        "standard_deviation": 0.28857363780834305
+      },
+      "body_yaw_error_deg": {
+        "mean": 19.26417388476313,
+        "max": 26.19183391803746
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": -4.7069999999999705,
+          "p95": -4.356299999999973,
+          "max": -4.007999999999976
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": -4.659599999999971,
+          "p95": -4.192799999999977,
+          "max": -3.749999999999979
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": -4.370776738034147,
+          "p95": -3.9453269965736677,
+          "max": -3.5508662609946957
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": -4.653599992192387,
+          "p95": -4.187099992930307,
+          "max": -3.746999993619731
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": -4.368602664160763,
+          "p95": -3.943717665608069,
+          "max": -3.549487647093574
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": -4.356004390660138,
+          "p95": -3.9326963970182987,
+          "max": -3.538720161010213
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.08000000000000025,
+          "p95": 0.27800000000000036,
+          "max": 0.4400000000000013
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.06599999999999948,
+          "p95": 0.08000000000000007,
+          "max": 0.08000000000000007
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.6199999999999998,
+          "p95": 0.620000000000001,
+          "max": 0.620000000000001
+        },
+        "settling_time_sec": {
+          "count": 1,
+          "mean": 6.640000000000001,
+          "p95": 6.640000000000001,
+          "max": 6.640000000000001
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.37356593346972466,
+          "p95": 0.37412203388671134,
+          "max": 0.37412203388994314
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 0.9223534941906539,
+          "p95": 1.0357010788129277,
+          "max": 1.1450550909758357
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 6.60232583511458,
+          "p95": 8.37734402833529,
+          "max": 8.377986950652794
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": -0.6,
+      "thermal_state": "hot",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": -4.507038899010939,
+        "standard_deviation": 0.04629757547283376
+      },
+      "body_yaw_error_deg": {
+        "mean": 15.925997955483831,
+        "max": 19.166235485683195
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": -4.785000000000017,
+          "p95": -4.770000000000016,
+          "max": -4.770000000000015
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": -4.755600000000017,
+          "p95": -4.739400000000016,
+          "max": -4.734000000000017
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": -4.507038899010939,
+          "p95": -4.454921594058017,
+          "max": -4.447486085562272
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": -4.7483999920476645,
+          "p95": -4.730999992077526,
+          "max": -4.73099999207673
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": -4.503793862684155,
+          "p95": -4.449887026793381,
+          "max": -4.442809838452428
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": -4.486027589203447,
+          "p95": -4.441274234640753,
+          "max": -4.434062954366089
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.05,
+          "p95": 0.0799999999999983,
+          "max": 0.0799999999999983
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.038000000000000256,
+          "p95": 0.060000000000002274,
+          "max": 0.060000000000002274
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.5960000000000008,
+          "p95": 0.6200000000000045,
+          "max": 0.6200000000000045
+        },
+        "settling_time_sec": {
+          "count": 0,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.3738013181524339,
+          "p95": 0.37412275186830346,
+          "max": 0.3741240470279801
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": -3.5357458115419305,
+          "p95": 0.9466440433197362,
+          "max": 0.9518790047047981
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 5.830668137520731,
+          "p95": 8.36871434728059,
+          "max": 8.369947076480752
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": -0.45,
+      "thermal_state": "cold",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": -3.478826216395811,
+        "standard_deviation": 0.00630902965138901
+      },
+      "body_yaw_error_deg": {
+        "mean": 6.117687163164211,
+        "max": 6.388487132819971
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": -3.585600000000018,
+          "p95": -3.5775000000000174,
+          "max": -3.577500000000017
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": -3.5631000000000177,
+          "p95": -3.5446500000000176,
+          "max": -3.5325000000000175
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": -3.478826216395811,
+          "p95": -3.4701847393392615,
+          "max": -3.470184739297411
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": -3.5599499919616577,
+          "p95": -3.5527499919786028,
+          "max": -3.5527499919786028
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": -3.4763065461190394,
+          "p95": -3.468101561095754,
+          "max": -3.467387918615557
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": -3.4682693589008062,
+          "p95": -3.4605181681379293,
+          "max": -3.4605181680957764
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.04999999999999982,
+          "p95": 0.0930000000000015,
+          "max": 0.120000000000001
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.05400000000000027,
+          "p95": 0.060000000000002274,
+          "max": 0.060000000000002274
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.46799999999999964,
+          "p95": 0.4800000000000004,
+          "max": 0.4800000000000004
+        },
+        "settling_time_sec": {
+          "count": 0,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.37695174335635195,
+          "p95": 0.377040987386971,
+          "max": 0.3770409873955991
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 1.159302968416594,
+          "p95": 1.1605761182987313,
+          "max": 1.1605761183112058
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 7.155837952103913,
+          "p95": 8.16599236555361,
+          "max": 8.16627615348225
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": -0.45,
+      "thermal_state": "hot",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": -3.508353167852402,
+        "standard_deviation": 0.01019272780423829
+      },
+      "body_yaw_error_deg": {
+        "mean": 4.503266765154198,
+        "max": 5.062767772105084
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": -3.5869499999999768,
+          "p95": -3.581549999999976,
+          "max": -3.577499999999977
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": -3.569399999999977,
+          "p95": -3.5594999999999755,
+          "max": -3.559499999999975
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": -3.508353167852402,
+          "p95": -3.494178730197134,
+          "max": -3.490939300538793
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": -3.5635499920021787,
+          "p95": -3.5527499920159302,
+          "max": -3.5527499920042453
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": -3.507404689480501,
+          "p95": -3.4923411946847156,
+          "max": -3.4888693094887424
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": -3.4973672085307554,
+          "p95": -3.4768020396034856,
+          "max": -3.4731417979565435
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.04000000000000128,
+          "p95": 0.07100000000000006,
+          "max": 0.0799999999999983
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.024000000000000198,
+          "p95": 0.03999999999999915,
+          "max": 0.03999999999999915
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.4199999999999989,
+          "p95": 0.4509999999999994,
+          "max": 0.46000000000000085
+        },
+        "settling_time_sec": {
+          "count": 2,
+          "mean": 7.809999999999999,
+          "p95": 7.819,
+          "max": 7.82
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.37665290842535315,
+          "p95": 0.377076948125346,
+          "max": 0.3771380589267024
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 1.157893888434705,
+          "p95": 1.167422352256443,
+          "max": 1.1674672373205879
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 0.5678986128003272,
+          "p95": 0.5864148755526291,
+          "max": 0.5872988467243393
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": -0.35,
+      "thermal_state": "cold",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": -2.638689911698319,
+        "standard_deviation": 0.004767303518326343
+      },
+      "body_yaw_error_deg": {
+        "mean": 8.761102704658347,
+        "max": 9.436428234891185
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": -2.7915999999999874,
+          "p95": -2.785649999999987,
+          "max": -2.7824999999999873
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": -2.7800499999999877,
+          "p95": -2.7716499999999877,
+          "max": -2.768499999999988
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": -2.638689911698319,
+          "p95": -2.6339250412644737,
+          "max": -2.632450884788536
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": -2.762374992160429,
+          "p95": -2.7118874923268113,
+          "max": -2.6669999924772845
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": -2.64221006762044,
+          "p95": -2.631334639558894,
+          "max": -2.6304626506483744
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": -2.6284906467753215,
+          "p95": -2.6113224757202462,
+          "max": -2.599381835461152
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.03399999999999999,
+          "p95": 0.040000000000000924,
+          "max": 0.040000000000000924
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.06800000000000014,
+          "p95": 0.10400000000000045,
+          "max": 0.14000000000000057
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.36000000000000015,
+          "p95": 0.3600000000000022,
+          "max": 0.360000000000003
+        },
+        "settling_time_sec": {
+          "count": 0,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.37896514398726433,
+          "p95": 0.37915853110682224,
+          "max": 0.37915853110685993
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 0.8342129993598114,
+          "p95": 0.8350191513955378,
+          "max": 0.8350191514051788
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 6.243205248257668,
+          "p95": 7.998117320052261,
+          "max": 7.99811732009809
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": -0.35,
+      "thermal_state": "hot",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": -2.8145974081075837,
+        "standard_deviation": 0.015076659845585979
+      },
+      "body_yaw_error_deg": {
+        "mean": 1.4865751925238582,
+        "max": 2.315462340536039
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": -2.7905499999999934,
+          "p95": -2.7894999999999923,
+          "max": -2.789499999999992
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": -2.776199999999993,
+          "p95": -2.768499999999993,
+          "max": -2.7684999999999924
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": -2.8145974081075837,
+          "p95": -2.7913121094695943,
+          "max": -2.780008882097896
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": -2.7730499920164404,
+          "p95": -2.7609749920432565,
+          "max": -2.756249992053052
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": -2.81355455997266,
+          "p95": -2.7901595368702194,
+          "max": -2.7785848528555
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": -2.8073537100172024,
+          "p95": -2.7828986529208173,
+          "max": -2.774336744743129
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.04400000000000048,
+          "p95": 0.07100000000000006,
+          "max": 0.0799999999999983
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.019999999999999574,
+          "p95": 0.020000000000003126,
+          "max": 0.020000000000003126
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.2180000000000007,
+          "p95": 0.23100000000000376,
+          "max": 0.240000000000002
+        },
+        "settling_time_sec": {
+          "count": 0,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.3790166639516429,
+          "p95": 0.3791594266232743,
+          "max": 0.37915952175619205
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 0.8897882268316593,
+          "p95": 0.9047751329239407,
+          "max": 0.9072028581978792
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 0.4455971710793369,
+          "p95": 0.45382331289015315,
+          "max": 0.45638121355345096
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": -0.25,
+      "thermal_state": "cold",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": -1.999545797028528,
+        "standard_deviation": 0.004096508150512857
+      },
+      "body_yaw_error_deg": {
+        "mean": 0.5227053696554853,
+        "max": 1.802397319602594
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": -1.9970000000000003,
+          "p95": -1.9925,
+          "max": -1.9924999999999997
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": -1.982,
+          "p95": -1.9747500000000002,
+          "max": -1.9725000000000001
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": -1.999545797028528,
+          "p95": -1.99331956781246,
+          "max": -1.9910721042071147
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": -1.9797499919218038,
+          "p95": -1.9734999919472596,
+          "max": -1.9712499919564381
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": -1.9981589777224138,
+          "p95": -1.9920336497316247,
+          "max": -1.990034931911054
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": -1.993065551240706,
+          "p95": -1.983295636195767,
+          "max": -1.9810312763264284
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.06000000000000103,
+          "p95": 0.1460000000000013,
+          "max": 0.20000000000000107
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.04799999999999969,
+          "p95": 0.060000000000001476,
+          "max": 0.060000000000002274
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.25999999999999945,
+          "p95": 0.26000000000000156,
+          "max": 0.26000000000000156
+        },
+        "settling_time_sec": {
+          "count": 10,
+          "mean": 7.806,
+          "p95": 8.145,
+          "max": 8.459999999999999
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.38081876758545463,
+          "p95": 0.3811897228495622,
+          "max": 0.3811897228495702
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 1.1844873769242215,
+          "p95": 1.1917262954542107,
+          "max": 1.1930534498208596
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 0.32340852833869727,
+          "p95": 0.32495201439741783,
+          "max": 0.32495662909292394
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": -0.25,
+      "thermal_state": "hot",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": -1.9743054533183475,
+        "standard_deviation": 0.00760805807679726
+      },
+      "body_yaw_error_deg": {
+        "mean": 1.0424707350124696,
+        "max": 1.6820038918602709
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": -1.9925000000000004,
+          "p95": -1.9924999999999997,
+          "max": -1.9924999999999997
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": -1.9820000000000004,
+          "p95": -1.9775,
+          "max": -1.9775
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": -1.9743054533183475,
+          "p95": -1.9653909032464936,
+          "max": -1.9631434940556802
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": -1.9791249920077305,
+          "p95": -1.9748749920326578,
+          "max": -1.973749992033505
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": -1.9735302186057009,
+          "p95": -1.9652677245195973,
+          "max": -1.96349729576341
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": -1.968932487627015,
+          "p95": -1.9603473698276745,
+          "max": -1.958800894840925
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.04199999999999946,
+          "p95": 0.060000000000002274,
+          "max": 0.060000000000002274
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.024000000000000198,
+          "p95": 0.03999999999999915,
+          "max": 0.03999999999999915
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.2259999999999998,
+          "p95": 0.240000000000002,
+          "max": 0.240000000000002
+        },
+        "settling_time_sec": {
+          "count": 0,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.3809206870785603,
+          "p95": 0.3811905843504235,
+          "max": 0.3811910410808781
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 1.0474309948269567,
+          "p95": 1.1016673084838102,
+          "max": 1.1026967242403545
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 6.319100618913064,
+          "p95": 7.828747569815812,
+          "max": 7.831762744259239
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": -0.1,
+      "thermal_state": "cold",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": -0.7897442953911916,
+        "standard_deviation": 0.0008695167993904092
+      },
+      "body_yaw_error_deg": {
+        "mean": 0.4500987191864655,
+        "max": 0.49738300967691657
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": -0.7976000000000049,
+          "p95": -0.7970000000000047,
+          "max": -0.7970000000000046
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": -0.7938000000000047,
+          "p95": -0.7930000000000045,
+          "max": -0.7930000000000045
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": -0.7897442953911916,
+          "p95": -0.7886770323883434,
+          "max": -0.7886770323880304
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": -0.7925999920786814,
+          "p95": -0.7914999920879224,
+          "max": -0.791499992087922
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": -0.789418678083354,
+          "p95": -0.7884178289711247,
+          "max": -0.7882481377704678
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": -0.7876076706606926,
+          "p95": -0.7870318530443614,
+          "max": -0.7870318530439939
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.038000000000000436,
+          "p95": 0.0400000000000027,
+          "max": 0.0400000000000027
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.031999999999999675,
+          "p95": 0.040000000000000924,
+          "max": 0.040000000000000924
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.11400000000000077,
+          "p95": 0.120000000000001,
+          "max": 0.120000000000001
+        },
+        "settling_time_sec": {
+          "count": 0,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.3671105280844311,
+          "p95": 0.3682258682781433,
+          "max": 0.3682258683361408
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 0.8042876958371965,
+          "p95": 0.8051112471622399,
+          "max": 0.8056715034065983
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 0.1220070868576506,
+          "p95": 0.1226234852723463,
+          "max": 0.12262348528946015
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": -0.1,
+      "thermal_state": "hot",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": -0.7662591015489493,
+        "standard_deviation": 0.04213910696909542
+      },
+      "body_yaw_error_deg": {
+        "mean": 2.4239376538766075,
+        "max": 6.509336261607178
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": -0.7968000000000011,
+          "p95": -0.7959000000000007,
+          "max": -0.7950000000000006
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": -0.7932000000000011,
+          "p95": -0.7910000000000009,
+          "max": -0.7910000000000007
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": -0.7662591015489493,
+          "p95": -0.7143849069498291,
+          "max": -0.6833906501154972
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": -0.7913999922656483,
+          "p95": -0.7889499919812852,
+          "max": -0.788499992102142
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": -0.7660248595398088,
+          "p95": -0.7142143378992344,
+          "max": -0.6829866034069595
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": -0.7629910800817715,
+          "p95": -0.7110342953658759,
+          "max": -0.6793676403925322
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.036000000000000656,
+          "p95": 0.05100000000000404,
+          "max": 0.060000000000002274
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.010000000000000142,
+          "p95": 0.020000000000003126,
+          "max": 0.020000000000003126
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 2.9360000000000013,
+          "p95": 3.7110000000000007,
+          "max": 3.719999999999999
+        },
+        "settling_time_sec": {
+          "count": 1,
+          "mean": 6.460000000000001,
+          "p95": 6.460000000000001,
+          "max": 6.460000000000001
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.276830783328266,
+          "p95": 0.3842184729808402,
+          "max": 0.384234154255805
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 1.1903448849714229,
+          "p95": 1.3050972297503667,
+          "max": 1.3196680132334988
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 0.11436083311144338,
+          "p95": 0.12665393901152852,
+          "max": 0.131193837926944
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": 0.1,
+      "thermal_state": "cold",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": 0.758400216959939,
+        "standard_deviation": 0.06455959841164471
+      },
+      "body_yaw_error_deg": {
+        "mean": 0.7219143909762551,
+        "max": 1.7573881448700115
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": 0.7710000000000042,
+          "p95": 0.798100000000005,
+          "max": 0.7990000000000049
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": 0.7674000000000042,
+          "p95": 0.7941000000000049,
+          "max": 0.7950000000000048
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": 0.758400216959939,
+          "p95": 0.7899497360194996,
+          "max": 0.7903190288406715
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": 0.7626999924120426,
+          "p95": 0.7930499920749019,
+          "max": 0.7934999920711224
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": 0.7580531736712893,
+          "p95": 0.7894136041573379,
+          "max": 0.7894290676785257
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": 0.7522243887861181,
+          "p95": 0.7883071285882739,
+          "max": 0.7886771411171426
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.03599999999999977,
+          "p95": 0.0599999999999997,
+          "max": 0.0600000000000005
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.024000000000000198,
+          "p95": 0.040000000000000924,
+          "max": 0.040000000000000924
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.08999999999999968,
+          "p95": 0.120000000000001,
+          "max": 0.120000000000001
+        },
+        "settling_time_sec": {
+          "count": 0,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.33894559621567677,
+          "p95": 0.36822586829076703,
+          "max": 0.36822586846578154
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 0.8034853378645697,
+          "p95": 0.8044264895376985,
+          "max": 0.8044264896073239
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 0.11338069970753988,
+          "p95": 0.12246385264934825,
+          "max": 0.12262348526114805
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": 0.1,
+      "thermal_state": "hot",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": 0.8445953862016049,
+        "standard_deviation": 0.04938404571784053
+      },
+      "body_yaw_error_deg": {
+        "mean": 3.480206395910835,
+        "max": 6.353283237073639
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": 0.7971000000000009,
+          "p95": 0.798550000000001,
+          "max": 0.7990000000000013
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": 0.792400000000001,
+          "p95": 0.7950000000000013,
+          "max": 0.7950000000000014
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": 0.8445953862016049,
+          "p95": 0.8915002323849737,
+          "max": 0.9098857107986997
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": 0.791599991839072,
+          "p95": 0.793499991585938,
+          "max": 0.7934999917012137
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": 0.8443549838648187,
+          "p95": 0.891009157277064,
+          "max": 0.9094933157578068
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": 0.8419753222984945,
+          "p95": 0.8881922262042881,
+          "max": 0.9058135762312729
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.04799999999999969,
+          "p95": 0.07100000000000006,
+          "max": 0.0799999999999983
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.006000000000000938,
+          "p95": 0.020000000000003126,
+          "max": 0.020000000000003126
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 1.8099999999999994,
+          "p95": 3.535999999999996,
+          "max": 4.219999999999999
+        },
+        "settling_time_sec": {
+          "count": 1,
+          "mean": 7.039999999999999,
+          "p95": 7.039999999999999,
+          "max": 7.039999999999999
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.36591501784892344,
+          "p95": 0.3842340453163418,
+          "max": 0.3842340453254902
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 1.25872432875554,
+          "p95": 1.3130353273543447,
+          "max": 1.3141460343371627
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 0.1274084731322911,
+          "p95": 0.13254581767214357,
+          "max": 0.13289020493748396
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": 0.25,
+      "thermal_state": "cold",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": 2.0001583707476955,
+        "standard_deviation": 0.005126565852117354
+      },
+      "body_yaw_error_deg": {
+        "mean": 0.6250036052069035,
+        "max": 2.5648020601991717
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": 1.9892499999999997,
+          "p95": 1.9975,
+          "max": 1.9975
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": 1.97975,
+          "p95": 1.9875000000000003,
+          "max": 1.9875000000000003
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": 2.0001583707476955,
+          "p95": 2.0059995211287047,
+          "max": 2.005999521153363
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": 1.9723749919568996,
+          "p95": 1.9862499918953778,
+          "max": 1.9862499918953778
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": 2.0009278816508624,
+          "p95": 2.006930837783132,
+          "max": 2.0082191922473274
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": 1.9911645766575472,
+          "p95": 2.0010463182694322,
+          "max": 2.0010463182941827
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.038000000000000075,
+          "p95": 0.060000000000001476,
+          "max": 0.060000000000002274
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.041999999999999996,
+          "p95": 0.0600000000000005,
+          "max": 0.0600000000000005
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.2540000000000003,
+          "p95": 0.26000000000000156,
+          "max": 0.26000000000000156
+        },
+        "settling_time_sec": {
+          "count": 10,
+          "mean": 7.712000000000001,
+          "p95": 7.751000000000001,
+          "max": 7.760000000000002
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.3807569416884916,
+          "p95": 0.3811897228082459,
+          "max": 0.3811897228082459
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 1.182506248612865,
+          "p95": 1.1861104418932549,
+          "max": 1.1861104419090527
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 0.32032385466391367,
+          "p95": 0.32495662910300355,
+          "max": 0.32495662910300355
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": 0.25,
+      "thermal_state": "hot",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": 1.9443670741579155,
+        "standard_deviation": 0.017811823836875497
+      },
+      "body_yaw_error_deg": {
+        "mean": 2.7864613961241758,
+        "max": 4.246848010976013
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": 1.9929999999999999,
+          "p95": 1.995,
+          "max": 1.995000000000001
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": 1.9840000000000004,
+          "p95": 1.9875000000000003,
+          "max": 1.9875000000000007
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": 1.9443670741579155,
+          "p95": 1.9687468049507177,
+          "max": 1.9829107649521907
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": 1.980249992137552,
+          "p95": 1.98512499219816,
+          "max": 1.9862499921403227
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": 1.9431461838504593,
+          "p95": 1.9678612164930473,
+          "max": 1.981571536498623
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": 1.9398851157262738,
+          "p95": 1.9643235061550628,
+          "max": 1.9782701147147677
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.03799999999999955,
+          "p95": 0.059999999999999075,
+          "max": 0.060000000000002274
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.02400000000000162,
+          "p95": 0.03999999999999915,
+          "max": 0.03999999999999915
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.18399999999999964,
+          "p95": 0.22200000000000233,
+          "max": 0.240000000000002
+        },
+        "settling_time_sec": {
+          "count": 0,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.38089974661685055,
+          "p95": 0.38118984797106015,
+          "max": 0.38118988412645893
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 0.9253703197301458,
+          "p95": 1.033912888358238,
+          "max": 1.090953433829238
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 0.29308253263858686,
+          "p95": 0.311624134501543,
+          "max": 0.31573032487632297
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": 0.35,
+      "thermal_state": "cold",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": 2.6370724219561645,
+        "standard_deviation": 0.009789552664986788
+      },
+      "body_yaw_error_deg": {
+        "mean": 8.71340338048244,
+        "max": 9.528664526177254
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": 2.7891499999999874,
+          "p95": 2.794924999999987,
+          "max": 2.796499999999987
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": 2.7747999999999875,
+          "p95": 2.7863499999999872,
+          "max": 2.789499999999987
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": 2.6370724219561645,
+          "p95": 2.649248307221104,
+          "max": 2.652230104558091
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": 2.7709499921309106,
+          "p95": 2.7845999920920828,
+          "max": 2.787749992083077
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": 2.6356015341815766,
+          "p95": 2.647440459469877,
+          "max": 2.650361474445372
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": 2.6285534500524292,
+          "p95": 2.6390038046864794,
+          "max": 2.639003804696891
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.04200000000000035,
+          "p95": 0.07099999999999944,
+          "max": 0.08000000000000007
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.05999999999999943,
+          "p95": 0.0600000000000005,
+          "max": 0.0600000000000005
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.3600000000000003,
+          "p95": 0.360000000000003,
+          "max": 0.360000000000003
+        },
+        "settling_time_sec": {
+          "count": 0,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.37877175688976766,
+          "p95": 0.37915853110206055,
+          "max": 0.37915853110667896
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 0.8340521979126961,
+          "p95": 0.8356805847696072,
+          "max": 0.8362811407938116
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 0.4590498917985372,
+          "p95": 0.4613072714653824,
+          "max": 0.4615162772998162
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": 0.35,
+      "thermal_state": "hot",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": 2.724193639597107,
+        "standard_deviation": 0.008929529435788243
+      },
+      "body_yaw_error_deg": {
+        "mean": 3.721725303616118,
+        "max": 4.902791332782345
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": 2.7891499999999936,
+          "p95": 2.7949249999999934,
+          "max": 2.796499999999994
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": 2.7705999999999937,
+          "p95": 2.779349999999997,
+          "max": 2.7824999999999944
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": 2.724193639597107,
+          "p95": 2.736589777766975,
+          "max": 2.7400012046999187
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": 2.766574992104186,
+          "p95": 2.7748874920865876,
+          "max": 2.7772499920855434
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": 2.722890871003627,
+          "p95": 2.7344956540714755,
+          "max": 2.7394549636156977
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": 2.7181397096072444,
+          "p95": 2.730594286101136,
+          "max": 2.7340483290009825
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.053999999999999916,
+          "p95": 0.0799999999999983,
+          "max": 0.0799999999999983
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.021999999999999888,
+          "p95": 0.031000000000000916,
+          "max": 0.03999999999999915
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.3059999999999995,
+          "p95": 0.3200000000000003,
+          "max": 0.3200000000000003
+        },
+        "settling_time_sec": {
+          "count": 0,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.37906983111329906,
+          "p95": 0.37915936547971807,
+          "max": 0.37915999868662276
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 0.8372404182883516,
+          "p95": 0.8400822672652314,
+          "max": 0.8411330840739062
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 6.745244263049446,
+          "p95": 8.005281276003567,
+          "max": 8.006901609282083
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": 0.45,
+      "thermal_state": "cold",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": 3.4859650581486945,
+        "standard_deviation": 0.011513785104272579
+      },
+      "body_yaw_error_deg": {
+        "mean": 5.966492667921072,
+        "max": 6.802688964340365
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": 3.5901000000000183,
+          "p95": 3.595500000000018,
+          "max": 3.595500000000018
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": 3.5739000000000183,
+          "p95": 3.5865000000000182,
+          "max": 3.5865000000000182
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": 3.4859650581486945,
+          "p95": 3.503533419485921,
+          "max": 3.503533419566311
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": 3.56579999194795,
+          "p95": 3.5842499919047026,
+          "max": 3.584249991904703
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": 3.483491454011284,
+          "p95": 3.5000443895954136,
+          "max": 3.5003458449426796
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": 3.4725225003751783,
+          "p95": 3.4941044729040986,
+          "max": 3.4941044729850543
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.03599999999999977,
+          "p95": 0.05100000000000049,
+          "max": 0.05999999999999872
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.06400000000000024,
+          "p95": 0.08199999999999981,
+          "max": 0.09999999999999787
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.46600000000000036,
+          "p95": 0.4800000000000014,
+          "max": 0.4800000000000022
+        },
+        "settling_time_sec": {
+          "count": 0,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.3769023305985689,
+          "p95": 0.3770934766480734,
+          "max": 0.37713642241053513
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 1.159349552085596,
+          "p95": 1.161062400595725,
+          "max": 1.1613348587863959
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 0.6257354733256113,
+          "p95": 0.6318129389192773,
+          "max": 0.6361977014300209
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": 0.45,
+      "thermal_state": "hot",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": 3.5076910620235564,
+        "standard_deviation": 0.010822587424324787
+      },
+      "body_yaw_error_deg": {
+        "mean": 4.5154195339570915,
+        "max": 5.797184511153437
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": 3.586499999999975,
+          "p95": 3.586499999999977,
+          "max": 3.586499999999977
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": 3.567599999999976,
+          "p95": 3.5774999999999775,
+          "max": 3.5774999999999775
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": 3.5076910620235564,
+          "p95": 3.5200862456918935,
+          "max": 3.522516647459188
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": 3.561299992030976,
+          "p95": 3.570749992020805,
+          "max": 3.57074999202121
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": 3.505527611827574,
+          "p95": 3.517942247194705,
+          "max": 3.520110505562703
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": 3.4986096288446094,
+          "p95": 3.5110975224462764,
+          "max": 3.5126673345399304
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.04199999999999875,
+          "p95": 0.05999999999999517,
+          "max": 0.05999999999999517
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.022000000000001307,
+          "p95": 0.031000000000000916,
+          "max": 0.03999999999999915
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.38999999999999985,
+          "p95": 0.4510000000000026,
+          "max": 0.46000000000000085
+        },
+        "settling_time_sec": {
+          "count": 2,
+          "mean": 7.82,
+          "p95": 7.927999999999998,
+          "max": 7.939999999999998
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.3767927775501051,
+          "p95": 0.3771372385833462,
+          "max": 0.3771381210642972
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 1.1290676105637867,
+          "p95": 1.1642725925844197,
+          "max": 1.1660328817686618
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 6.347950904435187,
+          "p95": 8.12616098129838,
+          "max": 8.14264356489413
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": 0.6,
+      "thermal_state": "cold",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": 4.3958927428325625,
+        "standard_deviation": 0.20130702556174285
+      },
+      "body_yaw_error_deg": {
+        "mean": 22.191071210480395,
+        "max": 54.93299182696329
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": 4.783199999999969,
+          "p95": 4.7885999999999695,
+          "max": 4.793999999999969
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": 4.6883999999999695,
+          "p95": 4.77659999999997,
+          "max": 4.78199999999997
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": 4.3958927428325625,
+          "p95": 4.468534457136488,
+          "max": 4.4746855113078325
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": 4.681799992148789,
+          "p95": 4.761599992020446,
+          "max": 4.766999992010472
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": 4.39339463252698,
+          "p95": 4.466810443720501,
+          "max": 4.472406790994479
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": 4.382722272171334,
+          "p95": 4.454899221597269,
+          "max": 4.460987385736296
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.1580000000000002,
+          "p95": 0.7219999999999998,
+          "max": 1.2800000000000011
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.06800000000000032,
+          "p95": 0.10000000000000062,
+          "max": 0.10000000000000142
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.6200000000000001,
+          "p95": 0.620000000000001,
+          "max": 0.620000000000001
+        },
+        "settling_time_sec": {
+          "count": 0,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.3736453763589143,
+          "p95": 0.37412203389223264,
+          "max": 0.37412203389710474
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": -5.087942246309975,
+          "p95": -1.3193379982357762,
+          "max": 1.0980679727729763
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 6.605251917105673,
+          "p95": 8.385183037008591,
+          "max": 8.39530952130903
+        }
+      }
+    },
+    {
+      "angular_rate_rad_s": 0.6,
+      "thermal_state": "hot",
+      "required_trials": 10,
+      "completed_trials": 10,
+      "repeatability": {
+        "count": 10,
+        "mean": 4.560096617010147,
+        "standard_deviation": 0.07854765284239615
+      },
+      "body_yaw_error_deg": {
+        "mean": 12.645372369578965,
+        "max": 15.79598564522662
+      },
+      "metrics": {
+        "requested_command_integral_rad": {
+          "count": 10,
+          "mean": 4.780800000000016,
+          "p95": 4.782000000000019,
+          "max": 4.782000000000019
+        },
+        "actual_output_command_integral_rad": {
+          "count": 10,
+          "mean": 4.755600000000016,
+          "p95": 4.770000000000018,
+          "max": 4.770000000000019
+        },
+        "ground_truth_yaw_delta_rad": {
+          "count": 10,
+          "mean": 4.560096617010147,
+          "p95": 4.679970769754668,
+          "max": 4.77452614707145
+        },
+        "raw_odom_yaw_delta_rad": {
+          "count": 10,
+          "mean": 4.747199992056058,
+          "p95": 4.758299992057396,
+          "max": 4.760999992025415
+        },
+        "imu_integrated_yaw_rad": {
+          "count": 10,
+          "mean": 4.5567693750597416,
+          "p95": 4.677428149704327,
+          "max": 4.772755152810477
+        },
+        "ekf_yaw_delta_rad": {
+          "count": 10,
+          "mean": 4.54610927992608,
+          "p95": 4.668978640175847,
+          "max": 4.765020039038131
+        },
+        "request_to_output_delay_sec": {
+          "count": 10,
+          "mean": 0.042000000000000884,
+          "p95": 0.07100000000000077,
+          "max": 0.0800000000000054
+        },
+        "output_to_body_delay_sec": {
+          "count": 10,
+          "mean": 0.029999999999999714,
+          "p95": 0.05100000000000084,
+          "max": 0.060000000000002274
+        },
+        "rise_time_sec": {
+          "count": 10,
+          "mean": 0.5580000000000005,
+          "p95": 0.5999999999999982,
+          "max": 0.6000000000000014
+        },
+        "settling_time_sec": {
+          "count": 0,
+          "mean": null,
+          "p95": null,
+          "max": null
+        },
+        "overshoot_ratio": {
+          "count": 10,
+          "mean": 0.37386101328718313,
+          "p95": 0.3741293462416228,
+          "max": 0.3741298119365557
+        },
+        "steady_state_yaw_rate_gain": {
+          "count": 10,
+          "mean": 0.9070355850560687,
+          "p95": 0.974204337060809,
+          "max": 1.0399581395175854
+        },
+        "integral_tracking_error_rad": {
+          "count": 10,
+          "mean": 1.2763102391010765,
+          "p95": 3.519853051140311,
+          "max": 5.746633052757955
+        }
+      }
+    }
+  ],
+  "matrix_complete": true,
+  "precision_0p25_tracking_pass": true,
+  "coverage_0p35_tracking_pass": true,
+  "high_speed_open_loop_stress_pass": false
+}

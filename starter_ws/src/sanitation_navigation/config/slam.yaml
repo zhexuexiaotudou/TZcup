@@ -22,7 +22,7 @@ slam_toolbox:
     transform_timeout: 0.3
     tf_buffer_duration: 30.0
     stack_size_to_use: 40000000
-    enable_interactive_mode: true
+    enable_interactive_mode: false
     use_scan_matching: true
     use_scan_barycenter: true
     minimum_travel_distance: 0.20

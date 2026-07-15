@@ -1,5 +1,9 @@
 # TZcup 无人清扫车仿真项目
 
+## Stage4T 瞬态、EKF 与定位恢复边界（2026-07-15）
+
+Stage4T 已完成 200 组固定时长瞬态、120 组闭环航向、A/B/C/D 各 5 次 EKF 消融、非零 measurement covariance、双分辨率重建图和正式 Oracle 10-seed 定位。0.25/0.35 rad/s 运行包络与闭环航向通过，0.60 rad/s 开环 stress 失败被保留；最终选择 EKF-B。选中 0.05 m 地图后，Oracle 10/10 次导航成功，但 XY RMSE P50/P95/max 为 0.08397/0.14848/0.16972 m，未达到 0.05 m 硬门，因此 `READY_FOR_GPT_REVIEW_STAGE4T=false`、`READY_FOR_STAGE5A=false`，realistic 全量与完整 Coverage 按协议阻断。完整事实、逐 trial 结果和 SHA-256 清单见 [`GPT_REVIEW_STAGE4T.md`](GPT_REVIEW_STAGE4T.md) 与 [`artifacts/stage4t_20260715_review/`](artifacts/stage4t_20260715_review/)；原始 MCAP 和失败调优 artifact 在用户确认前保留。
+
 ## Stage4S 运动标定复核边界（2026-07-15）
 
 Stage4S 已完成专用 Gazebo ground truth 身份自证、开环 13 段实验台、轮半径/轮距粗细网格以及摩擦/WheelSlip 最小扫描。当前选择 `drive_wheel_radius=0.14 m`、`drive_wheel_separation=1.22 m`；直线、低速正反整圈和四个圆弧半径均通过车体跟踪门槛，但高速 `0.60 rad/s` 正转整圈的车体 yaw 误差为 `19.1825°`，超过 `18°` 门槛。

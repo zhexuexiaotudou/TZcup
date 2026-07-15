@@ -42,6 +42,18 @@ def generate_launch_description():
                 }.items(),
             ),
             Node(
+                package='sanitation_safety',
+                executable='velocity_gate',
+                name='mapping_velocity_gate',
+                output='screen',
+                parameters=[{
+                    'use_sim_time': LaunchConfiguration('use_sim_time'),
+                    'profile_name': 'precision_mapping',
+                    'max_linear_velocity': 0.30,
+                    'max_angular_velocity': 0.25,
+                }],
+            ),
+            Node(
                 package='rviz2',
                 executable='rviz2',
                 name='rviz2',

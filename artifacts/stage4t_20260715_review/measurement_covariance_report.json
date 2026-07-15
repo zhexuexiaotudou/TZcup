@@ -1,0 +1,222 @@
+{
+  "schema_version": 1,
+  "raw_topics_preserved": true,
+  "corrected_topics_present": true,
+  "corrected_covariance_nonzero": true,
+  "parameter_source": "sanitation_tasks/config/measurement_covariance.yaml",
+  "topics": {
+    "raw_wheel_odom": {
+      "sample_count": 621,
+      "frame": "sanitation_vehicle/odom",
+      "child_frame": "base_footprint",
+      "first_timestamp_sec": 13.4,
+      "last_timestamp_sec": 25.8,
+      "rate_hz": 50.0,
+      "covariance": {
+        "pose": {
+          "diagonal": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "all_zero": true,
+          "has_zero_diagonal": true,
+          "has_negative_diagonal": false,
+          "all_finite": true,
+          "unusual": false
+        },
+        "twist": {
+          "diagonal": [
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0,
+            0.0
+          ],
+          "all_zero": true,
+          "has_zero_diagonal": true,
+          "has_negative_diagonal": false,
+          "all_finite": true,
+          "unusual": false
+        }
+      }
+    },
+    "corrected_wheel_odom": {
+      "sample_count": 620,
+      "frame": "odom",
+      "child_frame": "base_footprint",
+      "first_timestamp_sec": 13.42,
+      "last_timestamp_sec": 25.8,
+      "rate_hz": 50.0,
+      "covariance": {
+        "pose": {
+          "diagonal": [
+            0.0025,
+            0.0025,
+            1000000.0,
+            1000000.0,
+            1000000.0,
+            0.0076
+          ],
+          "all_zero": false,
+          "has_zero_diagonal": false,
+          "has_negative_diagonal": false,
+          "all_finite": true,
+          "unusual": false
+        },
+        "twist": {
+          "diagonal": [
+            0.0025,
+            0.04,
+            1000000.0,
+            1000000.0,
+            1000000.0,
+            0.0076
+          ],
+          "all_zero": false,
+          "has_zero_diagonal": false,
+          "has_negative_diagonal": false,
+          "all_finite": true,
+          "unusual": false
+        }
+      }
+    },
+    "raw_imu": {
+      "sample_count": 615,
+      "frame": "sanitation_vehicle/base_footprint/imu_sensor",
+      "child_frame": null,
+      "first_timestamp_sec": 13.52,
+      "last_timestamp_sec": 25.8,
+      "rate_hz": 49.99999999999999,
+      "covariance": {
+        "orientation": {
+          "diagonal": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "all_zero": true,
+          "has_zero_diagonal": true,
+          "has_negative_diagonal": false,
+          "all_finite": true,
+          "unusual": false
+        },
+        "angular_velocity": {
+          "diagonal": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "all_zero": true,
+          "has_zero_diagonal": true,
+          "has_negative_diagonal": false,
+          "all_finite": true,
+          "unusual": false
+        },
+        "linear_acceleration": {
+          "diagonal": [
+            0.0,
+            0.0,
+            0.0
+          ],
+          "all_zero": true,
+          "has_zero_diagonal": true,
+          "has_negative_diagonal": false,
+          "all_finite": true,
+          "unusual": false
+        }
+      }
+    },
+    "corrected_imu": {
+      "sample_count": 615,
+      "frame": "imu_link",
+      "child_frame": null,
+      "first_timestamp_sec": 13.52,
+      "last_timestamp_sec": 25.8,
+      "rate_hz": 49.99999999999999,
+      "covariance": {
+        "orientation": {
+          "diagonal": [
+            1000000.0,
+            1000000.0,
+            0.0004
+          ],
+          "all_zero": false,
+          "has_zero_diagonal": false,
+          "has_negative_diagonal": false,
+          "all_finite": true,
+          "unusual": false
+        },
+        "angular_velocity": {
+          "diagonal": [
+            1000000.0,
+            1000000.0,
+            0.0004
+          ],
+          "all_zero": false,
+          "has_zero_diagonal": false,
+          "has_negative_diagonal": false,
+          "all_finite": true,
+          "unusual": false
+        },
+        "linear_acceleration": {
+          "diagonal": [
+            0.04,
+            0.04,
+            0.09
+          ],
+          "all_zero": false,
+          "has_zero_diagonal": false,
+          "has_negative_diagonal": false,
+          "all_finite": true,
+          "unusual": false
+        }
+      }
+    },
+    "ekf": {
+      "sample_count": 522,
+      "frame": "odom",
+      "child_frame": "base_footprint",
+      "first_timestamp_sec": 13.44,
+      "last_timestamp_sec": 25.78,
+      "rate_hz": 42.220421393841164,
+      "covariance": {
+        "pose": {
+          "diagonal": [
+            1.2893447474066124,
+            5804.085346023489,
+            3.332407921556444e-07,
+            3.3314835366505406e-07,
+            3.3314835366505406e-07,
+            0.0003165191673619821
+          ],
+          "all_zero": false,
+          "has_zero_diagonal": false,
+          "has_negative_diagonal": false,
+          "all_finite": true,
+          "unusual": false
+        },
+        "twist": {
+          "diagonal": [
+            0.0009155408237493303,
+            57.55685666457852,
+            3.3319456008781445e-07,
+            3.327796219492058e-07,
+            3.327796219492058e-07,
+            0.00024721102296100707
+          ],
+          "all_zero": false,
+          "has_zero_diagonal": false,
+          "has_negative_diagonal": false,
+          "all_finite": true,
+          "unusual": false
+        }
+      }
+    }
+  },
+  "pass": true
+}

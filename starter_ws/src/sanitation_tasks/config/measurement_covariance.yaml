@@ -1,0 +1,19 @@
+schema_version: 1
+source: Stage4S Gazebo calibration residuals; conservative non-zero simulation measurement model
+wheel_odom:
+  output_topic: /measurements/wheel_odom
+  frame_id: odom
+  child_frame_id: base_footprint
+  pose_diagonal: [0.0025, 0.0025, 1000000.0, 1000000.0, 1000000.0, 0.0076]
+  twist_diagonal: [0.0025, 0.0400, 1000000.0, 1000000.0, 1000000.0, 0.0076]
+imu:
+  output_topic: /measurements/imu
+  frame_id: imu_link
+  orientation_diagonal: [1000000.0, 1000000.0, 0.0004]
+  angular_velocity_diagonal: [1000000.0, 1000000.0, 0.0004]
+  linear_acceleration_diagonal: [0.0400, 0.0400, 0.0900]
+notes:
+  - Raw bridge topics remain unchanged for audit and replay.
+  - Gazebo scoped frame names are normalized to frames published by robot_state_publisher.
+  - Large variances mark unused 3D axes; no covariance entry is zero.
+  - Values must be re-estimated from stationary and motion logs before real-vehicle migration.

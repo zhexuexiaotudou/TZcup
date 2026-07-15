@@ -22,6 +22,8 @@ def generate_launch_description():
     spawn_yaw = LaunchConfiguration("spawn_yaw")
     enable_command_timeout = LaunchConfiguration("enable_command_timeout")
     enable_ekf = LaunchConfiguration("enable_ekf")
+    enable_measurement_adapter = LaunchConfiguration("enable_measurement_adapter")
+    ekf_config = LaunchConfiguration("ekf_config")
     physical_wheel_radius = LaunchConfiguration("physical_wheel_radius")
     physical_track_width = LaunchConfiguration("physical_track_width")
     drive_wheel_radius = LaunchConfiguration("drive_wheel_radius")
@@ -32,6 +34,10 @@ def generate_launch_description():
     slip_compliance_lateral = LaunchConfiguration("slip_compliance_lateral")
     enable_wheel_slip = LaunchConfiguration("enable_wheel_slip")
     world_file = LaunchConfiguration("world_file")
+    random_seed = LaunchConfiguration("random_seed")
+    world_to_map_x = LaunchConfiguration("world_to_map_x")
+    world_to_map_y = LaunchConfiguration("world_to_map_y")
+    world_to_map_yaw = LaunchConfiguration("world_to_map_yaw")
 
     gz_launch = PathJoinSubstitution(
         [FindPackageShare("ros_gz_sim"), "launch", "gz_sim.launch.py"]
@@ -46,8 +52,8 @@ def generate_launch_description():
     world_path = PathJoinSubstitution(
         [FindPackageShare("sanitation_worlds"), "worlds", "sanitation_test_world.sdf"]
     )
-    ekf_config = PathJoinSubstitution(
-        [FindPackageShare("linorobot2_base"), "config", "ekf.yaml"]
+    default_ekf_config = PathJoinSubstitution(
+        [FindPackageShare("sanitation_bringup"), "config", "selected_ekf.yaml"]
     )
 
     robot_description = ParameterValue(
@@ -83,6 +89,8 @@ def generate_launch_description():
             DeclareLaunchArgument("spawn_yaw", default_value="0.0"),
             DeclareLaunchArgument("enable_command_timeout", default_value="true"),
             DeclareLaunchArgument("enable_ekf", default_value="true"),
+            DeclareLaunchArgument("enable_measurement_adapter", default_value="true"),
+            DeclareLaunchArgument("ekf_config", default_value=default_ekf_config),
             DeclareLaunchArgument("physical_wheel_radius", default_value="0.14"),
             DeclareLaunchArgument("physical_track_width", default_value="0.80"),
             DeclareLaunchArgument("drive_wheel_radius", default_value="0.14"),
@@ -93,10 +101,14 @@ def generate_launch_description():
             DeclareLaunchArgument("slip_compliance_lateral", default_value="0.0"),
             DeclareLaunchArgument("enable_wheel_slip", default_value="false"),
             DeclareLaunchArgument("world_file", default_value=world_path),
+            DeclareLaunchArgument("random_seed", default_value="0"),
+            DeclareLaunchArgument("world_to_map_x", default_value="8.0"),
+            DeclareLaunchArgument("world_to_map_y", default_value="0.0"),
+            DeclareLaunchArgument("world_to_map_yaw", default_value="0.0"),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(gz_launch),
                 launch_arguments={
-                    "gz_args": [" -r -s ", headless_rendering, " ", world_file]
+                    "gz_args": [" -r -s --seed ", random_seed, " ", headless_rendering, " ", world_file]
                 }.items(),
             ),
             IncludeLaunchDescription(
@@ -173,9 +185,9 @@ def generate_launch_description():
                 parameters=[
                     {
                         "use_sim_time": sim_time_parameter,
-                        "world_to_map_x": 8.0,
-                        "world_to_map_y": 0.0,
-                        "world_to_map_yaw": 0.0,
+                        "world_to_map_x": ParameterValue(world_to_map_x, value_type=float),
+                        "world_to_map_y": ParameterValue(world_to_map_y, value_type=float),
+                        "world_to_map_yaw": ParameterValue(world_to_map_yaw, value_type=float),
                         "expected_source_frame": "world",
                         "expected_child_frame": "sanitation_vehicle/base_footprint",
                     }
@@ -211,6 +223,14 @@ def generate_launch_description():
                 name="command_timeout",
                 output="screen",
                 condition=IfCondition(enable_command_timeout),
+            ),
+            Node(
+                package="sanitation_tasks",
+                executable="sanitation_measurement_adapter",
+                name="measurement_adapter",
+                output="screen",
+                parameters=[{"use_sim_time": sim_time_parameter}],
+                condition=IfCondition(enable_measurement_adapter),
             ),
             Node(
                 package="robot_localization",

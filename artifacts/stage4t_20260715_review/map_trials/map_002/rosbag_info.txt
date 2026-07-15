@@ -1,0 +1,23 @@
+
+Files:             mapping_bag_0.mcap
+Bag size:          270.9 MiB
+Storage id:        mcap
+ROS Distro:        jazzy
+Duration:          398.840305747s
+Start:             Jul 15 2026 12:59:55.007545392 (1784120395.007545392)
+End:               Jul 15 2026 13:06:33.847851139 (1784120793.847851139)
+Messages:          239771
+Topic information: Topic: /clock | Type: rosgraph_msgs/msg/Clock | Count: 77100 | Serialization Format: cdr
+                   Topic: /cmd_vel | Type: geometry_msgs/msg/Twist | Count: 7763 | Serialization Format: cdr
+                   Topic: /cmd_vel_gate | Type: geometry_msgs/msg/Twist | Count: 7356 | Serialization Format: cdr
+                   Topic: /ground_truth/odom | Type: nav_msgs/msg/Odometry | Count: 19349 | Serialization Format: cdr
+                   Topic: /map | Type: nav_msgs/msg/OccupancyGrid | Count: 200 | Serialization Format: cdr
+                   Topic: /measurements/imu | Type: sensor_msgs/msg/Imu | Count: 19340 | Serialization Format: cdr
+                   Topic: /measurements/wheel_odom | Type: nav_msgs/msg/Odometry | Count: 19336 | Serialization Format: cdr
+                   Topic: /odom | Type: nav_msgs/msg/Odometry | Count: 19187 | Serialization Format: cdr
+                   Topic: /odom/unfiltered | Type: nav_msgs/msg/Odometry | Count: 19330 | Serialization Format: cdr
+                   Topic: /scan | Type: sensor_msgs/msg/LaserScan | Count: 3864 | Serialization Format: cdr
+                   Topic: /tf | Type: tf2_msgs/msg/TFMessage | Count: 46944 | Serialization Format: cdr
+                   Topic: /tf_static | Type: tf2_msgs/msg/TFMessage | Count: 2 | Serialization Format: cdr
+Service:           0
+Service information:

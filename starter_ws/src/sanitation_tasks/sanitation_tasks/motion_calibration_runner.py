@@ -93,6 +93,37 @@ def build_schedule():
     return segments
 
 
+def build_ablation_schedule():
+    """Compact but complete A/B/C/D action set, identical for every candidate."""
+    segments = []
+
+    def add(name, actions):
+        segments.extend(Action(name, *action) for action in actions)
+        segments.append(Action(name, f"rest_after_{name}", 1.0, 0.0, 0.0, False))
+
+    add("stationary_3s", [("stationary", 3.0, 0.0, 0.0)])
+    add("ablation_straight", [("line", 5.0, 0.20, 0.0)])
+    add("turn_positive_360_0p25", [("turn", 2.0 * math.pi / 0.25, 0.0, 0.25)])
+    add("turn_negative_360_0p25", [("turn", 2.0 * math.pi / 0.25, 0.0, -0.25)])
+    for rate in (0.35, 0.45, 0.60):
+        label = str(rate).replace(".", "p")
+        for direction, sign in (("positive", 1.0), ("negative", -1.0)):
+            name = f"turn_{direction}_step_{label}"
+            add(name, [("turn_step", 5.0, 0.0, sign * rate)])
+    add("circle_r1_left", [("circle", 2.0 * math.pi / 0.20, 0.20, 0.20)])
+    add("circle_r1_right", [("circle", 2.0 * math.pi / 0.20, 0.20, -0.20)])
+    rectangle = []
+    for index, length in enumerate((2.0, 1.0, 2.0, 1.0), start=1):
+        rectangle.append((f"side_{index}", length / 0.30, 0.30, 0.0))
+        rectangle.append((f"corner_{index}", (math.pi / 2.0) / 0.25, 0.0, 0.25))
+    add("rectangle_2x1", rectangle)
+    add("figure_eight_r1", [
+        ("left_loop", 2.0 * math.pi / 0.20, 0.20, 0.20),
+        ("right_loop", 2.0 * math.pi / 0.20, 0.20, -0.20),
+    ])
+    return segments
+
+
 class MotionCalibrationRunner(Node):
     def __init__(self):
         super().__init__("motion_calibration_runner")
@@ -101,6 +132,8 @@ class MotionCalibrationRunner(Node):
         self.declare_parameter("drive_wheel_radius", 0.14)
         self.declare_parameter("drive_wheel_separation", 0.80)
         self.declare_parameter("calibration_label", "baseline")
+        self.declare_parameter("schedule_profile", "stage4s")
+        self.declare_parameter("random_seed", 0)
         self.cmd_publisher = self.create_publisher(Twist, "/cmd_vel_gate", 20)
         self.marker_publisher = self.create_publisher(
             String, "/calibration/segment_marker", 20
@@ -112,7 +145,11 @@ class MotionCalibrationRunner(Node):
         self.create_subscription(JointState, "/joint_states", self.on_joints, 50)
         self.create_subscription(Twist, "/cmd_vel", self.on_output_command, 50)
 
-        self.schedule = build_schedule()
+        self.schedule = (
+            build_ablation_schedule()
+            if self.get_parameter("schedule_profile").value == "stage4t_ablation"
+            else build_schedule()
+        )
         self.expected_duration = sum(action.duration for action in self.schedule)
         self.action_index = -1
         self.action_start = None
@@ -289,11 +326,21 @@ class MotionCalibrationRunner(Node):
         gt_linear_velocities = []
         gt_angular_velocities = []
         imu_integral = 0.0
+        requested_command_integral = 0.0
+        actual_output_command_integral = 0.0
         ekf_errors = []
         for index in range(1, len(rows)):
             dt = times[index] - times[index - 1]
             if dt <= 0.0 or dt > 0.2:
                 continue
+            requested_command_integral += 0.5 * (
+                rows[index - 1]["cmd_requested_angular"]
+                + rows[index]["cmd_requested_angular"]
+            ) * dt
+            actual_output_command_integral += 0.5 * (
+                rows[index - 1]["cmd_output_angular"]
+                + rows[index]["cmd_output_angular"]
+            ) * dt
             dx = rows[index]["gt_x"] - rows[index - 1]["gt_x"]
             dy = rows[index]["gt_y"] - rows[index - 1]["gt_y"]
             gt_path_length += math.hypot(dx, dy)
@@ -363,9 +410,12 @@ class MotionCalibrationRunner(Node):
             "complete": True,
             "expected_distance_m": expected_distance,
             "expected_yaw_rad": expected_yaw,
+            "requested_command_integral_rad": requested_command_integral,
+            "actual_output_command_integral_rad": actual_output_command_integral,
             "gt_projected_distance_m": gt_projected,
             "gt_path_length_m": gt_path_length,
             "gt_yaw_delta_rad": gt_yaw_delta,
+            "ground_truth_yaw_delta_rad": gt_yaw_delta,
             "raw_projected_distance_m": raw_projected,
             "raw_yaw_delta_rad": raw_yaw_delta,
             "imu_integrated_yaw_rad": imu_integral,
@@ -415,18 +465,27 @@ class MotionCalibrationRunner(Node):
             for name in segment_names
         ]
         by_name = {result["segment"]: result for result in results}
-        line_names = ("forward_5m_0p20", "forward_5m_0p45", "reverse_5m_0p20")
-        turn_names = (
-            "turn_positive_360_0p25",
-            "turn_negative_360_0p25",
-            "turn_positive_360_0p60",
-        )
-        circle_expected = {
-            "circle_r1_left": 1.0,
-            "circle_r1_right": 1.0,
-            "circle_r2_left": 2.0,
-            "circle_r2_right": 2.0,
-        }
+        if self.get_parameter("schedule_profile").value == "stage4t_ablation":
+            line_names = ("ablation_straight",)
+            turn_names = ("turn_positive_360_0p25", "turn_negative_360_0p25")
+            circle_expected = {"circle_r1_left": 1.0, "circle_r1_right": 1.0}
+            rectangle_name = "rectangle_2x1"
+            figure_name = "figure_eight_r1"
+        else:
+            line_names = ("forward_5m_0p20", "forward_5m_0p45", "reverse_5m_0p20")
+            turn_names = (
+                "turn_positive_360_0p25",
+                "turn_negative_360_0p25",
+                "turn_positive_360_0p60",
+            )
+            circle_expected = {
+                "circle_r1_left": 1.0,
+                "circle_r1_right": 1.0,
+                "circle_r2_left": 2.0,
+                "circle_r2_right": 2.0,
+            }
+            rectangle_name = "rectangle_10x5"
+            figure_name = "figure_eight_r2"
         body_command_tracking_valid = (
             all(by_name[name].get("body_distance_error_pct", math.inf) <= 5.0 for name in line_names)
             and all(by_name[name].get("body_yaw_error_deg", math.inf) <= 18.0 for name in turn_names)
@@ -443,10 +502,10 @@ class MotionCalibrationRunner(Node):
             by_name[name].get("imu_yaw_error_deg", math.inf) <= 1.0
             for name in turn_names[:2]
         )
-        rectangle_error = by_name["rectangle_10x5"].get(
+        rectangle_error = by_name[rectangle_name].get(
             "ekf_closure_vector_error_m", math.inf
         )
-        figure_error = by_name["figure_eight_r2"].get(
+        figure_error = by_name[figure_name].get(
             "ekf_closure_vector_error_m", math.inf
         )
         ekf_valid = rectangle_error <= 0.10 and figure_error <= 0.15
@@ -488,7 +547,8 @@ class MotionCalibrationRunner(Node):
         report = {
             "schema_version": 1,
             "baseline_commit": "413b6ebfb16d40e00a820c1dcf8cb5c87c90e566",
-            "random_seed": 0,
+            "random_seed": int(self.get_parameter("random_seed").value),
+            "schedule_profile": str(self.get_parameter("schedule_profile").value),
             "use_sim_time": bool(self.get_parameter("use_sim_time").value),
             "calibration_label": self.get_parameter("calibration_label").value,
             "vehicle_dynamics": {
@@ -496,7 +556,7 @@ class MotionCalibrationRunner(Node):
                 "drive_wheel_separation": self.get_parameter("drive_wheel_separation").value,
             },
             "segment_count": len(results),
-            "all_segments_complete": len(results) == 13 and all(result.get("complete") for result in results),
+            "all_segments_complete": len(results) == len(segment_names) and all(result.get("complete") for result in results),
             "expected_duration_sec": self.expected_duration,
             "sample_count": len(self.rows),
             "thresholds": {
@@ -525,9 +585,12 @@ class MotionCalibrationRunner(Node):
             "duration_sec",
             "expected_distance_m",
             "expected_yaw_rad",
+            "requested_command_integral_rad",
+            "actual_output_command_integral_rad",
             "gt_projected_distance_m",
             "gt_path_length_m",
             "gt_yaw_delta_rad",
+            "ground_truth_yaw_delta_rad",
             "raw_projected_distance_m",
             "raw_yaw_delta_rad",
             "imu_integrated_yaw_rad",

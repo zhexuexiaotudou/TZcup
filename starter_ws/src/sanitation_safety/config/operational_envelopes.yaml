@@ -1,0 +1,30 @@
+schema_version: 1
+default_profile: localization_coverage
+profiles:
+  precision_mapping:
+    enabled: true
+    max_linear_velocity: 0.30
+    max_angular_velocity: 0.25
+    purpose: High-precision SLAM map acquisition.
+  localization_coverage:
+    enabled: true
+    max_linear_velocity: 0.45
+    max_angular_velocity: 0.35
+    purpose: Realistic AMCL localization and complete coverage execution.
+  stress:
+    enabled: false
+    max_linear_velocity: 0.45
+    max_angular_velocity: 0.60
+    purpose: Preserve the Stage4S high-speed open-loop failure as a disabled stress lane.
+
+enforced_components:
+  - nav2_controller
+  - velocity_smoother
+  - rotate_to_heading
+  - spin
+  - backup
+  - drive_on_heading
+  - coverage_turn
+  - mapping_probe
+  - automated_routes
+  - final_cmd_vel

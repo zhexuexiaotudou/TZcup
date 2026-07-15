@@ -1,0 +1,8 @@
+{
+  "schema_version": 1,
+  "executed": false,
+  "competition_evidence": false,
+  "competition_localization_pass": false,
+  "blocked_by": "oracle_localization_pass",
+  "reason": "Stage4T stop condition: Oracle localization did not pass the 0.05 m XY RMSE gate."
+}

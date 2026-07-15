@@ -1,6 +1,6 @@
 import math
 
-from sanitation_tasks.motion_calibration_runner import build_schedule
+from sanitation_tasks.motion_calibration_runner import build_ablation_schedule, build_schedule
 
 
 def test_schedule_contains_all_thirteen_required_segments():
@@ -30,3 +30,16 @@ def test_required_line_and_turn_commands_are_exact():
         moving["turn_positive_360_0p25"].duration * 0.25,
         2.0 * math.pi,
     )
+
+
+def test_stage4t_ablation_adds_both_directions_at_intermediate_rates():
+    actions = build_ablation_schedule()
+    commands = {action.segment: action.angular for action in actions if action.action == "turn_step"}
+    assert commands == {
+        "turn_positive_step_0p35": 0.35,
+        "turn_negative_step_0p35": -0.35,
+        "turn_positive_step_0p45": 0.45,
+        "turn_negative_step_0p45": -0.45,
+        "turn_positive_step_0p6": 0.60,
+        "turn_negative_step_0p6": -0.60,
+    }
