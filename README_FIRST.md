@@ -14,6 +14,9 @@
   - `sanitation_worlds`
   - `sanitation_bringup`
   - `sanitation_tasks`
+  - `sanitation_navigation`
+  - `sanitation_safety`
+  - `sanitation_coverage`
 
 > 不建议把 ROS 1 OpenPodcar 直接作为主工程。它可用于参考车辆比例和模型结构，但其主线是 ROS Kinetic + Gazebo 7，迁移成本高。
 
@@ -26,6 +29,7 @@
 - `THIRD_PARTY_SELECTION.md`：第三方仓库选择理由和许可边界
 - `AGENTS.md`：项目级 Agent 规则和开发门禁
 - `docs/development-workflow.md`：统一命名的“开发工作流”，覆盖分支、PR、CI、部署、真实验收和收尾
+- `docs/progress.md`：Stage 0–4 的真实运行证据、当前边界和复现命令
 - `scripts/`：环境检查、拉取依赖、构建、运行和证据采集脚本
 - `starter_ws/src/`：可直接放进 ROS 2 工作空间的项目骨架
 
@@ -80,7 +84,7 @@ source "$HOME/sanitation_ws/install/setup.bash"
 ros2 run teleop_twist_keyboard teleop_twist_keyboard
 ```
 
-## 4. 当前骨架已经包含
+## 4. 当前项目已经包含
 
 - 4WD 差速/滑移转向清扫车几何模型
 - 0.65 m 清扫作业宽度可视化区域
@@ -89,8 +93,10 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 - 道路、路缘、窄通道、垃圾、落叶堆、低摩擦积水区、静态障碍场景
 - 一键启动入口
 - ROS Topic 冒烟检查
-- 后续 Coverage、Nav2、动态障碍、感知和 J6 接口的明确阶段门
+- SLAM Toolbox、AMCL、Nav2、keepout/speed filter 和急停速度门
+- OpenNav Coverage + Fields2Cover 覆盖规划、指标 JSON 和 rosbag 证据
+- 后续动态障碍、感知和 J6 接口的明确阶段门
 
 ## 5. 重要说明
 
-本包是在无 ROS/Gazebo 图形运行环境中生成的工程骨架，未在当前生成环境中实际启动 Gazebo。Codex 必须在目标 Ubuntu 24.04 机器上执行构建、启动和修复，并以 `artifacts/` 中的日志、截图、rosbag 和 JSON 报告作为完成证据。
+当前 Windows 主机已通过 Docker Desktop、Ubuntu 24.04 / ROS 2 Jazzy 容器和 NVIDIA GPU passthrough 完成 Stage 0–4 的 headless 构建与运行验证，真实日志、JSON、地图、轨迹图和 rosbag 位于 `artifacts/`。该结果不能替代原生 Ubuntu 24.04 或 WSLg 下的 Gazebo/RViz GUI 验收；完整覆盖回放、障碍恢复和定位一致性等剩余边界以 `docs/progress.md` 与 `GPT_REVIEW_STAGE4.md` 为准。
