@@ -6,6 +6,7 @@
 
 - [ ] 已核实问题与验收条件
 - [ ] 使用独立分支和独立 worktree，未夹带其他任务改动
+- [ ] 本 PR 的每个提交都已同步中文 `README.md`，“最近同步”只保留最新状态
 - [ ] `python scripts/ci_fast.py` 或 `py scripts/ci_fast.py` 通过
 - [ ] 已运行受影响的 pytest / Stage Docker / 页面或真实运行检查
 - [ ] 文档、接口、命令和评测口径已同步
