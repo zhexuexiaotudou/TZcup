@@ -20,6 +20,7 @@ SOURCE_ROOT = ROOT / "starter_ws" / "src"
 def require_project_files() -> None:
     required = (
         ROOT / "AGENTS.md",
+        ROOT / "README.md",
         ROOT / "README_FIRST.md",
         ROOT / "PROJECT_SPEC.md",
         ROOT / "STAGE_GATES.md",
