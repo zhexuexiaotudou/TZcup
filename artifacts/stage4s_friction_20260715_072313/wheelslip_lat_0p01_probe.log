@@ -1,0 +1,5 @@
+[INFO] [1784100511.621984411] [motion_fit_probe]: fit action start: stationary duration=3.000s sim_time=6.860
+[INFO] [1784100514.589198464] [motion_fit_probe]: fit action start: positive_360_high_speed duration=10.472s sim_time=9.860
+[INFO] [1784100525.169743389] [motion_fit_probe]: fit action start: rest duration=3.000s sim_time=20.340
+[INFO] [1784100528.196178410] [motion_fit_probe]: fit probe schedule complete
+[INFO] [1784100528.216714530] [motion_fit_probe]: fit report written: /stage4s/artifacts/stage4s_friction_20260715_072313/cases/wheelslip_lat_0p01.json; complete=True

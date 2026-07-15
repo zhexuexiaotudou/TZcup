@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-07-15T05:38:33.687355+00:00",
+  "baseline_commit": "413b6ebfb16d40e00a820c1dcf8cb5c87c90e566",
+  "runner_exit_code": 0,
+  "experiment_completed": true,
+  "realistic_motion_calibration_pass": false,
+  "first_failed_layer": "layer_1_body_command_tracking",
+  "artifacts": [
+    "build.log",
+    "fault_isolation_report.json",
+    "model_odom_first.txt",
+    "motion_calibration_bag",
+    "motion_calibration_report.json",
+    "motion_calibration_runner.log",
+    "motion_calibration_segments.csv",
+    "motion_calibration_trajectory.csv",
+    "motion_calibration_trajectory.png",
+    "rosbag_info.txt",
+    "rosbag_record.log",
+    "simulation.log"
+  ]
+}

@@ -1,0 +1,46 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-07-15-06-08-05-049092-2013e04e83e7-498
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [gazebo-1]: process started with pid [518]
+[INFO] [robot_state_publisher-2]: process started with pid [519]
+[INFO] [create-3]: process started with pid [520]
+[INFO] [parameter_bridge-4]: process started with pid [521]
+[INFO] [sanitation_ground_truth_adapter-5]: process started with pid [522]
+[INFO] [static_transform_publisher-6]: process started with pid [523]
+[INFO] [ekf_node-7]: process started with pid [524]
+[INFO] [velocity_gate-8]: process started with pid [525]
+[static_transform_publisher-6] [INFO] [1784095731.550479092] [lidar_scoped_frame_bridge]: Spinning until stopped - publishing transform
+[static_transform_publisher-6] translation: ('0.000000', '0.000000', '0.000000')
+[static_transform_publisher-6] rotation: ('0.000000', '0.000000', '0.000000', '1.000000')
+[static_transform_publisher-6] from 'laser' to 'sanitation_vehicle/base_footprint/sanitation_gpu_lidar'
+[create-3] [INFO] [1784095731.564337451] [ros_gz_sim]: Requesting list of world names.
+[ekf_node-7] [INFO] [1784095731.649120925] [ekf_filter_node]: Waiting for clock to start...
+[parameter_bridge-4] [INFO] [1784095731.724896687] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/clock (gz.msgs.Clock) -> /clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095731.745153938] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/cmd_vel (gz.msgs.Twist) -> /cmd_vel (geometry_msgs/msg/Twist)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095731.765083280] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/cmd_vel (geometry_msgs/msg/Twist) -> /cmd_vel (gz.msgs.Twist)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095731.765968194] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/odom/unfiltered (gz.msgs.Odometry) -> /odom/unfiltered (nav_msgs/msg/Odometry)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095731.781207567] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/ground_truth/model_odom_raw (gz.msgs.Odometry) -> /ground_truth/model_odom_raw (nav_msgs/msg/Odometry)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095731.782041650] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/imu/data (gz.msgs.IMU) -> /imu/data (sensor_msgs/msg/Imu)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095731.795966711] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/joint_states (gz.msgs.Model) -> /joint_states (sensor_msgs/msg/JointState)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095731.796992141] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/scan (gz.msgs.LaserScan) -> /scan (sensor_msgs/msg/LaserScan)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095731.797752977] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/camera_info (gz.msgs.CameraInfo) -> /camera/camera_info (sensor_msgs/msg/CameraInfo)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095731.798541654] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/image (gz.msgs.Image) -> /camera/image (sensor_msgs/msg/Image)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095731.799223236] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/depth_image (gz.msgs.Image) -> /camera/depth_image (sensor_msgs/msg/Image)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095731.799818522] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/points (gz.msgs.PointCloudPacked) -> /camera/points (sensor_msgs/msg/PointCloud2)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095731.800573780] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/world/sanitation_test_world/dynamic_pose/info (gz.msgs.Pose_V) -> /world/sanitation_test_world/dynamic_pose/info (tf2_msgs/msg/TFMessage)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095731.840926761] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/world_overview/image (gz.msgs.Image) -> /world_overview/image (sensor_msgs/msg/Image)] (Lazy 0)
+[robot_state_publisher-2] [INFO] [1784095732.047977978] [robot_state_publisher]: Robot initialized
+[create-3] [INFO] [1784095732.797006040] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-3] [INFO] [1784095732.808690068] [ros_gz_sim]: Entity creation successful.
+[INFO] [create-3]: process has finished cleanly [pid 520]
+[parameter_bridge-4] [INFO] [1784095734.835110394] [ros_gz_bridge]: Passing message from ROS geometry_msgs/msg/Twist to Gazebo gz.msgs.Twist (showing msg only once per type)
+[robot_state_publisher-2] [INFO] [1784095774.831457511] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[ekf_node-7] [INFO] [1784095774.831497263] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[parameter_bridge-4] [INFO] [1784095774.831482652] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[static_transform_publisher-6] [INFO] [1784095774.831494320] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[INFO] [gazebo-1]: process has finished cleanly [pid 518]
+[INFO] [parameter_bridge-4]: process has finished cleanly [pid 521]
+[INFO] [static_transform_publisher-6]: process has finished cleanly [pid 523]
+[INFO] [robot_state_publisher-2]: process has finished cleanly [pid 519]
+[INFO] [ekf_node-7]: process has finished cleanly [pid 524]
+[INFO] [velocity_gate-8]: process has finished cleanly [pid 525]
+[INFO] [sanitation_ground_truth_adapter-5]: process has finished cleanly [pid 522]

@@ -1,0 +1,24 @@
+
+Files:             motion_calibration_bag_0.mcap
+Bag size:          138.2 MiB
+Storage id:        mcap
+ROS Distro:        jazzy
+Duration:          553.580148594s
+Start:             Jul 15 2026 06:41:24.338621324 (1784097684.338621324)
+End:               Jul 15 2026 06:50:37.918769918 (1784098237.918769918)
+Messages:          440275
+Topic information: Topic: /calibration/segment_marker | Type: std_msgs/msg/String | Count: 67 | Serialization Format: cdr
+                   Topic: /clock | Type: rosgraph_msgs/msg/Clock | Count: 104616 | Serialization Format: cdr
+                   Topic: /cmd_vel | Type: geometry_msgs/msg/Twist | Count: 10468 | Serialization Format: cdr
+                   Topic: /cmd_vel_gate | Type: geometry_msgs/msg/Twist | Count: 26700 | Serialization Format: cdr
+                   Topic: /ground_truth/identity_valid | Type: std_msgs/msg/Bool | Count: 26177 | Serialization Format: cdr
+                   Topic: /ground_truth/model_odom_raw | Type: nav_msgs/msg/Odometry | Count: 26184 | Serialization Format: cdr
+                   Topic: /ground_truth/odom | Type: nav_msgs/msg/Odometry | Count: 26161 | Serialization Format: cdr
+                   Topic: /imu/data | Type: sensor_msgs/msg/Imu | Count: 26188 | Serialization Format: cdr
+                   Topic: /joint_states | Type: sensor_msgs/msg/JointState | Count: 104779 | Serialization Format: cdr
+                   Topic: /odom | Type: nav_msgs/msg/Odometry | Count: 26098 | Serialization Format: cdr
+                   Topic: /odom/unfiltered | Type: nav_msgs/msg/Odometry | Count: 26203 | Serialization Format: cdr
+                   Topic: /tf | Type: tf2_msgs/msg/TFMessage | Count: 36632 | Serialization Format: cdr
+                   Topic: /tf_static | Type: tf2_msgs/msg/TFMessage | Count: 2 | Serialization Format: cdr
+Service:           0
+Service information: 

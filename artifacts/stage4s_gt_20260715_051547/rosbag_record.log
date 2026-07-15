@@ -1,0 +1,24 @@
+[WARN] [ros2bag]: Positional "topics" argument deprecated. Please use optional "--topics" argument instead.
+stdin is not a terminal device. Keyboard handling disabled.[INFO] [1784092652.538013387] [rosbag2_recorder]: Press SPACE for pausing/resuming
+[INFO] [1784092652.538019574] [rosbag2_recorder]: Event publisher thread: Started
+[INFO] [1784092652.544325931] [rosbag2_recorder]: Starting recording to '/stage4s/artifacts/stage4s_gt_20260715_051547/ground_truth_identity_bag'
+[INFO] [1784092653.915312345] [rosbag2_recorder]: Subscribed to topic '/tf_static'
+[INFO] [1784092654.399487336] [rosbag2_recorder]: Subscribed to topic '/odom/unfiltered'
+[INFO] [1784092654.552400571] [rosbag2_recorder]: Subscribed to topic '/joint_states'
+[INFO] [1784092654.689361797] [rosbag2_recorder]: Subscribed to topic '/imu/data'
+[INFO] [1784092654.767019545] [rosbag2_recorder]: Subscribed to topic '/ground_truth/model_odom_raw'
+[INFO] [1784092654.898726965] [rosbag2_recorder]: Subscribed to topic '/ground_truth/identity_valid'
+[INFO] [1784092654.965274213] [rosbag2_recorder]: Subscribed to topic '/ground_truth/dynamic_pose'
+[INFO] [1784092655.098543332] [rosbag2_recorder]: Subscribed to topic '/cmd_vel'
+[INFO] [1784092655.178885027] [rosbag2_recorder]: Subscribed to topic '/tf'
+[INFO] [1784092655.256466641] [rosbag2_recorder]: Subscribed to topic '/ground_truth/odom'
+[INFO] [1784092655.414568523] [rosbag2_recorder]: Subscribed to topic '/clock'
+[INFO] [1784092655.414994424] [rosbag2_recorder]: Listening for topics...
+[INFO] [1784092655.415945460] [rosbag2_recorder]: Recording...
+[INFO] [1784092655.415059204] [rosbag2_recorder]: Topics discovery started.
+[INFO] [1784092655.416446032] [rosbag2_recorder]: All requested topics are subscribed. Stopping discovery...
+[INFO] [1784092655.416632601] [rosbag2_recorder]: Topics discovery stopped.
+[INFO] [1784092842.591876685] [rosbag2_recorder]: Pausing recording.
+[INFO] [1784092842.592271749] [rosbag2_cpp]: Writing remaining messages from cache to the bag. It may take a while
+[INFO] [1784092842.624390436] [rosbag2_recorder]: Recording stopped
+[INFO] [1784092842.628859540] [rosbag2_recorder]: Event publisher thread: Exited

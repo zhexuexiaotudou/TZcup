@@ -1,0 +1,182 @@
+Starting >>> sanitation_safety
+Starting >>> sanitation_worlds
+Starting >>> sanitation_vehicle_description
+Starting >>> sanitation_tasks
+Starting >>> sanitation_coverage
+-- Found ament_cmake: 2.5.6 (/opt/ros/jazzy/share/ament_cmake/cmake)
+-- Found ament_cmake: 2.5.6 (/opt/ros/jazzy/share/ament_cmake/cmake)
+-- Override CMake install command with custom implementation using symlinks instead of copying resources
+-- Override CMake install command with custom implementation using symlinks instead of copying resources
+-- Configuring done (5.9s)
+-- Configuring done (5.8s)
+-- Generating done (0.5s)
+-- Generating done (0.5s)
+-- Build files have been written to: /work/.work/stage1_20260714_154523/build/sanitation_worlds
+-- Build files have been written to: /work/.work/stage1_20260714_154523/build/sanitation_vehicle_description
+-- Install configuration: ""
+-- Install configuration: ""
+-- Execute custom install script
+-- Execute custom install script
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_worlds/share/sanitation_worlds/worlds/sanitation_test_world.sdf
+-- Symlinking: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/sanitation_vehicle_description/launch/__pycache__/display.launch.cpython-314.pyc
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_worlds/share/ament_index/resource_index/package_run_dependencies/sanitation_worlds
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_worlds/share/ament_index/resource_index/parent_prefix_path/sanitation_worlds
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_worlds/share/sanitation_worlds/environment/ament_prefix_path.sh
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_worlds/share/sanitation_worlds/environment/ament_prefix_path.dsv
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_worlds/share/sanitation_worlds/environment/path.sh
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_worlds/share/sanitation_worlds/environment/path.dsv
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_worlds/share/sanitation_worlds/local_setup.bash
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_worlds/share/sanitation_worlds/local_setup.sh
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_worlds/share/sanitation_worlds/local_setup.zsh
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_worlds/share/sanitation_worlds/local_setup.dsv
+-- Symlinking: /work/.work/stage1_20260714_154523/install/sanitation_worlds/share/sanitation_worlds/package.dsv
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/sanitation_vehicle_description/launch/display.launch.py
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/sanitation_vehicle_description/urdf/sanitation_vehicle.urdf.xacro
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/sanitation_vehicle_description/rviz/.gitkeep
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/ament_index/resource_index/package_run_dependencies/sanitation_vehicle_description
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/ament_index/resource_index/parent_prefix_path/sanitation_vehicle_description
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/sanitation_vehicle_description/environment/ament_prefix_path.sh
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/sanitation_vehicle_description/environment/ament_prefix_path.dsv
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/sanitation_vehicle_description/environment/path.sh
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/sanitation_vehicle_description/environment/path.dsv
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_worlds/share/ament_index/resource_index/packages/sanitation_worlds
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/sanitation_vehicle_description/local_setup.bash
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_worlds/share/sanitation_worlds/cmake/sanitation_worldsConfig.cmake
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/sanitation_vehicle_description/local_setup.sh
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_worlds/share/sanitation_worlds/cmake/sanitation_worldsConfig-version.cmake
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/sanitation_vehicle_description/local_setup.zsh
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_worlds/share/sanitation_worlds/package.xml
+Finished <<< sanitation_worlds [13.5s]
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/sanitation_vehicle_description/local_setup.dsv
+-- Symlinking: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/sanitation_vehicle_description/package.dsv
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/ament_index/resource_index/packages/sanitation_vehicle_description
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/sanitation_vehicle_description/cmake/sanitation_vehicle_descriptionConfig.cmake
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/sanitation_vehicle_description/cmake/sanitation_vehicle_descriptionConfig-version.cmake
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_vehicle_description/share/sanitation_vehicle_description/package.xml
+Finished <<< sanitation_vehicle_description [14.0s]
+Starting >>> sanitation_bringup
+-- Found ament_cmake: 2.5.6 (/opt/ros/jazzy/share/ament_cmake/cmake)
+running develop
+running develop
+running develop
+running egg_info
+writing sanitation_safety.egg-info/PKG-INFO
+writing dependency_links to sanitation_safety.egg-info/dependency_links.txt
+writing entry points to sanitation_safety.egg-info/entry_points.txt
+writing requirements to sanitation_safety.egg-info/requires.txt
+running egg_info
+writing top-level names to sanitation_safety.egg-info/top_level.txt
+writing sanitation_tasks.egg-info/PKG-INFO
+writing dependency_links to sanitation_tasks.egg-info/dependency_links.txt
+writing entry points to sanitation_tasks.egg-info/entry_points.txt
+writing requirements to sanitation_tasks.egg-info/requires.txt
+writing top-level names to sanitation_tasks.egg-info/top_level.txt
+reading manifest file 'sanitation_safety.egg-info/SOURCES.txt'
+running egg_info
+writing sanitation_coverage.egg-info/PKG-INFO
+writing dependency_links to sanitation_coverage.egg-info/dependency_links.txt
+writing entry points to sanitation_coverage.egg-info/entry_points.txt
+writing requirements to sanitation_coverage.egg-info/requires.txt
+writing top-level names to sanitation_coverage.egg-info/top_level.txt
+writing manifest file 'sanitation_safety.egg-info/SOURCES.txt'
+reading manifest file 'sanitation_tasks.egg-info/SOURCES.txt'
+running build_ext
+Creating /work/.work/stage1_20260714_154523/install/sanitation_safety/lib/python3.12/site-packages/sanitation-safety.egg-link (link to .)
+Installing velocity_gate script to /work/.work/stage1_20260714_154523/install/sanitation_safety/lib/sanitation_safety
+
+Installed /work/.work/stage1_20260714_154523/build/sanitation_safety
+running symlink_data
+reading manifest file 'sanitation_coverage.egg-info/SOURCES.txt'
+writing manifest file 'sanitation_tasks.egg-info/SOURCES.txt'
+Finished <<< sanitation_safety [18.7s]
+Starting >>> sanitation_navigation
+writing manifest file 'sanitation_coverage.egg-info/SOURCES.txt'
+running build_ext
+Creating /work/.work/stage1_20260714_154523/install/sanitation_coverage/lib/python3.12/site-packages/sanitation-coverage.egg-link (link to .)
+Installing coverage_probe script to /work/.work/stage1_20260714_154523/install/sanitation_coverage/lib/sanitation_coverage
+
+Installed /work/.work/stage1_20260714_154523/build/sanitation_coverage
+running symlink_data
+running build_ext
+Creating /work/.work/stage1_20260714_154523/install/sanitation_tasks/lib/python3.12/site-packages/sanitation-tasks.egg-link (link to .)
+Installing sanitation_filter_probe script to /work/.work/stage1_20260714_154523/install/sanitation_tasks/lib/sanitation_tasks
+Installing sanitation_ground_truth_adapter script to /work/.work/stage1_20260714_154523/install/sanitation_tasks/lib/sanitation_tasks
+Installing sanitation_ground_truth_identity_probe script to /work/.work/stage1_20260714_154523/install/sanitation_tasks/lib/sanitation_tasks
+Installing sanitation_image_capture script to /work/.work/stage1_20260714_154523/install/sanitation_tasks/lib/sanitation_tasks
+Installing sanitation_localization_evaluator script to /work/.work/stage1_20260714_154523/install/sanitation_tasks/lib/sanitation_tasks
+Installing sanitation_map_quality script to /work/.work/stage1_20260714_154523/install/sanitation_tasks/lib/sanitation_tasks
+Installing sanitation_mapping_probe script to /work/.work/stage1_20260714_154523/install/sanitation_tasks/lib/sanitation_tasks
+Installing sanitation_navigation_probe script to /work/.work/stage1_20260714_154523/install/sanitation_tasks/lib/sanitation_tasks
+Installing sanitation_runtime_probe script to /work/.work/stage1_20260714_154523/install/sanitation_tasks/lib/sanitation_tasks
+Installing sanitation_safety_probe script to /work/.work/stage1_20260714_154523/install/sanitation_tasks/lib/sanitation_tasks
+Installing sanitation_smoke_check script to /work/.work/stage1_20260714_154523/install/sanitation_tasks/lib/sanitation_tasks
+
+Installed /work/.work/stage1_20260714_154523/build/sanitation_tasks
+running symlink_data
+Finished <<< sanitation_coverage [18.0s]
+Finished <<< sanitation_tasks [18.6s]
+-- Override CMake install command with custom implementation using symlinks instead of copying resources
+-- Found ament_cmake: 2.5.6 (/opt/ros/jazzy/share/ament_cmake/cmake)
+-- Configuring done (4.7s)
+-- Generating done (0.4s)
+-- Build files have been written to: /work/.work/stage1_20260714_154523/build/sanitation_bringup
+-- Install configuration: ""
+-- Execute custom install script
+-- Symlinking: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/sanitation_bringup/launch/__pycache__/sim.launch.cpython-314.pyc
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/sanitation_bringup/launch/sim.launch.py
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/sanitation_bringup/config/.gitkeep
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/ament_index/resource_index/package_run_dependencies/sanitation_bringup
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/ament_index/resource_index/parent_prefix_path/sanitation_bringup
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/sanitation_bringup/environment/ament_prefix_path.sh
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/sanitation_bringup/environment/ament_prefix_path.dsv
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/sanitation_bringup/environment/path.sh
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/sanitation_bringup/environment/path.dsv
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/sanitation_bringup/local_setup.bash
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/sanitation_bringup/local_setup.sh
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/sanitation_bringup/local_setup.zsh
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/sanitation_bringup/local_setup.dsv
+-- Symlinking: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/sanitation_bringup/package.dsv
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/ament_index/resource_index/packages/sanitation_bringup
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/sanitation_bringup/cmake/sanitation_bringupConfig.cmake
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/sanitation_bringup/cmake/sanitation_bringupConfig-version.cmake
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_bringup/share/sanitation_bringup/package.xml
+Finished <<< sanitation_bringup [9.30s]
+-- Override CMake install command with custom implementation using symlinks instead of copying resources
+-- Found ament_lint_auto: 0.17.5 (/opt/ros/jazzy/share/ament_lint_auto/cmake)
+-- Added test 'copyright' to check source files copyright and LICENSE
+-- Added test 'flake8' to check Python code syntax and style conventions
+-- Configured 'flake8' exclude dirs and/or files: 
+-- Added test 'lint_cmake' to check CMake code style
+-- Added test 'pep257' to check Python code against some of the docstring style conventions in PEP 257
+-- Added test 'xmllint' to check XML markup files
+-- Configuring done (6.5s)
+-- Generating done (0.5s)
+-- Build files have been written to: /work/.work/stage1_20260714_154523/build/sanitation_navigation
+-- Install configuration: ""
+-- Execute custom install script
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/config/nav2.yaml
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/config/slam.yaml
+-- Symlinking: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/launch/__pycache__/navigation.launch.cpython-314.pyc
+-- Symlinking: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/launch/__pycache__/slam.launch.cpython-314.pyc
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/launch/navigation.launch.py
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/launch/slam.launch.py
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/maps/sanitation_test_map.pgm
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/maps/sanitation_test_map.yaml
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/ament_index/resource_index/package_run_dependencies/sanitation_navigation
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/ament_index/resource_index/parent_prefix_path/sanitation_navigation
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/environment/ament_prefix_path.sh
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/environment/ament_prefix_path.dsv
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/environment/path.sh
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/environment/path.dsv
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/local_setup.bash
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/local_setup.sh
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/local_setup.zsh
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/local_setup.dsv
+-- Symlinking: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/package.dsv
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/ament_index/resource_index/packages/sanitation_navigation
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/cmake/sanitation_navigationConfig.cmake
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/cmake/sanitation_navigationConfig-version.cmake
+-- Up-to-date symlink: /work/.work/stage1_20260714_154523/install/sanitation_navigation/share/sanitation_navigation/package.xml
+Finished <<< sanitation_navigation [12.5s]
+
+Summary: 7 packages finished [32.6s]

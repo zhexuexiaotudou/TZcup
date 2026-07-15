@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "413b6ebfb16d40e00a820c1dcf8cb5c87c90e566",
+  "branch": "agent/stage4s-motion-calibration",
+  "ground_truth_identity_pass": true,
+  "selected_vehicle_dynamics": {
+    "physical_wheel_radius": 0.14,
+    "physical_track_width": 0.8,
+    "drive_wheel_radius": 0.14,
+    "drive_wheel_separation": 1.22,
+    "wheel_mu_longitudinal": 1.0,
+    "wheel_mu_lateral": 1.0,
+    "slip_compliance_longitudinal": 0.0,
+    "slip_compliance_lateral": 0.0,
+    "enable_wheel_slip": false
+  },
+  "motion_experiment_completed": true,
+  "realistic_motion_calibration_pass": false,
+  "first_failed_layer": "layer_1_body_command_tracking",
+  "blocking_metric": {
+    "segment": "turn_positive_360_0p60",
+    "body_yaw_error_deg": 19.1825223918751,
+    "threshold_deg": 18.0
+  },
+  "raw_odom_preliminary_gate_pass": true,
+  "imu_preliminary_gate_pass": true,
+  "friction_slip_grid_executed": true,
+  "friction_slip_grid_complete": true,
+  "ekf_ablation_executed": false,
+  "oracle_realistic_executed": false,
+  "map_geometry_executed": false,
+  "localization_trials_executed": false,
+  "coverage_regression_executed": false,
+  "READY_FOR_GPT_REVIEW_STAGE4S": false,
+  "READY_FOR_STAGE5A": false,
+  "stage5_or_j6_started": false
+}

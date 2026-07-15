@@ -1,0 +1,66 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-07-15-06-40-42-958546-7f94c8668d38-137
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [gazebo-1]: process started with pid [175]
+[INFO] [robot_state_publisher-2]: process started with pid [176]
+[INFO] [create-3]: process started with pid [177]
+[INFO] [parameter_bridge-4]: process started with pid [178]
+[INFO] [sanitation_ground_truth_adapter-5]: process started with pid [179]
+[INFO] [static_transform_publisher-6]: process started with pid [180]
+[INFO] [ekf_node-7]: process started with pid [181]
+[INFO] [velocity_gate-8]: process started with pid [182]
+[create-3] [INFO] [1784097674.446576955] [ros_gz_sim]: Requesting list of world names.
+[static_transform_publisher-6] [INFO] [1784097674.447335542] [lidar_scoped_frame_bridge]: Spinning until stopped - publishing transform
+[static_transform_publisher-6] translation: ('0.000000', '0.000000', '0.000000')
+[static_transform_publisher-6] rotation: ('0.000000', '0.000000', '0.000000', '1.000000')
+[static_transform_publisher-6] from 'laser' to 'sanitation_vehicle/base_footprint/sanitation_gpu_lidar'
+[ekf_node-7] [INFO] [1784097674.545402448] [ekf_filter_node]: Waiting for clock to start...
+[parameter_bridge-4] [INFO] [1784097674.599585508] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/clock (gz.msgs.Clock) -> /clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784097674.612750468] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/cmd_vel (gz.msgs.Twist) -> /cmd_vel (geometry_msgs/msg/Twist)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784097674.636445130] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/cmd_vel (geometry_msgs/msg/Twist) -> /cmd_vel (gz.msgs.Twist)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784097674.637433306] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/odom/unfiltered (gz.msgs.Odometry) -> /odom/unfiltered (nav_msgs/msg/Odometry)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784097674.651011383] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/ground_truth/model_odom_raw (gz.msgs.Odometry) -> /ground_truth/model_odom_raw (nav_msgs/msg/Odometry)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784097674.651610922] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/imu/data (gz.msgs.IMU) -> /imu/data (sensor_msgs/msg/Imu)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784097674.664285275] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/joint_states (gz.msgs.Model) -> /joint_states (sensor_msgs/msg/JointState)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784097674.665040543] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/scan (gz.msgs.LaserScan) -> /scan (sensor_msgs/msg/LaserScan)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784097674.665936317] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/camera_info (gz.msgs.CameraInfo) -> /camera/camera_info (sensor_msgs/msg/CameraInfo)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784097674.666869630] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/image (gz.msgs.Image) -> /camera/image (sensor_msgs/msg/Image)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784097674.667540266] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/depth_image (gz.msgs.Image) -> /camera/depth_image (sensor_msgs/msg/Image)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784097674.668170709] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/points (gz.msgs.PointCloudPacked) -> /camera/points (sensor_msgs/msg/PointCloud2)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784097674.668940515] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/world/sanitation_test_world/dynamic_pose/info (gz.msgs.Pose_V) -> /world/sanitation_test_world/dynamic_pose/info (tf2_msgs/msg/TFMessage)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784097674.695286709] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/world_overview/image (gz.msgs.Image) -> /world_overview/image (sensor_msgs/msg/Image)] (Lazy 0)
+[robot_state_publisher-2] [INFO] [1784097674.885005655] [robot_state_publisher]: Robot initialized
+[create-3] [INFO] [1784097675.663608364] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-3] [INFO] [1784097675.675146727] [ros_gz_sim]: Entity creation successful.
+[INFO] [create-3]: process has finished cleanly [pid 177]
+[parameter_bridge-4] [INFO] [1784097678.151410899] [ros_gz_bridge]: Passing message from ROS geometry_msgs/msg/Twist to Gazebo gz.msgs.Twist (showing msg only once per type)
+[static_transform_publisher-6] [INFO] [1784098238.175087183] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[robot_state_publisher-2] [INFO] [1784098238.175216977] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[ekf_node-7] [INFO] [1784098238.175207850] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[parameter_bridge-4] [INFO] [1784098238.175227574] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[velocity_gate-8] Traceback (most recent call last):
+[velocity_gate-8]   File "/work/.work/stage1_20260714_154523/install/sanitation_safety/lib/sanitation_safety/velocity_gate", line 33, in <module>
+[velocity_gate-8]     sys.exit(load_entry_point('sanitation-safety', 'console_scripts', 'velocity_gate')())
+[velocity_gate-8]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[velocity_gate-8]   File "/work/.work/stage1_20260714_154523/build/sanitation_safety/sanitation_safety/velocity_gate.py", line 66, in main
+[velocity_gate-8]     rclpy.spin(node)
+[velocity_gate-8]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 247, in spin
+[velocity_gate-8]     executor.spin_once()
+[velocity_gate-8]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+[velocity_gate-8]     self._spin_once_impl(timeout_sec)
+[velocity_gate-8]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+[velocity_gate-8]     handler, entity, node = self.wait_for_ready_callbacks(
+[velocity_gate-8]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[velocity_gate-8]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+[velocity_gate-8]     return next(self._cb_iter)
+[velocity_gate-8]            ^^^^^^^^^^^^^^^^^^^
+[velocity_gate-8]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 757, in _wait_for_ready_callbacks
+[velocity_gate-8]     wait_set = _rclpy.WaitSet(
+[velocity_gate-8]                ^^^^^^^^^^^^^^^
+[velocity_gate-8] rclpy._rclpy_pybind11.RCLError: failed to initialize wait set: the given context is not valid, either rcl_init() was not called or rcl_shutdown() was called., at ./src/rcl/wait.c:130
+[INFO] [static_transform_publisher-6]: process has finished cleanly [pid 180]
+[INFO] [parameter_bridge-4]: process has finished cleanly [pid 178]
+[INFO] [robot_state_publisher-2]: process has finished cleanly [pid 176]
+[INFO] [ekf_node-7]: process has finished cleanly [pid 181]
+[INFO] [sanitation_ground_truth_adapter-5]: process has finished cleanly [pid 179]
+[INFO] [gazebo-1]: process has finished cleanly [pid 175]
+[ERROR] [velocity_gate-8]: process has died [pid 182, exit code 1, cmd '/work/.work/stage1_20260714_154523/install/sanitation_safety/lib/sanitation_safety/velocity_gate --ros-args -r __node:=calibration_velocity_gate --params-file /tmp/launch_params_q16j4qkx'].

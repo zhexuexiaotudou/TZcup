@@ -1,0 +1,78 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-07-15-05-59-40-173401-9c8e37da1e09-137
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [gazebo-1]: process started with pid [176]
+[INFO] [robot_state_publisher-2]: process started with pid [177]
+[INFO] [create-3]: process started with pid [178]
+[INFO] [parameter_bridge-4]: process started with pid [179]
+[INFO] [sanitation_ground_truth_adapter-5]: process started with pid [180]
+[INFO] [static_transform_publisher-6]: process started with pid [181]
+[INFO] [ekf_node-7]: process started with pid [182]
+[INFO] [velocity_gate-8]: process started with pid [183]
+[static_transform_publisher-6] [INFO] [1784095225.373274189] [lidar_scoped_frame_bridge]: Spinning until stopped - publishing transform
+[static_transform_publisher-6] translation: ('0.000000', '0.000000', '0.000000')
+[static_transform_publisher-6] rotation: ('0.000000', '0.000000', '0.000000', '1.000000')
+[static_transform_publisher-6] from 'laser' to 'sanitation_vehicle/base_footprint/sanitation_gpu_lidar'
+[create-3] [INFO] [1784095225.397591304] [ros_gz_sim]: Requesting list of world names.
+[ekf_node-7] [INFO] [1784095225.499208388] [ekf_filter_node]: Waiting for clock to start...
+[parameter_bridge-4] [INFO] [1784095225.911813697] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/clock (gz.msgs.Clock) -> /clock (rosgraph_msgs/msg/Clock)] (Lazy 0)
+[robot_state_publisher-2] [INFO] [1784095225.925157603] [robot_state_publisher]: Robot initialized
+[parameter_bridge-4] [INFO] [1784095225.926278473] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/cmd_vel (gz.msgs.Twist) -> /cmd_vel (geometry_msgs/msg/Twist)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095226.083393146] [ros_gz_bridge]: Creating ROS->GZ Bridge: [/cmd_vel (geometry_msgs/msg/Twist) -> /cmd_vel (gz.msgs.Twist)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095226.084883559] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/odom/unfiltered (gz.msgs.Odometry) -> /odom/unfiltered (nav_msgs/msg/Odometry)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095226.098949042] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/ground_truth/model_odom_raw (gz.msgs.Odometry) -> /ground_truth/model_odom_raw (nav_msgs/msg/Odometry)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095226.100003562] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/imu/data (gz.msgs.IMU) -> /imu/data (sensor_msgs/msg/Imu)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095226.114527472] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/joint_states (gz.msgs.Model) -> /joint_states (sensor_msgs/msg/JointState)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095226.115635035] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/scan (gz.msgs.LaserScan) -> /scan (sensor_msgs/msg/LaserScan)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095226.116567750] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/camera_info (gz.msgs.CameraInfo) -> /camera/camera_info (sensor_msgs/msg/CameraInfo)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095226.117803123] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/image (gz.msgs.Image) -> /camera/image (sensor_msgs/msg/Image)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095226.118733363] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/depth_image (gz.msgs.Image) -> /camera/depth_image (sensor_msgs/msg/Image)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095226.119509836] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/camera/points (gz.msgs.PointCloudPacked) -> /camera/points (sensor_msgs/msg/PointCloud2)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095226.120488227] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/world/sanitation_test_world/dynamic_pose/info (gz.msgs.Pose_V) -> /world/sanitation_test_world/dynamic_pose/info (tf2_msgs/msg/TFMessage)] (Lazy 0)
+[parameter_bridge-4] [INFO] [1784095226.140658372] [ros_gz_bridge]: Creating GZ->ROS Bridge: [/world_overview/image (gz.msgs.Image) -> /world_overview/image (sensor_msgs/msg/Image)] (Lazy 0)
+[create-3] [INFO] [1784095226.644554979] [ros_gz_sim]: Waiting messages on topic [robot_description].
+[create-3] [INFO] [1784095226.656252252] [ros_gz_sim]: Entity creation successful.
+[INFO] [create-3]: process has finished cleanly [pid 178]
+[parameter_bridge-4] [INFO] [1784095229.642773135] [ros_gz_bridge]: Passing message from ROS geometry_msgs/msg/Twist to Gazebo gz.msgs.Twist (showing msg only once per type)
+[ekf_node-7] [INFO] [1784095269.621900680] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[static_transform_publisher-6] [INFO] [1784095269.621944988] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[parameter_bridge-4] [INFO] [1784095269.622008706] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[robot_state_publisher-2] [INFO] [1784095269.622049924] [rclcpp]: signal_handler(SIGINT/SIGTERM)
+[sanitation_ground_truth_adapter-5] Traceback (most recent call last):
+[sanitation_ground_truth_adapter-5]   File "/work/.work/stage1_20260714_154523/build/sanitation_tasks/sanitation_tasks/ground_truth_adapter.py", line 104, in main
+[sanitation_ground_truth_adapter-5]     rclpy.spin(node)
+[sanitation_ground_truth_adapter-5]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 247, in spin
+[sanitation_ground_truth_adapter-5]     executor.spin_once()
+[sanitation_ground_truth_adapter-5]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 926, in spin_once
+[sanitation_ground_truth_adapter-5]     self._spin_once_impl(timeout_sec)
+[sanitation_ground_truth_adapter-5]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 907, in _spin_once_impl
+[sanitation_ground_truth_adapter-5]     handler, entity, node = self.wait_for_ready_callbacks(
+[sanitation_ground_truth_adapter-5]                             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[sanitation_ground_truth_adapter-5]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 877, in wait_for_ready_callbacks
+[sanitation_ground_truth_adapter-5]     return next(self._cb_iter)
+[sanitation_ground_truth_adapter-5]            ^^^^^^^^^^^^^^^^^^^
+[sanitation_ground_truth_adapter-5]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/executors.py", line 785, in _wait_for_ready_callbacks
+[sanitation_ground_truth_adapter-5]     raise ExternalShutdownException()
+[sanitation_ground_truth_adapter-5] rclpy.executors.ExternalShutdownException
+[sanitation_ground_truth_adapter-5] 
+[sanitation_ground_truth_adapter-5] During handling of the above exception, another exception occurred:
+[sanitation_ground_truth_adapter-5] 
+[sanitation_ground_truth_adapter-5] Traceback (most recent call last):
+[sanitation_ground_truth_adapter-5]   File "/work/.work/stage1_20260714_154523/install/sanitation_tasks/lib/sanitation_tasks/sanitation_ground_truth_adapter", line 33, in <module>
+[sanitation_ground_truth_adapter-5]     sys.exit(load_entry_point('sanitation-tasks', 'console_scripts', 'sanitation_ground_truth_adapter')())
+[sanitation_ground_truth_adapter-5]              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[sanitation_ground_truth_adapter-5]   File "/work/.work/stage1_20260714_154523/build/sanitation_tasks/sanitation_tasks/ground_truth_adapter.py", line 107, in main
+[sanitation_ground_truth_adapter-5]     rclpy.shutdown()
+[sanitation_ground_truth_adapter-5]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py", line 134, in shutdown
+[sanitation_ground_truth_adapter-5]     _shutdown(context=context)
+[sanitation_ground_truth_adapter-5]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/utilities.py", line 82, in shutdown
+[sanitation_ground_truth_adapter-5]     context.shutdown()
+[sanitation_ground_truth_adapter-5]   File "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/context.py", line 129, in shutdown
+[sanitation_ground_truth_adapter-5]     self.__context.shutdown()
+[sanitation_ground_truth_adapter-5] rclpy._rclpy_pybind11.RCLError: failed to shutdown: rcl_shutdown already called on the given context, at ./src/rcl/init.c:333
+[INFO] [static_transform_publisher-6]: process has finished cleanly [pid 181]
+[INFO] [parameter_bridge-4]: process has finished cleanly [pid 179]
+[INFO] [gazebo-1]: process has finished cleanly [pid 176]
+[INFO] [robot_state_publisher-2]: process has finished cleanly [pid 177]
+[INFO] [ekf_node-7]: process has finished cleanly [pid 182]
+[INFO] [velocity_gate-8]: process has finished cleanly [pid 183]
+[ERROR] [sanitation_ground_truth_adapter-5]: process has died [pid 180, exit code 1, cmd '/work/.work/stage1_20260714_154523/install/sanitation_tasks/lib/sanitation_tasks/sanitation_ground_truth_adapter --ros-args -r __node:=ground_truth_adapter --params-file /tmp/launch_params__8tozay3'].

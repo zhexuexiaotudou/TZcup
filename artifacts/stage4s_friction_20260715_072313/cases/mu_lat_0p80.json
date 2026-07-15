@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "mode": "friction",
+  "drive_wheel_radius": 0.14,
+  "drive_wheel_separation": 1.22,
+  "sample_count": 824,
+  "contact_parameters": {
+    "wheel_mu_longitudinal": 1.0,
+    "wheel_mu_lateral": 0.8,
+    "slip_compliance_longitudinal": 0.0,
+    "slip_compliance_lateral": 0.0,
+    "enable_wheel_slip": false
+  },
+  "complete": true,
+  "high_speed_positive": {
+    "expected_yaw_rad": 6.283185307179586,
+    "gt_yaw_rad": 1.5705258753659466,
+    "raw_yaw_rad": 6.242999989004581,
+    "body_yaw_error_deg": 270.0154957254421,
+    "raw_vs_truth_error_deg": 267.71304659562395
+  },
+  "objective_body_yaw_error_deg": 270.0154957254421,
+  "body_tracking_gate_deg": 18.0,
+  "body_tracking_pass": false
+}

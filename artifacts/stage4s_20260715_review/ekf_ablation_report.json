@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "stage": "Stage4S-5 EKF ablation",
+  "executed": false,
+  "status": "blocked_by_first_failed_layer",
+  "first_failed_layer": "layer_1_body_command_tracking",
+  "required_precondition": "realistic motion calibration Layers 0-3 pass",
+  "reason": "Stage4S forbids tuning a later layer while body command tracking is the first failed layer.",
+  "success": false
+}

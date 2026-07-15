@@ -1,0 +1,22 @@
+
+Files:             ground_truth_identity_bag_0.mcap
+Bag size:          44.9 MiB
+Storage id:        mcap
+ROS Distro:        jazzy
+Duration:          188.664852781s
+Start:             Jul 15 2026 05:17:33.925599978 (1784092653.925599978)
+End:               Jul 15 2026 05:20:42.590452759 (1784092842.590452759)
+Messages:          142010
+Topic information: Topic: /clock | Type: rosgraph_msgs/msg/Clock | Count: 36082 | Serialization Format: cdr
+                   Topic: /cmd_vel | Type: geometry_msgs/msg/Twist | Count: 2668 | Serialization Format: cdr
+                   Topic: /ground_truth/dynamic_pose | Type: tf2_msgs/msg/TFMessage | Count: 9121 | Serialization Format: cdr
+                   Topic: /ground_truth/identity_valid | Type: std_msgs/msg/Bool | Count: 9045 | Serialization Format: cdr
+                   Topic: /ground_truth/model_odom_raw | Type: nav_msgs/msg/Odometry | Count: 9051 | Serialization Format: cdr
+                   Topic: /ground_truth/odom | Type: nav_msgs/msg/Odometry | Count: 9028 | Serialization Format: cdr
+                   Topic: /imu/data | Type: sensor_msgs/msg/Imu | Count: 9054 | Serialization Format: cdr
+                   Topic: /joint_states | Type: sensor_msgs/msg/JointState | Count: 36246 | Serialization Format: cdr
+                   Topic: /odom/unfiltered | Type: nav_msgs/msg/Odometry | Count: 9069 | Serialization Format: cdr
+                   Topic: /tf | Type: tf2_msgs/msg/TFMessage | Count: 12644 | Serialization Format: cdr
+                   Topic: /tf_static | Type: tf2_msgs/msg/TFMessage | Count: 2 | Serialization Format: cdr
+Service:           0
+Service information: 

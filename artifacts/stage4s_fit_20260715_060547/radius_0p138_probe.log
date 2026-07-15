@@ -1,0 +1,5 @@
+[INFO] [1784095936.093408477] [motion_fit_probe]: fit action start: stationary duration=3.000s sim_time=8.160
+[INFO] [1784095939.125444572] [motion_fit_probe]: fit action start: forward_5m duration=25.000s sim_time=11.160
+[INFO] [1784095965.144343358] [motion_fit_probe]: fit action start: rest duration=3.000s sim_time=36.160
+[INFO] [1784095968.271879388] [motion_fit_probe]: fit probe schedule complete
+[INFO] [1784095968.300156324] [motion_fit_probe]: fit report written: /stage4s/artifacts/stage4s_fit_20260715_060547/radius_grid/0p138.json; complete=True

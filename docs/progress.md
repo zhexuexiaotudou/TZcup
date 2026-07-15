@@ -1,5 +1,31 @@
 # 项目推进记录
 
+## Stage4S：运动模型标定与定位闭环
+
+状态：已到达可复核失败边界，未通过 Stage4S，未进入 Stage5A。
+
+已完成：
+
+- 新增模型级 Gazebo `OdometryPublisher` 真值源 `/ground_truth/model_odom_raw`，严格校验 `world` 与 `sanitation_vehicle/base_footprint`，移除生产路径对匿名 `Pose_V.transforms[0]` 的依赖。
+- 通过出生点、静止 20 s、前进 1 m、正负 90°、world→map_gt 变换和实体稳定性自证。
+- 建立使用仿真时钟、无障碍专用世界的 13 段开环实验台，并记录命令、关节、raw odom、IMU、EKF、真值、TF、段标记和完整 MCAP。
+- 解耦 physical 与 DiffDrive 参数，完成轮半径 5 点、轮距 9 点粗细网格；选择 `drive_wheel_radius=0.14 m`、`drive_wheel_separation=1.22 m`。
+- 完成 5 点摩擦/WheelSlip 最小网格。降低横向摩擦或启用 WheelSlip 均显著恶化高速转向，默认接触为网格最优。
+
+当前边界：
+
+- 首个失败层为 `layer_1_body_command_tracking`。
+- 5 m 直线、低速正反整圈和四个圆弧半径通过；高速 `0.60 rad/s` 正转整圈车体 yaw 误差为 `19.1825°`，门槛为 `≤18°`。
+- raw wheel odom 与 IMU 初步门槛通过，但不能跳过 Layer 1 直接做 EKF 消融。
+- Stage4S-5 至 Stage4S-9 未执行；`READY_FOR_GPT_REVIEW_STAGE4S=false`、`READY_FOR_STAGE5A=false`。
+- 垃圾感知训练、J6 量化和实板部署均未开始。
+
+复核入口：
+
+- `GPT_REVIEW_STAGE4S.md`
+- `artifacts/stage4s_20260715_review/stage4s_summary.json`
+- `artifacts/stage4s_20260715_review/manifest.sha256`
+
 ## Stage 0：预检与基线锁定
 
 状态：已通过（容器 headless 预检门）。
