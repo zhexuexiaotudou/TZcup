@@ -12,6 +12,8 @@ setup(
         ("share/" + package_name + "/config", [
             "config/demo_area.yaml",
             "config/mission_schema.json",
+            "config/mapping_completion_route.json",
+            "config/localization_route.json",
         ]),
     ],
     install_requires=["setuptools"],
@@ -27,6 +29,12 @@ setup(
             "sanitation_runtime_probe = sanitation_tasks.runtime_probe:main",
             "sanitation_navigation_probe = sanitation_tasks.navigation_probe:main",
             "sanitation_safety_probe = sanitation_tasks.safety_probe:main",
+            "sanitation_ground_truth_adapter = sanitation_tasks.ground_truth_adapter:main",
+            "sanitation_localization_evaluator = sanitation_tasks.localization_evaluator:main",
+            "sanitation_mapping_probe = sanitation_tasks.mapping_probe:main",
+            "sanitation_map_quality = sanitation_tasks.map_quality:main",
+            "sanitation_image_capture = sanitation_tasks.image_capture:main",
+            "sanitation_filter_probe = sanitation_tasks.filter_probe:main",
         ],
     },
 )

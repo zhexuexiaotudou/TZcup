@@ -93,3 +93,62 @@ def raster_coverage_metrics(polygon, swaths, width, resolution=0.10):
         "repeat_rate": repeated / target if target else 0.0,
         "gross_swept_area_m2": passes * cell_area,
     }
+
+
+def empirical_swept_metrics(polygon, timed_points, width, resolution=0.10):
+    """Rasterize actual brush-on poses, with continuous motion counted once.
+
+    A cell becomes a repeated-cleaning cell only after the footprint leaves it
+    for at least five samples and later returns. This avoids labeling every
+    high-rate adjacent pose on one straight pass as overlap.
+    """
+    min_x = min(point[0] for point in polygon)
+    max_x = max(point[0] for point in polygon)
+    min_y = min(point[1] for point in polygon)
+    max_y = max(point[1] for point in polygon)
+    cells = {}
+    rows = max(0, int(math.ceil((max_y - min_y) / resolution)))
+    columns = max(0, int(math.ceil((max_x - min_x) / resolution)))
+    for iy in range(rows):
+        y = min_y + (iy + 0.5) * resolution
+        for ix in range(columns):
+            x = min_x + (ix + 0.5) * resolution
+            if point_in_polygon(x, y, polygon):
+                cells[(ix, iy)] = (x, y)
+    visited = set()
+    repeated = set()
+    last_seen = {}
+    radius_cells = int(math.ceil(width / 2.0 / resolution))
+    for index, (_stamp, x, y) in enumerate(timed_points):
+        center_ix = int((x - min_x) / resolution)
+        center_iy = int((y - min_y) / resolution)
+        for iy in range(center_iy - radius_cells, center_iy + radius_cells + 1):
+            for ix in range(center_ix - radius_cells, center_ix + radius_cells + 1):
+                cell_index = (ix, iy)
+                if cell_index not in cells:
+                    continue
+                cell_x, cell_y = cells[cell_index]
+                if math.hypot(cell_x - x, cell_y - y) <= width / 2.0:
+                    if cell_index in last_seen and index - last_seen[cell_index] > 5:
+                        repeated.add(cell_index)
+                    visited.add(cell_index)
+                    last_seen[cell_index] = index
+    cell_area = resolution * resolution
+    target_area = len(cells) * cell_area
+    covered_area = len(visited) * cell_area
+    repeated_area = len(repeated) * cell_area
+    duration = (
+        timed_points[-1][0] - timed_points[0][0] if len(timed_points) >= 2 else 0.0
+    )
+    return {
+        "resolution_m": resolution,
+        "target_area_m2": target_area,
+        "covered_area_m2": covered_area,
+        "missed_area_m2": max(0.0, target_area - covered_area),
+        "repeated_area_m2": repeated_area,
+        "coverage_rate": len(visited) / len(cells) if cells else 0.0,
+        "miss_rate": (len(cells) - len(visited)) / len(cells) if cells else 0.0,
+        "repeat_rate": len(repeated) / len(cells) if cells else 0.0,
+        "brush_on_duration_sec": max(0.0, duration),
+        "metric_basis": "gazebo_ground_truth_cleaning_footprint_brush_on",
+    }

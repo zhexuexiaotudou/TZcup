@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "estimate_frame": "map",
+  "truth_frame": "map_gt",
+  "alignment": "world_to_map translation (+8, 0), zero yaw; map and map_gt axes explicitly coincident",
+  "sample_count": 1068,
+  "estimate_sample_count": 1068,
+  "truth_sample_count": 7230,
+  "dropped_estimate_count": 0,
+  "sync_error_sec": {
+    "rmse": 0.00964855270433277,
+    "p50": 0.009999999999990905,
+    "p95": 0.014999999999986358,
+    "max": 0.01999999999998181
+  },
+  "xy_error_m": {
+    "rmse": 14.044127688036168,
+    "p50": 14.926959893112024,
+    "p95": 16.023733193749415,
+    "max": 16.182159766169132
+  },
+  "yaw_error_rad": {
+    "rmse": 1.4511671587566746,
+    "p50": 0.48239768207396405,
+    "p95": 3.0065159862311783,
+    "max": 3.1170955099817514
+  },
+  "competition_localization_pass": false
+}

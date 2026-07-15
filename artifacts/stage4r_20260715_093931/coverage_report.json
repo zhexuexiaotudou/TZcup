@@ -1,0 +1,73 @@
+{
+  "schema_version": 2,
+  "mission_id": "demo_coverage_001",
+  "planner": "OpenNav Coverage + Fields2Cover",
+  "planning_success": true,
+  "transit_to_start_success": false,
+  "full_execution_success": false,
+  "empirical_coverage_success": false,
+  "safety_success": true,
+  "competition_efficiency_pass": false,
+  "success": false,
+  "operation_width_m": 0.65,
+  "swath_count": 12,
+  "turn_count": 11,
+  "nav_path_pose_count": 1180,
+  "component_count": 23,
+  "component_results": [],
+  "transit_to_start": {
+    "success": false,
+    "retries": 1,
+    "attempts": [
+      {
+        "attempt": 1,
+        "accepted": true,
+        "terminal_status": 6,
+        "error_code": 203,
+        "succeeded": false
+      },
+      {
+        "attempt": 2,
+        "accepted": true,
+        "terminal_status": 6,
+        "error_code": 203,
+        "succeeded": false
+      }
+    ]
+  },
+  "planned_metrics": {
+    "resolution_m": 0.1,
+    "target_area_m2": 64.00000000000001,
+    "covered_area_m2": 62.40000000000001,
+    "missed_area_m2": 1.6000000000000014,
+    "repeated_area_m2": 1.5900000000000003,
+    "coverage_rate": 0.975,
+    "miss_rate": 0.025,
+    "repeat_rate": 0.02484375,
+    "gross_swept_area_m2": 63.99000000000001,
+    "metric_basis": "planned_fields2cover_swaths_rasterized",
+    "path_length_m": 117.49408925046085,
+    "swath_endpoint_compatibility_repair": true
+  },
+  "empirical_metrics": {
+    "resolution_m": 0.1,
+    "target_area_m2": 64.00000000000001,
+    "covered_area_m2": 0.0,
+    "missed_area_m2": 64.00000000000001,
+    "repeated_area_m2": 0.0,
+    "coverage_rate": 0.0,
+    "miss_rate": 1.0,
+    "repeat_rate": 0.0,
+    "brush_on_duration_sec": 0.0,
+    "metric_basis": "gazebo_ground_truth_cleaning_footprint_brush_on",
+    "actual_path_length_m": 0.0,
+    "actual_duration_sec": 0.1283622019982431,
+    "gross_efficiency_m2_h": 0.0,
+    "net_efficiency_m2_h": 0.0
+  },
+  "recovery_count": 1,
+  "collision_count": 0,
+  "minimum_lidar_range_m": 9.540506362915039,
+  "brush_disabled_on_exit": true,
+  "execution_boundary": "All path components were required to terminate SUCCEEDED; no 180-pose shortcut or bounded cancellation is accepted."
+}

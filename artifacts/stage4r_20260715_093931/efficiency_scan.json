@@ -1,0 +1,177 @@
+{
+  "formula": "operation_width_m * speed_m_s * 3600",
+  "current_config": {
+    "operation_width_m": 0.65,
+    "desired_speed_m_s": 0.45,
+    "theoretical_efficiency_m2_h": 1053.0000000000002
+  },
+  "actual_net_efficiency_m2_h": 0.0,
+  "target_efficiency_m2_h": 3500.0,
+  "minimum_speed_at_0_65m_m_s": 1.4957264957264957,
+  "minimum_width_at_0_45m_m": 2.1604938271604937,
+  "gap_statement": "The current 0.65 m / 0.45 m/s Nav2 configuration cannot reach 3500 m2/h even theoretically; wider hardware or >=1.496 m/s is required before turn/overlap losses.",
+  "mechanical_feasibility_boundary": "URDF and simulation parameter scans do not prove brush, drivetrain, braking, stability, or competition-rule feasibility.",
+  "cases": [
+    {
+      "operation_width_m": 0.65,
+      "speed_m_s": 0.45,
+      "theoretical_efficiency_m2_h": 1053.0000000000002,
+      "competition_theory_pass": false,
+      "simulation_config_supported": true,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 0.65,
+      "speed_m_s": 0.8,
+      "theoretical_efficiency_m2_h": 1872.0,
+      "competition_theory_pass": false,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 0.65,
+      "speed_m_s": 1.0,
+      "theoretical_efficiency_m2_h": 2340.0,
+      "competition_theory_pass": false,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 0.65,
+      "speed_m_s": 1.2,
+      "theoretical_efficiency_m2_h": 2808.0,
+      "competition_theory_pass": false,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 0.65,
+      "speed_m_s": 1.5,
+      "theoretical_efficiency_m2_h": 3510.0000000000005,
+      "competition_theory_pass": true,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 0.8,
+      "speed_m_s": 0.45,
+      "theoretical_efficiency_m2_h": 1296.0000000000002,
+      "competition_theory_pass": false,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 0.8,
+      "speed_m_s": 0.8,
+      "theoretical_efficiency_m2_h": 2304.0000000000005,
+      "competition_theory_pass": false,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 0.8,
+      "speed_m_s": 1.0,
+      "theoretical_efficiency_m2_h": 2880.0,
+      "competition_theory_pass": false,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 0.8,
+      "speed_m_s": 1.2,
+      "theoretical_efficiency_m2_h": 3456.0,
+      "competition_theory_pass": false,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 0.8,
+      "speed_m_s": 1.5,
+      "theoretical_efficiency_m2_h": 4320.000000000001,
+      "competition_theory_pass": true,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 1.0,
+      "speed_m_s": 0.45,
+      "theoretical_efficiency_m2_h": 1620.0,
+      "competition_theory_pass": false,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 1.0,
+      "speed_m_s": 0.8,
+      "theoretical_efficiency_m2_h": 2880.0,
+      "competition_theory_pass": false,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 1.0,
+      "speed_m_s": 1.0,
+      "theoretical_efficiency_m2_h": 3600.0,
+      "competition_theory_pass": true,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 1.0,
+      "speed_m_s": 1.2,
+      "theoretical_efficiency_m2_h": 4320.0,
+      "competition_theory_pass": true,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 1.0,
+      "speed_m_s": 1.5,
+      "theoretical_efficiency_m2_h": 5400.0,
+      "competition_theory_pass": true,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 1.2,
+      "speed_m_s": 0.45,
+      "theoretical_efficiency_m2_h": 1944.0000000000002,
+      "competition_theory_pass": false,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 1.2,
+      "speed_m_s": 0.8,
+      "theoretical_efficiency_m2_h": 3456.0,
+      "competition_theory_pass": false,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 1.2,
+      "speed_m_s": 1.0,
+      "theoretical_efficiency_m2_h": 4320.0,
+      "competition_theory_pass": true,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 1.2,
+      "speed_m_s": 1.2,
+      "theoretical_efficiency_m2_h": 5184.0,
+      "competition_theory_pass": true,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    },
+    {
+      "operation_width_m": 1.2,
+      "speed_m_s": 1.5,
+      "theoretical_efficiency_m2_h": 6479.999999999999,
+      "competition_theory_pass": true,
+      "simulation_config_supported": false,
+      "mechanical_feasibility": "unverified_by_URDF"
+    }
+  ],
+  "competition_efficiency_pass": false
+}

@@ -1,0 +1,250 @@
+{
+  "schema_version": 1,
+  "requested_seed_count": 20,
+  "executed_set_pose_seed_count": 20,
+  "coverage_interaction_trial_count": 0,
+  "blocked_by": "same-frame localization failure prevented a valid coverage mission; service-only obstacle motion is not counted as an avoidance trial",
+  "success": false,
+  "trials": [
+    {
+      "seed": 0,
+      "world_pose": [
+        -4.0,
+        -2.6583035391673837,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 1,
+      "world_pose": [
+        -4.0,
+        -2.999443029694973,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 2,
+      "world_pose": [
+        -4.0,
+        0.7043985383320219,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 3,
+      "world_pose": [
+        -4.0,
+        3.4254393077272516,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 4,
+      "world_pose": [
+        -4.0,
+        -1.9777236881665634,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 5,
+      "world_pose": [
+        -4.0,
+        2.0666830419041133,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 6,
+      "world_pose": [
+        -4.0,
+        -1.8112690582429032,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 7,
+      "world_pose": [
+        -4.0,
+        -3.25553895143142,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 8,
+      "world_pose": [
+        -4.0,
+        -2.5718396585342904,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 9,
+      "world_pose": [
+        -4.0,
+        0.9735690702805293,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 10,
+      "world_pose": [
+        -4.0,
+        2.4100538554472406,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 11,
+      "world_pose": [
+        -4.0,
+        -2.474269649087675,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 12,
+      "world_pose": [
+        -4.0,
+        2.457281563070172,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 13,
+      "world_pose": [
+        -4.0,
+        0.7552647331441564,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 14,
+      "world_pose": [
+        -4.0,
+        0.7807522208169351,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 15,
+      "world_pose": [
+        -4.0,
+        1.3380995665494257,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 16,
+      "world_pose": [
+        -4.0,
+        -1.7873857919946907,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 17,
+      "world_pose": [
+        -4.0,
+        -0.6114894150584318,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 18,
+      "world_pose": [
+        -4.0,
+        -1.1980710930105296,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    },
+    {
+      "seed": 19,
+      "world_pose": [
+        -4.0,
+        -1.4629122843302524,
+        0.55
+      ],
+      "set_pose_success": true,
+      "collision_count": null,
+      "minimum_distance_m": null,
+      "coverage_completion": false
+    }
+  ]
+}

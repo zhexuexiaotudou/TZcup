@@ -28,11 +28,14 @@ class VelocityGate(Node):
     def __init__(self) -> None:
         super().__init__("velocity_gate")
         self.declare_parameter("command_timeout_sec", 0.5)
+        self.declare_parameter("input_topic", "/cmd_vel_gate")
         timeout = float(self.get_parameter("command_timeout_sec").value)
         self.state = VelocityGateState(command_timeout_sec=timeout)
         self.last_command = Twist()
         self.publisher = self.create_publisher(Twist, "/cmd_vel", 10)
-        self.create_subscription(Twist, "/cmd_vel_nav", self._on_command, 10)
+        self.create_subscription(
+            Twist, str(self.get_parameter("input_topic").value), self._on_command, 10
+        )
         self.create_subscription(Bool, "/emergency_stop", self._on_estop, 10)
         self.timer = self.create_timer(0.05, self._publish)
 

@@ -11,7 +11,7 @@
 
     <gravity>0 0 -9.81</gravity>
     <physics name="1ms" type="ignored">
-      <max_step_size>0.001</max_step_size>
+      <max_step_size>0.005</max_step_size>
       <real_time_factor>1.0</real_time_factor>
     </physics>
 
@@ -28,6 +28,25 @@
       <specular>0.2 0.2 0.2 1</specular>
       <direction>-0.4 0.2 -1.0</direction>
     </light>
+
+    <!-- Fixed orthographic-like overview evidence camera. The image is rendered
+         by Gazebo / Ogre2; Stage4R stores its ROS image frames as PNG evidence. -->
+    <model name="world_overview_camera">
+      <static>true</static>
+      <pose>0 0 28 0 1.57079632679 0</pose>
+      <link name="link">
+        <sensor name="overview" type="camera">
+          <always_on>true</always_on>
+          <update_rate>1</update_rate>
+          <topic>world_overview/image</topic>
+          <camera>
+            <horizontal_fov>1.55</horizontal_fov>
+            <image><width>960</width><height>640</height><format>R8G8B8</format></image>
+            <clip><near>0.1</near><far>100</far></clip>
+          </camera>
+        </sensor>
+      </link>
+    </model>
 
     <!-- Asphalt ground -->
     <model name="asphalt_ground">
@@ -136,6 +155,20 @@
         <visual name="visual">
           <geometry><box><size>0.9 0.7 0.7</size></box></geometry>
           <material><ambient>0.55 0.32 0.12 1</ambient><diffuse>0.65 0.42 0.18 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Stage4R movable obstacle. It is static between explicit Gazebo
+         SetPose commands so it does not contaminate the vehicle truth stream. -->
+    <model name="dynamic_pedestrian_box">
+      <static>true</static>
+      <pose>25 18 0.55 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.55 0.55 1.10</size></box></geometry></collision>
+        <visual name="visual">
+          <geometry><box><size>0.55 0.55 1.10</size></box></geometry>
+          <material><ambient>0.8 0.08 0.08 1</ambient><diffuse>0.95 0.12 0.12 1</diffuse></material>
         </visual>
       </link>
     </model>

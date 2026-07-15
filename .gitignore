@@ -9,14 +9,13 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 
-# Local secrets
-.env
-.env.*
-!.env.example
-
 # ROS bag payloads are evidence but are too large for normal Git history.
 artifacts/**/*.db3
+artifacts/**/*.mcap
 artifacts/**/metadata.yaml
+
+# Superseded local review bundle; the current Stage4R bundle is committed.
+无人清扫车仿真_GPT复核包_Stage4_20260715.zip
 
 # Editor and OS noise
 .vscode/

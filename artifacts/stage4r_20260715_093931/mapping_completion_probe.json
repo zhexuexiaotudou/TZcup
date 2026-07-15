@@ -1,0 +1,39 @@
+{
+  "success": true,
+  "route_completed": true,
+  "waypoints_completed": 4,
+  "waypoint_count": 4,
+  "trajectory_sample_count": 849,
+  "map_update_count": 22,
+  "final_map": {
+    "stamp_sec": 1050.8,
+    "width_cells": 817,
+    "height_cells": 663,
+    "resolution_m": 0.05000000074505806,
+    "known_cells": 176831,
+    "free_cells": 175339,
+    "occupied_cells": 1492,
+    "unknown_cells": 364840,
+    "known_area_m2": 442.07751317493626,
+    "span_x_m": 40.850000608712435,
+    "span_y_m": 33.150000493973494
+  },
+  "route": [
+    [
+      14.22,
+      -6.21
+    ],
+    [
+      14.22,
+      -8.0
+    ],
+    [
+      0.0,
+      -8.0
+    ],
+    [
+      0.0,
+      0.0
+    ]
+  ]
+}
