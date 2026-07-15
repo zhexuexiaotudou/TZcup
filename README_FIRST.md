@@ -24,6 +24,8 @@
 - `COMPETITION_REQUIREMENTS.md`：赛题指标到仿真模块的映射
 - `STAGE_GATES.md`：阶段、验收条件和 GPT 复核门
 - `THIRD_PARTY_SELECTION.md`：第三方仓库选择理由和许可边界
+- `AGENTS.md`：项目级 Agent 规则和开发门禁
+- `docs/development-workflow.md`：统一命名的“开发工作流”，覆盖分支、PR、CI、部署、真实验收和收尾
 - `scripts/`：环境检查、拉取依赖、构建、运行和证据采集脚本
 - `starter_ws/src/`：可直接放进 ROS 2 工作空间的项目骨架
 
