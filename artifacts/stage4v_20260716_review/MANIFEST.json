@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "stage": "Stage4V",
+  "generated_at": "2026-07-16",
+  "localization_formal_gate_pass": true,
+  "coverage_and_safety_gate_pass": false,
+  "ready_for_gpt_review_stage4v": false,
+  "ready_for_stage5a": false,
+  "competition_efficiency_pass": false,
+  "files": {
+    "localization": "stage4v_localization_report.json",
+    "coverage": "stage4v_coverage_report.json",
+    "review": "../../GPT_REVIEW_STAGE4V.md"
+  },
+  "raw_evidence": {
+    "localization": "../stage4v_formal_hybrid_fixed20_20260716/",
+    "coverage": "../stage4v_coverage_hybrid_retry_20260716/"
+  }
+}

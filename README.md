@@ -1,5 +1,9 @@
 # TZcup 无人清扫车仿真项目
 
+## Stage4V 混合定位与完整任务复核（2026-07-16）
+
+Stage4V 已实现 C++ 扫描精化、标准 NavSatFix 仿真、局部/全局融合及 TF 单所有权审计。正式 hybrid 10-seed 全部通过：XY RMSE P50/P95/max 为 `0.03344/0.03792/0.03872 m`，导航、TF 与扫描实际参与均为 10/10，GT 控制违规 0。随后完整 Coverage 在 transit-to-start 失败，经验覆盖率 0%，动态障碍有效交互 0/20；但零碰撞、过滤器、30 次急停（P95 `0.171 s`）与 MCAP 回放通过。因此 `READY_FOR_GPT_REVIEW_STAGE4V=false`、`READY_FOR_STAGE5A=false`，理论效率仍为 `1053 m²/h < 3500 m²/h`。复核入口见 [`GPT_REVIEW_STAGE4V.md`](GPT_REVIEW_STAGE4V.md)。
+
 ## Stage4U 坐标标定、定位地图与 5 cm 闭环（2026-07-16）
 
 Stage4U 已修复 map/map_gt 评测语义、`ParticleCloud` 类型/QoS 和地图质量假通过，并完成 M1/M2/M3、AMCL/SLAM Toolbox、LiDAR/AMCL 灵敏度及正式 Oracle 10-seed。最优候选为结构化 v2 surveyed reference 0.02 m + AMCL + 360@10 Hz；10/10 导航成功、TF 全连续、粒子仪器全有效、恢复 0 次，但 map-relative XY RMSE P50/P95/max 为 `0.06767/0.07983/0.08022 m`，未过 0.05 m 硬门。因此 `READY_FOR_GPT_REVIEW_STAGE4U=false`、`READY_FOR_STAGE5A=false`，realistic 与完整 Coverage 按停止条件未执行。复核入口见 [`GPT_REVIEW_STAGE4U.md`](GPT_REVIEW_STAGE4U.md) 与 [`artifacts/stage4u_20260716_review/`](artifacts/stage4u_20260716_review/)；原始 MCAP/posegraph 在用户确认前保留。
@@ -12,10 +16,10 @@ Stage4T 已完成 200 组固定时长瞬态、120 组闭环航向、A/B/C/D 各 
 
 ## 当前状态
 
-- Stage 0–4T 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；当前车辆参数为 0.14 m 轮半径、1.22 m 有效轮距，融合配置选择 EKF-B。
+- Stage 0–4V 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；当前车辆参数为 0.14 m 轮半径、1.22 m 有效轮距，局部融合选择 EKF-B，全局融合采用 RTK + 扫描精化 + 局部里程计。
 - precision mapping 与 localization/coverage 包络分别限制为 0.30/0.25 和 0.45/0.35 m/s、rad/s；0.60 rad/s stress 默认禁用且仍失败。
-- 0.05 m 地图通过基础质量门，但 Oracle 10-seed 的 XY RMSE P50/P95/max 为 0.08397/0.14848/0.16972 m，第一失败层为 `oracle_localization_pass`。
-- realistic 全量定位、完整 Coverage、动态障碍、完整任务急停与 rosbag 回放按停止条件未执行；理论清扫效率仍为 1053 m²/h，未达到 3500 m²/h。
+- Stage4V hybrid 10-seed 的 XY RMSE P50/P95/max 为 0.03344/0.03792/0.03872 m，定位门禁通过。
+- 完整 Coverage 已执行但 transit-to-start 失败；动态障碍有效交互 0/20。过滤器、30 次急停和 rosbag 回放通过；理论清扫效率仍为 1053 m²/h，未达到 3500 m²/h。
 - 原生 Ubuntu/WSLg 下的 Gazebo/RViz GUI 验收仍未完成；进入感知训练或 J6 量化前必须先解决定位硬门。
 - 详细证据、复现命令和已知边界以 [`docs/progress.md`](docs/progress.md) 为准。
 

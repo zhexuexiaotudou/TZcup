@@ -1,0 +1,9 @@
+sanitation_gnss_sim:
+  ros__parameters:
+    use_sim_time: true
+    profile: rtk_fixed
+    random_seed: 0
+    origin_latitude_deg: 31.2304
+    origin_longitude_deg: 121.4737
+    publish_heading: true
+    publish_velocity: true

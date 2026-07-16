@@ -59,12 +59,16 @@ def validate_structured_files() -> None:
 def run_ros_independent_tests() -> None:
     coverage_package = SOURCE_ROOT / "sanitation_coverage"
     tasks_package = SOURCE_ROOT / "sanitation_tasks"
+    gnss_package = SOURCE_ROOT / "sanitation_gnss_sim"
     sys.path.insert(0, str(coverage_package))
     sys.path.insert(0, str(tasks_package))
+    sys.path.insert(0, str(gnss_package))
     test_paths = (
         coverage_package / "test" / "test_metrics.py",
         tasks_package / "test" / "test_localization_metrics.py",
         tasks_package / "test" / "test_stage4t_localization_aggregate.py",
+        tasks_package / "test" / "test_stage4v_localization_aggregate.py",
+        gnss_package / "test" / "test_model.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])
     if result != pytest.ExitCode.OK:

@@ -21,6 +21,11 @@
   <exec_depend>sanitation_vehicle_description</exec_depend>
   <exec_depend>sanitation_worlds</exec_depend>
   <exec_depend>sanitation_tasks</exec_depend>
+  <exec_depend>sanitation_navigation</exec_depend>
+  <exec_depend>sanitation_gnss_sim</exec_depend>
+  <exec_depend>sanitation_scan_refiner</exec_depend>
+  <exec_depend>nav2_map_server</exec_depend>
+  <exec_depend>nav2_lifecycle_manager</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
