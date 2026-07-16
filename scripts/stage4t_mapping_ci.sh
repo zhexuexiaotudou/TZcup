@@ -49,6 +49,10 @@ for label in ${TZCUP_MAPPING_LABELS:-005 002}; do
   ros2 run nav2_map_server map_saver_cli -f "$trial/slam_map" --ros-args \
     -p use_sim_time:=true -p save_map_timeout:=30.0 > "$trial/map_save.log" 2>&1
   MAP_SAVE_CODE=$?
+  timeout 60s ros2 service call /slam_toolbox/serialize_map \
+    slam_toolbox/srv/SerializePoseGraph "{filename: '$trial/slam_posegraph'}" \
+    > "$trial/posegraph_serialize.log" 2>&1
+  SERIALIZE_CODE=$?
   set -e
   ros2 run sanitation_tasks sanitation_image_capture --ros-args -p output_path:="$trial/gazebo_mapping.png" > "$trial/image_capture.log" 2>&1 || true
   stop_bag "$BAG_PID" "$trial/rosbag_stop.log"; stop_group "$SLAM_PID"; stop_group "$SIM_PID"; PIDS=()
@@ -61,10 +65,10 @@ for label in ${TZCUP_MAPPING_LABELS:-005 002}; do
   python3 "$PACK_ROOT/scripts/stage4t_map_geometry.py" --map-yaml "$trial/slam_map.yaml" \
     --world-sdf "$PACK_ROOT/starter_ws/src/sanitation_worlds/worlds/sanitation_test_world.sdf" \
     --output "$trial/map_geometry.json" --overlay "$trial/map_truth_overlay.png"
-  python3 - "$trial" "$MAPPING_CODE" "$MAP_SAVE_CODE" "$QUALITY_CODE" <<'PY'
+  python3 - "$trial" "$MAPPING_CODE" "$MAP_SAVE_CODE" "$QUALITY_CODE" "$SERIALIZE_CODE" <<'PY'
 import json, sys
 from pathlib import Path
-root=Path(sys.argv[1]); report=json.loads((root/'mapping_probe.json').read_text(encoding='utf-8')); report['exit_codes']={'mapping_probe':int(sys.argv[2]),'map_save':int(sys.argv[3]),'map_quality':int(sys.argv[4])}; (root/'mapping_probe.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
+root=Path(sys.argv[1]); report=json.loads((root/'mapping_probe.json').read_text(encoding='utf-8')); report['exit_codes']={'mapping_probe':int(sys.argv[2]),'map_save':int(sys.argv[3]),'map_quality':int(sys.argv[4]),'posegraph_serialize':int(sys.argv[5])}; report['serialized_pose_graph']={'posegraph':str(root/'slam_posegraph.posegraph'),'data':str(root/'slam_posegraph.data'),'complete':(root/'slam_posegraph.posegraph').is_file() and (root/'slam_posegraph.data').is_file()}; (root/'mapping_probe.json').write_text(json.dumps(report,ensure_ascii=False,indent=2)+'\n',encoding='utf-8')
 PY
 done
 if [[ "${SKIP_AGGREGATE:-false}" != true ]]; then

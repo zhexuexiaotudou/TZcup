@@ -5,7 +5,13 @@ import argparse
 import json
 import math
 import shutil
+import sys
 from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "starter_ws" / "src" / "sanitation_tasks"))
+from sanitation_tasks.localization_metrics import map_gate_result  # noqa: E402
 
 
 def main():
@@ -18,16 +24,22 @@ def main():
         geometry = json.loads((root / "map_geometry.json").read_text(encoding="utf-8"))
         mapping = json.loads((root / "mapping_probe.json").read_text(encoding="utf-8"))
         quality = json.loads((root / "map_quality.json").read_text(encoding="utf-8"))
-        candidates[label] = {"mapping": mapping, "quality": quality, "geometry": geometry}
+        gates = map_gate_result(mapping, quality, geometry)
+        candidates[label] = {"mapping": mapping, "quality": quality, "geometry": geometry, **gates}
     eligible = [label for label, item in candidates.items() if item["mapping"].get("success") and item["quality"].get("slam_quality_pass")]
     selected = max(eligible, key=lambda label: (candidates[label]["geometry"].get("occupancy_iou", 0.0), -float(candidates[label]["geometry"].get("boundary_rmse_m") or 1.0e9))) if eligible else None
+    selected_gates = candidates.get(selected, {})
     report = {
-        "schema_version": 1,
+        "schema_version": 2,
         "comparison_resolutions_m": [candidates[label]["geometry"]["map_resolution_m"] for label in candidates],
         "rigid_registration_completed_before_metrics": True,
         "candidates": candidates,
         "selected_map": selected,
-        "pass": selected is not None,
+        "map_generation_pass": bool(selected and selected_gates.get("map_generation_pass")),
+        "map_basic_quality_pass": bool(selected and selected_gates.get("map_basic_quality_pass")),
+        "map_localization_geometry_pass": bool(selected and selected_gates.get("map_localization_geometry_pass")),
+        "pass": bool(selected and selected_gates.get("map_localization_geometry_pass")),
+        "pass_semantics": "deprecated alias of map_localization_geometry_pass",
     }
     (args.output_dir / "map_geometry_report.json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     if selected:

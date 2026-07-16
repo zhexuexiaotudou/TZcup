@@ -1,5 +1,9 @@
 # TZcup 无人清扫车仿真项目
 
+## Stage4U 坐标标定、定位地图与 5 cm 闭环（2026-07-16）
+
+Stage4U 已修复 map/map_gt 评测语义、`ParticleCloud` 类型/QoS 和地图质量假通过，并完成 M1/M2/M3、AMCL/SLAM Toolbox、LiDAR/AMCL 灵敏度及正式 Oracle 10-seed。最优候选为结构化 v2 surveyed reference 0.02 m + AMCL + 360@10 Hz；10/10 导航成功、TF 全连续、粒子仪器全有效、恢复 0 次，但 map-relative XY RMSE P50/P95/max 为 `0.06767/0.07983/0.08022 m`，未过 0.05 m 硬门。因此 `READY_FOR_GPT_REVIEW_STAGE4U=false`、`READY_FOR_STAGE5A=false`，realistic 与完整 Coverage 按停止条件未执行。复核入口见 [`GPT_REVIEW_STAGE4U.md`](GPT_REVIEW_STAGE4U.md) 与 [`artifacts/stage4u_20260716_review/`](artifacts/stage4u_20260716_review/)；原始 MCAP/posegraph 在用户确认前保留。
+
 ## Stage4T 瞬态、EKF 与定位恢复边界（2026-07-15）
 
 Stage4T 已完成 200 组固定时长瞬态、120 组闭环航向、A/B/C/D 各 5 次 EKF 消融、非零 measurement covariance、双分辨率重建图和正式 Oracle 10-seed 定位。0.25/0.35 rad/s 运行包络与闭环航向通过，0.60 rad/s 开环 stress 失败被保留；最终选择 EKF-B。选中 0.05 m 地图后，Oracle 10/10 次导航成功，但 XY RMSE P50/P95/max 为 0.08397/0.14848/0.16972 m，未达到 0.05 m 硬门，因此 `READY_FOR_GPT_REVIEW_STAGE4T=false`、`READY_FOR_STAGE5A=false`，realistic 全量与完整 Coverage 按协议阻断。发布与审计见 [PR #7](https://github.com/zhexuexiaotudou/TZcup/pull/7)、[`GPT_REVIEW_STAGE4T.md`](GPT_REVIEW_STAGE4T.md) 与 [`artifacts/stage4t_20260715_review/`](artifacts/stage4t_20260715_review/)；原始 MCAP 和失败调优 artifact 在用户确认前保留。
@@ -84,4 +88,4 @@ python scripts/ci_fast.py
 
 ## 最近同步
 
-2026-07-15：Stage4T 已由 [PR #7](https://github.com/zhexuexiaotudou/TZcup/pull/7) 合并到 `main@2412300192d6f4204e0049e55c06ba69353377ba`；合并树的真实 Gazebo core smoke 再验通过 covariance、运行包络与最终速度门（实际越界 0），但 Oracle 定位硬门仍失败，`READY_FOR_GPT_REVIEW_STAGE4T=false`。
+2026-07-16：Stage4U 在隔离分支完成坐标标定、粒子云、地图质量语义与定位矩阵修复；正式串行 Oracle 10-seed 为 10/10 有效，但 XY RMSE P50/P95/max `0.06767/0.07983/0.08022 m` 未过 0.05 m。当前等待 PR/CI/合并与合并树复验，`READY_FOR_GPT_REVIEW_STAGE4U=false`。

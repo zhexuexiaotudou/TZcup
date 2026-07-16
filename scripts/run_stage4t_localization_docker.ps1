@@ -11,5 +11,12 @@ $argsList = @(
   "--volume", "${mainCheckout}:/work", "--volume", "${packRoot}:/stage4t",
   "--workdir", "/stage4t", "tzcup/sanitation-jazzy:stage0", "bash", "scripts/stage4t_localization_ci.sh"
 )
+foreach ($name in @("TZCUP_MAP_YAML", "TZCUP_MAP_CALIBRATION", "TZCUP_FILTER_ROOT", "TZCUP_LOCALIZATION_BACKEND", "TZCUP_SLAM_PARAMS", "TZCUP_POSEGRAPH", "TZCUP_LIDAR_SAMPLES", "TZCUP_LIDAR_UPDATE_RATE", "TZCUP_NAV2_PARAMS", "TZCUP_WORLD_FILE")) {
+  $value = [Environment]::GetEnvironmentVariable($name)
+  if ($value) {
+    $insertAt = $argsList.IndexOf("--volume")
+    $argsList = $argsList[0..($insertAt - 1)] + @("--env", "$name=$value") + $argsList[$insertAt..($argsList.Count - 1)]
+  }
+}
 docker @argsList
 if ($LASTEXITCODE -ne 0) { throw "Stage4T localization failed: $LASTEXITCODE" }

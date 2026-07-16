@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "stage": "Stage4U",
+  "baseline_remote_main": "de5106cdaf0948888c0225a1076cad790280efa3",
+  "map_frame_contract": "explicit frozen T_target_source; no per-seed fitting",
+  "particle_topic_type": "nav2_msgs/msg/ParticleCloud",
+  "map_lanes": {
+    "M1_slam_raw": "localization geometry failed; low-quality rigid calibration rejected",
+    "M2_slam_refined": "posegraph serialized; offline optimization not executed; localization geometry failed",
+    "M3_surveyed_reference": "localization-only reference; not mapping evidence"
+  },
+  "backend_screening_map_relative_xy_rmse_m": {
+    "M1_amcl": 0.19926,
+    "M2_amcl": 0.0874376,
+    "M2_slam_toolbox": 0.297881,
+    "M3_sparse_amcl_baseline": 0.124271,
+    "M3_sparse_amcl_tuned_360x10": 0.112926,
+    "M3_sparse_amcl_tuned_720x20": 0.122323,
+    "M3_structured_v2_005_amcl": 0.064731,
+    "M3_structured_v2_002_amcl": 0.0628141
+  },
+  "formal_oracle_10seed": {
+    "candidate": "M3 structured v2, 0.02 m, AMCL tuned profile, 360 samples at 10 Hz",
+    "completed_seed_count": 10,
+    "required_seed_count": 10,
+    "xy_rmse_m": {
+      "p50": 0.06766908674850856,
+      "p95": 0.07983295274652637,
+      "max": 0.0802179077764475
+    },
+    "yaw_rmse_rad": {
+      "p50": 0.004061749652250778,
+      "p95": 0.004354922145787521,
+      "max": 0.0044165478653672525
+    },
+    "particle_instrumentation_pass_all_trials": true,
+    "tf_continuous_all_trials": true,
+    "navigation_success_all_trials": true,
+    "recovery_count": 0,
+    "worst_seed_trial": "seed_7/localization_report.json",
+    "oracle_localization_pass": false
+  },
+  "stop_condition": "Oracle 10-seed max RMSE exceeds 0.05 m; realistic and full Coverage not executed",
+  "theoretical_efficiency_m2_per_h": 1053,
+  "competition_efficiency_target_m2_per_h": 3500,
+  "competition_efficiency_pass": false,
+  "READY_FOR_GPT_REVIEW_STAGE4U": false,
+  "READY_FOR_STAGE5A": false
+}

@@ -1,0 +1,18 @@
+{
+  "map_yaml": "/stage4t/artifacts/stage4u_20260716_mapping_005/map_005/slam_map.yaml",
+  "map_image": "/stage4t/artifacts/stage4u_20260716_mapping_005/map_005/slam_map.pgm",
+  "resolution_m": 0.05,
+  "width_cells": 661,
+  "height_cells": 327,
+  "span_x_m": 33.050000000000004,
+  "span_y_m": 16.35,
+  "occupied_cells": 854,
+  "free_cells": 60115,
+  "unknown_cells": 155178,
+  "known_cells": 60969,
+  "known_area_m2": 152.42250000000004,
+  "resolution_pass": true,
+  "span_pass": true,
+  "known_area_pass": true,
+  "slam_quality_pass": true
+}

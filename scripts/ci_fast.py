@@ -58,9 +58,15 @@ def validate_structured_files() -> None:
 
 def run_ros_independent_tests() -> None:
     coverage_package = SOURCE_ROOT / "sanitation_coverage"
+    tasks_package = SOURCE_ROOT / "sanitation_tasks"
     sys.path.insert(0, str(coverage_package))
-    test_path = coverage_package / "test" / "test_metrics.py"
-    result = pytest.main(["-q", str(test_path)])
+    sys.path.insert(0, str(tasks_package))
+    test_paths = (
+        coverage_package / "test" / "test_metrics.py",
+        tasks_package / "test" / "test_localization_metrics.py",
+        tasks_package / "test" / "test_stage4t_localization_aggregate.py",
+    )
+    result = pytest.main(["-q", *(str(path) for path in test_paths)])
     if result != pytest.ExitCode.OK:
         raise RuntimeError(f"ROS-independent pytest gate failed with exit code {int(result)}")
 

@@ -1,0 +1,294 @@
+{
+  "schema_version": 2,
+  "lane": "oracle",
+  "oracle_only": true,
+  "competition_evidence": false,
+  "required_seed_count": 10,
+  "discovered_seed_count": 10,
+  "completed_seed_count": 10,
+  "incomplete_seed_count": 0,
+  "trial_completion": [
+    {
+      "trial_path": "seed_0/localization_report.json",
+      "complete": true,
+      "reasons": []
+    },
+    {
+      "trial_path": "seed_1/localization_report.json",
+      "complete": true,
+      "reasons": []
+    },
+    {
+      "trial_path": "seed_2/localization_report.json",
+      "complete": true,
+      "reasons": []
+    },
+    {
+      "trial_path": "seed_3/localization_report.json",
+      "complete": true,
+      "reasons": []
+    },
+    {
+      "trial_path": "seed_4/localization_report.json",
+      "complete": true,
+      "reasons": []
+    },
+    {
+      "trial_path": "seed_5/localization_report.json",
+      "complete": true,
+      "reasons": []
+    },
+    {
+      "trial_path": "seed_6/localization_report.json",
+      "complete": true,
+      "reasons": []
+    },
+    {
+      "trial_path": "seed_7/localization_report.json",
+      "complete": true,
+      "reasons": []
+    },
+    {
+      "trial_path": "seed_8/localization_report.json",
+      "complete": true,
+      "reasons": []
+    },
+    {
+      "trial_path": "seed_9/localization_report.json",
+      "complete": true,
+      "reasons": []
+    }
+  ],
+  "map_relative_xy_rmse_m": {
+    "p50": 0.06766908674850856,
+    "p95": 0.07983295274652637,
+    "max": 0.0802179077764475
+  },
+  "map_relative_yaw_rmse_rad": {
+    "p50": 0.004061749652250778,
+    "p95": 0.004354922145787521,
+    "max": 0.0044165478653672525
+  },
+  "absolute_world_xy_rmse_m": {
+    "p50": 0.06766908674850856,
+    "p95": 0.07983295274652637,
+    "max": 0.0802179077764475
+  },
+  "calibrated_absolute_world_xy_rmse_m": {
+    "p50": 0.06766908674850856,
+    "p95": 0.07983295274652637,
+    "max": 0.0802179077764475
+  },
+  "xy_rmse_m": {
+    "p50": 0.06766908674850856,
+    "p95": 0.07983295274652637,
+    "max": 0.0802179077764475
+  },
+  "yaw_rmse_rad": {
+    "p50": 0.004061749652250778,
+    "p95": 0.004354922145787521,
+    "max": 0.0044165478653672525
+  },
+  "map_georeferencing_error": {
+    "fit_residual": {
+      "objective_initial_m": 0.0,
+      "objective_final_m": 0.0,
+      "boundary_chamfer_mean_m": 0.0,
+      "boundary_p95_m": 0.0,
+      "occupancy_iou": 1.0
+    },
+    "definition": "one-time fixed-anchor map calibration residual; never fit per trial"
+  },
+  "particle_instrumentation_applicable_trial_count": 10,
+  "particle_instrumentation_pass_all_trials": true,
+  "particle_degenerate_updates": 0,
+  "tf_continuous_all_trials": true,
+  "navigation_success_all_trials": true,
+  "recovery_count": 0,
+  "worst_seed_trial": "seed_7/localization_report.json",
+  "localization_pass": false,
+  "oracle_localization_pass": false,
+  "competition_localization_pass": false,
+  "trials": [
+    {
+      "trial_path": "seed_0/localization_report.json",
+      "sample_count": 443,
+      "estimate_sample_count": 452,
+      "truth_sample_count": 5680,
+      "map_relative_xy_rmse_m": 0.07011626621596002,
+      "map_relative_yaw_rmse_rad": 0.003967738105393079,
+      "particle_valid_update_count": 451,
+      "particle_count_min": 2001,
+      "particle_count_max": 8000,
+      "particle_instrumentation_pass": true,
+      "particle_degenerate_update_count": 0,
+      "tf_continuous": true,
+      "navigation_success": true,
+      "navigation_recoveries": 0,
+      "navigation_exit_code": 0,
+      "evaluator_exit_code": 2
+    },
+    {
+      "trial_path": "seed_1/localization_report.json",
+      "sample_count": 486,
+      "estimate_sample_count": 487,
+      "truth_sample_count": 5785,
+      "map_relative_xy_rmse_m": 0.06898955394121764,
+      "map_relative_yaw_rmse_rad": 0.0038790102691965023,
+      "particle_valid_update_count": 486,
+      "particle_count_min": 2001,
+      "particle_count_max": 8000,
+      "particle_instrumentation_pass": true,
+      "particle_degenerate_update_count": 0,
+      "tf_continuous": true,
+      "navigation_success": true,
+      "navigation_recoveries": 0,
+      "navigation_exit_code": 0,
+      "evaluator_exit_code": 2
+    },
+    {
+      "trial_path": "seed_2/localization_report.json",
+      "sample_count": 485,
+      "estimate_sample_count": 486,
+      "truth_sample_count": 5804,
+      "map_relative_xy_rmse_m": 0.06701722234968885,
+      "map_relative_yaw_rmse_rad": 0.004031474310037704,
+      "particle_valid_update_count": 484,
+      "particle_count_min": 2001,
+      "particle_count_max": 8000,
+      "particle_instrumentation_pass": true,
+      "particle_degenerate_update_count": 0,
+      "tf_continuous": true,
+      "navigation_success": true,
+      "navigation_recoveries": 0,
+      "navigation_exit_code": 0,
+      "evaluator_exit_code": 2
+    },
+    {
+      "trial_path": "seed_3/localization_report.json",
+      "sample_count": 492,
+      "estimate_sample_count": 492,
+      "truth_sample_count": 5790,
+      "map_relative_xy_rmse_m": 0.0679393627652394,
+      "map_relative_yaw_rmse_rad": 0.00410382716717432,
+      "particle_valid_update_count": 492,
+      "particle_count_min": 2001,
+      "particle_count_max": 8000,
+      "particle_instrumentation_pass": true,
+      "particle_degenerate_update_count": 0,
+      "tf_continuous": true,
+      "navigation_success": true,
+      "navigation_recoveries": 0,
+      "navigation_exit_code": 0,
+      "evaluator_exit_code": 2
+    },
+    {
+      "trial_path": "seed_4/localization_report.json",
+      "sample_count": 478,
+      "estimate_sample_count": 478,
+      "truth_sample_count": 5846,
+      "map_relative_xy_rmse_m": 0.0668609980205671,
+      "map_relative_yaw_rmse_rad": 0.003849749836202864,
+      "particle_valid_update_count": 477,
+      "particle_count_min": 2001,
+      "particle_count_max": 8000,
+      "particle_instrumentation_pass": true,
+      "particle_degenerate_update_count": 0,
+      "tf_continuous": true,
+      "navigation_success": true,
+      "navigation_recoveries": 0,
+      "navigation_exit_code": 0,
+      "evaluator_exit_code": 2
+    },
+    {
+      "trial_path": "seed_5/localization_report.json",
+      "sample_count": 494,
+      "estimate_sample_count": 494,
+      "truth_sample_count": 5799,
+      "map_relative_xy_rmse_m": 0.06722503440526151,
+      "map_relative_yaw_rmse_rad": 0.004092024994463852,
+      "particle_valid_update_count": 494,
+      "particle_count_min": 2001,
+      "particle_count_max": 8000,
+      "particle_instrumentation_pass": true,
+      "particle_degenerate_update_count": 0,
+      "tf_continuous": true,
+      "navigation_success": true,
+      "navigation_recoveries": 0,
+      "navigation_exit_code": 0,
+      "evaluator_exit_code": 2
+    },
+    {
+      "trial_path": "seed_6/localization_report.json",
+      "sample_count": 462,
+      "estimate_sample_count": 469,
+      "truth_sample_count": 5803,
+      "map_relative_xy_rmse_m": 0.06739881073177773,
+      "map_relative_yaw_rmse_rad": 0.004279601821856737,
+      "particle_valid_update_count": 468,
+      "particle_count_min": 2001,
+      "particle_count_max": 8000,
+      "particle_instrumentation_pass": true,
+      "particle_degenerate_update_count": 0,
+      "tf_continuous": true,
+      "navigation_success": true,
+      "navigation_recoveries": 0,
+      "navigation_exit_code": 0,
+      "evaluator_exit_code": 2
+    },
+    {
+      "trial_path": "seed_7/localization_report.json",
+      "sample_count": 470,
+      "estimate_sample_count": 481,
+      "truth_sample_count": 5783,
+      "map_relative_xy_rmse_m": 0.0802179077764475,
+      "map_relative_yaw_rmse_rad": 0.004249812746974616,
+      "particle_valid_update_count": 480,
+      "particle_count_min": 2001,
+      "particle_count_max": 8000,
+      "particle_instrumentation_pass": true,
+      "particle_degenerate_update_count": 0,
+      "tf_continuous": true,
+      "navigation_success": true,
+      "navigation_recoveries": 0,
+      "navigation_exit_code": 0,
+      "evaluator_exit_code": 2
+    },
+    {
+      "trial_path": "seed_8/localization_report.json",
+      "sample_count": 489,
+      "estimate_sample_count": 489,
+      "truth_sample_count": 5861,
+      "map_relative_xy_rmse_m": 0.06601327020770732,
+      "map_relative_yaw_rmse_rad": 0.003863550229271341,
+      "particle_valid_update_count": 488,
+      "particle_count_min": 2001,
+      "particle_count_max": 8000,
+      "particle_instrumentation_pass": true,
+      "particle_degenerate_update_count": 0,
+      "tf_continuous": true,
+      "navigation_success": true,
+      "navigation_recoveries": 0,
+      "navigation_exit_code": 0,
+      "evaluator_exit_code": 2
+    },
+    {
+      "trial_path": "seed_9/localization_report.json",
+      "sample_count": 469,
+      "estimate_sample_count": 479,
+      "truth_sample_count": 5800,
+      "map_relative_xy_rmse_m": 0.07936245215440056,
+      "map_relative_yaw_rmse_rad": 0.0044165478653672525,
+      "particle_valid_update_count": 478,
+      "particle_count_min": 2001,
+      "particle_count_max": 8000,
+      "particle_instrumentation_pass": true,
+      "particle_degenerate_update_count": 0,
+      "tf_continuous": true,
+      "navigation_success": true,
+      "navigation_recoveries": 0,
+      "navigation_exit_code": 0,
+      "evaluator_exit_code": 2
+    }
+  ]
+}

@@ -1,5 +1,13 @@
 # Codex 阶段推进与验收门
 
+## Stage4U 当前门禁（2026-07-16）
+
+- Oracle 10-seed 有效性：通过（10/10 完整、导航成功、TF 连续、粒子仪器有效）。
+- Oracle map-relative XY RMSE ≤ 0.05 m：失败（P50/P95/max `0.06767/0.07983/0.08022 m`）。
+- Realistic 10-seed：未执行；前置 Oracle 硬门失败。
+- 完整 Coverage/动态障碍/急停/replay：未执行；前置 realistic 硬门未满足。
+- `READY_FOR_GPT_REVIEW_STAGE4U=false`；`READY_FOR_STAGE5A=false`。
+
 ## Stage 0：预检与基线锁定
 
 ### 任务

@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "entries": [
+    {
+      "path": "M1_slam_raw__map_geometry.json",
+      "bytes": 1907,
+      "sha256": "33f132f04c401289f5fed886a3060d44f7450e71b53d579533f95af8de9a8db4"
+    },
+    {
+      "path": "M1_slam_raw__map_quality.json",
+      "bytes": 535,
+      "sha256": "58290ddc43f246d980ea4334ec71d5de00a98e5a5bcee90190def54c0014acd0"
+    },
+    {
+      "path": "M2_slam_refined__lane_status.json",
+      "bytes": 641,
+      "sha256": "72ab46a87d2593f4d82507217eb13336d9eb0b32b4df038f5ebc97c1701deef9"
+    },
+    {
+      "path": "M2_slam_refined__map_geometry.json",
+      "bytes": 1979,
+      "sha256": "fdc4cbe471bb3603249bd03b8e653677c8f0c5f0849a0f39a2204bab052342de"
+    },
+    {
+      "path": "M2_slam_refined__map_quality.json",
+      "bytes": 543,
+      "sha256": "d54256757a71b5b2275f5055fff3e55f9a754713e3bae4898fb62c578f6696ff"
+    },
+    {
+      "path": "M3_structured_reference_v2_002__surveyed_reference_report.json",
+      "bytes": 5779,
+      "sha256": "65baf935885f6b549dc6a87c93996fd5b4d0d49e313bf7977f4637a5a7789d44"
+    },
+    {
+      "path": "map_lane_summary.json",
+      "bytes": 1527,
+      "sha256": "67e79713a2e62edb24e953d895dd18b21800b17d76747e1d59c2bc3e3ed46b5f"
+    },
+    {
+      "path": "oracle_10seed_compact.json",
+      "bytes": 9544,
+      "sha256": "6fd6b57cf3201014e1366b7ff08b9d6231b0e2c85a6584da1a21585f3bba76f0"
+    },
+    {
+      "path": "stage4u_summary.json",
+      "bytes": 1970,
+      "sha256": "65a93b77cf35d0c9c69903f287e34487c3ff14e486a0cd88cbd67ead71a17297"
+    },
+    {
+      "path": "structured_world_v2__structured_world_report.json",
+      "bytes": 2400,
+      "sha256": "4204449c41458b4bfd1ff0436cdfcd49c5421a8c64a6551bb4dceb459a77060f"
+    }
+  ]
+}

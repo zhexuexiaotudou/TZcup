@@ -2,10 +2,28 @@
 set -euo pipefail
 PACK_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"; WS="${SANITATION_WS:?SANITATION_WS required}"
 MAP_ROOT="${TZCUP_MAP_ROOT:?TZCUP_MAP_ROOT must contain selected_map.yaml}"
-WORLD_TO_MAP_X=8.0; WORLD_TO_MAP_Y=0.0; WORLD_TO_MAP_YAW=0.0
 INITIAL_POSE_X=0.0; INITIAL_POSE_Y=0.0; INITIAL_POSE_YAW=0.0
+MAP_YAML="${TZCUP_MAP_YAML:-$MAP_ROOT/selected_map.yaml}"
+CALIBRATION="${TZCUP_MAP_CALIBRATION:-$MAP_ROOT/map_frame_calibration.yaml}"
+FILTER_ROOT="${TZCUP_FILTER_ROOT:-$MAP_ROOT/filters}"
+[[ -f "$MAP_YAML" ]] || { echo "ERROR: missing localization map $MAP_YAML" >&2; exit 3; }
+[[ -f "$CALIBRATION" ]] || { echo "ERROR: missing frozen map calibration $CALIBRATION" >&2; exit 3; }
+readarray -t INITIAL_POSE < <(python3 - "$CALIBRATION" <<'PY'
+import sys, yaml
+document = yaml.safe_load(open(sys.argv[1], encoding="utf-8"))
+t = document["T_map_map_gt"]
+print(t["x_m"]); print(t["y_m"]); print(t["yaw_rad"])
+PY
+)
+INITIAL_POSE_X="${INITIAL_POSE[0]}"; INITIAL_POSE_Y="${INITIAL_POSE[1]}"; INITIAL_POSE_YAW="${INITIAL_POSE[2]}"
 STAMP="$(date +%Y%m%d_%H%M%S)"; OUT="${STAGE4T_OUT:-$PACK_ROOT/artifacts/stage4t_localization_$STAMP}"
 SEEDS="${TZCUP_LOCALIZATION_SEEDS:-1}"; LANE="${TZCUP_LOCALIZATION_LANE:-realistic}"
+BACKEND="${TZCUP_LOCALIZATION_BACKEND:-amcl}"
+POSEGRAPH="${TZCUP_POSEGRAPH:-}"
+LIDAR_SAMPLES="${TZCUP_LIDAR_SAMPLES:-360}"
+LIDAR_UPDATE_RATE="${TZCUP_LIDAR_UPDATE_RATE:-10}"
+NAV2_PARAMS="${TZCUP_NAV2_PARAMS:-$WS/install/sanitation_navigation/share/sanitation_navigation/config/nav2.yaml}"
+WORLD_FILE="${TZCUP_WORLD_FILE:-$WS/install/sanitation_worlds/share/sanitation_worlds/worlds/sanitation_test_world.sdf}"
 PIDS=(); mkdir -p "$OUT/localization_trials"
 SEED_START="${SEED_START:-0}"; SEED_STEP="${SEED_STEP:-1}"
 stop_group(){ local pid="${1:-}"; [[ -n "$pid" ]] || return; kill -INT -- "-$pid" 2>/dev/null || true; for _ in {1..100}; do if ! kill -0 "$pid" 2>/dev/null; then wait "$pid" 2>/dev/null || true; return; fi; sleep 0.1; done; kill -TERM -- "-$pid" 2>/dev/null || true; for _ in {1..100}; do if ! kill -0 "$pid" 2>/dev/null; then wait "$pid" 2>/dev/null || true; return; fi; sleep 0.1; done; kill -KILL -- "-$pid" 2>/dev/null || true; wait "$pid" 2>/dev/null || true; }
@@ -20,24 +38,47 @@ set +u; source "$WS/install/setup.bash"; set -u
 for ((seed=SEED_START; seed<SEEDS; seed+=SEED_STEP)); do
   trial="$OUT/localization_trials/seed_$seed"; mkdir -p "$trial"
   enable_ekf=true; [[ "$LANE" == oracle ]] && enable_ekf=false
+  estimate_topic=/amcl_pose; require_particles=true; slam_params=""
+  if [[ "$BACKEND" == slam_toolbox ]]; then
+    [[ -n "$POSEGRAPH" && -f "$POSEGRAPH.posegraph" && -f "$POSEGRAPH.data" ]] || { echo "ERROR: slam_toolbox backend requires TZCUP_POSEGRAPH base path" >&2; exit 3; }
+    estimate_topic=/pose; require_particles=false
+    slam_params="$trial/slam_localization.yaml"
+    python3 - "$WS/install/sanitation_navigation/share/sanitation_navigation/config/slam_localization.yaml" "$slam_params" "$POSEGRAPH" "$INITIAL_POSE_X" "$INITIAL_POSE_Y" "$INITIAL_POSE_YAW" <<'PY'
+import sys, yaml
+source, output, posegraph, x, y, yaw = sys.argv[1:]
+document = yaml.safe_load(open(source, encoding="utf-8"))
+params = document["slam_toolbox"]["ros__parameters"]
+params["map_file_name"] = posegraph
+params["map_start_pose"] = [float(x), float(y), float(yaw)]
+with open(output, "w", encoding="utf-8") as stream:
+    yaml.safe_dump(document, stream, sort_keys=False)
+PY
+  fi
   setsid ros2 launch sanitation_bringup sim.launch.py gui:=false headless_rendering:=true \
     drive_wheel_radius:=0.14 drive_wheel_separation:=1.22 random_seed:="$seed" enable_ekf:="$enable_ekf" \
-    world_to_map_x:="$WORLD_TO_MAP_X" world_to_map_y:="$WORLD_TO_MAP_Y" world_to_map_yaw:="$WORLD_TO_MAP_YAW" \
+    lidar_samples:="$LIDAR_SAMPLES" lidar_update_rate:="$LIDAR_UPDATE_RATE" \
+    world_file:="$WORLD_FILE" \
+    world_to_map_x:=8.0 world_to_map_y:=0.0 world_to_map_yaw:=0.0 \
     > "$trial/simulation.log" 2>&1 & SIM_PID=$!; PIDS+=("$SIM_PID")
   if [[ "$LANE" == oracle ]]; then
     setsid ros2 run sanitation_tasks sanitation_oracle_odom_adapter > "$trial/oracle_adapter.log" 2>&1 & ORACLE_PID=$!; PIDS+=("$ORACLE_PID")
   fi
   setsid ros2 launch sanitation_navigation navigation.launch.py rviz:=false \
-    map_file:="$MAP_ROOT/selected_map.yaml" keepout_map:="$MAP_ROOT/filters/keepout_mask.yaml" speed_map:="$MAP_ROOT/filters/speed_mask.yaml" \
+    params_file:="$NAV2_PARAMS" \
+    map_file:="$MAP_YAML" keepout_map:="$FILTER_ROOT/keepout_mask.yaml" speed_map:="$FILTER_ROOT/speed_mask.yaml" \
     operational_profile:=localization_coverage max_linear_velocity:=0.45 max_angular_velocity:=0.35 \
     initial_pose_x:="$INITIAL_POSE_X" initial_pose_y:="$INITIAL_POSE_Y" initial_pose_yaw:="$INITIAL_POSE_YAW" \
+    localization_backend:="$BACKEND" ${slam_params:+slam_params_file:="$slam_params"} \
     > "$trial/navigation.log" 2>&1 & NAV_PID=$!; PIDS+=("$NAV_PID")
-  timeout 120s ros2 topic echo --once /amcl_pose geometry_msgs/msg/PoseWithCovarianceStamped > "$trial/first_amcl.txt" || true
+  timeout 120s ros2 topic echo --once "$estimate_topic" geometry_msgs/msg/PoseWithCovarianceStamped > "$trial/first_localization_pose.txt" || true
+  timeout 30s ros2 topic type /particle_cloud > "$trial/particle_cloud_type.txt" || true
   setsid ros2 bag record --storage mcap --output "$trial/localization_bag" \
-    /clock /scan /odom /amcl_pose /particle_cloud /ground_truth/odom /tf /tf_static /cmd_vel_gate /cmd_vel \
+    /clock /scan /odom /amcl_pose /pose /particle_cloud /ground_truth/odom /tf /tf_static /cmd_vel_gate /cmd_vel \
     > "$trial/rosbag.log" 2>&1 & BAG_PID=$!; PIDS+=("$BAG_PID")
   setsid ros2 run sanitation_tasks sanitation_localization_evaluator --ros-args \
     -p use_sim_time:=true -p duration_sec:=120.0 -p rmse_threshold_m:=0.05 \
+    -p map_frame_calibration:="$CALIBRATION" \
+    -p localization_backend:="$BACKEND" -p estimate_topic:="$estimate_topic" -p require_particle_instrumentation:="$require_particles" \
     -p output_path:="$trial/localization_report.json" -p csv_path:="$trial/localization_trajectory.csv" \
     -p plot_path:="$trial/localization_error.png" > "$trial/evaluator.log" 2>&1 & EVAL_PID=$!; PIDS+=("$EVAL_PID")
   set +e
