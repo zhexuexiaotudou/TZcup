@@ -1,0 +1,310 @@
+{
+  "schema_version": 1,
+  "lane": "M3_surveyed_reference",
+  "mapping_evidence": false,
+  "localization_reference": true,
+  "world_sdf": "artifacts\\stage4u_20260716_map_lanes\\structured_world_v2\\sanitation_structured_world.sdf",
+  "world_sdf_sha256": "774c1056eec0b3367115f585cbc7a8bd0c61bc183c0abd3571de6a4f877696f1",
+  "lidar_height_m": 0.64,
+  "resolution_m": 0.02,
+  "visible_fixed_obstacle_count": 10,
+  "visible_fixed_obstacles": [
+    "corridor_wall_left",
+    "corridor_wall_right",
+    "trash_bin_obstacle",
+    "cardboard_box_obstacle",
+    "structured_building_north",
+    "structured_lamp_west",
+    "structured_lamp_east",
+    "structured_tree_south",
+    "structured_tree_north",
+    "structured_waste_bin"
+  ],
+  "occupied_cells": 16968,
+  "polygons": [
+    {
+      "name": "corridor_wall_left",
+      "x": 15.0,
+      "y": 3.2,
+      "z": 0.45,
+      "yaw": 0.0,
+      "size_x": 10.0,
+      "size_y": 0.25,
+      "size_z": 0.9,
+      "map_corners": [
+        [
+          18.0,
+          3.075
+        ],
+        [
+          28.0,
+          3.075
+        ],
+        [
+          28.0,
+          3.325
+        ],
+        [
+          18.0,
+          3.325
+        ]
+      ]
+    },
+    {
+      "name": "corridor_wall_right",
+      "x": 15.0,
+      "y": 1.6,
+      "z": 0.45,
+      "yaw": 0.0,
+      "size_x": 10.0,
+      "size_y": 0.25,
+      "size_z": 0.9,
+      "map_corners": [
+        [
+          18.0,
+          1.475
+        ],
+        [
+          28.0,
+          1.475
+        ],
+        [
+          28.0,
+          1.725
+        ],
+        [
+          18.0,
+          1.725
+        ]
+      ]
+    },
+    {
+      "name": "trash_bin_obstacle",
+      "x": 2.0,
+      "y": 3.0,
+      "z": 0.45,
+      "yaw": 0.0,
+      "size_x": 0.7,
+      "size_y": 0.7,
+      "size_z": 0.9,
+      "map_corners": [
+        [
+          9.65,
+          2.65
+        ],
+        [
+          10.35,
+          2.65
+        ],
+        [
+          10.35,
+          3.35
+        ],
+        [
+          9.65,
+          3.35
+        ]
+      ]
+    },
+    {
+      "name": "cardboard_box_obstacle",
+      "x": 8.0,
+      "y": -1.0,
+      "z": 0.35,
+      "yaw": 0.25,
+      "size_x": 0.9,
+      "size_y": 0.7,
+      "size_z": 0.7,
+      "map_corners": [
+        [
+          15.650580795969294,
+          -1.4504511292632611
+        ],
+        [
+          16.522601975508874,
+          -1.2277875659341904
+        ],
+        [
+          16.349419204030706,
+          -0.5495488707367391
+        ],
+        [
+          15.477398024491126,
+          -0.7722124340658097
+        ]
+      ]
+    },
+    {
+      "name": "structured_building_north",
+      "x": 2.0,
+      "y": 9.0,
+      "z": 1.0,
+      "yaw": 0.0,
+      "size_x": 24.0,
+      "size_y": 0.3,
+      "size_z": 2.0,
+      "map_corners": [
+        [
+          -2.0,
+          8.85
+        ],
+        [
+          22.0,
+          8.85
+        ],
+        [
+          22.0,
+          9.15
+        ],
+        [
+          -2.0,
+          9.15
+        ]
+      ]
+    },
+    {
+      "name": "structured_lamp_west",
+      "x": -3.0,
+      "y": 5.0,
+      "z": 0.75,
+      "yaw": 0.0,
+      "size_x": 0.25,
+      "size_y": 0.25,
+      "size_z": 1.5,
+      "map_corners": [
+        [
+          4.875,
+          4.875
+        ],
+        [
+          5.125,
+          4.875
+        ],
+        [
+          5.125,
+          5.125
+        ],
+        [
+          4.875,
+          5.125
+        ]
+      ]
+    },
+    {
+      "name": "structured_lamp_east",
+      "x": 11.0,
+      "y": -5.0,
+      "z": 0.75,
+      "yaw": 0.0,
+      "size_x": 0.25,
+      "size_y": 0.25,
+      "size_z": 1.5,
+      "map_corners": [
+        [
+          18.875,
+          -5.125
+        ],
+        [
+          19.125,
+          -5.125
+        ],
+        [
+          19.125,
+          -4.875
+        ],
+        [
+          18.875,
+          -4.875
+        ]
+      ]
+    },
+    {
+      "name": "structured_tree_south",
+      "x": 0.0,
+      "y": -6.0,
+      "z": 0.9,
+      "yaw": 0.0,
+      "size_x": 0.45,
+      "size_y": 0.45,
+      "size_z": 1.8,
+      "map_corners": [
+        [
+          7.775,
+          -6.225
+        ],
+        [
+          8.225,
+          -6.225
+        ],
+        [
+          8.225,
+          -5.775
+        ],
+        [
+          7.775,
+          -5.775
+        ]
+      ]
+    },
+    {
+      "name": "structured_tree_north",
+      "x": 12.0,
+      "y": 6.0,
+      "z": 0.9,
+      "yaw": 0.0,
+      "size_x": 0.45,
+      "size_y": 0.45,
+      "size_z": 1.8,
+      "map_corners": [
+        [
+          19.775,
+          5.775
+        ],
+        [
+          20.225,
+          5.775
+        ],
+        [
+          20.225,
+          6.225
+        ],
+        [
+          19.775,
+          6.225
+        ]
+      ]
+    },
+    {
+      "name": "structured_waste_bin",
+      "x": -4.0,
+      "y": -2.0,
+      "z": 0.5,
+      "yaw": 0.15,
+      "size_x": 0.8,
+      "size_y": 0.65,
+      "size_z": 1.0,
+      "map_corners": [
+        [
+          3.653058961879503,
+          -2.3811258533186535
+        ],
+        [
+          4.444075824228336,
+          -2.261575347339774
+        ],
+        [
+          4.346941038120497,
+          -1.6188741466813465
+        ],
+        [
+          3.555924175771663,
+          -1.738424652660226
+        ]
+      ]
+    }
+  ],
+  "map_sha256": "485205b0bb4a776019a297c25238c19ec1319edacc449f38562f8bf58a09a698",
+  "map_generation_pass": true,
+  "map_basic_quality_pass": true,
+  "map_localization_geometry_pass": true
+}

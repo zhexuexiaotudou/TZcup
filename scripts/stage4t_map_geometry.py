@@ -28,7 +28,7 @@ def pose_values(element):
     return (values + [0.0] * 6)[:6]
 
 
-def sdf_boxes(path, minimum_height=0.20):
+def sdf_boxes(path, minimum_height=0.20, lidar_height=None):
     root = ET.parse(path).getroot(); boxes = []
     for model in root.findall(".//world/model"):
         name = model.attrib.get("name", "")
@@ -40,7 +40,12 @@ def sdf_boxes(path, minimum_height=0.20):
             sx, sy, sz = (float(value) for value in size.text.split())
             if sz < minimum_height: continue
             local = pose_values(collision.find("pose")) if collision.find("pose") is not None else [0.0] * 6
-            boxes.append({"name": name, "x": model_pose[0] + local[0], "y": model_pose[1] + local[1], "yaw": model_pose[5] + local[5], "size_x": sx, "size_y": sy, "size_z": sz})
+            center_z = model_pose[2] + local[2]
+            if lidar_height is not None and not (
+                center_z - sz / 2.0 <= lidar_height <= center_z + sz / 2.0
+            ):
+                continue
+            boxes.append({"name": name, "x": model_pose[0] + local[0], "y": model_pose[1] + local[1], "z": center_z, "yaw": model_pose[5] + local[5], "size_x": sx, "size_y": sy, "size_z": sz})
     return boxes
 
 

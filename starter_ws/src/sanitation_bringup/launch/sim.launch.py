@@ -33,6 +33,8 @@ def generate_launch_description():
     slip_compliance_longitudinal = LaunchConfiguration("slip_compliance_longitudinal")
     slip_compliance_lateral = LaunchConfiguration("slip_compliance_lateral")
     enable_wheel_slip = LaunchConfiguration("enable_wheel_slip")
+    lidar_samples = LaunchConfiguration("lidar_samples")
+    lidar_update_rate = LaunchConfiguration("lidar_update_rate")
     world_file = LaunchConfiguration("world_file")
     random_seed = LaunchConfiguration("random_seed")
     world_to_map_x = LaunchConfiguration("world_to_map_x")
@@ -70,6 +72,8 @@ def generate_launch_description():
                 " slip_compliance_longitudinal:=", slip_compliance_longitudinal,
                 " slip_compliance_lateral:=", slip_compliance_lateral,
                 " enable_wheel_slip:=", enable_wheel_slip,
+                " lidar_samples:=", lidar_samples,
+                " lidar_update_rate:=", lidar_update_rate,
             ]
         ),
         value_type=str,
@@ -100,6 +104,8 @@ def generate_launch_description():
             DeclareLaunchArgument("slip_compliance_longitudinal", default_value="0.0"),
             DeclareLaunchArgument("slip_compliance_lateral", default_value="0.0"),
             DeclareLaunchArgument("enable_wheel_slip", default_value="false"),
+            DeclareLaunchArgument("lidar_samples", default_value="360"),
+            DeclareLaunchArgument("lidar_update_rate", default_value="10"),
             DeclareLaunchArgument("world_file", default_value=world_path),
             DeclareLaunchArgument("random_seed", default_value="0"),
             DeclareLaunchArgument("world_to_map_x", default_value="8.0"),

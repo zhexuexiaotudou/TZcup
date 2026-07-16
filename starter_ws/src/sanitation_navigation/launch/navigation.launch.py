@@ -24,6 +24,7 @@ from launch.actions import (
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration
+from launch.substitutions import PythonExpression
 from launch_ros.actions import Node, SetRemap
 from launch_ros.parameter_descriptions import ParameterValue
 
@@ -37,6 +38,12 @@ def generate_launch_description():
     nav2_launch = os.path.join(
         get_package_share_directory('nav2_bringup'), 'launch', 'bringup_launch.py'
     )
+    slam_localization_launch = os.path.join(
+        get_package_share_directory('slam_toolbox'), 'launch', 'localization_launch.py'
+    )
+    default_slam_localization_params = os.path.join(
+        package_share, 'config', 'slam_localization.yaml'
+    )
 
     use_sim_time = LaunchConfiguration('use_sim_time')
     params_file = LaunchConfiguration('params_file')
@@ -48,6 +55,14 @@ def generate_launch_description():
     initial_pose_x = LaunchConfiguration('initial_pose_x')
     initial_pose_y = LaunchConfiguration('initial_pose_y')
     initial_pose_yaw = LaunchConfiguration('initial_pose_yaw')
+    localization_backend = LaunchConfiguration('localization_backend')
+    slam_params_file = LaunchConfiguration('slam_params_file')
+    amcl_condition = IfCondition(
+        PythonExpression(["'", localization_backend, "' == 'amcl'"])
+    )
+    slam_condition = IfCondition(
+        PythonExpression(["'", localization_backend, "' == 'slam_toolbox'"])
+    )
 
     localization_nodes = [
         Node(
@@ -55,6 +70,7 @@ def generate_launch_description():
             executable='map_server',
             name='map_server',
             output='screen',
+            condition=amcl_condition,
             parameters=[params_file, {'yaml_filename': map_file}],
         ),
         Node(
@@ -62,6 +78,7 @@ def generate_launch_description():
             executable='amcl',
             name='amcl',
             output='screen',
+            condition=amcl_condition,
             parameters=[params_file, {
                 'initial_pose.x': ParameterValue(initial_pose_x, value_type=float),
                 'initial_pose.y': ParameterValue(initial_pose_y, value_type=float),
@@ -73,6 +90,7 @@ def generate_launch_description():
             executable='lifecycle_manager',
             name='lifecycle_manager_localization',
             output='screen',
+            condition=amcl_condition,
             parameters=[
                 {
                     'use_sim_time': use_sim_time,
@@ -138,7 +156,20 @@ def generate_launch_description():
             DeclareLaunchArgument('initial_pose_x', default_value='0.0'),
             DeclareLaunchArgument('initial_pose_y', default_value='0.0'),
             DeclareLaunchArgument('initial_pose_yaw', default_value='0.0'),
+            DeclareLaunchArgument('localization_backend', default_value='amcl'),
+            DeclareLaunchArgument(
+                'slam_params_file', default_value=default_slam_localization_params
+            ),
             *localization_nodes,
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(slam_localization_launch),
+                condition=slam_condition,
+                launch_arguments={
+                    'use_sim_time': use_sim_time,
+                    'slam_params_file': slam_params_file,
+                    'autostart': 'true',
+                }.items(),
+            ),
             GroupAction(
                 [
                     SetRemap(src='/cmd_vel', dst='/cmd_vel_nav'),

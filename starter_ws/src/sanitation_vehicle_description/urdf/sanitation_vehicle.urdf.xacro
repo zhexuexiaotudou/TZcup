@@ -16,6 +16,8 @@
   <xacro:arg name="slip_compliance_longitudinal" default="0.0"/>
   <xacro:arg name="slip_compliance_lateral" default="0.0"/>
   <xacro:arg name="enable_wheel_slip" default="false"/>
+  <xacro:arg name="lidar_samples" default="360"/>
+  <xacro:arg name="lidar_update_rate" default="10"/>
 
   <!-- Baseline geometry; replace with measured real vehicle values later. -->
   <xacro:property name="base_length" value="1.15"/>
@@ -36,6 +38,8 @@
   <xacro:property name="wheel_pos_z" value="-0.02"/>
   <xacro:property name="wheel_mass" value="3.0"/>
   <xacro:property name="cleaning_width" value="0.65"/>
+  <xacro:property name="lidar_samples" value="$(arg lidar_samples)"/>
+  <xacro:property name="lidar_update_rate" value="$(arg lidar_update_rate)"/>
 
   <!-- Local primitive chassis avoids the upstream Gazebo-classic visual
        override colliding with URDF materials in Ogre2 / Gazebo Harmonic. -->
@@ -131,13 +135,13 @@
   <gazebo reference="laser">
     <sensor name="sanitation_gpu_lidar" type="gpu_lidar">
       <topic>scan</topic>
-      <update_rate>10</update_rate>
+      <update_rate>${lidar_update_rate}</update_rate>
       <always_on>true</always_on>
       <visualize>true</visualize>
       <lidar>
         <scan>
           <horizontal>
-            <samples>360</samples>
+            <samples>${lidar_samples}</samples>
             <resolution>1</resolution>
             <min_angle>-3.1416</min_angle>
             <max_angle>3.1416</max_angle>

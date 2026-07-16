@@ -17,6 +17,13 @@ for ($shard = 0; $shard -lt 4; $shard++) {
     "--volume", "${mainCheckout}:/work", "--volume", "${packRoot}:/stage4t",
     "--workdir", "/stage4t", "tzcup/sanitation-jazzy:stage0", "bash", "scripts/stage4t_localization_ci.sh"
   )
+  foreach ($name in @("TZCUP_MAP_YAML", "TZCUP_MAP_CALIBRATION", "TZCUP_FILTER_ROOT", "TZCUP_LOCALIZATION_BACKEND", "TZCUP_SLAM_PARAMS", "TZCUP_POSEGRAPH", "TZCUP_LIDAR_SAMPLES", "TZCUP_LIDAR_UPDATE_RATE", "TZCUP_NAV2_PARAMS", "TZCUP_WORLD_FILE")) {
+    $value = [Environment]::GetEnvironmentVariable($name)
+    if ($value) {
+      $insertAt = $dockerArgs.IndexOf("--volume")
+      $dockerArgs = $dockerArgs[0..($insertAt - 1)] + @("--env", "$name=$value") + $dockerArgs[$insertAt..($dockerArgs.Count - 1)]
+    }
+  }
   $processes += Start-Process -FilePath "docker" -ArgumentList $dockerArgs -PassThru -WindowStyle Hidden -RedirectStandardOutput $stdout -RedirectStandardError $stderr
 }
 $processes | Wait-Process; $failed = $processes | Where-Object ExitCode -ne 0

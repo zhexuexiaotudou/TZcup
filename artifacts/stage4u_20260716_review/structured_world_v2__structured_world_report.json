@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "generator_revision": 2,
+  "source_world": "starter_ws\\src\\sanitation_worlds\\worlds\\sanitation_test_world.sdf",
+  "source_world_sha256": "b81be49a7acf1a1c1148c4075ec3193ed1a99a00519bf69280cccfb2c3f642b8",
+  "structured_world": "artifacts\\stage4u_20260716_map_lanes\\structured_world_v2\\sanitation_structured_world.sdf",
+  "structured_world_sha256": "774c1056eec0b3367115f585cbc7a8bd0c61bc183c0abd3571de6a4f877696f1",
+  "feature_count": 7,
+  "features": [
+    {
+      "name": "structured_building_north",
+      "pose": [
+        2.0,
+        9.0,
+        1.0,
+        0.0
+      ],
+      "size": [
+        24.0,
+        0.3,
+        2.0
+      ],
+      "kind": "building_boundary"
+    },
+    {
+      "name": "structured_curb_south",
+      "pose": [
+        6.0,
+        -9.0,
+        0.25,
+        0.0
+      ],
+      "size": [
+        28.0,
+        0.25,
+        0.5
+      ],
+      "kind": "curb_face"
+    },
+    {
+      "name": "structured_lamp_west",
+      "pose": [
+        -3.0,
+        5.0,
+        0.75,
+        0.0
+      ],
+      "size": [
+        0.25,
+        0.25,
+        1.5
+      ],
+      "kind": "lamp_post"
+    },
+    {
+      "name": "structured_lamp_east",
+      "pose": [
+        11.0,
+        -5.0,
+        0.75,
+        0.0
+      ],
+      "size": [
+        0.25,
+        0.25,
+        1.5
+      ],
+      "kind": "lamp_post"
+    },
+    {
+      "name": "structured_tree_south",
+      "pose": [
+        0.0,
+        -6.0,
+        0.9,
+        0.0
+      ],
+      "size": [
+        0.45,
+        0.45,
+        1.8
+      ],
+      "kind": "tree_trunk"
+    },
+    {
+      "name": "structured_tree_north",
+      "pose": [
+        12.0,
+        6.0,
+        0.9,
+        0.0
+      ],
+      "size": [
+        0.45,
+        0.45,
+        1.8
+      ],
+      "kind": "tree_trunk"
+    },
+    {
+      "name": "structured_waste_bin",
+      "pose": [
+        -4.0,
+        -2.0,
+        0.5,
+        0.15
+      ],
+      "size": [
+        0.8,
+        0.65,
+        1.0
+      ],
+      "kind": "waste_bin"
+    }
+  ],
+  "hidden_markers": false,
+  "sparse_world_preserved": true,
+  "structured_world_does_not_override_sparse_failure": true,
+  "route_clearance_review": "v2 removes the rejected west boundary that blocked the first navigation segment"
+}

@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "lanes": {
+    "M1_slam_raw": {
+      "available": true,
+      "mapping_evidence": true,
+      "localization_reference": true,
+      "map_yaml": "M1_slam_raw/selected_map.yaml",
+      "calibration": "M1_slam_raw/map_frame_calibration.yaml"
+    },
+    "M2_slam_refined": {
+      "schema_version": 1,
+      "lane": "M2_slam_refined",
+      "available": true,
+      "mapping_evidence": true,
+      "localization_reference": true,
+      "offline_optimization_executed": false,
+      "serialized_post_loop_closure_graph": true,
+      "map_rendered_from_serialized_graph": false,
+      "source_posegraph_files": [
+        "artifacts\\stage4u_20260716_mapping_005\\map_005\\slam_posegraph.posegraph",
+        "artifacts\\stage4u_20260716_mapping_005\\map_005\\slam_posegraph.data"
+      ],
+      "reason": "Serialized post-loop-closure graph is available for localization mode, but a separate offline optimization/render pass has not yet been executed",
+      "map_yaml": "M2_slam_refined/selected_map.yaml",
+      "calibration": "M2_slam_refined/map_frame_calibration.yaml",
+      "posegraph_base": "M2_slam_refined/slam_posegraph"
+    },
+    "M3_surveyed_reference": {
+      "available": true,
+      "mapping_evidence": false,
+      "localization_reference": true,
+      "map_yaml": "M3_surveyed_reference/surveyed_reference.yaml",
+      "calibration": "M3_surveyed_reference/map_frame_calibration.yaml"
+    }
+  },
+  "first_blocked_lane": "M2_offline_optimization"
+}

@@ -1,5 +1,13 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## Stage4U 定位评测契约
+
+- 坐标变换统一命名为 `T_target_source`，使用同一冻结标定覆盖全部 seed，禁止逐 trial 拟合。
+- 正式精度以 map-relative localization error 为主；地图地理配准误差独立报告，不与定位器误差相加后冒充单一指标。
+- AMCL 粒子话题类型为 `nav2_msgs/msg/ParticleCloud`，订阅 QoS 必须与运行时 publisher 兼容；0 次有效更新一律 fail-closed。
+- 地图的 generation/basic-quality/localization-geometry 三个门彼此独立；surveyed reference 只属于定位基线，不属于 SLAM 建图成绩。
+- 正式 10-seed 只有在有效同步样本、导航完成、TF 连续和必需粒子仪器有效时才计入完成种子。
+
 ## 1. 目标
 
 构建一套面向“仿真 + 实车”并行开发的 ROS 2 仿真底座，使同一套上层算法可以在 Gazebo 和实车之间切换。第一轮目标不是追求高精度外观模型，而是先完成：

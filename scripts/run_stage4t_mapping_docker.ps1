@@ -10,5 +10,9 @@ if ($env:TZCUP_STAGE4T_MAPPING_DIR) {
   $insertAt = $argsList.IndexOf("--volume")
   $argsList = $argsList[0..($insertAt - 1)] + @("--env", "STAGE4T_OUT=/stage4t/artifacts/$($env:TZCUP_STAGE4T_MAPPING_DIR)") + $argsList[$insertAt..($argsList.Count - 1)]
 }
+if ($env:TZCUP_MAPPING_LABELS) {
+  $insertAt = $argsList.IndexOf("--volume")
+  $argsList = $argsList[0..($insertAt - 1)] + @("--env", "TZCUP_MAPPING_LABELS=$($env:TZCUP_MAPPING_LABELS)") + $argsList[$insertAt..($argsList.Count - 1)]
+}
 docker @argsList
 if ($LASTEXITCODE -ne 0) { throw "Stage4T mapping failed: $LASTEXITCODE" }

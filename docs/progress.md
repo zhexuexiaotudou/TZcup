@@ -1,5 +1,17 @@
 # 项目推进记录
 
+## Stage4U：坐标标定、定位地图与 5 cm 定位闭环
+
+状态：达到可复核失败边界；未通过 Stage4U，未进入 Stage5A。
+
+已完成：显式冻结 SE(2) 坐标标定；map-relative/地理配准/absolute 误差解耦；Jazzy `nav2_msgs/msg/ParticleCloud` 与 best-effort QoS 修复；加权粒子统计；地图生成/基础质量/定位几何三级门；M1/M2/M3 与 AMCL/SLAM Toolbox 对照；360@10 与 720@20、AMCL profile 灵敏度；结构化 v2 场景；正式串行 Oracle 10-seed。
+
+正式最优候选为结构化 v2、0.02 m surveyed reference、AMCL 精度 profile、360@10 Hz。10/10 seed 完整，10/10 导航成功，TF 全连续，粒子仪器全有效，恢复 0 次；XY RMSE P50/P95/max 为 `0.067669/0.079833/0.080218 m`，worst 为 seed 7。首个真实失败层仍是 `oracle_localization_pass`。
+
+边界：M2 posegraph 已序列化，但没有执行独立离线优化/重渲染；M3 是定位参考图，不是 SLAM 建图成绩；realistic、完整 Coverage、动态障碍和急停按停止条件未执行；理论效率仍为 `1053 m²/h`，`READY_FOR_GPT_REVIEW_STAGE4U=false`、`READY_FOR_STAGE5A=false`。
+
+复核入口：`GPT_REVIEW_STAGE4U.md`、`artifacts/stage4u_20260716_review/stage4u_summary.json`、`oracle_10seed_compact.json` 与 `MANIFEST.json`。
+
 ## Stage4T：转向瞬态、EKF 融合与定位恢复
 
 状态：到达可复核失败边界；未通过 Stage4T，未进入 Stage5A。
