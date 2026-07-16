@@ -88,4 +88,4 @@ python scripts/ci_fast.py
 
 ## 最近同步
 
-2026-07-16：Stage4U 在隔离分支完成坐标标定、粒子云、地图质量语义与定位矩阵修复；正式串行 Oracle 10-seed 为 10/10 有效，但 XY RMSE P50/P95/max `0.06767/0.07983/0.08022 m` 未过 0.05 m。当前等待 PR/CI/合并与合并树复验，`READY_FOR_GPT_REVIEW_STAGE4U=false`。
+2026-07-16：Stage4U 已由 [PR #9](https://github.com/zhexuexiaotudou/TZcup/pull/9) 合并到 `main@efd5e34cbb3c8ba1016118c63a6e35402704e787`，`fast-validation` 通过；合并树 `00f2b33c5866025421bc5e9bea224945b58eafbd` 的真实 Gazebo core smoke 再验通过 covariance 与运行包络。正式 Oracle 10-seed 虽 10/10 有效，但 XY RMSE P50/P95/max `0.06767/0.07983/0.08022 m` 未过 0.05 m，`READY_FOR_GPT_REVIEW_STAGE4U=false`。
