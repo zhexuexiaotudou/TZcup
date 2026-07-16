@@ -1,5 +1,13 @@
 # 项目推进记录
 
+## Stage4V：混合定位与完整任务复核
+
+状态：正式混合定位门禁通过，完整 Coverage 门禁失败；未进入 Stage5A。
+
+新增 `sanitation_scan_refiner`、`sanitation_gnss_sim`、混合全局融合器和 TF 所有权审计。正式 10-seed 的 XY RMSE P50/P95/max 为 `0.033438/0.037916/0.038717 m`；定位、导航、TF 单所有者及扫描参与均为 10/10，GT 控制违规 0。完整任务随后真实运行：规划覆盖率 97.5%，但 transit-to-start 超时/终止，完整执行 false、经验覆盖率 0%；动态障碍有效交互 0/20、碰撞 0；keepout 违规 0、速度区通过；30 次急停 P95 `0.1705 s`；MCAP 融合位姿回放通过。理论效率 `1053 m²/h` 未达 `3500 m²/h`。最终 `READY_FOR_GPT_REVIEW_STAGE4V=false`、`READY_FOR_STAGE5A=false`。
+
+证据入口：`GPT_REVIEW_STAGE4V.md`、`artifacts/stage4v_20260716_review/`；原始 10-seed、Coverage 和 MCAP 在用户确认前保留。
+
 ## Stage4U：坐标标定、定位地图与 5 cm 定位闭环
 
 状态：达到可复核失败边界；未通过 Stage4U，未进入 Stage5A。

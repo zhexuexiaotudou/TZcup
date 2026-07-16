@@ -1,0 +1,33 @@
+scan_refiner:
+  ros__parameters:
+    use_sim_time: true
+    map_frame: map
+    base_frame: base_footprint
+    map_topic: /map
+    scan_topic: /scan
+    prior_topic: /amcl_pose
+    refined_pose_topic: /localization/refined_pose
+    refined_odom_topic: /localization/refined_odom
+    diagnostics_topic: /localization/refiner_diagnostics
+    minimum_points: 20
+    maximum_points: 240
+    maximum_scan_range_m: 20.0
+    maximum_score_m: 0.12
+    minimum_improvement_m: 0.001
+
+hybrid_global_fuser:
+  ros__parameters:
+    use_sim_time: true
+    mode: hybrid_rtk_scan_imu_wheel
+    map_frame: map
+    odom_frame: odom
+    base_frame: base_footprint
+    local_odom_topic: /odom
+    gnss_topic: /gnss/fix
+    refined_pose_topic: /localization/refined_pose
+    origin_latitude_deg: 31.2304
+    origin_longitude_deg: 121.4737
+    maximum_gnss_age_s: 0.5
+    maximum_refined_age_s: 0.5
+    gnss_outlier_threshold_m: 0.75
+    publish_map_to_odom: true

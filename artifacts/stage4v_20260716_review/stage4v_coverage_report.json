@@ -1,0 +1,707 @@
+﻿{
+    "schema_version":  1,
+    "lane":  "hybrid_rtk_scan_imu_wheel",
+    "competition_evidence":  true,
+    "gates":  {
+                  "full_execution_success":  false,
+                  "empirical_coverage_at_least_90pct":  false,
+                  "collision_count_zero":  true,
+                  "brush_final_state_false":  true,
+                  "keepout_violations_zero":  true,
+                  "speed_zone_pass":  true,
+                  "dynamic_obstacle_valid_trials_at_least_20":  false,
+                  "emergency_stop_p95_at_most_1s":  true
+              },
+    "coverage":  {
+                     "schema_version":  2,
+                     "mission_id":  "demo_coverage_001",
+                     "planner":  "OpenNav Coverage + Fields2Cover",
+                     "planning_success":  true,
+                     "transit_to_start_success":  false,
+                     "full_execution_success":  false,
+                     "empirical_coverage_success":  false,
+                     "safety_success":  true,
+                     "competition_efficiency_pass":  false,
+                     "success":  false,
+                     "operation_width_m":  0.65,
+                     "swath_count":  12,
+                     "turn_count":  11,
+                     "nav_path_pose_count":  1180,
+                     "component_count":  23,
+                     "component_results":  [
+
+                                           ],
+                     "transit_to_start":  {
+                                              "success":  false,
+                                              "retries":  1,
+                                              "attempts":  [
+                                                               {
+                                                                   "attempt":  1,
+                                                                   "accepted":  true,
+                                                                   "timeout":  true
+                                                               },
+                                                               {
+                                                                   "attempt":  2,
+                                                                   "accepted":  true,
+                                                                   "terminal_status":  6,
+                                                                   "error_code":  105,
+                                                                   "succeeded":  false
+                                                               }
+                                                           ]
+                                          },
+                     "planned_metrics":  {
+                                             "resolution_m":  0.1,
+                                             "target_area_m2":  64.00000000000001,
+                                             "covered_area_m2":  62.40000000000001,
+                                             "missed_area_m2":  1.6000000000000014,
+                                             "repeated_area_m2":  1.5900000000000003,
+                                             "coverage_rate":  0.975,
+                                             "miss_rate":  0.025,
+                                             "repeat_rate":  0.02484375,
+                                             "gross_swept_area_m2":  63.99000000000001,
+                                             "metric_basis":  "planned_fields2cover_swaths_rasterized",
+                                             "path_length_m":  117.49408925046085,
+                                             "swath_endpoint_compatibility_repair":  true
+                                         },
+                     "empirical_metrics":  {
+                                               "resolution_m":  0.1,
+                                               "target_area_m2":  64.00000000000001,
+                                               "covered_area_m2":  0.0,
+                                               "missed_area_m2":  64.00000000000001,
+                                               "repeated_area_m2":  0.0,
+                                               "coverage_rate":  0.0,
+                                               "miss_rate":  1.0,
+                                               "repeat_rate":  0.0,
+                                               "brush_on_duration_sec":  0.0,
+                                               "metric_basis":  "gazebo_ground_truth_cleaning_footprint_brush_on",
+                                               "actual_path_length_m":  10.648115646349888,
+                                               "actual_duration_sec":  270.570029196002,
+                                               "gross_efficiency_m2_h":  0.0,
+                                               "net_efficiency_m2_h":  0.0
+                                           },
+                     "recovery_count":  1,
+                     "collision_count":  0,
+                     "minimum_lidar_range_m":  3.8056085109710693,
+                     "brush_disabled_on_exit":  true,
+                     "execution_boundary":  "All path components were required to terminate SUCCEEDED; no 180-pose shortcut or bounded cancellation is accepted."
+                 },
+    "dynamic_obstacles":  {
+                              "schema_version":  1,
+                              "requested_trial_count":  20,
+                              "completed_trial_count":  20,
+                              "dynamic_obstacle_valid_trials":  0,
+                              "collision_count":  0,
+                              "trials":  [
+                                             {
+                                                 "seed":  0,
+                                                 "target_map_xy":  [
+                                                                       0.7094173632807984,
+                                                                       -1.174235855230223
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  3.9156835079193115,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  1.855041694317958,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  1,
+                                                 "target_map_xy":  [
+                                                                       -1.5490608089766569,
+                                                                       -3.40393260420682
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.585310459136963,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  2.0800757178624627,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  2,
+                                                 "target_map_xy":  [
+                                                                       -2.562002141776698,
+                                                                       -5.110522888173225
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.570348262786865,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.036370341190050386,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  3,
+                                                 "target_map_xy":  [
+                                                                       -2.41366954522886,
+                                                                       -4.717569540382161
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.442348480224609,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.015437631178781934,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  4,
+                                                 "target_map_xy":  [
+                                                                       -2.732337809394008,
+                                                                       -4.959756051321764
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.5515217781066895,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.04019138202334533,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  5,
+                                                 "target_map_xy":  [
+                                                                       -1.6753038834779193,
+                                                                       -4.964322553842363
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.566762447357178,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.03941150635880297,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  6,
+                                                 "target_map_xy":  [
+                                                                       -2.2276613750399457,
+                                                                       -5.1869458857523085
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.601494312286377,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.013037713413895998,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  7,
+                                                 "target_map_xy":  [
+                                                                       -2.4595918520297526,
+                                                                       -5.138011070264126
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.610074520111084,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.04009979569889949,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  8,
+                                                 "target_map_xy":  [
+                                                                       -2.095704853210751,
+                                                                       -5.087061168561414
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.274873733520508,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.1523590726883462,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  9,
+                                                 "target_map_xy":  [
+                                                                       -1.0631293161794424,
+                                                                       -4.908061000954353
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.512950420379639,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.1605121670910693,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  10,
+                                                 "target_map_xy":  [
+                                                                       -1.152288669462772,
+                                                                       -5.331486921988572
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.56694221496582,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.006974571774123376,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  11,
+                                                 "target_map_xy":  [
+                                                                       -1.5556837561601204,
+                                                                       -5.164352257527223
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.603271961212158,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.02785854694810054,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  12,
+                                                 "target_map_xy":  [
+                                                                       -1.064626226122577,
+                                                                       -4.780098622769357
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.546193599700928,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.033750981962036096,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  13,
+                                                 "target_map_xy":  [
+                                                                       -0.8763551817377934,
+                                                                       -4.555005837380491
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.523031711578369,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.053907169627871857,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  14,
+                                                 "target_map_xy":  [
+                                                                       -1.68279939041023,
+                                                                       -5.397236967185683
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.561579704284668,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.18612965014102342,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  15,
+                                                 "target_map_xy":  [
+                                                                       -1.9231377554160902,
+                                                                       -5.226915270360845
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.597726821899414,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.0928637553212007,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  16,
+                                                 "target_map_xy":  [
+                                                                       -1.1943376099763074,
+                                                                       -4.579453874204457
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.547196865081787,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.006017892521351143,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  17,
+                                                 "target_map_xy":  [
+                                                                       -0.8942375150503142,
+                                                                       -4.3706268961120776
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.5901198387146,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.0113950746201914,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  18,
+                                                 "target_map_xy":  [
+                                                                       -1.2847393779896357,
+                                                                       -4.654574380528437
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.590760231018066,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.04072524023586524,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             },
+                                             {
+                                                 "seed":  19,
+                                                 "target_map_xy":  [
+                                                                       -1.0620259253790532,
+                                                                       -4.941756725460279
+                                                                   ],
+                                                 "set_pose_success":  false,
+                                                 "minimum_lidar_range_m":  5.572996139526367,
+                                                 "interaction_observed":  false,
+                                                 "collision_free":  true,
+                                                 "vehicle_progress_m":  0.024559134997189883,
+                                                 "stdout_tail":  "",
+                                                 "stderr_tail":  "Service call timed out\n",
+                                                 "valid":  false
+                                             }
+                                         ],
+                              "success":  false
+                          },
+    "filters":  {
+                    "keepout":  {
+                                    "mask_polygon":  [
+                                                         2.0,
+                                                         1.0,
+                                                         4.0,
+                                                         3.0
+                                                     ],
+                                    "goal_crossed_polygon_direct_line":  true,
+                                    "navigation_succeeded":  true,
+                                    "violation_sample_count":  0,
+                                    "minimum_distance_m":  0.5895633403971335,
+                                    "keepout_pass":  true
+                                },
+                    "speed_zone":  {
+                                       "polygon":  [
+                                                       -2.0,
+                                                       -2.0,
+                                                       2.0,
+                                                       2.0
+                                                   ],
+                                       "navigation_succeeded":  true,
+                                       "mean_speed_m_s":  {
+                                                              "before":  0.1908471237968052,
+                                                              "inside":  0.28472910159535797,
+                                                              "after":  0.40599242860961127
+                                                          },
+                                       "speed_limit_messages":  [
+                                                                    {
+                                                                        "wall_time":  28326.638892791,
+                                                                        "speed_limit":  63.0,
+                                                                        "percentage":  true
+                                                                    },
+                                                                    {
+                                                                        "wall_time":  28361.136678298,
+                                                                        "speed_limit":  0.0,
+                                                                        "percentage":  true
+                                                                    },
+                                                                    {
+                                                                        "wall_time":  28398.135998983,
+                                                                        "speed_limit":  63.0,
+                                                                        "percentage":  true
+                                                                    },
+                                                                    {
+                                                                        "wall_time":  28412.636827068,
+                                                                        "speed_limit":  0.0,
+                                                                        "percentage":  true
+                                                                    },
+                                                                    {
+                                                                        "wall_time":  28572.136617256,
+                                                                        "speed_limit":  63.0,
+                                                                        "percentage":  true
+                                                                    },
+                                                                    {
+                                                                        "wall_time":  28586.636172843,
+                                                                        "speed_limit":  0.0,
+                                                                        "percentage":  true
+                                                                    }
+                                                                ],
+                                       "speed_compliance_pass":  true
+                                   },
+                    "success":  true
+                },
+    "emergency_stop":  {
+                           "schema_version":  2,
+                           "trial_count":  30,
+                           "completed_trial_count":  30,
+                           "command_passed":  false,
+                           "emergency_stop_zeroed":  true,
+                           "resume_after_release":  true,
+                           "stale_command_zeroed":  false,
+                           "latency_sec":  {
+                                               "p50":  0.1497287355014123,
+                                               "p95":  0.17050019070120465,
+                                               "max":  0.2834162139988621
+                                           },
+                           "competition_estop_pass":  true,
+                           "trials":  [
+                                          {
+                                              "trial":  1,
+                                              "estop_publish_monotonic_sec":  28603.41959464,
+                                              "first_zero_monotonic_sec":  28603.703010854,
+                                              "latency_sec":  0.2834162139988621,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  2,
+                                              "estop_publish_monotonic_sec":  28604.142726093,
+                                              "first_zero_monotonic_sec":  28604.320449249,
+                                              "latency_sec":  0.17772315600086586,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  3,
+                                              "estop_publish_monotonic_sec":  28604.760295307,
+                                              "first_zero_monotonic_sec":  28604.905072709,
+                                              "latency_sec":  0.14477740199799882,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  4,
+                                              "estop_publish_monotonic_sec":  28605.345900309,
+                                              "first_zero_monotonic_sec":  28605.490425534,
+                                              "latency_sec":  0.1445252250014164,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  5,
+                                              "estop_publish_monotonic_sec":  28605.92850719,
+                                              "first_zero_monotonic_sec":  28606.088975358,
+                                              "latency_sec":  0.16046816800007946,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  6,
+                                              "estop_publish_monotonic_sec":  28606.528390824,
+                                              "first_zero_monotonic_sec":  28606.667849543,
+                                              "latency_sec":  0.13945871899704798,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  7,
+                                              "estop_publish_monotonic_sec":  28607.107407185,
+                                              "first_zero_monotonic_sec":  28607.267871783,
+                                              "latency_sec":  0.16046459799690638,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  8,
+                                              "estop_publish_monotonic_sec":  28607.707629275,
+                                              "first_zero_monotonic_sec":  28607.836595583,
+                                              "latency_sec":  0.12896630800241837,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  9,
+                                              "estop_publish_monotonic_sec":  28608.275838003,
+                                              "first_zero_monotonic_sec":  28608.410684629,
+                                              "latency_sec":  0.13484662600239972,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  10,
+                                              "estop_publish_monotonic_sec":  28608.850188413,
+                                              "first_zero_monotonic_sec":  28609.000741824,
+                                              "latency_sec":  0.1505534110001463,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  11,
+                                              "estop_publish_monotonic_sec":  28609.440441599,
+                                              "first_zero_monotonic_sec":  28609.591367526,
+                                              "latency_sec":  0.15092592700239038,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  12,
+                                              "estop_publish_monotonic_sec":  28610.030239653,
+                                              "first_zero_monotonic_sec":  28610.179517632,
+                                              "latency_sec":  0.14927797900236328,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  13,
+                                              "estop_publish_monotonic_sec":  28610.618080357,
+                                              "first_zero_monotonic_sec":  28610.779752479,
+                                              "latency_sec":  0.16167212200161885,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  14,
+                                              "estop_publish_monotonic_sec":  28611.218798782,
+                                              "first_zero_monotonic_sec":  28611.359488306,
+                                              "latency_sec":  0.14068952399975387,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  15,
+                                              "estop_publish_monotonic_sec":  28611.799772101,
+                                              "first_zero_monotonic_sec":  28611.949951593,
+                                              "latency_sec":  0.15017949200046132,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  16,
+                                              "estop_publish_monotonic_sec":  28612.389557524,
+                                              "first_zero_monotonic_sec":  28612.528932513,
+                                              "latency_sec":  0.1393749890012259,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  17,
+                                              "estop_publish_monotonic_sec":  28612.967981311,
+                                              "first_zero_monotonic_sec":  28613.112617723,
+                                              "latency_sec":  0.14463641199836275,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  18,
+                                              "estop_publish_monotonic_sec":  28613.552934207,
+                                              "first_zero_monotonic_sec":  28613.703868491,
+                                              "latency_sec":  0.150934283999959,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  19,
+                                              "estop_publish_monotonic_sec":  28614.14290415,
+                                              "first_zero_monotonic_sec":  28614.304532832,
+                                              "latency_sec":  0.16162868199899094,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  20,
+                                              "estop_publish_monotonic_sec":  28614.745761037,
+                                              "first_zero_monotonic_sec":  28614.891343038,
+                                              "latency_sec":  0.14558200100145768,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  21,
+                                              "estop_publish_monotonic_sec":  28615.332144389,
+                                              "first_zero_monotonic_sec":  28615.472368871,
+                                              "latency_sec":  0.1402244819983025,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  22,
+                                              "estop_publish_monotonic_sec":  28615.912049792,
+                                              "first_zero_monotonic_sec":  28616.057645972,
+                                              "latency_sec":  0.14559617999839247,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  23,
+                                              "estop_publish_monotonic_sec":  28616.495915892,
+                                              "first_zero_monotonic_sec":  28616.65214763,
+                                              "latency_sec":  0.15623173800122458,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  24,
+                                              "estop_publish_monotonic_sec":  28617.091131426,
+                                              "first_zero_monotonic_sec":  28617.252392698,
+                                              "latency_sec":  0.16126127199822804,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  25,
+                                              "estop_publish_monotonic_sec":  28617.692305299,
+                                              "first_zero_monotonic_sec":  28617.848201166,
+                                              "latency_sec":  0.1558958670029824,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  26,
+                                              "estop_publish_monotonic_sec":  28618.287392482,
+                                              "first_zero_monotonic_sec":  28618.421691216,
+                                              "latency_sec":  0.1342987339994579,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  27,
+                                              "estop_publish_monotonic_sec":  28618.862118001,
+                                              "first_zero_monotonic_sec":  28618.985917169,
+                                              "latency_sec":  0.12379916799909552,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  28,
+                                              "estop_publish_monotonic_sec":  28619.424028702,
+                                              "first_zero_monotonic_sec":  28619.56918647,
+                                              "latency_sec":  0.14515776799817104,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  29,
+                                              "estop_publish_monotonic_sec":  28620.007941924,
+                                              "first_zero_monotonic_sec":  28620.163171979,
+                                              "latency_sec":  0.15523005499926512,
+                                              "resume_after_release":  true
+                                          },
+                                          {
+                                              "trial":  30,
+                                              "estop_publish_monotonic_sec":  28620.60146141,
+                                              "first_zero_monotonic_sec":  28620.753671074,
+                                              "latency_sec":  0.15220966400011093,
+                                              "resume_after_release":  true
+                                          }
+                                      ],
+                           "success":  false
+                       },
+    "efficiency":  {
+                       "operation_width_m":  0.65,
+                       "max_linear_velocity_m_s":  0.45,
+                       "theoretical_efficiency_m2_h":  1053.0000000000002,
+                       "target_efficiency_m2_h":  3500.0,
+                       "competition_efficiency_pass":  false,
+                       "minimum_speed_at_current_width_m_s":  1.4957264957264957,
+                       "minimum_width_at_current_speed_m":  2.1604938271604937
+                   },
+    "success":  false,
+    "stage":  "Stage4V",
+    "complete_rosbag_replay":  true,
+    "exit_codes":  {
+                       "coverage":  2,
+                       "dynamic":  0,
+                       "filters":  0,
+                       "safety":  0
+                   }
+}

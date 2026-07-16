@@ -1,0 +1,40 @@
+schema_version: 1
+map_id: sha256:485205b0bb4a776019a297c25238c19ec1319edacc449f38562f8bf58a09a698
+map_sha256: 485205b0bb4a776019a297c25238c19ec1319edacc449f38562f8bf58a09a698
+map_yaml_sha256: feb93b24f2e5c51af35ceee9508f980465b2d1d69aad82968d506d22051ab9d8
+map_image_sha256: 49801fee5abc336ea450c36080bddb531cfc3e5db1422ae8389f1e24cb26b4d6
+source_map: surveyed_reference
+source_map_yaml: surveyed_reference.yaml
+transform_convention: 'T_target_source: p_target = R(yaw) * p_source + [x_m, y_m]'
+T_map_gt_map:
+  x_m: 0.0
+  y_m: 0.0
+  yaw_rad: 0.0
+T_map_map_gt:
+  x_m: 0.0
+  y_m: 0.0
+  yaw_rad: 0.0
+calibration_source: SDF surveyed reference in canonical map_gt coordinates
+fixed_anchors:
+- corridor_wall_left
+- corridor_wall_right
+- trash_bin_obstacle
+- cardboard_box_obstacle
+- structured_building_north
+- structured_lamp_west
+- structured_lamp_east
+- structured_tree_south
+- structured_tree_north
+- structured_waste_bin
+fit_residual:
+  objective_initial_m: 0.0
+  objective_final_m: 0.0
+  boundary_chamfer_mean_m: 0.0
+  boundary_p95_m: 0.0
+  occupancy_iou: 1.0
+rules:
+  fit_once_per_map: true
+  shared_by_all_seeds: true
+  trial_trajectory_fitting_forbidden: true
+  amcl_trajectory_used_for_fit: false
+calibration_payload_sha256: 6f330ef091e38f3eb497d7da3fbd8e6a23729ea0f8c805f08fe4520cc9ea2a54

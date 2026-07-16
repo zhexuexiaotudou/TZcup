@@ -45,6 +45,7 @@ setup(
             "sanitation_operational_envelope_audit = sanitation_tasks.operational_envelope_audit:main",
             "sanitation_oracle_odom_adapter = sanitation_tasks.oracle_odom_adapter:main",
             "sanitation_dynamic_obstacle_probe = sanitation_tasks.dynamic_obstacle_probe:main",
+            "sanitation_tf_ownership_audit = sanitation_tasks.tf_ownership_audit:main",
         ],
     },
 )
