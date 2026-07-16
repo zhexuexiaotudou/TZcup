@@ -12,6 +12,8 @@
 
 复核入口：`GPT_REVIEW_STAGE4U.md`、`artifacts/stage4u_20260716_review/stage4u_summary.json`、`oracle_10seed_compact.json` 与 `MANIFEST.json`。
 
+发布与合并后验证：[PR #9](https://github.com/zhexuexiaotudou/TZcup/pull/9) 的 `fast-validation` 通过，已按 merge-commit 策略合入 `main@efd5e34cbb3c8ba1016118c63a6e35402704e787`。远端 main tree `00f2b33c5866025421bc5e9bea224945b58eafbd` 与本地验证树一致；合并树真实 Gazebo core smoke 再验通过 covariance 与 operational envelope，MCAP 17.5 MiB、48,255 条消息且元数据可读。回滚点为 `de5106cdaf0948888c0225a1076cad790280efa3`。
+
 ## Stage4T：转向瞬态、EKF 融合与定位恢复
 
 状态：到达可复核失败边界；未通过 Stage4T，未进入 Stage5A。
