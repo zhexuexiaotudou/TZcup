@@ -8,3 +8,6 @@
 *.yml text eol=lf
 *.json text eol=lf
 *.md text eol=lf
+
+# Review evidence manifests hash exact bytes; never normalize or diff their payloads.
+artifacts/stage4w_*_review/** binary
