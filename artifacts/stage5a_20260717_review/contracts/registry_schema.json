@@ -1,0 +1,16 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/tzcup/stage5a/garbage-registry.schema.json",
+  "title": "TZcup Stage5A garbage semantic registry",
+  "type": "object",
+  "required": ["schema_version", "registry_version", "uuid_namespace", "class_order", "models", "negative_models"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "registry_version": {"type": "string", "minLength": 1},
+    "uuid_namespace": {"type": "string", "format": "uuid"},
+    "class_order": {"type": "array", "minItems": 6, "uniqueItems": true, "items": {"type": "string"}},
+    "models": {"type": "object", "minProperties": 5},
+    "negative_models": {"type": "object", "minProperties": 3}
+  },
+  "additionalProperties": false
+}

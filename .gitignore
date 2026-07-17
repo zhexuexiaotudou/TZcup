@@ -24,6 +24,13 @@ artifacts/stage4w_localization_regression/
 artifacts/stage4w_localization_regression_*/
 artifacts/stage4w_localization_reweight_probe_*/
 
+# Stage5A raw datasets, generated ONNX models, workspaces, and MCAP stay local.
+artifacts/stage5a_formal*/
+artifacts/stage5a_live_formal*/
+artifacts/stage5a_screening*/
+artifacts/stage5a_*_raw*/
+artifacts/stage5a_stage4w_regression*/
+
 # Superseded local review bundle; the current Stage4R bundle is committed.
 无人清扫车仿真_GPT复核包_Stage4_20260715.zip
 

@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "file_count": 27,
+  "files": [
+    {
+      "path": "calibration_dataset_manifest.json",
+      "bytes": 961,
+      "sha256": "3118ccc388ec672f351f2bf195d47c8c318ee951bf2d5a393dae7d0441a91a6f"
+    },
+    {
+      "path": "coco_annotations.json",
+      "bytes": 46407,
+      "sha256": "a521d2682e3d9f96d5d490cc4c47655892c17178d2fa465b23bf5caff6697545"
+    },
+    {
+      "path": "colcon_test_results.txt",
+      "bytes": 377,
+      "sha256": "945ecad03fa88c865f2205b1b3b370a5ab4570b7be51b3a8d5e1c638836c69f6"
+    },
+    {
+      "path": "contracts/garbage_registry.yaml",
+      "bytes": 2035,
+      "sha256": "45df1f0bb8cdde3c2bea8dc7a86125777470cbf1d632497ed3e1484dc8bb339b"
+    },
+    {
+      "path": "contracts/model_manifest.yaml",
+      "bytes": 525,
+      "sha256": "f0ed41c819e972a0dddb6ef19a44cc110d4131cc7e1f762ac99f1e0fc5f46760"
+    },
+    {
+      "path": "contracts/operator_inventory.json",
+      "bytes": 315,
+      "sha256": "78e65ab61dfa4b2ff4b8767fd22e9f6a3b096d8077b99aa317abf30ca3dba725"
+    },
+    {
+      "path": "contracts/postprocess_spec.yaml",
+      "bytes": 333,
+      "sha256": "9bcd337b6425735114658cc2701d23e9ce81d9b410d33d448163b25182905051"
+    },
+    {
+      "path": "contracts/preprocess_spec.yaml",
+      "bytes": 160,
+      "sha256": "4f58ed07593bc7e72374a1f52e5b3b5a92f821281527abc9fa974b33586b2b35"
+    },
+    {
+      "path": "contracts/registry_schema.json",
+      "bytes": 764,
+      "sha256": "855350da57a873897317ace8689270d3388b5dbf1570f8ea237f110299fa8b97"
+    },
+    {
+      "path": "dataset_manifest.json",
+      "bytes": 9600,
+      "sha256": "977596444561283b6639ff698daee81638d5cb3b37f273d20419d52270caec72"
+    },
+    {
+      "path": "e2e_timeline_seed_100.json",
+      "bytes": 2192,
+      "sha256": "0af6e09adae85ab793aba63502b9e0b87b547709c7bd4dd7d6fdbb8f9e29d948"
+    },
+    {
+      "path": "j6_fail_closed.json",
+      "bytes": 105,
+      "sha256": "c1b6404a4d5bf723cf78718cf4e005fb4141e10124d94f7dc06f1d90fc35df0c"
+    },
+    {
+      "path": "rosbag_info.txt",
+      "bytes": 2657,
+      "sha256": "d546406f59b162f9012f87de61ad5b6164a86fee92b89953a5bc15a6a88f3387"
+    },
+    {
+      "path": "splits/test.json",
+      "bytes": 58,
+      "sha256": "00dd3d19b9ea45540ff20f8c1a26dd7daaae7bc4943c9ec6bde9603c7ed0611d"
+    },
+    {
+      "path": "splits/train.json",
+      "bytes": 112,
+      "sha256": "968c6cb5b63c5d61f231bfb8f304f14de3be8f347a9399dc1e80e10add503dbf"
+    },
+    {
+      "path": "splits/val.json",
+      "bytes": 58,
+      "sha256": "7c66c37641010d4edbe66ea9b9883551414701d4394514e946923b751c0fcd0b"
+    },
+    {
+      "path": "spot_clean_e2e_report.json",
+      "bytes": 72989,
+      "sha256": "23edd3a955721326aabeca046012c65d97d8cdb200f1d4d6129f18e96e4df69d"
+    },
+    {
+      "path": "stage4w_regression_compact.json",
+      "bytes": 647,
+      "sha256": "3ccdc7c01599d3f0be3ac235eb5c66146ffba6108f2b598d7a5c9a62d1e811c7"
+    },
+    {
+      "path": "stage5a_live_smoke_report.json",
+      "bytes": 959,
+      "sha256": "504d155aa22d380250edef074fd22f2bbf16aa09d7660635ec567d49178765ca"
+    },
+    {
+      "path": "stage5a_offline_report.json",
+      "bytes": 639,
+      "sha256": "2f6afb133544c0e0830892e5e4d897e031ca16a641d32b9f29f807e453c5fa25"
+    },
+    {
+      "path": "stage5a_summary.json",
+      "bytes": 1591,
+      "sha256": "8fb33c6541ac0422a0e154eecbc20f8304574761169ac609e97577822b4ae11e"
+    },
+    {
+      "path": "stage5a_synthetic_color_prototype.onnx",
+      "bytes": 326,
+      "sha256": "f7a10487a2577dc6675abb6784769308a0c21bfb11c0c9eb42af6aa2a5152e73"
+    },
+    {
+      "path": "synthetic_perception_report.json",
+      "bytes": 4000,
+      "sha256": "963739a22db9e4705fa35cc62355b911ac2e71975e31b0788217f182e9e51ec0"
+    },
+    {
+      "path": "visuals/confusion_matrix.png",
+      "bytes": 10035,
+      "sha256": "57ec76ebd778dd33450aaae550028f8f51afbbebfe05d0b17e6a19997b362475"
+    },
+    {
+      "path": "visuals/map_targets_scene_0016.png",
+      "bytes": 6458,
+      "sha256": "607be92dde0f90cfa907d2ea96ea23e90e4fe0a0d167648fa6cdbd4f6b7a1186"
+    },
+    {
+      "path": "visuals/precision_recall_operating_point.png",
+      "bytes": 6265,
+      "sha256": "d1333ac05174705dc653d040e201411015e00d79f5e089ca5788bb2c01450731"
+    },
+    {
+      "path": "visuals/segmentation_overlay_scene_0016.png",
+      "bytes": 102633,
+      "sha256": "44e740b67aa5326671fd07062af66bc295bded6d423519e26f2f7ef43417f550"
+    }
+  ]
+}

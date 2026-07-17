@@ -1,0 +1,6 @@
+build/sanitation_dataset/pytest.xml: 2 tests, 0 errors, 0 failures, 0 skipped
+build/sanitation_ground_truth/pytest.xml: 1 test, 0 errors, 0 failures, 0 skipped
+build/sanitation_perception/pytest.xml: 9 tests, 0 errors, 0 failures, 0 skipped
+build/sanitation_spot_cleaning/pytest.xml: 2 tests, 0 errors, 0 failures, 0 skipped
+
+Summary: 14 tests, 0 errors, 0 failures, 0 skipped

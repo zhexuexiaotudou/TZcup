@@ -1,5 +1,14 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## Stage5A 感知与定点清扫契约
+
+- 类别必须由版本化 registry 的精确 Gazebo identity 解析；模型名子串不得决定目标/障碍语义。
+- 正式 x86 仿真后端为 ONNX Runtime；GT 仅用于标注与评估，进入决策 tracker 必须 fail-closed；J6 不可用时不得回退伪装。
+- RGB、depth、camera_info 和 TF 必须共同形成 2D、3D、分割与 `map` 目标；任何关键输入缺失时 map 输出 fail-closed 并记录原因。
+- train/val/test 按 scene seed 分割，COCO detection/segmentation、map pose、相机参数、TF、场景 manifest、split hash 和重复图像检查均须保留。
+- spot-clean 默认 `deferred`，状态为 TENTATIVE、CONFIRMED、QUEUED、APPROACHING、CLEANING、CLEANED、LOST、REJECTED；同一目标不得逐帧重复建任务。
+- synthetic、真实数据、J6、实车与竞赛效率是互相独立的门，禁止跨门替代。
+
 ## Stage4W 完整任务契约
 
 - 规划、执行与评测必须使用同一份编译后的 mission geometry，包括 outer、headland、keepout、显式 exclusion、world→map 固定障碍、footprint 和安全裕量。
@@ -38,7 +47,7 @@ flowchart LR
   LOC[robot_localization<br/>SLAM Toolbox / AMCL]
   NAV[Nav2<br/>Planner/Controller/Collision Monitor]
   COV[OpenNav Coverage<br/>Fields2Cover]
-  PER[垃圾检测与定位<br/>仿真假模型 -> J6量化模型]
+  PER[垃圾检测与定位<br/>GT评估 / ONNX Runtime / J6边界]
   TASK[任务管理器<br/>规则/BT/大模型任务分解]
   CLEAN[清扫执行器语义<br/>刷盘/作业宽度/尘箱]
   MET[评测与证据系统]
@@ -88,8 +97,14 @@ flowchart LR
 - `/cleaning/brush_speed` — `std_msgs/msg/Float32`
 - `/cleaning/bin_fill_ratio` — `std_msgs/msg/Float32`
 - `/emergency_stop` — `std_msgs/msg/Bool`
-- `/garbage/detections_2d` — `vision_msgs/msg/Detection2DArray`
-- `/garbage/targets` — `geometry_msgs/msg/PoseArray`
+- `/perception/garbage/detections_2d` — `vision_msgs/msg/Detection2DArray`
+- `/perception/garbage/detections_3d` — `vision_msgs/msg/Detection3DArray`
+- `/perception/garbage/segmentation` — `sensor_msgs/msg/Image`
+- `/perception/garbage/targets` — `sanitation_perception_interfaces/msg/GarbageTargetArray`
+- `/perception/garbage/diagnostics` — `std_msgs/msg/String`
+- `/garbage/ground_truth` — `sanitation_perception_interfaces/msg/GarbageTargetArray`，仅标注/评估
+- `/garbage/cleaning_events` — `sanitation_perception_interfaces/msg/CleaningEvent`
+- `/spot_clean/state` — `std_msgs/msg/String`
 - `/coverage/path` — `nav_msgs/msg/Path`
 - `/metrics/coverage_ratio` — `std_msgs/msg/Float32`
 

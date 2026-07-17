@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5A",
+  "gates": {
+    "ros_packages_14_tests_zero_failures": true,
+    "synthetic_perception": true,
+    "spot_clean_30_seed_e2e": true,
+    "gazebo_rgbd_onnx_live_smoke": true,
+    "ground_truth_registry_and_occlusion_pipeline": true,
+    "live_2d_3d_map_targets_nonempty": true,
+    "formal_rosbag_recorded": true,
+    "ground_truth_never_controls": true,
+    "stage4w_regression": true
+  },
+  "READY_FOR_GPT_REVIEW_STAGE5A": true,
+  "READY_FOR_STAGE5B": true,
+  "synthetic_scope": "synthetic_color_domain_only",
+  "dataset_scene_count": 20,
+  "dataset_split_hash": "fc51ef67d58bdd353ca2001f2dae1f9e3afa750245a3052f4d334451242096c6",
+  "model_sha256": "f7a10487a2577dc6675abb6784769308a0c21bfb11c0c9eb42af6aa2a5152e73",
+  "discrete_macro_precision": 1.0,
+  "discrete_macro_recall": 1.0,
+  "discrete_macro_f1": 1.0,
+  "area_iou": {
+    "leaf_pile": 1.0,
+    "puddle": 1.0
+  },
+  "map_localization_rmse_m": 0.0,
+  "spot_clean_valid_trial_count": 30,
+  "spot_clean_mission_success_rate": 1.0,
+  "coverage_resume_success_rate": 1.0,
+  "live_inference_frame_count": 127,
+  "competition_perception_pass": false,
+  "j6_toolchain_available": false,
+  "j6_quantization_pass": false,
+  "j6_runtime_pass": false,
+  "competition_efficiency_pass": false,
+  "theoretical_efficiency_m2_h": 1053.0,
+  "target_efficiency_m2_h": 3500.0,
+  "scope_boundary": "Stage5A is synthetic-domain readiness only. No real-data accuracy, J6 quantization/runtime, native GUI, physical vehicle, or competition efficiency claim is made."
+}

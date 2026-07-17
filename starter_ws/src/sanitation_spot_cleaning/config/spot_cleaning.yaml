@@ -1,0 +1,13 @@
+schema_version: 1
+mode: deferred
+confirmation_observations: 3
+association_distance_m: 0.25
+maximum_covariance_trace: 0.03
+maximum_observation_age_s: 1.0
+maximum_retries: 2
+discrete_cleaning_duration_s: 1.0
+area_cleaned_fraction_threshold: 0.90
+require_component_boundary: true
+require_compute_path: true
+require_keepout_clear: true
+require_brush_final_false: true

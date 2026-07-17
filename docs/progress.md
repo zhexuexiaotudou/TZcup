@@ -1,8 +1,14 @@
 # 项目推进记录
 
+## Stage5A：垃圾感知真值闭环、数据集与定点清扫
+
+状态：正式实现已覆盖 registry、GT、20-scene 数据、ONNX Runtime、RGB-D 到 map、多帧 tracker、30-seed synthetic task-state E2E 和 Stage4W 回归。紧凑复核目录的 9 个机器 gate 全部通过，`READY_FOR_GPT_REVIEW_STAGE5A=true`、`READY_FOR_STAGE5B=true`。
+
+已验证边界：Stage5A 仅为 synthetic-domain 工程证据。30-seed 状态闭环不等于 30 次真实车辆/Nav2 定点任务；J6 工具链/量化/运行、真实数据精度、原生 GUI、实车、机械臂与竞赛效率仍未通过。详细复现与结果见 `docs/stage5a-garbage-perception.md` 和 `GPT_REVIEW_STAGE5A.md`。
+
 ## Stage4W：可达清扫域、完整覆盖与动态交互闭环
 
-状态：正式门禁全部通过，已到达 GPT 复核边界；尚未启动 Stage5A 实施。
+状态：Stage4W 正式门禁全部通过并已作为 Stage5A 回归基线；当前阶段状态见上方 Stage5A 条目。
 
 已完成：
 
@@ -17,7 +23,7 @@
 
 边界：
 
-- `READY_FOR_GPT_REVIEW_STAGE4W=true`、`READY_FOR_STAGE5A=true` 只表示 Stage4W 技术门已满足，Stage5A 实施仍需 GPT/人工复核后另行启动。
+- `READY_FOR_GPT_REVIEW_STAGE4W=true`、`READY_FOR_STAGE5A=true` 只表示 Stage4W 技术门满足；Stage5A 已在后续独立阶段实施并保留新的合成域边界。
 - 竞赛理论效率仍为 `1053 m²/h < 3500 m²/h`，`competition_efficiency_pass=false`；不得以经验覆盖率替换效率门。
 - 垃圾感知训练、J6 量化、实板部署和原生 Ubuntu/WSLg GUI 验收未执行。
 - 紧凑证据位于 `artifacts/stage4w_20260717_review/`；原始 MCAP、筛查和失败诊断在用户确认前保留本机。

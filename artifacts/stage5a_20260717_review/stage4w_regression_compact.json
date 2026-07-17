@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "stage": "Stage4W regression for Stage5A",
+  "seed": 0,
+  "gates": {
+    "static_gate_pass": true,
+    "mission_success": true,
+    "collision_zero": true,
+    "keepout_violation_zero": true,
+    "brush_final_false": true,
+    "coverage_at_least_90pct": true,
+    "coverage_localization_rmse_at_most_0_05m": true,
+    "rosbag_replay": true
+  },
+  "stage4w_regression_pass": true,
+  "empirical_coverage_rate": 0.9386666666666666,
+  "collision_count": 0,
+  "keepout_violation_sample_count": 0,
+  "brush_disabled_on_exit": true,
+  "localization_rmse_m": 0.03569694465310105,
+  "rosbag_replay": true
+}

@@ -1,0 +1,11 @@
+FROM tzcup/sanitation-jazzy:stage0
+
+ARG ONNX_VERSION=1.17.0
+ARG ONNXRUNTIME_VERSION=1.20.1
+
+RUN python3 -m pip install --break-system-packages --no-cache-dir \
+    "onnx==${ONNX_VERSION}" \
+    "onnxruntime==${ONNXRUNTIME_VERSION}"
+
+LABEL org.opencontainers.image.title="TZcup Stage5A synthetic perception gate"
+LABEL org.opencontainers.image.licenses="Apache-2.0"

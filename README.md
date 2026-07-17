@@ -20,11 +20,11 @@ Stage4T 已完成 200 组固定时长瞬态、120 组闭环航向、A/B/C/D 各 
 
 ## 当前状态
 
-- Stage 0–4W 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；当前车辆参数为 0.14 m 轮半径、1.22 m 有效轮距，局部融合选择 EKF-B，全局融合采用 RTK + 扫描精化 + 局部里程计。
+- Stage 0–5A 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；当前车辆参数为 0.14 m 轮半径、1.22 m 有效轮距，局部融合选择 EKF-B，全局融合采用 RTK + 扫描精化 + 局部里程计。
 - precision mapping 与 localization/coverage 包络分别限制为 0.30/0.25 和 0.45/0.35 m/s、rad/s；0.60 rad/s stress 默认禁用且仍失败。
 - Stage4W hybrid 10-seed 的 XY RMSE P50/P95/max 为 0.02825/0.03726/0.03778 m，定位门禁通过且 GT 控制违规为 0。
 - 完整 Coverage 静态 5/5 通过，每次均执行统一几何生成的 17/17 组件；动态障碍 20/20、碰撞 0，过滤器、30 次急停和 rosbag 回放全部通过。
-- 原生 Ubuntu/WSLg 下的 Gazebo/RViz GUI 验收仍未完成；垃圾感知训练、J6 量化和实板部署尚未启动，需先由 GPT/人工复核 Stage4W 证据。
+- 原生 Ubuntu/WSLg 下的 Gazebo/RViz GUI 验收仍未完成；Stage5A synthetic 感知与 task-state E2E 已形成复核证据，但真实数据训练、J6 量化和实板部署尚未启动。
 - 理论清扫效率仍为 1053 m²/h，未达到 3500 m²/h；不得用覆盖率或仿真实测净效率替代竞赛效率口径。
 - 详细证据、复现命令和已知边界以 [`docs/progress.md`](docs/progress.md) 为准。
 
@@ -51,6 +51,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage2_doc
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage3_docker.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_docker.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4t_core_smoke_docker.ps1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage5a_docker.ps1 -OutputName stage5a_formal3 -RecordBag
 ```
 
 ## 开发工作流
@@ -95,6 +96,12 @@ python scripts/ci_fast.py
 - 服务器地址、SSH 私钥、令牌和其他凭据不得提交到仓库，只能放入受保护环境或 GitHub Secrets。
 - 不能用“代码已合并”代替“运行时已部署”，也不能用命令返回 0 代替真实节点、话题、日志、JSON、rosbag 或页面效果验收。
 
+## Stage5A 垃圾感知真值闭环、数据集与定点清扫（2026-07-17）
+
+Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 GT、20-scene RGB-D/COCO 数据、固定契约 ONNX Runtime 后端、2D/3D/map 投影、多帧 tracker 和 deferred spot-clean 状态闭环。正式门包含 ROS 构建/测试、held-out synthetic perception、30-seed 状态闭环、Gazebo 实时 RGB-D 推理、压缩 MCAP，以及 Stage4W 单 seed 完整 Coverage 回归。
+
+当前结论严格限定为 synthetic-domain 工程就绪；`competition_perception_pass=false`、`j6_quantization_pass=false`、`j6_runtime_pass=false`、`competition_efficiency_pass=false`，理论效率仍为 `1053 m²/h < 3500 m²/h`。复核入口为 [`GPT_REVIEW_STAGE5A.md`](GPT_REVIEW_STAGE5A.md)、[`docs/stage5a-garbage-perception.md`](docs/stage5a-garbage-perception.md) 和 `artifacts/stage5a_20260717_review/`。
+
 ## 最近同步
 
-2026-07-17：Stage4W 正式门禁全部完成。hybrid 定位 10/10，静态覆盖 5/5 且每次 17/17，动态交互 20/20，碰撞/keepout/刷盘违规为 0，过滤器、30 次急停和 MCAP 回放通过；`READY_FOR_GPT_REVIEW_STAGE4W=true`、`READY_FOR_STAGE5A=true`。竞赛理论效率 `1053 m²/h` 仍未达 `3500 m²/h`，原始 MCAP 和失败诊断在用户确认前保留于本机。GPT 复核证据目录按原始字节提交，`MANIFEST.json` 的字节数与 SHA-256 在 Git 归档中保持一致。
+2026-07-17：Stage5A 机器门全部通过，`READY_FOR_GPT_REVIEW_STAGE5A=true`、`READY_FOR_STAGE5B=true`。14/14 ROS 测试通过；20-scene held-out synthetic 指标为 1.0；30/30 task-state E2E 成功；Gazebo 实时 ONNX 处理 127 帧并发布非空 2D/3D/map 目标；正式 MCAP 4.6 MiB、8,527 条消息；Stage4W 回归覆盖率 93.87%、定位 RMSE 0.03570 m、碰撞/keepout 0、刷盘最终关闭。轻量 CI 已显式安装 Stage5A 投影与合成数据测试所需的 NumPy、headless OpenCV。真实数据、J6 与竞赛效率仍为 false；原始 dataset/MCAP 保留本机，Git 仅提交紧凑复核证据。

@@ -1,0 +1,20 @@
+schema_version: 1
+model_id: stage5a_synthetic_color_prototype_v1
+artifact: stage5a_synthetic_color_prototype.onnx
+license: Apache-2.0
+weight_source: deterministic_color_prototypes_no_learned_weights
+framework: ONNX
+opset: 13
+batch: 1
+input:
+  name: images
+  shape: [1, 3, 96, 128]
+  dtype: float32
+output:
+  name: logits
+  shape: [1, 6, 96, 128]
+  dtype: float32
+class_order: [background, plastic_bottle, metal_can, paper_litter, leaf_pile, puddle]
+dynamic_shapes: false
+synthetic_only: true
+competition_claim_allowed: false
