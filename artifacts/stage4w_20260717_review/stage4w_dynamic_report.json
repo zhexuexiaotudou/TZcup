@@ -1,0 +1,4707 @@
+{
+  "schema_version": 1,
+  "stage": "Stage4W",
+  "lane": "hybrid_rtk_scan_imu_wheel",
+  "competition_evidence": true,
+  "gates": {
+    "full_execution_success": true,
+    "empirical_coverage_at_least_90pct": true,
+    "localization_regression_pass": true,
+    "swath_exclusion_intersections_zero": true,
+    "collision_count_zero": true,
+    "coverage_keepout_violations_zero": true,
+    "brush_only_during_swaths": true,
+    "brush_final_state_false": true,
+    "dynamic_obstacle_valid_trials_at_least_20": true,
+    "dynamic_obstacle_gate_pass": true,
+    "keepout_violations_zero": true,
+    "speed_zone_pass": true,
+    "emergency_stop_30_trials": true,
+    "emergency_stop_p95_at_most_1s": true,
+    "complete_rosbag_replay": true,
+    "all_processes_exit_zero": true
+  },
+  "exit_codes": {
+    "coverage": 0,
+    "dynamic": 0,
+    "filters": 0,
+    "safety": 0
+  },
+  "coverage": {
+    "schema_version": 2,
+    "mission_id": "demo_coverage_001",
+    "planner": "OpenNav Coverage + Fields2Cover",
+    "planning_success": true,
+    "transit_to_start_success": true,
+    "full_execution_success": true,
+    "empirical_coverage_success": true,
+    "safety_success": true,
+    "competition_efficiency_pass": false,
+    "success": true,
+    "operation_width_m": 0.65,
+    "swath_count": 9,
+    "turn_count": 8,
+    "nav_path_pose_count": 393,
+    "component_count": 17,
+    "component_results": [
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 2.6656694412231445,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 2.3694839477539062,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 2.073298454284668,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.7771129608154297,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.3821989297866821,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 0.8885564804077148,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 0.4936424791812897,
+                "speed": 0.3624281585216522
+              }
+            ],
+            "terminal_estimated_pose": [
+              1.6702263828032964,
+              -2.6838278980752617,
+              0.0017781659820590434
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              1.6622971068946972,
+              -2.6655290554896425,
+              0.0013726924397747828
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 0,
+        "brush_enabled": true,
+        "path_pose_count": 31,
+        "planned_length_m": 2.9618549346923806,
+        "goal_pose": {
+          "x": 1.9618549346923801,
+          "y": -2.675,
+          "yaw": -1.609927270747946e-08
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.29176213609951385,
+            "heading_rad": 0.0017781820813317511
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.2997075090563874,
+            "heading_rad": 0.0013727085390474903
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 1.9030194282531738,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.7028018236160278,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.302119255065918,
+                "speed": 0.22169779241085052
+              },
+              {
+                "distance_to_goal": 1.10178542137146,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 1.10178542137146,
+                "speed": 0.1372188925743103
+              },
+              {
+                "distance_to_goal": 1.10178542137146,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 1.001618504524231,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 1.001618504524231,
+                "speed": 0.13961607217788696
+              },
+              {
+                "distance_to_goal": 0.901451587677002,
+                "speed": 0.13766677677631378
+              },
+              {
+                "distance_to_goal": 0.901451587677002,
+                "speed": 0.13810354471206665
+              },
+              {
+                "distance_to_goal": 0.8012847304344177,
+                "speed": 0.14514045417308807
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.10157483071088791
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.09496835619211197
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.10245621204376221
+              }
+            ],
+            "terminal_estimated_pose": [
+              2.237516524728701,
+              -1.925448251349082,
+              -3.0870855194708198
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              2.242270481879258,
+              -1.9257625150788833,
+              -3.0870953876578766
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "turn",
+        "index": 0,
+        "brush_enabled": false,
+        "path_pose_count": 20,
+        "planned_length_m": 1.9030193748524813,
+        "goal_pose": {
+          "x": 2.0218243114668626,
+          "y": -2.02136160157856,
+          "yaw": -2.8813079682258036
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.2360561408098357,
+            "heading_rad": 0.20577755124501618
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.240282540749559,
+            "heading_rad": 0.20578741943207302
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.7643978595733643,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 2.3694839477539062,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.9745699167251587,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 1.6783844232559204,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.4809274673461914,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.1847419738769531,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 0.8885564804077148,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 0.5923709869384766,
+                "speed": 0.26342952251434326
+              }
+            ],
+            "terminal_estimated_pose": [
+              -0.7711928777402436,
+              -2.0182615381311835,
+              3.127329013584192
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -0.7661218758372641,
+              -2.0042496050190315,
+              3.127320041518337
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 1,
+        "brush_enabled": true,
+        "path_pose_count": 31,
+        "planned_length_m": 2.9618549346923846,
+        "goal_pose": {
+          "x": -1.0,
+          "y": -2.025,
+          "yaw": 3.1415926213912435
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.22890632596140417,
+            "heading_rad": 0.014263607807051493
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.2347968395310003,
+            "heading_rad": 0.014272579872906642
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 1.9030194282531738,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.8028756380081177,
+                "speed": 0.39702627062797546
+              },
+              {
+                "distance_to_goal": 1.10178542137146,
+                "speed": 0.12620601058006287
+              },
+              {
+                "distance_to_goal": 1.001618504524231,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.901451587677002,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.901451587677002,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.901451587677002,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.901451587677002,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.8012847304344177,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.09828806668519974
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.08354625105857849
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.0629197210073471
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.05866529420018196
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.0
+              }
+            ],
+            "terminal_estimated_pose": [
+              -1.2785386370957315,
+              -1.3699239174871496,
+              0.11738155148807161
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -1.2834921437405686,
+              -1.3538642705120734,
+              0.12270153300461731
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "turn",
+        "index": 1,
+        "brush_enabled": false,
+        "path_pose_count": 20,
+        "planned_length_m": 1.9030193748524822,
+        "goal_pose": {
+          "x": -1.0599693767744816,
+          "y": -1.3713616015785597,
+          "yaw": -0.2602846853639918
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.21857398860094263,
+            "heading_rad": 0.3776662368520634
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.22420656535129807,
+            "heading_rad": 0.3829862183686091
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.6656694412231445,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.3694839477539062,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.073298454284668,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.7771129608154297,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.4809274673461914,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.1847419738769531,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.8885564804077148,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.5923709869384766,
+                "speed": 0.23207175731658936
+              },
+              {
+                "distance_to_goal": 0.39491400122642517,
+                "speed": 0.14210234582424164
+              }
+            ],
+            "terminal_estimated_pose": [
+              1.6972411600803619,
+              -1.3593503104083253,
+              -0.0024892100526079375
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              1.698068023268772,
+              -1.3567766894500184,
+              -0.0024517953259378983
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 2,
+        "brush_enabled": true,
+        "path_pose_count": 31,
+        "planned_length_m": 2.96185493469238,
+        "goal_pose": {
+          "x": 1.9618549346923801,
+          "y": -1.375,
+          "yaw": 0.0
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.2650761447183352,
+            "heading_rad": 0.0024892100526079375
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.26441562678065683,
+            "heading_rad": 0.0024517953259378983
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 1.9030194282531738,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.9030194282531738,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.8028756380081177,
+                "speed": 0.2976028025150299
+              },
+              {
+                "distance_to_goal": 1.10178542137146,
+                "speed": 0.1505322903394699
+              },
+              {
+                "distance_to_goal": 0.901451587677002,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.901451587677002,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.8012847304344177,
+                "speed": 0.1452351063489914
+              },
+              {
+                "distance_to_goal": 0.8012847304344177,
+                "speed": 0.14045248925685883
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.14054951071739197
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.11698764562606812
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.106911301612854
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.09615985304117203
+              },
+              {
+                "distance_to_goal": 0.3004501163959503,
+                "speed": 0.10154556483030319
+              }
+            ],
+            "terminal_estimated_pose": [
+              2.2416222445416247,
+              -0.6282334825721833,
+              -3.045841815968099
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              2.230410558005401,
+              -0.6095867769115457,
+              -3.0458201819849138
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "turn",
+        "index": 2,
+        "brush_enabled": false,
+        "path_pose_count": 20,
+        "planned_length_m": 1.903019374852481,
+        "goal_pose": {
+          "x": 2.0218243114668626,
+          "y": -0.7213616015785598,
+          "yaw": -2.8813079682258036
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.23871317084233842,
+            "heading_rad": 0.1645338477422955
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.23664706563652477,
+            "heading_rad": 0.16451221375911018
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.566941022872925,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.2707555294036865,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.073298454284668,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.7771129608154297,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.4809274673461914,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.1847419738769531,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.8885564804077148,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.5923709869384766,
+                "speed": 0.2640265226364136
+              },
+              {
+                "distance_to_goal": 0.39491400122642517,
+                "speed": 0.18111516535282135
+              }
+            ],
+            "terminal_estimated_pose": [
+              -0.7634204274559504,
+              -0.754441009391948,
+              -3.1328395730917493
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -0.7499255871077093,
+              -0.7104756070834239,
+              -3.131848687728034
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 3,
+        "brush_enabled": true,
+        "path_pose_count": 31,
+        "planned_length_m": 2.961854934692383,
+        "goal_pose": {
+          "x": -1.0,
+          "y": -0.7250000000000001,
+          "yaw": 3.1415926455401557
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.23840441937837897,
+            "heading_rad": 0.008753088547681887
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.25049584821513304,
+            "heading_rad": 0.009743973911396498
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.10017555952072144,
+                "speed": 0.2782585024833679
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.8012847304344177,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.09576676785945892
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.08462079614400864
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.06954841315746307
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.06324125081300735
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.058637432754039764
+              }
+            ],
+            "terminal_estimated_pose": [
+              -1.2493821330940413,
+              -0.03483112612127186,
+              0.0890770648029373
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -1.2767620788798286,
+              -0.030149874542705908,
+              0.08907731786950447
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "turn",
+        "index": 3,
+        "brush_enabled": false,
+        "path_pose_count": 20,
+        "planned_length_m": 1.9030193748524822,
+        "goal_pose": {
+          "x": -1.0599693767744816,
+          "y": -0.07136160157855986,
+          "yaw": -0.2602846853639918
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.19290326045380482,
+            "heading_rad": 0.3493617501669291
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.22067506005757762,
+            "heading_rad": 0.34936200323349625
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.6656694412231445,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.3694839477539062,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.073298454284668,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.7771129608154297,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.4809274673461914,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.1847419738769531,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.8885564804077148,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.6910994648933411,
+                "speed": 0.22051702439785004
+              }
+            ],
+            "terminal_estimated_pose": [
+              1.681707517280776,
+              -0.06882065536884358,
+              -0.02229605559006976
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              1.6879067074662846,
+              -0.06355174738874818,
+              -0.021825661272300345
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 4,
+        "brush_enabled": true,
+        "path_pose_count": 31,
+        "planned_length_m": 2.96185493469238,
+        "goal_pose": {
+          "x": 1.9618549346923801,
+          "y": -0.07500000000000018,
+          "yaw": 1.0062045442174662e-09
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.28021555949386917,
+            "heading_rad": 0.022296056596274302
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.27418733320153854,
+            "heading_rad": 0.021825662278504885
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 0.5021594762802124,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.7030332684516907,
+                "speed": 0.24238857626914978
+              },
+              {
+                "distance_to_goal": 1.1047743558883667,
+                "speed": 0.18531538546085358
+              },
+              {
+                "distance_to_goal": 1.2052081823349,
+                "speed": 0.1371266394853592
+              },
+              {
+                "distance_to_goal": 1.2052081823349,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 1.2052081823349,
+                "speed": 0.14091795682907104
+              },
+              {
+                "distance_to_goal": 1.2052081823349,
+                "speed": 0.14514553546905518
+              },
+              {
+                "distance_to_goal": 1.2052081823349,
+                "speed": 0.14531411230564117
+              },
+              {
+                "distance_to_goal": 1.2052081823349,
+                "speed": 0.1501273810863495
+              },
+              {
+                "distance_to_goal": 1.1047743558883667,
+                "speed": 0.14147810637950897
+              },
+              {
+                "distance_to_goal": 1.1047743558883667,
+                "speed": 0.13726527988910675
+              },
+              {
+                "distance_to_goal": 1.1047743558883667,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 1.00434410572052,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 1.00434410572052,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 1.00434410572052,
+                "speed": 0.14597585797309875
+              },
+              {
+                "distance_to_goal": 0.9039012789726257,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.9039012789726257,
+                "speed": 0.21249431371688843
+              },
+              {
+                "distance_to_goal": 0.7030332684516907,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.40172263979911804,
+                "speed": 0.16279563307762146
+              }
+            ],
+            "terminal_estimated_pose": [
+              1.2611349422007305,
+              0.6263800684167762,
+              -2.8882273713105913
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              1.2511672784824075,
+              0.6336652075347368,
+              -2.8871405229740876
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "turn",
+        "index": 4,
+        "brush_enabled": false,
+        "path_pose_count": 23,
+        "planned_length_m": 2.209513240382409,
+        "goal_pose": {
+          "x": 1.0301279609259257,
+          "y": 0.5757307046314155,
+          "yaw": -2.998218552655331
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.23649436240544894,
+            "heading_rad": 0.10999118134473962
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.22850555033191233,
+            "heading_rad": 0.11107802968124325
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 2.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.7000000476837158,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.399999976158142,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.2000000476837158,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.8999999761581421,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.6000000238418579,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.30000001192092896,
+                "speed": 0.17098604142665863
+              }
+            ],
+            "terminal_estimated_pose": [
+              -0.7607863726938566,
+              0.5691170041310661,
+              3.1311189142058478
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -0.7722184059717563,
+              0.5923710797483233,
+              3.131120551505424
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 5,
+        "brush_enabled": true,
+        "path_pose_count": 21,
+        "planned_length_m": 2.0,
+        "goal_pose": {
+          "x": -1.0,
+          "y": 0.5750000000000002,
+          "yaw": 3.141592647629329
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.23928595681601617,
+            "heading_rad": 0.010473733423481235
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.22844301037604595,
+            "heading_rad": 0.010472096123904873
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.3004501163959503,
+                "speed": 0.2771763801574707
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.1319809854030609
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.09399375319480896
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.08577732741832733
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.07272358983755112
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.05755385011434555
+              }
+            ],
+            "terminal_estimated_pose": [
+              -1.2828340691202982,
+              1.2686184432625944,
+              0.08633378323790675
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -1.3003458421012706,
+              1.27699755552336,
+              0.08909545159806993
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "turn",
+        "index": 5,
+        "brush_enabled": false,
+        "path_pose_count": 20,
+        "planned_length_m": 1.9030193748524822,
+        "goal_pose": {
+          "x": -1.0599693767744816,
+          "y": 1.22863839842144,
+          "yaw": -0.2602846853639918
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.22642233785538082,
+            "heading_rad": 0.34661846860189854
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.24519268577714382,
+            "heading_rad": 0.3493801369620617
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 2.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.7000000476837158,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.399999976158142,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.100000023841858,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.8999999761581421,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.6000000238418579,
+                "speed": 0.1624092161655426
+              }
+            ],
+            "terminal_estimated_pose": [
+              0.7479641168742058,
+              1.2223615132747274,
+              0.0005827123534882794
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              0.7371263878061676,
+              1.2355983506007002,
+              0.0005721901893305797
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 6,
+        "brush_enabled": true,
+        "path_pose_count": 21,
+        "planned_length_m": 2.0000000000000004,
+        "goal_pose": {
+          "x": 1.0,
+          "y": 1.2249999999999996,
+          "yaw": -1.1920928688624588e-08
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.2520496935034804,
+            "heading_rad": 0.0005827242744169681
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.26308717380991564,
+            "heading_rad": 0.0005722021102592684
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.3004501163959503,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.3004501163959503,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.3004501163959503,
+                "speed": 0.06660342961549759
+              },
+              {
+                "distance_to_goal": 0.3004501163959503,
+                "speed": 0.06532524526119232
+              }
+            ],
+            "terminal_estimated_pose": [
+              1.257738845836736,
+              1.8890418075465778,
+              3.0512306658941952
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              1.2570433685634006,
+              1.9061833686987626,
+              3.051234667417146
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "turn",
+        "index": 6,
+        "brush_enabled": false,
+        "path_pose_count": 20,
+        "planned_length_m": 1.9030193748524822,
+        "goal_pose": {
+          "x": 1.0599693767744816,
+          "y": 1.8786383984214394,
+          "yaw": -2.8813079682258014
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.19804290902375432,
+            "heading_rad": 0.3506466730595899
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.19898965708598412,
+            "heading_rad": 0.3506426715366387
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 2.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.7999999523162842,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.5,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.2000000476837158,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.8999999761581421,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.6000000238418579,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.4000000059604645,
+                "speed": 0.17917338013648987
+              }
+            ],
+            "terminal_estimated_pose": [
+              -0.7810265270308855,
+              1.9294949675008868,
+              -3.128102710287911
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -0.7581187709826533,
+              1.8848810310186084,
+              -3.127006235454323
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 7,
+        "brush_enabled": true,
+        "path_pose_count": 21,
+        "planned_length_m": 2.0,
+        "goal_pose": {
+          "x": -1.0,
+          "y": 1.875,
+          "yaw": 3.141592653589793
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.22565257221462873,
+            "heading_rad": 0.013489943301882936
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.2420829686800226,
+            "heading_rad": 0.014586418135470923
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.2002853900194168,
+                "speed": 0.2248721420764923
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.14194674789905548
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.18547149002552032
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.1451616734266281
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.11330516636371613
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.10947272926568985
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.3004501163959503,
+                "speed": 0.08115772157907486
+              }
+            ],
+            "terminal_estimated_pose": [
+              -1.2570428575164259,
+              2.615757665940103,
+              -0.003924335762001796
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -1.2682312266629463,
+              2.5827254911265607,
+              -0.003932457811533746
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "turn",
+        "index": 7,
+        "brush_enabled": false,
+        "path_pose_count": 20,
+        "planned_length_m": 1.9030193748524824,
+        "goal_pose": {
+          "x": -1.0599693767744816,
+          "y": 2.52863839842144,
+          "yaw": -0.2602846853639918
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.21547093443138426,
+            "heading_rad": 0.25636034960199
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.2151706571915831,
+            "heading_rad": 0.25635222755245807
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 1.899999976158142,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.899999976158142,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.5199999809265137,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.0449999570846558,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 0.5699999928474426,
+                "speed": 0.41219863295555115
+              }
+            ],
+            "terminal_estimated_pose": [
+              0.6240140434846572,
+              2.5222727373639477,
+              0.014604976384941626
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              0.6359688390093199,
+              2.5038114217359877,
+              0.014672615943985433
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 8,
+        "brush_enabled": true,
+        "path_pose_count": 21,
+        "planned_length_m": 1.9000000000000024,
+        "goal_pose": {
+          "x": 0.8999999999999999,
+          "y": 2.5250000000000004,
+          "yaw": -5.019338395210366e-08
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.2759994314399482,
+            "heading_rad": 0.014605026578325579
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.26487999136011875,
+            "heading_rad": 0.014672666137369386
+          }
+        }
+      }
+    ],
+    "transit_to_start": {
+      "success": true,
+      "retries": 0,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "terminal_status": 4,
+          "error_code": 0,
+          "error_name": "NONE",
+          "error_msg": "",
+          "succeeded": true,
+          "feedback": [
+            {
+              "distance_remaining": 0.0,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 3.174058675765991,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 3.1129369735717773,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 3.0908570289611816,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 3.1073923110961914,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 3.079655647277832,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 3.068544626235962,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 3.068544626235962,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 2.940985679626465,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 2.766925573348999,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 2.466925621032715,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 2.206925630569458,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 1.9169257879257202,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 1.6269254684448242,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 1.3569256067276,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 1.07692551612854,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 0.7969255447387695,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 0.4169255793094635,
+              "number_of_recoveries": 0.0
+            }
+          ],
+          "terminal_estimated_pose": [
+            -1.6063919680107799,
+            -2.4672985263365925,
+            -2.19991939351892
+          ],
+          "terminal_ground_truth_pose_evaluation_only": [
+            -1.6332979457735046,
+            -2.45816579313143,
+            -2.199913940235364
+          ],
+          "action_kind": "navigate_to_pose",
+          "controller_id": null,
+          "progress_checker_id": "progress_checker",
+          "goal_checker_id": "goal_checker"
+        }
+      ],
+      "goal_pose": {
+        "x": -1.75,
+        "y": -2.67499994024183,
+        "yaw": -2.1514247924486276
+      },
+      "controller": "NavigateToPose default controller",
+      "progress_checker": "nav2_controller::PoseProgressChecker",
+      "terminal_tracking_error": {
+        "estimated_pose": {
+          "position_m": 0.25251365149245214,
+          "heading_rad": 0.048494601070292465
+        },
+        "ground_truth_evaluation_only": {
+          "position_m": 0.24624462798968505,
+          "heading_rad": 0.048489147786736186
+        }
+      },
+      "entry": {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 0.6437531113624573,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6437531113624573,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6437531113624573,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6437531113624573,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6437531113624573,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6437531113624573,
+                "speed": 0.15774135291576385
+              },
+              {
+                "distance_to_goal": 0.5944471955299377,
+                "speed": 0.12826628983020782
+              },
+              {
+                "distance_to_goal": 0.49583539366722107,
+                "speed": 0.10689700394868851
+              },
+              {
+                "distance_to_goal": 0.3972235918045044,
+                "speed": 0.09289764612913132
+              },
+              {
+                "distance_to_goal": 0.2986117899417877,
+                "speed": 0.11014062911272049
+              }
+            ],
+            "terminal_estimated_pose": [
+              -1.0100841200560862,
+              -2.689301806583095,
+              -0.13933721937556018
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -1.000091378414803,
+              -2.6949231429511755,
+              -0.1393175756720573
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "entry",
+        "index": -1,
+        "brush_enabled": false,
+        "path_pose_count": 15,
+        "planned_length_m": 0.8409766775959824,
+        "goal_pose": {
+          "x": -0.8,
+          "y": -2.674999955536139,
+          "yaw": -1.6099273025815822e-08
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.21057036933792306,
+            "heading_rad": 0.13933720327628715
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.20108081239320302,
+            "heading_rad": 0.13931755957278427
+          }
+        }
+      }
+    },
+    "mission_geometry": {
+      "outer_polygon": [
+        [
+          -2.0,
+          -4.0
+        ],
+        [
+          6.0,
+          -4.0
+        ],
+        [
+          6.0,
+          4.0
+        ],
+        [
+          -2.0,
+          4.0
+        ]
+      ],
+      "exclusion_polygons": [
+        [
+          [
+            2.0,
+            1.0
+          ],
+          [
+            4.0,
+            1.0
+          ],
+          [
+            4.0,
+            3.0
+          ],
+          [
+            2.0,
+            3.0
+          ]
+        ],
+        [
+          [
+            2.9618550381170516,
+            -2.963144961882948
+          ],
+          [
+            5.038144961882948,
+            -2.963144961882948
+          ],
+          [
+            5.038144961882948,
+            -1.0368550381170516
+          ],
+          [
+            2.9618550381170516,
+            -1.0368550381170516
+          ]
+        ]
+      ],
+      "cleanable_outer_polygon": [
+        [
+          -1.0,
+          -3.0
+        ],
+        [
+          5.0,
+          -3.0
+        ],
+        [
+          5.0,
+          3.0
+        ],
+        [
+          -1.0,
+          3.0
+        ]
+      ],
+      "cleanable_exclusion_polygons": [
+        [
+          [
+            1.0,
+            0.0
+          ],
+          [
+            5.0,
+            0.0
+          ],
+          [
+            5.0,
+            3.0
+          ],
+          [
+            1.0,
+            3.0
+          ]
+        ],
+        [
+          [
+            1.9618550381170516,
+            -3.0
+          ],
+          [
+            5.0,
+            -3.0
+          ],
+          [
+            5.0,
+            -0.0368550381170516
+          ],
+          [
+            1.9618550381170516,
+            -0.0368550381170516
+          ]
+        ]
+      ],
+      "outer_area_m2": 64.0,
+      "base_excluded_area_m2": 7.999536358966909,
+      "excluded_area_m2": 49.00246393727352,
+      "cleanable_area_m2": 14.997536062726478,
+      "footprint_radius_m": 0.5381449618829485,
+      "safety_margin_m": 0.1,
+      "configured_headland_width_m": 1.0,
+      "required_headland_width_m": 0.9631449618829484,
+      "headland_clearance_valid": true,
+      "world_to_map_translation": [
+        8.0,
+        0.0
+      ],
+      "compiled_static_obstacles": [
+        {
+          "name": "structured_waste_bin",
+          "source_frame": "world",
+          "map_center": [
+            4.0,
+            -2.0
+          ],
+          "size": [
+            0.8,
+            0.65
+          ],
+          "inflated_polygon": [
+            [
+              2.9618550381170516,
+              -2.963144961882948
+            ],
+            [
+              5.038144961882948,
+              -2.963144961882948
+            ],
+            [
+              5.038144961882948,
+              -1.0368550381170516
+            ],
+            [
+              2.9618550381170516,
+              -1.0368550381170516
+            ]
+          ]
+        }
+      ],
+      "ignored_static_obstacles": [
+        {
+          "name": "trash_bin_obstacle",
+          "source_frame": "world",
+          "map_center": [
+            10.0,
+            3.0
+          ],
+          "size": [
+            0.7,
+            0.7
+          ],
+          "reason": "inflated_bounds_outside_outer_polygon"
+        }
+      ]
+    },
+    "route_selection": {
+      "candidates": [
+        {
+          "direction": "forward",
+          "staging_pose": {
+            "x": -1.75,
+            "y": -2.67499994024183,
+            "yaw": -2.1514247924486276
+          },
+          "transit_yaw_source": "fused_pose_to_staging_pose",
+          "operation_entry_yaw": -1.6099272707479423e-08,
+          "footprint_clearance_m": 4.711855038117052,
+          "target_grid_values": {
+            "global_costmap_received": true,
+            "global_costmap_cost": 0,
+            "keepout_mask_received": true,
+            "keepout_mask_value": 0,
+            "speed_mask_received": true,
+            "speed_mask_value": 0,
+            "global_costmap_bounds": {
+              "origin_xy": [
+                -6.336,
+                -8.352
+              ],
+              "resolution_m": 0.019999999552965164,
+              "width": 1661,
+              "height": 829,
+              "axis_aligned_max_xy": [
+                26.88399925747514,
+                8.22799962940812
+              ]
+            }
+          },
+          "target_cost_and_keepout_clear": true,
+          "staging_inside_operation_polygon": true,
+          "collision_free_footprint_path": true,
+          "success": true,
+          "terminal_status": 4,
+          "error_code": 0,
+          "error_name": "NONE",
+          "error_msg": "",
+          "path_length_m": 3.190810824228621,
+          "path_pose_count": 318,
+          "path_start": [
+            0.003999858289956748,
+            -0.012000186413526848
+          ],
+          "path_goal": [
+            -1.75,
+            -2.67499994024183
+          ]
+        },
+        {
+          "direction": "reverse",
+          "staging_pose": {
+            "x": 1.649999999999999,
+            "y": 2.5249999623549626,
+            "yaw": 0.9933558841319396
+          },
+          "transit_yaw_source": "fused_pose_to_staging_pose",
+          "operation_entry_yaw": 3.1415926033964094,
+          "footprint_clearance_m": 0.350000000000001,
+          "target_grid_values": {
+            "global_costmap_received": true,
+            "global_costmap_cost": 99,
+            "keepout_mask_received": true,
+            "keepout_mask_value": 0,
+            "speed_mask_received": true,
+            "speed_mask_value": 0,
+            "global_costmap_bounds": {
+              "origin_xy": [
+                -6.336,
+                -8.352
+              ],
+              "resolution_m": 0.019999999552965164,
+              "width": 1661,
+              "height": 829,
+              "axis_aligned_max_xy": [
+                26.88399925747514,
+                8.22799962940812
+              ]
+            }
+          },
+          "target_cost_and_keepout_clear": false,
+          "staging_inside_operation_polygon": true,
+          "collision_free_footprint_path": true,
+          "success": true,
+          "terminal_status": 4,
+          "error_code": 0,
+          "error_name": "NONE",
+          "error_msg": "",
+          "path_length_m": 3.0778414900203352,
+          "path_pose_count": 307,
+          "path_start": [
+            0.003999858289956748,
+            -0.012000186413526848
+          ],
+          "path_goal": [
+            1.5999999955296507,
+            2.5349999565435097
+          ]
+        }
+      ],
+      "selected_direction": "forward",
+      "grid_diagnostics_ready": true,
+      "selection_basis": "shortest reachable staging path with geometry clearance"
+    },
+    "swath_exclusion_intersection_count": 0,
+    "planned_metrics": {
+      "resolution_m": 0.1,
+      "target_area_m2": 15.000000000000004,
+      "covered_area_m2": 14.790000000000003,
+      "missed_area_m2": 0.21000000000000085,
+      "repeated_area_m2": 0.5000000000000001,
+      "coverage_rate": 0.986,
+      "miss_rate": 0.014,
+      "repeat_rate": 0.03333333333333333,
+      "gross_swept_area_m2": 15.290000000000003,
+      "metric_basis": "planned_fields2cover_swaths_rasterized",
+      "path_length_m": 38.69061789387719,
+      "swath_endpoint_compatibility_repair": true,
+      "outer_area_m2": 64.0,
+      "excluded_area_m2": 49.00246393727352,
+      "cleanable_area_m2": 14.997536062726478
+    },
+    "empirical_metrics": {
+      "resolution_m": 0.1,
+      "target_area_m2": 15.000000000000004,
+      "covered_area_m2": 14.030000000000003,
+      "missed_area_m2": 0.9700000000000006,
+      "repeated_area_m2": 0.4200000000000001,
+      "coverage_rate": 0.9353333333333333,
+      "miss_rate": 0.06466666666666666,
+      "repeat_rate": 0.028,
+      "brush_on_duration_sec": 226.5,
+      "metric_basis": "gazebo_ground_truth_cleaning_footprint_brush_on",
+      "actual_path_length_m": 42.73393843337934,
+      "actual_duration_sec": 261.69793980200484,
+      "gross_efficiency_m2_h": 193.00113725852523,
+      "net_efficiency_m2_h": 193.00113725852523
+    },
+    "recovery_count": 0,
+    "collision_count": 0,
+    "keepout_violation_sample_count": 0,
+    "brush_state_violation_sample_count": 0,
+    "minimum_lidar_range_m": 0.6090916991233826,
+    "brush_disabled_on_exit": true,
+    "localization_regression_during_coverage": {
+      "sample_count": 2528,
+      "rmse_m": 0.030139808076040574,
+      "p95_m": 0.057441216121574,
+      "max_m": 0.10183849555296307,
+      "estimate_sample_count": 2557,
+      "truth_sample_count": 2528,
+      "dropped_estimate_count": 29,
+      "sync_tolerance_sec": 0.05,
+      "sync_error_sec": {
+        "sample_count": 2528,
+        "rmse_sec": 0.014264677096177965,
+        "p95_sec": 0.020000000000038654,
+        "max_sec": 0.040000000000020464
+      },
+      "metric_basis": "nearest_neighbour_ros_timestamp_without_truth_reuse",
+      "pass_rmse_and_p95_at_most_0_05m": false,
+      "pass_rmse_at_most_0_05m": true,
+      "formal_gate_basis": "Stage4V-compatible per-seed XY RMSE <= 0.05 m; pointwise P95 is diagnostic"
+    },
+    "execution_boundary": "All path components were required to terminate SUCCEEDED; no 180-pose shortcut or bounded cancellation is accepted."
+  },
+  "dynamic_obstacles": {
+    "schema_version": 1,
+    "requested_trial_count": 20,
+    "completed_trial_count": 20,
+    "dynamic_obstacle_valid_trials": 20,
+    "world_name": "sanitation_structured_world",
+    "model_name": "dynamic_pedestrian_box",
+    "set_pose_preflight": [
+      {
+        "step": "park",
+        "target_world_xy": [
+          25.0,
+          18.0
+        ],
+        "success": true,
+        "stdout_tail": "ros_gz set_pose success=true",
+        "stderr_tail": ""
+      },
+      {
+        "step": "test",
+        "target_world_xy": [
+          -6.0,
+          0.0
+        ],
+        "success": true,
+        "stdout_tail": "ros_gz set_pose success=true",
+        "stderr_tail": ""
+      },
+      {
+        "step": "park_return",
+        "target_world_xy": [
+          25.0,
+          18.0
+        ],
+        "success": true,
+        "stdout_tail": "ros_gz set_pose success=true",
+        "stderr_tail": ""
+      }
+    ],
+    "failure_reason": null,
+    "collision_count": 0,
+    "trials": [
+      {
+        "seed": 0,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            -1.0100841200560862,
+            -2.689301806583095,
+            -0.13933721937556018
+          ],
+          "ground_truth_pose_evaluation_only": [
+            -1.000091378414803,
+            -2.6949231429511755,
+            -0.1393175756720573
+          ],
+          "kind": "swath",
+          "index": 0
+        },
+        "component_key": [
+          "swath",
+          0
+        ],
+        "spacing_from_previous_interaction_m": null,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 2.9003320244663118,
+        "path_heading_rad": -1.6099277205564775e-08,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              0.33406498947093693,
+              -3.669581451061416
+            ],
+            "elapsed_sec": 0.0010068779956782237,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.3340649975205755,
+              -3.169581451061416
+            ],
+            "elapsed_sec": 0.20291677199566038,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.3340650055702141,
+              -2.669581451061416
+            ],
+            "elapsed_sec": 0.4080909959957353,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.33406501361985275,
+              -2.169581451061416
+            ],
+            "elapsed_sec": 0.6129300519969547,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.3340650216694913,
+              -1.6695814510614162
+            ],
+            "elapsed_sec": 0.8186142659978941,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 0.7131825089454651,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.13144537996364636,
+        "injection_vehicle_speed_m_s": 0.12676944177881003,
+        "resumed_vehicle_speed_m_s": 0.39570669479877424,
+        "recovery_time_sec": 0.5153121830007876,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 1,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            -1.0100841200560862,
+            -2.689301806583095,
+            -0.13933721937556018
+          ],
+          "ground_truth_pose_evaluation_only": [
+            -1.000091378414803,
+            -2.6949231429511755,
+            -0.1393175756720573
+          ],
+          "kind": "swath",
+          "index": 0
+        },
+        "component_key": [
+          "swath",
+          0
+        ],
+        "spacing_from_previous_interaction_m": 0.5331007735220773,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 2.378861406334011,
+        "path_heading_rad": -1.6099277205564794e-08,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              0.8377288330178176,
+              -3.6840509278576534
+            ],
+            "elapsed_sec": 0.0010515689937165007,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.8377288410674563,
+              -3.1840509278576534
+            ],
+            "elapsed_sec": 0.20307621299434686,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.8377288491170949,
+              -2.6840509278576534
+            ],
+            "elapsed_sec": 0.40609192599367816,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.8377288571667335,
+              -2.1840509278576534
+            ],
+            "elapsed_sec": 0.6113764059991809,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.8377288652163721,
+              -1.6840509278576534
+            ],
+            "elapsed_sec": 0.8136057479932788,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 0.6090916991233826,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.1001907064737156,
+        "injection_vehicle_speed_m_s": 0.4498993137091768,
+        "resumed_vehicle_speed_m_s": 0.3324990059185327,
+        "recovery_time_sec": 0.8086140119994525,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 2,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            -1.0100841200560862,
+            -2.689301806583095,
+            -0.13933721937556018
+          ],
+          "ground_truth_pose_evaluation_only": [
+            -1.000091378414803,
+            -2.6949231429511755,
+            -0.1393175756720573
+          ],
+          "kind": "swath",
+          "index": 0
+        },
+        "component_key": [
+          "swath",
+          0
+        ],
+        "spacing_from_previous_interaction_m": 0.5400121263565445,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 1.9246070373741984,
+        "path_heading_rad": -1.6099277205564738e-08,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              1.6951497833497557,
+              -3.6757821490004834
+            ],
+            "elapsed_sec": 0.0011033119953935966,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              1.6951497913993945,
+              -3.1757821490004834
+            ],
+            "elapsed_sec": 0.20547658799478086,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              1.695149799449033,
+              -2.6757821490004834
+            ],
+            "elapsed_sec": 0.41851267499441747,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              1.6951498074986715,
+              -2.1757821490004834
+            ],
+            "elapsed_sec": 0.6324517119937809,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              1.6951498155483102,
+              -1.6757821490004834
+            ],
+            "elapsed_sec": 0.8397803199986811,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 0.8427686095237732,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.13390498714574106,
+        "injection_vehicle_speed_m_s": 0.45040578893113753,
+        "resumed_vehicle_speed_m_s": 0.44994493214359504,
+        "recovery_time_sec": 0.3142467689976911,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 3,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            -1.0100841200560862,
+            -2.689301806583095,
+            -0.13933721937556018
+          ],
+          "ground_truth_pose_evaluation_only": [
+            -1.000091378414803,
+            -2.6949231429511755,
+            -0.1393175756720573
+          ],
+          "kind": "swath",
+          "index": 0
+        },
+        "component_key": [
+          "swath",
+          0
+        ],
+        "spacing_from_previous_interaction_m": 0.5680099072436186,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 1.3101632197252002,
+        "path_heading_rad": -1.6099272707479423e-08,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              2.496267394042341,
+              -3.66389675005961
+            ],
+            "elapsed_sec": 0.0011721299961209297,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              2.496267402091977,
+              -3.16389675005961
+            ],
+            "elapsed_sec": 0.2062720609974349,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              2.4962674101416136,
+              -2.66389675005961
+            ],
+            "elapsed_sec": 0.4115706809971016,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              2.49626741819125,
+              -2.16389675005961
+            ],
+            "elapsed_sec": 0.6162906489989837,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              2.496267426240886,
+              -1.6638967500596098
+            ],
+            "elapsed_sec": 0.8187345339974854,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 1.0644996166229248,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.1350024149125191,
+        "injection_vehicle_speed_m_s": 0.44994493214359504,
+        "resumed_vehicle_speed_m_s": 0.44999402711863384,
+        "recovery_time_sec": 0.3106081540026935,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 4,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            2.237516524728701,
+            -1.925448251349082,
+            -3.0870855194708198
+          ],
+          "ground_truth_pose_evaluation_only": [
+            2.242270481879258,
+            -1.9257625150788833,
+            -3.0870953876578766
+          ],
+          "kind": "swath",
+          "index": 1
+        },
+        "component_key": [
+          "swath",
+          1
+        ],
+        "spacing_from_previous_interaction_m": 1.048189003742171,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 3.207423664740457,
+        "path_heading_rad": 3.1415926213912435,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              0.8680225591115266,
+              -0.9594140251571105
+            ],
+            "elapsed_sec": 0.00107076000131201,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.8680225430122518,
+              -1.4594140251571102
+            ],
+            "elapsed_sec": 0.21419705900189,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.8680225269129769,
+              -1.95941402515711
+            ],
+            "elapsed_sec": 0.4157098100040457,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.868022510813702,
+              -2.4594140251571095
+            ],
+            "elapsed_sec": 0.6260898590044235,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.8680224947144272,
+              -2.9594140251571095
+            ],
+            "elapsed_sec": 0.8333966190039064,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 0.750372052192688,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.12314228250894789,
+        "injection_vehicle_speed_m_s": 0.11942963611168747,
+        "resumed_vehicle_speed_m_s": 0.28524958078809287,
+        "recovery_time_sec": 0.4120549950021086,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 5,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            2.237516524728701,
+            -1.925448251349082,
+            -3.0870855194708198
+          ],
+          "ground_truth_pose_evaluation_only": [
+            2.242270481879258,
+            -1.9257625150788833,
+            -3.0870953876578766
+          ],
+          "kind": "swath",
+          "index": 1
+        },
+        "component_key": [
+          "swath",
+          1
+        ],
+        "spacing_from_previous_interaction_m": 0.5353356561912508,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 2.703348765723802,
+        "path_heading_rad": 3.1415926213912435,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              -0.004066318193980056,
+              -1.0619438551306661
+            ],
+            "elapsed_sec": 0.0007946309997350909,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.004066334293254919,
+              -1.561943855130666
+            ],
+            "elapsed_sec": 0.20394679099990753,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.004066350392529783,
+              -2.0619438551306657
+            ],
+            "elapsed_sec": 0.40685831399605377,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.0040663664918046466,
+              -2.5619438551306652
+            ],
+            "elapsed_sec": 0.6096220729959896,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.0040663825910795095,
+              -3.0619438551306652
+            ],
+            "elapsed_sec": 0.8129117459975532,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 0.9969261884689331,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.13498025228864247,
+        "injection_vehicle_speed_m_s": 0.4102191500010504,
+        "resumed_vehicle_speed_m_s": 0.45015995781328527,
+        "recovery_time_sec": 0.3088038290006807,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 6,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            2.237516524728701,
+            -1.925448251349082,
+            -3.0870855194708198
+          ],
+          "ground_truth_pose_evaluation_only": [
+            2.242270481879258,
+            -1.9257625150788833,
+            -3.0870953876578766
+          ],
+          "kind": "swath",
+          "index": 1
+        },
+        "component_key": [
+          "swath",
+          1
+        ],
+        "spacing_from_previous_interaction_m": 0.5731393853140854,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 2.117460061151685,
+        "path_heading_rad": 3.141592621391248,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              -0.24480721540099692,
+              -1.0602195627318016
+            ],
+            "elapsed_sec": 0.0014830880027147941,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.24480723150026956,
+              -1.5602195627318014
+            ],
+            "elapsed_sec": 0.2074209240017808,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.2448072475995422,
+              -2.060219562731801
+            ],
+            "elapsed_sec": 0.4193453060070169,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.24480726369881484,
+              -2.5602195627318007
+            ],
+            "elapsed_sec": 0.621269483002834,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.24480727979808747,
+              -3.0602195627318007
+            ],
+            "elapsed_sec": 0.8235691660011071,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 0.6742847561836243,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.1322933760966346,
+        "injection_vehicle_speed_m_s": 0.45015995781328527,
+        "resumed_vehicle_speed_m_s": 0.3442892253265831,
+        "recovery_time_sec": 0.7253040810028324,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 7,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            2.237516524728701,
+            -1.925448251349082,
+            -3.0870855194708198
+          ],
+          "ground_truth_pose_evaluation_only": [
+            2.242270481879258,
+            -1.9257625150788833,
+            -3.0870953876578766
+          ],
+          "kind": "swath",
+          "index": 1
+        },
+        "component_key": [
+          "swath",
+          1
+        ],
+        "spacing_from_previous_interaction_m": 0.5065468460902383,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 1.5953720963630065,
+        "path_heading_rad": 3.141592621391248,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              -0.6267067388681812,
+              -1.0308393194237215
+            ],
+            "elapsed_sec": 0.0012118119993829168,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.6267067549674538,
+              -1.5308393194237213
+            ],
+            "elapsed_sec": 0.2038772349987994,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.6267067710667265,
+              -2.030839319423721
+            ],
+            "elapsed_sec": 0.4056554370035883,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.6267067871659991,
+              -2.5308393194237206
+            ],
+            "elapsed_sec": 0.6189596399999573,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.6267068032652717,
+              -3.0308393194237206
+            ],
+            "elapsed_sec": 0.8268268699976034,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 0.6100316643714905,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.11113927302655295,
+        "injection_vehicle_speed_m_s": 0.3442892253265831,
+        "resumed_vehicle_speed_m_s": 0.37023250077965686,
+        "recovery_time_sec": 0.814655367998057,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 8,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            2.237516524728701,
+            -1.925448251349082,
+            -3.0870855194708198
+          ],
+          "ground_truth_pose_evaluation_only": [
+            2.242270481879258,
+            -1.9257625150788833,
+            -3.0870953876578766
+          ],
+          "kind": "swath",
+          "index": 1
+        },
+        "component_key": [
+          "swath",
+          1
+        ],
+        "spacing_from_previous_interaction_m": 0.5434902711775655,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 1.1250735082370884,
+        "path_heading_rad": 3.1415926213912435,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              -1.2282830391409836,
+              -1.0071444003115553
+            ],
+            "elapsed_sec": 0.00090292399545433,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -1.2282830552402586,
+              -1.507144400311555
+            ],
+            "elapsed_sec": 0.20584328599943547,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -1.2282830713395334,
+              -2.007144400311555
+            ],
+            "elapsed_sec": 0.4084014269974432,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -1.2282830874388082,
+              -2.5071444003115544
+            ],
+            "elapsed_sec": 0.6100797059989418,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -1.2282831035380832,
+              -3.0071444003115544
+            ],
+            "elapsed_sec": 0.81515225199837,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 0.6446359157562256,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.11072786023991052,
+        "injection_vehicle_speed_m_s": 0.4504523436022371,
+        "resumed_vehicle_speed_m_s": 0.34856522969137926,
+        "recovery_time_sec": 0.8357316030014772,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 9,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            -1.2785386370957315,
+            -1.3699239174871496,
+            0.11738155148807161
+          ],
+          "ground_truth_pose_evaluation_only": [
+            -1.2834921437405686,
+            -1.3538642705120734,
+            0.12270153300461731
+          ],
+          "kind": "swath",
+          "index": 2
+        },
+        "component_key": [
+          "swath",
+          2
+        ],
+        "spacing_from_previous_interaction_m": 0.8962034459246021,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 3.2454564621111928,
+        "path_heading_rad": 0.0,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              0.2999562330605148,
+              -2.382861528374021
+            ],
+            "elapsed_sec": 0.0008984469968709163,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.2999562330605148,
+              -1.8828615283740209
+            ],
+            "elapsed_sec": 0.20492463099799352,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.2999562330605148,
+              -1.3828615283740209
+            ],
+            "elapsed_sec": 0.4099635689999559,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.2999562330605148,
+              -0.8828615283740209
+            ],
+            "elapsed_sec": 0.6118014539970318,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.2999562330605148,
+              -0.3828615283740209
+            ],
+            "elapsed_sec": 0.8178050139977131,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 1.1065542697906494,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.10790579539901728,
+        "injection_vehicle_speed_m_s": 0.01807853846102955,
+        "resumed_vehicle_speed_m_s": 0.2838582619361306,
+        "recovery_time_sec": 0.40640530599921476,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 10,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            -1.2785386370957315,
+            -1.3699239174871496,
+            0.11738155148807161
+          ],
+          "ground_truth_pose_evaluation_only": [
+            -1.2834921437405686,
+            -1.3538642705120734,
+            0.12270153300461731
+          ],
+          "kind": "swath",
+          "index": 2
+        },
+        "component_key": [
+          "swath",
+          2
+        ],
+        "spacing_from_previous_interaction_m": 0.513985848931228,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 2.8029939501654835,
+        "path_heading_rad": 0.0,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              0.9362434975953733,
+              -2.353736450872336
+            ],
+            "elapsed_sec": 0.0011194350008736365,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.9362434975953733,
+              -1.853736450872336
+            ],
+            "elapsed_sec": 0.2060181749984622,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.9362434975953733,
+              -1.353736450872336
+            ],
+            "elapsed_sec": 0.41092536599899177,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.9362434975953733,
+              -0.853736450872336
+            ],
+            "elapsed_sec": 0.6129814129963052,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.9362434975953733,
+              -0.35373645087233596
+            ],
+            "elapsed_sec": 0.8148353639990091,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 1.1182013750076294,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.1133761893882023,
+        "injection_vehicle_speed_m_s": 0.28408054290470963,
+        "resumed_vehicle_speed_m_s": 0.283481725766134,
+        "recovery_time_sec": 0.40940600700560026,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 11,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            -1.2785386370957315,
+            -1.3699239174871496,
+            0.11738155148807161
+          ],
+          "ground_truth_pose_evaluation_only": [
+            -1.2834921437405686,
+            -1.3538642705120734,
+            0.12270153300461731
+          ],
+          "kind": "swath",
+          "index": 2
+        },
+        "component_key": [
+          "swath",
+          2
+        ],
+        "spacing_from_previous_interaction_m": 0.5099508172826843,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 2.3274654969795154,
+        "path_heading_rad": 0.0,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              1.0274720122809333,
+              -2.3455320981277215
+            ],
+            "elapsed_sec": 0.0009890770015772432,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              1.0274720122809333,
+              -1.8455320981277215
+            ],
+            "elapsed_sec": 0.20305925000138814,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              1.0274720122809333,
+              -1.3455320981277215
+            ],
+            "elapsed_sec": 0.4070098789961776,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              1.0274720122809333,
+              -0.8455320981277215
+            ],
+            "elapsed_sec": 0.6114806549958303,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              1.0274720122809333,
+              -0.34553209812772145
+            ],
+            "elapsed_sec": 0.8171311240002979,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 0.7175438404083252,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.11907211682258034,
+        "injection_vehicle_speed_m_s": 0.283547524589129,
+        "resumed_vehicle_speed_m_s": 0.28350153589994936,
+        "recovery_time_sec": 0.41905307099659694,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 12,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            -1.2785386370957315,
+            -1.3699239174871496,
+            0.11738155148807161
+          ],
+          "ground_truth_pose_evaluation_only": [
+            -1.2834921437405686,
+            -1.3538642705120734,
+            0.12270153300461731
+          ],
+          "kind": "swath",
+          "index": 2
+        },
+        "component_key": [
+          "swath",
+          2
+        ],
+        "spacing_from_previous_interaction_m": 0.5159752597826465,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 1.7154696053605334,
+        "path_heading_rad": 0.0,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              1.966126311638411,
+              -2.3506467186397195
+            ],
+            "elapsed_sec": 0.0010459230034030043,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              1.966126311638411,
+              -1.8506467186397195
+            ],
+            "elapsed_sec": 0.20648477900249418,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              1.966126311638411,
+              -1.3506467186397195
+            ],
+            "elapsed_sec": 0.4076045879992307,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              1.966126311638411,
+              -0.8506467186397195
+            ],
+            "elapsed_sec": 0.6088278680035728,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              1.966126311638411,
+              -0.3506467186397195
+            ],
+            "elapsed_sec": 0.8099563260038849,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 1.1297794580459595,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.10773007458942654,
+        "injection_vehicle_speed_m_s": 0.2835176188372912,
+        "resumed_vehicle_speed_m_s": 0.2835024162537137,
+        "recovery_time_sec": 0.40800600800139364,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 13,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            -1.2785386370957315,
+            -1.3699239174871496,
+            0.11738155148807161
+          ],
+          "ground_truth_pose_evaluation_only": [
+            -1.2834921437405686,
+            -1.3538642705120734,
+            0.12270153300461731
+          ],
+          "kind": "swath",
+          "index": 2
+        },
+        "component_key": [
+          "swath",
+          2
+        ],
+        "spacing_from_previous_interaction_m": 0.5216423196985676,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 1.2071670846486051,
+        "path_heading_rad": 0.0,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              2.3418779108165335,
+              -2.3525749066749055
+            ],
+            "elapsed_sec": 0.0008382989981328137,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              2.3418779108165335,
+              -1.8525749066749053
+            ],
+            "elapsed_sec": 0.20398778199887602,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              2.3418779108165335,
+              -1.3525749066749053
+            ],
+            "elapsed_sec": 0.4073764970016782,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              2.3418779108165335,
+              -0.8525749066749053
+            ],
+            "elapsed_sec": 0.6104487100019469,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              2.3418779108165335,
+              -0.3525749066749053
+            ],
+            "elapsed_sec": 0.8145522990016616,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 0.9707192182540894,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.1190691734283822,
+        "injection_vehicle_speed_m_s": 0.2835076042339148,
+        "resumed_vehicle_speed_m_s": 0.28359628885993093,
+        "recovery_time_sec": 0.4140722289957921,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 14,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            2.2416222445416247,
+            -0.6282334825721833,
+            -3.045841815968099
+          ],
+          "ground_truth_pose_evaluation_only": [
+            2.230410558005401,
+            -0.6095867769115457,
+            -3.0458201819849138
+          ],
+          "kind": "swath",
+          "index": 3
+        },
+        "component_key": [
+          "swath",
+          3
+        ],
+        "spacing_from_previous_interaction_m": 0.9708205307905159,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 3.190587154219724,
+        "path_heading_rad": 3.1415926455401557,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              0.6094669783790895,
+              0.3543330796553451
+            ],
+            "elapsed_sec": 0.0008934299985412508,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.6094669743542708,
+              -0.1456669203446549
+            ],
+            "elapsed_sec": 0.20347694799420424,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.609466970329452,
+              -0.6456669203446549
+            ],
+            "elapsed_sec": 0.4066602969978703,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.6094669663046332,
+              -1.145666920344655
+            ],
+            "elapsed_sec": 0.6077900149975903,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.6094669622798145,
+              -1.645666920344655
+            ],
+            "elapsed_sec": 0.8126455169986002,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 0.9937024712562561,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.11455891671300293,
+        "injection_vehicle_speed_m_s": 0.05569921349441281,
+        "resumed_vehicle_speed_m_s": 0.32111618497383076,
+        "recovery_time_sec": 0.3081054790018243,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 15,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            2.2416222445416247,
+            -0.6282334825721833,
+            -3.045841815968099
+          ],
+          "ground_truth_pose_evaluation_only": [
+            2.230410558005401,
+            -0.6095867769115457,
+            -3.0458201819849138
+          ],
+          "kind": "swath",
+          "index": 3
+        },
+        "component_key": [
+          "swath",
+          3
+        ],
+        "spacing_from_previous_interaction_m": 0.5078020104468429,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 2.677328824269386,
+        "path_heading_rad": 3.1415926455401557,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              0.061081799631045,
+              0.26918639787548415
+            ],
+            "elapsed_sec": 0.0008790130013949238,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.06108179560622624,
+              -0.23081360212451585
+            ],
+            "elapsed_sec": 0.20639243700134102,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.061081791581407474,
+              -0.7308136021245158
+            ],
+            "elapsed_sec": 0.412058389003505,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.06108178755658871,
+              -1.230813602124516
+            ],
+            "elapsed_sec": 0.6129339710023487,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.06108178353176995,
+              -1.730813602124516
+            ],
+            "elapsed_sec": 0.8156569889979437,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 1.0304038524627686,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.11929977599615985,
+        "injection_vehicle_speed_m_s": 0.29413370757476265,
+        "resumed_vehicle_speed_m_s": 0.2838252670464836,
+        "recovery_time_sec": 0.40870064699993236,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 16,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            2.2416222445416247,
+            -0.6282334825721833,
+            -3.045841815968099
+          ],
+          "ground_truth_pose_evaluation_only": [
+            2.230410558005401,
+            -0.6095867769115457,
+            -3.0458201819849138
+          ],
+          "kind": "swath",
+          "index": 3
+        },
+        "component_key": [
+          "swath",
+          3
+        ],
+        "spacing_from_previous_interaction_m": 0.5101064304404447,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 2.179767146624065,
+        "path_heading_rad": 3.1415926455401557,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              -0.18102032347075692,
+              0.27956352892967307
+            ],
+            "elapsed_sec": 0.0009586609958205372,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.18102032749557567,
+              -0.22043647107032693
+            ],
+            "elapsed_sec": 0.2144127589999698,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.18102033152039443,
+              -0.7204364710703269
+            ],
+            "elapsed_sec": 0.41718191399559146,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.18102033554521318,
+              -1.220436471070327
+            ],
+            "elapsed_sec": 0.6263172940016375,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.18102033957003194,
+              -1.720436471070327
+            ],
+            "elapsed_sec": 0.8280378979980014,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 0.7786784172058105,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.113364542233515,
+        "injection_vehicle_speed_m_s": 0.283412727655677,
+        "resumed_vehicle_speed_m_s": 0.2834653033548024,
+        "recovery_time_sec": 0.40899075500055915,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 17,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            2.2416222445416247,
+            -0.6282334825721833,
+            -3.045841815968099
+          ],
+          "ground_truth_pose_evaluation_only": [
+            2.230410558005401,
+            -0.6095867769115457,
+            -3.0458201819849138
+          ],
+          "kind": "swath",
+          "index": 3
+        },
+        "component_key": [
+          "swath",
+          3
+        ],
+        "spacing_from_previous_interaction_m": 0.5214724308589336,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 1.7147439386227579,
+        "path_heading_rad": 3.1415926455401557,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              -0.8032181533843766,
+              0.287842233833444
+            ],
+            "elapsed_sec": 0.0008597320047556423,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.8032181574091953,
+              -0.21215776616655602
+            ],
+            "elapsed_sec": 0.20210203299939167,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.8032181614340141,
+              -0.712157766166556
+            ],
+            "elapsed_sec": 0.4037807310014614,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.803218165458833,
+              -1.212157766166556
+            ],
+            "elapsed_sec": 0.6090494220043183,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -0.8032181694836517,
+              -1.712157766166556
+            ],
+            "elapsed_sec": 0.8143510580048314,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 0.8791752457618713,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.10775805477712273,
+        "injection_vehicle_speed_m_s": 0.28348252261806733,
+        "resumed_vehicle_speed_m_s": 0.28382494180558787,
+        "recovery_time_sec": 0.41049510299490066,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 18,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            2.2416222445416247,
+            -0.6282334825721833,
+            -3.045841815968099
+          ],
+          "ground_truth_pose_evaluation_only": [
+            2.230410558005401,
+            -0.6095867769115457,
+            -3.0458201819849138
+          ],
+          "kind": "swath",
+          "index": 3
+        },
+        "component_key": [
+          "swath",
+          3
+        ],
+        "spacing_from_previous_interaction_m": 0.5046573606843191,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 1.2339314239742287,
+        "path_heading_rad": 3.1415926455401557,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              -1.257547637198631,
+              0.2949066141084711
+            ],
+            "elapsed_sec": 0.0012590900005307049,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -1.2575476412234499,
+              -0.20509338589152892
+            ],
+            "elapsed_sec": 0.2072663460057811,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -1.2575476452482686,
+              -0.7050933858915289
+            ],
+            "elapsed_sec": 0.41417022100358736,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -1.2575476492730873,
+              -1.205093385891529
+            ],
+            "elapsed_sec": 0.6214970389992232,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              -1.2575476532979062,
+              -1.705093385891529
+            ],
+            "elapsed_sec": 0.8317837960057659,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 0.826643705368042,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.1133997723581001,
+        "injection_vehicle_speed_m_s": 0.28346386415519326,
+        "resumed_vehicle_speed_m_s": 0.28351209705456165,
+        "recovery_time_sec": 0.40889015400171047,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      },
+      {
+        "seed": 19,
+        "coverage_component": {
+          "state": "EXECUTING_SWATH",
+          "brush_enabled": false,
+          "estimated_pose": [
+            -1.2493821330940413,
+            -0.03483112612127186,
+            0.0890770648029373
+          ],
+          "ground_truth_pose_evaluation_only": [
+            -1.2767620788798286,
+            -0.030149874542705908,
+            0.08907731786950447
+          ],
+          "kind": "swath",
+          "index": 4
+        },
+        "component_key": [
+          "swath",
+          4
+        ],
+        "spacing_from_previous_interaction_m": 0.9375752904641185,
+        "minimum_progress_between_trials_m": 0.5,
+        "remaining_path_m_at_injection": 3.2273709002150355,
+        "path_heading_rad": 1.0062045442174642e-09,
+        "moving_obstacle_trajectory": [
+          {
+            "target_map_xy": [
+              0.1098051098925331,
+              -1.0555471915777916
+            ],
+            "elapsed_sec": 0.0008499190007569268,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.10980510938943082,
+              -0.5555471915777916
+            ],
+            "elapsed_sec": 0.20915000799868722,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.10980510888632855,
+              -0.055547191577791616
+            ],
+            "elapsed_sec": 0.41102534899982857,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.10980510838322628,
+              0.44445280842220836
+            ],
+            "elapsed_sec": 0.6132303970007342,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          },
+          {
+            "target_map_xy": [
+              0.109805107880124,
+              0.9444528084222084
+            ],
+            "elapsed_sec": 0.8150435659990762,
+            "set_pose_success": true,
+            "stdout_tail": "ros_gz set_pose success=true",
+            "stderr_tail": ""
+          }
+        ],
+        "set_pose_success": true,
+        "obstacle_in_path_corridor": true,
+        "path_corridor_center_distance_m": 0.0,
+        "minimum_lidar_range_m": 0.87324458360672,
+        "interaction_observed": true,
+        "collision_free": true,
+        "mission_progress_resumed": true,
+        "vehicle_progress_m": 0.11342294429476324,
+        "injection_vehicle_speed_m_s": 0.0497400451943742,
+        "resumed_vehicle_speed_m_s": 0.2834547767958538,
+        "recovery_time_sec": 0.42065704900596756,
+        "resume_observation_limit_sec": 1.5,
+        "response_classification": "interaction_collision_free_and_resumed",
+        "park_success": true,
+        "park_stdout_tail": "ros_gz set_pose success=true",
+        "park_stderr_tail": "",
+        "valid": true
+      }
+    ],
+    "success": true
+  },
+  "filters": {
+    "keepout": {
+      "mask_polygon": [
+        2.0,
+        1.0,
+        4.0,
+        3.0
+      ],
+      "goal_crossed_polygon_direct_line": true,
+      "navigation_succeeded": true,
+      "violation_sample_count": 0,
+      "minimum_distance_m": 0.5560438728974496,
+      "keepout_pass": true
+    },
+    "speed_zone": {
+      "polygon": [
+        -2.0,
+        -2.0,
+        2.0,
+        2.0
+      ],
+      "navigation_succeeded": true,
+      "mean_speed_m_s": {
+        "before": 0.1689338147046335,
+        "inside": 0.2892045779730153,
+        "after": 0.41364396749822596
+      },
+      "speed_limit_messages": [
+        {
+          "wall_time": 62723.164981052,
+          "speed_limit": 63.0,
+          "percentage": true
+        },
+        {
+          "wall_time": 62724.666147665,
+          "speed_limit": 0.0,
+          "percentage": true
+        },
+        {
+          "wall_time": 62725.164483956,
+          "speed_limit": 63.0,
+          "percentage": true
+        },
+        {
+          "wall_time": 62726.664564799,
+          "speed_limit": 0.0,
+          "percentage": true
+        },
+        {
+          "wall_time": 62729.164979171,
+          "speed_limit": 63.0,
+          "percentage": true
+        },
+        {
+          "wall_time": 62731.665121432,
+          "speed_limit": 0.0,
+          "percentage": true
+        },
+        {
+          "wall_time": 62732.167492647,
+          "speed_limit": 63.0,
+          "percentage": true
+        },
+        {
+          "wall_time": 62900.169673644,
+          "speed_limit": 0.0,
+          "percentage": true
+        },
+        {
+          "wall_time": 62940.166558573,
+          "speed_limit": 63.0,
+          "percentage": true
+        },
+        {
+          "wall_time": 62954.662332358,
+          "speed_limit": 0.0,
+          "percentage": true
+        },
+        {
+          "wall_time": 63116.162480354,
+          "speed_limit": 63.0,
+          "percentage": true
+        },
+        {
+          "wall_time": 63130.168131039,
+          "speed_limit": 0.0,
+          "percentage": true
+        }
+      ],
+      "speed_compliance_pass": true
+    },
+    "success": true
+  },
+  "emergency_stop": {
+    "schema_version": 2,
+    "trial_count": 30,
+    "completed_trial_count": 30,
+    "command_passed": true,
+    "emergency_stop_zeroed": true,
+    "resume_after_release": true,
+    "stale_command_zeroed": true,
+    "stale_command": {
+      "stable_zero_observed": true,
+      "stable_zero_latency_sec": 1.6943252390046837,
+      "timeout_sec": 4.0,
+      "required_consecutive_zero_samples": 5,
+      "tail_samples": [
+        {
+          "time": 63168.478207944,
+          "linear_x": 0.21500000000000002,
+          "angular_z": 0.0
+        },
+        {
+          "time": 63168.529994892,
+          "linear_x": 0.17000000000000004,
+          "angular_z": 0.0
+        },
+        {
+          "time": 63168.578243068,
+          "linear_x": 0.12500000000000006,
+          "angular_z": 0.0
+        },
+        {
+          "time": 63168.626887553,
+          "linear_x": 0.08000000000000006,
+          "angular_z": 0.0
+        },
+        {
+          "time": 63168.681107493,
+          "linear_x": 0.03500000000000006,
+          "angular_z": 0.0
+        },
+        {
+          "time": 63168.726901663,
+          "linear_x": 0.0,
+          "angular_z": 0.0
+        },
+        {
+          "time": 63168.779316287,
+          "linear_x": 0.0,
+          "angular_z": 0.0
+        },
+        {
+          "time": 63168.828119743,
+          "linear_x": 0.0,
+          "angular_z": 0.0
+        },
+        {
+          "time": 63168.876693234,
+          "linear_x": 0.0,
+          "angular_z": 0.0
+        },
+        {
+          "time": 63168.941297331,
+          "linear_x": 0.0,
+          "angular_z": 0.0
+        }
+      ]
+    },
+    "latency_sec": {
+      "p50": 0.15079297150077764,
+      "p95": 0.1884925069021846,
+      "max": 0.3383537429981516
+    },
+    "competition_estop_pass": true,
+    "trials": [
+      {
+        "trial": 1,
+        "estop_publish_monotonic_sec": 63148.992287111,
+        "first_zero_monotonic_sec": 63149.003077244,
+        "latency_sec": 0.010790132997499313,
+        "resume_after_release": true
+      },
+      {
+        "trial": 2,
+        "estop_publish_monotonic_sec": 63149.68099138,
+        "first_zero_monotonic_sec": 63150.019345123,
+        "latency_sec": 0.3383537429981516,
+        "resume_after_release": true
+      },
+      {
+        "trial": 3,
+        "estop_publish_monotonic_sec": 63150.459462646,
+        "first_zero_monotonic_sec": 63150.661977269,
+        "latency_sec": 0.20251462300075218,
+        "resume_after_release": true
+      },
+      {
+        "trial": 4,
+        "estop_publish_monotonic_sec": 63151.09974534,
+        "first_zero_monotonic_sec": 63151.271099705,
+        "latency_sec": 0.17135436500393553,
+        "resume_after_release": true
+      },
+      {
+        "trial": 5,
+        "estop_publish_monotonic_sec": 63151.709553691,
+        "first_zero_monotonic_sec": 63151.869769005,
+        "latency_sec": 0.16021531400474487,
+        "resume_after_release": true
+      },
+      {
+        "trial": 6,
+        "estop_publish_monotonic_sec": 63152.308197586,
+        "first_zero_monotonic_sec": 63152.447514663,
+        "latency_sec": 0.13931707700248808,
+        "resume_after_release": true
+      },
+      {
+        "trial": 7,
+        "estop_publish_monotonic_sec": 63152.887159264,
+        "first_zero_monotonic_sec": 63153.03666001,
+        "latency_sec": 0.14950074600346852,
+        "resume_after_release": true
+      },
+      {
+        "trial": 8,
+        "estop_publish_monotonic_sec": 63153.474587861,
+        "first_zero_monotonic_sec": 63153.635389726,
+        "latency_sec": 0.16080186500039417,
+        "resume_after_release": true
+      },
+      {
+        "trial": 9,
+        "estop_publish_monotonic_sec": 63154.074841077,
+        "first_zero_monotonic_sec": 63154.220303128,
+        "latency_sec": 0.1454620509975939,
+        "resume_after_release": true
+      },
+      {
+        "trial": 10,
+        "estop_publish_monotonic_sec": 63154.658863851,
+        "first_zero_monotonic_sec": 63154.808385978,
+        "latency_sec": 0.14952212700154632,
+        "resume_after_release": true
+      },
+      {
+        "trial": 11,
+        "estop_publish_monotonic_sec": 63155.248706763,
+        "first_zero_monotonic_sec": 63155.388237489,
+        "latency_sec": 0.1395307260027039,
+        "resume_after_release": true
+      },
+      {
+        "trial": 12,
+        "estop_publish_monotonic_sec": 63155.827081275,
+        "first_zero_monotonic_sec": 63155.968376645,
+        "latency_sec": 0.14129537000553682,
+        "resume_after_release": true
+      },
+      {
+        "trial": 13,
+        "estop_publish_monotonic_sec": 63156.408285161,
+        "first_zero_monotonic_sec": 63156.569135096,
+        "latency_sec": 0.16084993499680422,
+        "resume_after_release": true
+      },
+      {
+        "trial": 14,
+        "estop_publish_monotonic_sec": 63157.007933271,
+        "first_zero_monotonic_sec": 63157.148358222,
+        "latency_sec": 0.1404249510014779,
+        "resume_after_release": true
+      },
+      {
+        "trial": 15,
+        "estop_publish_monotonic_sec": 63157.587428025,
+        "first_zero_monotonic_sec": 63157.748243082,
+        "latency_sec": 0.16081505700276466,
+        "resume_after_release": true
+      },
+      {
+        "trial": 16,
+        "estop_publish_monotonic_sec": 63158.189034105,
+        "first_zero_monotonic_sec": 63158.351958408,
+        "latency_sec": 0.1629243029965437,
+        "resume_after_release": true
+      },
+      {
+        "trial": 17,
+        "estop_publish_monotonic_sec": 63158.793345785,
+        "first_zero_monotonic_sec": 63158.939102702,
+        "latency_sec": 0.14575691700156312,
+        "resume_after_release": true
+      },
+      {
+        "trial": 18,
+        "estop_publish_monotonic_sec": 63159.379502313,
+        "first_zero_monotonic_sec": 63159.513653782,
+        "latency_sec": 0.1341514689993346,
+        "resume_after_release": true
+      },
+      {
+        "trial": 19,
+        "estop_publish_monotonic_sec": 63159.953035627,
+        "first_zero_monotonic_sec": 63160.115434884,
+        "latency_sec": 0.16239925700210733,
+        "resume_after_release": true
+      },
+      {
+        "trial": 20,
+        "estop_publish_monotonic_sec": 63160.554810416,
+        "first_zero_monotonic_sec": 63160.711460338,
+        "latency_sec": 0.15664992200618144,
+        "resume_after_release": true
+      },
+      {
+        "trial": 21,
+        "estop_publish_monotonic_sec": 63161.153367158,
+        "first_zero_monotonic_sec": 63161.298882261,
+        "latency_sec": 0.14551510300225345,
+        "resume_after_release": true
+      },
+      {
+        "trial": 22,
+        "estop_publish_monotonic_sec": 63161.73964975,
+        "first_zero_monotonic_sec": 63161.884570518,
+        "latency_sec": 0.1449207679979736,
+        "resume_after_release": true
+      },
+      {
+        "trial": 23,
+        "estop_publish_monotonic_sec": 63162.325466133,
+        "first_zero_monotonic_sec": 63162.476042718,
+        "latency_sec": 0.15057658500154503,
+        "resume_after_release": true
+      },
+      {
+        "trial": 24,
+        "estop_publish_monotonic_sec": 63162.915311207,
+        "first_zero_monotonic_sec": 63163.055043563,
+        "latency_sec": 0.13973235600133194,
+        "resume_after_release": true
+      },
+      {
+        "trial": 25,
+        "estop_publish_monotonic_sec": 63163.49345881,
+        "first_zero_monotonic_sec": 63163.644468168,
+        "latency_sec": 0.15100935800001025,
+        "resume_after_release": true
+      },
+      {
+        "trial": 26,
+        "estop_publish_monotonic_sec": 63164.08475737,
+        "first_zero_monotonic_sec": 63164.246124985,
+        "latency_sec": 0.1613676150009269,
+        "resume_after_release": true
+      },
+      {
+        "trial": 27,
+        "estop_publish_monotonic_sec": 63164.684819974,
+        "first_zero_monotonic_sec": 63164.846150415,
+        "latency_sec": 0.16133044099842664,
+        "resume_after_release": true
+      },
+      {
+        "trial": 28,
+        "estop_publish_monotonic_sec": 63165.286124326,
+        "first_zero_monotonic_sec": 63165.447649478,
+        "latency_sec": 0.16152515200519701,
+        "resume_after_release": true
+      },
+      {
+        "trial": 29,
+        "estop_publish_monotonic_sec": 63165.88663426,
+        "first_zero_monotonic_sec": 63166.016424732,
+        "latency_sec": 0.1297904719976941,
+        "resume_after_release": true
+      },
+      {
+        "trial": 30,
+        "estop_publish_monotonic_sec": 63166.456209149,
+        "first_zero_monotonic_sec": 63166.607385098,
+        "latency_sec": 0.15117594900220865,
+        "resume_after_release": true
+      }
+    ],
+    "success": true
+  },
+  "efficiency": {
+    "operation_width_m": 0.65,
+    "max_linear_velocity_m_s": 0.45,
+    "theoretical_efficiency_m2_h": 1053.0000000000002,
+    "target_efficiency_m2_h": 3500.0,
+    "competition_efficiency_pass": false,
+    "minimum_speed_at_current_width_m_s": 1.4957264957264957,
+    "minimum_width_at_current_speed_m": 2.1604938271604937
+  },
+  "success": true
+}

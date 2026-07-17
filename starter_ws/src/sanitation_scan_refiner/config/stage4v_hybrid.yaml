@@ -28,6 +28,17 @@ hybrid_global_fuser:
     origin_latitude_deg: 31.2304
     origin_longitude_deg: 121.4737
     maximum_gnss_age_s: 0.5
-    maximum_refined_age_s: 0.5
+    # Retain the last scan global correction while wheel/IMU odometry
+    # propagates it through brief low-feature turns. MCAP gaps leave only
+    # 24.5 s uncovered at 5 s versus 52.5 s at the old 0.5 s limit.
+    maximum_refined_age_s: 5.0
+    # Seed-1 long-coverage MCAP measured GNSS per-axis error variance at
+    # 1.28 times the median reported variance.
+    gnss_variance_scale: 1.3
     gnss_outlier_threshold_m: 0.75
+    # Long-coverage MCAP shows refined XY RMSE near 0.043 m, corresponding to
+    # roughly 0.0009 m^2 per axis, while local curvature can report much larger
+    # values. Bound only the fusion covariance; retain the raw diagnostic value.
+    minimum_refined_variance: 0.00025
+    maximum_refined_variance: 0.0009
     publish_map_to_odom: true

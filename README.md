@@ -1,5 +1,9 @@
 # TZcup 无人清扫车仿真项目
 
+## Stage4W 可达清扫域与完整任务闭环（2026-07-17）
+
+Stage4W 已修复定位协方差/全局锚点传播、统一任务几何、可达 staging、完整组件执行、动态障碍清除与安全超时证据链。正式 hybrid 10-seed 全部通过，XY RMSE P50/P95/max 为 `0.02825/0.03726/0.03778 m`；静态 5-seed 全部通过，每次均为当前几何生成的 `17/17` 组件，经验覆盖率 `92.93%–94.53%`、覆盖期 RMSE `0.02930–0.04620 m`；动态交互 `20/20` 有效且碰撞 0。keepout、限速区、30 次急停和完整 MCAP 回放均通过，急停 P95 为 `0.188 s`，上游命令停止后 `1.694 s` 达到连续 5 帧稳定零输出。`READY_FOR_GPT_REVIEW_STAGE4W=true`、`READY_FOR_STAGE5A=true`；理论效率仍为 `1053 m²/h < 3500 m²/h`，因此竞赛效率门保持 false。复核入口见 [`GPT_REVIEW_STAGE4W.md`](GPT_REVIEW_STAGE4W.md) 与 [`artifacts/stage4w_20260717_review/`](artifacts/stage4w_20260717_review/)。
+
 ## Stage4V 混合定位与完整任务复核（2026-07-16）
 
 Stage4V 已实现 C++ 扫描精化、标准 NavSatFix 仿真、局部/全局融合及 TF 单所有权审计。正式 hybrid 10-seed 全部通过：XY RMSE P50/P95/max 为 `0.03344/0.03792/0.03872 m`，导航、TF 与扫描实际参与均为 10/10，GT 控制违规 0。随后完整 Coverage 在 transit-to-start 失败，经验覆盖率 0%，动态障碍有效交互 0/20；但零碰撞、过滤器、30 次急停（P95 `0.171 s`）与 MCAP 回放通过。因此 `READY_FOR_GPT_REVIEW_STAGE4V=false`、`READY_FOR_STAGE5A=false`，理论效率仍为 `1053 m²/h < 3500 m²/h`。复核入口见 [`GPT_REVIEW_STAGE4V.md`](GPT_REVIEW_STAGE4V.md)。
@@ -16,11 +20,12 @@ Stage4T 已完成 200 组固定时长瞬态、120 组闭环航向、A/B/C/D 各 
 
 ## 当前状态
 
-- Stage 0–4V 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；当前车辆参数为 0.14 m 轮半径、1.22 m 有效轮距，局部融合选择 EKF-B，全局融合采用 RTK + 扫描精化 + 局部里程计。
+- Stage 0–4W 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；当前车辆参数为 0.14 m 轮半径、1.22 m 有效轮距，局部融合选择 EKF-B，全局融合采用 RTK + 扫描精化 + 局部里程计。
 - precision mapping 与 localization/coverage 包络分别限制为 0.30/0.25 和 0.45/0.35 m/s、rad/s；0.60 rad/s stress 默认禁用且仍失败。
-- Stage4V hybrid 10-seed 的 XY RMSE P50/P95/max 为 0.03344/0.03792/0.03872 m，定位门禁通过。
-- 完整 Coverage 已执行但 transit-to-start 失败；动态障碍有效交互 0/20。过滤器、30 次急停和 rosbag 回放通过；理论清扫效率仍为 1053 m²/h，未达到 3500 m²/h。
-- 原生 Ubuntu/WSLg 下的 Gazebo/RViz GUI 验收仍未完成；进入感知训练或 J6 量化前必须先解决定位硬门。
+- Stage4W hybrid 10-seed 的 XY RMSE P50/P95/max 为 0.02825/0.03726/0.03778 m，定位门禁通过且 GT 控制违规为 0。
+- 完整 Coverage 静态 5/5 通过，每次均执行统一几何生成的 17/17 组件；动态障碍 20/20、碰撞 0，过滤器、30 次急停和 rosbag 回放全部通过。
+- 原生 Ubuntu/WSLg 下的 Gazebo/RViz GUI 验收仍未完成；垃圾感知训练、J6 量化和实板部署尚未启动，需先由 GPT/人工复核 Stage4W 证据。
+- 理论清扫效率仍为 1053 m²/h，未达到 3500 m²/h；不得用覆盖率或仿真实测净效率替代竞赛效率口径。
 - 详细证据、复现命令和已知边界以 [`docs/progress.md`](docs/progress.md) 为准。
 
 ## 快速开始
@@ -92,4 +97,4 @@ python scripts/ci_fast.py
 
 ## 最近同步
 
-2026-07-16：Stage4U 已由 [PR #9](https://github.com/zhexuexiaotudou/TZcup/pull/9) 合并到 `main@efd5e34cbb3c8ba1016118c63a6e35402704e787`，`fast-validation` 通过；合并树 `00f2b33c5866025421bc5e9bea224945b58eafbd` 的真实 Gazebo core smoke 再验通过 covariance 与运行包络。正式 Oracle 10-seed 虽 10/10 有效，但 XY RMSE P50/P95/max `0.06767/0.07983/0.08022 m` 未过 0.05 m，`READY_FOR_GPT_REVIEW_STAGE4U=false`。
+2026-07-17：Stage4W 正式门禁全部完成。hybrid 定位 10/10，静态覆盖 5/5 且每次 17/17，动态交互 20/20，碰撞/keepout/刷盘违规为 0，过滤器、30 次急停和 MCAP 回放通过；`READY_FOR_GPT_REVIEW_STAGE4W=true`、`READY_FOR_STAGE5A=true`。竞赛理论效率 `1053 m²/h` 仍未达 `3500 m²/h`，原始 MCAP 和失败诊断在用户确认前保留于本机。

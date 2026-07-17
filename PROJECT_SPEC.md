@@ -1,5 +1,14 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## Stage4W 完整任务契约
+
+- 规划、执行与评测必须使用同一份编译后的 mission geometry，包括 outer、headland、keepout、显式 exclusion、world→map 固定障碍、footprint 和安全裕量。
+- staging 必须经当前全局 costmap、keepout/speed mask、footprint clearance 和 ComputePathToPose 验证；costmap 未覆盖候选点时不得提前规划。
+- Coverage 硬门要求当前统一几何生成的全部组件终态成功。当前几何为 9 swath + 8 turn = 17；历史固定 23 组件口径不适用。
+- 动态障碍服务必须 fail-closed；20 次有效交互均需 set-pose 成功、路径走廊命中、LiDAR 观测、碰撞 0 和任务恢复推进。
+- 覆盖期定位沿用 Stage4V-compatible 每 seed XY RMSE ≤0.05 m；GT 仅评分，不参与控制。
+- 急停 P95 必须 ≤1 s；上游失联必须观察到连续稳定零输出。竞赛效率单独按作业宽度×速度×3600 计算，不能用覆盖率替代。
+
 ## Stage4U 定位评测契约
 
 - 坐标变换统一命名为 `T_target_source`，使用同一冻结标定覆盖全部 seed，禁止逐 trial 拟合。

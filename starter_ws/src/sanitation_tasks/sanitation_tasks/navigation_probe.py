@@ -90,8 +90,6 @@ class NavigationProbe(Node):
         timeout_sec = float(self.get_parameter("timeout_sec").value)
         output_path = Path(str(self.get_parameter("output_path").value))
         output_path.parent.mkdir(parents=True, exist_ok=True)
-        deadline = time.monotonic() + timeout_sec
-
         if not self.action_client.wait_for_server(timeout_sec=60.0):
             return self._write(output_path, {"success": False, "error": "action_timeout"})
         if not self._wait_for_active():
@@ -112,12 +110,26 @@ class NavigationProbe(Node):
             return self._write(output_path, {"success": False, "error": "goal_rejected"})
 
         result_future = goal_handle.get_result_async()
+        # The configured timeout is the action execution budget. Readiness,
+        # lifecycle activation and initial-pose publication must not silently
+        # consume a variable portion of it.
+        deadline = time.monotonic() + timeout_sec
         while rclpy.ok() and not result_future.done() and time.monotonic() < deadline:
             rclpy.spin_once(self, timeout_sec=0.2)
 
         if not result_future.done():
             goal_handle.cancel_goal_async()
-            return self._write(output_path, {"success": False, "error": "goal_timeout"})
+            return self._write(output_path, {
+                "success": False,
+                "error": "goal_timeout",
+                "feedback_samples": self.feedback_samples,
+                "recoveries_max": max(
+                    (item["recoveries"] for item in self.feedback_samples),
+                    default=0,
+                ),
+                "final_odom_xy_m": self._xy(self.last_odom),
+                "final_amcl_xy_m": self._xy(self.last_amcl),
+            })
 
         wrapped_result = result_future.result()
         status = int(wrapped_result.status)

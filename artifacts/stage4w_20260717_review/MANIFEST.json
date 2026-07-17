@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "file_count": 15,
+  "files": [
+    {
+      "path": "dynamic_rosbag_info.txt",
+      "bytes": 3074,
+      "sha256": "a7d8aca1e238cbed903a5f4a6f2f3c5514552679ba5d764fdcaf29d2d35a5434"
+    },
+    {
+      "path": "stage4w_dynamic_report.json",
+      "bytes": 147421,
+      "sha256": "3aedb7f3531c95c3626333e350529a302206ea191c47737af5e6a6accf140f79"
+    },
+    {
+      "path": "stage4w_localization_report.json",
+      "bytes": 427654,
+      "sha256": "e218672d8778b9956f0b1a44c8b95212ffc63c4e96878bb6d33781dc749c3939"
+    },
+    {
+      "path": "stage4w_static_matrix_report.json",
+      "bytes": 6593,
+      "sha256": "39d9f98234be1fb604762193e768d2586671f8291bcd290f34f55b8b95e91562"
+    },
+    {
+      "path": "stage4w_summary.json",
+      "bytes": 8557,
+      "sha256": "3cb702d40bb5d037e99b1a4faf7ceca26a06d951275ab2197f27363356f9528c"
+    },
+    {
+      "path": "static_trials/seed_0/rosbag_info.txt",
+      "bytes": 2959,
+      "sha256": "62e7b9d5af50e297da9106c860a409664b48df3f7c066c56c5efd024f3775ebb"
+    },
+    {
+      "path": "static_trials/seed_0/stage4w_static_summary.json",
+      "bytes": 70939,
+      "sha256": "009395ead0634c0de259f2a924b7aea1eb9bc6f9ccc767725d40b645fdc07b81"
+    },
+    {
+      "path": "static_trials/seed_1/rosbag_info.txt",
+      "bytes": 2958,
+      "sha256": "3b10d5d1a247f5139c0cc4d88f1b046a720ddc5da6687e3a92459d2254090776"
+    },
+    {
+      "path": "static_trials/seed_1/stage4w_static_summary.json",
+      "bytes": 70716,
+      "sha256": "c18f88ba20ba8245fc14ee19a90f0775bb6a217e30c6960c56d9219977451c54"
+    },
+    {
+      "path": "static_trials/seed_2/rosbag_info.txt",
+      "bytes": 2959,
+      "sha256": "3026c2bbd92de30a55962e03731c2545d58111896b532278b05f152326f1b6d3"
+    },
+    {
+      "path": "static_trials/seed_2/stage4w_static_summary.json",
+      "bytes": 70991,
+      "sha256": "b1c8d511ef97b3adca12529224f0ac1d9c9ca88ad47c1c6b7a34b7e4b726d9e4"
+    },
+    {
+      "path": "static_trials/seed_3/rosbag_info.txt",
+      "bytes": 2959,
+      "sha256": "3cb2f7fffe1957b18dbce4f1779ecd6c260750657b6bdcddcab34d5522f9bd1e"
+    },
+    {
+      "path": "static_trials/seed_3/stage4w_static_summary.json",
+      "bytes": 70537,
+      "sha256": "cc2d38f5d72d4cac187f8fd3cf2d32c9caa12fa115b96d42ffd2cdb2d27f93a5"
+    },
+    {
+      "path": "static_trials/seed_4/rosbag_info.txt",
+      "bytes": 2958,
+      "sha256": "07c38f7c59c1cd10dd63c4ba99e75abdff4e924bd6debd3a4bbd2ae4d6392aeb"
+    },
+    {
+      "path": "static_trials/seed_4/stage4w_static_summary.json",
+      "bytes": 70929,
+      "sha256": "887dfe0e1dc6ee381659041efc1a2943b1681c52d4ac5929299200fd86f421fd"
+    }
+  ]
+}

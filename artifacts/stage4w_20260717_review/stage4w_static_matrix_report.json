@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "stage": "Stage4W",
+  "required_seed_count": 5,
+  "completed_seed_count": 5,
+  "trials": [
+    {
+      "seed": 0,
+      "static_gate_pass": true,
+      "transit_success": true,
+      "full_execution_success": true,
+      "component_terminal_success_count": 17,
+      "component_terminal_total": 17,
+      "empirical_coverage_rate": 0.942,
+      "collision_count": 0,
+      "keepout_violation_sample_count": 0,
+      "brush_state_violation_sample_count": 0,
+      "brush_disabled_on_exit": true,
+      "localization": {
+        "sample_count": 2451,
+        "rmse_m": 0.035721015637982315,
+        "p95_m": 0.06631688548611817,
+        "max_m": 0.09802722348150301,
+        "estimate_sample_count": 2451,
+        "truth_sample_count": 2515,
+        "dropped_estimate_count": 0,
+        "sync_tolerance_sec": 0.05,
+        "sync_error_sec": {
+          "sample_count": 2451,
+          "rmse_sec": 0.01436824096503149,
+          "p95_sec": 0.020000000000038654,
+          "max_sec": 0.040000000000020464
+        },
+        "metric_basis": "nearest_neighbour_ros_timestamp_without_truth_reuse",
+        "pass_rmse_and_p95_at_most_0_05m": false,
+        "pass_rmse_at_most_0_05m": true,
+        "formal_gate_basis": "Stage4V-compatible per-seed XY RMSE <= 0.05 m; pointwise P95 is diagnostic"
+      },
+      "rosbag_replay": true
+    },
+    {
+      "seed": 1,
+      "static_gate_pass": true,
+      "transit_success": true,
+      "full_execution_success": true,
+      "component_terminal_success_count": 17,
+      "component_terminal_total": 17,
+      "empirical_coverage_rate": 0.934,
+      "collision_count": 0,
+      "keepout_violation_sample_count": 0,
+      "brush_state_violation_sample_count": 0,
+      "brush_disabled_on_exit": true,
+      "localization": {
+        "sample_count": 2447,
+        "rmse_m": 0.04620196269308704,
+        "p95_m": 0.07824556861923218,
+        "max_m": 0.12091940119639319,
+        "estimate_sample_count": 2506,
+        "truth_sample_count": 2447,
+        "dropped_estimate_count": 59,
+        "sync_tolerance_sec": 0.05,
+        "sync_error_sec": {
+          "sample_count": 2447,
+          "rmse_sec": 0.014300185326344592,
+          "p95_sec": 0.020000000000038654,
+          "max_sec": 0.040000000000020464
+        },
+        "metric_basis": "nearest_neighbour_ros_timestamp_without_truth_reuse",
+        "pass_rmse_and_p95_at_most_0_05m": false,
+        "pass_rmse_at_most_0_05m": true,
+        "formal_gate_basis": "Stage4V-compatible per-seed XY RMSE <= 0.05 m; pointwise P95 is diagnostic"
+      },
+      "rosbag_replay": true
+    },
+    {
+      "seed": 2,
+      "static_gate_pass": true,
+      "transit_success": true,
+      "full_execution_success": true,
+      "component_terminal_success_count": 17,
+      "component_terminal_total": 17,
+      "empirical_coverage_rate": 0.9293333333333333,
+      "collision_count": 0,
+      "keepout_violation_sample_count": 0,
+      "brush_state_violation_sample_count": 0,
+      "brush_disabled_on_exit": true,
+      "localization": {
+        "sample_count": 2496,
+        "rmse_m": 0.031729486079146926,
+        "p95_m": 0.06186017383055584,
+        "max_m": 0.11656589834897776,
+        "estimate_sample_count": 2502,
+        "truth_sample_count": 2496,
+        "dropped_estimate_count": 6,
+        "sync_tolerance_sec": 0.05,
+        "sync_error_sec": {
+          "sample_count": 2496,
+          "rmse_sec": 0.01397685816278286,
+          "p95_sec": 0.020000000000038654,
+          "max_sec": 0.040000000000020464
+        },
+        "metric_basis": "nearest_neighbour_ros_timestamp_without_truth_reuse",
+        "pass_rmse_and_p95_at_most_0_05m": false,
+        "pass_rmse_at_most_0_05m": true,
+        "formal_gate_basis": "Stage4V-compatible per-seed XY RMSE <= 0.05 m; pointwise P95 is diagnostic"
+      },
+      "rosbag_replay": true
+    },
+    {
+      "seed": 3,
+      "static_gate_pass": true,
+      "transit_success": true,
+      "full_execution_success": true,
+      "component_terminal_success_count": 17,
+      "component_terminal_total": 17,
+      "empirical_coverage_rate": 0.9453333333333334,
+      "collision_count": 0,
+      "keepout_violation_sample_count": 0,
+      "brush_state_violation_sample_count": 0,
+      "brush_disabled_on_exit": true,
+      "localization": {
+        "sample_count": 2444,
+        "rmse_m": 0.03339910472083416,
+        "p95_m": 0.05816971915243641,
+        "max_m": 0.09134491818927042,
+        "estimate_sample_count": 2444,
+        "truth_sample_count": 2528,
+        "dropped_estimate_count": 0,
+        "sync_tolerance_sec": 0.05,
+        "sync_error_sec": {
+          "sample_count": 2444,
+          "rmse_sec": 0.014124765542714987,
+          "p95_sec": 0.020000000000038654,
+          "max_sec": 0.040000000000020464
+        },
+        "metric_basis": "nearest_neighbour_ros_timestamp_without_truth_reuse",
+        "pass_rmse_and_p95_at_most_0_05m": false,
+        "pass_rmse_at_most_0_05m": true,
+        "formal_gate_basis": "Stage4V-compatible per-seed XY RMSE <= 0.05 m; pointwise P95 is diagnostic"
+      },
+      "rosbag_replay": true
+    },
+    {
+      "seed": 4,
+      "static_gate_pass": true,
+      "transit_success": true,
+      "full_execution_success": true,
+      "component_terminal_success_count": 17,
+      "component_terminal_total": 17,
+      "empirical_coverage_rate": 0.94,
+      "collision_count": 0,
+      "keepout_violation_sample_count": 0,
+      "brush_state_violation_sample_count": 0,
+      "brush_disabled_on_exit": true,
+      "localization": {
+        "sample_count": 2454,
+        "rmse_m": 0.029300202349728424,
+        "p95_m": 0.054871135404813184,
+        "max_m": 0.09468813750907262,
+        "estimate_sample_count": 2469,
+        "truth_sample_count": 2455,
+        "dropped_estimate_count": 15,
+        "sync_tolerance_sec": 0.05,
+        "sync_error_sec": {
+          "sample_count": 2454,
+          "rmse_sec": 0.01426835596942041,
+          "p95_sec": 0.020000000000038654,
+          "max_sec": 0.040000000000020464
+        },
+        "metric_basis": "nearest_neighbour_ros_timestamp_without_truth_reuse",
+        "pass_rmse_and_p95_at_most_0_05m": false,
+        "pass_rmse_at_most_0_05m": true,
+        "formal_gate_basis": "Stage4V-compatible per-seed XY RMSE <= 0.05 m; pointwise P95 is diagnostic"
+      },
+      "rosbag_replay": true
+    }
+  ],
+  "static_coverage_success_count": 5,
+  "success": true
+}

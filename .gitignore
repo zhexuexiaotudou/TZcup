@@ -14,6 +14,16 @@ artifacts/**/*.db3
 artifacts/**/*.mcap
 artifacts/**/metadata.yaml
 
+# Stage4W raw screening/formal runs stay local; compact review evidence is tracked.
+artifacts/stage4w_static_screening*/
+artifacts/stage4w_static_*screening*/
+artifacts/stage4w_static_formal*/
+artifacts/stage4w_static_pre_dynamic_clearance_config/
+artifacts/stage4w_dynamic_*/
+artifacts/stage4w_localization_regression/
+artifacts/stage4w_localization_regression_*/
+artifacts/stage4w_localization_reweight_probe_*/
+
 # Superseded local review bundle; the current Stage4R bundle is committed.
 无人清扫车仿真_GPT复核包_Stage4_20260715.zip
 

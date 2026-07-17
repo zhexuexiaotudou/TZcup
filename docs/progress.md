@@ -1,5 +1,29 @@
 # 项目推进记录
 
+## Stage4W：可达清扫域、完整覆盖与动态交互闭环
+
+状态：正式门禁全部通过，已到达 GPT 复核边界；尚未启动 Stage5A 实施。
+
+已完成：
+
+- 修复 GNSS 协方差建模、refined/GNSS 有界权重和全局锚点随局部里程计传播；正式 hybrid 10-seed 为 10/10，XY RMSE P50/P95/max `0.02825/0.03726/0.03778 m`，导航、TF 单所有者、扫描精化参与均为 10/10，GT 控制违规 0。
+- 建立唯一 mission geometry：outer、headland、keepout、显式 exclusion、world→map 固定障碍、footprint 和安全裕量共同编译。当前生成 9 swath + 8 turn = 17 组件；Stage4V 的固定 23 组件来自旧几何，Stage4W 标记为不适用。
+- 同时预规划正/反 staging，等待全局 costmap 覆盖候选点，核对 cost/keepout/speed mask 与 footprint clearance，再以明确 approach yaw 执行 transit 和 brush-off 稠密 entry。
+- 为 NavigateToPose、ComputePathToPose 和 FollowPath 使用各自动作错误码语义；FollowPath 104 被正确识别为 `PATIENCE_EXCEEDED`。Nav2 使用 `PoseProgressChecker`，controller 有界容忍 5 s。
+- 动态障碍通过持久 ROS–Gazebo SetEntityPose 服务桥横穿；同一组件注入间距至少 0.5 m。局部/全局 obstacle layer 启用无限量程清障，消除障碍移走后的旧标记。
+- 正式静态 5-seed 全部通过：每次 17/17、经验覆盖率 `92.93%–94.53%`、覆盖期 RMSE `0.02930–0.04620 m`、碰撞/keepout/刷盘违规均为 0、刷盘最终关闭、回放 5/5。
+- 正式动态任务通过：20/20 有效交互、碰撞 0，完整任务 17/17、覆盖率 93.53%、覆盖期 RMSE 0.03014 m；keepout 违规 0、限速区平均 0.288 m/s。
+- 30 次急停全部归零与释放恢复，P95 `0.188 s`；停止上游命令后 `1.694 s` 达到连续 5 帧稳定零输出。动态 MCAP 完整回放通过。
+
+边界：
+
+- `READY_FOR_GPT_REVIEW_STAGE4W=true`、`READY_FOR_STAGE5A=true` 只表示 Stage4W 技术门已满足，Stage5A 实施仍需 GPT/人工复核后另行启动。
+- 竞赛理论效率仍为 `1053 m²/h < 3500 m²/h`，`competition_efficiency_pass=false`；不得以经验覆盖率替换效率门。
+- 垃圾感知训练、J6 量化、实板部署和原生 Ubuntu/WSLg GUI 验收未执行。
+- 紧凑证据位于 `artifacts/stage4w_20260717_review/`；原始 MCAP、筛查和失败诊断在用户确认前保留本机。
+
+复核入口：`GPT_REVIEW_STAGE4W.md`、`artifacts/stage4w_20260717_review/stage4w_summary.json` 与 `MANIFEST.json`。
+
 ## Stage4V：混合定位与完整任务复核
 
 状态：正式混合定位门禁通过，完整 Coverage 门禁失败；未进入 Stage5A。
