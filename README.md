@@ -104,4 +104,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-17：Stage5A 机器门全部通过，`READY_FOR_GPT_REVIEW_STAGE5A=true`、`READY_FOR_STAGE5B=true`。14/14 ROS 测试通过；20-scene held-out synthetic 指标为 1.0；30/30 task-state E2E 成功；Gazebo 实时 ONNX 处理 127 帧并发布非空 2D/3D/map 目标；正式 MCAP 4.6 MiB、8,527 条消息；Stage4W 回归覆盖率 93.87%、定位 RMSE 0.03570 m、碰撞/keepout 0、刷盘最终关闭。轻量 CI 已显式安装 Stage5A 投影与数据测试所需的 NumPy。真实数据、J6 与竞赛效率仍为 false；原始 dataset/MCAP 保留本机，Git 仅提交紧凑复核证据。
+2026-07-17：Stage5A 机器门全部通过，`READY_FOR_GPT_REVIEW_STAGE5A=true`、`READY_FOR_STAGE5B=true`。14/14 ROS 测试通过；20-scene held-out synthetic 指标为 1.0；30/30 task-state E2E 成功；Gazebo 实时 ONNX 处理 127 帧并发布非空 2D/3D/map 目标；正式 MCAP 4.6 MiB、8,527 条消息；Stage4W 回归覆盖率 93.87%、定位 RMSE 0.03570 m、碰撞/keepout 0、刷盘最终关闭。轻量 CI 已显式安装 Stage5A 投影与合成数据测试所需的 NumPy、headless OpenCV。真实数据、J6 与竞赛效率仍为 false；原始 dataset/MCAP 保留本机，Git 仅提交紧凑复核证据。
