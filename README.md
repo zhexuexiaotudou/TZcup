@@ -97,4 +97,4 @@ python scripts/ci_fast.py
 
 ## 最近同步
 
-2026-07-17：Stage4W 正式门禁全部完成。hybrid 定位 10/10，静态覆盖 5/5 且每次 17/17，动态交互 20/20，碰撞/keepout/刷盘违规为 0，过滤器、30 次急停和 MCAP 回放通过；`READY_FOR_GPT_REVIEW_STAGE4W=true`、`READY_FOR_STAGE5A=true`。竞赛理论效率 `1053 m²/h` 仍未达 `3500 m²/h`，原始 MCAP 和失败诊断在用户确认前保留于本机。
+2026-07-17：Stage4W 正式门禁全部完成。hybrid 定位 10/10，静态覆盖 5/5 且每次 17/17，动态交互 20/20，碰撞/keepout/刷盘违规为 0，过滤器、30 次急停和 MCAP 回放通过；`READY_FOR_GPT_REVIEW_STAGE4W=true`、`READY_FOR_STAGE5A=true`。竞赛理论效率 `1053 m²/h` 仍未达 `3500 m²/h`，原始 MCAP 和失败诊断在用户确认前保留于本机。GPT 复核证据目录按原始字节提交，`MANIFEST.json` 的字节数与 SHA-256 在 Git 归档中保持一致。
