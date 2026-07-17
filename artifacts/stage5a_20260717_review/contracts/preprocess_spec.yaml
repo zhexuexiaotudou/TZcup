@@ -1,0 +1,9 @@
+schema_version: 1
+color_space: RGB
+resize: [128, 96]
+layout: NCHW
+dtype: float32
+scale: 0.00392156862745098
+mean: [0.0, 0.0, 0.0]
+std: [1.0, 1.0, 1.0]
+batch: 1

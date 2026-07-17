@@ -11,3 +11,4 @@
 
 # Review evidence manifests hash exact bytes; never normalize or diff their payloads.
 artifacts/stage4w_*_review/** binary
+artifacts/stage5a_*_review/** binary

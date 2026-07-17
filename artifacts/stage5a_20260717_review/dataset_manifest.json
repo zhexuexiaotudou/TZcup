@@ -1,0 +1,267 @@
+{
+  "schema_version": 1,
+  "dataset_id": "stage5a_synthetic_smoke_v1",
+  "scene_count": 20,
+  "class_order": [
+    "background",
+    "plastic_bottle",
+    "metal_can",
+    "paper_litter",
+    "leaf_pile",
+    "puddle"
+  ],
+  "split_scene_seeds": {
+    "train": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10,
+      11
+    ],
+    "val": [
+      12,
+      13,
+      14,
+      15
+    ],
+    "test": [
+      16,
+      17,
+      18,
+      19
+    ]
+  },
+  "split_hash": "fc51ef67d58bdd353ca2001f2dae1f9e3afa750245a3052f4d334451242096c6",
+  "adjacent_frames_cross_split": false,
+  "duplicate_image_count": 0,
+  "records": [
+    {
+      "scene_seed": 0,
+      "split": "train",
+      "image": "images/scene_0000.png",
+      "depth": "depth/scene_0000.npy",
+      "annotation": "annotations/scene_0000.json",
+      "camera": "camera/scene_0000.json",
+      "tf": "tf/scene_0000.json",
+      "image_sha256": "b21063f14c4672f61be2536cd06bfa981072535fcce77630799f0da3504245a3",
+      "depth_sha256": "dbeb77bb8a63ae23eb3c50ecc6e6a373c842c276fc949bb624eb5ca2a0d683c7"
+    },
+    {
+      "scene_seed": 1,
+      "split": "train",
+      "image": "images/scene_0001.png",
+      "depth": "depth/scene_0001.npy",
+      "annotation": "annotations/scene_0001.json",
+      "camera": "camera/scene_0001.json",
+      "tf": "tf/scene_0001.json",
+      "image_sha256": "0fba43e67fca6c7405e41aa6e6010dfff76042ea9c8c912d61727bde3ca980a1",
+      "depth_sha256": "5b23046c9898249ddd8707bdb52d41711ff2778328d98375dda79282e2713f7a"
+    },
+    {
+      "scene_seed": 2,
+      "split": "train",
+      "image": "images/scene_0002.png",
+      "depth": "depth/scene_0002.npy",
+      "annotation": "annotations/scene_0002.json",
+      "camera": "camera/scene_0002.json",
+      "tf": "tf/scene_0002.json",
+      "image_sha256": "3d5ad5f1551ee32656fb6ef330a34b609abe5ccbc6c7ef38332b9428c58c476a",
+      "depth_sha256": "8451f4b546f05aba2e10acb2b6c3a318bc1c008954c20f96861a52239e3b0adb"
+    },
+    {
+      "scene_seed": 3,
+      "split": "train",
+      "image": "images/scene_0003.png",
+      "depth": "depth/scene_0003.npy",
+      "annotation": "annotations/scene_0003.json",
+      "camera": "camera/scene_0003.json",
+      "tf": "tf/scene_0003.json",
+      "image_sha256": "fb4c3dcf4e3a8e8a0cfe9fe471905b51443481f928dd4cd3c7b7b1c70c2989f7",
+      "depth_sha256": "b18211aa8db38334ace571597a83d6769711ef772183dca80ab4f03d3f254869"
+    },
+    {
+      "scene_seed": 4,
+      "split": "train",
+      "image": "images/scene_0004.png",
+      "depth": "depth/scene_0004.npy",
+      "annotation": "annotations/scene_0004.json",
+      "camera": "camera/scene_0004.json",
+      "tf": "tf/scene_0004.json",
+      "image_sha256": "3736f820870b1a8831da561ea584454127b6d92ceacffd9d43b8217e881f1a4f",
+      "depth_sha256": "144d66203f7cbc09afdc6d752045ba0180699617cf59275ae826a989d92b1792"
+    },
+    {
+      "scene_seed": 5,
+      "split": "train",
+      "image": "images/scene_0005.png",
+      "depth": "depth/scene_0005.npy",
+      "annotation": "annotations/scene_0005.json",
+      "camera": "camera/scene_0005.json",
+      "tf": "tf/scene_0005.json",
+      "image_sha256": "b84bc664a40e21e7d8b294918201219e7c990f1f37f2faa650d6099dcc278ec8",
+      "depth_sha256": "a7be7174d963bcaab6cd9688304205a73fc112827b916bcc592d654c8fee0ac4"
+    },
+    {
+      "scene_seed": 6,
+      "split": "train",
+      "image": "images/scene_0006.png",
+      "depth": "depth/scene_0006.npy",
+      "annotation": "annotations/scene_0006.json",
+      "camera": "camera/scene_0006.json",
+      "tf": "tf/scene_0006.json",
+      "image_sha256": "bee49a03663f951221f3f6b0a2cbf4962298d2dce17f89e1d3d6600bcba53843",
+      "depth_sha256": "0b64bdc25b39ddfbf2773c528194e50cbb9f23f6202f49f520cf9f65eaf5f960"
+    },
+    {
+      "scene_seed": 7,
+      "split": "train",
+      "image": "images/scene_0007.png",
+      "depth": "depth/scene_0007.npy",
+      "annotation": "annotations/scene_0007.json",
+      "camera": "camera/scene_0007.json",
+      "tf": "tf/scene_0007.json",
+      "image_sha256": "2f29c1fc39a8c8f32449d4ace0401fe9f9453f0551a3fe4ff963bed9092fdceb",
+      "depth_sha256": "e431ab39dfa4cc191c8c90389c5b1e22c6fd23ce04d58340dc94c506800534aa"
+    },
+    {
+      "scene_seed": 8,
+      "split": "train",
+      "image": "images/scene_0008.png",
+      "depth": "depth/scene_0008.npy",
+      "annotation": "annotations/scene_0008.json",
+      "camera": "camera/scene_0008.json",
+      "tf": "tf/scene_0008.json",
+      "image_sha256": "e4671b363f60a367d1f5d8c110fd7c98fdfadd35b6fdc41fcf17e43ff43f92b7",
+      "depth_sha256": "fe74f2665ccea08e197de5cb1ab9df75782a1ba97a635a8b269030b6849cf28e"
+    },
+    {
+      "scene_seed": 9,
+      "split": "train",
+      "image": "images/scene_0009.png",
+      "depth": "depth/scene_0009.npy",
+      "annotation": "annotations/scene_0009.json",
+      "camera": "camera/scene_0009.json",
+      "tf": "tf/scene_0009.json",
+      "image_sha256": "8db4aa3d18a0a6dca61f7d97303a7481ab7b631a3368dbc0db24a63819479896",
+      "depth_sha256": "1aae64c6a8aaf296da9fe216f3cae7749c71a5a14ad963389ca7443156864039"
+    },
+    {
+      "scene_seed": 10,
+      "split": "train",
+      "image": "images/scene_0010.png",
+      "depth": "depth/scene_0010.npy",
+      "annotation": "annotations/scene_0010.json",
+      "camera": "camera/scene_0010.json",
+      "tf": "tf/scene_0010.json",
+      "image_sha256": "445d86fd8784adb4546d0a41e7cf0e15e4478d03396794f1b454a9bc568b30aa",
+      "depth_sha256": "4cb1e871313dc53eca81ff4c66f1da7dc9e11616d2a0024800278869c4267618"
+    },
+    {
+      "scene_seed": 11,
+      "split": "train",
+      "image": "images/scene_0011.png",
+      "depth": "depth/scene_0011.npy",
+      "annotation": "annotations/scene_0011.json",
+      "camera": "camera/scene_0011.json",
+      "tf": "tf/scene_0011.json",
+      "image_sha256": "211b3ccb25a798703ae5ff1958507d88a19f52171b269197ce5192ebba47b57e",
+      "depth_sha256": "5dbcd966e1e04d4cb4b6a0a6f1bd1091b2ae04fc16bdcdb0bcf81d0c7292b65f"
+    },
+    {
+      "scene_seed": 12,
+      "split": "val",
+      "image": "images/scene_0012.png",
+      "depth": "depth/scene_0012.npy",
+      "annotation": "annotations/scene_0012.json",
+      "camera": "camera/scene_0012.json",
+      "tf": "tf/scene_0012.json",
+      "image_sha256": "348c42d4b86eac13e91b295b61dbfc3922a033960d46e05e2f61257125ba0ae1",
+      "depth_sha256": "003ef9704cf5a14bf4d23efaaca1858845291e3370799ea8ab80659ea74beabe"
+    },
+    {
+      "scene_seed": 13,
+      "split": "val",
+      "image": "images/scene_0013.png",
+      "depth": "depth/scene_0013.npy",
+      "annotation": "annotations/scene_0013.json",
+      "camera": "camera/scene_0013.json",
+      "tf": "tf/scene_0013.json",
+      "image_sha256": "acf2a27909a5e94ea68789b6ec4a7c75e926981ecb7ed86d77d980880295e79b",
+      "depth_sha256": "f09e117bb1f3ab8d4fc5f9526065b70ff63dede83dc2288db3dea1fae521bde5"
+    },
+    {
+      "scene_seed": 14,
+      "split": "val",
+      "image": "images/scene_0014.png",
+      "depth": "depth/scene_0014.npy",
+      "annotation": "annotations/scene_0014.json",
+      "camera": "camera/scene_0014.json",
+      "tf": "tf/scene_0014.json",
+      "image_sha256": "5888ccd585e35d30cc69a2de147026a60d2b68c15845f228426d045b989f6d66",
+      "depth_sha256": "b280d17abeefd3faf70c5a0df96fbd55d0575362d7ee3f66d2fb8a7d1142374a"
+    },
+    {
+      "scene_seed": 15,
+      "split": "val",
+      "image": "images/scene_0015.png",
+      "depth": "depth/scene_0015.npy",
+      "annotation": "annotations/scene_0015.json",
+      "camera": "camera/scene_0015.json",
+      "tf": "tf/scene_0015.json",
+      "image_sha256": "9f85d7489862473747e38d32cb43ed354f3d0657a30728e7325a6033e1c2dba8",
+      "depth_sha256": "3615be16ef461216c9e79ad58ce839dca08f549f94e8337bca4bf39b4f5da1c5"
+    },
+    {
+      "scene_seed": 16,
+      "split": "test",
+      "image": "images/scene_0016.png",
+      "depth": "depth/scene_0016.npy",
+      "annotation": "annotations/scene_0016.json",
+      "camera": "camera/scene_0016.json",
+      "tf": "tf/scene_0016.json",
+      "image_sha256": "6a580b0446f8a0dc5a617c9a25806fca4d9d874a386fa93186b9fc50e5ea74e4",
+      "depth_sha256": "4fcef83653b3d6981465db4841f1ac01882982012370aa0c22d3c04b09f3092d"
+    },
+    {
+      "scene_seed": 17,
+      "split": "test",
+      "image": "images/scene_0017.png",
+      "depth": "depth/scene_0017.npy",
+      "annotation": "annotations/scene_0017.json",
+      "camera": "camera/scene_0017.json",
+      "tf": "tf/scene_0017.json",
+      "image_sha256": "8fe597db3187b5db78c1b7f34b59a7837ad52243368b30ea172e8e6d715a069d",
+      "depth_sha256": "3e6c2318e4e0170aa2e5496fa1502e85db0c93f72024c5d8e63a4a334fd68847"
+    },
+    {
+      "scene_seed": 18,
+      "split": "test",
+      "image": "images/scene_0018.png",
+      "depth": "depth/scene_0018.npy",
+      "annotation": "annotations/scene_0018.json",
+      "camera": "camera/scene_0018.json",
+      "tf": "tf/scene_0018.json",
+      "image_sha256": "717e08e230858f87ab0f0d6d301f24f27daa18f34a63859d7a8d7040dc37c996",
+      "depth_sha256": "6f22f2828d915ae16c421591d7e35b09d265205af18a7d3a7e5bdfc0c4cca38a"
+    },
+    {
+      "scene_seed": 19,
+      "split": "test",
+      "image": "images/scene_0019.png",
+      "depth": "depth/scene_0019.npy",
+      "annotation": "annotations/scene_0019.json",
+      "camera": "camera/scene_0019.json",
+      "tf": "tf/scene_0019.json",
+      "image_sha256": "af27a8a435acf89bda5460a65958d087cb9bdd915dc43454328a3b95ece1a758",
+      "depth_sha256": "e6680dd1dd6e3f545998a9636cab3a2ca3c88929fce0c910489902c7e2c4a86a"
+    }
+  ],
+  "synthetic_only": true
+}

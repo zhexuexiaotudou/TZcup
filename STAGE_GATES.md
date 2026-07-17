@@ -1,6 +1,12 @@
 # Codex 阶段推进与验收门
 
-## Stage4W 当前门禁（2026-07-17）
+## Stage5A 当前门禁（2026-07-17）
+
+只有 Stage4W 最小回归、GT registry/遮挡、held-out synthetic perception、30-seed spot-clean、Gazebo 实时 RGB-D/ONNX/非空 2D-3D-map 输出和正式 rosbag 全部通过时，才可设置 `READY_FOR_GPT_REVIEW_STAGE5A=true` 与 `READY_FOR_STAGE5B=true`。机器门以 `artifacts/stage5a_20260717_review/stage5a_summary.json` 为准。
+
+正式结果：上述 9 个机器 gate 全部为 true，故 `READY_FOR_GPT_REVIEW_STAGE5A=true`、`READY_FOR_STAGE5B=true`。该 Ready 仅表示 synthetic-domain 内部工程门通过。无真实数据和 J6 实板证据时保持 `competition_perception_pass=false`、`j6_quantization_pass=false`、`j6_runtime_pass=false`；理论效率 `1053 m²/h` 未达 `3500 m²/h`，故 `competition_efficiency_pass=false`。
+
+## Stage4W 回归基线（2026-07-17）
 
 - Hybrid 定位回归：通过（10/10 完整、导航成功、TF 单所有者、扫描精化参与；GT 控制违规 0）。
 - 定位 XY RMSE：通过（P50/P95/max `0.02825/0.03726/0.03778 m`，每 seed ≤0.05 m）。

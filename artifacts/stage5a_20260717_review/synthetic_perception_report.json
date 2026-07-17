@@ -1,0 +1,218 @@
+{
+  "schema_version": 1,
+  "backend": "onnxruntime",
+  "model_path": "/stage5a/artifacts/stage5a_formal3/stage5a_synthetic_color_prototype.onnx",
+  "held_out_scene_seeds": [
+    16,
+    17,
+    18,
+    19
+  ],
+  "per_class": {
+    "plastic_bottle": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "metal_can": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    },
+    "paper_litter": {
+      "tp": 4,
+      "fp": 0,
+      "fn": 0,
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1": 1.0
+    }
+  },
+  "discrete_macro_precision": 1.0,
+  "discrete_macro_recall": 1.0,
+  "discrete_macro_f1": 1.0,
+  "ap50": 1.0,
+  "ap50_95": 1.0,
+  "confusion_matrix": [
+    [
+      41660,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      684,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      596,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      924,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      2316,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      2972
+    ]
+  ],
+  "area_iou": {
+    "leaf_pile": 1.0,
+    "puddle": 1.0
+  },
+  "area_macro_f1": 1.0,
+  "map_localization_rmse_m": 0.0,
+  "map_localization_p95_m": 0.0,
+  "latency_ms": {
+    "mean": 0.2868024998861074,
+    "p95": 0.6658086497736802,
+    "max": 0.7542229996033711
+  },
+  "peak_rss_kib": 149564,
+  "false_positives_per_min": 0.0,
+  "missed_targets": 0,
+  "gates": {
+    "discrete_macro_precision_at_least_0_95": true,
+    "discrete_macro_recall_at_least_0_95": true,
+    "discrete_macro_f1_at_least_0_95": true,
+    "each_discrete_recall_at_least_0_90": true,
+    "area_macro_f1_at_least_0_95": true,
+    "leaf_and_puddle_miou_at_least_0_80": true,
+    "map_localization_rmse_at_most_0_10m": true
+  },
+  "synthetic_perception_pass": true,
+  "competition_perception_pass": false,
+  "ground_truth_control_violation_count": 0,
+  "scope": "synthetic_color_domain_only",
+  "scene_reports": [
+    {
+      "seed": 16,
+      "latency_ms": 0.7542229996033711,
+      "classes": {
+        "plastic_bottle": {
+          "bbox_iou": 1.0,
+          "detected": true
+        },
+        "metal_can": {
+          "bbox_iou": 1.0,
+          "detected": true
+        },
+        "paper_litter": {
+          "bbox_iou": 1.0,
+          "detected": true
+        },
+        "leaf_pile": {
+          "iou": 1.0
+        },
+        "puddle": {
+          "iou": 1.0
+        }
+      }
+    },
+    {
+      "seed": 17,
+      "latency_ms": 0.16479400073876604,
+      "classes": {
+        "plastic_bottle": {
+          "bbox_iou": 1.0,
+          "detected": true
+        },
+        "metal_can": {
+          "bbox_iou": 1.0,
+          "detected": true
+        },
+        "paper_litter": {
+          "bbox_iou": 1.0,
+          "detected": true
+        },
+        "leaf_pile": {
+          "iou": 1.0
+        },
+        "puddle": {
+          "iou": 1.0
+        }
+      }
+    },
+    {
+      "seed": 18,
+      "latency_ms": 0.10967100024572574,
+      "classes": {
+        "plastic_bottle": {
+          "bbox_iou": 1.0,
+          "detected": true
+        },
+        "metal_can": {
+          "bbox_iou": 1.0,
+          "detected": true
+        },
+        "paper_litter": {
+          "bbox_iou": 1.0,
+          "detected": true
+        },
+        "leaf_pile": {
+          "iou": 1.0
+        },
+        "puddle": {
+          "iou": 1.0
+        }
+      }
+    },
+    {
+      "seed": 19,
+      "latency_ms": 0.11852199895656668,
+      "classes": {
+        "plastic_bottle": {
+          "bbox_iou": 1.0,
+          "detected": true
+        },
+        "metal_can": {
+          "bbox_iou": 1.0,
+          "detected": true
+        },
+        "paper_litter": {
+          "bbox_iou": 1.0,
+          "detected": true
+        },
+        "leaf_pile": {
+          "iou": 1.0
+        },
+        "puddle": {
+          "iou": 1.0
+        }
+      }
+    }
+  ]
+}

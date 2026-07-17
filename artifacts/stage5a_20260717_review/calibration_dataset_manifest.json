@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "dataset_id": "stage5a_synthetic_smoke_v1",
+  "representative_scene_seeds": [
+    0,
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9
+  ],
+  "image_sha256": [
+    "b21063f14c4672f61be2536cd06bfa981072535fcce77630799f0da3504245a3",
+    "0fba43e67fca6c7405e41aa6e6010dfff76042ea9c8c912d61727bde3ca980a1",
+    "3d5ad5f1551ee32656fb6ef330a34b609abe5ccbc6c7ef38332b9428c58c476a",
+    "fb4c3dcf4e3a8e8a0cfe9fe471905b51443481f928dd4cd3c7b7b1c70c2989f7",
+    "3736f820870b1a8831da561ea584454127b6d92ceacffd9d43b8217e881f1a4f",
+    "b84bc664a40e21e7d8b294918201219e7c990f1f37f2faa650d6099dcc278ec8",
+    "bee49a03663f951221f3f6b0a2cbf4962298d2dce17f89e1d3d6600bcba53843",
+    "2f29c1fc39a8c8f32449d4ace0401fe9f9453f0551a3fe4ff963bed9092fdceb",
+    "e4671b363f60a367d1f5d8c110fd7c98fdfadd35b6fdc41fcf17e43ff43f92b7",
+    "8db4aa3d18a0a6dca61f7d97303a7481ab7b631a3368dbc0db24a63819479896"
+  ],
+  "j6_quantization_executed": false
+}

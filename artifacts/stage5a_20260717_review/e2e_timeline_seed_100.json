@@ -1,0 +1,72 @@
+{
+  "seed": 100,
+  "backend": "onnxruntime",
+  "inference_latency_ms": 1.2679159990511835,
+  "detected_target_count": 5,
+  "queued_target_count": 5,
+  "cleaned_target_count": 5,
+  "mission_success": true,
+  "wrong_target_cleaning_count": 0,
+  "collision_count": 0,
+  "keepout_violation_count": 0,
+  "brush_final": false,
+  "ground_truth_control_violation_count": 0,
+  "coverage_resume_success": true,
+  "events": [
+    {
+      "target_uuid": "3fc9c29d-5f6f-5251-ba73-6331614992a0",
+      "class_id": "plastic_bottle",
+      "cleaning_policy": "spot_clean",
+      "result": "cleaned",
+      "cleaned_fraction": 1.0,
+      "brush_enabled_during_event": true,
+      "brush_final": false,
+      "in_keepout": false,
+      "source_backend": "onnxruntime"
+    },
+    {
+      "target_uuid": "0d0a4ab1-902c-5de3-b7a3-abec5471bea5",
+      "class_id": "metal_can",
+      "cleaning_policy": "spot_clean",
+      "result": "cleaned",
+      "cleaned_fraction": 1.0,
+      "brush_enabled_during_event": true,
+      "brush_final": false,
+      "in_keepout": false,
+      "source_backend": "onnxruntime"
+    },
+    {
+      "target_uuid": "b89659c8-39b1-5d35-b134-d34d57bbe5e4",
+      "class_id": "paper_litter",
+      "cleaning_policy": "spot_clean",
+      "result": "cleaned",
+      "cleaned_fraction": 1.0,
+      "brush_enabled_during_event": true,
+      "brush_final": false,
+      "in_keepout": false,
+      "source_backend": "onnxruntime"
+    },
+    {
+      "target_uuid": "9b721a0e-9981-5419-abda-d3247fc2d333",
+      "class_id": "leaf_pile",
+      "cleaning_policy": "local_coverage",
+      "result": "cleaned",
+      "cleaned_fraction": 0.98,
+      "brush_enabled_during_event": true,
+      "brush_final": false,
+      "in_keepout": false,
+      "source_backend": "onnxruntime"
+    },
+    {
+      "target_uuid": "60aef8c0-9aa0-5546-ab34-9aaf41c102a2",
+      "class_id": "puddle",
+      "cleaning_policy": "local_coverage",
+      "result": "cleaned",
+      "cleaned_fraction": 0.98,
+      "brush_enabled_during_event": true,
+      "brush_final": false,
+      "in_keepout": false,
+      "source_backend": "onnxruntime"
+    }
+  ]
+}

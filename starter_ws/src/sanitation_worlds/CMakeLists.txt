@@ -4,7 +4,7 @@ project(sanitation_worlds)
 find_package(ament_cmake REQUIRED)
 
 install(
-  DIRECTORY worlds
+  DIRECTORY models worlds
   DESTINATION share/${PROJECT_NAME}
 )
 

@@ -1,0 +1,74 @@
+schema_version: 1
+registry_version: 2026.07-stage5a
+uuid_namespace: 4f0f9736-31b6-5884-9ae6-478ca371cb5c
+class_order:
+  - background
+  - plastic_bottle
+  - metal_can
+  - paper_litter
+  - leaf_pile
+  - puddle
+models:
+  trash_bottle_01:
+    uuid: 9a16ea6a-ebf3-50ac-b1d0-b5970f9a6f17
+    class_id: plastic_bottle
+    target_type: discrete
+    policy: spot_clean
+    pickable: true
+    size_m: [0.08, 0.08, 0.24]
+  trash_can_01:
+    uuid: 0ad95393-285f-5041-87e9-8cbe91e5dd87
+    class_id: metal_can
+    target_type: discrete
+    policy: spot_clean
+    pickable: true
+    size_m: [0.07, 0.07, 0.12]
+  trash_paper_01:
+    uuid: c2114a3b-3814-5243-9408-7a8671a26a40
+    class_id: paper_litter
+    target_type: discrete
+    policy: spot_clean
+    pickable: true
+    size_m: [0.20, 0.14, 0.01]
+  leaf_pile_01:
+    uuid: df4286a6-61fc-54c5-8c73-8073f2f04d6c
+    class_id: leaf_pile
+    target_type: area
+    policy: local_coverage
+    pickable: false
+    size_m: [0.80, 0.55, 0.02]
+  puddle_zone:
+    uuid: 2cf44561-af8a-55c6-9ca9-f6e26166e059
+    class_id: puddle
+    target_type: area
+    policy: local_coverage
+    pickable: false
+    size_m: [1.20, 0.75, 0.01]
+negative_models:
+  trash_bin_obstacle:
+    uuid: ee12b33f-d9c2-5c4d-9bcf-67eba94d6b1c
+    class_id: fixed_bin
+  cardboard_box_obstacle:
+    uuid: c0b6fede-90b6-58a7-a9c8-1b89a88e7c2e
+    class_id: cardboard_obstacle
+  dynamic_pedestrian_box:
+    uuid: 73f84259-6763-5b32-a7a7-0300d2a600ca
+    class_id: dynamic_pedestrian
+  structured_building_north:
+    uuid: b0c1096e-4547-5b91-ab3d-e9b33b6e782b
+    class_id: building
+  structured_lamp_west:
+    uuid: 1be94a55-266d-5db6-830f-fca64d1790f7
+    class_id: lamp
+  structured_lamp_east:
+    uuid: 07a1ef3d-44c3-5380-a06e-8dfd2df5b632
+    class_id: lamp
+  structured_tree_south:
+    uuid: 760b645f-70a4-5b78-83e6-c706c8baf93e
+    class_id: tree
+  structured_tree_north:
+    uuid: 3c369bc8-2258-5c94-951c-2718e4a5620d
+    class_id: tree
+  structured_waste_bin:
+    uuid: 210383a7-03e0-5ff2-b6c5-bd2c6e27ecb8
+    class_id: fixed_bin

@@ -19,6 +19,8 @@ Docker 的 headless GPU 成功已经覆盖真实 Gazebo 物理、传感器、ROS
 
 Stage4W 已在同一 headless GPU 通道完成 hybrid 定位 10-seed、静态完整 Coverage 5-seed、动态障碍 20 次交互、过滤器、30 次急停和 MCAP 回放。每次静态任务都执行统一几何生成的 17/17 组件；GUI 缺口不阻塞这些计算与运行证据，但仍是人工视觉验收项。
 
+Stage5A 继续使用该 Docker/headless GPU 通道完成 14 项 ROS 测试、20-scene synthetic 数据、held-out ONNX、30-seed task-state E2E 和真实 Gazebo RGB-D/2D/3D/map 感知录包。该兼容性结论不外推到真实数据精度、J6 工具链/实板或原生 GUI。
+
 ## 第三方锁定
 
 精确版本见 `repos/locked_revisions.json`。2026-07-14 远端核查发现：

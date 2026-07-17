@@ -79,9 +79,17 @@ def run_ros_independent_tests() -> None:
     coverage_package = SOURCE_ROOT / "sanitation_coverage"
     tasks_package = SOURCE_ROOT / "sanitation_tasks"
     gnss_package = SOURCE_ROOT / "sanitation_gnss_sim"
+    perception_package = SOURCE_ROOT / "sanitation_perception"
+    dataset_package = SOURCE_ROOT / "sanitation_dataset"
+    ground_truth_package = SOURCE_ROOT / "sanitation_ground_truth"
+    spot_cleaning_package = SOURCE_ROOT / "sanitation_spot_cleaning"
     sys.path.insert(0, str(coverage_package))
     sys.path.insert(0, str(tasks_package))
     sys.path.insert(0, str(gnss_package))
+    sys.path.insert(0, str(perception_package))
+    sys.path.insert(0, str(dataset_package))
+    sys.path.insert(0, str(ground_truth_package))
+    sys.path.insert(0, str(spot_cleaning_package))
     test_paths = (
         coverage_package / "test" / "test_metrics.py",
         coverage_package / "test" / "test_stage4w_geometry.py",
@@ -91,6 +99,13 @@ def run_ros_independent_tests() -> None:
         tasks_package / "test" / "test_dynamic_geometry.py",
         tasks_package / "test" / "test_stage4w_dynamic_aggregate.py",
         gnss_package / "test" / "test_model.py",
+        perception_package / "test" / "test_registry.py",
+        perception_package / "test" / "test_projection.py",
+        perception_package / "test" / "test_tracking.py",
+        perception_package / "test" / "test_backends.py",
+        dataset_package / "test" / "test_synthetic.py",
+        ground_truth_package / "test" / "test_visibility.py",
+        spot_cleaning_package / "test" / "test_coordinator.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])
     if result != pytest.ExitCode.OK:

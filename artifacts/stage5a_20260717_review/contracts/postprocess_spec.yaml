@@ -1,0 +1,10 @@
+schema_version: 1
+operation: pixel_argmax_then_connected_components
+score_threshold: 0.80
+minimum_component_pixels: 12
+nms_iou_threshold: 0.50
+discrete_classes: [plastic_bottle, metal_can, paper_litter]
+area_classes: [leaf_pile, puddle]
+fail_closed_on_missing_depth: true
+fail_closed_on_missing_tf: true
+fail_closed_on_keepout: true

@@ -1,0 +1,10 @@
+std_msgs/Header header
+string event_id
+string target_uuid
+string class_id
+string cleaning_policy
+string result
+float32 cleaned_fraction
+bool brush_enabled_during_event
+bool in_keepout
+string source_backend

@@ -1,0 +1,15 @@
+schema_version: 1
+world_name: sanitation_structured_world
+world_to_map_translation: [8.0, 0.0]
+vehicle_spawn_world: [-8.0, 0.0, 0.18]
+objects:
+  trash_bottle_01: {pose_world: [-5.4, -0.55, 0.12, 0.0]}
+  trash_can_01: {pose_world: [-4.8, 0.00, 0.06, 0.0]}
+  trash_paper_01: {pose_world: [-4.2, 0.55, 0.015, 0.15]}
+  leaf_pile_01: {pose_world: [-3.6, -0.65, 0.02, -0.10]}
+  puddle_zone: {pose_world: [3.0, -5.0, 0.005, 0.0]}
+negative_objects:
+  trash_bin_obstacle: {source: structured_world, pose_world: [2.0, 3.0], radius_m: 0.50}
+  cardboard_box_obstacle: {source: structured_world, pose_world: [8.0, -1.0], radius_m: 0.43}
+  dynamic_pedestrian_box: {source: structured_world, pose_world: [25.0, 18.0], radius_m: 0.32}
+  structured_waste_bin: {source: structured_world, pose_world: [-4.0, -2.0], radius_m: 0.52}

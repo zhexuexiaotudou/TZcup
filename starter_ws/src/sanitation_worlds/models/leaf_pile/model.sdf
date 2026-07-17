@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <model name="leaf_pile_01"><static>true</static><link name="link">
+    <visual name="visual"><geometry><cylinder><radius>0.34</radius><length>0.02</length></cylinder></geometry><material><ambient>0.86 0.72 0.12 1</ambient><diffuse>0.90 0.76 0.12 1</diffuse></material></visual>
+  </link></model>
+</sdf>
