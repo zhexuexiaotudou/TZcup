@@ -29,7 +29,7 @@
       "type": "string",
       "default": "map"
     },
-    "polygon": {
+    "outer_polygon": {
       "type": "array",
       "items": {
         "type": "array",
@@ -45,6 +45,19 @@
         "maxItems": 2
       }
     },
+    "exclusion_polygons": {"type": "array"},
+    "keepout_polygons": {"type": "array"},
+    "static_obstacles": {"type": "array"},
+    "world_to_map_translation": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {"type": "number"}
+    },
+    "headland": {"type": "object"},
+    "safety_margin_m": {"type": "number"},
+    "operation_width_m": {"type": "number"},
+    "robot_footprint": {"type": "array"},
     "targets": {
       "type": "array"
     },

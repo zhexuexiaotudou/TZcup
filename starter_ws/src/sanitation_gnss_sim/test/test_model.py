@@ -24,6 +24,19 @@ def test_denied_profile_never_publishes():
     assert not any(model.sample(0.0, 0.0, 0.1).publish for _ in range(100))
 
 
+def test_fixed_profile_covariance_includes_bias_and_accumulated_random_walk():
+    profile = PROFILES["rtk_fixed"]
+    model = GnssNoiseModel(profile, seed=1)
+    first = model.sample(0.0, 0.0, 0.1)
+    second = model.sample(0.0, 0.0, 9.9)
+    base = profile.standard_deviation_m**2
+    bias = profile.fixed_bias_standard_deviation_m**2
+    walk_rate = profile.random_walk_standard_deviation_m_sqrt_s**2
+    assert math.isclose(first.variance_m2, base + bias + walk_rate * 0.1)
+    assert math.isclose(second.variance_m2, base + bias + walk_rate * 10.0)
+    assert second.variance_m2 > first.variance_m2
+
+
 def test_multipath_profile_injects_approximately_one_percent_outliers():
     model = GnssNoiseModel(PROFILES["multipath"], seed=8)
     samples = [model.sample(0.0, 0.0, 0.1) for _ in range(10_000)]

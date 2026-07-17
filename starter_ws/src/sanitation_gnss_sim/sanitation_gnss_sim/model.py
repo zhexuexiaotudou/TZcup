@@ -50,6 +50,7 @@ class GnssNoiseModel:
         )
         self._walk_x = 0.0
         self._walk_y = 0.0
+        self._elapsed_s = 0.0
 
     @property
     def fixed_bias(self):
@@ -64,6 +65,7 @@ class GnssNoiseModel:
         walk_sigma = self.profile.random_walk_standard_deviation_m_sqrt_s * math.sqrt(
             max(0.0, dt_s)
         )
+        self._elapsed_s += max(0.0, dt_s)
         self._walk_x += self._random.gauss(0.0, walk_sigma)
         self._walk_y += self._random.gauss(0.0, walk_sigma)
         x_m = truth_x_m + self._bias_x + self._walk_x + self._random.gauss(
@@ -77,7 +79,12 @@ class GnssNoiseModel:
             angle = self._random.uniform(-math.pi, math.pi)
             x_m += self.profile.multipath_magnitude_m * math.cos(angle)
             y_m += self.profile.multipath_magnitude_m * math.sin(angle)
-        variance = self.profile.standard_deviation_m**2
+        variance = (
+            self.profile.standard_deviation_m**2
+            + self.profile.fixed_bias_standard_deviation_m**2
+            + self.profile.random_walk_standard_deviation_m_sqrt_s**2
+            * self._elapsed_s
+        )
         return GnssMeasurement(True, x_m, y_m, variance, multipath, "published")
 
 

@@ -56,6 +56,25 @@ def validate_structured_files() -> None:
                 seen.add(path)
 
 
+def validate_stage4w_runtime_contract() -> None:
+    nav2_path = SOURCE_ROOT / "sanitation_navigation" / "config" / "nav2.yaml"
+    nav2 = yaml.safe_load(nav2_path.read_text(encoding="utf-8"))
+    controller = nav2["controller_server"]["ros__parameters"]
+    progress = controller["progress_checker"]
+    if progress["plugin"] != "nav2_controller::PoseProgressChecker":
+        raise RuntimeError("Stage4W requires PoseProgressChecker")
+    if float(controller["failure_tolerance"]) != 5.0:
+        raise RuntimeError("Stage4W controller failure_tolerance must be 5.0 s")
+    for costmap_name in ("local_costmap", "global_costmap"):
+        obstacle_scan = nav2[costmap_name][costmap_name]["ros__parameters"][
+            "obstacle_layer"
+        ]["scan"]
+        if obstacle_scan.get("inf_is_valid") is not True:
+            raise RuntimeError(
+                f"Stage4W {costmap_name} must clear infinite-range laser rays"
+            )
+
+
 def run_ros_independent_tests() -> None:
     coverage_package = SOURCE_ROOT / "sanitation_coverage"
     tasks_package = SOURCE_ROOT / "sanitation_tasks"
@@ -65,9 +84,12 @@ def run_ros_independent_tests() -> None:
     sys.path.insert(0, str(gnss_package))
     test_paths = (
         coverage_package / "test" / "test_metrics.py",
+        coverage_package / "test" / "test_stage4w_geometry.py",
         tasks_package / "test" / "test_localization_metrics.py",
         tasks_package / "test" / "test_stage4t_localization_aggregate.py",
         tasks_package / "test" / "test_stage4v_localization_aggregate.py",
+        tasks_package / "test" / "test_dynamic_geometry.py",
+        tasks_package / "test" / "test_stage4w_dynamic_aggregate.py",
         gnss_package / "test" / "test_model.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])
@@ -79,6 +101,7 @@ def main() -> int:
     require_project_files()
     validate_python()
     validate_structured_files()
+    validate_stage4w_runtime_contract()
     run_ros_independent_tests()
     print("development workflow fast validation passed")
     return 0

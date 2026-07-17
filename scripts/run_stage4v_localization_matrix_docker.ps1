@@ -3,7 +3,8 @@ param(
   [int]$SeedCount = 10,
   [int]$MaxParallel = 2,
   [string]$Lane = "hybrid_rtk_scan_imu_wheel",
-  [string]$OutputName = ""
+  [string]$OutputName = "",
+  [string]$RuntimeWorkspace = "/work/.work/stage4v_20260716"
 )
 
 $ErrorActionPreference = "Stop"
@@ -34,7 +35,7 @@ while ($pending.Count -gt 0 -or $active.Count -gt 0) {
       "--env", "ROS_DOMAIN_ID=$($seed + 100)",
       "--env", "GZ_PARTITION=stage4v_${seed}",
       "--env", "SANITATION_BASE_WS=/work/.work/stage1_20260714_154523",
-      "--env", "SANITATION_WS=/work/.work/stage4v_20260716",
+      "--env", "SANITATION_WS=$RuntimeWorkspace",
       "--env", "STAGE4V_OUT=/stage4v/artifacts/$OutputName",
       "--env", "STAGE4V_SEED=$seed",
       "--env", "STAGE4V_LANE=$Lane",

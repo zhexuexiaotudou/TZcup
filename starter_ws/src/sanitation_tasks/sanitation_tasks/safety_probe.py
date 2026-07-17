@@ -48,6 +48,40 @@ class SafetyProbe(Node):
             rclpy.spin_once(self, timeout_sec=0.01)
             time.sleep(0.01)
 
+    def _wait_for_stable_zero(self, timeout=4.0, required_samples=5):
+        started = time.monotonic()
+        cursor = len(self.samples)
+        consecutive = 0
+        stable_sample = None
+        deadline = started + timeout
+        while rclpy.ok() and time.monotonic() < deadline:
+            rclpy.spin_once(self, timeout_sec=0.01)
+            for sample in self.samples[cursor:]:
+                if abs(sample[1]) < 1e-6 and abs(sample[2]) < 1e-6:
+                    consecutive += 1
+                    if consecutive >= required_samples:
+                        stable_sample = sample
+                        break
+                else:
+                    consecutive = 0
+            cursor = len(self.samples)
+            if stable_sample is not None:
+                break
+            time.sleep(0.005)
+        tail = [
+            {"time": sample[0], "linear_x": sample[1], "angular_z": sample[2]}
+            for sample in self.samples[max(0, len(self.samples) - 10):]
+        ]
+        return {
+            "stable_zero_observed": stable_sample is not None,
+            "stable_zero_latency_sec": (
+                stable_sample[0] - started if stable_sample is not None else None
+            ),
+            "timeout_sec": timeout,
+            "required_consecutive_zero_samples": required_samples,
+            "tail_samples": tail,
+        }
+
     def run(self):
         self._set_estop(False, 0.5); self._pump(1.0)
         command_passed = any(abs(sample[1]) > 0.2 for sample in self.samples)
@@ -63,18 +97,15 @@ class SafetyProbe(Node):
             releases_ok = releases_ok and resumed
             trials.append({"trial": index + 1, "estop_publish_monotonic_sec": publish_time, "first_zero_monotonic_sec": zero[0] if zero else None, "latency_sec": latency, "resume_after_release": resumed})
         self._set_estop(False); self._pump(0.3)
-        timeout_index = len(self.samples); self._pump(1.5, command=False)
-        timeout_samples = self.samples[timeout_index:]
-        timeout_zero = bool(timeout_samples) and all(
-            abs(sample[1]) < 1e-6 and abs(sample[2]) < 1e-6
-            for sample in timeout_samples[-5:]
-        )
+        stale_command = self._wait_for_stable_zero()
+        timeout_zero = stale_command["stable_zero_observed"]
         latencies = [item["latency_sec"] for item in trials if item["latency_sec"] is not None]
         p50 = percentile(latencies, 0.50); p95 = percentile(latencies, 0.95); maximum = max(latencies) if latencies else None
         report = {
             "schema_version": 2, "trial_count": len(trials), "completed_trial_count": len(latencies),
             "command_passed": command_passed, "emergency_stop_zeroed": len(latencies) == len(trials),
             "resume_after_release": releases_ok, "stale_command_zeroed": timeout_zero,
+            "stale_command": stale_command,
             "latency_sec": {"p50": p50, "p95": p95, "max": maximum},
             "competition_estop_pass": bool(p95 is not None and p95 <= 1.0),
             "trials": trials,

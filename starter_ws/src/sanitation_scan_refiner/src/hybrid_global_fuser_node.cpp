@@ -21,6 +21,7 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <utility>
 
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "diagnostic_msgs/msg/diagnostic_status.hpp"
@@ -89,7 +90,12 @@ public:
     origin_longitude_deg_ = declare_parameter<double>("origin_longitude_deg", 121.4737);
     maximum_gnss_age_s_ = declare_parameter<double>("maximum_gnss_age_s", 0.5);
     maximum_refined_age_s_ = declare_parameter<double>("maximum_refined_age_s", 0.5);
+    gnss_variance_scale_ = declare_parameter<double>("gnss_variance_scale", 1.0);
     gnss_outlier_threshold_m_ = declare_parameter<double>("gnss_outlier_threshold_m", 0.75);
+    minimum_refined_variance_ = declare_parameter<double>(
+      "minimum_refined_variance", 0.0025);
+    maximum_refined_variance_ = declare_parameter<double>(
+      "maximum_refined_variance", 1.0);
     publish_map_to_odom_ = declare_parameter<bool>("publish_map_to_odom", true);
     initial_pose_x_ = declare_parameter<double>("initial_pose_x", 0.0);
     initial_pose_y_ = declare_parameter<double>("initial_pose_y", 0.0);
@@ -147,7 +153,7 @@ private:
     const double raw_x = (message->longitude - origin_longitude_deg_) * kPi / 180.0 *
       kEarthRadiusM * std::cos(origin_latitude_rad);
     const double raw_y = (latitude_rad - origin_latitude_rad) * kEarthRadiusM;
-    const double variance = std::max(
+    const double variance = gnss_variance_scale_ * std::max(
       1e-6, std::max(message->position_covariance[0], message->position_covariance[4]));
 
     double projected_x = raw_x;
@@ -155,8 +161,9 @@ private:
     const double measurement_stamp = stampSeconds(message->header.stamp);
     const auto sample = closestLocal(measurement_stamp);
     if (sample && have_local_) {
-      projected_x += local_.x - sample->x;
-      projected_y += local_.y - sample->y;
+      const auto projected = propagateGlobal(raw_x, raw_y, *sample);
+      projected_x = projected.first;
+      projected_y = projected.second;
     }
 
     if (have_global_ && std::hypot(projected_x - global_x_, projected_y - global_y_) >
@@ -169,6 +176,7 @@ private:
     gnss_x_ = projected_x;
     gnss_y_ = projected_y;
     gnss_variance_ = variance;
+    gnss_local_anchor_ = local_;
     gnss_receive_stamp_ = now().seconds();
     have_gnss_ = true;
   }
@@ -181,9 +189,18 @@ private:
     refined_x_ = message->pose.pose.position.x;
     refined_y_ = message->pose.pose.position.y;
     refined_yaw_ = tf2::getYaw(message->pose.pose.orientation);
-    refined_variance_ = std::max(
-      0.0025, std::max(message->pose.covariance[0], message->pose.covariance[7]));
+    const auto sample = closestLocal(stampSeconds(message->header.stamp));
+    if (sample && have_local_) {
+      const auto projected = propagateGlobal(refined_x_, refined_y_, *sample);
+      refined_x_ = projected.first;
+      refined_y_ = projected.second;
+      refined_yaw_ += local_.yaw - sample->yaw;
+    }
+    refined_variance_ = std::clamp(
+      std::max(message->pose.covariance[0], message->pose.covariance[7]),
+      minimum_refined_variance_, maximum_refined_variance_);
     refined_yaw_variance_ = std::max(1e-6, message->pose.covariance[35]);
+    refined_local_anchor_ = local_;
     refined_receive_stamp_ = now().seconds();
     have_refined_ = true;
   }
@@ -205,12 +222,28 @@ private:
     return best;
   }
 
+  std::pair<double, double> propagateGlobal(
+    const double global_x, const double global_y, const OdomSample & local_anchor) const
+  {
+    const double cosine = std::cos(initial_pose_yaw_ - local_origin_.yaw);
+    const double sine = std::sin(initial_pose_yaw_ - local_origin_.yaw);
+    const double delta_x = local_.x - local_anchor.x;
+    const double delta_y = local_.y - local_anchor.y;
+    return {
+      global_x + cosine * delta_x - sine * delta_y,
+      global_y + sine * delta_x + cosine * delta_y};
+  }
+
   void publishFusion(const builtin_interfaces::msg::Time & stamp)
   {
     const double current = now().seconds();
     const bool gnss_fresh = have_gnss_ && current - gnss_receive_stamp_ <= maximum_gnss_age_s_;
     const bool refined_fresh = have_refined_ &&
       current - refined_receive_stamp_ <= maximum_refined_age_s_;
+    const auto gnss_position = propagateGlobal(gnss_x_, gnss_y_, gnss_local_anchor_);
+    const auto refined_position = propagateGlobal(
+      refined_x_, refined_y_, refined_local_anchor_);
+    const double refined_yaw = refined_yaw_ + local_.yaw - refined_local_anchor_.yaw;
 
     double x = 0.0;
     double y = 0.0;
@@ -219,14 +252,14 @@ private:
     double yaw_variance = 0.05;
     std::string source;
     if (mode_ == "rtk_imu_wheel" && gnss_fresh) {
-      x = gnss_x_;
-      y = gnss_y_;
+      x = gnss_position.first;
+      y = gnss_position.second;
       xy_variance = gnss_variance_;
       source = "rtk_plus_local_yaw";
     } else if (mode_ == "gnss_denied_scan_fallback" && refined_fresh) {
-      x = refined_x_;
-      y = refined_y_;
-      yaw = refined_yaw_;
+      x = refined_position.first;
+      y = refined_position.second;
+      yaw = refined_yaw;
       xy_variance = refined_variance_;
       yaw_variance = refined_yaw_variance_;
       source = "scan_fallback";
@@ -234,21 +267,23 @@ private:
       if (gnss_fresh && refined_fresh) {
         const double gnss_weight = 1.0 / gnss_variance_;
         const double scan_weight = 1.0 / refined_variance_;
-        x = (gnss_weight * gnss_x_ + scan_weight * refined_x_) / (gnss_weight + scan_weight);
-        y = (gnss_weight * gnss_y_ + scan_weight * refined_y_) / (gnss_weight + scan_weight);
+        x = (gnss_weight * gnss_position.first + scan_weight * refined_position.first) /
+          (gnss_weight + scan_weight);
+        y = (gnss_weight * gnss_position.second + scan_weight * refined_position.second) /
+          (gnss_weight + scan_weight);
         xy_variance = 1.0 / (gnss_weight + scan_weight);
         yaw = local_.yaw;
         yaw_variance = 0.01;
         source = "rtk_scan_local";
       } else if (gnss_fresh) {
-        x = gnss_x_;
-        y = gnss_y_;
+        x = gnss_position.first;
+        y = gnss_position.second;
         xy_variance = gnss_variance_;
         source = "rtk_local_fallback";
       } else {
-        x = refined_x_;
-        y = refined_y_;
-        yaw = refined_yaw_;
+        x = refined_position.first;
+        y = refined_position.second;
+        yaw = refined_yaw;
         xy_variance = refined_variance_;
         yaw_variance = refined_yaw_variance_;
         source = "scan_local_fallback";
@@ -338,7 +373,10 @@ private:
   double origin_longitude_deg_{0.0};
   double maximum_gnss_age_s_{0.5};
   double maximum_refined_age_s_{0.5};
+  double gnss_variance_scale_{1.0};
   double gnss_outlier_threshold_m_{0.75};
+  double minimum_refined_variance_{0.0025};
+  double maximum_refined_variance_{1.0};
   bool publish_map_to_odom_{true};
   double initial_pose_x_{0.0};
   double initial_pose_y_{0.0};
@@ -355,12 +393,14 @@ private:
   double gnss_y_{0.0};
   double gnss_variance_{0.04};
   double gnss_receive_stamp_{0.0};
+  OdomSample gnss_local_anchor_;
   double refined_x_{0.0};
   double refined_y_{0.0};
   double refined_yaw_{0.0};
   double refined_variance_{0.04};
   double refined_yaw_variance_{0.05};
   double refined_receive_stamp_{0.0};
+  OdomSample refined_local_anchor_;
   double global_x_{0.0};
   double global_y_{0.0};
   std::uint64_t rejected_gnss_count_{0};

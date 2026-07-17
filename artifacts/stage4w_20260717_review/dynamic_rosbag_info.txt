@@ -1,0 +1,34 @@
+
+Files:             dynamic_coverage_bag_0.mcap
+Bag size:          804.0 MiB
+Storage id:        mcap
+ROS Distro:        jazzy
+Duration:          751.358552125s
+Start:             Jul 16 2026 23:32:01.647552831 (1784244721.647552831)
+End:               Jul 16 2026 23:44:33.006104956 (1784245473.006104956)
+Messages:          404514
+Topic information: Topic: /brush_enabled | Type: std_msgs/msg/Bool | Count: 12619 | Serialization Format: cdr
+                   Topic: /clock | Type: rosgraph_msgs/msg/Clock | Count: 145227 | Serialization Format: cdr
+                   Topic: /cmd_vel | Type: geometry_msgs/msg/Twist | Count: 15355 | Serialization Format: cdr
+                   Topic: /cmd_vel_gate | Type: geometry_msgs/msg/Twist | Count: 14421 | Serialization Format: cdr
+                   Topic: /collision_monitor_state | Type: nav2_msgs/msg/CollisionMonitorState | Count: 14 | Serialization Format: cdr
+                   Topic: /coverage/component_state | Type: std_msgs/msg/String | Count: 19 | Serialization Format: cdr
+                   Topic: /coverage/current_path | Type: nav_msgs/msg/Path | Count: 18 | Serialization Format: cdr
+                   Topic: /coverage/diagnostics | Type: std_msgs/msg/String | Count: 19 | Serialization Format: cdr
+                   Topic: /coverage/state | Type: std_msgs/msg/String | Count: 19 | Serialization Format: cdr
+                   Topic: /emergency_stop | Type: std_msgs/msg/Bool | Count: 649 | Serialization Format: cdr
+                   Topic: /global_costmap/costmap | Type: nav_msgs/msg/OccupancyGrid | Count: 503 | Serialization Format: cdr
+                   Topic: /gnss/fix | Type: sensor_msgs/msg/NavSatFix | Count: 7257 | Serialization Format: cdr
+                   Topic: /ground_truth/odom | Type: nav_msgs/msg/Odometry | Count: 36318 | Serialization Format: cdr
+                   Topic: /keepout_filter_mask | Type: nav_msgs/msg/OccupancyGrid | Count: 1 | Serialization Format: cdr
+                   Topic: /local_costmap/costmap | Type: nav_msgs/msg/OccupancyGrid | Count: 2044 | Serialization Format: cdr
+                   Topic: /localization/fused_pose | Type: geometry_msgs/msg/PoseWithCovarianceStamped | Count: 36165 | Serialization Format: cdr
+                   Topic: /localization/refined_pose | Type: geometry_msgs/msg/PoseWithCovarianceStamped | Count: 2461 | Serialization Format: cdr
+                   Topic: /odom | Type: nav_msgs/msg/Odometry | Count: 36448 | Serialization Format: cdr
+                   Topic: /scan | Type: sensor_msgs/msg/LaserScan | Count: 7309 | Serialization Format: cdr
+                   Topic: /speed_filter_mask | Type: nav_msgs/msg/OccupancyGrid | Count: 1 | Serialization Format: cdr
+                   Topic: /speed_limit | Type: nav2_msgs/msg/SpeedLimit | Count: 23 | Serialization Format: cdr
+                   Topic: /tf | Type: tf2_msgs/msg/TFMessage | Count: 87622 | Serialization Format: cdr
+                   Topic: /tf_static | Type: tf2_msgs/msg/TFMessage | Count: 2 | Serialization Format: cdr
+Service:           0
+Service information:

@@ -3,7 +3,33 @@ from sanitation_coverage.metrics import (
     path_length,
     raster_coverage_metrics,
     repair_degenerate_swaths,
+    summarize_distances,
+    synchronized_xy_errors,
 )
+
+
+def test_summarize_distances_reports_rmse_and_tail():
+    summary = summarize_distances([0.01, 0.02, 0.03, 0.04])
+    assert summary['sample_count'] == 4
+    assert summary['p95_m'] == 0.04
+    assert summary['max_m'] == 0.04
+    assert 0.02 < summary['rmse_m'] < 0.04
+
+
+def test_synchronized_xy_errors_use_ros_time_not_callback_arrival_order():
+    estimates = [(1.00, 1.0, 0.0, 0.0), (1.10, 2.0, 0.0, 0.0)]
+    truths = [
+        (0.98, 0.98, 0.0, 0.0, False),
+        (1.02, 1.02, 0.0, 0.0, False),
+        (1.10, 2.01, 0.0, 0.0, False),
+    ]
+    errors, sync_errors, dropped = synchronized_xy_errors(
+        estimates, truths, tolerance_sec=0.05
+    )
+    assert dropped == 0
+    assert len(errors) == 2
+    assert max(errors) <= 0.0200001
+    assert max(sync_errors) <= 0.0200001
 
 
 def test_empirical_metrics_use_brush_on_ground_truth_points():

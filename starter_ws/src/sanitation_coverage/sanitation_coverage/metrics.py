@@ -1,3 +1,4 @@
+import bisect
 import math
 
 
@@ -7,6 +8,58 @@ def segment_length(start, end):
 
 def path_length(points):
     return sum(segment_length(a, b) for a, b in zip(points, points[1:]))
+
+
+def summarize_distances(values):
+    ordered = sorted(float(value) for value in values)
+    if not ordered:
+        return {'sample_count': 0, 'rmse_m': None, 'p95_m': None, 'max_m': None}
+    p95_index = min(len(ordered) - 1, math.ceil(0.95 * len(ordered)) - 1)
+    return {
+        'sample_count': len(ordered),
+        'rmse_m': math.sqrt(sum(value * value for value in ordered) / len(ordered)),
+        'p95_m': ordered[p95_index],
+        'max_m': ordered[-1],
+    }
+
+
+def synchronized_xy_errors(estimates, truths, tolerance_sec=0.05):
+    """Pair pose samples by ROS stamp and return XY and synchronization errors.
+
+    The callback arrival order is deliberately ignored: comparing the latest
+    estimate against the latest truth turns transport latency into apparent
+    localization error while the vehicle is moving.
+    """
+    truth_times = [float(sample[0]) for sample in truths]
+    used = set()
+    xy_errors = []
+    sync_errors = []
+    dropped = 0
+    for estimate in estimates:
+        index = bisect.bisect_left(truth_times, float(estimate[0]))
+        candidates = [
+            item for item in (index - 1, index)
+            if 0 <= item < len(truths) and item not in used
+        ]
+        if not candidates:
+            dropped += 1
+            continue
+        chosen = min(
+            candidates,
+            key=lambda item: abs(truth_times[item] - float(estimate[0])),
+        )
+        sync_error = abs(truth_times[chosen] - float(estimate[0]))
+        if sync_error > tolerance_sec:
+            dropped += 1
+            continue
+        used.add(chosen)
+        truth = truths[chosen]
+        xy_errors.append(math.hypot(
+            float(estimate[1]) - float(truth[1]),
+            float(estimate[2]) - float(truth[2]),
+        ))
+        sync_errors.append(sync_error)
+    return xy_errors, sync_errors, dropped
 
 
 def repair_degenerate_swaths(swaths, turns, nav_points, tolerance=1.0e-3):
@@ -44,6 +97,12 @@ def point_in_polygon(x, y, polygon):
     return inside
 
 
+def point_in_cleanable_area(x, y, outer_polygon, exclusion_polygons=()):
+    return point_in_polygon(x, y, outer_polygon) and not any(
+        point_in_polygon(x, y, polygon) for polygon in exclusion_polygons
+    )
+
+
 def point_segment_distance(x, y, start, end):
     dx = end[0] - start[0]
     dy = end[1] - start[1]
@@ -57,7 +116,9 @@ def point_segment_distance(x, y, start, end):
     return math.hypot(x - closest_x, y - closest_y)
 
 
-def raster_coverage_metrics(polygon, swaths, width, resolution=0.10):
+def raster_coverage_metrics(
+    polygon, swaths, width, resolution=0.10, exclusion_polygons=()
+):
     min_x = min(point[0] for point in polygon)
     max_x = max(point[0] for point in polygon)
     min_y = min(point[1] for point in polygon)
@@ -67,7 +128,7 @@ def raster_coverage_metrics(polygon, swaths, width, resolution=0.10):
     while y < max_y:
         x = min_x + resolution / 2.0
         while x < max_x:
-            if point_in_polygon(x, y, polygon):
+            if point_in_cleanable_area(x, y, polygon, exclusion_polygons):
                 target += 1
                 count = sum(
                     point_segment_distance(x, y, start, end) <= width / 2.0
@@ -95,7 +156,9 @@ def raster_coverage_metrics(polygon, swaths, width, resolution=0.10):
     }
 
 
-def empirical_swept_metrics(polygon, timed_points, width, resolution=0.10):
+def empirical_swept_metrics(
+    polygon, timed_points, width, resolution=0.10, exclusion_polygons=()
+):
     """Rasterize actual brush-on poses, with continuous motion counted once.
 
     A cell becomes a repeated-cleaning cell only after the footprint leaves it
@@ -113,7 +176,7 @@ def empirical_swept_metrics(polygon, timed_points, width, resolution=0.10):
         y = min_y + (iy + 0.5) * resolution
         for ix in range(columns):
             x = min_x + (ix + 0.5) * resolution
-            if point_in_polygon(x, y, polygon):
+            if point_in_cleanable_area(x, y, polygon, exclusion_polygons):
                 cells[(ix, iy)] = (x, y)
     visited = set()
     repeated = set()

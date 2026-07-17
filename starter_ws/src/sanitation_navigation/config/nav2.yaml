@@ -58,13 +58,15 @@ controller_server:
     min_x_velocity_threshold: 0.001
     min_y_velocity_threshold: 0.5
     min_theta_velocity_threshold: 0.001
-    failure_tolerance: 0.5
+    # Permit a bounded dynamic-obstacle stop before declaring controller patience exceeded.
+    failure_tolerance: 5.0
     progress_checker_plugins: [progress_checker]
     goal_checker_plugins: [goal_checker]
     controller_plugins: [FollowPath]
     progress_checker:
-      plugin: nav2_controller::SimpleProgressChecker
-      required_movement_radius: 0.25
+      plugin: nav2_controller::PoseProgressChecker
+      required_movement_radius: 0.20
+      required_movement_angle: 0.20
       movement_time_allowance: 15.0
     goal_checker:
       plugin: nav2_controller::SimpleGoalChecker
@@ -120,6 +122,7 @@ local_costmap:
           clearing: true
           marking: true
           data_type: LaserScan
+          inf_is_valid: true
           raytrace_max_range: 10.0
           obstacle_max_range: 9.0
       inflation_layer:
@@ -153,6 +156,7 @@ global_costmap:
           clearing: true
           marking: true
           data_type: LaserScan
+          inf_is_valid: true
           raytrace_max_range: 10.0
           obstacle_max_range: 9.0
       keepout_filter:

@@ -7,7 +7,7 @@ coverage_server:
     operation_width: 0.65
     min_turning_radius: 0.40
     linear_curv_change: 200.0
-    default_headland_width: 0.0
+    default_headland_width: 1.00
     default_headland_type: CONSTANT
     default_allow_overlap: true
     default_swath_type: COVERAGE

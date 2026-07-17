@@ -1,6 +1,6 @@
 # 无人清扫车仿真启动包
 
-> 2026-07-16：Stage4U 已完成坐标标定与定位地图复核。正式 Oracle 10-seed 的 XY RMSE P50/P95/max 为 `0.06767/0.07983/0.08022 m`，未过 0.05 m，因此 realistic、完整 Coverage 与 Stage5A 尚未启动。先读 `GPT_REVIEW_STAGE4U.md`。
+> 2026-07-17：Stage4W 正式门禁已通过。hybrid 定位 10/10，静态 Coverage 5/5 且每次 17/17，动态障碍 20/20，过滤器、30 次急停和 MCAP 回放通过；`READY_FOR_GPT_REVIEW_STAGE4W=true`。先读 `GPT_REVIEW_STAGE4W.md`，GPT/人工复核前不启动 Stage5A 实施。
 
 本包用于把“智慧环卫无人清扫车”项目的仿真工作推进到可复现、可演示、可评测的第一阶段。
 
@@ -21,6 +21,8 @@
   - `sanitation_navigation`
   - `sanitation_safety`
   - `sanitation_coverage`
+  - `sanitation_gnss_sim`
+  - `sanitation_scan_refiner`
 
 > 不建议把 ROS 1 OpenPodcar 直接作为主工程。它可用于参考车辆比例和模型结构，但其主线是 ROS Kinetic + Gazebo 7，迁移成本高。
 
@@ -34,7 +36,7 @@
 - `THIRD_PARTY_SELECTION.md`：第三方仓库选择理由和许可边界
 - `AGENTS.md`：项目级 Agent 规则和开发门禁
 - `docs/development-workflow.md`：统一命名的“开发工作流”，覆盖分支、PR、CI、部署、真实验收和收尾
-- `docs/progress.md`：Stage 0–4T 的真实运行证据、当前边界和复现命令
+- `docs/progress.md`：Stage 0–4W 的真实运行证据、当前边界和复现命令
 - `scripts/`：环境检查、拉取依赖、构建、运行和证据采集脚本
 - `starter_ws/src/`：可直接放进 ROS 2 工作空间的项目骨架
 
@@ -100,10 +102,12 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 - ROS Topic 冒烟检查
 - SLAM Toolbox、AMCL、Nav2、keepout/speed filter 和急停速度门
 - OpenNav Coverage + Fields2Cover 覆盖规划、指标 JSON 和 rosbag 证据
+- hybrid RTK/扫描精化定位、统一任务几何、可达 staging 和完整 17 组件执行
+- 持久 ROS–Gazebo 动态障碍桥、20 次有效交互和动态清障证据
 - raw measurement、非零 covariance adapter、EKF A/B/C/D 消融与双分辨率地图几何评估
 - precision mapping、localization/coverage 和默认禁用 stress 三套运行包络
 - 后续动态障碍、感知和 J6 接口的明确阶段门
 
 ## 5. 重要说明
 
-当前 Windows 主机已通过 Docker Desktop、Ubuntu 24.04 / ROS 2 Jazzy 容器和 NVIDIA GPU passthrough 完成 Stage 0–4T 的 headless 构建与运行验证，真实日志、JSON、地图、轨迹图和 rosbag 位于 `artifacts/`。该结果不能替代原生 Ubuntu 24.04 或 WSLg 下的 Gazebo/RViz GUI 验收；Stage4T 的第一失败层是 Oracle 定位 XY RMSE 硬门，realistic 全量与完整 Coverage 因此前置失败而未执行。当前边界以 `docs/progress.md` 与 `GPT_REVIEW_STAGE4T.md` 为准。
+当前 Windows 主机已通过 Docker Desktop、Ubuntu 24.04 / ROS 2 Jazzy 容器和 NVIDIA GPU passthrough 完成 Stage 0–4W 的 headless 构建与运行验证，真实日志、JSON、地图、轨迹和 rosbag 位于 `artifacts/`。Stage4W 正式定位、静态/动态完整 Coverage、过滤器、急停和回放门均已通过；竞赛效率仍失败，原生 Ubuntu 24.04 或 WSLg 下的 Gazebo/RViz GUI 验收也仍未完成。当前边界以 `docs/progress.md` 与 `GPT_REVIEW_STAGE4W.md` 为准。
