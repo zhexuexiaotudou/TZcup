@@ -1,0 +1,88 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR Gazebo-camera data recovery and model screening boundary",
+  "phase_a": {
+    "micro_overfit_pass": true,
+    "micro_macro_f1": 0.9812364637589098,
+    "micro_foreground_miou": 0.9633332480876055,
+    "pipeline_parity_pass": true,
+    "pytorch_onnx_max_logit_error": 6.866455078125e-05,
+    "pytorch_onnx_argmax_agreement": 1.0,
+    "P1_first_collapse_layer": "same_assets_unseen_seeds"
+  },
+  "G1_smoke": {
+    "scene_count": 50,
+    "frame_count": 500,
+    "annotation_completeness": 1.0,
+    "sampled_label_error_rate": 0.0,
+    "exact_sensor_timestamp_match": true,
+    "asset_leakage": [],
+    "cross_split_exact_duplicate_count": 0,
+    "cross_split_perceptual_duplicate_count": 0,
+    "G1_smoke_pass": true
+  },
+  "model_attempts": [
+    {
+      "in_domain_macro_f1": 0.845106427491342,
+      "cross_asset_world_macro_f1": 0.6580443112066726,
+      "cross_asset_world_leaf_puddle_miou": 0.8631345659134233,
+      "color_stress_macro_f1": 0.4764706100593816,
+      "held_out_test_macro_f1": 0.5204138043936622,
+      "screening_pass": false
+    },
+    {
+      "in_domain_macro_f1": 0.6986887273612495,
+      "cross_asset_world_macro_f1": 0.5336982633544475,
+      "cross_asset_world_leaf_puddle_miou": 0.667374988272821,
+      "color_stress_macro_f1": 0.4095971594184139,
+      "held_out_test_macro_f1": 0.3273358589372812,
+      "screening_pass": false
+    },
+    {
+      "in_domain_macro_f1": 0.7101891726617106,
+      "cross_asset_world_macro_f1": 0.37575192651689326,
+      "cross_asset_world_leaf_puddle_miou": 0.4500464041944814,
+      "color_stress_macro_f1": 0.27520762786389585,
+      "held_out_test_macro_f1": 0.28452813346748185,
+      "screening_pass": false
+    }
+  ],
+  "best_screening_attempt_by_cross_asset_world_macro_f1": 1,
+  "G1_model_screening_pass": false,
+  "first_blocking_layer": "G1_model_recovery_in_domain_cross_asset_world_and_color_stress",
+  "formal_G1_500_scene_5000_frame_executed": false,
+  "formal_G1_not_executed_reason": "all three 50-scene screening model attempts failed required validation gates",
+  "formal_live_30_seed_10_min_executed": false,
+  "formal_live_not_executed_reason": "offline G1 model screening failed",
+  "real_nav2_spot_clean_executed": false,
+  "real_nav2_spot_clean_not_executed_reason": "offline and live formal gates did not pass",
+  "stage5a_regression": {
+    "offline_pass": true,
+    "live_pass": true,
+    "inference_frame_count": 186,
+    "rosbag_recorded": true,
+    "ground_truth_control_violation_count": 0,
+    "synthetic_spot_clean_trials": 30,
+    "synthetic_spot_clean_success_rate": 1.0
+  },
+  "stage4w_seed0_regression": {
+    "success": true,
+    "component_count": 17,
+    "successful_component_count": 17,
+    "empirical_coverage_rate": 0.936,
+    "collision_count": 0,
+    "keepout_violation_sample_count": 0,
+    "brush_state_violation_sample_count": 0,
+    "brush_disabled_on_exit": true,
+    "coverage_localization_rmse_m": 0.032595211450625425
+  },
+  "REVIEW_PACKET_COMPLETE": true,
+  "READY_FOR_GPT_REVIEW_STAGE5B": false,
+  "READY_FOR_STAGE5C": false,
+  "competition_perception_pass": false,
+  "real_domain_evaluation_executed": false,
+  "j6_runtime_pass": false,
+  "competition_efficiency_pass": false,
+  "theoretical_efficiency_m2_h": 1053.0,
+  "target_efficiency_m2_h": 3500.0
+}

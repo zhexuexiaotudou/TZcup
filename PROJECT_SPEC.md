@@ -1,5 +1,13 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## Stage5BR G1 数据与训练链契约
+
+- `P1` 仅指 NumPy/OpenCV 程序化筛查；`G1` 必须来自 Gazebo Harmonic 实际 RGB-D 与 SegmentationCamera topics，二者不得混名。
+- G1 RGB、depth、semantic、instance 必须同 pose、同分辨率/FOV、同仿真时间戳；CameraInfo、固定/动态 transform、world/registry/scene hash 和 annotation source 必须落盘。
+- 整个 scene 只属于一个 split；asset 不得跨 train/val/test，测试集不得用于结构或 checkpoint 选择。
+- 训练链进入 G1 前必须通过 micro F1 ≥0.98、micro mIoU ≥0.95、PyTorch/ONNX logit error ≤1e-4 和 argmax agreement ≥99.99%。
+- 50 scene/500 frame 只用于 smoke 与 screening；只有 in-domain F1 ≥0.90、leaf/puddle mIoU ≥0.75、cross asset/world F1 ≥0.70、color stress F1 ≥0.60 后，才允许扩到正式 500 scene/5000 frame。
+
 ## Stage5B 学习型感知契约
 
 - D0 固定颜色模型只作 Stage5A 回归基线；Stage5B 候选必须从随机初始化经优化器训练，模型卡必须记录数据域、种子、环境、候选选择和权重来源。

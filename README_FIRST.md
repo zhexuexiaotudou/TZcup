@@ -1,6 +1,8 @@
 # 无人清扫车仿真启动包
 
-> 2026-07-19：Stage5B 已形成可独立审计的失败边界。先读 `GPT_REVIEW_STAGE5B.md` 与 `docs/stage5b-learned-perception.md`；复核包完整不等于 Stage5B 通过，`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
+> 2026-07-19：Stage5BR 已恢复真实 Gazebo-camera G1 数据链并通过 50 scene/500 frame smoke，但模型 screening 未过；先读 `GPT_REVIEW_STAGE5BR.md` 和 `docs/stage5br-gazebo-camera-recovery.md`。Stage5B/Stage5C readiness 仍为 false。
+
+> 2026-07-19：Stage5B 的 Stage5BR 前历史失败边界保留在 `GPT_REVIEW_STAGE5B.md` 与 `docs/stage5b-learned-perception.md`；当前结论以上一行 Stage5BR 入口为准。复核包完整不等于 Stage5B 通过，`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
 
 本包用于把“智慧环卫无人清扫车”项目的仿真工作推进到可复现、可演示、可评测的第一阶段。
 

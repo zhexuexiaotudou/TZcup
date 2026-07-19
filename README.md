@@ -1,10 +1,16 @@
 # TZcup 无人清扫车仿真项目
 
-## Stage5B 学习型感知筛查与停止边界（2026-07-19）
+## Stage5BR Gazebo-camera 数据恢复与模型筛查（2026-07-19）
+
+Stage5BR 已通过训练链自证：12 帧 micro-overfit 的 macro F1/mIoU 为 `0.98124/0.96333`，PyTorch/ONNX 最大 logit 误差 `6.866e-05`、argmax agreement `1.0`。项目新增真实 Gazebo Harmonic 共视场 RGB-D、semantic、instance 数据链，50 个独立 scene / 500 帧 smoke 的标注完整率为 100%，semantic-instance 一致性错误、asset leakage 和跨 split exact/pHash duplicate 均为 0。
+
+三次 G1 模型筛查仍未同时通过 in-domain、跨资产/世界和颜色压力门；最佳尝试为 `0.84511 / 0.65804 / 0.47647`，未达到 `0.90 / 0.70 / 0.60`。因此没有扩成 500 scene/5000 帧正式 G1，也没有执行正式 live 或真实 Nav2 spot-clean。`REVIEW_PACKET_COMPLETE=true`，但 `READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。复核入口见 [`GPT_REVIEW_STAGE5BR.md`](GPT_REVIEW_STAGE5BR.md)、[`docs/stage5br-gazebo-camera-recovery.md`](docs/stage5br-gazebo-camera-recovery.md) 与 [`artifacts/stage5br_20260719_review/`](artifacts/stage5br_20260719_review/)。
+
+## Stage5B 学习型感知筛查与停止边界（2026-07-19，Stage5BR 前历史基线）
 
 Stage5B 已新增 30 个自研程序化垃圾资产（五类、每类六变体）、12 个硬负样本、按 scene/asset/texture/world 隔离的数据合同、两种实际梯度训练候选、ONNX Runtime 评测、颜色捷径压力测试、J6 fail-closed 预检和训练模型的真实 Gazebo RGB-D 接入诊断。三次结构性筛查后，最佳候选验证 macro F1 为 `0.38637`，但 100 个未见 scene / 1000 帧测试的离散类 macro P/R/F1 仅为 `0.00752/0.00784/0.00768`，颜色压力 aggregate macro F1 为 `0.05192`，均未过门。
 
-当前数据生成器是程序化 D1 renderer，不是真实 Gazebo camera renderer；D2 真实数据为空，J6 官方工具链/实板不可用。依规划包停止条件，本轮没有执行 500 seed/5000 帧正式 D1、30 seed/10 分钟正式实时门或 30 次真实 Nav2 spot-clean，不允许把一条成功的运行链冒充精度通过。因此 `REVIEW_PACKET_COMPLETE=true`，但 `READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`、`competition_perception_pass=false`。复核入口见 [`GPT_REVIEW_STAGE5B.md`](GPT_REVIEW_STAGE5B.md)、[`docs/stage5b-learned-perception.md`](docs/stage5b-learned-perception.md) 与 [`artifacts/stage5b_20260719_review/`](artifacts/stage5b_20260719_review/)。
+该轮数据生成器还是程序化 D1 renderer，不是真实 Gazebo camera renderer；这是 Stage5BR 推进前的历史边界。Stage5BR 已补齐真实 Gazebo-camera G1 smoke 数据链，但模型 screening 仍失败；D2 真实数据为空，J6 官方工具链/实板不可用。依停止条件，仍未执行 500 seed/5000 帧正式 D1、30 seed/10 分钟正式实时门或 30 次真实 Nav2 spot-clean。因此 `REVIEW_PACKET_COMPLETE=true`，但 `READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`、`competition_perception_pass=false`。Stage5B 历史复核入口见 [`GPT_REVIEW_STAGE5B.md`](GPT_REVIEW_STAGE5B.md)、[`docs/stage5b-learned-perception.md`](docs/stage5b-learned-perception.md) 与 [`artifacts/stage5b_20260719_review/`](artifacts/stage5b_20260719_review/)；当前结论以本页顶部 Stage5BR 段落为准。
 
 ## Stage4W 可达清扫域与完整任务闭环（2026-07-17）
 
@@ -111,4 +117,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-19：Stage5B 三次学习模型筛查均未通过未见测试与颜色捷径门，已按停止条件冻结并形成 24 文件紧凑证据。训练模型的 Gazebo 诊断处理 161 帧，证明接口可运行但不证明精度；Stage5A 固定颜色基线回归、57 项快速测试和 Stage4W seed 0 完整覆盖回归均通过。`REVIEW_PACKET_COMPLETE=true`，`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`；D2、J6 实板、竞赛感知与 `1053 < 3500 m²/h` 效率门均保持 false。原始筛查数据、工作区和 rosbag 保留本机，Git 只提交紧凑复核证据。
+2026-07-19：Stage5BR 已把数据域从 P1 程序化 renderer 恢复到真实 Gazebo-camera G1，完成 Phase A 自证、50 scene/500 frame G1 smoke、三次模型筛查和 Stage5A/Stage4W 回归。G1 数据 QA 通过，但所有模型筛查均失败，首个阻断层为 `G1_model_recovery_in_domain_cross_asset_world_and_color_stress`；正式 G1、live、真实 Nav2 spot-clean、R1、J6 实板和竞赛效率门均未执行或保持 false。原始 500 帧、失败 checkpoint、MCAP 和 worktree 在用户确认前保留本机，Git 只提交紧凑复核证据。

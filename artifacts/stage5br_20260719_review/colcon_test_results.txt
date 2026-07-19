@@ -1,0 +1,4 @@
+build/sanitation_learning/pytest.xml: 7 tests, 0 errors, 0 failures, 0 skipped
+build/sanitation_perception/pytest.xml: 12 tests, 0 errors, 0 failures, 0 skipped
+
+Summary: 19 tests, 0 errors, 0 failures, 0 skipped

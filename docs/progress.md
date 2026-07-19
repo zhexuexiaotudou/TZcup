@@ -1,5 +1,28 @@
 # 项目推进记录
 
+## Stage5BR：Gazebo-camera 数据恢复、训练链审计与泛化修复
+
+状态：G1 数据 smoke 通过，学习模型 screening 失败并按停止条件冻结。
+
+已完成：
+
+- 12 帧 micro-overfit 达到 macro F1 `0.98124`、foreground mIoU `0.96333`。
+- PyTorch/ONNX/ROS parity 达到最大 logit error `6.866e-05`、argmax agreement `1.0`。
+- 新增 Gazebo Label system、共视场 RGB-D/semantic/instance cameras、scene/lighting 随机化和 exact timestamp collector。
+- G1 50 scene/500 frame：annotation completeness `1.0`、label consistency error `0`、asset leakage `0`、跨 split exact/pHash duplicate `0/0`。
+- 三次 G1 model screening 均失败；最佳 cross asset/world F1 为 `0.65804`，最佳 color stress F1 为 `0.47647`。
+- Stage5A 回归通过：30/30 synthetic spot-clean，live 186 帧、MCAP true、GT control violation 0。
+- Stage4W seed 0 回归通过：17/17、coverage `0.936`、RMSE `0.03260 m`、零碰撞/keepout/brush violation。
+
+停止边界：
+
+- 不生成 500 scene/5000 frame formal G1；
+- 不运行 30 seed/10 min formal live；
+- 不运行真实 Nav2 spot-clean；
+- R1、J6 实板、竞赛感知和 `1053 < 3500 m²/h` 效率门保持 false。
+
+证据：`GPT_REVIEW_STAGE5BR.md`、`docs/stage5br-gazebo-camera-recovery.md`、`artifacts/stage5br_20260719_review/`。
+
 ## Stage5B：学习型感知、域隔离与颜色捷径筛查
 
 状态：已形成可复核的失败边界，未通过 Stage5B，未进入 Stage5C。紧凑证据包完整，但 `READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。

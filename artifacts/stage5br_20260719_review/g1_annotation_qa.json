@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "phase": "Stage5BR G1 smoke QA",
+  "expected_scene_count": 50,
+  "actual_scene_count": 50,
+  "expected_frame_count": 500,
+  "actual_frame_count": 500,
+  "annotation_completeness": 1.0,
+  "rgb_depth_semantic_instance_exact_timestamp_match": true,
+  "tf_manifest_present": true,
+  "semantic_instance_consistency_error_rate": 0.0,
+  "sampled_label_error_rate": 0.0,
+  "sampled_label_error_semantics": "instance pixels whose semantic labels disagree with that instance majority",
+  "class_pixel_distribution": {
+    "background": 5740780,
+    "plastic_bottle": 13260,
+    "metal_can": 11610,
+    "paper_litter": 18510,
+    "leaf_pile": 125770,
+    "puddle": 234070
+  },
+  "instance_size_pixels": {
+    "plastic_bottle": {
+      "min": 1,
+      "median": 29.5,
+      "max": 43
+    },
+    "metal_can": {
+      "min": 4,
+      "median": 25.0,
+      "max": 34
+    },
+    "paper_litter": {
+      "min": 0,
+      "median": 44.0,
+      "max": 79
+    },
+    "leaf_pile": {
+      "min": 50,
+      "median": 275.5,
+      "max": 537
+    },
+    "puddle": {
+      "min": 142,
+      "median": 486.0,
+      "max": 651
+    }
+  },
+  "occlusion_estimate": {
+    "method": "one minus visible pixel area divided by per-asset observed maximum at fixed camera",
+    "count": 2500,
+    "mean": 0.24704173227820403,
+    "p95": 0.8064516129032258
+  },
+  "negative_asset_distribution": {
+    "blue_obstacle": 11,
+    "bottle_like_reusable_cone": 20,
+    "can_like_bollard": 16,
+    "cardboard": 16,
+    "fixed_bin": 18,
+    "green_obstacle": 27,
+    "leaves_outside_target_region": 13,
+    "red_obstacle": 18,
+    "reflective_patch": 17,
+    "robot_self_pixels": 19,
+    "shadow": 12,
+    "wet_asphalt": 13
+  },
+  "lighting_randomized": true,
+  "ground_material_distribution": [
+    "g1_asphalt_fixed_v1"
+  ],
+  "asset_leakage": [],
+  "cross_split_exact_duplicate_count": 0,
+  "cross_split_perceptual_duplicate_count": 0,
+  "errors": [],
+  "annotation_qa_pass": true
+}

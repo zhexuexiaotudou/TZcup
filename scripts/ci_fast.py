@@ -105,11 +105,14 @@ def run_ros_independent_tests() -> None:
         perception_package / "test" / "test_projection.py",
         perception_package / "test" / "test_tracking.py",
         perception_package / "test" / "test_backends.py",
+        perception_package / "test" / "test_preprocessing.py",
         dataset_package / "test" / "test_synthetic.py",
         ground_truth_package / "test" / "test_visibility.py",
         spot_cleaning_package / "test" / "test_coordinator.py",
         learning_package / "test" / "test_assets.py",
         learning_package / "test" / "test_rendered.py",
+        learning_package / "test" / "test_gazebo_g1.py",
+        learning_package / "test" / "test_g1_collector.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])
     if result != pytest.ExitCode.OK:

@@ -1,12 +1,22 @@
 # Codex 阶段推进与验收门
 
-## Stage5B 当前门禁（2026-07-19）
+## Stage5BR：Gazebo-camera 数据恢复与模型筛查
+
+状态：训练链与 G1 smoke 通过，模型恢复 screening 失败，正式 Stage5B 阻断。
+
+- Phase A：micro-overfit 与 PyTorch/ONNX/ROS preprocessing parity 通过。
+- G1 smoke：50 scene/500 frame actual Gazebo camera，annotation/sync/split QA 通过。
+- 模型 screening：三次均未同时达到 in-domain、跨资产/世界、leaf/puddle 和颜色压力门。
+- 停止条件：未执行 500 scene/5000 frame formal G1、30 seed/10 min live、真实 Nav2 spot-clean 或 J6。
+- 复核状态：`REVIEW_PACKET_COMPLETE=true`，`READY_FOR_GPT_REVIEW_STAGE5B=false`，`READY_FOR_STAGE5C=false`。
+
+## Stage5B 正式门禁与 Stage5BR 前历史结果（2026-07-19）
 
 正式通过需要：D0 Stage5A 回归、D1 真实 Gazebo-camera RGB-D 的 500 seed/5000 帧独立数据、学习模型未见测试、颜色捷径压力、30 seed/至少 10 分钟实时 Gazebo、30 次真实 Nav2 spot-clean、D2 状态披露和 J6 fail-closed 预检全部满足规划包阈值。只有全部通过时才可设置 `READY_FOR_GPT_REVIEW_STAGE5B=true` 与 `READY_FOR_STAGE5C=true`。
 
-本轮结果：D0 与 Stage4W seed 0 回归通过；两种候选确为梯度训练模型，第三种因 ONNX/J6 算子风险未训练。三次结构性筛查后，100 个未见 scene / 1000 帧离散 macro P/R/F1 为 `0.00752/0.00784/0.00768`，leaf/puddle IoU 为 `0.00376/0.2494`，颜色压力 aggregate macro F1 为 `0.05192`；仅 map RMSE `0.09731 m` 通过。数据域还是 `D1_procedural_rendered_not_gazebo_camera`，故没有启动 500/5000 正式集与后续正式 E2E。
+Stage5BR 前历史结果：D0 与 Stage4W seed 0 回归通过；两种候选确为梯度训练模型，第三种因 ONNX/J6 算子风险未训练。三次结构性筛查后，100 个未见 scene / 1000 帧离散 macro P/R/F1 为 `0.00752/0.00784/0.00768`，leaf/puddle IoU 为 `0.00376/0.2494`，颜色压力 aggregate macro F1 为 `0.05192`；仅 map RMSE `0.09731 m` 通过。该轮数据域为 `D1_procedural_rendered_not_gazebo_camera`。Stage5BR 已补齐真实 Gazebo-camera G1 smoke 数据链，但新的模型筛查仍未过门，因此仍未启动 500/5000 正式集与后续正式 E2E。
 
-结论：`REVIEW_PACKET_COMPLETE=true` 仅表示失败证据可审计；`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`、`competition_perception_pass=false`、`j6_runtime_pass=false`、`competition_efficiency_pass=false`。第一阻塞层为真实 Gazebo-camera D1 数据和模型泛化/颜色鲁棒性。
+结论：`REVIEW_PACKET_COMPLETE=true` 仅表示失败证据可审计；`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`、`competition_perception_pass=false`、`j6_runtime_pass=false`、`competition_efficiency_pass=false`。当前第一阻塞层为 `G1_model_recovery_in_domain_cross_asset_world_and_color_stress`；真实 G1 smoke 数据链已通过，不再把“完全没有 Gazebo-camera pipeline”列为当前阻断。
 
 ## Stage5A 当前门禁（2026-07-17）
 

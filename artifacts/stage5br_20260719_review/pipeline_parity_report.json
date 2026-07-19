@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "phase": "Stage5BR Phase A2 pipeline parity",
+  "raw_label_to_training_target_exact": true,
+  "raw_rgb_to_training_tensor_max_error": 0.0,
+  "checkpoint_load_exact": true,
+  "pytorch_onnx_max_logit_error": 6.866455078125e-05,
+  "pytorch_onnx_argmax_agreement": 1.0,
+  "class_order": [
+    "background",
+    "plastic_bottle",
+    "metal_can",
+    "paper_litter",
+    "leaf_pile",
+    "puddle"
+  ],
+  "checkpoint_class_order": [
+    "background",
+    "plastic_bottle",
+    "metal_can",
+    "paper_litter",
+    "leaf_pile",
+    "puddle"
+  ],
+  "class_order_identical": true,
+  "rgb_bgr_contract": "cv_bridge desired_encoding=rgb8; preprocess_rgb requires RGB",
+  "normalization": "float32 divide by 255.0",
+  "resize": [
+    128,
+    96
+  ],
+  "mask_interpolation": "nearest",
+  "label_resize_round_trip_exact": true,
+  "onnx_operators": {
+    "Conv": 11,
+    "Relu": 10,
+    "MaxPool": 2,
+    "Shape": 6,
+    "Constant": 14,
+    "Gather": 4,
+    "Unsqueeze": 4,
+    "Concat": 6,
+    "Slice": 2,
+    "Cast": 2,
+    "Resize": 2
+  },
+  "onnx_sha256": "f50d1a0da8f5cca1f4eb3f2e6bfa841709ef7a2fb097d25089461ca70c33e53e",
+  "pipeline_parity_pass": true
+}

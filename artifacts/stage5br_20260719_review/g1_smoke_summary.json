@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR G1 smoke",
+  "dataset_scale_gate": true,
+  "annotation_qa_pass": true,
+  "G1_smoke_pass": true,
+  "formal_G1_500_scene_gate_executed": false,
+  "READY_FOR_GPT_REVIEW_STAGE5B": false,
+  "READY_FOR_STAGE5C": false
+}

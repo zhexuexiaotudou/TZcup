@@ -1,0 +1,11 @@
+{
+  "success": true,
+  "component_count": 17,
+  "successful_component_count": 17,
+  "empirical_coverage_rate": 0.936,
+  "collision_count": 0,
+  "keepout_violation_sample_count": 0,
+  "brush_state_violation_sample_count": 0,
+  "brush_disabled_on_exit": true,
+  "coverage_localization_rmse_m": 0.032595211450625425
+}

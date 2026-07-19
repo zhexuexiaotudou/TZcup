@@ -32,8 +32,16 @@ def main() -> None:
         ObjectHypothesisWithPose,
     )
 
-    class_order = ("background", "plastic_bottle", "metal_can", "paper_litter", "leaf_pile", "puddle")
-    model_height, model_width = 96, 128
+    from sanitation_perception.preprocessing import (
+        CLASS_ORDER,
+        MODEL_HEIGHT,
+        MODEL_WIDTH,
+        preprocess_rgb,
+        resize_labels,
+    )
+
+    class_order = CLASS_ORDER
+    model_height, model_width = MODEL_HEIGHT, MODEL_WIDTH
 
     class PerceptionNode(Node):
         def __init__(self):
@@ -172,13 +180,12 @@ def main() -> None:
                 return
             self.last_inference_monotonic = now
             image = self.bridge.imgmsg_to_cv2(message, desired_encoding="rgb8")
-            resized = cv2.resize(image, (model_width, model_height), interpolation=cv2.INTER_AREA)
-            tensor = np.transpose(resized.astype(np.float32) / 255.0, (2, 0, 1))[None, ...]
+            tensor = preprocess_rgb(image)
             start = time.perf_counter()
             logits = self.session.run(["logits"], {"images": tensor})[0]
             self.last_latency_ms = (time.perf_counter() - start) * 1000.0
             labels = np.argmax(logits[0], axis=0).astype(np.uint8)
-            full_size = cv2.resize(labels, (message.width, message.height), interpolation=cv2.INTER_NEAREST)
+            full_size = resize_labels(labels, message.width, message.height)
             segmentation = self.bridge.cv2_to_imgmsg(full_size, encoding="mono8")
             segmentation.header = message.header
             self.segmentation_publisher.publish(segmentation)
