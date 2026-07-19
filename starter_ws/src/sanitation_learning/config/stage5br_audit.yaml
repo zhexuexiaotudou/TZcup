@@ -1,0 +1,15 @@
+schema_version: 1
+seed: 20260719
+micro_scene_seeds: [0, 1]
+micro_frames_per_scene: 6
+batch_size: 3
+maximum_epochs: 800
+learning_rate: 0.003
+weight_decay: 0.00001
+micro_macro_f1_gate: 0.98
+micro_miou_gate: 0.95
+pipeline_max_logit_error_gate: 0.0001
+pipeline_argmax_agreement_gate: 0.9999
+ladder_scene_count: 6
+ladder_frames_per_scene: 4
+opset: 17

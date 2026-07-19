@@ -28,6 +28,12 @@ setup(
             "stage5b_train_models = sanitation_learning.cli:train_models_main",
             "stage5b_evaluate_models = sanitation_learning.cli:evaluate_models_main",
             "stage5b_j6_preflight = sanitation_learning.cli:j6_preflight_main",
+            "stage5br_audit = sanitation_learning.stage5br_audit:main",
+            "stage5br_generate_g1_world = sanitation_learning.gazebo_g1:main",
+            "stage5br_collect_g1 = sanitation_learning.g1_collector:main",
+            "stage5br_randomize_g1 = sanitation_learning.g1_randomize:main",
+            "stage5br_finalize_g1 = sanitation_learning.g1_finalize:main",
+            "stage5br_train_g1 = sanitation_learning.g1_training:main",
         ],
     },
 )

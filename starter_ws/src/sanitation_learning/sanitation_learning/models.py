@@ -27,6 +27,47 @@ def _torch():
 
 def build_model(candidate_id: str):
     torch, nn = _torch()
+    if candidate_id in {"stage5br_micro_unet", "stage5br_g1_unet"}:
+        base = 32 if candidate_id == "stage5br_micro_unet" else 48
+        class MicroUNet(nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.enc1 = nn.Sequential(
+                    nn.Conv2d(3, base, 3, padding=1), nn.ReLU(),
+                    nn.Conv2d(base, base, 3, padding=1), nn.ReLU(),
+                )
+                self.enc2 = nn.Sequential(
+                    nn.Conv2d(base, base * 2, 3, padding=1), nn.ReLU(),
+                    nn.Conv2d(base * 2, base * 2, 3, padding=1), nn.ReLU(),
+                )
+                self.bottleneck = nn.Sequential(
+                    nn.Conv2d(base * 2, base * 4, 3, padding=1), nn.ReLU(),
+                    nn.Conv2d(base * 4, base * 4, 3, padding=1), nn.ReLU(),
+                )
+                self.dec2 = nn.Sequential(
+                    nn.Conv2d(base * 6, base * 2, 3, padding=1), nn.ReLU(),
+                    nn.Conv2d(base * 2, base * 2, 3, padding=1), nn.ReLU(),
+                )
+                self.dec1 = nn.Sequential(
+                    nn.Conv2d(base * 3, base, 3, padding=1), nn.ReLU(),
+                    nn.Conv2d(base, base, 3, padding=1), nn.ReLU(),
+                )
+                self.output = nn.Conv2d(base, len(CLASS_ORDER), 1)
+
+            def forward(self, images):
+                import torch.nn.functional as functional
+                level1 = self.enc1(images)
+                level2 = self.enc2(functional.max_pool2d(level1, 2))
+                center = self.bottleneck(functional.max_pool2d(level2, 2))
+                # Nearest-neighbor upsampling keeps the exported ONNX and the
+                # deployed CPU Runtime inside Stage5BR's strict 1e-4 parity
+                # budget; the following convolutions learn the refinement.
+                up2 = functional.interpolate(center, size=level2.shape[-2:], mode="nearest")
+                up2 = self.dec2(torch.cat((up2, level2), dim=1))
+                up1 = functional.interpolate(up2, size=level1.shape[-2:], mode="nearest")
+                return self.output(self.dec1(torch.cat((up1, level1), dim=1)))
+
+        return MicroUNet()
     if candidate_id == "candidate_a_pixel":
         return nn.Conv2d(3, len(CLASS_ORDER), kernel_size=1, bias=True)
     if candidate_id == "candidate_b_context":

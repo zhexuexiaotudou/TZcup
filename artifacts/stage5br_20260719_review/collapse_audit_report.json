@@ -1,0 +1,316 @@
+{
+  "schema_version": 1,
+  "phase": "Stage5BR Phase A4 collapse audit",
+  "layers": {
+    "train": {
+      "truth_pixel_histogram": {
+        "background": 124618,
+        "plastic_bottle": 1941,
+        "metal_can": 3630,
+        "paper_litter": 3483,
+        "leaf_pile": 5305,
+        "puddle": 8479
+      },
+      "prediction_pixel_histogram": {
+        "background": 124150,
+        "plastic_bottle": 2014,
+        "metal_can": 3651,
+        "paper_litter": 3539,
+        "leaf_pile": 5515,
+        "puddle": 8587
+      },
+      "mean_entropy": 0.01245881523936987,
+      "mean_confidence": 0.995315432548523,
+      "per_class_cross_entropy": {
+        "background": 0.01612800732254982,
+        "plastic_bottle": 0.019802995026111603,
+        "metal_can": 0.01994403265416622,
+        "paper_litter": 0.02293541096150875,
+        "leaf_pile": 0.055053986608982086,
+        "puddle": 0.0158305112272501
+      },
+      "false_positive_truth_sources": {
+        "plastic_bottle": {
+          "background": 68,
+          "metal_can": 2,
+          "paper_litter": 1,
+          "leaf_pile": 2,
+          "puddle": 8
+        },
+        "metal_can": {
+          "background": 44,
+          "paper_litter": 2,
+          "puddle": 1
+        },
+        "paper_litter": {
+          "background": 73,
+          "metal_can": 7
+        },
+        "leaf_pile": {
+          "background": 295,
+          "puddle": 3
+        },
+        "puddle": {
+          "background": 140,
+          "plastic_bottle": 2,
+          "leaf_pile": 5
+        }
+      }
+    },
+    "same_assets_unseen_seeds": {
+      "truth_pixel_histogram": {
+        "background": 254669,
+        "plastic_bottle": 3383,
+        "metal_can": 6945,
+        "paper_litter": 6785,
+        "leaf_pile": 8099,
+        "puddle": 15031
+      },
+      "prediction_pixel_histogram": {
+        "background": 262002,
+        "plastic_bottle": 3852,
+        "metal_can": 5516,
+        "paper_litter": 4715,
+        "leaf_pile": 6246,
+        "puddle": 12581
+      },
+      "mean_entropy": 0.03529393672943115,
+      "mean_confidence": 0.9858936667442322,
+      "per_class_cross_entropy": {
+        "background": 0.081422820687294,
+        "plastic_bottle": 4.737183094024658,
+        "metal_can": 5.221256256103516,
+        "paper_litter": 10.656190872192383,
+        "leaf_pile": 7.030771732330322,
+        "puddle": 8.05236530303955
+      },
+      "false_positive_truth_sources": {
+        "plastic_bottle": {
+          "background": 338,
+          "metal_can": 215,
+          "paper_litter": 183,
+          "leaf_pile": 689,
+          "puddle": 658
+        },
+        "metal_can": {
+          "background": 205,
+          "plastic_bottle": 405,
+          "paper_litter": 523,
+          "leaf_pile": 103,
+          "puddle": 92
+        },
+        "paper_litter": {
+          "background": 447,
+          "plastic_bottle": 53,
+          "metal_can": 644,
+          "leaf_pile": 580,
+          "puddle": 1957
+        },
+        "leaf_pile": {
+          "background": 1173,
+          "plastic_bottle": 538,
+          "metal_can": 224,
+          "paper_litter": 927,
+          "puddle": 604
+        },
+        "puddle": {
+          "background": 1879,
+          "plastic_bottle": 106,
+          "metal_can": 581,
+          "paper_litter": 1833,
+          "leaf_pile": 1233
+        }
+      }
+    },
+    "unseen_textures": {
+      "truth_pixel_histogram": {
+        "background": 254854,
+        "plastic_bottle": 3350,
+        "metal_can": 7338,
+        "paper_litter": 5429,
+        "leaf_pile": 9626,
+        "puddle": 14315
+      },
+      "prediction_pixel_histogram": {
+        "background": 264044,
+        "plastic_bottle": 2276,
+        "metal_can": 4900,
+        "paper_litter": 4499,
+        "leaf_pile": 6160,
+        "puddle": 13033
+      },
+      "mean_entropy": 0.0344434529542923,
+      "mean_confidence": 0.9862080812454224,
+      "per_class_cross_entropy": {
+        "background": 0.07220791280269623,
+        "plastic_bottle": 10.4489107131958,
+        "metal_can": 5.703268527984619,
+        "paper_litter": 10.931136131286621,
+        "leaf_pile": 7.408572673797607,
+        "puddle": 7.1827778816223145
+      },
+      "false_positive_truth_sources": {
+        "plastic_bottle": {
+          "background": 255,
+          "metal_can": 322,
+          "paper_litter": 130,
+          "leaf_pile": 562,
+          "puddle": 229
+        },
+        "metal_can": {
+          "background": 263,
+          "plastic_bottle": 102,
+          "leaf_pile": 124
+        },
+        "paper_litter": {
+          "background": 624,
+          "plastic_bottle": 278,
+          "metal_can": 687,
+          "leaf_pile": 540,
+          "puddle": 1833
+        },
+        "leaf_pile": {
+          "background": 998,
+          "plastic_bottle": 528,
+          "metal_can": 512,
+          "paper_litter": 1067,
+          "puddle": 543
+        },
+        "puddle": {
+          "background": 1659,
+          "plastic_bottle": 153,
+          "metal_can": 649,
+          "paper_litter": 1712,
+          "leaf_pile": 1810
+        }
+      }
+    },
+    "unseen_assets": {
+      "truth_pixel_histogram": {
+        "background": 248827,
+        "plastic_bottle": 4477,
+        "metal_can": 6373,
+        "paper_litter": 8122,
+        "leaf_pile": 9300,
+        "puddle": 17813
+      },
+      "prediction_pixel_histogram": {
+        "background": 272846,
+        "plastic_bottle": 2420,
+        "metal_can": 1396,
+        "paper_litter": 3460,
+        "leaf_pile": 10622,
+        "puddle": 4168
+      },
+      "mean_entropy": 0.039703547954559326,
+      "mean_confidence": 0.9839205145835876,
+      "per_class_cross_entropy": {
+        "background": 0.04972439259290695,
+        "plastic_bottle": 16.296871185302734,
+        "metal_can": 9.333183288574219,
+        "paper_litter": 11.774947166442871,
+        "leaf_pile": 6.6881184577941895,
+        "puddle": 16.482454299926758
+      },
+      "false_positive_truth_sources": {
+        "plastic_bottle": {
+          "background": 118,
+          "metal_can": 837,
+          "paper_litter": 159,
+          "leaf_pile": 489,
+          "puddle": 499
+        },
+        "metal_can": {
+          "background": 41,
+          "leaf_pile": 85,
+          "puddle": 1
+        },
+        "paper_litter": {
+          "background": 555,
+          "plastic_bottle": 68,
+          "metal_can": 2080,
+          "leaf_pile": 359,
+          "puddle": 168
+        },
+        "leaf_pile": {
+          "background": 1957,
+          "plastic_bottle": 2594,
+          "metal_can": 850,
+          "paper_litter": 1561,
+          "puddle": 1204
+        },
+        "puddle": {
+          "background": 940,
+          "plastic_bottle": 147,
+          "metal_can": 141,
+          "paper_litter": 893,
+          "leaf_pile": 939
+        }
+      }
+    },
+    "unseen_world": {
+      "truth_pixel_histogram": {
+        "background": 248827,
+        "plastic_bottle": 4477,
+        "metal_can": 6373,
+        "paper_litter": 8122,
+        "leaf_pile": 9300,
+        "puddle": 17813
+      },
+      "prediction_pixel_histogram": {
+        "background": 272846,
+        "plastic_bottle": 2420,
+        "metal_can": 1396,
+        "paper_litter": 3460,
+        "leaf_pile": 10622,
+        "puddle": 4168
+      },
+      "mean_entropy": 0.039703547954559326,
+      "mean_confidence": 0.9839205145835876,
+      "per_class_cross_entropy": {
+        "background": 0.04972439259290695,
+        "plastic_bottle": 16.296871185302734,
+        "metal_can": 9.333183288574219,
+        "paper_litter": 11.774947166442871,
+        "leaf_pile": 6.6881184577941895,
+        "puddle": 16.482454299926758
+      },
+      "false_positive_truth_sources": {
+        "plastic_bottle": {
+          "background": 118,
+          "metal_can": 837,
+          "paper_litter": 159,
+          "leaf_pile": 489,
+          "puddle": 499
+        },
+        "metal_can": {
+          "background": 41,
+          "leaf_pile": 85,
+          "puddle": 1
+        },
+        "paper_litter": {
+          "background": 555,
+          "plastic_bottle": 68,
+          "metal_can": 2080,
+          "leaf_pile": 359,
+          "puddle": 168
+        },
+        "leaf_pile": {
+          "background": 1957,
+          "plastic_bottle": 2594,
+          "metal_can": 850,
+          "paper_litter": 1561,
+          "puddle": 1204
+        },
+        "puddle": {
+          "background": 940,
+          "plastic_bottle": 147,
+          "metal_can": 141,
+          "paper_litter": 893,
+          "leaf_pile": 939
+        }
+      }
+    }
+  },
+  "interpretation_boundary": "diagnostic P1 procedural screening only; not a G1 accuracy claim"
+}

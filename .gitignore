@@ -40,6 +40,14 @@ artifacts/stage5b_nav2*/
 artifacts/stage5b_stage4w_regression*/
 artifacts/stage5b_stage5a_regression*/
 
+# Stage5BR raw Gazebo frames, checkpoints, failed attempts, MCAP, and regressions
+# stay local; only artifacts/stage5br_20260719_review is versioned.
+artifacts/stage5br_phase_a_run*/
+artifacts/stage5br_g1_*/
+artifacts/stage5br_ros_validation*/
+artifacts/stage5br_stage4w_regression*/
+artifacts/stage5br_stage5a_regression*/
+
 # Superseded local review bundle; the current Stage4R bundle is committed.
 无人清扫车仿真_GPT复核包_Stage4_20260715.zip
 

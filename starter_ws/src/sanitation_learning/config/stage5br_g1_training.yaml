@@ -1,0 +1,13 @@
+schema_version: 1
+seed: 20260719
+batch_size: 16
+maximum_epochs: 220
+learning_rate: 0.002
+weight_decay: 0.00001
+validation_interval_epochs: 2
+patience_intervals: 24
+opset: 17
+in_domain_macro_f1_gate: 0.90
+leaf_puddle_miou_gate: 0.75
+cross_asset_world_macro_f1_gate: 0.70
+color_stress_macro_f1_gate: 0.60

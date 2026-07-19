@@ -1,0 +1,8 @@
+{
+  "valid_trial_count": 30,
+  "mission_success_count": 30,
+  "mission_success_rate": 1.0,
+  "coverage_resume_success_count": 30,
+  "coverage_resume_success_rate": 1.0,
+  "spot_clean_e2e_pass": true
+}

@@ -1,0 +1,187 @@
+{
+  "schema_version": 1,
+  "scene_seed": 8,
+  "split": "test",
+  "world_sha256": "49253984cec820a2c780ec31fedff82d767bb079633df4dc05e7bb4e4bf56ad1",
+  "registry_sha256": "0541a19b5553b152a069153e6d347d19d84e03b4f51362382c67cb1b6ef4e123",
+  "asset_ids": [
+    "bottle_unseen_crushed",
+    "can_unseen_crushed",
+    "leaves_unseen_windrow",
+    "paper_unseen_torn",
+    "puddle_unseen_split"
+  ],
+  "texture_ids": [
+    "bands",
+    "crosshatch",
+    "crosshatch",
+    "crosshatch",
+    "crosshatch"
+  ],
+  "negative_ids": [
+    "bottle_like_reusable_cone",
+    "fixed_bin",
+    "leaves_outside_target_region",
+    "reflective_patch"
+  ],
+  "objects": [
+    {
+      "model_name": "bottle_unseen_crushed",
+      "class_id": "plastic_bottle",
+      "semantic_label": 1,
+      "xyz_m": [
+        -1.0022217950364904,
+        0.5728292358440763,
+        0.1
+      ],
+      "yaw_rad": 1.6732412348226111,
+      "variant_index": 5,
+      "texture_id": "crosshatch",
+      "negative_id": null
+    },
+    {
+      "model_name": "can_unseen_crushed",
+      "class_id": "metal_can",
+      "semantic_label": 2,
+      "xyz_m": [
+        -0.3313676827761669,
+        0.4857827339197547,
+        0.1
+      ],
+      "yaw_rad": 3.02201660183914,
+      "variant_index": 5,
+      "texture_id": "crosshatch",
+      "negative_id": null
+    },
+    {
+      "model_name": "paper_unseen_torn",
+      "class_id": "paper_litter",
+      "semantic_label": 3,
+      "xyz_m": [
+        -0.6308342796582678,
+        0.2522984963109157,
+        0.1
+      ],
+      "yaw_rad": 3.0264489322429444,
+      "variant_index": 5,
+      "texture_id": "crosshatch",
+      "negative_id": null
+    },
+    {
+      "model_name": "leaves_unseen_windrow",
+      "class_id": "leaf_pile",
+      "semantic_label": 4,
+      "xyz_m": [
+        -0.9789370869527729,
+        -0.4126358764792658,
+        0.1
+      ],
+      "yaw_rad": 1.0165332163325607,
+      "variant_index": 5,
+      "texture_id": "bands",
+      "negative_id": null
+    },
+    {
+      "model_name": "puddle_unseen_split",
+      "class_id": "puddle",
+      "semantic_label": 5,
+      "xyz_m": [
+        0.578040063595489,
+        0.3202982987616311,
+        0.1
+      ],
+      "yaw_rad": -2.4715027370241773,
+      "variant_index": 5,
+      "texture_id": "crosshatch",
+      "negative_id": null
+    },
+    {
+      "model_name": "negative_reflective_patch",
+      "class_id": "background",
+      "semantic_label": 0,
+      "xyz_m": [
+        -0.06120680521984407,
+        -0.35894669076800284,
+        0.04
+      ],
+      "yaw_rad": -0.5069345338588915,
+      "variant_index": null,
+      "texture_id": null,
+      "negative_id": "reflective_patch"
+    },
+    {
+      "model_name": "negative_fixed_bin",
+      "class_id": "background",
+      "semantic_label": 0,
+      "xyz_m": [
+        0.36902625557846147,
+        -0.5651580870520424,
+        0.04
+      ],
+      "yaw_rad": 0.7858315519740109,
+      "variant_index": null,
+      "texture_id": null,
+      "negative_id": "fixed_bin"
+    },
+    {
+      "model_name": "negative_bottle_like_reusable_cone",
+      "class_id": "background",
+      "semantic_label": 0,
+      "xyz_m": [
+        0.9714229118557505,
+        0.4509565530165933,
+        0.04
+      ],
+      "yaw_rad": 2.7770281760790665,
+      "variant_index": null,
+      "texture_id": null,
+      "negative_id": "bottle_like_reusable_cone"
+    },
+    {
+      "model_name": "negative_leaves_outside_target_region",
+      "class_id": "background",
+      "semantic_label": 0,
+      "xyz_m": [
+        1.1405454420573151,
+        -0.19634544209710997,
+        0.04
+      ],
+      "yaw_rad": 1.2399838724616083,
+      "variant_index": null,
+      "texture_id": null,
+      "negative_id": "leaves_outside_target_region"
+    }
+  ],
+  "camera_pose_id": "g1_topdown_v1",
+  "camera_contract": {
+    "co_visible_pose": "g1_camera_rig/camera_link",
+    "camera_height_m": 2.6,
+    "width": 128,
+    "height": 96,
+    "horizontal_fov_rad": 1.0472,
+    "update_rate_hz": 10,
+    "topics": [
+      "/g1/rgbd/image",
+      "/g1/rgbd/depth_image",
+      "/g1/semantic/labels_map",
+      "/g1/instance/labels_map"
+    ]
+  },
+  "lighting": {
+    "profile": "g1_random_directional_v1",
+    "diffuse_rgb": [
+      0.7164485205473219,
+      0.8560689028677118,
+      0.9805831551690951
+    ],
+    "direction_xyz": [
+      -0.4502440103548209,
+      -0.07328998517594049,
+      -0.9199518131291345
+    ],
+    "randomized": true
+  },
+  "ground_material": "g1_asphalt_fixed_v1",
+  "annotation_source": "Gazebo Harmonic SegmentationCamera + Label system",
+  "scene_manifest_sha256": "db879acd516e95d2796cf53db64ece4011ff7d8e80021400a9f4deb358600a47"
+}

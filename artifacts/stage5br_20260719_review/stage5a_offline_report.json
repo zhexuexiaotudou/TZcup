@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5A",
+  "model_sha256": "f7a10487a2577dc6675abb6784769308a0c21bfb11c0c9eb42af6aa2a5152e73",
+  "dataset_scene_count": 20,
+  "dataset_split_hash": "fc51ef67d58bdd353ca2001f2dae1f9e3afa750245a3052f4d334451242096c6",
+  "duplicate_image_count": 0,
+  "calibration_scene_count": 10,
+  "synthetic_perception_pass": true,
+  "spot_clean_e2e_pass": true,
+  "competition_perception_pass": false,
+  "j6_toolchain_available": false,
+  "j6_quantization_pass": false,
+  "j6_runtime_pass": false,
+  "competition_efficiency_pass": false,
+  "theoretical_efficiency_m2_h": 1053.0,
+  "target_efficiency_m2_h": 3500.0
+}
