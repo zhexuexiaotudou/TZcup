@@ -117,4 +117,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-19：Stage5BR 已把数据域从 P1 程序化 renderer 恢复到真实 Gazebo-camera G1，完成 Phase A 自证、50 scene/500 frame G1 smoke、三次模型筛查和 Stage5A/Stage4W 回归。G1 数据 QA 通过，但所有模型筛查均失败，首个阻断层为 `G1_model_recovery_in_domain_cross_asset_world_and_color_stress`；正式 G1、live、真实 Nav2 spot-clean、R1、J6 实板和竞赛效率门均未执行或保持 false。原始 500 帧、失败 checkpoint、MCAP 和 worktree 在用户确认前保留本机，Git 只提交紧凑复核证据。
+2026-07-19：Stage5BR 已把数据域从 P1 程序化 renderer 恢复到真实 Gazebo-camera G1，完成 Phase A 自证、50 scene/500 frame G1 smoke、三次模型筛查和 Stage5A/Stage4W 回归。G1 数据 QA 通过，但所有模型筛查均失败，首个阻断层为 `G1_model_recovery_in_domain_cross_asset_world_and_color_stress`；正式 G1、live、真实 Nav2 spot-clean、R1、J6 实板和竞赛效率门均未执行或保持 false。紧凑复核证据已按原始字节锁定，确保 Git 归档与 `MANIFEST.json` 哈希一致；原始 500 帧、失败 checkpoint、MCAP 和 worktree 在用户确认前保留本机。
