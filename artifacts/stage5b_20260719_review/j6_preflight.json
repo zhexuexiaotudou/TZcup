@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5B",
+  "model_sha256": "6858863df0588f33083779f15c87a37e7f280d06d8241c37363277d4c9ecc328",
+  "onnx_checker_pass": true,
+  "fixed_input_shape": [
+    1,
+    3,
+    96,
+    128
+  ],
+  "fixed_shape_pass": true,
+  "opset": 13,
+  "operator_inventory": {
+    "ai.onnx::Conv": 6,
+    "ai.onnx::Relu": 5
+  },
+  "custom_operator_count": 0,
+  "calibration_manifest_present": true,
+  "calibration_frame_count": 500,
+  "tool_discovery": {
+    "hb_mapper": null,
+    "hbdk": null,
+    "horizon_tc_ui": null,
+    "hb_model_modifier": null
+  },
+  "j6_toolchain_available": false,
+  "j6_model_precheck_pass": false,
+  "conversion_dry_run_executed": false,
+  "quantization_dry_run_executed": false,
+  "j6_runtime_pass": false,
+  "j6_board_fps": null,
+  "failure_reason": "official Horizon J6 toolchain not found; fail-closed"
+}

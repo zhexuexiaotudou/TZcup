@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "model_id": "stage5b_learned_perception_v1",
+  "architecture": "candidate_b_context",
+  "weight_source": "trained_from_random_initialization_on_D1_procedural_rendered",
+  "handwritten_color_weights": false,
+  "input_shape": [
+    1,
+    3,
+    96,
+    128
+  ],
+  "class_order": [
+    "background",
+    "plastic_bottle",
+    "metal_can",
+    "paper_litter",
+    "leaf_pile",
+    "puddle"
+  ],
+  "opset": 13,
+  "domain": "D1_procedural_rendered",
+  "license": "Apache-2.0",
+  "intended_use": "ROS/Gazebo research and Stage5B evaluation",
+  "limitations": [
+    "not evaluated on D2 real data",
+    "procedural D1 is not equivalent to real Gazebo camera rendering",
+    "no J6 board evidence",
+    "no competition accuracy claim"
+  ]
+}

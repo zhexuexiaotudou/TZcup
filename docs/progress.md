@@ -1,5 +1,26 @@
 # 项目推进记录
 
+## Stage5B：学习型感知、域隔离与颜色捷径筛查
+
+状态：已形成可复核的失败边界，未通过 Stage5B，未进入 Stage5C。紧凑证据包完整，但 `READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
+
+已完成：
+
+- 新增 `sanitation_learning`，含五类各六变体、12 个硬负样本、许可清单、scene/asset/texture/world 隔离、RGB-D/semantic/instance/map-pose/COCO 生成、标注 QA、训练、ONNX 评测、颜色压力和 J6 预检。
+- 候选 A 为已训练 1×1 Conv 基线；候选 B 为 137,078 参数、6 Conv + 5 ReLU 的上下文模型；候选 C 因 ONNX/J6 算子风险明确 deferred。选择未使用测试集。
+- 三次结构性筛查后冻结：最佳验证 macro F1 `0.38637`，100 个未见 scene / 1000 帧离散 macro P/R/F1 `0.00752/0.00784/0.00768`，leaf/puddle IoU `0.00376/0.2494`，颜色压力 aggregate macro F1 `0.05192`；map RMSE `0.09731 m` 是唯一主要精度通过项。
+- 修正评测命名：无置信度排序 PR 曲线时，`ap50`/`ap50_95` 为 null；实际 IoU 匹配分数使用独立字段，禁止冒充 AP。
+- 训练模型真实接入 Gazebo RGB-D/TF/ONNX Runtime 链，处理 161 帧并发布分割与 map targets，且 `ground_truth_input_used=false`；该运行只作为接口诊断，正式 30 seed/10 分钟门为 false。
+- 回归通过：`py scripts/ci_fast.py` 为 57 passed；Stage5A 固定颜色离线/30 次状态评测/实时 Gazebo 通过；Stage4W seed 0 为 17/17、经验覆盖率 94.2%、碰撞/keepout/刷盘违规 0。
+
+停止边界：
+
+- 当前 D1 数据是程序化 renderer，不是 Gazebo camera 实际渲染；500 seed/5000 帧正式集未执行。
+- 颜色捷径和未见泛化失败后，按规划包停止条件不执行 30-seed 正式实时门与 30 次真实 Nav2 spot-clean，避免用运行可达性替代精度。
+- D2 无授权真实数据；J6 官方工具链、转换/量化和实板 FPS 均无证据；理论效率 `1053 m²/h < 3500 m²/h`。
+
+复核入口：`GPT_REVIEW_STAGE5B.md`、`docs/stage5b-learned-perception.md` 与 `artifacts/stage5b_20260719_review/`。原始三次筛查、Docker workspace、数据卷与 rosbag 在用户确认前保留本机。
+
 ## Stage5A：垃圾感知真值闭环、数据集与定点清扫
 
 状态：正式实现已覆盖 registry、GT、20-scene 数据、ONNX Runtime、RGB-D 到 map、多帧 tracker、30-seed synthetic task-state E2E 和 Stage4W 回归。紧凑复核目录的 9 个机器 gate 全部通过，`READY_FOR_GPT_REVIEW_STAGE5A=true`、`READY_FOR_STAGE5B=true`。

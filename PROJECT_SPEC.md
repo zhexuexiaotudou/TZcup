@@ -1,5 +1,13 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## Stage5B 学习型感知契约
+
+- D0 固定颜色模型只作 Stage5A 回归基线；Stage5B 候选必须从随机初始化经优化器训练，模型卡必须记录数据域、种子、环境、候选选择和权重来源。
+- D1 正式门必须使用 Gazebo 相机实际渲染的 RGB-D，不得把 NumPy/OpenCV 程序化图像命名为 Gazebo camera 数据。scene、asset、texture、world 和相邻帧必须按合同隔离，测试集不得参与候选选择。
+- 每类至少六个许可明确的变体，并加入同色异类、异色同类、背景换色、纹理/形状、曝光和积水混淆等压力测试；颜色捷径失败即停止正式端到端推进。
+- AP 只有在保留置信度排序预测并形成 precision-recall 曲线时才可报告；IoU 匹配 Jaccard 分数不得命名为 AP。
+- D2 真实数据、J6 转换/量化、J6 实板运行、真实 Nav2 spot-clean 和竞赛效率均是独立 fail-closed 门，禁止以 ONNX 可加载、单次 Gazebo 运行或理论接口兼容替代。
+
 ## Stage5A 感知与定点清扫契约
 
 - 类别必须由版本化 registry 的精确 Gazebo identity 解析；模型名子串不得决定目标/障碍语义。

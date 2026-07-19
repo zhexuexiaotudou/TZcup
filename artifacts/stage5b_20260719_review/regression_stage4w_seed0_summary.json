@@ -1,0 +1,2323 @@
+{
+  "schema_version": 1,
+  "stage": "Stage4W",
+  "seed": 0,
+  "coverage_exit_code": 0,
+  "coverage": {
+    "schema_version": 2,
+    "mission_id": "demo_coverage_001",
+    "planner": "OpenNav Coverage + Fields2Cover",
+    "planning_success": true,
+    "transit_to_start_success": true,
+    "full_execution_success": true,
+    "empirical_coverage_success": true,
+    "safety_success": true,
+    "competition_efficiency_pass": false,
+    "success": true,
+    "operation_width_m": 0.65,
+    "swath_count": 9,
+    "turn_count": 8,
+    "nav_path_pose_count": 393,
+    "component_count": 17,
+    "component_results": [
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 2.7643978595733643,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 2.2707555294036865,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.875841498374939,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.3821989297866821,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 0.8885564804077148,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 0.4936424791812897,
+                "speed": 0.3318803310394287
+              }
+            ],
+            "terminal_estimated_pose": [
+              1.7078644639309726,
+              -2.6709260450466927,
+              0.014803691053570933
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              1.6703024553275716,
+              -2.6582018175795383,
+              0.014880323604149957
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 0,
+        "brush_enabled": true,
+        "path_pose_count": 31,
+        "planned_length_m": 2.9618549346923806,
+        "goal_pose": {
+          "x": 1.9618549346923801,
+          "y": -2.675,
+          "yaw": -1.609927270747946e-08
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.25402314136031584,
+            "heading_rad": 0.01480370715284364
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.29203600318522066,
+            "heading_rad": 0.014880339703422663
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 1.9030194282531738,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.8028756380081177,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.4022859334945679,
+                "speed": 0.2464703470468521
+              },
+              {
+                "distance_to_goal": 1.201952338218689,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 1.10178542137146,
+                "speed": 0.14465868473052979
+              },
+              {
+                "distance_to_goal": 1.10178542137146,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 1.001618504524231,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 1.001618504524231,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.901451587677002,
+                "speed": 0.13866101205348969
+              },
+              {
+                "distance_to_goal": 0.8012847304344177,
+                "speed": 0.1466677039861679
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.15202046930789948
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.13991779088974
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.12524084746837616
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.10317686945199966
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.10124880820512772
+              }
+            ],
+            "terminal_estimated_pose": [
+              2.2573593222707315,
+              -1.9519143352948114,
+              3.1295625495139197
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              2.232402972344336,
+              -1.9310036924091996,
+              3.1247771302662124
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "turn",
+        "index": 0,
+        "brush_enabled": false,
+        "path_pose_count": 20,
+        "planned_length_m": 1.9030193748524813,
+        "goal_pose": {
+          "x": 2.0218243114668626,
+          "y": -2.02136160157856,
+          "yaw": -2.8813079682258036
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.24555989922759083,
+            "heading_rad": 0.2723147894398628
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.2291460760440999,
+            "heading_rad": 0.27710020868757046
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 2.7643978595733643,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 2.2707555294036865,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.875841498374939,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.3821989297866821,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 0.8885564804077148,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 0.4936424791812897,
+                "speed": 0.2718270719051361
+              }
+            ],
+            "terminal_estimated_pose": [
+              -0.7452259145682647,
+              -2.023297712124526,
+              3.1256023425820523
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -0.7615911775260802,
+              -2.0037058998785415,
+              3.1256049002452584
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 1,
+        "brush_enabled": true,
+        "path_pose_count": 31,
+        "planned_length_m": 2.9618549346923846,
+        "goal_pose": {
+          "x": -1.0,
+          "y": -2.025,
+          "yaw": 3.1415926213912435
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.2547797723360081,
+            "heading_rad": 0.01599027880919124
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.23935790217451294,
+            "heading_rad": 0.015987721145985123
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 1.9030194282531738,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.9030194282531738,
+                "speed": 0.411326140165329
+              },
+              {
+                "distance_to_goal": 1.5024540424346924,
+                "speed": 0.13985483348369598
+              },
+              {
+                "distance_to_goal": 1.10178542137146,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 1.001618504524231,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.901451587677002,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.901451587677002,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.8012847304344177,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.8012847304344177,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.12458393722772598
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.09801525622606277
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.08949755132198334
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.08090777695178986
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.06884793192148209
+              },
+              {
+                "distance_to_goal": 0.3004501163959503,
+                "speed": 0.06012817099690437
+              },
+              {
+                "distance_to_goal": 0.3004501163959503,
+                "speed": 0.053576353937387466
+              }
+            ],
+            "terminal_estimated_pose": [
+              -1.2525744007229707,
+              -1.3740230872939665,
+              0.08909715164938257
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -1.2632303875166446,
+              -1.3496395088603412,
+              0.09069840619209664
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "turn",
+        "index": 1,
+        "brush_enabled": false,
+        "path_pose_count": 20,
+        "planned_length_m": 1.9030193748524822,
+        "goal_pose": {
+          "x": -1.0599693767744816,
+          "y": -1.3713616015785597,
+          "yaw": -0.2602846853639918
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.1926234117557141,
+            "heading_rad": 0.3493818370133744
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.20441841355412338,
+            "heading_rad": 0.3509830915560884
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.7643978595733643,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.566941022872925,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.2707555294036865,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.9745699167251587,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.6783844232559204,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.3821989297866821,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.0860134363174438,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.7898280024528503,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.4936424791812897,
+                "speed": 0.2125600278377533
+              }
+            ],
+            "terminal_estimated_pose": [
+              1.6816207048056115,
+              -1.374342315329225,
+              -0.004951737095625575
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              1.674852924412371,
+              -1.3547091673071694,
+              -0.004984554419354061
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 2,
+        "brush_enabled": true,
+        "path_pose_count": 31,
+        "planned_length_m": 2.96185493469238,
+        "goal_pose": {
+          "x": 1.9618549346923801,
+          "y": -1.375,
+          "yaw": 0.0
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.2802350016492523,
+            "heading_rad": 0.004951737095625575
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.2877183897427046,
+            "heading_rad": 0.004984554419354061
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 1.9030194282531738,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.9030194282531738,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.8028756380081177,
+                "speed": 0.3857403099536896
+              },
+              {
+                "distance_to_goal": 1.001618504524231,
+                "speed": 0.147807776927948
+              },
+              {
+                "distance_to_goal": 0.901451587677002,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.901451587677002,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.8012847304344177,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.8012847304344177,
+                "speed": 0.14423711597919464
+              },
+              {
+                "distance_to_goal": 0.8012847304344177,
+                "speed": 0.14145471155643463
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.1393429934978485
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.13705037534236908
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.11909142136573792
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.11201076954603195
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.09502897411584854
+              },
+              {
+                "distance_to_goal": 0.3004501163959503,
+                "speed": 0.10052952915430069
+              }
+            ],
+            "terminal_estimated_pose": [
+              2.2694964425758646,
+              -0.6265862241578336,
+              -3.127102712293432
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              2.242585834862906,
+              -0.6242837383952146,
+              -3.1219431476641537
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "turn",
+        "index": 2,
+        "brush_enabled": false,
+        "path_pose_count": 20,
+        "planned_length_m": 1.903019374852481,
+        "goal_pose": {
+          "x": 2.0218243114668626,
+          "y": -0.7213616015785598,
+          "yaw": -2.8813079682258036
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.2651864564666072,
+            "heading_rad": 0.24579474406762847
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.24116335072391515,
+            "heading_rad": 0.2406351794383501
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.6656694412231445,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.3694839477539062,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.073298454284668,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.7771129608154297,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.4809274673461914,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.1847419738769531,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.9872849583625793,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.6910994648933411,
+                "speed": 0.2754540741443634
+              },
+              {
+                "distance_to_goal": 0.39491400122642517,
+                "speed": 0.1769901067018509
+              }
+            ],
+            "terminal_estimated_pose": [
+              -0.7628462652462,
+              -0.7489768723059588,
+              -3.129767113238058
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -0.7586688039258096,
+              -0.7177193063639532,
+              -3.1290696276937147
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 3,
+        "brush_enabled": true,
+        "path_pose_count": 31,
+        "planned_length_m": 2.961854934692383,
+        "goal_pose": {
+          "x": -1.0,
+          "y": -0.7250000000000001,
+          "yaw": 3.1415926455401557
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.23836271586230084,
+            "heading_rad": 0.011825548401372532
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.241440996308459,
+            "heading_rad": 0.012523033945715658
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.10017555952072144,
+                "speed": 0.256835013628006
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.12960965931415558
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.7011178731918335,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.12550121545791626
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.088264599442482
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.07948416471481323
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.07355024665594101
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.06115919351577759
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.0729769915342331
+              }
+            ],
+            "terminal_estimated_pose": [
+              -1.2256042096386506,
+              -0.08430581053430472,
+              0.10709052120054174
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -1.257238158867958,
+              -0.05546925883162725,
+              0.11046880230081631
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "turn",
+        "index": 3,
+        "brush_enabled": false,
+        "path_pose_count": 20,
+        "planned_length_m": 1.9030193748524822,
+        "goal_pose": {
+          "x": -1.0599693767744816,
+          "y": -0.07136160157855986,
+          "yaw": -0.2602846853639918
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.1661398519423657,
+            "heading_rad": 0.36737520656453354
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.19790790521510115,
+            "heading_rad": 0.37075348766480815
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.961854934692383,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.863126516342163,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.6656694412231445,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.3694839477539062,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.073298454284668,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.7771129608154297,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.4809274673461914,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.1847419738769531,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.8885564804077148,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.5923709869384766,
+                "speed": 0.22944346070289612
+              },
+              {
+                "distance_to_goal": 0.39491400122642517,
+                "speed": 0.1433706432580948
+              }
+            ],
+            "terminal_estimated_pose": [
+              1.7063069437149052,
+              -0.07014881658013358,
+              -0.025056348123373873
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              1.7040580314708018,
+              -0.06346073159480155,
+              -0.025071444055310078
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 4,
+        "brush_enabled": true,
+        "path_pose_count": 31,
+        "planned_length_m": 2.96185493469238,
+        "goal_pose": {
+          "x": 1.9618549346923801,
+          "y": -0.07500000000000018,
+          "yaw": 1.0062045442174662e-09
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.25559403293738453,
+            "heading_rad": 0.025056349129578413
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.25805502906543604,
+            "heading_rad": 0.02507144506151462
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 0.6025962233543396,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.8034692406654358,
+                "speed": 0.1821635663509369
+              },
+              {
+                "distance_to_goal": 1.1047743558883667,
+                "speed": 0.1954222321510315
+              },
+              {
+                "distance_to_goal": 1.3056410551071167,
+                "speed": 0.1445624977350235
+              },
+              {
+                "distance_to_goal": 1.3056410551071167,
+                "speed": 0.1404581069946289
+              },
+              {
+                "distance_to_goal": 1.3056410551071167,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 1.3056410551071167,
+                "speed": 0.1369839608669281
+              },
+              {
+                "distance_to_goal": 1.2052081823349,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 1.2052081823349,
+                "speed": 0.14843109250068665
+              },
+              {
+                "distance_to_goal": 1.2052081823349,
+                "speed": 0.1522979885339737
+              },
+              {
+                "distance_to_goal": 1.1047743558883667,
+                "speed": 0.1368778944015503
+              },
+              {
+                "distance_to_goal": 1.1047743558883667,
+                "speed": 0.14220045506954193
+              },
+              {
+                "distance_to_goal": 1.1047743558883667,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 1.00434410572052,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 1.00434410572052,
+                "speed": 0.14332111179828644
+              },
+              {
+                "distance_to_goal": 1.00434410572052,
+                "speed": 0.1610320806503296
+              },
+              {
+                "distance_to_goal": 0.9039012789726257,
+                "speed": 0.17990587651729584
+              },
+              {
+                "distance_to_goal": 0.7030332684516907,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.5021594762802124,
+                "speed": 0.18353642523288727
+              }
+            ],
+            "terminal_estimated_pose": [
+              1.2704764481068704,
+              0.6245678575868299,
+              -2.9027592658122012
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              1.2606691315798138,
+              0.6403881718557355,
+              -2.903207162194294
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "turn",
+        "index": 4,
+        "brush_enabled": false,
+        "path_pose_count": 23,
+        "planned_length_m": 2.209513240382409,
+        "goal_pose": {
+          "x": 1.0301279609259257,
+          "y": 0.5757307046314155,
+          "yaw": -2.998218552655331
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.2452599902123444,
+            "heading_rad": 0.09545928684312965
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.239436462207261,
+            "heading_rad": 0.0950113904610368
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 2.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.7999999523162842,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.5,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.2000000476837158,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.8999999761581421,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.6000000238418579,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.4000000059604645,
+                "speed": 0.16132773458957672
+              }
+            ],
+            "terminal_estimated_pose": [
+              -0.7497931180238226,
+              0.5702127808223163,
+              -3.14054264056629
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -0.7458912854409103,
+              0.5924627535453986,
+              -3.140941955888972
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 5,
+        "brush_enabled": true,
+        "path_pose_count": 21,
+        "planned_length_m": 2.0,
+        "goal_pose": {
+          "x": -1.0,
+          "y": 0.5750000000000002,
+          "yaw": 3.141592647629329
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.25025267482226027,
+            "heading_rad": 0.0010500189839677495
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.2547080418366492,
+            "heading_rad": 0.0006507036612853019
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.2002853900194168,
+                "speed": 0.25954413414001465
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.13695065677165985
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.6009510159492493,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.09419447928667068
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.08230281621217728
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.06603474915027618
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.05485319346189499
+              }
+            ],
+            "terminal_estimated_pose": [
+              -1.2776471061990988,
+              1.2815960649822455,
+              0.08033153586892759
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -1.2709339400195887,
+              1.2607936477070467,
+              0.08290167579622991
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "turn",
+        "index": 5,
+        "brush_enabled": false,
+        "path_pose_count": 20,
+        "planned_length_m": 1.9030193748524822,
+        "goal_pose": {
+          "x": -1.0599693767744816,
+          "y": 1.22863839842144,
+          "yaw": -0.2602846853639918
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.22402702590317614,
+            "heading_rad": 0.3406162212329194
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.21340104733065002,
+            "heading_rad": 0.3431863611602217
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 2.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.899999976158142,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.600000023841858,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.2999999523162842,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.100000023841858,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.800000011920929,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.5,
+                "speed": 0.1564214527606964
+              }
+            ],
+            "terminal_estimated_pose": [
+              0.7669839111363331,
+              1.2230893067129562,
+              0.010295747131800592
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              0.7545980079431649,
+              1.2356074627890021,
+              0.010623317249783281
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 6,
+        "brush_enabled": true,
+        "path_pose_count": 21,
+        "planned_length_m": 2.0000000000000004,
+        "goal_pose": {
+          "x": 1.0,
+          "y": 1.2249999999999996,
+          "yaw": -1.1920928688624588e-08
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.23302392241604175,
+            "heading_rad": 0.01029575905272928
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.24563113803482456,
+            "heading_rad": 0.01062332917071197
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.10017555952072144,
+                "speed": 0.25101110339164734
+              },
+              {
+                "distance_to_goal": 0.3004501163959503,
+                "speed": 0.12084030359983444
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.11999999731779099
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.09538162499666214
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.08878060430288315
+              },
+              {
+                "distance_to_goal": 0.3004501163959503,
+                "speed": 0.07389269024133682
+              },
+              {
+                "distance_to_goal": 0.3004501163959503,
+                "speed": 0.06530070304870605
+              }
+            ],
+            "terminal_estimated_pose": [
+              1.279868994990714,
+              1.9156074550667792,
+              3.068582835920675
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              1.2889777967376688,
+              1.9223760084984425,
+              3.0659866406351535
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "turn",
+        "index": 6,
+        "brush_enabled": false,
+        "path_pose_count": 20,
+        "planned_length_m": 1.9030193748524822,
+        "goal_pose": {
+          "x": 1.0599693767744816,
+          "y": 1.8786383984214394,
+          "yaw": -2.8813079682258014
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.2229855449146674,
+            "heading_rad": 0.33329450303311003
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.23314766768999318,
+            "heading_rad": 0.33589069831863166
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 2.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 2.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.7999999523162842,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.5,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 1.2000000476837158,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.8999999761581421,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.699999988079071,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.4000000059604645,
+                "speed": 0.18208330869674683
+              }
+            ],
+            "terminal_estimated_pose": [
+              -0.6884731701954667,
+              1.9033912164980193,
+              -3.1289666631121875
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -0.6868852846532256,
+              1.8769234441102678,
+              -3.131064019610979
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 7,
+        "brush_enabled": true,
+        "path_pose_count": 21,
+        "planned_length_m": 2.0,
+        "goal_pose": {
+          "x": -1.0,
+          "y": 1.875,
+          "yaw": 3.141592653589793
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.3128178813020446,
+            "heading_rad": 0.012625990477605842
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.3131206230894683,
+            "heading_rad": 0.01052863397881445
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.0,
+                "speed": 0.28349998593330383
+              },
+              {
+                "distance_to_goal": 0.2002853900194168,
+                "speed": 0.2225760966539383
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.12102118134498596
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.1287592202425003
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.14358389377593994
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.141480952501297
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.5007840991020203,
+                "speed": 0.156829833984375
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.14213953912258148
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.13657163083553314
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.13563428819179535
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.11945747584104538
+              },
+              {
+                "distance_to_goal": 0.4006173610687256,
+                "speed": 0.1116168424487114
+              },
+              {
+                "distance_to_goal": 0.3004501163959503,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.3004501163959503,
+                "speed": 0.10925997793674469
+              }
+            ],
+            "terminal_estimated_pose": [
+              -1.2866209006101392,
+              2.6533870426824775,
+              -0.03435586011096081
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -1.2609534524118438,
+              2.59380302513894,
+              -0.034324416800257426
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "turn",
+        "index": 7,
+        "brush_enabled": false,
+        "path_pose_count": 20,
+        "planned_length_m": 1.9030193748524824,
+        "goal_pose": {
+          "x": -1.0599693767744816,
+          "y": 2.52863839842144,
+          "yaw": -0.2602846853639918
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.25871439368924304,
+            "heading_rad": 0.22592882525303098
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.21128423328548698,
+            "heading_rad": 0.22596026856373436
+          }
+        }
+      },
+      {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 1.899999976158142,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.899999976158142,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.5199999809265137,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 1.0449999570846558,
+                "speed": 0.44999998807907104
+              },
+              {
+                "distance_to_goal": 0.5699999928474426,
+                "speed": 0.35685139894485474
+              }
+            ],
+            "terminal_estimated_pose": [
+              0.6150772152965657,
+              2.5175225320198216,
+              0.07212962507580613
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              0.6092587946014758,
+              2.5040552006188204,
+              0.07130751745315361
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "swath",
+        "index": 8,
+        "brush_enabled": true,
+        "path_pose_count": 21,
+        "planned_length_m": 1.9000000000000024,
+        "goal_pose": {
+          "x": 0.8999999999999999,
+          "y": 2.5250000000000004,
+          "yaw": -5.019338395210366e-08
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.2850208865514142,
+            "heading_rad": 0.07212967526919008
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.2914946537034679,
+            "heading_rad": 0.07130756764653756
+          }
+        }
+      }
+    ],
+    "transit_to_start": {
+      "success": true,
+      "retries": 0,
+      "attempts": [
+        {
+          "attempt": 1,
+          "accepted": true,
+          "terminal_status": 4,
+          "error_code": 0,
+          "error_name": "NONE",
+          "error_msg": "",
+          "succeeded": true,
+          "feedback": [
+            {
+              "distance_remaining": 0.0,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 3.1573190689086914,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 3.1073923110961914,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 3.086925745010376,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 3.0569255352020264,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 3.1021292209625244,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 3.0630548000335693,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 3.040813684463501,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 2.940985679626465,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 2.7469258308410645,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 2.4969258308410645,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 2.206925630569458,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 1.926925778388977,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 1.6269255876541138,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 1.3669259548187256,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 1.0869252681732178,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 0.7969255447387695,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 0.4269256293773651,
+              "number_of_recoveries": 0.0
+            },
+            {
+              "distance_remaining": 0.20692579448223114,
+              "number_of_recoveries": 0.0
+            }
+          ],
+          "terminal_estimated_pose": [
+            -1.6116324381121716,
+            -2.4707510280790292,
+            -2.2045559024029395
+          ],
+          "terminal_ground_truth_pose_evaluation_only": [
+            -1.6193079378014037,
+            -2.4327475291324827,
+            -2.2037912582977026
+          ],
+          "action_kind": "navigate_to_pose",
+          "controller_id": null,
+          "progress_checker_id": "progress_checker",
+          "goal_checker_id": "goal_checker"
+        }
+      ],
+      "goal_pose": {
+        "x": -1.75,
+        "y": -2.67499994024183,
+        "yaw": -2.1585283735610967
+      },
+      "controller": "NavigateToPose default controller",
+      "progress_checker": "nav2_controller::PoseProgressChecker",
+      "terminal_tracking_error": {
+        "estimated_pose": {
+          "position_m": 0.24670468236835202,
+          "heading_rad": 0.0460275288418428
+        },
+        "ground_truth_evaluation_only": {
+          "position_m": 0.27525741735694226,
+          "heading_rad": 0.0452628847366059
+        }
+      },
+      "entry": {
+        "success": true,
+        "retries": 0,
+        "attempts": [
+          {
+            "attempt": 1,
+            "accepted": true,
+            "terminal_status": 4,
+            "error_code": 0,
+            "error_name": "NONE",
+            "error_msg": "",
+            "succeeded": true,
+            "feedback": [
+              {
+                "distance_to_goal": 0.6464240550994873,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6464240550994873,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6464240550994873,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6464240550994873,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6464240550994873,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.6464240550994873,
+                "speed": 0.12925004959106445
+              },
+              {
+                "distance_to_goal": 0.5472187399864197,
+                "speed": 0.0
+              },
+              {
+                "distance_to_goal": 0.4976160526275635,
+                "speed": 0.11353569477796555
+              },
+              {
+                "distance_to_goal": 0.4480133652687073,
+                "speed": 0.11103396862745285
+              },
+              {
+                "distance_to_goal": 0.34880802035331726,
+                "speed": 0.07016067951917648
+              }
+            ],
+            "terminal_estimated_pose": [
+              -1.0351806513107413,
+              -2.7316547028899514,
+              -0.14164934993701417
+            ],
+            "terminal_ground_truth_pose_evaluation_only": [
+              -1.031296314576247,
+              -2.6935499051140064,
+              -0.14166004653291667
+            ],
+            "action_kind": "follow_path",
+            "controller_id": "FollowPath",
+            "progress_checker_id": "progress_checker",
+            "goal_checker_id": "goal_checker"
+          }
+        ],
+        "kind": "entry",
+        "index": -1,
+        "brush_enabled": false,
+        "path_pose_count": 15,
+        "planned_length_m": 0.8448347558895343,
+        "goal_pose": {
+          "x": -0.8,
+          "y": -2.674999955536139,
+          "yaw": -1.6099273025815822e-08
+        },
+        "terminal_tracking_error": {
+          "estimated_pose": {
+            "position_m": 0.24190845199924044,
+            "heading_rad": 0.14164933383774114
+          },
+          "ground_truth_evaluation_only": {
+            "position_m": 0.23203897466998005,
+            "heading_rad": 0.1416600304336436
+          }
+        }
+      }
+    },
+    "mission_geometry": {
+      "outer_polygon": [
+        [
+          -2.0,
+          -4.0
+        ],
+        [
+          6.0,
+          -4.0
+        ],
+        [
+          6.0,
+          4.0
+        ],
+        [
+          -2.0,
+          4.0
+        ]
+      ],
+      "exclusion_polygons": [
+        [
+          [
+            2.0,
+            1.0
+          ],
+          [
+            4.0,
+            1.0
+          ],
+          [
+            4.0,
+            3.0
+          ],
+          [
+            2.0,
+            3.0
+          ]
+        ],
+        [
+          [
+            2.9618550381170516,
+            -2.963144961882948
+          ],
+          [
+            5.038144961882948,
+            -2.963144961882948
+          ],
+          [
+            5.038144961882948,
+            -1.0368550381170516
+          ],
+          [
+            2.9618550381170516,
+            -1.0368550381170516
+          ]
+        ]
+      ],
+      "cleanable_outer_polygon": [
+        [
+          -1.0,
+          -3.0
+        ],
+        [
+          5.0,
+          -3.0
+        ],
+        [
+          5.0,
+          3.0
+        ],
+        [
+          -1.0,
+          3.0
+        ]
+      ],
+      "cleanable_exclusion_polygons": [
+        [
+          [
+            1.0,
+            0.0
+          ],
+          [
+            5.0,
+            0.0
+          ],
+          [
+            5.0,
+            3.0
+          ],
+          [
+            1.0,
+            3.0
+          ]
+        ],
+        [
+          [
+            1.9618550381170516,
+            -3.0
+          ],
+          [
+            5.0,
+            -3.0
+          ],
+          [
+            5.0,
+            -0.0368550381170516
+          ],
+          [
+            1.9618550381170516,
+            -0.0368550381170516
+          ]
+        ]
+      ],
+      "outer_area_m2": 64.0,
+      "base_excluded_area_m2": 7.999536358966909,
+      "excluded_area_m2": 49.00246393727352,
+      "cleanable_area_m2": 14.997536062726478,
+      "footprint_radius_m": 0.5381449618829485,
+      "safety_margin_m": 0.1,
+      "configured_headland_width_m": 1.0,
+      "required_headland_width_m": 0.9631449618829484,
+      "headland_clearance_valid": true,
+      "world_to_map_translation": [
+        8.0,
+        0.0
+      ],
+      "compiled_static_obstacles": [
+        {
+          "name": "structured_waste_bin",
+          "source_frame": "world",
+          "map_center": [
+            4.0,
+            -2.0
+          ],
+          "size": [
+            0.8,
+            0.65
+          ],
+          "inflated_polygon": [
+            [
+              2.9618550381170516,
+              -2.963144961882948
+            ],
+            [
+              5.038144961882948,
+              -2.963144961882948
+            ],
+            [
+              5.038144961882948,
+              -1.0368550381170516
+            ],
+            [
+              2.9618550381170516,
+              -1.0368550381170516
+            ]
+          ]
+        }
+      ],
+      "ignored_static_obstacles": [
+        {
+          "name": "trash_bin_obstacle",
+          "source_frame": "world",
+          "map_center": [
+            10.0,
+            3.0
+          ],
+          "size": [
+            0.7,
+            0.7
+          ],
+          "reason": "inflated_bounds_outside_outer_polygon"
+        }
+      ]
+    },
+    "route_selection": {
+      "candidates": [
+        {
+          "direction": "forward",
+          "staging_pose": {
+            "x": -1.75,
+            "y": -2.67499994024183,
+            "yaw": -2.1585283735610967
+          },
+          "transit_yaw_source": "fused_pose_to_staging_pose",
+          "operation_entry_yaw": -1.6099272707479423e-08,
+          "footprint_clearance_m": 4.711855038117052,
+          "target_grid_values": {
+            "global_costmap_received": true,
+            "global_costmap_cost": 0,
+            "keepout_mask_received": true,
+            "keepout_mask_value": 0,
+            "speed_mask_received": true,
+            "speed_mask_value": 0,
+            "global_costmap_bounds": {
+              "origin_xy": [
+                -6.336,
+                -8.352
+              ],
+              "resolution_m": 0.019999999552965164,
+              "width": 1661,
+              "height": 829,
+              "axis_aligned_max_xy": [
+                26.88399925747514,
+                8.22799962940812
+              ]
+            }
+          },
+          "target_cost_and_keepout_clear": true,
+          "staging_inside_operation_polygon": true,
+          "collision_free_footprint_path": true,
+          "success": true,
+          "terminal_status": 4,
+          "error_code": 0,
+          "error_name": "NONE",
+          "error_msg": "",
+          "path_length_m": 3.1850396844144835,
+          "path_pose_count": 317,
+          "path_start": [
+            0.023999857842921912,
+            -0.03200018596649201
+          ],
+          "path_goal": [
+            -1.75,
+            -2.67499994024183
+          ]
+        },
+        {
+          "direction": "reverse",
+          "staging_pose": {
+            "x": 1.649999999999999,
+            "y": 2.5249999623549626,
+            "yaw": 1.0003842561655352
+          },
+          "transit_yaw_source": "fused_pose_to_staging_pose",
+          "operation_entry_yaw": 3.1415926033964094,
+          "footprint_clearance_m": 0.350000000000001,
+          "target_grid_values": {
+            "global_costmap_received": true,
+            "global_costmap_cost": 99,
+            "keepout_mask_received": true,
+            "keepout_mask_value": 0,
+            "speed_mask_received": true,
+            "speed_mask_value": 0,
+            "global_costmap_bounds": {
+              "origin_xy": [
+                -6.336,
+                -8.352
+              ],
+              "resolution_m": 0.019999999552965164,
+              "width": 1661,
+              "height": 829,
+              "axis_aligned_max_xy": [
+                26.88399925747514,
+                8.22799962940812
+              ]
+            }
+          },
+          "target_cost_and_keepout_clear": false,
+          "staging_inside_operation_polygon": true,
+          "collision_free_footprint_path": true,
+          "success": true,
+          "terminal_status": 4,
+          "error_code": 0,
+          "error_name": "NONE",
+          "error_msg": "",
+          "path_length_m": 3.0925059663941163,
+          "path_pose_count": 308,
+          "path_start": [
+            0.003999858289956748,
+            -0.03200018596649201
+          ],
+          "path_goal": [
+            1.5999999955296507,
+            2.5349999565435097
+          ]
+        }
+      ],
+      "selected_direction": "forward",
+      "grid_diagnostics_ready": true,
+      "selection_basis": "shortest reachable staging path with geometry clearance"
+    },
+    "swath_exclusion_intersection_count": 0,
+    "planned_metrics": {
+      "resolution_m": 0.1,
+      "target_area_m2": 15.000000000000004,
+      "covered_area_m2": 14.790000000000003,
+      "missed_area_m2": 0.21000000000000085,
+      "repeated_area_m2": 0.5000000000000001,
+      "coverage_rate": 0.986,
+      "miss_rate": 0.014,
+      "repeat_rate": 0.03333333333333333,
+      "gross_swept_area_m2": 15.290000000000003,
+      "metric_basis": "planned_fields2cover_swaths_rasterized",
+      "path_length_m": 38.69061789387719,
+      "swath_endpoint_compatibility_repair": true,
+      "outer_area_m2": 64.0,
+      "excluded_area_m2": 49.00246393727352,
+      "cleanable_area_m2": 14.997536062726478
+    },
+    "empirical_metrics": {
+      "resolution_m": 0.1,
+      "target_area_m2": 15.000000000000004,
+      "covered_area_m2": 14.130000000000003,
+      "missed_area_m2": 0.870000000000001,
+      "repeated_area_m2": 0.56,
+      "coverage_rate": 0.942,
+      "miss_rate": 0.058,
+      "repeat_rate": 0.037333333333333336,
+      "brush_on_duration_sec": 222.48,
+      "metric_basis": "gazebo_ground_truth_cleaning_footprint_brush_on",
+      "actual_path_length_m": 42.64038947103144,
+      "actual_duration_sec": 258.13059002999944,
+      "gross_efficiency_m2_h": 197.0630446941148,
+      "net_efficiency_m2_h": 197.0630446941148
+    },
+    "recovery_count": 0,
+    "collision_count": 0,
+    "keepout_violation_sample_count": 0,
+    "brush_state_violation_sample_count": 0,
+    "minimum_lidar_range_m": 0.8543107509613037,
+    "brush_disabled_on_exit": true,
+    "localization_regression_during_coverage": {
+      "sample_count": 2485,
+      "rmse_m": 0.03532654996026727,
+      "p95_m": 0.06848860944253564,
+      "max_m": 0.11397582467306606,
+      "estimate_sample_count": 2485,
+      "truth_sample_count": 2485,
+      "dropped_estimate_count": 0,
+      "sync_tolerance_sec": 0.05,
+      "sync_error_sec": {
+        "sample_count": 2485,
+        "rmse_sec": 0.014421088961693033,
+        "p95_sec": 0.020000000000038654,
+        "max_sec": 0.040000000000020464
+      },
+      "metric_basis": "nearest_neighbour_ros_timestamp_without_truth_reuse",
+      "pass_rmse_and_p95_at_most_0_05m": false,
+      "pass_rmse_at_most_0_05m": true,
+      "formal_gate_basis": "Stage4V-compatible per-seed XY RMSE <= 0.05 m; pointwise P95 is diagnostic"
+    },
+    "execution_boundary": "All path components were required to terminate SUCCEEDED; no 180-pose shortcut or bounded cancellation is accepted."
+  },
+  "rosbag_replay": true,
+  "static_gate_pass": true
+}

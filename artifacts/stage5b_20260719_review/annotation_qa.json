@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "checked_frame_count": 500,
+  "checked_instance_count": 2722,
+  "checked_negative_count": 1788,
+  "occluded_target_count": 2193,
+  "truncated_target_count": 247,
+  "area_target_count": 1064,
+  "annotation_error_count": 0,
+  "annotation_error_rate": 0.0,
+  "asset_split_leakage": false,
+  "errors": [],
+  "gates": {
+    "each_class_at_least_100_instances": true,
+    "negative_samples_at_least_100": true,
+    "occluded_targets_at_least_50": true,
+    "truncated_targets_at_least_50": true,
+    "area_targets_at_least_50": true,
+    "annotation_error_rate_at_most_0_01": true,
+    "asset_split_leakage_zero": true
+  },
+  "annotation_qa_pass": true
+}

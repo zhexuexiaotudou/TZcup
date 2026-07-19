@@ -40,8 +40,14 @@ def main() -> None:
             super().__init__("garbage_perception")
             self.declare_parameter("backend", "onnxruntime")
             self.declare_parameter("model_path", "")
+            self.declare_parameter("model_id", "stage5a_synthetic_color_model_v1")
+            self.declare_parameter("model_scope", "synthetic_color_domain_only")
+            self.declare_parameter("learned_weights", False)
             backend = str(self.get_parameter("backend").value)
             model_path = Path(str(self.get_parameter("model_path").value))
+            self.model_id = str(self.get_parameter("model_id").value)
+            self.model_scope = str(self.get_parameter("model_scope").value)
+            self.learned_weights = bool(self.get_parameter("learned_weights").value)
             if backend != "onnxruntime":
                 raise RuntimeError(f"live Stage5A simulation requires onnxruntime, got {backend}")
             if not model_path.is_file():
@@ -242,6 +248,9 @@ def main() -> None:
                 "requested_backend": "onnxruntime",
                 "active_backend": "onnxruntime",
                 "model_sha256": self.model_sha256,
+                "model_id": self.model_id,
+                "model_scope": self.model_scope,
+                "learned_weights": self.learned_weights,
                 "class_order": list(class_order),
                 "frame_count": self.frame_count,
                 "last_latency_ms": self.last_latency_ms,
@@ -253,7 +262,7 @@ def main() -> None:
                 "map_targets_fail_closed_reason": self.last_projection_error,
                 "ground_truth_input_used": False,
                 "ground_truth_control_violation_count": 0,
-                "synthetic_only_model": True,
+                "synthetic_only_model": self.model_scope != "real_domain_validated",
                 "competition_perception_pass": False,
             }
             self.diagnostics_publisher.publish(String(data=json.dumps(payload, sort_keys=True)))

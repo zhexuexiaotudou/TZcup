@@ -53,7 +53,8 @@ for name in "${!models[@]}"; do
   grep -qi 'success' "${OUT}/spawn_${name}.log"
 done
 
-setsid ros2 launch sanitation_perception stage5a_perception.launch.py \
+perception_launch="${STAGE5A_PERCEPTION_LAUNCH:-stage5a_perception.launch.py}"
+setsid ros2 launch sanitation_perception "${perception_launch}" \
   model_path:="${MODEL_PATH}" use_sim_time:=true \
   > "${OUT}/live_perception.log" 2>&1 & pids+=("$!")
 
@@ -118,8 +119,10 @@ fi
 
 grep -q 'active_backend.*onnxruntime' "${OUT}/perception_diagnostics.txt"
 grep -q 'ground_truth_input_used.*false' "${OUT}/perception_diagnostics.txt"
-grep -Eq 'last_detection_count.*[1-9][0-9]*' "${OUT}/perception_diagnostics.txt"
-grep -Eq 'last_map_target_count.*[1-9][0-9]*' "${OUT}/perception_diagnostics.txt"
+if [[ "${STAGE5A_REQUIRE_NONEMPTY:-true}" == "true" ]]; then
+  grep -Eq 'last_detection_count.*[1-9][0-9]*' "${OUT}/perception_diagnostics.txt"
+  grep -Eq 'last_map_target_count.*[1-9][0-9]*' "${OUT}/perception_diagnostics.txt"
+fi
 grep -q 'map_targets_fail_closed.*false' "${OUT}/perception_diagnostics.txt"
 grep -q 'registry_target_count.*5' "${OUT}/ground_truth_diagnostics.txt"
 grep -Eq 'published_target_count.*[1-5]' "${OUT}/ground_truth_diagnostics.txt"
@@ -150,7 +153,7 @@ def bag_topic_has_messages(topic):
 
 report = {
     'schema_version': 1,
-    'stage': 'Stage5A',
+    'stage': __import__('os').environ.get('STAGE5A_REPORT_STAGE', 'Stage5A'),
     'rgb_topic_received': (out / 'rgb_image.txt').stat().st_size > 0,
     'depth_topic_received': (out / 'depth_image.txt').stat().st_size > 0,
     'camera_info_received': (out / 'camera_info.txt').stat().st_size > 0,
@@ -161,6 +164,9 @@ report = {
     'ground_truth_negative_target_count': ground_truth_diagnostics.get('negative_models_published_as_targets'),
     'ground_truth_occlusion_filter': ground_truth_diagnostics.get('occlusion_filter'),
     'active_backend': diagnostics.get('active_backend'),
+    'model_id': diagnostics.get('model_id'),
+    'model_scope': diagnostics.get('model_scope'),
+    'learned_weights': diagnostics.get('learned_weights'),
     'inference_frame_count': diagnostics.get('frame_count', 0),
     'last_detection_count': diagnostics.get('last_detection_count', 0),
     'last_map_target_count': diagnostics.get('last_map_target_count', 0),
@@ -194,6 +200,19 @@ report['live_smoke_pass'] = all([
     not report['rosbag_required'] or report['rosbag_depth_messages_present'],
     not report['rosbag_required'] or report['rosbag_perception_messages_present'],
 ])
+report['pipeline_transport_pass'] = all([
+    report['rgb_topic_received'], report['depth_topic_received'],
+    report['camera_info_received'], report['segmentation_topic_received'],
+    report['ground_truth_topic_received'], report['active_backend'] == 'onnxruntime',
+    report['inference_frame_count'] > 0, report['ground_truth_input_used'] is False,
+    report['map_targets_fail_closed'] is False,
+])
+if report['stage'].startswith('Stage5B'):
+    report['formal_stage5b_live_gazebo_pass'] = False
+    report['formal_stage5b_live_gazebo_unavailable_reason'] = (
+        'diagnostic is one seed and shorter than 10 minutes; D1 and color-shortcut stop conditions failed'
+    )
 (out / 'stage5a_live_smoke_report.json').write_text(json.dumps(report, indent=2) + '\n', encoding='utf-8')
-assert report['live_smoke_pass'], report
+if __import__('os').environ.get('STAGE5A_ASSERT_PASS', 'true') == 'true':
+    assert report['live_smoke_pass'], report
 PY

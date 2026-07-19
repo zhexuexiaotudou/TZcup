@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "id": "screening1",
+      "change": "pixel/context baseline",
+      "selected_validation_macro_f1": 0.063,
+      "test_discrete_macro_f1": 0.00185,
+      "result": "fail"
+    },
+    {
+      "id": "screening2",
+      "change": "RF23 CE+Dice and channel/edge augmentation",
+      "selected_validation_macro_f1": 0.346,
+      "test_discrete_macro_f1": 0.0166,
+      "result": "fail"
+    },
+    {
+      "id": "screening3",
+      "change": "RF51 context model and morphology",
+      "selected_validation_macro_f1": 0.38637346322611926,
+      "test_discrete_macro_f1": 0.0076769537847382165,
+      "result": "fail_and_freeze"
+    }
+  ],
+  "conclusion": "three structural attempts did not generalize; freeze evidence and require a true Gazebo-camera D1 pipeline before further formal E2E"
+}

@@ -83,6 +83,7 @@ def run_ros_independent_tests() -> None:
     dataset_package = SOURCE_ROOT / "sanitation_dataset"
     ground_truth_package = SOURCE_ROOT / "sanitation_ground_truth"
     spot_cleaning_package = SOURCE_ROOT / "sanitation_spot_cleaning"
+    learning_package = SOURCE_ROOT / "sanitation_learning"
     sys.path.insert(0, str(coverage_package))
     sys.path.insert(0, str(tasks_package))
     sys.path.insert(0, str(gnss_package))
@@ -90,6 +91,7 @@ def run_ros_independent_tests() -> None:
     sys.path.insert(0, str(dataset_package))
     sys.path.insert(0, str(ground_truth_package))
     sys.path.insert(0, str(spot_cleaning_package))
+    sys.path.insert(0, str(learning_package))
     test_paths = (
         coverage_package / "test" / "test_metrics.py",
         coverage_package / "test" / "test_stage4w_geometry.py",
@@ -106,6 +108,8 @@ def run_ros_independent_tests() -> None:
         dataset_package / "test" / "test_synthetic.py",
         ground_truth_package / "test" / "test_visibility.py",
         spot_cleaning_package / "test" / "test_coordinator.py",
+        learning_package / "test" / "test_assets.py",
+        learning_package / "test" / "test_rendered.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])
     if result != pytest.ExitCode.OK:

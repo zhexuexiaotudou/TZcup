@@ -1,0 +1,17 @@
+schema_version: 1
+seed: 2051
+input_shape: [1, 3, 96, 128]
+opset: 13
+batch_size: 32
+epochs: 20
+learning_rate: 0.003
+weight_decay: 0.0001
+training_scene_seeds: 350
+frames_per_scene: 10
+validation_scene_seeds: 50
+test_scene_seeds: 100
+class_order: [background, plastic_bottle, metal_can, paper_litter, leaf_pile, puddle]
+candidates:
+  - {id: candidate_a_pixel, architecture: learned_1x1_conv, role: transparent_baseline}
+  - {id: candidate_b_context, architecture: five_layer_dilated_context_conv_relu, role: selected_candidate}
+  - {id: candidate_c_instance, architecture: deferred, role: compatibility_risk_not_run}
