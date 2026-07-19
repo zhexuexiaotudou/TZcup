@@ -2,7 +2,9 @@
 
 ## 结论
 
-Stage5BR 已把 Stage5B 的数据真实性阻断项从“程序化 P1 renderer”推进为可复现的真实 Gazebo Harmonic camera 数据链。训练链 micro-overfit 与 PyTorch/ONNX/ROS 预处理一致性均通过；G1 smoke 采集了 50 个独立 scene、500 帧共视场 RGB-D、semantic 与 instance 数据，标注、同步和 split QA 通过。但三次学习模型筛查均未同时达到 in-domain、跨资产/世界和颜色压力门，因此本轮停在 `G1_model_recovery_in_domain_cross_asset_world_and_color_stress`，没有启动 500 scene/5000 帧正式数据、正式 live 门或真实 Nav2 spot-clean。
+Stage5BR 已把 Stage5B 的数据真实性阻断项从“程序化 P1 renderer”推进为可复现的真实 Gazebo Harmonic camera 数据链。训练链 micro-overfit 与 PyTorch/ONNX/ROS 预处理一致性均通过；G1 smoke 采集了 50 个独立 scene、500 帧共视场 RGB-D、semantic 与 instance 数据，标注、同步和 split QA 通过。但三次学习模型筛查均未同时达到 in-domain、同世界跨资产和颜色压力门，因此本轮停在 `G1_model_recovery_in_domain_cross_asset_same_world_and_color_stress`，没有启动 500 scene/5000 帧正式数据、正式 live 门或真实 Nav2 spot-clean。
+
+> Stage5BR2 语义勘误：历史 JSON 字段 `cross_asset_world` 实际只隔离了同一个 G1 世界中的资产，应规范化为 `cross_asset_same_world`。G1 只有一个 world，因此真正的 `cross_world=null`，`cross_material` 也没有独立证据；历史 JSON 为保持原始哈希不原地改写。
 
 ```text
 REVIEW_PACKET_COMPLETE=true
@@ -58,13 +60,13 @@ competition_perception_pass=false
 
 ## 三次模型筛查
 
-| 尝试 | 数据/改动 | in-domain F1 | cross asset/world F1 | cross leaf/puddle mIoU | color stress F1 | 通过 |
+| 尝试 | 数据/改动 | in-domain F1 | cross asset/same-world F1 | same-world leaf/puddle mIoU | color stress F1 | 通过 |
 |---|---|---:|---:|---:|---:|---|
 | 1 | 4 m camera，基础增强 | 0.84511 | 0.65804 | 0.86313 | 0.47647 | 否 |
 | 2 | 2.6 m camera，重颜色增强 | 0.69869 | 0.53370 | 0.66737 | 0.40960 | 否 |
 | 3 | 2.6 m camera，48-base U-Net、中增强/稀有类加权 | 0.71019 | 0.37575 | 0.45005 | 0.27521 | 否 |
 
-筛查门为 in-domain F1 ≥0.90、leaf/puddle mIoU ≥0.75、cross asset/world F1 ≥0.70、color stress F1 ≥0.60。三次均未全部通过；最佳跨资产/世界结果为尝试 1，但也不能进入正式扩量。尝试 2/3 的退化被完整保留，没有用后验阈值修改宣布通过。
+筛查门为 in-domain F1 ≥0.90、leaf/puddle mIoU ≥0.75、cross asset/same-world F1 ≥0.70、color stress F1 ≥0.60。三次均未全部通过；最佳同世界跨资产结果为尝试 1，但也不能进入正式扩量。尝试 2/3 的退化被完整保留，没有用后验阈值修改宣布通过。
 
 ## 回归
 
@@ -89,4 +91,4 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage5br_g
 
 ## 下一步建议
 
-先扩大几何、材质和 ground/world 多样性，并把离散小目标改为 detector + crop segmenter 或高分辨率分支；用验证集进行结构选择，保留同样的 cross-asset/world 和颜色压力门。只有 screening 四门均过，才允许生成 500 scene/5000 帧正式 G1 数据。
+后续以 Stage5BR2 的 G2 车载相机路线为准：先完成四世界车辆运动随机化、80 scene/800 frame 数据 QA 和四档分辨率实测，再分别筛选离散目标 detector 与 leaf/puddle area segmenter。只有真正的 world-isolated screening 全部过门，才允许生成 500 scene/5000 帧正式 G2 数据。

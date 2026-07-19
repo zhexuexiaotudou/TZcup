@@ -1,5 +1,15 @@
 # 项目推进记录
 
+## Stage5BR2：G2 车载相机基础恢复与 fail-closed 边界
+
+- 从当前车辆 Xacro 提取 `camera_link` 相对 `base_link` 外参 `[0.53, 0, 0.22] m`、`camera_depth_link`、640×480、水平 FOV `1.50098 rad`、15 Hz，并校验 `sim.launch.py` 的生产 ROS 话题映射。
+- 建立四个 G2 世界与 2/1/1 train/val/test world-isolated split；4 个 world SHA 和 4 种材料均不同，资产为项目自制 Apache-2.0 程序化几何、scale 1.0。
+- Gazebo Harmonic 逐世界实际启动通过，RGB、深度、semantic GT、instance GT 四类话题齐全；GT 为 training-only，生产 launch 未修改。
+- 修正指标语义：历史 G1 `cross_asset_world` 规范化为 `cross_asset_same_world`，单世界 `cross_world=null`；新增逐 instance-id bbox、最短边、mask area、距离、遮挡和 `not_visible` 统计。
+- ROS-independent 快速门通过：68 tests。当前尚未采集 G2 80 scene/800 frame，故分辨率实测、detector/area segmenter、500/5000、live、真实 Nav2 和 J6 均未执行。
+- 首个阻断层：`G2_screening_dataset_80_scene_800_frame_not_executed`；`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
+- 证据：`GPT_REVIEW_STAGE5BR2.md`、`artifacts/stage5br2_20260720_review/`、`docs/stage5br2-g2-vehicle-camera.md`。
+
 ## Stage5BR：Gazebo-camera 数据恢复、训练链审计与泛化修复
 
 状态：G1 数据 smoke 通过，学习模型 screening 失败并按停止条件冻结。

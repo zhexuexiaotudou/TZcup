@@ -113,6 +113,9 @@ def run_ros_independent_tests() -> None:
         learning_package / "test" / "test_rendered.py",
         learning_package / "test" / "test_gazebo_g1.py",
         learning_package / "test" / "test_g1_collector.py",
+        learning_package / "test" / "test_g2_contract.py",
+        learning_package / "test" / "test_g2_metrics.py",
+        learning_package / "test" / "test_gazebo_g2.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])
     if result != pytest.ExitCode.OK:

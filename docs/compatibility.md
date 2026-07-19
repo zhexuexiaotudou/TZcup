@@ -21,7 +21,7 @@ Stage4W 已在同一 headless GPU 通道完成 hybrid 定位 10-seed、静态完
 
 Stage5A 继续使用该 Docker/headless GPU 通道完成 14 项 ROS 测试、20-scene synthetic 数据、held-out ONNX、30-seed task-state E2E 和真实 Gazebo RGB-D/2D/3D/map 感知录包。该兼容性结论不外推到真实数据精度、J6 工具链/实板或原生 GUI。
 
-Stage5B/Stage5BR 使用独立 `tzcup/sanitation-jazzy:stage5b` 镜像，在 Stage5A 基础上固定 PyTorch 2.5.1+cu124、ONNX 1.17.0 和 ONNX Runtime 1.20.1，RTX 4080 Laptop GPU 可用于训练。Stage5BR 已在该 headless GPU 通道完成真实 Gazebo Harmonic 共视场 RGB-D、semantic、instance 的 50 scene/500 frame G1 smoke，数据同步与标注 QA 通过；当前阻断已转为学习模型的 in-domain、跨资产/世界和颜色压力 screening 未过，因此尚未扩大为正式 500 scene/5000 frame。Horizon J6 工具链未发现，故转换、量化、实板 FPS 与运行门均 fail-closed。
+Stage5B/Stage5BR/Stage5BR2 使用独立 `tzcup/sanitation-jazzy:stage5b` 镜像，在 Stage5A 基础上固定 PyTorch 2.5.1+cu124、ONNX 1.17.0 和 ONNX Runtime 1.20.1，RTX 4080 Laptop GPU 可用于训练。Stage5BR 已在该 headless GPU 通道完成真实 Gazebo Harmonic 共视场 RGB-D、semantic、instance 的 50 scene/500 frame G1 smoke，数据同步与标注 QA 通过；其历史 `cross_asset_world` 实为单世界 `cross_asset_same_world`，不能作为 cross-world 证据。Stage5BR2 已从生产 Xacro/launch 派生 G2 车载相机契约，并实际启动四个不同 SHA/材料的 G2 世界及共位 GT 传感器；当前阻断是尚未执行 G2 80 scene/800 frame 数据 QA，因此也未进入分辨率实测或双模型筛选。Horizon J6 工具链未发现，故转换、量化、实板 FPS 与运行门均 fail-closed。
 
 ## 第三方锁定
 

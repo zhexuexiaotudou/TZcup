@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR2 G2 four-world sensor smoke",
+  "worlds": [
+    {
+      "world_id": "world_a_asphalt_campus",
+      "expected_topics": [
+        "/g2/world_a_asphalt_campus/rgbd/image",
+        "/g2/world_a_asphalt_campus/rgbd/depth_image",
+        "/g2/world_a_asphalt_campus/semantic_gt/labels_map",
+        "/g2/world_a_asphalt_campus/instance_gt/labels_map"
+      ],
+      "all_topics_present": true
+    },
+    {
+      "world_id": "world_b_concrete_sidewalk",
+      "expected_topics": [
+        "/g2/world_b_concrete_sidewalk/rgbd/image",
+        "/g2/world_b_concrete_sidewalk/rgbd/depth_image",
+        "/g2/world_b_concrete_sidewalk/semantic_gt/labels_map",
+        "/g2/world_b_concrete_sidewalk/instance_gt/labels_map"
+      ],
+      "all_topics_present": true
+    },
+    {
+      "world_id": "world_c_wet_dark_ground",
+      "expected_topics": [
+        "/g2/world_c_wet_dark_ground/rgbd/image",
+        "/g2/world_c_wet_dark_ground/rgbd/depth_image",
+        "/g2/world_c_wet_dark_ground/semantic_gt/labels_map",
+        "/g2/world_c_wet_dark_ground/instance_gt/labels_map"
+      ],
+      "all_topics_present": true
+    },
+    {
+      "world_id": "world_d_mixed_curb_vegetation",
+      "expected_topics": [
+        "/g2/world_d_mixed_curb_vegetation/rgbd/image",
+        "/g2/world_d_mixed_curb_vegetation/rgbd/depth_image",
+        "/g2/world_d_mixed_curb_vegetation/semantic_gt/labels_map",
+        "/g2/world_d_mixed_curb_vegetation/instance_gt/labels_map"
+      ],
+      "all_topics_present": true
+    }
+  ],
+  "four_world_sensor_smoke_pass": true
+}
