@@ -1,0 +1,164 @@
+{
+  "schema_version": 1,
+  "dataset_id": "stage5b_d1_procedural_rendered_v1",
+  "domain": "D1_procedural_rendered_not_gazebo_camera",
+  "scene_count": 50,
+  "frame_count": 500,
+  "frames_per_scene": 10,
+  "class_order": [
+    "background",
+    "plastic_bottle",
+    "metal_can",
+    "paper_litter",
+    "leaf_pile",
+    "puddle"
+  ],
+  "split_scene_seeds": {
+    "train": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16,
+      20,
+      21,
+      22,
+      23,
+      24,
+      25,
+      26,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46
+    ],
+    "val": [
+      7,
+      17,
+      27,
+      37,
+      47
+    ],
+    "test": [
+      8,
+      9,
+      18,
+      19,
+      28,
+      29,
+      38,
+      39,
+      48,
+      49
+    ]
+  },
+  "split_assets": {
+    "train": [
+      "bottle_dented",
+      "bottle_flattened",
+      "bottle_ribbed_short",
+      "bottle_ribbed_tall",
+      "can_dented_dots",
+      "can_flat_side",
+      "can_short_rings",
+      "can_tall_label",
+      "leaves_dense",
+      "leaves_long",
+      "leaves_mixed",
+      "leaves_sparse",
+      "paper_crumpled",
+      "paper_folded_grid",
+      "paper_long_bands",
+      "paper_torn_text",
+      "puddle_irregular",
+      "puddle_matte_small",
+      "puddle_reflective",
+      "puddle_shallow"
+    ],
+    "val": [
+      "bottle_clear_label",
+      "can_matte_rings",
+      "leaves_matte",
+      "paper_matte_grid",
+      "puddle_shadowed"
+    ],
+    "test": [
+      "bottle_unseen_crushed",
+      "can_unseen_crushed",
+      "leaves_unseen_windrow",
+      "paper_unseen_torn",
+      "puddle_unseen_split"
+    ]
+  },
+  "split_textures": {
+    "train": [
+      "bands",
+      "crosshatch",
+      "grid",
+      "label",
+      "reflection",
+      "ribs",
+      "rings",
+      "ripple",
+      "speckle",
+      "text",
+      "veins"
+    ],
+    "val": [
+      "grid",
+      "label",
+      "reflection",
+      "rings",
+      "veins"
+    ],
+    "test": [
+      "bands",
+      "crosshatch"
+    ]
+  },
+  "split_worlds": {
+    "train": [
+      "asphalt_courtyard",
+      "concrete_lane"
+    ],
+    "val": [
+      "brick_service_lane"
+    ],
+    "test": [
+      "unseen_mixed_paving"
+    ]
+  },
+  "split_hash": "17aebcd751edfd548aa06708852c02ea2b98022b40640ce5390d402927e2dcc4",
+  "adjacent_frames_cross_split": false,
+  "exact_duplicate_image_count": 0,
+  "perceptual_hash_duplicate_count": 0,
+  "per_class_instance_count": {
+    "plastic_bottle": 552,
+    "metal_can": 540,
+    "paper_litter": 566,
+    "leaf_pile": 528,
+    "puddle": 536
+  },
+  "rendered_synthetic_perception_claim_only": true,
+  "gazebo_camera_rendered": false,
+  "competition_perception_pass": false
+}

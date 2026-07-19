@@ -1,0 +1,10 @@
+FROM tzcup/sanitation-jazzy:stage5a
+
+ARG TORCH_VERSION=2.5.1
+
+RUN python3 -m pip install --break-system-packages --no-cache-dir \
+    --index-url https://download.pytorch.org/whl/cu124 \
+    "torch==${TORCH_VERSION}"
+
+LABEL org.opencontainers.image.title="TZcup Stage5B learned perception gate"
+LABEL org.opencontainers.image.licenses="Apache-2.0"

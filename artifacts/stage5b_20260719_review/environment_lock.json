@@ -1,0 +1,14 @@
+{
+  "python": "3.12.3",
+  "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "torch": "2.5.1+cu124",
+  "cuda_available": true,
+  "cuda_version": "12.4",
+  "device": "cuda",
+  "deterministic_algorithms": "warn_only_due_to_cuda_nll_loss2d",
+  "cudnn_deterministic": true,
+  "cudnn_benchmark": false,
+  "onnx": "1.17.0",
+  "opencv": "4.6.0",
+  "numpy": "1.26.4"
+}

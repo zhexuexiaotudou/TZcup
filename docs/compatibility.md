@@ -21,6 +21,8 @@ Stage4W 已在同一 headless GPU 通道完成 hybrid 定位 10-seed、静态完
 
 Stage5A 继续使用该 Docker/headless GPU 通道完成 14 项 ROS 测试、20-scene synthetic 数据、held-out ONNX、30-seed task-state E2E 和真实 Gazebo RGB-D/2D/3D/map 感知录包。该兼容性结论不外推到真实数据精度、J6 工具链/实板或原生 GUI。
 
+Stage5B 使用独立 `tzcup/sanitation-jazzy:stage5b` 镜像，在 Stage5A 基础上固定 PyTorch 2.5.1+cu124、ONNX 1.17.0 和 ONNX Runtime 1.20.1，RTX 4080 Laptop GPU 可用于训练。训练模型已在真实 Gazebo 相机话题上运行，但正式数据生成仍缺真正的 Gazebo-camera dataset pipeline；Horizon J6 工具链未发现，故转换、量化、实板 FPS 与运行门均 fail-closed。
+
 ## 第三方锁定
 
 精确版本见 `repos/locked_revisions.json`。2026-07-14 远端核查发现：

@@ -1,0 +1,314 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5B",
+  "domain": "D1_procedural_rendered_not_gazebo_camera",
+  "backend": "onnxruntime_cpu",
+  "test_scene_seeds": [
+    8,
+    9,
+    18,
+    19,
+    28,
+    29,
+    38,
+    39,
+    48,
+    49,
+    58,
+    59,
+    68,
+    69,
+    78,
+    79,
+    88,
+    89,
+    98,
+    99,
+    108,
+    109,
+    118,
+    119,
+    128,
+    129,
+    138,
+    139,
+    148,
+    149,
+    158,
+    159,
+    168,
+    169,
+    178,
+    179,
+    188,
+    189,
+    198,
+    199,
+    208,
+    209,
+    218,
+    219,
+    228,
+    229,
+    238,
+    239,
+    248,
+    249,
+    258,
+    259,
+    268,
+    269,
+    278,
+    279,
+    288,
+    289,
+    298,
+    299,
+    308,
+    309,
+    318,
+    319,
+    328,
+    329,
+    338,
+    339,
+    348,
+    349,
+    358,
+    359,
+    368,
+    369,
+    378,
+    379,
+    388,
+    389,
+    398,
+    399,
+    408,
+    409,
+    418,
+    419,
+    428,
+    429,
+    438,
+    439,
+    448,
+    449,
+    458,
+    459,
+    468,
+    469,
+    478,
+    479,
+    488,
+    489,
+    498,
+    499
+  ],
+  "test_frame_count": 1000,
+  "unseen_world_asset_texture_split": true,
+  "pixel_per_class": {
+    "plastic_bottle": {
+      "tp_pixels": 157,
+      "fp_pixels": 9148,
+      "fn_pixels": 213535,
+      "precision": 0.016872649113379903,
+      "recall": 0.0007347022817887427,
+      "f1": 0.0014080906918030288
+    },
+    "metal_can": {
+      "tp_pixels": 8177,
+      "fp_pixels": 618258,
+      "fn_pixels": 446611,
+      "precision": 0.013053229784414984,
+      "recall": 0.017979805975531456,
+      "f1": 0.015125464404660277
+    },
+    "paper_litter": {
+      "tp_pixels": 9891,
+      "fp_pixels": 287667,
+      "fn_pixels": 318693,
+      "precision": 0.03324057830742242,
+      "recall": 0.030101891753706814,
+      "f1": 0.03159347240721753
+    }
+  },
+  "detection_per_class": {
+    "plastic_bottle": {
+      "tp": 0,
+      "fp": 192,
+      "fn": 1085,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "metal_can": {
+      "tp": 0,
+      "fp": 1177,
+      "fn": 1094,
+      "precision": 0.0,
+      "recall": 0.0,
+      "f1": 0.0
+    },
+    "paper_litter": {
+      "tp": 25,
+      "fp": 1083,
+      "fn": 1038,
+      "precision": 0.02256317689530686,
+      "recall": 0.023518344308560677,
+      "f1": 0.02303086135421465
+    }
+  },
+  "discrete_macro_precision": 0.007521058965102287,
+  "discrete_macro_recall": 0.00783944810285356,
+  "discrete_macro_f1": 0.0076769537847382165,
+  "instance_match_score_at_iou50": 0.003883193538365952,
+  "mean_instance_match_score_iou50_95": 0.0011652380952380953,
+  "ap50": null,
+  "ap50_95": null,
+  "ap_unavailable_reason": "screening does not retain calibrated confidence-ranked detections required for a precision-recall curve",
+  "area_iou": {
+    "leaf_pile": 0.0037555952548224574,
+    "puddle": 0.24941347858027518
+  },
+  "missed_targets": 3217,
+  "map_localization_rmse_m": 0.09730712410633667,
+  "map_localization_p95_m": 0.15936887610318415,
+  "map_localization_max_m": 0.22235578564254788,
+  "latency_ms": {
+    "p50": 24.834140500161084,
+    "p95": 26.852541899893367,
+    "max": 35.26560399996015
+  },
+  "peak_rss_kib": 167956,
+  "distance_buckets": {
+    "near_1_3_to_2_0": 1777,
+    "mid_2_0_to_2_7": 1861,
+    "far_2_7_to_3_4": 1782
+  },
+  "occlusion_buckets": {
+    "clear": 742,
+    "partial": 2539,
+    "heavy": 2139
+  },
+  "color_shortcut": {
+    "aggregate_macro_f1": 0.05192165800000022,
+    "color_shortcut_pass": false,
+    "stress_reports": {
+      "grayscale": {
+        "macro_precision": 0.1237646021212979,
+        "macro_recall": 0.2302832774785747,
+        "macro_f1": 0.16064646340720046,
+        "per_class_drop_from_baseline": {
+          "plastic_bottle": 0.0014080906918030288,
+          "metal_can": 0.014076902899974517,
+          "paper_litter": -0.4492973563096981
+        }
+      },
+      "hue_shift": {
+        "macro_precision": 0.016979016498478296,
+        "macro_recall": 0.005675125816468573,
+        "macro_f1": 0.008506881746318367,
+        "per_class_drop_from_baseline": {
+          "plastic_bottle": 0.0014080906918030288,
+          "metal_can": 0.015125464404660277,
+          "paper_litter": 0.006072827168262428
+        }
+      },
+      "color_permutation": {
+        "macro_precision": 0.023687617250477706,
+        "macro_recall": 0.014615991331159916,
+        "macro_f1": 0.017583621341430607,
+        "per_class_drop_from_baseline": {
+          "plastic_bottle": -0.004288042510081076,
+          "metal_can": 0.012131647287836327,
+          "paper_litter": -0.012467441298366237
+        }
+      },
+      "same_color_negatives": {
+        "macro_precision": 0.007316877077028144,
+        "macro_recall": 0.007662933422866857,
+        "macro_f1": 0.007485898492739865,
+        "per_class_drop_from_baseline": {
+          "plastic_bottle": 0.0014080906918030288,
+          "metal_can": 0.007586110634983392,
+          "paper_litter": 0.016675130698674816
+        }
+      },
+      "different_color_same_class": {
+        "macro_precision": 0.007316877077028144,
+        "macro_recall": 0.007662933422866857,
+        "macro_f1": 0.007485898492739865,
+        "per_class_drop_from_baseline": {
+          "plastic_bottle": 0.0014080906918030288,
+          "metal_can": 0.007586110634983392,
+          "paper_litter": 0.016675130698674816
+        }
+      },
+      "texture_only": {
+        "macro_precision": 0.11716220194289079,
+        "macro_recall": 0.19177642145840026,
+        "macro_f1": 0.1454589754522751,
+        "per_class_drop_from_baseline": {
+          "plastic_bottle": 0.0014080906918030288,
+          "metal_can": 0.015125464404660277,
+          "paper_litter": -0.40478345394960774
+        }
+      },
+      "shape_only": {
+        "macro_precision": 0.051273985530040894,
+        "macro_recall": 0.07854159974301317,
+        "macro_f1": 0.062044027152191844,
+        "per_class_drop_from_baseline": {
+          "plastic_bottle": 0.0014080906918030288,
+          "metal_can": 0.015125464404660277,
+          "paper_litter": -0.154538609049358
+        }
+      },
+      "background_color_swap": {
+        "macro_precision": 0.10946047809387106,
+        "macro_recall": 0.1414939427881148,
+        "macro_f1": 0.09935360680276199,
+        "per_class_drop_from_baseline": {
+          "plastic_bottle": -0.0731849445441335,
+          "metal_can": -0.02296883621547951,
+          "paper_litter": -0.1537800121449921
+        }
+      },
+      "exposure_extremes": {
+        "macro_precision": 0.006444647815067736,
+        "macro_recall": 0.007117302124380068,
+        "macro_f1": 0.006762762016701636,
+        "per_class_drop_from_baseline": {
+          "plastic_bottle": 0.0014080906918030288,
+          "metal_can": 0.005680645165801593,
+          "paper_litter": 0.020750005595971302
+        }
+      },
+      "blue_patch_puddle_confuser": {
+        "macro_precision": 0.0039080405032194555,
+        "macro_recall": 0.003869783516102445,
+        "macro_f1": 0.0038884450956424878,
+        "per_class_drop_from_baseline": {
+          "plastic_bottle": 0.0014080906918030288,
+          "metal_can": 0.012775901684388772,
+          "paper_litter": 0.02227769984056157
+        }
+      }
+    }
+  },
+  "gates": {
+    "test_scene_count_at_least_100": true,
+    "discrete_macro_precision_at_least_0_95": false,
+    "discrete_macro_recall_at_least_0_95": false,
+    "discrete_macro_f1_at_least_0_95": false,
+    "each_discrete_recall_at_least_0_90": false,
+    "leaf_and_puddle_miou_at_least_0_80": false,
+    "map_localization_rmse_at_most_0_10m": true,
+    "color_shortcut_pass": false
+  },
+  "rendered_synthetic_perception_pass": false,
+  "gazebo_camera_evaluation_executed": false,
+  "real_domain_evaluation_executed": false,
+  "competition_perception_pass": false
+}

@@ -1,5 +1,11 @@
 # TZcup 无人清扫车仿真项目
 
+## Stage5B 学习型感知筛查与停止边界（2026-07-19）
+
+Stage5B 已新增 30 个自研程序化垃圾资产（五类、每类六变体）、12 个硬负样本、按 scene/asset/texture/world 隔离的数据合同、两种实际梯度训练候选、ONNX Runtime 评测、颜色捷径压力测试、J6 fail-closed 预检和训练模型的真实 Gazebo RGB-D 接入诊断。三次结构性筛查后，最佳候选验证 macro F1 为 `0.38637`，但 100 个未见 scene / 1000 帧测试的离散类 macro P/R/F1 仅为 `0.00752/0.00784/0.00768`，颜色压力 aggregate macro F1 为 `0.05192`，均未过门。
+
+当前数据生成器是程序化 D1 renderer，不是真实 Gazebo camera renderer；D2 真实数据为空，J6 官方工具链/实板不可用。依规划包停止条件，本轮没有执行 500 seed/5000 帧正式 D1、30 seed/10 分钟正式实时门或 30 次真实 Nav2 spot-clean，不允许把一条成功的运行链冒充精度通过。因此 `REVIEW_PACKET_COMPLETE=true`，但 `READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`、`competition_perception_pass=false`。复核入口见 [`GPT_REVIEW_STAGE5B.md`](GPT_REVIEW_STAGE5B.md)、[`docs/stage5b-learned-perception.md`](docs/stage5b-learned-perception.md) 与 [`artifacts/stage5b_20260719_review/`](artifacts/stage5b_20260719_review/)。
+
 ## Stage4W 可达清扫域与完整任务闭环（2026-07-17）
 
 Stage4W 已修复定位协方差/全局锚点传播、统一任务几何、可达 staging、完整组件执行、动态障碍清除与安全超时证据链。正式 hybrid 10-seed 全部通过，XY RMSE P50/P95/max 为 `0.02825/0.03726/0.03778 m`；静态 5-seed 全部通过，每次均为当前几何生成的 `17/17` 组件，经验覆盖率 `92.93%–94.53%`、覆盖期 RMSE `0.02930–0.04620 m`；动态交互 `20/20` 有效且碰撞 0。keepout、限速区、30 次急停和完整 MCAP 回放均通过，急停 P95 为 `0.188 s`，上游命令停止后 `1.694 s` 达到连续 5 帧稳定零输出。`READY_FOR_GPT_REVIEW_STAGE4W=true`、`READY_FOR_STAGE5A=true`；理论效率仍为 `1053 m²/h < 3500 m²/h`，因此竞赛效率门保持 false。复核入口见 [`GPT_REVIEW_STAGE4W.md`](GPT_REVIEW_STAGE4W.md) 与 [`artifacts/stage4w_20260717_review/`](artifacts/stage4w_20260717_review/)。
@@ -20,11 +26,11 @@ Stage4T 已完成 200 组固定时长瞬态、120 组闭环航向、A/B/C/D 各 
 
 ## 当前状态
 
-- Stage 0–5A 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；当前车辆参数为 0.14 m 轮半径、1.22 m 有效轮距，局部融合选择 EKF-B，全局融合采用 RTK + 扫描精化 + 局部里程计。
+- Stage 0–5A 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；Stage5B 已实现学习型感知工具链并冻结在 D1 数据真实性、泛化与颜色鲁棒性失败边界。
 - precision mapping 与 localization/coverage 包络分别限制为 0.30/0.25 和 0.45/0.35 m/s、rad/s；0.60 rad/s stress 默认禁用且仍失败。
 - Stage4W hybrid 10-seed 的 XY RMSE P50/P95/max 为 0.02825/0.03726/0.03778 m，定位门禁通过且 GT 控制违规为 0。
 - 完整 Coverage 静态 5/5 通过，每次均执行统一几何生成的 17/17 组件；动态障碍 20/20、碰撞 0，过滤器、30 次急停和 rosbag 回放全部通过。
-- 原生 Ubuntu/WSLg 下的 Gazebo/RViz GUI 验收仍未完成；Stage5A synthetic 感知与 task-state E2E 已形成复核证据，但真实数据训练、J6 量化和实板部署尚未启动。
+- 原生 Ubuntu/WSLg 下的 Gazebo/RViz GUI 验收仍未完成；Stage5B 训练模型已接入真实 Gazebo RGB-D 链路，但该诊断不构成正式精度门，真实数据训练、J6 量化和实板部署仍未启动。
 - 理论清扫效率仍为 1053 m²/h，未达到 3500 m²/h；不得用覆盖率或仿真实测净效率替代竞赛效率口径。
 - 详细证据、复现命令和已知边界以 [`docs/progress.md`](docs/progress.md) 为准。
 
@@ -52,6 +58,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage3_doc
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_docker.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4t_core_smoke_docker.ps1
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage5a_docker.ps1 -OutputName stage5a_formal3 -RecordBag
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage5b_docker.ps1 -OutputName stage5b_screening
 ```
 
 ## 开发工作流
@@ -104,4 +111,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-17：Stage5A 机器门全部通过，`READY_FOR_GPT_REVIEW_STAGE5A=true`、`READY_FOR_STAGE5B=true`。14/14 ROS 测试通过；20-scene held-out synthetic 指标为 1.0；30/30 task-state E2E 成功；Gazebo 实时 ONNX 处理 127 帧并发布非空 2D/3D/map 目标；正式 MCAP 4.6 MiB、8,527 条消息；Stage4W 回归覆盖率 93.87%、定位 RMSE 0.03570 m、碰撞/keepout 0、刷盘最终关闭。轻量 CI 已显式安装 Stage5A 投影与合成数据测试所需的 NumPy、headless OpenCV。真实数据、J6 与竞赛效率仍为 false；原始 dataset/MCAP 保留本机，Git 仅提交紧凑复核证据。
+2026-07-19：Stage5B 三次学习模型筛查均未通过未见测试与颜色捷径门，已按停止条件冻结并形成 24 文件紧凑证据。训练模型的 Gazebo 诊断处理 161 帧，证明接口可运行但不证明精度；Stage5A 固定颜色基线回归、57 项快速测试和 Stage4W seed 0 完整覆盖回归均通过。`REVIEW_PACKET_COMPLETE=true`，`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`；D2、J6 实板、竞赛感知与 `1053 < 3500 m²/h` 效率门均保持 false。原始筛查数据、工作区和 rosbag 保留本机，Git 只提交紧凑复核证据。

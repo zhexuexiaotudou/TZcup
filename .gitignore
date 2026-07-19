@@ -31,6 +31,15 @@ artifacts/stage5a_screening*/
 artifacts/stage5a_*_raw*/
 artifacts/stage5a_stage4w_regression*/
 
+# Stage5B raw datasets, checkpoints, generated assets, workspaces, and rosbag stay local.
+artifacts/stage5b_screening*/
+artifacts/stage5b_formal*/
+artifacts/stage5b_*_raw*/
+artifacts/stage5b_live*/
+artifacts/stage5b_nav2*/
+artifacts/stage5b_stage4w_regression*/
+artifacts/stage5b_stage5a_regression*/
+
 # Superseded local review bundle; the current Stage4R bundle is committed.
 无人清扫车仿真_GPT复核包_Stage4_20260715.zip
 

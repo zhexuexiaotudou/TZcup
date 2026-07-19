@@ -1,0 +1,83 @@
+schema_version: 1
+registry_version: 2026.07-stage5b-d1
+license_manifest: asset_license_manifest.json
+palette_rgb:
+  stone: [112, 118, 126]
+  rust: [154, 76, 48]
+  teal: [38, 142, 146]
+  blue: [54, 94, 168]
+  yellow: [190, 157, 48]
+  red: [176, 54, 58]
+  green: [68, 132, 74]
+  white: [190, 190, 184]
+classes:
+  plastic_bottle:
+    target_type: discrete
+    policy: spot_clean
+    variants:
+      - {id: bottle_ribbed_short, geometry: bottle_short, texture: ribs, palette: [teal, white]}
+      - {id: bottle_ribbed_tall, geometry: bottle_tall, texture: ribs, palette: [red, stone]}
+      - {id: bottle_dented, geometry: bottle_dented, texture: speckle, palette: [blue, yellow]}
+      - {id: bottle_flattened, geometry: bottle_flattened, texture: bands, palette: [green, rust]}
+      - {id: bottle_clear_label, geometry: bottle_tall, texture: label, palette: [white, blue]}
+      - {id: bottle_unseen_crushed, geometry: bottle_crushed, texture: crosshatch, palette: [yellow, teal]}
+  metal_can:
+    target_type: discrete
+    policy: spot_clean
+    variants:
+      - {id: can_short_rings, geometry: can_short, texture: rings, palette: [teal, rust]}
+      - {id: can_tall_label, geometry: can_tall, texture: label, palette: [red, white]}
+      - {id: can_dented_dots, geometry: can_dented, texture: speckle, palette: [green, blue]}
+      - {id: can_flat_side, geometry: can_flattened, texture: bands, palette: [yellow, stone]}
+      - {id: can_matte_rings, geometry: can_short, texture: rings, palette: [white, green]}
+      - {id: can_unseen_crushed, geometry: can_crushed, texture: crosshatch, palette: [blue, rust]}
+  paper_litter:
+    target_type: discrete
+    policy: spot_clean
+    variants:
+      - {id: paper_folded_grid, geometry: paper_folded, texture: grid, palette: [teal, white]}
+      - {id: paper_torn_text, geometry: paper_torn, texture: text, palette: [red, stone]}
+      - {id: paper_long_bands, geometry: paper_long, texture: bands, palette: [green, blue]}
+      - {id: paper_crumpled, geometry: paper_crumpled, texture: speckle, palette: [yellow, rust]}
+      - {id: paper_matte_grid, geometry: paper_folded, texture: grid, palette: [white, green]}
+      - {id: paper_unseen_torn, geometry: paper_torn_wide, texture: crosshatch, palette: [blue, yellow]}
+  leaf_pile:
+    target_type: area
+    policy: local_coverage
+    variants:
+      - {id: leaves_sparse, geometry: leaves_sparse, texture: veins, palette: [teal, rust]}
+      - {id: leaves_dense, geometry: leaves_dense, texture: speckle, palette: [red, yellow]}
+      - {id: leaves_long, geometry: leaves_long, texture: veins, palette: [green, stone]}
+      - {id: leaves_mixed, geometry: leaves_mixed, texture: crosshatch, palette: [blue, white]}
+      - {id: leaves_matte, geometry: leaves_dense, texture: veins, palette: [white, green]}
+      - {id: leaves_unseen_windrow, geometry: leaves_windrow, texture: bands, palette: [yellow, teal]}
+  puddle:
+    target_type: area
+    policy: local_coverage
+    variants:
+      - {id: puddle_matte_small, geometry: puddle_small, texture: ripple, palette: [teal, stone]}
+      - {id: puddle_reflective, geometry: puddle_wide, texture: reflection, palette: [red, white]}
+      - {id: puddle_irregular, geometry: puddle_irregular, texture: ripple, palette: [green, blue]}
+      - {id: puddle_shallow, geometry: puddle_long, texture: bands, palette: [yellow, rust]}
+      - {id: puddle_shadowed, geometry: puddle_wide, texture: reflection, palette: [white, green]}
+      - {id: puddle_unseen_split, geometry: puddle_split, texture: crosshatch, palette: [blue, teal]}
+negative_assets:
+  - bottle_like_reusable_cone
+  - can_like_bollard
+  - red_obstacle
+  - green_obstacle
+  - blue_obstacle
+  - cardboard
+  - fixed_bin
+  - reflective_patch
+  - shadow
+  - wet_asphalt
+  - leaves_outside_target_region
+  - robot_self_pixels
+split_contract:
+  train_variant_indices: [0, 1, 2, 3]
+  val_variant_indices: [4]
+  test_variant_indices: [5]
+  train_worlds: [asphalt_courtyard, concrete_lane]
+  val_worlds: [brick_service_lane]
+  test_worlds: [unseen_mixed_paving]

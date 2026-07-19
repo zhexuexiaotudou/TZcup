@@ -1,0 +1,167 @@
+{
+  "schema_version": 1,
+  "class_variant_counts": {
+    "plastic_bottle": 6,
+    "metal_can": 6,
+    "paper_litter": 6,
+    "leaf_pile": 6,
+    "puddle": 6
+  },
+  "target_variant_count": 30,
+  "negative_asset_count": 12,
+  "fixed_class_color_encoding": false,
+  "license": "Apache-2.0",
+  "external_files_used": false,
+  "generated_assets": [
+    {
+      "class_id": "plastic_bottle",
+      "asset_id": "bottle_ribbed_short",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/bottle_ribbed_short/model.sdf"
+    },
+    {
+      "class_id": "plastic_bottle",
+      "asset_id": "bottle_ribbed_tall",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/bottle_ribbed_tall/model.sdf"
+    },
+    {
+      "class_id": "plastic_bottle",
+      "asset_id": "bottle_dented",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/bottle_dented/model.sdf"
+    },
+    {
+      "class_id": "plastic_bottle",
+      "asset_id": "bottle_flattened",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/bottle_flattened/model.sdf"
+    },
+    {
+      "class_id": "plastic_bottle",
+      "asset_id": "bottle_clear_label",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/bottle_clear_label/model.sdf"
+    },
+    {
+      "class_id": "plastic_bottle",
+      "asset_id": "bottle_unseen_crushed",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/bottle_unseen_crushed/model.sdf"
+    },
+    {
+      "class_id": "metal_can",
+      "asset_id": "can_short_rings",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/can_short_rings/model.sdf"
+    },
+    {
+      "class_id": "metal_can",
+      "asset_id": "can_tall_label",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/can_tall_label/model.sdf"
+    },
+    {
+      "class_id": "metal_can",
+      "asset_id": "can_dented_dots",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/can_dented_dots/model.sdf"
+    },
+    {
+      "class_id": "metal_can",
+      "asset_id": "can_flat_side",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/can_flat_side/model.sdf"
+    },
+    {
+      "class_id": "metal_can",
+      "asset_id": "can_matte_rings",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/can_matte_rings/model.sdf"
+    },
+    {
+      "class_id": "metal_can",
+      "asset_id": "can_unseen_crushed",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/can_unseen_crushed/model.sdf"
+    },
+    {
+      "class_id": "paper_litter",
+      "asset_id": "paper_folded_grid",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/paper_folded_grid/model.sdf"
+    },
+    {
+      "class_id": "paper_litter",
+      "asset_id": "paper_torn_text",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/paper_torn_text/model.sdf"
+    },
+    {
+      "class_id": "paper_litter",
+      "asset_id": "paper_long_bands",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/paper_long_bands/model.sdf"
+    },
+    {
+      "class_id": "paper_litter",
+      "asset_id": "paper_crumpled",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/paper_crumpled/model.sdf"
+    },
+    {
+      "class_id": "paper_litter",
+      "asset_id": "paper_matte_grid",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/paper_matte_grid/model.sdf"
+    },
+    {
+      "class_id": "paper_litter",
+      "asset_id": "paper_unseen_torn",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/paper_unseen_torn/model.sdf"
+    },
+    {
+      "class_id": "leaf_pile",
+      "asset_id": "leaves_sparse",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/leaves_sparse/model.sdf"
+    },
+    {
+      "class_id": "leaf_pile",
+      "asset_id": "leaves_dense",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/leaves_dense/model.sdf"
+    },
+    {
+      "class_id": "leaf_pile",
+      "asset_id": "leaves_long",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/leaves_long/model.sdf"
+    },
+    {
+      "class_id": "leaf_pile",
+      "asset_id": "leaves_mixed",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/leaves_mixed/model.sdf"
+    },
+    {
+      "class_id": "leaf_pile",
+      "asset_id": "leaves_matte",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/leaves_matte/model.sdf"
+    },
+    {
+      "class_id": "leaf_pile",
+      "asset_id": "leaves_unseen_windrow",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/leaves_unseen_windrow/model.sdf"
+    },
+    {
+      "class_id": "puddle",
+      "asset_id": "puddle_matte_small",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/puddle_matte_small/model.sdf"
+    },
+    {
+      "class_id": "puddle",
+      "asset_id": "puddle_reflective",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/puddle_reflective/model.sdf"
+    },
+    {
+      "class_id": "puddle",
+      "asset_id": "puddle_irregular",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/puddle_irregular/model.sdf"
+    },
+    {
+      "class_id": "puddle",
+      "asset_id": "puddle_shallow",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/puddle_shallow/model.sdf"
+    },
+    {
+      "class_id": "puddle",
+      "asset_id": "puddle_shadowed",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/puddle_shadowed/model.sdf"
+    },
+    {
+      "class_id": "puddle",
+      "asset_id": "puddle_unseen_split",
+      "path": "/stage5b_data/stage5b_screening3/gazebo_assets/puddle_unseen_split/model.sdf"
+    }
+  ]
+}
