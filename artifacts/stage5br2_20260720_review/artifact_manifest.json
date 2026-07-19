@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "artifact": "stage5br2_20260720_review",
+  "files": [
+    {
+      "path": "g2_world_smoke/g2_world_smoke.json",
+      "bytes": 1594,
+      "sha256": "fc427550ddecc54d2660c72fb1367f4873cdcf191d4a6a14303add7078a0db7c"
+    },
+    {
+      "path": "g2_world_smoke/world_a_asphalt_campus.gz.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "g2_world_smoke/world_a_asphalt_campus.topics.txt",
+      "bytes": 892,
+      "sha256": "da2b29eb1708cfcb5327d86318883b88a857ef5b41665d611840c3925ebd6de9"
+    },
+    {
+      "path": "g2_world_smoke/world_b_concrete_sidewalk.gz.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "g2_world_smoke/world_b_concrete_sidewalk.topics.txt",
+      "bytes": 949,
+      "sha256": "16e922ad469c7ccbf1802c4c450aa4337dc43cc38b6bfdce0b07600bb265d24a"
+    },
+    {
+      "path": "g2_world_smoke/world_c_wet_dark_ground.gz.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "g2_world_smoke/world_c_wet_dark_ground.topics.txt",
+      "bytes": 911,
+      "sha256": "8362f13a3752d61c284f2ff60ee106407b58044829cb1efe7409b3fe1db642a9"
+    },
+    {
+      "path": "g2_world_smoke/world_d_mixed_curb_vegetation.gz.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "g2_world_smoke/world_d_mixed_curb_vegetation.topics.txt",
+      "bytes": 1025,
+      "sha256": "2a62bbb0f5b1cc0efd166878f058a93c7197dddd68eb1c27994648268a9299c7"
+    },
+    {
+      "path": "g2_worlds/g2_world_manifest.json",
+      "bytes": 17965,
+      "sha256": "1137765d6f956b2ba210b2f8cebfc01e5b0a7398249fad24c4cf25fd501921b6"
+    },
+    {
+      "path": "g2_worlds/world_a_asphalt_campus.sdf",
+      "bytes": 32010,
+      "sha256": "f9dda6905e729994abebdfe60b4cad68c5af90498d61dcc9bbbabd30c4d11d53"
+    },
+    {
+      "path": "g2_worlds/world_b_concrete_sidewalk.sdf",
+      "bytes": 32022,
+      "sha256": "cc71bf65590d629e230e367e2fac8e9a2a24542514601a36c4a9a64460a6ec4e"
+    },
+    {
+      "path": "g2_worlds/world_c_wet_dark_ground.sdf",
+      "bytes": 32014,
+      "sha256": "dfc27b39caae10981155ee11249137199183022810a1645204993726ef9a2b47"
+    },
+    {
+      "path": "g2_worlds/world_d_mixed_curb_vegetation.sdf",
+      "bytes": 32038,
+      "sha256": "0b25b619cf68ade5173ae218609114024c13273819cca9b2d12d7472cb3a560c"
+    },
+    {
+      "path": "stage5br2_status.json",
+      "bytes": 2940,
+      "sha256": "222f9490128754ae68735f833258fc017b5eec50036d2a4b1be11613c506c778"
+    }
+  ],
+  "READY_FOR_GPT_REVIEW_STAGE5B": false,
+  "READY_FOR_STAGE5C": false
+}

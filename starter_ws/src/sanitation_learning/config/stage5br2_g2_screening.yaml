@@ -1,0 +1,45 @@
+schema_version: 1
+stage: Stage5BR2
+domain: G2_deployment_aligned_vehicle_camera_gazebo
+fail_closed: true
+camera:
+  source: sanitation_vehicle_description/urdf/sanitation_vehicle.urdf.xacro
+  production_launch: sanitation_bringup/launch/sim.launch.py
+  resolution_scan: [[256, 192], [384, 288], [512, 384], [640, 384]]
+  selection_status: pending_measured_tradeoff
+world_split:
+  train: [world_a_asphalt_campus, world_b_concrete_sidewalk]
+  val: [world_c_wet_dark_ground]
+  test: [world_d_mixed_curb_vegetation]
+  isolate: [asset, texture, material, world, trajectory]
+screening_dataset:
+  minimum_scenes: 80
+  minimum_frames: 800
+  target_distance_m: [0.5, 4.0]
+  class_instances_per_scene: [0, 3]
+  hard_negatives_per_scene: [0, 4]
+  require_negative_only: true
+  require_missing_class: true
+  require_vehicle_motion: true
+  require_exact_rgb_depth_semantic_instance_timestamp: true
+  sampled_annotation_error_max: 0.01
+model_attempt_limit: 3
+model_split:
+  discrete_detector:
+    classes: [plastic_bottle, metal_can, paper_litter]
+    required_metrics: [confidence_ranked_AP50, confidence_ranked_AP50_95, macro_f1, small_object_recall, same_color_negative_fp]
+    export: fixed_input_onnx_no_custom_ops
+  area_segmenter:
+    classes: [leaf_litter, puddle]
+    required_outputs: [semantic_mask, map_polygon, area_m2, remaining_area_m2]
+screening_gates:
+  detector_in_domain_macro_f1_min: 0.90
+  detector_cross_world_macro_f1_min: 0.70
+  detector_small_object_recall_min: 0.70
+  area_cross_world_miou_min: 0.75
+  color_stress_macro_f1_min: 0.60
+  same_color_negative_fp_rate_max: 0.05
+expansion:
+  minimum_scenes: 500
+  minimum_frames: 5000
+  eligible_only_after_all_screening_gates: true

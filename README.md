@@ -1,5 +1,11 @@
 # TZcup 无人清扫车仿真项目
 
+## Stage5BR2 G2 车载相机基础恢复（2026-07-20）
+
+Stage5BR2 已纠正历史指标语义：G1 的 `cross_asset_world` 只能称为 `cross_asset_same_world`，单世界的真实 `cross_world` 与未隔离的 `cross_material` 均为 `null`；实例尺寸改为按 instance-id 掩码逐实例统计，零像素物体记为 `not_visible`。新增 G2 训练世界从当前车辆 Xacro/launch 提取生产相机契约，使用未放大的真实物理资产，在四种材料上生成 4 个不同 SHA 的 world，并由 Gazebo Harmonic 实际验证 RGB、深度、semantic GT、instance GT 话题全部可启动。GT 仅存在于训练世界，生产 launch 未修改。
+
+当前尚未执行 G2 的 80 scene/800 frame 采集 QA、四分辨率实测和 detector/area segmenter 筛选，因此首个阻断层为 `G2_screening_dataset_80_scene_800_frame_not_executed`，`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。复核入口见 [`GPT_REVIEW_STAGE5BR2.md`](GPT_REVIEW_STAGE5BR2.md)、[`docs/stage5br2-g2-vehicle-camera.md`](docs/stage5br2-g2-vehicle-camera.md) 与 [`artifacts/stage5br2_20260720_review/`](artifacts/stage5br2_20260720_review/)。
+
 ## Stage5BR Gazebo-camera 数据恢复与模型筛查（2026-07-19）
 
 Stage5BR 已通过训练链自证：12 帧 micro-overfit 的 macro F1/mIoU 为 `0.98124/0.96333`，PyTorch/ONNX 最大 logit 误差 `6.866e-05`、argmax agreement `1.0`。项目新增真实 Gazebo Harmonic 共视场 RGB-D、semantic、instance 数据链，50 个独立 scene / 500 帧 smoke 的标注完整率为 100%，semantic-instance 一致性错误、asset leakage 和跨 split exact/pHash duplicate 均为 0。
@@ -117,4 +123,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-19：Stage5BR 已把数据域从 P1 程序化 renderer 恢复到真实 Gazebo-camera G1，完成 Phase A 自证、50 scene/500 frame G1 smoke、三次模型筛查和 Stage5A/Stage4W 回归。G1 数据 QA 通过，但所有模型筛查均失败，首个阻断层为 `G1_model_recovery_in_domain_cross_asset_world_and_color_stress`；正式 G1、live、真实 Nav2 spot-clean、R1、J6 实板和竞赛效率门均未执行或保持 false。紧凑复核证据已按原始字节锁定，确保 Git 归档与 `MANIFEST.json` 哈希一致；原始 500 帧、失败 checkpoint、MCAP 和 worktree 在用户确认前保留本机。
+2026-07-20：Stage5BR2 已完成指标语义和逐实例尺寸统计纠正，建立从生产 Xacro/launch 派生的 G2 车载相机契约，生成 4 个不同 SHA/材料并按 2/1/1 world-isolated split 分配的训练世界；四世界 RGB-D/semantic GT/instance GT Gazebo Harmonic 话题烟测通过，G2 资产保持真实物理尺寸。80 scene/800 frame 数据、分辨率扫描、双模型筛选及后续正式/live/Nav2/J6 门尚未执行，首个阻断层为 `G2_screening_dataset_80_scene_800_frame_not_executed`，两个 readiness 均为 false；Stage5BR 原始 500 帧及两个任务 worktree 在用户确认前继续保留。

@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR2",
+  "metric_semantics_corrected": true,
+  "historical_metric_correction": {
+    "old_name": "cross_asset_world",
+    "correct_name": "cross_asset_same_world",
+    "cross_material": null,
+    "cross_world": null,
+    "reason": "Stage5BR G1 used one world; historical evidence files remain immutable for hash traceability"
+  },
+  "production_camera_contract": {
+    "schema_version": 1,
+    "source": "starter_ws/src/sanitation_vehicle_description/urdf/sanitation_vehicle.urdf.xacro",
+    "source_sha256": "6eab3b745987b5711f1d3f5140b7396029151ea5b3b84fb536c4a47ad8fb9447",
+    "parent_frame": "base_link",
+    "camera_link": "camera_link",
+    "optical_frame": "camera_depth_link",
+    "extrinsics": {
+      "xyz_m": [
+        0.53,
+        0.0,
+        0.22
+      ],
+      "rpy_rad": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "native_resolution": {
+      "width": 640,
+      "height": 480
+    },
+    "horizontal_fov_rad": 1.50098,
+    "update_rate_hz": 15.0,
+    "near_clip_m": 0.3,
+    "far_clip_m": 100.0,
+    "gazebo_base_topic": "camera",
+    "production_ros_topics": {
+      "camera_info": "/camera/color/camera_info",
+      "rgb": "/camera/color/image_raw",
+      "depth": "/camera/depth/image_rect_raw",
+      "points": "/camera/depth/color/points"
+    }
+  },
+  "g2_foundation": {
+    "distinct_world_count": 4,
+    "distinct_material_count": 4,
+    "four_world_sensor_smoke_pass": true,
+    "true_physical_asset_scale": true,
+    "training_only_ground_truth": true,
+    "production_launch_modified": false
+  },
+  "resolution_scan": {
+    "candidates": [
+      [
+        256,
+        192
+      ],
+      [
+        384,
+        288
+      ],
+      [
+        512,
+        384
+      ],
+      [
+        640,
+        384
+      ]
+    ],
+    "measured": false,
+    "selected": null,
+    "required_metrics": [
+      "bbox_short_side_p10_p50_p90",
+      "mask_area",
+      "distance",
+      "visibility",
+      "throughput",
+      "training_vram",
+      "onnx_latency",
+      "model_size",
+      "small_object_recall"
+    ]
+  },
+  "g2_screening_dataset": {
+    "required_scenes": 80,
+    "required_frames": 800,
+    "actual_scenes": 0,
+    "actual_frames": 0,
+    "annotation_qa_pass": false,
+    "status": "not_executed"
+  },
+  "model_screening": {
+    "architecture_attempt_limit": 3,
+    "attempts_executed": 0,
+    "discrete_detector": null,
+    "area_segmenter": null,
+    "status": "blocked_by_g2_screening_dataset_gate"
+  },
+  "formal_500_scene_5000_frame_gate_executed": false,
+  "live_30_seed_10_min_gate_executed": false,
+  "real_nav2_spot_clean_30_seed_gate_executed": false,
+  "j6_gate_executed": false,
+  "first_blocking_layer": "G2_screening_dataset_80_scene_800_frame_not_executed",
+  "READY_FOR_GPT_REVIEW_STAGE5B": false,
+  "READY_FOR_STAGE5C": false
+}
