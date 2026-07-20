@@ -1,0 +1,85 @@
+schema_version: 1
+stage: Stage5BR5
+predecessor_commit: 27e6e7d7611b84c4170ab94cc354c27cb3c9ddb3
+camera_configs:
+  V1:
+    label: front_overhang_low_oblique
+    base_link_xyz_m: [0.67, 0.0, 0.30]
+    front_bumper_relative_xyz_m: [0.095, 0.0, 0.30]
+    pitch_deg: -35.0
+  V2:
+    label: front_overhang_medium_oblique
+    base_link_xyz_m: [0.67, 0.0, 0.48]
+    front_bumper_relative_xyz_m: [0.095, 0.0, 0.48]
+    pitch_deg: -50.0
+  V3:
+    label: front_overhang_high_downward
+    base_link_xyz_m: [0.69, 0.0, 0.70]
+    front_bumper_relative_xyz_m: [0.115, 0.0, 0.70]
+    pitch_deg: -60.0
+  V4:
+    label: lateral_offset_verification
+    base_link_xyz_m: [0.67, 0.34, 0.48]
+    front_bumper_relative_xyz_m: [0.095, 0.34, 0.48]
+    pitch_deg: -50.0
+camera_common:
+  resolution: [640, 480]
+  horizontal_fov_rad: 1.50098
+  near_clip_m: 0.30
+  far_clip_m: 100.0
+  update_rate_hz: 15.0
+  collision_box_size_m: [0.05, 0.14, 0.05]
+vehicle_collision_geometry:
+  source_xacro: sanitation_vehicle_description/urdf/sanitation_vehicle.urdf.xacro
+  front_bumper_x_m: 0.575
+  maximum_mount_height_m: 0.75
+  ground_z_m: -0.155
+  body_aabb:
+    center_m: [0.0, 0.0, 0.0]
+    size_m: [1.15, 0.72, 0.28]
+  front_bumper_reserved_aabb:
+    center_m: [0.60, 0.0, -0.02]
+    size_m: [0.05, 0.76, 0.28]
+  mechanical_arm_reserved_aabb:
+    center_m: [0.10, 0.0, 0.42]
+    size_m: [0.40, 0.40, 0.40]
+  brush_cylinders:
+    - {center_m: [0.58, 0.23, -0.14], radius_m: 0.14, height_m: 0.03}
+    - {center_m: [0.58, -0.23, -0.14], radius_m: 0.14, height_m: 0.03}
+  production_nav2_footprint_xy_m: [[0.40, 0.36], [0.40, -0.36], [-0.40, -0.36], [-0.40, 0.36]]
+  stage5br5_trial_footprint_xy_m: [[0.72, 0.43], [0.72, -0.43], [-0.60, -0.43], [-0.60, 0.43]]
+  trial_footprint_only: true
+  production_footprint_change_requires_camera_selection: true
+mechanical_gates:
+  collision_free: true
+  no_ground_penetration: true
+  within_mount_height: true
+  inside_stage5br5_trial_footprint: true
+  production_footprint_compatibility_reported_separately: true
+runtime_gates:
+  verification_self_pixels_p95_max: 0.05
+  target_self_overlap_max: 0.05
+  minimum_worlds: 6
+  synchronized_frames_per_role_min: 10
+manual_audit_gates:
+  samples_per_class_min: 40
+  worlds_min: 6
+  independent_reviewers_min: 2
+  recognition_ready_class_accuracy_min: 0.90
+  cohen_kappa_min: 0.75
+  self_occlusion_failure_max: 0.05
+active_observation:
+  maximum_approaches: 2
+  sensor_stale_s: 2.0
+  queue_timeout_s: 120.0
+  approach_timeout_base_s: 20.0
+  minimum_approach_speed_mps: 0.10
+  spatial_merge_radius_m: 0.20
+  minimum_footprint_clearance_m: 0.15
+  maximum_covariance_trace: 0.03
+  oracle_candidate_only: true
+  competition_evidence: false
+fail_closed:
+  model_micro_overfit_requires_camera_mechanical_runtime_manual_and_active_observation_gates: true
+  screening_requires_both_micro_overfit_gates: true
+  formal_requires_all_screening_gates: true

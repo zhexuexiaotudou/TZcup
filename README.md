@@ -1,5 +1,11 @@
 # TZcup 无人清扫车仿真项目
 
+## Stage5BR5 相机机械重构、平衡盲审集与主动观察前置边界（2026-07-20）
+
+Stage5BR5 已修复 ActiveObservation 首见/末见/排队/接近时间混用问题，并完成 V1–V4 相机机械网格；V3 因 trial footprint 冲突被剔除，V1/V2/V4 在六个真实 Gazebo 世界完成 discovery/verification 各 10 帧，共 360 帧精确同步 RGB-D/semantic/instance 证据，运行时自遮挡与 collision/envelope 门通过。最终盲审集达到 200 张、五类各 40 张并覆盖六世界；但尚无两名独立人工评审结果，故 V4 只作为待审候选，相机没有定型。
+
+当前首个阻断层为 `G2_camera_selection_blocked_two_independent_human_manual_reviewers_not_available`。policy v2 保持未冻结、训练禁用；正式 oracle active-observation、detector/area micro-overfit、120/1200、formal/live/J6 均未越级执行。`REVIEW_PACKET_COMPLETE=true`，但 `READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。复核入口见 [`GPT_REVIEW_STAGE5BR5.md`](GPT_REVIEW_STAGE5BR5.md)、[`docs/stage5br5-camera-active-observation.md`](docs/stage5br5-camera-active-observation.md) 与 [`artifacts/stage5br5_20260720_review/`](artifacts/stage5br5_20260720_review/)。
+
 ## Stage5BR4 可观测性、相机消融与主动观察停止边界（2026-07-20）
 
 Stage5BR4 先冻结可评测策略并重算 Stage5BR3 原始数据：3370 个可见实例中只有 875 个 recognition-ready（`25.96%`），2495 个 non-ready 没有被隐藏。C0–C3 已在同一 world、seed、目标 pose 和轨迹命令下真实采集；C3 verification 虽把小规模 ready 比例提高到 `29.63%`，主动观察 ready 转换仍只有 `2/4 = 50% < 90%`，且车体自身像素 P50 为 `21.11%`。人工审计不通过，相机没有定型。
@@ -135,4 +141,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-20：Stage5BR4 已完成 C0 全量可观测性重算、C0–C3 同场景真实消融、生产隔离和主动观察 fail-closed 状态机；C3 ready conversion `0.50 < 0.90` 且人工审计失败，故相机未定型、模型与数据扩充未启动。当前复核包完整但两个 readiness 仍为 false，原始数据、运行工作区、失败尝试和回归证据在用户确认前保留。
+2026-07-20：Stage5BR5 已完成 ActiveObservation 时间语义修复、四相机机械网格、V1/V2/V4 六世界 360 帧真实运行时消融、五类各 40 张的 200 张盲审集和 observation-pose planner；两名独立人工评审尚未完成，相机与 policy v2 未冻结，正式主动观察和模型链按门禁未启动。当前复核包完整但两个 readiness 仍为 false，原始数据、运行工作区、失败尝试和回归证据在用户确认前保留。

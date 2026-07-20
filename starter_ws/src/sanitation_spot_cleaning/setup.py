@@ -25,6 +25,7 @@ setup(
         "console_scripts": [
             "spot_cleaning_node = sanitation_spot_cleaning.node:main",
             "stage5a_spot_clean_evaluator = sanitation_spot_cleaning.evaluator:main",
+            "stage5br5_observation_pose_node = sanitation_spot_cleaning.observation_pose_node:main",
         ],
     },
 )

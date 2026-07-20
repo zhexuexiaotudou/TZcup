@@ -1,5 +1,15 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## Stage5BR5 相机、审计与观测位姿契约
+
+- 主动观察候选必须分别保存 `first_seen_s`、`last_seen_s`、`queued_at_s`、`preflight_started_s`、`approach_started_s`、`approach_deadline_s` 与 `last_observation_s`；sensor stale 不得与 queue timeout 混用，approach timeout 必须包含路径长度/最小速度项。
+- verification 相机候选必须同时保存 base_link 和保险杠相对坐标，并按车体、保险杠、刷盘、机械臂预留体积、地面、安装高度、旋转 AABB 与 footprint 做实际机械门。生产 footprint 只有在相机选择通过后才能修改。
+- 相机运行消融至少覆盖六世界、每 role 10 组同步帧，并报告 self pixels、target/self overlap、bbox/mask/depth、可见比例与 boundary completeness。静态同 pose view replay 不得命名为主动观察。
+- 人工可辨识门必须使用五类各至少 40 张、至少六世界的平衡盲审集和两名独立评审；脚本不能代替人工。准确率 `>=0.90`、Cohen kappa `>=0.75`、self-occlusion failure `<=0.05` 才通过。
+- policy v1 不修改；policy v2 在人工审计完成前不得冻结或允许训练。任何阈值变化使用新 policy id 与新 SHA-256。
+- Observation pose planner 必须包含 ROS-independent 几何核心和 Nav2 `ComputePathToPose` wrapper；无可达候选时进入 `UNREACHABLE`，不得用 GT 直接输出车辆最终位姿。
+- 只有机械、运行时、人工和正式六世界 oracle active-observation 门全部通过，才允许进入 detector/area micro-overfit 与 120/1200 screening。
+
 ## Stage5BR4 感知可评测与主动观察契约
 
 感知报告必须保留 `all_visible`、`recognition_ready`、`non_ready` 三个互斥视图。离散类 ready 以最短边、mask area 和最大深度联合判定；区域类独立使用 mask area 门。阈值在训练前冻结并记录 SHA-256，修改必须新建 policy id 和人工审计证据。

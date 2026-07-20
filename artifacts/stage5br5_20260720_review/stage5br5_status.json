@@ -1,0 +1,180 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR5",
+  "predecessor_commit": "27e6e7d7611b84c4170ab94cc354c27cb3c9ddb3",
+  "historical_stage5br4_conclusion_preserved": {
+    "first_blocking_layer": "G2_camera_selection_blocked_active_observation_ready_conversion_below_0.90_and_manual_audit_failed",
+    "READY_FOR_GPT_REVIEW_STAGE5B": false,
+    "READY_FOR_STAGE5C": false
+  },
+  "active_observation_time_semantics": {
+    "separate_first_last_queue_preflight_approach_observation_times": true,
+    "sensor_stale_separate_from_queue_timeout": true,
+    "dynamic_approach_deadline": true,
+    "spatial_merge_across_model_id_changes": true,
+    "backward_compatible_migration_tested": true,
+    "coverage_resume_tested": true
+  },
+  "camera_mechanics": {
+    "grid_candidates": [
+      "V1",
+      "V2",
+      "V3",
+      "V4"
+    ],
+    "mechanically_viable": [
+      "V1",
+      "V2",
+      "V4"
+    ],
+    "mechanically_pruned": [
+      "V3"
+    ],
+    "production_footprint_changed": false
+  },
+  "camera_runtime": {
+    "world_count": 6,
+    "capture_count": 36,
+    "frame_count": 360,
+    "runtime_eligible_camera_candidates": [
+      "V1",
+      "V2",
+      "V4"
+    ],
+    "all_exact_timestamps": true,
+    "view_replay_is_active_observation_evidence": false
+  },
+  "manual_audit": {
+    "schema_version": 2,
+    "stage": "Stage5BR5",
+    "audit_camera_candidate_not_selected": "V4",
+    "blind_dataset": {
+      "sample_count": 200,
+      "samples_by_class": {
+        "plastic_bottle": 40,
+        "metal_can": 40,
+        "paper_litter": 40,
+        "leaf_pile": 40,
+        "puddle": 40
+      },
+      "worlds_by_class": {
+        "plastic_bottle": [
+          "world_a_asphalt_campus",
+          "world_b_concrete_sidewalk",
+          "world_c_wet_dark_ground",
+          "world_d_mixed_curb_vegetation",
+          "world_e_tiled_plaza",
+          "world_f_service_road"
+        ],
+        "metal_can": [
+          "world_a_asphalt_campus",
+          "world_b_concrete_sidewalk",
+          "world_c_wet_dark_ground",
+          "world_e_tiled_plaza",
+          "world_f_service_road"
+        ],
+        "paper_litter": [
+          "world_a_asphalt_campus",
+          "world_b_concrete_sidewalk",
+          "world_c_wet_dark_ground",
+          "world_d_mixed_curb_vegetation",
+          "world_e_tiled_plaza",
+          "world_f_service_road"
+        ],
+        "leaf_pile": [
+          "world_a_asphalt_campus",
+          "world_b_concrete_sidewalk",
+          "world_c_wet_dark_ground",
+          "world_d_mixed_curb_vegetation",
+          "world_e_tiled_plaza",
+          "world_f_service_road"
+        ],
+        "puddle": [
+          "world_a_asphalt_campus",
+          "world_b_concrete_sidewalk",
+          "world_c_wet_dark_ground",
+          "world_e_tiled_plaza",
+          "world_f_service_road"
+        ]
+      },
+      "balanced_40_per_class_pass": true,
+      "six_worlds_represented": true
+    },
+    "reviewer_response_count": 0,
+    "independent_reviewers_required": 2,
+    "recognition_ready_class_accuracy": null,
+    "cohen_kappa": null,
+    "self_occlusion_failure_fraction": null,
+    "thresholds": {
+      "recognition_ready_class_accuracy_min": 0.9,
+      "cohen_kappa_min": 0.75,
+      "self_occlusion_failure_max": 0.05
+    },
+    "manual_audit_pass": false,
+    "blocker": "two_independent_human_reviewer_responses_not_available",
+    "scripts_substitute_for_human_review": false
+  },
+  "policy_v2": {
+    "policy_id": "stage5br5_occlusion_aware_candidate_v2",
+    "sha256": "78254d4c09923d981bb9735e646a31c1c1d3951174808b6d871de90dd8e31250",
+    "frozen_before_model_training": false,
+    "training_permitted": false
+  },
+  "observation_pose_planner": {
+    "ros_independent_geometry_core": true,
+    "ros2_compute_path_to_pose_wrapper": true,
+    "ground_truth_pose_used": false,
+    "formal_oracle_active_observation_executed": false,
+    "reason": "camera selection blocked before formal oracle-candidate runtime"
+  },
+  "downstream_stop_boundary": {
+    "detector_micro_overfit_executed": false,
+    "area_model_micro_overfit_executed": false,
+    "screening_120_scene_1200_frame_executed": false,
+    "formal_500_scene_5000_frame_executed": false,
+    "live_30_seed_10_min_executed": false,
+    "real_active_nav2_spot_clean_30_seed_executed": false,
+    "j6_gate_executed": false
+  },
+  "regressions": {
+    "schema_version": 1,
+    "stage": "Stage5BR5",
+    "fast_and_affected_pytest_pass": true,
+    "affected_colcon_packages": [
+      "sanitation_learning",
+      "sanitation_spot_cleaning"
+    ],
+    "affected_colcon_test_count": 29,
+    "affected_colcon_errors": 0,
+    "affected_colcon_failures": 0,
+    "stage5a": {
+      "synthetic_perception_pass": true,
+      "spot_clean_e2e_pass": true,
+      "valid_trial_count": 30,
+      "mission_success_count": 30,
+      "live_smoke_pass": true,
+      "inference_frame_count": 119,
+      "rosbag_recorded": true,
+      "ground_truth_control_violation_count": 0
+    },
+    "stage4w_seed0": {
+      "static_gate_pass": true,
+      "coverage_success": true,
+      "component_count": 17,
+      "collision_count": 0,
+      "keepout_violation_sample_count": 0
+    },
+    "production_gt_isolation_pass": true,
+    "regression_gate_pass": true
+  },
+  "competition_perception_pass": false,
+  "real_domain_evaluation_executed": false,
+  "j6_runtime_pass": false,
+  "competition_efficiency_pass": false,
+  "theoretical_efficiency_m2_h": 1053,
+  "target_efficiency_m2_h": 3500,
+  "first_blocking_layer": "G2_camera_selection_blocked_two_independent_human_manual_reviewers_not_available",
+  "REVIEW_PACKET_COMPLETE": true,
+  "READY_FOR_GPT_REVIEW_STAGE5B": false,
+  "READY_FOR_STAGE5C": false
+}

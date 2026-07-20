@@ -1,0 +1,370 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR5",
+  "same_asset_seed_pose_and_trajectory_within_world": true,
+  "worlds": [
+    "world_a_asphalt_campus",
+    "world_b_concrete_sidewalk",
+    "world_c_wet_dark_ground",
+    "world_d_mixed_curb_vegetation",
+    "world_e_tiled_plaza",
+    "world_f_service_road"
+  ],
+  "camera_configs_executed": [
+    "V1",
+    "V2",
+    "V4"
+  ],
+  "camera_config_mechanically_pruned": [
+    "V3"
+  ],
+  "runtime_capture_count": 36,
+  "runtime_frame_count": 360,
+  "policy_v1_sha256": "3fd55150090ec239153cd4a766a19ed874dc2c3c1361002dccf59701b2a48eb5",
+  "policy_v2_sha256": "78254d4c09923d981bb9735e646a31c1c1d3951174808b6d871de90dd8e31250",
+  "policy_v2_frozen_before_model_training": false,
+  "policy_v2_training_permitted": false,
+  "mechanics": {
+    "schema_version": 1,
+    "stage": "Stage5BR5",
+    "source_xacro": "sanitation_vehicle_description/urdf/sanitation_vehicle.urdf.xacro",
+    "trial_footprint_only": true,
+    "camera_results": {
+      "V1": {
+        "camera_id": "V1",
+        "label": "front_overhang_low_oblique",
+        "base_link_xyz_m": [
+          0.67,
+          0.0,
+          0.3
+        ],
+        "front_bumper_relative_xyz_m": [
+          0.095,
+          0.0,
+          0.3
+        ],
+        "pitch_deg": -35.0,
+        "camera_aabb_min_m": [
+          0.635181787983999,
+          -0.07,
+          0.26518178798399905
+        ],
+        "camera_aabb_max_m": [
+          0.704818212016001,
+          0.07,
+          0.3348182120160009
+        ],
+        "collision_geometry_sources": [
+          "body_aabb",
+          "front_bumper_reserved_aabb",
+          "mechanical_arm_reserved_aabb",
+          "brush_cylinders"
+        ],
+        "collisions": [],
+        "collision_free": true,
+        "no_ground_penetration": true,
+        "within_mount_height": true,
+        "inside_stage5br5_trial_footprint": true,
+        "inside_current_production_nav2_footprint": false,
+        "production_footprint_change_applied": false,
+        "mechanical_gate_pass": true
+      },
+      "V2": {
+        "camera_id": "V2",
+        "label": "front_overhang_medium_oblique",
+        "base_link_xyz_m": [
+          0.67,
+          0.0,
+          0.48
+        ],
+        "front_bumper_relative_xyz_m": [
+          0.095,
+          0.0,
+          0.48
+        ],
+        "pitch_deg": -50.0,
+        "camera_aabb_min_m": [
+          0.6347791986798621,
+          -0.07,
+          0.44477919867986204
+        ],
+        "camera_aabb_max_m": [
+          0.705220801320138,
+          0.07,
+          0.5152208013201379
+        ],
+        "collision_geometry_sources": [
+          "body_aabb",
+          "front_bumper_reserved_aabb",
+          "mechanical_arm_reserved_aabb",
+          "brush_cylinders"
+        ],
+        "collisions": [],
+        "collision_free": true,
+        "no_ground_penetration": true,
+        "within_mount_height": true,
+        "inside_stage5br5_trial_footprint": true,
+        "inside_current_production_nav2_footprint": false,
+        "production_footprint_change_applied": false,
+        "mechanical_gate_pass": true
+      },
+      "V3": {
+        "camera_id": "V3",
+        "label": "front_overhang_high_downward",
+        "base_link_xyz_m": [
+          0.69,
+          0.0,
+          0.7
+        ],
+        "front_bumper_relative_xyz_m": [
+          0.115,
+          0.0,
+          0.7
+        ],
+        "pitch_deg": -60.0,
+        "camera_aabb_min_m": [
+          0.6558493649053889,
+          -0.07,
+          0.6658493649053889
+        ],
+        "camera_aabb_max_m": [
+          0.724150635094611,
+          0.07,
+          0.734150635094611
+        ],
+        "collision_geometry_sources": [
+          "body_aabb",
+          "front_bumper_reserved_aabb",
+          "mechanical_arm_reserved_aabb",
+          "brush_cylinders"
+        ],
+        "collisions": [],
+        "collision_free": true,
+        "no_ground_penetration": true,
+        "within_mount_height": true,
+        "inside_stage5br5_trial_footprint": false,
+        "inside_current_production_nav2_footprint": false,
+        "production_footprint_change_applied": false,
+        "mechanical_gate_pass": false
+      },
+      "V4": {
+        "camera_id": "V4",
+        "label": "lateral_offset_verification",
+        "base_link_xyz_m": [
+          0.67,
+          0.34,
+          0.48
+        ],
+        "front_bumper_relative_xyz_m": [
+          0.095,
+          0.34,
+          0.48
+        ],
+        "pitch_deg": -50.0,
+        "camera_aabb_min_m": [
+          0.6347791986798621,
+          0.27,
+          0.44477919867986204
+        ],
+        "camera_aabb_max_m": [
+          0.705220801320138,
+          0.41000000000000003,
+          0.5152208013201379
+        ],
+        "collision_geometry_sources": [
+          "body_aabb",
+          "front_bumper_reserved_aabb",
+          "mechanical_arm_reserved_aabb",
+          "brush_cylinders"
+        ],
+        "collisions": [],
+        "collision_free": true,
+        "no_ground_penetration": true,
+        "within_mount_height": true,
+        "inside_stage5br5_trial_footprint": true,
+        "inside_current_production_nav2_footprint": false,
+        "production_footprint_change_applied": false,
+        "mechanical_gate_pass": true
+      }
+    },
+    "all_candidates_mechanical_gate_pass": false,
+    "mechanically_viable_candidates": [
+      "V1",
+      "V2",
+      "V4"
+    ],
+    "mechanically_pruned_candidates": [
+      "V3"
+    ],
+    "mechanical_grid_executed": true,
+    "mechanical_grid_has_viable_candidate": true,
+    "production_nav2_footprint_unchanged": true
+  },
+  "camera_results": {
+    "V1": {
+      "world_count": 6,
+      "capture_role_count": 12,
+      "captured_frames": 120,
+      "all_exact_timestamp_gate_pass": true,
+      "verification_self_pixels_p95_worst_world": 0.0,
+      "target_self_overlap_max": 0.0,
+      "mechanical_gate_pass": true,
+      "runtime_camera_gate_pass": true,
+      "ready_v1_fraction": 0.29239766081871343,
+      "ready_v2_fraction": 0.13450292397660818,
+      "view_replay_conversion_not_active_observation": 0.5,
+      "view_replay_conversion_candidate_count": 22,
+      "view_replay_conversion_by_class": {
+        "plastic_bottle": {
+          "converted": 8,
+          "matched_candidates": 9,
+          "fraction": 0.8888888888888888
+        },
+        "paper_litter": {
+          "converted": 1,
+          "matched_candidates": 10,
+          "fraction": 0.1
+        },
+        "puddle": {
+          "converted": 2,
+          "matched_candidates": 3,
+          "fraction": 0.6666666666666666
+        }
+      }
+    },
+    "V2": {
+      "world_count": 6,
+      "capture_role_count": 12,
+      "captured_frames": 120,
+      "all_exact_timestamp_gate_pass": true,
+      "verification_self_pixels_p95_worst_world": 0.0,
+      "target_self_overlap_max": 0.0,
+      "mechanical_gate_pass": true,
+      "runtime_camera_gate_pass": true,
+      "ready_v1_fraction": 0.5,
+      "ready_v2_fraction": 0.13636363636363635,
+      "view_replay_conversion_not_active_observation": 0.22727272727272727,
+      "view_replay_conversion_candidate_count": 22,
+      "view_replay_conversion_by_class": {
+        "plastic_bottle": {
+          "converted": 1,
+          "matched_candidates": 9,
+          "fraction": 0.1111111111111111
+        },
+        "paper_litter": {
+          "converted": 2,
+          "matched_candidates": 10,
+          "fraction": 0.2
+        },
+        "puddle": {
+          "converted": 2,
+          "matched_candidates": 3,
+          "fraction": 0.6666666666666666
+        }
+      }
+    },
+    "V4": {
+      "world_count": 6,
+      "capture_role_count": 12,
+      "captured_frames": 120,
+      "all_exact_timestamp_gate_pass": true,
+      "verification_self_pixels_p95_worst_world": 0.0,
+      "target_self_overlap_max": 0.0,
+      "mechanical_gate_pass": true,
+      "runtime_camera_gate_pass": true,
+      "ready_v1_fraction": 0.8305084745762712,
+      "ready_v2_fraction": 0.3050847457627119,
+      "view_replay_conversion_not_active_observation": 0.36363636363636365,
+      "view_replay_conversion_candidate_count": 22,
+      "view_replay_conversion_by_class": {
+        "plastic_bottle": {
+          "converted": 1,
+          "matched_candidates": 9,
+          "fraction": 0.1111111111111111
+        },
+        "paper_litter": {
+          "converted": 5,
+          "matched_candidates": 10,
+          "fraction": 0.5
+        },
+        "puddle": {
+          "converted": 2,
+          "matched_candidates": 3,
+          "fraction": 0.6666666666666666
+        }
+      }
+    }
+  },
+  "runtime_eligible_camera_candidates": [
+    "V1",
+    "V2",
+    "V4"
+  ],
+  "manual_audit": {
+    "sample_count": 200,
+    "samples_by_class": {
+      "plastic_bottle": 40,
+      "metal_can": 40,
+      "paper_litter": 40,
+      "leaf_pile": 40,
+      "puddle": 40
+    },
+    "worlds_by_class": {
+      "plastic_bottle": [
+        "world_a_asphalt_campus",
+        "world_b_concrete_sidewalk",
+        "world_c_wet_dark_ground",
+        "world_d_mixed_curb_vegetation",
+        "world_e_tiled_plaza",
+        "world_f_service_road"
+      ],
+      "metal_can": [
+        "world_a_asphalt_campus",
+        "world_b_concrete_sidewalk",
+        "world_c_wet_dark_ground",
+        "world_e_tiled_plaza",
+        "world_f_service_road"
+      ],
+      "paper_litter": [
+        "world_a_asphalt_campus",
+        "world_b_concrete_sidewalk",
+        "world_c_wet_dark_ground",
+        "world_d_mixed_curb_vegetation",
+        "world_e_tiled_plaza",
+        "world_f_service_road"
+      ],
+      "leaf_pile": [
+        "world_a_asphalt_campus",
+        "world_b_concrete_sidewalk",
+        "world_c_wet_dark_ground",
+        "world_d_mixed_curb_vegetation",
+        "world_e_tiled_plaza",
+        "world_f_service_road"
+      ],
+      "puddle": [
+        "world_a_asphalt_campus",
+        "world_b_concrete_sidewalk",
+        "world_c_wet_dark_ground",
+        "world_e_tiled_plaza",
+        "world_f_service_road"
+      ]
+    },
+    "balanced_40_per_class_pass": true,
+    "six_worlds_represented": true,
+    "reviewer_response_count": 0,
+    "independent_reviewers_required": 2,
+    "manual_gate_pass": false,
+    "manual_gate_blocker": "two_independent_human_reviewer_responses_not_available",
+    "audit_camera_candidate": "V4",
+    "extra_verification_capture_count": 19
+  },
+  "camera_selected": null,
+  "camera_selection_gate_pass": false,
+  "camera_selection_blocker": "two_independent_human_reviewer_responses_not_available",
+  "active_observation_runtime_executed": false,
+  "active_observation_runtime_reason": "camera cannot be frozen before required two-reviewer manual gate",
+  "oracle_candidate_only": true,
+  "competition_evidence": false,
+  "model_micro_overfit_executed": false,
+  "dataset_120_1200_executed": false
+}

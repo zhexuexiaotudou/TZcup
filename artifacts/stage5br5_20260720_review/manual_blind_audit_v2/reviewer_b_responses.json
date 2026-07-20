@@ -1,0 +1,2202 @@
+[
+  {
+    "sample_id": "sample_0000",
+    "crop": "crops/sample_0000.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0001",
+    "crop": "crops/sample_0001.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0002",
+    "crop": "crops/sample_0002.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0003",
+    "crop": "crops/sample_0003.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0004",
+    "crop": "crops/sample_0004.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0005",
+    "crop": "crops/sample_0005.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0006",
+    "crop": "crops/sample_0006.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0007",
+    "crop": "crops/sample_0007.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0008",
+    "crop": "crops/sample_0008.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0009",
+    "crop": "crops/sample_0009.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0010",
+    "crop": "crops/sample_0010.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0011",
+    "crop": "crops/sample_0011.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0012",
+    "crop": "crops/sample_0012.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0013",
+    "crop": "crops/sample_0013.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0014",
+    "crop": "crops/sample_0014.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0015",
+    "crop": "crops/sample_0015.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0016",
+    "crop": "crops/sample_0016.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0017",
+    "crop": "crops/sample_0017.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0018",
+    "crop": "crops/sample_0018.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0019",
+    "crop": "crops/sample_0019.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0020",
+    "crop": "crops/sample_0020.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0021",
+    "crop": "crops/sample_0021.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0022",
+    "crop": "crops/sample_0022.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0023",
+    "crop": "crops/sample_0023.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0024",
+    "crop": "crops/sample_0024.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0025",
+    "crop": "crops/sample_0025.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0026",
+    "crop": "crops/sample_0026.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0027",
+    "crop": "crops/sample_0027.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0028",
+    "crop": "crops/sample_0028.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0029",
+    "crop": "crops/sample_0029.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0030",
+    "crop": "crops/sample_0030.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0031",
+    "crop": "crops/sample_0031.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0032",
+    "crop": "crops/sample_0032.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0033",
+    "crop": "crops/sample_0033.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0034",
+    "crop": "crops/sample_0034.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0035",
+    "crop": "crops/sample_0035.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0036",
+    "crop": "crops/sample_0036.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0037",
+    "crop": "crops/sample_0037.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0038",
+    "crop": "crops/sample_0038.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0039",
+    "crop": "crops/sample_0039.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0040",
+    "crop": "crops/sample_0040.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0041",
+    "crop": "crops/sample_0041.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0042",
+    "crop": "crops/sample_0042.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0043",
+    "crop": "crops/sample_0043.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0044",
+    "crop": "crops/sample_0044.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0045",
+    "crop": "crops/sample_0045.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0046",
+    "crop": "crops/sample_0046.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0047",
+    "crop": "crops/sample_0047.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0048",
+    "crop": "crops/sample_0048.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0049",
+    "crop": "crops/sample_0049.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0050",
+    "crop": "crops/sample_0050.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0051",
+    "crop": "crops/sample_0051.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0052",
+    "crop": "crops/sample_0052.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0053",
+    "crop": "crops/sample_0053.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0054",
+    "crop": "crops/sample_0054.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0055",
+    "crop": "crops/sample_0055.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0056",
+    "crop": "crops/sample_0056.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0057",
+    "crop": "crops/sample_0057.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0058",
+    "crop": "crops/sample_0058.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0059",
+    "crop": "crops/sample_0059.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0060",
+    "crop": "crops/sample_0060.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0061",
+    "crop": "crops/sample_0061.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0062",
+    "crop": "crops/sample_0062.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0063",
+    "crop": "crops/sample_0063.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0064",
+    "crop": "crops/sample_0064.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0065",
+    "crop": "crops/sample_0065.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0066",
+    "crop": "crops/sample_0066.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0067",
+    "crop": "crops/sample_0067.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0068",
+    "crop": "crops/sample_0068.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0069",
+    "crop": "crops/sample_0069.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0070",
+    "crop": "crops/sample_0070.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0071",
+    "crop": "crops/sample_0071.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0072",
+    "crop": "crops/sample_0072.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0073",
+    "crop": "crops/sample_0073.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0074",
+    "crop": "crops/sample_0074.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0075",
+    "crop": "crops/sample_0075.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0076",
+    "crop": "crops/sample_0076.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0077",
+    "crop": "crops/sample_0077.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0078",
+    "crop": "crops/sample_0078.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0079",
+    "crop": "crops/sample_0079.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0080",
+    "crop": "crops/sample_0080.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0081",
+    "crop": "crops/sample_0081.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0082",
+    "crop": "crops/sample_0082.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0083",
+    "crop": "crops/sample_0083.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0084",
+    "crop": "crops/sample_0084.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0085",
+    "crop": "crops/sample_0085.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0086",
+    "crop": "crops/sample_0086.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0087",
+    "crop": "crops/sample_0087.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0088",
+    "crop": "crops/sample_0088.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0089",
+    "crop": "crops/sample_0089.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0090",
+    "crop": "crops/sample_0090.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0091",
+    "crop": "crops/sample_0091.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0092",
+    "crop": "crops/sample_0092.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0093",
+    "crop": "crops/sample_0093.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0094",
+    "crop": "crops/sample_0094.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0095",
+    "crop": "crops/sample_0095.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0096",
+    "crop": "crops/sample_0096.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0097",
+    "crop": "crops/sample_0097.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0098",
+    "crop": "crops/sample_0098.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0099",
+    "crop": "crops/sample_0099.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0100",
+    "crop": "crops/sample_0100.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0101",
+    "crop": "crops/sample_0101.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0102",
+    "crop": "crops/sample_0102.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0103",
+    "crop": "crops/sample_0103.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0104",
+    "crop": "crops/sample_0104.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0105",
+    "crop": "crops/sample_0105.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0106",
+    "crop": "crops/sample_0106.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0107",
+    "crop": "crops/sample_0107.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0108",
+    "crop": "crops/sample_0108.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0109",
+    "crop": "crops/sample_0109.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0110",
+    "crop": "crops/sample_0110.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0111",
+    "crop": "crops/sample_0111.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0112",
+    "crop": "crops/sample_0112.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0113",
+    "crop": "crops/sample_0113.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0114",
+    "crop": "crops/sample_0114.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0115",
+    "crop": "crops/sample_0115.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0116",
+    "crop": "crops/sample_0116.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0117",
+    "crop": "crops/sample_0117.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0118",
+    "crop": "crops/sample_0118.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0119",
+    "crop": "crops/sample_0119.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0120",
+    "crop": "crops/sample_0120.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0121",
+    "crop": "crops/sample_0121.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0122",
+    "crop": "crops/sample_0122.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0123",
+    "crop": "crops/sample_0123.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0124",
+    "crop": "crops/sample_0124.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0125",
+    "crop": "crops/sample_0125.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0126",
+    "crop": "crops/sample_0126.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0127",
+    "crop": "crops/sample_0127.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0128",
+    "crop": "crops/sample_0128.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0129",
+    "crop": "crops/sample_0129.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0130",
+    "crop": "crops/sample_0130.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0131",
+    "crop": "crops/sample_0131.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0132",
+    "crop": "crops/sample_0132.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0133",
+    "crop": "crops/sample_0133.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0134",
+    "crop": "crops/sample_0134.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0135",
+    "crop": "crops/sample_0135.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0136",
+    "crop": "crops/sample_0136.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0137",
+    "crop": "crops/sample_0137.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0138",
+    "crop": "crops/sample_0138.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0139",
+    "crop": "crops/sample_0139.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0140",
+    "crop": "crops/sample_0140.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0141",
+    "crop": "crops/sample_0141.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0142",
+    "crop": "crops/sample_0142.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0143",
+    "crop": "crops/sample_0143.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0144",
+    "crop": "crops/sample_0144.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0145",
+    "crop": "crops/sample_0145.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0146",
+    "crop": "crops/sample_0146.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0147",
+    "crop": "crops/sample_0147.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0148",
+    "crop": "crops/sample_0148.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0149",
+    "crop": "crops/sample_0149.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0150",
+    "crop": "crops/sample_0150.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0151",
+    "crop": "crops/sample_0151.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0152",
+    "crop": "crops/sample_0152.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0153",
+    "crop": "crops/sample_0153.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0154",
+    "crop": "crops/sample_0154.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0155",
+    "crop": "crops/sample_0155.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0156",
+    "crop": "crops/sample_0156.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0157",
+    "crop": "crops/sample_0157.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0158",
+    "crop": "crops/sample_0158.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0159",
+    "crop": "crops/sample_0159.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0160",
+    "crop": "crops/sample_0160.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0161",
+    "crop": "crops/sample_0161.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0162",
+    "crop": "crops/sample_0162.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0163",
+    "crop": "crops/sample_0163.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0164",
+    "crop": "crops/sample_0164.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0165",
+    "crop": "crops/sample_0165.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0166",
+    "crop": "crops/sample_0166.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0167",
+    "crop": "crops/sample_0167.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0168",
+    "crop": "crops/sample_0168.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0169",
+    "crop": "crops/sample_0169.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0170",
+    "crop": "crops/sample_0170.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0171",
+    "crop": "crops/sample_0171.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0172",
+    "crop": "crops/sample_0172.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0173",
+    "crop": "crops/sample_0173.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0174",
+    "crop": "crops/sample_0174.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0175",
+    "crop": "crops/sample_0175.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0176",
+    "crop": "crops/sample_0176.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0177",
+    "crop": "crops/sample_0177.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0178",
+    "crop": "crops/sample_0178.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0179",
+    "crop": "crops/sample_0179.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0180",
+    "crop": "crops/sample_0180.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0181",
+    "crop": "crops/sample_0181.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0182",
+    "crop": "crops/sample_0182.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0183",
+    "crop": "crops/sample_0183.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0184",
+    "crop": "crops/sample_0184.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0185",
+    "crop": "crops/sample_0185.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0186",
+    "crop": "crops/sample_0186.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0187",
+    "crop": "crops/sample_0187.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0188",
+    "crop": "crops/sample_0188.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0189",
+    "crop": "crops/sample_0189.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0190",
+    "crop": "crops/sample_0190.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0191",
+    "crop": "crops/sample_0191.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0192",
+    "crop": "crops/sample_0192.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0193",
+    "crop": "crops/sample_0193.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0194",
+    "crop": "crops/sample_0194.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0195",
+    "crop": "crops/sample_0195.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0196",
+    "crop": "crops/sample_0196.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0197",
+    "crop": "crops/sample_0197.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0198",
+    "crop": "crops/sample_0198.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  },
+  {
+    "sample_id": "sample_0199",
+    "crop": "crops/sample_0199.png",
+    "review_fields": {
+      "class": null,
+      "target_present": null,
+      "suitable_for_recognition": null,
+      "self_occluded": null,
+      "confidence": null
+    }
+  }
+]

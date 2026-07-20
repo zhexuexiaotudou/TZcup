@@ -35,20 +35,48 @@ def recognition_ready(row: dict, policy: dict) -> bool:
     if class_id in DISCRETE_CLASSES:
         rule = policy["discrete_recognition_ready"]
         distance = row.get("distance_m")
-        return (
+        ready = (
             float(row.get("bbox_shortest_side_px", 0)) >= float(rule["shortest_side_px"])
             and float(row.get("mask_area_px", 0)) >= float(rule["mask_area_px"])
             and distance is not None
             and math.isfinite(float(distance))
             and float(distance) <= float(rule["max_depth_m"])
         )
+        for field, rule_key, comparison in (
+            ("visible_fraction", "min_visible_fraction", "minimum"),
+            ("target_self_overlap", "max_target_self_overlap", "maximum"),
+            ("boundary_completeness", "boundary_completeness_min", "minimum"),
+        ):
+            threshold = rule.get(rule_key)
+            if threshold is None:
+                continue
+            value = row.get(field)
+            if value is None or not math.isfinite(float(value)):
+                return False
+            ready = ready and (float(value) >= float(threshold) if comparison == "minimum" else float(value) <= float(threshold))
+        return ready
     if class_id in AREA_CLASSES:
         rule = policy["area_recognition_ready"]
         visible_fraction = row.get("visible_fraction")
         minimum = rule.get("min_visible_fraction")
-        return float(row.get("mask_area_px", 0)) >= float(rule["mask_area_px"]) and (
+        ready = float(row.get("mask_area_px", 0)) >= float(rule["mask_area_px"]) and (
             minimum is None or (visible_fraction is not None and float(visible_fraction) >= float(minimum))
         )
+        distance = row.get("distance_m")
+        if rule.get("max_depth_m") is not None:
+            ready = ready and distance is not None and math.isfinite(float(distance)) and float(distance) <= float(rule["max_depth_m"])
+        for field, rule_key, comparison in (
+            ("target_self_overlap", "max_target_self_overlap", "maximum"),
+            ("boundary_completeness", "boundary_completeness_min", "minimum"),
+        ):
+            threshold = rule.get(rule_key)
+            if threshold is None:
+                continue
+            value = row.get(field)
+            if value is None or not math.isfinite(float(value)):
+                return False
+            ready = ready and (float(value) >= float(threshold) if comparison == "minimum" else float(value) <= float(threshold))
+        return ready
     return False
 
 
@@ -103,7 +131,7 @@ def summarize_rows(rows: list[dict], policy: dict) -> dict:
             grouped[item.get("class_id", "unknown")].append(item)
         for class_id, group in sorted(grouped.items()):
             entry = {"count": len(group)}
-            for key in ("bbox_shortest_side_px", "mask_area_px", "distance_m", "visible_fraction", "occlusion", "depth_valid_ratio"):
+            for key in ("bbox_shortest_side_px", "mask_area_px", "distance_m", "visible_fraction", "occlusion", "depth_valid_ratio", "target_self_overlap", "boundary_completeness"):
                 values = [float(x[key]) for x in group if x.get(key) is not None and math.isfinite(float(x[key]))]
                 entry[key] = {
                     "count": len(values),
