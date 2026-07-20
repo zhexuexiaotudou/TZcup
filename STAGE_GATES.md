@@ -1,5 +1,14 @@
 # Codex 阶段推进与验收门
 
+## Stage5BR3：G2 真实车辆数据与 split-model screening
+
+- 证据字节修复、六世界真实车辆相机运行时契约、生产 GT 隔离：通过。
+- G2 80 scene/800 frame 原生采集与逐实例 QA：一次失败后修复并重采，通过。
+- 四档分辨率扫描：通过，选择 640×384 与 512×384；模型实际筛查使用 512×384。
+- detector + area segmenter 三次 architecture screening：失败；所有 screening 门未同时通过。
+- 停止条件已执行：500/5000、live、真实 Nav2、真实域与 J6 均未启动。
+- 当前 `READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
+
 ## Stage5BR：Gazebo-camera 数据恢复与模型筛查
 
 状态：训练链与 G1 smoke 通过，模型恢复 screening 失败，正式 Stage5B 阻断。

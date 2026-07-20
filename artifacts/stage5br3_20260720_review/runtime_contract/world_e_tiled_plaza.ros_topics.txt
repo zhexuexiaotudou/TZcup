@@ -1,0 +1,11 @@
+/camera/color/camera_info
+/camera/color/image_raw
+/camera/depth/image_rect_raw
+/clock
+/cmd_vel
+/ground_truth/instance/image
+/ground_truth/model_odom_raw
+/ground_truth/semantic/image
+/parameter_events
+/rosout
+/tf_static

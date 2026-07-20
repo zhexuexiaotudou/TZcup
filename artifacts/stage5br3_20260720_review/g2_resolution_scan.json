@@ -1,0 +1,368 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR3 native-once offline resolution scan",
+  "native_capture_resolution": [
+    640,
+    480
+  ],
+  "frame_count": 800,
+  "candidates": [
+    {
+      "resolution": [
+        256,
+        192
+      ],
+      "processed_frames": 800,
+      "preprocess_wall_sec": 3.1009710999787785,
+      "preprocess_fps": 257.9837006560541,
+      "source_io_bytes": 1238835887,
+      "source_io_mib_per_sec": 380.99225358222157,
+      "bbox_shortest_side_px": {
+        "plastic_bottle": {
+          "count": 643,
+          "p10": 2.0,
+          "p50": 3.0,
+          "p90": 5.0
+        },
+        "metal_can": {
+          "count": 715,
+          "p10": 2.0,
+          "p50": 3.0,
+          "p90": 8.0
+        },
+        "paper_litter": {
+          "count": 491,
+          "p10": 1.0,
+          "p50": 1.0,
+          "p90": 4.0
+        },
+        "leaf_pile": {
+          "count": 687,
+          "p10": 1.0,
+          "p50": 2.0,
+          "p90": 10.399999999999977
+        },
+        "puddle": {
+          "count": 643,
+          "p10": 1.0,
+          "p50": 3.0,
+          "p90": 14.0
+        }
+      },
+      "mask_area_px": {
+        "plastic_bottle": {
+          "count": 643,
+          "p10": 6.0,
+          "p50": 15.0,
+          "p90": 55.0
+        },
+        "metal_can": {
+          "count": 715,
+          "p10": 4.0,
+          "p50": 12.0,
+          "p90": 85.20000000000005
+        },
+        "paper_litter": {
+          "count": 491,
+          "p10": 3.0,
+          "p50": 8.0,
+          "p90": 37.0
+        },
+        "leaf_pile": {
+          "count": 687,
+          "p10": 7.0,
+          "p50": 24.0,
+          "p90": 251.79999999999984
+        },
+        "puddle": {
+          "count": 643,
+          "p10": 8.0,
+          "p50": 45.0,
+          "p90": 483.80000000000075
+        }
+      },
+      "visible_frame_fraction": {
+        "plastic_bottle": 0.52125,
+        "metal_can": 0.62125,
+        "paper_litter": 0.46125,
+        "leaf_pile": 0.57375,
+        "puddle": 0.57
+      },
+      "training_peak_vram_mib": null,
+      "onnx_latency_ms": null,
+      "onnx_model_bytes": null,
+      "pending_fields_reason": "measured only after each split-model screening attempt"
+    },
+    {
+      "resolution": [
+        384,
+        288
+      ],
+      "processed_frames": 800,
+      "preprocess_wall_sec": 4.738660199975129,
+      "preprocess_fps": 168.824090827234,
+      "source_io_bytes": 1238835887,
+      "source_io_mib_per_sec": 249.3206766926348,
+      "bbox_shortest_side_px": {
+        "plastic_bottle": {
+          "count": 643,
+          "p10": 2.0,
+          "p50": 4.0,
+          "p90": 8.0
+        },
+        "metal_can": {
+          "count": 716,
+          "p10": 3.0,
+          "p50": 4.0,
+          "p90": 12.0
+        },
+        "paper_litter": {
+          "count": 566,
+          "p10": 1.0,
+          "p50": 2.0,
+          "p90": 5.0
+        },
+        "leaf_pile": {
+          "count": 698,
+          "p10": 1.0,
+          "p50": 3.0,
+          "p90": 15.0
+        },
+        "puddle": {
+          "count": 661,
+          "p10": 1.0,
+          "p50": 4.0,
+          "p90": 20.0
+        }
+      },
+      "mask_area_px": {
+        "plastic_bottle": {
+          "count": 643,
+          "p10": 12.0,
+          "p50": 34.0,
+          "p90": 122.4000000000002
+        },
+        "metal_can": {
+          "count": 716,
+          "p10": 12.0,
+          "p50": 28.0,
+          "p90": 186.5
+        },
+        "paper_litter": {
+          "count": 566,
+          "p10": 5.0,
+          "p50": 15.0,
+          "p90": 79.5
+        },
+        "leaf_pile": {
+          "count": 698,
+          "p10": 15.0,
+          "p50": 53.5,
+          "p90": 551.9000000000016
+        },
+        "puddle": {
+          "count": 661,
+          "p10": 14.0,
+          "p50": 96.0,
+          "p90": 1026.0
+        }
+      },
+      "visible_frame_fraction": {
+        "plastic_bottle": 0.52125,
+        "metal_can": 0.62125,
+        "paper_litter": 0.4975,
+        "leaf_pile": 0.57625,
+        "puddle": 0.585
+      },
+      "training_peak_vram_mib": null,
+      "onnx_latency_ms": null,
+      "onnx_model_bytes": null,
+      "pending_fields_reason": "measured only after each split-model screening attempt"
+    },
+    {
+      "resolution": [
+        512,
+        384
+      ],
+      "processed_frames": 800,
+      "preprocess_wall_sec": 5.6287401000154205,
+      "preprocess_fps": 142.12772055291882,
+      "source_io_bytes": 1238835887,
+      "source_io_mib_per_sec": 209.89527792747415,
+      "bbox_shortest_side_px": {
+        "plastic_bottle": {
+          "count": 643,
+          "p10": 3.0,
+          "p50": 5.0,
+          "p90": 10.0
+        },
+        "metal_can": {
+          "count": 716,
+          "p10": 4.0,
+          "p50": 6.0,
+          "p90": 16.0
+        },
+        "paper_litter": {
+          "count": 594,
+          "p10": 1.0,
+          "p50": 2.0,
+          "p90": 7.0
+        },
+        "leaf_pile": {
+          "count": 698,
+          "p10": 2.0,
+          "p50": 4.0,
+          "p90": 20.0
+        },
+        "puddle": {
+          "count": 676,
+          "p10": 1.5,
+          "p50": 5.0,
+          "p90": 26.0
+        }
+      },
+      "mask_area_px": {
+        "plastic_bottle": {
+          "count": 643,
+          "p10": 24.0,
+          "p50": 60.0,
+          "p90": 219.0
+        },
+        "metal_can": {
+          "count": 716,
+          "p10": 20.0,
+          "p50": 48.0,
+          "p90": 336.0
+        },
+        "paper_litter": {
+          "count": 594,
+          "p10": 6.0,
+          "p50": 24.0,
+          "p90": 133.0
+        },
+        "leaf_pile": {
+          "count": 698,
+          "p10": 27.0,
+          "p50": 94.5,
+          "p90": 959.0000000000027
+        },
+        "puddle": {
+          "count": 676,
+          "p10": 22.5,
+          "p50": 163.0,
+          "p90": 1714.5
+        }
+      },
+      "visible_frame_fraction": {
+        "plastic_bottle": 0.52125,
+        "metal_can": 0.62125,
+        "paper_litter": 0.51125,
+        "leaf_pile": 0.57625,
+        "puddle": 0.59
+      },
+      "training_peak_vram_mib": null,
+      "onnx_latency_ms": null,
+      "onnx_model_bytes": null,
+      "pending_fields_reason": "measured only after each split-model screening attempt"
+    },
+    {
+      "resolution": [
+        640,
+        384
+      ],
+      "processed_frames": 800,
+      "preprocess_wall_sec": 6.261345500010066,
+      "preprocess_fps": 127.76806518642262,
+      "source_io_bytes": 1238835887,
+      "source_io_mib_per_sec": 188.6888317650505,
+      "bbox_shortest_side_px": {
+        "plastic_bottle": {
+          "count": 643,
+          "p10": 4.0,
+          "p50": 6.0,
+          "p90": 13.0
+        },
+        "metal_can": {
+          "count": 716,
+          "p10": 5.0,
+          "p50": 7.0,
+          "p90": 19.5
+        },
+        "paper_litter": {
+          "count": 595,
+          "p10": 1.0,
+          "p50": 2.0,
+          "p90": 7.0
+        },
+        "leaf_pile": {
+          "count": 698,
+          "p10": 2.0,
+          "p50": 4.0,
+          "p90": 20.0
+        },
+        "puddle": {
+          "count": 677,
+          "p10": 1.6000000000000085,
+          "p50": 5.0,
+          "p90": 27.0
+        }
+      },
+      "mask_area_px": {
+        "plastic_bottle": {
+          "count": 643,
+          "p10": 28.0,
+          "p50": 72.0,
+          "p90": 273.4000000000002
+        },
+        "metal_can": {
+          "count": 716,
+          "p10": 25.0,
+          "p50": 61.5,
+          "p90": 421.0
+        },
+        "paper_litter": {
+          "count": 595,
+          "p10": 8.0,
+          "p50": 30.0,
+          "p90": 167.60000000000002
+        },
+        "leaf_pile": {
+          "count": 698,
+          "p10": 34.0,
+          "p50": 118.5,
+          "p90": 1198.7000000000035
+        },
+        "puddle": {
+          "count": 677,
+          "p10": 28.60000000000001,
+          "p50": 203.0,
+          "p90": 2141.3999999999996
+        }
+      },
+      "visible_frame_fraction": {
+        "plastic_bottle": 0.52125,
+        "metal_can": 0.62125,
+        "paper_litter": 0.5125,
+        "leaf_pile": 0.57625,
+        "puddle": 0.59
+      },
+      "training_peak_vram_mib": null,
+      "onnx_latency_ms": null,
+      "onnx_model_bytes": null,
+      "pending_fields_reason": "measured only after each split-model screening attempt"
+    }
+  ],
+  "selected_for_model_screening": [
+    [
+      640,
+      384
+    ],
+    [
+      512,
+      384
+    ]
+  ],
+  "selection_limit": 2,
+  "selection_basis": "maximize summed discrete-class bbox-short-side p10, then mask-area p10, then preprocessing throughput",
+  "resolution_scan_pass": true
+}

@@ -18,6 +18,8 @@
   <xacro:arg name="enable_wheel_slip" default="false"/>
   <xacro:arg name="lidar_samples" default="360"/>
   <xacro:arg name="lidar_update_rate" default="10"/>
+  <!-- Offline G2 capture only. Production launch never overrides this false default. -->
+  <xacro:arg name="enable_training_gt" default="false"/>
 
   <!-- Baseline geometry; replace with measured real vehicle values later. -->
   <xacro:property name="base_length" value="1.15"/>
@@ -193,6 +195,34 @@
         <clip><near>0.3</near><far>100</far></clip>
       </camera>
     </sensor>
+    <xacro:if value="$(arg enable_training_gt)">
+      <sensor name="g2_semantic_gt" type="segmentation">
+        <topic>g2/semantic_gt</topic>
+        <gz_frame_id>camera_depth_link</gz_frame_id>
+        <update_rate>15</update_rate>
+        <always_on>true</always_on>
+        <camera>
+          <segmentation_type>semantic</segmentation_type>
+          <optical_frame_id>camera_depth_link</optical_frame_id>
+          <horizontal_fov>1.50098</horizontal_fov>
+          <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+          <clip><near>0.3</near><far>100</far></clip>
+        </camera>
+      </sensor>
+      <sensor name="g2_instance_gt" type="segmentation">
+        <topic>g2/instance_gt</topic>
+        <gz_frame_id>camera_depth_link</gz_frame_id>
+        <update_rate>15</update_rate>
+        <always_on>true</always_on>
+        <camera>
+          <segmentation_type>instance</segmentation_type>
+          <optical_frame_id>camera_depth_link</optical_frame_id>
+          <horizontal_fov>1.50098</horizontal_fov>
+          <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+          <clip><near>0.3</near><far>100</far></clip>
+        </camera>
+      </sensor>
+    </xacro:if>
   </gazebo>
 
   <xacro:diff_drive_controller

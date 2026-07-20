@@ -1,0 +1,16 @@
+/camera/color/camera_info
+/camera/color/image_raw
+/camera/depth/image_rect_raw
+/clock
+/cmd_vel
+/g2/instance_gt/camera_info
+/g2/semantic_gt/camera_info
+/ground_truth/instance/image
+/ground_truth/model_odom_raw
+/ground_truth/semantic/image
+/joint_states
+/parameter_events
+/robot_description
+/rosout
+/tf
+/tf_static

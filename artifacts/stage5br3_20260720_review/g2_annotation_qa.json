@@ -1,0 +1,99 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR3 G2 80-scene screening QA",
+  "data_root": "F:\\Project\\TZcup-stage5br3-data\\g2_screening_native",
+  "scene_count": 80,
+  "frame_count": 800,
+  "annotation_completeness": 1.0,
+  "native_resolution": [
+    640,
+    480
+  ],
+  "split_scene_counts": {
+    "train": 40,
+    "val": 16,
+    "test": 24
+  },
+  "split_worlds": {
+    "train": [
+      "world_a_asphalt_campus",
+      "world_b_concrete_sidewalk",
+      "world_c_wet_dark_ground"
+    ],
+    "val": [
+      "world_d_mixed_curb_vegetation"
+    ],
+    "test": [
+      "world_e_tiled_plaza",
+      "world_f_service_road"
+    ]
+  },
+  "target_asset_leakage": [],
+  "hard_negative_asset_leakage": [],
+  "trajectory_leakage": [],
+  "cross_split_exact_duplicate_count": 0,
+  "cross_split_phash_duplicate_count": 0,
+  "semantic_instance_error_rate": 0.0,
+  "semantic_instance_error_threshold": 0.01,
+  "negative_only_scene_count": 5,
+  "missing_class_scene_counts": {
+    "leaf_pile": 29,
+    "metal_can": 20,
+    "paper_litter": 23,
+    "plastic_bottle": 28,
+    "puddle": 24
+  },
+  "hard_negative_count_distribution": {
+    "0": 9,
+    "1": 10,
+    "2": 35,
+    "3": 3,
+    "4": 3,
+    "5": 8,
+    "6": 3,
+    "7": 3,
+    "8": 6
+  },
+  "class_visible_frame_counts": {
+    "plastic_bottle": 417,
+    "metal_can": 497,
+    "leaf_pile": 461,
+    "puddle": 472,
+    "paper_litter": 419
+  },
+  "instance_bbox_shortest_side_px": {
+    "leaf_pile": {
+      "count": 698,
+      "p10": 3.0,
+      "p50": 5.0,
+      "p90": 25.300000000000068
+    },
+    "metal_can": {
+      "count": 716,
+      "p10": 5.0,
+      "p50": 7.0,
+      "p90": 20.0
+    },
+    "paper_litter": {
+      "count": 633,
+      "p10": 1.0,
+      "p50": 3.0,
+      "p90": 9.0
+    },
+    "plastic_bottle": {
+      "count": 643,
+      "p10": 4.0,
+      "p50": 6.0,
+      "p90": 13.0
+    },
+    "puddle": {
+      "count": 680,
+      "p10": 2.0,
+      "p50": 6.5,
+      "p90": 32.10000000000002
+    }
+  },
+  "instance_record_count": 3370,
+  "errors": [],
+  "annotation_qa_pass": true
+}

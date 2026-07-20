@@ -1,0 +1,6 @@
+[INFO] [launch]: All log files can be found below /root/.ros/log/2026-07-19-22-42-34-352515-4edcd7d31a1a-40
+[INFO] [launch]: Default logging verbosity is set to INFO
+[INFO] [gazebo-1]: process started with pid [66]
+[INFO] [robot_state_publisher-2]: process started with pid [67]
+[INFO] [create-3]: process started with pid [68]
+[INFO] [parameter_bridge-4]: process started with pid [69]

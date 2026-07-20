@@ -1,0 +1,132 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR3",
+  "stage5br2_archive_integrity": "passed_16_files_four_surfaces_byte_identical",
+  "runtime_camera_contract": {
+    "six_distinct_worlds": true,
+    "all_worlds_pass": true,
+    "actual_vehicle_model": "sanitation_vehicle_description/urdf/sanitation_vehicle.urdf.xacro",
+    "production_gt_isolation_pass": true
+  },
+  "g2_screening_dataset": {
+    "scene_count": 80,
+    "frame_count": 800,
+    "annotation_qa_pass": true,
+    "negative_only_scene_count": 5,
+    "target_asset_leakage": [],
+    "hard_negative_asset_leakage": [],
+    "cross_split_exact_duplicate_count": 0,
+    "cross_split_phash_duplicate_count": 0
+  },
+  "resolution_scan": {
+    "native_capture_resolution": [
+      640,
+      480
+    ],
+    "candidates": [
+      [
+        256,
+        192
+      ],
+      [
+        384,
+        288
+      ],
+      [
+        512,
+        384
+      ],
+      [
+        640,
+        384
+      ]
+    ],
+    "selected_for_screening": [
+      [
+        640,
+        384
+      ],
+      [
+        512,
+        384
+      ]
+    ],
+    "actual_model_screening_resolution": [
+      512,
+      384
+    ]
+  },
+  "model_screening": {
+    "architecture_attempt_limit": 3,
+    "attempts_executed": 3,
+    "attempts": [
+      {
+        "attempt": 1,
+        "hypothesis": "separate discrete objects from area masks to reduce class-imbalance interference",
+        "detector_in_domain_f1": 0.08399710354815351,
+        "detector_cross_world_f1": 0.05296610169491525,
+        "detector_cross_world_ap50": 0.09441734468906897,
+        "detector_cross_world_ap50_95": 0.018799575569812318,
+        "small_object_recall": 0.1951219512195122,
+        "color_stress_f1": 0.08729714581807287,
+        "same_color_negative_fp_rate": 8.7,
+        "area_cross_world_miou": 0.02346147157978583,
+        "screening_pass": false
+      },
+      {
+        "attempt": 2,
+        "hypothesis": "foreground-centered scale augmentation plus color invariance should recover tiny targets without using test data",
+        "detector_in_domain_f1": 0.07874015748031497,
+        "detector_cross_world_f1": 0.1310734463276836,
+        "detector_cross_world_ap50": 0.3232186084329424,
+        "detector_cross_world_ap50_95": 0.10750057117050767,
+        "small_object_recall": 0.44308943089430897,
+        "color_stress_f1": 0.10184609804662702,
+        "same_color_negative_fp_rate": 10.4,
+        "area_cross_world_miou": 0.001157730253600543,
+        "screening_pass": false
+      },
+      {
+        "attempt": 3,
+        "hypothesis": "higher-capacity split backbones and longer optimization should convert the attempt-2 detector gain into cross-world gate compliance",
+        "detector_in_domain_f1": 0.07770270270270271,
+        "detector_cross_world_f1": 0.07503152585119797,
+        "detector_cross_world_ap50": 0.34840706002626404,
+        "detector_cross_world_ap50_95": 0.08228826094345915,
+        "small_object_recall": 0.45121951219512196,
+        "color_stress_f1": 0.07181056640463461,
+        "same_color_negative_fp_rate": 9.6,
+        "area_cross_world_miou": 0.0011488608847540726,
+        "screening_pass": false
+      }
+    ],
+    "best_observed": {
+      "detector_in_domain_f1": 0.08399710354815351,
+      "detector_cross_world_f1": 0.1310734463276836,
+      "detector_cross_world_ap50": 0.34840706002626404,
+      "detector_cross_world_ap50_95": 0.10750057117050767,
+      "small_object_recall": 0.45121951219512196,
+      "color_stress_f1": 0.10184609804662702,
+      "area_cross_world_miou": 0.02346147157978583,
+      "lowest_same_color_negative_fp_rate": 8.7
+    },
+    "all_gates_pass": false
+  },
+  "regressions": {
+    "stage5a_pass": true,
+    "stage4w_seed0_pass": true
+  },
+  "formal_500_scene_5000_frame_gate_executed": false,
+  "live_30_seed_10_min_gate_executed": false,
+  "real_nav2_spot_clean_30_seed_gate_executed": false,
+  "j6_gate_executed": false,
+  "competition_perception_pass": false,
+  "real_domain_evaluation_executed": false,
+  "j6_runtime_pass": false,
+  "competition_efficiency_pass": false,
+  "competition_efficiency_boundary": "1053 m\u00b2/h < 3500 m\u00b2/h",
+  "first_blocking_layer": "G2_split_model_screening_gates_failed_after_3_attempts",
+  "REVIEW_PACKET_COMPLETE": true,
+  "READY_FOR_GPT_REVIEW_STAGE5B": false,
+  "READY_FOR_STAGE5C": false
+}

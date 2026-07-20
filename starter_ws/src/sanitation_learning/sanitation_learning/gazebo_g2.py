@@ -10,10 +10,12 @@ from .rendered import CLASS_INDEX, CLASS_ORDER
 
 
 WORLD_PROFILES = (
-    ("world_a_asphalt_campus", "asphalt_coarse", "0.24 0.25 0.27 1", 0.92),
-    ("world_b_concrete_sidewalk", "concrete_light", "0.58 0.57 0.54 1", 0.84),
-    ("world_c_wet_dark_ground", "wet_dark", "0.10 0.12 0.13 1", 0.28),
-    ("world_d_mixed_curb_vegetation", "mixed_curb_vegetation", "0.31 0.35 0.27 1", 0.76),
+    ("world_a_asphalt_campus", "asphalt_coarse", "campus_open", "0.24 0.25 0.27 1", 0.92, "train"),
+    ("world_b_concrete_sidewalk", "concrete_light", "sidewalk_corridor", "0.58 0.57 0.54 1", 0.84, "train"),
+    ("world_c_wet_dark_ground", "wet_dark", "wet_courtyard", "0.10 0.12 0.13 1", 0.28, "train"),
+    ("world_d_mixed_curb_vegetation", "mixed_curb_vegetation", "curb_chicane", "0.31 0.35 0.27 1", 0.76, "val"),
+    ("world_e_tiled_plaza", "tiled_plaza", "plaza_islands", "0.64 0.61 0.55 1", 0.74, "test"),
+    ("world_f_service_road", "service_road", "service_lane", "0.29 0.30 0.31 1", 0.88, "test"),
 )
 
 
@@ -34,27 +36,21 @@ def _asset_model(name: str, geometry: str, rgba: str, label: int, pose: str) -> 
     </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>{label}</label></plugin></model>"""
 
 
-def _camera_rig(contract: dict, topic_prefix: str, width: int, height: int) -> str:
-    xyz = " ".join(str(value) for value in contract["extrinsics"]["xyz_m"])
-    rpy = " ".join(str(value) for value in contract["extrinsics"]["rpy_rad"])
-    camera = f"""
-          <horizontal_fov>{contract['horizontal_fov_rad']}</horizontal_fov>
-          <image><width>{width}</width><height>{height}</height><format>R8G8B8</format></image>
-          <clip><near>{contract['near_clip_m']}</near><far>{contract['far_clip_m']}</far></clip>"""
-    rate = contract["update_rate_hz"]
-    return f"""
-    <model name="g2_vehicle_training_rig"><static>true</static><pose>0 0 0.35 0 0 0</pose>
-      <link name="base_link">
-        <visual name="vehicle_body"><pose>0 0 0 0 0 0</pose><geometry><box><size>0.90 0.60 0.38</size></box></geometry>{_material('0.10 0.17 0.26 1', 0.55)}</visual>
-        <collision name="vehicle_collision"><geometry><box><size>0.90 0.60 0.38</size></box></geometry></collision>
-      </link>
-      <link name="camera_link"><pose relative_to="base_link">{xyz} {rpy}</pose>
-        <sensor name="rgbd" type="rgbd_camera"><topic>{topic_prefix}/rgbd</topic><always_on>true</always_on><update_rate>{rate}</update_rate><camera>{camera}<optical_frame_id>{contract['optical_frame']}</optical_frame_id></camera></sensor>
-        <sensor name="semantic_gt" type="segmentation"><topic>{topic_prefix}/semantic_gt</topic><always_on>true</always_on><update_rate>{rate}</update_rate><camera><segmentation_type>semantic</segmentation_type>{camera}</camera></sensor>
-        <sensor name="instance_gt" type="segmentation"><topic>{topic_prefix}/instance_gt</topic><always_on>true</always_on><update_rate>{rate}</update_rate><camera><segmentation_type>instance</segmentation_type>{camera}</camera></sensor>
-      </link>
-      <joint name="camera_joint" type="fixed"><parent>base_link</parent><child>camera_link</child></joint>
-    </model>"""
+def _layout_models(layout_family: str) -> str:
+    """Geometry changes by world; these are not color-only variants."""
+    layouts = {
+        "campus_open": [("planter", "box", "1.8 1.8 0.45", "5 3 0.225")],
+        "sidewalk_corridor": [("wall_left", "box", "14 0.25 0.7", "2 3 0.35"), ("wall_right", "box", "14 0.25 0.7", "2 -3 0.35")],
+        "wet_courtyard": [("shelter", "box", "2.5 1.2 0.35", "4 2 0.175"), ("drain", "box", "0.35 7 0.08", "1 -1 0.04")],
+        "curb_chicane": [("curb_a", "box", "5 0.22 0.28", "1 2 0.14"), ("curb_b", "box", "5 0.22 0.28", "5 -2 0.14")],
+        "plaza_islands": [("island_a", "cylinder", "1.1 0.35", "3 2 0.175"), ("island_b", "cylinder", "0.8 0.35", "6 -2 0.175")],
+        "service_lane": [("loading_bay", "box", "3.0 1.4 0.25", "5 2.4 0.125"), ("bollard", "cylinder", "0.18 1.0", "2 -2 0.5")],
+    }
+    chunks = []
+    for name, kind, size, pose in layouts[layout_family]:
+        geometry = f"<box><size>{size}</size></box>" if kind == "box" else f"<cylinder><radius>{size.split()[0]}</radius><length>{size.split()[1]}</length></cylinder>"
+        chunks.append(f'<model name="{name}"><static>true</static><pose>{pose} 0 0 0</pose><link name="body"><collision name="collision"><geometry>{geometry}</geometry></collision><visual name="visual"><geometry>{geometry}</geometry>{_material("0.38 0.39 0.37 1", 0.85)}</visual></link></model>')
+    return "".join(chunks)
 
 
 def write_g2_worlds(
@@ -77,8 +73,7 @@ def write_g2_worlds(
             palette_name = variant["palette"][variant_index % len(variant["palette"])]
             color = registry["palette_rgb"][palette_name]
             rgba = " ".join(f"{channel / 255:.5f}" for channel in color) + " 1"
-            z = max(float(values[-1]) / 2.0, 0.008)
-            pose = f"{25 + offset * 0.3:.3f} 25 {z:.4f} 0 0 0"
+            pose = f"{-200 - offset * 0.3:.3f} 200 -5 0 0 0"
             models.append(_asset_model(variant["id"], geometry, rgba, CLASS_INDEX[class_id], pose))
             records.append({
                 "model_name": variant["id"], "class_id": class_id,
@@ -92,11 +87,10 @@ def write_g2_worlds(
     for index, negative_id in enumerate(registry["negative_assets"]):
         name = f"negative_{negative_id}"
         geometry = "<box><size>0.16 0.12 0.08</size></box>"
-        models.append(_asset_model(name, geometry, "0.22 0.42 0.25 1", 0, f"{28 + index * .25} 27 0.04 0 0 0"))
+        models.append(_asset_model(name, geometry, "0.22 0.42 0.25 1", 0, f"{-220 - index * .25} 200 -5 0 0 0"))
         negative_records.append({"model_name": name, "negative_id": negative_id, "semantic_label": 0})
     worlds = []
-    for world_name, material_id, rgba, roughness in WORLD_PROFILES:
-        prefix = f"g2/{world_name}"
+    for world_name, material_id, layout_family, rgba, roughness, split in WORLD_PROFILES:
         world = f"""<?xml version="1.0"?>
 <sdf version="1.9"><world name="{world_name}">
   <physics name="1ms" type="ignored"><max_step_size>0.001</max_step_size><real_time_factor>1</real_time_factor></physics>
@@ -106,7 +100,7 @@ def write_g2_worlds(
   <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors"><render_engine>ogre2</render_engine></plugin>
   <light type="directional" name="sun"><pose>0 0 10 0 0 0</pose><cast_shadows>true</cast_shadows><diffuse>0.82 0.80 0.76 1</diffuse><direction>-0.45 0.2 -0.87</direction></light>
   <model name="ground"><static>true</static><link name="ground"><collision name="collision"><geometry><plane><normal>0 0 1</normal><size>80 80</size></plane></geometry></collision><visual name="visual"><geometry><plane><normal>0 0 1</normal><size>80 80</size></plane></geometry>{_material(rgba, roughness)}</visual></link></model>
-  {_camera_rig(contract, prefix, width, height)}
+  {_layout_models(layout_family)}
   {''.join(models)}
 </world></sdf>
 """
@@ -114,21 +108,28 @@ def write_g2_worlds(
         path = output_dir / f"{world_name}.sdf"
         path.write_text(world, encoding="utf-8")
         worlds.append({
-            "world_id": world_name, "material_id": material_id, "path": path.name,
+            "world_id": world_name, "material_id": material_id, "layout_family": layout_family,
+            "geometry_family": layout_family, "background_family": material_id,
+            "lighting_family": "wet_low_key" if world_name == "world_c_wet_dark_ground" else "directional_daylight",
+            "path": path.name,
             "sha256": hashlib.sha256(path.read_bytes()).hexdigest(),
-            "split_eligibility": (
-                ["train"] if world_name in {"world_a_asphalt_campus", "world_b_concrete_sidewalk"}
-                else ["val"] if world_name == "world_c_wet_dark_ground" else ["test"]
-            ),
-            "topics": [f"/{prefix}/rgbd/image", f"/{prefix}/rgbd/depth_image", f"/{prefix}/semantic_gt/labels_map", f"/{prefix}/instance_gt/labels_map"],
+            "split_eligibility": [split],
+            "allowed_trajectory_family": f"{layout_family}_vehicle_motion",
+            "vehicle_spawned_by": "sanitation_bringup/stage5br3_g2_capture.launch.py",
+            "sensor_topics": ["/camera/image", "/camera/depth_image", "/g2/semantic_gt/labels_map", "/g2/instance_gt/labels_map"],
         })
     manifest = {
         "schema_version": 1,
         "dataset_domain": "G2_deployment_aligned_vehicle_camera_gazebo",
         "camera_contract": contract,
-        "selected_resolution": {"width": width, "height": height, "status": "candidate_not_yet_selected_by_scan"},
+        "native_capture_resolution": contract["native_resolution"],
+        "offline_resolution_candidates": [[256, 192], [384, 288], [512, 384], [640, 384]],
+        "selected_resolution": None,
         "training_only_ground_truth": True,
         "production_launch_modified": False,
+        "actual_vehicle_model_required": "sanitation_vehicle_description/urdf/sanitation_vehicle.urdf.xacro",
+        "static_independent_camera_rig_forbidden": True,
+        "world_split_counts": {"train": 3, "val": 1, "test": 2},
         "vehicle_motion_required": True,
         "distance_envelope_m": [0.5, 4.0],
         "worlds": worlds,
