@@ -1,5 +1,7 @@
 # Stage5BR：Gazebo-camera 数据恢复与模型筛查边界
 
+> 历史阶段说明：本页记录 G1 结果。当前 G2 状态和阻断以 `docs/stage5br3-g2-screening.md` 为准。
+
 ## 结论
 
 Stage5BR 已把 Stage5B 的数据真实性阻断项从“程序化 P1 renderer”推进为可复现的真实 Gazebo Harmonic camera 数据链。训练链 micro-overfit 与 PyTorch/ONNX/ROS 预处理一致性均通过；G1 smoke 采集了 50 个独立 scene、500 帧共视场 RGB-D、semantic 与 instance 数据，标注、同步和 split QA 通过。但三次学习模型筛查均未同时达到 in-domain、同世界跨资产和颜色压力门，因此本轮停在 `G1_model_recovery_in_domain_cross_asset_same_world_and_color_stress`，没有启动 500 scene/5000 帧正式数据、正式 live 门或真实 Nav2 spot-clean。
@@ -91,4 +93,4 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage5br_g
 
 ## 下一步建议
 
-后续以 Stage5BR2 的 G2 车载相机路线为准：先完成四世界车辆运动随机化、80 scene/800 frame 数据 QA 和四档分辨率实测，再分别筛选离散目标 detector 与 leaf/puddle area segmenter。只有真正的 world-isolated screening 全部过门，才允许生成 500 scene/5000 帧正式 G2 数据。
+该建议已由 Stage5BR3 执行：G2 扩为六个 world-isolated 世界并完成 80 scene/800 frame QA、四档分辨率扫描和 detector/area segmenter 三次筛选。筛选未过门，因此 500 scene/5000 frame 正式 G2 数据仍未生成；后续应先补强原生场景随机化证据和跨世界模型泛化。

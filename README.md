@@ -22,7 +22,7 @@ Stage5BR 已通过训练链自证：12 帧 micro-overfit 的 macro F1/mIoU 为 `
 
 Stage5B 已新增 30 个自研程序化垃圾资产（五类、每类六变体）、12 个硬负样本、按 scene/asset/texture/world 隔离的数据合同、两种实际梯度训练候选、ONNX Runtime 评测、颜色捷径压力测试、J6 fail-closed 预检和训练模型的真实 Gazebo RGB-D 接入诊断。三次结构性筛查后，最佳候选验证 macro F1 为 `0.38637`，但 100 个未见 scene / 1000 帧测试的离散类 macro P/R/F1 仅为 `0.00752/0.00784/0.00768`，颜色压力 aggregate macro F1 为 `0.05192`，均未过门。
 
-该轮数据生成器还是程序化 D1 renderer，不是真实 Gazebo camera renderer；这是 Stage5BR 推进前的历史边界。Stage5BR 已补齐真实 Gazebo-camera G1 smoke 数据链，但模型 screening 仍失败；D2 真实数据为空，J6 官方工具链/实板不可用。依停止条件，仍未执行 500 seed/5000 帧正式 D1、30 seed/10 分钟正式实时门或 30 次真实 Nav2 spot-clean。因此 `REVIEW_PACKET_COMPLETE=true`，但 `READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`、`competition_perception_pass=false`。Stage5B 历史复核入口见 [`GPT_REVIEW_STAGE5B.md`](GPT_REVIEW_STAGE5B.md)、[`docs/stage5b-learned-perception.md`](docs/stage5b-learned-perception.md) 与 [`artifacts/stage5b_20260719_review/`](artifacts/stage5b_20260719_review/)；当前结论以本页顶部 Stage5BR2 段落为准。
+该轮数据生成器还是程序化 D1 renderer，不是真实 Gazebo camera renderer；这是 Stage5BR 推进前的历史边界。Stage5BR 已补齐真实 Gazebo-camera G1 smoke 数据链，但模型 screening 仍失败；D2 真实数据为空，J6 官方工具链/实板不可用。依停止条件，仍未执行 500 seed/5000 帧正式 D1、30 seed/10 分钟正式实时门或 30 次真实 Nav2 spot-clean。因此 `REVIEW_PACKET_COMPLETE=true`，但 `READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`、`competition_perception_pass=false`。Stage5B 历史复核入口见 [`GPT_REVIEW_STAGE5B.md`](GPT_REVIEW_STAGE5B.md)、[`docs/stage5b-learned-perception.md`](docs/stage5b-learned-perception.md) 与 [`artifacts/stage5b_20260719_review/`](artifacts/stage5b_20260719_review/)；当前结论以本页顶部 Stage5BR3 段落为准。
 
 ## Stage4W 可达清扫域与完整任务闭环（2026-07-17）
 
@@ -44,7 +44,7 @@ Stage4T 已完成 200 组固定时长瞬态、120 组闭环航向、A/B/C/D 各 
 
 ## 当前状态
 
-- Stage 0–5A 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；Stage5B 已实现学习型感知工具链并冻结在 D1 数据真实性、泛化与颜色鲁棒性失败边界。
+- Stage 0–5A 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；Stage5BR3 已完成真实车辆 G2 数据链、80/800 QA 与 split-model screening，并冻结在模型跨世界泛化、颜色压力、小目标和负样本误报失败边界。
 - precision mapping 与 localization/coverage 包络分别限制为 0.30/0.25 和 0.45/0.35 m/s、rad/s；0.60 rad/s stress 默认禁用且仍失败。
 - Stage4W hybrid 10-seed 的 XY RMSE P50/P95/max 为 0.02825/0.03726/0.03778 m，定位门禁通过且 GT 控制违规为 0。
 - 完整 Coverage 静态 5/5 通过，每次均执行统一几何生成的 17/17 组件；动态障碍 20/20、碰撞 0，过滤器、30 次急停和 rosbag 回放全部通过。
@@ -129,4 +129,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-20：Stage5BR3 已在真实车辆 `camera_link` 上完成 6 个不同世界的 RGB-D/semantic/instance 同步运行时契约，生产默认和运行时 GT 隔离通过；原生采集 80 scene/800 frame，修复一次 hard-negative split 泄漏与 negative-only 缺失后重采，逐实例、泄漏和跨 split 重复 QA 全部通过。四档分辨率扫描后在 512×384 完成 detector/area segmenter 三次筛选，所有尝试均未同时过门，首个阻断层为 `G2_split_model_screening_gates_failed_after_3_attempts`；Stage5BR2 的 16 个证据文件已通过 Git blob、工作树、git archive、最终 ZIP 四表面逐字节审计，`REVIEW_PACKET_COMPLETE=true`。500/5000、live、真实 Nav2、真实域和 J6 均未启动，两个 readiness 继续为 false，2.225 GB 原始数据及任务 worktree 在用户确认前保留。
+2026-07-20：Stage5BR3 工程与证据已由 [PR #20](https://github.com/zhexuexiaotudou/TZcup/pull/20) 通过 CI 并合入 main；本次知识同步将 `README_FIRST.md`、`PROJECT_SPEC.md`、兼容性说明、阶段门和历史 G1/G2 文档统一到当前事实。当前首个阻断层仍为 `G2_split_model_screening_gates_failed_after_3_attempts`，`REVIEW_PACKET_COMPLETE=true`，两个 readiness 为 false；500/5000、live、真实 Nav2、真实域和 J6 未启动，2.225 GB 原始数据及任务 worktree 在用户确认前保留。

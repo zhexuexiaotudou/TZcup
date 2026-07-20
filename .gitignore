@@ -62,3 +62,5 @@ artifacts/stage5br3_regression_stage4w*/
 .DS_Store
 Thumbs.db
 .runtime_ws/
+.env
+.env.*

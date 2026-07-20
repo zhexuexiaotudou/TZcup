@@ -1,5 +1,15 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## Stage5BR3 G2 真实车辆数据与筛选契约
+
+- G2 必须使用实际 `sanitation_vehicle` 的生产相机外参、内参、光学帧和车辆运动；禁止独立静态相机 rig。semantic/instance GT 只能由默认关闭的训练开关挂载，生产 Xacro/launch 和控制订阅不得包含 GT。
+- 至少六个材料、几何、布局和 SHA 均不同的世界，按 3/1/2 固定分给 train/val/test；目标、hard negative、轨迹族和相邻帧不得跨 split 泄漏，测试 split 不得参与模型选择。
+- screening 数据为 80 scene/800 frame，每场景 10 帧且相邻帧车辆位移至少 0.25 m；逐实例保存 bbox、最短边、mask area、距离、遮挡与可见性，并检查 semantic-instance 一致、negative-only、exact/pHash 重复。
+- 原生相机只采集一次，再离线扫描 256×192、384×288、512×384 与 640×384。离散目标使用置信度排序 detector 指标，leaf/puddle 使用 area segmentation 指标，不得把 IoU 匹配值冒充 AP。
+- architecture screening 最多三次；只有 detector in-domain F1 ≥0.90、cross-world F1 ≥0.70、small-object recall ≥0.70、area cross-world mIoU ≥0.75、color-stress F1 ≥0.60、same-color negative FP ≤0.05/frame 全部通过，才允许扩大到 500/5000。
+- 场景 manifest 中的曝光、白平衡、噪声、模糊或动态障碍“请求”不等于已在 Gazebo 原生图像逐项施加；缺少实际执行证据时必须明确保留为边界。
+- screening 失败后，500/5000、30-seed/10-min live、真实 Nav2 spot-clean、真实域和 J6 均保持未执行，readiness 必须为 false。
+
 ## Stage5BR G1 数据与训练链契约
 
 - `P1` 仅指 NumPy/OpenCV 程序化筛查；`G1` 必须来自 Gazebo Harmonic 实际 RGB-D 与 SegmentationCamera topics，二者不得混名。

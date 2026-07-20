@@ -1,8 +1,6 @@
 # 无人清扫车仿真启动包
 
-> 2026-07-19：Stage5BR 已恢复真实 Gazebo-camera G1 数据链并通过 50 scene/500 frame smoke，但模型 screening 未过；先读 `GPT_REVIEW_STAGE5BR.md` 和 `docs/stage5br-gazebo-camera-recovery.md`。Stage5B/Stage5C readiness 仍为 false。
-
-> 2026-07-19：Stage5B 的 Stage5BR 前历史失败边界保留在 `GPT_REVIEW_STAGE5B.md` 与 `docs/stage5b-learned-perception.md`；当前结论以上一行 Stage5BR 入口为准。复核包完整不等于 Stage5B 通过，`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
+> 2026-07-20：当前入口为 `GPT_REVIEW_STAGE5BR3.md` 和 `docs/stage5br3-g2-screening.md`。Stage5BR3 已完成真实车辆相机六世界运行时契约、80 scene/800 frame QA、四档分辨率扫描和三次 split-model screening；模型门失败后已停止。复核包完整不等于 Stage5B 通过，`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
 
 本包用于把“智慧环卫无人清扫车”项目的仿真工作推进到可复现、可演示、可评测的第一阶段。
 
@@ -116,8 +114,9 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 - precision mapping、localization/coverage 和默认禁用 stress 三套运行包络
 - Stage5A 五类 registry、仿真 GT、20-scene RGB-D/COCO 数据、ONNX Runtime 2D/3D/map 感知、多帧 tracker 与 synthetic task-state E2E
 - Stage5B 程序化多变体资产、学习模型训练/ONNX 评测、颜色压力测试、J6 预检与失败边界证据
+- Stage5BR3 六个 world-isolated G2 世界、真实车辆 RGB-D/GT 同步采集、80/800 逐实例 QA、分辨率扫描与 split-model screening
 - J6、真实数据、实车和竞赛效率的独立 fail-closed 阶段门
 
 ## 5. 重要说明
 
-当前 Windows 主机已通过 Docker Desktop、Ubuntu 24.04 / ROS 2 Jazzy 容器和 NVIDIA GPU passthrough 完成 Stage 0–5A，并执行 Stage5B 学习型感知筛查。Stage4W 与 Stage5A 回归仍通过；Stage5B 的训练模型能接入实时 RGB-D 链路，但未见测试、颜色鲁棒性、真实 Gazebo-camera 数据、D2、J6 与竞赛效率门未通过。当前边界以 `docs/progress.md` 与 `GPT_REVIEW_STAGE5B.md` 为准。
+当前 Windows 主机已通过 Docker Desktop、Ubuntu 24.04 / ROS 2 Jazzy 容器和 NVIDIA GPU passthrough 完成 Stage 0–5A，并把 Stage5B 推进到 Stage5BR3。Stage4W 与 Stage5A 回归仍通过；G2 已有真实 Gazebo 车辆相机数据，但 detector/area segmenter 的跨世界、颜色、小目标和负样本门未通过，D2、J6 与竞赛效率门也未通过。当前边界以 `docs/progress.md` 与 `GPT_REVIEW_STAGE5BR3.md` 为准。

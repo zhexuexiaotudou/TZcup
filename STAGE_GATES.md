@@ -7,6 +7,8 @@
 - 四档分辨率扫描：通过，选择 640×384 与 512×384；模型实际筛查使用 512×384。
 - detector + area segmenter 三次 architecture screening：失败；所有 screening 门未同时通过。
 - 停止条件已执行：500/5000、live、真实 Nav2、真实域与 J6 均未启动。
+- Stage5BR2 的 16 个证据文件四表面逐字节审计通过，紧凑复核包完整：`REVIEW_PACKET_COMPLETE=true`。
+- 曝光、白平衡、噪声、模糊和动态障碍请求没有原生逐项施加证据，不得外推为已验证的数据增强。
 - 当前 `READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
 
 ## Stage5BR：Gazebo-camera 数据恢复与模型筛查
