@@ -1,0 +1,269 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR3 Stage5BR2 archive integrity audit",
+  "git_ref": "HEAD",
+  "evidence_root": "artifacts/stage5br2_20260720_review",
+  "final_zip": "C:\\Users\\zhexu\\Downloads\\TZcup_Stage5BR2_GPT\u590d\u6838\u5305_\u5df2\u6821\u9a8c_20260720_main-1378044.zip",
+  "checked_file_count": 16,
+  "mismatch_count": 0,
+  "mismatch_paths": [],
+  "all_four_surfaces_byte_identical": true,
+  "files": [
+    {
+      "path": "artifacts/stage5br2_20260720_review/artifact_manifest.json",
+      "bytes": {
+        "working_tree": 2804,
+        "git_blob": 2804,
+        "git_archive": 2804,
+        "final_zip": 2804
+      },
+      "sha256": {
+        "working_tree": "7b72ebd5ca25912c63e4a3080c22a484776877880e4eed8fb13f9c707cca9abc",
+        "git_blob": "7b72ebd5ca25912c63e4a3080c22a484776877880e4eed8fb13f9c707cca9abc",
+        "git_archive": "7b72ebd5ca25912c63e4a3080c22a484776877880e4eed8fb13f9c707cca9abc",
+        "final_zip": "7b72ebd5ca25912c63e4a3080c22a484776877880e4eed8fb13f9c707cca9abc"
+      },
+      "all_four_equal": true
+    },
+    {
+      "path": "artifacts/stage5br2_20260720_review/g2_world_smoke/g2_world_smoke.json",
+      "bytes": {
+        "working_tree": 1594,
+        "git_blob": 1594,
+        "git_archive": 1594,
+        "final_zip": 1594
+      },
+      "sha256": {
+        "working_tree": "fc427550ddecc54d2660c72fb1367f4873cdcf191d4a6a14303add7078a0db7c",
+        "git_blob": "fc427550ddecc54d2660c72fb1367f4873cdcf191d4a6a14303add7078a0db7c",
+        "git_archive": "fc427550ddecc54d2660c72fb1367f4873cdcf191d4a6a14303add7078a0db7c",
+        "final_zip": "fc427550ddecc54d2660c72fb1367f4873cdcf191d4a6a14303add7078a0db7c"
+      },
+      "all_four_equal": true
+    },
+    {
+      "path": "artifacts/stage5br2_20260720_review/g2_world_smoke/world_a_asphalt_campus.gz.log",
+      "bytes": {
+        "working_tree": 0,
+        "git_blob": 0,
+        "git_archive": 0,
+        "final_zip": 0
+      },
+      "sha256": {
+        "working_tree": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "git_blob": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "git_archive": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "final_zip": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "all_four_equal": true
+    },
+    {
+      "path": "artifacts/stage5br2_20260720_review/g2_world_smoke/world_a_asphalt_campus.topics.txt",
+      "bytes": {
+        "working_tree": 915,
+        "git_blob": 915,
+        "git_archive": 915,
+        "final_zip": 915
+      },
+      "sha256": {
+        "working_tree": "edd729ea3b7f966abec249194cf7ce16ae8059662d300f523cc6630b4f1e92e5",
+        "git_blob": "edd729ea3b7f966abec249194cf7ce16ae8059662d300f523cc6630b4f1e92e5",
+        "git_archive": "edd729ea3b7f966abec249194cf7ce16ae8059662d300f523cc6630b4f1e92e5",
+        "final_zip": "edd729ea3b7f966abec249194cf7ce16ae8059662d300f523cc6630b4f1e92e5"
+      },
+      "all_four_equal": true
+    },
+    {
+      "path": "artifacts/stage5br2_20260720_review/g2_world_smoke/world_b_concrete_sidewalk.gz.log",
+      "bytes": {
+        "working_tree": 0,
+        "git_blob": 0,
+        "git_archive": 0,
+        "final_zip": 0
+      },
+      "sha256": {
+        "working_tree": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "git_blob": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "git_archive": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "final_zip": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "all_four_equal": true
+    },
+    {
+      "path": "artifacts/stage5br2_20260720_review/g2_world_smoke/world_b_concrete_sidewalk.topics.txt",
+      "bytes": {
+        "working_tree": 972,
+        "git_blob": 972,
+        "git_archive": 972,
+        "final_zip": 972
+      },
+      "sha256": {
+        "working_tree": "a7cec8599be10b59f75fdf0b0367f736bbd7ebb3fe9a6fcf4072a7a67974abda",
+        "git_blob": "a7cec8599be10b59f75fdf0b0367f736bbd7ebb3fe9a6fcf4072a7a67974abda",
+        "git_archive": "a7cec8599be10b59f75fdf0b0367f736bbd7ebb3fe9a6fcf4072a7a67974abda",
+        "final_zip": "a7cec8599be10b59f75fdf0b0367f736bbd7ebb3fe9a6fcf4072a7a67974abda"
+      },
+      "all_four_equal": true
+    },
+    {
+      "path": "artifacts/stage5br2_20260720_review/g2_world_smoke/world_c_wet_dark_ground.gz.log",
+      "bytes": {
+        "working_tree": 0,
+        "git_blob": 0,
+        "git_archive": 0,
+        "final_zip": 0
+      },
+      "sha256": {
+        "working_tree": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "git_blob": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "git_archive": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "final_zip": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "all_four_equal": true
+    },
+    {
+      "path": "artifacts/stage5br2_20260720_review/g2_world_smoke/world_c_wet_dark_ground.topics.txt",
+      "bytes": {
+        "working_tree": 934,
+        "git_blob": 934,
+        "git_archive": 934,
+        "final_zip": 934
+      },
+      "sha256": {
+        "working_tree": "f3c605964ce912af0d7dd64c2890c076045a2a267f70953048ca7c569608edf5",
+        "git_blob": "f3c605964ce912af0d7dd64c2890c076045a2a267f70953048ca7c569608edf5",
+        "git_archive": "f3c605964ce912af0d7dd64c2890c076045a2a267f70953048ca7c569608edf5",
+        "final_zip": "f3c605964ce912af0d7dd64c2890c076045a2a267f70953048ca7c569608edf5"
+      },
+      "all_four_equal": true
+    },
+    {
+      "path": "artifacts/stage5br2_20260720_review/g2_world_smoke/world_d_mixed_curb_vegetation.gz.log",
+      "bytes": {
+        "working_tree": 0,
+        "git_blob": 0,
+        "git_archive": 0,
+        "final_zip": 0
+      },
+      "sha256": {
+        "working_tree": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "git_blob": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "git_archive": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "final_zip": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "all_four_equal": true
+    },
+    {
+      "path": "artifacts/stage5br2_20260720_review/g2_world_smoke/world_d_mixed_curb_vegetation.topics.txt",
+      "bytes": {
+        "working_tree": 1048,
+        "git_blob": 1048,
+        "git_archive": 1048,
+        "final_zip": 1048
+      },
+      "sha256": {
+        "working_tree": "04e578a0fe0f085deb3e652fbe20841ed0339f60485439b7ded9d48dcc81b447",
+        "git_blob": "04e578a0fe0f085deb3e652fbe20841ed0339f60485439b7ded9d48dcc81b447",
+        "git_archive": "04e578a0fe0f085deb3e652fbe20841ed0339f60485439b7ded9d48dcc81b447",
+        "final_zip": "04e578a0fe0f085deb3e652fbe20841ed0339f60485439b7ded9d48dcc81b447"
+      },
+      "all_four_equal": true
+    },
+    {
+      "path": "artifacts/stage5br2_20260720_review/g2_worlds/g2_world_manifest.json",
+      "bytes": {
+        "working_tree": 17318,
+        "git_blob": 17318,
+        "git_archive": 17318,
+        "final_zip": 17318
+      },
+      "sha256": {
+        "working_tree": "008b1fffe63de9f4abd4f52035123964b47da8258ce4d83818a7b7881d0ad562",
+        "git_blob": "008b1fffe63de9f4abd4f52035123964b47da8258ce4d83818a7b7881d0ad562",
+        "git_archive": "008b1fffe63de9f4abd4f52035123964b47da8258ce4d83818a7b7881d0ad562",
+        "final_zip": "008b1fffe63de9f4abd4f52035123964b47da8258ce4d83818a7b7881d0ad562"
+      },
+      "all_four_equal": true
+    },
+    {
+      "path": "artifacts/stage5br2_20260720_review/g2_worlds/world_a_asphalt_campus.sdf",
+      "bytes": {
+        "working_tree": 31809,
+        "git_blob": 31809,
+        "git_archive": 31809,
+        "final_zip": 31809
+      },
+      "sha256": {
+        "working_tree": "4ada64d9a35d4ab33c701245fb6ec9ee238ceca02a7892ff4f82d73dabb903d6",
+        "git_blob": "4ada64d9a35d4ab33c701245fb6ec9ee238ceca02a7892ff4f82d73dabb903d6",
+        "git_archive": "4ada64d9a35d4ab33c701245fb6ec9ee238ceca02a7892ff4f82d73dabb903d6",
+        "final_zip": "4ada64d9a35d4ab33c701245fb6ec9ee238ceca02a7892ff4f82d73dabb903d6"
+      },
+      "all_four_equal": true
+    },
+    {
+      "path": "artifacts/stage5br2_20260720_review/g2_worlds/world_b_concrete_sidewalk.sdf",
+      "bytes": {
+        "working_tree": 31821,
+        "git_blob": 31821,
+        "git_archive": 31821,
+        "final_zip": 31821
+      },
+      "sha256": {
+        "working_tree": "be6a6c56b85708dd2ee0c4f55b3ba5ec4b9b84692db8fb55a7b7c5f5c706392e",
+        "git_blob": "be6a6c56b85708dd2ee0c4f55b3ba5ec4b9b84692db8fb55a7b7c5f5c706392e",
+        "git_archive": "be6a6c56b85708dd2ee0c4f55b3ba5ec4b9b84692db8fb55a7b7c5f5c706392e",
+        "final_zip": "be6a6c56b85708dd2ee0c4f55b3ba5ec4b9b84692db8fb55a7b7c5f5c706392e"
+      },
+      "all_four_equal": true
+    },
+    {
+      "path": "artifacts/stage5br2_20260720_review/g2_worlds/world_c_wet_dark_ground.sdf",
+      "bytes": {
+        "working_tree": 31813,
+        "git_blob": 31813,
+        "git_archive": 31813,
+        "final_zip": 31813
+      },
+      "sha256": {
+        "working_tree": "a33689a3a5f946df7a7505f49d9df1076dd51276ffe03d7bfde3c0e2322ffdf0",
+        "git_blob": "a33689a3a5f946df7a7505f49d9df1076dd51276ffe03d7bfde3c0e2322ffdf0",
+        "git_archive": "a33689a3a5f946df7a7505f49d9df1076dd51276ffe03d7bfde3c0e2322ffdf0",
+        "final_zip": "a33689a3a5f946df7a7505f49d9df1076dd51276ffe03d7bfde3c0e2322ffdf0"
+      },
+      "all_four_equal": true
+    },
+    {
+      "path": "artifacts/stage5br2_20260720_review/g2_worlds/world_d_mixed_curb_vegetation.sdf",
+      "bytes": {
+        "working_tree": 31837,
+        "git_blob": 31837,
+        "git_archive": 31837,
+        "final_zip": 31837
+      },
+      "sha256": {
+        "working_tree": "39560b64f492e922f4776c55f64125c6f5ef63ce33e5a15e22701a86d6d1280f",
+        "git_blob": "39560b64f492e922f4776c55f64125c6f5ef63ce33e5a15e22701a86d6d1280f",
+        "git_archive": "39560b64f492e922f4776c55f64125c6f5ef63ce33e5a15e22701a86d6d1280f",
+        "final_zip": "39560b64f492e922f4776c55f64125c6f5ef63ce33e5a15e22701a86d6d1280f"
+      },
+      "all_four_equal": true
+    },
+    {
+      "path": "artifacts/stage5br2_20260720_review/stage5br2_status.json",
+      "bytes": {
+        "working_tree": 2830,
+        "git_blob": 2830,
+        "git_archive": 2830,
+        "final_zip": 2830
+      },
+      "sha256": {
+        "working_tree": "6f8b9edc5333139b0bd7f4d9d920b797a741ee88fea4e4c8c339e9fc4a43e3f2",
+        "git_blob": "6f8b9edc5333139b0bd7f4d9d920b797a741ee88fea4e4c8c339e9fc4a43e3f2",
+        "git_archive": "6f8b9edc5333139b0bd7f4d9d920b797a741ee88fea4e4c8c339e9fc4a43e3f2",
+        "final_zip": "6f8b9edc5333139b0bd7f4d9d920b797a741ee88fea4e4c8c339e9fc4a43e3f2"
+      },
+      "all_four_equal": true
+    }
+  ]
+}

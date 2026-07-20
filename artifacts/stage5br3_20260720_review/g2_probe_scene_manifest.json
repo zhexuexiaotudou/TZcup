@@ -1,0 +1,344 @@
+{
+  "schema_version": 1,
+  "scene_seed": 0,
+  "world_id": "world_a_asphalt_campus",
+  "split": "train",
+  "world_sha256": "7a9d75d8403a7653dc9f8c9605493e58aeb737bf832c31e34d9c22b9076969f2",
+  "trajectory_id": "world_a_asphalt_campus_scene_0000",
+  "objects": [
+    {
+      "model_name": "leaves_dense",
+      "class_id": "leaf_pile",
+      "semantic_label": 4,
+      "xyz_m": [
+        -6.478592607795221,
+        1.430022175672235,
+        0.0125
+      ],
+      "yaw_rad": -0.9302195645364453,
+      "distance_bucket_m": [
+        0.5,
+        2.0
+      ],
+      "horizontal_region": "left",
+      "keepout_or_unreachable": false,
+      "physical_geometry_values_m": [
+        0.28,
+        0.18,
+        0.025
+      ]
+    },
+    {
+      "model_name": "can_tall_label",
+      "class_id": "metal_can",
+      "semantic_label": 2,
+      "xyz_m": [
+        -1.8590626507071297,
+        -2.0326354518469203,
+        0.0575
+      ],
+      "yaw_rad": 0.9050294022214604,
+      "distance_bucket_m": [
+        4.0,
+        8.0
+      ],
+      "horizontal_region": "right",
+      "keepout_or_unreachable": true,
+      "physical_geometry_values_m": [
+        0.044,
+        0.115
+      ]
+    },
+    {
+      "model_name": "can_dented_dots",
+      "class_id": "metal_can",
+      "semantic_label": 2,
+      "xyz_m": [
+        -6.6098846068345765,
+        1.997761281201797,
+        0.065
+      ],
+      "yaw_rad": 2.6629307150760164,
+      "distance_bucket_m": [
+        0.5,
+        2.0
+      ],
+      "horizontal_region": "left",
+      "keepout_or_unreachable": true,
+      "physical_geometry_values_m": [
+        0.04,
+        0.13
+      ]
+    },
+    {
+      "model_name": "paper_long_bands",
+      "class_id": "paper_litter",
+      "semantic_label": 3,
+      "xyz_m": [
+        -2.027594531592901,
+        0.4105881239028699,
+        0.008
+      ],
+      "yaw_rad": 0.8775052879272973,
+      "distance_bucket_m": [
+        4.0,
+        8.0
+      ],
+      "horizontal_region": "middle",
+      "keepout_or_unreachable": false,
+      "physical_geometry_values_m": [
+        0.18,
+        0.13,
+        0.008
+      ]
+    },
+    {
+      "model_name": "paper_torn_text",
+      "class_id": "paper_litter",
+      "semantic_label": 3,
+      "xyz_m": [
+        -0.628696779150304,
+        -2.022706257290112,
+        0.008
+      ],
+      "yaw_rad": -1.4493066252180868,
+      "distance_bucket_m": [
+        4.0,
+        8.0
+      ],
+      "horizontal_region": "right",
+      "keepout_or_unreachable": true,
+      "physical_geometry_values_m": [
+        0.19999999999999998,
+        0.12,
+        0.008
+      ]
+    },
+    {
+      "model_name": "paper_folded_grid",
+      "class_id": "paper_litter",
+      "semantic_label": 3,
+      "xyz_m": [
+        -1.7323591374218061,
+        0.09564143823889193,
+        0.008
+      ],
+      "yaw_rad": -2.6164622154153583,
+      "distance_bucket_m": [
+        4.0,
+        8.0
+      ],
+      "horizontal_region": "middle",
+      "keepout_or_unreachable": false,
+      "physical_geometry_values_m": [
+        0.18,
+        0.11,
+        0.008
+      ]
+    },
+    {
+      "model_name": "bottle_ribbed_short",
+      "class_id": "plastic_bottle",
+      "semantic_label": 1,
+      "xyz_m": [
+        -0.11137039443844277,
+        -1.4684775632334097,
+        0.08
+      ],
+      "yaw_rad": -0.854612370170424,
+      "distance_bucket_m": [
+        4.0,
+        8.0
+      ],
+      "horizontal_region": "right",
+      "keepout_or_unreachable": false,
+      "physical_geometry_values_m": [
+        0.035,
+        0.16
+      ]
+    },
+    {
+      "model_name": "bottle_dented",
+      "class_id": "plastic_bottle",
+      "semantic_label": 1,
+      "xyz_m": [
+        -2.940292129443118,
+        -1.9953667617994193,
+        0.08
+      ],
+      "yaw_rad": -0.23271176881590883,
+      "distance_bucket_m": [
+        4.0,
+        8.0
+      ],
+      "horizontal_region": "right",
+      "keepout_or_unreachable": true,
+      "physical_geometry_values_m": [
+        0.041,
+        0.16
+      ]
+    },
+    {
+      "model_name": "bottle_ribbed_tall",
+      "class_id": "plastic_bottle",
+      "semantic_label": 1,
+      "xyz_m": [
+        -5.628370669329392,
+        -1.2669844503038363,
+        0.09
+      ],
+      "yaw_rad": -0.8861201115778523,
+      "distance_bucket_m": [
+        2.0,
+        4.0
+      ],
+      "horizontal_region": "right",
+      "keepout_or_unreachable": false,
+      "physical_geometry_values_m": [
+        0.038000000000000006,
+        0.18
+      ]
+    },
+    {
+      "model_name": "negative_blue_obstacle",
+      "class_id": "background",
+      "semantic_label": 0,
+      "xyz_m": [
+        -3.107844014836642,
+        -1.8996544931245296,
+        0.04
+      ],
+      "yaw_rad": -1.6992101583805734,
+      "distance_bucket_m": [
+        4.0,
+        8.0
+      ],
+      "horizontal_region": "right",
+      "keepout_or_unreachable": true,
+      "physical_geometry_values_m": [
+        0.16,
+        0.12,
+        0.08
+      ]
+    },
+    {
+      "model_name": "negative_bottle_like_reusable_cone",
+      "class_id": "background",
+      "semantic_label": 0,
+      "xyz_m": [
+        -4.947415110621584,
+        1.2902859413531766,
+        0.04
+      ],
+      "yaw_rad": 1.529392381104902,
+      "distance_bucket_m": [
+        2.0,
+        4.0
+      ],
+      "horizontal_region": "left",
+      "keepout_or_unreachable": false,
+      "physical_geometry_values_m": [
+        0.16,
+        0.12,
+        0.08
+      ]
+    },
+    {
+      "model_name": "negative_cardboard",
+      "class_id": "background",
+      "semantic_label": 0,
+      "xyz_m": [
+        -0.9690928672973875,
+        1.8292522641098072,
+        0.04
+      ],
+      "yaw_rad": -0.8960740688533644,
+      "distance_bucket_m": [
+        4.0,
+        8.0
+      ],
+      "horizontal_region": "left",
+      "keepout_or_unreachable": true,
+      "physical_geometry_values_m": [
+        0.16,
+        0.12,
+        0.08
+      ]
+    },
+    {
+      "model_name": "negative_shadow",
+      "class_id": "background",
+      "semantic_label": 0,
+      "xyz_m": [
+        -2.261485469145353,
+        -0.32916554067846504,
+        0.04
+      ],
+      "yaw_rad": -2.9472600871766006,
+      "distance_bucket_m": [
+        4.0,
+        8.0
+      ],
+      "horizontal_region": "middle",
+      "keepout_or_unreachable": false,
+      "physical_geometry_values_m": [
+        0.16,
+        0.12,
+        0.08
+      ]
+    },
+    {
+      "model_name": "negative_robot_self_pixels",
+      "class_id": "background",
+      "semantic_label": 0,
+      "xyz_m": [
+        -1.4074607945199116,
+        -0.07776841640684529,
+        0.04
+      ],
+      "yaw_rad": -0.5372111235398762,
+      "distance_bucket_m": [
+        4.0,
+        8.0
+      ],
+      "horizontal_region": "middle",
+      "keepout_or_unreachable": false,
+      "physical_geometry_values_m": [
+        0.16,
+        0.12,
+        0.08
+      ]
+    }
+  ],
+  "target_count_by_class": {
+    "leaf_pile": 1,
+    "metal_can": 2,
+    "paper_litter": 3,
+    "plastic_bottle": 3,
+    "puddle": 0
+  },
+  "hard_negative_count": 5,
+  "negative_only": false,
+  "missing_target_classes": [
+    "puddle"
+  ],
+  "overlap_requested": true,
+  "dynamic_obstacle_requested": true,
+  "appearance_randomization": {
+    "exposure": 1.209118856738388,
+    "white_balance_k": 4633,
+    "noise_sigma": 0.020238653789715424,
+    "motion_blur_px": 3,
+    "shadow_profile": "mixed"
+  },
+  "vehicle_start_xyz_m": [
+    -8.0,
+    0.0,
+    0.18
+  ],
+  "vehicle_motion_command": {
+    "linear_x_mps": 0.35,
+    "duration_s": 8.0
+  },
+  "manifest_sha256": "cc6a20e608025285ff3add72e980a8c4077fca5f7a4bc3856fda129d6d79d193"
+}

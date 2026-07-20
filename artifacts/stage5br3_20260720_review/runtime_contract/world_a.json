@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "world_id": "world_a_asphalt_campus",
+  "topics": {
+    "rgb": "/camera/color/image_raw",
+    "depth": "/camera/depth/image_rect_raw",
+    "semantic": "/ground_truth/semantic/image",
+    "instance": "/ground_truth/instance/image"
+  },
+  "checks": {
+    "all_four_images_nonempty": false,
+    "camera_info_nonempty": false,
+    "resolution_640x480": false,
+    "exact_sensor_timestamps": false,
+    "optical_frame": false,
+    "depth_encoding_32FC1": false,
+    "depth_units_and_range": false,
+    "camera_to_base_tf_matches_production": false,
+    "actual_vehicle_reproducible_motion": false,
+    "gt_ids_are_registry_bounded": false
+  },
+  "depth": null,
+  "vehicle_motion_m": null,
+  "runtime_contract_pass": false
+}

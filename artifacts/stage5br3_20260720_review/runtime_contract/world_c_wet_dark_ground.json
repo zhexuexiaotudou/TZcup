@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "world_id": "world_c_wet_dark_ground",
+  "topics": {
+    "rgb": "/camera/color/image_raw",
+    "depth": "/camera/depth/image_rect_raw",
+    "semantic": "/ground_truth/semantic/image",
+    "instance": "/ground_truth/instance/image"
+  },
+  "checks": {
+    "all_four_images_nonempty": true,
+    "camera_info_nonempty": true,
+    "resolution_640x480": true,
+    "exact_sensor_timestamps": true,
+    "optical_frame": true,
+    "depth_encoding_32FC1": true,
+    "depth_units_and_range": true,
+    "camera_to_base_tf_matches_production": true,
+    "actual_vehicle_reproducible_motion": true,
+    "gt_ids_are_registry_bounded": true
+  },
+  "common_stamp_ns": 27985000000,
+  "frames": {
+    "rgb": "camera_depth_link",
+    "depth": "camera_depth_link",
+    "semantic": "camera_depth_link",
+    "instance": "camera_depth_link"
+  },
+  "encodings": {
+    "rgb": "rgb8",
+    "depth": "32FC1",
+    "semantic": "rgb8",
+    "instance": "rgb8"
+  },
+  "depth": {
+    "finite_count": 151788,
+    "nan_count": 0,
+    "inf_count": 155412,
+    "min_m": 0.5444729328155518,
+    "max_m": 37.28261184692383
+  },
+  "vehicle_motion_m": 0.7041978538890765,
+  "runtime_contract_pass": true
+}

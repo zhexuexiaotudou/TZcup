@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "stage5a": {
+    "script_exit_code": 0,
+    "synthetic_perception_pass": true,
+    "spot_clean_e2e_pass": true,
+    "valid_trial_count": 30,
+    "mission_success_count": 30,
+    "live_smoke_pass": true,
+    "live_inference_frame_count": 132,
+    "ground_truth_input_used": false,
+    "ground_truth_control_violation_count": 0,
+    "competition_perception_pass": false
+  },
+  "stage4w_seed0": {
+    "script_exit_code": 0,
+    "coverage_success": true,
+    "component_count": 17,
+    "coverage_rate": 0.9353333333333333,
+    "localization_xy_rmse_m": 0.03571546874636302,
+    "collision_count": 0,
+    "keepout_violation_sample_count": 0,
+    "brush_state_violation_sample_count": 0,
+    "brush_disabled_on_exit": true,
+    "competition_efficiency_pass": false
+  },
+  "full_regression_artifacts_packaged": false,
+  "full_regression_artifacts_retained_locally": [
+    "F:/Project/TZcup-stage5br3/artifacts/stage5br3_regression_stage5a",
+    "F:/Project/TZcup-stage5br3/artifacts/stage5br3_regression_stage4w_seed0"
+  ]
+}

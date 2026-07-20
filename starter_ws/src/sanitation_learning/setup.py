@@ -35,6 +35,9 @@ setup(
             "stage5br_finalize_g1 = sanitation_learning.g1_finalize:main",
             "stage5br_train_g1 = sanitation_learning.g1_training:main",
             "stage5br2_generate_g2_worlds = sanitation_learning.gazebo_g2:main",
+            "stage5br3_runtime_contract = sanitation_learning.g2_runtime_contract:main",
+            "stage5br3_randomize_scene = sanitation_learning.g2_scene:main",
+            "stage5br3_capture_scene = sanitation_learning.g2_capture:main",
         ],
     },
 )

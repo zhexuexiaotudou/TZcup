@@ -1,0 +1,232 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR3 split-model screening attempt 1",
+  "attempt": 1,
+  "attempt_limit": 3,
+  "device": "cuda",
+  "test_split_used_for_selection": false,
+  "same_color_negative_fp_rate_for_gate": 8.7,
+  "same_color_negative_fp_threshold": 0.05,
+  "detector": {
+    "task": "discrete_detector",
+    "hypothesis": "separate discrete objects from area masks to reduce class-imbalance interference",
+    "resolution": [
+      512,
+      384
+    ],
+    "epochs": 8,
+    "training_frames": 340,
+    "duration_sec": 27.48031921799702,
+    "curves": [
+      {
+        "epoch": 1,
+        "loss": 1.0576854923192192
+      },
+      {
+        "epoch": 2,
+        "loss": 1.043959482978372
+      },
+      {
+        "epoch": 3,
+        "loss": 1.0311180006055272
+      },
+      {
+        "epoch": 4,
+        "loss": 0.9729219208745395
+      },
+      {
+        "epoch": 5,
+        "loss": 0.9308361540822422
+      },
+      {
+        "epoch": 6,
+        "loss": 0.907515406257966
+      },
+      {
+        "epoch": 7,
+        "loss": 0.8855335137423347
+      },
+      {
+        "epoch": 8,
+        "loss": 0.8682427949765149
+      }
+    ],
+    "class_weights": [
+      0.029999999329447746,
+      29.923843383789062,
+      23.66623306274414,
+      55.33543395996094
+    ],
+    "peak_training_vram_mib": 232.73095703125,
+    "parameter_count": 18628,
+    "onnx_path": "discrete_detector.onnx",
+    "onnx_sha256": "69597dba99c5ec87ee3e5e466258100677a92486f573a452cc354e7283b30e46",
+    "onnx_bytes": 77600,
+    "onnx_operator_inventory": {
+      "Conv": 7,
+      "Relu": 6,
+      "MaxPool": 1,
+      "Shape": 1,
+      "Constant": 4,
+      "Slice": 1,
+      "Concat": 2,
+      "Resize": 1
+    },
+    "onnx_cpu_latency_ms": {
+      "p50": 14.44678099869634,
+      "p95": 37.20094894888461
+    },
+    "in_domain": {
+      "macro_f1": 0.18042968052343078,
+      "foreground_miou": 0.10633042752326777,
+      "per_class_f1": [
+        0.3634208967015603,
+        0.1708977883181516,
+        0.0069703565505804315
+      ],
+      "per_class_iou": [
+        0.22206130823075065,
+        0.09343260711549417,
+        0.0034973672235584737
+      ],
+      "confidence_threshold": 0.35,
+      "precision": 0.048053024026512015,
+      "recall": 0.3333333333333333,
+      "f1": 0.08399710354815351,
+      "ap50": 0.11472137563527741,
+      "ap50_95": 0.02958884006473701,
+      "small_object_recall": 0.34355828220858897,
+      "small_object_gt_count": 163,
+      "same_color_negative_fp_per_frame": 8.7,
+      "negative_only_frame_count": 10
+    },
+    "cross_world": {
+      "macro_f1": 0.15295428071978573,
+      "foreground_miou": 0.08660028841862927,
+      "per_class_f1": [
+        0.26068261220102124,
+        0.19762317150549621,
+        0.0005570584528397796
+      ],
+      "per_class_iou": [
+        0.14987639060568603,
+        0.10964586782363799,
+        0.0002786068265637679
+      ],
+      "confidence_threshold": 0.35,
+      "precision": 0.03073140749846343,
+      "recall": 0.19157088122605365,
+      "f1": 0.05296610169491525,
+      "ap50": 0.09441734468906897,
+      "ap50_95": 0.018799575569812318,
+      "small_object_recall": 0.1951219512195122,
+      "small_object_gt_count": 246,
+      "same_color_negative_fp_per_frame": 0.0,
+      "negative_only_frame_count": 0
+    },
+    "color_stress_f1": 0.08729714581807287
+  },
+  "area_segmenter": {
+    "task": "area_segmenter",
+    "hypothesis": "separate discrete objects from area masks to reduce class-imbalance interference",
+    "resolution": [
+      512,
+      384
+    ],
+    "epochs": 8,
+    "training_frames": 340,
+    "duration_sec": 26.126464451001084,
+    "curves": [
+      {
+        "epoch": 1,
+        "loss": 1.049861155537998
+      },
+      {
+        "epoch": 2,
+        "loss": 1.0362589264617246
+      },
+      {
+        "epoch": 3,
+        "loss": 1.0279685030965244
+      },
+      {
+        "epoch": 4,
+        "loss": 0.9731330110746271
+      },
+      {
+        "epoch": 5,
+        "loss": 0.9481591575285968
+      },
+      {
+        "epoch": 6,
+        "loss": 0.9074564456939698
+      },
+      {
+        "epoch": 7,
+        "loss": 0.8972786931430592
+      },
+      {
+        "epoch": 8,
+        "loss": 0.902515325125526
+      }
+    ],
+    "class_weights": [
+      0.029999999329447746,
+      18.600526809692383,
+      12.745722770690918
+    ],
+    "peak_training_vram_mib": 227.81005859375,
+    "parameter_count": 18615,
+    "onnx_path": "area_segmenter.onnx",
+    "onnx_sha256": "40ac83476e4796b64171093840a0326d86123bf8b33862673a2ada3a18dbfc08",
+    "onnx_bytes": 77548,
+    "onnx_operator_inventory": {
+      "Conv": 7,
+      "Relu": 6,
+      "MaxPool": 1,
+      "Shape": 1,
+      "Constant": 4,
+      "Slice": 1,
+      "Concat": 2,
+      "Resize": 1
+    },
+    "onnx_cpu_latency_ms": {
+      "p50": 14.73741749941837,
+      "p95": 29.605201047888837
+    },
+    "in_domain": {
+      "macro_f1": 0.47425831173897676,
+      "foreground_miou": 0.3515173164351909,
+      "per_class_f1": [
+        0.7389605840989304,
+        0.20955603937902312
+      ],
+      "per_class_iou": [
+        0.5859932487287954,
+        0.11704138414158637
+      ]
+    },
+    "cross_world": {
+      "macro_f1": 0.044819863263250395,
+      "foreground_miou": 0.02346147157978583,
+      "per_class_f1": [
+        0.0,
+        0.08963972652650079
+      ],
+      "per_class_iou": [
+        0.0,
+        0.04692294315957166
+      ]
+    },
+    "color_stress_f1": null
+  },
+  "gates": {
+    "detector_in_domain_f1": false,
+    "detector_cross_world_f1": false,
+    "detector_small_object_recall": false,
+    "area_cross_world_miou": false,
+    "color_stress_f1": false,
+    "same_color_negative_fp": false
+  },
+  "screening_pass": false
+}

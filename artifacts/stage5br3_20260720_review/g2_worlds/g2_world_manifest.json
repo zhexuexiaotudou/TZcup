@@ -1,0 +1,738 @@
+{
+  "schema_version": 1,
+  "dataset_domain": "G2_deployment_aligned_vehicle_camera_gazebo",
+  "camera_contract": {
+    "schema_version": 1,
+    "source": "starter_ws/src/sanitation_vehicle_description/urdf/sanitation_vehicle.urdf.xacro",
+    "source_sha256": "59e85f90a12f967a120b7f60a0a6382385516ab5e2043ee53531e9b42504a96b",
+    "parent_frame": "base_link",
+    "camera_link": "camera_link",
+    "optical_frame": "camera_depth_link",
+    "extrinsics": {
+      "xyz_m": [
+        0.53,
+        0.0,
+        0.22
+      ],
+      "rpy_rad": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    "native_resolution": {
+      "width": 640,
+      "height": 480
+    },
+    "horizontal_fov_rad": 1.50098,
+    "update_rate_hz": 15.0,
+    "near_clip_m": 0.3,
+    "far_clip_m": 100.0,
+    "gazebo_base_topic": "camera",
+    "production_ros_topics": {
+      "camera_info": "/camera/color/camera_info",
+      "rgb": "/camera/color/image_raw",
+      "depth": "/camera/depth/image_rect_raw",
+      "points": "/camera/depth/color/points"
+    }
+  },
+  "native_capture_resolution": {
+    "width": 640,
+    "height": 480
+  },
+  "offline_resolution_candidates": [
+    [
+      256,
+      192
+    ],
+    [
+      384,
+      288
+    ],
+    [
+      512,
+      384
+    ],
+    [
+      640,
+      384
+    ]
+  ],
+  "selected_resolution": null,
+  "training_only_ground_truth": true,
+  "production_launch_modified": false,
+  "actual_vehicle_model_required": "sanitation_vehicle_description/urdf/sanitation_vehicle.urdf.xacro",
+  "static_independent_camera_rig_forbidden": true,
+  "world_split_counts": {
+    "train": 3,
+    "val": 1,
+    "test": 2
+  },
+  "vehicle_motion_required": true,
+  "distance_envelope_m": [
+    0.5,
+    4.0
+  ],
+  "worlds": [
+    {
+      "world_id": "world_a_asphalt_campus",
+      "material_id": "asphalt_coarse",
+      "layout_family": "campus_open",
+      "geometry_family": "campus_open",
+      "background_family": "asphalt_coarse",
+      "lighting_family": "directional_daylight",
+      "path": "world_a_asphalt_campus.sdf",
+      "sha256": "7a9d75d8403a7653dc9f8c9605493e58aeb737bf832c31e34d9c22b9076969f2",
+      "split_eligibility": [
+        "train"
+      ],
+      "allowed_trajectory_family": "campus_open_vehicle_motion",
+      "vehicle_spawned_by": "sanitation_bringup/stage5br3_g2_capture.launch.py",
+      "sensor_topics": [
+        "/camera/image",
+        "/camera/depth_image",
+        "/g2/semantic_gt/labels_map",
+        "/g2/instance_gt/labels_map"
+      ]
+    },
+    {
+      "world_id": "world_b_concrete_sidewalk",
+      "material_id": "concrete_light",
+      "layout_family": "sidewalk_corridor",
+      "geometry_family": "sidewalk_corridor",
+      "background_family": "concrete_light",
+      "lighting_family": "directional_daylight",
+      "path": "world_b_concrete_sidewalk.sdf",
+      "sha256": "f06e0807baef5433511969954aa89f3073f571e452aaed1072e91f967a6fc8bd",
+      "split_eligibility": [
+        "train"
+      ],
+      "allowed_trajectory_family": "sidewalk_corridor_vehicle_motion",
+      "vehicle_spawned_by": "sanitation_bringup/stage5br3_g2_capture.launch.py",
+      "sensor_topics": [
+        "/camera/image",
+        "/camera/depth_image",
+        "/g2/semantic_gt/labels_map",
+        "/g2/instance_gt/labels_map"
+      ]
+    },
+    {
+      "world_id": "world_c_wet_dark_ground",
+      "material_id": "wet_dark",
+      "layout_family": "wet_courtyard",
+      "geometry_family": "wet_courtyard",
+      "background_family": "wet_dark",
+      "lighting_family": "wet_low_key",
+      "path": "world_c_wet_dark_ground.sdf",
+      "sha256": "4da5cb24b973ae73a4a26146bf912b7e4459aeb593499d028c434f642a5a4ad4",
+      "split_eligibility": [
+        "train"
+      ],
+      "allowed_trajectory_family": "wet_courtyard_vehicle_motion",
+      "vehicle_spawned_by": "sanitation_bringup/stage5br3_g2_capture.launch.py",
+      "sensor_topics": [
+        "/camera/image",
+        "/camera/depth_image",
+        "/g2/semantic_gt/labels_map",
+        "/g2/instance_gt/labels_map"
+      ]
+    },
+    {
+      "world_id": "world_d_mixed_curb_vegetation",
+      "material_id": "mixed_curb_vegetation",
+      "layout_family": "curb_chicane",
+      "geometry_family": "curb_chicane",
+      "background_family": "mixed_curb_vegetation",
+      "lighting_family": "directional_daylight",
+      "path": "world_d_mixed_curb_vegetation.sdf",
+      "sha256": "c88e14826fa399bc46d872884d540773f860dd68105d37721add7e096f7efe0d",
+      "split_eligibility": [
+        "val"
+      ],
+      "allowed_trajectory_family": "curb_chicane_vehicle_motion",
+      "vehicle_spawned_by": "sanitation_bringup/stage5br3_g2_capture.launch.py",
+      "sensor_topics": [
+        "/camera/image",
+        "/camera/depth_image",
+        "/g2/semantic_gt/labels_map",
+        "/g2/instance_gt/labels_map"
+      ]
+    },
+    {
+      "world_id": "world_e_tiled_plaza",
+      "material_id": "tiled_plaza",
+      "layout_family": "plaza_islands",
+      "geometry_family": "plaza_islands",
+      "background_family": "tiled_plaza",
+      "lighting_family": "directional_daylight",
+      "path": "world_e_tiled_plaza.sdf",
+      "sha256": "703a1a9cad91f9fb64891de0aaeba4b92487130666342ec28cd80f585e9f64fc",
+      "split_eligibility": [
+        "test"
+      ],
+      "allowed_trajectory_family": "plaza_islands_vehicle_motion",
+      "vehicle_spawned_by": "sanitation_bringup/stage5br3_g2_capture.launch.py",
+      "sensor_topics": [
+        "/camera/image",
+        "/camera/depth_image",
+        "/g2/semantic_gt/labels_map",
+        "/g2/instance_gt/labels_map"
+      ]
+    },
+    {
+      "world_id": "world_f_service_road",
+      "material_id": "service_road",
+      "layout_family": "service_lane",
+      "geometry_family": "service_lane",
+      "background_family": "service_road",
+      "lighting_family": "directional_daylight",
+      "path": "world_f_service_road.sdf",
+      "sha256": "19194dd651bada0b7cafe7635eb46ae8b5a04e3b3302f53beca76846407dc075",
+      "split_eligibility": [
+        "test"
+      ],
+      "allowed_trajectory_family": "service_lane_vehicle_motion",
+      "vehicle_spawned_by": "sanitation_bringup/stage5br3_g2_capture.launch.py",
+      "sensor_topics": [
+        "/camera/image",
+        "/camera/depth_image",
+        "/g2/semantic_gt/labels_map",
+        "/g2/instance_gt/labels_map"
+      ]
+    }
+  ],
+  "assets": [
+    {
+      "model_name": "bottle_ribbed_short",
+      "class_id": "plastic_bottle",
+      "semantic_label": 1,
+      "variant_index": 0,
+      "texture_id": "ribs",
+      "geometry_kind": "cylinder",
+      "physical_geometry_values_m": [
+        0.035,
+        0.16
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "bottle_ribbed_tall",
+      "class_id": "plastic_bottle",
+      "semantic_label": 1,
+      "variant_index": 1,
+      "texture_id": "ribs",
+      "geometry_kind": "cylinder",
+      "physical_geometry_values_m": [
+        0.038000000000000006,
+        0.18
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "bottle_dented",
+      "class_id": "plastic_bottle",
+      "semantic_label": 1,
+      "variant_index": 2,
+      "texture_id": "speckle",
+      "geometry_kind": "cylinder",
+      "physical_geometry_values_m": [
+        0.041,
+        0.16
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "bottle_flattened",
+      "class_id": "plastic_bottle",
+      "semantic_label": 1,
+      "variant_index": 3,
+      "texture_id": "bands",
+      "geometry_kind": "cylinder",
+      "physical_geometry_values_m": [
+        0.035,
+        0.18
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "bottle_clear_label",
+      "class_id": "plastic_bottle",
+      "semantic_label": 1,
+      "variant_index": 4,
+      "texture_id": "label",
+      "geometry_kind": "cylinder",
+      "physical_geometry_values_m": [
+        0.038000000000000006,
+        0.16
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "bottle_unseen_crushed",
+      "class_id": "plastic_bottle",
+      "semantic_label": 1,
+      "variant_index": 5,
+      "texture_id": "crosshatch",
+      "geometry_kind": "cylinder",
+      "physical_geometry_values_m": [
+        0.041,
+        0.18
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "can_short_rings",
+      "class_id": "metal_can",
+      "semantic_label": 2,
+      "variant_index": 0,
+      "texture_id": "rings",
+      "geometry_kind": "cylinder",
+      "physical_geometry_values_m": [
+        0.04,
+        0.1
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "can_tall_label",
+      "class_id": "metal_can",
+      "semantic_label": 2,
+      "variant_index": 1,
+      "texture_id": "label",
+      "geometry_kind": "cylinder",
+      "physical_geometry_values_m": [
+        0.044,
+        0.115
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "can_dented_dots",
+      "class_id": "metal_can",
+      "semantic_label": 2,
+      "variant_index": 2,
+      "texture_id": "speckle",
+      "geometry_kind": "cylinder",
+      "physical_geometry_values_m": [
+        0.04,
+        0.13
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "can_flat_side",
+      "class_id": "metal_can",
+      "semantic_label": 2,
+      "variant_index": 3,
+      "texture_id": "bands",
+      "geometry_kind": "cylinder",
+      "physical_geometry_values_m": [
+        0.044,
+        0.1
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "can_matte_rings",
+      "class_id": "metal_can",
+      "semantic_label": 2,
+      "variant_index": 4,
+      "texture_id": "rings",
+      "geometry_kind": "cylinder",
+      "physical_geometry_values_m": [
+        0.04,
+        0.115
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "can_unseen_crushed",
+      "class_id": "metal_can",
+      "semantic_label": 2,
+      "variant_index": 5,
+      "texture_id": "crosshatch",
+      "geometry_kind": "cylinder",
+      "physical_geometry_values_m": [
+        0.044,
+        0.13
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "paper_folded_grid",
+      "class_id": "paper_litter",
+      "semantic_label": 3,
+      "variant_index": 0,
+      "texture_id": "grid",
+      "geometry_kind": "box",
+      "physical_geometry_values_m": [
+        0.18,
+        0.11,
+        0.008
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "paper_torn_text",
+      "class_id": "paper_litter",
+      "semantic_label": 3,
+      "variant_index": 1,
+      "texture_id": "text",
+      "geometry_kind": "box",
+      "physical_geometry_values_m": [
+        0.19999999999999998,
+        0.12,
+        0.008
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "paper_long_bands",
+      "class_id": "paper_litter",
+      "semantic_label": 3,
+      "variant_index": 2,
+      "texture_id": "bands",
+      "geometry_kind": "box",
+      "physical_geometry_values_m": [
+        0.18,
+        0.13,
+        0.008
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "paper_crumpled",
+      "class_id": "paper_litter",
+      "semantic_label": 3,
+      "variant_index": 3,
+      "texture_id": "speckle",
+      "geometry_kind": "box",
+      "physical_geometry_values_m": [
+        0.19999999999999998,
+        0.11,
+        0.008
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "paper_matte_grid",
+      "class_id": "paper_litter",
+      "semantic_label": 3,
+      "variant_index": 4,
+      "texture_id": "grid",
+      "geometry_kind": "box",
+      "physical_geometry_values_m": [
+        0.18,
+        0.12,
+        0.008
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "paper_unseen_torn",
+      "class_id": "paper_litter",
+      "semantic_label": 3,
+      "variant_index": 5,
+      "texture_id": "crosshatch",
+      "geometry_kind": "box",
+      "physical_geometry_values_m": [
+        0.19999999999999998,
+        0.13,
+        0.008
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "leaves_sparse",
+      "class_id": "leaf_pile",
+      "semantic_label": 4,
+      "variant_index": 0,
+      "texture_id": "veins",
+      "geometry_kind": "sphere",
+      "physical_geometry_values_m": [
+        0.25,
+        0.16,
+        0.025
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "leaves_dense",
+      "class_id": "leaf_pile",
+      "semantic_label": 4,
+      "variant_index": 1,
+      "texture_id": "speckle",
+      "geometry_kind": "sphere",
+      "physical_geometry_values_m": [
+        0.28,
+        0.18,
+        0.025
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "leaves_long",
+      "class_id": "leaf_pile",
+      "semantic_label": 4,
+      "variant_index": 2,
+      "texture_id": "veins",
+      "geometry_kind": "sphere",
+      "physical_geometry_values_m": [
+        0.31,
+        0.16,
+        0.025
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "leaves_mixed",
+      "class_id": "leaf_pile",
+      "semantic_label": 4,
+      "variant_index": 3,
+      "texture_id": "crosshatch",
+      "geometry_kind": "sphere",
+      "physical_geometry_values_m": [
+        0.25,
+        0.18,
+        0.025
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "leaves_matte",
+      "class_id": "leaf_pile",
+      "semantic_label": 4,
+      "variant_index": 4,
+      "texture_id": "veins",
+      "geometry_kind": "sphere",
+      "physical_geometry_values_m": [
+        0.28,
+        0.16,
+        0.025
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "leaves_unseen_windrow",
+      "class_id": "leaf_pile",
+      "semantic_label": 4,
+      "variant_index": 5,
+      "texture_id": "bands",
+      "geometry_kind": "sphere",
+      "physical_geometry_values_m": [
+        0.31,
+        0.18,
+        0.025
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "puddle_matte_small",
+      "class_id": "puddle",
+      "semantic_label": 5,
+      "variant_index": 0,
+      "texture_id": "ripple",
+      "geometry_kind": "sphere",
+      "physical_geometry_values_m": [
+        0.36,
+        0.22,
+        0.006
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "puddle_reflective",
+      "class_id": "puddle",
+      "semantic_label": 5,
+      "variant_index": 1,
+      "texture_id": "reflection",
+      "geometry_kind": "sphere",
+      "physical_geometry_values_m": [
+        0.39999999999999997,
+        0.24,
+        0.006
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "puddle_irregular",
+      "class_id": "puddle",
+      "semantic_label": 5,
+      "variant_index": 2,
+      "texture_id": "ripple",
+      "geometry_kind": "sphere",
+      "physical_geometry_values_m": [
+        0.44,
+        0.22,
+        0.006
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "puddle_shallow",
+      "class_id": "puddle",
+      "semantic_label": 5,
+      "variant_index": 3,
+      "texture_id": "bands",
+      "geometry_kind": "sphere",
+      "physical_geometry_values_m": [
+        0.36,
+        0.24,
+        0.006
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "puddle_shadowed",
+      "class_id": "puddle",
+      "semantic_label": 5,
+      "variant_index": 4,
+      "texture_id": "reflection",
+      "geometry_kind": "sphere",
+      "physical_geometry_values_m": [
+        0.39999999999999997,
+        0.22,
+        0.006
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    },
+    {
+      "model_name": "puddle_unseen_split",
+      "class_id": "puddle",
+      "semantic_label": 5,
+      "variant_index": 5,
+      "texture_id": "crosshatch",
+      "geometry_kind": "sphere",
+      "physical_geometry_values_m": [
+        0.44,
+        0.24,
+        0.006
+      ],
+      "scale_factor": 1.0,
+      "license": "Apache-2.0",
+      "source": "project-authored procedural primitive"
+    }
+  ],
+  "negative_assets": [
+    {
+      "model_name": "negative_bottle_like_reusable_cone",
+      "negative_id": "bottle_like_reusable_cone",
+      "semantic_label": 0
+    },
+    {
+      "model_name": "negative_can_like_bollard",
+      "negative_id": "can_like_bollard",
+      "semantic_label": 0
+    },
+    {
+      "model_name": "negative_red_obstacle",
+      "negative_id": "red_obstacle",
+      "semantic_label": 0
+    },
+    {
+      "model_name": "negative_green_obstacle",
+      "negative_id": "green_obstacle",
+      "semantic_label": 0
+    },
+    {
+      "model_name": "negative_blue_obstacle",
+      "negative_id": "blue_obstacle",
+      "semantic_label": 0
+    },
+    {
+      "model_name": "negative_cardboard",
+      "negative_id": "cardboard",
+      "semantic_label": 0
+    },
+    {
+      "model_name": "negative_fixed_bin",
+      "negative_id": "fixed_bin",
+      "semantic_label": 0
+    },
+    {
+      "model_name": "negative_reflective_patch",
+      "negative_id": "reflective_patch",
+      "semantic_label": 0
+    },
+    {
+      "model_name": "negative_shadow",
+      "negative_id": "shadow",
+      "semantic_label": 0
+    },
+    {
+      "model_name": "negative_wet_asphalt",
+      "negative_id": "wet_asphalt",
+      "semantic_label": 0
+    },
+    {
+      "model_name": "negative_leaves_outside_target_region",
+      "negative_id": "leaves_outside_target_region",
+      "semantic_label": 0
+    },
+    {
+      "model_name": "negative_robot_self_pixels",
+      "negative_id": "robot_self_pixels",
+      "semantic_label": 0
+    }
+  ],
+  "asset_policy": "self-authored procedural, true physical geometry, no G1 enlargement",
+  "registry_sha256": "0541a19b5553b152a069153e6d347d19d84e03b4f51362382c67cb1b6ef4e123"
+}

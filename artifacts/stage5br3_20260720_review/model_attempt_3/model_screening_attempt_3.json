@@ -1,0 +1,360 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR3 split-model screening attempt 3",
+  "attempt": 3,
+  "attempt_limit": 3,
+  "device": "cuda",
+  "test_split_used_for_selection": false,
+  "same_color_negative_fp_rate_for_gate": 9.6,
+  "same_color_negative_fp_threshold": 0.05,
+  "detector": {
+    "task": "discrete_detector",
+    "hypothesis": "higher-capacity split backbones and longer optimization should convert the attempt-2 detector gain into cross-world gate compliance",
+    "resolution": [
+      512,
+      384
+    ],
+    "epochs": 24,
+    "training_frames": 340,
+    "duration_sec": 85.6605948189972,
+    "curves": [
+      {
+        "epoch": 1,
+        "loss": 1.0806544030413907
+      },
+      {
+        "epoch": 2,
+        "loss": 1.063250397934633
+      },
+      {
+        "epoch": 3,
+        "loss": 1.0491296144092783
+      },
+      {
+        "epoch": 4,
+        "loss": 1.0348074530853946
+      },
+      {
+        "epoch": 5,
+        "loss": 1.0268479101798114
+      },
+      {
+        "epoch": 6,
+        "loss": 1.0153767480569726
+      },
+      {
+        "epoch": 7,
+        "loss": 1.0014910529641543
+      },
+      {
+        "epoch": 8,
+        "loss": 1.0000521112890806
+      },
+      {
+        "epoch": 9,
+        "loss": 0.9853878732989816
+      },
+      {
+        "epoch": 10,
+        "loss": 0.9728253354044522
+      },
+      {
+        "epoch": 11,
+        "loss": 0.9821256129180684
+      },
+      {
+        "epoch": 12,
+        "loss": 0.9899286319227779
+      },
+      {
+        "epoch": 13,
+        "loss": 0.9612489002592424
+      },
+      {
+        "epoch": 14,
+        "loss": 0.9573249830919154
+      },
+      {
+        "epoch": 15,
+        "loss": 0.9418626588933608
+      },
+      {
+        "epoch": 16,
+        "loss": 0.9378114672268139
+      },
+      {
+        "epoch": 17,
+        "loss": 0.9441256582736969
+      },
+      {
+        "epoch": 18,
+        "loss": 0.9462133428629707
+      },
+      {
+        "epoch": 19,
+        "loss": 0.9350059144637164
+      },
+      {
+        "epoch": 20,
+        "loss": 0.9252698659896851
+      },
+      {
+        "epoch": 21,
+        "loss": 0.9130861468174878
+      },
+      {
+        "epoch": 22,
+        "loss": 0.9105504428639132
+      },
+      {
+        "epoch": 23,
+        "loss": 0.9249514281749726
+      },
+      {
+        "epoch": 24,
+        "loss": 0.9101222942857181
+      }
+    ],
+    "class_weights": [
+      0.029999999329447746,
+      29.923843383789062,
+      23.66623306274414,
+      55.33543395996094
+    ],
+    "peak_training_vram_mib": 771.60791015625,
+    "parameter_count": 130308,
+    "onnx_path": "discrete_detector.onnx",
+    "onnx_sha256": "66bdada83f3070a6e720d8ed9ac1746bc08012e6d5532d4888bdefde3824ed1d",
+    "onnx_bytes": 524338,
+    "onnx_operator_inventory": {
+      "Conv": 7,
+      "Relu": 6,
+      "MaxPool": 1,
+      "Shape": 1,
+      "Constant": 4,
+      "Slice": 1,
+      "Concat": 2,
+      "Resize": 1
+    },
+    "onnx_cpu_latency_ms": {
+      "p50": 45.29361000095378,
+      "p95": 78.93742135311184
+    },
+    "in_domain": {
+      "macro_f1": 0.17758493236772507,
+      "foreground_miou": 0.0996538074179573,
+      "per_class_f1": [
+        0.26016764979819934,
+        0.2078050590636403,
+        0.06478208824133558
+      ],
+      "per_class_iou": [
+        0.14953604568165596,
+        0.11595003105804404,
+        0.03347534551417194
+      ],
+      "confidence_threshold": 0.35,
+      "precision": 0.04307116104868914,
+      "recall": 0.39655172413793105,
+      "f1": 0.07770270270270271,
+      "ap50": 0.16913413513426354,
+      "ap50_95": 0.03790638808801931,
+      "small_object_recall": 0.37423312883435583,
+      "small_object_gt_count": 163,
+      "same_color_negative_fp_per_frame": 9.6,
+      "negative_only_frame_count": 10
+    },
+    "cross_world": {
+      "macro_f1": 0.3065571372334773,
+      "foreground_miou": 0.2120161329111475,
+      "per_class_f1": [
+        0.6617686829532138,
+        0.20672184957899245,
+        0.051180879168225675
+      ],
+      "per_class_iou": [
+        0.494509936005389,
+        0.11527595400103458,
+        0.026262508727018852
+      ],
+      "confidence_threshold": 0.35,
+      "precision": 0.04087942287873583,
+      "recall": 0.4559386973180077,
+      "f1": 0.07503152585119797,
+      "ap50": 0.34840706002626404,
+      "ap50_95": 0.08228826094345915,
+      "small_object_recall": 0.45121951219512196,
+      "small_object_gt_count": 246,
+      "same_color_negative_fp_per_frame": 0.0,
+      "negative_only_frame_count": 0
+    },
+    "color_stress_f1": 0.07181056640463461
+  },
+  "area_segmenter": {
+    "task": "area_segmenter",
+    "hypothesis": "higher-capacity split backbones and longer optimization should convert the attempt-2 detector gain into cross-world gate compliance",
+    "resolution": [
+      512,
+      384
+    ],
+    "epochs": 24,
+    "training_frames": 340,
+    "duration_sec": 83.80903847700392,
+    "curves": [
+      {
+        "epoch": 1,
+        "loss": 1.0842152988209444
+      },
+      {
+        "epoch": 2,
+        "loss": 1.0809497636907242
+      },
+      {
+        "epoch": 3,
+        "loss": 1.0614942452486824
+      },
+      {
+        "epoch": 4,
+        "loss": 1.077199405782363
+      },
+      {
+        "epoch": 5,
+        "loss": 1.071327201759114
+      },
+      {
+        "epoch": 6,
+        "loss": 1.05300993568757
+      },
+      {
+        "epoch": 7,
+        "loss": 1.047063981434878
+      },
+      {
+        "epoch": 8,
+        "loss": 1.0645189320339876
+      },
+      {
+        "epoch": 9,
+        "loss": 1.0435425814460306
+      },
+      {
+        "epoch": 10,
+        "loss": 1.0544448210912591
+      },
+      {
+        "epoch": 11,
+        "loss": 1.0390865879900315
+      },
+      {
+        "epoch": 12,
+        "loss": 1.0515871752710904
+      },
+      {
+        "epoch": 13,
+        "loss": 1.0318269084481633
+      },
+      {
+        "epoch": 14,
+        "loss": 1.0562037892201368
+      },
+      {
+        "epoch": 15,
+        "loss": 1.0363427211256588
+      },
+      {
+        "epoch": 16,
+        "loss": 1.0373379041166866
+      },
+      {
+        "epoch": 17,
+        "loss": 1.0317211557837094
+      },
+      {
+        "epoch": 18,
+        "loss": 1.0197709981132956
+      },
+      {
+        "epoch": 19,
+        "loss": 1.0488903781946968
+      },
+      {
+        "epoch": 20,
+        "loss": 1.0528458833694458
+      },
+      {
+        "epoch": 21,
+        "loss": 1.0360388657625983
+      },
+      {
+        "epoch": 22,
+        "loss": 1.0477800842593699
+      },
+      {
+        "epoch": 23,
+        "loss": 1.0285579674384173
+      },
+      {
+        "epoch": 24,
+        "loss": 1.0272523725734037
+      }
+    ],
+    "class_weights": [
+      0.029999999329447746,
+      18.600526809692383,
+      12.745722770690918
+    ],
+    "peak_training_vram_mib": 767.60791015625,
+    "parameter_count": 130275,
+    "onnx_path": "area_segmenter.onnx",
+    "onnx_sha256": "4d900fd67d8b2b482514095d4571e9d64cd20f5c31f8bcd5ee49e7c7e88fb675",
+    "onnx_bytes": 524206,
+    "onnx_operator_inventory": {
+      "Conv": 7,
+      "Relu": 6,
+      "MaxPool": 1,
+      "Shape": 1,
+      "Constant": 4,
+      "Slice": 1,
+      "Concat": 2,
+      "Resize": 1
+    },
+    "onnx_cpu_latency_ms": {
+      "p50": 41.97908450078103,
+      "p95": 64.57770424967748
+    },
+    "in_domain": {
+      "macro_f1": 0.41281195805119736,
+      "foreground_miou": 0.3055539958819251,
+      "per_class_f1": [
+        0.7089976689976689,
+        0.11662624710472581
+      ],
+      "per_class_iou": [
+        0.5491838798208869,
+        0.06192411194296327
+      ]
+    },
+    "cross_world": {
+      "macro_f1": 0.002292454347248868,
+      "foreground_miou": 0.0011488608847540726,
+      "per_class_f1": [
+        0.0,
+        0.004584908694497736
+      ],
+      "per_class_iou": [
+        0.0,
+        0.002297721769508145
+      ]
+    },
+    "color_stress_f1": null
+  },
+  "gates": {
+    "detector_in_domain_f1": false,
+    "detector_cross_world_f1": false,
+    "detector_small_object_recall": false,
+    "area_cross_world_miou": false,
+    "color_stress_f1": false,
+    "same_color_negative_fp": false
+  },
+  "screening_pass": false
+}

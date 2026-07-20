@@ -1,0 +1,26 @@
+schema_version: 1
+stage: Stage5BR3
+dataset:
+  worlds: 6
+  split_world_counts: {train: 3, val: 1, test: 2}
+  screening_scenes: 80
+  frames_per_scene: 10
+  minimum_adjacent_translation_m: 0.25
+  negative_only_minimum: 5
+resolutions:
+  native: [640, 480]
+  candidates: [[256, 192], [384, 288], [512, 384], [640, 384]]
+  model_screening: [512, 384]
+attempt_limit: 3
+gates:
+  detector_in_domain_f1_min: 0.90
+  detector_cross_world_f1_min: 0.70
+  detector_small_object_recall_min: 0.70
+  area_cross_world_miou_min: 0.75
+  color_stress_f1_min: 0.60
+  same_color_negative_fp_per_frame_max: 0.05
+fail_closed:
+  formal_500_scene_5000_frame_requires_all_screening_gates: true
+  live_requires_formal_dataset_gate: true
+  real_nav2_requires_live_gate: true
+  stage5c_requires_all_prior_gates: true

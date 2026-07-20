@@ -1,0 +1,296 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR3 split-model screening attempt 2",
+  "attempt": 2,
+  "attempt_limit": 3,
+  "device": "cuda",
+  "test_split_used_for_selection": false,
+  "same_color_negative_fp_rate_for_gate": 10.4,
+  "same_color_negative_fp_threshold": 0.05,
+  "detector": {
+    "task": "discrete_detector",
+    "hypothesis": "foreground-centered scale augmentation plus color invariance should recover tiny targets without using test data",
+    "resolution": [
+      512,
+      384
+    ],
+    "epochs": 16,
+    "training_frames": 340,
+    "duration_sec": 56.10890331900009,
+    "curves": [
+      {
+        "epoch": 1,
+        "loss": 1.0845144699601565
+      },
+      {
+        "epoch": 2,
+        "loss": 1.0681904077529907
+      },
+      {
+        "epoch": 3,
+        "loss": 1.0651348569813897
+      },
+      {
+        "epoch": 4,
+        "loss": 1.0590492374756757
+      },
+      {
+        "epoch": 5,
+        "loss": 1.0528030640938704
+      },
+      {
+        "epoch": 6,
+        "loss": 1.0440042565850651
+      },
+      {
+        "epoch": 7,
+        "loss": 1.0218584106248967
+      },
+      {
+        "epoch": 8,
+        "loss": 1.0287989700541778
+      },
+      {
+        "epoch": 9,
+        "loss": 1.0066066727918737
+      },
+      {
+        "epoch": 10,
+        "loss": 0.9990879458539627
+      },
+      {
+        "epoch": 11,
+        "loss": 1.0088479729259716
+      },
+      {
+        "epoch": 12,
+        "loss": 0.9900991636164048
+      },
+      {
+        "epoch": 13,
+        "loss": 0.978662109375
+      },
+      {
+        "epoch": 14,
+        "loss": 0.9749053600956412
+      },
+      {
+        "epoch": 15,
+        "loss": 0.9579982140484978
+      },
+      {
+        "epoch": 16,
+        "loss": 0.9591204247053932
+      }
+    ],
+    "class_weights": [
+      0.029999999329447746,
+      29.923843383789062,
+      23.66623306274414,
+      55.33543395996094
+    ],
+    "peak_training_vram_mib": 367.73974609375,
+    "parameter_count": 51204,
+    "onnx_path": "discrete_detector.onnx",
+    "onnx_sha256": "0b72d4048e79a0711da0fa28ca8a932f4219325660bcbe7dbc51dc2441be85d1",
+    "onnx_bytes": 207914,
+    "onnx_operator_inventory": {
+      "Conv": 7,
+      "Relu": 6,
+      "MaxPool": 1,
+      "Shape": 1,
+      "Constant": 4,
+      "Slice": 1,
+      "Concat": 2,
+      "Resize": 1
+    },
+    "onnx_cpu_latency_ms": {
+      "p50": 29.932800000096904,
+      "p95": 59.921560403745374
+    },
+    "in_domain": {
+      "macro_f1": 0.12881704005617914,
+      "foreground_miou": 0.07077370628606185,
+      "per_class_f1": [
+        0.21528312259483232,
+        0.1488609583660644,
+        0.022307039207640756
+      ],
+      "per_class_iou": [
+        0.12062592410054214,
+        0.08041587099511988,
+        0.01127932376252352
+      ],
+      "confidence_threshold": 0.35,
+      "precision": 0.044008124576844956,
+      "recall": 0.3735632183908046,
+      "f1": 0.07874015748031497,
+      "ap50": 0.10680854053946733,
+      "ap50_95": 0.02524044136783925,
+      "small_object_recall": 0.3496932515337423,
+      "small_object_gt_count": 163,
+      "same_color_negative_fp_per_frame": 10.4,
+      "negative_only_frame_count": 10
+    },
+    "cross_world": {
+      "macro_f1": 0.27069164462138506,
+      "foreground_miou": 0.18601829527556604,
+      "per_class_f1": [
+        0.6265868049347398,
+        0.181726445753632,
+        0.0037616831757832773
+      ],
+      "per_class_iou": [
+        0.45622599752652476,
+        0.09994450248106555,
+        0.00188438581910785
+      ],
+      "confidence_threshold": 0.35,
+      "precision": 0.07687210072895957,
+      "recall": 0.4444444444444444,
+      "f1": 0.1310734463276836,
+      "ap50": 0.3232186084329424,
+      "ap50_95": 0.10750057117050767,
+      "small_object_recall": 0.44308943089430897,
+      "small_object_gt_count": 246,
+      "same_color_negative_fp_per_frame": 0.0,
+      "negative_only_frame_count": 0
+    },
+    "color_stress_f1": 0.10184609804662702
+  },
+  "area_segmenter": {
+    "task": "area_segmenter",
+    "hypothesis": "foreground-centered scale augmentation plus color invariance should recover tiny targets without using test data",
+    "resolution": [
+      512,
+      384
+    ],
+    "epochs": 16,
+    "training_frames": 340,
+    "duration_sec": 55.15684715699899,
+    "curves": [
+      {
+        "epoch": 1,
+        "loss": 1.0813035915879643
+      },
+      {
+        "epoch": 2,
+        "loss": 1.0776499292429755
+      },
+      {
+        "epoch": 3,
+        "loss": 1.0713997588438147
+      },
+      {
+        "epoch": 4,
+        "loss": 1.0641380667686462
+      },
+      {
+        "epoch": 5,
+        "loss": 1.0659505198983585
+      },
+      {
+        "epoch": 6,
+        "loss": 1.0644880357910604
+      },
+      {
+        "epoch": 7,
+        "loss": 1.0672784686088561
+      },
+      {
+        "epoch": 8,
+        "loss": 1.0842986913288342
+      },
+      {
+        "epoch": 9,
+        "loss": 1.0658799248583177
+      },
+      {
+        "epoch": 10,
+        "loss": 1.059078689883737
+      },
+      {
+        "epoch": 11,
+        "loss": 1.0564371038885678
+      },
+      {
+        "epoch": 12,
+        "loss": 1.0586611284929164
+      },
+      {
+        "epoch": 13,
+        "loss": 1.0511240917093614
+      },
+      {
+        "epoch": 14,
+        "loss": 1.0672501837506014
+      },
+      {
+        "epoch": 15,
+        "loss": 1.0605529441553003
+      },
+      {
+        "epoch": 16,
+        "loss": 1.048247875886805
+      }
+    ],
+    "class_weights": [
+      0.029999999329447746,
+      18.600526809692383,
+      12.745722770690918
+    ],
+    "peak_training_vram_mib": 363.73974609375,
+    "parameter_count": 51183,
+    "onnx_path": "area_segmenter.onnx",
+    "onnx_sha256": "37e57b9b2ec2a4ebc6ab9b8531ec3884b8b558346fd847f1583e7aa7e64f6ade",
+    "onnx_bytes": 207830,
+    "onnx_operator_inventory": {
+      "Conv": 7,
+      "Relu": 6,
+      "MaxPool": 1,
+      "Shape": 1,
+      "Constant": 4,
+      "Slice": 1,
+      "Concat": 2,
+      "Resize": 1
+    },
+    "onnx_cpu_latency_ms": {
+      "p50": 28.249471502931556,
+      "p95": 58.93496119751944
+    },
+    "in_domain": {
+      "macro_f1": 0.02827763759806231,
+      "foreground_miou": 0.014349856297601596,
+      "per_class_f1": [
+        0.03390565795976643,
+        0.022649617236358183
+      ],
+      "per_class_iou": [
+        0.017245183628666685,
+        0.011454528966536506
+      ]
+    },
+    "cross_world": {
+      "macro_f1": 0.002310951837768121,
+      "foreground_miou": 0.001157730253600543,
+      "per_class_f1": [
+        0.004223528573763005,
+        0.00039837510177323726
+      ],
+      "per_class_iou": [
+        0.002116233272729563,
+        0.00019922723447152296
+      ]
+    },
+    "color_stress_f1": null
+  },
+  "gates": {
+    "detector_in_domain_f1": false,
+    "detector_cross_world_f1": false,
+    "detector_small_object_recall": false,
+    "area_cross_world_miou": false,
+    "color_stress_f1": false,
+    "same_color_negative_fp": false
+  },
+  "screening_pass": false
+}

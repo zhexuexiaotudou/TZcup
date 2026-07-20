@@ -1,0 +1,180 @@
+<?xml version="1.0"?>
+<sdf version="1.9"><world name="world_d_mixed_curb_vegetation">
+  <physics name="1ms" type="ignored"><max_step_size>0.001</max_step_size><real_time_factor>1</real_time_factor></physics>
+  <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+  <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+  <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+  <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors"><render_engine>ogre2</render_engine></plugin>
+  <light type="directional" name="sun"><pose>0 0 10 0 0 0</pose><cast_shadows>true</cast_shadows><diffuse>0.82 0.80 0.76 1</diffuse><direction>-0.45 0.2 -0.87</direction></light>
+  <model name="ground"><static>true</static><link name="ground"><collision name="collision"><geometry><plane><normal>0 0 1</normal><size>80 80</size></plane></geometry></collision><visual name="visual"><geometry><plane><normal>0 0 1</normal><size>80 80</size></plane></geometry><material><ambient>0.31 0.35 0.27 1</ambient><diffuse>0.31 0.35 0.27 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.76</roughness><metalness>0</metalness></metal></pbr></material></visual></link></model>
+  <model name="curb_a"><static>true</static><pose>1 2 0.14 0 0 0</pose><link name="body"><collision name="collision"><geometry><box><size>5 0.22 0.28</size></box></geometry></collision><visual name="visual"><geometry><box><size>5 0.22 0.28</size></box></geometry><material><ambient>0.38 0.39 0.37 1</ambient><diffuse>0.38 0.39 0.37 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.85</roughness><metalness>0</metalness></metal></pbr></material></visual></link></model><model name="curb_b"><static>true</static><pose>5 -2 0.14 0 0 0</pose><link name="body"><collision name="collision"><geometry><box><size>5 0.22 0.28</size></box></geometry></collision><visual name="visual"><geometry><box><size>5 0.22 0.28</size></box></geometry><material><ambient>0.38 0.39 0.37 1</ambient><diffuse>0.38 0.39 0.37 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.85</roughness><metalness>0</metalness></metal></pbr></material></visual></link></model>
+
+    <model name="bottle_ribbed_short"><static>true</static><pose>-200.000 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><cylinder><radius>0.0350</radius><length>0.1600</length></cylinder></geometry><material><ambient>0.14902 0.55686 0.57255 1</ambient><diffuse>0.14902 0.55686 0.57255 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><cylinder><radius>0.0350</radius><length>0.1600</length></cylinder></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>1</label></plugin></model>
+    <model name="bottle_ribbed_tall"><static>true</static><pose>-200.300 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><cylinder><radius>0.0380</radius><length>0.1800</length></cylinder></geometry><material><ambient>0.43922 0.46275 0.49412 1</ambient><diffuse>0.43922 0.46275 0.49412 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><cylinder><radius>0.0380</radius><length>0.1800</length></cylinder></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>1</label></plugin></model>
+    <model name="bottle_dented"><static>true</static><pose>-200.600 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><cylinder><radius>0.0410</radius><length>0.1600</length></cylinder></geometry><material><ambient>0.21176 0.36863 0.65882 1</ambient><diffuse>0.21176 0.36863 0.65882 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><cylinder><radius>0.0410</radius><length>0.1600</length></cylinder></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>1</label></plugin></model>
+    <model name="bottle_flattened"><static>true</static><pose>-200.900 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><cylinder><radius>0.0350</radius><length>0.1800</length></cylinder></geometry><material><ambient>0.60392 0.29804 0.18824 1</ambient><diffuse>0.60392 0.29804 0.18824 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><cylinder><radius>0.0350</radius><length>0.1800</length></cylinder></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>1</label></plugin></model>
+    <model name="bottle_clear_label"><static>true</static><pose>-201.200 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><cylinder><radius>0.0380</radius><length>0.1600</length></cylinder></geometry><material><ambient>0.74510 0.74510 0.72157 1</ambient><diffuse>0.74510 0.74510 0.72157 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><cylinder><radius>0.0380</radius><length>0.1600</length></cylinder></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>1</label></plugin></model>
+    <model name="bottle_unseen_crushed"><static>true</static><pose>-201.500 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><cylinder><radius>0.0410</radius><length>0.1800</length></cylinder></geometry><material><ambient>0.14902 0.55686 0.57255 1</ambient><diffuse>0.14902 0.55686 0.57255 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><cylinder><radius>0.0410</radius><length>0.1800</length></cylinder></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>1</label></plugin></model>
+    <model name="can_short_rings"><static>true</static><pose>-201.800 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><cylinder><radius>0.0400</radius><length>0.1000</length></cylinder></geometry><material><ambient>0.14902 0.55686 0.57255 1</ambient><diffuse>0.14902 0.55686 0.57255 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><cylinder><radius>0.0400</radius><length>0.1000</length></cylinder></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>2</label></plugin></model>
+    <model name="can_tall_label"><static>true</static><pose>-202.100 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><cylinder><radius>0.0440</radius><length>0.1150</length></cylinder></geometry><material><ambient>0.74510 0.74510 0.72157 1</ambient><diffuse>0.74510 0.74510 0.72157 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><cylinder><radius>0.0440</radius><length>0.1150</length></cylinder></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>2</label></plugin></model>
+    <model name="can_dented_dots"><static>true</static><pose>-202.400 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><cylinder><radius>0.0400</radius><length>0.1300</length></cylinder></geometry><material><ambient>0.26667 0.51765 0.29020 1</ambient><diffuse>0.26667 0.51765 0.29020 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><cylinder><radius>0.0400</radius><length>0.1300</length></cylinder></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>2</label></plugin></model>
+    <model name="can_flat_side"><static>true</static><pose>-202.700 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><cylinder><radius>0.0440</radius><length>0.1000</length></cylinder></geometry><material><ambient>0.43922 0.46275 0.49412 1</ambient><diffuse>0.43922 0.46275 0.49412 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><cylinder><radius>0.0440</radius><length>0.1000</length></cylinder></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>2</label></plugin></model>
+    <model name="can_matte_rings"><static>true</static><pose>-203.000 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><cylinder><radius>0.0400</radius><length>0.1150</length></cylinder></geometry><material><ambient>0.74510 0.74510 0.72157 1</ambient><diffuse>0.74510 0.74510 0.72157 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><cylinder><radius>0.0400</radius><length>0.1150</length></cylinder></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>2</label></plugin></model>
+    <model name="can_unseen_crushed"><static>true</static><pose>-203.300 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><cylinder><radius>0.0440</radius><length>0.1300</length></cylinder></geometry><material><ambient>0.60392 0.29804 0.18824 1</ambient><diffuse>0.60392 0.29804 0.18824 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><cylinder><radius>0.0440</radius><length>0.1300</length></cylinder></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>2</label></plugin></model>
+    <model name="paper_folded_grid"><static>true</static><pose>-203.600 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.1800 0.1100 0.0080</size></box></geometry><material><ambient>0.14902 0.55686 0.57255 1</ambient><diffuse>0.14902 0.55686 0.57255 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.1800 0.1100 0.0080</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>3</label></plugin></model>
+    <model name="paper_torn_text"><static>true</static><pose>-203.900 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.2000 0.1200 0.0080</size></box></geometry><material><ambient>0.43922 0.46275 0.49412 1</ambient><diffuse>0.43922 0.46275 0.49412 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.2000 0.1200 0.0080</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>3</label></plugin></model>
+    <model name="paper_long_bands"><static>true</static><pose>-204.200 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.1800 0.1300 0.0080</size></box></geometry><material><ambient>0.26667 0.51765 0.29020 1</ambient><diffuse>0.26667 0.51765 0.29020 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.1800 0.1300 0.0080</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>3</label></plugin></model>
+    <model name="paper_crumpled"><static>true</static><pose>-204.500 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.2000 0.1100 0.0080</size></box></geometry><material><ambient>0.60392 0.29804 0.18824 1</ambient><diffuse>0.60392 0.29804 0.18824 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.2000 0.1100 0.0080</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>3</label></plugin></model>
+    <model name="paper_matte_grid"><static>true</static><pose>-204.800 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.1800 0.1200 0.0080</size></box></geometry><material><ambient>0.74510 0.74510 0.72157 1</ambient><diffuse>0.74510 0.74510 0.72157 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.1800 0.1200 0.0080</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>3</label></plugin></model>
+    <model name="paper_unseen_torn"><static>true</static><pose>-205.100 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.2000 0.1300 0.0080</size></box></geometry><material><ambient>0.74510 0.61569 0.18824 1</ambient><diffuse>0.74510 0.61569 0.18824 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.2000 0.1300 0.0080</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>3</label></plugin></model>
+    <model name="leaves_sparse"><static>true</static><pose>-205.400 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><ellipsoid><radii>0.2500 0.1600 0.0250</radii></ellipsoid></geometry><material><ambient>0.14902 0.55686 0.57255 1</ambient><diffuse>0.14902 0.55686 0.57255 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><ellipsoid><radii>0.2500 0.1600 0.0250</radii></ellipsoid></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>4</label></plugin></model>
+    <model name="leaves_dense"><static>true</static><pose>-205.700 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><ellipsoid><radii>0.2800 0.1800 0.0250</radii></ellipsoid></geometry><material><ambient>0.74510 0.61569 0.18824 1</ambient><diffuse>0.74510 0.61569 0.18824 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><ellipsoid><radii>0.2800 0.1800 0.0250</radii></ellipsoid></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>4</label></plugin></model>
+    <model name="leaves_long"><static>true</static><pose>-206.000 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><ellipsoid><radii>0.3100 0.1600 0.0250</radii></ellipsoid></geometry><material><ambient>0.26667 0.51765 0.29020 1</ambient><diffuse>0.26667 0.51765 0.29020 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><ellipsoid><radii>0.3100 0.1600 0.0250</radii></ellipsoid></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>4</label></plugin></model>
+    <model name="leaves_mixed"><static>true</static><pose>-206.300 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><ellipsoid><radii>0.2500 0.1800 0.0250</radii></ellipsoid></geometry><material><ambient>0.74510 0.74510 0.72157 1</ambient><diffuse>0.74510 0.74510 0.72157 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><ellipsoid><radii>0.2500 0.1800 0.0250</radii></ellipsoid></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>4</label></plugin></model>
+    <model name="leaves_matte"><static>true</static><pose>-206.600 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><ellipsoid><radii>0.2800 0.1600 0.0250</radii></ellipsoid></geometry><material><ambient>0.74510 0.74510 0.72157 1</ambient><diffuse>0.74510 0.74510 0.72157 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><ellipsoid><radii>0.2800 0.1600 0.0250</radii></ellipsoid></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>4</label></plugin></model>
+    <model name="leaves_unseen_windrow"><static>true</static><pose>-206.900 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><ellipsoid><radii>0.3100 0.1800 0.0250</radii></ellipsoid></geometry><material><ambient>0.14902 0.55686 0.57255 1</ambient><diffuse>0.14902 0.55686 0.57255 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><ellipsoid><radii>0.3100 0.1800 0.0250</radii></ellipsoid></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>4</label></plugin></model>
+    <model name="puddle_matte_small"><static>true</static><pose>-207.200 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><ellipsoid><radii>0.3600 0.2200 0.0060</radii></ellipsoid></geometry><material><ambient>0.14902 0.55686 0.57255 1</ambient><diffuse>0.14902 0.55686 0.57255 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><ellipsoid><radii>0.3600 0.2200 0.0060</radii></ellipsoid></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>5</label></plugin></model>
+    <model name="puddle_reflective"><static>true</static><pose>-207.500 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><ellipsoid><radii>0.4000 0.2400 0.0060</radii></ellipsoid></geometry><material><ambient>0.74510 0.74510 0.72157 1</ambient><diffuse>0.74510 0.74510 0.72157 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><ellipsoid><radii>0.4000 0.2400 0.0060</radii></ellipsoid></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>5</label></plugin></model>
+    <model name="puddle_irregular"><static>true</static><pose>-207.800 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><ellipsoid><radii>0.4400 0.2200 0.0060</radii></ellipsoid></geometry><material><ambient>0.26667 0.51765 0.29020 1</ambient><diffuse>0.26667 0.51765 0.29020 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><ellipsoid><radii>0.4400 0.2200 0.0060</radii></ellipsoid></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>5</label></plugin></model>
+    <model name="puddle_shallow"><static>true</static><pose>-208.100 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><ellipsoid><radii>0.3600 0.2400 0.0060</radii></ellipsoid></geometry><material><ambient>0.60392 0.29804 0.18824 1</ambient><diffuse>0.60392 0.29804 0.18824 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><ellipsoid><radii>0.3600 0.2400 0.0060</radii></ellipsoid></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>5</label></plugin></model>
+    <model name="puddle_shadowed"><static>true</static><pose>-208.400 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><ellipsoid><radii>0.4000 0.2200 0.0060</radii></ellipsoid></geometry><material><ambient>0.74510 0.74510 0.72157 1</ambient><diffuse>0.74510 0.74510 0.72157 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><ellipsoid><radii>0.4000 0.2200 0.0060</radii></ellipsoid></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>5</label></plugin></model>
+    <model name="puddle_unseen_split"><static>true</static><pose>-208.700 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><ellipsoid><radii>0.4400 0.2400 0.0060</radii></ellipsoid></geometry><material><ambient>0.14902 0.55686 0.57255 1</ambient><diffuse>0.14902 0.55686 0.57255 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><ellipsoid><radii>0.4400 0.2400 0.0060</radii></ellipsoid></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>5</label></plugin></model>
+    <model name="negative_bottle_like_reusable_cone"><static>true</static><pose>-220.0 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.16 0.12 0.08</size></box></geometry><material><ambient>0.22 0.42 0.25 1</ambient><diffuse>0.22 0.42 0.25 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.16 0.12 0.08</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>0</label></plugin></model>
+    <model name="negative_can_like_bollard"><static>true</static><pose>-220.25 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.16 0.12 0.08</size></box></geometry><material><ambient>0.22 0.42 0.25 1</ambient><diffuse>0.22 0.42 0.25 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.16 0.12 0.08</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>0</label></plugin></model>
+    <model name="negative_red_obstacle"><static>true</static><pose>-220.5 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.16 0.12 0.08</size></box></geometry><material><ambient>0.22 0.42 0.25 1</ambient><diffuse>0.22 0.42 0.25 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.16 0.12 0.08</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>0</label></plugin></model>
+    <model name="negative_green_obstacle"><static>true</static><pose>-220.75 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.16 0.12 0.08</size></box></geometry><material><ambient>0.22 0.42 0.25 1</ambient><diffuse>0.22 0.42 0.25 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.16 0.12 0.08</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>0</label></plugin></model>
+    <model name="negative_blue_obstacle"><static>true</static><pose>-221.0 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.16 0.12 0.08</size></box></geometry><material><ambient>0.22 0.42 0.25 1</ambient><diffuse>0.22 0.42 0.25 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.16 0.12 0.08</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>0</label></plugin></model>
+    <model name="negative_cardboard"><static>true</static><pose>-221.25 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.16 0.12 0.08</size></box></geometry><material><ambient>0.22 0.42 0.25 1</ambient><diffuse>0.22 0.42 0.25 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.16 0.12 0.08</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>0</label></plugin></model>
+    <model name="negative_fixed_bin"><static>true</static><pose>-221.5 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.16 0.12 0.08</size></box></geometry><material><ambient>0.22 0.42 0.25 1</ambient><diffuse>0.22 0.42 0.25 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.16 0.12 0.08</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>0</label></plugin></model>
+    <model name="negative_reflective_patch"><static>true</static><pose>-221.75 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.16 0.12 0.08</size></box></geometry><material><ambient>0.22 0.42 0.25 1</ambient><diffuse>0.22 0.42 0.25 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.16 0.12 0.08</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>0</label></plugin></model>
+    <model name="negative_shadow"><static>true</static><pose>-222.0 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.16 0.12 0.08</size></box></geometry><material><ambient>0.22 0.42 0.25 1</ambient><diffuse>0.22 0.42 0.25 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.16 0.12 0.08</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>0</label></plugin></model>
+    <model name="negative_wet_asphalt"><static>true</static><pose>-222.25 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.16 0.12 0.08</size></box></geometry><material><ambient>0.22 0.42 0.25 1</ambient><diffuse>0.22 0.42 0.25 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.16 0.12 0.08</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>0</label></plugin></model>
+    <model name="negative_leaves_outside_target_region"><static>true</static><pose>-222.5 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.16 0.12 0.08</size></box></geometry><material><ambient>0.22 0.42 0.25 1</ambient><diffuse>0.22 0.42 0.25 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.16 0.12 0.08</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>0</label></plugin></model>
+    <model name="negative_robot_self_pixels"><static>true</static><pose>-222.75 200 -5 0 0 0</pose><link name="body">
+      <visual name="visual"><geometry><box><size>0.16 0.12 0.08</size></box></geometry><material><ambient>0.22 0.42 0.25 1</ambient><diffuse>0.22 0.42 0.25 1</diffuse><specular>0.10 0.10 0.10 1</specular><pbr><metal><roughness>0.68</roughness><metalness>0</metalness></metal></pbr></material></visual>
+      <collision name="collision"><geometry><box><size>0.16 0.12 0.08</size></box></geometry></collision>
+    </link><plugin filename="gz-sim-label-system" name="gz::sim::systems::Label"><label>0</label></plugin></model>
+</world></sdf>

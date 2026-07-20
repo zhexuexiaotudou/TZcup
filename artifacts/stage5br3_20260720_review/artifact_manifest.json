@@ -1,0 +1,397 @@
+{
+  "schema_version": 1,
+  "artifact": "stage5br3_20260720_review",
+  "files": [
+    {
+      "path": "g2_annotation_qa.json",
+      "bytes": 2135,
+      "sha256": "d175b911cf8b110c4eac455bffbbc29025893ef43a3302c8fb7703ee5ef05916"
+    },
+    {
+      "path": "g2_annotation_qa_attempt1_failed.json",
+      "bytes": 2520,
+      "sha256": "5228258cd7c398d0fde9ed8f07f052d00ad05cde1344bd6b3066c7fca406ba6a"
+    },
+    {
+      "path": "g2_instance_qa_records.jsonl",
+      "bytes": 798311,
+      "sha256": "39cc425ba3bdf2831937b3df2a4b39d1a07e16f72ee74a4ce7885e4fdc50a42d"
+    },
+    {
+      "path": "g2_instance_qa_records_attempt1_failed.jsonl",
+      "bytes": 853724,
+      "sha256": "398b21045c7d686c8079910dbcd565dacc6ee0a26d78c8ab743512ea3096cf7b"
+    },
+    {
+      "path": "g2_probe_capture_report.json",
+      "bytes": 6261,
+      "sha256": "e5de690a75052f27ba2e04d7ac9e5f8647e0984415300a825ba83ac1f8b934e6"
+    },
+    {
+      "path": "g2_probe_scene_manifest.json",
+      "bytes": 7608,
+      "sha256": "50a8aa71cce85bd9de053595382f61beea8912bbf558716c3b4e73df2eca320b"
+    },
+    {
+      "path": "g2_resolution_scan.json",
+      "bytes": 8996,
+      "sha256": "65c28560fd510828cfbe8165617ffcf1e73758cf038b835804b3a08c0e10399e"
+    },
+    {
+      "path": "g2_worlds/g2_world_manifest.json",
+      "bytes": 20855,
+      "sha256": "4ff3efc81958a30a227d8c54c6a4448e84194ab120eca56e95f63b94a1d3c2ae"
+    },
+    {
+      "path": "g2_worlds/world_a_asphalt_campus.sdf",
+      "bytes": 30363,
+      "sha256": "7a9d75d8403a7653dc9f8c9605493e58aeb737bf832c31e34d9c22b9076969f2"
+    },
+    {
+      "path": "g2_worlds/world_b_concrete_sidewalk.sdf",
+      "bytes": 30860,
+      "sha256": "f06e0807baef5433511969954aa89f3073f571e452aaed1072e91f967a6fc8bd"
+    },
+    {
+      "path": "g2_worlds/world_c_wet_dark_ground.sdf",
+      "bytes": 30854,
+      "sha256": "4da5cb24b973ae73a4a26146bf912b7e4459aeb593499d028c434f642a5a4ad4"
+    },
+    {
+      "path": "g2_worlds/world_d_mixed_curb_vegetation.sdf",
+      "bytes": 30857,
+      "sha256": "c88e14826fa399bc46d872884d540773f860dd68105d37721add7e096f7efe0d"
+    },
+    {
+      "path": "g2_worlds/world_e_tiled_plaza.sdf",
+      "bytes": 30961,
+      "sha256": "703a1a9cad91f9fb64891de0aaeba4b92487130666342ec28cd80f585e9f64fc"
+    },
+    {
+      "path": "g2_worlds/world_f_service_road.sdf",
+      "bytes": 30912,
+      "sha256": "19194dd651bada0b7cafe7635eb46ae8b5a04e3b3302f53beca76846407dc075"
+    },
+    {
+      "path": "model_attempt_1/area_segmenter.onnx",
+      "bytes": 77548,
+      "sha256": "40ac83476e4796b64171093840a0326d86123bf8b33862673a2ada3a18dbfc08"
+    },
+    {
+      "path": "model_attempt_1/discrete_detector.onnx",
+      "bytes": 77600,
+      "sha256": "69597dba99c5ec87ee3e5e466258100677a92486f573a452cc354e7283b30e46"
+    },
+    {
+      "path": "model_attempt_1/model_screening_attempt_1.json",
+      "bytes": 5695,
+      "sha256": "870cc68ab550867c396af1dc16a737886e21dd6f6cf5063cb17f79c44184af80"
+    },
+    {
+      "path": "model_attempt_2/area_segmenter.onnx",
+      "bytes": 207830,
+      "sha256": "37e57b9b2ec2a4ebc6ab9b8531ec3884b8b558346fd847f1583e7aa7e64f6ade"
+    },
+    {
+      "path": "model_attempt_2/discrete_detector.onnx",
+      "bytes": 207914,
+      "sha256": "0b72d4048e79a0711da0fa28ca8a932f4219325660bcbe7dbc51dc2441be85d1"
+    },
+    {
+      "path": "model_attempt_2/model_screening_attempt_2.json",
+      "bytes": 6967,
+      "sha256": "9a07ac89a0be54587dbf472759fa6228ed6ede36a513baf614457fdc8b4555fc"
+    },
+    {
+      "path": "model_attempt_3/area_segmenter.onnx",
+      "bytes": 524206,
+      "sha256": "4d900fd67d8b2b482514095d4571e9d64cd20f5c31f8bcd5ee49e7c7e88fb675"
+    },
+    {
+      "path": "model_attempt_3/discrete_detector.onnx",
+      "bytes": 524338,
+      "sha256": "66bdada83f3070a6e720d8ed9ac1746bc08012e6d5532d4888bdefde3824ed1d"
+    },
+    {
+      "path": "model_attempt_3/model_screening_attempt_3.json",
+      "bytes": 8124,
+      "sha256": "303b6d2f629277b8d4fc4656e7faceafecf292c0ac17b4c84fffd588c4613caa"
+    },
+    {
+      "path": "production_isolation/production.gz.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "production_isolation/production_default.urdf",
+      "bytes": 13639,
+      "sha256": "e8e82e3e9a55d2d8fc3ee283f85e00a43dfa0f28f2224bee2e4de2c62e4dc305"
+    },
+    {
+      "path": "production_isolation/production_isolation_report.json",
+      "bytes": 1591,
+      "sha256": "bf9ba6d36a1b6d3637d0307cbebf35768e2f57bab7cfed1b7b66a2a5ff6927ee"
+    },
+    {
+      "path": "production_isolation/runtime_topics.txt",
+      "bytes": 734,
+      "sha256": "a53861e5083638302746b6a69c893254052b97781879a03fd13da2ec9c42f0d6"
+    },
+    {
+      "path": "production_isolation/spawn.log",
+      "bytes": 72,
+      "sha256": "dd5e86fc39d4f9186e62d4cb9c7c11c4e84a03f6ae3f21edddb367b3477d6de8"
+    },
+    {
+      "path": "runtime_contract/six_world_runtime_summary.json",
+      "bytes": 9325,
+      "sha256": "00f027e396ae0b45ad11d08aa64e040d7d0d9546106714cb9b9a1942e821144c"
+    },
+    {
+      "path": "runtime_contract/world_a.json",
+      "bytes": 746,
+      "sha256": "1ff1c7949ade52c3744c8894a5ec58fb983bb4da4b0fe37523758d6f216c73a2"
+    },
+    {
+      "path": "runtime_contract/world_a.launch.log",
+      "bytes": 387,
+      "sha256": "62e8e038a62e2c56eaed144c6fd3c71c4ee2b6f93d3e21d43074ee6a08d2408f"
+    },
+    {
+      "path": "runtime_contract/world_a.topics.txt",
+      "bytes": 312,
+      "sha256": "d40b6d14132cc7ea122c846ab68238973a0ff641ac07e88498b3da9816331b44"
+    },
+    {
+      "path": "runtime_contract/world_a_asphalt_campus.bridge.log",
+      "bytes": 1630,
+      "sha256": "6e08ae2972b60d12e77039d06eec3676a6d76498707fec69ca9d62229cb9da69"
+    },
+    {
+      "path": "runtime_contract/world_a_asphalt_campus.gz.log",
+      "bytes": 594,
+      "sha256": "80a63b3d8858fa97ee6ed04f601370c250718f74217fcd2b225d790ae5988009"
+    },
+    {
+      "path": "runtime_contract/world_a_asphalt_campus.gz_topics.txt",
+      "bytes": 900,
+      "sha256": "d183d3fe6790a2278814ea583ff0c3d6d355e5dc2d6b108d4dcc7f4179a617b0"
+    },
+    {
+      "path": "runtime_contract/world_a_asphalt_campus.json",
+      "bytes": 1188,
+      "sha256": "909bdc4a31e744e1ec80130b3d760c0fc393917a73e2ba2a794c7701e0ed2eb8"
+    },
+    {
+      "path": "runtime_contract/world_a_asphalt_campus.ros_topics.txt",
+      "bytes": 219,
+      "sha256": "c2355d13523e62653e198cf2868e9e658b9093f0cad64de36ecae79cee524bde"
+    },
+    {
+      "path": "runtime_contract/world_a_asphalt_campus.spawn.log",
+      "bytes": 72,
+      "sha256": "a6968b8e3b0a38c31397b1c292470a8aae41683b413da3d3b0b4f4c169145c52"
+    },
+    {
+      "path": "runtime_contract/world_a_asphalt_campus.tf.log",
+      "bytes": 266,
+      "sha256": "fa72a85bbcdd664beb670ccf66253dd14e002c7f2f6a165d5894ae456ffbe446"
+    },
+    {
+      "path": "runtime_contract/world_b_concrete_sidewalk.bridge.log",
+      "bytes": 1630,
+      "sha256": "da677994b4322d345021b6b95879dd2a0111eee8546e99275587ac8aa8387204"
+    },
+    {
+      "path": "runtime_contract/world_b_concrete_sidewalk.gz.log",
+      "bytes": 594,
+      "sha256": "80a63b3d8858fa97ee6ed04f601370c250718f74217fcd2b225d790ae5988009"
+    },
+    {
+      "path": "runtime_contract/world_b_concrete_sidewalk.gz_topics.txt",
+      "bytes": 927,
+      "sha256": "8c63d48158d56f4e61260a604ab9c713b7df9b5cef1ae6fa4fd211756b25ef9f"
+    },
+    {
+      "path": "runtime_contract/world_b_concrete_sidewalk.json",
+      "bytes": 1191,
+      "sha256": "3ee70569bab69cfa7a785304aa469ea0ef39377ed6842b470f64a14ac020848d"
+    },
+    {
+      "path": "runtime_contract/world_b_concrete_sidewalk.ros_topics.txt",
+      "bytes": 219,
+      "sha256": "c2355d13523e62653e198cf2868e9e658b9093f0cad64de36ecae79cee524bde"
+    },
+    {
+      "path": "runtime_contract/world_b_concrete_sidewalk.spawn.log",
+      "bytes": 72,
+      "sha256": "7c8bb93e14985a57874f3ba06c41d41e8926a3895e58da0ac7f2c7352989a501"
+    },
+    {
+      "path": "runtime_contract/world_b_concrete_sidewalk.tf.log",
+      "bytes": 266,
+      "sha256": "4d9bfa70968430e55f626198666093a57caf29a6d203a980b914229fe19ef082"
+    },
+    {
+      "path": "runtime_contract/world_c_wet_dark_ground.bridge.log",
+      "bytes": 1630,
+      "sha256": "081ea36fab34589e7ae4ad1ffac385ce71cb9f09476ab37206601cca68fca213"
+    },
+    {
+      "path": "runtime_contract/world_c_wet_dark_ground.gz.log",
+      "bytes": 594,
+      "sha256": "80a63b3d8858fa97ee6ed04f601370c250718f74217fcd2b225d790ae5988009"
+    },
+    {
+      "path": "runtime_contract/world_c_wet_dark_ground.gz_topics.txt",
+      "bytes": 909,
+      "sha256": "4b67d4d31229ee9083f042b39f485da51b4eabdef9dd40a4342e236c4a8c867f"
+    },
+    {
+      "path": "runtime_contract/world_c_wet_dark_ground.json",
+      "bytes": 1190,
+      "sha256": "a7969fd9fff0e9ebd127f26350e54a78781a91beb6c6af0d8ab197f422386665"
+    },
+    {
+      "path": "runtime_contract/world_c_wet_dark_ground.ros_topics.txt",
+      "bytes": 219,
+      "sha256": "c2355d13523e62653e198cf2868e9e658b9093f0cad64de36ecae79cee524bde"
+    },
+    {
+      "path": "runtime_contract/world_c_wet_dark_ground.spawn.log",
+      "bytes": 72,
+      "sha256": "2f4af1aeadc5030ba156488eee3435581ccf336cb0cc5a53e5f6db5f1ba6e3c6"
+    },
+    {
+      "path": "runtime_contract/world_c_wet_dark_ground.tf.log",
+      "bytes": 266,
+      "sha256": "d4bbf0958fb06de3612ee378cca4f7fd7c99bd89ca57fa68a4466758c075b3ce"
+    },
+    {
+      "path": "runtime_contract/world_d_mixed_curb_vegetation.bridge.log",
+      "bytes": 1630,
+      "sha256": "bec571e7eb265ee25974ecb9aadec479cfa124d3fc02287cebd75792f5a5e88f"
+    },
+    {
+      "path": "runtime_contract/world_d_mixed_curb_vegetation.gz.log",
+      "bytes": 594,
+      "sha256": "80a63b3d8858fa97ee6ed04f601370c250718f74217fcd2b225d790ae5988009"
+    },
+    {
+      "path": "runtime_contract/world_d_mixed_curb_vegetation.gz_topics.txt",
+      "bytes": 963,
+      "sha256": "70eb31e2ea85c9ba74d7ba8b3823789b9d934c472d35e797df85c2a17be78cc8"
+    },
+    {
+      "path": "runtime_contract/world_d_mixed_curb_vegetation.json",
+      "bytes": 1195,
+      "sha256": "da0d2eacd227ee8d5ebca528e0fd97aa1e6c033c1f4705ef4805eb9e09d983ed"
+    },
+    {
+      "path": "runtime_contract/world_d_mixed_curb_vegetation.ros_topics.txt",
+      "bytes": 219,
+      "sha256": "c2355d13523e62653e198cf2868e9e658b9093f0cad64de36ecae79cee524bde"
+    },
+    {
+      "path": "runtime_contract/world_d_mixed_curb_vegetation.spawn.log",
+      "bytes": 72,
+      "sha256": "fd427e5d7ae313390cf4d1e5bf4df70d080f649e5452d26142a3f4c111d7d0ee"
+    },
+    {
+      "path": "runtime_contract/world_d_mixed_curb_vegetation.tf.log",
+      "bytes": 266,
+      "sha256": "a00ad12ae5b1a3ea8d02d6e961b8827b2202fe943c82b0994f8561b296c126e1"
+    },
+    {
+      "path": "runtime_contract/world_e_tiled_plaza.bridge.log",
+      "bytes": 1630,
+      "sha256": "55f803600a415224ac25480ef475719676387796194e3ecf788d2ae1bde5a0f1"
+    },
+    {
+      "path": "runtime_contract/world_e_tiled_plaza.gz.log",
+      "bytes": 594,
+      "sha256": "80a63b3d8858fa97ee6ed04f601370c250718f74217fcd2b225d790ae5988009"
+    },
+    {
+      "path": "runtime_contract/world_e_tiled_plaza.gz_topics.txt",
+      "bytes": 873,
+      "sha256": "c380d99a1d4b7fa67cc76a27184a614559796d8512d7b5b59e8d80b2188b0907"
+    },
+    {
+      "path": "runtime_contract/world_e_tiled_plaza.json",
+      "bytes": 1185,
+      "sha256": "06515e4c5a593ddf65d0a69124f297cdccdcc463104a1ce8c5a05c7100875395"
+    },
+    {
+      "path": "runtime_contract/world_e_tiled_plaza.ros_topics.txt",
+      "bytes": 219,
+      "sha256": "c2355d13523e62653e198cf2868e9e658b9093f0cad64de36ecae79cee524bde"
+    },
+    {
+      "path": "runtime_contract/world_e_tiled_plaza.spawn.log",
+      "bytes": 72,
+      "sha256": "d7c7c50156266019d1d0118bfa0cf36a228f3bfb79df185979a2dd89aef0086b"
+    },
+    {
+      "path": "runtime_contract/world_e_tiled_plaza.tf.log",
+      "bytes": 266,
+      "sha256": "1eed23729397f042e5cb200aba6df35a884efb9ee00e6d270270355052eb6f7d"
+    },
+    {
+      "path": "runtime_contract/world_f_service_road.bridge.log",
+      "bytes": 1630,
+      "sha256": "5271d5fa5c647dc832eede1a7cfdc1053337b5e44a9ac4ca8016cac9f6864aa2"
+    },
+    {
+      "path": "runtime_contract/world_f_service_road.gz.log",
+      "bytes": 594,
+      "sha256": "80a63b3d8858fa97ee6ed04f601370c250718f74217fcd2b225d790ae5988009"
+    },
+    {
+      "path": "runtime_contract/world_f_service_road.gz_topics.txt",
+      "bytes": 882,
+      "sha256": "4096e4966ee5b186f84057d123f7f52c172e91c012954c73f0dfb33c94a07467"
+    },
+    {
+      "path": "runtime_contract/world_f_service_road.json",
+      "bytes": 1186,
+      "sha256": "d0d04c0171a637f7f33a80c265590d488e25b925ae31ee456cbef9c02dbb5faf"
+    },
+    {
+      "path": "runtime_contract/world_f_service_road.ros_topics.txt",
+      "bytes": 219,
+      "sha256": "c2355d13523e62653e198cf2868e9e658b9093f0cad64de36ecae79cee524bde"
+    },
+    {
+      "path": "runtime_contract/world_f_service_road.spawn.log",
+      "bytes": 72,
+      "sha256": "b8f731963f137bafa7135c69ff2e3d2a930ab895cd5b8ad948b7c6af40b8c1c9"
+    },
+    {
+      "path": "runtime_contract/world_f_service_road.tf.log",
+      "bytes": 266,
+      "sha256": "45784cf454c48ed4b401285679001776f895e742167cf79754cbebf2e6fc143d"
+    },
+    {
+      "path": "stage5br2_archive_integrity_report.json",
+      "bytes": 11216,
+      "sha256": "2ad9511a53309df446c80d5a45ea4a7e8de7a97e810daf0ef2412813886f3b1c"
+    },
+    {
+      "path": "stage5br3_regression_summary.json",
+      "bytes": 1077,
+      "sha256": "8d92056b56020875b5e3e98508fadf2d3d35d03d4fb6beb1e2d89cc1b037abb5"
+    },
+    {
+      "path": "stage5br3_status.json",
+      "bytes": 4448,
+      "sha256": "54c4358ec684ef2be7be5d58f3c1a6561a16b988e6246b6b0230e0a0278e3ed7"
+    }
+  ],
+  "raw_dataset_location": "F:/Project/TZcup-stage5br3-data/g2_screening_native",
+  "raw_dataset_packaged": false,
+  "raw_dataset_reason": "2.225 GB task evidence retained locally; review artifact contains QA, per-instance records, reports, models, and hashes",
+  "REVIEW_PACKET_COMPLETE": true,
+  "READY_FOR_GPT_REVIEW_STAGE5B": false,
+  "READY_FOR_STAGE5C": false
+}

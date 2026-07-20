@@ -48,6 +48,11 @@ artifacts/stage5br_ros_validation*/
 artifacts/stage5br_stage4w_regression*/
 artifacts/stage5br_stage5a_regression*/
 
+# Stage5BR3 full Stage5A/Stage4W regression logs stay local; the compact
+# machine-readable summary is versioned in artifacts/stage5br3_20260720_review.
+artifacts/stage5br3_regression_stage5a*/
+artifacts/stage5br3_regression_stage4w*/
+
 # Superseded local review bundle; the current Stage4R bundle is committed.
 无人清扫车仿真_GPT复核包_Stage4_20260715.zip
 
@@ -56,3 +61,4 @@ artifacts/stage5br_stage5a_regression*/
 .idea/
 .DS_Store
 Thumbs.db
+.runtime_ws/

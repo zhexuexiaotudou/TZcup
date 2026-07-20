@@ -1,5 +1,11 @@
 # TZcup 无人清扫车仿真项目
 
+## Stage5BR3 G2 真实车辆 screening 与停止边界（2026-07-20）
+
+Stage5BR3 已把 G2 从“静态训练 rig/话题名烟测”推进为真实车辆相机链：6 个不同材料、几何与布局的 Gazebo Harmonic 世界按 3/1/2 分为 train/val/test；每个世界均实际收到非空 RGB、32FC1 深度、CameraInfo、semantic/instance GT、精确同时间戳与 `camera_depth_link` 光学帧，生产外参 TF 一致，车辆 2 秒运动约 0.70 m。生产默认 Xacro/launch 与运行时均无 semantic/instance GT，控制侧订阅为 0。
+
+原生 640×480 数据已一次采集 80 scene/800 frame，逐实例 QA 在发现 hard-negative 跨 split 泄漏和缺少 negative-only 后重采并通过：target/negative/trajectory leakage 均为 0，跨 split exact/pHash duplicate 为 0，semantic-instance 错误率为 0，5 个 negative-only 场景，hard-negative 数覆盖 0–8。离线扫描选择 640×384 与 512×384，实际在 512×384 执行 3 次 detector/area-segmenter architecture screening；三次均未全门通过，最佳 cross-world detector F1/AP50/small recall 为 `0.1311/0.3484/0.4512`，最佳颜色压力 F1 `0.1018`，最低 negative-only FP `8.7/帧`，area cross-world mIoU `0.02346`。首个阻断层为 `G2_split_model_screening_gates_failed_after_3_attempts`，因此 500/5000、live、真实 Nav2 与 J6 均未启动，readiness 保持 false。
+
 ## Stage5BR2 G2 车载相机基础恢复（2026-07-20）
 
 Stage5BR2 已纠正历史指标语义：G1 的 `cross_asset_world` 只能称为 `cross_asset_same_world`，单世界的真实 `cross_world` 与未隔离的 `cross_material` 均为 `null`；实例尺寸改为按 instance-id 掩码逐实例统计，零像素物体记为 `not_visible`。新增 G2 训练世界从当前车辆 Xacro/launch 提取生产相机契约，使用未放大的真实物理资产，在四种材料上生成 4 个不同 SHA 的 world，并由 Gazebo Harmonic 实际验证 RGB、深度、semantic GT、instance GT 话题全部可启动。GT 仅存在于训练世界，生产 launch 未修改。
@@ -123,4 +129,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-20：Stage5BR2 已完成指标语义和逐实例尺寸统计纠正，建立从生产 Xacro/launch 派生的 G2 车载相机契约，生成 4 个不同 SHA/材料并按 2/1/1 world-isolated split 分配的训练世界；四世界 RGB-D/semantic GT/instance GT Gazebo Harmonic 话题烟测通过，G2 资产保持真实物理尺寸。80 scene/800 frame 数据、分辨率扫描、双模型筛选及后续正式/live/Nav2/J6 门尚未执行，首个阻断层为 `G2_screening_dataset_80_scene_800_frame_not_executed`，两个 readiness 均为 false；Stage5BR 原始 500 帧及两个任务 worktree 在用户确认前继续保留。
+2026-07-20：Stage5BR3 已在真实车辆 `camera_link` 上完成 6 个不同世界的 RGB-D/semantic/instance 同步运行时契约，生产默认和运行时 GT 隔离通过；原生采集 80 scene/800 frame，修复一次 hard-negative split 泄漏与 negative-only 缺失后重采，逐实例、泄漏和跨 split 重复 QA 全部通过。四档分辨率扫描后在 512×384 完成 detector/area segmenter 三次筛选，所有尝试均未同时过门，首个阻断层为 `G2_split_model_screening_gates_failed_after_3_attempts`；Stage5BR2 的 16 个证据文件已通过 Git blob、工作树、git archive、最终 ZIP 四表面逐字节审计，`REVIEW_PACKET_COMPLETE=true`。500/5000、live、真实 Nav2、真实域和 J6 均未启动，两个 readiness 继续为 false，2.225 GB 原始数据及任务 worktree 在用户确认前保留。

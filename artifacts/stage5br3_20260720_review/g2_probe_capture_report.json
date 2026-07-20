@@ -1,0 +1,202 @@
+{
+  "schema_version": 1,
+  "scene_seed": 0,
+  "world_id": "world_a_asphalt_campus",
+  "split": "train",
+  "requested_frames": 10,
+  "captured_frames": 10,
+  "records": [
+    {
+      "frame_index": 0,
+      "timestamp_ns": 52273000000,
+      "vehicle_xy_m": [
+        -7.997117789921222,
+        1.582947556518915e-19
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_00.png",
+        "depth": "depth/frame_00.npy",
+        "semantic": "semantic/frame_00.npy",
+        "instance": "instance/frame_00.npy",
+        "camera": "camera/frame_00.json",
+        "tf": "tf/frame_00.json",
+        "capture": "capture/frame_00.json"
+      },
+      "rgb_sha256": "cf6b15851dde14c80c49234d3f0e02b9c84f3d1adcb50c3c257018b0d8d7d73f"
+    },
+    {
+      "frame_index": 1,
+      "timestamp_ns": 52339000000,
+      "vehicle_xy_m": [
+        -7.745759754071617,
+        1.9547272091150575e-20
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_01.png",
+        "depth": "depth/frame_01.npy",
+        "semantic": "semantic/frame_01.npy",
+        "instance": "instance/frame_01.npy",
+        "camera": "camera/frame_01.json",
+        "tf": "tf/frame_01.json",
+        "capture": "capture/frame_01.json"
+      },
+      "rgb_sha256": "9f0b1e27276f5f92518bd8d0e2834c60b70b4b15505f2a7048d20bdffcbc4aea"
+    },
+    {
+      "frame_index": 2,
+      "timestamp_ns": 52537000000,
+      "vehicle_xy_m": [
+        -7.4937597540715695,
+        -5.51860801695806e-19
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_02.png",
+        "depth": "depth/frame_02.npy",
+        "semantic": "semantic/frame_02.npy",
+        "instance": "instance/frame_02.npy",
+        "camera": "camera/frame_02.json",
+        "tf": "tf/frame_02.json",
+        "capture": "capture/frame_02.json"
+      },
+      "rgb_sha256": "a9deaf487e0bd0ed52c4fa7098458d504cb1320b893eebddc3c6299957ba1a1e"
+    },
+    {
+      "frame_index": 3,
+      "timestamp_ns": 52735000000,
+      "vehicle_xy_m": [
+        -7.241759754071525,
+        2.7184220565459928e-17
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_03.png",
+        "depth": "depth/frame_03.npy",
+        "semantic": "semantic/frame_03.npy",
+        "instance": "instance/frame_03.npy",
+        "camera": "camera/frame_03.json",
+        "tf": "tf/frame_03.json",
+        "capture": "capture/frame_03.json"
+      },
+      "rgb_sha256": "f8f819e9b6ee8b86db4244753f221ac6dec5a4fab120bf0356294daca1911842"
+    },
+    {
+      "frame_index": 4,
+      "timestamp_ns": 52801000000,
+      "vehicle_xy_m": [
+        -6.9897597540714855,
+        6.145714094671158e-17
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_04.png",
+        "depth": "depth/frame_04.npy",
+        "semantic": "semantic/frame_04.npy",
+        "instance": "instance/frame_04.npy",
+        "camera": "camera/frame_04.json",
+        "tf": "tf/frame_04.json",
+        "capture": "capture/frame_04.json"
+      },
+      "rgb_sha256": "9761f019b2ddf25c1b93e2f9fedbc25508ca7369081b6fb2705f70ddf0edbe49"
+    },
+    {
+      "frame_index": 5,
+      "timestamp_ns": 53593000000,
+      "vehicle_xy_m": [
+        -6.73775975407144,
+        1.0545699808799684e-16
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_05.png",
+        "depth": "depth/frame_05.npy",
+        "semantic": "semantic/frame_05.npy",
+        "instance": "instance/frame_05.npy",
+        "camera": "camera/frame_05.json",
+        "tf": "tf/frame_05.json",
+        "capture": "capture/frame_05.json"
+      },
+      "rgb_sha256": "5655f553ca5abf64ef0981162da0d9ba330ad69091e5994eceea91d7d97e241f"
+    },
+    {
+      "frame_index": 6,
+      "timestamp_ns": 55573000000,
+      "vehicle_xy_m": [
+        -6.478759754071395,
+        1.287861570110125e-16
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_06.png",
+        "depth": "depth/frame_06.npy",
+        "semantic": "semantic/frame_06.npy",
+        "instance": "instance/frame_06.npy",
+        "camera": "camera/frame_06.json",
+        "tf": "tf/frame_06.json",
+        "capture": "capture/frame_06.json"
+      },
+      "rgb_sha256": "bf41224e1e5f18c5d2aa5ce8d17b628aef9879af4af4c2c126c8d0491cf1f9d7"
+    },
+    {
+      "frame_index": 7,
+      "timestamp_ns": 55639000000,
+      "vehicle_xy_m": [
+        -6.226759754071346,
+        1.4774130475757355e-16
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_07.png",
+        "depth": "depth/frame_07.npy",
+        "semantic": "semantic/frame_07.npy",
+        "instance": "instance/frame_07.npy",
+        "camera": "camera/frame_07.json",
+        "tf": "tf/frame_07.json",
+        "capture": "capture/frame_07.json"
+      },
+      "rgb_sha256": "72f1bf4694ed1697af846ef4a27964601d6560732ece7dbea5eddd13a97bf052"
+    },
+    {
+      "frame_index": 8,
+      "timestamp_ns": 56035000000,
+      "vehicle_xy_m": [
+        -5.967759754071297,
+        1.1228547941837154e-16
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_08.png",
+        "depth": "depth/frame_08.npy",
+        "semantic": "semantic/frame_08.npy",
+        "instance": "instance/frame_08.npy",
+        "camera": "camera/frame_08.json",
+        "tf": "tf/frame_08.json",
+        "capture": "capture/frame_08.json"
+      },
+      "rgb_sha256": "82e5fe24f54e987f3e48c69df34caf316f1d3761391450ee437a9eb9826f4fd5"
+    },
+    {
+      "frame_index": 9,
+      "timestamp_ns": 56695000000,
+      "vehicle_xy_m": [
+        -5.715759754071248,
+        3.85289766357371e-17
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_09.png",
+        "depth": "depth/frame_09.npy",
+        "semantic": "semantic/frame_09.npy",
+        "instance": "instance/frame_09.npy",
+        "camera": "camera/frame_09.json",
+        "tf": "tf/frame_09.json",
+        "capture": "capture/frame_09.json"
+      },
+      "rgb_sha256": "2c176aec65f3729f3bd8b1360acb3228db3ace1ab548abacccd05e8fe7e9e183"
+    }
+  ],
+  "adjacent_motion_gate_pass": true,
+  "capture_pass": true
+}

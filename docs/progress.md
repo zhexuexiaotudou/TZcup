@@ -1,5 +1,17 @@
 # 项目推进记录
 
+## Stage5BR3：真实车辆 G2 数据、逐实例 QA 与 split-model screening
+
+Stage5BR3 将 `artifacts/stage5br2_*_review/**` 改为 binary，避免 Git blob 与 Windows 导出包发生 LF/CRLF 证据字节漂移；同时废弃独立静态相机 rig，训练 GT 传感器只在显式 `enable_training_gt:=true` 时挂到生产车辆 `camera_link`，生产默认渲染和运行时均无 semantic/instance GT。
+
+最终 G2 有 6 个不同 SHA、材料和几何布局的世界，按 3 train / 1 val / 2 test 隔离。六世界真实消息门全部通过：640×480 RGB/depth/semantic/instance 非空、CameraInfo 有效、四传感器精确同时间戳、光学帧统一为 `camera_depth_link`、深度为 32FC1 且有限值处于 0.3–100 m、base→camera 外参为 `[0.53, 0, 0.22] m`，实际车辆 2 秒移动约 0.70 m。
+
+原生数据一次采集 80 scene/800 frame、约 2.225 GB。第一次 QA 因 12 个 hard-negative 资产跨 split 复用且 negative-only 场景数为 0 而失败；将 hard negatives 固定拆为 8/2/2 并强制 5 个 negative-only 种子后重采。第二次 QA 为 80/800、标注完整率 100%、target/negative/trajectory leakage 0、跨 split exact/pHash duplicate 0、semantic-instance 错误率 0，hard-negative 数覆盖 0–8，最终通过。
+
+四档离线扫描选择 640×384 与 512×384；实际在 512×384 执行 3 次 split-model 尝试。最佳 detector cross-world F1/AP50/AP50:95/small recall 为 `0.1311/0.3484/0.1075/0.4512`，最佳颜色压力 F1 `0.1018`，最低 negative-only FP `8.7/帧`；area cross-world mIoU `0.02346`。未达到 screening 门，故停在 `G2_split_model_screening_gates_failed_after_3_attempts`。没有执行 500/5000、live、真实 Nav2、真实域、J6 或竞赛效率门；`1053 m²/h < 3500 m²/h` 不变。
+
+回归方面，`ci_fast.py` 68 项、`sanitation_learning` 11 项和三包 colcon build/test 通过；Stage5A 为 30/30 spot-clean、132 帧 live 且 GT control violation 0；Stage4W seed 0 完成 17/17 组件、覆盖率 `0.93533`、定位 RMSE `0.03572 m`、碰撞/keepout/brush violation 均为 0。完整运行日志留在本地，紧凑机器摘要为 `artifacts/stage5br3_20260720_review/stage5br3_regression_summary.json`。
+
 ## Stage5BR2：G2 车载相机基础恢复与 fail-closed 边界
 
 - 从当前车辆 Xacro 提取 `camera_link` 相对 `base_link` 外参 `[0.53, 0, 0.22] m`、`camera_depth_link`、640×480、水平 FOV `1.50098 rad`、15 Hz，并校验 `sim.launch.py` 的生产 ROS 话题映射。
