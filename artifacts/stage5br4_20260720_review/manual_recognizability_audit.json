@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR4",
+  "audit_type": "small_scale_manual_visual_audit",
+  "images": [
+    {"camera_config": "C0", "role": "discovery", "path": "camera_ablation/C0/discovery/rgb/frame_04.png", "sha256": "77f3afa22e6ccf64fcf22e4570d4f0018543ad7e27b97f1e0d9540359adbbda4", "finding": "wide horizon view; most ground targets remain only a few pixels"},
+    {"camera_config": "C1", "role": "discovery", "path": "camera_ablation/C1/discovery/rgb/frame_04.png", "sha256": "3f9a934a1fc5d5304eb5e0ef0072343e4a15e6d3ad4614b5f7f7b9f933e74d09", "finding": "downward-oblique geometry is visible but does not consistently make discrete classes recognizable"},
+    {"camera_config": "C2", "role": "discovery", "path": "camera_ablation/C2/discovery/rgb/frame_04.png", "sha256": "c8d187c4b66c699e851b8acc38ccda2d0174da3ef732aabc6e89398d1ca41e33", "finding": "ground coverage increases while small targets remain difficult to distinguish"},
+    {"camera_config": "C3", "role": "verification", "path": "camera_ablation/C3/verification/rgb/frame_04.png", "sha256": "7501f724f08b83a132733ec073b25bb7f820e25f100dedb6b6590720aa674779", "finding": "near targets enlarge, but the vehicle body occupies a large lower-image region"}
+  ],
+  "manual_audit_pass": false,
+  "reason": "none of C0-C3 demonstrates both robust class recognizability and an acceptable vehicle self-occlusion envelope in this audit",
+  "camera_selection_allowed": false
+}

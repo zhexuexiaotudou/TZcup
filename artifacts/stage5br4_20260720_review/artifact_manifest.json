@@ -1,0 +1,256 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR4",
+  "checks": {
+    "historical_attempts_unchanged": true,
+    "all_visible_retained": true,
+    "ready_and_non_ready_partition_exact": true,
+    "camera_runtime_pass": true,
+    "active_conversion_gate_failed": true,
+    "manual_audit_failed": true,
+    "no_camera_selected": true,
+    "model_training_not_executed": true,
+    "dataset_expansion_not_executed": true,
+    "production_isolation_pass": true,
+    "regression_gate_pass": true,
+    "review_complete": true,
+    "stage5b_not_ready": true,
+    "stage5c_not_ready": true
+  },
+  "file_count_excluding_manifest": 46,
+  "files": [
+    {
+      "path": "camera_ablation/C0/discovery/capture_report.json",
+      "bytes": 6505,
+      "sha256": "2482c5ceaf8592e9b972089b435c59e6eee717e5ccd3d99ab780103d55bb3494"
+    },
+    {
+      "path": "camera_ablation/C0/discovery/rgb/frame_04.png",
+      "bytes": 11629,
+      "sha256": "77f3afa22e6ccf64fcf22e4570d4f0018543ad7e27b97f1e0d9540359adbbda4"
+    },
+    {
+      "path": "camera_ablation/C0/gz_topics.txt",
+      "bytes": 1073,
+      "sha256": "f355d1685fadce7f87b1f885ed446cc9f63724d325366079dc6d19914cf53084"
+    },
+    {
+      "path": "camera_ablation/C0/ros_topics.txt",
+      "bytes": 410,
+      "sha256": "81e8c9c8c9f6c60e22b3ef3c5155dae7da2e7c834356d7b358affe9524b0bf7e"
+    },
+    {
+      "path": "camera_ablation/C0/scene_manifest.json",
+      "bytes": 6747,
+      "sha256": "9fe22ab3383c023d750602fc9ed04c29d4783cdc366b1220a5e86474bf92dc81"
+    },
+    {
+      "path": "camera_ablation/C0/vehicle.urdf",
+      "bytes": 15032,
+      "sha256": "6e48716229d0c85798f783d3fa1ff7cb74664832dd5f20ea4abeaef2c61ec7c0"
+    },
+    {
+      "path": "camera_ablation/C1/discovery/capture_report.json",
+      "bytes": 6518,
+      "sha256": "4b535602e0173ac6a67a6b29f4c7f5a76df62e28988a72d68d0edc89af2e1f31"
+    },
+    {
+      "path": "camera_ablation/C1/discovery/rgb/frame_04.png",
+      "bytes": 13810,
+      "sha256": "3f9a934a1fc5d5304eb5e0ef0072343e4a15e6d3ad4614b5f7f7b9f933e74d09"
+    },
+    {
+      "path": "camera_ablation/C1/gz_topics.txt",
+      "bytes": 1073,
+      "sha256": "f355d1685fadce7f87b1f885ed446cc9f63724d325366079dc6d19914cf53084"
+    },
+    {
+      "path": "camera_ablation/C1/ros_topics.txt",
+      "bytes": 410,
+      "sha256": "81e8c9c8c9f6c60e22b3ef3c5155dae7da2e7c834356d7b358affe9524b0bf7e"
+    },
+    {
+      "path": "camera_ablation/C1/scene_manifest.json",
+      "bytes": 6747,
+      "sha256": "9fe22ab3383c023d750602fc9ed04c29d4783cdc366b1220a5e86474bf92dc81"
+    },
+    {
+      "path": "camera_ablation/C1/vehicle.urdf",
+      "bytes": 15042,
+      "sha256": "320c74d402d96c97bd10ae5dfbd50e31654adde841e8f368692973e341ca4d0a"
+    },
+    {
+      "path": "camera_ablation/C2/discovery/capture_report.json",
+      "bytes": 6503,
+      "sha256": "c2863fd3583c8f0c9e7a324600fd0945943a019b16cea4a1400724ed2ffb5dc4"
+    },
+    {
+      "path": "camera_ablation/C2/discovery/rgb/frame_04.png",
+      "bytes": 15136,
+      "sha256": "c8d187c4b66c699e851b8acc38ccda2d0174da3ef732aabc6e89398d1ca41e33"
+    },
+    {
+      "path": "camera_ablation/C2/gz_topics.txt",
+      "bytes": 1073,
+      "sha256": "f355d1685fadce7f87b1f885ed446cc9f63724d325366079dc6d19914cf53084"
+    },
+    {
+      "path": "camera_ablation/C2/ros_topics.txt",
+      "bytes": 410,
+      "sha256": "81e8c9c8c9f6c60e22b3ef3c5155dae7da2e7c834356d7b358affe9524b0bf7e"
+    },
+    {
+      "path": "camera_ablation/C2/scene_manifest.json",
+      "bytes": 6747,
+      "sha256": "9fe22ab3383c023d750602fc9ed04c29d4783cdc366b1220a5e86474bf92dc81"
+    },
+    {
+      "path": "camera_ablation/C2/vehicle.urdf",
+      "bytes": 15042,
+      "sha256": "2658d4de3234cf7999122d7eaec28f891b8afad37c75e574925f8adfac7d8cda"
+    },
+    {
+      "path": "camera_ablation/C3/discovery/capture_report.json",
+      "bytes": 6514,
+      "sha256": "43a47886385ae99ee690ea96f7559609510401304cb15f3519bd2958d639ad8b"
+    },
+    {
+      "path": "camera_ablation/C3/gz_topics.txt",
+      "bytes": 1265,
+      "sha256": "60a894dd83031468612a43bbdd36732674a50179f29ebb21928674372e41200c"
+    },
+    {
+      "path": "camera_ablation/C3/ros_topics.txt",
+      "bytes": 410,
+      "sha256": "81e8c9c8c9f6c60e22b3ef3c5155dae7da2e7c834356d7b358affe9524b0bf7e"
+    },
+    {
+      "path": "camera_ablation/C3/scene_manifest.json",
+      "bytes": 6747,
+      "sha256": "9fe22ab3383c023d750602fc9ed04c29d4783cdc366b1220a5e86474bf92dc81"
+    },
+    {
+      "path": "camera_ablation/C3/vehicle.urdf",
+      "bytes": 18047,
+      "sha256": "89732c794043f1472108699c83cb12a5db30fe15da8f0cd033846f52cf0e76ca"
+    },
+    {
+      "path": "camera_ablation/C3/verification/capture_report.json",
+      "bytes": 6583,
+      "sha256": "0ab7fb85dbbb72bbeafc85ebce3e09af63bdc7bc396a9f592c14d4ade5fde886"
+    },
+    {
+      "path": "camera_ablation/C3/verification/rgb/frame_04.png",
+      "bytes": 22607,
+      "sha256": "7501f724f08b83a132733ec073b25bb7f820e25f100dedb6b6590720aa674779"
+    },
+    {
+      "path": "camera_ablation_report.json",
+      "bytes": 51585,
+      "sha256": "11120b4f6d7b82768e9cf203fe9ccf3f71dc1633df63f3960f348aa673e67f1a"
+    },
+    {
+      "path": "manual_recognizability_audit.json",
+      "bytes": 1447,
+      "sha256": "104a3905ee6201b45bb43732d5b314c4f5b3433d0322e6d74c0877035f2bc8a4"
+    },
+    {
+      "path": "perception_evaluability_policy.yaml",
+      "bytes": 559,
+      "sha256": "3fd55150090ec239153cd4a766a19ed874dc2c3c1361002dccf59701b2a48eb5"
+    },
+    {
+      "path": "perception_observability_report.json",
+      "bytes": 17230,
+      "sha256": "2655cfc276696740152cfc9d4d01694feb13ab3b4291725590ca468b829d3058"
+    },
+    {
+      "path": "production_isolation/production.gz.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "production_isolation/production_default.urdf",
+      "bytes": 13629,
+      "sha256": "31a39eb176408a6911f55dc26978ea7040d2f659cb141a37c5a00aef13a075af"
+    },
+    {
+      "path": "production_isolation/production_isolation_report.json",
+      "bytes": 1546,
+      "sha256": "47ce847a32e51827e1044419e1e59a8fb65c96c253f9b8fa44e995760bbe3698"
+    },
+    {
+      "path": "production_isolation/runtime_topics.txt",
+      "bytes": 734,
+      "sha256": "a53861e5083638302746b6a69c893254052b97781879a03fd13da2ec9c42f0d6"
+    },
+    {
+      "path": "production_isolation/spawn.log",
+      "bytes": 72,
+      "sha256": "41908f143f4f93bfc36b5df4ae12e2d6ff093a18062dfd224bef927962277513"
+    },
+    {
+      "path": "regression_stage4w_seed0/coverage_report.json",
+      "bytes": 66301,
+      "sha256": "20f64f0b3adf594cb8c5fc83d3d63589cd09841e4363420cdfc1d215afd1f6ef"
+    },
+    {
+      "path": "regression_stage4w_seed0/replay_coverage_state.txt",
+      "bytes": 19,
+      "sha256": "40c29379f93657cdd3ebea8fa89182241bef1c1f7ff863a2e09df36e491b6b84"
+    },
+    {
+      "path": "regression_stage4w_seed0/rosbag_info.txt",
+      "bytes": 2959,
+      "sha256": "a2037407495f8e9458f3caadcdd8068d684e54d8299f5b6cc5b690c6fb1ebd83"
+    },
+    {
+      "path": "regression_stage4w_seed0/stage4w_static_summary.json",
+      "bytes": 71109,
+      "sha256": "79f2e82a565091e37f3313c7d7359ac7eabf2d5208629e2fa57992cf3e1a2aeb"
+    },
+    {
+      "path": "regression_stage5a/colcon_test_results.txt",
+      "bytes": 378,
+      "sha256": "97970261ec81f0af4fa24bc65e957177ca9397bce502b74582cac6f465dd71c3"
+    },
+    {
+      "path": "regression_stage5a/j6_fail_closed.json",
+      "bytes": 105,
+      "sha256": "c1b6404a4d5bf723cf78718cf4e005fb4141e10124d94f7dc06f1d90fc35df0c"
+    },
+    {
+      "path": "regression_stage5a/rosbag_info.txt",
+      "bytes": 2657,
+      "sha256": "306eaf52d10c1fad7ac0a5ad5c352fe33c2efdd3da6b4f50cf3ec8c2a5ca81a1"
+    },
+    {
+      "path": "regression_stage5a/stage5a_live_smoke_report.json",
+      "bytes": 1120,
+      "sha256": "ed0f91007f13ce7e3deabe2f9e2b1f5daf56c1024ee0b2d12a5f21b9dea99547"
+    },
+    {
+      "path": "regression_stage5a/stage5a_offline_report.json",
+      "bytes": 639,
+      "sha256": "2f6afb133544c0e0830892e5e4d897e031ca16a641d32b9f29f807e453c5fa25"
+    },
+    {
+      "path": "stage5br4_active_perception.yaml",
+      "bytes": 1347,
+      "sha256": "8c4a78abd4dc77047587eec7c5dd2894c06ad660de75383bd0d9ab7580658740"
+    },
+    {
+      "path": "stage5br4_regression_summary.json",
+      "bytes": 1085,
+      "sha256": "dd1d401056fb89ef3b5fafa855b24ae224f85ccb822b578d53dc5036bce36343"
+    },
+    {
+      "path": "stage5br4_status.json",
+      "bytes": 2587,
+      "sha256": "68c1d0a216ba3e5a977e2621deb1dafa146f642643b7e2cafb9463fb7dd8ec43"
+    }
+  ],
+  "REVIEW_PACKET_COMPLETE": true,
+  "READY_FOR_GPT_REVIEW_STAGE5B": false,
+  "READY_FOR_STAGE5C": false
+}

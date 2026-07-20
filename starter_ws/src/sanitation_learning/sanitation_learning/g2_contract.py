@@ -15,14 +15,32 @@ PRODUCTION_TOPICS = {
 }
 
 
-def _numbers(text: str | None) -> list[float]:
-    return [float(value) for value in (text or "").split()]
+def _xacro_arg_defaults(root: ET.Element) -> dict[str, str]:
+    suffix = "}arg"
+    return {
+        element.attrib["name"]: element.attrib["default"]
+        for element in root.iter()
+        if (element.tag == "arg" or element.tag.endswith(suffix))
+        and "name" in element.attrib
+        and "default" in element.attrib
+    }
+
+
+def _numbers(text: str | None, defaults: dict[str, str] | None = None) -> list[float]:
+    resolved = text or ""
+    for name, value in (defaults or {}).items():
+        resolved = re.sub(r"\$\(\s*arg\s+" + re.escape(name) + r"\s*\)", value, resolved)
+    unresolved = re.findall(r"\$\([^)]*\)", resolved)
+    if unresolved:
+        raise ValueError(f"unresolved Xacro arguments in numeric vector: {unresolved}")
+    return [float(value) for value in resolved.split()]
 
 
 def read_production_camera_contract(xacro_path: str | Path) -> dict:
     """Extract the simulated production camera contract from the vehicle Xacro."""
     path = Path(xacro_path)
     root = ET.parse(path).getroot()
+    defaults = _xacro_arg_defaults(root)
     joint = next(
         (candidate for candidate in root.findall("./joint")
          if candidate.find("./child") is not None
@@ -51,8 +69,8 @@ def read_production_camera_contract(xacro_path: str | Path) -> dict:
         "camera_link": child.attrib["link"],
         "optical_frame": optical_child.attrib["link"],
         "extrinsics": {
-            "xyz_m": _numbers(origin.attrib.get("xyz")),
-            "rpy_rad": _numbers(origin.attrib.get("rpy")),
+            "xyz_m": _numbers(origin.attrib.get("xyz"), defaults),
+            "rpy_rad": _numbers(origin.attrib.get("rpy"), defaults),
         },
         "native_resolution": {
             "width": int(image.findtext("width")),

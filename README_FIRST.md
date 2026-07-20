@@ -1,5 +1,7 @@
 # 无人清扫车仿真启动包
 
+> 2026-07-20：当前入口为 `GPT_REVIEW_STAGE5BR4.md`。Stage5BR4 证明 C0 全量数据只有 `25.96%` recognition-ready；C0–C3 真实消融后 C3 主动观察转换仅 `50% < 90%` 且车体遮挡明显，因此相机没有定型，模型训练和 120/1200 数据扩充按门禁未启动。
+
 > 2026-07-20：当前入口为 `GPT_REVIEW_STAGE5BR3.md` 和 `docs/stage5br3-g2-screening.md`。Stage5BR3 已完成真实车辆相机六世界运行时契约、80 scene/800 frame QA、四档分辨率扫描和三次 split-model screening；模型门失败后已停止。复核包完整不等于 Stage5B 通过，`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
 
 本包用于把“智慧环卫无人清扫车”项目的仿真工作推进到可复现、可演示、可评测的第一阶段。

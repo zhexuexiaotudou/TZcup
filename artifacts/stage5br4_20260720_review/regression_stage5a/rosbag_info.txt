@@ -1,0 +1,29 @@
+
+Files:             stage5a_live_bag_0.mcap.zstd
+Bag size:          5.2 MiB
+Storage id:        mcap
+ROS Distro:        jazzy
+Duration:          22.456822284s
+Start:             Jul 20 2026 06:23:49.943163138 (1784528629.943163138)
+End:               Jul 20 2026 06:24:12.399985422 (1784528652.399985422)
+Messages:          8717
+Topic information: Topic: /brush_enabled | Type: std_msgs/msg/Bool | Count: 110 | Serialization Format: cdr
+                   Topic: /camera/color/camera_info | Type: sensor_msgs/msg/CameraInfo | Count: 322 | Serialization Format: cdr
+                   Topic: /camera/color/image_raw | Type: sensor_msgs/msg/Image | Count: 306 | Serialization Format: cdr
+                   Topic: /camera/depth/image_rect_raw | Type: sensor_msgs/msg/Image | Count: 312 | Serialization Format: cdr
+                   Topic: /clock | Type: rosgraph_msgs/msg/Clock | Count: 4073 | Serialization Format: cdr
+                   Topic: /cmd_vel | Type: geometry_msgs/msg/Twist | Count: 0 | Serialization Format: cdr
+                   Topic: /garbage/cleaning_events | Type: sanitation_perception_interfaces/msg/CleaningEvent | Count: 0 | Serialization Format: cdr
+                   Topic: /garbage/ground_truth | Type: sanitation_perception_interfaces/msg/GarbageTargetArray | Count: 92 | Serialization Format: cdr
+                   Topic: /garbage/ground_truth/diagnostics | Type: std_msgs/msg/String | Count: 105 | Serialization Format: cdr
+                   Topic: /localization/fused_pose | Type: geometry_msgs/msg/PoseWithCovarianceStamped | Count: 884 | Serialization Format: cdr
+                   Topic: /perception/garbage/detections_2d | Type: vision_msgs/msg/Detection2DArray | Count: 21 | Serialization Format: cdr
+                   Topic: /perception/garbage/detections_3d | Type: vision_msgs/msg/Detection3DArray | Count: 22 | Serialization Format: cdr
+                   Topic: /perception/garbage/diagnostics | Type: std_msgs/msg/String | Count: 31 | Serialization Format: cdr
+                   Topic: /perception/garbage/segmentation | Type: sensor_msgs/msg/Image | Count: 21 | Serialization Format: cdr
+                   Topic: /perception/garbage/targets | Type: sanitation_perception_interfaces/msg/GarbageTargetArray | Count: 27 | Serialization Format: cdr
+                   Topic: /spot_clean/state | Type: std_msgs/msg/String | Count: 89 | Serialization Format: cdr
+                   Topic: /tf | Type: tf2_msgs/msg/TFMessage | Count: 2300 | Serialization Format: cdr
+                   Topic: /tf_static | Type: tf2_msgs/msg/TFMessage | Count: 2 | Serialization Format: cdr
+Service:           0
+Service information:

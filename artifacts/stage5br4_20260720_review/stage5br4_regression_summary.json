@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR4 regressions",
+  "fast_ci": {"pass": true, "test_count": 68},
+  "affected_package_pytest": {"pass": true, "test_count": 30},
+  "ros_colcon_build": {"pass": true, "package_count": 13},
+  "stage5a": {
+    "offline_pass": true,
+    "synthetic_perception_pass": true,
+    "spot_clean_e2e_pass": true,
+    "live_smoke_pass": true,
+    "pipeline_transport_pass": true,
+    "rosbag_recorded": true,
+    "ground_truth_control_violation_count": 0
+  },
+  "stage4w_seed0": {
+    "underlying_static_gate_pass": true,
+    "coverage_success": true,
+    "component_count": 17,
+    "empirical_coverage_rate": 0.934,
+    "collision_count": 0,
+    "localization_rmse_m": 0.036284112158894655,
+    "rosbag_replay": true,
+    "powershell_wrapper_exit_code": 1,
+    "wrapper_failure_scope": "post-run lookup used a nested OutputName containing a Windows separator; stage4w_static_summary.json itself exists and reports static_gate_pass=true"
+  },
+  "production_gt_isolation_pass": true,
+  "regression_gate_pass": true,
+  "wrapper_path_issue_disclosed": true
+}

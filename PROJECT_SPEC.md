@@ -1,5 +1,13 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## Stage5BR4 感知可评测与主动观察契约
+
+感知报告必须保留 `all_visible`、`recognition_ready`、`non_ready` 三个互斥视图。离散类 ready 以最短边、mask area 和最大深度联合判定；区域类独立使用 mask area 门。阈值在训练前冻结并记录 SHA-256，修改必须新建 policy id 和人工审计证据。
+
+主动观察使用稳定 candidate-id 关联 discovery 与 recognition，状态为 `DISCOVERED`、`OBSERVATION_QUEUED`、`APPROACH_PREFLIGHT`、`APPROACHING`、`RECOGNITION_READY`、`CONFIRMED`、`REJECTED`、`UNREACHABLE`。只有 component 边界、ComputePath、keepout、footprint、visibility 和定位不确定性均通过才能接近；stale、timeout、不可达和最大次数均 fail-closed，并记录额外里程与时间。
+
+C0 是生产默认单相机；C1/C2 只用于消融；C3 verification 相机和所有训练 GT/self-mask 默认关闭。生产控制不得订阅这些训练话题。
+
 ## Stage5BR3 G2 真实车辆数据与筛选契约
 
 - G2 必须使用实际 `sanitation_vehicle` 的生产相机外参、内参、光学帧和车辆运动；禁止独立静态相机 rig。semantic/instance GT 只能由默认关闭的训练开关挂载，生产 Xacro/launch 和控制订阅不得包含 GT。

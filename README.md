@@ -1,5 +1,11 @@
 # TZcup 无人清扫车仿真项目
 
+## Stage5BR4 可观测性、相机消融与主动观察停止边界（2026-07-20）
+
+Stage5BR4 先冻结可评测策略并重算 Stage5BR3 原始数据：3370 个可见实例中只有 875 个 recognition-ready（`25.96%`），2495 个 non-ready 没有被隐藏。C0–C3 已在同一 world、seed、目标 pose 和轨迹命令下真实采集；C3 verification 虽把小规模 ready 比例提高到 `29.63%`，主动观察 ready 转换仍只有 `2/4 = 50% < 90%`，且车体自身像素 P50 为 `21.11%`。人工审计不通过，相机没有定型。
+
+因此首个阻断层为 `G2_camera_selection_blocked_active_observation_ready_conversion_below_0.90_and_manual_audit_failed`。本轮新增参数化/双相机训练链、三分区可观测性报告与 fail-closed 主动观察状态机，但没有越级启动 detector/area micro-overfit、120/1200 数据扩充、模型 screening、formal、正式 live、真实 active Nav2 或 J6。Stage5BR3 的三次旧失败保持不变；`REVIEW_PACKET_COMPLETE=true`，两个 readiness 仍为 false。复核入口见 [`GPT_REVIEW_STAGE5BR4.md`](GPT_REVIEW_STAGE5BR4.md)、[`docs/stage5br4-active-perception.md`](docs/stage5br4-active-perception.md) 与 [`artifacts/stage5br4_20260720_review/`](artifacts/stage5br4_20260720_review/)。
+
 ## Stage5BR3 G2 真实车辆 screening 与停止边界（2026-07-20）
 
 Stage5BR3 已把 G2 从“静态训练 rig/话题名烟测”推进为真实车辆相机链：6 个不同材料、几何与布局的 Gazebo Harmonic 世界按 3/1/2 分为 train/val/test；每个世界均实际收到非空 RGB、32FC1 深度、CameraInfo、semantic/instance GT、精确同时间戳与 `camera_depth_link` 光学帧，生产外参 TF 一致，车辆 2 秒运动约 0.70 m。生产默认 Xacro/launch 与运行时均无 semantic/instance GT，控制侧订阅为 0。
@@ -129,4 +135,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-20：Stage5BR3 工程与证据已由 [PR #20](https://github.com/zhexuexiaotudou/TZcup/pull/20) 通过 CI 并合入 main；本次知识同步将 `README_FIRST.md`、`PROJECT_SPEC.md`、兼容性说明、阶段门和历史 G1/G2 文档统一到当前事实。当前首个阻断层仍为 `G2_split_model_screening_gates_failed_after_3_attempts`，`REVIEW_PACKET_COMPLETE=true`，两个 readiness 为 false；500/5000、live、真实 Nav2、真实域和 J6 未启动，2.225 GB 原始数据及任务 worktree 在用户确认前保留。
+2026-07-20：Stage5BR4 已完成 C0 全量可观测性重算、C0–C3 同场景真实消融、生产隔离和主动观察 fail-closed 状态机；C3 ready conversion `0.50 < 0.90` 且人工审计失败，故相机未定型、模型与数据扩充未启动。当前复核包完整但两个 readiness 仍为 false，原始数据、运行工作区、失败尝试和回归证据在用户确认前保留。
