@@ -1,0 +1,214 @@
+{
+  "schema_version": 1,
+  "scene_seed": 11,
+  "world_id": "world_a_asphalt_campus",
+  "split": "train",
+  "requested_frames": 10,
+  "captured_frames": 10,
+  "topics": [
+    "/camera/color/image_raw",
+    "/camera/depth/image_rect_raw",
+    "/ground_truth/semantic/image",
+    "/ground_truth/instance/image"
+  ],
+  "camera_xyz_m": [
+    0.53,
+    0.0,
+    0.22
+  ],
+  "optical_frame": "camera_depth_link",
+  "records": [
+    {
+      "frame_index": 0,
+      "timestamp_ns": 29371000000,
+      "vehicle_xy_m": [
+        -8.0,
+        1.4149896896463847e-20
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_00.png",
+        "depth": "depth/frame_00.npy",
+        "semantic": "semantic/frame_00.npy",
+        "instance": "instance/frame_00.npy",
+        "camera": "camera/frame_00.json",
+        "tf": "tf/frame_00.json",
+        "capture": "capture/frame_00.json"
+      },
+      "rgb_sha256": "cfe0a4429758ff20b37223b2857180f8e017c113a162d43c6045c7f27b406e04"
+    },
+    {
+      "frame_index": 1,
+      "timestamp_ns": 29569000000,
+      "vehicle_xy_m": [
+        -7.748209754069669,
+        -1.9752225619131387e-18
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_01.png",
+        "depth": "depth/frame_01.npy",
+        "semantic": "semantic/frame_01.npy",
+        "instance": "instance/frame_01.npy",
+        "camera": "camera/frame_01.json",
+        "tf": "tf/frame_01.json",
+        "capture": "capture/frame_01.json"
+      },
+      "rgb_sha256": "cfe0a4429758ff20b37223b2857180f8e017c113a162d43c6045c7f27b406e04"
+    },
+    {
+      "frame_index": 2,
+      "timestamp_ns": 29635000000,
+      "vehicle_xy_m": [
+        -7.496209754069693,
+        1.7988017228134573e-18
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_02.png",
+        "depth": "depth/frame_02.npy",
+        "semantic": "semantic/frame_02.npy",
+        "instance": "instance/frame_02.npy",
+        "camera": "camera/frame_02.json",
+        "tf": "tf/frame_02.json",
+        "capture": "capture/frame_02.json"
+      },
+      "rgb_sha256": "e90cefa79e52016fe906606459f50f184a90f1734ca79803040abcb2ede136dc"
+    },
+    {
+      "frame_index": 3,
+      "timestamp_ns": 29701000000,
+      "vehicle_xy_m": [
+        -7.244209754069646,
+        2.4420107352245484e-17
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_03.png",
+        "depth": "depth/frame_03.npy",
+        "semantic": "semantic/frame_03.npy",
+        "instance": "instance/frame_03.npy",
+        "camera": "camera/frame_03.json",
+        "tf": "tf/frame_03.json",
+        "capture": "capture/frame_03.json"
+      },
+      "rgb_sha256": "76bf4602a98dde561ee221e5576ee95fada21a2048beaad3e8346b653193f59a"
+    },
+    {
+      "frame_index": 4,
+      "timestamp_ns": 30427000000,
+      "vehicle_xy_m": [
+        -6.992209754069601,
+        1.9833240527393777e-17
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_04.png",
+        "depth": "depth/frame_04.npy",
+        "semantic": "semantic/frame_04.npy",
+        "instance": "instance/frame_04.npy",
+        "camera": "camera/frame_04.json",
+        "tf": "tf/frame_04.json",
+        "capture": "capture/frame_04.json"
+      },
+      "rgb_sha256": "77f3afa22e6ccf64fcf22e4570d4f0018543ad7e27b97f1e0d9540359adbbda4"
+    },
+    {
+      "frame_index": 5,
+      "timestamp_ns": 31087000000,
+      "vehicle_xy_m": [
+        -6.740209754069556,
+        -1.4924461952547765e-17
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_05.png",
+        "depth": "depth/frame_05.npy",
+        "semantic": "semantic/frame_05.npy",
+        "instance": "instance/frame_05.npy",
+        "camera": "camera/frame_05.json",
+        "tf": "tf/frame_05.json",
+        "capture": "capture/frame_05.json"
+      },
+      "rgb_sha256": "43eab57de195367799fc24219d755d07097f5bd8a2597a3be062862b74a7a581"
+    },
+    {
+      "frame_index": 6,
+      "timestamp_ns": 32011000000,
+      "vehicle_xy_m": [
+        -6.488209754069511,
+        -2.3311762832177078e-17
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_06.png",
+        "depth": "depth/frame_06.npy",
+        "semantic": "semantic/frame_06.npy",
+        "instance": "instance/frame_06.npy",
+        "camera": "camera/frame_06.json",
+        "tf": "tf/frame_06.json",
+        "capture": "capture/frame_06.json"
+      },
+      "rgb_sha256": "fb361852342343e3f67a84300cd27f267c0cf578f84098e05b4f04b08b9dd7a5"
+    },
+    {
+      "frame_index": 7,
+      "timestamp_ns": 32671000000,
+      "vehicle_xy_m": [
+        -6.229209754069469,
+        -5.471017262787674e-18
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_07.png",
+        "depth": "depth/frame_07.npy",
+        "semantic": "semantic/frame_07.npy",
+        "instance": "instance/frame_07.npy",
+        "camera": "camera/frame_07.json",
+        "tf": "tf/frame_07.json",
+        "capture": "capture/frame_07.json"
+      },
+      "rgb_sha256": "70760bf6e652d98be8810ab0e528a12e4bb8e474e4d2a010c74c0cc4923db0c2"
+    },
+    {
+      "frame_index": 8,
+      "timestamp_ns": 33199000000,
+      "vehicle_xy_m": [
+        -5.97720975406942,
+        -1.6269203696855438e-17
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_08.png",
+        "depth": "depth/frame_08.npy",
+        "semantic": "semantic/frame_08.npy",
+        "instance": "instance/frame_08.npy",
+        "camera": "camera/frame_08.json",
+        "tf": "tf/frame_08.json",
+        "capture": "capture/frame_08.json"
+      },
+      "rgb_sha256": "aa1b7817c5de1bc3e385b897e6ee2c20b3950617b1353fc4324f5f0c5fd1fb5e"
+    },
+    {
+      "frame_index": 9,
+      "timestamp_ns": 34123000000,
+      "vehicle_xy_m": [
+        -5.725209754069376,
+        9.037216292766188e-18
+      ],
+      "exact_four_sensor_timestamp": true,
+      "paths": {
+        "rgb": "rgb/frame_09.png",
+        "depth": "depth/frame_09.npy",
+        "semantic": "semantic/frame_09.npy",
+        "instance": "instance/frame_09.npy",
+        "camera": "camera/frame_09.json",
+        "tf": "tf/frame_09.json",
+        "capture": "capture/frame_09.json"
+      },
+      "rgb_sha256": "e2321715a21d24f14ca07a91c56a0f0b394ea4d84c747cb8eef19e11eabbcf92"
+    }
+  ],
+  "adjacent_motion_gate_pass": true,
+  "capture_pass": true
+}

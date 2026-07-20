@@ -1,5 +1,12 @@
 # Codex 阶段推进与验收门
 
+## Stage5BR4 前置恢复门（当前）
+
+- 在任何新模型训练前冻结 `perception_evaluability_policy.yaml`，同时报告 all-visible、recognition-ready、non-ready。
+- C0–C3 必须使用相同 world、asset、scene seed、目标 pose 与车辆轨迹做真实运行消融；相机配置需同时通过可辨识性、主动观察 ready conversion `>=0.90` 和安装/遮挡审计。
+- 当前 C3 conversion 为 `0.50`，人工审计失败，相机未选定；因此 detector/area micro-overfit、120/1200 和后续 screening 被阻断。
+- `REVIEW_PACKET_COMPLETE=true` 不改变 `READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
+
 ## Stage5BR3：G2 真实车辆数据与 split-model screening
 
 - 证据字节修复、六世界真实车辆相机运行时契约、生产 GT 隔离：通过。

@@ -1,0 +1,15 @@
+/camera/color/camera_info
+/camera/color/image_raw
+/camera/depth/image_rect_raw
+/clock
+/cmd_vel
+/ground_truth/instance/image
+/ground_truth/model_odom_raw
+/ground_truth/semantic/image
+/ground_truth/verification_instance/image
+/ground_truth/verification_semantic/image
+/parameter_events
+/rosout
+/verification_camera/color/camera_info
+/verification_camera/color/image_raw
+/verification_camera/depth/image_rect_raw

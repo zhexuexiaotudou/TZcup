@@ -20,6 +20,19 @@
   <xacro:arg name="lidar_update_rate" default="10"/>
   <!-- Offline G2 capture only. Production launch never overrides this false default. -->
   <xacro:arg name="enable_training_gt" default="false"/>
+  <!-- Stage5BR4 camera ablation. Defaults are the frozen C0 production candidate. -->
+  <xacro:arg name="camera_x" default="0.53"/>
+  <xacro:arg name="camera_y" default="0.0"/>
+  <xacro:arg name="camera_z" default="0.22"/>
+  <xacro:arg name="camera_pitch_rad" default="0.0"/>
+  <xacro:arg name="enable_verification_camera" default="false"/>
+  <xacro:arg name="enable_self_mask_gt" default="false"/>
+  <xacro:arg name="verification_camera_x" default="0.30"/>
+  <xacro:arg name="verification_camera_y" default="0.0"/>
+  <xacro:arg name="verification_camera_z" default="0.70"/>
+  <!-- Gazebo camera optical +X needs positive URDF Y rotation to look down;
+       the external camera spec continues to report conventional negative pitch. -->
+  <xacro:arg name="verification_camera_pitch_rad" default="0.7853981634"/>
 
   <!-- Baseline geometry; replace with measured real vehicle values later. -->
   <xacro:property name="base_length" value="1.15"/>
@@ -174,7 +187,7 @@
   <joint name="camera_to_base_link" type="fixed">
     <parent link="base_link"/>
     <child link="camera_link"/>
-    <origin xyz="0.53 0 0.22" rpy="0 0 0"/>
+    <origin xyz="$(arg camera_x) $(arg camera_y) $(arg camera_z)" rpy="0 $(arg camera_pitch_rad) 0"/>
   </joint>
   <link name="camera_depth_link"/>
   <joint name="camera_depth_joint" type="fixed">
@@ -225,6 +238,58 @@
     </xacro:if>
   </gazebo>
 
+  <!-- C3 verification camera. It is physically and topically independent of
+       the forward discovery camera and is absent from the production default. -->
+  <xacro:if value="$(arg enable_verification_camera)">
+    <link name="verification_camera_link">
+      <visual>
+        <geometry><box size="0.05 0.14 0.05"/></geometry>
+        <material name="sanitation_verification_camera_blue"><color rgba="0.05 0.18 0.55 1.0"/></material>
+      </visual>
+      <collision><geometry><box size="0.05 0.14 0.05"/></geometry></collision>
+      <inertial>
+        <mass value="0.135"/>
+        <inertia ixx="0.00025" ixy="0" ixz="0" iyy="0.00006" iyz="0" izz="0.00025"/>
+      </inertial>
+    </link>
+    <joint name="verification_camera_to_base_link" type="fixed">
+      <parent link="base_link"/>
+      <child link="verification_camera_link"/>
+      <origin xyz="$(arg verification_camera_x) $(arg verification_camera_y) $(arg verification_camera_z)"
+              rpy="0 $(arg verification_camera_pitch_rad) 0"/>
+    </joint>
+    <link name="verification_camera_depth_link"/>
+    <joint name="verification_camera_depth_joint" type="fixed">
+      <parent link="verification_camera_link"/>
+      <child link="verification_camera_depth_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+    <gazebo reference="verification_camera_link">
+      <sensor name="sanitation_verification_rgbd_camera" type="rgbd_camera">
+        <topic>verification_camera</topic>
+        <update_rate>15</update_rate><always_on>true</always_on><visualize>true</visualize>
+        <camera>
+          <optical_frame_id>verification_camera_depth_link</optical_frame_id>
+          <horizontal_fov>1.50098</horizontal_fov>
+          <image><width>640</width><height>480</height><format>R8G8B8</format></image>
+          <clip><near>0.3</near><far>100</far></clip>
+        </camera>
+      </sensor>
+      <xacro:if value="$(arg enable_training_gt)">
+        <sensor name="g2_verification_semantic_gt" type="segmentation">
+          <topic>g2/verification_semantic_gt</topic><gz_frame_id>verification_camera_depth_link</gz_frame_id>
+          <update_rate>15</update_rate><always_on>true</always_on>
+          <camera><segmentation_type>semantic</segmentation_type><optical_frame_id>verification_camera_depth_link</optical_frame_id><horizontal_fov>1.50098</horizontal_fov><image><width>640</width><height>480</height><format>R8G8B8</format></image><clip><near>0.3</near><far>100</far></clip></camera>
+        </sensor>
+        <sensor name="g2_verification_instance_gt" type="segmentation">
+          <topic>g2/verification_instance_gt</topic><gz_frame_id>verification_camera_depth_link</gz_frame_id>
+          <update_rate>15</update_rate><always_on>true</always_on>
+          <camera><segmentation_type>instance</segmentation_type><optical_frame_id>verification_camera_depth_link</optical_frame_id><horizontal_fov>1.50098</horizontal_fov><image><width>640</width><height>480</height><format>R8G8B8</format></image><clip><near>0.3</near><far>100</far></clip></camera>
+        </sensor>
+      </xacro:if>
+    </gazebo>
+  </xacro:if>
+
   <xacro:diff_drive_controller
     wheel_separation="${drive_wheel_separation}"
     wheel_radius="${drive_wheel_radius}"
@@ -266,6 +331,14 @@
       <dimensions>2</dimensions>
     </plugin>
   </gazebo>
+
+  <xacro:if value="$(arg enable_self_mask_gt)">
+    <gazebo>
+      <plugin filename="gz-sim-label-system" name="gz::sim::systems::Label">
+        <label>250</label>
+      </plugin>
+    </gazebo>
+  </xacro:if>
 
   <!-- 40 L bin: 0.50 * 0.40 * 0.20 = 0.040 m^3. -->
   <link name="dust_bin_link">

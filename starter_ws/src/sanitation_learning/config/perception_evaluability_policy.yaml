@@ -1,0 +1,15 @@
+schema_version: 1
+stage: Stage5BR4
+policy_id: stage5br4_initial_geometry_and_manual_audit_v1
+frozen_before_model_training: true
+discrete_recognition_ready:
+  classes: [plastic_bottle, metal_can, paper_litter]
+  shortest_side_px: 12
+  mask_area_px: 80
+  max_depth_m: 2.5
+area_recognition_ready:
+  classes: [leaf_pile, puddle]
+  mask_area_px: 256
+  min_visible_fraction: null
+report_partitions: [all_visible, recognition_ready, non_ready]
+adjustment_rule: Any threshold change requires a new policy_id, manual-audit evidence, and a new SHA-256 before training.

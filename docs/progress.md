@@ -1,5 +1,11 @@
 # 项目推进记录
 
+## Stage5BR4：可观测性、相机消融与主动观察（2026-07-20）
+
+状态：复核材料完整，Stage5B/Stage5C readiness 均为 false。C0 原始 3370 可见实例只有 875 个满足冻结的 recognition-ready；C0–C3 五段真实采集均完成 10/10 同步帧。C3 verification 的 ready 比例为 29.63%，但 discovery non-ready 到 verification ready 的实例转换仅 50%，低于 90% 门，且 self-pixel P50 为 21.11%。人工可辨识审计失败，首个阻断层为 `G2_camera_selection_blocked_active_observation_ready_conversion_below_0.90_and_manual_audit_failed`。
+
+已实现相机 mount 参数化、默认关闭的物理 C3 verification RGB-D/GT、冻结策略哈希、all-visible/ready/non-ready 报告，以及包含去重、路径/keepout/footprint/visibility preflight、stale/timeout/最大接近和代价记录的主动观察状态机。生产默认隔离通过。因相机选择失败，真正 detector、area 模型、micro-overfit、120/1200、screening、formal、正式 live、真实 active Nav2 和 J6 均未执行；Stage5BR3 三次旧模型结果未改写。
+
 ## Stage5BR3：真实车辆 G2 数据、逐实例 QA 与 split-model screening
 
 Stage5BR3 将 `artifacts/stage5br2_*_review/**` 改为 binary，避免 Git blob 与 Windows 导出包发生 LF/CRLF 证据字节漂移；同时废弃独立静态相机 rig，训练 GT 传感器只在显式 `enable_training_gt:=true` 时挂到生产车辆 `camera_link`，生产默认渲染和运行时均无 semantic/instance GT。

@@ -13,6 +13,7 @@ def test_extracts_real_production_camera_contract():
     assert contract["camera_link"] == "camera_link"
     assert contract["optical_frame"] == "camera_depth_link"
     assert contract["extrinsics"]["xyz_m"] == [0.53, 0.0, 0.22]
+    assert contract["extrinsics"]["rpy_rad"] == [0.0, 0.0, 0.0]
     assert contract["native_resolution"] == {"width": 640, "height": 480}
     assert contract["horizontal_fov_rad"] == 1.50098
     assert contract["update_rate_hz"] == 15.0

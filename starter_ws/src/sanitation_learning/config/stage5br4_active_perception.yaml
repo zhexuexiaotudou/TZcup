@@ -1,0 +1,51 @@
+schema_version: 1
+stage: Stage5BR4
+camera_configs:
+  C0:
+    mode: single_camera
+    xyz_m: [0.53, 0.0, 0.22]
+    pitch_deg: 0.0
+    role: discovery_and_recognition
+  C1:
+    mode: single_camera
+    xyz_m: [0.53, 0.0, 0.50]
+    pitch_deg: -15.0
+    role: discovery_and_recognition
+  C2:
+    mode: single_camera
+    xyz_m: [0.53, 0.0, 0.70]
+    pitch_deg: -30.0
+    role: discovery_and_recognition
+  C3:
+    mode: dual_camera
+    discovery:
+      xyz_m: [0.53, 0.0, 0.22]
+      pitch_deg: 0.0
+    verification:
+      xyz_m: [0.30, 0.0, 0.70]
+      pitch_deg: -45.0
+camera_common:
+  resolution: [640, 480]
+  horizontal_fov_rad: 1.50098
+  near_clip_m: 0.30
+  far_clip_m: 100.0
+  update_rate_hz: 15.0
+  estimated_rgbd_mbps_per_camera: 147.456
+vehicle:
+  footprint_length_m: 1.15
+  footprint_width_m: 0.72
+  camera_collision_box_m: [0.05, 0.14, 0.05]
+  maximum_mount_height_m: 0.75
+evaluability_policy: perception_evaluability_policy.yaml
+active_observation:
+  maximum_approaches: 2
+  stale_candidate_s: 2.0
+  approach_timeout_s: 20.0
+  minimum_footprint_clearance_m: 0.15
+  maximum_covariance_trace: 0.03
+  observation_distance_m: 1.0
+fail_closed:
+  camera_ablation_requires_runtime_measurement: true
+  model_micro_overfit_requires_camera_selection: true
+  screening_requires_both_micro_overfit_gates: true
+  formal_requires_all_screening_gates: true
