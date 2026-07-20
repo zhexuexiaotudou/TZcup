@@ -1,0 +1,26 @@
+schema_version: 2
+stage: Stage5BR5
+policy_id: stage5br5_occlusion_aware_candidate_v2
+supersedes_for_new_experiments: stage5br4_initial_geometry_and_manual_audit_v1
+v1_file_immutable: perception_evaluability_policy.yaml
+frozen_before_model_training: false
+manual_audit_gate_pass: false
+training_permitted: false
+discrete_recognition_ready:
+  classes: [plastic_bottle, metal_can, paper_litter]
+  shortest_side_px: 12
+  mask_area_px: 80
+  max_depth_m: 2.5
+  min_visible_fraction: 0.60
+  max_target_self_overlap: 0.05
+  boundary_completeness_min: 0.80
+area_recognition_ready:
+  classes: [leaf_pile, puddle]
+  mask_area_px: 256
+  max_depth_m: 3.0
+  min_visible_fraction: 0.70
+  max_target_self_overlap: 0.05
+  boundary_completeness_min: 0.70
+report_partitions: [all_visible, recognition_ready, non_ready]
+audit_basis: Thresholds are conservative candidates pending the required balanced two-reviewer blind audit; they are not tuned to raise Stage5BR4 conversion.
+adjustment_rule: Any threshold change requires a new policy_id, balanced blind-audit evidence, and a new SHA-256 before training.

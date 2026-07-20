@@ -1,5 +1,7 @@
 # 无人清扫车仿真启动包
 
+> 2026-07-20：当前入口为 `GPT_REVIEW_STAGE5BR5.md`。Stage5BR5 已完成 ActiveObservation 时间语义修复、V1–V4 机械网格、V1/V2/V4 六世界 360 帧真实消融和五类各 40 张的 200 张盲审集；两名独立人工评审尚未完成，所以相机、policy v2、正式主动观察和模型训练均保持 fail-closed。
+
 > 2026-07-20：当前入口为 `GPT_REVIEW_STAGE5BR4.md`。Stage5BR4 证明 C0 全量数据只有 `25.96%` recognition-ready；C0–C3 真实消融后 C3 主动观察转换仅 `50% < 90%` 且车体遮挡明显，因此相机没有定型，模型训练和 120/1200 数据扩充按门禁未启动。
 
 > 2026-07-20：当前入口为 `GPT_REVIEW_STAGE5BR3.md` 和 `docs/stage5br3-g2-screening.md`。Stage5BR3 已完成真实车辆相机六世界运行时契约、80 scene/800 frame QA、四档分辨率扫描和三次 split-model screening；模型门失败后已停止。复核包完整不等于 Stage5B 通过，`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。

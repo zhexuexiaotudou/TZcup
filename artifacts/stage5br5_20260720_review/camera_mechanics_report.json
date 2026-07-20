@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR5",
+  "source_xacro": "sanitation_vehicle_description/urdf/sanitation_vehicle.urdf.xacro",
+  "trial_footprint_only": true,
+  "camera_results": {
+    "V1": {
+      "camera_id": "V1",
+      "label": "front_overhang_low_oblique",
+      "base_link_xyz_m": [
+        0.67,
+        0.0,
+        0.3
+      ],
+      "front_bumper_relative_xyz_m": [
+        0.095,
+        0.0,
+        0.3
+      ],
+      "pitch_deg": -35.0,
+      "camera_aabb_min_m": [
+        0.635181787983999,
+        -0.07,
+        0.26518178798399905
+      ],
+      "camera_aabb_max_m": [
+        0.704818212016001,
+        0.07,
+        0.3348182120160009
+      ],
+      "collision_geometry_sources": [
+        "body_aabb",
+        "front_bumper_reserved_aabb",
+        "mechanical_arm_reserved_aabb",
+        "brush_cylinders"
+      ],
+      "collisions": [],
+      "collision_free": true,
+      "no_ground_penetration": true,
+      "within_mount_height": true,
+      "inside_stage5br5_trial_footprint": true,
+      "inside_current_production_nav2_footprint": false,
+      "production_footprint_change_applied": false,
+      "mechanical_gate_pass": true
+    },
+    "V2": {
+      "camera_id": "V2",
+      "label": "front_overhang_medium_oblique",
+      "base_link_xyz_m": [
+        0.67,
+        0.0,
+        0.48
+      ],
+      "front_bumper_relative_xyz_m": [
+        0.095,
+        0.0,
+        0.48
+      ],
+      "pitch_deg": -50.0,
+      "camera_aabb_min_m": [
+        0.6347791986798621,
+        -0.07,
+        0.44477919867986204
+      ],
+      "camera_aabb_max_m": [
+        0.705220801320138,
+        0.07,
+        0.5152208013201379
+      ],
+      "collision_geometry_sources": [
+        "body_aabb",
+        "front_bumper_reserved_aabb",
+        "mechanical_arm_reserved_aabb",
+        "brush_cylinders"
+      ],
+      "collisions": [],
+      "collision_free": true,
+      "no_ground_penetration": true,
+      "within_mount_height": true,
+      "inside_stage5br5_trial_footprint": true,
+      "inside_current_production_nav2_footprint": false,
+      "production_footprint_change_applied": false,
+      "mechanical_gate_pass": true
+    },
+    "V3": {
+      "camera_id": "V3",
+      "label": "front_overhang_high_downward",
+      "base_link_xyz_m": [
+        0.69,
+        0.0,
+        0.7
+      ],
+      "front_bumper_relative_xyz_m": [
+        0.115,
+        0.0,
+        0.7
+      ],
+      "pitch_deg": -60.0,
+      "camera_aabb_min_m": [
+        0.6558493649053889,
+        -0.07,
+        0.6658493649053889
+      ],
+      "camera_aabb_max_m": [
+        0.724150635094611,
+        0.07,
+        0.734150635094611
+      ],
+      "collision_geometry_sources": [
+        "body_aabb",
+        "front_bumper_reserved_aabb",
+        "mechanical_arm_reserved_aabb",
+        "brush_cylinders"
+      ],
+      "collisions": [],
+      "collision_free": true,
+      "no_ground_penetration": true,
+      "within_mount_height": true,
+      "inside_stage5br5_trial_footprint": false,
+      "inside_current_production_nav2_footprint": false,
+      "production_footprint_change_applied": false,
+      "mechanical_gate_pass": false
+    },
+    "V4": {
+      "camera_id": "V4",
+      "label": "lateral_offset_verification",
+      "base_link_xyz_m": [
+        0.67,
+        0.34,
+        0.48
+      ],
+      "front_bumper_relative_xyz_m": [
+        0.095,
+        0.34,
+        0.48
+      ],
+      "pitch_deg": -50.0,
+      "camera_aabb_min_m": [
+        0.6347791986798621,
+        0.27,
+        0.44477919867986204
+      ],
+      "camera_aabb_max_m": [
+        0.705220801320138,
+        0.41000000000000003,
+        0.5152208013201379
+      ],
+      "collision_geometry_sources": [
+        "body_aabb",
+        "front_bumper_reserved_aabb",
+        "mechanical_arm_reserved_aabb",
+        "brush_cylinders"
+      ],
+      "collisions": [],
+      "collision_free": true,
+      "no_ground_penetration": true,
+      "within_mount_height": true,
+      "inside_stage5br5_trial_footprint": true,
+      "inside_current_production_nav2_footprint": false,
+      "production_footprint_change_applied": false,
+      "mechanical_gate_pass": true
+    }
+  },
+  "all_candidates_mechanical_gate_pass": false,
+  "mechanically_viable_candidates": [
+    "V1",
+    "V2",
+    "V4"
+  ],
+  "mechanically_pruned_candidates": [
+    "V3"
+  ],
+  "mechanical_grid_executed": true,
+  "mechanical_grid_has_viable_candidate": true,
+  "production_nav2_footprint_unchanged": true
+}

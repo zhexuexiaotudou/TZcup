@@ -1,5 +1,15 @@
 # 项目推进记录
 
+## Stage5BR5：相机机械重构、平衡盲审与主动观察基础（2026-07-20）
+
+ActiveObservation 已把 `first_seen_s`、`last_seen_s`、排队、preflight、approach、动态 deadline 与最近 observation 时间分开；重复 discovery 刷新末见时间，sensor stale 和 queue timeout 独立，空间合并允许模型 ID 变化，旧记录可迁移。几何 planner 以 cleanable/keepout、footprint clearance、协方差、预期像素/ROI、自遮挡、视角、路径长度和转向代价选择候选；ROS 2 wrapper 实际调用 `/compute_path_to_pose` 且不使用 GT 输出位姿。
+
+机械网格中 V1/V2/V4 通过，V3 因旋转相机 AABB 超出 trial footprint 剔除。V1/V2/V4 各在 6 world × 2 role × 10 frame 完成真实 Gazebo 采集，共 360 帧，精确四传感器时间戳、自像素 P95、target/self overlap 与物理门通过。v2 ready fraction 为 `0.13450/0.13636/0.30508`；这些只是 view-level 结果，不是主动观察闭环转换。
+
+盲审数据经多轮固定 seed 补样后达到 200 张、五类各 40 张并覆盖六世界。当前没有两名独立人工评审，manual accuracy、Cohen kappa 与 self-occlusion failure 均为 null，相机没有选择，policy v2 为未冻结且 training disabled 的草案。首个阻断层为 `G2_camera_selection_blocked_two_independent_human_manual_reviewers_not_available`。正式 oracle active-observation、detector/area micro-overfit、120/1200、formal/live/J6 按门禁未执行；Stage5BR4 和更早结论未改写。
+
+回归已重新执行：`ci_fast` 68/68；`sanitation_learning` 与 `sanitation_spot_cleaning` colcon build 通过、29 tests/0 failures；Stage5A 为 30/30 spot-clean、119 帧 live、GT control violation 0 且 rosbag 已录制；Stage4W seed0 为 17/17 组件、经验覆盖率 `0.944`、定位 RMSE `0.03737 m`、碰撞/keepout/brush violation 0 且 replay 通过；生产默认运行时 GT 隔离通过。
+
 ## Stage5BR4：可观测性、相机消融与主动观察（2026-07-20）
 
 状态：复核材料完整，Stage5B/Stage5C readiness 均为 false。C0 原始 3370 可见实例只有 875 个满足冻结的 recognition-ready；C0–C3 五段真实采集均完成 10/10 同步帧。C3 verification 的 ready 比例为 29.63%，但 discovery non-ready 到 verification ready 的实例转换仅 50%，低于 90% 门，且 self-pixel P50 为 21.11%。人工可辨识审计失败，首个阻断层为 `G2_camera_selection_blocked_active_observation_ready_conversion_below_0.90_and_manual_audit_failed`。

@@ -7,6 +7,8 @@
   <license>Apache-2.0</license>
   <buildtool_depend>ament_python</buildtool_depend>
   <exec_depend>rclpy</exec_depend>
+  <exec_depend>nav2_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
   <exec_depend>sanitation_dataset</exec_depend>
   <exec_depend>sanitation_perception</exec_depend>
   <exec_depend>sanitation_perception_interfaces</exec_depend>

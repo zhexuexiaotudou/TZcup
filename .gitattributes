@@ -16,3 +16,5 @@ artifacts/stage5b_*_review/** binary
 artifacts/stage5br_*_review/** binary
 artifacts/stage5br2_*_review/** binary
 artifacts/stage5br3_*_review/** binary
+artifacts/stage5br4_*_review/** binary !eol
+artifacts/stage5br5_*_review/** binary !eol

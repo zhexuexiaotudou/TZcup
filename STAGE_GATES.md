@@ -1,5 +1,16 @@
 # Codex 阶段推进与验收门
 
+## Stage5BR5 相机选择与主动观察前置门（当前）
+
+- ActiveObservation 时间语义与回归：通过；16 项受影响测试覆盖 refresh、stale、长队列等待、空间合并、两次接近、动态 timeout、unreachable、迁移和 Coverage resume。
+- V1–V4 机械网格：通过执行；V1/V2/V4 可行，V3 因 trial footprint 冲突剔除，production footprint 未修改。
+- 六世界运行时相机门：V1/V2/V4 均通过；36 次 capture、360 帧精确同步证据，自像素 P95 和 target/self overlap 满足 `<=0.05`。
+- 平衡盲审数据门：通过；200 张、五类各 40 张、覆盖六世界。
+- 两名独立人工评审门：未执行，保持 false；accuracy/kappa/self-occlusion 指标为 null，脚本不替代评审者。
+- 相机选择、policy v2 冻结和正式 oracle active-observation：被人工门阻断，均未执行。
+- detector/area micro-overfit、120/1200、500/5000、live、真实 30 次 Nav2 spot-clean、真实域与 J6：按停止条件未执行。
+- 当前 `REVIEW_PACKET_COMPLETE=true`、`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
+
 ## Stage5BR4 前置恢复门（当前）
 
 - 在任何新模型训练前冻结 `perception_evaluability_policy.yaml`，同时报告 all-visible、recognition-ready、non-ready。

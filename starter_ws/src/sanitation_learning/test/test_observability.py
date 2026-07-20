@@ -12,6 +12,7 @@ from sanitation_learning.observability import (
 ROOT = Path(__file__).resolve().parents[1]
 POLICY = ROOT / "config" / "perception_evaluability_policy.yaml"
 CONFIG = ROOT / "config" / "stage5br4_active_perception.yaml"
+POLICY_V2 = ROOT / "config" / "perception_evaluability_policy_v2.yaml"
 
 
 def test_ready_policy_separates_discrete_and_area_without_hiding_non_ready():
@@ -40,3 +41,11 @@ def test_downward_camera_has_finite_ground_polygon_and_dual_bandwidth():
     report = build_report([], POLICY, CONFIG, "C3")
     assert report["estimated_uncompressed_rgbd_bandwidth_mbps"] == 294.912
     assert report["self_pixel_fraction"] is None
+
+
+def test_policy_v2_fails_closed_when_occlusion_evidence_is_missing():
+    policy = load_policy(POLICY_V2)
+    row = {"visibility": "visible", "class_id": "metal_can", "bbox_shortest_side_px": 20, "mask_area_px": 200, "distance_m": 1.0}
+    assert recognition_ready(row, policy) is False
+    row.update({"visible_fraction": 0.8, "target_self_overlap": 0.01, "boundary_completeness": 0.9})
+    assert recognition_ready(row, policy) is True

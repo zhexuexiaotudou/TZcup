@@ -1,0 +1,70 @@
+{
+  "schema_version": 2,
+  "stage": "Stage5BR5",
+  "audit_camera_candidate_not_selected": "V4",
+  "blind_dataset": {
+    "sample_count": 200,
+    "samples_by_class": {
+      "plastic_bottle": 40,
+      "metal_can": 40,
+      "paper_litter": 40,
+      "leaf_pile": 40,
+      "puddle": 40
+    },
+    "worlds_by_class": {
+      "plastic_bottle": [
+        "world_a_asphalt_campus",
+        "world_b_concrete_sidewalk",
+        "world_c_wet_dark_ground",
+        "world_d_mixed_curb_vegetation",
+        "world_e_tiled_plaza",
+        "world_f_service_road"
+      ],
+      "metal_can": [
+        "world_a_asphalt_campus",
+        "world_b_concrete_sidewalk",
+        "world_c_wet_dark_ground",
+        "world_e_tiled_plaza",
+        "world_f_service_road"
+      ],
+      "paper_litter": [
+        "world_a_asphalt_campus",
+        "world_b_concrete_sidewalk",
+        "world_c_wet_dark_ground",
+        "world_d_mixed_curb_vegetation",
+        "world_e_tiled_plaza",
+        "world_f_service_road"
+      ],
+      "leaf_pile": [
+        "world_a_asphalt_campus",
+        "world_b_concrete_sidewalk",
+        "world_c_wet_dark_ground",
+        "world_d_mixed_curb_vegetation",
+        "world_e_tiled_plaza",
+        "world_f_service_road"
+      ],
+      "puddle": [
+        "world_a_asphalt_campus",
+        "world_b_concrete_sidewalk",
+        "world_c_wet_dark_ground",
+        "world_e_tiled_plaza",
+        "world_f_service_road"
+      ]
+    },
+    "balanced_40_per_class_pass": true,
+    "six_worlds_represented": true
+  },
+  "reviewer_response_count": 0,
+  "independent_reviewers_required": 2,
+  "recognition_ready_class_accuracy": null,
+  "cohen_kappa": null,
+  "self_occlusion_failure_fraction": null,
+  "thresholds": {
+    "recognition_ready_class_accuracy_min": 0.9,
+    "cohen_kappa_min": 0.75,
+    "self_occlusion_failure_max": 0.05
+  },
+  "manual_audit_pass": false,
+  "blocker": "two_independent_human_reviewer_responses_not_available",
+  "scripts_substitute_for_human_review": false
+}
