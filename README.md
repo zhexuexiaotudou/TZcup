@@ -1,5 +1,11 @@
 # TZcup 无人清扫车仿真项目
 
+## Stage5BR6-A 双人盲审交付与人工停止门（2026-07-21）
+
+Stage5BR6-A 已把预注册 V4 的人工审计改造成真正隔离的双包交付：Reviewer A/B 各收到 270 张图片，包含 Stage5BR5 的五类各 40 张正样本和 70 张真实 Gazebo hard-negative/no-target；七类负样本各 10 张，所有负样本裁剪中的 semantic 目标像素为 0。两个包使用不同随机顺序、不同 opaque ID，ZIP CRC、逐文件 SHA、ID 集合、PNG 元数据和 truth 泄漏审计均通过；答案映射只保存在 Git 忽略的 `external_review_handoff/stage5br6/sealed_truth/`。
+
+当前没有两份真人完成的 response，故严格设置 `AWAITING_HUMAN_REVIEW=true`、`READY_FOR_STAGE5BR6_ORACLE=false`。V4 仍只是 `pre_registered_camera_candidate`，相机未定型，policy v2 未冻结，production footprint 未修改，Stage4W candidate-footprint 回归、Oracle 主动观察和模型训练均未启动。当前入口见 [`GPT_REVIEW_STAGE5BR6.md`](GPT_REVIEW_STAGE5BR6.md)、[`docs/stage5br6-human-audit.md`](docs/stage5br6-human-audit.md) 与 [`artifacts/stage5br6_20260721_review/`](artifacts/stage5br6_20260721_review/)。
+
 ## Stage5BR5 相机机械重构、平衡盲审集与主动观察前置边界（2026-07-20）
 
 Stage5BR5 已修复 ActiveObservation 首见/末见/排队/接近时间混用问题，并完成 V1–V4 相机机械网格；V3 因 trial footprint 冲突被剔除，V1/V2/V4 在六个真实 Gazebo 世界完成 discovery/verification 各 10 帧，共 360 帧精确同步 RGB-D/semantic/instance 证据，运行时自遮挡与 collision/envelope 门通过。最终盲审集达到 200 张、五类各 40 张并覆盖六世界；但尚无两名独立人工评审结果，故 V4 只作为待审候选，相机没有定型。
@@ -56,7 +62,7 @@ Stage4T 已完成 200 组固定时长瞬态、120 组闭环航向、A/B/C/D 各 
 
 ## 当前状态
 
-- Stage 0–5A 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；Stage5BR3 已完成真实车辆 G2 数据链、80/800 QA 与 split-model screening，并冻结在模型跨世界泛化、颜色压力、小目标和负样本误报失败边界。
+- Stage 0–5A 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；Stage5BR6-A 已完成双人盲审交付准备并停在等待两份独立真人 response 的边界。
 - precision mapping 与 localization/coverage 包络分别限制为 0.30/0.25 和 0.45/0.35 m/s、rad/s；0.60 rad/s stress 默认禁用且仍失败。
 - Stage4W hybrid 10-seed 的 XY RMSE P50/P95/max 为 0.02825/0.03726/0.03778 m，定位门禁通过且 GT 控制违规为 0。
 - 完整 Coverage 静态 5/5 通过，每次均执行统一几何生成的 17/17 组件；动态障碍 20/20、碰撞 0，过滤器、30 次急停和 rosbag 回放全部通过。
@@ -141,4 +147,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-20：Stage5BR5 已完成 ActiveObservation 时间语义修复、四相机机械网格、V1/V2/V4 六世界 360 帧真实运行时消融、五类各 40 张的 200 张盲审集和 observation-pose planner；两名独立人工评审尚未完成，相机与 policy v2 未冻结，正式主动观察和模型链按门禁未启动。当前复核包完整但两个 readiness 仍为 false，原始数据、运行工作区、失败尝试和回归证据在用户确认前保留。
+2026-07-21：Stage5BR6-A 已生成 Reviewer A/B 两个互相独立的 270 张盲审包；每包含 200 个 V4 正样本和 70 个真实 Gazebo hard-negative/no-target，七类负样本各 10 张且 semantic 目标像素为 0。当前等待两名真人独立填写，未冻结相机或 policy，未修改 footprint，也未进入 Oracle 主动观察或模型训练。
