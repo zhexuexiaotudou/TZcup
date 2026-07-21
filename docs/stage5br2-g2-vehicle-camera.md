@@ -1,6 +1,6 @@
 # Stage5BR2：G2 车载相机感知恢复
 
-> 历史阶段说明：本页记录 G2 基础恢复时的边界；80/800 数据与模型筛选已在 Stage5BR3 执行，当前结论以 `docs/stage5br3-g2-screening.md` 为准。
+> 历史阶段说明：本页记录 G2 基础恢复时的边界；80/800 数据与模型筛选已在 Stage5BR3 执行，项目当前阻断以 `docs/stage5br6-human-audit.md` 为准。
 
 Stage5BR2 不把 G1 顶视相机结果继续外推成部署结论。本轮新增 G2 数据域，其相机外参、视场、原生分辨率、频率和 ROS 话题均从当前车辆 Xacro 与 `sim.launch.py` 提取。训练世界内的 RGB-D、semantic GT 和 instance GT 传感器共位、同内参、同频率；GT 仅用于离线标注，生产启动文件没有被修改，也禁止 GT 进入控制或在线感知输入。
 

@@ -2,11 +2,11 @@
 
 > 2026-07-21：当前入口为 `GPT_REVIEW_STAGE5BR6.md`。Stage5BR6-A 已生成两个独立的 270 张人工盲审包并通过无 truth 泄漏审计；尚未收到两份真人 response，因此 `AWAITING_HUMAN_REVIEW=true`、`READY_FOR_STAGE5BR6_ORACLE=false`，V4、policy v2、candidate footprint 和 Oracle 主动观察均未越级推进。
 
-> 2026-07-20：当前入口为 `GPT_REVIEW_STAGE5BR5.md`。Stage5BR5 已完成 ActiveObservation 时间语义修复、V1–V4 机械网格、V1/V2/V4 六世界 360 帧真实消融和五类各 40 张的 200 张盲审集；两名独立人工评审尚未完成，所以相机、policy v2、正式主动观察和模型训练均保持 fail-closed。
+> 2026-07-20：历史入口为 `GPT_REVIEW_STAGE5BR5.md`。Stage5BR5 已完成 ActiveObservation 时间语义修复、V1–V4 机械网格、V1/V2/V4 六世界 360 帧真实消融和五类各 40 张的 200 张盲审集；两名独立人工评审尚未完成，所以相机、policy v2、正式主动观察和模型训练均保持 fail-closed。
 
-> 2026-07-20：当前入口为 `GPT_REVIEW_STAGE5BR4.md`。Stage5BR4 证明 C0 全量数据只有 `25.96%` recognition-ready；C0–C3 真实消融后 C3 主动观察转换仅 `50% < 90%` 且车体遮挡明显，因此相机没有定型，模型训练和 120/1200 数据扩充按门禁未启动。
+> 2026-07-20：历史入口为 `GPT_REVIEW_STAGE5BR4.md`。Stage5BR4 证明 C0 全量数据只有 `25.96%` recognition-ready；C0–C3 真实消融后 C3 主动观察转换仅 `50% < 90%` 且车体遮挡明显，因此相机没有定型，模型训练和 120/1200 数据扩充按门禁未启动。
 
-> 2026-07-20：当前入口为 `GPT_REVIEW_STAGE5BR3.md` 和 `docs/stage5br3-g2-screening.md`。Stage5BR3 已完成真实车辆相机六世界运行时契约、80 scene/800 frame QA、四档分辨率扫描和三次 split-model screening；模型门失败后已停止。复核包完整不等于 Stage5B 通过，`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
+> 2026-07-20：历史入口为 `GPT_REVIEW_STAGE5BR3.md` 和 `docs/stage5br3-g2-screening.md`。Stage5BR3 已完成真实车辆相机六世界运行时契约、80 scene/800 frame QA、四档分辨率扫描和三次 split-model screening；模型门失败后已停止。复核包完整不等于 Stage5B 通过，`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
 
 本包用于把“智慧环卫无人清扫车”项目的仿真工作推进到可复现、可演示、可评测的第一阶段。
 
@@ -125,4 +125,4 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 ## 5. 重要说明
 
-当前 Windows 主机已通过 Docker Desktop、Ubuntu 24.04 / ROS 2 Jazzy 容器和 NVIDIA GPU passthrough 完成 Stage 0–5A，并把 Stage5B 推进到 Stage5BR3。Stage4W 与 Stage5A 回归仍通过；G2 已有真实 Gazebo 车辆相机数据，但 detector/area segmenter 的跨世界、颜色、小目标和负样本门未通过，D2、J6 与竞赛效率门也未通过。当前边界以 `docs/progress.md` 与 `GPT_REVIEW_STAGE5BR3.md` 为准。
+当前 Windows 主机已通过 Docker Desktop、Ubuntu 24.04 / ROS 2 Jazzy 容器和 NVIDIA GPU passthrough 完成 Stage 0–5A，并把 Stage5B 推进到 Stage5BR6-A。Stage4W 与 Stage5A 历史回归仍通过；V4 盲审双包已生成，但尚缺两名独立真人 response，D2、J6 与竞赛效率门也未通过。当前边界以 `docs/progress.md` 与 `GPT_REVIEW_STAGE5BR6.md` 为准。
