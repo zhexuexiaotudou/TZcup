@@ -1,6 +1,6 @@
 # Stage5BR：Gazebo-camera 数据恢复与模型筛查边界
 
-> 历史阶段说明：本页记录 G1 结果。当前 G2 状态和阻断以 `docs/stage5br3-g2-screening.md` 为准。
+> 历史阶段说明：本页记录 G1 结果；G2 screening 结果见 `docs/stage5br3-g2-screening.md`，项目当前阻断以 `docs/stage5br6-human-audit.md` 为准。
 
 ## 结论
 

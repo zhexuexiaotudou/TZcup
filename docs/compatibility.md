@@ -21,7 +21,7 @@ Stage4W 已在同一 headless GPU 通道完成 hybrid 定位 10-seed、静态完
 
 Stage5A 继续使用该 Docker/headless GPU 通道完成 14 项 ROS 测试、20-scene synthetic 数据、held-out ONNX、30-seed task-state E2E 和真实 Gazebo RGB-D/2D/3D/map 感知录包。该兼容性结论不外推到真实数据精度、J6 工具链/实板或原生 GUI。
 
-Stage5B/Stage5BR/Stage5BR2/Stage5BR3 使用独立 `tzcup/sanitation-jazzy:stage5b` 镜像，在 Stage5A 基础上固定 PyTorch 2.5.1+cu124、ONNX 1.17.0 和 ONNX Runtime 1.20.1，RTX 4080 Laptop GPU 可用于训练。Stage5BR3 已在该 headless GPU 通道完成六个不同世界的真实车辆 RGB-D/semantic/instance 同步契约、80 scene/800 frame 原生采集与 QA、四档分辨率扫描和三次 split-model screening；Stage5A 与 Stage4W seed 0 回归仍通过。当前阻断为 G2 模型筛选失败，而不是“尚无 Gazebo-camera 数据”。Horizon J6 工具链未发现，故转换、量化、实板 FPS 与运行门均 fail-closed；原生 Ubuntu/WSLg GUI 仍是独立人工视觉验收缺口。
+Stage5B 至 Stage5BR6 使用独立 `tzcup/sanitation-jazzy:stage5b` 镜像，在 Stage5A 基础上固定 PyTorch 2.5.1+cu124、ONNX 1.17.0 和 ONNX Runtime 1.20.1，RTX 4080 Laptop GPU 可用于训练。Stage5BR3 已在该 headless GPU 通道完成六个不同世界的真实车辆 RGB-D/semantic/instance 同步契约、80 scene/800 frame 原生采集与 QA、四档分辨率扫描和三次 split-model screening；Stage5BR5 随后完成 V1/V2/V4 六世界相机消融，Stage5BR6-A 又通过实际 V4 精确同步链采集 70 张 label=0 hard-negative。当前阻断为两名独立真人 response 尚未返回，因此 V4、policy v2、candidate footprint、Oracle 与训练均保持 fail-closed。Horizon J6 工具链未发现，故转换、量化、实板 FPS 与运行门均 fail-closed；原生 Ubuntu/WSLg GUI 仍是独立人工视觉验收缺口。
 
 ## 第三方锁定
 

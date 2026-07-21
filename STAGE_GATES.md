@@ -55,7 +55,7 @@
 
 Stage5BR 前历史结果：D0 与 Stage4W seed 0 回归通过；两种候选确为梯度训练模型，第三种因 ONNX/J6 算子风险未训练。三次结构性筛查后，100 个未见 scene / 1000 帧离散 macro P/R/F1 为 `0.00752/0.00784/0.00768`，leaf/puddle IoU 为 `0.00376/0.2494`，颜色压力 aggregate macro F1 为 `0.05192`；仅 map RMSE `0.09731 m` 通过。该轮数据域为 `D1_procedural_rendered_not_gazebo_camera`。Stage5BR 已补齐真实 Gazebo-camera G1 smoke 数据链，但新的模型筛查仍未过门，因此仍未启动 500/5000 正式集与后续正式 E2E。
 
-结论：`REVIEW_PACKET_COMPLETE=true` 仅表示失败证据可审计；`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`、`competition_perception_pass=false`、`j6_runtime_pass=false`、`competition_efficiency_pass=false`。当前第一阻塞层为 `G1_model_recovery_in_domain_cross_asset_world_and_color_stress`；真实 G1 smoke 数据链已通过，不再把“完全没有 Gazebo-camera pipeline”列为当前阻断。
+该历史轮次结论：`REVIEW_PACKET_COMPLETE=true` 仅表示失败证据可审计；`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`、`competition_perception_pass=false`、`j6_runtime_pass=false`、`competition_efficiency_pass=false`。当时第一阻塞层为 `G1_model_recovery_in_domain_cross_asset_world_and_color_stress`；真实 G1 smoke 数据链已通过，不再把“完全没有 Gazebo-camera pipeline”列为该轮阻断。
 
 ## Stage5A 当前门禁（2026-07-17）
 
