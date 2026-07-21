@@ -1,0 +1,25 @@
+{
+  "stage": "Stage5BR6-A",
+  "handoff_integrity_pass": true,
+  "reviewer_packages": [
+    {
+      "reviewer_slot": "A",
+      "zip_crc_pass": true,
+      "sample_count": 270,
+      "metadata_leakage_count": 0
+    },
+    {
+      "reviewer_slot": "B",
+      "zip_crc_pass": true,
+      "sample_count": 270,
+      "metadata_leakage_count": 0
+    }
+  ],
+  "reviewer_ids_disjoint": true,
+  "reviewer_orders_independent": true,
+  "truth_mapping_absent_from_reviewer_packages": true,
+  "png_metadata_leakage_count": 0,
+  "semantic_target_pixels_in_negative_crops": 0,
+  "AWAITING_HUMAN_REVIEW": true,
+  "READY_FOR_STAGE5BR6_ORACLE": false
+}

@@ -64,3 +64,8 @@ Thumbs.db
 .runtime_ws/
 .env
 .env.*
+
+# Stage5BR6 human-review packages, sealed truth, and completed external responses
+# must stay outside Git. Only redacted manifests and status evidence are versioned.
+external_review_handoff/
+external_reviews/

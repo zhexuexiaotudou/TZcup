@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR6-A",
+  "created_at": "2026-07-21T04:28:35.257976+00:00",
+  "pre_registered_camera_candidate": "V4",
+  "camera_selected": false,
+  "positive_sample_count": 200,
+  "negative_sample_count": 70,
+  "total_sample_count": 270,
+  "negative_category_counts": {
+    "same_color_non_garbage": 10,
+    "bottle_or_can_shaped_obstacle": 10,
+    "wet_ground_non_puddle": 10,
+    "shadow": 10,
+    "leaf_background_non_target": 10,
+    "vehicle_self_structure": 10,
+    "crop_boundary_artifact": 10
+  },
+  "negative_camera_contracts": [
+    "V4"
+  ],
+  "semantic_target_pixels_in_negative_crops": 0,
+  "reviewer_packages": [
+    {
+      "reviewer_slot": "A",
+      "package_id": "stage5br6-a-b082d474e196c7f56e4f9ce1a024cf26",
+      "path": "reviewer_A_package.zip",
+      "bytes": 445123,
+      "sha256": "b5806f28c63537604b80febd496693a8662c1c826a1af31daefa8eb7c7e3f240",
+      "sample_count": 270,
+      "sample_ids_sha256": "1303c2019bb5c96e0a764e4f1ac0ce5c1c433aedf459405f3c3ba032617b4b63",
+      "zip_crc_pass": true
+    },
+    {
+      "reviewer_slot": "B",
+      "package_id": "stage5br6-b-46b492cca28243fc5f343b88b5d45f7e",
+      "path": "reviewer_B_package.zip",
+      "bytes": 445159,
+      "sha256": "2600ff6271b72a3fca5dd1d03bcd6d4dc12705028835465d0be7227e71cd50e6",
+      "sample_count": 270,
+      "sample_ids_sha256": "f090f37bc433813adea76ed345a53e9eaee7e0f88150f4a0b52bb51bedfb864e",
+      "zip_crc_pass": true
+    }
+  ],
+  "AWAITING_HUMAN_REVIEW": true,
+  "READY_FOR_STAGE5BR6_ORACLE": false,
+  "sealed_truth": {
+    "sha256": "969d98eda84816d71b287ede65f7757345c2260f50bcb9ccc64d0579f1480a37",
+    "stored_in_git_ignored_handoff_only": true,
+    "not_for_reviewers": true
+  }
+}

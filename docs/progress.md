@@ -1,5 +1,32 @@
 # 项目推进记录
 
+## Stage5BR6-A：双人盲审交付准备
+
+状态：交付包已准备，等待两名独立真人评审；后续门禁未启动。
+
+已完成：
+
+- 将 Stage5BR5 预注册候选固定为 V4，但保持 `camera_selected=false`。
+- 保留五类各 40 张的 200 个正样本，并从 Stage5BR6 训练专用 label=0 几何世界通过真实 V4 Gazebo RGB/depth/semantic/instance 精确同步链采集 70 个 no-target/hard-negative；同色非垃圾、瓶/罐形障碍、非积水湿地面、阴影、非目标落叶背景、车辆自身结构和裁剪边界伪影各 10 张，生产世界未修改。
+- 每个负样本裁剪均以 semantic mask 检查，目标像素总数为 0。
+- 生成 Reviewer A/B 两个独立 ZIP；随机顺序、opaque ID 与 package ID 均不同，无 Git 路径、world、camera 或 truth 映射泄漏。
+- ZIP CRC、逐文件 SHA、PNG 元数据、response 模板空值和 sample ID 集合校验通过。
+- 提供真人回收完整性校验脚本；脚本不会生成、补全或修正人工回答。
+
+当前边界：
+
+- `AWAITING_HUMAN_REVIEW=true`，真人 response 为 `0/2`。
+- `READY_FOR_STAGE5BR6_ORACLE=false`、`READY_FOR_GPT_REVIEW_STAGE5BR6=false`、`READY_FOR_STAGE5BR7=false`。
+- V4 相机契约与 policy v2 未冻结；production footprint 未修改。
+- candidate-footprint Stage4W 回归、Oracle 主动观察、detector/area model 训练和 J6 均未执行。
+
+证据：
+
+- `artifacts/stage5br6_20260721_review/stage5br6_status.json`
+- `artifacts/stage5br6_20260721_review/human_handoff_manifest_redacted.json`
+- `artifacts/stage5br6_20260721_review/human_handoff_integrity_report.json`
+- 本机 Git 忽略交付目录：`external_review_handoff/stage5br6/`
+
 ## Stage5BR5：相机机械重构、平衡盲审与主动观察基础（2026-07-20）
 
 ActiveObservation 已把 `first_seen_s`、`last_seen_s`、排队、preflight、approach、动态 deadline 与最近 observation 时间分开；重复 discovery 刷新末见时间，sensor stale 和 queue timeout 独立，空间合并允许模型 ID 变化，旧记录可迁移。几何 planner 以 cleanable/keepout、footprint clearance、协方差、预期像素/ROI、自遮挡、视角、路径长度和转向代价选择候选；ROS 2 wrapper 实际调用 `/compute_path_to_pose` 且不使用 GT 输出位姿。

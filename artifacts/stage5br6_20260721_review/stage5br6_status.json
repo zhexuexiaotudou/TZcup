@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR6-A",
+  "predecessor_main_commit": "c345445dc6f09a13e77e376d51d67052eb185e16",
+  "historical_stage5br5_conclusion_preserved": {
+    "first_blocking_layer": "G2_camera_selection_blocked_two_independent_human_manual_reviewers_not_available",
+    "READY_FOR_GPT_REVIEW_STAGE5B": false,
+    "READY_FOR_STAGE5C": false
+  },
+  "human_review_handoff": {
+    "pre_registered_camera_candidate": "V4",
+    "camera_selected": false,
+    "positive_sample_count": 200,
+    "negative_sample_count": 70,
+    "total_sample_count_per_reviewer": 270,
+    "negative_category_counts": {
+      "same_color_non_garbage": 10,
+      "bottle_or_can_shaped_obstacle": 10,
+      "wet_ground_non_puddle": 10,
+      "shadow": 10,
+      "leaf_background_non_target": 10,
+      "vehicle_self_structure": 10,
+      "crop_boundary_artifact": 10
+    },
+    "negative_camera_contracts": [
+      "V4"
+    ],
+    "semantic_target_pixels_in_negative_crops": 0,
+    "reviewer_package_count": 2,
+    "reviewer_packages_crc_pass": true,
+    "reviewer_ids_disjoint": true,
+    "reviewer_orders_independent": true,
+    "truth_mapping_absent_from_reviewer_packages": true,
+    "metadata_leakage_count": 0,
+    "reviewer_response_count": 0,
+    "required_independent_reviewers": 2
+  },
+  "manual_audit": {
+    "completed": false,
+    "integrity_pass": false,
+    "scoring_executed": false,
+    "metrics": null,
+    "scripts_or_llm_substitute_for_human_review": false
+  },
+  "downstream_stop_boundary": {
+    "camera_contract_frozen": false,
+    "policy_v2_frozen": false,
+    "candidate_production_footprint_changed": false,
+    "candidate_footprint_stage4w_regression_executed": false,
+    "oracle_active_observation_executed": false,
+    "detector_or_area_model_training_executed": false,
+    "j6_gate_executed": false
+  },
+  "competition_perception_pass": false,
+  "real_domain_evaluation_executed": false,
+  "j6_runtime_pass": false,
+  "competition_efficiency_pass": false,
+  "theoretical_efficiency_m2_h": 1053,
+  "target_efficiency_m2_h": 3500,
+  "first_blocking_layer": "G2_camera_selection_blocked_awaiting_two_independent_human_reviews",
+  "AWAITING_HUMAN_REVIEW": true,
+  "READY_FOR_STAGE5BR6_ORACLE": false,
+  "REVIEW_PACKET_COMPLETE": true,
+  "READY_FOR_GPT_REVIEW_STAGE5BR6": false,
+  "READY_FOR_STAGE5BR7": false,
+  "READY_FOR_GPT_REVIEW_STAGE5B": false,
+  "READY_FOR_STAGE5C": false
+}

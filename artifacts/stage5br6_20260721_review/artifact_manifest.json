@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR6-A",
+  "file_count_excluding_manifest": 5,
+  "files": [
+    {
+      "path": "human_handoff_integrity_report.json",
+      "bytes": 660,
+      "sha256": "a358e82103fe8deae1afe8823f6f5e84e53a0923a261343005e53b8d60408343"
+    },
+    {
+      "path": "human_handoff_manifest_redacted.json",
+      "bytes": 1779,
+      "sha256": "f0f057cb3d6a8d436b205f93947aff2d8cf994d3f575989f7bc4687ac07cf94e"
+    },
+    {
+      "path": "stage5br6_status.json",
+      "bytes": 2468,
+      "sha256": "7554afe1addbce299a5eaeab3a77e7d169f3e331cb70525f7d27306f4e147391"
+    },
+    {
+      "path": "test_stage5br6_handoff.py",
+      "bytes": 2690,
+      "sha256": "64f5f583bf30852f9801b877dc14f21b49843c0f2851e91270d2f5ac958b2bc0"
+    },
+    {
+      "path": "v4_negative_capture_summary.json",
+      "bytes": 720,
+      "sha256": "d44be4ff7bda36668a1d3d3a9a3154577cefa7b8dbe498227f03248043cca917"
+    }
+  ],
+  "REVIEW_PACKET_COMPLETE": true,
+  "AWAITING_HUMAN_REVIEW": true,
+  "READY_FOR_GPT_REVIEW_STAGE5BR6": false,
+  "READY_FOR_STAGE5BR7": false
+}
