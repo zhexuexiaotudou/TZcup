@@ -153,4 +153,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-21：Stage5BR6W 已增加不污染正式门的 V4 engineering profile、工程 policy、candidate footprint、整多边形/真实 CameraInfo/costmap footprint cost 的 observation planner，以及独立 Docker 回归入口。真实 Phase 4 seed 0 因 `no_reachable_clean_route` 失败后停止；Oracle、模型和 J6 未执行，正式人工门仍等待两名真人。
+2026-07-21：Stage5BR6W 已增加不污染正式门的 V4 engineering profile、工程 policy、candidate footprint、整多边形/真实 CameraInfo/costmap footprint cost 的 observation planner，以及独立 Docker 回归入口。真实 Phase 4 seed 0 与合并后独立复验都在 `no_reachable_clean_route` 失败；复验定位 RMSE 为 `0.05342 m > 0.05 m`，进一步确认工程门未通过。Oracle、模型和 J6 未执行，正式人工门仍等待两名真人。
