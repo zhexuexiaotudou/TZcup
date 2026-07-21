@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR6W",
+  "profile": "stage5br6w_v4",
+  "expected_footprint_xy_m": [
+    [
+      0.735220801320138,
+      0.44000000000000006
+    ],
+    [
+      0.735220801320138,
+      -0.39
+    ],
+    [
+      -0.43,
+      -0.39
+    ],
+    [
+      -0.43,
+      0.44000000000000006
+    ]
+  ],
+  "checks": {
+    "local_costmap_same_candidate_footprint": true,
+    "global_costmap_same_candidate_footprint": true,
+    "collision_monitor_consumes_local_published_footprint": true,
+    "coverage_mission_geometry_same_candidate_radius": true,
+    "coverage_profile_recorded": true,
+    "local_published_footprint_observed": true,
+    "global_published_footprint_observed": true
+  },
+  "all_runtime_consumers_same_candidate_footprint": true,
+  "production_default_unchanged": true
+}

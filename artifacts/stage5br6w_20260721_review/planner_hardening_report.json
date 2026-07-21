@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR6W",
+  "full_camera_se3": true,
+  "v4_lateral_offset": true,
+  "actual_camera_info_required_in_engineering_mode": true,
+  "full_candidate_footprint_polygon": true,
+  "polygon_boundary_keepout_intersection": true,
+  "costmap_footprint_cost_required": true,
+  "pose_dependent_target_self_overlap": true,
+  "predicted_roi_and_short_side": true,
+  "path_length_turning_clearance_scoring": true,
+  "missing_engineering_input_fail_closed": true,
+  "no_feasible_pose_terminal": "UNREACHABLE",
+  "targeted_pytest_passed": true,
+  "runtime_projection_calibration_executed": false,
+  "runtime_projection_calibration_blocker": "stage5br6w_phase4_candidate_footprint_static_seed0_no_reachable_clean_route"
+}

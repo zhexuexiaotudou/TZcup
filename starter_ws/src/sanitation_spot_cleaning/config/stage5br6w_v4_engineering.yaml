@@ -1,0 +1,14 @@
+stage5br6w_observation_pose_planner:
+  ros__parameters:
+    engineering_mode: true
+    camera_xyz_m: [0.67, 0.34, 0.48]
+    camera_pitch_deg: 50.0
+    camera_mount_rpy_deg: [0.0, 50.0, 0.0]
+    camera_info_topic: /verification_camera/color/camera_info
+    camera_self_pixel_fraction: 0.0
+    camera_target_self_overlap: 0.0
+    self_mask_roi_xyxy_json: "[]"
+    candidate_footprint_json: "[[0.735220801320138,0.44000000000000006],[0.735220801320138,-0.39],[-0.43,-0.39],[-0.43,0.44000000000000006]]"
+    global_frame: map
+    base_frame: base_footprint
+    compute_path_timeout_s: 4.0

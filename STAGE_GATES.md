@@ -1,5 +1,14 @@
 # Codex 阶段推进与验收门
 
+## Stage5BR6W 工程豁免支线（当前）
+
+- 工程豁免、V4 engineering camera、工程 policy 和 opt-in candidate footprint：已实现；正式人工状态未改变。
+- 运行时 footprint 一致性：通过；local/global costmap、Collision Monitor 订阅和 Coverage radius 与候选配置一致，production 默认不变。
+- Observation planner 加固与 ROS-independent 测试：通过；真实 projection calibration 未执行。
+- Phase 4 Stage4W candidate-footprint：seed 0 失败，`no_reachable_clean_route`；9 条 swath 全部与膨胀 exclusion 相交，组件 0、经验覆盖率 0、rosbag replay 未观察到 Coverage state。
+- 按停止条件，seed 1–4、dynamic interactions、estop 30 和 Phase 5 多世界 Oracle 均未执行。
+- `READY_FOR_STAGE5BR6W_ORACLE_ENGINEERING=false`、`READY_FOR_STAGE5BR7_ENGINEERING=false`；所有正式 Stage5BR6/Stage5B readiness 继续为 false。
+
 ## Stage5BR6-A 双人盲审交付门（当前）
 
 - V4 只作为预注册候选，`camera_selected=false`。

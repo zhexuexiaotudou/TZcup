@@ -147,6 +147,10 @@ def generate_launch_description():
             DeclareLaunchArgument('autostart', default_value='true'),
             DeclareLaunchArgument('rviz', default_value='false'),
             DeclareLaunchArgument('params_file', default_value=nav2_params),
+            DeclareLaunchArgument(
+                'footprint_profile', default_value='production',
+                description='production or opt-in stage5br6w_v4; params_file must carry the matching polygon',
+            ),
             DeclareLaunchArgument('map_file', default_value=default_map),
             DeclareLaunchArgument('keepout_map', default_value=default_map),
             DeclareLaunchArgument('speed_map', default_value=default_map),

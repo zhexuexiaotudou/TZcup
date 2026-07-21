@@ -40,6 +40,8 @@ def generate_launch_description():
     world_to_map_x = LaunchConfiguration("world_to_map_x")
     world_to_map_y = LaunchConfiguration("world_to_map_y")
     world_to_map_yaw = LaunchConfiguration("world_to_map_yaw")
+    camera_profile = LaunchConfiguration("camera_profile")
+    v4_engineering = PythonExpression(["'", camera_profile, "' == 'V4_engineering'"])
 
     gz_launch = PathJoinSubstitution(
         [FindPackageShare("ros_gz_sim"), "launch", "gz_sim.launch.py"]
@@ -74,6 +76,11 @@ def generate_launch_description():
                 " enable_wheel_slip:=", enable_wheel_slip,
                 " lidar_samples:=", lidar_samples,
                 " lidar_update_rate:=", lidar_update_rate,
+                " enable_verification_camera:=", PythonExpression(["'true' if '", camera_profile, "' == 'V4_engineering' else 'false'"]),
+                " verification_camera_x:=", PythonExpression(["'0.67' if '", camera_profile, "' == 'V4_engineering' else '0.30'"]),
+                " verification_camera_y:=", PythonExpression(["'0.34' if '", camera_profile, "' == 'V4_engineering' else '0.0'"]),
+                " verification_camera_z:=", PythonExpression(["'0.48' if '", camera_profile, "' == 'V4_engineering' else '0.70'"]),
+                " verification_camera_pitch_rad:=", PythonExpression(["'0.8726646260' if '", camera_profile, "' == 'V4_engineering' else '0.7853981634'"]),
             ]
         ),
         value_type=str,
@@ -111,6 +118,11 @@ def generate_launch_description():
             DeclareLaunchArgument("world_to_map_x", default_value="8.0"),
             DeclareLaunchArgument("world_to_map_y", default_value="0.0"),
             DeclareLaunchArgument("world_to_map_yaw", default_value="0.0"),
+            DeclareLaunchArgument(
+                "camera_profile",
+                default_value="production",
+                description="production or opt-in V4_engineering; production remains unchanged",
+            ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(gz_launch),
                 launch_arguments={
@@ -181,6 +193,25 @@ def generate_launch_description():
                         "/world/sanitation_test_world/dynamic_pose/info",
                         "/ground_truth/dynamic_pose",
                     ),
+                ],
+            ),
+            Node(
+                package="ros_gz_bridge",
+                executable="parameter_bridge",
+                name="stage5br6w_v4_camera_bridge",
+                output="screen",
+                condition=IfCondition(v4_engineering),
+                arguments=[
+                    "/verification_camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
+                    "/verification_camera/image@sensor_msgs/msg/Image[gz.msgs.Image",
+                    "/verification_camera/depth_image@sensor_msgs/msg/Image[gz.msgs.Image",
+                    "/verification_camera/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked",
+                ],
+                remappings=[
+                    ("/verification_camera/camera_info", "/verification_camera/color/camera_info"),
+                    ("/verification_camera/image", "/verification_camera/color/image_raw"),
+                    ("/verification_camera/depth_image", "/verification_camera/depth/image_rect_raw"),
+                    ("/verification_camera/points", "/verification_camera/depth/color/points"),
                 ],
             ),
             Node(

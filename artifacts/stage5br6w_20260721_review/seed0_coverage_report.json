@@ -1,0 +1,442 @@
+{
+  "schema_version": 2,
+  "mission_id": "demo_coverage_001",
+  "planner": "OpenNav Coverage + Fields2Cover",
+  "planning_success": true,
+  "transit_to_start_success": false,
+  "full_execution_success": false,
+  "empirical_coverage_success": false,
+  "safety_success": true,
+  "competition_efficiency_pass": false,
+  "success": false,
+  "operation_width_m": 0.65,
+  "swath_count": 9,
+  "turn_count": 8,
+  "nav_path_pose_count": 370,
+  "component_count": 0,
+  "component_results": [],
+  "transit_to_start": {
+    "success": false,
+    "error": "no_reachable_clean_route",
+    "swath_exclusion_intersection_count": 9,
+    "preflight": {
+      "candidates": [
+        {
+          "direction": "forward",
+          "staging_pose": {
+            "x": -2.05,
+            "y": -2.6749999333739463,
+            "yaw": -2.2375573525604415
+          },
+          "transit_yaw_source": "fused_pose_to_staging_pose",
+          "operation_entry_yaw": -1.8040321702800876e-08,
+          "footprint_clearance_m": 4.693174681341741,
+          "target_grid_values": {
+            "global_costmap_received": true,
+            "global_costmap_cost": 0,
+            "keepout_mask_received": true,
+            "keepout_mask_value": 0,
+            "speed_mask_received": true,
+            "speed_mask_value": 0,
+            "global_costmap_bounds": {
+              "origin_xy": [
+                -6.336,
+                -8.352
+              ],
+              "resolution_m": 0.019999999552965164,
+              "width": 1661,
+              "height": 829,
+              "axis_aligned_max_xy": [
+                26.88399925747514,
+                8.22799962940812
+              ]
+            }
+          },
+          "target_cost_and_keepout_clear": true,
+          "staging_inside_operation_polygon": false,
+          "collision_free_footprint_path": true,
+          "success": true,
+          "terminal_status": 4,
+          "error_code": 0,
+          "error_name": "NONE",
+          "error_msg": "",
+          "path_length_m": 3.344637613654718,
+          "path_pose_count": 333,
+          "path_start": [
+            0.023999857842921912,
+            -0.052000185519457176
+          ],
+          "path_goal": [
+            -2.05,
+            -2.6749999333739463
+          ]
+        },
+        {
+          "direction": "reverse",
+          "staging_pose": {
+            "x": 1.9499999999999986,
+            "y": 2.5249999472969473,
+            "yaw": 0.9266115832041194
+          },
+          "transit_yaw_source": "fused_pose_to_staging_pose",
+          "operation_entry_yaw": 3.1415926033964094,
+          "footprint_clearance_m": 0.05000000000000138,
+          "target_grid_values": {
+            "global_costmap_received": true,
+            "global_costmap_cost": 99,
+            "keepout_mask_received": true,
+            "keepout_mask_value": 0,
+            "speed_mask_received": true,
+            "speed_mask_value": 0,
+            "global_costmap_bounds": {
+              "origin_xy": [
+                -6.336,
+                -8.352
+              ],
+              "resolution_m": 0.019999999552965164,
+              "width": 1661,
+              "height": 829,
+              "axis_aligned_max_xy": [
+                26.88399925747514,
+                8.22799962940812
+              ]
+            }
+          },
+          "target_cost_and_keepout_clear": false,
+          "staging_inside_operation_polygon": true,
+          "collision_free_footprint_path": false,
+          "success": false,
+          "terminal_status": 6,
+          "error_code": 208,
+          "error_name": "NO_VALID_PATH",
+          "error_msg": "",
+          "path_length_m": 0,
+          "path_pose_count": 0,
+          "path_start": null,
+          "path_goal": null
+        }
+      ],
+      "selected_direction": "forward",
+      "grid_diagnostics_ready": true,
+      "selection_basis": "shortest reachable staging path with geometry clearance"
+    }
+  },
+  "mission_geometry": {
+    "outer_polygon": [
+      [
+        -2.0,
+        -4.0
+      ],
+      [
+        6.0,
+        -4.0
+      ],
+      [
+        6.0,
+        4.0
+      ],
+      [
+        -2.0,
+        4.0
+      ]
+    ],
+    "exclusion_polygons": [
+      [
+        [
+          2.0,
+          1.0
+        ],
+        [
+          4.0,
+          1.0
+        ],
+        [
+          4.0,
+          3.0
+        ],
+        [
+          2.0,
+          3.0
+        ]
+      ],
+      [
+        [
+          2.643174681341742,
+          -3.2818253186582584
+        ],
+        [
+          5.356825318658258,
+          -3.2818253186582584
+        ],
+        [
+          5.356825318658258,
+          -0.7181746813417418
+        ],
+        [
+          2.643174681341742,
+          -0.7181746813417418
+        ]
+      ]
+    ],
+    "cleanable_outer_polygon": [
+      [
+        -0.6499999999999999,
+        -2.65
+      ],
+      [
+        4.65,
+        -2.65
+      ],
+      [
+        4.65,
+        2.65
+      ],
+      [
+        -0.6499999999999999,
+        2.65
+      ]
+    ],
+    "cleanable_exclusion_polygons": [
+      [
+        [
+          0.6499999999999999,
+          -2.65
+        ],
+        [
+          4.65,
+          -2.65
+        ],
+        [
+          4.65,
+          2.65
+        ],
+        [
+          0.6499999999999999,
+          2.65
+        ]
+      ]
+    ],
+    "outer_area_m2": 64.0,
+    "base_excluded_area_m2": 10.956852185810858,
+    "excluded_area_m2": 57.11,
+    "cleanable_area_m2": 6.890000000000001,
+    "footprint_radius_m": 0.8568253186582583,
+    "safety_margin_m": 0.1,
+    "configured_headland_width_m": 1.35,
+    "required_headland_width_m": 1.2818253186582582,
+    "headland_clearance_valid": true,
+    "world_to_map_translation": [
+      8.0,
+      0.0
+    ],
+    "compiled_static_obstacles": [
+      {
+        "name": "structured_waste_bin",
+        "source_frame": "world",
+        "map_center": [
+          4.0,
+          -2.0
+        ],
+        "size": [
+          0.8,
+          0.65
+        ],
+        "inflated_polygon": [
+          [
+            2.643174681341742,
+            -3.2818253186582584
+          ],
+          [
+            5.356825318658258,
+            -3.2818253186582584
+          ],
+          [
+            5.356825318658258,
+            -0.7181746813417418
+          ],
+          [
+            2.643174681341742,
+            -0.7181746813417418
+          ]
+        ]
+      }
+    ],
+    "ignored_static_obstacles": [
+      {
+        "name": "trash_bin_obstacle",
+        "source_frame": "world",
+        "map_center": [
+          10.0,
+          3.0
+        ],
+        "size": [
+          0.7,
+          0.7
+        ],
+        "reason": "inflated_bounds_outside_outer_polygon"
+      }
+    ]
+  },
+  "route_selection": {
+    "candidates": [
+      {
+        "direction": "forward",
+        "staging_pose": {
+          "x": -2.05,
+          "y": -2.6749999333739463,
+          "yaw": -2.2375573525604415
+        },
+        "transit_yaw_source": "fused_pose_to_staging_pose",
+        "operation_entry_yaw": -1.8040321702800876e-08,
+        "footprint_clearance_m": 4.693174681341741,
+        "target_grid_values": {
+          "global_costmap_received": true,
+          "global_costmap_cost": 0,
+          "keepout_mask_received": true,
+          "keepout_mask_value": 0,
+          "speed_mask_received": true,
+          "speed_mask_value": 0,
+          "global_costmap_bounds": {
+            "origin_xy": [
+              -6.336,
+              -8.352
+            ],
+            "resolution_m": 0.019999999552965164,
+            "width": 1661,
+            "height": 829,
+            "axis_aligned_max_xy": [
+              26.88399925747514,
+              8.22799962940812
+            ]
+          }
+        },
+        "target_cost_and_keepout_clear": true,
+        "staging_inside_operation_polygon": false,
+        "collision_free_footprint_path": true,
+        "success": true,
+        "terminal_status": 4,
+        "error_code": 0,
+        "error_name": "NONE",
+        "error_msg": "",
+        "path_length_m": 3.344637613654718,
+        "path_pose_count": 333,
+        "path_start": [
+          0.023999857842921912,
+          -0.052000185519457176
+        ],
+        "path_goal": [
+          -2.05,
+          -2.6749999333739463
+        ]
+      },
+      {
+        "direction": "reverse",
+        "staging_pose": {
+          "x": 1.9499999999999986,
+          "y": 2.5249999472969473,
+          "yaw": 0.9266115832041194
+        },
+        "transit_yaw_source": "fused_pose_to_staging_pose",
+        "operation_entry_yaw": 3.1415926033964094,
+        "footprint_clearance_m": 0.05000000000000138,
+        "target_grid_values": {
+          "global_costmap_received": true,
+          "global_costmap_cost": 99,
+          "keepout_mask_received": true,
+          "keepout_mask_value": 0,
+          "speed_mask_received": true,
+          "speed_mask_value": 0,
+          "global_costmap_bounds": {
+            "origin_xy": [
+              -6.336,
+              -8.352
+            ],
+            "resolution_m": 0.019999999552965164,
+            "width": 1661,
+            "height": 829,
+            "axis_aligned_max_xy": [
+              26.88399925747514,
+              8.22799962940812
+            ]
+          }
+        },
+        "target_cost_and_keepout_clear": false,
+        "staging_inside_operation_polygon": true,
+        "collision_free_footprint_path": false,
+        "success": false,
+        "terminal_status": 6,
+        "error_code": 208,
+        "error_name": "NO_VALID_PATH",
+        "error_msg": "",
+        "path_length_m": 0,
+        "path_pose_count": 0,
+        "path_start": null,
+        "path_goal": null
+      }
+    ],
+    "selected_direction": "forward",
+    "grid_diagnostics_ready": true,
+    "selection_basis": "shortest reachable staging path with geometry clearance"
+  },
+  "swath_exclusion_intersection_count": 9,
+  "planned_metrics": {
+    "resolution_m": 0.1,
+    "target_area_m2": 6.8900000000000015,
+    "covered_area_m2": 6.630000000000002,
+    "missed_area_m2": 0.2599999999999998,
+    "repeated_area_m2": 0.0,
+    "coverage_rate": 0.9622641509433962,
+    "miss_rate": 0.03773584905660377,
+    "repeat_rate": 0.0,
+    "gross_swept_area_m2": 6.630000000000002,
+    "metric_basis": "planned_fields2cover_swaths_rasterized",
+    "path_length_m": 36.78535685472884,
+    "swath_endpoint_compatibility_repair": true,
+    "outer_area_m2": 64.0,
+    "excluded_area_m2": 57.11,
+    "cleanable_area_m2": 6.890000000000001
+  },
+  "empirical_metrics": {
+    "resolution_m": 0.1,
+    "target_area_m2": 6.8900000000000015,
+    "covered_area_m2": 0.0,
+    "missed_area_m2": 6.8900000000000015,
+    "repeated_area_m2": 0.0,
+    "coverage_rate": 0.0,
+    "miss_rate": 1.0,
+    "repeat_rate": 0.0,
+    "brush_on_duration_sec": 0.0,
+    "metric_basis": "gazebo_ground_truth_cleaning_footprint_brush_on",
+    "actual_path_length_m": 0.0,
+    "actual_duration_sec": 7.998499495442957e-05,
+    "gross_efficiency_m2_h": 0.0,
+    "net_efficiency_m2_h": 0.0
+  },
+  "recovery_count": 0,
+  "collision_count": 0,
+  "keepout_violation_sample_count": 0,
+  "brush_state_violation_sample_count": 0,
+  "minimum_lidar_range_m": 0.5878221392631531,
+  "brush_disabled_on_exit": true,
+  "localization_regression_during_coverage": {
+    "sample_count": 29,
+    "rmse_m": 0.04333201788841765,
+    "p95_m": 0.06469999507369356,
+    "max_m": 0.06469999507369356,
+    "estimate_sample_count": 30,
+    "truth_sample_count": 29,
+    "dropped_estimate_count": 1,
+    "sync_tolerance_sec": 0.05,
+    "sync_error_sec": {
+      "sample_count": 29,
+      "rmse_sec": 0.0037139067635376596,
+      "p95_sec": 0.0,
+      "max_sec": 0.01999999999998181
+    },
+    "metric_basis": "nearest_neighbour_ros_timestamp_without_truth_reuse",
+    "pass_rmse_and_p95_at_most_0_05m": false,
+    "pass_rmse_at_most_0_05m": true,
+    "formal_gate_basis": "Stage4V-compatible per-seed XY RMSE <= 0.05 m; pointwise P95 is diagnostic"
+  },
+  "execution_boundary": "All path components were required to terminate SUCCEEDED; no 180-pose shortcut or bounded cancellation is accepted."
+}

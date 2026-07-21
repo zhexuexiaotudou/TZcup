@@ -1,0 +1,29 @@
+schema_version: 1
+stage: Stage5BR6W
+profile: stage5br6w_v4
+opt_in_only: true
+production_default_unchanged: true
+source_camera: V4
+source_camera_aabb_min_m: [0.6347791986798621, 0.27, 0.44477919867986204]
+source_camera_aabb_max_m: [0.705220801320138, 0.41000000000000003, 0.5152208013201379]
+source_production_footprint_xy_m: [[0.40, 0.36], [0.40, -0.36], [-0.40, -0.36], [-0.40, 0.36]]
+mount_bracket_safety_margin_m: 0.03
+derivation: axis_aligned_envelope_of_production_footprint_and_v4_camera_aabb_then_outward_safety_margin
+footprint_xy_m:
+  - [0.735220801320138, 0.44000000000000006]
+  - [0.735220801320138, -0.39]
+  - [-0.43, -0.39]
+  - [-0.43, 0.44000000000000006]
+coverage_overrides:
+  robot_width_m: 0.8300000000000001
+  headland_width_m: 1.35
+  staging_offset_m: 1.05
+consumers:
+  - local_costmap
+  - global_costmap
+  - controller_planner_collision_checking
+  - collision_monitor
+  - observation_pose_footprint_checker
+  - keepout_evaluator
+  - coverage_mission_geometry
+  - runtime_diagnostics

@@ -1,5 +1,13 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## Stage5BR6W 工程豁免与 candidate-footprint 契约
+
+- 工程支线不得改变 Stage5BR6-A 的人工状态；V4 只能称为 engineering verification candidate，工程 policy 不具备人工或竞赛指标资格。
+- `camera_profile:=V4_engineering` 和 `footprint_profile:=stage5br6w_v4` 必须显式 opt-in；production 默认相机、footprint 和历史证据不可修改。
+- candidate footprint 由 V4 相机 AABB、production footprint 与支架裕量可重复推导，并统一供 local/global costmap、Nav2 碰撞检查、Collision Monitor、keepout、Coverage mission geometry 与 observation planner 使用。
+- 工程 observation planner 必须使用完整 camera SE(3)、V4 lateral offset、实际 CameraInfo、完整 footprint polygon、polygon-vs-boundary/keepout、costmap footprint cost 和位姿相关 self-overlap；缺失输入或无可行 pose 时 fail-closed 为 `UNREACHABLE`。
+- Stage4W candidate-footprint 回归是 Oracle 前置硬门；任一静态 seed 失败时停止，不执行 dynamic、estop 或多世界 Oracle，也不得设置工程 readiness。
+
 ## Stage5BR5 相机、审计与观测位姿契约
 
 - 主动观察候选必须分别保存 `first_seen_s`、`last_seen_s`、`queued_at_s`、`preflight_started_s`、`approach_started_s`、`approach_deadline_s` 与 `last_observation_s`；sensor stale 不得与 queue timeout 混用，approach timeout 必须包含路径长度/最小速度项。

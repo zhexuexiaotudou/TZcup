@@ -33,19 +33,32 @@ set -u
 
 map_root="${WS}/install/sanitation_navigation/share/sanitation_navigation/maps"
 nav_params="${WS}/install/sanitation_navigation/share/sanitation_navigation/config/nav2.yaml"
+mission_config="${WS}/install/sanitation_tasks/share/sanitation_tasks/config/demo_area.yaml"
+footprint_profile="${STAGE5BR6W_FOOTPRINT_PROFILE:-production}"
+camera_profile="${STAGE5BR6W_CAMERA_PROFILE:-production}"
+if [[ "${footprint_profile}" == "stage5br6w_v4" ]]; then
+  profile="${WS}/install/sanitation_navigation/share/sanitation_navigation/config/stage5br6w_v4_candidate_footprint.yaml"
+  nav_params="${OUT}/nav2_stage5br6w_v4.yaml"
+  mission_config="${OUT}/demo_area_stage5br6w_v4.yaml"
+  python3 "${PACK_ROOT}/scripts/stage5br6w_profile.py" \
+    --base-nav2 "${WS}/install/sanitation_navigation/share/sanitation_navigation/config/nav2.yaml" \
+    --base-mission "${WS}/install/sanitation_tasks/share/sanitation_tasks/config/demo_area.yaml" \
+    --profile "${profile}" --nav2-output "${nav_params}" --mission-output "${mission_config}"
+fi
 
 setsid ros2 launch sanitation_bringup stage4v_localization.launch.py \
   gui:=false random_seed:="${SEED}" gnss_profile:=rtk_fixed \
+  camera_profile:="${camera_profile}" \
   fusion_mode:=hybrid_rtk_scan_imu_wheel enable_scan_refiner:=true \
   > "${OUT}/localization.log" 2>&1 & pids+=("$!")
 setsid ros2 launch sanitation_navigation navigation.launch.py \
-  rviz:=false localization_backend:=external params_file:="${nav_params}" \
+  rviz:=false localization_backend:=external params_file:="${nav_params}" footprint_profile:="${footprint_profile}" \
   map_file:="${map_root}/stage4v_surveyed_reference.yaml" \
   keepout_map:="${map_root}/stage4v_filters/keepout_mask.yaml" \
   speed_map:="${map_root}/stage4v_filters/speed_mask.yaml" \
   operational_profile:=localization_coverage max_linear_velocity:=0.45 \
   max_angular_velocity:=0.35 > "${OUT}/navigation.log" 2>&1 & pids+=("$!")
-setsid ros2 launch sanitation_coverage coverage.launch.py \
+setsid ros2 launch sanitation_coverage coverage.launch.py footprint_profile:="${footprint_profile}" \
   > "${OUT}/coverage_server.log" 2>&1 & pids+=("$!")
 
 ready=0
@@ -106,6 +119,15 @@ for node in "${filter_lifecycle_nodes[@]}"; do
   done
   test "${active}" -eq 1
 done
+if [[ "${footprint_profile}" == "stage5br6w_v4" ]]; then
+  ros2 param dump /local_costmap/local_costmap > "${OUT}/runtime_local_costmap_params.yaml"
+  ros2 param dump /global_costmap/global_costmap > "${OUT}/runtime_global_costmap_params.yaml"
+  ros2 param dump /collision_monitor > "${OUT}/runtime_collision_monitor_params.yaml"
+  timeout 20 ros2 topic echo /local_costmap/published_footprint geometry_msgs/msg/PolygonStamped --once \
+    > "${OUT}/runtime_local_published_footprint.yaml"
+  timeout 20 ros2 topic echo /global_costmap/published_footprint geometry_msgs/msg/PolygonStamped --once \
+    > "${OUT}/runtime_global_published_footprint.yaml"
+fi
 ros2 param get /hybrid_global_fuser minimum_refined_variance \
   > "${OUT}/minimum_refined_variance.txt"
 ros2 param get /hybrid_global_fuser maximum_refined_variance \
@@ -144,6 +166,7 @@ sleep 2
 set +e
 timeout 1200 ros2 run sanitation_coverage coverage_probe --ros-args \
   -p use_sim_time:=true -p output_path:="${OUT}/coverage_report.json" \
+  -p config_path:="${mission_config}" \
   -p path_output_path:="${OUT}/coverage_path.json" \
   -p trajectory_output_path:="${OUT}/coverage_trajectory.csv" \
   > "${OUT}/coverage_probe.log" 2>&1
