@@ -10,6 +10,8 @@ Observation planner 已增加完整 camera SE(3)、V4 侧向偏置、实际 Came
 
 真实 Stage4W seed 0 使用 candidate footprint 半径 `0.856825 m`、headland `1.35 m`。运行时 local/global costmap 与 Coverage 加载同一多边形；规划本身成功且计划覆盖率 `0.96226`，但 cleanable area 仅 `6.89 m²`，9 条 swath 全部与膨胀 exclusion 相交。正向 staging 可达却位于 operation polygon 外，反向 staging footprint cost 99 且 `NO_VALID_PATH`，最终 `no_reachable_clean_route`、组件 0、经验覆盖率 0。碰撞/keepout 为 0、刷盘最终关闭、定位 RMSE `0.04333 m`，但不能补偿完整任务失败；Coverage state 未进入 bag，replay=false。
 
+PR #26 合并后使用同一代码树做了两次独立容器复验：首次在 Nav2 参数服务慢启动处超时，第二次完整复现 candidate footprint 一致性、`6.89 m²` cleanable area、9 条 swath 冲突和 `no_reachable_clean_route`，随后仍因 Coverage state 不存在而在 replay 等待处退出 124。第二次覆盖期定位 RMSE 为 `0.05342 m`，超过 `0.05 m` 门槛；这说明工程支线除几何不可达外还存在运行间定位波动，不改变所有 readiness=false 的结论。两次 post-merge 原始日志和 MCAP 只在本地保留，不进入 Git。
+
 停止边界：static 仅执行 1/5 且 0/1 通过；dynamic 0/20、estop 0/30、Oracle 0 world/0 scene/0 candidate。`READY_FOR_STAGE5BR6W_ORACLE_ENGINEERING=false`、`READY_FOR_STAGE5BR7_ENGINEERING=false`，正式人工与 Stage5B readiness 全部保持 false。紧凑证据见 `artifacts/stage5br6w_20260721_review/`，完整失败日志与 bag 保留在本机 `artifacts/stage5br6w_20260721_runtime/footprint_regression_retry2/static/seed_0/`。
 
 ## Stage5BR6-A：双人盲审交付准备

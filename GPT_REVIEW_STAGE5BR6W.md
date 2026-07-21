@@ -29,6 +29,8 @@ READY_FOR_STAGE5C=false
 
 candidate footprint 由 V4 AABB、production footprint 与 0.03 m 裕量推导，半径为 `0.856825 m`。运行时审计通过，但更大 footprint 把统一几何下的 cleanable area 压缩为 `6.89 m²`，9 条 swath 全部与膨胀 exclusion 相交。正向 staging 的 Nav2 path 可用但 staging 位于 operation polygon 外；反向 staging cost 为 99 且 `NO_VALID_PATH`。因此完整组件为 0、经验覆盖率为 0。定位 RMSE `0.04333 m`、碰撞 0、keepout 0 和刷盘最终关闭都不能替代完整任务门。
 
+PR #26 合并后独立复验再次得到相同 candidate footprint、`6.89 m²`、9 条 swath 冲突和 `no_reachable_clean_route`；该次定位 RMSE 为 `0.05342 m > 0.05 m`。首次 post-merge 尝试还出现 Nav2 参数服务慢启动超时。因此工程门不仅没有通过，还需在下一轮同时处理可达几何和运行稳定性；post-merge 原始日志未纳入本紧凑证据目录。
+
 本次 MCAP 已记录且元数据可读，但失败发生在 Coverage state 进入 bag 前，故 replay=false。按协议不补跑 dynamic 20、estop 30，也不启动 Oracle。
 
 ## 固定边界

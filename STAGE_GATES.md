@@ -6,6 +6,7 @@
 - 运行时 footprint 一致性：通过；local/global costmap、Collision Monitor 订阅和 Coverage radius 与候选配置一致，production 默认不变。
 - Observation planner 加固与 ROS-independent 测试：通过；真实 projection calibration 未执行。
 - Phase 4 Stage4W candidate-footprint：seed 0 失败，`no_reachable_clean_route`；9 条 swath 全部与膨胀 exclusion 相交，组件 0、经验覆盖率 0、rosbag replay 未观察到 Coverage state。
+- 合并后独立复验复现相同 footprint、`6.89 m²` cleanable area、9 条 swath 冲突和 `no_reachable_clean_route`；该次定位 RMSE 为 `0.05342 m > 0.05 m`，因此定位门也未通过。首次复验曾因 Nav2 参数服务启动超时终止，原始日志仅本地保留。
 - 按停止条件，seed 1–4、dynamic interactions、estop 30 和 Phase 5 多世界 Oracle 均未执行。
 - `READY_FOR_STAGE5BR6W_ORACLE_ENGINEERING=false`、`READY_FOR_STAGE5BR7_ENGINEERING=false`；所有正式 Stage5BR6/Stage5B readiness 继续为 false。
 
