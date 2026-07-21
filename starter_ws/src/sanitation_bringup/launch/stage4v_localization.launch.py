@@ -64,6 +64,7 @@ def generate_launch_description():
             DeclareLaunchArgument('world_to_map_yaw', default_value='0.0'),
             DeclareLaunchArgument('enable_scan_refiner', default_value='true'),
             DeclareLaunchArgument('publish_map_to_odom', default_value='true'),
+            DeclareLaunchArgument('camera_profile', default_value='production'),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(sim_launch),
                 launch_arguments={
@@ -80,6 +81,7 @@ def generate_launch_description():
                     'world_to_map_x': LaunchConfiguration('world_to_map_x'),
                     'world_to_map_y': LaunchConfiguration('world_to_map_y'),
                     'world_to_map_yaw': LaunchConfiguration('world_to_map_yaw'),
+                    'camera_profile': LaunchConfiguration('camera_profile'),
                 }.items(),
             ),
             Node(

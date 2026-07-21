@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "stage": "Stage5BR6W",
+  "files": [
+    {
+      "path": "engineering_waiver_stage5br6w.json",
+      "bytes": 1165,
+      "sha256": "be40a7ebd3c0744c56c3bb66c73d00e8065980d2dd64f7a541250bd55d0ab33b"
+    },
+    {
+      "path": "perception_evaluability_policy_v2_engineering.yaml",
+      "bytes": 1048,
+      "sha256": "25fd732da8ef878f118f9522d37c73fe7b24ed611e6a92013d89bb727e39ecae"
+    },
+    {
+      "path": "planner_hardening_report.json",
+      "bytes": 759,
+      "sha256": "8940adb05c267afb7dd36f8848366aabec1300760225b2d88b9e521b7227ee80"
+    },
+    {
+      "path": "runtime_footprint_audit.json",
+      "bytes": 838,
+      "sha256": "ba7a9e8599a6a8e9ae81b68657aac5684bb2904063d5a85477d8dc28674d2706"
+    },
+    {
+      "path": "seed0_coverage_report.json",
+      "bytes": 12003,
+      "sha256": "511d420f2d1b95afe33677bc486c9db8dd9c5572e46c6be058e671e46cd1fb20"
+    },
+    {
+      "path": "seed0_rosbag_info.txt",
+      "bytes": 2815,
+      "sha256": "4d42fef590db493af8d68756ea31d822b1bd24f2b1bb8077a9f8356c403bf124"
+    },
+    {
+      "path": "stage4w_candidate_footprint_regression.json",
+      "bytes": 1211,
+      "sha256": "6cb159f9e4827a7b2850751c213b17b11151d578eae3317c887955e4b70919cd"
+    },
+    {
+      "path": "stage5br6w_status.json",
+      "bytes": 4623,
+      "sha256": "550511c2e0ee1fd61c349b593abb50dcc0e3473cbb142ce257a123147a542e6e"
+    },
+    {
+      "path": "stage5br6w_v4_candidate_footprint.yaml",
+      "bytes": 1003,
+      "sha256": "3bc8b6fa9e82c01dfa8b77acff8c03a287c09be6986a584cfc683ae9390d7255"
+    }
+  ]
+}

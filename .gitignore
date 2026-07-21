@@ -48,6 +48,10 @@ artifacts/stage5br_ros_validation*/
 artifacts/stage5br_stage4w_regression*/
 artifacts/stage5br_stage5a_regression*/
 
+# Stage5BR6W full Docker/ROS runtime logs and bags stay local; only the compact
+# artifacts/stage5br6w_20260721_review evidence directory is versioned.
+artifacts/stage5br6w_*_runtime/
+
 # Stage5BR3 full Stage5A/Stage4W regression logs stay local; the compact
 # machine-readable summary is versioned in artifacts/stage5br3_20260720_review.
 artifacts/stage5br3_regression_stage5a*/

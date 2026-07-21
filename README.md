@@ -1,5 +1,11 @@
 # TZcup 无人清扫车仿真项目
 
+## Stage5BR6W 人工门豁免工程支线与 Phase 4 停止边界（2026-07-21）
+
+Stage5BR6W 在不改变真人双盲门的前提下建立了独立工程支线：V4 仅冻结为 engineering verification candidate，新 policy `stage5br6w_v4_engineering_geometry_ready_v1` 明确 `human_validated=false`、`competition_metric_eligible=false`，candidate footprint 由 V4 AABB、现有 production footprint 和 0.03 m 支架裕量自动推导。`camera_profile:=V4_engineering` 与 `footprint_profile:=stage5br6w_v4` 均为 opt-in，默认生产相机和 footprint 未改变；运行时审计确认 local/global costmap、Collision Monitor 与 Coverage 使用同一候选 footprint。
+
+真实 Stage4W seed 0 在 Phase 4 失败并按协议停止：候选 footprint 半径增至 `0.85683 m`，统一几何下 cleanable area 仅 `6.89 m²`，9 条 swath 全部与膨胀 exclusion 相交；正向 staging 落在 operation polygon 外，反向 staging 无有效路径，最终 `no_reachable_clean_route`、完整组件 `0`、经验覆盖率 `0`。因此未继续 seed 1–4、dynamic 20、estop 30 或 Oracle 主动观察，`READY_FOR_STAGE5BR6W_ORACLE_ENGINEERING=false`、`READY_FOR_STAGE5BR7_ENGINEERING=false`。正式人工与 Stage5B 状态全部保持 false；入口见 [`GPT_REVIEW_STAGE5BR6W.md`](GPT_REVIEW_STAGE5BR6W.md) 和 [`artifacts/stage5br6w_20260721_review/`](artifacts/stage5br6w_20260721_review/)。
+
 ## Stage5BR6-A 双人盲审交付与人工停止门（2026-07-21）
 
 Stage5BR6-A 已把预注册 V4 的人工审计改造成真正隔离的双包交付：Reviewer A/B 各收到 270 张图片，包含 Stage5BR5 的五类各 40 张正样本，以及训练专用 label=0 几何世界通过真实 V4 Gazebo 相机采集的 70 张 hard-negative/no-target；七类负样本各 10 张，四传感器精确同步，所有负样本裁剪中的 semantic 目标像素为 0，生产世界未修改。两个包使用不同随机顺序、不同 opaque ID，ZIP CRC、逐文件 SHA、ID 集合、PNG 元数据和 truth 泄漏审计均通过；答案映射只保存在 Git 忽略的 `external_review_handoff/stage5br6/sealed_truth/`。
@@ -62,7 +68,7 @@ Stage4T 已完成 200 组固定时长瞬态、120 组闭环航向、A/B/C/D 各 
 
 ## 当前状态
 
-- Stage 0–5A 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；Stage5BR6-A 已完成双人盲审交付准备并停在等待两份独立真人 response 的边界。
+- Stage 0–5A 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；Stage5BR6W 工程支线停在 candidate-footprint Phase 4 seed 0 失败边界，正式 Stage5BR6-A 仍等待两份独立真人 response。
 - precision mapping 与 localization/coverage 包络分别限制为 0.30/0.25 和 0.45/0.35 m/s、rad/s；0.60 rad/s stress 默认禁用且仍失败。
 - Stage4W hybrid 10-seed 的 XY RMSE P50/P95/max 为 0.02825/0.03726/0.03778 m，定位门禁通过且 GT 控制违规为 0。
 - 完整 Coverage 静态 5/5 通过，每次均执行统一几何生成的 17/17 组件；动态障碍 20/20、碰撞 0，过滤器、30 次急停和 rosbag 回放全部通过。
@@ -147,4 +153,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-21：Stage5BR6-A 已生成 Reviewer A/B 两个互相独立的 270 张盲审包；每包含 200 个 V4 正样本和 70 个真实 Gazebo hard-negative/no-target，七类负样本各 10 张且 semantic 目标像素为 0。当前等待两名真人独立填写，未冻结相机或 policy，未修改 footprint，也未进入 Oracle 主动观察或模型训练。
+2026-07-21：Stage5BR6W 已增加不污染正式门的 V4 engineering profile、工程 policy、candidate footprint、整多边形/真实 CameraInfo/costmap footprint cost 的 observation planner，以及独立 Docker 回归入口。真实 Phase 4 seed 0 因 `no_reachable_clean_route` 失败后停止；Oracle、模型和 J6 未执行，正式人工门仍等待两名真人。

@@ -1,5 +1,17 @@
 # 项目推进记录
 
+## Stage5BR6W：人工门豁免工程支线（2026-07-21）
+
+状态：完成 Phase 0–3 和 observation planner 加固；真实 Phase 4 seed 0 失败后按协议停止，未进入 Oracle。
+
+已实现独立 engineering waiver，保留 `AWAITING_HUMAN_REVIEW=true` 与全部正式 false 状态；Reviewer A/B 包和 sealed truth 未修改。V4 只冻结为 engineering verification candidate；工程 policy 使用新 ID 与 SHA，明确 `human_validated=false`、`competition_metric_eligible=false`。candidate footprint 由 V4 AABB、production footprint 与 0.03 m 安全裕量推导，并通过双 opt-in profile 接入实际 V4 相机、local/global costmap、Collision Monitor、Coverage mission geometry 和 planner。运行时 footprint audit 全部通过，production 默认未改变。
+
+Observation planner 已增加完整 camera SE(3)、V4 侧向偏置、实际 CameraInfo、整多边形边界/keepout 相交、global costmap footprint cost、位姿相关 target/self overlap、ROI/short-side、路径长度/转向/clearance 代价；工程输入缺失和无可行 pose 均 fail-closed。快速门为 73/73，针对性 planner 测试为 6/6。
+
+真实 Stage4W seed 0 使用 candidate footprint 半径 `0.856825 m`、headland `1.35 m`。运行时 local/global costmap 与 Coverage 加载同一多边形；规划本身成功且计划覆盖率 `0.96226`，但 cleanable area 仅 `6.89 m²`，9 条 swath 全部与膨胀 exclusion 相交。正向 staging 可达却位于 operation polygon 外，反向 staging footprint cost 99 且 `NO_VALID_PATH`，最终 `no_reachable_clean_route`、组件 0、经验覆盖率 0。碰撞/keepout 为 0、刷盘最终关闭、定位 RMSE `0.04333 m`，但不能补偿完整任务失败；Coverage state 未进入 bag，replay=false。
+
+停止边界：static 仅执行 1/5 且 0/1 通过；dynamic 0/20、estop 0/30、Oracle 0 world/0 scene/0 candidate。`READY_FOR_STAGE5BR6W_ORACLE_ENGINEERING=false`、`READY_FOR_STAGE5BR7_ENGINEERING=false`，正式人工与 Stage5B readiness 全部保持 false。紧凑证据见 `artifacts/stage5br6w_20260721_review/`，完整失败日志与 bag 保留在本机 `artifacts/stage5br6w_20260721_runtime/footprint_regression_retry2/static/seed_0/`。
+
 ## Stage5BR6-A：双人盲审交付准备
 
 状态：交付包已准备，等待两名独立真人评审；后续门禁未启动。

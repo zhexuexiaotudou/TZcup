@@ -16,10 +16,12 @@ from .observation_pose_planner import (
 def main() -> None:
     import rclpy
     from geometry_msgs.msg import PoseStamped
+    from nav_msgs.msg import OccupancyGrid
     from nav2_msgs.action import ComputePathToPose
     from rclpy.action import ActionClient
     from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
     from rclpy.node import Node
+    from sensor_msgs.msg import CameraInfo
     from std_msgs.msg import String
     from tf2_ros import Buffer, TransformListener
 
@@ -30,19 +32,92 @@ def main() -> None:
             self.declare_parameter("keepout_polygons_json", "[]")
             self.declare_parameter("camera_xyz_m", [0.67, 0.0, 0.48])
             self.declare_parameter("camera_pitch_deg", -50.0)
+            self.declare_parameter("camera_mount_rpy_deg", [0.0, -50.0, 0.0])
             self.declare_parameter("camera_self_pixel_fraction", 1.0)
             self.declare_parameter("camera_target_self_overlap", 1.0)
+            self.declare_parameter("camera_info_topic", "/verification_camera/color/camera_info")
+            self.declare_parameter("candidate_footprint_json", "[]")
+            self.declare_parameter("self_mask_roi_xyxy_json", "[]")
+            self.declare_parameter("engineering_mode", False)
             self.declare_parameter("compute_path_timeout_s", 4.0)
             self.declare_parameter("global_frame", "map")
             self.declare_parameter("base_frame", "base_footprint")
-            self.planner = ObservationPosePlanner(PlannerConstraints())
+            engineering_mode = bool(self.get_parameter("engineering_mode").value)
+            self.planner = ObservationPosePlanner(PlannerConstraints(
+                require_polygon_checks=engineering_mode,
+                require_costmap_footprint_cost=engineering_mode,
+                require_pose_dependent_self_overlap=engineering_mode,
+            ))
             self.tf_buffer = Buffer()
             self.tf_listener = TransformListener(self.tf_buffer, self)
             self.path_client = ActionClient(self, ComputePathToPose, "/compute_path_to_pose")
             self.pose_publisher = self.create_publisher(PoseStamped, "/active_observation/selected_pose", 10)
             self.status_publisher = self.create_publisher(String, "/active_observation/pose_plan", 10)
             self.create_subscription(String, "/active_observation/candidate", self.on_candidate, 10)
+            self.create_subscription(
+                CameraInfo,
+                str(self.get_parameter("camera_info_topic").value),
+                self._on_camera_info,
+                10,
+            )
+            self.create_subscription(OccupancyGrid, "/global_costmap/costmap", self._on_costmap, 10)
+            self.camera_info = None
+            self.global_costmap = None
             self._busy = threading.Lock()
+
+        def _on_camera_info(self, message):
+            self.camera_info = message
+
+        def _on_costmap(self, message):
+            self.global_costmap = message
+
+        @staticmethod
+        def _point_in_polygon(point, polygon):
+            x, y = point
+            inside = False
+            for index, first in enumerate(polygon):
+                second = polygon[(index + 1) % len(polygon)]
+                if (first[1] > y) != (second[1] > y):
+                    crossing = (second[0] - first[0]) * (y - first[1]) / (second[1] - first[1]) + first[0]
+                    if x < crossing:
+                        inside = not inside
+            return inside
+
+        def _costmap_footprint_cost(self, _pose, polygon):
+            message = self.global_costmap
+            if message is None or len(polygon) < 3:
+                return None
+            resolution = float(message.info.resolution)
+            origin_x = float(message.info.origin.position.x)
+            origin_y = float(message.info.origin.position.y)
+            min_x, max_x = min(p[0] for p in polygon), max(p[0] for p in polygon)
+            min_y, max_y = min(p[1] for p in polygon), max(p[1] for p in polygon)
+            x0 = max(0, math.floor((min_x - origin_x) / resolution))
+            x1 = min(message.info.width - 1, math.ceil((max_x - origin_x) / resolution))
+            y0 = max(0, math.floor((min_y - origin_y) / resolution))
+            y1 = min(message.info.height - 1, math.ceil((max_y - origin_y) / resolution))
+            if x0 > x1 or y0 > y1:
+                return None
+            costs = []
+            for row in range(y0, y1 + 1):
+                for column in range(x0, x1 + 1):
+                    point = (origin_x + (column + 0.5) * resolution, origin_y + (row + 0.5) * resolution)
+                    if not self._point_in_polygon(point, polygon):
+                        continue
+                    raw = int(message.data[row * message.info.width + column])
+                    costs.append(255.0 if raw < 0 else 2.54 * raw)
+            return max(costs) if costs else None
+
+        def _self_overlap(self, _pose, target_roi):
+            self_fraction = float(self.get_parameter("camera_self_pixel_fraction").value)
+            self_roi = json.loads(str(self.get_parameter("self_mask_roi_xyxy_json").value))
+            if len(self_roi) != 4:
+                return self_fraction, 0.0
+            left, top = max(target_roi[0], self_roi[0]), max(target_roi[1], self_roi[1])
+            right, bottom = min(target_roi[2], self_roi[2]), min(target_roi[3], self_roi[3])
+            intersection = max(0.0, right - left) * max(0.0, bottom - top)
+            target_area = max(1e-9, (target_roi[2] - target_roi[0]) * (target_roi[3] - target_roi[1]))
+            return self_fraction, intersection / target_area
 
         def on_candidate(self, message):
             try:
@@ -116,14 +191,24 @@ def main() -> None:
         def plan_candidate(self, payload: dict):
             try:
                 camera_xyz = tuple(float(value) for value in self.get_parameter("camera_xyz_m").value)
+                engineering_mode = bool(self.get_parameter("engineering_mode").value)
+                if engineering_mode and self.camera_info is None:
+                    raise RuntimeError("actual_camera_info_unavailable")
+                info = self.camera_info
+                mount_rpy = tuple(math.radians(float(value)) for value in self.get_parameter("camera_mount_rpy_deg").value)
                 camera = VerificationCameraModel(
-                    width_px=640,
-                    height_px=480,
+                    width_px=int(info.width) if info is not None else 640,
+                    height_px=int(info.height) if info is not None else 480,
                     horizontal_fov_rad=1.50098,
                     mount_xyz_m=camera_xyz,
                     pitch_rad=math.radians(float(self.get_parameter("camera_pitch_deg").value)),
                     predicted_self_pixel_fraction=float(self.get_parameter("camera_self_pixel_fraction").value),
                     predicted_target_self_overlap=float(self.get_parameter("camera_target_self_overlap").value),
+                    mount_rpy_rad=mount_rpy,
+                    fx_px=float(info.k[0]) if info is not None else None,
+                    fy_px=float(info.k[4]) if info is not None else None,
+                    cx_px=float(info.k[2]) if info is not None else None,
+                    cy_px=float(info.k[5]) if info is not None else None,
                 )
                 region = CandidateRegion(
                     candidate_id=str(payload["candidate_id"]),
@@ -139,12 +224,15 @@ def main() -> None:
                     keepout_polygons=json.loads(str(self.get_parameter("keepout_polygons_json").value)),
                     current_pose=self._current_pose(),
                     compute_path=self._compute_path,
+                    candidate_footprint=json.loads(str(self.get_parameter("candidate_footprint_json").value)),
+                    footprint_cost=self._costmap_footprint_cost if engineering_mode else None,
+                    self_overlap_estimator=self._self_overlap if engineering_mode else None,
                 )
                 if result is None:
                     self.status_publisher.publish(String(data=json.dumps({
                         "candidate_id": region.candidate_id,
                         "accepted": False,
-                        "reason": "no_reachable_visible_observation_pose",
+                        "reason": "UNREACHABLE:no_reachable_visible_observation_pose",
                         "ground_truth_pose_used": False,
                     }, sort_keys=True)))
                     return

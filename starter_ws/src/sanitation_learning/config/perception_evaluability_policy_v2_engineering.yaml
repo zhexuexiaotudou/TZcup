@@ -1,0 +1,27 @@
+schema_version: 1
+stage: Stage5BR6W
+policy_id: stage5br6w_v4_engineering_geometry_ready_v1
+derived_from_policy_id: stage5br5_occlusion_aware_candidate_v2
+derived_from_sha256: 78254d4c09923d981bb9735e646a31c1c1d3951174808b6d871de90dd8e31250
+human_validated: false
+competition_metric_eligible: false
+engineering_geometry_and_active_observation_only: true
+frozen_for_engineering_lane: true
+training_permitted: false
+discrete_recognition_ready:
+  classes: [plastic_bottle, metal_can, paper_litter]
+  shortest_side_px: 12
+  mask_area_px: 80
+  max_depth_m: 2.5
+  min_visible_fraction: 0.60
+  max_target_self_overlap: 0.05
+  boundary_completeness_min: 0.80
+area_recognition_ready:
+  classes: [leaf_pile, puddle]
+  mask_area_px: 256
+  max_depth_m: 3.0
+  min_visible_fraction: 0.70
+  max_target_self_overlap: 0.05
+  boundary_completeness_min: 0.70
+report_partitions: [all_visible, recognition_ready, non_ready]
+claim_boundary: This policy scores engineering observation geometry only and cannot support human recognizability or competition accuracy claims.
