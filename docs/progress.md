@@ -4,7 +4,9 @@
 
 基线冻结为远端 `main@ac6d5697427425c438ff0f42780ff6ab772226f9`，独立分支为 `agent/autonomous-final`。规划包的 11 个文件已完成逐文件 SHA-256/字节校验。当前已实现 17 阶段 registry、DAG 计划、原子状态文件、执行锁、依赖调度、断点续跑、幂等证据复用、统一 evidence manifest、状态防伪、secret scan 和带显式执行保护的 GitHub 适配器。
 
-AUTO-00 的本地机器门已通过：`ci_fast` 为 76/76，registry/state/plan 一致，依赖环为 0，断点续跑与幂等重跑测试通过，状态防伪、secret scan、diff 检查和逐文件 evidence manifest 均通过。证据目录为 `artifacts/autonomous_auto00_20260728T161119Z_evidence/`，其中 baseline hash audit 覆盖 475 个历史 review 文件。历史 Stage4W–Stage5BR6W evidence 未修改；Stage5BR6-A 人工完成/人工审计标志保持 false，Stage5BR6W 首个阻断层保持 `no_reachable_clean_route`。AUTO-00 仍需 PR/CI/合并与合并后复验完成发布门。
+AUTO-00 的机器门已通过：`ci_fast` 为 76/76，registry/state/plan 一致，依赖环为 0，断点续跑与幂等重跑测试通过，状态防伪、secret scan、diff 检查和逐文件 evidence manifest 均通过。证据目录为 `artifacts/autonomous_auto00_20260728T161119Z_evidence/`，其中 baseline hash audit 覆盖 475 个历史 review 文件。历史 Stage4W–Stage5BR6W evidence 未修改；Stage5BR6-A 人工完成/人工审计标志保持 false，Stage5BR6W 首个阻断层保持 `no_reachable_clean_route`。
+
+[PR #28](https://github.com/zhexuexiaotudou/TZcup/pull/28) 的 `fast-validation` 通过后已按 merge-commit 策略合入 `main@14dc0ecaa0b2cd21d7a7359b4bcd8db62dd2b40b`。合并后的远端 main 再次通过 evidence manifest、Git blob 和 git archive 精确字节校验。AUTO-00 是离线控制面，运行时部署门不适用；该远端仓库复验是本阶段发布验收。下一阶段为 AUTO-01，独立 AUTO-04/09/10/11/12/13/14 lane 可并行调度。
 
 ## Stage5BR6W：人工门豁免工程支线（2026-07-21）
 
