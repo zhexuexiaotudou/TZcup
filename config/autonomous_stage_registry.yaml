@@ -1,0 +1,113 @@
+schema_version: 1
+program: TZcup autonomous final
+baseline_commit: ac6d5697427425c438ff0f42780ff6ab772226f9
+policy:
+  ask_user_during_run: false
+  preserve_historical_evidence: true
+  continue_independent_lanes_after_block: true
+  max_attempts_per_stage: 3
+
+stages:
+  AUTO-00:
+    title: 自主控制面与基线冻结
+    lane: control
+    dependencies: []
+    optional_dependencies: []
+    command: null
+  AUTO-01:
+    title: V4 与导航几何可达性恢复
+    lane: navigation
+    dependencies: [AUTO-00]
+    optional_dependencies: []
+    command: null
+  AUTO-02:
+    title: 候选导航配置完整回归
+    lane: navigation
+    dependencies: [AUTO-01]
+    optional_dependencies: []
+    command: null
+  AUTO-03:
+    title: Oracle 主动观察闭环
+    lane: navigation
+    dependencies: [AUTO-01]
+    optional_dependencies: []
+    command: null
+  AUTO-04:
+    title: 双模型 micro-overfit
+    lane: perception
+    dependencies: [AUTO-00]
+    optional_dependencies: []
+    command: null
+  AUTO-05:
+    title: 数据分布与模型结构修复
+    lane: perception
+    dependencies: [AUTO-04]
+    optional_dependencies: []
+    command: null
+  AUTO-06:
+    title: 正式感知训练与泛化
+    lane: perception
+    dependencies: [AUTO-05]
+    optional_dependencies: []
+    command: null
+  AUTO-07:
+    title: 在线学习感知集成
+    lane: perception
+    dependencies: [AUTO-06]
+    optional_dependencies: []
+    command: null
+  AUTO-08:
+    title: 学习感知点清扫闭环
+    lane: integration
+    dependencies: [AUTO-02, AUTO-03, AUTO-07]
+    optional_dependencies: []
+    command: null
+  AUTO-09:
+    title: 抓取运输与入箱
+    lane: manipulation
+    dependencies: [AUTO-00]
+    optional_dependencies: []
+    command: null
+  AUTO-10:
+    title: APP 语音与 LLM
+    lane: interaction
+    dependencies: [AUTO-00]
+    optional_dependencies: []
+    command: null
+  AUTO-11:
+    title: 两万平方米大地图
+    lane: mapping
+    dependencies: [AUTO-00]
+    optional_dependencies: []
+    command: null
+  AUTO-12:
+    title: 清扫效率
+    lane: efficiency
+    dependencies: [AUTO-00]
+    optional_dependencies: []
+    command: null
+  AUTO-13:
+    title: 真实域工具链
+    lane: real_domain
+    dependencies: [AUTO-00]
+    optional_dependencies: []
+    command: null
+  AUTO-14:
+    title: 地平线 J6 工具链
+    lane: j6
+    dependencies: [AUTO-00]
+    optional_dependencies: [AUTO-06]
+    command: null
+  AUTO-15:
+    title: 全系统仿真竞赛矩阵
+    lane: integration
+    dependencies: [AUTO-02, AUTO-08, AUTO-09, AUTO-10, AUTO-11, AUTO-12]
+    optional_dependencies: [AUTO-13, AUTO-14]
+    command: null
+  AUTO-16:
+    title: 最终总验收与发布
+    lane: release
+    dependencies: [AUTO-15]
+    optional_dependencies: [AUTO-13, AUTO-14]
+    always_run: true
+    command: null

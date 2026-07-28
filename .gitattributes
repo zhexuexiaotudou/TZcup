@@ -9,6 +9,14 @@
 *.json text eol=lf
 *.md text eol=lf
 
+# These generated Stage4V snapshots were committed with CRLF before the LF
+# policy existed. Preserve their bytes so a fresh worktree starts clean.
+starter_ws/src/sanitation_navigation/maps/stage4v_filters/keepout_mask.yaml -text !eol
+starter_ws/src/sanitation_navigation/maps/stage4v_filters/speed_mask.yaml -text !eol
+starter_ws/src/sanitation_navigation/maps/stage4v_map_frame_calibration.yaml -text !eol
+starter_ws/src/sanitation_navigation/maps/stage4v_surveyed_reference.yaml -text !eol
+starter_ws/src/sanitation_worlds/worlds/sanitation_structured_world.sdf -text !eol
+
 # Review evidence manifests hash exact bytes; never normalize or diff their payloads.
 artifacts/stage4w_*_review/** binary
 artifacts/stage5a_*_review/** binary
@@ -18,3 +26,6 @@ artifacts/stage5br2_*_review/** binary
 artifacts/stage5br3_*_review/** binary
 artifacts/stage5br4_*_review/** binary !eol
 artifacts/stage5br5_*_review/** binary !eol
+artifacts/stage5br6_*_review/** binary !eol
+artifacts/stage5br6w_*_review/** binary !eol
+artifacts/autonomous_*_evidence/** binary !eol
