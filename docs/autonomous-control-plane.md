@@ -15,6 +15,8 @@
 
 规划输入基线为远端 `main` 的 `ac6d5697427425c438ff0f42780ff6ab772226f9`。历史 Stage4W 至 Stage5BR6W review evidence 是只读输入；Stage5BR6-A 的 `human_review_completed=false`、`manual_audit_pass=false` 也必须保持不变。
 
+AUTO-00 已由 PR #28 合入 `main@14dc0ecaa0b2cd21d7a7359b4bcd8db62dd2b40b`。合并后从远端 main 对紧凑 evidence 执行工作树、Git blob 和 git archive 三层精确字节复验，均通过。
+
 ## 使用
 
 Windows 当前安装的是 Python Launcher：
