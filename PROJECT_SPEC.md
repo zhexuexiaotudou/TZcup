@@ -1,5 +1,13 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## AUTO-01 自主导航几何契约
+
+- AUTO-01 冻结的自主候选为 opt-in `camera_profile:=V5_retracted` 与 `footprint_profile:=auto01_g2_v5_retracted`；production 默认相机和 Stage4W navigation footprint 不得被隐式替换。
+- 验证相机原始点云必须先转换到 `base_footprint`，仅剔除配置中冻结的已知车体 AABB，再发布到 `/verification_camera/depth/color/points/navigation`。Collision Monitor 不得直接消费未滤波的向下点云。
+- 单级 Collision Monitor 必须融合未掩膜 LiDAR 与自滤波 RGB-D；local/global costmap、Collision Monitor、Coverage mission geometry 和运行时审计必须使用同一导航 footprint。
+- 几何变更必须保持 cleanable-area ratio `>=0.90`、swath 冲突 `0`、合法 staging、完整覆盖 `17/17`、经验覆盖率 `>=0.90`、碰撞/keepout `0`、定位 RMSE `<=0.05 m` 和可回放证据。
+- 低障碍与高障碍正式门各至少 30 次，碰撞和 height-classification false-safe 均为 `0`。G1、G2-C1 和 G2-C2 的失败结论不得通过降低门槛改写。
+
 ## Stage5BR6W 工程豁免与 candidate-footprint 契约
 
 - 工程支线不得改变 Stage5BR6-A 的人工状态；V4 只能称为 engineering verification candidate，工程 policy 不具备人工或竞赛指标资格。

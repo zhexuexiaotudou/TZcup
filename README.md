@@ -4,7 +4,7 @@
 
 自主主线已选择 opt-in `G2-C3`：相机采用机械回收态 `V5_retracted`，保持 Stage4W 的 `0.40 m × 0.36 m` 导航 footprint 不变；向下 RGB-D 点云先转换到 `base_footprint`，只剔除已知车体包围盒内的自点，再与原始 LiDAR 一起送入单级 Collision Monitor。生产默认相机和默认 footprint 均未改变。G1 的三个配置、G2-C1 与 G2-C2 均按各自首个失败层保留为拒绝证据，没有用降低门槛覆盖失败事实。实现与复现说明见 [`docs/auto01-geometry.md`](docs/auto01-geometry.md)。
 
-机器门结果为：冷启动 3/3，Nav2 参数服务 25/25/26 秒就绪；seed0 完整覆盖 17/17，经验覆盖率 `0.932`、碰撞 `0`、keepout 违规 `0`、定位 RMSE `0.03391 m`、swath 冲突 `0`，MCAP 回放通过；低障碍 `30/30`、高障碍 `30/30`，碰撞 `0`、height-classification false-safe `0`。紧凑证据位于 [`artifacts/autonomous_auto01_20260729_evidence/`](artifacts/autonomous_auto01_20260729_evidence/)，自主状态已推进到 AUTO-02。以上均为 Docker 中 ROS 2 Jazzy + Gazebo Harmonic 的机器仿真结论，不代表真人、真实车辆或 J6 板端验证。
+机器门结果为：冷启动 3/3，Nav2 参数服务 25/25/26 秒就绪；seed0 完整覆盖 17/17，经验覆盖率 `0.932`、碰撞 `0`、keepout 违规 `0`、定位 RMSE `0.03391 m`、swath 冲突 `0`，MCAP 回放通过；低障碍 `30/30`、高障碍 `30/30`，碰撞 `0`、height-classification false-safe `0`。[PR #30](https://github.com/zhexuexiaotudou/TZcup/pull/30) 已通过 CI 并合入 `main@4e6c490`；紧凑证据位于 [`artifacts/autonomous_auto01_20260729_evidence/`](artifacts/autonomous_auto01_20260729_evidence/)，自主状态已推进到 AUTO-02。以上均为 Docker 中 ROS 2 Jazzy + Gazebo Harmonic 的机器仿真结论，不代表真人、真实车辆或 J6 板端验证。
 
 ## AUTO-00 自主控制面通过（2026-07-28）
 
@@ -80,7 +80,7 @@ Stage4T 已完成 200 组固定时长瞬态、120 组闭环航向、A/B/C/D 各 
 
 ## 当前状态
 
-- Stage 0–5A 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；Stage5BR6W 工程支线停在 candidate-footprint Phase 4 seed 0 失败边界，正式 Stage5BR6-A 仍等待两份独立真人 response。
+- Stage 0–5A 及自主 AUTO-00/AUTO-01 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；当前自主候选为 opt-in G2-C3，下一阶段为 AUTO-02。Stage5BR6W 的 V4 candidate-footprint 失败与 Stage5BR6-A 等待真人 response 均作为独立历史边界保留。
 - precision mapping 与 localization/coverage 包络分别限制为 0.30/0.25 和 0.45/0.35 m/s、rad/s；0.60 rad/s stress 默认禁用且仍失败。
 - Stage4W hybrid 10-seed 的 XY RMSE P50/P95/max 为 0.02825/0.03726/0.03778 m，定位门禁通过且 GT 控制违规为 0。
 - 完整 Coverage 静态 5/5 通过，每次均执行统一几何生成的 17/17 组件；动态障碍 20/20、碰撞 0，过滤器、30 次急停和 rosbag 回放全部通过。
@@ -165,4 +165,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-29：AUTO-01 的 opt-in G2-C3 已通过 3/3 冷启动、seed0 17/17 完整覆盖、MCAP 回放以及低/高障碍各 30 次正式门；紧凑证据已生成，下一阶段为 AUTO-02。生产默认未改变，真实域、真人与 J6 门仍未执行，不提前声明通过。
+2026-07-29：完成 AUTO-01 合并后 neat-freak 同步；`README_FIRST.md`、`PROJECT_SPEC.md`、`STAGE_GATES.md` 和兼容性说明现已统一指向 G2-C3 与 AUTO-02，同时保留 Stage5BR6W、真人、真实域和 J6 的原有边界。

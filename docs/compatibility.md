@@ -23,6 +23,8 @@ Stage5A 继续使用该 Docker/headless GPU 通道完成 14 项 ROS 测试、20-
 
 Stage5B 至 Stage5BR6W 使用独立 `tzcup/sanitation-jazzy:stage5b` 镜像，在 Stage5A 基础上固定 PyTorch 2.5.1+cu124、ONNX 1.17.0 和 ONNX Runtime 1.20.1，RTX 4080 Laptop GPU 可用于训练。Stage5BR3 已在该 headless GPU 通道完成六个不同世界的真实车辆 RGB-D/semantic/instance 同步契约、80 scene/800 frame 原生采集与 QA、四档分辨率扫描和三次 split-model screening；Stage5BR5 随后完成 V1/V2/V4 六世界相机消融，Stage5BR6-A 又通过实际 V4 精确同步链采集 70 张 label=0 hard-negative。Stage5BR6W 在同一通道实际启动 V4/candidate-footprint Stage4W seed 0，并在 `no_reachable_clean_route` 处 fail-closed；这证明运行环境可执行该 profile，但不构成工程 Oracle 通过。正式阻断仍包括两名独立真人 response 未返回；Horizon J6 工具链和原生 Ubuntu/WSLg GUI 也仍是独立缺口。
 
+AUTO-01 继续复用该镜像和 NVIDIA headless 通道，实际构建并运行 opt-in G2-C3：3/3 冷启动、seed0 17/17 完整 Coverage、MCAP 回放以及低/高障碍各 30 次均通过。该结果证明 `V5_retracted`、点云自滤波和 Nav2 安全链在当前容器环境可重复运行，但仍不外推为 GUI、真实车辆、真实域或 J6 验收。
+
 ## 第三方锁定
 
 精确版本见 `repos/locked_revisions.json`。2026-07-14 远端核查发现：

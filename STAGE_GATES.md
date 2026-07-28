@@ -1,6 +1,15 @@
 # Codex 阶段推进与验收门
 
-## Stage5BR6W 工程豁免支线（当前）
+## AUTO-01 自主几何与障碍安全门（当前）
+
+- 选中配置：opt-in `G2-C3 / V5_retracted`；production 默认未改变。
+- 冷启动：`3/3`，Nav2 参数服务 `25/25/26 s` 内就绪。
+- seed0 覆盖：`17/17`、经验覆盖率 `0.932`、碰撞 `0`、keepout `0`、swath 冲突 `0`、定位 RMSE `0.0339096 m`，MCAP 回放通过。
+- 障碍矩阵：低障碍 `30/30`、高障碍 `30/30`，保护触发 `60/60`、碰撞 `0`、false-safe `0`。
+- 状态：`AUTO-01=PASS`，下一阶段为 AUTO-02；真人、真实域、J6 和竞赛效率状态不变。
+- 证据：`artifacts/autonomous_auto01_20260729_evidence/`。
+
+## Stage5BR6W 工程豁免支线（历史）
 
 - 工程豁免、V4 engineering camera、工程 policy 和 opt-in candidate footprint：已实现；正式人工状态未改变。
 - 运行时 footprint 一致性：通过；local/global costmap、Collision Monitor 订阅和 Coverage radius 与候选配置一致，production 默认不变。
@@ -10,7 +19,7 @@
 - 按停止条件，seed 1–4、dynamic interactions、estop 30 和 Phase 5 多世界 Oracle 均未执行。
 - `READY_FOR_STAGE5BR6W_ORACLE_ENGINEERING=false`、`READY_FOR_STAGE5BR7_ENGINEERING=false`；所有正式 Stage5BR6/Stage5B readiness 继续为 false。
 
-## Stage5BR6-A 双人盲审交付门（当前）
+## Stage5BR6-A 双人盲审交付门（历史独立门）
 
 - V4 只作为预注册候选，`camera_selected=false`。
 - Reviewer A/B 各 270 张：Stage5BR5 正样本 200 张，真实 Gazebo no-target/hard-negative 70 张。
