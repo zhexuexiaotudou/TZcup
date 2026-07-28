@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "program": "TZcup autonomous final",
+  "stage_id": "AUTO-00",
+  "baseline_commit": "ac6d5697427425c438ff0f42780ff6ab772226f9",
+  "implementation_commit": "fbeba7471d2e93131c1eda94a6918aea3c5836ed",
+  "started_at": "2026-07-28T00:00:00Z",
+  "completed_at": "2026-07-28T16:11:19Z",
+  "status": "PASS",
+  "first_blocking_layer": null,
+  "attempt_count": 4,
+  "machine_gate_pass": true,
+  "human_review_required": false,
+  "human_approval_required": false,
+  "competition_evidence": false,
+  "dependencies": {},
+  "metrics": {
+    "baseline_commit_resolved": true,
+    "historical_evidence_modified": false,
+    "stage_registry_valid": true,
+    "dependency_cycle_count": 0,
+    "state_schema_valid": true,
+    "run_plan_matches_registry": true,
+    "resume_from_interruption_test": true,
+    "idempotent_rerun_test": true,
+    "ci_fast": true,
+    "state_invariants": true,
+    "secret_scan": true,
+    "git_diff_check": true
+  },
+  "unexecuted_items": [],
+  "next_scheduled_stages": [
+    "AUTO-01",
+    "AUTO-04",
+    "AUTO-09",
+    "AUTO-10",
+    "AUTO-11",
+    "AUTO-12",
+    "AUTO-13",
+    "AUTO-14"
+  ]
+}

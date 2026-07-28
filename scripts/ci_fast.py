@@ -26,6 +26,13 @@ def require_project_files() -> None:
         ROOT / "STAGE_GATES.md",
         ROOT / "docs" / "development-workflow.md",
         ROOT / ".github" / "workflows" / "development-workflow.yml",
+        ROOT / "AUTONOMOUS_STATE.json",
+        ROOT / "AUTONOMOUS_RUN_PLAN.json",
+        ROOT / "config" / "autonomous_stage_registry.yaml",
+        ROOT / "scripts" / "autonomous_runner.py",
+        ROOT / "scripts" / "verify_evidence_manifest.py",
+        ROOT / "scripts" / "verify_state_invariants.py",
+        ROOT / "scripts" / "scan_secrets.py",
     )
     missing = [str(path.relative_to(ROOT)) for path in required if not path.is_file()]
     if missing:
@@ -46,6 +53,12 @@ def validate_structured_files() -> None:
     for pattern in ("*.yaml", "*.yml"):
         for path in sorted(SOURCE_ROOT.rglob(pattern)):
             yaml.safe_load(path.read_text(encoding="utf-8"))
+
+    json.loads((ROOT / "AUTONOMOUS_STATE.json").read_text(encoding="utf-8"))
+    json.loads((ROOT / "AUTONOMOUS_RUN_PLAN.json").read_text(encoding="utf-8"))
+    yaml.safe_load(
+        (ROOT / "config" / "autonomous_stage_registry.yaml").read_text(encoding="utf-8")
+    )
 
     xml_patterns = ("package.xml", "*.xacro", "*.sdf", "*.urdf")
     seen: set[Path] = set()
@@ -117,6 +130,7 @@ def run_ros_independent_tests() -> None:
         learning_package / "test" / "test_g2_metrics.py",
         learning_package / "test" / "test_gazebo_g2.py",
         learning_package / "test" / "test_stage5br6_handoff.py",
+        ROOT / "scripts" / "test_autonomous_runner.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])
     if result != pytest.ExitCode.OK:
@@ -129,6 +143,15 @@ def main() -> int:
     validate_structured_files()
     validate_stage4w_runtime_contract()
     run_ros_independent_tests()
+    from autonomous_runner import build_plan, load_json, load_registry, validate_registry, validate_state
+
+    registry = load_registry()
+    state = load_json(ROOT / "AUTONOMOUS_STATE.json")
+    errors = validate_registry(registry) + validate_state(state, registry)
+    if load_json(ROOT / "AUTONOMOUS_RUN_PLAN.json") != build_plan(registry):
+        errors.append("AUTONOMOUS_RUN_PLAN.json differs from registry")
+    if errors:
+        raise RuntimeError("autonomous control-plane validation failed: " + "; ".join(errors))
     print("development workflow fast validation passed")
     return 0
 

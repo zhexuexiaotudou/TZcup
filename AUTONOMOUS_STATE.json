@@ -1,0 +1,357 @@
+{
+  "schema_version": 1,
+  "program": "TZcup autonomous final",
+  "repository": "zhexuexiaotudou/TZcup",
+  "baseline_commit_at_planning": "ac6d5697427425c438ff0f42780ff6ab772226f9",
+  "autonomous_policy": {
+    "autonomous_execution": true,
+    "human_review_required": false,
+    "human_approval_required": false,
+    "ask_user_during_run": false,
+    "auto_continue_after_machine_gate": true,
+    "auto_merge_on_green": true,
+    "preserve_historical_evidence": true
+  },
+  "run": {
+    "run_id": "tzcup-autonomous-20260728",
+    "branch": "agent/autonomous-final",
+    "started_at": "2026-07-28T00:00:00Z",
+    "completed_at": null,
+    "current_stage": "AUTO-01",
+    "status": "RUNNING",
+    "last_commit": "fbeba7471d2e93131c1eda94a6918aea3c5836ed",
+    "merge_blocked_by_branch_policy": false
+  },
+  "historical_boundaries": {
+    "stage5br6a_human_review_completed": false,
+    "stage5br6a_manual_audit_pass": false,
+    "stage5br6w_first_blocker": "no_reachable_clean_route",
+    "historical_evidence_modified": false
+  },
+  "external_resources": {
+    "real_domain_ground_truth_available": null,
+    "j6_official_toolchain_available": null,
+    "j6_board_available": null,
+    "physical_vehicle_available": null,
+    "physical_arm_available": null
+  },
+  "stages": {
+    "AUTO-00": {
+      "status": "PASS",
+      "machine_gate_pass": true,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 4,
+      "selected_attempt": "python_orchestrator",
+      "implementation_commit": "fbeba7471d2e93131c1eda94a6918aea3c5836ed",
+      "evidence_dir": "artifacts/autonomous_auto00_20260728T161119Z_evidence",
+      "metrics": {
+        "baseline_commit_resolved": true,
+        "historical_evidence_modified": false,
+        "stage_registry_valid": true,
+        "dependency_cycle_count": 0,
+        "state_schema_valid": true,
+        "run_plan_matches_registry": true,
+        "resume_from_interruption_test": true,
+        "idempotent_rerun_test": true,
+        "ci_fast": true,
+        "state_invariants": true,
+        "secret_scan": true,
+        "git_diff_check": true
+      },
+      "unexecuted_items": [],
+      "dependencies": []
+    },
+    "AUTO-01": {
+      "status": "PENDING",
+      "machine_gate_pass": false,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 0,
+      "selected_attempt": null,
+      "implementation_commit": null,
+      "evidence_dir": null,
+      "metrics": {},
+      "unexecuted_items": [],
+      "dependencies": [
+        "AUTO-00"
+      ]
+    },
+    "AUTO-02": {
+      "status": "PENDING",
+      "machine_gate_pass": false,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 0,
+      "selected_attempt": null,
+      "implementation_commit": null,
+      "evidence_dir": null,
+      "metrics": {},
+      "unexecuted_items": [],
+      "dependencies": [
+        "AUTO-01"
+      ]
+    },
+    "AUTO-03": {
+      "status": "PENDING",
+      "machine_gate_pass": false,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 0,
+      "selected_attempt": null,
+      "implementation_commit": null,
+      "evidence_dir": null,
+      "metrics": {},
+      "unexecuted_items": [],
+      "dependencies": [
+        "AUTO-01"
+      ]
+    },
+    "AUTO-04": {
+      "status": "PENDING",
+      "machine_gate_pass": false,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 0,
+      "selected_attempt": null,
+      "implementation_commit": null,
+      "evidence_dir": null,
+      "metrics": {},
+      "unexecuted_items": [],
+      "dependencies": [
+        "AUTO-00"
+      ]
+    },
+    "AUTO-05": {
+      "status": "PENDING",
+      "machine_gate_pass": false,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 0,
+      "selected_attempt": null,
+      "implementation_commit": null,
+      "evidence_dir": null,
+      "metrics": {},
+      "unexecuted_items": [],
+      "dependencies": [
+        "AUTO-04"
+      ]
+    },
+    "AUTO-06": {
+      "status": "PENDING",
+      "machine_gate_pass": false,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 0,
+      "selected_attempt": null,
+      "implementation_commit": null,
+      "evidence_dir": null,
+      "metrics": {},
+      "unexecuted_items": [],
+      "dependencies": [
+        "AUTO-05"
+      ]
+    },
+    "AUTO-07": {
+      "status": "PENDING",
+      "machine_gate_pass": false,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 0,
+      "selected_attempt": null,
+      "implementation_commit": null,
+      "evidence_dir": null,
+      "metrics": {},
+      "unexecuted_items": [],
+      "dependencies": [
+        "AUTO-06"
+      ]
+    },
+    "AUTO-08": {
+      "status": "PENDING",
+      "machine_gate_pass": false,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 0,
+      "selected_attempt": null,
+      "implementation_commit": null,
+      "evidence_dir": null,
+      "metrics": {},
+      "unexecuted_items": [],
+      "dependencies": [
+        "AUTO-02",
+        "AUTO-03",
+        "AUTO-07"
+      ]
+    },
+    "AUTO-09": {
+      "status": "PENDING",
+      "machine_gate_pass": false,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 0,
+      "selected_attempt": null,
+      "implementation_commit": null,
+      "evidence_dir": null,
+      "metrics": {},
+      "unexecuted_items": [],
+      "dependencies": [
+        "AUTO-00"
+      ]
+    },
+    "AUTO-10": {
+      "status": "PENDING",
+      "machine_gate_pass": false,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 0,
+      "selected_attempt": null,
+      "implementation_commit": null,
+      "evidence_dir": null,
+      "metrics": {},
+      "unexecuted_items": [],
+      "dependencies": [
+        "AUTO-00"
+      ]
+    },
+    "AUTO-11": {
+      "status": "PENDING",
+      "machine_gate_pass": false,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 0,
+      "selected_attempt": null,
+      "implementation_commit": null,
+      "evidence_dir": null,
+      "metrics": {},
+      "unexecuted_items": [],
+      "dependencies": [
+        "AUTO-00"
+      ]
+    },
+    "AUTO-12": {
+      "status": "PENDING",
+      "machine_gate_pass": false,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 0,
+      "selected_attempt": null,
+      "implementation_commit": null,
+      "evidence_dir": null,
+      "metrics": {},
+      "unexecuted_items": [],
+      "dependencies": [
+        "AUTO-00"
+      ]
+    },
+    "AUTO-13": {
+      "status": "PENDING",
+      "machine_gate_pass": false,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 0,
+      "selected_attempt": null,
+      "implementation_commit": null,
+      "evidence_dir": null,
+      "metrics": {},
+      "unexecuted_items": [],
+      "dependencies": [
+        "AUTO-00"
+      ]
+    },
+    "AUTO-14": {
+      "status": "PENDING",
+      "machine_gate_pass": false,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 0,
+      "selected_attempt": null,
+      "implementation_commit": null,
+      "evidence_dir": null,
+      "metrics": {},
+      "unexecuted_items": [],
+      "dependencies": [
+        "AUTO-00"
+      ]
+    },
+    "AUTO-15": {
+      "status": "PENDING",
+      "machine_gate_pass": false,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 0,
+      "selected_attempt": null,
+      "implementation_commit": null,
+      "evidence_dir": null,
+      "metrics": {},
+      "unexecuted_items": [],
+      "dependencies": [
+        "AUTO-02",
+        "AUTO-08",
+        "AUTO-09",
+        "AUTO-10",
+        "AUTO-11",
+        "AUTO-12"
+      ]
+    },
+    "AUTO-16": {
+      "status": "PENDING",
+      "machine_gate_pass": false,
+      "blocked": false,
+      "blocked_external": false,
+      "first_blocking_layer": null,
+      "attempt_count": 0,
+      "selected_attempt": null,
+      "implementation_commit": null,
+      "evidence_dir": null,
+      "metrics": {},
+      "unexecuted_items": [],
+      "dependencies": [
+        "AUTO-15"
+      ]
+    }
+  },
+  "final_states": {
+    "AUTONOMOUS_SOFTWARE_COMPLETE": false,
+    "SIMULATION_COMPETITION_MATRIX_PASS": false,
+    "REAL_DOMAIN_PASS": false,
+    "REAL_DOMAIN_BLOCKED_EXTERNAL": false,
+    "J6_TOOLCHAIN_PASS": false,
+    "J6_RUNTIME_PASS": false,
+    "J6_RUNTIME_BLOCKED_EXTERNAL": false,
+    "FINAL_COMPETITION_EVIDENCE_COMPLETE": false
+  },
+  "fixed_competition_metrics": {
+    "garbage_macro_f1_min": 0.95,
+    "llm_decomposition_accuracy_min": 0.95,
+    "localization_trajectory_xy_rmse_m_max": 0.05,
+    "cleaning_width_m_min": 0.6,
+    "mapping_area_m2_min": 20000,
+    "effective_cleaning_rate_m2_h_min": 3500,
+    "dynamic_collision_max": 0,
+    "boundary_violation_max": 0,
+    "emergency_stop_success_min": 1.0
+  },
+  "evidence": {
+    "final_evidence_index": null,
+    "final_blocker_register": null,
+    "final_artifact_manifest": null,
+    "final_release_zip": null
+  }
+}

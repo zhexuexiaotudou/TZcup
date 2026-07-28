@@ -1,5 +1,11 @@
 # TZcup 无人清扫车仿真项目
 
+## AUTO-00 自主控制面通过（2026-07-28）
+
+已依据“全流程自主推进规划包”从远端 `main@ac6d569` 建立 `AUTO-00` 至 `AUTO-16` 的持久状态机和依赖 DAG。新增 registry、状态、运行计划、无人值守 runner、证据 manifest 校验、状态防伪、secret scan 与受保护的 GitHub PR/合并适配器；未配置命令、未执行阶段和外部资源缺口都不会被写成通过。控制面支持断点续跑、已通过证据幂等复用、失败依赖传播和独立 lane 继续推进，入口见 [`docs/autonomous-control-plane.md`](docs/autonomous-control-plane.md)。
+
+AUTO-00 机器门已通过：基线 commit 可解析、历史 evidence 未修改、registry/state/plan 均有效、依赖环为 0，真实断点续跑与幂等重跑测试、`ci_fast`、状态防伪、secret scan 和 diff 检查全部通过。紧凑证据位于 [`artifacts/autonomous_auto00_20260728T161119Z_evidence/`](artifacts/autonomous_auto00_20260728T161119Z_evidence/)。既有事实边界保持不变：Stage5BR6-A 的两项人工标志为 false；Stage5BR6W 首个阻断层仍是 `no_reachable_clean_route`。下一执行阶段为 AUTO-01，同时 AUTO-04/09/10/11/12/13/14 已进入可调度集合。
+
 ## Stage5BR6W 人工门豁免工程支线与 Phase 4 停止边界（2026-07-21）
 
 Stage5BR6W 在不改变真人双盲门的前提下建立了独立工程支线：V4 仅冻结为 engineering verification candidate，新 policy `stage5br6w_v4_engineering_geometry_ready_v1` 明确 `human_validated=false`、`competition_metric_eligible=false`，candidate footprint 由 V4 AABB、现有 production footprint 和 0.03 m 支架裕量自动推导。`camera_profile:=V4_engineering` 与 `footprint_profile:=stage5br6w_v4` 均为 opt-in，默认生产相机和 footprint 未改变；运行时审计确认 local/global costmap、Collision Monitor 与 Coverage 使用同一候选 footprint。
@@ -153,4 +159,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-21：Stage5BR6W 已增加不污染正式门的 V4 engineering profile、工程 policy、candidate footprint、整多边形/真实 CameraInfo/costmap footprint cost 的 observation planner，以及独立 Docker 回归入口。真实 Phase 4 seed 0 与合并后独立复验都在 `no_reachable_clean_route` 失败；复验定位 RMSE 为 `0.05342 m > 0.05 m`，进一步确认工程门未通过。Oracle、模型和 J6 未执行，正式人工门仍等待两名真人。
+2026-07-28：AUTO-00 机器门通过。控制面将 17 个阶段固化为可恢复 DAG，断点续跑、幂等重跑、全量快速门禁、状态防伪、secret scan 与证据 manifest 均通过；历史 evidence 与人工标志保持只读。后续仿真、真实域与 J6 门尚未执行，不提前声明通过。
