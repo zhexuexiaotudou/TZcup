@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "topological_levels": [
+    [
+      "AUTO-00"
+    ],
+    [
+      "AUTO-01",
+      "AUTO-04",
+      "AUTO-09",
+      "AUTO-10",
+      "AUTO-11",
+      "AUTO-12",
+      "AUTO-13",
+      "AUTO-14"
+    ],
+    [
+      "AUTO-02",
+      "AUTO-03",
+      "AUTO-05"
+    ],
+    [
+      "AUTO-06"
+    ],
+    [
+      "AUTO-07"
+    ],
+    [
+      "AUTO-08"
+    ],
+    [
+      "AUTO-15"
+    ],
+    [
+      "AUTO-16"
+    ]
+  ],
+  "dependency_cycle_count": 0
+}

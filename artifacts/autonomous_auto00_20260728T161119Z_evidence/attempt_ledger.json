@@ -1,0 +1,94 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "attempt_id": "AUTO-00-GATE-1",
+      "hypothesis": "ci_fast passes on the implementation worktree",
+      "input_commit": "fbeba7471d2e93131c1eda94a6918aea3c5836ed",
+      "configuration_sha256": "df363907cf71b585ea7c22eb378024b179151d2ebfb46240fa56cfb6a37f0b46",
+      "changed_variables": [],
+      "fixed_variables": [],
+      "commands": [
+        [
+          "C:\\Users\\zhexu\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "scripts/ci_fast.py"
+        ]
+      ],
+      "returncode": 0,
+      "stdout": "........................................................................ [ 94%]\n....                                                                     [100%]\n76 passed in 3.71s\ndevelopment workflow fast validation passed\n",
+      "stderr": "",
+      "result": "PASS",
+      "first_failure": null,
+      "metrics": {},
+      "raw_evidence": [],
+      "decision": "select"
+    },
+    {
+      "attempt_id": "AUTO-00-GATE-2",
+      "hypothesis": "verify_state_invariants passes on the implementation worktree",
+      "input_commit": "fbeba7471d2e93131c1eda94a6918aea3c5836ed",
+      "configuration_sha256": "4fa0df002d9a6311ffc3d27e33fa852db8f67b594f00362de7200b806906b7e9",
+      "changed_variables": [],
+      "fixed_variables": [],
+      "commands": [
+        [
+          "C:\\Users\\zhexu\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "scripts/verify_state_invariants.py"
+        ]
+      ],
+      "returncode": 0,
+      "stdout": "{\n  \"valid\": true,\n  \"errors\": []\n}\n",
+      "stderr": "",
+      "result": "PASS",
+      "first_failure": null,
+      "metrics": {},
+      "raw_evidence": [],
+      "decision": "select"
+    },
+    {
+      "attempt_id": "AUTO-00-GATE-3",
+      "hypothesis": "scan_secrets passes on the implementation worktree",
+      "input_commit": "fbeba7471d2e93131c1eda94a6918aea3c5836ed",
+      "configuration_sha256": "448e9c4d5eeb8b5b3fd2c4d8912504e7b2100afc56022f46bc2dfc0eb49428be",
+      "changed_variables": [],
+      "fixed_variables": [],
+      "commands": [
+        [
+          "C:\\Users\\zhexu\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "scripts/scan_secrets.py"
+        ]
+      ],
+      "returncode": 0,
+      "stdout": "secret scan passed (1632 candidate paths checked)\n",
+      "stderr": "",
+      "result": "PASS",
+      "first_failure": null,
+      "metrics": {},
+      "raw_evidence": [],
+      "decision": "select"
+    },
+    {
+      "attempt_id": "AUTO-00-GATE-4",
+      "hypothesis": "git_diff_check passes on the implementation worktree",
+      "input_commit": "fbeba7471d2e93131c1eda94a6918aea3c5836ed",
+      "configuration_sha256": "466c2f308b48c7661d646fdd068fbecea974c665fe65dbf8ed508f224180ce0b",
+      "changed_variables": [],
+      "fixed_variables": [],
+      "commands": [
+        [
+          "git",
+          "diff",
+          "--check"
+        ]
+      ],
+      "returncode": 0,
+      "stdout": "",
+      "stderr": "",
+      "result": "PASS",
+      "first_failure": null,
+      "metrics": {},
+      "raw_evidence": [],
+      "decision": "select"
+    }
+  ]
+}
