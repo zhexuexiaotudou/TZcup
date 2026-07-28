@@ -36,10 +36,16 @@ nav_params="${WS}/install/sanitation_navigation/share/sanitation_navigation/conf
 mission_config="${WS}/install/sanitation_tasks/share/sanitation_tasks/config/demo_area.yaml"
 footprint_profile="${STAGE5BR6W_FOOTPRINT_PROFILE:-production}"
 camera_profile="${STAGE5BR6W_CAMERA_PROFILE:-production}"
-if [[ "${footprint_profile}" == "stage5br6w_v4" ]]; then
-  profile="${WS}/install/sanitation_navigation/share/sanitation_navigation/config/stage5br6w_v4_candidate_footprint.yaml"
-  nav_params="${OUT}/nav2_stage5br6w_v4.yaml"
-  mission_config="${OUT}/demo_area_stage5br6w_v4.yaml"
+if [[ "${footprint_profile}" != "production" ]]; then
+  case "${footprint_profile}" in
+    stage5br6w_v4) profile_name="stage5br6w_v4_candidate_footprint.yaml" ;;
+    auto01_g1_height_banded) profile_name="auto01_g1_height_banded.yaml" ;;
+    auto01_g2_v5_retracted) profile_name="auto01_g2_v5_retracted.yaml" ;;
+    *) echo "Unsupported footprint profile: ${footprint_profile}" >&2; exit 2 ;;
+  esac
+  profile="${WS}/install/sanitation_navigation/share/sanitation_navigation/config/${profile_name}"
+  nav_params="${OUT}/nav2_${footprint_profile}.yaml"
+  mission_config="${OUT}/demo_area_${footprint_profile}.yaml"
   python3 "${PACK_ROOT}/scripts/stage5br6w_profile.py" \
     --base-nav2 "${WS}/install/sanitation_navigation/share/sanitation_navigation/config/nav2.yaml" \
     --base-mission "${WS}/install/sanitation_tasks/share/sanitation_tasks/config/demo_area.yaml" \
@@ -119,10 +125,16 @@ for node in "${filter_lifecycle_nodes[@]}"; do
   done
   test "${active}" -eq 1
 done
-if [[ "${footprint_profile}" == "stage5br6w_v4" ]]; then
+if [[ "${footprint_profile}" != "production" ]]; then
   ros2 param dump /local_costmap/local_costmap > "${OUT}/runtime_local_costmap_params.yaml"
   ros2 param dump /global_costmap/global_costmap > "${OUT}/runtime_global_costmap_params.yaml"
-  ros2 param dump /collision_monitor > "${OUT}/runtime_collision_monitor_params.yaml"
+  if [[ "${footprint_profile}" == "auto01_g1_height_banded" ]]; then
+    "${PACK_ROOT}/scripts/auto01_capture_collision_params.sh" \
+      "${OUT}/runtime_collision_monitor_selected_params.json"
+  else
+    bash "${PACK_ROOT}/scripts/auto01_capture_g2_params.sh" \
+      "${OUT}/runtime_collision_monitor_g2_params.json"
+  fi
   timeout 20 ros2 topic echo /local_costmap/published_footprint geometry_msgs/msg/PolygonStamped --once \
     > "${OUT}/runtime_local_published_footprint.yaml"
   timeout 20 ros2 topic echo /global_costmap/published_footprint geometry_msgs/msg/PolygonStamped --once \
@@ -152,6 +164,11 @@ grep -qi 'true' "${OUT}/global_costmap_inf_is_valid.txt"
 timeout 20 ros2 run tf2_ros tf2_echo map base_footprint \
   > "${OUT}/tf_map_base.txt" 2>&1 || true
 grep -q 'Translation:' "${OUT}/tf_map_base.txt"
+if [[ "${camera_profile}" != "production" ]]; then
+  timeout 90 ros2 topic echo /verification_camera/color/image_raw \
+    sensor_msgs/msg/Image --field header --once \
+    > "${OUT}/verification_camera_sample.yaml"
+fi
 
 setsid ros2 bag record --storage mcap --output "${OUT}/static_coverage_bag" \
   /clock /scan /odom /gnss/fix /localization/fused_pose /localization/refined_pose \

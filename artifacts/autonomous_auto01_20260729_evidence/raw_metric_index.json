@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "raw_metrics": [
+    {
+      "path": "cold_start/trial_0.json",
+      "sha256": "6db89c3ba1a71bf9fef0dbb655a7e28aab69a396eb4b6c690b036b510f124305"
+    },
+    {
+      "path": "cold_start/trial_1.json",
+      "sha256": "826a1b2bdc52653f6ebb9c51797fe72e2bbc8f443730a0fcdcba80796dd7572d"
+    },
+    {
+      "path": "cold_start/trial_2.json",
+      "sha256": "e75842cf0589559c41dec0747b04580f1c5ab54ffd456587daed6608b8cc0f08"
+    },
+    {
+      "path": "formal/coverage_report.json",
+      "sha256": "9691c3f5736c058d22b26ad678c332c13f4ae432841dd70c5d62a02b6b70261b"
+    },
+    {
+      "path": "formal/nav2_auto01_g2_v5_retracted.yaml",
+      "sha256": "1b7e61d0b2b8fce9257309652a92d9c305c610189167a92c85ad285737b05c28"
+    },
+    {
+      "path": "formal/replay_coverage_state.txt",
+      "sha256": "40c29379f93657cdd3ebea8fa89182241bef1c1f7ff863a2e09df36e491b6b84"
+    },
+    {
+      "path": "formal/runtime_collision_monitor_g2_params.json",
+      "sha256": "b453da8e2d95d4532cdcc0a2225269902ee5d653ed0e71cf86f8b05d7d644a87"
+    },
+    {
+      "path": "formal/runtime_geometry_audit.json",
+      "sha256": "7727d83c02ac1b37b386cb50e77f795357aea39cf2926c6916bfe7f84d7000a9"
+    },
+    {
+      "path": "formal/stage4w_static_summary.json",
+      "sha256": "899ae0f544bc5713548a1fd5f70c9d168a7825dc91fa5e8893c4227a9308d730"
+    },
+    {
+      "path": "obstacles/formal_report.json",
+      "sha256": "4e3c8af10d246b42b428e0997a1f2e27e7dfcd787a14db579a8a8d94a8a49f78"
+    },
+    {
+      "path": "obstacles/smoke_report.json",
+      "sha256": "7cef339030b1adca3f26324dc3a09b7749a5b749a29a45900304e9cfaa1c3091"
+    },
+    {
+      "path": "offline/audit.json",
+      "sha256": "5e32118272ead1848bd460cd10282fa67ceac8b0b72b435561effb071a818bc2"
+    }
+  ]
+}

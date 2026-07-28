@@ -18,6 +18,8 @@ starter_ws/src/sanitation_navigation/maps/stage4v_surveyed_reference.yaml -text 
 starter_ws/src/sanitation_worlds/worlds/sanitation_structured_world.sdf -text !eol
 
 # Review evidence manifests hash exact bytes; never normalize or diff their payloads.
+GPT_REVIEW_STAGE*.md -text !eol
+artifacts/stage4*_review/** binary !eol
 artifacts/stage4w_*_review/** binary
 artifacts/stage5a_*_review/** binary
 artifacts/stage5b_*_review/** binary

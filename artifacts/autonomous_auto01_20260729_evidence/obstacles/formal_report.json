@@ -1,0 +1,1044 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-01",
+  "attempt_id": "AUTO-01-G2-C3-OBSTACLE-R1",
+  "architecture": "G2",
+  "profile": "auto01_g2_v5_retracted",
+  "trial_count_per_class": 30,
+  "low_obstacle": {
+    "pass_count": 30,
+    "collision_count": 0,
+    "monitor_trigger_count": 30
+  },
+  "tall_obstacle": {
+    "pass_count": 30,
+    "collision_count": 0,
+    "camera_envelope_protection_trigger_count": 30
+  },
+  "height_classification_false_safe_count": 0,
+  "height_classification_false_safe_rate": 0.0,
+  "collision_count": 0,
+  "gate_pass": true,
+  "trials": [
+    {
+      "kind": "low",
+      "trial": 0,
+      "obstacle_pose_map": [
+        0.84,
+        0.03
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.008474420614303924,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.22916666666666666,
+      "minimum_axis_clearance_m": 0.281525579385696,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 1,
+      "obstacle_pose_map": [
+        0.841663293526542,
+        0.02934442802201417
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.008657857105195177,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.2830054364213468,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 2,
+      "obstacle_pose_map": [
+        0.8432538931446064,
+        0.027406363729278026
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.008898517756933622,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.28435537538767275,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 3,
+      "obstacle_pose_map": [
+        0.8447022820183397,
+        0.024270509831248423
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.008411827214398926,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.2862904548039408,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 4,
+      "obstacle_pose_map": [
+        0.8459451586038191,
+        0.020073918190765747
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.0075312114588070855,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.22916666666666666,
+      "minimum_axis_clearance_m": 0.288413947145012,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 5,
+      "obstacle_pose_map": [
+        0.8469282032302755,
+        0.015000000000000003
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.006020828434449399,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.25,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.29090737479582607,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 6,
+      "obstacle_pose_map": [
+        0.8476084521303612,
+        0.009270509831248424
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.004576490759750307,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.2930319613706108,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 7,
+      "obstacle_pose_map": [
+        0.8479561751629462,
+        0.0031358538980296034
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.003126471019871957,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.25,
+      "maximum_output_command_mps": 0.25,
+      "minimum_axis_clearance_m": 0.2948297041430742,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 8,
+      "obstacle_pose_map": [
+        0.8479561751629462,
+        -0.0031358538980296
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.003125024956399436,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.2948311502065467,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 9,
+      "obstacle_pose_map": [
+        0.8476084521303612,
+        -0.00927050983124842
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.004560388456368969,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.25,
+      "maximum_output_command_mps": 0.25,
+      "minimum_axis_clearance_m": 0.29304806367399217,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 10,
+      "obstacle_pose_map": [
+        0.8469282032302755,
+        -0.014999999999999993
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.006026952405739472,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.290901250824536,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 11,
+      "obstacle_pose_map": [
+        0.8459451586038191,
+        -0.020073918190765736
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.0073433578761914475,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.25,
+      "maximum_output_command_mps": 0.25,
+      "minimum_axis_clearance_m": 0.28860180072762764,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 12,
+      "obstacle_pose_map": [
+        0.8447022820183397,
+        -0.02427050983124842
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.008064476422812383,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.2866378055955273,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 13,
+      "obstacle_pose_map": [
+        0.8432538931446064,
+        -0.02740636372927803
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.008940308482991988,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.25,
+      "maximum_output_command_mps": 0.25,
+      "minimum_axis_clearance_m": 0.2843135846616144,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 14,
+      "obstacle_pose_map": [
+        0.841663293526542,
+        -0.02934442802201417
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.008885932962357401,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.28277736056418457,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 15,
+      "obstacle_pose_map": [
+        0.84,
+        -0.03
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.008282404514124764,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.25,
+      "maximum_output_command_mps": 0.25,
+      "minimum_axis_clearance_m": 0.28171759548587516,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 16,
+      "obstacle_pose_map": [
+        0.8383367064734579,
+        -0.02934442802201417
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.007617811944752084,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.25,
+      "maximum_output_command_mps": 0.25,
+      "minimum_axis_clearance_m": 0.2807188945287058,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 17,
+      "obstacle_pose_map": [
+        0.8367461068553935,
+        -0.027406363729278026
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.006213966411600325,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.25,
+      "maximum_output_command_mps": 0.25,
+      "minimum_axis_clearance_m": 0.28053214044379315,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 18,
+      "obstacle_pose_map": [
+        0.8352977179816602,
+        -0.024270509831248427
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.004400880095575488,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.28089683788608466,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 19,
+      "obstacle_pose_map": [
+        0.8340548413961808,
+        -0.020073918190765754
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.0023851694558114644,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.25,
+      "maximum_output_command_mps": 0.25,
+      "minimum_axis_clearance_m": 0.2816696719403693,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 20,
+      "obstacle_pose_map": [
+        0.8330717967697244,
+        -0.015000000000000013
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 2.595960841222933e-05,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.25,
+      "maximum_output_command_mps": 0.25,
+      "minimum_axis_clearance_m": 0.28304583716131215,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 21,
+      "obstacle_pose_map": [
+        0.8323915478696388,
+        -0.009270509831248426
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 8.881784197001252e-16,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.2823915478696378,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 22,
+      "obstacle_pose_map": [
+        0.8320438248370537,
+        -0.003135853898029627
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 8.881784197001252e-16,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.2820438248370528,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 23,
+      "obstacle_pose_map": [
+        0.8320438248370537,
+        0.0031358538980295896
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 8.881784197001252e-16,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.2820438248370528,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 24,
+      "obstacle_pose_map": [
+        0.8323915478696388,
+        0.009270509831248417
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 8.881784197001252e-16,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.2823915478696378,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 25,
+      "obstacle_pose_map": [
+        0.8330717967697244,
+        0.015000000000000003
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.00013029540511677595,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.25,
+      "maximum_output_command_mps": 0.25,
+      "minimum_axis_clearance_m": 0.2829415013646076,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 26,
+      "obstacle_pose_map": [
+        0.8340548413961808,
+        0.020073918190765754
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.002391339986191454,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.2816635014099893,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 27,
+      "obstacle_pose_map": [
+        0.8352977179816602,
+        0.02427050983124842
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.0044194791679492695,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.25,
+      "maximum_output_command_mps": 0.25,
+      "minimum_axis_clearance_m": 0.2808782388137109,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 28,
+      "obstacle_pose_map": [
+        0.8367461068553935,
+        0.02740636372927803
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.006136565198520572,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.2806095416568729,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "low",
+      "trial": 29,
+      "obstacle_pose_map": [
+        0.8383367064734579,
+        0.02934442802201417
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": null,
+      "max_robot_x_m": 0.007737692614241176,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.24,
+      "maximum_output_command_mps": 0.24,
+      "minimum_axis_clearance_m": 0.2805990138592167,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 0,
+      "obstacle_pose_map": [
+        0.84,
+        0.03
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5617740154266357,
+      "max_robot_x_m": 0.008287753314739632,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21999999999999997,
+      "maximum_output_command_mps": 0.21999999999999997,
+      "minimum_axis_clearance_m": 0.2817122466852603,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 1,
+      "obstacle_pose_map": [
+        0.841663293526542,
+        0.02934442802201417
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5630543828010559,
+      "max_robot_x_m": 0.008671434982930215,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21,
+      "maximum_output_command_mps": 0.20833333333333331,
+      "minimum_axis_clearance_m": 0.28299185854361175,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 2,
+      "obstacle_pose_map": [
+        0.8432538931446064,
+        0.027406363729278026
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5647741556167603,
+      "max_robot_x_m": 0.008520342104364254,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21999999999999997,
+      "maximum_output_command_mps": 0.21999999999999997,
+      "minimum_axis_clearance_m": 0.2847335510402421,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 3,
+      "obstacle_pose_map": [
+        0.8447022820183397,
+        0.024270509831248423
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5666324496269226,
+      "max_robot_x_m": 0.008166756614359727,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21,
+      "maximum_output_command_mps": 0.21,
+      "minimum_axis_clearance_m": 0.28653552540398,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 4,
+      "obstacle_pose_map": [
+        0.8459451586038191,
+        0.020073918190765747
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5685853362083435,
+      "max_robot_x_m": 0.007452973383162309,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21999999999999997,
+      "maximum_output_command_mps": 0.21999999999999997,
+      "minimum_axis_clearance_m": 0.2884921852206568,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 5,
+      "obstacle_pose_map": [
+        0.8469282032302755,
+        0.015000000000000003
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.570954442024231,
+      "max_robot_x_m": 0.006023673195470813,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.22916666666666666,
+      "maximum_output_command_mps": 0.21999999999999997,
+      "minimum_axis_clearance_m": 0.29090453003480465,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 6,
+      "obstacle_pose_map": [
+        0.8476084521303612,
+        0.009270509831248424
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5730586647987366,
+      "max_robot_x_m": 0.00463611233958261,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.22916666666666666,
+      "maximum_output_command_mps": 0.22916666666666666,
+      "minimum_axis_clearance_m": 0.2929723397907785,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 7,
+      "obstacle_pose_map": [
+        0.8479561751629462,
+        0.0031358538980296034
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5747227668762207,
+      "max_robot_x_m": 0.003277301399913668,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.22916666666666666,
+      "maximum_output_command_mps": 0.22916666666666666,
+      "minimum_axis_clearance_m": 0.2946788737630325,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 8,
+      "obstacle_pose_map": [
+        0.8479561751629462,
+        -0.0031358538980296
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5747711658477783,
+      "max_robot_x_m": 0.0032186297095000427,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.22916666666666666,
+      "maximum_output_command_mps": 0.22916666666666666,
+      "minimum_axis_clearance_m": 0.2947375454534461,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 9,
+      "obstacle_pose_map": [
+        0.8476084521303612,
+        -0.00927050983124842
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5732724666595459,
+      "max_robot_x_m": 0.00435714528209985,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.22916666666666666,
+      "maximum_output_command_mps": 0.22916666666666666,
+      "minimum_axis_clearance_m": 0.2932513068482613,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 10,
+      "obstacle_pose_map": [
+        0.8469282032302755,
+        -0.014999999999999993
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5708817839622498,
+      "max_robot_x_m": 0.006099234497490613,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.22916666666666666,
+      "maximum_output_command_mps": 0.22916666666666666,
+      "minimum_axis_clearance_m": 0.29082896873278485,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 11,
+      "obstacle_pose_map": [
+        0.8459451586038191,
+        -0.020073918190765736
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.568606436252594,
+      "max_robot_x_m": 0.0073773249731505786,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.22916666666666666,
+      "maximum_output_command_mps": 0.22916666666666666,
+      "minimum_axis_clearance_m": 0.2885678336306685,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 12,
+      "obstacle_pose_map": [
+        0.8447022820183397,
+        -0.02427050983124842
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5666318535804749,
+      "max_robot_x_m": 0.008166705377132821,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21999999999999997,
+      "maximum_output_command_mps": 0.21,
+      "minimum_axis_clearance_m": 0.2865355766412069,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 13,
+      "obstacle_pose_map": [
+        0.8432538931446064,
+        -0.02740636372927803
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5643691420555115,
+      "max_robot_x_m": 0.009018969342531769,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21999999999999997,
+      "maximum_output_command_mps": 0.21999999999999997,
+      "minimum_axis_clearance_m": 0.2842349238020746,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 14,
+      "obstacle_pose_map": [
+        0.841663293526542,
+        -0.02934442802201417
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5627180337905884,
+      "max_robot_x_m": 0.008971546668272268,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21,
+      "maximum_output_command_mps": 0.21,
+      "minimum_axis_clearance_m": 0.2826917468582697,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 15,
+      "obstacle_pose_map": [
+        0.84,
+        -0.03
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5616487264633179,
+      "max_robot_x_m": 0.008375592639082718,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21,
+      "maximum_output_command_mps": 0.21,
+      "minimum_axis_clearance_m": 0.2816244073609172,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 16,
+      "obstacle_pose_map": [
+        0.8383367064734579,
+        -0.02934442802201417
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5610093474388123,
+      "max_robot_x_m": 0.007347802348542487,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21,
+      "maximum_output_command_mps": 0.21,
+      "minimum_axis_clearance_m": 0.2809889041249154,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 17,
+      "obstacle_pose_map": [
+        0.8367461068553935,
+        -0.027406363729278026
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5606769323348999,
+      "max_robot_x_m": 0.006084666083705059,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21,
+      "maximum_output_command_mps": 0.21,
+      "minimum_axis_clearance_m": 0.2806614407716884,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 18,
+      "obstacle_pose_map": [
+        0.8352977179816602,
+        -0.024270509831248427
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5609260201454163,
+      "max_robot_x_m": 0.004428845399960579,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21999999999999997,
+      "maximum_output_command_mps": 0.21999999999999997,
+      "minimum_axis_clearance_m": 0.28086887258169957,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 19,
+      "obstacle_pose_map": [
+        0.8340548413961808,
+        -0.020073918190765754
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5616248846054077,
+      "max_robot_x_m": 0.0024846645927754096,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21,
+      "maximum_output_command_mps": 0.20833333333333331,
+      "minimum_axis_clearance_m": 0.28157017680340535,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 20,
+      "obstacle_pose_map": [
+        0.8330717967697244,
+        -0.015000000000000013
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5629876852035522,
+      "max_robot_x_m": 0.0001344423644420445,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21999999999999997,
+      "maximum_output_command_mps": 0.21999999999999997,
+      "minimum_axis_clearance_m": 0.28293735440528234,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 21,
+      "obstacle_pose_map": [
+        0.8323915478696388,
+        -0.009270509831248426
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5625150799751282,
+      "max_robot_x_m": 1.3233858453531866e-13,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21999999999999997,
+      "maximum_output_command_mps": 0.21999999999999997,
+      "minimum_axis_clearance_m": 0.2823915478695064,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 22,
+      "obstacle_pose_map": [
+        0.8320438248370537,
+        -0.003135853898029627
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5621859431266785,
+      "max_robot_x_m": 1.3233858453531866e-13,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21,
+      "maximum_output_command_mps": 0.21,
+      "minimum_axis_clearance_m": 0.28204382483692136,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 23,
+      "obstacle_pose_map": [
+        0.8320438248370537,
+        0.0031358538980295896
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5621984004974365,
+      "max_robot_x_m": 1.3589129821411916e-13,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21999999999999997,
+      "maximum_output_command_mps": 0.21999999999999997,
+      "minimum_axis_clearance_m": 0.2820438248369178,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 24,
+      "obstacle_pose_map": [
+        0.8323915478696388,
+        0.009270509831248417
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.562457799911499,
+      "max_robot_x_m": 1.652011860642233e-13,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21,
+      "maximum_output_command_mps": 0.21,
+      "minimum_axis_clearance_m": 0.2823915478694735,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 25,
+      "obstacle_pose_map": [
+        0.8330717967697244,
+        0.015000000000000003
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5629835724830627,
+      "max_robot_x_m": 0.00013857687593521462,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21999999999999997,
+      "maximum_output_command_mps": 0.21,
+      "minimum_axis_clearance_m": 0.28293321989378917,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 26,
+      "obstacle_pose_map": [
+        0.8340548413961808,
+        0.020073918190765754
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5616350769996643,
+      "max_robot_x_m": 0.002436359910324093,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21,
+      "maximum_output_command_mps": 0.21,
+      "minimum_axis_clearance_m": 0.28161848148585666,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 27,
+      "obstacle_pose_map": [
+        0.8352977179816602,
+        0.02427050983124842
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5608541369438171,
+      "max_robot_x_m": 0.004492854934373902,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21,
+      "maximum_output_command_mps": 0.21,
+      "minimum_axis_clearance_m": 0.28080486304728625,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 28,
+      "obstacle_pose_map": [
+        0.8367461068553935,
+        0.02740636372927803
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5605178475379944,
+      "max_robot_x_m": 0.006289029279961333,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21,
+      "maximum_output_command_mps": 0.21,
+      "minimum_axis_clearance_m": 0.28045707757543215,
+      "collision": false,
+      "pass": true
+    },
+    {
+      "kind": "tall",
+      "trial": 29,
+      "obstacle_pose_map": [
+        0.8383367064734579,
+        0.02934442802201417
+      ],
+      "collision_monitor_triggered": true,
+      "forward_lidar_minimum_m": 0.5607837438583374,
+      "max_robot_x_m": 0.007571690262967223,
+      "maximum_smoothed_command_mps": 0.25,
+      "maximum_gated_command_mps": 0.21,
+      "maximum_output_command_mps": 0.21,
+      "minimum_axis_clearance_m": 0.28076501621049066,
+      "collision": false,
+      "pass": true
+    }
+  ]
+}

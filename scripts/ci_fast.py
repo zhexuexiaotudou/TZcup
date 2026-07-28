@@ -130,6 +130,7 @@ def run_ros_independent_tests() -> None:
         learning_package / "test" / "test_g2_metrics.py",
         learning_package / "test" / "test_gazebo_g2.py",
         learning_package / "test" / "test_stage5br6_handoff.py",
+        spot_cleaning_package / "test" / "test_auto01_geometry.py",
         ROOT / "scripts" / "test_autonomous_runner.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])

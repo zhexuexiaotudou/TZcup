@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-01",
+  "attempt_id": "AUTO-01-G2-C3-STARTUP-C1",
+  "profile": "auto01_g2_v5_retracted",
+  "camera_profile": "V5_retracted",
+  "observed_runtime_topics": {
+    "map_topic": true,
+    "scan_topic": true,
+    "odom_topic": true,
+    "cmd_vel_gate_topic": true,
+    "fused_pose_topic": false
+  },
+  "interfaces_ready": true,
+  "height_banded_pointcloud_message_ready": true,
+  "self_filtered_scan_message_ready": true,
+  "verification_camera_message_ready": true,
+  "nav2_parameter_services_ready_seconds": 25,
+  "nav2_parameter_services_ready_within_60_seconds": true,
+  "total_cold_start_seconds": 25,
+  "runtime_parameter_dumps_present": true
+}

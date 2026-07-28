@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "sanitation_navigation": {
+    "tests": 5,
+    "errors": 0,
+    "failures": 0
+  },
+  "sanitation_spot_cleaning": {
+    "tests": 21,
+    "errors": 0,
+    "failures": 0
+  }
+}

@@ -1,0 +1,3 @@
+py -3 scripts/ci_fast.py
+py -3 scripts/auto01_geometry_audit.py
+powershell -File scripts/run_auto01_geometry_docker.ps1 -FootprintProfile auto01_g2_v5_retracted -CameraProfile V5_retracted

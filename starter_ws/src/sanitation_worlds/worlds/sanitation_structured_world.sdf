@@ -272,6 +272,40 @@
         </visual>
       </link>
     </model>
+    <!-- AUTO-01 height-banded safety fixtures. They remain outside the
+         benchmark area until a test moves them with SetEntityPose. -->
+    <model name="auto01_low_obstacle">
+      <static>true</static>
+      <pose>25 17 0.175 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.30 0.30 0.35</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.30 0.30 0.35</size></box></geometry>
+          <material>
+            <ambient>0.95 0.50 0.05 1</ambient>
+            <diffuse>1.0 0.60 0.08 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
+    <model name="auto01_tall_obstacle">
+      <static>true</static>
+      <pose>25 16 0.55 0 0 0</pose>
+      <link name="link">
+        <collision name="collision">
+          <geometry><box><size>0.30 0.30 1.10</size></box></geometry>
+        </collision>
+        <visual name="visual">
+          <geometry><box><size>0.30 0.30 1.10</size></box></geometry>
+          <material>
+            <ambient>0.55 0.05 0.85 1</ambient>
+            <diffuse>0.70 0.10 0.95 1</diffuse>
+          </material>
+        </visual>
+      </link>
+    </model>
     <model name="trash_bottle_01">
       <static>true</static>
       <pose>-1 1 0.12 1.57 0 0.4</pose>

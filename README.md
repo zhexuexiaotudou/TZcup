@@ -1,5 +1,11 @@
 # TZcup 无人清扫车仿真项目
 
+## AUTO-01 几何与低矮障碍闭环通过（2026-07-29）
+
+自主主线已选择 opt-in `G2-C3`：相机采用机械回收态 `V5_retracted`，保持 Stage4W 的 `0.40 m × 0.36 m` 导航 footprint 不变；向下 RGB-D 点云先转换到 `base_footprint`，只剔除已知车体包围盒内的自点，再与原始 LiDAR 一起送入单级 Collision Monitor。生产默认相机和默认 footprint 均未改变。G1 的三个配置、G2-C1 与 G2-C2 均按各自首个失败层保留为拒绝证据，没有用降低门槛覆盖失败事实。实现与复现说明见 [`docs/auto01-geometry.md`](docs/auto01-geometry.md)。
+
+机器门结果为：冷启动 3/3，Nav2 参数服务 25/25/26 秒就绪；seed0 完整覆盖 17/17，经验覆盖率 `0.932`、碰撞 `0`、keepout 违规 `0`、定位 RMSE `0.03391 m`、swath 冲突 `0`，MCAP 回放通过；低障碍 `30/30`、高障碍 `30/30`，碰撞 `0`、height-classification false-safe `0`。紧凑证据位于 [`artifacts/autonomous_auto01_20260729_evidence/`](artifacts/autonomous_auto01_20260729_evidence/)，自主状态已推进到 AUTO-02。以上均为 Docker 中 ROS 2 Jazzy + Gazebo Harmonic 的机器仿真结论，不代表真人、真实车辆或 J6 板端验证。
+
 ## AUTO-00 自主控制面通过（2026-07-28）
 
 已依据“全流程自主推进规划包”从远端 `main@ac6d569` 建立 `AUTO-00` 至 `AUTO-16` 的持久状态机和依赖 DAG。新增 registry、状态、运行计划、无人值守 runner、证据 manifest 校验、状态防伪、secret scan 与受保护的 GitHub PR/合并适配器；未配置命令、未执行阶段和外部资源缺口都不会被写成通过。控制面支持断点续跑、已通过证据幂等复用、失败依赖传播和独立 lane 继续推进，入口见 [`docs/autonomous-control-plane.md`](docs/autonomous-control-plane.md)。
@@ -159,4 +165,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-28：AUTO-00 已通过 PR #28 和 CI 合入 `main@14dc0ec`，远端 main 的 evidence Git blob 与 git archive 复验一致；neat-freak 审计补齐发布状态。后续仿真、真实域与 J6 门尚未执行，不提前声明通过。
+2026-07-29：AUTO-01 的 opt-in G2-C3 已通过 3/3 冷启动、seed0 17/17 完整覆盖、MCAP 回放以及低/高障碍各 30 次正式门；紧凑证据已生成，下一阶段为 AUTO-02。生产默认未改变，真实域、真人与 J6 门仍未执行，不提前声明通过。
