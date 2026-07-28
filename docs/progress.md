@@ -15,6 +15,8 @@
 
 紧凑证据为 `artifacts/autonomous_auto01_20260729_evidence/`，原始 bag、日志和所有拒绝尝试保留在本地工作树外的 Git 忽略路径。`AUTO_STAGE_01_PASS=true`；下一阶段为 AUTO-02。真人审计、真实车辆、真实域与 J6 状态均未被提升。
 
+[PR #30](https://github.com/zhexuexiaotudou/TZcup/pull/30) 的 `fast-validation` 通过后已 squash 合入 `main@4e6c490df5a99b57645aec3cd8defc785e9dcd88`。合并后的远端 main 已再次通过 evidence manifest、Git blob 与 git archive 精确字节校验。AUTO-01 不是常驻服务，部署门以该远端发布和合并修订的 Docker/ROS/Gazebo 运行证据标记为 `not_applicable`；不虚构在线生产部署。
+
 ## AUTO-00：自主控制面（2026-07-28，机器门通过）
 
 基线冻结为远端 `main@ac6d5697427425c438ff0f42780ff6ab772226f9`，独立分支为 `agent/autonomous-final`。规划包的 11 个文件已完成逐文件 SHA-256/字节校验。当前已实现 17 阶段 registry、DAG 计划、原子状态文件、执行锁、依赖调度、断点续跑、幂等证据复用、统一 evidence manifest、状态防伪、secret scan 和带显式执行保护的 GitHub 适配器。

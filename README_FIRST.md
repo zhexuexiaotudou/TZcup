@@ -1,6 +1,8 @@
 # 无人清扫车仿真启动包
 
-> 2026-07-21：当前入口为 `GPT_REVIEW_STAGE5BR6W.md`。工程豁免支线已完成 V4/policy/candidate-footprint opt-in 与规划器加固，但真实 Stage4W seed 0 因 `no_reachable_clean_route` 失败，故工程 Oracle 未启动；正式人工门仍为 `AWAITING_HUMAN_REVIEW=true`。
+> 2026-07-29：当前自主入口为 `docs/auto01-geometry.md` 与 `artifacts/autonomous_auto01_20260729_evidence/`。AUTO-01 已冻结 opt-in G2-C3（`V5_retracted` + base-frame 点云自滤波），通过 3/3 冷启动、seed0 17/17 完整覆盖以及低/高障碍各 30 次机器门；下一阶段为 AUTO-02。生产默认、历史 evidence 和正式人工状态均未改变。
+
+> 2026-07-21：历史工程入口为 `GPT_REVIEW_STAGE5BR6W.md`。工程豁免支线已完成 V4/policy/candidate-footprint opt-in 与规划器加固，但真实 Stage4W seed 0 因 `no_reachable_clean_route` 失败，故工程 Oracle 未启动；该失败结论保持不变。
 
 > 2026-07-21：历史正式入口为 `GPT_REVIEW_STAGE5BR6.md`。Stage5BR6-A 已生成两个独立的 270 张人工盲审包并通过无 truth 泄漏审计；尚未收到两份真人 response，因此 `READY_FOR_STAGE5BR6_ORACLE=false`，原包与 sealed truth 保持不变。
 
@@ -127,4 +129,4 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 ## 5. 重要说明
 
-当前 Windows 主机已通过 Docker Desktop、Ubuntu 24.04 / ROS 2 Jazzy 容器和 NVIDIA GPU passthrough 完成 Stage 0–5A，并把 Stage5B 工程支线推进到 Stage5BR6W Phase 4 的真实失败边界。Stage4W production footprint 历史基线仍通过，但 V4 candidate footprint 的 seed 0 回归失败；正式人工门、D2、J6 与竞赛效率门均未通过。当前边界以 `docs/progress.md` 与 `GPT_REVIEW_STAGE5BR6W.md` 为准。
+当前 Windows 主机已通过 Docker Desktop、Ubuntu 24.04 / ROS 2 Jazzy 容器和 NVIDIA GPU passthrough 完成 Stage 0–5A，并在自主主线上完成 AUTO-00 与 AUTO-01。AUTO-01 的 opt-in G2-C3 通过完整覆盖、回放和低/高障碍正式机器门；Stage5BR6W 的 V4 candidate-footprint 失败仍作为历史事实保留。正式人工门、真实域、J6 与竞赛效率门均未通过。当前边界以 `AUTONOMOUS_STATE.json`、`docs/progress.md` 与 `docs/auto01-geometry.md` 为准。
