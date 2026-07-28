@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "regressions": [
+    "81 fast tests passed",
+    "sanitation_navigation ROS package lint: 5/5 passed",
+    "sanitation_spot_cleaning ROS package tests: 21/21 passed",
+    "production launch default remains production",
+    "Stage4W seed0 full coverage and replay passed"
+  ]
+}

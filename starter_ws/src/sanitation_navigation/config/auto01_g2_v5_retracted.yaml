@@ -1,0 +1,67 @@
+schema_version: 1
+stage: AUTO-01
+attempt_id: AUTO-01-G2-C3
+architecture: G2
+profile: auto01_g2_v5_retracted
+opt_in_only: true
+production_default_unchanged: true
+source_camera: V5_retracted
+
+# The camera is mechanically inside the frozen Stage4W navigation envelope.
+# Its collision box is above the 0.48 m lidar plane, so it cannot create a
+# self-return and needs neither footprint inflation nor a scan blind sector.
+navigation_footprint_source: frozen_stage4w_ground_navigation_envelope_candidate
+navigation_footprint_xy_m:
+  - [0.40, 0.36]
+  - [0.40, -0.36]
+  - [-0.40, -0.36]
+  - [-0.40, 0.36]
+
+camera_mechanical_reconstruction:
+  mode: fixed_retracted_navigation
+  camera_profile: V5_retracted
+  mount_xyz_base_link_m: [0.36, 0.0, 0.66]
+  mount_pitch_deg: -50.0
+  collision_box_size_m: [0.05, 0.14, 0.05]
+  rotated_aabb_min_m: [0.324779198679862, -0.07, 0.624779198679862]
+  rotated_aabb_max_m: [0.395220801320138, 0.07, 0.695220801320138]
+  lidar_plane_base_link_m: 0.48
+  lidar_plane_intersects_camera: false
+  inside_navigation_footprint: true
+  collision_free_from_body_bumper_arm_and_brush: true
+  maximum_mount_height_m: 0.75
+  observation_contract:
+    resolution: [640, 480]
+    horizontal_fov_rad: 1.50098
+    near_clip_m: 0.30
+    far_clip_m: 100.0
+    actual_gazebo_frame_required: true
+    target_pixel_scale_gate_pending_runtime_probe: true
+
+ground_obstacles:
+  source: V5_retracted_downward_rgbd_self_filtered_plus_lidar
+  raw_pointcloud_topic: /verification_camera/depth/color/points
+  pointcloud_topic: /verification_camera/depth/color/points/navigation
+  z_band_base_link_m: [0.05, 2.0]
+  self_filter:
+    output_frame: base_footprint
+    self_mask_min_xyz_m: [-0.60, -0.43, -0.20]
+    self_mask_max_xyz_m: [0.72, 0.43, 0.75]
+    sampling_stride: 4
+
+coverage_overrides:
+  robot_width_m: 0.72
+  headland_width_m: 1.00
+  staging_offset_m: 0.75
+
+consumers:
+  navigation_footprint:
+    - local_costmap
+    - global_costmap
+    - controller_planner_collision_checking
+    - collision_monitor
+    - coverage_mission_geometry
+  camera_collision_model:
+    - gazebo
+    - mechanical_geometry_audit
+    - observation_pose_footprint_checker

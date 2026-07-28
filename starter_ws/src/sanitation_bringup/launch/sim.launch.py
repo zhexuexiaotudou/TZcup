@@ -41,7 +41,13 @@ def generate_launch_description():
     world_to_map_y = LaunchConfiguration("world_to_map_y")
     world_to_map_yaw = LaunchConfiguration("world_to_map_yaw")
     camera_profile = LaunchConfiguration("camera_profile")
-    v4_engineering = PythonExpression(["'", camera_profile, "' == 'V4_engineering'"])
+    engineering_camera = PythonExpression(
+        [
+            "'",
+            camera_profile,
+            "' in ('V4_engineering', 'V5_retracted')",
+        ]
+    )
 
     gz_launch = PathJoinSubstitution(
         [FindPackageShare("ros_gz_sim"), "launch", "gz_sim.launch.py"]
@@ -76,11 +82,47 @@ def generate_launch_description():
                 " enable_wheel_slip:=", enable_wheel_slip,
                 " lidar_samples:=", lidar_samples,
                 " lidar_update_rate:=", lidar_update_rate,
-                " enable_verification_camera:=", PythonExpression(["'true' if '", camera_profile, "' == 'V4_engineering' else 'false'"]),
-                " verification_camera_x:=", PythonExpression(["'0.67' if '", camera_profile, "' == 'V4_engineering' else '0.30'"]),
-                " verification_camera_y:=", PythonExpression(["'0.34' if '", camera_profile, "' == 'V4_engineering' else '0.0'"]),
-                " verification_camera_z:=", PythonExpression(["'0.48' if '", camera_profile, "' == 'V4_engineering' else '0.70'"]),
-                " verification_camera_pitch_rad:=", PythonExpression(["'0.8726646260' if '", camera_profile, "' == 'V4_engineering' else '0.7853981634'"]),
+                " enable_verification_camera:=", PythonExpression(
+                    [
+                        "'true' if '",
+                        camera_profile,
+                        "' in ('V4_engineering', 'V5_retracted') else 'false'",
+                    ]
+                ),
+                " verification_camera_x:=", PythonExpression(
+                    [
+                        "'0.36' if '",
+                        camera_profile,
+                        "' == 'V5_retracted' else ('0.67' if '",
+                        camera_profile,
+                        "' == 'V4_engineering' else '0.30')",
+                    ]
+                ),
+                " verification_camera_y:=", PythonExpression(
+                    [
+                        "'0.0' if '",
+                        camera_profile,
+                        "' == 'V5_retracted' else ('0.34' if '",
+                        camera_profile,
+                        "' == 'V4_engineering' else '0.0')",
+                    ]
+                ),
+                " verification_camera_z:=", PythonExpression(
+                    [
+                        "'0.66' if '",
+                        camera_profile,
+                        "' == 'V5_retracted' else ('0.48' if '",
+                        camera_profile,
+                        "' == 'V4_engineering' else '0.70')",
+                    ]
+                ),
+                " verification_camera_pitch_rad:=", PythonExpression(
+                    [
+                        "'0.8726646260' if '",
+                        camera_profile,
+                        "' in ('V4_engineering', 'V5_retracted') else '0.7853981634'",
+                    ]
+                ),
             ]
         ),
         value_type=str,
@@ -121,7 +163,7 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "camera_profile",
                 default_value="production",
-                description="production or opt-in V4_engineering; production remains unchanged",
+                description="production, opt-in V4_engineering, or opt-in V5_retracted; production remains unchanged",
             ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(gz_launch),
@@ -198,9 +240,9 @@ def generate_launch_description():
             Node(
                 package="ros_gz_bridge",
                 executable="parameter_bridge",
-                name="stage5br6w_v4_camera_bridge",
+                name="engineering_verification_camera_bridge",
                 output="screen",
-                condition=IfCondition(v4_engineering),
+                condition=IfCondition(engineering_camera),
                 arguments=[
                     "/verification_camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
                     "/verification_camera/image@sensor_msgs/msg/Image[gz.msgs.Image",

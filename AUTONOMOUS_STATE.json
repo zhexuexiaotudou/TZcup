@@ -14,12 +14,12 @@
   },
   "run": {
     "run_id": "tzcup-autonomous-20260728",
-    "branch": "agent/autonomous-final",
+    "branch": "agent/autonomous-auto01",
     "started_at": "2026-07-28T00:00:00Z",
     "completed_at": null,
-    "current_stage": "AUTO-01",
+    "current_stage": "AUTO-02",
     "status": "RUNNING",
-    "last_commit": "fbeba7471d2e93131c1eda94a6918aea3c5836ed",
+    "last_commit": "bd7c62a4a3ce727b37831114b3f5306e636d704f",
     "merge_blocked_by_branch_policy": false
   },
   "historical_boundaries": {
@@ -64,16 +64,58 @@
       "dependencies": []
     },
     "AUTO-01": {
-      "status": "PENDING",
-      "machine_gate_pass": false,
+      "status": "PASS",
+      "machine_gate_pass": true,
       "blocked": false,
       "blocked_external": false,
       "first_blocking_layer": null,
-      "attempt_count": 0,
-      "selected_attempt": null,
-      "implementation_commit": null,
-      "evidence_dir": null,
-      "metrics": {},
+      "attempt_count": 6,
+      "selected_attempt": "AUTO-01-G2-C3",
+      "implementation_commit": "bd7c62a4a3ce727b37831114b3f5306e636d704f",
+      "evidence_dir": "artifacts/autonomous_auto01_20260729_evidence",
+      "metrics": {
+        "schema_version": 1,
+        "stage": "AUTO-01",
+        "checks": {
+          "offline_geometry_gate": true,
+          "cold_start_3_of_3": true,
+          "formal_static_gate": true,
+          "formal_runtime_geometry_gate": true,
+          "formal_components_17_of_17": true,
+          "formal_empirical_coverage_at_least_0_90": true,
+          "formal_collision_zero": true,
+          "formal_keepout_zero": true,
+          "formal_localization_rmse_at_most_0_05_m": true,
+          "formal_replay": true,
+          "obstacle_smoke_2_per_class": true,
+          "obstacle_formal_30_per_class": true,
+          "obstacle_collision_zero": true,
+          "height_classification_false_safe_zero": true
+        },
+        "cold_start_ready_seconds": [
+          25,
+          25,
+          26
+        ],
+        "cleanable_area_ratio": 1.0,
+        "component_count": 17,
+        "empirical_coverage": 0.932,
+        "collision_count": 0,
+        "keepout_violation_count": 0,
+        "localization_rmse_m": 0.033909644109579314,
+        "swath_conflict_count": 0,
+        "low_obstacle_trials": {
+          "pass_count": 30,
+          "collision_count": 0,
+          "monitor_trigger_count": 30
+        },
+        "tall_obstacle_trials": {
+          "pass_count": 30,
+          "collision_count": 0,
+          "camera_envelope_protection_trigger_count": 30
+        },
+        "height_classification_false_safe_count": 0
+      },
       "unexecuted_items": [],
       "dependencies": [
         "AUTO-00"

@@ -1,0 +1,60 @@
+schema_version: 1
+stage: AUTO-01
+attempt_id: AUTO-01-G1-C3
+profile: auto01_g1_height_banded
+opt_in_only: true
+production_default_unchanged: true
+source_camera: V4
+
+# Frozen Stage4W ground-navigation envelope. It is a G1 candidate, not a
+# physical-safety conclusion: 30 low-obstacle trials must still validate it.
+# The V4 camera is not silently discarded; it has an independent envelope.
+navigation_footprint_source: frozen_stage4w_ground_navigation_envelope_candidate
+navigation_footprint_xy_m:
+  - [0.40, 0.36]
+  - [0.40, -0.36]
+  - [-0.40, -0.36]
+  - [-0.40, 0.36]
+
+ground_obstacles:
+  source: forward_rgbd_pointcloud_plus_lidar
+  pointcloud_topic: /camera/depth/color/points
+  z_band_base_link_m: [0.05, 0.414779198679862]
+
+high_overhang:
+  source: V4_camera_local_rotated_aabb_plus_0.03_m_mount_margin
+  z_band_base_link_m: [0.414779198679862, 0.545220801320138]
+  lidar_plane_base_link_m: 0.48
+  lidar_origin_x_base_link_m: 0.12
+  collision_polygon_xy_m:
+    - [0.6047791986798621, 0.24000000000000002]
+    - [0.735220801320138, 0.24000000000000002]
+    - [0.735220801320138, 0.44000000000000006]
+    - [0.6047791986798621, 0.44000000000000006]
+  collision_monitor:
+    name: HighOverhangStop
+    action_type: stop
+    min_points: 1
+    observation_source: verification_camera_pointcloud_height_band
+    topic: /camera/depth/color/points
+  safety_contract:
+    pointcloud_height_filter_matches_camera_band: true
+    low_obstacles_do_not_expand_to_camera_envelope: true
+    tall_obstacles_trigger_high_overhang_stop: true
+    gazebo_camera_collision_geometry_retained: true
+
+coverage_overrides:
+  robot_width_m: 0.72
+  headland_width_m: 1.00
+  staging_offset_m: 0.75
+
+consumers:
+  navigation_footprint:
+    - local_costmap
+    - global_costmap
+    - controller_planner_collision_checking
+    - coverage_mission_geometry
+  high_overhang_footprint:
+    - collision_monitor
+    - runtime_diagnostics
+    - observation_pose_footprint_checker

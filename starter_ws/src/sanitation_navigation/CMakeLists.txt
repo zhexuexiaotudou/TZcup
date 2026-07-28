@@ -6,6 +6,14 @@ find_package(ament_cmake REQUIRED)
 install(DIRECTORY config launch maps
   DESTINATION share/${PROJECT_NAME}
 )
+install(PROGRAMS scripts/scan_self_filter.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME scan_self_filter
+)
+install(PROGRAMS scripts/pointcloud_self_filter.py
+  DESTINATION lib/${PROJECT_NAME}
+  RENAME pointcloud_self_filter
+)
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

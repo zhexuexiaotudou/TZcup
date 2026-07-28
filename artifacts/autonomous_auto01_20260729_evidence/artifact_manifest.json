@@ -1,0 +1,116 @@
+{
+  "schema_version": 1,
+  "root": ".",
+  "files": [
+    {
+      "path": "attempt_ledger.json",
+      "bytes": 1166,
+      "sha256": "0e16ae6937448b91a56ea7be1932d92d37fc35ef29f1fe7c9064d0e91c689bc0"
+    },
+    {
+      "path": "cold_start/trial_0.json",
+      "bytes": 686,
+      "sha256": "6db89c3ba1a71bf9fef0dbb655a7e28aab69a396eb4b6c690b036b510f124305"
+    },
+    {
+      "path": "cold_start/trial_1.json",
+      "bytes": 686,
+      "sha256": "826a1b2bdc52653f6ebb9c51797fe72e2bbc8f443730a0fcdcba80796dd7572d"
+    },
+    {
+      "path": "cold_start/trial_2.json",
+      "bytes": 686,
+      "sha256": "e75842cf0589559c41dec0747b04580f1c5ab54ffd456587daed6608b8cc0f08"
+    },
+    {
+      "path": "commands.txt",
+      "bytes": 189,
+      "sha256": "546d7e406dfa3628e5c66812c860b4027c05c97e4bd0bbf7035a4e49a2a60212"
+    },
+    {
+      "path": "environment.json",
+      "bytes": 634,
+      "sha256": "7c96a78f6fcd88fe110f0202b2d2a8b498e69481e313658efdd19a5f755ff78a"
+    },
+    {
+      "path": "formal/coverage_report.json",
+      "bytes": 74859,
+      "sha256": "9691c3f5736c058d22b26ad678c332c13f4ae432841dd70c5d62a02b6b70261b"
+    },
+    {
+      "path": "formal/nav2_auto01_g2_v5_retracted.yaml",
+      "bytes": 11268,
+      "sha256": "1b7e61d0b2b8fce9257309652a92d9c305c610189167a92c85ad285737b05c28"
+    },
+    {
+      "path": "formal/replay_coverage_state.txt",
+      "bytes": 19,
+      "sha256": "40c29379f93657cdd3ebea8fa89182241bef1c1f7ff863a2e09df36e491b6b84"
+    },
+    {
+      "path": "formal/runtime_collision_monitor_g2_params.json",
+      "bytes": 1095,
+      "sha256": "b453da8e2d95d4532cdcc0a2225269902ee5d653ed0e71cf86f8b05d7d644a87"
+    },
+    {
+      "path": "formal/runtime_geometry_audit.json",
+      "bytes": 1450,
+      "sha256": "7727d83c02ac1b37b386cb50e77f795357aea39cf2926c6916bfe7f84d7000a9"
+    },
+    {
+      "path": "formal/stage4w_static_summary.json",
+      "bytes": 80227,
+      "sha256": "899ae0f544bc5713548a1fd5f70c9d168a7825dc91fa5e8893c4227a9308d730"
+    },
+    {
+      "path": "metrics_summary.json",
+      "bytes": 1187,
+      "sha256": "1f684414fa8c2dd5447238897d236af5bce316206ce17747205a2483030a0db3"
+    },
+    {
+      "path": "obstacles/formal_report.json",
+      "bytes": 31528,
+      "sha256": "4e3c8af10d246b42b428e0997a1f2e27e7dfcd787a14db579a8a8d94a8a49f78"
+    },
+    {
+      "path": "obstacles/smoke_report.json",
+      "bytes": 2498,
+      "sha256": "7cef339030b1adca3f26324dc3a09b7749a5b749a29a45900304e9cfaa1c3091"
+    },
+    {
+      "path": "offline/audit.json",
+      "bytes": 1514,
+      "sha256": "5e32118272ead1848bd460cd10282fa67ceac8b0b72b435561effb071a818bc2"
+    },
+    {
+      "path": "raw_metric_index.json",
+      "bytes": 1772,
+      "sha256": "4a7f2cd4c9c036dca6587cebd8fa147198ea5c0efdf467600c80b7eeb34e827f"
+    },
+    {
+      "path": "README.md",
+      "bytes": 298,
+      "sha256": "39cb28fc1450dfd08e81af88b151ced17cb0aec33a7b36297e4abed429b73b8e"
+    },
+    {
+      "path": "regression_summary.json",
+      "bytes": 324,
+      "sha256": "ad11b3cd92c59048e57b8816d029343661b68102f1edb87f0d9a3000f43c3abd"
+    },
+    {
+      "path": "ros_package_tests.json",
+      "bytes": 220,
+      "sha256": "a286de9c0875554480b42b232b7b0302b5174f1dad9afc79e1396b9570e9bcbe"
+    },
+    {
+      "path": "stage_config.yaml",
+      "bytes": 198,
+      "sha256": "55fdf6f797b73b151c5aaefd1d8e600ca9ea313a29a6c91489a00ce998683e96"
+    },
+    {
+      "path": "stage_status.json",
+      "bytes": 918,
+      "sha256": "d1e568cba85eb60b8d3780e69e0e2325051204eb88f051f0cdbc1a1c859c6590"
+    }
+  ]
+}

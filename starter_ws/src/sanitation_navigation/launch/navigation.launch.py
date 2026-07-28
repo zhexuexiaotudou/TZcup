@@ -63,6 +63,18 @@ def generate_launch_description():
     slam_condition = IfCondition(
         PythonExpression(["'", localization_backend, "' == 'slam_toolbox'"])
     )
+    auto01_height_banded_condition = IfCondition(
+        PythonExpression([
+            "'", LaunchConfiguration('footprint_profile'),
+            "' == 'auto01_g1_height_banded'",
+        ])
+    )
+    auto01_g2_condition = IfCondition(
+        PythonExpression([
+            "'", LaunchConfiguration('footprint_profile'),
+            "' == 'auto01_g2_v5_retracted'",
+        ])
+    )
 
     localization_nodes = [
         Node(
@@ -149,7 +161,10 @@ def generate_launch_description():
             DeclareLaunchArgument('params_file', default_value=nav2_params),
             DeclareLaunchArgument(
                 'footprint_profile', default_value='production',
-                description='production or opt-in stage5br6w_v4; params_file must carry the matching polygon',
+                description=(
+                    'production or an opt-in external profile; params_file '
+                    'must carry matching polygons'
+                ),
             ),
             DeclareLaunchArgument('map_file', default_value=default_map),
             DeclareLaunchArgument('keepout_map', default_value=default_map),
@@ -165,6 +180,22 @@ def generate_launch_description():
                 'slam_params_file', default_value=default_slam_localization_params
             ),
             *localization_nodes,
+            Node(
+                package='sanitation_navigation',
+                executable='scan_self_filter',
+                name='scan_self_filter',
+                output='screen',
+                condition=auto01_height_banded_condition,
+                parameters=[params_file],
+            ),
+            Node(
+                package='sanitation_navigation',
+                executable='pointcloud_self_filter',
+                name='pointcloud_self_filter',
+                output='screen',
+                condition=auto01_g2_condition,
+                parameters=[params_file],
+            ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(slam_localization_launch),
                 condition=slam_condition,
@@ -190,6 +221,26 @@ def generate_launch_description():
                 ]
             ),
             *filter_nodes,
+            Node(
+                package='nav2_collision_monitor',
+                executable='collision_monitor',
+                name='ground_collision_monitor',
+                output='screen',
+                condition=auto01_height_banded_condition,
+                parameters=[params_file],
+            ),
+            Node(
+                package='nav2_lifecycle_manager',
+                executable='lifecycle_manager',
+                name='ground_collision_lifecycle_manager',
+                output='screen',
+                condition=auto01_height_banded_condition,
+                parameters=[{
+                    'use_sim_time': use_sim_time,
+                    'autostart': LaunchConfiguration('autostart'),
+                    'node_names': ['ground_collision_monitor'],
+                }],
+            ),
             Node(
                 package='sanitation_safety',
                 executable='velocity_gate',

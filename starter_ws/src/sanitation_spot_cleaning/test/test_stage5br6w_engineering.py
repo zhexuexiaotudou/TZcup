@@ -1,6 +1,7 @@
 import importlib.util
 import json
 import math
+import os
 from pathlib import Path
 
 import yaml
@@ -15,7 +16,15 @@ from sanitation_spot_cleaning.observation_pose_planner import (
 )
 
 
-ROOT = Path(__file__).resolve().parents[4]
+TEST_PATH = Path(__file__).resolve()
+ROOT = next(
+    (
+        parent
+        for parent in TEST_PATH.parents
+        if (parent / "scripts" / "stage5br6w_profile.py").is_file()
+    ),
+    Path(os.environ.get("TZCUP_ROOT", "/auto01")),
+)
 SPEC = importlib.util.spec_from_file_location("stage5br6w_profile", ROOT / "scripts" / "stage5br6w_profile.py")
 PROFILE_MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(PROFILE_MODULE)
