@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-02",
+  "bag": "artifacts/autonomous_auto02_raw_20260729/static/seed_0/static_coverage_bag",
+  "required_topic_count": 15,
+  "present_required_topic_count": 15,
+  "missing_required_topics": [],
+  "coverage_state_sample_count": 19,
+  "coverage_terminal_state_observed": true,
+  "localization": {
+    "source_rmse_m": 0.03373337818812873,
+    "reproduced_rmse_m": 0.033859821935644095,
+    "relative_delta": 0.0037483274521216904,
+    "estimate_sample_count": 14615,
+    "truth_sample_count": 14760,
+    "matched_sample_count": 14615,
+    "dropped_estimate_count": 0,
+    "sync_error_sample_count": 14615,
+    "evaluation_window_start_sec": 229.08,
+    "evaluation_window_end_sec": 524.26
+  },
+  "empirical_coverage": {
+    "source_coverage_rate": 0.9393333333333334,
+    "reproduced_coverage_rate": 0.9393333333333334,
+    "relative_delta": 0.0,
+    "brush_on_sample_count": 899
+  },
+  "checks": {
+    "mcap_metadata_readable": true,
+    "required_topics_present_100_percent": true,
+    "coverage_state_recorded": true,
+    "coverage_terminal_state_recorded": true,
+    "coverage_state_replay_observed": true,
+    "localization_samples_reproduced": true,
+    "localization_rmse_metric_delta_at_most_1_percent": true,
+    "empirical_coverage_metric_delta_at_most_1_percent": true
+  },
+  "replay_gate_pass": true
+}

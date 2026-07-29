@@ -1,0 +1,17 @@
+schema_version: 1
+stage: AUTO-02
+selected_attempt: AUTO-02-FREEZE-V1
+profile: autonomous_navigation_profile_v1
+source_profile: auto01_g2_v5_retracted
+camera_profile: V5_retracted
+static_seeds:
+- 0
+- 1
+- 2
+- 3
+- 4
+dynamic_seed: 10
+cold_start_trials: 5
+docker_image: tzcup/sanitation-jazzy:stage5b
+production_default_unchanged: true
+profile_sha256: 3f821d70ae1098aae9e4cee7159924408094ad3f1ed893198ef28cadcfdc1426

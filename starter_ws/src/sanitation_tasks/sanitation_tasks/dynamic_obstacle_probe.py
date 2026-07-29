@@ -31,6 +31,7 @@ class DynamicObstacleProbe(Node):
         self.declare_parameter("state_wait_timeout_sec", 120.0)
         self.declare_parameter("minimum_remaining_path_m", 3.0)
         self.declare_parameter("minimum_progress_between_trials_m", 0.5)
+        self.declare_parameter("hard_minimum_separation_m", 0.12)
         self.declare_parameter("resume_observation_sec", 2.0)
         self.declare_parameter("crossing_half_width_m", 1.0)
         self.declare_parameter("crossing_steps", 9)
@@ -214,6 +215,10 @@ class DynamicObstacleProbe(Node):
                     break
             interacted = self.scan_minimum < 3.0
             collision_free = self.collision_count == start_collisions
+            hard_minimum = float(
+                self.get_parameter("hard_minimum_separation_m").value
+            )
+            separation_safe = self.scan_minimum >= hard_minimum
             resumed = progress is not None and progress >= 0.10
             set_success = len(move_results) == len(targets) and all(
                 item["set_pose_success"] for item in move_results
@@ -248,6 +253,8 @@ class DynamicObstacleProbe(Node):
                 ),
                 "path_corridor_center_distance_m": corridor_distance,
                 "minimum_lidar_range_m": self.scan_minimum if math.isfinite(self.scan_minimum) else None,
+                "configured_hard_minimum_separation_m": hard_minimum,
+                "minimum_separation_gate_pass": separation_safe,
                 "interaction_observed": interacted, "collision_free": collision_free,
                 "mission_progress_resumed": resumed, "vehicle_progress_m": progress,
                 "injection_vehicle_speed_m_s": injection_vehicle_speed,
@@ -261,7 +268,14 @@ class DynamicObstacleProbe(Node):
                 ),
                 "park_success": park_success, "park_stdout_tail": park_stdout,
                 "park_stderr_tail": park_stderr,
-                "valid": bool(set_success and park_success and interacted and collision_free and resumed),
+                "valid": bool(
+                    set_success
+                    and park_success
+                    and interacted
+                    and collision_free
+                    and separation_safe
+                    and resumed
+                ),
             })
             last_component = current_component
             last_injection_position = position
@@ -276,8 +290,38 @@ class DynamicObstacleProbe(Node):
             "world_name": str(self.get_parameter("world_name").value),
             "model_name": str(self.get_parameter("model_name").value),
             "set_pose_preflight": preflight, "failure_reason": failure_reason,
-            "collision_count": self.collision_count, "trials": trials,
-            "success": failure_reason is None and len(trials) >= 20 and valid >= 20 and self.collision_count == 0,
+            "collision_count": self.collision_count,
+            "configured_hard_minimum_separation_m": float(
+                self.get_parameter("hard_minimum_separation_m").value
+            ),
+            "minimum_observed_separation_m": min(
+                (
+                    trial["minimum_lidar_range_m"]
+                    for trial in trials
+                    if trial["minimum_lidar_range_m"] is not None
+                ),
+                default=None,
+            ),
+            "minimum_separation_gate_pass": bool(
+                trials
+                and all(trial["minimum_separation_gate_pass"] for trial in trials)
+            ),
+            "mission_progress_resumed_all": bool(
+                trials
+                and all(trial["mission_progress_resumed"] for trial in trials)
+            ),
+            "trials": trials,
+            "success": (
+                failure_reason is None
+                and len(trials) >= 20
+                and valid >= 20
+                and self.collision_count == 0
+                and all(
+                    trial["minimum_separation_gate_pass"]
+                    and trial["mission_progress_resumed"]
+                    for trial in trials
+                )
+            ),
         }
         output = Path(str(self.get_parameter("output_path").value)); output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

@@ -40,6 +40,8 @@ if [[ "${footprint_profile}" != "production" ]]; then
   case "${footprint_profile}" in
     stage5br6w_v4) profile_name="stage5br6w_v4_candidate_footprint.yaml" ;;
     auto01_g1_height_banded) profile_name="auto01_g1_height_banded.yaml" ;;
+    auto01_g2_v5_retracted) profile_name="auto01_g2_v5_retracted.yaml" ;;
+    autonomous_navigation_profile_v1) profile_name="autonomous_navigation_profile_v1.yaml" ;;
     *) echo "Unsupported footprint profile: ${footprint_profile}" >&2; exit 2 ;;
   esac
   profile="${WS}/install/sanitation_navigation/share/sanitation_navigation/config/${profile_name}"
@@ -131,6 +133,10 @@ if [[ "${footprint_profile}" != "production" ]]; then
   if [[ "${footprint_profile}" == "auto01_g1_height_banded" ]]; then
     "${PACK_ROOT}/scripts/auto01_capture_collision_params.sh" \
       "${OUT}/runtime_collision_monitor_selected_params.json"
+  elif [[ "${footprint_profile}" == "auto01_g2_v5_retracted" || \
+          "${footprint_profile}" == "autonomous_navigation_profile_v1" ]]; then
+    bash "${PACK_ROOT}/scripts/auto01_capture_g2_params.sh" \
+      "${OUT}/runtime_collision_monitor_g2_params.json"
   else
     ros2 param dump /collision_monitor > "${OUT}/runtime_collision_monitor_params.yaml"
   fi
@@ -167,6 +173,7 @@ setsid ros2 bag record --storage mcap --output "${OUT}/dynamic_coverage_bag" \
   /keepout_filter_mask /speed_filter_mask \
   /collision_monitor_state /speed_limit /coverage/state \
   /coverage/component_state /coverage/current_path /coverage/diagnostics \
+  /coverage/evaluation_sample \
   > "${OUT}/rosbag.log" 2>&1 & bag_pid=$!; pids+=("${bag_pid}")
 sleep 2
 setsid ros2 run sanitation_tasks sanitation_dynamic_obstacle_probe --ros-args \
@@ -213,6 +220,13 @@ setsid ros2 bag play "${OUT}/dynamic_coverage_bag" --rate 5.0 \
 replay_pid=$!; pids+=("${replay_pid}")
 wait "${echo_pid}"
 stop_group "${replay_pid}"; pids=()
+
+python3 "${PACK_ROOT}/scripts/auto02_replay_audit.py" \
+  --bag "${OUT}/dynamic_coverage_bag" \
+  --coverage-report "${OUT}/coverage_report.json" \
+  --replay-state "${OUT}/replay_coverage_state.txt" \
+  --output "${OUT}/auto02_replay_audit.json" \
+  --require-emergency-stop
 
 python3 "${PACK_ROOT}/scripts/stage4w_dynamic_aggregate.py" "${OUT}" \
   --coverage-code "${coverage_code}" --dynamic-code "${dynamic_code}" \

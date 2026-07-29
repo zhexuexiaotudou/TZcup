@@ -58,10 +58,14 @@ artifacts/stage5br6w_*postmerge*/
 artifacts/autonomous_*_runtime*/
 artifacts/autonomous_*_driver.stdout.log
 artifacts/autonomous_*_driver.stderr.log
+artifacts/autonomous_*_driver.pid
 # AUTO-01 preserves every rejected/full ROS run locally; only the compact
 # autonomous_auto01_<date>_evidence directory is committed.
 artifacts/autonomous_auto01_g[12]_*/
 artifacts/autonomous_auto01_g[12]_*.log
+# AUTO-02 keeps the five-seed, dynamic, cold-start, logs, and MCAP evidence
+# locally; a compact manifest-backed evidence directory is committed.
+artifacts/autonomous_auto02_raw_*/
 
 # Stage5BR3 full Stage5A/Stage4W regression logs stay local; the compact
 # machine-readable summary is versioned in artifacts/stage5br3_20260720_review.

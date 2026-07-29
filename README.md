@@ -1,5 +1,13 @@
 # TZcup 无人清扫车仿真项目
 
+## AUTO-02 完整导航回归与配置冻结通过（2026-07-29）
+
+AUTO-01 选出的 opt-in `G2-C3 / V5_retracted` 已在 Docker 中完成 ROS 2 Jazzy + Gazebo Harmonic 全矩阵回归，并冻结为 [`autonomous_navigation_profile_v1.yaml`](starter_ws/src/sanitation_navigation/config/autonomous_navigation_profile_v1.yaml)。静态五个 seed 均完成 `17/17` 组件，经验覆盖率为 `0.92733–0.94467`、计划覆盖率均为 `0.986`、定位 XY RMSE 为 `0.03153–0.04050 m`，碰撞、keepout 违规和刷盘状态违规均为 `0`；五次冷启动均在 `24–25 s` 内达到完整 lifecycle/TF/参数就绪。
+
+动态门完成 `20/20` 有效交互且碰撞为 `0`，最小观测分离距离 `0.60439 m`，高于配置硬阈值 `0.12 m`；禁入区违规为 `0`，限速区均速 `0.28613 m/s`，低于含容差上限 `0.3135 m/s`；急停 `30/30`，P95/最大停止延迟为 `0.13994/0.14063 s`，停止后输出持续为零。五个静态 bag 和一个动态 bag 的 MCAP 元数据、必需主题、任务状态回放及经验覆盖率重算全部通过，覆盖率相对误差均为 `0`。紧凑证据见 [`artifacts/autonomous_auto02_20260729_evidence/`](artifacts/autonomous_auto02_20260729_evidence/)，复现说明见 [`docs/auto02-full-regression.md`](docs/auto02-full-regression.md)；自主状态已推进到 AUTO-03。
+
+本结论仅是机器仿真回归与配置冻结，不改变 production 默认 profile，不代表真人审计、真实车辆、真实域、J6 板端或最终竞赛指标通过。历史 Stage4W–Stage5BR6W 证据和两项 Stage5BR6-A 人工 false 标志保持不变。
+
 ## AUTO-01 几何与低矮障碍闭环通过（2026-07-29）
 
 自主主线已选择 opt-in `G2-C3`：相机采用机械回收态 `V5_retracted`，保持 Stage4W 的 `0.40 m × 0.36 m` 导航 footprint 不变；向下 RGB-D 点云先转换到 `base_footprint`，只剔除已知车体包围盒内的自点，再与原始 LiDAR 一起送入单级 Collision Monitor。生产默认相机和默认 footprint 均未改变。G1 的三个配置、G2-C1 与 G2-C2 均按各自首个失败层保留为拒绝证据，没有用降低门槛覆盖失败事实。实现与复现说明见 [`docs/auto01-geometry.md`](docs/auto01-geometry.md)。

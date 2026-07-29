@@ -35,6 +35,7 @@ ros2 daemon start >/dev/null
 map_root="${WS}/install/sanitation_navigation/share/sanitation_navigation/maps"
 footprint_profile="${AUTO01_FOOTPRINT_PROFILE:-auto01_g1_height_banded}"
 camera_profile="${AUTO01_CAMERA_PROFILE:-V4_engineering}"
+stage_id="${AUTO01_STAGE_ID:-AUTO-01}"
 profile="${WS}/install/sanitation_navigation/share/sanitation_navigation/config/${footprint_profile}.yaml"
 nav_params="${OUT}/nav2_${footprint_profile}.yaml"
 mission_config="${OUT}/demo_area_${footprint_profile}.yaml"
@@ -72,6 +73,12 @@ while [[ "$(( $(date +%s) - started_epoch ))" -lt 60 ]]; do
   then
     profile_services_ready=0
   fi
+  if [[ "${footprint_profile}" == "auto01_g2_v5_retracted" || \
+        "${footprint_profile}" == "autonomous_navigation_profile_v1" ]] && \
+    ! grep -q '^/pointcloud_self_filter/get_parameters$' <<< "${services}"
+  then
+    profile_services_ready=0
+  fi
   if [[ "${profile_services_ready}" -eq 1 ]] && \
     grep -q '^/controller_server/get_parameters$' <<< "${services}" && \
     grep -q '^/planner_server/get_parameters$' <<< "${services}" && \
@@ -95,7 +102,8 @@ printf '%s\n' "${services}" > "${OUT}/observed_services.txt"
 
 pointcloud_ready=0
 pointcloud_topic="/camera/depth/color/points"
-if [[ "${footprint_profile}" == "auto01_g2_v5_retracted" ]]; then
+if [[ "${footprint_profile}" == "auto01_g2_v5_retracted" || \
+      "${footprint_profile}" == "autonomous_navigation_profile_v1" ]]; then
   pointcloud_topic="/verification_camera/depth/color/points/navigation"
 fi
 if [[ "${ready}" -eq 1 ]] && \
@@ -124,6 +132,45 @@ then
   verification_camera_ready=1
 fi
 
+lifecycle_nodes=(
+  controller_server planner_server bt_navigator coverage_server
+  keepout_filter_mask_server keepout_costmap_filter_info_server
+  speed_filter_mask_server speed_costmap_filter_info_server
+)
+lifecycle_active_count=0
+if [[ "${ready}" -eq 1 ]]; then
+  for node in "${lifecycle_nodes[@]}"; do
+    active=0
+    for _ in $(seq 1 30); do
+      timeout 10 ros2 lifecycle get "/${node}" \
+        > "${OUT}/${node}_state.txt" 2>&1 || true
+      if grep -Fxq 'active [3]' "${OUT}/${node}_state.txt"; then
+        active=1
+        break
+      fi
+      sleep 1
+    done
+    lifecycle_active_count="$((lifecycle_active_count + active))"
+  done
+fi
+full_lifecycle_active=0
+if [[ "${lifecycle_active_count}" -eq "${#lifecycle_nodes[@]}" ]]; then
+  full_lifecycle_active=1
+fi
+
+tf_tree_complete=0
+if [[ "${ready}" -eq 1 ]]; then
+  timeout 30 ros2 run tf2_ros tf2_echo map base_footprint \
+    > "${OUT}/tf_map_base.txt" 2>&1 || true
+  timeout 30 ros2 run tf2_ros tf2_echo odom base_footprint \
+    > "${OUT}/tf_odom_base.txt" 2>&1 || true
+  if grep -q 'Translation:' "${OUT}/tf_map_base.txt" && \
+    grep -q 'Translation:' "${OUT}/tf_odom_base.txt"
+  then
+    tf_tree_complete=1
+  fi
+fi
+
 if [[ "${ready}" -eq 1 && "${pointcloud_ready}" -eq 1 && "${self_filtered_scan_ready}" -eq 1 && "${verification_camera_ready}" -eq 1 ]]; then
   ros2 param dump /local_costmap/local_costmap > "${OUT}/runtime_local_costmap_params.yaml"
   ros2 param dump /global_costmap/global_costmap > "${OUT}/runtime_global_costmap_params.yaml"
@@ -140,7 +187,7 @@ if [[ "${ready}" -eq 1 && "${pointcloud_ready}" -eq 1 && "${self_filtered_scan_r
     geometry_msgs/msg/PolygonStamped --once > "${OUT}/runtime_global_published_footprint.yaml"
 fi
 
-python3 - "${OUT}" "${ready}" "${nav2_ready_seconds}" "${total_ready_seconds}" "${attempt_id}" "${pointcloud_ready}" "${self_filtered_scan_ready}" "${verification_camera_ready}" "${footprint_profile}" "${camera_profile}" <<'PY'
+python3 - "${OUT}" "${ready}" "${nav2_ready_seconds}" "${total_ready_seconds}" "${attempt_id}" "${pointcloud_ready}" "${self_filtered_scan_ready}" "${verification_camera_ready}" "${footprint_profile}" "${camera_profile}" "${stage_id}" "${full_lifecycle_active}" "${lifecycle_active_count}" "${#lifecycle_nodes[@]}" "${tf_tree_complete}" <<'PY'
 import json
 import sys
 from pathlib import Path
@@ -155,6 +202,11 @@ self_filtered_scan_ready = bool(int(sys.argv[7]))
 verification_camera_ready = bool(int(sys.argv[8]))
 footprint_profile = sys.argv[9]
 camera_profile = sys.argv[10]
+stage_id = sys.argv[11]
+full_lifecycle_active = bool(int(sys.argv[12]))
+lifecycle_active_count = int(sys.argv[13])
+lifecycle_node_count = int(sys.argv[14])
+tf_tree_complete = bool(int(sys.argv[15]))
 topics = set((root / "observed_topics.txt").read_text(encoding="utf-8").splitlines())
 collision_parameter_file = (
     "runtime_collision_monitor_selected_params.json"
@@ -163,7 +215,7 @@ collision_parameter_file = (
 )
 report = {
     "schema_version": 1,
-    "stage": "AUTO-01",
+    "stage": stage_id,
     "attempt_id": attempt_id,
     "profile": footprint_profile,
     "camera_profile": camera_profile,
@@ -191,6 +243,10 @@ report = {
             "runtime_global_published_footprint.yaml",
         )
     ),
+    "full_lifecycle_active": full_lifecycle_active,
+    "lifecycle_active_count": lifecycle_active_count,
+    "lifecycle_node_count": lifecycle_node_count,
+    "tf_tree_complete": tf_tree_complete,
 }
 (root / "cold_start_report.json").write_text(
     json.dumps(report, indent=2) + "\n", encoding="utf-8"
@@ -202,3 +258,5 @@ test "${pointcloud_ready}" -eq 1
 test "${self_filtered_scan_ready}" -eq 1
 test "${verification_camera_ready}" -eq 1
 test "${nav2_ready_seconds}" -le 60
+test "${full_lifecycle_active}" -eq 1
+test "${tf_tree_complete}" -eq 1

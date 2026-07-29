@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-02",
+  "attempt_id": "AUTO-01-G2-C3",
+  "architecture": "G2",
+  "profile": "auto01_g2_v5_retracted",
+  "checks": {
+    "local_costmap_navigation_footprint_exact": true,
+    "global_costmap_navigation_footprint_exact": true,
+    "coverage_navigation_radius_exact": true,
+    "coverage_profile_headland_exact": true,
+    "cleanable_area_ratio_at_least_0_90": true,
+    "swath_conflict_count_zero": true,
+    "legal_staging_candidate_exists": true,
+    "local_published_footprint_observed": true,
+    "global_published_footprint_observed": true,
+    "costmaps_keep_unmasked_scan": true,
+    "single_collision_monitor_uses_full_footprint": true,
+    "single_monitor_fuses_scan_and_rgbd": true,
+    "camera_xy_aabb_inside_navigation_footprint": true,
+    "camera_above_lidar_plane": true,
+    "camera_within_mount_height": true,
+    "actual_gazebo_verification_camera_frame_observed": true,
+    "runtime_pointcloud_self_filter_exact": true
+  },
+  "runtime_geometry_gate_pass": true,
+  "metrics": {
+    "navigation_footprint_radius_m": 0.5381449618829485,
+    "high_overhang_radius_m": null,
+    "cleanable_area_m2": 14.997536062726478,
+    "cleanable_area_ratio": 1.0,
+    "swath_conflict_count": 0,
+    "component_count": 17,
+    "empirical_coverage": 0.9346666666666666,
+    "collision_count": 0,
+    "keepout_violation_count": 0,
+    "localization_rmse_m": 0.03153332542949821
+  }
+}

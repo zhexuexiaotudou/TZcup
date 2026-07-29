@@ -72,7 +72,8 @@ def generate_launch_description():
     auto01_g2_condition = IfCondition(
         PythonExpression([
             "'", LaunchConfiguration('footprint_profile'),
-            "' == 'auto01_g2_v5_retracted'",
+            "' in ('auto01_g2_v5_retracted', "
+            "'autonomous_navigation_profile_v1')",
         ])
     )
 

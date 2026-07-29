@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "status": "PASS",
+  "regressions": [
+    "85 fast ROS-independent tests passed before formal runtime",
+    "five static Coverage seeds passed 17/17 components",
+    "five independent cold starts reached 8/8 active lifecycle nodes",
+    "dynamic interaction, keepout, speed, and 30-trial estop gates passed",
+    "six MCAP runs passed metadata, required-topic, replay-state, and <=1% metric-delta gates",
+    "production launch default remains production"
+  ]
+}

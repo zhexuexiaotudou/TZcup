@@ -41,6 +41,7 @@ if [[ "${footprint_profile}" != "production" ]]; then
     stage5br6w_v4) profile_name="stage5br6w_v4_candidate_footprint.yaml" ;;
     auto01_g1_height_banded) profile_name="auto01_g1_height_banded.yaml" ;;
     auto01_g2_v5_retracted) profile_name="auto01_g2_v5_retracted.yaml" ;;
+    autonomous_navigation_profile_v1) profile_name="autonomous_navigation_profile_v1.yaml" ;;
     *) echo "Unsupported footprint profile: ${footprint_profile}" >&2; exit 2 ;;
   esac
   profile="${WS}/install/sanitation_navigation/share/sanitation_navigation/config/${profile_name}"
@@ -177,8 +178,11 @@ setsid ros2 bag record --storage mcap --output "${OUT}/static_coverage_bag" \
   /keepout_filter_mask /speed_filter_mask \
   /emergency_stop /collision_monitor_state /speed_limit /coverage/state \
   /coverage/component_state /coverage/current_path /coverage/diagnostics \
+  /coverage/evaluation_sample \
   > "${OUT}/rosbag.log" 2>&1 & bag_pid=$!; pids+=("${bag_pid}")
 sleep 2
+ros2 topic pub --once /emergency_stop std_msgs/msg/Bool "{data: false}" \
+  > "${OUT}/emergency_stop_available.log" 2>&1
 
 set +e
 timeout 1200 ros2 run sanitation_coverage coverage_probe --ros-args \
@@ -206,41 +210,11 @@ replay_pid=$!; pids+=("${replay_pid}")
 wait "${echo_pid}"
 stop_group "${replay_pid}"; pids=()
 
-python3 - "${OUT}" "${SEED}" "${coverage_code}" <<'PY'
-import json
-import sys
-from pathlib import Path
+python3 "${PACK_ROOT}/scripts/auto02_replay_audit.py" \
+  --bag "${OUT}/static_coverage_bag" \
+  --coverage-report "${OUT}/coverage_report.json" \
+  --replay-state "${OUT}/replay_coverage_state.txt" \
+  --output "${OUT}/auto02_replay_audit.json"
 
-root = Path(sys.argv[1])
-coverage = json.loads((root / 'coverage_report.json').read_text(encoding='utf-8'))
-summary = {
-    'schema_version': 1,
-    'stage': 'Stage4W',
-    'seed': int(sys.argv[2]),
-    'coverage_exit_code': int(sys.argv[3]),
-    'coverage': coverage,
-    'rosbag_replay': bool(
-        (root / 'static_coverage_bag' / 'metadata.yaml').is_file()
-        and (root / 'replay_coverage_state.txt').stat().st_size > 0
-    ),
-    'static_gate_pass': bool(
-        coverage.get('success')
-        and coverage.get('full_execution_success')
-        and coverage.get('empirical_metrics', {}).get('coverage_rate', 0) >= 0.90
-        and coverage.get('collision_count') == 0
-        and coverage.get('keepout_violation_sample_count') == 0
-        and coverage.get('brush_state_violation_sample_count') == 0
-        and coverage.get('brush_disabled_on_exit')
-        and coverage.get('swath_exclusion_intersection_count') == 0
-        and coverage.get('localization_regression_during_coverage', {}).get(
-            'pass_rmse_at_most_0_05m'
-        )
-    ),
-}
-(root / 'stage4w_static_summary.json').write_text(
-    json.dumps(summary, ensure_ascii=False, indent=2) + '\n', encoding='utf-8'
-)
-PY
-
-test "${coverage_code}" -eq 0
-python3 -c "import json; assert json.load(open('${OUT}/stage4w_static_summary.json'))['static_gate_pass']"
+python3 "${PACK_ROOT}/scripts/stage4w_static_finalize.py" \
+  --root "${OUT}" --seed "${SEED}" --coverage-code "${coverage_code}"

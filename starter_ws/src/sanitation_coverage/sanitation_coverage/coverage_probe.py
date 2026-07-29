@@ -104,6 +104,9 @@ class CoverageProbe(Node):
         self.controller_state_client = self.create_client(GetState, "/controller_server/get_state")
         self.brush_publisher = self.create_publisher(Bool, "/brush_enabled", 10)
         self.state_publisher = self.create_publisher(String, "/coverage/state", 10)
+        self.evaluation_sample_publisher = self.create_publisher(
+            String, "/coverage/evaluation_sample", 20
+        )
         self.component_state_publisher = self.create_publisher(
             String, "/coverage/component_state", 10
         )
@@ -163,6 +166,21 @@ class CoverageProbe(Node):
             self.brush_enabled, self.state,
         )
         self.truth_samples.append(sample)
+        self.evaluation_sample_publisher.publish(
+            String(
+                data=json.dumps(
+                    {
+                        "stamp_sec": stamp,
+                        "base_x_m": pose.position.x,
+                        "base_y_m": pose.position.y,
+                        "yaw_rad": yaw,
+                        "brush_enabled": self.brush_enabled,
+                        "coverage_state": self.state,
+                    },
+                    separators=(",", ":"),
+                )
+            )
+        )
         if self.brush_enabled:
             # Cleaning footprint is 0.55 m forward of base_footprint in URDF.
             self.brush_samples.append((stamp, pose.position.x + 0.55 * math.cos(yaw), pose.position.y + 0.55 * math.sin(yaw)))

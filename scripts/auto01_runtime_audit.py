@@ -27,6 +27,7 @@ def main() -> int:
     parser.add_argument("--trial", type=Path, required=True)
     parser.add_argument("--profile", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--stage", default="AUTO-01")
     args = parser.parse_args()
     profile = yaml.safe_load(args.profile.read_text(encoding="utf-8"))
     architecture = profile.get("architecture", "G1")
@@ -275,7 +276,7 @@ def main() -> int:
 
     report = {
         "schema_version": 1,
-        "stage": "AUTO-01",
+        "stage": args.stage,
         "attempt_id": profile["attempt_id"],
         "architecture": architecture,
         "profile": profile["profile"],
