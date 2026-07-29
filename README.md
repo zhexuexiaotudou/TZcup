@@ -185,6 +185,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-30：AUTO-03 已完成主动观察执行链、GT 隔离、投影标定和 MCAP 重放审计实现。首轮六世界矩阵只在短边误差 P95 上以 `0.31173 > 0.30` 失败；按 A–D 训练、E–F 留出验证的捕获侧短边标定重跑完整矩阵后，六世界 250 条 trial 的全部机器硬门通过，紧凑证据 manifest 和状态不变量均已验证，自主状态推进到 AUTO-04，历史人工 false 标志不变。
-
-2026-07-29：AUTO-02 已由 [PR #32](https://github.com/zhexuexiaotudou/TZcup/pull/32) 在 `fast-validation` 通过后合入 `main@6d09e197`。合并后的紧凑证据已通过 Git blob 与 git archive 逐字节复验；文档、规则和兼容性说明现已统一指向冻结的 `autonomous_navigation_profile_v1` 与下一阶段 AUTO-03，同时保留 Stage5BR6W、真人、真实域、J6 和竞赛效率的原有边界。
+2026-07-30：AUTO-03 已由 [PR #35](https://github.com/zhexuexiaotudou/TZcup/pull/35) 在 `fast-validation` 通过后 squash 合入 `main@c491221`，主分支 CI 也已通过。远端 main 的 92 个 manifest 管理证据文件与 Git blob 逐字节一致，状态为 `AUTO-03=PASS`、当前阶段 AUTO-04；部署门因本项目是离线 ROS 2/Gazebo 产物标记为 `not_applicable`，回滚点为 `main@82c85c0`。Stage5BR6-A 的人工完成与人工审计标志继续为 false，真人、真实车辆、真实域、J6 和最终竞赛状态均未提升。

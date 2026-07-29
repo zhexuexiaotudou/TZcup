@@ -75,8 +75,9 @@ artifacts/autonomous_auto03_*_smoke/
 artifacts/stage5br3_regression_stage5a*/
 artifacts/stage5br3_regression_stage4w*/
 
-# Superseded local review bundle; the current Stage4R bundle is committed.
-无人清扫车仿真_GPT复核包_Stage4_20260715.zip
+# GPT review bundles stay local. Only AUTO-16 may create the final release ZIP.
+无人清扫车仿真_GPT复核包_Stage*.zip
+无人清扫车仿真_GPT复核包_Stage*.zip.sha256
 
 # Editor and OS noise
 .vscode/

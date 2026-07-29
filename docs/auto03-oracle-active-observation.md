@@ -9,6 +9,12 @@ MCAP 重放均已完成，核心汇总的全部机器硬门通过；紧凑证据
 `731d069abe1384ee427cf2909c8b9605e70911b0` 生成并通过逐文件 manifest 校验，
 自主状态已推进到 AUTO-04。
 
+发布闭环已完成：[PR #35](https://github.com/zhexuexiaotudou/TZcup/pull/35) 的
+`fast-validation` 通过后 squash 合入 `main@c49122113583cf17015989740239128f6341ec41`，
+主分支 CI run `30488608555` 通过；远端 main 中 92 个 manifest 管理文件与对应
+Git blob 逐字节一致。该阶段没有常驻服务，部署门为 `not_applicable`，回滚点为
+`82c85c0`。
+
 ## 目标与真值边界
 
 本阶段只验证“已有候选后，车辆能否安全地主动靠近并获得机器可判定图像”，不把
