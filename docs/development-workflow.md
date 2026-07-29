@@ -55,7 +55,7 @@ git worktree list
 所有任务先运行快速门禁：
 
 ```powershell
-py scripts/ci_fast.py
+py -3 scripts/ci_fast.py
 ```
 
 快速门禁执行 Python 编译、JSON/YAML/XML/Xacro/SDF 解析和不依赖 ROS 的算法测试。根据改动类型追加验证：

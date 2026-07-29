@@ -14,13 +14,13 @@
 - `README.md`：中文项目入口、当前状态、快速开始和最近同步。
 - `README_FIRST.md`：环境、目录和启动入口。
 - `PROJECT_SPEC.md`：系统架构与接口边界。
-- `STAGE_GATES.md`：Stage 0–7 的任务与验收条件。
+- `STAGE_GATES.md`：历史 Stage 门与 AUTO-00–AUTO-16 自主阶段的验收条件。
 - `docs/progress.md`：当前阶段、证据和已知边界。
 - `docs/development-workflow.md`：分支、PR、CI、部署、线上验收和清理流程。
 
 ## 验证要求
 
-- 所有改动先运行 `py scripts/ci_fast.py`；Linux/CI 使用 `python scripts/ci_fast.py`。
+- 所有改动先运行 `py -3 scripts/ci_fast.py`；Linux/CI 使用 `python scripts/ci_fast.py`。
 - Bash 脚本改动运行 `bash -n scripts/*.sh`；PowerShell 脚本改动至少做解析检查。
 - 纯算法改动运行对应 pytest；快速 CI 当前覆盖不依赖 ROS 的 coverage metrics 测试。
 - ROS 包、launch、URDF/Xacro、SDF、Nav2、SLAM、覆盖规划或运行时改动，必须运行受影响的 `scripts/stageN_ci.sh`，Windows 优先使用对应 `scripts/run_stageN_docker.ps1`。完整仿真门禁不能被语法检查或轻量 CI 替代。

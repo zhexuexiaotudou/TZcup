@@ -25,6 +25,8 @@ Stage5B 至 Stage5BR6W 使用独立 `tzcup/sanitation-jazzy:stage5b` 镜像，�
 
 AUTO-01 继续复用该镜像和 NVIDIA headless 通道，实际构建并运行 opt-in G2-C3：3/3 冷启动、seed0 17/17 完整 Coverage、MCAP 回放以及低/高障碍各 30 次均通过。该结果证明 `V5_retracted`、点云自滤波和 Nav2 安全链在当前容器环境可重复运行，但仍不外推为 GUI、真实车辆、真实域或 J6 验收。
 
+AUTO-02 在同一镜像和专用 overlay 中进一步完成 5/5 冷启动、五个静态 seed、20/20 动态交互、keepout/限速、30/30 急停和六个 MCAP 回放门，并冻结 `autonomous_navigation_profile_v1`。受影响的 navigation、coverage、tasks 三包重新构建后共 `72` 项测试无失败；这仍是 headless 机器仿真结论，不补足 GUI 人工验收、真实车辆、真实域或 J6 证据。
+
 ## 第三方锁定
 
 精确版本见 `repos/locked_revisions.json`。2026-07-14 远端核查发现：
