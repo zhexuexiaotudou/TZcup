@@ -1,5 +1,11 @@
 # TZcup 无人清扫车仿真项目
 
+## AUTO-03 Oracle 主动观察闭环正式矩阵通过（2026-07-30）
+
+AUTO-03 已实现不依赖观察位姿真值的主动观察任务链：带噪候选进入队列后，车辆在 Coverage 组件边界暂停，经观察位姿采样、`ComputePathToPose` 预检和 `NavigateToPose` 靠近，完成同步图像捕获与 evaluation-only 机器可判定评测，再返回边界并恢复覆盖。Oracle 只发布带噪平面位置、协方差、时间戳、通用类别/尺度以及 false/stale 状态；planner、Nav2、控制器和执行器均不得订阅语义 GT，也不得由 Oracle 设置车辆位姿。
+
+正式确定性矩阵为 6 个 G2 Gazebo 世界、60 个 scene、250 条 trial，并逐世界记录 19 个必需话题的 MCAP 后实际重放审计。首轮完整矩阵只有预测目标短边相对误差 P95 `0.31173` 未达到 `≤0.30`，其余任务、安全、中心投影和成本门均通过；该轮已作为失败尝试保留。短边模型只用 A–D 世界拟合，E–F 留出验证后重新执行完整矩阵：路径预检、可达导航、机器可判定和 Coverage 恢复均为 100%，碰撞、keepout 和 GT 控制违规均为 0；170 个投影样本的中心误差 P50/P95 为 `7.89398/18.43392 px`，短边相对误差 P50/P95 为 `0.09270/0.29771`，中位额外时间 `19.502 s`、吞吐损失 `19.598%`。六个 MCAP 均达到 19/19 话题覆盖且重放审计通过；紧凑证据正在由固定 finalizer 从该实现提交生成。实现说明见 [`docs/auto03-oracle-active-observation.md`](docs/auto03-oracle-active-observation.md)。
+
 ## 本机 Ubuntu 24.04 WSLg 图形验收通过（2026-07-29）
 
 当前 Windows 主机已新增完全位于本地磁盘的 `TZcup-Ubuntu-24.04` WSL2 发行版，并在 Ubuntu 24.04.4、ROS 2 Jazzy、Gazebo Sim 8.11.0 与 WSLg 中完成真实图形复核。Gazebo 三维场景和 Nav2 默认 RViz 布局均实际渲染；D3D12 renderer 为 NVIDIA GeForce RTX 4080 Laptop GPU，OpenGL 4.6、硬件加速为 `yes`。当前 `main@11ee369` 的全工作空间结果为 `449 tests / 0 errors / 0 failures / 49 skipped`，运行中 smoke check 为 `11/11` 必需 topic、`missing_topics=[]`、`success=true`。
@@ -94,7 +100,7 @@ Stage4T 已完成 200 组固定时长瞬态、120 组闭环航向、A/B/C/D 各 
 
 ## 当前状态
 
-- Stage 0–5A 及自主 AUTO-00/AUTO-01 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；当前自主候选为 opt-in G2-C3，下一阶段为 AUTO-02。Stage5BR6W 的 V4 candidate-footprint 失败与 Stage5BR6-A 等待真人 response 均作为独立历史边界保留。
+- Stage 0–5A 及自主 AUTO-00/AUTO-01/AUTO-02 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；当前在 opt-in G2-C3 上正式复验 AUTO-03 Oracle 主动观察闭环。Stage5BR6W 的 V4 candidate-footprint 失败与 Stage5BR6-A 等待真人 response 均作为独立历史边界保留。
 - precision mapping 与 localization/coverage 包络分别限制为 0.30/0.25 和 0.45/0.35 m/s、rad/s；0.60 rad/s stress 默认禁用且仍失败。
 - Stage4W hybrid 10-seed 的 XY RMSE P50/P95/max 为 0.02825/0.03726/0.03778 m，定位门禁通过且 GT 控制违规为 0。
 - 完整 Coverage 静态 5/5 通过，每次均执行统一几何生成的 17/17 组件；动态障碍 20/20、碰撞 0，过滤器、30 次急停和 rosbag 回放全部通过。
@@ -178,5 +184,7 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 当前结论严格限定为 synthetic-domain 工程就绪；`competition_perception_pass=false`、`j6_quantization_pass=false`、`j6_runtime_pass=false`、`competition_efficiency_pass=false`，理论效率仍为 `1053 m²/h < 3500 m²/h`。复核入口为 [`GPT_REVIEW_STAGE5A.md`](GPT_REVIEW_STAGE5A.md)、[`docs/stage5a-garbage-perception.md`](docs/stage5a-garbage-perception.md) 和 `artifacts/stage5a_20260717_review/`。
 
 ## 最近同步
+
+2026-07-30：AUTO-03 已完成主动观察执行链、GT 隔离、投影标定和 MCAP 重放审计实现。首轮六世界矩阵只在短边误差 P95 上以 `0.31173 > 0.30` 失败；按 A–D 训练、E–F 留出验证的捕获侧短边标定重跑完整矩阵后，六世界 250 条 trial 的全部机器硬门通过，正在生成紧凑证据并保持历史人工 false 标志不变。
 
 2026-07-29：AUTO-02 已由 [PR #32](https://github.com/zhexuexiaotudou/TZcup/pull/32) 在 `fast-validation` 通过后合入 `main@6d09e197`。合并后的紧凑证据已通过 Git blob 与 git archive 逐字节复验；文档、规则和兼容性说明现已统一指向冻结的 `autonomous_navigation_profile_v1` 与下一阶段 AUTO-03，同时保留 Stage5BR6W、真人、真实域、J6 和竞赛效率的原有边界。

@@ -122,6 +122,11 @@ def run_ros_independent_tests() -> None:
         dataset_package / "test" / "test_synthetic.py",
         ground_truth_package / "test" / "test_visibility.py",
         spot_cleaning_package / "test" / "test_coordinator.py",
+        spot_cleaning_package / "test" / "test_active_observation.py",
+        spot_cleaning_package / "test" / "test_observation_pose_planner.py",
+        spot_cleaning_package / "test" / "test_stage5br6w_engineering.py",
+        spot_cleaning_package / "test" / "test_auto03_contract.py",
+        spot_cleaning_package / "test" / "test_auto03_replay_audit.py",
         learning_package / "test" / "test_assets.py",
         learning_package / "test" / "test_rendered.py",
         learning_package / "test" / "test_gazebo_g1.py",
@@ -133,6 +138,7 @@ def run_ros_independent_tests() -> None:
         spot_cleaning_package / "test" / "test_auto01_geometry.py",
         ROOT / "scripts" / "test_autonomous_runner.py",
         ROOT / "scripts" / "test_auto02_tools.py",
+        ROOT / "scripts" / "test_auto03_matrix.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])
     if result != pytest.ExitCode.OK:

@@ -33,6 +33,7 @@
   <!-- Gazebo camera optical +X needs positive URDF Y rotation to look down;
        the external camera spec continues to report conventional negative pitch. -->
   <xacro:arg name="verification_camera_pitch_rad" default="0.7853981634"/>
+  <xacro:arg name="verification_camera_yaw_rad" default="0.0"/>
 
   <!-- Baseline geometry; replace with measured real vehicle values later. -->
   <xacro:property name="base_length" value="1.15"/>
@@ -256,7 +257,7 @@
       <parent link="base_link"/>
       <child link="verification_camera_link"/>
       <origin xyz="$(arg verification_camera_x) $(arg verification_camera_y) $(arg verification_camera_z)"
-              rpy="0 $(arg verification_camera_pitch_rad) 0"/>
+              rpy="0 $(arg verification_camera_pitch_rad) $(arg verification_camera_yaw_rad)"/>
     </joint>
     <link name="verification_camera_depth_link"/>
     <joint name="verification_camera_depth_joint" type="fixed">

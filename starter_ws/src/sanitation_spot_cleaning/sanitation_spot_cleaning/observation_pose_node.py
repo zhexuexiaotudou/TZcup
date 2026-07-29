@@ -35,15 +35,34 @@ def main() -> None:
             self.declare_parameter("camera_mount_rpy_deg", [0.0, -50.0, 0.0])
             self.declare_parameter("camera_self_pixel_fraction", 1.0)
             self.declare_parameter("camera_target_self_overlap", 1.0)
+            self.declare_parameter(
+                "projection_center_affine",
+                [1.0, 0.0, 0.0, 0.0, 1.0, 0.0],
+            )
+            self.declare_parameter("projection_center_offset_px", [0.0, 0.0])
+            self.declare_parameter("projection_short_side_scale", 1.0)
+            self.declare_parameter("projection_roi_margin_px", 0.0)
+            self.declare_parameter("class_projection_calibration_json", "{}")
+            self.declare_parameter("class_short_side_correction_json", "{}")
             self.declare_parameter("camera_info_topic", "/verification_camera/color/camera_info")
             self.declare_parameter("candidate_footprint_json", "[]")
             self.declare_parameter("self_mask_roi_xyxy_json", "[]")
             self.declare_parameter("engineering_mode", False)
             self.declare_parameter("compute_path_timeout_s", 4.0)
+            self.declare_parameter("standoff_min_m", 0.65)
+            self.declare_parameter("standoff_max_m", 1.35)
+            self.declare_parameter("standoff_steps", 4)
+            self.declare_parameter("arc_half_angle_deg", 70.0)
+            self.declare_parameter("arc_samples", 15)
             self.declare_parameter("global_frame", "map")
             self.declare_parameter("base_frame", "base_footprint")
             engineering_mode = bool(self.get_parameter("engineering_mode").value)
             self.planner = ObservationPosePlanner(PlannerConstraints(
+                standoff_min_m=float(self.get_parameter("standoff_min_m").value),
+                standoff_max_m=float(self.get_parameter("standoff_max_m").value),
+                standoff_steps=int(self.get_parameter("standoff_steps").value),
+                arc_half_angle_rad=math.radians(float(self.get_parameter("arc_half_angle_deg").value)),
+                arc_samples=int(self.get_parameter("arc_samples").value),
                 require_polygon_checks=engineering_mode,
                 require_costmap_footprint_cost=engineering_mode,
                 require_pose_dependent_self_overlap=engineering_mode,
@@ -209,6 +228,46 @@ def main() -> None:
                     fy_px=float(info.k[4]) if info is not None else None,
                     cx_px=float(info.k[2]) if info is not None else None,
                     cy_px=float(info.k[5]) if info is not None else None,
+                    projection_center_affine=tuple(
+                        float(value)
+                        for value in self.get_parameter("projection_center_affine").value
+                    ),
+                    projection_center_offset_px=tuple(
+                        float(value)
+                        for value in self.get_parameter("projection_center_offset_px").value
+                    ),
+                    projection_short_side_scale=float(
+                        self.get_parameter("projection_short_side_scale").value
+                    ),
+                    projection_roi_margin_px=float(
+                        self.get_parameter("projection_roi_margin_px").value
+                    ),
+                    class_projection_calibration=tuple(
+                        (
+                            str(class_id),
+                            float(values[0]),
+                            float(values[1]),
+                            float(values[2]),
+                        )
+                        for class_id, values in json.loads(str(
+                            self.get_parameter("class_projection_calibration_json").value
+                        )).items()
+                    ),
+                    class_short_side_correction=tuple(
+                        (
+                            str(class_id),
+                            float(values[0]),
+                            float(values[1]),
+                            float(values[2]),
+                            float(values[3]),
+                            float(values[4]),
+                        )
+                        for class_id, values in json.loads(str(
+                            self.get_parameter(
+                                "class_short_side_correction_json"
+                            ).value
+                        )).items()
+                    ),
                 )
                 region = CandidateRegion(
                     candidate_id=str(payload["candidate_id"]),

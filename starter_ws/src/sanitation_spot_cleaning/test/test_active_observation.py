@@ -85,6 +85,24 @@ def test_unreachable_is_terminal_and_reason_is_retained():
     assert task.terminal_reason == "compute_path_failed"
 
 
+def test_navigation_failure_is_terminal_and_does_not_spatially_merge_next_candidate():
+    coordinator = ActiveObservationCoordinator(spatial_merge_radius_m=0.25)
+    coordinator.discover("failed", 0.0, (1.0, 2.0))
+    coordinator.preflight("failed", 0.1, GOOD)
+    failed = coordinator.mark_approach_failed(
+        "failed",
+        1.0,
+        reason="navigate_to_pose_failed",
+        distance_m=0.7,
+        elapsed_s=0.9,
+    )
+    assert failed.state == ObservationState.UNREACHABLE
+    assert failed.terminal_reason == "navigate_to_pose_failed"
+    following = coordinator.discover("following", 1.1, (1.1, 2.1))
+    assert following.candidate_id == "following"
+    assert following.state == ObservationState.OBSERVATION_QUEUED
+
+
 def test_stage5br4_record_migrates_backward_compatibly():
     coordinator = ActiveObservationCoordinator()
     task = coordinator.restore_task({
