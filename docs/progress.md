@@ -10,6 +10,8 @@
 
 每个确认目标的中位额外距离/时间为 `0.000128 m/19.502 s`，按 AUTO-02 实测基线计算的吞吐损失为 `19.598%`，低于 25% 硬门。六个世界均记录 19/19 必需话题的 MCAP，候选身份与顺序、任务时间线、消息级指标重算和实际 `ros2 bag play` 全部通过。紧凑证据为 `artifacts/autonomous_auto03_20260729_evidence/`，manifest 和状态不变量均有效；大型原始 MCAP、日志和失败尝试保留在 Git 忽略目录。`AUTO-03=PASS`，自主状态推进到 AUTO-04；真人审计、真实车辆、真实域、J6 和最终竞赛状态未提升。
 
+[PR #35](https://github.com/zhexuexiaotudou/TZcup/pull/35) 的 `fast-validation` 通过后已 squash 合入 `main@c49122113583cf17015989740239128f6341ec41`，主分支 CI run `30488608555` 通过。合并后的远端 main 已复核状态字段、92 个 manifest 管理文件及对应 Git blob，均与本轮通过证据一致。AUTO-03 没有常驻线上服务，部署门以远端发布和既有 Docker/ROS/Gazebo 正式运行证据标记为 `not_applicable`；回滚点为 `82c85c0`。
+
 ## 2026-07-29：本机 Ubuntu 24.04 WSLg 图形环境与基础运行链验收
 
 - 在本地 `F:\WSL\TZcup-Ubuntu-24.04` 新建 Ubuntu 24.04.4 WSL2 发行版，安装 ROS 2 Jazzy Desktop、Gazebo Sim 8.11.0、`ros_gz`、Nav2、SLAM Toolbox、Fields2Cover 和项目依赖；环境不依赖 NAS。
