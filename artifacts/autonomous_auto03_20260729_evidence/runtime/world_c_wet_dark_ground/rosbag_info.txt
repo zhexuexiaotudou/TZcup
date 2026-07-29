@@ -1,0 +1,30 @@
+
+Files:             auto03_runtime_bag_0.mcap
+Bag size:          51.9 MiB
+Storage id:        mcap
+ROS Distro:        jazzy
+Duration:          1035.279459571s
+Start:             Jul 29 2026 18:58:17.879284714 (1785351497.879284714)
+End:               Jul 29 2026 19:15:33.158744285 (1785352533.158744285)
+Messages:          158532
+Topic information: Topic: /active_observation/candidate | Type: std_msgs/msg/String | Count: 38 | Serialization Format: cdr
+                   Topic: /active_observation/pose_plan | Type: std_msgs/msg/String | Count: 38 | Serialization Format: cdr
+                   Topic: /active_observation/selected_pose | Type: geometry_msgs/msg/PoseStamped | Count: 33 | Serialization Format: cdr
+                   Topic: /auto03/capture_request | Type: std_msgs/msg/String | Count: 33 | Serialization Format: cdr
+                   Topic: /auto03/done | Type: std_msgs/msg/Bool | Count: 1 | Serialization Format: cdr
+                   Topic: /auto03/machine_ready_result | Type: std_msgs/msg/String | Count: 33 | Serialization Format: cdr
+                   Topic: /auto03/oracle_candidate | Type: std_msgs/msg/String | Count: 42 | Serialization Format: cdr
+                   Topic: /auto03/trial_result | Type: std_msgs/msg/String | Count: 42 | Serialization Format: cdr
+                   Topic: /brush_enabled | Type: std_msgs/msg/Bool | Count: 42 | Serialization Format: cdr
+                   Topic: /cmd_vel | Type: geometry_msgs/msg/Twist | Count: 13304 | Serialization Format: cdr
+                   Topic: /cmd_vel_nav | Type: geometry_msgs/msg/Twist | Count: 10003 | Serialization Format: cdr
+                   Topic: /compute_path_to_pose/_action/status | Type: action_msgs/msg/GoalStatusArray | Count: 1510 | Serialization Format: cdr
+                   Topic: /coverage/state | Type: std_msgs/msg/String | Count: 75 | Serialization Format: cdr
+                   Topic: /localization/fused_pose | Type: geometry_msgs/msg/PoseWithCovarianceStamped | Count: 29946 | Serialization Format: cdr
+                   Topic: /navigate_to_pose/_action/status | Type: action_msgs/msg/GoalStatusArray | Count: 224 | Serialization Format: cdr
+                   Topic: /odom | Type: nav_msgs/msg/Odometry | Count: 29864 | Serialization Format: cdr
+                   Topic: /spin/_action/status | Type: action_msgs/msg/GoalStatusArray | Count: 108 | Serialization Format: cdr
+                   Topic: /tf | Type: tf2_msgs/msg/TFMessage | Count: 73194 | Serialization Format: cdr
+                   Topic: /tf_static | Type: tf2_msgs/msg/TFMessage | Count: 2 | Serialization Format: cdr
+Service:           0
+Service information: 

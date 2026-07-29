@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "program": "TZcup autonomous final",
+  "stage_id": "AUTO-03",
+  "baseline_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+  "implementation_commit": "731d069abe1384ee427cf2909c8b9605e70911b0",
+  "started_at": "2026-07-28T00:00:00Z",
+  "completed_at": "2026-07-29T20:19:48.863159+00:00",
+  "status": "PASS",
+  "first_blocking_layer": null,
+  "attempt_count": 16,
+  "machine_gate_pass": true,
+  "human_review_required": false,
+  "human_approval_required": false,
+  "competition_evidence": false,
+  "oracle_candidate_only": true,
+  "dependencies": {
+    "AUTO-01": "PASS"
+  },
+  "metrics": {
+    "safe_coverage_boundary_pause_rate": 1.0,
+    "preflight_path_success_rate": 1.0,
+    "navigate_to_pose_success_rate_reachable": 1.0,
+    "ready_conversion_overall": 1.0,
+    "ready_conversion_by_class": {
+      "leaf_pile": 1.0,
+      "metal_can": 1.0,
+      "paper_litter": 1.0,
+      "plastic_bottle": 1.0,
+      "puddle": 1.0
+    },
+    "coverage_resume_rate": 1.0,
+    "unreachable_fail_closed_rate": 1.0,
+    "false_candidate_without_cleaning_rate": 1.0,
+    "stale_fail_closed_rate": 1.0,
+    "collision_count": 0,
+    "keepout_violation_count": 0,
+    "gt_control_violation_count": 0,
+    "projection": {
+      "sample_count": 170,
+      "actual_center_inside_predicted_roi_rate": 1.0,
+      "center_pixel_error_p50": 7.893984863253152,
+      "center_pixel_error_p95": 18.433915465038094,
+      "short_side_relative_error_p50": 0.09270474417521263,
+      "short_side_relative_error_p95": 0.29771034872086977,
+      "predicted_actual_ready_agreement": 1.0,
+      "self_pixel_fraction_p95": 0.005494791666666667,
+      "target_self_overlap_p95": 0.0
+    },
+    "cost": {
+      "median_extra_distance_per_confirmed_target_m": 0.00012800222142601142,
+      "median_extra_time_per_confirmed_target_s": 19.50200000000001,
+      "median_coverage_interruption_s": 19.50200000000001,
+      "candidate_count": 250,
+      "candidates_per_scene": 4.166666666666667,
+      "baseline_coverage_duration_s": 333.36516484299864,
+      "theoretical_throughput_penalty": 3.555265112304292e-06,
+      "measured_throughput_penalty": 0.19598101335485732,
+      "throughput_method": "AUTO-02 measured baseline duration plus AUTO-03 median per-confirmed-target interruption at the observed candidates-per-scene rate"
+    }
+  },
+  "unexecuted_items": [],
+  "next_scheduled_stages": [
+    "AUTO-04"
+  ]
+}

@@ -39,6 +39,16 @@ class VerificationCameraModel:
     fy_px: float | None = None
     cx_px: float | None = None
     cy_px: float | None = None
+    projection_center_affine: tuple[float, float, float, float, float, float] = (
+        1.0, 0.0, 0.0, 0.0, 1.0, 0.0
+    )
+    projection_center_offset_px: tuple[float, float] = (0.0, 0.0)
+    projection_short_side_scale: float = 1.0
+    projection_roi_margin_px: float = 0.0
+    class_projection_calibration: tuple[tuple[str, float, float, float], ...] = ()
+    class_short_side_correction: tuple[
+        tuple[str, float, float, float, float, float], ...
+    ] = ()
 
     @property
     def effective_mount_rpy_rad(self) -> tuple[float, float, float]:
@@ -221,12 +231,57 @@ class ObservationPosePlanner:
         forward, lateral, vertical = camera_delta
         focal_x = camera.fx_px or camera.width_px / (2.0 * math.tan(camera.horizontal_fov_rad / 2.0))
         focal_y = camera.fy_px or focal_x
-        center_x = (camera.cx_px if camera.cx_px is not None else camera.width_px / 2.0) - focal_x * lateral / max(forward, 1e-6)
-        center_y = (camera.cy_px if camera.cy_px is not None else camera.height_px / 2.0) - focal_y * vertical / max(forward, 1e-6)
+        class_dx, class_dy, class_scale = 0.0, 0.0, 1.0
+        for class_id, dx_px, dy_px, scale in camera.class_projection_calibration:
+            if class_id == region.class_id:
+                class_dx, class_dy, class_scale = dx_px, dy_px, scale
+                break
+        raw_center_x = (
+            (camera.cx_px if camera.cx_px is not None else camera.width_px / 2.0)
+            - focal_x * lateral / max(forward, 1e-6)
+        )
+        raw_center_y = (
+            (camera.cy_px if camera.cy_px is not None else camera.height_px / 2.0)
+            - focal_y * vertical / max(forward, 1e-6)
+        )
+        a00, a01, a02, a10, a11, a12 = camera.projection_center_affine
+        center_x = (
+            a00 * raw_center_x + a01 * raw_center_y + a02
+            + camera.projection_center_offset_px[0] + class_dx
+        )
+        center_y = (
+            a10 * raw_center_x + a11 * raw_center_y + a12
+            + camera.projection_center_offset_px[1] + class_dy
+        )
         distance = max(math.sqrt(sum(value * value for value in camera_delta)), 1e-6)
         viewing_angle = math.atan2(math.hypot(lateral, vertical), max(forward, 1e-6))
-        short_side = min(focal_x, focal_y) * region.target_size_m / max(forward, 1e-6)
-        half = short_side / 2.0
+        base_short_side = (
+            min(focal_x, focal_y)
+            * region.target_size_m
+            / max(forward, 1e-6)
+            * camera.projection_short_side_scale
+            * class_scale
+        )
+        short_correction = 1.0
+        for (
+            class_id,
+            intercept,
+            raw_x_coefficient,
+            raw_y_coefficient,
+            base_short_coefficient,
+            target_size_coefficient,
+        ) in camera.class_short_side_correction:
+            if class_id == region.class_id:
+                short_correction = (
+                    intercept
+                    + raw_x_coefficient * (raw_center_x - 320.0) / 200.0
+                    + raw_y_coefficient * (raw_center_y - 240.0) / 120.0
+                    + base_short_coefficient * base_short_side / 60.0
+                    + target_size_coefficient * region.target_size_m / 0.30
+                )
+                break
+        short_side = base_short_side * max(short_correction, 0.10)
+        half = short_side / 2.0 + max(0.0, camera.projection_roi_margin_px)
         roi = (center_x - half, center_y - half, center_x + half, center_y + half)
         visible = (
             forward > 0.0
@@ -249,7 +304,12 @@ class ObservationPosePlanner:
         footprint_cost: Callable[[Pose2D, Polygon], float | None] | None = None,
         self_overlap_estimator: Callable[[Pose2D, tuple[float, float, float, float]], tuple[float, float]] | None = None,
     ) -> PlannedObservationPose | None:
+        keepouts = tuple(keepout_polygons)
         if covariance_trace > self.constraints.maximum_covariance_trace:
+            return None
+        if not _point_in_polygon(region.center_xy_m, cleanable_polygon):
+            return None
+        if any(_point_in_polygon(region.center_xy_m, polygon) for polygon in keepouts):
             return None
         if self.constraints.require_polygon_checks and len(candidate_footprint) < 3:
             return None
@@ -261,7 +321,6 @@ class ObservationPosePlanner:
             return None
         if self_overlap_estimator is None and camera.predicted_target_self_overlap > self.constraints.maximum_target_self_overlap:
             return None
-        keepouts = tuple(keepout_polygons)
         options = []
         distances = [
             self.constraints.standoff_min_m + index * (self.constraints.standoff_max_m - self.constraints.standoff_min_m) / max(self.constraints.standoff_steps - 1, 1)
@@ -277,7 +336,8 @@ class ObservationPosePlanner:
                 radial = current_bearing + math.pi + offset
                 x = region.center_xy_m[0] + standoff * math.cos(radial)
                 y = region.center_xy_m[1] + standoff * math.sin(radial)
-                yaw = math.atan2(region.center_xy_m[1] - y, region.center_xy_m[0] - x)
+                mount_yaw = camera.effective_mount_rpy_rad[2]
+                yaw = math.atan2(region.center_xy_m[1] - y, region.center_xy_m[0] - x) - mount_yaw
                 pose = Pose2D(x, y, yaw)
                 transformed_footprint = _transform_polygon(candidate_footprint, pose) if candidate_footprint else ()
                 clearance = (

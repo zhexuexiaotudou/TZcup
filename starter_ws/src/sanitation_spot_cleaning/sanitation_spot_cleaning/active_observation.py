@@ -234,6 +234,25 @@ class ActiveObservationCoordinator:
             self._transition(task, ObservationState.CONFIRMED if confirmed else ObservationState.REJECTED, now_s, "recognized" if confirmed else "false_candidate")
         return task
 
+    def mark_approach_failed(
+        self,
+        candidate_id: str,
+        now_s: float,
+        *,
+        reason: str,
+        distance_m: float,
+        elapsed_s: float,
+    ) -> ObservationTask:
+        """Terminate a failed physical approach without leaving a mergeable task."""
+        task = self.tasks[self._canonical_id(candidate_id)]
+        if task.state != ObservationState.APPROACHING:
+            raise ValueError(f"approach failure requires APPROACHING, got {task.state.value}")
+        task.last_observation_s = float(now_s)
+        task.extra_distance_m += max(0.0, float(distance_m))
+        task.extra_time_s += max(0.0, float(elapsed_s))
+        self._transition(task, ObservationState.UNREACHABLE, now_s, str(reason))
+        return task
+
     def mark_coverage_resumed(self, candidate_id: str, now_s: float, success: bool) -> ObservationTask:
         task = self.tasks[self._canonical_id(candidate_id)]
         if not task.coverage_resume_required:

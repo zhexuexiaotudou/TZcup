@@ -1,0 +1,23 @@
+/auto03_oracle_scene_source
+  Subscribers:
+    /auto03/trial_result: std_msgs/msg/String
+    /clock: rosgraph_msgs/msg/Clock
+  Publishers:
+    /auto03/done: std_msgs/msg/Bool
+    /auto03/oracle_candidate: std_msgs/msg/String
+    /parameter_events: rcl_interfaces/msg/ParameterEvent
+    /rosout: rcl_interfaces/msg/Log
+  Service Servers:
+    /auto03_oracle_scene_source/describe_parameters: rcl_interfaces/srv/DescribeParameters
+    /auto03_oracle_scene_source/get_parameter_types: rcl_interfaces/srv/GetParameterTypes
+    /auto03_oracle_scene_source/get_parameters: rcl_interfaces/srv/GetParameters
+    /auto03_oracle_scene_source/get_type_description: type_description_interfaces/srv/GetTypeDescription
+    /auto03_oracle_scene_source/list_parameters: rcl_interfaces/srv/ListParameters
+    /auto03_oracle_scene_source/set_parameters: rcl_interfaces/srv/SetParameters
+    /auto03_oracle_scene_source/set_parameters_atomically: rcl_interfaces/srv/SetParametersAtomically
+  Service Clients:
+
+  Action Servers:
+
+  Action Clients:
+

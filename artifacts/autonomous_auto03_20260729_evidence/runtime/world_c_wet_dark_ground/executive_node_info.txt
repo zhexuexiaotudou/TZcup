@@ -1,0 +1,35 @@
+/auto03_observation_executive
+  Subscribers:
+    /active_observation/pose_plan: std_msgs/msg/String
+    /auto03/machine_ready_result: std_msgs/msg/String
+    /auto03/oracle_candidate: std_msgs/msg/String
+    /clock: rosgraph_msgs/msg/Clock
+    /localization/fused_pose: geometry_msgs/msg/PoseWithCovarianceStamped
+    /odom: nav_msgs/msg/Odometry
+    /scan: sensor_msgs/msg/LaserScan
+    /tf: tf2_msgs/msg/TFMessage
+    /tf_static: tf2_msgs/msg/TFMessage
+    /verification_camera/color/camera_info: sensor_msgs/msg/CameraInfo
+  Publishers:
+    /active_observation/candidate: std_msgs/msg/String
+    /auto03/capture_request: std_msgs/msg/String
+    /auto03/trial_result: std_msgs/msg/String
+    /brush_enabled: std_msgs/msg/Bool
+    /coverage/state: std_msgs/msg/String
+    /parameter_events: rcl_interfaces/msg/ParameterEvent
+    /rosout: rcl_interfaces/msg/Log
+  Service Servers:
+    /auto03_observation_executive/describe_parameters: rcl_interfaces/srv/DescribeParameters
+    /auto03_observation_executive/get_parameter_types: rcl_interfaces/srv/GetParameterTypes
+    /auto03_observation_executive/get_parameters: rcl_interfaces/srv/GetParameters
+    /auto03_observation_executive/get_type_description: type_description_interfaces/srv/GetTypeDescription
+    /auto03_observation_executive/list_parameters: rcl_interfaces/srv/ListParameters
+    /auto03_observation_executive/set_parameters: rcl_interfaces/srv/SetParameters
+    /auto03_observation_executive/set_parameters_atomically: rcl_interfaces/srv/SetParametersAtomically
+  Service Clients:
+
+  Action Servers:
+
+  Action Clients:
+    /navigate_to_pose: nav2_msgs/action/NavigateToPose
+    /spin: nav2_msgs/action/Spin

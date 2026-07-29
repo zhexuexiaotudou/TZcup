@@ -1,5 +1,15 @@
 # 项目推进记录
 
+## AUTO-03：Oracle 主动观察闭环（2026-07-30，机器门通过）
+
+本阶段在 AUTO-01 的 opt-in `G2-C3` 几何和 AUTO-02 冻结导航配置上实现真实主动观察任务链。Oracle 只发布带噪 XY、协方差、时间戳、通用类别/尺度以及 false/stale 状态，不输出观察位姿、路径或成功状态，也不设置车辆位姿；语义 GT 只进入独立 `auto03_machine_ready_evaluator`，节点图审计确认 planner、Nav2、控制器和执行器均无 GT 订阅。production 默认相机、footprint 和 `enable_training_gt=false` 均未改变。
+
+确定性正式矩阵包含 6 个 G2 Gazebo 世界、60 个 scene、250 条 trial：有效目标 200 条且五类各 40，其中 reachable 170、unreachable/keepout 30；另有 false 30、stale 20。每条可达候选均真实执行 Coverage 边界暂停、观察位姿采样、`ComputePathToPose`、`NavigateToPose`、同步捕获、机器可判定评测、返回边界和 Coverage 恢复。最终路径预检、可达导航、机器可判定和 Coverage 恢复均为 100%；三类拒绝用例均 100% fail-closed，碰撞、keepout 和 GT 控制违规均为 0。
+
+首轮完整矩阵的中心误差 P50/P95 为 `8.53655/20.16039 px`，但目标短边相对误差 P95 为 `0.31173`，未达到 `≤0.30`，因此整轮作为失败证据保留。捕获侧短边模型只在 A–D 世界拟合，E–F 作为留出验证，且规划投影、观察位姿和导航参数不变。完整重跑后 170 个投影样本的中心误差 P50/P95 为 `7.89398/18.43392 px`，短边相对误差 P50/P95 为 `0.09270/0.29771`，中心落入搜索 ROI 和预测/实际 ready 一致率均为 100%；自车像素 P95 为 `0.005495`，目标/自车重叠 P95 为 0。
+
+每个确认目标的中位额外距离/时间为 `0.000128 m/19.502 s`，按 AUTO-02 实测基线计算的吞吐损失为 `19.598%`，低于 25% 硬门。六个世界均记录 19/19 必需话题的 MCAP，候选身份与顺序、任务时间线、消息级指标重算和实际 `ros2 bag play` 全部通过。紧凑证据为 `artifacts/autonomous_auto03_20260729_evidence/`，manifest 和状态不变量均有效；大型原始 MCAP、日志和失败尝试保留在 Git 忽略目录。`AUTO-03=PASS`，自主状态推进到 AUTO-04；真人审计、真实车辆、真实域、J6 和最终竞赛状态未提升。
+
 ## 2026-07-29：本机 Ubuntu 24.04 WSLg 图形环境与基础运行链验收
 
 - 在本地 `F:\WSL\TZcup-Ubuntu-24.04` 新建 Ubuntu 24.04.4 WSL2 发行版，安装 ROS 2 Jazzy Desktop、Gazebo Sim 8.11.0、`ros_gz`、Nav2、SLAM Toolbox、Fields2Cover 和项目依赖；环境不依赖 NAS。

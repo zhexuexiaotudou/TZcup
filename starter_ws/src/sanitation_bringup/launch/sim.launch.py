@@ -41,11 +41,12 @@ def generate_launch_description():
     world_to_map_y = LaunchConfiguration("world_to_map_y")
     world_to_map_yaw = LaunchConfiguration("world_to_map_yaw")
     camera_profile = LaunchConfiguration("camera_profile")
+    enable_training_gt = LaunchConfiguration("enable_training_gt")
     engineering_camera = PythonExpression(
         [
             "'",
             camera_profile,
-            "' in ('V4_engineering', 'V5_retracted')",
+            "' in ('V4_engineering', 'V5_retracted', 'AUTO03_corner')",
         ]
     )
 
@@ -86,43 +87,58 @@ def generate_launch_description():
                     [
                         "'true' if '",
                         camera_profile,
-                        "' in ('V4_engineering', 'V5_retracted') else 'false'",
+                        "' in ('V4_engineering', 'V5_retracted', 'AUTO03_corner') else 'false'",
                     ]
                 ),
                 " verification_camera_x:=", PythonExpression(
                     [
-                        "'0.36' if '",
+                        "'0.32' if '",
+                        camera_profile,
+                        "' == 'AUTO03_corner' else ('0.36' if '",
                         camera_profile,
                         "' == 'V5_retracted' else ('0.67' if '",
                         camera_profile,
-                        "' == 'V4_engineering' else '0.30')",
+                        "' == 'V4_engineering' else '0.30'))",
                     ]
                 ),
                 " verification_camera_y:=", PythonExpression(
                     [
-                        "'0.0' if '",
+                        "'0.28' if '",
+                        camera_profile,
+                        "' == 'AUTO03_corner' else ('0.0' if '",
                         camera_profile,
                         "' == 'V5_retracted' else ('0.34' if '",
                         camera_profile,
-                        "' == 'V4_engineering' else '0.0')",
+                        "' == 'V4_engineering' else '0.0'))",
                     ]
                 ),
                 " verification_camera_z:=", PythonExpression(
                     [
                         "'0.66' if '",
                         camera_profile,
-                        "' == 'V5_retracted' else ('0.48' if '",
+                        "' in ('V5_retracted', 'AUTO03_corner') else ('0.48' if '",
                         camera_profile,
                         "' == 'V4_engineering' else '0.70')",
                     ]
                 ),
                 " verification_camera_pitch_rad:=", PythonExpression(
                     [
-                        "'0.8726646260' if '",
+                        "'0.6108652382' if '",
                         camera_profile,
-                        "' in ('V4_engineering', 'V5_retracted') else '0.7853981634'",
+                        "' == 'AUTO03_corner' else ('0.8726646260' if '",
+                        camera_profile,
+                        "' in ('V4_engineering', 'V5_retracted') else '0.7853981634')",
                     ]
                 ),
+                " verification_camera_yaw_rad:=", PythonExpression(
+                    [
+                        "'0.7853981634' if '",
+                        camera_profile,
+                        "' == 'AUTO03_corner' else '0.0'",
+                    ]
+                ),
+                " enable_training_gt:=", enable_training_gt,
+                " enable_self_mask_gt:=", enable_training_gt,
             ]
         ),
         value_type=str,
@@ -163,7 +179,12 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "camera_profile",
                 default_value="production",
-                description="production, opt-in V4_engineering, or opt-in V5_retracted; production remains unchanged",
+                description="production or opt-in engineering cameras; production remains unchanged",
+            ),
+            DeclareLaunchArgument(
+                "enable_training_gt",
+                default_value="false",
+                description="evaluation-only semantic/instance labels; never enabled by production defaults",
             ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(gz_launch),
@@ -234,6 +255,27 @@ def generate_launch_description():
                     (
                         "/world/sanitation_test_world/dynamic_pose/info",
                         "/ground_truth/dynamic_pose",
+                    ),
+                ],
+            ),
+            Node(
+                package="ros_gz_bridge",
+                executable="parameter_bridge",
+                name="auto03_evaluation_only_gt_bridge",
+                output="screen",
+                condition=IfCondition(enable_training_gt),
+                arguments=[
+                    "/g2/verification_semantic_gt/labels_map@sensor_msgs/msg/Image[gz.msgs.Image",
+                    "/g2/verification_instance_gt/labels_map@sensor_msgs/msg/Image[gz.msgs.Image",
+                ],
+                remappings=[
+                    (
+                        "/g2/verification_semantic_gt/labels_map",
+                        "/ground_truth/verification_semantic/image",
+                    ),
+                    (
+                        "/g2/verification_instance_gt/labels_map",
+                        "/ground_truth/verification_instance/image",
                     ),
                 ],
             ),
