@@ -1,0 +1,3 @@
+Type: nav_msgs/msg/OccupancyGrid
+Publisher count: 1
+Subscription count: 1

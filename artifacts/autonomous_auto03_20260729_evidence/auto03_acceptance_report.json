@@ -1,0 +1,217 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-03",
+  "oracle_boundary_fields": [
+    "candidate_id",
+    "class_id",
+    "covariance_trace",
+    "target_size_m",
+    "timestamp_s",
+    "x_m",
+    "y_m"
+  ],
+  "data_matrix": {
+    "world_count": 6,
+    "scene_count": 60,
+    "valid_target_candidate_count": 200,
+    "target_count_by_class": {
+      "leaf_pile": 40,
+      "metal_can": 40,
+      "paper_litter": 40,
+      "plastic_bottle": 40,
+      "puddle": 40
+    },
+    "unreachable_keepout_count": 30,
+    "false_no_target_count": 30,
+    "stale_dropout_count": 20
+  },
+  "metrics": {
+    "safe_coverage_boundary_pause_rate": 1.0,
+    "preflight_path_success_rate": 1.0,
+    "navigate_to_pose_success_rate_reachable": 1.0,
+    "ready_conversion_overall": 1.0,
+    "ready_conversion_by_class": {
+      "leaf_pile": 1.0,
+      "metal_can": 1.0,
+      "paper_litter": 1.0,
+      "plastic_bottle": 1.0,
+      "puddle": 1.0
+    },
+    "coverage_resume_rate": 1.0,
+    "unreachable_fail_closed_rate": 1.0,
+    "false_candidate_without_cleaning_rate": 1.0,
+    "stale_fail_closed_rate": 1.0,
+    "collision_count": 0,
+    "keepout_violation_count": 0,
+    "gt_control_violation_count": 0,
+    "projection": {
+      "sample_count": 170,
+      "actual_center_inside_predicted_roi_rate": 1.0,
+      "center_pixel_error_p50": 7.893984863253152,
+      "center_pixel_error_p95": 18.433915465038094,
+      "short_side_relative_error_p50": 0.09270474417521263,
+      "short_side_relative_error_p95": 0.29771034872086977,
+      "predicted_actual_ready_agreement": 1.0,
+      "self_pixel_fraction_p95": 0.005494791666666667,
+      "target_self_overlap_p95": 0.0
+    },
+    "cost": {
+      "median_extra_distance_per_confirmed_target_m": 0.00012800222142601142,
+      "median_extra_time_per_confirmed_target_s": 19.50200000000001,
+      "median_coverage_interruption_s": 19.50200000000001,
+      "candidate_count": 250,
+      "candidates_per_scene": 4.166666666666667,
+      "baseline_coverage_duration_s": 333.36516484299864,
+      "theoretical_throughput_penalty": 3.555265112304292e-06,
+      "measured_throughput_penalty": 0.19598101335485732,
+      "throughput_method": "AUTO-02 measured baseline duration plus AUTO-03 median per-confirmed-target interruption at the observed candidates-per-scene rate"
+    }
+  },
+  "checks": {
+    "worlds_at_least_6": true,
+    "scenes_at_least_60": true,
+    "valid_target_candidates_at_least_200": true,
+    "each_target_class_at_least_30": true,
+    "unreachable_keepout_at_least_30": true,
+    "false_no_target_at_least_30": true,
+    "stale_dropout_at_least_20": true,
+    "safe_coverage_boundary_pause_100_percent": true,
+    "preflight_path_success_at_least_0_95": true,
+    "navigate_success_at_least_0_95": true,
+    "ready_conversion_overall_at_least_0_90": true,
+    "discrete_class_conversion_each_at_least_0_85": true,
+    "coverage_resume_at_least_0_95": true,
+    "unreachable_fail_closed_100_percent": true,
+    "false_candidate_without_cleaning_100_percent": true,
+    "stale_fail_closed_100_percent": true,
+    "collision_zero": true,
+    "keepout_zero": true,
+    "gt_control_violation_zero": true,
+    "projection_center_inside_at_least_0_95": true,
+    "projection_center_error_p50_at_most_10_px": true,
+    "projection_center_error_p95_at_most_25_px": true,
+    "projection_short_error_p50_at_most_0_15": true,
+    "projection_short_error_p95_at_most_0_30": true,
+    "predicted_actual_ready_agreement_at_least_0_90": true,
+    "self_pixels_p95_at_most_0_05": true,
+    "target_self_overlap_at_most_0_05": true,
+    "median_extra_distance_at_most_8_m": true,
+    "median_extra_time_at_most_45_s": true,
+    "throughput_penalty_at_most_0_25": true,
+    "node_graph_gt_isolation": true,
+    "mcap_required_topic_coverage_100_percent": true,
+    "mcap_replay_audit_6_of_6": true,
+    "mcap_metric_replay_delta_at_most_0_01": true,
+    "task_timeline_reconstructable_6_of_6": true,
+    "rosbag_playback_started_6_of_6": true
+  },
+  "engineering_suggestions": {
+    "median_extra_distance_at_most_8_m": true,
+    "median_extra_time_at_most_45_s": true,
+    "throughput_penalty_at_most_0_25": true
+  },
+  "auto03_gate_pass": true,
+  "trial_count": 250,
+  "attempt_id": "AUTO-03-ORACLE-V1",
+  "matrix_sha256": "edbc3fec206d415adfe9b9763c5969769059fe5d8de62e158010b3612b8bba48",
+  "world_runtime": {
+    "world_a_asphalt_campus": {
+      "expected_count": 42,
+      "result_count": 42,
+      "robot_pose_set_by_oracle": false,
+      "runtime_complete": true,
+      "replay_audit_pass": true,
+      "required_topic_coverage": 1.0,
+      "metric_replay_delta_max": 0.0,
+      "task_timeline_reconstructable": true,
+      "rosbag_playback_started": true
+    },
+    "world_b_concrete_sidewalk": {
+      "expected_count": 42,
+      "result_count": 42,
+      "robot_pose_set_by_oracle": false,
+      "runtime_complete": true,
+      "replay_audit_pass": true,
+      "required_topic_coverage": 1.0,
+      "metric_replay_delta_max": 0.0,
+      "task_timeline_reconstructable": true,
+      "rosbag_playback_started": true
+    },
+    "world_c_wet_dark_ground": {
+      "expected_count": 42,
+      "result_count": 42,
+      "robot_pose_set_by_oracle": false,
+      "runtime_complete": true,
+      "replay_audit_pass": true,
+      "required_topic_coverage": 1.0,
+      "metric_replay_delta_max": 0.0,
+      "task_timeline_reconstructable": true,
+      "rosbag_playback_started": true
+    },
+    "world_d_mixed_curb_vegetation": {
+      "expected_count": 42,
+      "result_count": 42,
+      "robot_pose_set_by_oracle": false,
+      "runtime_complete": true,
+      "replay_audit_pass": true,
+      "required_topic_coverage": 1.0,
+      "metric_replay_delta_max": 0.0,
+      "task_timeline_reconstructable": true,
+      "rosbag_playback_started": true
+    },
+    "world_e_tiled_plaza": {
+      "expected_count": 41,
+      "result_count": 41,
+      "robot_pose_set_by_oracle": false,
+      "runtime_complete": true,
+      "replay_audit_pass": true,
+      "required_topic_coverage": 1.0,
+      "metric_replay_delta_max": 0.0,
+      "task_timeline_reconstructable": true,
+      "rosbag_playback_started": true
+    },
+    "world_f_service_road": {
+      "expected_count": 41,
+      "result_count": 41,
+      "robot_pose_set_by_oracle": false,
+      "runtime_complete": true,
+      "replay_audit_pass": true,
+      "required_topic_coverage": 1.0,
+      "metric_replay_delta_max": 0.0,
+      "task_timeline_reconstructable": true,
+      "rosbag_playback_started": true
+    }
+  },
+  "gt_isolation": {
+    "world_a_asphalt_campus": {
+      "control_graph_has_ground_truth_topic": false,
+      "gt_topic_has_control_subscriber": false,
+      "evaluation_subscriber_present": true
+    },
+    "world_b_concrete_sidewalk": {
+      "control_graph_has_ground_truth_topic": false,
+      "gt_topic_has_control_subscriber": false,
+      "evaluation_subscriber_present": true
+    },
+    "world_c_wet_dark_ground": {
+      "control_graph_has_ground_truth_topic": false,
+      "gt_topic_has_control_subscriber": false,
+      "evaluation_subscriber_present": true
+    },
+    "world_d_mixed_curb_vegetation": {
+      "control_graph_has_ground_truth_topic": false,
+      "gt_topic_has_control_subscriber": false,
+      "evaluation_subscriber_present": true
+    },
+    "world_e_tiled_plaza": {
+      "control_graph_has_ground_truth_topic": false,
+      "gt_topic_has_control_subscriber": false,
+      "evaluation_subscriber_present": true
+    },
+    "world_f_service_road": {
+      "control_graph_has_ground_truth_topic": false,
+      "gt_topic_has_control_subscriber": false,
+      "evaluation_subscriber_present": true
+    }
+  }
+}

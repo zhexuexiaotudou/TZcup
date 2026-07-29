@@ -1,0 +1,522 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "attempt_id": "AUTO-03-V5-RETRACTED-R1",
+      "hypothesis": "AUTO-01 retracted camera is sufficient for verification",
+      "result": "FAIL",
+      "first_failure": "self pixels 24.79%, center error 81.65 px and return timeout",
+      "changed_variables": [],
+      "decision": "redesign_camera_pose",
+      "raw_evidence": [
+        "F:\\Project\\TZcup-autonomous-auto03\\artifacts\\autonomous_auto03_raw_20260729"
+      ],
+      "input_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+      "configuration_sha256": "05fedadd78cd9580dfddd0b3b627f57a857ef78331e3570db2c07340188e78aa",
+      "capture_runtime_sha256": "40ce8d32e2131a4d5c2dd37ddc3377f0b9955330ffa9042cd5d21d3b129a5baf",
+      "fixed_variables": [
+        "autonomous_navigation_profile_v1",
+        "AUTO03_corner",
+        "six G2 worlds",
+        "250-case matrix"
+      ],
+      "commands": [
+        [
+          "powershell",
+          "-File",
+          "scripts/run_auto03_matrix_docker.ps1"
+        ]
+      ],
+      "metrics": {}
+    },
+    {
+      "attempt_id": "AUTO-03-CORNER-CAMERA-R1",
+      "hypothesis": "a corner camera inside the frozen footprint removes self occlusion",
+      "result": "FAIL",
+      "first_failure": "yaw 35 deg self pixels 11.2%; yaw 90 deg self pixels 8.35% with navigation instability",
+      "changed_variables": [
+        "camera mount x/y/z, pitch and yaw"
+      ],
+      "decision": "select_yaw_45_pitch_35",
+      "raw_evidence": [
+        "F:\\Project\\TZcup-autonomous-auto03\\artifacts\\autonomous_auto03_raw_20260729"
+      ],
+      "input_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+      "configuration_sha256": "05fedadd78cd9580dfddd0b3b627f57a857ef78331e3570db2c07340188e78aa",
+      "capture_runtime_sha256": "40ce8d32e2131a4d5c2dd37ddc3377f0b9955330ffa9042cd5d21d3b129a5baf",
+      "fixed_variables": [
+        "autonomous_navigation_profile_v1",
+        "AUTO03_corner",
+        "six G2 worlds",
+        "250-case matrix"
+      ],
+      "commands": [
+        [
+          "powershell",
+          "-File",
+          "scripts/run_auto03_matrix_docker.ps1"
+        ]
+      ],
+      "metrics": {}
+    },
+    {
+      "attempt_id": "AUTO-03-PARALLEL-FORMAL-R1",
+      "hypothesis": "two formal Gazebo worlds can run concurrently",
+      "result": "FAIL",
+      "first_failure": "CPU contention reduced world B navigation to 26/34",
+      "changed_variables": [
+        "world execution concurrency"
+      ],
+      "decision": "force_sequential_worlds",
+      "raw_evidence": [
+        "F:\\Project\\TZcup-autonomous-auto03\\artifacts\\autonomous_auto03_raw_20260729\\attempt_parallel_cpu_contention_failed"
+      ],
+      "input_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+      "configuration_sha256": "05fedadd78cd9580dfddd0b3b627f57a857ef78331e3570db2c07340188e78aa",
+      "capture_runtime_sha256": "40ce8d32e2131a4d5c2dd37ddc3377f0b9955330ffa9042cd5d21d3b129a5baf",
+      "fixed_variables": [
+        "autonomous_navigation_profile_v1",
+        "AUTO03_corner",
+        "six G2 worlds",
+        "250-case matrix"
+      ],
+      "commands": [
+        [
+          "powershell",
+          "-File",
+          "scripts/run_auto03_matrix_docker.ps1"
+        ]
+      ],
+      "metrics": {}
+    },
+    {
+      "attempt_id": "AUTO-03-AFFINE-PROJECTION-R2",
+      "hypothesis": "2D affine center calibration and robust class scales generalize",
+      "result": "PASS",
+      "first_failure": null,
+      "changed_variables": [
+        "projection affine",
+        "per-class short-side scale"
+      ],
+      "decision": "freeze_after_world_e_heldout_pass",
+      "raw_evidence": [
+        "F:\\Project\\TZcup-autonomous-auto03\\artifacts\\autonomous_auto03_raw_20260729\\calibration_evidence"
+      ],
+      "input_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+      "configuration_sha256": "05fedadd78cd9580dfddd0b3b627f57a857ef78331e3570db2c07340188e78aa",
+      "capture_runtime_sha256": "40ce8d32e2131a4d5c2dd37ddc3377f0b9955330ffa9042cd5d21d3b129a5baf",
+      "fixed_variables": [
+        "autonomous_navigation_profile_v1",
+        "AUTO03_corner",
+        "six G2 worlds",
+        "250-case matrix"
+      ],
+      "commands": [
+        [
+          "powershell",
+          "-File",
+          "scripts/run_auto03_matrix_docker.ps1"
+        ]
+      ],
+      "metrics": {}
+    },
+    {
+      "attempt_id": "AUTO-03-MAP-STARTUP-RACE-R1",
+      "hypothesis": "Nav2 can start concurrently with the localization map server",
+      "result": "FAIL",
+      "first_failure": "map lifecycle response timeout left StaticLayer on a 5 x 5 m fallback costmap",
+      "changed_variables": [
+        "startup ordering"
+      ],
+      "decision": "require_active_map_publisher_before_nav2",
+      "raw_evidence": [
+        "F:\\Project\\TZcup-autonomous-auto03\\artifacts\\autonomous_auto03_formal_20260729\\attempt_world_a_compute_path_failed"
+      ],
+      "input_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+      "configuration_sha256": "05fedadd78cd9580dfddd0b3b627f57a857ef78331e3570db2c07340188e78aa",
+      "capture_runtime_sha256": "40ce8d32e2131a4d5c2dd37ddc3377f0b9955330ffa9042cd5d21d3b129a5baf",
+      "fixed_variables": [
+        "autonomous_navigation_profile_v1",
+        "AUTO03_corner",
+        "six G2 worlds",
+        "250-case matrix"
+      ],
+      "commands": [
+        [
+          "powershell",
+          "-File",
+          "scripts/run_auto03_matrix_docker.ps1"
+        ]
+      ],
+      "metrics": {}
+    },
+    {
+      "attempt_id": "AUTO-03-MCAP-DISCOVERY-R1",
+      "hypothesis": "a fixed sleep is sufficient for rosbag topic discovery",
+      "result": "FAIL",
+      "first_failure": "2/14 required topics absent and one trial result missed",
+      "changed_variables": [
+        "bag discovery readiness"
+      ],
+      "decision": "delay_oracle_until_all_topics_subscribed",
+      "raw_evidence": [
+        "F:\\Project\\TZcup-autonomous-auto03\\artifacts\\autonomous_auto03_world_a_bag_smoke"
+      ],
+      "input_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+      "configuration_sha256": "05fedadd78cd9580dfddd0b3b627f57a857ef78331e3570db2c07340188e78aa",
+      "capture_runtime_sha256": "40ce8d32e2131a4d5c2dd37ddc3377f0b9955330ffa9042cd5d21d3b129a5baf",
+      "fixed_variables": [
+        "autonomous_navigation_profile_v1",
+        "AUTO03_corner",
+        "six G2 worlds",
+        "250-case matrix"
+      ],
+      "commands": [
+        [
+          "powershell",
+          "-File",
+          "scripts/run_auto03_matrix_docker.ps1"
+        ]
+      ],
+      "metrics": {}
+    },
+    {
+      "attempt_id": "AUTO-03-ROI-UNCERTAINTY-R1",
+      "hypothesis": "the calibrated target-size box is also a sufficient search ROI",
+      "result": "FAIL",
+      "first_failure": "world A partial center-inside-ROI rate was 5/6 despite 11.9 px center-error P95",
+      "changed_variables": [
+        "search ROI uncertainty margin"
+      ],
+      "decision": "separate_target_size_prediction_from_search_roi",
+      "raw_evidence": [
+        "F:\\Project\\TZcup-autonomous-auto03\\artifacts\\autonomous_auto03_formal_20260729\\attempt_projection_roi_undercoverage"
+      ],
+      "input_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+      "configuration_sha256": "05fedadd78cd9580dfddd0b3b627f57a857ef78331e3570db2c07340188e78aa",
+      "capture_runtime_sha256": "40ce8d32e2131a4d5c2dd37ddc3377f0b9955330ffa9042cd5d21d3b129a5baf",
+      "fixed_variables": [
+        "autonomous_navigation_profile_v1",
+        "AUTO03_corner",
+        "six G2 worlds",
+        "250-case matrix"
+      ],
+      "commands": [
+        [
+          "powershell",
+          "-File",
+          "scripts/run_auto03_matrix_docker.ps1"
+        ]
+      ],
+      "metrics": {}
+    },
+    {
+      "attempt_id": "AUTO-03-YAW-CONVERGENCE-R1",
+      "hypothesis": "a single NavigateToPose always closes final position and yaw",
+      "result": "FAIL",
+      "first_failure": "three near-goal samples timed out outside the 0.2 m position tolerance with yaw still open",
+      "changed_variables": [
+        "near-goal yaw handoff"
+      ],
+      "decision": "cancel_then_submit_orientation_only_navigate_goal",
+      "raw_evidence": [
+        "F:\\Project\\TZcup-autonomous-auto03\\artifacts\\autonomous_auto03_formal_20260729\\attempt_yaw_convergence_timeout"
+      ],
+      "input_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+      "configuration_sha256": "05fedadd78cd9580dfddd0b3b627f57a857ef78331e3570db2c07340188e78aa",
+      "capture_runtime_sha256": "40ce8d32e2131a4d5c2dd37ddc3377f0b9955330ffa9042cd5d21d3b129a5baf",
+      "fixed_variables": [
+        "autonomous_navigation_profile_v1",
+        "AUTO03_corner",
+        "six G2 worlds",
+        "250-case matrix"
+      ],
+      "commands": [
+        [
+          "powershell",
+          "-File",
+          "scripts/run_auto03_matrix_docker.ps1"
+        ]
+      ],
+      "metrics": {}
+    },
+    {
+      "attempt_id": "AUTO-03-CLASS-SCALE-R3",
+      "hypothesis": "the world E ten-trial class scales generalize to the full matrix",
+      "result": "FAIL",
+      "first_failure": "world A short-side relative-error P95 was 0.4063; leaf and puddle size predictions were systematically low",
+      "changed_variables": [
+        "leaf_pile and puddle short-side scales"
+      ],
+      "decision": "recalibrate_from_full_world_a_then_restart_all_six_worlds",
+      "raw_evidence": [
+        "F:\\Project\\TZcup-autonomous-auto03\\artifacts\\autonomous_auto03_formal_20260729\\attempt_projection_class_scale_calibration"
+      ],
+      "input_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+      "configuration_sha256": "05fedadd78cd9580dfddd0b3b627f57a857ef78331e3570db2c07340188e78aa",
+      "capture_runtime_sha256": "40ce8d32e2131a4d5c2dd37ddc3377f0b9955330ffa9042cd5d21d3b129a5baf",
+      "fixed_variables": [
+        "autonomous_navigation_profile_v1",
+        "AUTO03_corner",
+        "six G2 worlds",
+        "250-case matrix"
+      ],
+      "commands": [
+        [
+          "powershell",
+          "-File",
+          "scripts/run_auto03_matrix_docker.ps1"
+        ]
+      ],
+      "metrics": {}
+    },
+    {
+      "attempt_id": "AUTO-03-INSTALL-SYNC-R1",
+      "hypothesis": "SkipBuild also refreshes modified package share configuration",
+      "result": "FAIL",
+      "first_failure": "runtime leaf prediction retained the old 0.570 scale because the colcon install YAML was stale",
+      "changed_variables": [
+        "colcon install workspace"
+      ],
+      "decision": "rebuild_workspace_before_formal_restart",
+      "raw_evidence": [
+        "F:\\Project\\TZcup-autonomous-auto03\\artifacts\\autonomous_auto03_formal_20260729\\attempt_projection_class_scale_calibration\\world_a_v4_stale_install_partial"
+      ],
+      "input_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+      "configuration_sha256": "05fedadd78cd9580dfddd0b3b627f57a857ef78331e3570db2c07340188e78aa",
+      "capture_runtime_sha256": "40ce8d32e2131a4d5c2dd37ddc3377f0b9955330ffa9042cd5d21d3b129a5baf",
+      "fixed_variables": [
+        "autonomous_navigation_profile_v1",
+        "AUTO03_corner",
+        "six G2 worlds",
+        "250-case matrix"
+      ],
+      "commands": [
+        [
+          "powershell",
+          "-File",
+          "scripts/run_auto03_matrix_docker.ps1"
+        ]
+      ],
+      "metrics": {}
+    },
+    {
+      "attempt_id": "AUTO-03-YAW-ZERO-LENGTH-R2",
+      "hypothesis": "an orientation-only NavigateToPose at the current XY is a stable yaw handoff",
+      "result": "FAIL",
+      "first_failure": "three of thirteen world A handoffs timed out after DWB drifted about 0.5 m from the observation pose",
+      "changed_variables": [
+        "yaw-handoff retry goal XY"
+      ],
+      "decision": "replan_to_original_observation_pose",
+      "raw_evidence": [
+        "F:\\Project\\TZcup-autonomous-auto03\\artifacts\\autonomous_auto03_formal_20260729\\attempt_yaw_handoff_instability_after_calibration"
+      ],
+      "input_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+      "configuration_sha256": "05fedadd78cd9580dfddd0b3b627f57a857ef78331e3570db2c07340188e78aa",
+      "capture_runtime_sha256": "40ce8d32e2131a4d5c2dd37ddc3377f0b9955330ffa9042cd5d21d3b129a5baf",
+      "fixed_variables": [
+        "autonomous_navigation_profile_v1",
+        "AUTO03_corner",
+        "six G2 worlds",
+        "250-case matrix"
+      ],
+      "commands": [
+        [
+          "powershell",
+          "-File",
+          "scripts/run_auto03_matrix_docker.ps1"
+        ]
+      ],
+      "metrics": {}
+    },
+    {
+      "attempt_id": "AUTO-03-BOUNDARY-HEADING-R3",
+      "hypothesis": "position-only boundary return leaves a safe heading for the next observation",
+      "result": "FAIL",
+      "first_failure": "target 036 started near pi radians after the prior proximity return and timed out before reaching the observation neighborhood",
+      "changed_variables": [
+        "pre-navigation path-heading alignment"
+      ],
+      "decision": "use_collision_checked_nav2_spin_before_large_heading_changes",
+      "raw_evidence": [
+        "F:\\Project\\TZcup-autonomous-auto03\\artifacts\\autonomous_auto03_formal_20260729\\attempt_boundary_yaw_not_restored"
+      ],
+      "input_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+      "configuration_sha256": "05fedadd78cd9580dfddd0b3b627f57a857ef78331e3570db2c07340188e78aa",
+      "capture_runtime_sha256": "40ce8d32e2131a4d5c2dd37ddc3377f0b9955330ffa9042cd5d21d3b129a5baf",
+      "fixed_variables": [
+        "autonomous_navigation_profile_v1",
+        "AUTO03_corner",
+        "six G2 worlds",
+        "250-case matrix"
+      ],
+      "commands": [
+        [
+          "powershell",
+          "-File",
+          "scripts/run_auto03_matrix_docker.ps1"
+        ]
+      ],
+      "metrics": {}
+    },
+    {
+      "attempt_id": "AUTO-03-SIM-CLOCK-R4",
+      "hypothesis": "wall-clock action deadlines and costs are equivalent to Gazebo simulation time",
+      "result": "FAIL",
+      "first_failure": "20 wall seconds advanced only a fraction of the Nav2 Spin allowance under sub-real-time simulation, causing premature cancellation and inflated cost",
+      "changed_variables": [
+        "navigation timeout clock",
+        "cost clock"
+      ],
+      "decision": "use_ros_sim_time_with_bounded_wall_deadlock_guard",
+      "raw_evidence": [
+        "F:\\Project\\TZcup-autonomous-auto03\\artifacts\\autonomous_auto03_world_a_prealign_smoke"
+      ],
+      "input_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+      "configuration_sha256": "05fedadd78cd9580dfddd0b3b627f57a857ef78331e3570db2c07340188e78aa",
+      "capture_runtime_sha256": "40ce8d32e2131a4d5c2dd37ddc3377f0b9955330ffa9042cd5d21d3b129a5baf",
+      "fixed_variables": [
+        "autonomous_navigation_profile_v1",
+        "AUTO03_corner",
+        "six G2 worlds",
+        "250-case matrix"
+      ],
+      "commands": [
+        [
+          "powershell",
+          "-File",
+          "scripts/run_auto03_matrix_docker.ps1"
+        ]
+      ],
+      "metrics": {}
+    },
+    {
+      "attempt_id": "AUTO-03-FORMAL-SHORT-P95-R5",
+      "hypothesis": "the pre-calibrated capture projection passes the complete six-world matrix",
+      "result": "FAIL",
+      "first_failure": "170-sample short-side relative-error P95 was 0.31173 against the 0.30 hard gate",
+      "changed_variables": [],
+      "decision": "fit_capture_short_model_on_worlds_a_to_d_and_hold_out_worlds_e_to_f",
+      "raw_evidence": [
+        "F:\\Project\\TZcup-autonomous-auto03\\artifacts\\autonomous_auto03_formal_20260729\\attempt_capture_calibration_full_matrix_1"
+      ],
+      "input_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+      "configuration_sha256": "05fedadd78cd9580dfddd0b3b627f57a857ef78331e3570db2c07340188e78aa",
+      "capture_runtime_sha256": "40ce8d32e2131a4d5c2dd37ddc3377f0b9955330ffa9042cd5d21d3b129a5baf",
+      "fixed_variables": [
+        "autonomous_navigation_profile_v1",
+        "AUTO03_corner",
+        "six G2 worlds",
+        "250-case matrix"
+      ],
+      "commands": [
+        [
+          "powershell",
+          "-File",
+          "scripts/run_auto03_matrix_docker.ps1"
+        ]
+      ],
+      "metrics": {}
+    },
+    {
+      "attempt_id": "AUTO-03-CAPTURE-SHORT-FIT-R6",
+      "hypothesis": "capture-only short-side calibration generalizes without changing observation poses",
+      "result": "PASS",
+      "first_failure": null,
+      "changed_variables": [
+        "capture-only per-class short-side coefficients"
+      ],
+      "decision": "rerun_all_six_worlds_with_planner_calibration_unchanged",
+      "raw_evidence": [
+        "F:\\Project\\TZcup-autonomous-auto03\\artifacts\\autonomous_auto03_formal_20260729\\attempt_capture_calibration_full_matrix_1\\capture_short_calibration_fit.json"
+      ],
+      "input_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+      "configuration_sha256": "05fedadd78cd9580dfddd0b3b627f57a857ef78331e3570db2c07340188e78aa",
+      "capture_runtime_sha256": "40ce8d32e2131a4d5c2dd37ddc3377f0b9955330ffa9042cd5d21d3b129a5baf",
+      "fixed_variables": [
+        "autonomous_navigation_profile_v1",
+        "AUTO03_corner",
+        "six G2 worlds",
+        "250-case matrix"
+      ],
+      "commands": [
+        [
+          "powershell",
+          "-File",
+          "scripts/run_auto03_matrix_docker.ps1"
+        ]
+      ],
+      "metrics": {}
+    },
+    {
+      "attempt_id": "AUTO-03-ORACLE-V1",
+      "hypothesis": "sequential six-world active observation passes every machine gate",
+      "result": "PASS",
+      "first_failure": null,
+      "changed_variables": [],
+      "decision": "select",
+      "raw_evidence": [
+        "F:\\Project\\TZcup-autonomous-auto03\\artifacts\\autonomous_auto03_formal_20260729"
+      ],
+      "input_commit": "11ee369590f543d78eab66b7e790ba27c82cc0d5",
+      "configuration_sha256": "05fedadd78cd9580dfddd0b3b627f57a857ef78331e3570db2c07340188e78aa",
+      "capture_runtime_sha256": "40ce8d32e2131a4d5c2dd37ddc3377f0b9955330ffa9042cd5d21d3b129a5baf",
+      "fixed_variables": [
+        "autonomous_navigation_profile_v1",
+        "AUTO03_corner",
+        "six G2 worlds",
+        "250-case matrix"
+      ],
+      "commands": [
+        [
+          "powershell",
+          "-File",
+          "scripts/run_auto03_matrix_docker.ps1"
+        ]
+      ],
+      "metrics": {
+        "safe_coverage_boundary_pause_rate": 1.0,
+        "preflight_path_success_rate": 1.0,
+        "navigate_to_pose_success_rate_reachable": 1.0,
+        "ready_conversion_overall": 1.0,
+        "ready_conversion_by_class": {
+          "leaf_pile": 1.0,
+          "metal_can": 1.0,
+          "paper_litter": 1.0,
+          "plastic_bottle": 1.0,
+          "puddle": 1.0
+        },
+        "coverage_resume_rate": 1.0,
+        "unreachable_fail_closed_rate": 1.0,
+        "false_candidate_without_cleaning_rate": 1.0,
+        "stale_fail_closed_rate": 1.0,
+        "collision_count": 0,
+        "keepout_violation_count": 0,
+        "gt_control_violation_count": 0,
+        "projection": {
+          "sample_count": 170,
+          "actual_center_inside_predicted_roi_rate": 1.0,
+          "center_pixel_error_p50": 7.893984863253152,
+          "center_pixel_error_p95": 18.433915465038094,
+          "short_side_relative_error_p50": 0.09270474417521263,
+          "short_side_relative_error_p95": 0.29771034872086977,
+          "predicted_actual_ready_agreement": 1.0,
+          "self_pixel_fraction_p95": 0.005494791666666667,
+          "target_self_overlap_p95": 0.0
+        },
+        "cost": {
+          "median_extra_distance_per_confirmed_target_m": 0.00012800222142601142,
+          "median_extra_time_per_confirmed_target_s": 19.50200000000001,
+          "median_coverage_interruption_s": 19.50200000000001,
+          "candidate_count": 250,
+          "candidates_per_scene": 4.166666666666667,
+          "baseline_coverage_duration_s": 333.36516484299864,
+          "theoretical_throughput_penalty": 3.555265112304292e-06,
+          "measured_throughput_penalty": 0.19598101335485732,
+          "throughput_method": "AUTO-02 measured baseline duration plus AUTO-03 median per-confirmed-target interruption at the observed candidates-per-scene rate"
+        }
+      }
+    }
+  ]
+}

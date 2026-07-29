@@ -1,0 +1,106 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-03",
+  "fit_scope": "capture_projection_short_side_only",
+  "train_worlds": [
+    "world_a_asphalt_campus",
+    "world_b_concrete_sidewalk",
+    "world_c_wet_dark_ground",
+    "world_d_mixed_curb_vegetation"
+  ],
+  "heldout_worlds": [
+    "world_e_tiled_plaza",
+    "world_f_service_road"
+  ],
+  "row_count": 170,
+  "short_side_feature_order": [
+    "intercept",
+    "(raw_center_x_px-320)/200",
+    "(raw_center_y_px-240)/120",
+    "base_short_side_px/60",
+    "target_size_m/0.30"
+  ],
+  "recommended_class_short_side_correction": {
+    "leaf_pile": [
+      1.4655016083716128,
+      0.0017350097960302125,
+      0.7066249553725945,
+      -0.3887994611022482,
+      0.12984499130263635
+    ],
+    "metal_can": [
+      0.6475405866470701,
+      0.30678977197920954,
+      -1.2688165105403737,
+      4.400331288832601,
+      -7.904909757041143
+    ],
+    "paper_litter": [
+      1.1724995991027891,
+      -0.06145769893108791,
+      0.4392835224074717,
+      -0.002902544199251083,
+      -0.19576236688704346
+    ],
+    "plastic_bottle": [
+      0.520954678843004,
+      0.5125023267986658,
+      -0.09219435860629135,
+      -0.1326499293653301,
+      1.3135403850862895
+    ],
+    "puddle": [
+      1.818205185685996,
+      -0.04755093852330815,
+      0.7917667072685282,
+      -0.45137859584505613,
+      0.0
+    ]
+  },
+  "before": {
+    "train": {
+      "sample_count": 114,
+      "short_side_relative_error_p50": 0.11070037004271316,
+      "short_side_relative_error_p95": 0.28985420802527856,
+      "short_error_over_0_30_count": 4,
+      "short_side_relative_error_max": 0.3522083769039925
+    },
+    "heldout": {
+      "sample_count": 56,
+      "short_side_relative_error_p50": 0.0939791400114087,
+      "short_side_relative_error_p95": 0.3318711116267532,
+      "short_error_over_0_30_count": 6,
+      "short_side_relative_error_max": 0.36988222827606526
+    },
+    "all": {
+      "sample_count": 170,
+      "short_side_relative_error_p50": 0.10969435467934548,
+      "short_side_relative_error_p95": 0.311729756159561,
+      "short_error_over_0_30_count": 10,
+      "short_side_relative_error_max": 0.36988222827606526
+    }
+  },
+  "after": {
+    "train": {
+      "sample_count": 114,
+      "short_side_relative_error_p50": 0.1051084740185261,
+      "short_side_relative_error_p95": 0.2628844893994065,
+      "short_error_over_0_30_count": 0,
+      "short_side_relative_error_max": 0.2763852981411047
+    },
+    "heldout": {
+      "sample_count": 56,
+      "short_side_relative_error_p50": 0.11932001056669769,
+      "short_side_relative_error_p95": 0.2986197409380259,
+      "short_error_over_0_30_count": 3,
+      "short_side_relative_error_max": 0.3895413368630671
+    },
+    "all": {
+      "sample_count": 170,
+      "short_side_relative_error_p50": 0.10709756021174768,
+      "short_side_relative_error_p95": 0.27638529814105794,
+      "short_error_over_0_30_count": 3,
+      "short_side_relative_error_max": 0.3895413368630671
+    }
+  }
+}

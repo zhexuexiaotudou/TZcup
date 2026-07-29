@@ -5,8 +5,9 @@
 AUTO-03 的最终六世界正式结果由
 `artifacts/autonomous_auto03_20260729_evidence/auto03_acceptance_report.json`
 自动生成；本页中的最终指标只从该报告同步，不从 README 反推。六世界运行与逐世界
-MCAP 重放均已完成，核心汇总的全部机器硬门通过；紧凑证据将在实现提交后生成，以便
-报告记录可解析的 `implementation_commit`。
+MCAP 重放均已完成，核心汇总的全部机器硬门通过；紧凑证据已从实现提交
+`731d069abe1384ee427cf2909c8b9605e70911b0` 生成并通过逐文件 manifest 校验，
+自主状态已推进到 AUTO-04。
 
 ## 目标与真值边界
 
