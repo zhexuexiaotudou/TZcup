@@ -1,5 +1,7 @@
 # 无人清扫车仿真启动包
 
+> 2026-07-29：当前自主入口为 `docs/auto02-full-regression.md` 与 `artifacts/autonomous_auto02_20260729_evidence/`。AUTO-02 已让 `G2-C3 / V5_retracted` 通过静态 5-seed、动态避障/过滤/急停、5 次冷启动和六个 MCAP 回放门，并冻结为 `autonomous_navigation_profile_v1`；下一阶段为 AUTO-03。该结论仅限 Docker ROS/Gazebo 机器仿真，production 默认、历史 evidence、真人/真实域/J6 状态均未提升。
+
 > 2026-07-29：当前自主入口为 `docs/auto01-geometry.md` 与 `artifacts/autonomous_auto01_20260729_evidence/`。AUTO-01 已冻结 opt-in G2-C3（`V5_retracted` + base-frame 点云自滤波），通过 3/3 冷启动、seed0 17/17 完整覆盖以及低/高障碍各 30 次机器门；下一阶段为 AUTO-02。生产默认、历史 evidence 和正式人工状态均未改变。
 
 > 2026-07-21：历史工程入口为 `GPT_REVIEW_STAGE5BR6W.md`。工程豁免支线已完成 V4/policy/candidate-footprint opt-in 与规划器加固，但真实 Stage4W seed 0 因 `no_reachable_clean_route` 失败，故工程 Oracle 未启动；该失败结论保持不变。

@@ -24,6 +24,9 @@ class FilterProbe(Node):
     def __init__(self):
         super().__init__("filter_probe")
         self.declare_parameter("output_path", "/tmp/filter_report.json")
+        self.declare_parameter("maximum_vehicle_speed_m_s", 0.45)
+        self.declare_parameter("configured_speed_limit_percent", 63.0)
+        self.declare_parameter("speed_tolerance_m_s", 0.03)
         self.client = ActionClient(self, NavigateToPose, "/navigate_to_pose")
         self.samples = []; self.speed_limits = []
         self.create_subscription(Odometry, "/ground_truth/odom", self._truth, 20)
@@ -66,10 +69,36 @@ class FilterProbe(Node):
             bucket = "before" if current[1] < -2.0 else "after" if current[1] > 2.0 else "inside"
             buckets[bucket].append(speed)
         mean_speeds = {key: statistics.fmean(values) if values else None for key, values in buckets.items()}
-        speed_compliance = bool(mean_speeds["inside"] is not None and mean_speeds["inside"] <= 0.30 and mean_speeds["before"] is not None and mean_speeds["after"] is not None)
+        configured_limit = (
+            float(self.get_parameter("maximum_vehicle_speed_m_s").value)
+            * float(self.get_parameter("configured_speed_limit_percent").value)
+            / 100.0
+        )
+        tolerance = float(self.get_parameter("speed_tolerance_m_s").value)
+        speed_compliance = bool(
+            mean_speeds["inside"] is not None
+            and mean_speeds["inside"] <= configured_limit + tolerance
+            and mean_speeds["before"] is not None
+            and mean_speeds["after"] is not None
+        )
         report = {
             "keepout": {"mask_polygon": list(bounds), "goal_crossed_polygon_direct_line": True, "navigation_succeeded": keepout_goal_success, "violation_sample_count": violations, "minimum_distance_m": minimum_distance, "keepout_pass": keepout_goal_success and violations == 0},
-            "speed_zone": {"polygon": [-2.0, -2.0, 2.0, 2.0], "navigation_succeeded": speed_goal_success, "mean_speed_m_s": mean_speeds, "speed_limit_messages": self.speed_limits, "speed_compliance_pass": speed_goal_success and speed_compliance},
+            "speed_zone": {
+                "polygon": [-2.0, -2.0, 2.0, 2.0],
+                "navigation_succeeded": speed_goal_success,
+                "mean_speed_m_s": mean_speeds,
+                "maximum_vehicle_speed_m_s": float(
+                    self.get_parameter("maximum_vehicle_speed_m_s").value
+                ),
+                "configured_speed_limit_percent": float(
+                    self.get_parameter("configured_speed_limit_percent").value
+                ),
+                "configured_speed_limit_m_s": configured_limit,
+                "allowed_tolerance_m_s": tolerance,
+                "allowed_maximum_mean_speed_m_s": configured_limit + tolerance,
+                "speed_limit_messages": self.speed_limits,
+                "speed_compliance_pass": speed_goal_success and speed_compliance,
+            },
         }
         report["success"] = report["keepout"]["keepout_pass"] and report["speed_zone"]["speed_compliance_pass"]
         return self._write(report)

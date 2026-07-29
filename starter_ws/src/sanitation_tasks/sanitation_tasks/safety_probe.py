@@ -95,7 +95,14 @@ class SafetyProbe(Node):
             release_time = time.monotonic(); self._set_estop(False); self._pump(0.08)
             resumed = self._wait_for(lambda sample: abs(sample[1]) > 0.2, release_time, 1.0) is not None
             releases_ok = releases_ok and resumed
-            trials.append({"trial": index + 1, "estop_publish_monotonic_sec": publish_time, "first_zero_monotonic_sec": zero[0] if zero else None, "latency_sec": latency, "resume_after_release": resumed})
+            trials.append({
+                "trial": index + 1,
+                "estop_publish_monotonic_sec": publish_time,
+                "first_zero_monotonic_sec": zero[0] if zero else None,
+                "latency_sec": latency,
+                "post_stop_command_output_zero": zero is not None,
+                "resume_after_release": resumed,
+            })
         self._set_estop(False); self._pump(0.3)
         stale_command = self._wait_for_stable_zero()
         timeout_zero = stale_command["stable_zero_observed"]
@@ -104,13 +111,24 @@ class SafetyProbe(Node):
         report = {
             "schema_version": 2, "trial_count": len(trials), "completed_trial_count": len(latencies),
             "command_passed": command_passed, "emergency_stop_zeroed": len(latencies) == len(trials),
+            "post_stop_command_output_zero": bool(
+                trials
+                and all(item["post_stop_command_output_zero"] for item in trials)
+            ),
             "resume_after_release": releases_ok, "stale_command_zeroed": timeout_zero,
             "stale_command": stale_command,
             "latency_sec": {"p50": p50, "p95": p95, "max": maximum},
             "competition_estop_pass": bool(p95 is not None and p95 <= 1.0),
             "trials": trials,
         }
-        report["success"] = all([report["command_passed"], report["emergency_stop_zeroed"], report["resume_after_release"], report["stale_command_zeroed"], report["competition_estop_pass"]])
+        report["success"] = all([
+            report["command_passed"],
+            report["emergency_stop_zeroed"],
+            report["post_stop_command_output_zero"],
+            report["resume_after_release"],
+            report["stale_command_zeroed"],
+            report["competition_estop_pass"],
+        ])
         output = Path(self.get_parameter("output_path").value); output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         self.get_logger().info(json.dumps(report, ensure_ascii=False))

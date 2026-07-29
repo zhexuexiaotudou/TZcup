@@ -132,6 +132,7 @@ def run_ros_independent_tests() -> None:
         learning_package / "test" / "test_stage5br6_handoff.py",
         spot_cleaning_package / "test" / "test_auto01_geometry.py",
         ROOT / "scripts" / "test_autonomous_runner.py",
+        ROOT / "scripts" / "test_auto02_tools.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])
     if result != pytest.ExitCode.OK:

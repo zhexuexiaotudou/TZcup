@@ -1,5 +1,16 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## AUTO-02 完整回归与冻结配置契约
+
+- `autonomous_navigation_profile_v1` 只能从 AUTO-01 已选择的 opt-in `auto01_g2_v5_retracted` 配置冻结；不得隐式替换 production 默认 profile，也不得借冻结改写 G1、G2-C1、G2-C2 或 Stage5BR6W 的失败事实。
+- 静态门必须覆盖五个固定 seed；每次均须任务完整结束、当前几何生成的组件全部成功、计划覆盖率 `>=0.95`、经验覆盖率 `>=0.90`、碰撞/keepout/刷盘状态违规为 `0`、结束时刷盘关闭且 XY 轨迹 RMSE `<=0.05 m`。
+- 动态门至少包含 20 次有效交互，要求障碍真实移动、碰撞为 `0`、最小分离距离不低于报告中冻结的硬阈值，并且每次干预后 Coverage 能恢复。
+- keepout 采样违规必须为 `0`；限速区均速不得超过 `maximum_vehicle_speed × configured_speed_limit_percent + 0.03 m/s`，报告必须同时保存配置值、计算上限和实际均速。
+- 急停必须完成 `30/30`，P95 `<=1.0 s`、最大值 `<=1.5 s`；每次停止后的控制输出必须保持为零，刷盘最终状态必须为关闭。
+- 冷启动必须 `5/5` 验证全部 lifecycle 节点 active、TF 链完整、Nav2/点云自滤波关键参数服务可读。ROS domain 必须在 DDS 有效范围 `0–232` 内。
+- 每个正式静态/动态 MCAP 必须读取元数据并验证场景所需主题 100% 存在；Coverage 状态需实际录制和回放。经验覆盖率必须从 `/coverage/evaluation_sample` 重算，定位 RMSE 必须限定在同一 evaluation 时间窗重算，两项相对误差均须 `<=1%`。
+- 失败尝试、首次失败层、修复决策和原始证据位置必须进入 attempt ledger；紧凑证据由逐文件 SHA-256 manifest 约束，原始 bag 和日志不得写入 Git。
+
 ## AUTO-01 自主导航几何契约
 
 - AUTO-01 冻结的自主候选为 opt-in `camera_profile:=V5_retracted` 与 `footprint_profile:=auto01_g2_v5_retracted`；production 默认相机和 Stage4W navigation footprint 不得被隐式替换。

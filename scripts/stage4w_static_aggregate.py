@@ -21,6 +21,9 @@ def build_report(root, required_seeds=5):
             'empirical_coverage_rate': coverage.get('empirical_metrics', {}).get(
                 'coverage_rate'
             ),
+            'planned_coverage_rate': coverage.get('planned_metrics', {}).get(
+                'coverage_rate'
+            ),
             'collision_count': coverage.get('collision_count'),
             'keepout_violation_sample_count': coverage.get(
                 'keepout_violation_sample_count'

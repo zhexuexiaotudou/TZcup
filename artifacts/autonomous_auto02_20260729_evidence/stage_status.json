@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "program": "TZcup autonomous final",
+  "stage_id": "AUTO-02",
+  "baseline_commit": "06db16b2f9ff627d35daa44226500688075bd953",
+  "implementation_commit": "06db16b2f9ff627d35daa44226500688075bd953",
+  "started_at": null,
+  "completed_at": "2026-07-29T00:20:24.572662+00:00",
+  "status": "PASS",
+  "first_blocking_layer": null,
+  "attempt_count": 4,
+  "machine_gate_pass": true,
+  "human_review_required": false,
+  "human_approval_required": false,
+  "competition_evidence": false,
+  "dependencies": {
+    "AUTO-01": "PASS"
+  },
+  "metrics": {
+    "static_seed_count_5": true,
+    "static_mission_complete_5_of_5": true,
+    "static_empirical_coverage_at_least_0_90": true,
+    "static_planned_coverage_at_least_0_95": true,
+    "static_collision_keepout_zero": true,
+    "static_brush_safe_terminal_state": true,
+    "static_trajectory_rmse_at_most_0_05_m": true,
+    "frozen_profile_runtime_geometry_5_of_5": true,
+    "dynamic_valid_interactions_at_least_20": true,
+    "dynamic_obstacle_really_moved": true,
+    "dynamic_collision_zero_and_mission_complete": true,
+    "dynamic_minimum_separation_pass": true,
+    "dynamic_coverage_resume_all": true,
+    "filter_keepout_zero": true,
+    "filter_speed_mean_within_limit_plus_0_03_m_s": true,
+    "estop_30_of_30": true,
+    "estop_latency_p95_and_max_pass": true,
+    "estop_post_stop_output_zero": true,
+    "dynamic_brush_final_false": true,
+    "cold_start_5_of_5": true,
+    "replay_metadata_topics_state_and_delta_pass": true
+  },
+  "unexecuted_items": [],
+  "next_scheduled_stages": [
+    "AUTO-03"
+  ]
+}
