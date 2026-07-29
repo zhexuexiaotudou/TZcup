@@ -11,11 +11,13 @@
 - keepout 违规 `0`；限速区均速 `0.28613 m/s`，配置限值 `0.2835 m/s`、允许容差 `0.03 m/s`，故低于验收上限 `0.3135 m/s`。
 - 急停 `30/30`，P50/P95/max 为 `0.12142/0.13994/0.14063 s`，每次停止后的命令输出均持续为零，最终刷盘关闭。
 - 冷启动 `5/5`，完整 lifecycle、TF、Nav2 和 pointcloud self-filter 参数服务分别在 `24/24/24/24/25 s` 内就绪。
-- 五个静态 MCAP 的必需主题为 `15/15`，动态 MCAP 为 `16/16`；Coverage 状态实际录制并回放，使用新增 `/coverage/evaluation_sample` 重算的经验覆盖率与源报告相对误差均为 `0`。
+- 五个静态 MCAP 的必需主题为 `15/15`，动态 MCAP 为 `16/16`；Coverage 状态实际录制并回放，使用新增 `/coverage/evaluation_sample` 重算的经验覆盖率与源报告相对误差均为 `0`，同一 evaluation 时间窗内重算的定位 RMSE 相对误差为 `0.280%–0.792%`。
 
 尝试账本保留了两个真实夹具问题：首次静态回放审计错误地要求静态场景中未激活的 `/emergency_stop`，修正为按场景定义契约后复用未修改的 seed0 bag；seed3 首次分配到无效的 `ROS_DOMAIN_ID=233`，失败目录原样保留，随后加入 `0–232` 防护并将静态域移到 `180–184` 后断点续跑。两者都没有被计为算法通过。
 
 紧凑证据为 `artifacts/autonomous_auto02_20260729_evidence/`，包含 acceptance、attempt ledger、冻结配置、运行时参数、六次 replay audit 与逐文件 SHA-256 manifest；大型原始 MCAP 和日志保留在 Git 忽略的 `artifacts/autonomous_auto02_raw_20260729/`。`AUTO-02=PASS`，下一阶段为 AUTO-03。真人审计、真实车辆、真实域、J6 和最终竞赛状态全部未提升。
+
+[PR #32](https://github.com/zhexuexiaotudou/TZcup/pull/32) 的 `fast-validation` 通过后已 squash 合入 `main@6d09e1972526373e1ffdad97ec06c28e02a36e7c`。合并后的远端 main 已再次通过 evidence manifest、Git blob 与 git archive 精确字节校验。AUTO-02 没有常驻线上服务，部署门以远端发布和合并修订的 Docker/ROS/Gazebo 运行证据标记为 `not_applicable`。
 
 ## AUTO-01：几何/传感器候选冻结（2026-07-29，机器门通过）
 

@@ -134,13 +134,13 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage5b_do
 - [`AGENTS.md`](AGENTS.md)：项目级 Agent 规则和强制门禁。
 - [`docs/development-workflow.md`](docs/development-workflow.md)：开发工作流的完整定义。
 - [`PROJECT_SPEC.md`](PROJECT_SPEC.md)：系统架构、接口和技术约束。
-- [`STAGE_GATES.md`](STAGE_GATES.md)：Stage 0–7 的任务与验收条件。
+- [`STAGE_GATES.md`](STAGE_GATES.md)：历史 Stage 门与 AUTO-00–AUTO-16 自主阶段的验收条件。
 - [`README_FIRST.md`](README_FIRST.md)：环境准备、目录说明和启动细节。
 
 所有修改至少运行快速门禁：
 
 ```powershell
-py scripts/ci_fast.py
+py -3 scripts/ci_fast.py
 ```
 
 Linux 和 CI 使用：
@@ -173,4 +173,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-29：完成 AUTO-01 合并后 neat-freak 同步；`README_FIRST.md`、`PROJECT_SPEC.md`、`STAGE_GATES.md` 和兼容性说明现已统一指向 G2-C3 与 AUTO-02，同时保留 Stage5BR6W、真人、真实域和 J6 的原有边界。
+2026-07-29：AUTO-02 已由 [PR #32](https://github.com/zhexuexiaotudou/TZcup/pull/32) 在 `fast-validation` 通过后合入 `main@6d09e197`。合并后的紧凑证据已通过 Git blob 与 git archive 逐字节复验；文档、规则和兼容性说明现已统一指向冻结的 `autonomous_navigation_profile_v1` 与下一阶段 AUTO-03，同时保留 Stage5BR6W、真人、真实域、J6 和竞赛效率的原有边界。
