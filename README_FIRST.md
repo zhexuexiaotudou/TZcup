@@ -1,5 +1,7 @@
 # 无人清扫车仿真启动包
 
+> 2026-07-29：本机 `TZcup-Ubuntu-24.04` 已完成 ROS 2 Jazzy + Gazebo Harmonic + Nav2/RViz 的 WSLg 图形验收。Gazebo 三维场景与 Nav2 RViz 均实际渲染，D3D12 使用 RTX 4080 Laptop GPU；全工作空间 `449 tests / 0 failures`，运行中 smoke check 为 11/11 topic。证据见 `artifacts/wslg_gui_20260729_evidence/`，环境细节与边界见 `docs/compatibility.md`。
+
 > 2026-07-29：当前自主入口为 `docs/auto02-full-regression.md` 与 `artifacts/autonomous_auto02_20260729_evidence/`。AUTO-02 已让 `G2-C3 / V5_retracted` 通过静态 5-seed、动态避障/过滤/急停、5 次冷启动和六个 MCAP 回放门，并冻结为 `autonomous_navigation_profile_v1`；下一阶段为 AUTO-03。该结论仅限 Docker ROS/Gazebo 机器仿真，production 默认、历史 evidence、真人/真实域/J6 状态均未提升。
 
 > 2026-07-29：当前自主入口为 `docs/auto01-geometry.md` 与 `artifacts/autonomous_auto01_20260729_evidence/`。AUTO-01 已冻结 opt-in G2-C3（`V5_retracted` + base-frame 点云自滤波），通过 3/3 冷启动、seed0 17/17 完整覆盖以及低/高障碍各 30 次机器门；下一阶段为 AUTO-02。生产默认、历史 evidence 和正式人工状态均未改变。
@@ -89,6 +91,16 @@ bash scripts/build_ws.sh
 bash scripts/run_baseline.sh
 ```
 
+在 Ubuntu 24.04 WSLg 中需要强制选择 D3D12/NVIDIA renderer 时，可先设置：
+
+```bash
+export GALLIUM_DRIVER=d3d12
+export MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA
+glxinfo -B
+```
+
+本机 `zhexu` 用户已把这两个变量写入 shell 启动文件，并提供 `tzcup-gazebo`、`tzcup-navigation-rviz` 和 `tzcup-stop-visualization` 三个本地快捷命令；这些命令是主机便利入口，不是仓库可移植接口。
+
 另开终端检查：
 
 ```bash
@@ -131,4 +143,4 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 ## 5. 重要说明
 
-当前 Windows 主机已通过 Docker Desktop、Ubuntu 24.04 / ROS 2 Jazzy 容器和 NVIDIA GPU passthrough 完成 Stage 0–5A，并在自主主线上完成 AUTO-00 与 AUTO-01。AUTO-01 的 opt-in G2-C3 通过完整覆盖、回放和低/高障碍正式机器门；Stage5BR6W 的 V4 candidate-footprint 失败仍作为历史事实保留。正式人工门、真实域、J6 与竞赛效率门均未通过。当前边界以 `AUTONOMOUS_STATE.json`、`docs/progress.md` 与 `docs/auto01-geometry.md` 为准。
+当前 Windows 主机已通过 Docker Desktop、Ubuntu 24.04 / ROS 2 Jazzy 容器和 NVIDIA GPU passthrough 完成 Stage 0–5A 与 AUTO-02，并在本地 Ubuntu 24.04 WSLg 中补齐 Gazebo/RViz 图形复核和基础 topic smoke check。Stage5BR6W 的 V4 candidate-footprint 失败仍作为历史事实保留。正式人工门、真实域、J6 与竞赛效率门均未通过。当前边界以 `AUTONOMOUS_STATE.json`、`docs/progress.md` 与 `docs/auto02-full-regression.md` 为准。

@@ -1,5 +1,14 @@
 # 项目推进记录
 
+## 2026-07-29：本机 Ubuntu 24.04 WSLg 图形环境与基础运行链验收
+
+- 在本地 `F:\WSL\TZcup-Ubuntu-24.04` 新建 Ubuntu 24.04.4 WSL2 发行版，安装 ROS 2 Jazzy Desktop、Gazebo Sim 8.11.0、`ros_gz`、Nav2、SLAM Toolbox、Fields2Cover 和项目依赖；环境不依赖 NAS。
+- 在干净克隆 `main@11ee369590f543d78eab66b7e790ba27c82cc0d5` 上导入锁定第三方源码并完成全工作空间构建。最终测试为 `449 tests / 0 errors / 0 failures / 49 skipped`。
+- WSLg 使用 D3D12/NVIDIA renderer，`glxinfo -B` 为 RTX 4080 Laptop GPU、OpenGL 4.6、`Accelerated: yes`。
+- 实际打开并复核 Gazebo 三维清扫场景和 Nav2 默认 RViz 布局；RViz 中可见地图、RobotModel、TF、LaserScan 与 Navigation2 面板。
+- 运行中 `sanitation_smoke_check` 返回 `success=true`，11/11 必需 topic 均存在，`missing_topics=[]`。紧凑证据见 `artifacts/wslg_gui_20260729_evidence/`。
+- 本轮只补齐本机 WSLg 图形运行与基础 ROS topic 证据；不提升真人审计、真实车辆、真实域、J6 或竞赛效率状态。RViz 的一次 GLSL sampler warning 和 rosdep 的两项上游元数据 warning 保留为非阻塞边界。
+
 ## AUTO-02：完整导航回归与配置冻结（2026-07-29，机器门通过）
 
 本阶段没有重新选择 AUTO-01 候选，也没有放宽任何门槛。`auto01_g2_v5_retracted / V5_retracted` 在隔离 worktree 和专用 Docker overlay 中完成五个静态 seed、动态障碍、keepout/限速区、急停、冷启动及 MCAP 回放验证，随后冻结为 `autonomous_navigation_profile_v1`。production 默认配置未改变。
@@ -192,7 +201,7 @@ Stage5BR3 将 `artifacts/stage5br2_*_review/**` 改为 binary，避免 Git blob 
 
 - `READY_FOR_GPT_REVIEW_STAGE4W=true`、`READY_FOR_STAGE5A=true` 只表示 Stage4W 技术门满足；Stage5A 已在后续独立阶段实施并保留新的合成域边界。
 - 竞赛理论效率仍为 `1053 m²/h < 3500 m²/h`，`competition_efficiency_pass=false`；不得以经验覆盖率替换效率门。
-- 垃圾感知训练、J6 量化、实板部署和原生 Ubuntu/WSLg GUI 验收未执行。
+- 垃圾感知训练、J6 量化和实板部署未执行；原生 Ubuntu/WSLg GUI 的历史缺口已由 2026-07-29 本机 WSLg 基础图形验收补齐。
 - 紧凑证据位于 `artifacts/stage4w_20260717_review/`；原始 MCAP、筛查和失败诊断在用户确认前保留本机。
 
 复核入口：`GPT_REVIEW_STAGE4W.md`、`artifacts/stage4w_20260717_review/stage4w_summary.json` 与 `MANIFEST.json`。
@@ -296,7 +305,7 @@ Stage5BR3 将 `artifacts/stage5br2_*_review/**` 改为 binary，避免 Git blob 
 当前边界：
 
 - Windows 宿主不满足直接运行 ROS 2 Jazzy/Gazebo Harmonic 的要求。
-- Docker 可作为 Ubuntu 24.04/Jazzy headless 构建通道；GUI 与动力学证据仍需 Ubuntu 24.04 原生或 WSLg。
+- Docker 可作为 Ubuntu 24.04/Jazzy headless 构建通道；GUI 已由 2026-07-29 本机 Ubuntu 24.04 WSLg 复核，动力学与算法门仍以对应历史运行证据为准。
 
 证据：
 
@@ -343,7 +352,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage1_doc
 
 ## Stage 2：车辆 URDF、场景与运行闭环
 
-状态：headless GPU 验收已通过；GUI 截图仍需原生 Ubuntu 24.04 或 WSLg 复核。
+历史状态：headless GPU 验收已通过；当时 GUI 截图仍需原生 Ubuntu 24.04 或 WSLg 复核。该图形缺口已于 2026-07-29 在本机 WSLg 补齐。
 
 已完成：
 
@@ -421,7 +430,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage3_doc
 - `artifacts/stage4_20260714_174914/coverage_path.json`
 - `artifacts/stage4_20260714_174914/coverage_bag/metadata.yaml`
 - 受 Stage 3 终点定位差 1.806 m 影响，只执行与取消局部路径窗以验证接口和物理运动；97.5% 覆盖率不能解释为完整覆盖任务已经实跑完成。
-- 当前主机没有 Ubuntu 24.04/WSLg 图形环境，因此没有伪造 Gazebo/RViz GUI 截图；headless Ogre2、ROS 图谱、JSON 与 rosbag 是本轮可复核证据。
+- 历史执行时当前主机没有 Ubuntu 24.04/WSLg 图形环境，因此没有伪造 Gazebo/RViz GUI 截图；该缺口已由 2026-07-29 本机 WSLg 实机复核补齐，原轮次的 headless Ogre2、ROS 图谱、JSON 与 rosbag 证据保持不变。
 
 复现命令：
 

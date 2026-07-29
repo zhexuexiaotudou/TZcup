@@ -1,5 +1,11 @@
 # TZcup 无人清扫车仿真项目
 
+## 本机 Ubuntu 24.04 WSLg 图形验收通过（2026-07-29）
+
+当前 Windows 主机已新增完全位于本地磁盘的 `TZcup-Ubuntu-24.04` WSL2 发行版，并在 Ubuntu 24.04.4、ROS 2 Jazzy、Gazebo Sim 8.11.0 与 WSLg 中完成真实图形复核。Gazebo 三维场景和 Nav2 默认 RViz 布局均实际渲染；D3D12 renderer 为 NVIDIA GeForce RTX 4080 Laptop GPU，OpenGL 4.6、硬件加速为 `yes`。当前 `main@11ee369` 的全工作空间结果为 `449 tests / 0 errors / 0 failures / 49 skipped`，运行中 smoke check 为 `11/11` 必需 topic、`missing_topics=[]`、`success=true`。
+
+紧凑机器证据见 [`artifacts/wslg_gui_20260729_evidence/`](artifacts/wslg_gui_20260729_evidence/)，本机运行说明见 [`docs/compatibility.md`](docs/compatibility.md)。这补足的是本机 WSLg 图形运行与基础 ROS topic 验收，不改变 AUTO-02 算法结论，也不代表真人审计、真实车辆、真实域、J6 或竞赛效率门通过。
+
 ## AUTO-02 完整导航回归与配置冻结通过（2026-07-29）
 
 AUTO-01 选出的 opt-in `G2-C3 / V5_retracted` 已在 Docker 中完成 ROS 2 Jazzy + Gazebo Harmonic 全矩阵回归，并冻结为 [`autonomous_navigation_profile_v1.yaml`](starter_ws/src/sanitation_navigation/config/autonomous_navigation_profile_v1.yaml)。静态五个 seed 均完成 `17/17` 组件，经验覆盖率为 `0.92733–0.94467`、计划覆盖率均为 `0.986`、定位 XY RMSE 为 `0.03153–0.04050 m`，碰撞、keepout 违规和刷盘状态违规均为 `0`；五次冷启动均在 `24–25 s` 内达到完整 lifecycle/TF/参数就绪。
@@ -92,13 +98,13 @@ Stage4T 已完成 200 组固定时长瞬态、120 组闭环航向、A/B/C/D 各 
 - precision mapping 与 localization/coverage 包络分别限制为 0.30/0.25 和 0.45/0.35 m/s、rad/s；0.60 rad/s stress 默认禁用且仍失败。
 - Stage4W hybrid 10-seed 的 XY RMSE P50/P95/max 为 0.02825/0.03726/0.03778 m，定位门禁通过且 GT 控制违规为 0。
 - 完整 Coverage 静态 5/5 通过，每次均执行统一几何生成的 17/17 组件；动态障碍 20/20、碰撞 0，过滤器、30 次急停和 rosbag 回放全部通过。
-- 原生 Ubuntu/WSLg 下的 Gazebo/RViz GUI 验收仍未完成；Stage5B 训练模型已接入真实 Gazebo RGB-D 链路，但该诊断不构成正式精度门，真实数据训练、J6 量化和实板部署仍未启动。
+- 本机 Ubuntu 24.04 WSLg 下的 Gazebo/RViz GUI 与基础 ROS topic 验收已完成；Stage5B 训练模型已接入真实 Gazebo RGB-D 链路，但该诊断不构成正式精度门，真实数据训练、J6 量化和实板部署仍未启动。
 - 理论清扫效率仍为 1053 m²/h，未达到 3500 m²/h；不得用覆盖率或仿真实测净效率替代竞赛效率口径。
 - 详细证据、复现命令和已知边界以 [`docs/progress.md`](docs/progress.md) 为准。
 
 ## 快速开始
 
-推荐环境：Ubuntu 24.04、ROS 2 Jazzy、Gazebo Harmonic。Windows 可通过 Docker Desktop 执行 headless 阶段门禁，但不能替代原生 Ubuntu 或 WSLg 下的 GUI 验收。
+推荐环境：Ubuntu 24.04、ROS 2 Jazzy、Gazebo Harmonic。Windows 可通过 Docker Desktop 执行 headless 阶段门禁；需要图形交互时使用原生 Ubuntu 或 Ubuntu 24.04 WSLg。本机 WSLg 路径已于 2026-07-29 完成实机验收。
 
 ```bash
 export SANITATION_WS=$HOME/sanitation_ws
