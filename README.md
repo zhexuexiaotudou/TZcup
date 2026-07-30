@@ -104,7 +104,7 @@ Stage4T 已完成 200 组固定时长瞬态、120 组闭环航向、A/B/C/D 各 
 
 ## 当前状态
 
-- Stage 0–5A 及自主 AUTO-00/AUTO-01/AUTO-02/AUTO-03 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；当前自主状态为 AUTO-04。Stage5BR6W 的 V4 candidate-footprint 失败与 Stage5BR6-A 等待真人 response 均作为独立历史边界保留。
+- Stage 0–5A 及自主 AUTO-00–AUTO-04 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；当前自主状态为 AUTO-05。Stage5BR6W 的 V4 candidate-footprint 失败与 Stage5BR6-A 等待真人 response 均作为独立历史边界保留。
 - precision mapping 与 localization/coverage 包络分别限制为 0.30/0.25 和 0.45/0.35 m/s、rad/s；0.60 rad/s stress 默认禁用且仍失败。
 - Stage4W hybrid 10-seed 的 XY RMSE P50/P95/max 为 0.02825/0.03726/0.03778 m，定位门禁通过且 GT 控制违规为 0。
 - 完整 Coverage 静态 5/5 通过，每次均执行统一几何生成的 17/17 组件；动态障碍 20/20、碰撞 0，过滤器、30 次急停和 rosbag 回放全部通过。
@@ -189,4 +189,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-30：AUTO-04 第二轮正式 GPU micro-overfit 已通过：detector AP50 `0.99670`、逐类 recall `1.0`、negative-only FP/frame `0`；leaf/puddle IoU `0.98106/0.96914`、macro mIoU `0.97510`、negative-only area FP/frame `0`；两模型 ONNX parity 均通过。第一轮失败作为 prior attempt 保留，`AUTO-04=PASS`，自主状态已推进到 AUTO-05；真实域、J6 与最终竞赛状态未提升。
+2026-07-30：AUTO-04 代码、正式证据与知识层已同步。第二轮 GPU micro-overfit 通过：detector AP50 `0.99670`、逐类 recall `1.0`、negative-only FP/frame `0`；leaf/puddle IoU `0.98106/0.96914`、macro mIoU `0.97510`、negative-only area FP/frame `0`；两模型 ONNX parity 均通过。第一轮失败仍作为 prior attempt 保留，README_FIRST、PROJECT_SPEC、STAGE_GATES 与 docs 已统一到 `AUTO-04=PASS / 当前 AUTO-05`；真实域、J6 与最终竞赛状态未提升。
