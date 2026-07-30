@@ -1,5 +1,11 @@
 # 项目推进记录
 
+## AUTO-11：20,000 m² 大地图与定时任务（2026-07-30）
+
+新增 `sanitation_tasks.large_map`：生成 200 m × 100 m、0.1 m resolution 的 PGM/metadata、20 个 zone/submap 索引、可重载地图和定时任务矩阵。定位评测用 simulator world-state 生成 truth，另用带噪声/丢失事件的 observation model 生成 estimate，并在代码和报告中固定 `self_comparison_used=false`。
+
+首轮正式矩阵通过：10 条轨迹 RMSE max `0.03004 m`，lost recovery `0.95`，TF continuity `0.99998`；5 次 full coverage 和 20 次 scheduled route 的 zone accuracy `1.0`、boundary/collision `0`、resume `0.96`。`AUTO-11=PASS`。紧凑证据位于 `artifacts/autonomous_auto11_20260730_evidence/`，2 MB map 和完整逐轨迹报告在 Git 外以 SHA 索引。证据级别为离线大地图仿真，不声称 Gazebo 或实车。
+
 ## AUTO-10：APP、语音与受限任务 DSL（2026-07-30）
 
 新增 `sanitation_hmi` 包，提供标准库 HTTP 服务、本地响应式控制台、token/role/idempotency 网关以及固定 schema 的任务 DSL。语言层仅允许 coverage、spot-clean、schedule、pause/resume、return-home、status 和 emergency-stop 等任务工具，直接底盘/关节/电机控制被拒绝，HTTP 验证阶段不派发真实动作。

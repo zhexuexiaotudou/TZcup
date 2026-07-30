@@ -1,0 +1,2 @@
+py -3 scripts/auto11_large_map_formal.py --output <formal-root> --implementation-commit b06668229f0337a587d3da30653a5d6df14c6aa6
+py -3 scripts/ci_fast.py

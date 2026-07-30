@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-11",
+  "status": "PASS",
+  "machine_gate_pass": true,
+  "blocked": false,
+  "blocked_external": false,
+  "first_blocking_layer": null,
+  "selected_attempt": "AUTO-11-LARGE-MAP-V1",
+  "implementation_commit": "b06668229f0337a587d3da30653a5d6df14c6aa6",
+  "evidence_level": "OFFLINE_LARGE_MAP_SIMULATION",
+  "gazebo_claimed": false,
+  "real_vehicle_claimed": false
+}
