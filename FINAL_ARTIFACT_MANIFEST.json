@@ -1,0 +1,53 @@
+{
+  "schema_version": 1,
+  "implementation_commit": "8549422a3968942a807e2d517879e72c6c1083f4",
+  "coverage": 1.0,
+  "sha_mismatch_count": 0,
+  "files": [
+    {
+      "path": "FINAL_AUTONOMOUS_STATUS.json",
+      "bytes": 1215,
+      "sha256": "148cfa56494b92478f58330d77aa74f1046e1e913c4e82b5ee507752840063ad"
+    },
+    {
+      "path": "FINAL_BLOCKER_REGISTER.json",
+      "bytes": 2933,
+      "sha256": "59f060dcc52b917bc44162894abd4abfc810784b3caa3e65298c87804b54c3b2"
+    },
+    {
+      "path": "FINAL_EVIDENCE_INDEX.md",
+      "bytes": 1900,
+      "sha256": "0895066fe6086543d047702e8f448dafa2ebe21929c1a8620e6ca284ca2d27b5"
+    },
+    {
+      "path": "FINAL_COMPETITION_MATRIX.json",
+      "bytes": 11668,
+      "sha256": "04e39c9940a789a88465f41263d5247b88f7e4d3f47eeb69dce2c9eae81c00d2"
+    },
+    {
+      "path": "FINAL_RELEASE_CHECKLIST_STATUS.json",
+      "bytes": 615,
+      "sha256": "ee20b6b6cee1588a1221af71041d7eb2120bc87ed6ddd8208e7ac07f4c81f95f"
+    },
+    {
+      "path": "SBOM.spdx.json",
+      "bytes": 8510,
+      "sha256": "5715870a5008d29d5d2e9d3bd8264317f4f459f7c28d633f7fe77c64b2880abd"
+    },
+    {
+      "path": "LICENSE.md",
+      "bytes": 742,
+      "sha256": "29dfb7633a7840b45a2725c9ea75c9b82812f50442fe698b515a10e8aa7650db"
+    },
+    {
+      "path": "MODEL_AND_ASSET_LICENSES.md",
+      "bytes": 1380,
+      "sha256": "24f14aa797c2ed0514f6306ca4f1050a0194aec773cf219c2facd60072a004e5"
+    },
+    {
+      "path": "artifacts/autonomous_auto16_20260730_evidence/artifact_manifest.json",
+      "bytes": 1258,
+      "sha256": "c85d9cd8f03166f1d136f5e1df355a3f7fd53d0ede0280bc4fa6d3f3a8e7f30b"
+    }
+  ]
+}

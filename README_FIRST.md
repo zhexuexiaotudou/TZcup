@@ -1,5 +1,7 @@
 # 无人清扫车仿真启动包
 
+> 2026-07-30：AUTO-16 最终发布工程已补齐最终状态、阻断清单、证据索引、竞赛矩阵、SBOM、许可、中文操作/演示/回滚说明与最终 ZIP 生成器；clean-clone 快速 CI 已通过，全 ROS build 首轮发现并修复 `sanitation_manipulation` build type 缺口。完整发布状态以根目录 `FINAL_*` 文件为准。
+
 > 2026-07-30：AUTO-15 已完成 18 类竞赛场景的需求/依赖/证据索引；因 AUTO-08 学习感知与定点清扫依赖阻断，正式 10-seed/30-mission 综合矩阵未启动，视频与 MCAP 均为 0。`AUTO-15=BLOCKED`、`SIMULATION_COMPETITION_MATRIX_PASS=false`。
 
 > 2026-07-30：AUTO-14 已完成官方 D-Robotics OpenExplorer 3.7.0 工具链下载、哈希、版本、`hb_compile` 启动、ONNX 预检和 fail-closed runtime adapter；因 AUTO-06 正式模型未产生，量化/编译不得执行，本机亦无 J6 板卡。故 `AUTO-14=BLOCKED`、`J6_TOOLCHAIN_PASS=false`、`J6_RUNTIME_PASS=false`，不冒充模型编译或板端成绩。

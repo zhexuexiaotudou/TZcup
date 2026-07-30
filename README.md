@@ -1,5 +1,9 @@
 # TZcup 无人清扫车仿真项目
 
+## AUTO-16 最终发布工程通过（2026-07-30）
+
+最终发布工程已通过：新增最终状态、阻断清单、18 类竞赛矩阵、证据索引、SPDX SBOM、许可证/模型/资产清单、中文操作/演示/回滚说明和唯一最终 ZIP 生成器。最终 clean clone 快速 CI 为 `154 passed`；全 ROS build 首轮发现并修复 `sanitation_manipulation` build type 与 HMI pytest 发现缺口，重跑结果为 `17 packages / 220 tests / 0 errors / 0 failures / 5 skipped`。`AUTO-16=PASS`、`AUTONOMOUS_SOFTWARE_COMPLETE=true`；这表示所有现有环境可执行的软件、仿真组件、测试、文档和打包已完成且剩余阻断已结构化，不表示综合比赛通过。`SIMULATION_COMPETITION_MATRIX_PASS=false`、`REAL_DOMAIN_PASS=false`、`J6_TOOLCHAIN_PASS=false`、`J6_RUNTIME_PASS=false`、`FINAL_COMPETITION_EVIDENCE_COMPLETE=false`。最终 ZIP 只从合并后的精确 main 生成。
+
 ## AUTO-15 全竞赛矩阵达到依赖停止边界（2026-07-30）
 
 18 类竞赛场景的需求、依赖和现有组件证据已经逐项索引；其中 APP、语音、受限任务 DSL、大地图、定时任务、效率、安全导航和离线抓取等独立阶段证据保持可追溯。由于正式学习感知与定点清扫链 `AUTO-08=BLOCKED`，不满足启动综合任务的先决条件；J6 runtime 同样被 AUTO-14 阻断。因此 18 类场景每类 10 seeds、30 次综合任务、正式视频与 MCAP 均未执行，不能用独立组件结果拼接成综合成绩。`AUTO-15=BLOCKED`、`SIMULATION_COMPETITION_MATRIX_PASS=false`，首个阻断层为 `dependency_AUTO-08_learned_spot_cleaning_blocked`。证据见 [`artifacts/autonomous_auto15_20260730_evidence/`](artifacts/autonomous_auto15_20260730_evidence/)，说明见 [`docs/auto15-competition-matrix.md`](docs/auto15-competition-matrix.md)。
@@ -220,4 +224,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-30：AUTO-15 已完成 18 类竞赛场景需求与依赖矩阵；因 `AUTO-08=BLOCKED`，未启动每类 10 seeds、30 次综合任务、正式视频或 MCAP，`AUTO-15=BLOCKED`、`SIMULATION_COMPETITION_MATRIX_PASS=false`。独立组件通过不冒充综合竞赛通过。
+2026-07-30：AUTO-16 发布工程和全 ROS clean-build 修复已完成，clean clone 快速 CI `154 passed`、全工作空间 `17 packages / 220 tests / 0 failures`；`AUTONOMOUS_SOFTWARE_COMPLETE=true`。AUTO-15 综合矩阵、真实域与 J6 实体证据未通过，对应最终标志保持 false；最终 ZIP 仅从合并后的精确 main 生成。

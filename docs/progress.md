@@ -1,5 +1,9 @@
 # 项目推进记录
 
+## AUTO-16：最终发布工程（2026-07-30）
+
+已建立最终状态、阻断注册表、18 类竞赛矩阵、证据索引、最终 manifest、SPDX SBOM、模型/资产/第三方许可、中文操作员指南、竞赛演示边界和回滚说明，并提供 Validate/Build/Simulation/Matrix/Package 一键入口。最终 clean clone `8549422` 的 `ci_fast` 为 154 passed；首次全 ROS build 发现 `sanitation_manipulation` 缺少 `ament_python` build type，随后又发现 HMI 未声明 pytest discovery。两项均修复并加入合同测试，重跑为 17 packages、220 tests、0 errors、0 failures、5 skipped。`AUTO-16=PASS`、`AUTONOMOUS_SOFTWARE_COMPLETE=true`；综合矩阵、真实域和 J6 最终状态保持 false。最终 ZIP 只从合并后的精确 main 生成。
+
 ## AUTO-15：18 类竞赛需求矩阵完成、综合任务依赖阻断（2026-07-30）
 
 已将建图、全覆盖、定时轨迹、离散垃圾、落叶堆、积水、定点清扫、动态避障、窄通道、边界、急停、APP、语音、LLM DSL、满箱、恢复回放、效率和 J6 共 18 类场景逐项绑定到 AUTO 阶段状态。现有 PASS 阶段只记为组件证据。由于 AUTO-08 学习感知/定点清扫被 AUTO-05 模型门阻断，正式综合任务没有启动；每场景 seeds、integrated missions、视频和 MCAP 均为 0。故 `AUTO-15=BLOCKED`、`SIMULATION_COMPETITION_MATRIX_PASS=false`。证据位于 `artifacts/autonomous_auto15_20260730_evidence/`。

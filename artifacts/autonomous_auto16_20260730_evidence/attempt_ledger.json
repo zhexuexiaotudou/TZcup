@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-16",
+  "attempts": [
+    {
+      "attempt_id": "AUTO-16-RELEASE-V1",
+      "result": "PASS",
+      "input_commit": "8549422a3968942a807e2d517879e72c6c1083f4",
+      "decision": "release_with_structured_blockers"
+    }
+  ]
+}

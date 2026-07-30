@@ -72,6 +72,11 @@ artifacts/autonomous_auto03_*_smoke/
 artifacts/autonomous_auto04_*_raw/
 artifacts/autonomous_auto05_*_raw/
 
+# AUTO-16 clean-clone/full-workspace build logs are retained locally until
+# user confirmation; only the compact verification JSON is versioned.
+auto16_*build*.log
+auto16_*build*.pid
+
 # Stage5BR3 full Stage5A/Stage4W regression logs stay local; the compact
 # machine-readable summary is versioned in artifacts/stage5br3_20260720_review.
 artifacts/stage5br3_regression_stage5a*/

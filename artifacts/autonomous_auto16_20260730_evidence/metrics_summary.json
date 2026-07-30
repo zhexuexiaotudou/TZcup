@@ -1,0 +1,13 @@
+{
+  "clean_clone_source_commit": "8549422a3968942a807e2d517879e72c6c1083f4",
+  "clean_clone_fast_ci_pass": true,
+  "clean_clone_fast_ci_tests": 154,
+  "clean_clone_ros_build_test_pass": true,
+  "one_command_build_present": true,
+  "one_command_simulation_present": true,
+  "one_command_matrix_preflight_present": true,
+  "one_command_release_package_present": true,
+  "sbom_present": true,
+  "license_inventory_complete": true,
+  "final_zip_generated_after_main_merge": false
+}
