@@ -1,10 +1,12 @@
 # 项目推进记录
 
-## AUTO-04：双模型 micro-overfit（2026-07-30，正式执行准备）
+## AUTO-04：双模型 micro-overfit（2026-07-30，机器门通过）
 
 已新增直接 anchor-free object detector、独立 leaf/puddle area segmenter、真实 Gazebo micro 数据选择、固定门禁、PyTorch/ONNX parity 和 Docker GPU 执行器。detector 监督目标为 instance bbox 的中心 heatmap、offset 和宽高，输出经 confidence 排序及 class-wise NMS 解码；不使用 segmentation connected-components 作为主 detector。area model 单独计算 leaf/puddle IoU 与 negative-only area FP。
 
-第一轮正式 GPU 运行已完成但未通过：direct detector 的 AP50 为 `0.99670`、negative-only FP/frame 为 `0`、ONNX decoded parity 为 `1.0`，但固定 `0.5` 阈值下 macro recall 只有 `0.86087`；三分类 area head 的 leaf/puddle IoU 为 `0.63573/0.29043`、macro mIoU `0.46308`。失败报告与模型保留在 Git 忽略的 `artifacts/autonomous_auto04_attempt1_raw/`。第二轮遵循预定义 fallback，只冻结 detector 阈值为 `0.20`，并把 area 改为独立 leaf/puddle 二值 heads、收紧目标 crop 和负样本候选门。当前 `AUTO-04=PENDING`，不得推进 AUTO-05。复现和边界见 `docs/auto04-micro-overfit.md`。
+第一轮正式 GPU 运行未通过：direct detector 的 AP50 为 `0.99670`、negative-only FP/frame 为 `0`、ONNX decoded parity 为 `1.0`，但固定 `0.5` 阈值下 macro recall 只有 `0.86087`；三分类 area head 的 leaf/puddle IoU 为 `0.63573/0.29043`、macro mIoU `0.46308`。该失败保留在紧凑证据的 `prior_attempts/` 和 Git 忽略的原始目录。第二轮遵循预定义 fallback，只冻结 detector 阈值为 `0.20`，并把 area 改为独立 leaf/puddle 二值 heads、收紧目标 crop 和负样本候选门。
+
+第二轮正式运行通过：detector AP50 `0.9966997`、三类 recall 均为 `1.0`、negative-only FP/frame `0`、ONNX 最大误差 `1.1444e-05`、decoded agreement `1.0`；leaf/puddle IoU `0.9810641/0.9691405`、macro mIoU `0.9751023`、negative-only area FP/frame `0`、ONNX 最大误差 `9.1553e-05`、argmax agreement `1.0`。紧凑证据位于 `artifacts/autonomous_auto04_20260730_evidence/`，`AUTO-04=PASS`，自主状态推进到 AUTO-05；本结论不外推到跨世界、真实域、J6 或最终竞赛感知。复现和边界见 `docs/auto04-micro-overfit.md`。
 
 ## AUTO-03：Oracle 主动观察闭环（2026-07-30，机器门通过）
 

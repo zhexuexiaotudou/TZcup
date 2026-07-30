@@ -1,0 +1,382 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-04",
+  "attempt_id": "AUTO-04-DIRECT-DETECTOR-AREA-V2",
+  "attempt_limit": {
+    "detector_architectures": 3,
+    "area_architectures": 3,
+    "configs_per_architecture": 3
+  },
+  "hypothesis": "the ranked detector already has AP50 above 0.99, so a frozen 0.20 threshold should recover recall without negative FP; independent binary area heads and tighter target crops should remove three-class background competition",
+  "changed_variables": [
+    "direct anchor-free center detector",
+    "task-specific real-Gazebo micro crops",
+    "independent leaf/puddle binary area heads"
+  ],
+  "fixed_variables": [
+    "source RGB/semantic/instance frames",
+    "class registry",
+    "frozen input shapes",
+    "test sample identities"
+  ],
+  "stop_condition": "stop and preserve failure if any fixed AUTO-04 gate fails",
+  "implementation_commit": "152e7a55f89a83b395bca55445cf1c7c3353e8ba",
+  "source_data": {
+    "root": "/data",
+    "source": "Gazebo Harmonic synchronized RGB/semantic/instance G2 train split",
+    "training_rows_available": 400,
+    "ground_truth_control_input": false
+  },
+  "device": "cuda",
+  "detector": {
+    "architecture": "direct anchor-free stride-4 center heatmap + offset + bbox regression",
+    "segmentation_connected_components_used_as_detector": false,
+    "input_shape": [
+      1,
+      3,
+      192,
+      192
+    ],
+    "positive_frames": 36,
+    "negative_frames": 10,
+    "multi_instance_frames": 16,
+    "size_buckets": [
+      0,
+      1,
+      2
+    ],
+    "training": {
+      "epochs": 180,
+      "duration_s": 181.1735850499972,
+      "curve": [
+        {
+          "epoch": 1,
+          "loss": 7.055750290552775
+        },
+        {
+          "epoch": 10,
+          "loss": 2.0088303685188293
+        },
+        {
+          "epoch": 20,
+          "loss": 1.3155103127161663
+        },
+        {
+          "epoch": 30,
+          "loss": 1.0252710183461506
+        },
+        {
+          "epoch": 40,
+          "loss": 0.7089843302965164
+        },
+        {
+          "epoch": 50,
+          "loss": 0.6898411313692728
+        },
+        {
+          "epoch": 60,
+          "loss": 0.6335079421599706
+        },
+        {
+          "epoch": 70,
+          "loss": 0.6657106578350067
+        },
+        {
+          "epoch": 80,
+          "loss": 0.5475494960943857
+        },
+        {
+          "epoch": 90,
+          "loss": 0.6227874557177225
+        },
+        {
+          "epoch": 100,
+          "loss": 0.521792600552241
+        },
+        {
+          "epoch": 110,
+          "loss": 0.4206235110759735
+        },
+        {
+          "epoch": 120,
+          "loss": 0.4577225049336751
+        },
+        {
+          "epoch": 130,
+          "loss": 0.46570246915022534
+        },
+        {
+          "epoch": 140,
+          "loss": 0.38270800312360126
+        },
+        {
+          "epoch": 150,
+          "loss": 0.45522267123063404
+        },
+        {
+          "epoch": 160,
+          "loss": 0.41167160868644714
+        },
+        {
+          "epoch": 170,
+          "loss": 0.3603528290987015
+        },
+        {
+          "epoch": 180,
+          "loss": 0.399337962269783
+        }
+      ]
+    },
+    "metrics": {
+      "confidence_ranked": true,
+      "confidence_threshold": 0.2,
+      "nms_tested": true,
+      "ap50": 0.9966996699669967,
+      "ap50_by_class": [
+        1.0,
+        0.99009900990099,
+        1.0
+      ],
+      "macro_recall": 1.0,
+      "recall_by_class": {
+        "plastic_bottle": 1.0,
+        "metal_can": 1.0,
+        "paper_litter": 1.0
+      },
+      "precision_at_threshold": 0.9047619047619048,
+      "recall_at_threshold": 1.0,
+      "negative_only_frames": 10,
+      "negative_only_false_positive_per_frame": 0.0
+    },
+    "onnx": {
+      "path": "auto04_direct_detector.onnx",
+      "sha256": "ba0bbce8fafb1b8b52237c0256d51d5dba9a6648fb7af887f98d5768c898bc0b",
+      "bytes": 851100,
+      "batch": 1,
+      "fixed_input": [
+        1,
+        3,
+        192,
+        192
+      ],
+      "custom_ops": 0,
+      "operator_inventory": {
+        "Conv": 7,
+        "Mul": 4,
+        "Sigmoid": 4,
+        "Softplus": 1
+      },
+      "max_numeric_output_error": 1.1444091796875e-05,
+      "decoded_or_argmax_agreement": 1.0
+    },
+    "parameter_count": 212263
+  },
+  "area_segmenter": {
+    "architecture": "independent RGB U-Net-style area segmentation head",
+    "input_shape": [
+      1,
+      3,
+      128,
+      128
+    ],
+    "positive_frames": {
+      "leaf_pile": 20,
+      "puddle": 20
+    },
+    "negative_frames": 20,
+    "partial_or_occluded_boundaries_present": true,
+    "training": {
+      "epochs": 260,
+      "duration_s": 353.96987409699796,
+      "curve": [
+        {
+          "epoch": 1,
+          "loss": 1.7475510438283284
+        },
+        {
+          "epoch": 10,
+          "loss": 1.3282258907953899
+        },
+        {
+          "epoch": 20,
+          "loss": 1.025646964708964
+        },
+        {
+          "epoch": 30,
+          "loss": 0.9140031039714813
+        },
+        {
+          "epoch": 40,
+          "loss": 0.8174051443735758
+        },
+        {
+          "epoch": 50,
+          "loss": 0.8717745343844095
+        },
+        {
+          "epoch": 60,
+          "loss": 0.8135377069314321
+        },
+        {
+          "epoch": 70,
+          "loss": 0.7557534178098043
+        },
+        {
+          "epoch": 80,
+          "loss": 0.7358442544937134
+        },
+        {
+          "epoch": 90,
+          "loss": 0.6206356187661489
+        },
+        {
+          "epoch": 100,
+          "loss": 0.5075384626785914
+        },
+        {
+          "epoch": 110,
+          "loss": 0.48261115948359173
+        },
+        {
+          "epoch": 120,
+          "loss": 0.3549494246641795
+        },
+        {
+          "epoch": 130,
+          "loss": 0.3853282779455185
+        },
+        {
+          "epoch": 140,
+          "loss": 0.24771556506554285
+        },
+        {
+          "epoch": 150,
+          "loss": 0.15750286231438318
+        },
+        {
+          "epoch": 160,
+          "loss": 0.21033963561058044
+        },
+        {
+          "epoch": 170,
+          "loss": 0.2452309081951777
+        },
+        {
+          "epoch": 180,
+          "loss": 0.1558723064760367
+        },
+        {
+          "epoch": 190,
+          "loss": 0.17413432026902834
+        },
+        {
+          "epoch": 200,
+          "loss": 0.19379269828399023
+        },
+        {
+          "epoch": 210,
+          "loss": 0.05454289851089319
+        },
+        {
+          "epoch": 220,
+          "loss": 0.04449861217290163
+        },
+        {
+          "epoch": 230,
+          "loss": 0.037415336817502975
+        },
+        {
+          "epoch": 240,
+          "loss": 0.057399663453300796
+        },
+        {
+          "epoch": 250,
+          "loss": 0.05001268101235231
+        },
+        {
+          "epoch": 260,
+          "loss": 0.02510069900502761
+        }
+      ],
+      "positive_weights": [
+        12.0,
+        12.0
+      ]
+    },
+    "metrics": {
+      "iou_by_class": {
+        "leaf_pile": 0.9810640807233653,
+        "puddle": 0.9691404901622368
+      },
+      "macro_miou": 0.9751022854428011,
+      "negative_only_frames": 20,
+      "negative_area_false_positive_per_frame": 0.0,
+      "candidate_minimum_component_area_px": 32,
+      "intersection_pixels": [
+        14973,
+        14038
+      ],
+      "union_pixels": [
+        15262,
+        14485
+      ]
+    },
+    "onnx": {
+      "path": "auto04_area_segmenter.onnx",
+      "sha256": "2208d60d91c909875cb2db2c8b3a57cd8387a410ab6bf2c054ff6d626bb3eeac",
+      "bytes": 1837617,
+      "batch": 1,
+      "fixed_input": [
+        1,
+        3,
+        128,
+        128
+      ],
+      "custom_ops": 0,
+      "operator_inventory": {
+        "Concat": 2,
+        "Constant": 4,
+        "Conv": 8,
+        "MaxPool": 1,
+        "Mul": 7,
+        "Resize": 1,
+        "Shape": 1,
+        "Sigmoid": 7,
+        "Slice": 1
+      },
+      "max_numeric_output_error": 9.1552734375e-05,
+      "decoded_or_argmax_agreement": 1.0
+    },
+    "parameter_count": 458162
+  },
+  "gates": {
+    "detector_positive_frames_20_to_40": true,
+    "detector_all_three_classes": true,
+    "detector_negative_frames_at_least_10": true,
+    "detector_multi_instance_present": true,
+    "detector_small_medium_large_present": true,
+    "detector_train_ap50_at_least_0_95": true,
+    "detector_train_macro_recall_at_least_0_95": true,
+    "detector_each_class_recall_at_least_0_95": true,
+    "detector_negative_fp_at_most_0_05": true,
+    "detector_onnx_agreement_at_least_0_9999": true,
+    "detector_onnx_error_at_most_1e_4": true,
+    "area_leaf_frames_at_least_20": true,
+    "area_puddle_frames_at_least_20": true,
+    "area_negative_frames_at_least_10": true,
+    "area_leaf_iou_at_least_0_95": true,
+    "area_puddle_iou_at_least_0_95": true,
+    "area_macro_miou_at_least_0_95": true,
+    "area_negative_fp_at_most_0_05": true,
+    "area_onnx_agreement_at_least_0_9999": true
+  },
+  "auto04_gate_pass": true,
+  "prior_attempts": [
+    {
+      "attempt_id": "AUTO-04-DIRECT-DETECTOR-AREA-V1",
+      "report": "prior_attempts/attempt1_acceptance_report.json",
+      "sha256": "a86e34aa9fe0b2de4efd8530809f2363fb8219fa51a901800a36fd7ef21dcef5",
+      "gate_pass": false
+    }
+  ]
+}

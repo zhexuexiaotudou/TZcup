@@ -2,7 +2,7 @@
 
 ## 当前状态
 
-AUTO-04 已建立正式执行器和固定门禁，正在等待同一实现提交上的 GPU 正式运行。自主状态在机器报告全部通过前保持 `AUTO-04=PENDING`，不得提前推进 AUTO-05。
+AUTO-04 已在实现提交 `152e7a55f89a83b395bca55445cf1c7c3353e8ba` 上完成正式 GPU 运行。第二轮通过全部冻结机器门，状态为 `AUTO-04=PASS`，自主状态推进到 AUTO-05。紧凑证据位于 `artifacts/autonomous_auto04_20260730_evidence/`；第一轮失败报告同时保存在该证据的 `prior_attempts/` 和 Git 忽略的原始运行目录。
 
 ## 离散目标 detector
 
@@ -31,6 +31,8 @@ micro 数据来自 Stage5BR3 已留存的真实 Gazebo Harmonic 同步 RGB、sem
 本阶段只证明 task-specific train-set capacity。即使通过，也不能外推为 AUTO-05 跨世界 screening、AUTO-06 正式感知、live、真实域或竞赛感知通过。
 
 第一轮正式运行中，detector 的 AP50 已达到 `0.99670`，但固定 `0.5` 阈值的 macro recall 为 `0.86087`；三分类 area head 的 macro mIoU 为 `0.46308`。该失败完整保留。第二轮只把 detector 阈值冻结为 `0.20`，并按预定义 fallback 将 area 改为两个独立二值 heads、收紧目标 crop；没有改样本身份或降低验收阈值。
+
+第二轮结果为 detector AP50 `0.9966997`，三类 recall 均为 `1.0`，negative-only FP/frame 为 `0`；detector ONNX 最大数值误差 `1.1444e-05`、decoded agreement `1.0`。leaf/puddle IoU 为 `0.9810641/0.9691405`，macro mIoU `0.9751023`，negative-only area FP/frame 为 `0`；area ONNX 最大误差 `9.1553e-05`、argmax agreement `1.0`。这些结果只解除 AUTO-05 的依赖，不提升真实域、J6 或最终竞赛状态。
 
 ## 复现
 

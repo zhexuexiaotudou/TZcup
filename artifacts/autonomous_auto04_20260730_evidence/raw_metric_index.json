@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-04",
+  "selected_report": "auto04_acceptance_report.json",
+  "selected_models": [
+    "auto04_direct_detector.onnx",
+    "auto04_area_segmenter.onnx"
+  ],
+  "prior_failed_report": "prior_attempts/attempt1_acceptance_report.json",
+  "local_raw_attempt_dir": "artifacts/autonomous_auto04_attempt1_raw",
+  "large_source_dataset_versioned": false
+}
