@@ -110,6 +110,7 @@ def decode_centernet_outputs(
     score_threshold: float,
     nms_iou_threshold: float = 0.5,
     local_maximum_radius: int = 1,
+    max_detections: int | None = None,
 ) -> list[Detection]:
     if heatmap_probability.ndim != 3:
         raise ValueError("heatmap must be CxHxW")
@@ -149,4 +150,9 @@ def decode_centernet_outputs(
                         ),
                     )
                 )
-    return classwise_nms(detections, nms_iou_threshold)
+    decoded = classwise_nms(detections, nms_iou_threshold)
+    if max_detections is not None:
+        if max_detections < 1:
+            raise ValueError("max_detections must be positive")
+        decoded = decoded[:max_detections]
+    return decoded

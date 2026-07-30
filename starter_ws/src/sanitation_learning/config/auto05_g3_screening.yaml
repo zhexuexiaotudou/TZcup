@@ -1,0 +1,32 @@
+schema_version: 1
+stage: AUTO-05
+dataset:
+  domain: G3_deployment_aligned_vehicle_camera_gazebo
+  worlds_min: 8
+  split_world_counts: {train: 4, val: 2, test: 2}
+  scenes_min: 120
+  native_frames_min: 1200
+  heldout_negative_frames_per_world_min: 50
+  native_resolution: [640, 480]
+  screening_resolution: [384, 288]
+detector:
+  architecture: direct_anchor_free_center_offset_bbox
+  confidence_selection: validation_worlds_only
+  all_visible_candidate_recall_min: 0.80
+  false_candidates_per_min_max: 2.0
+  in_domain_macro_f1_min: 0.90
+  cross_world_macro_f1_min: 0.70
+  small_object_recall_min: 0.70
+  negative_fp_per_frame_max: 0.05
+area_segmenter:
+  architecture: rgbd_independent_binary_leaf_puddle_heads
+  cross_world_leaf_iou_min: 0.75
+  cross_world_puddle_iou_min: 0.75
+  cross_world_macro_miou_min: 0.75
+robustness:
+  color_material_stress_macro_f1_min: 0.60
+  same_color_negative_specificity_min: 0.95
+selection:
+  test_used_for_model_selection: false
+  maximum_architecture_attempts: 3
+  maximum_configs_per_architecture: 3

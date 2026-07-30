@@ -7,22 +7,31 @@ import math
 from pathlib import Path
 import random
 import subprocess
+import time
 
 
-def set_poses(world_id: str, poses: list[dict]) -> None:
+def set_poses(world_id: str, poses: list[dict], attempts: int = 3) -> None:
     request = " ".join(
         "pose { "
         f'name: "{item["name"]}" position {{ x: {item["xyz"][0]:.6f} y: {item["xyz"][1]:.6f} z: {item["xyz"][2]:.6f} }} '
         f'orientation {{ z: {math.sin(item["yaw"] / 2):.8f} w: {math.cos(item["yaw"] / 2):.8f} }} }}'
         for item in poses
     )
-    result = subprocess.run([
-        "gz", "service", "-s", f"/world/{world_id}/set_pose_vector",
-        "--reqtype", "gz.msgs.Pose_V", "--reptype", "gz.msgs.Boolean",
-        "--timeout", "5000", "--req", request,
-    ], capture_output=True, text=True)
-    if result.returncode or "data: true" not in result.stdout:
-        raise RuntimeError(f"set_pose_vector failed: {result.stdout} {result.stderr}")
+    result = None
+    for attempt in range(1, attempts + 1):
+        result = subprocess.run([
+            "gz", "service", "-s", f"/world/{world_id}/set_pose_vector",
+            "--reqtype", "gz.msgs.Pose_V", "--reptype", "gz.msgs.Boolean",
+            "--timeout", "5000", "--req", request,
+        ], capture_output=True, text=True)
+        if not result.returncode and "data: true" in result.stdout:
+            return
+        if attempt < attempts:
+            time.sleep(0.5 * attempt)
+    raise RuntimeError(
+        f"set_pose_vector failed after {attempts} attempts: "
+        f"{result.stdout} {result.stderr}"
+    )
 
 
 def randomize(manifest_path: Path, world_id: str, scene_seed: int, output: Path) -> dict:

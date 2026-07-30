@@ -1,7 +1,10 @@
 import hashlib
 from pathlib import Path
+from types import SimpleNamespace
 import xml.etree.ElementTree as ET
 
+from sanitation_learning.g2_capture import outside_start_envelope, should_reapply_start
+from sanitation_learning.g2_scene import set_poses
 from sanitation_learning.gazebo_g2 import write_g2_worlds
 
 
@@ -29,3 +32,35 @@ def test_g2_worlds_are_distinct_deployment_aligned_and_unscaled(tmp_path):
         assert 'type="segmentation"' not in text
     assert manifest["world_split_counts"] == {"train": 3, "val": 1, "test": 2}
     assert manifest["static_independent_camera_rig_forbidden"] is True
+
+
+def test_capture_rejects_cross_scene_vehicle_motion_state():
+    start = [-8.0, 0.0, 0.18]
+    assert not outside_start_envelope((-8.0, 0.0), start)
+    assert not outside_start_envelope((-7.51, 0.0), start)
+    assert outside_start_envelope((-5.10, 0.15), start)
+    assert should_reapply_start(0, (-5.10, 0.15), start)
+    assert not should_reapply_start(1, (-5.10, 0.15), start)
+
+
+def test_set_pose_vector_retries_transient_service_timeout(monkeypatch):
+    responses = iter(
+        [
+            SimpleNamespace(returncode=1, stdout="", stderr="timed out"),
+            SimpleNamespace(returncode=1, stdout="", stderr="timed out"),
+            SimpleNamespace(returncode=0, stdout="data: true", stderr=""),
+        ]
+    )
+    calls = []
+
+    def fake_run(*args, **kwargs):
+        calls.append((args, kwargs))
+        return next(responses)
+
+    monkeypatch.setattr("sanitation_learning.g2_scene.subprocess.run", fake_run)
+    monkeypatch.setattr("sanitation_learning.g2_scene.time.sleep", lambda _: None)
+    set_poses(
+        "world",
+        [{"name": "vehicle", "xyz": [-8.0, 0.0, 0.18], "yaw": 0.0}],
+    )
+    assert len(calls) == 3

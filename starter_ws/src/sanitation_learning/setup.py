@@ -38,6 +38,8 @@ setup(
             "stage5br3_runtime_contract = sanitation_learning.g2_runtime_contract:main",
             "stage5br3_randomize_scene = sanitation_learning.g2_scene:main",
             "stage5br3_capture_scene = sanitation_learning.g2_capture:main",
+            "auto05_generate_g3_worlds = sanitation_learning.gazebo_g3:main",
+            "auto05_randomize_g3_scene = sanitation_learning.g3_scene:main",
         ],
     },
 )

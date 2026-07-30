@@ -1,5 +1,8 @@
 # TZcup 无人清扫车仿真项目
 
+## AUTO-05 G3 多世界数据通过、模型 screening 达到停止边界（2026-07-30）
+
+8 个 material/layout/lighting/SHA 独立的真实 Gazebo G3 世界已按 world 固定为 train/val/test `4/2/2`，120 scene/1200 个原生同步 RGB-D/semantic/instance frame 的数据 QA 全部通过：同步、TF、标注完整率 100%，32/32 动态场景执行，asset/world/trajectory/exact/pHash 泄漏为 0。三次有界 GPU 模型方案均保留；最佳 Attempt 3 的 validation/test detector F1 为 `0.53253/0.42931`，small recall 为 `0.875/0.88406`，纯负 FP/frame 为 `0.05/0.01`，validation/test area mIoU 为 `0.45859/0.57297`。7 个冻结模型门仍失败，故 `AUTO-05=BLOCKED`，首个阻断层为 `G3_split_model_screening_gates_failed_after_3_attempts`；AUTO-06/07/08 不得启动。证据见 [`artifacts/autonomous_auto05_20260730_evidence/`](artifacts/autonomous_auto05_20260730_evidence/)，说明见 [`docs/auto05-g3-screening.md`](docs/auto05-g3-screening.md)。
 ## AUTO-09 抓取、运输与入箱通过（2026-07-30）
 
 AUTO-09 已通过软件与离线运动学机器门：opt-in 四自由度 arm、双指夹爪、mock `ros2_control`、MoveIt2 SRDF/运动学/OMPL/controller 配置、感知到抓取变换、规划场景、40 L bin 状态、急停与 fail-closed 恢复均已落地；leaf/puddle 明确只进入刷扫。瓶/罐/纸三类分别完成 20 次 pose-known micro 与 30 次带独立感知噪声的正式闭环，抓取/抬升/pick/transport/bin placement 逐类最低成功率均为 `1.0`；wrong-object、safe-zone 外掉落、碰撞和关节越界为 0，90/90 不可达目标 fail-closed，过量入箱拒绝率 `1.0`。`AUTO-09=PASS`；证据见 [`artifacts/autonomous_auto09_20260730_evidence/`](artifacts/autonomous_auto09_20260730_evidence/)，说明见 [`docs/auto09-manipulation.md`](docs/auto09-manipulation.md)。证据等级是 `OFFLINE_KINEMATIC_PERCEPTION_LOOP_SIMULATION`；MoveIt2/ros2_control 仅做静态合同审计，不冒充 Gazebo 或实体机械臂成绩。
@@ -124,7 +127,7 @@ Stage4T 已完成 200 组固定时长瞬态、120 组闭环航向、A/B/C/D 各 
 
 ## 当前状态
 
-- Stage 0–5A 及自主 AUTO-00–AUTO-04 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；当前自主状态为 AUTO-05。Stage5BR6W 的 V4 candidate-footprint 失败与 Stage5BR6-A 等待真人 response 均作为独立历史边界保留。
+- Stage 0–5A 及自主 AUTO-00–AUTO-04 已完成 Windows + Docker + NVIDIA GPU 的 headless 构建与运行验证；AUTO-05 数据门通过但三次模型 screening 后阻断，AUTO-06/07/08 为依赖阻断。Stage5BR6W 的 V4 candidate-footprint 失败与 Stage5BR6-A 等待真人 response 均作为独立历史边界保留。
 - precision mapping 与 localization/coverage 包络分别限制为 0.30/0.25 和 0.45/0.35 m/s、rad/s；0.60 rad/s stress 默认禁用且仍失败。
 - Stage4W hybrid 10-seed 的 XY RMSE P50/P95/max 为 0.02825/0.03726/0.03778 m，定位门禁通过且 GT 控制违规为 0。
 - 完整 Coverage 静态 5/5 通过，每次均执行统一几何生成的 17/17 组件；动态障碍 20/20、碰撞 0，过滤器、30 次急停和 rosbag 回放全部通过。
@@ -209,4 +212,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-30：独立 AUTO-13 lane 的采集、隐私、标定、接入和统一评测工具已通过 123 项快速测试。资源发现只找到 1 个本机相机、没有合格真实 GT dataset manifest，因此 `AUTO-13=BLOCKED_EXTERNAL`、`REAL_DOMAIN_PASS=false`；未执行的 1000-frame 正式评测、map RMSE 和 synthetic-to-real drop 保持 null/未执行。主依赖链仍为 `AUTO-04=PASS / 当前 AUTO-05`。
+2026-07-30：AUTO-05 原生 G3 数据门通过；三次有界模型方案均未通过全部冻结门。最佳 Attempt 3 的 validation/test detector F1 为 `0.53253/0.42931`、small recall `0.875/0.88406`、纯负 FP/frame `0.05/0.01`，validation/test area mIoU `0.45859/0.57297`；7 个门仍失败。`AUTO-05=BLOCKED`，AUTO-06/07/08 为依赖阻断；真实域、J6 和最终竞赛证据未提升。

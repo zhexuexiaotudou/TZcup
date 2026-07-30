@@ -6,7 +6,7 @@
 
 > 2026-07-29：本机 `TZcup-Ubuntu-24.04` 已完成 ROS 2 Jazzy + Gazebo Harmonic + Nav2/RViz 的 WSLg 图形验收。Gazebo 三维场景与 Nav2 RViz 均实际渲染，D3D12 使用 RTX 4080 Laptop GPU；全工作空间 `449 tests / 0 failures`，运行中 smoke check 为 11/11 topic。证据见 `artifacts/wslg_gui_20260729_evidence/`，环境细节与边界见 `docs/compatibility.md`。
 
-> 2026-07-30：当前自主入口为 `docs/auto04-micro-overfit.md` 与 `artifacts/autonomous_auto04_20260730_evidence/`。AUTO-04 的 direct detector 与独立 leaf/puddle area segmenter 已通过 micro-overfit、负样本和 ONNX parity 机器门；下一阶段为 AUTO-05 跨世界 screening。该结论只证明 Gazebo micro train-set capacity，production 默认、历史 evidence、真人/真实域/J6 和最终竞赛状态均未提升。
+> 2026-07-30：AUTO-05 的 8-world、120-scene/1200-frame 原生 G3 数据门通过，但三次有界模型 screening 后仍有 7 个冻结门失败，故 `AUTO-05=BLOCKED`，AUTO-06/07/08 依赖阻断。production 默认、历史 evidence、真人/真实域/J6 和最终竞赛状态均未提升。
 
 > 2026-07-30：独立 AUTO-13 真实域 lane 已实现采集、隐私、标定、接入与评测工具。资源发现只有本机相机，没有满足 20 scene/1000 frame 且带独立可审计 GT 的真实数据，因此 `AUTO-13=BLOCKED_EXTERNAL`、`REAL_DOMAIN_PASS=false`；fixture 不计真实域证据。
 
@@ -147,4 +147,4 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 
 ## 5. 重要说明
 
-当前 Windows 主机已通过 Docker Desktop、Ubuntu 24.04 / ROS 2 Jazzy 容器和 NVIDIA GPU passthrough 完成 Stage 0–5A 与 AUTO-00–AUTO-04，并在本地 Ubuntu 24.04 WSLg 中补齐 Gazebo/RViz 图形复核和基础 topic smoke check。Stage5BR6W 的 V4 candidate-footprint 失败仍作为历史事实保留。正式人工门、真实域、J6 与竞赛效率门均未通过。当前边界以 `AUTONOMOUS_STATE.json`、`docs/progress.md` 与 `docs/auto04-micro-overfit.md` 为准。
+当前 Windows 主机已通过 Docker Desktop、Ubuntu 24.04 / ROS 2 Jazzy 容器和 NVIDIA GPU passthrough 完成 Stage 0–5A 与 AUTO-00–AUTO-04，并在本地 Ubuntu 24.04 WSLg 中补齐 Gazebo/RViz 图形复核和基础 topic smoke check；AUTO-05 数据门通过但模型门阻断。Stage5BR6W 的 V4 candidate-footprint 失败仍作为历史事实保留。正式人工门、真实域与 J6 板端门均未通过；AUTO-12 离线效率门已通过。当前边界以 `AUTONOMOUS_STATE.json`、`docs/progress.md` 与 `docs/auto05-g3-screening.md` 为准。

@@ -1,0 +1,10 @@
+{
+  "target_asset_leakage": [],
+  "hard_negative_asset_leakage": [],
+  "trajectory_leakage": [],
+  "world_leakage": [],
+  "cross_split_exact_duplicate_count": 0,
+  "cross_split_phash_duplicate_count": 0,
+  "cross_split_exact_duplicates": [],
+  "cross_split_phash_duplicates": []
+}

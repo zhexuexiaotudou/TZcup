@@ -1,5 +1,12 @@
 # Codex 阶段推进与验收门
 
+## AUTO-05 G3 多世界数据与 screening 门（BLOCKED）
+
+- 数据合同：至少 8 world、4/2/2 split、120 scene/1200 native frame；每个 val/test world 至少 50 negative-only frame；
+- QA：annotation/sync/TF 100%，pixel/object label error `<=0.01`，asset/world/trajectory/exact/pHash leakage 为 0，semantic-instance error 为 0；
+- screening：discovery recall `>=0.80`、false candidates/min `<=2.0`；in-domain/cross-world macro F1 `>=0.90/0.70`、small recall `>=0.70`、negative FP/frame `<=0.05`；leaf/puddle/macro IoU 均 `>=0.75`；stress F1 `>=0.60`、same-color specificity `>=0.95`；
+- 当前状态：数据门通过；三次模型尝试后仍有 7 个冻结门失败，`AUTO-05=BLOCKED`，AUTO-06/07/08 依赖阻断；
+- 详细合同见 `docs/auto05-g3-screening.md`。
 ## AUTO-11 20,000 m² 大地图与定时任务门（PASS）
 
 - map：20,000 m²、0.1 m resolution、20 zone/submap，serialization/reload 通过；

@@ -1,5 +1,12 @@
 # 项目推进记录
 
+## AUTO-05：G3 数据门通过、模型 screening 阻断（2026-07-30）
+
+已建立 8 个实际 Gazebo 世界和 `4/2/2` world split；每世界 15 scene、每 scene 10 个原生同步 frame。val/test 每世界固定 5 个 negative-only scene，target/hard-negative variant、world 和 trajectory 按 split 隔离。新增 world-level 实际材质/光照、实际重叠、主动接近前后角色，并让动态 hard-negative 在采集期间通过 Gazebo service 实际移动、逐帧记录，而不是只写请求字段。
+
+数据 QA、防泄漏审计、direct detector、独立 RGB-D area heads、validation-only 阈值选择、test 冻结评估和 ONNX parity 均已执行。三次有界方案的最佳结果仍有 7 个门失败，故 `AUTO-05=BLOCKED`；AUTO-06/07/08 依赖阻断。紧凑证据见 `artifacts/autonomous_auto05_20260730_evidence/`。
+
+采集期间暴露的车辆状态继承、桥接进程泄漏、动态对象碰撞走廊和 odom 位移假通过均已修复并保留失败证据；最终 120/120 场景、1200/1200 帧通过严格 QA。
 ## AUTO-11：20,000 m² 大地图与定时任务（2026-07-30）
 
 新增 `sanitation_tasks.large_map`：生成 200 m × 100 m、0.1 m resolution 的 PGM/metadata、20 个 zone/submap 索引、可重载地图和定时任务矩阵。定位评测用 simulator world-state 生成 truth，另用带噪声/丢失事件的 observation model 生成 estimate，并在代码和报告中固定 `self_comparison_used=false`。
