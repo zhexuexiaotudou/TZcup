@@ -1,5 +1,12 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## AUTO-11 大地图与定时任务契约
+
+- 地图固定为 200 m × 100 m、0.1 m resolution，并建立 20 个互不重叠的 zone/submap；
+- localization truth 必须来自独立 simulator world-state，estimate 使用单独观测模型，禁止 odometry self-comparison；
+- 正式门包含至少 10 条定位轨迹、5 次全覆盖任务和 20 次定时任务；
+- 每条轨迹 RMSE ≤ 0.05 m，恢复率 ≥ 0.95、TF continuity ≥ 0.999；zone accuracy 100%，boundary/collision 为 0，中断恢复率 ≥ 0.95。
+
 ## AUTO-10 多模态任务入口契约
 
 - APP/API 必须经过 token 鉴权、角色授权、严格请求 schema 和 idempotency key；重复键同载荷返回同一结果，不同载荷冲突；

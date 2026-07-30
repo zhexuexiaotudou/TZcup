@@ -1,0 +1,7 @@
+{
+  "schema_version": 1,
+  "returncode": 0,
+  "stdout_tail": "........................................................................ [ 54%]\n.............................................................            [100%]\n133 passed in 4.16s\ndevelopment workflow fast validation passed\n",
+  "stderr_tail": "",
+  "pass": true
+}

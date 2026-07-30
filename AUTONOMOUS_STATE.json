@@ -14,12 +14,12 @@
   },
   "run": {
     "run_id": "tzcup-autonomous-20260728",
-    "branch": "agent/autonomous-auto10",
+    "branch": "agent/autonomous-auto11",
     "started_at": "2026-07-28T00:00:00Z",
     "completed_at": null,
     "current_stage": "AUTO-05",
     "status": "RUNNING",
-    "last_commit": "9497d7d112ab74be2152bf681a24b8aefca92c72",
+    "last_commit": "b06668229f0337a587d3da30653a5d6df14c6aa6",
     "merge_blocked_by_branch_policy": false
   },
   "historical_boundaries": {
@@ -753,16 +753,31 @@
       ]
     },
     "AUTO-11": {
-      "status": "PENDING",
-      "machine_gate_pass": false,
+      "status": "PASS",
+      "machine_gate_pass": true,
       "blocked": false,
       "blocked_external": false,
       "first_blocking_layer": null,
-      "attempt_count": 0,
-      "selected_attempt": null,
-      "implementation_commit": null,
-      "evidence_dir": null,
-      "metrics": {},
+      "attempt_count": 1,
+      "selected_attempt": "AUTO-11-LARGE-MAP-V1",
+      "implementation_commit": "b06668229f0337a587d3da30653a5d6df14c6aa6",
+      "evidence_dir": "artifacts/autonomous_auto11_20260730_evidence",
+      "metrics": {
+        "source_level": "OFFLINE_LARGE_MAP_SIMULATION",
+        "mapped_area_m2": 20000.0,
+        "map_resolution_m": 0.1,
+        "zone_submap_count": 20,
+        "formal_trajectory_count": 10,
+        "trajectory_rmse_max_m": 0.030043921293818148,
+        "lost_localization_recovery_rate": 0.95,
+        "tf_continuity": 0.99998,
+        "full_coverage_mission_count": 5,
+        "scheduled_route_count": 20,
+        "zone_selection_accuracy": 1.0,
+        "boundary_violation_count": 0,
+        "dynamic_collision_count": 0,
+        "resume_after_interruption_rate": 0.96
+      },
       "unexecuted_items": [],
       "dependencies": [
         "AUTO-00"

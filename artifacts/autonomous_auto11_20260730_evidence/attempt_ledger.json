@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "attempts": [
+    {
+      "attempt_id": "AUTO-11-LARGE-MAP-V1",
+      "selected": true,
+      "gate_pass": true
+    }
+  ]
+}

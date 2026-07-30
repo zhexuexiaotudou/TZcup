@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "external_raw_files": [
+    {
+      "path": "F:\\Project\\TZcup-autonomous-auto11-data\\formal_attempt1\\formal_report.json",
+      "bytes": 18860,
+      "sha256": "ef36e2b5f01796b26ffbb8f275c98bf3e920c28c903537a1f131ff7a21b00794"
+    },
+    {
+      "path": "F:\\Project\\TZcup-autonomous-auto11-data\\formal_attempt1\\map\\large_map.pgm",
+      "bytes": 2000017,
+      "sha256": "69d57790694b41aee30804ae2e9cdf2ec8111d2841e62558256de880052c0d42"
+    },
+    {
+      "path": "F:\\Project\\TZcup-autonomous-auto11-data\\formal_attempt1\\map\\large_map.json",
+      "bytes": 3813,
+      "sha256": "14ef19186f5a8a268974c31236067bf4fcead2a3fdffefad99144280e5db3bf9"
+    }
+  ]
+}

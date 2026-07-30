@@ -1,5 +1,13 @@
 # Codex 阶段推进与验收门
 
+## AUTO-11 20,000 m² 大地图与定时任务门（PASS）
+
+- map：20,000 m²、0.1 m resolution、20 zone/submap，serialization/reload 通过；
+- localization：10 trajectories，逐条 RMSE ≤ 0.05 m（max `0.03004 m`），lost recovery `0.95`，TF continuity `0.99998`；
+- missions：5 full coverage + 20 scheduled，zone accuracy `1.0`，boundary violation `0`，dynamic collision `0`，resume `0.96`；
+- truth source 与 estimate source 分离，`self_comparison_used=false`；
+- 状态：`AUTO-11=PASS`，证据等级 `OFFLINE_LARGE_MAP_SIMULATION`。
+
 ## AUTO-10 APP / 语音 / LLM DSL 门（PASS）
 
 - APP/API：288 cases，合法成功率 `1.0`、非法拒绝率 `1.0`、鉴权/授权/幂等通过、P95 `16.03 ms`；
