@@ -5,7 +5,7 @@
 新增独立 ROS 2 包 `sanitation_debug_visualization`，并已在本机
 `tzcup-gazebo-x11` 容器连接现有 Gazebo 仿真实际渲染。RViz 默认显示清扫区、
 禁行区、五类清扫目标、非目标障碍、实时感知置信度、车辆轮廓与方向、
-LiDAR、Coverage 路径及清扫状态；标签经过错位排布，精简容器没有中文字体时
+默认启用的 LiDAR、Coverage 路径及清扫状态；标签经过错位排布，精简容器没有中文字体时
 也使用稳定英文显示。基础仿真默认采用 `base_link` 跟车坐标系，不依赖当前
 缺失的 `odom→base_footprint` TF；Nav2/SLAM 启动后可切换到 `map`。该包只发布
 `/debug/markers`，不向控制链发送速度、导航或清扫命令。操作与图层说明见
@@ -247,4 +247,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-30：Docker/WSLg 调试可视化已经实际打开并连接现有 Gazebo，新增清扫区、禁行区、五类目标、障碍、感知结果、车辆、LiDAR、路径和状态图层；调试层只读 ROS 状态，不改变控制链。AUTO-16 已有发布状态保持不变，AUTO-15 综合矩阵、真实域与 J6 实体证据仍未通过。
+2026-07-30：Docker/WSLg 调试可视化已经实际打开并连接现有 Gazebo，新增清扫区、禁行区、五类目标、障碍、感知结果、车辆、路径和状态图层；默认 LiDAR 已实测约 9 Hz，RobotModel 仅在完整 TF 下按需启用。调试层只读 ROS 状态，不改变控制链；AUTO-16 已有发布状态及其他阻断保持不变。
