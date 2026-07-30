@@ -1,5 +1,9 @@
 # TZcup 无人清扫车仿真项目
 
+## AUTO-14 Horizon J6 官方工具链达到依赖停止边界（2026-07-30）
+
+AUTO-14 已锁定 D-Robotics 官方 OpenExplorer `3.7.0`（`hbdk4_compiler 4.7.5 / hmct 2.6.5 / horizon_tc_ui 3.5.3`），2.85 GB 官方包 SHA-256 为 `DE90DA5CF58879A0883BB47856232514C3CC30E368D8864911BD05E267229C5B`；官方 wheel 已在 CUDA/cuDNN 环境中把 `hb_compile --help` 实际运行到成功。新增 ONNX 固定 batch/shape、operator/custom-op、≥500 calibration frame 预检、官方编译配置生成和禁止静默 CPU fallback 的 HBM runtime adapter。由于 AUTO-06 正式模型未产出，正式量化/编译不得启动；本机也未发现 J6/S100/S600 板卡。因此 `AUTO-14=BLOCKED`，首个阻断层为 `dependency_AUTO-06_formal_model_not_selected`；当前只证明 `OFFICIAL_TOOLCHAIN_PACKAGE_READY=true`，`J6_TOOLCHAIN_PASS=false`、`J6_RUNTIME_PASS=false`。证据见 [`artifacts/autonomous_auto14_20260730_evidence/`](artifacts/autonomous_auto14_20260730_evidence/)，说明见 [`docs/auto14-j6-toolchain.md`](docs/auto14-j6-toolchain.md)。
+
 ## AUTO-05 G3 多世界数据通过、模型 screening 达到停止边界（2026-07-30）
 
 8 个 material/layout/lighting/SHA 独立的真实 Gazebo G3 世界已按 world 固定为 train/val/test `4/2/2`，120 scene/1200 个原生同步 RGB-D/semantic/instance frame 的数据 QA 全部通过：同步、TF、标注完整率 100%，32/32 动态场景执行，asset/world/trajectory/exact/pHash 泄漏为 0。三次有界 GPU 模型方案均保留；最佳 Attempt 3 的 validation/test detector F1 为 `0.53253/0.42931`，small recall 为 `0.875/0.88406`，纯负 FP/frame 为 `0.05/0.01`，validation/test area mIoU 为 `0.45859/0.57297`。7 个冻结模型门仍失败，故 `AUTO-05=BLOCKED`，首个阻断层为 `G3_split_model_screening_gates_failed_after_3_attempts`；AUTO-06/07/08 不得启动。证据见 [`artifacts/autonomous_auto05_20260730_evidence/`](artifacts/autonomous_auto05_20260730_evidence/)，说明见 [`docs/auto05-g3-screening.md`](docs/auto05-g3-screening.md)。

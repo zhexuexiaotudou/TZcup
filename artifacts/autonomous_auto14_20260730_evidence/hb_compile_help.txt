@@ -1,0 +1,17 @@
+Usage: hb_compile [OPTIONS]
+
+  A tool that maps floating-point models to quantized models and provides some
+  additional validation features
+
+Options:
+  -h, --help                      Show this message and exit.
+  -c, --config PATH               Model convert config file
+  -m, --model PATH                Model to be compiled or modified
+  --proto PATH                    Caffe prototxt file
+  --march [nash-a2p|nash-a3|nash-b|nash-b-lite|nash-b-plus|nash-e|nash-h|nash-m|nash-p]
+                                  BPU's micro architectures
+  -i, --input-shape <TEXT TEXT>...
+                                  Specify the model input shape, e.g. --input-
+                                  shape input1 1x3x224x224
+  --fast-perf                     Build with fast perf mode, e.g. --fast-perf
+  --skip TEXT                     Skip the specified steps,e.g. --skip compile

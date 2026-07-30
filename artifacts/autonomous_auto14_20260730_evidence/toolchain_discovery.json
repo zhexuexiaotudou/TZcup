@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-14",
+  "official_source": {
+    "url": "https://d-robotics-aitoolchain.oss-cn-beijing.aliyuncs.com/oe/3.7.0/oe-package-3.7.0-s100-s600.tgz",
+    "oe_version": "3.7.0",
+    "archive_bytes": 2846971999,
+    "archive_sha256": "de90da5cf58879a0883bb47856232514c3cc30e368d8864911bd05e267229c5b",
+    "archive_sha256_expected": "de90da5cf58879a0883bb47856232514c3cc30e368d8864911bd05e267229c5b",
+    "archive_integrity_pass": true
+  },
+  "host": {
+    "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.41",
+    "machine": "x86_64",
+    "board_device_count": 0
+  },
+  "wheel_inventory": [
+    {
+      "name": "hbdk4_compiler",
+      "version": "4.7.5",
+      "path": "package/host/ai_toolchain/hbdk4_compiler-4.7.5-cp310-cp310-manylinux_2_17_x86_64.whl",
+      "sha256": "12c75953f6bb71f0798a9cfa96cbd18a8a3876420dedecaf0018681f9453a8a7"
+    },
+    {
+      "name": "hbdk4_compiler",
+      "version": "4.7.5",
+      "path": "package/host/ai_toolchain/hbdk4_compiler-4.7.5-cp311-cp311-manylinux_2_17_x86_64.whl",
+      "sha256": "5c685b34f5df1d32861c58f91c705a17f509134fe43d1a00601252c92d94b735"
+    },
+    {
+      "name": "hbdk4_march",
+      "version": "4.7.5",
+      "path": "package/host/ai_toolchain/hbdk4_march-4.7.5-cp310-abi3-manylinux_2_17_x86_64.whl",
+      "sha256": "022ecb00d96ab0336104c123651ff5721f47a2fad60063e966d5ccc410d1fbaf"
+    },
+    {
+      "name": "hbdk4_runtime_aarch64_unknown_linux_gnu_nash",
+      "version": "4.7.5",
+      "path": "package/host/ai_toolchain/hbdk4_runtime_aarch64_unknown_linux_gnu_nash-4.7.5-py3-none-any.whl",
+      "sha256": "b67bf36aa3895891a88608864676bc53d830c8f779f5bea620683369fbffc684"
+    },
+    {
+      "name": "hbdk4_runtime_aarch64_unknown_nto_qnx800_nash",
+      "version": "4.7.5",
+      "path": "package/host/ai_toolchain/hbdk4_runtime_aarch64_unknown_nto_qnx800_nash-4.7.5-py3-none-any.whl",
+      "sha256": "9cc3f5649665127b2f3dc03f7e832c5d59294f971ee4917a032f280ff7284526"
+    },
+    {
+      "name": "hbdk4_runtime_x86_64_unknown_linux_gnu_nash",
+      "version": "4.7.5",
+      "path": "package/host/ai_toolchain/hbdk4_runtime_x86_64_unknown_linux_gnu_nash-4.7.5-py3-none-any.whl",
+      "sha256": "35dd55fd6f8712f14a9cd5e70621cfc684fb24759c3f1aaf05ba4820620b07b3"
+    },
+    {
+      "name": "hbdnn",
+      "version": "1.0.3",
+      "path": "package/host/ai_toolchain/hbdnn-1.0.3-py3-none-any.whl",
+      "sha256": "800af9867cc6d9b5be7ccd89691318b9ead877332b956be6fa922868c142edd7"
+    },
+    {
+      "name": "hbm_infer",
+      "version": "3.13.6",
+      "path": "package/host/ai_toolchain/hbm_infer-3.13.6-py3-none-any.whl",
+      "sha256": "8e72cc8e6183782a96583e930a1c7d90a955b6ef17ddab8043beb2d538859a1a"
+    },
+    {
+      "name": "hmct",
+      "version": "2.6.5",
+      "path": "package/host/ai_toolchain/hmct-2.6.5-cp310-cp310-linux_x86_64.whl",
+      "sha256": "6e8e88487ca771c45b6b445a055dd7c28e67d3bb3ebea468c661c0c35301ac79"
+    },
+    {
+      "name": "hmct",
+      "version": "2.6.5",
+      "path": "package/host/ai_toolchain/hmct-2.6.5-cp311-cp311-linux_x86_64.whl",
+      "sha256": "c22a93a4d8981282ae0910e8323069877a6a78dc3083b7f29df87755c5526394"
+    },
+    {
+      "name": "hmct_gpu",
+      "version": "2.6.5+cu126",
+      "path": "package/host/ai_toolchain/hmct_gpu-2.6.5+cu126-cp310-cp310-linux_x86_64.whl",
+      "sha256": "872bd7e3bc95ba4adde2eeba66bf4c11cc72b5682cc83246fd503497d24df3ed"
+    },
+    {
+      "name": "hmct_gpu",
+      "version": "2.6.5+cu126",
+      "path": "package/host/ai_toolchain/hmct_gpu-2.6.5+cu126-cp311-cp311-linux_x86_64.whl",
+      "sha256": "2612b5c597ac21baa7e4b33df9491c80d7d39b5202188c3bc8b41016d06033ba"
+    },
+    {
+      "name": "horizon_plugin_profiler",
+      "version": "3.1.5",
+      "path": "package/host/ai_toolchain/horizon_plugin_profiler-3.1.5-py3-none-any.whl",
+      "sha256": "67ff4e49dc19e9180e20e5e1e39650ec0163abb7a4262bca75c3dfe55f941bcd"
+    },
+    {
+      "name": "horizon_plugin_pytorch",
+      "version": "3.1.5+cu118.torch230",
+      "path": "package/host/ai_toolchain/horizon_plugin_pytorch-3.1.5+cu118.torch230-cp310-cp310-linux_x86_64.whl",
+      "sha256": "9cecfc2070b378bd10a9ff846c2475c80801e050450460bdbff2c0c63a09ea13"
+    },
+    {
+      "name": "horizon_plugin_pytorch",
+      "version": "3.1.5+cu118.torch230",
+      "path": "package/host/ai_toolchain/horizon_plugin_pytorch-3.1.5+cu118.torch230-cp311-cp311-linux_x86_64.whl",
+      "sha256": "74a8891465378937b56246c5411b3eb0e8c345f19fd757d82e563429897f46a3"
+    },
+    {
+      "name": "horizon_plugin_pytorch",
+      "version": "3.1.5+cu126.torch260",
+      "path": "package/host/ai_toolchain/horizon_plugin_pytorch-3.1.5+cu126.torch260-cp310-cp310-linux_x86_64.whl",
+      "sha256": "626e26a70aa915ca55511800a1b7f42f5b1653c6077a83b1b38009e8db3f889c"
+    },
+    {
+      "name": "horizon_plugin_pytorch",
+      "version": "3.1.5+cu126.torch260",
+      "path": "package/host/ai_toolchain/horizon_plugin_pytorch-3.1.5+cu126.torch260-cp311-cp311-linux_x86_64.whl",
+      "sha256": "b17fca51305509c7f6d41370083cebe126ce2bcee6abd41ba4f96b4749ade706"
+    },
+    {
+      "name": "horizon_plugin_pytorch",
+      "version": "3.1.5+cu128.torch280",
+      "path": "package/host/ai_toolchain/horizon_plugin_pytorch-3.1.5+cu128.torch280-cp310-cp310-linux_x86_64.whl",
+      "sha256": "c2f94784fbee042d69dc8ae77c4b337ef347167815863568b6c2abc67e713d6a"
+    },
+    {
+      "name": "horizon_tc_ui",
+      "version": "3.5.3",
+      "path": "package/host/ai_toolchain/horizon_tc_ui-3.5.3-py3-none-linux_x86_64.whl",
+      "sha256": "618ee52f09e052a331ef1e3d037c4e0edb841c17acc6732f27b27736904ff339"
+    },
+    {
+      "name": "horizon_torch_samples",
+      "version": "3.1.19",
+      "path": "package/host/ai_toolchain/horizon_torch_samples-3.1.19-py3-none-any.whl",
+      "sha256": "1c93db5f237b51060a95669ce24c08b62acf63436a0f69dc44ff18f2188dde17"
+    }
+  ],
+  "required_versions": {
+    "hbdk4_compiler": "4.7.5",
+    "hmct": "2.6.5",
+    "horizon_tc_ui": "3.5.3"
+  },
+  "required_versions_resolved": {
+    "hbdk4_compiler": true,
+    "hmct": true,
+    "horizon_tc_ui": true
+  },
+  "official_toolchain_package_ready": true,
+  "j6_toolchain_pass": false,
+  "j6_runtime_pass": false,
+  "truth_boundary": "Package discovery and hb_compile availability do not constitute model quantization/compile or board runtime acceptance."
+}

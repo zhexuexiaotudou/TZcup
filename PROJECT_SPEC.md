@@ -1,5 +1,12 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## AUTO-14 J6 工具链边界
+
+- 只允许使用 D-Robotics 官方 OpenExplorer/SDK，并记录包、wheel、编译产物 SHA；
+- `hb_compile` 可启动只表示官方工具链可用，不表示项目模型已量化或编译；
+- `J6_TOOLCHAIN_PASS=true` 要求 AUTO-06 正式 detector/area 模型完成预检、至少 500 帧校准、官方编译和量化精度回归；
+- `J6_RUNTIME_PASS=true` 必须有实体板 30 分钟稳定性、性能、功耗、温度和精度一致性证据；无板时这些值必须为 `null`。
+
 ## AUTO-05 G3 多世界数据与 screening 契约
 
 - G3 必须至少包含 8 个 material/layout/lighting/SHA 独立的真实 Gazebo 世界，并按世界固定为 train/val/test `4/2/2`；至少采集 120 scene/1200 native frame，每个 val/test 世界至少 50 个 negative-only frame。

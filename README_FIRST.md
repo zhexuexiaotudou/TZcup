@@ -1,5 +1,7 @@
 # 无人清扫车仿真启动包
 
+> 2026-07-30：AUTO-14 已完成官方 D-Robotics OpenExplorer 3.7.0 工具链下载、哈希、版本、`hb_compile` 启动、ONNX 预检和 fail-closed runtime adapter；因 AUTO-06 正式模型未产生，量化/编译不得执行，本机亦无 J6 板卡。故 `AUTO-14=BLOCKED`、`J6_TOOLCHAIN_PASS=false`、`J6_RUNTIME_PASS=false`，不冒充模型编译或板端成绩。
+
 > 2026-07-30：独立 AUTO-11 大地图与定时任务 lane 已通过离线仿真机器门：20,000 m² map、10 条真值分离定位轨迹、5 次全覆盖和 20 次定时路线全部满足冻结指标；证据等级不是 Gazebo 或实车。当前主依赖阶段仍为 AUTO-05。
 
 > 2026-07-30：独立 AUTO-10 多模态任务入口已通过机器门。APP/API 288 用例、语音 500 用例和 DSL 1200 用例均达到冻结阈值；LLM/语言层只输出固定任务 DSL 并调用 allowlist，不直接访问 `/cmd_vel` 或关节命令。当前主依赖阶段仍为 AUTO-05。
