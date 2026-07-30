@@ -1,5 +1,12 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## AUTO-13 真实域机器评测契约
+
+- 只有真实相机/车辆数据和可审计 GT 才能进入真实域指标；程序化 fixture、Gazebo、公开无标注图像或模型伪标签均不得设置 `REAL_DOMAIN_PASS=true`。
+- 正式资源至少包含 20 scene/1000 frame、五类完整、hard-negative、相机标定和独立 map localization truth；同轨迹、地点和连续帧必须按组隔离。
+- 采集必须显式记录同意，个人可识别区域在落盘前隐私处理，原始帧默认留在仓库外；dataset manifest 保存文件 SHA、标定 SHA、标注 SHA 和隐私状态。
+- 资源缺失时必须完成 capture/calibration/ingestion/annotation/evaluator/privacy 工具并设置 `REAL_DOMAIN_BLOCKED_EXTERNAL=true`、`REAL_DOMAIN_PASS=false`，继续其他独立阶段。
+
 ## AUTO-04 双模型 micro-overfit 契约
 
 - 离散类必须使用直接 object detector 输出中心 heatmap、中心 offset 和 bbox 尺寸，再经 confidence-ranked decode 与 class-wise NMS 形成检测框；禁止使用 segmentation connected-components 冒充 detector。

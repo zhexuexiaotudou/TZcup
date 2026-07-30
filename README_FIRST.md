@@ -4,6 +4,8 @@
 
 > 2026-07-30：当前自主入口为 `docs/auto04-micro-overfit.md` 与 `artifacts/autonomous_auto04_20260730_evidence/`。AUTO-04 的 direct detector 与独立 leaf/puddle area segmenter 已通过 micro-overfit、负样本和 ONNX parity 机器门；下一阶段为 AUTO-05 跨世界 screening。该结论只证明 Gazebo micro train-set capacity，production 默认、历史 evidence、真人/真实域/J6 和最终竞赛状态均未提升。
 
+> 2026-07-30：独立 AUTO-13 真实域 lane 已实现采集、隐私、标定、接入与评测工具，正在发现是否存在满足 20 scene/1000 frame 且带独立可审计 GT 的真实资源。fixture 不计真实域证据，资源不足时按规划包封口为 `BLOCKED_EXTERNAL`。
+
 > 2026-07-21：历史工程入口为 `GPT_REVIEW_STAGE5BR6W.md`。工程豁免支线已完成 V4/policy/candidate-footprint opt-in 与规划器加固，但真实 Stage4W seed 0 因 `no_reachable_clean_route` 失败，故工程 Oracle 未启动；该失败结论保持不变。
 
 > 2026-07-21：历史正式入口为 `GPT_REVIEW_STAGE5BR6.md`。Stage5BR6-A 已生成两个独立的 270 张人工盲审包并通过无 truth 泄漏审计；尚未收到两份真人 response，因此 `READY_FOR_STAGE5BR6_ORACLE=false`，原包与 sealed truth 保持不变。

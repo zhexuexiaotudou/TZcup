@@ -136,6 +136,7 @@ def run_ros_independent_tests() -> None:
         learning_package / "test" / "test_gazebo_g2.py",
         learning_package / "test" / "test_stage5br6_handoff.py",
         learning_package / "test" / "test_auto04_contract.py",
+        learning_package / "test" / "test_auto13_real_domain.py",
         spot_cleaning_package / "test" / "test_auto01_geometry.py",
         ROOT / "scripts" / "test_autonomous_runner.py",
         ROOT / "scripts" / "test_auto02_tools.py",
