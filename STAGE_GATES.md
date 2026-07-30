@@ -1,5 +1,13 @@
 # Codex 阶段推进与验收门
 
+## AUTO-04 双模型 micro-overfit 门（当前待正式执行）
+
+- direct object detector、独立 area segmenter 与正式 GPU 执行器已实现；
+- detector 必须直接预测 center/offset/bbox，并通过 confidence-ranked AP 与 NMS 门，禁止 segmentation connected-components 冒充；
+- area head 必须独立通过 leaf/puddle IoU、negative-only FP 与 ONNX parity；
+- 当前状态：`AUTO-04=PENDING`，正式报告未生成前不允许进入 AUTO-05；
+- 详细合同见 `docs/auto04-micro-overfit.md` 与全流程规划包的 `STAGE_ACCEPTANCE_STANDARDS.md`。
+
 ## AUTO-03 Oracle 主动观察闭环门（当前已通过）
 
 - 数据矩阵：6 个 G2 Gazebo 世界、60 个 scene、250 条 trial；有效目标 200 条（五类各 40），reachable 170、unreachable/keepout 30、false 30、stale 20。

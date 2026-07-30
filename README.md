@@ -1,5 +1,9 @@
 # TZcup 无人清扫车仿真项目
 
+## AUTO-04 双模型 micro-overfit 正式执行准备（2026-07-30）
+
+AUTO-04 已落地真正的 object-level anchor-free detector 与独立 leaf/puddle area segmenter。detector 直接输出三类中心 heatmap、中心 offset 和 bbox 尺寸，经 confidence-ranked decode 与 class-wise NMS 得到目标框，不使用语义分割连通域冒充 detector；area head 独立训练与导出。正式执行器从 Stage5BR3 留存的同步 Gazebo RGB/semantic/instance 训练 split 自动构造固定 micro 数据，检查样本规模、多实例和尺寸分布，并硬性验证 AP50、逐类 recall、negative-only FP、两类 IoU、ONNX 数值一致性、固定 batch/shape、算子清单与 NMS 行为。当前仍为执行准备状态，`AUTO-04=PENDING`，机器报告未通过前不推进 AUTO-05。实现说明见 [`docs/auto04-micro-overfit.md`](docs/auto04-micro-overfit.md)。
+
 ## AUTO-03 Oracle 主动观察闭环正式矩阵通过（2026-07-30）
 
 AUTO-03 已实现不依赖观察位姿真值的主动观察任务链：带噪候选进入队列后，车辆在 Coverage 组件边界暂停，经观察位姿采样、`ComputePathToPose` 预检和 `NavigateToPose` 靠近，完成同步图像捕获与 evaluation-only 机器可判定评测，再返回边界并恢复覆盖。Oracle 只发布带噪平面位置、协方差、时间戳、通用类别/尺度以及 false/stale 状态；planner、Nav2、控制器和执行器均不得订阅语义 GT，也不得由 Oracle 设置车辆位姿。
@@ -185,4 +189,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-30：AUTO-03 已由 [PR #35](https://github.com/zhexuexiaotudou/TZcup/pull/35) 在 `fast-validation` 通过后 squash 合入 `main@c491221`，主分支 CI 也已通过。远端 main 的 92 个 manifest 管理证据文件与 Git blob 逐字节一致，状态为 `AUTO-03=PASS`、当前阶段 AUTO-04；部署门因本项目是离线 ROS 2/Gazebo 产物标记为 `not_applicable`，回滚点为 `main@82c85c0`。Stage5BR6-A 的人工完成与人工审计标志继续为 false，真人、真实车辆、真实域、J6 和最终竞赛状态均未提升。
+2026-07-30：AUTO-04 已完成 direct detector、独立 area segmenter、micro 数据选择、固定门禁、ONNX parity 和 Docker GPU 执行器实现。第一轮正式运行已保留：detector AP50 `0.9967` 但固定阈值 recall 未过门，三分类 area head 的 macro mIoU `0.4631`；第二轮依据该失败只调整冻结 detector 阈值，并改用独立二值 area heads 与更紧的目标 crop。当前仍为 `AUTO-04=PENDING`，失败结果不会被覆盖或计为通过。

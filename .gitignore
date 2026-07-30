@@ -69,6 +69,7 @@ artifacts/autonomous_auto02_raw_*/
 artifacts/autonomous_auto03_raw_*/
 artifacts/autonomous_auto03_formal_*/
 artifacts/autonomous_auto03_*_smoke/
+artifacts/autonomous_auto04_*_raw/
 
 # Stage5BR3 full Stage5A/Stage4W regression logs stay local; the compact
 # machine-readable summary is versioned in artifacts/stage5br3_20260720_review.

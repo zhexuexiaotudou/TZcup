@@ -1,5 +1,11 @@
 # 项目推进记录
 
+## AUTO-04：双模型 micro-overfit（2026-07-30，正式执行准备）
+
+已新增直接 anchor-free object detector、独立 leaf/puddle area segmenter、真实 Gazebo micro 数据选择、固定门禁、PyTorch/ONNX parity 和 Docker GPU 执行器。detector 监督目标为 instance bbox 的中心 heatmap、offset 和宽高，输出经 confidence 排序及 class-wise NMS 解码；不使用 segmentation connected-components 作为主 detector。area model 单独计算 leaf/puddle IoU 与 negative-only area FP。
+
+第一轮正式 GPU 运行已完成但未通过：direct detector 的 AP50 为 `0.99670`、negative-only FP/frame 为 `0`、ONNX decoded parity 为 `1.0`，但固定 `0.5` 阈值下 macro recall 只有 `0.86087`；三分类 area head 的 leaf/puddle IoU 为 `0.63573/0.29043`、macro mIoU `0.46308`。失败报告与模型保留在 Git 忽略的 `artifacts/autonomous_auto04_attempt1_raw/`。第二轮遵循预定义 fallback，只冻结 detector 阈值为 `0.20`，并把 area 改为独立 leaf/puddle 二值 heads、收紧目标 crop 和负样本候选门。当前 `AUTO-04=PENDING`，不得推进 AUTO-05。复现和边界见 `docs/auto04-micro-overfit.md`。
+
 ## AUTO-03：Oracle 主动观察闭环（2026-07-30，机器门通过）
 
 本阶段在 AUTO-01 的 opt-in `G2-C3` 几何和 AUTO-02 冻结导航配置上实现真实主动观察任务链。Oracle 只发布带噪 XY、协方差、时间戳、通用类别/尺度以及 false/stale 状态，不输出观察位姿、路径或成功状态，也不设置车辆位姿；语义 GT 只进入独立 `auto03_machine_ready_evaluator`，节点图审计确认 planner、Nav2、控制器和执行器均无 GT 订阅。production 默认相机、footprint 和 `enable_training_gt=false` 均未改变。
