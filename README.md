@@ -1,8 +1,8 @@
 # TZcup 无人清扫车仿真项目
 
-## AUTO-09 抓取、运输与入箱候选（2026-07-30）
+## AUTO-09 抓取、运输与入箱通过（2026-07-30）
 
-AUTO-09 已建立 opt-in 机械臂候选：四自由度 arm、双指夹爪、mock `ros2_control`、MoveIt2 SRDF/运动学/OMPL/controller 配置、感知到抓取变换、规划场景、40 L bin 状态、急停与 fail-closed 恢复均已落地；leaf/puddle 明确只进入刷扫，不生成抓取候选。正式数据将来自 `OFFLINE_KINEMATIC_PERCEPTION_LOOP_SIMULATION`，不冒充 Gazebo 或实体机械臂结果。
+AUTO-09 已通过软件与离线运动学机器门：opt-in 四自由度 arm、双指夹爪、mock `ros2_control`、MoveIt2 SRDF/运动学/OMPL/controller 配置、感知到抓取变换、规划场景、40 L bin 状态、急停与 fail-closed 恢复均已落地；leaf/puddle 明确只进入刷扫。瓶/罐/纸三类分别完成 20 次 pose-known micro 与 30 次带独立感知噪声的正式闭环，抓取/抬升/pick/transport/bin placement 逐类最低成功率均为 `1.0`；wrong-object、safe-zone 外掉落、碰撞和关节越界为 0，90/90 不可达目标 fail-closed，过量入箱拒绝率 `1.0`。`AUTO-09=PASS`；证据见 [`artifacts/autonomous_auto09_20260730_evidence/`](artifacts/autonomous_auto09_20260730_evidence/)，说明见 [`docs/auto09-manipulation.md`](docs/auto09-manipulation.md)。证据等级是 `OFFLINE_KINEMATIC_PERCEPTION_LOOP_SIMULATION`；MoveIt2/ros2_control 仅做静态合同审计，不冒充 Gazebo 或实体机械臂成绩。
 
 ## AUTO-12 清扫效率重构通过（2026-07-30）
 
