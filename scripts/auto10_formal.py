@@ -329,7 +329,8 @@ def run_app(output: Path) -> int:
             "no_direct_cmd_vel": "/cmd_vel" not in html,
             "fail_closed_copy": "fail closed" in html,
             "bilingual_copy": "Authenticated task gateway" in html,
-            "mobile_width": "width: min(" in html,
+            "responsive_width": "max-width: 880px" in html
+            and "@media (max-width: 620px)" in html,
             "keyboard_submit": 'type="submit"' in html,
         }
         case_count = 210 + 60 + 5 + len(ui_checks)
