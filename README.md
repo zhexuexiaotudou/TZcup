@@ -1,5 +1,9 @@
 # TZcup 无人清扫车仿真项目
 
+## AUTO-11 20,000 m² 大地图与定时任务（2026-07-30）
+
+AUTO-11 已开始实现 200 m × 100 m、0.1 m 分辨率的 20,000 m² 占据栅格、20 个 zone/submap 索引、独立仿真 world-state GT 与定位估计、丢失恢复、TF 连续性、全覆盖和定时路线矩阵。正式报告通过全部冻结门、紧凑证据与状态同步完成前仍为 `AUTO-11=PENDING`；离线大地图仿真不冒充 Gazebo、真实车辆或 J6 板端证据。
+
 ## AUTO-10 APP / speech / constrained task DSL（2026-07-30）
 
 AUTO-10 已实现并通过独立的本地 APP/API、鉴权授权、幂等提交、GPU 语音识别和 fail-closed 任务 DSL 正式门。288 个真实 HTTP/API/UI 用例中合法成功率和非法拒绝率均为 `1.0`，P95 `16.03 ms`；1200 个双语/歧义/冲突/不安全 DSL 用例的语义分解、工具选择和参数准确率均为 `1.0`，危险执行率和直接执行器访问均为 `0`；500 条 Windows TTS→四档噪声/三类混响→GPU Whisper 用例覆盖三音色、三语速和中英文，意图准确率 `0.9911`、危险命令拒绝率 `1.0`、端到端 P95 `171.94 ms`。真实浏览器另验证了桌面与 390 px 窄屏布局、“紧急停止”安全 DSL 和直接电机指令拒绝。`AUTO-10=PASS`；紧凑证据见 [`artifacts/autonomous_auto10_20260730_evidence/`](artifacts/autonomous_auto10_20260730_evidence/)，说明见 [`docs/auto10-multimodal-hmi.md`](docs/auto10-multimodal-hmi.md)。该结论不代表车辆执行、真实域或 J6 板端通过。
