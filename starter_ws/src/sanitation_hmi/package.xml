@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>sanitation_hmi</name>
+  <version>0.1.0</version>
+  <description>Authenticated APP, speech intent, and constrained task DSL for TZcup.</description>
+  <maintainer email="zhexu@example.com">zhexu</maintainer>
+  <license>MIT</license>
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>python3</exec_depend>
+  <test_depend>python3-pytest</test_depend>
+  <export><build_type>ament_python</build_type></export>
+</package>

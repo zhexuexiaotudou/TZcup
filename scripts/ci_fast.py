@@ -97,6 +97,7 @@ def run_ros_independent_tests() -> None:
     ground_truth_package = SOURCE_ROOT / "sanitation_ground_truth"
     spot_cleaning_package = SOURCE_ROOT / "sanitation_spot_cleaning"
     learning_package = SOURCE_ROOT / "sanitation_learning"
+    hmi_package = SOURCE_ROOT / "sanitation_hmi"
     sys.path.insert(0, str(coverage_package))
     sys.path.insert(0, str(tasks_package))
     sys.path.insert(0, str(gnss_package))
@@ -105,6 +106,7 @@ def run_ros_independent_tests() -> None:
     sys.path.insert(0, str(ground_truth_package))
     sys.path.insert(0, str(spot_cleaning_package))
     sys.path.insert(0, str(learning_package))
+    sys.path.insert(0, str(hmi_package))
     test_paths = (
         coverage_package / "test" / "test_metrics.py",
         coverage_package / "test" / "test_stage4w_geometry.py",
@@ -137,10 +139,14 @@ def run_ros_independent_tests() -> None:
         learning_package / "test" / "test_stage5br6_handoff.py",
         learning_package / "test" / "test_auto04_contract.py",
         learning_package / "test" / "test_auto13_real_domain.py",
+        hmi_package / "test" / "test_dsl.py",
+        hmi_package / "test" / "test_gateway.py",
         spot_cleaning_package / "test" / "test_auto01_geometry.py",
         ROOT / "scripts" / "test_autonomous_runner.py",
         ROOT / "scripts" / "test_auto02_tools.py",
         ROOT / "scripts" / "test_auto03_matrix.py",
+        ROOT / "scripts" / "test_auto10_formal.py",
+        ROOT / "scripts" / "test_auto10_speech.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])
     if result != pytest.ExitCode.OK:

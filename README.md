@@ -1,5 +1,9 @@
 # TZcup 无人清扫车仿真项目
 
+## AUTO-10 APP / speech / constrained task DSL（2026-07-30）
+
+AUTO-10 已开始实现独立的本地 APP/API、鉴权授权、幂等提交和 fail-closed 任务 DSL，并新增真实 HTTP 的 200+ API/UI、1000+ 双语/歧义/冲突/不安全 DSL 机器矩阵，以及 Windows 三种系统音色、三档语速、四档噪声、三类混响到 GPU ASR 的 500 条正式语音流水线。自然语言层只允许调用任务级 allowlist，不直接发布 `/cmd_vel` 或关节命令；正式语音矩阵及三门汇总完成前仍为 `AUTO-10=PENDING`。
+
 ## AUTO-13 真实域工具链与资源发现（2026-07-30）
 
 独立 AUTO-13 lane 已实现显式同意的相机/视频采集、落盘前隐私模糊、棋盘格标定、带 SHA 的数据接入和离散/区域/定位统一评测。程序化 fixture 已验证软件合同，但不计为真实域证据。资源发现识别到 1 个本机 Integrated Camera 和仓库内 249 个图像文件，但没有任何满足至少 20 个真实 scene/1000 frame、五类完整、hard-negative、标定和独立 map localization GT 的可审计 manifest。因此 `AUTO-13=BLOCKED_EXTERNAL`、`REAL_DOMAIN_BLOCKED_EXTERNAL=true`、`REAL_DOMAIN_PASS=false`；相机存在不等于真实 GT 数据就绪。紧凑证据见 [`artifacts/autonomous_auto13_20260730_evidence/`](artifacts/autonomous_auto13_20260730_evidence/)，说明见 [`docs/auto13-real-domain.md`](docs/auto13-real-domain.md) 与 [`docs/real-domain-annotation-protocol.md`](docs/real-domain-annotation-protocol.md)。
