@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-13",
+  "search_roots": [
+    "F:\\Project\\TZcup-autonomous-auto13"
+  ],
+  "candidate_manifests": [],
+  "qualifying_real_ground_truth_datasets": [],
+  "repository_image_counts": {
+    "F:\\Project\\TZcup-autonomous-auto13": 249
+  },
+  "camera_inventory": {
+    "query_returncode": 0,
+    "devices": [
+      {
+        "Status": "OK",
+        "FriendlyName": "Integrated Camera",
+        "InstanceId": "USB\\VID_5986&PID_1196&MI_00\\6&1CB02AB9&0&0000"
+      }
+    ],
+    "camera_presence_is_not_ground_truth_dataset": true
+  },
+  "public_dataset_downloaded": false,
+  "physical_vehicle_or_pose_system_available": false,
+  "real_domain_resource_gate_pass": false,
+  "first_blocking_layer": "real_domain_auditable_ground_truth_dataset_not_available",
+  "boundary": "A camera device or unlabeled image does not satisfy the 20-scene/1000-frame, five-class, hard-negative, calibration, annotation, and independent map-ground-truth contract."
+}

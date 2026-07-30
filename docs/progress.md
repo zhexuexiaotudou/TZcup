@@ -1,5 +1,11 @@
 # 项目推进记录
 
+## AUTO-13：真实域机器评测（2026-07-30，独立 lane 资源发现）
+
+已实现显式 `--consent` 的相机/视频采集、落盘前隐私区域模糊、棋盘格标定、capture/annotation/calibration 三方 SHA 接入 manifest，以及离散 bbox、区域 mask、hard-negative specificity、map localization 和 synthetic-to-real drop 的统一评测器。程序化 fixture 只验证工具数学和停止边界，不计为真实域数据。
+
+资源发现识别到 1 个 Integrated Camera 和仓库内 249 个图像文件，但没有合格真实 dataset manifest，也没有 20 scene/1000 frame、完整五类/hard-negative、标定和独立 map GT 的组合资源。故 `AUTO-13=BLOCKED_EXTERNAL`、`REAL_DOMAIN_BLOCKED_EXTERNAL=true`、`REAL_DOMAIN_PASS=false`；未执行指标保持 null。紧凑证据为 `artifacts/autonomous_auto13_20260730_evidence/`，其他独立 lane 继续。
+
 ## AUTO-04：双模型 micro-overfit（2026-07-30，机器门通过）
 
 已新增直接 anchor-free object detector、独立 leaf/puddle area segmenter、真实 Gazebo micro 数据选择、固定门禁、PyTorch/ONNX parity 和 Docker GPU 执行器。detector 监督目标为 instance bbox 的中心 heatmap、offset 和宽高，输出经 confidence 排序及 class-wise NMS 解码；不使用 segmentation connected-components 作为主 detector。area model 单独计算 leaf/puddle IoU 与 negative-only area FP。

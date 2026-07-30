@@ -1,0 +1,6 @@
+{
+  "schema_version": 1,
+  "ci_fast_pass": true,
+  "ci_test_count": 123,
+  "fixture_is_real_domain_evidence": false
+}

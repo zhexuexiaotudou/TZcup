@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-13",
+  "attempts": [
+    {
+      "attempt_id": "AUTO-13-RESOURCE-DISCOVERY-V1",
+      "hypothesis": "an auditable real-domain dataset or capture/pose resource may already exist on the repository host",
+      "input_commit": "da01b9edbb217b983211d5e79e4619ab4c42aff9",
+      "result": "BLOCKED_EXTERNAL",
+      "first_failure": "real_domain_auditable_ground_truth_dataset_not_available",
+      "decision": "block_external"
+    }
+  ]
+}

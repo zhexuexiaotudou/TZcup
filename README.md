@@ -1,5 +1,9 @@
 # TZcup 无人清扫车仿真项目
 
+## AUTO-13 真实域工具链与资源发现（2026-07-30）
+
+独立 AUTO-13 lane 已实现显式同意的相机/视频采集、落盘前隐私模糊、棋盘格标定、带 SHA 的数据接入和离散/区域/定位统一评测。程序化 fixture 已验证软件合同，但不计为真实域证据。资源发现识别到 1 个本机 Integrated Camera 和仓库内 249 个图像文件，但没有任何满足至少 20 个真实 scene/1000 frame、五类完整、hard-negative、标定和独立 map localization GT 的可审计 manifest。因此 `AUTO-13=BLOCKED_EXTERNAL`、`REAL_DOMAIN_BLOCKED_EXTERNAL=true`、`REAL_DOMAIN_PASS=false`；相机存在不等于真实 GT 数据就绪。紧凑证据见 [`artifacts/autonomous_auto13_20260730_evidence/`](artifacts/autonomous_auto13_20260730_evidence/)，说明见 [`docs/auto13-real-domain.md`](docs/auto13-real-domain.md) 与 [`docs/real-domain-annotation-protocol.md`](docs/real-domain-annotation-protocol.md)。
+
 ## AUTO-04 双模型 micro-overfit 机器门通过（2026-07-30）
 
 AUTO-04 已落地真正的 object-level anchor-free detector 与独立 leaf/puddle area segmenter。detector 直接输出三类中心 heatmap、中心 offset 和 bbox 尺寸，经 confidence-ranked decode 与 class-wise NMS 得到目标框，不使用语义分割连通域冒充 detector；area head 独立训练与导出。第二轮正式 GPU 运行通过全部冻结机器门：detector AP50 `0.99670`、三类 recall 均为 `1.0`、negative-only FP/frame 为 `0`，ONNX 最大数值误差 `1.1444e-05` 且 decoded agreement 为 `1.0`；leaf/puddle IoU 分别为 `0.98106/0.96914`、macro mIoU `0.97510`、negative-only area FP/frame 为 `0`，ONNX 最大误差 `9.1553e-05`、argmax agreement 为 `1.0`。第一轮失败仍作为 prior attempt 保留，紧凑证据见 [`artifacts/autonomous_auto04_20260730_evidence/`](artifacts/autonomous_auto04_20260730_evidence/)。`AUTO-04=PASS`，自主状态已推进到 AUTO-05；本结论仅证明 Gazebo micro train-set capacity，不代表跨世界、真实域、J6 或竞赛感知通过。实现说明见 [`docs/auto04-micro-overfit.md`](docs/auto04-micro-overfit.md)。
@@ -189,4 +193,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-30：AUTO-04 代码、正式证据与知识层已同步。第二轮 GPU micro-overfit 通过：detector AP50 `0.99670`、逐类 recall `1.0`、negative-only FP/frame `0`；leaf/puddle IoU `0.98106/0.96914`、macro mIoU `0.97510`、negative-only area FP/frame `0`；两模型 ONNX parity 均通过。第一轮失败仍作为 prior attempt 保留，README_FIRST、PROJECT_SPEC、STAGE_GATES 与 docs 已统一到 `AUTO-04=PASS / 当前 AUTO-05`；真实域、J6 与最终竞赛状态未提升。
+2026-07-30：独立 AUTO-13 lane 的采集、隐私、标定、接入和统一评测工具已通过 123 项快速测试。资源发现只找到 1 个本机相机、没有合格真实 GT dataset manifest，因此 `AUTO-13=BLOCKED_EXTERNAL`、`REAL_DOMAIN_PASS=false`；未执行的 1000-frame 正式评测、map RMSE 和 synthetic-to-real drop 保持 null/未执行。主依赖链仍为 `AUTO-04=PASS / 当前 AUTO-05`。

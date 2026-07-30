@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-13",
+  "coverage": 1.0,
+  "file_count": 10,
+  "files": [
+    {
+      "path": "attempt_ledger.json",
+      "bytes": 490,
+      "sha256": "f80afa8b8e85240e69d7019f7438b36ba366bfe29ce662b551bb1d97f57335ab"
+    },
+    {
+      "path": "commands.txt",
+      "bytes": 162,
+      "sha256": "c45827734c77a8f7138dd34c80761a41dd9f96beb6e761af619aebc776804117"
+    },
+    {
+      "path": "environment.json",
+      "bytes": 165,
+      "sha256": "301f894d482875f8752bf7166e7fec3284aba140508ee7c0aaa5a54cb788662c"
+    },
+    {
+      "path": "metrics_summary.json",
+      "bytes": 343,
+      "sha256": "b38ca44ee89a36cb8d215ea316cbb3035c66a43cd9a5f7c64198e9624a73cd62"
+    },
+    {
+      "path": "raw_metric_index.json",
+      "bytes": 118,
+      "sha256": "b809be136db3d07e18f1a0b6615ea14aa3c53d93c0be0426518d2517b3e11b2e"
+    },
+    {
+      "path": "README.md",
+      "bytes": 161,
+      "sha256": "50eb1c070848e415658fcbef3d2f9d614ce0d4ec8882346aa2d0e2bdae5ac3c6"
+    },
+    {
+      "path": "regression_summary.json",
+      "bytes": 124,
+      "sha256": "3a4c3fe00b05074590210282848699b776e9d67b12d2319464d9c40cdc20e916"
+    },
+    {
+      "path": "resource_discovery.json",
+      "bytes": 1007,
+      "sha256": "602c3782e30f08925ec3ebc7cf450065090a3704fdc1278d35b38dd3b8af35b9"
+    },
+    {
+      "path": "stage_config.yaml",
+      "bytes": 177,
+      "sha256": "d86de8ce651f7ba61d0d871222670e90cf3321a73d9debb8e8d08bd47bad4b4a"
+    },
+    {
+      "path": "stage_status.json",
+      "bytes": 1221,
+      "sha256": "d7b737a0054506eaed1f8683500d7993a82af467aa9b8dc4e3159a244c113949"
+    }
+  ]
+}

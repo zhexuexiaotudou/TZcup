@@ -1,0 +1,41 @@
+{
+  "schema_version": 1,
+  "program": "TZcup autonomous final",
+  "stage_id": "AUTO-13",
+  "baseline_commit": "008c5ada4d684b998bb1dfa4ca8eb469612091cc",
+  "implementation_commit": "da01b9edbb217b983211d5e79e4619ab4c42aff9",
+  "status": "BLOCKED_EXTERNAL",
+  "first_blocking_layer": "real_domain_auditable_ground_truth_dataset_not_available",
+  "attempt_count": 1,
+  "machine_gate_pass": false,
+  "human_review_required": false,
+  "human_approval_required": false,
+  "competition_evidence": false,
+  "dependencies": {
+    "AUTO-00": "PASS"
+  },
+  "metrics": {
+    "qualifying_dataset_count": 0,
+    "camera_device_count": 1,
+    "capture_tool_present": true,
+    "calibration_tool_present": true,
+    "ingestion_tool_present": true,
+    "annotation_protocol_present": true,
+    "evaluator_present": true,
+    "privacy_filter_present": true,
+    "fixture_tests_passed": true,
+    "real_domain_metrics": null
+  },
+  "unexecuted_items": [
+    "real_domain_1000_frame_formal_evaluation",
+    "real_domain_map_localization_rmse",
+    "synthetic_to_real_drop_measurement"
+  ],
+  "next_scheduled_stages": [
+    "AUTO-09",
+    "AUTO-10",
+    "AUTO-11",
+    "AUTO-12",
+    "AUTO-14"
+  ]
+}
