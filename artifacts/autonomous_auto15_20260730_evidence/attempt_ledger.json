@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-15",
+  "attempts": [
+    {
+      "attempt_id": "AUTO-15-DEPENDENCY-PREFLIGHT-V1",
+      "hypothesis": "all mandatory dependencies may be ready for the integrated formal competition matrix",
+      "input_commit": "21dcc7e4478adba47ba8ad11fffdc031880f3cf6",
+      "result": "BLOCKED",
+      "first_failure": "dependency_AUTO-08_learned_spot_cleaning_blocked",
+      "decision": "do_not_launch_integrated_missions; preserve the complete requirement and blocker matrix"
+    }
+  ]
+}

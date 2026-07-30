@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-15",
+  "implementation_commit": "21dcc7e4478adba47ba8ad11fffdc031880f3cf6",
+  "file_count": 8,
+  "files": [
+    {
+      "path": "attempt_ledger.json",
+      "bytes": 534,
+      "sha256": "4bb3dd3b514cfa8a6989027dbefebeab541d928b72e7ee0c9566707cd3d8a967"
+    },
+    {
+      "path": "blocker_register.json",
+      "bytes": 523,
+      "sha256": "927f8bf4ae2d15a760005b9d3a89cea1c3e12a33681c64641070b8c15ac9ffc7"
+    },
+    {
+      "path": "commands.txt",
+      "bytes": 155,
+      "sha256": "81ea17be87cfed1ca154b576e1e91591081fb43ae36ff0d8b9d4a745f0493f73"
+    },
+    {
+      "path": "competition_matrix.json",
+      "bytes": 11919,
+      "sha256": "eb679e8be1cd06d2f7c40fba7e86f543f688ee48db9cc318306b68e471173773"
+    },
+    {
+      "path": "environment.json",
+      "bytes": 114,
+      "sha256": "fa84eb40a5cd1a0a4781eb88c122d98a038f3f69dd0a6b0ed660df1c9b05859b"
+    },
+    {
+      "path": "metrics_summary.json",
+      "bytes": 414,
+      "sha256": "b64aa17c61a8f381cc8d37222bb4e6801f591dc80549f9e351cd35aafdf320db"
+    },
+    {
+      "path": "README.md",
+      "bytes": 149,
+      "sha256": "39f0e037d789ae988f41af89b00492dd003682a07f2dd5e51a24c62c8657a4ef"
+    },
+    {
+      "path": "stage_status.json",
+      "bytes": 1489,
+      "sha256": "b23da4026866bf6b0a42ca9416bf49140c342b14c942594a7828876b6c3d2315"
+    }
+  ]
+}

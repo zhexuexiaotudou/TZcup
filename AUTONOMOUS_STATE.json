@@ -14,12 +14,12 @@
   },
   "run": {
     "run_id": "tzcup-autonomous-20260728",
-    "branch": "agent/autonomous-auto14",
+    "branch": "agent/autonomous-auto15",
     "started_at": "2026-07-28T00:00:00Z",
     "completed_at": null,
-    "current_stage": "AUTO-15",
+    "current_stage": "AUTO-16",
     "status": "RUNNING",
-    "last_commit": "5eb57104f72ed7156bb2c01e21cab3412d04d89b",
+    "last_commit": "21dcc7e4478adba47ba8ad11fffdc031880f3cf6",
     "merge_blocked_by_branch_policy": false
   },
   "historical_boundaries": {
@@ -954,17 +954,35 @@
       ]
     },
     "AUTO-15": {
-      "status": "PENDING",
+      "status": "BLOCKED",
       "machine_gate_pass": false,
-      "blocked": false,
+      "blocked": true,
       "blocked_external": false,
-      "first_blocking_layer": null,
-      "attempt_count": 0,
-      "selected_attempt": null,
-      "implementation_commit": null,
-      "evidence_dir": null,
-      "metrics": {},
-      "unexecuted_items": [],
+      "first_blocking_layer": "dependency_AUTO-08_learned_spot_cleaning_blocked",
+      "attempt_count": 1,
+      "selected_attempt": "AUTO-15-DEPENDENCY-PREFLIGHT-V1",
+      "implementation_commit": "21dcc7e4478adba47ba8ad11fffdc031880f3cf6",
+      "evidence_dir": "artifacts/autonomous_auto15_20260730_evidence",
+      "metrics": {
+        "required_scenario_count": 18,
+        "indexed_scenario_count": 18,
+        "component_evidence_available_count": 13,
+        "component_evidence_blocked_count": 5,
+        "required_seeds_per_scenario": 10,
+        "executed_seeds_per_scenario": 0,
+        "required_integrated_missions": 30,
+        "executed_integrated_missions": 0,
+        "formal_video_count": 0,
+        "formal_mcap_count": 0,
+        "simulation_competition_matrix_pass": false
+      },
+      "unexecuted_items": [
+        "10 seeds for each of 18 integrated scenarios",
+        "30 integrated formal missions",
+        "formal mission videos",
+        "formal mission MCAP recordings and replay",
+        "aggregate competition metrics"
+      ],
       "dependencies": [
         "AUTO-02",
         "AUTO-08",

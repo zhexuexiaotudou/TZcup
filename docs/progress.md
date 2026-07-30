@@ -1,5 +1,9 @@
 # 项目推进记录
 
+## AUTO-15：18 类竞赛需求矩阵完成、综合任务依赖阻断（2026-07-30）
+
+已将建图、全覆盖、定时轨迹、离散垃圾、落叶堆、积水、定点清扫、动态避障、窄通道、边界、急停、APP、语音、LLM DSL、满箱、恢复回放、效率和 J6 共 18 类场景逐项绑定到 AUTO 阶段状态。现有 PASS 阶段只记为组件证据。由于 AUTO-08 学习感知/定点清扫被 AUTO-05 模型门阻断，正式综合任务没有启动；每场景 seeds、integrated missions、视频和 MCAP 均为 0。故 `AUTO-15=BLOCKED`、`SIMULATION_COMPETITION_MATRIX_PASS=false`。证据位于 `artifacts/autonomous_auto15_20260730_evidence/`。
+
 ## AUTO-14：官方 J6 工具链就绪、正式编译依赖阻断（2026-07-30）
 
 D-Robotics 官方 OpenExplorer `3.7.0` 的 2.85 GB S100/S600 包已完成 SHA-256 校验，`hbdk4_compiler 4.7.5`、`hmct 2.6.5`、`horizon_tc_ui 3.5.3` 已解析，隔离 CUDA/cuDNN 环境中的 `hb_compile --help` 成功。仓库具备固定 batch/shape、operator/custom-op、500 帧校准集预检、官方配置生成和 HBM fail-closed runtime adapter。AUTO-06 正式模型未产出，故不得执行正式量化/编译；本机无 J6 板卡。`AUTO-14=BLOCKED`，`J6_TOOLCHAIN_PASS=false`、`J6_RUNTIME_PASS=false`；证据位于 `artifacts/autonomous_auto14_20260730_evidence/`。

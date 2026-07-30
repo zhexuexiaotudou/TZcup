@@ -1,0 +1,13 @@
+{
+  "required_scenario_count": 18,
+  "indexed_scenario_count": 18,
+  "component_evidence_available_count": 13,
+  "component_evidence_blocked_count": 5,
+  "required_seeds_per_scenario": 10,
+  "executed_seeds_per_scenario": 0,
+  "required_integrated_missions": 30,
+  "executed_integrated_missions": 0,
+  "formal_video_count": 0,
+  "formal_mcap_count": 0,
+  "simulation_competition_matrix_pass": false
+}
