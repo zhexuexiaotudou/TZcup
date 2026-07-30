@@ -15,7 +15,7 @@ RViz 图层，让操作者直接看到“场景中有什么、车辆看到了什
 - `/garbage/cleaning_events` 驱动的已清扫状态；
 - `/brush_enabled`、`/coverage/state` 和 `/spot_clean/state` 状态摘要；
 - `/odom` 驱动的车辆轮廓、`/coverage/current_path`；
-- 有完整 TF 时按需开启 RobotModel 和 `/scan`；
+- `/scan` 默认开启；有完整 TF 时可按需开启 RobotModel；
 - 可选 `/map`、RGB-D 点云和车载 RGB 画面；
 - “全场俯视”和“跟车视角”两个 RViz 视角。
 
@@ -61,6 +61,7 @@ ros2 launch sanitation_debug_visualization debug_sim.launch.py
 - 鼠标中键拖动：平移俯视图；
 - 左键拖动：旋转三维视角；
 - `F`：聚焦选中对象；
-- 左侧“调试图层”可以独立开关 LiDAR、路径、地图、点云和相机。
+- 左侧 `Debug Layers` 可以独立开关 LiDAR、路径、地图、点云和相机；
+- 基础仿真中 RobotModel 默认关闭；启动提供完整 TF 的 Nav2/SLAM 后再开启。
 
 调试节点使用 transient-local MarkerArray，RViz 晚启动仍能立即收到当前状态。

@@ -6,7 +6,8 @@
   区域配置转换为 `/debug/markers`，同时订阅感知、真值、清扫事件、刷盘、
   Coverage、定点清扫和里程计状态。
 - RViz 已在 `tzcup-gazebo-x11` 容器中连接正在运行的 Gazebo 实际渲染；可见
-  清扫区、禁行区、五类目标、负样本障碍、车辆方向、LiDAR 和运行状态。
+  清扫区、禁行区、五类目标、负样本障碍、车辆方向、LiDAR 和运行状态；
+  容器重启后 `/scan` 实测约 9 Hz。
 - 基础仿真缺少完整 `odom→base_footprint` TF 时，节点用 `/odom` 将全局标记
   换算到 `base_link` 跟车坐标系；Nav2/SLAM 环境仍可使用 `fixed_frame:=map`。
 - 调试层采用可靠、transient-local 的 `MarkerArray`，晚启动 RViz 也能收到当前
