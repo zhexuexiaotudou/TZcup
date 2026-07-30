@@ -1,5 +1,11 @@
 # 项目推进记录
 
+## AUTO-10：APP、语音与受限任务 DSL（2026-07-30）
+
+新增 `sanitation_hmi` 包，提供标准库 HTTP 服务、本地响应式控制台、token/role/idempotency 网关以及固定 schema 的任务 DSL。语言层仅允许 coverage、spot-clean、schedule、pause/resume、return-home、status 和 emergency-stop 等任务工具，直接底盘/关节/电机控制被拒绝，HTTP 验证阶段不派发真实动作。
+
+正式矩阵已通过：APP/API/UI `288` cases，合法成功率与非法拒绝率均为 `1.0`，P95 `16.03 ms`；Windows System.Speech 生成的 `500` 条语音，经 3 voices、3 rates、4 noise levels、3 reverb profiles 后由 GPU faster-whisper small 识别，intent accuracy `0.9911`、unsafe rejection `1.0`、P95 `171.94 ms`；DSL `1200` cases 的 semantic/tool/argument accuracy 均为 `1.0`，unsafe execution 和 direct actuator access 均为 `0`。真实浏览器首轮发现的桌面溢出、grid 宽度折叠和令牌入口缺失均修复后复验通过。紧凑证据位于 `artifacts/autonomous_auto10_20260730_evidence/`；500 个音频和逐 case 原始文件保留在 Git 外部并由 SHA 索引。`AUTO-10=PASS`，当前主依赖 stage 仍为 AUTO-05。
+
 ## AUTO-13：真实域机器评测（2026-07-30，独立 lane 资源发现）
 
 已实现显式 `--consent` 的相机/视频采集、落盘前隐私区域模糊、棋盘格标定、capture/annotation/calibration 三方 SHA 接入 manifest，以及离散 bbox、区域 mask、hard-negative specificity、map localization 和 synthetic-to-real drop 的统一评测器。程序化 fixture 只验证工具数学和停止边界，不计为真实域数据。

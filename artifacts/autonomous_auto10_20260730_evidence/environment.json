@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "host": "Windows-11-10.0.26200-SP0",
+  "python": "3.14.3",
+  "tts_backend": "Windows System.Speech",
+  "tts_voices": [
+    "Microsoft Huihui Desktop",
+    "Microsoft David Desktop",
+    "Microsoft Zira Desktop"
+  ],
+  "asr_backend": "faster-whisper small",
+  "asr_runtime": "NVIDIA CUDA 12.4.1 cuDNN Docker",
+  "container_image": "nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04"
+}

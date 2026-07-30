@@ -1,5 +1,12 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## AUTO-10 多模态任务入口契约
+
+- APP/API 必须经过 token 鉴权、角色授权、严格请求 schema 和 idempotency key；重复键同载荷返回同一结果，不同载荷冲突；
+- 语言层输出固定 `intent / ordered_subtasks / tool_calls / arguments / constraints / expected_terminal_state`，工具调用必须属于任务级 allowlist；
+- `/cmd_vel`、关节、电机和其他直接执行器请求 fail closed；网关只验证和形成任务，不在 HTTP 请求中执行车辆动作；
+- 正式门由 288 个 HTTP/API/UI、500 个 TTS→噪声/混响→ASR 和 1200 个 DSL 用例组成，详见 `docs/auto10-multimodal-hmi.md`。
+
 ## AUTO-13 真实域机器评测契约
 
 - 只有真实相机/车辆数据和可审计 GT 才能进入真实域指标；程序化 fixture、Gazebo、公开无标注图像或模型伪标签均不得设置 `REAL_DOMAIN_PASS=true`。
