@@ -72,7 +72,7 @@
 - detector/area micro-overfit、120/1200、500/5000、live、真实 30 次 Nav2 spot-clean、真实域与 J6：按停止条件未执行。
 - 当前 `REVIEW_PACKET_COMPLETE=true`、`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
 
-## Stage5BR4 前置恢复门（当前）
+## Stage5BR4 前置恢复门（历史）
 
 - 在任何新模型训练前冻结 `perception_evaluability_policy.yaml`，同时报告 all-visible、recognition-ready、non-ready。
 - C0–C3 必须使用相同 world、asset、scene seed、目标 pose 与车辆轨迹做真实运行消融；相机配置需同时通过可辨识性、主动观察 ready conversion `>=0.90` 和安装/遮挡审计。

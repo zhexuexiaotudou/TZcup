@@ -1,5 +1,21 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## AUTO-04 双模型 micro-overfit 契约
+
+- 离散类必须使用直接 object detector 输出中心 heatmap、中心 offset 和 bbox 尺寸，再经 confidence-ranked decode 与 class-wise NMS 形成检测框；禁止使用 segmentation connected-components 冒充 detector。
+- detector micro 数据必须来自留存的真实 Gazebo RGB/semantic/instance train split，覆盖三类、negative-only、多实例和小/中/大尺寸；正式门同时检查 AP50、逐类 recall、negative-only FP、NMS 和 PyTorch/ONNX 一致性。
+- `leaf_pile` 与 `puddle` 必须使用与 detector 独立训练、独立导出的 area heads，并分别报告 IoU、macro mIoU、negative-only area FP 和 ONNX argmax agreement；不得用一个任务的成绩替代另一个任务。
+- 正式模型和报告必须绑定实现提交 SHA；失败尝试不得覆盖，selected attempt、attempt ledger、冻结阈值、算子清单、模型许可与逐文件 SHA-256 manifest 必须进入紧凑证据。
+- AUTO-04 通过只证明 task-specific Gazebo micro train-set capacity；不得外推为 AUTO-05 跨世界 screening、AUTO-06 正式感知、真实域、J6 或竞赛感知通过。
+
+## AUTO-03 Oracle 主动观察闭环契约
+
+- Oracle 只能发布带噪候选位置、协方差、时间戳、通用类别/尺寸及 false/stale 状态，不得输出观察位姿、路径、机器判定或成功状态，也不得设置车辆位姿。
+- 可达候选必须在 Coverage 组件边界暂停，经观察位姿采样、`ComputePathToPose` 预检、`NavigateToPose`、同步图像捕获、evaluation-only 机器判定、返回边界和 Coverage 恢复形成完整任务链。
+- planner、Nav2、控制器和执行器不得订阅 semantic/instance ground truth；GT 只能进入独立评估节点，节点图审计和 `gt_control_violation_count=0` 是硬门。
+- 正式矩阵至少覆盖六个世界、60 个 scene、200 个有效目标（五类各至少 30）、30 个 unreachable/keepout、30 个 false 与 20 个 stale 用例，并保存可逐消息重算的 MCAP。
+- 路径预检、可达导航、机器可判定、Coverage 恢复及 fail-closed 必须达到阶段阈值；投影误差、自车遮挡、额外距离/时间和吞吐损失必须如实报告。AUTO-03 通过不代表真实域、J6 或最终竞赛通过。
+
 ## AUTO-02 完整回归与冻结配置契约
 
 - `autonomous_navigation_profile_v1` 只能从 AUTO-01 已选择的 opt-in `auto01_g2_v5_retracted` 配置冻结；不得隐式替换 production 默认 profile，也不得借冻结改写 G1、G2-C1、G2-C2 或 Stage5BR6W 的失败事实。
