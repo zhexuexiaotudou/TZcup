@@ -1,5 +1,9 @@
 # TZcup 无人清扫车仿真项目
 
+## AUTO-12 清扫效率重构候选（2026-07-30）
+
+AUTO-12 已建立 opt-in `auto12_efficiency_v1` 候选：展开作业宽度 `1.32 m`、清扫速度 `1.0 m/s`、加/减速度 `1.0/1.2 m/s²`，物理刷组、清扫 footprint、碰撞几何、Nav2 costmap、Coverage、动力学与能耗配置使用同一参数源；既有 `0.65 m` 生产默认保持不变。候选将通过时间步进动力学与 `0.10 m` 栅格清扫矩阵验证，证据等级严格限定为 `OFFLINE_TIME_STEP_DYNAMICS_AND_RASTER_SIMULATION`，不冒充 Gazebo 或实车实测。
+
 ## AUTO-11 20,000 m² 大地图与定时任务（2026-07-30）
 
 AUTO-11 已通过 200 m × 100 m、0.1 m 分辨率的 20,000 m² 大地图与定时任务正式门：20 个 zone/submap 可序列化重载，10 条轨迹逐条 XY RMSE 均小于 `0.05 m`（最大 `0.03004 m`），丢失恢复率 `0.95`、TF continuity `0.99998`；5 次全覆盖和 20 次定时任务的 zone accuracy `1.0`、boundary/collision 均为 `0`、中断恢复率 `0.96`。GT 来自独立仿真 world-state，估计器使用另一随机观测模型，未做里程计自比较。`AUTO-11=PASS`；紧凑证据见 [`artifacts/autonomous_auto11_20260730_evidence/`](artifacts/autonomous_auto11_20260730_evidence/)，说明见 [`docs/auto11-large-map-scheduling.md`](docs/auto11-large-map-scheduling.md)。证据等级是 `OFFLINE_LARGE_MAP_SIMULATION`，不冒充 Gazebo、真实车辆或 J6 板端。

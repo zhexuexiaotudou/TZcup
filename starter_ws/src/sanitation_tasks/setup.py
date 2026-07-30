@@ -15,6 +15,7 @@ setup(
             "config/mapping_completion_route.json",
             "config/localization_route.json",
             "config/measurement_covariance.yaml",
+            "config/demo_area_auto12.yaml",
         ]),
     ],
     install_requires=["setuptools"],
