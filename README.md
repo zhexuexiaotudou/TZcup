@@ -2,7 +2,7 @@
 
 ## AUTO-10 APP / speech / constrained task DSL（2026-07-30）
 
-AUTO-10 已开始实现独立的本地 APP/API、鉴权授权、幂等提交和 fail-closed 任务 DSL，并新增真实 HTTP 的 200+ API/UI、1000+ 双语/歧义/冲突/不安全 DSL 机器矩阵，以及 Windows 三种系统音色、三档语速、四档噪声、三类混响到 GPU ASR 的 500 条正式语音流水线。自然语言层只允许调用任务级 allowlist，不直接发布 `/cmd_vel` 或关节命令；正式语音矩阵及三门汇总完成前仍为 `AUTO-10=PENDING`。
+AUTO-10 已开始实现独立的本地 APP/API、鉴权授权、幂等提交和 fail-closed 任务 DSL，并新增真实 HTTP 的 200+ API/UI、1000+ 双语/歧义/冲突/不安全 DSL 机器矩阵，以及 Windows 三种系统音色、三档语速、四档噪声、三类混响到 GPU ASR 的 500 条正式语音流水线。真实浏览器检查发现并修复了桌面溢出、intrinsic grid 宽度折叠和页面缺少令牌录入入口三个问题；当前继续桌面交互和窄屏复验。自然语言层只允许调用任务级 allowlist，不直接发布 `/cmd_vel` 或关节命令；正式语音矩阵及三门汇总完成前仍为 `AUTO-10=PENDING`。
 
 ## AUTO-13 真实域工具链与资源发现（2026-07-30）
 

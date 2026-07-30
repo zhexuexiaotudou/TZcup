@@ -321,6 +321,7 @@ def run_app(output: Path) -> int:
             "viewport": 'name="viewport"' in html,
             "command_form": 'id="command-form"' in html,
             "command_input_label": 'aria-label="任务指令"' in html,
+            "token_input_label": 'aria-label="访问令牌"' in html,
             "live_result": 'aria-live="polite"' in html,
             "authorization_header": '"Authorization"' in html,
             "idempotency_header": '"Idempotency-Key"' in html,
