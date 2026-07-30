@@ -18,6 +18,10 @@
   <xacro:arg name="enable_wheel_slip" default="false"/>
   <xacro:arg name="lidar_samples" default="360"/>
   <xacro:arg name="lidar_update_rate" default="10"/>
+  <!-- AUTO-12 opt-in efficiency envelope. Defaults preserve the frozen
+       0.65 m production vehicle; launch with 1.32 / 0.52 for the candidate. -->
+  <xacro:arg name="cleaning_width" default="0.65"/>
+  <xacro:arg name="brush_center_y" default="0.23"/>
   <!-- Offline G2 capture only. Production launch never overrides this false default. -->
   <xacro:arg name="enable_training_gt" default="false"/>
   <!-- Stage5BR4 camera ablation. Defaults are the frozen C0 production candidate. -->
@@ -53,7 +57,8 @@
   <xacro:property name="wheel_pos_y" value="${physical_track_width / 2.0}"/>
   <xacro:property name="wheel_pos_z" value="-0.02"/>
   <xacro:property name="wheel_mass" value="3.0"/>
-  <xacro:property name="cleaning_width" value="0.65"/>
+  <xacro:property name="cleaning_width" value="$(arg cleaning_width)"/>
+  <xacro:property name="brush_center_y" value="$(arg brush_center_y)"/>
   <xacro:property name="lidar_samples" value="$(arg lidar_samples)"/>
   <xacro:property name="lidar_update_rate" value="$(arg lidar_update_rate)"/>
 
@@ -363,8 +368,9 @@
     <origin xyz="-0.18 0 0.25" rpy="0 0 0"/>
   </joint>
 
-  <!-- Side brushes are fixed visual/collision placeholders in Stage 2.
-       Codex should add controllable joints/cleaning semantics later. -->
+  <!-- Side-brush links carry both visual and collision geometry. AUTO-12 can
+       materialize the deployed envelope by setting brush_center_y=0.52 while
+       the production default remains retracted at 0.23. -->
   <link name="left_brush_link">
     <visual>
       <geometry><cylinder radius="0.14" length="0.03"/></geometry>
@@ -379,7 +385,7 @@
   <joint name="left_brush_joint" type="fixed">
     <parent link="base_link"/>
     <child link="left_brush_link"/>
-    <origin xyz="0.58 0.23 -0.14" rpy="0 0 0"/>
+    <origin xyz="0.58 ${brush_center_y} -0.14" rpy="0 0 0"/>
   </joint>
 
   <link name="right_brush_link">
@@ -396,7 +402,7 @@
   <joint name="right_brush_joint" type="fixed">
     <parent link="base_link"/>
     <child link="right_brush_link"/>
-    <origin xyz="0.58 -0.23 -0.14" rpy="0 0 0"/>
+    <origin xyz="0.58 ${-brush_center_y} -0.14" rpy="0 0 0"/>
   </joint>
 
   <!-- Non-colliding visualization of the nominal cleaning footprint. -->

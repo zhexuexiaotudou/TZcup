@@ -35,6 +35,8 @@ def generate_launch_description():
     enable_wheel_slip = LaunchConfiguration("enable_wheel_slip")
     lidar_samples = LaunchConfiguration("lidar_samples")
     lidar_update_rate = LaunchConfiguration("lidar_update_rate")
+    cleaning_width = LaunchConfiguration("cleaning_width")
+    brush_center_y = LaunchConfiguration("brush_center_y")
     world_file = LaunchConfiguration("world_file")
     random_seed = LaunchConfiguration("random_seed")
     world_to_map_x = LaunchConfiguration("world_to_map_x")
@@ -83,6 +85,8 @@ def generate_launch_description():
                 " enable_wheel_slip:=", enable_wheel_slip,
                 " lidar_samples:=", lidar_samples,
                 " lidar_update_rate:=", lidar_update_rate,
+                " cleaning_width:=", cleaning_width,
+                " brush_center_y:=", brush_center_y,
                 " enable_verification_camera:=", PythonExpression(
                     [
                         "'true' if '",
@@ -171,6 +175,8 @@ def generate_launch_description():
             DeclareLaunchArgument("enable_wheel_slip", default_value="false"),
             DeclareLaunchArgument("lidar_samples", default_value="360"),
             DeclareLaunchArgument("lidar_update_rate", default_value="10"),
+            DeclareLaunchArgument("cleaning_width", default_value="0.65"),
+            DeclareLaunchArgument("brush_center_y", default_value="0.23"),
             DeclareLaunchArgument("world_file", default_value=world_path),
             DeclareLaunchArgument("random_seed", default_value="0"),
             DeclareLaunchArgument("world_to_map_x", default_value="8.0"),

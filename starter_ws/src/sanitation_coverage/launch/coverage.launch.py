@@ -7,12 +7,14 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
-    params = PathJoinSubstitution(
+    default_params = PathJoinSubstitution(
         [FindPackageShare("sanitation_coverage"), "config", "coverage.yaml"]
     )
+    params = LaunchConfiguration('params_file')
     return LaunchDescription(
         [
             DeclareLaunchArgument('footprint_profile', default_value='production'),
+            DeclareLaunchArgument('params_file', default_value=default_params),
             Node(
                 package="opennav_coverage",
                 executable="opennav_coverage",
@@ -20,7 +22,12 @@ def generate_launch_description():
                 output="screen",
                 parameters=[params, {
                     'robot_width': ParameterValue(
-                        PythonExpression(["0.83 if '", LaunchConfiguration('footprint_profile'), "' == 'stage5br6w_v4' else 0.72"]),
+                        PythonExpression([
+                            "1.32 if '", LaunchConfiguration('footprint_profile'),
+                            "' == 'auto12_efficiency_v1' else (0.83 if '",
+                            LaunchConfiguration('footprint_profile'),
+                            "' == 'stage5br6w_v4' else 0.72)",
+                        ]),
                         value_type=float,
                     ),
                 }],

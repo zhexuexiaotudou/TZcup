@@ -477,3 +477,13 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_doc
 ```
 
 评审边界：优先修正定位一致性并完整回放覆盖任务；是否进入感知与 J6 阶段由人工评审后另行决定。
+# AUTO-12 自主推进（2026-07-30）
+
+新增 opt-in `auto12_efficiency_v1`，同步 `1.32 m` 展开刷组的物理/清扫/
+碰撞/成本地图/Coverage/动力学/能耗消费者，保留 `0.65 m` 生产默认。
+10 次时间步进与栅格正式任务的平均有效效率 `4205.81 m²/h`、95% CI
+下界 `4193.52 m²/h`、单次最低 `4181.12 m²/h`；覆盖、漏扫、重复、
+定位、安全和终态门全部通过。`AUTO-12=PASS`、
+`competition_efficiency_pass=true`。证据等级仅为
+`OFFLINE_TIME_STEP_DYNAMICS_AND_RASTER_SIMULATION`，尚未形成 Gazebo
+或真实车辆效率证据。
