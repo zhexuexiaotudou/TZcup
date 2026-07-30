@@ -1,0 +1,1348 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-12",
+  "attempt_id": "AUTO-12-EFFICIENCY-V1",
+  "implementation_commit": "41ae6e0a4e59c785a7f9a397eab939ca1ee9246d",
+  "source_level": "OFFLINE_TIME_STEP_DYNAMICS_AND_RASTER_SIMULATION",
+  "truth_boundary": "No Gazebo or physical-vehicle measurement is claimed. Effective rate uses raster-verified swept area and includes turns, obstacle stops, interruptions, and in-mission staging.",
+  "selected_design": {
+    "cleaning_width_m": 1.32,
+    "brush_extension_each_side_m": 0.30000000000000004,
+    "speed_m_s": 1.0,
+    "acceleration_m_s2": 1.0,
+    "deceleration_m_s2": 1.2,
+    "turn_radius_m": 0.75,
+    "headland_m": 1.8,
+    "swath_spacing_m": 1.254,
+    "planner": "BOUSTROPHEDON_CONTINUOUS",
+    "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+    "control_latency_s": 0.15,
+    "safety_braking_envelope_m": 0.65
+  },
+  "selected_theoretical_rate_m2_h": 4752.0,
+  "selected_braking_distance_m": 0.5666666666666667,
+  "design_search": [
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1375,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4050.0,
+      "predicted_effective_rate_m2_h": 3501.225,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1375,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4050.0,
+      "predicted_effective_rate_m2_h": 3501.225,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1625,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4050.0,
+      "predicted_effective_rate_m2_h": 3578.1749999999997,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1625,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4050.0,
+      "predicted_effective_rate_m2_h": 3578.1749999999997,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1875,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4050.0,
+      "predicted_effective_rate_m2_h": 3655.125,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1875,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4050.0,
+      "predicted_effective_rate_m2_h": 3655.125,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1375,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4500.0,
+      "predicted_effective_rate_m2_h": 3890.25,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1375,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4500.0,
+      "predicted_effective_rate_m2_h": 3890.25,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1625,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4500.0,
+      "predicted_effective_rate_m2_h": 3975.75,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1625,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4500.0,
+      "predicted_effective_rate_m2_h": 3975.75,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1875,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4500.0,
+      "predicted_effective_rate_m2_h": 4061.25,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1875,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4500.0,
+      "predicted_effective_rate_m2_h": 4061.25,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1375,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4725.0,
+      "predicted_effective_rate_m2_h": 4084.7625,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1375,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4725.0,
+      "predicted_effective_rate_m2_h": 4084.7625,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1625,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4725.0,
+      "predicted_effective_rate_m2_h": 4174.537499999999,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1625,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4725.0,
+      "predicted_effective_rate_m2_h": 4174.537499999999,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1875,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4725.0,
+      "predicted_effective_rate_m2_h": 4264.3125,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.25,
+        "brush_extension_each_side_m": 0.265,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.1875,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4725.0,
+      "predicted_effective_rate_m2_h": 4264.3125,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.2012,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4276.8,
+      "predicted_effective_rate_m2_h": 3697.2936,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.2012,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4276.8,
+      "predicted_effective_rate_m2_h": 3697.2936,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.2276,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4276.8,
+      "predicted_effective_rate_m2_h": 3778.5528000000004,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.2276,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4276.8,
+      "predicted_effective_rate_m2_h": 3778.5528000000004,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.254,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4276.8,
+      "predicted_effective_rate_m2_h": 3859.812,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.254,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4276.8,
+      "predicted_effective_rate_m2_h": 3859.812,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.2012,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4752.0,
+      "predicted_effective_rate_m2_h": 4108.103999999999,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.2012,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4752.0,
+      "predicted_effective_rate_m2_h": 4108.103999999999,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.2276,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4752.0,
+      "predicted_effective_rate_m2_h": 4198.392000000001,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.2276,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4752.0,
+      "predicted_effective_rate_m2_h": 4198.392000000001,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.254,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4752.0,
+      "predicted_effective_rate_m2_h": 4288.679999999999,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.254,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4752.0,
+      "predicted_effective_rate_m2_h": 4288.679999999999,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.2012,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4989.6,
+      "predicted_effective_rate_m2_h": 4313.5091999999995,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.2012,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4989.6,
+      "predicted_effective_rate_m2_h": 4313.5091999999995,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.2276,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4989.6,
+      "predicted_effective_rate_m2_h": 4408.3116,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.2276,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4989.6,
+      "predicted_effective_rate_m2_h": 4408.3116,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.254,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4989.6,
+      "predicted_effective_rate_m2_h": 4503.114,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.32,
+        "brush_extension_each_side_m": 0.30000000000000004,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.75,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.254,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4989.6,
+      "predicted_effective_rate_m2_h": 4503.114,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.274,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4536.0,
+      "predicted_effective_rate_m2_h": 3919.445712,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.274,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4536.0,
+      "predicted_effective_rate_m2_h": 3919.445712,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.302,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4536.0,
+      "predicted_effective_rate_m2_h": 4005.5873760000004,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.302,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4536.0,
+      "predicted_effective_rate_m2_h": 4005.5873760000004,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.3299999999999998,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4536.0,
+      "predicted_effective_rate_m2_h": 4091.7290399999997,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 0.9,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.3299999999999998,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 4536.0,
+      "predicted_effective_rate_m2_h": 4091.7290399999997,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.274,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 5040.0,
+      "predicted_effective_rate_m2_h": 4354.93968,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.274,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 5040.0,
+      "predicted_effective_rate_m2_h": 4354.93968,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.302,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 5040.0,
+      "predicted_effective_rate_m2_h": 4450.65264,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.302,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 5040.0,
+      "predicted_effective_rate_m2_h": 4450.65264,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.3299999999999998,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 5040.0,
+      "predicted_effective_rate_m2_h": 4546.3656,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 1.0,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.3299999999999998,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 5040.0,
+      "predicted_effective_rate_m2_h": 4546.3656,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.274,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 5292.0,
+      "predicted_effective_rate_m2_h": 4572.686664,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.274,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 5292.0,
+      "predicted_effective_rate_m2_h": 4572.686664,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.302,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 5292.0,
+      "predicted_effective_rate_m2_h": 4673.185272000001,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.302,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 5292.0,
+      "predicted_effective_rate_m2_h": 4673.185272000001,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 0.8,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.3299999999999998,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 5292.0,
+      "predicted_effective_rate_m2_h": 4773.68388,
+      "smoke_pass": true
+    },
+    {
+      "design": {
+        "cleaning_width_m": 1.4,
+        "brush_extension_each_side_m": 0.33999999999999997,
+        "speed_m_s": 1.05,
+        "acceleration_m_s2": 1.0,
+        "deceleration_m_s2": 1.2,
+        "turn_radius_m": 0.82,
+        "headland_m": 1.8,
+        "swath_spacing_m": 1.3299999999999998,
+        "planner": "BOUSTROPHEDON_CONTINUOUS",
+        "obstacle_policy": "STOP_WAIT_REPLAN_RESUME",
+        "control_latency_s": 0.15,
+        "safety_braking_envelope_m": 0.65
+      },
+      "theoretical_rate_m2_h": 5292.0,
+      "predicted_effective_rate_m2_h": 4773.68388,
+      "smoke_pass": true
+    }
+  ],
+  "configuration_synchronization": {
+    "physical_model_width_matches": true,
+    "cleaning_footprint_width_matches": true,
+    "collision_width_matches": true,
+    "dynamics_speed_matches": true,
+    "energy_model_present": true,
+    "costmap_width_matches": true,
+    "coverage_width_matches": true,
+    "auto02_equivalent_safety_regression": true
+  },
+  "runs": [
+    {
+      "seed": 0,
+      "source_level": "OFFLINE_TIME_STEP_DYNAMICS_AND_RASTER_SIMULATION",
+      "arena_m": [
+        80.0,
+        60.0
+      ],
+      "resolution_m": 0.1,
+      "swath_count": 48,
+      "effective_swath_spacing_m": 1.2485106382978723,
+      "obstacle_event_count": 3,
+      "first_brush_on_to_final_brush_off_s": 4085.9776899437625,
+      "verified_cleaned_area_m2": 4800.0,
+      "effective_cleaning_rate_m2_h": 4229.097981256436,
+      "empirical_coverage": 1.0,
+      "missed_cleanable_area_ratio": 0.0,
+      "overlap_ratio": 0.053030303030303066,
+      "collision_count": 0,
+      "keepout_violation_count": 0,
+      "trajectory_xy_rmse_m": 0.036054187301312955,
+      "brush_final": false,
+      "control_stable": true,
+      "energy_kwh": 1.4087849844712201,
+      "peak_power_w": 1595.0
+    },
+    {
+      "seed": 1,
+      "source_level": "OFFLINE_TIME_STEP_DYNAMICS_AND_RASTER_SIMULATION",
+      "arena_m": [
+        80.0,
+        60.0
+      ],
+      "resolution_m": 0.1,
+      "swath_count": 48,
+      "effective_swath_spacing_m": 1.2485106382978723,
+      "obstacle_event_count": 4,
+      "first_brush_on_to_final_brush_off_s": 4132.8637558817045,
+      "verified_cleaned_area_m2": 4800.0,
+      "effective_cleaning_rate_m2_h": 4181.120167682248,
+      "empirical_coverage": 1.0,
+      "missed_cleanable_area_ratio": 0.0,
+      "overlap_ratio": 0.053030303030303066,
+      "collision_count": 0,
+      "keepout_violation_count": 0,
+      "trajectory_xy_rmse_m": 0.036098510160219616,
+      "brush_final": false,
+      "control_stable": true,
+      "energy_kwh": 1.401938979197041,
+      "peak_power_w": 1595.0
+    },
+    {
+      "seed": 2,
+      "source_level": "OFFLINE_TIME_STEP_DYNAMICS_AND_RASTER_SIMULATION",
+      "arena_m": [
+        80.0,
+        60.0
+      ],
+      "resolution_m": 0.1,
+      "swath_count": 48,
+      "effective_swath_spacing_m": 1.2485106382978723,
+      "obstacle_event_count": 5,
+      "first_brush_on_to_final_brush_off_s": 4087.687726021366,
+      "verified_cleaned_area_m2": 4800.0,
+      "effective_cleaning_rate_m2_h": 4227.328787861933,
+      "empirical_coverage": 1.0,
+      "missed_cleanable_area_ratio": 0.0,
+      "overlap_ratio": 0.053030303030303066,
+      "collision_count": 0,
+      "keepout_violation_count": 0,
+      "trajectory_xy_rmse_m": 0.03445349749110616,
+      "brush_final": false,
+      "control_stable": true,
+      "energy_kwh": 1.4423530201560462,
+      "peak_power_w": 1595.0
+    },
+    {
+      "seed": 3,
+      "source_level": "OFFLINE_TIME_STEP_DYNAMICS_AND_RASTER_SIMULATION",
+      "arena_m": [
+        80.0,
+        60.0
+      ],
+      "resolution_m": 0.1,
+      "swath_count": 48,
+      "effective_swath_spacing_m": 1.2485106382978723,
+      "obstacle_event_count": 3,
+      "first_brush_on_to_final_brush_off_s": 4118.10754876338,
+      "verified_cleaned_area_m2": 4800.0,
+      "effective_cleaning_rate_m2_h": 4196.102164740449,
+      "empirical_coverage": 1.0,
+      "missed_cleanable_area_ratio": 0.0,
+      "overlap_ratio": 0.053030303030303066,
+      "collision_count": 0,
+      "keepout_violation_count": 0,
+      "trajectory_xy_rmse_m": 0.029118511923993867,
+      "brush_final": false,
+      "control_stable": true,
+      "energy_kwh": 1.4783385994929736,
+      "peak_power_w": 1595.0
+    },
+    {
+      "seed": 4,
+      "source_level": "OFFLINE_TIME_STEP_DYNAMICS_AND_RASTER_SIMULATION",
+      "arena_m": [
+        80.0,
+        60.0
+      ],
+      "resolution_m": 0.1,
+      "swath_count": 48,
+      "effective_swath_spacing_m": 1.2485106382978723,
+      "obstacle_event_count": 4,
+      "first_brush_on_to_final_brush_off_s": 4119.374466467845,
+      "verified_cleaned_area_m2": 4800.0,
+      "effective_cleaning_rate_m2_h": 4194.811649356249,
+      "empirical_coverage": 1.0,
+      "missed_cleanable_area_ratio": 0.0,
+      "overlap_ratio": 0.053030303030303066,
+      "collision_count": 0,
+      "keepout_violation_count": 0,
+      "trajectory_xy_rmse_m": 0.036204071163462276,
+      "brush_final": false,
+      "control_stable": true,
+      "energy_kwh": 1.4708753595727653,
+      "peak_power_w": 1595.0
+    },
+    {
+      "seed": 5,
+      "source_level": "OFFLINE_TIME_STEP_DYNAMICS_AND_RASTER_SIMULATION",
+      "arena_m": [
+        80.0,
+        60.0
+      ],
+      "resolution_m": 0.1,
+      "swath_count": 48,
+      "effective_swath_spacing_m": 1.2485106382978723,
+      "obstacle_event_count": 5,
+      "first_brush_on_to_final_brush_off_s": 4107.721336527553,
+      "verified_cleaned_area_m2": 4800.0,
+      "effective_cleaning_rate_m2_h": 4206.711844432852,
+      "empirical_coverage": 1.0,
+      "missed_cleanable_area_ratio": 0.0,
+      "overlap_ratio": 0.053030303030303066,
+      "collision_count": 0,
+      "keepout_violation_count": 0,
+      "trajectory_xy_rmse_m": 0.037490210452984826,
+      "brush_final": false,
+      "control_stable": true,
+      "energy_kwh": 1.4540270826545352,
+      "peak_power_w": 1595.0
+    },
+    {
+      "seed": 6,
+      "source_level": "OFFLINE_TIME_STEP_DYNAMICS_AND_RASTER_SIMULATION",
+      "arena_m": [
+        80.0,
+        60.0
+      ],
+      "resolution_m": 0.1,
+      "swath_count": 48,
+      "effective_swath_spacing_m": 1.2485106382978723,
+      "obstacle_event_count": 3,
+      "first_brush_on_to_final_brush_off_s": 4089.9060471576026,
+      "verified_cleaned_area_m2": 4800.0,
+      "effective_cleaning_rate_m2_h": 4225.035930106324,
+      "empirical_coverage": 1.0,
+      "missed_cleanable_area_ratio": 0.0,
+      "overlap_ratio": 0.053030303030303066,
+      "collision_count": 0,
+      "keepout_violation_count": 0,
+      "trajectory_xy_rmse_m": 0.03323228831358001,
+      "brush_final": false,
+      "control_stable": true,
+      "energy_kwh": 1.4597627018010615,
+      "peak_power_w": 1595.0
+    },
+    {
+      "seed": 7,
+      "source_level": "OFFLINE_TIME_STEP_DYNAMICS_AND_RASTER_SIMULATION",
+      "arena_m": [
+        80.0,
+        60.0
+      ],
+      "resolution_m": 0.1,
+      "swath_count": 48,
+      "effective_swath_spacing_m": 1.2485106382978723,
+      "obstacle_event_count": 4,
+      "first_brush_on_to_final_brush_off_s": 4111.625033136303,
+      "verified_cleaned_area_m2": 4800.0,
+      "effective_cleaning_rate_m2_h": 4202.717869634869,
+      "empirical_coverage": 1.0,
+      "missed_cleanable_area_ratio": 0.0,
+      "overlap_ratio": 0.053030303030303066,
+      "collision_count": 0,
+      "keepout_violation_count": 0,
+      "trajectory_xy_rmse_m": 0.03356692159870478,
+      "brush_final": false,
+      "control_stable": true,
+      "energy_kwh": 1.3885738197717565,
+      "peak_power_w": 1595.0
+    },
+    {
+      "seed": 8,
+      "source_level": "OFFLINE_TIME_STEP_DYNAMICS_AND_RASTER_SIMULATION",
+      "arena_m": [
+        80.0,
+        60.0
+      ],
+      "resolution_m": 0.1,
+      "swath_count": 48,
+      "effective_swath_spacing_m": 1.2485106382978723,
+      "obstacle_event_count": 5,
+      "first_brush_on_to_final_brush_off_s": 4128.939596709405,
+      "verified_cleaned_area_m2": 4800.0,
+      "effective_cleaning_rate_m2_h": 4185.093919458509,
+      "empirical_coverage": 1.0,
+      "missed_cleanable_area_ratio": 0.0,
+      "overlap_ratio": 0.053030303030303066,
+      "collision_count": 0,
+      "keepout_violation_count": 0,
+      "trajectory_xy_rmse_m": 0.03477681591564896,
+      "brush_final": false,
+      "control_stable": true,
+      "energy_kwh": 1.4407006870821322,
+      "peak_power_w": 1595.0
+    },
+    {
+      "seed": 9,
+      "source_level": "OFFLINE_TIME_STEP_DYNAMICS_AND_RASTER_SIMULATION",
+      "arena_m": [
+        80.0,
+        60.0
+      ],
+      "resolution_m": 0.1,
+      "swath_count": 48,
+      "effective_swath_spacing_m": 1.2485106382978723,
+      "obstacle_event_count": 3,
+      "first_brush_on_to_final_brush_off_s": 4104.440783678381,
+      "verified_cleaned_area_m2": 4800.0,
+      "effective_cleaning_rate_m2_h": 4210.074139384646,
+      "empirical_coverage": 1.0,
+      "missed_cleanable_area_ratio": 0.0,
+      "overlap_ratio": 0.053030303030303066,
+      "collision_count": 0,
+      "keepout_violation_count": 0,
+      "trajectory_xy_rmse_m": 0.03708468173028744,
+      "brush_final": false,
+      "control_stable": true,
+      "energy_kwh": 1.3908740849836587,
+      "peak_power_w": 1595.0
+    }
+  ],
+  "aggregate": {
+    "formal_run_count": 10,
+    "mean_effective_cleaning_rate_m2_h": 4205.809445391451,
+    "rate_95ci_lower_m2_h": 4193.5177842890225,
+    "rate_95ci_upper_m2_h": 4218.101106493879,
+    "minimum_run_rate_m2_h": 4181.120167682248,
+    "minimum_empirical_coverage": 1.0,
+    "maximum_missed_cleanable_area_ratio": 0.0,
+    "maximum_overlap_ratio": 0.053030303030303066,
+    "maximum_trajectory_xy_rmse_m": 0.037490210452984826,
+    "collision_count": 0,
+    "keepout_violation_count": 0,
+    "brush_final_false_count": 10
+  },
+  "checks": {
+    "cleaning_width_at_least_0_60_m": true,
+    "theoretical_rate_at_least_3800_m2_h": true,
+    "control_stable_at_candidate_speed": true,
+    "braking_distance_within_safety_envelope": true,
+    "all_width_consumers_synchronized": true,
+    "formal_runs_at_least_10": true,
+    "mean_rate_at_least_3500_m2_h": true,
+    "rate_95ci_lower_at_least_3500_m2_h": true,
+    "each_run_at_least_3300_m2_h": true,
+    "empirical_coverage_at_least_0_90": true,
+    "missed_cleanable_area_at_most_0_05": true,
+    "overlap_ratio_at_most_0_15": true,
+    "collision_zero": true,
+    "keepout_zero": true,
+    "trajectory_xy_rmse_at_most_0_05_m": true,
+    "brush_final_false": true
+  },
+  "auto12_gate_pass": true,
+  "competition_efficiency_pass": true
+}
