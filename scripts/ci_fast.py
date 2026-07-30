@@ -60,7 +60,7 @@ def validate_structured_files() -> None:
         (ROOT / "config" / "autonomous_stage_registry.yaml").read_text(encoding="utf-8")
     )
 
-    xml_patterns = ("package.xml", "*.xacro", "*.sdf", "*.urdf")
+    xml_patterns = ("package.xml", "*.xacro", "*.sdf", "*.urdf", "*.srdf")
     seen: set[Path] = set()
     for pattern in xml_patterns:
         for path in sorted(SOURCE_ROOT.rglob(pattern)):
@@ -98,6 +98,7 @@ def run_ros_independent_tests() -> None:
     spot_cleaning_package = SOURCE_ROOT / "sanitation_spot_cleaning"
     learning_package = SOURCE_ROOT / "sanitation_learning"
     hmi_package = SOURCE_ROOT / "sanitation_hmi"
+    manipulation_package = SOURCE_ROOT / "sanitation_manipulation"
     sys.path.insert(0, str(coverage_package))
     sys.path.insert(0, str(tasks_package))
     sys.path.insert(0, str(gnss_package))
@@ -107,6 +108,7 @@ def run_ros_independent_tests() -> None:
     sys.path.insert(0, str(spot_cleaning_package))
     sys.path.insert(0, str(learning_package))
     sys.path.insert(0, str(hmi_package))
+    sys.path.insert(0, str(manipulation_package))
     test_paths = (
         coverage_package / "test" / "test_metrics.py",
         coverage_package / "test" / "test_stage4w_geometry.py",
@@ -142,6 +144,7 @@ def run_ros_independent_tests() -> None:
         learning_package / "test" / "test_auto13_real_domain.py",
         hmi_package / "test" / "test_dsl.py",
         hmi_package / "test" / "test_gateway.py",
+        manipulation_package / "test" / "test_core.py",
         spot_cleaning_package / "test" / "test_auto01_geometry.py",
         ROOT / "scripts" / "test_autonomous_runner.py",
         ROOT / "scripts" / "test_auto02_tools.py",

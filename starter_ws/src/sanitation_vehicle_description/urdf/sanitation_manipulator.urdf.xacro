@@ -1,0 +1,91 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:macro name="sanitation_manipulator" params="parent">
+    <xacro:property name="arm_link_radius" value="0.035"/>
+
+    <link name="arm_base_link">
+      <visual><geometry><cylinder radius="0.10" length="0.08"/></geometry></visual>
+      <collision><geometry><cylinder radius="0.10" length="0.08"/></geometry></collision>
+      <inertial><mass value="4.0"/><inertia ixx="0.02" ixy="0" ixz="0" iyy="0.02" iyz="0" izz="0.02"/></inertial>
+    </link>
+    <joint name="arm_base_joint" type="revolute">
+      <parent link="${parent}"/><child link="arm_base_link"/>
+      <origin xyz="0 0 0.04"/><axis xyz="0 0 1"/>
+      <limit lower="-2.80" upper="2.80" effort="80" velocity="1.2"/>
+    </joint>
+
+    <xacro:macro name="arm_link" params="name length mass">
+      <link name="${name}">
+        <visual><origin xyz="${length / 2.0} 0 0" rpy="0 ${pi / 2.0} 0"/><geometry><cylinder radius="${arm_link_radius}" length="${length}"/></geometry></visual>
+        <collision><origin xyz="${length / 2.0} 0 0" rpy="0 ${pi / 2.0} 0"/><geometry><cylinder radius="${arm_link_radius}" length="${length}"/></geometry></collision>
+        <inertial><origin xyz="${length / 2.0} 0 0"/><mass value="${mass}"/><inertia ixx="${mass * length * length / 12.0}" ixy="0" ixz="0" iyy="${mass * length * length / 12.0}" iyz="0" izz="0.004"/></inertial>
+      </link>
+    </xacro:macro>
+
+    <xacro:arm_link name="arm_shoulder_link" length="0.34" mass="2.8"/>
+    <joint name="arm_shoulder_joint" type="revolute">
+      <parent link="arm_base_link"/><child link="arm_shoulder_link"/>
+      <origin xyz="0 0 0.06"/><axis xyz="0 1 0"/>
+      <limit lower="-1.20" upper="1.45" effort="80" velocity="1.0"/>
+    </joint>
+
+    <xacro:arm_link name="arm_elbow_link" length="0.30" mass="2.2"/>
+    <joint name="arm_elbow_joint" type="revolute">
+      <parent link="arm_shoulder_link"/><child link="arm_elbow_link"/>
+      <origin xyz="0.34 0 0"/><axis xyz="0 1 0"/>
+      <limit lower="-2.20" upper="0.10" effort="65" velocity="1.2"/>
+    </joint>
+
+    <xacro:arm_link name="arm_wrist_link" length="0.16" mass="1.1"/>
+    <joint name="arm_wrist_joint" type="revolute">
+      <parent link="arm_elbow_link"/><child link="arm_wrist_link"/>
+      <origin xyz="0.30 0 0"/><axis xyz="0 1 0"/>
+      <limit lower="-1.70" upper="1.70" effort="35" velocity="1.5"/>
+    </joint>
+
+    <link name="gripper_palm_link">
+      <visual><geometry><box size="0.10 0.12 0.04"/></geometry></visual>
+      <collision><geometry><box size="0.10 0.12 0.04"/></geometry></collision>
+      <inertial><mass value="0.8"/><inertia ixx="0.002" ixy="0" ixz="0" iyy="0.002" iyz="0" izz="0.002"/></inertial>
+    </link>
+    <joint name="arm_tool_joint" type="fixed">
+      <parent link="arm_wrist_link"/><child link="gripper_palm_link"/>
+      <origin xyz="0.16 0 0"/>
+    </joint>
+
+    <xacro:macro name="finger" params="side y">
+      <link name="${side}_finger_link">
+        <visual><origin xyz="0.06 0 0"/><geometry><box size="0.12 0.018 0.025"/></geometry></visual>
+        <collision><origin xyz="0.06 0 0"/><geometry><box size="0.12 0.018 0.025"/></geometry></collision>
+        <inertial><mass value="0.12"/><inertia ixx="0.0002" ixy="0" ixz="0" iyy="0.0002" iyz="0" izz="0.0002"/></inertial>
+      </link>
+      <joint name="${side}_finger_joint" type="prismatic">
+        <parent link="gripper_palm_link"/><child link="${side}_finger_link"/>
+        <origin xyz="0 ${y} 0"/><axis xyz="0 ${1 if y > 0 else -1} 0"/>
+        <limit lower="0.0" upper="0.045" effort="25" velocity="0.10"/>
+      </joint>
+    </xacro:macro>
+    <xacro:finger side="left" y="0.018"/>
+    <xacro:finger side="right" y="-0.018"/>
+
+    <ros2_control name="SanitationManipulatorSystem" type="system">
+      <hardware>
+        <plugin>mock_components/GenericSystem</plugin>
+        <param name="calculate_dynamics">true</param>
+      </hardware>
+      <xacro:macro name="controlled_joint" params="name">
+        <joint name="${name}">
+          <command_interface name="position"/>
+          <state_interface name="position"/>
+          <state_interface name="velocity"/>
+        </joint>
+      </xacro:macro>
+      <xacro:controlled_joint name="arm_base_joint"/>
+      <xacro:controlled_joint name="arm_shoulder_joint"/>
+      <xacro:controlled_joint name="arm_elbow_joint"/>
+      <xacro:controlled_joint name="arm_wrist_joint"/>
+      <xacro:controlled_joint name="left_finger_joint"/>
+      <xacro:controlled_joint name="right_finger_joint"/>
+    </ros2_control>
+  </xacro:macro>
+</robot>
