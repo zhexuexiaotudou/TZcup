@@ -2,7 +2,9 @@
 
 ## AUTO-13：真实域机器评测（2026-07-30，独立 lane 资源发现）
 
-已实现显式 `--consent` 的相机/视频采集、落盘前隐私区域模糊、棋盘格标定、capture/annotation/calibration 三方 SHA 接入 manifest，以及离散 bbox、区域 mask、hard-negative specificity、map localization 和 synthetic-to-real drop 的统一评测器。程序化 fixture 只验证工具数学和停止边界，不计为真实域数据。资源发现完成前 `AUTO-13=PENDING`；不存在 20 scene/1000 frame 且带独立可审计 GT 的真实集时将如实标记 `BLOCKED_EXTERNAL`。
+已实现显式 `--consent` 的相机/视频采集、落盘前隐私区域模糊、棋盘格标定、capture/annotation/calibration 三方 SHA 接入 manifest，以及离散 bbox、区域 mask、hard-negative specificity、map localization 和 synthetic-to-real drop 的统一评测器。程序化 fixture 只验证工具数学和停止边界，不计为真实域数据。
+
+资源发现识别到 1 个 Integrated Camera 和仓库内 249 个图像文件，但没有合格真实 dataset manifest，也没有 20 scene/1000 frame、完整五类/hard-negative、标定和独立 map GT 的组合资源。故 `AUTO-13=BLOCKED_EXTERNAL`、`REAL_DOMAIN_BLOCKED_EXTERNAL=true`、`REAL_DOMAIN_PASS=false`；未执行指标保持 null。紧凑证据为 `artifacts/autonomous_auto13_20260730_evidence/`，其他独立 lane 继续。
 
 ## AUTO-04：双模型 micro-overfit（2026-07-30，机器门通过）
 

@@ -1,11 +1,13 @@
 # Codex 阶段推进与验收门
 
-## AUTO-13 真实域机器评测门（独立 lane 执行中）
+## AUTO-13 真实域机器评测门（BLOCKED_EXTERNAL）
 
 - 正式资源：至少 20 个真实 scene/1000 frame、五类完整、hard-negative、相机标定与独立 map localization GT；
 - 正式指标：discrete macro F1 `>=0.90`、逐类 recall `>=0.85`、area mIoU `>=0.75`、negative specificity `>=0.95`、map localization RMSE `<=0.15 m`、synthetic-to-real F1 drop `<=0.10`；
 - 无合格资源时交付采集、标定、接入、标注、隐私和评测工具，状态必须为 `BLOCKED_EXTERNAL`，不得以仿真或 fixture 冒充；
-- 当前状态：工具已实现，资源发现完成前为 `AUTO-13=PENDING`。
+- 资源发现：本机相机 1 个、仓库图像 249 个，但合格真实 GT dataset manifest 为 0；相机或无标注图像不满足正式资源门；
+- 当前状态：`AUTO-13=BLOCKED_EXTERNAL`、`REAL_DOMAIN_BLOCKED_EXTERNAL=true`、`REAL_DOMAIN_PASS=false`；正式 1000-frame 指标未执行且保持 null；
+- 证据：`artifacts/autonomous_auto13_20260730_evidence/`。
 
 ## AUTO-04 双模型 micro-overfit 门（当前已通过）
 

@@ -2,7 +2,7 @@
 
 ## AUTO-13 真实域工具链与资源发现（2026-07-30）
 
-独立 AUTO-13 lane 已实现显式同意的相机/视频采集、落盘前隐私模糊、棋盘格标定、带 SHA 的数据接入和离散/区域/定位统一评测。程序化 fixture 已验证软件合同，但不计为真实域证据。当前正在检查本机和仓库是否存在至少 20 个真实 scene/1000 frame、五类完整、hard-negative、相机标定和独立 map localization GT 的可审计资源；发现完成前保持 `AUTO-13=PENDING`。说明见 [`docs/auto13-real-domain.md`](docs/auto13-real-domain.md) 与 [`docs/real-domain-annotation-protocol.md`](docs/real-domain-annotation-protocol.md)。
+独立 AUTO-13 lane 已实现显式同意的相机/视频采集、落盘前隐私模糊、棋盘格标定、带 SHA 的数据接入和离散/区域/定位统一评测。程序化 fixture 已验证软件合同，但不计为真实域证据。资源发现识别到 1 个本机 Integrated Camera 和仓库内 249 个图像文件，但没有任何满足至少 20 个真实 scene/1000 frame、五类完整、hard-negative、标定和独立 map localization GT 的可审计 manifest。因此 `AUTO-13=BLOCKED_EXTERNAL`、`REAL_DOMAIN_BLOCKED_EXTERNAL=true`、`REAL_DOMAIN_PASS=false`；相机存在不等于真实 GT 数据就绪。紧凑证据见 [`artifacts/autonomous_auto13_20260730_evidence/`](artifacts/autonomous_auto13_20260730_evidence/)，说明见 [`docs/auto13-real-domain.md`](docs/auto13-real-domain.md) 与 [`docs/real-domain-annotation-protocol.md`](docs/real-domain-annotation-protocol.md)。
 
 ## AUTO-04 双模型 micro-overfit 机器门通过（2026-07-30）
 
@@ -193,4 +193,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-30：独立 AUTO-13 lane 已实现真实采集、隐私、标定、接入和统一评测工具，程序化 fixture 仅验证软件合同。当前正在执行真实资源发现，`AUTO-13=PENDING`；没有完整真实 GT 时不会设置 `REAL_DOMAIN_PASS=true`。主依赖链仍为 `AUTO-04=PASS / 当前 AUTO-05`。
+2026-07-30：独立 AUTO-13 lane 的采集、隐私、标定、接入和统一评测工具已通过 123 项快速测试。资源发现只找到 1 个本机相机、没有合格真实 GT dataset manifest，因此 `AUTO-13=BLOCKED_EXTERNAL`、`REAL_DOMAIN_PASS=false`；未执行的 1000-frame 正式评测、map RMSE 和 synthetic-to-real drop 保持 null/未执行。主依赖链仍为 `AUTO-04=PASS / 当前 AUTO-05`。

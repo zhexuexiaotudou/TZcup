@@ -1,0 +1,12 @@
+{
+  "qualifying_dataset_count": 0,
+  "camera_device_count": 1,
+  "capture_tool_present": true,
+  "calibration_tool_present": true,
+  "ingestion_tool_present": true,
+  "annotation_protocol_present": true,
+  "evaluator_present": true,
+  "privacy_filter_present": true,
+  "fixture_tests_passed": true,
+  "real_domain_metrics": null
+}

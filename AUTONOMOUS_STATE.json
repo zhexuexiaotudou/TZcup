@@ -14,12 +14,12 @@
   },
   "run": {
     "run_id": "tzcup-autonomous-20260728",
-    "branch": "agent/autonomous-complete",
+    "branch": "agent/autonomous-auto13",
     "started_at": "2026-07-28T00:00:00Z",
     "completed_at": null,
     "current_stage": "AUTO-05",
     "status": "RUNNING",
-    "last_commit": "152e7a55f89a83b395bca55445cf1c7c3353e8ba",
+    "last_commit": "da01b9edbb217b983211d5e79e4619ab4c42aff9",
     "merge_blocked_by_branch_policy": false
   },
   "historical_boundaries": {
@@ -29,7 +29,7 @@
     "historical_evidence_modified": false
   },
   "external_resources": {
-    "real_domain_ground_truth_available": null,
+    "real_domain_ground_truth_available": false,
     "j6_official_toolchain_available": null,
     "j6_board_available": null,
     "physical_vehicle_available": null,
@@ -764,17 +764,32 @@
       ]
     },
     "AUTO-13": {
-      "status": "PENDING",
+      "status": "BLOCKED_EXTERNAL",
       "machine_gate_pass": false,
       "blocked": false,
-      "blocked_external": false,
-      "first_blocking_layer": null,
-      "attempt_count": 0,
-      "selected_attempt": null,
-      "implementation_commit": null,
-      "evidence_dir": null,
-      "metrics": {},
-      "unexecuted_items": [],
+      "blocked_external": true,
+      "first_blocking_layer": "real_domain_auditable_ground_truth_dataset_not_available",
+      "attempt_count": 1,
+      "selected_attempt": "AUTO-13-RESOURCE-DISCOVERY-V1",
+      "implementation_commit": "da01b9edbb217b983211d5e79e4619ab4c42aff9",
+      "evidence_dir": "artifacts/autonomous_auto13_20260730_evidence",
+      "metrics": {
+        "qualifying_dataset_count": 0,
+        "camera_device_count": 1,
+        "capture_tool_present": true,
+        "calibration_tool_present": true,
+        "ingestion_tool_present": true,
+        "annotation_protocol_present": true,
+        "evaluator_present": true,
+        "privacy_filter_present": true,
+        "fixture_tests_passed": true,
+        "real_domain_metrics": null
+      },
+      "unexecuted_items": [
+        "real_domain_1000_frame_formal_evaluation",
+        "real_domain_map_localization_rmse",
+        "synthetic_to_real_drop_measurement"
+      ],
       "dependencies": [
         "AUTO-00"
       ]
@@ -837,7 +852,7 @@
     "AUTONOMOUS_SOFTWARE_COMPLETE": false,
     "SIMULATION_COMPETITION_MATRIX_PASS": false,
     "REAL_DOMAIN_PASS": false,
-    "REAL_DOMAIN_BLOCKED_EXTERNAL": false,
+    "REAL_DOMAIN_BLOCKED_EXTERNAL": true,
     "J6_TOOLCHAIN_PASS": false,
     "J6_RUNTIME_PASS": false,
     "J6_RUNTIME_BLOCKED_EXTERNAL": false,
