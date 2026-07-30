@@ -1,5 +1,18 @@
 # 项目推进记录
 
+## 2026-07-30：Docker/WSLg 调试可视化
+
+- 新增 `sanitation_debug_visualization` 包，将现有目标注册表、Stage5A 场景和任务
+  区域配置转换为 `/debug/markers`，同时订阅感知、真值、清扫事件、刷盘、
+  Coverage、定点清扫和里程计状态。
+- RViz 已在 `tzcup-gazebo-x11` 容器中连接正在运行的 Gazebo 实际渲染；可见
+  清扫区、禁行区、五类目标、负样本障碍、车辆方向、LiDAR 和运行状态。
+- 基础仿真缺少完整 `odom→base_footprint` TF 时，节点用 `/odom` 将全局标记
+  换算到 `base_link` 跟车坐标系；Nav2/SLAM 环境仍可使用 `fixed_frame:=map`。
+- 调试层采用可靠、transient-local 的 `MarkerArray`，晚启动 RViz 也能收到当前
+  状态；真值只用于显示，不发布任何控制命令，不提升感知或竞赛通过状态。
+- 操作、图例和启动命令见 `docs/debug-visualization.md`。
+
 ## AUTO-16：最终发布工程（2026-07-30）
 
 已建立最终状态、阻断注册表、18 类竞赛矩阵、证据索引、最终 manifest、SPDX SBOM、模型/资产/第三方许可、中文操作员指南、竞赛演示边界和回滚说明，并提供 Validate/Build/Simulation/Matrix/Package 一键入口。最终 clean clone `8549422` 的 `ci_fast` 为 154 passed；首次全 ROS build 发现 `sanitation_manipulation` 缺少 `ament_python` build type，随后又发现 HMI 未声明 pytest discovery。两项均修复并加入合同测试，重跑为 17 packages、220 tests、0 errors、0 failures、5 skipped。`AUTO-16=PASS`、`AUTONOMOUS_SOFTWARE_COMPLETE=true`；综合矩阵、真实域和 J6 最终状态保持 false。最终 ZIP 只从合并后的精确 main 生成。

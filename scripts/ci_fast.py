@@ -99,6 +99,7 @@ def run_ros_independent_tests() -> None:
     learning_package = SOURCE_ROOT / "sanitation_learning"
     hmi_package = SOURCE_ROOT / "sanitation_hmi"
     manipulation_package = SOURCE_ROOT / "sanitation_manipulation"
+    debug_visualization_package = SOURCE_ROOT / "sanitation_debug_visualization"
     sys.path.insert(0, str(coverage_package))
     sys.path.insert(0, str(tasks_package))
     sys.path.insert(0, str(gnss_package))
@@ -109,6 +110,7 @@ def run_ros_independent_tests() -> None:
     sys.path.insert(0, str(learning_package))
     sys.path.insert(0, str(hmi_package))
     sys.path.insert(0, str(manipulation_package))
+    sys.path.insert(0, str(debug_visualization_package))
     test_paths = (
         coverage_package / "test" / "test_metrics.py",
         coverage_package / "test" / "test_stage4w_geometry.py",
@@ -147,6 +149,7 @@ def run_ros_independent_tests() -> None:
         hmi_package / "test" / "test_dsl.py",
         hmi_package / "test" / "test_gateway.py",
         manipulation_package / "test" / "test_core.py",
+        debug_visualization_package / "test" / "test_debug_visualization_model.py",
         spot_cleaning_package / "test" / "test_auto01_geometry.py",
         ROOT / "scripts" / "test_autonomous_runner.py",
         ROOT / "scripts" / "test_auto02_tools.py",

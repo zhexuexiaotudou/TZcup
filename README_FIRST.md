@@ -53,6 +53,7 @@
   - `sanitation_dataset`
   - `sanitation_spot_cleaning`
   - `sanitation_learning`
+  - `sanitation_debug_visualization`
 
 > 不建议把 ROS 1 OpenPodcar 直接作为主工程。它可用于参考车辆比例和模型结构，但其主线是 ROS Kinetic + Gazebo 7，迁移成本高。
 

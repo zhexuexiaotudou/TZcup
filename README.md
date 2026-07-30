@@ -1,5 +1,16 @@
 # TZcup 无人清扫车仿真项目
 
+## Docker 调试可视化完成（2026-07-30）
+
+新增独立 ROS 2 包 `sanitation_debug_visualization`，并已在本机
+`tzcup-gazebo-x11` 容器连接现有 Gazebo 仿真实际渲染。RViz 默认显示清扫区、
+禁行区、五类清扫目标、非目标障碍、实时感知置信度、车辆轮廓与方向、
+LiDAR、Coverage 路径及清扫状态；标签经过错位排布，精简容器没有中文字体时
+也使用稳定英文显示。基础仿真默认采用 `base_link` 跟车坐标系，不依赖当前
+缺失的 `odom→base_footprint` TF；Nav2/SLAM 启动后可切换到 `map`。该包只发布
+`/debug/markers`，不向控制链发送速度、导航或清扫命令。操作与图层说明见
+[`docs/debug-visualization.md`](docs/debug-visualization.md)。
+
 ## AUTO-16 最终发布工程通过（2026-07-30）
 
 最终发布工程已通过：新增最终状态、阻断清单、18 类竞赛矩阵、证据索引、SPDX SBOM、许可证/模型/资产清单、中文操作/演示/回滚说明和唯一最终 ZIP 生成器。最终 clean clone 快速 CI 为 `154 passed`；全 ROS build 首轮发现并修复 `sanitation_manipulation` build type 与 HMI pytest 发现缺口，重跑结果为 `17 packages / 220 tests / 0 errors / 0 failures / 5 skipped`。`AUTO-16=PASS`、`AUTONOMOUS_SOFTWARE_COMPLETE=true`；这表示所有现有环境可执行的软件、仿真组件、测试、文档和打包已完成且剩余阻断已结构化，不表示综合比赛通过。`SIMULATION_COMPETITION_MATRIX_PASS=false`、`REAL_DOMAIN_PASS=false`、`J6_TOOLCHAIN_PASS=false`、`J6_RUNTIME_PASS=false`、`FINAL_COMPETITION_EVIDENCE_COMPLETE=false`。最终 ZIP 只从合并后的精确 main 生成。
@@ -162,6 +173,18 @@ bash scripts/build_ws.sh
 bash scripts/run_baseline.sh
 ```
 
+连接已经运行的仿真并打开调试 RViz：
+
+```bash
+ros2 launch sanitation_debug_visualization debug_visualization.launch.py
+```
+
+同时启动 Gazebo 与调试 RViz：
+
+```bash
+ros2 launch sanitation_debug_visualization debug_sim.launch.py
+```
+
 Windows 上可按阶段运行 Docker 验收脚本：
 
 ```powershell
@@ -224,4 +247,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-30：AUTO-16 发布工程和全 ROS clean-build 修复已完成，clean clone 快速 CI `154 passed`、全工作空间 `17 packages / 220 tests / 0 failures`；`AUTONOMOUS_SOFTWARE_COMPLETE=true`。AUTO-15 综合矩阵、真实域与 J6 实体证据未通过，对应最终标志保持 false；最终 ZIP 仅从合并后的精确 main 生成。
+2026-07-30：Docker/WSLg 调试可视化已经实际打开并连接现有 Gazebo，新增清扫区、禁行区、五类目标、障碍、感知结果、车辆、LiDAR、路径和状态图层；调试层只读 ROS 状态，不改变控制链。AUTO-16 已有发布状态保持不变，AUTO-15 综合矩阵、真实域与 J6 实体证据仍未通过。
