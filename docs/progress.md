@@ -2,7 +2,7 @@
 
 ## AUTO-16：最终发布工程（2026-07-30）
 
-已建立最终状态、阻断注册表、18 类竞赛矩阵、证据索引、最终 manifest、SPDX SBOM、模型/资产/第三方许可、中文操作员指南、竞赛演示边界和回滚说明，并提供 Validate/Build/Simulation/Matrix/Package 一键入口。clean clone `main@8210037` 的 `ci_fast` 为 150 passed；首次全 ROS build 发现 `sanitation_manipulation` 缺少 `ament_python` build type，发布分支已修复并加入合同测试，完整 build/test 重跑后再冻结 AUTO-16 状态。最终 ZIP 只从合并后的精确 main 生成。
+已建立最终状态、阻断注册表、18 类竞赛矩阵、证据索引、最终 manifest、SPDX SBOM、模型/资产/第三方许可、中文操作员指南、竞赛演示边界和回滚说明，并提供 Validate/Build/Simulation/Matrix/Package 一键入口。最终 clean clone `8549422` 的 `ci_fast` 为 154 passed；首次全 ROS build 发现 `sanitation_manipulation` 缺少 `ament_python` build type，随后又发现 HMI 未声明 pytest discovery。两项均修复并加入合同测试，重跑为 17 packages、220 tests、0 errors、0 failures、5 skipped。`AUTO-16=PASS`、`AUTONOMOUS_SOFTWARE_COMPLETE=true`；综合矩阵、真实域和 J6 最终状态保持 false。最终 ZIP 只从合并后的精确 main 生成。
 
 ## AUTO-15：18 类竞赛需求矩阵完成、综合任务依赖阻断（2026-07-30）
 

@@ -224,7 +224,7 @@ def finalize(args: argparse.Namespace) -> None:
     metrics = {
         "clean_clone_source_commit": args.implementation_commit,
         "clean_clone_fast_ci_pass": True,
-        "clean_clone_fast_ci_tests": 150,
+        "clean_clone_fast_ci_tests": 154,
         "clean_clone_ros_build_test_pass": args.clean_clone_ros_build_pass,
         "one_command_build_present": True,
         "one_command_simulation_present": True,
@@ -268,6 +268,9 @@ def finalize(args: argparse.Namespace) -> None:
     state_path.write_text(
         json.dumps(state, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
+    )
+    (ROOT / "FINAL_EVIDENCE_INDEX.md").write_text(
+        evidence_index(state), encoding="utf-8"
     )
 
     final_status = {
@@ -385,7 +388,7 @@ def finalize(args: argparse.Namespace) -> None:
             "clone_type": "fresh detached clean worktree from fetched origin/main",
             "git_status_clean": True,
             "ci_fast_pass": True,
-            "ci_fast_tests": 150,
+            "ci_fast_tests": 154,
             "ros_build_test_pass": args.clean_clone_ros_build_pass,
         },
     )

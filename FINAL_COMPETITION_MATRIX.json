@@ -1,0 +1,352 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-15",
+  "status": "BLOCKED",
+  "simulation_competition_matrix_pass": false,
+  "first_blocking_layer": "dependency_AUTO-08_learned_spot_cleaning_blocked",
+  "scenario_count": 18,
+  "required_scenario_count": 18,
+  "required_seeds_per_scenario": 10,
+  "required_integrated_missions": 30,
+  "executed_integrated_missions": 0,
+  "formal_video_count": 0,
+  "formal_mcap_count": 0,
+  "blocking_dependencies": [
+    "AUTO-08",
+    "AUTO-14"
+  ],
+  "scenarios": [
+    {
+      "scenario_id": "mapping",
+      "title": "建图与 20,000 m² 地图加载",
+      "required_stages": [
+        "AUTO-11"
+      ],
+      "dependency_status": {
+        "AUTO-11": "PASS"
+      },
+      "component_evidence_status": "AVAILABLE",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": null,
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "full_coverage",
+      "title": "全覆盖清扫",
+      "required_stages": [
+        "AUTO-02",
+        "AUTO-12"
+      ],
+      "dependency_status": {
+        "AUTO-02": "PASS",
+        "AUTO-12": "PASS"
+      },
+      "component_evidence_status": "AVAILABLE",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": null,
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "timed_trajectory",
+      "title": "定时轨迹",
+      "required_stages": [
+        "AUTO-11"
+      ],
+      "dependency_status": {
+        "AUTO-11": "PASS"
+      },
+      "component_evidence_status": "AVAILABLE",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": null,
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "discrete_pick",
+      "title": "离散垃圾识别与抓取",
+      "required_stages": [
+        "AUTO-08",
+        "AUTO-09"
+      ],
+      "dependency_status": {
+        "AUTO-08": "BLOCKED",
+        "AUTO-09": "PASS"
+      },
+      "component_evidence_status": "BLOCKED",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": "AUTO-08",
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "leaf_pile",
+      "title": "落叶堆识别与清扫",
+      "required_stages": [
+        "AUTO-08"
+      ],
+      "dependency_status": {
+        "AUTO-08": "BLOCKED"
+      },
+      "component_evidence_status": "BLOCKED",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": "AUTO-08",
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "puddle",
+      "title": "积水识别与清扫",
+      "required_stages": [
+        "AUTO-08"
+      ],
+      "dependency_status": {
+        "AUTO-08": "BLOCKED"
+      },
+      "component_evidence_status": "BLOCKED",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": "AUTO-08",
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "spot_cleaning",
+      "title": "学习感知定点清扫",
+      "required_stages": [
+        "AUTO-08"
+      ],
+      "dependency_status": {
+        "AUTO-08": "BLOCKED"
+      },
+      "component_evidence_status": "BLOCKED",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": "AUTO-08",
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "dynamic_avoidance",
+      "title": "动态避障",
+      "required_stages": [
+        "AUTO-02"
+      ],
+      "dependency_status": {
+        "AUTO-02": "PASS"
+      },
+      "component_evidence_status": "AVAILABLE",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": null,
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "narrow_corridor",
+      "title": "窄通道",
+      "required_stages": [
+        "AUTO-02"
+      ],
+      "dependency_status": {
+        "AUTO-02": "PASS"
+      },
+      "component_evidence_status": "AVAILABLE",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": null,
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "boundary_protection",
+      "title": "边界保护",
+      "required_stages": [
+        "AUTO-02"
+      ],
+      "dependency_status": {
+        "AUTO-02": "PASS"
+      },
+      "component_evidence_status": "AVAILABLE",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": null,
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "emergency_stop",
+      "title": "急停",
+      "required_stages": [
+        "AUTO-02",
+        "AUTO-10"
+      ],
+      "dependency_status": {
+        "AUTO-02": "PASS",
+        "AUTO-10": "PASS"
+      },
+      "component_evidence_status": "AVAILABLE",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": null,
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "app",
+      "title": "APP",
+      "required_stages": [
+        "AUTO-10"
+      ],
+      "dependency_status": {
+        "AUTO-10": "PASS"
+      },
+      "component_evidence_status": "AVAILABLE",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": null,
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "speech",
+      "title": "语音",
+      "required_stages": [
+        "AUTO-10"
+      ],
+      "dependency_status": {
+        "AUTO-10": "PASS"
+      },
+      "component_evidence_status": "AVAILABLE",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": null,
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "llm_dsl",
+      "title": "LLM 任务分解",
+      "required_stages": [
+        "AUTO-10"
+      ],
+      "dependency_status": {
+        "AUTO-10": "PASS"
+      },
+      "component_evidence_status": "AVAILABLE",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": null,
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "bin_full",
+      "title": "满箱与拒绝入箱",
+      "required_stages": [
+        "AUTO-09"
+      ],
+      "dependency_status": {
+        "AUTO-09": "PASS"
+      },
+      "component_evidence_status": "AVAILABLE",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": null,
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "recovery_replay",
+      "title": "恢复与回放",
+      "required_stages": [
+        "AUTO-02",
+        "AUTO-11"
+      ],
+      "dependency_status": {
+        "AUTO-02": "PASS",
+        "AUTO-11": "PASS"
+      },
+      "component_evidence_status": "AVAILABLE",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": null,
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "efficiency",
+      "title": "3500 m²/h 效率",
+      "required_stages": [
+        "AUTO-12"
+      ],
+      "dependency_status": {
+        "AUTO-12": "PASS"
+      },
+      "component_evidence_status": "AVAILABLE",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": null,
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    },
+    {
+      "scenario_id": "j6_runtime",
+      "title": "J6 runtime",
+      "required_stages": [
+        "AUTO-14"
+      ],
+      "dependency_status": {
+        "AUTO-14": "BLOCKED"
+      },
+      "component_evidence_status": "BLOCKED",
+      "integrated_execution_status": "NOT_EXECUTED",
+      "scenario_seed_count": 0,
+      "formal_mission_count": 0,
+      "video_count": 0,
+      "mcap_count": 0,
+      "first_blocking_dependency": "AUTO-14",
+      "claim_boundary": "Existing stage evidence is indexed only; no AUTO-15 integrated mission is inferred from component results."
+    }
+  ]
+}

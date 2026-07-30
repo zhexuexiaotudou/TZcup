@@ -14,12 +14,12 @@
   },
   "run": {
     "run_id": "tzcup-autonomous-20260728",
-    "branch": "agent/autonomous-auto15",
+    "branch": "agent/autonomous-auto16",
     "started_at": "2026-07-28T00:00:00Z",
-    "completed_at": null,
+    "completed_at": "2026-07-30T10:30:25Z",
     "current_stage": "AUTO-16",
-    "status": "RUNNING",
-    "last_commit": "21dcc7e4478adba47ba8ad11fffdc031880f3cf6",
+    "status": "COMPLETE",
+    "last_commit": "8549422a3968942a807e2d517879e72c6c1083f4",
     "merge_blocked_by_branch_policy": false
   },
   "historical_boundaries": {
@@ -993,16 +993,28 @@
       ]
     },
     "AUTO-16": {
-      "status": "PENDING",
-      "machine_gate_pass": false,
+      "status": "PASS",
+      "machine_gate_pass": true,
       "blocked": false,
       "blocked_external": false,
       "first_blocking_layer": null,
-      "attempt_count": 0,
-      "selected_attempt": null,
-      "implementation_commit": null,
-      "evidence_dir": null,
-      "metrics": {},
+      "attempt_count": 1,
+      "selected_attempt": "AUTO-16-RELEASE-V1",
+      "implementation_commit": "8549422a3968942a807e2d517879e72c6c1083f4",
+      "evidence_dir": "artifacts/autonomous_auto16_20260730_evidence",
+      "metrics": {
+        "clean_clone_source_commit": "8549422a3968942a807e2d517879e72c6c1083f4",
+        "clean_clone_fast_ci_pass": true,
+        "clean_clone_fast_ci_tests": 154,
+        "clean_clone_ros_build_test_pass": true,
+        "one_command_build_present": true,
+        "one_command_simulation_present": true,
+        "one_command_matrix_preflight_present": true,
+        "one_command_release_package_present": true,
+        "sbom_present": true,
+        "license_inventory_complete": true,
+        "final_zip_generated_after_main_merge": false
+      },
       "unexecuted_items": [],
       "dependencies": [
         "AUTO-15"
@@ -1010,7 +1022,7 @@
     }
   },
   "final_states": {
-    "AUTONOMOUS_SOFTWARE_COMPLETE": false,
+    "AUTONOMOUS_SOFTWARE_COMPLETE": true,
     "SIMULATION_COMPETITION_MATRIX_PASS": false,
     "REAL_DOMAIN_PASS": false,
     "REAL_DOMAIN_BLOCKED_EXTERNAL": true,
