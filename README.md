@@ -1,5 +1,9 @@
 # TZcup 无人清扫车仿真项目
 
+## AUTO-16 最终发布工程与 clean-clone 修复（2026-07-30）
+
+最终发布工程已进入收口：新增最终状态、阻断清单、18 类竞赛矩阵、证据索引、SPDX SBOM、许可证/模型/资产清单、中文操作/演示/回滚说明和唯一最终 ZIP 生成器。clean clone 快速 CI 已通过；首次全 ROS build 发现 `sanitation_manipulation` 缺少 `ament_python` build type 导出，已修复并加入全 Python 包合同测试，正在重跑完整构建。软件完成标志只在重跑通过并完成发布证据后设置；综合比赛、真实域和 J6 实机标志保持 false。
+
 ## AUTO-15 全竞赛矩阵达到依赖停止边界（2026-07-30）
 
 18 类竞赛场景的需求、依赖和现有组件证据已经逐项索引；其中 APP、语音、受限任务 DSL、大地图、定时任务、效率、安全导航和离线抓取等独立阶段证据保持可追溯。由于正式学习感知与定点清扫链 `AUTO-08=BLOCKED`，不满足启动综合任务的先决条件；J6 runtime 同样被 AUTO-14 阻断。因此 18 类场景每类 10 seeds、30 次综合任务、正式视频与 MCAP 均未执行，不能用独立组件结果拼接成综合成绩。`AUTO-15=BLOCKED`、`SIMULATION_COMPETITION_MATRIX_PASS=false`，首个阻断层为 `dependency_AUTO-08_learned_spot_cleaning_blocked`。证据见 [`artifacts/autonomous_auto15_20260730_evidence/`](artifacts/autonomous_auto15_20260730_evidence/)，说明见 [`docs/auto15-competition-matrix.md`](docs/auto15-competition-matrix.md)。

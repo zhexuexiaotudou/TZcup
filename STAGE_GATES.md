@@ -1,5 +1,13 @@
 # Codex 阶段推进与验收门
 
+## AUTO-16 最终发布、复现与归档门
+
+- clean clone 的快速 CI 与全 ROS build/test 必须通过；
+- 提供一键 Validate、Build、Simulation、Matrix 和 Package 入口；
+- 最终状态、阻断清单、18 类矩阵、证据索引、manifest、SBOM、许可证、中文操作/演示/回滚说明必须完整；
+- 最终 ZIP 从绿色 `main` 精确提交生成并附 SHA-256；
+- 软件发布可在 AUTO-15、真实域和 J6 被结构化阻断时完成，但对应竞赛状态必须保持 false。
+
 ## AUTO-15 全竞赛场景正式矩阵（BLOCKED）
 
 - 需求索引完整覆盖 18 类场景；

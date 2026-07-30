@@ -17,6 +17,7 @@ setup(
     maintainer_email="zhexu@example.com",
     description="Authenticated HMI and constrained task DSL.",
     license="MIT",
+    tests_require=["pytest"],
     entry_points={
         "console_scripts": [
             "sanitation_hmi_server = sanitation_hmi.server:main",
