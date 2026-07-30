@@ -153,6 +153,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_auto03_matrix.py",
         ROOT / "scripts" / "test_auto10_formal.py",
         ROOT / "scripts" / "test_auto10_speech.py",
+        ROOT / "scripts" / "test_auto15_competition_matrix.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])
     if result != pytest.ExitCode.OK:

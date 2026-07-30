@@ -1,5 +1,7 @@
 # 无人清扫车仿真启动包
 
+> 2026-07-30：AUTO-15 已完成 18 类竞赛场景的需求/依赖/证据索引；因 AUTO-08 学习感知与定点清扫依赖阻断，正式 10-seed/30-mission 综合矩阵未启动，视频与 MCAP 均为 0。`AUTO-15=BLOCKED`、`SIMULATION_COMPETITION_MATRIX_PASS=false`。
+
 > 2026-07-30：AUTO-14 已完成官方 D-Robotics OpenExplorer 3.7.0 工具链下载、哈希、版本、`hb_compile` 启动、ONNX 预检和 fail-closed runtime adapter；因 AUTO-06 正式模型未产生，量化/编译不得执行，本机亦无 J6 板卡。故 `AUTO-14=BLOCKED`、`J6_TOOLCHAIN_PASS=false`、`J6_RUNTIME_PASS=false`，不冒充模型编译或板端成绩。
 
 > 2026-07-30：独立 AUTO-11 大地图与定时任务 lane 已通过离线仿真机器门：20,000 m² map、10 条真值分离定位轨迹、5 次全覆盖和 20 次定时路线全部满足冻结指标；证据等级不是 Gazebo 或实车。当前主依赖阶段仍为 AUTO-05。

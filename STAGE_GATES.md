@@ -1,5 +1,13 @@
 # Codex 阶段推进与验收门
 
+## AUTO-15 全竞赛场景正式矩阵（BLOCKED）
+
+- 需求索引完整覆盖 18 类场景；
+- 正式规模要求：每类至少 10 seeds、至少 30 次综合任务、所有正式任务具备视频与 MCAP；
+- AUTO-08 为必需依赖且已阻断，AUTO-14 的 J6 runtime 也未通过；
+- 正式 integrated mission、视频、MCAP 和聚合竞赛指标均未执行；
+- `AUTO-15=BLOCKED`、`SIMULATION_COMPETITION_MATRIX_PASS=false`，不得用独立组件成绩冒充综合矩阵。
+
 ## AUTO-14 Horizon J6 工具链与板端门（BLOCKED）
 
 - 官方 OpenExplorer 3.7.0 包完整性、版本和 `hb_compile --help` 已验证；

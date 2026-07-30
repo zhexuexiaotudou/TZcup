@@ -1,5 +1,9 @@
 # TZcup 无人清扫车仿真项目
 
+## AUTO-15 全竞赛矩阵达到依赖停止边界（2026-07-30）
+
+18 类竞赛场景的需求、依赖和现有组件证据已经逐项索引；其中 APP、语音、受限任务 DSL、大地图、定时任务、效率、安全导航和离线抓取等独立阶段证据保持可追溯。由于正式学习感知与定点清扫链 `AUTO-08=BLOCKED`，不满足启动综合任务的先决条件；J6 runtime 同样被 AUTO-14 阻断。因此 18 类场景每类 10 seeds、30 次综合任务、正式视频与 MCAP 均未执行，不能用独立组件结果拼接成综合成绩。`AUTO-15=BLOCKED`、`SIMULATION_COMPETITION_MATRIX_PASS=false`，首个阻断层为 `dependency_AUTO-08_learned_spot_cleaning_blocked`。证据见 [`artifacts/autonomous_auto15_20260730_evidence/`](artifacts/autonomous_auto15_20260730_evidence/)，说明见 [`docs/auto15-competition-matrix.md`](docs/auto15-competition-matrix.md)。
+
 ## AUTO-14 Horizon J6 官方工具链达到依赖停止边界（2026-07-30）
 
 AUTO-14 已锁定 D-Robotics 官方 OpenExplorer `3.7.0`（`hbdk4_compiler 4.7.5 / hmct 2.6.5 / horizon_tc_ui 3.5.3`），2.85 GB 官方包 SHA-256 为 `DE90DA5CF58879A0883BB47856232514C3CC30E368D8864911BD05E267229C5B`；官方 wheel 已在 CUDA/cuDNN 环境中把 `hb_compile --help` 实际运行到成功。新增 ONNX 固定 batch/shape、operator/custom-op、≥500 calibration frame 预检、官方编译配置生成和禁止静默 CPU fallback 的 HBM runtime adapter。由于 AUTO-06 正式模型未产出，正式量化/编译不得启动；本机也未发现 J6/S100/S600 板卡。因此 `AUTO-14=BLOCKED`，首个阻断层为 `dependency_AUTO-06_formal_model_not_selected`；当前只证明 `OFFICIAL_TOOLCHAIN_PACKAGE_READY=true`，`J6_TOOLCHAIN_PASS=false`、`J6_RUNTIME_PASS=false`。证据见 [`artifacts/autonomous_auto14_20260730_evidence/`](artifacts/autonomous_auto14_20260730_evidence/)，说明见 [`docs/auto14-j6-toolchain.md`](docs/auto14-j6-toolchain.md)。
@@ -216,4 +220,4 @@ Stage5A 已建立五类垃圾的显式 semantic registry、稳定 UUID、仿真 
 
 ## 最近同步
 
-2026-07-30：AUTO-05 原生 G3 数据门通过；三次有界模型方案均未通过全部冻结门。最佳 Attempt 3 的 validation/test detector F1 为 `0.53253/0.42931`、small recall `0.875/0.88406`、纯负 FP/frame `0.05/0.01`，validation/test area mIoU `0.45859/0.57297`；7 个门仍失败。`AUTO-05=BLOCKED`，AUTO-06/07/08 为依赖阻断；真实域、J6 和最终竞赛证据未提升。
+2026-07-30：AUTO-15 已完成 18 类竞赛场景需求与依赖矩阵；因 `AUTO-08=BLOCKED`，未启动每类 10 seeds、30 次综合任务、正式视频或 MCAP，`AUTO-15=BLOCKED`、`SIMULATION_COMPETITION_MATRIX_PASS=false`。独立组件通过不冒充综合竞赛通过。
