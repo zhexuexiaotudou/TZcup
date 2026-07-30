@@ -1,5 +1,13 @@
 # Codex 阶段推进与验收门
 
+## AUTO-14 Horizon J6 工具链与板端门（BLOCKED）
+
+- 官方 OpenExplorer 3.7.0 包完整性、版本和 `hb_compile --help` 已验证；
+- ONNX/operator/static-shape/calibration 预检与禁止静默 CPU fallback 的 runtime adapter 已落地；
+- AUTO-06 正式模型被 AUTO-05 阻断，因此量化、正式编译和精度回归未执行；
+- 未发现实体 J6/S100/S600 板卡，板端时延、FPS、温度、功耗和稳定性保持 `null`；
+- `J6_TOOLCHAIN_PASS=false`、`J6_RUNTIME_PASS=false`。
+
 ## AUTO-05 G3 多世界数据与 screening 门（BLOCKED）
 
 - 数据合同：至少 8 world、4/2/2 split、120 scene/1200 native frame；每个 val/test world 至少 50 negative-only frame；

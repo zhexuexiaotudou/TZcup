@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "program": "TZcup autonomous final",
+  "stage_id": "AUTO-14",
+  "implementation_commit": "5eb57104f72ed7156bb2c01e21cab3412d04d89b",
+  "status": "BLOCKED",
+  "first_blocking_layer": "dependency_AUTO-06_formal_model_not_selected",
+  "attempt_count": 1,
+  "machine_gate_pass": false,
+  "human_review_required": false,
+  "human_approval_required": false,
+  "competition_evidence": false,
+  "dependencies": {
+    "AUTO-00": "PASS",
+    "AUTO-06": "BLOCKED"
+  },
+  "metrics": {
+    "official_toolchain_package_ready": true,
+    "official_archive_integrity_pass": true,
+    "oe_version": "3.7.0",
+    "hbdk4_compiler_version": "4.7.5",
+    "hmct_version": "2.6.5",
+    "horizon_tc_ui_version": "3.5.3",
+    "hb_compile_help_pass": true,
+    "onnx_preflight_tool_present": true,
+    "runtime_adapter_tests_present": true,
+    "formal_model_available": false,
+    "calibration_frame_count": 0,
+    "official_model_compile_success": false,
+    "quantized_metric_regression_executed": false,
+    "board_device_count": 0,
+    "board_runtime_minutes": null,
+    "board_fps": null,
+    "board_temperature_c": null,
+    "board_power_w": null,
+    "j6_toolchain_pass": false,
+    "j6_runtime_pass": false
+  },
+  "unexecuted_items": [
+    "AUTO-06 detector and area ONNX preflight",
+    "500-frame quantization calibration",
+    "official detector and area model compile",
+    "x86 reference parity and quantized metric regression",
+    "30-minute J6 board stability and performance"
+  ],
+  "claim_boundary": "Official package integrity and hb_compile availability are verified; no formal project model was quantized or compiled and no physical J6 board runtime was executed."
+}

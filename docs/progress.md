@@ -1,5 +1,9 @@
 # 项目推进记录
 
+## AUTO-14：官方 J6 工具链就绪、正式编译依赖阻断（2026-07-30）
+
+D-Robotics 官方 OpenExplorer `3.7.0` 的 2.85 GB S100/S600 包已完成 SHA-256 校验，`hbdk4_compiler 4.7.5`、`hmct 2.6.5`、`horizon_tc_ui 3.5.3` 已解析，隔离 CUDA/cuDNN 环境中的 `hb_compile --help` 成功。仓库具备固定 batch/shape、operator/custom-op、500 帧校准集预检、官方配置生成和 HBM fail-closed runtime adapter。AUTO-06 正式模型未产出，故不得执行正式量化/编译；本机无 J6 板卡。`AUTO-14=BLOCKED`，`J6_TOOLCHAIN_PASS=false`、`J6_RUNTIME_PASS=false`；证据位于 `artifacts/autonomous_auto14_20260730_evidence/`。
+
 ## AUTO-05：G3 数据门通过、模型 screening 阻断（2026-07-30）
 
 已建立 8 个实际 Gazebo 世界和 `4/2/2` world split；每世界 15 scene、每 scene 10 个原生同步 frame。val/test 每世界固定 5 个 negative-only scene，target/hard-negative variant、world 和 trajectory 按 split 隔离。新增 world-level 实际材质/光照、实际重叠、主动接近前后角色，并让动态 hard-negative 在采集期间通过 Gazebo service 实际移动、逐帧记录，而不是只写请求字段。

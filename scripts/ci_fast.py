@@ -124,6 +124,7 @@ def run_ros_independent_tests() -> None:
         perception_package / "test" / "test_tracking.py",
         perception_package / "test" / "test_backends.py",
         perception_package / "test" / "test_preprocessing.py",
+        perception_package / "test" / "test_j6_runtime.py",
         dataset_package / "test" / "test_synthetic.py",
         ground_truth_package / "test" / "test_visibility.py",
         spot_cleaning_package / "test" / "test_coordinator.py",
