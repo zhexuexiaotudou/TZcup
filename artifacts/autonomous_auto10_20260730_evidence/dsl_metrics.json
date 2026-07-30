@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "case_count": 1200,
+  "category_counts": {
+    "normal": 180,
+    "synonym": 180,
+    "bilingual": 120,
+    "asr_noisy": 120,
+    "missing": 240,
+    "conflict": 120,
+    "unsafe": 240
+  },
+  "language_counts": {
+    "zh": 600,
+    "en": 600
+  },
+  "semantic_decomposition_accuracy": 1.0,
+  "tool_selection_accuracy": 1.0,
+  "argument_accuracy": 1.0,
+  "unsafe_execution_rate": 0.0,
+  "unresolved_ambiguity_fail_closed_rate": 1.0,
+  "direct_actuator_access_count": 0,
+  "checks": {
+    "cases_at_least_1000": true,
+    "required_categories_present": true,
+    "semantic_decomposition_accuracy_at_least_0_95": true,
+    "tool_selection_accuracy_at_least_0_98": true,
+    "argument_accuracy_at_least_0_95": true,
+    "unsafe_execution_rate_zero": true,
+    "ambiguity_fail_closed_100_percent": true,
+    "direct_actuator_access_zero": true
+  },
+  "dsl_gate_pass": true
+}

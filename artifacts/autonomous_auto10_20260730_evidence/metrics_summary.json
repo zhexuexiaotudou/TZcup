@@ -1,0 +1,153 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-10",
+  "attempt_id": "AUTO-10-MULTIMODAL-V1",
+  "implementation_commit": "9497d7d112ab74be2152bf681a24b8aefca92c72",
+  "source_levels": {
+    "app": "LOCAL_HTTP_BROWSER",
+    "speech": "MACHINE_GENERATED_TTS_NOISE_REVERB_GPU_ASR",
+    "dsl": "OFFLINE_CONSTRAINED_LANGUAGE_MATRIX"
+  },
+  "app": {
+    "schema_version": 1,
+    "automated_api_ui_case_count": 288,
+    "valid_command_success_rate": 1.0,
+    "invalid_input_rejection_rate": 1.0,
+    "authentication_pass": true,
+    "authorization_pass": true,
+    "duplicate_submission_idempotent": true,
+    "latency_ms": {
+      "p50": 14.674899983219802,
+      "p95": 16.031599952839315,
+      "max": 22.860600030981004
+    },
+    "ui_checks": {
+      "viewport": true,
+      "command_form": true,
+      "command_input_label": true,
+      "token_input_label": true,
+      "live_result": true,
+      "authorization_header": true,
+      "idempotency_header": true,
+      "api_endpoint": true,
+      "no_direct_cmd_vel": true,
+      "fail_closed_copy": true,
+      "bilingual_copy": true,
+      "responsive_width": true,
+      "keyboard_submit": true
+    },
+    "checks": {
+      "automated_cases_at_least_200": true,
+      "valid_success_at_least_0_99": true,
+      "invalid_rejection_100_percent": true,
+      "authentication_authorization_pass": true,
+      "duplicate_submission_idempotent": true,
+      "latency_p95_at_most_500_ms": true,
+      "ui_contract_pass": true
+    },
+    "app_gate_pass": true
+  },
+  "speech": {
+    "schema_version": 1,
+    "command_count": 500,
+    "voices": 3,
+    "speech_rates": 3,
+    "noise_levels": 4,
+    "reverb_profiles": 3,
+    "languages": 2,
+    "distribution": {
+      "voices": {
+        "Microsoft Huihui Desktop": 250,
+        "Microsoft David Desktop": 125,
+        "Microsoft Zira Desktop": 125
+      },
+      "speech_rates": {
+        "-2": 180,
+        "0": 160,
+        "2": 160
+      },
+      "noise_levels": {
+        "0.0": 140,
+        "0.003": 120,
+        "0.006": 120,
+        "0.01": 120
+      },
+      "reverb_profiles": {
+        "dry": 240,
+        "room_short": 240,
+        "room_long": 20
+      },
+      "languages": {
+        "zh": 250,
+        "en": 250
+      }
+    },
+    "intent_accuracy": 0.9911111111111112,
+    "unsafe_command_rejection_rate": 1.0,
+    "end_to_end_latency_ms": {
+      "p50": 135.1532915016628,
+      "p95": 171.94263199662194,
+      "max": 544.0977089992034
+    },
+    "checks": {
+      "commands_at_least_500": true,
+      "voices_at_least_3": true,
+      "speech_rates_at_least_3": true,
+      "noise_levels_at_least_4": true,
+      "reverb_profiles_at_least_2": true,
+      "chinese_and_english_present": true,
+      "intent_accuracy_at_least_0_95": true,
+      "unsafe_rejection_100_percent": true,
+      "end_to_end_p95_at_most_2000_ms": true
+    },
+    "speech_gate_pass": true
+  },
+  "dsl": {
+    "schema_version": 1,
+    "case_count": 1200,
+    "category_counts": {
+      "normal": 180,
+      "synonym": 180,
+      "bilingual": 120,
+      "asr_noisy": 120,
+      "missing": 240,
+      "conflict": 120,
+      "unsafe": 240
+    },
+    "language_counts": {
+      "zh": 600,
+      "en": 600
+    },
+    "semantic_decomposition_accuracy": 1.0,
+    "tool_selection_accuracy": 1.0,
+    "argument_accuracy": 1.0,
+    "unsafe_execution_rate": 0.0,
+    "unresolved_ambiguity_fail_closed_rate": 1.0,
+    "direct_actuator_access_count": 0,
+    "checks": {
+      "cases_at_least_1000": true,
+      "required_categories_present": true,
+      "semantic_decomposition_accuracy_at_least_0_95": true,
+      "tool_selection_accuracy_at_least_0_98": true,
+      "argument_accuracy_at_least_0_95": true,
+      "unsafe_execution_rate_zero": true,
+      "ambiguity_fail_closed_100_percent": true,
+      "direct_actuator_access_zero": true
+    },
+    "dsl_gate_pass": true
+  },
+  "browser_qa": {
+    "desktop_render_pass": true,
+    "mobile_390x844_render_pass": true,
+    "authenticated_emergency_stop_dsl_pass": true,
+    "direct_motor_command_rejected": true,
+    "initial_overflow_and_width_collapse_defects_fixed": true
+  },
+  "checks": {
+    "app_gate_pass": true,
+    "speech_gate_pass": true,
+    "dsl_gate_pass": true,
+    "browser_qa_pass": true
+  },
+  "auto10_gate_pass": true
+}

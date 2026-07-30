@@ -2,7 +2,7 @@
 
 ## AUTO-10 APP / speech / constrained task DSL（2026-07-30）
 
-AUTO-10 已开始实现独立的本地 APP/API、鉴权授权、幂等提交和 fail-closed 任务 DSL，并新增真实 HTTP 的 200+ API/UI、1000+ 双语/歧义/冲突/不安全 DSL 机器矩阵，以及 Windows 三种系统音色、三档语速、四档噪声、三类混响到 GPU ASR 的 500 条正式语音流水线。真实浏览器已验证桌面和 390 px 窄屏布局，并验证“紧急停止”生成安全 DSL、“直接设置电机速度”被拒绝；此前发现的溢出、宽度折叠和缺少令牌入口均已修复。自然语言层只允许调用任务级 allowlist，不直接发布 `/cmd_vel` 或关节命令；三门证据正式收口前仍为 `AUTO-10=PENDING`。
+AUTO-10 已实现并通过独立的本地 APP/API、鉴权授权、幂等提交、GPU 语音识别和 fail-closed 任务 DSL 正式门。288 个真实 HTTP/API/UI 用例中合法成功率和非法拒绝率均为 `1.0`，P95 `16.03 ms`；1200 个双语/歧义/冲突/不安全 DSL 用例的语义分解、工具选择和参数准确率均为 `1.0`，危险执行率和直接执行器访问均为 `0`；500 条 Windows TTS→四档噪声/三类混响→GPU Whisper 用例覆盖三音色、三语速和中英文，意图准确率 `0.9911`、危险命令拒绝率 `1.0`、端到端 P95 `171.94 ms`。真实浏览器另验证了桌面与 390 px 窄屏布局、“紧急停止”安全 DSL 和直接电机指令拒绝。`AUTO-10=PASS`；紧凑证据见 [`artifacts/autonomous_auto10_20260730_evidence/`](artifacts/autonomous_auto10_20260730_evidence/)，说明见 [`docs/auto10-multimodal-hmi.md`](docs/auto10-multimodal-hmi.md)。该结论不代表车辆执行、真实域或 J6 板端通过。
 
 ## AUTO-13 真实域工具链与资源发现（2026-07-30）
 

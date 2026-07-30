@@ -1,0 +1,8 @@
+py -3 scripts/auto10_formal.py dsl --output <formal-root>
+py -3 scripts/auto10_formal.py app --output <formal-root>
+py -3 scripts/auto10_speech.py generate-manifest --output <speech-root> --count 500
+powershell -File scripts/auto10_generate_tts.ps1 -DataRoot <speech-root>
+py -3 scripts/auto10_speech.py augment --manifest <manifest> --output <speech-root>
+docker run --gpus all ... python3 scripts/auto10_faster_whisper.py --model small
+py -3 scripts/auto10_speech.py evaluate --manifest <manifest> --predictions <predictions> --output <speech-root>
+py -3 scripts/ci_fast.py

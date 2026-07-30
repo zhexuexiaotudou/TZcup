@@ -1,5 +1,7 @@
 # 无人清扫车仿真启动包
 
+> 2026-07-30：独立 AUTO-10 多模态任务入口已通过机器门。APP/API 288 用例、语音 500 用例和 DSL 1200 用例均达到冻结阈值；LLM/语言层只输出固定任务 DSL 并调用 allowlist，不直接访问 `/cmd_vel` 或关节命令。当前主依赖阶段仍为 AUTO-05。
+
 > 2026-07-29：本机 `TZcup-Ubuntu-24.04` 已完成 ROS 2 Jazzy + Gazebo Harmonic + Nav2/RViz 的 WSLg 图形验收。Gazebo 三维场景与 Nav2 RViz 均实际渲染，D3D12 使用 RTX 4080 Laptop GPU；全工作空间 `449 tests / 0 failures`，运行中 smoke check 为 11/11 topic。证据见 `artifacts/wslg_gui_20260729_evidence/`，环境细节与边界见 `docs/compatibility.md`。
 
 > 2026-07-30：当前自主入口为 `docs/auto04-micro-overfit.md` 与 `artifacts/autonomous_auto04_20260730_evidence/`。AUTO-04 的 direct detector 与独立 leaf/puddle area segmenter 已通过 micro-overfit、负样本和 ONNX parity 机器门；下一阶段为 AUTO-05 跨世界 screening。该结论只证明 Gazebo micro train-set capacity，production 默认、历史 evidence、真人/真实域/J6 和最终竞赛状态均未提升。

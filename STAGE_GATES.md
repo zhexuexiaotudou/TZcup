@@ -1,5 +1,13 @@
 # Codex 阶段推进与验收门
 
+## AUTO-10 APP / 语音 / LLM DSL 门（PASS）
+
+- APP/API：288 cases，合法成功率 `1.0`、非法拒绝率 `1.0`、鉴权/授权/幂等通过、P95 `16.03 ms`；
+- speech：500 cases，3 voices、3 rates、4 noise levels、3 reverb profiles、中英文，intent accuracy `0.9911`、unsafe rejection `1.0`、P95 `171.94 ms`；
+- DSL：1200 cases，semantic/tool/argument accuracy `1.0/1.0/1.0`，unsafe execution `0`、ambiguity fail-closed `1.0`、direct actuator access `0`；
+- 浏览器：桌面与 390×844 窄屏布局、合法急停 DSL、危险电机指令拒绝均通过；
+- 状态：`AUTO-10=PASS`。这不是机器人实际执行、真实域或 J6 板端证据。
+
 ## AUTO-13 真实域机器评测门（BLOCKED_EXTERNAL）
 
 - 正式资源：至少 20 个真实 scene/1000 frame、五类完整、hard-negative、相机标定与独立 map localization GT；

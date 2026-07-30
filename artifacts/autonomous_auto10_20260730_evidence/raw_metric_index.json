@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "external_raw_files": [
+    {
+      "path": "F:\\Project\\TZcup-autonomous-auto10-data\\formal_attempt1\\app_cases.jsonl",
+      "bytes": 18438,
+      "sha256": "06930f4017b004161840c6580f084b9944f62be5b5c40f179f92bcdd91150aa6"
+    },
+    {
+      "path": "F:\\Project\\TZcup-autonomous-auto10-data\\formal_attempt1\\dsl_cases.jsonl",
+      "bytes": 330192,
+      "sha256": "568923807f3098cb152062573fd4962d20a857371a7f99bae32db4d9f3d0d245"
+    },
+    {
+      "path": "F:\\Project\\TZcup-autonomous-auto10-data\\speech_attempt1\\speech_manifest.json",
+      "bytes": 193225,
+      "sha256": "e6fb29a2db5f0d20ef315ef34ce4b1d14181740938d2c09757103951bae85ffd"
+    },
+    {
+      "path": "F:\\Project\\TZcup-autonomous-auto10-data\\speech_attempt1\\asr_predictions.json",
+      "bytes": 63935,
+      "sha256": "fa109c34bfbdc087388950a1f9b9ae091350b9ee48c6bac2d6d4a1ab70af7736"
+    },
+    {
+      "path": "F:\\Project\\TZcup-autonomous-auto10-data\\speech_attempt1\\speech_cases.jsonl",
+      "bytes": 243057,
+      "sha256": "a8ae3ae7a46eaa51cdeea4be91c2814b2938e28f7deda12e729a38b08efba37f"
+    }
+  ],
+  "raw_audio_directory": "F:\\Project\\TZcup-autonomous-auto10-data\\speech_attempt1\\raw",
+  "augmented_audio_directory": "F:\\Project\\TZcup-autonomous-auto10-data\\speech_attempt1\\audio",
+  "raw_audio_count": 500,
+  "augmented_audio_count": 500
+}
