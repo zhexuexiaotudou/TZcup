@@ -1,0 +1,21 @@
+controller_manager:
+  ros__parameters:
+    update_rate: 100
+    arm_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
+    gripper_controller:
+      type: parallel_gripper_action_controller/GripperActionController
+    joint_state_broadcaster:
+      type: joint_state_broadcaster/JointStateBroadcaster
+arm_controller:
+  ros__parameters:
+    joints: [arm_base_joint, arm_shoulder_joint, arm_elbow_joint, arm_wrist_joint]
+    command_interfaces: [position]
+    state_interfaces: [position, velocity]
+    allow_partial_joints_goal: false
+gripper_controller:
+  ros__parameters:
+    joint: left_finger_joint
+    max_effort: 25.0
+    allow_stalling: true
+    stall_velocity_threshold: 0.001

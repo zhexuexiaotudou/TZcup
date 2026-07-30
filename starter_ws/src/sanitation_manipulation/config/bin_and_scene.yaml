@@ -1,0 +1,16 @@
+schema_version: 1
+bin:
+  nominal_capacity_l: 40.0
+  internal_size_m: [0.50, 0.40, 0.20]
+  frame_id: dust_bin_link
+  drop_pose_xyz_m: [0.0, 0.0, 0.16]
+  full_threshold_ratio: 1.0
+  fill_state_topic: /manipulation/bin_state
+planning_scene:
+  required_collision_objects: [vehicle_body, ground, dust_bin, left_brush, right_brush]
+  reject_unknown_scene_revision: true
+safety:
+  estop_topic: /emergency_stop
+  cancel_active_trajectory_on_estop: true
+  open_gripper_only_inside_safe_drop_zone: true
+  fail_closed_on_tf_covariance_or_ik_error: true

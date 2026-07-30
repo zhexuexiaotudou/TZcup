@@ -4,6 +4,7 @@
   <!-- Reuse maintained Linorobot2 macros without modifying upstream source. -->
   <xacro:include filename="$(find linorobot2_description)/urdf/sensors/imu.urdf.xacro"/>
   <xacro:include filename="$(find linorobot2_description)/urdf/controllers/skid_steer.urdf.xacro"/>
+  <xacro:include filename="$(find sanitation_vehicle_description)/urdf/sanitation_manipulator.urdf.xacro"/>
 
   <!-- Stage4S separates physical geometry from the DiffDrive estimator / command
        model. Defaults reproduce the Stage4R vehicle exactly. -->
@@ -31,6 +32,7 @@
   <xacro:arg name="camera_pitch_rad" default="0.0"/>
   <xacro:arg name="enable_verification_camera" default="false"/>
   <xacro:arg name="enable_self_mask_gt" default="false"/>
+  <xacro:arg name="enable_manipulator" default="false"/>
   <xacro:arg name="verification_camera_x" default="0.30"/>
   <xacro:arg name="verification_camera_y" default="0.0"/>
   <xacro:arg name="verification_camera_z" default="0.70"/>
@@ -426,5 +428,9 @@
     <child link="arm_mount_link"/>
     <origin xyz="0.10 0 0.32" rpy="0 0 0"/>
   </joint>
+
+  <xacro:if value="$(arg enable_manipulator)">
+    <xacro:sanitation_manipulator parent="arm_mount_link"/>
+  </xacro:if>
 
 </robot>

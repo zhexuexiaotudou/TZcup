@@ -487,3 +487,12 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_doc
 `competition_efficiency_pass=true`。证据等级仅为
 `OFFLINE_TIME_STEP_DYNAMICS_AND_RASTER_SIMULATION`，尚未形成 Gazebo
 或真实车辆效率证据。
+# AUTO-09 自主推进（2026-07-30）
+
+新增 opt-in arm/hand URDF、ros2_control、MoveIt2、抓取候选、感知坐标变换、
+规划场景、40 L bin 和安全恢复。瓶/罐/纸分别完成 20 次 micro 与 30 次
+正式离线运动学闭环，逐类抓取/运输/入箱成功率均为 `1.0`，90/90 不可达
+目标 fail-closed，错误目标、掉落、碰撞和关节越界均为 0。
+`AUTO-09=PASS`。证据等级为
+`OFFLINE_KINEMATIC_PERCEPTION_LOOP_SIMULATION`，尚未形成 Gazebo 动态
+抓取或实体机械臂证据。
