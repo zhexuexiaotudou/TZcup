@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-04",
+  "coverage": 1.0,
+  "file_count": 14,
+  "files": [
+    {
+      "path": "attempt_ledger.json",
+      "bytes": 1116,
+      "sha256": "f1b5942863308c1b718be05b89e9cb830d8c6d5e6d834ce58fd6b613f139e088"
+    },
+    {
+      "path": "auto04_acceptance_report.json",
+      "bytes": 9284,
+      "sha256": "8eec7895bc194405cb32b887aa43c0212f43781046c10884cbc0d0bd6de8acfa"
+    },
+    {
+      "path": "auto04_area_segmenter.onnx",
+      "bytes": 1837617,
+      "sha256": "2208d60d91c909875cb2db2c8b3a57cd8387a410ab6bf2c054ff6d626bb3eeac"
+    },
+    {
+      "path": "auto04_direct_detector.onnx",
+      "bytes": 851100,
+      "sha256": "ba0bbce8fafb1b8b52237c0256d51d5dba9a6648fb7af887f98d5768c898bc0b"
+    },
+    {
+      "path": "commands.txt",
+      "bytes": 519,
+      "sha256": "52a7e97918d67ea89a9b690b1166e7702548294485c970f0fcaae2308a8c7be1"
+    },
+    {
+      "path": "environment.json",
+      "bytes": 251,
+      "sha256": "a06145ce4814c69e5e4269e24053925d24d39a069f905fc582cefdf6d46aa682"
+    },
+    {
+      "path": "metrics_summary.json",
+      "bytes": 728,
+      "sha256": "108749a6d9a19d0f4919710e61f5ce3b6dd10dadbbcad26913ad47c8641868f2"
+    },
+    {
+      "path": "model_license.json",
+      "bytes": 461,
+      "sha256": "88a4e491e3dd30c5eda6aa1e4faed924d30ca4c6283f30bd939c871538f0fecf"
+    },
+    {
+      "path": "prior_attempts/attempt1_acceptance_report.json",
+      "bytes": 8288,
+      "sha256": "a86e34aa9fe0b2de4efd8530809f2363fb8219fa51a901800a36fd7ef21dcef5"
+    },
+    {
+      "path": "raw_metric_index.json",
+      "bytes": 399,
+      "sha256": "ccefe9d0315085e1cf53bc4924de6c4072cd28b9ee7aedeccfa17b478bc3223e"
+    },
+    {
+      "path": "README.md",
+      "bytes": 267,
+      "sha256": "b9ec3d705201825092e9f5763f997a99dbd7ca34a88487f5ebf039d5978ddbde"
+    },
+    {
+      "path": "regression_summary.json",
+      "bytes": 266,
+      "sha256": "1af8c93fe4ba908c7486b2420ccdbb8a18794106d8c455939c248c200e983201"
+    },
+    {
+      "path": "stage_config.yaml",
+      "bytes": 584,
+      "sha256": "5baa62f927ed5370925293383e498e188101111f303b04852c68a76b5348e4d6"
+    },
+    {
+      "path": "stage_status.json",
+      "bytes": 508,
+      "sha256": "d3a8a4b8bc7730ef529918ae2be687c2c0703e7850f602182e685a023de311d5"
+    }
+  ]
+}

@@ -14,12 +14,12 @@
   },
   "run": {
     "run_id": "tzcup-autonomous-20260728",
-    "branch": "agent/autonomous-auto03",
+    "branch": "agent/autonomous-complete",
     "started_at": "2026-07-28T00:00:00Z",
     "completed_at": null,
-    "current_stage": "AUTO-04",
+    "current_stage": "AUTO-05",
     "status": "RUNNING",
-    "last_commit": "731d069abe1384ee427cf2909c8b9605e70911b0",
+    "last_commit": "152e7a55f89a83b395bca55445cf1c7c3353e8ba",
     "merge_blocked_by_branch_policy": false
   },
   "historical_boundaries": {
@@ -593,16 +593,41 @@
       ]
     },
     "AUTO-04": {
-      "status": "PENDING",
-      "machine_gate_pass": false,
+      "status": "PASS",
+      "machine_gate_pass": true,
       "blocked": false,
       "blocked_external": false,
       "first_blocking_layer": null,
-      "attempt_count": 0,
-      "selected_attempt": null,
-      "implementation_commit": null,
-      "evidence_dir": null,
-      "metrics": {},
+      "attempt_count": 2,
+      "selected_attempt": "AUTO-04-DIRECT-DETECTOR-AREA-V2",
+      "implementation_commit": "152e7a55f89a83b395bca55445cf1c7c3353e8ba",
+      "evidence_dir": "artifacts/autonomous_auto04_20260730_evidence",
+      "metrics": {
+        "detector": {
+          "ap50": 0.9966996699669967,
+          "macro_recall": 1.0,
+          "recall_by_class": {
+            "plastic_bottle": 1.0,
+            "metal_can": 1.0,
+            "paper_litter": 1.0
+          },
+          "negative_only_false_positive_per_frame": 0.0,
+          "onnx_max_numeric_error": 1.1444091796875e-05,
+          "onnx_decoded_agreement": 1.0
+        },
+        "area_segmenter": {
+          "iou_by_class": {
+            "leaf_pile": 0.9810640807233653,
+            "puddle": 0.9691404901622368
+          },
+          "macro_miou": 0.9751022854428011,
+          "negative_area_false_positive_per_frame": 0.0,
+          "onnx_max_numeric_error": 9.1552734375e-05,
+          "onnx_argmax_agreement": 1.0
+        },
+        "attempt_count": 2,
+        "source_level": "OFFLINE_SYNTHETIC_GAZEBO_MICRO"
+      },
       "unexecuted_items": [],
       "dependencies": [
         "AUTO-00"

@@ -1,0 +1,30 @@
+schema_version: 1
+stage: AUTO-04
+detector:
+  architecture: direct_anchor_free_center_offset_bbox
+  input:
+  - 1
+  - 3
+  - 192
+  - 192
+  stride: 4
+  confidence_threshold: 0.2
+  ap50_min: 0.95
+  macro_recall_min: 0.95
+  each_class_recall_min: 0.95
+  negative_fp_per_frame_max: 0.05
+area_segmenter:
+  architecture: independent_binary_leaf_puddle_heads
+  input:
+  - 1
+  - 3
+  - 128
+  - 128
+  per_class_iou_min: 0.95
+  macro_miou_min: 0.95
+  negative_fp_per_frame_max: 0.05
+onnx:
+  batch: 1
+  custom_ops: 0
+  agreement_min: 0.9999
+  max_numeric_error: 0.0001

@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-04",
+  "status": "PASS",
+  "machine_gate_pass": true,
+  "selected_attempt": "AUTO-04-DIRECT-DETECTOR-AREA-V2",
+  "implementation_commit": "152e7a55f89a83b395bca55445cf1c7c3353e8ba",
+  "evidence_dir": "artifacts/autonomous_auto04_20260730_evidence",
+  "first_blocking_layer": null,
+  "next_stage": "AUTO-05",
+  "claim_boundary": "task-specific train-set capacity only; not cross-world, formal, live, real-domain, J6, or competition perception evidence"
+}
