@@ -1,0 +1,2 @@
+py -3 scripts/auto05_finalize_dataset.py --data-root <G3_ROOT> --output-dir <DATASET_EVIDENCE>
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run_auto05_screening_docker.ps1 -Attempt <1|2|3>

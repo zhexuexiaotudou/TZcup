@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "split_worlds": {
+    "train": [
+      "world_a_asphalt_campus",
+      "world_b_concrete_sidewalk",
+      "world_c_wet_dark_ground",
+      "world_g_cobblestone_arcade"
+    ],
+    "val": [
+      "world_d_mixed_curb_vegetation",
+      "world_h_red_brick_promenade"
+    ],
+    "test": [
+      "world_e_tiled_plaza",
+      "world_f_service_road"
+    ]
+  },
+  "scene_counts": {
+    "train": 60,
+    "val": 30,
+    "test": 30
+  },
+  "frame_counts": {
+    "train": 600,
+    "val": 300,
+    "test": 300
+  },
+  "test_used_for_model_selection": false
+}

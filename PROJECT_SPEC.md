@@ -1,5 +1,12 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## AUTO-05 G3 多世界数据与 screening 契约
+
+- G3 必须至少包含 8 个 material/layout/lighting/SHA 独立的真实 Gazebo 世界，并按世界固定为 train/val/test `4/2/2`；至少采集 120 scene/1200 native frame，每个 val/test 世界至少 50 个 negative-only frame。
+- target asset、hard-negative asset、world 和 trajectory 必须跨 split 零泄漏；RGB/depth/semantic/instance exact sync、TF、标注完整性、semantic-instance 一致性、exact/pHash duplicate 必须自动审计。
+- 动态障碍、重叠、材质和光照只有在 Gazebo 运行中实际执行并留痕时才能计入覆盖；manifest 中的请求字段不得冒充执行证据。
+- detector 阈值和 area threshold 只能在 validation worlds 上选择，test worlds 不参与选模。离散类必须继续使用 direct detector；区域类必须独立训练、评测和导出。
+- 全部 discovery、discrete recognition、area、robustness、negative-only 与 ONNX 门通过后才允许进入 AUTO-06；AUTO-05 通过只表示 native Gazebo G3 离线 screening。
 ## AUTO-11 大地图与定时任务契约
 
 - 地图固定为 200 m × 100 m、0.1 m resolution，并建立 20 个互不重叠的 zone/submap；

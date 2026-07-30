@@ -63,6 +63,23 @@ def test_nms_is_classwise_and_score_ranked() -> None:
     assert [item.class_index for item in kept] == [0, 1]
 
 
+def test_decode_applies_score_ranked_max_detections() -> None:
+    heatmap = np.zeros((1, 4, 4), np.float32)
+    heatmap[0, 0, 0] = 0.7
+    heatmap[0, 3, 3] = 0.9
+    size = np.ones((2, 4, 4), np.float32)
+    decoded = decode_centernet_outputs(
+        heatmap,
+        np.zeros((2, 4, 4), np.float32),
+        size,
+        stride=4,
+        score_threshold=0.5,
+        max_detections=1,
+    )
+    assert len(decoded) == 1
+    assert np.isclose(decoded[0].score, 0.9)
+
+
 def test_invalid_shapes_fail_closed() -> None:
     heatmap = np.zeros((3, 4, 4), np.float32)
     try:

@@ -1,0 +1,913 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-05",
+  "attempt_id": "AUTO-05-G3-SCREENING-V3",
+  "hypothesis": "hard-negative and class-balanced sampling plus 512x384 RGB-D, edge, and local-contrast inputs can improve precision and leaf/generalization gates left unresolved by attempt 2",
+  "implementation_commit": "df7ed632b006fc1310ab088784e856ec75dd0754",
+  "device": "cuda",
+  "selection_policy": {
+    "threshold_selected_on": "validation worlds only",
+    "test_used_for_model_selection": false,
+    "detector_threshold": 0.4,
+    "area_thresholds": {
+      "leaf_pile": 0.9,
+      "puddle": 0.3
+    }
+  },
+  "row_counts": {
+    "train": 480,
+    "in_domain_holdout": 120,
+    "validation": 300,
+    "test": 300
+  },
+  "detector": {
+    "architecture": "direct anchor-free center/offset/bbox detector",
+    "segmentation_connected_components_used_as_detector": false,
+    "input_shape": [
+      1,
+      6,
+      384,
+      512
+    ],
+    "input_features": [
+      "rgb",
+      "normalized_depth",
+      "edge",
+      "local_contrast"
+    ],
+    "training": {
+      "epochs": 30,
+      "curve": [
+        {
+          "epoch": 1,
+          "loss": 3.65998275578022,
+          "learning_rate": 0.0004986989501499649
+        },
+        {
+          "epoch": 5,
+          "loss": 1.2006690273682277,
+          "learning_rate": 0.00046818103339880414
+        },
+        {
+          "epoch": 10,
+          "loss": 0.755388202269872,
+          "learning_rate": 0.0003812499999999999
+        },
+        {
+          "epoch": 15,
+          "loss": 0.6070480937759082,
+          "learning_rate": 0.00026250000000000004
+        },
+        {
+          "epoch": 20,
+          "loss": 0.5477573412160078,
+          "learning_rate": 0.00014375000000000002
+        },
+        {
+          "epoch": 25,
+          "loss": 0.48207454606890676,
+          "learning_rate": 5.6818966601195823e-05
+        },
+        {
+          "epoch": 30,
+          "loss": 0.49655033349990846,
+          "learning_rate": 2.5e-05
+        }
+      ],
+      "augmentation_profile": "epoch_varying_color_geometry_plus_hard_negative_rebalance",
+      "weighted_samples_per_epoch": 960,
+      "duration_s": 1233.225295791999
+    },
+    "calibration_trace": [
+      {
+        "threshold": 0.05,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.10909090909090909,
+          "metal_can": 0.2980769230769231,
+          "paper_litter": 0.010337323177366704
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.9818181818181818,
+          "metal_can": 1.0,
+          "paper_litter": 0.8636363636363636
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.19636363636363635,
+          "metal_can": 0.45925925925925926,
+          "paper_litter": 0.02043010752688172
+        },
+        "macro_precision": 0.13916838511506627,
+        "macro_recall": 0.9484848484848486,
+        "macro_f1": 0.22535100104992575,
+        "small_object_recall": 0.9821428571428571,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 6.44,
+        "all_visible_candidate_recall": 0.8891891891891892,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 57.9
+      },
+      {
+        "threshold": 0.08,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.12735849056603774,
+          "metal_can": 0.41517857142857145,
+          "paper_litter": 0.02328589909443726
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.9818181818181818,
+          "metal_can": 1.0,
+          "paper_litter": 0.8181818181818182
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.22546972860125258,
+          "metal_can": 0.5867507886435331,
+          "paper_litter": 0.04528301886792453
+        },
+        "macro_precision": 0.1886076536963488,
+        "macro_recall": 0.9333333333333335,
+        "macro_f1": 0.2858345120375701,
+        "small_object_recall": 0.9732142857142857,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 2.99,
+        "all_visible_candidate_recall": 0.8756756756756757,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 27.425
+      },
+      {
+        "threshold": 0.1,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.13846153846153847,
+          "metal_can": 0.484375,
+          "paper_litter": 0.04116222760290557
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.9818181818181818,
+          "metal_can": 1.0,
+          "paper_litter": 0.7727272727272727
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.24269662921348314,
+          "metal_can": 0.6526315789473685,
+          "paper_litter": 0.07816091954022988
+        },
+        "macro_precision": 0.22133292202148133,
+        "macro_recall": 0.9181818181818183,
+        "macro_f1": 0.32449637590036046,
+        "small_object_recall": 0.9732142857142857,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 1.67,
+        "all_visible_candidate_recall": 0.8675675675675676,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 16.85
+      },
+      {
+        "threshold": 0.12,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.15384615384615385,
+          "metal_can": 0.5602409638554217,
+          "paper_litter": 0.06204379562043796
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.9818181818181818,
+          "metal_can": 1.0,
+          "paper_litter": 0.7727272727272727
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.2660098522167488,
+          "metal_can": 0.7181467181467182,
+          "paper_litter": 0.11486486486486487
+        },
+        "macro_precision": 0.25871030444067117,
+        "macro_recall": 0.9181818181818183,
+        "macro_f1": 0.36634047840944395,
+        "small_object_recall": 0.9732142857142857,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 1.03,
+        "all_visible_candidate_recall": 0.8675675675675676,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 11.75
+      },
+      {
+        "threshold": 0.15,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.19081272084805653,
+          "metal_can": 0.6158940397350994,
+          "paper_litter": 0.0825242718446602
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.9818181818181818,
+          "metal_can": 1.0,
+          "paper_litter": 0.7727272727272727
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.31952662721893493,
+          "metal_can": 0.7622950819672132,
+          "paper_litter": 0.14912280701754388
+        },
+        "macro_precision": 0.29641034414260536,
+        "macro_recall": 0.9181818181818183,
+        "macro_f1": 0.41031483873456404,
+        "small_object_recall": 0.9732142857142857,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 0.73,
+        "all_visible_candidate_recall": 0.8621621621621621,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 8.025
+      },
+      {
+        "threshold": 0.18,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.23076923076923078,
+          "metal_can": 0.6503496503496503,
+          "paper_litter": 0.09444444444444444
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.9818181818181818,
+          "metal_can": 1.0,
+          "paper_litter": 0.7727272727272727
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.3737024221453287,
+          "metal_can": 0.7881355932203389,
+          "paper_litter": 0.16831683168316833
+        },
+        "macro_precision": 0.32518777518777514,
+        "macro_recall": 0.9181818181818183,
+        "macro_f1": 0.4433849490162786,
+        "small_object_recall": 0.9732142857142857,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 0.55,
+        "all_visible_candidate_recall": 0.8567567567567568,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 6.0
+      },
+      {
+        "threshold": 0.2,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.27835051546391754,
+          "metal_can": 0.6690647482014388,
+          "paper_litter": 0.10179640718562874
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.9818181818181818,
+          "metal_can": 1.0,
+          "paper_litter": 0.7727272727272727
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.4337349397590361,
+          "metal_can": 0.8017241379310345,
+          "paper_litter": 0.17989417989417988
+        },
+        "macro_precision": 0.34973722361699505,
+        "macro_recall": 0.9181818181818183,
+        "macro_f1": 0.47178441919475017,
+        "small_object_recall": 0.9732142857142857,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 0.36,
+        "all_visible_candidate_recall": 0.8486486486486486,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 4.65
+      },
+      {
+        "threshold": 0.25,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.32142857142857145,
+          "metal_can": 0.7045454545454546,
+          "paper_litter": 0.13709677419354838
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.9818181818181818,
+          "metal_can": 1.0,
+          "paper_litter": 0.7727272727272727
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.48430493273542596,
+          "metal_can": 0.8266666666666667,
+          "paper_litter": 0.2328767123287671
+        },
+        "macro_precision": 0.38769026672252477,
+        "macro_recall": 0.9181818181818183,
+        "macro_f1": 0.5146161039102867,
+        "small_object_recall": 0.9732142857142857,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 0.19,
+        "all_visible_candidate_recall": 0.8405405405405405,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 2.825
+      },
+      {
+        "threshold": 0.3,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.36486486486486486,
+          "metal_can": 0.7244094488188977,
+          "paper_litter": 0.13392857142857142
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.9818181818181818,
+          "metal_can": 0.989247311827957,
+          "paper_litter": 0.6818181818181818
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.5320197044334976,
+          "metal_can": 0.8363636363636363,
+          "paper_litter": 0.22388059701492538
+        },
+        "macro_precision": 0.4077342950374447,
+        "macro_recall": 0.8842945584881069,
+        "macro_f1": 0.530754645937353,
+        "small_object_recall": 0.9553571428571429,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 0.13,
+        "all_visible_candidate_recall": 0.8324324324324325,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 1.975
+      },
+      {
+        "threshold": 0.35,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.38848920863309355,
+          "metal_can": 0.736,
+          "paper_litter": 0.12121212121212122
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.9818181818181818,
+          "metal_can": 0.989247311827957,
+          "paper_litter": 0.5454545454545454
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.5567010309278351,
+          "metal_can": 0.8440366972477065,
+          "paper_litter": 0.19834710743801653
+        },
+        "macro_precision": 0.41523377661507155,
+        "macro_recall": 0.8388400130335615,
+        "macro_f1": 0.5330282785378527,
+        "small_object_recall": 0.9285714285714286,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 0.07,
+        "all_visible_candidate_recall": 0.8135135135135135,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 1.55
+      },
+      {
+        "threshold": 0.4,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.424,
+          "metal_can": 0.75,
+          "paper_litter": 0.10227272727272728
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.9636363636363636,
+          "metal_can": 0.967741935483871,
+          "paper_litter": 0.4090909090909091
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.5888888888888889,
+          "metal_can": 0.8450704225352113,
+          "paper_litter": 0.16363636363636366
+        },
+        "macro_precision": 0.4254242424242424,
+        "macro_recall": 0.7801564027370479,
+        "macro_f1": 0.5325318916868212,
+        "small_object_recall": 0.875,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 0.05,
+        "all_visible_candidate_recall": 0.7864864864864864,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 1.05
+      },
+      {
+        "threshold": 0.5,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.4406779661016949,
+          "metal_can": 0.7586206896551724,
+          "paper_litter": 0.01639344262295082
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.9454545454545454,
+          "metal_can": 0.946236559139785,
+          "paper_litter": 0.045454545454545456
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.6011560693641618,
+          "metal_can": 0.8421052631578947,
+          "paper_litter": 0.024096385542168676
+        },
+        "macro_precision": 0.40523069945993934,
+        "macro_recall": 0.6457152166829586,
+        "macro_f1": 0.4891192393547417,
+        "small_object_recall": 0.8035714285714286,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 0.05,
+        "all_visible_candidate_recall": 0.7351351351351352,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 0.575
+      },
+      {
+        "threshold": 0.6,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.4766355140186916,
+          "metal_can": 0.7837837837837838,
+          "paper_litter": 0.023255813953488372
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.9272727272727272,
+          "metal_can": 0.9354838709677419,
+          "paper_litter": 0.045454545454545456
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.6296296296296297,
+          "metal_can": 0.8529411764705881,
+          "paper_litter": 0.03076923076923077
+        },
+        "macro_precision": 0.42789170391865455,
+        "macro_recall": 0.6360703812316716,
+        "macro_f1": 0.5044466789564828,
+        "small_object_recall": 0.7857142857142857,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 0.03,
+        "all_visible_candidate_recall": 0.6891891891891891,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 0.15
+      },
+      {
+        "threshold": 0.7,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.4787234042553192,
+          "metal_can": 0.8163265306122449,
+          "paper_litter": 0.0
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.8181818181818182,
+          "metal_can": 0.8602150537634409,
+          "paper_litter": 0.0
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.6040268456375839,
+          "metal_can": 0.837696335078534,
+          "paper_litter": 0.0
+        },
+        "macro_precision": 0.4316833116225214,
+        "macro_recall": 0.559465623981753,
+        "macro_f1": 0.4805743935720393,
+        "small_object_recall": 0.7053571428571429,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 0.02,
+        "all_visible_candidate_recall": 0.6054054054054054,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 0.075
+      },
+      {
+        "threshold": 0.8,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.4305555555555556,
+          "metal_can": 0.8571428571428571,
+          "paper_litter": 0.0
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.5636363636363636,
+          "metal_can": 0.5806451612903226,
+          "paper_litter": 0.0
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.4881889763779528,
+          "metal_can": 0.6923076923076923,
+          "paper_litter": 0.0
+        },
+        "macro_precision": 0.4292328042328042,
+        "macro_recall": 0.38142717497556206,
+        "macro_f1": 0.39349888956188167,
+        "small_object_recall": 0.5,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 0.01,
+        "all_visible_candidate_recall": 0.4135135135135135,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 0.025
+      },
+      {
+        "threshold": 0.9,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.16279069767441862,
+          "metal_can": 0.8,
+          "paper_litter": 0.0
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.12727272727272726,
+          "metal_can": 0.21505376344086022,
+          "paper_litter": 0.0
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.14285714285714285,
+          "metal_can": 0.3389830508474576,
+          "paper_litter": 0.0
+        },
+        "macro_precision": 0.32093023255813957,
+        "macro_recall": 0.11410883023786249,
+        "macro_f1": 0.16061339790153348,
+        "small_object_recall": 0.16071428571428573,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 0.0,
+        "all_visible_candidate_recall": 0.20270270270270271,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 0.0
+      }
+    ],
+    "results": {
+      "in_domain": {
+        "threshold": 0.4,
+        "machine_evaluable_object_count": 139,
+        "precision_by_class": {
+          "plastic_bottle": 0.5939849624060151,
+          "metal_can": 0.5287356321839081,
+          "paper_litter": 0.014492753623188406
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.8681318681318682,
+          "metal_can": 0.9787234042553191,
+          "paper_litter": 1.0
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.7053571428571428,
+          "metal_can": 0.6865671641791046,
+          "paper_litter": 0.02857142857142857
+        },
+        "macro_precision": 0.3790711160710372,
+        "macro_recall": 0.9489517574623957,
+        "macro_f1": 0.473498578535892,
+        "small_object_recall": 0.9770114942528736,
+        "small_object_count": 87,
+        "negative_only_frames": 0,
+        "negative_only_false_positive_per_frame": 0.0,
+        "all_visible_candidate_recall": 0.6764705882352942,
+        "all_visible_object_count": 340,
+        "false_candidates_per_min": 3.6875
+      },
+      "validation_cross_world": {
+        "threshold": 0.4,
+        "machine_evaluable_object_count": 170,
+        "precision_by_class": {
+          "plastic_bottle": 0.424,
+          "metal_can": 0.75,
+          "paper_litter": 0.10227272727272728
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.9636363636363636,
+          "metal_can": 0.967741935483871,
+          "paper_litter": 0.4090909090909091
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.5888888888888889,
+          "metal_can": 0.8450704225352113,
+          "paper_litter": 0.16363636363636366
+        },
+        "macro_precision": 0.4254242424242424,
+        "macro_recall": 0.7801564027370479,
+        "macro_f1": 0.5325318916868212,
+        "small_object_recall": 0.875,
+        "small_object_count": 112,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 0.05,
+        "all_visible_candidate_recall": 0.7864864864864864,
+        "all_visible_object_count": 370,
+        "false_candidates_per_min": 1.05
+      },
+      "test_cross_world": {
+        "threshold": 0.4,
+        "machine_evaluable_object_count": 200,
+        "precision_by_class": {
+          "plastic_bottle": 0.30943396226415093,
+          "metal_can": 0.5507246376811594,
+          "paper_litter": 0.09322033898305085
+        },
+        "recall_by_class": {
+          "plastic_bottle": 0.9010989010989011,
+          "metal_can": 0.8444444444444444,
+          "paper_litter": 0.5789473684210527
+        },
+        "f1_by_class": {
+          "plastic_bottle": 0.46067415730337075,
+          "metal_can": 0.6666666666666667,
+          "paper_litter": 0.16058394160583944
+        },
+        "macro_precision": 0.317792979642787,
+        "macro_recall": 0.7748302379881328,
+        "macro_f1": 0.429308255191959,
+        "small_object_recall": 0.8840579710144928,
+        "small_object_count": 138,
+        "negative_only_frames": 100,
+        "negative_only_false_positive_per_frame": 0.01,
+        "all_visible_candidate_recall": 0.8075601374570447,
+        "all_visible_object_count": 582,
+        "false_candidates_per_min": 1.275
+      }
+    },
+    "onnx": {
+      "path": "auto05_direct_detector.onnx",
+      "sha256": "1135b51ecc408e1b3b8b31a0901fecac1273b5508f177c904292da5a88358d32",
+      "bytes": 2112497,
+      "fixed_input": [
+        1,
+        6,
+        384,
+        512
+      ],
+      "custom_ops": 0,
+      "operator_inventory": {
+        "Conv": 8,
+        "Mul": 5,
+        "Sigmoid": 5,
+        "Softplus": 1
+      },
+      "max_numeric_output_error": 8.58306884765625e-06
+    },
+    "parameter_count": 527559
+  },
+  "area_segmenter": {
+    "architecture": "RGB-D independent binary leaf/puddle U-Net heads",
+    "input_shape": [
+      1,
+      7,
+      384,
+      512
+    ],
+    "input_features": [
+      "rgb",
+      "normalized_depth",
+      "edge",
+      "local_contrast",
+      "saturation"
+    ],
+    "training": {
+      "epochs": 25,
+      "curve": [
+        {
+          "epoch": 1,
+          "loss": 1.3822361124058564,
+          "learning_rate": 0.0003985017932497508
+        },
+        {
+          "epoch": 5,
+          "loss": 0.9323641553521156,
+          "learning_rate": 0.0003637132289312401
+        },
+        {
+          "epoch": 10,
+          "loss": 0.7777601735045513,
+          "learning_rate": 0.00026871322893124
+        },
+        {
+          "epoch": 15,
+          "loss": 0.6339536518789828,
+          "learning_rate": 0.0001512867710687601
+        },
+        {
+          "epoch": 20,
+          "loss": 0.4660526504895339,
+          "learning_rate": 5.6286771068760026e-05
+        },
+        {
+          "epoch": 25,
+          "loss": 0.38649052909264964,
+          "learning_rate": 2e-05
+        }
+      ],
+      "positive_weights": [
+        80.0,
+        80.0
+      ],
+      "augmentation_profile": "epoch_varying_color_geometry_plus_class_rebalance",
+      "weighted_samples_per_epoch": 960,
+      "duration_s": 980.0918590100046
+    },
+    "calibration_trace": {
+      "leaf_pile": [
+        {
+          "threshold": 0.3,
+          "iou": 0.1824360245412877
+        },
+        {
+          "threshold": 0.35,
+          "iou": 0.18634348211646468
+        },
+        {
+          "threshold": 0.4,
+          "iou": 0.1900389411639923
+        },
+        {
+          "threshold": 0.45,
+          "iou": 0.1932918019543569
+        },
+        {
+          "threshold": 0.5,
+          "iou": 0.19691587147340417
+        },
+        {
+          "threshold": 0.55,
+          "iou": 0.2007226473088745
+        },
+        {
+          "threshold": 0.6,
+          "iou": 0.20467708630617623
+        },
+        {
+          "threshold": 0.65,
+          "iou": 0.20863011572357415
+        },
+        {
+          "threshold": 0.7,
+          "iou": 0.21267755681818182
+        },
+        {
+          "threshold": 0.75,
+          "iou": 0.2167855244101417
+        },
+        {
+          "threshold": 0.8,
+          "iou": 0.2225904130720448
+        },
+        {
+          "threshold": 0.85,
+          "iou": 0.2303311284746508
+        },
+        {
+          "threshold": 0.9,
+          "iou": 0.24151377612989836
+        }
+      ],
+      "puddle": [
+        {
+          "threshold": 0.3,
+          "iou": 0.6756711315361766
+        },
+        {
+          "threshold": 0.35,
+          "iou": 0.6671621956438498
+        },
+        {
+          "threshold": 0.4,
+          "iou": 0.6595646053918381
+        },
+        {
+          "threshold": 0.45,
+          "iou": 0.651336953006655
+        },
+        {
+          "threshold": 0.5,
+          "iou": 0.643418887136178
+        },
+        {
+          "threshold": 0.55,
+          "iou": 0.6356143399332388
+        },
+        {
+          "threshold": 0.6,
+          "iou": 0.6278141135972461
+        },
+        {
+          "threshold": 0.65,
+          "iou": 0.6195876169972715
+        },
+        {
+          "threshold": 0.7,
+          "iou": 0.6103468588655185
+        },
+        {
+          "threshold": 0.75,
+          "iou": 0.6002700369127711
+        },
+        {
+          "threshold": 0.8,
+          "iou": 0.5885979145221604
+        },
+        {
+          "threshold": 0.85,
+          "iou": 0.574336004111285
+        },
+        {
+          "threshold": 0.9,
+          "iou": 0.5554707498649633
+        }
+      ]
+    },
+    "results": {
+      "validation_cross_world": {
+        "thresholds": {
+          "leaf_pile": 0.9,
+          "puddle": 0.3
+        },
+        "iou_by_class": {
+          "leaf_pile": 0.24151377612989836,
+          "puddle": 0.6756711315361766
+        },
+        "macro_miou": 0.4585924538330375,
+        "negative_only_frames": 100,
+        "negative_area_false_positive_per_frame": 0.0,
+        "intersection_pixels": [
+          11334,
+          120560
+        ],
+        "union_pixels": [
+          46929,
+          178430
+        ],
+        "minimum_candidate_area_px": 20
+      },
+      "test_cross_world": {
+        "thresholds": {
+          "leaf_pile": 0.9,
+          "puddle": 0.3
+        },
+        "iou_by_class": {
+          "leaf_pile": 0.5383984637811169,
+          "puddle": 0.6075398078627533
+        },
+        "macro_miou": 0.5729691358219351,
+        "negative_only_frames": 100,
+        "negative_area_false_positive_per_frame": 0.01,
+        "intersection_pixels": [
+          76823,
+          119271
+        ],
+        "union_pixels": [
+          142688,
+          196318
+        ],
+        "minimum_candidate_area_px": 20
+      }
+    },
+    "onnx": {
+      "path": "auto05_rgbd_area_segmenter.onnx",
+      "sha256": "82a408f17c81f0aebe68debcb5385eccde859308f59fe8ab2e8bcff72414b3eb",
+      "bytes": 2035107,
+      "fixed_input": [
+        1,
+        7,
+        384,
+        512
+      ],
+      "custom_ops": 0,
+      "operator_inventory": {
+        "Concat": 4,
+        "Constant": 8,
+        "Conv": 9,
+        "MaxPool": 2,
+        "Mul": 8,
+        "Resize": 2,
+        "Shape": 2,
+        "Sigmoid": 8,
+        "Slice": 2
+      },
+      "max_numeric_output_error": 8.7738037109375e-05
+    },
+    "parameter_count": 507202
+  },
+  "gates": {
+    "discovery_all_visible_candidate_recall_at_least_0_80": false,
+    "discovery_false_candidates_per_min_at_most_2": true,
+    "in_domain_macro_f1_at_least_0_90": false,
+    "cross_world_macro_f1_at_least_0_70": false,
+    "small_object_recall_at_least_0_70": true,
+    "negative_only_fp_per_frame_at_most_0_05": true,
+    "cross_world_leaf_iou_at_least_0_75": false,
+    "cross_world_puddle_iou_at_least_0_75": false,
+    "cross_world_macro_miou_at_least_0_75": false,
+    "color_material_stress_macro_f1_at_least_0_60": false,
+    "same_color_negative_specificity_at_least_0_95": true,
+    "onnx_detector_error_at_most_1e_4": true,
+    "onnx_area_error_at_most_1e_4": true
+  },
+  "auto05_screening_gate_pass": false,
+  "claim_boundary": "offline native Gazebo G3 screening only; not AUTO-06 formal, live, real-domain, J6, or competition evidence"
+}
