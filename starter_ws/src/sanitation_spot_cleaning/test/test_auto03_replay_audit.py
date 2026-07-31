@@ -2,7 +2,15 @@ import importlib.util
 from pathlib import Path
 
 
-SCRIPT = Path(__file__).resolve().parents[4] / "scripts" / "auto03_replay_audit.py"
+def _find_script() -> Path:
+    for candidate in Path(__file__).resolve().parents:
+        script = candidate / "scripts" / "auto03_replay_audit.py"
+        if script.is_file():
+            return script
+    raise RuntimeError("could not locate repository root containing auto03_replay_audit.py")
+
+
+SCRIPT = _find_script()
 SPEC = importlib.util.spec_from_file_location("auto03_replay_audit", SCRIPT)
 MODULE = importlib.util.module_from_spec(SPEC)
 assert SPEC.loader is not None

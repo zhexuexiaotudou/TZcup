@@ -27,6 +27,20 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 
 本机完整任务通过：`17/17` 组件、经验覆盖率 `93.67%`、碰撞 `0`、禁行区违规 `0`、定位 XY RMSE `0.03588 m`，MCAP 为 `205528` 条消息/18 个话题；看板终态为 `COMPLETED`，专用 MP4 为 `1.49 MB`。使用与证据边界见 [`docs/auto17-visual-demo.md`](docs/auto17-visual-demo.md)。AUTO-17 只提升可观察性和演示复现能力，不改变学习感知、真实域、J6 板端及综合竞赛矩阵仍为 false 的事实。
 
+## Gazebo 数字孪生场景
+
+不需要浏览器控制台时，可直接启动人类可读的园区道路 Gazebo 场景和清扫车：
+
+```bash
+ros2 launch sanitation_bringup gazebo_scene.launch.py
+```
+
+结构化世界包含实体路面/路缘/人行道、道路标线、斑马线、绿化、建筑、树木、
+路灯、垃圾桶、纸箱、行人障碍以及五类清扫目标；车辆补齐了上车体、保险杠、
+轮毂、传感器外壳、尘箱和刷盘细节。冻结的导航锚点、二维 footprint、传感器外参、
+话题和动力学参数保持不变。对象口径、几何差异和许可说明见
+[`docs/gazebo-digital-twin-scene.md`](docs/gazebo-digital-twin-scene.md)。
+
 ## 当前状态
 
 | 范围 | 状态 | 说明 |
@@ -44,7 +58,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 ## 主要能力
 
 - 4WD 差速/滑移转向清扫车模型，含刷盘、尘箱、LiDAR、RGB-D 相机和 IMU；
-- 道路、路缘、窄通道、积水、垃圾、落叶、静态/动态障碍等 Gazebo 场景；
+- 人类可读的园区道路、路缘、人行道、绿化、积水、垃圾、落叶和静态/动态障碍 Gazebo 场景；
 - SLAM、AMCL、混合定位、Nav2、keepout/speed filter、碰撞监控和急停；
 - 全覆盖规划、任务几何、覆盖率/定位/安全指标与 rosbag 回放审计；
 - 五类清扫目标的数据生成、感知接口、跟踪、主动观察与定点清扫链；

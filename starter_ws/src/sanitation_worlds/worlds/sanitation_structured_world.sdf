@@ -13,16 +13,16 @@
       <real_time_factor>1.0</real_time_factor>
     </physics>
     <scene>
-      <ambient>0.65 0.65 0.65 1</ambient>
-      <background>0.85 0.92 1.0 1</background>
+      <ambient>0.58 0.60 0.62 1</ambient>
+      <background>0.72 0.84 0.94 1</background>
       <shadows>true</shadows>
     </scene>
     <light type="directional" name="sun">
       <cast_shadows>true</cast_shadows>
       <pose>0 0 10 0 0 0</pose>
-      <diffuse>0.9 0.9 0.9 1</diffuse>
-      <specular>0.2 0.2 0.2 1</specular>
-      <direction>-0.4 0.2 -1.0</direction>
+      <diffuse>0.96 0.91 0.82 1</diffuse>
+      <specular>0.16 0.16 0.16 1</specular>
+      <direction>-0.45 0.25 -1.0</direction>
     </light>
     <model name="world_overview_camera">
       <static>true</static>
@@ -72,8 +72,9 @@
             </box>
           </geometry>
           <material>
-            <ambient>0.18 0.18 0.18 1</ambient>
-            <diffuse>0.22 0.22 0.22 1</diffuse>
+            <ambient>0.105 0.115 0.12 1</ambient>
+            <diffuse>0.16 0.17 0.18 1</diffuse>
+            <specular>0.02 0.02 0.02 1</specular>
           </material>
         </visual>
       </link>
@@ -97,8 +98,9 @@
             </box>
           </geometry>
           <material>
-            <ambient>0.55 0.55 0.55 1</ambient>
-            <diffuse>0.65 0.65 0.65 1</diffuse>
+            <ambient>0.47 0.48 0.47 1</ambient>
+            <diffuse>0.61 0.62 0.60 1</diffuse>
+            <specular>0.04 0.04 0.04 1</specular>
           </material>
         </visual>
       </link>
@@ -121,10 +123,53 @@
             </box>
           </geometry>
           <material>
-            <ambient>0.55 0.55 0.55 1</ambient>
-            <diffuse>0.65 0.65 0.65 1</diffuse>
+            <ambient>0.47 0.48 0.47 1</ambient>
+            <diffuse>0.61 0.62 0.60 1</diffuse>
+            <specular>0.04 0.04 0.04 1</specular>
           </material>
         </visual>
+      </link>
+    </model>
+    <!-- Paint and planting surfaces are visual-only because they do not add
+         occupancy. Raised sidewalks above remain the authoritative collision
+         and navigation boundary. -->
+    <model name="campus_road_markings">
+      <static>true</static>
+      <pose>0 0 0.006 0 0 0</pose>
+      <link name="link">
+        <visual name="edge_line_north"><pose>0 8.2 0 0 0 0</pose><geometry><box><size>48 0.10 0.008</size></box></geometry><material><ambient>0.88 0.89 0.82 1</ambient><diffuse>0.98 0.98 0.90 1</diffuse></material></visual>
+        <visual name="edge_line_south"><pose>0 -8.2 0 0 0 0</pose><geometry><box><size>48 0.10 0.008</size></box></geometry><material><ambient>0.88 0.89 0.82 1</ambient><diffuse>0.98 0.98 0.90 1</diffuse></material></visual>
+        <visual name="center_dash_01"><pose>-20 0 0 0 0 0</pose><geometry><box><size>2.4 0.12 0.008</size></box></geometry><material><ambient>0.88 0.72 0.12 1</ambient><diffuse>1.0 0.82 0.16 1</diffuse></material></visual>
+        <visual name="center_dash_02"><pose>-15 0 0 0 0 0</pose><geometry><box><size>2.4 0.12 0.008</size></box></geometry><material><ambient>0.88 0.72 0.12 1</ambient><diffuse>1.0 0.82 0.16 1</diffuse></material></visual>
+        <visual name="center_dash_03"><pose>-10 0 0 0 0 0</pose><geometry><box><size>2.4 0.12 0.008</size></box></geometry><material><ambient>0.88 0.72 0.12 1</ambient><diffuse>1.0 0.82 0.16 1</diffuse></material></visual>
+        <visual name="center_dash_04"><pose>-5 0 0 0 0 0</pose><geometry><box><size>2.4 0.12 0.008</size></box></geometry><material><ambient>0.88 0.72 0.12 1</ambient><diffuse>1.0 0.82 0.16 1</diffuse></material></visual>
+        <visual name="center_dash_05"><pose>0 0 0 0 0 0</pose><geometry><box><size>2.4 0.12 0.008</size></box></geometry><material><ambient>0.88 0.72 0.12 1</ambient><diffuse>1.0 0.82 0.16 1</diffuse></material></visual>
+        <visual name="center_dash_06"><pose>5 0 0 0 0 0</pose><geometry><box><size>2.4 0.12 0.008</size></box></geometry><material><ambient>0.88 0.72 0.12 1</ambient><diffuse>1.0 0.82 0.16 1</diffuse></material></visual>
+        <visual name="center_dash_07"><pose>10 0 0 0 0 0</pose><geometry><box><size>2.4 0.12 0.008</size></box></geometry><material><ambient>0.88 0.72 0.12 1</ambient><diffuse>1.0 0.82 0.16 1</diffuse></material></visual>
+        <visual name="center_dash_08"><pose>15 0 0 0 0 0</pose><geometry><box><size>2.4 0.12 0.008</size></box></geometry><material><ambient>0.88 0.72 0.12 1</ambient><diffuse>1.0 0.82 0.16 1</diffuse></material></visual>
+        <visual name="center_dash_09"><pose>20 0 0 0 0 0</pose><geometry><box><size>2.4 0.12 0.008</size></box></geometry><material><ambient>0.88 0.72 0.12 1</ambient><diffuse>1.0 0.82 0.16 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="campus_crosswalk_west">
+      <static>true</static>
+      <pose>-8 0 0.009 0 0 0</pose>
+      <link name="link">
+        <visual name="stripe_01"><pose>-1.4 0 0 0 0 0</pose><geometry><box><size>0.34 13.0 0.01</size></box></geometry><material><ambient>0.82 0.84 0.82 1</ambient><diffuse>0.96 0.97 0.94 1</diffuse></material></visual>
+        <visual name="stripe_02"><pose>-1.0 0 0 0 0 0</pose><geometry><box><size>0.34 13.0 0.01</size></box></geometry><material><ambient>0.82 0.84 0.82 1</ambient><diffuse>0.96 0.97 0.94 1</diffuse></material></visual>
+        <visual name="stripe_03"><pose>-0.6 0 0 0 0 0</pose><geometry><box><size>0.34 13.0 0.01</size></box></geometry><material><ambient>0.82 0.84 0.82 1</ambient><diffuse>0.96 0.97 0.94 1</diffuse></material></visual>
+        <visual name="stripe_04"><pose>-0.2 0 0 0 0 0</pose><geometry><box><size>0.34 13.0 0.01</size></box></geometry><material><ambient>0.82 0.84 0.82 1</ambient><diffuse>0.96 0.97 0.94 1</diffuse></material></visual>
+        <visual name="stripe_05"><pose>0.2 0 0 0 0 0</pose><geometry><box><size>0.34 13.0 0.01</size></box></geometry><material><ambient>0.82 0.84 0.82 1</ambient><diffuse>0.96 0.97 0.94 1</diffuse></material></visual>
+        <visual name="stripe_06"><pose>0.6 0 0 0 0 0</pose><geometry><box><size>0.34 13.0 0.01</size></box></geometry><material><ambient>0.82 0.84 0.82 1</ambient><diffuse>0.96 0.97 0.94 1</diffuse></material></visual>
+        <visual name="stripe_07"><pose>1.0 0 0 0 0 0</pose><geometry><box><size>0.34 13.0 0.01</size></box></geometry><material><ambient>0.82 0.84 0.82 1</ambient><diffuse>0.96 0.97 0.94 1</diffuse></material></visual>
+        <visual name="stripe_08"><pose>1.4 0 0 0 0 0</pose><geometry><box><size>0.34 13.0 0.01</size></box></geometry><material><ambient>0.82 0.84 0.82 1</ambient><diffuse>0.96 0.97 0.94 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="campus_green_verges">
+      <static>true</static>
+      <pose>0 0 0.171 0 0 0</pose>
+      <link name="link">
+        <visual name="north_verge"><pose>0 13.0 0 0 0 0</pose><geometry><box><size>49 1.7 0.018</size></box></geometry><material><ambient>0.12 0.34 0.13 1</ambient><diffuse>0.18 0.46 0.18 1</diffuse></material></visual>
+        <visual name="south_verge"><pose>0 -13.0 0 0 0 0</pose><geometry><box><size>49 1.7 0.018</size></box></geometry><material><ambient>0.12 0.34 0.13 1</ambient><diffuse>0.18 0.46 0.18 1</diffuse></material></visual>
       </link>
     </model>
     <model name="corridor_wall_left">
@@ -186,7 +231,7 @@
             </friction>
           </surface>
         </collision>
-        <visual name="visual">
+        <visual name="puddle_main_visual">
           <geometry>
             <box>
               <size>5 3 0.01</size>
@@ -197,6 +242,12 @@
             <diffuse>0.05 0.35 0.75 0.45</diffuse>
           </material>
           <transparency>0.55</transparency>
+        </visual>
+        <visual name="puddle_highlight_visual">
+          <pose>-0.8 0.45 0.006 0 0 -0.18</pose>
+          <geometry><box><size>2.2 0.45 0.004</size></box></geometry>
+          <material><ambient>0.22 0.50 0.72 0.30</ambient><diffuse>0.32 0.62 0.82 0.30</diffuse></material>
+          <transparency>0.72</transparency>
         </visual>
       </link>
     </model>
@@ -211,10 +262,10 @@
             </box>
           </geometry>
         </collision>
-        <visual name="visual">
+        <visual name="bin_body_visual">
           <geometry>
             <box>
-              <size>0.7 0.7 0.9</size>
+              <size>0.62 0.62 0.78</size>
             </box>
           </geometry>
           <material>
@@ -259,17 +310,13 @@
             </box>
           </geometry>
         </collision>
-        <visual name="visual">
-          <geometry>
-            <box>
-              <size>0.55 0.55 1.10</size>
-            </box>
-          </geometry>
-          <material>
-            <ambient>0.8 0.08 0.08 1</ambient>
-            <diffuse>0.95 0.12 0.12 1</diffuse>
-          </material>
-        </visual>
+        <!-- Human-readable silhouette; the legacy box collision is retained
+             so SetEntityPose dynamic-obstacle regressions keep the same body. -->
+        <visual name="pedestrian_torso_visual"><pose>0 0 0.12 0 0 0</pose><geometry><box><size>0.34 0.25 0.52</size></box></geometry><material><ambient>0.06 0.30 0.62 1</ambient><diffuse>0.08 0.42 0.82 1</diffuse></material></visual>
+        <visual name="pedestrian_head_visual"><pose>0 0 0.49 0 0 0</pose><geometry><sphere><radius>0.15</radius></sphere></geometry><material><ambient>0.72 0.48 0.30 1</ambient><diffuse>0.84 0.60 0.39 1</diffuse></material></visual>
+        <visual name="pedestrian_left_leg_visual"><pose>0 0.10 -0.28 0 0 0</pose><geometry><box><size>0.13 0.12 0.46</size></box></geometry><material><ambient>0.07 0.08 0.10 1</ambient><diffuse>0.10 0.12 0.15 1</diffuse></material></visual>
+        <visual name="pedestrian_right_leg_visual"><pose>0 -0.10 -0.28 0 0 0</pose><geometry><box><size>0.13 0.12 0.46</size></box></geometry><material><ambient>0.07 0.08 0.10 1</ambient><diffuse>0.10 0.12 0.15 1</diffuse></material></visual>
+        <visual name="pedestrian_safety_vest_visual"><pose>0.176 0 0.13 0 0 0</pose><geometry><box><size>0.012 0.27 0.22</size></box></geometry><material><ambient>0.88 0.36 0.02 1</ambient><diffuse>1.0 0.48 0.03 1</diffuse></material></visual>
       </link>
     </model>
     <!-- AUTO-01 height-banded safety fixtures. They remain outside the
@@ -281,13 +328,18 @@
         <collision name="collision">
           <geometry><box><size>0.30 0.30 0.35</size></box></geometry>
         </collision>
-        <visual name="visual">
+        <visual name="box_body_visual">
           <geometry><box><size>0.30 0.30 0.35</size></box></geometry>
           <material>
             <ambient>0.95 0.50 0.05 1</ambient>
             <diffuse>1.0 0.60 0.08 1</diffuse>
           </material>
         </visual>
+        <visual name="box_tape_visual"><pose>0 0 0.356 0 0 0</pose><geometry><box><size>0.16 0.71 0.012</size></box></geometry><material><ambient>0.76 0.67 0.44 1</ambient><diffuse>0.88 0.77 0.50 1</diffuse></material></visual>
+        <visual name="box_label_visual"><pose>0.456 0 0.06 0 0 0</pose><geometry><box><size>0.012 0.28 0.18</size></box></geometry><material><ambient>0.84 0.84 0.76 1</ambient><diffuse>0.96 0.96 0.88 1</diffuse></material></visual>
+        <visual name="bin_lid_visual"><pose>0 0 0.43 0 0 0</pose><geometry><box><size>0.70 0.70 0.10</size></box></geometry><material><ambient>0.035 0.12 0.06 1</ambient><diffuse>0.05 0.18 0.08 1</diffuse></material></visual>
+        <visual name="bin_opening_visual"><pose>0.316 0 0.18 0 0 0</pose><geometry><box><size>0.012 0.36 0.20</size></box></geometry><material><ambient>0.015 0.02 0.02 1</ambient><diffuse>0.02 0.025 0.025 1</diffuse></material></visual>
+        <visual name="bin_recycle_strip_visual"><pose>0.323 0 -0.12 0 0 0</pose><geometry><box><size>0.014 0.39 0.08</size></box></geometry><material><ambient>0.02 0.48 0.68 1</ambient><diffuse>0.03 0.62 0.82 1</diffuse></material></visual>
       </link>
     </model>
     <model name="auto01_tall_obstacle">
@@ -318,7 +370,7 @@
             </cylinder>
           </geometry>
         </collision>
-        <visual name="visual">
+        <visual name="bottle_body_visual">
           <geometry>
             <cylinder>
               <radius>0.045</radius>
@@ -330,6 +382,8 @@
             <diffuse>0.15 0.45 0.9 1</diffuse>
           </material>
         </visual>
+        <visual name="bottle_cap_visual"><pose>0 0 0.128 0 0 0</pose><geometry><cylinder><radius>0.026</radius><length>0.022</length></cylinder></geometry><material><ambient>0.04 0.12 0.50 1</ambient><diffuse>0.06 0.18 0.68 1</diffuse></material></visual>
+        <visual name="bottle_label_visual"><geometry><cylinder><radius>0.047</radius><length>0.055</length></cylinder></geometry><material><ambient>0.72 0.82 0.90 1</ambient><diffuse>0.82 0.92 1.0 1</diffuse></material></visual>
       </link>
     </model>
     <model name="trash_can_01">
@@ -344,7 +398,7 @@
             </cylinder>
           </geometry>
         </collision>
-        <visual name="visual">
+        <visual name="can_body_visual">
           <geometry>
             <cylinder>
               <radius>0.035</radius>
@@ -356,6 +410,7 @@
             <diffuse>0.9 0.15 0.15 1</diffuse>
           </material>
         </visual>
+        <visual name="can_band_visual"><geometry><cylinder><radius>0.037</radius><length>0.035</length></cylinder></geometry><material><ambient>0.82 0.82 0.78 1</ambient><diffuse>0.94 0.94 0.90 1</diffuse></material></visual>
       </link>
     </model>
     <model name="trash_paper_01">
@@ -369,7 +424,7 @@
             </box>
           </geometry>
         </collision>
-        <visual name="visual">
+        <visual name="carton_body_visual">
           <geometry>
             <box>
               <size>0.24 0.18 0.02</size>
@@ -380,6 +435,7 @@
             <diffuse>1 1 0.9 1</diffuse>
           </material>
         </visual>
+        <visual name="carton_print_visual"><pose>0 0 0.011 0 0 0</pose><geometry><box><size>0.12 0.08 0.004</size></box></geometry><material><ambient>0.15 0.46 0.20 1</ambient><diffuse>0.20 0.62 0.28 1</diffuse></material></visual>
       </link>
     </model>
     <model name="leaf_pile_01">
@@ -393,7 +449,7 @@
             </box>
           </geometry>
         </collision>
-        <visual name="visual">
+        <visual name="leaf_bed_visual">
           <geometry>
             <box>
               <size>1.8 1.2 0.03</size>
@@ -404,6 +460,9 @@
             <diffuse>0.65 0.28 0.05 1</diffuse>
           </material>
         </visual>
+        <visual name="leaf_cluster_01"><pose>-0.45 0.18 0.025 0 0 0</pose><geometry><sphere><radius>0.22</radius></sphere></geometry><material><ambient>0.52 0.24 0.03 1</ambient><diffuse>0.72 0.34 0.05 1</diffuse></material></visual>
+        <visual name="leaf_cluster_02"><pose>0.12 -0.18 0.03 0 0 0</pose><geometry><sphere><radius>0.26</radius></sphere></geometry><material><ambient>0.36 0.20 0.03 1</ambient><diffuse>0.52 0.31 0.05 1</diffuse></material></visual>
+        <visual name="leaf_cluster_03"><pose>0.52 0.22 0.02 0 0 0</pose><geometry><sphere><radius>0.18</radius></sphere></geometry><material><ambient>0.62 0.31 0.04 1</ambient><diffuse>0.82 0.42 0.06 1</diffuse></material></visual>
       </link>
     </model>
     <model name="structured_building_north">
@@ -417,13 +476,21 @@
             </box>
           </geometry>
         </collision>
-        <visual name="visual">
+        <visual name="facade_visual">
           <geometry>
             <box>
               <size>24.0 0.3 2.0</size>
             </box>
           </geometry>
+          <material><ambient>0.48 0.52 0.54 1</ambient><diffuse>0.68 0.72 0.73 1</diffuse></material>
         </visual>
+        <visual name="roof_cap_visual"><pose>0 0 1.05 0 0 0</pose><geometry><box><size>24.5 0.48 0.10</size></box></geometry><material><ambient>0.12 0.14 0.15 1</ambient><diffuse>0.20 0.22 0.23 1</diffuse></material></visual>
+        <visual name="window_01"><pose>-9.0 -0.156 0.25 0 0 0</pose><geometry><box><size>2.2 0.014 0.82</size></box></geometry><material><ambient>0.06 0.20 0.30 1</ambient><diffuse>0.10 0.34 0.48 1</diffuse></material></visual>
+        <visual name="window_02"><pose>-5.5 -0.156 0.25 0 0 0</pose><geometry><box><size>2.2 0.014 0.82</size></box></geometry><material><ambient>0.06 0.20 0.30 1</ambient><diffuse>0.10 0.34 0.48 1</diffuse></material></visual>
+        <visual name="window_03"><pose>-2.0 -0.156 0.25 0 0 0</pose><geometry><box><size>2.2 0.014 0.82</size></box></geometry><material><ambient>0.06 0.20 0.30 1</ambient><diffuse>0.10 0.34 0.48 1</diffuse></material></visual>
+        <visual name="service_door"><pose>1.8 -0.157 -0.24 0 0 0</pose><geometry><box><size>1.55 0.016 1.42</size></box></geometry><material><ambient>0.08 0.25 0.20 1</ambient><diffuse>0.10 0.40 0.31 1</diffuse></material></visual>
+        <visual name="window_04"><pose>5.0 -0.156 0.25 0 0 0</pose><geometry><box><size>2.2 0.014 0.82</size></box></geometry><material><ambient>0.06 0.20 0.30 1</ambient><diffuse>0.10 0.34 0.48 1</diffuse></material></visual>
+        <visual name="window_05"><pose>8.5 -0.156 0.25 0 0 0</pose><geometry><box><size>2.2 0.014 0.82</size></box></geometry><material><ambient>0.06 0.20 0.30 1</ambient><diffuse>0.10 0.34 0.48 1</diffuse></material></visual>
       </link>
     </model>
     <model name="structured_curb_south">
@@ -437,13 +504,15 @@
             </box>
           </geometry>
         </collision>
-        <visual name="visual">
+        <visual name="curb_body_visual">
           <geometry>
             <box>
               <size>28.0 0.25 0.5</size>
             </box>
           </geometry>
+          <material><ambient>0.60 0.60 0.56 1</ambient><diffuse>0.76 0.76 0.71 1</diffuse></material>
         </visual>
+        <visual name="curb_warning_band_visual"><pose>0 -0.131 0.14 0 0 0</pose><geometry><box><size>28.0 0.012 0.12</size></box></geometry><material><ambient>0.86 0.67 0.05 1</ambient><diffuse>0.98 0.78 0.07 1</diffuse></material></visual>
       </link>
     </model>
     <model name="structured_lamp_west">
@@ -457,13 +526,10 @@
             </box>
           </geometry>
         </collision>
-        <visual name="visual">
-          <geometry>
-            <box>
-              <size>0.25 0.25 1.5</size>
-            </box>
-          </geometry>
-        </visual>
+        <visual name="lamp_base_visual"><pose>0 0 -0.63 0 0 0</pose><geometry><cylinder><radius>0.15</radius><length>0.24</length></cylinder></geometry><material><ambient>0.12 0.14 0.15 1</ambient><diffuse>0.20 0.23 0.24 1</diffuse></material></visual>
+        <visual name="lamp_pole_visual"><geometry><cylinder><radius>0.055</radius><length>1.5</length></cylinder></geometry><material><ambient>0.18 0.21 0.22 1</ambient><diffuse>0.30 0.34 0.35 1</diffuse></material></visual>
+        <visual name="lamp_head_visual"><pose>0.28 0 0.76 0 0 0</pose><geometry><box><size>0.62 0.22 0.12</size></box></geometry><material><ambient>0.09 0.11 0.12 1</ambient><diffuse>0.16 0.18 0.19 1</diffuse></material></visual>
+        <visual name="lamp_emitter_visual"><pose>0.28 0 0.695 0 0 0</pose><geometry><box><size>0.44 0.15 0.015</size></box></geometry><material><ambient>0.95 0.84 0.52 1</ambient><diffuse>1.0 0.94 0.72 1</diffuse><emissive>0.35 0.28 0.12 1</emissive></material></visual>
       </link>
     </model>
     <model name="structured_lamp_east">
@@ -477,13 +543,10 @@
             </box>
           </geometry>
         </collision>
-        <visual name="visual">
-          <geometry>
-            <box>
-              <size>0.25 0.25 1.5</size>
-            </box>
-          </geometry>
-        </visual>
+        <visual name="lamp_base_visual"><pose>0 0 -0.63 0 0 0</pose><geometry><cylinder><radius>0.15</radius><length>0.24</length></cylinder></geometry><material><ambient>0.12 0.14 0.15 1</ambient><diffuse>0.20 0.23 0.24 1</diffuse></material></visual>
+        <visual name="lamp_pole_visual"><geometry><cylinder><radius>0.055</radius><length>1.5</length></cylinder></geometry><material><ambient>0.18 0.21 0.22 1</ambient><diffuse>0.30 0.34 0.35 1</diffuse></material></visual>
+        <visual name="lamp_head_visual"><pose>-0.28 0 0.76 0 0 0</pose><geometry><box><size>0.62 0.22 0.12</size></box></geometry><material><ambient>0.09 0.11 0.12 1</ambient><diffuse>0.16 0.18 0.19 1</diffuse></material></visual>
+        <visual name="lamp_emitter_visual"><pose>-0.28 0 0.695 0 0 0</pose><geometry><box><size>0.44 0.15 0.015</size></box></geometry><material><ambient>0.95 0.84 0.52 1</ambient><diffuse>1.0 0.94 0.72 1</diffuse><emissive>0.35 0.28 0.12 1</emissive></material></visual>
       </link>
     </model>
     <model name="structured_tree_south">
@@ -497,13 +560,9 @@
             </box>
           </geometry>
         </collision>
-        <visual name="visual">
-          <geometry>
-            <box>
-              <size>0.45 0.45 1.8</size>
-            </box>
-          </geometry>
-        </visual>
+        <visual name="tree_trunk_visual"><geometry><cylinder><radius>0.19</radius><length>1.8</length></cylinder></geometry><material><ambient>0.25 0.12 0.045 1</ambient><diffuse>0.38 0.19 0.07 1</diffuse></material></visual>
+        <visual name="tree_canopy_low_visual"><pose>0 0 1.10 0 0 0</pose><geometry><sphere><radius>0.75</radius></sphere></geometry><material><ambient>0.06 0.25 0.08 1</ambient><diffuse>0.10 0.40 0.12 1</diffuse></material></visual>
+        <visual name="tree_canopy_high_visual"><pose>0.18 -0.08 1.65 0 0 0</pose><geometry><sphere><radius>0.62</radius></sphere></geometry><material><ambient>0.08 0.31 0.10 1</ambient><diffuse>0.13 0.49 0.15 1</diffuse></material></visual>
       </link>
     </model>
     <model name="structured_tree_north">
@@ -517,13 +576,9 @@
             </box>
           </geometry>
         </collision>
-        <visual name="visual">
-          <geometry>
-            <box>
-              <size>0.45 0.45 1.8</size>
-            </box>
-          </geometry>
-        </visual>
+        <visual name="tree_trunk_visual"><geometry><cylinder><radius>0.19</radius><length>1.8</length></cylinder></geometry><material><ambient>0.25 0.12 0.045 1</ambient><diffuse>0.38 0.19 0.07 1</diffuse></material></visual>
+        <visual name="tree_canopy_low_visual"><pose>0 0 1.10 0 0 0</pose><geometry><sphere><radius>0.75</radius></sphere></geometry><material><ambient>0.06 0.25 0.08 1</ambient><diffuse>0.10 0.40 0.12 1</diffuse></material></visual>
+        <visual name="tree_canopy_high_visual"><pose>-0.18 0.08 1.65 0 0 0</pose><geometry><sphere><radius>0.62</radius></sphere></geometry><material><ambient>0.08 0.31 0.10 1</ambient><diffuse>0.13 0.49 0.15 1</diffuse></material></visual>
       </link>
     </model>
     <model name="structured_waste_bin">
@@ -537,13 +592,52 @@
             </box>
           </geometry>
         </collision>
-        <visual name="visual">
-          <geometry>
-            <box>
-              <size>0.8 0.65 1.0</size>
-            </box>
-          </geometry>
-        </visual>
+        <visual name="waste_bin_body_visual"><geometry><box><size>0.72 0.57 0.88</size></box></geometry><material><ambient>0.05 0.25 0.17 1</ambient><diffuse>0.07 0.40 0.27 1</diffuse></material></visual>
+        <visual name="waste_bin_lid_visual"><pose>0 0 0.47 0 0 0</pose><geometry><box><size>0.80 0.65 0.08</size></box></geometry><material><ambient>0.025 0.10 0.07 1</ambient><diffuse>0.04 0.18 0.12 1</diffuse></material></visual>
+        <visual name="waste_bin_opening_visual"><pose>0.366 0 0.18 0 0 0</pose><geometry><box><size>0.012 0.34 0.22</size></box></geometry><material><ambient>0.01 0.015 0.015 1</ambient><diffuse>0.015 0.02 0.02 1</diffuse></material></visual>
+        <visual name="waste_bin_label_visual"><pose>0.373 0 -0.12 0 0 0</pose><geometry><box><size>0.014 0.28 0.12</size></box></geometry><material><ambient>0.88 0.88 0.76 1</ambient><diffuse>1.0 1.0 0.88 1</diffuse></material></visual>
+      </link>
+    </model>
+    <!-- Additional campus furniture sits entirely on already occupied raised
+         sidewalks / green verges, so the frozen drivable and map geometry is
+         unchanged while the Gazebo scene gains human-scale references. -->
+    <model name="campus_bench_north">
+      <static>true</static>
+      <pose>-12 11.7 0.55 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1.8 0.55 0.9</size></box></geometry></collision>
+        <visual name="seat_visual"><pose>0 0 -0.12 0 0 0</pose><geometry><box><size>1.8 0.46 0.10</size></box></geometry><material><ambient>0.34 0.16 0.055 1</ambient><diffuse>0.52 0.26 0.08 1</diffuse></material></visual>
+        <visual name="back_visual"><pose>0 0.22 0.18 0.22 0 0</pose><geometry><box><size>1.8 0.08 0.52</size></box></geometry><material><ambient>0.34 0.16 0.055 1</ambient><diffuse>0.52 0.26 0.08 1</diffuse></material></visual>
+        <visual name="leg_left_visual"><pose>-0.62 0 -0.39 0 0 0</pose><geometry><box><size>0.10 0.42 0.48</size></box></geometry><material><ambient>0.10 0.11 0.11 1</ambient><diffuse>0.18 0.20 0.20 1</diffuse></material></visual>
+        <visual name="leg_right_visual"><pose>0.62 0 -0.39 0 0 0</pose><geometry><box><size>0.10 0.42 0.48</size></box></geometry><material><ambient>0.10 0.11 0.11 1</ambient><diffuse>0.18 0.20 0.20 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="campus_tree_west">
+      <static>true</static>
+      <pose>-18 -13 1.08 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><pose>0 0 -0.18 0 0 0</pose><geometry><cylinder><radius>0.22</radius><length>1.8</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 -0.18 0 0 0</pose><geometry><cylinder><radius>0.20</radius><length>1.8</length></cylinder></geometry><material><ambient>0.25 0.12 0.04 1</ambient><diffuse>0.38 0.19 0.06 1</diffuse></material></visual>
+        <visual name="canopy_visual"><pose>0 0 1.15 0 0 0</pose><geometry><sphere><radius>0.78</radius></sphere></geometry><material><ambient>0.05 0.26 0.08 1</ambient><diffuse>0.09 0.44 0.12 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="campus_tree_east">
+      <static>true</static>
+      <pose>18 13 1.08 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><pose>0 0 -0.18 0 0 0</pose><geometry><cylinder><radius>0.22</radius><length>1.8</length></cylinder></geometry></collision>
+        <visual name="trunk_visual"><pose>0 0 -0.18 0 0 0</pose><geometry><cylinder><radius>0.20</radius><length>1.8</length></cylinder></geometry><material><ambient>0.25 0.12 0.04 1</ambient><diffuse>0.38 0.19 0.06 1</diffuse></material></visual>
+        <visual name="canopy_visual"><pose>0 0 1.15 0 0 0</pose><geometry><sphere><radius>0.78</radius></sphere></geometry><material><ambient>0.05 0.26 0.08 1</ambient><diffuse>0.09 0.44 0.12 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="campus_safety_cones">
+      <static>true</static>
+      <pose>18 7.5 0.30 0 0 0</pose>
+      <link name="link">
+        <collision name="cone_left_collision"><pose>-0.55 0 0 0 0 0</pose><geometry><cylinder><radius>0.18</radius><length>0.60</length></cylinder></geometry></collision>
+        <collision name="cone_right_collision"><pose>0.55 0 0 0 0 0</pose><geometry><cylinder><radius>0.18</radius><length>0.60</length></cylinder></geometry></collision>
+        <visual name="cone_left_visual"><pose>-0.55 0 0 0 0 0</pose><geometry><cone><radius>0.18</radius><length>0.60</length></cone></geometry><material><ambient>0.88 0.26 0.015 1</ambient><diffuse>1.0 0.38 0.02 1</diffuse></material></visual>
+        <visual name="cone_right_visual"><pose>0.55 0 0 0 0 0</pose><geometry><cone><radius>0.18</radius><length>0.60</length></cone></geometry><material><ambient>0.88 0.26 0.015 1</ambient><diffuse>1.0 0.38 0.02 1</diffuse></material></visual>
       </link>
     </model>
   </world>

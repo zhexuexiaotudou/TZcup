@@ -8,7 +8,16 @@ from sanitation_learning.g2_capture import adjacent_translation_gate
 
 
 ROOT = Path(__file__).resolve().parents[2]
-REPO = Path(__file__).resolve().parents[4]
+
+
+def _find_repository_root() -> Path:
+    for candidate in Path(__file__).resolve().parents:
+        if (candidate / "scripts" / "auto05_capture_all.sh").is_file():
+            return candidate
+    raise RuntimeError("could not locate repository root containing auto05_capture_all.sh")
+
+
+REPO = _find_repository_root()
 
 
 def test_g3_world_contract_is_8_world_4_2_2_and_distinct(tmp_path):
