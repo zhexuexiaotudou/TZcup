@@ -16,6 +16,7 @@ ALLOWLIST = {
     "mission.return_home",
     "mission.status",
     "safety.emergency_stop",
+    "safety.clear_emergency_stop",
 }
 DIRECT_ACTUATOR_TERMS = {
     "cmd_vel",
@@ -29,6 +30,10 @@ DIRECT_ACTUATOR_TERMS = {
     "wheel speed",
 }
 INTENT_PATTERNS = {
+    "clear_emergency_stop": (
+        r"\b(clear|release|reset) (the )?(emergency stop|e[- ]?stop)\b",
+        r"(解除急停|释放急停|复位急停)",
+    ),
     "emergency_stop": (
         r"\b(emergency stop|e[- ]?stop|stop immediately)\b",
         r"(急停|紧急停止|立刻停下)",
@@ -59,6 +64,7 @@ TOOL_BY_INTENT = {
     "return_home": "mission.return_home",
     "status": "mission.status",
     "emergency_stop": "safety.emergency_stop",
+    "clear_emergency_stop": "safety.clear_emergency_stop",
 }
 CLASS_ALIASES = {
     "plastic_bottle": ("plastic bottle", "bottle", "塑料瓶", "瓶子"),
@@ -123,7 +129,9 @@ def parse_command(text: str) -> ParseResult:
         for intent, patterns in INTENT_PATTERNS.items()
         if _matches(normalized, patterns)
     ]
-    if "emergency_stop" in matched:
+    if "clear_emergency_stop" in matched:
+        matched = ["clear_emergency_stop"]
+    elif "emergency_stop" in matched:
         matched = ["emergency_stop"]
     if len(matched) != 1:
         reason = "unresolved_ambiguity" if matched else "unsupported_intent"
@@ -161,7 +169,11 @@ def parse_command(text: str) -> ParseResult:
             "safety_supervisor_required": True,
         },
         "expected_terminal_state": (
-            "SAFE_STOPPED" if intent == "emergency_stop" else "TASK_ACCEPTED"
+            "SAFE_STOPPED"
+            if intent == "emergency_stop"
+            else "SAFE_READY"
+            if intent == "clear_emergency_stop"
+            else "TASK_ACCEPTED"
         ),
     }
     return ParseResult("ACCEPTED", dsl, None)

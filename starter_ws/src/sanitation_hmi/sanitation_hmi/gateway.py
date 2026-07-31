@@ -7,7 +7,7 @@ import hashlib
 import json
 import threading
 import time
-from typing import Any
+from typing import Any, Callable
 
 from .dsl import parse_command, validate_dsl
 
@@ -23,6 +23,7 @@ ROLE_PERMISSIONS = {
         "spot_clean",
         "schedule",
         "emergency_stop",
+        "clear_emergency_stop",
     },
 }
 
@@ -30,6 +31,7 @@ ROLE_PERMISSIONS = {
 @dataclass
 class CommandGateway:
     tokens: dict[str, str]
+    dispatcher: Callable[[dict[str, Any]], dict[str, Any]] | None = None
     responses: dict[str, tuple[str, dict[str, Any]]] = field(default_factory=dict)
     lock: threading.Lock = field(default_factory=threading.Lock)
 
@@ -66,12 +68,23 @@ class CommandGateway:
         role = self.tokens[token]
         if result.dsl["intent"] not in ROLE_PERMISSIONS.get(role, set()):
             return 403, self._response("REJECTED", "authorization_failed", started)
+        dispatch = {"accepted": True, "dispatched": False, "reason": None}
+        if self.dispatcher is not None:
+            dispatch = self.dispatcher(result.dsl)
+            if not dispatch.get("accepted", False):
+                response = self._response(
+                    "REJECTED",
+                    str(dispatch.get("reason") or "dispatch_rejected"),
+                    started,
+                )
+                response["dsl"] = result.dsl
+                return 503, response
         response = {
             "status": "ACCEPTED",
-            "reason": None,
+            "reason": dispatch.get("reason"),
             "dsl": result.dsl,
             "idempotent_replay": False,
-            "execution_dispatched": False,
+            "execution_dispatched": bool(dispatch.get("dispatched", False)),
             "latency_ms": (time.perf_counter_ns() - started) / 1e6,
         }
         with self.lock:

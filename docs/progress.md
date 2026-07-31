@@ -11,6 +11,28 @@
 - MCAP `205528` 条消息、18 个话题、持续 `397.705 s`；看板终态 `COMPLETED`，专用 MP4 `1.49 MB`，机器验收汇总 `PASS`，单命令启动器自行返回 `0`。
 - 边界不变：真值只用于评估与绘图；learned perception、real domain、J6 runtime、simulation competition matrix 仍为 false。
 
+## 2026-07-31：地图优先的人类监督台
+
+- 将原有单页 DSL 表单重构为高密度工业监督台：二维作业地图占首屏主区域，增加
+  参考/SLAM/作业/对比视图、图层控制、车辆姿态、规划与实际轨迹、真值/预测分离、
+  障碍/禁行区、刷盘轨迹推导覆盖网格和地图交互。
+- 新增线程安全运行状态和可选 ROS 2 适配器，接入 `/odom`、`/map`、规划路径、
+  两路图像、感知/真值、清扫事件、Coverage、刷盘和急停；每个来源单独计算
+  live/stale/error/unavailable，不以静态配置填充缺失的实时来源。
+- 新增 Gazebo 全场与车载相机面板、事件时间线、评委/学习/工程模式、当前会话真实
+  里程计回放、JSON 摘要导出和 `human_visualization_gate.py`。
+- 保留 AUTO-10 的鉴权、授权、幂等和受限 DSL；急停可派发至现有
+  `/emergency_stop`，但必须检测到外部安全订阅者。Coverage、暂停/恢复、返航等任务
+  在缺少安全任务编排器时 API 返回 503、UI 禁用，绝不声称执行成功。
+- 新增一键 ROS 入口 `human_visualization_demo.launch.py`，用于启动结构化 Gazebo 场景、
+  SLAM、安全门和浏览器监督服务。本机 WSLg 冷启动已确认 `/odom`、`/map`、生产车载
+  相机、Gazebo 总览相机和外部安全门全部为 `live`，监督链
+  `visual_monitoring_ready=true`；1920×1080 与 390×844 浏览器布局均无水平溢出。
+- 合入同期 AUTO-17 主分支能力后，Windows 快速回归为 180 项通过，WSL ROS 包测试为
+  15 项通过、0 失败；两套浏览器/RViz 可视化入口和测试均保留。完整
+  `human_visualization_ready` 仍因仓库没有安全任务编排器而保持 false；这是已记录的
+  执行链硬边界，不能用 UI 或 DSL 成功代替。
+
 ## 2026-07-30：Docker/WSLg 调试可视化
 
 - 新增 `sanitation_debug_visualization` 包，将现有目标注册表、Stage5A 场景和任务

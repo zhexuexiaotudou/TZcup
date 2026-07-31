@@ -26,3 +26,26 @@ def test_auth_authorization_idempotency_and_validation():
     )
     assert status == 409
     assert conflict["reason"] == "idempotency_conflict"
+
+
+def test_dispatcher_can_fail_closed_or_confirm_execution():
+    def dispatcher(dsl):
+        if dsl["intent"] == "emergency_stop":
+            return {"accepted": True, "dispatched": True, "reason": None}
+        return {
+            "accepted": False,
+            "dispatched": False,
+            "reason": "safe_task_orchestrator_unavailable",
+        }
+
+    gateway = CommandGateway({"operator": "operator"}, dispatcher=dispatcher)
+    status, rejected = gateway.submit(
+        "operator", "coverage", {"command": "开始区域 A 清扫"}
+    )
+    assert status == 503
+    assert rejected["reason"] == "safe_task_orchestrator_unavailable"
+    status, accepted = gateway.submit(
+        "operator", "estop", {"command": "紧急停止"}
+    )
+    assert status == 202
+    assert accepted["execution_dispatched"] is True

@@ -195,6 +195,10 @@ def run_ros_independent_tests() -> None:
         hmi_package / "test" / "test_dsl.py",
         hmi_package / "test" / "test_gateway.py",
         hmi_package / "test" / "test_live_state.py",
+        hmi_package / "test" / "test_state.py",
+        hmi_package / "test" / "test_reference.py",
+        hmi_package / "test" / "test_ros_adapter.py",
+        hmi_package / "test" / "test_server.py",
         manipulation_package / "test" / "test_core.py",
         debug_visualization_package / "test" / "test_debug_visualization_model.py",
         spot_cleaning_package / "test" / "test_auto01_geometry.py",
@@ -208,6 +212,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_visual_demo_summary.py",
         ROOT / "scripts" / "test_dashboard_telemetry_frames.py",
         ROOT / "scripts" / "test_run_visual_demo_contract.py",
+        ROOT / "scripts" / "test_human_visualization_gate.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])
     if result != pytest.ExitCode.OK:

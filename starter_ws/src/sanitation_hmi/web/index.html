@@ -3,58 +3,160 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>TZcup 清扫任务控制台</title>
-  <style>
-    :root { color-scheme: dark; font-family: Inter, "Microsoft YaHei", sans-serif; }
-    * { box-sizing: border-box; }
-    body { margin: 0; min-height: 100vh; background: #07130f; color: #e8fff4; display: grid; place-items: center; }
-    main { width: calc(100% - 40px); max-width: 880px; padding: 42px; border: 1px solid #285947; background: #0d2119; box-shadow: 0 24px 80px #0008; overflow: hidden; }
-    .eyebrow { color: #74d9a6; letter-spacing: .14em; font-size: 12px; text-transform: uppercase; }
-    h1 { font-size: clamp(30px, 5vw, 50px); line-height: 1.05; margin: 18px 0 14px; max-width: 760px; overflow-wrap: anywhere; }
-    p { color: #a9c9bb; max-width: 620px; }
-    form { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; margin-top: 32px; }
-    input, button { border: 1px solid #376957; padding: 15px 16px; font: inherit; }
-    input { min-width: 0; background: #06100c; color: #fff; }
-    #token { grid-column: 1 / -1; }
-    button { background: #80f0bb; color: #062016; font-weight: 700; cursor: pointer; }
-    pre { min-height: 130px; margin-top: 16px; padding: 18px; overflow: auto; background: #06100c; border-left: 3px solid #80f0bb; color: #bcebd5; }
-    @media (max-width: 620px) {
-      main { width: calc(100% - 20px); padding: 26px 22px; }
-      form { grid-template-columns: 1fr; }
-      button { width: 100%; }
-    }
-  </style>
+  <meta name="color-scheme" content="dark">
+  <title>TZcup 数字孪生监督台</title>
+  <link rel="stylesheet" href="/static/app.css">
 </head>
 <body>
-  <main>
-    <div class="eyebrow">Authenticated task gateway · fail closed</div>
-    <h1>只下达任务，不越过安全层。</h1>
-    <p>输入“开始区域 A 清扫”“暂停”“紧急停止”等任务级指令。所有输出都经过固定 DSL、工具白名单、鉴权和幂等校验。</p>
-    <form id="command-form">
-      <input id="token" type="password" aria-label="访问令牌" placeholder="输入本地操作员令牌" autocomplete="off">
-      <input id="command" aria-label="任务指令" value="开始区域 A 清扫" autocomplete="off">
-      <button type="submit">验证指令</button>
-    </form>
-    <pre id="result" aria-live="polite">等待指令…</pre>
+  <main class="console" id="console">
+    <header class="topbar">
+      <div class="brand">
+        <span class="brand-mark" aria-hidden="true">TZ</span>
+        <div>
+          <strong>TZcup 数字孪生监督台</strong>
+          <span id="scene-name">园区环卫示范道路</span>
+        </div>
+      </div>
+      <nav class="mode-switch" aria-label="界面模式">
+        <button class="mode-button active" data-ui-mode="judge">评委</button>
+        <button class="mode-button" data-ui-mode="learning">学习</button>
+        <button class="mode-button" data-ui-mode="engineering">工程</button>
+      </nav>
+      <div class="top-status" aria-live="polite">
+        <span class="source-mode" id="source-mode">实时模式</span>
+        <span class="status-item"><small>系统</small><b id="system-status">连接中</b></span>
+        <span class="status-item"><small>定位</small><b id="localization-status">未知</b></span>
+        <span class="status-item"><small>安全</small><b id="safety-status">未知</b></span>
+        <time id="current-time"></time>
+      </div>
+    </header>
+
+    <section class="workspace">
+      <section class="map-panel panel" aria-label="二维作业地图">
+        <div class="panel-heading map-heading">
+          <div>
+            <h1>二维作业地图</h1>
+            <p id="map-subtitle">参考地图、SLAM 地图与作业语义保持来源分离</p>
+          </div>
+          <div class="map-actions">
+            <div class="segmented" aria-label="地图视图">
+              <button class="map-view active" data-map-view="operation">作业地图</button>
+              <button class="map-view" data-map-view="reference">参考地图</button>
+              <button class="map-view" data-map-view="slam">SLAM 地图</button>
+              <button class="map-view" data-map-view="compare">对比</button>
+            </div>
+            <button id="fit-map" class="quiet-button">适配全图</button>
+            <button id="toggle-layers" class="quiet-button" aria-expanded="false">图层</button>
+          </div>
+        </div>
+        <div class="map-stage" id="map-stage">
+          <canvas id="map-canvas" aria-label="车辆、路线、覆盖、垃圾、障碍和语义区域地图"></canvas>
+          <div class="map-scale"><span></span><b id="scale-label">2 m</b></div>
+          <div class="north-arrow" aria-label="北向">N<span></span></div>
+          <div class="map-cursor-readout" id="map-cursor">坐标 --</div>
+          <aside class="layer-drawer" id="layer-drawer" hidden>
+            <h2>显示图层</h2>
+            <div id="layer-controls"></div>
+            <p>参考真值、感知预测、规划结果和实际执行采用不同线型。</p>
+          </aside>
+          <div class="map-message" id="map-message" hidden></div>
+        </div>
+        <div class="legend" aria-label="地图图例">
+          <span><i class="legend-block truth"></i>仿真参考真值</span>
+          <span><i class="legend-ring prediction"></i>感知预测</span>
+          <span><i class="legend-line planned"></i>规划结果</span>
+          <span><i class="legend-line actual"></i>实际执行</span>
+          <span><i class="legend-block cleaned"></i>已清扫</span>
+          <span><i class="legend-block keepout"></i>禁行区</span>
+        </div>
+      </section>
+
+      <aside class="mission-panel panel">
+        <section class="mission-summary">
+          <div class="section-title"><h2>当前任务</h2><span id="mission-state">数据不可用</span></div>
+          <strong id="mission-name">等待任务数据</strong>
+          <p id="mission-boundary">未连接到任务编排器时不会显示虚假成功状态。</p>
+        </section>
+        <section class="metric-strip">
+          <div><small>实际清扫</small><strong id="actual-coverage">--</strong><span>经验值</span></div>
+          <div><small>规划覆盖</small><strong id="planned-coverage">--</strong><span>规划值</span></div>
+          <div><small>识别目标</small><strong id="target-count">--</strong><span>感知输出</span></div>
+        </section>
+        <section class="current-action">
+          <h2>正在做什么</h2>
+          <strong id="current-action">等待数据</strong>
+          <p id="next-action">下一步动作尚不可用</p>
+        </section>
+        <section class="explanation learning-only">
+          <h2>行为解释</h2>
+          <dl>
+            <div><dt>路线依据</dt><dd id="route-reason">等待规划状态</dd></div>
+            <div><dt>地图偏差</dt><dd id="map-difference">SLAM 数据不可用</dd></div>
+            <div><dt>数据口径</dt><dd>规划值与实际测量值分栏显示，不互相替代</dd></div>
+          </dl>
+        </section>
+        <section class="source-health engineering-only">
+          <h2>数据源健康</h2>
+          <div id="source-health-list"></div>
+        </section>
+        <section class="truth-boundary">
+          <h2>当前事实边界</h2>
+          <p id="truth-boundary">界面可视化不等于比赛指标、真实车辆或 J6 验证通过。</p>
+        </section>
+      </aside>
+    </section>
+
+    <section class="media-row">
+      <article class="media-panel panel">
+        <div class="panel-heading"><h2>Gazebo 三维场景</h2><span id="overview-source">真实话题</span></div>
+        <div class="image-frame">
+          <img id="overview-image" alt="Gazebo 世界总览实时画面">
+          <p id="overview-empty">等待 /world_overview/image</p>
+        </div>
+      </article>
+      <article class="media-panel panel">
+        <div class="panel-heading"><h2>车载相机</h2><span id="camera-source">真实话题</span></div>
+        <div class="image-frame">
+          <img id="camera-image" alt="清扫车实时相机画面">
+          <p id="camera-empty">等待 /camera/color/image_raw</p>
+          <canvas id="detection-overlay" aria-hidden="true"></canvas>
+        </div>
+      </article>
+      <article class="timeline-panel panel">
+        <div class="panel-heading"><h2>事件时间线</h2><button id="clear-event-filter" class="text-button">全部事件</button></div>
+        <ol id="event-list" aria-live="polite"></ol>
+      </article>
+    </section>
+
+    <section class="replay-bar panel" id="replay-bar" hidden>
+      <strong>历史回放模式</strong>
+      <button id="replay-toggle">播放</button>
+      <input id="replay-range" type="range" min="0" max="0" value="0" aria-label="历史回放进度">
+      <span id="replay-time">00:00</span>
+      <button id="exit-replay" class="quiet-button">返回实时</button>
+      <p id="replay-warning"></p>
+    </section>
+
+    <footer class="controlbar">
+      <div class="token-control">
+        <label for="operator-token">本地操作员令牌</label>
+        <input id="operator-token" type="password" autocomplete="off" placeholder="输入启动时生成的令牌">
+      </div>
+      <div class="task-controls" aria-label="任务控制">
+        <button data-command="开始区域 A 清扫" data-needs-dispatch>开始任务</button>
+        <button data-command="暂停" data-needs-dispatch>暂停</button>
+        <button data-command="恢复任务" data-needs-dispatch>恢复</button>
+        <button data-command="返回充电站" data-needs-dispatch>返回起点</button>
+        <button id="replay-button">历史回放</button>
+        <a href="/api/v1/export" download="tzcup-mission-summary.json">导出摘要</a>
+      </div>
+      <div class="safety-controls">
+        <button class="estop" data-command="紧急停止">紧急停止</button>
+        <button class="release-estop" data-command="解除急停">解除急停</button>
+      </div>
+      <output id="command-result" aria-live="polite"></output>
+    </footer>
   </main>
-  <script>
-    const form = document.querySelector("#command-form");
-    const result = document.querySelector("#result");
-    form.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      const token = document.querySelector("#token").value;
-      sessionStorage.setItem("tzcup_operator_token", token);
-      const response = await fetch("/api/v1/commands", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "Content-Type": "application/json",
-          "Idempotency-Key": crypto.randomUUID()
-        },
-        body: JSON.stringify({command: document.querySelector("#command").value})
-      });
-      result.textContent = JSON.stringify(await response.json(), null, 2);
-    });
-  </script>
+  <script src="/static/app.js" defer></script>
 </body>
 </html>

@@ -38,6 +38,7 @@ def generate_launch_description():
     cleaning_width = LaunchConfiguration("cleaning_width")
     brush_center_y = LaunchConfiguration("brush_center_y")
     world_file = LaunchConfiguration("world_file")
+    world_name = LaunchConfiguration("world_name")
     random_seed = LaunchConfiguration("random_seed")
     world_to_map_x = LaunchConfiguration("world_to_map_x")
     world_to_map_y = LaunchConfiguration("world_to_map_y")
@@ -178,6 +179,7 @@ def generate_launch_description():
             DeclareLaunchArgument("cleaning_width", default_value="0.65"),
             DeclareLaunchArgument("brush_center_y", default_value="0.23"),
             DeclareLaunchArgument("world_file", default_value=world_path),
+            DeclareLaunchArgument("world_name", default_value="sanitation_test_world"),
             DeclareLaunchArgument("random_seed", default_value="0"),
             DeclareLaunchArgument("world_to_map_x", default_value="8.0"),
             DeclareLaunchArgument("world_to_map_y", default_value="0.0"),
@@ -250,7 +252,7 @@ def generate_launch_description():
                     "/camera/image@sensor_msgs/msg/Image[gz.msgs.Image",
                     "/camera/depth_image@sensor_msgs/msg/Image[gz.msgs.Image",
                     "/camera/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked",
-                    "/world/sanitation_test_world/dynamic_pose/info@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V",
+                    ["/world/", world_name, "/dynamic_pose/info@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V"],
                     "/world_overview/image@sensor_msgs/msg/Image[gz.msgs.Image",
                 ],
                 remappings=[
@@ -259,7 +261,7 @@ def generate_launch_description():
                     ("/camera/depth_image", "/camera/depth/image_rect_raw"),
                     ("/camera/points", "/camera/depth/color/points"),
                     (
-                        "/world/sanitation_test_world/dynamic_pose/info",
+                        ["/world/", world_name, "/dynamic_pose/info"],
                         "/ground_truth/dynamic_pose",
                     ),
                 ],

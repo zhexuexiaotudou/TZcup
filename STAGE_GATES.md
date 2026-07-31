@@ -8,6 +8,24 @@
 
 AUTO-17 不加入或改写 AUTO-00—AUTO-16 的依赖状态机终态；它是可观察性与比赛展示交付门。学习感知、真实域、J6 runtime 和综合竞赛矩阵仍保持 false。
 
+## 人类可读地图与数字孪生监督门（MONITORING READY / TASK EXECUTION BLOCKED）
+
+- 地图必须是主界面，至少独立呈现参考地图、SLAM 地图、作业语义、车辆、规划路径、
+  实际轨迹、仿真真值、感知预测、障碍物、禁行区和清扫覆盖；
+- `/world_overview/image`、`/camera/color/image_raw`、`/odom`、`/map` 和安全状态必须按
+  来源新鲜度显示，缺失或过期时标为不可用/降级，禁止使用参考配置冒充实时传感器；
+- 规划覆盖率和经验清扫覆盖率必须分栏；覆盖热图只能由带刷盘状态的实际轨迹推导；
+- 历史回放必须来自已记录轨迹或当前服务真实 ROS 会话，并明确不是实时运行；
+- 急停只有在外部安全订阅者已连接时可用；任务动作只有接入安全任务编排器时可用，
+  否则按钮保持禁用且 API fail closed；
+- `software_contract_pass=true` 只证明 UI/API/来源分离合同。只有 live odom、SLAM、两个
+  相机源、外部安全门和安全任务执行链全部通过时，才能设置
+  `human_visualization_ready=true`；
+- 机器门入口：`python scripts/human_visualization_gate.py --url http://127.0.0.1:8765`。
+- 2026-07-31 本机 WSLg 冷启动验收：`odom/map/camera/gazebo_overview/safety=live`，
+  `visual_monitoring_ready=true`；仓库暂无安全任务编排器，故
+  `human_visualization_ready=false`，阻塞项为 `safe_task_orchestrator_not_connected`。
+
 ## AUTO-16 最终发布、复现与归档门
 
 - clean clone 的快速 CI 与全 ROS build/test 必须通过；

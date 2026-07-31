@@ -2,6 +2,21 @@
 
 TZcup 是一个面向智慧环卫无人清扫车的 ROS 2 仿真与自主任务工程。项目以 Ubuntu 24.04、ROS 2 Jazzy、Gazebo Harmonic、Nav2、SLAM Toolbox、OpenNav Coverage 和 Fields2Cover 为基础，覆盖车辆建模、环境仿真、定位导航、全覆盖清扫、垃圾感知、定点清扫、安全控制、调试可视化和验收证据。
 
+## 地图优先的人类监督台（2026-07-31）
+
+新增 `sanitation_hmi` 地图监督模式：浏览器首屏以二维作业地图为主，明确分开
+Gazebo 配置参考真值、SLAM `/map`、感知预测、全局/局部规划和 `/odom` 实际轨迹；
+同时显示 Gazebo 全场相机、车载相机、来源新鲜度、任务/安全状态、事件时间线、
+刷盘轨迹推导的未覆盖/已覆盖/重复覆盖网格以及当前会话真实回放。评委、学习、工程
+三种界面密度可切换，地图支持平移、缩放、全图适配和图层开关。
+
+一键启动入口为
+`ros2 launch sanitation_hmi human_visualization_demo.launch.py operator_token:=<本地令牌>`，
+操作与验收说明见 [`docs/human-visualization.md`](docs/human-visualization.md)。急停只在检测到
+外部安全速度门订阅后启用；Coverage、暂停/恢复、返航等任务按钮在安全任务编排器尚未
+接入时保持禁用，不把 DSL 校验冒充车辆执行。当前软件合同可以通过独立机器门，完整
+`human_visualization_ready` 仍要求本机 live ROS 源、外部安全门和真实任务执行链同时通过。
+
 ## 实时可视化演示
 
 项目现在提供一条 Windows 命令启动的真实 Gazebo 导航与全覆盖演示：Gazebo GUI 跟随清扫车，RViz 以 `base_footprint` 为目标坐标系跟随显示地图、激光、规划路径与代价地图，浏览器看板实时显示任务阶段、融合位姿、速度、17 个覆盖组件、刷盘、急停和车辆轨迹，并自动保存 MCAP、专用看板 MP4 与代表帧；代表帧从录像末尾抽取，用于直接展示完整轨迹和任务终态。演示复用 AUTO-02 冻结的 `autonomous_navigation_profile_v1` 与正式 Coverage 链，不使用预制动画。
