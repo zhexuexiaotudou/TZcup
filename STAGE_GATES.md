@@ -21,6 +21,10 @@
 - Stage 2 无界面 Gazebo 探针收到 12/12 类必需话题，5 秒位移 `1.1775 m`；WSLg 独立场景
   验收同样收到 12/12 类话题，位移 `1.2425 m`，实时因子 `1.0002`。总览和车辆近景图
   已人工检查，原始截图与日志保留在 Git 忽略的 `.codex-task/`。
+- [PR #56](https://github.com/zhexuexiaotudou/TZcup/pull/56) 在 `fast-validation` 绿灯后以
+  merge commit 合入 `main@1d8a45e`。该精确提交部署到隔离 WSL overlay 后再次收到
+  12/12 类话题，5 秒位移 `1.2050 m`、实时因子 `1.0011`，合并版总览图人工复核通过；
+  直接回滚点为 `8ec902e`。
 
 ## AUTO-17：真实仿真可视化演示层
 

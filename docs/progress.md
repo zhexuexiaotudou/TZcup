@@ -17,6 +17,11 @@
 - 验收结果：快速回归 `184 passed`；干净 Docker Stage 1 双轮均为 513 项、0 失败；
   Stage 2 为 43/43，URDF/SDF 均有效，运行时 12/12 类话题齐全，5 秒位移 `1.1775 m`。
   WSLg 独立场景另测位移 `1.2425 m`、实时因子 `1.0002`，并人工检查总览与车辆近景。
+- [PR #56](https://github.com/zhexuexiaotudou/TZcup/pull/56) 的 `fast-validation` 通过后，
+  已按 merge-commit 策略合入 `main@1d8a45eac1eca7e1e39990211efab2cd453f53d4`。从该精确
+  合并提交建立的 `/home/zhexu/tzcup_gazebo_scene_deploy_1d8a45e_ws` overlay 构建 3 包
+  成功，独立启动结构化世界后 12/12 类话题齐全，5 秒位移 `1.2050 m`、实时因子
+  `1.0011`，合并版总览图人工复核通过；回滚点为 `8ec902e`。
 - 操作、资产许可、几何一致性和验证说明见
   [`gazebo-digital-twin-scene.md`](gazebo-digital-twin-scene.md)。
 
