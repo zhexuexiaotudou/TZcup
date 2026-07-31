@@ -85,6 +85,12 @@ artifacts/autonomous_auto03_*_smoke/
 artifacts/autonomous_auto04_*_raw/
 artifacts/autonomous_auto05_*_raw/
 
+# AUTO-17 full GUI/dashboard runs contain MP4, frame sequences, logs, and bags.
+# Keep them local; only explicitly named compact evidence directories are versioned.
+artifacts/auto17_visual_demo_*/
+!artifacts/auto17_visual_demo_*_evidence/
+!artifacts/auto17_visual_demo_*_evidence/**
+
 # AUTO-16 clean-clone/full-workspace build logs are retained locally until
 # user confirmation; only the compact verification JSON is versioned.
 auto16_*build*.log
