@@ -87,6 +87,15 @@ source /opt/ros/jazzy/setup.bash
 source "$SANITATION_WS/install/setup.bash"
 ```
 
+只打开 Gazebo 场地和车辆，不启动浏览器控制台、SLAM 或 RViz：
+
+```bash
+ros2 launch sanitation_bringup gazebo_scene.launch.py
+```
+
+该入口默认加载人类可读的园区道路结构化世界。场景对象、车辆模型和几何边界见
+[`docs/gazebo-digital-twin-scene.md`](docs/gazebo-digital-twin-scene.md)。
+
 一键启动结构化 Gazebo 场景、SLAM、安全速度门和地图优先的浏览器监督台：
 
 ```bash

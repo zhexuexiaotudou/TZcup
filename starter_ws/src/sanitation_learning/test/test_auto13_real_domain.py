@@ -6,7 +6,14 @@ import cv2
 import numpy as np
 
 
-ROOT = Path(__file__).resolve().parents[4]
+def _find_repository_root() -> Path:
+    for candidate in Path(__file__).resolve().parents:
+        if (candidate / "scripts" / "auto13_real_domain.py").is_file():
+            return candidate
+    raise RuntimeError("could not locate repository root containing auto13_real_domain.py")
+
+
+ROOT = _find_repository_root()
 SPEC = importlib.util.spec_from_file_location(
     "auto13_real_domain", ROOT / "scripts" / "auto13_real_domain.py"
 )
