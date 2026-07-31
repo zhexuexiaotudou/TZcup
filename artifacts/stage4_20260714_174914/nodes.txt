@@ -1,2 +1,0 @@
-/coverage_lifecycle_manager
-/lifecycle_manager_navigation

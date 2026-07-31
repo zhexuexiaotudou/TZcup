@@ -25,6 +25,7 @@ def require_project_files() -> None:
         ROOT / "PROJECT_SPEC.md",
         ROOT / "STAGE_GATES.md",
         ROOT / "docs" / "development-workflow.md",
+        ROOT / "docs" / "artifact-policy.md",
         ROOT / ".github" / "workflows" / "development-workflow.yml",
         ROOT / "AUTONOMOUS_STATE.json",
         ROOT / "AUTONOMOUS_RUN_PLAN.json",
@@ -37,6 +38,51 @@ def require_project_files() -> None:
     missing = [str(path.relative_to(ROOT)) for path in required if not path.is_file()]
     if missing:
         raise RuntimeError(f"missing required project files: {', '.join(missing)}")
+
+
+def validate_repository_hygiene() -> None:
+    readme = (ROOT / "README.md").read_text(encoding="utf-8")
+    readme_first = (ROOT / "README_FIRST.md").read_text(encoding="utf-8")
+    if len(readme.splitlines()) > 180:
+        raise RuntimeError("README.md must remain a concise project front door")
+    if len(readme_first.splitlines()) > 180:
+        raise RuntimeError("README_FIRST.md must remain a concise startup guide")
+    forbidden_headings = ("## 最近同步", "## AUTO-", "## Stage")
+    found = [heading for heading in forbidden_headings if heading in readme]
+    if found:
+        raise RuntimeError(
+            "README.md contains progress-log headings: " + ", ".join(found)
+        )
+
+    artifact_root = ROOT / "artifacts"
+    raw_patterns = (
+        "stage0_*",
+        "stage1_*",
+        "stage2_*",
+        "stage3_*",
+        "stage4_[0-9]*",
+        "stage4r_[0-9]*",
+        "stage4s_gt_*",
+        "stage4s_fit_*",
+        "stage4s_friction_*",
+        "stage4s_motion_*",
+    )
+    raw_dirs = sorted(
+        str(path.relative_to(ROOT))
+        for pattern in raw_patterns
+        for path in artifact_root.glob(pattern)
+        if path.is_dir()
+    )
+    raw_payloads = sorted(
+        str(path.relative_to(ROOT))
+        for suffix in ("*.mcap", "*.db3")
+        for path in artifact_root.rglob(suffix)
+    )
+    if raw_dirs or raw_payloads:
+        raise RuntimeError(
+            "raw artifacts must stay outside Git: "
+            + ", ".join(raw_dirs + raw_payloads)
+        )
 
 
 def validate_python() -> None:
@@ -166,6 +212,7 @@ def run_ros_independent_tests() -> None:
 
 def main() -> int:
     require_project_files()
+    validate_repository_hygiene()
     validate_python()
     validate_structured_files()
     validate_stage4w_runtime_contract()
