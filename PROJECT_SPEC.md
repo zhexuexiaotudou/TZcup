@@ -6,6 +6,22 @@ AUTO-17 是既有自主控制面的只读观察层，不是新的控制器。`sa
 
 控制面继续使用 AUTO-02 冻结 profile、Stage4V 混合定位、Nav2 和 OpenNav Coverage/Fields2Cover。真值只允许进入评估轨迹、覆盖率与定位误差统计，禁止进入规划、导航、控制或安全决策。AUTO-17 的 PASS 不得推导出学习感知、真实域、J6 或综合竞赛矩阵 PASS。
 
+## 地图优先的人类监督架构
+
+`sanitation_hmi_server --ros` 是 AUTO-17 实时看板之外的地图监督入口，默认监听本机
+`http://127.0.0.1:8765`。ROS 适配器把 `/odom`、`/map`、规划路径、两路图像、感知、
+清扫事件、刷盘和急停状态写入线程安全快照；每个实时来源独立计算
+`live/stale/error/unavailable`。Gazebo world 与项目 YAML 只进入参考层，不得补写缺失的
+SLAM、感知或执行状态。浏览器通过 `/api/v1/state`、`/api/v1/replay`、
+`/api/v1/export` 和 `/api/v1/images/<source>` 读取快照，不直接连接 ROS 或发布
+`/cmd_vel`。
+
+`POST /api/v1/commands` 继续使用 AUTO-10 token、角色、严格 schema、幂等键和受限 DSL。
+急停只有在 ROS 图中检测到 HMI 之外的 `/emergency_stop` 订阅者时才可派发；Coverage、
+暂停/恢复和返航只有接入可审计任务编排器时才可用。编排器缺失时 API 必须返回 503
+`safe_task_orchestrator_unavailable`，UI 同步禁用对应按钮。参考地图、SLAM 地图、规划结果、
+实际轨迹、仿真真值、感知预测和刷盘轨迹推导覆盖率必须保持独立语义，不能相互代替。
+
 ## AUTO-16 最终发布契约
 
 - 最终状态必须区分软件交付、仿真综合矩阵、真实域、J6 工具链、J6 实机和完整竞赛证据；

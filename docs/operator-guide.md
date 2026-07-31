@@ -22,6 +22,19 @@ powershell -ExecutionPolicy Bypass -File scripts/run_auto16_release.ps1 -Mode Si
 powershell -ExecutionPolicy Bypass -File scripts/run_auto16_release.ps1 -Mode Matrix
 ```
 
+地图优先的人类监督台使用 ROS 2 launch 启动，并在 Windows 浏览器打开
+`http://127.0.0.1:8765`：
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source "$HOME/sanitation_ws/install/setup.bash"
+ros2 launch sanitation_hmi human_visualization_demo.launch.py \
+  operator_token:=replace-with-a-local-token
+```
+
+已有 Gazebo、SLAM 与安全门时使用 `human_visualization.launch.py` 只附着监督台。令牌只
+保存在本机；未接入安全任务编排器时，Coverage、暂停/恢复和返航按钮按设计保持禁用。
+
 启动后先检查 `/clock`、TF、里程计、激光雷达、RGB-D、Nav2 lifecycle 和安全
 节点，再下发任务。急停、安全区和命令超时不得关闭。训练 GT 默认必须关闭。
 
@@ -38,4 +51,6 @@ J6 实机也没有通过。操作员不得把 AUTO-02、09、10、11、12 的独
   `rosdep install`；
 - Gazebo 无画面：检查 WSLg、D3D12/OpenGL 和 `DISPLAY`；
 - Nav2 未激活：查看 lifecycle、TF 树、map/odom/base_link 和参数服务；
+- 地图监督台显示降级：切换工程模式，逐项检查 `/odom`、`/map`、两路相机和安全来源；
+- 地图监督台任务按钮禁用：先确认安全任务编排器是否存在，禁止绕过 503 失败关闭边界；
 - Matrix 阻断：读取 `FINAL_BLOCKER_REGISTER.json`，禁止手工改写状态。
