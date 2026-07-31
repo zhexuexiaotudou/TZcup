@@ -54,6 +54,25 @@ ros2 launch sanitation_hmi human_visualization.launch.py \
 `brush_enabled=true` 的实际轨迹样本参与计算。规划覆盖率与经验覆盖率分栏显示，不能
 互相替代。
 
+## 数据流与 HTTP API
+
+ROS 回调只更新进程内线程安全快照；HTTP 请求读取快照，不在请求线程中等待 ROS，也不
+把浏览器变成新的控制节点。普通状态响应省略完整回放样本以控制轮询体积，需要回放时再
+从专用端点读取。
+
+| 方法与路径 | 用途 | 边界 |
+|---|---|---|
+| `GET /healthz` | 服务进程健康检查 | 不代表 ROS 来源或任务执行链就绪 |
+| `GET /api/v1/state` | 当前地图、车辆、来源、指标、事件与能力快照 | 回放只返回样本数，不返回完整样本 |
+| `GET /api/v1/replay` | 当前会话或已装载真实记录的完整回放 | 明确标为历史，不得解释为实时运行 |
+| `GET /api/v1/export` | 下载当前事实摘要 JSON | 保留不可用状态和事实边界 |
+| `GET /api/v1/images/camera` | 车载相机 PNG | 来源不在线时返回 404 |
+| `GET /api/v1/images/gazebo_overview` | Gazebo 全场相机 PNG | 来源不在线时返回 404 |
+| `POST /api/v1/commands` | 提交受限 DSL 请求 | Bearer token + 幂等键；无安全执行链时 fail closed |
+
+`/static/*` 只提供随包安装的前端资源。所有响应禁用缓存；状态和导出内容不应作为比赛
+成绩来源，机器验收仍以项目阶段门和可追溯证据为准。
+
 ## 界面与操作
 
 - `评委`：保留地图、关键状态、三维/车载画面和事实边界；
@@ -74,6 +93,21 @@ ros2 launch sanitation_hmi human_visualization.launch.py \
 之外的安全订阅者时按钮才启用。Coverage、暂停、恢复和返航需要可审计的任务编排器；
 当前仓库没有通用安全编排服务，因此这些按钮保持禁用，对 API 的同类请求返回 503
 `safe_task_orchestrator_unavailable`。这是明确的工程边界，不是 UI 故障。
+
+## 运维与故障排查
+
+- `/healthz` 正常但顶部状态为降级：打开工程模式，按来源查看
+  `live/stale/error/unavailable`，再检查对应 ROS 话题频率和时间戳；
+- SLAM 长时间不可用：确认 `slam_toolbox` lifecycle 已激活、`/scan` 与 TF 连通，不要用
+  参考地图代替 `/map`；
+- 相机面板不可用：分别检查 `/camera/color/image_raw` 与 `/world_overview/image`，两路
+  图像互不替代；
+- 急停按钮禁用：确认速度门等外部安全节点确实订阅 `/emergency_stop`；仅 HMI 自身订阅
+  不满足能力门；
+- Coverage、暂停、恢复或返航禁用：这是未接入安全任务编排器的预期状态，不应通过前端
+  绕过；
+- 端口占用或重复节点：停止旧监督台后再启动，或只使用附着入口，避免同时启动两个
+  `sanitation_hmi_server`。
 
 ## 验收
 

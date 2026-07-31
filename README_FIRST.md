@@ -87,6 +87,18 @@ source /opt/ros/jazzy/setup.bash
 source "$SANITATION_WS/install/setup.bash"
 ```
 
+一键启动结构化 Gazebo 场景、SLAM、安全速度门和地图优先的浏览器监督台：
+
+```bash
+ros2 launch sanitation_hmi human_visualization_demo.launch.py \
+  operator_token:=replace-with-a-local-token
+```
+
+Windows 浏览器打开 `http://127.0.0.1:8765`。若 Gazebo、SLAM 和安全门已经由其他
+launch 启动，则改用 `human_visualization.launch.py` 只附着监督台，避免重复启动控制面。
+数据口径、API、安全边界和验收命令见
+[`docs/human-visualization.md`](docs/human-visualization.md)。
+
 连接已经运行的 Gazebo：
 
 ```bash
