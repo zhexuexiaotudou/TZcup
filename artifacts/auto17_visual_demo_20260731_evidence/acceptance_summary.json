@@ -1,0 +1,92 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-17",
+  "title": "visual demonstration layer",
+  "generated_at": "2026-07-31T13:47:59.251667+00:00",
+  "status": "PASS",
+  "machine_gate_pass": true,
+  "checks": {
+    "coverage_process_exit_zero": true,
+    "coverage_full_execution_success": true,
+    "coverage_safety_success": true,
+    "coverage_zero_collision_and_keepout_violations": true,
+    "dashboard_completed_snapshot_present": true,
+    "dashboard_required_topics_seen": true,
+    "dashboard_truth_boundary_explicit": true,
+    "mcap_requirement_satisfied": true,
+    "video_requirement_satisfied": true,
+    "video_frame_present_when_recorded": true,
+    "camera_follow_requested": true
+  },
+  "coverage": {
+    "exit_code": 0,
+    "report_present": true,
+    "success": true,
+    "mission_id": "demo_coverage_001",
+    "component_count": 17,
+    "empirical_coverage_rate": 0.9366666666666666,
+    "collision_count": 0,
+    "keepout_violation_count": 0
+  },
+  "dashboard": {
+    "snapshot_present": true,
+    "status": "COMPLETED",
+    "topics_seen": [
+      "/brush_enabled",
+      "/cmd_vel",
+      "/coverage/component_state",
+      "/coverage/current_path",
+      "/coverage/evaluation_sample",
+      "/coverage/state",
+      "/emergency_stop",
+      "/localization/fused_pose"
+    ]
+  },
+  "mcap": {
+    "path": "visual_demo_bag",
+    "metadata_present": true,
+    "message_count": 205528,
+    "duration_ns": 397704818296,
+    "topics": [
+      "/brush_enabled",
+      "/clock",
+      "/cmd_vel",
+      "/cmd_vel_gate",
+      "/coverage/component_state",
+      "/coverage/current_path",
+      "/coverage/diagnostics",
+      "/coverage/evaluation_sample",
+      "/coverage/state",
+      "/emergency_stop",
+      "/global_costmap/costmap",
+      "/ground_truth/odom",
+      "/local_costmap/costmap",
+      "/localization/fused_pose",
+      "/odom",
+      "/scan",
+      "/tf",
+      "/tf_static"
+    ]
+  },
+  "video": {
+    "path": "visual_demo.mp4",
+    "exists": true,
+    "bytes": 1485569,
+    "nonempty": true,
+    "mode": "on",
+    "representative_frame": "visual_demo_frame.png"
+  },
+  "camera_follow": {
+    "requested": true,
+    "transport_topic": "/gui/track",
+    "target": "sanitation_vehicle"
+  },
+  "claim_boundary": {
+    "source_level": "LIVE_GAZEBO_NAVIGATION_COVERAGE_DEMO",
+    "learned_perception_pass": false,
+    "real_domain_pass": false,
+    "j6_runtime_pass": false,
+    "simulation_competition_matrix_pass": false,
+    "note": "AUTO-17 improves observability and repeatable demonstration; it does not change AUTO-05/06/07/08/13/14/15 status."
+  }
+}

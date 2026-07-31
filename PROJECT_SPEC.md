@@ -1,5 +1,11 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## AUTO-17 可视化演示架构
+
+AUTO-17 是既有自主控制面的只读观察层，不是新的控制器。`sanitation_live_dashboard` 订阅 `/coverage/state`、`/coverage/component_state`、`/coverage/current_path`、`/localization/fused_pose`、`/cmd_vel`、`/brush_enabled`、`/emergency_stop` 与 evaluation-only 的 `/coverage/evaluation_sample`，通过本机 HTTP `/api/v1/telemetry` 和 `/healthz` 提供快照；网页不得发布底盘命令。Gazebo `/gui/track` 跟随 `sanitation_vehicle`，RViz `TopDownOrtho` 以 `base_footprint` 为目标帧。专用录像直接轮询只读遥测并绘制任务画面，不抓取用户桌面。
+
+控制面继续使用 AUTO-02 冻结 profile、Stage4V 混合定位、Nav2 和 OpenNav Coverage/Fields2Cover。真值只允许进入评估轨迹、覆盖率与定位误差统计，禁止进入规划、导航、控制或安全决策。AUTO-17 的 PASS 不得推导出学习感知、真实域、J6 或综合竞赛矩阵 PASS。
+
 ## AUTO-16 最终发布契约
 
 - 最终状态必须区分软件交付、仿真综合矩阵、真实域、J6 工具链、J6 实机和完整竞赛证据；

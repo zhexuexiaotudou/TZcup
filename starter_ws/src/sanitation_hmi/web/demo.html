@@ -1,0 +1,307 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>TZcup · 实时清扫演示</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, "Segoe UI", "Microsoft YaHei", sans-serif;
+      --bg: #07100e;
+      --panel: #0d1a17;
+      --panel-2: #111f1b;
+      --line: #253b34;
+      --mint: #66f1b5;
+      --cyan: #69d7ff;
+      --amber: #ffc66d;
+      --red: #ff7b7b;
+      --muted: #8da79d;
+      --text: #effff8;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 84% 12%, #17362b 0, transparent 28%),
+        radial-gradient(circle at 12% 88%, #0f2731 0, transparent 26%),
+        var(--bg);
+    }
+    main { max-width: 1500px; margin: auto; padding: 28px; }
+    header { display: flex; gap: 24px; align-items: flex-end; justify-content: space-between; margin-bottom: 20px; }
+    .eyebrow { color: var(--mint); letter-spacing: .16em; font-size: 12px; text-transform: uppercase; }
+    h1 { margin: 8px 0 0; font-size: clamp(30px, 4vw, 54px); letter-spacing: -.04em; }
+    .boundary {
+      max-width: 620px; padding: 12px 14px; border: 1px solid #745c31;
+      background: #2b2112c9; color: #ffe0a5; font-size: 13px; line-height: 1.55;
+    }
+    .grid { display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(320px, .85fr); gap: 18px; }
+    .panel { border: 1px solid var(--line); background: #0b1714e8; box-shadow: 0 22px 70px #0006; }
+    .map-panel { min-height: 650px; padding: 18px; display: grid; grid-template-rows: auto 1fr; }
+    .panel-head { display: flex; justify-content: space-between; gap: 16px; align-items: center; margin-bottom: 14px; }
+    h2 { font-size: 16px; margin: 0; font-weight: 650; }
+    .legend { display: flex; flex-wrap: wrap; gap: 12px; color: var(--muted); font-size: 12px; }
+    .legend i { width: 18px; height: 3px; display: inline-block; vertical-align: middle; margin-right: 5px; }
+    canvas { width: 100%; height: 100%; min-height: 560px; display: block; background: #06100e; border: 1px solid #1e322b; }
+    aside { display: grid; align-content: start; gap: 14px; }
+    .status-card { padding: 20px; }
+    .status-row { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; }
+    .state { color: var(--mint); font-size: 25px; font-weight: 760; letter-spacing: -.02em; }
+    .elapsed { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .progress-track { height: 11px; border-radius: 20px; background: #172a24; overflow: hidden; margin: 18px 0 10px; }
+    .progress-bar { height: 100%; width: 0; background: linear-gradient(90deg, #4fcf9a, #74eaff); transition: width .4s ease; }
+    .progress-copy { color: var(--muted); display: flex; justify-content: space-between; font-size: 13px; }
+    .metrics { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--line); border: 1px solid var(--line); }
+    .metric { background: var(--panel); padding: 17px; min-height: 96px; }
+    .metric label { color: var(--muted); display: block; font-size: 12px; margin-bottom: 10px; }
+    .metric strong { display: block; font-size: 23px; font-variant-numeric: tabular-nums; }
+    .metric small { color: var(--muted); }
+    .ok { color: var(--mint); }
+    .warn { color: var(--amber); }
+    .danger { color: var(--red); }
+    .timeline { padding: 18px; }
+    .events { margin: 14px 0 0; padding: 0; list-style: none; max-height: 285px; overflow: auto; }
+    .events li { display: grid; grid-template-columns: 58px 1fr; gap: 12px; padding: 10px 0; border-top: 1px solid #1b2e28; font-size: 13px; }
+    .events time { color: var(--muted); font-variant-numeric: tabular-nums; }
+    .connection { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--amber); box-shadow: 0 0 12px currentColor; }
+    .dot.live { background: var(--mint); }
+    footer { margin-top: 14px; color: #71877f; font-size: 12px; }
+    @media (max-width: 980px) {
+      header { align-items: flex-start; flex-direction: column; }
+      .grid { grid-template-columns: 1fr; }
+      .map-panel { min-height: 520px; }
+      canvas { min-height: 430px; }
+    }
+    @media (max-width: 560px) {
+      main { padding: 15px; }
+      .metrics { grid-template-columns: 1fr; }
+      .boundary { font-size: 12px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <div class="eyebrow">AUTO-17 · Live Gazebo navigation coverage</div>
+        <h1>清扫任务正在发生。</h1>
+      </div>
+      <div class="boundary">
+        当前是 Gazebo 导航与全覆盖演示。真值轨迹仅用于评估和绘图，不参与控制；
+        学习感知、真实域、J6 板端和综合竞赛矩阵仍未通过。
+      </div>
+    </header>
+
+    <section class="grid">
+      <article class="panel map-panel">
+        <div class="panel-head">
+          <h2>任务地图与车辆轨迹</h2>
+          <div class="legend">
+            <span><i style="background:#69d7ff"></i>当前规划</span>
+            <span><i style="background:#536d65"></i>实际轨迹（评估）</span>
+            <span><i style="background:#66f1b5"></i>刷盘开启轨迹</span>
+            <span><i style="background:#ffc66d"></i>车辆</span>
+          </div>
+        </div>
+        <canvas id="map" aria-label="实时任务地图"></canvas>
+      </article>
+
+      <aside>
+        <section class="panel status-card">
+          <div class="status-row">
+            <div>
+              <div class="eyebrow">Mission state</div>
+              <div class="state" id="state">BOOTING</div>
+            </div>
+            <div class="elapsed" id="elapsed">00:00</div>
+          </div>
+          <div class="progress-track"><div class="progress-bar" id="progress-bar"></div></div>
+          <div class="progress-copy">
+            <span id="component">等待任务组件</span>
+            <span id="progress-value">0%</span>
+          </div>
+        </section>
+
+        <section class="metrics">
+          <div class="metric">
+            <label>线速度</label>
+            <strong id="speed">0.00 <small>m/s</small></strong>
+          </div>
+          <div class="metric">
+            <label>地图位姿</label>
+            <strong id="pose">—</strong>
+          </div>
+          <div class="metric">
+            <label>清扫刷盘</label>
+            <strong id="brush" class="warn">关闭</strong>
+          </div>
+          <div class="metric">
+            <label>安全状态</label>
+            <strong id="safety" class="ok">正常</strong>
+          </div>
+        </section>
+
+        <section class="panel timeline">
+          <div class="panel-head">
+            <h2>任务时间线</h2>
+            <div class="connection"><span class="dot" id="dot"></span><span id="connection">连接中</span></div>
+          </div>
+          <ol class="events" id="events"></ol>
+        </section>
+      </aside>
+    </section>
+    <footer>
+      数据源：ROS 2 话题实时快照 · 浏览器仅展示，不直接访问底盘执行器
+    </footer>
+  </main>
+
+  <script>
+    const canvas = document.querySelector("#map");
+    const ctx = canvas.getContext("2d");
+    let telemetry = null;
+
+    function resizeCanvas() {
+      const ratio = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.round(rect.width * ratio);
+      canvas.height = Math.round(rect.height * ratio);
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+      draw();
+    }
+
+    function bounds(data) {
+      const geometry = data?.visualization?.geometry || {};
+      const all = [
+        ...(geometry.outer_polygon || []),
+        ...(data?.visualization?.planned_path || []),
+        ...(data?.visualization?.evaluation_only_trajectory || [])
+      ];
+      if (!all.length) return {minX: -3, maxX: 7, minY: -5, maxY: 5};
+      const xs = all.map(p => p[0]), ys = all.map(p => p[1]);
+      return {
+        minX: Math.min(...xs) - .8, maxX: Math.max(...xs) + .8,
+        minY: Math.min(...ys) - .8, maxY: Math.max(...ys) + .8
+      };
+    }
+
+    function mapper(data) {
+      const b = bounds(data);
+      const rect = canvas.getBoundingClientRect();
+      const scale = Math.min((rect.width - 54) / (b.maxX - b.minX), (rect.height - 54) / (b.maxY - b.minY));
+      const offsetX = (rect.width - (b.maxX - b.minX) * scale) / 2;
+      const offsetY = (rect.height - (b.maxY - b.minY) * scale) / 2;
+      return p => [offsetX + (p[0] - b.minX) * scale, rect.height - offsetY - (p[1] - b.minY) * scale];
+    }
+
+    function path(points, color, width, map, dashed = false) {
+      if (!points || points.length < 2) return;
+      ctx.beginPath();
+      points.forEach((point, index) => {
+        const [x, y] = map(point);
+        index ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      });
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineJoin = "round";
+      ctx.lineCap = "round";
+      ctx.setLineDash(dashed ? [7, 7] : []);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+
+    function polygon(points, fill, stroke, map) {
+      if (!points || points.length < 3) return;
+      ctx.beginPath();
+      points.forEach((point, index) => {
+        const [x, y] = map(point);
+        index ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+      });
+      ctx.closePath();
+      ctx.fillStyle = fill; ctx.fill();
+      ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke();
+    }
+
+    function draw() {
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+      ctx.fillStyle = "#06100e"; ctx.fillRect(0, 0, rect.width, rect.height);
+      if (!telemetry) return;
+      const map = mapper(telemetry);
+      const visual = telemetry.visualization || {};
+      const geometry = visual.geometry || {};
+      polygon(geometry.outer_polygon, "#10231d", "#315d4d", map);
+      (geometry.keepout_polygons || []).forEach(poly => polygon(poly, "#4a2525aa", "#ff7b7b", map));
+      (geometry.exclusion_polygons || []).forEach(poly => polygon(poly, "#3b301baa", "#ffc66d", map));
+      path(visual.evaluation_only_trajectory, "#536d65", 3, map);
+      path(visual.evaluation_only_cleaned_trajectory, "#66f1b5", 9, map);
+      path(visual.planned_path, "#69d7ff", 2.5, map, true);
+
+      const pose = telemetry.vehicle?.evaluation_only_pose_map || telemetry.vehicle?.estimated_pose_map;
+      if (pose) {
+        const [x, y] = map(pose);
+        const yaw = -(pose[2] || 0);
+        ctx.save(); ctx.translate(x, y); ctx.rotate(yaw);
+        ctx.beginPath(); ctx.moveTo(15, 0); ctx.lineTo(-10, -9); ctx.lineTo(-6, 0); ctx.lineTo(-10, 9); ctx.closePath();
+        ctx.fillStyle = "#ffc66d"; ctx.fill();
+        ctx.strokeStyle = "#fff1c9"; ctx.lineWidth = 1.5; ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    function duration(seconds) {
+      const value = Math.max(0, Math.round(seconds || 0));
+      return `${String(Math.floor(value / 60)).padStart(2, "0")}:${String(value % 60).padStart(2, "0")}`;
+    }
+
+    function render(data) {
+      telemetry = data;
+      document.querySelector("#state").textContent = data.status || "UNKNOWN";
+      document.querySelector("#elapsed").textContent = duration(data.elapsed_sec);
+      const progress = data.progress || {};
+      const percent = Math.round((progress.ratio || 0) * 100);
+      document.querySelector("#progress-bar").style.width = `${percent}%`;
+      document.querySelector("#progress-value").textContent = `${percent}%`;
+      document.querySelector("#component").textContent = progress.current_component
+        ? `组件 ${progress.active_component_number}/${progress.expected_components} · ${progress.current_component}`
+        : `等待组件 · 0/${progress.expected_components || 17}`;
+      document.querySelector("#speed").innerHTML = `${(data.vehicle?.linear_speed_m_s || 0).toFixed(2)} <small>m/s</small>`;
+      const pose = data.vehicle?.estimated_pose_map;
+      document.querySelector("#pose").innerHTML = pose
+        ? `${pose[0].toFixed(2)}, ${pose[1].toFixed(2)} <small>m</small>`
+        : "—";
+      const brush = document.querySelector("#brush");
+      brush.textContent = data.cleaning?.brush_enabled ? "开启" : "关闭";
+      brush.className = data.cleaning?.brush_enabled ? "ok" : "warn";
+      const safety = document.querySelector("#safety");
+      safety.textContent = data.cleaning?.emergency_stop ? "急停" : "正常";
+      safety.className = data.cleaning?.emergency_stop ? "danger" : "ok";
+      const events = document.querySelector("#events");
+      events.innerHTML = [...(data.events || [])].reverse().map(event =>
+        `<li><time>${duration(event.elapsed_sec)}</time><span>${event.label}</span></li>`
+      ).join("");
+      document.querySelector("#dot").classList.add("live");
+      document.querySelector("#connection").textContent = `实时 · ${data.topics_seen?.length || 0} topics`;
+      draw();
+    }
+
+    async function refresh() {
+      try {
+        const response = await fetch("/api/v1/telemetry", {cache: "no-store"});
+        if (!response.ok) throw new Error(response.statusText);
+        render(await response.json());
+      } catch (error) {
+        document.querySelector("#dot").classList.remove("live");
+        document.querySelector("#connection").textContent = "等待遥测";
+      }
+    }
+
+    window.addEventListener("resize", resizeCanvas);
+    new ResizeObserver(resizeCanvas).observe(canvas);
+    setInterval(refresh, 500);
+    refresh();
+  </script>
+</body>
+</html>
