@@ -9,7 +9,14 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
-        ("share/" + package_name + "/web", ["web/index.html"]),
+        (
+            "share/" + package_name + "/web",
+            ["web/index.html", "web/demo.html"],
+        ),
+        (
+            "share/" + package_name + "/rviz",
+            ["rviz/visual_demo.rviz"],
+        ),
     ],
     install_requires=["setuptools"],
     zip_safe=True,
@@ -21,6 +28,7 @@ setup(
     entry_points={
         "console_scripts": [
             "sanitation_hmi_server = sanitation_hmi.server:main",
+            "sanitation_live_dashboard = sanitation_hmi.live_server:main",
         ]
     },
 )

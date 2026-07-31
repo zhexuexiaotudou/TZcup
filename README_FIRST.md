@@ -2,6 +2,16 @@
 
 本页只说明如何在本机准备和启动 TZcup。项目概览、当前能力和边界见根目录 [`README.md`](README.md)。
 
+## 最快看到清扫车移动
+
+在 Windows PowerShell 的仓库根目录运行：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps1 -Video on
+```
+
+脚本使用 `TZcup-Ubuntu-24.04` WSL2/WSLg，自动启动 Gazebo、Nav2、Coverage、RViz 和 `http://127.0.0.1:8877` 实时看板；正常冷启动后车辆会自动驶向作业起点并执行 9 条清扫带和 8 个转弯。结果写入 `artifacts/auto17_visual_demo_<UTC>/`。再次启动前必须先停止旧实例；启动器会检测重复 Nav2/Coverage 节点并拒绝污染运行。完整说明见 [`docs/auto17-visual-demo.md`](docs/auto17-visual-demo.md)。
+
 ## 推荐环境
 
 - Ubuntu 24.04（原生或 WSLg）；

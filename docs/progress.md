@@ -2,6 +2,15 @@
 
 > 仓库清理说明：当前树只保留源码、配置、最终状态和紧凑评审证据。早期 Stage 0–4S 的原始构建日志、MCAP、逐点轨迹 CSV 和重复标定运行已从当前树移除；历史结论仍记录在本页及 `GPT_REVIEW_STAGE*.md`，原始字节可从清理前 Git 历史恢复。新的原始运行数据必须留在 Git 忽略目录，详见 [`artifact-policy.md`](artifact-policy.md)。
 
+## 2026-07-31：AUTO-17 可视化演示层
+
+- 新增一条命令入口 `scripts/run_visual_demo.ps1` / `scripts/run_visual_demo.sh`，在专用 overlay 中启动 Stage4V 混合定位、外部定位 Nav2、Coverage、Gazebo GUI、RViz 和实时看板。
+- 新增 `sanitation_live_dashboard` 只读 ROS/HTTP 节点、响应式任务地图、实时轨迹/进度/刷盘/安全状态、Gazebo 跟随相机和 RViz 跟随视图。
+- 录像由只读遥测专用渲染器生成，不录制 Windows 桌面，不采集无关窗口；默认同时记录 18 个关键 ROS 话题到 MCAP。
+- 本机 WSLg 正式任务：planning/transit/full execution/empirical coverage/safety 全部成功，17/17 组件，经验覆盖率 `0.9366667`，实际路径 `42.3215 m`，任务时长 `362.023 s`，定位 XY RMSE `0.035878 m`，碰撞/keepout/刷盘违规均为 `0`。
+- MCAP `205528` 条消息、18 个话题、持续 `397.705 s`；看板终态 `COMPLETED`，专用 MP4 `1.49 MB`，机器验收汇总 `PASS`，单命令启动器自行返回 `0`。
+- 边界不变：真值只用于评估与绘图；learned perception、real domain、J6 runtime、simulation competition matrix 仍为 false。
+
 ## 2026-07-30：Docker/WSLg 调试可视化
 
 - 新增 `sanitation_debug_visualization` 包，将现有目标注册表、Stage5A 场景和任务
