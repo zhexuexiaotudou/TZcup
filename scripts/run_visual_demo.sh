@@ -443,8 +443,8 @@ trap - EXIT INT TERM
 if [[ -f "${OUTPUT_DIR}/visual_demo.mp4" ]] &&
   command -v ffmpeg >/dev/null 2>&1
 then
-  ffmpeg -nostdin -y -ss 5 -i "${OUTPUT_DIR}/visual_demo.mp4" \
-    -frames:v 1 "${OUTPUT_DIR}/visual_demo_frame.png" \
+  ffmpeg -nostdin -y -sseof -5 -i "${OUTPUT_DIR}/visual_demo.mp4" \
+    -frames:v 1 -update 1 "${OUTPUT_DIR}/visual_demo_frame.png" \
     > "${OUTPUT_DIR}/video_frame.log" 2>&1 || true
 fi
 
