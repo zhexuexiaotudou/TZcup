@@ -14,6 +14,17 @@
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
+  <exec_depend>rosgraph_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>sanitation_perception_interfaces</exec_depend>
+  <exec_depend>sanitation_perception</exec_depend>
+  <exec_depend>sanitation_ground_truth</exec_depend>
+  <exec_depend>sanitation_tasks</exec_depend>
+  <exec_depend>sanitation_bringup</exec_depend>
+  <exec_depend>sanitation_navigation</exec_depend>
+  <exec_depend>sanitation_worlds</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
   <test_depend>python3-pytest</test_depend>
   <export><build_type>ament_python</build_type></export>
 </package>

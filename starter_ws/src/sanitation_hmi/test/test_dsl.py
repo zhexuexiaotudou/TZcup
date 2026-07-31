@@ -14,6 +14,8 @@ def test_bilingual_valid_commands_produce_complete_dsl():
         "返回充电站": "return_home",
         "status": "status",
         "紧急停止": "emergency_stop",
+        "解除急停": "clear_emergency_stop",
+        "release emergency stop": "clear_emergency_stop",
     }
     for text, intent in commands.items():
         result = parse_command(text)
