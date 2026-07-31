@@ -44,11 +44,11 @@ git status --short --branch
 git worktree list
 ```
 
-从最新、合适的远端基线创建 `agent/<task-slug>` 分支和独立 worktree。主工作区存在未提交实验时必须原样保留，禁止 stash、reset、checkout 或夹带到新任务。
+从最新、合适的远端基线创建 `codex/<task-slug>` 分支和独立 worktree。主工作区存在未提交实验时必须原样保留，禁止 stash、reset、checkout 或夹带到新任务。
 
 ### 3. `implementation_complete`：开发完成
 
-只修改本任务范围内的文件。每个提交都必须复核并更新根目录中文 `README.md`；“最近同步”只保留最新状态，不追加提交流水账。接口、环境变量、数据格式、launch 参数或评测口径变化时，还要同步更新相应架构、运维或验收文档。
+只修改本任务范围内的文件。每次改动都必须复核根目录中文 `README.md`；只有项目定位、使用方式、目录结构或当前能力边界变化时才更新。阶段过程写入 `docs/progress.md` 或对应专题文档，提交过程由 Git/PR 历史记录。接口、环境变量、数据格式、launch 参数或评测口径变化时，还要同步更新相应架构、运维或验收文档。
 
 ### 4. `local_verification_passed`：本地验证通过
 
@@ -74,11 +74,11 @@ py -3 scripts/ci_fast.py
 
 ### 5. `pr_opened`：分支已推送并创建 PR
 
-检查 diff 和敏感信息，只暂存本任务文件，确认本次每个提交都包含 `README.md`，使用简洁提交说明，推送远端分支并创建目标为 `main` 的 Draft PR。PR说明至少包含改动、原因、影响、验收命令、Stage 证据、部署计划与回滚点。
+检查 diff 和敏感信息，只暂存本任务文件，使用简洁提交说明，推送远端分支并创建目标为 `main` 的 Draft PR。PR说明至少包含改动、原因、影响、验收命令、Stage 证据、部署计划与回滚点。
 
 ### 6. `ci_passed`：CI 自动验收通过
 
-`.github/workflows/development-workflow.yml` 提供可立即运行的快速 CI，并逐个检查 PR 提交是否同步 `README.md`。失败时读取具体日志，在任务分支修复并重新运行。红灯、必须检查被跳过、状态未知或仍在排队都不能视为通过。
+`.github/workflows/development-workflow.yml` 提供可立即运行的快速 CI。失败时读取具体日志，在任务分支修复并重新运行。红灯、必须检查被跳过、状态未知或仍在排队都不能视为通过。
 
 完整 ROS/Gazebo 门禁可在具备 Ubuntu 24.04、ROS 2 Jazzy、Gazebo Harmonic、Docker及必要 GPU能力的受控服务器上执行。首次接入服务器前必须确认 SSH身份、主机指纹、运行目录、Runner标签、Secrets、健康检查、备份与回滚；这些信息不能写入公开仓库。
 

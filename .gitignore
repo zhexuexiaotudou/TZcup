@@ -14,6 +14,19 @@ artifacts/**/*.db3
 artifacts/**/*.mcap
 artifacts/**/metadata.yaml
 
+# Legacy Stage 0-4S raw logs and calibration runs stay outside the current
+# repository tree. Keep only compact, reviewed evidence directories in Git.
+artifacts/stage0_*/
+artifacts/stage1_*/
+artifacts/stage2_*/
+artifacts/stage3_*/
+artifacts/stage4_[0-9]*/
+artifacts/stage4r_[0-9]*/
+artifacts/stage4s_gt_*/
+artifacts/stage4s_fit_*/
+artifacts/stage4s_friction_*/
+artifacts/stage4s_motion_*/
+
 # Stage4W raw screening/formal runs stay local; compact review evidence is tracked.
 artifacts/stage4w_static_screening*/
 artifacts/stage4w_static_*screening*/

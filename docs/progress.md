@@ -1,5 +1,7 @@
 # 项目推进记录
 
+> 仓库清理说明：当前树只保留源码、配置、最终状态和紧凑评审证据。早期 Stage 0–4S 的原始构建日志、MCAP、逐点轨迹 CSV 和重复标定运行已从当前树移除；历史结论仍记录在本页及 `GPT_REVIEW_STAGE*.md`，原始字节可从清理前 Git 历史恢复。新的原始运行数据必须留在 Git 忽略目录，详见 [`artifact-policy.md`](artifact-policy.md)。
+
 ## 2026-07-30：Docker/WSLg 调试可视化
 
 - 新增 `sanitation_debug_visualization` 包，将现有目标注册表、Stage5A 场景和任务
