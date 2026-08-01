@@ -8,9 +8,10 @@
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
 ```
 
-该入口仍执行真实 Stage4V 定位、Nav2 和 Coverage 控制链，只隐藏网页与 RViz。默认选择
-约 `6 m × 5 m`、无禁入区的 `showcase_area.yaml`，以便一个镜头看清从起点到完成的全过程；
-`-FullArea` 切回原完整任务。缩小的是任务多边形，不是车辆运动或 Coverage 结果造假。
+该入口仍执行真实 Stage4V 定位、Nav2 和 Coverage 控制链，只隐藏网页与 RViz。默认加载单独制作的
+`16 m × 12 m` 世界 `sanitation_competition_demo.sdf`，而不是在大地图内裁出一块区域；场内包含
+30 m² 指定作业区、扣除安全回转带后的 12 m² 可清扫区和五类目标。`-FullArea` 切换到中型
+`80 m × 50 m` 场景的 17 组件任务。车辆运动、Nav2 跟踪和 Coverage 结果都来自真实仿真链。
 `sanitation_gazebo_visualization` 通过 Gazebo MarkerManager 和原生任务面板叠加以下只读信息：
 
 - 蓝色边框与半透明灰底：配置中的指定清扫区和尚未被青绿色覆盖的区域；
@@ -29,13 +30,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 速度门或安全决策。默认任务完成后保留 Gazebo，按 `Ctrl+C` 后收尾；自动验收可增加
 `-CloseOnComplete`。
 
-默认缩小演示与完整区域模式分别为：
+独立小场演示与中型完整区域模式分别为：
 
 ```powershell
-# 约 6 m × 5 m，默认用于功能演示
+# 独立 16 m × 12 m 竞赛功能演示场，默认 5 条作业带和 4 个转弯
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
 
-# 原 9 条清扫带、8 个转弯任务
+# 中型 80 m × 50 m 场景的 9 条清扫带、8 个转弯任务
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1 -FullArea
 ```
 
