@@ -245,7 +245,9 @@ ros2 daemon stop >/dev/null 2>&1 || true
 ros2 daemon start >/dev/null
 sleep 1
 
-existing_nodes="$(timeout 10 ros2 node list 2>/dev/null || true)"
+existing_nodes="$(
+  timeout 10 ros2 node list --no-daemon --spin-time 3 2>/dev/null || true
+)"
 for node in /controller_server /coverage_server /sanitation_live_dashboard; do
   if grep -Fxq "${node}" <<< "${existing_nodes}"; then
     echo "Existing AUTO-17 runtime node detected: ${node}" >&2
@@ -319,9 +321,14 @@ for _ in $(seq 1 150); do
     tail -50 "${OUTPUT_DIR}/dashboard.log" >&2 || true
     exit 4
   fi
-  topics="$(timeout 8 ros2 topic list 2>/dev/null || true)"
-  actions="$(timeout 8 ros2 action list 2>/dev/null || true)"
-  services="$(timeout 8 ros2 service list 2>/dev/null || true)"
+  topics="$(
+    timeout 8 ros2 topic list --no-daemon --spin-time 3 2>/dev/null || true
+  )"
+  services="$(
+    timeout 8 ros2 service list --no-daemon --spin-time 3 \
+      --include-hidden-services \
+      2>/dev/null || true
+  )"
   dashboard_health="$(
     curl --fail --silent --max-time 2 \
       "http://127.0.0.1:${DASHBOARD_PORT}/healthz" 2>/dev/null || true
@@ -330,9 +337,9 @@ for _ in $(seq 1 150); do
     grep -q '^/map$' <<< "${topics}" &&
     grep -q '^/scan$' <<< "${topics}" &&
     grep -q '^/cmd_vel$' <<< "${topics}" &&
-    grep -q '^/compute_coverage_path$' <<< "${actions}" &&
-    grep -q '^/follow_path$' <<< "${actions}" &&
-    grep -q '^/navigate_to_pose$' <<< "${actions}" &&
+    grep -q '^/compute_coverage_path/_action/send_goal$' <<< "${services}" &&
+    grep -q '^/follow_path/_action/send_goal$' <<< "${services}" &&
+    grep -q '^/navigate_to_pose/_action/send_goal$' <<< "${services}" &&
     grep -q '^/controller_server/get_state$' <<< "${services}" &&
     grep -q '"mission_status"' <<< "${dashboard_health}"
   then
