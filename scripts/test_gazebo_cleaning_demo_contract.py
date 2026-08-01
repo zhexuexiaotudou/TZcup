@@ -39,6 +39,10 @@ def test_gazebo_visualizer_package_contract() -> None:
     assert '"z:0.55} orientation {w:1.0}} "' in source
     assert '"z:0.55}} orientation {w:1.0}} "' not in source
     assert "GOING HOME -> CLEANING START" in source
+    assert 'ns:\\"tzcup_current_cleaning_path\\\" id:1' in source
+    assert 'ns:\\"tzcup_cleaning_status\\\" id:1' in source
+    assert 'ns:\\"tzcup_current_cleaning_path\\\" id:0' not in source
+    assert 'ns:\\"tzcup_cleaning_status\\\" id:0' not in source
     assert "visibility:GUI" in source
     assert "world_to_map_x" in source
     assert "world_to_map_y" in source

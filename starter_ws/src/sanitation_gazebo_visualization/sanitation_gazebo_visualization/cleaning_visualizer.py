@@ -252,7 +252,7 @@ class CleaningVisualizer(Node):
             )
             points.append(f"point {{x:{point.x:.5f} y:{point.y:.5f} z:0.055}}")
         marker = (
-            "ns:\"tzcup_current_cleaning_path\" id:0 "
+            "ns:\"tzcup_current_cleaning_path\" id:1 "
             "action:ADD_MODIFY type:LINE_STRIP visibility:GUI layer:3 "
             "scale {x:0.065 y:0.065 z:0.065} "
             f"{color_proto(1.0, 0.72, 0.08, 0.95)} "
@@ -375,7 +375,7 @@ class CleaningVisualizer(Node):
         else:
             color = color_proto(1.0, 0.90, 0.28, 1.0)
         return (
-            "ns:\"tzcup_cleaning_status\" id:0 action:ADD_MODIFY "
+            "ns:\"tzcup_cleaning_status\" id:1 action:ADD_MODIFY "
             "type:TEXT visibility:GUI layer:5 "
             f"pose {{position {{x:{world_pose.x:.5f} y:{world_pose.y:.5f} z:2.2}} "
             "orientation {w:1.0}} scale {x:0.32 y:0.32 z:0.32} "
