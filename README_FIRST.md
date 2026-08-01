@@ -23,6 +23,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 `/mnt/shared_memory`，避免 `[WARN:COPY MODE]`，并恢复异常最小化窗口；关闭 Gazebo 会同步停止本次后台仿真，不会遗留
 占用端口的旧会话或无渲染内容的 WSLg 黑色残留窗口。详见
 [`docs/gazebo-multiscale-control.md`](docs/gazebo-multiscale-control.md)。
+WSLg 冷启动后若 Gazebo 在原生控制面板加载前提前退出，启动器会自动安全重启并按同一参数
+重试一次；重复失败会明确退出，不会留下黑屏窗口或无限重启。
 
 比赛尺度配置使用
 `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps1 -CompetitionProfile -GazeboOnly -ManualControl -KeepOpen`；

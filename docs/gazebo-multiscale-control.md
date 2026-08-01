@@ -76,3 +76,6 @@ RemoteApp 只剩无标题黑色外壳，守护器会仅向该已跟踪句柄发�
 
 COPY MODE 本身来自 WSLg RemoteApp，不是 ROS 或 Gazebo 任务故障；它不再被解释成需要
 人工按 `Esc` 的普通状态。若预检后仍出现 COPY MODE，启动器会明确失败并保留诊断证据。
+若 WSLg 重启后的 Gazebo GUI 在原生任务控制加载前提前退出，Windows 启动器会将它与
+COPY MODE 一样视为可恢复的 WSLg 冷启动故障，最多再执行一次安全重启和同参数重试；第二次
+仍失败时立即停止并返回错误，不进行无限重启。
