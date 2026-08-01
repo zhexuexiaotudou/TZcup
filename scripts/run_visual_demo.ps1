@@ -14,6 +14,7 @@ param(
     [switch]$NoRviz,
     [switch]$NoMcap,
     [switch]$GazeboOnly,
+    [switch]$Showcase,
     [switch]$NoBrowser,
     [switch]$NoGazeboTrail,
     [switch]$KeepOpen
@@ -64,6 +65,7 @@ if ($NoGui) { $arguments += "--no-gui" }
 if ($NoRviz) { $arguments += "--no-rviz" }
 if ($NoMcap) { $arguments += "--no-mcap" }
 if ($GazeboOnly) { $arguments += "--gazebo-only" }
+if ($Showcase) { $arguments += "--showcase" }
 if ($NoBrowser) { $arguments += "--no-browser" }
 if ($NoGazeboTrail) { $arguments += "--no-gazebo-trail" }
 if ($KeepOpen) { $arguments += "--keep-open" }

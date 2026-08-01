@@ -19,8 +19,9 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
 ```
 
-专用入口会启动真实定位、Nav2 和 Coverage 任务，并在 Gazebo 内显示当前路径、实时已清扫带、
-17 段进度与刷盘状态；不会打开浏览器控制台或 RViz。
+专用入口默认启动约 `6 m × 5 m` 的小范围完整任务，并在 Gazebo 内显示指定清扫边界、车辆
+实际出发点、Coverage 作业起点、当前路径、实时已清扫带、组件进度与刷盘状态；俯视镜头可
+同时看到车辆和整个作业区，不会打开浏览器控制台或 RViz。增加 `-FullArea` 可恢复原 17 段任务。
 
 可用键盘控制验证车辆运动：
 

@@ -18,9 +18,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
 ```
 
-青绿色区域表示刷盘实际经过的已清扫带，琥珀色线表示当前 Nav2 跟踪路径，车顶状态文字
-显示任务阶段、组件进度和刷盘开关。默认完成后保留窗口；使用 `-CloseOnComplete` 可让脚本
-在任务完成并生成证据后自动关闭 Gazebo。
+默认运行一个约 `6 m × 5 m` 的完整小范围任务：蓝色边框和灰色底面是指定清扫区，车辆从
+蓝色 `HOME` 出发并驶向绿色 `CLEANING START`，随后逐条覆盖。青绿色区域是刷盘实际经过的
+已清扫带，琥珀色线是当前 Nav2 路径，车顶文字显示转场、对齐、清扫、转弯和完成状态。
+需要原 17 段大范围任务时增加 `-FullArea`；使用 `-CloseOnComplete` 可在验收后自动关闭。
 
 ## 推荐环境
 

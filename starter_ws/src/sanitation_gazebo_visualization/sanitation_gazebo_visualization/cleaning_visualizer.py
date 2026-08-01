@@ -10,12 +10,14 @@ import subprocess
 import threading
 import time
 from dataclasses import dataclass
+from pathlib import Path as FilePath
 
 from nav_msgs.msg import Odometry, Path
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from std_msgs.msg import Bool, String
+import yaml
 
 
 def yaw_from_quaternion(quaternion) -> float:
@@ -69,6 +71,9 @@ class CleaningVisualizer(Node):
         self.expected_components = int(
             self.declare_parameter("expected_components", 17).value
         )
+        self.mission_config = str(
+            self.declare_parameter("mission_config", "").value
+        )
         self.world_to_map_x = float(
             self.declare_parameter("world_to_map_x", 8.0).value
         )
@@ -104,6 +109,13 @@ class CleaningVisualizer(Node):
         self.last_status_update = 0.0
         self.dropped_requests = 0
         self.pending_kinds: set[str] = set()
+        self.outer_polygon_map: list[Point2] = []
+        self.show_zone_fill = False
+        self.home_world: Point2 | None = None
+        self.work_start_world: Point2 | None = None
+        self.static_markers_queued = False
+        self.static_markers_sent = False
+        self._load_mission_geometry()
 
         self.request_queue: queue.Queue[tuple[str, list[str]]] = queue.Queue(
             maxsize=48
@@ -147,11 +159,37 @@ class CleaningVisualizer(Node):
         sine = math.sin(self.world_to_map_yaw)
         return Point2(cosine * dx + sine * dy, -sine * dx + cosine * dy)
 
+    def _load_mission_geometry(self) -> None:
+        if not self.mission_config:
+            return
+        config_path = FilePath(self.mission_config)
+        try:
+            config = yaml.safe_load(config_path.read_text(encoding="utf-8"))
+        except (OSError, yaml.YAMLError) as error:
+            self.get_logger().warning(f"Mission boundary unavailable: {error}")
+            return
+        polygon = config.get("outer_polygon", []) if isinstance(config, dict) else []
+        try:
+            self.outer_polygon_map = [
+                Point2(float(point[0]), float(point[1])) for point in polygon
+            ]
+        except (TypeError, ValueError, IndexError):
+            self.outer_polygon_map = []
+            self.get_logger().warning("Mission outer_polygon is malformed")
+            return
+        keepouts = config.get("keepout_polygons", [])
+        exclusions = config.get("exclusion_polygons", [])
+        self.show_zone_fill = (
+            len(self.outer_polygon_map) == 4 and not keepouts and not exclusions
+        )
+
     def _on_truth(self, message: Odometry) -> None:
         pose = message.pose.pose
         self.map_x = float(pose.position.x)
         self.map_y = float(pose.position.y)
         self.map_yaw = yaw_from_quaternion(pose.orientation)
+        if self.home_world is None:
+            self.home_world = self.map_to_world(self.map_x, self.map_y)
         self.have_pose = True
 
     def _on_brush(self, message: Bool) -> None:
@@ -193,6 +231,20 @@ class CleaningVisualizer(Node):
     def _on_path(self, message: Path) -> None:
         if len(message.poses) < 2 or not self.markers_cleared:
             return
+        if (
+            self.work_start_world is None
+            and self.coverage_state == "EXECUTING_SWATH"
+        ):
+            first_pose = message.poses[0].pose.position
+            self.work_start_world = self.map_to_world(first_pose.x, first_pose.y)
+            self._enqueue(
+                "work_start", self._build_point_markers(
+                    "tzcup_cleaning_start",
+                    self.work_start_world,
+                    "CLEANING START",
+                    (0.16, 1.0, 0.38, 1.0),
+                )
+            )
         points = []
         for stamped_pose in message.poses:
             point = self.map_to_world(
@@ -222,9 +274,17 @@ class CleaningVisualizer(Node):
                             "tzcup_cleaned_swath",
                             "tzcup_current_cleaning_path",
                             "tzcup_cleaning_status",
+                            "tzcup_cleaning_zone",
+                            "tzcup_cleaning_home",
+                            "tzcup_cleaning_start",
                         )
                     ],
                 )
+            return
+        if not self.static_markers_sent:
+            if not self.static_markers_queued:
+                self.static_markers_queued = True
+                self._enqueue("static", self._build_static_markers())
             return
 
         now = time.monotonic()
@@ -292,8 +352,19 @@ class CleaningVisualizer(Node):
 
     def _build_status_marker(self) -> str:
         world_pose = self.map_to_world(self.map_x, self.map_y)
+        state_label = {
+            "WAITING": "READY AT HOME",
+            "PLANNING": "PLANNING CLEANING ROUTE",
+            "TRANSIT_PREFLIGHT": "CHECKING ROUTE TO START",
+            "TRANSIT": "GOING HOME -> CLEANING START",
+            "ALIGNING": "ALIGNING AT CLEANING START",
+            "EXECUTING_SWATH": "CLEANING ASSIGNED AREA",
+            "EXECUTING_TURN": "TURNING - BRUSH OFF",
+            "COMPLETED": "ASSIGNED AREA COMPLETE",
+            "FAILED": "MISSION FAILED",
+        }.get(self.coverage_state, self.coverage_state)
         text = (
-            f"{self.coverage_state} | {self.completed_components}/"
+            f"{state_label} | STEP {self.completed_components}/"
             f"{self.expected_components} | BRUSH "
             f"{'ON' if self.brush_enabled else 'OFF'}"
         )
@@ -310,6 +381,79 @@ class CleaningVisualizer(Node):
             "orientation {w:1.0}} scale {x:0.32 y:0.32 z:0.32} "
             f"text:{quote_proto(text)} {color}"
         )
+
+    def _build_static_markers(self) -> list[str]:
+        markers: list[str] = []
+        if self.outer_polygon_map:
+            polygon_world = [
+                self.map_to_world(point.x, point.y)
+                for point in self.outer_polygon_map
+            ]
+            closed = polygon_world + [polygon_world[0]]
+            points = " ".join(
+                f"point {{x:{point.x:.5f} y:{point.y:.5f} z:0.06000}}"
+                for point in closed
+            )
+            markers.append(
+                "ns:\"tzcup_cleaning_zone\" id:1 action:ADD_MODIFY "
+                "type:LINE_STRIP visibility:GUI layer:4 "
+                "scale {x:0.09000 y:0.09000 z:0.09000} "
+                f"{color_proto(0.10, 0.72, 1.0, 1.0)} {points}"
+            )
+            if self.show_zone_fill:
+                xs = [point.x for point in polygon_world]
+                ys = [point.y for point in polygon_world]
+                center_x = 0.5 * (min(xs) + max(xs))
+                center_y = 0.5 * (min(ys) + max(ys))
+                markers.append(
+                    "ns:\"tzcup_cleaning_zone\" id:2 action:ADD_MODIFY "
+                    "type:BOX visibility:GUI layer:1 "
+                    f"pose {{position {{x:{center_x:.5f} y:{center_y:.5f} z:0.01200}} "
+                    "orientation {w:1.0}} "
+                    f"scale {{x:{max(xs) - min(xs):.5f} "
+                    f"y:{max(ys) - min(ys):.5f} z:0.00800}} "
+                    f"{color_proto(0.38, 0.44, 0.50, 0.16)}"
+                )
+                markers.append(
+                    "ns:\"tzcup_cleaning_zone\" id:3 action:ADD_MODIFY "
+                    "type:TEXT visibility:GUI layer:5 "
+                    f"pose {{position {{x:{center_x:.5f} y:{max(ys) + 0.35:.5f} "
+                    "z:0.55} orientation {w:1.0}} "
+                    "scale {x:0.30 y:0.30 z:0.30} "
+                    f"text:{quote_proto('ASSIGNED CLEANING AREA')} "
+                    f"{color_proto(0.22, 0.80, 1.0, 1.0)}"
+                )
+        if self.home_world is not None:
+            markers.extend(
+                self._build_point_markers(
+                    "tzcup_cleaning_home",
+                    self.home_world,
+                    "HOME / MISSION START",
+                    (0.28, 0.64, 1.0, 1.0),
+                )
+            )
+        return markers
+
+    def _build_point_markers(
+        self,
+        namespace: str,
+        point: Point2,
+        label: str,
+        color: tuple[float, float, float, float],
+    ) -> list[str]:
+        material = color_proto(*color)
+        return [
+            f"ns:{quote_proto(namespace)} id:1 action:ADD_MODIFY "
+            "type:SPHERE visibility:GUI layer:5 "
+            f"pose {{position {{x:{point.x:.5f} y:{point.y:.5f} z:0.16}} "
+            "orientation {w:1.0}} scale {x:0.32 y:0.32 z:0.32} "
+            f"{material}",
+            f"ns:{quote_proto(namespace)} id:2 action:ADD_MODIFY "
+            "type:TEXT visibility:GUI layer:5 "
+            f"pose {{position {{x:{point.x:.5f} y:{point.y:.5f} z:0.72}} "
+            "orientation {w:1.0}} scale {x:0.25 y:0.25 z:0.25} "
+            f"text:{quote_proto(label)} {material}",
+        ]
 
     def _enqueue(self, kind: str, markers: list[str]) -> None:
         if kind in self.pending_kinds:
@@ -334,6 +478,9 @@ class CleaningVisualizer(Node):
             if kind == "clear":
                 self.markers_cleared = success
                 self.clear_queued = False
+            elif kind == "static":
+                self.static_markers_sent = success
+                self.static_markers_queued = False
             self.pending_kinds.discard(kind)
             self.request_queue.task_done()
 

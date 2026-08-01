@@ -14,6 +14,8 @@ VIDEO_MODE="auto"
 KEEP_OPEN=0
 OPEN_DASHBOARD=1
 GAZEBO_TRAIL=1
+SHOWCASE=0
+EXPECTED_COMPONENTS=17
 MISSION_TIMEOUT_SEC=1800
 RANDOM_SEED=0
 
@@ -32,6 +34,7 @@ Options:
   --no-mcap             Do not record MCAP
   --video MODE          auto, on, or off (default: auto)
   --gazebo-only         Show the full mission in Gazebo without browser or RViz
+  --showcase            Use the bounded 6 m x 5 m demonstration task
   --no-browser          Keep the read-only dashboard server hidden
   --no-gazebo-trail     Disable Gazebo cleaned-swath and mission markers
   --keep-open           Keep GUI/dashboard open after mission termination
@@ -53,6 +56,7 @@ while [[ $# -gt 0 ]]; do
     --no-mcap) RECORD_MCAP=0; shift ;;
     --video) VIDEO_MODE="$2"; shift 2 ;;
     --gazebo-only) RVIZ=0; VIDEO_MODE=off; OPEN_DASHBOARD=0; shift ;;
+    --showcase) SHOWCASE=1; EXPECTED_COMPONENTS=9; shift ;;
     --no-browser) OPEN_DASHBOARD=0; shift ;;
     --no-gazebo-trail) GAZEBO_TRAIL=0; shift ;;
     --keep-open) KEEP_OPEN=1; shift ;;
@@ -192,6 +196,11 @@ hmi_share="$(ros2 pkg prefix sanitation_hmi)/share/sanitation_hmi"
 map_root="${navigation_share}/maps"
 nav_params="${runtime}/nav2_autonomous_navigation_profile_v1.yaml"
 mission_config="${runtime}/demo_area_autonomous_navigation_profile_v1.yaml"
+mission_template="${tasks_share}/config/demo_area.yaml"
+if [[ "${SHOWCASE}" -eq 1 ]]; then
+  mission_config="${runtime}/showcase_area_autonomous_navigation_profile_v1.yaml"
+  mission_template="${tasks_share}/config/showcase_area.yaml"
+fi
 world_file="$(
   ros2 pkg prefix sanitation_worlds
 )/share/sanitation_worlds/worlds/sanitation_structured_world.sdf"
@@ -213,7 +222,7 @@ fi
 
 python3 "${ROOT}/scripts/stage5br6w_profile.py" \
   --base-nav2 "${navigation_share}/config/nav2.yaml" \
-  --base-mission "${tasks_share}/config/demo_area.yaml" \
+  --base-mission "${mission_template}" \
   --profile "${navigation_share}/config/autonomous_navigation_profile_v1.yaml" \
   --nav2-output "${nav_params}" \
   --mission-output "${mission_config}"
@@ -262,9 +271,9 @@ pids+=("$!")
 setsid ros2 run sanitation_hmi sanitation_live_dashboard --ros-args \
   -p use_sim_time:=true \
   -p port:="${DASHBOARD_PORT}" \
-  -p output_dir:="${OUTPUT_DIR}" \
-  -p mission_config:="${mission_config}" \
-  -p expected_components:=17 \
+    -p output_dir:="${OUTPUT_DIR}" \
+    -p mission_config:="${mission_config}" \
+    -p expected_components:="${EXPECTED_COMPONENTS}" \
   > "${OUTPUT_DIR}/dashboard.log" 2>&1 &
 dashboard_pid="$!"
 pids+=("${dashboard_pid}")
@@ -273,7 +282,8 @@ if [[ "${GUI}" -eq 1 && "${GAZEBO_TRAIL}" -eq 1 ]]; then
   setsid ros2 run sanitation_gazebo_visualization cleaning_visualizer --ros-args \
     -p use_sim_time:=true \
     -p operation_width_m:=0.65 \
-    -p expected_components:=17 \
+    -p expected_components:="${EXPECTED_COMPONENTS}" \
+    -p mission_config:="${mission_config}" \
     -p world_to_map_x:=8.0 \
     -p world_to_map_y:=0.0 \
     -p world_to_map_yaw:=0.0 \
@@ -325,12 +335,16 @@ if [[ "${ready}" -ne 1 ]]; then
 fi
 
 camera_follow_requested=0
+camera_track_request='track_mode: FOLLOW_LOOK_AT, follow_target: {name: "sanitation_vehicle", type: MODEL}, track_target: {name: "sanitation_vehicle", type: MODEL}, follow_offset: {x: -4.5, y: -3.0, z: 3.2}, follow_pgain: 0.35, track_pgain: 0.35'
+if [[ "${SHOWCASE}" -eq 1 ]]; then
+  camera_track_request='track_mode: FOLLOW_LOOK_AT, follow_target: {name: "sanitation_vehicle", type: MODEL}, track_target: {name: "sanitation_vehicle", type: MODEL}, follow_offset: {x: -8.0, y: -8.0, z: 10.0}, follow_pgain: 0.25, track_pgain: 0.35'
+fi
 if [[ "${GUI}" -eq 1 ]]; then
   for _ in $(seq 1 40); do
     gz_topics="$(gz topic -l 2>/dev/null || true)"
     if grep -Fxq '/gui/track' <<< "${gz_topics}"; then
       if gz topic -t /gui/track -m gz.msgs.CameraTrack -p \
-        'track_mode: FOLLOW_LOOK_AT, follow_target: {name: "sanitation_vehicle", type: MODEL}, track_target: {name: "sanitation_vehicle", type: MODEL}, follow_offset: {x: -4.5, y: -3.0, z: 3.2}, follow_pgain: 0.35, track_pgain: 0.35' \
+        "${camera_track_request}" \
         > "${OUTPUT_DIR}/gazebo_camera_follow.log" 2>&1
       then
         camera_follow_requested=1

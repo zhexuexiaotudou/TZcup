@@ -11,6 +11,7 @@ setup(
         ("share/" + package_name, ["package.xml"]),
         ("share/" + package_name + "/config", [
             "config/demo_area.yaml",
+            "config/showcase_area.yaml",
             "config/mission_schema.json",
             "config/mapping_completion_route.json",
             "config/localization_route.json",
