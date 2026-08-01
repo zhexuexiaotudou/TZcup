@@ -24,6 +24,21 @@ def test_readiness_bypasses_stale_ros_daemon():
     assert "ros2 action list" not in launcher
 
 
+def test_nav2_waits_for_localization_tf_and_exact_lifecycle_state():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+
+    localization_gate = launcher.index("tf2_echo odom base_footprint")
+    navigation_start = launcher.index(
+        "setsid ros2 launch sanitation_navigation navigation.launch.py"
+    )
+    assert localization_gate < navigation_start
+    assert "grep -Fq 'Translation:'" in launcher
+    assert "grep -Fq 'Rotation:'" in launcher
+    assert "grep -Fxq 'active [3]' <<< \"${controller_state}\"" in launcher
+    assert "grep -Fxq 'active [3]' <<< \"${planner_state}\"" in launcher
+    assert "grep -q 'active' <<< \"${controller_state}\"" not in launcher
+
+
 def test_camera_follow_discovery_has_a_hard_timeout():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
 

@@ -422,7 +422,49 @@ setsid ros2 launch sanitation_bringup stage4v_localization.launch.py \
   camera_profile:=V5_retracted fusion_mode:=hybrid_rtk_scan_imu_wheel \
   enable_scan_refiner:=true \
   > "${OUTPUT_DIR}/localization.log" 2>&1 &
-pids+=("$!")
+localization_pid="$!"
+pids+=("${localization_pid}")
+
+# Nav2 lifecycle activation is intentionally delayed until the localization
+# pipeline has produced both its public topics and the odom -> base_footprint
+# transform. On a cold WSL / Gazebo start the simulator may need several
+# seconds to publish its first wheel and IMU samples; activating Nav2 earlier
+# makes its costmaps abort and leaves a visible but unusable operator window.
+localization_ready=0
+localization_topics=""
+localization_tf=""
+for _ in $(seq 1 120); do
+  if ! kill -0 "${localization_pid}" 2>/dev/null; then
+    echo "Localization runtime exited before readiness." >&2
+    tail -80 "${OUTPUT_DIR}/localization.log" >&2 || true
+    exit 4
+  fi
+  localization_topics="$(
+    timeout 8 ros2 topic list --no-daemon --spin-time 3 2>/dev/null || true
+  )"
+  if grep -Fxq '/localization/fused_pose' <<< "${localization_topics}" &&
+    grep -Fxq '/scan' <<< "${localization_topics}" &&
+    grep -Fxq '/odom' <<< "${localization_topics}"
+  then
+    localization_tf="$(
+      timeout 4 ros2 run tf2_ros tf2_echo odom base_footprint 2>&1 || true
+    )"
+    if grep -Fq 'Translation:' <<< "${localization_tf}" &&
+      grep -Fq 'Rotation:' <<< "${localization_tf}"
+    then
+      localization_ready=1
+      break
+    fi
+  fi
+  sleep 1
+done
+printf '%s\n' "${localization_topics}" > "${OUTPUT_DIR}/localization_readiness_topics.txt"
+printf '%s\n' "${localization_tf}" > "${OUTPUT_DIR}/localization_readiness_tf.txt"
+if [[ "${localization_ready}" -ne 1 ]]; then
+  echo "Localization did not publish odom -> base_footprint within the readiness window." >&2
+  tail -80 "${OUTPUT_DIR}/localization.log" >&2 || true
+  exit 4
+fi
 
 setsid ros2 launch sanitation_navigation navigation.launch.py \
   rviz:=false localization_backend:=external params_file:="${nav_params}" \
@@ -514,8 +556,8 @@ for _ in $(seq 1 150); do
     grep -q '^/follow_path/_action/send_goal$' <<< "${services}" &&
     grep -q '^/navigate_to_pose/_action/send_goal$' <<< "${services}" &&
     grep -q '^/controller_server/get_state$' <<< "${services}" &&
-    grep -q 'active' <<< "${controller_state}" &&
-    grep -q 'active' <<< "${planner_state}" &&
+    grep -Fxq 'active [3]' <<< "${controller_state}" &&
+    grep -Fxq 'active [3]' <<< "${planner_state}" &&
     grep -q '"mission_status"' <<< "${dashboard_health}"
   then
     printf '%s\n' "${dashboard_health}" > "${OUTPUT_DIR}/dashboard_health.json"
