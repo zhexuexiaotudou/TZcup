@@ -23,6 +23,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 `[WARN:COPY MODE]`，单击 Gazebo 后按一次 `Esc`。详见
 [`docs/gazebo-multiscale-control.md`](docs/gazebo-multiscale-control.md)。
 
+比赛尺度配置使用
+`powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps1 -CompetitionProfile -GazeboOnly -ManualControl -KeepOpen`；
+它加载完整 20,000 m² 地图并现场执行一个 108 m² 代表分区，不代表全场耐久通过。
+
 默认运行一个约 `6 m × 5 m` 的完整小范围任务：蓝色边框和灰色底面是指定清扫区，车辆从
 蓝色 `HOME` 出发并驶向绿色 `CLEANING START`，随后逐条覆盖。青绿色区域是刷盘实际经过的
 已清扫带，琥珀色线是当前 Nav2 路径，车顶文字显示转场、对齐、清扫、转弯和完成状态。
