@@ -11,6 +11,8 @@ param(
     [int]$Seed = 0,
     [ValidateSet("auto", "d3d12", "software")]
     [string]$GazeboGuiRenderer = "auto",
+    [ValidateSet("normal", "fast", "turbo")]
+    [string]$SimulationSpeed = "fast",
     [switch]$SkipBuild,
     [switch]$NoGui,
     [switch]$NoRviz,
@@ -94,6 +96,7 @@ $arguments = @(
     "--timeout", "$TimeoutSeconds",
     "--seed", "$Seed",
     "--gazebo-gui-renderer", $GazeboGuiRenderer,
+    "--simulation-speed", $SimulationSpeed,
     "--map-size", $MapSize
 )
 if ($Workspace) {

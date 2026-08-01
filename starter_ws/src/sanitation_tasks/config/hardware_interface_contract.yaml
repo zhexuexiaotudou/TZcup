@@ -1,0 +1,75 @@
+contract_version: 1.0.0
+coordinate_convention:
+  world_frame: map
+  robot_frame: base_link
+  forward_axis: x
+  left_axis: y
+  up_axis: z
+  angular_sign: right_hand_rule
+  units: SI
+command_interfaces:
+  velocity:
+    topic: /cmd_vel
+    type: geometry_msgs/msg/Twist
+    minimum_rate_hz: 20.0
+    timeout_sec: 0.25
+    limits:
+      linear_x_mps: [-1.0, 1.0]
+      angular_z_radps: [-0.72, 0.72]
+      linear_acceleration_mps2: 0.7
+      angular_acceleration_radps2: 1.2
+  brush:
+    topic: /brush_enabled
+    type: std_msgs/msg/Bool
+    timeout_sec: 0.50
+sensor_interfaces:
+  lidar:
+    topic: /scan/navigation
+    type: sensor_msgs/msg/LaserScan
+    minimum_rate_hz: 10.0
+    freshness_timeout_sec: 0.30
+  imu:
+    topic: /imu/data
+    type: sensor_msgs/msg/Imu
+    minimum_rate_hz: 50.0
+    freshness_timeout_sec: 0.10
+  wheel_odometry:
+    topic: /wheel/odom
+    type: nav_msgs/msg/Odometry
+    minimum_rate_hz: 30.0
+    freshness_timeout_sec: 0.15
+  fused_localization:
+    topic: /odometry/filtered
+    type: nav_msgs/msg/Odometry
+    minimum_rate_hz: 20.0
+    freshness_timeout_sec: 0.20
+  brush_feedback:
+    topic: /brush_enabled
+    type: std_msgs/msg/Bool
+    minimum_rate_hz: 2.0
+    freshness_timeout_sec: 0.75
+safety_contract:
+  emergency_stop_topic: /emergency_stop
+  emergency_stop_type: std_msgs/msg/Bool
+  maximum_command_stop_latency_sec: 0.25
+  maximum_brush_stop_latency_sec: 0.50
+  fail_safe_on_command_timeout: true
+  fail_safe_on_localization_timeout: true
+  require_hardware_estop_chain: true
+time_contract:
+  production_uses_sim_time: false
+  maximum_sensor_clock_skew_sec: 0.02
+  monotonic_timestamp_required: true
+acceptance_gates:
+  sil:
+    minimum_coverage_rate: 0.90
+    maximum_collision_count: 0
+    maximum_localization_p95_m: 0.20
+  hil:
+    maximum_command_latency_p95_sec: 0.10
+    maximum_estop_latency_sec: 0.25
+    maximum_sensor_dropout_rate: 0.01
+  field:
+    minimum_consecutive_safe_missions: 20
+    maximum_manual_interventions_per_mission: 0
+    rollback_package_required: true

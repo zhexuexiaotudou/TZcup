@@ -24,6 +24,11 @@ SanitationMissionControl::SanitationMissionControl()
     [this](const std_msgs::msg::String::SharedPtr _message) {
       this->SetMissionState(_message->data);
     });
+  this->telemetrySubscription = this->node->create_subscription<std_msgs::msg::String>(
+    "/coverage/gazebo_telemetry", rclcpp::QoS(10),
+    [this](const std_msgs::msg::String::SharedPtr _message) {
+      this->SetTelemetryJson(_message->data);
+    });
   rclcpp::ExecutorOptions executorOptions;
   executorOptions.context = this->context;
   this->executor =
@@ -82,6 +87,12 @@ QString SanitationMissionControl::SceneLabel() const
   return QString::fromStdString(this->sceneLabel);
 }
 
+QString SanitationMissionControl::TelemetryJson() const
+{
+  std::lock_guard<std::mutex> lock(this->textMutex);
+  return QString::fromStdString(this->telemetryJson);
+}
+
 void SanitationMissionControl::SetMissionState(const std::string &_state)
 {
   {
@@ -98,6 +109,15 @@ void SanitationMissionControl::SetOperatorMessage(const std::string &_message)
     this->operatorMessage = _message;
   }
   QMetaObject::invokeMethod(this, "OperatorMessageChanged", Qt::QueuedConnection);
+}
+
+void SanitationMissionControl::SetTelemetryJson(const std::string &_telemetry)
+{
+  {
+    std::lock_guard<std::mutex> lock(this->textMutex);
+    this->telemetryJson = _telemetry;
+  }
+  QMetaObject::invokeMethod(this, "TelemetryJsonChanged", Qt::QueuedConnection);
 }
 
 void SanitationMissionControl::Call(

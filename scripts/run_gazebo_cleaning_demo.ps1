@@ -11,6 +11,8 @@ param(
     [switch]$FullArea,
     [ValidateSet("small", "medium", "large")]
     [string]$MapSize = "small",
+    [ValidateSet("normal", "fast", "turbo")]
+    [string]$SimulationSpeed = "fast",
     [switch]$CloseOnComplete
 )
 
@@ -25,6 +27,7 @@ $launchParameters = @{
     GazeboOnly = $true
     MapSize = $MapSize
     ManualControl = $true
+    SimulationSpeed = $SimulationSpeed
 }
 if ($FullArea) { $launchParameters["MapSize"] = "medium" }
 if ($Workspace) { $launchParameters["Workspace"] = $Workspace }
@@ -37,7 +40,7 @@ if (-not $CloseOnComplete) { $launchParameters["KeepOpen"] = $true }
 if ($FullArea) {
     Write-Host "Launching the medium 80 m x 50 m scene with the full 17-component mission..."
 } else {
-    Write-Host "Launching the $MapSize Gazebo scene with native mission controls..."
+    Write-Host "Launching the independent 16 m x 12 m competition demo with native mission controls at $SimulationSpeed speed..."
 }
 Write-Host "Use the right-side Gazebo panel: Start, Pause, Resume, Stop, or Close Gazebo."
 Write-Host "Gray is the assigned area, teal is cleaned ground, and amber is the active path."

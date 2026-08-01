@@ -12,6 +12,9 @@ setup(
         ("share/" + package_name + "/config", [
             "config/demo_area.yaml",
             "config/showcase_area.yaml",
+            "config/competition_demo_area.yaml",
+            "config/hardware_interface_contract.yaml",
+            "config/sim2real_fault_profiles.yaml",
             "config/mission_schema.json",
             "config/mapping_completion_route.json",
             "config/localization_route.json",

@@ -48,6 +48,26 @@ class Point2:
     y: float
 
 
+def point_in_polygon(point: Point2, polygon: list[Point2]) -> bool:
+    """Return whether a point is inside a simple polygon."""
+    if len(polygon) < 3:
+        return False
+    inside = False
+    previous = polygon[-1]
+    for current in polygon:
+        if (previous.y > point.y) != (current.y > point.y):
+            crossing_x = (
+                (current.x - previous.x)
+                * (point.y - previous.y)
+                / (current.y - previous.y)
+                + previous.x
+            )
+            if point.x < crossing_x:
+                inside = not inside
+        previous = current
+    return inside
+
+
 class CleaningVisualizer(Node):
     """Send route, swept-area, and status markers to the Gazebo GUI only."""
 
@@ -95,6 +115,15 @@ class CleaningVisualizer(Node):
         self.service_timeout_ms = int(
             self.declare_parameter("service_timeout_ms", 3000).value
         )
+        self.cleaning_cell_m = float(
+            self.declare_parameter("cleaning_cell_m", 0.20).value
+        )
+        self.simulation_speed_label = str(
+            self.declare_parameter("simulation_speed_label", "2X TARGET").value
+        )
+        self.world_name = str(
+            self.declare_parameter("world_name", "sanitation_competition_demo").value
+        )
 
         self.gz_binary = shutil.which("gz")
         if not self.gz_binary:
@@ -104,6 +133,13 @@ class CleaningVisualizer(Node):
         self.map_y = 0.0
         self.map_yaw = 0.0
         self.have_pose = False
+        self.current_speed_mps = 0.0
+        self.total_distance_m = 0.0
+        self.last_pose_map: Point2 | None = None
+        self.last_pose_stamp_sec: float | None = None
+        self.mission_start_stamp_sec: float | None = None
+        self.trajectory_map: list[Point2] = []
+        self.planned_path_map: list[Point2] = []
         self.brush_enabled = False
         self.coverage_state = "WAITING"
         self.completed_components = 0
@@ -115,10 +151,14 @@ class CleaningVisualizer(Node):
         self.last_trail_update = 0.0
         self.markers_cleared = False
         self.clear_queued = False
-        self.last_status_update = 0.0
         self.dropped_requests = 0
         self.pending_kinds: set[str] = set()
         self.outer_polygon_map: list[Point2] = []
+        self.cleanable_polygon_map: list[Point2] = []
+        self.exclusion_polygons_map: list[list[Point2]] = []
+        self.cleanable_cells: dict[tuple[int, int], Point2] = {}
+        self.cleaned_cells: set[tuple[int, int]] = set()
+        self.targets: list[dict] = []
         self.show_zone_fill = False
         self.home_world: Point2 | None = None
         self.work_start_world: Point2 | None = None
@@ -149,7 +189,11 @@ class CleaningVisualizer(Node):
             String, "/coverage/component_state", self._on_component, 10
         )
         self.create_subscription(Path, "/coverage/current_path", self._on_path, 10)
+        self.telemetry_publisher = self.create_publisher(
+            String, "/coverage/gazebo_telemetry", 10
+        )
         self.create_timer(0.1, self._update_markers)
+        self.create_timer(0.5, self._publish_telemetry)
         self.get_logger().info(
             "Gazebo cleaning visualization ready: "
             f"service={self.marker_service} width={self.operation_width_m:.2f} m "
@@ -188,18 +232,103 @@ class CleaningVisualizer(Node):
             return
         keepouts = config.get("keepout_polygons", [])
         exclusions = config.get("exclusion_polygons", [])
+        for polygon in [*keepouts, *exclusions]:
+            try:
+                self.exclusion_polygons_map.append(
+                    [Point2(float(point[0]), float(point[1])) for point in polygon]
+                )
+            except (TypeError, ValueError, IndexError):
+                self.exclusion_polygons_map = []
+                break
+        for target in config.get("cleaning_targets", []):
+            try:
+                position = target["position"]
+                self.targets.append({
+                    "id": str(target["id"]),
+                    "class": str(target.get("class", "other")),
+                    "x": float(position[0]),
+                    "y": float(position[1]),
+                    "radius_m": float(target.get("collection_radius_m", 0.55)),
+                    "model_name": str(target.get("model_name", "")),
+                    "cleaned": False,
+                    "removed_from_scene": False,
+                })
+            except (KeyError, TypeError, ValueError, IndexError):
+                self.get_logger().warning("Ignoring malformed cleaning target")
         self.show_zone_fill = (
             len(self.outer_polygon_map) == 4 and not keepouts and not exclusions
         )
+        self.cleanable_polygon_map = list(self.outer_polygon_map)
+        if len(self.outer_polygon_map) == 4:
+            inset = float(config.get("headland", {}).get("width_m", 0.0))
+            min_x = min(point.x for point in self.outer_polygon_map) + inset
+            max_x = max(point.x for point in self.outer_polygon_map) - inset
+            min_y = min(point.y for point in self.outer_polygon_map) + inset
+            max_y = max(point.y for point in self.outer_polygon_map) - inset
+            if min_x < max_x and min_y < max_y:
+                self.cleanable_polygon_map = [
+                    Point2(min_x, min_y), Point2(max_x, min_y),
+                    Point2(max_x, max_y), Point2(min_x, max_y),
+                ]
+        self._build_cleanable_grid()
+
+    def _build_cleanable_grid(self) -> None:
+        polygon = self.cleanable_polygon_map
+        if not polygon or self.cleaning_cell_m <= 0.0:
+            return
+        min_x = min(point.x for point in polygon)
+        max_x = max(point.x for point in polygon)
+        min_y = min(point.y for point in polygon)
+        max_y = max(point.y for point in polygon)
+        rows = int(math.ceil((max_y - min_y) / self.cleaning_cell_m))
+        columns = int(math.ceil((max_x - min_x) / self.cleaning_cell_m))
+        for row in range(rows):
+            for column in range(columns):
+                point = Point2(
+                    min_x + (column + 0.5) * self.cleaning_cell_m,
+                    min_y + (row + 0.5) * self.cleaning_cell_m,
+                )
+                if point_in_polygon(point, polygon) and not any(
+                    point_in_polygon(point, polygon)
+                    for polygon in self.exclusion_polygons_map
+                ):
+                    self.cleanable_cells[(column, row)] = point
 
     def _on_truth(self, message: Odometry) -> None:
         pose = message.pose.pose
+        stamp_sec = (
+            float(message.header.stamp.sec)
+            + float(message.header.stamp.nanosec) / 1_000_000_000.0
+        )
         self.map_x = float(pose.position.x)
         self.map_y = float(pose.position.y)
         self.map_yaw = yaw_from_quaternion(pose.orientation)
+        self.current_speed_mps = math.hypot(
+            float(message.twist.twist.linear.x),
+            float(message.twist.twist.linear.y),
+        )
+        current = Point2(self.map_x, self.map_y)
+        if self.last_pose_map is not None:
+            step = math.hypot(
+                current.x - self.last_pose_map.x,
+                current.y - self.last_pose_map.y,
+            )
+            if step < 1.0:
+                self.total_distance_m += step
+        if not self.trajectory_map or math.hypot(
+            current.x - self.trajectory_map[-1].x,
+            current.y - self.trajectory_map[-1].y,
+        ) >= 0.12:
+            self.trajectory_map.append(current)
+            if len(self.trajectory_map) > 1200:
+                self.trajectory_map = self.trajectory_map[-1200:]
+        self.last_pose_map = current
+        self.last_pose_stamp_sec = stamp_sec
         if self.home_world is None:
             self.home_world = self.map_to_world(self.map_x, self.map_y)
         self.have_pose = True
+        if self.brush_enabled:
+            self._record_cleaning_footprint()
 
     def _on_brush(self, message: Bool) -> None:
         next_enabled = bool(message.data)
@@ -213,6 +342,10 @@ class CleaningVisualizer(Node):
 
     def _on_state(self, message: String) -> None:
         self.coverage_state = message.data
+        if self.mission_start_stamp_sec is None and self.coverage_state not in {
+            "WAITING", "READY", "WAITING_FOR_START", "STOPPED", "COMPLETED", "FAILED"
+        }:
+            self._begin_mission_metrics()
         if self.coverage_state == "COMPLETED":
             self.completed_components = self.expected_components
 
@@ -222,6 +355,10 @@ class CleaningVisualizer(Node):
         except (TypeError, json.JSONDecodeError):
             return
         self.coverage_state = str(payload.get("state", self.coverage_state))
+        if self.mission_start_stamp_sec is None and self.coverage_state not in {
+            "WAITING", "READY", "WAITING_FOR_START", "STOPPED", "COMPLETED", "FAILED"
+        }:
+            self._begin_mission_metrics()
         if self.coverage_state in {"EXECUTING_SWATH", "EXECUTING_TURN"}:
             signature = json.dumps(
                 {
@@ -236,6 +373,16 @@ class CleaningVisualizer(Node):
                 self.completed_components = min(
                     self.completed_components + 1, self.expected_components
                 )
+
+    def _begin_mission_metrics(self) -> None:
+        self.mission_start_stamp_sec = self.last_pose_stamp_sec
+        self.total_distance_m = 0.0
+        self.trajectory_map = []
+        self.cleaned_cells.clear()
+        self.completed_components = 0
+        for target in self.targets:
+            target["cleaned"] = False
+            target["removed_from_scene"] = False
 
     def _on_path(self, message: Path) -> None:
         if len(message.poses) < 2 or not self.markers_cleared:
@@ -255,7 +402,12 @@ class CleaningVisualizer(Node):
                 )
             )
         points = []
+        self.planned_path_map = []
         for stamped_pose in message.poses:
+            self.planned_path_map.append(Point2(
+                float(stamped_pose.pose.position.x),
+                float(stamped_pose.pose.position.y),
+            ))
             point = self.map_to_world(
                 stamped_pose.pose.position.x, stamped_pose.pose.position.y
             )
@@ -268,6 +420,68 @@ class CleaningVisualizer(Node):
             + " ".join(points)
         )
         self._enqueue("path", [marker])
+
+    def _record_cleaning_footprint(self) -> None:
+        brush = Point2(
+            self.map_x + self.brush_forward_offset_m * math.cos(self.map_yaw),
+            self.map_y + self.brush_forward_offset_m * math.sin(self.map_yaw),
+        )
+        radius = self.operation_width_m / 2.0
+        for cell_index, point in self.cleanable_cells.items():
+            if cell_index in self.cleaned_cells:
+                continue
+            if math.hypot(point.x - brush.x, point.y - brush.y) <= radius:
+                self.cleaned_cells.add(cell_index)
+        for target in self.targets:
+            if not target["cleaned"] and math.hypot(
+                target["x"] - brush.x, target["y"] - brush.y
+            ) <= target["radius_m"]:
+                target["cleaned"] = True
+                if target["model_name"]:
+                    self._enqueue(
+                        f"remove_target:{target['id']}", [target["model_name"]]
+                    )
+
+    def _publish_telemetry(self) -> None:
+        if not self.have_pose:
+            return
+        total_cells = len(self.cleanable_cells)
+        cleaned_count = len(self.cleaned_cells)
+        cleaned_area = cleaned_count * self.cleaning_cell_m**2
+        total_area = total_cells * self.cleaning_cell_m**2
+        elapsed_sec = 0.0
+        if self.mission_start_stamp_sec is not None and self.last_pose_stamp_sec is not None:
+            elapsed_sec = max(0.0, self.last_pose_stamp_sec - self.mission_start_stamp_sec)
+        rate = cleaned_area / elapsed_sec * 60.0 if elapsed_sec > 0.0 else 0.0
+        trajectory = self.trajectory_map[::max(1, len(self.trajectory_map) // 240)]
+        cleaned_points = [self.cleanable_cells[index] for index in self.cleaned_cells]
+        payload = {
+            "schema": "tzcup.gazebo_cleaning_telemetry.v1",
+            "metric_basis": "gazebo_ground_truth_brush_footprint_evaluation_only",
+            "state": self.coverage_state,
+            "brush_enabled": self.brush_enabled,
+            "progress_percent": 100.0 * cleaned_count / total_cells if total_cells else 0.0,
+            "cleaned_area_m2": cleaned_area,
+            "total_area_m2": total_area,
+            "cleaning_rate_m2_min": rate,
+            "targets_cleaned": sum(target["cleaned"] for target in self.targets),
+            "targets_total": len(self.targets),
+            "completed_components": self.completed_components,
+            "expected_components": self.expected_components,
+            "elapsed_sim_sec": elapsed_sec,
+            "distance_m": self.total_distance_m,
+            "speed_mps": self.current_speed_mps,
+            "simulation_speed": self.simulation_speed_label,
+            "robot": {"x": self.map_x, "y": self.map_y, "yaw": self.map_yaw},
+            "field_boundary": [[point.x, point.y] for point in self.outer_polygon_map],
+            "boundary": [[point.x, point.y] for point in self.cleanable_polygon_map],
+            "planned_path": [[point.x, point.y] for point in self.planned_path_map],
+            "trajectory": [[point.x, point.y] for point in trajectory],
+            "cleaned_cells": [[point.x, point.y] for point in cleaned_points],
+            "cell_size_m": self.cleaning_cell_m,
+            "targets": self.targets,
+        }
+        self.telemetry_publisher.publish(String(data=json.dumps(payload, separators=(",", ":"))))
 
     def _update_markers(self) -> None:
         if not self.have_pose:
@@ -297,16 +511,9 @@ class CleaningVisualizer(Node):
             return
 
         now = time.monotonic()
-        status_due = now - self.last_status_update >= 3.0
         trail_marker = self._build_trail_marker()
-        if trail_marker or status_due:
-            markers = []
-            if trail_marker:
-                markers.append(trail_marker)
-            if status_due:
-                markers.append(self._build_status_marker())
-                self.last_status_update = now
-            self._enqueue("update", markers)
+        if trail_marker:
+            self._enqueue("update", [trail_marker])
 
     def _build_trail_marker(self) -> str | None:
         if not self.brush_enabled:
@@ -359,39 +566,6 @@ class CleaningVisualizer(Node):
         self.last_trail_update = time.monotonic()
         return marker
 
-    def _build_status_marker(self) -> str:
-        world_pose = self.map_to_world(self.map_x, self.map_y)
-        state_label = {
-            "WAITING": "READY AT HOME",
-            "PLANNING": "PLANNING CLEANING ROUTE",
-            "TRANSIT_PREFLIGHT": "CHECKING ROUTE TO START",
-            "TRANSIT": "GOING HOME -> CLEANING START",
-            "ALIGNING": "ALIGNING AT CLEANING START",
-            "EXECUTING_SWATH": "CLEANING ASSIGNED AREA",
-            "EXECUTING_TURN": "TURNING - BRUSH OFF",
-            "COMPLETED": "ASSIGNED AREA COMPLETE",
-            "FAILED": "MISSION FAILED",
-        }.get(self.coverage_state, self.coverage_state)
-        text = (
-            f"{self.profile_label} | MAP {self.map_area_m2:.0f} M2 | "
-            f"{self.mission_scope} | {state_label} | STEP {self.completed_components}/"
-            f"{self.expected_components} | BRUSH "
-            f"{'ON' if self.brush_enabled else 'OFF'}"
-        )
-        if self.coverage_state == "COMPLETED":
-            color = color_proto(0.16, 1.0, 0.38, 1.0)
-        elif self.coverage_state == "FAILED":
-            color = color_proto(1.0, 0.18, 0.12, 1.0)
-        else:
-            color = color_proto(1.0, 0.90, 0.28, 1.0)
-        return (
-            "ns:\"tzcup_cleaning_status\" id:1 action:ADD_MODIFY "
-            "type:TEXT visibility:GUI layer:5 "
-            f"pose {{position {{x:{world_pose.x:.5f} y:{world_pose.y:.5f} z:2.2}} "
-            "orientation {w:1.0}} scale {x:0.32 y:0.32 z:0.32} "
-            f"text:{quote_proto(text)} {color}"
-        )
-
     def _build_static_markers(self) -> list[str]:
         markers: list[str] = []
         if self.outer_polygon_map:
@@ -424,15 +598,6 @@ class CleaningVisualizer(Node):
                     f"y:{max(ys) - min(ys):.5f} z:0.00800}} "
                     f"{color_proto(0.38, 0.44, 0.50, 0.16)}"
                 )
-                markers.append(
-                    "ns:\"tzcup_cleaning_zone\" id:3 action:ADD_MODIFY "
-                    "type:TEXT visibility:GUI layer:5 "
-                    f"pose {{position {{x:{center_x:.5f} y:{max(ys) + 0.35:.5f} "
-                    "z:0.55} orientation {w:1.0}} "
-                    "scale {x:0.30 y:0.30 z:0.30} "
-                    f"text:{quote_proto('ASSIGNED CLEANING AREA')} "
-                    f"{color_proto(0.22, 0.80, 1.0, 1.0)}"
-                )
         if self.home_world is not None:
             markers.extend(
                 self._build_point_markers(
@@ -458,11 +623,6 @@ class CleaningVisualizer(Node):
             f"pose {{position {{x:{point.x:.5f} y:{point.y:.5f} z:0.16}} "
             "orientation {w:1.0}} scale {x:0.32 y:0.32 z:0.32} "
             f"{material}",
-            f"ns:{quote_proto(namespace)} id:2 action:ADD_MODIFY "
-            "type:TEXT visibility:GUI layer:5 "
-            f"pose {{position {{x:{point.x:.5f} y:{point.y:.5f} z:0.72}} "
-            "orientation {w:1.0}} scale {x:0.25 y:0.25 z:0.25} "
-            f"text:{quote_proto(label)} {material}",
         ]
 
     def _enqueue(self, kind: str, markers: list[str]) -> None:
@@ -484,7 +644,15 @@ class CleaningVisualizer(Node):
                 kind, markers = self.request_queue.get(timeout=0.2)
             except queue.Empty:
                 continue
-            success = all(self._call_marker_service(marker) for marker in markers)
+            if kind.startswith("remove_target:"):
+                success = bool(markers) and self._call_remove_service(markers[0])
+                target_id = kind.split(":", 1)[1]
+                for target in self.targets:
+                    if target["id"] == target_id:
+                        target["removed_from_scene"] = success
+                        break
+            else:
+                success = all(self._call_marker_service(marker) for marker in markers)
             if kind == "clear":
                 self.markers_cleared = success
                 self.clear_queued = False
@@ -524,6 +692,33 @@ class CleaningVisualizer(Node):
             detail = (completed.stderr or completed.stdout).strip().replace("\n", " ")
             self.get_logger().warning(
                 f"Gazebo MarkerManager is not ready: {detail[:240]}"
+            )
+        return success
+
+    def _call_remove_service(self, model_name: str) -> bool:
+        service = f"/world/{self.world_name}/remove"
+        request = f"name:{quote_proto(model_name)} type:MODEL"
+        try:
+            completed = subprocess.run(
+                [
+                    self.gz_binary, "service", "--timeout",
+                    str(max(self.service_timeout_ms, 1)), "-s", service,
+                    "--reqtype", "gz.msgs.Entity",
+                    "--reptype", "gz.msgs.Boolean", "--req", request,
+                ],
+                check=False,
+                capture_output=True,
+                text=True,
+                timeout=max(2.0, self.service_timeout_ms / 1000.0 + 2.0),
+            )
+        except (OSError, subprocess.TimeoutExpired) as error:
+            self.get_logger().warning(f"Target scene removal failed: {error}")
+            return False
+        success = completed.returncode == 0 and "true" in completed.stdout.lower()
+        if not success:
+            detail = (completed.stderr or completed.stdout).strip().replace("\n", " ")
+            self.get_logger().warning(
+                f"Target scene removal rejected for {model_name}: {detail[:240]}"
             )
         return success
 

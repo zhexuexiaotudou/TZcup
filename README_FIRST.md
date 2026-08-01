@@ -27,14 +27,11 @@ WSLg 冷启动后若 Gazebo 在原生控制面板加载前提前退出，启动�
 重试一次；重复失败会明确退出，不会留下黑屏窗口或无限重启。
 WSLg 下默认把 Gazebo 服务端保留在 D3D12/NVIDIA，只把 GUI 设为软件渲染；启动器会对 `3D Scene` 做真实截图和黑色像素检测。出现纯黑视口时不会继续显示“已就绪”。
 
+该命令加载独立的 `16 m × 12 m` 竞赛演示场；右侧实时显示清扫指标、规划/实际轨迹和已清扫面积。默认目标 2x，可传 `-SimulationSpeed normal|turbo`，实际 RTF 以顶部 World Stats 为准。
+
 比赛尺度配置使用
 `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps1 -CompetitionProfile -GazeboOnly -ManualControl -KeepOpen`；
 它加载完整 20,000 m² 地图并现场执行一个 108 m² 代表分区，不代表全场耐久通过。
-
-默认运行一个约 `6 m × 5 m` 的完整小范围任务：蓝色边框和灰色底面是指定清扫区，车辆从
-蓝色 `HOME` 出发并驶向绿色 `CLEANING START`，随后逐条覆盖。青绿色区域是刷盘实际经过的
-已清扫带，琥珀色线是当前 Nav2 路径，车顶文字显示转场、对齐、清扫、转弯和完成状态。
-需要原 17 段大范围任务时增加 `-FullArea`；使用 `-CloseOnComplete` 可在验收后自动关闭。
 
 ## 推荐环境
 

@@ -27,7 +27,7 @@ READY → STARTING → PLANNING → TRANSIT_PREFLIGHT → TRANSIT → ALIGNING
 
 | 参数 | 场景尺寸 | 用途 | 主要内容 |
 |---|---:|---|---|
-| `small` | 30 m × 20 m | 快速演示完整清扫 | 服务中心、道路、人行道、绿化、斑马线、公交站、停车位、树木、路灯、垃圾桶和五类清扫目标 |
+| `small` | 16 m × 12 m | 独立小场快速演示 | 专用清扫区、充电位、路缘、护栏、行人假人、积水和五类可移除清扫目标 |
 | `medium` | 80 m × 50 m | 中等规模联调和展示 | 园区建筑、服务建筑、道路设施、停车区、绿化和更密集街具 |
 | `large` | 200 m × 100 m = 20,000 m² | 赛题正式建图尺度 | 精确 20,000 m² 场地、分区建筑、尺度标尺、长道路和完整园区要素 |
 
@@ -37,7 +37,9 @@ READY → STARTING → PLANNING → TRANSIT_PREFLIGHT → TRANSIT → ALIGNING
 .\scripts\run_gazebo_cleaning_demo.ps1 -MapSize large
 ```
 
-三张 SDF 只使用本地基础几何，不在线下载模型。`large` 的物理地面尺寸严格为
+三个入口均只使用本地基础几何，不在线下载模型。`small` 独立加载
+`sanitation_competition_demo.sdf`，不是在大场景内设置虚拟边界；`medium/large` 由
+`scripts/generate_gazebo_world_variants.py` 确定性生成。`large` 的物理地面尺寸严格为
 200 m × 100 m。普通 `-MapSize large` 仍只改变物理场景；需要把完整大图栅格、
 AUTO-12 车辆参数和代表性分区任务接入同一条运行链时，使用：
 
@@ -50,7 +52,13 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 “20,000 m² 全场清扫已经通过”。正式全场多分区调度、耐久和效率仍须另行验收，
 详细边界见 [`competition-gazebo-profile.md`](competition-gazebo-profile.md)。
 
-场景由 `scripts/generate_gazebo_world_variants.py` 确定性生成，结果保存在 `sanitation_worlds/worlds/sanitation_campus_{small,medium,large}.sdf`。
+小场地右栏实时显示规划路径、实际轨迹、已清扫面积、清扫率、目标数、效率、里程、速度和
+仿真用时。目标清扫基于 Gazebo 真值和刷盘足迹，判定后从场景移除；这仍是仿真评估，不是
+实车视觉或物理吸入证据。默认 `-SimulationSpeed fast` 的目标物理倍率为 2x，另有
+`normal` 和 `turbo`；顶部 World Stats 才是当前硬件实际达到的 RTF。
+
+启动器只在 `controller_server` 和 `planner_server` 均为 lifecycle `active` 后开放 Gazebo
+任务面板，避免窗口可见但导航尚未就绪时“开始”被拒绝。
 
 ## WSLg 的 3D Scene 黑屏
 
