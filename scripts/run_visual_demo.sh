@@ -360,8 +360,8 @@ if [[ "${SHOWCASE}" -eq 1 ]]; then
   camera_track_request='track_mode: FOLLOW_LOOK_AT, follow_target: {name: "sanitation_vehicle", type: MODEL}, track_target: {name: "sanitation_vehicle", type: MODEL}, follow_offset: {x: -8.0, y: -8.0, z: 10.0}, follow_pgain: 0.25, track_pgain: 0.35'
 fi
 if [[ "${GUI}" -eq 1 ]]; then
-  for _ in $(seq 1 40); do
-    gz_topics="$(gz topic -l 2>/dev/null || true)"
+  for _ in $(seq 1 10); do
+    gz_topics="$(timeout 3 gz topic -l 2>/dev/null || true)"
     if grep -Fxq '/gui/track' <<< "${gz_topics}"; then
       if gz topic -t /gui/track -m gz.msgs.CameraTrack -p \
         "${camera_track_request}" \
