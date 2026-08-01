@@ -61,6 +61,7 @@ void SanitationMissionControl::LoadConfig(
   const auto *scene = _pluginElem->FirstChildElement("scene_label");
   if (scene && scene->GetText()) {
     this->sceneLabel = scene->GetText();
+    emit SceneLabelChanged();
   }
 }
 

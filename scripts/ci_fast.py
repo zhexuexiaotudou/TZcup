@@ -212,6 +212,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_visual_demo_summary.py",
         ROOT / "scripts" / "test_dashboard_telemetry_frames.py",
         ROOT / "scripts" / "test_run_visual_demo_contract.py",
+        ROOT / "scripts" / "test_gazebo_viewport_probe.py",
         ROOT / "scripts" / "test_human_visualization_gate.py",
         ROOT / "scripts" / "test_gazebo_scene_contract.py",
     )
