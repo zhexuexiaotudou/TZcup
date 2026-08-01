@@ -31,6 +31,12 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
 ```
 
+Gazebo 右侧现在有原生“清扫任务控制”卡片，可点击开始、暂停、继续、停止任务和关闭
+Gazebo；按钮通过 Coverage 受控服务驱动 Nav2，不直接发送速度。场景可用
+`-MapSize small|medium|large` 选择 30 m × 20 m 小型演示、80 m × 50 m 中型验证或
+严格 200 m × 100 m（20,000 m²）的比赛大图。操作、安全语义和场景边界见
+[`docs/gazebo-multiscale-control.md`](docs/gazebo-multiscale-control.md)。
+
 它不会打开浏览器或 RViz。默认使用约 `6 m × 5 m` 的缩小演示区：车辆从蓝色 `HOME`
 真实驶向绿色 `CLEANING START`，在蓝色作业边界内逐条覆盖；灰色表示待清扫区，琥珀色线表示
 当前执行路径，青绿色带随刷盘开启实时累积。俯视跟随镜头始终保留完整作业区。使用
@@ -52,6 +58,8 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 轮毂、传感器外壳、尘箱和刷盘细节。冻结的导航锚点、二维 footprint、传感器外参、
 话题和动力学参数保持不变。对象口径、几何差异和许可说明见
 [`docs/gazebo-digital-twin-scene.md`](docs/gazebo-digital-twin-scene.md)。
+车辆灯组、检修门、充电口、传感器、尘箱、刷盘和清扫机构说明见
+[`docs/vehicle-model-guide.md`](docs/vehicle-model-guide.md)。
 
 ## 当前状态
 

@@ -18,6 +18,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
 ```
 
+启动后使用 Gazebo 右侧“清扫任务控制”卡片，不要用世界物理暂停代替任务暂停。默认
+`-MapSize small`，也可选择 `medium` 或 `large`。若窗口标题显示
+`[WARN:COPY MODE]`，单击 Gazebo 后按一次 `Esc`。详见
+[`docs/gazebo-multiscale-control.md`](docs/gazebo-multiscale-control.md)。
+
 默认运行一个约 `6 m × 5 m` 的完整小范围任务：蓝色边框和灰色底面是指定清扫区，车辆从
 蓝色 `HOME` 出发并驶向绿色 `CLEANING START`，随后逐条覆盖。青绿色区域是刷盘实际经过的
 已清扫带，琥珀色线是当前 Nav2 路径，车顶文字显示转场、对齐、清扫、转弯和完成状态。

@@ -66,6 +66,8 @@ def test_gazebo_only_launcher_contract() -> None:
 
     assert "--gazebo-only" in shell_launcher
     assert "--showcase" in shell_launcher
+    assert "--map-size" in shell_launcher
+    assert "--manual-control" in shell_launcher
     assert "showcase_area.yaml" in shell_launcher
     assert "follow_offset: {x: -8.0, y: -8.0, z: 10.0}" in shell_launcher
     assert "OPEN_DASHBOARD=0" in shell_launcher
@@ -78,7 +80,8 @@ def test_gazebo_only_launcher_contract() -> None:
     assert '"--showcase"' in powershell_launcher
     assert "GazeboOnly = $true" in dedicated_launcher
     assert "[switch]$FullArea" in dedicated_launcher
-    assert 'Showcase"] = $true' in dedicated_launcher
+    assert '[string]$MapSize = "small"' in dedicated_launcher
+    assert "ManualControl = $true" in dedicated_launcher
     assert "NoRviz" not in dedicated_launcher
     assert "Start-Process" not in dedicated_launcher
 
@@ -102,3 +105,27 @@ def test_showcase_area_is_small_bounded_and_installed() -> None:
     assert "  - [3.0, 1.0]" in showcase
     assert "keepout_polygons: []" in showcase
     assert '"config/showcase_area.yaml"' in task_setup
+
+
+def test_native_gazebo_controls_use_safe_task_services() -> None:
+    source = read(
+        "starter_ws/src/sanitation_gazebo_control/src/"
+        "SanitationMissionControl.cc"
+    )
+    qml = read(
+        "starter_ws/src/sanitation_gazebo_control/"
+        "SanitationMissionControl.qml"
+    )
+    coverage = read(
+        "starter_ws/src/sanitation_coverage/"
+        "sanitation_coverage/coverage_probe.py"
+    )
+    for command in ("start", "pause", "resume", "stop"):
+        assert f'"/coverage/control/{command}"' in source
+        assert f'"/coverage/control/{command}"' in coverage
+    for label in ("开始", "暂停", "继续", "停止任务", "关闭 Gazebo"):
+        assert label in qml
+    assert '"/cmd_vel"' not in source
+    assert "manual_start" in coverage
+    assert 'self._set_state("PAUSED"' in coverage
+    assert 'self._set_brush(False)' in coverage

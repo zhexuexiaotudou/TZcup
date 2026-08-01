@@ -18,6 +18,7 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Bool, String
+from std_srvs.srv import Trigger
 import yaml
 
 from sanitation_coverage.metrics import (
@@ -95,6 +96,7 @@ class CoverageProbe(Node):
         self.declare_parameter("trajectory_output_path", "coverage_trajectory.csv")
         self.declare_parameter("component_retry_limit", 1)
         self.declare_parameter("minimum_component_timeout_sec", 45.0)
+        self.declare_parameter("manual_start", False)
         self.coverage_client = ActionClient(self, ComputeCoveragePath, "/compute_coverage_path")
         self.follow_client = ActionClient(self, FollowPath, "/follow_path")
         self.navigate_client = ActionClient(self, NavigateToPose, "/navigate_to_pose")
@@ -117,7 +119,12 @@ class CoverageProbe(Node):
             String, "/coverage/diagnostics", 10
         )
         self.brush_enabled = False
-        self.state = "PLANNING"
+        self.state = "READY" if self.get_parameter("manual_start").value else "PLANNING"
+        self.run_requested = not bool(self.get_parameter("manual_start").value)
+        self.pause_requested = False
+        self.resume_requested = False
+        self.stop_requested = False
+        self.state_before_pause = "READY"
         self.estimated_pose = None
         self.truth_pose = None
         self.truth_samples = []
@@ -155,6 +162,68 @@ class CoverageProbe(Node):
             OccupancyGrid, "/speed_filter_mask",
             lambda message: setattr(self, "speed_mask", message), latched_qos,
         )
+        self.create_service(Trigger, "/coverage/control/start", self._on_start)
+        self.create_service(Trigger, "/coverage/control/pause", self._on_pause)
+        self.create_service(Trigger, "/coverage/control/resume", self._on_resume)
+        self.create_service(Trigger, "/coverage/control/stop", self._on_stop)
+        self.create_timer(1.0, lambda: self.state_publisher.publish(String(data=self.state)))
+        if self.get_parameter("manual_start").value:
+            self._set_state("READY", {"operator_control": "gazebo_native_panel"})
+
+    def _on_start(self, _request, response):
+        if self.state != "READY" or self.run_requested:
+            response.success = False
+            response.message = f"当前状态 {self.state} 不允许重复开始"
+            return response
+        self.run_requested = True
+        response.success = True
+        response.message = "已接收开始命令，正在规划清扫任务"
+        self._set_state("STARTING")
+        return response
+
+    def _on_pause(self, _request, response):
+        if self.state in {"READY", "PAUSED", "PAUSING", "COMPLETED", "FAILED", "STOPPED"}:
+            response.success = False
+            response.message = f"当前状态 {self.state} 不可暂停"
+            return response
+        self.state_before_pause = self.state
+        self.pause_requested = True
+        self.resume_requested = False
+        response.success = True
+        response.message = "已请求安全暂停；刷盘将关闭，当前 Nav2 goal 将取消"
+        self._set_state("PAUSING")
+        return response
+
+    def _on_resume(self, _request, response):
+        if self.state != "PAUSED":
+            response.success = False
+            response.message = f"当前状态 {self.state} 不可继续"
+            return response
+        self.resume_requested = True
+        response.success = True
+        response.message = "已请求继续，将从当前清扫段续接"
+        return response
+
+    def _on_stop(self, _request, response):
+        if self.state in {"COMPLETED", "FAILED", "STOPPED"}:
+            response.success = False
+            response.message = f"任务已经处于终态 {self.state}"
+            return response
+        self.stop_requested = True
+        self.pause_requested = False
+        self.resume_requested = False
+        self._set_brush(False)
+        response.success = True
+        response.message = "已请求停止任务，刷盘已关闭"
+        return response
+
+    def wait_for_start(self):
+        while rclpy.ok() and not self.run_requested and not self.stop_requested:
+            rclpy.spin_once(self, timeout_sec=0.1)
+        if self.stop_requested:
+            self._set_state("STOPPED", {"reason": "operator_stop_before_start"})
+            return False
+        return True
 
     def _on_truth(self, message):
         pose = message.pose.pose
@@ -314,13 +383,20 @@ class CoverageProbe(Node):
         component_results = []
         if transit["success"]:
             for component in selected_components:
+                # Publish the commanded brush state before the component state
+                # so the Gazebo panel and diagnostics never show a stale brush
+                # value at swath / turn boundaries.
+                self._set_brush(component["brush"])
                 self._set_state(
                     "EXECUTING_SWATH" if component["kind"] == "swath" else "EXECUTING_TURN",
                     {"kind": component["kind"], "index": component["index"]},
                 )
                 component_results.append(self._follow_component(component))
                 if not component_results[-1]["success"]:
-                    self._set_state("RECOVERY", component_results[-1])
+                    if component_results[-1].get("stopped_by_operator"):
+                        self._set_state("STOPPED", component_results[-1])
+                    else:
+                        self._set_state("RECOVERY", component_results[-1])
                     break
         self._set_brush(False)
         execution_duration = time.monotonic() - execution_started_wall
@@ -410,7 +486,12 @@ class CoverageProbe(Node):
             "localization_regression_during_coverage": localization,
             "execution_boundary": "All path components were required to terminate SUCCEEDED; no 180-pose shortcut or bounded cancellation is accepted.",
         }
-        self._set_state("COMPLETED" if report["success"] else "FAILED", report)
+        if self.stop_requested:
+            report["stopped_by_operator"] = True
+            report["success"] = False
+            self._set_state("STOPPED", report)
+        else:
+            self._set_state("COMPLETED" if report["success"] else "FAILED", report)
         return self._write_report(report)
 
     def _plan(self, config, polygon, exclusions):
@@ -635,7 +716,9 @@ class CoverageProbe(Node):
     def _run_action(self, client, goal, brush, timeout, action_kind):
         retry_limit = int(self.get_parameter("component_retry_limit").value)
         attempts = []
-        for attempt in range(retry_limit + 1):
+        attempt = 0
+        pause_count = 0
+        while attempt <= retry_limit:
             feedback_samples = []
             last_feedback_sample_time = 0.0
 
@@ -661,10 +744,62 @@ class CoverageProbe(Node):
             handle = send.result() if send.done() else None
             if handle is None or not handle.accepted:
                 attempts.append({"attempt": attempt + 1, "accepted": False, "feedback": feedback_samples})
+                attempt += 1
                 continue
             result_future = handle.get_result_async(); deadline = time.monotonic() + timeout
+            paused = False
+            stopped = False
             while rclpy.ok() and not result_future.done() and time.monotonic() < deadline:
-                self._set_brush(brush); rclpy.spin_once(self, timeout_sec=0.05); time.sleep(0.02)
+                rclpy.spin_once(self, timeout_sec=0.05)
+                if self.stop_requested or self.pause_requested:
+                    cancel = handle.cancel_goal_async()
+                    rclpy.spin_until_future_complete(self, cancel, timeout_sec=5.0)
+                    self._set_brush(False)
+                    if self.stop_requested:
+                        stopped = True
+                        break
+                    paused = True
+                    pause_count += 1
+                    self.pause_requested = False
+                    self.resume_requested = False
+                    self._set_state("PAUSED", {
+                        "action_kind": action_kind,
+                        "pause_count": pause_count,
+                        "brush_disabled": True,
+                        "nav2_goal_cancel_requested": True,
+                    })
+                    while rclpy.ok() and not self.resume_requested and not self.stop_requested:
+                        self._set_brush(False)
+                        rclpy.spin_once(self, timeout_sec=0.1)
+                    if self.stop_requested:
+                        stopped = True
+                        break
+                    self.resume_requested = False
+                    self._set_state(self.state_before_pause, {
+                        "action_kind": action_kind,
+                        "pause_count": pause_count,
+                        "resumed": True,
+                    })
+                    break
+                self._set_brush(brush)
+                time.sleep(0.02)
+            if stopped:
+                self._set_brush(False)
+                self._set_state("STOPPED", {
+                    "reason": "operator_stop",
+                    "action_kind": action_kind,
+                })
+                return {
+                    "success": False,
+                    "stopped_by_operator": True,
+                    "pause_count": pause_count,
+                    "retries": attempt,
+                    "attempts": attempts,
+                }
+            if paused:
+                # A user pause is not a navigation retry. Re-send the same
+                # component from the robot's current pose after resume.
+                continue
             if not result_future.done():
                 cancel = handle.cancel_goal_async(); rclpy.spin_until_future_complete(self, cancel, timeout_sec=5.0)
                 cancel_response = cancel.result() if cancel.done() else None
@@ -678,6 +813,7 @@ class CoverageProbe(Node):
                     "terminal_estimated_pose": self.estimated_pose,
                     "terminal_ground_truth_pose_evaluation_only": self.truth_pose,
                 })
+                attempt += 1
                 continue
             wrapped = result_future.result(); error_code = int(getattr(wrapped.result, "error_code", 0))
             succeeded = wrapped.status == GoalStatus.STATUS_SUCCEEDED and error_code == 0
@@ -704,9 +840,20 @@ class CoverageProbe(Node):
             })
             if succeeded:
                 self._set_brush(False if brush else brush)
-                return {"success": True, "retries": attempt, "attempts": attempts}
+                return {
+                    "success": True,
+                    "retries": attempt,
+                    "pause_count": pause_count,
+                    "attempts": attempts,
+                }
+            attempt += 1
         self._set_brush(False)
-        return {"success": False, "retries": max(0, len(attempts) - 1), "attempts": attempts}
+        return {
+            "success": False,
+            "retries": attempt,
+            "pause_count": pause_count,
+            "attempts": attempts,
+        }
 
     @staticmethod
     def _sample_grid(grid, x, y):
@@ -803,7 +950,8 @@ class CoverageProbe(Node):
 
 def main(args=None):
     rclpy.init(args=args); node = CoverageProbe()
-    try: code = node.run()
+    try:
+        code = node.run() if node.wait_for_start() else 130
     finally:
         node._set_brush(False); node.destroy_node(); rclpy.shutdown()
     raise SystemExit(code)

@@ -45,6 +45,10 @@ def generate_launch_description():
     world_to_map_yaw = LaunchConfiguration("world_to_map_yaw")
     camera_profile = LaunchConfiguration("camera_profile")
     enable_training_gt = LaunchConfiguration("enable_training_gt")
+    gui_config = LaunchConfiguration("gui_config")
+    gui_config_arg = PythonExpression(
+        ["'--gui-config ' + '", gui_config, "' if '", gui_config, "' else ''"]
+    )
     engineering_camera = PythonExpression(
         [
             "'",
@@ -180,6 +184,7 @@ def generate_launch_description():
             DeclareLaunchArgument("brush_center_y", default_value="0.23"),
             DeclareLaunchArgument("world_file", default_value=world_path),
             DeclareLaunchArgument("world_name", default_value="sanitation_test_world"),
+            DeclareLaunchArgument("gui_config", default_value=""),
             DeclareLaunchArgument("random_seed", default_value="0"),
             DeclareLaunchArgument("world_to_map_x", default_value="8.0"),
             DeclareLaunchArgument("world_to_map_y", default_value="0.0"),
@@ -203,7 +208,7 @@ def generate_launch_description():
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(gz_launch),
                 condition=IfCondition(gui),
-                launch_arguments={"gz_args": [" -g"]}.items(),
+                launch_arguments={"gz_args": [" -g ", gui_config_arg]}.items(),
             ),
             Node(
                 package="robot_state_publisher",
