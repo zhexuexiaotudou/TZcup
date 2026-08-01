@@ -256,10 +256,8 @@ for node in /controller_server /coverage_server /sanitation_live_dashboard; do
   fi
 done
 
-gui_value=false
-[[ "${GUI}" -eq 1 ]] && gui_value=true
 setsid ros2 launch sanitation_bringup stage4v_localization.launch.py \
-  gui:="${gui_value}" random_seed:="${RANDOM_SEED}" gnss_profile:=rtk_fixed \
+  gui:=false random_seed:="${RANDOM_SEED}" gnss_profile:=rtk_fixed \
   world_file:="${world_file}" world_name:="${world_name}" \
   gui_config:="${gui_config}" \
   camera_profile:=V5_retracted fusion_mode:=hybrid_rtk_scan_imu_wheel \
@@ -352,6 +350,16 @@ done
 if [[ "${ready}" -ne 1 ]]; then
   echo "AUTO-17 runtime did not become ready within 150 seconds." >&2
   exit 4
+fi
+
+if [[ "${GUI}" -eq 1 ]]; then
+  # Start the WSLg client only after the Gazebo server and ROS graph are ready.
+  # Starting it inside ros2 launch, or before the world is discoverable, can
+  # load the custom library without instantiating its ROS control backend.
+  setsid gz sim -g --gui-config "${gui_config}" \
+    > "${OUTPUT_DIR}/gazebo_gui.log" 2>&1 &
+  pids+=("$!")
+  sleep 2
 fi
 
 camera_follow_requested=0
