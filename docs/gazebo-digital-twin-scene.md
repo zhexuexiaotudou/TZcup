@@ -13,6 +13,15 @@ source "$HOME/sanitation_ws/install/setup.bash"
 ros2 launch sanitation_bringup gazebo_scene.launch.py
 ```
 
+上面的入口只启动场景和车辆。要在同一个 Gazebo 窗口观看自动清扫的完整过程：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
+```
+
+专用入口会启动真实定位、Nav2 和 Coverage 任务，并在 Gazebo 内显示当前路径、实时已清扫带、
+17 段进度与刷盘状态；不会打开浏览器控制台或 RViz。
+
 可用键盘控制验证车辆运动：
 
 ```bash

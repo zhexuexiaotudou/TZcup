@@ -13,6 +13,9 @@ param(
     [switch]$NoGui,
     [switch]$NoRviz,
     [switch]$NoMcap,
+    [switch]$GazeboOnly,
+    [switch]$NoBrowser,
+    [switch]$NoGazeboTrail,
     [switch]$KeepOpen
 )
 
@@ -60,6 +63,9 @@ if ($SkipBuild) { $arguments += "--skip-build" }
 if ($NoGui) { $arguments += "--no-gui" }
 if ($NoRviz) { $arguments += "--no-rviz" }
 if ($NoMcap) { $arguments += "--no-mcap" }
+if ($GazeboOnly) { $arguments += "--gazebo-only" }
+if ($NoBrowser) { $arguments += "--no-browser" }
+if ($NoGazeboTrail) { $arguments += "--no-gazebo-trail" }
 if ($KeepOpen) { $arguments += "--keep-open" }
 
 Write-Host "Launching AUTO-17 visual demo in $WslDistribution..."

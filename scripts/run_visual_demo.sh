@@ -12,6 +12,8 @@ RVIZ=1
 RECORD_MCAP=1
 VIDEO_MODE="auto"
 KEEP_OPEN=0
+OPEN_DASHBOARD=1
+GAZEBO_TRAIL=1
 MISSION_TIMEOUT_SEC=1800
 RANDOM_SEED=0
 
@@ -29,6 +31,9 @@ Options:
   --no-rviz             Do not open RViz
   --no-mcap             Do not record MCAP
   --video MODE          auto, on, or off (default: auto)
+  --gazebo-only         Show the full mission in Gazebo without browser or RViz
+  --no-browser          Keep the read-only dashboard server hidden
+  --no-gazebo-trail     Disable Gazebo cleaned-swath and mission markers
   --keep-open           Keep GUI/dashboard open after mission termination
   --timeout SEC         Coverage mission timeout (default: 1800)
   --seed N              Gazebo random seed (default: 0)
@@ -47,6 +52,9 @@ while [[ $# -gt 0 ]]; do
     --no-rviz) RVIZ=0; shift ;;
     --no-mcap) RECORD_MCAP=0; shift ;;
     --video) VIDEO_MODE="$2"; shift 2 ;;
+    --gazebo-only) RVIZ=0; VIDEO_MODE=off; OPEN_DASHBOARD=0; shift ;;
+    --no-browser) OPEN_DASHBOARD=0; shift ;;
+    --no-gazebo-trail) GAZEBO_TRAIL=0; shift ;;
     --keep-open) KEEP_OPEN=1; shift ;;
     --timeout) MISSION_TIMEOUT_SEC="$2"; shift 2 ;;
     --seed) RANDOM_SEED="$2"; shift 2 ;;
@@ -261,6 +269,19 @@ setsid ros2 run sanitation_hmi sanitation_live_dashboard --ros-args \
 dashboard_pid="$!"
 pids+=("${dashboard_pid}")
 
+if [[ "${GUI}" -eq 1 && "${GAZEBO_TRAIL}" -eq 1 ]]; then
+  setsid ros2 run sanitation_gazebo_visualization cleaning_visualizer --ros-args \
+    -p use_sim_time:=true \
+    -p operation_width_m:=0.65 \
+    -p expected_components:=17 \
+    -p world_to_map_x:=8.0 \
+    -p world_to_map_y:=0.0 \
+    -p world_to_map_yaw:=0.0 \
+    -p service_timeout_ms:=3000 \
+    > "${OUTPUT_DIR}/gazebo_cleaning_visualizer.log" 2>&1 &
+  pids+=("$!")
+fi
+
 if [[ "${RVIZ}" -eq 1 ]]; then
   setsid rviz2 -d "${rviz_config}" \
     --ros-args -p use_sim_time:=true \
@@ -320,14 +341,14 @@ if [[ "${GUI}" -eq 1 ]]; then
   done
 fi
 
-if command -v powershell.exe >/dev/null 2>&1; then
+if [[ "${OPEN_DASHBOARD}" -eq 1 ]] && command -v powershell.exe >/dev/null 2>&1; then
   powershell.exe -NoProfile -Command \
     "Start-Process 'http://127.0.0.1:${DASHBOARD_PORT}'" \
     > "${OUTPUT_DIR}/browser_open.log" 2>&1 || true
   powershell.exe -NoProfile -Command \
     "\$shell = New-Object -ComObject WScript.Shell; Start-Sleep -Seconds 2; [void]\$shell.AppActivate('TZcup')" \
     >> "${OUTPUT_DIR}/browser_open.log" 2>&1 || true
-elif command -v xdg-open >/dev/null 2>&1; then
+elif [[ "${OPEN_DASHBOARD}" -eq 1 ]] && command -v xdg-open >/dev/null 2>&1; then
   xdg-open "http://127.0.0.1:${DASHBOARD_PORT}" \
     > "${OUTPUT_DIR}/browser_open.log" 2>&1 || true
 fi
@@ -413,7 +434,10 @@ set -e
 sleep 8
 if [[ "${KEEP_OPEN}" -eq 1 ]]; then
   echo "[AUTO-17] Mission ended. Press Ctrl+C when visual inspection is complete."
-  while true; do sleep 10; done
+  keep_open_stop=0
+  trap 'keep_open_stop=1' INT TERM
+  while [[ "${keep_open_stop}" -eq 0 ]]; do sleep 1; done
+  trap on_exit EXIT INT TERM
 fi
 
 if [[ "${video_backend}" == "dashboard_telemetry_frames" ]]; then
