@@ -20,6 +20,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 - 青绿色带：`/brush_enabled=true` 时，evaluation-only `/ground_truth/odom` 推导的实际刷盘扫掠；
 - 车顶文字：转场、对齐、清扫、转弯、完成、组件进度和刷盘开关。
 
+“当前路径”和车顶状态使用固定的非零 marker ID 原位更新，避免 Gazebo 将 `id=0`
+解释为自动分配并在长时间演示中累积旧路径或文字残影；已清扫带仍按真实作业带分别保留。
+
 规划和控制不订阅这些 Gazebo marker。真值只生成显示与验收轨迹，不进入 Nav2、Coverage、
 速度门或安全决策。默认任务完成后保留 Gazebo，按 `Ctrl+C` 后收尾；自动验收可增加
 `-CloseOnComplete`。
