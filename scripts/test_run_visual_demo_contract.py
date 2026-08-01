@@ -22,3 +22,11 @@ def test_readiness_bypasses_stale_ros_daemon():
     for action in ("compute_coverage_path", "follow_path", "navigate_to_pose"):
         assert f"/{action}/_action/send_goal" in launcher
     assert "ros2 action list" not in launcher
+
+
+def test_camera_follow_discovery_has_a_hard_timeout():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+
+    assert "for _ in $(seq 1 10)" in launcher
+    assert 'gz_topics="$(timeout 3 gz topic -l 2>/dev/null || true)"' in launcher
+    assert 'gz_topics="$(gz topic -l 2>/dev/null || true)"' not in launcher
