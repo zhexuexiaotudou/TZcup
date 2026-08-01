@@ -21,6 +21,7 @@ COMPETITION_PROFILE=0
 EXPECTED_COMPONENTS=17
 MISSION_TIMEOUT_SEC=1800
 RANDOM_SEED=0
+GAZEBO_GUI_RENDERER="auto"
 
 usage() {
   cat <<'EOF'
@@ -47,6 +48,8 @@ Options:
   --keep-open           Keep GUI/dashboard open after mission termination
   --timeout SEC         Coverage mission timeout (default: 1800)
   --seed N              Gazebo random seed (default: 0)
+  --gazebo-gui-renderer MODE
+                        auto, d3d12, or software (default: auto)
   -h, --help            Show this help
 EOF
 }
@@ -72,6 +75,7 @@ while [[ $# -gt 0 ]]; do
     --keep-open) KEEP_OPEN=1; shift ;;
     --timeout) MISSION_TIMEOUT_SEC="$2"; shift 2 ;;
     --seed) RANDOM_SEED="$2"; shift 2 ;;
+    --gazebo-gui-renderer) GAZEBO_GUI_RENDERER="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -79,6 +83,7 @@ done
 
 case "${VIDEO_MODE}" in auto|on|off) ;; *) echo "--video must be auto, on, or off" >&2; exit 2 ;; esac
 case "${MAP_SIZE}" in small|medium|large) ;; *) echo "--map-size must be small, medium, or large" >&2; exit 2 ;; esac
+case "${GAZEBO_GUI_RENDERER}" in auto|d3d12|software) ;; *) echo "--gazebo-gui-renderer must be auto, d3d12, or software" >&2; exit 2 ;; esac
 if [[ "${MAP_SIZE}" == "small" ]]; then SHOWCASE=1; EXPECTED_COMPONENTS=9; fi
 [[ "${DASHBOARD_PORT}" =~ ^[0-9]+$ ]] || { echo "dashboard port must be numeric" >&2; exit 2; }
 [[ "${MISSION_TIMEOUT_SEC}" =~ ^[0-9]+$ ]] || { echo "timeout must be numeric" >&2; exit 2; }
@@ -225,6 +230,23 @@ set -u
 export GALLIUM_DRIVER="${GALLIUM_DRIVER:-d3d12}"
 export MESA_D3D12_DEFAULT_ADAPTER_NAME="${MESA_D3D12_DEFAULT_ADAPTER_NAME:-NVIDIA}"
 export LINOROBOT2_BASE=4wd
+
+gazebo_gui_renderer="${GAZEBO_GUI_RENDERER}"
+if [[ "${gazebo_gui_renderer}" == "auto" ]]; then
+  if [[ -d /mnt/wslg ]] && grep -qi microsoft /proc/version; then
+    # Ogre2 can create a healthy Qt shell but leave the 3D Scene fully black
+    # with Mesa's D3D12 driver under WSLg. Keep the headless Gazebo server and
+    # sensors on D3D12, while using the reliable X11 llvmpipe path for the GUI.
+    gazebo_gui_renderer="software"
+  else
+    gazebo_gui_renderer="d3d12"
+  fi
+fi
+if [[ "${gazebo_gui_renderer}" == "software" ]]; then
+  gazebo_gui_env=(env GALLIUM_DRIVER=llvmpipe LIBGL_ALWAYS_SOFTWARE=1 QT_QPA_PLATFORM=xcb)
+else
+  gazebo_gui_env=(env GALLIUM_DRIVER=d3d12 MESA_D3D12_DEFAULT_ADAPTER_NAME=NVIDIA)
+fi
 
 runtime="${OUTPUT_DIR}/runtime"
 mkdir -p "${runtime}"
@@ -438,7 +460,10 @@ if [[ "${GUI}" -eq 1 ]]; then
   # Start the WSLg client only after the Gazebo server and ROS graph are ready.
   # Starting it inside ros2 launch, or before the world is discoverable, can
   # load the custom library without instantiating its ROS control backend.
-  setsid gz sim -g --gui-config "${gui_config}" \
+  printf '{"requested":"%s","selected":"%s","server_renderer":"%s"}\n' \
+    "${GAZEBO_GUI_RENDERER}" "${gazebo_gui_renderer}" "${GALLIUM_DRIVER}" \
+    > "${OUTPUT_DIR}/gazebo_gui_renderer.json"
+  setsid "${gazebo_gui_env[@]}" gz sim -g --gui-config "${gui_config}" \
     > "${OUTPUT_DIR}/gazebo_gui.log" 2>&1 &
   gazebo_gui_pid="$!"
   pids+=("${gazebo_gui_pid}")
@@ -465,6 +490,18 @@ if [[ "${GUI}" -eq 1 ]]; then
   if [[ "${gazebo_gui_ready}" -ne 1 ]]; then
     echo "Gazebo GUI did not expose its native mission control within 30 seconds." >&2
     exit 4
+  fi
+  if command -v xwininfo >/dev/null 2>&1 && \
+     command -v xwd >/dev/null 2>&1 && \
+     command -v ffmpeg >/dev/null 2>&1; then
+    if ! python3 "${ROOT}/scripts/gazebo_viewport_probe.py" \
+      --output-dir "${OUTPUT_DIR}" --title "Gazebo Sim" --timeout 20; then
+      echo "Gazebo 3D viewport is black; refusing to report GUI readiness." >&2
+      exit 8
+    fi
+  else
+    printf '{"render_visible":null,"skipped":"xwininfo/xwd/ffmpeg unavailable"}\n' \
+      > "${OUTPUT_DIR}/gazebo_viewport_probe.json"
   fi
 fi
 

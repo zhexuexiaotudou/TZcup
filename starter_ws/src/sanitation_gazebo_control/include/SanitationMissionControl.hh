@@ -18,7 +18,7 @@ class SanitationMissionControl : public gz::gui::Plugin
   Q_OBJECT
   Q_PROPERTY(QString missionState READ MissionState NOTIFY MissionStateChanged)
   Q_PROPERTY(QString operatorMessage READ OperatorMessage NOTIFY OperatorMessageChanged)
-  Q_PROPERTY(QString sceneLabel READ SceneLabel CONSTANT)
+  Q_PROPERTY(QString sceneLabel READ SceneLabel NOTIFY SceneLabelChanged)
 
 public:
   SanitationMissionControl();
@@ -32,6 +32,7 @@ public:
 signals:
   void MissionStateChanged();
   void OperatorMessageChanged();
+  void SceneLabelChanged();
 
 protected slots:
   void StartMission();

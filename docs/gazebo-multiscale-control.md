@@ -52,6 +52,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 
 场景由 `scripts/generate_gazebo_world_variants.py` 确定性生成，结果保存在 `sanitation_worlds/worlds/sanitation_campus_{small,medium,large}.sdf`。
 
+## WSLg 的 3D Scene 黑屏
+
+WSLg 中 Mesa D3D12 能通过 `glxinfo -B` 并不等于 Ogre2 视口一定可见：实测故障会保留
+完整 Qt 外壳、World Control 和清扫控制卡，但 `3D Scene` 像素全黑。三档任务配置现在补齐
+`GzSceneManager`、交互视图、相机跟踪、Marker 和实体选择插件；Windows 默认参数
+`-GazeboGuiRenderer auto` 在 WSLg 上让 Gazebo 服务端与传感器继续使用 D3D12/NVIDIA，
+只让 GUI 使用 X11/llvmpipe。可用 `d3d12` 或 `software` 显式覆盖，仅建议用于诊断。
+
+GUI 原生控制节点加载后，`gazebo_viewport_probe.py` 会通过 X11 捕获 Gazebo 窗口，只分析
+左侧中央 3D 区域并记录 `gazebo_viewport.png`、`gazebo_viewport_probe.json`。若该区域仍为
+纯黑，启动器以退出码 `8` 停止整条运行链，不把窗口响应、ROS READY 或 GPU 名称当作画面验收。
+
 ## WSLg 的 COPY MODE
 
 本机使用的 WSL 2.7.3 / WSLg 1.0.73 存在 RemoteApp 共享内存初始化缺陷：

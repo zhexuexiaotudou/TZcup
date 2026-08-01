@@ -25,6 +25,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 [`docs/gazebo-multiscale-control.md`](docs/gazebo-multiscale-control.md)。
 WSLg 冷启动后若 Gazebo 在原生控制面板加载前提前退出，启动器会自动安全重启并按同一参数
 重试一次；重复失败会明确退出，不会留下黑屏窗口或无限重启。
+WSLg 下默认把 Gazebo 服务端保留在 D3D12/NVIDIA，只把 GUI 设为软件渲染；启动器会对 `3D Scene` 做真实截图和黑色像素检测。出现纯黑视口时不会继续显示“已就绪”。
 
 比赛尺度配置使用
 `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps1 -CompetitionProfile -GazeboOnly -ManualControl -KeepOpen`；

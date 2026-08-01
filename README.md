@@ -38,6 +38,7 @@ Gazebo；按钮通过 Coverage 受控服务驱动 Nav2，不直接发送速度�
 [`docs/gazebo-multiscale-control.md`](docs/gazebo-multiscale-control.md)。
 Windows 启动器会准备 WSLg `/mnt/shared_memory`、恢复异常窗口，并在关闭 Gazebo 后立即停止运行链、释放端口和关闭已跟踪的 RemoteApp 窗口句柄，避免残留不可交互会话或无渲染内容的黑色外壳。
 WSLg 冷启动后若 GUI 在原生控制加载前提前退出，启动器只执行一次安全重启和同参数重试；重复失败会明确返回错误。
+在 WSLg 中，Gazebo 服务端和传感器继续使用 D3D12/NVIDIA，原生 GUI 自动改用已验证可见的 X11/llvmpipe 通道；启动器会抓取 `3D Scene` 实际像素，纯黑视口会返回错误而不再误报 READY。
 
 它不会打开浏览器或 RViz。默认使用约 `6 m × 5 m` 的缩小演示区：车辆从蓝色 `HOME`
 真实驶向绿色 `CLEANING START`，在蓝色作业边界内逐条覆盖；灰色表示待清扫区，琥珀色线表示
@@ -52,7 +53,7 @@ WSLg 冷启动后若 GUI 在原生控制加载前提前退出，启动器只执�
 `powershell -ExecutionPolicy Bypass -File scripts/run_visual_demo.ps1 -CompetitionProfile -GazeboOnly -ManualControl -KeepOpen`
 在同一条 Gazebo/Nav2/Coverage 运行链加载 20,000 m² 完整地图、20 分区和
 AUTO-12 的 1.32 m 刷盘/1.0 m/s 参数，并现场运行一个 108 m² 代表性分区；
-Gazebo 状态标记使用显式浮点面积参数，避免 ROS 参数类型不匹配。
+Gazebo 状态标记使用显式浮点面积参数，避免 ROS 参数类型不匹配。需要诊断渲染器时可显式增加 `-GazeboGuiRenderer d3d12|software`；日常使用保留默认 `auto`。
 这不等价于全场耐久通过；边界和剩余差距见
 [`docs/competition-gazebo-profile.md`](docs/competition-gazebo-profile.md)。
 

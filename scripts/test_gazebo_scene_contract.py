@@ -22,6 +22,9 @@ VEHICLE = (
     / "sanitation_vehicle.urdf.xacro"
 )
 VARIANT_DIR = ROOT / "starter_ws" / "src" / "sanitation_worlds" / "worlds"
+MISSION_CONTROL_CONFIG_DIR = (
+    ROOT / "starter_ws" / "src" / "sanitation_gazebo_control" / "config"
+)
 
 
 def _model(world: ET.Element, name: str) -> ET.Element:
@@ -182,3 +185,47 @@ def test_multiscale_worlds_have_exact_dimensions_and_realistic_furniture() -> No
         } <= names
         assert not root.findall(".//uri"), "world variants must remain offline"
     assert expected["large"][0] * expected["large"][1] == 20000.0
+
+
+def test_multiscale_gui_configs_include_scene_runtime_plugins() -> None:
+    required_plugins = {
+        "MinimalScene",
+        "GzSceneManager",
+        "InteractiveViewControl",
+        "CameraTracking",
+        "MarkerManager",
+        "SelectEntities",
+        "WorldControl",
+        "WorldStats",
+        "SanitationMissionControl",
+    }
+    for variant in ("small", "medium", "large"):
+        config_path = MISSION_CONTROL_CONFIG_DIR / f"mission_control_{variant}.config"
+        text = config_path.read_text(encoding="utf-8").replace(
+            '<?xml version="1.0"?>', ""
+        )
+        root = ET.fromstring(f"<root>{text}</root>")
+        plugins = {plugin.get("filename") for plugin in root.findall("plugin")}
+        assert required_plugins <= plugins, variant
+
+
+def test_mission_control_scene_label_updates_after_config_load() -> None:
+    header = (
+        ROOT
+        / "starter_ws"
+        / "src"
+        / "sanitation_gazebo_control"
+        / "include"
+        / "SanitationMissionControl.hh"
+    ).read_text(encoding="utf-8")
+    source = (
+        ROOT
+        / "starter_ws"
+        / "src"
+        / "sanitation_gazebo_control"
+        / "src"
+        / "SanitationMissionControl.cc"
+    ).read_text(encoding="utf-8")
+    assert "sceneLabel READ SceneLabel NOTIFY SceneLabelChanged" in header
+    assert "void SceneLabelChanged();" in header
+    assert "emit SceneLabelChanged();" in source

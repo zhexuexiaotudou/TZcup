@@ -9,6 +9,8 @@ param(
     [int]$DashboardPort = 8877,
     [int]$TimeoutSeconds = 1800,
     [int]$Seed = 0,
+    [ValidateSet("auto", "d3d12", "software")]
+    [string]$GazeboGuiRenderer = "auto",
     [switch]$SkipBuild,
     [switch]$NoGui,
     [switch]$NoRviz,
@@ -91,6 +93,7 @@ $arguments = @(
     "--video", $Video,
     "--timeout", "$TimeoutSeconds",
     "--seed", "$Seed",
+    "--gazebo-gui-renderer", $GazeboGuiRenderer,
     "--map-size", $MapSize
 )
 if ($Workspace) {

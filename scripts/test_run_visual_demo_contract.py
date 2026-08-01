@@ -43,12 +43,28 @@ def test_wslg_gui_is_launched_directly_for_native_plugin_backend():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
 
     assert 'gui:=false random_seed:="${RANDOM_SEED}"' in launcher
-    assert 'setsid gz sim -g --gui-config "${gui_config}"' in launcher
+    assert 'setsid "${gazebo_gui_env[@]}" gz sim -g --gui-config "${gui_config}"' in launcher
     assert '> "${OUTPUT_DIR}/gazebo_gui.log" 2>&1 &' in launcher
     assert 'gui:="${gui_value}"' not in launcher
     assert launcher.index('if [[ "${ready}" -ne 1 ]]') < launcher.index(
-        'setsid gz sim -g --gui-config "${gui_config}"'
+        'setsid "${gazebo_gui_env[@]}" gz sim -g --gui-config "${gui_config}"'
     )
+
+
+def test_wslg_gui_uses_a_visible_software_viewport_and_pixel_probe():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    wrapper = (ROOT / "scripts" / "run_visual_demo.ps1").read_text(encoding="utf-8")
+
+    assert 'GAZEBO_GUI_RENDERER="auto"' in launcher
+    assert 'gazebo_gui_renderer="software"' in launcher
+    assert 'GALLIUM_DRIVER=llvmpipe' in launcher
+    assert 'LIBGL_ALWAYS_SOFTWARE=1' in launcher
+    assert 'QT_QPA_PLATFORM=xcb' in launcher
+    assert 'gazebo_viewport_probe.py' in launcher
+    assert 'Gazebo 3D viewport is black' in launcher
+    assert 'gazebo_gui_renderer.json' in launcher
+    assert '[ValidateSet("auto", "d3d12", "software")]' in wrapper
+    assert '"--gazebo-gui-renderer", $GazeboGuiRenderer' in wrapper
 
 
 def test_wslg_gui_is_health_checked_and_supervised_during_the_mission():

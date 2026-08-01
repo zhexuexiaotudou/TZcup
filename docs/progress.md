@@ -2,6 +2,18 @@
 
 > 仓库清理说明：当前树只保留源码、配置、最终状态和紧凑评审证据。早期 Stage 0–4S 的原始构建日志、MCAP、逐点轨迹 CSV 和重复标定运行已从当前树移除；历史结论仍记录在本页及 `GPT_REVIEW_STAGE*.md`，原始字节可从清理前 Git 历史恢复。新的原始运行数据必须留在 Git 忽略目录，详见 [`artifact-policy.md`](artifact-policy.md)。
 
+## 2026-08-02：Gazebo 3D 视口真实黑屏修复
+
+- 用户截图证明 Qt 外壳、World Control 和原生任务卡正常时，`3D Scene` 仍可能全黑；原有
+  “窗口响应 + ROS READY + D3D12 renderer”验收不足。默认 Gazebo GUI 对照窗口使用
+  X11/llvmpipe 后显示出真实场景，确认世界、模型和服务端数据本身正常。
+- 大、中、小三档自定义 GUI 配置补齐 Gazebo 默认场景管理、交互视图、相机跟踪、Marker
+  和实体选择插件；WSLg 的 AUTO 模式仅把 GUI 改用软件渲染，headless 服务端和传感器仍使用
+  D3D12/NVIDIA。
+- 新增 X11 原生像素探针：首轮仍黑时正确返回退出码 `8`，没有误报 READY；补齐插件并在独立
+  overlay 重建后，比赛大图捕获 `near_black_ratio=0.0`、`render_visible=true`，控制节点和
+  start/pause/resume/stop 四个服务同时在线。
+
 ## 2026-08-02：WSLg 黑色残留窗口收尾
 
 - 复验发现 Linux `gz sim -g` 已退出时，WSLg 偶尔仍保留无标题黑色 RemoteApp 外壳；窗口
