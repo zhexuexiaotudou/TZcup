@@ -8,6 +8,7 @@ param(
     [int]$Seed = 0,
     [switch]$SkipBuild,
     [switch]$NoMcap,
+    [switch]$FullArea,
     [switch]$CloseOnComplete
 )
 
@@ -21,6 +22,7 @@ $launchParameters = @{
     Video = "off"
     GazeboOnly = $true
 }
+if (-not $FullArea) { $launchParameters["Showcase"] = $true }
 if ($Workspace) { $launchParameters["Workspace"] = $Workspace }
 if ($BaseWorkspace) { $launchParameters["BaseWorkspace"] = $BaseWorkspace }
 if ($OutputDirectory) { $launchParameters["OutputDirectory"] = $OutputDirectory }
@@ -28,6 +30,10 @@ if ($SkipBuild) { $launchParameters["SkipBuild"] = $true }
 if ($NoMcap) { $launchParameters["NoMcap"] = $true }
 if (-not $CloseOnComplete) { $launchParameters["KeepOpen"] = $true }
 
-Write-Host "Launching the full cleaning mission in Gazebo only..."
-Write-Host "The teal band is cleaned ground; the amber line is the active path."
+if ($FullArea) {
+    Write-Host "Launching the full-area cleaning mission in Gazebo only..."
+} else {
+    Write-Host "Launching the bounded 6 m x 5 m showcase mission in Gazebo only..."
+}
+Write-Host "Gray is the assigned area, teal is cleaned ground, and amber is the active path."
 & $launcher @launchParameters
