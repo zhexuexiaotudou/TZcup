@@ -15,6 +15,9 @@ param(
     [switch]$NoMcap,
     [switch]$GazeboOnly,
     [switch]$Showcase,
+    [ValidateSet("small", "medium", "large")]
+    [string]$MapSize = "medium",
+    [switch]$ManualControl,
     [switch]$NoBrowser,
     [switch]$NoGazeboTrail,
     [switch]$KeepOpen
@@ -46,7 +49,8 @@ $arguments = @(
     "--dashboard-port", "$DashboardPort",
     "--video", $Video,
     "--timeout", "$TimeoutSeconds",
-    "--seed", "$Seed"
+    "--seed", "$Seed",
+    "--map-size", $MapSize
 )
 if ($Workspace) {
     $arguments += @("--workspace", $Workspace)
@@ -66,6 +70,7 @@ if ($NoRviz) { $arguments += "--no-rviz" }
 if ($NoMcap) { $arguments += "--no-mcap" }
 if ($GazeboOnly) { $arguments += "--gazebo-only" }
 if ($Showcase) { $arguments += "--showcase" }
+if ($ManualControl) { $arguments += "--manual-control" }
 if ($NoBrowser) { $arguments += "--no-browser" }
 if ($NoGazeboTrail) { $arguments += "--no-gazebo-trail" }
 if ($KeepOpen) { $arguments += "--keep-open" }

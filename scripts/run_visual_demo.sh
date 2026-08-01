@@ -15,6 +15,8 @@ KEEP_OPEN=0
 OPEN_DASHBOARD=1
 GAZEBO_TRAIL=1
 SHOWCASE=0
+MAP_SIZE="medium"
+MANUAL_CONTROL=0
 EXPECTED_COMPONENTS=17
 MISSION_TIMEOUT_SEC=1800
 RANDOM_SEED=0
@@ -35,6 +37,8 @@ Options:
   --video MODE          auto, on, or off (default: auto)
   --gazebo-only         Show the full mission in Gazebo without browser or RViz
   --showcase            Use the bounded 6 m x 5 m demonstration task
+  --map-size SIZE       small (30x20), medium (80x50), or large (200x100)
+  --manual-control      Wait for the native Gazebo Start button
   --no-browser          Keep the read-only dashboard server hidden
   --no-gazebo-trail     Disable Gazebo cleaned-swath and mission markers
   --keep-open           Keep GUI/dashboard open after mission termination
@@ -57,6 +61,8 @@ while [[ $# -gt 0 ]]; do
     --video) VIDEO_MODE="$2"; shift 2 ;;
     --gazebo-only) RVIZ=0; VIDEO_MODE=off; OPEN_DASHBOARD=0; shift ;;
     --showcase) SHOWCASE=1; EXPECTED_COMPONENTS=9; shift ;;
+    --map-size) MAP_SIZE="$2"; shift 2 ;;
+    --manual-control) MANUAL_CONTROL=1; shift ;;
     --no-browser) OPEN_DASHBOARD=0; shift ;;
     --no-gazebo-trail) GAZEBO_TRAIL=0; shift ;;
     --keep-open) KEEP_OPEN=1; shift ;;
@@ -68,6 +74,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 case "${VIDEO_MODE}" in auto|on|off) ;; *) echo "--video must be auto, on, or off" >&2; exit 2 ;; esac
+case "${MAP_SIZE}" in small|medium|large) ;; *) echo "--map-size must be small, medium, or large" >&2; exit 2 ;; esac
+if [[ "${MAP_SIZE}" == "small" ]]; then SHOWCASE=1; EXPECTED_COMPONENTS=9; fi
 [[ "${DASHBOARD_PORT}" =~ ^[0-9]+$ ]] || { echo "dashboard port must be numeric" >&2; exit 2; }
 [[ "${MISSION_TIMEOUT_SEC}" =~ ^[0-9]+$ ]] || { echo "timeout must be numeric" >&2; exit 2; }
 
@@ -193,6 +201,9 @@ mkdir -p "${runtime}"
 navigation_share="$(ros2 pkg prefix sanitation_navigation)/share/sanitation_navigation"
 tasks_share="$(ros2 pkg prefix sanitation_tasks)/share/sanitation_tasks"
 hmi_share="$(ros2 pkg prefix sanitation_hmi)/share/sanitation_hmi"
+control_prefix="$(ros2 pkg prefix sanitation_gazebo_control)"
+control_share="${control_prefix}/share/sanitation_gazebo_control"
+export GZ_GUI_PLUGIN_PATH="${control_prefix}/lib${GZ_GUI_PLUGIN_PATH:+:${GZ_GUI_PLUGIN_PATH}}"
 map_root="${navigation_share}/maps"
 nav_params="${runtime}/nav2_autonomous_navigation_profile_v1.yaml"
 mission_config="${runtime}/demo_area_autonomous_navigation_profile_v1.yaml"
@@ -201,9 +212,9 @@ if [[ "${SHOWCASE}" -eq 1 ]]; then
   mission_config="${runtime}/showcase_area_autonomous_navigation_profile_v1.yaml"
   mission_template="${tasks_share}/config/showcase_area.yaml"
 fi
-world_file="$(
-  ros2 pkg prefix sanitation_worlds
-)/share/sanitation_worlds/worlds/sanitation_structured_world.sdf"
+world_file="$(ros2 pkg prefix sanitation_worlds)/share/sanitation_worlds/worlds/sanitation_campus_${MAP_SIZE}.sdf"
+world_name="sanitation_campus_${MAP_SIZE}"
+gui_config="${control_share}/config/mission_control_${MAP_SIZE}.config"
 rviz_config="${hmi_share}/rviz/visual_demo.rviz"
 
 if python3 - "${DASHBOARD_PORT}" <<'PY'
@@ -247,6 +258,8 @@ gui_value=false
 [[ "${GUI}" -eq 1 ]] && gui_value=true
 setsid ros2 launch sanitation_bringup stage4v_localization.launch.py \
   gui:="${gui_value}" random_seed:="${RANDOM_SEED}" gnss_profile:=rtk_fixed \
+  world_file:="${world_file}" world_name:="${world_name}" \
+  gui_config:="${gui_config}" \
   camera_profile:=V5_retracted fusion_mode:=hybrid_rtk_scan_imu_wheel \
   enable_scan_refiner:=true \
   > "${OUTPUT_DIR}/localization.log" 2>&1 &
@@ -437,6 +450,7 @@ ros2 topic pub --once /emergency_stop std_msgs/msg/Bool "{data: false}" \
 set +e
 timeout "${MISSION_TIMEOUT_SEC}" ros2 run sanitation_coverage coverage_probe --ros-args \
   -p use_sim_time:=true \
+  -p manual_start:="$([[ "${MANUAL_CONTROL}" -eq 1 ]] && echo true || echo false)" \
   -p output_path:="${OUTPUT_DIR}/coverage_report.json" \
   -p config_path:="${mission_config}" \
   -p path_output_path:="${OUTPUT_DIR}/coverage_path.json" \
@@ -450,7 +464,13 @@ if [[ "${KEEP_OPEN}" -eq 1 ]]; then
   echo "[AUTO-17] Mission ended. Press Ctrl+C when visual inspection is complete."
   keep_open_stop=0
   trap 'keep_open_stop=1' INT TERM
-  while [[ "${keep_open_stop}" -eq 0 ]]; do sleep 1; done
+  while [[ "${keep_open_stop}" -eq 0 ]]; do
+    if [[ "${GUI}" -eq 1 ]] && ! pgrep -f 'gz sim.*-g' >/dev/null 2>&1; then
+      echo "[AUTO-17] Gazebo GUI closed; finishing the launcher."
+      break
+    fi
+    sleep 1
+  done
   trap on_exit EXIT INT TERM
 fi
 

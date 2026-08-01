@@ -21,6 +21,7 @@ VEHICLE = (
     / "urdf"
     / "sanitation_vehicle.urdf.xacro"
 )
+VARIANT_DIR = ROOT / "starter_ws" / "src" / "sanitation_worlds" / "worlds"
 
 
 def _model(world: ET.Element, name: str) -> ET.Element:
@@ -118,6 +119,11 @@ def test_vehicle_visual_detail_preserves_frozen_planar_envelope() -> None:
         "upper_body_visual",
         "front_service_panel_visual",
         "front_bumper_visual",
+        "left_headlamp_visual",
+        "right_headlamp_visual",
+        "roof_safety_beacon_visual",
+        "charging_port_visual",
+        "rear_suction_intake_visual",
     } <= visual_names
     assert {"lower_chassis_collision", "upper_body_collision"} <= collision_names
 
@@ -145,3 +151,34 @@ def test_vehicle_visual_detail_preserves_frozen_planar_envelope() -> None:
         "hub_visual",
     }
     assert not root.findall(".//mesh"), "the production vehicle remains offline primitive geometry"
+
+
+def test_multiscale_worlds_have_exact_dimensions_and_realistic_furniture() -> None:
+    expected = {
+        "small": (30.0, 20.0),
+        "medium": (80.0, 50.0),
+        "large": (200.0, 100.0),
+    }
+    for variant, dimensions in expected.items():
+        root = ET.parse(VARIANT_DIR / f"sanitation_campus_{variant}.sdf").getroot()
+        world = root.find("world")
+        assert world is not None
+        assert world.get("name") == f"sanitation_campus_{variant}"
+        ground = _model(world, "asphalt_ground")
+        size = tuple(map(float, _text(ground, "./link/collision/geometry/box/size").split()))
+        assert size[:2] == dimensions
+        names = {model.get("name") for model in world.findall("model")}
+        assert {
+            "north_sidewalk",
+            "south_sidewalk",
+            "bus_shelter_roof",
+            "target_cardboard",
+            "target_bottle",
+            "target_can",
+            "target_leaf_pile",
+            "target_paper",
+            "dimension_x_bar",
+            "dimension_y_bar",
+        } <= names
+        assert not root.findall(".//uri"), "world variants must remain offline"
+    assert expected["large"][0] * expected["large"][1] == 20000.0

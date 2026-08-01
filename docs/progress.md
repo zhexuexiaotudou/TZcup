@@ -2,6 +2,20 @@
 
 > 仓库清理说明：当前树只保留源码、配置、最终状态和紧凑评审证据。早期 Stage 0–4S 的原始构建日志、MCAP、逐点轨迹 CSV 和重复标定运行已从当前树移除；历史结论仍记录在本页及 `GPT_REVIEW_STAGE*.md`，原始字节可从清理前 Git 历史恢复。新的原始运行数据必须留在 Git 忽略目录，详见 [`artifact-policy.md`](artifact-policy.md)。
 
+## 2026-08-01：Gazebo 原生任务控制、三档场景与车辆细化
+
+- 新增 Gazebo 原生“清扫任务控制”卡片，通过 ROS 2 Trigger 服务提供开始、暂停、继续、停止和关闭；
+  暂停会关闭刷盘、取消当前 Nav2 goal 并进入 `PAUSED`，控制卡本身从不发布 `/cmd_vel`。
+- 新增 `30 m × 20 m`、`80 m × 50 m`、`200 m × 100 m` 三档园区场景；大场景物理地面精确为
+  `20,000 m²`，三档均包含道路、建筑、绿化、停车、公交站、街具和清扫目标，且只使用离线 SDF 基础几何。
+- 车辆增加前灯、尾灯、警示灯、检修门、把手、充电口、后吸口、安全条和刷盘支臂等可读外观；
+  二维 footprint、轮距、动力学、碰撞包络、传感器外参与 ROS 话题保持冻结。
+- 本机 WSLg 已实际执行 `READY → 开始 → 暂停 → 继续 → 停止`：暂停后刷盘关闭且速度为零，
+  停止报告包含 `stopped_by_operator=true`；大场景尺寸正确不等于 20,000 m² 全场清扫已验收。
+- 操作入口、三档地图和车辆部件表分别见
+  [`gazebo-multiscale-control.md`](gazebo-multiscale-control.md) 与
+  [`vehicle-model-guide.md`](vehicle-model-guide.md)。
+
 ## 2026-08-01：有界小范围完整清扫演示
 
 - `run_gazebo_cleaning_demo.ps1` 默认改为约 `6 m × 5 m` 的真实 Coverage 任务，保留

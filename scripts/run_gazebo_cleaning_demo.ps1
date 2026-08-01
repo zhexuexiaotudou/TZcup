@@ -9,6 +9,8 @@ param(
     [switch]$SkipBuild,
     [switch]$NoMcap,
     [switch]$FullArea,
+    [ValidateSet("small", "medium", "large")]
+    [string]$MapSize = "small",
     [switch]$CloseOnComplete
 )
 
@@ -21,8 +23,10 @@ $launchParameters = @{
     Seed = $Seed
     Video = "off"
     GazeboOnly = $true
+    MapSize = $MapSize
+    ManualControl = $true
 }
-if (-not $FullArea) { $launchParameters["Showcase"] = $true }
+if ($FullArea) { $launchParameters["MapSize"] = "medium" }
 if ($Workspace) { $launchParameters["Workspace"] = $Workspace }
 if ($BaseWorkspace) { $launchParameters["BaseWorkspace"] = $BaseWorkspace }
 if ($OutputDirectory) { $launchParameters["OutputDirectory"] = $OutputDirectory }
@@ -31,9 +35,10 @@ if ($NoMcap) { $launchParameters["NoMcap"] = $true }
 if (-not $CloseOnComplete) { $launchParameters["KeepOpen"] = $true }
 
 if ($FullArea) {
-    Write-Host "Launching the full-area cleaning mission in Gazebo only..."
+    Write-Host "Launching the medium 80 m x 50 m scene with the full 17-component mission..."
 } else {
-    Write-Host "Launching the bounded 6 m x 5 m showcase mission in Gazebo only..."
+    Write-Host "Launching the $MapSize Gazebo scene with native mission controls..."
 }
+Write-Host "Use the right-side Gazebo panel: Start, Pause, Resume, Stop, or Close Gazebo."
 Write-Host "Gray is the assigned area, teal is cleaned ground, and amber is the active path."
 & $launcher @launchParameters
