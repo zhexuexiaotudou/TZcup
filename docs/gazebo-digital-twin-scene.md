@@ -19,9 +19,11 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
 ```
 
-专用入口默认启动约 `6 m × 5 m` 的小范围完整任务，并在 Gazebo 内显示指定清扫边界、车辆
-实际出发点、Coverage 作业起点、当前路径、实时已清扫带、组件进度与刷盘状态；俯视镜头可
-同时看到车辆和整个作业区，不会打开浏览器控制台或 RViz。增加 `-FullArea` 可恢复原 17 段任务。
+专用入口默认加载单独制作的 `16 m × 12 m` 竞赛功能演示世界，而不是在大地图中限制一块区域。
+场内包含专用作业面、充电位、路缘、护栏、行人假人、积水以及瓶、罐、纸张、纸箱和落叶五类
+目标；Gazebo 同窗显示清扫边界、车辆出发点、Coverage 路径、实际轨迹、已清扫栅格、目标状态、
+面积、覆盖率和效率。俯视镜头可同时看到车辆与完整作业区，不会打开浏览器控制台或 RViz。
+增加 `-FullArea` 会切换到中型 `80 m × 50 m` 场景的原 17 组件任务。
 
 可用键盘控制验证车辆运动：
 

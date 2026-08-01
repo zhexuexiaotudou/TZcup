@@ -57,8 +57,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 实车视觉或物理吸入证据。默认 `-SimulationSpeed fast` 的目标物理倍率为 2x，另有
 `normal` 和 `turbo`；顶部 World Stats 才是当前硬件实际达到的 RTF。
 
-启动器只在 `controller_server` 和 `planner_server` 均为 lifecycle `active` 后开放 Gazebo
-任务面板，避免窗口可见但导航尚未就绪时“开始”被拒绝。
+启动器先确认定位话题、`/scan`、`/odom` 与 `odom→base_footprint` TF 均真实可用，再启动
+Nav2；随后只在 `controller_server` 和 `planner_server` 都精确返回 lifecycle `active [3]`
+后开放 Gazebo 任务面板，避免把 `inactive` 误判为就绪，也避免出现可见但不能行驶的窗口。
 
 ## WSLg 的 3D Scene 黑屏
 

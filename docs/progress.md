@@ -2,6 +2,13 @@
 
 > 仓库清理说明：当前树只保留源码、配置、最终状态和紧凑评审证据。早期 Stage 0–4S 的原始构建日志、MCAP、逐点轨迹 CSV 和重复标定运行已从当前树移除；历史结论仍记录在本页及 `GPT_REVIEW_STAGE*.md`，原始字节可从清理前 Git 历史恢复。新的原始运行数据必须留在 Git 忽略目录，详见 [`artifact-policy.md`](artifact-policy.md)。
 
+## 2026-08-02：独立小场、同窗清扫遥测与冷启动就绪门
+
+- 新增独立 `16 m × 12 m` 竞赛功能演示世界、五类可移除目标和 30 m² 指定作业区；小场不再复用大场景或只裁剪任务多边形。Gazebo 右栏实时显示规划路径、实际轨迹、已清扫栅格、面积、覆盖率、目标数、效率、里程、速度、仿真时间和组件进度。
+- 新增 `normal/fast/turbo` 三档仿真速度、硬件接口契约、Sim-to-Real 故障档案和 SIL/HIL/封闭场/实车准入说明；仿真目标清除与覆盖统计保持 `evaluation-only`，不冒充实车识别、吸入或称重证据。
+- 冷启动现在先等待定位话题和 `odom→base_footprint` TF，再精确要求 Nav2 controller/planner 为 `active [3]` 后打开界面；修复了 `inactive` 包含 `active` 导致的假阳性。
+- `main@9f6b788b64974b12c5b49e46055a7c305d16362a` 在本机 WSLg 从全新 overlay 实跑完成：9/9 组件、经验覆盖率 92.0%、5/5 目标、0 碰撞、0 禁行区违规、定位 XY RMSE 0.0478 m；暂停时刷盘关闭且速度为 0，继续后终态 `COMPLETED`，3D 视口 `near_black_ratio=0.0`。运行时代码经 [PR #72](https://github.com/zhexuexiaotudou/TZcup/pull/72) 与 [PR #73](https://github.com/zhexuexiaotudou/TZcup/pull/73) 合并。
+
 ## 2026-08-02：Gazebo 3D 视口真实黑屏修复
 
 - 用户截图证明 Qt 外壳、World Control 和原生任务卡正常时，`3D Scene` 仍可能全黑；原有
