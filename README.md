@@ -25,6 +25,16 @@ Gazebo 配置参考真值、SLAM `/map`、感知预测、全局/局部规划和 
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps1 -Video on
 ```
 
+只希望在 Gazebo 一个窗口中观看完整清扫任务时，使用专用入口：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
+```
+
+它不会打开浏览器或 RViz；Gazebo 会跟随车辆显示 9 条清扫带和 8 个转弯，琥珀色线表示
+当前执行路径，青绿色作业带随刷盘开启实时累积，车顶文字显示任务阶段、17 段进度和刷盘状态。
+默认在任务结束后保留 Gazebo 供检查，按 `Ctrl+C` 后才收尾并生成验收摘要。
+
 本机完整任务通过：`17/17` 组件、经验覆盖率 `93.67%`、碰撞 `0`、禁行区违规 `0`、定位 XY RMSE `0.03588 m`，MCAP 为 `205528` 条消息/18 个话题；看板终态为 `COMPLETED`，专用 MP4 为 `1.49 MB`。使用与证据边界见 [`docs/auto17-visual-demo.md`](docs/auto17-visual-demo.md)。AUTO-17 只提升可观察性和演示复现能力，不改变学习感知、真实域、J6 板端及综合竞赛矩阵仍为 false 的事实。
 
 ## Gazebo 数字孪生场景

@@ -2,6 +2,18 @@
 
 > 仓库清理说明：当前树只保留源码、配置、最终状态和紧凑评审证据。早期 Stage 0–4S 的原始构建日志、MCAP、逐点轨迹 CSV 和重复标定运行已从当前树移除；历史结论仍记录在本页及 `GPT_REVIEW_STAGE*.md`，原始字节可从清理前 Git 历史恢复。新的原始运行数据必须留在 Git 忽略目录，详见 [`artifact-policy.md`](artifact-policy.md)。
 
+## 2026-08-01：Gazebo 单窗口完整清扫过程
+
+- 新增 `sanitation_gazebo_visualization`，只读订阅真实 Coverage 任务的当前路径、状态、刷盘和
+  evaluation-only 真值里程计，通过 Gazebo MarkerManager 显示当前路径、实际已清扫带和车顶状态。
+- 新增 `scripts/run_gazebo_cleaning_demo.ps1`，复用 AUTO-17 的 Stage4V 定位、Nav2、Coverage
+  和证据链，但默认不打开浏览器与 RViz，并在完成后保留 Gazebo 供人工检查。
+- 显示层不发布 `/cmd_vel`、导航 goal 或安全状态；`world_to_map` 变换显式冻结为当前任务几何，
+  真值只用于显示和评估，不能进入规划、控制或安全决策。
+- 本机 WSLg 正式验收完成 17/17 组件，经验覆盖率 92.47%，碰撞与禁入区违规均为 0；
+  Gazebo 中确认三个 marker namespace，限频后的显示节点警告与丢弃请求均为 0。紧凑证据见
+  `artifacts/auto17_gazebo_cleaning_process_20260801_evidence/acceptance_summary.json`。
+
 ## 2026-07-31：Gazebo 场地、车辆模型与数字孪生场景
 
 - 本轮按需求把重点收回 Gazebo 本体，没有继续扩展网页控制台；新增

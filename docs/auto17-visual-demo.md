@@ -1,5 +1,24 @@
 # AUTO-17：从“有仿真结果”到“看得见清扫过程”
 
+## Gazebo 单窗口完整清扫
+
+不需要浏览器或 RViz 时，可直接运行：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
+```
+
+该入口仍执行同一条真实 Stage4V 定位、Nav2 和 Coverage 控制链，只隐藏网页与 RViz。
+`sanitation_gazebo_visualization` 通过 Gazebo MarkerManager 在三维场景中叠加三类只读信息：
+
+- 琥珀色折线：当前 `/coverage/current_path`，即 Nav2 正在跟踪的组件；
+- 青绿色带：`/brush_enabled=true` 时，evaluation-only `/ground_truth/odom` 推导的实际刷盘扫掠；
+- 车顶文字：`/coverage/state`、17 段任务进度和刷盘开关。
+
+规划和控制不订阅这些 Gazebo marker。真值只生成显示与验收轨迹，不进入 Nav2、Coverage、
+速度门或安全决策。默认任务完成后保留 Gazebo，按 `Ctrl+C` 后收尾；自动验收可增加
+`-CloseOnComplete`。
+
 ## 目标
 
 AUTO-17 解决的是展示与可观察性缺口：以前可以从 JSON、日志和 MCAP 判断任务是否成功，但普通观众难以看到车辆何时启动、正在清扫哪一条带、刷盘是否开启、当前位置和覆盖进度。该层直接复用已通过的 AUTO-02 正式导航与 Coverage 链，不制造动画替代仿真。

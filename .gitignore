@@ -90,6 +90,7 @@ artifacts/autonomous_auto05_*_raw/
 artifacts/auto17_visual_demo_*/
 !artifacts/auto17_visual_demo_*_evidence/
 !artifacts/auto17_visual_demo_*_evidence/**
+artifacts/gazebo_cleaning_process_*/
 
 # AUTO-16 clean-clone/full-workspace build logs are retained locally until
 # user confirmation; only the compact verification JSON is versioned.

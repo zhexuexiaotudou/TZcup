@@ -12,6 +12,16 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 
 脚本使用 `TZcup-Ubuntu-24.04` WSL2/WSLg，自动启动 Gazebo、Nav2、Coverage、RViz 和 `http://127.0.0.1:8877` 实时看板；正常冷启动后车辆会自动驶向作业起点并执行 9 条清扫带和 8 个转弯。结果写入 `artifacts/auto17_visual_demo_<UTC>/`。再次启动前必须先停止旧实例；启动器会检测重复 Nav2/Coverage 节点并拒绝污染运行。完整说明见 [`docs/auto17-visual-demo.md`](docs/auto17-visual-demo.md)。
 
+如果只看 Gazebo，不需要浏览器看板和 RViz：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
+```
+
+青绿色区域表示刷盘实际经过的已清扫带，琥珀色线表示当前 Nav2 跟踪路径，车顶状态文字
+显示任务阶段、组件进度和刷盘开关。默认完成后保留窗口；使用 `-CloseOnComplete` 可让脚本
+在任务完成并生成证据后自动关闭 Gazebo。
+
 ## 推荐环境
 
 - Ubuntu 24.04（原生或 WSLg）；
@@ -95,6 +105,10 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 
 该入口默认加载人类可读的园区道路结构化世界。场景对象、车辆模型和几何边界见
 [`docs/gazebo-digital-twin-scene.md`](docs/gazebo-digital-twin-scene.md)。
+
+`gazebo_scene.launch.py` 只负责静态场景和手动驾驶。需要车辆自动执行完整清扫任务时，
+必须改用上面的 `run_gazebo_cleaning_demo.ps1`，它会同时启动定位、Nav2、Coverage 和
+Gazebo 原生清扫可视化。
 
 一键启动结构化 Gazebo 场景、SLAM、安全速度门和地图优先的浏览器监督台：
 
