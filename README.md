@@ -36,7 +36,7 @@ Gazebo；按钮通过 Coverage 受控服务驱动 Nav2，不直接发送速度�
 `-MapSize small|medium|large` 选择 30 m × 20 m 小型演示、80 m × 50 m 中型验证或
 严格 200 m × 100 m（20,000 m²）的比赛大图。操作、安全语义和场景边界见
 [`docs/gazebo-multiscale-control.md`](docs/gazebo-multiscale-control.md)。
-Windows 启动器会准备 WSLg `/mnt/shared_memory`、恢复异常窗口，并在关闭 Gazebo 后立即停止运行链和释放端口，避免残留不可交互会话。
+Windows 启动器会准备 WSLg `/mnt/shared_memory`、恢复异常窗口，并在关闭 Gazebo 后立即停止运行链、释放端口和关闭已跟踪的 RemoteApp 窗口句柄，避免残留不可交互会话或无渲染内容的黑色外壳。
 
 它不会打开浏览器或 RViz。默认使用约 `6 m × 5 m` 的缩小演示区：车辆从蓝色 `HOME`
 真实驶向绿色 `CLEANING START`，在蓝色作业边界内逐条覆盖；灰色表示待清扫区，琥珀色线表示

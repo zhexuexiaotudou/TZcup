@@ -88,6 +88,11 @@ def test_windows_wrapper_runs_the_wslg_window_guard():
     assert 'StartsWith("[WARN:COPY MODE]"' in guard
     assert '"copy_mode_timeout"' in guard
     assert 'Found multiple WSLg windows' in guard
+    assert '"-CloseWindowOnStop"' in wrapper
+    assert "WM_CLOSE" in guard
+    assert "PostMessage" in guard
+    assert '"window_close_requested"' in guard
+    assert "close_request_accepted" in guard
 
 
 def test_wslg_shared_memory_preflight_is_idempotent_and_persistent():

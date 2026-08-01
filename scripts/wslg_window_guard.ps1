@@ -7,6 +7,7 @@ param(
     [string]$FailureFile = "",
     [int]$StartupTimeoutSeconds = 180,
     [int]$PollMilliseconds = 750,
+    [switch]$CloseWindowOnStop,
     [switch]$Monitor
 )
 
@@ -55,6 +56,12 @@ namespace TZcup
         private static extern bool SetForegroundWindow(IntPtr hWnd);
 
         [DllImport("user32.dll")]
+        private static extern bool IsWindow(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool PostMessage(IntPtr hWnd, uint message, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
 
         [DllImport("user32.dll")]
@@ -74,6 +81,7 @@ namespace TZcup
 
         private const int SW_RESTORE = 9;
         private const int SW_SHOW = 5;
+        private const uint WM_CLOSE = 0x0010;
 
         public static WindowState[] Find(string titleFragment)
         {
@@ -132,6 +140,12 @@ namespace TZcup
             }
         }
 
+        public static bool Close(long handle)
+        {
+            var hWnd = new IntPtr(handle);
+            return IsWindow(hWnd) && PostMessage(hWnd, WM_CLOSE, IntPtr.Zero, IntPtr.Zero);
+        }
+
     }
 }
 '@
@@ -180,9 +194,17 @@ $lastRecoveryHandle = 0L
 $healthyOnce = $false
 $copyModeDeadline = $null
 $windowRecoveryDeadline = $null
+$lastSeenWindow = $null
 
 while ($true) {
     if ($StopFile -and (Test-Path -LiteralPath $StopFile)) {
+        if ($CloseWindowOnStop -and $null -ne $lastSeenWindow) {
+            $closeRequested = [TZcup.WslgWindow]::Close($lastSeenWindow.Handle)
+            Write-WindowEvidence -Event "window_close_requested" -Window $lastSeenWindow -Details @{
+                reason = "guard_stop"
+                request_accepted = $closeRequested
+            }
+        }
         Write-WindowEvidence -Event "guard_stopped"
         exit 0
     }
@@ -197,6 +219,7 @@ while ($true) {
     if ($windows.Count -eq 1) {
         $seenWindow = $true
         $window = $windows[0]
+        $lastSeenWindow = $window
         $copyMode = $window.Title.StartsWith("[WARN:COPY MODE]", [StringComparison]::OrdinalIgnoreCase)
         $needsRecovery = -not $window.Visible -or $window.Minimized
 
@@ -236,7 +259,13 @@ while ($true) {
             }
         }
     } elseif ($seenWindow) {
-        Write-WindowEvidence -Event "window_closed"
+        $closeRequested = $false
+        if ($CloseWindowOnStop -and $null -ne $lastSeenWindow) {
+            $closeRequested = [TZcup.WslgWindow]::Close($lastSeenWindow.Handle)
+        }
+        Write-WindowEvidence -Event "window_closed" -Window $lastSeenWindow -Details @{
+            close_request_accepted = $closeRequested
+        }
         exit 5
     } elseif ([DateTime]::UtcNow -ge $deadline) {
         Write-WindowEvidence -Event "startup_timeout"

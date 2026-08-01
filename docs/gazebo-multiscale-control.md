@@ -70,6 +70,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 一个短暂的安全停止窗口，然后终止本次任务和全部子进程并释放 `8877`。证据目录中的
 `wslg_window_guard.jsonl` 记录窗口恢复事件；任务未完成时关闭 GUI 会写入
 `launcher_termination.json`，状态为 `OPERATOR_GUI_CLOSED`，不得误写成清扫完成。
+Windows 守护器同时保留已经确认过的 Gazebo 窗口句柄；若 Linux GUI 已退出而 WSLg
+RemoteApp 只剩无标题黑色外壳，守护器会仅向该已跟踪句柄发送 `WM_CLOSE`，避免任务栏留下
+可点击但没有渲染内容的残留窗口，不会终止整个 `msrdc` 或其他 WSLg 应用。
 
 COPY MODE 本身来自 WSLg RemoteApp，不是 ROS 或 Gazebo 任务故障；它不再被解释成需要
 人工按 `Esc` 的普通状态。若预检后仍出现 COPY MODE，启动器会明确失败并保留诊断证据。

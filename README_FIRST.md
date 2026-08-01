@@ -21,7 +21,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 启动后使用 Gazebo 右侧“清扫任务控制”卡片，不要用世界物理暂停代替任务暂停。默认
 `-MapSize small`，也可选择 `medium` 或 `large`。Windows 启动器默认准备并验证 WSLg
 `/mnt/shared_memory`，避免 `[WARN:COPY MODE]`，并恢复异常最小化窗口；关闭 Gazebo 会同步停止本次后台仿真，不会遗留
-占用端口的旧会话。详见
+占用端口的旧会话或无渲染内容的 WSLg 黑色残留窗口。详见
 [`docs/gazebo-multiscale-control.md`](docs/gazebo-multiscale-control.md)。
 
 比赛尺度配置使用

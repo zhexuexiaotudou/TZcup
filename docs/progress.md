@@ -2,6 +2,14 @@
 
 > 仓库清理说明：当前树只保留源码、配置、最终状态和紧凑评审证据。早期 Stage 0–4S 的原始构建日志、MCAP、逐点轨迹 CSV 和重复标定运行已从当前树移除；历史结论仍记录在本页及 `GPT_REVIEW_STAGE*.md`，原始字节可从清理前 Git 历史恢复。新的原始运行数据必须留在 Git 忽略目录，详见 [`artifact-policy.md`](artifact-policy.md)。
 
+## 2026-08-02：WSLg 黑色残留窗口收尾
+
+- 复验发现 Linux `gz sim -g` 已退出时，WSLg 偶尔仍保留无标题黑色 RemoteApp 外壳；窗口
+  守护器现保存已确认的 Gazebo HWND，并在 GUI 消失或守护停止时只向该句柄发送 `WM_CLOSE`，
+  防止任务栏残留无渲染内容的黑窗口，同时避免终止整个 `msrdc` 或其他 WSLg 应用。
+- 本机故意终止 Gazebo GUI 后，ROS/Gazebo 子进程与 `8877` 全部释放，Windows RemoteApp
+  窗口枚举为 0，任务终态保持 `OPERATOR_GUI_CLOSED`，没有把异常退出记成任务完成。
+
 ## 2026-08-01：Gazebo 原生任务控制、三档场景与车辆细化
 
 - 修复 WSLg Gazebo 窗口关闭/最小化后的不可恢复问题：启动前自动挂载并持久化
