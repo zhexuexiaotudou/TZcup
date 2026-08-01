@@ -30,3 +30,15 @@ def test_camera_follow_discovery_has_a_hard_timeout():
     assert "for _ in $(seq 1 10)" in launcher
     assert 'gz_topics="$(timeout 3 gz topic -l 2>/dev/null || true)"' in launcher
     assert 'gz_topics="$(gz topic -l 2>/dev/null || true)"' not in launcher
+
+
+def test_wslg_gui_is_launched_directly_for_native_plugin_backend():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+
+    assert 'gui:=false random_seed:="${RANDOM_SEED}"' in launcher
+    assert 'setsid gz sim -g --gui-config "${gui_config}"' in launcher
+    assert '> "${OUTPUT_DIR}/gazebo_gui.log" 2>&1 &' in launcher
+    assert 'gui:="${gui_value}"' not in launcher
+    assert launcher.index('if [[ "${ready}" -ne 1 ]]') < launcher.index(
+        'setsid gz sim -g --gui-config "${gui_config}"'
+    )
