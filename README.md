@@ -31,23 +31,18 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
 ```
 
-Gazebo 右侧现在有原生“清扫任务控制”卡片，可点击开始、暂停、继续、停止任务和关闭
-Gazebo；按钮通过 Coverage 受控服务驱动 Nav2，不直接发送速度。场景可用
-`-MapSize small|medium|large` 选择 30 m × 20 m 小型演示、80 m × 50 m 中型验证或
-严格 200 m × 100 m（20,000 m²）的比赛大图。操作、安全语义和场景边界见
-[`docs/gazebo-multiscale-control.md`](docs/gazebo-multiscale-control.md)。
+Gazebo 右侧原生卡片可控制开始、暂停、继续、停止和关闭；按钮通过 Coverage 服务驱动 Nav2，不直接发速度。`-MapSize small|medium|large` 选择独立 16 m × 12 m 演示场、80 m × 50 m 中型验证或严格 200 m × 100 m 比赛大图，详见 [`docs/gazebo-multiscale-control.md`](docs/gazebo-multiscale-control.md)。
 Windows 启动器会准备 WSLg `/mnt/shared_memory`、恢复异常窗口，并在关闭 Gazebo 后立即停止运行链、释放端口和关闭已跟踪的 RemoteApp 窗口句柄，避免残留不可交互会话或无渲染内容的黑色外壳。
+
+默认 `small` 是单独设计的 `16 m × 12 m` 竞赛功能演示场；Gazebo 右侧同窗显示清扫指标、琥珀色规划路径、实际轨迹、青绿色已清扫栅格和目标状态。默认 `fast` 目标为 2x、0.60 m/s，可传 `-SimulationSpeed normal|fast|turbo`；顶部 World Stats 显示本机实际 RTF。
 WSLg 冷启动后若 GUI 在原生控制加载前提前退出，启动器只执行一次安全重启和同参数重试；重复失败会明确返回错误。
 在 WSLg 中，Gazebo 服务端和传感器继续使用 D3D12/NVIDIA，原生 GUI 自动改用已验证可见的 X11/llvmpipe 通道；启动器会抓取 `3D Scene` 实际像素，纯黑视口会返回错误而不再误报 READY。
 
-它不会打开浏览器或 RViz。默认使用约 `6 m × 5 m` 的缩小演示区：车辆从蓝色 `HOME`
-真实驶向绿色 `CLEANING START`，在蓝色作业边界内逐条覆盖；灰色表示待清扫区，琥珀色线表示
-当前执行路径，青绿色带随刷盘开启实时累积。俯视跟随镜头始终保留完整作业区。使用
-`-FullArea` 可恢复 9 条清扫带、8 个转弯的完整区域任务。默认任务结束后保留 Gazebo，
-按 `Ctrl+C` 后才收尾并生成验收摘要。
+它不打开浏览器或 RViz；车辆在独立小场内真实执行完整 Coverage，青绿清扫带随刷盘开启累积，默认任务结束后保留 Gazebo，按 `Ctrl+C` 才收尾并生成验收摘要。
 
 本机完整任务通过：`17/17` 组件、经验覆盖率 `93.67%`、碰撞 `0`、禁行区违规 `0`、定位 XY RMSE `0.03588 m`，MCAP 为 `205528` 条消息/18 个话题；看板终态为 `COMPLETED`，专用 MP4 为 `1.49 MB`。使用与证据边界见 [`docs/auto17-visual-demo.md`](docs/auto17-visual-demo.md)。AUTO-17 只提升可观察性和演示复现能力，不改变学习感知、真实域、J6 板端及综合竞赛矩阵仍为 false 的事实。
 
+工业化接口契约、故障档案和 SIL/HIL/封闭场准入见 [`docs/industrialization-and-sim2real.md`](docs/industrialization-and-sim2real.md)；演示目标按真值和刷盘足迹判定并从场景移除，不代表真实识别或物理吸入闭环。
 ### 竞赛尺度现场配置
 
 `powershell -ExecutionPolicy Bypass -File scripts/run_visual_demo.ps1 -CompetitionProfile -GazeboOnly -ManualControl -KeepOpen`

@@ -24,8 +24,9 @@ def test_gazebo_visualizer_package_contract() -> None:
         '"/coverage/current_path"',
     ):
         assert topic in source
-    for marker_type in ("type:LINE_STRIP", "type:TEXT", "type:BOX", "type:SPHERE"):
+    for marker_type in ("type:LINE_STRIP", "type:BOX", "type:SPHERE"):
         assert marker_type in source
+    assert "type:TEXT" not in source, "Ogre2 MarkerManager does not support text markers reliably"
     assert '"/marker"' in source
     assert '"gz.msgs.Marker"' in source
     assert '"gz.msgs.Empty"' in source
@@ -35,18 +36,19 @@ def test_gazebo_visualizer_package_contract() -> None:
     assert "tzcup_cleaning_zone" in source
     assert "tzcup_cleaning_home" in source
     assert "tzcup_cleaning_start" in source
-    assert "ASSIGNED CLEANING AREA" in source
-    assert '"z:0.55} orientation {w:1.0}} "' in source
-    assert '"z:0.55}} orientation {w:1.0}} "' not in source
-    assert "GOING HOME -> CLEANING START" in source
     assert 'ns:\\"tzcup_current_cleaning_path\\\" id:1' in source
-    assert 'ns:\\"tzcup_cleaning_status\\\" id:1' in source
     assert 'ns:\\"tzcup_current_cleaning_path\\\" id:0' not in source
-    assert 'ns:\\"tzcup_cleaning_status\\\" id:0' not in source
     assert "visibility:GUI" in source
     assert "world_to_map_x" in source
     assert "world_to_map_y" in source
     assert "world_to_map_yaw" in source
+    assert '"/coverage/gazebo_telemetry"' in source
+    assert "gazebo_ground_truth_brush_footprint_evaluation_only" in source
+    assert "cleaned_cells" in source
+    assert "cleaning_targets" in source
+    assert '"gz.msgs.Entity"' in source
+    assert "_call_remove_service" in source
+    assert "removed_from_scene" in source
     assert '"/cmd_vel"' not in source
     assert "<exec_depend>rclpy</exec_depend>" in package
     assert "<exec_depend>nav_msgs</exec_depend>" in package
@@ -67,6 +69,10 @@ def test_gazebo_only_launcher_contract() -> None:
     assert "--gazebo-only" in shell_launcher
     assert "--showcase" in shell_launcher
     assert "--map-size" in shell_launcher
+    assert "--simulation-speed" in shell_launcher
+    assert 'ros2 lifecycle get /controller_server' in shell_launcher
+    assert 'ros2 lifecycle get /planner_server' in shell_launcher
+    assert 'grep -q \'active\' <<< "${controller_state}"' in shell_launcher
     assert "--manual-control" in shell_launcher
     assert "showcase_area.yaml" in shell_launcher
     assert "follow_offset: {x: -8.0, y: -8.0, z: 10.0}" in shell_launcher
@@ -81,6 +87,7 @@ def test_gazebo_only_launcher_contract() -> None:
     assert "GazeboOnly = $true" in dedicated_launcher
     assert "[switch]$FullArea" in dedicated_launcher
     assert '[string]$MapSize = "small"' in dedicated_launcher
+    assert '[string]$SimulationSpeed = "fast"' in dedicated_launcher
     assert "ManualControl = $true" in dedicated_launcher
     assert "NoRviz" not in dedicated_launcher
     assert "Start-Process" not in dedicated_launcher
@@ -105,6 +112,52 @@ def test_showcase_area_is_small_bounded_and_installed() -> None:
     assert "  - [3.0, 1.0]" in showcase
     assert "keepout_polygons: []" in showcase
     assert '"config/showcase_area.yaml"' in task_setup
+
+
+def test_small_mode_is_a_physically_independent_competition_demo() -> None:
+    world_path = (
+        ROOT / "starter_ws" / "src" / "sanitation_worlds" / "worlds"
+        / "sanitation_competition_demo.sdf"
+    )
+    root = __import__("xml.etree.ElementTree", fromlist=["ElementTree"]).parse(
+        world_path
+    ).getroot()
+    world = root.find("world")
+    assert world is not None
+    assert world.get("name") == "sanitation_competition_demo"
+    names = {model.get("name") for model in world.findall("model")}
+    assert {
+        "demo_arena_floor", "cleaning_lane_surface", "home_dock",
+        "target_bottle_demo", "target_can_demo", "target_paper_demo",
+        "target_cardboard_demo", "target_leaf_pile_demo", "puddle_demo",
+    } <= names
+    floor = world.find("./model[@name='demo_arena_floor']")
+    assert floor is not None
+    assert "16 12 0.08" in __import__("xml.etree.ElementTree", fromlist=["ElementTree"]).tostring(
+        floor, encoding="unicode"
+    )
+    shell = read("scripts/run_visual_demo.sh")
+    assert 'world_name="sanitation_competition_demo"' in shell
+    assert 'mission_control_demo.config' in shell
+
+
+def test_gazebo_panel_renders_live_cleaning_metrics_and_map() -> None:
+    header = read(
+        "starter_ws/src/sanitation_gazebo_control/include/SanitationMissionControl.hh"
+    )
+    source = read(
+        "starter_ws/src/sanitation_gazebo_control/src/SanitationMissionControl.cc"
+    )
+    qml = read("starter_ws/src/sanitation_gazebo_control/SanitationMissionControl.qml")
+    assert "telemetryJson READ TelemetryJson NOTIFY TelemetryJsonChanged" in header
+    assert '"/coverage/gazebo_telemetry"' in source
+    for label in (
+        "实时作业地图", "已清扫", "目标清除", "清扫效率", "累计里程",
+        "当前速度", "仿真用时", "作业步骤", "实际轨迹",
+    ):
+        assert label in qml
+    for layer in ("planned_path", "trajectory", "cleaned_cells", "targets"):
+        assert layer in qml
 
 
 def test_native_gazebo_controls_use_safe_task_services() -> None:

@@ -11,17 +11,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 该入口仍执行真实 Stage4V 定位、Nav2 和 Coverage 控制链，只隐藏网页与 RViz。默认选择
 约 `6 m × 5 m`、无禁入区的 `showcase_area.yaml`，以便一个镜头看清从起点到完成的全过程；
 `-FullArea` 切回原完整任务。缩小的是任务多边形，不是车辆运动或 Coverage 结果造假。
-`sanitation_gazebo_visualization` 通过 Gazebo MarkerManager 叠加以下只读信息：
+`sanitation_gazebo_visualization` 通过 Gazebo MarkerManager 和原生任务面板叠加以下只读信息：
 
 - 蓝色边框与半透明灰底：配置中的指定清扫区和尚未被青绿色覆盖的区域；
 - 蓝色 `HOME`：本次运行第一帧 evaluation-only 真值位置，即车辆实际出发点；
 - 绿色 `CLEANING START`：Coverage 第一条真实作业带的起点；
 - 琥珀色折线：当前 `/coverage/current_path`，即 Nav2 正在跟踪的组件；
 - 青绿色带：`/brush_enabled=true` 时，evaluation-only `/ground_truth/odom` 推导的实际刷盘扫掠；
-- 车顶文字：转场、对齐、清扫、转弯、完成、组件进度和刷盘开关。
+- 右侧实时作业地图：规划路径、实际轨迹、已清扫栅格、目标状态和车辆姿态；
+- 实时指标：清扫百分比、面积、目标数、效率、里程、速度、仿真时间和组件进度。
 
-“当前路径”和车顶状态使用固定的非零 marker ID 原位更新，避免 Gazebo 将 `id=0`
-解释为自动分配并在长时间演示中累积旧路径或文字残影；已清扫带仍按真实作业带分别保留。
+“当前路径”使用固定的非零 marker ID 原位更新，避免 Gazebo 将 `id=0` 解释为自动分配并在
+长时间演示中累积旧路径；已清扫带仍按真实作业带分别保留。Ogre2 不稳定的三维文字标记已
+移除，状态统一进入右侧原生面板。
 
 规划和控制不订阅这些 Gazebo marker。真值只生成显示与验收轨迹，不进入 Nav2、Coverage、
 速度门或安全决策。默认任务完成后保留 Gazebo，按 `Ctrl+C` 后收尾；自动验收可增加

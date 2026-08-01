@@ -1,0 +1,22 @@
+schema_version: 1
+profiles:
+  nominal:
+    sensor_latency_ms: 0
+    sensor_dropout_probability: 0.0
+    wheel_slip_ratio: 0.0
+    actuator_gain: 1.0
+  transport_stress:
+    sensor_latency_ms: 100
+    sensor_dropout_probability: 0.01
+    wheel_slip_ratio: 0.02
+    actuator_gain: 0.95
+  wet_surface:
+    sensor_latency_ms: 20
+    sensor_dropout_probability: 0.002
+    wheel_slip_ratio: 0.15
+    actuator_gain: 0.85
+  degraded_drive:
+    sensor_latency_ms: 40
+    sensor_dropout_probability: 0.005
+    wheel_slip_ratio: 0.08
+    actuator_gain: 0.65

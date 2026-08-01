@@ -22,6 +22,7 @@ EXPECTED_COMPONENTS=17
 MISSION_TIMEOUT_SEC=1800
 RANDOM_SEED=0
 GAZEBO_GUI_RENDERER="auto"
+SIMULATION_SPEED="fast"
 
 usage() {
   cat <<'EOF'
@@ -39,7 +40,9 @@ Options:
   --video MODE          auto, on, or off (default: auto)
   --gazebo-only         Show the full mission in Gazebo without browser or RViz
   --showcase            Use the bounded 6 m x 5 m demonstration task
-  --map-size SIZE       small (30x20), medium (80x50), or large (200x100)
+  --map-size SIZE       small (independent 16x12 demo), medium (80x50), or large (200x100)
+  --simulation-speed MODE
+                        normal (1x), fast (2x), or turbo (3x; default: fast)
   --manual-control      Wait for the native Gazebo Start button
   --competition-profile Use the 20,000 m2 map and AUTO-12 vehicle candidate;
                         execute one representative live zone
@@ -76,6 +79,7 @@ while [[ $# -gt 0 ]]; do
     --timeout) MISSION_TIMEOUT_SEC="$2"; shift 2 ;;
     --seed) RANDOM_SEED="$2"; shift 2 ;;
     --gazebo-gui-renderer) GAZEBO_GUI_RENDERER="$2"; shift 2 ;;
+    --simulation-speed) SIMULATION_SPEED="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -84,6 +88,7 @@ done
 case "${VIDEO_MODE}" in auto|on|off) ;; *) echo "--video must be auto, on, or off" >&2; exit 2 ;; esac
 case "${MAP_SIZE}" in small|medium|large) ;; *) echo "--map-size must be small, medium, or large" >&2; exit 2 ;; esac
 case "${GAZEBO_GUI_RENDERER}" in auto|d3d12|software) ;; *) echo "--gazebo-gui-renderer must be auto, d3d12, or software" >&2; exit 2 ;; esac
+case "${SIMULATION_SPEED}" in normal|fast|turbo) ;; *) echo "--simulation-speed must be normal, fast, or turbo" >&2; exit 2 ;; esac
 if [[ "${MAP_SIZE}" == "small" ]]; then SHOWCASE=1; EXPECTED_COMPONENTS=9; fi
 [[ "${DASHBOARD_PORT}" =~ ^[0-9]+$ ]] || { echo "dashboard port must be numeric" >&2; exit 2; }
 [[ "${MISSION_TIMEOUT_SEC}" =~ ^[0-9]+$ ]] || { echo "timeout must be numeric" >&2; exit 2; }
@@ -255,6 +260,9 @@ tasks_share="$(ros2 pkg prefix sanitation_tasks)/share/sanitation_tasks"
 hmi_share="$(ros2 pkg prefix sanitation_hmi)/share/sanitation_hmi"
 control_prefix="$(ros2 pkg prefix sanitation_gazebo_control)"
 control_share="${control_prefix}/share/sanitation_gazebo_control"
+python3 "${ROOT}/scripts/validate_hardware_interface_contract.py" \
+  "${tasks_share}/config/hardware_interface_contract.yaml" \
+  --output "${OUTPUT_DIR}/hardware_interface_contract_validation.json"
 export GZ_GUI_PLUGIN_PATH="${control_prefix}/lib${GZ_GUI_PLUGIN_PATH:+:${GZ_GUI_PLUGIN_PATH}}"
 map_root="${navigation_share}/maps"
 nav_params="${runtime}/nav2_autonomous_navigation_profile_v1.yaml"
@@ -281,6 +289,21 @@ map_area_m2="4000.0"
 if [[ "${SHOWCASE}" -eq 1 ]]; then
   mission_config="${runtime}/showcase_area_autonomous_navigation_profile_v1.yaml"
   mission_template="${tasks_share}/config/showcase_area.yaml"
+fi
+simulation_rtf="2.0"
+simulation_speed_label="2X TARGET"
+case "${SIMULATION_SPEED}" in
+  normal) simulation_rtf="1.0"; simulation_speed_label="1X NORMAL" ;;
+  turbo) simulation_rtf="3.0"; simulation_speed_label="3X TARGET" ;;
+esac
+if [[ "${MAP_SIZE}" == "small" ]]; then
+  mission_config="${runtime}/competition_demo_area_autonomous_navigation_profile_v1.yaml"
+  mission_template="${tasks_share}/config/competition_demo_area.yaml"
+  profile_label="INDEPENDENT COMPETITION DEMO"
+  mission_scope="30 M2 LIVE CLEANING CELL"
+  map_area_m2="30.0"
+  if [[ "${SIMULATION_SPEED}" == "fast" ]]; then max_linear_velocity="0.60"; max_angular_velocity="0.50"; fi
+  if [[ "${SIMULATION_SPEED}" == "turbo" ]]; then max_linear_velocity="0.75"; max_angular_velocity="0.62"; fi
 fi
 if [[ "${COMPETITION_PROFILE}" -eq 1 ]]; then
   competition_runtime="${runtime}/competition_profile"
@@ -311,6 +334,29 @@ fi
 world_file="$(ros2 pkg prefix sanitation_worlds)/share/sanitation_worlds/worlds/sanitation_campus_${MAP_SIZE}.sdf"
 world_name="sanitation_campus_${MAP_SIZE}"
 gui_config="${control_share}/config/mission_control_${MAP_SIZE}.config"
+if [[ "${MAP_SIZE}" == "small" ]]; then
+  world_file="$(ros2 pkg prefix sanitation_worlds)/share/sanitation_worlds/worlds/sanitation_competition_demo.sdf"
+  world_name="sanitation_competition_demo"
+  gui_config="${control_share}/config/mission_control_demo.config"
+fi
+runtime_world="${runtime}/${world_name}_${SIMULATION_SPEED}.sdf"
+python3 - "${world_file}" "${runtime_world}" "${simulation_rtf}" <<'PY'
+from pathlib import Path
+import re
+import sys
+source, output, factor = sys.argv[1:]
+text = Path(source).read_text(encoding="utf-8")
+text, count = re.subn(
+    r"<real_time_factor>[^<]+</real_time_factor>",
+    f"<real_time_factor>{factor}</real_time_factor>",
+    text,
+    count=1,
+)
+if count != 1:
+    raise SystemExit("world does not define exactly one real_time_factor")
+Path(output).write_text(text, encoding="utf-8")
+PY
+world_file="${runtime_world}"
 rviz_config="${hmi_share}/rviz/visual_demo.rviz"
 
 if python3 - "${DASHBOARD_PORT}" <<'PY'
@@ -335,6 +381,17 @@ if [[ "${COMPETITION_PROFILE}" -eq 0 ]]; then
     --nav2-output "${nav_params}" \
     --mission-output "${mission_config}"
 fi
+python3 - "${nav_params}" "${max_linear_velocity}" "${max_angular_velocity}" <<'PY'
+from pathlib import Path
+import sys
+import yaml
+path = Path(sys.argv[1])
+config = yaml.safe_load(path.read_text(encoding="utf-8"))
+follow = config["controller_server"]["ros__parameters"]["FollowPath"]
+follow["desired_linear_vel"] = float(sys.argv[2])
+follow["rotate_to_heading_angular_vel"] = float(sys.argv[3])
+path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+PY
 
 echo "[AUTO-17] Evidence: ${OUTPUT_DIR}"
 echo "[AUTO-17] Dashboard: http://127.0.0.1:${DASHBOARD_PORT}"
@@ -401,6 +458,8 @@ if [[ "${GUI}" -eq 1 && "${GAZEBO_TRAIL}" -eq 1 ]]; then
     -p map_area_m2:="${map_area_m2}" \
     -p mission_scope:="${mission_scope}" \
     -p mission_config:="${mission_config}" \
+    -p simulation_speed_label:="${simulation_speed_label}" \
+    -p world_name:="${world_name}" \
     -p world_to_map_x:="${world_to_map_x}" \
     -p world_to_map_y:="${world_to_map_y}" \
     -p world_to_map_yaw:=0.0 \
@@ -435,6 +494,18 @@ for _ in $(seq 1 150); do
     curl --fail --silent --max-time 2 \
       "http://127.0.0.1:${DASHBOARD_PORT}/healthz" 2>/dev/null || true
   )"
+  controller_state=""
+  planner_state=""
+  if grep -q '^/controller_server/get_state$' <<< "${services}"; then
+    controller_state="$(
+      timeout 5 ros2 lifecycle get /controller_server 2>/dev/null || true
+    )"
+  fi
+  if grep -q '^/planner_server/get_state$' <<< "${services}"; then
+    planner_state="$(
+      timeout 5 ros2 lifecycle get /planner_server 2>/dev/null || true
+    )"
+  fi
   if grep -q '^/localization/fused_pose$' <<< "${topics}" &&
     grep -q '^/map$' <<< "${topics}" &&
     grep -q '^/scan$' <<< "${topics}" &&
@@ -443,6 +514,8 @@ for _ in $(seq 1 150); do
     grep -q '^/follow_path/_action/send_goal$' <<< "${services}" &&
     grep -q '^/navigate_to_pose/_action/send_goal$' <<< "${services}" &&
     grep -q '^/controller_server/get_state$' <<< "${services}" &&
+    grep -q 'active' <<< "${controller_state}" &&
+    grep -q 'active' <<< "${planner_state}" &&
     grep -q '"mission_status"' <<< "${dashboard_health}"
   then
     printf '%s\n' "${dashboard_health}" > "${OUTPUT_DIR}/dashboard_health.json"
