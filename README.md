@@ -45,6 +45,14 @@ Gazebo；按钮通过 Coverage 受控服务驱动 Nav2，不直接发送速度�
 
 本机完整任务通过：`17/17` 组件、经验覆盖率 `93.67%`、碰撞 `0`、禁行区违规 `0`、定位 XY RMSE `0.03588 m`，MCAP 为 `205528` 条消息/18 个话题；看板终态为 `COMPLETED`，专用 MP4 为 `1.49 MB`。使用与证据边界见 [`docs/auto17-visual-demo.md`](docs/auto17-visual-demo.md)。AUTO-17 只提升可观察性和演示复现能力，不改变学习感知、真实域、J6 板端及综合竞赛矩阵仍为 false 的事实。
 
+### 竞赛尺度现场配置
+
+`scripts/run_visual_demo.ps1 -CompetitionProfile -GazeboOnly -ManualControl -KeepOpen`
+在同一条 Gazebo/Nav2/Coverage 运行链加载 20,000 m² 完整地图、20 分区和
+AUTO-12 的 1.32 m 刷盘/1.0 m/s 参数，并现场运行一个 108 m² 代表性分区。
+这不等价于全场耐久通过；边界和剩余差距见
+[`docs/competition-gazebo-profile.md`](docs/competition-gazebo-profile.md)。
+
 ## Gazebo 数字孪生场景
 
 不需要浏览器控制台时，可直接启动人类可读的园区道路 Gazebo 场景和清扫车：

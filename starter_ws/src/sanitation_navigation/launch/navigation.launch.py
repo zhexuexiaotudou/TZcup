@@ -73,7 +73,7 @@ def generate_launch_description():
         PythonExpression([
             "'", LaunchConfiguration('footprint_profile'),
             "' in ('auto01_g2_v5_retracted', "
-            "'autonomous_navigation_profile_v1')",
+            "'autonomous_navigation_profile_v1', 'auto12_efficiency_v1')",
         ])
     )
 

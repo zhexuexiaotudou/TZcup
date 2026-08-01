@@ -17,6 +17,7 @@ GAZEBO_TRAIL=1
 SHOWCASE=0
 MAP_SIZE="medium"
 MANUAL_CONTROL=0
+COMPETITION_PROFILE=0
 EXPECTED_COMPONENTS=17
 MISSION_TIMEOUT_SEC=1800
 RANDOM_SEED=0
@@ -39,6 +40,8 @@ Options:
   --showcase            Use the bounded 6 m x 5 m demonstration task
   --map-size SIZE       small (30x20), medium (80x50), or large (200x100)
   --manual-control      Wait for the native Gazebo Start button
+  --competition-profile Use the 20,000 m2 map and AUTO-12 vehicle candidate;
+                        execute one representative live zone
   --no-browser          Keep the read-only dashboard server hidden
   --no-gazebo-trail     Disable Gazebo cleaned-swath and mission markers
   --keep-open           Keep GUI/dashboard open after mission termination
@@ -63,6 +66,7 @@ while [[ $# -gt 0 ]]; do
     --showcase) SHOWCASE=1; EXPECTED_COMPONENTS=9; shift ;;
     --map-size) MAP_SIZE="$2"; shift 2 ;;
     --manual-control) MANUAL_CONTROL=1; shift ;;
+    --competition-profile) COMPETITION_PROFILE=1; MAP_SIZE=large; EXPECTED_COMPONENTS=7; shift ;;
     --no-browser) OPEN_DASHBOARD=0; shift ;;
     --no-gazebo-trail) GAZEBO_TRAIL=0; shift ;;
     --keep-open) KEEP_OPEN=1; shift ;;
@@ -208,9 +212,53 @@ map_root="${navigation_share}/maps"
 nav_params="${runtime}/nav2_autonomous_navigation_profile_v1.yaml"
 mission_config="${runtime}/demo_area_autonomous_navigation_profile_v1.yaml"
 mission_template="${tasks_share}/config/demo_area.yaml"
+footprint_profile="autonomous_navigation_profile_v1"
+coverage_params=""
+map_file="${map_root}/stage4v_surveyed_reference.yaml"
+keepout_map="${map_root}/stage4v_filters/keepout_mask.yaml"
+speed_map="${map_root}/stage4v_filters/speed_mask.yaml"
+spawn_x="-8.0"
+spawn_y="0.0"
+world_to_map_x="8.0"
+world_to_map_y="0.0"
+initial_pose_x="0.0"
+initial_pose_y="0.0"
+cleaning_width="0.65"
+brush_center_y="0.23"
+max_linear_velocity="0.45"
+max_angular_velocity="0.35"
+profile_label="STANDARD DEMO"
+mission_scope="LIVE DEMO AREA"
+map_area_m2="4000"
 if [[ "${SHOWCASE}" -eq 1 ]]; then
   mission_config="${runtime}/showcase_area_autonomous_navigation_profile_v1.yaml"
   mission_template="${tasks_share}/config/showcase_area.yaml"
+fi
+if [[ "${COMPETITION_PROFILE}" -eq 1 ]]; then
+  competition_runtime="${runtime}/competition_profile"
+  python3 "${ROOT}/scripts/generate_competition_gazebo_profile.py" \
+    --output "${competition_runtime}" \
+    > "${OUTPUT_DIR}/competition_profile_generation.json"
+  nav_params="${navigation_share}/config/nav2_auto12.yaml"
+  mission_config="${competition_runtime}/competition_zone_auto12.yaml"
+  footprint_profile="auto12_efficiency_v1"
+  coverage_params="${DEMO_WS}/install/sanitation_coverage/share/sanitation_coverage/config/coverage_auto12.yaml"
+  map_file="${competition_runtime}/competition_map.yaml"
+  keepout_map="${competition_runtime}/competition_keepout.yaml"
+  speed_map="${competition_runtime}/competition_speed.yaml"
+  spawn_x="-90.0"
+  spawn_y="0.0"
+  world_to_map_x="100.0"
+  world_to_map_y="50.0"
+  initial_pose_x="10.0"
+  initial_pose_y="50.0"
+  cleaning_width="1.32"
+  brush_center_y="0.52"
+  max_linear_velocity="1.0"
+  max_angular_velocity="0.72"
+  profile_label="COMPETITION AUTO-12"
+  mission_scope="LIVE ZONE 108 M2 / FULL MAP"
+  map_area_m2="20000"
 fi
 world_file="$(ros2 pkg prefix sanitation_worlds)/share/sanitation_worlds/worlds/sanitation_campus_${MAP_SIZE}.sdf"
 world_name="sanitation_campus_${MAP_SIZE}"
@@ -231,12 +279,14 @@ then
   exit 3
 fi
 
-python3 "${ROOT}/scripts/stage5br6w_profile.py" \
-  --base-nav2 "${navigation_share}/config/nav2.yaml" \
-  --base-mission "${mission_template}" \
-  --profile "${navigation_share}/config/autonomous_navigation_profile_v1.yaml" \
-  --nav2-output "${nav_params}" \
-  --mission-output "${mission_config}"
+if [[ "${COMPETITION_PROFILE}" -eq 0 ]]; then
+  python3 "${ROOT}/scripts/stage5br6w_profile.py" \
+    --base-nav2 "${navigation_share}/config/nav2.yaml" \
+    --base-mission "${mission_template}" \
+    --profile "${navigation_share}/config/autonomous_navigation_profile_v1.yaml" \
+    --nav2-output "${nav_params}" \
+    --mission-output "${mission_config}"
+fi
 
 echo "[AUTO-17] Evidence: ${OUTPUT_DIR}"
 echo "[AUTO-17] Dashboard: http://127.0.0.1:${DASHBOARD_PORT}"
@@ -260,6 +310,10 @@ setsid ros2 launch sanitation_bringup stage4v_localization.launch.py \
   gui:=false random_seed:="${RANDOM_SEED}" gnss_profile:=rtk_fixed \
   world_file:="${world_file}" world_name:="${world_name}" \
   gui_config:="${gui_config}" \
+  map_file:="${map_file}" spawn_x:="${spawn_x}" spawn_y:="${spawn_y}" \
+  cleaning_width:="${cleaning_width}" brush_center_y:="${brush_center_y}" \
+  world_to_map_x:="${world_to_map_x}" world_to_map_y:="${world_to_map_y}" \
+  initial_pose_x:="${initial_pose_x}" initial_pose_y:="${initial_pose_y}" \
   camera_profile:=V5_retracted fusion_mode:=hybrid_rtk_scan_imu_wheel \
   enable_scan_refiner:=true \
   > "${OUTPUT_DIR}/localization.log" 2>&1 &
@@ -267,17 +321,16 @@ pids+=("$!")
 
 setsid ros2 launch sanitation_navigation navigation.launch.py \
   rviz:=false localization_backend:=external params_file:="${nav_params}" \
-  footprint_profile:=autonomous_navigation_profile_v1 \
-  map_file:="${map_root}/stage4v_surveyed_reference.yaml" \
-  keepout_map:="${map_root}/stage4v_filters/keepout_mask.yaml" \
-  speed_map:="${map_root}/stage4v_filters/speed_mask.yaml" \
-  operational_profile:=localization_coverage max_linear_velocity:=0.45 \
-  max_angular_velocity:=0.35 \
+  footprint_profile:="${footprint_profile}" \
+  map_file:="${map_file}" keepout_map:="${keepout_map}" speed_map:="${speed_map}" \
+  operational_profile:=localization_coverage max_linear_velocity:="${max_linear_velocity}" \
+  max_angular_velocity:="${max_angular_velocity}" \
   > "${OUTPUT_DIR}/navigation.log" 2>&1 &
 pids+=("$!")
 
-setsid ros2 launch sanitation_coverage coverage.launch.py \
-  footprint_profile:=autonomous_navigation_profile_v1 \
+coverage_launch_args=(footprint_profile:="${footprint_profile}")
+[[ -n "${coverage_params}" ]] && coverage_launch_args+=(params_file:="${coverage_params}")
+setsid ros2 launch sanitation_coverage coverage.launch.py "${coverage_launch_args[@]}" \
   > "${OUTPUT_DIR}/coverage_server.log" 2>&1 &
 pids+=("$!")
 
@@ -294,11 +347,14 @@ pids+=("${dashboard_pid}")
 if [[ "${GUI}" -eq 1 && "${GAZEBO_TRAIL}" -eq 1 ]]; then
   setsid ros2 run sanitation_gazebo_visualization cleaning_visualizer --ros-args \
     -p use_sim_time:=true \
-    -p operation_width_m:=0.65 \
+    -p operation_width_m:="${cleaning_width}" \
     -p expected_components:="${EXPECTED_COMPONENTS}" \
+    -p profile_label:="${profile_label}" \
+    -p map_area_m2:="${map_area_m2}" \
+    -p mission_scope:="${mission_scope}" \
     -p mission_config:="${mission_config}" \
-    -p world_to_map_x:=8.0 \
-    -p world_to_map_y:=0.0 \
+    -p world_to_map_x:="${world_to_map_x}" \
+    -p world_to_map_y:="${world_to_map_y}" \
     -p world_to_map_yaw:=0.0 \
     -p service_timeout_ms:=3000 \
     > "${OUTPUT_DIR}/gazebo_cleaning_visualizer.log" 2>&1 &
@@ -528,4 +584,5 @@ summary_args=(
 )
 [[ "${RECORD_MCAP}" -eq 1 ]] && summary_args+=(--mcap-required)
 [[ "${camera_follow_requested}" -eq 1 ]] && summary_args+=(--camera-follow-requested)
+[[ "${GUI}" -eq 0 ]] && summary_args+=(--camera-follow-not-required)
 python3 "${ROOT}/scripts/visual_demo_summary.py" "${summary_args[@]}"

@@ -71,6 +71,15 @@ class CleaningVisualizer(Node):
         self.expected_components = int(
             self.declare_parameter("expected_components", 17).value
         )
+        self.profile_label = str(
+            self.declare_parameter("profile_label", "STANDARD DEMO").value
+        )
+        self.map_area_m2 = float(
+            self.declare_parameter("map_area_m2", 4000.0).value
+        )
+        self.mission_scope = str(
+            self.declare_parameter("mission_scope", "LIVE DEMO AREA").value
+        )
         self.mission_config = str(
             self.declare_parameter("mission_config", "").value
         )
@@ -364,7 +373,8 @@ class CleaningVisualizer(Node):
             "FAILED": "MISSION FAILED",
         }.get(self.coverage_state, self.coverage_state)
         text = (
-            f"{state_label} | STEP {self.completed_components}/"
+            f"{self.profile_label} | MAP {self.map_area_m2:.0f} M2 | "
+            f"{self.mission_scope} | {state_label} | STEP {self.completed_components}/"
             f"{self.expected_components} | BRUSH "
             f"{'ON' if self.brush_enabled else 'OFF'}"
         )
