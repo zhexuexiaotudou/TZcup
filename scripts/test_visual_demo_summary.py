@@ -141,3 +141,42 @@ def test_visual_demo_summary_requires_camera_follow(tmp_path):
 
     assert report["machine_gate_pass"] is False
     assert report["checks"]["camera_follow_requested"] is False
+
+
+def test_visual_demo_summary_does_not_require_camera_follow_when_headless(tmp_path):
+    _write_json(
+        tmp_path / "coverage_report.json",
+        {
+            "success": True,
+            "full_execution_success": True,
+            "safety_success": True,
+            "collision_count": 0,
+            "keepout_violation_sample_count": 0,
+        },
+    )
+    _write_json(
+        tmp_path / "dashboard_telemetry.json",
+        {
+            "status": "COMPLETED",
+            "topics_seen": [
+                "/brush_enabled", "/cmd_vel", "/coverage/component_state",
+                "/coverage/current_path", "/coverage/evaluation_sample",
+                "/coverage/state", "/emergency_stop", "/localization/fused_pose",
+            ],
+            "claim_boundary": {
+                "ground_truth_usage": "evaluation_and_visualization_only"
+            },
+        },
+    )
+
+    report = assemble(
+        tmp_path,
+        coverage_exit_code=0,
+        mcap_required=False,
+        video_mode="off",
+        camera_follow_requested=False,
+        camera_follow_required=False,
+    )
+
+    assert report["machine_gate_pass"] is True
+    assert report["camera_follow"]["required"] is False

@@ -18,6 +18,7 @@ param(
     [ValidateSet("small", "medium", "large")]
     [string]$MapSize = "medium",
     [switch]$ManualControl,
+    [switch]$CompetitionProfile,
     [switch]$NoBrowser,
     [switch]$NoGazeboTrail,
     [switch]$KeepOpen
@@ -71,6 +72,7 @@ if ($NoMcap) { $arguments += "--no-mcap" }
 if ($GazeboOnly) { $arguments += "--gazebo-only" }
 if ($Showcase) { $arguments += "--showcase" }
 if ($ManualControl) { $arguments += "--manual-control" }
+if ($CompetitionProfile) { $arguments += "--competition-profile" }
 if ($NoBrowser) { $arguments += "--no-browser" }
 if ($NoGazeboTrail) { $arguments += "--no-gazebo-trail" }
 if ($KeepOpen) { $arguments += "--keep-open" }

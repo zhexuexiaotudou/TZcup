@@ -60,6 +60,7 @@ def assemble(
     mcap_required: bool,
     video_mode: str,
     camera_follow_requested: bool,
+    camera_follow_required: bool = True,
 ) -> dict:
     coverage = _load_json(output_dir / "coverage_report.json")
     dashboard = _load_json(output_dir / "dashboard_telemetry.json")
@@ -129,7 +130,9 @@ def assemble(
             not video["exists"]
             or (screenshot.is_file() and screenshot.stat().st_size > 0)
         ),
-        "camera_follow_requested": bool(camera_follow_requested),
+        "camera_follow_requested": bool(
+            camera_follow_requested or not camera_follow_required
+        ),
     }
     gate_checks = checks
     return {
@@ -174,6 +177,7 @@ def assemble(
             ),
         },
         "camera_follow": {
+            "required": camera_follow_required,
             "requested": camera_follow_requested,
             "transport_topic": "/gui/track",
             "target": "sanitation_vehicle",
@@ -201,6 +205,7 @@ def main() -> int:
         "--video-mode", choices=("on", "off", "auto"), default="auto"
     )
     parser.add_argument("--camera-follow-requested", action="store_true")
+    parser.add_argument("--camera-follow-not-required", action="store_true")
     args = parser.parse_args()
     report = assemble(
         args.output_dir,
@@ -208,6 +213,7 @@ def main() -> int:
         mcap_required=args.mcap_required,
         video_mode=args.video_mode,
         camera_follow_requested=args.camera_follow_requested,
+        camera_follow_required=not args.camera_follow_not_required,
     )
     output = args.output_dir / "acceptance_summary.json"
     output.write_text(

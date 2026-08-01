@@ -61,6 +61,8 @@ def generate_launch_description():
             DeclareLaunchArgument('spawn_x', default_value='-8.0'),
             DeclareLaunchArgument('spawn_y', default_value='0.0'),
             DeclareLaunchArgument('spawn_yaw', default_value='0.0'),
+            DeclareLaunchArgument('cleaning_width', default_value='0.65'),
+            DeclareLaunchArgument('brush_center_y', default_value='0.23'),
             DeclareLaunchArgument('world_to_map_x', default_value='8.0'),
             DeclareLaunchArgument('world_to_map_y', default_value='0.0'),
             DeclareLaunchArgument('world_to_map_yaw', default_value='0.0'),
@@ -68,6 +70,9 @@ def generate_launch_description():
             DeclareLaunchArgument('publish_map_to_odom', default_value='true'),
             DeclareLaunchArgument('camera_profile', default_value='production'),
             DeclareLaunchArgument('enable_training_gt', default_value='false'),
+            DeclareLaunchArgument('initial_pose_x', default_value='0.0'),
+            DeclareLaunchArgument('initial_pose_y', default_value='0.0'),
+            DeclareLaunchArgument('initial_pose_yaw', default_value='0.0'),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(sim_launch),
                 launch_arguments={
@@ -83,6 +88,8 @@ def generate_launch_description():
                     'spawn_x': LaunchConfiguration('spawn_x'),
                     'spawn_y': LaunchConfiguration('spawn_y'),
                     'spawn_yaw': LaunchConfiguration('spawn_yaw'),
+                    'cleaning_width': LaunchConfiguration('cleaning_width'),
+                    'brush_center_y': LaunchConfiguration('brush_center_y'),
                     'world_to_map_x': LaunchConfiguration('world_to_map_x'),
                     'world_to_map_y': LaunchConfiguration('world_to_map_y'),
                     'world_to_map_yaw': LaunchConfiguration('world_to_map_yaw'),
@@ -138,9 +145,9 @@ def generate_launch_description():
                     'publish_map_to_odom': LaunchConfiguration(
                         'publish_map_to_odom'
                     ),
-                    'initial_pose_x': '0.0',
-                    'initial_pose_y': '0.0',
-                    'initial_pose_yaw': '0.0',
+                    'initial_pose_x': LaunchConfiguration('initial_pose_x'),
+                    'initial_pose_y': LaunchConfiguration('initial_pose_y'),
+                    'initial_pose_yaw': LaunchConfiguration('initial_pose_yaw'),
                 }.items(),
             ),
         ]
