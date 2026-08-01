@@ -135,6 +135,7 @@ if (-not $NoGui) {
         "-StopFile", $quotedStopFile,
         "-EvidencePath", $quotedEvidence,
         "-FailureFile", $quotedFailure,
+        "-CloseWindowOnStop",
         "-Monitor"
     )
 }
