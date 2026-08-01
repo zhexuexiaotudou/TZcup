@@ -37,7 +37,18 @@ READY → STARTING → PLANNING → TRANSIT_PREFLIGHT → TRANSIT → ALIGNING
 .\scripts\run_gazebo_cleaning_demo.ps1 -MapSize large
 ```
 
-三张 SDF 只使用本地基础几何，不在线下载模型。`large` 的物理地面尺寸严格为 200 m × 100 m；当前自动清扫仍使用已验证的小区域或 17 段 Coverage 任务，不能把“场地尺寸正确”写成“20,000 m² 全场清扫已经通过”。正式全场建图、分区调度和全场效率仍须另行验收。
+三张 SDF 只使用本地基础几何，不在线下载模型。`large` 的物理地面尺寸严格为
+200 m × 100 m。普通 `-MapSize large` 仍只改变物理场景；需要把完整大图栅格、
+AUTO-12 车辆参数和代表性分区任务接入同一条运行链时，使用：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps1 `
+  -CompetitionProfile -GazeboOnly -ManualControl -KeepOpen
+```
+
+该配置加载 20,000 m² 地图和 20 分区，但现场只派发一个 108 m² 分区，不能写成
+“20,000 m² 全场清扫已经通过”。正式全场多分区调度、耐久和效率仍须另行验收，
+详细边界见 [`competition-gazebo-profile.md`](competition-gazebo-profile.md)。
 
 场景由 `scripts/generate_gazebo_world_variants.py` 确定性生成，结果保存在 `sanitation_worlds/worlds/sanitation_campus_{small,medium,large}.sdf`。
 
