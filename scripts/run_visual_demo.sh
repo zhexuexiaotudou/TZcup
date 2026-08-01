@@ -229,7 +229,7 @@ max_linear_velocity="0.45"
 max_angular_velocity="0.35"
 profile_label="STANDARD DEMO"
 mission_scope="LIVE DEMO AREA"
-map_area_m2="4000"
+map_area_m2="4000.0"
 if [[ "${SHOWCASE}" -eq 1 ]]; then
   mission_config="${runtime}/showcase_area_autonomous_navigation_profile_v1.yaml"
   mission_template="${tasks_share}/config/showcase_area.yaml"
@@ -258,7 +258,7 @@ if [[ "${COMPETITION_PROFILE}" -eq 1 ]]; then
   max_angular_velocity="0.72"
   profile_label="COMPETITION AUTO-12"
   mission_scope="LIVE ZONE 108 M2 / FULL MAP"
-  map_area_m2="20000"
+  map_area_m2="20000.0"
 fi
 world_file="$(ros2 pkg prefix sanitation_worlds)/share/sanitation_worlds/worlds/sanitation_campus_${MAP_SIZE}.sdf"
 world_name="sanitation_campus_${MAP_SIZE}"

@@ -49,7 +49,8 @@ Gazebo；按钮通过 Coverage 受控服务驱动 Nav2，不直接发送速度�
 
 `scripts/run_visual_demo.ps1 -CompetitionProfile -GazeboOnly -ManualControl -KeepOpen`
 在同一条 Gazebo/Nav2/Coverage 运行链加载 20,000 m² 完整地图、20 分区和
-AUTO-12 的 1.32 m 刷盘/1.0 m/s 参数，并现场运行一个 108 m² 代表性分区。
+AUTO-12 的 1.32 m 刷盘/1.0 m/s 参数，并现场运行一个 108 m² 代表性分区；
+Gazebo 状态标记使用显式浮点面积参数，避免 ROS 参数类型不匹配。
 这不等价于全场耐久通过；边界和剩余差距见
 [`docs/competition-gazebo-profile.md`](docs/competition-gazebo-profile.md)。
 

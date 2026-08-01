@@ -38,5 +38,6 @@ def test_visual_launcher_exposes_competition_profile() -> None:
     assert "--competition-profile" in bash
     assert "generate_competition_gazebo_profile.py" in bash
     assert 'cleaning_width="1.32"' in bash
-    assert 'map_area_m2="20000"' in bash
+    assert 'map_area_m2="20000.0"' in bash
+    assert 'map_area_m2="4000.0"' in bash
     assert "[switch]$CompetitionProfile" in powershell
