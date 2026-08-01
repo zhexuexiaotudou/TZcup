@@ -25,6 +25,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 [`docs/gazebo-multiscale-control.md`](docs/gazebo-multiscale-control.md)。
 WSLg 冷启动后若 Gazebo 在原生控制面板加载前提前退出，启动器会自动安全重启并按同一参数
 重试一次；重复失败会明确退出，不会留下黑屏窗口或无限重启。
+在界面出现前，启动器还会等待定位、`odom→base_footprint` TF 和 Nav2 controller/planner
+精确进入 active 状态；冷机较慢时只会延迟显示，不会打开一个能看见但无法启动清扫的窗口。
 WSLg 下默认把 Gazebo 服务端保留在 D3D12/NVIDIA，只把 GUI 设为软件渲染；启动器会对 `3D Scene` 做真实截图和黑色像素检测。出现纯黑视口时不会继续显示“已就绪”。
 
 该命令加载独立的 `16 m × 12 m` 竞赛演示场；右侧实时显示清扫指标、规划/实际轨迹和已清扫面积。默认目标 2x，可传 `-SimulationSpeed normal|turbo`，实际 RTF 以顶部 World Stats 为准。

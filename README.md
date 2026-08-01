@@ -35,7 +35,7 @@ Gazebo 右侧原生卡片可控制开始、暂停、继续、停止和关闭；�
 Windows 启动器会准备 WSLg `/mnt/shared_memory`、恢复异常窗口，并在关闭 Gazebo 后立即停止运行链、释放端口和关闭已跟踪的 RemoteApp 窗口句柄，避免残留不可交互会话或无渲染内容的黑色外壳。
 
 默认 `small` 是单独设计的 `16 m × 12 m` 竞赛功能演示场；Gazebo 右侧同窗显示清扫指标、琥珀色规划路径、实际轨迹、青绿色已清扫栅格和目标状态。默认 `fast` 目标为 2x、0.60 m/s，可传 `-SimulationSpeed normal|fast|turbo`；顶部 World Stats 显示本机实际 RTF。
-WSLg 冷启动后若 GUI 在原生控制加载前提前退出，启动器只执行一次安全重启和同参数重试；重复失败会明确返回错误。
+冷启动时，启动器会先验证定位话题与 `odom→base_footprint` TF，再精确确认 Nav2 controller/planner 均为 `active [3]`，之后才打开 Gazebo；若 GUI 在原生控制加载前提前退出，则只执行一次安全重启和同参数重试。任一就绪门重复失败都会明确返回错误，不会留下一个可见但不能行驶的误导窗口。
 在 WSLg 中，Gazebo 服务端和传感器继续使用 D3D12/NVIDIA，原生 GUI 自动改用已验证可见的 X11/llvmpipe 通道；启动器会抓取 `3D Scene` 实际像素，纯黑视口会返回错误而不再误报 READY。
 
 它不打开浏览器或 RViz；车辆在独立小场内真实执行完整 Coverage，青绿清扫带随刷盘开启累积，默认任务结束后保留 Gazebo，按 `Ctrl+C` 才收尾并生成验收摘要。

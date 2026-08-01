@@ -72,7 +72,10 @@ def test_gazebo_only_launcher_contract() -> None:
     assert "--simulation-speed" in shell_launcher
     assert 'ros2 lifecycle get /controller_server' in shell_launcher
     assert 'ros2 lifecycle get /planner_server' in shell_launcher
-    assert 'grep -q \'active\' <<< "${controller_state}"' in shell_launcher
+    assert "tf2_echo odom base_footprint" in shell_launcher
+    assert "localization_readiness_tf.txt" in shell_launcher
+    assert 'grep -Fxq \'active [3]\' <<< "${controller_state}"' in shell_launcher
+    assert 'grep -Fxq \'active [3]\' <<< "${planner_state}"' in shell_launcher
     assert "--manual-control" in shell_launcher
     assert "showcase_area.yaml" in shell_launcher
     assert "follow_offset: {x: -8.0, y: -8.0, z: 10.0}" in shell_launcher
