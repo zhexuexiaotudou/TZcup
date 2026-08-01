@@ -77,9 +77,12 @@ def test_windows_wrapper_runs_the_wslg_window_guard():
     assert 'wsl.exe --shutdown' in wrapper
     assert 'wsl.exe --list --running --quiet' in wrapper
     assert 'other WSL distributions are running' in wrapper
-    assert "$wslExitCode -ne 7" in wrapper
-    assert "$copyModeRecoveryAttempted" in wrapper
-    assert "COPY MODE detected; restarting WSLg once and retrying the demo..." in wrapper
+    assert "$wslExitCode -in @(4, 7)" in wrapper
+    assert "$wslgRecoveryAttempted" in wrapper
+    assert '"COPY MODE detected"' in wrapper
+    assert "restarting WSLg once and retrying the demo..." in wrapper
+    assert "Gazebo GUI exited before native controls loaded" in wrapper
+    assert "launcher_termination_early_gui_exit_attempt.json" in wrapper
     assert 'launcher_termination_copy_mode_attempt.json' in wrapper
     assert '"-WindowTitle", \'"Gazebo Sim"\'' in wrapper
     assert 'Start-Process -FilePath "powershell.exe"' in wrapper

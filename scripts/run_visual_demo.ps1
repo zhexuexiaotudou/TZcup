@@ -141,7 +141,7 @@ if (-not $NoGui) {
 }
 
 $wslExitCode = 1
-$copyModeRecoveryAttempted = $false
+$wslgRecoveryAttempted = $false
 while ($true) {
     $guardProcess = $null
     if (-not $NoGui) {
@@ -161,7 +161,8 @@ while ($true) {
             }
         }
     }
-    if ($wslExitCode -ne 7 -or $copyModeRecoveryAttempted -or $NoGui) {
+    $recoverableWslgExit = $wslExitCode -in @(4, 7)
+    if (-not $recoverableWslgExit -or $wslgRecoveryAttempted -or $NoGui) {
         break
     }
     $otherRunningDistributions = ((& wsl.exe --list --running --quiet) -replace "`0", "") |
@@ -169,26 +170,32 @@ while ($true) {
         Where-Object { $_ -and $_ -ne $WslDistribution }
     if ($otherRunningDistributions) {
         $names = $otherRunningDistributions -join ", "
-        throw "COPY MODE recovery needs one full WSL restart, but other distributions are running: $names"
+        throw "WSLg recovery needs one full WSL restart, but other distributions are running: $names"
     }
-    Write-Host "COPY MODE detected; restarting WSLg once and retrying the demo..."
+    $recoveryReason = if ($wslExitCode -eq 7) { "COPY MODE detected" } else { "Gazebo GUI exited before native controls loaded" }
+    Write-Host "$recoveryReason; restarting WSLg once and retrying the demo..."
     $terminationPath = Join-Path $resolvedOutput "launcher_termination.json"
     if (Test-Path -LiteralPath $terminationPath) {
+        $attemptTerminationName = if ($wslExitCode -eq 7) {
+            "launcher_termination_copy_mode_attempt.json"
+        } else {
+            "launcher_termination_early_gui_exit_attempt.json"
+        }
         Move-Item -LiteralPath $terminationPath `
-            -Destination (Join-Path $resolvedOutput "launcher_termination_copy_mode_attempt.json") `
+            -Destination (Join-Path $resolvedOutput $attemptTerminationName) `
             -Force
     }
     & wsl.exe --shutdown
     if ($LASTEXITCODE -ne 0) {
-        throw "COPY MODE recovery shutdown failed with exit code $LASTEXITCODE."
+        throw "WSLg recovery shutdown failed with exit code $LASTEXITCODE."
     }
     Start-Sleep -Seconds 5
     & wsl.exe -d $WslDistribution -u root -- bash $wslgPrepareScript
     if ($LASTEXITCODE -ne 0) {
-        throw "COPY MODE recovery preflight failed with exit code $LASTEXITCODE."
+        throw "WSLg recovery preflight failed with exit code $LASTEXITCODE."
     }
     Start-Sleep -Seconds 2
-    $copyModeRecoveryAttempted = $true
+    $wslgRecoveryAttempted = $true
 }
 if ($wslExitCode -ne 0) {
     throw "AUTO-17 visual demo failed with exit code $wslExitCode."
