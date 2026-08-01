@@ -4,6 +4,10 @@
 
 ## 2026-08-01：Gazebo 原生任务控制、三档场景与车辆细化
 
+- 修复 WSLg Gazebo 窗口关闭/最小化后的不可恢复问题：启动前自动挂载并持久化
+  `/mnt/shared_memory`，避免 WSL 2.7.3 的 `[WARN:COPY MODE]` 回退；Windows 守护器恢复隐藏和
+  异常最小化窗口，Linux 任务监督器在 GUI 关闭后立即停止运行链并
+  释放看板端口，保留 `wslg_window_guard.jsonl` 和 `launcher_termination.json` 作为真实终态证据。
 - 新增 Gazebo 原生“清扫任务控制”卡片，通过 ROS 2 Trigger 服务提供开始、暂停、继续、停止和关闭；
   暂停会关闭刷盘、取消当前 Nav2 goal 并进入 `PAUSED`，控制卡本身从不发布 `/cmd_vel`。
 - 新增 `30 m × 20 m`、`80 m × 50 m`、`200 m × 100 m` 三档园区场景；大场景物理地面精确为

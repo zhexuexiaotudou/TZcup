@@ -44,7 +44,47 @@ function ConvertTo-WslPath {
     return "/mnt/$drive/$tail"
 }
 
+$guardProcess = $null
+$guardStopFile = ""
+$guardEvidencePath = ""
+$guardFailureFile = ""
+$guardScript = Join-Path $PSScriptRoot "wslg_window_guard.ps1"
+
+if (-not $OutputDirectory) {
+    $timestamp = [DateTime]::UtcNow.ToString("yyyyMMddTHHmmssZ")
+    $OutputDirectory = Join-Path $repoRoot "artifacts\auto17_visual_demo_$timestamp"
+}
+$resolvedOutput = [System.IO.Path]::GetFullPath($OutputDirectory)
+[System.IO.Directory]::CreateDirectory($resolvedOutput) | Out-Null
+
 $wslRoot = ConvertTo-WslPath -Path $repoRoot
+if (-not $NoGui) {
+    $wslgPrepareScript = "$wslRoot/scripts/prepare_wslg_runtime.sh"
+    Write-Host "Preparing the WSLg shared-memory transport..."
+    & wsl.exe -d $WslDistribution -u root -- bash $wslgPrepareScript
+    $prepareExitCode = $LASTEXITCODE
+    if ($prepareExitCode -eq 10) {
+        $otherRunningDistributions = ((& wsl.exe --list --running --quiet) -replace "`0", "") |
+            ForEach-Object { $_.Trim() } |
+            Where-Object { $_ -and $_ -ne $WslDistribution }
+        if ($otherRunningDistributions) {
+            $names = $otherRunningDistributions -join ", "
+            throw "WSLg needs one full restart, but other WSL distributions are running: $names"
+        }
+        Write-Host "Recovering the WSLg shared-memory session once..."
+        & wsl.exe --shutdown
+        if ($LASTEXITCODE -ne 0) {
+            throw "WSLg recovery shutdown failed with exit code $LASTEXITCODE."
+        }
+        Start-Sleep -Seconds 5
+        & wsl.exe -d $WslDistribution -u root -- bash $wslgPrepareScript
+        $prepareExitCode = $LASTEXITCODE
+    }
+    if ($prepareExitCode -ne 0) {
+        throw "WSLg shared-memory preparation failed with exit code $prepareExitCode."
+    }
+    Start-Sleep -Seconds 2
+}
 $arguments = @(
     "$wslRoot/scripts/run_visual_demo.sh",
     "--dashboard-port", "$DashboardPort",
@@ -59,12 +99,8 @@ if ($Workspace) {
 if ($BaseWorkspace) {
     $arguments += @("--base-workspace", $BaseWorkspace)
 }
-if ($OutputDirectory) {
-    $resolvedOutput = [System.IO.Path]::GetFullPath($OutputDirectory)
-    [System.IO.Directory]::CreateDirectory($resolvedOutput) | Out-Null
-    $wslOutput = ConvertTo-WslPath -Path $resolvedOutput
-    $arguments += @("--output", $wslOutput)
-}
+$wslOutput = ConvertTo-WslPath -Path $resolvedOutput
+$arguments += @("--output", $wslOutput)
 if ($SkipBuild) { $arguments += "--skip-build" }
 if ($NoGui) { $arguments += "--no-gui" }
 if ($NoRviz) { $arguments += "--no-rviz" }
@@ -79,7 +115,80 @@ if ($KeepOpen) { $arguments += "--keep-open" }
 
 Write-Host "Launching AUTO-17 visual demo in $WslDistribution..."
 Write-Host "Dashboard: http://127.0.0.1:$DashboardPort"
-& wsl.exe -d $WslDistribution -- bash @arguments
-if ($LASTEXITCODE -ne 0) {
-    throw "AUTO-17 visual demo failed with exit code $LASTEXITCODE."
+
+if (-not $NoGui) {
+    if (-not (Test-Path -LiteralPath $guardScript)) {
+        throw "WSLg window guard is missing: $guardScript"
+    }
+    $guardStopFile = Join-Path $resolvedOutput "wslg_window_guard.stop"
+    $guardEvidencePath = Join-Path $resolvedOutput "wslg_window_guard.jsonl"
+    $guardFailureFile = Join-Path $resolvedOutput "wslg_window_guard.failed"
+    $quotedGuardScript = '"' + $guardScript.Replace('"', '\"') + '"'
+    $quotedStopFile = '"' + $guardStopFile.Replace('"', '\"') + '"'
+    $quotedEvidence = '"' + $guardEvidencePath.Replace('"', '\"') + '"'
+    $quotedFailure = '"' + $guardFailureFile.Replace('"', '\"') + '"'
+    $guardArguments = @(
+        "-NoProfile",
+        "-ExecutionPolicy", "Bypass",
+        "-File", $quotedGuardScript,
+        "-WindowTitle", '"Gazebo Sim"',
+        "-StopFile", $quotedStopFile,
+        "-EvidencePath", $quotedEvidence,
+        "-FailureFile", $quotedFailure,
+        "-Monitor"
+    )
+}
+
+$wslExitCode = 1
+$copyModeRecoveryAttempted = $false
+while ($true) {
+    $guardProcess = $null
+    if (-not $NoGui) {
+        Remove-Item -LiteralPath $guardStopFile -Force -ErrorAction SilentlyContinue
+        Remove-Item -LiteralPath $guardFailureFile -Force -ErrorAction SilentlyContinue
+        $guardProcess = Start-Process -FilePath "powershell.exe" `
+            -ArgumentList $guardArguments -WindowStyle Hidden -PassThru
+    }
+    try {
+        & wsl.exe -d $WslDistribution -- bash @arguments
+        $wslExitCode = $LASTEXITCODE
+    } finally {
+        if ($guardProcess) {
+            New-Item -ItemType File -Path $guardStopFile -Force | Out-Null
+            if (-not $guardProcess.WaitForExit(5000)) {
+                Stop-Process -Id $guardProcess.Id -Force -ErrorAction SilentlyContinue
+            }
+        }
+    }
+    if ($wslExitCode -ne 7 -or $copyModeRecoveryAttempted -or $NoGui) {
+        break
+    }
+    $otherRunningDistributions = ((& wsl.exe --list --running --quiet) -replace "`0", "") |
+        ForEach-Object { $_.Trim() } |
+        Where-Object { $_ -and $_ -ne $WslDistribution }
+    if ($otherRunningDistributions) {
+        $names = $otherRunningDistributions -join ", "
+        throw "COPY MODE recovery needs one full WSL restart, but other distributions are running: $names"
+    }
+    Write-Host "COPY MODE detected; restarting WSLg once and retrying the demo..."
+    $terminationPath = Join-Path $resolvedOutput "launcher_termination.json"
+    if (Test-Path -LiteralPath $terminationPath) {
+        Move-Item -LiteralPath $terminationPath `
+            -Destination (Join-Path $resolvedOutput "launcher_termination_copy_mode_attempt.json") `
+            -Force
+    }
+    & wsl.exe --shutdown
+    if ($LASTEXITCODE -ne 0) {
+        throw "COPY MODE recovery shutdown failed with exit code $LASTEXITCODE."
+    }
+    Start-Sleep -Seconds 5
+    & wsl.exe -d $WslDistribution -u root -- bash $wslgPrepareScript
+    if ($LASTEXITCODE -ne 0) {
+        throw "COPY MODE recovery preflight failed with exit code $LASTEXITCODE."
+    }
+    Start-Sleep -Seconds 2
+    $copyModeRecoveryAttempted = $true
+}
+if ($wslExitCode -ne 0) {
+    throw "AUTO-17 visual demo failed with exit code $wslExitCode."
 }

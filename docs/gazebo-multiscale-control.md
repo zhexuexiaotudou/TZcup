@@ -54,4 +54,22 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 
 ## WSLg 的 COPY MODE
 
-若标题出现 `[WARN:COPY MODE]`，单击 Gazebo 窗口并按一次 `Esc` 退出 WSLg 复制模式。它不是 ROS 或 Gazebo 任务故障；退出后右侧按钮即可正常接收鼠标操作。
+本机使用的 WSL 2.7.3 / WSLg 1.0.73 存在 RemoteApp 共享内存初始化缺陷：
+`/mnt/shared_memory` 缺失时，应用仍会产生任务栏图标，但窗口没有可交互表面并显示
+`[WARN:COPY MODE]`。`run_visual_demo.ps1` 现在先以 root 幂等执行
+`prepare_wslg_runtime.sh`，挂载 `tmpfs`、写入专用发行版的 `/etc/fstab` 并验证可写性，随后等待
+两秒再启动 Gazebo，避免触发该故障。
+若当前 WSLg 日志已经出现共享内存分配错误，且没有其他发行版正在运行，启动器会执行一次
+完整 `wsl --shutdown` 并重新预检；若检测到其他活动发行版则明确停止，避免中断无关工作。
+
+启动器还会同时运行 `wslg_window_guard.ps1`。守护器只匹配唯一的 Gazebo RemoteApp 窗口，
+恢复异常最小化或隐藏的窗口；若 COPY MODE 持续出现或同时存在多个 Gazebo 窗口，则写入
+`wslg_window_guard.failed` 并让 Linux 任务监督器停止整条运行链，避免留下不可交互的后台会话。
+
+关闭 Gazebo GUI 后，Linux 侧任务监督器会在任务运行期间检测精确 GUI PID，给 Coverage
+一个短暂的安全停止窗口，然后终止本次任务和全部子进程并释放 `8877`。证据目录中的
+`wslg_window_guard.jsonl` 记录窗口恢复事件；任务未完成时关闭 GUI 会写入
+`launcher_termination.json`，状态为 `OPERATOR_GUI_CLOSED`，不得误写成清扫完成。
+
+COPY MODE 本身来自 WSLg RemoteApp，不是 ROS 或 Gazebo 任务故障；它不再被解释成需要
+人工按 `Esc` 的普通状态。若预检后仍出现 COPY MODE，启动器会明确失败并保留诊断证据。

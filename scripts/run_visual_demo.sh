@@ -154,8 +154,31 @@ stop_group() {
 stop_all() {
   [[ "${stopped}" -eq 0 ]] || return
   stopped=1
-  for (( index=${#pids[@]}-1; index>=0; index-- )); do
-    stop_group "${pids[index]}"
+  for signal in INT TERM KILL; do
+    for (( index=${#pids[@]}-1; index>=0; index-- )); do
+      pid="${pids[index]}"
+      [[ -n "${pid}" ]] || continue
+      kill -"${signal}" -- "-${pid}" 2>/dev/null || true
+      kill -"${signal}" "${pid}" 2>/dev/null || true
+    done
+    wait_steps=10
+    [[ "${signal}" == "INT" ]] && wait_steps=80
+    [[ "${signal}" == "KILL" ]] && wait_steps=1
+    for _ in $(seq 1 "${wait_steps}"); do
+      alive=0
+      for pid in "${pids[@]}"; do
+        if kill -0 "${pid}" 2>/dev/null || pgrep -g "${pid}" >/dev/null 2>&1; then
+          alive=1
+          break
+        fi
+      done
+      [[ "${alive}" -eq 0 ]] && break
+      sleep 0.1
+    done
+    [[ "${alive:-0}" -eq 0 ]] && break
+  done
+  for pid in "${pids[@]}"; do
+    wait "${pid}" 2>/dev/null || true
   done
   if [[ -n "${world_file:-}" ]]; then
     pkill -INT -f "gz sim.*${world_file}" 2>/dev/null || true
@@ -165,7 +188,10 @@ stop_all() {
   fi
 }
 on_exit() {
+  exit_code=$?
+  trap - EXIT INT TERM
   stop_all
+  exit "${exit_code}"
 }
 trap on_exit EXIT INT TERM
 
@@ -414,8 +440,32 @@ if [[ "${GUI}" -eq 1 ]]; then
   # load the custom library without instantiating its ROS control backend.
   setsid gz sim -g --gui-config "${gui_config}" \
     > "${OUTPUT_DIR}/gazebo_gui.log" 2>&1 &
-  pids+=("$!")
-  sleep 2
+  gazebo_gui_pid="$!"
+  pids+=("${gazebo_gui_pid}")
+  gazebo_gui_ready=0
+  for _ in $(seq 1 30); do
+    if [[ -f "${OUTPUT_DIR}/wslg_window_guard.failed" ]]; then
+      echo "WSLg window guard reported: $(cat "${OUTPUT_DIR}/wslg_window_guard.failed")" >&2
+      exit 7
+    fi
+    if ! kill -0 "${gazebo_gui_pid}" 2>/dev/null; then
+      echo "Gazebo GUI exited before its native mission control loaded." >&2
+      tail -50 "${OUTPUT_DIR}/gazebo_gui.log" >&2 || true
+      exit 4
+    fi
+    gui_nodes="$(
+      timeout 5 ros2 node list --no-daemon --spin-time 2 2>/dev/null || true
+    )"
+    if grep -Fxq '/sanitation_gazebo_mission_control' <<< "${gui_nodes}"; then
+      gazebo_gui_ready=1
+      break
+    fi
+    sleep 1
+  done
+  if [[ "${gazebo_gui_ready}" -ne 1 ]]; then
+    echo "Gazebo GUI did not expose its native mission control within 30 seconds." >&2
+    exit 4
+  fi
 fi
 
 camera_follow_requested=0
@@ -437,6 +487,11 @@ if [[ "${GUI}" -eq 1 ]]; then
     fi
     sleep 0.5
   done
+fi
+
+if [[ -f "${OUTPUT_DIR}/wslg_window_guard.failed" ]]; then
+  echo "WSLg window guard reported: $(cat "${OUTPUT_DIR}/wslg_window_guard.failed")" >&2
+  exit 7
 fi
 
 if [[ "${OPEN_DASHBOARD}" -eq 1 ]] && command -v powershell.exe >/dev/null 2>&1; then
@@ -515,20 +570,68 @@ if [[ "${VIDEO_MODE}" != "off" ]]; then
   fi
 fi
 
-ros2 topic pub --once /emergency_stop std_msgs/msg/Bool "{data: false}" \
+if ! timeout 10 ros2 topic pub --once --wait-matching-subscriptions 0 \
+  /emergency_stop std_msgs/msg/Bool "{data: false}" \
   > "${OUTPUT_DIR}/emergency_stop_available.log" 2>&1
+then
+  echo "Unable to publish the bounded emergency-stop availability pulse." >&2
+  exit 4
+fi
 
 set +e
-timeout "${MISSION_TIMEOUT_SEC}" ros2 run sanitation_coverage coverage_probe --ros-args \
+setsid timeout "${MISSION_TIMEOUT_SEC}" ros2 run sanitation_coverage coverage_probe --ros-args \
   -p use_sim_time:=true \
   -p manual_start:="$([[ "${MANUAL_CONTROL}" -eq 1 ]] && echo true || echo false)" \
   -p output_path:="${OUTPUT_DIR}/coverage_report.json" \
   -p config_path:="${mission_config}" \
   -p path_output_path:="${OUTPUT_DIR}/coverage_path.json" \
   -p trajectory_output_path:="${OUTPUT_DIR}/coverage_trajectory.csv" \
-  > "${OUTPUT_DIR}/coverage_probe.log" 2>&1
-coverage_code=$?
+  > "${OUTPUT_DIR}/coverage_probe.log" 2>&1 &
+coverage_pid="$!"
+pids+=("${coverage_pid}")
+gui_closed_during_mission=0
+runtime_termination_status=""
+while kill -0 "${coverage_pid}" 2>/dev/null; do
+  if [[ -f "${OUTPUT_DIR}/wslg_window_guard.failed" ]]; then
+    gui_closed_during_mission=1
+    runtime_termination_status="WSLG_WINDOW_GUARD_FAILED"
+    echo "[AUTO-17] WSLg window guard failed; stopping the active mission and runtime."
+    break
+  fi
+  if [[ "${GUI}" -eq 1 ]] && ! kill -0 "${gazebo_gui_pid}" 2>/dev/null; then
+    for _ in $(seq 1 10); do
+      kill -0 "${coverage_pid}" 2>/dev/null || break
+      sleep 0.2
+    done
+    if kill -0 "${coverage_pid}" 2>/dev/null; then
+      gui_closed_during_mission=1
+      runtime_termination_status="OPERATOR_GUI_CLOSED"
+      echo "[AUTO-17] Gazebo GUI closed; stopping the active mission and runtime."
+    fi
+    break
+  fi
+  sleep 0.5
+done
+if [[ "${gui_closed_during_mission}" -eq 1 ]]; then
+  coverage_code=130
+else
+  wait "${coverage_pid}"
+  coverage_code=$?
+fi
 set -e
+
+if [[ "${gui_closed_during_mission}" -eq 1 ]]; then
+  printf '{"schema_version":1,"status":"%s","mission_completed":false,"timestamp_utc":"%s"}\n' \
+    "${runtime_termination_status}" \
+    "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    > "${OUTPUT_DIR}/launcher_termination.json"
+  stop_all
+  trap - EXIT INT TERM
+  if [[ "${runtime_termination_status}" == "WSLG_WINDOW_GUARD_FAILED" ]]; then
+    exit 7
+  fi
+  exit 0
+fi
 
 sleep 8
 if [[ "${KEEP_OPEN}" -eq 1 ]]; then
@@ -536,7 +639,11 @@ if [[ "${KEEP_OPEN}" -eq 1 ]]; then
   keep_open_stop=0
   trap 'keep_open_stop=1' INT TERM
   while [[ "${keep_open_stop}" -eq 0 ]]; do
-    if [[ "${GUI}" -eq 1 ]] && ! pgrep -f 'gz sim.*-g' >/dev/null 2>&1; then
+    if [[ -f "${OUTPUT_DIR}/wslg_window_guard.failed" ]]; then
+      echo "[AUTO-17] WSLg window guard failed; finishing the launcher."
+      break
+    fi
+    if [[ "${GUI}" -eq 1 ]] && ! kill -0 "${gazebo_gui_pid}" 2>/dev/null; then
       echo "[AUTO-17] Gazebo GUI closed; finishing the launcher."
       break
     fi
