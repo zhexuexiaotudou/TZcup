@@ -147,10 +147,12 @@ Rectangle {
           ctx.beginPath(); ctx.moveTo(px(fieldBoundary[0][0]), py(fieldBoundary[0][1]))
           for (i = 1; i < fieldBoundary.length; ++i) ctx.lineTo(px(fieldBoundary[i][0]), py(fieldBoundary[i][1]))
           ctx.closePath(); ctx.fill()
+          ctx.strokeStyle = "#f58c14"; ctx.lineWidth = 3; ctx.stroke()
           ctx.fillStyle = "#1b3044"
           ctx.beginPath(); ctx.moveTo(px(boundary[0][0]), py(boundary[0][1]))
           for (i = 1; i < boundary.length; ++i) ctx.lineTo(px(boundary[i][0]), py(boundary[i][1]))
           ctx.closePath(); ctx.fill()
+          ctx.strokeStyle = "#14d0ff"; ctx.lineWidth = 2.5; ctx.stroke()
 
           var cells = root.value("cleaned_cells", [])
           var cellSize = Number(root.value("cell_size_m", 0.2)) * scale
@@ -164,7 +166,7 @@ Rectangle {
             for (var j = 1; j < points.length; ++j) ctx.lineTo(px(points[j][0]), py(points[j][1]))
             ctx.stroke()
           }
-          line(root.value("planned_path", []), "#ffc857", 2)
+          line(root.value("planned_path", []), "#c084fc", 2)
           line(root.value("trajectory", []), "#55d6ff", 2.5)
 
           var targets = root.value("targets", [])
@@ -179,10 +181,6 @@ Rectangle {
             ctx.strokeStyle = "#ffffff"; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(rx, ry)
             ctx.lineTo(rx + 12 * Math.cos(robot.yaw), ry - 12 * Math.sin(robot.yaw)); ctx.stroke()
           }
-          ctx.strokeStyle = "#42bff5"; ctx.lineWidth = 2; ctx.beginPath()
-          ctx.moveTo(px(boundary[0][0]), py(boundary[0][1]))
-          for (i = 1; i < boundary.length; ++i) ctx.lineTo(px(boundary[i][0]), py(boundary[i][1]))
-          ctx.closePath(); ctx.stroke()
         }
       }
 
@@ -238,7 +236,7 @@ Rectangle {
         Layout.fillWidth: true
         Layout.leftMargin: 16
         Layout.rightMargin: 16
-        text: "图例  ■ 已清扫  ━ 规划路径  ━ 实际轨迹  ● 待清目标\n面积与目标统计依据 Gazebo 真值和刷盘足迹，仅用于仿真评估。"
+        text: "图例  ▰ 橙色外框：外部任务区  ▰ 青色内框：实际清扫区\n■ 绿色：已清扫  ━ 紫色：规划路径  ━ 蓝色：实际轨迹  ● 红色：待清目标\n覆盖率只统计青色内框；数据依据 Gazebo 真值和刷盘足迹，仅用于仿真评估。"
         wrapMode: Text.WordWrap
         color: "#7890a6"
         font.pixelSize: 10

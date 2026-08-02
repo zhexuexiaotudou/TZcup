@@ -14,6 +14,7 @@ from pathlib import Path as FilePath
 
 from nav_msgs.msg import Odometry, Path
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from std_msgs.msg import Bool, String
@@ -498,6 +499,7 @@ class CleaningVisualizer(Node):
                             "tzcup_current_cleaning_path",
                             "tzcup_cleaning_status",
                             "tzcup_cleaning_zone",
+                            "tzcup_cleanable_zone",
                             "tzcup_cleaning_home",
                             "tzcup_cleaning_start",
                         )
@@ -582,21 +584,37 @@ class CleaningVisualizer(Node):
                 "ns:\"tzcup_cleaning_zone\" id:1 action:ADD_MODIFY "
                 "type:LINE_STRIP visibility:GUI layer:4 "
                 "scale {x:0.09000 y:0.09000 z:0.09000} "
-                f"{color_proto(0.10, 0.72, 1.0, 1.0)} {points}"
+                f"{color_proto(0.96, 0.55, 0.08, 1.0)} {points}"
+            )
+        if self.cleanable_polygon_map:
+            cleanable_world = [
+                self.map_to_world(point.x, point.y)
+                for point in self.cleanable_polygon_map
+            ]
+            closed = cleanable_world + [cleanable_world[0]]
+            points = " ".join(
+                f"point {{x:{point.x:.5f} y:{point.y:.5f} z:0.07000}}"
+                for point in closed
+            )
+            markers.append(
+                "ns:\"tzcup_cleanable_zone\" id:1 action:ADD_MODIFY "
+                "type:LINE_STRIP visibility:GUI layer:5 "
+                "scale {x:0.07500 y:0.07500 z:0.07500} "
+                f"{color_proto(0.08, 0.82, 1.0, 1.0)} {points}"
             )
             if self.show_zone_fill:
-                xs = [point.x for point in polygon_world]
-                ys = [point.y for point in polygon_world]
+                xs = [point.x for point in cleanable_world]
+                ys = [point.y for point in cleanable_world]
                 center_x = 0.5 * (min(xs) + max(xs))
                 center_y = 0.5 * (min(ys) + max(ys))
                 markers.append(
-                    "ns:\"tzcup_cleaning_zone\" id:2 action:ADD_MODIFY "
+                    "ns:\"tzcup_cleanable_zone\" id:2 action:ADD_MODIFY "
                     "type:BOX visibility:GUI layer:1 "
                     f"pose {{position {{x:{center_x:.5f} y:{center_y:.5f} z:0.01200}} "
                     "orientation {w:1.0}} "
                     f"scale {{x:{max(xs) - min(xs):.5f} "
                     f"y:{max(ys) - min(ys):.5f} z:0.00800}} "
-                    f"{color_proto(0.38, 0.44, 0.50, 0.16)}"
+                    f"{color_proto(0.08, 0.64, 0.82, 0.10)}"
                 )
         if self.home_world is not None:
             markers.extend(
@@ -728,9 +746,12 @@ def main(args=None) -> None:
     node = CleaningVisualizer()
     try:
         rclpy.spin(node)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == "__main__":

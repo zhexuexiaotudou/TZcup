@@ -14,6 +14,7 @@
       <ambient>0.68 0.70 0.72 1</ambient>
       <background>0.58 0.76 0.91 1</background>
       <shadows>true</shadows>
+      <grid>false</grid>
     </scene>
     <light type="directional" name="sun">
       <cast_shadows>true</cast_shadows><pose>-4 -6 20 0 0 0</pose>
@@ -38,10 +39,16 @@
         </visual>
       </link>
     </model>
-    <model name="cleaning_boundary_north"><static>true</static><pose>-8 1.04 0.02 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>6.1 0.08 0.02</size></box></geometry><material><ambient>0.08 0.72 1 1</ambient><diffuse>0.08 0.72 1 1</diffuse></material></visual></link></model>
-    <model name="cleaning_boundary_south"><static>true</static><pose>-8 -4.04 0.02 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>6.1 0.08 0.02</size></box></geometry><material><ambient>0.08 0.72 1 1</ambient><diffuse>0.08 0.72 1 1</diffuse></material></visual></link></model>
-    <model name="cleaning_boundary_west"><static>true</static><pose>-11.04 -1.5 0.02 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>0.08 5.1 0.02</size></box></geometry><material><ambient>0.08 0.72 1 1</ambient><diffuse>0.08 0.72 1 1</diffuse></material></visual></link></model>
-    <model name="cleaning_boundary_east"><static>true</static><pose>-4.96 -1.5 0.02 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>0.08 5.1 0.02</size></box></geometry><material><ambient>0.08 0.72 1 1</ambient><diffuse>0.08 0.72 1 1</diffuse></material></visual></link></model>
+    <!-- Orange: full task allocation. Cyan: the inset area that is actually
+         scored for cleaning after the 1.0 m safety headland is reserved. -->
+    <model name="cleaning_boundary_north"><static>true</static><pose>-8 1.04 0.02 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>6.1 0.08 0.02</size></box></geometry><material><ambient>0.96 0.55 0.08 1</ambient><diffuse>0.96 0.55 0.08 1</diffuse></material></visual></link></model>
+    <model name="cleaning_boundary_south"><static>true</static><pose>-8 -4.04 0.02 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>6.1 0.08 0.02</size></box></geometry><material><ambient>0.96 0.55 0.08 1</ambient><diffuse>0.96 0.55 0.08 1</diffuse></material></visual></link></model>
+    <model name="cleaning_boundary_west"><static>true</static><pose>-11.04 -1.5 0.02 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>0.08 5.1 0.02</size></box></geometry><material><ambient>0.96 0.55 0.08 1</ambient><diffuse>0.96 0.55 0.08 1</diffuse></material></visual></link></model>
+    <model name="cleaning_boundary_east"><static>true</static><pose>-4.96 -1.5 0.02 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>0.08 5.1 0.02</size></box></geometry><material><ambient>0.96 0.55 0.08 1</ambient><diffuse>0.96 0.55 0.08 1</diffuse></material></visual></link></model>
+    <model name="actual_cleaning_boundary_north"><static>true</static><pose>-8 0.04 0.025 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>4.1 0.07 0.025</size></box></geometry><material><ambient>0.08 0.82 1 1</ambient><diffuse>0.08 0.82 1 1</diffuse></material></visual></link></model>
+    <model name="actual_cleaning_boundary_south"><static>true</static><pose>-8 -3.04 0.025 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>4.1 0.07 0.025</size></box></geometry><material><ambient>0.08 0.82 1 1</ambient><diffuse>0.08 0.82 1 1</diffuse></material></visual></link></model>
+    <model name="actual_cleaning_boundary_west"><static>true</static><pose>-10.04 -1.5 0.025 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>0.07 3.1 0.025</size></box></geometry><material><ambient>0.08 0.82 1 1</ambient><diffuse>0.08 0.82 1 1</diffuse></material></visual></link></model>
+    <model name="actual_cleaning_boundary_east"><static>true</static><pose>-5.96 -1.5 0.025 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>0.07 3.1 0.025</size></box></geometry><material><ambient>0.08 0.82 1 1</ambient><diffuse>0.08 0.82 1 1</diffuse></material></visual></link></model>
 
     <model name="home_dock">
       <static>true</static><pose>-8 2.45 0.16 0 0 0</pose><link name="link">

@@ -30,6 +30,8 @@ from sanitation_coverage.metrics import (
     repair_degenerate_swaths,
     summarize_distances,
     synchronized_xy_errors,
+    uncovered_cell_centers,
+    horizontal_repair_segments,
 )
 from sanitation_coverage.mission_geometry import (
     compile_mission_geometry,
@@ -302,6 +304,19 @@ class CoverageProbe(Node):
         cleanable_polygon = geometry["cleanable_outer_polygon"]
         cleanable_exclusions = geometry["cleanable_exclusion_polygons"]
         width = float(config["operation_width_m"])
+        planning_spacing = float(config.get("planning_swath_spacing_m", width))
+        endpoint_extension = float(config.get("swath_endpoint_extension_m", 0.0))
+        empirical_threshold = float(config.get("empirical_coverage_threshold", 0.98))
+        if not 0.0 < planning_spacing <= width:
+            return self._write_report({
+                "success": False,
+                "error": "planning_swath_spacing_m_must_be_positive_and_at_most_operation_width_m",
+            })
+        if endpoint_extension < 0.0 or not 0.0 <= empirical_threshold <= 1.0:
+            return self._write_report({
+                "success": False,
+                "error": "invalid_coverage_execution_acceptance_parameters",
+            })
         self._set_state("PLANNING", {"geometry": geometry})
         if not geometry["headland_clearance_valid"]:
             return self._write_report({
@@ -315,6 +330,10 @@ class CoverageProbe(Node):
             return self._write_report({"success": False, **planning})
         raw_swaths, turns, nav_points, result = planning["raw_swaths"], planning["turns"], planning["nav_points"], planning["result"]
         swaths, repaired = repair_degenerate_swaths(raw_swaths, turns, nav_points)
+        execution_swaths = [
+            self._extend_swath(start, end, endpoint_extension)
+            for start, end in swaths
+        ]
         planned_metrics = raster_coverage_metrics(
             cleanable_polygon, swaths, width, resolution=0.10,
             exclusion_polygons=cleanable_exclusions,
@@ -328,7 +347,7 @@ class CoverageProbe(Node):
             "cleanable_area_m2": geometry["cleanable_area_m2"],
         })
         components = []
-        for index, swath in enumerate(swaths):
+        for index, swath in enumerate(execution_swaths):
             components.append({"kind": "swath", "index": index, "brush": True, "points": self._interpolate(*swath)})
             if index < len(turns):
                 components.append({"kind": "turn", "index": index, "brush": False, "points": turns[index]})
@@ -336,7 +355,7 @@ class CoverageProbe(Node):
         intersection_count = self._swath_exclusion_intersections(
             swaths, cleanable_polygon, cleanable_exclusions
         )
-        self._set_state("TRANSIT_PREFLIGHT")
+        self._set_state("TRANSIT_PREFLIGHT", {"expected_components": len(components)})
         self._wait_for_estimated_pose(15.0)
         selection = self._select_route(
             components, geometry, float(config["staging_offset_m"])
@@ -344,8 +363,12 @@ class CoverageProbe(Node):
         path_report = {
             "frame_id": result.nav_path.header.frame_id,
             "operation_width_m": width,
+            "planning_swath_spacing_m": planning_spacing,
+            "swath_overlap_m": width - planning_spacing,
+            "swath_endpoint_extension_m": endpoint_extension,
             "route_type": str(config["route_type"]), "path_type": str(config["path_type"]),
-            "nav_path": nav_points, "swaths": swaths, "raw_swaths": raw_swaths,
+            "nav_path": nav_points, "swaths": swaths, "execution_swaths": execution_swaths,
+            "raw_swaths": raw_swaths,
             "turns": turns,
             "component_count": len(components),
             "mission_geometry": geometry,
@@ -399,12 +422,30 @@ class CoverageProbe(Node):
                         self._set_state("RECOVERY", component_results[-1])
                     break
         self._set_brush(False)
-        execution_duration = time.monotonic() - execution_started_wall
         complete = bool(selected_components and transit["success"] and len(component_results) == len(selected_components) and all(item["success"] for item in component_results))
         empirical = empirical_swept_metrics(
             cleanable_polygon, self.brush_samples, width, resolution=0.10,
             exclusion_polygons=cleanable_exclusions,
         )
+        repair_report = {
+            "enabled": int(config.get("coverage_repair_max_passes", 0)) > 0,
+            "passes": [],
+            "success": True,
+        }
+        if complete and empirical["coverage_rate"] < empirical_threshold:
+            repair_report = self._execute_coverage_repairs(
+                config,
+                cleanable_polygon,
+                cleanable_exclusions,
+                width,
+                empirical_threshold,
+            )
+            complete = complete and repair_report["success"]
+            empirical = empirical_swept_metrics(
+                cleanable_polygon, self.brush_samples, width, resolution=0.10,
+                exclusion_polygons=cleanable_exclusions,
+            )
+        execution_duration = time.monotonic() - execution_started_wall
         actual_path_points = [(sample[1], sample[2]) for sample in self.truth_samples]
         actual_path_length = path_length(actual_path_points)
         empirical.update({
@@ -413,7 +454,7 @@ class CoverageProbe(Node):
             "gross_efficiency_m2_h": empirical["covered_area_m2"] / execution_duration * 3600.0 if execution_duration > 0 else 0.0,
             "net_efficiency_m2_h": empirical["covered_area_m2"] / execution_duration * 3600.0 if execution_duration > 0 else 0.0,
         })
-        empirical_pass = complete and empirical["coverage_rate"] >= 0.90
+        empirical_pass = complete and empirical["coverage_rate"] >= empirical_threshold
         safety_pass = self.collision_events == 0
         keepout_violation_samples = sum(
             any(point_in_polygon(sample[1], sample[2], polygon) for polygon in exclusions)
@@ -421,6 +462,7 @@ class CoverageProbe(Node):
         )
         brush_state_violation_samples = sum(
             bool(sample[4]) and sample[5] != "EXECUTING_SWATH"
+            and sample[5] != "REPAIR_SWATH"
             for sample in self.truth_samples
         )
         recovery_count = sum(item["retries"] for item in component_results) + int(transit.get("retries", 0))
@@ -468,6 +510,10 @@ class CoverageProbe(Node):
             "competition_efficiency_pass": efficiency_pass,
             "success": bool(complete and empirical_pass and safety_pass and not self.brush_enabled),
             "operation_width_m": width,
+            "planning_swath_spacing_m": planning_spacing,
+            "swath_overlap_m": width - planning_spacing,
+            "swath_endpoint_extension_m": endpoint_extension,
+            "empirical_coverage_threshold": empirical_threshold,
             "swath_count": len(swaths), "turn_count": len(turns),
             "nav_path_pose_count": len(nav_points),
             "component_count": len(selected_components), "component_results": component_results,
@@ -477,6 +523,7 @@ class CoverageProbe(Node):
             "swath_exclusion_intersection_count": intersection_count,
             "planned_metrics": planned_metrics,
             "empirical_metrics": empirical,
+            "coverage_repair": repair_report,
             "recovery_count": recovery_count,
             "collision_count": self.collision_events,
             "keepout_violation_sample_count": keepout_violation_samples,
@@ -532,6 +579,19 @@ class CoverageProbe(Node):
         return [(start[0] + (end[0] - start[0]) * index / (count - 1), start[1] + (end[1] - start[1]) * index / (count - 1)) for index in range(count)]
 
     @staticmethod
+    def _extend_swath(start, end, extension_m):
+        """Extend the brush-on line inside the reserved headland at both ends."""
+        length = math.dist(start, end)
+        if extension_m <= 0.0 or length <= 1e-9:
+            return start, end
+        unit_x = (end[0] - start[0]) / length
+        unit_y = (end[1] - start[1]) / length
+        return (
+            (start[0] - unit_x * extension_m, start[1] - unit_y * extension_m),
+            (end[0] + unit_x * extension_m, end[1] + unit_y * extension_m),
+        )
+
+    @staticmethod
     def _swath_exclusion_intersections(swaths, outer, exclusions):
         count = 0
         for start, end in swaths:
@@ -542,6 +602,119 @@ class CoverageProbe(Node):
             ):
                 count += 1
         return count
+
+    def _execute_coverage_repairs(
+        self, config, cleanable_polygon, cleanable_exclusions, width, threshold
+    ):
+        """Run bounded brush-footprint repairs until the actual gate is met."""
+        max_passes = max(0, int(config.get("coverage_repair_max_passes", 0)))
+        forward_offset = float(config.get("brush_forward_offset_m", 0.55))
+        reports = []
+        all_success = True
+        for pass_index in range(max_passes):
+            empirical = empirical_swept_metrics(
+                cleanable_polygon, self.brush_samples, width, resolution=0.10,
+                exclusion_polygons=cleanable_exclusions,
+            )
+            if empirical["coverage_rate"] >= threshold:
+                break
+            missed = uncovered_cell_centers(
+                cleanable_polygon, self.brush_samples, width, resolution=0.10,
+                exclusion_polygons=cleanable_exclusions,
+            )
+            segments = horizontal_repair_segments(
+                missed, cleanable_polygon, width
+            )
+            pass_report = {
+                "pass_index": pass_index,
+                "coverage_before": empirical["coverage_rate"],
+                "missed_cell_count_before": len(missed),
+                "segment_count": len(segments),
+                "segments": [],
+            }
+            for segment_index, (brush_start, brush_end) in enumerate(segments):
+                if self.stop_requested:
+                    all_success = False
+                    break
+                heading = segment_heading(brush_start, brush_end)
+                unit_x, unit_y = math.cos(heading), math.sin(heading)
+                base_start = (
+                    brush_start[0] - forward_offset * unit_x,
+                    brush_start[1] - forward_offset * unit_y,
+                )
+                base_end = (
+                    brush_end[0] - forward_offset * unit_x,
+                    brush_end[1] - forward_offset * unit_y,
+                )
+                staging = (
+                    base_start[0] - 0.25 * unit_x,
+                    base_start[1] - 0.25 * unit_y,
+                )
+                current = self.truth_pose[:2] if self.truth_pose else staging
+                self._set_brush(False)
+                self._set_state(
+                    "REPAIR_TRANSIT",
+                    {"pass_index": pass_index, "segment_index": segment_index},
+                )
+                entry = {
+                    "kind": "repair_entry",
+                    "index": segment_index,
+                    "brush": False,
+                    "points": self._interpolate(current, staging, spacing=0.05),
+                }
+                entry_result = self._follow_component(entry)
+                repair_result = None
+                if entry_result["success"]:
+                    self._set_brush(True)
+                    self._set_state(
+                        "REPAIR_SWATH",
+                        {"pass_index": pass_index, "segment_index": segment_index},
+                    )
+                    repair = {
+                        "kind": "repair_swath",
+                        "index": segment_index,
+                        "brush": True,
+                        "points": self._interpolate(
+                            staging,
+                            (base_end[0] + 0.30 * unit_x, base_end[1] + 0.30 * unit_y),
+                        ),
+                    }
+                    repair_result = self._follow_component(repair)
+                self._set_brush(False)
+                segment_success = bool(
+                    entry_result["success"]
+                    and repair_result
+                    and repair_result["success"]
+                )
+                pass_report["segments"].append({
+                    "brush_segment": [brush_start, brush_end],
+                    "entry": entry_result,
+                    "repair": repair_result,
+                    "success": segment_success,
+                })
+                if not segment_success:
+                    all_success = False
+                    break
+            after = empirical_swept_metrics(
+                cleanable_polygon, self.brush_samples, width, resolution=0.10,
+                exclusion_polygons=cleanable_exclusions,
+            )
+            pass_report["coverage_after"] = after["coverage_rate"]
+            pass_report["missed_area_after_m2"] = after["missed_area_m2"]
+            reports.append(pass_report)
+            if not all_success or after["coverage_rate"] >= threshold:
+                break
+        final = empirical_swept_metrics(
+            cleanable_polygon, self.brush_samples, width, resolution=0.10,
+            exclusion_polygons=cleanable_exclusions,
+        )
+        return {
+            "enabled": max_passes > 0,
+            "max_passes": max_passes,
+            "passes": reports,
+            "final_coverage_rate": final["coverage_rate"],
+            "success": bool(all_success and final["coverage_rate"] >= threshold),
+        }
 
     def _select_route(self, components, geometry, offset_m):
         candidates = route_candidates(components, offset_m)

@@ -47,10 +47,10 @@ def test_camera_follow_discovery_has_a_hard_timeout():
     assert 'gz_topics="$(gz topic -l 2>/dev/null || true)"' not in launcher
 
 
-def test_emergency_stop_availability_publish_cannot_block_gui_supervision():
+def test_emergency_stop_availability_waits_for_dashboard_but_stays_bounded():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
 
-    assert "timeout 10 ros2 topic pub --once --wait-matching-subscriptions 0" in launcher
+    assert "timeout 15 ros2 topic pub --once --wait-matching-subscriptions 1" in launcher
     assert "Unable to publish the bounded emergency-stop availability pulse." in launcher
 
 

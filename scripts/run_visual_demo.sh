@@ -89,7 +89,7 @@ case "${VIDEO_MODE}" in auto|on|off) ;; *) echo "--video must be auto, on, or of
 case "${MAP_SIZE}" in small|medium|large) ;; *) echo "--map-size must be small, medium, or large" >&2; exit 2 ;; esac
 case "${GAZEBO_GUI_RENDERER}" in auto|d3d12|software) ;; *) echo "--gazebo-gui-renderer must be auto, d3d12, or software" >&2; exit 2 ;; esac
 case "${SIMULATION_SPEED}" in normal|fast|turbo) ;; *) echo "--simulation-speed must be normal, fast, or turbo" >&2; exit 2 ;; esac
-if [[ "${MAP_SIZE}" == "small" ]]; then SHOWCASE=1; EXPECTED_COMPONENTS=9; fi
+if [[ "${MAP_SIZE}" == "small" ]]; then SHOWCASE=1; EXPECTED_COMPONENTS=13; fi
 [[ "${DASHBOARD_PORT}" =~ ^[0-9]+$ ]] || { echo "dashboard port must be numeric" >&2; exit 2; }
 [[ "${MISSION_TIMEOUT_SEC}" =~ ^[0-9]+$ ]] || { echo "timeout must be numeric" >&2; exit 2; }
 
@@ -256,6 +256,7 @@ fi
 runtime="${OUTPUT_DIR}/runtime"
 mkdir -p "${runtime}"
 navigation_share="$(ros2 pkg prefix sanitation_navigation)/share/sanitation_navigation"
+coverage_share="$(ros2 pkg prefix sanitation_coverage)/share/sanitation_coverage"
 tasks_share="$(ros2 pkg prefix sanitation_tasks)/share/sanitation_tasks"
 hmi_share="$(ros2 pkg prefix sanitation_hmi)/share/sanitation_hmi"
 control_prefix="$(ros2 pkg prefix sanitation_gazebo_control)"
@@ -300,8 +301,9 @@ if [[ "${MAP_SIZE}" == "small" ]]; then
   mission_config="${runtime}/competition_demo_area_autonomous_navigation_profile_v1.yaml"
   mission_template="${tasks_share}/config/competition_demo_area.yaml"
   profile_label="INDEPENDENT COMPETITION DEMO"
-  mission_scope="30 M2 LIVE CLEANING CELL"
+  mission_scope="OUTER TASK 30 M2 / CLEANABLE 12 M2"
   map_area_m2="30.0"
+  coverage_params="${coverage_share}/config/coverage_demo_overlap.yaml"
   if [[ "${SIMULATION_SPEED}" == "fast" ]]; then max_linear_velocity="0.60"; max_angular_velocity="0.50"; fi
   if [[ "${SIMULATION_SPEED}" == "turbo" ]]; then max_linear_velocity="0.75"; max_angular_velocity="0.62"; fi
 fi
@@ -722,7 +724,7 @@ if [[ "${VIDEO_MODE}" != "off" ]]; then
   fi
 fi
 
-if ! timeout 10 ros2 topic pub --once --wait-matching-subscriptions 0 \
+if ! timeout 15 ros2 topic pub --once --wait-matching-subscriptions 1 \
   /emergency_stop std_msgs/msg/Bool "{data: false}" \
   > "${OUTPUT_DIR}/emergency_stop_available.log" 2>&1
 then

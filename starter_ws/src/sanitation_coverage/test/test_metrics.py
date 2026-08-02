@@ -5,6 +5,8 @@ from sanitation_coverage.metrics import (
     repair_degenerate_swaths,
     summarize_distances,
     synchronized_xy_errors,
+    uncovered_cell_centers,
+    horizontal_repair_segments,
 )
 
 
@@ -42,6 +44,17 @@ def test_empirical_metrics_use_brush_on_ground_truth_points():
 
 def test_path_length():
     assert path_length([(0.0, 0.0), (3.0, 4.0)]) == 5.0
+
+
+def test_uncovered_cells_form_bounded_horizontal_repair_segments():
+    polygon = [(0.0, 0.0), (2.0, 0.0), (2.0, 1.0), (0.0, 1.0)]
+    points = [(0.0, 0.5, 0.5)]
+    missed = uncovered_cell_centers(polygon, points, 0.4, resolution=0.2)
+    segments = horizontal_repair_segments(missed, polygon, 0.4)
+    assert missed
+    assert segments
+    assert all(0.0 <= point[0] <= 2.0 for segment in segments for point in segment)
+    assert all(segment[0][1] == segment[1][1] for segment in segments)
 
 
 def test_single_swath_coverage_is_bounded():

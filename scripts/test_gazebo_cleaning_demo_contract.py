@@ -83,6 +83,7 @@ def test_gazebo_only_launcher_contract() -> None:
     assert "sanitation_gazebo_visualization cleaning_visualizer" in shell_launcher
     assert '[[ "${OPEN_DASHBOARD}" -eq 1 ]]' in shell_launcher
     assert "keep_open_stop=1" in shell_launcher
+    assert "--wait-matching-subscriptions 1" in shell_launcher
     assert "[switch]$GazeboOnly" in powershell_launcher
     assert '"--gazebo-only"' in powershell_launcher
     assert "[switch]$Showcase" in powershell_launcher
@@ -102,7 +103,7 @@ def test_operator_docs_name_the_gazebo_only_entry() -> None:
     assert command in read("README_FIRST.md")
     assert command in read("docs/auto17-visual-demo.md")
     assert "青绿色" in read("README.md")
-    assert "琥珀色" in read("README.md")
+    assert "橙色外框" in read("README.md")
 
 
 def test_showcase_area_is_small_bounded_and_installed() -> None:
@@ -131,6 +132,8 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     names = {model.get("name") for model in world.findall("model")}
     assert {
         "demo_arena_floor", "cleaning_lane_surface", "home_dock",
+        "actual_cleaning_boundary_north", "actual_cleaning_boundary_south",
+        "actual_cleaning_boundary_west", "actual_cleaning_boundary_east",
         "target_bottle_demo", "target_can_demo", "target_paper_demo",
         "target_cardboard_demo", "target_leaf_pile_demo", "puddle_demo",
     } <= names
@@ -139,9 +142,35 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     assert "16 12 0.08" in __import__("xml.etree.ElementTree", fromlist=["ElementTree"]).tostring(
         floor, encoding="unicode"
     )
+    assert world.findtext("./scene/grid") == "false"
     shell = read("scripts/run_visual_demo.sh")
     assert 'world_name="sanitation_competition_demo"' in shell
     assert 'mission_control_demo.config' in shell
+    assert 'EXPECTED_COMPONENTS=13' in shell
+    assert 'coverage_demo_overlap.yaml' in shell
+
+
+def test_small_demo_uses_overlap_and_strict_actual_coverage_gate() -> None:
+    mission = read(
+        "starter_ws/src/sanitation_tasks/config/competition_demo_area.yaml"
+    )
+    coverage = read(
+        "starter_ws/src/sanitation_coverage/config/coverage_demo_overlap.yaml"
+    )
+    probe = read(
+        "starter_ws/src/sanitation_coverage/"
+        "sanitation_coverage/coverage_probe.py"
+    )
+    assert "operation_width_m: 0.65" in mission
+    assert "planning_swath_spacing_m: 0.45" in mission
+    assert "swath_endpoint_extension_m: 0.20" in mission
+    assert "empirical_coverage_threshold: 0.995" in mission
+    assert "coverage_repair_max_passes: 2" in mission
+    assert "expected_components: 13" in mission
+    assert "operation_width: 0.45" in coverage
+    assert 'empirical["coverage_rate"] >= empirical_threshold' in probe
+    assert "execution_swaths" in probe
+    assert "_execute_coverage_repairs" in probe
 
 
 def test_gazebo_panel_renders_live_cleaning_metrics_and_map() -> None:
@@ -157,6 +186,7 @@ def test_gazebo_panel_renders_live_cleaning_metrics_and_map() -> None:
     for label in (
         "实时作业地图", "已清扫", "目标清除", "清扫效率", "累计里程",
         "当前速度", "仿真用时", "作业步骤", "实际轨迹",
+        "外部任务区", "实际清扫区", "覆盖率只统计青色内框",
     ):
         assert label in qml
     for layer in ("planned_path", "trajectory", "cleaned_cells", "targets"):
