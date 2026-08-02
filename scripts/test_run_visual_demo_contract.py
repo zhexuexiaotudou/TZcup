@@ -1,5 +1,9 @@
 from pathlib import Path
 
+import pytest
+
+from prepare_manual_gazebo_gui import remove_camera_tracking
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -45,6 +49,27 @@ def test_camera_follow_discovery_has_a_hard_timeout():
     assert "for _ in $(seq 1 10)" in launcher
     assert 'gz_topics="$(timeout 3 gz topic -l 2>/dev/null || true)"' in launcher
     assert 'gz_topics="$(gz topic -l 2>/dev/null || true)"' not in launcher
+
+
+def test_manual_control_removes_camera_tracking_instead_of_trying_to_release_it():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    config = (ROOT / "starter_ws" / "src" / "sanitation_gazebo_control" / "config" / "mission_control_demo.config").read_text(encoding="utf-8")
+
+    free_config = remove_camera_tracking(config)
+    assert 'filename="CameraTracking"' in config
+    assert 'filename="CameraTracking"' not in free_config
+    assert 'filename="InteractiveViewControl"' in free_config
+    gui_launch = launcher.index('setsid "${gazebo_gui_env[@]}" gz sim -g')
+    follow_guard = launcher.index(
+        'if [[ "${GUI}" -eq 1 && "${MANUAL_CONTROL}" -eq 0 ]]'
+    )
+    assert gui_launch < follow_guard
+    assert '[[ "${GUI}" -eq 0 || "${MANUAL_CONTROL}" -eq 1 ]]' in launcher
+
+
+def test_manual_gui_preparation_fails_closed_without_one_tracking_plugin():
+    with pytest.raises(ValueError, match="exactly one CameraTracking"):
+        remove_camera_tracking("<window></window>\n")
 
 
 def test_emergency_stop_availability_waits_for_dashboard_but_stays_bounded():

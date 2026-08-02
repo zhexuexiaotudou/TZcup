@@ -341,6 +341,12 @@ if [[ "${MAP_SIZE}" == "small" ]]; then
   world_name="sanitation_competition_demo"
   gui_config="${control_share}/config/mission_control_demo.config"
 fi
+if [[ "${MANUAL_CONTROL}" -eq 1 ]]; then
+  manual_gui_config="${runtime}/mission_control_${MAP_SIZE}_manual.config"
+  python3 "${ROOT}/scripts/prepare_manual_gazebo_gui.py" \
+    --input "${gui_config}" --output "${manual_gui_config}"
+  gui_config="${manual_gui_config}"
+fi
 runtime_world="${runtime}/${world_name}_${SIMULATION_SPEED}.sdf"
 python3 - "${world_file}" "${runtime_world}" "${simulation_rtf}" <<'PY'
 from pathlib import Path
@@ -627,7 +633,7 @@ camera_track_request='track_mode: FOLLOW_LOOK_AT, follow_target: {name: "sanitat
 if [[ "${SHOWCASE}" -eq 1 ]]; then
   camera_track_request='track_mode: FOLLOW_LOOK_AT, follow_target: {name: "sanitation_vehicle", type: MODEL}, track_target: {name: "sanitation_vehicle", type: MODEL}, follow_offset: {x: -8.0, y: -8.0, z: 10.0}, follow_pgain: 0.25, track_pgain: 0.35'
 fi
-if [[ "${GUI}" -eq 1 ]]; then
+if [[ "${GUI}" -eq 1 && "${MANUAL_CONTROL}" -eq 0 ]]; then
   for _ in $(seq 1 10); do
     gz_topics="$(timeout 3 gz topic -l 2>/dev/null || true)"
     if grep -Fxq '/gui/track' <<< "${gz_topics}"; then
@@ -845,5 +851,5 @@ summary_args=(
 )
 [[ "${RECORD_MCAP}" -eq 1 ]] && summary_args+=(--mcap-required)
 [[ "${camera_follow_requested}" -eq 1 ]] && summary_args+=(--camera-follow-requested)
-[[ "${GUI}" -eq 0 ]] && summary_args+=(--camera-follow-not-required)
+[[ "${GUI}" -eq 0 || "${MANUAL_CONTROL}" -eq 1 ]] && summary_args+=(--camera-follow-not-required)
 python3 "${ROOT}/scripts/visual_demo_summary.py" "${summary_args[@]}"
