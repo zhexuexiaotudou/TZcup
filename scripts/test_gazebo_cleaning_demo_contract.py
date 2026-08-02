@@ -24,8 +24,10 @@ def test_gazebo_visualizer_package_contract() -> None:
         '"/coverage/current_path"',
     ):
         assert topic in source
-    for marker_type in ("type:LINE_STRIP", "type:BOX", "type:SPHERE"):
+    for marker_type in ("type:LINE_STRIP", "type:BOX"):
         assert marker_type in source
+    assert "type:SPHERE" not in source
+    assert "scale {x:0.14 y:0.14 z:0.018}" in source
     assert "type:TEXT" not in source, "Ogre2 MarkerManager does not support text markers reliably"
     assert '"/marker"' in source
     assert '"gz.msgs.Marker"' in source
@@ -143,6 +145,27 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
         floor, encoding="unicode"
     )
     assert world.findtext("./scene/grid") == "false"
+    bottle = world.find("./model[@name='target_bottle_demo']")
+    can = world.find("./model[@name='target_can_demo']")
+    paper = world.find("./model[@name='target_paper_demo']")
+    cardboard = world.find("./model[@name='target_cardboard_demo']")
+    leaves = world.find("./model[@name='target_leaf_pile_demo']")
+    puddle = world.find("./model[@name='puddle_demo']")
+    assert bottle is not None and can is not None
+    assert paper is not None and cardboard is not None
+    assert leaves is not None and puddle is not None
+    assert bottle.findtext("./link/visual[@name='body']/geometry/cylinder/radius") == "0.033"
+    assert bottle.findtext("./link/visual[@name='body']/geometry/cylinder/length") == "0.22"
+    assert can.findtext("./link/visual/geometry/cylinder/radius") == "0.033"
+    assert can.findtext("./link/visual/geometry/cylinder/length") == "0.115"
+    assert paper.findtext("./link/visual/geometry/box/size") == "0.21 0.15 0.004"
+    assert cardboard.findtext("./link/visual/geometry/box/size") == "0.24 0.17 0.06"
+    assert not leaves.findall(".//sphere")
+    assert len(leaves.findall("./link/visual")) == 4
+    puddle_radii = [
+        float(radius.text) for radius in puddle.findall(".//cylinder/radius")
+    ]
+    assert puddle_radii and max(puddle_radii) <= 0.18
     shell = read("scripts/run_visual_demo.sh")
     assert 'world_name="sanitation_competition_demo"' in shell
     assert 'mission_control_demo.config' in shell

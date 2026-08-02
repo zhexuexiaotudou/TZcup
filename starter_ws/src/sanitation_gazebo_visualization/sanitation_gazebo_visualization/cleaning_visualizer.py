@@ -637,9 +637,9 @@ class CleaningVisualizer(Node):
         material = color_proto(*color)
         return [
             f"ns:{quote_proto(namespace)} id:1 action:ADD_MODIFY "
-            "type:SPHERE visibility:GUI layer:5 "
-            f"pose {{position {{x:{point.x:.5f} y:{point.y:.5f} z:0.16}} "
-            "orientation {w:1.0}} scale {x:0.32 y:0.32 z:0.32} "
+            "type:BOX visibility:GUI layer:5 "
+            f"pose {{position {{x:{point.x:.5f} y:{point.y:.5f} z:0.012}} "
+            "orientation {w:1.0}} scale {x:0.14 y:0.14 z:0.018} "
             f"{material}",
         ]
 
