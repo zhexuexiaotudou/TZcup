@@ -215,3 +215,57 @@ def empirical_swept_metrics(
         "brush_on_duration_sec": max(0.0, duration),
         "metric_basis": "gazebo_ground_truth_cleaning_footprint_brush_on",
     }
+
+
+def uncovered_cell_centers(
+    polygon, timed_points, width, resolution=0.10, exclusion_polygons=()
+):
+    """Return cleanable raster cells not reached by the actual brush center."""
+    min_x = min(point[0] for point in polygon)
+    max_x = max(point[0] for point in polygon)
+    min_y = min(point[1] for point in polygon)
+    max_y = max(point[1] for point in polygon)
+    rows = max(0, int(math.ceil((max_y - min_y) / resolution)))
+    columns = max(0, int(math.ceil((max_x - min_x) / resolution)))
+    missed = []
+    radius = width / 2.0
+    for iy in range(rows):
+        y = min_y + (iy + 0.5) * resolution
+        for ix in range(columns):
+            x = min_x + (ix + 0.5) * resolution
+            if not point_in_cleanable_area(x, y, polygon, exclusion_polygons):
+                continue
+            if not any(math.hypot(x - px, y - py) <= radius for _, px, py in timed_points):
+                missed.append((x, y))
+    return missed
+
+
+def horizontal_repair_segments(missed_cells, cleanable_polygon, width):
+    """Create bounded horizontal repair lines for sparse missed-cell rows."""
+    if not missed_cells:
+        return []
+    min_x = min(point[0] for point in cleanable_polygon)
+    max_x = max(point[0] for point in cleanable_polygon)
+    rows = {}
+    for x, y in missed_cells:
+        rows.setdefault(round(y, 6), []).append(x)
+    row_groups = []
+    for y, xs in sorted(rows.items()):
+        if row_groups and y - row_groups[-1][-1][0] <= width * 0.75:
+            row_groups[-1].append((y, xs))
+        else:
+            row_groups.append([(y, xs)])
+    segments = []
+    reverse = False
+    margin = width / 2.0
+    for group in row_groups:
+        y = sum(item[0] for item in group) / len(group)
+        xs = [x for _, values in group for x in values]
+        start_x = max(min_x, min(xs) - margin)
+        end_x = min(max_x, max(xs) + margin)
+        start, end = (start_x, y), (end_x, y)
+        if reverse:
+            start, end = end, start
+        segments.append((start, end))
+        reverse = not reverse
+    return segments

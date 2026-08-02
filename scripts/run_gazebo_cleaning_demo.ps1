@@ -43,5 +43,5 @@ if ($FullArea) {
     Write-Host "Launching the independent 16 m x 12 m competition demo with native mission controls at $SimulationSpeed speed..."
 }
 Write-Host "Use the right-side Gazebo panel: Start, Pause, Resume, Stop, or Close Gazebo."
-Write-Host "Gray is the assigned area, teal is cleaned ground, and amber is the active path."
+Write-Host "Orange is the outer task area, cyan is the actual cleaning area, green is cleaned ground, and purple is the active path."
 & $launcher @launchParameters

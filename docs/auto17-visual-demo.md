@@ -14,10 +14,11 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 `80 m × 50 m` 场景的 17 组件任务。车辆运动、Nav2 跟踪和 Coverage 结果都来自真实仿真链。
 `sanitation_gazebo_visualization` 通过 Gazebo MarkerManager 和原生任务面板叠加以下只读信息：
 
-- 蓝色边框与半透明灰底：配置中的指定清扫区和尚未被青绿色覆盖的区域；
+- 橙色外框：30 m² 外部任务区，包含安全回转带；
+- 青色内框与半透明底：扣除 1.0 m 安全回转带后、实际计分的 12 m² 清扫区；
 - 蓝色 `HOME`：本次运行第一帧 evaluation-only 真值位置，即车辆实际出发点；
 - 绿色 `CLEANING START`：Coverage 第一条真实作业带的起点；
-- 琥珀色折线：当前 `/coverage/current_path`，即 Nav2 正在跟踪的组件；
+- 紫色折线：当前 `/coverage/current_path`，即 Nav2 正在跟踪的组件；
 - 青绿色带：`/brush_enabled=true` 时，evaluation-only `/ground_truth/odom` 推导的实际刷盘扫掠；
 - 右侧实时作业地图：规划路径、实际轨迹、已清扫栅格、目标状态和车辆姿态；
 - 实时指标：清扫百分比、面积、目标数、效率、里程、速度、仿真时间和组件进度。
@@ -33,12 +34,19 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 独立小场演示与中型完整区域模式分别为：
 
 ```powershell
-# 独立 16 m × 12 m 竞赛功能演示场，默认 5 条作业带和 4 个转弯
+# 独立 16 m × 12 m 竞赛功能演示场，7 条重叠作业带和 6 个转弯
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
 
 # 中型 80 m × 50 m 场景的 9 条清扫带、8 个转弯任务
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1 -FullArea
 ```
+
+小场的物理刷盘宽度保持 0.65 m，规划条带间距为 0.45 m，形成约 31% 横向重叠；每条
+刷盘开启线结合 0.55 m 前置刷盘偏移向两端补偿。任务只有在全部 13 个组件成功、无碰撞
+且 Gazebo 真值刷盘足迹覆盖率达到 99.5% 时才进入 `COMPLETED`，避免规划覆盖率 100% 掩盖
+实际跟踪漏扫。首轮不足时，系统按未覆盖栅格生成有界水平补扫段，最多两轮，并在补扫后
+重新计算真实覆盖率；补扫失败或仍未达标会进入 `FAILED`。Gazebo 默认网格已关闭，场地
+不再与全局参考平面发生错位或深度冲突。
 
 ## 目标
 
