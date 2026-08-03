@@ -5,8 +5,8 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 WORKSPACE="${ROOT}/starter_ws"
 BASE_WORKSPACE="${WORKSPACE}"
 OUTPUT=""
-SEEDS="160,161"
-TRIALS_PER_RUN=12
+SEEDS="160,161,162"
+TRIALS_PER_RUN=8
 RENDER_ENGINE="ogre2"
 
 while [[ $# -gt 0 ]]; do

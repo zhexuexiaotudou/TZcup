@@ -4,7 +4,7 @@ from pathlib import Path
 from coverage_dynamic_matrix_report import build_report
 
 
-def _write_run(root: Path, seed: int, count: int = 12) -> None:
+def _write_run(root: Path, seed: int, count: int = 8) -> None:
     run = root / f"run_seed_{seed}"
     run.mkdir()
     trials = [
@@ -31,9 +31,10 @@ def _write_run(root: Path, seed: int, count: int = 12) -> None:
     }), encoding="utf-8")
 
 
-def test_two_bounded_runs_form_a_passing_twenty_interaction_matrix(tmp_path):
+def test_three_bounded_runs_form_a_passing_twenty_interaction_matrix(tmp_path):
     _write_run(tmp_path, 160)
     _write_run(tmp_path, 161)
+    _write_run(tmp_path, 162)
     report = build_report(tmp_path)
     assert report["dynamic_obstacle_valid_trials"] == 24
     assert report["dynamic_recovery_rate"] == 1.0
@@ -44,6 +45,7 @@ def test_two_bounded_runs_form_a_passing_twenty_interaction_matrix(tmp_path):
 def test_collision_or_oscillation_fails_closed(tmp_path):
     _write_run(tmp_path, 160)
     _write_run(tmp_path, 161)
+    _write_run(tmp_path, 162)
     report_path = tmp_path / "run_seed_161" / "dynamic_obstacle_report.json"
     payload = json.loads(report_path.read_text(encoding="utf-8"))
     payload["collision_count"] = 1

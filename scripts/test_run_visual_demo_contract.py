@@ -70,6 +70,7 @@ def test_launcher_can_run_a_bounded_physical_dynamic_matrix():
     assert '"repeated_oscillation_count": repeated_oscillation_count' in probe
     assert 'and repeated_oscillation_count == 0' in probe
     assert 'valid >= requested_count' in probe
+    assert 'maximum_attempt_count = requested_count + 2' in probe
 
 
 def test_headless_matrix_can_select_ogre_without_changing_gui_default():

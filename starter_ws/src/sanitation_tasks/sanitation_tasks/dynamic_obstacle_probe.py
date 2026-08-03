@@ -162,7 +162,11 @@ class DynamicObstacleProbe(Node):
         last_component = None
         last_injection_position = None
         terminal_states = {"COMPLETED", "FAILED", "RECOVERY"}
-        for seed in range(int(self.get_parameter("trial_count").value)):
+        requested_count = int(self.get_parameter("trial_count").value)
+        maximum_attempt_count = requested_count + 2
+        for seed in range(maximum_attempt_count):
+            if sum(trial["valid"] for trial in trials) >= requested_count:
+                break
             remaining = 0.0
             spacing_from_previous = None
             current_component = None
@@ -347,6 +351,7 @@ class DynamicObstacleProbe(Node):
         )
         report = {
             "schema_version": 1, "requested_trial_count": requested_count,
+            "maximum_attempt_count": requested_count + 2,
             "completed_trial_count": len(trials), "dynamic_obstacle_valid_trials": valid,
             "world_name": str(self.get_parameter("world_name").value),
             "model_name": str(self.get_parameter("model_name").value),
