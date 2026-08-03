@@ -51,6 +51,7 @@ headland:
   width_m: 0.75
 safety_margin_m: 0.10
 staging_offset_m: 0.50
+optimized_staging_offset_m: 0.15
 robot_footprint:
   - [0.40, 0.36]
   - [0.40, -0.36]

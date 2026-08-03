@@ -445,8 +445,12 @@ class CoverageProbe(Node):
         )
         self._set_state("TRANSIT_PREFLIGHT", {"expected_components": len(components)})
         self._wait_for_estimated_pose(15.0)
+        staging_offset = float(
+            config.get("optimized_staging_offset_m", config["staging_offset_m"])
+            if optimized_profile else config["staging_offset_m"]
+        )
         selection = self._select_route(
-            components, geometry, float(config["staging_offset_m"]),
+            components, geometry, staging_offset,
             allow_reverse=not optimized_profile,
         )
         path_report = {
@@ -466,6 +470,7 @@ class CoverageProbe(Node):
             "mission_geometry": geometry,
             "swath_exclusion_intersection_count": intersection_count,
             "route_selection": selection["report"],
+            "staging_offset_m": staging_offset,
             "execution_strategy": "ordered adjacent swaths with semantic skid-steer connectors" if optimized_profile else "legacy preflight forward/reverse staging and Dubins turns",
         }
         self._write_json(self.get_parameter("path_output_path").value, path_report)
