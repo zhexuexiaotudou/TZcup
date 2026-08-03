@@ -27,10 +27,14 @@ state, speed profile and one of these types:
   by a brush-on line across clean ground. At most one repair pass and 10% of the
   primary swath length are allowed by the optimized demo profile.
 
-The optimized small-field configuration uses a 0.42 m swath spacing for the
-physical 0.65 m brush. Candidate spacings are 0.42, 0.46, 0.48, 0.50 and
+The optimized small-field configuration selects a 0.52 m planning spacing for
+the physical 0.65 m brush. Candidate spacings are 0.42, 0.46, 0.48, 0.50 and
 0.52 m; the first live 0.48 m trial reached only 97.17% and was therefore
-rejected. The 0.35 m profile is retained only as a fail-closed legacy fallback. The pure
+rejected. A map-normal affine execution calibration (`1.06`, `0.0264 m`) adds
+tracking-error margin without changing the selected planning candidate. It was
+fitted offline against seeds 118, 119, 120 and the retained failing seed 123;
+ground truth remains evaluation-only and is never read by the online controller.
+The 0.35 m profile is retained only as a fail-closed legacy fallback. The pure
 optimizer evaluates angles from 0 through 175 degrees in five-degree steps and
 chooses the route with the lowest path/connector/turn cost.
 

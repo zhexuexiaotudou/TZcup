@@ -28,6 +28,11 @@ def test_optimized_profile_has_bounded_repair_and_legacy_fallback():
     assert config["coverage_planner_profile"] == "SKID_STEER_OPTIMIZED"
     assert config["planning_swath_spacing_m"] in config["swath_spacing_candidates_m"]
     assert config["legacy_fallback_swath_spacing_m"] == 0.35
+    assert config["execution_lateral_scale"] == 1.06
+    assert config["execution_lateral_offset_m"] == 0.0264
+    assert config["execution_calibration_source"] == (
+        "coverage_optimizer_seeds118_119_120_123_robust_affine_fit"
+    )
     assert config["coverage_repair_max_passes"] == 1
     assert config["repair_max_primary_length_ratio"] <= 0.10
     assert config["empirical_repeat_rate_threshold"] <= 0.20
