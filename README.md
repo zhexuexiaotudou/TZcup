@@ -24,6 +24,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 优化方案将清扫直线固定为 `CleanPath`（`0.65 m/s`、固定前视），补扫使用 `RepairPath`，转向和横移使用 Nav2 `Spin / DriveOnHeading / BackUp`；`fast/turbo` 只改变 Gazebo 推进倍率，不再把所有物理动作一并加速。
 小场世界预置一个默认停放在场外的非静态行人模型，仅在正式动态矩阵中由 Gazebo `SetEntityPose` 移入当前条带；普通演示不会看到它，也不会把服务调用本身冒充有效避障交互。
 WSLg 日常演示始终默认 Ogre2；只有缺少 EGL 图形上下文的无头 Docker 矩阵才显式使用 `-SimulationRenderEngine ogre`，实际选择会写入保留的运行时 SDF。
+正式 A/B 回归入口为 `bash scripts/run_coverage_optimizer_matrix.sh --output <evidence-dir>`：默认保留 optimized/legacy 各 5 个随机种子，并为 optimized seed 132 记录一套 MCAP 回放源。
 
 Gazebo 右侧原生卡片可控制开始、暂停、继续、停止和关闭；按钮通过 Coverage 服务驱动 Nav2，不直接发速度。`-MapSize small|medium|large` 选择独立 16 m × 12 m 演示场、80 m × 50 m 中型验证或严格 200 m × 100 m 比赛大图，详见 [`docs/gazebo-multiscale-control.md`](docs/gazebo-multiscale-control.md)。
 Windows 启动器会准备 WSLg `/mnt/shared_memory`、恢复异常窗口，并在关闭 Gazebo 后立即停止运行链、释放端口和关闭已跟踪的 RemoteApp 窗口句柄，避免残留不可交互会话或无渲染内容的黑色外壳。

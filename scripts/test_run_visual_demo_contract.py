@@ -99,6 +99,20 @@ def test_optimized_connectors_use_nav2_behaviors_and_dedicated_controllers():
     assert "use_velocity_scaled_lookahead_dist: false" in nav2
 
 
+def test_formal_matrix_preserves_five_seed_a_b_and_one_mcap_replay_source():
+    matrix = (
+        ROOT / "scripts" / "run_coverage_optimizer_matrix.sh"
+    ).read_text(encoding="utf-8")
+
+    assert 'OPTIMIZED_SEEDS="132,133,134,135,136"' in matrix
+    assert 'LEGACY_SEEDS="140,141,142,143,144"' in matrix
+    assert 'MCAP_SEED="132"' in matrix
+    assert 'run_profile optimized "${OPTIMIZED_SEEDS}" selected' in matrix
+    assert 'run_profile legacy "${LEGACY_SEEDS}" baseline' in matrix
+    assert 'Refusing to overwrite retained matrix status' in matrix
+    assert 'args+=(--no-mcap)' in matrix
+
+
 def test_readiness_bypasses_stale_ros_daemon():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
     readiness = (ROOT / "scripts" / "ros_runtime_readiness.py").read_text(
