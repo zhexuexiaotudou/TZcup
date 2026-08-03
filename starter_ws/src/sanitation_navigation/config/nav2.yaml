@@ -70,10 +70,11 @@ controller_server:
       movement_time_allowance: 15.0
     goal_checker:
       plugin: nav2_controller::SimpleGoalChecker
-      # A coverage swath must finish close to its actual endpoint.  A stateful
-      # goal checker can remember a transient in-tolerance sample and then
-      # accept the goal after the skid-steer chassis has drifted back out.
-      stateful: false
+      # Reach the endpoint tightly before switching to final heading control.
+      # Stateful XY acceptance is necessary for skid-steer in-place rotation:
+      # minute chassis slip must not make position and heading mutually
+      # unattainable after the 8 cm endpoint gate has already passed.
+      stateful: true
       xy_goal_tolerance: 0.08
       yaw_goal_tolerance: 0.35
     FollowPath:
