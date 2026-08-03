@@ -20,6 +20,7 @@ def test_optimized_small_demo_profile_is_packaged_and_selected():
     assert "ros2 topic pub --times 5 --rate 5" in runner
     assert "--wait-matching-subscriptions 2" in runner
     assert '"/emergency_stop" in payload.get("topics_seen", [])' in runner
+    assert "-p component_retry_limit:=2" in runner
     assert "gazebo_cleaning_telemetry.json" in runner
     assert 'localization_fusion_mode="rtk_imu_wheel"' in runner
     assert 'enable_scan_refiner="false"' in runner

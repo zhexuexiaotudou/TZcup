@@ -803,6 +803,7 @@ setsid timeout "${MISSION_TIMEOUT_SEC}" ros2 run sanitation_coverage coverage_pr
   -p config_path:="${mission_config}" \
   -p path_output_path:="${OUTPUT_DIR}/coverage_path.json" \
   -p trajectory_output_path:="${OUTPUT_DIR}/coverage_trajectory.csv" \
+  -p component_retry_limit:=2 \
   > "${OUTPUT_DIR}/coverage_probe.log" 2>&1 &
 coverage_pid="$!"
 pids+=("${coverage_pid}")
