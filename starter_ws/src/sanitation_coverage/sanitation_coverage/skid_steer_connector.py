@@ -34,6 +34,15 @@ def _segment_inside(start, end, polygon, sample_m=0.05) -> bool:
     )
 
 
+def _sample_segment(start, end, sample_m=0.10):
+    count = max(1, int(math.ceil(math.dist(start, end) / sample_m)))
+    return tuple(
+        (start[0] + (end[0] - start[0]) * index / count,
+         start[1] + (end[1] - start[1]) * index / count)
+        for index in range(count + 1)
+    )
+
+
 def plan_skid_steer_connector(
     connector_id: str,
     start: tuple[float, float],
@@ -65,7 +74,7 @@ def plan_skid_steer_connector(
     if distance > 1e-4:
         kind = ComponentType.BACKUP if reverse else ComponentType.SHIFT
         components.append(CoverageComponent(
-            f"{connector_id}-translate", kind, (start, goal), False,
+            f"{connector_id}-translate", kind, _sample_segment(start, goal), False,
             "BACKUP" if reverse else "SHIFT", {"travel_yaw_rad": travel_yaw},
         ))
     # travel_yaw is always the chassis heading. In backup mode the translation

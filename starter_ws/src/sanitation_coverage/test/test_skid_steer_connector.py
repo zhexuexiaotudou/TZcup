@@ -12,6 +12,9 @@ def test_rtr_connector_uses_semantic_rotate_shift_rotate():
     components = plan_skid_steer_connector("c0", (0, 0), 0, (0, 1), math.pi, SAFE, False)
     assert [item.kind for item in components] == [ComponentType.ROTATE, ComponentType.SHIFT, ComponentType.ROTATE]
     assert all(not item.brush_enabled for item in components)
+    assert len(components[1].points) > 2
+    assert components[1].points[0] == (0.0, 0.0)
+    assert components[1].points[-1] == (0.0, 1.0)
 
 
 def test_large_heading_change_prefers_bounded_backup():
