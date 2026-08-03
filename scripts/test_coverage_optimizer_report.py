@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-from coverage_optimizer_report import build_report
+from coverage_optimizer_report import build_repair_matrix, build_report
 
 
 def _write_run(root: Path, bucket: str, seed: int, profile: str):
@@ -46,3 +46,25 @@ def test_report_collects_five_seed_profiles_and_keeps_missing_live_gates_closed(
     assert report["gates"]["mcap_replay"] is False
     assert report["gates"]["dynamic_matrix"] is False
     assert report["pass"] is False
+
+
+def test_repair_matrix_requires_ten_observed_bounded_repairs(tmp_path):
+    repair = tmp_path / "repair"
+    for seed in range(10):
+        _write_run(repair, "", seed, "optimized")
+        run = repair / f"seed_{seed}"
+        report = json.loads((run / "coverage_report.json").read_text())
+        report["evaluation_injection"] = {
+            "observed": True, "ground_truth_used_for_control": False,
+        }
+        report["coverage_repair"] = {"passes": [{
+            "segment_count": 1, "planned_repair_length_m": 0.2,
+        }]}
+        (run / "coverage_report.json").write_text(json.dumps(report))
+
+    result = build_repair_matrix(repair)
+
+    assert len(result["runs"]) == 10
+    assert result["gates"]["all_injections_observed"] is True
+    assert result["gates"]["no_ground_truth_control"] is True
+    assert result["pass"] is True

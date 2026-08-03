@@ -137,6 +137,49 @@ def _reduction(baseline, selected, key):
     return (old - new) / old
 
 
+def build_repair_matrix(repair_root):
+    rows = []
+    for run_dir in sorted(repair_root.glob("seed_*")):
+        report_path = run_dir / "coverage_report.json"
+        path_path = run_dir / "coverage_path.json"
+        if not report_path.exists() or not path_path.exists():
+            rows.append({
+                "seed": int(run_dir.name.split("_")[-1]),
+                "success": False, "report_present": False,
+            })
+            continue
+        report = _read_json(report_path)
+        row = collect_run("repair_injection", run_dir)
+        injection = report.get("evaluation_injection", {})
+        primary_length = float(row.get("primary_path_length_m") or 0.0)
+        repair_length = float(row.get("repair_path_length_m") or 0.0)
+        row.update({
+            "injection_observed": bool(injection.get("observed")),
+            "ground_truth_used_for_control": injection.get(
+                "ground_truth_used_for_control"
+            ),
+            "repair_within_10_percent": (
+                primary_length > 0.0 and repair_length <= primary_length * 0.10 + 1e-9
+            ),
+        })
+        rows.append(row)
+    gates = {
+        "ten_injected_seeds": len(rows) >= 10,
+        "all_injections_observed": bool(rows) and all(row.get("injection_observed") for row in rows),
+        "all_repairs_executed": bool(rows) and all(row.get("repair_passes") == 1 for row in rows),
+        "all_repairs_within_10_percent": bool(rows) and all(row.get("repair_within_10_percent") for row in rows),
+        "all_coverage_recovered": bool(rows) and all((row.get("coverage_rate") or 0.0) >= 0.995 for row in rows),
+        "all_runs_success": bool(rows) and all(row.get("success") for row in rows),
+        "no_ground_truth_control": bool(rows) and all(row.get("ground_truth_used_for_control") is False for row in rows),
+    }
+    return {
+        "schema": "tzcup.coverage_repair_matrix.v1",
+        "runs": rows,
+        "gates": gates,
+        "pass": all(gates.values()),
+    }
+
+
 def build_report(root):
     baseline = [collect_run("legacy", path) for path in sorted((root / "baseline").glob("seed_*"))]
     selected = [collect_run("optimized", path) for path in sorted((root / "selected").glob("seed_*"))]
@@ -163,7 +206,9 @@ def build_report(root):
         "brush_off_reduction_at_least_0_40": (comparison["brush_off_distance_reduction"] or -1) >= 0.40,
         "connector_reduction_at_least_0_50": (comparison["connector_distance_reduction"] or -1) >= 0.50,
         "mcap_replay": replay_path.exists() and bool(_read_json(replay_path).get("pass")),
-        "dynamic_matrix": dynamic_path.exists() and bool(_read_json(dynamic_path).get("pass")),
+        "dynamic_matrix": dynamic_path.exists() and bool(
+            _read_json(dynamic_path).get("pass", _read_json(dynamic_path).get("success"))
+        ),
         "repair_matrix": repair_path.exists() and bool(_read_json(repair_path).get("pass")),
     }
     return {
@@ -225,6 +270,13 @@ def main():
     parser.add_argument("--root", type=Path, required=True)
     args = parser.parse_args()
     root = args.root.resolve()
+    repair_root = root / "repair"
+    if repair_root.exists():
+        repair_report_path = repair_root / "repair_matrix_report.json"
+        repair_report_path.write_text(
+            json.dumps(build_repair_matrix(repair_root), indent=2) + "\n",
+            encoding="utf-8",
+        )
     report = build_report(root)
     json_path = root / "comparison_report.json"
     markdown_path = root / "comparison_report.md"

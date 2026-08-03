@@ -26,6 +26,7 @@ SIMULATION_SPEED="fast"
 COVERAGE_PROFILE="optimized"
 DYNAMIC_OBSTACLE_TRIALS=0
 SIMULATION_RENDER_ENGINE="ogre2"
+REPAIR_EVALUATION_INJECTION=0
 
 usage() {
   cat <<'EOF'
@@ -53,6 +54,8 @@ Options:
                         Run N physical SetEntityPose interactions (formal: 20)
   --simulation-render-engine ENGINE
                         ogre2 (default) or ogre (headless software fallback)
+  --repair-evaluation-injection
+                        Inject one fused-pose brush dropout for repair testing
   --manual-control      Wait for the native Gazebo Start button
   --competition-profile Use the 20,000 m2 map and AUTO-12 vehicle candidate;
                         execute one representative live zone
@@ -93,6 +96,7 @@ while [[ $# -gt 0 ]]; do
     --coverage-profile) COVERAGE_PROFILE="$2"; shift 2 ;;
     --dynamic-obstacle-trials) DYNAMIC_OBSTACLE_TRIALS="$2"; shift 2 ;;
     --simulation-render-engine) SIMULATION_RENDER_ENGINE="$2"; shift 2 ;;
+    --repair-evaluation-injection) REPAIR_EVALUATION_INJECTION=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -110,6 +114,10 @@ if [[ "${MAP_SIZE}" == "small" ]]; then SHOWCASE=1; EXPECTED_COMPONENTS=17; fi
 [[ "${DYNAMIC_OBSTACLE_TRIALS}" =~ ^[0-9]+$ ]] || { echo "dynamic obstacle trials must be numeric" >&2; exit 2; }
 if [[ "${DYNAMIC_OBSTACLE_TRIALS}" -gt 0 && "${MAP_SIZE}" != "small" ]]; then
   echo "dynamic obstacle trials are currently defined only for the independent small field" >&2
+  exit 2
+fi
+if [[ "${REPAIR_EVALUATION_INJECTION}" -eq 1 && ( "${MAP_SIZE}" != "small" || "${COVERAGE_PROFILE}" != "optimized" ) ]]; then
+  echo "repair evaluation injection requires the optimized independent small field" >&2
   exit 2
 fi
 
@@ -466,6 +474,26 @@ if map_size == "small":
     }
 path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 PY
+if [[ "${REPAIR_EVALUATION_INJECTION}" -eq 1 ]]; then
+  python3 - "${mission_config}" "${RANDOM_SEED}" <<'PY'
+from pathlib import Path
+import sys
+import yaml
+
+path = Path(sys.argv[1])
+seed = int(sys.argv[2])
+config = yaml.safe_load(path.read_text(encoding="utf-8"))
+config["evaluation_brush_dropout"] = {
+    "enabled": True,
+    "swath_index": seed % 6,
+    "start_fraction": 0.25,
+    "end_fraction": 0.65,
+    "evaluation_only": True,
+    "vehicle_control_source": "unchanged_nav2",
+}
+path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+PY
+fi
 
 echo "[AUTO-17] Evidence: ${OUTPUT_DIR}"
 echo "[AUTO-17] Dashboard: http://127.0.0.1:${DASHBOARD_PORT}"

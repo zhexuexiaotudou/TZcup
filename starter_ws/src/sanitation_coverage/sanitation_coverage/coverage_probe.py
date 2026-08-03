@@ -199,6 +199,9 @@ class CoverageProbe(Node):
         self._collision_active = False
         self.blocked_swath_manager = None
         self.active_component = None
+        self.evaluation_dropout_config = {"enabled": False}
+        self.evaluation_dropout_events = []
+        self._evaluation_dropout_active = False
         self.create_subscription(Odometry, "/ground_truth/odom", self._on_truth, 20)
         self.create_subscription(
             PoseWithCovarianceStamped,
@@ -369,11 +372,72 @@ class CoverageProbe(Node):
         self._collision_active = collision_now
 
     def _set_brush(self, enabled):
-        self.brush_enabled = bool(enabled)
+        requested = bool(enabled)
+        injected_dropout = False
+        dropout_fraction = None
+        config = self.evaluation_dropout_config
+        component = self.active_component
+        if (
+            requested
+            and bool(config.get("enabled", False))
+            and component
+            and component.get("kind") == "SWATH"
+            and int(component.get("metadata", {}).get("swath_index", -1))
+            == int(config.get("swath_index", -2))
+            and self.estimated_pose is not None
+            and len(component.get("points", [])) >= 2
+        ):
+            start = component["points"][0]
+            end = component["points"][-1]
+            dx = end[0] - start[0]
+            dy = end[1] - start[1]
+            scale = dx * dx + dy * dy
+            if scale > 1e-9:
+                dropout_fraction = (
+                    (self.estimated_pose[0] - start[0]) * dx
+                    + (self.estimated_pose[1] - start[1]) * dy
+                ) / scale
+                injected_dropout = (
+                    float(config.get("start_fraction", 0.30))
+                    <= dropout_fraction
+                    <= float(config.get("end_fraction", 0.65))
+                )
+        if injected_dropout and not self._evaluation_dropout_active:
+            self.evaluation_dropout_events.append({
+                "event": "dropout_started",
+                "component_id": component.get("component_id"),
+                "swath_index": component.get("metadata", {}).get("swath_index"),
+                "estimated_pose": list(self.estimated_pose),
+                "path_fraction": dropout_fraction,
+            })
+        if not injected_dropout and self._evaluation_dropout_active:
+            self.evaluation_dropout_events.append({
+                "event": "dropout_ended",
+                "component_id": component.get("component_id") if component else None,
+                "estimated_pose": list(self.estimated_pose) if self.estimated_pose else None,
+                "path_fraction": dropout_fraction,
+            })
+        self._evaluation_dropout_active = injected_dropout
+        self.brush_enabled = requested and not injected_dropout
         self.brush_publisher.publish(Bool(data=self.brush_enabled))
 
     def run(self):
         config = yaml.safe_load(Path(self.get_parameter("config_path").value).read_text(encoding="utf-8"))
+        self.evaluation_dropout_config = dict(
+            config.get("evaluation_brush_dropout", {"enabled": False})
+        )
+        if bool(self.evaluation_dropout_config.get("enabled", False)):
+            start_fraction = float(
+                self.evaluation_dropout_config.get("start_fraction", 0.30)
+            )
+            end_fraction = float(
+                self.evaluation_dropout_config.get("end_fraction", 0.65)
+            )
+            if not 0.0 <= start_fraction < end_fraction <= 1.0:
+                return self._write_report({
+                    "success": False,
+                    "error": "invalid_evaluation_brush_dropout_fraction",
+                })
         self.blocked_swath_manager = BlockedSwathManager(
             max_retries=int(config.get("blocked_swath_max_retries", 2)),
             minimum_retry_delay_sec=float(
@@ -745,6 +809,17 @@ class CoverageProbe(Node):
                 self.blocked_swath_manager.snapshot()
                 if self.blocked_swath_manager else []
             ),
+            "evaluation_injection": {
+                "config": self.evaluation_dropout_config,
+                "events": self.evaluation_dropout_events,
+                "observed": any(
+                    item.get("event") == "dropout_started"
+                    for item in self.evaluation_dropout_events
+                ),
+                "active_on_exit": self._evaluation_dropout_active,
+                "control_source": "fused_localization_path_fraction",
+                "ground_truth_used_for_control": False,
+            },
             "recovery_count": recovery_count,
             "collision_count": self.collision_events,
             "keepout_violation_sample_count": keepout_violation_samples,

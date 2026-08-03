@@ -50,6 +50,13 @@ def test_launcher_can_run_a_bounded_physical_dynamic_matrix():
     assert '[int]$DynamicObstacleTrials = 0' in wrapper
     assert '"--dynamic-obstacle-trials", "$DynamicObstacleTrials"' in wrapper
     assert '<model name="dynamic_pedestrian_box">' in world
+    probe = (
+        ROOT / "starter_ws/src/sanitation_tasks/sanitation_tasks/dynamic_obstacle_probe.py"
+    ).read_text(encoding="utf-8")
+    assert 'get_package_prefix("ros_gz_sim")' in probe
+    assert 'self.set_pose_backend = "gz_cli"' in probe
+    assert 'subprocess.run(' in probe
+    assert '"set_pose_backend": self.set_pose_backend' in probe
 
 
 def test_headless_matrix_can_select_ogre_without_changing_gui_default():
@@ -111,6 +118,42 @@ def test_formal_matrix_preserves_five_seed_a_b_and_one_mcap_replay_source():
     assert 'run_profile legacy "${LEGACY_SEEDS}" baseline' in matrix
     assert 'Refusing to overwrite retained matrix status' in matrix
     assert 'args+=(--no-mcap)' in matrix
+
+
+def test_coverage_mcap_gate_performs_storage_audit_and_real_rosbag_play():
+    verifier = (ROOT / "scripts" / "verify_coverage_mcap_replay.sh").read_text(
+        encoding="utf-8"
+    )
+    audit = (ROOT / "scripts" / "coverage_mcap_replay_audit.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'ros2 bag info "${BAG}"' in verifier
+    assert 'ros2 bag play "${BAG}" --rate 100' in verifier
+    assert '--play-exit-code "${play_code}"' in verifier
+    assert '"/coverage/full_plan"' in audit
+    assert '"/coverage/actual_cleaning_trajectory"' in audit
+    assert '"completed_terminal_state_present"' in audit
+    assert '"ros2_bag_play_succeeded"' in audit
+
+
+def test_repair_matrix_injects_ten_fused_pose_brush_dropouts_without_gt_control():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    matrix = (ROOT / "scripts" / "run_coverage_repair_matrix.sh").read_text(
+        encoding="utf-8"
+    )
+    probe = (
+        ROOT
+        / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
+    ).read_text(encoding="utf-8")
+
+    assert 'REPAIR_EVALUATION_INJECTION=0' in launcher
+    assert '--repair-evaluation-injection) REPAIR_EVALUATION_INJECTION=1' in launcher
+    assert '"vehicle_control_source": "unchanged_nav2"' in launcher
+    assert 'SEEDS="150,151,152,153,154,155,156,157,158,159"' in matrix
+    assert '--repair-evaluation-injection' in matrix
+    assert '"control_source": "fused_localization_path_fraction"' in probe
+    assert '"ground_truth_used_for_control": False' in probe
 
 
 def test_readiness_bypasses_stale_ros_daemon():

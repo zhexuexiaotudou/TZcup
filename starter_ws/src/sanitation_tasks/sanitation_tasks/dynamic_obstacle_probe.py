@@ -3,9 +3,11 @@
 import json
 import math
 import random
+import subprocess
 import time
 from pathlib import Path
 
+from ament_index_python.packages import get_package_prefix
 import rclpy
 from nav_msgs.msg import Odometry, Path as NavPath
 from rclpy.node import Node
@@ -40,11 +42,17 @@ class DynamicObstacleProbe(Node):
             f"/world/{self.get_parameter('world_name').value}/set_pose"
         )
         self.set_pose_client = self.create_client(SetEntityPose, service_name)
+        self.set_pose_executable = (
+            Path(get_package_prefix("ros_gz_sim"))
+            / "lib" / "ros_gz_sim" / "set_entity_pose"
+        )
+        self.set_pose_backend = None
         self.coverage_state = None
         self.component_state = {}
         self.current_path = []
         self.pose = None; self.vehicle_speed_m_s = None
-        self.scan_minimum = math.inf; self.collision_count = 0; self.collision_active = False
+        self.scan_minimum = math.inf; self.current_scan_minimum = math.inf
+        self.collision_count = 0; self.collision_active = False
         self.create_subscription(Odometry, "/ground_truth/odom", self.on_truth, 20)
         self.create_subscription(LaserScan, "/scan", self.on_scan, 20)
         self.create_subscription(String, "/coverage/state", self.on_state, 20)
@@ -76,7 +84,8 @@ class DynamicObstacleProbe(Node):
     def on_scan(self, message):
         finite = [value for value in message.ranges if math.isfinite(value)]
         if not finite: return
-        minimum = min(finite); self.scan_minimum = min(self.scan_minimum, minimum)
+        minimum = min(finite); self.current_scan_minimum = minimum
+        self.scan_minimum = min(self.scan_minimum, minimum)
         active = minimum < 0.12
         if active and not self.collision_active: self.collision_count += 1
         self.collision_active = active
@@ -88,24 +97,46 @@ class DynamicObstacleProbe(Node):
 
     def set_pose(self, world_x, world_y):
         timeout_sec = float(self.get_parameter("service_timeout_ms").value) / 1000.0
-        if not self.set_pose_client.wait_for_service(timeout_sec=timeout_sec):
-            return False, "", "set_pose ROS-Gazebo bridge unavailable"
-        request = SetEntityPose.Request()
-        request.entity.name = str(self.get_parameter("model_name").value)
-        request.entity.type = Entity.MODEL
-        request.pose.position.x = float(world_x)
-        request.pose.position.y = float(world_y)
-        request.pose.position.z = 0.55
-        request.pose.orientation.w = 1.0
-        future = self.set_pose_client.call_async(request)
-        deadline = time.monotonic() + timeout_sec
-        while rclpy.ok() and not future.done() and time.monotonic() < deadline:
-            rclpy.spin_once(self, timeout_sec=0.02)
-        if not future.done():
-            return False, "", "set_pose request timed out"
-        response = future.result()
-        success = bool(response and response.success)
-        return success, f"ros_gz set_pose success={str(success).lower()}", ""
+        if self.set_pose_backend != "gz_cli" and self.set_pose_client.wait_for_service(
+            timeout_sec=min(timeout_sec, 0.5)
+        ):
+            self.set_pose_backend = "ros_service"
+            request = SetEntityPose.Request()
+            request.entity.name = str(self.get_parameter("model_name").value)
+            request.entity.type = Entity.MODEL
+            request.pose.position.x = float(world_x)
+            request.pose.position.y = float(world_y)
+            request.pose.position.z = 0.55
+            request.pose.orientation.w = 1.0
+            future = self.set_pose_client.call_async(request)
+            deadline = time.monotonic() + timeout_sec
+            while rclpy.ok() and not future.done() and time.monotonic() < deadline:
+                rclpy.spin_once(self, timeout_sec=0.02)
+            if not future.done():
+                return False, "", "set_pose request timed out"
+            response = future.result()
+            success = bool(response and response.success)
+            return success, f"ros_service set_pose success={str(success).lower()}", ""
+        self.set_pose_backend = "gz_cli"
+        if not self.set_pose_executable.is_file():
+            return False, "", f"missing {self.set_pose_executable}"
+        try:
+            process = subprocess.run(
+                [
+                    str(self.set_pose_executable),
+                    "--name", str(self.get_parameter("model_name").value),
+                    "--type", "6", "--pos", str(float(world_x)),
+                    str(float(world_y)), "0.55", "--quat", "0", "0", "0", "1",
+                ],
+                check=False, capture_output=True, text=True, timeout=timeout_sec,
+            )
+        except (OSError, subprocess.TimeoutExpired) as error:
+            return False, "", str(error)
+        return (
+            process.returncode == 0,
+            f"gz_cli rc={process.returncode} {process.stdout[-300:]}",
+            process.stderr[-300:],
+        )
 
     def run(self):
         self.pump(5.0); randomizer = random.Random(20260715); trials = []
@@ -178,7 +209,9 @@ class DynamicObstacleProbe(Node):
                 int(self.get_parameter("crossing_steps").value),
             )
             move_results = []
-            start_collisions = self.collision_count; self.scan_minimum = math.inf
+            start_collisions = self.collision_count
+            baseline_scan_minimum = self.current_scan_minimum
+            self.scan_minimum = math.inf
             step_sec = float(self.get_parameter("hold_sec").value) / len(targets)
             interaction_start = time.monotonic()
             injection_vehicle_speed = self.vehicle_speed_m_s
@@ -213,7 +246,13 @@ class DynamicObstacleProbe(Node):
                 if progress is not None and progress >= 0.10:
                     recovery_time = time.monotonic() - resume_start
                     break
-            interacted = self.scan_minimum < 3.0
+            interacted = bool(
+                self.scan_minimum < 2.0
+                and (
+                    not math.isfinite(baseline_scan_minimum)
+                    or self.scan_minimum <= baseline_scan_minimum - 0.15
+                )
+            )
             collision_free = self.collision_count == start_collisions
             hard_minimum = float(
                 self.get_parameter("hard_minimum_separation_m").value
@@ -253,6 +292,11 @@ class DynamicObstacleProbe(Node):
                 ),
                 "path_corridor_center_distance_m": corridor_distance,
                 "minimum_lidar_range_m": self.scan_minimum if math.isfinite(self.scan_minimum) else None,
+                "baseline_lidar_range_m": (
+                    baseline_scan_minimum
+                    if math.isfinite(baseline_scan_minimum) else None
+                ),
+                "required_lidar_range_drop_m": 0.15,
                 "configured_hard_minimum_separation_m": hard_minimum,
                 "minimum_separation_gate_pass": separation_safe,
                 "interaction_observed": interacted, "collision_free": collision_free,
@@ -289,6 +333,7 @@ class DynamicObstacleProbe(Node):
             "completed_trial_count": len(trials), "dynamic_obstacle_valid_trials": valid,
             "world_name": str(self.get_parameter("world_name").value),
             "model_name": str(self.get_parameter("model_name").value),
+            "set_pose_backend": self.set_pose_backend,
             "set_pose_preflight": preflight, "failure_reason": failure_reason,
             "collision_count": self.collision_count,
             "configured_hard_minimum_separation_m": float(

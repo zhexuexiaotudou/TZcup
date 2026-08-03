@@ -19,6 +19,7 @@ param(
     [int]$DynamicObstacleTrials = 0,
     [ValidateSet("ogre2", "ogre")]
     [string]$SimulationRenderEngine = "ogre2",
+    [switch]$RepairEvaluationInjection,
     [switch]$CloseOnComplete
 )
 
@@ -40,6 +41,7 @@ $launchParameters = @{
 }
 if ($FullArea) { $launchParameters["MapSize"] = "medium" }
 if ($Workspace) { $launchParameters["Workspace"] = $Workspace }
+if ($RepairEvaluationInjection) { $launchParameters["RepairEvaluationInjection"] = $true }
 if ($BaseWorkspace) { $launchParameters["BaseWorkspace"] = $BaseWorkspace }
 if ($OutputDirectory) { $launchParameters["OutputDirectory"] = $OutputDirectory }
 if ($SkipBuild) { $launchParameters["SkipBuild"] = $true }

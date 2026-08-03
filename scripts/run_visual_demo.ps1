@@ -19,6 +19,7 @@ param(
     [int]$DynamicObstacleTrials = 0,
     [ValidateSet("ogre2", "ogre")]
     [string]$SimulationRenderEngine = "ogre2",
+    [switch]$RepairEvaluationInjection,
     [switch]$SkipBuild,
     [switch]$NoGui,
     [switch]$NoRviz,
@@ -110,6 +111,9 @@ $arguments = @(
 )
 if ($Workspace) {
     $arguments += @("--workspace", $Workspace)
+}
+if ($RepairEvaluationInjection) {
+    $arguments += "--repair-evaluation-injection"
 }
 if ($BaseWorkspace) {
     $arguments += @("--base-workspace", $BaseWorkspace)

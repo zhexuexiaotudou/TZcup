@@ -125,6 +125,23 @@ MCAP/DB3 payloads even when ignored. `scripts/coverage_optimizer_report.py`
 aggregates the retained directories and writes the comparison plus a streaming
 SHA-256 manifest without replacing any raw run.
 
+Repair evidence is a separate ten-seed matrix launched by
+`scripts/run_coverage_repair_matrix.sh`. Its evaluation-only injection disables
+the brush over one bounded portion of a primary swath, selected from the fused
+localization path fraction. It does not modify a Nav2 goal or publish vehicle
+commands, and ground truth remains evaluation-only. A valid run must observe
+the injected miss, execute exactly one connected-component repair pass, recover
+at least 99.5% coverage, keep repair length within 10% of the primary swaths,
+and explicitly report that ground truth was not used for control.
+
+The retained optimized seed 132 bag is checked with
+`scripts/verify_coverage_mcap_replay.sh`. That gate first executes a real
+`ros2 bag play` into remapped replay topics, then uses the MCAP sequential
+reader to reconstruct the state sequence, stable component IDs, semantic plan,
+brush transitions, localization, command, and planned/actual trajectory topic
+inventory. A readable storage file without a completed play process or a
+`COMPLETED` terminal state fails the replay gate.
+
 Controller failures that classify a cleaning swath as blocked now enter an
 explicit state machine. The report retains normalized blocked intervals, first
 observation time, obstacle state, retry count and terminal reason. A retry is
@@ -136,7 +153,12 @@ The reproducible small-field entry is
 `run_gazebo_cleaning_demo.ps1 -DynamicObstacleTrials 20`; a non-static physical
 pedestrian starts parked outside the arena and the probe moves it across the
 current swath. Only lidar-observed, collision-free interactions followed by
-measured vehicle progress count as valid.
+measured vehicle progress count as valid. The probe prefers the ROS-Gazebo
+`SetEntityPose` service and falls back to the installed `ros_gz_sim`
+`set_entity_pose` executable when that service bridge is absent; every report
+records the backend. A service return alone is insufficient: the interaction
+also requires a lidar range below 2.0 m and at least a 0.15 m drop from the
+pre-injection scan.
 WSLg and operator demos retain Ogre2. A Docker-only headless matrix may pass
 `--simulation-render-engine ogre` when its runtime has CUDA but no EGL graphics
 context; the selected engine is materialized in the retained runtime SDF and
