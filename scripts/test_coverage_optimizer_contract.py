@@ -17,9 +17,12 @@ def test_optimized_small_demo_profile_is_packaged_and_selected():
     assert 'monitor["observation_sources"] = ["scan"]' in runner
     assert 'config["tzcup_demo_safety_profile"] = {' in runner
     assert '"ros__parameters": {' in runner
-    assert "ros2 topic pub --times 5 --rate 5" in runner
-    assert "--wait-matching-subscriptions 2" in runner
-    assert '"/emergency_stop" in payload.get("topics_seen", [])' in runner
+    assert "emergency_stop_availability.py" in runner
+    availability = (ROOT / "scripts/emergency_stop_availability.py").read_text(
+        encoding="utf-8"
+    )
+    assert "subscription_count >= 2" in availability
+    assert '"/emergency_stop" in payload.get("topics_seen", [])' in availability
     assert "-p component_retry_limit:=2" in runner
     assert "gazebo_cleaning_telemetry.json" in runner
     assert 'localization_fusion_mode="rtk_imu_wheel"' in runner

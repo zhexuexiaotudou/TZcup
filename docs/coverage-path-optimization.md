@@ -101,6 +101,9 @@ Cold-start readiness is observed by one persistent ROS graph node, including
 the required action services and exact Nav2 lifecycle state IDs. This avoids
 restarting DDS discovery on every poll and records `runtime_readiness.json` on
 both success and timeout.
+The pre-mission false emergency-stop availability pulse uses the same
+persistent-node approach and requires both matching safety/HMI subscribers and
+dashboard observation before coverage execution starts.
 For a legacy comparison, invoke `run_visual_demo.sh` after pointing
 `mission_template` and `coverage_params` to the two legacy files listed above.
 

@@ -727,32 +727,13 @@ if [[ "${VIDEO_MODE}" != "off" ]]; then
   fi
 fi
 
-emergency_stop_seen=0
-: > "${OUTPUT_DIR}/emergency_stop_available.log"
-for _ in $(seq 1 3); do
-  timeout 15 ros2 topic pub --times 5 --rate 5 \
-    --wait-matching-subscriptions 2 \
-    /emergency_stop std_msgs/msg/Bool "{data: false}" \
-    >> "${OUTPUT_DIR}/emergency_stop_available.log" 2>&1 || true
-  for _ in $(seq 1 5); do
-    if python3 - "${OUTPUT_DIR}/dashboard_telemetry.json" <<'PY'
-import json
-import pathlib
-import sys
-
-path = pathlib.Path(sys.argv[1])
-payload = json.loads(path.read_text(encoding="utf-8")) if path.is_file() else {}
-raise SystemExit(0 if "/emergency_stop" in payload.get("topics_seen", []) else 1)
-PY
-    then
-      emergency_stop_seen=1
-      break 2
-    fi
-    sleep 0.3
-  done
-done
-if [[ "${emergency_stop_seen}" -ne 1 ]]; then
+if ! timeout 20 python3 "${ROOT}/scripts/emergency_stop_availability.py" \
+  --telemetry "${OUTPUT_DIR}/dashboard_telemetry.json" \
+  --output "${OUTPUT_DIR}/emergency_stop_available.json" \
+  --timeout 15
+then
   echo "Unable to publish the bounded emergency-stop availability pulse." >&2
+  cat "${OUTPUT_DIR}/emergency_stop_available.json" >&2 2>/dev/null || true
   exit 4
 fi
 
