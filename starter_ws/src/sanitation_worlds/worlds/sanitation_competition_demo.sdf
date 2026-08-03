@@ -130,7 +130,7 @@
     </model>
     <model name="target_bottle_demo_02">
       <static>true</static>
-      <pose>-6.3 -3.55 0.035 0 1.57 -0.35</pose>
+      <pose>-6.3 -2.75 0.035 0 1.57 -0.35</pose>
       <link name="link">
         <visual name="body"><pose>0 0 -0.025 0 0 0</pose><geometry><cylinder><radius>0.033</radius><length>0.145</length></cylinder></geometry><material><ambient>0.10 0.62 0.32 0.78</ambient><diffuse>0.10 0.62 0.32 0.78</diffuse></material></visual>
         <visual name="base_ring"><pose>0 0 -0.1005 0 0 0</pose><geometry><cylinder><radius>0.034</radius><length>0.006</length></cylinder></geometry><material><ambient>0.06 0.44 0.22 0.9</ambient><diffuse>0.06 0.44 0.22 0.9</diffuse></material></visual>
@@ -142,7 +142,7 @@
     </model>
     <model name="target_can_demo_02">
       <static>true</static>
-      <pose>-8.8 -3.125 0.034 0 1.57 -0.55</pose>
+      <pose>-8.6 -2.55 0.034 0 1.57 -0.55</pose>
       <link name="link">
         <visual name="body"><geometry><cylinder><radius>0.033</radius><length>0.103</length></cylinder></geometry><material><ambient>0.76 0.79 0.82 1</ambient><diffuse>0.76 0.79 0.82 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
         <visual name="label_band"><geometry><cylinder><radius>0.034</radius><length>0.062</length></cylinder></geometry><material><ambient>0.12 0.35 0.88 1</ambient><diffuse>0.14 0.40 0.94 1</diffuse></material></visual>
@@ -153,7 +153,7 @@
     </model>
     <model name="target_paper_demo_02">
       <static>true</static>
-      <pose>-10 -1.80 0.003 0 0 -0.45</pose>
+      <pose>-9.7 -1.75 0.003 0 0 -0.45</pose>
       <link name="link">
         <visual name="sheet"><geometry><polyline><height>0.004</height><point>-0.105 -0.068</point><point>-0.045 -0.075</point><point>0.018 -0.067</point><point>0.105 -0.075</point><point>0.098 0.020</point><point>0.105 0.075</point><point>0.025 0.068</point><point>-0.030 0.074</point><point>-0.105 0.066</point></polyline></geometry><material><ambient>0.90 0.95 0.99 1</ambient><diffuse>0.90 0.95 0.99 1</diffuse></material></visual>
         <visual name="printed_line_1"><pose>0.010 0.025 0.003 0 0 0.03</pose><geometry><box><size>0.120 0.004 0.001</size></box></geometry><material><ambient>0.65 0.18 0.22 1</ambient><diffuse>0.65 0.18 0.22 1</diffuse></material></visual>
@@ -163,7 +163,7 @@
     </model>
     <model name="target_cardboard_demo_02">
       <static>true</static>
-      <pose>-6 -0.95 0.03 0 0 -0.35</pose>
+      <pose>-6.25 -0.95 0.03 0 0 -0.35</pose>
       <link name="link">
         <visual name="carton_body"><geometry><box><size>0.205 0.145 0.052</size></box></geometry><material><ambient>0.58 0.36 0.16 1</ambient><diffuse>0.67 0.43 0.22 1</diffuse></material></visual>
         <visual name="left_flap"><pose>-0.112 0 0.023 0 -0.18 0</pose><geometry><box><size>0.055 0.135 0.005</size></box></geometry><material><ambient>0.66 0.43 0.22 1</ambient><diffuse>0.72 0.48 0.25 1</diffuse></material></visual>
@@ -173,7 +173,7 @@
     </model>
     <model name="target_leaf_pile_demo_02">
       <static>true</static>
-      <pose>-10.1 0.45 0.003 0 0 0.25</pose>
+      <pose>-9.7 -0.25 0.003 0 0 0.25</pose>
       <link name="link">
         <visual name="leaf_a"><pose>-0.080 0.020 0 0 0 0.35</pose><geometry><polyline><height>0.003</height><point>-0.055 0</point><point>-0.030 -0.014</point><point>0 -0.022</point><point>0.032 -0.013</point><point>0.055 0</point><point>0.032 0.013</point><point>0 0.022</point><point>-0.030 0.014</point></polyline></geometry><material><ambient>0.70 0.20 0.04 1</ambient><diffuse>0.76 0.24 0.04 1</diffuse></material></visual>
         <visual name="vein_a"><pose>-0.080 0.020 0.003 0 0 0.35</pose><geometry><box><size>0.082 0.003 0.001</size></box></geometry><material><ambient>0.32 0.09 0.01 1</ambient><diffuse>0.32 0.09 0.01 1</diffuse></material></visual>
