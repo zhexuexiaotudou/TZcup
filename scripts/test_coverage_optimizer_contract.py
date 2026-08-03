@@ -30,3 +30,13 @@ def test_optimized_profile_has_bounded_repair_and_legacy_fallback():
     assert config["repair_max_primary_length_ratio"] <= 0.10
     assert config["empirical_repeat_rate_threshold"] <= 0.20
     assert config["path_continuity_type"] == "DISCONTINUOUS"
+
+
+def test_fields2cover_spacing_matches_selected_mission_spacing():
+    mission = yaml.safe_load((
+        ROOT / "starter_ws/src/sanitation_tasks/config/competition_demo_area_skid_steer_optimized.yaml"
+    ).read_text(encoding="utf-8"))
+    server = yaml.safe_load((
+        ROOT / "starter_ws/src/sanitation_coverage/config/coverage_skid_steer_optimized.yaml"
+    ).read_text(encoding="utf-8"))
+    assert server["coverage_server"]["ros__parameters"]["operation_width"] == mission["planning_swath_spacing_m"]
