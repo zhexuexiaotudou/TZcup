@@ -699,7 +699,11 @@ class CoverageProbe(Node):
             try:
                 components.extend(plan_skid_steer_connector(
                     f"connector-{index:02d}", swath[1], current_yaw,
-                    next_swath[0], next_yaw, safe_polygon, allow_backup=True,
+                    next_swath[0], next_yaw, safe_polygon,
+                    # The installed Regulated Pure Pursuit profile has
+                    # allow_reversing=false. Keep BACKUP for bounded recovery
+                    # profiles, never as the primary connector here.
+                    allow_backup=False,
                 ))
             except ValueError:
                 components.append(CoverageComponent(
