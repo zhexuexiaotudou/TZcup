@@ -77,6 +77,8 @@ def test_emergency_stop_availability_waits_for_dashboard_but_stays_bounded():
 
     assert "timeout 15 ros2 topic pub --times 5 --rate 5" in launcher
     assert "--wait-matching-subscriptions 2" in launcher
+    assert '"/emergency_stop" in payload.get("topics_seen", [])' in launcher
+    assert 'if [[ "${emergency_stop_seen}" -ne 1 ]]' in launcher
     assert "Unable to publish the bounded emergency-stop availability pulse." in launcher
 
 
