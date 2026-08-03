@@ -143,6 +143,9 @@ def test_coverage_supervisor_waits_for_the_real_setsid_child():
     assert (
         'PYTHONUNBUFFERED=1 setsid --wait timeout "${MISSION_TIMEOUT_SEC}"'
     ) in launcher
+    assert "ros2 pkg prefix sanitation_coverage" in launcher
+    assert '"${coverage_executable}" --ros-args' in launcher
+    assert "ros2 run sanitation_coverage coverage_probe" not in launcher
     assert 'setsid timeout "${MISSION_TIMEOUT_SEC}" ros2 run' not in launcher
     assert '"${OUTPUT_DIR}/coverage_process_exit_code.txt"' in launcher
 

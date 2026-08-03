@@ -738,8 +738,13 @@ then
 fi
 
 set +e
+coverage_executable="$(ros2 pkg prefix sanitation_coverage)/lib/sanitation_coverage/coverage_probe"
+if [[ ! -x "${coverage_executable}" ]]; then
+  echo "Coverage executable is missing: ${coverage_executable}" >&2
+  exit 4
+fi
 PYTHONUNBUFFERED=1 setsid --wait timeout "${MISSION_TIMEOUT_SEC}" \
-  ros2 run sanitation_coverage coverage_probe --ros-args \
+  "${coverage_executable}" --ros-args \
   -p use_sim_time:=true \
   -p manual_start:="$([[ "${MANUAL_CONTROL}" -eq 1 ]] && echo true || echo false)" \
   -p output_path:="${OUTPUT_DIR}/coverage_report.json" \
