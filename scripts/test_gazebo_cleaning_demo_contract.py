@@ -1,5 +1,7 @@
 from pathlib import Path
 
+import yaml
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -138,6 +140,8 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
         "actual_cleaning_boundary_west", "actual_cleaning_boundary_east",
         "target_bottle_demo", "target_can_demo", "target_paper_demo",
         "target_cardboard_demo", "target_leaf_pile_demo", "puddle_demo",
+        "target_bottle_demo_02", "target_can_demo_02", "target_paper_demo_02",
+        "target_cardboard_demo_02", "target_leaf_pile_demo_02",
     } <= names
     floor = world.find("./model[@name='demo_arena_floor']")
     assert floor is not None
@@ -162,7 +166,9 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     ) == "0.145"
     assert {
         visual.get("name") for visual in bottle.findall("./link/visual")
-    } == {"body", "base_ring", "label", "shoulder", "neck", "cap"}
+    } == {
+        "body", "base_ring", "label", "shoulder", "neck", "cap",
+    }
     assert can.findtext(
         "./link/visual[@name='body']/geometry/cylinder/radius"
     ) == "0.033"
@@ -204,6 +210,40 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     assert max(abs(x) for x, _ in puddle_points) <= 0.25
     assert max(abs(y) for _, y in puddle_points) <= 0.19
     assert not puddle.findall(".//cylinder")
+
+    mission_path = (
+        ROOT / "starter_ws" / "src" / "sanitation_tasks" / "config"
+        / "competition_demo_area.yaml"
+    )
+    mission = yaml.safe_load(mission_path.read_text(encoding="utf-8"))
+    targets = mission["cleaning_targets"]
+    assert len(targets) == 10
+    assert {target["class"] for target in targets} == {
+        "bottle", "can", "paper", "cardboard", "leaves",
+    }
+    assert all(
+        sum(target["class"] == target_class for target in targets) == 2
+        for target_class in {target["class"] for target in targets}
+    )
+    target_model_names = {target["model_name"] for target in targets}
+    assert target_model_names <= names
+    assert len(target_model_names) == len(targets)
+    assert all(-3.0 <= target["position"][0] <= 3.0 for target in targets)
+    assert all(-4.0 <= target["position"][1] <= 1.0 for target in targets)
+
+    translation = mission["world_to_map_translation"]
+    for model_name in target_model_names:
+        model = world.find(f"./model[@name='{model_name}']")
+        assert model is not None
+        target = next(
+            item for item in targets if item["model_name"] == model_name
+        )
+        world_x, world_y = (
+            float(value) for value in model.findtext("pose").split()[:2]
+        )
+        assert abs(world_x + translation[0] - target["position"][0]) < 1e-9
+        assert abs(world_y + translation[1] - target["position"][1]) < 1e-9
+        assert not model.findall(".//collision")
     shell = read("scripts/run_visual_demo.sh")
     assert 'world_name="sanitation_competition_demo"' in shell
     assert 'mission_control_demo.config' in shell
