@@ -4,9 +4,9 @@ coverage_server:
     action_server_result_timeout: 30.0
     coordinates_in_cartesian_frame: true
     robot_width: 0.72
-    # The physical brush is 0.65 m wide. Planning at 0.45 m keeps about 31%
-    # overlap so turn-exit and lateral tracking errors cannot open seams.
-    operation_width: 0.45
+    # The physical brush is 0.65 m wide. Planning at 0.35 m keeps about 46%
+    # overlap so the faster demo profile cannot open seams between swaths.
+    operation_width: 0.35
     min_turning_radius: 0.40
     linear_curv_change: 200.0
     default_headland_width: 1.00

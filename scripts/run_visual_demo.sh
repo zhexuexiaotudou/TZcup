@@ -42,7 +42,8 @@ Options:
   --showcase            Use the bounded 6 m x 5 m demonstration task
   --map-size SIZE       small (independent 16x12 demo), medium (80x50), or large (200x100)
   --simulation-speed MODE
-                        normal (1x), fast (2x), or turbo (3x; default: fast)
+                        normal (1x), fast (2x / 0.70 m/s), or turbo
+                        (3x / 0.90 m/s; default: fast)
   --manual-control      Wait for the native Gazebo Start button
   --competition-profile Use the 20,000 m2 map and AUTO-12 vehicle candidate;
                         execute one representative live zone
@@ -89,7 +90,7 @@ case "${VIDEO_MODE}" in auto|on|off) ;; *) echo "--video must be auto, on, or of
 case "${MAP_SIZE}" in small|medium|large) ;; *) echo "--map-size must be small, medium, or large" >&2; exit 2 ;; esac
 case "${GAZEBO_GUI_RENDERER}" in auto|d3d12|software) ;; *) echo "--gazebo-gui-renderer must be auto, d3d12, or software" >&2; exit 2 ;; esac
 case "${SIMULATION_SPEED}" in normal|fast|turbo) ;; *) echo "--simulation-speed must be normal, fast, or turbo" >&2; exit 2 ;; esac
-if [[ "${MAP_SIZE}" == "small" ]]; then SHOWCASE=1; EXPECTED_COMPONENTS=13; fi
+if [[ "${MAP_SIZE}" == "small" ]]; then SHOWCASE=1; EXPECTED_COMPONENTS=17; fi
 [[ "${DASHBOARD_PORT}" =~ ^[0-9]+$ ]] || { echo "dashboard port must be numeric" >&2; exit 2; }
 [[ "${MISSION_TIMEOUT_SEC}" =~ ^[0-9]+$ ]] || { echo "timeout must be numeric" >&2; exit 2; }
 
@@ -304,8 +305,8 @@ if [[ "${MAP_SIZE}" == "small" ]]; then
   mission_scope="OUTER TASK 30 M2 / CLEANABLE 12 M2"
   map_area_m2="30.0"
   coverage_params="${coverage_share}/config/coverage_demo_overlap.yaml"
-  if [[ "${SIMULATION_SPEED}" == "fast" ]]; then max_linear_velocity="0.60"; max_angular_velocity="0.50"; fi
-  if [[ "${SIMULATION_SPEED}" == "turbo" ]]; then max_linear_velocity="0.75"; max_angular_velocity="0.62"; fi
+  if [[ "${SIMULATION_SPEED}" == "fast" ]]; then max_linear_velocity="0.70"; max_angular_velocity="0.60"; fi
+  if [[ "${SIMULATION_SPEED}" == "turbo" ]]; then max_linear_velocity="0.90"; max_angular_velocity="0.75"; fi
 fi
 if [[ "${COMPETITION_PROFILE}" -eq 1 ]]; then
   competition_runtime="${runtime}/competition_profile"
@@ -396,8 +397,13 @@ import yaml
 path = Path(sys.argv[1])
 config = yaml.safe_load(path.read_text(encoding="utf-8"))
 follow = config["controller_server"]["ros__parameters"]["FollowPath"]
-follow["desired_linear_vel"] = float(sys.argv[2])
-follow["rotate_to_heading_angular_vel"] = float(sys.argv[3])
+linear_velocity = float(sys.argv[2])
+angular_velocity = float(sys.argv[3])
+follow["desired_linear_vel"] = linear_velocity
+follow["rotate_to_heading_angular_vel"] = angular_velocity
+smoother = config["velocity_smoother"]["ros__parameters"]
+smoother["max_velocity"] = [linear_velocity, 0.0, angular_velocity]
+smoother["min_velocity"] = [-min(linear_velocity, 0.15), 0.0, -angular_velocity]
 path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 PY
 
