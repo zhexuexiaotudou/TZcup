@@ -38,6 +38,11 @@ The 0.35 m profile is retained only as a fail-closed legacy fallback. The pure
 optimizer evaluates angles from 0 through 175 degrees in five-degree steps and
 chooses the route with the lowest path/connector/turn cost.
 
+The hybrid localizer smooths RTK global anchors in the odometry frame and
+rejects scan corrections that disagree with a fresh RTK fix by more than
+0.10 m. Wheel/IMU propagation remains unsmoothed, so this improves absolute
+cross-seed stability without adding motion lag or reducing the 0.05 m gate.
+
 ## ROS interfaces
 
 The plan and its semantic layers are published as compact JSON strings:

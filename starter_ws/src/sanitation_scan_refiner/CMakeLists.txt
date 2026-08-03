@@ -27,6 +27,7 @@ ament_target_dependencies(scan_refiner_node
   tf2 tf2_geometry_msgs tf2_ros)
 
 add_executable(hybrid_global_fuser_node src/hybrid_global_fuser_node.cpp)
+target_include_directories(hybrid_global_fuser_node PRIVATE include)
 ament_target_dependencies(hybrid_global_fuser_node
   rclcpp diagnostic_msgs geometry_msgs nav_msgs sensor_msgs
   tf2 tf2_geometry_msgs tf2_ros)
@@ -43,6 +44,8 @@ if(BUILD_TESTING)
   ament_add_gtest(test_scan_refiner_core test/test_scan_refiner_core.cpp)
   target_link_libraries(test_scan_refiner_core scan_refiner_core)
   target_include_directories(test_scan_refiner_core PRIVATE include)
+  ament_add_gtest(test_fusion_filter test/test_fusion_filter.cpp)
+  target_include_directories(test_fusion_filter PRIVATE include)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
 endif()

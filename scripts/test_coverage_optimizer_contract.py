@@ -48,3 +48,16 @@ def test_fields2cover_spacing_matches_selected_mission_spacing():
         ROOT / "starter_ws/src/sanitation_coverage/config/coverage_skid_steer_optimized.yaml"
     ).read_text(encoding="utf-8"))
     assert server["coverage_server"]["ros__parameters"]["operation_width"] == mission["planning_swath_spacing_m"]
+
+
+def test_hybrid_localizer_bounds_absolute_sensor_disagreement():
+    config = yaml.safe_load((
+        ROOT / "starter_ws/src/sanitation_scan_refiner/config/stage4v_hybrid.yaml"
+    ).read_text(encoding="utf-8"))["hybrid_global_fuser"]["ros__parameters"]
+    source = (
+        ROOT / "starter_ws/src/sanitation_scan_refiner/src/hybrid_global_fuser_node.cpp"
+    ).read_text(encoding="utf-8")
+    assert 0.0 < config["gnss_anchor_smoothing_alpha"] < 1.0
+    assert config["maximum_refined_gnss_disagreement_m"] == 0.10
+    assert config["minimum_refined_variance"] >= 0.0015
+    assert "rtk_local_refined_innovation_rejected" in source
