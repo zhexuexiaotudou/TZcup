@@ -10,6 +10,56 @@ def path_length(points):
     return sum(segment_length(a, b) for a, b in zip(points, points[1:]))
 
 
+def semantic_path_distances(timed_samples):
+    """Split executed base motion by the brush state at both segment ends."""
+    brush_on = 0.0
+    brush_off = 0.0
+    transition = 0.0
+    for first, second in zip(timed_samples, timed_samples[1:]):
+        distance = segment_length(first[1:3], second[1:3])
+        first_brush = bool(first[4])
+        second_brush = bool(second[4])
+        if first_brush and second_brush:
+            brush_on += distance
+        elif not first_brush and not second_brush:
+            brush_off += distance
+        else:
+            transition += distance
+    return {
+        "brush_on_distance_m": brush_on,
+        "brush_off_distance_m": brush_off,
+        "brush_transition_distance_m": transition,
+        "total_distance_m": brush_on + brush_off + transition,
+    }
+
+
+def point_line_distance(x, y, start, end):
+    """Perpendicular distance to an infinite swath centreline."""
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    denominator = math.hypot(dx, dy)
+    if denominator == 0.0:
+        return math.hypot(x - start[0], y - start[1])
+    return abs(dy * x - dx * y + end[0] * start[1] - end[1] * start[0]) / denominator
+
+
+def swath_lateral_errors(timed_samples, swaths, brush_forward_offset_m=0.55):
+    """Return brush-centre lateral errors for primary straight swath samples."""
+    errors = []
+    for sample in timed_samples:
+        if not bool(sample[4]) or sample[5] != "EXECUTING_SWATH":
+            continue
+        yaw = float(sample[3])
+        brush_x = float(sample[1]) + brush_forward_offset_m * math.cos(yaw)
+        brush_y = float(sample[2]) + brush_forward_offset_m * math.sin(yaw)
+        if swaths:
+            errors.append(min(
+                point_line_distance(brush_x, brush_y, start, end)
+                for start, end in swaths
+            ))
+    return errors
+
+
 def summarize_distances(values):
     ordered = sorted(float(value) for value in values)
     if not ordered:

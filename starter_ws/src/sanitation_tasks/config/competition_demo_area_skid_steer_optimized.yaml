@@ -12,6 +12,7 @@ legacy_fallback_swath_spacing_m: 0.35
 swath_endpoint_extension_m: 0.20
 empirical_coverage_threshold: 0.995
 empirical_repeat_rate_threshold: 0.20
+empirical_swath_lateral_p95_threshold_m: 0.08
 coverage_repair_max_passes: 1
 repair_max_primary_length_ratio: 0.10
 brush_forward_offset_m: 0.55

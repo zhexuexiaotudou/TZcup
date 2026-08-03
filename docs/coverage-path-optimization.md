@@ -47,6 +47,11 @@ Stage4V scan map, it explicitly selects the RTK + wheel/IMU lane. Medium and
 large mapped scenes retain hybrid scan fallback. The final Coverage success
 gate includes per-seed localization RMSE, so a path-only pass cannot mask a
 localization regression.
+The same report separates executed brush-on, brush-off and state-transition
+distance. It also computes the brush-center lateral error against the nearest
+primary straight swath and fails the mission when P95 exceeds 0.08 m. These
+metrics turn the visual claim of a tidy lawnmower route into machine-checkable
+execution evidence.
 The simulated `rtk_fixed` capability contract retains 0.02 m white noise and
 0.005 m fixed-bias sigma, with long-term random walk calibrated to
 0.001 m/sqrt(s). Float, multipath and denied profiles retain their stronger
@@ -92,6 +97,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 
 The optimized profile is selected automatically for `-MapSize small`. The
 normal manual Start, Pause, Resume, Stop and Close Gazebo controls are unchanged.
+Cold-start readiness is observed by one persistent ROS graph node, including
+the required action services and exact Nav2 lifecycle state IDs. This avoids
+restarting DDS discovery on every poll and records `runtime_readiness.json` on
+both success and timeout.
 For a legacy comparison, invoke `run_visual_demo.sh` after pointing
 `mission_template` and `coverage_params` to the two legacy files listed above.
 

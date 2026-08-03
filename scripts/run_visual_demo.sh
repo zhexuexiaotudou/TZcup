@@ -556,59 +556,20 @@ if [[ "${RVIZ}" -eq 1 ]]; then
   pids+=("$!")
 fi
 
-ready=0
-for _ in $(seq 1 150); do
+if ! timeout 155 python3 "${ROOT}/scripts/ros_runtime_readiness.py" \
+  --timeout 150 \
+  --dashboard-url "http://127.0.0.1:${DASHBOARD_PORT}/healthz" \
+  --output "${OUTPUT_DIR}/runtime_readiness.json"
+then
   if ! kill -0 "${dashboard_pid}" 2>/dev/null; then
     echo "Live dashboard process exited before readiness." >&2
     tail -50 "${OUTPUT_DIR}/dashboard.log" >&2 || true
-    exit 4
   fi
-  topics="$(
-    timeout 8 ros2 topic list --no-daemon --spin-time 3 2>/dev/null || true
-  )"
-  services="$(
-    timeout 12 ros2 service list --no-daemon --spin-time 3 \
-      --include-hidden-services \
-      2>/dev/null || true
-  )"
-  dashboard_health="$(
-    curl --fail --silent --max-time 2 \
-      "http://127.0.0.1:${DASHBOARD_PORT}/healthz" 2>/dev/null || true
-  )"
-  controller_state=""
-  planner_state=""
-  if grep -q '^/controller_server/get_state$' <<< "${services}"; then
-    controller_state="$(
-      timeout 7 ros2 lifecycle get /controller_server 2>/dev/null || true
-    )"
-  fi
-  if grep -q '^/planner_server/get_state$' <<< "${services}"; then
-    planner_state="$(
-      timeout 7 ros2 lifecycle get /planner_server 2>/dev/null || true
-    )"
-  fi
-  if grep -q '^/localization/fused_pose$' <<< "${topics}" &&
-    grep -q '^/map$' <<< "${topics}" &&
-    grep -q '^/scan$' <<< "${topics}" &&
-    grep -q '^/cmd_vel$' <<< "${topics}" &&
-    grep -q '^/compute_coverage_path/_action/send_goal$' <<< "${services}" &&
-    grep -q '^/follow_path/_action/send_goal$' <<< "${services}" &&
-    grep -q '^/navigate_to_pose/_action/send_goal$' <<< "${services}" &&
-    grep -q '^/controller_server/get_state$' <<< "${services}" &&
-    grep -Fxq 'active [3]' <<< "${controller_state}" &&
-    grep -Fxq 'active [3]' <<< "${planner_state}" &&
-    grep -q '"mission_status"' <<< "${dashboard_health}"
-  then
-    printf '%s\n' "${dashboard_health}" > "${OUTPUT_DIR}/dashboard_health.json"
-    ready=1
-    break
-  fi
-  sleep 1
-done
-if [[ "${ready}" -ne 1 ]]; then
   echo "AUTO-17 runtime did not become ready within 150 seconds." >&2
+  cat "${OUTPUT_DIR}/runtime_readiness.json" >&2 2>/dev/null || true
   exit 4
 fi
+cp "${OUTPUT_DIR}/runtime_readiness.json" "${OUTPUT_DIR}/dashboard_health.json"
 
 if [[ "${GUI}" -eq 1 ]]; then
   # Start the WSLg client only after the Gazebo server and ROS graph are ready.

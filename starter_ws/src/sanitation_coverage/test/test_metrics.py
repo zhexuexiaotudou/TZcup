@@ -1,9 +1,11 @@
 from sanitation_coverage.metrics import (
     empirical_swept_metrics,
+    semantic_path_distances,
     path_length,
     raster_coverage_metrics,
     repair_degenerate_swaths,
     summarize_distances,
+    swath_lateral_errors,
     synchronized_xy_errors,
     uncovered_cell_centers,
     horizontal_repair_segments,
@@ -44,6 +46,31 @@ def test_empirical_metrics_use_brush_on_ground_truth_points():
 
 def test_path_length():
     assert path_length([(0.0, 0.0), (3.0, 4.0)]) == 5.0
+
+
+def test_semantic_path_distances_split_brush_motion_and_transitions():
+    samples = [
+        (0.0, 0.0, 0.0, 0.0, False, "TRANSIT"),
+        (1.0, 1.0, 0.0, 0.0, False, "TRANSIT"),
+        (2.0, 2.0, 0.0, 0.0, True, "EXECUTING_SWATH"),
+        (3.0, 3.0, 0.0, 0.0, True, "EXECUTING_SWATH"),
+    ]
+    distances = semantic_path_distances(samples)
+    assert distances["brush_off_distance_m"] == 1.0
+    assert distances["brush_transition_distance_m"] == 1.0
+    assert distances["brush_on_distance_m"] == 1.0
+    assert distances["total_distance_m"] == 3.0
+
+
+def test_swath_lateral_errors_use_brush_center_and_ignore_connectors():
+    samples = [
+        (0.0, 0.0, 0.04, 0.0, True, "EXECUTING_SWATH"),
+        (1.0, 1.0, 0.50, 0.0, False, "EXECUTING_SHIFT"),
+    ]
+    errors = swath_lateral_errors(
+        samples, [((0.0, 0.0), (2.0, 0.0))], brush_forward_offset_m=0.55
+    )
+    assert errors == [0.04]
 
 
 def test_uncovered_cells_form_bounded_horizontal_repair_segments():

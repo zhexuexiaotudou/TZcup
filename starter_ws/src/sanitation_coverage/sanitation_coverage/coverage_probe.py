@@ -28,7 +28,9 @@ from sanitation_coverage.metrics import (
     point_in_polygon,
     raster_coverage_metrics,
     repair_degenerate_swaths,
+    semantic_path_distances,
     summarize_distances,
+    swath_lateral_errors,
     synchronized_xy_errors,
     uncovered_cell_centers,
 )
@@ -363,13 +365,17 @@ class CoverageProbe(Node):
         endpoint_extension = float(config.get("swath_endpoint_extension_m", 0.0))
         empirical_threshold = float(config.get("empirical_coverage_threshold", 0.98))
         empirical_repeat_threshold = float(config.get("empirical_repeat_rate_threshold", 1.0))
+        lateral_p95_threshold = float(
+            config.get("empirical_swath_lateral_p95_threshold_m", 0.08)
+        )
         if not 0.0 < planning_spacing <= width:
             return self._write_report({
                 "success": False,
                 "error": "planning_swath_spacing_m_must_be_positive_and_at_most_operation_width_m",
             })
         if (endpoint_extension < 0.0 or not 0.0 <= empirical_threshold <= 1.0
-                or not 0.0 <= empirical_repeat_threshold <= 1.0):
+                or not 0.0 <= empirical_repeat_threshold <= 1.0
+                or lateral_p95_threshold <= 0.0):
             return self._write_report({
                 "success": False,
                 "error": "invalid_coverage_execution_acceptance_parameters",
@@ -587,8 +593,24 @@ class CoverageProbe(Node):
         execution_duration = time.monotonic() - execution_started_wall
         actual_path_points = [(sample[1], sample[2]) for sample in self.truth_samples]
         actual_path_length = path_length(actual_path_points)
+        semantic_distances = semantic_path_distances(self.truth_samples)
+        lateral = summarize_distances(swath_lateral_errors(
+            self.truth_samples,
+            calibrated_swaths,
+            float(config.get("brush_forward_offset_m", 0.55)),
+        ))
+        lateral["threshold_p95_m"] = lateral_p95_threshold
+        lateral["pass"] = bool(
+            lateral["p95_m"] is not None
+            and lateral["p95_m"] <= lateral_p95_threshold
+        )
+        lateral["metric_basis"] = (
+            "gazebo_ground_truth_brush_center_to_nearest_primary_swath_infinite_line"
+        )
         empirical.update({
             "actual_path_length_m": actual_path_length,
+            **semantic_distances,
+            "primary_swath_lateral_error": lateral,
             "actual_duration_sec": execution_duration,
             "gross_efficiency_m2_h": empirical["covered_area_m2"] / execution_duration * 3600.0 if execution_duration > 0 else 0.0,
             "net_efficiency_m2_h": empirical["covered_area_m2"] / execution_duration * 3600.0 if execution_duration > 0 else 0.0,
@@ -596,6 +618,7 @@ class CoverageProbe(Node):
         empirical_pass = complete and empirical["coverage_rate"] >= empirical_threshold
         repeat_pass = empirical["repeat_rate"] <= empirical_repeat_threshold
         coverage_quality_pass = empirical_pass and repeat_pass
+        lateral_tracking_pass = lateral["pass"]
         safety_pass = self.collision_events == 0
         keepout_violation_samples = sum(
             any(point_in_polygon(sample[1], sample[2], polygon) for polygon in exclusions)
@@ -651,11 +674,12 @@ class CoverageProbe(Node):
             "empirical_coverage_success": empirical_pass,
             "empirical_repeat_success": repeat_pass,
             "coverage_quality_success": coverage_quality_pass,
+            "swath_lateral_tracking_success": lateral_tracking_pass,
             "safety_success": safety_pass,
             "localization_success": localization_pass,
             "competition_efficiency_pass": efficiency_pass,
             "success": bool(
-                complete and coverage_quality_pass and safety_pass
+                complete and coverage_quality_pass and lateral_tracking_pass and safety_pass
                 and localization_pass and not self.brush_enabled
             ),
             "operation_width_m": width,
@@ -668,6 +692,7 @@ class CoverageProbe(Node):
             "swath_endpoint_extension_m": endpoint_extension,
             "empirical_coverage_threshold": empirical_threshold,
             "empirical_repeat_rate_threshold": empirical_repeat_threshold,
+            "empirical_swath_lateral_p95_threshold_m": lateral_p95_threshold,
             "swath_count": len(swaths), "turn_count": len(turns),
             "nav_path_pose_count": len(nav_points),
             "component_count": len(selected_components), "component_results": component_results,

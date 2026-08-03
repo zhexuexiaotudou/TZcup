@@ -18,18 +18,29 @@ def test_representative_frame_is_taken_from_the_completed_end_of_video():
 
 def test_readiness_bypasses_stale_ros_daemon():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    readiness = (ROOT / "scripts" / "ros_runtime_readiness.py").read_text(
+        encoding="utf-8"
+    )
 
     assert "ros2 node list --no-daemon --spin-time 3" in launcher
-    assert "ros2 topic list --no-daemon --spin-time 3" in launcher
-    assert "ros2 service list --no-daemon --spin-time 3" in launcher
-    assert "--include-hidden-services" in launcher
+    assert 'timeout 155 python3 "${ROOT}/scripts/ros_runtime_readiness.py"' in launcher
+    assert '"${OUTPUT_DIR}/runtime_readiness.json"' in launcher
+    assert "node.get_topic_names_and_types()" in readiness
+    assert "node.get_service_names_and_types()" in readiness
     for action in ("compute_coverage_path", "follow_path", "navigate_to_pose"):
-        assert f"/{action}/_action/send_goal" in launcher
+        assert f'"/{action}/_action/send_goal"' in readiness
+    assert '"/controller_server/get_state"' in readiness
+    assert '"/planner_server/get_state"' in readiness
+    assert "controller_state == 3" in readiness
+    assert "planner_state == 3" in readiness
     assert "ros2 action list" not in launcher
 
 
 def test_nav2_waits_for_localization_tf_and_exact_lifecycle_state():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    readiness = (ROOT / "scripts" / "ros_runtime_readiness.py").read_text(
+        encoding="utf-8"
+    )
 
     localization_gate = launcher.index("tf2_echo odom base_footprint")
     navigation_start = launcher.index(
@@ -38,9 +49,10 @@ def test_nav2_waits_for_localization_tf_and_exact_lifecycle_state():
     assert localization_gate < navigation_start
     assert "grep -Fq 'Translation:'" in launcher
     assert "grep -Fq 'Rotation:'" in launcher
-    assert "grep -Fxq 'active [3]' <<< \"${controller_state}\"" in launcher
-    assert "grep -Fxq 'active [3]' <<< \"${planner_state}\"" in launcher
-    assert "grep -q 'active' <<< \"${controller_state}\"" not in launcher
+    assert '"/controller_server/get_state"' in readiness
+    assert '"/planner_server/get_state"' in readiness
+    assert "controller_state == 3" in readiness
+    assert "planner_state == 3" in readiness
 
 
 def test_camera_follow_discovery_has_a_hard_timeout():
@@ -89,7 +101,7 @@ def test_wslg_gui_is_launched_directly_for_native_plugin_backend():
     assert 'setsid "${gazebo_gui_env[@]}" gz sim -g --gui-config "${gui_config}"' in launcher
     assert '> "${OUTPUT_DIR}/gazebo_gui.log" 2>&1 &' in launcher
     assert 'gui:="${gui_value}"' not in launcher
-    assert launcher.index('if [[ "${ready}" -ne 1 ]]') < launcher.index(
+    assert launcher.index('timeout 155 python3 "${ROOT}/scripts/ros_runtime_readiness.py"') < launcher.index(
         'setsid "${gazebo_gui_env[@]}" gz sim -g --gui-config "${gui_config}"'
     )
 

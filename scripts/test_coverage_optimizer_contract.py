@@ -49,6 +49,7 @@ def test_optimized_profile_has_bounded_repair_and_legacy_fallback():
     assert config["coverage_repair_max_passes"] == 1
     assert config["repair_max_primary_length_ratio"] <= 0.10
     assert config["empirical_repeat_rate_threshold"] <= 0.20
+    assert config["empirical_swath_lateral_p95_threshold_m"] <= 0.08
     assert config["path_continuity_type"] == "DISCONTINUOUS"
 
 
