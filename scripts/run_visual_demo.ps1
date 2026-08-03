@@ -13,6 +13,8 @@ param(
     [string]$GazeboGuiRenderer = "auto",
     [ValidateSet("normal", "fast", "turbo")]
     [string]$SimulationSpeed = "fast",
+    [ValidateSet("optimized", "legacy")]
+    [string]$CoverageProfile = "optimized",
     [switch]$SkipBuild,
     [switch]$NoGui,
     [switch]$NoRviz,
@@ -97,6 +99,7 @@ $arguments = @(
     "--seed", "$Seed",
     "--gazebo-gui-renderer", $GazeboGuiRenderer,
     "--simulation-speed", $SimulationSpeed,
+    "--coverage-profile", $CoverageProfile,
     "--map-size", $MapSize
 )
 if ($Workspace) {

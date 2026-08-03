@@ -69,17 +69,19 @@ def test_gazebo_only_launcher_contract() -> None:
     shell_launcher = read("scripts/run_visual_demo.sh")
     powershell_launcher = read("scripts/run_visual_demo.ps1")
     dedicated_launcher = read("scripts/run_gazebo_cleaning_demo.ps1")
+    readiness = read("scripts/ros_runtime_readiness.py")
+    emergency_availability = read("scripts/emergency_stop_availability.py")
 
     assert "--gazebo-only" in shell_launcher
     assert "--showcase" in shell_launcher
     assert "--map-size" in shell_launcher
     assert "--simulation-speed" in shell_launcher
-    assert 'ros2 lifecycle get /controller_server' in shell_launcher
-    assert 'ros2 lifecycle get /planner_server' in shell_launcher
+    assert '"/controller_server/get_state"' in readiness
+    assert '"/planner_server/get_state"' in readiness
+    assert "controller_state == 3" in readiness
+    assert "planner_state == 3" in readiness
     assert "tf2_echo odom base_footprint" in shell_launcher
     assert "localization_readiness_tf.txt" in shell_launcher
-    assert 'grep -Fxq \'active [3]\' <<< "${controller_state}"' in shell_launcher
-    assert 'grep -Fxq \'active [3]\' <<< "${planner_state}"' in shell_launcher
     assert "--manual-control" in shell_launcher
     assert "showcase_area.yaml" in shell_launcher
     assert "follow_offset: {x: -8.0, y: -8.0, z: 10.0}" in shell_launcher
@@ -87,7 +89,9 @@ def test_gazebo_only_launcher_contract() -> None:
     assert "sanitation_gazebo_visualization cleaning_visualizer" in shell_launcher
     assert '[[ "${OPEN_DASHBOARD}" -eq 1 ]]' in shell_launcher
     assert "keep_open_stop=1" in shell_launcher
-    assert "--wait-matching-subscriptions 2" in shell_launcher
+    assert 'timeout 20 python3 "${ROOT}/scripts/emergency_stop_availability.py"' in shell_launcher
+    assert "publisher.get_subscription_count()" in emergency_availability
+    assert "subscription_count >= 2" in emergency_availability
     assert "[switch]$GazeboOnly" in powershell_launcher
     assert '"--gazebo-only"' in powershell_launcher
     assert "[switch]$Showcase" in powershell_launcher
@@ -96,6 +100,8 @@ def test_gazebo_only_launcher_contract() -> None:
     assert "[switch]$FullArea" in dedicated_launcher
     assert '[string]$MapSize = "small"' in dedicated_launcher
     assert '[string]$SimulationSpeed = "fast"' in dedicated_launcher
+    assert '[string]$CoverageProfile = "optimized"' in dedicated_launcher
+    assert "CoverageProfile = $CoverageProfile" in dedicated_launcher
     assert "ManualControl = $true" in dedicated_launcher
     assert "NoRviz" not in dedicated_launcher
     assert "Start-Process" not in dedicated_launcher

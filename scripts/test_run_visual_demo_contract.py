@@ -16,6 +16,23 @@ def test_representative_frame_is_taken_from_the_completed_end_of_video():
     assert 'ffmpeg -nostdin -y -ss 5 -i "${OUTPUT_DIR}/visual_demo.mp4"' not in launcher
 
 
+def test_launcher_exposes_optimized_and_legacy_coverage_profiles():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    wrapper = (ROOT / "scripts" / "run_visual_demo.ps1").read_text(encoding="utf-8")
+    frozen = (ROOT / "scripts" / "run_frozen_coverage_trial.ps1").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'COVERAGE_PROFILE="optimized"' in launcher
+    assert '--coverage-profile) COVERAGE_PROFILE="$2"' in launcher
+    assert '"${COVERAGE_PROFILE}" == "legacy"' in launcher
+    assert 'competition_demo_area.yaml' in launcher
+    assert 'coverage_demo_overlap.yaml' in launcher
+    assert '[ValidateSet("optimized", "legacy")]' in wrapper
+    assert '"--coverage-profile", $CoverageProfile' in wrapper
+    assert '[ValidateSet("optimized", "legacy")]' in frozen
+
+
 def test_readiness_bypasses_stale_ros_daemon():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
     readiness = (ROOT / "scripts" / "ros_runtime_readiness.py").read_text(

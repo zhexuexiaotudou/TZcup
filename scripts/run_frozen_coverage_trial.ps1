@@ -8,6 +8,8 @@ param(
     [string]$Tag,
     [ValidateSet("fast", "turbo")]
     [string]$SimulationSpeed = "fast",
+    [ValidateSet("optimized", "legacy")]
+    [string]$CoverageProfile = "optimized",
     [switch]$Trace,
     [string]$WslDistribution = "TZcup-Ubuntu-24.04",
     [int]$DashboardPort = 8899
@@ -42,6 +44,7 @@ $arguments += @(
     "--dashboard-port", "$DashboardPort",
     "--skip-build", "--gazebo-only", "--no-gui", "--no-mcap",
     "--simulation-speed", $SimulationSpeed,
+    "--coverage-profile", $CoverageProfile,
     "--map-size", "small", "--timeout", "300", "--seed", "$Seed"
 )
 

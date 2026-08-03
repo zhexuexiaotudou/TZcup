@@ -23,6 +23,7 @@ MISSION_TIMEOUT_SEC=1800
 RANDOM_SEED=0
 GAZEBO_GUI_RENDERER="auto"
 SIMULATION_SPEED="fast"
+COVERAGE_PROFILE="optimized"
 
 usage() {
   cat <<'EOF'
@@ -44,6 +45,8 @@ Options:
   --simulation-speed MODE
                         normal (1x), fast (2x / 0.70 m/s), or turbo
                         (3x / 0.90 m/s; default: fast)
+  --coverage-profile PROFILE
+                        optimized (skid-steer RTR) or legacy (Dubins baseline)
   --manual-control      Wait for the native Gazebo Start button
   --competition-profile Use the 20,000 m2 map and AUTO-12 vehicle candidate;
                         execute one representative live zone
@@ -81,6 +84,7 @@ while [[ $# -gt 0 ]]; do
     --seed) RANDOM_SEED="$2"; shift 2 ;;
     --gazebo-gui-renderer) GAZEBO_GUI_RENDERER="$2"; shift 2 ;;
     --simulation-speed) SIMULATION_SPEED="$2"; shift 2 ;;
+    --coverage-profile) COVERAGE_PROFILE="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -90,6 +94,7 @@ case "${VIDEO_MODE}" in auto|on|off) ;; *) echo "--video must be auto, on, or of
 case "${MAP_SIZE}" in small|medium|large) ;; *) echo "--map-size must be small, medium, or large" >&2; exit 2 ;; esac
 case "${GAZEBO_GUI_RENDERER}" in auto|d3d12|software) ;; *) echo "--gazebo-gui-renderer must be auto, d3d12, or software" >&2; exit 2 ;; esac
 case "${SIMULATION_SPEED}" in normal|fast|turbo) ;; *) echo "--simulation-speed must be normal, fast, or turbo" >&2; exit 2 ;; esac
+case "${COVERAGE_PROFILE}" in optimized|legacy) ;; *) echo "--coverage-profile must be optimized or legacy" >&2; exit 2 ;; esac
 if [[ "${MAP_SIZE}" == "small" ]]; then SHOWCASE=1; EXPECTED_COMPONENTS=17; fi
 [[ "${DASHBOARD_PORT}" =~ ^[0-9]+$ ]] || { echo "dashboard port must be numeric" >&2; exit 2; }
 [[ "${MISSION_TIMEOUT_SEC}" =~ ^[0-9]+$ ]] || { echo "timeout must be numeric" >&2; exit 2; }
@@ -312,6 +317,11 @@ if [[ "${MAP_SIZE}" == "small" ]]; then
   # scan corrections. Medium/large retain hybrid scan fallback.
   localization_fusion_mode="rtk_imu_wheel"
   enable_scan_refiner="false"
+  if [[ "${COVERAGE_PROFILE}" == "legacy" ]]; then
+    mission_template="${tasks_share}/config/competition_demo_area.yaml"
+    profile_label="LEGACY DUBINS BASELINE"
+    coverage_params="${coverage_share}/config/coverage_demo_overlap.yaml"
+  fi
   if [[ "${SIMULATION_SPEED}" == "fast" ]]; then max_linear_velocity="0.70"; max_angular_velocity="0.60"; fi
   if [[ "${SIMULATION_SPEED}" == "turbo" ]]; then max_linear_velocity="0.90"; max_angular_velocity="0.75"; fi
 fi

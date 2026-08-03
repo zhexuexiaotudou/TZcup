@@ -13,6 +13,8 @@ param(
     [string]$MapSize = "small",
     [ValidateSet("normal", "fast", "turbo")]
     [string]$SimulationSpeed = "fast",
+    [ValidateSet("optimized", "legacy")]
+    [string]$CoverageProfile = "optimized",
     [switch]$CloseOnComplete
 )
 
@@ -28,6 +30,7 @@ $launchParameters = @{
     MapSize = $MapSize
     ManualControl = $true
     SimulationSpeed = $SimulationSpeed
+    CoverageProfile = $CoverageProfile
 }
 if ($FullArea) { $launchParameters["MapSize"] = "medium" }
 if ($Workspace) { $launchParameters["Workspace"] = $Workspace }

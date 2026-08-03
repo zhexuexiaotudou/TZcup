@@ -8,6 +8,8 @@
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1 -MapSize small
 ```
 
+小场覆盖方案可由 `-CoverageProfile optimized|legacy` 选择；中、大场保持各自冻结任务配置。
+
 | 按钮 | 作用 | 安全行为 |
 |---|---|---|
 | 开始 | 从 `READY` 进入规划、转场和清扫 | 只调用 `/coverage/control/start`，不直接控制底盘 |

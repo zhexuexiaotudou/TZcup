@@ -18,6 +18,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
 ```
 
+覆盖算法 A/B 回归使用 `-CoverageProfile optimized`（默认）或 `-CoverageProfile legacy`；后者保留 0.35 m 条带与 Dubins 基线，不是 skid-steer 交付默认值。
 启动后使用 Gazebo 右侧“清扫任务控制”卡片，不要用世界物理暂停代替任务暂停。默认
 `-MapSize small`，也可选择 `medium` 或 `large`。Windows 启动器默认准备并验证 WSLg
 `/mnt/shared_memory`，避免 `[WARN:COPY MODE]`，并恢复异常最小化窗口；关闭 Gazebo 会同步停止本次后台仿真，不会遗留

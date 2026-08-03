@@ -8,6 +8,8 @@
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
 ```
 
+使用 `-CoverageProfile optimized` 运行默认 skid-steer 方案；使用 `-CoverageProfile legacy` 运行保留的 Dubins A/B 基线。
+
 该入口仍执行真实 Stage4V 定位、Nav2 和 Coverage 控制链，只隐藏网页与 RViz。默认加载单独制作的
 `16 m × 12 m` 世界 `sanitation_competition_demo.sdf`，而不是在大地图内裁出一块区域；场内包含
 30 m² 指定作业区、扣除安全回转带后的 12 m² 可清扫区和五类目标。`-FullArea` 切换到中型

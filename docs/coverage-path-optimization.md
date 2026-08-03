@@ -112,8 +112,9 @@ persistent-node approach and requires both matching safety/HMI subscribers and
 dashboard observation before coverage execution starts.
 The launcher supervises the Coverage process with `setsid --wait`, so a
 context-dependent intermediate fork cannot be mistaken for mission completion.
-For a legacy comparison, invoke `run_visual_demo.sh` after pointing
-`mission_template` and `coverage_params` to the two legacy files listed above.
+For a legacy comparison, pass `--coverage-profile legacy` to
+`run_visual_demo.sh` or `-CoverageProfile legacy` to either Windows launcher.
+The default and explicit optimized spelling are `optimized`.
 Long headless multi-seed acceptance can use
 `scripts/run_frozen_coverage_trial.ps1`; it fixes the ROS domain, assigns a
 per-trial Gazebo partition and always runs the same independent small-field
