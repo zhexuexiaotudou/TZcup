@@ -390,7 +390,7 @@ if [[ "${COMPETITION_PROFILE}" -eq 0 ]]; then
     --nav2-output "${nav_params}" \
     --mission-output "${mission_config}"
 fi
-python3 - "${nav_params}" "${max_linear_velocity}" "${max_angular_velocity}" <<'PY'
+python3 - "${nav_params}" "${max_linear_velocity}" "${max_angular_velocity}" "${MAP_SIZE}" <<'PY'
 from pathlib import Path
 import sys
 import yaml
@@ -399,11 +399,26 @@ config = yaml.safe_load(path.read_text(encoding="utf-8"))
 follow = config["controller_server"]["ros__parameters"]["FollowPath"]
 linear_velocity = float(sys.argv[2])
 angular_velocity = float(sys.argv[3])
+map_size = sys.argv[4]
 follow["desired_linear_vel"] = linear_velocity
 follow["rotate_to_heading_angular_vel"] = angular_velocity
 smoother = config["velocity_smoother"]["ros__parameters"]
 smoother["max_velocity"] = [linear_velocity, 0.0, angular_velocity]
 smoother["min_velocity"] = [-min(linear_velocity, 0.15), 0.0, -angular_velocity]
+if map_size == "small":
+    # Debris is intentionally traversable in the cleaning demonstration. Keep
+    # the production RGB-D source alive for observation, but do not let a
+    # delayed renderer timestamp stop the demo vehicle. The fresh 2D lidar
+    # remains fail-closed and protects the field boundary / true obstacles.
+    monitor = config["collision_monitor"]["ros__parameters"]
+    monitor["observation_sources"] = ["scan"]
+    monitor["source_timeout"] = 1.0
+    monitor.pop("ground_cloud", None)
+    config["tzcup_demo_safety_profile"] = {
+        "mode": "SMALL_FIELD_LIDAR_ONLY",
+        "production_approved": False,
+        "reason": "cleanable debris is traversable; renderer pointcloud is non-blocking",
+    }
 path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 PY
 

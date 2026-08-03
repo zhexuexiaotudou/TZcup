@@ -13,6 +13,8 @@ def test_optimized_small_demo_profile_is_packaged_and_selected():
     assert name in setup_text
     assert name in runner
     assert "coverage_skid_steer_optimized.yaml" in runner
+    assert "SMALL_FIELD_LIDAR_ONLY" in runner
+    assert 'monitor["observation_sources"] = ["scan"]' in runner
 
 
 def test_optimized_profile_has_bounded_repair_and_legacy_fallback():

@@ -91,3 +91,10 @@ brush invariant even during process restart, network loss and emergency stop.
 Required promotion gates are SIL multi-seed replay, HIL actuator/safety testing,
 closed-site low-speed trials, calibrated coverage measurement, and an operator-
 approved rollback to the retained legacy profile.
+
+The small-field launcher deliberately uses a `SMALL_FIELD_LIDAR_ONLY` collision
+monitor profile: demo debris is traversable and delayed renderer point clouds
+must not masquerade as physical obstacles. RGB-D remains published, but is not
+an actuator-safety source in this profile. Medium/large and every real vehicle
+must restore the multi-source lidar + height-aware RGB-D contract. `turbo` is a
+developer experiment only; `fast` is the highest supported demo mode.
