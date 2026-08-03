@@ -56,6 +56,8 @@ def test_launcher_can_run_a_bounded_physical_dynamic_matrix():
     assert 'get_package_prefix("ros_gz_sim")' in probe
     assert 'self.set_pose_backend = "gz_cli"' in probe
     assert 'subprocess.run(' in probe
+    assert '"/world/default/set_pose:=/world/"' in probe
+    assert '-p service_timeout_ms:=10000' in launcher
     assert '"set_pose_backend": self.set_pose_backend' in probe
 
 

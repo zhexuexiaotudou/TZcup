@@ -127,6 +127,11 @@ class DynamicObstacleProbe(Node):
                     "--name", str(self.get_parameter("model_name").value),
                     "--type", "6", "--pos", str(float(world_x)),
                     str(float(world_y)), "0.55", "--quat", "0", "0", "0", "1",
+                    "--ros-args", "--remap",
+                    (
+                        "/world/default/set_pose:=/world/"
+                        f"{self.get_parameter('world_name').value}/set_pose"
+                    ),
                 ],
                 check=False, capture_output=True, text=True, timeout=timeout_sec,
             )
