@@ -62,10 +62,14 @@ def test_launcher_can_run_a_bounded_physical_dynamic_matrix():
     assert 'z: 0.55' not in probe
     assert '"true" in process.stdout.lower()' in probe
     assert '-p service_timeout_ms:=10000' in launcher
-    assert '-p minimum_progress_between_trials_m:=0.25' in launcher
+    assert '-p minimum_remaining_path_m:=3.0' in launcher
+    assert '-p minimum_progress_between_trials_m:=0.5' in launcher
     assert '-p hold_sec:=0.5' in launcher
     assert '-p crossing_steps:=5' in launcher
     assert '"set_pose_backend": self.set_pose_backend' in probe
+    assert '"repeated_oscillation_count": repeated_oscillation_count' in probe
+    assert 'and repeated_oscillation_count == 0' in probe
+    assert 'valid >= requested_count' in probe
 
 
 def test_headless_matrix_can_select_ogre_without_changing_gui_default():

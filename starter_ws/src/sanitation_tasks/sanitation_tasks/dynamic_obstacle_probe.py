@@ -334,8 +334,19 @@ class DynamicObstacleProbe(Node):
 
     def write_report(self, trials, preflight, failure_reason):
         valid = sum(trial["valid"] for trial in trials)
+        requested_count = int(self.get_parameter("trial_count").value)
+        minimum_progress = float(
+            self.get_parameter("minimum_progress_between_trials_m").value
+        )
+        repeated_oscillation_count = sum(
+            1
+            for trial in trials
+            if trial.get("spacing_from_previous_interaction_m") is not None
+            and trial["spacing_from_previous_interaction_m"] + 1e-9
+            < minimum_progress
+        )
         report = {
-            "schema_version": 1, "requested_trial_count": int(self.get_parameter("trial_count").value),
+            "schema_version": 1, "requested_trial_count": requested_count,
             "completed_trial_count": len(trials), "dynamic_obstacle_valid_trials": valid,
             "world_name": str(self.get_parameter("world_name").value),
             "model_name": str(self.get_parameter("model_name").value),
@@ -361,12 +372,19 @@ class DynamicObstacleProbe(Node):
                 trials
                 and all(trial["mission_progress_resumed"] for trial in trials)
             ),
+            "repeated_oscillation_count": repeated_oscillation_count,
+            "repeated_oscillation_gate_pass": repeated_oscillation_count == 0,
+            "oscillation_metric_basis": (
+                "same-component consecutive interactions closer than the configured "
+                "minimum progress distance"
+            ),
             "trials": trials,
             "success": (
                 failure_reason is None
-                and len(trials) >= 20
-                and valid >= 20
+                and len(trials) >= requested_count
+                and valid >= requested_count
                 and self.collision_count == 0
+                and repeated_oscillation_count == 0
                 and all(
                     trial["minimum_separation_gate_pass"]
                     and trial["mission_progress_resumed"]
