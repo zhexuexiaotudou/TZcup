@@ -44,7 +44,7 @@ Windows 启动器会准备 WSLg `/mnt/shared_memory`、恢复异常窗口，并�
 冷启动时，启动器会先验证定位话题与 `odom→base_footprint` TF，再由单个持续驻留的 ROS 图探针精确确认必需话题、Action 服务及 Nav2 controller/planner 均为 `active [3]`，之后才打开 Gazebo；探针结果保存为 `runtime_readiness.json`，避免逐轮重启 DDS 发现造成偶发假超时。若 GUI 在原生控制加载前提前退出，则只执行一次安全重启和同参数重试；任一就绪门重复失败都会明确返回错误，不会留下一个可见但不能行驶的误导窗口。
 任务开始前的急停 false 可用性脉冲由单个持续驻留的 ROS 节点重复发布，并同时确认至少两个订阅者及仪表盘 `topics_seen`；只有安全链和人机界面都实际观察到该接口才继续，避免短生命周期 CLI 发布器的 DDS 发现竞态造成偶发假失败。
 Nav2 转场与组件执行最多允许初次执行加 2 次有界重试；每次中止都保留终端位姿与错误证据，超过上限立即失败，不以无限恢复掩盖控制问题。
-Coverage 进程由 `setsid --wait` 监督，启动器始终等待真实子进程终态；即使在终端、systemd 或 Windows 进程服务等不同父进程布局下，也不会把 `setsid` 的中间 fork 误判为任务完成并提前清理仿真。
+Coverage 进程由 `setsid --wait` 监督，启动器始终等待真实子进程终态，并以无缓冲日志和 `coverage_process_exit_code.txt` 保留退出证据；即使在终端、systemd 或 Windows 进程服务等不同父进程布局下，也不会把 `setsid` 的中间 fork 误判为任务完成并提前清理仿真。
 在 WSLg 中，Gazebo 服务端和传感器继续使用 D3D12/NVIDIA，原生 GUI 自动改用已验证可见的 X11/llvmpipe 通道；启动器会抓取 `3D Scene` 实际像素，纯黑视口会返回错误而不再误报 READY。
 
 它不打开浏览器或 RViz；车辆在独立小场内真实执行完整 Coverage，青绿清扫带随刷盘开启累积，默认任务结束后保留 Gazebo，按 `Ctrl+C` 才收尾并生成验收摘要。

@@ -141,10 +141,10 @@ def test_coverage_supervisor_waits_for_the_real_setsid_child():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
 
     assert (
-        'setsid --wait timeout "${MISSION_TIMEOUT_SEC}" ros2 run '
-        "sanitation_coverage coverage_probe"
+        'PYTHONUNBUFFERED=1 setsid --wait timeout "${MISSION_TIMEOUT_SEC}"'
     ) in launcher
     assert 'setsid timeout "${MISSION_TIMEOUT_SEC}" ros2 run' not in launcher
+    assert '"${OUTPUT_DIR}/coverage_process_exit_code.txt"' in launcher
 
 
 def test_windows_wrapper_runs_the_wslg_window_guard():

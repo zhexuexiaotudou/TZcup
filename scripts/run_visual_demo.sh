@@ -738,7 +738,8 @@ then
 fi
 
 set +e
-setsid --wait timeout "${MISSION_TIMEOUT_SEC}" ros2 run sanitation_coverage coverage_probe --ros-args \
+PYTHONUNBUFFERED=1 setsid --wait timeout "${MISSION_TIMEOUT_SEC}" \
+  ros2 run sanitation_coverage coverage_probe --ros-args \
   -p use_sim_time:=true \
   -p manual_start:="$([[ "${MANUAL_CONTROL}" -eq 1 ]] && echo true || echo false)" \
   -p output_path:="${OUTPUT_DIR}/coverage_report.json" \
@@ -778,6 +779,7 @@ else
   wait "${coverage_pid}"
   coverage_code=$?
 fi
+printf '%s\n' "${coverage_code}" > "${OUTPUT_DIR}/coverage_process_exit_code.txt"
 set -e
 
 if [[ "${gui_closed_during_mission}" -eq 1 ]]; then
