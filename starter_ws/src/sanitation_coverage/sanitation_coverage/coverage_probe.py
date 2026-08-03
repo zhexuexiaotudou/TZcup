@@ -41,6 +41,10 @@ from sanitation_coverage.skid_steer_rotation import (
     bounded_angular_command,
     normalized_yaw_error,
 )
+from sanitation_coverage.skid_steer_translation import (
+    bounded_translation_command,
+    translation_errors,
+)
 from sanitation_coverage.swath_optimizer import optimize_swath_angle
 from sanitation_coverage.mission_geometry import (
     compile_mission_geometry,
@@ -109,6 +113,7 @@ class CoverageProbe(Node):
         self.declare_parameter("component_retry_limit", 1)
         self.declare_parameter("minimum_component_timeout_sec", 45.0)
         self.declare_parameter("rotation_timeout_sec", 45.0)
+        self.declare_parameter("translation_timeout_sec", 45.0)
         self.declare_parameter("manual_start", False)
         self.coverage_client = ActionClient(self, ComputeCoveragePath, "/compute_coverage_path")
         self.follow_client = ActionClient(self, FollowPath, "/follow_path")
@@ -1096,14 +1101,123 @@ class CoverageProbe(Node):
                 "brush_enabled": False, "planned_length_m": 0.0,
             })
             return result
+        if component["kind"] in {"SHIFT", "BACKUP"}:
+            result = self._translate_to_goal(component)
+            result.update({
+                "kind": component["kind"], "index": component["index"],
+                "component_id": component.get("component_id"),
+                "brush_enabled": False,
+                "path_pose_count": len(component["points"]),
+                "planned_length_m": path_length(component["points"]),
+            })
+            return result
         result = self._follow_component(component)
         result["component_id"] = component.get("component_id")
         return result
 
-    def _publish_rotation_command(self, angular_z):
+    def _publish_chassis_command(self, linear_x=0.0, angular_z=0.0):
         command = Twist()
+        command.linear.x = float(linear_x)
         command.angular.z = float(angular_z)
         self.rotation_command_publisher.publish(command)
+
+    def _publish_rotation_command(self, angular_z):
+        self._publish_chassis_command(0.0, angular_z)
+
+    def _translate_to_goal(self, component):
+        """Execute a short safe connector with estimated-pose endpoint feedback."""
+        self._set_brush(False)
+        path_message = self._path_message(component["points"])
+        self.current_path_publisher.publish(path_message)
+        self.current_component_path_publisher.publish(path_message)
+        goal = component["points"][-1]
+        travel_yaw = float(component.get("metadata", {}).get(
+            "travel_yaw_rad", segment_heading(component["points"][0], goal)
+        ))
+        timeout = float(self.get_parameter("translation_timeout_sec").value)
+        started = time.monotonic()
+        settled_samples = 0
+        pause_count = 0
+        feedback = []
+        last_feedback = 0.0
+        while rclpy.ok() and time.monotonic() - started < timeout:
+            rclpy.spin_once(self, timeout_sec=0.02)
+            if self.stop_requested:
+                self._publish_chassis_command()
+                return {
+                    "success": False, "stopped_by_operator": True,
+                    "retries": 0, "pause_count": pause_count, "attempts": [],
+                    "controller": "estimated_pose_skid_steer",
+                }
+            if self.pause_requested:
+                self._publish_chassis_command()
+                pause_count += 1
+                self.pause_requested = False
+                self._set_state("PAUSED", {
+                    "action_kind": "skid_steer_translate", "pause_count": pause_count,
+                    "brush_disabled": True,
+                })
+                while rclpy.ok() and not self.resume_requested and not self.stop_requested:
+                    self._publish_chassis_command()
+                    rclpy.spin_once(self, timeout_sec=0.1)
+                if self.stop_requested:
+                    continue
+                self.resume_requested = False
+                self._set_state(self.state_before_pause, {
+                    "action_kind": "skid_steer_translate", "resumed": True,
+                })
+                started = time.monotonic()
+            if self.estimated_pose is None:
+                continue
+            along, cross, yaw_error, distance = translation_errors(
+                self.estimated_pose, goal, travel_yaw
+            )
+            linear, angular = bounded_translation_command(along, cross, yaw_error)
+            if distance <= 0.04 and abs(yaw_error) <= 0.12:
+                linear = angular = 0.0
+                settled_samples += 1
+            else:
+                settled_samples = 0
+            self._publish_chassis_command(linear, angular)
+            now = time.monotonic()
+            if now - last_feedback >= 0.5:
+                feedback.append({
+                    "distance_to_goal": distance,
+                    "along_error_m": along,
+                    "cross_error_m": cross,
+                    "yaw_error_rad": yaw_error,
+                    "linear_command_m_s": linear,
+                    "angular_command_rad_s": angular,
+                })
+                last_feedback = now
+            if settled_samples >= 5:
+                self._publish_chassis_command()
+                goal_pose = {"x": goal[0], "y": goal[1], "yaw": travel_yaw}
+                return {
+                    "success": True, "retries": 0, "pause_count": pause_count,
+                    "attempts": [{
+                        "attempt": 1, "accepted": True, "terminal_status": 4,
+                        "error_code": 0, "error_name": "NONE", "error_msg": "",
+                        "succeeded": True, "feedback": feedback,
+                        "terminal_estimated_pose": list(self.estimated_pose),
+                        "action_kind": "estimated_pose_skid_steer",
+                    }],
+                    "goal_pose": goal_pose,
+                    "controller": "estimated_pose_skid_steer_v1",
+                    "progress_checker": "five_samples_within_0.04m_and_0.12rad",
+                    "terminal_tracking_error": self._tracking_error(goal_pose),
+                }
+            time.sleep(0.02)
+        self._publish_chassis_command()
+        return {
+            "success": False, "retries": 0, "pause_count": pause_count,
+            "attempts": [{
+                "attempt": 1, "accepted": True, "timeout": True,
+                "feedback": feedback, "action_kind": "estimated_pose_skid_steer",
+            }],
+            "error": "translation_timeout",
+            "controller": "estimated_pose_skid_steer_v1",
+        }
 
     def _rotate_to_yaw(self, anchor, target_yaw):
         """Rotate on estimated yaw without asking NavigateToPose to re-plan."""
