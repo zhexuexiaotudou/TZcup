@@ -819,6 +819,7 @@ if [[ "${DYNAMIC_OBSTACLE_TRIALS}" -gt 0 ]]; then
     -p model_name:="dynamic_pedestrian_box" \
     -p world_to_map_x:="${world_to_map_x}" \
     -p service_timeout_ms:=10000 \
+    -p minimum_progress_between_trials_m:=0.25 \
     -p hold_sec:=0.5 \
     -p crossing_steps:=5 \
     > "${OUTPUT_DIR}/dynamic_obstacle_probe.log" 2>&1 &

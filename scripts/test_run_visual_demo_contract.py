@@ -62,6 +62,7 @@ def test_launcher_can_run_a_bounded_physical_dynamic_matrix():
     assert 'z: 0.55' not in probe
     assert '"true" in process.stdout.lower()' in probe
     assert '-p service_timeout_ms:=10000' in launcher
+    assert '-p minimum_progress_between_trials_m:=0.25' in launcher
     assert '-p hold_sec:=0.5' in launcher
     assert '-p crossing_steps:=5' in launcher
     assert '"set_pose_backend": self.set_pose_backend' in probe
