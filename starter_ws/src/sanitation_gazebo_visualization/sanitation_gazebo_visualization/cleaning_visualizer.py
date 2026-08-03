@@ -16,9 +16,11 @@ from nav_msgs.msg import Odometry, Path
 import rclpy
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
-from rclpy.qos import qos_profile_sensor_data
+from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy, qos_profile_sensor_data
 from std_msgs.msg import Bool, String
 import yaml
+
+from .telemetry_v2 import SCHEMA as TELEMETRY_V2_SCHEMA, classify_motion_state, decimate_xy
 
 
 def yaw_from_quaternion(quaternion) -> float:
@@ -141,6 +143,13 @@ class CleaningVisualizer(Node):
         self.mission_start_stamp_sec: float | None = None
         self.trajectory_map: list[Point2] = []
         self.planned_path_map: list[Point2] = []
+        self.planned_swaths_map: list[list[Point2]] = []
+        self.planned_connectors_map: list[list[Point2]] = []
+        self.planned_repairs_map: list[list[Point2]] = []
+        self.actual_cleaning_map: list[list[Point2]] = []
+        self.actual_transit_map: list[list[Point2]] = []
+        self.actual_repair_map: list[list[Point2]] = []
+        self.last_motion_layer = ""
         self.brush_enabled = False
         self.coverage_state = "WAITING"
         self.completed_components = 0
@@ -190,9 +199,17 @@ class CleaningVisualizer(Node):
             String, "/coverage/component_state", self._on_component, 10
         )
         self.create_subscription(Path, "/coverage/current_path", self._on_path, 10)
+        plan_qos = QoSProfile(depth=1)
+        plan_qos.reliability = ReliabilityPolicy.RELIABLE
+        plan_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
+        self.create_subscription(String, "/coverage/full_plan", self._on_full_plan, plan_qos)
+        self.create_subscription(String, "/coverage/planned_repairs", self._on_repairs, plan_qos)
         self.telemetry_publisher = self.create_publisher(
             String, "/coverage/gazebo_telemetry", 10
         )
+        self.actual_cleaning_publisher = self.create_publisher(String, "/coverage/actual_cleaning_trajectory", 10)
+        self.actual_transit_publisher = self.create_publisher(String, "/coverage/actual_transit_trajectory", 10)
+        self.actual_repair_publisher = self.create_publisher(String, "/coverage/actual_repair_trajectory", 10)
         self.create_timer(0.1, self._update_markers)
         self.create_timer(0.5, self._publish_telemetry)
         self.get_logger().info(
@@ -323,6 +340,21 @@ class CleaningVisualizer(Node):
             self.trajectory_map.append(current)
             if len(self.trajectory_map) > 1200:
                 self.trajectory_map = self.trajectory_map[-1200:]
+            layer_name = classify_motion_state(self.coverage_state, self.brush_enabled)
+            layer_segments = {
+                "cleaning": self.actual_cleaning_map,
+                "transit": self.actual_transit_map,
+                "repair": self.actual_repair_map,
+            }[layer_name]
+            if layer_name != self.last_motion_layer or not layer_segments:
+                layer_segments.append([current])
+                self.last_motion_layer = layer_name
+            else:
+                segment = layer_segments[-1]
+                if not segment or math.hypot(current.x - segment[-1].x, current.y - segment[-1].y) >= 0.12:
+                    segment.append(current)
+                    if len(segment) > 1200:
+                        del segment[:-1200]
         self.last_pose_map = current
         self.last_pose_stamp_sec = stamp_sec
         if self.home_world is None:
@@ -360,7 +392,7 @@ class CleaningVisualizer(Node):
             "WAITING", "READY", "WAITING_FOR_START", "STOPPED", "COMPLETED", "FAILED"
         }:
             self._begin_mission_metrics()
-        if self.coverage_state in {"EXECUTING_SWATH", "EXECUTING_TURN"}:
+        if self.coverage_state.startswith("EXECUTING_") or self.coverage_state.startswith("REPAIR_"):
             signature = json.dumps(
                 {
                     "state": self.coverage_state,
@@ -379,6 +411,10 @@ class CleaningVisualizer(Node):
         self.mission_start_stamp_sec = self.last_pose_stamp_sec
         self.total_distance_m = 0.0
         self.trajectory_map = []
+        self.actual_cleaning_map = []
+        self.actual_transit_map = []
+        self.actual_repair_map = []
+        self.last_motion_layer = ""
         self.cleaned_cells.clear()
         self.completed_components = 0
         for target in self.targets:
@@ -422,6 +458,34 @@ class CleaningVisualizer(Node):
         )
         self._enqueue("path", [marker])
 
+    @staticmethod
+    def _component_points(component: dict) -> list[Point2]:
+        return [Point2(float(point[0]), float(point[1])) for point in component.get("points", [])]
+
+    def _on_full_plan(self, message: String) -> None:
+        try:
+            payload = json.loads(message.data)
+            components = payload["components"]
+        except (KeyError, TypeError, ValueError, json.JSONDecodeError):
+            self.get_logger().warning("Ignoring malformed /coverage/full_plan")
+            return
+        self.expected_components = int(payload.get("component_count", len(components)))
+        self.planned_swaths_map = [
+            self._component_points(item) for item in components if item.get("kind") == "SWATH"
+        ]
+        self.planned_connectors_map = [
+            self._component_points(item) for item in components
+            if item.get("kind") in {"TRANSIT", "ROTATE", "SHIFT", "BACKUP", "OBSTACLE_BYPASS", "RETURN_HOME"}
+            and len(item.get("points", [])) >= 2
+        ]
+
+    def _on_repairs(self, message: String) -> None:
+        try:
+            components = json.loads(message.data)
+            self.planned_repairs_map = [self._component_points(item) for item in components]
+        except (TypeError, ValueError, json.JSONDecodeError):
+            self.get_logger().warning("Ignoring malformed /coverage/planned_repairs")
+
     def _record_cleaning_footprint(self) -> None:
         brush = Point2(
             self.map_x + self.brush_forward_offset_m * math.cos(self.map_yaw),
@@ -456,8 +520,18 @@ class CleaningVisualizer(Node):
         rate = cleaned_area / elapsed_sec * 60.0 if elapsed_sec > 0.0 else 0.0
         trajectory = self.trajectory_map[::max(1, len(self.trajectory_map) // 240)]
         cleaned_points = [self.cleanable_cells[index] for index in self.cleaned_cells]
+        semantic_paths = {
+            "planned_swaths": [decimate_xy(points, 120) for points in self.planned_swaths_map],
+            "planned_connectors": [decimate_xy(points, 120) for points in self.planned_connectors_map],
+            "planned_repairs": [decimate_xy(points, 120) for points in self.planned_repairs_map],
+            "current_component": [[point.x, point.y] for point in self.planned_path_map],
+            "actual_cleaning": [decimate_xy(points) for points in self.actual_cleaning_map],
+            "actual_transit": [decimate_xy(points) for points in self.actual_transit_map],
+            "actual_repair": [decimate_xy(points) for points in self.actual_repair_map],
+        }
         payload = {
-            "schema": "tzcup.gazebo_cleaning_telemetry.v1",
+            "schema": TELEMETRY_V2_SCHEMA,
+            "compatible_schema": "tzcup.gazebo_cleaning_telemetry.v1",
             "metric_basis": "gazebo_ground_truth_brush_footprint_evaluation_only",
             "state": self.coverage_state,
             "brush_enabled": self.brush_enabled,
@@ -478,11 +552,16 @@ class CleaningVisualizer(Node):
             "boundary": [[point.x, point.y] for point in self.cleanable_polygon_map],
             "planned_path": [[point.x, point.y] for point in self.planned_path_map],
             "trajectory": [[point.x, point.y] for point in trajectory],
+            "paths": semantic_paths,
             "cleaned_cells": [[point.x, point.y] for point in cleaned_points],
             "cell_size_m": self.cleaning_cell_m,
             "targets": self.targets,
         }
-        self.telemetry_publisher.publish(String(data=json.dumps(payload, separators=(",", ":"))))
+        encoded = json.dumps(payload, separators=(",", ":"))
+        self.telemetry_publisher.publish(String(data=encoded))
+        self.actual_cleaning_publisher.publish(String(data=json.dumps(semantic_paths["actual_cleaning"], separators=(",", ":"))))
+        self.actual_transit_publisher.publish(String(data=json.dumps(semantic_paths["actual_transit"], separators=(",", ":"))))
+        self.actual_repair_publisher.publish(String(data=json.dumps(semantic_paths["actual_repair"], separators=(",", ":"))))
 
     def _update_markers(self) -> None:
         if not self.have_pose:

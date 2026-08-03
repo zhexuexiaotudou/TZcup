@@ -9,6 +9,9 @@ Rectangle {
   implicitWidth: 360
   implicitHeight: 820
   property var telemetry: ({"state": "WAITING_FOR_DATA"})
+  property bool showPlanned: true
+  property bool showActual: true
+  property bool showRepairs: true
 
   function updateTelemetry() {
     try {
@@ -110,6 +113,16 @@ Rectangle {
         Label { text: root.value("simulation_speed", "--"); color: "#ffc857"; font.pixelSize: 12; font.bold: true }
       }
 
+      RowLayout {
+        Layout.fillWidth: true
+        Layout.leftMargin: 16
+        Layout.rightMargin: 16
+        spacing: 6
+        CheckBox { text: "规划"; checked: root.showPlanned; onToggled: { root.showPlanned = checked; mapCanvas.requestPaint() } }
+        CheckBox { text: "实际"; checked: root.showActual; onToggled: { root.showActual = checked; mapCanvas.requestPaint() } }
+        CheckBox { text: "补扫"; checked: root.showRepairs; onToggled: { root.showRepairs = checked; mapCanvas.requestPaint() } }
+      }
+
       Canvas {
         id: mapCanvas
         Layout.fillWidth: true
@@ -159,15 +172,36 @@ Rectangle {
           ctx.fillStyle = "rgba(41, 214, 151, 0.65)"
           for (i = 0; i < cells.length; ++i) ctx.fillRect(px(cells[i][0]) - cellSize / 2, py(cells[i][1]) - cellSize / 2, cellSize + 0.5, cellSize + 0.5)
 
-          function line(points, color, lineWidth) {
+          function line(points, color, lineWidth, dashed) {
             if (!points || points.length < 2) return
+            ctx.setLineDash(dashed ? [6, 4] : [])
             ctx.strokeStyle = color; ctx.lineWidth = lineWidth; ctx.beginPath()
             ctx.moveTo(px(points[0][0]), py(points[0][1]))
             for (var j = 1; j < points.length; ++j) ctx.lineTo(px(points[j][0]), py(points[j][1]))
-            ctx.stroke()
+            ctx.stroke(); ctx.setLineDash([])
           }
-          line(root.value("planned_path", []), "#c084fc", 2)
-          line(root.value("trajectory", []), "#55d6ff", 2.5)
+          var paths = root.value("paths", {})
+          var layer, j
+          if (root.showPlanned) {
+            layer = paths.planned_swaths || []
+            for (j = 0; j < layer.length; ++j) line(layer[j], "#ffc857", 2.2, false)
+            layer = paths.planned_connectors || []
+            for (j = 0; j < layer.length; ++j) line(layer[j], "#aab7c4", 1.6, true)
+            line(paths.current_component || root.value("planned_path", []), "#ffffff", 3.0, false)
+          }
+          if (root.showRepairs) {
+            layer = paths.planned_repairs || []
+            for (j = 0; j < layer.length; ++j) line(layer[j], "#d77cff", 2.2, true)
+            layer = paths.actual_repair || []
+            for (j = 0; j < layer.length; ++j) line(layer[j], "#c084fc", 3.0, false)
+          }
+          if (root.showActual) {
+            layer = paths.actual_transit || []
+            for (j = 0; j < layer.length; ++j) line(layer[j], "#ff9f43", 1.8, true)
+            layer = paths.actual_cleaning || []
+            for (j = 0; j < layer.length; ++j) line(layer[j], "#55d6ff", 2.8, false)
+            if (!layer.length) line(root.value("trajectory", []), "#55d6ff", 2.8, false)
+          }
 
           var targets = root.value("targets", [])
           for (i = 0; i < targets.length; ++i) {
