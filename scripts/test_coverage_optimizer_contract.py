@@ -17,6 +17,7 @@ def test_optimized_small_demo_profile_is_packaged_and_selected():
     assert 'monitor["observation_sources"] = ["scan"]' in runner
     assert 'config["tzcup_demo_safety_profile"] = {' in runner
     assert '"ros__parameters": {' in runner
+    assert "ros2 topic pub --times 5 --rate 5" in runner
     assert "--wait-matching-subscriptions 2" in runner
     assert "gazebo_cleaning_telemetry.json" in runner
 

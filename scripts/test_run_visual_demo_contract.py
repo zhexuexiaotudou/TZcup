@@ -75,7 +75,8 @@ def test_manual_gui_preparation_fails_closed_without_one_tracking_plugin():
 def test_emergency_stop_availability_waits_for_dashboard_but_stays_bounded():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
 
-    assert "timeout 15 ros2 topic pub --once --wait-matching-subscriptions 2" in launcher
+    assert "timeout 15 ros2 topic pub --times 5 --rate 5" in launcher
+    assert "--wait-matching-subscriptions 2" in launcher
     assert "Unable to publish the bounded emergency-stop availability pulse." in launcher
 
 

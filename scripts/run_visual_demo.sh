@@ -759,7 +759,8 @@ if [[ "${VIDEO_MODE}" != "off" ]]; then
   fi
 fi
 
-if ! timeout 15 ros2 topic pub --once --wait-matching-subscriptions 2 \
+if ! timeout 15 ros2 topic pub --times 5 --rate 5 \
+  --wait-matching-subscriptions 2 \
   /emergency_stop std_msgs/msg/Bool "{data: false}" \
   > "${OUTPUT_DIR}/emergency_stop_available.log" 2>&1
 then
