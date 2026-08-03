@@ -40,19 +40,25 @@ def _region_swaths(region: list[Point], resolution: float, brush_width: float):
     min_y, max_y = min(y for _, y in region), max(y for _, y in region)
     horizontal = (max_x - min_x) >= (max_y - min_y)
     axis = 1 if horizontal else 0
-    groups = {}
-    for point in region:
-        key = round(point[axis] / max(resolution, 1e-6))
-        groups.setdefault(key, []).append(point)
+    # Cluster adjacent residual rows/columns into one brush-width corridor.
+    # The old one-grid-row-per-swath rule produced many almost coincident
+    # repair paths and exhausted the bounded repair budget without covering
+    # the next residual island.
+    ordered = sorted(region, key=lambda point: (point[axis], point[1 - axis]))
+    groups: list[list[Point]] = []
+    for point in ordered:
+        if not groups or point[axis] - groups[-1][0][axis] > brush_width + 1e-9:
+            groups.append([point])
+        else:
+            groups[-1].append(point)
     swaths = []
-    for index, key in enumerate(sorted(groups)):
-        values = groups[key]
+    for index, values in enumerate(groups):
         if horizontal:
-            y = sum(point[1] for point in values) / len(values)
+            y = (min(point[1] for point in values) + max(point[1] for point in values)) / 2.0
             segment = ((min(p[0] for p in values) - brush_width / 2, y),
                        (max(p[0] for p in values) + brush_width / 2, y))
         else:
-            x = sum(point[0] for point in values) / len(values)
+            x = (min(point[0] for point in values) + max(point[0] for point in values)) / 2.0
             segment = ((x, min(p[1] for p in values) - brush_width / 2),
                        (x, max(p[1] for p in values) + brush_width / 2))
         swaths.append(segment if index % 2 == 0 else (segment[1], segment[0]))

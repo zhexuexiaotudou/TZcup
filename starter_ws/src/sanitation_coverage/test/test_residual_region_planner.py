@@ -15,3 +15,11 @@ def test_repair_length_is_capped_at_ten_percent():
     plan = plan_residual_regions(points, 0.1, 0.4, primary_length_m=5.0)
     assert plan.total_length_m <= 0.5
     assert plan.truncated
+
+
+def test_adjacent_grid_rows_share_one_brush_width_repair_swath():
+    points = [(x / 10, y / 10) for y in range(4) for x in range(11)]
+    plan = plan_residual_regions(points, 0.1, 0.65, primary_length_m=20.0)
+    assert len(plan.regions) == 1
+    assert len(plan.swaths) == 1
+    assert plan.total_length_m <= 2.0

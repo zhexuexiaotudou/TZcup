@@ -346,12 +346,14 @@ class CoverageProbe(Node):
         planning_spacing = float(config.get("planning_swath_spacing_m", width))
         endpoint_extension = float(config.get("swath_endpoint_extension_m", 0.0))
         empirical_threshold = float(config.get("empirical_coverage_threshold", 0.98))
+        empirical_repeat_threshold = float(config.get("empirical_repeat_rate_threshold", 1.0))
         if not 0.0 < planning_spacing <= width:
             return self._write_report({
                 "success": False,
                 "error": "planning_swath_spacing_m_must_be_positive_and_at_most_operation_width_m",
             })
-        if endpoint_extension < 0.0 or not 0.0 <= empirical_threshold <= 1.0:
+        if (endpoint_extension < 0.0 or not 0.0 <= empirical_threshold <= 1.0
+                or not 0.0 <= empirical_repeat_threshold <= 1.0):
             return self._write_report({
                 "success": False,
                 "error": "invalid_coverage_execution_acceptance_parameters",
@@ -527,6 +529,7 @@ class CoverageProbe(Node):
                     break
         self._set_brush(False)
         complete = bool(selected_components and transit["success"] and len(component_results) == len(selected_components) and all(item["success"] for item in component_results))
+        primary_execution_complete = complete
         empirical = empirical_swept_metrics(
             cleanable_polygon, self.brush_samples, width, resolution=0.10,
             exclusion_polygons=cleanable_exclusions,
@@ -560,6 +563,8 @@ class CoverageProbe(Node):
             "net_efficiency_m2_h": empirical["covered_area_m2"] / execution_duration * 3600.0 if execution_duration > 0 else 0.0,
         })
         empirical_pass = complete and empirical["coverage_rate"] >= empirical_threshold
+        repeat_pass = empirical["repeat_rate"] <= empirical_repeat_threshold
+        coverage_quality_pass = empirical_pass and repeat_pass
         safety_pass = self.collision_events == 0
         keepout_violation_samples = sum(
             any(point_in_polygon(sample[1], sample[2], polygon) for polygon in exclusions)
@@ -609,17 +614,21 @@ class CoverageProbe(Node):
             "planner": "OpenNav Coverage + Fields2Cover",
             "planning_success": True,
             "transit_to_start_success": transit["success"],
-            "full_execution_success": complete,
+            "full_execution_success": primary_execution_complete,
+            "repair_execution_success": repair_report["success"],
             "empirical_coverage_success": empirical_pass,
+            "empirical_repeat_success": repeat_pass,
+            "coverage_quality_success": coverage_quality_pass,
             "safety_success": safety_pass,
             "competition_efficiency_pass": efficiency_pass,
-            "success": bool(complete and empirical_pass and safety_pass and not self.brush_enabled),
+            "success": bool(complete and coverage_quality_pass and safety_pass and not self.brush_enabled),
             "operation_width_m": width,
             "planning_swath_spacing_m": planning_spacing,
             "coverage_planner_profile": str(config.get("coverage_planner_profile", "LEGACY_DUBINS")),
             "swath_overlap_m": width - planning_spacing,
             "swath_endpoint_extension_m": endpoint_extension,
             "empirical_coverage_threshold": empirical_threshold,
+            "empirical_repeat_rate_threshold": empirical_repeat_threshold,
             "swath_count": len(swaths), "turn_count": len(turns),
             "nav_path_pose_count": len(nav_points),
             "component_count": len(selected_components), "component_results": component_results,
@@ -1055,7 +1064,7 @@ class CoverageProbe(Node):
         goal = FollowPath.Goal(); goal.path = self._path_message(component["points"])
         self.current_path_publisher.publish(goal.path)
         self.current_component_path_publisher.publish(goal.path)
-        goal.controller_id = "FollowPath"; goal.goal_checker_id = "goal_checker"; goal.progress_checker_id = "progress_checker"
+        goal.controller_id = "FollowPath"; goal.goal_checker_id = "coverage_goal_checker"; goal.progress_checker_id = "progress_checker"
         timeout = max(self.get_parameter("minimum_component_timeout_sec").value, path_length(component["points"]) / 0.10 + 30.0)
         result = self._run_action(
             self.follow_client, goal, component["brush"], timeout, "follow_path"
