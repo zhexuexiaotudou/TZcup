@@ -679,6 +679,11 @@ if [[ "${RECORD_MCAP}" -eq 1 ]]; then
     /ground_truth/odom /cmd_vel /cmd_vel_gate /brush_enabled \
     /emergency_stop /coverage/state /coverage/component_state \
     /coverage/current_path /coverage/evaluation_sample \
+    /coverage/full_plan /coverage/planned_swaths \
+    /coverage/planned_connectors /coverage/planned_repairs \
+    /coverage/current_component_path \
+    /coverage/actual_cleaning_trajectory \
+    /coverage/actual_transit_trajectory /coverage/actual_repair_trajectory \
     /coverage/diagnostics /local_costmap/costmap /global_costmap/costmap \
     > "${OUTPUT_DIR}/rosbag.log" 2>&1 &
   pids+=("$!")

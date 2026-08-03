@@ -27,9 +27,10 @@ state, speed profile and one of these types:
   by a brush-on line across clean ground. At most one repair pass and 10% of the
   primary swath length are allowed by the optimized demo profile.
 
-The optimized small-field configuration uses a 0.48 m swath spacing for the
+The optimized small-field configuration uses a 0.42 m swath spacing for the
 physical 0.65 m brush. Candidate spacings are 0.42, 0.46, 0.48, 0.50 and
-0.52 m; 0.35 m is retained only as a fail-closed legacy fallback. The pure
+0.52 m; the first live 0.48 m trial reached only 97.17% and was therefore
+rejected. The 0.35 m profile is retained only as a fail-closed legacy fallback. The pure
 optimizer evaluates angles from 0 through 175 degrees in five-degree steps and
 chooses the route with the lowest path/connector/turn cost.
 

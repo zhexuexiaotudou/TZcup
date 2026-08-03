@@ -6,7 +6,7 @@ coverage_server:
     robot_width: 0.72
     # The coverage server only produces swaths for this profile. Runtime
     # connectors are rebuilt as rotate/translate/rotate semantic components.
-    operation_width: 0.48
+    operation_width: 0.42
     min_turning_radius: 0.40
     linear_curv_change: 200.0
     default_headland_width: 1.00
