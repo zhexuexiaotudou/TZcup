@@ -471,7 +471,7 @@ for _ in $(seq 1 120); do
     exit 4
   fi
   localization_topics="$(
-    timeout 8 ros2 topic list --no-daemon --spin-time 3 2>/dev/null || true
+    timeout 12 ros2 topic list --no-daemon --spin-time 3 2>/dev/null || true
   )"
   if grep -Fxq '/localization/fused_pose' <<< "${localization_topics}" &&
     grep -Fxq '/scan' <<< "${localization_topics}" &&
@@ -537,6 +537,7 @@ if [[ "${GUI}" -eq 1 && "${GAZEBO_TRAIL}" -eq 1 ]]; then
     -p world_to_map_y:="${world_to_map_y}" \
     -p world_to_map_yaw:=0.0 \
     -p service_timeout_ms:=3000 \
+    -p telemetry_output_path:="${OUTPUT_DIR}/gazebo_cleaning_telemetry.json" \
     > "${OUTPUT_DIR}/gazebo_cleaning_visualizer.log" 2>&1 &
   pids+=("$!")
 fi
@@ -559,7 +560,7 @@ for _ in $(seq 1 150); do
     timeout 8 ros2 topic list --no-daemon --spin-time 3 2>/dev/null || true
   )"
   services="$(
-    timeout 8 ros2 service list --no-daemon --spin-time 3 \
+    timeout 12 ros2 service list --no-daemon --spin-time 3 \
       --include-hidden-services \
       2>/dev/null || true
   )"
@@ -571,12 +572,12 @@ for _ in $(seq 1 150); do
   planner_state=""
   if grep -q '^/controller_server/get_state$' <<< "${services}"; then
     controller_state="$(
-      timeout 5 ros2 lifecycle get /controller_server 2>/dev/null || true
+      timeout 7 ros2 lifecycle get /controller_server 2>/dev/null || true
     )"
   fi
   if grep -q '^/planner_server/get_state$' <<< "${services}"; then
     planner_state="$(
-      timeout 5 ros2 lifecycle get /planner_server 2>/dev/null || true
+      timeout 7 ros2 lifecycle get /planner_server 2>/dev/null || true
     )"
   fi
   if grep -q '^/localization/fused_pose$' <<< "${topics}" &&
@@ -758,7 +759,7 @@ if [[ "${VIDEO_MODE}" != "off" ]]; then
   fi
 fi
 
-if ! timeout 15 ros2 topic pub --once --wait-matching-subscriptions 1 \
+if ! timeout 15 ros2 topic pub --once --wait-matching-subscriptions 2 \
   /emergency_stop std_msgs/msg/Bool "{data: false}" \
   > "${OUTPUT_DIR}/emergency_stop_available.log" 2>&1
 then
@@ -880,4 +881,5 @@ summary_args=(
 [[ "${RECORD_MCAP}" -eq 1 ]] && summary_args+=(--mcap-required)
 [[ "${camera_follow_requested}" -eq 1 ]] && summary_args+=(--camera-follow-requested)
 [[ "${GUI}" -eq 0 || "${MANUAL_CONTROL}" -eq 1 ]] && summary_args+=(--camera-follow-not-required)
+[[ "${GUI}" -eq 1 && "${GAZEBO_TRAIL}" -eq 1 ]] && summary_args+=(--targets-required)
 python3 "${ROOT}/scripts/visual_demo_summary.py" "${summary_args[@]}"

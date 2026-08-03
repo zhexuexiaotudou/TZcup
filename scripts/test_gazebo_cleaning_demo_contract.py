@@ -87,7 +87,7 @@ def test_gazebo_only_launcher_contract() -> None:
     assert "sanitation_gazebo_visualization cleaning_visualizer" in shell_launcher
     assert '[[ "${OPEN_DASHBOARD}" -eq 1 ]]' in shell_launcher
     assert "keep_open_stop=1" in shell_launcher
-    assert "--wait-matching-subscriptions 1" in shell_launcher
+    assert "--wait-matching-subscriptions 2" in shell_launcher
     assert "[switch]$GazeboOnly" in powershell_launcher
     assert '"--gazebo-only"' in powershell_launcher
     assert "[switch]$Showcase" in powershell_launcher
@@ -327,7 +327,7 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     assert 'world_name="sanitation_competition_demo"' in shell
     assert 'mission_control_demo.config' in shell
     assert 'EXPECTED_COMPONENTS=17' in shell
-    assert 'coverage_demo_overlap.yaml' in shell
+    assert 'coverage_skid_steer_optimized.yaml' in shell
     assert 'max_linear_velocity="0.70"; max_angular_velocity="0.60"' in shell
     assert 'max_linear_velocity="0.90"; max_angular_velocity="0.75"' in shell
     assert 'smoother["max_velocity"] = [linear_velocity, 0.0, angular_velocity]' in shell

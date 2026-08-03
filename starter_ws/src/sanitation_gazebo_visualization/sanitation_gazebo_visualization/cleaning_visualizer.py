@@ -106,6 +106,12 @@ class CleaningVisualizer(Node):
         self.mission_config = str(
             self.declare_parameter("mission_config", "").value
         )
+        telemetry_output_path = str(
+            self.declare_parameter("telemetry_output_path", "").value
+        )
+        self.telemetry_output_path = (
+            FilePath(telemetry_output_path) if telemetry_output_path else None
+        )
         self.world_to_map_x = float(
             self.declare_parameter("world_to_map_x", 8.0).value
         )
@@ -559,6 +565,11 @@ class CleaningVisualizer(Node):
         }
         encoded = json.dumps(payload, separators=(",", ":"))
         self.telemetry_publisher.publish(String(data=encoded))
+        if self.telemetry_output_path is not None:
+            self.telemetry_output_path.parent.mkdir(parents=True, exist_ok=True)
+            temporary = self.telemetry_output_path.with_suffix(".json.tmp")
+            temporary.write_text(encoded, encoding="utf-8")
+            temporary.replace(self.telemetry_output_path)
         self.actual_cleaning_publisher.publish(String(data=json.dumps(semantic_paths["actual_cleaning"], separators=(",", ":"))))
         self.actual_transit_publisher.publish(String(data=json.dumps(semantic_paths["actual_transit"], separators=(",", ":"))))
         self.actual_repair_publisher.publish(String(data=json.dumps(semantic_paths["actual_repair"], separators=(",", ":"))))
