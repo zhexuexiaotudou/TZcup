@@ -638,6 +638,7 @@ class CoverageProbe(Node):
         localization["formal_gate_basis"] = (
             "Stage4V-compatible per-seed XY RMSE <= 0.05 m; pointwise P95 is diagnostic"
         )
+        localization_pass = localization["pass_rmse_at_most_0_05m"]
         self._write_trajectory()
         report = {
             "schema_version": 2,
@@ -651,8 +652,12 @@ class CoverageProbe(Node):
             "empirical_repeat_success": repeat_pass,
             "coverage_quality_success": coverage_quality_pass,
             "safety_success": safety_pass,
+            "localization_success": localization_pass,
             "competition_efficiency_pass": efficiency_pass,
-            "success": bool(complete and coverage_quality_pass and safety_pass and not self.brush_enabled),
+            "success": bool(
+                complete and coverage_quality_pass and safety_pass
+                and localization_pass and not self.brush_enabled
+            ),
             "operation_width_m": width,
             "planning_swath_spacing_m": planning_spacing,
             "execution_lateral_scale": calibration_scale,

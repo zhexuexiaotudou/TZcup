@@ -285,6 +285,8 @@ cleaning_width="0.65"
 brush_center_y="0.23"
 max_linear_velocity="0.45"
 max_angular_velocity="0.35"
+localization_fusion_mode="hybrid_rtk_scan_imu_wheel"
+enable_scan_refiner="true"
 profile_label="STANDARD DEMO"
 mission_scope="LIVE DEMO AREA"
 map_area_m2="4000.0"
@@ -305,6 +307,11 @@ if [[ "${MAP_SIZE}" == "small" ]]; then
   mission_scope="OUTER TASK 30 M2 / CLEANABLE 12 M2"
   map_area_m2="30.0"
   coverage_params="${coverage_share}/config/coverage_skid_steer_optimized.yaml"
+  # The independent demo world does not share the frozen Stage4V scan map.
+  # Use the deployable RTK + wheel/IMU lane instead of accepting map-mismatched
+  # scan corrections. Medium/large retain hybrid scan fallback.
+  localization_fusion_mode="rtk_imu_wheel"
+  enable_scan_refiner="false"
   if [[ "${SIMULATION_SPEED}" == "fast" ]]; then max_linear_velocity="0.70"; max_angular_velocity="0.60"; fi
   if [[ "${SIMULATION_SPEED}" == "turbo" ]]; then max_linear_velocity="0.90"; max_angular_velocity="0.75"; fi
 fi
@@ -450,8 +457,8 @@ setsid ros2 launch sanitation_bringup stage4v_localization.launch.py \
   cleaning_width:="${cleaning_width}" brush_center_y:="${brush_center_y}" \
   world_to_map_x:="${world_to_map_x}" world_to_map_y:="${world_to_map_y}" \
   initial_pose_x:="${initial_pose_x}" initial_pose_y:="${initial_pose_y}" \
-  camera_profile:=V5_retracted fusion_mode:=hybrid_rtk_scan_imu_wheel \
-  enable_scan_refiner:=true \
+  camera_profile:=V5_retracted fusion_mode:="${localization_fusion_mode}" \
+  enable_scan_refiner:="${enable_scan_refiner}" \
   > "${OUTPUT_DIR}/localization.log" 2>&1 &
 localization_pid="$!"
 pids+=("${localization_pid}")

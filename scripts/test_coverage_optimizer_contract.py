@@ -20,6 +20,16 @@ def test_optimized_small_demo_profile_is_packaged_and_selected():
     assert "ros2 topic pub --times 5 --rate 5" in runner
     assert "--wait-matching-subscriptions 2" in runner
     assert "gazebo_cleaning_telemetry.json" in runner
+    assert 'localization_fusion_mode="rtk_imu_wheel"' in runner
+    assert 'enable_scan_refiner="false"' in runner
+
+
+def test_coverage_success_includes_the_formal_localization_gate():
+    probe = (
+        ROOT / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
+    ).read_text(encoding="utf-8")
+    assert '"localization_success": localization_pass' in probe
+    assert "and localization_pass and not self.brush_enabled" in probe
 
 
 def test_optimized_profile_has_bounded_repair_and_legacy_fallback():

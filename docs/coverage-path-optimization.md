@@ -42,6 +42,11 @@ The hybrid localizer smooths RTK global anchors in the odometry frame and
 rejects scan corrections that disagree with a fresh RTK fix by more than
 0.10 m. Wheel/IMU propagation remains unsmoothed, so this improves absolute
 cross-seed stability without adding motion lag or reducing the 0.05 m gate.
+Because the independent small demo does not share geometry with the frozen
+Stage4V scan map, it explicitly selects the RTK + wheel/IMU lane. Medium and
+large mapped scenes retain hybrid scan fallback. The final Coverage success
+gate includes per-seed localization RMSE, so a path-only pass cannot mask a
+localization regression.
 
 ## ROS interfaces
 
