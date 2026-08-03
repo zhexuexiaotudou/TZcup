@@ -68,7 +68,10 @@ def plan_skid_steer_connector(
             f"{connector_id}-translate", kind, (start, goal), False,
             "BACKUP" if reverse else "SHIFT", {"travel_yaw_rad": travel_yaw},
         ))
-    physical_arrival_yaw = normalize_angle(travel_yaw + (math.pi if reverse else 0.0))
+    # travel_yaw is always the chassis heading. In backup mode the translation
+    # direction is opposite to it, but the chassis does not magically flip at
+    # arrival.
+    physical_arrival_yaw = travel_yaw
     final_turn = normalize_angle(goal_yaw - physical_arrival_yaw)
     if abs(final_turn) > 1e-3:
         components.append(CoverageComponent(
