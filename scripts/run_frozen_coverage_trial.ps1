@@ -8,6 +8,7 @@ param(
     [string]$Tag,
     [ValidateSet("fast", "turbo")]
     [string]$SimulationSpeed = "fast",
+    [switch]$Trace,
     [string]$WslDistribution = "TZcup-Ubuntu-24.04",
     [int]$DashboardPort = 8899
 )
@@ -28,7 +29,13 @@ $arguments = @(
     "--", "env",
     "ROS_DOMAIN_ID=42",
     "GZ_PARTITION=$partition",
-    "bash", "$wslRoot/scripts/run_visual_demo.sh",
+    "bash"
+)
+if ($Trace) {
+    $arguments += "-x"
+}
+$arguments += @(
+    "$wslRoot/scripts/run_visual_demo.sh",
     "--workspace", "/home/zhexu/tzcup_coverage_optimizer_ws",
     "--base-workspace", "/home/zhexu/sanitation_ws",
     "--output", "$wslRoot/artifacts/coverage_optimizer_$Tag",

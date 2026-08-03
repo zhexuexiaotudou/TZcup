@@ -18,3 +18,6 @@ def test_frozen_trial_is_isolated_and_uses_the_real_small_mission():
     assert "-RedirectStandardError $launcherErrorLog" in runner
     assert "-Wait -PassThru" in runner
     assert "exit $process.ExitCode" in runner
+    assert "[switch]$Trace" in runner
+    assert 'if ($Trace)' in runner
+    assert '$arguments += "-x"' in runner
