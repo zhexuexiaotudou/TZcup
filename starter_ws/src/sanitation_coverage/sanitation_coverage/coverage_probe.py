@@ -31,8 +31,12 @@ from sanitation_coverage.metrics import (
     summarize_distances,
     synchronized_xy_errors,
     uncovered_cell_centers,
-    horizontal_repair_segments,
 )
+from sanitation_coverage.coverage_components import ComponentType, CoverageComponent
+from sanitation_coverage.coverage_plan import CoveragePlan
+from sanitation_coverage.oriented_swath_router import route_oriented_swaths
+from sanitation_coverage.residual_region_planner import plan_residual_regions
+from sanitation_coverage.skid_steer_connector import plan_skid_steer_connector
 from sanitation_coverage.mission_geometry import (
     compile_mission_geometry,
     exclusion_clearance,
@@ -105,6 +109,9 @@ class CoverageProbe(Node):
         self.compute_path_client = ActionClient(
             self, ComputePathToPose, "/compute_path_to_pose"
         )
+        plan_qos = QoSProfile(depth=1)
+        plan_qos.reliability = ReliabilityPolicy.RELIABLE
+        plan_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
         self.controller_state_client = self.create_client(GetState, "/controller_server/get_state")
         self.brush_publisher = self.create_publisher(Bool, "/brush_enabled", 10)
         self.state_publisher = self.create_publisher(String, "/coverage/state", 10)
@@ -116,6 +123,21 @@ class CoverageProbe(Node):
         )
         self.current_path_publisher = self.create_publisher(
             NavPath, "/coverage/current_path", 10
+        )
+        self.current_component_path_publisher = self.create_publisher(
+            NavPath, "/coverage/current_component_path", 10
+        )
+        self.full_plan_publisher = self.create_publisher(
+            String, "/coverage/full_plan", plan_qos
+        )
+        self.planned_swaths_publisher = self.create_publisher(
+            String, "/coverage/planned_swaths", plan_qos
+        )
+        self.planned_connectors_publisher = self.create_publisher(
+            String, "/coverage/planned_connectors", plan_qos
+        )
+        self.planned_repairs_publisher = self.create_publisher(
+            String, "/coverage/planned_repairs", plan_qos
         )
         self.diagnostics_publisher = self.create_publisher(
             String, "/coverage/diagnostics", 10
@@ -171,6 +193,21 @@ class CoverageProbe(Node):
         self.create_timer(1.0, lambda: self.state_publisher.publish(String(data=self.state)))
         if self.get_parameter("manual_start").value:
             self._set_state("READY", {"operator_control": "gazebo_native_panel"})
+
+    def _publish_semantic_plan(self, plan):
+        payload = plan.to_dict()
+        self.full_plan_publisher.publish(String(data=json.dumps(payload, separators=(",", ":"))))
+        layers = {
+            "swaths": [item.to_dict() for item in plan.components if item.kind is ComponentType.SWATH],
+            "connectors": [item.to_dict() for item in plan.components if item.kind in {
+                ComponentType.ROTATE, ComponentType.SHIFT, ComponentType.BACKUP,
+                ComponentType.OBSTACLE_BYPASS, ComponentType.TRANSIT,
+            }],
+            "repairs": [item.to_dict() for item in plan.components if item.kind is ComponentType.REPAIR_SWATH],
+        }
+        self.planned_swaths_publisher.publish(String(data=json.dumps(layers["swaths"], separators=(",", ":"))))
+        self.planned_connectors_publisher.publish(String(data=json.dumps(layers["connectors"], separators=(",", ":"))))
+        self.planned_repairs_publisher.publish(String(data=json.dumps(layers["repairs"], separators=(",", ":"))))
 
     def _on_start(self, _request, response):
         if self.state != "READY" or self.run_requested:
@@ -330,6 +367,12 @@ class CoverageProbe(Node):
             return self._write_report({"success": False, **planning})
         raw_swaths, turns, nav_points, result = planning["raw_swaths"], planning["turns"], planning["nav_points"], planning["result"]
         swaths, repaired = repair_degenerate_swaths(raw_swaths, turns, nav_points)
+        optimized_profile = str(config.get("coverage_planner_profile", "LEGACY_DUBINS")) == "SKID_STEER_OPTIMIZED"
+        if optimized_profile:
+            self._wait_for_estimated_pose(15.0)
+            route_start = self.estimated_pose[:2] if self.estimated_pose else swaths[0][0]
+            routed = route_oriented_swaths(swaths, route_start)
+            swaths = list(routed.swaths)
         execution_swaths = [
             self._extend_swath(start, end, endpoint_extension)
             for start, end in swaths
@@ -346,11 +389,42 @@ class CoverageProbe(Node):
             "excluded_area_m2": geometry["excluded_area_m2"],
             "cleanable_area_m2": geometry["cleanable_area_m2"],
         })
-        components = []
-        for index, swath in enumerate(execution_swaths):
-            components.append({"kind": "swath", "index": index, "brush": True, "points": self._interpolate(*swath)})
-            if index < len(turns):
-                components.append({"kind": "turn", "index": index, "brush": False, "points": turns[index]})
+        if optimized_profile:
+            semantic_components = self._build_optimized_components(
+                execution_swaths, geometry["outer_polygon"]
+            )
+            components = [
+                {
+                    "component_id": item.component_id,
+                    "kind": item.kind.value,
+                    "index": index,
+                    "brush": item.brush_enabled,
+                    "points": list(item.points),
+                    "speed_profile": item.speed_profile,
+                    "metadata": item.metadata,
+                }
+                for index, item in enumerate(semantic_components)
+            ]
+            semantic_plan = CoveragePlan(
+                mission_id=str(config["mission_id"]), frame_id=str(config["frame_id"]),
+                components=semantic_components,
+                route_mode=str(config.get("route_mode", "AREA_FILL")),
+                metadata={
+                    "planning_swath_spacing_m": planning_spacing,
+                    "physical_operation_width_m": width,
+                    "legacy_dubins_turns_discarded": len(turns),
+                },
+            )
+        else:
+            components = []
+            for index, swath in enumerate(execution_swaths):
+                components.append({"component_id": f"swath-{index}", "kind": "SWATH", "index": index, "brush": True, "points": self._interpolate(*swath)})
+                if index < len(turns):
+                    components.append({"component_id": f"turn-{index}", "kind": "LEGACY_DUBINS_TURN", "index": index, "brush": False, "points": turns[index]})
+            semantic_plan = None
+
+        if semantic_plan is not None:
+            self._publish_semantic_plan(semantic_plan)
 
         intersection_count = self._swath_exclusion_intersections(
             swaths, cleanable_polygon, cleanable_exclusions
@@ -358,7 +432,8 @@ class CoverageProbe(Node):
         self._set_state("TRANSIT_PREFLIGHT", {"expected_components": len(components)})
         self._wait_for_estimated_pose(15.0)
         selection = self._select_route(
-            components, geometry, float(config["staging_offset_m"])
+            components, geometry, float(config["staging_offset_m"]),
+            allow_reverse=not optimized_profile,
         )
         path_report = {
             "frame_id": result.nav_path.header.frame_id,
@@ -371,10 +446,12 @@ class CoverageProbe(Node):
             "raw_swaths": raw_swaths,
             "turns": turns,
             "component_count": len(components),
+            "coverage_planner_profile": str(config.get("coverage_planner_profile", "LEGACY_DUBINS")),
+            "semantic_plan": semantic_plan.to_dict() if semantic_plan else None,
             "mission_geometry": geometry,
             "swath_exclusion_intersection_count": intersection_count,
             "route_selection": selection["report"],
-            "execution_strategy": "preflight forward/reverse staging poses, NavigateToPose with explicit swath yaw, brush-off entry, then every swath/turn",
+            "execution_strategy": "ordered adjacent swaths with semantic skid-steer connectors" if optimized_profile else "legacy preflight forward/reverse staging and Dubins turns",
         }
         self._write_json(self.get_parameter("path_output_path").value, path_report)
 
@@ -410,11 +487,18 @@ class CoverageProbe(Node):
                 # so the Gazebo panel and diagnostics never show a stale brush
                 # value at swath / turn boundaries.
                 self._set_brush(component["brush"])
-                self._set_state(
-                    "EXECUTING_SWATH" if component["kind"] == "swath" else "EXECUTING_TURN",
-                    {"kind": component["kind"], "index": component["index"]},
-                )
-                component_results.append(self._follow_component(component))
+                component_state = {
+                    "SWATH": "EXECUTING_SWATH", "ROTATE": "EXECUTING_ROTATE",
+                    "SHIFT": "EXECUTING_SHIFT", "BACKUP": "EXECUTING_BACKUP",
+                    "OBSTACLE_BYPASS": "EXECUTING_BYPASS",
+                }.get(component["kind"], "EXECUTING_TURN")
+                self._set_state(component_state, {
+                    "component_id": component.get("component_id"),
+                    "kind": component["kind"], "index": component["index"],
+                    "completed_components": len(component_results),
+                    "expected_components": len(selected_components),
+                })
+                component_results.append(self._execute_component(component))
                 if not component_results[-1]["success"]:
                     if component_results[-1].get("stopped_by_operator"):
                         self._set_state("STOPPED", component_results[-1])
@@ -439,6 +523,7 @@ class CoverageProbe(Node):
                 cleanable_exclusions,
                 width,
                 empirical_threshold,
+                sum(math.dist(*swath) for swath in swaths),
             )
             complete = complete and repair_report["success"]
             empirical = empirical_swept_metrics(
@@ -511,6 +596,7 @@ class CoverageProbe(Node):
             "success": bool(complete and empirical_pass and safety_pass and not self.brush_enabled),
             "operation_width_m": width,
             "planning_swath_spacing_m": planning_spacing,
+            "coverage_planner_profile": str(config.get("coverage_planner_profile", "LEGACY_DUBINS")),
             "swath_overlap_m": width - planning_spacing,
             "swath_endpoint_extension_m": endpoint_extension,
             "empirical_coverage_threshold": empirical_threshold,
@@ -572,6 +658,35 @@ class CoverageProbe(Node):
         nav_points = [(float(pose.pose.position.x), float(pose.pose.position.y)) for pose in result.nav_path.poses]
         return {"raw_swaths": raw_swaths, "turns": turns, "nav_points": nav_points, "result": result}
 
+    def _build_optimized_components(self, swaths, safe_polygon):
+        components = []
+        for index, swath in enumerate(swaths):
+            points = tuple(self._interpolate(*swath))
+            components.append(CoverageComponent(
+                component_id=f"swath-{index:02d}", kind=ComponentType.SWATH,
+                points=points, brush_enabled=True, speed_profile="CLEAN",
+                metadata={"swath_index": index},
+            ))
+            if index >= len(swaths) - 1:
+                continue
+            next_swath = swaths[index + 1]
+            current_yaw = segment_heading(*swath)
+            next_yaw = segment_heading(*next_swath)
+            try:
+                components.extend(plan_skid_steer_connector(
+                    f"connector-{index:02d}", swath[1], current_yaw,
+                    next_swath[0], next_yaw, safe_polygon, allow_backup=True,
+                ))
+            except ValueError:
+                components.append(CoverageComponent(
+                    component_id=f"connector-{index:02d}-bypass",
+                    kind=ComponentType.OBSTACLE_BYPASS,
+                    points=tuple(self._interpolate(swath[1], next_swath[0])),
+                    brush_enabled=False, speed_profile="BYPASS",
+                    metadata={"fallback": "nav2_collision_checked_path"},
+                ))
+        return tuple(components)
+
     @staticmethod
     def _interpolate(start, end, spacing=0.10):
         length = math.dist(start, end)
@@ -604,7 +719,8 @@ class CoverageProbe(Node):
         return count
 
     def _execute_coverage_repairs(
-        self, config, cleanable_polygon, cleanable_exclusions, width, threshold
+        self, config, cleanable_polygon, cleanable_exclusions, width, threshold,
+        primary_length_m,
     ):
         """Run bounded brush-footprint repairs until the actual gate is met."""
         max_passes = max(0, int(config.get("coverage_repair_max_passes", 0)))
@@ -622,14 +738,29 @@ class CoverageProbe(Node):
                 cleanable_polygon, self.brush_samples, width, resolution=0.10,
                 exclusion_polygons=cleanable_exclusions,
             )
-            segments = horizontal_repair_segments(
-                missed, cleanable_polygon, width
+            residual = plan_residual_regions(
+                missed, resolution=0.10, brush_width=width,
+                primary_length_m=primary_length_m,
+                max_ratio=float(config.get("repair_max_primary_length_ratio", 0.10)),
             )
+            segments = list(residual.swaths)
+            self.planned_repairs_publisher.publish(String(data=json.dumps([
+                {
+                    "component_id": f"repair-{pass_index:02d}-{index:02d}",
+                    "kind": "REPAIR_SWATH", "points": [list(a), list(b)],
+                    "brush_enabled": True,
+                }
+                for index, (a, b) in enumerate(segments)
+            ], separators=(",", ":"))))
             pass_report = {
                 "pass_index": pass_index,
                 "coverage_before": empirical["coverage_rate"],
                 "missed_cell_count_before": len(missed),
                 "segment_count": len(segments),
+                "residual_region_count": len(residual.regions),
+                "planned_repair_length_m": residual.total_length_m,
+                "repair_length_limit_m": primary_length_m * float(config.get("repair_max_primary_length_ratio", 0.10)),
+                "repair_plan_truncated": residual.truncated,
                 "segments": [],
             }
             for segment_index, (brush_start, brush_end) in enumerate(segments):
@@ -716,8 +847,10 @@ class CoverageProbe(Node):
             "success": bool(all_success and final["coverage_rate"] >= threshold),
         }
 
-    def _select_route(self, components, geometry, offset_m):
+    def _select_route(self, components, geometry, offset_m, allow_reverse=True):
         candidates = route_candidates(components, offset_m)
+        if not allow_reverse:
+            candidates = candidates[:1]
         staging_points = [
             (candidate["staging_pose"]["x"], candidate["staging_pose"]["y"])
             for candidate in candidates
@@ -877,6 +1010,7 @@ class CoverageProbe(Node):
     def _follow_component(self, component):
         goal = FollowPath.Goal(); goal.path = self._path_message(component["points"])
         self.current_path_publisher.publish(goal.path)
+        self.current_component_path_publisher.publish(goal.path)
         goal.controller_id = "FollowPath"; goal.goal_checker_id = "goal_checker"; goal.progress_checker_id = "progress_checker"
         timeout = max(self.get_parameter("minimum_component_timeout_sec").value, path_length(component["points"]) / 0.10 + 30.0)
         result = self._run_action(
@@ -884,6 +1018,23 @@ class CoverageProbe(Node):
         )
         goal_pose = {"x": component["points"][-1][0], "y": component["points"][-1][1], "yaw": segment_heading(component["points"][-2], component["points"][-1])}
         result.update({"kind": component["kind"], "index": component["index"], "brush_enabled": component["brush"], "path_pose_count": len(component["points"]), "planned_length_m": path_length(component["points"]), "goal_pose": goal_pose, "terminal_tracking_error": self._tracking_error(goal_pose)})
+        return result
+
+    def _execute_component(self, component):
+        if component["kind"] == "ROTATE":
+            anchor = component["points"][0]
+            target_yaw = float(component.get("metadata", {}).get(
+                "target_yaw_rad", self.estimated_pose[2] if self.estimated_pose else 0.0
+            ))
+            result = self._navigate_to({"x": anchor[0], "y": anchor[1], "yaw": target_yaw})
+            result.update({
+                "kind": component["kind"], "index": component["index"],
+                "component_id": component.get("component_id"),
+                "brush_enabled": False, "planned_length_m": 0.0,
+            })
+            return result
+        result = self._follow_component(component)
+        result["component_id"] = component.get("component_id")
         return result
 
     def _run_action(self, client, goal, brush, timeout, action_kind):

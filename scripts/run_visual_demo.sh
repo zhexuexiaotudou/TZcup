@@ -300,11 +300,11 @@ case "${SIMULATION_SPEED}" in
 esac
 if [[ "${MAP_SIZE}" == "small" ]]; then
   mission_config="${runtime}/competition_demo_area_autonomous_navigation_profile_v1.yaml"
-  mission_template="${tasks_share}/config/competition_demo_area.yaml"
-  profile_label="INDEPENDENT COMPETITION DEMO"
+  mission_template="${tasks_share}/config/competition_demo_area_skid_steer_optimized.yaml"
+  profile_label="SKID-STEER OPTIMIZED DEMO"
   mission_scope="OUTER TASK 30 M2 / CLEANABLE 12 M2"
   map_area_m2="30.0"
-  coverage_params="${coverage_share}/config/coverage_demo_overlap.yaml"
+  coverage_params="${coverage_share}/config/coverage_skid_steer_optimized.yaml"
   if [[ "${SIMULATION_SPEED}" == "fast" ]]; then max_linear_velocity="0.70"; max_angular_velocity="0.60"; fi
   if [[ "${SIMULATION_SPEED}" == "turbo" ]]; then max_linear_velocity="0.90"; max_angular_velocity="0.75"; fi
 fi

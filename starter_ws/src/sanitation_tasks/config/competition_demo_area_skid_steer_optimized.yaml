@@ -1,0 +1,57 @@
+frame_id: map
+mission_id: competition_demo_coverage_optimized_001
+mode: coverage
+route_mode: AREA_FILL
+coverage_planner_profile: SKID_STEER_OPTIMIZED
+robot_width_m: 0.72
+operation_width_m: 0.65
+planning_swath_spacing_m: 0.48
+swath_spacing_candidates_m: [0.42, 0.46, 0.48, 0.50, 0.52]
+legacy_fallback_swath_spacing_m: 0.35
+swath_endpoint_extension_m: 0.20
+empirical_coverage_threshold: 0.995
+coverage_repair_max_passes: 1
+repair_max_primary_length_ratio: 0.10
+brush_forward_offset_m: 0.55
+min_turning_radius_m: 0.40
+route_type: ORIENTED_BOUSTROPHEDON
+path_type: SKID_STEER_RTR
+path_continuity_type: DISCONTINUOUS
+allow_overlap: true
+speed_profiles:
+  CLEAN: {linear_mps: 0.90, angular_radps: 0.45}
+  SHIFT: {linear_mps: 0.55, angular_radps: 0.60}
+  TURN: {linear_mps: 0.0, angular_radps: 0.60}
+  BACKUP: {linear_mps: 0.30, angular_radps: 0.35}
+  BYPASS: {linear_mps: 0.45, angular_radps: 0.45}
+  REPAIR: {linear_mps: 0.55, angular_radps: 0.40}
+outer_polygon:
+  - [-3.0, -4.0]
+  - [3.0, -4.0]
+  - [3.0, 1.0]
+  - [-3.0, 1.0]
+exclusion_polygons: []
+keepout_polygons: []
+static_obstacles: []
+cleaning_targets:
+  - {id: bottle_01, class: bottle, model_name: target_bottle_demo, position: [-1.60, -2.65], collection_radius_m: 0.55}
+  - {id: bottle_02, class: bottle, model_name: target_bottle_demo_02, position: [1.65, -0.80], collection_radius_m: 0.55}
+  - {id: can_01, class: can, model_name: target_can_demo, position: [0.40, -2.70], collection_radius_m: 0.55}
+  - {id: can_02, class: can, model_name: target_can_demo_02, position: [-1.20, -1.25], collection_radius_m: 0.55}
+  - {id: paper_01, class: paper, model_name: target_paper_demo, position: [-0.65, -2.45], collection_radius_m: 0.55}
+  - {id: paper_02, class: paper, model_name: target_paper_demo_02, position: [0.65, -0.95], collection_radius_m: 0.55}
+  - {id: cardboard_01, class: cardboard, model_name: target_cardboard_demo, position: [1.45, -2.30], collection_radius_m: 0.60}
+  - {id: cardboard_02, class: cardboard, model_name: target_cardboard_demo_02, position: [-1.55, -0.55], collection_radius_m: 0.60}
+  - {id: leaf_pile_01, class: leaves, model_name: target_leaf_pile_demo, position: [-0.15, -1.80], collection_radius_m: 0.65}
+  - {id: leaf_pile_02, class: leaves, model_name: target_leaf_pile_demo_02, position: [1.45, -1.55], collection_radius_m: 0.65}
+world_to_map_translation: [8.0, 0.0]
+headland:
+  enabled: true
+  width_m: 0.75
+safety_margin_m: 0.10
+staging_offset_m: 0.50
+robot_footprint:
+  - [0.40, 0.36]
+  - [0.40, -0.36]
+  - [-0.40, -0.36]
+  - [-0.40, 0.36]
