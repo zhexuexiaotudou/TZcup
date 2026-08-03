@@ -566,7 +566,7 @@ setsid ros2 run sanitation_hmi sanitation_live_dashboard --ros-args \
 dashboard_pid="$!"
 pids+=("${dashboard_pid}")
 
-if [[ "${GUI}" -eq 1 && "${GAZEBO_TRAIL}" -eq 1 ]]; then
+if [[ "${GAZEBO_TRAIL}" -eq 1 ]]; then
   setsid ros2 run sanitation_gazebo_visualization cleaning_visualizer --ros-args \
     -p use_sim_time:=true \
     -p operation_width_m:="${cleaning_width}" \
@@ -923,7 +923,7 @@ summary_args=(
 [[ "${RECORD_MCAP}" -eq 1 ]] && summary_args+=(--mcap-required)
 [[ "${camera_follow_requested}" -eq 1 ]] && summary_args+=(--camera-follow-requested)
 [[ "${GUI}" -eq 0 || "${MANUAL_CONTROL}" -eq 1 ]] && summary_args+=(--camera-follow-not-required)
-[[ "${GUI}" -eq 1 && "${GAZEBO_TRAIL}" -eq 1 ]] && summary_args+=(--targets-required)
+[[ "${GAZEBO_TRAIL}" -eq 1 ]] && summary_args+=(--targets-required)
 python3 "${ROOT}/scripts/visual_demo_summary.py" "${summary_args[@]}"
 if [[ "${DYNAMIC_OBSTACLE_TRIALS}" -gt 0 && "${dynamic_probe_code}" -ne 0 ]]; then
   echo "Dynamic obstacle matrix failed with exit code ${dynamic_probe_code}." >&2

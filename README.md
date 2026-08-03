@@ -21,6 +21,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 小场默认使用 skid-steer 优化方案；A/B 回归可加 `-CoverageProfile legacy` 启动保留的 `0.35 m + Dubins` 基线，或显式使用 `-CoverageProfile optimized`。
 
 动态受阻条带采用可审计状态机，默认最多重试 2 次且两次重试至少间隔 10 秒；持续受阻会进入 `DEFERRED` 并纳入报告，后续由局部残余任务处理，不会在同一障碍前无限振荡。正式动态恢复率仍必须以 20 次真实交互矩阵为准。
+优化方案将清扫直线固定为 `CleanPath`（`0.65 m/s`、固定前视），补扫使用 `RepairPath`，转向和横移使用 Nav2 `Spin / DriveOnHeading / BackUp`；`fast/turbo` 只改变 Gazebo 推进倍率，不再把所有物理动作一并加速。
 小场世界预置一个默认停放在场外的非静态行人模型，仅在正式动态矩阵中由 Gazebo `SetEntityPose` 移入当前条带；普通演示不会看到它，也不会把服务调用本身冒充有效避障交互。
 WSLg 日常演示始终默认 Ogre2；只有缺少 EGL 图形上下文的无头 Docker 矩阵才显式使用 `-SimulationRenderEngine ogre`，实际选择会写入保留的运行时 SDF。
 

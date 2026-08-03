@@ -71,6 +71,34 @@ def test_headless_matrix_can_select_ogre_without_changing_gui_default():
     assert "'headless_rendering': LaunchConfiguration('headless_rendering')" in stage4v
 
 
+def test_headless_formal_matrix_still_scores_all_cleaning_targets():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+
+    assert 'if [[ "${GAZEBO_TRAIL}" -eq 1 ]]; then' in launcher
+    assert '[[ "${GAZEBO_TRAIL}" -eq 1 ]] && summary_args+=(--targets-required)' in launcher
+    assert '"${GUI}" -eq 1 && "${GAZEBO_TRAIL}" -eq 1' not in launcher
+
+
+def test_optimized_connectors_use_nav2_behaviors_and_dedicated_controllers():
+    probe = (
+        ROOT
+        / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
+    ).read_text(encoding="utf-8")
+    nav2 = (
+        ROOT / "starter_ws/src/sanitation_navigation/config/nav2.yaml"
+    ).read_text(encoding="utf-8")
+
+    assert 'ActionClient(self, Spin, "/spin")' in probe
+    assert 'ActionClient(\n            self, DriveOnHeading, "/drive_on_heading"' in probe
+    assert 'ActionClient(self, BackUp, "/backup")' in probe
+    assert 'create_publisher(\n            Twist, "/cmd_vel_nav"' not in probe
+    assert '"CLEAN": "CleanPath"' in probe
+    assert '"REPAIR": "RepairPath"' in probe
+    assert "controller_plugins: [FollowPath, CleanPath, RepairPath]" in nav2
+    assert "desired_linear_vel: 0.65" in nav2
+    assert "use_velocity_scaled_lookahead_dist: false" in nav2
+
+
 def test_readiness_bypasses_stale_ros_daemon():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
     readiness = (ROOT / "scripts" / "ros_runtime_readiness.py").read_text(

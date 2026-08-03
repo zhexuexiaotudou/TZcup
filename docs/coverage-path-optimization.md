@@ -140,6 +140,15 @@ Gazebo's Ogre2-only EGL headless path.
 
 ## Sim-to-real boundary
 
+The selected execution profile does not publish chassis commands from the
+coverage task. Straight cleaning uses the dedicated Nav2 `CleanPath`
+controller at 0.65 m/s with a fixed 0.75 m lookahead; repairs use
+`RepairPath`; connector rotation and translation use Nav2 `Spin`,
+`DriveOnHeading`, or `BackUp` behaviors. The velocity smoother, collision
+monitor, safety gate, and behavior collision projection therefore remain in
+the command path. Gazebo 2x/3x real-time factor is independent of these
+physical component limits.
+
 The semantic split is designed to map to real controllers, but simulation does
 not prove physical performance. Before vehicle deployment, calibrate brush
 width and forward offset under load, identify yaw overshoot and lateral slip on
