@@ -48,8 +48,14 @@ large mapped scenes retain hybrid scan fallback. The final Coverage success
 gate includes per-seed localization RMSE, so a path-only pass cannot mask a
 localization regression.
 The same report separates executed brush-on, brush-off and state-transition
-distance. It also computes the brush-center lateral error against the nearest
-primary straight swath and fails the mission when P95 exceeds 0.08 m. These
+distance. It computes two separate brush-center diagnostics: absolute
+cross-track error to the nearest planned primary swath for map alignment, and
+steady-state straightness after removing each swath run's median offset. The
+straightness metric uses the central 80 percent of every executed swath and
+fails the mission when P95 exceeds 0.08 m. Localization retains its independent
+0.05 m RMSE gate, so a fixed frame bias cannot masquerade as path weave. These
+reports retain `primary_swath_lateral_error` as an alias of the absolute
+cross-track diagnostic for existing evidence readers.
 metrics turn the visual claim of a tidy lawnmower route into machine-checkable
 execution evidence.
 The simulated `rtk_fixed` capability contract retains 0.02 m white noise and

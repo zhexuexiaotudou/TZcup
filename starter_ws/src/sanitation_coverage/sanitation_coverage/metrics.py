@@ -1,5 +1,6 @@
 import bisect
 import math
+import statistics
 
 
 def segment_length(start, end):
@@ -43,8 +44,10 @@ def point_line_distance(x, y, start, end):
     return abs(dy * x - dx * y + end[0] * start[1] - end[1] * start[0]) / denominator
 
 
-def swath_lateral_errors(timed_samples, swaths, brush_forward_offset_m=0.55):
-    """Return brush-centre lateral errors for primary straight swath samples."""
+def swath_absolute_cross_track_errors(
+    timed_samples, swaths, brush_forward_offset_m=0.55
+):
+    """Return absolute brush-centre error to the nearest planned swath line."""
     errors = []
     for sample in timed_samples:
         if not bool(sample[4]) or sample[5] != "EXECUTING_SWATH":
@@ -57,6 +60,90 @@ def swath_lateral_errors(timed_samples, swaths, brush_forward_offset_m=0.55):
                 point_line_distance(brush_x, brush_y, start, end)
                 for start, end in swaths
             ))
+    return errors
+
+
+def swath_lateral_errors(timed_samples, swaths, brush_forward_offset_m=0.55):
+    """Backward-compatible name for absolute planned-line cross-track error."""
+    return swath_absolute_cross_track_errors(
+        timed_samples, swaths, brush_forward_offset_m
+    )
+
+
+def _signed_line_offset(x, y, start, end):
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    denominator = math.hypot(dx, dy)
+    if denominator == 0.0:
+        return None
+    return (dx * (y - start[1]) - dy * (x - start[0])) / denominator
+
+
+def _line_projection_fraction(x, y, start, end):
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    denominator = dx * dx + dy * dy
+    if denominator == 0.0:
+        return None
+    return ((x - start[0]) * dx + (y - start[1]) * dy) / denominator
+
+
+def swath_straightness_errors(
+    timed_samples,
+    swaths,
+    brush_forward_offset_m=0.55,
+    endpoint_fraction=0.10,
+    minimum_group_samples=3,
+):
+    """Measure weave within each executed straight swath independently.
+
+    The central 80 percent excludes entry/exit settling and measures the steady
+    straight-line phase.  A constant lateral offset is deliberately removed
+    per continuous swath run.
+    Absolute map alignment is reported separately by
+    :func:`swath_absolute_cross_track_errors` and localization metrics.  This
+    prevents RTK/map-frame bias from being misreported as a disorderly coverage
+    path while still retaining the planned-line diagnostic.
+    """
+    groups = []
+    current = []
+    for sample in timed_samples:
+        if bool(sample[4]) and sample[5] == "EXECUTING_SWATH":
+            yaw = float(sample[3])
+            current.append((
+                float(sample[1]) + brush_forward_offset_m * math.cos(yaw),
+                float(sample[2]) + brush_forward_offset_m * math.sin(yaw),
+            ))
+        elif current:
+            groups.append(current)
+            current = []
+    if current:
+        groups.append(current)
+
+    errors = []
+    for group in groups:
+        if len(group) < minimum_group_samples or not swaths:
+            continue
+        selected = min(
+            swaths,
+            key=lambda swath: statistics.median(
+                point_line_distance(x, y, *swath) for x, y in group
+            ),
+        )
+        interior_offsets = []
+        for x, y in group:
+            projection = _line_projection_fraction(x, y, *selected)
+            offset = _signed_line_offset(x, y, *selected)
+            if (
+                projection is not None
+                and offset is not None
+                and endpoint_fraction <= projection <= 1.0 - endpoint_fraction
+            ):
+                interior_offsets.append(offset)
+        if len(interior_offsets) < minimum_group_samples:
+            continue
+        centre = statistics.median(interior_offsets)
+        errors.extend(abs(offset - centre) for offset in interior_offsets)
     return errors
 
 

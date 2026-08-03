@@ -29,8 +29,9 @@ from sanitation_coverage.metrics import (
     raster_coverage_metrics,
     repair_degenerate_swaths,
     semantic_path_distances,
+    swath_absolute_cross_track_errors,
     summarize_distances,
-    swath_lateral_errors,
+    swath_straightness_errors,
     synchronized_xy_errors,
     uncovered_cell_centers,
 )
@@ -594,23 +595,33 @@ class CoverageProbe(Node):
         actual_path_points = [(sample[1], sample[2]) for sample in self.truth_samples]
         actual_path_length = path_length(actual_path_points)
         semantic_distances = semantic_path_distances(self.truth_samples)
-        lateral = summarize_distances(swath_lateral_errors(
+        absolute_cross_track = summarize_distances(swath_absolute_cross_track_errors(
             self.truth_samples,
             calibrated_swaths,
             float(config.get("brush_forward_offset_m", 0.55)),
         ))
-        lateral["threshold_p95_m"] = lateral_p95_threshold
-        lateral["pass"] = bool(
-            lateral["p95_m"] is not None
-            and lateral["p95_m"] <= lateral_p95_threshold
-        )
-        lateral["metric_basis"] = (
+        absolute_cross_track["metric_basis"] = (
             "gazebo_ground_truth_brush_center_to_nearest_primary_swath_infinite_line"
+        )
+        straightness = summarize_distances(swath_straightness_errors(
+            self.truth_samples,
+            calibrated_swaths,
+            float(config.get("brush_forward_offset_m", 0.55)),
+        ))
+        straightness["threshold_p95_m"] = lateral_p95_threshold
+        straightness["pass"] = bool(
+            straightness["p95_m"] is not None
+            and straightness["p95_m"] <= lateral_p95_threshold
+        )
+        straightness["metric_basis"] = (
+            "per_continuous_swath_ground_truth_brush_center_residual_after_median_offset;_central_80_percent"
         )
         empirical.update({
             "actual_path_length_m": actual_path_length,
             **semantic_distances,
-            "primary_swath_lateral_error": lateral,
+            "primary_swath_lateral_error": absolute_cross_track,
+            "primary_swath_absolute_cross_track_error": absolute_cross_track,
+            "primary_swath_straightness_error": straightness,
             "actual_duration_sec": execution_duration,
             "gross_efficiency_m2_h": empirical["covered_area_m2"] / execution_duration * 3600.0 if execution_duration > 0 else 0.0,
             "net_efficiency_m2_h": empirical["covered_area_m2"] / execution_duration * 3600.0 if execution_duration > 0 else 0.0,
@@ -618,7 +629,7 @@ class CoverageProbe(Node):
         empirical_pass = complete and empirical["coverage_rate"] >= empirical_threshold
         repeat_pass = empirical["repeat_rate"] <= empirical_repeat_threshold
         coverage_quality_pass = empirical_pass and repeat_pass
-        lateral_tracking_pass = lateral["pass"]
+        lateral_tracking_pass = straightness["pass"]
         safety_pass = self.collision_events == 0
         keepout_violation_samples = sum(
             any(point_in_polygon(sample[1], sample[2], polygon) for polygon in exclusions)

@@ -5,7 +5,9 @@ from sanitation_coverage.metrics import (
     raster_coverage_metrics,
     repair_degenerate_swaths,
     summarize_distances,
+    swath_absolute_cross_track_errors,
     swath_lateral_errors,
+    swath_straightness_errors,
     synchronized_xy_errors,
     uncovered_cell_centers,
     horizontal_repair_segments,
@@ -71,6 +73,42 @@ def test_swath_lateral_errors_use_brush_center_and_ignore_connectors():
         samples, [((0.0, 0.0), (2.0, 0.0))], brush_forward_offset_m=0.55
     )
     assert errors == [0.04]
+
+
+def test_swath_straightness_separates_weave_from_constant_map_offset():
+    samples = [
+        (float(index), float(index) * 0.2, 0.10, 0.0, True, "EXECUTING_SWATH")
+        for index in range(11)
+    ]
+    swaths = [((0.0, 0.0), (2.0, 0.0))]
+    absolute = swath_absolute_cross_track_errors(
+        samples, swaths, brush_forward_offset_m=0.0
+    )
+    straightness = swath_straightness_errors(
+        samples, swaths, brush_forward_offset_m=0.0
+    )
+    assert min(absolute) == 0.10
+    assert max(straightness) < 1.0e-12
+
+
+def test_swath_straightness_detects_lateral_weave_and_splits_runs():
+    samples = [
+        (0.0, 0.0, 0.00, 0.0, True, "EXECUTING_SWATH"),
+        (1.0, 0.5, 0.04, 0.0, True, "EXECUTING_SWATH"),
+        (2.0, 1.0, -0.04, 0.0, True, "EXECUTING_SWATH"),
+        (3.0, 1.0, 0.50, 0.0, False, "EXECUTING_SHIFT"),
+        (4.0, 1.0, 1.02, 0.0, True, "EXECUTING_SWATH"),
+        (5.0, 0.5, 0.98, 0.0, True, "EXECUTING_SWATH"),
+        (6.0, 0.0, 1.00, 0.0, True, "EXECUTING_SWATH"),
+    ]
+    errors = swath_straightness_errors(
+        samples,
+        [((0.0, 0.0), (1.0, 0.0)), ((1.0, 1.0), (0.0, 1.0))],
+        brush_forward_offset_m=0.0,
+        endpoint_fraction=0.0,
+    )
+    assert len(errors) == 6
+    assert max(errors) == 0.04
 
 
 def test_uncovered_cells_form_bounded_horizontal_repair_segments():
