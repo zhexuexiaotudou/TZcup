@@ -33,6 +33,8 @@ class DynamicObstacleProbe(Node):
         self.declare_parameter("state_wait_timeout_sec", 120.0)
         self.declare_parameter("minimum_remaining_path_m", 3.0)
         self.declare_parameter("minimum_progress_between_trials_m", 0.5)
+        self.declare_parameter("minimum_injection_distance_m", 1.5)
+        self.declare_parameter("maximum_injection_distance_m", 1.8)
         self.declare_parameter("hard_minimum_separation_m", 0.12)
         self.declare_parameter("resume_observation_sec", 2.0)
         self.declare_parameter("crossing_half_width_m", 1.0)
@@ -212,7 +214,17 @@ class DynamicObstacleProbe(Node):
                 self.component_state.get("index"),
             )
             heading = path_heading(position, self.current_path)
-            distance = randomizer.uniform(1.2, 1.8)
+            minimum_distance = float(
+                self.get_parameter("minimum_injection_distance_m").value
+            )
+            maximum_distance = float(
+                self.get_parameter("maximum_injection_distance_m").value
+            )
+            if not 0.0 < minimum_distance <= maximum_distance:
+                return self.write_report(
+                    trials, preflight, "invalid_injection_distance_bounds"
+                )
+            distance = randomizer.uniform(minimum_distance, maximum_distance)
             targets = crossing_targets(
                 position, heading, distance,
                 float(self.get_parameter("crossing_half_width_m").value),
@@ -291,6 +303,7 @@ class DynamicObstacleProbe(Node):
                 "remaining_path_m_at_injection": remaining_path_length(
                     position, self.current_path
                 ),
+                "injection_distance_m": distance,
                 "path_heading_rad": heading,
                 "moving_obstacle_trajectory": move_results,
                 "set_pose_success": set_success,
