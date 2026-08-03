@@ -37,6 +37,7 @@ from sanitation_coverage.coverage_plan import CoveragePlan
 from sanitation_coverage.oriented_swath_router import route_oriented_swaths
 from sanitation_coverage.residual_region_planner import plan_residual_regions
 from sanitation_coverage.skid_steer_connector import plan_skid_steer_connector
+from sanitation_coverage.swath_optimizer import optimize_swath_angle
 from sanitation_coverage.mission_geometry import (
     compile_mission_geometry,
     exclusion_clearance,
@@ -366,6 +367,7 @@ class CoverageProbe(Node):
             self._set_state("FAILED", planning)
             return self._write_report({"success": False, **planning})
         raw_swaths, turns, nav_points, result = planning["raw_swaths"], planning["turns"], planning["nav_points"], planning["result"]
+        angle_selection = planning.get("angle_selection")
         swaths, repaired = repair_degenerate_swaths(raw_swaths, turns, nav_points)
         optimized_profile = str(config.get("coverage_planner_profile", "LEGACY_DUBINS")) == "SKID_STEER_OPTIMIZED"
         if optimized_profile:
@@ -413,6 +415,8 @@ class CoverageProbe(Node):
                     "planning_swath_spacing_m": planning_spacing,
                     "physical_operation_width_m": width,
                     "legacy_dubins_turns_discarded": len(turns),
+                    "selected_swath_angle_deg": angle_selection.angle_deg if angle_selection else None,
+                    "selected_angle_score": angle_selection.score if angle_selection else None,
                 },
             )
         else:
@@ -447,6 +451,7 @@ class CoverageProbe(Node):
             "turns": turns,
             "component_count": len(components),
             "coverage_planner_profile": str(config.get("coverage_planner_profile", "LEGACY_DUBINS")),
+            "selected_swath_angle_deg": angle_selection.angle_deg if angle_selection else None,
             "semantic_plan": semantic_plan.to_dict() if semantic_plan else None,
             "mission_geometry": geometry,
             "swath_exclusion_intersection_count": intersection_count,
@@ -633,6 +638,21 @@ class CoverageProbe(Node):
         goal = ComputeCoveragePath.Goal()
         goal.generate_headland = bool(config["headland"]["enabled"]); goal.generate_route = True; goal.generate_path = True
         goal.frame_id = str(config["frame_id"])
+        angle_selection = None
+        if str(config.get("coverage_planner_profile", "")) == "SKID_STEER_OPTIMIZED":
+            angle_selection, candidates = optimize_swath_angle(
+                polygon, float(config.get("planning_swath_spacing_m", config["operation_width_m"])),
+                step_deg=int(config.get("swath_angle_step_deg", 5)),
+            )
+            goal.swath_mode.objective = "LENGTH"
+            goal.swath_mode.mode = "SET_ANGLE"
+            goal.swath_mode.best_angle = math.radians(angle_selection.angle_deg)
+            goal.swath_mode.step_angle = math.radians(int(config.get("swath_angle_step_deg", 5)))
+            goal.route_mode.mode = "BOUSTROPHEDON"
+            # Fields2Cover still materializes a compatibility path so degraded
+            # endpoint data can be repaired. Its turns are never executed.
+            goal.path_mode.mode = "DUBIN"
+            goal.path_mode.continuity_mode = "DISCONTINUOUS"
         closed = polygon if polygon[0] == polygon[-1] else polygon + [polygon[0]]
         coordinates = Coordinates(); coordinates.coordinates = [Coordinate(axis1=x, axis2=y) for x, y in closed]
         goal.polygons = [coordinates]
@@ -656,7 +676,11 @@ class CoverageProbe(Node):
         raw_swaths = [((float(item.start.x), float(item.start.y)), (float(item.end.x), float(item.end.y))) for item in result.coverage_path.swaths]
         turns = [[(float(pose.pose.position.x), float(pose.pose.position.y)) for pose in turn.poses] for turn in result.coverage_path.turns]
         nav_points = [(float(pose.pose.position.x), float(pose.pose.position.y)) for pose in result.nav_path.poses]
-        return {"raw_swaths": raw_swaths, "turns": turns, "nav_points": nav_points, "result": result}
+        return {
+            "raw_swaths": raw_swaths, "turns": turns,
+            "nav_points": nav_points, "result": result,
+            "angle_selection": angle_selection,
+        }
 
     def _build_optimized_components(self, swaths, safe_polygon):
         components = []

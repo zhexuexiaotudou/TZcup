@@ -7,6 +7,7 @@ robot_width_m: 0.72
 operation_width_m: 0.65
 planning_swath_spacing_m: 0.48
 swath_spacing_candidates_m: [0.42, 0.46, 0.48, 0.50, 0.52]
+swath_angle_step_deg: 5
 legacy_fallback_swath_spacing_m: 0.35
 swath_endpoint_extension_m: 0.20
 empirical_coverage_threshold: 0.995

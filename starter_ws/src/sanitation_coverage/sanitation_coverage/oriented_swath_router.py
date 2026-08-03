@@ -50,7 +50,18 @@ def route_oriented_swaths(swaths: Iterable[Swath], start: Point) -> RoutedSwaths
         raise ValueError("degenerate swaths cannot be routed")
     longest = max(normalized, key=lambda swath: math.dist(*swath))
     heading = math.atan2(longest[1][1] - longest[0][1], longest[1][0] - longest[0][0])
-    ascending = sorted(normalized, key=lambda swath: _normal_projection(swath, heading))
+    direction = (math.cos(heading), math.sin(heading))
+    # Fields2Cover may encode neighboring swaths with alternating endpoint
+    # order already. Normalize that source order before applying our own
+    # boustrophedon alternation, otherwise connectors can cross the whole field.
+    aligned = []
+    for swath in normalized:
+        vector = (swath[1][0] - swath[0][0], swath[1][1] - swath[0][1])
+        aligned.append(
+            swath if vector[0] * direction[0] + vector[1] * direction[1] >= 0.0
+            else (swath[1], swath[0])
+        )
+    ascending = sorted(aligned, key=lambda swath: _normal_projection(swath, heading))
     candidates = [
         _candidate(ascending, start, "ascending"),
         _candidate(list(reversed(ascending)), start, "descending"),
