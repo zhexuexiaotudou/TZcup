@@ -228,8 +228,24 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     target_model_names = {target["model_name"] for target in targets}
     assert target_model_names <= names
     assert len(target_model_names) == len(targets)
-    assert all(-3.0 <= target["position"][0] <= 3.0 for target in targets)
-    assert all(-4.0 <= target["position"][1] <= 1.0 for target in targets)
+    profile_path = (
+        ROOT / "starter_ws" / "src" / "sanitation_navigation" / "config"
+        / "autonomous_navigation_profile_v1.yaml"
+    )
+    profile = yaml.safe_load(profile_path.read_text(encoding="utf-8"))
+    inset = float(profile["coverage_overrides"]["headland_width_m"])
+    outer_x = [point[0] for point in mission["outer_polygon"]]
+    outer_y = [point[1] for point in mission["outer_polygon"]]
+    boundary_x = [min(outer_x) + inset, max(outer_x) - inset]
+    boundary_y = [min(outer_y) + inset, max(outer_y) - inset]
+    assert all(
+        min(boundary_x) < target["position"][0] < max(boundary_x)
+        for target in targets
+    )
+    assert all(
+        min(boundary_y) < target["position"][1] < max(boundary_y)
+        for target in targets
+    )
 
     translation = mission["world_to_map_translation"]
     for model_name in target_model_names:
