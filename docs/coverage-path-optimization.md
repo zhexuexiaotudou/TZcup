@@ -79,6 +79,19 @@ The plan and its semantic layers are published as compact JSON strings:
 `tzcup.gazebo_cleaning_telemetry.v2`, while retaining the v1 `planned_path` and
 `trajectory` fields for old consumers.
 
+## Mission modes
+
+The mission schema exposes three explicit route modes. `AREA_FILL` is the
+default and owns the optimized coverage pipeline described here. A
+`TAUGHT_ROUTE` file is generated offline and must contain route/version IDs,
+poses, per-pose speed and brush states, direction policy, no-clean ranges,
+interaction and recovery points, and a canonical SHA-256. The loader rejects
+tampering, missing fields, unsafe points and brush-on no-clean sections; valid
+segments compile to the same semantic plan and execute through collision-
+checked Nav2 FollowPath with an absolute speed-limit message. `POINT_CLEAN`
+remains owned by `sanitation_spot_cleaning`; the coverage executor rejects it
+with the delegate package named instead of silently treating it as area fill.
+
 ## Gazebo panel
 
 The map uses independent layers instead of one merged polyline:

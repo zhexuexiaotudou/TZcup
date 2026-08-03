@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -113,6 +114,26 @@ def test_optimized_connectors_use_nav2_behaviors_and_dedicated_controllers():
     assert "controller_plugins: [FollowPath, CleanPath, RepairPath]" in nav2
     assert "desired_linear_vel: 0.65" in nav2
     assert "use_velocity_scaled_lookahead_dist: false" in nav2
+
+
+def test_mission_route_modes_include_sealed_taught_route_contract():
+    schema = json.loads(
+        (ROOT / "starter_ws/src/sanitation_tasks/config/mission_schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    taught = (
+        ROOT
+        / "starter_ws/src/sanitation_coverage/sanitation_coverage/taught_route.py"
+    ).read_text(encoding="utf-8")
+
+    assert schema["properties"]["route_mode"]["enum"] == [
+        "AREA_FILL", "TAUGHT_ROUTE", "POINT_CLEAN"
+    ]
+    assert "taught_route_file" in schema["properties"]
+    assert "canonical_route_hash" in taught
+    assert '"collision_checked": True' in taught
+    assert '"executor": "Nav2 FollowPath"' in taught
 
 
 def test_formal_matrix_preserves_five_seed_a_b_and_one_mcap_replay_source():

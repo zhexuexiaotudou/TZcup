@@ -58,13 +58,27 @@ class CoverageComponent:
         return sum(math.dist(a, b) for a, b in zip(self.points, self.points[1:]))
 
     def to_dict(self) -> dict[str, Any]:
+        speed_mps = self.metadata.get("speed_limit_mps")
+        expected_duration = (
+            self.length_m / float(speed_mps)
+            if speed_mps is not None and float(speed_mps) > 0.0 else None
+        )
         return {
             "component_id": self.component_id,
             "kind": self.kind.value,
+            "component_type": self.kind.value,
             "points": [list(point) for point in self.points],
+            "path": [list(point) for point in self.points],
+            "start_pose": list(self.points[0]),
+            "end_pose": list(self.points[-1]),
             "brush_enabled": self.brush_enabled,
             "speed_profile": self.speed_profile,
             "length_m": self.length_m,
+            "expected_length_m": self.length_m,
+            "expected_duration_s": expected_duration,
+            "collision_checked": bool(self.metadata.get("collision_checked", False)),
+            "source_swath_id": self.metadata.get("source_swath_id"),
+            "target_swath_id": self.metadata.get("target_swath_id"),
             "metadata": self.metadata,
         }
 

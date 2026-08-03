@@ -16,6 +16,7 @@ from nav2_msgs.action import (
     NavigateToPose,
     Spin,
 )
+from nav2_msgs.msg import SpeedLimit
 from nav_msgs.msg import OccupancyGrid, Odometry, Path as NavPath
 from nav_msgs.srv import GetMap
 from opennav_coverage_msgs.action import ComputeCoveragePath
@@ -51,6 +52,7 @@ from sanitation_coverage.residual_region_planner import plan_residual_regions
 from sanitation_coverage.skid_steer_connector import plan_skid_steer_connector
 from sanitation_coverage.skid_steer_rotation import normalized_yaw_error
 from sanitation_coverage.swath_optimizer import optimize_swath_angle
+from sanitation_coverage.taught_route import load_taught_route
 from sanitation_coverage.mission_geometry import (
     compile_mission_geometry,
     exclusion_clearance,
@@ -152,6 +154,9 @@ class CoverageProbe(Node):
         plan_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
         self.controller_state_client = self.create_client(GetState, "/controller_server/get_state")
         self.brush_publisher = self.create_publisher(Bool, "/brush_enabled", 10)
+        self.speed_limit_publisher = self.create_publisher(
+            SpeedLimit, "/speed_limit", 10
+        )
         self.state_publisher = self.create_publisher(String, "/coverage/state", 10)
         self.evaluation_sample_publisher = self.create_publisher(
             String, "/coverage/evaluation_sample", 20
@@ -475,6 +480,26 @@ class CoverageProbe(Node):
             return self._write_report({
                 "success": False,
                 "error": "invalid_coverage_execution_acceptance_parameters",
+            })
+        route_mode = str(config.get("route_mode", "AREA_FILL"))
+        if route_mode == "TAUGHT_ROUTE":
+            return self._execute_taught_route(
+                config, geometry, cleanable_polygon, cleanable_exclusions
+            )
+        if route_mode == "POINT_CLEAN":
+            self._set_brush(False)
+            return self._write_report({
+                "success": False,
+                "route_mode": route_mode,
+                "error": "point_clean_requires_sanitation_spot_cleaning_executor",
+                "delegate_package": "sanitation_spot_cleaning",
+                "brush_disabled_on_exit": True,
+            })
+        if route_mode != "AREA_FILL":
+            return self._write_report({
+                "success": False,
+                "route_mode": route_mode,
+                "error": "unsupported_route_mode",
             })
         self._set_state("PLANNING", {"geometry": geometry})
         if not geometry["headland_clearance_valid"]:
@@ -842,6 +867,76 @@ class CoverageProbe(Node):
             self._set_state("STOPPED", report)
         else:
             self._set_state("COMPLETED" if report["success"] else "FAILED", report)
+        return self._write_report(report)
+
+    def _execute_taught_route(
+        self, config, geometry, safe_polygon, safe_exclusions
+    ):
+        """Replay a sealed offline route through collision-checked Nav2 paths."""
+        route_value = config.get("taught_route_file")
+        if not route_value:
+            return self._write_report({
+                "success": False,
+                "route_mode": "TAUGHT_ROUTE",
+                "error": "taught_route_file_required",
+            })
+        route_path = Path(str(route_value))
+        if not route_path.is_absolute():
+            config_path = Path(str(self.get_parameter("config_path").value))
+            route_path = config_path.parent / route_path
+        try:
+            plan = load_taught_route(route_path, safe_polygon, safe_exclusions)
+        except (OSError, ValueError, TypeError, KeyError) as exc:
+            self._set_brush(False)
+            return self._write_report({
+                "success": False,
+                "route_mode": "TAUGHT_ROUTE",
+                "error": "invalid_taught_route",
+                "detail": str(exc),
+                "brush_disabled_on_exit": True,
+            })
+        self._publish_semantic_plan(plan)
+        results = []
+        success = True
+        for index, item in enumerate(plan.components):
+            if self.stop_requested:
+                success = False
+                break
+            component = {
+                "component_id": item.component_id,
+                "kind": item.kind.value,
+                "index": index,
+                "brush": item.brush_enabled,
+                "points": list(item.points),
+                "speed_profile": item.speed_profile,
+                "metadata": item.metadata,
+            }
+            self._set_state("EXECUTING_TAUGHT_ROUTE", {
+                "current_component": index,
+                "expected_components": len(plan.components),
+            })
+            result = self._execute_component(component)
+            results.append(result)
+            if not result.get("success"):
+                success = False
+                break
+        self._set_brush(False)
+        report = {
+            "success": bool(success and len(results) == len(plan.components)),
+            "route_mode": "TAUGHT_ROUTE",
+            "semantic_plan": plan.to_dict(),
+            "component_count": len(plan.components),
+            "component_results": results,
+            "mission_geometry": geometry,
+            "collision_count": self.collision_events,
+            "ground_truth_used_for_control": False,
+            "brush_disabled_on_exit": not self.brush_enabled,
+            "execution_boundary": (
+                "Every taught segment uses Nav2 FollowPath with controller "
+                "collision checking; invalid geometry or hash fails closed."
+            ),
+        }
+        self._set_state("COMPLETED" if report["success"] else "FAILED", report)
         return self._write_report(report)
 
     def _plan(self, config, polygon, exclusions):
@@ -1316,6 +1411,12 @@ class CoverageProbe(Node):
         return result
 
     def _follow_component(self, component):
+        speed_limit = component.get("metadata", {}).get("speed_limit_mps")
+        if speed_limit is not None:
+            limit = SpeedLimit()
+            limit.percentage = False
+            limit.speed_limit = float(speed_limit)
+            self.speed_limit_publisher.publish(limit)
         final_yaw = component.get("goal_yaw")
         goal = FollowPath.Goal(); goal.path = self._path_message(
             component["points"], final_yaw=final_yaw
@@ -1334,6 +1435,11 @@ class CoverageProbe(Node):
         result = self._run_action(
             self.follow_client, goal, component["brush"], timeout, "follow_path"
         )
+        if speed_limit is not None:
+            reset = SpeedLimit()
+            reset.percentage = False
+            reset.speed_limit = 0.0
+            self.speed_limit_publisher.publish(reset)
         goal_pose = {
             "x": component["points"][-1][0],
             "y": component["points"][-1][1],

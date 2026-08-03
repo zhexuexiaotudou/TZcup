@@ -37,6 +37,16 @@ class CoveragePlan:
         return sum(component.length_m for component in self.components)
 
     def to_dict(self) -> dict[str, Any]:
+        serialized = [component.to_dict() for component in self.components]
+        main_swaths = [item for item in serialized if item["kind"] == "SWATH"]
+        connectors = [
+            item for item in serialized
+            if item["kind"] in {
+                "TRANSIT", "ROTATE", "SHIFT", "BACKUP", "OBSTACLE_BYPASS",
+                "RETURN_HOME",
+            }
+        ]
+        repairs = [item for item in serialized if item["kind"] == "REPAIR_SWATH"]
         return {
             "schema": SCHEMA,
             "mission_id": self.mission_id,
@@ -46,7 +56,17 @@ class CoveragePlan:
             "generated_at": self.generated_at,
             "component_count": len(self.components),
             "total_length_m": self.total_length_m,
-            "components": [component.to_dict() for component in self.components],
+            "components": serialized,
+            "ordered_components": serialized,
+            "main_swaths": main_swaths,
+            "connectors": connectors,
+            "repair_components": repairs,
+            "planned_metrics": self.metadata.get("planned_metrics", {}),
+            "selection_cost": self.metadata.get("selection_cost"),
+            "cleanable_polygon": self.metadata.get("cleanable_polygon", []),
+            "swath_angle_rad": self.metadata.get("swath_angle_rad"),
+            "operation_width_m": self.metadata.get("operation_width_m"),
+            "swath_spacing_m": self.metadata.get("swath_spacing_m"),
             "metadata": self.metadata,
         }
 

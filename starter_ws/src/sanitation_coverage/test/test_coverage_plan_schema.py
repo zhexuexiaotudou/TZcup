@@ -17,7 +17,12 @@ def test_plan_round_trip_preserves_semantics_and_length():
     restored = CoveragePlan.from_dict(plan.to_dict())
     assert restored.components[0].kind is ComponentType.SWATH
     assert restored.total_length_m == pytest.approx(2.5)
-    assert restored.to_dict()["schema"] == "tzcup.coverage_plan.v1"
+    payload = restored.to_dict()
+    assert payload["schema"] == "tzcup.coverage_plan.v1"
+    assert payload["ordered_components"] == payload["components"]
+    assert len(payload["main_swaths"]) == 1
+    assert len(payload["connectors"]) == 2
+    assert payload["components"][0]["expected_length_m"] == pytest.approx(2.0)
 
 
 def test_non_cleaning_component_cannot_enable_brush():

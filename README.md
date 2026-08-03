@@ -2,6 +2,7 @@
 
 TZcup 是一个面向智慧环卫无人清扫车的 ROS 2 仿真与自主任务工程。项目以 Ubuntu 24.04、ROS 2 Jazzy、Gazebo Harmonic、Nav2、SLAM Toolbox、OpenNav Coverage 和 Fields2Cover 为基础，覆盖车辆建模、环境仿真、定位导航、全覆盖清扫、垃圾感知、定点清扫、安全控制、调试可视化和验收证据。
 
+任务契约显式区分 `AREA_FILL / TAUGHT_ROUTE / POINT_CLEAN`：小场默认 `AREA_FILL` 使用本页的覆盖优化；狭窄固定通道可离线生成带版本和 SHA-256 的教学路线，每段仍由 Nav2 FollowPath 做碰撞检查并执行速度/刷盘状态；`POINT_CLEAN` 继续由既有 `sanitation_spot_cleaning` 链执行，若误交给 Coverage 执行器会 fail-closed。
 地图监督台会分层显示仿真参考、SLAM、感知、规划与实际轨迹；安全状态、回放、操作边界和启动方式见 [`docs/human-visualization.md`](docs/human-visualization.md)。
 ## 实时可视化演示
 
