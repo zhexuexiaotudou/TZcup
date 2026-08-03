@@ -21,7 +21,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 
 动态受阻条带采用可审计状态机，默认最多重试 2 次且两次重试至少间隔 10 秒；持续受阻会进入 `DEFERRED` 并纳入报告，后续由局部残余任务处理，不会在同一障碍前无限振荡。正式动态恢复率仍必须以 20 次真实交互矩阵为准。
 优化方案将清扫直线固定为 `CleanPath`（`0.65 m/s`、固定前视），补扫使用 `RepairPath`，转向和横移使用 Nav2 `Spin / DriveOnHeading / BackUp`；补扫中心线只覆盖漏扫连通域、不会重复外扩刷盘端帽，且长度按实际下发路径而非名义残余线验收，`fast/turbo` 只改变 Gazebo 推进倍率，不再把所有物理动作一并加速。
-小场世界预置一个默认停放在场外的非静态行人模型，仅在正式动态矩阵中由 ROS `SetEntityPose` 或当前世界的原生 Gazebo `set_pose` 服务移入当前条带；普通演示不会看到它，也不会把服务调用本身冒充有效避障交互。
+小场世界预置一个默认停放在场外的非静态行人模型，仅在正式动态矩阵中由 ROS `SetEntityPose` 或当前世界的原生 Gazebo `set_pose` 服务贴地移入当前条带；模型自身已定义碰撞体高度，不会被二次抬高到平面 LiDAR 上方，普通演示不会看到它，也不会把服务调用本身冒充有效避障交互。
 WSLg 日常演示始终默认 Ogre2；只有缺少 EGL 图形上下文的无头 Docker 矩阵才显式使用 `-SimulationRenderEngine ogre`，实际选择会写入保留的运行时 SDF。
 正式回归入口包括 optimized/legacy 各 5 个种子的 `run_coverage_optimizer_matrix.sh`、10 个融合定位路径分数刷盘失效注入种子的 `run_coverage_repair_matrix.sh`，以及 20 次物理动态障碍交互；optimized seed 132 保留 MCAP，必须再经 `verify_coverage_mcap_replay.sh` 的顺序重建和真实 `ros2 bag play` 双门禁。正式原始证据必须写到仓库外；`coverage_optimizer_report.py` 生成对照报告和逐文件 SHA-256 清单，仓库只接收压缩审核摘要。
 

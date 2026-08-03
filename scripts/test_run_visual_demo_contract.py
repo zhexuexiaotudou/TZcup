@@ -57,6 +57,8 @@ def test_launcher_can_run_a_bounded_physical_dynamic_matrix():
     assert 'subprocess.run(' in probe
     assert 'f"/world/{world_name}/set_pose"' in probe
     assert '"gz.msgs.Pose"' in probe
+    assert 'z: 0.0' in probe
+    assert 'z: 0.55' not in probe
     assert '"true" in process.stdout.lower()' in probe
     assert '-p service_timeout_ms:=10000' in launcher
     assert '"set_pose_backend": self.set_pose_backend' in probe

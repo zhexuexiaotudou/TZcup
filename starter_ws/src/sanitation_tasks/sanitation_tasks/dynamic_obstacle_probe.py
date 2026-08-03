@@ -103,7 +103,7 @@ class DynamicObstacleProbe(Node):
             request.entity.type = Entity.MODEL
             request.pose.position.x = float(world_x)
             request.pose.position.y = float(world_y)
-            request.pose.position.z = 0.55
+            request.pose.position.z = 0.0
             request.pose.orientation.w = 1.0
             future = self.set_pose_client.call_async(request)
             deadline = time.monotonic() + timeout_sec
@@ -130,7 +130,7 @@ class DynamicObstacleProbe(Node):
                     "--req",
                     (
                         f"name: '{model_name}', position: {{x: {float(world_x)}, "
-                        f"y: {float(world_y)}, z: 0.55}}, orientation: {{w: 1.0}}"
+                        f"y: {float(world_y)}, z: 0.0}}, orientation: {{w: 1.0}}"
                     ),
                 ],
                 check=False, capture_output=True, text=True,

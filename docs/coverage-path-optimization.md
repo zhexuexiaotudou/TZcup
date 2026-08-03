@@ -163,7 +163,10 @@ measured vehicle progress count as valid. The probe prefers the ROS-Gazebo
 `SetEntityPose` service and falls back to the selected world's native Gazebo
 Transport `/world/<name>/set_pose` service when that ROS bridge is absent;
 every report records the backend. The native call receives a separate
-10-second cold-discovery budget and must return Boolean `true`. A service
+10-second cold-discovery budget and must return Boolean `true`. The pose is set
+at model-frame ground height (`z=0`); the pedestrian collision cylinder already
+contains its own 0.85 m vertical offset, so it is not lifted above the planar
+LiDAR a second time. A service
 return alone is insufficient: the interaction
 also requires a lidar range below 2.0 m and at least a 0.15 m drop from the
 pre-injection scan.
