@@ -34,7 +34,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 Gazebo 右侧原生卡片可控制开始、暂停、继续、停止和关闭；按钮通过 Coverage 服务驱动 Nav2，不直接发速度。`-MapSize small|medium|large` 选择独立 16 m × 12 m 演示场、80 m × 50 m 中型验证或严格 200 m × 100 m 比赛大图，详见 [`docs/gazebo-multiscale-control.md`](docs/gazebo-multiscale-control.md)。
 Windows 启动器会准备 WSLg `/mnt/shared_memory`、恢复异常窗口，并在关闭 Gazebo 后立即停止运行链、释放端口和关闭已跟踪的 RemoteApp 窗口句柄，避免残留不可交互会话或无渲染内容的黑色外壳。
 
-默认 `small` 是单独设计的 `16 m × 12 m` 竞赛功能演示场；橙色外框表示 30 m² 外部任务区，青色内框表示扣除安全回转带后的 12 m² 实际清扫区，覆盖率只统计内框。Gazebo 右侧同窗显示紫色规划路径、蓝色实际轨迹、青绿色已清扫栅格和目标状态。瓶、罐、A5 级纸张、小纸盒、落叶和积水按真实物件尺度建模，起点/回库也是贴地薄标记，不再用悬浮大球冒充清扫物。手动演示入口使用不含 CameraTracking 的专用 GUI 配置，默认可自由旋转、平移和缩放，不会把拖动后的视角拉回小车。小场使用 0.45 m 条带间距配合 0.65 m 刷盘形成约 31% 重叠；首轮后依据实际刷盘足迹自动补扫漏点，并将实际覆盖率 99.5% 作为完成门槛。默认 `fast` 目标为 2x、0.60 m/s，可传 `-SimulationSpeed normal|fast|turbo`；顶部 World Stats 显示本机实际 RTF。
+默认 `small` 是单独设计的 `16 m × 12 m` 竞赛功能演示场；橙色外框表示 30 m² 外部任务区，青色内框表示扣除安全回转带后的 12 m² 实际清扫区，覆盖率只统计内框。Gazebo 右侧同窗显示紫色规划路径、蓝色实际轨迹、青绿色已清扫栅格和目标状态。瓶、罐、A5 级纸张、小纸盒、落叶和积水不仅保持真实尺度，还具有瓶肩/瓶颈/标签、罐沿/拉环、纸张折角、纸盒翻盖、叶尖/叶柄/叶脉和不规则水斑等可辨识外形；起点/回库也是贴地薄标记，不再用悬浮大球冒充清扫物。手动演示入口使用不含 CameraTracking 的专用 GUI 配置，默认可自由旋转、平移和缩放，不会把拖动后的视角拉回小车。小场使用 0.45 m 条带间距配合 0.65 m 刷盘形成约 31% 重叠；首轮后依据实际刷盘足迹自动补扫漏点，并将实际覆盖率 99.5% 作为完成门槛。默认 `fast` 目标为 2x、0.60 m/s，可传 `-SimulationSpeed normal|fast|turbo`；顶部 World Stats 显示本机实际 RTF。
 冷启动时，启动器会先验证定位话题与 `odom→base_footprint` TF，再精确确认 Nav2 controller/planner 均为 `active [3]`，之后才打开 Gazebo；若 GUI 在原生控制加载前提前退出，则只执行一次安全重启和同参数重试。任一就绪门重复失败都会明确返回错误，不会留下一个可见但不能行驶的误导窗口。
 在 WSLg 中，Gazebo 服务端和传感器继续使用 D3D12/NVIDIA，原生 GUI 自动改用已验证可见的 X11/llvmpipe 通道；启动器会抓取 `3D Scene` 实际像素，纯黑视口会返回错误而不再误报 READY。
 

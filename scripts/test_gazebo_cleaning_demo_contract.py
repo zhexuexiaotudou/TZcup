@@ -154,18 +154,56 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     assert bottle is not None and can is not None
     assert paper is not None and cardboard is not None
     assert leaves is not None and puddle is not None
-    assert bottle.findtext("./link/visual[@name='body']/geometry/cylinder/radius") == "0.033"
-    assert bottle.findtext("./link/visual[@name='body']/geometry/cylinder/length") == "0.22"
-    assert can.findtext("./link/visual/geometry/cylinder/radius") == "0.033"
-    assert can.findtext("./link/visual/geometry/cylinder/length") == "0.115"
-    assert paper.findtext("./link/visual/geometry/box/size") == "0.21 0.15 0.004"
-    assert cardboard.findtext("./link/visual/geometry/box/size") == "0.24 0.17 0.06"
+    assert bottle.findtext(
+        "./link/visual[@name='body']/geometry/cylinder/radius"
+    ) == "0.033"
+    assert bottle.findtext(
+        "./link/visual[@name='body']/geometry/cylinder/length"
+    ) == "0.145"
+    assert {
+        visual.get("name") for visual in bottle.findall("./link/visual")
+    } == {"body", "base_ring", "label", "shoulder", "neck", "cap"}
+    assert can.findtext(
+        "./link/visual[@name='body']/geometry/cylinder/radius"
+    ) == "0.033"
+    assert can.findtext(
+        "./link/visual[@name='body']/geometry/cylinder/length"
+    ) == "0.103"
+    assert can.find("./link/visual[@name='pull_tab']/geometry/box") is not None
+
+    paper_outline = paper.find(
+        "./link/visual[@name='sheet']/geometry/polyline"
+    )
+    assert paper_outline is not None
+    assert paper_outline.findtext("height") == "0.004"
+    assert len(paper_outline.findall("point")) == 9
+    assert paper.find("./link/visual[@name='folded_corner']") is not None
+    assert cardboard.findtext(
+        "./link/visual[@name='carton_body']/geometry/box/size"
+    ) == "0.205 0.145 0.052"
+    assert cardboard.find("./link/visual[@name='left_flap']") is not None
+    assert cardboard.find("./link/visual[@name='right_flap']") is not None
+    assert cardboard.find("./link/visual[@name='packing_tape']") is not None
+
+    leaf_blades = leaves.findall("./link/visual/geometry/polyline")
+    assert len(leaf_blades) == 4
+    assert all(len(blade.findall("point")) == 8 for blade in leaf_blades)
+    assert len(leaves.findall("./link/visual[@name='vein_a']")) == 1
+    assert leaves.find("./link/visual[@name='stem_a']") is not None
     assert not leaves.findall(".//sphere")
-    assert len(leaves.findall("./link/visual")) == 4
-    puddle_radii = [
-        float(radius.text) for radius in puddle.findall(".//cylinder/radius")
+
+    water_patch = puddle.find(
+        "./link/visual[@name='water_patch']/geometry/polyline"
+    )
+    assert water_patch is not None
+    puddle_points = [
+        tuple(float(value) for value in point.text.split())
+        for point in water_patch.findall("point")
     ]
-    assert puddle_radii and max(puddle_radii) <= 0.18
+    assert len(puddle_points) == 12
+    assert max(abs(x) for x, _ in puddle_points) <= 0.25
+    assert max(abs(y) for _, y in puddle_points) <= 0.19
+    assert not puddle.findall(".//cylinder")
     shell = read("scripts/run_visual_demo.sh")
     assert 'world_name="sanitation_competition_demo"' in shell
     assert 'mission_control_demo.config' in shell
