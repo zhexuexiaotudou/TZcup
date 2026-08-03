@@ -169,7 +169,10 @@ contains its own 0.85 m vertical offset, so it is not lifted above the planar
 LiDAR a second time. A service
 return alone is insufficient: the interaction
 also requires a lidar range below 2.0 m and at least a 0.15 m drop from the
-pre-injection scan.
+pre-injection scan. The formal trajectory uses five physical pose samples and
+a 0.5-second requested hold budget; this keeps a crossing observable while the
+obstacle clears the centreline before the vehicle reaches it, instead of using
+a slow teleport sequence that manufactures a near collision.
 WSLg and operator demos retain Ogre2. A Docker-only headless matrix may pass
 `--simulation-render-engine ogre` when its runtime has CUDA but no EGL graphics
 context; the selected engine is materialized in the retained runtime SDF and
