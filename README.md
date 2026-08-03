@@ -48,6 +48,7 @@ Coverage 进程由 `setsid --wait` 监督，启动器始终等待真实子进程
 在 WSLg 中，Gazebo 服务端和传感器继续使用 D3D12/NVIDIA，原生 GUI 自动改用已验证可见的 X11/llvmpipe 通道；启动器会抓取 `3D Scene` 实际像素，纯黑视口会返回错误而不再误报 READY。
 
 它不打开浏览器或 RViz；车辆在独立小场内真实执行完整 Coverage，青绿清扫带随刷盘开启累积，默认任务结束后保留 Gazebo，按 `Ctrl+C` 才收尾并生成验收摘要。
+长时无头多种子回归使用 `scripts/run_frozen_coverage_trial.ps1`：每轮固定独立 ROS domain、Gazebo partition 和小场任务配置，输出单独的启动日志与证据目录，避免测试编排器的会话寿命影响仿真任务本身。
 
 本机完整任务通过：`17/17` 组件、经验覆盖率 `93.67%`、碰撞 `0`、禁行区违规 `0`、定位 XY RMSE `0.03588 m`，MCAP 为 `205528` 条消息/18 个话题；看板终态为 `COMPLETED`，专用 MP4 为 `1.49 MB`。使用与证据边界见 [`docs/auto17-visual-demo.md`](docs/auto17-visual-demo.md)。AUTO-17 只提升可观察性和演示复现能力，不改变学习感知、真实域、J6 板端及综合竞赛矩阵仍为 false 的事实。
 

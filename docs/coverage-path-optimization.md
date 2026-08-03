@@ -108,6 +108,10 @@ The launcher supervises the Coverage process with `setsid --wait`, so a
 context-dependent intermediate fork cannot be mistaken for mission completion.
 For a legacy comparison, invoke `run_visual_demo.sh` after pointing
 `mission_template` and `coverage_params` to the two legacy files listed above.
+Long headless multi-seed acceptance can use
+`scripts/run_frozen_coverage_trial.ps1`; it fixes the ROS domain, assigns a
+per-trial Gazebo partition and always runs the same independent small-field
+mission while retaining a dedicated launcher log and evidence directory.
 
 ## Sim-to-real boundary
 
