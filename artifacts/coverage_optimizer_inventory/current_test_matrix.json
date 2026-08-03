@@ -1,0 +1,15 @@
+{
+  "baseline_live_artifact": "artifacts/merged_main_ready_20260803_213159",
+  "baseline_success": true,
+  "baseline_planned_components": 17,
+  "baseline_planned_coverage_rate": 1.0,
+  "baseline_planned_repeat_rate": 0.8325,
+  "baseline_primary_empirical_coverage_rate": 0.96,
+  "baseline_final_empirical_coverage_rate": 0.995,
+  "baseline_repair_passes": 2,
+  "baseline_repair_entry_length_m": 12.86,
+  "baseline_repair_swath_length_m": 12.7,
+  "baseline_localization_rmse_m": 0.0503268,
+  "required_seed_matrix": [101, 202, 303, 404, 505],
+  "required_dynamic_interactions_min": 20
+}

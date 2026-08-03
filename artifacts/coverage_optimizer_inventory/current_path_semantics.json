@@ -1,0 +1,8 @@
+{
+  "planner_components": ["swath", "dubins_turn"],
+  "execution_path_topic": "/coverage/current_path",
+  "ui_planned_path_behavior": "replaced by each current component",
+  "ui_actual_trajectory_behavior": "all motion states merged into one polyline",
+  "brush_state_encoded_per_component": true,
+  "turn_shift_backup_bypass_repair_layers": false
+}

@@ -1,0 +1,13 @@
+{
+  "published": [
+    "/coverage/state",
+    "/coverage/evaluation_sample",
+    "/coverage/component_state",
+    "/coverage/current_path",
+    "/coverage/diagnostics"
+  ],
+  "persistent_full_plan": false,
+  "semantic_planned_layers": false,
+  "semantic_actual_layers": false,
+  "compatibility_alias": "/coverage/current_path"
+}
