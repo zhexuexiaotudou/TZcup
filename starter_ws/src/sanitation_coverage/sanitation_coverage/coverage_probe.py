@@ -17,6 +17,7 @@ from nav2_msgs.action import (
     Spin,
 )
 from nav_msgs.msg import OccupancyGrid, Odometry, Path as NavPath
+from nav_msgs.srv import GetMap
 from opennav_coverage_msgs.action import ComputeCoveragePath
 from opennav_coverage_msgs.msg import Coordinate, Coordinates
 import rclpy
@@ -227,6 +228,12 @@ class CoverageProbe(Node):
         self.create_subscription(
             OccupancyGrid, "/speed_filter_mask",
             lambda message: setattr(self, "speed_mask", message), latched_qos,
+        )
+        self.keepout_map_client = self.create_client(
+            GetMap, "/keepout_filter_mask_server/map"
+        )
+        self.speed_map_client = self.create_client(
+            GetMap, "/speed_filter_mask_server/map"
         )
         self.create_service(Trigger, "/coverage/control/start", self._on_start)
         self.create_service(Trigger, "/coverage/control/pause", self._on_pause)
@@ -1171,6 +1178,27 @@ class CoverageProbe(Node):
     def _wait_for_grid_diagnostics(self, timeout_sec, required_global_points=None):
         required_global_points = required_global_points or []
         deadline = time.monotonic() + timeout_sec
+        # Transient-local delivery can still lose a cold-start discovery race.
+        # MapServer's GetMap service is the authoritative fallback and returns
+        # exactly the same configured masks; no safety check is bypassed.
+        for attribute, client in (
+            ("keepout_mask", self.keepout_map_client),
+            ("speed_mask", self.speed_map_client),
+        ):
+            if getattr(self, attribute) is not None:
+                continue
+            remaining = deadline - time.monotonic()
+            if remaining <= 0.0 or not client.wait_for_service(
+                timeout_sec=min(5.0, remaining)
+            ):
+                continue
+            future = client.call_async(GetMap.Request())
+            rclpy.spin_until_future_complete(
+                self, future, timeout_sec=min(10.0, max(0.0, deadline - time.monotonic()))
+            )
+            response = future.result() if future.done() else None
+            if response is not None and response.map.data:
+                setattr(self, attribute, response.map)
         while rclpy.ok() and time.monotonic() < deadline:
             grids_ready = all(
                 (self.global_costmap, self.keepout_mask, self.speed_mask)

@@ -65,6 +65,23 @@ def _region_swaths(region: list[Point], resolution: float, brush_width: float):
             x = (min(point[0] for point in values) + max(point[0] for point in values)) / 2.0
             segment = ((x, min(p[1] for p in values)),
                        (x, max(p[1] for p in values)))
+        if math.dist(*segment) < resolution * 0.5:
+            # Nav2 cannot execute a zero-length heading. A one-cell residual is
+            # represented by the shortest physical centreline that spans that
+            # raster cell, rather than being ignored or extended by a brush
+            # radius on both sides.
+            center_x = (segment[0][0] + segment[1][0]) / 2.0
+            center_y = (segment[0][1] + segment[1][1]) / 2.0
+            if horizontal:
+                segment = (
+                    (center_x - resolution / 2.0, center_y),
+                    (center_x + resolution / 2.0, center_y),
+                )
+            else:
+                segment = (
+                    (center_x, center_y - resolution / 2.0),
+                    (center_x, center_y + resolution / 2.0),
+                )
         swaths.append(segment if index % 2 == 0 else (segment[1], segment[0]))
     return swaths
 

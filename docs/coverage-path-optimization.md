@@ -138,7 +138,15 @@ residual planner's nominal geometry; transit reaches the residual endpoint with
 the brush disabled, so hidden lead-in and overrun cannot inflate repeat area.
 Residual swaths are brush-centre paths over the missed-cell span: their circular
 swept footprint supplies the endpoint radius, and the planner does not extend
-the centreline by that radius a second time.
+the centreline by that radius a second time. A one-cell residual is represented
+by one raster-cell width of physical centreline so Nav2 always receives a
+non-degenerate heading.
+
+The entry preflight normally receives keepout and speed masks through
+transient-local topics. If cold DDS discovery misses either latched sample, the
+coverage task calls that mask MapServer's authoritative `GetMap` service within
+the same bounded readiness window. Entry selection remains fail-closed unless
+the global costmap and both configured masks cover the staging point.
 
 The retained optimized seed 132 bag is checked with
 `scripts/verify_coverage_mcap_replay.sh`. That gate first executes a real

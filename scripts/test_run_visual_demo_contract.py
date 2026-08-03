@@ -206,6 +206,17 @@ def test_nav2_waits_for_localization_tf_and_exact_lifecycle_state():
     assert "planner_state == 3" in readiness
 
 
+def test_coverage_fetches_authoritative_filter_maps_after_latched_discovery_race():
+    probe = (
+        ROOT
+        / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
+    ).read_text(encoding="utf-8")
+
+    assert 'GetMap, "/keepout_filter_mask_server/map"' in probe
+    assert 'GetMap, "/speed_filter_mask_server/map"' in probe
+    assert "response is not None and response.map.data" in probe
+
+
 def test_camera_follow_discovery_has_a_hard_timeout():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
 
