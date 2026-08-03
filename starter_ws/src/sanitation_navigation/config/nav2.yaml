@@ -61,7 +61,7 @@ controller_server:
     # Permit a bounded dynamic-obstacle stop before declaring controller patience exceeded.
     failure_tolerance: 5.0
     progress_checker_plugins: [progress_checker]
-    goal_checker_plugins: [goal_checker, coverage_goal_checker]
+    goal_checker_plugins: [goal_checker]
     controller_plugins: [FollowPath]
     progress_checker:
       plugin: nav2_controller::PoseProgressChecker
@@ -69,11 +69,6 @@ controller_server:
       required_movement_angle: 0.20
       movement_time_allowance: 15.0
     goal_checker:
-      plugin: nav2_controller::SimpleGoalChecker
-      stateful: true
-      xy_goal_tolerance: 0.20
-      yaw_goal_tolerance: 0.30
-    coverage_goal_checker:
       plugin: nav2_controller::SimpleGoalChecker
       # A coverage swath must finish close to its actual endpoint.  A stateful
       # goal checker can remember a transient in-tolerance sample and then

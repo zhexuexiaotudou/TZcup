@@ -1064,7 +1064,7 @@ class CoverageProbe(Node):
         goal = FollowPath.Goal(); goal.path = self._path_message(component["points"])
         self.current_path_publisher.publish(goal.path)
         self.current_component_path_publisher.publish(goal.path)
-        goal.controller_id = "FollowPath"; goal.goal_checker_id = "coverage_goal_checker"; goal.progress_checker_id = "progress_checker"
+        goal.controller_id = "FollowPath"; goal.goal_checker_id = "goal_checker"; goal.progress_checker_id = "progress_checker"
         timeout = max(self.get_parameter("minimum_component_timeout_sec").value, path_length(component["points"]) / 0.10 + 30.0)
         result = self._run_action(
             self.follow_client, goal, component["brush"], timeout, "follow_path"
