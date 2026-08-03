@@ -16,6 +16,29 @@ class ResidualPlan:
     truncated: bool
 
 
+def trim_swept_endcaps(
+    segment: tuple[Point, Point], brush_width: float, resolution: float
+) -> tuple[Point, Point]:
+    """Trim a repair centreline where the circular brush already covers its ends.
+
+    Keep a one-cell residual executable: it is the minimum physical heading and
+    must not collapse to a zero-length Nav2 goal.
+    """
+    start, end = segment
+    length = math.dist(start, end)
+    minimum_length = max(0.0, float(resolution))
+    if length <= minimum_length + 1e-9 or brush_width <= 0.0:
+        return segment
+    requested = float(brush_width) * 0.25
+    trim = min(requested, max(0.0, (length - minimum_length) / 2.0))
+    unit_x = (end[0] - start[0]) / length
+    unit_y = (end[1] - start[1]) / length
+    return (
+        (start[0] + unit_x * trim, start[1] + unit_y * trim),
+        (end[0] - unit_x * trim, end[1] - unit_y * trim),
+    )
+
+
 def connected_residual_regions(points: Iterable[Point], resolution: float) -> list[list[Point]]:
     remaining = {(round(float(x), 6), round(float(y), 6)) for x, y in points}
     regions = []

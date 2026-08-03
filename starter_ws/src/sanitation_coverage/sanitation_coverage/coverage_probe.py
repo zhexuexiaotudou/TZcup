@@ -47,7 +47,10 @@ from sanitation_coverage.coverage_components import ComponentType, CoverageCompo
 from sanitation_coverage.coverage_plan import CoveragePlan
 from sanitation_coverage.blocked_swath_manager import BlockedSwathManager
 from sanitation_coverage.oriented_swath_router import route_oriented_swaths
-from sanitation_coverage.residual_region_planner import plan_residual_regions
+from sanitation_coverage.residual_region_planner import (
+    plan_residual_regions,
+    trim_swept_endcaps,
+)
 from sanitation_coverage.skid_steer_connector import plan_skid_steer_connector
 from sanitation_coverage.skid_steer_rotation import normalized_yaw_error
 from sanitation_coverage.swath_optimizer import optimize_swath_angle
@@ -984,7 +987,21 @@ class CoverageProbe(Node):
                 primary_length_m=primary_length_m,
                 max_ratio=float(config.get("repair_max_primary_length_ratio", 0.10)),
             )
-            segments = list(residual.swaths)
+            nominal_segments = list(residual.swaths)
+            calibration_scale = float(config.get("execution_lateral_scale", 1.0))
+            calibration_offset = float(config.get("execution_lateral_offset_m", 0.0))
+            segments = []
+            for nominal in nominal_segments:
+                trimmed = trim_swept_endcaps(nominal, width, resolution=0.10)
+                # A swath line has no signed normal: reverse traversal must use
+                # the same offline map-normal calibration as forward traversal.
+                angle_deg = math.degrees(segment_heading(*trimmed)) % 180.0
+                segments.append(apply_lateral_affine(
+                    [trimmed], angle_deg,
+                    scale=calibration_scale,
+                    offset_m=calibration_offset,
+                )[0])
+            planned_repair_length = sum(math.dist(*segment) for segment in segments)
             self.planned_repairs_publisher.publish(String(data=json.dumps([
                 {
                     "component_id": f"repair-{pass_index:02d}-{index:02d}",
@@ -999,12 +1016,20 @@ class CoverageProbe(Node):
                 "missed_cell_count_before": len(missed),
                 "segment_count": len(segments),
                 "residual_region_count": len(residual.regions),
-                "planned_repair_length_m": residual.total_length_m,
+                "nominal_residual_length_m": residual.total_length_m,
+                "planned_repair_length_m": planned_repair_length,
                 "repair_length_limit_m": primary_length_m * float(config.get("repair_max_primary_length_ratio", 0.10)),
                 "repair_plan_truncated": residual.truncated,
+                "execution_lateral_scale": calibration_scale,
+                "execution_lateral_offset_m": calibration_offset,
+                "execution_calibration_source": config.get(
+                    "execution_calibration_source", "unspecified_offline_calibration"
+                ),
                 "segments": [],
             }
-            for segment_index, (brush_start, brush_end) in enumerate(segments):
+            for segment_index, ((nominal_start, nominal_end), (brush_start, brush_end)) in enumerate(
+                zip(nominal_segments, segments)
+            ):
                 if self.stop_requested:
                     all_success = False
                     break
@@ -1064,6 +1089,8 @@ class CoverageProbe(Node):
                     and repair_result["success"]
                 )
                 pass_report["segments"].append({
+                    "nominal_residual_segment": [nominal_start, nominal_end],
+                    "commanded_brush_segment": [brush_start, brush_end],
                     "brush_segment": [brush_start, brush_end],
                     "entry": entry_result,
                     "repair": repair_result,
