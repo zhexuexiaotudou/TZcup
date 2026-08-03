@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -16,20 +17,212 @@ def test_representative_frame_is_taken_from_the_completed_end_of_video():
     assert 'ffmpeg -nostdin -y -ss 5 -i "${OUTPUT_DIR}/visual_demo.mp4"' not in launcher
 
 
-def test_readiness_bypasses_stale_ros_daemon():
+def test_launcher_exposes_optimized_and_legacy_coverage_profiles():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    wrapper = (ROOT / "scripts" / "run_visual_demo.ps1").read_text(encoding="utf-8")
+    frozen = (ROOT / "scripts" / "run_frozen_coverage_trial.ps1").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'COVERAGE_PROFILE="optimized"' in launcher
+    assert '--coverage-profile) COVERAGE_PROFILE="$2"' in launcher
+    assert '"${COVERAGE_PROFILE}" == "legacy"' in launcher
+    assert 'competition_demo_area.yaml' in launcher
+    assert 'coverage_demo_overlap.yaml' in launcher
+    assert '[ValidateSet("optimized", "legacy")]' in wrapper
+    assert '"--coverage-profile", $CoverageProfile' in wrapper
+    assert '[ValidateSet("optimized", "legacy")]' in frozen
+
+
+def test_launcher_can_run_a_bounded_physical_dynamic_matrix():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    wrapper = (ROOT / "scripts" / "run_visual_demo.ps1").read_text(encoding="utf-8")
+    world = (
+        ROOT / "starter_ws/src/sanitation_worlds/worlds/sanitation_competition_demo.sdf"
+    ).read_text(encoding="utf-8")
+
+    assert 'DYNAMIC_OBSTACLE_TRIALS=0' in launcher
+    assert '--dynamic-obstacle-trials) DYNAMIC_OBSTACLE_TRIALS="$2"' in launcher
+    assert 'dynamic_probe_executable="$(ros2 pkg prefix sanitation_tasks)' in launcher
+    assert '"${dynamic_probe_executable}" --ros-args' in launcher
+    assert 'model_name:="dynamic_pedestrian_box"' in launcher
+    assert 'dynamic_obstacle_report.json' in launcher
+    assert 'dynamic_probe_code' in launcher
+    assert '[int]$DynamicObstacleTrials = 0' in wrapper
+    assert '"--dynamic-obstacle-trials", "$DynamicObstacleTrials"' in wrapper
+    assert '<model name="dynamic_pedestrian_box">' in world
+    probe = (
+        ROOT / "starter_ws/src/sanitation_tasks/sanitation_tasks/dynamic_obstacle_probe.py"
+    ).read_text(encoding="utf-8")
+    assert 'self.set_pose_backend = "gz_transport"' in probe
+    assert 'subprocess.run(' in probe
+    assert 'f"/world/{world_name}/set_pose"' in probe
+    assert '"gz.msgs.Pose"' in probe
+    assert 'z: 0.0' in probe
+    assert 'z: 0.55' not in probe
+    assert '"true" in process.stdout.lower()' in probe
+    assert '-p service_timeout_ms:=10000' in launcher
+    assert '-p minimum_remaining_path_m:=3.0' in launcher
+    assert '-p minimum_progress_between_trials_m:=0.5' in launcher
+    assert '-p minimum_injection_distance_m:=1.5' in launcher
+    assert '-p maximum_injection_distance_m:=1.8' in launcher
+    assert '-p hold_sec:=0.5' in launcher
+    assert '-p crossing_steps:=5' in launcher
+    assert '"set_pose_backend": self.set_pose_backend' in probe
+    assert '"repeated_oscillation_count": repeated_oscillation_count' in probe
+    assert 'and repeated_oscillation_count == 0' in probe
+    assert 'valid >= requested_count' in probe
+    assert 'maximum_attempt_count = requested_count + 2' in probe
+
+
+def test_headless_matrix_can_select_ogre_without_changing_gui_default():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    wrapper = (ROOT / "scripts" / "run_visual_demo.ps1").read_text(encoding="utf-8")
+
+    assert 'SIMULATION_RENDER_ENGINE="ogre2"' in launcher
+    assert '--simulation-render-engine) SIMULATION_RENDER_ENGINE="$2"' in launcher
+    assert 'case "${SIMULATION_RENDER_ENGINE}" in ogre2|ogre)' in launcher
+    assert 'f"<render_engine>{render_engine}</render_engine>"' in launcher
+    assert 'server_headless_rendering="false"' in launcher
+    assert 'headless_rendering:="${server_headless_rendering}"' in launcher
+    assert '[ValidateSet("ogre2", "ogre")]' in wrapper
+    assert '[string]$SimulationRenderEngine = "ogre2"' in wrapper
+    stage4v = (
+        ROOT / "starter_ws/src/sanitation_bringup/launch/stage4v_localization.launch.py"
+    ).read_text(encoding="utf-8")
+    assert "DeclareLaunchArgument('headless_rendering', default_value='true')" in stage4v
+    assert "'headless_rendering': LaunchConfiguration('headless_rendering')" in stage4v
+
+
+def test_headless_formal_matrix_still_scores_all_cleaning_targets():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
 
+    assert 'if [[ "${GAZEBO_TRAIL}" -eq 1 ]]; then' in launcher
+    assert '[[ "${GAZEBO_TRAIL}" -eq 1 ]] && summary_args+=(--targets-required)' in launcher
+    assert '"${GUI}" -eq 1 && "${GAZEBO_TRAIL}" -eq 1' not in launcher
+
+
+def test_optimized_connectors_use_nav2_behaviors_and_dedicated_controllers():
+    probe = (
+        ROOT
+        / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
+    ).read_text(encoding="utf-8")
+    nav2 = (
+        ROOT / "starter_ws/src/sanitation_navigation/config/nav2.yaml"
+    ).read_text(encoding="utf-8")
+
+    assert 'ActionClient(self, Spin, "/spin")' in probe
+    assert 'ActionClient(\n            self, DriveOnHeading, "/drive_on_heading"' in probe
+    assert 'ActionClient(self, BackUp, "/backup")' in probe
+    assert 'create_publisher(\n            Twist, "/cmd_vel_nav"' not in probe
+    assert '"CLEAN": "CleanPath"' in probe
+    assert '"REPAIR": "RepairPath"' in probe
+    assert '"goal_yaw": heading' in probe
+    assert 'component.get("goal_yaw")' in probe
+    assert "controller_plugins: [FollowPath, CleanPath, RepairPath]" in nav2
+    assert "desired_linear_vel: 0.65" in nav2
+    assert "use_velocity_scaled_lookahead_dist: false" in nav2
+
+
+def test_mission_route_modes_include_sealed_taught_route_contract():
+    schema = json.loads(
+        (ROOT / "starter_ws/src/sanitation_tasks/config/mission_schema.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    taught = (
+        ROOT
+        / "starter_ws/src/sanitation_coverage/sanitation_coverage/taught_route.py"
+    ).read_text(encoding="utf-8")
+
+    assert schema["properties"]["route_mode"]["enum"] == [
+        "AREA_FILL", "TAUGHT_ROUTE", "POINT_CLEAN"
+    ]
+    assert "taught_route_file" in schema["properties"]
+    assert "canonical_route_hash" in taught
+    assert '"collision_checked": True' in taught
+    assert '"executor": "Nav2 FollowPath"' in taught
+
+
+def test_formal_matrix_preserves_five_seed_a_b_and_one_mcap_replay_source():
+    matrix = (
+        ROOT / "scripts" / "run_coverage_optimizer_matrix.sh"
+    ).read_text(encoding="utf-8")
+
+    assert 'OPTIMIZED_SEEDS="132,133,134,135,136"' in matrix
+    assert 'LEGACY_SEEDS="140,141,142,143,144"' in matrix
+    assert 'MCAP_SEED="132"' in matrix
+    assert 'run_profile optimized "${OPTIMIZED_SEEDS}" selected' in matrix
+    assert 'run_profile legacy "${LEGACY_SEEDS}" baseline' in matrix
+    assert 'Refusing to overwrite retained matrix status' in matrix
+    assert 'args+=(--no-mcap)' in matrix
+
+
+def test_coverage_mcap_gate_performs_storage_audit_and_real_rosbag_play():
+    verifier = (ROOT / "scripts" / "verify_coverage_mcap_replay.sh").read_text(
+        encoding="utf-8"
+    )
+    audit = (ROOT / "scripts" / "coverage_mcap_replay_audit.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'ros2 bag info "${BAG}"' in verifier
+    assert 'ros2 bag play "${BAG}" --rate 100' in verifier
+    assert '--play-exit-code "${play_code}"' in verifier
+    assert '"/coverage/full_plan"' in audit
+    assert '"/coverage/actual_cleaning_trajectory"' in audit
+    assert '"completed_terminal_state_present"' in audit
+    assert '"ros2_bag_play_succeeded"' in audit
+
+
+def test_repair_matrix_injects_ten_fused_pose_brush_dropouts_without_gt_control():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    matrix = (ROOT / "scripts" / "run_coverage_repair_matrix.sh").read_text(
+        encoding="utf-8"
+    )
+    probe = (
+        ROOT
+        / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
+    ).read_text(encoding="utf-8")
+
+    assert 'REPAIR_EVALUATION_INJECTION=0' in launcher
+    assert '--repair-evaluation-injection) REPAIR_EVALUATION_INJECTION=1' in launcher
+    assert '"vehicle_control_source": "unchanged_nav2"' in launcher
+    assert 'SEEDS="150,151,152,153,154,155,156,157,158,159"' in matrix
+    assert '--repair-evaluation-injection' in matrix
+    assert '"control_source": "fused_localization_path_fraction"' in probe
+    assert '"ground_truth_used_for_control": False' in probe
+    assert 'staging = base_start' in probe
+    assert '"executed_repair_length_m"' in probe
+    assert '"repair_length_gate_pass"' in probe
+    assert 'base_end[0] + 0.30' not in probe
+
+
+def test_readiness_bypasses_stale_ros_daemon():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    readiness = (ROOT / "scripts" / "ros_runtime_readiness.py").read_text(
+        encoding="utf-8"
+    )
+
     assert "ros2 node list --no-daemon --spin-time 3" in launcher
-    assert "ros2 topic list --no-daemon --spin-time 3" in launcher
-    assert "ros2 service list --no-daemon --spin-time 3" in launcher
-    assert "--include-hidden-services" in launcher
+    assert 'timeout 155 python3 "${ROOT}/scripts/ros_runtime_readiness.py"' in launcher
+    assert '"${OUTPUT_DIR}/runtime_readiness.json"' in launcher
+    assert "node.get_topic_names_and_types()" in readiness
+    assert "node.get_service_names_and_types()" in readiness
     for action in ("compute_coverage_path", "follow_path", "navigate_to_pose"):
-        assert f"/{action}/_action/send_goal" in launcher
+        assert f'"/{action}/_action/send_goal"' in readiness
+    assert '"/controller_server/get_state"' in readiness
+    assert '"/planner_server/get_state"' in readiness
+    assert "controller_state == 3" in readiness
+    assert "planner_state == 3" in readiness
     assert "ros2 action list" not in launcher
 
 
 def test_nav2_waits_for_localization_tf_and_exact_lifecycle_state():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    readiness = (ROOT / "scripts" / "ros_runtime_readiness.py").read_text(
+        encoding="utf-8"
+    )
 
     localization_gate = launcher.index("tf2_echo odom base_footprint")
     navigation_start = launcher.index(
@@ -38,9 +231,21 @@ def test_nav2_waits_for_localization_tf_and_exact_lifecycle_state():
     assert localization_gate < navigation_start
     assert "grep -Fq 'Translation:'" in launcher
     assert "grep -Fq 'Rotation:'" in launcher
-    assert "grep -Fxq 'active [3]' <<< \"${controller_state}\"" in launcher
-    assert "grep -Fxq 'active [3]' <<< \"${planner_state}\"" in launcher
-    assert "grep -q 'active' <<< \"${controller_state}\"" not in launcher
+    assert '"/controller_server/get_state"' in readiness
+    assert '"/planner_server/get_state"' in readiness
+    assert "controller_state == 3" in readiness
+    assert "planner_state == 3" in readiness
+
+
+def test_coverage_fetches_authoritative_filter_maps_after_latched_discovery_race():
+    probe = (
+        ROOT
+        / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
+    ).read_text(encoding="utf-8")
+
+    assert 'GetMap, "/keepout_filter_mask_server/map"' in probe
+    assert 'GetMap, "/speed_filter_mask_server/map"' in probe
+    assert "response is not None and response.map.data" in probe
 
 
 def test_camera_follow_discovery_has_a_hard_timeout():
@@ -74,8 +279,14 @@ def test_manual_gui_preparation_fails_closed_without_one_tracking_plugin():
 
 def test_emergency_stop_availability_waits_for_dashboard_but_stays_bounded():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    availability = (ROOT / "scripts" / "emergency_stop_availability.py").read_text(
+        encoding="utf-8"
+    )
 
-    assert "timeout 15 ros2 topic pub --once --wait-matching-subscriptions 1" in launcher
+    assert 'timeout 20 python3 "${ROOT}/scripts/emergency_stop_availability.py"' in launcher
+    assert "publisher.get_subscription_count()" in availability
+    assert "publish_count < 5" in availability
+    assert '"/emergency_stop" in payload.get("topics_seen", [])' in availability
     assert "Unable to publish the bounded emergency-stop availability pulse." in launcher
 
 
@@ -86,7 +297,7 @@ def test_wslg_gui_is_launched_directly_for_native_plugin_backend():
     assert 'setsid "${gazebo_gui_env[@]}" gz sim -g --gui-config "${gui_config}"' in launcher
     assert '> "${OUTPUT_DIR}/gazebo_gui.log" 2>&1 &' in launcher
     assert 'gui:="${gui_value}"' not in launcher
-    assert launcher.index('if [[ "${ready}" -ne 1 ]]') < launcher.index(
+    assert launcher.index('timeout 155 python3 "${ROOT}/scripts/ros_runtime_readiness.py"') < launcher.index(
         'setsid "${gazebo_gui_env[@]}" gz sim -g --gui-config "${gui_config}"'
     )
 
@@ -117,6 +328,19 @@ def test_wslg_gui_is_health_checked_and_supervised_during_the_mission():
     assert 'runtime_termination_status="OPERATOR_GUI_CLOSED"' in launcher
     assert '"${OUTPUT_DIR}/launcher_termination.json"' in launcher
     assert "pgrep -f 'gz sim.*-g'" not in launcher
+
+
+def test_coverage_supervisor_waits_for_the_real_setsid_child():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+
+    assert (
+        'PYTHONUNBUFFERED=1 setsid --wait timeout "${MISSION_TIMEOUT_SEC}"'
+    ) in launcher
+    assert "ros2 pkg prefix sanitation_coverage" in launcher
+    assert '"${coverage_executable}" --ros-args' in launcher
+    assert "ros2 run sanitation_coverage coverage_probe" not in launcher
+    assert 'setsid timeout "${MISSION_TIMEOUT_SEC}" ros2 run' not in launcher
+    assert '"${OUTPUT_DIR}/coverage_process_exit_code.txt"' in launcher
 
 
 def test_windows_wrapper_runs_the_wslg_window_guard():
@@ -168,3 +392,13 @@ def test_wslg_shared_memory_preflight_is_idempotent_and_persistent():
     assert 'rdp_allocate_shared_memory: Failed to open' in preflight
     assert 'wslg_restart_required' in preflight
     assert 'exit 10' in preflight
+
+
+def test_emergency_availability_republishes_through_dds_discovery_race():
+    probe = (ROOT / "scripts" / "emergency_stop_availability.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "publish_count < 50" in probe
+    assert "now - last_publish >= 0.25" in probe
+    assert "publish_count >= 5 and observed" in probe

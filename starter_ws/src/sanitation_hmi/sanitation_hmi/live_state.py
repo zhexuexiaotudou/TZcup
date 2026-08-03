@@ -10,7 +10,11 @@ import time
 
 
 TERMINAL_STATES = {"COMPLETED", "FAILED", "CANCELED"}
-ACTIVE_COMPONENT_STATES = {"EXECUTING_SWATH", "EXECUTING_TURN"}
+ACTIVE_COMPONENT_STATES = {
+    "EXECUTING_SWATH", "EXECUTING_TURN", "EXECUTING_ROTATE",
+    "EXECUTING_SHIFT", "EXECUTING_BACKUP", "EXECUTING_BYPASS",
+    "REPAIR_SWATH", "REPAIR_TRANSIT",
+}
 
 
 def _bounded_points(points, maximum: int = 320) -> list[list[float]]:
@@ -92,11 +96,14 @@ class LiveMissionState:
 
     def update_component(self, payload: dict) -> None:
         with self._lock:
+            expected = payload.get("expected_components")
+            if expected is not None and int(expected) > 0:
+                self._expected_components = int(expected)
             kind = payload.get("kind")
             index = payload.get("index")
             state = str(payload.get("state") or self._state)
             if state in ACTIVE_COMPONENT_STATES and kind is not None and index is not None:
-                key = f"{kind}:{int(index)}"
+                key = str(payload.get("component_id") or f"{kind}:{int(index)}")
                 if key != self._current_component:
                     if (
                         self._current_component

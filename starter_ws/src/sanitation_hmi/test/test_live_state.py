@@ -80,3 +80,17 @@ def test_path_decimation_preserves_last_point():
     assert len(sampled) <= 101
     assert sampled[0] == [0.0, 0.0]
     assert sampled[-1] == [999.0, -999.0]
+
+
+def test_semantic_component_updates_dynamic_plan_size():
+    state = LiveMissionState(expected_components=17)
+    state.update_component({
+        "state": "EXECUTING_SHIFT",
+        "kind": "SHIFT",
+        "index": 2,
+        "component_id": "connector-00-translate",
+        "expected_components": 25,
+    })
+    snapshot = state.snapshot()
+    assert snapshot["progress"]["expected_components"] == 25
+    assert snapshot["progress"]["current_component"] == "connector-00-translate"

@@ -1,0 +1,27 @@
+{
+  "schema": "tzcup.coverage_optimizer_verification_summary.v1",
+  "stage": "pre_pr",
+  "code_revision": "8943ba681a7f5c7f3b2e9b56ed852c8446e716df",
+  "checks": [
+    {
+      "command": "py scripts/ci_fast.py",
+      "result": "pass",
+      "detail": "236 passed"
+    },
+    {
+      "command": "py -m compileall starter_ws/src/sanitation_coverage starter_ws/src/sanitation_tasks starter_ws/src/sanitation_gazebo_visualization",
+      "result": "pass"
+    },
+    {
+      "command": "bash -n scripts/run_visual_demo.sh scripts/run_coverage_dynamic_matrix.sh",
+      "result": "pass"
+    },
+    {
+      "command": "scripts/coverage_optimizer_report.py --root <external-final-root>",
+      "result": "pass",
+      "detail": "5 legacy plus 5 optimized runs; static, repair, dynamic, and MCAP gates passed"
+    }
+  ],
+  "external_evidence_root": "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T073000Z_delivery_final",
+  "raw_evidence_committed": false
+}

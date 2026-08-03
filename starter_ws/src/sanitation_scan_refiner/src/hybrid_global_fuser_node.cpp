@@ -36,6 +36,7 @@
 #include "tf2/utils.h"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
 #include "tf2_ros/transform_broadcaster.h"
+#include "sanitation_scan_refiner/fusion_filter.hpp"
 
 namespace sanitation_scan_refiner
 {
@@ -92,6 +93,10 @@ public:
     maximum_refined_age_s_ = declare_parameter<double>("maximum_refined_age_s", 0.5);
     gnss_variance_scale_ = declare_parameter<double>("gnss_variance_scale", 1.0);
     gnss_outlier_threshold_m_ = declare_parameter<double>("gnss_outlier_threshold_m", 0.75);
+    gnss_anchor_smoothing_alpha_ = declare_parameter<double>(
+      "gnss_anchor_smoothing_alpha", 1.0);
+    maximum_refined_gnss_disagreement_m_ = declare_parameter<double>(
+      "maximum_refined_gnss_disagreement_m", 0.10);
     minimum_refined_variance_ = declare_parameter<double>(
       "minimum_refined_variance", 0.0025);
     maximum_refined_variance_ = declare_parameter<double>(
@@ -172,6 +177,13 @@ private:
       ++rejected_gnss_count_;
       publishDiagnostic("gnss_outlier_rejected", false, true);
       return;
+    }
+    if (have_gnss_ && have_local_) {
+      const auto previous = propagateGlobal(gnss_x_, gnss_y_, gnss_local_anchor_);
+      const auto filtered = smoothAnchor(
+        previous, {projected_x, projected_y}, gnss_anchor_smoothing_alpha_);
+      projected_x = filtered.first;
+      projected_y = filtered.second;
     }
     gnss_x_ = projected_x;
     gnss_y_ = projected_y;
@@ -264,7 +276,9 @@ private:
       yaw_variance = refined_yaw_variance_;
       source = "scan_fallback";
     } else if (mode_ == "hybrid_rtk_scan_imu_wheel" && (gnss_fresh || refined_fresh)) {
-      if (gnss_fresh && refined_fresh) {
+      if (gnss_fresh && refined_fresh && measurementsConsistent(
+          gnss_position, refined_position, maximum_refined_gnss_disagreement_m_))
+      {
         const double gnss_weight = 1.0 / gnss_variance_;
         const double scan_weight = 1.0 / refined_variance_;
         x = (gnss_weight * gnss_position.first + scan_weight * refined_position.first) /
@@ -279,7 +293,8 @@ private:
         x = gnss_position.first;
         y = gnss_position.second;
         xy_variance = gnss_variance_;
-        source = "rtk_local_fallback";
+        source = refined_fresh ? "rtk_local_refined_innovation_rejected" :
+          "rtk_local_fallback";
       } else {
         x = refined_position.first;
         y = refined_position.second;
@@ -375,6 +390,8 @@ private:
   double maximum_refined_age_s_{0.5};
   double gnss_variance_scale_{1.0};
   double gnss_outlier_threshold_m_{0.75};
+  double gnss_anchor_smoothing_alpha_{1.0};
+  double maximum_refined_gnss_disagreement_m_{0.10};
   double minimum_refined_variance_{0.0025};
   double maximum_refined_variance_{1.0};
   bool publish_map_to_odom_{true};

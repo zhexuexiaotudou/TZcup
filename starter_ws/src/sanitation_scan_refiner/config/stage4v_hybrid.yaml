@@ -36,9 +36,16 @@ hybrid_global_fuser:
     # 1.28 times the median reported variance.
     gnss_variance_scale: 1.3
     gnss_outlier_threshold_m: 0.75
+    # Smooth the absolute RTK correction in the odometry frame. Local wheel/IMU
+    # propagation remains unsmoothed, so this removes fix noise without adding
+    # motion lag.
+    gnss_anchor_smoothing_alpha: 0.10
+    # A scan-map correction that disagrees with fresh RTK beyond this bound is
+    # not allowed to dominate the global pose.
+    maximum_refined_gnss_disagreement_m: 0.10
     # Long-coverage MCAP shows refined XY RMSE near 0.043 m, corresponding to
     # roughly 0.0009 m^2 per axis, while local curvature can report much larger
     # values. Bound only the fusion covariance; retain the raw diagnostic value.
-    minimum_refined_variance: 0.00025
-    maximum_refined_variance: 0.0009
+    minimum_refined_variance: 0.0015
+    maximum_refined_variance: 0.0025
     publish_map_to_odom: true

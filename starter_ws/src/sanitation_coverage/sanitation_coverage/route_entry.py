@@ -1,10 +1,47 @@
 import math
 
 
+def apply_lateral_affine(swaths, angle_deg, scale=1.0, offset_m=0.0):
+    """Apply an offline map-normal calibration to desired brush swaths."""
+    angle = math.radians(float(angle_deg))
+    normal = (-math.sin(angle), math.cos(angle))
+    calibrated = []
+    for start, end in swaths:
+        points = []
+        for point in (start, end):
+            projection = point[0] * normal[0] + point[1] * normal[1]
+            correction = float(scale) * projection + float(offset_m) - projection
+            points.append((
+                point[0] + correction * normal[0],
+                point[1] + correction * normal[1],
+            ))
+        calibrated.append(tuple(points))
+    return calibrated
+
+
 def segment_heading(start, end):
     if start == end:
         raise ValueError('a single or degenerate point cannot define heading')
     return math.atan2(end[1] - start[1], end[0] - start[0])
+
+
+def brush_center_to_base_swath(start, end, forward_offset_m, extension_m):
+    """Convert a desired brush-center swath to the commanded base path."""
+    length = math.dist(start, end)
+    if length <= 1e-9:
+        return start, end
+    unit_x = (end[0] - start[0]) / length
+    unit_y = (end[1] - start[1]) / length
+    return (
+        (
+            start[0] - (forward_offset_m + extension_m) * unit_x,
+            start[1] - (forward_offset_m + extension_m) * unit_y,
+        ),
+        (
+            end[0] + (extension_m - forward_offset_m) * unit_x,
+            end[1] + (extension_m - forward_offset_m) * unit_y,
+        ),
+    )
 
 
 def oriented_pose(point, heading):

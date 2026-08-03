@@ -61,9 +61,11 @@ def assemble(
     video_mode: str,
     camera_follow_requested: bool,
     camera_follow_required: bool = True,
+    targets_required: bool = False,
 ) -> dict:
     coverage = _load_json(output_dir / "coverage_report.json")
     dashboard = _load_json(output_dir / "dashboard_telemetry.json")
+    cleaning = _load_json(output_dir / "gazebo_cleaning_telemetry.json")
     mcap = _mcap_evidence(output_dir / "visual_demo_bag")
     video = _video_evidence(output_dir / "visual_demo.mp4")
     screenshot = output_dir / "visual_demo_frame.png"
@@ -97,6 +99,11 @@ def assemble(
         "/tf",
     }
     recorded_topics = set(mcap["topics"])
+    targets_complete = bool(
+        cleaning
+        and cleaning.get("targets_total") == 10
+        and cleaning.get("targets_cleaned") == 10
+    )
     checks = {
         "coverage_process_exit_zero": coverage_exit_code == 0,
         "coverage_full_execution_success": coverage_success,
@@ -133,6 +140,7 @@ def assemble(
         "camera_follow_requested": bool(
             camera_follow_requested or not camera_follow_required
         ),
+        "target_requirement_satisfied": not targets_required or targets_complete,
     }
     gate_checks = checks
     return {
@@ -167,6 +175,13 @@ def assemble(
             "snapshot_present": dashboard is not None,
             "status": dashboard.get("status") if dashboard else None,
             "topics_seen": dashboard.get("topics_seen", []) if dashboard else [],
+        },
+        "cleaning_targets": {
+            "required": targets_required,
+            "telemetry_present": cleaning is not None,
+            "cleaned": cleaning.get("targets_cleaned") if cleaning else None,
+            "total": cleaning.get("targets_total") if cleaning else None,
+            "complete": targets_complete,
         },
         "mcap": mcap,
         "video": {
@@ -206,6 +221,7 @@ def main() -> int:
     )
     parser.add_argument("--camera-follow-requested", action="store_true")
     parser.add_argument("--camera-follow-not-required", action="store_true")
+    parser.add_argument("--targets-required", action="store_true")
     args = parser.parse_args()
     report = assemble(
         args.output_dir,
@@ -214,6 +230,7 @@ def main() -> int:
         video_mode=args.video_mode,
         camera_follow_requested=args.camera_follow_requested,
         camera_follow_required=not args.camera_follow_not_required,
+        targets_required=args.targets_required,
     )
     output = args.output_dir / "acceptance_summary.json"
     output.write_text(

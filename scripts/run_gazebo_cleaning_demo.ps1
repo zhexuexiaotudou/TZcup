@@ -13,6 +13,13 @@ param(
     [string]$MapSize = "small",
     [ValidateSet("normal", "fast", "turbo")]
     [string]$SimulationSpeed = "fast",
+    [ValidateSet("optimized", "legacy")]
+    [string]$CoverageProfile = "optimized",
+    [ValidateRange(0, 1000)]
+    [int]$DynamicObstacleTrials = 0,
+    [ValidateSet("ogre2", "ogre")]
+    [string]$SimulationRenderEngine = "ogre2",
+    [switch]$RepairEvaluationInjection,
     [switch]$CloseOnComplete
 )
 
@@ -28,9 +35,13 @@ $launchParameters = @{
     MapSize = $MapSize
     ManualControl = $true
     SimulationSpeed = $SimulationSpeed
+    CoverageProfile = $CoverageProfile
+    DynamicObstacleTrials = $DynamicObstacleTrials
+    SimulationRenderEngine = $SimulationRenderEngine
 }
 if ($FullArea) { $launchParameters["MapSize"] = "medium" }
 if ($Workspace) { $launchParameters["Workspace"] = $Workspace }
+if ($RepairEvaluationInjection) { $launchParameters["RepairEvaluationInjection"] = $true }
 if ($BaseWorkspace) { $launchParameters["BaseWorkspace"] = $BaseWorkspace }
 if ($OutputDirectory) { $launchParameters["OutputDirectory"] = $OutputDirectory }
 if ($SkipBuild) { $launchParameters["SkipBuild"] = $true }

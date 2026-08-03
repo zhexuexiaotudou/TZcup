@@ -13,6 +13,7 @@ setup(
             "config/demo_area.yaml",
             "config/showcase_area.yaml",
             "config/competition_demo_area.yaml",
+            "config/competition_demo_area_skid_steer_optimized.yaml",
             "config/hardware_interface_contract.yaml",
             "config/sim2real_fault_profiles.yaml",
             "config/mission_schema.json",

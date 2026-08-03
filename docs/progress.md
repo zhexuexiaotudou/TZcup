@@ -1,5 +1,18 @@
 # 项目推进记录
 
+## 2026-08-04：skid-steer 覆盖路径优化与语义可视化
+
+- 历史基线完整保留：OpenNav Coverage + Fields2Cover 的 `BOUSTROPHEDON / DUBIN / CONTINUOUS`、`0.35 m` 条带间距、约 46% 重叠、最多两轮补扫、固定 17 组件和全局 turbo 速度仍可用 `-CoverageProfile legacy` 回归。该汽车式大圆弧基线不适合可原地旋转的 skid-steer，且正式 5-seed 基线的重复率和横向误差不满足新门，因此不再是小场默认值。
+- 小场默认改为 Hybrid Area-Fill CPP：Fields2Cover 只负责区域/条带几何，优化器在 0–175° 与 `0.42/0.46/0.48/0.50/0.52 m` 候选中选择方向和间距；最终选择 `0° + 0.52 m`，形成 6 条相邻弓字主条带。主连接器为 Nav2 `Spin → DriveOnHeading → Spin`，失败时依次尝试后退、Nav2 绕行或延后条带，不直接发布 `/cmd_vel`。
+- `CoveragePlan` 现在显式区分 `TRANSIT/SWATH/ROTATE/SHIFT/BACKUP/OBSTACLE_BYPASS/REPAIR_SWATH/RETURN_HOME`，完整计划由 transient-local `/coverage/full_plan` 持久发布；当前组件、规划条带/连接/补扫和实际清扫/转场/补扫各有独立话题，旧 `/coverage/current_path` 只保留 alias。`expected_components` 从实际 `ordered_components` 动态计算。
+- 残余补扫按 8 邻域连通域生成局部短条带，进入和航向对齐期间刷盘关闭；每个任务最多一轮，实际下发补扫长度不超过主条带的 10%。10 个正式注入 seed 全部观察到漏扫、执行一次补扫并恢复到 ≥99.5%，重复率为 16.08%–19.50%，且没有使用 Gazebo 真值控制车辆。
+- 正式 optimized 5-seed 全部通过：实际覆盖率 100%、10/10 目标、重复率 14.25%–17.83%、零碰撞/零禁行区违规，定位 RMSE 3.47–3.94 cm，直线规整度 P95 3.49–5.65 cm。相对 legacy 中位数，实际总里程下降 48.97%、刷盘关闭里程下降 61.46%、连接里程下降 68.00%、任务时间下降 49.57%。
+- seed 132 的 MCAP 经真实 `ros2 bag play` 和顺序重建双门通过：124,094 条消息、14 个必需话题、125.303 s，包含完整语义计划、组件序列、刷盘切换和 `COMPLETED` 终态。原始 MCAP、运行日志和所有失败尝试保留在仓库外，Git 只接收紧凑摘要。
+- Gazebo 原生地图固定使用紫色主条带、灰色虚线连接、黄色补扫、绿色实际清扫、深灰实际转场、白色当前组件、红色受阻区间和绿色已清扫栅格；完整计划不会再被每次当前路径更新清空。动态障碍矩阵分为三个独立任务，每轮要求 8 个有效交互且最多额外尝试 2 次，保留 3.0 m 路径余量、0.5 m 同条带间隔和 1.5–1.8 m 横穿距离。
+- 正式动态矩阵 3 个独立任务全部通过：24/24 次注入均形成有效 LiDAR 交互，恢复率和任务继续率均为 100%，碰撞 0、最小观测净距 0.467 m、重复振荡 0；三次任务均完整结束、满足覆盖质量、无禁行区违规，并在退出时关闭刷盘。静态直线规整度由独立 5-seed 矩阵验收，避免把动态停车/恢复产生的瞬态误算成基础路径摆动。
+- 任务 schema 同时支持 `AREA_FILL / TAUGHT_ROUTE / POINT_CLEAN`。教学路线必须带版本和 SHA-256，逐段保留速度、刷盘、方向、禁扫区、交互点和恢复点并由 Nav2 执行；篡改或越界 fail-closed。定点清扫继续委派 `sanitation_spot_cleaning`，不会被面积覆盖执行器误吞。
+- 边界：以上是 ROS 2/Nav2/Gazebo SIL 证据，不证明垃圾视觉泛化、真实吸扫效果、真实 RTK/轮滑参数、J6 板端、真实行人制动或 20,000 m² 全场耐久。实车前必须重标刷宽/前置偏移、轮胎侧滑和旋转超调，加入电流/温升限制，用真实刷盘接触与定位替代 Gazebo 真值覆盖，并依次通过 HIL、封闭场低速和操作员回滚验收。
+
 > 仓库清理说明：当前树只保留源码、配置、最终状态和紧凑评审证据。早期 Stage 0–4S 的原始构建日志、MCAP、逐点轨迹 CSV 和重复标定运行已从当前树移除；历史结论仍记录在本页及 `GPT_REVIEW_STAGE*.md`，原始字节可从清理前 Git 历史恢复。新的原始运行数据必须留在 Git 忽略目录，详见 [`artifact-policy.md`](artifact-policy.md)。
 
 ## 2026-08-03：小场目标密度
@@ -672,3 +685,10 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_doc
 `AUTO-09=PASS`。证据等级为
 `OFFLINE_KINEMATIC_PERCEPTION_LOOP_SIMULATION`，尚未形成 Gazebo 动态
 抓取或实体机械臂证据。
+# Coverage path optimization（2026-08-03）
+
+- 新增版本化 `CoveragePlan` 与 8 类语义组件，规划、执行和 Gazebo 面板使用同一组件身份与刷盘语义。
+- 新增 5 度步进方向搜索、经验间距选择、相邻往复式清扫带路由、履带底盘 RTR 转接、阻塞条带有界重试和连通残余区域补扫。
+- 独立小场默认启用 0.48 m / DISCONTINUOUS 优化配置；保留 0.35 m / Dubins 连续旧配置作为显式回退。
+- 遥测升级为 v2 并分离规划清扫带、转接、补扫、当前组件及三类实际轨迹；保留旧字段和 `/coverage/current_path`。
+- Windows 快速门禁 202 项通过；ROS 选定包构建通过，coverage 与 Gazebo visualization 共 34 项 ROS 测试通过。真实多种子 Gazebo 结果以本任务验收报告为准，不用静态测试替代。

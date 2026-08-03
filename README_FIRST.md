@@ -18,6 +18,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
 ```
 
+覆盖算法 A/B 回归使用 `-CoverageProfile optimized`（默认）或 `-CoverageProfile legacy`；后者保留 0.35 m 条带与 Dubins 基线，不是 skid-steer 交付默认值。
 启动后使用 Gazebo 右侧“清扫任务控制”卡片，不要用世界物理暂停代替任务暂停。默认
 `-MapSize small`，也可选择 `medium` 或 `large`。Windows 启动器默认准备并验证 WSLg
 `/mnt/shared_memory`，避免 `[WARN:COPY MODE]`，并恢复异常最小化窗口；关闭 Gazebo 会同步停止本次后台仿真，不会遗留
@@ -29,7 +30,7 @@ WSLg 冷启动后若 Gazebo 在原生控制面板加载前提前退出，启动�
 精确进入 active 状态；冷机较慢时只会延迟显示，不会打开一个能看见但无法启动清扫的窗口。
 WSLg 下默认把 Gazebo 服务端保留在 D3D12/NVIDIA，只把 GUI 设为软件渲染；启动器会对 `3D Scene` 做真实截图和黑色像素检测。出现纯黑视口时不会继续显示“已就绪”。
 
-该命令加载独立的 `16 m × 12 m` 竞赛演示场；橙色外框是 30 m² 外部任务区，青色内框是 12 m² 实际清扫区，覆盖率只统计内框。手动演示默认不加载 CameraTracking，可在 3D 区域自由旋转、平移和缩放。高速小场以约 46% 相邻条带重叠、刷盘前置偏移补偿和真值漏点自动补扫消除跟踪误差造成的漏扫，并要求实际覆盖率至少 99.5%。右侧实时显示清扫指标、规划/实际轨迹和已清扫面积。默认 `fast` 为 2x、`0.70 m/s`，录制加速可选 `turbo` 的 3x、`0.90 m/s`；实际 RTF 以顶部 World Stats 为准。
+该命令加载独立的 `16 m × 12 m` 竞赛演示场；橙色外框是 30 m² 外部任务区，青色内框是 12 m² 实际清扫区，覆盖率只统计内框。手动演示默认不加载 CameraTracking，可在 3D 区域自由旋转、平移和缩放。优化小场用 `0.52 m` 规划间距配合 `0.65 m` 物理刷宽，主路径后只允许一次连通域补扫，并要求实际覆盖率至少 99.5%、重复率至多 20%。右侧按规划条带、无刷连接、实际清扫、实际转场、补扫和已清扫栅格分层显示。默认 `fast` 为 2x、`0.70 m/s`，录制加速可选 `turbo` 的 3x、`0.90 m/s`；实际 RTF 以顶部 World Stats 为准。
 
 比赛尺度配置使用
 `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps1 -CompetitionProfile -GazeboOnly -ManualControl -KeepOpen`；

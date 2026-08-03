@@ -1,25 +1,12 @@
-# TZcup 智慧环卫无人清扫车
+# TZcup 智慧环卫无人清扫车 · [覆盖路径优化](docs/coverage-path-optimization.md)
 
 TZcup 是一个面向智慧环卫无人清扫车的 ROS 2 仿真与自主任务工程。项目以 Ubuntu 24.04、ROS 2 Jazzy、Gazebo Harmonic、Nav2、SLAM Toolbox、OpenNav Coverage 和 Fields2Cover 为基础，覆盖车辆建模、环境仿真、定位导航、全覆盖清扫、垃圾感知、定点清扫、安全控制、调试可视化和验收证据。
 
-## 地图优先的人类监督台（2026-07-31）
-
-新增 `sanitation_hmi` 地图监督模式：浏览器首屏以二维作业地图为主，明确分开
-Gazebo 配置参考真值、SLAM `/map`、感知预测、全局/局部规划和 `/odom` 实际轨迹；
-同时显示 Gazebo 全场相机、车载相机、来源新鲜度、任务/安全状态、事件时间线、
-刷盘轨迹推导的未覆盖/已覆盖/重复覆盖网格以及当前会话真实回放。评委、学习、工程
-三种界面密度可切换，地图支持平移、缩放、全图适配和图层开关。
-
-一键启动入口为
-`ros2 launch sanitation_hmi human_visualization_demo.launch.py operator_token:=<本地令牌>`，
-操作与验收说明见 [`docs/human-visualization.md`](docs/human-visualization.md)。急停只在检测到
-外部安全速度门订阅后启用；Coverage、暂停/恢复、返航等任务按钮在安全任务编排器尚未
-接入时保持禁用，不把 DSL 校验冒充车辆执行。当前软件合同可以通过独立机器门，完整
-`human_visualization_ready` 仍要求本机 live ROS 源、外部安全门和真实任务执行链同时通过。
-
+任务契约显式区分 `AREA_FILL / TAUGHT_ROUTE / POINT_CLEAN`：小场默认 `AREA_FILL` 使用本页的覆盖优化；狭窄固定通道可离线生成带版本和 SHA-256 的教学路线，每段仍由 Nav2 FollowPath 做碰撞检查并执行速度/刷盘状态；`POINT_CLEAN` 继续由既有 `sanitation_spot_cleaning` 链执行，若误交给 Coverage 执行器会 fail-closed。
+地图监督台会分层显示仿真参考、SLAM、感知、规划与实际轨迹；安全状态、回放、操作边界和启动方式见 [`docs/human-visualization.md`](docs/human-visualization.md)。
 ## 实时可视化演示
 
-项目现在提供一条 Windows 命令启动的真实 Gazebo 导航与全覆盖演示：Gazebo GUI 跟随清扫车，RViz 以 `base_footprint` 为目标坐标系跟随显示地图、激光、规划路径与代价地图，浏览器看板实时显示任务阶段、融合位姿、速度、17 个覆盖组件、刷盘、急停和车辆轨迹，并自动保存 MCAP、专用看板 MP4 与代表帧；代表帧从录像末尾抽取，用于直接展示完整轨迹和任务终态。演示复用 AUTO-02 冻结的 `autonomous_navigation_profile_v1` 与正式 Coverage 链，不使用预制动画。
+项目现在提供一条 Windows 命令启动的真实 Gazebo 导航与全覆盖演示：Gazebo GUI 跟随清扫车，RViz 以 `base_footprint` 为目标坐标系跟随显示地图、激光、规划路径与代价地图，浏览器看板按实际 `CoveragePlan` 动态显示任务阶段、融合位姿、速度、组件进度、刷盘、急停和车辆轨迹，并自动保存 MCAP、专用看板 MP4 与代表帧；代表帧从录像末尾抽取，用于直接展示完整轨迹和任务终态。演示复用正式 Stage4V 定位、Nav2 与 Coverage 链，不使用预制动画。
 
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps1 -Video on
@@ -31,15 +18,32 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
 ```
 
+小场默认使用 skid-steer 优化方案；A/B 回归可加 `-CoverageProfile legacy` 启动保留的 `0.35 m + Dubins` 基线，或显式使用 `-CoverageProfile optimized`。
+
+动态受阻条带采用可审计状态机，默认最多重试 2 次且两次重试至少间隔 10 秒；持续受阻会进入 `DEFERRED` 并纳入报告，后续由局部残余任务处理，不会在同一障碍前无限振荡。正式动态恢复率仍必须以 20 次真实交互矩阵为准。
+优化方案将清扫直线固定为 `CleanPath`（`0.65 m/s`、固定前视），补扫使用 `RepairPath`，转向和横移使用 Nav2 `Spin / DriveOnHeading / BackUp`；补扫中心线只覆盖漏扫连通域、复用主条带的离线法向标定，并在刷盘关闭时完成进入与航向对齐，避免把转向弧伪装成补扫；长度按实际下发路径而非名义残余线验收，`fast/turbo` 只改变 Gazebo 推进倍率，不再把所有物理动作一并加速。
+小场世界预置一个默认停放在场外的非静态行人模型，仅在正式动态矩阵中由 ROS `SetEntityPose` 或当前世界的原生 Gazebo `set_pose` 服务贴地横穿当前条带；模型自身已定义碰撞体高度，五点快速横穿兼顾 LiDAR 可观测与安全净距，普通演示不会看到它，也不会把服务调用本身冒充有效避障交互。
+WSLg 日常演示始终默认 Ogre2；只有缺少 EGL 图形上下文的无头 Docker 矩阵才显式使用 `-SimulationRenderEngine ogre`，实际选择会写入保留的运行时 SDF。
+正式回归入口包括 optimized/legacy 各 5 个种子的 `run_coverage_optimizer_matrix.sh`、10 个融合定位路径分数刷盘失效注入种子的 `run_coverage_repair_matrix.sh`，以及 `run_coverage_dynamic_matrix.sh` 的三个独立 8 次有效物理动态障碍任务；每轮只允许 2 次额外有界尝试，动态汇总至少要求 20 个有效交互，并按全部尝试保持恢复率/任务继续率 ≥95%、零碰撞和零原地振荡。分轮是为了保持每次注入前至少 3.0 m 剩余路径和同条带 0.5 m 前进间隔，不用压缩安全净距换数量。optimized seed 132 保留 MCAP，必须再经 `verify_coverage_mcap_replay.sh` 的顺序重建和真实 `ros2 bag play` 双门禁。正式原始证据必须写到仓库外；`coverage_optimizer_report.py` 生成对照报告和逐文件 SHA-256 清单，仓库只接收压缩审核摘要。
+
 Gazebo 右侧原生卡片可控制开始、暂停、继续、停止和关闭；按钮通过 Coverage 服务驱动 Nav2，不直接发速度。`-MapSize small|medium|large` 选择独立 16 m × 12 m 演示场、80 m × 50 m 中型验证或严格 200 m × 100 m 比赛大图，详见 [`docs/gazebo-multiscale-control.md`](docs/gazebo-multiscale-control.md)。
 Windows 启动器会准备 WSLg `/mnt/shared_memory`、恢复异常窗口，并在关闭 Gazebo 后立即停止运行链、释放端口和关闭已跟踪的 RemoteApp 窗口句柄，避免残留不可交互会话或无渲染内容的黑色外壳。
 
-默认 `small` 是单独设计的 `16 m × 12 m` 竞赛功能演示场；橙色外框表示 30 m² 外部任务区，青色内框表示扣除安全回转带后的 12 m² 实际清扫区，覆盖率只统计内框。Gazebo 右侧同窗显示紫色规划路径、蓝色实际轨迹、青绿色已清扫栅格和目标状态。场内布置 10 个、五类可清扫目标，每类各 2 个；清扫完成后物品本体会从场景中移除。瓶、罐、A5 级纸张、小纸盒、落叶和积水不仅保持真实尺度，还具有瓶肩/瓶颈/标签、罐沿/拉环、纸张折角、纸盒翻盖、叶尖/叶柄/叶脉和不规则水斑等可辨识外形；起点/回库也是贴地薄标记，不再用悬浮大球冒充清扫物。手动演示入口使用不含 CameraTracking 的专用 GUI 配置，默认可自由旋转、平移和缩放，不会把拖动后的视角拉回小车。高速小场使用 `0.35 m` 条带间距配合 `0.65 m` 刷盘形成约 46% 重叠，以 9 条清扫带和 8 个转弯吸收高速跟踪误差；首轮后仍依据实际刷盘足迹补扫漏点，并坚持实际覆盖率 99.5% 完成门槛。默认 `fast` 为 2x、`0.70 m/s`，`turbo` 为 3x、`0.90 m/s`；运行时同时更新控制器、安全速度门和 velocity smoother，避免旧版平滑器把演示速度仍夹在 `0.45 m/s`。顶部 World Stats 显示本机实际 RTF。
+默认 `small` 是单独设计的 `16 m × 12 m` 竞赛功能演示场；橙色外框表示 30 m² 外部任务区，青色内框表示扣除安全回转带后的 12 m² 实际清扫区，覆盖率只统计内框。Gazebo 右侧同窗按语义分层显示规划条带、无刷连接、实际清扫、补扫和青绿色已清扫栅格，并实时显示目标状态。场内布置 10 个、五类可清扫目标，每类各 2 个；清扫完成后物品本体会从场景中移除。瓶、罐、A5 级纸张、小纸盒、落叶和积水不仅保持真实尺度，还具有瓶肩/瓶颈/标签、罐沿/拉环、纸张折角、纸盒翻盖、叶尖/叶柄/叶脉和不规则水斑等可辨识外形；起点/回库也是贴地薄标记，不再用悬浮大球冒充清扫物。手动演示入口使用不含 CameraTracking 的专用 GUI 配置，默认可自由旋转、平移和缩放，不会把拖动后的视角拉回小车。优化器默认用 `0.52 m` 条带间距配合 `0.65 m` 刷盘，按相邻弓字形条带执行原地转向与短距离横移；刷盘仅在清扫条带开启，残余区域最多补扫一轮。演示摘要同时硬验收实际覆盖率、重复覆盖率、安全状态和 `10/10` 目标清除。默认 `fast` 为 2x、`0.70 m/s`，`turbo` 为 3x、`0.90 m/s`；运行时同时更新控制器、安全速度门和 velocity smoother，避免旧版平滑器把演示速度仍夹在 `0.45 m/s`。顶部 World Stats 显示本机实际 RTF。
 10 个可移除目标的中心全部位于青色实际清扫区内部；场景契约会拒绝任何只在橙色外任务区内、但覆盖路径无法遍历的目标配置。目标采用覆盖四个象限、彼此至少相距 `0.70 m` 且横纵坐标不成行列的错落均匀分布，既接近真实散落状态，也避免遮挡和重叠。薄纸张使用同尺寸超薄实体底层和紧贴本体的轮廓阴影，落叶堆由六片真实尺度、可双面观察的薄实体叶片和不规则贴地阴影组成；小场默认相机放大框住车辆与青色作业区，便于在开始前数清全部目标。这些细节不使用圆圈或悬浮光环，也不增加碰撞体。
-冷启动时，启动器会先验证定位话题与 `odom→base_footprint` TF，再精确确认 Nav2 controller/planner 均为 `active [3]`，之后才打开 Gazebo；若 GUI 在原生控制加载前提前退出，则只执行一次安全重启和同参数重试。任一就绪门重复失败都会明确返回错误，不会留下一个可见但不能行驶的误导窗口。
+条带执行坐标使用 seed 118/119/120/123 离线拟合的法向标定，为实际跟踪误差预留重复率余量；安全栅格首包若遇到冷启动发现竞争，会从对应 MapServer 的 `GetMap` 服务读取同一配置且仍然 fail-closed，在线控制只读取融合位姿，Gazebo 真值仍仅用于任务结束后的覆盖和定位评分。
+验收报告会分别记录刷盘开启、关闭和状态切换期间的实际里程。直线条带中央 80% 的刷盘中心轨迹会按每段去除固定横向偏置后计算摆动误差，并以 P95 ≤ `0.08 m` 作为规整度硬门；刷盘中心到计划条带的绝对横向误差仍单独保留，结合定位 RMSE 判断地图对齐，避免仅凭轨迹图片或把定位偏置误判成规划混乱。
+混合定位在里程计坐标中平滑 RTK 全局锚点，并对 RTK 与扫描修正执行 10 cm 创新一致性检查；这会抑制绝对定位噪声和错误地图匹配，同时保留轮速/IMU 的实时运动响应。
+独立小场与冻结的 Stage4V 扫描地图不共用场景几何，因此小场明确使用 RTK+轮速+IMU，避免把地图不一致的扫描修正混入控制；中/大场仍保留混合扫描降级。Coverage 的最终 `success` 现在同时包含每 seed 定位 RMSE ≤5 cm，不能再出现路径通过但定位超限的假绿灯。
+仿真 `rtk_fixed` 档将白噪声保持为 2 cm、固定偏置保持为 5 mm，并把长期随机游走标定为 1 mm/√s；较差的 RTK float、多路径和拒止档不随之放宽。该参数是明确的固定解传感器能力假设，实车必须用接收机日志重新标定，不能直接沿用仿真结论。
+冷启动时，启动器会先验证定位话题与 `odom→base_footprint` TF，再由单个持续驻留的 ROS 图探针精确确认必需话题、Action 服务及 Nav2 controller/planner 均为 `active [3]`，之后才打开 Gazebo；探针结果保存为 `runtime_readiness.json`，避免逐轮重启 DDS 发现造成偶发假超时。若 GUI 在原生控制加载前提前退出，则只执行一次安全重启和同参数重试；任一就绪门重复失败都会明确返回错误，不会留下一个可见但不能行驶的误导窗口。
+任务开始前的急停 false 可用性脉冲由单个持续驻留的 ROS 节点重复发布，并同时确认至少两个订阅者及仪表盘 `topics_seen`；只有安全链和人机界面都实际观察到该接口才继续，避免短生命周期 CLI 发布器的 DDS 发现竞态造成偶发假失败。
+Nav2 转场与组件执行最多允许初次执行加 2 次有界重试；每次中止都保留终端位姿与错误证据，超过上限立即失败，不以无限恢复掩盖控制问题。
+Coverage 启动器直接执行已安装的 `coverage_probe`，不经过 `ros2 run` 的额外进程转发；任务由 `setsid --wait` 监督，始终等待真实子进程终态，并以无缓冲日志和 `coverage_process_exit_code.txt` 保留退出证据。即使在终端、systemd 或 Windows 进程服务等不同父进程布局下，也不会把中间包装进程退出误判为任务完成并提前清理仿真。
 在 WSLg 中，Gazebo 服务端和传感器继续使用 D3D12/NVIDIA，原生 GUI 自动改用已验证可见的 X11/llvmpipe 通道；启动器会抓取 `3D Scene` 实际像素，纯黑视口会返回错误而不再误报 READY。
 
 它不打开浏览器或 RViz；车辆在独立小场内真实执行完整 Coverage，青绿清扫带随刷盘开启累积，默认任务结束后保留 Gazebo，按 `Ctrl+C` 才收尾并生成验收摘要。
+长时无头多种子回归使用 `scripts/run_frozen_coverage_trial.ps1`：每轮固定独立 ROS domain、Gazebo partition 和小场任务配置，通过 `Start-Process -Wait` 监督 WSL，并分开保存 stdout/stderr 启动日志与证据目录；普通 ROS stderr 警告和测试编排器的会话寿命都不会冒充任务终止。诊断编排问题时可临时加 `-Trace` 保存 Bash xtrace。
 
 本机完整任务通过：`17/17` 组件、经验覆盖率 `93.67%`、碰撞 `0`、禁行区违规 `0`、定位 XY RMSE `0.03588 m`，MCAP 为 `205528` 条消息/18 个话题；看板终态为 `COMPLETED`，专用 MP4 为 `1.49 MB`。使用与证据边界见 [`docs/auto17-visual-demo.md`](docs/auto17-visual-demo.md)。AUTO-17 只提升可观察性和演示复现能力，不改变学习感知、真实域、J6 板端及综合竞赛矩阵仍为 false 的事实。
 

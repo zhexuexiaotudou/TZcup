@@ -23,6 +23,10 @@ MISSION_TIMEOUT_SEC=1800
 RANDOM_SEED=0
 GAZEBO_GUI_RENDERER="auto"
 SIMULATION_SPEED="fast"
+COVERAGE_PROFILE="optimized"
+DYNAMIC_OBSTACLE_TRIALS=0
+SIMULATION_RENDER_ENGINE="ogre2"
+REPAIR_EVALUATION_INJECTION=0
 
 usage() {
   cat <<'EOF'
@@ -44,6 +48,14 @@ Options:
   --simulation-speed MODE
                         normal (1x), fast (2x / 0.70 m/s), or turbo
                         (3x / 0.90 m/s; default: fast)
+  --coverage-profile PROFILE
+                        optimized (skid-steer RTR) or legacy (Dubins baseline)
+  --dynamic-obstacle-trials N
+                        Run N physical SetEntityPose interactions (formal: 20)
+  --simulation-render-engine ENGINE
+                        ogre2 (default) or ogre (headless software fallback)
+  --repair-evaluation-injection
+                        Inject one fused-pose brush dropout for repair testing
   --manual-control      Wait for the native Gazebo Start button
   --competition-profile Use the 20,000 m2 map and AUTO-12 vehicle candidate;
                         execute one representative live zone
@@ -81,6 +93,10 @@ while [[ $# -gt 0 ]]; do
     --seed) RANDOM_SEED="$2"; shift 2 ;;
     --gazebo-gui-renderer) GAZEBO_GUI_RENDERER="$2"; shift 2 ;;
     --simulation-speed) SIMULATION_SPEED="$2"; shift 2 ;;
+    --coverage-profile) COVERAGE_PROFILE="$2"; shift 2 ;;
+    --dynamic-obstacle-trials) DYNAMIC_OBSTACLE_TRIALS="$2"; shift 2 ;;
+    --simulation-render-engine) SIMULATION_RENDER_ENGINE="$2"; shift 2 ;;
+    --repair-evaluation-injection) REPAIR_EVALUATION_INJECTION=1; shift ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -90,9 +106,20 @@ case "${VIDEO_MODE}" in auto|on|off) ;; *) echo "--video must be auto, on, or of
 case "${MAP_SIZE}" in small|medium|large) ;; *) echo "--map-size must be small, medium, or large" >&2; exit 2 ;; esac
 case "${GAZEBO_GUI_RENDERER}" in auto|d3d12|software) ;; *) echo "--gazebo-gui-renderer must be auto, d3d12, or software" >&2; exit 2 ;; esac
 case "${SIMULATION_SPEED}" in normal|fast|turbo) ;; *) echo "--simulation-speed must be normal, fast, or turbo" >&2; exit 2 ;; esac
+case "${COVERAGE_PROFILE}" in optimized|legacy) ;; *) echo "--coverage-profile must be optimized or legacy" >&2; exit 2 ;; esac
+case "${SIMULATION_RENDER_ENGINE}" in ogre2|ogre) ;; *) echo "--simulation-render-engine must be ogre2 or ogre" >&2; exit 2 ;; esac
 if [[ "${MAP_SIZE}" == "small" ]]; then SHOWCASE=1; EXPECTED_COMPONENTS=17; fi
 [[ "${DASHBOARD_PORT}" =~ ^[0-9]+$ ]] || { echo "dashboard port must be numeric" >&2; exit 2; }
 [[ "${MISSION_TIMEOUT_SEC}" =~ ^[0-9]+$ ]] || { echo "timeout must be numeric" >&2; exit 2; }
+[[ "${DYNAMIC_OBSTACLE_TRIALS}" =~ ^[0-9]+$ ]] || { echo "dynamic obstacle trials must be numeric" >&2; exit 2; }
+if [[ "${DYNAMIC_OBSTACLE_TRIALS}" -gt 0 && "${MAP_SIZE}" != "small" ]]; then
+  echo "dynamic obstacle trials are currently defined only for the independent small field" >&2
+  exit 2
+fi
+if [[ "${REPAIR_EVALUATION_INJECTION}" -eq 1 && ( "${MAP_SIZE}" != "small" || "${COVERAGE_PROFILE}" != "optimized" ) ]]; then
+  echo "repair evaluation injection requires the optimized independent small field" >&2
+  exit 2
+fi
 
 if [[ -z "${OUTPUT_DIR}" ]]; then
   OUTPUT_DIR="${ROOT}/artifacts/auto17_visual_demo_$(date -u +%Y%m%dT%H%M%SZ)"
@@ -285,6 +312,8 @@ cleaning_width="0.65"
 brush_center_y="0.23"
 max_linear_velocity="0.45"
 max_angular_velocity="0.35"
+localization_fusion_mode="hybrid_rtk_scan_imu_wheel"
+enable_scan_refiner="true"
 profile_label="STANDARD DEMO"
 mission_scope="LIVE DEMO AREA"
 map_area_m2="4000.0"
@@ -300,11 +329,21 @@ case "${SIMULATION_SPEED}" in
 esac
 if [[ "${MAP_SIZE}" == "small" ]]; then
   mission_config="${runtime}/competition_demo_area_autonomous_navigation_profile_v1.yaml"
-  mission_template="${tasks_share}/config/competition_demo_area.yaml"
-  profile_label="INDEPENDENT COMPETITION DEMO"
+  mission_template="${tasks_share}/config/competition_demo_area_skid_steer_optimized.yaml"
+  profile_label="SKID-STEER OPTIMIZED DEMO"
   mission_scope="OUTER TASK 30 M2 / CLEANABLE 12 M2"
   map_area_m2="30.0"
-  coverage_params="${coverage_share}/config/coverage_demo_overlap.yaml"
+  coverage_params="${coverage_share}/config/coverage_skid_steer_optimized.yaml"
+  # The independent demo world does not share the frozen Stage4V scan map.
+  # Use the deployable RTK + wheel/IMU lane instead of accepting map-mismatched
+  # scan corrections. Medium/large retain hybrid scan fallback.
+  localization_fusion_mode="rtk_imu_wheel"
+  enable_scan_refiner="false"
+  if [[ "${COVERAGE_PROFILE}" == "legacy" ]]; then
+    mission_template="${tasks_share}/config/competition_demo_area.yaml"
+    profile_label="LEGACY DUBINS BASELINE"
+    coverage_params="${coverage_share}/config/coverage_demo_overlap.yaml"
+  fi
   if [[ "${SIMULATION_SPEED}" == "fast" ]]; then max_linear_velocity="0.70"; max_angular_velocity="0.60"; fi
   if [[ "${SIMULATION_SPEED}" == "turbo" ]]; then max_linear_velocity="0.90"; max_angular_velocity="0.75"; fi
 fi
@@ -349,11 +388,11 @@ if [[ "${MANUAL_CONTROL}" -eq 1 ]]; then
   gui_config="${manual_gui_config}"
 fi
 runtime_world="${runtime}/${world_name}_${SIMULATION_SPEED}.sdf"
-python3 - "${world_file}" "${runtime_world}" "${simulation_rtf}" <<'PY'
+python3 - "${world_file}" "${runtime_world}" "${simulation_rtf}" "${SIMULATION_RENDER_ENGINE}" <<'PY'
 from pathlib import Path
 import re
 import sys
-source, output, factor = sys.argv[1:]
+source, output, factor, render_engine = sys.argv[1:]
 text = Path(source).read_text(encoding="utf-8")
 text, count = re.subn(
     r"<real_time_factor>[^<]+</real_time_factor>",
@@ -363,10 +402,22 @@ text, count = re.subn(
 )
 if count != 1:
     raise SystemExit("world does not define exactly one real_time_factor")
+text, render_count = re.subn(
+    r"<render_engine>[^<]+</render_engine>",
+    f"<render_engine>{render_engine}</render_engine>",
+    text,
+    count=1,
+)
+if render_count != 1:
+    raise SystemExit("world does not define exactly one sensor render_engine")
 Path(output).write_text(text, encoding="utf-8")
 PY
 world_file="${runtime_world}"
 rviz_config="${hmi_share}/rviz/visual_demo.rviz"
+server_headless_rendering="true"
+if [[ "${SIMULATION_RENDER_ENGINE}" == "ogre" ]]; then
+  server_headless_rendering="false"
+fi
 
 if python3 - "${DASHBOARD_PORT}" <<'PY'
 import socket
@@ -390,7 +441,7 @@ if [[ "${COMPETITION_PROFILE}" -eq 0 ]]; then
     --nav2-output "${nav_params}" \
     --mission-output "${mission_config}"
 fi
-python3 - "${nav_params}" "${max_linear_velocity}" "${max_angular_velocity}" <<'PY'
+python3 - "${nav_params}" "${max_linear_velocity}" "${max_angular_velocity}" "${MAP_SIZE}" <<'PY'
 from pathlib import Path
 import sys
 import yaml
@@ -399,13 +450,50 @@ config = yaml.safe_load(path.read_text(encoding="utf-8"))
 follow = config["controller_server"]["ros__parameters"]["FollowPath"]
 linear_velocity = float(sys.argv[2])
 angular_velocity = float(sys.argv[3])
+map_size = sys.argv[4]
 follow["desired_linear_vel"] = linear_velocity
 follow["rotate_to_heading_angular_vel"] = angular_velocity
 smoother = config["velocity_smoother"]["ros__parameters"]
 smoother["max_velocity"] = [linear_velocity, 0.0, angular_velocity]
 smoother["min_velocity"] = [-min(linear_velocity, 0.15), 0.0, -angular_velocity]
+if map_size == "small":
+    # Debris is intentionally traversable in the cleaning demonstration. Keep
+    # the production RGB-D source alive for observation, but do not let a
+    # delayed renderer timestamp stop the demo vehicle. The fresh 2D lidar
+    # remains fail-closed and protects the field boundary / true obstacles.
+    monitor = config["collision_monitor"]["ros__parameters"]
+    monitor["observation_sources"] = ["scan"]
+    monitor["source_timeout"] = 1.0
+    monitor.pop("ground_cloud", None)
+    config["tzcup_demo_safety_profile"] = {
+        "ros__parameters": {
+            "mode": "SMALL_FIELD_LIDAR_ONLY",
+            "production_approved": False,
+            "reason": "cleanable debris is traversable; renderer pointcloud is non-blocking",
+        },
+    }
 path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 PY
+if [[ "${REPAIR_EVALUATION_INJECTION}" -eq 1 ]]; then
+  python3 - "${mission_config}" "${RANDOM_SEED}" <<'PY'
+from pathlib import Path
+import sys
+import yaml
+
+path = Path(sys.argv[1])
+seed = int(sys.argv[2])
+config = yaml.safe_load(path.read_text(encoding="utf-8"))
+config["evaluation_brush_dropout"] = {
+    "enabled": True,
+    "swath_index": seed % 6,
+    "start_fraction": 0.25,
+    "end_fraction": 0.65,
+    "evaluation_only": True,
+    "vehicle_control_source": "unchanged_nav2",
+}
+path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+PY
+fi
 
 echo "[AUTO-17] Evidence: ${OUTPUT_DIR}"
 echo "[AUTO-17] Dashboard: http://127.0.0.1:${DASHBOARD_PORT}"
@@ -427,14 +515,15 @@ done
 
 setsid ros2 launch sanitation_bringup stage4v_localization.launch.py \
   gui:=false random_seed:="${RANDOM_SEED}" gnss_profile:=rtk_fixed \
+  headless_rendering:="${server_headless_rendering}" \
   world_file:="${world_file}" world_name:="${world_name}" \
   gui_config:="${gui_config}" \
   map_file:="${map_file}" spawn_x:="${spawn_x}" spawn_y:="${spawn_y}" \
   cleaning_width:="${cleaning_width}" brush_center_y:="${brush_center_y}" \
   world_to_map_x:="${world_to_map_x}" world_to_map_y:="${world_to_map_y}" \
   initial_pose_x:="${initial_pose_x}" initial_pose_y:="${initial_pose_y}" \
-  camera_profile:=V5_retracted fusion_mode:=hybrid_rtk_scan_imu_wheel \
-  enable_scan_refiner:=true \
+  camera_profile:=V5_retracted fusion_mode:="${localization_fusion_mode}" \
+  enable_scan_refiner:="${enable_scan_refiner}" \
   > "${OUTPUT_DIR}/localization.log" 2>&1 &
 localization_pid="$!"
 pids+=("${localization_pid}")
@@ -454,7 +543,7 @@ for _ in $(seq 1 120); do
     exit 4
   fi
   localization_topics="$(
-    timeout 8 ros2 topic list --no-daemon --spin-time 3 2>/dev/null || true
+    timeout 12 ros2 topic list --no-daemon --spin-time 3 2>/dev/null || true
   )"
   if grep -Fxq '/localization/fused_pose' <<< "${localization_topics}" &&
     grep -Fxq '/scan' <<< "${localization_topics}" &&
@@ -505,7 +594,7 @@ setsid ros2 run sanitation_hmi sanitation_live_dashboard --ros-args \
 dashboard_pid="$!"
 pids+=("${dashboard_pid}")
 
-if [[ "${GUI}" -eq 1 && "${GAZEBO_TRAIL}" -eq 1 ]]; then
+if [[ "${GAZEBO_TRAIL}" -eq 1 ]]; then
   setsid ros2 run sanitation_gazebo_visualization cleaning_visualizer --ros-args \
     -p use_sim_time:=true \
     -p operation_width_m:="${cleaning_width}" \
@@ -520,6 +609,7 @@ if [[ "${GUI}" -eq 1 && "${GAZEBO_TRAIL}" -eq 1 ]]; then
     -p world_to_map_y:="${world_to_map_y}" \
     -p world_to_map_yaw:=0.0 \
     -p service_timeout_ms:=3000 \
+    -p telemetry_output_path:="${OUTPUT_DIR}/gazebo_cleaning_telemetry.json" \
     > "${OUTPUT_DIR}/gazebo_cleaning_visualizer.log" 2>&1 &
   pids+=("$!")
 fi
@@ -531,59 +621,20 @@ if [[ "${RVIZ}" -eq 1 ]]; then
   pids+=("$!")
 fi
 
-ready=0
-for _ in $(seq 1 150); do
+if ! timeout 155 python3 "${ROOT}/scripts/ros_runtime_readiness.py" \
+  --timeout 150 \
+  --dashboard-url "http://127.0.0.1:${DASHBOARD_PORT}/healthz" \
+  --output "${OUTPUT_DIR}/runtime_readiness.json"
+then
   if ! kill -0 "${dashboard_pid}" 2>/dev/null; then
     echo "Live dashboard process exited before readiness." >&2
     tail -50 "${OUTPUT_DIR}/dashboard.log" >&2 || true
-    exit 4
   fi
-  topics="$(
-    timeout 8 ros2 topic list --no-daemon --spin-time 3 2>/dev/null || true
-  )"
-  services="$(
-    timeout 8 ros2 service list --no-daemon --spin-time 3 \
-      --include-hidden-services \
-      2>/dev/null || true
-  )"
-  dashboard_health="$(
-    curl --fail --silent --max-time 2 \
-      "http://127.0.0.1:${DASHBOARD_PORT}/healthz" 2>/dev/null || true
-  )"
-  controller_state=""
-  planner_state=""
-  if grep -q '^/controller_server/get_state$' <<< "${services}"; then
-    controller_state="$(
-      timeout 5 ros2 lifecycle get /controller_server 2>/dev/null || true
-    )"
-  fi
-  if grep -q '^/planner_server/get_state$' <<< "${services}"; then
-    planner_state="$(
-      timeout 5 ros2 lifecycle get /planner_server 2>/dev/null || true
-    )"
-  fi
-  if grep -q '^/localization/fused_pose$' <<< "${topics}" &&
-    grep -q '^/map$' <<< "${topics}" &&
-    grep -q '^/scan$' <<< "${topics}" &&
-    grep -q '^/cmd_vel$' <<< "${topics}" &&
-    grep -q '^/compute_coverage_path/_action/send_goal$' <<< "${services}" &&
-    grep -q '^/follow_path/_action/send_goal$' <<< "${services}" &&
-    grep -q '^/navigate_to_pose/_action/send_goal$' <<< "${services}" &&
-    grep -q '^/controller_server/get_state$' <<< "${services}" &&
-    grep -Fxq 'active [3]' <<< "${controller_state}" &&
-    grep -Fxq 'active [3]' <<< "${planner_state}" &&
-    grep -q '"mission_status"' <<< "${dashboard_health}"
-  then
-    printf '%s\n' "${dashboard_health}" > "${OUTPUT_DIR}/dashboard_health.json"
-    ready=1
-    break
-  fi
-  sleep 1
-done
-if [[ "${ready}" -ne 1 ]]; then
   echo "AUTO-17 runtime did not become ready within 150 seconds." >&2
+  cat "${OUTPUT_DIR}/runtime_readiness.json" >&2 2>/dev/null || true
   exit 4
 fi
+cp "${OUTPUT_DIR}/runtime_readiness.json" "${OUTPUT_DIR}/dashboard_health.json"
 
 if [[ "${GUI}" -eq 1 ]]; then
   # Start the WSLg client only after the Gazebo server and ROS graph are ready.
@@ -679,6 +730,11 @@ if [[ "${RECORD_MCAP}" -eq 1 ]]; then
     /ground_truth/odom /cmd_vel /cmd_vel_gate /brush_enabled \
     /emergency_stop /coverage/state /coverage/component_state \
     /coverage/current_path /coverage/evaluation_sample \
+    /coverage/full_plan /coverage/planned_swaths \
+    /coverage/planned_connectors /coverage/planned_repairs \
+    /coverage/current_component_path \
+    /coverage/actual_cleaning_trajectory \
+    /coverage/actual_transit_trajectory /coverage/actual_repair_trajectory \
     /coverage/diagnostics /local_costmap/costmap /global_costmap/costmap \
     > "${OUTPUT_DIR}/rosbag.log" 2>&1 &
   pids+=("$!")
@@ -736,22 +792,59 @@ if [[ "${VIDEO_MODE}" != "off" ]]; then
   fi
 fi
 
-if ! timeout 15 ros2 topic pub --once --wait-matching-subscriptions 1 \
-  /emergency_stop std_msgs/msg/Bool "{data: false}" \
-  > "${OUTPUT_DIR}/emergency_stop_available.log" 2>&1
+if ! timeout 20 python3 "${ROOT}/scripts/emergency_stop_availability.py" \
+  --telemetry "${OUTPUT_DIR}/dashboard_telemetry.json" \
+  --output "${OUTPUT_DIR}/emergency_stop_available.json" \
+  --timeout 15
 then
   echo "Unable to publish the bounded emergency-stop availability pulse." >&2
+  cat "${OUTPUT_DIR}/emergency_stop_available.json" >&2 2>/dev/null || true
   exit 4
 fi
 
+dynamic_probe_pid=""
+dynamic_probe_code=0
+if [[ "${DYNAMIC_OBSTACLE_TRIALS}" -gt 0 ]]; then
+  dynamic_probe_executable="$(ros2 pkg prefix sanitation_tasks)/lib/sanitation_tasks/sanitation_dynamic_obstacle_probe"
+  if [[ ! -x "${dynamic_probe_executable}" ]]; then
+    echo "Dynamic obstacle probe executable is missing: ${dynamic_probe_executable}" >&2
+    exit 4
+  fi
+  setsid --wait timeout "${MISSION_TIMEOUT_SEC}" \
+    "${dynamic_probe_executable}" --ros-args \
+    -p use_sim_time:=true \
+    -p output_path:="${OUTPUT_DIR}/dynamic_obstacle_report.json" \
+    -p trial_count:="${DYNAMIC_OBSTACLE_TRIALS}" \
+    -p world_name:="${world_name}" \
+    -p model_name:="dynamic_pedestrian_box" \
+    -p world_to_map_x:="${world_to_map_x}" \
+    -p service_timeout_ms:=10000 \
+    -p minimum_remaining_path_m:=3.0 \
+    -p minimum_progress_between_trials_m:=0.5 \
+    -p minimum_injection_distance_m:=1.5 \
+    -p maximum_injection_distance_m:=1.8 \
+    -p hold_sec:=0.5 \
+    -p crossing_steps:=5 \
+    > "${OUTPUT_DIR}/dynamic_obstacle_probe.log" 2>&1 &
+  dynamic_probe_pid="$!"
+  pids+=("${dynamic_probe_pid}")
+fi
+
 set +e
-setsid timeout "${MISSION_TIMEOUT_SEC}" ros2 run sanitation_coverage coverage_probe --ros-args \
+coverage_executable="$(ros2 pkg prefix sanitation_coverage)/lib/sanitation_coverage/coverage_probe"
+if [[ ! -x "${coverage_executable}" ]]; then
+  echo "Coverage executable is missing: ${coverage_executable}" >&2
+  exit 4
+fi
+PYTHONUNBUFFERED=1 setsid --wait timeout "${MISSION_TIMEOUT_SEC}" \
+  "${coverage_executable}" --ros-args \
   -p use_sim_time:=true \
   -p manual_start:="$([[ "${MANUAL_CONTROL}" -eq 1 ]] && echo true || echo false)" \
   -p output_path:="${OUTPUT_DIR}/coverage_report.json" \
   -p config_path:="${mission_config}" \
   -p path_output_path:="${OUTPUT_DIR}/coverage_path.json" \
   -p trajectory_output_path:="${OUTPUT_DIR}/coverage_trajectory.csv" \
+  -p component_retry_limit:=2 \
   > "${OUTPUT_DIR}/coverage_probe.log" 2>&1 &
 coverage_pid="$!"
 pids+=("${coverage_pid}")
@@ -783,6 +876,13 @@ if [[ "${gui_closed_during_mission}" -eq 1 ]]; then
 else
   wait "${coverage_pid}"
   coverage_code=$?
+fi
+printf '%s\n' "${coverage_code}" > "${OUTPUT_DIR}/coverage_process_exit_code.txt"
+if [[ -n "${dynamic_probe_pid}" ]]; then
+  wait "${dynamic_probe_pid}"
+  dynamic_probe_code=$?
+  printf '%s\n' "${dynamic_probe_code}" \
+    > "${OUTPUT_DIR}/dynamic_obstacle_process_exit_code.txt"
 fi
 set -e
 
@@ -858,4 +958,9 @@ summary_args=(
 [[ "${RECORD_MCAP}" -eq 1 ]] && summary_args+=(--mcap-required)
 [[ "${camera_follow_requested}" -eq 1 ]] && summary_args+=(--camera-follow-requested)
 [[ "${GUI}" -eq 0 || "${MANUAL_CONTROL}" -eq 1 ]] && summary_args+=(--camera-follow-not-required)
+[[ "${GAZEBO_TRAIL}" -eq 1 ]] && summary_args+=(--targets-required)
 python3 "${ROOT}/scripts/visual_demo_summary.py" "${summary_args[@]}"
+if [[ "${DYNAMIC_OBSTACLE_TRIALS}" -gt 0 && "${dynamic_probe_code}" -ne 0 ]]; then
+  echo "Dynamic obstacle matrix failed with exit code ${dynamic_probe_code}." >&2
+  exit 8
+fi

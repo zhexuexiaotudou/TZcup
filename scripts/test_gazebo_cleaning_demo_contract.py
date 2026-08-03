@@ -69,17 +69,19 @@ def test_gazebo_only_launcher_contract() -> None:
     shell_launcher = read("scripts/run_visual_demo.sh")
     powershell_launcher = read("scripts/run_visual_demo.ps1")
     dedicated_launcher = read("scripts/run_gazebo_cleaning_demo.ps1")
+    readiness = read("scripts/ros_runtime_readiness.py")
+    emergency_availability = read("scripts/emergency_stop_availability.py")
 
     assert "--gazebo-only" in shell_launcher
     assert "--showcase" in shell_launcher
     assert "--map-size" in shell_launcher
     assert "--simulation-speed" in shell_launcher
-    assert 'ros2 lifecycle get /controller_server' in shell_launcher
-    assert 'ros2 lifecycle get /planner_server' in shell_launcher
+    assert '"/controller_server/get_state"' in readiness
+    assert '"/planner_server/get_state"' in readiness
+    assert "controller_state == 3" in readiness
+    assert "planner_state == 3" in readiness
     assert "tf2_echo odom base_footprint" in shell_launcher
     assert "localization_readiness_tf.txt" in shell_launcher
-    assert 'grep -Fxq \'active [3]\' <<< "${controller_state}"' in shell_launcher
-    assert 'grep -Fxq \'active [3]\' <<< "${planner_state}"' in shell_launcher
     assert "--manual-control" in shell_launcher
     assert "showcase_area.yaml" in shell_launcher
     assert "follow_offset: {x: -8.0, y: -8.0, z: 10.0}" in shell_launcher
@@ -87,7 +89,9 @@ def test_gazebo_only_launcher_contract() -> None:
     assert "sanitation_gazebo_visualization cleaning_visualizer" in shell_launcher
     assert '[[ "${OPEN_DASHBOARD}" -eq 1 ]]' in shell_launcher
     assert "keep_open_stop=1" in shell_launcher
-    assert "--wait-matching-subscriptions 1" in shell_launcher
+    assert 'timeout 20 python3 "${ROOT}/scripts/emergency_stop_availability.py"' in shell_launcher
+    assert "publisher.get_subscription_count()" in emergency_availability
+    assert "subscription_count >= 2" in emergency_availability
     assert "[switch]$GazeboOnly" in powershell_launcher
     assert '"--gazebo-only"' in powershell_launcher
     assert "[switch]$Showcase" in powershell_launcher
@@ -96,6 +100,10 @@ def test_gazebo_only_launcher_contract() -> None:
     assert "[switch]$FullArea" in dedicated_launcher
     assert '[string]$MapSize = "small"' in dedicated_launcher
     assert '[string]$SimulationSpeed = "fast"' in dedicated_launcher
+    assert '[string]$CoverageProfile = "optimized"' in dedicated_launcher
+    assert "CoverageProfile = $CoverageProfile" in dedicated_launcher
+    assert "DynamicObstacleTrials = $DynamicObstacleTrials" in dedicated_launcher
+    assert "SimulationRenderEngine = $SimulationRenderEngine" in dedicated_launcher
     assert "ManualControl = $true" in dedicated_launcher
     assert "NoRviz" not in dedicated_launcher
     assert "Start-Process" not in dedicated_launcher
@@ -153,7 +161,13 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
         "target_cardboard_demo", "target_leaf_pile_demo", "puddle_demo",
         "target_bottle_demo_02", "target_can_demo_02", "target_paper_demo_02",
         "target_cardboard_demo_02", "target_leaf_pile_demo_02",
+        "dynamic_pedestrian_box",
     } <= names
+    dynamic = world.find("./model[@name='dynamic_pedestrian_box']")
+    assert dynamic is not None
+    assert dynamic.findtext("static") == "false"
+    assert dynamic.findtext("./link/gravity") == "false"
+    assert dynamic.find("./link/collision") is not None
     floor = world.find("./model[@name='demo_arena_floor']")
     assert floor is not None
     assert "16 12 0.08" in __import__("xml.etree.ElementTree", fromlist=["ElementTree"]).tostring(
@@ -327,7 +341,7 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     assert 'world_name="sanitation_competition_demo"' in shell
     assert 'mission_control_demo.config' in shell
     assert 'EXPECTED_COMPONENTS=17' in shell
-    assert 'coverage_demo_overlap.yaml' in shell
+    assert 'coverage_skid_steer_optimized.yaml' in shell
     assert 'max_linear_velocity="0.70"; max_angular_velocity="0.60"' in shell
     assert 'max_linear_velocity="0.90"; max_angular_velocity="0.75"' in shell
     assert 'smoother["max_velocity"] = [linear_velocity, 0.0, angular_velocity]' in shell
@@ -375,6 +389,26 @@ def test_gazebo_panel_renders_live_cleaning_metrics_and_map() -> None:
         assert label in qml
     for layer in ("planned_path", "trajectory", "cleaned_cells", "targets"):
         assert layer in qml
+
+
+def test_gazebo_panel_uses_the_documented_semantic_path_palette() -> None:
+    qml = read("starter_ws/src/sanitation_gazebo_control/SanitationMissionControl.qml")
+    visualizer = read(
+        "starter_ws/src/sanitation_gazebo_visualization/"
+        "sanitation_gazebo_visualization/cleaning_visualizer.py"
+    )
+    for layer in (
+        "planned_swaths", "planned_connectors", "planned_repairs",
+        "current_component", "actual_cleaning", "actual_transit",
+        "actual_repair", "blocked_intervals",
+    ):
+        assert layer in qml
+        assert layer in visualizer
+    for color in (
+        "#a855f7", "#aab7c4", "#ffc857", "#2ed47a",
+        "#5f6b76", "#ffffff", "#ff4d4f",
+    ):
+        assert color in qml
 
 
 def test_native_gazebo_controls_use_safe_task_services() -> None:

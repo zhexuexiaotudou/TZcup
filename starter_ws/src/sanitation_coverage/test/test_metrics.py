@@ -1,9 +1,13 @@
 from sanitation_coverage.metrics import (
     empirical_swept_metrics,
+    semantic_path_distances,
     path_length,
     raster_coverage_metrics,
     repair_degenerate_swaths,
     summarize_distances,
+    swath_absolute_cross_track_errors,
+    swath_lateral_errors,
+    swath_straightness_errors,
     synchronized_xy_errors,
     uncovered_cell_centers,
     horizontal_repair_segments,
@@ -46,6 +50,67 @@ def test_path_length():
     assert path_length([(0.0, 0.0), (3.0, 4.0)]) == 5.0
 
 
+def test_semantic_path_distances_split_brush_motion_and_transitions():
+    samples = [
+        (0.0, 0.0, 0.0, 0.0, False, "TRANSIT"),
+        (1.0, 1.0, 0.0, 0.0, False, "TRANSIT"),
+        (2.0, 2.0, 0.0, 0.0, True, "EXECUTING_SWATH"),
+        (3.0, 3.0, 0.0, 0.0, True, "EXECUTING_SWATH"),
+    ]
+    distances = semantic_path_distances(samples)
+    assert distances["brush_off_distance_m"] == 1.0
+    assert distances["brush_transition_distance_m"] == 1.0
+    assert distances["brush_on_distance_m"] == 1.0
+    assert distances["total_distance_m"] == 3.0
+
+
+def test_swath_lateral_errors_use_brush_center_and_ignore_connectors():
+    samples = [
+        (0.0, 0.0, 0.04, 0.0, True, "EXECUTING_SWATH"),
+        (1.0, 1.0, 0.50, 0.0, False, "EXECUTING_SHIFT"),
+    ]
+    errors = swath_lateral_errors(
+        samples, [((0.0, 0.0), (2.0, 0.0))], brush_forward_offset_m=0.55
+    )
+    assert errors == [0.04]
+
+
+def test_swath_straightness_separates_weave_from_constant_map_offset():
+    samples = [
+        (float(index), float(index) * 0.2, 0.10, 0.0, True, "EXECUTING_SWATH")
+        for index in range(11)
+    ]
+    swaths = [((0.0, 0.0), (2.0, 0.0))]
+    absolute = swath_absolute_cross_track_errors(
+        samples, swaths, brush_forward_offset_m=0.0
+    )
+    straightness = swath_straightness_errors(
+        samples, swaths, brush_forward_offset_m=0.0
+    )
+    assert min(absolute) == 0.10
+    assert max(straightness) < 1.0e-12
+
+
+def test_swath_straightness_detects_lateral_weave_and_splits_runs():
+    samples = [
+        (0.0, 0.0, 0.00, 0.0, True, "EXECUTING_SWATH"),
+        (1.0, 0.5, 0.04, 0.0, True, "EXECUTING_SWATH"),
+        (2.0, 1.0, -0.04, 0.0, True, "EXECUTING_SWATH"),
+        (3.0, 1.0, 0.50, 0.0, False, "EXECUTING_SHIFT"),
+        (4.0, 1.0, 1.02, 0.0, True, "EXECUTING_SWATH"),
+        (5.0, 0.5, 0.98, 0.0, True, "EXECUTING_SWATH"),
+        (6.0, 0.0, 1.00, 0.0, True, "EXECUTING_SWATH"),
+    ]
+    errors = swath_straightness_errors(
+        samples,
+        [((0.0, 0.0), (1.0, 0.0)), ((1.0, 1.0), (0.0, 1.0))],
+        brush_forward_offset_m=0.0,
+        endpoint_fraction=0.0,
+    )
+    assert len(errors) == 6
+    assert max(errors) == 0.04
+
+
 def test_uncovered_cells_form_bounded_horizontal_repair_segments():
     polygon = [(0.0, 0.0), (2.0, 0.0), (2.0, 1.0), (0.0, 1.0)]
     points = [(0.0, 0.5, 0.5)]
@@ -80,3 +145,13 @@ def test_repair_degenerate_swaths_uses_turn_boundaries():
         ((0.0, 0.5), (2.0, 0.5)),
         ((2.0, 1.5), (0.0, 1.5)),
     ]
+
+
+def test_brush_center_swath_is_shifted_back_from_base_path():
+    from sanitation_coverage.route_entry import brush_center_to_base_swath
+
+    start, end = brush_center_to_base_swath(
+        (0.0, 0.0), (4.0, 0.0), forward_offset_m=0.55, extension_m=0.20
+    )
+    assert start == (-0.75, 0.0)
+    assert end == (3.65, 0.0)

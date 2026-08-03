@@ -67,6 +67,7 @@ def generate_launch_description():
             DeclareLaunchArgument('world_to_map_y', default_value='0.0'),
             DeclareLaunchArgument('world_to_map_yaw', default_value='0.0'),
             DeclareLaunchArgument('enable_scan_refiner', default_value='true'),
+            DeclareLaunchArgument('headless_rendering', default_value='true'),
             DeclareLaunchArgument('publish_map_to_odom', default_value='true'),
             DeclareLaunchArgument('camera_profile', default_value='production'),
             DeclareLaunchArgument('enable_training_gt', default_value='false'),
@@ -77,7 +78,7 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource(sim_launch),
                 launch_arguments={
                     'gui': LaunchConfiguration('gui'),
-                    'headless_rendering': 'true',
+                    'headless_rendering': LaunchConfiguration('headless_rendering'),
                     'use_sim_time': use_sim_time,
                     'world_file': LaunchConfiguration('world_file'),
                     'world_name': LaunchConfiguration('world_name'),

@@ -62,7 +62,7 @@ controller_server:
     failure_tolerance: 5.0
     progress_checker_plugins: [progress_checker]
     goal_checker_plugins: [goal_checker]
-    controller_plugins: [FollowPath]
+    controller_plugins: [FollowPath, CleanPath, RepairPath]
     progress_checker:
       plugin: nav2_controller::PoseProgressChecker
       required_movement_radius: 0.20
@@ -97,6 +97,54 @@ controller_server:
       rotate_to_heading_min_angle: 0.785
       max_angular_accel: 1.8
       max_robot_pose_search_dist: 10.0
+      stateful: true
+    CleanPath:
+      plugin: nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
+      desired_linear_vel: 0.80
+      lookahead_dist: 0.90
+      min_lookahead_dist: 0.90
+      max_lookahead_dist: 0.90
+      lookahead_time: 1.5
+      rotate_to_heading_angular_vel: 0.45
+      transform_tolerance: 0.2
+      use_velocity_scaled_lookahead_dist: false
+      min_approach_linear_velocity: 0.08
+      approach_velocity_scaling_dist: 1.0
+      use_collision_detection: true
+      max_allowed_time_to_collision_up_to_carrot: 1.0
+      use_regulated_linear_velocity_scaling: true
+      use_cost_regulated_linear_velocity_scaling: true
+      regulated_linear_scaling_min_radius: 0.90
+      regulated_linear_scaling_min_speed: 0.15
+      use_rotate_to_heading: true
+      allow_reversing: false
+      rotate_to_heading_min_angle: 0.785
+      max_angular_accel: 1.8
+      max_robot_pose_search_dist: 20.0
+      stateful: true
+    RepairPath:
+      plugin: nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
+      desired_linear_vel: 0.45
+      lookahead_dist: 0.65
+      min_lookahead_dist: 0.45
+      max_lookahead_dist: 0.80
+      lookahead_time: 1.5
+      rotate_to_heading_angular_vel: 0.40
+      transform_tolerance: 0.2
+      use_velocity_scaled_lookahead_dist: true
+      min_approach_linear_velocity: 0.05
+      approach_velocity_scaling_dist: 0.8
+      use_collision_detection: true
+      max_allowed_time_to_collision_up_to_carrot: 1.0
+      use_regulated_linear_velocity_scaling: true
+      use_cost_regulated_linear_velocity_scaling: true
+      regulated_linear_scaling_min_radius: 0.90
+      regulated_linear_scaling_min_speed: 0.12
+      use_rotate_to_heading: true
+      allow_reversing: false
+      rotate_to_heading_min_angle: 0.785
+      max_angular_accel: 1.8
+      max_robot_pose_search_dist: 20.0
       stateful: true
 
 local_costmap:

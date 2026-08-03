@@ -13,6 +13,13 @@ param(
     [string]$GazeboGuiRenderer = "auto",
     [ValidateSet("normal", "fast", "turbo")]
     [string]$SimulationSpeed = "fast",
+    [ValidateSet("optimized", "legacy")]
+    [string]$CoverageProfile = "optimized",
+    [ValidateRange(0, 1000)]
+    [int]$DynamicObstacleTrials = 0,
+    [ValidateSet("ogre2", "ogre")]
+    [string]$SimulationRenderEngine = "ogre2",
+    [switch]$RepairEvaluationInjection,
     [switch]$SkipBuild,
     [switch]$NoGui,
     [switch]$NoRviz,
@@ -97,10 +104,16 @@ $arguments = @(
     "--seed", "$Seed",
     "--gazebo-gui-renderer", $GazeboGuiRenderer,
     "--simulation-speed", $SimulationSpeed,
+    "--coverage-profile", $CoverageProfile,
+    "--dynamic-obstacle-trials", "$DynamicObstacleTrials",
+    "--simulation-render-engine", $SimulationRenderEngine,
     "--map-size", $MapSize
 )
 if ($Workspace) {
     $arguments += @("--workspace", $Workspace)
+}
+if ($RepairEvaluationInjection) {
+    $arguments += "--repair-evaluation-injection"
 }
 if ($BaseWorkspace) {
     $arguments += @("--base-workspace", $BaseWorkspace)

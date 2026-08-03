@@ -3,6 +3,8 @@
 import json
 import math
 import random
+import shutil
+import subprocess
 import time
 from pathlib import Path
 
@@ -31,6 +33,8 @@ class DynamicObstacleProbe(Node):
         self.declare_parameter("state_wait_timeout_sec", 120.0)
         self.declare_parameter("minimum_remaining_path_m", 3.0)
         self.declare_parameter("minimum_progress_between_trials_m", 0.5)
+        self.declare_parameter("minimum_injection_distance_m", 1.5)
+        self.declare_parameter("maximum_injection_distance_m", 1.8)
         self.declare_parameter("hard_minimum_separation_m", 0.12)
         self.declare_parameter("resume_observation_sec", 2.0)
         self.declare_parameter("crossing_half_width_m", 1.0)
@@ -40,11 +44,14 @@ class DynamicObstacleProbe(Node):
             f"/world/{self.get_parameter('world_name').value}/set_pose"
         )
         self.set_pose_client = self.create_client(SetEntityPose, service_name)
+        self.gz_executable = shutil.which("gz")
+        self.set_pose_backend = None
         self.coverage_state = None
         self.component_state = {}
         self.current_path = []
         self.pose = None; self.vehicle_speed_m_s = None
-        self.scan_minimum = math.inf; self.collision_count = 0; self.collision_active = False
+        self.scan_minimum = math.inf; self.current_scan_minimum = math.inf
+        self.collision_count = 0; self.collision_active = False
         self.create_subscription(Odometry, "/ground_truth/odom", self.on_truth, 20)
         self.create_subscription(LaserScan, "/scan", self.on_scan, 20)
         self.create_subscription(String, "/coverage/state", self.on_state, 20)
@@ -76,7 +83,8 @@ class DynamicObstacleProbe(Node):
     def on_scan(self, message):
         finite = [value for value in message.ranges if math.isfinite(value)]
         if not finite: return
-        minimum = min(finite); self.scan_minimum = min(self.scan_minimum, minimum)
+        minimum = min(finite); self.current_scan_minimum = minimum
+        self.scan_minimum = min(self.scan_minimum, minimum)
         active = minimum < 0.12
         if active and not self.collision_active: self.collision_count += 1
         self.collision_active = active
@@ -88,24 +96,55 @@ class DynamicObstacleProbe(Node):
 
     def set_pose(self, world_x, world_y):
         timeout_sec = float(self.get_parameter("service_timeout_ms").value) / 1000.0
-        if not self.set_pose_client.wait_for_service(timeout_sec=timeout_sec):
-            return False, "", "set_pose ROS-Gazebo bridge unavailable"
-        request = SetEntityPose.Request()
-        request.entity.name = str(self.get_parameter("model_name").value)
-        request.entity.type = Entity.MODEL
-        request.pose.position.x = float(world_x)
-        request.pose.position.y = float(world_y)
-        request.pose.position.z = 0.55
-        request.pose.orientation.w = 1.0
-        future = self.set_pose_client.call_async(request)
-        deadline = time.monotonic() + timeout_sec
-        while rclpy.ok() and not future.done() and time.monotonic() < deadline:
-            rclpy.spin_once(self, timeout_sec=0.02)
-        if not future.done():
-            return False, "", "set_pose request timed out"
-        response = future.result()
-        success = bool(response and response.success)
-        return success, f"ros_gz set_pose success={str(success).lower()}", ""
+        if self.set_pose_backend != "gz_transport" and self.set_pose_client.wait_for_service(
+            timeout_sec=min(timeout_sec, 0.5)
+        ):
+            self.set_pose_backend = "ros_service"
+            request = SetEntityPose.Request()
+            request.entity.name = str(self.get_parameter("model_name").value)
+            request.entity.type = Entity.MODEL
+            request.pose.position.x = float(world_x)
+            request.pose.position.y = float(world_y)
+            request.pose.position.z = 0.0
+            request.pose.orientation.w = 1.0
+            future = self.set_pose_client.call_async(request)
+            deadline = time.monotonic() + timeout_sec
+            while rclpy.ok() and not future.done() and time.monotonic() < deadline:
+                rclpy.spin_once(self, timeout_sec=0.02)
+            if not future.done():
+                return False, "", "set_pose request timed out"
+            response = future.result()
+            success = bool(response and response.success)
+            return success, f"ros_service set_pose success={str(success).lower()}", ""
+        self.set_pose_backend = "gz_transport"
+        if not self.gz_executable:
+            return False, "", "gz executable is unavailable"
+        world_name = str(self.get_parameter("world_name").value)
+        model_name = str(self.get_parameter("model_name").value)
+        try:
+            process = subprocess.run(
+                [
+                    self.gz_executable,
+                    "service", "-s", f"/world/{world_name}/set_pose",
+                    "--reqtype", "gz.msgs.Pose",
+                    "--reptype", "gz.msgs.Boolean",
+                    "--timeout", str(int(timeout_sec * 1000)),
+                    "--req",
+                    (
+                        f"name: '{model_name}', position: {{x: {float(world_x)}, "
+                        f"y: {float(world_y)}, z: 0.0}}, orientation: {{w: 1.0}}"
+                    ),
+                ],
+                check=False, capture_output=True, text=True,
+                timeout=timeout_sec + 2.0,
+            )
+        except (OSError, subprocess.TimeoutExpired) as error:
+            return False, "", str(error)
+        return (
+            process.returncode == 0 and "true" in process.stdout.lower(),
+            f"gz_transport rc={process.returncode} {process.stdout[-300:]}",
+            process.stderr[-300:],
+        )
 
     def run(self):
         self.pump(5.0); randomizer = random.Random(20260715); trials = []
@@ -125,7 +164,11 @@ class DynamicObstacleProbe(Node):
         last_component = None
         last_injection_position = None
         terminal_states = {"COMPLETED", "FAILED", "RECOVERY"}
-        for seed in range(int(self.get_parameter("trial_count").value)):
+        requested_count = int(self.get_parameter("trial_count").value)
+        maximum_attempt_count = requested_count + 2
+        for seed in range(maximum_attempt_count):
+            if sum(trial["valid"] for trial in trials) >= requested_count:
+                break
             remaining = 0.0
             spacing_from_previous = None
             current_component = None
@@ -171,14 +214,26 @@ class DynamicObstacleProbe(Node):
                 self.component_state.get("index"),
             )
             heading = path_heading(position, self.current_path)
-            distance = randomizer.uniform(1.2, 1.8)
+            minimum_distance = float(
+                self.get_parameter("minimum_injection_distance_m").value
+            )
+            maximum_distance = float(
+                self.get_parameter("maximum_injection_distance_m").value
+            )
+            if not 0.0 < minimum_distance <= maximum_distance:
+                return self.write_report(
+                    trials, preflight, "invalid_injection_distance_bounds"
+                )
+            distance = randomizer.uniform(minimum_distance, maximum_distance)
             targets = crossing_targets(
                 position, heading, distance,
                 float(self.get_parameter("crossing_half_width_m").value),
                 int(self.get_parameter("crossing_steps").value),
             )
             move_results = []
-            start_collisions = self.collision_count; self.scan_minimum = math.inf
+            start_collisions = self.collision_count
+            baseline_scan_minimum = self.current_scan_minimum
+            self.scan_minimum = math.inf
             step_sec = float(self.get_parameter("hold_sec").value) / len(targets)
             interaction_start = time.monotonic()
             injection_vehicle_speed = self.vehicle_speed_m_s
@@ -213,7 +268,13 @@ class DynamicObstacleProbe(Node):
                 if progress is not None and progress >= 0.10:
                     recovery_time = time.monotonic() - resume_start
                     break
-            interacted = self.scan_minimum < 3.0
+            interacted = bool(
+                self.scan_minimum < 2.0
+                and (
+                    not math.isfinite(baseline_scan_minimum)
+                    or self.scan_minimum <= baseline_scan_minimum - 0.15
+                )
+            )
             collision_free = self.collision_count == start_collisions
             hard_minimum = float(
                 self.get_parameter("hard_minimum_separation_m").value
@@ -242,6 +303,7 @@ class DynamicObstacleProbe(Node):
                 "remaining_path_m_at_injection": remaining_path_length(
                     position, self.current_path
                 ),
+                "injection_distance_m": distance,
                 "path_heading_rad": heading,
                 "moving_obstacle_trajectory": move_results,
                 "set_pose_success": set_success,
@@ -253,6 +315,11 @@ class DynamicObstacleProbe(Node):
                 ),
                 "path_corridor_center_distance_m": corridor_distance,
                 "minimum_lidar_range_m": self.scan_minimum if math.isfinite(self.scan_minimum) else None,
+                "baseline_lidar_range_m": (
+                    baseline_scan_minimum
+                    if math.isfinite(baseline_scan_minimum) else None
+                ),
+                "required_lidar_range_drop_m": 0.15,
                 "configured_hard_minimum_separation_m": hard_minimum,
                 "minimum_separation_gate_pass": separation_safe,
                 "interaction_observed": interacted, "collision_free": collision_free,
@@ -284,11 +351,24 @@ class DynamicObstacleProbe(Node):
 
     def write_report(self, trials, preflight, failure_reason):
         valid = sum(trial["valid"] for trial in trials)
+        requested_count = int(self.get_parameter("trial_count").value)
+        minimum_progress = float(
+            self.get_parameter("minimum_progress_between_trials_m").value
+        )
+        repeated_oscillation_count = sum(
+            1
+            for trial in trials
+            if trial.get("spacing_from_previous_interaction_m") is not None
+            and trial["spacing_from_previous_interaction_m"] + 1e-9
+            < minimum_progress
+        )
         report = {
-            "schema_version": 1, "requested_trial_count": int(self.get_parameter("trial_count").value),
+            "schema_version": 1, "requested_trial_count": requested_count,
+            "maximum_attempt_count": requested_count + 2,
             "completed_trial_count": len(trials), "dynamic_obstacle_valid_trials": valid,
             "world_name": str(self.get_parameter("world_name").value),
             "model_name": str(self.get_parameter("model_name").value),
+            "set_pose_backend": self.set_pose_backend,
             "set_pose_preflight": preflight, "failure_reason": failure_reason,
             "collision_count": self.collision_count,
             "configured_hard_minimum_separation_m": float(
@@ -310,12 +390,19 @@ class DynamicObstacleProbe(Node):
                 trials
                 and all(trial["mission_progress_resumed"] for trial in trials)
             ),
+            "repeated_oscillation_count": repeated_oscillation_count,
+            "repeated_oscillation_gate_pass": repeated_oscillation_count == 0,
+            "oscillation_metric_basis": (
+                "same-component consecutive interactions closer than the configured "
+                "minimum progress distance"
+            ),
             "trials": trials,
             "success": (
                 failure_reason is None
-                and len(trials) >= 20
-                and valid >= 20
+                and len(trials) >= requested_count
+                and valid >= requested_count
                 and self.collision_count == 0
+                and repeated_oscillation_count == 0
                 and all(
                     trial["minimum_separation_gate_pass"]
                     and trial["mission_progress_resumed"]

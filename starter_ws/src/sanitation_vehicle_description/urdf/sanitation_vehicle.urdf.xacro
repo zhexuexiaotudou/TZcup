@@ -31,6 +31,10 @@
   <xacro:arg name="camera_z" default="0.22"/>
   <xacro:arg name="camera_pitch_rad" default="0.0"/>
   <xacro:arg name="enable_verification_camera" default="false"/>
+  <!-- Three verification renderers at 15 Hz each cannot stay fresh when the
+       simulator runs above real time. Five simulated Hz remains well inside
+       the collision monitor's fail-closed timeout and removes the backlog. -->
+  <xacro:arg name="verification_camera_update_rate" default="5"/>
   <xacro:arg name="enable_self_mask_gt" default="false"/>
   <xacro:arg name="enable_manipulator" default="false"/>
   <xacro:arg name="verification_camera_x" default="0.30"/>
@@ -404,7 +408,7 @@
     <gazebo reference="verification_camera_link">
       <sensor name="sanitation_verification_rgbd_camera" type="rgbd_camera">
         <topic>verification_camera</topic>
-        <update_rate>15</update_rate><always_on>true</always_on><visualize>true</visualize>
+        <update_rate>$(arg verification_camera_update_rate)</update_rate><always_on>true</always_on><visualize>true</visualize>
         <camera>
           <optical_frame_id>verification_camera_depth_link</optical_frame_id>
           <horizontal_fov>1.50098</horizontal_fov>
@@ -415,12 +419,12 @@
       <xacro:if value="$(arg enable_training_gt)">
         <sensor name="g2_verification_semantic_gt" type="segmentation">
           <topic>g2/verification_semantic_gt</topic><gz_frame_id>verification_camera_depth_link</gz_frame_id>
-          <update_rate>15</update_rate><always_on>true</always_on>
+          <update_rate>$(arg verification_camera_update_rate)</update_rate><always_on>true</always_on>
           <camera><segmentation_type>semantic</segmentation_type><optical_frame_id>verification_camera_depth_link</optical_frame_id><horizontal_fov>1.50098</horizontal_fov><image><width>640</width><height>480</height><format>R8G8B8</format></image><clip><near>0.3</near><far>100</far></clip></camera>
         </sensor>
         <sensor name="g2_verification_instance_gt" type="segmentation">
           <topic>g2/verification_instance_gt</topic><gz_frame_id>verification_camera_depth_link</gz_frame_id>
-          <update_rate>15</update_rate><always_on>true</always_on>
+          <update_rate>$(arg verification_camera_update_rate)</update_rate><always_on>true</always_on>
           <camera><segmentation_type>instance</segmentation_type><optical_frame_id>verification_camera_depth_link</optical_frame_id><horizontal_fov>1.50098</horizontal_fov><image><width>640</width><height>480</height><format>R8G8B8</format></image><clip><near>0.3</near><far>100</far></clip></camera>
         </sensor>
       </xacro:if>

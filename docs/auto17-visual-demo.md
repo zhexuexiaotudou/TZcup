@@ -8,6 +8,8 @@
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
 ```
 
+使用 `-CoverageProfile optimized` 运行默认 skid-steer 方案；使用 `-CoverageProfile legacy` 运行保留的 Dubins A/B 基线。
+
 该入口仍执行真实 Stage4V 定位、Nav2 和 Coverage 控制链，只隐藏网页与 RViz。默认加载单独制作的
 `16 m × 12 m` 世界 `sanitation_competition_demo.sdf`，而不是在大地图内裁出一块区域；场内包含
 30 m² 指定作业区、扣除安全回转带后的 12 m² 可清扫区和五类目标。`-FullArea` 切换到中型
@@ -18,8 +20,10 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 - 青色内框与半透明底：扣除 1.0 m 安全回转带后、实际计分的 12 m² 清扫区；
 - 蓝色 `HOME`：本次运行第一帧 evaluation-only 真值位置，即车辆实际出发点；
 - 绿色 `CLEANING START`：Coverage 第一条真实作业带的起点；
-- 紫色折线：当前 `/coverage/current_path`，即 Nav2 正在跟踪的组件；
-- 青绿色带：`/brush_enabled=true` 时，evaluation-only `/ground_truth/odom` 推导的实际刷盘扫掠；
+- 紫色主线：任务开始后持续显示的完整规划清扫条带；灰色虚线为无刷 RTR 连接；
+- 白色加粗线：`/coverage/current_component_path`，即 Nav2 正在跟踪的组件；旧 `/coverage/current_path` 只保留兼容 alias；
+- 绿色实线：`/brush_enabled=true` 时，evaluation-only `/ground_truth/odom` 推导的实际刷盘扫掠；深灰线为实际无刷转场；
+- 黄色实线：连通残余区域的一次有界补扫；红色短段为受阻区间；
 - 右侧实时作业地图：规划路径、实际轨迹、已清扫栅格、目标状态和车辆姿态；
 - 实时指标：清扫百分比、面积、目标数、效率、里程、速度、仿真时间和组件进度。
 
@@ -34,17 +38,17 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 独立小场演示与中型完整区域模式分别为：
 
 ```powershell
-# 独立 16 m × 12 m 竞赛功能演示场，7 条重叠作业带和 6 个转弯
+# 独立 16 m × 12 m 竞赛功能演示场，6 条优化作业带和 15 个 RTR 连接组件
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1
 
 # 中型 80 m × 50 m 场景的 9 条清扫带、8 个转弯任务
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1 -FullArea
 ```
 
-小场的物理刷盘宽度保持 0.65 m，规划条带间距为 0.45 m，形成约 31% 横向重叠；每条
-刷盘开启线结合 0.55 m 前置刷盘偏移向两端补偿。任务只有在全部 13 个组件成功、无碰撞
+小场的物理刷盘宽度保持 0.65 m，优化规划条带间距为 0.52 m，形成约 20% 横向重叠；每条
+刷盘开启线结合 0.55 m 前置刷盘偏移向两端补偿。任务只有在动态生成的 21 个组件成功、无碰撞
 且 Gazebo 真值刷盘足迹覆盖率达到 99.5% 时才进入 `COMPLETED`，避免规划覆盖率 100% 掩盖
-实际跟踪漏扫。首轮不足时，系统按未覆盖栅格生成有界水平补扫段，最多两轮，并在补扫后
+实际跟踪漏扫。首轮不足时，系统按未覆盖栅格生成连通域短补扫段，最多一轮，并在补扫后
 重新计算真实覆盖率；补扫失败或仍未达标会进入 `FAILED`。Gazebo 默认网格已关闭，场地
 不再与全局参考平面发生错位或深度冲突。
 
@@ -66,7 +70,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 
 1. Gazebo 展示三维场景与清扫车，`/gui/track` 请求让相机跟随 `sanitation_vehicle`。
 2. RViz 以 `base_footprint` 为跟随目标，叠加地图、机器人模型、激光、当前覆盖路径、Nav2 路径、局部/全局代价地图与 footprint。
-3. 浏览器看板显示任务状态、17 个组件进度、融合位姿、速度、刷盘、急停、当前规划、evaluation-only 实际轨迹、刷盘开启轨迹和事件时间线。
+3. 浏览器看板按实际 CoveragePlan 动态显示组件进度，并显示融合位姿、速度、刷盘、急停、完整语义规划、evaluation-only 实际轨迹、刷盘开启轨迹和事件时间线。
 4. 专用视频渲染器只读取 `/api/v1/telemetry`，生成与看板相同语义的 MP4；它不录制整个 Windows 桌面，也不接触执行器。
 
 ## 数据流和安全边界

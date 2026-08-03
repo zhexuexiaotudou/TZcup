@@ -19,6 +19,14 @@
         "return_home"
       ]
     },
+    "route_mode": {
+      "enum": ["AREA_FILL", "TAUGHT_ROUTE", "POINT_CLEAN"],
+      "default": "AREA_FILL"
+    },
+    "taught_route_file": {
+      "type": "string",
+      "minLength": 1
+    },
     "schedule": {
       "type": [
         "string",
@@ -83,5 +91,15 @@
         }
       }
     }
-  }
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"route_mode": {"const": "TAUGHT_ROUTE"}}, "required": ["route_mode"]},
+      "then": {"required": ["taught_route_file"]}
+    },
+    {
+      "if": {"properties": {"route_mode": {"const": "POINT_CLEAN"}}, "required": ["route_mode"]},
+      "then": {"properties": {"mode": {"const": "spot_clean"}}}
+    }
+  ]
 }

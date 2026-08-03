@@ -68,6 +68,18 @@
     <model name="competition_bin"><static>true</static><pose>-12.7 -4.8 0.55 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.75 0.65 1.1</size></box></geometry></collision><visual name="v"><geometry><box><size>0.75 0.65 1.1</size></box></geometry><material><ambient>0.08 0.45 0.25 1</ambient><diffuse>0.08 0.45 0.25 1</diffuse></material></visual></link></model>
     <model name="pedestrian_dummy"><static>true</static><pose>-3.1 2.25 0 0 0 0</pose><link name="link"><collision name="c"><pose>0 0 0.9 0 0 0</pose><geometry><cylinder><radius>0.25</radius><length>1.8</length></cylinder></geometry></collision><visual name="body"><pose>0 0 0.9 0 0 0</pose><geometry><cylinder><radius>0.24</radius><length>1.35</length></cylinder></geometry><material><ambient>0.92 0.24 0.18 1</ambient><diffuse>0.92 0.24 0.18 1</diffuse></material></visual><visual name="head"><pose>0 0 1.72 0 0 0</pose><geometry><sphere><radius>0.22</radius></sphere></geometry><material><ambient>0.86 0.65 0.48 1</ambient><diffuse>0.86 0.65 0.48 1</diffuse></material></visual></link></model>
 
+    <!-- Parked outside the arena during nominal demos. Formal dynamic trials
+         move this physical model through the active swath using SetEntityPose. -->
+    <model name="dynamic_pedestrian_box">
+      <static>false</static><pose>25 18 0 0 0 0</pose>
+      <link name="link">
+        <gravity>false</gravity><kinematic>true</kinematic>
+        <collision name="collision"><pose>0 0 0.85 0 0 0</pose><geometry><cylinder><radius>0.25</radius><length>1.70</length></cylinder></geometry></collision>
+        <visual name="body"><pose>0 0 0.85 0 0 0</pose><geometry><cylinder><radius>0.24</radius><length>1.30</length></cylinder></geometry><material><ambient>0.96 0.38 0.08 1</ambient><diffuse>0.96 0.38 0.08 1</diffuse></material></visual>
+        <visual name="head"><pose>0 0 1.62 0 0 0</pose><geometry><sphere><radius>0.22</radius></sphere></geometry><material><ambient>0.86 0.65 0.48 1</ambient><diffuse>0.86 0.65 0.48 1</diffuse></material></visual>
+      </link>
+    </model>
+
     <!-- Competition cleaning targets. Their map coordinates are declared in
          competition_demo_area.yaml and judged only while the brush is on. -->
     <model name="target_bottle_demo">

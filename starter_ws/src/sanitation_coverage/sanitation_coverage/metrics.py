@@ -1,5 +1,6 @@
 import bisect
 import math
+import statistics
 
 
 def segment_length(start, end):
@@ -8,6 +9,142 @@ def segment_length(start, end):
 
 def path_length(points):
     return sum(segment_length(a, b) for a, b in zip(points, points[1:]))
+
+
+def semantic_path_distances(timed_samples):
+    """Split executed base motion by the brush state at both segment ends."""
+    brush_on = 0.0
+    brush_off = 0.0
+    transition = 0.0
+    for first, second in zip(timed_samples, timed_samples[1:]):
+        distance = segment_length(first[1:3], second[1:3])
+        first_brush = bool(first[4])
+        second_brush = bool(second[4])
+        if first_brush and second_brush:
+            brush_on += distance
+        elif not first_brush and not second_brush:
+            brush_off += distance
+        else:
+            transition += distance
+    return {
+        "brush_on_distance_m": brush_on,
+        "brush_off_distance_m": brush_off,
+        "brush_transition_distance_m": transition,
+        "total_distance_m": brush_on + brush_off + transition,
+    }
+
+
+def point_line_distance(x, y, start, end):
+    """Perpendicular distance to an infinite swath centreline."""
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    denominator = math.hypot(dx, dy)
+    if denominator == 0.0:
+        return math.hypot(x - start[0], y - start[1])
+    return abs(dy * x - dx * y + end[0] * start[1] - end[1] * start[0]) / denominator
+
+
+def swath_absolute_cross_track_errors(
+    timed_samples, swaths, brush_forward_offset_m=0.55
+):
+    """Return absolute brush-centre error to the nearest planned swath line."""
+    errors = []
+    for sample in timed_samples:
+        if not bool(sample[4]) or sample[5] != "EXECUTING_SWATH":
+            continue
+        yaw = float(sample[3])
+        brush_x = float(sample[1]) + brush_forward_offset_m * math.cos(yaw)
+        brush_y = float(sample[2]) + brush_forward_offset_m * math.sin(yaw)
+        if swaths:
+            errors.append(min(
+                point_line_distance(brush_x, brush_y, start, end)
+                for start, end in swaths
+            ))
+    return errors
+
+
+def swath_lateral_errors(timed_samples, swaths, brush_forward_offset_m=0.55):
+    """Backward-compatible name for absolute planned-line cross-track error."""
+    return swath_absolute_cross_track_errors(
+        timed_samples, swaths, brush_forward_offset_m
+    )
+
+
+def _signed_line_offset(x, y, start, end):
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    denominator = math.hypot(dx, dy)
+    if denominator == 0.0:
+        return None
+    return (dx * (y - start[1]) - dy * (x - start[0])) / denominator
+
+
+def _line_projection_fraction(x, y, start, end):
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    denominator = dx * dx + dy * dy
+    if denominator == 0.0:
+        return None
+    return ((x - start[0]) * dx + (y - start[1]) * dy) / denominator
+
+
+def swath_straightness_errors(
+    timed_samples,
+    swaths,
+    brush_forward_offset_m=0.55,
+    endpoint_fraction=0.10,
+    minimum_group_samples=3,
+):
+    """Measure weave within each executed straight swath independently.
+
+    The central 80 percent excludes entry/exit settling and measures the steady
+    straight-line phase.  A constant lateral offset is deliberately removed
+    per continuous swath run.
+    Absolute map alignment is reported separately by
+    :func:`swath_absolute_cross_track_errors` and localization metrics.  This
+    prevents RTK/map-frame bias from being misreported as a disorderly coverage
+    path while still retaining the planned-line diagnostic.
+    """
+    groups = []
+    current = []
+    for sample in timed_samples:
+        if bool(sample[4]) and sample[5] == "EXECUTING_SWATH":
+            yaw = float(sample[3])
+            current.append((
+                float(sample[1]) + brush_forward_offset_m * math.cos(yaw),
+                float(sample[2]) + brush_forward_offset_m * math.sin(yaw),
+            ))
+        elif current:
+            groups.append(current)
+            current = []
+    if current:
+        groups.append(current)
+
+    errors = []
+    for group in groups:
+        if len(group) < minimum_group_samples or not swaths:
+            continue
+        selected = min(
+            swaths,
+            key=lambda swath: statistics.median(
+                point_line_distance(x, y, *swath) for x, y in group
+            ),
+        )
+        interior_offsets = []
+        for x, y in group:
+            projection = _line_projection_fraction(x, y, *selected)
+            offset = _signed_line_offset(x, y, *selected)
+            if (
+                projection is not None
+                and offset is not None
+                and endpoint_fraction <= projection <= 1.0 - endpoint_fraction
+            ):
+                interior_offsets.append(offset)
+        if len(interior_offsets) < minimum_group_samples:
+            continue
+        centre = statistics.median(interior_offsets)
+        errors.extend(abs(offset - centre) for offset in interior_offsets)
+    return errors
 
 
 def summarize_distances(values):

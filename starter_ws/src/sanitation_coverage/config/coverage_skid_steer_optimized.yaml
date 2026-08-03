@@ -1,0 +1,24 @@
+coverage_server:
+  ros__parameters:
+    use_sim_time: true
+    action_server_result_timeout: 30.0
+    coordinates_in_cartesian_frame: true
+    robot_width: 0.72
+    # The coverage server only produces swaths for this profile. Runtime
+    # connectors are rebuilt as rotate/translate/rotate semantic components.
+    operation_width: 0.52
+    min_turning_radius: 0.40
+    linear_curv_change: 200.0
+    default_headland_width: 1.00
+    default_headland_type: CONSTANT
+    default_allow_overlap: true
+    default_swath_type: COVERAGE
+    default_swath_angle_type: SET_ANGLE
+    default_swath_angle: 0.0
+    default_route_type: BOUSTROPHEDON
+    # Kept only as the Fields2Cover generator compatibility setting. The
+    # generated curves are discarded and never sent to Nav2 in this profile.
+    default_path_type: DUBIN
+    default_path_continuity_type: DISCONTINUOUS
+    default_turn_point_distance: 0.10
+    max_turn_angular_velocity: 0.60
