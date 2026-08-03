@@ -22,16 +22,16 @@ exclusion_polygons: []
 keepout_polygons: []
 static_obstacles: []
 cleaning_targets:
-  - {id: bottle_01, class: bottle, model_name: target_bottle_demo, position: [-1.70, -2.55], collection_radius_m: 0.55}
-  - {id: bottle_02, class: bottle, model_name: target_bottle_demo_02, position: [1.55, -2.72], collection_radius_m: 0.55}
-  - {id: can_01, class: can, model_name: target_can_demo, position: [-1.45, -1.82], collection_radius_m: 0.55}
-  - {id: can_02, class: can, model_name: target_can_demo_02, position: [1.68, -2.02], collection_radius_m: 0.55}
-  - {id: paper_01, class: paper, model_name: target_paper_demo, position: [-1.72, -1.12], collection_radius_m: 0.55}
-  - {id: paper_02, class: paper, model_name: target_paper_demo_02, position: [1.48, -1.32], collection_radius_m: 0.55}
-  - {id: cardboard_01, class: cardboard, model_name: target_cardboard_demo, position: [-1.45, -0.42], collection_radius_m: 0.60}
-  - {id: cardboard_02, class: cardboard, model_name: target_cardboard_demo_02, position: [1.72, -0.62], collection_radius_m: 0.60}
-  - {id: leaf_pile_01, class: leaves, model_name: target_leaf_pile_demo, position: [-0.85, -2.92], collection_radius_m: 0.65}
-  - {id: leaf_pile_02, class: leaves, model_name: target_leaf_pile_demo_02, position: [0.85, -2.88], collection_radius_m: 0.65}
+  - {id: bottle_01, class: bottle, model_name: target_bottle_demo, position: [-1.60, -2.45], collection_radius_m: 0.55}
+  - {id: bottle_02, class: bottle, model_name: target_bottle_demo_02, position: [1.60, -1.15], collection_radius_m: 0.55}
+  - {id: can_01, class: can, model_name: target_can_demo, position: [-0.80, -2.45], collection_radius_m: 0.55}
+  - {id: can_02, class: can, model_name: target_can_demo_02, position: [0.80, -1.15], collection_radius_m: 0.55}
+  - {id: paper_01, class: paper, model_name: target_paper_demo, position: [0.00, -2.45], collection_radius_m: 0.55}
+  - {id: paper_02, class: paper, model_name: target_paper_demo_02, position: [0.00, -1.15], collection_radius_m: 0.55}
+  - {id: cardboard_01, class: cardboard, model_name: target_cardboard_demo, position: [0.80, -2.45], collection_radius_m: 0.60}
+  - {id: cardboard_02, class: cardboard, model_name: target_cardboard_demo_02, position: [-0.80, -1.15], collection_radius_m: 0.60}
+  - {id: leaf_pile_01, class: leaves, model_name: target_leaf_pile_demo, position: [1.60, -2.45], collection_radius_m: 0.65}
+  - {id: leaf_pile_02, class: leaves, model_name: target_leaf_pile_demo_02, position: [-1.60, -1.15], collection_radius_m: 0.65}
 world_to_map_translation: [8.0, 0.0]
 headland:
   enabled: true

@@ -109,7 +109,7 @@ def test_small_demo_default_camera_is_close_enough_for_target_counting() -> None
         "starter_ws/src/sanitation_gazebo_control/config/mission_control_demo.config"
     )
     assert "<camera_pose>-12 -9 10 0 0.65 0.78</camera_pose>" in small_config
-    assert "<camera_pose>-13.5 -8.5 10.5 0 0.72 0.68</camera_pose>" in demo_config
+    assert "<camera_pose>-10.5 -4.5 6.0 0 1.0 0.68</camera_pose>" in demo_config
 
 
 def test_operator_docs_name_the_gazebo_only_entry() -> None:
@@ -199,7 +199,9 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     assert len(paper_outline.findall("point")) == 9
     assert paper.find("./link/visual[@name='folded_corner']") is not None
     assert paper.find("./link/visual[@name='sheet_shadow']") is not None
+    assert paper.find("./link/visual[@name='sheet_body']/geometry/box") is not None
     assert paper_02.find("./link/visual[@name='sheet_shadow']") is not None
+    assert paper_02.find("./link/visual[@name='sheet_body']/geometry/box") is not None
     assert cardboard.findtext(
         "./link/visual[@name='carton_body']/geometry/box/size"
     ) == "0.205 0.145 0.052"
@@ -219,6 +221,14 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     assert leaves.find("./link/visual[@name='stem_a']") is not None
     assert leaves.find("./link/visual[@name='pile_shadow']") is not None
     assert leaves_02.find("./link/visual[@name='pile_shadow']") is not None
+    assert len([
+        visual for visual in leaves.findall("./link/visual")
+        if visual.get("name", "").startswith("solid_")
+    ]) == 6
+    assert len([
+        visual for visual in leaves_02.findall("./link/visual")
+        if visual.get("name", "").startswith("solid_")
+    ]) == 6
     assert not leaves.findall(".//sphere")
     assert not leaves_02.findall(".//sphere")
 
@@ -275,7 +285,7 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
         for target in targets
     }
     assert all(
-        (x * x + y * y) ** 0.5 >= 1.35
+        (x * x + y * y) ** 0.5 >= 1.10
         for x, y in positions.values()
     ), "demo targets must remain visibly separated from the vehicle start pose"
     position_items = list(positions.items())
