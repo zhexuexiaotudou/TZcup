@@ -15,6 +15,8 @@ def test_optimized_small_demo_profile_is_packaged_and_selected():
     assert "coverage_skid_steer_optimized.yaml" in runner
     assert "SMALL_FIELD_LIDAR_ONLY" in runner
     assert 'monitor["observation_sources"] = ["scan"]' in runner
+    assert 'config["tzcup_demo_safety_profile"] = {' in runner
+    assert '"ros__parameters": {' in runner
 
 
 def test_optimized_profile_has_bounded_repair_and_legacy_fallback():

@@ -415,9 +415,11 @@ if map_size == "small":
     monitor["source_timeout"] = 1.0
     monitor.pop("ground_cloud", None)
     config["tzcup_demo_safety_profile"] = {
-        "mode": "SMALL_FIELD_LIDAR_ONLY",
-        "production_approved": False,
-        "reason": "cleanable debris is traversable; renderer pointcloud is non-blocking",
+        "ros__parameters": {
+            "mode": "SMALL_FIELD_LIDAR_ONLY",
+            "production_approved": False,
+            "reason": "cleanable debris is traversable; renderer pointcloud is non-blocking",
+        },
     }
 path.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 PY
