@@ -155,6 +155,8 @@ class CleaningVisualizer(Node):
         self.actual_cleaning_map: list[list[Point2]] = []
         self.actual_transit_map: list[list[Point2]] = []
         self.actual_repair_map: list[list[Point2]] = []
+        self.blocked_intervals_map: list[list[Point2]] = []
+        self.deferred_swaths: list[str] = []
         self.last_motion_layer = ""
         self.brush_enabled = False
         self.coverage_state = "WAITING"
@@ -394,6 +396,34 @@ class CleaningVisualizer(Node):
         except (TypeError, json.JSONDecodeError):
             return
         self.coverage_state = str(payload.get("state", self.coverage_state))
+        blocked_interval = payload.get("blocked_interval")
+        if (
+            isinstance(blocked_interval, list)
+            and len(blocked_interval) == 2
+            and len(self.planned_path_map) >= 2
+        ):
+            try:
+                start_fraction = max(0.0, min(1.0, float(blocked_interval[0])))
+                end_fraction = max(start_fraction, min(1.0, float(blocked_interval[1])))
+                last_index = len(self.planned_path_map) - 1
+                start_index = min(last_index - 1, int(start_fraction * last_index))
+                end_index = max(start_index + 1, int(math.ceil(end_fraction * last_index)))
+                segment = self.planned_path_map[start_index:end_index + 1]
+                if segment and (
+                    not self.blocked_intervals_map
+                    or segment != self.blocked_intervals_map[-1]
+                ):
+                    self.blocked_intervals_map.append(segment)
+                    self.blocked_intervals_map = self.blocked_intervals_map[-64:]
+            except (TypeError, ValueError):
+                self.get_logger().warning("Ignoring malformed blocked interval")
+        blocked_swaths = payload.get("blocked_swaths", [])
+        if isinstance(blocked_swaths, list):
+            self.deferred_swaths = [
+                str(item.get("swath_id"))
+                for item in blocked_swaths
+                if isinstance(item, dict) and item.get("state") == "DEFERRED"
+            ]
         if self.mission_start_stamp_sec is None and self.coverage_state not in {
             "WAITING", "READY", "WAITING_FOR_START", "STOPPED", "COMPLETED", "FAILED"
         }:
@@ -420,6 +450,8 @@ class CleaningVisualizer(Node):
         self.actual_cleaning_map = []
         self.actual_transit_map = []
         self.actual_repair_map = []
+        self.blocked_intervals_map = []
+        self.deferred_swaths = []
         self.last_motion_layer = ""
         self.cleaned_cells.clear()
         self.completed_components = 0
@@ -534,6 +566,7 @@ class CleaningVisualizer(Node):
             "actual_cleaning": [decimate_xy(points) for points in self.actual_cleaning_map],
             "actual_transit": [decimate_xy(points) for points in self.actual_transit_map],
             "actual_repair": [decimate_xy(points) for points in self.actual_repair_map],
+            "blocked_intervals": [decimate_xy(points, 80) for points in self.blocked_intervals_map],
         }
         payload = {
             "schema": TELEMETRY_V2_SCHEMA,
@@ -559,6 +592,8 @@ class CleaningVisualizer(Node):
             "planned_path": [[point.x, point.y] for point in self.planned_path_map],
             "trajectory": [[point.x, point.y] for point in trajectory],
             "paths": semantic_paths,
+            "blocked_intervals": semantic_paths["blocked_intervals"],
+            "deferred_swaths": self.deferred_swaths,
             "cleaned_cells": [[point.x, point.y] for point in cleaned_points],
             "cell_size_m": self.cleaning_cell_m,
             "targets": self.targets,

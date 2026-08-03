@@ -15,8 +15,27 @@ def test_v2_contract_requires_all_semantic_path_layers():
     paths = {name: [] for name in (
         "planned_swaths", "planned_connectors", "planned_repairs",
         "current_component", "actual_cleaning", "actual_transit", "actual_repair",
+        "blocked_intervals",
     )}
-    assert validate_telemetry_v2({"schema": SCHEMA, "paths": paths})
+    payload = {
+        "schema": SCHEMA,
+        "paths": paths,
+        "blocked_intervals": [],
+        "deferred_swaths": [],
+    }
+    assert validate_telemetry_v2(payload)
     paths.pop("actual_repair")
     with pytest.raises(ValueError, match="incomplete"):
-        validate_telemetry_v2({"schema": SCHEMA, "paths": paths})
+        validate_telemetry_v2(payload)
+
+
+def test_v2_contract_requires_blocked_and_deferred_state_layers():
+    paths = {name: [] for name in (
+        "planned_swaths", "planned_connectors", "planned_repairs",
+        "current_component", "actual_cleaning", "actual_transit", "actual_repair",
+        "blocked_intervals",
+    )}
+    with pytest.raises(ValueError, match="blocked_intervals"):
+        validate_telemetry_v2({
+            "schema": SCHEMA, "paths": paths, "deferred_swaths": [],
+        })

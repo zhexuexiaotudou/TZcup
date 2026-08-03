@@ -184,24 +184,26 @@ Rectangle {
           var layer, j
           if (root.showPlanned) {
             layer = paths.planned_swaths || []
-            for (j = 0; j < layer.length; ++j) line(layer[j], "#ffc857", 2.2, false)
+            for (j = 0; j < layer.length; ++j) line(layer[j], "#a855f7", 2.2, false)
             layer = paths.planned_connectors || []
             for (j = 0; j < layer.length; ++j) line(layer[j], "#aab7c4", 1.6, true)
             line(paths.current_component || root.value("planned_path", []), "#ffffff", 3.0, false)
           }
           if (root.showRepairs) {
             layer = paths.planned_repairs || []
-            for (j = 0; j < layer.length; ++j) line(layer[j], "#d77cff", 2.2, true)
+            for (j = 0; j < layer.length; ++j) line(layer[j], "#ffc857", 2.2, false)
             layer = paths.actual_repair || []
-            for (j = 0; j < layer.length; ++j) line(layer[j], "#c084fc", 3.0, false)
+            for (j = 0; j < layer.length; ++j) line(layer[j], "#ffc857", 3.0, false)
           }
           if (root.showActual) {
             layer = paths.actual_transit || []
-            for (j = 0; j < layer.length; ++j) line(layer[j], "#ff9f43", 1.8, true)
+            for (j = 0; j < layer.length; ++j) line(layer[j], "#5f6b76", 1.8, false)
             layer = paths.actual_cleaning || []
-            for (j = 0; j < layer.length; ++j) line(layer[j], "#55d6ff", 2.8, false)
-            if (!layer.length) line(root.value("trajectory", []), "#55d6ff", 2.8, false)
+            for (j = 0; j < layer.length; ++j) line(layer[j], "#2ed47a", 2.8, false)
+            if (!layer.length) line(root.value("trajectory", []), "#2ed47a", 2.8, false)
           }
+          layer = paths.blocked_intervals || root.value("blocked_intervals", [])
+          for (j = 0; j < layer.length; ++j) line(layer[j], "#ff4d4f", 3.4, false)
 
           var targets = root.value("targets", [])
           for (i = 0; i < targets.length; ++i) {

@@ -391,6 +391,26 @@ def test_gazebo_panel_renders_live_cleaning_metrics_and_map() -> None:
         assert layer in qml
 
 
+def test_gazebo_panel_uses_the_documented_semantic_path_palette() -> None:
+    qml = read("starter_ws/src/sanitation_gazebo_control/SanitationMissionControl.qml")
+    visualizer = read(
+        "starter_ws/src/sanitation_gazebo_visualization/"
+        "sanitation_gazebo_visualization/cleaning_visualizer.py"
+    )
+    for layer in (
+        "planned_swaths", "planned_connectors", "planned_repairs",
+        "current_component", "actual_cleaning", "actual_transit",
+        "actual_repair", "blocked_intervals",
+    ):
+        assert layer in qml
+        assert layer in visualizer
+    for color in (
+        "#a855f7", "#aab7c4", "#ffc857", "#2ed47a",
+        "#5f6b76", "#ffffff", "#ff4d4f",
+    ):
+        assert color in qml
+
+
 def test_native_gazebo_controls_use_safe_task_services() -> None:
     source = read(
         "starter_ws/src/sanitation_gazebo_control/src/"

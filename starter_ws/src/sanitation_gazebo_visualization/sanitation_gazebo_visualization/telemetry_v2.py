@@ -27,7 +27,12 @@ def validate_telemetry_v2(payload):
     required = {
         "planned_swaths", "planned_connectors", "planned_repairs",
         "current_component", "actual_cleaning", "actual_transit", "actual_repair",
+        "blocked_intervals",
     }
     if not isinstance(paths, dict) or not required.issubset(paths):
         raise ValueError("semantic path layers are incomplete")
+    if not isinstance(payload.get("blocked_intervals"), list):
+        raise ValueError("blocked_intervals must be a list")
+    if not isinstance(payload.get("deferred_swaths"), list):
+        raise ValueError("deferred_swaths must be a list")
     return True
