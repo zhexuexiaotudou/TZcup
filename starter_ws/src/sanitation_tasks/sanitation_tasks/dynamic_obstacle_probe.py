@@ -3,11 +3,11 @@
 import json
 import math
 import random
+import shutil
 import subprocess
 import time
 from pathlib import Path
 
-from ament_index_python.packages import get_package_prefix
 import rclpy
 from nav_msgs.msg import Odometry, Path as NavPath
 from rclpy.node import Node
@@ -42,10 +42,7 @@ class DynamicObstacleProbe(Node):
             f"/world/{self.get_parameter('world_name').value}/set_pose"
         )
         self.set_pose_client = self.create_client(SetEntityPose, service_name)
-        self.set_pose_executable = (
-            Path(get_package_prefix("ros_gz_sim"))
-            / "lib" / "ros_gz_sim" / "set_entity_pose"
-        )
+        self.gz_executable = shutil.which("gz")
         self.set_pose_backend = None
         self.coverage_state = None
         self.component_state = {}
@@ -97,7 +94,7 @@ class DynamicObstacleProbe(Node):
 
     def set_pose(self, world_x, world_y):
         timeout_sec = float(self.get_parameter("service_timeout_ms").value) / 1000.0
-        if self.set_pose_backend != "gz_cli" and self.set_pose_client.wait_for_service(
+        if self.set_pose_backend != "gz_transport" and self.set_pose_client.wait_for_service(
             timeout_sec=min(timeout_sec, 0.5)
         ):
             self.set_pose_backend = "ros_service"
@@ -117,29 +114,33 @@ class DynamicObstacleProbe(Node):
             response = future.result()
             success = bool(response and response.success)
             return success, f"ros_service set_pose success={str(success).lower()}", ""
-        self.set_pose_backend = "gz_cli"
-        if not self.set_pose_executable.is_file():
-            return False, "", f"missing {self.set_pose_executable}"
+        self.set_pose_backend = "gz_transport"
+        if not self.gz_executable:
+            return False, "", "gz executable is unavailable"
+        world_name = str(self.get_parameter("world_name").value)
+        model_name = str(self.get_parameter("model_name").value)
         try:
             process = subprocess.run(
                 [
-                    str(self.set_pose_executable),
-                    "--name", str(self.get_parameter("model_name").value),
-                    "--type", "6", "--pos", str(float(world_x)),
-                    str(float(world_y)), "0.55", "--quat", "0", "0", "0", "1",
-                    "--ros-args", "--remap",
+                    self.gz_executable,
+                    "service", "-s", f"/world/{world_name}/set_pose",
+                    "--reqtype", "gz.msgs.Pose",
+                    "--reptype", "gz.msgs.Boolean",
+                    "--timeout", str(int(timeout_sec * 1000)),
+                    "--req",
                     (
-                        "/world/default/set_pose:=/world/"
-                        f"{self.get_parameter('world_name').value}/set_pose"
+                        f"name: '{model_name}', position: {{x: {float(world_x)}, "
+                        f"y: {float(world_y)}, z: 0.55}}, orientation: {{w: 1.0}}"
                     ),
                 ],
-                check=False, capture_output=True, text=True, timeout=timeout_sec,
+                check=False, capture_output=True, text=True,
+                timeout=timeout_sec + 2.0,
             )
         except (OSError, subprocess.TimeoutExpired) as error:
             return False, "", str(error)
         return (
-            process.returncode == 0,
-            f"gz_cli rc={process.returncode} {process.stdout[-300:]}",
+            process.returncode == 0 and "true" in process.stdout.lower(),
+            f"gz_transport rc={process.returncode} {process.stdout[-300:]}",
             process.stderr[-300:],
         )
 

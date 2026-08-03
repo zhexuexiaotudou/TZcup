@@ -160,12 +160,11 @@ The reproducible small-field entry is
 pedestrian starts parked outside the arena and the probe moves it across the
 current swath. Only lidar-observed, collision-free interactions followed by
 measured vehicle progress count as valid. The probe prefers the ROS-Gazebo
-`SetEntityPose` service and falls back to the installed `ros_gz_sim`
-`set_entity_pose` executable when that service bridge is absent; every report
-records the backend. The executable's compiled `/world/default/set_pose`
-client is explicitly remapped to the selected simulation world and receives a
-separate 10-second cold-discovery budget. A service return alone is
-insufficient: the interaction
+`SetEntityPose` service and falls back to the selected world's native Gazebo
+Transport `/world/<name>/set_pose` service when that ROS bridge is absent;
+every report records the backend. The native call receives a separate
+10-second cold-discovery budget and must return Boolean `true`. A service
+return alone is insufficient: the interaction
 also requires a lidar range below 2.0 m and at least a 0.15 m drop from the
 pre-injection scan.
 WSLg and operator demos retain Ogre2. A Docker-only headless matrix may pass
