@@ -1,0 +1,46 @@
+{
+  "schema": "tzcup.coverage_candidate_selection.v1",
+  "selection_policy": [
+    "collision and geometry gates",
+    "empirical coverage >= 0.995",
+    "targets cleaned 10/10",
+    "repeat rate <= 0.20",
+    "then shortest actual distance and duration"
+  ],
+  "rejected_live_candidates": [
+    {
+      "evidence": "coverage_optimizer_seed106",
+      "spacing_m": 0.48,
+      "coverage_rate": 0.9716666666666667,
+      "repeat_rate": 0.3375,
+      "reason": "coverage and repeat gates failed"
+    },
+    {
+      "evidence": "coverage_optimizer_seed111b_fast",
+      "spacing_m": 0.42,
+      "coverage_rate": 1.0,
+      "repeat_rate": 0.43583333333333335,
+      "reason": "final repeat-rate gate failed"
+    },
+    {
+      "evidence": "coverage_optimizer_seed118_fast",
+      "spacing_m": 0.52,
+      "coverage_rate": 0.995,
+      "repeat_rate": 0.24,
+      "reason": "repeat-rate gate failed before lateral calibration"
+    },
+    {
+      "evidence": "coverage_optimizer_seed123_fast",
+      "spacing_m": 0.52,
+      "coverage_rate": 1.0,
+      "repeat_rate": 0.21583333333333332,
+      "reason": "repeat-rate gate failed before lateral calibration"
+    }
+  ],
+  "selected": {
+    "profile": "SKID_STEER_OPTIMIZED",
+    "spacing_m": 0.52,
+    "angle_deg": 0.0,
+    "selection_basis": "five retained live seeds passed all hard gates after offline map-normal affine calibration"
+  }
+}

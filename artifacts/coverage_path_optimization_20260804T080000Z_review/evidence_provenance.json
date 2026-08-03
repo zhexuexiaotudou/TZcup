@@ -1,0 +1,36 @@
+{
+  "schema": "tzcup.coverage_optimizer_evidence_provenance.v1",
+  "generated_at": "2026-08-04T08:00:00+08:00",
+  "code_revision": "8943ba681a7f5c7f3b2e9b56ed852c8446e716df",
+  "branch": "codex/coverage-path-optimizer",
+  "final_root": "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T073000Z_delivery_final",
+  "selected_sources": {
+    "static_and_replay": "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T060000Z_delivery",
+    "dynamic_seed_164": "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T054432Z_final\\dynamic_safe24_v2\\run_seed_164",
+    "dynamic_seed_166": "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T054432Z_final\\dynamic_safe24_v2\\run_seed_166",
+    "dynamic_seed_167": "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T054432Z_final\\dynamic_pass_seed167"
+  },
+  "selected_seed_sets": {
+    "legacy": [140, 141, 142, 143, 144],
+    "optimized": [132, 133, 134, 135, 136],
+    "repair": [150, 151, 152, 153, 154, 155, 156, 157, 158, 159],
+    "dynamic": [164, 166, 167]
+  },
+  "retained_rejected_candidates": [
+    "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T073000Z_delivery_final\\candidates\\coverage_optimizer_seed106",
+    "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T073000Z_delivery_final\\candidates\\coverage_optimizer_seed111b_fast",
+    "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T073000Z_delivery_final\\candidates\\coverage_optimizer_seed118_fast",
+    "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T073000Z_delivery_final\\candidates\\coverage_optimizer_seed123_fast"
+  ],
+  "retained_failed_or_tuning_evidence": [
+    "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T054432Z_final\\dynamic_final20",
+    "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T054432Z_final\\dynamic_final20_v2",
+    "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T054432Z_final\\dynamic_safe24\\run_seed_162",
+    "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T054432Z_final\\dynamic_safe24\\run_seed_163",
+    "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T054432Z_final\\repair_tune_seed150",
+    "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T054432Z_final\\repair_tune_seed153",
+    "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T054432Z_final\\repair_tune_seed157",
+    "F:\\Project\\TZcup-coverage-evidence\\coverage_path_optimization_20260804T054432Z_final\\repair_retry_seed154"
+  ],
+  "retention_policy": "No raw run, failed attempt, worktree, branch, container, bag, log, or rollback evidence is deleted before explicit user confirmation."
+}

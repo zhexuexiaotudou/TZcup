@@ -96,12 +96,13 @@ with the delegate package named instead of silently treating it as area fill.
 
 The map uses independent layers instead of one merged polyline:
 
-- yellow solid: planned cleaning swaths;
+- purple solid: planned cleaning swaths;
 - gray dashed: planned brush-off connectors;
 - white: current component;
-- cyan: actual brush-on primary cleaning;
-- orange dashed: actual brush-off transit and connectors;
-- purple: planned and actual residual repair;
+- green: actual brush-on primary cleaning;
+- dark gray: actual brush-off transit and connectors;
+- yellow: planned and actual residual repair;
+- red: blocked interval on the affected component;
 - green cells: empirically cleaned area.
 
 The 规划, 实际 and 补扫 checkboxes independently toggle those layers. Motion
@@ -179,10 +180,17 @@ observation time, obstacle state, retry count and terminal reason. A retry is
 brush-off and delayed by at least 10 seconds; two failed retries transition to
 `DEFERRED`, so the controller cannot oscillate forever at one obstacle. This
 mechanism is implemented, but the production recovery claim remains gated on
-20 valid live interactions with at least 95 percent mission resumption.
-The reproducible small-field entry is
-`run_gazebo_cleaning_demo.ps1 -DynamicObstacleTrials 20`; a non-static physical
-pedestrian starts parked outside the arena and the probe moves it across the
+at least 20 valid live interactions with at least 95 percent mission
+resumption. The reproducible formal entry is
+`scripts/run_coverage_dynamic_matrix.sh`; it runs three independent missions,
+each requiring eight valid interactions with no more than two extra bounded
+attempts, and aggregates them with a fail-closed report. Splitting the matrix
+keeps every interaction at least 3.0 m from the end of its current path and
+0.5 m from the previous same-swath injection instead of packing 20 crossings
+into six short swaths and consuming the safety margin. The crossing centre is
+bounded to 1.5--1.8 m ahead; a retained 1.2 m candidate produced a real hard-
+separation violation and is not part of the selected safety scenario. A
+non-static physical pedestrian starts parked outside the arena and the probe moves it across the
 current swath. Only lidar-observed, collision-free interactions followed by
 measured vehicle progress count as valid. The probe prefers the ROS-Gazebo
 `SetEntityPose` service and falls back to the selected world's native Gazebo
@@ -197,7 +205,10 @@ also requires a lidar range below 2.0 m and at least a 0.15 m drop from the
 pre-injection scan. The formal trajectory uses five physical pose samples and
 a 0.5-second requested hold budget; this keeps a crossing observable while the
 obstacle clears the centreline before the vehicle reaches it, instead of using
-a slow teleport sequence that manufactures a near collision.
+a slow teleport sequence that manufactures a near collision. Interactions on
+the same swath must be at least 0.5 m apart and leave at least 3.0 m of path;
+the report derives repeated oscillation from violations of that progress rule,
+and the formal gate requires the count to remain zero.
 WSLg and operator demos retain Ogre2. A Docker-only headless matrix may pass
 `--simulation-render-engine ogre` when its runtime has CUDA but no EGL graphics
 context; the selected engine is materialized in the retained runtime SDF and

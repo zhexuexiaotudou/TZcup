@@ -26,7 +26,7 @@ READY → STARTING → PLANNING → TRANSIT_PREFLIGHT → TRANSIT → ALIGNING
 ```
 
 只有当主路径执行后的实际刷盘足迹覆盖率低于 `99.5%` 时，才会进入补扫状态；
-补扫仍以真实刷盘足迹重新计算，最多两轮，仍不达标就报告失败，不会用规划路径冒充已清扫面积。
+补扫仍以真实刷盘足迹重新计算，最多一轮，仍不达标就报告失败，不会用规划路径冒充已清扫面积。
 
 ## 三档地图
 
@@ -61,8 +61,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 实际清扫区；覆盖率分母只计青色区域。Gazebo 全局网格已关闭，不再与场地边界错位。
 手动控制入口会从场景 GUI 配置中移除 `CameraTracking` 插件，而不是在启动后再发送
 一次性解锁命令；因此用户拖动后的自由视角不会被跟随状态拉回。非手动自动验收入口仍保留跟车镜头。
-物理刷宽保持 `0.65 m`，高速小场规划横向间距为 `0.35 m`，保留约 46% 重叠并生成
-9 条清扫带与 8 个转弯；执行后再按实际
+物理刷宽保持 `0.65 m`，优化小场规划横向间距为 `0.52 m`，保留约 20% 重叠并动态生成
+6 条清扫带与 15 个 RTR 连接组件；执行后再按实际
 刷盘足迹评估 `99.5%` 门槛并针对未覆盖栅格自动补扫。
 
 小场地右栏实时显示规划路径、实际轨迹、已清扫面积、清扫率、目标数、效率、里程、速度和
@@ -70,6 +70,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps
 实车视觉或物理吸入证据。默认 `-SimulationSpeed fast` 的目标物理倍率为 2x，小场速度为
 `0.70 m/s`；`turbo` 为 3x、`0.90 m/s`，另有 `normal`。启动器同步设置控制器、安全速度门和
 velocity smoother，避免平滑器沿用 `0.45 m/s` 上限；顶部 World Stats 才是当前硬件实际达到的 RTF。
+地图图例固定为紫色规划条带、灰色虚线无刷连接、绿色实际清扫、深灰实际转场、黄色补扫、
+白色当前组件和红色受阻区间；绿色栅格只表示 evaluation-only 刷盘足迹判定的已清扫面积。
 
 启动器先确认定位话题、`/scan`、`/odom` 与 `odom→base_footprint` TF 均真实可用，再启动
 Nav2；随后只在 `controller_server` 和 `planner_server` 都精确返回 lifecycle `active [3]`
