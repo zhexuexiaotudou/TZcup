@@ -1,5 +1,16 @@
 # TZcup 智慧环卫无人清扫车
 
+## 履带式覆盖路径优化（2026-08-03）
+
+独立小场默认改用语义化 `SKID_STEER_OPTIMIZED` 路径：直线清扫带按相邻
+往复顺序执行，原 Dubins 大回环不再下发给 Nav2，转接拆为原地转向、横移或
+受限倒车、再次对正。0.65 m 刷盘的主间距从 0.35 m 调整为 0.48 m；漏扫按
+连通残余区域补扫，最多一轮且补扫长度不超过主清扫带的 10%。Gazebo 右侧
+地图分别显示规划清扫带、无刷转接、当前组件、实际清扫、实际转场和补扫，
+不再把所有运动首尾相连成一条混乱折线。旧配置、`/coverage/current_path`
+和遥测 v1 字段继续兼容。设计、话题、颜色图例与实车迁移边界见
+[`docs/coverage-path-optimization.md`](docs/coverage-path-optimization.md)。
+
 TZcup 是一个面向智慧环卫无人清扫车的 ROS 2 仿真与自主任务工程。项目以 Ubuntu 24.04、ROS 2 Jazzy、Gazebo Harmonic、Nav2、SLAM Toolbox、OpenNav Coverage 和 Fields2Cover 为基础，覆盖车辆建模、环境仿真、定位导航、全覆盖清扫、垃圾感知、定点清扫、安全控制、调试可视化和验收证据。
 
 ## 地图优先的人类监督台（2026-07-31）

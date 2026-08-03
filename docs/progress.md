@@ -672,3 +672,10 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_doc
 `AUTO-09=PASS`。证据等级为
 `OFFLINE_KINEMATIC_PERCEPTION_LOOP_SIMULATION`，尚未形成 Gazebo 动态
 抓取或实体机械臂证据。
+# Coverage path optimization（2026-08-03）
+
+- 新增版本化 `CoveragePlan` 与 8 类语义组件，规划、执行和 Gazebo 面板使用同一组件身份与刷盘语义。
+- 新增 5 度步进方向搜索、经验间距选择、相邻往复式清扫带路由、履带底盘 RTR 转接、阻塞条带有界重试和连通残余区域补扫。
+- 独立小场默认启用 0.48 m / DISCONTINUOUS 优化配置；保留 0.35 m / Dubins 连续旧配置作为显式回退。
+- 遥测升级为 v2 并分离规划清扫带、转接、补扫、当前组件及三类实际轨迹；保留旧字段和 `/coverage/current_path`。
+- Windows 快速门禁 202 项通过；ROS 选定包构建通过，coverage 与 Gazebo visualization 共 34 项 ROS 测试通过。真实多种子 Gazebo 结果以本任务验收报告为准，不用静态测试替代。
