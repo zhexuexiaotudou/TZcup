@@ -47,10 +47,7 @@ from sanitation_coverage.coverage_components import ComponentType, CoverageCompo
 from sanitation_coverage.coverage_plan import CoveragePlan
 from sanitation_coverage.blocked_swath_manager import BlockedSwathManager
 from sanitation_coverage.oriented_swath_router import route_oriented_swaths
-from sanitation_coverage.residual_region_planner import (
-    plan_residual_regions,
-    trim_swept_endcaps,
-)
+from sanitation_coverage.residual_region_planner import plan_residual_regions
 from sanitation_coverage.skid_steer_connector import plan_skid_steer_connector
 from sanitation_coverage.skid_steer_rotation import normalized_yaw_error
 from sanitation_coverage.swath_optimizer import optimize_swath_angle
@@ -992,12 +989,11 @@ class CoverageProbe(Node):
             calibration_offset = float(config.get("execution_lateral_offset_m", 0.0))
             segments = []
             for nominal in nominal_segments:
-                trimmed = trim_swept_endcaps(nominal, width, resolution=0.10)
                 # A swath line has no signed normal: reverse traversal must use
                 # the same offline map-normal calibration as forward traversal.
-                angle_deg = math.degrees(segment_heading(*trimmed)) % 180.0
+                angle_deg = math.degrees(segment_heading(*nominal)) % 180.0
                 segments.append(apply_lateral_affine(
-                    [trimmed], angle_deg,
+                    [nominal], angle_deg,
                     scale=calibration_scale,
                     offset_m=calibration_offset,
                 )[0])
@@ -1063,6 +1059,11 @@ class CoverageProbe(Node):
                     "brush": False,
                     "speed_profile": "BYPASS",
                     "points": self._interpolate(current, staging, spacing=0.05),
+                    # Align to the repair line while the brush is still off.
+                    # Otherwise FollowPath accepts the entry position and the
+                    # RepairPath controller performs its heading correction
+                    # after brush-on, drawing an unreported repeat-coverage arc.
+                    "goal_yaw": heading,
                 }
                 entry_result = self._follow_component(entry)
                 repair_result = None
@@ -1284,7 +1285,7 @@ class CoverageProbe(Node):
         message.pose.orientation.w = math.cos(float(pose["yaw"]) / 2.0)
         return message
 
-    def _path_message(self, points):
+    def _path_message(self, points, final_yaw=None):
         path = NavPath(); path.header.frame_id = "map"
         if len(points) < 2:
             raise ValueError("a coverage path needs at least two points for yaw")
@@ -1292,6 +1293,8 @@ class CoverageProbe(Node):
             next_point = points[min(index + 1, len(points) - 1)]
             previous = points[max(0, index - 1)]
             yaw = math.atan2(next_point[1] - previous[1], next_point[0] - previous[0])
+            if index == len(points) - 1 and final_yaw is not None:
+                yaw = float(final_yaw)
             pose = PoseStamped(); pose.header.frame_id = "map"
             pose.pose.position.x = float(x); pose.pose.position.y = float(y)
             pose.pose.orientation.z = math.sin(yaw / 2.0); pose.pose.orientation.w = math.cos(yaw / 2.0)
@@ -1313,7 +1316,10 @@ class CoverageProbe(Node):
         return result
 
     def _follow_component(self, component):
-        goal = FollowPath.Goal(); goal.path = self._path_message(component["points"])
+        final_yaw = component.get("goal_yaw")
+        goal = FollowPath.Goal(); goal.path = self._path_message(
+            component["points"], final_yaw=final_yaw
+        )
         self.current_path_publisher.publish(goal.path)
         self.current_component_path_publisher.publish(goal.path)
         controller_by_profile = {
@@ -1328,7 +1334,13 @@ class CoverageProbe(Node):
         result = self._run_action(
             self.follow_client, goal, component["brush"], timeout, "follow_path"
         )
-        goal_pose = {"x": component["points"][-1][0], "y": component["points"][-1][1], "yaw": segment_heading(component["points"][-2], component["points"][-1])}
+        goal_pose = {
+            "x": component["points"][-1][0],
+            "y": component["points"][-1][1],
+            "yaw": float(final_yaw) if final_yaw is not None else segment_heading(
+                component["points"][-2], component["points"][-1]
+            ),
+        }
         result.update({"kind": component["kind"], "index": component["index"], "brush_enabled": component["brush"], "path_pose_count": len(component["points"]), "planned_length_m": path_length(component["points"]), "goal_pose": goal_pose, "terminal_tracking_error": self._tracking_error(goal_pose)})
         return result
 

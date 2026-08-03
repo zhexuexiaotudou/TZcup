@@ -108,6 +108,8 @@ def test_optimized_connectors_use_nav2_behaviors_and_dedicated_controllers():
     assert 'create_publisher(\n            Twist, "/cmd_vel_nav"' not in probe
     assert '"CLEAN": "CleanPath"' in probe
     assert '"REPAIR": "RepairPath"' in probe
+    assert '"goal_yaw": heading' in probe
+    assert 'component.get("goal_yaw")' in probe
     assert "controller_plugins: [FollowPath, CleanPath, RepairPath]" in nav2
     assert "desired_linear_vel: 0.65" in nav2
     assert "use_velocity_scaled_lookahead_dist: false" in nav2

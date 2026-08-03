@@ -3,7 +3,6 @@ import math
 from sanitation_coverage.residual_region_planner import (
     connected_residual_regions,
     plan_residual_regions,
-    trim_swept_endcaps,
 )
 
 
@@ -45,17 +44,3 @@ def test_single_cell_residual_has_one_cell_physical_heading():
     assert len(plan.swaths) == 1
     assert math.isclose(plan.total_length_m, 0.1)
     assert plan.swaths[0][0] != plan.swaths[0][1]
-
-
-def test_multicell_repair_trims_brush_swept_endcaps():
-    trimmed = trim_swept_endcaps(((0.0, 0.0), (1.2, 0.0)), 0.65, 0.1)
-
-    assert math.isclose(trimmed[0][0], 0.1625)
-    assert math.isclose(trimmed[1][0], 1.0375)
-    assert math.isclose(math.dist(*trimmed), 0.875)
-
-
-def test_single_cell_repair_is_not_trimmed_to_zero():
-    segment = ((-0.05, 0.0), (0.05, 0.0))
-
-    assert trim_swept_endcaps(segment, 0.65, 0.1) == segment

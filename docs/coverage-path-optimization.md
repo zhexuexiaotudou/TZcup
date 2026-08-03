@@ -138,12 +138,13 @@ residual planner's nominal geometry; transit reaches the residual endpoint with
 the brush disabled, so hidden lead-in and overrun cannot inflate repeat area.
 Residual swaths are brush-centre paths over the missed-cell span: their circular
 swept footprint supplies the endpoint radius, and the planner does not extend
-the centreline by that radius a second time. Before execution, each multi-cell
-repair trims one quarter brush width from each endpoint and applies the same
-offline map-normal affine calibration as the primary swaths; the report keeps
-both nominal residual and commanded brush-centre segments. A one-cell residual
-is represented by one raster-cell width of physical centreline and is never
-trimmed, so Nav2 always receives a non-degenerate heading.
+the centreline by that radius a second time. Before execution, each repair
+applies the same offline map-normal affine calibration as the primary swaths;
+the report keeps both nominal residual and commanded brush-centre segments.
+The entry FollowPath also receives the repair-line terminal yaw while the brush
+is off, so heading correction cannot become an unreported brush-on arc. A
+one-cell residual is represented by one raster-cell width of physical
+centreline, so Nav2 always receives a non-degenerate heading.
 
 The entry preflight normally receives keepout and speed masks through
 transient-local topics. If cold DDS discovery misses either latched sample, the
