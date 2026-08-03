@@ -23,10 +23,15 @@ keepout_polygons: []
 static_obstacles: []
 cleaning_targets:
   - {id: bottle_01, class: bottle, model_name: target_bottle_demo, position: [-1.6, -2.675], collection_radius_m: 0.55}
+  - {id: bottle_02, class: bottle, model_name: target_bottle_demo_02, position: [1.7, -3.55], collection_radius_m: 0.55}
   - {id: can_01, class: can, model_name: target_can_demo, position: [0.0, -2.025], collection_radius_m: 0.55}
+  - {id: can_02, class: can, model_name: target_can_demo_02, position: [-0.8, -3.125], collection_radius_m: 0.55}
   - {id: paper_01, class: paper, model_name: target_paper_demo, position: [1.5, -1.375], collection_radius_m: 0.55}
+  - {id: paper_02, class: paper, model_name: target_paper_demo_02, position: [-2.0, -1.80], collection_radius_m: 0.55}
   - {id: cardboard_01, class: cardboard, model_name: target_cardboard_demo, position: [-1.0, -0.725], collection_radius_m: 0.60}
+  - {id: cardboard_02, class: cardboard, model_name: target_cardboard_demo_02, position: [2.0, -0.95], collection_radius_m: 0.60}
   - {id: leaf_pile_01, class: leaves, model_name: target_leaf_pile_demo, position: [1.0, -0.075], collection_radius_m: 0.65}
+  - {id: leaf_pile_02, class: leaves, model_name: target_leaf_pile_demo_02, position: [-2.1, 0.45], collection_radius_m: 0.65}
 world_to_map_translation: [8.0, 0.0]
 headland:
   enabled: true
