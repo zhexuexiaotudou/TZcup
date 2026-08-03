@@ -41,6 +41,13 @@ def build_report(root: Path) -> dict:
             "repeated_oscillation_count": int(dynamic.get("repeated_oscillation_count", 0)),
             "probe_success": bool(dynamic.get("success")),
             "mission_full_execution_success": bool(coverage.get("full_execution_success")),
+            "mission_coverage_quality_success": bool(
+                coverage.get("coverage_quality_success")
+            ),
+            "mission_collision_count": int(coverage.get("collision_count", 0)),
+            "mission_keepout_violation_count": int(
+                coverage.get("keepout_violation_sample_count", 0)
+            ),
             "brush_disabled_on_exit": bool(coverage.get("brush_disabled_on_exit")),
         })
 
@@ -57,7 +64,7 @@ def build_report(root: Path) -> dict:
     valid_rate = valid / completed if completed else 0.0
     resume_rate = resumed / completed if completed else 0.0
     gates = {
-        "at_least_two_independent_missions": len(runs) >= 2,
+        "at_least_three_independent_missions": len(runs) >= 3,
         "all_run_evidence_complete": bool(runs) and all(item.get("complete") for item in runs),
         "valid_dynamic_interactions_at_least_20": valid >= 20,
         "dynamic_recovery_rate_at_least_0_95": valid_rate >= 0.95,
@@ -69,6 +76,14 @@ def build_report(root: Path) -> dict:
         "repeated_oscillation_zero": oscillations == 0,
         "all_missions_completed": bool(runs) and all(
             item.get("mission_full_execution_success") for item in runs
+        ),
+        "all_missions_meet_coverage_quality": bool(runs) and all(
+            item.get("mission_coverage_quality_success") for item in runs
+        ),
+        "mission_safety_counts_zero": bool(runs) and all(
+            item.get("mission_collision_count") == 0
+            and item.get("mission_keepout_violation_count") == 0
+            for item in runs
         ),
         "brush_disabled_on_every_exit": bool(runs) and all(
             item.get("brush_disabled_on_exit") for item in runs

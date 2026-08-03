@@ -27,6 +27,9 @@ def _write_run(root: Path, seed: int, count: int = 8) -> None:
     }), encoding="utf-8")
     (run / "coverage_report.json").write_text(json.dumps({
         "full_execution_success": True,
+        "coverage_quality_success": True,
+        "collision_count": 0,
+        "keepout_violation_sample_count": 0,
         "brush_disabled_on_exit": True,
     }), encoding="utf-8")
 
