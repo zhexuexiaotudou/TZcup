@@ -154,6 +154,10 @@ def test_repair_matrix_injects_ten_fused_pose_brush_dropouts_without_gt_control(
     assert '--repair-evaluation-injection' in matrix
     assert '"control_source": "fused_localization_path_fraction"' in probe
     assert '"ground_truth_used_for_control": False' in probe
+    assert 'staging = base_start' in probe
+    assert '"executed_repair_length_m"' in probe
+    assert '"repair_length_gate_pass"' in probe
+    assert 'base_end[0] + 0.30' not in probe
 
 
 def test_readiness_bypasses_stale_ros_daemon():

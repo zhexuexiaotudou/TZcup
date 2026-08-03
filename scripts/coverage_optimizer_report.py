@@ -104,7 +104,13 @@ def collect_run(profile, run_dir):
         **geometry,
         "repair_count": sum(int(item.get("segment_count", 0)) for item in repair_passes),
         "repair_passes": len(repair_passes),
-        "repair_path_length_m": sum(float(item.get("planned_repair_length_m", 0.0)) for item in repair_passes),
+        "repair_path_length_m": sum(
+            float(item.get(
+                "executed_repair_length_m",
+                item.get("planned_repair_length_m", 0.0),
+            ))
+            for item in repair_passes
+        ),
         "brush_on_distance_m": empirical.get("brush_on_distance_m"),
         "brush_off_distance_m": empirical.get("brush_off_distance_m"),
         "actual_total_distance_m": empirical.get("total_distance_m"),

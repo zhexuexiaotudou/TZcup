@@ -1011,10 +1011,12 @@ class CoverageProbe(Node):
                     brush_end[0] - forward_offset * unit_x,
                     brush_end[1] - forward_offset * unit_y,
                 )
-                staging = (
-                    base_start[0] - 0.25 * unit_x,
-                    base_start[1] - 0.25 * unit_y,
-                )
+                # The residual planner already returns brush-centre endpoints.
+                # Transit without the brush to the first endpoint, then command
+                # exactly that bounded segment. Extra lead-in / overrun would
+                # create unreported repeat coverage and could exceed the 10%
+                # repair-path budget even when the nominal segment passed it.
+                staging = base_start
                 # Runtime control and path generation consume fused localization
                 # only. Ground truth remains evaluation-only throughout.
                 current = self.estimated_pose[:2] if self.estimated_pose else staging
@@ -1044,8 +1046,7 @@ class CoverageProbe(Node):
                         "brush": True,
                         "speed_profile": "REPAIR",
                         "points": self._interpolate(
-                            staging,
-                            (base_end[0] + 0.30 * unit_x, base_end[1] + 0.30 * unit_y),
+                            base_start, base_end,
                         ),
                     }
                     repair_result = self._follow_component(repair)
@@ -1064,6 +1065,17 @@ class CoverageProbe(Node):
                 if not segment_success:
                     all_success = False
                     break
+            executed_repair_length = sum(
+                float(item.get("repair", {}).get("planned_length_m", 0.0))
+                for item in pass_report["segments"]
+                if item.get("repair")
+            )
+            pass_report["executed_repair_length_m"] = executed_repair_length
+            pass_report["repair_length_gate_pass"] = (
+                executed_repair_length <= pass_report["repair_length_limit_m"] + 1e-9
+            )
+            if not pass_report["repair_length_gate_pass"]:
+                all_success = False
             after = empirical_swept_metrics(
                 cleanable_polygon, self.brush_samples, width, resolution=0.10,
                 exclusion_polygons=cleanable_exclusions,

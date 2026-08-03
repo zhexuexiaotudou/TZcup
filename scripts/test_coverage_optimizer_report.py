@@ -58,7 +58,9 @@ def test_repair_matrix_requires_ten_observed_bounded_repairs(tmp_path):
             "observed": True, "ground_truth_used_for_control": False,
         }
         report["coverage_repair"] = {"passes": [{
-            "segment_count": 1, "planned_repair_length_m": 0.2,
+            "segment_count": 1,
+            "planned_repair_length_m": 0.2,
+            "executed_repair_length_m": 0.2,
         }]}
         (run / "coverage_report.json").write_text(json.dumps(report))
 

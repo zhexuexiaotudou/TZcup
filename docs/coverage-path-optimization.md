@@ -132,7 +132,10 @@ localization path fraction. It does not modify a Nav2 goal or publish vehicle
 commands, and ground truth remains evaluation-only. A valid run must observe
 the injected miss, execute exactly one connected-component repair pass, recover
 at least 99.5% coverage, keep repair length within 10% of the primary swaths,
-and explicitly report that ground truth was not used for control.
+and explicitly report that ground truth was not used for control. The length
+gate uses the brush-on path actually sent to `RepairPath`, not merely the
+residual planner's nominal geometry; transit reaches the residual endpoint with
+the brush disabled, so hidden lead-in and overrun cannot inflate repeat area.
 
 The retained optimized seed 132 bag is checked with
 `scripts/verify_coverage_mcap_replay.sh`. That gate first executes a real
