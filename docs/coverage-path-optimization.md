@@ -127,6 +127,16 @@ brush-off and delayed by at least 10 seconds; two failed retries transition to
 `DEFERRED`, so the controller cannot oscillate forever at one obstacle. This
 mechanism is implemented, but the production recovery claim remains gated on
 20 valid live interactions with at least 95 percent mission resumption.
+The reproducible small-field entry is
+`run_gazebo_cleaning_demo.ps1 -DynamicObstacleTrials 20`; a non-static physical
+pedestrian starts parked outside the arena and the probe moves it across the
+current swath. Only lidar-observed, collision-free interactions followed by
+measured vehicle progress count as valid.
+WSLg and operator demos retain Ogre2. A Docker-only headless matrix may pass
+`--simulation-render-engine ogre` when its runtime has CUDA but no EGL graphics
+context; the selected engine is materialized in the retained runtime SDF and
+is never inferred silently. Ogre runs with an explicit X display instead of
+Gazebo's Ogre2-only EGL headless path.
 
 ## Sim-to-real boundary
 

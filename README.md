@@ -21,6 +21,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 小场默认使用 skid-steer 优化方案；A/B 回归可加 `-CoverageProfile legacy` 启动保留的 `0.35 m + Dubins` 基线，或显式使用 `-CoverageProfile optimized`。
 
 动态受阻条带采用可审计状态机，默认最多重试 2 次且两次重试至少间隔 10 秒；持续受阻会进入 `DEFERRED` 并纳入报告，后续由局部残余任务处理，不会在同一障碍前无限振荡。正式动态恢复率仍必须以 20 次真实交互矩阵为准。
+小场世界预置一个默认停放在场外的非静态行人模型，仅在正式动态矩阵中由 Gazebo `SetEntityPose` 移入当前条带；普通演示不会看到它，也不会把服务调用本身冒充有效避障交互。
+WSLg 日常演示始终默认 Ogre2；只有缺少 EGL 图形上下文的无头 Docker 矩阵才显式使用 `-SimulationRenderEngine ogre`，实际选择会写入保留的运行时 SDF。
 
 Gazebo 右侧原生卡片可控制开始、暂停、继续、停止和关闭；按钮通过 Coverage 服务驱动 Nav2，不直接发速度。`-MapSize small|medium|large` 选择独立 16 m × 12 m 演示场、80 m × 50 m 中型验证或严格 200 m × 100 m 比赛大图，详见 [`docs/gazebo-multiscale-control.md`](docs/gazebo-multiscale-control.md)。
 Windows 启动器会准备 WSLg `/mnt/shared_memory`、恢复异常窗口，并在关闭 Gazebo 后立即停止运行链、释放端口和关闭已跟踪的 RemoteApp 窗口句柄，避免残留不可交互会话或无渲染内容的黑色外壳。

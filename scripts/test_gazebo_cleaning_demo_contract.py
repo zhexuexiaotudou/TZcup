@@ -102,6 +102,8 @@ def test_gazebo_only_launcher_contract() -> None:
     assert '[string]$SimulationSpeed = "fast"' in dedicated_launcher
     assert '[string]$CoverageProfile = "optimized"' in dedicated_launcher
     assert "CoverageProfile = $CoverageProfile" in dedicated_launcher
+    assert "DynamicObstacleTrials = $DynamicObstacleTrials" in dedicated_launcher
+    assert "SimulationRenderEngine = $SimulationRenderEngine" in dedicated_launcher
     assert "ManualControl = $true" in dedicated_launcher
     assert "NoRviz" not in dedicated_launcher
     assert "Start-Process" not in dedicated_launcher
@@ -159,7 +161,13 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
         "target_cardboard_demo", "target_leaf_pile_demo", "puddle_demo",
         "target_bottle_demo_02", "target_can_demo_02", "target_paper_demo_02",
         "target_cardboard_demo_02", "target_leaf_pile_demo_02",
+        "dynamic_pedestrian_box",
     } <= names
+    dynamic = world.find("./model[@name='dynamic_pedestrian_box']")
+    assert dynamic is not None
+    assert dynamic.findtext("static") == "false"
+    assert dynamic.findtext("./link/gravity") == "false"
+    assert dynamic.find("./link/collision") is not None
     floor = world.find("./model[@name='demo_arena_floor']")
     assert floor is not None
     assert "16 12 0.08" in __import__("xml.etree.ElementTree", fromlist=["ElementTree"]).tostring(

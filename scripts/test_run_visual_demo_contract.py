@@ -33,6 +33,44 @@ def test_launcher_exposes_optimized_and_legacy_coverage_profiles():
     assert '[ValidateSet("optimized", "legacy")]' in frozen
 
 
+def test_launcher_can_run_a_bounded_physical_dynamic_matrix():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    wrapper = (ROOT / "scripts" / "run_visual_demo.ps1").read_text(encoding="utf-8")
+    world = (
+        ROOT / "starter_ws/src/sanitation_worlds/worlds/sanitation_competition_demo.sdf"
+    ).read_text(encoding="utf-8")
+
+    assert 'DYNAMIC_OBSTACLE_TRIALS=0' in launcher
+    assert '--dynamic-obstacle-trials) DYNAMIC_OBSTACLE_TRIALS="$2"' in launcher
+    assert 'dynamic_probe_executable="$(ros2 pkg prefix sanitation_tasks)' in launcher
+    assert '"${dynamic_probe_executable}" --ros-args' in launcher
+    assert 'model_name:="dynamic_pedestrian_box"' in launcher
+    assert 'dynamic_obstacle_report.json' in launcher
+    assert 'dynamic_probe_code' in launcher
+    assert '[int]$DynamicObstacleTrials = 0' in wrapper
+    assert '"--dynamic-obstacle-trials", "$DynamicObstacleTrials"' in wrapper
+    assert '<model name="dynamic_pedestrian_box">' in world
+
+
+def test_headless_matrix_can_select_ogre_without_changing_gui_default():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+    wrapper = (ROOT / "scripts" / "run_visual_demo.ps1").read_text(encoding="utf-8")
+
+    assert 'SIMULATION_RENDER_ENGINE="ogre2"' in launcher
+    assert '--simulation-render-engine) SIMULATION_RENDER_ENGINE="$2"' in launcher
+    assert 'case "${SIMULATION_RENDER_ENGINE}" in ogre2|ogre)' in launcher
+    assert 'f"<render_engine>{render_engine}</render_engine>"' in launcher
+    assert 'server_headless_rendering="false"' in launcher
+    assert 'headless_rendering:="${server_headless_rendering}"' in launcher
+    assert '[ValidateSet("ogre2", "ogre")]' in wrapper
+    assert '[string]$SimulationRenderEngine = "ogre2"' in wrapper
+    stage4v = (
+        ROOT / "starter_ws/src/sanitation_bringup/launch/stage4v_localization.launch.py"
+    ).read_text(encoding="utf-8")
+    assert "DeclareLaunchArgument('headless_rendering', default_value='true')" in stage4v
+    assert "'headless_rendering': LaunchConfiguration('headless_rendering')" in stage4v
+
+
 def test_readiness_bypasses_stale_ros_daemon():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
     readiness = (ROOT / "scripts" / "ros_runtime_readiness.py").read_text(

@@ -24,6 +24,8 @@ RANDOM_SEED=0
 GAZEBO_GUI_RENDERER="auto"
 SIMULATION_SPEED="fast"
 COVERAGE_PROFILE="optimized"
+DYNAMIC_OBSTACLE_TRIALS=0
+SIMULATION_RENDER_ENGINE="ogre2"
 
 usage() {
   cat <<'EOF'
@@ -47,6 +49,10 @@ Options:
                         (3x / 0.90 m/s; default: fast)
   --coverage-profile PROFILE
                         optimized (skid-steer RTR) or legacy (Dubins baseline)
+  --dynamic-obstacle-trials N
+                        Run N physical SetEntityPose interactions (formal: 20)
+  --simulation-render-engine ENGINE
+                        ogre2 (default) or ogre (headless software fallback)
   --manual-control      Wait for the native Gazebo Start button
   --competition-profile Use the 20,000 m2 map and AUTO-12 vehicle candidate;
                         execute one representative live zone
@@ -85,6 +91,8 @@ while [[ $# -gt 0 ]]; do
     --gazebo-gui-renderer) GAZEBO_GUI_RENDERER="$2"; shift 2 ;;
     --simulation-speed) SIMULATION_SPEED="$2"; shift 2 ;;
     --coverage-profile) COVERAGE_PROFILE="$2"; shift 2 ;;
+    --dynamic-obstacle-trials) DYNAMIC_OBSTACLE_TRIALS="$2"; shift 2 ;;
+    --simulation-render-engine) SIMULATION_RENDER_ENGINE="$2"; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
   esac
@@ -95,9 +103,15 @@ case "${MAP_SIZE}" in small|medium|large) ;; *) echo "--map-size must be small, 
 case "${GAZEBO_GUI_RENDERER}" in auto|d3d12|software) ;; *) echo "--gazebo-gui-renderer must be auto, d3d12, or software" >&2; exit 2 ;; esac
 case "${SIMULATION_SPEED}" in normal|fast|turbo) ;; *) echo "--simulation-speed must be normal, fast, or turbo" >&2; exit 2 ;; esac
 case "${COVERAGE_PROFILE}" in optimized|legacy) ;; *) echo "--coverage-profile must be optimized or legacy" >&2; exit 2 ;; esac
+case "${SIMULATION_RENDER_ENGINE}" in ogre2|ogre) ;; *) echo "--simulation-render-engine must be ogre2 or ogre" >&2; exit 2 ;; esac
 if [[ "${MAP_SIZE}" == "small" ]]; then SHOWCASE=1; EXPECTED_COMPONENTS=17; fi
 [[ "${DASHBOARD_PORT}" =~ ^[0-9]+$ ]] || { echo "dashboard port must be numeric" >&2; exit 2; }
 [[ "${MISSION_TIMEOUT_SEC}" =~ ^[0-9]+$ ]] || { echo "timeout must be numeric" >&2; exit 2; }
+[[ "${DYNAMIC_OBSTACLE_TRIALS}" =~ ^[0-9]+$ ]] || { echo "dynamic obstacle trials must be numeric" >&2; exit 2; }
+if [[ "${DYNAMIC_OBSTACLE_TRIALS}" -gt 0 && "${MAP_SIZE}" != "small" ]]; then
+  echo "dynamic obstacle trials are currently defined only for the independent small field" >&2
+  exit 2
+fi
 
 if [[ -z "${OUTPUT_DIR}" ]]; then
   OUTPUT_DIR="${ROOT}/artifacts/auto17_visual_demo_$(date -u +%Y%m%dT%H%M%SZ)"
@@ -366,11 +380,11 @@ if [[ "${MANUAL_CONTROL}" -eq 1 ]]; then
   gui_config="${manual_gui_config}"
 fi
 runtime_world="${runtime}/${world_name}_${SIMULATION_SPEED}.sdf"
-python3 - "${world_file}" "${runtime_world}" "${simulation_rtf}" <<'PY'
+python3 - "${world_file}" "${runtime_world}" "${simulation_rtf}" "${SIMULATION_RENDER_ENGINE}" <<'PY'
 from pathlib import Path
 import re
 import sys
-source, output, factor = sys.argv[1:]
+source, output, factor, render_engine = sys.argv[1:]
 text = Path(source).read_text(encoding="utf-8")
 text, count = re.subn(
     r"<real_time_factor>[^<]+</real_time_factor>",
@@ -380,10 +394,22 @@ text, count = re.subn(
 )
 if count != 1:
     raise SystemExit("world does not define exactly one real_time_factor")
+text, render_count = re.subn(
+    r"<render_engine>[^<]+</render_engine>",
+    f"<render_engine>{render_engine}</render_engine>",
+    text,
+    count=1,
+)
+if render_count != 1:
+    raise SystemExit("world does not define exactly one sensor render_engine")
 Path(output).write_text(text, encoding="utf-8")
 PY
 world_file="${runtime_world}"
 rviz_config="${hmi_share}/rviz/visual_demo.rviz"
+server_headless_rendering="true"
+if [[ "${SIMULATION_RENDER_ENGINE}" == "ogre" ]]; then
+  server_headless_rendering="false"
+fi
 
 if python3 - "${DASHBOARD_PORT}" <<'PY'
 import socket
@@ -461,6 +487,7 @@ done
 
 setsid ros2 launch sanitation_bringup stage4v_localization.launch.py \
   gui:=false random_seed:="${RANDOM_SEED}" gnss_profile:=rtk_fixed \
+  headless_rendering:="${server_headless_rendering}" \
   world_file:="${world_file}" world_name:="${world_name}" \
   gui_config:="${gui_config}" \
   map_file:="${map_file}" spawn_x:="${spawn_x}" spawn_y:="${spawn_y}" \
@@ -747,6 +774,27 @@ then
   exit 4
 fi
 
+dynamic_probe_pid=""
+dynamic_probe_code=0
+if [[ "${DYNAMIC_OBSTACLE_TRIALS}" -gt 0 ]]; then
+  dynamic_probe_executable="$(ros2 pkg prefix sanitation_tasks)/lib/sanitation_tasks/sanitation_dynamic_obstacle_probe"
+  if [[ ! -x "${dynamic_probe_executable}" ]]; then
+    echo "Dynamic obstacle probe executable is missing: ${dynamic_probe_executable}" >&2
+    exit 4
+  fi
+  setsid --wait timeout "${MISSION_TIMEOUT_SEC}" \
+    "${dynamic_probe_executable}" --ros-args \
+    -p use_sim_time:=true \
+    -p output_path:="${OUTPUT_DIR}/dynamic_obstacle_report.json" \
+    -p trial_count:="${DYNAMIC_OBSTACLE_TRIALS}" \
+    -p world_name:="${world_name}" \
+    -p model_name:="dynamic_pedestrian_box" \
+    -p world_to_map_x:="${world_to_map_x}" \
+    > "${OUTPUT_DIR}/dynamic_obstacle_probe.log" 2>&1 &
+  dynamic_probe_pid="$!"
+  pids+=("${dynamic_probe_pid}")
+fi
+
 set +e
 coverage_executable="$(ros2 pkg prefix sanitation_coverage)/lib/sanitation_coverage/coverage_probe"
 if [[ ! -x "${coverage_executable}" ]]; then
@@ -795,6 +843,12 @@ else
   coverage_code=$?
 fi
 printf '%s\n' "${coverage_code}" > "${OUTPUT_DIR}/coverage_process_exit_code.txt"
+if [[ -n "${dynamic_probe_pid}" ]]; then
+  wait "${dynamic_probe_pid}"
+  dynamic_probe_code=$?
+  printf '%s\n' "${dynamic_probe_code}" \
+    > "${OUTPUT_DIR}/dynamic_obstacle_process_exit_code.txt"
+fi
 set -e
 
 if [[ "${gui_closed_during_mission}" -eq 1 ]]; then
@@ -871,3 +925,7 @@ summary_args=(
 [[ "${GUI}" -eq 0 || "${MANUAL_CONTROL}" -eq 1 ]] && summary_args+=(--camera-follow-not-required)
 [[ "${GUI}" -eq 1 && "${GAZEBO_TRAIL}" -eq 1 ]] && summary_args+=(--targets-required)
 python3 "${ROOT}/scripts/visual_demo_summary.py" "${summary_args[@]}"
+if [[ "${DYNAMIC_OBSTACLE_TRIALS}" -gt 0 && "${dynamic_probe_code}" -ne 0 ]]; then
+  echo "Dynamic obstacle matrix failed with exit code ${dynamic_probe_code}." >&2
+  exit 8
+fi

@@ -15,6 +15,10 @@ param(
     [string]$SimulationSpeed = "fast",
     [ValidateSet("optimized", "legacy")]
     [string]$CoverageProfile = "optimized",
+    [ValidateRange(0, 1000)]
+    [int]$DynamicObstacleTrials = 0,
+    [ValidateSet("ogre2", "ogre")]
+    [string]$SimulationRenderEngine = "ogre2",
     [switch]$SkipBuild,
     [switch]$NoGui,
     [switch]$NoRviz,
@@ -100,6 +104,8 @@ $arguments = @(
     "--gazebo-gui-renderer", $GazeboGuiRenderer,
     "--simulation-speed", $SimulationSpeed,
     "--coverage-profile", $CoverageProfile,
+    "--dynamic-obstacle-trials", "$DynamicObstacleTrials",
+    "--simulation-render-engine", $SimulationRenderEngine,
     "--map-size", $MapSize
 )
 if ($Workspace) {

@@ -15,6 +15,10 @@ param(
     [string]$SimulationSpeed = "fast",
     [ValidateSet("optimized", "legacy")]
     [string]$CoverageProfile = "optimized",
+    [ValidateRange(0, 1000)]
+    [int]$DynamicObstacleTrials = 0,
+    [ValidateSet("ogre2", "ogre")]
+    [string]$SimulationRenderEngine = "ogre2",
     [switch]$CloseOnComplete
 )
 
@@ -31,6 +35,8 @@ $launchParameters = @{
     ManualControl = $true
     SimulationSpeed = $SimulationSpeed
     CoverageProfile = $CoverageProfile
+    DynamicObstacleTrials = $DynamicObstacleTrials
+    SimulationRenderEngine = $SimulationRenderEngine
 }
 if ($FullArea) { $launchParameters["MapSize"] = "medium" }
 if ($Workspace) { $launchParameters["Workspace"] = $Workspace }
