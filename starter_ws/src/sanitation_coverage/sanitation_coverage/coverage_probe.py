@@ -6,7 +6,7 @@ from pathlib import Path
 
 from action_msgs.msg import GoalStatus
 from ament_index_python.packages import get_package_share_directory
-from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
+from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped, Twist
 from lifecycle_msgs.srv import GetState
 from nav2_msgs.action import ComputePathToPose, FollowPath, NavigateToPose
 from nav_msgs.msg import OccupancyGrid, Odometry, Path as NavPath
@@ -37,6 +37,10 @@ from sanitation_coverage.coverage_plan import CoveragePlan
 from sanitation_coverage.oriented_swath_router import route_oriented_swaths
 from sanitation_coverage.residual_region_planner import plan_residual_regions
 from sanitation_coverage.skid_steer_connector import plan_skid_steer_connector
+from sanitation_coverage.skid_steer_rotation import (
+    bounded_angular_command,
+    normalized_yaw_error,
+)
 from sanitation_coverage.swath_optimizer import optimize_swath_angle
 from sanitation_coverage.mission_geometry import (
     compile_mission_geometry,
@@ -104,6 +108,7 @@ class CoverageProbe(Node):
         self.declare_parameter("trajectory_output_path", "coverage_trajectory.csv")
         self.declare_parameter("component_retry_limit", 1)
         self.declare_parameter("minimum_component_timeout_sec", 45.0)
+        self.declare_parameter("rotation_timeout_sec", 45.0)
         self.declare_parameter("manual_start", False)
         self.coverage_client = ActionClient(self, ComputeCoveragePath, "/compute_coverage_path")
         self.follow_client = ActionClient(self, FollowPath, "/follow_path")
@@ -116,6 +121,11 @@ class CoverageProbe(Node):
         plan_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
         self.controller_state_client = self.create_client(GetState, "/controller_server/get_state")
         self.brush_publisher = self.create_publisher(Bool, "/brush_enabled", 10)
+        # This input still traverses Nav2 velocity smoothing, collision
+        # monitoring and the fail-closed velocity gate before reaching Gazebo.
+        self.rotation_command_publisher = self.create_publisher(
+            Twist, "/cmd_vel_nav", 10
+        )
         self.state_publisher = self.create_publisher(String, "/coverage/state", 10)
         self.evaluation_sample_publisher = self.create_publisher(
             String, "/coverage/evaluation_sample", 20
@@ -1079,7 +1089,7 @@ class CoverageProbe(Node):
             target_yaw = float(component.get("metadata", {}).get(
                 "target_yaw_rad", self.estimated_pose[2] if self.estimated_pose else 0.0
             ))
-            result = self._navigate_to({"x": anchor[0], "y": anchor[1], "yaw": target_yaw})
+            result = self._rotate_to_yaw(anchor, target_yaw)
             result.update({
                 "kind": component["kind"], "index": component["index"],
                 "component_id": component.get("component_id"),
@@ -1089,6 +1099,89 @@ class CoverageProbe(Node):
         result = self._follow_component(component)
         result["component_id"] = component.get("component_id")
         return result
+
+    def _publish_rotation_command(self, angular_z):
+        command = Twist()
+        command.angular.z = float(angular_z)
+        self.rotation_command_publisher.publish(command)
+
+    def _rotate_to_yaw(self, anchor, target_yaw):
+        """Rotate on estimated yaw without asking NavigateToPose to re-plan."""
+        self._set_brush(False)
+        started = time.monotonic()
+        timeout = float(self.get_parameter("rotation_timeout_sec").value)
+        settled_samples = 0
+        pause_count = 0
+        feedback = []
+        last_feedback = 0.0
+        while rclpy.ok() and time.monotonic() - started < timeout:
+            rclpy.spin_once(self, timeout_sec=0.02)
+            if self.stop_requested:
+                self._publish_rotation_command(0.0)
+                return {
+                    "success": False, "stopped_by_operator": True,
+                    "retries": 0, "pause_count": pause_count,
+                    "attempts": [], "controller": "estimated_yaw_skid_steer",
+                }
+            if self.pause_requested:
+                self._publish_rotation_command(0.0)
+                pause_count += 1
+                self.pause_requested = False
+                self._set_state("PAUSED", {
+                    "action_kind": "skid_steer_rotate", "pause_count": pause_count,
+                    "brush_disabled": True,
+                })
+                while rclpy.ok() and not self.resume_requested and not self.stop_requested:
+                    self._publish_rotation_command(0.0)
+                    rclpy.spin_once(self, timeout_sec=0.1)
+                if self.stop_requested:
+                    continue
+                self.resume_requested = False
+                self._set_state(self.state_before_pause, {
+                    "action_kind": "skid_steer_rotate", "resumed": True,
+                })
+                started = time.monotonic()
+            if self.estimated_pose is None:
+                continue
+            error = normalized_yaw_error(target_yaw, self.estimated_pose[2])
+            angular = bounded_angular_command(error)
+            self._publish_rotation_command(angular)
+            settled_samples = settled_samples + 1 if angular == 0.0 else 0
+            now = time.monotonic()
+            if now - last_feedback >= 0.5:
+                feedback.append({
+                    "yaw_error_rad": error,
+                    "angular_command_rad_s": angular,
+                })
+                last_feedback = now
+            if settled_samples >= 5:
+                self._publish_rotation_command(0.0)
+                goal_pose = {"x": anchor[0], "y": anchor[1], "yaw": target_yaw}
+                return {
+                    "success": True, "retries": 0, "pause_count": pause_count,
+                    "attempts": [{
+                        "attempt": 1, "accepted": True, "terminal_status": 4,
+                        "error_code": 0, "error_name": "NONE", "error_msg": "",
+                        "succeeded": True, "feedback": feedback,
+                        "terminal_estimated_pose": list(self.estimated_pose),
+                        "action_kind": "estimated_yaw_skid_steer",
+                    }],
+                    "goal_pose": goal_pose,
+                    "controller": "estimated_yaw_skid_steer_v1",
+                    "progress_checker": "five_consecutive_samples_within_0.06_rad",
+                    "terminal_tracking_error": self._tracking_error(goal_pose),
+                }
+            time.sleep(0.02)
+        self._publish_rotation_command(0.0)
+        return {
+            "success": False, "retries": 0, "pause_count": pause_count,
+            "attempts": [{
+                "attempt": 1, "accepted": True, "timeout": True,
+                "feedback": feedback, "action_kind": "estimated_yaw_skid_steer",
+            }],
+            "error": "rotation_timeout",
+            "controller": "estimated_yaw_skid_steer_v1",
+        }
 
     def _run_action(self, client, goal, brush, timeout, action_kind):
         retry_limit = int(self.get_parameter("component_retry_limit").value)
