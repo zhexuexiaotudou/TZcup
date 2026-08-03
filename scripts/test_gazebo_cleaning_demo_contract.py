@@ -101,6 +101,17 @@ def test_gazebo_only_launcher_contract() -> None:
     assert "Start-Process" not in dedicated_launcher
 
 
+def test_small_demo_default_camera_is_close_enough_for_target_counting() -> None:
+    small_config = read(
+        "starter_ws/src/sanitation_gazebo_control/config/mission_control_small.config"
+    )
+    demo_config = read(
+        "starter_ws/src/sanitation_gazebo_control/config/mission_control_demo.config"
+    )
+    assert "<camera_pose>-12 -9 10 0 0.65 0.78</camera_pose>" in small_config
+    assert "<camera_pose>-13.5 -8.5 10.5 0 0.72 0.68</camera_pose>" in demo_config
+
+
 def test_operator_docs_name_the_gazebo_only_entry() -> None:
     command = "scripts\\run_gazebo_cleaning_demo.ps1"
     assert command in read("README.md")
@@ -154,10 +165,13 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     paper = world.find("./model[@name='target_paper_demo']")
     cardboard = world.find("./model[@name='target_cardboard_demo']")
     leaves = world.find("./model[@name='target_leaf_pile_demo']")
+    paper_02 = world.find("./model[@name='target_paper_demo_02']")
+    leaves_02 = world.find("./model[@name='target_leaf_pile_demo_02']")
     puddle = world.find("./model[@name='puddle_demo']")
     assert bottle is not None and can is not None
     assert paper is not None and cardboard is not None
-    assert leaves is not None and puddle is not None
+    assert leaves is not None and leaves_02 is not None and puddle is not None
+    assert paper_02 is not None
     assert bottle.findtext(
         "./link/visual[@name='body']/geometry/cylinder/radius"
     ) == "0.033"
@@ -184,6 +198,8 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     assert paper_outline.findtext("height") == "0.004"
     assert len(paper_outline.findall("point")) == 9
     assert paper.find("./link/visual[@name='folded_corner']") is not None
+    assert paper.find("./link/visual[@name='sheet_shadow']") is not None
+    assert paper_02.find("./link/visual[@name='sheet_shadow']") is not None
     assert cardboard.findtext(
         "./link/visual[@name='carton_body']/geometry/box/size"
     ) == "0.205 0.145 0.052"
@@ -191,12 +207,20 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     assert cardboard.find("./link/visual[@name='right_flap']") is not None
     assert cardboard.find("./link/visual[@name='packing_tape']") is not None
 
-    leaf_blades = leaves.findall("./link/visual/geometry/polyline")
-    assert len(leaf_blades) == 4
+    leaf_blades = [
+        visual.find("geometry/polyline")
+        for visual in leaves.findall("./link/visual")
+        if visual.get("name", "").startswith("leaf_")
+    ]
+    assert len(leaf_blades) == 6
+    assert all(blade is not None for blade in leaf_blades)
     assert all(len(blade.findall("point")) == 8 for blade in leaf_blades)
     assert len(leaves.findall("./link/visual[@name='vein_a']")) == 1
     assert leaves.find("./link/visual[@name='stem_a']") is not None
+    assert leaves.find("./link/visual[@name='pile_shadow']") is not None
+    assert leaves_02.find("./link/visual[@name='pile_shadow']") is not None
     assert not leaves.findall(".//sphere")
+    assert not leaves_02.findall(".//sphere")
 
     water_patch = puddle.find(
         "./link/visual[@name='water_patch']/geometry/polyline"
@@ -246,6 +270,21 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
         min(boundary_y) < target["position"][1] < max(boundary_y)
         for target in targets
     )
+    positions = {
+        target["id"]: tuple(float(value) for value in target["position"])
+        for target in targets
+    }
+    assert all(
+        (x * x + y * y) ** 0.5 >= 1.35
+        for x, y in positions.values()
+    ), "demo targets must remain visibly separated from the vehicle start pose"
+    position_items = list(positions.items())
+    assert all(
+        ((left[0] - right[0]) ** 2 + (left[1] - right[1]) ** 2) ** 0.5
+        >= 0.60
+        for index, (_, left) in enumerate(position_items)
+        for _, right in position_items[index + 1:]
+    ), "demo targets must not visually overlap each other"
 
     translation = mission["world_to_map_translation"]
     for model_name in target_model_names:
@@ -263,8 +302,12 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     shell = read("scripts/run_visual_demo.sh")
     assert 'world_name="sanitation_competition_demo"' in shell
     assert 'mission_control_demo.config' in shell
-    assert 'EXPECTED_COMPONENTS=13' in shell
+    assert 'EXPECTED_COMPONENTS=17' in shell
     assert 'coverage_demo_overlap.yaml' in shell
+    assert 'max_linear_velocity="0.70"; max_angular_velocity="0.60"' in shell
+    assert 'max_linear_velocity="0.90"; max_angular_velocity="0.75"' in shell
+    assert 'smoother["max_velocity"] = [linear_velocity, 0.0, angular_velocity]' in shell
+    assert 'smoother["min_velocity"] = [-min(linear_velocity, 0.15), 0.0, -angular_velocity]' in shell
 
 
 def test_small_demo_uses_overlap_and_strict_actual_coverage_gate() -> None:
@@ -279,12 +322,12 @@ def test_small_demo_uses_overlap_and_strict_actual_coverage_gate() -> None:
         "sanitation_coverage/coverage_probe.py"
     )
     assert "operation_width_m: 0.65" in mission
-    assert "planning_swath_spacing_m: 0.45" in mission
+    assert "planning_swath_spacing_m: 0.35" in mission
     assert "swath_endpoint_extension_m: 0.20" in mission
     assert "empirical_coverage_threshold: 0.995" in mission
     assert "coverage_repair_max_passes: 2" in mission
-    assert "expected_components: 13" in mission
-    assert "operation_width: 0.45" in coverage
+    assert "expected_components: 17" in mission
+    assert "operation_width: 0.35" in coverage
     assert 'empirical["coverage_rate"] >= empirical_threshold' in probe
     assert "execution_swaths" in probe
     assert "_execute_coverage_repairs" in probe

@@ -3,7 +3,7 @@ mission_id: competition_demo_coverage_001
 mode: coverage
 robot_width_m: 0.72
 operation_width_m: 0.65
-planning_swath_spacing_m: 0.45
+planning_swath_spacing_m: 0.35
 swath_endpoint_extension_m: 0.20
 empirical_coverage_threshold: 0.995
 coverage_repair_max_passes: 2
@@ -12,7 +12,7 @@ min_turning_radius_m: 0.40
 route_type: BOUSTROPHEDON
 path_type: DUBIN
 allow_overlap: true
-expected_components: 13
+expected_components: 17
 outer_polygon:
   - [-3.0, -4.0]
   - [3.0, -4.0]
@@ -22,16 +22,16 @@ exclusion_polygons: []
 keepout_polygons: []
 static_obstacles: []
 cleaning_targets:
-  - {id: bottle_01, class: bottle, model_name: target_bottle_demo, position: [-1.6, -2.675], collection_radius_m: 0.55}
-  - {id: bottle_02, class: bottle, model_name: target_bottle_demo_02, position: [1.7, -2.75], collection_radius_m: 0.55}
-  - {id: can_01, class: can, model_name: target_can_demo, position: [0.0, -2.025], collection_radius_m: 0.55}
-  - {id: can_02, class: can, model_name: target_can_demo_02, position: [-0.6, -2.55], collection_radius_m: 0.55}
-  - {id: paper_01, class: paper, model_name: target_paper_demo, position: [1.5, -1.375], collection_radius_m: 0.55}
-  - {id: paper_02, class: paper, model_name: target_paper_demo_02, position: [-1.7, -1.75], collection_radius_m: 0.55}
-  - {id: cardboard_01, class: cardboard, model_name: target_cardboard_demo, position: [-1.0, -0.725], collection_radius_m: 0.60}
-  - {id: cardboard_02, class: cardboard, model_name: target_cardboard_demo_02, position: [1.75, -0.95], collection_radius_m: 0.60}
-  - {id: leaf_pile_01, class: leaves, model_name: target_leaf_pile_demo, position: [1.0, -0.075], collection_radius_m: 0.65}
-  - {id: leaf_pile_02, class: leaves, model_name: target_leaf_pile_demo_02, position: [-1.7, -0.25], collection_radius_m: 0.65}
+  - {id: bottle_01, class: bottle, model_name: target_bottle_demo, position: [-1.70, -2.55], collection_radius_m: 0.55}
+  - {id: bottle_02, class: bottle, model_name: target_bottle_demo_02, position: [1.55, -2.72], collection_radius_m: 0.55}
+  - {id: can_01, class: can, model_name: target_can_demo, position: [-1.45, -1.82], collection_radius_m: 0.55}
+  - {id: can_02, class: can, model_name: target_can_demo_02, position: [1.68, -2.02], collection_radius_m: 0.55}
+  - {id: paper_01, class: paper, model_name: target_paper_demo, position: [-1.72, -1.12], collection_radius_m: 0.55}
+  - {id: paper_02, class: paper, model_name: target_paper_demo_02, position: [1.48, -1.32], collection_radius_m: 0.55}
+  - {id: cardboard_01, class: cardboard, model_name: target_cardboard_demo, position: [-1.45, -0.42], collection_radius_m: 0.60}
+  - {id: cardboard_02, class: cardboard, model_name: target_cardboard_demo_02, position: [1.72, -0.62], collection_radius_m: 0.60}
+  - {id: leaf_pile_01, class: leaves, model_name: target_leaf_pile_demo, position: [-0.85, -2.92], collection_radius_m: 0.65}
+  - {id: leaf_pile_02, class: leaves, model_name: target_leaf_pile_demo_02, position: [0.85, -2.88], collection_radius_m: 0.65}
 world_to_map_translation: [8.0, 0.0]
 headland:
   enabled: true
