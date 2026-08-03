@@ -47,6 +47,10 @@ Stage4V scan map, it explicitly selects the RTK + wheel/IMU lane. Medium and
 large mapped scenes retain hybrid scan fallback. The final Coverage success
 gate includes per-seed localization RMSE, so a path-only pass cannot mask a
 localization regression.
+The simulated `rtk_fixed` capability contract retains 0.02 m white noise and
+0.005 m fixed-bias sigma, with long-term random walk calibrated to
+0.001 m/sqrt(s). Float, multipath and denied profiles retain their stronger
+degradation. A real receiver must replace this assumption with field logs.
 
 ## ROS interfaces
 

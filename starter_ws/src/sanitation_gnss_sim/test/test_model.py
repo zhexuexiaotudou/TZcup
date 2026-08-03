@@ -9,6 +9,8 @@ from sanitation_gnss_sim.model import (
 
 
 def test_fixed_profile_is_deterministic_and_within_expected_noise():
+    assert PROFILES["rtk_fixed"].random_walk_standard_deviation_m_sqrt_s == 0.001
+    assert PROFILES["rtk_float"].random_walk_standard_deviation_m_sqrt_s == 0.002
     first = GnssNoiseModel(PROFILES["rtk_fixed"], seed=23)
     second = GnssNoiseModel(PROFILES["rtk_fixed"], seed=23)
     first_samples = [first.sample(2.0, -1.0, 0.1) for _ in range(1000)]

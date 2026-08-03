@@ -21,7 +21,11 @@ class GnssProfile:
 
 
 PROFILES = {
-    "rtk_fixed": GnssProfile("rtk_fixed", True, 10.0, 0.02, 0.10, 0.0, 0.0, 0.0),
+    "rtk_fixed": GnssProfile(
+        "rtk_fixed", True, 10.0, 0.02, 0.10, 0.0, 0.0, 0.0,
+        fixed_bias_standard_deviation_m=0.005,
+        random_walk_standard_deviation_m_sqrt_s=0.001,
+    ),
     "rtk_float": GnssProfile("rtk_float", True, 10.0, 0.12, 0.10, 0.0, 0.0, 0.0),
     "gnss_denied": GnssProfile("gnss_denied", False, 10.0, 0.0, 0.10, 1.0, 0.0, 0.0),
     "multipath": GnssProfile("multipath", True, 10.0, 0.02, 0.10, 0.0, 0.01, 0.50),
