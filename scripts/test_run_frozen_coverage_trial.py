@@ -14,3 +14,7 @@ def test_frozen_trial_is_isolated_and_uses_the_real_small_mission():
     assert '"--no-gui"' in runner
     assert '"--timeout", "300"' in runner
     assert "coverage_optimizer_$Tag" in runner
+    assert 'Start-Process -FilePath "wsl.exe"' in runner
+    assert "-RedirectStandardError $launcherErrorLog" in runner
+    assert "-Wait -PassThru" in runner
+    assert "exit $process.ExitCode" in runner

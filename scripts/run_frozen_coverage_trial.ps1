@@ -20,6 +20,7 @@ $wslRoot = "/mnt/$drive/$tail"
 $outputDirectory = Join-Path $repoRoot "artifacts\coverage_optimizer_$Tag"
 [System.IO.Directory]::CreateDirectory($outputDirectory) | Out-Null
 $launcherLog = Join-Path $repoRoot "artifacts\coverage_optimizer_${Tag}_launcher.log"
+$launcherErrorLog = Join-Path $repoRoot "artifacts\coverage_optimizer_${Tag}_launcher.err.log"
 $partition = "tzcup_cov_$Tag"
 
 $arguments = @(
@@ -37,5 +38,8 @@ $arguments = @(
     "--map-size", "small", "--timeout", "300", "--seed", "$Seed"
 )
 
-& wsl.exe @arguments *> $launcherLog
-exit $LASTEXITCODE
+$process = Start-Process -FilePath "wsl.exe" -ArgumentList $arguments `
+    -RedirectStandardOutput $launcherLog `
+    -RedirectStandardError $launcherErrorLog `
+    -NoNewWindow -Wait -PassThru
+exit $process.ExitCode
