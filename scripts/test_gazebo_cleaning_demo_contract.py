@@ -291,10 +291,24 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     position_items = list(positions.items())
     assert all(
         ((left[0] - right[0]) ** 2 + (left[1] - right[1]) ** 2) ** 0.5
-        >= 0.60
+        >= 0.70
         for index, (_, left) in enumerate(position_items)
         for _, right in position_items[index + 1:]
     ), "demo targets must not visually overlap each other"
+    assert len({round(x, 2) for x, _ in positions.values()}) >= 8
+    assert len({round(y, 2) for _, y in positions.values()}) >= 8
+    quadrant_counts = {
+        (horizontal, vertical): 0
+        for horizontal in ("west", "east")
+        for vertical in ("south", "north")
+    }
+    for x, y in positions.values():
+        quadrant = (
+            "west" if x < 0.0 else "east",
+            "south" if y < -1.5 else "north",
+        )
+        quadrant_counts[quadrant] += 1
+    assert all(count >= 2 for count in quadrant_counts.values())
 
     translation = mission["world_to_map_translation"]
     for model_name in target_model_names:
