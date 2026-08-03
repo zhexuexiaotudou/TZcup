@@ -52,6 +52,7 @@ from sanitation_coverage.mission_geometry import (
     target_grid_viable,
 )
 from sanitation_coverage.route_entry import (
+    apply_lateral_affine,
     brush_center_to_base_swath,
     entry_points,
     route_candidates,
@@ -395,13 +396,24 @@ class CoverageProbe(Node):
             swaths = list(routed.swaths)
         if optimized_profile:
             brush_offset = float(config.get("brush_forward_offset_m", 0.55))
+            calibration_scale = float(config.get("execution_lateral_scale", 1.0))
+            calibration_offset = float(config.get("execution_lateral_offset_m", 0.0))
+            calibrated_swaths = apply_lateral_affine(
+                swaths,
+                angle_selection.angle_deg if angle_selection else 0.0,
+                calibration_scale,
+                calibration_offset,
+            )
             execution_swaths = [
                 brush_center_to_base_swath(
                     start, end, brush_offset, endpoint_extension
                 )
-                for start, end in swaths
+                for start, end in calibrated_swaths
             ]
         else:
+            calibration_scale = 1.0
+            calibration_offset = 0.0
+            calibrated_swaths = swaths
             execution_swaths = [
                 self._extend_swath(start, end, endpoint_extension)
                 for start, end in swaths
@@ -444,6 +456,9 @@ class CoverageProbe(Node):
                     "legacy_dubins_turns_discarded": len(turns),
                     "selected_swath_angle_deg": angle_selection.angle_deg if angle_selection else None,
                     "selected_angle_score": angle_selection.score if angle_selection else None,
+                    "execution_lateral_scale": calibration_scale,
+                    "execution_lateral_offset_m": calibration_offset,
+                    "execution_calibration_source": config.get("execution_calibration_source"),
                 },
             )
         else:
@@ -478,6 +493,7 @@ class CoverageProbe(Node):
             "swath_endpoint_extension_m": endpoint_extension,
             "route_type": str(config["route_type"]), "path_type": str(config["path_type"]),
             "nav_path": nav_points, "swaths": swaths, "execution_swaths": execution_swaths,
+            "calibrated_brush_swaths": calibrated_swaths,
             "raw_swaths": raw_swaths,
             "turns": turns,
             "component_count": len(components),
@@ -639,6 +655,9 @@ class CoverageProbe(Node):
             "success": bool(complete and coverage_quality_pass and safety_pass and not self.brush_enabled),
             "operation_width_m": width,
             "planning_swath_spacing_m": planning_spacing,
+            "execution_lateral_scale": calibration_scale,
+            "execution_lateral_offset_m": calibration_offset,
+            "execution_calibration_source": config.get("execution_calibration_source"),
             "coverage_planner_profile": str(config.get("coverage_planner_profile", "LEGACY_DUBINS")),
             "swath_overlap_m": width - planning_spacing,
             "swath_endpoint_extension_m": endpoint_extension,

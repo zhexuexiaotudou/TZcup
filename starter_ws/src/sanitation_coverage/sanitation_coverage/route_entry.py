@@ -1,6 +1,24 @@
 import math
 
 
+def apply_lateral_affine(swaths, angle_deg, scale=1.0, offset_m=0.0):
+    """Apply an offline map-normal calibration to desired brush swaths."""
+    angle = math.radians(float(angle_deg))
+    normal = (-math.sin(angle), math.cos(angle))
+    calibrated = []
+    for start, end in swaths:
+        points = []
+        for point in (start, end):
+            projection = point[0] * normal[0] + point[1] * normal[1]
+            correction = float(scale) * projection + float(offset_m) - projection
+            points.append((
+                point[0] + correction * normal[0],
+                point[1] + correction * normal[1],
+            ))
+        calibrated.append(tuple(points))
+    return calibrated
+
+
 def segment_heading(start, end):
     if start == end:
         raise ValueError('a single or degenerate point cannot define heading')
