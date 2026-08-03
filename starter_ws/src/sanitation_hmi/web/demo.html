@@ -266,7 +266,7 @@
       document.querySelector("#progress-value").textContent = `${percent}%`;
       document.querySelector("#component").textContent = progress.current_component
         ? `组件 ${progress.active_component_number}/${progress.expected_components} · ${progress.current_component}`
-        : `等待组件 · 0/${progress.expected_components || 17}`;
+        : `等待组件 · 0/${progress.expected_components || "--"}`;
       document.querySelector("#speed").innerHTML = `${(data.vehicle?.linear_speed_m_s || 0).toFixed(2)} <small>m/s</small>`;
       const pose = data.vehicle?.estimated_pose_map;
       document.querySelector("#pose").innerHTML = pose
