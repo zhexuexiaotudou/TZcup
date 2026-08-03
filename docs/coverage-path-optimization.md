@@ -104,6 +104,8 @@ both success and timeout.
 The pre-mission false emergency-stop availability pulse uses the same
 persistent-node approach and requires both matching safety/HMI subscribers and
 dashboard observation before coverage execution starts.
+The launcher supervises the Coverage process with `setsid --wait`, so a
+context-dependent intermediate fork cannot be mistaken for mission completion.
 For a legacy comparison, invoke `run_visual_demo.sh` after pointing
 `mission_template` and `coverage_params` to the two legacy files listed above.
 

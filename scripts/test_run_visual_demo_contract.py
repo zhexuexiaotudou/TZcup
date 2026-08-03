@@ -137,6 +137,16 @@ def test_wslg_gui_is_health_checked_and_supervised_during_the_mission():
     assert "pgrep -f 'gz sim.*-g'" not in launcher
 
 
+def test_coverage_supervisor_waits_for_the_real_setsid_child():
+    launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
+
+    assert (
+        'setsid --wait timeout "${MISSION_TIMEOUT_SEC}" ros2 run '
+        "sanitation_coverage coverage_probe"
+    ) in launcher
+    assert 'setsid timeout "${MISSION_TIMEOUT_SEC}" ros2 run' not in launcher
+
+
 def test_windows_wrapper_runs_the_wslg_window_guard():
     wrapper = (ROOT / "scripts" / "run_visual_demo.ps1").read_text(encoding="utf-8")
     guard = (ROOT / "scripts" / "wslg_window_guard.ps1").read_text(encoding="utf-8")
