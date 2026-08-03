@@ -7,6 +7,25 @@ def segment_heading(start, end):
     return math.atan2(end[1] - start[1], end[0] - start[0])
 
 
+def brush_center_to_base_swath(start, end, forward_offset_m, extension_m):
+    """Convert a desired brush-center swath to the commanded base path."""
+    length = math.dist(start, end)
+    if length <= 1e-9:
+        return start, end
+    unit_x = (end[0] - start[0]) / length
+    unit_y = (end[1] - start[1]) / length
+    return (
+        (
+            start[0] - (forward_offset_m + extension_m) * unit_x,
+            start[1] - (forward_offset_m + extension_m) * unit_y,
+        ),
+        (
+            end[0] + (extension_m - forward_offset_m) * unit_x,
+            end[1] + (extension_m - forward_offset_m) * unit_y,
+        ),
+    )
+
+
 def oriented_pose(point, heading):
     return {'x': float(point[0]), 'y': float(point[1]), 'yaw': float(heading)}
 

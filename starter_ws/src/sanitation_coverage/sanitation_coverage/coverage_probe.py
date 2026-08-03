@@ -44,6 +44,7 @@ from sanitation_coverage.mission_geometry import (
     target_grid_viable,
 )
 from sanitation_coverage.route_entry import (
+    brush_center_to_base_swath,
     entry_points,
     route_candidates,
     segment_heading,
@@ -375,10 +376,19 @@ class CoverageProbe(Node):
             route_start = self.estimated_pose[:2] if self.estimated_pose else swaths[0][0]
             routed = route_oriented_swaths(swaths, route_start)
             swaths = list(routed.swaths)
-        execution_swaths = [
-            self._extend_swath(start, end, endpoint_extension)
-            for start, end in swaths
-        ]
+        if optimized_profile:
+            brush_offset = float(config.get("brush_forward_offset_m", 0.55))
+            execution_swaths = [
+                brush_center_to_base_swath(
+                    start, end, brush_offset, endpoint_extension
+                )
+                for start, end in swaths
+            ]
+        else:
+            execution_swaths = [
+                self._extend_swath(start, end, endpoint_extension)
+                for start, end in swaths
+            ]
         planned_metrics = raster_coverage_metrics(
             cleanable_polygon, swaths, width, resolution=0.10,
             exclusion_polygons=cleanable_exclusions,
@@ -733,6 +743,7 @@ class CoverageProbe(Node):
             (start[0] - unit_x * extension_m, start[1] - unit_y * extension_m),
             (end[0] + unit_x * extension_m, end[1] + unit_y * extension_m),
         )
+
 
     @staticmethod
     def _swath_exclusion_intersections(swaths, outer, exclusions):

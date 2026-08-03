@@ -80,3 +80,13 @@ def test_repair_degenerate_swaths_uses_turn_boundaries():
         ((0.0, 0.5), (2.0, 0.5)),
         ((2.0, 1.5), (0.0, 1.5)),
     ]
+
+
+def test_brush_center_swath_is_shifted_back_from_base_path():
+    from sanitation_coverage.route_entry import brush_center_to_base_swath
+
+    start, end = brush_center_to_base_swath(
+        (0.0, 0.0), (4.0, 0.0), forward_offset_m=0.55, extension_m=0.20
+    )
+    assert start == (-0.75, 0.0)
+    assert end == (3.65, 0.0)
