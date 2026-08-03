@@ -29,13 +29,23 @@ def run(telemetry_path: Path, output_path: Path, timeout_sec: float) -> int:
     publish_count = 0
     subscription_count = 0
     observed = False
+    last_publish = 0.0
     try:
         while rclpy.ok() and time.monotonic() < deadline:
             rclpy.spin_once(node, timeout_sec=0.1)
             subscription_count = publisher.get_subscription_count()
-            if subscription_count >= 2 and publish_count < 5:
+            now = time.monotonic()
+            # DDS discovery can report a matched reader slightly before that
+            # reader is ready to consume data. Keep sending a bounded false
+            # availability heartbeat until the dashboard confirms receipt.
+            if (
+                subscription_count >= 2
+                and publish_count < 50
+                and now - last_publish >= 0.25
+            ):
                 publisher.publish(Bool(data=False))
                 publish_count += 1
+                last_publish = now
             observed = dashboard_observed(telemetry_path)
             if publish_count >= 5 and observed:
                 break

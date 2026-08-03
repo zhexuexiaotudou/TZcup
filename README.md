@@ -3,7 +3,6 @@
 TZcup 是一个面向智慧环卫无人清扫车的 ROS 2 仿真与自主任务工程。项目以 Ubuntu 24.04、ROS 2 Jazzy、Gazebo Harmonic、Nav2、SLAM Toolbox、OpenNav Coverage 和 Fields2Cover 为基础，覆盖车辆建模、环境仿真、定位导航、全覆盖清扫、垃圾感知、定点清扫、安全控制、调试可视化和验收证据。
 
 地图监督台会分层显示仿真参考、SLAM、感知、规划与实际轨迹；安全状态、回放、操作边界和启动方式见 [`docs/human-visualization.md`](docs/human-visualization.md)。
-
 ## 实时可视化演示
 
 项目现在提供一条 Windows 命令启动的真实 Gazebo 导航与全覆盖演示：Gazebo GUI 跟随清扫车，RViz 以 `base_footprint` 为目标坐标系跟随显示地图、激光、规划路径与代价地图，浏览器看板实时显示任务阶段、融合位姿、速度、17 个覆盖组件、刷盘、急停和车辆轨迹，并自动保存 MCAP、专用看板 MP4 与代表帧；代表帧从录像末尾抽取，用于直接展示完整轨迹和任务终态。演示复用 AUTO-02 冻结的 `autonomous_navigation_profile_v1` 与正式 Coverage 链，不使用预制动画。
@@ -25,6 +24,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleanin
 小场世界预置一个默认停放在场外的非静态行人模型，仅在正式动态矩阵中由 Gazebo `SetEntityPose` 移入当前条带；普通演示不会看到它，也不会把服务调用本身冒充有效避障交互。
 WSLg 日常演示始终默认 Ogre2；只有缺少 EGL 图形上下文的无头 Docker 矩阵才显式使用 `-SimulationRenderEngine ogre`，实际选择会写入保留的运行时 SDF。
 正式 A/B 回归入口为 `bash scripts/run_coverage_optimizer_matrix.sh --output <evidence-dir>`：默认保留 optimized/legacy 各 5 个随机种子，并为 optimized seed 132 记录一套 MCAP 回放源。
+正式原始证据（特别是 MCAP）必须写到仓库外；`scripts/coverage_optimizer_report.py --root <evidence-dir>` 会生成对照报告和逐文件 SHA-256 清单，仓库只接收后续压缩审核摘要。
 
 Gazebo 右侧原生卡片可控制开始、暂停、继续、停止和关闭；按钮通过 Coverage 服务驱动 Nav2，不直接发速度。`-MapSize small|medium|large` 选择独立 16 m × 12 m 演示场、80 m × 50 m 中型验证或严格 200 m × 100 m 比赛大图，详见 [`docs/gazebo-multiscale-control.md`](docs/gazebo-multiscale-control.md)。
 Windows 启动器会准备 WSLg `/mnt/shared_memory`、恢复异常窗口，并在关闭 Gazebo 后立即停止运行链、释放端口和关闭已跟踪的 RemoteApp 窗口句柄，避免残留不可交互会话或无渲染内容的黑色外壳。

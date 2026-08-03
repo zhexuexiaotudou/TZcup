@@ -296,3 +296,13 @@ def test_wslg_shared_memory_preflight_is_idempotent_and_persistent():
     assert 'rdp_allocate_shared_memory: Failed to open' in preflight
     assert 'wslg_restart_required' in preflight
     assert 'exit 10' in preflight
+
+
+def test_emergency_availability_republishes_through_dds_discovery_race():
+    probe = (ROOT / "scripts" / "emergency_stop_availability.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert "publish_count < 50" in probe
+    assert "now - last_publish >= 0.25" in probe
+    assert "publish_count >= 5 and observed" in probe

@@ -119,6 +119,11 @@ Long headless multi-seed acceptance can use
 `scripts/run_frozen_coverage_trial.ps1`; it fixes the ROS domain, assigns a
 per-trial Gazebo partition and always runs the same independent small-field
 mission while retaining a dedicated launcher log and evidence directory.
+The complete A/B entry is `scripts/run_coverage_optimizer_matrix.sh`. Its
+output must be outside the Git worktree because repository hygiene rejects raw
+MCAP/DB3 payloads even when ignored. `scripts/coverage_optimizer_report.py`
+aggregates the retained directories and writes the comparison plus a streaming
+SHA-256 manifest without replacing any raw run.
 
 Controller failures that classify a cleaning swath as blocked now enter an
 explicit state machine. The report retains normalized blocked intervals, first
