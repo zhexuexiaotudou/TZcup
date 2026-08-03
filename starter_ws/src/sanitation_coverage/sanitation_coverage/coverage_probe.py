@@ -37,6 +37,7 @@ from sanitation_coverage.metrics import (
 )
 from sanitation_coverage.coverage_components import ComponentType, CoverageComponent
 from sanitation_coverage.coverage_plan import CoveragePlan
+from sanitation_coverage.blocked_swath_manager import BlockedSwathManager
 from sanitation_coverage.oriented_swath_router import route_oriented_swaths
 from sanitation_coverage.residual_region_planner import plan_residual_regions
 from sanitation_coverage.skid_steer_connector import plan_skid_steer_connector
@@ -181,6 +182,8 @@ class CoverageProbe(Node):
         self.speed_mask = None
         self.collision_events = 0
         self._collision_active = False
+        self.blocked_swath_manager = None
+        self.active_component = None
         self.create_subscription(Odometry, "/ground_truth/odom", self._on_truth, 20)
         self.create_subscription(
             PoseWithCovarianceStamped,
@@ -356,6 +359,12 @@ class CoverageProbe(Node):
 
     def run(self):
         config = yaml.safe_load(Path(self.get_parameter("config_path").value).read_text(encoding="utf-8"))
+        self.blocked_swath_manager = BlockedSwathManager(
+            max_retries=int(config.get("blocked_swath_max_retries", 2)),
+            minimum_retry_delay_sec=float(
+                config.get("blocked_swath_minimum_retry_delay_sec", 10.0)
+            ),
+        )
         geometry = compile_mission_geometry(config)
         polygon = geometry["outer_polygon"]
         exclusions = geometry["exclusion_polygons"]
@@ -558,7 +567,9 @@ class CoverageProbe(Node):
                     "completed_components": len(component_results),
                     "expected_components": len(selected_components),
                 })
+                self.active_component = component
                 component_results.append(self._execute_component(component))
+                self.active_component = None
                 if not component_results[-1]["success"]:
                     if component_results[-1].get("stopped_by_operator"):
                         self._set_state("STOPPED", component_results[-1])
@@ -714,6 +725,10 @@ class CoverageProbe(Node):
             "planned_metrics": planned_metrics,
             "empirical_metrics": empirical,
             "coverage_repair": repair_report,
+            "blocked_swaths": (
+                self.blocked_swath_manager.snapshot()
+                if self.blocked_swath_manager else []
+            ),
             "recovery_count": recovery_count,
             "collision_count": self.collision_events,
             "keepout_violation_sample_count": keepout_violation_samples,
@@ -1483,6 +1498,15 @@ class CoverageProbe(Node):
                 "goal_checker_id": "goal_checker",
             })
             if succeeded:
+                if (
+                    brush and self.blocked_swath_manager
+                    and self.active_component
+                    and self.active_component.get("component_id")
+                    in self.blocked_swath_manager.records
+                ):
+                    self.blocked_swath_manager.report_clear(
+                        self.active_component["component_id"]
+                    )
                 self._set_brush(False if brush else brush)
                 return {
                     "success": True,
@@ -1490,6 +1514,24 @@ class CoverageProbe(Node):
                     "pause_count": pause_count,
                     "attempts": attempts,
                 }
+            if brush and action_kind == "follow_path" and error_code in {104, 105, 106, 107}:
+                retry_state = self._record_blocked_swath(
+                    error_names.get(error_code, f"ERROR_{error_code}")
+                )
+                attempts[-1]["blocked_swath_state"] = retry_state
+                if retry_state == "RETRY_PENDING":
+                    if not self._wait_for_blocked_swath_retry():
+                        self._set_brush(False)
+                        return {
+                            "success": False,
+                            "stopped_by_operator": self.stop_requested,
+                            "retries": attempt,
+                            "pause_count": pause_count,
+                            "attempts": attempts,
+                        }
+                elif retry_state == "DEFERRED":
+                    attempt = retry_limit + 1
+                    continue
             attempt += 1
         self._set_brush(False)
         return {
@@ -1498,6 +1540,57 @@ class CoverageProbe(Node):
             "pause_count": pause_count,
             "attempts": attempts,
         }
+
+    def _record_blocked_swath(self, obstacle_state):
+        if not self.blocked_swath_manager or not self.active_component:
+            return "UNTRACKED"
+        component_id = self.active_component.get("component_id")
+        points = self.active_component.get("points", [])
+        if not component_id or len(points) < 2:
+            return "UNTRACKED"
+        progress = 0.0
+        if self.estimated_pose is not None:
+            nearest = min(
+                range(len(points)),
+                key=lambda index: math.dist(self.estimated_pose[:2], points[index]),
+            )
+            progress = nearest / max(len(points) - 1, 1)
+        state = self.blocked_swath_manager.report_blocked(
+            component_id,
+            (progress, 1.0),
+            obstacle_state=obstacle_state,
+        )
+        self._set_brush(False)
+        self._set_state(state, {
+            "component_id": component_id,
+            "kind": self.active_component.get("kind"),
+            "blocked_interval": [progress, 1.0],
+            "blocked_swaths": self.blocked_swath_manager.snapshot(),
+        })
+        return state
+
+    def _wait_for_blocked_swath_retry(self):
+        component_id = self.active_component.get("component_id")
+        record = self.blocked_swath_manager.records[component_id]
+        while (
+            rclpy.ok()
+            and not self.stop_requested
+            and record.next_retry_time_sec is not None
+            and time.monotonic() < record.next_retry_time_sec
+        ):
+            self._set_brush(False)
+            rclpy.spin_once(self, timeout_sec=0.1)
+        if self.stop_requested:
+            return False
+        activated = self.blocked_swath_manager.activate_retry(component_id)
+        if activated:
+            self._set_state("ACTIVE", {
+                "component_id": component_id,
+                "kind": self.active_component.get("kind"),
+                "blocked_swath_retry": True,
+                "retry_count": record.retry_count,
+            })
+        return activated
 
     @staticmethod
     def _sample_grid(grid, x, y):

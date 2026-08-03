@@ -53,7 +53,19 @@ def test_optimized_profile_has_bounded_repair_and_legacy_fallback():
     assert config["repair_max_primary_length_ratio"] <= 0.10
     assert config["empirical_repeat_rate_threshold"] <= 0.20
     assert config["empirical_swath_lateral_p95_threshold_m"] <= 0.08
+    assert config["blocked_swath_max_retries"] == 2
+    assert config["blocked_swath_minimum_retry_delay_sec"] >= 10.0
     assert config["path_continuity_type"] == "DISCONTINUOUS"
+
+
+def test_coverage_probe_publishes_bounded_blocked_swath_state():
+    probe = (
+        ROOT / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
+    ).read_text(encoding="utf-8")
+    assert "BlockedSwathManager(" in probe
+    assert '"blocked_swaths": self.blocked_swath_manager.snapshot()' in probe
+    assert 'retry_state == "RETRY_PENDING"' in probe
+    assert 'retry_state == "DEFERRED"' in probe
 
 
 def test_fields2cover_spacing_matches_selected_mission_spacing():

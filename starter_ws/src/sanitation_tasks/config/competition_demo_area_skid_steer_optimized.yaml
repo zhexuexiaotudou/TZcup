@@ -15,6 +15,8 @@ empirical_repeat_rate_threshold: 0.20
 empirical_swath_lateral_p95_threshold_m: 0.08
 coverage_repair_max_passes: 1
 repair_max_primary_length_ratio: 0.10
+blocked_swath_max_retries: 2
+blocked_swath_minimum_retry_delay_sec: 10.0
 brush_forward_offset_m: 0.55
 # Offline inverse calibration from seed119 evaluation only. Runtime control
 # continues to use fused localization; Gazebo ground truth is never consumed.

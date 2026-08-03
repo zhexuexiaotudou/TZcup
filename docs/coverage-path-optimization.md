@@ -120,6 +120,14 @@ Long headless multi-seed acceptance can use
 per-trial Gazebo partition and always runs the same independent small-field
 mission while retaining a dedicated launcher log and evidence directory.
 
+Controller failures that classify a cleaning swath as blocked now enter an
+explicit state machine. The report retains normalized blocked intervals, first
+observation time, obstacle state, retry count and terminal reason. A retry is
+brush-off and delayed by at least 10 seconds; two failed retries transition to
+`DEFERRED`, so the controller cannot oscillate forever at one obstacle. This
+mechanism is implemented, but the production recovery claim remains gated on
+20 valid live interactions with at least 95 percent mission resumption.
+
 ## Sim-to-real boundary
 
 The semantic split is designed to map to real controllers, but simulation does
