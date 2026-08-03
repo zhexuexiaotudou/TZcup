@@ -55,12 +55,16 @@ def _region_swaths(region: list[Point], resolution: float, brush_width: float):
     for index, values in enumerate(groups):
         if horizontal:
             y = (min(point[1] for point in values) + max(point[1] for point in values)) / 2.0
-            segment = ((min(p[0] for p in values) - brush_width / 2, y),
-                       (max(p[0] for p in values) + brush_width / 2, y))
+            # These are brush-centre paths. The swept-footprint evaluator and
+            # the physical brush already add the radius around both endpoints;
+            # extending the centreline by another half width would double-count
+            # that envelope and create avoidable repeat coverage.
+            segment = ((min(p[0] for p in values), y),
+                       (max(p[0] for p in values), y))
         else:
             x = (min(point[0] for point in values) + max(point[0] for point in values)) / 2.0
-            segment = ((x, min(p[1] for p in values) - brush_width / 2),
-                       (x, max(p[1] for p in values) + brush_width / 2))
+            segment = ((x, min(p[1] for p in values)),
+                       (x, max(p[1] for p in values)))
         swaths.append(segment if index % 2 == 0 else (segment[1], segment[0]))
     return swaths
 

@@ -136,6 +136,9 @@ and explicitly report that ground truth was not used for control. The length
 gate uses the brush-on path actually sent to `RepairPath`, not merely the
 residual planner's nominal geometry; transit reaches the residual endpoint with
 the brush disabled, so hidden lead-in and overrun cannot inflate repeat area.
+Residual swaths are brush-centre paths over the missed-cell span: their circular
+swept footprint supplies the endpoint radius, and the planner does not extend
+the centreline by that radius a second time.
 
 The retained optimized seed 132 bag is checked with
 `scripts/verify_coverage_mcap_replay.sh`. That gate first executes a real

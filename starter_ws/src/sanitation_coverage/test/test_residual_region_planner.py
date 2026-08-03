@@ -23,3 +23,11 @@ def test_adjacent_grid_rows_share_one_brush_width_repair_swath():
     assert len(plan.regions) == 1
     assert len(plan.swaths) == 1
     assert plan.total_length_m <= 2.0
+
+
+def test_brush_centre_segment_does_not_double_extend_its_swept_endcaps():
+    points = [(x / 10, 0.0) for x in range(13)]
+    plan = plan_residual_regions(points, 0.1, 0.65, primary_length_m=20.0)
+
+    assert plan.swaths == (((0.0, 0.0), (1.2, 0.0)),)
+    assert plan.total_length_m == 1.2
