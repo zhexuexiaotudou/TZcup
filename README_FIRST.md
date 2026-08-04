@@ -10,7 +10,7 @@
 powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_visual_demo.ps1 -Video on
 ```
 
-脚本使用 `TZcup-Ubuntu-24.04` WSL2/WSLg，自动启动 Gazebo、Nav2、Coverage、RViz 和 `http://127.0.0.1:8877` 实时看板；正常冷启动后车辆会自动驶向作业起点并执行 9 条清扫带和 8 个转弯。结果写入 `artifacts/auto17_visual_demo_<UTC>/`。再次启动前必须先停止旧实例；启动器会检测重复 Nav2/Coverage 节点并拒绝污染运行。完整说明见 [`docs/auto17-visual-demo.md`](docs/auto17-visual-demo.md)。
+脚本使用 `TZcup-Ubuntu-24.04` WSL2/WSLg，自动启动 Gazebo、Nav2、Coverage、RViz 和 `http://127.0.0.1:8877` 实时看板；正常冷启动后车辆会自动驶向作业起点，并按默认 optimized 配置执行 6 条相邻弓字主清扫带及对应的转场、旋转和横移语义组件。结果写入 `artifacts/auto17_visual_demo_<UTC>/`。再次启动前必须先停止旧实例；启动器会检测重复 Nav2/Coverage 节点并拒绝污染运行。完整说明见 [`docs/auto17-visual-demo.md`](docs/auto17-visual-demo.md)。
 
 如果只看 Gazebo，不需要浏览器看板和 RViz：
 
