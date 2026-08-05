@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-05T10:53:10Z",
+  "stage": "AUTO-05R-0",
+  "source_files": [
+    "starter_ws/src/sanitation_perception/sanitation_perception/tracking.py",
+    "starter_ws/src/sanitation_perception/test/test_tracking.py"
+  ],
+  "facts": {
+    "association": {
+      "mode": "same-class nearest detection",
+      "association_distance_m": 0.25,
+      "same_class_only": true
+    },
+    "confidence_update": "min(old_confidence, new_confidence)",
+    "confirmation": {
+      "confirmation_observations": 3,
+      "confidence_threshold": 0.8,
+      "covariance_trace_max": 0.03
+    },
+    "lifecycle": {
+      "lost_timeout_s": 2.0,
+      "states": ["TENTATIVE", "CONFIRMED", "QUEUED", "APPROACHING", "CLEANING", "CLEANED", "LOST", "REJECTED"],
+      "allowed_transitions": {
+        "CONFIRMED": ["QUEUED", "REJECTED"],
+        "QUEUED": ["APPROACHING", "REJECTED"],
+        "APPROACHING": ["CLEANING", "QUEUED", "REJECTED"],
+        "CLEANING": ["CLEANED", "QUEUED", "REJECTED"]
+      }
+    },
+    "ground_truth_isolation": "ground_truth detections are rejected in the decision tracker",
+    "deterministic_uuid": "uuid5 over class_id and rounded x/y"
+  },
+  "contract": {
+    "tracker_v2_behavior_implemented": false,
+    "tracker_v2_owner": "future AUTO-07R interface placeholder only",
+    "current_contract_recorded": true
+  }
+}

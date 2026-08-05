@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-05T10:53:10Z",
+  "stage": "AUTO-05R-0",
+  "source_files": [
+    "scripts/auto05_screening.py",
+    "starter_ws/src/sanitation_learning/sanitation_learning/auto04_contract.py",
+    "artifacts/autonomous_auto05_20260730_evidence/attempt3_screening_report.json",
+    "docs/auto05-attempts.md"
+  ],
+  "facts": {
+    "detector": {
+      "name": "DirectDetector",
+      "architecture": "direct anchor-free center/offset/bbox detector",
+      "segmentation_connected_components_used_as_detector": false,
+      "input_shape_attempt_3": [1, 6, 384, 512],
+      "input_features_attempt_3": ["rgb", "normalized_depth", "edge", "local_contrast"],
+      "parameter_count_attempt_3": 527559,
+      "status": "screening_checkpoint_only"
+    },
+    "area_segmenter": {
+      "name": "RGBDAreaUNet",
+      "architecture": "RGB-D independent binary leaf/puddle U-Net heads",
+      "input_shape_attempt_3": [1, 7, 384, 512],
+      "input_features_attempt_3": ["rgb", "normalized_depth", "edge", "local_contrast", "saturation"],
+      "parameter_count_attempt_3": 507202,
+      "status": "screening_checkpoint_only"
+    },
+    "formal_onnx_models_exist": false,
+    "trained_models_in_repo": false,
+    "best_attempt": "AUTO-05-G3-SCREENING-V3"
+  },
+  "metrics_reference": {
+    "in_domain_macro_f1": 0.473498578535892,
+    "validation_cross_world_macro_f1": 0.5325318916868212,
+    "test_cross_world_macro_f1": 0.429308255191959,
+    "validation_small_object_recall": 0.875,
+    "test_small_object_recall": 0.8840579710144928,
+    "validation_leaf_iou": 0.24151377612989836,
+    "validation_puddle_iou": 0.6756711315361766,
+    "test_leaf_iou": 0.5383984637811169,
+    "test_puddle_iou": 0.6075398078627533
+  },
+  "contract": {
+    "planned_v2_manifest_ids": [
+      "detector_manifest",
+      "classifier_manifest",
+      "leaf_segmenter_manifest",
+      "puddle_segmenter_manifest"
+    ],
+    "artifact_and_sha256_null_until_model_exists": true,
+    "competition_claim_allowed": false
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-05T10:53:10Z",
+  "stage": "AUTO-05R-0",
+  "source_files": [
+    "starter_ws/src/sanitation_learning/config/auto05_g3_screening.yaml",
+    "scripts/auto05_screening.py",
+    "starter_ws/src/sanitation_learning/sanitation_learning/metric_scale.py",
+    "STAGE_GATES.md",
+    "docs/auto05-g3-screening.md"
+  ],
+  "facts": {
+    "detector_gates": {
+      "discovery_all_visible_candidate_recall_min": 0.8,
+      "false_candidates_per_min_max": 2.0,
+      "in_domain_macro_f1_min": 0.9,
+      "cross_world_macro_f1_min": 0.7,
+      "small_object_recall_min": 0.7,
+      "negative_fp_per_frame_max": 0.05
+    },
+    "area_gates": {
+      "cross_world_leaf_iou_min": 0.75,
+      "cross_world_puddle_iou_min": 0.75,
+      "cross_world_macro_miou_min": 0.75
+    },
+    "robustness_gates": {
+      "color_material_stress_macro_f1_min": 0.6,
+      "same_color_negative_specificity_min": 0.95
+    },
+    "onnx_parity_gates": {
+      "detector_max_numeric_output_error": 0.0001,
+      "area_max_numeric_output_error": 0.0001
+    },
+    "machine_evaluable_native_scale": {
+      "min_short_side_px": 8.0,
+      "min_mask_area_px": 20.0
+    },
+    "small_object_native_scale": {
+      "max_short_side_px": 18.0
+    },
+    "scale_contract_version": 1,
+    "machine_evaluable_scale": "native",
+    "small_object_scale": "native"
+  },
+  "contract": {
+    "frozen_thresholds_unchanged": true,
+    "native_to_model_scale_conversion": {
+      "bbox": "linear scaling from source to target resolution",
+      "short_side": "recomputed from model-scale bbox",
+      "mask_area": "cv2.resize INTER_NEAREST pixel count when model_mask provided; proportional area scaling is only a fallback when no mask is available"
+    },
+    "legacy_g3_test_not_used_as_selection_set": true
+  },
+  "historical_status": "AUTO-05=BLOCKED"
+}

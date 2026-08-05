@@ -1,0 +1,36 @@
+schema_version: 2
+model_id: perception_classifier_g4_placeholder
+model_status: not_available
+artifact: null
+artifact_sha256: null
+framework: onnxruntime
+opset: null
+license: Apache-2.0
+weight_source: not_available
+pretraining_source: null
+input:
+  names: [crops]
+  shapes: [[1, 3, 64, 64]]
+  dtypes: [float32]
+normalization:
+  scale: 0.00392156862745098
+  mean: [0.0, 0.0, 0.0]
+  std: [1.0, 1.0, 1.0]
+output:
+  names: [logits]
+  shapes: [[1, 3]]
+  dtypes: [float32]
+class_order: [plastic_bottle, metal_can, paper_litter]
+thresholds:
+  score: null
+  nms_iou: null
+NMS:
+  classwise: false
+  iou_threshold: null
+  score_threshold: null
+provider_compatibility: [onnxruntime, horizon_j6]
+screening_pass: false
+formal_pass: false
+live_pass: false
+synthetic_only: true
+competition_claim_allowed: false

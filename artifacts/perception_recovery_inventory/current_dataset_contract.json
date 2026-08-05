@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-05T10:53:10Z",
+  "stage": "AUTO-05R-0",
+  "source_files": [
+    "starter_ws/src/sanitation_learning/config/auto05_g3_screening.yaml",
+    "starter_ws/src/sanitation_learning/sanitation_learning/g3_scene.py",
+    "starter_ws/src/sanitation_learning/sanitation_learning/gazebo_g3.py",
+    "artifacts/autonomous_auto05_20260730_evidence/g3_dataset_qa.json",
+    "artifacts/autonomous_auto05_20260730_evidence/leakage_report.json",
+    "artifacts/autonomous_auto05_20260730_evidence/split_manifest.json",
+    "docs/auto05-g3-screening.md"
+  ],
+  "facts": {
+    "dataset_domain": "G3_deployment_aligned_vehicle_camera_gazebo",
+    "world_count": 8,
+    "split_world_counts": {
+      "train": 4,
+      "val": 2,
+      "test": 2
+    },
+    "scene_count": 120,
+    "frame_count": 1200,
+    "native_resolution": [640, 480],
+    "screening_resolutions": {
+      "attempt_1_2": [384, 288],
+      "attempt_3": [512, 384]
+    },
+    "negative_frames_per_heldout_world": 50,
+    "annotation_completeness": 1.0,
+    "four_sensor_sync_rate": 1.0,
+    "tf_valid_rate": 1.0,
+    "semantic_instance_error_rate": 0.0,
+    "leakage": {
+      "target_asset_leakage": [],
+      "hard_negative_asset_leakage": [],
+      "trajectory_leakage": [],
+      "world_leakage": [],
+      "cross_split_exact_duplicate_count": 0,
+      "cross_split_phash_duplicate_count": 0
+    },
+    "class_visible_frame_counts": {
+      "plastic_bottle": 653,
+      "metal_can": 576,
+      "paper_litter": 607,
+      "leaf_pile": 661,
+      "puddle": 572
+    },
+    "instance_record_count": 4736,
+    "dynamic_scene_count": 32,
+    "dynamic_executed_count": 32
+  },
+  "g4_dataset": {
+    "collected": false,
+    "frames": null,
+    "worlds": null,
+    "note": "G4 尚未采集；不得伪造或外推 G3 结果作为新模型选择集。"
+  },
+  "contract": {
+    "worlds_min": 8,
+    "scenes_min": 120,
+    "native_frames_min": 1200,
+    "heldout_negative_frames_per_world_min": 50,
+    "test_used_for_model_selection": false,
+    "legacy_g3_test_kept_as_benchmark": true,
+    "g3_test_not_a_new_model_selection_set": true
+  }
+}

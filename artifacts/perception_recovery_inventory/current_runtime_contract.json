@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-05T10:53:10Z",
+  "stage": "AUTO-05R-0",
+  "source_files": [
+    "starter_ws/src/sanitation_perception/sanitation_perception/backends.py",
+    "starter_ws/src/sanitation_perception/sanitation_perception/perception_node.py",
+    "starter_ws/src/sanitation_perception/sanitation_perception/preprocessing.py",
+    "starter_ws/src/sanitation_perception/config/preprocess_spec.yaml",
+    "starter_ws/src/sanitation_perception/config/postprocess_spec.yaml",
+    "starter_ws/src/sanitation_perception/sanitation_perception/projection.py",
+    "starter_ws/src/sanitation_perception/sanitation_perception/tracking.py"
+  ],
+  "facts": {
+    "legacy_perception_node": {
+      "role": "128x96 six-class segmentation legacy synthetic node",
+      "model_id_parameter": "stage5a_synthetic_color_model_v1",
+      "backend": "onnxruntime",
+      "learned_weights": false,
+      "rewritten_in_auto05r0": false,
+      "formal_multi_model_chain_owner": "AUTO-07R"
+    },
+    "preprocess_spec": {
+      "resize": [128, 96],
+      "layout": "NCHW",
+      "dtype": "float32",
+      "scale": 0.00392156862745098,
+      "mean": [0.0, 0.0, 0.0],
+      "std": [1.0, 1.0, 1.0]
+    },
+    "postprocess_spec": {
+      "operation": "pixel_argmax_then_connected_components",
+      "score_threshold": 0.8,
+      "minimum_component_pixels": 12,
+      "nms_iou_threshold": 0.5,
+      "fail_closed_on_missing_depth": true,
+      "fail_closed_on_missing_tf": true,
+      "fail_closed_on_keepout": true
+    },
+    "backend_policy_before_auto05r0": {
+      "onnxruntime_synthetic_only_hardcoded": true,
+      "manifest_validation": "none",
+      "sha_validation": "none"
+    },
+    "backend_policy_after_auto05r0": {
+      "onnxruntime_synthetic_only_hardcoded": false,
+      "manifest_required_for_onnxruntime": true,
+      "manifest_required_for_claims": true,
+      "sha256_required_when_artifact_present": true,
+      "fail_closed_on_missing_invalid_manifest": true
+    }
+  },
+  "contract": {
+    "ground_truth": "evaluation-only",
+    "mock": "test-only",
+    "horizon_j6": "requires toolchain and runtime",
+    "onnxruntime": "eligible only with a validated manifest for the requested claim"
+  }
+}

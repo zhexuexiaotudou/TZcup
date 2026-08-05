@@ -1,0 +1,210 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-05T10:53:10Z",
+  "stage": "AUTO-05",
+  "historical_status": "BLOCKED",
+  "source_files": [
+    "artifacts/autonomous_auto05_20260730_evidence/metrics_summary.json",
+    "artifacts/autonomous_auto05_20260730_evidence/attempt1_screening_report.json",
+    "artifacts/autonomous_auto05_20260730_evidence/attempt2_screening_report.json",
+    "artifacts/autonomous_auto05_20260730_evidence/attempt3_screening_report.json",
+    "artifacts/autonomous_auto05_20260730_evidence/stage_status.json",
+    "docs/auto05-attempts.md",
+    "docs/auto05-g3-screening.md",
+    "STAGE_GATES.md"
+  ],
+  "summary": "AUTO-05 数据门通过；三次有界 screening 未通过全部冻结门，最佳 Attempt 3 仍有 7 个门失败，AUTO-05=BLOCKED，AUTO-06/07/08 依赖阻断。",
+  "best_attempt": "AUTO-05-G3-SCREENING-V3",
+  "facts": {
+    "attempt_count": 3,
+    "best_attempt_id": "AUTO-05-G3-SCREENING-V3",
+    "failed_gate_count": 7,
+    "failed_gates": [
+      "discovery_all_visible_candidate_recall_at_least_0_80",
+      "in_domain_macro_f1_at_least_0_90",
+      "cross_world_macro_f1_at_least_0_70",
+      "cross_world_leaf_iou_at_least_0_75",
+      "cross_world_puddle_iou_at_least_0_75",
+      "cross_world_macro_miou_at_least_0_75",
+      "color_material_stress_macro_f1_at_least_0_60"
+    ],
+    "passed_gates": [
+      "discovery_false_candidates_per_min_at_most_2",
+      "small_object_recall_at_least_0_70",
+      "negative_only_fp_per_frame_at_most_0_05",
+      "same_color_negative_specificity_at_least_0_95",
+      "onnx_detector_error_at_most_1e_4",
+      "onnx_area_error_at_most_1e_4"
+    ],
+    "best_metrics": {
+      "in_domain_macro_f1": 0.473498578535892,
+      "validation_cross_world_macro_f1": 0.5325318916868212,
+      "test_cross_world_macro_f1": 0.429308255191959,
+      "validation_small_object_recall": 0.875,
+      "test_small_object_recall": 0.8840579710144928,
+      "validation_negative_fp_per_frame": 0.05,
+      "test_negative_fp_per_frame": 0.01,
+      "validation_leaf_iou": 0.24151377612989836,
+      "validation_puddle_iou": 0.6756711315361766,
+      "test_leaf_iou": 0.5383984637811169,
+      "test_puddle_iou": 0.6075398078627533
+    }
+  },
+  "root_causes": [
+    {
+      "id": "RC-01",
+      "name": "discovery recall 不足",
+      "failed_gates": ["discovery_all_visible_candidate_recall_at_least_0_80"],
+      "evidence": {
+        "in_domain": 0.6764705882352942,
+        "validation": 0.7864864864864864,
+        "test": 0.8075601374570447,
+        "gate": 0.8
+      },
+      "assessment": "低置信、远距离、遮挡或小尺度候选在解码阈值下被漏检，全可见候选召回低于门限。",
+      "mitigation": "后续因子化诊断 D1-D6 拆分世界/资产/材质/光照/负样本/轨迹六类偏移，量化漏检来源后再训练。"
+    },
+    {
+      "id": "RC-02",
+      "name": "false candidate 噪声",
+      "failed_gates": [],
+      "gate_state": "passed_but_in_domain_diagnostic_over_threshold",
+      "evidence": {
+        "in_domain": 3.6875,
+        "validation": 1.05,
+        "test": 1.275,
+        "gate": 2.0
+      },
+      "assessment": "in-domain 的 false candidates 超限，背景/阴影/同色干扰造成误检；val/test 已通过该门。",
+      "mitigation": "在因子化诊断中按负样本与同色干扰拆解误检，后续收紧候选阈值或增加 hard-negative 训练。"
+    },
+    {
+      "id": "RC-03",
+      "name": "in-domain macro F1 失衡",
+      "failed_gates": ["in_domain_macro_f1_at_least_0_90"],
+      "evidence": {
+        "in_domain_macro_f1": 0.473498578535892,
+        "gate": 0.9
+      },
+      "assessment": "in-domain 训练分布内 F1 仍低，说明模型容量/类不平衡/paper 与 leaf 类精度召回同时不足。",
+      "mitigation": "因子化指标按类别 precision/recall/F1 与 AP 分拆，定位薄弱类别后再决定架构与采样。"
+    },
+    {
+      "id": "RC-04",
+      "name": "cross-world 迁移不足",
+      "failed_gates": ["cross_world_macro_f1_at_least_0_70"],
+      "evidence": {
+        "validation": 0.5325318916868212,
+        "test": 0.429308255191959,
+        "gate": 0.7
+      },
+      "assessment": "未见世界的材质、布局、光照迁移导致跨世界 F1 明显下降。",
+      "mitigation": "D2/D3/D4/D6 分别隔离 unseen world、unseen material、unseen lighting 与全组合偏移，指导数据增强与分布覆盖。"
+    },
+    {
+      "id": "RC-05",
+      "name": "small-object 尺度与口径",
+      "failed_gates": [],
+      "gate_state": "passed",
+      "evidence": {
+        "in_domain": 0.9770114942528736,
+        "validation": 0.875,
+        "test": 0.8840579710144928,
+        "gate": 0.7
+      },
+      "assessment": "small-object 门已通过，但旧实现把 native short_side/mask_area 与 model-input bbox 混用，尺度口径不严格。",
+      "mitigation": "AUTO-05R-0 将 machine-evaluable 与 small-object 判断冻结为 native scale，并新增 native→model 转换合同。"
+    },
+    {
+      "id": "RC-06",
+      "name": "negative-only FP",
+      "failed_gates": [],
+      "gate_state": "passed_boundary",
+      "evidence": {
+        "validation": 0.05,
+        "test": 0.01,
+        "gate": 0.05
+      },
+      "assessment": "纯负样本帧误检门已通过（val 恰好等于门限），仍存在边界风险。",
+      "mitigation": "因子化 D5 专测 unseen negative assets，持续约束负样本泛化。"
+    },
+    {
+      "id": "RC-07",
+      "name": "leaf 泛化不足",
+      "failed_gates": ["cross_world_leaf_iou_at_least_0_75"],
+      "evidence": {
+        "validation_leaf_iou": 0.24151377612989836,
+        "test_leaf_iou": 0.5383984637811169,
+        "gate": 0.75
+      },
+      "assessment": "落叶堆外观/阴影/材质变化下 IoU 远低于门限，是区域模型主要短板。",
+      "mitigation": "D3/D4/D6 因子化诊断配合 leaf_segmenter_manifest 合同，后续单独训练与验证 leaf head。"
+    },
+    {
+      "id": "RC-08",
+      "name": "puddle 泛化不足",
+      "failed_gates": ["cross_world_puddle_iou_at_least_0_75"],
+      "evidence": {
+        "validation_puddle_iou": 0.6756711315361766,
+        "test_puddle_iou": 0.6075398078627533,
+        "gate": 0.75
+      },
+      "assessment": "积水高光/地面材质变化下 IoU 低于门限。",
+      "mitigation": "puddle_segmenter_manifest 建立独立 artifact/门禁绑定，后续按 D3/D4 诊断定向增强。"
+    },
+    {
+      "id": "RC-09",
+      "name": "区域 macro mIoU",
+      "failed_gates": ["cross_world_macro_miou_at_least_0_75"],
+      "evidence": {
+        "validation_macro_miou": 0.4585924538330375,
+        "test_macro_miou": 0.5729691358219351,
+        "gate": 0.75
+      },
+      "assessment": "两个区域 head 平均性能受 leaf 拖累，mIoU 未达门限。",
+      "mitigation": "区域指标按类独立记录，factorized report 强制 leaf/puddle 分开审计。"
+    },
+    {
+      "id": "RC-10",
+      "name": "color/material stress",
+      "failed_gates": ["color_material_stress_macro_f1_at_least_0_60"],
+      "evidence": {
+        "test_macro_f1_used_as_stress": 0.429308255191959,
+        "gate": 0.6
+      },
+      "assessment": "未见世界的颜色/材质压力下离散目标 F1 低于 stress 门。",
+      "mitigation": "D3/D4 诊断把 unseen material 与 unseen lighting 分开量化，作为未来 stress 数据的准入依据。"
+    },
+    {
+      "id": "RC-11",
+      "name": "same-color negative specificity",
+      "failed_gates": [],
+      "gate_state": "passed",
+      "evidence": {
+        "specificity": "1.0 - test negative_only_fp_per_frame",
+        "test_negative_only_fp_per_frame": 0.01,
+        "gate": 0.95
+      },
+      "assessment": "该门已通过，但同色 hard-negative 仍是 precision 边界风险。",
+      "mitigation": "D5 因子化诊断持续覆盖 unseen negative assets，避免特异性回退。"
+    },
+    {
+      "id": "RC-12",
+      "name": "ONNX 数值一致性",
+      "failed_gates": [],
+      "gate_state": "passed",
+      "evidence": {
+        "detector_error_gate": "passed",
+        "area_error_gate": "passed"
+      },
+      "assessment": "PyTorch/ONNX 数值一致门已通过，不是当前阻断根因；仅作为导出链路合同保留。",
+      "mitigation": "manifest v2 将 artifact SHA-256 与算子合同绑定，后续正式模型导出时继续复用该 parity 门。"
+    }
+  ],
+  "conclusion": {
+    "auto05_status": "BLOCKED",
+    "auto06_07_08_status": "dependency blocked",
+    "legacy_g3_test_used_as_selection": false,
+    "no_metric_inflated_or_replaced": true
+  }
+}

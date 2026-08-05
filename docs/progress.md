@@ -1,5 +1,14 @@
 # 项目推进记录
 
+## 2026-08-05：AUTO-05R-0 感知恢复合同
+
+- 建立 AUTO-05R-0 恢复合同，只修评测尺度、因子化诊断、模型 manifest v2 与 runtime backend fail-closed 基础设施；不训练新模型、不导出正式 ONNX、不采集 G4，也不改写历史证据。
+- 新增 `metric_scale.py`：native/model-input 双尺度显式化，machine-evaluable（短边 ≥8 px、mask ≥20 px）与 small-object（短边 <18 px）判断固定为 native scale，并带 `scale_contract_version=1`；`auto05_screening.py` 的 instance 记录同时返回 native 字段、旧别名和布尔 mask，匹配用 bbox 明确指向 model-input 尺度，AUTO-05 冻结阈值与门禁数值不变。
+- 新增 D1-D6 因子化诊断合同（同世界未见资产 / 未见世界已见资产 / 未见材质已见几何 / 未见光照已见资产 / 未见负样本资产 / 全未见组合）与报告校验；`legacy_g3_test_used_as_selection=false` 被强制校验，旧 G3 test 仅作 legacy benchmark，不作为新模型选择集。
+- 新增 model manifest v2（detector/classifier/leaf_segmenter/puddle_segmenter + perception pipeline）与 legacy synthetic manifest 副本；当前无正式模型，artifact/artifact_sha256 均为 null，screening/formal/live/competition 状态全部 false；`backends.py` 对 onnxruntime 不再硬编码 synthetic_only，缺 manifest、manifest 无效、SHA 不匹配或状态不足一律 fail-closed。
+- 历史事实不变：`AUTO-04=PASS`（仅小样本 micro-overfit，不外推）、`AUTO-05=BLOCKED`（G3 数据门通过，三次 screening 最佳 Attempt 3 仍有 7 个冻结门失败）、`AUTO-06/07/08` 依赖阻断；G4 未采集，正式模型不存在，`competition_claim_allowed` 保持 false。
+- 详细合同见 [`docs/auto05r-0-recovery.md`](auto05r-0-recovery.md)；仓库基线与 12 类根因分析见 `artifacts/perception_recovery_inventory/`。
+
 ## 2026-08-04：skid-steer 覆盖路径优化与语义可视化
 
 - 历史基线完整保留：OpenNav Coverage + Fields2Cover 的 `BOUSTROPHEDON / DUBIN / CONTINUOUS`、`0.35 m` 条带间距、约 46% 重叠、最多两轮补扫、固定 17 组件和全局 turbo 速度仍可用 `-CoverageProfile legacy` 回归。该汽车式大圆弧基线不适合可原地旋转的 skid-steer，且正式 5-seed 基线的重复率和横向误差不满足新门，因此不再是小场默认值。

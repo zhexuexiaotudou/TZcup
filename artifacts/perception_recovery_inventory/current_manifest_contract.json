@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-05T10:53:10Z",
+  "stage": "AUTO-05R-0",
+  "source_files": [
+    "starter_ws/src/sanitation_perception/config/model_manifest.yaml",
+    "starter_ws/src/sanitation_perception/config/model_manifest_legacy_synthetic.yaml",
+    "starter_ws/src/sanitation_perception/config/detector_manifest.yaml",
+    "starter_ws/src/sanitation_perception/config/classifier_manifest.yaml",
+    "starter_ws/src/sanitation_perception/config/leaf_segmenter_manifest.yaml",
+    "starter_ws/src/sanitation_perception/config/puddle_segmenter_manifest.yaml",
+    "starter_ws/src/sanitation_perception/config/perception_pipeline_manifest.yaml",
+    "starter_ws/src/sanitation_perception/sanitation_perception/pipeline_manifest.py"
+  ],
+  "facts": {
+    "legacy_manifest": {
+      "schema_version": 1,
+      "model_id": "stage5a_synthetic_color_prototype_v1",
+      "artifact": "stage5a_synthetic_color_prototype.onnx",
+      "framework": "ONNX",
+      "opset": 13,
+      "input_shape": [1, 3, 96, 128],
+      "class_order": ["background", "plastic_bottle", "metal_can", "paper_litter", "leaf_pile", "puddle"],
+      "synthetic_only": true,
+      "competition_claim_allowed": false,
+      "status": "kept_immutable_and_copied_to_model_manifest_legacy_synthetic.yaml"
+    },
+    "v2_manifests": {
+      "model_status": "not_available",
+      "artifact": null,
+      "artifact_sha256": null,
+      "screening_pass": false,
+      "formal_pass": false,
+      "live_pass": false,
+      "competition_claim_allowed": false,
+      "trained_or_gated_claim": false
+    }
+  },
+  "contract": {
+    "required_fields": [
+      "schema_version",
+      "model_id",
+      "artifact",
+      "artifact_sha256",
+      "framework",
+      "opset",
+      "license",
+      "weight_source",
+      "pretraining_source",
+      "input",
+      "normalization",
+      "output",
+      "class_order",
+      "thresholds",
+      "NMS",
+      "provider_compatibility",
+      "screening_pass",
+      "formal_pass",
+      "live_pass",
+      "synthetic_only",
+      "competition_claim_allowed"
+    ],
+    "validator_behavior": {
+      "missing_required_field": "error",
+      "wrong_yaml_type": "error",
+      "non_finite_threshold": "error",
+      "non_boolean_status": "error",
+      "artifact_missing": "error",
+      "sha256_mismatch": "error"
+    }
+  }
+}

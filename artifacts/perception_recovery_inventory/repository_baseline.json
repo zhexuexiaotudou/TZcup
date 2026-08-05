@@ -1,0 +1,49 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-08-05T10:53:10Z",
+  "repository": "zhexuexiaotudou/TZcup",
+  "remote": "https://github.com/zhexuexiaotudou/TZcup.git",
+  "branch": "deepseek/perception-recovery",
+  "baseline_commit": "d321c23beed1fbba1c8d66457f19195c18cc18b6",
+  "baseline_commit_short": "d321c23",
+  "working_tree_status_at_baseline": "clean",
+  "historical_auto05_status": "BLOCKED",
+  "historical_auto04_status": "PASS",
+  "source_files": [
+    "README.md",
+    "AUTONOMOUS_STATE.json",
+    "FINAL_AUTONOMOUS_STATUS.json",
+    "FINAL_BLOCKER_REGISTER.json",
+    "STAGE_GATES.md",
+    "docs/progress.md",
+    "docs/auto05-g3-screening.md",
+    "docs/auto05-attempts.md",
+    "docs/auto04-micro-overfit.md"
+  ],
+  "facts": {
+    "baseline_commit_origin": "origin/main",
+    "auto04_evidence_dir": "artifacts/autonomous_auto04_20260730_evidence",
+    "auto05_evidence_dir": "artifacts/autonomous_auto05_20260730_evidence",
+    "auto05_first_blocking_layer": "G3_split_model_screening_gates_failed_after_3_attempts",
+    "auto05_best_attempt": "AUTO-05-G3-SCREENING-V3",
+    "auto06_dependency_blocked": true,
+    "auto07_dependency_blocked": true,
+    "auto08_dependency_blocked": true,
+    "g4_dataset_collected": false,
+    "formal_onnx_models_exist": false
+  },
+  "immutable_paths": [
+    "AUTONOMOUS_STATE.json",
+    "FINAL_AUTONOMOUS_STATUS.json",
+    "FINAL_BLOCKER_REGISTER.json",
+    "artifacts/autonomous_auto04_20260730_evidence",
+    "artifacts/autonomous_auto05_20260730_evidence"
+  ],
+  "contract": {
+    "recovery_stage_id": "AUTO-05R-0",
+    "scope": "evaluation scale contract, factorized diagnostics, manifest v2, and runtime backend fail-closed contract only",
+    "model_training_executed": false,
+    "g4_capture_executed": false,
+    "formal_onnx_export_executed": false
+  }
+}
