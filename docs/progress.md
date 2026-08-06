@@ -1,5 +1,22 @@
 # 项目推进记录
 
+## 2026-08-06：AUTO-05R-1 G4 正式采集门通过
+
+- 已完成 12 worlds × 25 scenes = 300 scenes / 3000 frames 的真实 Gazebo 采集；每个 scene `capture_report.capture_pass=true`，每 world 分布 25/25。
+- 已运行 `scripts/auto05r_g4_finalize_dataset.py --data-root ... --output-dir ... --strict`；严格 QA 输出 `G4_dataset_gate_pass=true`、`quality_gates_pass=true`，无失败门。
+- 数据集 QA 产物（`g4_dataset_qa.json`、`g4_frame_manifest.jsonl`、`g4_instance_records.jsonl`、`split_manifest.json`、`leakage_report.json`）保留在仓库外数据根；Git 只保存代码、配置和本推进记录。
+- 当前 `AUTO-05R-2/3` 仍为 `not_trained`，`micro_overfit_pass=false`；下一步是真实训练、micro-overfit、screening/formal/live/spot-clean。
+
+## 2026-08-06：AUTO-05R-2/3 模型与训练协议代码
+
+- 新增 `g4_models.py`：`DiscoveryDetector`（class-agnostic litter_candidate，stride 4/8 FPN 风格，输入 `[1,3,512,384]`）、`CandidateCropClassifier`（4 类，输入 `[1,3,192,192]`）、`LeafSegmenter`/`PuddleSegmenter`（支持共享 encoder，但每个模型拥有独立 decoder 与 boundary head，输入 `[1,4,384,512]`）；`build_g4_models()`/`model_summary()` 返回四类模型卡，状态全部 `not_trained`；ONNX 合同 `export_fixed_onnx`/`operator_inventory`/`torch_onnx_parity`（opset 17、`dynamic_axes=None`、无自定义 op），解码复用 `auto04_contract` 风格。
+- 新增 `ground_geometry.py`：`GroundGeometryEstimator` 用 CameraInfo + depth（+ 外参）计算 valid mask、确定性最小二乘地面拟合、离地高度、局部表面法线与深度梯度代理；训练与 live 共用同一实现，无 GT plane 旁路；退化输入抛 `ValueError`。
+- 新增 `g4_training.py` 与 `config/auto05r_training_protocol.yaml`：`BalancedBatchSampler`（positive/negative-only/paper-like/离散类/leaf/puddle 比例采样，桶内全量轮换，禁止 WeightedRandomSampler 重复小负样本集）、`Trainer`（每 epoch 验证、best checkpoint、EMA、early stopping、AMP、确定性 seed、完整 curve，拒绝任何暴露 test split 的数据集）、`HardNegativeMining`（最多 3 轮，只允许 train/val，test 帧直接报错）、`MicroOverfitGate`（六项门槛，缺指标即 fail）。
+- 协议冻结：每模型 seed、micro-overfit 样本量与门槛、batch 比例、AdamW/CosineAnnealingLR、EMA decay 0.999、patience 8；模型选择只允许 train/val + D1-D5；`test_split_readable_during_training=false`、`hard_negative_mining_from_test=false`。
+- 新增 CLI `scripts/auto05r_micro_overfit.py`（`--model-type/--data-root/--output-dir/--config`），只验证 CLI 与代码路径，不运行训练，报告恒为 `micro_overfit_pass=false`、`executed=false`。
+- 新增 `test_g4_models.py`、`test_ground_geometry.py`、`test_g4_training_protocol.py` 并加入 `scripts/ci_fast.py`；torch/onnx 依赖路径在无 torch 主机上自动 skip。
+- 当前状态：`AUTO-05R-2/3` 仍为 `not_trained`，未执行 G4 正式训练、micro-overfit 正式运行、screening/formal/live/spot-clean；不伪造任何指标。详见 [`docs/auto05r-2-3-models-training.md`](auto05r-2-3-models-training.md)。
+
 ## 2026-08-05：AUTO-05R-1 G4 数据域重构代码
 
 - 只实现 G4 数据生成/采集/QA 基础设施，不执行完整 300 scene / 3000 frame 采集、不训练模型、不伪造任何 G4 指标；`G4_dataset_gate_pass=false`、`full_capture_executed=false` 保持冻结。
