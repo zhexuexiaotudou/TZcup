@@ -1,5 +1,15 @@
 # 项目推进记录
 
+## 2026-08-05：AUTO-05R-1 G4 数据域重构代码
+
+- 只实现 G4 数据生成/采集/QA 基础设施，不执行完整 300 scene / 3000 frame 采集、不训练模型、不伪造任何 G4 指标；`G4_dataset_gate_pass=false`、`full_capture_executed=false` 保持冻结。
+- 新增 G4 资产注册表（schema_version 2，166 个 target variants：bottle/can/paper/leaf/puddle=30/30/46/30/30，hard negatives 84 家族 = train 52/val 16/test 16）与确定性生成器 `scripts/generate_g4_asset_registry.py`；`g4_assets.py` 为每个变体生成带程序化纹理 PNG、PBR albedo map 与 SHA-256 的模型目录，加载时强制校验计数、split 与内容哈希。paper hard-negative taxonomy（14 项）全部进入 train 家族；leaf/puddle area 属性（厚度/疏密/干湿/叶形/阴影/遮挡/背景区分，轮廓/反射/地面/湿地面/高光/边界模糊等）每项 train 覆盖 ≥ 4。
+- 新增 `gazebo_g4.py`：12 worlds（train 8/val 2/test 2），material/layout/geometry/lighting 家族两两不同、world SHA 全不同；世界引用 G4 模型目录与程序化地面纹理，生产相机话题与 G3 一致，输出 `g4_world_manifest.json`。
+- 新增 `g4_scene.py` 与 `auto05r_g4_contract.yaml`：negative-only 先验固定 25%–35%（train 28%/val 32%/test 28%，跨 split 差 ≤ 10pp），train negative-only frames ≥ 500、paper-like hard-negative frames ≥ 300；scene manifest 显式分离 `native_gazebo_applied` 与 `offline_sensor_augmentation`（本任务 `requested_only=false`），distance/size/occlusion/visible_fraction 分桶全部落盘。
+- 新增 `g4_qa.py` 与 `scripts/auto05r_g4_finalize_dataset.py`：校验正式规模（smoke 输出 expected/actual）、负样本比例、taxonomy、标注完整性、四传感器 sync、CameraInfo、TF、semantic-instance 一致性、跨 split 泄漏、exact/pHash 重复与分桶；`test_used_for_model_selection=false` 强制，`--strict` 要求全门通过。
+- 新增 capture 脚本 `scripts/auto05r_g4_capture_all.sh` 与 `run_auto05r_g4_capture_docker.ps1`：复用 G3 真实采集语义（`parameter_bridge` 直连、10 帧/ scene、真实同步 RGB/depth/semantic/instance/CameraInfo/TF），支持 resume-skip 与每 world 25 scene 的正式参数；本任务仅验证脚本与 smoke 流程。
+- 新增 `test_g4_assets.py`、`test_g4_scene_negative_prior.py`、`test_g4_qa.py` 并加入 `scripts/ci_fast.py`；覆盖注册表/生成器可复现、纹理 SHA、12 world 合同、负样本先验、QA schema 与泄漏/sync/比例 fail。详见 [`docs/auto05r-1-g4-data.md`](auto05r-1-g4-data.md)。
+
 ## 2026-08-05：AUTO-05R-0 感知恢复合同
 
 - 建立 AUTO-05R-0 恢复合同，只修评测尺度、因子化诊断、模型 manifest v2 与 runtime backend fail-closed 基础设施；不训练新模型、不导出正式 ONNX、不采集 G4，也不改写历史证据。

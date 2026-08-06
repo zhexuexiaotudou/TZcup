@@ -1,0 +1,142 @@
+schema_version: 1
+stage: AUTO-05R
+task: AUTO-05R-1
+contract_version: 1
+dataset_domain: G4_deployment_aligned_vehicle_camera_gazebo
+description: |
+  G4 数据域重构的冻结合同：只覆盖可复现的数据生成/采集/QA 基础设施。
+  本任务不执行完整 300 scene / 3000 frame 真实采集，不训练模型，
+  G4_dataset_gate_pass 在完整采集与 QA 全绿之前必须保持 false。
+formal_scale:
+  worlds: 12
+  world_split_counts:
+    train: 8
+    val: 2
+    test: 2
+  scenes: 300
+  scenes_per_world: 25
+  frames: 3000
+  frames_per_scene: 10
+assets:
+  target_variants_total: 166
+  per_class_variant_counts:
+    plastic_bottle: 30
+    metal_can: 30
+    paper_litter: 46
+    leaf_pile: 30
+    puddle: 30
+  per_class_split_counts:
+    plastic_bottle:
+      train: 20
+      val: 5
+      test: 5
+    metal_can:
+      train: 20
+      val: 5
+      test: 5
+    paper_litter:
+      train: 30
+      val: 8
+      test: 8
+    leaf_pile:
+      train: 20
+      val: 5
+      test: 5
+    puddle:
+      train: 20
+      val: 5
+      test: 5
+  hard_negative_families_total: 84
+  hard_negative_family_split_counts:
+    train: 52
+    val: 16
+    test: 16
+negative_prior:
+  negative_only_ratio_range: [0.25, 0.35]
+  cross_split_ratio_delta_max: 0.10
+  train_negative_only_frames_min: 500
+  train_paper_like_hard_negative_frames_min: 300
+taxonomy:
+  required_paper_hard_negative_taxonomies:
+    - road_marking_fragment
+    - light_paver
+    - paver_joint
+    - paper_like_road_patch
+    - crack
+    - shadow_edge
+    - plastic_label
+    - packaging_graphic
+    - flat_stone
+    - light_leaf_litter
+    - reflective_area
+    - vehicle_white_gray_structure
+    - curb_corner
+    - truncated_object_edge
+area_coverage:
+  leaf_pile:
+    required_attributes:
+      - thickness_high
+      - thickness_low
+      - density_sparse
+      - density_dense
+      - condition_wet
+      - condition_dry
+      - leaf_shape_round
+      - leaf_shape_pointed
+      - leaf_shape_lobed
+      - shadow_coverage
+      - partial_occlusion
+      - background_leaf_discrimination
+    minimum_train_variants_per_attribute: 4
+  puddle:
+    required_attributes:
+      - contour_irregular
+      - contour_round
+      - reflectivity_shallow
+      - reflectivity_deep
+      - ground_asphalt
+      - ground_concrete
+      - ground_paving
+      - ground_soil
+      - shadow_coverage
+      - wet_non_puddle
+      - specular_highlight
+      - partial_occlusion
+      - boundary_blur
+    minimum_train_variants_per_attribute: 4
+data_contract:
+  native_gazebo_applied: true
+  offline_sensor_augmentation_requested_only: false
+  production_camera_topics:
+    - /camera/color/image_raw
+    - /camera/depth/image_rect_raw
+    - /camera/color/camera_info
+  ground_truth_topics:
+    - /ground_truth/semantic/image
+    - /ground_truth/instance/image
+  legacy_g3_test_used_as_selection: false
+  test_used_for_model_selection: false
+  G4_dataset_gate_pass: false
+  full_capture_executed: false
+qa_gates:
+  - worlds_12_and_8_2_2
+  - scenes_300_and_frames_3000
+  - scenes_per_world_25
+  - negative_only_ratio_in_25_to_35_percent
+  - negative_only_cross_split_delta_at_most_10pp
+  - train_negative_only_frames_at_least_500
+  - train_paper_like_hard_negative_frames_at_least_300
+  - required_paper_taxonomy_covered_in_train
+  - annotation_completeness_100_percent
+  - four_sensor_sync_100_percent
+  - camera_info_valid_100_percent
+  - tf_valid_100_percent
+  - semantic_instance_error_zero
+  - asset_split_leakage_zero
+  - world_split_leakage_zero
+  - trajectory_split_leakage_zero
+  - exact_duplicate_zero
+  - cross_split_phash_duplicate_zero
+  - distance_bucket_coverage_all
+  - size_bucket_coverage_all
+  - test_used_for_model_selection_false
