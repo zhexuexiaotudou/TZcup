@@ -87,4 +87,3 @@ def test_config_is_manifest_driven():
     del manifest["runtime"]["tracker_v2"]["score_ema_alpha"]
     with pytest.raises(ValueError, match="incomplete"):
         TrackerV2Config.from_pipeline_manifest(manifest)
-

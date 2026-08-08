@@ -261,4 +261,3 @@ class ProductTrackerV2:
                 track.state = "LOST"
         self._suppress_duplicates()
         return list(self.tracks.values())
-
