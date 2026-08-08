@@ -9,6 +9,18 @@ runtime:
   backend: onnxruntime
   preprocess_spec: preprocess_spec.yaml
   postprocess_spec: postprocess_spec.yaml
+  tracker_v2:
+    association_distance_m: 0.30
+    close_recovery_distance_m: 0.10
+    minimum_image_iou: 0.05
+    maximum_observation_gap_s: 0.50
+    occlusion_recovery_s: 2.0
+    duplicate_distance_m: 0.08
+    confirmation_observations: 3
+    confirmation_class_posterior: 0.70
+    confirmation_score_ema: 0.60
+    score_ema_alpha: 0.35
+    defer_after_observations: 5
 status:
   formal_pipeline_pass: false
   live_pipeline_pass: false

@@ -93,6 +93,7 @@ def test_pipeline_manifest_loads_all_four_roles() -> None:
     assert pipeline["status"]["formal_pipeline_pass"] is False
     assert pipeline["status"]["live_pipeline_pass"] is False
     assert pipeline["status"]["competition_pipeline_claim_allowed"] is False
+    assert pipeline["runtime"]["tracker_v2"]["confirmation_observations"] == 3
 
 
 def test_legacy_synthetic_manifest_is_preserved() -> None:

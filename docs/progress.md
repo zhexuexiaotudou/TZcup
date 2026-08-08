@@ -14,6 +14,10 @@
 - P2 教师在污染数据第 3 轮后主动中止，不计 pass/fail；严格 G4 QA 重新通过
   前禁止 student 训练。证据与边界见
   [`docs/auto05r-p2-data-integrity-recovery.md`](auto05r-p2-data-integrity-recovery.md)。
+- P6 独立软件支线新增 `tracker_v2.py`：class-agnostic 空间关联、map 距离/
+  图像 IoU/时间门、类别后验累积、置信 EMA、稳定 UUID、临时遮挡恢复、重复
+  抑制和低置信 `DEFERRED` 均已实现；所有阈值由 pipeline manifest 提供。
+  旧 `tracking.py` 保留给 Stage5A legacy 节点，产品模型未冻结前不宣称 live。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 

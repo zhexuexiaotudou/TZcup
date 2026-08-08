@@ -92,6 +92,12 @@ def load_pipeline_manifest(path: str | Path) -> dict:
         raise ValueError(
             "pipeline manifest missing model roles: " + ", ".join(missing)
         )
+    from sanitation_perception.tracker_v2 import TrackerV2Config
+
+    try:
+        TrackerV2Config.from_pipeline_manifest(pipeline)
+    except ValueError as exc:
+        raise ValueError(f"pipeline manifest tracker_v2 invalid: {exc}") from exc
     return pipeline
 
 

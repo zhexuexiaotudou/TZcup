@@ -172,6 +172,7 @@ def run_ros_independent_tests() -> None:
         perception_package / "test" / "test_registry.py",
         perception_package / "test" / "test_projection.py",
         perception_package / "test" / "test_tracking.py",
+        perception_package / "test" / "test_tracker_v2.py",
         perception_package / "test" / "test_backends.py",
         perception_package / "test" / "test_pipeline_manifest.py",
         perception_package / "test" / "test_preprocessing.py",
