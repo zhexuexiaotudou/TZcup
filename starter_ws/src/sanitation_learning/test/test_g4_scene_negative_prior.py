@@ -226,3 +226,10 @@ def test_g4_capture_script_uses_g4_modules_and_resume_skip():
     assert "AUTO05R_START_WORLD_INDEX" in script
     assert "START_WORLD_INDEX + local_world_index" in script
     assert "/opt/ros/jazzy/lib/ros_gz_bridge/parameter_bridge" in script
+    wrapper = (REPO / "scripts" / "run_auto05r_g4_capture_docker.ps1").read_text(
+        encoding="utf-8"
+    )
+    assert "ROS_DOMAIN_ID=$RosDomainId" in wrapper
+    assert "GZ_PARTITION=$GzPartition" in wrapper
+    assert "IGN_PARTITION=$GzPartition" in wrapper
+    assert "100 + $StartWorldIndex" in wrapper

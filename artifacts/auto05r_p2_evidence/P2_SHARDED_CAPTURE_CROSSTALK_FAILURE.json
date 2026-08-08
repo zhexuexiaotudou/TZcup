@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-P2",
+  "attempt": "g4-clean-v2-three-shard",
+  "status": "INVALID_DATA_MIDDLEWARE_CROSSTALK",
+  "formal_scale": {
+    "worlds": 12,
+    "scenes": 300,
+    "frames": 3000
+  },
+  "metrics": {
+    "scene_pose_reset_valid_rate": 1.0,
+    "manifest_pixel_target_consistency_rate": 0.7313333333333333,
+    "manifest_pixel_mismatch_frames": 806,
+    "cross_split_exact_duplicate_count": 303,
+    "cross_split_phash_duplicate_count": 483,
+    "G4_dataset_gate_pass": false,
+    "quality_gates_pass": false
+  },
+  "root_cause": "Parallel containers used distinct storage/world/seed ranges but shared default ROS 2 and Gazebo middleware partitions, allowing sensor topics from another shard to satisfy capture subscriptions.",
+  "correction": "Assign a unique ROS_DOMAIN_ID, GZ_PARTITION, and IGN_PARTITION to every capture shard and recapture from empty roots.",
+  "external_report": {
+    "path": "F:/Project/TZcup-perception-product-runtime/g4-clean-v2-merged/qa_formal/g4_dataset_qa.json",
+    "bytes": 589171,
+    "sha256": "a4e161daf357c47c9d13f777b1315403c44879ca5ce608f1558af124fcefb849"
+  },
+  "training_allowed": false
+}

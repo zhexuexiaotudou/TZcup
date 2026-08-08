@@ -36,6 +36,13 @@ P2 教师训练没有暴露出一个需要继续调参的普通收敛问题，�
 为 0。完整 `12 × 25 × 10` 重采仍必须通过严格 QA，之后才允许重启官方
 Torchvision FCOS-R50 教师门。
 
+第一次三路分片完整重采虽然三个进程都正常结束，但 wrapper 未隔离 ROS 2
+domain 与 Gazebo partition。三台容器的桥接 topic 因此发生跨容器串流：v2
+全量 QA 的 manifest—像素一致率只有 `0.731333`，并检测到 303 组跨 split
+exact duplicate 与 483 组跨 split pHash duplicate。该批数据同样作废并保留
+为失败证据。v3 分片必须分别使用互异的 `ROS_DOMAIN_ID`、`GZ_PARTITION` 和
+`IGN_PARTITION`；通过全量严格 QA 前仍禁止训练。
+
 紧凑证据见
 `artifacts/auto05r_p2_evidence/P2_DATA_INTEGRITY_RECOVERY.json`；原始帧、完整
 QA 和中止训练日志继续留在仓库外。

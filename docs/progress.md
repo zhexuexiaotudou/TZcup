@@ -43,6 +43,11 @@
   GPU 容器内 ORT `1.20.2` 暴露 CUDA EP。占位配置负向启动保持进程运行并报告
   `ERROR/configure_failed/spot_clean_allowed=false`，healthcheck 非零，见
   `artifacts/auto05r_p10_evidence/product_container_smoke.json`。
+- 第一次 3 路完整重采暴露并行容器中间件隔离缺失：虽然各 shard 的 world/seed/
+  文件路径互斥，ROS/Gazebo topic 仍跨容器串流。v2 QA 为 `3000` 帧完整但
+  manifest—像素一致率仅 `0.731333`，跨 split exact/pHash duplicates 分别为
+  `303/483`；数据作废。Docker wrapper 现按分片设置独立 ROS domain 与 Gazebo/
+  Ignition partition，必须重新采集 v3。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 
