@@ -26,6 +26,10 @@
 - P6 `map_projection_v2.py` 已按预测连通区输出真实 contour-derived map
   polygon、物理面积、置信度和协方差；无效 depth fail-closed，不再允许固定
   registry rectangle 冒充 leaf/puddle 预测区域。
+- P6/P10 model registry 已实现 `model_id + version + sha256` 唯一身份和四模型
+  artifact/SHA/provider/claim/threshold 启动前校验；现有 placeholder manifest
+  补齐显式 placeholder version，但 artifact 仍为 null，因此产品启动继续
+  fail-closed。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 

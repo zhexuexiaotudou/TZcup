@@ -17,6 +17,7 @@ import yaml
 V2_REQUIRED_FIELDS = (
     "schema_version",
     "model_id",
+    "version",
     "artifact",
     "artifact_sha256",
     "framework",
@@ -131,6 +132,10 @@ def _validate_v2(manifest: dict, artifact_root: Path | None) -> list[str]:
     for field in ("input", "output", "normalization", "thresholds", "NMS"):
         if field in manifest and not isinstance(manifest[field], dict):
             errors.append(f"{field} must be a mapping")
+    if "version" in manifest and (
+        not isinstance(manifest["version"], str) or not manifest["version"].strip()
+    ):
+        errors.append("version must be a non-empty string")
     for field in ("class_order", "provider_compatibility"):
         if field in manifest and not isinstance(manifest[field], list):
             errors.append(f"{field} must be a list")

@@ -1,5 +1,6 @@
 schema_version: 2
 model_id: perception_detector_g4_placeholder
+version: 0.0.0-placeholder
 model_status: not_available
 artifact: null
 artifact_sha256: null

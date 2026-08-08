@@ -17,6 +17,9 @@ ORT CUDA session 仍必须在 P4/P5 模型冻结后做 live 验收。
   depth 直接丢弃，禁止使用 registry 固定矩形替代预测边界；
 - 上述全部阈值由 `perception_pipeline_manifest.yaml` 提供，缺失、越界或队列
   大于 2 时 manifest 加载直接失败。
+- 产品 model registry 以 `model_id + version + sha256` 唯一标识四模型，并在
+  session 创建前验证 artifact 存在性/哈希、正式 claim、provider 兼容性和
+  非空阈值；当前 placeholder 因 artifact 为空会按设计拒绝启动。
 
 仍未通过：
 

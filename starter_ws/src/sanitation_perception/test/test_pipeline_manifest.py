@@ -22,6 +22,7 @@ def _valid_manifest(artifact: str | None = None) -> dict:
     return {
         "schema_version": 2,
         "model_id": "test_model",
+        "version": "1.0.0",
         "artifact": artifact,
         "artifact_sha256": None if artifact is None else hashlib.sha256(b"x").hexdigest(),
         "framework": "onnxruntime",
