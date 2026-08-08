@@ -52,6 +52,10 @@
   `10–19`、IR `≤9`、batch=1、无 custom op、校准帧 `≥1000`，并新增 J6E/M
   BPU profile 与 TopK/NMS 图外门。本机仅有完整性通过的官方 3.7.0 包且没有
   冻结 ONNX/实板，所以 toolchain/board 两门仍为 false。
+- P12 已补严格 ROS RGB-D/CameraInfo 20 ms 同步采集工具与独立摆位真值校验器；
+  现有 OpenCV RGB capture、棋盘格标定、隐私、ingestion、统一 evaluator 继续保留。
+  本机只发现 Integrated Camera，未发现可审计 RGB-D 数据/独立 GT，因此
+  `PRODUCT_FIELD_READY=false`、`REAL_DOMAIN_BLOCKED_EXTERNAL=true`。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 
