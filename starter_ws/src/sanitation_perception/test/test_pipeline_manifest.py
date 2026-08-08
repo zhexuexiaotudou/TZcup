@@ -94,6 +94,9 @@ def test_pipeline_manifest_loads_all_four_roles() -> None:
     assert pipeline["status"]["live_pipeline_pass"] is False
     assert pipeline["status"]["competition_pipeline_claim_allowed"] is False
     assert pipeline["runtime"]["tracker_v2"]["confirmation_observations"] == 3
+    assert pipeline["runtime"]["sync_tolerance_ms"] == 20.0
+    assert pipeline["runtime"]["frame_queue_depth"] == 2
+    assert pipeline["runtime"]["watchdog"]["camera_stale_ms"] == 500.0
 
 
 def test_legacy_synthetic_manifest_is_preserved() -> None:

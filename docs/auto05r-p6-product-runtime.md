@@ -1,0 +1,25 @@
+# AUTO-05R P6 产品运行时软件合同
+
+当前 P6 先完成不依赖冻结模型的运行时内核，产品 ROS lifecycle 节点与真实
+ORT CUDA session 仍必须在 P4/P5 模型冻结后做 live 验收。
+
+已实现：
+
+- RGB、depth、CameraInfo 的 20 ms 硬同步门；每路缓存最多 2 帧；
+- latest-frame-wins 调度，推理落后时丢弃旧帧而不形成积压；
+- tracker v2 的 class-agnostic 空间关联、图像 IoU/map 距离/时间门、类别
+  后验累积、置信 EMA、稳定 UUID、临时遮挡恢复和重复抑制；
+- 低置信轨迹只能保持 `TENTATIVE` 或进入 `DEFERRED`，不能直接驱动清扫；
+- camera stale、TF 连续错误、session 连续错误、OOM、持续超时的 watchdog，
+  非 `ACTIVE` 状态一律设置 `perception_spot_clean_allowed=false`；
+- 上述全部阈值由 `perception_pipeline_manifest.yaml` 提供，缺失、越界或队列
+  大于 2 时 manifest 加载直接失败。
+
+仍未通过：
+
+- 正式 `LifecycleNode` 的 configure/activate/deactivate/error 全链；
+- 四模型 ORT CUDA session、I/O Binding、设备 buffer 预分配与 warm-up；
+- RGB stamp 精确 TF 查询、完整推理/投影/多实例 polygon 发布；
+- ROS diagnostics topic、fault injection、10 次冷启动及 learned-live。
+
+这些状态保持 false，不能因为纯 Python 内核测试通过而提升 P6/P7/live 门。

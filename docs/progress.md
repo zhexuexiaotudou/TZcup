@@ -18,6 +18,11 @@
   图像 IoU/时间门、类别后验累积、置信 EMA、稳定 UUID、临时遮挡恢复、重复
   抑制和低置信 `DEFERRED` 均已实现；所有阈值由 pipeline manifest 提供。
   旧 `tracking.py` 保留给 Stage5A legacy 节点，产品模型未冻结前不宣称 live。
+- P6 又新增 20 ms RGB-D-CameraInfo 硬同步、最大深度 2 的 latest-frame-wins
+  scheduler，以及 camera/TF/session/OOM/持续延迟 watchdog；任何 DEGRADED/
+  ERROR 状态都禁止感知驱动定点清扫。当前仅为 ROS-independent 软件合同，
+  lifecycle/ORT CUDA/live 仍未通过，见
+  [`docs/auto05r-p6-product-runtime.md`](auto05r-p6-product-runtime.md)。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 

@@ -7,6 +7,8 @@ model_manifests:
   puddle_segmenter: puddle_segmenter_manifest.yaml
 runtime:
   backend: onnxruntime
+  sync_tolerance_ms: 20.0
+  frame_queue_depth: 2
   preprocess_spec: preprocess_spec.yaml
   postprocess_spec: postprocess_spec.yaml
   tracker_v2:
@@ -21,6 +23,12 @@ runtime:
     confirmation_score_ema: 0.60
     score_ema_alpha: 0.35
     defer_after_observations: 5
+  watchdog:
+    camera_stale_ms: 500.0
+    maximum_latency_ms: 200.0
+    sustained_latency_samples: 5
+    maximum_consecutive_tf_errors: 3
+    maximum_consecutive_session_errors: 2
 status:
   formal_pipeline_pass: false
   live_pipeline_pass: false

@@ -93,11 +93,20 @@ def load_pipeline_manifest(path: str | Path) -> dict:
             "pipeline manifest missing model roles: " + ", ".join(missing)
         )
     from sanitation_perception.tracker_v2 import TrackerV2Config
+    from sanitation_perception.lifecycle_health import WatchdogConfig
 
     try:
         TrackerV2Config.from_pipeline_manifest(pipeline)
+        WatchdogConfig.from_pipeline_manifest(pipeline)
+        runtime = pipeline["runtime"]
+        if not 0.0 < float(runtime["sync_tolerance_ms"]) <= 20.0:
+            raise ValueError("sync_tolerance_ms must be in (0, 20]")
+        if int(runtime["frame_queue_depth"]) not in (1, 2):
+            raise ValueError("frame_queue_depth must be 1 or 2")
     except ValueError as exc:
-        raise ValueError(f"pipeline manifest tracker_v2 invalid: {exc}") from exc
+        raise ValueError(f"pipeline manifest runtime invalid: {exc}") from exc
+    except (KeyError, TypeError) as exc:
+        raise ValueError("pipeline manifest runtime is incomplete") from exc
     return pipeline
 
 
