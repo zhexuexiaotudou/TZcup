@@ -34,6 +34,14 @@ def test_onnx_contract_functions_exist() -> None:
     assert callable(g4_models.operator_inventory)
     assert callable(g4_models.torch_onnx_parity)
     assert callable(g4_models.decode_discovery_flat)
+    assert callable(g4_models.build_g4_models)
+
+
+def test_build_models_accepts_from_scratch_control_flag() -> None:
+    pytest.importorskip("torch")
+    pytest.importorskip("torchvision")
+    models = g4_models.build_g4_models(from_scratch_control=True)
+    assert set(models) == {"discovery", "classifier", "leaf", "puddle"}
 
 
 def test_discovery_detector_output_shapes() -> None:
@@ -132,3 +140,23 @@ def test_classifier_onnx_parity_argmax_agreement(tmp_path) -> None:
     parity = g4_models.torch_onnx_parity(model, session, inputs)
     assert parity["max_absolute_error"] < 1e-3
     assert parity["argmax_agreement"] == 1.0
+    assert parity["top1_agreement"] == 1.0
+    assert parity["max_probability_error"] < 1e-3
+
+
+def test_segmenter_onnx_parity_mask_agreement(tmp_path) -> None:
+    torch = pytest.importorskip("torch")
+    pytest.importorskip("onnx")
+    onnxruntime = pytest.importorskip("onnxruntime")
+    model = g4_models.build_g4_models()["leaf"]
+    model.eval()
+    onnx_path = tmp_path / "leaf.onnx"
+    g4_models.export_fixed_onnx(model, None, onnx_path, opset=17)
+    session = onnxruntime.InferenceSession(
+        str(onnx_path), providers=["CPUExecutionProvider"]
+    )
+    inputs = torch.randn(1, 10, 384, 512)
+    parity = g4_models.torch_onnx_parity(model, session, inputs)
+    assert parity["max_absolute_error"] < 1e-3
+    assert "binary_mask_iou" in parity
+    assert "boundary_mask_agreement" in parity

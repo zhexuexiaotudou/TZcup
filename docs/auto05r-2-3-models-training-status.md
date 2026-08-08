@@ -1,6 +1,15 @@
 # AUTO-05R-2/3 current status
 
-Last updated: 2026-08-07
+Last updated: 2026-08-08
+
+## P0 trustworthiness foundation (2026-08-08)
+
+- P0-1..P0-12 implemented in code, tests, canonical policies and compact
+  evidence; see [docs/auto05r-p0-trustworthiness.md](auto05r-p0-trustworthiness.md).
+- The old G4 `test` split is only `legacy_G4_D6_diagnostic` (contaminated,
+  non-gating); G5 remains sealed/not created.
+- No new product model has been trained or frozen; `MODEL_FREEZE.json` does
+  not exist; AUTO-05R/P4/P5/formal/live/J6/field claims remain false.
 
 ## Real evidence on repaired G4 data
 

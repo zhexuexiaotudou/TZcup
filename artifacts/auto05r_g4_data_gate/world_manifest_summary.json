@@ -1,0 +1,96 @@
+{
+  "frame_counts_by_world": {
+    "world_g4_01_asphalt_campus": 250,
+    "world_g4_02_concrete_sidewalk": 250,
+    "world_g4_03_wet_courtyard": 250,
+    "world_g4_04_cobblestone_arcade": 250,
+    "world_g4_05_red_brick_promenade": 250,
+    "world_g4_06_tiled_plaza": 250,
+    "world_g4_07_service_road": 250,
+    "world_g4_08_mixed_curb_vegetation": 250,
+    "world_g4_09_light_paver_pedestrian": 250,
+    "world_g4_10_dark_gravel_parking": 250,
+    "world_g4_11_brick_market_street": 250,
+    "world_g4_12_smooth_industrial_floor": 250
+  },
+  "native_capture_resolution": {
+    "height": 480,
+    "width": 640
+  },
+  "source_sha256": "69e51944326a7305fd913ed65fa40c88fe656aaac2576f3669a0a3d16ab0a77b",
+  "world_count": 12,
+  "worlds": [
+    {
+      "split_eligibility": [
+        "train"
+      ],
+      "world_id": "world_g4_01_asphalt_campus"
+    },
+    {
+      "split_eligibility": [
+        "train"
+      ],
+      "world_id": "world_g4_02_concrete_sidewalk"
+    },
+    {
+      "split_eligibility": [
+        "train"
+      ],
+      "world_id": "world_g4_03_wet_courtyard"
+    },
+    {
+      "split_eligibility": [
+        "train"
+      ],
+      "world_id": "world_g4_04_cobblestone_arcade"
+    },
+    {
+      "split_eligibility": [
+        "train"
+      ],
+      "world_id": "world_g4_05_red_brick_promenade"
+    },
+    {
+      "split_eligibility": [
+        "train"
+      ],
+      "world_id": "world_g4_06_tiled_plaza"
+    },
+    {
+      "split_eligibility": [
+        "train"
+      ],
+      "world_id": "world_g4_07_service_road"
+    },
+    {
+      "split_eligibility": [
+        "train"
+      ],
+      "world_id": "world_g4_08_mixed_curb_vegetation"
+    },
+    {
+      "split_eligibility": [
+        "val"
+      ],
+      "world_id": "world_g4_09_light_paver_pedestrian"
+    },
+    {
+      "split_eligibility": [
+        "val"
+      ],
+      "world_id": "world_g4_10_dark_gravel_parking"
+    },
+    {
+      "split_eligibility": [
+        "test"
+      ],
+      "world_id": "world_g4_11_brick_market_street"
+    },
+    {
+      "split_eligibility": [
+        "test"
+      ],
+      "world_id": "world_g4_12_smooth_industrial_floor"
+    }
+  ]
+}

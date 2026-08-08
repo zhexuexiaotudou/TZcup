@@ -22,6 +22,7 @@ from __future__ import annotations
 
 from collections import Counter, defaultdict
 import math
+import os
 import random
 from pathlib import Path
 from typing import Callable, Iterable, Iterator, Sequence
@@ -31,6 +32,11 @@ import yaml
 
 from .auto04_contract import box_iou, decode_centernet_outputs
 from .g4_models import CLASSIFIER_CLASSES
+from .g4_split_policy import (
+    LEGACY_DIAGNOSTIC_ROLE,
+    SEALED_FINAL_ROLE,
+    assert_development_rows,
+)
 
 
 _ID_TO_NAME = {
@@ -53,7 +59,9 @@ DEFAULT_BATCH_PROPORTIONS = {
 }
 
 REQUIRED_MODELS = ("discovery", "classifier", "leaf", "puddle")
-ALLOWED_SELECTION_SPLITS = frozenset({"train", "val"})
+ALLOWED_SELECTION_SPLITS = frozenset(
+    {"train", "train_world_holdout", "val"}
+)
 REQUIRED_SELECTION_DIAGNOSTICS = frozenset({"D1", "D2", "D3", "D4", "D5"})
 
 
@@ -258,6 +266,25 @@ def load_training_protocol(path) -> dict:
         errors.append(
             "model_selection.hard_negative_mining_from_test must be false"
         )
+    if selection.get("legacy_G4_D6_diagnostic_readable") is not False:
+        errors.append(
+            "model_selection.legacy_G4_D6_diagnostic_readable must be false"
+        )
+    if selection.get("G5_sealed_final_readable") is not False:
+        errors.append(
+            "model_selection.G5_sealed_final_readable must be false"
+        )
+    if selection.get("constraint_aware") is not True:
+        errors.append("model_selection.constraint_aware must be true")
+    if selection.get("load_best") is not True:
+        errors.append("model_selection.load_best must be true")
+    if not isinstance(selection.get("positive_early_stopping_patience"), int) or (
+        selection.get("positive_early_stopping_patience", 0) < 1
+    ):
+        errors.append(
+            "model_selection.positive_early_stopping_patience must be a "
+            "positive integer"
+        )
     if errors:
         raise ValueError(
             "invalid AUTO-05R training protocol: " + "; ".join(errors)
@@ -269,8 +296,8 @@ class Trainer:
     """Epoch trainer with validation, best checkpoint, EMA, early stopping.
 
     ``fit`` accepts train/val loaders only.  A dataset that exposes the test
-    split is rejected with ``ValueError`` before any training step, enforcing
-    ``test_split_readable_during_training=false``.
+    split, the contaminated legacy diagnostic or the sealed G5 final set is
+    rejected with ``ValueError`` before any training step.
     """
 
     def __init__(
@@ -306,6 +333,7 @@ class Trainer:
                 "cuda" if torch.cuda.is_available() else "cpu"
             )
         )
+        self.model = self.model.to(self.device)
         learning_rate = float(self.config.get("learning_rate", 1e-3))
         weight_decay = float(self.config.get("weight_decay", 0.0))
         self.optimizer = torch.optim.AdamW(
@@ -345,6 +373,7 @@ class Trainer:
 
     def _apply_seed(self) -> None:
         torch = _torch()
+        os.environ.setdefault("CUBLAS_WORKSPACE_CONFIG", ":4096:8")
         random.seed(self.seed)
         np.random.seed(self.seed)
         torch.manual_seed(self.seed)
@@ -361,12 +390,18 @@ class Trainer:
     def _assert_no_test_dataset(dataset) -> None:
         split = getattr(dataset, "split", None)
         splits = getattr(dataset, "splits", None)
-        if split == "test" or (
-            splits is not None and "test" in set(splits)
+        forbidden = {
+            "test",
+            LEGACY_DIAGNOSTIC_ROLE,
+            SEALED_FINAL_ROLE,
+        }
+        if split in forbidden or (
+            splits is not None and forbidden.intersection(set(splits))
         ):
             raise ValueError(
-                "Trainer refuses datasets exposing the test split "
-                "(test_split_readable_during_training=false)"
+                "Trainer refuses datasets exposing the test split, "
+                "legacy_G4_D6_diagnostic or G5_SEALED_FINAL "
+                "(all development-unreadable)"
             )
 
     def _update_ema(self) -> None:
@@ -406,12 +441,16 @@ class Trainer:
         total = 0.0
         steps = 0
         amp_enabled = self.amp and torch.cuda.is_available()
-        scaler = torch.cuda.amp.GradScaler(enabled=amp_enabled)
+        scaler = torch.amp.GradScaler("cuda", enabled=amp_enabled)
         for inputs, targets in train_loader:
             inputs = inputs.to(self.device)
             targets = targets.to(self.device)
             self.optimizer.zero_grad(set_to_none=True)
-            with torch.cuda.amp.autocast(enabled=amp_enabled):
+            with torch.autocast(
+                device_type="cuda",
+                enabled=amp_enabled,
+                dtype=torch.float16,
+            ):
                 outputs = self.model(inputs)
                 loss = loss_fn(outputs, targets)
             scaler.scale(loss).backward()
@@ -441,7 +480,7 @@ class Trainer:
             ema_applied = True
         try:
             self.model.eval()
-            metrics = metric_fn(self.model, val_loader)
+            metrics = metric_fn(self.model, self._device_loader(val_loader))
         finally:
             if ema_applied:
                 self._restore_weights()
@@ -450,6 +489,23 @@ class Trainer:
                 f"metric_fn must return {metric_key!r}, got {sorted(metrics)}"
             )
         return metrics
+
+    def _device_loader(self, loader):
+        """Yield validation batches on the configured model device."""
+
+        def move(value):
+            if hasattr(value, "to"):
+                return value.to(self.device)
+            if isinstance(value, dict):
+                return {key: move(item) for key, item in value.items()}
+            if isinstance(value, tuple):
+                return tuple(move(item) for item in value)
+            if isinstance(value, list):
+                return [move(item) for item in value]
+            return value
+
+        for batch in loader:
+            yield move(batch)
 
     def _default_metric_fn(self, loss_fn):
         device = self.device
@@ -617,12 +673,24 @@ class HardNegativeMining:
     def mine(self, frames: Sequence[dict], infer_fn: Callable) -> dict:
         frames = list(frames)
         test_frames = [
-            frame for frame in frames if str(frame.get("split", "")).lower() == "test"
+            frame
+            for frame in frames
+            if str(frame.get("split", "")).lower() == "test"
         ]
-        if test_frames:
+        forbidden = [
+            frame
+            for frame in frames
+            if str(frame.get("split", "")) in (
+                "test",
+                LEGACY_DIAGNOSTIC_ROLE,
+                SEALED_FINAL_ROLE,
+            )
+        ]
+        if test_frames or forbidden:
             raise ValueError(
-                "hard-negative mining must never read the G4 final test "
-                f"split; found {len(test_frames)} test frames"
+                "hard-negative mining must never read the contaminated legacy "
+                "diagnostic, the G4 final test or G5_SEALED_FINAL; "
+                f"found {len(test_frames) + len(forbidden)} forbidden frames"
             )
         missing_split = [
             frame for frame in frames if "split" not in frame
@@ -694,16 +762,49 @@ class HardNegativeMining:
 
 GATE_SPECS = (
     ("discovery_recall", "discovery_recall_min", "ge"),
+    ("discovery_ap50", "discovery_ap50_min", "ge"),
+    ("discovery_precision", "discovery_precision_min", "ge"),
+    (
+        "discovery_false_proposals_per_frame",
+        "discovery_false_proposals_per_frame_max",
+        "le",
+    ),
     ("negative_fp_per_frame", "negative_fp_per_frame_max", "le"),
     ("classifier_macro_f1", "classifier_macro_f1_min", "ge"),
     ("paper_precision", "paper_precision_min", "ge"),
+    (
+        "classifier_background_specificity",
+        "classifier_background_specificity_min",
+        "ge",
+    ),
+    (
+        "classifier_hard_negative_specificity",
+        "classifier_hard_negative_specificity_min",
+        "ge",
+    ),
     ("leaf_iou", "leaf_iou_min", "ge"),
+    ("leaf_boundary_f1", "leaf_boundary_f1_min", "ge"),
+    (
+        "leaf_negative_fp_per_frame",
+        "leaf_negative_fp_per_frame_max",
+        "le",
+    ),
     ("puddle_iou", "puddle_iou_min", "ge"),
+    ("puddle_boundary_f1", "puddle_boundary_f1_min", "ge"),
+    (
+        "puddle_negative_fp_per_frame",
+        "puddle_negative_fp_per_frame_max",
+        "le",
+    ),
 )
 
 
 class MicroOverfitGate:
-    """Evaluate the frozen micro-overfit thresholds; fail on any miss."""
+    """Evaluate the frozen capacity-only micro-overfit thresholds.
+
+    Micro gates prove fitting capacity on a tiny train subset only; they are
+    explicitly not development screening and never imply a product claim.
+    """
 
     def __init__(self, thresholds: dict):
         self.thresholds = {
@@ -746,6 +847,9 @@ class MicroOverfitGate:
         return {
             "pass": bool(passed),
             "micro_overfit_pass": bool(passed),
+            "gate_kind": "capacity_only",
+            "screening_claim_allowed": False,
+            "product_claim_allowed": False,
             "gates": gates,
             "missing_thresholds": missing_thresholds,
             "status": "passed" if passed else "failed",

@@ -19,7 +19,9 @@ from .g4_data import (
     G4DiscoveryDataset,
 )
 from .g4_losses import area_loss, classifier_loss, discovery_loss
-from .g4_models import build_g4_models
+from .g4_models import build_g4_model
+from .g4_selection import ConstraintAwareSelector
+from .g4_split_policy import assert_development_rows
 
 
 SEED = 20260806
@@ -139,6 +141,8 @@ def fit_model(
     metric_key: str = "validation_loss",
     maximize: bool = False,
     load_best: bool = True,
+    selector: ConstraintAwareSelector | None = None,
+    validation_metric_fn: Callable | None = None,
 ) -> tuple[torch.nn.Module, dict]:
     _seed(seed)
     model = model.to(device)
@@ -148,18 +152,23 @@ def fit_model(
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
         optimizer, T_max=max(epochs, 1), eta_min=learning_rate * 0.05
     )
-    metric_fn = _default_metric_fn(loss_fn)
+    metric_fn = validation_metric_fn or _default_metric_fn(loss_fn)
     ema_state = None
     non_ema_state = None
     best_metric = None
     best_epoch = None
     best_state = None
+    best_selection: dict | None = None
     curves: list[dict] = []
     epochs_without_improvement = 0
     early_stopped = False
     started = time.perf_counter()
     use_amp = bool(amp and torch.cuda.is_available())
     scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
+    if selector is not None and val_loader is None:
+        raise ValueError(
+            "constraint-aware selection requires a validation loader"
+        )
 
     def update_ema() -> None:
         nonlocal ema_state
@@ -224,6 +233,12 @@ def fit_model(
                 ema_applied = True
             try:
                 metrics = metric_fn(model, val_loader, device)
+                evaluated_state = {
+                    key: value.detach().cpu().clone()
+                    for key, value in (
+                        ema_state if ema_applied else model.state_dict()
+                    ).items()
+                }
             finally:
                 if ema_applied:
                     restore_non_ema()
@@ -234,13 +249,31 @@ def fit_model(
         curves.append(curve)
         if scheduler is not None:
             scheduler.step()
-        improved = best_metric is None or (
-            value > best_metric if maximize else value < best_metric
-        )
-        if improved:
+        selected = False
+        if selector is not None:
+            verdict = selector.consider(epoch, metrics)
+            selected = bool(verdict["checkpoint_selected"])
+            curve["selection"] = {
+                "selected": bool(verdict["selected"]),
+                "checkpoint_selected": selected,
+                "product_eligible": bool(verdict["product_eligible"]),
+                "selection_score": verdict["selection_score"],
+                "selected_epoch": verdict["selected_epoch"],
+                "violated_constraints": verdict["violated_constraints"],
+            }
+            if selected:
+                best_metric = value
+                best_epoch = epoch
+                best_selection = selector.checkpoint_best()
+        else:
+            improved = best_metric is None or (
+                value > best_metric if maximize else value < best_metric
+            )
+            selected = improved
+        if selected:
             best_metric = value
             best_epoch = epoch
-            best_state = {
+            best_state = evaluated_state if val_loader is not None else {
                 key: value.detach().cpu().clone()
                 for key, value in model.state_dict().items()
             }
@@ -265,19 +298,25 @@ def fit_model(
                 "state_dict": best_state,
                 "ema_state": ema_state,
                 "seed": seed,
+                "selection": best_selection,
             },
             checkpoint_path_obj,
         )
-    return model, {
+    selection_summary = None
+    if selector is not None:
+        selection_summary = selector.best()
+    report = {
         "epochs": len(curves),
         "curves": curves,
         "best_epoch": best_epoch,
         "best_metric": best_metric,
+        "selection": selection_summary or best_selection,
         "early_stopped": early_stopped,
         "duration_s": time.perf_counter() - started,
         "device": str(device),
         "amp": use_amp,
     }
+    return model, report
 
 
 def train_discovery(
@@ -293,7 +332,12 @@ def train_discovery(
     checkpoint_path=None,
     early_stopping_patience: int = 8,
     load_best: bool = True,
+    selector: ConstraintAwareSelector | None = None,
+    validation_metric_fn: Callable | None = None,
 ) -> tuple[torch.nn.Module, dict]:
+    assert_development_rows(rows, "discovery training")
+    if val_rows is not None:
+        assert_development_rows(val_rows, "discovery validation")
     dataset = G4DiscoveryDataset(rows, instances_by_key, augment=True, seed=seed)
     loader = DataLoader(
         dataset,
@@ -308,7 +352,7 @@ def train_discovery(
             val_rows, instances_by_key, augment=False, seed=seed
         )
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    model = build_g4_models()["discovery"]
+    model = build_g4_model("discovery")
     loss_fn = lambda outputs, targets: discovery_loss(outputs, targets)["total"]
     model, report = fit_model(
         model,
@@ -322,6 +366,8 @@ def train_discovery(
         checkpoint_path=checkpoint_path,
         early_stopping_patience=early_stopping_patience,
         load_best=load_best,
+        selector=selector,
+        validation_metric_fn=validation_metric_fn,
     )
     return model, report
 
@@ -347,7 +393,7 @@ def train_discovery_crop(
         num_workers=0,
         generator=torch.Generator().manual_seed(seed),
     )
-    model = build_g4_models()["discovery"]
+    model = build_g4_model("discovery")
     loss_fn = lambda outputs, targets: discovery_loss(outputs, targets)["total"]
     model, report = fit_model(
         model,
@@ -378,7 +424,12 @@ def train_classifier(
     early_stopping_patience: int = 8,
     load_best: bool = True,
     cache_crops: bool = False,
+    selector: ConstraintAwareSelector | None = None,
+    validation_metric_fn: Callable | None = None,
 ) -> tuple[torch.nn.Module, dict]:
+    assert_development_rows(samples, "classifier training")
+    if val_samples is not None:
+        assert_development_rows(val_samples, "classifier validation")
     dataset = G4ClassifierDataset(
         samples,
         augment=True,
@@ -399,7 +450,7 @@ def train_classifier(
             batch_size=batch_size,
             shuffle=False,
         )
-    model = build_g4_models()["classifier"]
+    model = build_g4_model("classifier")
     model, report = fit_model(
         model,
         loader,
@@ -412,6 +463,8 @@ def train_classifier(
         checkpoint_path=checkpoint_path,
         early_stopping_patience=early_stopping_patience,
         load_best=load_best,
+        selector=selector,
+        validation_metric_fn=validation_metric_fn,
     )
     return model, report
 
@@ -431,9 +484,14 @@ def train_area(
     load_best: bool = True,
     cache_frames: bool = False,
     crop_mode: str = "full",
+    selector: ConstraintAwareSelector | None = None,
+    validation_metric_fn: Callable | None = None,
 ) -> tuple[torch.nn.Module, dict]:
     if task not in ("leaf", "puddle"):
         raise ValueError(f"unknown area task {task}")
+    assert_development_rows(rows, f"{task} training")
+    if val_rows is not None:
+        assert_development_rows(val_rows, f"{task} validation")
     channel = 0 if task == "leaf" else 1
     dataset = G4AreaDataset(
         rows,
@@ -462,7 +520,7 @@ def train_area(
             batch_size=batch_size,
             shuffle=False,
         )
-    model = build_g4_models()[task]
+    model = build_g4_model(task)
     loss_fn = lambda outputs, targets, boundaries: area_loss(
         outputs, targets, boundaries
     )["total"]
@@ -478,6 +536,8 @@ def train_area(
         checkpoint_path=checkpoint_path,
         early_stopping_patience=early_stopping_patience,
         load_best=load_best,
+        selector=selector,
+        validation_metric_fn=validation_metric_fn,
     )
     return model, report
 

@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-05R-P0",
+  "validated_at_utc": "2026-08-08T16:15:30Z",
+  "claim": "trustworthiness_infrastructure_only",
+  "product_model_trained": false,
+  "P4_SCREENING_PASS": false,
+  "P5_FINAL_PASS": false,
+  "windows_fast_ci": {
+    "command": "py -3 scripts/ci_fast.py",
+    "passed": 379,
+    "skipped_optional_dependency_tests": 12,
+    "exit_code": 0
+  },
+  "container_validation": {
+    "image": "tzcup/sanitation-jazzy:stage5b",
+    "image_id": "sha256:619cc00eabe35f490fdccabc486818bf72637bac1e0e19bf646e46229de3914a",
+    "gpu": "NVIDIA GeForce RTX 4080 Laptop GPU",
+    "torch": "2.5.1+cu124",
+    "torchvision": "0.20.1+cu124",
+    "onnx": "1.17.0",
+    "onnxruntime": "1.20.1",
+    "torchvision_install_scope": "temporary_validation_container_overlay",
+    "focused_model_and_onnx_tests": {
+      "passed": 24,
+      "skipped": 0,
+      "exit_code": 0
+    },
+    "fast_ci": {
+      "command": "python3 scripts/ci_fast.py",
+      "passed": 391,
+      "skipped": 0,
+      "warnings": 1,
+      "expected_warning": "legacy G4 test role renamed to contaminated non-gating diagnostic",
+      "exit_code": 0
+    }
+  },
+  "official_weight_cache": {
+    "location_policy": "repository_external_task_cache",
+    "files": [
+      {
+        "name": "resnet18-f37072fd.pth",
+        "bytes": 46830571,
+        "sha256": "f37072fd47e89c5e827621c5baffa7500819f7896bbacec160b1a16c560e07ec"
+      },
+      {
+        "name": "mobilenet_v3_small-047dcff4.pth",
+        "bytes": 10306551,
+        "sha256": "047dcff4addef86ea5bc2eff13c9614dc11f47ab1160d0a71a25e7db994f4e1f"
+      },
+      {
+        "name": "deeplabv3_resnet50_coco-cd0a2569.pth",
+        "bytes": 168312152,
+        "sha256": "cd0a25694c4a0f7106b38f4938bf90a874f2f241cc410b8f63c7024399538f06"
+      },
+      {
+        "name": "resnet50-0676ba61.pth",
+        "bytes": 102530333,
+        "sha256": "0676ba61b6795bbe1773cffd859882e5e297624d384b6993f7c9e683e722fb8a",
+        "role": "torchvision_deeplab_backbone_cache"
+      }
+    ]
+  },
+  "legacy_G4_D6_diagnostic": {
+    "contaminated": true,
+    "read_by_development_screening": false,
+    "included_in_screening_decision": false
+  },
+  "G5_SEALED_FINAL": {
+    "created": false,
+    "evaluated": false,
+    "status": "not_evaluated"
+  }
+}

@@ -78,7 +78,11 @@ def test_protocol_frozen_contract() -> None:
     assert payload["optimizer"]["name"] == "AdamW"
     assert payload["scheduler"]["name"] == "CosineAnnealingLR"
     selection = payload["model_selection"]
-    assert set(selection["allowed_splits"]) <= {"train", "val"}
+    assert set(selection["allowed_splits"]) <= {
+        "train",
+        "train_world_holdout",
+        "val",
+    }
     assert set(selection["allowed_diagnostics"]) == {
         "D1",
         "D2",
@@ -88,6 +92,11 @@ def test_protocol_frozen_contract() -> None:
     }
     assert selection["test_split_readable_during_training"] is False
     assert selection["hard_negative_mining_from_test"] is False
+    assert selection["legacy_G4_D6_diagnostic_readable"] is False
+    assert selection["G5_sealed_final_readable"] is False
+    assert selection["constraint_aware"] is True
+    assert selection["load_best"] is True
+    assert selection["positive_early_stopping_patience"] >= 1
     assert set(payload["micro_overfit"]["sample_counts"]) == {
         "discovery_frames",
         "classifier_crops",
@@ -96,12 +105,30 @@ def test_protocol_frozen_contract() -> None:
     }
     assert set(payload["micro_overfit"]["gates"]) == {
         "discovery_recall_min",
+        "discovery_ap50_min",
+        "discovery_precision_min",
+        "discovery_false_proposals_per_frame_max",
         "negative_fp_per_frame_max",
         "classifier_macro_f1_min",
         "paper_precision_min",
+        "classifier_background_specificity_min",
+        "classifier_hard_negative_specificity_min",
         "leaf_iou_min",
+        "leaf_boundary_f1_min",
+        "leaf_negative_fp_per_frame_max",
         "puddle_iou_min",
+        "puddle_boundary_f1_min",
+        "puddle_negative_fp_per_frame_max",
     }
+    assert payload["micro_overfit"]["gate_kind"] == "capacity_only"
+    assert payload["micro_overfit"]["screening_claim_allowed"] is False
+    assert payload["onnx"]["task_specific_parity_required"] is True
+    assert payload["pretrained_backbone"]["PRETRAINED_REQUIRED"] is True
+    assert payload["pretrained_backbone"]["from_scratch_control_product_ready"] is False
+    assert payload["split_policy"]["legacy_G4_D6_diagnostic"] == (
+        "contaminated_diagnostic_only"
+    )
+    assert payload["split_policy"]["G5_SEALED_FINAL"] == "sealed_not_created"
 
 
 def test_row_group_membership() -> None:
@@ -326,6 +353,31 @@ def test_hard_negative_mining_rejects_test_split() -> None:
         miner.mine(frames_missing_split, lambda frame: _fp_output())
 
 
+def test_hard_negative_mining_rejects_legacy_and_sealed() -> None:
+    miner = HardNegativeMining(max_rounds=1, top_k=1)
+    legacy = [_frame(0, "legacy_G4_D6_diagnostic")]
+    with pytest.raises(ValueError, match="legacy"):
+        miner.mine(legacy, lambda frame: _fp_output())
+    sealed = [_frame(0, "G5_SEALED_FINAL")]
+    with pytest.raises(ValueError, match="G5_SEALED_FINAL"):
+        miner.mine(sealed, lambda frame: _fp_output())
+
+
+def test_trainer_rejects_legacy_and_sealed_datasets() -> None:
+    class LegacyDataset:
+        split = "legacy_G4_D6_diagnostic"
+
+    class SealedDataset:
+        split = "G5_SEALED_FINAL"
+
+    with pytest.raises(ValueError, match="legacy_G4_D6_diagnostic"):
+        Trainer._assert_no_test_dataset(LegacyDataset())
+    with pytest.raises(ValueError, match="G5_SEALED_FINAL"):
+        Trainer._assert_no_test_dataset(SealedDataset())
+    with pytest.raises(ValueError, match="test split"):
+        Trainer._assert_no_test_dataset(type("T", (), {"split": "test"})())
+
+
 def test_hard_negative_mining_only_mines_train_val_background() -> None:
     miner = HardNegativeMining(max_rounds=3, top_k=2, seed=1)
     frames = [_frame(0, "train"), _frame(1, "train"), _frame(2, "val")]
@@ -369,14 +421,27 @@ def test_micro_overfit_gate_pass_and_fail() -> None:
     protocol = load_training_protocol(PROTOCOL)
     gate = MicroOverfitGate(protocol["micro_overfit"]["gates"])
     passing = {
-        "discovery_recall": 0.95,
+        "discovery_recall": 0.99,
+        "discovery_ap50": 0.96,
+        "discovery_precision": 0.92,
+        "discovery_false_proposals_per_frame": 0.2,
         "negative_fp_per_frame": 0.05,
-        "classifier_macro_f1": 0.97,
-        "paper_precision": 0.93,
-        "leaf_iou": 0.75,
-        "puddle_iou": 0.72,
+        "classifier_macro_f1": 0.99,
+        "paper_precision": 0.99,
+        "classifier_background_specificity": 0.99,
+        "classifier_hard_negative_specificity": 0.92,
+        "leaf_iou": 0.96,
+        "leaf_boundary_f1": 0.91,
+        "leaf_negative_fp_per_frame": 0.03,
+        "puddle_iou": 0.96,
+        "puddle_boundary_f1": 0.91,
+        "puddle_negative_fp_per_frame": 0.04,
     }
-    assert gate.evaluate(passing)["pass"] is True
+    result = gate.evaluate(passing)
+    assert result["pass"] is True
+    assert result["gate_kind"] == "capacity_only"
+    assert result["screening_claim_allowed"] is False
+    assert result["product_claim_allowed"] is False
     failing = dict(passing)
     failing["leaf_iou"] = 0.3
     assert gate.evaluate(failing)["pass"] is False

@@ -3,6 +3,19 @@ stage: AUTO-05R
 task: AUTO-05R-1
 contract_version: 1
 dataset_domain: G4_deployment_aligned_vehicle_camera_gazebo
+split_roles:
+  development_readable: [train, train_world_holdout, val, D1, D2, D3, D4, D5]
+  legacy_G4_D6_diagnostic:
+    status: contaminated_diagnostic_only
+    readable_for_development: false
+    non_gating: true
+  G5_SEALED_FINAL:
+    status: sealed_not_created
+    readable_for_development: false
+    min_unseen_worlds: 4
+    min_scenes: 100
+    min_frames: 1000
+    unlock_requires: MODEL_FREEZE.json
 description: |
   G4 数据域重构的冻结合同：只覆盖可复现的数据生成/采集/QA 基础设施。
   本任务不执行完整 300 scene / 3000 frame 真实采集，不训练模型，
@@ -116,6 +129,8 @@ data_contract:
     - /ground_truth/instance/image
   legacy_g3_test_used_as_selection: false
   test_used_for_model_selection: false
+  legacy_G4_D6_diagnostic_used_for_model_selection: false
+  G5_sealed_final_readable_during_development: false
   G4_dataset_gate_pass: false
   full_capture_executed: false
 qa_gates:

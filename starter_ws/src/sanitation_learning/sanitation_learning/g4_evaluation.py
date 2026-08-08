@@ -28,6 +28,7 @@ from .g4_data import (
     read_rgb,
     square_crop,
 )
+from .g4_geometry import bbox_model_to_native
 
 
 def discovery_predictions(
@@ -371,14 +372,14 @@ def torch_sigmoid(value):
 
 
 def detection_to_native_bbox(
-    bbox_xyxy: list[float], model_size=DISCOVERY_MODEL_SIZE
+    bbox_xyxy: list[float],
+    model_size=DISCOVERY_MODEL_SIZE,
+    native_size=(640, 480),
 ) -> tuple[float, float, float, float]:
-    x1, y1, x2, y2 = bbox_xyxy
-    return (
-        x1 * 640.0 / model_size[0],
-        y1 * 480.0 / model_size[1],
-        x2 * 640.0 / model_size[0],
-        y2 * 480.0 / model_size[1],
+    return bbox_model_to_native(
+        tuple(float(value) for value in bbox_xyxy),
+        native_size=native_size,
+        model_size=model_size,
     )
 
 
@@ -390,7 +391,11 @@ def classifier_crop_for_detection(
     scale: float = 3.0,
 ) -> np.ndarray:
     height, width = rgb.shape[:2]
-    native = detection_to_native_bbox(detection_bbox_model)
+    native = detection_to_native_bbox(
+        detection_bbox_model,
+        model_size=DISCOVERY_MODEL_SIZE,
+        native_size=(width, height),
+    )
     crop = square_crop(width, height, native, scale=scale, minimum_side=48)
     left, top, right, bottom = crop
     return cv2.resize(
@@ -627,10 +632,16 @@ def discovery_metrics(frames: list[dict]) -> dict:
             negative_frames += 1
             negative_fp_frames += int(frame_fp > 0)
     duration_minutes = max(len(frames) / 10.0 / 60.0, 1e-9)
+    total_detections = matched_truth + total_false_positives
+    ap50 = average_precision(frames)
     return {
         "all_gt_candidate_recall": matched_truth / max(total_truth, 1),
         "matched_truth": matched_truth,
         "total_truth": total_truth,
+        "ap50": ap50,
+        "precision": matched_truth / max(total_detections, 1),
+        "false_proposals_per_frame": total_false_positives
+        / max(len(frames), 1),
         "total_false_positives": total_false_positives,
         "negative_only_frames": negative_frames,
         "negative_only_fp_frames": negative_fp_frames,
@@ -638,6 +649,80 @@ def discovery_metrics(frames: list[dict]) -> dict:
         / max(negative_frames, 1),
         "false_candidates_per_min": total_false_positives / duration_minutes,
     }
+
+
+def average_precision(frames: list[dict], iou_threshold: float = 0.5) -> float:
+    """VOC-style interpolated AP50 over discovery candidate frames."""
+    records: list[tuple[float, bool]] = []
+    total_truth = 0
+    for frame in frames:
+        truth = frame["truth"]
+        total_truth += len(truth)
+        used_truth: set[int] = set()
+        detections = sorted(
+            frame["detections"],
+            key=lambda item: float(item["score"]),
+            reverse=True,
+        )
+        for detection in detections:
+            best_iou = 0.0
+            best_index = -1
+            for index, item in enumerate(truth):
+                if index in used_truth:
+                    continue
+                iou = box_iou(
+                    tuple(float(value) for value in detection["bbox_xyxy"]),
+                    tuple(float(value) for value in item["bbox_xyxy"]),
+                )
+                if iou > best_iou:
+                    best_iou = iou
+                    best_index = index
+            if best_index >= 0 and best_iou >= iou_threshold:
+                used_truth.add(best_index)
+                records.append((float(detection["score"]), True))
+            else:
+                records.append((float(detection["score"]), False))
+    if not records:
+        return 0.0
+    records.sort(key=lambda item: item[0], reverse=True)
+    true_positive = 0
+    false_positive = 0
+    recalls: list[float] = []
+    precisions: list[float] = []
+    for _, is_true in records:
+        true_positive += int(is_true)
+        false_positive += int(not is_true)
+        precisions.append(
+            true_positive / max(true_positive + false_positive, 1)
+        )
+        recalls.append(true_positive / max(total_truth, 1))
+    recalls = [0.0] + recalls + [1.0]
+    precisions = [0.0] + precisions + [0.0]
+    for index in range(len(precisions) - 2, -1, -1):
+        precisions[index] = max(precisions[index], precisions[index + 1])
+    levels = np.linspace(0.0, 1.0, 101)
+    total = 0.0
+    for level in levels:
+        eligible = [
+            precision
+            for recall, precision in zip(recalls, precisions)
+            if recall >= level
+        ]
+        total += max(eligible, default=0.0)
+    return float(total / len(levels))
+
+
+def background_specificity(confusion: dict) -> float:
+    """Fraction of true background samples correctly rejected as background.
+
+    In the four-class confusion mapping, true background/negative examples
+    predicted as background are stored as the background class ``tp`` and
+    background examples hallucinated as a garbage class are its ``fn``.
+    """
+    per_class = confusion["background"]
+    true_positive = int(per_class["tp"])
+    false_negative = int(per_class["fn"])
+    return true_positive / max(true_positive + false_negative, 1)
 
 
 def area_predictions(
@@ -664,8 +749,9 @@ def area_predictions(
                 tensor = torch_from_numpy(
                     np.ascontiguousarray(inputs.transpose(2, 0, 1)[None], dtype=np.float32)
                 ).to(device)
-                logits = model(tensor)["logits"][0].cpu().numpy()
-                boundary = model(tensor)["boundary_logits"][0].cpu().numpy()
+                model_output = model(tensor)
+                logits = model_output["logits"][0].cpu().numpy()
+                boundary = model_output["boundary_logits"][0].cpu().numpy()
                 probabilities = 1.0 / (1.0 + np.exp(-logits))
                 boundary_probabilities = 1.0 / (1.0 + np.exp(-boundary))
                 if probabilities.ndim == 3 and probabilities.shape[0] == 1:
@@ -751,8 +837,9 @@ def area_crop_predictions(
                         inputs.transpose(2, 0, 1)[None], dtype=np.float32
                     )
                 ).to(device)
-                logits = model(tensor)["logits"][0].cpu().numpy()
-                boundary = model(tensor)["boundary_logits"][0].cpu().numpy()
+                model_output = model(tensor)
+                logits = model_output["logits"][0].cpu().numpy()
+                boundary = model_output["boundary_logits"][0].cpu().numpy()
                 probabilities = 1.0 / (1.0 + np.exp(-logits))
                 boundary_probabilities = 1.0 / (1.0 + np.exp(-boundary))
                 zeros = np.zeros_like(probabilities)
@@ -1003,9 +1090,11 @@ def evaluate_pipeline(
 
 
 __all__ = [
+    "average_precision",
     "area_crop_predictions",
     "area_metrics",
     "area_predictions",
+    "background_specificity",
     "classifier_crop_for_detection",
     "classify_detections",
     "discovery_metrics",

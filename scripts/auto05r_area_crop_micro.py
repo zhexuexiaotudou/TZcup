@@ -258,6 +258,8 @@ def _evaluate(model, dataset: AreaCropDataset, device) -> dict:
     for threshold in (0.25, 0.35, 0.45, 0.5, 0.55, 0.65, 0.75):
         intersections = 0
         unions = 0
+        boundary_intersections = 0
+        boundary_unions = 0
         negative_frames = 0
         negative_fp_frames = 0
         for probability, truth, negative in zip(
@@ -266,6 +268,10 @@ def _evaluate(model, dataset: AreaCropDataset, device) -> dict:
             predicted = (probability >= threshold).astype(bool)
             intersections += int((predicted & truth).sum())
             unions += int((predicted | truth).sum())
+            predicted_edge = mask_boundary(predicted) > 0
+            truth_edge = mask_boundary(truth) > 0
+            boundary_intersections += int((predicted_edge & truth_edge).sum())
+            boundary_unions += int((predicted_edge | truth_edge).sum())
             if negative:
                 negative_frames += 1
                 count, _, stats, _ = cv2.connectedComponentsWithStats(
@@ -275,12 +281,20 @@ def _evaluate(model, dataset: AreaCropDataset, device) -> dict:
                 negative_fp_frames += int(false)
         iou = intersections / max(unions, 1)
         neg_fp = negative_fp_frames / max(negative_frames, 1)
-        if iou >= 0.95 and neg_fp <= 0.05:
-            if best is None or iou > best["iou"]:
+        boundary_f1 = 2 * boundary_intersections / max(
+            boundary_intersections + boundary_unions, 1
+        )
+        if iou >= 0.95 and neg_fp <= 0.05 and boundary_f1 >= 0.90:
+            if (
+                best is None
+                or iou > best["iou"]
+                or (iou == best["iou"] and boundary_f1 > best["boundary_f1"])
+            ):
                 best = {
                     "iou": iou,
                     "intersection_pixels": intersections,
                     "union_pixels": unions,
+                    "boundary_f1": boundary_f1,
                     "negative_only_frames": negative_frames,
                     "negative_only_fp_frames": negative_fp_frames,
                     "negative_fp_per_frame": neg_fp,
@@ -290,6 +304,8 @@ def _evaluate(model, dataset: AreaCropDataset, device) -> dict:
         threshold = 0.5
         intersections = 0
         unions = 0
+        boundary_intersections = 0
+        boundary_unions = 0
         negative_frames = 0
         negative_fp_frames = 0
         for probability, truth, negative in zip(
@@ -298,6 +314,10 @@ def _evaluate(model, dataset: AreaCropDataset, device) -> dict:
             predicted = (probability >= threshold).astype(bool)
             intersections += int((predicted & truth).sum())
             unions += int((predicted | truth).sum())
+            predicted_edge = mask_boundary(predicted) > 0
+            truth_edge = mask_boundary(truth) > 0
+            boundary_intersections += int((predicted_edge & truth_edge).sum())
+            boundary_unions += int((predicted_edge | truth_edge).sum())
             if negative:
                 negative_frames += 1
                 count, _, stats, _ = cv2.connectedComponentsWithStats(
@@ -309,6 +329,9 @@ def _evaluate(model, dataset: AreaCropDataset, device) -> dict:
             "iou": intersections / max(unions, 1),
             "intersection_pixels": intersections,
             "union_pixels": unions,
+            "boundary_f1": 2 * boundary_intersections / max(
+                boundary_intersections + boundary_unions, 1
+            ),
             "negative_only_frames": negative_frames,
             "negative_only_fp_frames": negative_fp_frames,
             "negative_fp_per_frame": negative_fp_frames / max(negative_frames, 1),
@@ -399,6 +422,7 @@ def main() -> int:
     metrics = _evaluate(model, dataset, device)
     gates = {
         f"{args.task}_iou": metrics["iou"] >= 0.95,
+        f"{args.task}_boundary_f1": metrics["boundary_f1"] >= 0.90,
         "negative_fp_per_frame": metrics["negative_fp_per_frame"] <= 0.05,
     }
     report = {
@@ -409,6 +433,9 @@ def main() -> int:
         "micro_mode": "square_crop_256",
         "executed": True,
         "micro_overfit_pass": bool(gates and all(gates.values())),
+        "gate_kind": "capacity_only",
+        "screening_claim_allowed": False,
+        "product_claim_allowed": False,
         "metrics": metrics,
         "gates": gates,
         "positive_samples": sum(

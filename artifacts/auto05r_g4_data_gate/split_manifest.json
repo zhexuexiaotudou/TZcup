@@ -1,0 +1,64 @@
+{
+  "historical_data_gate_test_used_for_model_selection": false,
+  "historical_split_manifest": {
+    "frame_counts": {
+      "test": 500,
+      "train": 2000,
+      "val": 500
+    },
+    "scene_counts": {
+      "test": 50,
+      "train": 200,
+      "val": 50
+    },
+    "schema_version": 2,
+    "split_worlds": {
+      "test": [
+        "world_g4_11_brick_market_street",
+        "world_g4_12_smooth_industrial_floor"
+      ],
+      "train": [
+        "world_g4_01_asphalt_campus",
+        "world_g4_02_concrete_sidewalk",
+        "world_g4_03_wet_courtyard",
+        "world_g4_04_cobblestone_arcade",
+        "world_g4_05_red_brick_promenade",
+        "world_g4_06_tiled_plaza",
+        "world_g4_07_service_road",
+        "world_g4_08_mixed_curb_vegetation"
+      ],
+      "val": [
+        "world_g4_09_light_paver_pedestrian",
+        "world_g4_10_dark_gravel_parking"
+      ]
+    },
+    "test_used_for_model_selection": false
+  },
+  "post_capture_contamination": {
+    "allowed_in_current_development_screening": false,
+    "historical_screening_attempts_that_read_legacy": 2,
+    "legacy_G4_D6_contaminated": true,
+    "used_in_historical_screening_pass_fail": true
+  },
+  "role_rename": {
+    "test": "legacy_G4_D6_diagnostic"
+  },
+  "roles": {
+    "legacy_G4_D6_diagnostic": {
+      "frames": 500,
+      "negative_only_frames": 140,
+      "tf_valid_frames": 500
+    },
+    "train": {
+      "frames": 2000,
+      "negative_only_frames": 560,
+      "tf_valid_frames": 2000
+    },
+    "val": {
+      "frames": 500,
+      "negative_only_frames": 160,
+      "tf_valid_frames": 500
+    }
+  },
+  "schema_version": 1
+}

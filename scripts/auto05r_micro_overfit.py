@@ -105,6 +105,8 @@ def _select_rows(
 def _classifier_metrics(model, samples: list[dict], device) -> dict:
     model.eval()
     confusion = {name: {"tp": 0, "fp": 0, "fn": 0} for name in CLASSIFIER_CLASSES}
+    hard_negative_total = 0
+    hard_negative_misclassified = 0
     with torch.no_grad():
         for sample in samples:
             crop = load_classifier_crop(sample, CLASSIFIER_MODEL_SIZE)
@@ -120,6 +122,9 @@ def _classifier_metrics(model, samples: list[dict], device) -> dict:
             else:
                 confusion[CLASSIFIER_CLASSES[predicted]]["fp"] += 1
                 confusion[CLASSIFIER_CLASSES[truth]]["fn"] += 1
+            if sample.get("hard_negative"):
+                hard_negative_total += 1
+                hard_negative_misclassified += int(predicted != 0)
     per_class = {}
     for name in CLASSIFIER_CLASSES:
         tp = confusion[name]["tp"]
@@ -140,10 +145,20 @@ def _classifier_metrics(model, samples: list[dict], device) -> dict:
     macro_f1 = float(
         np.mean([per_class[name]["f1"] for name in positive_classes])
     )
+    background = per_class["background"]
     return {
         "per_class": per_class,
         "macro_f1": macro_f1,
         "paper_precision": per_class["paper_litter"]["precision"],
+        "background_specificity": background["tp"]
+        / max(background["tp"] + background["fn"], 1),
+        "hard_negative_specificity": (
+            1.0
+            - hard_negative_misclassified / max(hard_negative_total, 1)
+            if hard_negative_total
+            else 0.0
+        ),
+        "hard_negative_samples": hard_negative_total,
         "sample_count": len(samples),
     }
 
@@ -280,6 +295,9 @@ def run_micro(
         "model_type": model_type,
         "executed": True,
         "micro_overfit_pass": False,
+        "gate_kind": "capacity_only",
+        "screening_claim_allowed": False,
+        "product_claim_allowed": False,
         "device": str(device),
         "data_root": str(data_root),
         "train_rows_available": len(train_rows),
@@ -324,7 +342,14 @@ def run_micro(
         )
         gates = {
             "discovery_recall": metrics["all_gt_candidate_recall"] >= 0.98,
-            "negative_fp_per_frame": metrics["negative_only_fp_per_frame"] <= 0.05,
+            "discovery_ap50": metrics["ap50"] >= 0.95,
+            "discovery_precision": metrics["precision"] >= 0.90,
+            "discovery_false_proposals_per_frame": metrics[
+                "false_proposals_per_frame"
+            ]
+            <= 0.50,
+            "negative_fp_per_frame": metrics["negative_only_fp_per_frame"]
+            <= 0.05,
         }
         report.update(
             {
@@ -381,6 +406,14 @@ def run_micro(
         gates = {
             "classifier_macro_f1": metrics["macro_f1"] >= 0.98,
             "paper_precision": metrics["paper_precision"] >= 0.98,
+            "classifier_background_specificity": metrics[
+                "background_specificity"
+            ]
+            >= 0.98,
+            "classifier_hard_negative_specificity": metrics[
+                "hard_negative_specificity"
+            ]
+            >= 0.90,
             "background_samples": metrics["per_class"]["background"]["tp"]
             + metrics["per_class"]["background"]["fn"]
             >= 100,

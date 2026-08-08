@@ -17,6 +17,11 @@ import cv2
 import numpy as np
 
 from .auto04_contract import box_iou, encode_centernet_targets
+from .g4_geometry import (
+    bbox_native_to_model,
+    flip_bbox_horizontal,
+    remap_flipped_box,
+)
 from .ground_geometry import GroundGeometryEstimator
 
 
@@ -61,14 +66,20 @@ def load_camera_info(row: dict) -> dict:
 
 
 def load_frame_rows(
-    manifest_path: str | Path, data_root: str | Path | None = None
+    manifest_path: str | Path,
+    data_root: str | Path | None = None,
+    *,
+    allowed_splits: Iterable[str] | None = None,
 ) -> list[dict]:
     root = Path(data_root) if data_root is not None else None
+    allowed = set(allowed_splits) if allowed_splits is not None else None
     rows: list[dict] = []
     for line in Path(manifest_path).read_text(encoding="utf-8").splitlines():
         if not line.strip():
             continue
         row = json.loads(line)
+        if allowed is not None and row.get("split") not in allowed:
+            continue
         if root is not None:
             for key in ("rgb_path", "depth_path", "semantic_path", "instance_path"):
                 row[key] = root / row[key]
@@ -76,11 +87,26 @@ def load_frame_rows(
     return rows
 
 
-def load_instance_records(instance_path: str | Path) -> list[dict]:
+def load_instance_records(
+    instance_path: str | Path,
+    *,
+    allowed_frame_keys: Iterable[tuple[int, int]] | None = None,
+) -> list[dict]:
+    allowed = (
+        set(allowed_frame_keys)
+        if allowed_frame_keys is not None
+        else None
+    )
     records: list[dict] = []
     for line in Path(instance_path).read_text(encoding="utf-8").splitlines():
         if line.strip():
-            records.append(json.loads(line))
+            record = json.loads(line)
+            key = (
+                int(record["scene_seed"]),
+                int(record["frame_index"]),
+            )
+            if allowed is None or key in allowed:
+                records.append(record)
     return records
 
 
@@ -143,15 +169,14 @@ def discrete_boxes_for_frame(
     records = instances_by_key.get(
         (int(row["scene_seed"]), int(row["frame_index"])), []
     )
-    scale_x = model_size[0] / native_size[0]
-    scale_y = model_size[1] / native_size[1]
     boxes: list[dict] = []
     for record in records:
         if record.get("semantic_class") not in DISCRETE_NAMES:
             continue
         native_bbox = tuple(float(value) for value in record["bbox_xyxy_px"])
-        x1, y1, x2, y2 = native_bbox
-        model_bbox = (x1 * scale_x, y1 * scale_y, x2 * scale_x, y2 * scale_y)
+        model_bbox = bbox_native_to_model(
+            native_bbox, native_size, model_size
+        )
         boxes.append(
             {
                 "class_index": DISCRETE_TO_CLASS[record["semantic_class"]],
@@ -422,6 +447,10 @@ def build_classifier_samples(
                         "crop": crop,
                         "label": CLASSIFIER_CLASSES.index(class_name),
                         "class_name": class_name,
+                        "split": row.get("split", "train"),
+                        "scene_seed": int(row.get("scene_seed", 0)),
+                        "frame_index": int(row.get("frame_index", 0)),
+                        "hard_negative": False,
                     }
                 )
         crop_count = background_per_positive if boxes else negative_only_per_frame
@@ -439,6 +468,12 @@ def build_classifier_samples(
                     "crop": crop,
                     "label": 0,
                     "class_name": "background",
+                    "split": row.get("split", "train"),
+                    "scene_seed": int(row.get("scene_seed", 0)),
+                    "frame_index": int(row.get("frame_index", 0)),
+                    "hard_negative": bool(
+                        row.get("paper_like_hard_negative", False)
+                    ),
                 }
             )
     samples = negatives
@@ -661,7 +696,13 @@ class G4DiscoveryDataset:
         torch = _torch()
         row = self.rows[index]
         rgb, depth, semantic, instance = read_frame(row)
-        boxes = discrete_boxes_for_frame(row, self.instances_by_key)
+        native_size = (int(rgb.shape[1]), int(rgb.shape[0]))
+        boxes = discrete_boxes_for_frame(
+            row,
+            self.instances_by_key,
+            native_size=native_size,
+            model_size=DISCOVERY_MODEL_SIZE,
+        )
         rng = random.Random(self.seed + index * 7919 + self.epoch * 104729)
         flip = self.augment and rng.random() < 0.5
         if flip:
@@ -669,15 +710,14 @@ class G4DiscoveryDataset:
             depth = np.ascontiguousarray(depth[:, ::-1])
             semantic = np.ascontiguousarray(semantic[:, ::-1])
             instance = np.ascontiguousarray(instance[:, ::-1])
-            for box in boxes:
-                x1, y1, x2, y2 = box["native_bbox_xyxy"]
-                box["native_bbox_xyxy"] = [640.0 - x2, y1, 640.0 - x1, y2]
-                box["bbox_xyxy"] = [
-                    (640.0 - x2) * 384.0 / 640.0,
-                    y1 * 512.0 / 480.0,
-                    (640.0 - x1) * 384.0 / 640.0,
-                    y2 * 512.0 / 480.0,
-                ]
+            boxes = [
+                remap_flipped_box(
+                    box,
+                    native_size=native_size,
+                    model_size=DISCOVERY_MODEL_SIZE,
+                )
+                for box in boxes
+            ]
         resized = cv2.resize(rgb, DISCOVERY_MODEL_SIZE, interpolation=cv2.INTER_AREA)
         image = resized.astype(np.float32) / 255.0
         if self.augment:
@@ -879,6 +919,9 @@ __all__ = [
     "load_scene_manifests",
     "mask_boundary",
     "normalize_depth",
+    "bbox_native_to_model",
+    "flip_bbox_horizontal",
+    "remap_flipped_box",
     "read_frame",
     "read_rgb",
     "square_crop",

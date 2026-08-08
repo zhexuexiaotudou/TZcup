@@ -27,6 +27,13 @@ from typing import Any
 import numpy as np
 
 from .auto04_contract import box_iou, decode_centernet_outputs
+from .g4_onnx_parity import task_specific_parity
+from .g4_pretrained import (
+    from_scratch_control_record,
+    pretrained_backbone_spec,
+    provenance_record,
+    torchvision_cache_path,
+)
 
 
 DISCOVERY_INPUT_SHAPE = (1, 3, 480, 640)
@@ -145,14 +152,30 @@ def _model_classes() -> dict[str, type]:
     class _DiscoveryResNetBackbone(nn.Module):
         """ResNet18 stride-4/8 features for the discovery detector."""
 
-        def __init__(self, base: int = 48):
+        def __init__(self, base: int = 48, from_scratch_control: bool = False):
             super().__init__()
             import torchvision
 
-            try:
-                resnet = torchvision.models.resnet18(pretrained=True)
-            except Exception:
-                resnet = torchvision.models.resnet18(pretrained=False)
+            weights_enum = torchvision.models.ResNet18_Weights.IMAGENET1K_V1
+            if from_scratch_control:
+                resnet = torchvision.models.resnet18(weights=None)
+                self.provenance = from_scratch_control_record("resnet18")
+            else:
+                try:
+                    resnet = torchvision.models.resnet18(
+                        weights=weights_enum
+                    )
+                except Exception as exc:
+                    raise RuntimeError(
+                        "official pretrained ResNet18 weights are required "
+                        "(PRETRAINED_REQUIRED=true) but could not be acquired; "
+                        "from_scratch_control is the only labelled ablation"
+                    ) from exc
+                self.provenance = provenance_record(
+                    "resnet18",
+                    cache_path=torchvision_cache_path("resnet18"),
+                    torchvision_version=torchvision.__version__,
+                )
             self.stem = nn.Sequential(
                 resnet.conv1,
                 resnet.bn1,
@@ -192,7 +215,9 @@ def _model_classes() -> dict[str, type]:
         output_names = ("objectness_logits", "offset", "bbox_size")
         output_channels = {"objectness_logits": 1, "offset": 2, "bbox_size": 2}
 
-        def __init__(self, base: int = 48):
+        def __init__(
+            self, base: int = 48, from_scratch_control: bool = False
+        ):
             super().__init__()
             try:
                 import torchvision  # noqa: F401
@@ -200,8 +225,16 @@ def _model_classes() -> dict[str, type]:
                 torchvision_available = True
             except Exception:
                 torchvision_available = False
+            if not torchvision_available and not from_scratch_control:
+                raise RuntimeError(
+                    "torchvision is required for the production discovery "
+                    "backbone (PRETRAINED_REQUIRED=true)"
+                )
             self.backbone = (
-                _DiscoveryResNetBackbone(base=base)
+                _DiscoveryResNetBackbone(
+                    base=base,
+                    from_scratch_control=from_scratch_control,
+                )
                 if torchvision_available
                 else _FPNBackbone(base=base)
             )
@@ -225,7 +258,7 @@ def _model_classes() -> dict[str, type]:
             }
 
     class CandidateCropClassifier(_FlatOutputMixin, nn.Module):
-        """Four-class crop classifier with a global-pool classification head."""
+        """Four-class classifier on an official MobileNetV3-small backbone."""
 
         task = "classifier"
         model_id = "g4_candidate_crop_classifier_v1"
@@ -234,30 +267,57 @@ def _model_classes() -> dict[str, type]:
         output_names = ("logits",)
         output_channels = {"logits": len(CLASSIFIER_CLASSES)}
 
-        def __init__(self, base: int = 48):
+        def __init__(
+            self, base: int = 48, from_scratch_control: bool = False
+        ):
             super().__init__()
-            self.features = nn.Sequential(
-                _ConvBnReLU(3, base, 3, 2, 1),
-                _ConvBnReLU(base, base * 2, 3, 2, 1),
-                _ConvBnReLU(base * 2, base * 4, 3, 2, 1),
-                _ConvBnReLU(base * 4, base * 4, 3, 1, 1),
+            import torchvision
+
+            self.from_scratch_control = bool(from_scratch_control)
+            weights_enum = (
+                torchvision.models.MobileNet_V3_Small_Weights.IMAGENET1K_V1
             )
-            self.pool = nn.AdaptiveAvgPool2d(1)
-            self.head = nn.Sequential(
-                nn.Flatten(),
-                nn.Linear(base * 4, base * 4),
-                nn.ReLU(inplace=False),
-                nn.Dropout(0.3),
-                nn.Linear(base * 4, len(CLASSIFIER_CLASSES)),
+            if from_scratch_control:
+                mobilenet = torchvision.models.mobilenet_v3_small(weights=None)
+                self.provenance = from_scratch_control_record(
+                    "mobilenet_v3_small"
+                )
+            else:
+                try:
+                    mobilenet = torchvision.models.mobilenet_v3_small(
+                        weights=weights_enum
+                    )
+                except Exception as exc:
+                    raise RuntimeError(
+                        "official MobileNetV3-small weights are required for "
+                        "the crop classifier (PRETRAINED_REQUIRED=true)"
+                    ) from exc
+                self.provenance = provenance_record(
+                    "mobilenet_v3_small",
+                    cache_path=torchvision_cache_path("mobilenet_v3_small"),
+                    torchvision_version=torchvision.__version__,
+                )
+            self.features = mobilenet.features
+            self.pool = mobilenet.avgpool
+            in_features = mobilenet.classifier[-1].in_features
+            mobilenet.classifier[-1] = nn.Linear(
+                in_features, len(CLASSIFIER_CLASSES)
             )
+            self.head = mobilenet.classifier
 
         def forward(self, crop):
-            return self.head(self.pool(self.features(crop)))
+            features = self.pool(self.features(crop))
+            return self.head(torch.flatten(features, 1))
 
     class _AreaEncoder(nn.Module):
         """RGB-D encoder with pretrained ResNet18 when torchvision is present."""
 
-        def __init__(self, in_channels: int = 10, base: int = 24):
+        def __init__(
+            self,
+            in_channels: int = 10,
+            base: int = 24,
+            from_scratch_control: bool = False,
+        ):
             super().__init__()
             self.base = base
             self.use_resnet = False
@@ -266,10 +326,27 @@ def _model_classes() -> dict[str, type]:
             except Exception:
                 torchvision = None
             if torchvision is not None:
-                try:
-                    resnet = torchvision.models.resnet18(pretrained=True)
-                except Exception:
-                    resnet = torchvision.models.resnet18(pretrained=False)
+                weights_enum = (
+                    torchvision.models.ResNet18_Weights.IMAGENET1K_V1
+                )
+                if from_scratch_control:
+                    resnet = torchvision.models.resnet18(weights=None)
+                    self.provenance = from_scratch_control_record("resnet18")
+                else:
+                    try:
+                        resnet = torchvision.models.resnet18(
+                            weights=weights_enum
+                        )
+                    except Exception as exc:
+                        raise RuntimeError(
+                            "official pretrained ResNet18 weights are required "
+                            "for the area encoder (PRETRAINED_REQUIRED=true)"
+                        ) from exc
+                    self.provenance = provenance_record(
+                        "resnet18",
+                        cache_path=torchvision_cache_path("resnet18"),
+                        torchvision_version=torchvision.__version__,
+                    )
                 pretrained_conv = resnet.conv1
                 first_conv = nn.Conv2d(
                     in_channels,
@@ -304,6 +381,11 @@ def _model_classes() -> dict[str, type]:
                 self.out_channels = base * 8
                 self.use_resnet = True
             else:
+                if not from_scratch_control:
+                    raise RuntimeError(
+                        "torchvision is required for the production area "
+                        "encoder (PRETRAINED_REQUIRED=true)"
+                    )
                 self.stem = _ConvBnReLU(in_channels, base, 3, 2, 1)
                 self.enc1 = _ConvBnReLU(base, base * 2, 3, 2, 1)
                 self.enc2 = _ConvBnReLU(base * 2, base * 4, 3, 2, 1)
@@ -427,11 +509,23 @@ def _model_classes() -> dict[str, type]:
         output_names = ("logits", "boundary_logits")
         output_channels = {"logits": 1, "boundary_logits": 1}
 
-        def __init__(self, encoder=None, base: int = 24):
+        def __init__(
+            self,
+            encoder=None,
+            base: int = 24,
+            from_scratch_control: bool = False,
+        ):
             super().__init__()
-            self.encoder = encoder if encoder is not None else _AreaEncoder(base=base)
+            self.encoder = (
+                encoder
+                if encoder is not None
+                else _AreaEncoder(
+                    base=base, from_scratch_control=from_scratch_control
+                )
+            )
             self.decoder = _AreaDecoder(self.encoder.out_channels, base=base)
             self.boundary_head = _BoundaryHead(base)
+            self.provenance = getattr(self.encoder, "provenance", None)
 
         def forward(self, rgbd):
             features = self.encoder(rgbd)
@@ -459,21 +553,40 @@ def _model_classes() -> dict[str, type]:
         output_names = ("logits", "boundary_logits")
         output_channels = {"logits": 1, "boundary_logits": 1}
 
-        def __init__(self):
+        def __init__(self, from_scratch_control: bool = False):
             super().__init__()
             import torchvision
 
-            try:
-                self.deeplab = torchvision.models.segmentation.deeplabv3_resnet50(
-                    weights=(
-                        torchvision.models.segmentation
-                        .DeepLabV3_ResNet50_Weights
-                        .COCO_WITH_VOC_LABELS_V1
-                    )
-                )
-            except Exception:
+            weights_enum = (
+                torchvision.models.segmentation
+                .DeepLabV3_ResNet50_Weights
+                .COCO_WITH_VOC_LABELS_V1
+            )
+            if from_scratch_control:
                 self.deeplab = torchvision.models.segmentation.deeplabv3_resnet50(
                     weights=None
+                )
+                self.provenance = from_scratch_control_record(
+                    "deeplabv3_resnet50"
+                )
+            else:
+                try:
+                    self.deeplab = (
+                        torchvision.models.segmentation.deeplabv3_resnet50(
+                            weights=weights_enum
+                        )
+                    )
+                except Exception as exc:
+                    raise RuntimeError(
+                        "official DeepLabV3-ResNet50 pretrained weights are "
+                        "required (PRETRAINED_REQUIRED=true)"
+                    ) from exc
+                self.provenance = provenance_record(
+                    "deeplabv3_resnet50",
+                    cache_path=torchvision_cache_path(
+                        "deeplabv3_resnet50"
+                    ),
+                    torchvision_version=torchvision.__version__,
                 )
             pretrained_conv = self.deeplab.backbone.conv1
             first_conv = nn.Conv2d(
@@ -544,8 +657,15 @@ def __getattr__(name: str):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-def build_g4_models(shared_encoder: bool = False) -> dict:
-    """Build the four G4 models; ``shared_encoder`` shares only the encoder."""
+def build_g4_models(
+    shared_encoder: bool = False, from_scratch_control: bool = False
+) -> dict:
+    """Build the four G4 models.
+
+    ``shared_encoder`` shares only the area encoder.  Production candidates
+    use official pretrained weights; ``from_scratch_control`` is an explicitly
+    labelled ablation that can never produce product-ready status.
+    """
     classes = _model_classes()
     try:
         import torchvision  # noqa: F401
@@ -554,21 +674,74 @@ def build_g4_models(shared_encoder: bool = False) -> dict:
     except Exception:
         torchvision_available = False
     models = {
-        "discovery": classes["DiscoveryDetector"](),
-        "classifier": classes["CandidateCropClassifier"](),
+        "discovery": classes["DiscoveryDetector"](
+            from_scratch_control=from_scratch_control
+        ),
+        "classifier": classes["CandidateCropClassifier"](
+            from_scratch_control=from_scratch_control
+        ),
     }
     if shared_encoder:
-        encoder = classes["_AreaEncoder"]()
+        encoder = classes["_AreaEncoder"](
+            from_scratch_control=from_scratch_control
+        )
         models["leaf"] = classes["LeafSegmenter"](encoder=encoder)
         models["puddle"] = classes["PuddleSegmenter"](encoder=encoder)
     else:
         if torchvision_available:
-            models["leaf"] = classes["DeepLabLeafSegmenter"]()
-            models["puddle"] = classes["DeepLabPuddleSegmenter"]()
+            models["leaf"] = classes["DeepLabLeafSegmenter"](
+                from_scratch_control=from_scratch_control
+            )
+            models["puddle"] = classes["DeepLabPuddleSegmenter"](
+                from_scratch_control=from_scratch_control
+            )
         else:
-            models["leaf"] = classes["LeafSegmenter"]()
-            models["puddle"] = classes["PuddleSegmenter"]()
+            if not from_scratch_control:
+                raise RuntimeError(
+                    "torchvision is required for production area segmenters "
+                    "(PRETRAINED_REQUIRED=true)"
+                )
+            models["leaf"] = classes["LeafSegmenter"](
+                from_scratch_control=True
+            )
+            models["puddle"] = classes["PuddleSegmenter"](
+                from_scratch_control=True
+            )
     return models
+
+
+def build_g4_model(
+    task: str,
+    *,
+    from_scratch_control: bool = False,
+):
+    """Build one task model without instantiating unrelated backbones."""
+    classes = _model_classes()
+    if task == "discovery":
+        return classes["DiscoveryDetector"](
+            from_scratch_control=from_scratch_control
+        )
+    if task == "classifier":
+        return classes["CandidateCropClassifier"](
+            from_scratch_control=from_scratch_control
+        )
+    if task not in ("leaf", "puddle"):
+        raise ValueError(f"unknown G4 model task {task!r}")
+    class_name = (
+        "DeepLabLeafSegmenter" if task == "leaf" else "DeepLabPuddleSegmenter"
+    )
+    try:
+        import torchvision  # noqa: F401
+    except Exception as exc:
+        if not from_scratch_control:
+            raise RuntimeError(
+                "torchvision is required for production area segmenters "
+                "(PRETRAINED_REQUIRED=true)"
+            ) from exc
+        class_name = "LeafSegmenter" if task == "leaf" else "PuddleSegmenter"
+    return classes[class_name](
+        from_scratch_control=from_scratch_control
+    )
 
 
 def _output_shapes(flat_shape: tuple[int, ...], model) -> list[list[int]]:
@@ -601,6 +774,7 @@ def model_summary(models: dict | None = None, dummy_inputs: dict | None = None) 
             "model_id": model.model_id,
             "task": task,
             "state": "not_trained",
+            "pretrained": getattr(model, "provenance", None),
             "parameter_count": int(
                 sum(parameter.numel() for parameter in model.parameters())
             ),
@@ -745,10 +919,21 @@ def torch_onnx_parity(model, onnx_session: Any, inputs) -> dict:
         onnx_session.run(None, {model.input_names[0]: inputs.numpy()})[0]
     )
     max_error = float(np.abs(torch_flat.numpy() - onnx_flat).max())
+    task = getattr(model, "task", None)
+    task_parity = (
+        task_specific_parity(task, torch_flat.numpy(), onnx_flat)
+        if task is not None
+        else {}
+    )
     return {
         "max_absolute_error": max_error,
         "argmax_agreement": _argmax_agreement(torch_flat, onnx_flat),
-        "decoded_agreement": _decoded_agreement(model, torch_flat, onnx_flat),
+        "decoded_agreement": (
+            task_parity.get("decoded_agreement")
+            if task == "discovery"
+            else None
+        ),
+        **task_parity,
     }
 
 
@@ -766,6 +951,7 @@ __all__ = [
     "SEGMENTER_INPUT_SHAPE",
     "SEGMENTER_TASKS",
     "build_g4_models",
+    "build_g4_model",
     "decode_discovery_flat",
     "export_fixed_onnx",
     "model_summary",

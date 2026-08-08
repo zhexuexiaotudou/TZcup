@@ -1,5 +1,48 @@
 # 项目推进记录
 
+## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
+
+- GPT 复核推翻了首轮“仅凭 Windows skip 的全绿”：修复 classifier parity
+  门限变量覆盖、segmenter boundary 通道误接、CUDA Trainer 模型/数据设备
+  不一致、DeepLab 官方权重文件名错误、legacy 标注先加载后拒绝，以及无可行
+  epoch 时未保存诊断 checkpoint 等问题。最终 Windows fast CI 为
+  `379 passed, 12 skipped`；CUDA 完整依赖容器为 `391 passed, 0 skipped`，
+  定向模型/ONNX 为 `24 passed, 0 skipped`。紧凑证据见
+  `artifacts/auto05r_p0_evidence/P0_VALIDATION.json`。
+- 修复 discovery horizontal-flip bbox 硬编码 `384/512`：统一 native↔model
+  bbox 工具（`g4_geometry.py`），flip 后 native/model bbox 重新由统一 scale
+  utility 生成，往返误差 ≤0.5 px，随机 1000 boxes 属性测试通过。
+- 引入显式 split-role 策略（`g4_split_policy.py`）：development 只读
+  `train` / `train_world_holdout` / `val` / `D1`-`D5`；旧 `test` 在报告与
+  CLI 中一律为 `legacy_G4_D6_diagnostic`（受污染诊断、非门控）；训练/阈值/
+  checkpoint 选择/困难负样本挖掘/screening 判定拒绝读取 legacy 与 G5。
+- 新增密封 G5 合约与 one-shot 评估器（`g4_sealed_final.py`、
+  `scripts/run_sealed_final_test.py`）：≥4 unseen worlds、≥100 scenes、
+  ≥1000 frames、未见资产与 `MODEL_FREEZE.json` 才可解锁；原子记录首次
+  访问，拒绝重跑/部分探测；G5 当前 `not_evaluated`。
+- `scripts/auto05r_screening.py` 重写为 validation-only：每 epoch 验证、
+  EMA、正早停、`load_best=True`、约束感知选择（`g4_selection.py`），
+  classifier 验证使用 train-world holdout 样本；报告显式区分 in-domain
+  与 cross-world，legacy D6 仅诊断。
+- task-specific ONNX parity（`g4_onnx_parity.py`）：discovery decoded 候选
+  一致、classifier top-1/概率误差、segmenter 掩码/边界一致；固定形状、
+  opset 17、operator inventory、零 custom ops。
+- 新增权威 P4/P5 策略（`perception_p4_screening_policy.yaml`、
+  `perception_p5_final_policy.yaml`），阈值与规范一致且不得降低；缺失指标
+  一律 `not_evaluated` fail-closed。
+- 冻结/manifest 合约（`g4_manifest.py`）与官方预训练权重溯源
+  （`g4_pretrained.py`）：字段/哈希缺失或失配即拒绝；`from_scratch_control`
+  仅限标注消融，永不 product-ready。
+- 提交紧凑 G4 数据门证据 `artifacts/auto05r_g4_data_gate/`（schemas、哈希、
+  计数、split/world/asset registries、既有 `G4_dataset_gate_pass=true`
+  决策）；生成器 `scripts/auto05r_g4_data_gate_evidence.py` 确定性可复现。
+- micro 门加强（AP50/precision/FP rate、background/hard-negative
+  specificity、boundary F1/negative-frame FP），报告显式标记
+  `gate_kind=capacity_only`；历史 micro 结果不删除、不冒充 screening。
+- 边界：未训练新产品模型；未创建 G5；`AUTO_05R/P4/P5/formal/live/J6/field`
+  全部保持 false。详见
+  [`docs/auto05r-p0-trustworthiness.md`](docs/auto05r-p0-trustworthiness.md)。
+
 ## 2026-08-07：完整 AUTO-05R-4 screening 两轮真实训练
 
 - 运行 `scripts/auto05r_screening.py` 完整 2000 train / 500 val / 500 test 两轮。

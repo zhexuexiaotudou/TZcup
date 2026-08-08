@@ -91,6 +91,8 @@ artifacts/autonomous_auto05_*_raw/
 artifacts/auto05r_*/
 !artifacts/auto05r_*_evidence/
 !artifacts/auto05r_*_evidence/**
+!artifacts/auto05r_g4_data_gate/
+!artifacts/auto05r_g4_data_gate/**
 
 # AUTO-17 full GUI/dashboard runs contain MP4, frame sequences, logs, and bags.
 # Keep them local; only explicitly named compact evidence directories are versioned.

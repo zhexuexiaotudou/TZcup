@@ -1,0 +1,81 @@
+{
+  "G4_dataset_gate_pass": true,
+  "errors": [],
+  "formal_scale": {
+    "actual": {
+      "frames": 3000,
+      "frames_per_scene": 10,
+      "scenes": 300,
+      "scenes_per_world": {
+        "world_g4_01_asphalt_campus": 25,
+        "world_g4_02_concrete_sidewalk": 25,
+        "world_g4_03_wet_courtyard": 25,
+        "world_g4_04_cobblestone_arcade": 25,
+        "world_g4_05_red_brick_promenade": 25,
+        "world_g4_06_tiled_plaza": 25,
+        "world_g4_07_service_road": 25,
+        "world_g4_08_mixed_curb_vegetation": 25,
+        "world_g4_09_light_paver_pedestrian": 25,
+        "world_g4_10_dark_gravel_parking": 25,
+        "world_g4_11_brick_market_street": 25,
+        "world_g4_12_smooth_industrial_floor": 25
+      },
+      "world_split_counts": {
+        "test": 2,
+        "train": 8,
+        "val": 2
+      },
+      "worlds": 12
+    },
+    "expected": {
+      "frames": 3000,
+      "frames_per_scene": 10,
+      "scenes": 300,
+      "scenes_per_world": 25,
+      "world_split_counts": {
+        "test": 2,
+        "train": 8,
+        "val": 2
+      },
+      "worlds": 12
+    }
+  },
+  "frame_count": 3000,
+  "gates": {
+    "annotation_completeness_100_percent": true,
+    "asset_split_leakage_zero": true,
+    "camera_info_valid_100_percent": true,
+    "cross_split_phash_duplicate_zero": true,
+    "distance_bucket_coverage_all": true,
+    "exact_duplicate_zero": true,
+    "four_sensor_sync_100_percent": true,
+    "negative_only_cross_split_delta_at_most_10pp": true,
+    "negative_only_ratio_in_25_to_35_percent": true,
+    "required_paper_taxonomy_covered_in_train": true,
+    "scenes_300_and_frames_3000": true,
+    "scenes_per_world_25": true,
+    "semantic_instance_error_zero": true,
+    "size_bucket_coverage_all": true,
+    "test_used_for_model_selection_false": true,
+    "tf_valid_100_percent": true,
+    "train_negative_only_frames_at_least_500": true,
+    "train_paper_like_hard_negative_frames_at_least_300": true,
+    "trajectory_split_leakage_zero": true,
+    "world_split_leakage_zero": true,
+    "worlds_12_and_8_2_2": true
+  },
+  "historical_data_gate_test_used_for_model_selection": false,
+  "post_capture_contamination": {
+    "allowed_in_current_development_screening": false,
+    "historical_screening_attempts_that_read_legacy": 2,
+    "legacy_G4_D6_contaminated": true,
+    "used_in_historical_screening_pass_fail": true
+  },
+  "quality_gates_pass": true,
+  "scene_count": 300,
+  "schema_version": 1,
+  "source_sha256": "92f2fae67a8bedf4d2368029cbbaf23e3e2ad4c39f334fa12e865317063c54f3",
+  "stage": "AUTO-05R",
+  "task": "AUTO-05R-1",
+  "world_count": 12
+}
