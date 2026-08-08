@@ -4,7 +4,8 @@ param(
     [string]$UpstreamRoot = "F:\Project\TZcup-coverage-docker-src\linorobot2",
     [string]$Image = "tzcup/sanitation-jazzy:stage5b",
     [int]$ScenesPerWorld = 25,
-    [int]$MaxWorlds = 0
+    [int]$MaxWorlds = 0,
+    [int]$StartWorldIndex = 0
 )
 
 $ErrorActionPreference = "Stop"
@@ -29,6 +30,7 @@ docker run --rm --gpus all --shm-size 2g `
     -e AUTO05R_DATA_ROOT=/data/g4_screening_native `
     -e AUTO05R_SCENES_PER_WORLD=$ScenesPerWorld `
     -e AUTO05R_MAX_WORLDS=$MaxWorlds `
+    -e AUTO05R_START_WORLD_INDEX=$StartWorldIndex `
     @volumeArgs `
     $Image `
     bash /repo/scripts/auto05r_g4_capture_all.sh

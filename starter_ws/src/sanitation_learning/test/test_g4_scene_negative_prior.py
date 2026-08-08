@@ -223,4 +223,6 @@ def test_g4_capture_script_uses_g4_modules_and_resume_skip():
     assert "resume-skip" in script
     assert "GZ_SIM_RESOURCE_PATH" in script
     assert "AUTO05R_MAX_WORLDS" in script
+    assert "AUTO05R_START_WORLD_INDEX" in script
+    assert "START_WORLD_INDEX + local_world_index" in script
     assert "/opt/ros/jazzy/lib/ros_gz_bridge/parameter_bridge" in script

@@ -13,6 +13,7 @@ DATA_ROOT="${AUTO05R_DATA_ROOT:-/data/g4_screening_native}"
 RUNTIME_WS="${AUTO05R_RUNTIME_WS:-/data/runtime_ws_g4}"
 SCENES_PER_WORLD="${AUTO05R_SCENES_PER_WORLD:-25}"
 MAX_WORLDS="${AUTO05R_MAX_WORLDS:-0}"
+START_WORLD_INDEX="${AUTO05R_START_WORLD_INDEX:-0}"
 mkdir -p "${DATA_ROOT}/logs" "${DATA_ROOT}/scenes" "${RUNTIME_WS}"
 
 colcon --log-base "${RUNTIME_WS}/log" build \
@@ -45,8 +46,14 @@ mapfile -t WORLD_IDS < <(
   python3 -c 'import json,sys; m=json.load(open(sys.argv[1])); print("\n".join(w["world_id"] for w in m["worlds"]))' \
     "${WORLD_MANIFEST}"
 )
+if [[ "${START_WORLD_INDEX}" -lt 0 || "${START_WORLD_INDEX}" -ge "${#WORLD_IDS[@]}" ]]; then
+  echo "AUTO05R_START_WORLD_INDEX out of range: ${START_WORLD_INDEX}" >&2
+  exit 2
+fi
 if [[ "${MAX_WORLDS}" -gt 0 ]]; then
-  WORLD_IDS=("${WORLD_IDS[@]:0:${MAX_WORLDS}}")
+  WORLD_IDS=("${WORLD_IDS[@]:${START_WORLD_INDEX}:${MAX_WORLDS}}")
+else
+  WORLD_IDS=("${WORLD_IDS[@]:${START_WORLD_INDEX}}")
 fi
 
 export GZ_SIM_RESOURCE_PATH="${DATA_ROOT}/worlds:${DATA_ROOT}/models"
@@ -176,8 +183,9 @@ capture_world() {
   cleanup_world
 }
 
-for world_index in "${!WORLD_IDS[@]}"; do
-  capture_world "${WORLD_IDS[$world_index]}" "${world_index}"
+for local_world_index in "${!WORLD_IDS[@]}"; do
+  world_index=$((START_WORLD_INDEX + local_world_index))
+  capture_world "${WORLD_IDS[$local_world_index]}" "${world_index}"
 done
 
-echo "G4 capture complete: worlds=${#WORLD_IDS[@]} scenes_per_world=${SCENES_PER_WORLD}"
+echo "G4 capture complete: start_world_index=${START_WORLD_INDEX} worlds=${#WORLD_IDS[@]} scenes_per_world=${SCENES_PER_WORLD}"

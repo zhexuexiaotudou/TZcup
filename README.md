@@ -80,7 +80,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 | 软件工程与发布 | 已完成 | `AUTO-16=PASS`，源码、配置、测试、文档和发布工具齐全 |
 | 基础仿真与自主导航 | 已通过机器门 | 车辆、场景、定位、Nav2、覆盖规划、安全控制和回放链已验证 |
 | 调试可视化 | 可用 | Gazebo 显示物理场景，RViz 显示目标、障碍、区域、路径、车辆和系统状态 |
-| 学习感知 | P2 数据完整性恢复中、screening 仍阻塞 | 新 QA 发现旧 G4 仅 `987/3000` 帧与 scene manifest 一致，历史数据门已撤销；场景复位修复的真实 Gazebo 20 帧烟测达到 100% 一致，正在完整重采 3000 帧，严格 QA 通过前禁止继续 teacher/student。G5 尚未创建，`AUTO_05R/P4/P5/formal/live/J6/field` 仍为 false，见 [`docs/auto05r-p2-data-integrity-recovery.md`](docs/auto05r-p2-data-integrity-recovery.md) |
+| 学习感知 | P2 数据完整性恢复中、screening 仍阻塞 | 新 QA 发现旧 G4 仅 `987/3000` 帧与 scene manifest 一致，历史数据门已撤销；场景复位修复的真实 Gazebo 20 帧烟测达到 100% 一致，正在按互斥 world/seed 分片完整重采 3000 帧并统一严格 QA，通过前禁止继续 teacher/student。G5 尚未创建，`AUTO_05R/P4/P5/formal/live/J6/field` 仍为 false，见 [`docs/auto05r-p2-data-integrity-recovery.md`](docs/auto05r-p2-data-integrity-recovery.md) |
 | 综合竞赛矩阵 | 未通过 | 受 AUTO-08 学习感知与定点清扫依赖阻断，正式综合任务未启动 |
 | 真实域 | 外部阻断 | 缺少满足数量、标定和独立真值要求的真实数据集 |
 | J6 部署 | 未通过 | 官方工具链已准备，但正式模型尚未产生，本机也没有 J6 实板 |
