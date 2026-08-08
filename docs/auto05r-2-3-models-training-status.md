@@ -1,6 +1,20 @@
 # AUTO-05R-2/3 current status
 
-Last updated: 2026-08-08
+Last updated: 2026-08-09
+
+## P2 data-integrity recovery (2026-08-09)
+
+- The previously reported G4 data gate is retracted. A new full audit found
+  that only `987 / 3000` frames matched their scene manifest; stale targets
+  from earlier scenes contaminated 2013 frames because unselected assets were
+  never moved back off-camera.
+- Scene randomization now resets all 250 assets on every scene, and QA rejects
+  both an incomplete pose-reset contract and pixel instances not declared by
+  the manifest. A real Gazebo 20-frame smoke passed both checks at 100%.
+- The FCOS-R50 teacher run was stopped after epoch 3 because its input dataset
+  was invalid. This is not a teacher failure or pass, and student training is
+  forbidden until the full 3000-frame recapture passes strict QA.
+- See [docs/auto05r-p2-data-integrity-recovery.md](auto05r-p2-data-integrity-recovery.md).
 
 ## P0 trustworthiness foundation (2026-08-08)
 
@@ -11,9 +25,10 @@ Last updated: 2026-08-08
 - No new product model has been trained or frozen; `MODEL_FREEZE.json` does
   not exist; AUTO-05R/P4/P5/formal/live/J6/field claims remain false.
 
-## Real evidence on repaired G4 data
+## Historical evidence on the rejected G4 capture
 
-- `G4_dataset_gate_pass=true`, `quality_gates_pass=true`
+- `G4_dataset_gate_pass=false`, `quality_gates_pass=false` after the stricter
+  manifest/pixel consistency audit
 - negative-only frames with nonzero semantic targets: `0 / 860`
 - discovery micro: `artifacts/auto05r_micro_discovery_crop_v15/micro_overfit_report.json`, pass
 - classifier micro: `artifacts/auto05r_micro_classifier_v3/micro_overfit_report.json`, pass

@@ -139,6 +139,8 @@ def finalize_g4_dataset(
     tf_valid_count = 0
     exact_sync_count = 0
     camera_info_valid_count = 0
+    scene_pose_reset_valid_count = 0
+    manifest_pixel_consistent_count = 0
     distance_seen: set[tuple[float, float]] = set()
     size_seen: set[str] = set()
     distance_bucket_frame_counts: Counter = Counter()
@@ -166,6 +168,19 @@ def finalize_g4_dataset(
             errors.append({"scene": scene_dir.name, "reason": "scene_schema_version"})
         if scene.get("native_gazebo_applied") is not True:
             errors.append({"scene": scene_dir.name, "reason": "native_gazebo_applied_false"})
+        pose_reset = scene.get("pose_reset_contract", {})
+        pose_reset_valid = (
+            pose_reset.get("all_world_assets_accounted_for") is True
+            and int(pose_reset.get("duplicate_asset_pose_names", -1)) == 0
+            and int(pose_reset.get("asset_pose_count", -1))
+            == len(world_manifest["assets"])
+            + len(world_manifest["negative_assets"])
+        )
+        scene_pose_reset_valid_count += int(pose_reset_valid)
+        if not pose_reset_valid:
+            errors.append(
+                {"scene": scene_dir.name, "reason": "scene_pose_reset_contract_invalid"}
+            )
         offline = scene.get("offline_sensor_augmentation", {})
         if offline.get("requested_only") is not False or offline.get("applied") is not False:
             errors.append(
@@ -211,6 +226,11 @@ def finalize_g4_dataset(
                 negative_only_frames_train += len(records)
         if split == "train" and scene.get("paper_like_hard_negative_count", 0) > 0:
             paper_like_frames_train += len(records)
+        declared_target_counts = Counter(
+            int(item["semantic_label"])
+            for item in scene["objects"]
+            if int(item.get("semantic_label") or 0) in CLASS_NAMES
+        )
         positions = [tuple(record["vehicle_xy_m"]) for record in records]
         adjacent = [
             math.hypot(b[0] - a[0], b[1] - a[1])
@@ -287,12 +307,15 @@ def finalize_g4_dataset(
                         "reason": "camera_info_invalid",
                     }
                 )
+            observed_target_counts: Counter = Counter()
             for instance_id in (
                 int(value) for value in np.unique(instance) if int(value) != 0
             ):
                 mask = instance == instance_id
                 values = semantic[mask].astype(np.int64)
                 majority = int(np.bincount(values, minlength=6).argmax())
+                if majority in CLASS_NAMES:
+                    observed_target_counts[majority] += 1
                 semantic_error_pixels += int((values != majority).sum())
                 instance_pixels += int(mask.sum())
                 ys, xs = np.nonzero(mask)
@@ -315,6 +338,25 @@ def finalize_g4_dataset(
                             min(xs.max() - xs.min() + 1, ys.max() - ys.min() + 1)
                         ),
                         "mask_area_px": int(mask.sum()),
+                    }
+                )
+            target_count_mismatch = {
+                CLASS_NAMES[semantic_id]: {
+                    "declared": int(declared_target_counts[semantic_id]),
+                    "observed": int(observed_count),
+                }
+                for semantic_id, observed_count in observed_target_counts.items()
+                if observed_count > declared_target_counts[semantic_id]
+            }
+            manifest_pixel_consistent_count += int(not target_count_mismatch)
+            if target_count_mismatch:
+                errors.append(
+                    {
+                        "scene": scene_dir.name,
+                        "frame": record["frame_index"],
+                        "reason": "manifest_pixel_target_count_mismatch",
+                        "classes": target_count_mismatch,
+                        "negative_only": bool(scene["negative_only"]),
                     }
                 )
             rgb_hash = hashlib.sha256(rgb_path.read_bytes()).hexdigest()
@@ -404,6 +446,11 @@ def finalize_g4_dataset(
         "camera_info_valid_100_percent": camera_info_valid_count == len(frames),
         "tf_valid_100_percent": tf_valid_count == len(frames),
         "semantic_instance_error_zero": semantic_error_rate == 0.0,
+        "scene_pose_reset_contract_100_percent": scene_pose_reset_valid_count
+        == len(scenes),
+        "manifest_pixel_target_consistency_100_percent": (
+            manifest_pixel_consistent_count == len(frames)
+        ),
         "asset_split_leakage_zero": not leakage["target_asset_leakage"]
         and not leakage["hard_negative_asset_leakage"],
         "world_split_leakage_zero": not leakage["world_leakage"],
@@ -474,6 +521,10 @@ def finalize_g4_dataset(
         "camera_info_valid_rate": camera_info_valid_count / max(len(frames), 1),
         "tf_valid_rate": tf_valid_count / max(len(frames), 1),
         "semantic_instance_error_rate": semantic_error_rate,
+        "scene_pose_reset_valid_rate": scene_pose_reset_valid_count
+        / max(len(scenes), 1),
+        "manifest_pixel_target_consistency_rate": manifest_pixel_consistent_count
+        / max(len(frames), 1),
         "instance_record_count": len(instances),
         "leakage": leakage,
         "distance_bucket_counts": dict(distance_bucket_frame_counts),
@@ -481,7 +532,11 @@ def finalize_g4_dataset(
         "errors": errors,
         "gates": gates,
         "test_used_for_model_selection": False,
-        "full_capture_executed": False,
+        "full_capture_executed": (
+            len(scenes) == formal["scenes"]
+            and len(frames) == formal["frames"]
+            and len(scene_counts_by_world) == formal["worlds"]
+        ),
         "G4_dataset_gate_pass": all(gates.values()),
     }
     report["quality_gates_pass"] = all(

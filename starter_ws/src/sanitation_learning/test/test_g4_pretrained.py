@@ -39,6 +39,11 @@ def test_specs_use_official_enum_api() -> None:
     assert classifier.weight_enum == (
         "MobileNet_V3_Small_Weights.IMAGENET1K_V1"
     )
+    teacher = pretrained_backbone_spec("fcos_resnet50_fpn_coco")
+    assert teacher.weight_enum == "FCOS_ResNet50_FPN_Weights.COCO_V1"
+    assert teacher.expected_sha256 == (
+        "99b0c9b7cfb1527d782db86b91d207f00547c792fb4103fc612b651d0a07b9e7"
+    )
     with pytest.raises(ValueError):
         pretrained_backbone_spec("mobilenet_unknown")
 
@@ -111,6 +116,7 @@ def test_from_scratch_control_is_labelled_ablation_only() -> None:
 
 def test_backbone_specs_cover_supported_architectures() -> None:
     assert set(BACKBONE_SPECS) == {
+        "fcos_resnet50_fpn_coco",
         "resnet18",
         "deeplabv3_resnet50",
         "mobilenet_v3_small",

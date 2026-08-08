@@ -147,6 +147,8 @@ qa_gates:
   - camera_info_valid_100_percent
   - tf_valid_100_percent
   - semantic_instance_error_zero
+  - scene_pose_reset_contract_100_percent
+  - manifest_pixel_target_consistency_100_percent
   - asset_split_leakage_zero
   - world_split_leakage_zero
   - trajectory_split_leakage_zero

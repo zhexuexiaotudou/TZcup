@@ -217,6 +217,9 @@ def main() -> int:
         "historical_split_manifest": split_manifest,
     }
 
+    error_counts = Counter(
+        str(item.get("reason", "unknown")) for item in qa.get("errors", [])
+    )
     qa_summary = {
         "schema_version": 1,
         "stage": qa.get("stage"),
@@ -228,7 +231,12 @@ def main() -> int:
         "frame_count": qa.get("frame_count"),
         "world_count": qa.get("world_count"),
         "gates": qa.get("gates"),
-        "errors": qa.get("errors", []),
+        "error_summary": {
+            "count": len(qa.get("errors", [])),
+            "counts_by_reason": dict(sorted(error_counts.items())),
+            "examples": qa.get("errors", [])[:10],
+            "full_errors_retained_external": True,
+        },
         "historical_data_gate_test_used_for_model_selection": qa.get(
             "test_used_for_model_selection"
         ),

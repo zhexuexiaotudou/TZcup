@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-P2_DATA_INTEGRITY_RECOVERY",
+  "recorded_at": "2026-08-09",
+  "historical_g4_dataset_gate_pass": false,
+  "historical_dataset_rejected_for_product_training": true,
+  "root_cause": "scene randomization moved selected assets into view but did not park assets selected by earlier scenes, so stale targets accumulated across the reused Gazebo world",
+  "historical_full_audit": {
+    "scenes": 300,
+    "frames": 3000,
+    "scene_pose_reset_valid_rate": 0.0,
+    "manifest_pixel_target_consistency_rate": 0.329,
+    "manifest_pixel_target_count_mismatch_frames": 2013,
+    "total_errors": 2313,
+    "external_report": "p2-invalid-data-audit/g4_dataset_qa.json",
+    "external_report_sha256": "6d50ac443bd3f98dce1af77926856cc7f2e911ec41516520c6a2f0f49e47172a",
+    "external_report_bytes": 1212939
+  },
+  "teacher_diagnostic": {
+    "architecture": "torchvision_fcos_resnet50_fpn",
+    "official_pretrained_weights": true,
+    "formal_claim": false,
+    "stopped_after_epoch": 3,
+    "reason_stopped": "input dataset failed the newly added integrity gate",
+    "last_invalid_data_holdout_recall": 0.0903,
+    "last_invalid_data_false_candidates_per_min": 0.0,
+    "student_training_allowed": false
+  },
+  "implemented_recovery": {
+    "all_250_assets_receive_exactly_one_pose_per_scene": true,
+    "unselected_assets_parked_off_camera": true,
+    "duplicate_asset_pose_names_required_zero": true,
+    "manifest_pixel_target_count_mismatch_is_hard_gate": true,
+    "negative_only_stale_positive_is_hard_gate": true
+  },
+  "real_gazebo_smoke": {
+    "worlds": 1,
+    "scenes": 2,
+    "frames": 20,
+    "scene_pose_reset_valid_rate": 1.0,
+    "manifest_pixel_target_consistency_rate": 1.0,
+    "related_error_count": 0,
+    "external_report": "g4-reset-smoke/qa/g4_dataset_qa.json",
+    "external_report_sha256": "9f5224ebe383cd76224e6357da0fd118cade3c20acb24d2dee081332c82774f9",
+    "external_report_bytes": 3965
+  },
+  "current_action": "recapture_12_world_300_scene_3000_frame_g4_then_retrain_teacher",
+  "G4_dataset_gate_pass": false,
+  "PERCEPTION_P2_TEACHER_PASS": false,
+  "next_stage_unlocked": false
+}

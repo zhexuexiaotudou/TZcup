@@ -30,6 +30,21 @@ class BackboneSpec:
 
 
 BACKBONE_SPECS = {
+    "fcos_resnet50_fpn_coco": BackboneSpec(
+        architecture="fcos_resnet50_fpn_coco",
+        weight_enum="FCOS_ResNet50_FPN_Weights.COCO_V1",
+        source_url=(
+            "https://download.pytorch.org/models/"
+            "fcos_resnet50_fpn_coco-99b0c9b7.pth"
+        ),
+        license_ref=(
+            "BSD-3-Clause / COCO dataset license (torchvision reference weights)"
+        ),
+        torchvision_min_version="0.13",
+        expected_sha256=(
+            "99b0c9b7cfb1527d782db86b91d207f00547c792fb4103fc612b651d0a07b9e7"
+        ),
+    ),
     "resnet18": BackboneSpec(
         architecture="resnet18",
         weight_enum="ResNet18_Weights.IMAGENET1K_V1",

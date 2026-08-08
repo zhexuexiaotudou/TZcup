@@ -1,5 +1,20 @@
 # 项目推进记录
 
+## 2026-08-09：AUTO-05R P2 发现并修复 G4 跨场景资产泄漏
+
+- 官方 FCOS-R50 教师全量训练启动后，像素尺度与实例数量审计发现单帧最多
+  43 个离散真值，而 scene manifest 最多只声明 6 个离散目标。根因是 world
+  连续复用时只移动新选中资产、未复位旧资产，导致目标逐场累积。
+- 新 QA 重审历史 300 scene / 3000 frame：pose-reset 合同有效率 0%，只有
+  `987/3000` 帧与 manifest 一致，2013 帧包含额外正目标。此前
+  `G4_dataset_gate_pass=true` 结论已撤销；旧数据与其训练结果只保留为诊断。
+- 修复后每场对全部 250 个资产给出唯一 pose，未选资产回收到场外；QA 新增
+  pose-reset 与 manifest—像素目标一致性硬门。真实 Gazebo 20 帧烟测两门
+  均为 100%、相关错误为 0，完整 3000 帧重采已启动。
+- P2 教师在污染数据第 3 轮后主动中止，不计 pass/fail；严格 G4 QA 重新通过
+  前禁止 student 训练。证据与边界见
+  [`docs/auto05r-p2-data-integrity-recovery.md`](auto05r-p2-data-integrity-recovery.md)。
+
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 
 - GPT 复核推翻了首轮“仅凭 Windows skip 的全绿”：修复 classifier parity

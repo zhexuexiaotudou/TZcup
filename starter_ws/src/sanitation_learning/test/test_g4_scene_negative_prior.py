@@ -157,6 +157,22 @@ def test_negative_only_prior_and_scene_contract(
             assert item["occlusion_bucket"] in OCCLUSION_BUCKETS
             assert item["visible_fraction_bucket"] in VISIBLE_FRACTION_BUCKETS
     assert len(calls) == 300
+    expected_asset_count = len(manifest["assets"]) + len(
+        manifest["negative_assets"]
+    )
+    for _world_id, poses in calls:
+        assert len(poses) == expected_asset_count + 1
+        assert poses[0]["name"] == "sanitation_vehicle"
+        asset_names = [pose["name"] for pose in poses[1:]]
+        assert len(asset_names) == len(set(asset_names)) == expected_asset_count
+    for report in reports:
+        assert report["pose_reset_contract"] == {
+            "all_world_assets_accounted_for": True,
+            "selected_asset_count": len(report["objects"]),
+            "parked_asset_count": expected_asset_count - len(report["objects"]),
+            "asset_pose_count": expected_asset_count,
+            "duplicate_asset_pose_names": 0,
+        }
 
 
 def test_negative_only_rule_is_frozen():
@@ -206,4 +222,5 @@ def test_g4_capture_script_uses_g4_modules_and_resume_skip():
     assert "g4_world_manifest.json" in script
     assert "resume-skip" in script
     assert "GZ_SIM_RESOURCE_PATH" in script
+    assert "AUTO05R_MAX_WORLDS" in script
     assert "/opt/ros/jazzy/lib/ros_gz_bridge/parameter_bridge" in script

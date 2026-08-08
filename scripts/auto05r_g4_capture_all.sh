@@ -12,6 +12,7 @@ REPO=/repo
 DATA_ROOT="${AUTO05R_DATA_ROOT:-/data/g4_screening_native}"
 RUNTIME_WS="${AUTO05R_RUNTIME_WS:-/data/runtime_ws_g4}"
 SCENES_PER_WORLD="${AUTO05R_SCENES_PER_WORLD:-25}"
+MAX_WORLDS="${AUTO05R_MAX_WORLDS:-0}"
 mkdir -p "${DATA_ROOT}/logs" "${DATA_ROOT}/scenes" "${RUNTIME_WS}"
 
 colcon --log-base "${RUNTIME_WS}/log" build \
@@ -44,6 +45,9 @@ mapfile -t WORLD_IDS < <(
   python3 -c 'import json,sys; m=json.load(open(sys.argv[1])); print("\n".join(w["world_id"] for w in m["worlds"]))' \
     "${WORLD_MANIFEST}"
 )
+if [[ "${MAX_WORLDS}" -gt 0 ]]; then
+  WORLD_IDS=("${WORLD_IDS[@]:0:${MAX_WORLDS}}")
+fi
 
 export GZ_SIM_RESOURCE_PATH="${DATA_ROOT}/worlds:${DATA_ROOT}/models"
 

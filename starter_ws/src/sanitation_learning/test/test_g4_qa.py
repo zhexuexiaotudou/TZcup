@@ -188,6 +188,8 @@ def test_good_smoke_reports_expected_actual_and_quality_pass(
         "camera_info_valid_100_percent",
         "tf_valid_100_percent",
         "semantic_instance_error_zero",
+        "scene_pose_reset_contract_100_percent",
+        "manifest_pixel_target_consistency_100_percent",
         "asset_split_leakage_zero",
         "world_split_leakage_zero",
         "trajectory_split_leakage_zero",
@@ -299,6 +301,35 @@ def test_negative_ratio_gate_fails_on_injected_prior_error(
     )
     assert report["gates"]["negative_only_ratio_in_25_to_35_percent"] is False
     assert report["quality_gates_pass"] is False
+
+
+def test_manifest_pixel_target_gate_rejects_stale_positive(
+    tiny_worlds, tmp_path
+):
+    root, manifest_path = tiny_worlds
+    _tiny_scene(root, manifest_path, "world_g4_01_asphalt_campus", 0, "train")
+    scene_dir = root / "scenes" / "scene_0000"
+    scene = json.loads(
+        (scene_dir / "scene_manifest.json").read_text(encoding="utf-8")
+    )
+    assert scene["negative_only"] is True
+    instance_path = scene_dir / "instance" / "frame_00.png"
+    semantic_path = scene_dir / "semantic" / "frame_00.png"
+    instance = np.zeros((480, 640), dtype=np.uint16)
+    semantic = np.zeros((480, 640), dtype=np.uint8)
+    instance[200:220, 200:220] = 1
+    semantic[200:220, 200:220] = 1
+    cv2.imwrite(str(instance_path), instance)
+    cv2.imwrite(str(semantic_path), semantic)
+    report = finalize_g4_dataset(
+        root, tmp_path / "qa", contract_path=str(CONTRACT)
+    )
+    assert report["gates"]["manifest_pixel_target_consistency_100_percent"] is False
+    assert report["manifest_pixel_target_consistency_rate"] == 0.9
+    assert any(
+        error["reason"] == "manifest_pixel_target_count_mismatch"
+        for error in report["errors"]
+    )
 
 
 def test_contract_enforces_test_used_for_model_selection_false(

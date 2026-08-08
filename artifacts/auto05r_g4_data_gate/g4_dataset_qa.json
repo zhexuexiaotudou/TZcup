@@ -1,6 +1,155 @@
 {
-  "G4_dataset_gate_pass": true,
-  "errors": [],
+  "G4_dataset_gate_pass": false,
+  "error_summary": {
+    "count": 2313,
+    "counts_by_reason": {
+      "manifest_pixel_target_count_mismatch": 2013,
+      "scene_pose_reset_contract_invalid": 300
+    },
+    "examples": [
+      {
+        "reason": "scene_pose_reset_contract_invalid",
+        "scene": "scene_0000"
+      },
+      {
+        "reason": "scene_pose_reset_contract_invalid",
+        "scene": "scene_0001"
+      },
+      {
+        "reason": "scene_pose_reset_contract_invalid",
+        "scene": "scene_0002"
+      },
+      {
+        "classes": {
+          "metal_can": {
+            "declared": 2,
+            "observed": 3
+          },
+          "paper_litter": {
+            "declared": 2,
+            "observed": 3
+          },
+          "plastic_bottle": {
+            "declared": 1,
+            "observed": 2
+          }
+        },
+        "frame": 0,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0002"
+      },
+      {
+        "classes": {
+          "metal_can": {
+            "declared": 2,
+            "observed": 3
+          },
+          "paper_litter": {
+            "declared": 2,
+            "observed": 3
+          },
+          "plastic_bottle": {
+            "declared": 1,
+            "observed": 2
+          }
+        },
+        "frame": 1,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0002"
+      },
+      {
+        "classes": {
+          "metal_can": {
+            "declared": 2,
+            "observed": 3
+          },
+          "paper_litter": {
+            "declared": 2,
+            "observed": 3
+          },
+          "plastic_bottle": {
+            "declared": 1,
+            "observed": 2
+          }
+        },
+        "frame": 2,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0002"
+      },
+      {
+        "classes": {
+          "metal_can": {
+            "declared": 2,
+            "observed": 3
+          },
+          "paper_litter": {
+            "declared": 2,
+            "observed": 3
+          },
+          "plastic_bottle": {
+            "declared": 1,
+            "observed": 2
+          }
+        },
+        "frame": 3,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0002"
+      },
+      {
+        "classes": {
+          "metal_can": {
+            "declared": 2,
+            "observed": 3
+          },
+          "plastic_bottle": {
+            "declared": 1,
+            "observed": 2
+          }
+        },
+        "frame": 4,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0002"
+      },
+      {
+        "classes": {
+          "metal_can": {
+            "declared": 2,
+            "observed": 3
+          },
+          "plastic_bottle": {
+            "declared": 1,
+            "observed": 2
+          }
+        },
+        "frame": 5,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0002"
+      },
+      {
+        "classes": {
+          "metal_can": {
+            "declared": 2,
+            "observed": 3
+          },
+          "paper_litter": {
+            "declared": 2,
+            "observed": 3
+          }
+        },
+        "frame": 6,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0002"
+      }
+    ],
+    "full_errors_retained_external": true
+  },
   "formal_scale": {
     "actual": {
       "frames": 3000,
@@ -49,9 +198,11 @@
     "distance_bucket_coverage_all": true,
     "exact_duplicate_zero": true,
     "four_sensor_sync_100_percent": true,
+    "manifest_pixel_target_consistency_100_percent": false,
     "negative_only_cross_split_delta_at_most_10pp": true,
     "negative_only_ratio_in_25_to_35_percent": true,
     "required_paper_taxonomy_covered_in_train": true,
+    "scene_pose_reset_contract_100_percent": false,
     "scenes_300_and_frames_3000": true,
     "scenes_per_world_25": true,
     "semantic_instance_error_zero": true,
@@ -71,10 +222,10 @@
     "legacy_G4_D6_contaminated": true,
     "used_in_historical_screening_pass_fail": true
   },
-  "quality_gates_pass": true,
+  "quality_gates_pass": false,
   "scene_count": 300,
   "schema_version": 1,
-  "source_sha256": "92f2fae67a8bedf4d2368029cbbaf23e3e2ad4c39f334fa12e865317063c54f3",
+  "source_sha256": "6d50ac443bd3f98dce1af77926856cc7f2e911ec41516520c6a2f0f49e47172a",
   "stage": "AUTO-05R",
   "task": "AUTO-05R-1",
   "world_count": 12

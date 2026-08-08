@@ -6,29 +6,29 @@
       "sha256": "69e51944326a7305fd913ed65fa40c88fe656aaac2576f3669a0a3d16ab0a77b"
     },
     {
-      "bytes": 5310,
+      "bytes": 1212939,
       "relative_name": "g4_dataset_qa.json",
-      "sha256": "92f2fae67a8bedf4d2368029cbbaf23e3e2ad4c39f334fa12e865317063c54f3"
+      "sha256": "6d50ac443bd3f98dce1af77926856cc7f2e911ec41516520c6a2f0f49e47172a"
     },
     {
-      "bytes": 1520885,
+      "bytes": 1523885,
       "relative_name": "g4_frame_manifest.jsonl",
-      "sha256": "27304c5f129808c61115845bce8cfa30e55e6599eeb00456d0e9135ca3af8ef4"
+      "sha256": "5b3e44756b94075c7b51983d275a0064817fd278477cd77e10c24befe703d333"
     },
     {
-      "bytes": 15963679,
+      "bytes": 16025294,
       "relative_name": "g4_instance_records.jsonl",
-      "sha256": "bca02e9468cd2a3dbd3a3819632c97641af981ca2247853a2f2b46fec22f7c3c"
+      "sha256": "f6d1775fd268f6a12d5eb354043fe2e7cdf10e7b5301b6d1987cff43acc57338"
     },
     {
-      "bytes": 281,
+      "bytes": 291,
       "relative_name": "leakage_report.json",
-      "sha256": "2e4d80d88406151bfe973ede0a97bea799ba660947db780fd60d39cee631684c"
+      "sha256": "61e3c25be1a9214ebfb74f8cf5dd3852d6e4e0634134d63dfcf25bfe7c1db033"
     },
     {
-      "bytes": 773,
+      "bytes": 807,
       "relative_name": "split_manifest.json",
-      "sha256": "477cfa1999deb2771f7c222a252186b35dbca0311b2759f41576e5fef525d9de"
+      "sha256": "6fbd28206d7528c45598147eba56f31e21e0ec4c984d96e5b53273e09eee57c8"
     }
   ],
   "location_contract": "raw G4 frames, bags and checkpoints stay outside Git; only compact summaries and manifest hashes are committed"

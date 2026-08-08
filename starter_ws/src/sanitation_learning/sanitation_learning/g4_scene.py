@@ -35,6 +35,10 @@ DISTANCE_BUCKETS = ((0.5, 2.0), (2.0, 4.0), (4.0, 8.0))
 SIZE_BUCKETS = ("small", "medium", "large", "small_area", "medium_area", "large_area")
 OCCLUSION_BUCKETS = ("none", "partial", "heavy")
 VISIBLE_FRACTION_BUCKETS = ("full", "partial", "low")
+PARKING_ORIGIN_X_M = -200.0
+PARKING_ORIGIN_Y_M = 200.0
+PARKING_Z_M = -5.0
+PARKING_SPACING_M = 0.3
 
 
 def negative_only_rule(split: str, scene_index: int) -> bool:
@@ -86,6 +90,32 @@ def _visible_fraction_bucket(fraction: float) -> str:
     return "low"
 
 
+def _parked_asset_updates(manifest: dict, selected_names: set[str]) -> list[dict]:
+    """Return one off-camera reset pose for every asset not used this scene.
+
+    Gazebo worlds are reused for 25 consecutive scenes.  Without this reset,
+    objects selected by an earlier scene remain visible and silently corrupt
+    later positive and negative-only captures.
+    """
+    updates = []
+    all_items = manifest["assets"] + manifest["negative_assets"]
+    for asset_index, item in enumerate(all_items):
+        if item["model_name"] in selected_names:
+            continue
+        updates.append(
+            {
+                "name": item["model_name"],
+                "xyz": [
+                    PARKING_ORIGIN_X_M - asset_index * PARKING_SPACING_M,
+                    PARKING_ORIGIN_Y_M,
+                    PARKING_Z_M,
+                ],
+                "yaw": 0.0,
+            }
+        )
+    return updates
+
+
 def randomize(
     manifest_path: Path,
     world_id: str,
@@ -130,11 +160,13 @@ def randomize(
     if force_negative:
         selected = []
 
+    selected_all = selected + selected_negatives
+    selected_names = {item["model_name"] for item in selected_all}
     updates = [
-        {"name": "sanitation_vehicle", "xyz": [-8.0, 0.0, 0.18], "yaw": 0.0}
+        {"name": "sanitation_vehicle", "xyz": [-8.0, 0.0, 0.18], "yaw": 0.0},
+        *_parked_asset_updates(manifest, selected_names),
     ]
     objects = []
-    selected_all = selected + selected_negatives
     for index, item in enumerate(selected_all):
         if index == 0:
             # Guarantee at least one object is clearly inside the production
@@ -275,6 +307,15 @@ def randomize(
         "visible_fraction_bucket_counts": visible_fraction_bucket_counts,
         "vehicle_start_xyz_m": [-8.0, 0.0, 0.18],
         "vehicle_motion_command": {"linear_x_mps": 0.35, "duration_s": 8.0},
+        "pose_reset_contract": {
+            "all_world_assets_accounted_for": len(updates)
+            == 1 + len(manifest["assets"]) + len(manifest["negative_assets"]),
+            "selected_asset_count": len(selected_names),
+            "parked_asset_count": len(updates) - 1 - len(selected_names),
+            "asset_pose_count": len(updates) - 1,
+            "duplicate_asset_pose_names": len(updates) - 1
+            - len({item["name"] for item in updates[1:]}),
+        },
     }
     scene["manifest_sha256"] = hashlib.sha256(
         json.dumps(scene, sort_keys=True).encode()
