@@ -30,6 +30,10 @@
   artifact/SHA/provider/claim/threshold 启动前校验；现有 placeholder manifest
   补齐显式 placeholder version，但 artifact 仍为 null，因此产品启动继续
   fail-closed。
+- P7 `inference_engine.py` 已实现固定 shape CUDA OrtValue 预分配、I/O Binding、
+  provider 首选检查、`disable_fallback()` 与 warm-up profiling 全节点 CUDA
+  审计；本机保留容器当前仅暴露 CPU ORT，故真实 CUDA 性能门仍为 false，
+  不能以 fake-session 单测替代。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 

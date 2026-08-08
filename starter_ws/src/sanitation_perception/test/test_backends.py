@@ -23,6 +23,7 @@ def _write_manifest(
     manifest = {
         "schema_version": 2,
         "model_id": "test_model",
+        "version": "1.0.0",
         "artifact": artifact_name,
         "artifact_sha256": sha256,
         "framework": "onnxruntime",
@@ -133,6 +134,7 @@ def test_onnx_fails_closed_when_manifest_has_no_artifact(tmp_path: Path):
     manifest = {
         "schema_version": 2,
         "model_id": "placeholder",
+        "version": "0.0.0-placeholder",
         "artifact": None,
         "artifact_sha256": None,
         "framework": "onnxruntime",

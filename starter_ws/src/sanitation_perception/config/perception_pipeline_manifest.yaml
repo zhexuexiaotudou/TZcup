@@ -7,6 +7,9 @@ model_manifests:
   puddle_segmenter: puddle_segmenter_manifest.yaml
 runtime:
   backend: onnxruntime
+  required_provider: CUDAExecutionProvider
+  io_binding_required: true
+  cpu_fallback_forbidden: true
   sync_tolerance_ms: 20.0
   frame_queue_depth: 2
   preprocess_spec: preprocess_spec.yaml

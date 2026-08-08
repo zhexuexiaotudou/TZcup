@@ -20,11 +20,16 @@ ORT CUDA session 仍必须在 P4/P5 模型冻结后做 live 验收。
 - 产品 model registry 以 `model_id + version + sha256` 唯一标识四模型，并在
   session 创建前验证 artifact 存在性/哈希、正式 claim、provider 兼容性和
   非空阈值；当前 placeholder 因 artifact 为空会按设计拒绝启动。
+- ORT CUDA session 内核固定 `CUDAExecutionProvider` 为首 provider，调用
+  `disable_fallback()`，按 manifest 固定 shape 预分配 CUDA OrtValue，使用
+  `bind_ortvalue_input/output + run_with_iobinding`；warm-up profile 中只要出现
+  CPU/unassigned node 就拒绝进入产品运行。实现依据当前 ONNX Runtime 官方
+  CUDA EP 与 Python I/O Binding API。
 
 仍未通过：
 
 - 正式 `LifecycleNode` 的 configure/activate/deactivate/error 全链；
-- 四模型 ORT CUDA session、I/O Binding、设备 buffer 预分配与 warm-up；
+- 四个冻结模型上的真实 ORT CUDA session/warm-up/profile 验收；
 - RGB stamp 的 ROS TF 查询、完整推理与多实例 polygon ROS 发布；
 - ROS diagnostics topic、fault injection、10 次冷启动及 learned-live。
 
