@@ -42,6 +42,8 @@ setup(
             "auto05_randomize_g3_scene = sanitation_learning.g3_scene:main",
             "auto05r_generate_g4_worlds = sanitation_learning.gazebo_g4:main",
             "auto05r_randomize_g4_scene = sanitation_learning.g4_scene:main",
+            "auto05r_generate_g5_sealed = sanitation_learning.g5_dataset:main_generate",
+            "auto05r_finalize_g5_sealed = sanitation_learning.g5_dataset:main_finalize",
         ],
     },
 )

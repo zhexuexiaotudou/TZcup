@@ -80,7 +80,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 | 软件工程与发布 | 已完成 | `AUTO-16=PASS`，源码、配置、测试、文档和发布工具齐全 |
 | 基础仿真与自主导航 | 已通过机器门 | 车辆、场景、定位、Nav2、覆盖规划、安全控制和回放链已验证 |
 | 调试可视化 | 可用 | Gazebo 显示物理场景，RViz 显示目标、障碍、区域、路径、车辆和系统状态 |
-| 学习感知 | G4 数据门已恢复，P2 teacher 待门控 | 隔离 ROS/Gazebo 中间件后的 v3 已完成 12 world / 300 scene / 3000 frame 严格 QA：pose-reset 与 manifest—像素一致率均 `1.0`，跨 split exact/pHash duplicate 均为 `0`，G4 数据门恢复为 true；现只解锁 FCOS-R50 teacher，student 仍需 teacher 通过。area 默认候选已改为保留 RGB 预训练 stem 的双分支。P6/P7/P10 的同步/watchdog、tracker、map polygon、Lifecycle、model registry、rollback、容器、ORT CUDA I/O Binding 及性能/soak 门已实现软件合同，但尚无冻结模型可做 live/性能/真实 release 验收；G5 尚未创建，`AUTO_05R/P4/P5/formal/live/J6/field` 仍为 false，见 [`docs/auto05r-p2-data-integrity-recovery.md`](docs/auto05r-p2-data-integrity-recovery.md) |
+| 学习感知 | G4 数据门已恢复，P2 teacher 尺度对照中 | 隔离 ROS/Gazebo 中间件后的 v3 已完成 12 world / 300 scene / 3000 frame 严格 QA，全部数据门通过。首轮 FCOS-R50 teacher 因 val recall `0.2594` 失败；像素审计发现 val 目标短边中位数仅 `6 px`，现按有界规则运行唯一 `2×` 尺度对照，未启动 student。area 默认候选已改为保留 RGB 预训练 stem 的双分支。P6/P7/P10 的同步/watchdog、tracker、map polygon、Lifecycle、model registry、rollback、容器、ORT CUDA I/O Binding 及性能/soak 门已实现软件合同；G5 生成/隔离采集/封存工具已具备但数据尚未创建，`AUTO_05R/P4/P5/formal/live/J6/field` 仍为 false，见 [`docs/auto05r-p2-data-integrity-recovery.md`](docs/auto05r-p2-data-integrity-recovery.md) |
 | 综合竞赛矩阵 | 未通过 | 受 AUTO-08 学习感知与定点清扫依赖阻断，正式综合任务未启动 |
 | 真实域 | 外部阻断 | 只发现普通 Integrated Camera，未发现 RGB-D 数据 manifest 或独立 map GT；严格采集/标定/摆位校验/ingestion/evaluator 工具已具备 |
 | J6 部署 | 未通过 | 本机官方 OE 3.7.0 离线包完整，但官方文档当前为 3.9.0；正式模型、当前工具链 PTQ/compile 与 J6 实板均缺失 |

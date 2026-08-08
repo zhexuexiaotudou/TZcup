@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-P2_TEACHER_SCALE_AUDIT",
+  "read_splits": [
+    "train",
+    "val"
+  ],
+  "legacy_G4_D6_diagnostic_read": false,
+  "G5_SEALED_FINAL_read": false,
+  "shortest_side_distribution": {
+    "train": {
+      "count": 4579,
+      "p10_px": 2.0,
+      "p25_px": 4.0,
+      "p50_px": 6.0,
+      "p75_px": 10.0,
+      "fraction_below_4px": 0.16007861978597948,
+      "fraction_below_8px": 0.5826599694256388,
+      "fraction_below_12px": 0.7942782266870496
+    },
+    "val": {
+      "count": 1060,
+      "p10_px": 2.0,
+      "p25_px": 4.0,
+      "p50_px": 6.0,
+      "p75_px": 9.0,
+      "fraction_below_4px": 0.14339622641509434,
+      "fraction_below_8px": 0.6518867924528302,
+      "fraction_below_12px": 0.819811320754717
+    }
+  },
+  "val_shortest_side_by_class": {
+    "1": {
+      "count": 408,
+      "p10_px": 4.0,
+      "p25_px": 5.0,
+      "p50_px": 7.0,
+      "p75_px": 11.0,
+      "fraction_below_4px": 0.022058823529411766,
+      "fraction_below_8px": 0.5367647058823529,
+      "fraction_below_12px": 0.7745098039215687
+    },
+    "2": {
+      "count": 372,
+      "p10_px": 4.0,
+      "p25_px": 5.0,
+      "p50_px": 6.0,
+      "p75_px": 10.0,
+      "fraction_below_4px": 0.04032258064516129,
+      "fraction_below_8px": 0.6209677419354839,
+      "fraction_below_12px": 0.793010752688172
+    },
+    "3": {
+      "count": 280,
+      "p10_px": 1.0,
+      "p25_px": 2.0,
+      "p50_px": 4.0,
+      "p75_px": 6.0,
+      "fraction_below_4px": 0.45714285714285713,
+      "fraction_below_8px": 0.8607142857142858,
+      "fraction_below_12px": 0.9214285714285714
+    }
+  },
+  "first_teacher": {
+    "input_scale": 1,
+    "best_epoch": 5,
+    "val_recall": 0.25943396226415094,
+    "val_ap50": 0.2538270797514756,
+    "false_candidates_per_min": 22.8,
+    "gate_pass": false
+  },
+  "selection_rule": "choose only scale 1 or 2; require median discrete shortest side at least 12 model-input pixels; otherwise return to capture scale",
+  "selected_bounded_input_scale": 2,
+  "next_action": "run_single_scale2_teacher_control"
+}

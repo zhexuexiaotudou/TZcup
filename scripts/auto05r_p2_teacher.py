@@ -128,6 +128,7 @@ def main() -> int:
     parser.add_argument("--holdout-fraction", type=float, default=0.2)
     parser.add_argument("--max-train-frames", type=int, default=600)
     parser.add_argument("--max-eval-frames", type=int, default=100)
+    parser.add_argument("--input-scale", type=int, choices=(1, 2), default=1)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
     dataset_qa = require_teacher_dataset_gate(args.evidence_dir)
@@ -146,6 +147,8 @@ def main() -> int:
         "holdout_fraction": args.holdout_fraction,
         "max_train_frames": args.max_train_frames,
         "max_eval_frames": args.max_eval_frames,
+        "input_scale": args.input_scale,
+        "input_size": [640 * args.input_scale, 480 * args.input_scale],
         "amp": True,
         "gradient_clip_norm": 5.0,
         "dataset_qa_sha256": dataset_qa["sha256"],
@@ -203,8 +206,10 @@ def main() -> int:
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
-    model = build_fcos_teacher().to(device)
-    dataset = FCOSDiscoveryDataset(train_rows, instances_by_key)
+    model = build_fcos_teacher(args.input_scale).to(device)
+    dataset = FCOSDiscoveryDataset(
+        train_rows, instances_by_key, input_scale=args.input_scale
+    )
     loader = DataLoader(
         dataset,
         batch_size=args.batch_size,
@@ -276,6 +281,7 @@ def main() -> int:
                 device=device,
                 score_threshold=0.01,
                 batch_size=args.eval_batch_size,
+                input_scale=args.input_scale,
             )
             threshold, selection, sweep = select_teacher_threshold(
                 holdout_frames
@@ -334,6 +340,7 @@ def main() -> int:
         device=device,
         score_threshold=0.01,
         batch_size=args.eval_batch_size,
+        input_scale=args.input_scale,
     )
     from sanitation_learning.g4_evaluation import discovery_metrics
 

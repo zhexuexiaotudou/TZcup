@@ -23,6 +23,7 @@ from .g4_pretrained import provenance_record, torchvision_cache_path
 TEACHER_ARCHITECTURE = "torchvision_fcos_resnet50_fpn"
 TEACHER_WEIGHT_SPEC = "fcos_resnet50_fpn_coco"
 TEACHER_INPUT_SIZE = DISCOVERY_MODEL_SIZE
+TEACHER_ALLOWED_INPUT_SCALES = (1, 2)
 TEACHER_GATE_RECALL = 0.85
 TEACHER_GATE_FALSE_CANDIDATES_PER_MIN = 10.0
 TEACHER_THRESHOLDS = tuple(
@@ -77,7 +78,15 @@ def require_teacher_dataset_gate(evidence_dir: str | Path) -> dict:
     }
 
 
-def build_fcos_teacher():
+def teacher_input_size(input_scale: int = 1) -> tuple[int, int]:
+    if int(input_scale) not in TEACHER_ALLOWED_INPUT_SCALES:
+        raise ValueError(
+            f"teacher input scale must be one of {TEACHER_ALLOWED_INPUT_SCALES}"
+        )
+    return tuple(int(value) * int(input_scale) for value in TEACHER_INPUT_SIZE)
+
+
+def build_fcos_teacher(input_scale: int = 1):
     """Build a one-class FCOS teacher from exact official COCO weights."""
     torch = _torch()
     try:
@@ -85,12 +94,13 @@ def build_fcos_teacher():
     except ImportError as exc:
         raise RuntimeError("torchvision is required for the FCOS teacher") from exc
 
+    input_size = teacher_input_size(input_scale)
     weights = torchvision.models.detection.FCOS_ResNet50_FPN_Weights.COCO_V1
     try:
         model = torchvision.models.detection.fcos_resnet50_fpn(
             weights=weights,
-            min_size=TEACHER_INPUT_SIZE[1],
-            max_size=TEACHER_INPUT_SIZE[0],
+            min_size=input_size[1],
+            max_size=input_size[0],
             box_score_thresh=0.01,
             box_detections_per_img=100,
             topk_candidates=1000,
@@ -114,6 +124,8 @@ def build_fcos_teacher():
     )
     model.architecture_role = "reference_teacher_not_default_deployable"
     model.model_id = "g4_fcos_resnet50_fpn_teacher_v1"
+    model.input_size = input_size
+    model.input_scale = int(input_scale)
     return model
 
 
@@ -124,9 +136,12 @@ class FCOSDiscoveryDataset:
         self,
         rows: list[dict],
         instances_by_key: dict[tuple[int, int], list[dict]],
+        *,
+        input_scale: int = 1,
     ):
         self.rows = list(rows)
         self.instances_by_key = instances_by_key
+        self.input_size = teacher_input_size(input_scale)
 
     def __len__(self) -> int:
         return len(self.rows)
@@ -140,10 +155,16 @@ class FCOSDiscoveryDataset:
             row,
             self.instances_by_key,
             native_size=native_size,
-            model_size=TEACHER_INPUT_SIZE,
+            model_size=self.input_size,
         )
         resized = cv2.resize(
-            rgb, TEACHER_INPUT_SIZE, interpolation=cv2.INTER_AREA
+            rgb,
+            self.input_size,
+            interpolation=(
+                cv2.INTER_AREA
+                if self.input_size == native_size
+                else cv2.INTER_CUBIC
+            ),
         )
         image = torch.from_numpy(
             np.ascontiguousarray(
@@ -171,12 +192,15 @@ def teacher_predictions(
     device,
     score_threshold: float = 0.01,
     batch_size: int = 4,
+    input_scale: int = 1,
 ) -> list[dict]:
     """Run batched teacher inference and return discovery-metric frames."""
     torch = _torch()
     from torch.utils.data import DataLoader
 
-    dataset = FCOSDiscoveryDataset(rows, instances_by_key)
+    dataset = FCOSDiscoveryDataset(
+        rows, instances_by_key, input_scale=input_scale
+    )
     loader = DataLoader(
         dataset,
         batch_size=batch_size,
@@ -296,12 +320,14 @@ __all__ = [
     "TEACHER_GATE_FALSE_CANDIDATES_PER_MIN",
     "TEACHER_GATE_RECALL",
     "TEACHER_INPUT_SIZE",
+    "TEACHER_ALLOWED_INPUT_SCALES",
     "TEACHER_THRESHOLDS",
     "TEACHER_WEIGHT_SPEC",
     "build_fcos_teacher",
     "fcos_collate",
     "filter_prediction_frames",
     "teacher_gate",
+    "teacher_input_size",
     "teacher_constraint_distance",
     "teacher_predictions",
     "require_teacher_dataset_gate",

@@ -56,6 +56,13 @@ def test_teacher_dataset_is_rgb_only_and_supports_empty_targets(monkeypatch) -> 
     assert tuple(image.shape) == (3, 480, 640)
     assert tuple(target["boxes"].shape) == (0, 4)
     assert tuple(target["labels"].shape) == (0,)
+    scaled = g4_teacher.FCOSDiscoveryDataset(
+        [{"scene_seed": 1, "frame_index": 2}], {}, input_scale=2
+    )
+    scaled_image, _, _ = scaled[0]
+    assert tuple(scaled_image.shape) == (3, 960, 1280)
+    with pytest.raises(ValueError, match="input scale"):
+        g4_teacher.teacher_input_size(3)
 
 
 def test_teacher_gate_requires_recall_and_low_flood() -> None:

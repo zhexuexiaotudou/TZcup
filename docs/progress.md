@@ -72,6 +72,17 @@
 - Stage5B 训练镜像补齐与 PyTorch `2.5.1+cu124` 官方配对的 Torchvision
   `0.20.1`；此前镜像只有 torch，FCOS teacher 与预训练正式候选会在 import
   阶段 fail-closed。版本配对以 PyTorch 官方历史版本安装表为准。
+- 首轮正式 FCOS-R50 teacher 在新 G4 上按 best checkpoint/EMA/早停运行 11
+  epochs，最佳 epoch 5；val recall/AP50/false candidates per min 为
+  `0.259434/0.253827/22.8`，teacher 门失败，未启动 student。development-only
+  像素尺度审计发现 val 短边中位数仅 `6 px`、`65.19% < 8 px`，纸屑
+  `86.07% < 8 px`；按预注册的 12 px 中位尺度规则只解锁一次 `2×` FCOS teacher
+  对照，用于判断 stride-4 路线可学性，不读取 legacy/G5。
+- P0-3 的真实 G5 生成/采集/封存工具已补齐：4 个全新 world profile、全新
+  target/hard-negative artifact ID、独立 ROS/Gazebo 分片、100 scene/1000 frame
+  严格 QA、与 G4 world/asset 零重叠检查及 `g5_sealed_manifest(.sha256)`；
+  封存清单同时绑定实际 world SHA 和 `models/worlds/scenes` 数据树内容哈希。
+  G5 尚未实际采集，也不会在 P4 freeze 前运行评估。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 

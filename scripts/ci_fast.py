@@ -219,6 +219,7 @@ def run_ros_independent_tests() -> None:
         learning_package / "test" / "test_g4_manifest.py",
         learning_package / "test" / "test_g4_pretrained.py",
         learning_package / "test" / "test_g4_sealed_final.py",
+        learning_package / "test" / "test_g5_dataset.py",
         learning_package / "test" / "test_g4_onnx_parity.py",
         learning_package / "test" / "test_g4_evaluation_metrics.py",
         learning_package / "test" / "test_ground_geometry.py",

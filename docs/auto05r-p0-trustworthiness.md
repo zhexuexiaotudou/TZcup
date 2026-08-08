@@ -21,7 +21,10 @@ G5 数据集；未通过 AUTO-05R / P4 / P5 / formal / live / J6 / 真实现场�
    artifact/预训练权重哈希、ONNX 合同和冻结 evaluator 哈希；
    `SealedFinalGate` 原子记录首次访问并拒绝重跑。one-shot CLI 不存在
    open-only 或外部预制 metrics 入口，只能在记录访问后运行哈希匹配的冻结
-   evaluator。测试只使用临时合成元数据，不创建真实 final 数据集。
+   evaluator。新增 `g5_dataset.py`、G5 capture/finalize CLI 与 Docker wrapper，
+   可生成 4 个新 world、全新目标/困难负样本资产 ID、100 scene/1000 frame，
+   并在封存前核验与 G4 world/asset 零重叠、实际 world 文件哈希及
+   `models/worlds/scenes` 全数据树内容哈希；当前真实数据仍未采集/访问。
 4. **P0-4 最佳 checkpoint 训练**：`scripts/auto05r_screening.py` 对
    discovery/classifier/leaf/puddle 均启用每 epoch 验证、EMA、正早停耐心、
    checkpoint 持久化与 `load_best=True`；classifier 验证使用独立的
@@ -57,7 +60,7 @@ G5 数据集；未通过 AUTO-05R / P4 / P5 / formal / live / J6 / 真实现场�
     后来被两次历史 screening 读取并已污染。生成器
     `scripts/auto05r_g4_data_gate_evidence.py` 确定性可复现，原始帧/包/模型
     二进制一律不入库。P2 后续新增 manifest—像素一致性审计并推翻了旧门，
-    当前紧凑证据已更新为 `G4_dataset_gate_pass=false`；详见
+    v3 隔离重采后紧凑证据已更新为 `G4_dataset_gate_pass=true`；详见
     `docs/auto05r-p2-data-integrity-recovery.md`。
 12. **P0-12 micro 门加强**：discovery 增加 AP50/precision/FP rate；
     classifier 增加 background/hard-negative specificity；area 增加 boundary
@@ -70,6 +73,8 @@ G5 数据集；未通过 AUTO-05R / P4 / P5 / formal / live / J6 / 真实现场�
 - legacy G4 `test` 是受污染诊断证据（`legacy_G4_D6_diagnostic`），只可用于
   非门控诊断。
 - G5 sealed final 尚未创建，任何 `G5_SEALED_FINAL` 指标均为 `not_evaluated`。
+  生成、隔离采集、严格 QA 与 SHA 封存工具已实现，但不会在 P4 freeze 前访问
+  G5 指标。
 - `AUTO_05R_PASS`、`P4_SCREENING_PASS`、`P5_FINAL_PASS`、formal、live、
   J6 与真实现场 claim 全部保持 false。
 

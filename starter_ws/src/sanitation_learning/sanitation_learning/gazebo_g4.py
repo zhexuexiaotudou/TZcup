@@ -254,6 +254,26 @@ def _layout_models(layout_family: str) -> str:
             ("bay_rack_a", "box", "2.8 0.9 0.45", "1.5 2.2 0.225"),
             ("bay_rack_b", "box", "2.8 0.9 0.45", "5 -2.2 0.225"),
         ],
+        "covered_walkway_zigzag": [
+            ("screen_a", "box", "2.4 0.24 0.8", "1.5 2.2 0.4"),
+            ("screen_b", "box", "2.4 0.24 0.8", "4.8 -2.0 0.4"),
+            ("pillar", "cylinder", "0.24 1.8", "6.5 1.8 0.9"),
+        ],
+        "drainage_alley_offset": [
+            ("drain_left", "box", "0.28 6.5 0.05", "2.0 1.45 0.025"),
+            ("drain_right", "box", "0.28 4.5 0.05", "5.5 -1.65 0.025"),
+            ("utility_box", "box", "1.1 0.8 0.65", "7.0 2.3 0.325"),
+        ],
+        "tree_plaza_asymmetric": [
+            ("tree_island_a", "cylinder", "0.85 0.32", "2.0 -2.0 0.16"),
+            ("tree_island_b", "cylinder", "1.25 0.32", "5.8 2.2 0.16"),
+            ("seat_wall", "box", "2.2 0.35 0.48", "7.2 -2.4 0.24"),
+        ],
+        "warehouse_ramp_crossing": [
+            ("ramp_guard_a", "box", "3.8 0.20 0.35", "2.5 2.5 0.175"),
+            ("ramp_guard_b", "box", "2.8 0.20 0.35", "6.2 -2.4 0.175"),
+            ("dock_bollard", "cylinder", "0.20 0.9", "4.8 1.2 0.45"),
+        ],
     }
     chunks = []
     for name, kind, size, pose in layouts[layout_family]:

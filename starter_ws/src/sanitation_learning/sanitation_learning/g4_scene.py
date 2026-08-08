@@ -28,6 +28,7 @@ FORMAL_WORLD_SPLITS = {"train": 8, "val": 2, "test": 2}
 # [25%, 35%] and the cross-split delta stays <= 10pp:
 #   train: 7/25 = 28%  val: 8/25 = 32%  test: 7/25 = 28%
 NEGATIVE_ONLY_HITS = {"train": 7, "val": 8, "test": 7}
+SEALED_FINAL_SPLIT = "G5_SEALED_FINAL"
 
 PAPER_LIKE_TAXONOMIES = frozenset(REQUIRED_PAPER_TAXONOMIES)
 
@@ -43,7 +44,8 @@ PARKING_SPACING_M = 0.3
 
 def negative_only_rule(split: str, scene_index: int) -> bool:
     """Deterministic per-world negative-only prior (25%-35% for every split)."""
-    return (scene_index * 7) % SCENES_PER_WORLD < NEGATIVE_ONLY_HITS[split]
+    hits = 7 if split == SEALED_FINAL_SPLIT else NEGATIVE_ONLY_HITS[split]
+    return (scene_index * 7) % SCENES_PER_WORLD < hits
 
 
 def paper_like_train_rule(scene_index: int) -> bool:
@@ -140,7 +142,9 @@ def randomize(
         if item.get("taxonomy") in PAPER_LIKE_TAXONOMIES
     ]
     force_negative = negative_only_rule(split, scene_index)
-    force_paper_like = split == "train" and paper_like_train_rule(scene_index)
+    force_paper_like = split in {"train", SEALED_FINAL_SPLIT} and paper_like_train_rule(
+        scene_index
+    )
     selected = []
     if not force_negative:
         for class_id in sorted({item["class_id"] for item in assets}):
