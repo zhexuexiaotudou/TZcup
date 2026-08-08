@@ -34,6 +34,15 @@
   provider 首选检查、`disable_fallback()` 与 warm-up profiling 全节点 CUDA
   审计；本机保留容器当前仅暴露 CPU ORT，故真实 CUDA 性能门仍为 false，
   不能以 fake-session 单测替代。
+- P6/P10 已新增产品 Lifecycle 入口、严格 RGB-stamp TF、三类 diagnostics topic、
+  不可变模型包原子切换/rollback，以及 CUDA/cuDNN ROS Jazzy 产品容器、Compose、
+  build/run/healthcheck/release packaging；占位模型无法通过 formal registry，因此
+  当前不会生成或激活虚假的产品 release。
+- P10 产品镜像已真实构建为
+  `sha256:4fa835b11e9bd5bb50efde0fd3d1180345d3e0ae8eb9cee94d61d4214dff8efe`；
+  GPU 容器内 ORT `1.20.2` 暴露 CUDA EP。占位配置负向启动保持进程运行并报告
+  `ERROR/configure_failed/spot_clean_allowed=false`，healthcheck 非零，见
+  `artifacts/auto05r_p10_evidence/product_container_smoke.json`。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 

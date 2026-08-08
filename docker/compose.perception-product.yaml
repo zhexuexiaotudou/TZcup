@@ -1,0 +1,19 @@
+services:
+  perception:
+    image: tzcup/perception-product:${TZCUP_PERCEPTION_TAG:-local}
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.perception-product
+    network_mode: host
+    ipc: host
+    runtime: nvidia
+    read_only: true
+    tmpfs:
+      - /tmp:size=512m
+    volumes:
+      - ${TZCUP_PERCEPTION_RELEASE:?set release directory}:/opt/tzcup/release:ro
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-0}
+      NVIDIA_VISIBLE_DEVICES: ${NVIDIA_VISIBLE_DEVICES:-all}
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    restart: unless-stopped

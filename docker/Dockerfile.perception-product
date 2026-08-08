@@ -1,0 +1,29 @@
+ARG TZCUP_CUDA_ROS_BASE=tzcup/sanitation-jazzy:stage5b
+FROM ${TZCUP_CUDA_ROS_BASE}
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG ONNXRUNTIME_GPU_VERSION=1.20.2
+
+RUN python3 -m pip install --break-system-packages --no-cache-dir \
+      "onnxruntime-gpu==${ONNXRUNTIME_GPU_VERSION}"
+
+WORKDIR /opt/tzcup
+COPY starter_ws/src ./src
+RUN source /opt/ros/jazzy/setup.bash \
+    && colcon build --merge-install --packages-select \
+      sanitation_perception_interfaces sanitation_perception
+
+COPY scripts/healthcheck_perception.sh /usr/local/bin/healthcheck_perception
+COPY scripts/perception_entrypoint.sh /usr/local/bin/perception_entrypoint
+RUN chmod 0555 /usr/local/bin/healthcheck_perception /usr/local/bin/perception_entrypoint
+
+ENV ROS_DOMAIN_ID=0 \
+    PERCEPTION_PIPELINE_MANIFEST=/opt/tzcup/release/manifests/perception_pipeline_manifest.yaml \
+    PERCEPTION_MODEL_ROOT=/opt/tzcup/release/models
+HEALTHCHECK --interval=10s --timeout=4s --start-period=30s --retries=3 \
+  CMD ["/usr/local/bin/healthcheck_perception"]
+ENTRYPOINT ["/usr/local/bin/perception_entrypoint"]
+CMD []
+
+LABEL org.opencontainers.image.title="TZcup product perception runtime" \
+      org.opencontainers.image.licenses="Apache-2.0"

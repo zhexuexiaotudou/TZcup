@@ -27,6 +27,7 @@ setup(
         "console_scripts": [
             "garbage_perception_node = sanitation_perception.perception_node:main",
             "stage5a_backend_probe = sanitation_perception.backend_probe:main",
+            "product_perception_node = sanitation_perception.product_pipeline_node:main",
         ],
     },
 )

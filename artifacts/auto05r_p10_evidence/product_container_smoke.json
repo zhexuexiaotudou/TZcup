@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "observed_at_utc": "2026-08-08T20:10:15Z",
+  "image": "tzcup/perception-product:dev",
+  "image_id": "sha256:4fa835b11e9bd5bb50efde0fd3d1180345d3e0ae8eb9cee94d61d4214dff8efe",
+  "build_pass": true,
+  "onnxruntime_version": "1.20.2",
+  "gpu_container_providers": [
+    "TensorrtExecutionProvider",
+    "CUDAExecutionProvider",
+    "CPUExecutionProvider"
+  ],
+  "product_ros_executable_present": true,
+  "placeholder_negative_gate": {
+    "container": "tzcup-perception-product-negative-gate",
+    "process_remained_running": true,
+    "state": "ERROR",
+    "reason": "configure_failed",
+    "perception_spot_clean_allowed": false,
+    "healthcheck_exit_code": 1
+  },
+  "claim_boundary": "Container build and negative fail-closed startup passed. Frozen-model ACTIVE, latency, soak, live, and release gates remain false."
+}

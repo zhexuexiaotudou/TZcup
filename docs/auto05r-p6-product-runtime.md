@@ -25,10 +25,17 @@ ORT CUDA session 仍必须在 P4/P5 模型冻结后做 live 验收。
   `bind_ortvalue_input/output + run_with_iobinding`；warm-up profile 中只要出现
   CPU/unassigned node 就拒绝进入产品运行。实现依据当前 ONNX Runtime 官方
   CUDA EP 与 Python I/O Binding API。
+- 产品 Lifecycle 入口已建立：configure 阶段完成 pipeline/model manifest、artifact
+  hash、正式 claim、CUDA provider、I/O Binding、预分配与 warm-up 审计，任一失败
+  都不进入 ACTIVE；同步队列仍由 20 ms/深度 2 合同控制，TF 强制使用 RGB stamp。
+- 已建立不可变 release 的原子激活指针；新版本只有在独立 stage 中完成 registry
+  校验和 inactive warm-up 后才能切换，失败保持旧指针，显式 rollback 可恢复上一版本。
+- 产品容器、Compose、build/run/healthcheck 和 release packaging 已加入；当前正式模型
+  为空，因此真实 release 构建按设计失败关闭，不能先产出空壳产品包。
 
 仍未通过：
 
-- 正式 `LifecycleNode` 的 configure/activate/deactivate/error 全链；
+- 冻结模型解码、完整推理与 publisher 接入后的 Lifecycle live 全链；
 - 四个冻结模型上的真实 ORT CUDA session/warm-up/profile 验收；
 - RGB stamp 的 ROS TF 查询、完整推理与多实例 polygon ROS 发布；
 - ROS diagnostics topic、fault injection、10 次冷启动及 learned-live。
