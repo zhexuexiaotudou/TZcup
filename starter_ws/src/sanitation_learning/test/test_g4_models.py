@@ -53,6 +53,20 @@ def test_discovery_detector_output_shapes() -> None:
     assert outputs["bbox_size"].shape == (1, 2, 120, 160)
 
 
+def test_legacy_discovery_control_is_explicit_and_exclusive() -> None:
+    pytest.importorskip("torch")
+    model = g4_models.build_g4_model("discovery", legacy_fpn_control=True)
+    assert model.architecture_role == "legacy_small_fpn_control"
+    with pytest.raises(ValueError):
+        g4_models.build_g4_model(
+            "discovery",
+            legacy_fpn_control=True,
+            from_scratch_control=True,
+        )
+    with pytest.raises(ValueError):
+        g4_models.build_g4_model("classifier", legacy_fpn_control=True)
+
+
 def test_classifier_output_shape() -> None:
     torch = pytest.importorskip("torch")
     model = g4_models.build_g4_models()["classifier"]

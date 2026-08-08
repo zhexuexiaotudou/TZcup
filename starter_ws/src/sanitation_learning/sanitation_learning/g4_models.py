@@ -216,9 +216,17 @@ def _model_classes() -> dict[str, type]:
         output_channels = {"objectness_logits": 1, "offset": 2, "bbox_size": 2}
 
         def __init__(
-            self, base: int = 48, from_scratch_control: bool = False
+            self,
+            base: int = 48,
+            from_scratch_control: bool = False,
+            legacy_fpn_control: bool = False,
         ):
             super().__init__()
+            if legacy_fpn_control and from_scratch_control:
+                raise ValueError(
+                    "legacy_fpn_control and from_scratch_control are "
+                    "mutually exclusive diagnostic modes"
+                )
             try:
                 import torchvision  # noqa: F401
 
@@ -231,12 +239,20 @@ def _model_classes() -> dict[str, type]:
                     "backbone (PRETRAINED_REQUIRED=true)"
                 )
             self.backbone = (
+                _FPNBackbone(base=base)
+                if legacy_fpn_control
+                else
                 _DiscoveryResNetBackbone(
                     base=base,
                     from_scratch_control=from_scratch_control,
                 )
                 if torchvision_available
                 else _FPNBackbone(base=base)
+            )
+            self.architecture_role = (
+                "legacy_small_fpn_control"
+                if legacy_fpn_control
+                else "production_candidate"
             )
             self.head = nn.Sequential(
                 _ConvBnReLU(base * 2, base * 2, 3, 1, 1)
@@ -714,13 +730,17 @@ def build_g4_model(
     task: str,
     *,
     from_scratch_control: bool = False,
+    legacy_fpn_control: bool = False,
 ):
     """Build one task model without instantiating unrelated backbones."""
     classes = _model_classes()
     if task == "discovery":
         return classes["DiscoveryDetector"](
-            from_scratch_control=from_scratch_control
+            from_scratch_control=from_scratch_control,
+            legacy_fpn_control=legacy_fpn_control,
         )
+    if legacy_fpn_control:
+        raise ValueError("legacy_fpn_control is valid only for discovery")
     if task == "classifier":
         return classes["CandidateCropClassifier"](
             from_scratch_control=from_scratch_control

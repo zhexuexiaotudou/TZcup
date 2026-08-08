@@ -695,7 +695,10 @@ class G4DiscoveryDataset:
     def __getitem__(self, index: int):
         torch = _torch()
         row = self.rows[index]
-        rgb, depth, semantic, instance = read_frame(row)
+        # Discovery is RGB-only. Loading depth/semantic/instance arrays here
+        # added three unused disk reads per sample and made formal full-frame
+        # training I/O-bound without changing a single target.
+        rgb = read_rgb(row)
         native_size = (int(rgb.shape[1]), int(rgb.shape[0]))
         boxes = discrete_boxes_for_frame(
             row,
@@ -707,9 +710,6 @@ class G4DiscoveryDataset:
         flip = self.augment and rng.random() < 0.5
         if flip:
             rgb = np.ascontiguousarray(rgb[:, ::-1])
-            depth = np.ascontiguousarray(depth[:, ::-1])
-            semantic = np.ascontiguousarray(semantic[:, ::-1])
-            instance = np.ascontiguousarray(instance[:, ::-1])
             boxes = [
                 remap_flipped_box(
                     box,

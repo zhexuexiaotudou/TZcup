@@ -42,6 +42,7 @@ def discovery_predictions(
     nms_iou_threshold: float = 0.5,
     local_maximum_radius: int = 1,
     stride: int = DISCOVERY_STRIDE,
+    pre_nms_topk: int | None = None,
 ) -> list[dict]:
     model.eval()
     frames: list[dict] = []
@@ -68,6 +69,7 @@ def discovery_predictions(
                 nms_iou_threshold=nms_iou_threshold,
                 max_detections=max_detections,
                 local_maximum_radius=local_maximum_radius,
+                pre_nms_topk=pre_nms_topk,
             )
             truth = discrete_boxes_for_frame(row, instances_by_key)
             frames.append(

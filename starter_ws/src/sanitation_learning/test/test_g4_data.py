@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 import pytest
+import numpy as np
 
 
 _PACKAGE_DIR = Path(__file__).resolve().parents[1]
@@ -24,9 +25,34 @@ from sanitation_learning.g4_geometry import (  # noqa: E402
 )
 from sanitation_learning.g4_data import (  # noqa: E402
     DISCOVERY_MODEL_SIZE,
+    G4DiscoveryDataset,
     load_frame_rows,
     load_instance_records,
 )
+
+
+def test_discovery_dataset_does_not_read_unused_modalities(monkeypatch) -> None:
+    pytest.importorskip("torch")
+    from sanitation_learning import g4_data
+
+    calls = {"rgb": 0}
+
+    def fake_read_rgb(_row):
+        calls["rgb"] += 1
+        return np.zeros((480, 640, 3), dtype=np.uint8)
+
+    def forbidden_read_frame(_row):
+        raise AssertionError("RGB-only discovery loaded unused modalities")
+
+    monkeypatch.setattr(g4_data, "read_rgb", fake_read_rgb)
+    monkeypatch.setattr(g4_data, "read_frame", forbidden_read_frame)
+    dataset = G4DiscoveryDataset(
+        [{"scene_seed": 1, "frame_index": 2}], {}, augment=False
+    )
+    image, targets = dataset[0]
+    assert tuple(image.shape) == (3, 480, 640)
+    assert tuple(targets["heatmap"].shape) == (1, 120, 160)
+    assert calls == {"rgb": 1}
 
 
 def _box(x1, y1, x2, y2):

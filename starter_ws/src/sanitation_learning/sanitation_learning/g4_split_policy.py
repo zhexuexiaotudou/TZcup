@@ -16,6 +16,8 @@ final set that development code must never load.
 
 from __future__ import annotations
 
+from collections import defaultdict, deque
+import random
 import warnings
 
 
@@ -135,6 +137,33 @@ def screening_decision(
     }
 
 
+def stratified_row_sample(
+    rows: list[dict], limit: int, *, seed: int
+) -> list[dict]:
+    """Deterministically round-robin world x positive/negative groups."""
+    if limit <= 0 or limit >= len(rows):
+        return list(rows)
+    groups: dict[tuple[str, bool], deque] = defaultdict(deque)
+    for row in rows:
+        groups[(str(row["world_id"]), bool(row.get("negative_only")))].append(row)
+    ordered_keys = sorted(groups)
+    rng = random.Random(seed)
+    for key in ordered_keys:
+        values = list(groups[key])
+        rng.shuffle(values)
+        groups[key] = deque(values)
+    selected: list[dict] = []
+    while len(selected) < limit:
+        progressed = False
+        for key in ordered_keys:
+            if groups[key] and len(selected) < limit:
+                selected.append(groups[key].popleft())
+                progressed = True
+        if not progressed:
+            break
+    return selected
+
+
 __all__ = [
     "ALL_ROLES",
     "DEVELOPMENT_ROLES",
@@ -148,4 +177,5 @@ __all__ = [
     "is_sealed_final",
     "partition_rows",
     "screening_decision",
+    "stratified_row_sample",
 ]

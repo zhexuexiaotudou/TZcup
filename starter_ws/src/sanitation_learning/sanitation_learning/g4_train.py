@@ -334,6 +334,8 @@ def train_discovery(
     load_best: bool = True,
     selector: ConstraintAwareSelector | None = None,
     validation_metric_fn: Callable | None = None,
+    model=None,
+    objectness_variant: str = "L2_independent_ohem",
 ) -> tuple[torch.nn.Module, dict]:
     assert_development_rows(rows, "discovery training")
     if val_rows is not None:
@@ -352,8 +354,13 @@ def train_discovery(
             val_rows, instances_by_key, augment=False, seed=seed
         )
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
-    model = build_g4_model("discovery")
-    loss_fn = lambda outputs, targets: discovery_loss(outputs, targets)["total"]
+    if model is None:
+        model = build_g4_model("discovery")
+    loss_fn = lambda outputs, targets: discovery_loss(
+        outputs,
+        targets,
+        objectness_variant=objectness_variant,
+    )["total"]
     model, report = fit_model(
         model,
         loader,

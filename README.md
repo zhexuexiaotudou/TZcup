@@ -80,7 +80,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 | 软件工程与发布 | 已完成 | `AUTO-16=PASS`，源码、配置、测试、文档和发布工具齐全 |
 | 基础仿真与自主导航 | 已通过机器门 | 车辆、场景、定位、Nav2、覆盖规划、安全控制和回放链已验证 |
 | 调试可视化 | 可用 | Gazebo 显示物理场景，RViz 显示目标、障碍、区域、路径、车辆和系统状态 |
-| 学习感知 | P0 可信基础已落地、screening 仍阻塞 | P0-1..P0-12 基础设施已实现：flip bbox 统一几何、train-world holdout、legacy G4 仅诊断、G5 密封未创建、约束感知选择、task-specific ONNX parity、冻结/manifest/预训练溯源、P4/P5 固定门槛；四类 micro-overfit 仅证明容量；未训练新产品模型，两轮旧 screening 的 `test` 仅作诊断，`AUTO_05R/P4/P5/formal/live/J6/field` 仍为 false，见 [`docs/auto05r-p0-trustworthiness.md`](docs/auto05r-p0-trustworthiness.md) |
+| 学习感知 | P1 已淘汰旧 discovery head、screening 仍阻塞 | P0-1..P0-12 可信基础已实现；P1 又完成 legacy small-FPN 的 L1/L2/L3 修复后对照，三者都无法兼顾召回与 proposal flood，已禁止继续追加 epoch，下一步为 FCOS ResNet50-FPN teacher → FCOS-lite student；G5 尚未创建，`AUTO_05R/P4/P5/formal/live/J6/field` 仍为 false，见 [`docs/auto05r-p0-trustworthiness.md`](docs/auto05r-p0-trustworthiness.md) 与 [`docs/auto05r-p1-discovery-control.md`](docs/auto05r-p1-discovery-control.md) |
 | 综合竞赛矩阵 | 未通过 | 受 AUTO-08 学习感知与定点清扫依赖阻断，正式综合任务未启动 |
 | 真实域 | 外部阻断 | 缺少满足数量、标定和独立真值要求的真实数据集 |
 | J6 部署 | 未通过 | 官方工具链已准备，但正式模型尚未产生，本机也没有 J6 实板 |
@@ -144,7 +144,7 @@ ros2 launch sanitation_debug_visualization debug_sim.launch.py
 
 ## 文档入口
 
-- [`README_FIRST.md`](README_FIRST.md)：环境准备和启动步骤；[`docs/auto05r-p0-trustworthiness.md`](docs/auto05r-p0-trustworthiness.md)：AUTO-05R P0 可信基础与能力边界；
+- [`README_FIRST.md`](README_FIRST.md)：环境准备和启动步骤；[`docs/auto05r-p0-trustworthiness.md`](docs/auto05r-p0-trustworthiness.md)：AUTO-05R P0 可信基础与能力边界；[`docs/auto05r-p1-discovery-control.md`](docs/auto05r-p1-discovery-control.md)：旧 discovery head 淘汰证据与 P2 路线；
 - [`PROJECT_SPEC.md`](PROJECT_SPEC.md)：系统架构与接口边界；
 - [`STAGE_GATES.md`](STAGE_GATES.md)：Stage 与 AUTO 阶段验收条件；
 - [`docs/progress.md`](docs/progress.md)：详细进度、指标和历史边界；

@@ -80,6 +80,41 @@ def test_decode_applies_score_ranked_max_detections() -> None:
     assert np.isclose(decoded[0].score, 0.9)
 
 
+def test_decode_applies_pre_nms_topk_before_unbounded_nms() -> None:
+    heatmap = np.full((1, 8, 8), 0.6, np.float32)
+    heatmap[0, 1, 1] = 0.9
+    heatmap[0, 6, 6] = 0.8
+    size = np.ones((2, 8, 8), np.float32)
+    decoded = decode_centernet_outputs(
+        heatmap,
+        np.zeros((2, 8, 8), np.float32),
+        size,
+        stride=4,
+        score_threshold=0.5,
+        local_maximum_radius=0,
+        pre_nms_topk=2,
+    )
+    assert [round(item.score, 1) for item in decoded] == [0.9, 0.8]
+
+
+def test_decode_rejects_nonpositive_pre_nms_topk() -> None:
+    heatmap = np.ones((1, 2, 2), np.float32)
+    size = np.ones((2, 2, 2), np.float32)
+    try:
+        decode_centernet_outputs(
+            heatmap,
+            np.zeros((2, 2, 2), np.float32),
+            size,
+            stride=4,
+            score_threshold=0.5,
+            pre_nms_topk=0,
+        )
+    except ValueError as exc:
+        assert "pre_nms_topk must be positive" in str(exc)
+    else:
+        raise AssertionError("nonpositive pre-NMS top-K must fail")
+
+
 def test_invalid_shapes_fail_closed() -> None:
     heatmap = np.zeros((3, 4, 4), np.float32)
     try:

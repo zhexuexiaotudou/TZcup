@@ -11,25 +11,86 @@ import torch
 import torch.nn.functional as functional
 
 
-def focal_objectness_loss(
-    logits: torch.Tensor, target: torch.Tensor
-) -> torch.Tensor:
+OBJECTNESS_LOSS_VARIANTS = (
+    "L1_centernet",
+    "L2_independent_ohem",
+    "L3_quality_focal",
+)
+
+
+def objectness_loss_audit(
+    logits: torch.Tensor,
+    target: torch.Tensor,
+    *,
+    variant: str = "L2_independent_ohem",
+    negative_weight: float = 1.0,
+) -> dict[str, torch.Tensor]:
+    """Return auditable positive, negative and hard-negative contributions.
+
+    L1 is the standard CenterNet normalization. L2 keeps positive
+    normalization independent from an OHEM negative mean. L3 is a
+    quality-focal-style continuous heatmap objective with the same independent
+    hard-negative term. The explicit components prevent coefficient changes
+    from hiding a collapsed negative contribution.
+    """
+    if variant not in OBJECTNESS_LOSS_VARIANTS:
+        raise ValueError(f"unknown objectness loss variant {variant!r}")
     prediction = torch.sigmoid(logits).clamp(1e-5, 1.0 - 1e-5)
     positive = target.eq(1.0).float()
     negative = target.lt(1.0).float()
-    negative_weight = (1.0 - target).pow(4)
-    positive_loss = -(prediction.log()) * (1.0 - prediction).pow(2) * positive
-    negative_loss = (
-        -((1.0 - prediction).log())
-        * prediction.pow(2)
-        * negative_weight
-        * negative
-    )
+    gaussian_negative_weight = (1.0 - target).pow(4)
+    if variant == "L3_quality_focal":
+        modulation = torch.abs(target - prediction).pow(2)
+        elementwise = torch.nn.functional.binary_cross_entropy_with_logits(
+            logits, target, reduction="none"
+        ) * modulation
+        positive_loss = elementwise * positive
+        negative_loss = elementwise * gaussian_negative_weight * negative
+    else:
+        positive_loss = -(prediction.log()) * (1.0 - prediction).pow(2) * positive
+        negative_loss = (
+            -((1.0 - prediction).log())
+            * prediction.pow(2)
+            * gaussian_negative_weight
+            * negative
+        )
     batch_size = max(int(logits.shape[0]), 1)
     negative_flat = negative_loss.reshape(batch_size, -1)
     topk_count = max(1, int(negative_flat.shape[1] * 0.02))
     topk, _ = torch.topk(negative_flat, topk_count, dim=1)
-    return (positive_loss.sum() + topk.mean()) / positive.sum().clamp(min=1.0)
+    positive_count = positive.sum().clamp(min=1.0)
+    positive_contribution = positive_loss.sum() / positive_count
+    negative_contribution = negative_loss.sum() / positive_count
+    hard_negative_contribution = topk.mean()
+    if variant == "L1_centernet":
+        total = positive_contribution + negative_contribution
+    else:
+        total = (
+            positive_contribution
+            + float(negative_weight) * hard_negative_contribution
+        )
+    return {
+        "total": total,
+        "positive": positive_contribution,
+        "negative": negative_contribution,
+        "hard_negative": hard_negative_contribution,
+        "positive_count": positive_count,
+    }
+
+
+def focal_objectness_loss(
+    logits: torch.Tensor,
+    target: torch.Tensor,
+    *,
+    variant: str = "L2_independent_ohem",
+    negative_weight: float = 1.0,
+) -> torch.Tensor:
+    return objectness_loss_audit(
+        logits,
+        target,
+        variant=variant,
+        negative_weight=negative_weight,
+    )["total"]
 
 
 def _generalized_iou(predicted: torch.Tensor, target: torch.Tensor) -> torch.Tensor:
@@ -67,10 +128,16 @@ def discovery_loss(
     targets: dict[str, torch.Tensor],
     *,
     stride: int = 4,
+    objectness_variant: str = "L2_independent_ohem",
+    objectness_negative_weight: float = 1.0,
 ) -> dict[str, torch.Tensor]:
-    objectness = focal_objectness_loss(
-        outputs["objectness_logits"], targets["heatmap"]
+    objectness_audit = objectness_loss_audit(
+        outputs["objectness_logits"],
+        targets["heatmap"],
+        variant=objectness_variant,
+        negative_weight=objectness_negative_weight,
     )
+    objectness = objectness_audit["total"]
     mask = targets["regression_mask"]
     denominator = mask.sum().clamp(min=1.0)
     offset_loss = (
@@ -130,6 +197,9 @@ def discovery_loss(
         "offset": offset_loss,
         "giou": giou_loss,
         "negative_penalty": negative_penalty,
+        "objectness_positive": objectness_audit["positive"],
+        "objectness_negative": objectness_audit["negative"],
+        "objectness_hard_negative": objectness_audit["hard_negative"],
     }
 
 
@@ -209,8 +279,10 @@ def area_loss(
 
 
 __all__ = [
+    "OBJECTNESS_LOSS_VARIANTS",
     "area_loss",
     "classifier_loss",
     "discovery_loss",
     "focal_objectness_loss",
+    "objectness_loss_audit",
 ]

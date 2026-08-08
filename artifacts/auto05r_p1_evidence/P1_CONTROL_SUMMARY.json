@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-P1",
+  "executed_at_local_date": "2026-08-09",
+  "execution_status": "completed",
+  "architecture": "legacy_small_fpn_centernet_like_full_frame",
+  "architecture_role": "historical_control_diagnostic_only",
+  "decision": {
+    "legacy_architecture_retired": true,
+    "additional_epoch_tuning_allowed": false,
+    "next_action": "proceed_to_P2_teacher_then_FCOS_lite"
+  },
+  "control_gates": {
+    "all_gt_candidate_recall_min": 0.75,
+    "false_candidates_per_min_max": 20.0,
+    "negative_only_fp_per_frame_max": 0.2
+  },
+  "data_policy": {
+    "read_splits": ["train", "val"],
+    "derived_split": "train_world_holdout",
+    "legacy_G4_D6_diagnostic_read": false,
+    "G5_SEALED_FINAL_read": false,
+    "sampling": "deterministic_world_x_polarity_round_robin",
+    "train": {"frames": 600, "worlds": 8, "negative_only_frames": 300},
+    "train_world_holdout": {"frames": 100, "worlds": 8, "negative_only_frames": 38},
+    "cross_world_val": {"frames": 100, "worlds": 2, "negative_only_frames": 50}
+  },
+  "decoder_policy": {
+    "postprocess_location": "outside_model_graph",
+    "pre_nms_topk": 1000,
+    "max_detections": 100,
+    "bounded_before_nms": true
+  },
+  "selected_control": {
+    "variant": "L1_centernet",
+    "threshold_selected_on_train_world_holdout": 0.95,
+    "cross_world_val": {
+      "all_gt_candidate_recall": 0.0,
+      "total_truth": 456,
+      "false_candidates_per_min": 0.0,
+      "negative_only_frames": 50,
+      "negative_only_fp_per_frame": 0.0,
+      "ap50": 0.0,
+      "all_gates_pass": false
+    }
+  },
+  "loss_variants": {
+    "L1_centernet": {
+      "epochs": 10,
+      "best_epoch": 2,
+      "early_stopped": true,
+      "training_duration_s": 190.855,
+      "positive_score_mean": 0.04531138017773628,
+      "negative_score_mean": 0.04539034888148308,
+      "holdout_at_threshold_0_05": {"recall": 0.0, "false_candidates_per_min": 0.0, "negative_only_fp_per_frame": 0.0},
+      "checkpoint_sha256": "7eaaa3633242b8b8330efdca65fe532267c71592f0b9ba62b3514e1c09b7ae03"
+    },
+    "L2_independent_ohem": {
+      "epochs": 20,
+      "best_epoch": 12,
+      "early_stopped": true,
+      "training_duration_s": 381.668,
+      "positive_score_mean": 0.08097080141305923,
+      "negative_score_mean": 0.06146473437547684,
+      "holdout_at_threshold_0_05": {"recall": 0.0031496062992125984, "false_candidates_per_min": 59976.0, "negative_only_fp_per_frame": 1.0},
+      "checkpoint_sha256": "8ac2d8a2f33cee45ffbe00567e4ca320af67f89ba156c6e6cf63427c0131e603"
+    },
+    "L3_quality_focal": {
+      "epochs": 22,
+      "best_epoch": 14,
+      "early_stopped": true,
+      "training_duration_s": 419.742,
+      "positive_score_mean": 0.0940682515501976,
+      "negative_score_mean": 0.07050636410713196,
+      "holdout_at_threshold_0_05": {"recall": 0.02125984251968504, "false_candidates_per_min": 59838.0, "negative_only_fp_per_frame": 1.0},
+      "checkpoint_sha256": "061d12e1207bda0c1aff9a893031c0e07b4a7dbcae382aeda2ad8da7f1b3045a"
+    }
+  },
+  "visual_decode": {
+    "frame_count": 24,
+    "legend": "green=ground_truth, red=decoded_detection",
+    "raw_files_retained_outside_git": true
+  },
+  "external_raw_report": {
+    "logical_path": "TZcup-perception-product-runtime/p1-control/P1_CONTROL_REPORT.json",
+    "sha256": "33ba936af240b59d80441d1f65e447eed51ed68c4c0778dfbf6826e78eec0ec9"
+  },
+  "product_claim_allowed": false
+}
