@@ -10,7 +10,7 @@ weight_source: not_available
 pretraining_source: null
 input:
   names: [images]
-  shapes: [[1, 4, 384, 512]]
+  shapes: [[1, 10, 384, 512]]
   dtypes: [float32]
 normalization:
   scale: 0.00392156862745098

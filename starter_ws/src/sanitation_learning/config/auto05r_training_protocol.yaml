@@ -9,7 +9,7 @@ description: |
 models:
   discovery:
     model_id: g4_discovery_detector_v1
-    input_shape: [1, 3, 512, 384]
+    input_shape: [1, 3, 480, 640]
     architecture: stride_4_8_fpn_objectness_offset_bbox
     seed: 20260805
   classifier:
@@ -19,12 +19,12 @@ models:
     seed: 20260806
   leaf:
     model_id: g4_leaf_segmenter_v1
-    input_shape: [1, 4, 384, 512]
+    input_shape: [1, 10, 384, 512]
     architecture: area_unet_shared_encoder_independent_decoder
     seed: 20260807
   puddle:
     model_id: g4_puddle_segmenter_v1
-    input_shape: [1, 4, 384, 512]
+    input_shape: [1, 10, 384, 512]
     architecture: area_unet_shared_encoder_independent_decoder
     seed: 20260808
 micro_overfit:

@@ -13,10 +13,10 @@ U-Net）不再作为新正式候选；本任务提供替换它的新模型族与
 
 | 模型 | 输入 | 输出 |
 |---|---|---|
-| `DiscoveryDetector`（class-agnostic `litter_candidate`） | `[1, 3, 512, 384]` RGB | objectness heatmap `[1, 1, 128, 96]`、center offset `[1, 2, 128, 96]`、bbox regression `[1, 2, 128, 96]`（stride 4） |
+| `DiscoveryDetector`（class-agnostic `litter_candidate`） | `[1, 3, 480, 640]` RGB | objectness heatmap `[1, 1, 120, 160]`、center offset `[1, 2, 120, 160]`、bbox regression `[1, 2, 120, 160]`（stride 4） |
 | `CandidateCropClassifier` | `[1, 3, 192, 192]` crop | `[1, 4]` logits（background / plastic_bottle / metal_can / paper_litter） |
-| `LeafSegmenter` | `[1, 4, 384, 512]` RGB-D | logits `[1, 1, 384, 512]` + boundary logits `[1, 1, 384, 512]` |
-| `PuddleSegmenter` | `[1, 4, 384, 512]` RGB-D | logits `[1, 1, 384, 512]` + boundary logits `[1, 1, 384, 512]` |
+| `LeafSegmenter` | `[1, 10, 384, 512]` RGB-depth-geometry | logits `[1, 1, 384, 512]` + boundary logits `[1, 1, 384, 512]` |
+| `PuddleSegmenter` | `[1, 10, 384, 512]` RGB-depth-context | logits `[1, 1, 384, 512]` + boundary logits `[1, 1, 384, 512]` |
 
 - `DiscoveryDetector` 使用 stride 4/8 FPN 风格特征（自底向上 stride 2/4/8，
   顶层 top-down 融合回 stride 4），head 只放在 stride 4，输出中心热图 +

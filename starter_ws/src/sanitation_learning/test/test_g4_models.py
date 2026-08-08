@@ -15,9 +15,9 @@ from sanitation_learning import g4_models  # noqa: E402
 
 
 def test_input_shape_constants_match_spec() -> None:
-    assert tuple(g4_models.DISCOVERY_INPUT_SHAPE) == (1, 3, 512, 384)
+    assert tuple(g4_models.DISCOVERY_INPUT_SHAPE) == (1, 3, 480, 640)
     assert tuple(g4_models.CLASSIFIER_INPUT_SHAPE) == (1, 3, 192, 192)
-    assert tuple(g4_models.SEGMENTER_INPUT_SHAPE) == (1, 4, 384, 512)
+    assert tuple(g4_models.SEGMENTER_INPUT_SHAPE) == (1, 10, 384, 512)
     assert tuple(g4_models.DISCOVERY_STRIDES) == (4, 8)
     assert tuple(g4_models.CLASSIFIER_CLASSES) == (
         "background",
@@ -39,10 +39,10 @@ def test_onnx_contract_functions_exist() -> None:
 def test_discovery_detector_output_shapes() -> None:
     torch = pytest.importorskip("torch")
     model = g4_models.build_g4_models()["discovery"]
-    outputs = model(torch.zeros(1, 3, 512, 384))
-    assert outputs["objectness_logits"].shape == (1, 1, 128, 96)
-    assert outputs["offset"].shape == (1, 2, 128, 96)
-    assert outputs["bbox_size"].shape == (1, 2, 128, 96)
+    outputs = model(torch.zeros(1, 3, 480, 640))
+    assert outputs["objectness_logits"].shape == (1, 1, 120, 160)
+    assert outputs["offset"].shape == (1, 2, 120, 160)
+    assert outputs["bbox_size"].shape == (1, 2, 120, 160)
 
 
 def test_classifier_output_shape() -> None:
@@ -56,9 +56,10 @@ def test_segmenter_output_shapes() -> None:
     torch = pytest.importorskip("torch")
     models = g4_models.build_g4_models()
     for task in ("leaf", "puddle"):
-        outputs = models[task](torch.zeros(1, 4, 384, 512))
-        assert outputs["logits"].shape == (1, 1, 384, 512)
-        assert outputs["boundary_logits"].shape == (1, 1, 384, 512)
+        models[task].eval()
+        outputs = models[task](torch.zeros(1, 10, 384, 512))
+    assert outputs["logits"].shape == (1, 1, 384, 512)
+    assert outputs["boundary_logits"].shape == (1, 1, 384, 512)
 
 
 def test_segmenters_can_share_encoder_with_independent_decoders() -> None:
@@ -76,10 +77,10 @@ def test_model_summary_cards_not_trained() -> None:
     cards = g4_models.model_summary()
     assert set(cards) == {"discovery", "classifier", "leaf", "puddle"}
     expected_inputs = {
-        "discovery": [1, 3, 512, 384],
+        "discovery": [1, 3, 480, 640],
         "classifier": [1, 3, 192, 192],
-        "leaf": [1, 4, 384, 512],
-        "puddle": [1, 4, 384, 512],
+            "leaf": [1, 10, 384, 512],
+            "puddle": [1, 10, 384, 512],
     }
     for task, card in cards.items():
         assert card["state"] == "not_trained"
@@ -88,7 +89,7 @@ def test_model_summary_cards_not_trained() -> None:
         assert card["inputs"][0]["dtype"] == "float32"
         assert card["outputs"][0]["dtype"] == "float32"
     assert cards["classifier"]["outputs"][0]["shape"] == [1, 4]
-    assert cards["discovery"]["outputs"][0]["shape"] == [1, 1, 128, 96]
+    assert cards["discovery"]["outputs"][0]["shape"] == [1, 1, 120, 160]
     assert cards["leaf"]["outputs"][0]["shape"] == [1, 1, 384, 512]
 
 
@@ -110,7 +111,7 @@ def test_onnx_export_inventory_and_parity(tmp_path) -> None:
     session = onnxruntime.InferenceSession(
         str(onnx_path), providers=["CPUExecutionProvider"]
     )
-    inputs = torch.randn(1, 3, 512, 384)
+    inputs = torch.randn(1, 3, 480, 640)
     parity = g4_models.torch_onnx_parity(model, session, inputs)
     assert parity["max_absolute_error"] < 1e-3
     assert parity["decoded_agreement"] is True

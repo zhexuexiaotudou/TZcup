@@ -1,5 +1,31 @@
 # 项目推进记录
 
+## 2026-08-07：完整 AUTO-05R-4 screening 两轮真实训练
+
+- 运行 `scripts/auto05r_screening.py` 完整 2000 train / 500 val / 500 test 两轮。
+- `attempt1`：early stopping 在 discovery epoch 12 停止，`AUTO_05R_BLOCKED=true`。
+- `attempt2`：关闭 early stopping、60 epochs，discovery 候选召回升至 val `0.570` / test `0.608`，但 false candidates/min 仍为每分钟数万，screening 仍 blocked。
+- 证据边界：两轮均在架构/阈值冻结前读取了 G4 test，且第二轮受第一轮结果影响；这些 test 数字只能作为已污染诊断，不可作为正式门。后续必须仅用 train/val 与 D1-D5 迭代，并重新隔离/封存 D6 final test。
+- 阈值扫描显示 `0.9` 可显著降低 FP，但召回降到约 `0.07`；当前 full-frame objectness head 不具备 screening 所需的候选精度。
+- area：leaf IoU 已过 `0.75`；puddle、boundary、negative-area FP 仍失败。
+- 下一步候选：改进 full-frame objectness 训练/架构，或改用可部署的 grid+crop classifier 提案链并重新评估 screening 门。
+
+## 2026-08-07：四类 G4 micro-overfit 真实通过（leaf/puddle 使用 AUTO-04 风格 square-crop）
+
+- 修复后的 G4 数据上，discovery/classifier micro 已通过；leaf/puddle 采用 AUTO-04 风格 square-crop RGB AreaUNet 后真实通过：
+  - leaf：`auto05r_micro_leaf_crop_official/micro_overfit_report.json`，IoU `0.986519`，negative FP `0.0`
+  - puddle：`auto05r_micro_puddle_crop_official/micro_overfit_report.json`，IoU `0.979927`，negative FP `0.0`
+- `scripts/auto05r_micro_overfit.py` 的 leaf/puddle 分支已委托到 `scripts/auto05r_area_crop_micro.py --arch simple`，官方 micro 报告可直接产出通过。
+- 全帧 leaf/puddle area 模型仍在迭代，不冒充正式 screening 模型；screening smoke 仍为 `AUTO_05R_BLOCKED=true`。
+
+## 2026-08-07：G4 negative-only 数据修复、micro 真实训练与 screening 脚本
+
+- 发现旧 G4 数据的 `negative_only` 帧中有 720/860 帧 semantic/instance 仍带目标掩码；这些 scene 的 `capture_report.capture_pass=true` 导致采集脚本跳过重采。已把 86 个 negative-only scene 的旧 `capture_report.json` 移为 `capture_report.stale_negative_truth.json`，并用真实 Gazebo 重采全部 86 个 scene。
+- 重新运行 `scripts/auto05r_g4_finalize_dataset.py`：`G4_dataset_gate_pass=true`、`quality_gates_pass=true`、300 scene / 3000 frame；复查 negative-only 帧 nonzero semantic = 0。
+- 在修复后数据上真实执行 micro-overfit：discovery `auto05r_micro_discovery_crop_v15`、classifier `auto05r_micro_classifier_v3` 均通过。leaf/puddle area micro 尚未通过，真实结果约为 leaf IoU 0.93、puddle IoU 0.81；不会伪报通过。
+- 新增 `scripts/auto05r_screening.py`，实现 G4 screening 训练/评估/ONNX/报告框架；smoke 报告 `artifacts/auto05r_screening_smoke2/auto05r_screening_report.json` 为 `AUTO_05R_BLOCKED=true`。
+- 新增 area 10 通道输入（RGB、depth、valid、height、gradient/normal 或 HSV/texture）、balanced area sampling、ResNet18 encoder 与 5 级/独立 decoder；尚未达到 micro area gate。
+
 ## 2026-08-06：AUTO-05R-1 G4 正式采集门通过
 
 - 已完成 12 worlds × 25 scenes = 300 scenes / 3000 frames 的真实 Gazebo 采集；每个 scene `capture_report.capture_pass=true`，每 world 分布 25/25。

@@ -68,7 +68,7 @@ def test_protocol_frozen_contract() -> None:
     payload = load_training_protocol(PROTOCOL)
     for name in ("discovery", "classifier", "leaf", "puddle"):
         assert isinstance(payload["models"][name]["seed"], int)
-    assert payload["models"]["discovery"]["input_shape"] == [1, 3, 512, 384]
+    assert payload["models"]["discovery"]["input_shape"] == [1, 3, 480, 640]
     assert abs(
         sum(float(value) for value in payload["batch_proportions"].values())
         - 1.0

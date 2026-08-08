@@ -10,7 +10,7 @@ Four model families are defined here:
   (input ``[1, 3, 192, 192]``).
 - ``LeafSegmenter`` / ``PuddleSegmenter``: independent binary area
   segmenters with a shared-encoder option; every segmenter owns an
-  independent decoder and boundary head (input ``[1, 4, 384, 512]``).
+  independent decoder and boundary head (input ``[1, 10, 384, 512]``).
 - ``build_g4_models`` / ``model_summary``: model cards with parameter
   counts, input/output names/shapes/dtypes and ``state: not_trained``.
 
@@ -29,9 +29,9 @@ import numpy as np
 from .auto04_contract import box_iou, decode_centernet_outputs
 
 
-DISCOVERY_INPUT_SHAPE = (1, 3, 512, 384)
+DISCOVERY_INPUT_SHAPE = (1, 3, 480, 640)
 CLASSIFIER_INPUT_SHAPE = (1, 3, 192, 192)
-SEGMENTER_INPUT_SHAPE = (1, 4, 384, 512)
+SEGMENTER_INPUT_SHAPE = (1, 10, 384, 512)
 CLASSIFIER_CLASSES = ("background", "plastic_bottle", "metal_can", "paper_litter")
 DISCOVERY_STRIDES = (4, 8)
 SEGMENTER_TASKS = ("leaf", "puddle")
@@ -111,7 +111,7 @@ def _model_classes() -> dict[str, type]:
     class _FPNBackbone(nn.Module):
         """Stride-4/8 multi-scale FPN-style features for the detector."""
 
-        def __init__(self, base: int = 32):
+        def __init__(self, base: int = 48):
             super().__init__()
             self.stem = _ConvBnReLU(3, base, 3, 2, 1)
             self.conv3 = nn.Sequential(
@@ -142,6 +142,46 @@ def _model_classes() -> dict[str, type]:
             )
             return {"p4": p4, "p5": p5}
 
+    class _DiscoveryResNetBackbone(nn.Module):
+        """ResNet18 stride-4/8 features for the discovery detector."""
+
+        def __init__(self, base: int = 48):
+            super().__init__()
+            import torchvision
+
+            try:
+                resnet = torchvision.models.resnet18(pretrained=True)
+            except Exception:
+                resnet = torchvision.models.resnet18(pretrained=False)
+            self.stem = nn.Sequential(
+                resnet.conv1,
+                resnet.bn1,
+                resnet.relu,
+            )
+            self.pool = resnet.maxpool
+            self.layer1 = resnet.layer1
+            self.layer2 = resnet.layer2
+            self.reduce4 = _ConvBnReLU(64, base * 2, 1, 1, 0)
+            self.reduce5 = _ConvBnReLU(128, base * 2, 1, 1, 0)
+            self.fuse = _ConvBnReLU(base * 2, base * 2, 3, 1, 1)
+
+        def forward(self, image):
+            x = self.stem(image)
+            x = self.pool(x)
+            c4 = self.layer1(x)
+            c5 = self.layer2(c4)
+            p4 = self.reduce4(c4)
+            p5 = self.reduce5(c5)
+            p4 = self.fuse(
+                p4
+                + functional.interpolate(
+                    p5,
+                    size=p4.shape[-2:],
+                    mode="nearest",
+                )
+            )
+            return {"p4": p4, "p5": p5}
+
     class DiscoveryDetector(_FlatOutputMixin, nn.Module):
         """Class-agnostic litter-candidate detector (objectness/offset/bbox)."""
 
@@ -152,15 +192,28 @@ def _model_classes() -> dict[str, type]:
         output_names = ("objectness_logits", "offset", "bbox_size")
         output_channels = {"objectness_logits": 1, "offset": 2, "bbox_size": 2}
 
-        def __init__(self, base: int = 32):
+        def __init__(self, base: int = 48):
             super().__init__()
-            self.backbone = _FPNBackbone(base=base)
+            try:
+                import torchvision  # noqa: F401
+
+                torchvision_available = True
+            except Exception:
+                torchvision_available = False
+            self.backbone = (
+                _DiscoveryResNetBackbone(base=base)
+                if torchvision_available
+                else _FPNBackbone(base=base)
+            )
             self.head = nn.Sequential(
                 _ConvBnReLU(base * 2, base * 2, 3, 1, 1)
             )
             self.objectness = nn.Conv2d(base * 2, 1, 3, padding=1)
             self.offset = nn.Conv2d(base * 2, 2, 3, padding=1)
-            self.bbox_size = nn.Conv2d(base * 2, 2, 3, padding=1)
+            self.bbox_size = nn.Sequential(
+                nn.Conv2d(base * 2, 2, 3, padding=1), nn.Softplus()
+            )
+            nn.init.constant_(self.objectness.bias, -3.0)
 
         def forward(self, image):
             features = self.backbone(image)
@@ -181,7 +234,7 @@ def _model_classes() -> dict[str, type]:
         output_names = ("logits",)
         output_channels = {"logits": len(CLASSIFIER_CLASSES)}
 
-        def __init__(self, base: int = 32):
+        def __init__(self, base: int = 48):
             super().__init__()
             self.features = nn.Sequential(
                 _ConvBnReLU(3, base, 3, 2, 1),
@@ -202,34 +255,99 @@ def _model_classes() -> dict[str, type]:
             return self.head(self.pool(self.features(crop)))
 
     class _AreaEncoder(nn.Module):
-        """RGB-D encoder for the area segmenters (4 input channels)."""
+        """RGB-D encoder with pretrained ResNet18 when torchvision is present."""
 
-        def __init__(self, in_channels: int = 4, base: int = 24):
+        def __init__(self, in_channels: int = 10, base: int = 24):
             super().__init__()
             self.base = base
-            self.stem = _ConvBnReLU(in_channels, base, 3, 2, 1)
-            self.enc1 = nn.Sequential(
-                _ConvBnReLU(base, base * 2, 3, 1, 1),
-                _ConvBnReLU(base * 2, base * 2, 3, 1, 1),
-            )
-            self.enc2 = _ConvBnReLU(base * 2, base * 4, 3, 2, 1)
-            self.enc3 = _ConvBnReLU(base * 4, base * 8, 3, 2, 1)
-            self.bottleneck = nn.Sequential(
-                _ConvBnReLU(base * 8, base * 8, 3, 1, 1)
-            )
-            self.out_channels = base * 8
+            self.use_resnet = False
+            try:
+                import torchvision
+            except Exception:
+                torchvision = None
+            if torchvision is not None:
+                try:
+                    resnet = torchvision.models.resnet18(pretrained=True)
+                except Exception:
+                    resnet = torchvision.models.resnet18(pretrained=False)
+                pretrained_conv = resnet.conv1
+                first_conv = nn.Conv2d(
+                    in_channels,
+                    64,
+                    kernel_size=7,
+                    stride=2,
+                    padding=3,
+                    bias=False,
+                )
+                with torch.no_grad():
+                    first_conv.weight[:, :3] = pretrained_conv.weight
+                    nn.init.kaiming_normal_(
+                        first_conv.weight[:, 3:],
+                        mode="fan_out",
+                        nonlinearity="relu",
+                    )
+                self.stem = nn.Sequential(
+                    first_conv,
+                    resnet.bn1,
+                    resnet.relu,
+                )
+                self.pool = resnet.maxpool
+                self.enc1 = resnet.layer1
+                self.enc2 = resnet.layer2
+                self.enc3 = resnet.layer3
+                self.enc4 = resnet.layer4
+                self.reduce_stem = _ConvBnReLU(64, base, 1, 1, 0)
+                self.reduce_enc1 = _ConvBnReLU(64, base * 2, 1, 1, 0)
+                self.reduce_enc2 = _ConvBnReLU(128, base * 4, 1, 1, 0)
+                self.reduce_enc3 = _ConvBnReLU(256, base * 8, 1, 1, 0)
+                self.reduce_bottleneck = _ConvBnReLU(512, base * 8, 1, 1, 0)
+                self.out_channels = base * 8
+                self.use_resnet = True
+            else:
+                self.stem = _ConvBnReLU(in_channels, base, 3, 2, 1)
+                self.enc1 = _ConvBnReLU(base, base * 2, 3, 2, 1)
+                self.enc2 = _ConvBnReLU(base * 2, base * 4, 3, 2, 1)
+                self.enc3 = _ConvBnReLU(base * 4, base * 8, 3, 2, 1)
+                self.enc4 = _ConvBnReLU(base * 8, base * 16, 3, 2, 1)
+                self.bottleneck = nn.Sequential(
+                    _ConvBnReLU(base * 16, base * 16, 3, 1, 1),
+                    _ConvBnReLU(base * 16, base * 16, 3, 1, 1),
+                )
+                self.out_channels = base * 16
 
         def forward(self, rgbd):
+            if self.use_resnet:
+                x = self.stem(rgbd)
+                stem = self.reduce_stem(x)
+                x = self.pool(x)
+                x = self.enc1(x)
+                enc1 = self.reduce_enc1(x)
+                x = self.enc2(x)
+                enc2 = self.reduce_enc2(x)
+                x = self.enc3(x)
+                enc3 = self.reduce_enc3(x)
+                x = self.enc4(x)
+                bottleneck = self.reduce_bottleneck(x)
+                return {
+                    "stem": stem,
+                    "enc1": enc1,
+                    "enc2": enc2,
+                    "enc3": enc3,
+                    "enc4": enc3,
+                    "bottleneck": bottleneck,
+                }
             stem = self.stem(rgbd)
             enc1 = self.enc1(stem)
             enc2 = self.enc2(enc1)
             enc3 = self.enc3(enc2)
+            enc4 = self.enc4(enc3)
             return {
                 "stem": stem,
                 "enc1": enc1,
                 "enc2": enc2,
                 "enc3": enc3,
-                "bottleneck": self.bottleneck(enc3),
+                "enc4": enc4,
+                "bottleneck": self.bottleneck(enc4),
             }
 
     class _AreaDecoder(nn.Module):
@@ -237,10 +355,13 @@ def _model_classes() -> dict[str, type]:
 
         def __init__(self, encoder_out_channels: int, base: int = 24):
             super().__init__()
-            self.up2 = nn.Sequential(
+            self.up3 = nn.Sequential(
                 _ConvBnReLU(
-                    encoder_out_channels + base * 4, base * 4, 3, 1, 1
+                    encoder_out_channels + base * 8, base * 8, 3, 1, 1
                 )
+            )
+            self.up2 = nn.Sequential(
+                _ConvBnReLU(base * 8 + base * 4, base * 4, 3, 1, 1)
             )
             self.up1 = nn.Sequential(
                 _ConvBnReLU(base * 4 + base * 2, base * 2, 3, 1, 1)
@@ -253,6 +374,12 @@ def _model_classes() -> dict[str, type]:
         def forward(self, features):
             x = functional.interpolate(
                 features["bottleneck"],
+                size=features["enc3"].shape[-2:],
+                mode="nearest",
+            )
+            x = self.up3(torch.cat((x, features["enc3"]), dim=1))
+            x = functional.interpolate(
+                x,
                 size=features["enc2"].shape[-2:],
                 mode="nearest",
             )
@@ -322,6 +449,68 @@ def _model_classes() -> dict[str, type]:
         task = "puddle"
         model_id = "g4_puddle_segmenter_v1"
 
+    class DeepLabAreaSegmenter(_FlatOutputMixin, nn.Module):
+        """DeepLabV3-based independent area segmenter."""
+
+        task: str | None = None
+        model_id: str | None = None
+        input_shape = SEGMENTER_INPUT_SHAPE
+        input_names = ("rgbd",)
+        output_names = ("logits", "boundary_logits")
+        output_channels = {"logits": 1, "boundary_logits": 1}
+
+        def __init__(self):
+            super().__init__()
+            import torchvision
+
+            try:
+                self.deeplab = torchvision.models.segmentation.deeplabv3_resnet50(
+                    weights=(
+                        torchvision.models.segmentation
+                        .DeepLabV3_ResNet50_Weights
+                        .COCO_WITH_VOC_LABELS_V1
+                    )
+                )
+            except Exception:
+                self.deeplab = torchvision.models.segmentation.deeplabv3_resnet50(
+                    weights=None
+                )
+            pretrained_conv = self.deeplab.backbone.conv1
+            first_conv = nn.Conv2d(
+                10,
+                64,
+                kernel_size=7,
+                stride=2,
+                padding=3,
+                bias=False,
+            )
+            with torch.no_grad():
+                first_conv.weight[:, :3] = pretrained_conv.weight
+                nn.init.kaiming_normal_(
+                    first_conv.weight[:, 3:],
+                    mode="fan_out",
+                    nonlinearity="relu",
+                )
+            self.deeplab.backbone.conv1 = first_conv
+            self.deeplab.classifier[4] = nn.Conv2d(256, 1, 1)
+            self.deeplab.aux_classifier = None
+            self.boundary_head = _BoundaryHead(1)
+
+        def forward(self, rgbd):
+            logits = self.deeplab(rgbd)["out"]
+            return {
+                "logits": logits,
+                "boundary_logits": self.boundary_head(logits),
+            }
+
+    class DeepLabLeafSegmenter(DeepLabAreaSegmenter):
+        task = "leaf"
+        model_id = "g4_leaf_segmenter_deeplab_v1"
+
+    class DeepLabPuddleSegmenter(DeepLabAreaSegmenter):
+        task = "puddle"
+        model_id = "g4_puddle_segmenter_deeplab_v1"
+
     class _FlatForwardWrapper(nn.Module):
         """Wraps a model for single-tensor ONNX export."""
 
@@ -338,6 +527,9 @@ def _model_classes() -> dict[str, type]:
             "_FlatForwardWrapper": _FlatForwardWrapper,
             "AreaSegmenter": AreaSegmenter,
             "CandidateCropClassifier": CandidateCropClassifier,
+            "DeepLabAreaSegmenter": DeepLabAreaSegmenter,
+            "DeepLabLeafSegmenter": DeepLabLeafSegmenter,
+            "DeepLabPuddleSegmenter": DeepLabPuddleSegmenter,
             "DiscoveryDetector": DiscoveryDetector,
             "LeafSegmenter": LeafSegmenter,
             "PuddleSegmenter": PuddleSegmenter,
@@ -355,6 +547,12 @@ def __getattr__(name: str):
 def build_g4_models(shared_encoder: bool = False) -> dict:
     """Build the four G4 models; ``shared_encoder`` shares only the encoder."""
     classes = _model_classes()
+    try:
+        import torchvision  # noqa: F401
+
+        torchvision_available = True
+    except Exception:
+        torchvision_available = False
     models = {
         "discovery": classes["DiscoveryDetector"](),
         "classifier": classes["CandidateCropClassifier"](),
@@ -364,8 +562,12 @@ def build_g4_models(shared_encoder: bool = False) -> dict:
         models["leaf"] = classes["LeafSegmenter"](encoder=encoder)
         models["puddle"] = classes["PuddleSegmenter"](encoder=encoder)
     else:
-        models["leaf"] = classes["LeafSegmenter"]()
-        models["puddle"] = classes["PuddleSegmenter"]()
+        if torchvision_available:
+            models["leaf"] = classes["DeepLabLeafSegmenter"]()
+            models["puddle"] = classes["DeepLabPuddleSegmenter"]()
+        else:
+            models["leaf"] = classes["LeafSegmenter"]()
+            models["puddle"] = classes["PuddleSegmenter"]()
     return models
 
 

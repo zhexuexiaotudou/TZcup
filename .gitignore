@@ -85,6 +85,13 @@ artifacts/autonomous_auto03_*_smoke/
 artifacts/autonomous_auto04_*_raw/
 artifacts/autonomous_auto05_*_raw/
 
+# AUTO-05R training runs contain local checkpoints and generated ONNX models.
+# Keep raw/smoke/failed-attempt payloads local; only explicitly named compact
+# evidence directories or deliberately force-added JSON reports are versioned.
+artifacts/auto05r_*/
+!artifacts/auto05r_*_evidence/
+!artifacts/auto05r_*_evidence/**
+
 # AUTO-17 full GUI/dashboard runs contain MP4, frame sequences, logs, and bags.
 # Keep them local; only explicitly named compact evidence directories are versioned.
 artifacts/auto17_visual_demo_*/
