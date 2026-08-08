@@ -2,33 +2,33 @@
   "hard_negative_families_total": null,
   "hard_negative_family_split_counts": null,
   "instance_record_counts_by_role": {
-    "legacy_G4_D6_diagnostic": 5695,
-    "train": 50328,
-    "val": 5592
+    "legacy_G4_D6_diagnostic": 1978,
+    "train": 7788,
+    "val": 1860
   },
   "per_class_split_counts": null,
   "per_class_variant_counts": null,
   "per_role_class_counts": {
     "legacy_G4_D6_diagnostic": {
-      "leaf_pile": 992,
-      "metal_can": 1085,
-      "paper_litter": 1227,
-      "plastic_bottle": 1253,
-      "puddle": 1138
+      "leaf_pile": 369,
+      "metal_can": 398,
+      "paper_litter": 371,
+      "plastic_bottle": 404,
+      "puddle": 436
     },
     "train": {
-      "leaf_pile": 10304,
-      "metal_can": 9640,
-      "paper_litter": 9726,
-      "plastic_bottle": 9604,
-      "puddle": 11054
+      "leaf_pile": 1614,
+      "metal_can": 1540,
+      "paper_litter": 1493,
+      "plastic_bottle": 1546,
+      "puddle": 1595
     },
     "val": {
-      "leaf_pile": 1118,
-      "metal_can": 1109,
-      "paper_litter": 1048,
-      "plastic_bottle": 1156,
-      "puddle": 1161
+      "leaf_pile": 392,
+      "metal_can": 372,
+      "paper_litter": 280,
+      "plastic_bottle": 408,
+      "puddle": 408
     }
   },
   "required_paper_taxonomies": [],

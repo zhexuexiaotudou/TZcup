@@ -52,6 +52,11 @@
   manifest—像素一致率仅 `0.731333`，跨 split exact/pHash duplicates 分别为
   `303/483`；数据作废。Docker wrapper 现按分片设置独立 ROS domain 与 Gazebo/
   Ignition partition，必须重新采集 v3。
+- v3 三路隔离重采已真实完成并从只读分片合并：12 world / 300 scene /
+  3000 frame，严格 QA 的 pose-reset 与 manifest—像素一致率均为 `1.0`，跨 split
+  exact/pHash duplicate 均为 `0`，全部门通过、errors 为空。正式 QA SHA-256
+  `5da1a06fff93e9545a2b98412eb8d76ee889e0f4a92ae0e776de09d968d89eae`；
+  G4 数据门恢复为 true，现只解锁官方 FCOS-R50 teacher，student 仍需 teacher 门。
 - P11 联网确认官方 OpenExplorer 文档当前为 `3.9.0`；ONNX 预检已强制 opset
   `10–19`、IR `≤9`、batch=1、无 custom op、校准帧 `≥1000`，并新增 J6E/M
   BPU profile 与 TopK/NMS 图外门。本机仅有完整性通过的官方 3.7.0 包且没有
@@ -60,6 +65,13 @@
   现有 OpenCV RGB capture、棋盘格标定、隐私、ingestion、统一 evaluator 继续保留。
   本机只发现 Integrated Camera，未发现可审计 RGB-D 数据/独立 GT，因此
   `PRODUCT_FIELD_READY=false`、`REAL_DOMAIN_BLOCKED_EXTERNAL=true`。
+- P3 默认 leaf/puddle 候选已从会改写 10 通道首层且由最终 logits 生成 boundary
+  的旧 DeepLab 路径切换为 RGB/geometry 双分支：ResNet18 原生 3 通道预训练 stem
+  保持不变，7 通道 geometry 分支逐 stage 融合，boundary head 读取多通道 decoder
+  feature。旧 DeepLab 类仅保留历史代码，不再由正式 model builder 选择。
+- Stage5B 训练镜像补齐与 PyTorch `2.5.1+cu124` 官方配对的 Torchvision
+  `0.20.1`；此前镜像只有 torch，FCOS teacher 与预训练正式候选会在 import
+  阶段 fail-closed。版本配对以 PyTorch 官方历史版本安装表为准。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 

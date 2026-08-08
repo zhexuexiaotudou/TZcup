@@ -1,22 +1,22 @@
 {
-  "G4_dataset_gate_pass": false,
+  "G4_dataset_gate_pass": true,
   "evidence_id": "auto05r_g4_data_gate",
   "files": {
     "asset_registry_summary.json": {
-      "bytes": 881,
-      "sha256": "4f3b8e06bd6382ff8d18989531e8c58ed8cbf3ff721a3b7899272276caa0ee6a"
+      "bytes": 869,
+      "sha256": "bca6f6fb027e942713d6cf83506e5a2224670eb40d9a8042bcb24fa39fcadef1"
     },
     "g4_dataset_qa.json": {
-      "bytes": 6485,
-      "sha256": "db6cd6e27dd53df67f66e1e3683d8a6d657ad71af203674898a0b5a7d7218c09"
+      "bytes": 2921,
+      "sha256": "11a2ab601ac4a3de7a707a7320321a1c43210dd38f7fab401c88cf8fd20a8dd9"
     },
     "leakage_report.json": {
       "bytes": 291,
       "sha256": "22345049140e69ca2ab56870711375d4f4d71ff67272a77230a969fe89f3af90"
     },
     "raw_external_evidence_index.json": {
-      "bytes": 1192,
-      "sha256": "f04d480800a6d29e06f318b60b251609d5371eb509e8cc2955364300e44c0a32"
+      "bytes": 1188,
+      "sha256": "b644e2f3fa3c627c5c7f7292e8d59fabab8a18f79f125e52fa2d795ae672cef2"
     },
     "split_manifest.json": {
       "bytes": 1683,
@@ -38,19 +38,19 @@
           "sha256": "69e51944326a7305fd913ed65fa40c88fe656aaac2576f3669a0a3d16ab0a77b"
         },
         {
-          "bytes": 1212939,
+          "bytes": 5695,
           "relative_name": "g4_dataset_qa.json",
-          "sha256": "6d50ac443bd3f98dce1af77926856cc7f2e911ec41516520c6a2f0f49e47172a"
+          "sha256": "5da1a06fff93e9545a2b98412eb8d76ee889e0f4a92ae0e776de09d968d89eae"
         },
         {
-          "bytes": 1523885,
+          "bytes": 1523998,
           "relative_name": "g4_frame_manifest.jsonl",
-          "sha256": "5b3e44756b94075c7b51983d275a0064817fd278477cd77e10c24befe703d333"
+          "sha256": "2a50a71a32f928c53fdf2475349f2cd66f0d8e21802d5c4cf52a7cf0d2fc27da"
         },
         {
-          "bytes": 16025294,
+          "bytes": 3033234,
           "relative_name": "g4_instance_records.jsonl",
-          "sha256": "f6d1775fd268f6a12d5eb354043fe2e7cdf10e7b5301b6d1987cff43acc57338"
+          "sha256": "2e03c55766b0be6eb06fe3f70df3e3eadecd7391ba4a78b1444b0f139c333cc5"
         },
         {
           "bytes": 291,

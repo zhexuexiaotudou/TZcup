@@ -94,6 +94,15 @@ def test_segmenters_can_share_encoder_with_independent_decoders() -> None:
     )
 
 
+def test_area_candidate_preserves_rgb_stem_and_separates_geometry_branch() -> None:
+    pytest.importorskip("torch")
+    pytest.importorskip("torchvision")
+    model = g4_models.build_g4_model("leaf", from_scratch_control=True)
+    assert model.encoder.rgb_stem[0].in_channels == 3
+    assert model.encoder.geometry_stem[0].in_channels == 7
+    assert model.boundary_head.conv[0].in_channels > 1
+
+
 def test_model_summary_cards_not_trained() -> None:
     pytest.importorskip("torch")
     cards = g4_models.model_summary()

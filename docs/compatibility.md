@@ -32,7 +32,7 @@ Stage4W 已在同一 headless GPU 通道完成 hybrid 定位 10-seed、静态完
 
 Stage5A 继续使用该 Docker/headless GPU 通道完成 14 项 ROS 测试、20-scene synthetic 数据、held-out ONNX、30-seed task-state E2E 和真实 Gazebo RGB-D/2D/3D/map 感知录包。该兼容性结论不外推到真实数据精度、J6 工具链/实板或原生 GUI。
 
-Stage5B 至 Stage5BR6W 使用独立 `tzcup/sanitation-jazzy:stage5b` 镜像，在 Stage5A 基础上固定 PyTorch 2.5.1+cu124、ONNX 1.17.0 和 ONNX Runtime 1.20.1，RTX 4080 Laptop GPU 可用于训练。Stage5BR3 已在该 headless GPU 通道完成六个不同世界的真实车辆 RGB-D/semantic/instance 同步契约、80 scene/800 frame 原生采集与 QA、四档分辨率扫描和三次 split-model screening；Stage5BR5 随后完成 V1/V2/V4 六世界相机消融，Stage5BR6-A 又通过实际 V4 精确同步链采集 70 张 label=0 hard-negative。Stage5BR6W 在同一通道实际启动 V4/candidate-footprint Stage4W seed 0，并在 `no_reachable_clean_route` 处 fail-closed；这证明运行环境可执行该 profile，但不构成工程 Oracle 通过。正式阻断仍包括两名独立真人 response 未返回和 Horizon J6 工具链；原生 Ubuntu/WSLg GUI 不再是本机独立缺口。
+Stage5B 至 Stage5BR6W 使用独立 `tzcup/sanitation-jazzy:stage5b` 镜像，在 Stage5A 基础上固定官方 CUDA 12.4 配对的 PyTorch 2.5.1、Torchvision 0.20.1、ONNX 1.17.0 和 ONNX Runtime 1.20.1，RTX 4080 Laptop GPU 可用于训练。Stage5BR3 已在该 headless GPU 通道完成六个不同世界的真实车辆 RGB-D/semantic/instance 同步契约、80 scene/800 frame 原生采集与 QA、四档分辨率扫描和三次 split-model screening；Stage5BR5 随后完成 V1/V2/V4 六世界相机消融，Stage5BR6-A 又通过实际 V4 精确同步链采集 70 张 label=0 hard-negative。Stage5BR6W 在同一通道实际启动 V4/candidate-footprint Stage4W seed 0，并在 `no_reachable_clean_route` 处 fail-closed；这证明运行环境可执行该 profile，但不构成工程 Oracle 通过。正式阻断仍包括两名独立真人 response 未返回和 Horizon J6 工具链；原生 Ubuntu/WSLg GUI 不再是本机独立缺口。
 
 AUTO-01 继续复用该镜像和 NVIDIA headless 通道，实际构建并运行 opt-in G2-C3：3/3 冷启动、seed0 17/17 完整 Coverage、MCAP 回放以及低/高障碍各 30 次均通过。该结果证明 `V5_retracted`、点云自滤波和 Nav2 安全链在当前容器环境可重复运行；GUI 已于后续 WSLg 基础复核中补足，但仍不外推为真实车辆、真实域或 J6 验收。
 

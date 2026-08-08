@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-P2_TRAINING_RUNTIME",
+  "image": "tzcup/sanitation-jazzy:stage5b",
+  "image_id": "sha256:418550f48916d794bc0aff144c60a3b1353d0bb0bb1dcf086cda0ec8e2a5aadc",
+  "torch": "2.5.1+cu124",
+  "torchvision": "0.20.1+cu124",
+  "cuda_runtime": "12.4",
+  "cuda_available": true,
+  "gpu": "NVIDIA GeForce RTX 4080 Laptop GPU",
+  "official_version_pairing_verified": true,
+  "area_runtime_smoke": {
+    "input_shape": [1, 10, 384, 512],
+    "rgb_stem_channels": 3,
+    "geometry_branch_channels": 7,
+    "boundary_feature_channels": 24,
+    "logits_shape": [1, 1, 384, 512],
+    "boundary_logits_shape": [1, 1, 384, 512],
+    "cuda_forward_pass": true
+  }
+}

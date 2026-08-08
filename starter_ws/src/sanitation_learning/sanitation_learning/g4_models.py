@@ -9,8 +9,10 @@ Four model families are defined here:
   ``background / plastic_bottle / metal_can / paper_litter``
   (input ``[1, 3, 192, 192]``).
 - ``LeafSegmenter`` / ``PuddleSegmenter``: independent binary area
-  segmenters with a shared-encoder option; every segmenter owns an
-  independent decoder and boundary head (input ``[1, 10, 384, 512]``).
+  segmenters with a shared-encoder option; the original three-channel RGB
+  pretrained stem is preserved and fused stage-wise with a seven-channel
+  geometry branch. Every segmenter owns an independent decoder and a boundary
+  head fed by decoder features (input ``[1, 10, 384, 512]``).
 - ``build_g4_models`` / ``model_summary``: model cards with parameter
   counts, input/output names/shapes/dtypes and ``state: not_trained``.
 
@@ -326,7 +328,7 @@ def _model_classes() -> dict[str, type]:
             return self.head(torch.flatten(features, 1))
 
     class _AreaEncoder(nn.Module):
-        """RGB-D encoder with pretrained ResNet18 when torchvision is present."""
+        """RGB/geometry dual branch that preserves the pretrained RGB stem."""
 
         def __init__(
             self,
@@ -363,37 +365,50 @@ def _model_classes() -> dict[str, type]:
                         cache_path=torchvision_cache_path("resnet18"),
                         torchvision_version=torchvision.__version__,
                     )
-                pretrained_conv = resnet.conv1
-                first_conv = nn.Conv2d(
-                    in_channels,
-                    64,
-                    kernel_size=7,
-                    stride=2,
-                    padding=3,
-                    bias=False,
-                )
-                with torch.no_grad():
-                    first_conv.weight[:, :3] = pretrained_conv.weight
-                    nn.init.kaiming_normal_(
-                        first_conv.weight[:, 3:],
-                        mode="fan_out",
-                        nonlinearity="relu",
+                geometry_channels = in_channels - 3
+                if geometry_channels <= 0:
+                    raise ValueError(
+                        "area input must contain RGB plus geometry channels"
                     )
-                self.stem = nn.Sequential(
-                    first_conv,
+                self.rgb_stem = nn.Sequential(
+                    resnet.conv1,
                     resnet.bn1,
                     resnet.relu,
                 )
-                self.pool = resnet.maxpool
-                self.enc1 = resnet.layer1
-                self.enc2 = resnet.layer2
-                self.enc3 = resnet.layer3
-                self.enc4 = resnet.layer4
-                self.reduce_stem = _ConvBnReLU(64, base, 1, 1, 0)
-                self.reduce_enc1 = _ConvBnReLU(64, base * 2, 1, 1, 0)
-                self.reduce_enc2 = _ConvBnReLU(128, base * 4, 1, 1, 0)
-                self.reduce_enc3 = _ConvBnReLU(256, base * 8, 1, 1, 0)
-                self.reduce_bottleneck = _ConvBnReLU(512, base * 8, 1, 1, 0)
+                self.rgb_pool = resnet.maxpool
+                self.rgb_enc1 = resnet.layer1
+                self.rgb_enc2 = resnet.layer2
+                self.rgb_enc3 = resnet.layer3
+                self.rgb_enc4 = resnet.layer4
+                self.geometry_stem = _ConvBnReLU(
+                    geometry_channels, base, 3, 2, 1
+                )
+                self.geometry_pool = nn.MaxPool2d(3, 2, 1)
+                self.geometry_enc1 = _ConvBnReLU(
+                    base, base * 2, 3, 1, 1
+                )
+                self.geometry_enc2 = _ConvBnReLU(
+                    base * 2, base * 4, 3, 2, 1
+                )
+                self.geometry_enc3 = _ConvBnReLU(
+                    base * 4, base * 8, 3, 2, 1
+                )
+                self.geometry_enc4 = _ConvBnReLU(
+                    base * 8, base * 8, 3, 2, 1
+                )
+                self.fuse_stem = _ConvBnReLU(64 + base, base, 1, 1, 0)
+                self.fuse_enc1 = _ConvBnReLU(
+                    64 + base * 2, base * 2, 1, 1, 0
+                )
+                self.fuse_enc2 = _ConvBnReLU(
+                    128 + base * 4, base * 4, 1, 1, 0
+                )
+                self.fuse_enc3 = _ConvBnReLU(
+                    256 + base * 8, base * 8, 1, 1, 0
+                )
+                self.fuse_bottleneck = _ConvBnReLU(
+                    512 + base * 8, base * 8, 1, 1, 0
+                )
                 self.out_channels = base * 8
                 self.use_resnet = True
             else:
@@ -415,23 +430,45 @@ def _model_classes() -> dict[str, type]:
 
         def forward(self, rgbd):
             if self.use_resnet:
-                x = self.stem(rgbd)
-                stem = self.reduce_stem(x)
-                x = self.pool(x)
-                x = self.enc1(x)
-                enc1 = self.reduce_enc1(x)
-                x = self.enc2(x)
-                enc2 = self.reduce_enc2(x)
-                x = self.enc3(x)
-                enc3 = self.reduce_enc3(x)
-                x = self.enc4(x)
-                bottleneck = self.reduce_bottleneck(x)
+                if rgbd.shape[1] != 10:
+                    raise ValueError(
+                        f"area model requires 10 channels, got {rgbd.shape[1]}"
+                    )
+                rgb = rgbd[:, :3]
+                geometry = rgbd[:, 3:]
+                rgb_stem = self.rgb_stem(rgb)
+                geometry_stem = self.geometry_stem(geometry)
+                stem = self.fuse_stem(
+                    torch.cat((rgb_stem, geometry_stem), dim=1)
+                )
+                rgb_enc1 = self.rgb_enc1(self.rgb_pool(rgb_stem))
+                geometry_enc1 = self.geometry_enc1(
+                    self.geometry_pool(geometry_stem)
+                )
+                enc1 = self.fuse_enc1(
+                    torch.cat((rgb_enc1, geometry_enc1), dim=1)
+                )
+                rgb_enc2 = self.rgb_enc2(rgb_enc1)
+                geometry_enc2 = self.geometry_enc2(geometry_enc1)
+                enc2 = self.fuse_enc2(
+                    torch.cat((rgb_enc2, geometry_enc2), dim=1)
+                )
+                rgb_enc3 = self.rgb_enc3(rgb_enc2)
+                geometry_enc3 = self.geometry_enc3(geometry_enc2)
+                enc3 = self.fuse_enc3(
+                    torch.cat((rgb_enc3, geometry_enc3), dim=1)
+                )
+                rgb_enc4 = self.rgb_enc4(rgb_enc3)
+                geometry_enc4 = self.geometry_enc4(geometry_enc3)
+                bottleneck = self.fuse_bottleneck(
+                    torch.cat((rgb_enc4, geometry_enc4), dim=1)
+                )
                 return {
                     "stem": stem,
                     "enc1": enc1,
                     "enc2": enc2,
                     "enc3": enc3,
-                    "enc4": enc3,
+                    "enc4": bottleneck,
                     "bottleneck": bottleneck,
                 }
             stem = self.stem(rgbd)
@@ -704,25 +741,17 @@ def build_g4_models(
         models["leaf"] = classes["LeafSegmenter"](encoder=encoder)
         models["puddle"] = classes["PuddleSegmenter"](encoder=encoder)
     else:
-        if torchvision_available:
-            models["leaf"] = classes["DeepLabLeafSegmenter"](
-                from_scratch_control=from_scratch_control
+        if not torchvision_available and not from_scratch_control:
+            raise RuntimeError(
+                "torchvision is required for production area segmenters "
+                "(PRETRAINED_REQUIRED=true)"
             )
-            models["puddle"] = classes["DeepLabPuddleSegmenter"](
-                from_scratch_control=from_scratch_control
-            )
-        else:
-            if not from_scratch_control:
-                raise RuntimeError(
-                    "torchvision is required for production area segmenters "
-                    "(PRETRAINED_REQUIRED=true)"
-                )
-            models["leaf"] = classes["LeafSegmenter"](
-                from_scratch_control=True
-            )
-            models["puddle"] = classes["PuddleSegmenter"](
-                from_scratch_control=True
-            )
+        models["leaf"] = classes["LeafSegmenter"](
+            from_scratch_control=from_scratch_control
+        )
+        models["puddle"] = classes["PuddleSegmenter"](
+            from_scratch_control=from_scratch_control
+        )
     return models
 
 
@@ -747,9 +776,7 @@ def build_g4_model(
         )
     if task not in ("leaf", "puddle"):
         raise ValueError(f"unknown G4 model task {task!r}")
-    class_name = (
-        "DeepLabLeafSegmenter" if task == "leaf" else "DeepLabPuddleSegmenter"
-    )
+    class_name = "LeafSegmenter" if task == "leaf" else "PuddleSegmenter"
     try:
         import torchvision  # noqa: F401
     except Exception as exc:
@@ -758,7 +785,6 @@ def build_g4_model(
                 "torchvision is required for production area segmenters "
                 "(PRETRAINED_REQUIRED=true)"
             ) from exc
-        class_name = "LeafSegmenter" if task == "leaf" else "PuddleSegmenter"
     return classes[class_name](
         from_scratch_control=from_scratch_control
     )

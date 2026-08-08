@@ -6,19 +6,19 @@
       "sha256": "69e51944326a7305fd913ed65fa40c88fe656aaac2576f3669a0a3d16ab0a77b"
     },
     {
-      "bytes": 1212939,
+      "bytes": 5695,
       "relative_name": "g4_dataset_qa.json",
-      "sha256": "6d50ac443bd3f98dce1af77926856cc7f2e911ec41516520c6a2f0f49e47172a"
+      "sha256": "5da1a06fff93e9545a2b98412eb8d76ee889e0f4a92ae0e776de09d968d89eae"
     },
     {
-      "bytes": 1523885,
+      "bytes": 1523998,
       "relative_name": "g4_frame_manifest.jsonl",
-      "sha256": "5b3e44756b94075c7b51983d275a0064817fd278477cd77e10c24befe703d333"
+      "sha256": "2a50a71a32f928c53fdf2475349f2cd66f0d8e21802d5c4cf52a7cf0d2fc27da"
     },
     {
-      "bytes": 16025294,
+      "bytes": 3033234,
       "relative_name": "g4_instance_records.jsonl",
-      "sha256": "f6d1775fd268f6a12d5eb354043fe2e7cdf10e7b5301b6d1987cff43acc57338"
+      "sha256": "2e03c55766b0be6eb06fe3f70df3e3eadecd7391ba4a78b1444b0f139c333cc5"
     },
     {
       "bytes": 291,

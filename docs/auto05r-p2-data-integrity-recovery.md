@@ -2,9 +2,10 @@
 
 ## 结论
 
-P2 教师训练没有暴露出一个需要继续调参的普通收敛问题，而是发现了 G4
-采集链的场景状态泄漏。历史 G4 数据不得继续用于产品模型训练，原有
-`G4_dataset_gate_pass=true` 已撤销。
+P2 教师训练首先发现 G4 采集链的场景状态泄漏；第一次修复后并行重采又发现
+跨容器中间件串流。两批历史数据均不得继续用于产品模型训练。使用独立 ROS
+domain 与 Gazebo partition 的 v3 已完成 12 world / 300 scene / 3000 frame
+全量重采并通过严格 QA，当前只解锁官方 FCOS-R50 teacher，不提前解锁 student。
 
 ## 根因与影响
 
@@ -41,8 +42,27 @@ domain 与 Gazebo partition。三台容器的桥接 topic 因此发生跨容器�
 全量 QA 的 manifest—像素一致率只有 `0.731333`，并检测到 303 组跨 split
 exact duplicate 与 483 组跨 split pHash duplicate。该批数据同样作废并保留
 为失败证据。v3 分片必须分别使用互异的 `ROS_DOMAIN_ID`、`GZ_PARTITION` 和
-`IGN_PARTITION`；通过全量严格 QA 前仍禁止训练。
+`IGN_PARTITION`。
+
+## v3 正式恢复结果
+
+v3 三个分片分别使用 `ROS_DOMAIN_ID=100/104/108` 与互异 Gazebo/Ignition
+partition，从空目录采集后只读合并。严格 QA 实测：
+
+- 12 worlds、300 scenes、3000 frames，split 为 8/2/2；
+- scene pose-reset 合同有效率 `1.0`；
+- manifest—像素目标一致率 `1.0`；
+- annotation、四传感器同步、CameraInfo、TF 有效率均为 `1.0`；
+- semantic/instance error rate `0.0`；
+- 跨 split exact duplicate `0`，pHash duplicate `0`；
+- `G4_dataset_gate_pass=true`、`quality_gates_pass=true`，失败门与错误均为空。
+
+正式 QA SHA-256 为
+`5da1a06fff93e9545a2b98412eb8d76ee889e0f4a92ae0e776de09d968d89eae`
+（5695 bytes）；raw 数据与完整 QA 保留在仓库外，repo 内 compact evidence 已同步。
+下一步按合同只读取 train/val 并重新训练 teacher；若 teacher 不过门，返回数据/
+标注/相机尺度，不启动 student。
 
 紧凑证据见
 `artifacts/auto05r_p2_evidence/P2_DATA_INTEGRITY_RECOVERY.json`；原始帧、完整
-QA 和中止训练日志继续留在仓库外。
+QA、中止训练日志及 v2 串流失败证据继续留在仓库外。
