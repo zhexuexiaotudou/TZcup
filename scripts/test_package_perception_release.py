@@ -46,7 +46,10 @@ def _formal_bundle(tmp_path: Path) -> tuple[Path, Path]:
             "defer_after_observations": 5},
           "watchdog": {"camera_stale_ms": 500., "maximum_latency_ms": 200.,
             "sustained_latency_samples": 5, "maximum_consecutive_tf_errors": 3,
-            "maximum_consecutive_session_errors": 2}},
+            "maximum_consecutive_session_errors": 2},
+          "performance": {"inference_p95_ms": 150., "end_to_end_p95_ms": 200.,
+            "minimum_effective_hz": 10., "maximum_drop_rate": .01,
+            "soak_duration_s": 7200., "maximum_memory_growth_ratio": .05}},
     }
     pipeline_path = manifests / "perception_pipeline_manifest.yaml"
     pipeline_path.write_text(yaml.safe_dump(pipeline), encoding="utf-8")

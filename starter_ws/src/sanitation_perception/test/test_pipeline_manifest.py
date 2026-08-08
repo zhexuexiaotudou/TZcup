@@ -98,6 +98,7 @@ def test_pipeline_manifest_loads_all_four_roles() -> None:
     assert pipeline["runtime"]["sync_tolerance_ms"] == 20.0
     assert pipeline["runtime"]["frame_queue_depth"] == 2
     assert pipeline["runtime"]["watchdog"]["camera_stale_ms"] == 500.0
+    assert pipeline["runtime"]["performance"]["end_to_end_p95_ms"] == 200.0
 
 
 def test_legacy_synthetic_manifest_is_preserved() -> None:

@@ -57,6 +57,7 @@ def main() -> None:
 
     from sanitation_perception.inference_engine import ProductInferenceEngine
     from sanitation_perception.model_registry import ProductModelRegistry
+    from sanitation_perception.performance_monitor import PerformanceConfig, PerformanceMonitor
 
     default_watchdog = WatchdogConfig(
         camera_stale_ms=500.0,
@@ -78,6 +79,7 @@ def main() -> None:
             self.pipeline = None
             self.registry = None
             self.engine = None
+            self.performance = None
             self.synchronizer = None
             self.scheduler = None
             self.sensor_subscribers = []
@@ -130,6 +132,9 @@ def main() -> None:
                     device_id=int(self.get_parameter("device_id").value),
                 )
                 self.engine.warm_up()
+                self.performance = PerformanceMonitor(
+                    PerformanceConfig.from_pipeline_manifest(self.pipeline)
+                )
                 self.synchronizer = StrictFrameSynchronizer(
                     tolerance_ms=float(runtime["sync_tolerance_ms"]),
                     queue_depth=int(runtime["frame_queue_depth"]),
@@ -200,7 +205,12 @@ def main() -> None:
             frame = self.synchronizer.add(stream, stamp_nanoseconds(message), message)
             if frame is not None:
                 self.health.record_frame(time.monotonic())
+                before = self.scheduler.dropped
                 self.scheduler.submit(frame)
+                if self.performance is not None:
+                    self.performance.record_submission(
+                        dropped=self.scheduler.dropped - before
+                    )
 
         def _consume_latest(self) -> None:
             if self.health.state != "ACTIVE" or self.scheduler is None:
@@ -248,9 +258,10 @@ def main() -> None:
             self.health_publisher.publish(
                 String(data=json.dumps(snapshot, sort_keys=True))
             )
-            self.metrics_publisher.publish(
-                String(data=json.dumps({"acceptance_ready": False, **snapshot}, sort_keys=True))
-            )
+            metrics = self.performance.snapshot(now) if self.performance else None
+            self.metrics_publisher.publish(String(data=json.dumps(
+                {"acceptance_ready": False, "health": snapshot,
+                 "performance": metrics}, sort_keys=True)))
 
     rclpy.init()
     node = ProductPerceptionNode()

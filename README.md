@@ -80,7 +80,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 | 软件工程与发布 | 已完成 | `AUTO-16=PASS`，源码、配置、测试、文档和发布工具齐全 |
 | 基础仿真与自主导航 | 已通过机器门 | 车辆、场景、定位、Nav2、覆盖规划、安全控制和回放链已验证 |
 | 调试可视化 | 可用 | Gazebo 显示物理场景，RViz 显示目标、障碍、区域、路径、车辆和系统状态 |
-| 学习感知 | P2 数据完整性恢复中、screening 仍阻塞 | 旧 G4 仅 `987/3000` 帧与 manifest 一致；复位修复后的首轮三路重采又暴露 ROS/Gazebo 跨容器串流，v2 一致率 `0.731333` 且有跨 split duplicate，已继续作废。wrapper 已增加独立 ROS domain/Gazebo partition，v3 严格 QA 通过前禁止 teacher/student。P6/P7/P10 的 tracker v2、同步/watchdog、map polygon、Lifecycle、model registry、原子 rollback、产品容器/发布包与 ORT CUDA I/O Binding 内核已实现软件合同，但尚无冻结模型可做 live/性能/真实 release 验收；G5 尚未创建，`AUTO_05R/P4/P5/formal/live/J6/field` 仍为 false，见 [`docs/auto05r-p2-data-integrity-recovery.md`](docs/auto05r-p2-data-integrity-recovery.md) |
+| 学习感知 | P2 数据完整性恢复中、screening 仍阻塞 | 旧 G4 仅 `987/3000` 帧与 manifest 一致；复位修复后的首轮三路重采又暴露 ROS/Gazebo 跨容器串流，v2 一致率 `0.731333` 且有跨 split duplicate，已继续作废。wrapper 已增加独立 ROS domain/Gazebo partition，v3 严格 QA 通过前禁止 teacher/student。P6/P7/P10 的同步/watchdog、tracker、map polygon、Lifecycle、model registry、rollback、容器、ORT CUDA I/O Binding 及性能/soak 门已实现软件合同，但尚无冻结模型可做 live/性能/真实 release 验收；G5 尚未创建，`AUTO_05R/P4/P5/formal/live/J6/field` 仍为 false，见 [`docs/auto05r-p2-data-integrity-recovery.md`](docs/auto05r-p2-data-integrity-recovery.md) |
 | 综合竞赛矩阵 | 未通过 | 受 AUTO-08 学习感知与定点清扫依赖阻断，正式综合任务未启动 |
 | 真实域 | 外部阻断 | 只发现普通 Integrated Camera，未发现 RGB-D 数据 manifest 或独立 map GT；严格采集/标定/摆位校验/ingestion/evaluator 工具已具备 |
 | J6 部署 | 未通过 | 本机官方 OE 3.7.0 离线包完整，但官方文档当前为 3.9.0；正式模型、当前工具链 PTQ/compile 与 J6 实板均缺失 |

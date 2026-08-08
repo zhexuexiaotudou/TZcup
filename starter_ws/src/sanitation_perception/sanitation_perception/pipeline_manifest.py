@@ -95,10 +95,12 @@ def load_pipeline_manifest(path: str | Path) -> dict:
         )
     from sanitation_perception.tracker_v2 import TrackerV2Config
     from sanitation_perception.lifecycle_health import WatchdogConfig
+    from sanitation_perception.performance_monitor import PerformanceConfig
 
     try:
         TrackerV2Config.from_pipeline_manifest(pipeline)
         WatchdogConfig.from_pipeline_manifest(pipeline)
+        PerformanceConfig.from_pipeline_manifest(pipeline)
         runtime = pipeline["runtime"]
         if not 0.0 < float(runtime["sync_tolerance_ms"]) <= 20.0:
             raise ValueError("sync_tolerance_ms must be in (0, 20]")

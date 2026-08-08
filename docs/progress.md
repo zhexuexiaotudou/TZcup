@@ -34,6 +34,10 @@
   provider 首选检查、`disable_fallback()` 与 warm-up profiling 全节点 CUDA
   审计；本机保留容器当前仅暴露 CPU ORT，故真实 CUDA 性能门仍为 false，
   不能以 fake-session 单测替代。
+- P7 新增产品性能与 soak 审计：manifest 固定推理/端到端 P95、有效帧率、drop、
+  内存增长和两小时门，运行时按阶段发布 latency、CPU/GPU memory、候选/拒绝/
+  轨迹数；Windows 无 `psutil` 时使用系统 API 获取工作集。无冻结模型时性能样本
+  不足，门继续 fail-closed，单元测试不冒充真实 CUDA/Gazebo 验收。
 - P6/P10 已新增产品 Lifecycle 入口、严格 RGB-stamp TF、三类 diagnostics topic、
   不可变模型包原子切换/rollback，以及 CUDA/cuDNN ROS Jazzy 产品容器、Compose、
   build/run/healthcheck/release packaging；占位模型无法通过 formal registry，因此

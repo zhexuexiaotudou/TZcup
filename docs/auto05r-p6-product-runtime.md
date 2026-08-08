@@ -32,6 +32,12 @@ ORT CUDA session 仍必须在 P4/P5 模型冻结后做 live 验收。
   校验和 inactive warm-up 后才能切换，失败保持旧指针，显式 rollback 可恢复上一版本。
 - 产品容器、Compose、build/run/healthcheck 和 release packaging 已加入；当前正式模型
   为空，因此真实 release 构建按设计失败关闭，不能先产出空壳产品包。
+- P7 性能监控按 manifest 固定记录 preprocess、discovery、classifier batch、leaf、
+  puddle、projection、tracking、inference pipeline 与 end-to-end 的 P50/P95，以及
+  effective Hz、drop rate、候选/拒绝/轨迹数、CPU/GPU memory；门限为推理 P95
+  `≤150 ms`、端到端 P95 `≤200 ms`、`≥10 Hz`、drop `≤1%`。两小时 soak
+  审计同时要求零 crash/deadlock/意外 reload/TF stale storm、队列深度 `≤2`、
+  内存增长 `≤5%`。当前无冻结模型，指标样本不足时门按设计为 false。
 
 仍未通过：
 
@@ -39,5 +45,6 @@ ORT CUDA session 仍必须在 P4/P5 模型冻结后做 live 验收。
 - 四个冻结模型上的真实 ORT CUDA session/warm-up/profile 验收；
 - RGB stamp 的 ROS TF 查询、完整推理与多实例 polygon ROS 发布；
 - ROS diagnostics topic、fault injection、10 次冷启动及 learned-live。
+- 冻结模型下的真实性能门和连续两小时 Gazebo soak。
 
 这些状态保持 false，不能因为纯 Python 内核测试通过而提升 P6/P7/live 门。

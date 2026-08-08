@@ -37,6 +37,14 @@ def runtime():
             "maximum_consecutive_tf_errors": 3,
             "maximum_consecutive_session_errors": 2,
         },
+        "performance": {
+            "inference_p95_ms": 150.0,
+            "end_to_end_p95_ms": 200.0,
+            "minimum_effective_hz": 10.0,
+            "maximum_drop_rate": 0.01,
+            "soak_duration_s": 7200.0,
+            "maximum_memory_growth_ratio": 0.05,
+        },
     }
 
 
