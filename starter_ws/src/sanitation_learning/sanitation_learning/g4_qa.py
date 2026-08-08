@@ -343,10 +343,11 @@ def finalize_g4_dataset(
             target_count_mismatch = {
                 CLASS_NAMES[semantic_id]: {
                     "declared": int(declared_target_counts[semantic_id]),
-                    "observed": int(observed_count),
+                    "observed": int(observed_target_counts[semantic_id]),
                 }
-                for semantic_id, observed_count in observed_target_counts.items()
-                if observed_count > declared_target_counts[semantic_id]
+                for semantic_id in CLASS_NAMES
+                if observed_target_counts[semantic_id]
+                != declared_target_counts[semantic_id]
             }
             manifest_pixel_consistent_count += int(not target_count_mismatch)
             if target_count_mismatch:

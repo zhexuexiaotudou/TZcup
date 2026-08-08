@@ -83,6 +83,13 @@
   严格 QA、与 G4 world/asset 零重叠检查及 `g5_sealed_manifest(.sha256)`；
   封存清单同时绑定实际 world SHA 和 `models/worlds/scenes` 数据树内容哈希。
   G5 尚未实际采集，也不会在 P4 freeze 前运行评估。
+- v3 G4 的双向 manifest—像素复审推翻了此前数据门：旧 QA 只检查 observed
+  不得大于 declared，未检查 declared 目标是否真的渲染。严格复审仅
+  `1164/3000 = 0.388` 帧逐类计数完全一致，1836 帧缺少声明目标，故
+  `G4_dataset_gate_pass=false`。2× teacher 在 epoch 8 主动中止，formal val
+  未运行、student 未启动。QA 已改为逐类 declared==observed；新摆位每类只取
+  1 个实例，初始距离 3.0–4.6 m，保证车辆约 2.25 m 运动窗口后仍在前视相机内，
+  由轨迹自然覆盖近距尺度。必须通过真实烟测和全量空目录 v4 重采才能恢复数据门。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 

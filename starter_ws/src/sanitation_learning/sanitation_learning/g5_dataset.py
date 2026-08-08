@@ -422,7 +422,7 @@ def finalize_g5_dataset(
                 majority = int(np.bincount(values, minlength=6).argmax())
                 if majority in range(1, 6):
                     observed[majority] += 1
-            mismatch = any(observed[label] > declared[label] for label in observed)
+            mismatch = any(observed[label] != declared[label] for label in range(1, 6))
             consistent += int(not mismatch)
             if mismatch:
                 errors.append({"scene": scene_dir.name, "frame": record.get("frame_index"), "reason": "manifest_pixel_target_count_mismatch"})

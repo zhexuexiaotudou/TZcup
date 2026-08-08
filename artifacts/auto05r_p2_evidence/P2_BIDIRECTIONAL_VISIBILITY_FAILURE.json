@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-P2_DATA_VISIBILITY_REAUDIT",
+  "dataset_revision": "g4_clean_v3_merged",
+  "audit_contract": "declared target instance counts must equal rendered semantic-instance counts for every class in every frame",
+  "worlds": 12,
+  "scenes": 300,
+  "frames": 3000,
+  "frames_with_exact_declared_observed_target_counts": 1164,
+  "frames_with_missing_declared_targets": 1836,
+  "bidirectional_manifest_pixel_consistency_rate": 0.388,
+  "frames_with_undeclared_extra_targets": 0,
+  "G4_dataset_gate_pass": false,
+  "quality_gates_pass": false,
+  "failed_gate": "manifest_pixel_target_consistency_100_percent",
+  "full_external_qa": {
+    "relative_name": "qa_bidirectional_reaudit/g4_dataset_qa.json",
+    "sha256": "3fe950473267210052f662dcd4919433ce1f99dcefbaf49a5ebed80e5ce1f713",
+    "bytes": 694408
+  },
+  "scale2_teacher_control": {
+    "status": "interrupted_after_epoch_8",
+    "reason": "input dataset gate was invalidated by the bidirectional visibility re-audit",
+    "best_observed_holdout_epoch": 3,
+    "best_observed_holdout_recall": 0.578,
+    "best_observed_holdout_false_candidates_per_min": 9.13,
+    "formal_val_not_run": true,
+    "student_started": false
+  },
+  "next_action": "repair target visibility and scale placement, recapture G4 from empty roots, rerun strict QA, then restart teacher"
+}

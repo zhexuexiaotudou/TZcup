@@ -1,9 +1,144 @@
 {
-  "G4_dataset_gate_pass": true,
+  "G4_dataset_gate_pass": false,
   "error_summary": {
-    "count": 0,
-    "counts_by_reason": {},
-    "examples": [],
+    "count": 1836,
+    "counts_by_reason": {
+      "manifest_pixel_target_count_mismatch": 1836
+    },
+    "examples": [
+      {
+        "classes": {
+          "puddle": {
+            "declared": 2,
+            "observed": 1
+          }
+        },
+        "frame": 0,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0001"
+      },
+      {
+        "classes": {
+          "puddle": {
+            "declared": 2,
+            "observed": 1
+          }
+        },
+        "frame": 1,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0001"
+      },
+      {
+        "classes": {
+          "puddle": {
+            "declared": 2,
+            "observed": 1
+          }
+        },
+        "frame": 2,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0001"
+      },
+      {
+        "classes": {
+          "puddle": {
+            "declared": 2,
+            "observed": 1
+          }
+        },
+        "frame": 3,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0001"
+      },
+      {
+        "classes": {
+          "puddle": {
+            "declared": 2,
+            "observed": 1
+          }
+        },
+        "frame": 4,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0001"
+      },
+      {
+        "classes": {
+          "puddle": {
+            "declared": 2,
+            "observed": 1
+          }
+        },
+        "frame": 5,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0001"
+      },
+      {
+        "classes": {
+          "puddle": {
+            "declared": 2,
+            "observed": 1
+          }
+        },
+        "frame": 6,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0001"
+      },
+      {
+        "classes": {
+          "leaf_pile": {
+            "declared": 1,
+            "observed": 0
+          },
+          "puddle": {
+            "declared": 2,
+            "observed": 1
+          }
+        },
+        "frame": 7,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0001"
+      },
+      {
+        "classes": {
+          "leaf_pile": {
+            "declared": 1,
+            "observed": 0
+          },
+          "puddle": {
+            "declared": 2,
+            "observed": 1
+          }
+        },
+        "frame": 8,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0001"
+      },
+      {
+        "classes": {
+          "leaf_pile": {
+            "declared": 1,
+            "observed": 0
+          },
+          "puddle": {
+            "declared": 2,
+            "observed": 1
+          }
+        },
+        "frame": 9,
+        "negative_only": false,
+        "reason": "manifest_pixel_target_count_mismatch",
+        "scene": "scene_0001"
+      }
+    ],
     "full_errors_retained_external": true
   },
   "formal_scale": {
@@ -54,7 +189,7 @@
     "distance_bucket_coverage_all": true,
     "exact_duplicate_zero": true,
     "four_sensor_sync_100_percent": true,
-    "manifest_pixel_target_consistency_100_percent": true,
+    "manifest_pixel_target_consistency_100_percent": false,
     "negative_only_cross_split_delta_at_most_10pp": true,
     "negative_only_ratio_in_25_to_35_percent": true,
     "required_paper_taxonomy_covered_in_train": true,
@@ -78,10 +213,10 @@
     "legacy_G4_D6_contaminated": true,
     "used_in_historical_screening_pass_fail": true
   },
-  "quality_gates_pass": true,
+  "quality_gates_pass": false,
   "scene_count": 300,
   "schema_version": 1,
-  "source_sha256": "5da1a06fff93e9545a2b98412eb8d76ee889e0f4a92ae0e776de09d968d89eae",
+  "source_sha256": "3fe950473267210052f662dcd4919433ce1f99dcefbaf49a5ebed80e5ce1f713",
   "stage": "AUTO-05R",
   "task": "AUTO-05R-1",
   "world_count": 12

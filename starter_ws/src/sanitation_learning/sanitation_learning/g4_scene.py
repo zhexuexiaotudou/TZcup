@@ -40,6 +40,8 @@ PARKING_ORIGIN_X_M = -200.0
 PARKING_ORIGIN_Y_M = 200.0
 PARKING_Z_M = -5.0
 PARKING_SPACING_M = 0.3
+TARGET_DISTANCE_RANGE_M = (3.0, 4.6)
+TARGET_LATERAL_FRACTIONS = (-0.62, 0.62, -0.30, 0.30, 0.0)
 
 
 def negative_only_rule(split: str, scene_index: int) -> bool:
@@ -149,8 +151,11 @@ def randomize(
     if not force_negative:
         for class_id in sorted({item["class_id"] for item in assets}):
             pool = [item for item in split_assets if item["class_id"] == class_id]
-            count = rng.randint(1, 2)
-            selected.extend(rng.sample(pool, min(count, len(pool))))
+            # One variant per class keeps every declared target simultaneously
+            # visible during the moving 10-frame capture. Variant diversity is
+            # obtained across the 25 deterministic scenes, not by crowding a
+            # single camera view with duplicate instances.
+            selected.extend(rng.sample(pool, min(1, len(pool))))
     negative_count = rng.randint(2, 3)
     selected_negatives = rng.sample(
         split_negatives, min(negative_count, len(split_negatives))
@@ -172,16 +177,27 @@ def randomize(
     ]
     objects = []
     for index, item in enumerate(selected_all):
-        if index == 0:
-            # Guarantee at least one object is clearly inside the production
-            # camera FOV so a scene cannot become a visually static background.
-            distance = rng.uniform(2.0, 3.5)
-            lateral = 1.0 if rng.random() < 0.5 else -1.0
+        if index < len(selected):
+            # The vehicle advances about 2.25 m over ten captured frames. Put
+            # every target far enough ahead to remain in the forward camera,
+            # while the trajectory itself supplies close-range observations.
+            distance = rng.uniform(*TARGET_DISTANCE_RANGE_M)
+            fraction = TARGET_LATERAL_FRACTIONS[index % len(TARGET_LATERAL_FRACTIONS)]
+            lateral = fraction * min(1.45, distance * 0.30)
         else:
-            distance = rng.uniform(0.5, 8.0)
-            lateral = rng.uniform(-2.1, 2.1)
-        if index != 0 and distance < 5.0 and abs(lateral) < 1.0:
-            lateral = 1.2 if lateral >= 0 else -1.2
+            # Hard negatives remain visible around the target group. A frozen
+            # subset spans the close bucket so the metric-scale audit retains
+            # 0.5-2/2-4/4-8 m coverage without putting positive labels behind
+            # the moving camera.
+            negative_index = index - len(selected)
+            if (scene_index + negative_index) % 7 == 0:
+                distance = rng.uniform(0.7, 1.8)
+            elif (scene_index + negative_index) % 5 == 0:
+                distance = rng.uniform(4.2, 6.5)
+            else:
+                distance = rng.uniform(2.8, 4.8)
+            sign = -1.0 if negative_index % 2 else 1.0
+            lateral = sign * 0.78 * min(1.55, distance * 0.32)
         geometry = item.get("physical_geometry_values_m", [0.16, 0.12, 0.08])
         geometry_kind = item.get("geometry_kind", "box")
         distance_bucket = next(

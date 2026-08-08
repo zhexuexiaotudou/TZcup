@@ -65,7 +65,13 @@ def _gradient_frame(split: str, seed: int) -> np.ndarray:
     return rgb
 
 
-def _write_frame(scene_dir: Path, index: int, split: str, seed: int) -> dict:
+def _write_frame(
+    scene_dir: Path,
+    index: int,
+    split: str,
+    seed: int,
+    objects: list[dict] | None = None,
+) -> dict:
     stem = f"frame_{index:02d}"
     for name in ("rgb", "depth", "semantic", "instance", "camera", "tf"):
         (scene_dir / name).mkdir(parents=True, exist_ok=True)
@@ -73,14 +79,16 @@ def _write_frame(scene_dir: Path, index: int, split: str, seed: int) -> dict:
     cv2.imwrite(
         str(scene_dir / "rgb" / f"{stem}.png"), cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)
     )
-    cv2.imwrite(
-        str(scene_dir / "semantic" / f"{stem}.png"),
-        np.zeros((480, 640), dtype=np.uint8),
-    )
-    cv2.imwrite(
-        str(scene_dir / "instance" / f"{stem}.png"),
-        np.zeros((480, 640), dtype=np.uint8),
-    )
+    semantic = np.zeros((480, 640), dtype=np.uint8)
+    instance = np.zeros((480, 640), dtype=np.uint16)
+    targets = [item for item in (objects or []) if int(item["semantic_label"]) > 0]
+    for object_index, item in enumerate(targets, start=1):
+        left = 30 + (object_index % 10) * 45
+        top = 180 + (object_index // 10) * 30
+        semantic[top : top + 12, left : left + 12] = int(item["semantic_label"])
+        instance[top : top + 12, left : left + 12] = object_index
+    cv2.imwrite(str(scene_dir / "semantic" / f"{stem}.png"), semantic)
+    cv2.imwrite(str(scene_dir / "instance" / f"{stem}.png"), instance)
     (scene_dir / "depth" / f"{stem}.npy").write_bytes(b"\x00")
     (scene_dir / "camera" / f"{stem}.json").write_text(
         json.dumps(
@@ -139,7 +147,10 @@ def _build_scene(
         scene_index,
         scene_dir / "scene_manifest.json",
     )
-    records = [_write_frame(scene_dir, index, scene["split"], seed) for index in range(10)]
+    records = [
+        _write_frame(scene_dir, index, scene["split"], seed, scene["objects"])
+        for index in range(10)
+    ]
     (scene_dir / "capture_report.json").write_text(
         json.dumps({"schema_version": 1, "capture_pass": True, "records": records})
         + "\n",
@@ -230,7 +241,10 @@ def _tiny_scene(root: Path, manifest_path: Path, world_id: str, seed: int, split
     scene = g4_scene.randomize(
         manifest_path, world_id, seed, seed % 25, scene_dir / "scene_manifest.json"
     )
-    records = [_write_frame(scene_dir, index, split, seed) for index in range(10)]
+    records = [
+        _write_frame(scene_dir, index, split, seed, scene["objects"])
+        for index in range(10)
+    ]
     (scene_dir / "capture_report.json").write_text(
         json.dumps({"schema_version": 1, "capture_pass": True, "records": records})
         + "\n",

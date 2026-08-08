@@ -156,6 +156,13 @@ def test_negative_only_prior_and_scene_contract(
             assert item["size_bucket"] in SIZE_BUCKETS
             assert item["occlusion_bucket"] in OCCLUSION_BUCKETS
             assert item["visible_fraction_bucket"] in VISIBLE_FRACTION_BUCKETS
+        positive = [item for item in report["objects"] if item["semantic_label"] > 0]
+        if report["negative_only"]:
+            assert positive == []
+        else:
+            assert len(positive) == 5
+            assert all(3.0 <= item["distance_m"] <= 4.6 for item in positive)
+            assert all(abs(item["xyz_m"][1]) <= 1.45 for item in positive)
     assert len(calls) == 300
     expected_asset_count = len(manifest["assets"]) + len(
         manifest["negative_assets"]

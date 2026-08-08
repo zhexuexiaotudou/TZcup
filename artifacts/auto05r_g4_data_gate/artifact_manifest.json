@@ -1,5 +1,5 @@
 {
-  "G4_dataset_gate_pass": true,
+  "G4_dataset_gate_pass": false,
   "evidence_id": "auto05r_g4_data_gate",
   "files": {
     "asset_registry_summary.json": {
@@ -7,16 +7,16 @@
       "sha256": "bca6f6fb027e942713d6cf83506e5a2224670eb40d9a8042bcb24fa39fcadef1"
     },
     "g4_dataset_qa.json": {
-      "bytes": 2921,
-      "sha256": "11a2ab601ac4a3de7a707a7320321a1c43210dd38f7fab401c88cf8fd20a8dd9"
+      "bytes": 6155,
+      "sha256": "f6a0f029bf871abdde3162b8688d06da27fa4337c08b967dbe2a9ec7dc2c06a5"
     },
     "leakage_report.json": {
       "bytes": 291,
       "sha256": "22345049140e69ca2ab56870711375d4f4d71ff67272a77230a969fe89f3af90"
     },
     "raw_external_evidence_index.json": {
-      "bytes": 1188,
-      "sha256": "b644e2f3fa3c627c5c7f7292e8d59fabab8a18f79f125e52fa2d795ae672cef2"
+      "bytes": 1190,
+      "sha256": "45647031d21870774b044a89c04cada3249412056721906fa4c5092878389f67"
     },
     "split_manifest.json": {
       "bytes": 1683,
@@ -38,9 +38,9 @@
           "sha256": "69e51944326a7305fd913ed65fa40c88fe656aaac2576f3669a0a3d16ab0a77b"
         },
         {
-          "bytes": 5695,
+          "bytes": 694408,
           "relative_name": "g4_dataset_qa.json",
-          "sha256": "5da1a06fff93e9545a2b98412eb8d76ee889e0f4a92ae0e776de09d968d89eae"
+          "sha256": "3fe950473267210052f662dcd4919433ce1f99dcefbaf49a5ebed80e5ce1f713"
         },
         {
           "bytes": 1523998,

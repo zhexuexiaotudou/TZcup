@@ -66,3 +66,19 @@ partition，从空目录采集后只读合并。严格 QA 实测：
 紧凑证据见
 `artifacts/auto05r_p2_evidence/P2_DATA_INTEGRITY_RECOVERY.json`；原始帧、完整
 QA、中止训练日志及 v2 串流失败证据继续留在仓库外。
+
+## v3 双向可见性复审（2026-08-09）
+
+后续 teacher 像素尺度审计触发了更严格的反向检查：原 QA 只拒绝画面出现
+manifest 未声明的额外目标，却允许 manifest 声明的目标完全离开画面。对 v3
+全部 3000 帧按五类逐帧比较 declared 与 semantic-instance observed 后，仅
+1164 帧完全一致，一致率 `0.388`；1836 帧至少缺少一个声明实例，额外实例仍为
+0。因此此前 `G4_dataset_gate_pass=true` 被正式撤销，2× teacher 在 epoch 8
+中止，未运行 formal val，也未启动 student。
+
+修复将 QA 改为双向相等，并把正样本从单场景每类 1–2 个拥挤实例改成每类 1 个，
+初始距离限定为 3.0–4.6 m、横向位置受前视 FOV 约束，使车辆约 2.25 m 的十帧
+运动后目标仍保持在前方；近距尺度由运动轨迹产生。旧 v3 完整复审 QA SHA-256
+为 `3fe950473267210052f662dcd4919433ce1f99dcefbaf49a5ebed80e5ce1f713`，
+紧凑证据见 `P2_BIDIRECTIONAL_VISIBILITY_FAILURE.json`。只有从空目录完成 v4
+全量重采并通过严格 QA 后，才允许重新启动 teacher。
