@@ -12,6 +12,9 @@ ORT CUDA session 仍必须在 P4/P5 模型冻结后做 live 验收。
 - 低置信轨迹只能保持 `TENTATIVE` 或进入 `DEFERRED`，不能直接驱动清扫；
 - camera stale、TF 连续错误、session 连续错误、OOM、持续超时的 watchdog，
   非 `ACTIVE` 状态一律设置 `perception_spot_clean_allowed=false`；
+- leaf/puddle 的每个预测连通区独立提取 contour，并用该帧 depth、CameraInfo
+  与外部传入的时间戳 TF 投影为 map polygon、物理面积、置信度和协方差；无效
+  depth 直接丢弃，禁止使用 registry 固定矩形替代预测边界；
 - 上述全部阈值由 `perception_pipeline_manifest.yaml` 提供，缺失、越界或队列
   大于 2 时 manifest 加载直接失败。
 
@@ -19,7 +22,7 @@ ORT CUDA session 仍必须在 P4/P5 模型冻结后做 live 验收。
 
 - 正式 `LifecycleNode` 的 configure/activate/deactivate/error 全链；
 - 四模型 ORT CUDA session、I/O Binding、设备 buffer 预分配与 warm-up；
-- RGB stamp 精确 TF 查询、完整推理/投影/多实例 polygon 发布；
+- RGB stamp 的 ROS TF 查询、完整推理与多实例 polygon ROS 发布；
 - ROS diagnostics topic、fault injection、10 次冷启动及 learned-live。
 
 这些状态保持 false，不能因为纯 Python 内核测试通过而提升 P6/P7/live 门。

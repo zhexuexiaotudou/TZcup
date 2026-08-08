@@ -23,6 +23,9 @@
   ERROR 状态都禁止感知驱动定点清扫。当前仅为 ROS-independent 软件合同，
   lifecycle/ORT CUDA/live 仍未通过，见
   [`docs/auto05r-p6-product-runtime.md`](auto05r-p6-product-runtime.md)。
+- P6 `map_projection_v2.py` 已按预测连通区输出真实 contour-derived map
+  polygon、物理面积、置信度和协方差；无效 depth fail-closed，不再允许固定
+  registry rectangle 冒充 leaf/puddle 预测区域。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 
