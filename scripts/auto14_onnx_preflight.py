@@ -11,6 +11,27 @@ from pathlib import Path
 import yaml
 
 
+MIN_CALIBRATION_FRAMES = 1000
+SUPPORTED_ONNX_OPSET_RANGE = (10, 19)
+MAX_ONNX_IR_VERSION = 9
+
+
+def contract_gate(
+    *, opset: int, ir_version: int, fixed_batch_one: bool,
+    custom_operator_count: int, calibration_file_count: int,
+) -> dict:
+    return {
+        "opset_supported": SUPPORTED_ONNX_OPSET_RANGE[0]
+        <= int(opset)
+        <= SUPPORTED_ONNX_OPSET_RANGE[1],
+        "ir_version_supported": int(ir_version) <= MAX_ONNX_IR_VERSION,
+        "fixed_batch_one": bool(fixed_batch_one),
+        "custom_operator_count_zero": int(custom_operator_count) == 0,
+        "calibration_at_least_1000": int(calibration_file_count)
+        >= MIN_CALIBRATION_FRAMES,
+    }
+
+
 def tensor_shape(value_info) -> list[int | str]:
     dimensions = value_info.type.tensor_type.shape.dim
     return [
@@ -73,6 +94,14 @@ def main() -> int:
         and inputs[0]["shape"][0] == 1
         and all(isinstance(value, int) and value > 0 for value in inputs[0]["shape"])
     )
+    opset = max(item.version for item in inferred.opset_import)
+    gates = contract_gate(
+        opset=opset,
+        ir_version=inferred.ir_version,
+        fixed_batch_one=static_batch_one,
+        custom_operator_count=len(custom_ops),
+        calibration_file_count=len(calibration_files),
+    )
     config = {
         "model_parameters": {
             "onnx_model": str(model_path),
@@ -114,13 +143,15 @@ def main() -> int:
         "custom_operators": custom_ops,
         "custom_operator_count": len(custom_ops),
         "fixed_batch_one": static_batch_one,
+        "opset": opset,
+        "ir_version": inferred.ir_version,
         "calibration_file_count": len(calibration_files),
-        "calibration_at_least_500": len(calibration_files) >= 500,
+        "calibration_at_least_1000": len(calibration_files)
+        >= MIN_CALIBRATION_FRAMES,
+        "gates": gates,
         "compile_config": config_path.name,
         "preflight_pass": (
-            static_batch_one
-            and not custom_ops
-            and len(calibration_files) >= 500
+            all(gates.values())
         ),
     }
     (output / f"{args.model_name}_preflight.json").write_text(

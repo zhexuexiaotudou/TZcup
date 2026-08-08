@@ -83,7 +83,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 | 学习感知 | P2 数据完整性恢复中、screening 仍阻塞 | 旧 G4 仅 `987/3000` 帧与 manifest 一致；复位修复后的首轮三路重采又暴露 ROS/Gazebo 跨容器串流，v2 一致率 `0.731333` 且有跨 split duplicate，已继续作废。wrapper 已增加独立 ROS domain/Gazebo partition，v3 严格 QA 通过前禁止 teacher/student。P6/P7/P10 的 tracker v2、同步/watchdog、map polygon、Lifecycle、model registry、原子 rollback、产品容器/发布包与 ORT CUDA I/O Binding 内核已实现软件合同，但尚无冻结模型可做 live/性能/真实 release 验收；G5 尚未创建，`AUTO_05R/P4/P5/formal/live/J6/field` 仍为 false，见 [`docs/auto05r-p2-data-integrity-recovery.md`](docs/auto05r-p2-data-integrity-recovery.md) |
 | 综合竞赛矩阵 | 未通过 | 受 AUTO-08 学习感知与定点清扫依赖阻断，正式综合任务未启动 |
 | 真实域 | 外部阻断 | 缺少满足数量、标定和独立真值要求的真实数据集 |
-| J6 部署 | 未通过 | 官方工具链已准备，但正式模型尚未产生，本机也没有 J6 实板 |
+| J6 部署 | 未通过 | 本机官方 OE 3.7.0 离线包完整，但官方文档当前为 3.9.0；正式模型、当前工具链 PTQ/compile 与 J6 实板均缺失 |
 
 权威机器状态见 [`FINAL_AUTONOMOUS_STATUS.json`](FINAL_AUTONOMOUS_STATUS.json) 和 [`FINAL_BLOCKER_REGISTER.json`](FINAL_BLOCKER_REGISTER.json)。详细阶段过程、指标和失败边界保存在 [`docs/progress.md`](docs/progress.md)，不在本页重复记录逐步变更。
 

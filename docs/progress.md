@@ -48,6 +48,10 @@
   manifest—像素一致率仅 `0.731333`，跨 split exact/pHash duplicates 分别为
   `303/483`；数据作废。Docker wrapper 现按分片设置独立 ROS domain 与 Gazebo/
   Ignition partition，必须重新采集 v3。
+- P11 联网确认官方 OpenExplorer 文档当前为 `3.9.0`；ONNX 预检已强制 opset
+  `10–19`、IR `≤9`、batch=1、无 custom op、校准帧 `≥1000`，并新增 J6E/M
+  BPU profile 与 TopK/NMS 图外门。本机仅有完整性通过的官方 3.7.0 包且没有
+  冻结 ONNX/实板，所以 toolchain/board 两门仍为 false。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 
