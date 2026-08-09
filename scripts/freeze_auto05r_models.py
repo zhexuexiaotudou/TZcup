@@ -32,7 +32,7 @@ from sanitation_learning.g4_pretrained import (  # noqa: E402
 MODEL_TYPES = ("discovery", "classifier", "leaf", "puddle")
 INPUTS = {
     "discovery": {"name": "image_rgb", "shape": [1, 3, 480, 640]},
-    "classifier": {"name": "crop_rgb", "shape": [1, 3, 192, 192]},
+    "classifier": {"name": "crop_rgb", "shape": [16, 3, 192, 192]},
     "leaf": {"name": "area_features", "shape": [1, 10, 384, 512]},
     "puddle": {"name": "area_features", "shape": [1, 10, 384, 512]},
 }
@@ -182,6 +182,10 @@ def build_freeze(
         _require(onnx.get("sha256") == file_sha256(onnx_path), f"{task} ONNX SHA mismatch")
         _require(onnx.get("opset") == 17, f"{task} ONNX opset must be 17")
         _require(onnx.get("fixed_input") is True, f"{task} ONNX input is not fixed")
+        _require(
+            onnx.get("input_shape") == INPUTS[task]["shape"],
+            f"{task} ONNX input shape does not match frozen runtime contract",
+        )
         _require(onnx.get("custom_ops") == 0, f"{task} ONNX has custom ops")
         model_config[task] = {
             "model_id": contract["model_id"],
@@ -202,6 +206,7 @@ def build_freeze(
         onnx_contracts[task] = {
             "passed": True,
             "fixed_input": True,
+            "input_shape": onnx["input_shape"],
             "opset": 17,
             "custom_ops": 0,
             "operator_inventory": onnx.get("operator_inventory", {}),
@@ -224,7 +229,7 @@ def build_freeze(
         "discovery": {
             "graph_external": ["local_maximum", "top_k", "nms"],
             "local_maximum_radius": 1,
-            "max_detections": 100,
+            "max_detections": 16,
         },
         "classifier": {"background_index": 0, "class_order": [
             "background", "plastic_bottle", "metal_can", "paper_litter"
@@ -252,7 +257,7 @@ def build_freeze(
             "leaf": {"mask": thresholds["area"]["leaf"]},
             "puddle": {"mask": thresholds["area"]["puddle"]},
         },
-        "nms": {"discovery": {"iou": 0.5, "max_detections": 100}},
+        "nms": {"discovery": {"iou": 0.5, "max_detections": 16}},
         "calibration": report["calibration"],
         "training_data_hashes": {
             "g4_dataset_qa": file_sha256(dataset_qa_path),

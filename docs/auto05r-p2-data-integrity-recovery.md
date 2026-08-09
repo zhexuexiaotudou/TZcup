@@ -174,3 +174,9 @@ G4 QA SHA-256 完全一致、逐任务 selection 记录一致、checkpoint 标�
 `training_complete` 且逐任务 product eligible，并在新报告中记录源报告和每个 checkpoint
 的 SHA-256；任一条件不满足即拒绝运行。A3 discovery 仍从头训练并使用已冻结 teacher
 蒸馏目标，不能复用 A2 discovery，也不能把 A2 的整体失败提升为通过。
+
+P4 的 discovery 阈值选择、checkpoint 选择与所有正式 split 现统一使用产品上限
+top-16；freeze 的 graph-external NMS 合同和产品 `maximum_candidates` 同样为 16。
+classifier 正式 ONNX 固定导出 `[16, 3, 192, 192] -> [16, 4]`，输入不足时由产品
+runtime padding，确保每帧候选只进行一次 I/O-binding 推理。freeze 会核对报告中的
+真实 ONNX input shape，禁止把 batch-1 图伪装成 batch-16 产品 manifest。

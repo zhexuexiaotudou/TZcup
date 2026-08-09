@@ -12,8 +12,8 @@ import numpy as np
 from sanitation_perception.model_registry import ProductModel, ProductModelRegistry
 from sanitation_perception.area_runtime import decode_area, preprocess_area
 from sanitation_perception.classifier_runtime import (
-    classifier_input,
-    classify_candidate,
+    classifier_batch_input,
+    classify_candidates,
 )
 from sanitation_perception.detector_runtime import (
     decode_discovery,
@@ -238,19 +238,33 @@ class ProductInferenceEngine:
             classifier_model.manifest["thresholds"]["score"]
         )
         classifier_started = time.perf_counter()
-        classified = []
-        for candidate in candidates:
-            crop = classifier_input(rgb, candidate["bbox_xyxy"])
-            logits = self._single_numpy(
+        classifier_batch_size = int(
+            classifier_model.manifest["input"]["shapes"][0][0]
+        )
+        if classifier_batch_size != int(maximum_candidates):
+            raise RuntimeError(
+                "classifier fixed batch must equal maximum_candidates"
+            )
+        if candidates:
+            crops = classifier_batch_input(
+                rgb,
+                candidates,
+                fixed_batch_size=classifier_batch_size,
+            )
+            classifier_logits = self._single_numpy(
                 self.sessions["classifier"].run(
-                    {classifier_model.manifest["input"]["names"][0]: crop}
+                    {
+                        classifier_model.manifest["input"]["names"][0]: crops
+                    }
                 )
             )
-            classified.append(
-                classify_candidate(
-                    logits, candidate, score_threshold=classifier_threshold
-                )
+            classified = classify_candidates(
+                classifier_logits,
+                candidates,
+                score_threshold=classifier_threshold,
             )
+        else:
+            classified = []
         classifier_ms = (time.perf_counter() - classifier_started) * 1000.0
 
         area_outputs = {}

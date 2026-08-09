@@ -35,7 +35,7 @@ ROLE_TO_TASK = {
 }
 OUTPUTS = {
     "discovery": {"names": ["outputs"], "shapes": [[1, 15, 120, 160]]},
-    "classifier": {"names": ["outputs"], "shapes": [[1, 4]]},
+    "classifier": {"names": ["outputs"], "shapes": [[16, 4]]},
     "leaf": {"names": ["outputs"], "shapes": [[1, 2, 384, 512]]},
     "puddle": {"names": ["outputs"], "shapes": [[1, 2, 384, 512]]},
 }
@@ -78,6 +78,16 @@ def generate(
 ) -> dict:
     freeze = load_freeze(freeze_path)
     formal_pass, p5_sha = _formal_pass(freeze, p5_result_path)
+    maximum_candidates = int(
+        freeze.get("nms", {}).get("discovery", {}).get("max_detections", 0)
+    )
+    classifier_batch = int(
+        freeze["model_config"]["classifier"]["input_shape"][0]
+    )
+    if maximum_candidates <= 0 or classifier_batch != maximum_candidates:
+        raise ValueError(
+            "frozen classifier batch must equal discovery max_detections"
+        )
     output_dir.mkdir(parents=True, exist_ok=True)
     filenames = {}
     for role, task in ROLE_TO_TASK.items():
@@ -91,6 +101,9 @@ def generate(
         threshold = freeze["thresholds"][task]
         nms = freeze.get("nms", {}).get(task, {})
         provenance = freeze["pretrained_provenance"][task]
+        output_spec = dict(OUTPUTS[task])
+        if task == "classifier":
+            output_spec["shapes"] = [[classifier_batch, 4]]
         manifest = {
             "schema_version": 2,
             "model_id": config["model_id"],
@@ -118,7 +131,7 @@ def generate(
                 "std": [1.0, 1.0, 1.0],
                 "preprocess_hash": freeze["preprocess_hashes"][task],
             },
-            "output": {**OUTPUTS[task], "dtypes": ["float32"]},
+            "output": {**output_spec, "dtypes": ["float32"]},
             "class_order": CLASS_ORDER[task],
             "thresholds": dict(threshold),
             "NMS": {
@@ -167,7 +180,7 @@ def generate(
     base["runtime"].update(
         {
             "postprocess_contract": "fcos_classifier_area_v1",
-            "maximum_candidates": 16,
+            "maximum_candidates": maximum_candidates,
             "minimum_valid_depth_ratio": 0.05,
             "minimum_area_region_pixels": 20,
             "minimum_rgb_stddev": 2.0,

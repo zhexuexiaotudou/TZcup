@@ -104,6 +104,8 @@ from sanitation_learning.g4_train import (  # noqa: E402
 
 
 SEED = 20260807
+CLASSIFIER_EXPORT_BATCH = 16
+PRODUCT_MAXIMUM_CANDIDATES = CLASSIFIER_EXPORT_BATCH
 CLASSIFIER_THRESHOLD_GRID = tuple(
     round(value / 100.0, 2) for value in range(20, 96, 5)
 )
@@ -358,6 +360,8 @@ def _load_reused_model(
         "best_epoch": checkpoint.get("best_epoch"),
         "best_metric": checkpoint.get("best_metric"),
         "selection": checkpoint.get("selection"),
+        "model_contract": checkpoint.get("model_contract"),
+        "checkpoint_status": checkpoint.get("checkpoint_status"),
         "device": str(device),
     }
 
@@ -487,6 +491,7 @@ def _evaluate_split(
         instances_by_key,
         device=device,
         threshold=discovery_threshold,
+        max_detections=PRODUCT_MAXIMUM_CANDIDATES,
     )
     candidate = discovery_metrics(candidate_frames)
     classified = classify_detections(
@@ -759,7 +764,7 @@ def _discovery_validation_metric_fn(
             instances_by_key,
             device=device,
             threshold=min(DISCOVERY_THRESHOLD_GRID),
-            max_detections=100,
+            max_detections=PRODUCT_MAXIMUM_CANDIDATES,
         )
         operating_point = select_discovery_threshold(frames)
         candidate = operating_point["metrics"]
@@ -949,6 +954,7 @@ def _cross_world_f1(
             instances_by_key,
             device=device,
             threshold=discovery_threshold,
+            max_detections=PRODUCT_MAXIMUM_CANDIDATES,
         )
         classified = classify_detections(
             classifier,
@@ -1419,7 +1425,7 @@ def main() -> int:
             instances_by_key,
             device=device,
             threshold=min(DISCOVERY_THRESHOLD_GRID),
-            max_detections=100,
+            max_detections=PRODUCT_MAXIMUM_CANDIDATES,
         )
         discovery_operating_point = select_discovery_threshold(
             calibration_frames
@@ -1548,7 +1554,12 @@ def main() -> int:
         ),
         "classifier": _export_onnx_task_specific(
             classifier,
-            (1, 3, CLASSIFIER_MODEL_SIZE[0], CLASSIFIER_MODEL_SIZE[1]),
+            (
+                CLASSIFIER_EXPORT_BATCH,
+                3,
+                CLASSIFIER_MODEL_SIZE[0],
+                CLASSIFIER_MODEL_SIZE[1],
+            ),
             output / "classifier.onnx",
             device,
         ),

@@ -29,8 +29,9 @@ ROS lifecycle 节点与真实 ORT CUDA session 仍必须在 P4/P5 模型冻结�
   hash、正式 claim、CUDA provider、I/O Binding、预分配与 warm-up 审计，任一失败
   都不进入 ACTIVE；同步队列仍由 20 ms/深度 2 合同控制，TF 强制使用 RGB stamp。
 - 产品推理不再停在 postprocessor 占位异常：discovery 按 P3/P4/P5 解码并在图外做
-  local maximum/NMS，所有候选进入冻结 crop classifier；leaf/puddle 分别构建与训练
-  一致的 10 通道 RGB-D/ground-geometry 输入并输出原生分辨率 mask。
+  local maximum/NMS，候选按冻结 top-16 上限进入固定 batch-16 crop classifier，
+  不足部分 padding 后每帧只执行一次 classifier I/O-binding run；leaf/puddle 分别构建
+  与训练一致的 10 通道 RGB-D/ground-geometry 输入并输出原生分辨率 mask。
 - 离散实例仅从预测 bbox 内的有效 depth 投影；每个 leaf/puddle 连通区分别从预测
   contour 生成 map polygon、物理面积、置信度与协方差，再统一进入 class-agnostic
   tracker v2。area 不使用 registry rectangle。低置信 track 保持 TENTATIVE/DEFERRED。
@@ -61,6 +62,7 @@ ROS lifecycle 节点与真实 ORT CUDA session 仍必须在 P4/P5 模型冻结�
 这些状态保持 false，不能因为纯 Python 内核测试通过而提升 P6/P7/live 门。
 
 当前软件验证证据：Windows 快速门 `460 passed / 23 skipped`；正式 CUDA 镜像中的
-产品 runtime/manifest/packaging 聚焦回归 `29 passed`；ROS 2 Jazzy 容器实际构建
-`sanitation_perception_interfaces` 与 `sanitation_perception` 两包成功。以上只证明
+产品 runtime/manifest/packaging 聚焦回归 `30 passed`；ROS 2 Jazzy 容器实际构建
+`sanitation_perception_interfaces` 与 `sanitation_perception` 两包成功，随后 colcon
+测试 `65 passed / 0 failed`。以上只证明
 实现和安装链成立，不能替代冻结模型上的 provider profile、Gazebo live 或 soak。

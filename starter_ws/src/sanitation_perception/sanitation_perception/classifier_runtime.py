@@ -40,6 +40,25 @@ def classifier_input(rgb: np.ndarray, bbox_model) -> np.ndarray:
     ) / 255.0
 
 
+def classifier_batch_input(
+    rgb: np.ndarray,
+    candidates: list[dict],
+    *,
+    fixed_batch_size: int,
+) -> np.ndarray:
+    if fixed_batch_size <= 0 or len(candidates) > fixed_batch_size:
+        raise ValueError(
+            "classifier candidate count exceeds the fixed exported batch"
+        )
+    batch = np.zeros(
+        (fixed_batch_size, 3, CLASSIFIER_SIZE[1], CLASSIFIER_SIZE[0]),
+        dtype=np.float32,
+    )
+    for index, candidate in enumerate(candidates):
+        batch[index] = classifier_input(rgb, candidate["bbox_xyxy"])[0]
+    return batch
+
+
 def classify_candidate(
     logits: np.ndarray, candidate: dict, *, score_threshold: float
 ) -> dict:
@@ -69,4 +88,31 @@ def classify_candidate(
     }
 
 
-__all__ = ["CLASS_NAMES", "classifier_input", "classify_candidate"]
+def classify_candidates(
+    logits: np.ndarray,
+    candidates: list[dict],
+    *,
+    score_threshold: float,
+) -> list[dict]:
+    flat = np.asarray(logits, dtype=np.float32)
+    if flat.ndim != 2 or flat.shape[1] != len(CLASS_NAMES):
+        raise ValueError(f"classifier batch output shape mismatch: {flat.shape}")
+    if len(candidates) > flat.shape[0]:
+        raise ValueError("classifier output has fewer rows than candidates")
+    return [
+        classify_candidate(
+            flat[index : index + 1],
+            candidate,
+            score_threshold=score_threshold,
+        )
+        for index, candidate in enumerate(candidates)
+    ]
+
+
+__all__ = [
+    "CLASS_NAMES",
+    "classifier_batch_input",
+    "classifier_input",
+    "classify_candidate",
+    "classify_candidates",
+]

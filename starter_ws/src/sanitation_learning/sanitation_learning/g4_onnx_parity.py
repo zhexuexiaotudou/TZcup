@@ -292,15 +292,15 @@ def assert_onnx_contract(
         raise ValueError(
             f"ONNX opset must be {expected_opset}, got {opset}"
         )
+    graph_input = onnx_model.graph.input[0]
+    dims = []
+    for dim in graph_input.type.tensor_type.shape.dim:
+        if dim.dim_param:
+            raise ValueError(
+                "exported ONNX must use fixed shapes (dynamic_axes=None)"
+            )
+        dims.append(int(dim.dim_value))
     if expected_input_shape is not None:
-        graph_input = onnx_model.graph.input[0]
-        dims = []
-        for dim in graph_input.type.tensor_type.shape.dim:
-            if dim.dim_param:
-                raise ValueError(
-                    "exported ONNX must use fixed shapes (dynamic_axes=None)"
-                )
-            dims.append(int(dim.dim_value))
         if tuple(dims) != tuple(int(value) for value in expected_input_shape):
             raise ValueError(
                 f"ONNX input shape {tuple(dims)} does not match "
@@ -316,6 +316,7 @@ def assert_onnx_contract(
     return {
         "opset": opset,
         "fixed_input": True,
+        "input_shape": dims,
         "operator_inventory": inventory,
         "custom_ops": 0,
         "passed": True,

@@ -8,7 +8,12 @@ import numpy as np
 import pytest
 
 from sanitation_perception.area_runtime import decode_area, preprocess_area
-from sanitation_perception.classifier_runtime import classify_candidate, classifier_input
+from sanitation_perception.classifier_runtime import (
+    classifier_batch_input,
+    classifier_input,
+    classify_candidate,
+    classify_candidates,
+)
 from sanitation_perception.detector_runtime import decode_discovery, preprocess_discovery
 from sanitation_perception.product_postprocess import (
     project_area_predictions,
@@ -53,6 +58,29 @@ def test_discovery_decode_and_classifier_acceptance_are_multi_instance() -> None
     )
     assert accepted["accepted"] is True
     assert accepted["class_id"] == "metal_can"
+    batch = classifier_batch_input(rgb, candidates, fixed_batch_size=16)
+    assert batch.shape == (16, 3, 192, 192)
+    logits = np.zeros((16, 4), np.float32)
+    logits[:2, 2] = 4.0
+    assert len(
+        classify_candidates(logits, candidates, score_threshold=0.75)
+    ) == 2
+
+
+def test_candidate_flood_is_bounded_before_single_classifier_batch() -> None:
+    flat = np.full((1, 15, 120, 160), -20.0, np.float32)
+    for index in range(40):
+        y, x = 2 + (index // 8) * 20, 2 + (index % 8) * 20
+        flat[0, 0, y, x] = 10.0
+        flat[0, 3:5, y, x] = 0.5
+        flat[0, 9:11, y, x] = 6.0
+    candidates = decode_discovery(
+        flat,
+        score_threshold=0.8,
+        nms_iou_threshold=0.5,
+        maximum_candidates=16,
+    )
+    assert len(candidates) == 16
 
 
 def test_area_preprocess_matches_training_contract_and_decodes_native_mask() -> None:

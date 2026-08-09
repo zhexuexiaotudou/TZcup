@@ -176,6 +176,7 @@ def test_freeze_generator_binds_complete_checkpoints_and_official_weights(
             "sha256": freezer.file_sha256(model_dir / f"{task}.onnx"),
             "opset": 17,
             "fixed_input": True,
+            "input_shape": freezer.INPUTS[task]["shape"],
             "custom_ops": 0,
             "operator_inventory": {"Conv": 1},
             "parity": {"max_absolute_error": 0.0},
@@ -266,7 +267,11 @@ def test_product_manifests_keep_formal_false_until_matching_p5(
         model_config[task] = {
             "model_id": f"g4_{task}_v1",
             "input_name": f"{task}_input",
-            "input_shape": [1, 3, 4, 4],
+            "input_shape": (
+                [16, 3, 192, 192]
+                if task == "classifier"
+                else [1, 3, 4, 4]
+            ),
             "onnx": artifact.name,
         }
         artifact_hashes[task] = generator.file_sha256(artifact)
@@ -285,7 +290,7 @@ def test_product_manifests_keep_formal_false_until_matching_p5(
         "preprocess_hashes": {task: "c" * 64 for task in tasks},
         "postprocess_hashes": {task: "e" * 64 for task in tasks},
         "thresholds": thresholds,
-        "nms": {"discovery": {"iou": 0.5}},
+        "nms": {"discovery": {"iou": 0.5, "max_detections": 16}},
         "p4_screening": {"evidence_sha256": "d" * 64},
     }
     monkeypatch.setattr(generator, "load_freeze", lambda _: freeze)
