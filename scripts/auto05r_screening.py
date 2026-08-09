@@ -140,6 +140,7 @@ def _load_reused_model(
     device: torch.device,
     *,
     area_architecture: str = "dual_resnet18",
+    discovery_architecture: str = "resnet18_fpn_a1",
 ) -> tuple[torch.nn.Module, dict]:
     source = source_dir / f"{task}.pt"
     if not source.is_file():
@@ -149,8 +150,23 @@ def _load_reused_model(
     if not isinstance(state, dict) or not state:
         raise RuntimeError(f"reused {task} checkpoint has no selected state_dict")
     model = build_g4_model(
-        task, area_architecture=area_architecture
+        task,
+        area_architecture=area_architecture,
+        discovery_architecture=discovery_architecture,
     ).to(device)
+    expected_contract = {
+        "model_id": getattr(model, "model_id", None),
+        "architecture_role": getattr(model, "architecture_role", None),
+        "discovery_architecture": getattr(
+            model, "discovery_architecture", None
+        ),
+    }
+    checkpoint_contract = checkpoint.get("model_contract")
+    if checkpoint_contract is not None and checkpoint_contract != expected_contract:
+        raise RuntimeError(
+            f"reused {task} checkpoint model contract mismatch: "
+            f"expected {expected_contract}, got {checkpoint_contract}"
+        )
     model.load_state_dict(state, strict=True)
     model.eval()
     target = output_dir / source.name
@@ -737,6 +753,11 @@ def main() -> int:
     parser.add_argument("--class-threshold", type=float, default=0.35)
     parser.add_argument("--area-threshold", type=float, default=0.5)
     parser.add_argument(
+        "--discovery-architecture",
+        choices=("resnet18_fpn_a1", "mobilenetv3_small_fpn_a2"),
+        default="resnet18_fpn_a1",
+    )
+    parser.add_argument(
         "--area-architecture",
         choices=("dual_resnet18", "deeplab_resnet50"),
         default="dual_resnet18",
@@ -882,7 +903,11 @@ def main() -> int:
                     "reused checkpoints were selected on a different formal G4 QA"
                 )
         discovery, discovery_training = _load_reused_model(
-            "discovery", reuse_discrete_source, output, device
+            "discovery",
+            reuse_discrete_source,
+            output,
+            device,
+            discovery_architecture=args.discovery_architecture,
         )
     else:
         previous_report = None
@@ -903,6 +928,10 @@ def main() -> int:
                 selection_val_rows,
                 instances_by_key,
                 device,
+            ),
+            model=build_g4_model(
+                "discovery",
+                discovery_architecture=args.discovery_architecture,
             ),
         )
 
@@ -1341,7 +1370,11 @@ def main() -> int:
         "stage": "AUTO-05R",
         "task": "AUTO-05R-4",
         "student_route": {
-            "attempt": "A1_FCOS_lite_ResNet18_FPN",
+            "attempt": (
+                "A1_FCOS_lite_ResNet18_FPN"
+                if args.discovery_architecture == "resnet18_fpn_a1"
+                else "A2_FCOS_lite_MobileNetV3_Small_FPN"
+            ),
             "teacher_report": str(args.teacher_report),
             "teacher_report_sha256": sha256(args.teacher_report),
             "teacher_checkpoint_sha256": teacher_report.get("checkpoint", {}).get(
@@ -1355,7 +1388,12 @@ def main() -> int:
             ]["false_candidates_per_min"],
             "dataset_qa_sha256": dataset_qa["sha256"],
             "architecture_attempt_limit": 3,
-            "attempts_used": 1,
+            "attempts_used": (
+                1
+                if args.discovery_architecture == "resnet18_fpn_a1"
+                else 2
+            ),
+            "discovery_architecture": args.discovery_architecture,
             "area_architecture": args.area_architecture,
             "reused_selected_checkpoints_for_diagnostic_evaluation": bool(
                 args.reuse_model_dir

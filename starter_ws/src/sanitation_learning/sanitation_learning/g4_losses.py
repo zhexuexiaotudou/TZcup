@@ -146,6 +146,11 @@ def discovery_loss(
                     :, level * 2 : level * 2 + 2, ::factor, ::factor
                 ],
             }
+            for name in ("objectness_raw_logits", "quality_logits"):
+                if name in outputs:
+                    level_output[name] = outputs[
+                        name
+                    ][:, level : level + 1, ::factor, ::factor]
             level_target = {
                 name: targets[f"{name}_s{level_stride}"]
                 for name in ("heatmap", "offset", "size", "regression_mask")
@@ -169,13 +174,26 @@ def discovery_loss(
             / denominator
             for name in level_reports[0]
         }
+    independently_supervised_quality = (
+        "objectness_raw_logits" in outputs and "quality_logits" in outputs
+    )
     objectness_audit = objectness_loss_audit(
-        outputs["objectness_logits"],
+        outputs.get("objectness_raw_logits", outputs["objectness_logits"]),
         targets["heatmap"],
         variant=objectness_variant,
         negative_weight=objectness_negative_weight,
     )
     objectness = objectness_audit["total"]
+    if independently_supervised_quality:
+        quality_audit = objectness_loss_audit(
+            outputs["quality_logits"],
+            targets["heatmap"],
+            variant="L3_quality_focal",
+            negative_weight=objectness_negative_weight,
+        )
+        quality = quality_audit["total"]
+    else:
+        quality = objectness.new_tensor(0.0)
     mask = targets["regression_mask"]
     denominator = mask.sum().clamp(min=1.0)
     offset_loss = (
@@ -225,6 +243,7 @@ def discovery_loss(
     negative_penalty = probability[targets["heatmap"] < 1.0].pow(2).mean()
     total = (
         objectness
+        + 0.5 * quality
         + offset_loss
         + 0.25 * giou_loss
         + 0.1 * negative_penalty
@@ -232,6 +251,7 @@ def discovery_loss(
     return {
         "total": total,
         "objectness": objectness,
+        "quality": quality,
         "offset": offset_loss,
         "giou": giou_loss,
         "negative_penalty": negative_penalty,

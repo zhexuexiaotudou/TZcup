@@ -3,7 +3,8 @@
 Four model families are defined here:
 
 - ``DiscoveryDetector``: class-agnostic FCOS-lite ``litter_candidate``
-  detector with a pretrained ResNet18 P3/P4/P5 pyramid, objectness, quality
+  detector with a pretrained ResNet18 or MobileNetV3-small P3/P4/P5 pyramid,
+  objectness, quality
   and internal ltrb regression. It preserves P3/P4/P5 as separate fixed
   output channels while top-K and cross-level NMS remain outside ONNX.
 - ``CandidateCropClassifier``: four-class crop classifier
@@ -44,6 +45,10 @@ CLASSIFIER_INPUT_SHAPE = (1, 3, 192, 192)
 SEGMENTER_INPUT_SHAPE = (1, 10, 384, 512)
 CLASSIFIER_CLASSES = ("background", "plastic_bottle", "metal_can", "paper_litter")
 DISCOVERY_STRIDES = (4, 8, 16)
+DISCOVERY_ARCHITECTURES = (
+    "resnet18_fpn_a1",
+    "mobilenetv3_small_fpn_a2",
+)
 SEGMENTER_TASKS = ("leaf", "puddle")
 DEFAULT_ONNX_OPSET = 17
 
@@ -215,6 +220,67 @@ def _model_classes() -> dict[str, type]:
                 "p5": self.smooth5(p5),
             }
 
+    class _DiscoveryMobileNetBackbone(nn.Module):
+        """Pretrained MobileNetV3-small FPN with stride-4/8/16 taps."""
+
+        def __init__(self, base: int = 48, from_scratch_control: bool = False):
+            super().__init__()
+            import torchvision
+
+            weights_enum = (
+                torchvision.models.MobileNet_V3_Small_Weights.IMAGENET1K_V1
+            )
+            if from_scratch_control:
+                mobilenet = torchvision.models.mobilenet_v3_small(weights=None)
+                self.provenance = from_scratch_control_record(
+                    "mobilenet_v3_small"
+                )
+            else:
+                try:
+                    mobilenet = torchvision.models.mobilenet_v3_small(
+                        weights=weights_enum
+                    )
+                except Exception as exc:
+                    raise RuntimeError(
+                        "official pretrained MobileNetV3-small weights are "
+                        "required (PRETRAINED_REQUIRED=true) but could not "
+                        "be acquired; from_scratch_control is the only "
+                        "labelled ablation"
+                    ) from exc
+                self.provenance = provenance_record(
+                    "mobilenet_v3_small",
+                    cache_path=torchvision_cache_path("mobilenet_v3_small"),
+                    torchvision_version=torchvision.__version__,
+                )
+            features = mobilenet.features
+            self.stage3 = nn.Sequential(*features[:2])
+            self.stage4 = nn.Sequential(*features[2:4])
+            self.stage5 = nn.Sequential(*features[4:9])
+            channels = base * 2
+            self.lateral3 = nn.Conv2d(16, channels, 1)
+            self.lateral4 = nn.Conv2d(24, channels, 1)
+            self.lateral5 = nn.Conv2d(48, channels, 1)
+            self.smooth3 = _ConvBnReLU(channels, channels, 3, 1, 1)
+            self.smooth4 = _ConvBnReLU(channels, channels, 3, 1, 1)
+            self.smooth5 = _ConvBnReLU(channels, channels, 3, 1, 1)
+
+        def forward(self, image):
+            c3 = self.stage3(image)
+            c4 = self.stage4(c3)
+            c5 = self.stage5(c4)
+            p5 = self.lateral5(c5)
+            p4 = self.lateral4(c4) + functional.interpolate(
+                p5, size=c4.shape[-2:], mode="nearest"
+            )
+            p3 = self.lateral3(c3) + functional.interpolate(
+                p4, size=c3.shape[-2:], mode="nearest"
+            )
+            return {
+                "p3": self.smooth3(p3),
+                "p4": self.smooth4(p4),
+                "p5": self.smooth5(p5),
+            }
+
     class DiscoveryDetector(_FlatOutputMixin, nn.Module):
         """Class-agnostic litter-candidate detector (objectness/offset/bbox)."""
 
@@ -230,8 +296,13 @@ def _model_classes() -> dict[str, type]:
             base: int = 48,
             from_scratch_control: bool = False,
             legacy_fpn_control: bool = False,
+            architecture: str = "resnet18_fpn_a1",
         ):
             super().__init__()
+            if architecture not in DISCOVERY_ARCHITECTURES:
+                raise ValueError(
+                    f"unknown discovery architecture {architecture!r}"
+                )
             if legacy_fpn_control and from_scratch_control:
                 raise ValueError(
                     "legacy_fpn_control and from_scratch_control are "
@@ -248,21 +319,23 @@ def _model_classes() -> dict[str, type]:
                     "torchvision is required for the production discovery "
                     "backbone (PRETRAINED_REQUIRED=true)"
                 )
-            self.backbone = (
-                _FPNBackbone(base=base)
-                if legacy_fpn_control
-                else
-                _DiscoveryResNetBackbone(
-                    base=base,
-                    from_scratch_control=from_scratch_control,
+            if legacy_fpn_control:
+                self.backbone = _FPNBackbone(base=base)
+            elif architecture == "resnet18_fpn_a1":
+                self.backbone = _DiscoveryResNetBackbone(
+                    base=base, from_scratch_control=from_scratch_control
                 )
-                if torchvision_available
-                else _FPNBackbone(base=base)
-            )
+            else:
+                self.backbone = _DiscoveryMobileNetBackbone(
+                    base=base, from_scratch_control=from_scratch_control
+                )
+            self.discovery_architecture = architecture
             self.architecture_role = (
                 "legacy_small_fpn_control"
                 if legacy_fpn_control
                 else "fcos_lite_resnet18_fpn_product_candidate"
+                if architecture == "resnet18_fpn_a1"
+                else "fcos_lite_mobilenetv3_small_fpn_product_candidate"
             )
             self.head = nn.Sequential(
                 _ConvBnReLU(base * 2, base * 2, 3, 1, 1)
@@ -281,6 +354,9 @@ def _model_classes() -> dict[str, type]:
                 self.pyramid_levels = ("P3", "P4", "P5")
                 self.pyramid_strides = DISCOVERY_STRIDES
                 self.quality_head_enabled = True
+                self.independent_quality_supervision = (
+                    architecture == "mobilenetv3_small_fpn_a2"
+                )
                 self.regression_parameterization = "ltrb"
                 self.graph_external_postprocess = ("top_k", "nms")
             nn.init.constant_(self.objectness.bias, -3.0)
@@ -296,11 +372,15 @@ def _model_classes() -> dict[str, type]:
                 }
             target_size = features["p3"].shape[-2:]
             level_logits = []
+            level_objectness_logits = []
+            level_quality_logits = []
             level_offsets = []
             level_sizes = []
             for name, stride in zip(("p3", "p4", "p5"), DISCOVERY_STRIDES):
                 head = self.head(features[name])
-                combined_logits = self.objectness(head) + self.quality(head)
+                objectness_logits = self.objectness(head)
+                quality_logits = self.quality(head)
+                combined_logits = objectness_logits + quality_logits
                 left, top, right, bottom = self.ltrb(head).unbind(dim=1)
                 offset = torch.stack(
                     ((right - left) * 0.5, (bottom - top) * 0.5), dim=1
@@ -311,17 +391,35 @@ def _model_classes() -> dict[str, type]:
                         combined_logits, size=target_size, mode="nearest"
                     )
                 )
+                level_objectness_logits.append(
+                    functional.interpolate(
+                        objectness_logits, size=target_size, mode="nearest"
+                    )
+                )
+                level_quality_logits.append(
+                    functional.interpolate(
+                        quality_logits, size=target_size, mode="nearest"
+                    )
+                )
                 level_offsets.append(
                     functional.interpolate(offset, size=target_size, mode="nearest")
                 )
                 level_sizes.append(
                     functional.interpolate(size, size=target_size, mode="nearest")
                 )
-            return {
+            outputs = {
                 "objectness_logits": torch.cat(level_logits, dim=1),
                 "offset": torch.cat(level_offsets, dim=1),
                 "bbox_size": torch.cat(level_sizes, dim=1),
             }
+            if self.independent_quality_supervision:
+                outputs["objectness_raw_logits"] = torch.cat(
+                    level_objectness_logits, dim=1
+                )
+                outputs["quality_logits"] = torch.cat(
+                    level_quality_logits, dim=1
+                )
+            return outputs
 
     class CandidateCropClassifier(_FlatOutputMixin, nn.Module):
         """Four-class classifier on an official MobileNetV3-small backbone."""
@@ -782,7 +880,9 @@ def __getattr__(name: str):
 
 
 def build_g4_models(
-    shared_encoder: bool = False, from_scratch_control: bool = False
+    shared_encoder: bool = False,
+    from_scratch_control: bool = False,
+    discovery_architecture: str = "resnet18_fpn_a1",
 ) -> dict:
     """Build the four G4 models.
 
@@ -799,7 +899,8 @@ def build_g4_models(
         torchvision_available = False
     models = {
         "discovery": classes["DiscoveryDetector"](
-            from_scratch_control=from_scratch_control
+            from_scratch_control=from_scratch_control,
+            architecture=discovery_architecture,
         ),
         "classifier": classes["CandidateCropClassifier"](
             from_scratch_control=from_scratch_control
@@ -831,6 +932,7 @@ def build_g4_model(
     *,
     from_scratch_control: bool = False,
     legacy_fpn_control: bool = False,
+    discovery_architecture: str = "resnet18_fpn_a1",
     area_architecture: str = "dual_resnet18",
 ):
     """Build one task model without instantiating unrelated backbones."""
@@ -839,6 +941,7 @@ def build_g4_model(
         return classes["DiscoveryDetector"](
             from_scratch_control=from_scratch_control,
             legacy_fpn_control=legacy_fpn_control,
+            architecture=discovery_architecture,
         )
     if legacy_fpn_control:
         raise ValueError("legacy_fpn_control is valid only for discovery")

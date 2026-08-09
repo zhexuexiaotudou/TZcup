@@ -19,6 +19,10 @@ def test_input_shape_constants_match_spec() -> None:
     assert tuple(g4_models.CLASSIFIER_INPUT_SHAPE) == (1, 3, 192, 192)
     assert tuple(g4_models.SEGMENTER_INPUT_SHAPE) == (1, 10, 384, 512)
     assert tuple(g4_models.DISCOVERY_STRIDES) == (4, 8, 16)
+    assert tuple(g4_models.DISCOVERY_ARCHITECTURES) == (
+        "resnet18_fpn_a1",
+        "mobilenetv3_small_fpn_a2",
+    )
     assert tuple(g4_models.CLASSIFIER_CLASSES) == (
         "background",
         "plastic_bottle",
@@ -71,6 +75,40 @@ def test_legacy_discovery_control_is_explicit_and_exclusive() -> None:
         )
     with pytest.raises(ValueError):
         g4_models.build_g4_model("classifier", legacy_fpn_control=True)
+
+
+def test_a2_mobilenet_discovery_has_real_pyramid_and_quality_contract() -> None:
+    torch = pytest.importorskip("torch")
+    pytest.importorskip("torchvision")
+    model = g4_models.build_g4_model(
+        "discovery",
+        from_scratch_control=True,
+        discovery_architecture="mobilenetv3_small_fpn_a2",
+    )
+    model.eval()
+    with torch.no_grad():
+        outputs = model(torch.zeros(1, 3, 64, 64))
+    assert outputs["objectness_logits"].shape == (1, 3, 16, 16)
+    assert outputs["objectness_raw_logits"].shape == (1, 3, 16, 16)
+    assert outputs["quality_logits"].shape == (1, 3, 16, 16)
+    assert model.architecture_role == (
+        "fcos_lite_mobilenetv3_small_fpn_product_candidate"
+    )
+    assert model.discovery_architecture == "mobilenetv3_small_fpn_a2"
+    assert model.independent_quality_supervision is True
+    assert model.backbone.stage3[-1].out_channels == 16
+    assert model.backbone.stage4[-1].out_channels == 24
+    assert model.backbone.stage5[-1].out_channels == 48
+
+
+def test_unknown_discovery_architecture_fails_closed() -> None:
+    pytest.importorskip("torch")
+    with pytest.raises(ValueError, match="unknown discovery architecture"):
+        g4_models.build_g4_model(
+            "discovery",
+            from_scratch_control=True,
+            discovery_architecture="placeholder",
+        )
 
 
 def test_classifier_output_shape() -> None:

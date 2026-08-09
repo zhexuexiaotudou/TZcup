@@ -186,6 +186,13 @@ def fit_model(
     checkpoint_write_count = 0
     started = time.perf_counter()
     use_amp = bool(amp and torch.cuda.is_available())
+    model_contract = {
+        "model_id": getattr(model, "model_id", None),
+        "architecture_role": getattr(model, "architecture_role", None),
+        "discovery_architecture": getattr(
+            model, "discovery_architecture", None
+        ),
+    }
     scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
     if selector is not None and val_loader is None:
         raise ValueError(
@@ -322,6 +329,7 @@ def fit_model(
                         "seed": seed,
                         "selection": best_selection,
                         "checkpoint_status": "in_progress_best",
+                        "model_contract": model_contract,
                     },
                 )
                 checkpoint_write_count += 1
@@ -351,6 +359,7 @@ def fit_model(
                 "seed": seed,
                 "selection": best_selection,
                 "checkpoint_status": "training_complete",
+                "model_contract": model_contract,
             },
         )
         checkpoint_write_count += 1
@@ -372,6 +381,7 @@ def fit_model(
         "ema_updates": ema_updates,
         "checkpoint_write_count": checkpoint_write_count,
         "checkpoint_write_mode": "atomic_on_selection_and_completion",
+        "model_contract": model_contract,
     }
     return model, report
 

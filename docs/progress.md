@@ -2,6 +2,17 @@
 
 ## 2026-08-09：AUTO-05R P2 发现并修复 G4 跨场景资产泄漏
 
+- 修复后的 A1（FCOS-lite ResNet18-FPN）在 V5 正式 G4 上从零训练，600 帧覆盖
+  8/8 个训练世界并跑满 30 epoch；验证选择只读 100 帧 development val，未读旧
+  D6/G5。最佳 epoch 20 在阈值 0.975 下 precision=1、negative FP/frame=0、
+  false candidate/min=0，但 recall=0.2069、AP50=0.2079，违反 recall>=0.80
+  硬门，故 A1 正式淘汰且禁止继续追加 epoch。完整 checkpoint SHA-256 为
+  `3bd8fcf2f5ec185ee3cd3bb452ac93d36d9b5fe7067f229f3a434e1074484107`；
+  紧凑证据见 `artifacts/auto05r_p4_evidence/P4_A1_FORMAL_STRATIFIED_FAILURE.json`。
+- 开始注册上限内的 A2：MobileNetV3-small stride-4/8/16 FPN，保持图外 top-K/NMS
+  和固定 ONNX 输出契约，并将 objectness/quality 从仅相加的冗余 head 改为独立监督；
+  A2 尚未通过 P4，旧 D6/G5 继续不可读。
+
 - 官方 FCOS-R50 教师全量训练启动后，像素尺度与实例数量审计发现单帧最多
   43 个离散真值，而 scene manifest 最多只声明 6 个离散目标。根因是 world
   连续复用时只移动新选中资产、未复位旧资产，导致目标逐场累积。

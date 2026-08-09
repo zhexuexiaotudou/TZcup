@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-05R",
+  "gate": "PERCEPTION-P4",
+  "architecture_attempt": "A1_FCOS_lite_ResNet18_FPN",
+  "source_commit": "ef966034e2b442c4499d11751081eacbc54c3c20",
+  "dataset": {
+    "formal_g4_version": "V5",
+    "dataset_qa_sha256": "72baf192e70c59d369c284c8141dcc6e2c03350dca930212ae97cf2182d1ab01",
+    "training_frames": 600,
+    "training_worlds": 8,
+    "selection_validation_frames": 100,
+    "selection_policy": "development_val_only"
+  },
+  "training": {
+    "requested_epochs": 30,
+    "completed_epochs": 30,
+    "best_epoch": 20,
+    "checkpoint_status": "training_complete",
+    "checkpoint_sha256": "3bd8fcf2f5ec185ee3cd3bb452ac93d36d9b5fe7067f229f3a434e1074484107",
+    "fresh_training": true,
+    "checkpoint_reused": false
+  },
+  "selected_validation_metrics": {
+    "candidate_recall": 0.20689655172413793,
+    "ap50": 0.2079207920792079,
+    "proposal_precision": 1.0,
+    "false_candidates_per_min": 0.0,
+    "negative_only_fp_per_frame": 0.0,
+    "threshold": 0.975
+  },
+  "failed_constraints": [
+    {
+      "metric": "candidate_recall",
+      "operator": ">=",
+      "threshold": 0.8,
+      "value": 0.20689655172413793,
+      "normalized_violation": 0.7413793103448276
+    }
+  ],
+  "decision": {
+    "product_eligible": false,
+    "status": "diagnostic_fallback_only",
+    "P4_SCREENING_PASS": false,
+    "architecture_eliminated": true,
+    "next_registered_attempt": "A2_FCOS_lite_MobileNetV3_Small_FPN",
+    "additional_A1_epochs_allowed": false
+  },
+  "run_boundary": {
+    "full_screening_report_written": false,
+    "reason": "The run was stopped after the completed discovery model had formally failed its recall gate, before spending compute on unrelated classifier and area training.",
+    "partial_classifier_checkpoint_product_eligible": false,
+    "legacy_G4_D6_read": false,
+    "G5_sealed_final_read": false
+  }
+}

@@ -85,3 +85,39 @@ def test_quality_focal_is_autocast_safe() -> None:
     loss.backward()
     assert torch.isfinite(loss)
     assert torch.isfinite(logits.grad).all()
+
+
+def test_a2_objectness_and_quality_heads_receive_independent_gradients() -> None:
+    torch = pytest.importorskip("torch")
+    from sanitation_learning.g4_losses import discovery_loss
+
+    raw = torch.zeros(1, 1, 8, 8, requires_grad=True)
+    quality = torch.zeros(1, 1, 8, 8, requires_grad=True)
+    combined = raw + quality
+    offset = torch.zeros(1, 2, 8, 8, requires_grad=True)
+    size = torch.ones(1, 2, 8, 8, requires_grad=True)
+    heatmap = torch.zeros(1, 1, 8, 8)
+    heatmap[0, 0, 3, 4] = 1.0
+    mask = torch.zeros(1, 1, 8, 8)
+    mask[0, 0, 3, 4] = 1.0
+    report = discovery_loss(
+        {
+            "objectness_logits": combined,
+            "objectness_raw_logits": raw,
+            "quality_logits": quality,
+            "offset": offset,
+            "bbox_size": size,
+        },
+        {
+            "heatmap": heatmap,
+            "offset": torch.zeros(1, 2, 8, 8),
+            "size": torch.ones(1, 2, 8, 8),
+            "regression_mask": mask,
+        },
+    )
+    report["total"].backward()
+    assert report["quality"] > 0
+    assert raw.grad is not None and torch.isfinite(raw.grad).all()
+    assert quality.grad is not None and torch.isfinite(quality.grad).all()
+    assert float(raw.grad.abs().sum()) > 0.0
+    assert float(quality.grad.abs().sum()) > 0.0
