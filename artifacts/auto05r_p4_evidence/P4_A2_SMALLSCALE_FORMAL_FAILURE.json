@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-05R-P4",
+  "protocol": "A2_FCOS_lite_MobileNetV3_Small_FPN_smallscale_balanced_v1",
+  "source_commit": "151e0cc2b2f848121c13f6c0d50e8495946e3886",
+  "raw_report_sha256": "a03c1b5ba5bf12c133f9bfdbafdce6854053146098ec825b0069ca4f25003bd6",
+  "P4_SCREENING_PASS": false,
+  "AUTO_05R_PASS": false,
+  "legacy_G4_D6_diagnostic_read": false,
+  "G5_SEALED_FINAL_read": false,
+  "failed_gates": {
+    "in_domain_candidate_recall_ge": {"value": 0.0757918552036199, "threshold": 0.8},
+    "in_domain_false_candidates_per_min_le": {"value": 6.521739130434782, "threshold": 2.0},
+    "in_domain_macro_precision_ge": {"value": 0.8968897903989181, "threshold": 0.9},
+    "in_domain_macro_recall_ge": {"value": 0.07087218337218337, "threshold": 0.9},
+    "in_domain_macro_f1_ge": {"value": 0.12687570205143917, "threshold": 0.9},
+    "cross_world_macro_f1_ge": {"value": 0.17880316644961552, "threshold": 0.7},
+    "val_per_class_recall_ge": {"value": 0.03237410071942446, "threshold": 0.7},
+    "small_object_recall_ge": {"value": 0.0, "threshold": 0.7},
+    "boundary_f1_ge": {"value": 0.6879968704664454, "threshold": 0.7},
+    "color_material_stress_macro_f1_ge": {"value": 0.057239057239057235, "threshold": 0.6},
+    "selected_models_product_eligible": {"value": false, "threshold": true}
+  },
+  "task_selection": {
+    "discovery": {"product_eligible": false, "diagnostic_epoch": 2, "validation_recall": 0.14655172413793102},
+    "classifier": {"product_eligible": true, "selected_epoch": 5, "validation_macro_f1": 0.9787490287490287},
+    "leaf": {"product_eligible": true, "selected_epoch": 13, "validation_boundary_f1": 0.7650268415031242},
+    "puddle": {"product_eligible": true, "selected_epoch": 20, "validation_boundary_f1": 0.7023679993669509}
+  },
+  "area_metrics": {
+    "in_domain_macro_miou": 0.9222495150688391,
+    "cross_world_macro_miou": 0.9204795792741834,
+    "in_domain_boundary_f1": 0.7071777271042647,
+    "cross_world_boundary_f1": 0.6879968704664454,
+    "negative_area_fp_per_frame": 0.0
+  },
+  "onnx": {
+    "all_task_specific_parity_pass": true,
+    "custom_ops_zero": true,
+    "discovery_sha256": "95cfa3750223bd9aa8c68ff62f123e3a2c563eb1679f9a734feaac1aa9a39c2e",
+    "classifier_sha256": "21ee29aadaebd7b4bbe119f8d0b662d480143b7088ae003f7ba9dd1cf0ff0ed3",
+    "leaf_sha256": "7ea3226506a702fbde373be148d82b43fae1bf3f6c538f01a1e45f1b754e609d",
+    "puddle_sha256": "bf54e47a3187a4146b5e2afcead5f68dfe9f2d2600e062363ea9b10ab2d41dc4"
+  },
+  "next_registered_route": "A3_Teacher_Distilled_MobileNetV3_Small_FPN",
+  "reuse_policy": "train discovery from scratch; reuse only same-QA training-complete product-eligible classifier/leaf/puddle checkpoints"
+}

@@ -145,3 +145,23 @@ def test_reused_checkpoint_must_be_marked_training_complete(
             tmp_path / "output",
             screening.torch.device("cpu"),
         )
+
+
+def test_selection_fingerprint_ignores_report_checkpoint_metadata_drift() -> None:
+    screening = _load_screening()
+    common = {
+        "selected_epoch": 5,
+        "selection_score": 0.97,
+        "tie_breaker_score": 0.05,
+        "validation_metrics": {"validation_macro_f1": 0.97},
+        "violated_constraints": [],
+    }
+    report_selection = {"selected": True, **common}
+    checkpoint_selection = {
+        **common,
+        "product_eligible": True,
+        "status": "constraint_feasible",
+    }
+    assert screening._selection_fingerprint(
+        report_selection
+    ) == screening._selection_fingerprint(checkpoint_selection)

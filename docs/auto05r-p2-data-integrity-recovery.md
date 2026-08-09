@@ -180,3 +180,13 @@ top-16；freeze 的 graph-external NMS 合同和产品 `maximum_candidates` 同�
 classifier 正式 ONNX 固定导出 `[16, 3, 192, 192] -> [16, 4]`，输入不足时由产品
 runtime padding，确保每帧候选只进行一次 I/O-binding 推理。freeze 会核对报告中的
 真实 ONNX input shape，禁止把 batch-1 图伪装成 batch-16 产品 manifest。
+
+A2 已在不可变 `151e0cc` 源码上完成正式运行。classifier、leaf、puddle 的任务级
+checkpoint 均 training-complete 且合格，area 的 in-domain/cross-world mIoU 为
+`0.9222/0.9205`；四个 ONNX parity 均通过且 custom ops 为零。但 discovery 的
+in-domain candidate recall 仅 `0.0758`、small-object recall 为 `0`，并连带使
+macro recall/F1 与 stress 门失败；cross-world area boundary F1 `0.6880` 也未过
+`0.70`。因此 A2 严格失败，紧凑证据为
+`artifacts/auto05r_p4_evidence/P4_A2_SMALLSCALE_FORMAL_FAILURE.json`。最后登记的 A3
+只从头训练 teacher-distilled discovery，并按同 QA/selection/checkpoint 哈希合同复用
+A2 的三个合格非 discovery 模型；仍不读取旧 D6/G5。

@@ -245,6 +245,20 @@ def _selection_product_eligible(training_report: dict) -> bool:
     return bool(selection.get("product_eligible", False))
 
 
+def _selection_fingerprint(selection: dict | None) -> dict:
+    selection = selection or {}
+    return {
+        key: selection.get(key)
+        for key in (
+            "selected_epoch",
+            "selection_score",
+            "tie_breaker_score",
+            "validation_metrics",
+            "violated_constraints",
+        )
+    }
+
+
 def _load_qualified_task_reuse_report(
     source_dir: Path,
     dataset_qa_sha256: str,
@@ -320,13 +334,20 @@ def _load_reused_model(
         raise RuntimeError(
             f"reused {task} checkpoint is not marked training_complete"
         )
-    if (
-        expected_selection is not None
-        and checkpoint.get("selection") != expected_selection
-    ):
-        raise RuntimeError(
-            f"reused {task} checkpoint selection disagrees with source report"
-        )
+    if expected_selection is not None:
+        checkpoint_selection = checkpoint.get("selection")
+        if _selection_fingerprint(checkpoint_selection) != _selection_fingerprint(
+            expected_selection
+        ):
+            raise RuntimeError(
+                f"reused {task} checkpoint selection disagrees with source report"
+            )
+        if not _selection_product_eligible(
+            {"selection": checkpoint_selection or {}}
+        ):
+            raise RuntimeError(
+                f"reused {task} checkpoint is not product eligible"
+            )
     state = checkpoint.get("state_dict")
     if not isinstance(state, dict) or not state:
         raise RuntimeError(f"reused {task} checkpoint has no selected state_dict")
