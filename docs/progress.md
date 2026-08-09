@@ -7,8 +7,22 @@
   negative-only FP/frame `0`；classifier macro F1 为 `0.9733`，paper
   precision/background specificity/hard-negative specificity 均为 `1.0`。
 - leaf 已按约束感知选择与早停自然结束，冻结最优 epoch 22：IoU `0.9790`、
-  boundary F1 `0.7851`、negative-area FP/frame `0`。puddle 仍在同一不可变
-  `3b03227` 源码上训练；完整 P4 报告落盘前不宣称通过。
+  boundary F1 `0.7851`、negative-area FP/frame `0`；puddle 最优 epoch 38：
+  IoU `0.9614`、boundary F1 `0.7365`、negative-area FP/frame `0`。四模型
+  checkpoint 均为 training-complete，四个 ONNX 的 task-specific parity、opset 17、
+  fixed input 与零 custom op 全部通过。
+- 完整 A1 正式 P4 仍严格失败：false candidate/min `14.4 > 2`、in-domain
+  macro recall `0.8837 < 0.9`、small-object recall `0.2889 < 0.7`、boundary F1
+  `0.6913 < 0.7`；其余固定门通过。失败时未冻结，也未创建/读取 G5。
+- development-only 失败分解显示，in-domain 的 32/45 个小目标漏检全部发生在
+  discovery，classifier 没有新增损失；cross-world 24/39 无合格 candidate，另有
+  3 个被 classifier 拒绝。阈值升到 `0.95` 才把 in-domain 误报降到 `1.3/min`，
+  但召回同步跌到 `0.6765`，不能用校准绕过。训练抽样还只保留 1540 个候选训练帧
+  中 102 个可用小目标的 22 个，现修复为先全量保留小目标帧再分层填充。
+- 修复后的 A2 将 MobileNetV3-FPN 的独立 objectness/quality 监督与按目标尺度唯一
+  P3/P4/P5 分配同时启用；area selector 在硬约束满足后最大化 IoU 与 boundary F1
+  的调和均值，避免仅追逐极小 IoU 差异。以上均只用 development roles，旧 D6/G5
+  继续不可读。
 - 新增正式 `MODEL_FREEZE.json` 生成器与冻结 G5 evaluator。冻结器必须同时
   验证 P4 真通过、G4 QA、四模型产品资格、checkpoint/ONNX/官方预训练权重
   SHA-256、固定 shape、opset 17、零 custom op、task-specific parity 与 evaluator

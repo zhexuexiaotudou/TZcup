@@ -179,6 +179,7 @@ def test_task_specific_selectors_use_p4_constraints() -> None:
     assert area.constraints[0].metric == "validation_iou"
     assert area.constraints[1].metric == "validation_negative_area_fp_per_frame"
     assert area.constraints[1].threshold == 0.05
+    assert area.objective.metric == "validation_area_balanced_score"
     assert discovery.tie_breaker.metric == "validation_loss"
     assert discovery.tie_breaker.maximize is False
 
@@ -241,11 +242,39 @@ def test_task_selectors_reject_metrics_below_primary_p4_quality_gates() -> None:
         {
             "validation_iou": 0.74,
             "validation_boundary_f1": 1.0,
+            "validation_area_balanced_score": 0.85,
             "validation_negative_area_fp_per_frame": 0.0,
             "validation_loss": 0.1,
         },
     )
     assert area_verdict["product_eligible"] is False
+
+
+def test_area_selector_prefers_balanced_iou_and_boundary_checkpoint() -> None:
+    area = area_selector()
+    iou_only_winner = area.consider(
+        1,
+        {
+            "validation_iou": 0.98,
+            "validation_boundary_f1": 0.75,
+            "validation_area_balanced_score": 0.85,
+            "validation_negative_area_fp_per_frame": 0.0,
+            "validation_loss": 0.1,
+        },
+    )
+    balanced_winner = area.consider(
+        2,
+        {
+            "validation_iou": 0.97,
+            "validation_boundary_f1": 0.80,
+            "validation_area_balanced_score": 0.88,
+            "validation_negative_area_fp_per_frame": 0.0,
+            "validation_loss": 0.2,
+        },
+    )
+    assert iou_only_winner["checkpoint_selected"] is True
+    assert balanced_winner["checkpoint_selected"] is True
+    assert area.best()["selected_epoch"] == 2
 
 
 def test_invalid_operator_rejected() -> None:

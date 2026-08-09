@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-05R-P4",
+  "route": "A1_FCOS_lite_ResNet18_FPN_bbox_size_supervision_repaired",
+  "decision": "P4_SCREENING_PASS=false",
+  "source_commit": "3b03227",
+  "source_report_sha256": "68088c8d98573a5fb9dd7e490f210dc0da63f78eefa7db7128aa0fbe8fa1f078",
+  "dataset_qa_sha256": "72baf192e70c59d369c284c8141dcc6e2c03350dca930212ae97cf2182d1ab01",
+  "teacher_checkpoint_sha256": "a5884ac9bfa4e89f2ae8a25f4cae0521e263dd951ef895fa1185f013b2f04ee5",
+  "formal_protocol": {
+    "train_world_holdout_frames": 460,
+    "cross_world_val_frames": 500,
+    "D1_D5_frames_each": 100,
+    "legacy_G4_D6_accessed": false,
+    "G5_SEALED_FINAL_accessed": false
+  },
+  "failed_fixed_gates": {
+    "in_domain_false_candidates_per_min_le": {
+      "value": 14.4,
+      "threshold": 2.0
+    },
+    "in_domain_macro_recall_ge": {
+      "value": 0.8837412587412588,
+      "threshold": 0.9
+    },
+    "small_object_recall_ge": {
+      "value": 0.28888888888888886,
+      "threshold": 0.7
+    },
+    "boundary_f1_ge": {
+      "value": 0.6913032552122185,
+      "threshold": 0.7
+    }
+  },
+  "model_artifacts": {
+    "discovery": {
+      "selected_epoch": 29,
+      "validation_recall": 0.9224137931034483,
+      "validation_ap50": 0.9207920792079208,
+      "validation_threshold": 0.8,
+      "onnx_sha256": "657602382aec6392b58855873ddc7ce2c90e10a23b7e07da12295820a87d4a18",
+      "onnx_task_specific_parity_pass": true
+    },
+    "classifier": {
+      "selected_epoch": 4,
+      "validation_macro_f1": 0.9733099209833188,
+      "validation_threshold": 0.75,
+      "onnx_sha256": "02a1dcd5a7463d6d90a7e5bba7a2eeaa45883a8e5816a8b27e2a174897dfdc58",
+      "onnx_task_specific_parity_pass": true
+    },
+    "leaf": {
+      "selected_epoch": 22,
+      "validation_iou": 0.97902123327516,
+      "validation_boundary_f1": 0.7850850783880823,
+      "validation_threshold": 0.8,
+      "onnx_sha256": "c483f7266f880a4b84f927d2d3095138978056d75542839ebeb141d96169e749",
+      "onnx_task_specific_parity_pass": true
+    },
+    "puddle": {
+      "selected_epoch": 38,
+      "validation_iou": 0.9614258311635989,
+      "validation_boundary_f1": 0.7364620938628159,
+      "validation_threshold": 0.8,
+      "onnx_sha256": "9f36cd981861209e44b05b8778c4e114b691c9a5a28d59ef481aa4aaef04f166",
+      "onnx_task_specific_parity_pass": true
+    }
+  },
+  "root_cause_diagnostic": {
+    "decision_role": "development_only_not_a_gate",
+    "sha256": "a6bb1b51ad61b64d4c539b562b6ae82b9b9aeb3eb4794c2fa035e0f573d04f03",
+    "in_domain": {
+      "small_truth": 45,
+      "small_candidate_iou50": 13,
+      "small_final_matched": 13,
+      "no_candidate_iou50": 32,
+      "classifier_rejected": 0,
+      "threshold_0_95_candidate_recall": 0.6764705882352942,
+      "threshold_0_95_false_candidates_per_min": 1.3043478260869565
+    },
+    "cross_world": {
+      "small_truth": 39,
+      "small_candidate_iou50": 15,
+      "small_final_matched": 12,
+      "no_candidate_iou50": 24,
+      "classifier_rejected": 3,
+      "threshold_0_95_candidate_recall": 0.4910025706940874,
+      "threshold_0_95_false_candidates_per_min": 3.6
+    },
+    "training_sample_audit": {
+      "eligible_frames": 1540,
+      "eligible_discrete_objects": 2321,
+      "eligible_small_objects": 102,
+      "selected_frames": 600,
+      "selected_discrete_objects": 675,
+      "selected_small_objects": 22,
+      "small_native_short_side_px_lt": 18.0
+    },
+    "conclusion": "A1 has no fixed-gate-feasible threshold; small-object loss is primarily discovery sampling/scale specialization, while dense false peaks require independent quality supervision"
+  },
+  "next_registered_route": {
+    "route": "A2_FCOS_lite_MobileNetV3_Small_FPN",
+    "changes": [
+      "retain all scarce small-object training frames before stratified fill",
+      "assign each target to exactly one P3/P4/P5 level by scale",
+      "independently supervise objectness and quality",
+      "select area checkpoints by balanced IoU and boundary F1 after hard constraints"
+    ],
+    "fixed_thresholds_lowered": false
+  }
+}

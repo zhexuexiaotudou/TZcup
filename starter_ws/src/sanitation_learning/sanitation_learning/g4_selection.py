@@ -435,9 +435,9 @@ def area_selector(
     iou_min: float = 0.75,
     negative_area_fp_per_frame_max: float = 0.05,
     boundary_f1_min: float = 0.70,
-    objective_metric: str = "validation_iou",
+    objective_metric: str = "validation_area_balanced_score",
 ) -> ConstraintAwareSelector:
-    """P4 area selection: negative-area FP and boundary first, then IoU."""
+    """P4 area selection: enforce gates, then balance IoU and boundary F1."""
     return ConstraintAwareSelector(
         [
             ConstraintSpec("validation_iou", "ge", iou_min),

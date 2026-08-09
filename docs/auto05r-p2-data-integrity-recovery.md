@@ -153,3 +153,17 @@ candidates/min 为 `3336.5/3562.8`。更重要的是，cross-world leaf/puddle I
 帧），却用全部 8 个世界生成 holdout；该证据不能称为 in-domain。现改为按
 world×positive/negative 分层确定性抽样 600 帧，并在报告中写出逐 world 计数；
 旧结果紧凑保存在 `P4_A1_PYRAMID_DIAGNOSTIC_FAILURE.json`。
+
+修复 bbox size/ltrb 直接监督后的完整 A1 正式运行已在不可变 `3b03227` 源码上结束。
+四模型均产生 training-complete checkpoint，四个 ONNX 均通过 task-specific parity、
+opset 17、fixed input 与零 custom op；但 P4 仍在 false candidate/min `14.4`、
+in-domain macro recall `0.8837`、small-object recall `0.2889`、boundary F1 `0.6913`
+四项严格失败。开发角色上的逐目标分解显示，in-domain 小目标 32/45 没有 IoU≥0.5
+的 candidate，分类器没有造成额外小目标损失；cross-world 则为 24/39 无 candidate、
+3/39 被分类器拒绝。阈值扫描证明误报与召回之间不存在满足固定门的 A1 工作点。
+
+进一步审计训练样本发现，1540 个 eligible 帧共含 102 个小目标，而通用 600 帧抽样
+仅保留 22 个。下一条已登记 A2 路线因此先保留全部小目标帧再分层填充，并为
+MobileNetV3-FPN 同时启用独立 quality 监督与按 `<=48 / <=80 / >80 px` 的唯一尺度
+分配。area checkpoint 在硬门满足后改用 IoU 与 boundary F1 的调和均值选择；这些
+修改不降低任何 P4 门槛，也不读取旧 D6/G5。

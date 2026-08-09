@@ -41,6 +41,7 @@ from sanitation_learning.g4_data import (  # noqa: E402
     DISCOVERY_MODEL_SIZE,
     DISCRETE_NAMES,
     build_classifier_samples,
+    discrete_boxes_for_frame,
     index_instance_records,
     load_classifier_crop,
     load_frame_rows,
@@ -307,6 +308,47 @@ def _holdout_rows(rows: list[dict], fraction: float = 0.2) -> list[dict]:
             < int(fraction * 100)
         )
     ]
+
+
+def _row_identity(row: dict) -> tuple[str, int, int]:
+    return (
+        str(row["world_id"]),
+        int(row["scene_seed"]),
+        int(row["frame_index"]),
+    )
+
+
+def _prioritized_discovery_row_sample(
+    rows: list[dict],
+    small_object_frame_keys: set[tuple[str, int, int]],
+    limit: int,
+    *,
+    seed: int,
+) -> list[dict]:
+    """Retain scarce small-object frames before filling the formal sample.
+
+    The previous generic frame sampler retained only 22 of 102 available
+    small objects.  P4 evaluates native short sides below 18 px explicitly,
+    so dropping most of their training frames made that fixed gate largely a
+    sampling accident.  This helper stays deterministic and uses the existing
+    stratified sampler for both the mandatory subset (if it alone is too
+    large) and the remaining capacity.
+    """
+    if limit <= 0 or limit >= len(rows):
+        return list(rows)
+    small_rows = [
+        row for row in rows if _row_identity(row) in small_object_frame_keys
+    ]
+    if len(small_rows) >= limit:
+        return stratified_row_sample(small_rows, limit, seed=seed)
+    selected_keys = {_row_identity(row) for row in small_rows}
+    remaining = [
+        row for row in rows if _row_identity(row) not in selected_keys
+    ]
+    filler = stratified_row_sample(
+        remaining, limit - len(small_rows), seed=seed
+    )
+    return small_rows + filler
 
 
 def _tag_rows_with_scene_metadata(
@@ -728,11 +770,22 @@ def _area_validation_metric_fn(rows, device, task: str):
         operating_point = select_area_threshold(predictions, task)
         metrics = operating_point["metrics"]
         key = "leaf_pile" if task == "leaf" else "puddle"
+        validation_iou = float(metrics["iou_by_class"][key])
+        validation_boundary_f1 = float(
+            metrics["boundary_f1_by_class"][key]
+        )
+        balanced_score = (
+            2.0
+            * validation_iou
+            * validation_boundary_f1
+            / max(validation_iou + validation_boundary_f1, 1e-12)
+        )
         return {
             "validation_loss": total / max(steps, 1),
-            "validation_iou": metrics["iou_by_class"][key],
+            "validation_iou": validation_iou,
             "validation_macro_miou": metrics["macro_miou"],
-            "validation_boundary_f1": metrics["boundary_f1_by_class"][key],
+            "validation_boundary_f1": validation_boundary_f1,
+            "validation_area_balanced_score": balanced_score,
             "validation_negative_area_fp_per_frame": metrics[
                 "negative_area_fp_per_frame"
             ],
@@ -962,8 +1015,22 @@ def main() -> int:
         if (str(row["world_id"]), int(row["scene_seed"]))
         not in holdout_keys
     ]
-    train_rows = stratified_row_sample(
-        eligible_train_rows, args.max_train_frames, seed=SEED + 8
+    small_object_frame_keys = {
+        _row_identity(row)
+        for row in eligible_train_rows
+        if any(
+            float(box.get("native_short_side_px", 0.0)) < 18.0
+            for box in discrete_boxes_for_frame(row, instances_by_key)
+        )
+    }
+    train_rows = _prioritized_discovery_row_sample(
+        eligible_train_rows,
+        small_object_frame_keys,
+        args.max_train_frames,
+        seed=SEED + 8,
+    )
+    selected_small_object_frames = sum(
+        _row_identity(row) in small_object_frame_keys for row in train_rows
     )
     val_rows = by_role["val"]
     shift_rows = {
@@ -1061,7 +1128,7 @@ def main() -> int:
             ),
             assign_pyramid_by_scale=(
                 args.discovery_architecture
-                == "teacher_distilled_mobilenetv3_fpn_a3"
+                != "resnet18_fpn_a1"
             ),
             teacher_detections_by_key=teacher_detections_by_key,
         )
@@ -1589,6 +1656,23 @@ def main() -> int:
             "train_world_holdout_frames": len(holdout),
             "val_frames": len(val_rows),
             "legacy_diagnostic_frames_read": 0,
+            "discovery_training_sample": {
+                "eligible_frames": len(eligible_train_rows),
+                "selected_frames": len(train_rows),
+                "available_small_object_frames": len(
+                    small_object_frame_keys
+                ),
+                "selected_small_object_frames": (
+                    selected_small_object_frames
+                ),
+                "small_object_native_short_side_px_lt": 18.0,
+                "sampling_policy": (
+                    "retain_small_object_frames_then_stratified_fill"
+                ),
+                "pyramid_scale_assignment": (
+                    args.discovery_architecture != "resnet18_fpn_a1"
+                ),
+            },
             "train_world_counts": {
                 world_id: sum(
                     1 for row in train_rows if str(row["world_id"]) == world_id
