@@ -131,6 +131,44 @@ def discovery_loss(
     objectness_variant: str = "L2_independent_ohem",
     objectness_negative_weight: float = 1.0,
 ) -> dict[str, torch.Tensor]:
+    if outputs["objectness_logits"].shape[1] == 3:
+        level_reports = []
+        for level, level_stride in enumerate((4, 8, 16)):
+            factor = level_stride // 4
+            level_output = {
+                "objectness_logits": outputs["objectness_logits"][
+                    :, level : level + 1, ::factor, ::factor
+                ],
+                "offset": outputs["offset"][
+                    :, level * 2 : level * 2 + 2, ::factor, ::factor
+                ],
+                "bbox_size": outputs["bbox_size"][
+                    :, level * 2 : level * 2 + 2, ::factor, ::factor
+                ],
+            }
+            level_target = {
+                name: targets[f"{name}_s{level_stride}"]
+                for name in ("heatmap", "offset", "size", "regression_mask")
+            }
+            level_reports.append(
+                discovery_loss(
+                    level_output,
+                    level_target,
+                    stride=level_stride,
+                    objectness_variant=objectness_variant,
+                    objectness_negative_weight=objectness_negative_weight,
+                )
+            )
+        weights = (1.0, 0.75, 0.5)
+        denominator = sum(weights)
+        return {
+            name: sum(
+                weight * report[name]
+                for weight, report in zip(weights, level_reports)
+            )
+            / denominator
+            for name in level_reports[0]
+        }
     objectness_audit = objectness_loss_audit(
         outputs["objectness_logits"],
         targets["heatmap"],
@@ -252,9 +290,31 @@ def area_loss(
     tversky = (intersection + 1.0) / (denominator + 1.0)
     tversky_loss = 1.0 - tversky.mean()
     boundary_logits = outputs["boundary_logits"]
-    boundary_loss = functional.binary_cross_entropy_with_logits(
-        boundary_logits, boundary_targets
+    boundary_positive = boundary_targets.sum(dim=(0, 2, 3))
+    boundary_pos_weight = torch.clamp(
+        (pixel_count - boundary_positive) / boundary_positive.clamp(min=1.0),
+        min=1.0,
+        max=40.0,
     )
+    boundary_binary = functional.binary_cross_entropy_with_logits(
+        boundary_logits,
+        boundary_targets,
+        pos_weight=boundary_pos_weight.view(1, -1, 1, 1),
+    )
+    boundary_probability = torch.sigmoid(boundary_logits)
+    boundary_intersection = (boundary_probability * boundary_targets).sum(
+        dim=(0, 2, 3)
+    )
+    boundary_dice = 1.0 - (
+        (2.0 * boundary_intersection + 1.0)
+        /
+        (
+            boundary_probability.sum(dim=(0, 2, 3))
+            + boundary_targets.sum(dim=(0, 2, 3))
+            + 1.0
+        )
+    ).mean()
+    boundary_loss = boundary_binary + boundary_dice
     negative_logits = logits[targets == 0].flatten()
     if negative_logits.numel() > 0:
         top_count = max(1, int(negative_logits.numel() * negative_ratio))
@@ -274,6 +334,8 @@ def area_loss(
         "binary": binary,
         "tversky": tversky_loss,
         "boundary": boundary_loss,
+        "boundary_binary": boundary_binary,
+        "boundary_dice": boundary_dice,
         "negative_penalty": negative_penalty,
     }
 

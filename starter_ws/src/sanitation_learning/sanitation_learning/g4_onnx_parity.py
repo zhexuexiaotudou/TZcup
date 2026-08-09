@@ -38,14 +38,24 @@ def _decode_discovery_candidates(
     from .auto04_contract import decode_centernet_outputs
 
     flat = _as_float_array(flat)
-    if flat.ndim != 4 or flat.shape[1] != 5:
-        raise ValueError("discovery flat output must be Nx5xHxW")
-    objectness = 1.0 / (1.0 + np.exp(-flat[:, 0:1]))
-    return decode_centernet_outputs(
+    if flat.ndim != 4 or flat.shape[1] not in (5, 15):
+        raise ValueError("discovery flat output must be Nx5xHxW or Nx15xHxW")
+    if flat.shape[1] == 5:
+        objectness = 1.0 / (1.0 + np.exp(-flat[:, 0:1]))
+        return decode_centernet_outputs(
+            objectness[0],
+            flat[:, 1:3][0],
+            flat[:, 3:5][0],
+            stride=stride,
+            score_threshold=score_threshold,
+        )
+    from .g4_evaluation import decode_discovery_outputs
+
+    objectness = 1.0 / (1.0 + np.exp(-flat[:, 0:3]))
+    return decode_discovery_outputs(
         objectness[0],
-        flat[:, 1:3][0],
-        flat[:, 3:5][0],
-        stride=stride,
+        flat[:, 3:9][0],
+        flat[:, 9:15][0],
         score_threshold=score_threshold,
     )
 
@@ -111,6 +121,7 @@ def discovery_parity(
         and max_det_score_error <= max_score_error
     )
     return {
+        "passed": passed,
         "decoded_agreement": passed,
         "decoded_candidate_count_agreement": count_agreement,
         "decoded_candidate_agreement": float(candidate_agreement),

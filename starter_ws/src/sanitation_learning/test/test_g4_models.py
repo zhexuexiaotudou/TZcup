@@ -18,7 +18,7 @@ def test_input_shape_constants_match_spec() -> None:
     assert tuple(g4_models.DISCOVERY_INPUT_SHAPE) == (1, 3, 480, 640)
     assert tuple(g4_models.CLASSIFIER_INPUT_SHAPE) == (1, 3, 192, 192)
     assert tuple(g4_models.SEGMENTER_INPUT_SHAPE) == (1, 10, 384, 512)
-    assert tuple(g4_models.DISCOVERY_STRIDES) == (4, 8)
+    assert tuple(g4_models.DISCOVERY_STRIDES) == (4, 8, 16)
     assert tuple(g4_models.CLASSIFIER_CLASSES) == (
         "background",
         "plastic_bottle",
@@ -48,9 +48,15 @@ def test_discovery_detector_output_shapes() -> None:
     torch = pytest.importorskip("torch")
     model = g4_models.build_g4_models()["discovery"]
     outputs = model(torch.zeros(1, 3, 480, 640))
-    assert outputs["objectness_logits"].shape == (1, 1, 120, 160)
-    assert outputs["offset"].shape == (1, 2, 120, 160)
-    assert outputs["bbox_size"].shape == (1, 2, 120, 160)
+    assert outputs["objectness_logits"].shape == (1, 3, 120, 160)
+    assert outputs["offset"].shape == (1, 6, 120, 160)
+    assert outputs["bbox_size"].shape == (1, 6, 120, 160)
+    assert model.architecture_role == "fcos_lite_resnet18_fpn_product_candidate"
+    assert model.pyramid_levels == ("P3", "P4", "P5")
+    assert model.pyramid_strides == (4, 8, 16)
+    assert model.quality_head_enabled is True
+    assert model.regression_parameterization == "ltrb"
+    assert model.graph_external_postprocess == ("top_k", "nms")
 
 
 def test_legacy_discovery_control_is_explicit_and_exclusive() -> None:
@@ -120,7 +126,7 @@ def test_model_summary_cards_not_trained() -> None:
         assert card["inputs"][0]["dtype"] == "float32"
         assert card["outputs"][0]["dtype"] == "float32"
     assert cards["classifier"]["outputs"][0]["shape"] == [1, 4]
-    assert cards["discovery"]["outputs"][0]["shape"] == [1, 1, 120, 160]
+    assert cards["discovery"]["outputs"][0]["shape"] == [1, 3, 120, 160]
     assert cards["leaf"]["outputs"][0]["shape"] == [1, 1, 384, 512]
 
 

@@ -98,6 +98,24 @@
   p50 为 32 px。该结果仅放行采集几何。正式 12 world / 300 scene / 3000 frame
   已按四个独立 ROS/Gazebo 中间件分片从空目录启动，合并前强制校验静态载荷哈希、
   world/scene 互斥和每场 10 帧 capture gate。
+- 正式四分片完成 300 场景/3000 帧。首次统一 QA 的 1070 个序列类别检查中有 14 个
+  只完整出现 1 帧（11 个场景，leaf 11 次）；保持“两帧”门不变，将最近车道从
+  1.2 m 后移至 1.8 m，定向重采 110 帧后全部通过。唯一 64-bit pHash 冲突经
+  SHA 与像素差确认是低纹理别名，QA 增加独立 RGB MAE/RMSE 二次确认。
+- `merged-v3` 最终 QA 的 12/300/3000、8/2/2 及全部质量门均为 true，错误为空，
+  exact/pHash 重复为 0，QA SHA-256 为
+  `72baf192e70c59d369c284c8141dcc6e2c03350dca930212ae97cf2182d1ab01`。
+  完整 val 离散目标最短边 p50=31 px，规则选择 1× teacher；teacher 正式 val
+  recall=0.955357、AP50=0.950495、precision=1.0、false candidate/min=0，数据可学门通过。
+- 新增 D1–D5 五类原生 Gazebo 单因素诊断，各 10 scene / 100 frame；五份独立 QA
+  的同步、CameraInfo、TF、语义/实例一致、pose reset、逐帧零额外目标和序列可见门
+  均为 100%，错误为空。3500 帧扩展 screening 视图保留正式 G4 QA SHA，不含 G5。
+- A1 FCOS-lite ResNet18-FPN 首轮发现 checkpoint tie/early-stop 漂移：零 recall/IoU
+  与零误报同时出现时错误冻结第 1 epoch；已修为硬约束、任务指标、validation loss
+  三级选择并补齐 discovery ONNX parity `passed` 字段。选择修复后的旧单网格融合
+  基线仍以 discovery recall=0、leaf IoU=0、puddle IoU≈0.22 严格失败；classifier
+  四项验证指标均为 1.0，ONNX/D1–D5 基础门通过。现从零运行真正独立 P3/P4/P5、
+  EMA warmup 和稀疏边界损失版本，不复用失败 checkpoint。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 

@@ -52,6 +52,9 @@ def test_discovery_dataset_does_not_read_unused_modalities(monkeypatch) -> None:
     image, targets = dataset[0]
     assert tuple(image.shape) == (3, 480, 640)
     assert tuple(targets["heatmap"].shape) == (1, 120, 160)
+    assert tuple(targets["heatmap_s4"].shape) == (1, 120, 160)
+    assert tuple(targets["heatmap_s8"].shape) == (1, 60, 80)
+    assert tuple(targets["heatmap_s16"].shape) == (1, 30, 40)
     assert calls == {"rgb": 1}
 
 

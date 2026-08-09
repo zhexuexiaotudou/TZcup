@@ -57,6 +57,28 @@ def phash(path: Path) -> str:
     return f"{int(''.join('1' if bit else '0' for bit in bits.ravel()), 2):016x}"
 
 
+def perceptual_near_duplicate(first: Path, second: Path) -> bool:
+    """Confirm a pHash collision with independent low-resolution pixels.
+
+    A 64-bit pHash alone aliases visually distinct low-texture ground frames.
+    Exact duplicates are checked separately by SHA-256; this confirmation keeps
+    near-duplicate detection sensitive to small rendering noise without treating
+    unrelated flat scenes as the same image.
+    """
+    first_image = cv2.imread(str(first), cv2.IMREAD_COLOR)
+    second_image = cv2.imread(str(second), cv2.IMREAD_COLOR)
+    if first_image is None or second_image is None:
+        return False
+    if first_image.shape != second_image.shape:
+        return False
+    first_small = cv2.resize(first_image, (64, 48), interpolation=cv2.INTER_AREA)
+    second_small = cv2.resize(second_image, (64, 48), interpolation=cv2.INTER_AREA)
+    difference = first_small.astype(np.float32) - second_small.astype(np.float32)
+    mean_absolute = float(np.mean(np.abs(difference)))
+    rmse = float(np.sqrt(np.mean(np.square(difference))))
+    return mean_absolute <= 4.0 and rmse <= 7.0
+
+
 def finite_pose(path: Path) -> bool:
     payload = json.loads(path.read_text(encoding="utf-8"))
     values = payload.get("world_to_base_xy", []) + payload.get(
@@ -126,7 +148,7 @@ def finalize_g4_dataset(
     split_trajectories = defaultdict(set)
     split_worlds = defaultdict(set)
     exact_seen: dict[str, dict] = {}
-    phash_seen: dict[str, dict] = {}
+    phash_seen: dict[str, list[dict]] = {}
     exact_cross, phash_cross = [], []
     semantic_error_pixels = 0
     instance_pixels = 0
@@ -384,15 +406,25 @@ def finalize_g4_dataset(
                 "split": split,
                 "world_id": world_id,
             }
-            for value, seen, found in (
-                (rgb_hash, exact_seen, exact_cross),
-                (perceptual_hash, phash_seen, phash_cross),
-            ):
-                previous = seen.get(value)
-                if previous and previous["split"] != split:
-                    found.append([previous, identity])
-                else:
-                    seen[value] = identity
+            previous = exact_seen.get(rgb_hash)
+            if previous and previous["split"] != split:
+                exact_cross.append([previous, identity])
+            else:
+                exact_seen[rgb_hash] = identity
+            perceptual_candidates = phash_seen.setdefault(perceptual_hash, [])
+            for candidate in perceptual_candidates:
+                if candidate["split"] != split and perceptual_near_duplicate(
+                    Path(candidate["path"]), rgb_path
+                ):
+                    phash_cross.append(
+                        [
+                            {key: candidate[key] for key in identity},
+                            identity,
+                        ]
+                    )
+            perceptual_candidates.append(
+                {**identity, "path": str(rgb_path)}
+            )
             frames.append(
                 {
                     **identity,

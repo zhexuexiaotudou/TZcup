@@ -40,7 +40,7 @@ PARKING_ORIGIN_X_M = -200.0
 PARKING_ORIGIN_Y_M = 200.0
 PARKING_Z_M = -5.0
 PARKING_SPACING_M = 0.3
-TARGET_DISTANCE_LANES_M = (1.20, 1.70, 2.20, 2.70, 3.20)
+TARGET_DISTANCE_LANES_M = (1.80, 2.10, 2.40, 2.80, 3.40)
 TARGET_LATERAL_LANES_M = (-0.80, 0.80, -0.60, 0.60, -1.05)
 
 
@@ -126,25 +126,40 @@ def randomize(
     scene_seed: int,
     scene_index: int,
     output: Path,
+    *,
+    diagnostic_role: str | None = None,
+    asset_source_split: str | None = None,
+    negative_source_split: str | None = None,
+    force_negative_only: bool = False,
 ) -> dict:
     """Build and persist one G4 scene plan (no capture is performed here)."""
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
     world = next(item for item in manifest["worlds"] if item["world_id"] == world_id)
-    split = world["split_eligibility"][0]
+    world_split = world["split_eligibility"][0]
+    split = diagnostic_role or world_split
+    asset_split = asset_source_split or world_split
+    negative_split = negative_source_split or asset_split
     rng = random.Random(20260805 + scene_seed * 7919)
     assets = manifest["assets"]
     negatives = manifest["negative_assets"]
-    split_assets = [item for item in assets if item["split_eligibility"] == [split]]
+    split_assets = [
+        item for item in assets if item["split_eligibility"] == [asset_split]
+    ]
     split_negatives = [
-        item for item in negatives if item["split_eligibility"] == [split]
+        item for item in negatives if item["split_eligibility"] == [negative_split]
     ]
     paper_like_negatives = [
         item
         for item in split_negatives
         if item.get("taxonomy") in PAPER_LIKE_TAXONOMIES
     ]
-    force_negative = negative_only_rule(split, scene_index)
-    force_paper_like = split in {"train", SEALED_FINAL_SPLIT} and paper_like_train_rule(
+    schedule_split = (
+        asset_split if asset_split in NEGATIVE_ONLY_HITS else "train"
+    )
+    force_negative = force_negative_only or negative_only_rule(
+        schedule_split, scene_index
+    )
+    force_paper_like = negative_split == "train" and paper_like_train_rule(
         scene_index
     )
     selected = []
@@ -179,6 +194,8 @@ def randomize(
             # AUTO-05R uses the V5-derived downward primary perception pose. The
             # vehicle advances about 2.25 m over ten frames, so targets are
             # staggered along the path and become visible at different times.
+            # The nearest lane starts at 1.8 m so even low leaf geometry crosses
+            # the downward camera footprint in at least two sampled frames.
             # Lateral separation avoids target-on-target masking and keeps all
             # physical target collision shapes outside the vehicle sweep.
             lane = index % len(TARGET_DISTANCE_LANES_M)
@@ -295,6 +312,7 @@ def randomize(
         "scene_index_in_world": scene_index,
         "world_id": world_id,
         "split": split,
+        "source_world_split": world_split,
         "world_sha256": world["sha256"],
         "trajectory_id": f"{world_id}_trajectory_{scene_seed:04d}",
         "objects": objects,
@@ -318,6 +336,14 @@ def randomize(
             "requested_only": False,
             "applied": False,
             "plan": None,
+        },
+        "factorized_diagnostic": {
+            "enabled": diagnostic_role is not None,
+            "role": diagnostic_role,
+            "asset_source_split": asset_split,
+            "negative_source_split": negative_split,
+            "force_negative_only": bool(force_negative_only),
+            "single_factor_capture": diagnostic_role is not None,
         },
         "lighting_executed_by_world": world["lighting_family"],
         "ground_material_executed_by_world": world["material_id"],
@@ -352,6 +378,10 @@ def main() -> None:
     parser.add_argument("--scene-seed", type=int, required=True)
     parser.add_argument("--scene-index", type=int, required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--diagnostic-role", choices=("D1", "D2", "D3", "D4", "D5"))
+    parser.add_argument("--asset-source-split", choices=("train", "val", "test"))
+    parser.add_argument("--negative-source-split", choices=("train", "val", "test"))
+    parser.add_argument("--force-negative-only", action="store_true")
     args = parser.parse_args()
     print(
         json.dumps(
@@ -361,6 +391,10 @@ def main() -> None:
                 args.scene_seed,
                 args.scene_index,
                 Path(args.output),
+                diagnostic_role=args.diagnostic_role,
+                asset_source_split=args.asset_source_split,
+                negative_source_split=args.negative_source_split,
+                force_negative_only=args.force_negative_only,
             ),
             indent=2,
         )

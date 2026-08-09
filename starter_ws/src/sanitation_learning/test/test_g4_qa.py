@@ -17,7 +17,11 @@ if str(_PACKAGE_DIR) not in sys.path:
 
 from sanitation_learning import g4_scene
 from sanitation_learning.g4_assets import write_g4_assets
-from sanitation_learning.g4_qa import finalize_g4_dataset
+from sanitation_learning.g4_qa import (
+    finalize_g4_dataset,
+    perceptual_near_duplicate,
+    phash,
+)
 from sanitation_learning.gazebo_g4 import write_g4_worlds
 
 
@@ -391,6 +395,18 @@ def test_contract_enforces_test_used_for_model_selection_false(
     )
     with pytest.raises(ValueError, match="test_used_for_model_selection"):
         finalize_g4_dataset(root, tmp_path / "qa", contract_path=str(broken))
+
+
+def test_phash_collision_requires_independent_pixel_confirmation(tmp_path):
+    dark = tmp_path / "dark.png"
+    light = tmp_path / "light.png"
+    near = tmp_path / "near.png"
+    cv2.imwrite(str(dark), np.full((480, 640, 3), 40, dtype=np.uint8))
+    cv2.imwrite(str(light), np.full((480, 640, 3), 100, dtype=np.uint8))
+    cv2.imwrite(str(near), np.full((480, 640, 3), 42, dtype=np.uint8))
+    assert phash(dark) == phash(light) == phash(near)
+    assert perceptual_near_duplicate(dark, light) is False
+    assert perceptual_near_duplicate(dark, near) is True
 
 
 def test_finalize_cli_strict_and_non_strict(good_dataset, tmp_path):

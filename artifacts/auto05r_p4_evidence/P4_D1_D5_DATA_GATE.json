@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-05R",
+  "evidence_id": "P4_D1_D5_NATIVE_GAZEBO_DATA_GATE",
+  "capture_profile": "auto05r_v5_retracted_primary_perception_v1",
+  "formal_g4_dataset_qa_sha256": "72baf192e70c59d369c284c8141dcc6e2c03350dca930212ae97cf2182d1ab01",
+  "formal_g4_frame_count": 3000,
+  "factorized_diagnostics": {
+    "D1": {
+      "definition": "seen world, unseen target assets",
+      "scenes": 10,
+      "frames": 100,
+      "positive_scenes": 6,
+      "qa_pass": true,
+      "qa_sha256": "d2b130e0f65837493a535771de7f704d9e9fee9d8d81f10bf1cef883e7e2e2aa"
+    },
+    "D2": {
+      "definition": "unseen world, seen target assets",
+      "scenes": 10,
+      "frames": 100,
+      "positive_scenes": 7,
+      "qa_pass": true,
+      "qa_sha256": "b4e4731dac386144f5349bf8b4efe1db0850ca68f02da8ea951ad80e297d8e8c"
+    },
+    "D3": {
+      "definition": "seen geometry, unseen material",
+      "scenes": 10,
+      "frames": 100,
+      "positive_scenes": 7,
+      "qa_pass": true,
+      "qa_sha256": "5bbc2d96b97cb9a2e4ec5b991bdb4ac1d9e0d6cb44cba05ce44ad2141b7ca982"
+    },
+    "D4": {
+      "definition": "seen assets, unseen lighting",
+      "scenes": 10,
+      "frames": 100,
+      "positive_scenes": 7,
+      "qa_pass": true,
+      "qa_sha256": "365b0612963e68ca28fa7b375978b553ede1856c951cc604b0e6eb712781a90f"
+    },
+    "D5": {
+      "definition": "negative-only, unseen negative assets",
+      "scenes": 10,
+      "frames": 100,
+      "positive_scenes": 0,
+      "qa_pass": true,
+      "qa_sha256": "1cc6a886d14924107907efd915bb487ef6625b728f50386a1164d84ea6c61a99"
+    }
+  },
+  "essential_qa_gates": {
+    "annotation_completeness_100_percent": true,
+    "four_sensor_sync_100_percent": true,
+    "camera_info_valid_100_percent": true,
+    "tf_valid_100_percent": true,
+    "semantic_instance_error_zero": true,
+    "scene_pose_reset_contract_100_percent": true,
+    "manifest_pixel_target_consistency_100_percent": true,
+    "declared_target_sequence_visibility_100_percent": true
+  },
+  "factorized_qa_errors": 0,
+  "development_screening_view": {
+    "total_frames": 3500,
+    "train": 2000,
+    "val": 500,
+    "legacy_G4_D6_diagnostic": 500,
+    "D1": 100,
+    "D2": 100,
+    "D3": 100,
+    "D4": 100,
+    "D5": 100,
+    "build_report_sha256": "018d9ae254bee271e49e9ab33ca6fcabb3b2963f702ded1a40f8051fbf267f17",
+    "legacy_diagnostic_read_by_screening": false,
+    "G5_SEALED_FINAL_included": false
+  },
+  "D1_D5_data_reports_complete": true,
+  "P4_SCREENING_PASS": false,
+  "claim_boundary": "This artifact proves native diagnostic data integrity only; model metrics are gated separately."
+}

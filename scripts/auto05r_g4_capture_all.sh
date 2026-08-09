@@ -19,6 +19,15 @@ CAMERA_X="${AUTO05R_CAMERA_X:-0.36}"
 CAMERA_Y="${AUTO05R_CAMERA_Y:-0.0}"
 CAMERA_Z="${AUTO05R_CAMERA_Z:-0.66}"
 CAMERA_PITCH_RAD="${AUTO05R_CAMERA_PITCH_RAD:-0.872664626}"
+ONLY_SCENES="${AUTO05R_ONLY_SCENES:-}"
+FORCE_SCENES="${AUTO05R_FORCE_SCENES:-}"
+SKIP_WORLD_GENERATION="${AUTO05R_SKIP_WORLD_GENERATION:-0}"
+WORLD_MANIFEST_OVERRIDE="${AUTO05R_WORLD_MANIFEST:-}"
+SCENE_SEED_OFFSET="${AUTO05R_SCENE_SEED_OFFSET:-0}"
+DIAGNOSTIC_ROLE="${AUTO05R_DIAGNOSTIC_ROLE:-}"
+ASSET_SOURCE_SPLIT="${AUTO05R_ASSET_SOURCE_SPLIT:-}"
+NEGATIVE_SOURCE_SPLIT="${AUTO05R_NEGATIVE_SOURCE_SPLIT:-}"
+FORCE_NEGATIVE_ONLY="${AUTO05R_FORCE_NEGATIVE_ONLY:-0}"
 mkdir -p "${DATA_ROOT}/logs" "${DATA_ROOT}/scenes" "${RUNTIME_WS}"
 
 colcon --log-base "${RUNTIME_WS}/log" build \
@@ -39,17 +48,23 @@ set +u
 source "${RUNTIME_WS}/install/setup.bash"
 set -u
 
-ros2 run sanitation_learning auto05r_generate_g4_worlds \
-  --registry "${REPO}/starter_ws/src/sanitation_learning/config/g4_asset_registry.yaml" \
-  --assets-dir "${DATA_ROOT}/models" \
-  --xacro "${REPO}/starter_ws/src/sanitation_vehicle_description/urdf/sanitation_vehicle.urdf.xacro" \
-  --output-dir "${DATA_ROOT}/worlds" \
-  --camera-x "${CAMERA_X}" --camera-y "${CAMERA_Y}" \
-  --camera-z "${CAMERA_Z}" --camera-pitch-rad "${CAMERA_PITCH_RAD}" \
-  --camera-profile-id "${CAMERA_PROFILE_ID}" \
-  >"${DATA_ROOT}/g4_world_generation.json"
+if [[ "${SKIP_WORLD_GENERATION}" != "1" ]]; then
+  ros2 run sanitation_learning auto05r_generate_g4_worlds \
+    --registry "${REPO}/starter_ws/src/sanitation_learning/config/g4_asset_registry.yaml" \
+    --assets-dir "${DATA_ROOT}/models" \
+    --xacro "${REPO}/starter_ws/src/sanitation_vehicle_description/urdf/sanitation_vehicle.urdf.xacro" \
+    --output-dir "${DATA_ROOT}/worlds" \
+    --camera-x "${CAMERA_X}" --camera-y "${CAMERA_Y}" \
+    --camera-z "${CAMERA_Z}" --camera-pitch-rad "${CAMERA_PITCH_RAD}" \
+    --camera-profile-id "${CAMERA_PROFILE_ID}" \
+    >"${DATA_ROOT}/g4_world_generation.json"
+fi
 
-WORLD_MANIFEST="${DATA_ROOT}/worlds/g4_world_manifest.json"
+WORLD_MANIFEST="${WORLD_MANIFEST_OVERRIDE:-${DATA_ROOT}/worlds/g4_world_manifest.json}"
+if [[ ! -f "${WORLD_MANIFEST}" ]]; then
+  echo "AUTO-05R world manifest is missing: ${WORLD_MANIFEST}" >&2
+  exit 2
+fi
 mapfile -t WORLD_IDS < <(
   python3 -c 'import json,sys; m=json.load(open(sys.argv[1])); print("\n".join(w["world_id"] for w in m["worlds"]))' \
     "${WORLD_MANIFEST}"
@@ -135,10 +150,20 @@ capture_world() {
 
   local index seed scene out
   for index in $(seq 0 $((SCENES_PER_WORLD - 1))); do
-    seed=$((seed_start + index))
+    seed=$((SCENE_SEED_OFFSET + seed_start + index))
     scene=$(printf 'scene_%04d' "${seed}")
     out="${DATA_ROOT}/scenes/${scene}"
+    if [[ -n "${ONLY_SCENES}" && ",${ONLY_SCENES}," != *",${scene},"* ]]; then
+      echo "filter-skip ${world_id} ${scene}"
+      continue
+    fi
+    local force_recap=false
+    if [[ -n "${FORCE_SCENES}" && ",${FORCE_SCENES}," == *",${scene},"* ]]; then
+      force_recap=true
+      echo "force-recapture ${world_id} ${scene}"
+    fi
     if [[ -f "${out}/capture_report.json" ]] &&
+       [[ "${force_recap}" != true ]] &&
        python3 -c 'import json,sys; raise SystemExit(0 if json.load(open(sys.argv[1]))["capture_pass"] else 1)' "${out}/capture_report.json"; then
       echo "resume-skip ${world_id} ${scene}"
       continue
@@ -157,13 +182,27 @@ capture_world() {
     local capture_pass=false
     local capture_attempt
     for capture_attempt in 1 2 3; do
+      randomize_args=(
+        --manifest "${WORLD_MANIFEST}"
+        --world-id "${world_id}"
+        --scene-seed "${seed}"
+        --scene-index "${index}"
+        --output "${out}/scene_manifest.json"
+      )
+      if [[ -n "${DIAGNOSTIC_ROLE}" ]]; then
+        randomize_args+=(--diagnostic-role "${DIAGNOSTIC_ROLE}")
+      fi
+      if [[ -n "${ASSET_SOURCE_SPLIT}" ]]; then
+        randomize_args+=(--asset-source-split "${ASSET_SOURCE_SPLIT}")
+      fi
+      if [[ -n "${NEGATIVE_SOURCE_SPLIT}" ]]; then
+        randomize_args+=(--negative-source-split "${NEGATIVE_SOURCE_SPLIT}")
+      fi
+      if [[ "${FORCE_NEGATIVE_ONLY}" == "1" ]]; then
+        randomize_args+=(--force-negative-only)
+      fi
       ros2 run sanitation_learning auto05r_randomize_g4_scene \
-        --manifest "${WORLD_MANIFEST}" \
-        --world-id "${world_id}" \
-        --scene-seed "${seed}" \
-        --scene-index "${index}" \
-        --output "${out}/scene_manifest.json" \
-        >"${out}/randomize.log"
+        "${randomize_args[@]}" >"${out}/randomize.log"
       sleep 2
       if ros2 run sanitation_learning stage5br3_capture_scene \
         --scene-manifest "${out}/scene_manifest.json" \

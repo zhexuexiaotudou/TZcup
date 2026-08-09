@@ -1,22 +1,22 @@
 {
-  "G4_dataset_gate_pass": false,
+  "G4_dataset_gate_pass": true,
   "evidence_id": "auto05r_g4_data_gate",
   "files": {
     "asset_registry_summary.json": {
-      "bytes": 869,
-      "sha256": "bca6f6fb027e942713d6cf83506e5a2224670eb40d9a8042bcb24fa39fcadef1"
+      "bytes": 867,
+      "sha256": "f6b3639cca861ab0c36161448ce6dfecb047f9d7db9b5569f0f09c9aebeefaaf"
     },
     "g4_dataset_qa.json": {
-      "bytes": 6155,
-      "sha256": "f6a0f029bf871abdde3162b8688d06da27fa4337c08b967dbe2a9ec7dc2c06a5"
+      "bytes": 2983,
+      "sha256": "7384d8e6d6a195c550c09161dd846637d17a28fd5db4d63b41012c6b4854a292"
     },
     "leakage_report.json": {
       "bytes": 291,
       "sha256": "22345049140e69ca2ab56870711375d4f4d71ff67272a77230a969fe89f3af90"
     },
     "raw_external_evidence_index.json": {
-      "bytes": 1190,
-      "sha256": "45647031d21870774b044a89c04cada3249412056721906fa4c5092878389f67"
+      "bytes": 1188,
+      "sha256": "766a350001b0868c1d37dda665e87b66e98c75ae7a1e05da1208cd2086e0cd6f"
     },
     "split_manifest.json": {
       "bytes": 1683,
@@ -24,7 +24,7 @@
     },
     "world_manifest_summary.json": {
       "bytes": 2242,
-      "sha256": "43d6897601ac4a6deef694534c222e913cd7bd9fe270bb049f9a05144f9eda11"
+      "sha256": "861e4531c11b1608f717327c724459626152cf0b74d0f2ef75328745be6b8078"
     }
   },
   "generation": {
@@ -33,24 +33,24 @@
     "source_sha256_index": {
       "files": [
         {
-          "bytes": 177801,
+          "bytes": 178059,
           "relative_name": "g4_world_manifest.json",
-          "sha256": "69e51944326a7305fd913ed65fa40c88fe656aaac2576f3669a0a3d16ab0a77b"
+          "sha256": "dc7c145e14ac62ba62d7e1542990959a5f6adde50dcdf5095cf8043cbc906670"
         },
         {
-          "bytes": 694408,
+          "bytes": 5854,
           "relative_name": "g4_dataset_qa.json",
-          "sha256": "3fe950473267210052f662dcd4919433ce1f99dcefbaf49a5ebed80e5ce1f713"
+          "sha256": "72baf192e70c59d369c284c8141dcc6e2c03350dca930212ae97cf2182d1ab01"
         },
         {
-          "bytes": 1523998,
+          "bytes": 1523769,
           "relative_name": "g4_frame_manifest.jsonl",
-          "sha256": "2a50a71a32f928c53fdf2475349f2cd66f0d8e21802d5c4cf52a7cf0d2fc27da"
+          "sha256": "73b012278198dbc8695f75bc260e28a5c8fdeeb93de22ca1ba997f642154a9b9"
         },
         {
-          "bytes": 3033234,
+          "bytes": 2062947,
           "relative_name": "g4_instance_records.jsonl",
-          "sha256": "2e03c55766b0be6eb06fe3f70df3e3eadecd7391ba4a78b1444b0f139c333cc5"
+          "sha256": "329d93c96971751e4c6e6a054d9d945d5badc4120b1c1fbb211892b9ee5e778c"
         },
         {
           "bytes": 291,

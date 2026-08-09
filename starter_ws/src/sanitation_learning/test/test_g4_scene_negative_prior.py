@@ -161,7 +161,7 @@ def test_negative_only_prior_and_scene_contract(
             assert positive == []
         else:
             assert len(positive) == 5
-            assert all(1.16 <= item["distance_m"] <= 3.24 for item in positive)
+            assert all(1.76 <= item["distance_m"] <= 3.44 for item in positive)
             assert {item["xyz_m"][1] for item in positive} == {
                 -1.05,
                 -0.8,
@@ -197,6 +197,53 @@ def test_negative_only_rule_is_frozen():
     assert sum(negative_only_rule("train", i) for i in range(25)) == 7
     assert sum(negative_only_rule("val", i) for i in range(25)) == 8
     assert sum(negative_only_rule("test", i) for i in range(25)) == 7
+
+
+def test_factorized_diagnostic_uses_explicit_asset_sources(
+    monkeypatch, tmp_path, g4_world_manifest
+):
+    _, manifest_path = g4_world_manifest
+    monkeypatch.setattr(
+        "sanitation_learning.g4_scene.set_poses", lambda *_args: None
+    )
+    report = g4_scene.randomize(
+        manifest_path,
+        "world_g4_01_asphalt_campus",
+        1000,
+        2,
+        tmp_path / "d1.json",
+        diagnostic_role="D1",
+        asset_source_split="val",
+        negative_source_split="train",
+    )
+    assert report["split"] == "D1"
+    assert report["source_world_split"] == "train"
+    assert report["factorized_diagnostic"] == {
+        "enabled": True,
+        "role": "D1",
+        "asset_source_split": "val",
+        "negative_source_split": "train",
+        "force_negative_only": False,
+        "single_factor_capture": True,
+    }
+    positive = [item for item in report["objects"] if item["semantic_label"]]
+    assert positive
+    assert all(item["split_eligibility"] == ["val"] for item in positive)
+
+    negative = g4_scene.randomize(
+        manifest_path,
+        "world_g4_01_asphalt_campus",
+        1400,
+        1,
+        tmp_path / "d5.json",
+        diagnostic_role="D5",
+        asset_source_split="train",
+        negative_source_split="val",
+        force_negative_only=True,
+    )
+    assert negative["negative_only"] is True
+    assert all(not item["semantic_label"] for item in negative["objects"])
+    assert all(item["split_eligibility"] == ["val"] for item in negative["objects"])
 
 
 def test_g4_contract_frozen_contract_matches_generator():
@@ -242,6 +289,10 @@ def test_g4_capture_script_uses_g4_modules_and_resume_skip():
     assert "GZ_SIM_RESOURCE_PATH" in script
     assert "AUTO05R_MAX_WORLDS" in script
     assert "AUTO05R_START_WORLD_INDEX" in script
+    assert "AUTO05R_ONLY_SCENES" in script
+    assert "AUTO05R_FORCE_SCENES" in script
+    assert "AUTO05R_DIAGNOSTIC_ROLE" in script
+    assert "AUTO05R_SCENE_SEED_OFFSET" in script
     assert "START_WORLD_INDEX + local_world_index" in script
     assert "/opt/ros/jazzy/lib/ros_gz_bridge/parameter_bridge" in script
     assert "auto05r_v5_retracted_primary_perception_v1" in script

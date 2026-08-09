@@ -2,9 +2,10 @@
 
 Four model families are defined here:
 
-- ``DiscoveryDetector``: class-agnostic ``litter_candidate`` detector that
-  emits an objectness heatmap, centre offset and bbox regression from
-  stride-4/8 FPN-style features (fixed input ``[1, 3, 512, 384]``).
+- ``DiscoveryDetector``: class-agnostic FCOS-lite ``litter_candidate``
+  detector with a pretrained ResNet18 P3/P4/P5 pyramid, objectness, quality
+  and internal ltrb regression. It preserves P3/P4/P5 as separate fixed
+  output channels while top-K and cross-level NMS remain outside ONNX.
 - ``CandidateCropClassifier``: four-class crop classifier
   ``background / plastic_bottle / metal_can / paper_litter``
   (input ``[1, 3, 192, 192]``).
@@ -42,7 +43,7 @@ DISCOVERY_INPUT_SHAPE = (1, 3, 480, 640)
 CLASSIFIER_INPUT_SHAPE = (1, 3, 192, 192)
 SEGMENTER_INPUT_SHAPE = (1, 10, 384, 512)
 CLASSIFIER_CLASSES = ("background", "plastic_bottle", "metal_can", "paper_litter")
-DISCOVERY_STRIDES = (4, 8)
+DISCOVERY_STRIDES = (4, 8, 16)
 SEGMENTER_TASKS = ("leaf", "puddle")
 DEFAULT_ONNX_OPSET = 17
 
@@ -152,7 +153,7 @@ def _model_classes() -> dict[str, type]:
             return {"p4": p4, "p5": p5}
 
     class _DiscoveryResNetBackbone(nn.Module):
-        """ResNet18 stride-4/8 features for the discovery detector."""
+        """Pretrained ResNet18 FPN with genuine stride-4/8/16 levels."""
 
         def __init__(self, base: int = 48, from_scratch_control: bool = False):
             super().__init__()
@@ -186,26 +187,33 @@ def _model_classes() -> dict[str, type]:
             self.pool = resnet.maxpool
             self.layer1 = resnet.layer1
             self.layer2 = resnet.layer2
-            self.reduce4 = _ConvBnReLU(64, base * 2, 1, 1, 0)
-            self.reduce5 = _ConvBnReLU(128, base * 2, 1, 1, 0)
-            self.fuse = _ConvBnReLU(base * 2, base * 2, 3, 1, 1)
+            self.layer3 = resnet.layer3
+            channels = base * 2
+            self.lateral3 = nn.Conv2d(64, channels, 1)
+            self.lateral4 = nn.Conv2d(128, channels, 1)
+            self.lateral5 = nn.Conv2d(256, channels, 1)
+            self.smooth3 = _ConvBnReLU(channels, channels, 3, 1, 1)
+            self.smooth4 = _ConvBnReLU(channels, channels, 3, 1, 1)
+            self.smooth5 = _ConvBnReLU(channels, channels, 3, 1, 1)
 
         def forward(self, image):
             x = self.stem(image)
             x = self.pool(x)
-            c4 = self.layer1(x)
-            c5 = self.layer2(c4)
-            p4 = self.reduce4(c4)
-            p5 = self.reduce5(c5)
-            p4 = self.fuse(
-                p4
-                + functional.interpolate(
-                    p5,
-                    size=p4.shape[-2:],
-                    mode="nearest",
-                )
+            c3 = self.layer1(x)
+            c4 = self.layer2(c3)
+            c5 = self.layer3(c4)
+            p5 = self.lateral5(c5)
+            p4 = self.lateral4(c4) + functional.interpolate(
+                p5, size=c4.shape[-2:], mode="nearest"
             )
-            return {"p4": p4, "p5": p5}
+            p3 = self.lateral3(c3) + functional.interpolate(
+                p4, size=c3.shape[-2:], mode="nearest"
+            )
+            return {
+                "p3": self.smooth3(p3),
+                "p4": self.smooth4(p4),
+                "p5": self.smooth5(p5),
+            }
 
     class DiscoveryDetector(_FlatOutputMixin, nn.Module):
         """Class-agnostic litter-candidate detector (objectness/offset/bbox)."""
@@ -215,7 +223,7 @@ def _model_classes() -> dict[str, type]:
         input_shape = DISCOVERY_INPUT_SHAPE
         input_names = ("image_rgb",)
         output_names = ("objectness_logits", "offset", "bbox_size")
-        output_channels = {"objectness_logits": 1, "offset": 2, "bbox_size": 2}
+        output_channels = {"objectness_logits": 3, "offset": 6, "bbox_size": 6}
 
         def __init__(
             self,
@@ -254,25 +262,65 @@ def _model_classes() -> dict[str, type]:
             self.architecture_role = (
                 "legacy_small_fpn_control"
                 if legacy_fpn_control
-                else "production_candidate"
+                else "fcos_lite_resnet18_fpn_product_candidate"
             )
             self.head = nn.Sequential(
                 _ConvBnReLU(base * 2, base * 2, 3, 1, 1)
             )
             self.objectness = nn.Conv2d(base * 2, 1, 3, padding=1)
-            self.offset = nn.Conv2d(base * 2, 2, 3, padding=1)
-            self.bbox_size = nn.Sequential(
-                nn.Conv2d(base * 2, 2, 3, padding=1), nn.Softplus()
-            )
+            if legacy_fpn_control:
+                self.offset = nn.Conv2d(base * 2, 2, 3, padding=1)
+                self.bbox_size = nn.Sequential(
+                    nn.Conv2d(base * 2, 2, 3, padding=1), nn.Softplus()
+                )
+            else:
+                self.quality = nn.Conv2d(base * 2, 1, 3, padding=1)
+                self.ltrb = nn.Sequential(
+                    nn.Conv2d(base * 2, 4, 3, padding=1), nn.Softplus()
+                )
+                self.pyramid_levels = ("P3", "P4", "P5")
+                self.pyramid_strides = DISCOVERY_STRIDES
+                self.quality_head_enabled = True
+                self.regression_parameterization = "ltrb"
+                self.graph_external_postprocess = ("top_k", "nms")
             nn.init.constant_(self.objectness.bias, -3.0)
 
         def forward(self, image):
             features = self.backbone(image)
-            head = self.head(features["p4"])
+            if self.architecture_role == "legacy_small_fpn_control":
+                head = self.head(features["p4"])
+                return {
+                    "objectness_logits": self.objectness(head),
+                    "offset": self.offset(head),
+                    "bbox_size": self.bbox_size(head),
+                }
+            target_size = features["p3"].shape[-2:]
+            level_logits = []
+            level_offsets = []
+            level_sizes = []
+            for name, stride in zip(("p3", "p4", "p5"), DISCOVERY_STRIDES):
+                head = self.head(features[name])
+                combined_logits = self.objectness(head) + self.quality(head)
+                left, top, right, bottom = self.ltrb(head).unbind(dim=1)
+                offset = torch.stack(
+                    ((right - left) * 0.5, (bottom - top) * 0.5), dim=1
+                )
+                size = torch.stack((left + right, top + bottom), dim=1)
+                level_logits.append(
+                    functional.interpolate(
+                        combined_logits, size=target_size, mode="nearest"
+                    )
+                )
+                level_offsets.append(
+                    functional.interpolate(offset, size=target_size, mode="nearest")
+                )
+                level_sizes.append(
+                    functional.interpolate(size, size=target_size, mode="nearest")
+                )
             return {
-                "objectness_logits": self.objectness(head),
-                "offset": self.offset(head),
-                "bbox_size": self.bbox_size(head),
+                "objectness_logits": torch.cat(level_logits, dim=1),
+                "offset": torch.cat(level_offsets, dim=1),
+                "bbox_size": torch.cat(level_sizes, dim=1),
             }
 
     class CandidateCropClassifier(_FlatOutputMixin, nn.Module):

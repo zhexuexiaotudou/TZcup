@@ -7,7 +7,16 @@ param(
     [int]$MaxWorlds = 0,
     [int]$StartWorldIndex = 0,
     [int]$RosDomainId = -1,
-    [string]$GzPartition = ""
+    [string]$GzPartition = "",
+    [ValidateSet("", "D1", "D2", "D3", "D4", "D5")]
+    [string]$DiagnosticRole = "",
+    [ValidateSet("", "train", "val", "test")]
+    [string]$AssetSourceSplit = "",
+    [ValidateSet("", "train", "val", "test")]
+    [string]$NegativeSourceSplit = "",
+    [int]$SceneSeedOffset = 0,
+    [switch]$SkipWorldGeneration,
+    [switch]$ForceNegativeOnly
 )
 
 $ErrorActionPreference = "Stop"
@@ -46,6 +55,12 @@ docker run --rm --gpus all --shm-size 2g `
     -e ROS_DOMAIN_ID=$RosDomainId `
     -e GZ_PARTITION=$GzPartition `
     -e IGN_PARTITION=$GzPartition `
+    -e AUTO05R_DIAGNOSTIC_ROLE=$DiagnosticRole `
+    -e AUTO05R_ASSET_SOURCE_SPLIT=$AssetSourceSplit `
+    -e AUTO05R_NEGATIVE_SOURCE_SPLIT=$NegativeSourceSplit `
+    -e AUTO05R_SCENE_SEED_OFFSET=$SceneSeedOffset `
+    -e AUTO05R_SKIP_WORLD_GENERATION=$([int]$SkipWorldGeneration.IsPresent) `
+    -e AUTO05R_FORCE_NEGATIVE_ONLY=$([int]$ForceNegativeOnly.IsPresent) `
     @volumeArgs `
     $Image `
     bash /repo/scripts/auto05r_g4_capture_all.sh

@@ -27,5 +27,5 @@ capture_contract:
   declared_target_minimum_full_visibility_frames_per_sequence: 2
   frames_per_sequence: 10
   ground_truth_training_only: true
-  target_initial_distance_lanes_m: [1.2, 1.7, 2.2, 2.7, 3.2]
+  target_initial_distance_lanes_m: [1.8, 2.1, 2.4, 2.8, 3.4]
   target_lateral_lanes_m: [-0.8, 0.8, -0.6, 0.6, -1.05]

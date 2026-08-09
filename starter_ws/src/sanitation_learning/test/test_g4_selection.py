@@ -173,6 +173,44 @@ def test_task_specific_selectors_use_p4_constraints() -> None:
     area = area_selector()
     assert area.constraints[0].metric == "validation_negative_area_fp_per_frame"
     assert area.constraints[0].threshold == 0.05
+    assert discovery.tie_breaker.metric == "validation_loss"
+    assert discovery.tie_breaker.maximize is False
+
+
+def test_task_selector_uses_validation_loss_only_to_break_objective_tie() -> None:
+    selector = discovery_selector()
+    first = selector.consider(
+        1,
+        {
+            "validation_all_gt_candidate_recall": 0.0,
+            "validation_negative_only_fp_per_frame": 0.0,
+            "validation_false_candidates_per_min": 0.0,
+            "validation_loss": 3.0,
+        },
+    )
+    second = selector.consider(
+        2,
+        {
+            "validation_all_gt_candidate_recall": 0.0,
+            "validation_negative_only_fp_per_frame": 0.0,
+            "validation_false_candidates_per_min": 0.0,
+            "validation_loss": 2.0,
+        },
+    )
+    assert first["checkpoint_selected"] is True
+    assert second["checkpoint_selected"] is True
+    assert selector.best()["selected_epoch"] == 2
+    better_recall_wins_even_with_worse_loss = selector.consider(
+        3,
+        {
+            "validation_all_gt_candidate_recall": 0.5,
+            "validation_negative_only_fp_per_frame": 0.0,
+            "validation_false_candidates_per_min": 0.0,
+            "validation_loss": 9.0,
+        },
+    )
+    assert better_recall_wins_even_with_worse_loss["checkpoint_selected"] is True
+    assert selector.best()["selected_epoch"] == 3
 
 
 def test_invalid_operator_rejected() -> None:

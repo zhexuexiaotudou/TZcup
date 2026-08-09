@@ -22,6 +22,7 @@ import json
 from pathlib import Path
 import platform
 import random
+import shutil
 import sys
 import time
 
@@ -61,6 +62,7 @@ from sanitation_learning.g4_gates import (  # noqa: E402
     load_policy,
 )
 from sanitation_learning.g4_models import (  # noqa: E402
+    build_g4_model,
     export_fixed_onnx,
     torch_onnx_parity,
 )
@@ -79,6 +81,7 @@ from sanitation_learning.g4_split_policy import (  # noqa: E402
     partition_rows,
     screening_decision,
 )
+from sanitation_learning.g4_teacher import require_teacher_dataset_gate  # noqa: E402
 from sanitation_learning.g4_train import (  # noqa: E402
     train_area,
     train_classifier,
@@ -99,6 +102,36 @@ P4_POLICY = (
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _load_reused_model(
+    task: str,
+    source_dir: Path,
+    output_dir: Path,
+    device: torch.device,
+) -> tuple[torch.nn.Module, dict]:
+    source = source_dir / f"{task}.pt"
+    if not source.is_file():
+        raise FileNotFoundError(f"reused {task} checkpoint is missing: {source}")
+    checkpoint = torch.load(source, map_location=device, weights_only=False)
+    state = checkpoint.get("state_dict")
+    if not isinstance(state, dict) or not state:
+        raise RuntimeError(f"reused {task} checkpoint has no selected state_dict")
+    model = build_g4_model(task).to(device)
+    model.load_state_dict(state, strict=True)
+    model.eval()
+    target = output_dir / source.name
+    shutil.copy2(source, target)
+    return model, {
+        "reused_frozen_checkpoint": True,
+        "source": str(source),
+        "source_sha256": sha256(source),
+        "copied_checkpoint_sha256": sha256(target),
+        "best_epoch": checkpoint.get("best_epoch"),
+        "best_metric": checkpoint.get("best_metric"),
+        "selection": checkpoint.get("selection"),
+        "device": str(device),
+    }
 
 
 def _holdout_rows(rows: list[dict], fraction: float = 0.2) -> list[dict]:
@@ -560,6 +593,7 @@ def main() -> int:
     parser.add_argument("--data-root", required=True, type=Path)
     parser.add_argument("--evidence-dir", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
+    parser.add_argument("--teacher-report", required=True, type=Path)
     parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--classifier-epochs", type=int, default=40)
     parser.add_argument("--area-epochs", type=int, default=40)
@@ -575,11 +609,27 @@ def main() -> int:
     parser.add_argument("--class-threshold", type=float, default=0.35)
     parser.add_argument("--area-threshold", type=float, default=0.5)
     parser.add_argument("--holdout-fraction", type=float, default=0.2)
+    parser.add_argument(
+        "--reuse-model-dir",
+        type=Path,
+        help="reuse already-selected A1 checkpoints and rerun evaluation/export only",
+    )
     args = parser.parse_args()
 
     started = time.perf_counter()
     output = args.output
     output.mkdir(parents=True, exist_ok=True)
+    dataset_qa = require_teacher_dataset_gate(args.evidence_dir)
+    teacher_report = json.loads(args.teacher_report.read_text(encoding="utf-8"))
+    if teacher_report.get("teacher_data_learnability_pass") is not True:
+        raise RuntimeError("P4 student screening requires a passed P2 teacher")
+    teacher_dataset = teacher_report.get("data_policy", {}).get("dataset_qa", {})
+    if teacher_dataset.get("sha256") != dataset_qa["sha256"]:
+        raise RuntimeError("teacher and student dataset QA SHA-256 differ")
+    if teacher_report.get("architecture_role") != (
+        "reference_teacher_not_default_deployable"
+    ):
+        raise RuntimeError("teacher architecture role is not the reference contract")
     # Filter roles while streaming metadata, before resolving paths or loading
     # instance annotations.  The contaminated legacy split and sealed G5 are
     # therefore not read by the development-screening process at all.
@@ -646,26 +696,42 @@ def main() -> int:
     )
 
     discovery_ckpt = output / "discovery.pt"
-    discovery, discovery_training = train_discovery(
-        train_rows,
-        instances_by_key,
-        device=device,
-        epochs=args.epochs,
-        batch_size=args.batch_size,
-        learning_rate=args.learning_rate,
-        seed=SEED,
-        val_rows=holdout[:100],
-        checkpoint_path=discovery_ckpt,
-        early_stopping_patience=8,
-        load_best=True,
-        selector=discovery_selector(),
-        validation_metric_fn=_discovery_validation_metric_fn(
-            holdout[:100],
+    if args.reuse_model_dir:
+        previous_report_path = args.reuse_model_dir / "auto05r_screening_report.json"
+        previous_report = json.loads(previous_report_path.read_text(encoding="utf-8"))
+        if previous_report.get("student_route", {}).get("dataset_qa_sha256") != dataset_qa["sha256"]:
+            raise RuntimeError("reused checkpoints were selected on a different formal G4 QA")
+        if previous_report.get("thresholds") != {
+            "discovery": args.discovery_threshold,
+            "classifier": args.class_threshold,
+            "area": args.area_threshold,
+        }:
+            raise RuntimeError("reused checkpoint thresholds differ from this screening run")
+        discovery, discovery_training = _load_reused_model(
+            "discovery", args.reuse_model_dir, output, device
+        )
+    else:
+        previous_report = None
+        discovery, discovery_training = train_discovery(
+            train_rows,
             instances_by_key,
-            device,
-            threshold=args.discovery_threshold,
-        ),
-    )
+            device=device,
+            epochs=args.epochs,
+            batch_size=args.batch_size,
+            learning_rate=args.learning_rate,
+            seed=SEED,
+            val_rows=holdout[:100],
+            checkpoint_path=discovery_ckpt,
+            early_stopping_patience=8,
+            load_best=True,
+            selector=discovery_selector(),
+            validation_metric_fn=_discovery_validation_metric_fn(
+                holdout[:100],
+                instances_by_key,
+                device,
+                threshold=args.discovery_threshold,
+            ),
+        )
 
     classifier_samples = build_classifier_samples(
         train_rows,
@@ -686,23 +752,28 @@ def main() -> int:
         seed=SEED + 1,
     )
     classifier_ckpt = output / "classifier.pt"
-    classifier, classifier_training = train_classifier(
-        classifier_samples,
-        device=device,
-        epochs=args.classifier_epochs,
-        batch_size=args.batch_size,
-        learning_rate=args.learning_rate,
-        seed=SEED,
-        val_samples=classifier_val_samples,
-        checkpoint_path=classifier_ckpt,
-        early_stopping_patience=8,
-        load_best=True,
-        cache_crops=True,
-        selector=classifier_selector(),
-        validation_metric_fn=_classifier_validation_metric_fn(
-            classifier_val_samples, device
-        ),
-    )
+    if args.reuse_model_dir:
+        classifier, classifier_training = _load_reused_model(
+            "classifier", args.reuse_model_dir, output, device
+        )
+    else:
+        classifier, classifier_training = train_classifier(
+            classifier_samples,
+            device=device,
+            epochs=args.classifier_epochs,
+            batch_size=args.batch_size,
+            learning_rate=args.learning_rate,
+            seed=SEED,
+            val_samples=classifier_val_samples,
+            checkpoint_path=classifier_ckpt,
+            early_stopping_patience=8,
+            load_best=True,
+            cache_crops=True,
+            selector=classifier_selector(),
+            validation_metric_fn=_classifier_validation_metric_fn(
+                classifier_val_samples, device
+            ),
+        )
 
     leaf_rows = _select_area_rows(
         train_rows,
@@ -736,42 +807,50 @@ def main() -> int:
         args.area_negative_frames // 2,
         SEED + 3,
     )
-    leaf, leaf_training = train_area(
-        "leaf",
-        leaf_rows,
-        device=device,
-        epochs=args.area_epochs,
-        batch_size=args.batch_size,
-        learning_rate=args.learning_rate,
-        seed=SEED,
-        val_rows=leaf_holdout,
-        checkpoint_path=output / "leaf.pt",
-        early_stopping_patience=8,
-        load_best=True,
-        cache_frames=True,
-        selector=area_selector(),
-        validation_metric_fn=_area_validation_metric_fn(
-            leaf_holdout, device, "leaf", args.area_threshold
-        ),
-    )
-    puddle, puddle_training = train_area(
-        "puddle",
-        puddle_rows,
-        device=device,
-        epochs=args.area_epochs,
-        batch_size=args.batch_size,
-        learning_rate=args.learning_rate,
-        seed=SEED + 1,
-        val_rows=puddle_holdout,
-        checkpoint_path=output / "puddle.pt",
-        early_stopping_patience=8,
-        load_best=True,
-        cache_frames=True,
-        selector=area_selector(),
-        validation_metric_fn=_area_validation_metric_fn(
-            puddle_holdout, device, "puddle", args.area_threshold
-        ),
-    )
+    if args.reuse_model_dir:
+        leaf, leaf_training = _load_reused_model(
+            "leaf", args.reuse_model_dir, output, device
+        )
+        puddle, puddle_training = _load_reused_model(
+            "puddle", args.reuse_model_dir, output, device
+        )
+    else:
+        leaf, leaf_training = train_area(
+            "leaf",
+            leaf_rows,
+            device=device,
+            epochs=args.area_epochs,
+            batch_size=args.batch_size,
+            learning_rate=args.learning_rate,
+            seed=SEED,
+            val_rows=leaf_holdout,
+            checkpoint_path=output / "leaf.pt",
+            early_stopping_patience=8,
+            load_best=True,
+            cache_frames=True,
+            selector=area_selector(),
+            validation_metric_fn=_area_validation_metric_fn(
+                leaf_holdout, device, "leaf", args.area_threshold
+            ),
+        )
+        puddle, puddle_training = train_area(
+            "puddle",
+            puddle_rows,
+            device=device,
+            epochs=args.area_epochs,
+            batch_size=args.batch_size,
+            learning_rate=args.learning_rate,
+            seed=SEED + 1,
+            val_rows=puddle_holdout,
+            checkpoint_path=output / "puddle.pt",
+            early_stopping_patience=8,
+            load_best=True,
+            cache_frames=True,
+            selector=area_selector(),
+            validation_metric_fn=_area_validation_metric_fn(
+                puddle_holdout, device, "puddle", args.area_threshold
+            ),
+        )
 
     in_domain = _evaluate_split(
         discovery,
@@ -1001,6 +1080,31 @@ def main() -> int:
         "schema_version": 2,
         "stage": "AUTO-05R",
         "task": "AUTO-05R-4",
+        "student_route": {
+            "attempt": "A1_FCOS_lite_ResNet18_FPN",
+            "teacher_report": str(args.teacher_report),
+            "teacher_report_sha256": sha256(args.teacher_report),
+            "teacher_checkpoint_sha256": teacher_report.get("checkpoint", {}).get(
+                "sha256"
+            ),
+            "teacher_val_recall": teacher_report["cross_world_val_metrics"][
+                "all_gt_candidate_recall"
+            ],
+            "teacher_val_false_candidates_per_min": teacher_report[
+                "cross_world_val_metrics"
+            ]["false_candidates_per_min"],
+            "dataset_qa_sha256": dataset_qa["sha256"],
+            "architecture_attempt_limit": 3,
+            "attempts_used": 1,
+            "reused_selected_checkpoints_for_diagnostic_evaluation": bool(
+                args.reuse_model_dir
+            ),
+            "reuse_source_report_sha256": (
+                sha256(args.reuse_model_dir / "auto05r_screening_report.json")
+                if args.reuse_model_dir
+                else None
+            ),
+        },
         "AUTO_05R_PASS": decision["AUTO_05R_PASS"],
         "AUTO_05R_BLOCKED": decision["AUTO_05R_BLOCKED"],
         "P4_SCREENING_PASS": decision["P4_SCREENING_PASS"],

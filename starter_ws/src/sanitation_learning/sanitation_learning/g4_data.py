@@ -35,7 +35,24 @@ DISCOVERY_MODEL_SIZE = (640, 480)  # width, height
 AREA_MODEL_SIZE = (512, 384)  # width, height
 CLASSIFIER_MODEL_SIZE = (192, 192)
 DISCOVERY_STRIDE = 4
+DISCOVERY_PYRAMID_STRIDES = (4, 8, 16)
 AREA_FEATURE_COUNT = 10
+
+
+def encode_discovery_pyramid_targets(boxes: list[dict]) -> dict[str, np.ndarray]:
+    """Encode the same boxes independently on P3/P4/P5 grids."""
+    result: dict[str, np.ndarray] = {}
+    for stride in DISCOVERY_PYRAMID_STRIDES:
+        encoded = encode_centernet_targets(
+            boxes,
+            input_width=DISCOVERY_MODEL_SIZE[0],
+            input_height=DISCOVERY_MODEL_SIZE[1],
+            stride=stride,
+            class_count=1,
+        )
+        for name in ("heatmap", "offset", "size", "regression_mask"):
+            result[f"{name}_s{stride}"] = encoded[name]
+    return result
 
 
 def normalize_depth(depth: np.ndarray) -> np.ndarray:
@@ -649,6 +666,7 @@ class G4DiscoveryCropDataset:
         tensor = torch.from_numpy(
             np.ascontiguousarray(resized.transpose(2, 0, 1), dtype=np.float32)
         )
+        pyramid = encode_discovery_pyramid_targets(sample["boxes"])
         return (
             tensor,
             {
@@ -656,6 +674,10 @@ class G4DiscoveryCropDataset:
                 "offset": torch.from_numpy(targets["offset"]),
                 "size": torch.from_numpy(targets["size"]),
                 "regression_mask": torch.from_numpy(targets["regression_mask"]),
+                **{
+                    name: torch.from_numpy(value)
+                    for name, value in pyramid.items()
+                },
             },
         )
 
@@ -741,6 +763,9 @@ class G4DiscoveryDataset:
         tensor = torch.from_numpy(
             np.ascontiguousarray(image.transpose(2, 0, 1), dtype=np.float32)
         )
+        pyramid = encode_discovery_pyramid_targets(
+            [{"class_index": 0, "bbox_xyxy": box["bbox_xyxy"]} for box in boxes]
+        )
         return (
             tensor,
             {
@@ -748,6 +773,10 @@ class G4DiscoveryDataset:
                 "offset": torch.from_numpy(targets["offset"]),
                 "size": torch.from_numpy(targets["size"]),
                 "regression_mask": torch.from_numpy(targets["regression_mask"]),
+                **{
+                    name: torch.from_numpy(value)
+                    for name, value in pyramid.items()
+                },
             },
         )
 

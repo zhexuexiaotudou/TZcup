@@ -93,3 +93,41 @@ QA 错误为 0。纸屑最短边 p10/p50 为 19.9/30 px，离散三类总体 p50
 这只通过相机与场景几何选择门，不是正式 G4 数据门。紧凑证据为
 `artifacts/auto05r_p2_evidence/P2_V5_CAMERA_SMOKE.json`。正式 G4 已从四个分别配置
 `ROS_DOMAIN_ID`、`GZ_PARTITION` 和 `IGN_PARTITION` 的空分片目录开始重采。
+
+正式重采与定向修复现已完成。四个基础分片各 75 场景；首次统一 QA 在 1070 个
+“场景×声明类别”检查中发现 14 个只完整出现 1 帧的缺口，涉及 11 个场景，其中
+leaf_pile 11 次。没有把门槛降为 1 帧，而是将最近目标车道从 1.2 m 后移到 1.8 m，
+仅定向重采这 11 个场景（110 帧）；修复集逐帧一致率、序列可见率均为 1.0、错误 0。
+唯一跨 split 64-bit pHash 相同的图像对经独立像素审计为不同图：SHA 不同、RGB
+MAE 23.149、像素完全相同比例 5.59%、RMSE 34.003；QA 因此改为 pHash 命中后
+必须再通过 64×48 RGB MAE/RMSE 确认，而不是删除样本或忽略重复门。
+
+最终 `merged-v3` 严格 QA：12 world / 300 scene / 3000 frame、8/2/2，所有门为
+true，失败门与错误均为空；scene reset、逐帧声明一致、序列声明可见、四传感器同步、
+CameraInfo、TF 均为 1.0，semantic-instance error 为 0，跨 split exact/pHash 重复均
+为 0。QA SHA-256 为 `72baf192e70c59d369c284c8141dcc6e2c03350dca930212ae97cf2182d1ab01`。
+完整 val 离散三类最短边 p50 为 31 px、paper p50 为 29 px，预注册尺度规则选择
+1× 输入。官方 FCOS-R50 teacher 已通过：正式 val recall `0.955357`、AP50
+`0.950495`、precision `1.0`、false candidate/min `0`，checkpoint SHA-256 为
+`a5884ac9bfa4e89f2ae8a25f4cae0521e263dd951ef895fa1185f013b2f04ee5`。紧凑证据见
+`artifacts/auto05r_p2_evidence/P2_V5_FORMAL_DATA_RECOVERY.json` 与
+`P2_TEACHER_PASS.json`。
+
+teacher 通过后新增 D1–D5 单因素原生 Gazebo 诊断，每类 10 scene / 100 frame：
+D1 已见世界/未见资产、D2 未见世界/已见资产、D3 已见几何/未见材质、D4 已见
+资产/未见光照、D5 纯未见负样本。五类独立 QA 的同步、CameraInfo、TF、语义/
+实例一致、pose reset、逐帧零额外目标和序列声明可见门均为 100%，错误为空；扩展
+screening 视图共 3500 帧，保留正式 G4 QA SHA 不变，未读 legacy D6 或 G5。
+
+A1 FCOS-lite ResNet18-FPN 首轮训练暴露 checkpoint 选择 bug：recall/IoU 仍为 0
+时，零误报使约束成立，selector 在第 1 个 epoch 冻结；随后 validation loss 持续
+改善却未重置 patience。现已按冻结合同改为“硬约束优先、任务指标次之、同任务指标
+再比较 validation loss”，并补齐 discovery ONNX parity 的 `passed` 字段。
+
+选择修复后的旧单网格融合基线仍严格失败：classifier 的 macro F1、paper precision、
+background/hard-negative specificity 均为 1.0，四个模型的 task-specific ONNX parity
+和零自定义算子门通过，D1–D5 报告完整；但 in-domain/cross-world discovery recall
+均为 0，leaf IoU 为 0，puddle IoU 约为 0.22，边界 F1 近 0。该结果只作为诊断
+基线保留在 `artifacts/auto05r_p4_evidence/P4_A1_SELECTION_FIXED_FAILURE.json`，不冒充
+P4。当前 A1 已按产品合同改为真正保留 P3/P4/P5 三层输出、跨层 NMS、EMA warmup、
+稀疏边界加权 BCE+Dice 后从零重训，不复用任何旧 checkpoint。

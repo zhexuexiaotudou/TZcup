@@ -154,6 +154,7 @@ def fit_model(
     )
     metric_fn = validation_metric_fn or _default_metric_fn(loss_fn)
     ema_state = None
+    ema_updates = 0
     non_ema_state = None
     best_metric = None
     best_epoch = None
@@ -171,9 +172,10 @@ def fit_model(
         )
 
     def update_ema() -> None:
-        nonlocal ema_state
+        nonlocal ema_state, ema_updates
         if not 0.0 < ema_decay < 1.0:
             return
+        ema_updates += 1
         with torch.no_grad():
             if ema_state is None:
                 ema_state = {
@@ -181,11 +183,18 @@ def fit_model(
                     for key, value in model.state_dict().items()
                 }
             else:
+                effective_decay = min(
+                    float(ema_decay),
+                    float(1 + ema_updates) / float(10 + ema_updates),
+                )
                 for key, value in model.state_dict().items():
-                    ema_state[key] = (
-                        ema_decay * ema_state[key]
-                        + (1.0 - ema_decay) * value.detach()
-                    )
+                    if torch.is_floating_point(value):
+                        ema_state[key] = (
+                            effective_decay * ema_state[key]
+                            + (1.0 - effective_decay) * value.detach()
+                        )
+                    else:
+                        ema_state[key] = value.detach().clone()
 
     def apply_ema() -> None:
         nonlocal non_ema_state
@@ -315,6 +324,9 @@ def fit_model(
         "duration_s": time.perf_counter() - started,
         "device": str(device),
         "amp": use_amp,
+        "ema_decay_target": ema_decay,
+        "ema_warmup": "min(target,(1+updates)/(10+updates))",
+        "ema_updates": ema_updates,
     }
     return model, report
 

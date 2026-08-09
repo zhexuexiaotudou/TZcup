@@ -28,7 +28,12 @@ from .g4_assets import (
     load_g4_asset_registry,
 )
 from .g4_manifest import config_hash
-from .g4_qa import MIN_DECLARED_TARGET_VISIBLE_FRAMES, finite_pose, phash
+from .g4_qa import (
+    MIN_DECLARED_TARGET_VISIBLE_FRAMES,
+    finite_pose,
+    perceptual_near_duplicate,
+    phash,
+)
 from .gazebo_g4 import (
     GAZEBO_SENSOR_TOPICS,
     GROUND_COLORS,
@@ -454,15 +459,28 @@ def finalize_g5_dataset(
                 camera_ok = False
             camera_valid += int(camera_ok)
             identity = {"world_id": scene["world_id"], "scene": scene_dir.name, "frame": record.get("frame_index")}
-            for value, seen, duplicates in (
-                (_sha256(paths["rgb"]), exact_seen, cross_world_exact),
-                (phash(paths["rgb"]), phash_seen, cross_world_phash),
-            ):
-                previous = seen.get(value)
-                if previous and previous["world_id"] != identity["world_id"]:
-                    duplicates.append([previous, identity])
-                else:
-                    seen[value] = identity
+            rgb_hash = _sha256(paths["rgb"])
+            previous = exact_seen.get(rgb_hash)
+            if previous and previous["world_id"] != identity["world_id"]:
+                cross_world_exact.append([previous, identity])
+            else:
+                exact_seen[rgb_hash] = identity
+            perceptual_hash = phash(paths["rgb"])
+            candidates = phash_seen.setdefault(perceptual_hash, [])
+            for candidate in candidates:
+                if (
+                    candidate["world_id"] != identity["world_id"]
+                    and perceptual_near_duplicate(
+                        Path(candidate["path"]), paths["rgb"]
+                    )
+                ):
+                    cross_world_phash.append(
+                        [
+                            {key: candidate[key] for key in identity},
+                            identity,
+                        ]
+                    )
+            candidates.append({**identity, "path": str(paths["rgb"])})
         for label, declared_count in sorted(declared.items()):
             if declared_count <= 0:
                 continue

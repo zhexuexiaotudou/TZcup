@@ -130,9 +130,9 @@ def test_build_and_validate_artifact_manifest(tmp_path) -> None:
         artifact_path=artifact,
         input_shape=(1, 3, 480, 640),
         output_shapes={
-            "objectness_logits": [1, 1, 120, 160],
-            "offset": [1, 2, 120, 160],
-            "bbox_size": [1, 2, 120, 160],
+            "objectness_logits": [1, 3, 120, 160],
+            "offset": [1, 6, 120, 160],
+            "bbox_size": [1, 6, 120, 160],
         },
         operator_inventory={"Conv": 20},
         class_map={"class_agnostic": 0},

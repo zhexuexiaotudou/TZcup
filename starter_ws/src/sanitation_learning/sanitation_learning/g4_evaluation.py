@@ -31,6 +31,59 @@ from .g4_data import (
 from .g4_geometry import bbox_model_to_native
 
 
+def decode_discovery_outputs(
+    objectness: np.ndarray,
+    offset: np.ndarray,
+    size: np.ndarray,
+    *,
+    score_threshold: float,
+    nms_iou_threshold: float = 0.5,
+    max_detections: int = 100,
+    local_maximum_radius: int = 1,
+    pre_nms_topk: int | None = None,
+):
+    """Decode legacy single-grid or P3/P4/P5 channel-preserving outputs."""
+    if objectness.shape[0] == 1:
+        return decode_centernet_outputs(
+            objectness,
+            offset,
+            size,
+            stride=DISCOVERY_STRIDE,
+            score_threshold=score_threshold,
+            nms_iou_threshold=nms_iou_threshold,
+            max_detections=max_detections,
+            local_maximum_radius=local_maximum_radius,
+            pre_nms_topk=pre_nms_topk,
+        )
+    if objectness.shape[0] != 3 or offset.shape[0] != 6 or size.shape[0] != 6:
+        raise ValueError("discovery pyramid output must have 3/6/6 channels")
+    candidates = []
+    for level, stride in enumerate((4, 8, 16)):
+        factor = stride // 4
+        candidates.extend(
+            decode_centernet_outputs(
+                objectness[level : level + 1, ::factor, ::factor],
+                offset[level * 2 : level * 2 + 2, ::factor, ::factor],
+                size[level * 2 : level * 2 + 2, ::factor, ::factor],
+                stride=stride,
+                score_threshold=score_threshold,
+                nms_iou_threshold=1.0,
+                max_detections=max_detections,
+                local_maximum_radius=local_maximum_radius,
+                pre_nms_topk=pre_nms_topk,
+            )
+        )
+    candidates.sort(key=lambda item: item.score, reverse=True)
+    kept = []
+    for item in candidates:
+        if any(box_iou(item.bbox_xyxy, other.bbox_xyxy) >= nms_iou_threshold for other in kept):
+            continue
+        kept.append(item)
+        if len(kept) >= max_detections:
+            break
+    return kept
+
+
 def discovery_predictions(
     model,
     rows: list[dict],
@@ -60,11 +113,10 @@ def discovery_predictions(
             objectness = torch_sigmoid(outputs["objectness_logits"])[0].cpu().numpy()
             offset = outputs["offset"][0].cpu().numpy()
             size = outputs["bbox_size"][0].cpu().numpy()
-            detections = decode_centernet_outputs(
+            detections = decode_discovery_outputs(
                 objectness,
                 offset,
                 size,
-                stride=stride,
                 score_threshold=threshold,
                 nms_iou_threshold=nms_iou_threshold,
                 max_detections=max_detections,
@@ -219,11 +271,10 @@ def discovery_crop_predictions(
                 objectness = torch_sigmoid(outputs["objectness_logits"])[0].cpu().numpy()
                 offset = outputs["offset"][0].cpu().numpy()
                 size = outputs["bbox_size"][0].cpu().numpy()
-                detections = decode_centernet_outputs(
+                detections = decode_discovery_outputs(
                     objectness,
                     offset,
                     size,
-                    stride=DISCOVERY_STRIDE,
                     score_threshold=threshold,
                     nms_iou_threshold=nms_iou_threshold,
                     local_maximum_radius=local_maximum_radius,
@@ -1032,11 +1083,10 @@ def evaluate_pipeline(
                 with torch_no_grad():
                     outputs = discovery(tensor)
                 objectness = torch_sigmoid(outputs["objectness_logits"])[0].cpu().numpy()
-                detections = decode_centernet_outputs(
+                detections = decode_discovery_outputs(
                     objectness,
                     outputs["offset"][0].cpu().numpy(),
                     outputs["bbox_size"][0].cpu().numpy(),
-                    stride=DISCOVERY_STRIDE,
                     score_threshold=discovery_threshold,
                 )
                 truth = discrete_boxes_for_frame(row, instances_by_key)

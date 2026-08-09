@@ -1,144 +1,9 @@
 {
-  "G4_dataset_gate_pass": false,
+  "G4_dataset_gate_pass": true,
   "error_summary": {
-    "count": 1836,
-    "counts_by_reason": {
-      "manifest_pixel_target_count_mismatch": 1836
-    },
-    "examples": [
-      {
-        "classes": {
-          "puddle": {
-            "declared": 2,
-            "observed": 1
-          }
-        },
-        "frame": 0,
-        "negative_only": false,
-        "reason": "manifest_pixel_target_count_mismatch",
-        "scene": "scene_0001"
-      },
-      {
-        "classes": {
-          "puddle": {
-            "declared": 2,
-            "observed": 1
-          }
-        },
-        "frame": 1,
-        "negative_only": false,
-        "reason": "manifest_pixel_target_count_mismatch",
-        "scene": "scene_0001"
-      },
-      {
-        "classes": {
-          "puddle": {
-            "declared": 2,
-            "observed": 1
-          }
-        },
-        "frame": 2,
-        "negative_only": false,
-        "reason": "manifest_pixel_target_count_mismatch",
-        "scene": "scene_0001"
-      },
-      {
-        "classes": {
-          "puddle": {
-            "declared": 2,
-            "observed": 1
-          }
-        },
-        "frame": 3,
-        "negative_only": false,
-        "reason": "manifest_pixel_target_count_mismatch",
-        "scene": "scene_0001"
-      },
-      {
-        "classes": {
-          "puddle": {
-            "declared": 2,
-            "observed": 1
-          }
-        },
-        "frame": 4,
-        "negative_only": false,
-        "reason": "manifest_pixel_target_count_mismatch",
-        "scene": "scene_0001"
-      },
-      {
-        "classes": {
-          "puddle": {
-            "declared": 2,
-            "observed": 1
-          }
-        },
-        "frame": 5,
-        "negative_only": false,
-        "reason": "manifest_pixel_target_count_mismatch",
-        "scene": "scene_0001"
-      },
-      {
-        "classes": {
-          "puddle": {
-            "declared": 2,
-            "observed": 1
-          }
-        },
-        "frame": 6,
-        "negative_only": false,
-        "reason": "manifest_pixel_target_count_mismatch",
-        "scene": "scene_0001"
-      },
-      {
-        "classes": {
-          "leaf_pile": {
-            "declared": 1,
-            "observed": 0
-          },
-          "puddle": {
-            "declared": 2,
-            "observed": 1
-          }
-        },
-        "frame": 7,
-        "negative_only": false,
-        "reason": "manifest_pixel_target_count_mismatch",
-        "scene": "scene_0001"
-      },
-      {
-        "classes": {
-          "leaf_pile": {
-            "declared": 1,
-            "observed": 0
-          },
-          "puddle": {
-            "declared": 2,
-            "observed": 1
-          }
-        },
-        "frame": 8,
-        "negative_only": false,
-        "reason": "manifest_pixel_target_count_mismatch",
-        "scene": "scene_0001"
-      },
-      {
-        "classes": {
-          "leaf_pile": {
-            "declared": 1,
-            "observed": 0
-          },
-          "puddle": {
-            "declared": 2,
-            "observed": 1
-          }
-        },
-        "frame": 9,
-        "negative_only": false,
-        "reason": "manifest_pixel_target_count_mismatch",
-        "scene": "scene_0001"
-      }
-    ],
+    "count": 0,
+    "counts_by_reason": {},
+    "examples": [],
     "full_errors_retained_external": true
   },
   "formal_scale": {
@@ -186,10 +51,11 @@
     "asset_split_leakage_zero": true,
     "camera_info_valid_100_percent": true,
     "cross_split_phash_duplicate_zero": true,
+    "declared_target_sequence_visibility_100_percent": true,
     "distance_bucket_coverage_all": true,
     "exact_duplicate_zero": true,
     "four_sensor_sync_100_percent": true,
-    "manifest_pixel_target_consistency_100_percent": false,
+    "manifest_pixel_target_consistency_100_percent": true,
     "negative_only_cross_split_delta_at_most_10pp": true,
     "negative_only_ratio_in_25_to_35_percent": true,
     "required_paper_taxonomy_covered_in_train": true,
@@ -213,10 +79,10 @@
     "legacy_G4_D6_contaminated": true,
     "used_in_historical_screening_pass_fail": true
   },
-  "quality_gates_pass": false,
+  "quality_gates_pass": true,
   "scene_count": 300,
   "schema_version": 1,
-  "source_sha256": "3fe950473267210052f662dcd4919433ce1f99dcefbaf49a5ebed80e5ce1f713",
+  "source_sha256": "72baf192e70c59d369c284c8141dcc6e2c03350dca930212ae97cf2182d1ab01",
   "stage": "AUTO-05R",
   "task": "AUTO-05R-1",
   "world_count": 12

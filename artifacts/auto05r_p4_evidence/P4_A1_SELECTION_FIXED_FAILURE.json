@@ -1,0 +1,58 @@
+{
+  "schema_version": "1.0",
+  "stage": "PERCEPTION-P4",
+  "attempt": "A1_FCOS_lite_ResNet18_FPN_selection_fixed_old_fusion",
+  "status": "FAILED_DIAGNOSTIC_BASELINE",
+  "product_eligible": false,
+  "source_report": {
+    "external_path": "F:/Project/TZcup-perception-product-runtime/p4-screening-v5-a1-selection-fixed/auto05r_screening_report.json",
+    "sha256": "2e153636d0e4d3ea54262ed8dc646a99c4d937ba10d1fdcd66c4957348c3e016",
+    "duration_s": 3889.204986899
+  },
+  "data_contract": {
+    "formal_g4_qa_sha256": "72baf192e70c59d369c284c8141dcc6e2c03350dca930212ae97cf2182d1ab01",
+    "train_frames": 600,
+    "train_world_holdout_frames": 460,
+    "val_frames": 500,
+    "D1_D5_frames_each": 100,
+    "legacy_G4_D6_read": false,
+    "G5_read": false
+  },
+  "selected_checkpoint_sha256": {
+    "discovery": "581223a86f8f9605ba4b161af25467c551ff962c02f1efef3399267247285bc4",
+    "classifier": "3efe0b1c80c7bf0d16c21d1bdb96c09cddfd99e381ee1b2753f337b266c980cb",
+    "leaf": "abd3ff6e6b7545e5246dc789da0d646492c039a056e6fe53efb9c26a0e56e22a",
+    "puddle": "3cfcfc656103dd2ae495cb2b2f62567336bd2b523dc700d9f516ff2f73c78a97"
+  },
+  "selection": {
+    "discovery_epoch": 15,
+    "classifier_epoch": 40,
+    "leaf_diagnostic_epoch": 21,
+    "puddle_diagnostic_epoch": 40,
+    "leaf_product_checkpoint_selected": false,
+    "puddle_product_checkpoint_selected": false
+  },
+  "metrics": {
+    "classifier_validation_macro_f1": 1.0,
+    "classifier_validation_paper_precision": 1.0,
+    "classifier_validation_background_specificity": 1.0,
+    "in_domain_candidate_recall": 0.0,
+    "in_domain_false_candidates_per_min": 0.0,
+    "in_domain_leaf_iou": 0.0,
+    "in_domain_puddle_iou": 0.218616188800471,
+    "in_domain_macro_miou": 0.1093080944002355,
+    "in_domain_boundary_f1": 0.00021495986296308735,
+    "cross_world_candidate_recall": 0.0,
+    "cross_world_leaf_iou": 0.0,
+    "cross_world_puddle_iou": 0.23200425305688463,
+    "cross_world_macro_miou": 0.11600212652844231,
+    "cross_world_boundary_f1": 0.0007136785720013471,
+    "same_color_negative_specificity": 1.0
+  },
+  "infrastructure_gates": {
+    "D1_D5_reports_complete": true,
+    "onnx_task_specific_parity_pass": true,
+    "onnx_custom_ops_zero": true
+  },
+  "conclusion": "The corrected selector and task-specific ONNX gates work, but the old weighted single-grid fusion collapses discovery and leaf segmentation. This result is retained only as a diagnostic baseline; the next A1 uses genuine channel-preserving P3/P4/P5 outputs, EMA warmup, and sparse-boundary loss repair without checkpoint reuse."
+}

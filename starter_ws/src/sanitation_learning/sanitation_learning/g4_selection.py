@@ -51,6 +51,7 @@ class ConstraintAwareSelector:
         self,
         constraints: Iterable[ConstraintSpec | Mapping],
         objective: ObjectiveSpec | Mapping,
+        tie_breaker: ObjectiveSpec | Mapping | None = None,
     ):
         self.constraints: tuple[ConstraintSpec, ...] = tuple(
             constraint
@@ -70,12 +71,23 @@ class ConstraintAwareSelector:
                 maximize=bool(objective["maximize"]),
             )
         )
+        self.tie_breaker = (
+            tie_breaker
+            if isinstance(tie_breaker, ObjectiveSpec)
+            else ObjectiveSpec(
+                metric=tie_breaker["metric"],
+                maximize=bool(tie_breaker["maximize"]),
+            )
+            if tie_breaker is not None
+            else None
+        )
         if not self.constraints:
             raise ValueError("constraint-aware selection requires constraints")
         self._best_epoch: int | None = None
         self._best_score: float | None = None
         self._best_metrics: dict | None = None
-        self._fallback_rank: tuple[float, float, int] | None = None
+        self._best_tie_score: float | None = None
+        self._fallback_rank: tuple[float, float, float, int] | None = None
         self._fallback_epoch: int | None = None
         self._fallback_score: float | None = None
         self._fallback_metrics: dict | None = None
@@ -134,6 +146,20 @@ class ConstraintAwareSelector:
             return score > self._best_score
         return score < self._best_score
 
+    def _tie_score(self, metrics: Mapping) -> float:
+        if self.tie_breaker is None:
+            return 0.0
+        if metrics.get(self.tie_breaker.metric) is None:
+            return 0.0
+        return self._score(metrics, self.tie_breaker)
+
+    def _tie_improves(self, score: float) -> bool:
+        if self.tie_breaker is None or self._best_tie_score is None:
+            return False
+        if self.tie_breaker.maximize:
+            return score > self._best_tie_score
+        return score < self._best_tie_score
+
     def consider(
         self,
         epoch: int,
@@ -145,12 +171,18 @@ class ConstraintAwareSelector:
             raise ValueError("epoch must be a positive integer")
         violated = self.violated_constraints(metrics)
         score = self._score(metrics, self.objective)
+        tie_score = self._tie_score(metrics)
         accepted = False
         checkpoint_selected = False
         if not violated:
-            if self._best_score is None or self._improves(score):
+            if (
+                self._best_score is None
+                or self._improves(score)
+                or (score == self._best_score and self._tie_improves(tie_score))
+            ):
                 self._best_epoch = epoch
                 self._best_score = score
+                self._best_tie_score = tie_score
                 self._best_metrics = {
                     str(key): value for key, value in metrics.items()
                 }
@@ -163,7 +195,12 @@ class ConstraintAwareSelector:
                 sum(item["normalized_violation"] for item in violated)
             )
             objective_rank = -score if self.objective.maximize else score
-            fallback_rank = (violation_total, objective_rank, epoch)
+            tie_rank = (
+                -tie_score
+                if self.tie_breaker is not None and self.tie_breaker.maximize
+                else tie_score
+            )
+            fallback_rank = (violation_total, objective_rank, tie_rank, epoch)
             if (
                 self._fallback_rank is None
                 or fallback_rank < self._fallback_rank
@@ -180,6 +217,7 @@ class ConstraintAwareSelector:
             "checkpoint_selected": bool(checkpoint_selected),
             "product_eligible": not violated,
             "selection_score": score,
+            "tie_breaker_score": tie_score if self.tie_breaker else None,
             "selected_epoch": self._best_epoch,
             "best_selection_score": self._best_score,
             "violated_constraints": violated,
@@ -202,6 +240,7 @@ class ConstraintAwareSelector:
             "selected": True,
             "selected_epoch": self._best_epoch,
             "selection_score": self._best_score,
+            "tie_breaker_score": self._best_tie_score,
             "validation_metrics": dict(self._best_metrics or {}),
             "violated_constraints": [],
         }
@@ -217,6 +256,7 @@ class ConstraintAwareSelector:
             return {
                 "selected_epoch": self._best_epoch,
                 "selection_score": self._best_score,
+                "tie_breaker_score": self._best_tie_score,
                 "validation_metrics": dict(self._best_metrics or {}),
                 "violated_constraints": [],
                 "product_eligible": True,
@@ -226,6 +266,11 @@ class ConstraintAwareSelector:
             return {
                 "selected_epoch": self._fallback_epoch,
                 "selection_score": self._fallback_score,
+                "tie_breaker_score": (
+                    self._fallback_metrics.get(self.tie_breaker.metric)
+                    if self.tie_breaker is not None and self._fallback_metrics
+                    else None
+                ),
                 "validation_metrics": dict(self._fallback_metrics or {}),
                 "violated_constraints": [
                     dict(item) for item in self._fallback_violations
@@ -342,6 +387,7 @@ def discovery_selector(
             ),
         ],
         ObjectiveSpec(objective_metric, maximize=True),
+        ObjectiveSpec("validation_loss", maximize=False),
     )
 
 
@@ -364,6 +410,7 @@ def classifier_selector(
             ),
         ],
         ObjectiveSpec(objective_metric, maximize=True),
+        ObjectiveSpec("validation_loss", maximize=False),
     )
 
 
@@ -386,6 +433,7 @@ def area_selector(
             ),
         ],
         ObjectiveSpec(objective_metric, maximize=True),
+        ObjectiveSpec("validation_loss", maximize=False),
     )
 
 
