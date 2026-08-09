@@ -12,6 +12,14 @@
 - 开始注册上限内的 A2：MobileNetV3-small stride-4/8/16 FPN，保持图外 top-K/NMS
   和固定 ONNX 输出契约，并将 objectness/quality 从仅相加的冗余 head 改为独立监督；
   A2 尚未通过 P4，旧 D6/G5 继续不可读。
+- A2 在同一正式数据与选择协议下跑满 30 epoch，最佳仍为 epoch 1，recall/AP50
+  均为 0，虽然 false candidate/min=0，但违反 recall>=0.80 硬门，checkpoint
+  SHA-256 为 `b1dc9807a197783bd71331319d7210903b723adea3701b5a58b3b18decd41cd3`。
+  A2 已正式淘汰；证据见 `P4_A2_FORMAL_STRATIFIED_FAILURE.json`。
+- 进入最后一个注册架构 A3：沿用紧凑 MobileNetV3 图，训练时只从已冻结且通过 P2
+  的 FCOS teacher 在 train 帧生成 soft quality target；每个 GT/teacher box 按最大边
+  `<=48 / <=80 / >80 px` 唯一分配到 P3/P4/P5，消除 A1/A2 将同一目标复制到三层的
+  target 冲突。teacher 不读取 val 作为蒸馏输入，旧 D6/G5 仍不可读。
 
 - 官方 FCOS-R50 教师全量训练启动后，像素尺度与实例数量审计发现单帧最多
   43 个离散真值，而 scene manifest 最多只声明 6 个离散目标。根因是 world

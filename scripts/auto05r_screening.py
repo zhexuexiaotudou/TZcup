@@ -47,6 +47,7 @@ from sanitation_learning.g4_data import (  # noqa: E402
     load_instance_records,
     load_scene_manifests,
 )
+from sanitation_learning.auto04_contract import box_iou  # noqa: E402
 from sanitation_learning.g4_calibration import (  # noqa: E402
     AREA_THRESHOLD_GRID,
     DISCOVERY_THRESHOLD_GRID,
@@ -89,7 +90,11 @@ from sanitation_learning.g4_split_policy import (  # noqa: E402
     screening_decision,
     stratified_row_sample,
 )
-from sanitation_learning.g4_teacher import require_teacher_dataset_gate  # noqa: E402
+from sanitation_learning.g4_teacher import (  # noqa: E402
+    build_fcos_teacher,
+    require_teacher_dataset_gate,
+    teacher_predictions,
+)
 from sanitation_learning.g4_train import (  # noqa: E402
     train_area,
     train_classifier,
@@ -113,6 +118,110 @@ P4_POLICY = (
 
 def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _prepare_a3_distillation_targets(
+    *,
+    teacher_report: dict,
+    teacher_report_path: Path,
+    train_rows: list[dict],
+    instances_by_key: dict[tuple[int, int], list[dict]],
+    device: torch.device,
+    output: Path,
+) -> tuple[dict[tuple[int, int], list[dict]], dict]:
+    """Freeze teacher detections on train only for A3 soft-quality targets."""
+    checkpoint_meta = teacher_report.get("checkpoint") or {}
+    checkpoint_path = teacher_report_path.parent / str(
+        checkpoint_meta.get("path", "")
+    )
+    if not checkpoint_path.is_file():
+        raise FileNotFoundError(
+            f"A3 teacher checkpoint is missing: {checkpoint_path}"
+        )
+    checkpoint_hash = sha256(checkpoint_path)
+    if checkpoint_hash != checkpoint_meta.get("sha256"):
+        raise RuntimeError("A3 teacher checkpoint SHA-256 mismatch")
+    input_scale = int(teacher_report.get("config", {}).get("input_scale", 1))
+    threshold = float(
+        teacher_report["frozen_threshold_from_train_world_holdout"]
+    )
+    teacher = build_fcos_teacher(input_scale).to(device)
+    checkpoint = torch.load(
+        checkpoint_path, map_location=device, weights_only=False
+    )
+    teacher.load_state_dict(checkpoint["state_dict"], strict=True)
+    frames = teacher_predictions(
+        teacher,
+        train_rows,
+        instances_by_key,
+        device=device,
+        score_threshold=threshold,
+        batch_size=int(
+            teacher_report.get("config", {}).get("eval_batch_size", 4)
+        ),
+        input_scale=input_scale,
+    )
+    metrics = discovery_metrics(frames)
+    targets = {}
+    for frame in frames:
+        aligned = []
+        for truth in frame["truth"]:
+            matches = [
+                item
+                for item in frame["detections"]
+                if box_iou(
+                    tuple(truth["bbox_xyxy"]), tuple(item["bbox_xyxy"])
+                )
+                >= 0.5
+            ]
+            if matches:
+                best = max(matches, key=lambda item: float(item["score"]))
+                aligned.append(
+                    {
+                        "class_index": 0,
+                        "bbox_xyxy": list(truth["bbox_xyxy"]),
+                        "score": float(best["score"]),
+                    }
+                )
+        targets[(int(frame["scene_seed"]), int(frame["frame_index"]))] = aligned
+    manifest_path = output / "a3_teacher_distillation_targets.json"
+    manifest = {
+        "schema_version": 1,
+        "role": "train_only_frozen_teacher_soft_quality_targets",
+        "teacher_checkpoint_sha256": checkpoint_hash,
+        "teacher_threshold": threshold,
+        "train_frames": len(frames),
+        "metrics": metrics,
+        "legacy_G4_D6_read": False,
+        "G5_sealed_final_read": False,
+        "frames": [
+            {
+                "scene_seed": int(frame["scene_seed"]),
+                "frame_index": int(frame["frame_index"]),
+                "quality_targets": targets[
+                    (int(frame["scene_seed"]), int(frame["frame_index"]))
+                ],
+            }
+            for frame in frames
+        ],
+    }
+    manifest_path.write_text(
+        json.dumps(manifest, indent=2) + "\n", encoding="utf-8"
+    )
+    del teacher
+    torch.cuda.empty_cache()
+    return targets, {
+        "teacher_checkpoint_sha256": checkpoint_hash,
+        "teacher_threshold": threshold,
+        "train_frames": len(frames),
+        "train_metrics": metrics,
+        "target_manifest": manifest_path.name,
+        "target_manifest_sha256": sha256(manifest_path),
+        "pyramid_target_assignment": "single_level_by_max_side_48_80",
+        "quality_target": "frozen_teacher_score_heatmap",
+        "quality_target_alignment": "teacher_iou_ge_0.5_score_at_gt_box",
+        "matched_quality_targets": sum(len(items) for items in targets.values()),
+    }
 
 
 def _selected_validation_metrics(training_report: dict) -> dict:
@@ -754,7 +863,11 @@ def main() -> int:
     parser.add_argument("--area-threshold", type=float, default=0.5)
     parser.add_argument(
         "--discovery-architecture",
-        choices=("resnet18_fpn_a1", "mobilenetv3_small_fpn_a2"),
+        choices=(
+            "resnet18_fpn_a1",
+            "mobilenetv3_small_fpn_a2",
+            "teacher_distilled_mobilenetv3_fpn_a3",
+        ),
         default="resnet18_fpn_a1",
     )
     parser.add_argument(
@@ -879,6 +992,19 @@ def main() -> int:
 
     discovery_ckpt = output / "discovery.pt"
     selection_val_rows = stratified_row_sample(val_rows, 100, seed=SEED + 9)
+    teacher_detections_by_key = None
+    distillation_summary = None
+    if args.discovery_architecture == "teacher_distilled_mobilenetv3_fpn_a3":
+        teacher_detections_by_key, distillation_summary = (
+            _prepare_a3_distillation_targets(
+                teacher_report=teacher_report,
+                teacher_report_path=args.teacher_report,
+                train_rows=train_rows,
+                instances_by_key=instances_by_key,
+                device=device,
+                output=output,
+            )
+        )
     reuse_discrete_source = (
         args.reuse_model_dir
         or args.reuse_discrete_model_dir
@@ -933,6 +1059,11 @@ def main() -> int:
                 "discovery",
                 discovery_architecture=args.discovery_architecture,
             ),
+            assign_pyramid_by_scale=(
+                args.discovery_architecture
+                == "teacher_distilled_mobilenetv3_fpn_a3"
+            ),
+            teacher_detections_by_key=teacher_detections_by_key,
         )
 
     classifier_samples = build_classifier_samples(
@@ -1370,11 +1501,15 @@ def main() -> int:
         "stage": "AUTO-05R",
         "task": "AUTO-05R-4",
         "student_route": {
-            "attempt": (
-                "A1_FCOS_lite_ResNet18_FPN"
-                if args.discovery_architecture == "resnet18_fpn_a1"
-                else "A2_FCOS_lite_MobileNetV3_Small_FPN"
-            ),
+            "attempt": {
+                "resnet18_fpn_a1": "A1_FCOS_lite_ResNet18_FPN",
+                "mobilenetv3_small_fpn_a2": (
+                    "A2_FCOS_lite_MobileNetV3_Small_FPN"
+                ),
+                "teacher_distilled_mobilenetv3_fpn_a3": (
+                    "A3_Teacher_Distilled_MobileNetV3_Small_FPN"
+                ),
+            }[args.discovery_architecture],
             "teacher_report": str(args.teacher_report),
             "teacher_report_sha256": sha256(args.teacher_report),
             "teacher_checkpoint_sha256": teacher_report.get("checkpoint", {}).get(
@@ -1388,12 +1523,13 @@ def main() -> int:
             ]["false_candidates_per_min"],
             "dataset_qa_sha256": dataset_qa["sha256"],
             "architecture_attempt_limit": 3,
-            "attempts_used": (
-                1
-                if args.discovery_architecture == "resnet18_fpn_a1"
-                else 2
-            ),
+            "attempts_used": {
+                "resnet18_fpn_a1": 1,
+                "mobilenetv3_small_fpn_a2": 2,
+                "teacher_distilled_mobilenetv3_fpn_a3": 3,
+            }[args.discovery_architecture],
             "discovery_architecture": args.discovery_architecture,
+            "distillation": distillation_summary,
             "area_architecture": args.area_architecture,
             "reused_selected_checkpoints_for_diagnostic_evaluation": bool(
                 args.reuse_model_dir

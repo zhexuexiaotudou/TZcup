@@ -44,8 +44,8 @@ def objectness_loss_audit(
         elementwise = torch.nn.functional.binary_cross_entropy_with_logits(
             logits, target, reduction="none"
         ) * modulation
-        positive_loss = elementwise * positive
-        negative_loss = elementwise * gaussian_negative_weight * negative
+        positive_loss = elementwise * target
+        negative_loss = elementwise * (1.0 - target)
     else:
         positive_loss = -(prediction.log()) * (1.0 - prediction).pow(2) * positive
         negative_loss = (
@@ -58,7 +58,11 @@ def objectness_loss_audit(
     negative_flat = negative_loss.reshape(batch_size, -1)
     topk_count = max(1, int(negative_flat.shape[1] * 0.02))
     topk, _ = torch.topk(negative_flat, topk_count, dim=1)
-    positive_count = positive.sum().clamp(min=1.0)
+    positive_count = (
+        target.sum().clamp(min=1.0)
+        if variant == "L3_quality_focal"
+        else positive.sum().clamp(min=1.0)
+    )
     positive_contribution = positive_loss.sum() / positive_count
     negative_contribution = negative_loss.sum() / positive_count
     hard_negative_contribution = topk.mean()
@@ -155,6 +159,11 @@ def discovery_loss(
                 name: targets[f"{name}_s{level_stride}"]
                 for name in ("heatmap", "offset", "size", "regression_mask")
             }
+            teacher_quality_name = f"teacher_quality_s{level_stride}"
+            if teacher_quality_name in targets:
+                level_target["teacher_quality"] = targets[
+                    teacher_quality_name
+                ]
             level_reports.append(
                 discovery_loss(
                     level_output,
@@ -187,7 +196,7 @@ def discovery_loss(
     if independently_supervised_quality:
         quality_audit = objectness_loss_audit(
             outputs["quality_logits"],
-            targets["heatmap"],
+            targets.get("teacher_quality", targets["heatmap"]),
             variant="L3_quality_focal",
             negative_weight=objectness_negative_weight,
         )

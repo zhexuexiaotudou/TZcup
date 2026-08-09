@@ -403,11 +403,20 @@ def train_discovery(
     validation_metric_fn: Callable | None = None,
     model=None,
     objectness_variant: str = "L2_independent_ohem",
+    assign_pyramid_by_scale: bool = False,
+    teacher_detections_by_key: dict[tuple[int, int], list[dict]] | None = None,
 ) -> tuple[torch.nn.Module, dict]:
     assert_development_rows(rows, "discovery training")
     if val_rows is not None:
         assert_development_rows(val_rows, "discovery validation")
-    dataset = G4DiscoveryDataset(rows, instances_by_key, augment=True, seed=seed)
+    dataset = G4DiscoveryDataset(
+        rows,
+        instances_by_key,
+        augment=True,
+        seed=seed,
+        assign_pyramid_by_scale=assign_pyramid_by_scale,
+        teacher_detections_by_key=teacher_detections_by_key,
+    )
     loader = DataLoader(
         dataset,
         batch_size=batch_size,
@@ -418,7 +427,11 @@ def train_discovery(
     val_loader = None
     if val_rows:
         val_dataset = G4DiscoveryDataset(
-            val_rows, instances_by_key, augment=False, seed=seed
+            val_rows,
+            instances_by_key,
+            augment=False,
+            seed=seed,
+            assign_pyramid_by_scale=assign_pyramid_by_scale,
         )
         val_loader = DataLoader(val_dataset, batch_size=batch_size, shuffle=False)
     if model is None:

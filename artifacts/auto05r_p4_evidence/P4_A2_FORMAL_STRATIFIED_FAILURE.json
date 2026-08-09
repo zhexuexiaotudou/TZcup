@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-05R",
+  "gate": "PERCEPTION-P4",
+  "architecture_attempt": "A2_FCOS_lite_MobileNetV3_Small_FPN",
+  "source_commit": "6351ea496091e4dd863ab7699f3418844b30b8cc",
+  "dataset": {
+    "formal_g4_version": "V5",
+    "dataset_qa_sha256": "72baf192e70c59d369c284c8141dcc6e2c03350dca930212ae97cf2182d1ab01",
+    "training_frames": 600,
+    "training_worlds": 8,
+    "selection_validation_frames": 100,
+    "selection_policy": "development_val_only"
+  },
+  "training": {
+    "requested_epochs": 30,
+    "completed_epochs": 30,
+    "best_epoch": 1,
+    "checkpoint_status": "training_complete",
+    "checkpoint_sha256": "b1dc9807a197783bd71331319d7210903b723adea3701b5a58b3b18decd41cd3",
+    "fresh_training": true,
+    "checkpoint_reused": false,
+    "independent_objectness_quality_supervision": true
+  },
+  "selected_validation_metrics": {
+    "candidate_recall": 0.0,
+    "ap50": 0.0,
+    "proposal_precision": 0.0,
+    "false_candidates_per_min": 0.0,
+    "negative_only_fp_per_frame": 0.0,
+    "threshold": 0.99
+  },
+  "failed_constraints": [
+    {
+      "metric": "candidate_recall",
+      "operator": ">=",
+      "threshold": 0.8,
+      "value": 0.0,
+      "normalized_violation": 1.0
+    }
+  ],
+  "decision": {
+    "product_eligible": false,
+    "status": "diagnostic_fallback_only",
+    "P4_SCREENING_PASS": false,
+    "architecture_eliminated": true,
+    "next_registered_attempt": "A3_Teacher_Distilled_MobileNetV3_Small_FPN",
+    "additional_A2_epochs_allowed": false
+  },
+  "run_boundary": {
+    "full_screening_report_written": false,
+    "reason": "The run was stopped after the completed discovery model had formally failed its recall gate, before spending compute on unrelated classifier and area training.",
+    "partial_classifier_checkpoint_product_eligible": false,
+    "container_exit_code_after_deliberate_stop": 137,
+    "container_oom_killed": false,
+    "legacy_G4_D6_read": false,
+    "G5_sealed_final_read": false
+  }
+}

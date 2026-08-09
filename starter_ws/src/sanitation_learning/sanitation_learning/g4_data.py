@@ -39,12 +39,31 @@ DISCOVERY_PYRAMID_STRIDES = (4, 8, 16)
 AREA_FEATURE_COUNT = 10
 
 
-def encode_discovery_pyramid_targets(boxes: list[dict]) -> dict[str, np.ndarray]:
-    """Encode the same boxes independently on P3/P4/P5 grids."""
+DISCOVERY_LEVEL_MAX_SIDE = {4: 48.0, 8: 80.0, 16: float("inf")}
+
+
+def _discovery_stride_for_box(box: dict) -> int:
+    x1, y1, x2, y2 = (float(value) for value in box["bbox_xyxy"])
+    max_side = max(x2 - x1, y2 - y1)
+    for stride in DISCOVERY_PYRAMID_STRIDES:
+        if max_side <= DISCOVERY_LEVEL_MAX_SIDE[stride]:
+            return stride
+    raise AssertionError("discovery size assignment has no terminal level")
+
+
+def encode_discovery_pyramid_targets(
+    boxes: list[dict], *, assign_by_scale: bool = False
+) -> dict[str, np.ndarray]:
+    """Encode boxes on P3/P4/P5, optionally assigning each to one level."""
     result: dict[str, np.ndarray] = {}
     for stride in DISCOVERY_PYRAMID_STRIDES:
+        level_boxes = (
+            [box for box in boxes if _discovery_stride_for_box(box) == stride]
+            if assign_by_scale
+            else boxes
+        )
         encoded = encode_centernet_targets(
-            boxes,
+            level_boxes,
             input_width=DISCOVERY_MODEL_SIZE[0],
             input_height=DISCOVERY_MODEL_SIZE[1],
             stride=stride,
@@ -52,6 +71,36 @@ def encode_discovery_pyramid_targets(boxes: list[dict]) -> dict[str, np.ndarray]
         )
         for name in ("heatmap", "offset", "size", "regression_mask"):
             result[f"{name}_s{stride}"] = encoded[name]
+    return result
+
+
+def encode_teacher_quality_pyramid(
+    detections: list[dict], *, assign_by_scale: bool = True
+) -> dict[str, np.ndarray]:
+    """Encode frozen-teacher scores as soft quality maps for distillation."""
+    result: dict[str, np.ndarray] = {}
+    for stride in DISCOVERY_PYRAMID_STRIDES:
+        output = np.zeros(
+            (
+                1,
+                DISCOVERY_MODEL_SIZE[1] // stride,
+                DISCOVERY_MODEL_SIZE[0] // stride,
+            ),
+            dtype=np.float32,
+        )
+        for detection in detections:
+            if assign_by_scale and _discovery_stride_for_box(detection) != stride:
+                continue
+            encoded = encode_centernet_targets(
+                [{"class_index": 0, "bbox_xyxy": detection["bbox_xyxy"]}],
+                input_width=DISCOVERY_MODEL_SIZE[0],
+                input_height=DISCOVERY_MODEL_SIZE[1],
+                stride=stride,
+                class_count=1,
+            )["heatmap"]
+            score = float(np.clip(detection.get("score", 1.0), 0.0, 1.0))
+            output = np.maximum(output, encoded * score)
+        result[f"teacher_quality_s{stride}"] = output
     return result
 
 
@@ -701,12 +750,18 @@ class G4DiscoveryDataset:
         augment: bool = False,
         epoch: int = 0,
         seed: int = 20260806,
+        assign_pyramid_by_scale: bool = False,
+        teacher_detections_by_key: dict[
+            tuple[int, int], list[dict]
+        ] | None = None,
     ):
         self.rows = rows
         self.instances_by_key = instances_by_key
         self.augment = augment
         self.epoch = epoch
         self.seed = seed
+        self.assign_pyramid_by_scale = bool(assign_pyramid_by_scale)
+        self.teacher_detections_by_key = teacher_detections_by_key
 
     def set_epoch(self, epoch: int) -> None:
         self.epoch = epoch
@@ -740,6 +795,25 @@ class G4DiscoveryDataset:
                 )
                 for box in boxes
             ]
+        teacher_detections = None
+        if self.teacher_detections_by_key is not None:
+            key = (int(row["scene_seed"]), int(row["frame_index"]))
+            teacher_detections = [
+                dict(item)
+                for item in self.teacher_detections_by_key.get(key, ())
+            ]
+            if flip:
+                teacher_detections = [
+                    {
+                        **item,
+                        "bbox_xyxy": list(
+                            flip_bbox_horizontal(
+                                item["bbox_xyxy"], DISCOVERY_MODEL_SIZE[0]
+                            )
+                        ),
+                    }
+                    for item in teacher_detections
+                ]
         resized = cv2.resize(rgb, DISCOVERY_MODEL_SIZE, interpolation=cv2.INTER_AREA)
         image = resized.astype(np.float32) / 255.0
         if self.augment:
@@ -764,7 +838,16 @@ class G4DiscoveryDataset:
             np.ascontiguousarray(image.transpose(2, 0, 1), dtype=np.float32)
         )
         pyramid = encode_discovery_pyramid_targets(
-            [{"class_index": 0, "bbox_xyxy": box["bbox_xyxy"]} for box in boxes]
+            [{"class_index": 0, "bbox_xyxy": box["bbox_xyxy"]} for box in boxes],
+            assign_by_scale=self.assign_pyramid_by_scale,
+        )
+        teacher_quality = (
+            encode_teacher_quality_pyramid(
+                teacher_detections,
+                assign_by_scale=self.assign_pyramid_by_scale,
+            )
+            if teacher_detections is not None
+            else {}
         )
         return (
             tensor,
@@ -775,7 +858,7 @@ class G4DiscoveryDataset:
                 "regression_mask": torch.from_numpy(targets["regression_mask"]),
                 **{
                     name: torch.from_numpy(value)
-                    for name, value in pyramid.items()
+                    for name, value in {**pyramid, **teacher_quality}.items()
                 },
             },
         )

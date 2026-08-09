@@ -26,9 +26,35 @@ from sanitation_learning.g4_geometry import (  # noqa: E402
 from sanitation_learning.g4_data import (  # noqa: E402
     DISCOVERY_MODEL_SIZE,
     G4DiscoveryDataset,
+    encode_discovery_pyramid_targets,
+    encode_teacher_quality_pyramid,
     load_frame_rows,
     load_instance_records,
 )
+
+
+def test_a3_assigns_each_box_to_exactly_one_pyramid_level() -> None:
+    boxes = [
+        {"class_index": 0, "bbox_xyxy": [0, 0, 40, 30]},
+        {"class_index": 0, "bbox_xyxy": [0, 0, 70, 50]},
+        {"class_index": 0, "bbox_xyxy": [0, 0, 100, 60]},
+    ]
+    targets = encode_discovery_pyramid_targets(boxes, assign_by_scale=True)
+    assert float(targets["regression_mask_s4"].sum()) == 1.0
+    assert float(targets["regression_mask_s8"].sum()) == 1.0
+    assert float(targets["regression_mask_s16"].sum()) == 1.0
+
+
+def test_a3_teacher_quality_preserves_frozen_soft_scores() -> None:
+    targets = encode_teacher_quality_pyramid(
+        [
+            {"score": 0.73, "bbox_xyxy": [10, 20, 50, 60]},
+            {"score": 0.91, "bbox_xyxy": [100, 100, 170, 140]},
+        ]
+    )
+    assert float(targets["teacher_quality_s4"].max()) == pytest.approx(0.73)
+    assert float(targets["teacher_quality_s8"].max()) == pytest.approx(0.91)
+    assert float(targets["teacher_quality_s16"].max()) == 0.0
 
 
 def test_discovery_dataset_does_not_read_unused_modalities(monkeypatch) -> None:

@@ -22,6 +22,7 @@ def test_input_shape_constants_match_spec() -> None:
     assert tuple(g4_models.DISCOVERY_ARCHITECTURES) == (
         "resnet18_fpn_a1",
         "mobilenetv3_small_fpn_a2",
+        "teacher_distilled_mobilenetv3_fpn_a3",
     )
     assert tuple(g4_models.CLASSIFIER_CLASSES) == (
         "background",
@@ -109,6 +110,20 @@ def test_unknown_discovery_architecture_fails_closed() -> None:
             from_scratch_control=True,
             discovery_architecture="placeholder",
         )
+
+
+def test_a3_distilled_candidate_is_explicitly_identified() -> None:
+    pytest.importorskip("torch")
+    pytest.importorskip("torchvision")
+    model = g4_models.build_g4_model(
+        "discovery",
+        from_scratch_control=True,
+        discovery_architecture="teacher_distilled_mobilenetv3_fpn_a3",
+    )
+    assert model.architecture_role == (
+        "teacher_distilled_mobilenetv3_small_fpn_product_candidate"
+    )
+    assert model.independent_quality_supervision is True
 
 
 def test_classifier_output_shape() -> None:

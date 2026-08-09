@@ -48,6 +48,7 @@ DISCOVERY_STRIDES = (4, 8, 16)
 DISCOVERY_ARCHITECTURES = (
     "resnet18_fpn_a1",
     "mobilenetv3_small_fpn_a2",
+    "teacher_distilled_mobilenetv3_fpn_a3",
 )
 SEGMENTER_TASKS = ("leaf", "puddle")
 DEFAULT_ONNX_OPSET = 17
@@ -330,12 +331,21 @@ def _model_classes() -> dict[str, type]:
                     base=base, from_scratch_control=from_scratch_control
                 )
             self.discovery_architecture = architecture
+            architecture_roles = {
+                "resnet18_fpn_a1": (
+                    "fcos_lite_resnet18_fpn_product_candidate"
+                ),
+                "mobilenetv3_small_fpn_a2": (
+                    "fcos_lite_mobilenetv3_small_fpn_product_candidate"
+                ),
+                "teacher_distilled_mobilenetv3_fpn_a3": (
+                    "teacher_distilled_mobilenetv3_small_fpn_product_candidate"
+                ),
+            }
             self.architecture_role = (
                 "legacy_small_fpn_control"
                 if legacy_fpn_control
-                else "fcos_lite_resnet18_fpn_product_candidate"
-                if architecture == "resnet18_fpn_a1"
-                else "fcos_lite_mobilenetv3_small_fpn_product_candidate"
+                else architecture_roles[architecture]
             )
             self.head = nn.Sequential(
                 _ConvBnReLU(base * 2, base * 2, 3, 1, 1)
@@ -354,8 +364,8 @@ def _model_classes() -> dict[str, type]:
                 self.pyramid_levels = ("P3", "P4", "P5")
                 self.pyramid_strides = DISCOVERY_STRIDES
                 self.quality_head_enabled = True
-                self.independent_quality_supervision = (
-                    architecture == "mobilenetv3_small_fpn_a2"
+                self.independent_quality_supervision = architecture != (
+                    "resnet18_fpn_a1"
                 )
                 self.regression_parameterization = "ltrb"
                 self.graph_external_postprocess = ("top_k", "nms")

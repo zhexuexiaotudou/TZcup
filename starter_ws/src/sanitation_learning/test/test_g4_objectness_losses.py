@@ -100,6 +100,8 @@ def test_a2_objectness_and_quality_heads_receive_independent_gradients() -> None
     heatmap[0, 0, 3, 4] = 1.0
     mask = torch.zeros(1, 1, 8, 8)
     mask[0, 0, 3, 4] = 1.0
+    teacher_quality = torch.zeros(1, 1, 8, 8)
+    teacher_quality[0, 0, 3, 4] = 0.73
     report = discovery_loss(
         {
             "objectness_logits": combined,
@@ -113,6 +115,7 @@ def test_a2_objectness_and_quality_heads_receive_independent_gradients() -> None
             "offset": torch.zeros(1, 2, 8, 8),
             "size": torch.ones(1, 2, 8, 8),
             "regression_mask": mask,
+            "teacher_quality": teacher_quality,
         },
     )
     report["total"].backward()
