@@ -4,13 +4,17 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from sanitation_perception.inference_engine import CudaIOBindingSession
+from sanitation_perception.inference_engine import (
+    CudaIOBindingSession,
+    ProductInferenceEngine,
+)
 from sanitation_perception.model_registry import ProductModel
 
 
 class FakeOrtValue:
     def __init__(self, shape, dtype, device):
         self._shape = tuple(shape); self.dtype = dtype; self.device = device; self.updated = 0
+        self.value = np.zeros(self._shape, dtype=dtype)
 
     @classmethod
     def ortvalue_from_shape_and_type(cls, shape, dtype, device, device_id):
@@ -22,6 +26,10 @@ class FakeOrtValue:
     def update_inplace(self, value):
         assert tuple(value.shape) == self._shape
         self.updated += 1
+        self.value[...] = value
+
+    def numpy(self):
+        return self.value.copy()
 
 
 class FakeBinding:
@@ -114,3 +122,75 @@ def test_missing_cuda_or_dynamic_shape_is_rejected(tmp_path):
     dynamic.manifest["input"]["shapes"] = [[1, 3, -1, 8]]
     with pytest.raises(RuntimeError, match="fixed positive shapes"):
         CudaIOBindingSession(dynamic, FakeOrt)
+
+
+def test_product_engine_runs_discovery_classifier_and_both_area_models(tmp_path):
+    def product_model(role, input_name, input_shape, output_shape, thresholds, nms=None):
+        artifact = tmp_path / f"{role}.onnx"
+        artifact.write_bytes(role.encode())
+        manifest = {
+            "input": {"names": [input_name], "shapes": [input_shape], "dtypes": ["float32"]},
+            "output": {"names": ["outputs"], "shapes": [output_shape], "dtypes": ["float32"]},
+            "thresholds": thresholds,
+            "NMS": nms or {"iou_threshold": None},
+        }
+        return ProductModel(role, role, "1", "0" * 64, artifact, artifact, manifest)
+
+    models = {
+        "detector": product_model(
+            "detector", "image_rgb", [1, 3, 480, 640], [1, 15, 120, 160],
+            {"score": 0.8}, {"iou_threshold": 0.5},
+        ),
+        "classifier": product_model(
+            "classifier", "crop_rgb", [1, 3, 192, 192], [1, 4], {"score": 0.75}
+        ),
+        "leaf_segmenter": product_model(
+            "leaf_segmenter", "area_features", [1, 10, 384, 512],
+            [1, 2, 384, 512], {"mask": 0.8},
+        ),
+        "puddle_segmenter": product_model(
+            "puddle_segmenter", "area_features", [1, 10, 384, 512],
+            [1, 2, 384, 512], {"mask": 0.8},
+        ),
+    }
+
+    class Output:
+        def __init__(self, value): self.value = value
+        def numpy(self): return self.value
+
+    class Session:
+        def __init__(self, value): self.value = value; self.last_latency_ms = 1.0
+        def run(self, _inputs): return {"outputs": Output(self.value.copy())}
+
+    detector = np.full((1, 15, 120, 160), -20.0, np.float32)
+    detector[0, 0, 60, 80] = 10.0
+    detector[0, 3:5, 60, 80] = 0.5
+    detector[0, 9:11, 60, 80] = 10.0
+    area = np.full((1, 2, 384, 512), -20.0, np.float32)
+    engine = ProductInferenceEngine.__new__(ProductInferenceEngine)
+    engine.registry = type("Registry", (), {"models": models})()
+    engine.sessions = {
+        "detector": Session(detector),
+        "classifier": Session(np.array([[0.0, 5.0, 0.0, 0.0]], np.float32)),
+        "leaf_segmenter": Session(area),
+        "puddle_segmenter": Session(area),
+    }
+    engine.last_metrics = None
+    yy, xx = np.mgrid[0:480, 0:640]
+    rgb = np.stack((xx % 255, yy % 255, (xx + yy) % 255), axis=-1).astype(np.uint8)
+    depth = np.full((480, 640), 2.0, np.float32)
+    result = engine.run_frame(
+        rgb,
+        depth,
+        {"width": 640, "height": 480, "fx": 343.0, "fy": 343.0,
+         "cx": 320.0, "cy": 240.0},
+    )
+    assert len(result["candidates"]) == 1
+    assert result["discrete"][0]["class_id"] == "plastic_bottle"
+    assert result["areas"]["leaf"]["mask"].sum() == 0
+    assert result["metrics"]["candidate_count"] == 1
+    with pytest.raises(ValueError, match="RGB contrast"):
+        engine.run_frame(np.zeros_like(rgb), depth, {
+            "width": 640, "height": 480, "fx": 343.0, "fy": 343.0,
+            "cx": 320.0, "cy": 240.0,
+        })

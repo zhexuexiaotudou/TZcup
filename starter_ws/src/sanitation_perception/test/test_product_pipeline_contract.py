@@ -33,12 +33,22 @@ def test_product_contract_rejects_cpu_or_missing_iobinding():
         "required_provider": "CUDAExecutionProvider",
         "io_binding_required": True,
         "cpu_fallback_forbidden": True,
+        "maximum_candidates": 16,
+        "minimum_valid_depth_ratio": 0.05,
+        "minimum_area_region_pixels": 20,
+        "minimum_rgb_stddev": 2.0,
+        "maximum_dark_or_saturated_fraction": 0.98,
     }
     validate_product_runtime_contract({"runtime": runtime})
     for key, value in (
         ("required_provider", "CPUExecutionProvider"),
         ("io_binding_required", False),
         ("cpu_fallback_forbidden", False),
+        ("maximum_candidates", 0),
+        ("minimum_valid_depth_ratio", 0.0),
+        ("minimum_area_region_pixels", 2),
+        ("minimum_rgb_stddev", 0.0),
+        ("maximum_dark_or_saturated_fraction", 1.0),
     ):
         invalid = {"runtime": {**runtime, key: value}}
         with pytest.raises(RuntimeError):

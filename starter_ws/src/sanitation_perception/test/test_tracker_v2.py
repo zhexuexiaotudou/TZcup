@@ -87,3 +87,20 @@ def test_config_is_manifest_driven():
     del manifest["runtime"]["tracker_v2"]["score_ema_alpha"]
     with pytest.raises(ValueError, match="incomplete"):
         TrackerV2Config.from_pipeline_manifest(manifest)
+
+
+def test_area_polygon_and_physical_area_follow_the_latest_observation():
+    tracker = ProductTrackerV2(config())
+    area = detection(cls="leaf_pile")
+    area["class_probabilities"] = {"leaf_pile": 0.9, "background": 0.1}
+    area["target_type"] = "AREA"
+    area["polygon_xy_m"] = ((0.0, 0.0), (1.0, 0.0), (1.0, 0.5))
+    area["physical_area_m2"] = 0.25
+    first = tracker.update([area], 0.0)[0]
+    assert first.target_type == "AREA"
+    assert first.physical_area_m2 == pytest.approx(0.25)
+    area["polygon_xy_m"] = ((0.0, 0.0), (1.2, 0.0), (1.2, 0.5))
+    area["physical_area_m2"] = 0.30
+    updated = tracker.update([area], 0.1)[0]
+    assert updated.polygon_xy_m[1] == (1.2, 0.0)
+    assert updated.physical_area_m2 == pytest.approx(0.30)

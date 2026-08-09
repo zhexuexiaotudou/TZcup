@@ -283,6 +283,7 @@ def test_product_manifests_keep_formal_false_until_matching_p5(
         "model_artifact_hashes": artifact_hashes,
         "pretrained_provenance": provenance,
         "preprocess_hashes": {task: "c" * 64 for task in tasks},
+        "postprocess_hashes": {task: "e" * 64 for task in tasks},
         "thresholds": thresholds,
         "nms": {"discovery": {"iou": 0.5}},
         "p4_screening": {"evidence_sha256": "d" * 64},
@@ -314,3 +315,10 @@ def test_product_manifests_keep_formal_false_until_matching_p5(
     )
     assert detector["artifact_sha256"] == artifact_hashes["discovery"]
     assert detector["live_pass"] is False
+    pipeline = yaml.safe_load(
+        (tmp_path / "formal" / "perception_pipeline_manifest.yaml").read_text()
+    )
+    assert pipeline["runtime"]["postprocess_contract"] == (
+        "fcos_classifier_area_v1"
+    )
+    assert pipeline["runtime"]["maximum_candidates"] == 16

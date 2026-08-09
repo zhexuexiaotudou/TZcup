@@ -60,6 +60,10 @@ class ProductTrack:
     state: str = "TENTATIVE"
     state_before_occlusion: str = "TENTATIVE"
     source_backend: str = "onnxruntime"
+    z_m: float = 0.0
+    target_type: str = "DISCRETE"
+    polygon_xy_m: tuple[tuple[float, float], ...] = ()
+    physical_area_m2: float = 0.0
 
     @property
     def class_posterior(self) -> dict[str, float]:
@@ -144,6 +148,13 @@ class ProductTrackerV2:
                 else None
             ),
             source_backend=str(detection.get("source_backend", "onnxruntime")),
+            z_m=float(detection.get("z_m", 0.0)),
+            target_type=str(detection.get("target_type", "DISCRETE")),
+            polygon_xy_m=tuple(
+                tuple(float(coordinate) for coordinate in point)
+                for point in detection.get("polygon_xy_m", ())
+            ),
+            physical_area_m2=float(detection.get("physical_area_m2", 0.0)),
         )
         self.tracks[track.uuid] = track
         return track
@@ -193,6 +204,16 @@ class ProductTrackerV2:
         track.last_seen_s = stamp
         if detection.get("bbox_xyxy") is not None:
             track.bbox_xyxy = tuple(float(value) for value in detection["bbox_xyxy"])
+        track.z_m = float(detection.get("z_m", track.z_m))
+        track.target_type = str(detection.get("target_type", track.target_type))
+        if detection.get("polygon_xy_m"):
+            track.polygon_xy_m = tuple(
+                tuple(float(coordinate) for coordinate in point)
+                for point in detection["polygon_xy_m"]
+            )
+        track.physical_area_m2 = float(
+            detection.get("physical_area_m2", track.physical_area_m2)
+        )
         if track.state == "LOST":
             track.state = track.state_before_occlusion
         if (

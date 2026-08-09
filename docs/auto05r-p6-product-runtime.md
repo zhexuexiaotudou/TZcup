@@ -1,7 +1,7 @@
 # AUTO-05R P6 产品运行时软件合同
 
-当前 P6 先完成不依赖冻结模型的运行时内核，产品 ROS lifecycle 节点与真实
-ORT CUDA session 仍必须在 P4/P5 模型冻结后做 live 验收。
+当前 P6 已补齐冻结模型的预处理、解码、投影、跟踪和 ROS publisher 代码；产品
+ROS lifecycle 节点与真实 ORT CUDA session 仍必须在 P4/P5 模型冻结后做 live 验收。
 
 已实现：
 
@@ -28,6 +28,18 @@ ORT CUDA session 仍必须在 P4/P5 模型冻结后做 live 验收。
 - 产品 Lifecycle 入口已建立：configure 阶段完成 pipeline/model manifest、artifact
   hash、正式 claim、CUDA provider、I/O Binding、预分配与 warm-up 审计，任一失败
   都不进入 ACTIVE；同步队列仍由 20 ms/深度 2 合同控制，TF 强制使用 RGB stamp。
+- 产品推理不再停在 postprocessor 占位异常：discovery 按 P3/P4/P5 解码并在图外做
+  local maximum/NMS，所有候选进入冻结 crop classifier；leaf/puddle 分别构建与训练
+  一致的 10 通道 RGB-D/ground-geometry 输入并输出原生分辨率 mask。
+- 离散实例仅从预测 bbox 内的有效 depth 投影；每个 leaf/puddle 连通区分别从预测
+  contour 生成 map polygon、物理面积、置信度与协方差，再统一进入 class-agnostic
+  tracker v2。area 不使用 registry rectangle。低置信 track 保持 TENTATIVE/DEFERRED。
+- 自动生成的正式 manifest 现在显式声明 `fcos_classifier_area_v1`，并绑定 freeze 的
+  preprocess/postprocess hash；registry 在创建 session 前重算并核对这些合同。没有
+  P5 formal claim 的 manifest 仍不能启动产品节点。
+- ROS 产品节点发布预测 leaf/puddle mask 和 `GarbageTargetArray`，同时将 preprocess、
+  discovery、classifier、leaf、puddle、projection、tracking 和 end-to-end 延迟写入
+  metrics。keepout 权威输入尚未接入，因此所有目标暂时按 blocked 标记，禁止误触发。
 - 已建立不可变 release 的原子激活指针；新版本只有在独立 stage 中完成 registry
   校验和 inactive warm-up 后才能切换，失败保持旧指针，显式 rollback 可恢复上一版本。
 - 产品容器、Compose、build/run/healthcheck 和 release packaging 已加入；当前正式模型
@@ -41,10 +53,14 @@ ORT CUDA session 仍必须在 P4/P5 模型冻结后做 live 验收。
 
 仍未通过：
 
-- 冻结模型解码、完整推理与 publisher 接入后的 Lifecycle live 全链；
 - 四个冻结模型上的真实 ORT CUDA session/warm-up/profile 验收；
-- RGB stamp 的 ROS TF 查询、完整推理与多实例 polygon ROS 发布；
+- RGB stamp 的 ROS TF 查询、完整推理与多实例 polygon 的真实 Gazebo 验收；
 - ROS diagnostics topic、fault injection、10 次冷启动及 learned-live。
 - 冻结模型下的真实性能门和连续两小时 Gazebo soak。
 
 这些状态保持 false，不能因为纯 Python 内核测试通过而提升 P6/P7/live 门。
+
+当前软件验证证据：Windows 快速门 `460 passed / 23 skipped`；正式 CUDA 镜像中的
+产品 runtime/manifest/packaging 聚焦回归 `29 passed`；ROS 2 Jazzy 容器实际构建
+`sanitation_perception_interfaces` 与 `sanitation_perception` 两包成功。以上只证明
+实现和安装链成立，不能替代冻结模型上的 provider profile、Gazebo live 或 soak。

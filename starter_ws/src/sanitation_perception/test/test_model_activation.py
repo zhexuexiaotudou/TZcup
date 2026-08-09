@@ -8,6 +8,7 @@ import pytest
 import yaml
 
 from sanitation_perception.model_activation import AtomicModelActivator
+from sanitation_perception.model_registry import _config_hash
 
 
 ROLES = ("detector", "classifier", "leaf_segmenter", "puddle_segmenter")
@@ -23,6 +24,18 @@ def _release(root: Path, release_id: str) -> Path:
     for role in ROLES:
         artifact = models / f"{role}.onnx"
         artifact.write_bytes(role.encode())
+        preprocess = {
+            "detector": {"resize_wh": [640, 480], "rgb_scale": "uint8/255"},
+            "classifier": {"resize_wh": [192, 192], "rgb_scale": "uint8/255", "context_scale": 3.0},
+            "leaf_segmenter": {"resize_wh": [512, 384], "feature_channels": 10},
+            "puddle_segmenter": {"resize_wh": [512, 384], "feature_channels": 10},
+        }[role]
+        postprocess = {
+            "detector": {"graph_external": ["local_maximum", "top_k", "nms"], "local_maximum_radius": 1, "max_detections": 100},
+            "classifier": {"background_index": 0, "class_order": ["background", "plastic_bottle", "metal_can", "paper_litter"]},
+            "leaf_segmenter": {"mask_threshold": 0.5},
+            "puddle_segmenter": {"mask_threshold": 0.5},
+        }[role]
         manifest = {
             "schema_version": 2,
             "model_id": role,
@@ -35,10 +48,10 @@ def _release(root: Path, release_id: str) -> Path:
             "weight_source": "test",
             "pretraining_source": "test",
             "input": {"names": ["x"], "shapes": [[1, 3, 8, 8]], "dtypes": ["float32"]},
-            "normalization": {},
+            "normalization": {"preprocess_hash": _config_hash(preprocess)},
             "output": {"names": ["y"], "shapes": [[1, 1]], "dtypes": ["float32"]},
             "class_order": ["background"],
-            "thresholds": {"score": 0.5},
+            "thresholds": {("mask" if role in {"leaf_segmenter", "puddle_segmenter"} else "score"): 0.5},
             "NMS": {"classwise": False, "iou_threshold": None, "score_threshold": 0.5},
             "provider_compatibility": ["CUDAExecutionProvider"],
             "screening_pass": True,
@@ -46,6 +59,7 @@ def _release(root: Path, release_id: str) -> Path:
             "live_pass": False,
             "synthetic_only": True,
             "competition_claim_allowed": False,
+            "postprocess_hash": _config_hash(postprocess),
         }
         name = f"{role}_manifest.yaml"
         (manifests / name).write_text(yaml.safe_dump(manifest), encoding="utf-8")

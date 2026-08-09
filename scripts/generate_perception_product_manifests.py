@@ -137,6 +137,7 @@ def generate(
             "competition_claim_allowed": False,
             "freeze_id": freeze["freeze_id"],
             "freeze_config_hash": freeze["config_hash"],
+            "postprocess_hash": freeze["postprocess_hashes"][task],
             "p4_evidence_sha256": freeze["p4_screening"]["evidence_sha256"],
             "p5_result_sha256": p5_sha,
         }
@@ -163,6 +164,16 @@ def generate(
     base["model_manifests"] = filenames
     base["freeze_id"] = freeze["freeze_id"]
     base["freeze_config_hash"] = freeze["config_hash"]
+    base["runtime"].update(
+        {
+            "postprocess_contract": "fcos_classifier_area_v1",
+            "maximum_candidates": 16,
+            "minimum_valid_depth_ratio": 0.05,
+            "minimum_area_region_pixels": 20,
+            "minimum_rgb_stddev": 2.0,
+            "maximum_dark_or_saturated_fraction": 0.98,
+        }
+    )
     base["status"] = {
         "screening_pipeline_pass": True,
         "formal_pipeline_pass": formal_pass,

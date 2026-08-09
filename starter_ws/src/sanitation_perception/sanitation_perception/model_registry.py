@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import hashlib
+import json
 from pathlib import Path
 
 from sanitation_perception.pipeline_manifest import (
@@ -71,6 +72,7 @@ class ProductModelRegistry:
             thresholds = manifest.get("thresholds", {})
             if not thresholds or any(value is None for value in thresholds.values()):
                 raise ValueError(f"{role} has missing product thresholds")
+            _validate_runtime_contract_hashes(role, manifest)
             artifact_path = artifact_root / manifest["artifact"]
             models[role] = ProductModel(
                 role=role,
@@ -106,3 +108,52 @@ class ProductModelRegistry:
                 for role, model in sorted(self.models.items())
             },
         }
+
+
+def _config_hash(value: object) -> str:
+    payload = json.dumps(
+        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+    )
+    return hashlib.sha256(payload.encode("utf-8")).hexdigest()
+
+
+def _validate_runtime_contract_hashes(role: str, manifest: dict) -> None:
+    task = {
+        "detector": "discovery",
+        "classifier": "classifier",
+        "leaf_segmenter": "leaf",
+        "puddle_segmenter": "puddle",
+    }[role]
+    preprocess = {
+        "discovery": {"resize_wh": [640, 480], "rgb_scale": "uint8/255"},
+        "classifier": {
+            "resize_wh": [192, 192],
+            "rgb_scale": "uint8/255",
+            "context_scale": 3.0,
+        },
+        "leaf": {"resize_wh": [512, 384], "feature_channels": 10},
+        "puddle": {"resize_wh": [512, 384], "feature_channels": 10},
+    }[task]
+    class_order = [
+        "background", "plastic_bottle", "metal_can", "paper_litter"
+    ]
+    if task == "discovery":
+        postprocess = {
+            "graph_external": ["local_maximum", "top_k", "nms"],
+            "local_maximum_radius": 1,
+            "max_detections": 100,
+        }
+    elif task == "classifier":
+        postprocess = {"background_index": 0, "class_order": class_order}
+    else:
+        postprocess = {"mask_threshold": manifest["thresholds"]["mask"]}
+    declared_preprocess = manifest.get("normalization", {}).get(
+        "preprocess_hash"
+    )
+    declared_postprocess = manifest.get("postprocess_hash")
+    if declared_preprocess is None or declared_postprocess is None:
+        raise ValueError(f"{role} runtime contract hashes are missing")
+    if declared_preprocess != _config_hash(preprocess):
+        raise ValueError(f"{role} preprocess contract hash mismatch")
+    if declared_postprocess != _config_hash(postprocess):
+        raise ValueError(f"{role} postprocess contract hash mismatch")

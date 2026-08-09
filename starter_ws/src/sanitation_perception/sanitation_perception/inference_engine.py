@@ -10,6 +10,15 @@ import time
 import numpy as np
 
 from sanitation_perception.model_registry import ProductModel, ProductModelRegistry
+from sanitation_perception.area_runtime import decode_area, preprocess_area
+from sanitation_perception.classifier_runtime import (
+    classifier_input,
+    classify_candidate,
+)
+from sanitation_perception.detector_runtime import (
+    decode_discovery,
+    preprocess_discovery,
+)
 
 
 DTYPES = {
@@ -152,9 +161,148 @@ class ProductInferenceEngine:
             for role, model in registry.models.items()
         }
         self.provider_audits = {}
+        self.last_metrics = None
 
     def warm_up(self) -> dict:
         self.provider_audits = {
             role: session.warm_up_and_audit() for role, session in self.sessions.items()
         }
         return self.provider_audits
+
+    @staticmethod
+    def _single_numpy(outputs: dict) -> np.ndarray:
+        if len(outputs) != 1:
+            raise RuntimeError(
+                f"frozen task must expose exactly one flat output, got {list(outputs)}"
+            )
+        value = next(iter(outputs.values()))
+        if not hasattr(value, "numpy"):
+            raise RuntimeError("ORT device output cannot be copied for postprocessing")
+        return np.asarray(value.numpy())
+
+    def run_frame(
+        self,
+        rgb: np.ndarray,
+        depth_m: np.ndarray,
+        camera: dict,
+        *,
+        maximum_candidates: int = 16,
+        minimum_valid_depth_ratio: float = 0.05,
+        minimum_rgb_stddev: float = 2.0,
+        maximum_dark_or_saturated_fraction: float = 0.98,
+    ) -> dict:
+        """Run all four frozen models and return prediction-derived outputs."""
+        started = time.perf_counter()
+        rgb = np.asarray(rgb)
+        depth_m = np.asarray(depth_m, dtype=np.float32)
+        if rgb.ndim != 3 or rgb.shape[2] != 3:
+            raise ValueError("product RGB must be HxWx3")
+        if depth_m.shape != rgb.shape[:2]:
+            raise ValueError("RGB and depth dimensions differ")
+        grayscale = np.asarray(rgb, dtype=np.float32).mean(axis=2)
+        invalid_exposure_fraction = float(
+            ((grayscale <= 2.0) | (grayscale >= 253.0)).mean()
+        )
+        if float(grayscale.std()) < float(minimum_rgb_stddev):
+            raise ValueError("RGB contrast is below product minimum")
+        if invalid_exposure_fraction > float(
+            maximum_dark_or_saturated_fraction
+        ):
+            raise ValueError("RGB frame is predominantly dark or saturated")
+        valid_depth_ratio = float(
+            (np.isfinite(depth_m) & (depth_m > 0.0)).mean()
+        )
+        if valid_depth_ratio < float(minimum_valid_depth_ratio):
+            raise ValueError("valid depth ratio is below product minimum")
+
+        preprocess_started = time.perf_counter()
+        discovery_input = preprocess_discovery(rgb)
+        preprocess_ms = (time.perf_counter() - preprocess_started) * 1000.0
+        detector_model = self.registry.models["detector"]
+        detector_threshold = float(detector_model.manifest["thresholds"]["score"])
+        nms_threshold = float(detector_model.manifest["NMS"]["iou_threshold"])
+        discovery_output = self._single_numpy(
+            self.sessions["detector"].run(
+                {detector_model.manifest["input"]["names"][0]: discovery_input}
+            )
+        )
+        candidates = decode_discovery(
+            discovery_output,
+            score_threshold=detector_threshold,
+            nms_iou_threshold=nms_threshold,
+            maximum_candidates=int(maximum_candidates),
+        )
+
+        classifier_model = self.registry.models["classifier"]
+        classifier_threshold = float(
+            classifier_model.manifest["thresholds"]["score"]
+        )
+        classifier_started = time.perf_counter()
+        classified = []
+        for candidate in candidates:
+            crop = classifier_input(rgb, candidate["bbox_xyxy"])
+            logits = self._single_numpy(
+                self.sessions["classifier"].run(
+                    {classifier_model.manifest["input"]["names"][0]: crop}
+                )
+            )
+            classified.append(
+                classify_candidate(
+                    logits, candidate, score_threshold=classifier_threshold
+                )
+            )
+        classifier_ms = (time.perf_counter() - classifier_started) * 1000.0
+
+        area_outputs = {}
+        geometry = None
+        area_preprocess_ms = 0.0
+        for role, task in (
+            ("leaf_segmenter", "leaf"),
+            ("puddle_segmenter", "puddle"),
+        ):
+            area_model = self.registry.models[role]
+            area_started = time.perf_counter()
+            tensor, task_geometry = preprocess_area(
+                rgb, depth_m, camera, task=task, geometry=geometry
+            )
+            area_preprocess_ms += (time.perf_counter() - area_started) * 1000.0
+            geometry = task_geometry if geometry is None else geometry
+            flat = self._single_numpy(
+                self.sessions[role].run(
+                    {area_model.manifest["input"]["names"][0]: tensor}
+                )
+            )
+            area_outputs[task] = decode_area(
+                flat,
+                mask_threshold=float(
+                    area_model.manifest["thresholds"]["mask"]
+                ),
+                native_size=(rgb.shape[1], rgb.shape[0]),
+            )
+
+        total_ms = (time.perf_counter() - started) * 1000.0
+        self.last_metrics = {
+            "preprocess_ms": preprocess_ms + area_preprocess_ms,
+            "discovery_ms": self.sessions["detector"].last_latency_ms,
+            "classifier_batch_ms": classifier_ms,
+            "leaf_ms": self.sessions["leaf_segmenter"].last_latency_ms,
+            "puddle_ms": self.sessions["puddle_segmenter"].last_latency_ms,
+            "inference_pipeline_ms": total_ms,
+            "candidate_count": len(candidates),
+            "accepted_discrete_count": sum(item["accepted"] for item in classified),
+            "rejected_candidate_count": sum(not item["accepted"] for item in classified),
+            "valid_depth_ratio": valid_depth_ratio,
+            "rgb_stddev": float(grayscale.std()),
+            "dark_or_saturated_fraction": invalid_exposure_fraction,
+        }
+        return {
+            "candidates": candidates,
+            "discrete": [item for item in classified if item["accepted"]],
+            "rejected": [item for item in classified if not item["accepted"]],
+            "areas": area_outputs,
+            "geometry": {
+                "valid_depth_ratio": geometry.get("valid_depth_ratio"),
+                "ground_plane": geometry.get("ground_plane"),
+            },
+            "metrics": dict(self.last_metrics),
+        }
