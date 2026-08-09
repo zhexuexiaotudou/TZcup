@@ -16,6 +16,13 @@ import zipfile
 
 ROOT = Path(__file__).resolve().parents[1]
 MODEL_ROLES = ("detector", "classifier", "leaf_segmenter", "puddle_segmenter")
+PRODUCT_STATUS_FILES = (
+    "PERCEPTION_PRODUCT_STATUS.json",
+    "PERCEPTION_PRODUCT_EVIDENCE_INDEX.md",
+    "PERCEPTION_PRODUCT_BLOCKERS.json",
+    "PERCEPTION_MODEL_REGISTRY.json",
+    "PERCEPTION_RELEASE_MANIFEST.json",
+)
 
 
 def sha256(path: Path) -> str:
@@ -66,6 +73,7 @@ def package(
     *,
     required_provider: str,
     commit: str,
+    product_status_dir: Path | None = None,
 ) -> tuple[Path, Path]:
     registry = _registry(pipeline, artifact_root, required_provider)
     release_id = f"{registry.pipeline_id}-{commit[:12]}"
@@ -97,21 +105,34 @@ def package(
         _copy(ROOT / "docker/compose.perception-product.yaml", stage / "compose.perception-product.yaml")
         _copy(ROOT / "scripts/healthcheck_perception.sh", stage / "healthcheck_perception.sh")
         _copy(ROOT / "scripts/perception_entrypoint.sh", stage / "perception_entrypoint.sh")
-        _write_json(
-            stage / "PERCEPTION_MODEL_REGISTRY.json",
-            {"schema_version": 1, "release_id": release_id, **registry.model_info()},
-        )
-        _write_json(
-            stage / "PERCEPTION_RELEASE_MANIFEST.json",
-            {
-                "schema_version": 1,
-                "release_id": release_id,
-                "source_commit": commit,
-                "required_provider": required_provider,
-                "created_at": datetime.now(timezone.utc).isoformat(),
-                "claim": "formal_models_packaged; live readiness remains evidence-gated",
-            },
-        )
+        registry_payload = {
+            "schema_version": 1,
+            "release_id": release_id,
+            "source_commit": commit,
+            **registry.model_info(),
+        }
+        release_payload = {
+            "schema_version": 1,
+            "release_id": release_id,
+            "source_commit": commit,
+            "required_provider": required_provider,
+            "created_at": datetime.now(timezone.utc).isoformat(),
+            "claim": "formal_models_packaged; live readiness remains evidence-gated",
+        }
+        _write_json(stage / "PERCEPTION_MODEL_REGISTRY.json", registry_payload)
+        _write_json(stage / "PERCEPTION_RELEASE_MANIFEST.json", release_payload)
+        _write_json(output_dir / "PERCEPTION_MODEL_REGISTRY.json", registry_payload)
+        _write_json(output_dir / "PERCEPTION_RELEASE_MANIFEST.json", release_payload)
+        if product_status_dir is not None:
+            for name in PRODUCT_STATUS_FILES:
+                source = product_status_dir / name
+                if source.suffix == ".json":
+                    payload = json.loads(source.read_text(encoding="utf-8"))
+                    if payload.get("source_commit") != commit:
+                        raise ValueError(
+                            f"{name} source_commit does not match release commit"
+                        )
+                _copy(source, stage / name)
         (stage / "environment.lock").write_text(
             "ros_distro=jazzy\nonnxruntime_gpu=1.20.2\npython=3.12\nprovider="
             f"{required_provider}\n", encoding="utf-8",
@@ -164,10 +185,14 @@ def main() -> int:
     parser.add_argument("--output-dir", type=Path, required=True)
     parser.add_argument("--required-provider", default="CUDAExecutionProvider")
     parser.add_argument("--commit", default=None)
+    parser.add_argument("--product-status-dir", type=Path)
     args = parser.parse_args()
     archive, digest = package(
         args.pipeline.resolve(), args.artifact_root.resolve(), args.output_dir.resolve(),
         required_provider=args.required_provider, commit=args.commit or _git_commit(),
+        product_status_dir=(
+            args.product_status_dir.resolve() if args.product_status_dir else None
+        ),
     )
     print(json.dumps({"archive": str(archive), "sha256_file": str(digest)}, indent=2))
     return 0

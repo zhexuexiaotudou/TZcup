@@ -77,6 +77,11 @@ def test_release_contains_required_layout_and_checksums(tmp_path: Path):
         pipeline, artifacts, tmp_path / "out",
         required_provider="CUDAExecutionProvider", commit="a" * 40,
     )
+    registry = tmp_path / "out" / "PERCEPTION_MODEL_REGISTRY.json"
+    release = tmp_path / "out" / "PERCEPTION_RELEASE_MANIFEST.json"
+    assert registry.is_file()
+    assert release.is_file()
+    assert '"source_commit": "aaaaaaaa' in registry.read_text()
     assert digest.read_text().startswith(hashlib.sha256(archive.read_bytes()).hexdigest())
     with zipfile.ZipFile(archive) as source:
         names = set(source.namelist())

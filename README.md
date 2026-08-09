@@ -145,7 +145,7 @@ ros2 launch sanitation_debug_visualization debug_sim.launch.py
 ## 文档入口
 
 - [`README_FIRST.md`](README_FIRST.md)：环境准备和启动步骤；[`docs/auto05r-p0-trustworthiness.md`](docs/auto05r-p0-trustworthiness.md)：AUTO-05R P0 可信基础与能力边界；[`docs/auto05r-p1-discovery-control.md`](docs/auto05r-p1-discovery-control.md)：旧 discovery head 诊断；[`docs/auto05r-p2-data-integrity-recovery.md`](docs/auto05r-p2-data-integrity-recovery.md)：G4 场景泄漏根因、修复与重采边界；[`docs/auto05r-p6-product-runtime.md`](docs/auto05r-p6-product-runtime.md)：产品同步、调度、tracker v2 与 watchdog 软件边界；[`docs/auto05r-p13-test-engineering.md`](docs/auto05r-p13-test-engineering.md)：12 项 fail-closed 故障注入与冷启动/replay 边界；
-- `scripts/generate_perception_product_status.py`：从显式通过证据生成 P14 状态、证据哈希索引和 blocker register；缺失或 false 证据不会提升任何产品状态；
+- `scripts/generate_perception_product_status.py`：从显式通过证据生成 P14 状态、证据哈希索引和 blocker register；缺失或 false 证据不会提升任何产品状态；`package_perception_release.py` 同步输出真实 model registry/release manifest，并可将五个 P14 文件纳入最终不可变 zip；
 - [`PROJECT_SPEC.md`](PROJECT_SPEC.md)：系统架构与接口边界；
 - [`STAGE_GATES.md`](STAGE_GATES.md)：Stage 与 AUTO 阶段验收条件；
 - [`docs/progress.md`](docs/progress.md)：详细进度、指标和历史边界；

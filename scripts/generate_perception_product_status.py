@@ -71,6 +71,7 @@ def generate(
     source_commit: str,
     external_blockers: set[str] | None = None,
     model_registry_path: Path | None = None,
+    release_manifest_path: Path | None = None,
 ) -> dict:
     unknown = set(evidence) - set(EVIDENCE_KEYS)
     if unknown:
@@ -152,13 +153,18 @@ def generate(
         "external_only": bool(blockers)
         and all(item["classification"] == "external_resource" for item in blockers),
     }
-    release_payload = {
-        "schema_version": 1,
-        "source_commit": source_commit,
+    if release_manifest_path is None:
+        release_payload = {"schema_version": 1, "source_commit": source_commit}
+    else:
+        release_manifest_path = release_manifest_path.resolve()
+        release_payload = _load(release_manifest_path)
+        if release_payload.get("source_commit") != source_commit:
+            raise ValueError("release manifest source_commit mismatch")
+    release_payload.update({
         "status_sha256": None,
         "evidence": index,
         "release_ready": statuses["PRODUCT_X86_RUNTIME_READY"],
-    }
+    })
 
     status_path = output_dir / "PERCEPTION_PRODUCT_STATUS.json"
     blockers_path = output_dir / "PERCEPTION_PRODUCT_BLOCKERS.json"
@@ -222,6 +228,7 @@ def main() -> int:
     parser.add_argument("--output-dir", required=True, type=Path)
     parser.add_argument("--source-commit", default=None)
     parser.add_argument("--model-registry", type=Path)
+    parser.add_argument("--release-manifest", type=Path)
     parser.add_argument(
         "--external-blocker",
         action="append",
@@ -238,6 +245,7 @@ def main() -> int:
         source_commit=args.source_commit or _git_commit(),
         external_blockers=set(args.external_blocker),
         model_registry_path=args.model_registry,
+        release_manifest_path=args.release_manifest,
     )
     print(json.dumps(result, ensure_ascii=False, indent=2))
     return 0
