@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-09",
+  "coverage_is_primary_task": true,
+  "existing_spot_cleaning_mode": "deferred",
+  "existing_active_observation": true,
+  "dynamic_trash_map": false,
+  "cleaning_task_scheduler": false,
+  "post_clean_visual_verification": false,
+  "online_product_target_bridge": false,
+  "known_blockers": [
+    "product perception target topic does not match spot-cleaning subscription",
+    "product targets are fail-closed as in_keepout until an authoritative map input exists",
+    "no frozen model permits live online observations"
+  ]
+}

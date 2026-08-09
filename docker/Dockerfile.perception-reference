@@ -1,0 +1,30 @@
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+
+ARG DEBIAN_FRONTEND=noninteractive
+ARG GROUNDING_DINO_COMMIT=856dde20aee659246248e20734ef9ba5214f5e44
+ARG GROUNDED_SAM2_COMMIT=b7a9c29f196edff0eb54dbe14588d7ae5e3dde28
+ARG SAM2_COMMIT=2b90b9f5ceec907a1c18123530e92e794ad901a4
+ARG YOLO_WORLD_COMMIT=4f70adbaacf5685bd9ec5bea85f1f91057f6fc0b
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates git python3 python3-pip && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/reference
+
+# Dependencies are pinned and isolated from the ROS product image. Checkpoints are intentionally
+# absent: the benchmark launcher must verify the external artifact hash and registry first.
+RUN git clone https://github.com/IDEA-Research/GroundingDINO.git grounding-dino && \
+    git -C grounding-dino checkout --detach "${GROUNDING_DINO_COMMIT}" && \
+    git clone https://github.com/IDEA-Research/Grounded-SAM-2.git grounded-sam2 && \
+    git -C grounded-sam2 checkout --detach "${GROUNDED_SAM2_COMMIT}" && \
+    git clone https://github.com/facebookresearch/sam2.git sam2 && \
+    git -C sam2 checkout --detach "${SAM2_COMMIT}" && \
+    git clone https://github.com/AILab-CVC/YOLO-World.git yolo-world && \
+    git -C yolo-world checkout --detach "${YOLO_WORLD_COMMIT}"
+
+COPY reference_vision /workspace/reference_vision
+COPY third_party/perception /workspace/third_party/perception
+WORKDIR /workspace
+
+CMD ["python3", "-c", "import reference_vision; print('reference adapters ready; no product claim')"]

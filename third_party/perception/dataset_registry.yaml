@@ -1,0 +1,11 @@
+schema_version: 1
+datasets:
+  - name: TACO
+    upstream_repository: https://github.com/pedropro/TACO
+    upstream_commit: 29de1a9ba05a647b83a90f18d7772e20bb23d846
+    toolkit_license: MIT
+    dataset_license: per_image_metadata_audit_required
+    allowed_use: training_only_after_audit
+    source_hash: null
+    split_policy: external_train_only_no_sealed_final
+    ingested: false

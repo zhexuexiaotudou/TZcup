@@ -1,5 +1,14 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## PERCEPTION-ONLINE 清扫智能边界
+
+正式任务以空 `DynamicTrashMap` 启动，Coverage 为主任务。生产目标只能从车载 RGB-D
+当前视野、严格同步的 CameraInfo、RGB 时间戳 TF 与多帧跟踪生成；Gazebo/evaluation
+registry 和 `/ground_truth/*` 不得进入生产地图、调度或控制。Safety Perception 对所有
+清扫动作保留最高优先级否决权。完整数据模型、状态和回放合同见
+[`DYNAMIC_TRASH_MAP_SPEC.md`](DYNAMIC_TRASH_MAP_SPEC.md)，调度与 reference/product
+隔离见 [`ONLINE_CLEANING_INTELLIGENCE_ARCHITECTURE.md`](ONLINE_CLEANING_INTELLIGENCE_ARCHITECTURE.md)。
+
 ## AUTO-17 可视化演示架构
 
 AUTO-17 是既有自主控制面的只读观察层，不是新的控制器。`sanitation_live_dashboard` 订阅 `/coverage/state`、`/coverage/component_state`、`/coverage/current_path`、`/localization/fused_pose`、`/cmd_vel`、`/brush_enabled`、`/emergency_stop` 与 evaluation-only 的 `/coverage/evaluation_sample`，通过本机 HTTP `/api/v1/telemetry` 和 `/healthz` 提供快照；网页不得发布底盘命令。Gazebo `/gui/track` 跟随 `sanitation_vehicle`，RViz `TopDownOrtho` 以 `base_footprint` 为目标帧。专用录像直接轮询只读遥测并绘制任务画面，不抓取用户桌面。

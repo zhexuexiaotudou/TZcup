@@ -2,6 +2,12 @@
 
 TZcup 是一个面向智慧环卫无人清扫车的 ROS 2 仿真与自主任务工程。项目以 Ubuntu 24.04、ROS 2 Jazzy、Gazebo Harmonic、Nav2、SLAM Toolbox、OpenNav Coverage 和 Fields2Cover 为基础，覆盖车辆建模、环境仿真、定位导航、全覆盖清扫、垃圾感知、定点清扫、安全控制、调试可视化和验收证据。
 
+## 在线感知任务契约
+
+正式清扫任务在启动时只知道道路、可清扫区域、keepout 和静态障碍，不预载垃圾坐标，`DynamicTrashMap` 必须为空。车辆先执行 Coverage，垃圾目标只能由车载 RGB-D 在车辆运动中的当前视野内发现，经多帧确认、时间戳 TF 投影和地图融合后，才允许进入清扫调度；Gazebo target registry 和 ground-truth 只属于独立评测进程，不能生成生产目标或控制动作。
+
+离线数据集只用于训练和验收“垃圾长什么样”。系统不要求在任务开始前取得整个清扫区域的垃圾照片或垃圾位置，正式任务中的垃圾目标来自车载相机运行时观测。当前新授权的 `PERCEPTION-ONLINE` 路线与历史 AUTO-05R 分开计门：A1/A2/A3 及 P4 失败证据保持不变，先以 x86/RTX 候选打通在线闭环，再独立蒸馏到 Horizon J6；任何未通过的 sealed final、moving-camera、spot-clean、soak、J6 实板或真实域门均保持 fail-closed。
+
 任务契约显式区分 `AREA_FILL / TAUGHT_ROUTE / POINT_CLEAN`：小场默认 `AREA_FILL` 使用本页的覆盖优化；狭窄固定通道可离线生成带版本和 SHA-256 的教学路线，每段仍由 Nav2 FollowPath 做碰撞检查并执行速度/刷盘状态；`POINT_CLEAN` 继续由既有 `sanitation_spot_cleaning` 链执行，若误交给 Coverage 执行器会 fail-closed。
 地图监督台会分层显示仿真参考、SLAM、感知、规划与实际轨迹；安全状态、回放、操作边界和启动方式见 [`docs/human-visualization.md`](docs/human-visualization.md)。
 ## 实时可视化演示
@@ -157,18 +163,8 @@ ros2 launch sanitation_debug_visualization debug_sim.launch.py
 
 所有开发修改应在独立分支和 worktree 中完成。README 只在项目定位、使用方式、目录结构或当前能力边界发生变化时更新；逐阶段和逐提交记录写入对应文档或 Git/PR 历史。
 
-最低快速门禁：
-
-```powershell
-py -3 scripts/ci_fast.py
-```
-
-Linux / CI：
-
-```bash
-python scripts/ci_fast.py
-bash -n scripts/*.sh
-```
+最低快速门禁为 Windows 的 `py -3 scripts/ci_fast.py` 或 Linux/CI 的
+`python scripts/ci_fast.py`；改动 Bash 脚本时还要执行 `bash -n scripts/*.sh`。
 
 涉及 ROS 包、URDF/Xacro、SDF、Nav2、SLAM、覆盖规划或运行时行为时，还必须执行受影响的 Docker/ROS Stage 门禁；轻量 CI 不能代替真实仿真验收。
 

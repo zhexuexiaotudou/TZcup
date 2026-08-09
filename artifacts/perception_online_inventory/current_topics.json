@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-09",
+  "product_inputs": [
+    "/camera/color/image_raw",
+    "/camera/depth/image_rect_raw",
+    "/camera/color/camera_info",
+    "/tf",
+    "/tf_static"
+  ],
+  "product_outputs": [
+    "/perception/product/targets",
+    "/perception/product/leaf_mask",
+    "/perception/product/puddle_mask",
+    "/perception/product/health",
+    "/perception/product/metrics",
+    "/perception/product/model_info"
+  ],
+  "required_online_outputs_not_yet_present": [
+    "/perception/product/observations",
+    "/perception/product/tracks",
+    "/perception/product/dynamic_trash_map",
+    "/perception/product/area_regions"
+  ],
+  "integration_mismatch": {
+    "spot_cleaning_subscription": "/perception/garbage/targets",
+    "product_publisher": "/perception/product/targets"
+  },
+  "ground_truth_input_topics": []
+}

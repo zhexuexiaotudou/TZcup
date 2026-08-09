@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-09",
+  "blockers": [
+    {"gate": "PERCEPTION_ONLINE_X86_DEV_PASS", "kind": "model_and_runtime_evidence", "detail": "FCOS-R50 teacher passed standalone G4 data learnability, but the complete X1 detector-classifier-area-map-tracker moving-camera development gate has not run.", "fallback": "keep X1 registered; X2 Grounding DINO remains reference-only until checkpoint provenance, container, latency, and moving-camera benchmark are present"},
+    {"gate": "DYNAMIC_TRASH_MAP_PASS", "kind": "formal_simulation_evidence", "detail": "software FOV, insertion, fusion, expiry, resume, and replay tests pass, but no 30-seed learned moving-camera mission has exercised the map", "fallback": "retain software_contract_pass only"},
+    {"gate": "POST_CLEAN_VERIFICATION_PASS", "kind": "formal_simulation_evidence", "detail": "bounded discrete/area verification state machines pass unit and ROS package tests, but learned before/after camera evidence and 30 mission seeds are absent", "fallback": "do not equate action completion with CLEANED"},
+    {"gate": "MODEL_FREEZE_X86", "kind": "upstream_gate", "detail": "no x86 candidate has passed the complete development gate; G5 remains sealed", "fallback": "MODEL_FREEZE_X86.json records NOT_CREATED and denies G5 access"},
+    {"gate": "PRODUCT_J6_TOOLCHAIN_READY", "kind": "external_and_upstream_gate", "detail": "local official OpenExplorer 3.7.0 is older than current 3.9.0 documentation and no frozen ONNX/PTQ/compile evidence exists", "fallback": "board metrics remain null"},
+    {"gate": "PRODUCT_J6_BOARD_READY", "kind": "blocked_external", "detail": "no physical J6 board is available", "fallback": "FPS, temperature, and power remain null"},
+    {"gate": "PRODUCT_FIELD_READY", "kind": "blocked_external", "detail": "no auditable RGB-D dataset and no independent map ground truth are available", "fallback": "capture and evaluation software remains usable; no field accuracy is claimed"},
+    {"gate": "PRODUCT_X86_PERCEPTION_READY", "kind": "aggregate_gate", "detail": "sealed final, learned moving-camera, spot-clean, post-clean, 2h soak, replay, and product release gates are incomplete", "fallback": "withhold product release zip"}
+  ],
+  "BLOCKED_EXTERNAL": true
+}

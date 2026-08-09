@@ -5,6 +5,7 @@ import yaml
 
 from sanitation_perception.product_pipeline_node import (
     SUPPORTED_RUNTIME_CONTRACT,
+    optical_forward_yaw,
     stamp_nanoseconds,
     validate_product_runtime_contract,
 )
@@ -27,6 +28,11 @@ def test_rgb_stamp_is_converted_exactly_for_timestamped_tf():
     assert stamp_nanoseconds(Message()) == 12_000_000_345
 
 
+def test_frustum_yaw_uses_optical_z_axis():
+    matrix = [[1.0, 0.0, 0.0, 0.0], [0.0, 1.0, 1.0, 0.0], [0.0, 0.0, 0.0, 0.0]]
+    assert optical_forward_yaw(matrix) == pytest.approx(1.5707963267948966)
+
+
 def test_product_contract_rejects_cpu_or_missing_iobinding():
     runtime = {
         "postprocess_contract": SUPPORTED_RUNTIME_CONTRACT,
@@ -38,6 +44,21 @@ def test_product_contract_rejects_cpu_or_missing_iobinding():
         "minimum_area_region_pixels": 20,
         "minimum_rgb_stddev": 2.0,
         "maximum_dark_or_saturated_fraction": 0.98,
+        "dynamic_trash_map": {
+            "association_distance_m": 0.30,
+            "confirmation_observations": 3,
+            "confirmation_class_posterior": 0.70,
+            "confirmation_confidence": 0.60,
+            "maximum_covariance_trace": 0.03,
+            "lost_after_s": 1.0,
+            "reject_after_s": 5.0,
+            "maximum_observation_history": 64,
+        },
+        "camera_frustum": {
+            "horizontal_fov_rad": 1.4,
+            "minimum_range_m": 0.1,
+            "maximum_range_m": 8.0,
+        },
     }
     validate_product_runtime_contract({"runtime": runtime})
     for key, value in (

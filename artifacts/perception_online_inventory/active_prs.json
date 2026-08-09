@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-09",
+  "pull_requests": [
+    {
+      "number": 88,
+      "title": "train(perception): publish AUTO-05R recovery progress",
+      "state": "OPEN",
+      "is_draft": true,
+      "head": "deepseek/perception-recovery",
+      "head_sha": "ae80e735e6e8877fc020df992970628e3dfd2c90",
+      "base": "main",
+      "url": "https://github.com/zhexuexiaotudou/TZcup/pull/88"
+    },
+    {
+      "number": 89,
+      "title": "feat(perception): product-grade recovery and deployment",
+      "state": "OPEN",
+      "is_draft": true,
+      "head": "codex/perception-product-grade",
+      "head_sha": "d7987840ea5ca26a050ed2e6616250a9cbb17474",
+      "base": "main",
+      "url": "https://github.com/zhexuexiaotudou/TZcup/pull/89"
+    }
+  ]
+}

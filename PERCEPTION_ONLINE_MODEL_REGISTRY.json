@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-09",
+  "routes": [
+    {"route_id": "ONLINE-X1", "discovery": "torchvision_fcos_resnet50_fpn", "checkpoint_sha256": "a5884ac9bfa4e89f2ae8a25f4cae0521e263dd951ef895fa1185f013b2f04ee5", "role": "reference teacher and direct x86 candidate", "development_gate_pass": false, "selected": false, "shipped": false},
+    {"route_id": "ONLINE-X2", "discovery": "Grounding DINO plus existing closed-set classifier", "checkpoint_sha256": null, "role": "reference candidate proposal", "development_gate_pass": false, "selected": false, "shipped": false},
+    {"route_id": "ONLINE-X3", "discovery": null, "role": "not activated unless X1 and X2 fail", "development_gate_pass": false, "selected": false, "shipped": false}
+  ],
+  "qualified_nondiscovery_candidates": {
+    "classifier_checkpoint_sha256": "d145090681551160b74aa0e43bb711561c8e4d3a1494535243f700935bcfb2e6",
+    "leaf_checkpoint_sha256": "ecba9043d0e0523ad5b79381bcc7c21583ccba2c9a806f2179e5ca7e3e14aa2e",
+    "puddle_checkpoint_sha256": "8b3aee52679105f857b9e43694dc08304e5cda73c9536a7904c52ed33b31d2e2"
+  },
+  "reference_tracking": {"T1_tracker_v2": "implemented_product_candidate", "T2_SAM2": "adapter_only_not_benchmarked", "T3_Grounded_SAM2": "adapter_only_not_benchmarked"},
+  "frozen_product_model": null
+}

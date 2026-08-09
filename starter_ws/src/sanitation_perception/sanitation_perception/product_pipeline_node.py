@@ -8,15 +8,26 @@ enabled only by a frozen manifest declaring the supported runtime contract.
 from __future__ import annotations
 
 import json
+import math
 from pathlib import Path
 import time
 
+from sanitation_perception.camera_frustum_model import CameraFrustumModel
+from sanitation_perception.dynamic_trash_map import (
+    DynamicTrashMap,
+    DynamicTrashMapConfig,
+)
 from sanitation_perception.frame_synchronizer import (
     LatestFrameScheduler,
     StrictFrameSynchronizer,
 )
 from sanitation_perception.lifecycle_health import ProductHealth, WatchdogConfig
+from sanitation_perception.observation_model import (
+    MapPoseMeasurement,
+    TargetObservation,
+)
 from sanitation_perception.pipeline_manifest import load_pipeline_manifest
+from sanitation_perception.trash_map_messages import TargetState
 
 
 SUPPORTED_RUNTIME_CONTRACT = "fcos_classifier_area_v1"
@@ -52,6 +63,61 @@ def validate_product_runtime_contract(pipeline: dict) -> None:
     saturated = float(runtime.get("maximum_dark_or_saturated_fraction", 0.0))
     if not 0.0 < saturated < 1.0:
         raise RuntimeError("maximum_dark_or_saturated_fraction must be in (0, 1)")
+    DynamicTrashMapConfig(**runtime["dynamic_trash_map"]).validate()
+    frustum = CameraFrustumModel(**runtime["camera_frustum"])
+    frustum.make_sweep(
+        sweep_id="contract",
+        mission_id="contract",
+        stamp_ns=0,
+        camera_frame_id="camera",
+        image_frame_id="image",
+        camera_x_m=0.0,
+        camera_y_m=0.0,
+        camera_yaw_rad=0.0,
+    )
+
+
+def optical_forward_yaw(transform_matrix) -> float:
+    """Map yaw of the ROS optical +Z viewing axis, not the frame's +X axis."""
+    forward_x = float(transform_matrix[0][2])
+    forward_y = float(transform_matrix[1][2])
+    if math.hypot(forward_x, forward_y) < 1e-9:
+        raise RuntimeError("camera optical axis has no usable map-plane projection")
+    return math.atan2(forward_y, forward_x)
+
+
+def track_to_online_observation(
+    track,
+    *,
+    mission_id: str,
+    stamp_ns: int,
+    camera_frame_id: str,
+    image_frame_id: str,
+    source_model: str,
+) -> TargetObservation:
+    return TargetObservation(
+        observation_id=f"{track.uuid}:{stamp_ns}",
+        mission_id=mission_id,
+        stamp_ns=stamp_ns,
+        camera_frame_id=camera_frame_id,
+        image_frame_id=image_frame_id,
+        source_model=source_model,
+        source_backend=str(track.source_backend),
+        target_type=str(track.target_type).upper(),
+        class_probabilities=track.class_posterior,
+        confidence=float(track.score_ema),
+        map_pose=MapPoseMeasurement(
+            x_m=float(track.x_m),
+            y_m=float(track.y_m),
+            z_m=float(track.z_m),
+            covariance_xx=max(float(track.covariance_trace) * 0.5, 1e-9),
+            covariance_yy=max(float(track.covariance_trace) * 0.5, 1e-9),
+        ),
+        bbox_xyxy=track.bbox_xyxy,
+        polygon_xy_m=tuple(track.polygon_xy_m),
+        estimated_size_m=(0.0, 0.0, 0.0),
+        in_current_fov=True,
+    )
 
 
 def main() -> None:
@@ -97,6 +163,9 @@ def main() -> None:
             self.declare_parameter("artifact_root", "")
             self.declare_parameter("device_id", 0)
             self.declare_parameter("autostart", True)
+            self.declare_parameter("mission_id", "")
+            self.declare_parameter("resume_same_mission", False)
+            self.declare_parameter("dynamic_map_path", "")
             self.health = ProductHealth(default_watchdog)
             self.last_error = None
             self.pipeline = None
@@ -111,6 +180,8 @@ def main() -> None:
             self.garbage_registry = None
             self.registry_entries = {}
             self.last_runtime_metrics = None
+            self.dynamic_map = None
+            self.camera_frustum = None
             self.tf_buffer = Buffer()
             self.tf_listener = TransformListener(self.tf_buffer, self)
             self.health_publisher = self.create_publisher(
@@ -124,6 +195,18 @@ def main() -> None:
             )
             self.target_publisher = self.create_publisher(
                 GarbageTargetArray, "/perception/product/targets", 10
+            )
+            self.observation_publisher = self.create_publisher(
+                String, "/perception/product/observations", 10
+            )
+            self.track_publisher = self.create_publisher(
+                String, "/perception/product/tracks", 10
+            )
+            self.dynamic_map_publisher = self.create_publisher(
+                String, "/perception/product/dynamic_trash_map", 10
+            )
+            self.area_region_publisher = self.create_publisher(
+                String, "/perception/product/area_regions", 10
             )
             self.leaf_mask_publisher = self.create_publisher(
                 Image, "/perception/product/leaf_mask", 10
@@ -154,6 +237,21 @@ def main() -> None:
                 self.pipeline = load_pipeline_manifest(pipeline_path)
                 validate_product_runtime_contract(self.pipeline)
                 runtime = self.pipeline["runtime"]
+                mission_id = str(self.get_parameter("mission_id").value).strip()
+                if not mission_id:
+                    raise RuntimeError("mission_id is required; target maps are mission-scoped")
+                resume = bool(self.get_parameter("resume_same_mission").value)
+                map_path = Path(str(self.get_parameter("dynamic_map_path").value)).resolve()
+                if resume:
+                    if not map_path.is_file():
+                        raise RuntimeError("resume_same_mission requires an existing dynamic_map_path")
+                    self.dynamic_map = DynamicTrashMap.resume_same_mission(map_path, mission_id)
+                else:
+                    self.dynamic_map = DynamicTrashMap.start_new(
+                        mission_id,
+                        config=DynamicTrashMapConfig(**runtime["dynamic_trash_map"]),
+                    )
+                self.camera_frustum = CameraFrustumModel(**runtime["camera_frustum"])
                 self.health = ProductHealth(
                     WatchdogConfig.from_pipeline_manifest(self.pipeline)
                 )
@@ -237,6 +335,8 @@ def main() -> None:
             self.tracker = None
             self.garbage_registry = None
             self.registry_entries = {}
+            self.dynamic_map = None
+            self.camera_frustum = None
             self.sensor_subscribers.clear()
             if self.health.state == "INACTIVE":
                 self.health.transition("UNCONFIGURED", "cleaned_up")
@@ -320,6 +420,19 @@ def main() -> None:
                 ):
                     raise RuntimeError("valid depth ratio violates pipeline manifest")
                 transform_matrix = transform_to_matrix(transform)
+                stamp_ns = stamp_nanoseconds(frame.rgb.payload)
+                image_frame_id = f"{frame.rgb.payload.header.frame_id}:{stamp_ns}"
+                sweep = self.camera_frustum.make_sweep(
+                    sweep_id=f"sweep:{stamp_ns}",
+                    mission_id=self.dynamic_map.mission_id,
+                    stamp_ns=stamp_ns,
+                    camera_frame_id=frame.rgb.payload.header.frame_id,
+                    image_frame_id=image_frame_id,
+                    camera_x_m=float(transform.transform.translation.x),
+                    camera_y_m=float(transform.transform.translation.y),
+                    camera_yaw_rad=optical_forward_yaw(transform_matrix),
+                )
+                self.dynamic_map.observed_regions.record(sweep)
                 projection_started = time.perf_counter()
                 detections = project_discrete_predictions(
                     result["discrete"], depth_m, camera, transform_matrix
@@ -337,9 +450,28 @@ def main() -> None:
                 tracking_started = time.perf_counter()
                 stamp_s = stamp_nanoseconds(frame.rgb.payload) / 1_000_000_000.0
                 tracks = self.tracker.update(detections, stamp_s)
+                online_observations = []
+                for track in tracks:
+                    if abs(track.last_seen_s - stamp_s) > 1e-6:
+                        continue
+                    observation = track_to_online_observation(
+                        track,
+                        mission_id=self.dynamic_map.mission_id,
+                        stamp_ns=stamp_ns,
+                        camera_frame_id=frame.rgb.payload.header.frame_id,
+                        image_frame_id=image_frame_id,
+                        source_model=str(self.pipeline["pipeline_id"]),
+                    )
+                    target = self.dynamic_map.ingest(observation)
+                    online_observations.append({
+                        **observation.to_record(),
+                        "accepted_target_uuid": target.uuid if target else None,
+                    })
+                self.dynamic_map.expire(stamp_ns)
                 tracking_ms = (time.perf_counter() - tracking_started) * 1000.0
                 self._publish_masks(frame.rgb.payload, result["areas"])
-                self._publish_targets(frame.rgb.payload, tracks)
+                self._publish_online_state(online_observations, tracks)
+                self._publish_targets(frame.rgb.payload, self.dynamic_map.targets.values())
                 end_to_end_ms = (time.perf_counter() - started) * 1000.0
                 metrics = {
                     "preprocess": result["metrics"]["preprocess_ms"],
@@ -380,29 +512,64 @@ def main() -> None:
                 message.header = rgb_message.header
                 publisher.publish(message)
 
+        def _publish_online_state(self, observations, tracks) -> None:
+            self.observation_publisher.publish(
+                String(data=json.dumps(observations, sort_keys=True))
+            )
+            self.track_publisher.publish(String(data=json.dumps([
+                {
+                    "uuid": track.uuid,
+                    "state": track.state,
+                    "class_posterior": track.class_posterior,
+                    "confidence": track.score_ema,
+                    "observation_count": track.observation_count,
+                    "last_seen_s": track.last_seen_s,
+                }
+                for track in tracks
+            ], sort_keys=True)))
+            snapshot = self.dynamic_map.snapshot()
+            self.dynamic_map_publisher.publish(
+                String(data=json.dumps(snapshot, sort_keys=True))
+            )
+            self.area_region_publisher.publish(String(data=json.dumps([
+                target.to_record()
+                for target in self.dynamic_map.targets.values()
+                if target.target_type == "AREA"
+            ], sort_keys=True)))
+
         def _publish_targets(self, rgb_message, tracks) -> None:
             message = GarbageTargetArray()
             message.header.stamp = rgb_message.header.stamp
             message.header.frame_id = "map"
             message.registry_sha256 = self.garbage_registry.sha256
             for track in tracks:
-                if track.state in {"LOST", "REJECTED", "CLEANED"}:
+                if track.track_state not in {
+                    TargetState.CONFIRMED,
+                    TargetState.SCHEDULED,
+                    TargetState.APPROACHING,
+                    TargetState.VERIFYING,
+                    TargetState.CLEANING,
+                    TargetState.POST_VERIFY,
+                    TargetState.DEFERRED,
+                }:
                     continue
-                entry = self.registry_entries.get(track.class_id)
+                entry = self.registry_entries.get(track.current_class)
                 if entry is None:
                     continue
                 target = GarbageTarget()
                 target.header = message.header
                 target.uuid = track.uuid
-                target.class_id = track.class_id
+                target.class_id = track.current_class
                 target.target_type = entry.target_type
-                target.confidence = float(track.score_ema)
-                target.map_pose.pose.position.x = track.x_m
-                target.map_pose.pose.position.y = track.y_m
-                target.map_pose.pose.position.z = track.z_m
+                target.confidence = float(track.confidence)
+                target.map_pose.pose.position.x = track.map_x_m
+                target.map_pose.pose.position.y = track.map_y_m
+                target.map_pose.pose.position.z = track.map_z_m
                 target.map_pose.pose.orientation.w = 1.0
-                target.map_pose.covariance[0] = track.covariance_trace * 0.5
-                target.map_pose.covariance[7] = track.covariance_trace * 0.5
+                target.map_pose.covariance[0] = track.covariance_xx
+                target.map_pose.covariance[1] = track.covariance_xy
+                target.map_pose.covariance[6] = track.covariance_xy
+                target.map_pose.covariance[7] = track.covariance_yy
                 if track.polygon_xy_m:
                     polygon = track.polygon_xy_m
                     xs = [point[0] for point in polygon]
@@ -411,10 +578,10 @@ def main() -> None:
                 else:
                     half_x, half_y = entry.size_m[0] * 0.5, entry.size_m[1] * 0.5
                     polygon = (
-                        (track.x_m - half_x, track.y_m - half_y),
-                        (track.x_m + half_x, track.y_m - half_y),
-                        (track.x_m + half_x, track.y_m + half_y),
-                        (track.x_m - half_x, track.y_m + half_y),
+                        (track.map_x_m - half_x, track.map_y_m - half_y),
+                        (track.map_x_m + half_x, track.map_y_m - half_y),
+                        (track.map_x_m + half_x, track.map_y_m + half_y),
+                        (track.map_x_m - half_x, track.map_y_m + half_y),
                     )
                     size = entry.size_m
                 for x_m, y_m in polygon:
@@ -425,15 +592,15 @@ def main() -> None:
                     float(size[0]), float(size[1]), float(size[2])
                 )
                 target.first_seen = Time(
-                    nanoseconds=int(track.first_seen_s * 1_000_000_000)
+                    nanoseconds=int(track.first_seen_stamp_ns)
                 ).to_msg()
                 target.last_seen = Time(
-                    nanoseconds=int(track.last_seen_s * 1_000_000_000)
+                    nanoseconds=int(track.last_seen_stamp_ns)
                 ).to_msg()
                 target.observation_count = int(track.observation_count)
-                target.track_state = track.state
+                target.track_state = track.track_state.value
                 target.cleaning_policy = entry.policy
-                target.source_backend = track.source_backend
+                target.source_backend = ",".join(track.source_models)
                 target.source_stamp = rgb_message.header.stamp
                 target.visibility = 1.0
                 target.occlusion_ratio = 0.0
@@ -447,6 +614,16 @@ def main() -> None:
             now = time.monotonic()
             snapshot = self.health.snapshot(now)
             snapshot["last_error"] = self.last_error
+            snapshot["dynamic_trash_map"] = (
+                {
+                    "mission_id": self.dynamic_map.mission_id,
+                    "active_target_count": self.dynamic_map.count,
+                    "preknown_target_coordinates_used": False,
+                    "ground_truth_control_allowed": False,
+                }
+                if self.dynamic_map is not None
+                else None
+            )
             snapshot["sync"] = (
                 {
                     "sync_count": self.synchronizer.sync_count,

@@ -147,6 +147,7 @@ def run_ros_independent_tests() -> None:
     manipulation_package = SOURCE_ROOT / "sanitation_manipulation"
     debug_visualization_package = SOURCE_ROOT / "sanitation_debug_visualization"
     gazebo_visualization_package = SOURCE_ROOT / "sanitation_gazebo_visualization"
+    sys.path.insert(0, str(ROOT))
     sys.path.insert(0, str(coverage_package))
     sys.path.insert(0, str(tasks_package))
     sys.path.insert(0, str(gnss_package))
@@ -185,6 +186,14 @@ def run_ros_independent_tests() -> None:
         perception_package / "test" / "test_pipeline_manifest.py",
         perception_package / "test" / "test_preprocessing.py",
         perception_package / "test" / "test_j6_runtime.py",
+        perception_package / "test" / "test_dynamic_trash_map.py",
+        perception_package / "test" / "test_no_preknown_targets.py",
+        perception_package / "test" / "test_fov_visibility_contract.py",
+        perception_package / "test" / "test_online_observation_fusion.py",
+        perception_package / "test" / "test_dynamic_insertion.py",
+        perception_package / "test" / "test_online_replay.py",
+        perception_package / "test" / "test_target_appears_only_after_fov_entry.py",
+        perception_package / "test" / "test_target_expiry_after_removal.py",
         dataset_package / "test" / "test_synthetic.py",
         ground_truth_package / "test" / "test_visibility.py",
         spot_cleaning_package / "test" / "test_coordinator.py",
@@ -193,6 +202,12 @@ def run_ros_independent_tests() -> None:
         spot_cleaning_package / "test" / "test_stage5br6w_engineering.py",
         spot_cleaning_package / "test" / "test_auto03_contract.py",
         spot_cleaning_package / "test" / "test_auto03_replay_audit.py",
+        spot_cleaning_package / "test" / "test_cleaning_task_scheduler.py",
+        spot_cleaning_package / "test" / "test_post_clean_verification.py",
+        ROOT / "reference_vision" / "test" / "test_reference_adapter_contract.py",
+        ROOT / "reference_vision" / "test" / "test_third_party_registry.py",
+        ROOT / "reference_vision" / "test" / "test_product_reference_isolation.py",
+        ROOT / "reference_vision" / "test" / "test_gt_topic_denylist.py",
         learning_package / "test" / "test_assets.py",
         learning_package / "test" / "test_rendered.py",
         learning_package / "test" / "test_gazebo_g1.py",

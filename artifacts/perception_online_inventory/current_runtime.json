@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-09",
+  "product_runtime_files": [
+    "starter_ws/src/sanitation_perception/sanitation_perception/product_pipeline_node.py",
+    "starter_ws/src/sanitation_perception/sanitation_perception/inference_engine.py",
+    "starter_ws/src/sanitation_perception/sanitation_perception/frame_synchronizer.py",
+    "starter_ws/src/sanitation_perception/sanitation_perception/map_projection_v2.py",
+    "starter_ws/src/sanitation_perception/sanitation_perception/tracker_v2.py",
+    "starter_ws/src/sanitation_perception/sanitation_perception/lifecycle_health.py",
+    "starter_ws/src/sanitation_perception/sanitation_perception/performance_monitor.py",
+    "starter_ws/src/sanitation_perception/sanitation_perception/model_registry.py"
+  ],
+  "runtime_contract": "fcos_classifier_area_v1",
+  "required_provider": "CUDAExecutionProvider",
+  "io_binding_required": true,
+  "cpu_fallback_forbidden": true,
+  "pipeline_manifest_status": "placeholder_fail_closed",
+  "product_container_built": true,
+  "product_container_smoke_pass": false,
+  "reason": "no frozen formal product model bundle"
+}

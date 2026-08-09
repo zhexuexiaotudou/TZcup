@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-09",
+  "P4_SCREENING_PASS": false,
+  "AUTO_05R_PASS": false,
+  "architecture_attempt_limit": 3,
+  "attempts_used": 3,
+  "routes": {
+    "A1": {
+      "status": "failed",
+      "checkpoint_sha256": "3bd8fcf2f5ec185ee3cd3bb452ac93d36d9b5fe7067f229f3a434e1074484107",
+      "evidence": "artifacts/auto05r_p4_evidence/P4_A1_FORMAL_STRATIFIED_FAILURE.json"
+    },
+    "A2": {
+      "status": "failed",
+      "checkpoint_sha256": "b1dc9807a197783bd71331319d7210903b723adea3701b5a58b3b18decd41cd3",
+      "evidence": "artifacts/auto05r_p4_evidence/P4_A2_FORMAL_STRATIFIED_FAILURE.json"
+    },
+    "A3": {
+      "status": "failed",
+      "discovery_onnx_sha256": "6bb2105c28d418d7297069882e02a244ebef3cafd00f8c951ab0504d85a9ca8a",
+      "raw_report_sha256": "24d111512d125a40fa18e61e48ebe846b46af353f7ccdd97a2f9e7b7781ac2e7",
+      "evidence": "artifacts/auto05r_p4_evidence/P4_A3_DISTILLED_FORMAL_FAILURE.json"
+    }
+  },
+  "formal_g4_qa_sha256": "72baf192e70c59d369c284c8141dcc6e2c03350dca930212ae97cf2182d1ab01",
+  "historical_evidence_glob": "artifacts/auto05r_p*",
+  "historical_evidence_read_only": true,
+  "new_attempt_prefix": "PERCEPTION-ONLINE"
+}

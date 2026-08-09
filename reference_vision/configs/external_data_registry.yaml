@@ -1,0 +1,18 @@
+schema_version: 1
+datasets:
+  - dataset: TACO
+    version: "upstream-29de1a9ba05a647b83a90f18d7772e20bb23d846"
+    source: https://github.com/pedropro/TACO
+    license: "toolkit MIT; image-level rights require metadata audit"
+    allowed_use: pending_per_image_audit
+    classes:
+      - plastic_bottle
+      - metal_can
+      - paper_litter
+      - litter_candidate
+      - background
+    image_count: null
+    annotation_type: COCO instance segmentation
+    sha256_index: null
+    split_policy: external_train_only_no_sealed_final
+    ingested: false

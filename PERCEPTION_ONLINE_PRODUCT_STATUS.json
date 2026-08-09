@@ -1,0 +1,39 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-09",
+  "implementation_head": "0486005",
+  "protocol": "PERCEPTION-ONLINE-00..15",
+  "historical_status": {"P4_SCREENING_PASS": false, "AUTO_05R_PASS": false, "A1_A2_A3_EXHAUSTED": true},
+  "software_contracts": {
+    "mission_start_dynamic_target_count_zero": true,
+    "preknown_target_coordinates_used": false,
+    "current_fov_proof_required": true,
+    "online_observation_fusion_implemented": true,
+    "online_replay_implemented": true,
+    "scheduler_implemented": true,
+    "post_clean_verifier_implemented": true,
+    "reference_product_dependency_isolation": true,
+    "GT_control_allowed": false
+  },
+  "formal_gates": {
+    "ONLINE_DYNAMIC_DISCOVERY_PASS": false,
+    "DYNAMIC_TRASH_MAP_PASS": false,
+    "POST_CLEAN_VERIFICATION_PASS": false,
+    "PRODUCT_X86_PERCEPTION_READY": false,
+    "PRODUCT_J6_TOOLCHAIN_READY": false,
+    "PRODUCT_J6_BOARD_READY": false,
+    "PRODUCT_FIELD_READY": false,
+    "COMPETITION_PERCEPTION_PASS": false
+  },
+  "verification": {
+    "windows_fast_ci": "496 passed, 23 skipped",
+    "focused_online_contracts": "35 passed",
+    "reference_isolation_contracts": "9 passed",
+    "ros_colcon": "413 tests, 0 errors, 0 failures, 2 skipped",
+    "moving_camera_gazebo_matrix": "not_run_no_frozen_x86_model",
+    "sealed_final": "not_read",
+    "spot_clean_formal_matrix": "not_run",
+    "soak_2h": "not_run"
+  },
+  "decision": "software foundations passed; all evidence-dependent product claims remain fail-closed"
+}

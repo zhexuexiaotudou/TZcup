@@ -12,6 +12,7 @@ TRACK_STATES = {
     "QUEUED",
     "APPROACHING",
     "CLEANING",
+    "POST_VERIFY",
     "CLEANED",
     "LOST",
     "REJECTED",
@@ -119,7 +120,8 @@ class TargetTracker:
             "CONFIRMED": {"QUEUED", "REJECTED"},
             "QUEUED": {"APPROACHING", "REJECTED"},
             "APPROACHING": {"CLEANING", "QUEUED", "REJECTED"},
-            "CLEANING": {"CLEANED", "QUEUED", "REJECTED"},
+            "CLEANING": {"POST_VERIFY", "QUEUED", "REJECTED"},
+            "POST_VERIFY": {"CLEANED", "QUEUED", "REJECTED"},
         }
         if next_state not in allowed.get(track.state, set()):
             raise ValueError(f"invalid transition {track.state}->{next_state}")

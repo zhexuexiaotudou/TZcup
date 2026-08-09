@@ -26,6 +26,19 @@ runtime:
     confirmation_score_ema: 0.60
     score_ema_alpha: 0.35
     defer_after_observations: 5
+  dynamic_trash_map:
+    association_distance_m: 0.30
+    confirmation_observations: 3
+    confirmation_class_posterior: 0.70
+    confirmation_confidence: 0.60
+    maximum_covariance_trace: 0.03
+    lost_after_s: 1.0
+    reject_after_s: 5.0
+    maximum_observation_history: 64
+  camera_frustum:
+    horizontal_fov_rad: 1.40
+    minimum_range_m: 0.10
+    maximum_range_m: 8.0
   watchdog:
     camera_stale_ms: 500.0
     maximum_latency_ms: 200.0

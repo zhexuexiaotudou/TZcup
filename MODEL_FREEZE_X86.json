@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-09",
+  "freeze_state": "NOT_CREATED",
+  "freeze_authorized": false,
+  "reason": "no ONLINE-X candidate has passed the complete x86 development gate",
+  "architecture": null,
+  "model_hashes": null,
+  "prompt_list_hash": null,
+  "class_map": null,
+  "preprocess_hash": null,
+  "postprocess_hash": null,
+  "tracker_config_hash": null,
+  "dynamic_trash_map_config_hash": null,
+  "scheduler_config_hash": null,
+  "training_data_qa_hashes": null,
+  "reference_dependency_versions": null,
+  "license_inventory": "third_party/perception/dependency_registry.yaml",
+  "G5_access_allowed": false,
+  "release_allowed": false
+}

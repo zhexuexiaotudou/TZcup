@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-09",
+  "official_sources_only": true,
+  "candidates": [
+    {
+      "name": "Grounding DINO",
+      "repository": "https://github.com/IDEA-Research/GroundingDINO",
+      "upstream_commit": "856dde20aee659246248e20734ef9ba5214f5e44",
+      "repository_license": "Apache-2.0",
+      "role": "ONLINE-X2 reference and candidate proposal benchmark",
+      "shipped_in_product": false,
+      "checkpoint_redistribution": "pending explicit artifact-level audit"
+    },
+    {
+      "name": "Grounded SAM 2",
+      "repository": "https://github.com/IDEA-Research/Grounded-SAM-2",
+      "upstream_commit": "b7a9c29f196edff0eb54dbe14588d7ae5e3dde28",
+      "repository_license": "Apache-2.0 with bundled third-party notices",
+      "role": "reference tracking and auto-label pipeline",
+      "shipped_in_product": false,
+      "redistribution": "blocked until transitive component audit"
+    },
+    {
+      "name": "SAM 2",
+      "repository": "https://github.com/facebookresearch/sam2",
+      "upstream_commit": "2b90b9f5ceec907a1c18123530e92e794ad901a4",
+      "repository_license": "Apache-2.0",
+      "checkpoint_license": "Apache-2.0",
+      "role": "reference video tracking and auto-label refinement",
+      "shipped_in_product": false
+    },
+    {
+      "name": "YOLO-World",
+      "repository": "https://github.com/AILab-CVC/YOLO-World",
+      "upstream_commit": "4f70adbaacf5685bd9ec5bea85f1f91057f6fc0b",
+      "repository_license": "GPL-3.0",
+      "role": "benchmark only",
+      "shipped_in_product": false,
+      "redistribution": "default product bundle forbidden pending compatibility audit"
+    },
+    {
+      "name": "TACO",
+      "repository": "https://github.com/pedropro/TACO",
+      "upstream_commit": "29de1a9ba05a647b83a90f18d7772e20bb23d846",
+      "toolkit_license": "MIT",
+      "role": "training data candidate",
+      "ingested": false,
+      "redistribution": "blocked pending per-image source and license audit"
+    }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-09",
+  "teacher": {
+    "architecture": "torchvision_fcos_resnet50_fpn",
+    "role": "ONLINE-X1 reference and x86 candidate",
+    "checkpoint_sha256": "a5884ac9bfa4e89f2ae8a25f4cae0521e263dd951ef895fa1185f013b2f04ee5",
+    "report_sha256": "6a6930671867acb410149bebb76c720f9e615e61cff489fbd233537e078438b2",
+    "data_learnability_pass": true,
+    "product_frozen": false
+  },
+  "qualified_nondiscovery_models": {
+    "classifier_checkpoint_sha256": "d145090681551160b74aa0e43bb711561c8e4d3a1494535243f700935bcfb2e6",
+    "leaf_checkpoint_sha256": "ecba9043d0e0523ad5b79381bcc7c21583ccba2c9a806f2179e5ca7e3e14aa2e",
+    "puddle_checkpoint_sha256": "8b3aee52679105f857b9e43694dc08304e5cda73c9536a7904c52ed33b31d2e2",
+    "classifier_onnx_sha256": "9da004ef8f63a16e758a4519e2f456666f2885c2149179fd16f197e6b4b3cc43",
+    "leaf_onnx_sha256": "7ea3226506a702fbde373be148d82b43fae1bf3f6c538f01a1e45f1b754e609d",
+    "puddle_onnx_sha256": "bf54e47a3187a4146b5e2afcead5f68dfe9f2d2600e062363ea9b10ab2d41dc4"
+  },
+  "formal_pipeline_pass": false,
+  "model_freeze_x86_exists": false,
+  "g5_sealed_final_read": false
+}

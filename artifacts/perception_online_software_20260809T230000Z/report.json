@@ -1,0 +1,34 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-ONLINE-SOFTWARE",
+  "source_commit": "f70bde389387eef0f235e586efda1c63fff06b38",
+  "dataset_hash": null,
+  "model_hash": null,
+  "config_hashes": {
+    "perception_pipeline_manifest": "203ca5ed53ad622caefd3460968b10369b8e7e9fa27d6c1b444c908e32760928",
+    "dynamic_trash_map": "ee11f93469ef5a42375e4d6dd822a3992ac1e96d9e2eebd0aeedfeb6afee2b2f",
+    "cleaning_task_scheduler": "a302df20870bb627e09a80fef08c712b05c0f5d912f9c18840c6c4e8a7f0d937"
+  },
+  "environment": {
+    "host": "Windows PowerShell",
+    "python": "py -3",
+    "ros_container": "tzcup/sanitation-jazzy:stage5b",
+    "ros_container_image": "sha256:418550f48916d794bc0aff144c60a3b1353d0bb0bb1dcf086cda0ec8e2a5aadc"
+  },
+  "commands": [
+    {"command": "py -3 -u scripts/ci_fast.py", "exit_code": 0, "result": "496 passed, 23 skipped, 1 warning"},
+    {"command": "py -3 -m pytest -q reference_vision/test", "exit_code": 0, "result": "9 passed"},
+    {"command": "colcon build --packages-up-to sanitation_learning sanitation_perception sanitation_perception_interfaces sanitation_spot_cleaning sanitation_coverage", "exit_code": 0, "result": "6 packages finished"},
+    {"command": "colcon test --packages-select sanitation_learning sanitation_perception sanitation_spot_cleaning sanitation_coverage", "exit_code": 0, "result": "413 tests, 0 errors, 0 failures, 2 skipped"}
+  ],
+  "metrics": {
+    "mission_start_dynamic_target_count": 0,
+    "preknown_target_coordinates_used": false,
+    "GT_control_allowed": false,
+    "software_contract_tests_pass": true,
+    "formal_moving_camera_pass": false,
+    "formal_spot_clean_pass": false
+  },
+  "GT_boundary": "evaluation GT is allowed only outside product perception, map, scheduler, and control",
+  "decision": "software_contract_pass_only"
+}

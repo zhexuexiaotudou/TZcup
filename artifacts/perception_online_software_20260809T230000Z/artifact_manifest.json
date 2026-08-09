@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "artifact_kind": "compact_software_evidence",
+  "raw_payloads_committed": false,
+  "files": [
+    {"path": "report.json", "role": "machine-readable claim and boundary", "sha256": "dab50855e6268763cc691e015918242f65cf0db4cb2bd051f8d02d086e4dde5d", "size": 1806},
+    {"path": "report.md", "role": "human-readable summary", "sha256": "a497dc0e2423ba5978bfd8bc38727241f0ff4de4f4c57f120c6439c0ee0c3933", "size": 536}
+  ],
+  "external_artifacts": [],
+  "reproduction": [
+    "py -3 -u scripts/ci_fast.py",
+    "py -3 -m pytest -q reference_vision/test",
+    "run the documented colcon build/test command in tzcup/sanitation-jazzy:stage5b"
+  ]
+}

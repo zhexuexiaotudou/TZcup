@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-09",
+  "repository": "https://github.com/zhexuexiaotudou/TZcup",
+  "branch": "codex/perception-online-cleaning-intelligence",
+  "head": "d7987840ea5ca26a050ed2e6616250a9cbb17474",
+  "baseline_ref": "codex/perception-product-grade",
+  "baseline_pr": 89,
+  "worktree": "F:/Project/TZcup-perception-online-product",
+  "root_checkout_preserved": true,
+  "remote_git_transport_status": "github_api_verified_git_fetch_unavailable",
+  "remote_verification": {
+    "pr_head": "d7987840ea5ca26a050ed2e6616250a9cbb17474",
+    "pr_state": "OPEN",
+    "pr_is_draft": true,
+    "pr_mergeable": "MERGEABLE"
+  }
+}

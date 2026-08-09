@@ -1,0 +1,20 @@
+schema_version: 1
+models:
+  - model_id: grounding-dino-online-x2
+    upstream_dependency: Grounding DINO
+    checkpoint: null
+    checkpoint_sha256: null
+    redistribution_allowed: false
+    shipped_in_product: false
+  - model_id: sam2.1-reference-tracker
+    upstream_dependency: SAM 2
+    checkpoint: null
+    checkpoint_sha256: null
+    redistribution_allowed: false
+    shipped_in_product: false
+  - model_id: yolo-world-online-x3-benchmark
+    upstream_dependency: YOLO-World
+    checkpoint: null
+    checkpoint_sha256: null
+    redistribution_allowed: false
+    shipped_in_product: false

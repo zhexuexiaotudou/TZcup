@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "protocol": "PERCEPTION-ONLINE",
+  "authorized_at": "2026-08-09",
+  "source_commit": "d7987840ea5ca26a050ed2e6616250a9cbb17474",
+  "source_pr": 89,
+  "HISTORICAL_P4_PASS": false,
+  "HISTORICAL_AUTO05R_PASS": false,
+  "A1_A2_A3_EXHAUSTED": true,
+  "NEW_PROTOCOL_AUTHORIZED": true,
+  "history_mutation_forbidden": true,
+  "sealed_final_read": false,
+  "mission_start_contract": {
+    "dynamic_target_count": 0,
+    "preknown_target_coordinates_used": false,
+    "ground_truth_control_allowed": false
+  }
+}

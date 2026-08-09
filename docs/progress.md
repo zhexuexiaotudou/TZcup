@@ -1,5 +1,36 @@
 # 项目推进记录
 
+## 2026-08-09：PERCEPTION-ONLINE-00 新协议 inventory 与历史冻结
+
+- 从 Draft PR #89 的精确头提交 `d798784` 建立独立分支
+  `codex/perception-online-cleaning-intelligence`；根工作区的既有实验删除记录保持原样。
+- 新协议明确冻结 `P4_SCREENING_PASS=false`、`AUTO_05R_PASS=false` 和 A1/A2/A3
+  三条失败路线，不续写 A4，也不读取 G5 sealed final。
+- 新增 `PERCEPTION_ONLINE_BASELINE.json` 与
+  `artifacts/perception_online_inventory/`，记录 PR、模型/QA 哈希、现有产品运行时、
+  topic/GT 边界、J6/真实域阻断及官方第三方候选审计。
+- 正式任务合同改为 `DynamicTrashMap` 空图起步；离线数据只用于训练/验收，
+  Gazebo registry/GT 不得初始化生产目标。当前仅完成 inventory 和架构授权，
+  x86、sealed final、moving-camera、spot-clean、soak、J6、field 与 competition
+  产品门均未因此通过。
+
+## 2026-08-09：PERCEPTION-ONLINE-01/02/07/08/09 软件基础
+
+- 新增任务级空图、严格当前 FOV 证明、协方差加权地图融合、完整状态转换、移除过期、
+  同任务恢复与 observation/frustum replay。未提供 Gazebo/GT registry 初始化入口。
+- 产品 Lifecycle 保留既有同步、时间戳 TF、CUDA ORT、投影、tracker v2 与 watchdog，
+  新发布 observations/tracks/dynamic map/area topics；spot-clean target topic 已与产品输出对齐。
+- 新增 Coverage 优先的 `CLEAN_NOW/DEFER/OBSERVE_AGAIN` 调度器、安全否决、批量 defer
+  排序与 pause/resume bridge；清扫动作现在进入 `POST_VERIFY`，离散目标需连续三帧消失，
+  area 需视觉面积下降至少 90%，最多允许一次 re-clean。
+- `reference_vision/` 提供 FCOS、Grounding DINO、YOLO-World、SAM 2 和 Grounded SAM 2
+  统一 adapter/cadence/benchmark 合同，研究依赖固定到独立 Dockerfile，ROS product
+  不导入这些依赖。官方上游提交和许可边界记录于 `third_party/perception/`。
+- Windows fast CI 为 `496 passed, 23 skipped`；ROS 容器依赖闭包构建成功，四个目标包
+  共 `413 tests, 0 errors, 0 failures, 2 skipped`。这些只证明软件合同；X1/X2 完整模型
+  benchmark、G5、30-seed moving camera/spot-clean、2h soak、J6 实板和真实 RGB-D/GT
+  尚无证据，所有聚合产品状态继续为 false。
+
 ## 2026-08-09：AUTO-05R 修复后正式 P4 与冻结链
 
 - 修复 bbox size/ltrb 直接监督后的 A1 discovery 在同一 V5 正式协议下达到
