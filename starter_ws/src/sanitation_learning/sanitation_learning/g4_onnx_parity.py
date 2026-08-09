@@ -23,6 +23,11 @@ def _as_float_array(value: Any) -> np.ndarray:
     return np.asarray(value, dtype=np.float32)
 
 
+def _sigmoid(values: np.ndarray) -> np.ndarray:
+    clipped = np.clip(_as_float_array(values), -80.0, 80.0)
+    return 1.0 / (1.0 + np.exp(-clipped))
+
+
 def _softmax(logits: np.ndarray) -> np.ndarray:
     shifted = logits - logits.max(axis=-1, keepdims=True)
     exp = np.exp(shifted)
@@ -41,7 +46,7 @@ def _decode_discovery_candidates(
     if flat.ndim != 4 or flat.shape[1] not in (5, 15):
         raise ValueError("discovery flat output must be Nx5xHxW or Nx15xHxW")
     if flat.shape[1] == 5:
-        objectness = 1.0 / (1.0 + np.exp(-flat[:, 0:1]))
+        objectness = _sigmoid(flat[:, 0:1])
         return decode_centernet_outputs(
             objectness[0],
             flat[:, 1:3][0],
@@ -51,7 +56,7 @@ def _decode_discovery_candidates(
         )
     from .g4_evaluation import decode_discovery_outputs
 
-    objectness = 1.0 / (1.0 + np.exp(-flat[:, 0:3]))
+    objectness = _sigmoid(flat[:, 0:3])
     return decode_discovery_outputs(
         objectness[0],
         flat[:, 3:9][0],
@@ -204,20 +209,16 @@ def segmenter_parity(
             "segmenter flat output must be Nx2xHxW "
             "(logits + boundary logits)"
         )
-    torch_mask = 1.0 / (1.0 + np.exp(-torch_np[:, 0:1])) > mask_threshold
-    onnx_mask = 1.0 / (1.0 + np.exp(-onnx_np[:, 0:1])) > mask_threshold
+    torch_mask = _sigmoid(torch_np[:, 0:1]) > mask_threshold
+    onnx_mask = _sigmoid(onnx_np[:, 0:1]) > mask_threshold
     intersection = int((torch_mask & onnx_mask).sum())
     union = int((torch_mask | onnx_mask).sum())
     binary_iou = 1.0 if union == 0 else intersection / union
     pixel_agreement = float((torch_mask == onnx_mask).mean())
     # Channel 1 is the exported boundary-logit head. Comparing a boundary
     # derived from channel 0 would let a broken/miswired boundary head pass.
-    torch_boundary = (
-        1.0 / (1.0 + np.exp(-torch_np[:, 1:2])) > mask_threshold
-    )
-    onnx_boundary = (
-        1.0 / (1.0 + np.exp(-onnx_np[:, 1:2])) > mask_threshold
-    )
+    torch_boundary = _sigmoid(torch_np[:, 1:2]) > mask_threshold
+    onnx_boundary = _sigmoid(onnx_np[:, 1:2]) > mask_threshold
     boundary_intersection = int((torch_boundary & onnx_boundary).sum())
     boundary_union = int((torch_boundary | onnx_boundary).sum())
     boundary_agreement = float((torch_boundary == onnx_boundary).mean())
@@ -252,6 +253,24 @@ def task_specific_parity(
     if task in ("leaf", "puddle"):
         return segmenter_parity(torch_flat, onnx_flat)
     raise ValueError(f"unsupported task-specific parity task {task!r}")
+
+
+def product_parity_gate(reports: dict[str, dict]) -> bool:
+    """Aggregate semantic parity and fixed-graph contracts for all tasks.
+
+    Raw logit maximum error remains diagnostic. Each task owns its semantic
+    tolerance: decoded boxes/scores, class probabilities, or binary masks.
+    """
+    return bool(
+        reports
+        and all(
+            report.get("parity", {}).get("passed") is True
+            and report.get("fixed_input") is True
+            and report.get("custom_ops") == 0
+            and report.get("opset") == 17
+            for report in reports.values()
+        )
+    )
 
 
 def assert_onnx_contract(
@@ -307,6 +326,7 @@ __all__ = [
     "assert_onnx_contract",
     "classifier_parity",
     "discovery_parity",
+    "product_parity_gate",
     "segmenter_parity",
     "task_specific_parity",
 ]

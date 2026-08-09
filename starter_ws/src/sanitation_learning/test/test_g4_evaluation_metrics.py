@@ -13,10 +13,22 @@ if str(_PACKAGE_DIR) not in sys.path:
 
 
 from sanitation_learning.g4_evaluation import (  # noqa: E402
+    _stable_sigmoid,
     average_precision,
     background_specificity,
     decode_discovery_outputs,
 )
+
+
+def test_stable_sigmoid_handles_extreme_logits_without_warning() -> None:
+    with np.errstate(over="raise"):
+        probabilities = _stable_sigmoid(
+            np.asarray([-1.0e6, 0.0, 1.0e6], dtype=np.float32)
+        )
+    assert probabilities[0] >= 0.0
+    assert probabilities[0] < 1.0e-20
+    assert probabilities[1] == pytest.approx(0.5)
+    assert probabilities[2] == pytest.approx(1.0)
 
 
 def _frame(*, truth: bool, detection: bool, score: float = 0.9) -> dict:

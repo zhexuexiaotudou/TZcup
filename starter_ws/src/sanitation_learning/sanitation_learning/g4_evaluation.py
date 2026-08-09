@@ -31,6 +31,12 @@ from .g4_data import (
 from .g4_geometry import bbox_model_to_native
 
 
+def _stable_sigmoid(values: np.ndarray) -> np.ndarray:
+    """Evaluate sigmoid without overflowing on confident float logits."""
+    clipped = np.clip(np.asarray(values), -80.0, 80.0)
+    return 1.0 / (1.0 + np.exp(-clipped))
+
+
 def decode_discovery_outputs(
     objectness: np.ndarray,
     offset: np.ndarray,
@@ -831,8 +837,8 @@ def area_predictions(
                 model_output = model(tensor)
                 logits = model_output["logits"][0].cpu().numpy()
                 boundary = model_output["boundary_logits"][0].cpu().numpy()
-                probabilities = 1.0 / (1.0 + np.exp(-logits))
-                boundary_probabilities = 1.0 / (1.0 + np.exp(-boundary))
+                probabilities = _stable_sigmoid(logits)
+                boundary_probabilities = _stable_sigmoid(boundary)
                 if probabilities.ndim == 3 and probabilities.shape[0] == 1:
                     zeros = np.zeros_like(probabilities)
                     if task == "leaf":

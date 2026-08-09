@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-05R/P4",
+  "status": "DIAGNOSTIC_FAILURE_AREA_ARCHITECTURE_SELECTED",
+  "P4_SCREENING_PASS": false,
+  "claim_boundary": "Area-only architecture comparison with reused discovery/classifier checkpoints from a training run later found to cover only 3/8 train worlds. It cannot freeze models or unlock G5.",
+  "source_report": {
+    "external_path": "F:/Project/TZcup-perception-product-runtime/p4-area-deeplab-v5-stratified-v1/auto05r_screening_report.json",
+    "sha256": "b14385319d8b5a61521ba91b01271ada7915ef64b1253f372fcb09b15a692fde",
+    "duration_s": 4727.654968645002,
+    "exit_code": 2,
+    "oom_killed": false
+  },
+  "architecture": {
+    "area": "deeplab_resnet50_rgb_preserved_shallow_geometry",
+    "rgb_stem_channels": 3,
+    "geometry_branch_channels": 7,
+    "boundary_head_source": "256-channel decoder features"
+  },
+  "validation_selection": {
+    "leaf": {
+      "best_epoch": 26,
+      "threshold": 0.85,
+      "iou": 0.9786405065052529,
+      "boundary_f1": 0.7868567609712631,
+      "negative_area_fp_per_frame": 0.0,
+      "checkpoint_sha256": "78e949303f6c92dca98cde9be0f2acc814f47d0a4b01d25fd5bef7639a617f5d"
+    },
+    "puddle": {
+      "best_epoch": 24,
+      "threshold": 0.9,
+      "iou": 0.9635651794184523,
+      "boundary_f1": 0.7481363996827914,
+      "negative_area_fp_per_frame": 0.0,
+      "checkpoint_sha256": "9aebd29e3b80ede8c2d44c64b2deff8cd8d61ec372991fa52c7cc4a316443d58"
+    }
+  },
+  "screening_area_metrics": {
+    "in_domain": {
+      "leaf_iou": 0.9258599975813716,
+      "puddle_iou": 0.9287621021282366,
+      "macro_miou": 0.9273110498548041,
+      "boundary_f1": 0.7300777862241605,
+      "negative_area_fp_per_frame": 0.016666666666666666
+    },
+    "cross_world": {
+      "leaf_iou": 0.9135659778310031,
+      "puddle_iou": 0.9620036346542126,
+      "macro_miou": 0.9377848062426078,
+      "boundary_f1": 0.7294171621070381,
+      "negative_area_fp_per_frame": 0.01875
+    }
+  },
+  "onnx": {
+    "all_individual_task_specific_parity_pass": true,
+    "all_custom_ops_zero": true,
+    "source_aggregate_gate": false,
+    "source_aggregate_failure_reason": "The old runner incorrectly added one universal max-absolute-logit-error threshold after all semantic task parity gates passed; corrected before the fresh formal run."
+  },
+  "blocking_discovery_metrics": {
+    "selected_val_threshold": 0.95,
+    "in_domain_recall": 0.3925339366515837,
+    "in_domain_false_candidates_per_min": 10.434782608695652,
+    "cross_world_recall": 0.43958868894601544,
+    "cross_world_false_candidates_per_min": 4.8
+  },
+  "decision": "Use DeepLabV3-ResNet50 for both area tasks in the next fresh A1 run. Retrain all four models from scratch with 8-world stratification, complete P4 selector constraints, infeasible-selection early-stop protection, atomic best checkpoints, and corrected task-specific ONNX aggregation."
+}

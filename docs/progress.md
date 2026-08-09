@@ -137,6 +137,15 @@
   零误报但零召回、或 boundary 合格但 IoU 不足的 epoch 当作正式候选；现将 discovery
   recall、classifier macro F1/逐类最小 recall、area IoU 一并纳入 VAL 阈值和 checkpoint
   硬约束。任何候选满足全部约束前禁用 early stopping，避免初始化期零输出提前终止。
+- 8-world 分层行集上的 DeepLab 面积对照完成：leaf/puddle 的 VAL IoU 为
+  `0.9786/0.9636`、boundary F1 为 `0.7869/0.7481`、negative FP 均为 0；完整
+  in-domain/cross-world mIoU 为 `0.9273/0.9378`，boundary F1 为 `0.7301/0.7294`，
+  因而选择 DeepLab 作为下一轮面积架构。离散模型仍复用旧 3/8-world checkpoint，
+  在 0.95 阈值下 recall 仅 `0.3925/0.4396`，所以整轮严格失败且不能冻结模型。
+- 四个 ONNX 的任务级 parity 与 custom-op 门实际全部通过；旧聚合器却额外套用统一
+  raw-logit `1e-4` 门，将 leaf 的 `1.68e-4` 判失败，尽管其 mask IoU=1、boundary
+  agreement=0.999995。现聚合只认各任务语义门、固定输入、opset 和零 custom op；
+  同时对极端 logits 使用稳定 sigmoid，避免诊断日志出现无害但误导性的 overflow。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 

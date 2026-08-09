@@ -74,6 +74,7 @@ from sanitation_learning.g4_models import (  # noqa: E402
 )
 from sanitation_learning.g4_onnx_parity import (  # noqa: E402
     assert_onnx_contract,
+    product_parity_gate,
 )
 from sanitation_learning.g4_selection import (  # noqa: E402
     area_selector,
@@ -1222,13 +1223,7 @@ def main() -> int:
             device,
         ),
     }
-    onnx_parity_pass = all(
-        report["parity"]["max_absolute_error"] <= 1e-4
-        and report["parity"].get("passed", False)
-        and report["custom_ops"] == 0
-        and report["opset"] == 17
-        for report in onnx.values()
-    )
+    onnx_parity_pass = product_parity_gate(onnx)
     onnx_custom_ops_zero = all(
         report["custom_ops"] == 0 for report in onnx.values()
     )

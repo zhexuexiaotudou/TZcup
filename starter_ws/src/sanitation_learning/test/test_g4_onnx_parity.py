@@ -16,9 +16,28 @@ from sanitation_learning.g4_onnx_parity import (  # noqa: E402
     assert_onnx_contract,
     classifier_parity,
     discovery_parity,
+    product_parity_gate,
     segmenter_parity,
     task_specific_parity,
 )
+
+
+def test_product_parity_gate_uses_task_semantics_not_raw_logit_error() -> None:
+    reports = {
+        task: {
+            "parity": {
+                "passed": True,
+                "max_absolute_error": 1.0 if task == "leaf" else 0.0,
+            },
+            "fixed_input": True,
+            "custom_ops": 0,
+            "opset": 17,
+        }
+        for task in ("discovery", "classifier", "leaf", "puddle")
+    }
+    assert product_parity_gate(reports) is True
+    reports["leaf"]["parity"]["passed"] = False
+    assert product_parity_gate(reports) is False
 
 
 def test_classifier_parity_top1_and_probability_error() -> None:
