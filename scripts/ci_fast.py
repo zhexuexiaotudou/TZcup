@@ -249,6 +249,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_auto15_competition_matrix.py",
         ROOT / "scripts" / "test_auto16_release.py",
         ROOT / "scripts" / "test_package_perception_release.py",
+        ROOT / "scripts" / "test_generate_perception_product_status.py",
         ROOT / "scripts" / "test_j6_product_contract.py",
         ROOT / "scripts" / "test_real_rgbd_capture.py",
         ROOT / "scripts" / "test_merge_auto05r_capture_shards.py",

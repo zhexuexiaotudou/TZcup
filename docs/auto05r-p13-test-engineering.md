@@ -23,4 +23,4 @@ formal MCAP 的真实 replay，离线重算指标差 `<=1%`。在 P4/P5 freeze �
 证据产生前，这两项必须保持 false。
 
 当前故障路径聚焦回归在 Windows 与正式 CUDA 镜像中均为 `22 passed`；全仓库快速门
-为 `464 passed / 23 skipped`。容器只读源码产生的 pytest cache 警告不影响结果。
+为 `466 passed / 23 skipped`。容器只读源码产生的 pytest cache 警告不影响结果。
