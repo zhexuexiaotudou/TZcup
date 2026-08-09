@@ -1,3 +1,5 @@
+import pytest
+
 from sanitation_perception.frame_synchronizer import (
     LatestFrameScheduler,
     StrictFrameSynchronizer,
@@ -33,3 +35,19 @@ def test_latest_frame_wins_and_queue_never_exceeds_two():
     assert scheduler.pop_latest().rgb.payload == "rgb"
     assert scheduler.pop_latest() is None
     assert scheduler.dropped == 2
+
+
+@pytest.mark.parametrize("missing", ("rgb", "depth", "camera_info"))
+def test_missing_or_delayed_sensor_stream_never_yields_a_frame(missing):
+    sync = StrictFrameSynchronizer(tolerance_ms=20, queue_depth=2)
+    streams = {"rgb": "rgb", "depth": "depth", "camera_info": "camera"}
+    for stream, payload in streams.items():
+        if stream != missing:
+            assert sync.add(stream, 1_000_000_000, payload) is None
+    assert sync.sync_count == 0
+    assert sync.received[missing] == 0
+
+    # A stream arriving outside the hard window also cannot form a frame.
+    assert sync.add(missing, 1_100_000_000, streams[missing]) is None
+    assert sync.sync_count == 0
+    assert sync.sync_reject_count == 1

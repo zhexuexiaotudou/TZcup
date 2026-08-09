@@ -124,6 +124,16 @@ def test_missing_cuda_or_dynamic_shape_is_rejected(tmp_path):
         CudaIOBindingSession(dynamic, FakeOrt)
 
 
+def test_corrupt_onnx_session_creation_fails_closed(tmp_path):
+    class CorruptOrt(FakeOrt):
+        @staticmethod
+        def InferenceSession(*_args, **_kwargs):
+            raise RuntimeError("invalid ONNX graph")
+
+    with pytest.raises(RuntimeError, match="invalid ONNX graph"):
+        CudaIOBindingSession(model(tmp_path), CorruptOrt)
+
+
 def test_product_engine_runs_discovery_classifier_and_both_area_models(tmp_path):
     def product_model(role, input_name, input_shape, output_shape, thresholds, nms=None):
         artifact = tmp_path / f"{role}.onnx"
@@ -211,6 +221,11 @@ def test_product_engine_runs_discovery_classifier_and_both_area_models(tmp_path)
     assert result["metrics"]["candidate_count"] == 2
     with pytest.raises(ValueError, match="RGB contrast"):
         engine.run_frame(np.zeros_like(rgb), depth, {
+            "width": 640, "height": 480, "fx": 343.0, "fy": 343.0,
+            "cx": 320.0, "cy": 240.0,
+        })
+    with pytest.raises(ValueError, match="valid depth ratio"):
+        engine.run_frame(rgb, np.full_like(depth, np.nan), {
             "width": 640, "height": 480, "fx": 343.0, "fy": 343.0,
             "cx": 320.0, "cy": 240.0,
         })

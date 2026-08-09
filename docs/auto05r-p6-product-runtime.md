@@ -61,7 +61,7 @@ ROS lifecycle 节点与真实 ORT CUDA session 仍必须在 P4/P5 模型冻结�
 
 这些状态保持 false，不能因为纯 Python 内核测试通过而提升 P6/P7/live 门。
 
-当前软件验证证据：Windows 快速门 `460 passed / 23 skipped`；正式 CUDA 镜像中的
+当前软件验证证据：Windows 快速门 `464 passed / 23 skipped`；正式 CUDA 镜像中的
 产品 runtime/manifest/packaging 聚焦回归 `30 passed`；ROS 2 Jazzy 容器实际构建
 `sanitation_perception_interfaces` 与 `sanitation_perception` 两包成功，随后 colcon
 测试 `65 passed / 0 failed`。以上只证明
