@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-10",
+  "local_probe_exit_code": 0,
+  "local_matching_devices": [],
+  "configured_remote_endpoint_present": false,
+  "board_device_count": 0,
+  "PRODUCT_J6_BOARD_READY": false,
+  "BLOCKED_EXTERNAL_J6_BOARD": true,
+  "FPS": null,
+  "latency_p95_ms": null,
+  "temperature_c": null,
+  "power_w": null,
+  "memory_mb": null,
+  "BPU_utilization": null,
+  "CPU_utilization": null,
+  "truth_boundary": "No physical runtime metrics may be populated without an identified board, a compiled student, and a 30-minute board run."
+}

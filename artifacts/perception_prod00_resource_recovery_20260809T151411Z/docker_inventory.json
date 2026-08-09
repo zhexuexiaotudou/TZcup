@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "product_base_image": "tzcup/sanitation-jazzy:stage5b",
+  "probe": {
+    "command": [
+      "docker",
+      "image",
+      "inspect",
+      "tzcup/sanitation-jazzy:stage5b",
+      "--format",
+      "{{.Id}} {{.Size}}"
+    ],
+    "exit_code": 0,
+    "stdout": "sha256:418550f48916d794bc0aff144c60a3b1353d0bb0bb1dcf086cda0ec8e2a5aadc 4656554020",
+    "stderr": ""
+  },
+  "available": true,
+  "perception_product_image_built": false,
+  "perception_reference_image_built": false
+}

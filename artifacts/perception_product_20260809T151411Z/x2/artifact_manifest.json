@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-02-X2",
+  "artifacts": [
+    {
+      "path": "X2_EXTERNAL_ASSET_BLOCKED.json",
+      "sha256": "076173a8a3ee96355b6f999ca9ebabce91e386278d91970c6b9e3471abd7be29"
+    }
+  ],
+  "large_assets_committed": false,
+  "external_zero_byte_partial_committed": false
+}

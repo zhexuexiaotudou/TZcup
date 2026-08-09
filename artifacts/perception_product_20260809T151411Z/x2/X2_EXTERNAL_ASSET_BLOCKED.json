@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-02-X2",
+  "route": "ONLINE-X2_GROUNDING_DINO_PLUS_CLOSED_SET_CLASSIFIER",
+  "decision": "BLOCKED_EXTERNAL_NETWORK_ASSET",
+  "source_commit": "bc91bc0",
+  "reference_dependency": {
+    "name": "Grounding DINO",
+    "repository": "https://github.com/IDEA-Research/GroundingDINO",
+    "pinned_commit": "856dde20aee659246248e20734ef9ba5214f5e44",
+    "license": "Apache-2.0",
+    "checkpoint": "groundingdino_swint_ogc.pth",
+    "checkpoint_expected_nonempty": true
+  },
+  "attempts": [
+    {
+      "channel": "official GitHub release URL",
+      "url": "https://github.com/IDEA-Research/GroundingDINO/releases/download/v0.1.0-alpha/groundingdino_swint_ogc.pth",
+      "result": "metadata endpoint resolved but payload remained at zero bytes until bounded termination"
+    },
+    {
+      "channel": "official README Hugging Face mirror",
+      "url": "https://huggingface.co/ShilongLiu/GroundingDINO/resolve/main/groundingdino_swint_ogc.pth",
+      "result": "three bounded 20-second connection attempts timed out with curl exit 28"
+    },
+    {
+      "channel": "GitHub CLI release asset download",
+      "url": "release v0.1.0-alpha via GitHub Release API",
+      "result": "release metadata was reachable but asset payload remained at zero bytes until bounded termination"
+    }
+  ],
+  "external_cache": {
+    "path": "F:/Project/TZcup-perception-product-runtime/reference-cache/grounding-dino/groundingdino_swint_ogc.pth",
+    "observed_size_bytes": 0,
+    "valid_checkpoint": false,
+    "repository_tracked": false
+  },
+  "execution_boundary": {
+    "source_checkout_started": false,
+    "checkpoint_loaded": false,
+    "model_inference_started": false,
+    "performance_failure_claimed": false,
+    "reason": "A verified non-empty official checkpoint is a hard prerequisite; a zero-byte partial file must fail closed."
+  },
+  "fixed_gate_changes": [],
+  "G5_SEALED_FINAL_read": false,
+  "legacy_G4_D6_read": false,
+  "PERCEPTION_ONLINE_X86_DEV_PASS": false,
+  "MODEL_BLOCKED_INTERNAL": false,
+  "next_action": "Run the final allowed route ONLINE-X3 with an official auditable detector that does not require a new external asset download."
+}

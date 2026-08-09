@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "evidence_source_commit": "f11c0f16e78c3c9592c27c01f94c63a5fdf1035c",
+  "selected_product_model": null,
+  "models": [
+    {
+      "route": "X1",
+      "model": "FCOS-R50 proposal + crop classifier",
+      "status": "FAILED_STATIC_FULL_PIPELINE",
+      "checkpoint_sha256": "a5884ac9bfa4e89f2ae8a25f4cae0521e263dd951ef895fa1185f013b2f04ee5",
+      "shipped": false
+    },
+    {
+      "route": "X2",
+      "model": "Grounding DINO + crop classifier",
+      "status": "BLOCKED_EXTERNAL_NETWORK_ASSET",
+      "checkpoint_sha256": null,
+      "shipped": false
+    },
+    {
+      "route": "X3",
+      "model": "Torchvision FCOS-R50 direct three-class",
+      "status": "FAILED_STATIC_FULL_PIPELINE",
+      "checkpoint_sha256": "02869d3677a999a0d8cd0a73114a60fbc803c447717d129313bcf3dbfe68507b",
+      "checkpoint_repository_tracked": false,
+      "shipped": false
+    }
+  ],
+  "PRODUCT_X86_PERCEPTION_READY": false,
+  "release_model_count": 0
+}

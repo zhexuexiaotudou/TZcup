@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "source_path": "F:/Project/TZcup-perception-product-runtime/j6-toolchain/toolchain_discovery.json",
+  "source_sha256": "5b25f2031a41297cea1b892a6ba55185eb45dee355fffccccd9b01948f4a3dc1",
+  "official_package_ready": true,
+  "local_oe_version": "3.7.0",
+  "official_docs_version": "3.9.0",
+  "official_docs_url": "https://doc.oe.horizon.auto/",
+  "version_difference_requires_resolution": true,
+  "hbdk_version": "4.7.5",
+  "hmct_version": "2.6.5",
+  "board_device_count": 0,
+  "frozen_j6_student_available": false,
+  "ptq_or_compile_executed": false,
+  "PRODUCT_J6_TOOLCHAIN_READY": false,
+  "PRODUCT_J6_BOARD_READY": false
+}

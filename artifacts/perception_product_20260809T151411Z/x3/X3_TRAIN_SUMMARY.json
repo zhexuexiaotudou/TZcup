@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-02-X3-TRAIN",
+  "route": "ONLINE-X3_TORCHVISION_FCOS_R50_DIRECT_3CLASS",
+  "execution": {
+    "environment": "tzcup/sanitation-jazzy:stage5b with RTX 4080 CUDA",
+    "epochs": 8,
+    "train_frames": 600,
+    "train_world_holdout_frames": 100,
+    "duration_s": 316.55697813100414,
+    "full_external_report_sha256": "316719d35a269ae242c4579051c45664dc44ffcd62023cac8de74d5d804d5f35",
+    "full_external_report_path": "F:/Project/TZcup-perception-product-runtime/x3-direct-fcos-3class-v1/X3_TRAIN_REPORT.json"
+  },
+  "official_pretrained_weights": {
+    "weight_enum": "FCOS_ResNet50_FPN_Weights.COCO_V1",
+    "sha256": "99b0c9b7cfb1527d782db86b91d207f00547c792fb4103fc612b651d0a07b9e7"
+  },
+  "checkpoint": {
+    "path": "F:/Project/TZcup-perception-product-runtime/x3-direct-fcos-3class-v1/x3_fcos_r50_direct_3class.pt",
+    "sha256": "02869d3677a999a0d8cd0a73114a60fbc803c447717d129313bcf3dbfe68507b",
+    "bytes": 128798634,
+    "repository_tracked": false
+  },
+  "selection": {
+    "split": "train_world_holdout",
+    "threshold": 0.6,
+    "macro_precision": 1.0,
+    "macro_recall": 0.8787666581784229,
+    "macro_f1": 0.9343589250516802,
+    "small_object_recall": 0.0,
+    "false_candidates_per_min": 0.0,
+    "all_fixed_gates_pass": false
+  },
+  "VAL_read_for_training_or_selection": false,
+  "G5_SEALED_FINAL_read": false,
+  "legacy_G4_D6_read": false,
+  "product_ready": false
+}

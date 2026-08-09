@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-11",
+  "artifacts": [
+    {
+      "path": "FIELD_RESOURCE_AND_SOFTWARE_STATUS.json",
+      "sha256": "5ab0b50a90d24011df160e271a38bd807eb8f709ea4bafe89376289e29a455be"
+    }
+  ],
+  "software_preparation_complete": true,
+  "PRODUCT_FIELD_READY": false,
+  "REAL_DOMAIN_BLOCKED_EXTERNAL": true
+}

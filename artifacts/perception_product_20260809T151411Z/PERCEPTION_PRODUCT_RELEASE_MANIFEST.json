@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-12",
+  "evidence_source_commit": "f11c0f16e78c3c9592c27c01f94c63a5fdf1035c",
+  "release_id": null,
+  "selected_model": null,
+  "container_digest": null,
+  "deployment_target": null,
+  "deployed_commit": null,
+  "rollback_point": "f11c0f16e78c3c9592c27c01f94c63a5fdf1035c",
+  "release_ready": false,
+  "release_blocked_at": "static_x86_model_qualification",
+  "SBOM_generated": false,
+  "signature_generated": false,
+  "production_verification_run": false,
+  "truth_boundary": "A release manifest records the blocked state; it is not a product release."
+}

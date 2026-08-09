@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "probe": {
+    "command": [
+      "nvidia-smi",
+      "--query-gpu=name,driver_version,memory.total,memory.free",
+      "--format=csv,noheader,nounits"
+    ],
+    "exit_code": 0,
+    "stdout": "NVIDIA GeForce RTX 4080 Laptop GPU, 595.79, 12282, 9638",
+    "stderr": ""
+  },
+  "cuda_gpu_available": true,
+  "required_reference_gpu": "NVIDIA RTX 4080 Laptop GPU"
+}

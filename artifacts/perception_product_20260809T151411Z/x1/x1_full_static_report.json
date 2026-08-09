@@ -1,0 +1,1962 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-01-X1-STATIC",
+  "source_commit": "31be4ce",
+  "route": "ONLINE-X1_FCOS_R50",
+  "device": "cuda",
+  "environment": {
+    "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "torch": "2.5.1+cu124",
+    "cuda_available": true,
+    "gpu": "NVIDIA GeForce RTX 4080 Laptop GPU"
+  },
+  "thresholds": {
+    "discovery": 0.7,
+    "classifier": 0.95,
+    "classifier_grid": [
+      0.2,
+      0.25,
+      0.3,
+      0.35,
+      0.4,
+      0.45,
+      0.5,
+      0.55,
+      0.6,
+      0.65,
+      0.7,
+      0.75,
+      0.8,
+      0.85,
+      0.9,
+      0.95
+    ],
+    "area": [
+      0.85,
+      0.85
+    ],
+    "top_k": 16
+  },
+  "models": {
+    "teacher": {
+      "path": "/runtime/p2-teacher-v5/fcos_resnet50_fpn_teacher.pt",
+      "sha256": "a5884ac9bfa4e89f2ae8a25f4cae0521e263dd951ef895fa1185f013b2f04ee5"
+    },
+    "classifier": {
+      "path": "/runtime/p4-screening-v5-a3-distilled-top16-batch16-v1/classifier.pt",
+      "sha256": "d145090681551160b74aa0e43bb711561c8e4d3a1494535243f700935bcfb2e6",
+      "checkpoint_status": "training_complete",
+      "model_contract": {
+        "model_id": "g4_candidate_crop_classifier_v1",
+        "architecture_role": null,
+        "discovery_architecture": null
+      }
+    },
+    "leaf": {
+      "path": "/runtime/p4-screening-v5-a3-distilled-top16-batch16-v1/leaf.pt",
+      "sha256": "ecba9043d0e0523ad5b79381bcc7c21583ccba2c9a806f2179e5ca7e3e14aa2e",
+      "checkpoint_status": "training_complete",
+      "model_contract": {
+        "model_id": "g4_leaf_segmenter_deeplab_v1",
+        "architecture_role": "deeplab_resnet50_rgb_preserved_shallow_geometry",
+        "discovery_architecture": null
+      }
+    },
+    "puddle": {
+      "path": "/runtime/p4-screening-v5-a3-distilled-top16-batch16-v1/puddle.pt",
+      "sha256": "8b3aee52679105f857b9e43694dc08304e5cda73c9536a7904c52ed33b31d2e2",
+      "checkpoint_status": "training_complete",
+      "model_contract": {
+        "model_id": "g4_puddle_segmenter_deeplab_v1",
+        "architecture_role": "deeplab_resnet50_rgb_preserved_shallow_geometry",
+        "discovery_architecture": null
+      }
+    }
+  },
+  "splits": {
+    "VAL": {
+      "name": "VAL",
+      "rows": 500,
+      "candidate": {
+        "all_gt_candidate_recall": 0.9357326478149101,
+        "matched_truth": 728,
+        "total_truth": 778,
+        "ap50": 0.9302480685164176,
+        "precision": 0.9904761904761905,
+        "false_proposals_per_frame": 0.014,
+        "total_false_positives": 7,
+        "negative_only_frames": 160,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 8.4,
+        "small_object_candidate_recall": 0.9357326478149101,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 778,
+            "matched": 728,
+            "recall": 0.9357326478149101
+          },
+          "medium_18_to_48px": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "large_ge_48px": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          }
+        },
+        "per_world": {
+          "world_g4_09_light_paver_pedestrian": {
+            "total": 356,
+            "matched": 334,
+            "recall": 0.9382022471910112
+          },
+          "world_g4_10_dark_gravel_parking": {
+            "total": 422,
+            "matched": 394,
+            "recall": 0.933649289099526
+          }
+        }
+      },
+      "discrete": {
+        "per_class": {
+          "plastic_bottle": {
+            "tp": 0,
+            "fp": 241,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "metal_can": {
+            "tp": 0,
+            "fp": 213,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "paper_litter": {
+            "tp": 0,
+            "fp": 215,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        },
+        "macro_precision": 0.0,
+        "macro_recall": 0.0,
+        "macro_f1": 0.0,
+        "paper_precision": 0.0,
+        "paper_recall": 0.0,
+        "small_object_recall": 0.0,
+        "small_object_total": 778,
+        "small_object_matched": 0,
+        "all_gt_candidate_recall": 0.0,
+        "all_gt_candidate_total": 778,
+        "all_gt_candidate_matched": 0,
+        "negative_only_frames": 160,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 802.8,
+        "total_false_positives": 669,
+        "frame_count": 500
+      },
+      "area": {
+        "iou_by_class": {
+          "leaf_pile": 0.8913577492098728,
+          "puddle": 0.9496047965053415
+        },
+        "macro_miou": 0.9204812728576071,
+        "boundary_f1_by_class": {
+          "leaf_pile": 0.6724210472632692,
+          "puddle": 0.7035945354255593
+        },
+        "boundary_f1": 0.6880077913444143,
+        "boundary_intersection_pixels": [
+          26370,
+          57528
+        ],
+        "boundary_union_pixels": [
+          52063,
+          105998
+        ],
+        "negative_only_frames": 160,
+        "negative_only_fp_frames": 0,
+        "negative_area_fp_per_frame": 0.0,
+        "intersection_pixels": [
+          463375,
+          1053879
+        ],
+        "union_pixels": [
+          519853,
+          1109808
+        ]
+      },
+      "same_color_negative_specificity": {
+        "status": "not_evaluated",
+        "specificity": null,
+        "taxonomy_count": 0
+      },
+      "classifier_threshold": 0.95,
+      "classifier_calibration": {
+        "selected": {
+          "threshold": 0.95,
+          "metrics": {
+            "per_class": {
+              "plastic_bottle": {
+                "tp": 0,
+                "fp": 241,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "metal_can": {
+                "tp": 0,
+                "fp": 213,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              },
+              "paper_litter": {
+                "tp": 0,
+                "fp": 215,
+                "fn": 0,
+                "precision": 0.0,
+                "recall": 0.0,
+                "f1": 0.0
+              }
+            },
+            "macro_precision": 0.0,
+            "macro_recall": 0.0,
+            "macro_f1": 0.0,
+            "paper_precision": 0.0,
+            "paper_recall": 0.0,
+            "small_object_recall": 0.0,
+            "small_object_total": 778,
+            "small_object_matched": 0,
+            "all_gt_candidate_recall": 0.0,
+            "all_gt_candidate_total": 778,
+            "all_gt_candidate_matched": 0,
+            "negative_only_frames": 160,
+            "negative_only_fp_frames": 0,
+            "negative_only_fp_per_frame": 0.0,
+            "false_candidates_per_min": 802.8,
+            "total_false_positives": 669,
+            "frame_count": 500
+          },
+          "gates": {
+            "macro_precision_at_least_0_90": false,
+            "macro_recall_at_least_0_90": false,
+            "macro_f1_at_least_0_90": false,
+            "paper_precision_at_least_0_80": false,
+            "small_recall_at_least_0_70": false
+          },
+          "all_pass": false
+        },
+        "sweep": [
+          {
+            "threshold": 0.2,
+            "metrics": {
+              "per_class": {
+                "plastic_bottle": {
+                  "tp": 0,
+                  "fp": 253,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "metal_can": {
+                  "tp": 0,
+                  "fp": 237,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "paper_litter": {
+                  "tp": 0,
+                  "fp": 229,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                }
+              },
+              "macro_precision": 0.0,
+              "macro_recall": 0.0,
+              "macro_f1": 0.0,
+              "paper_precision": 0.0,
+              "paper_recall": 0.0,
+              "small_object_recall": 0.0,
+              "small_object_total": 778,
+              "small_object_matched": 0,
+              "all_gt_candidate_recall": 0.0,
+              "all_gt_candidate_total": 778,
+              "all_gt_candidate_matched": 0,
+              "negative_only_frames": 160,
+              "negative_only_fp_frames": 0,
+              "negative_only_fp_per_frame": 0.0,
+              "false_candidates_per_min": 862.8,
+              "total_false_positives": 719,
+              "frame_count": 500
+            },
+            "gates": {
+              "macro_precision_at_least_0_90": false,
+              "macro_recall_at_least_0_90": false,
+              "macro_f1_at_least_0_90": false,
+              "paper_precision_at_least_0_80": false,
+              "small_recall_at_least_0_70": false
+            },
+            "all_pass": false
+          },
+          {
+            "threshold": 0.25,
+            "metrics": {
+              "per_class": {
+                "plastic_bottle": {
+                  "tp": 0,
+                  "fp": 253,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "metal_can": {
+                  "tp": 0,
+                  "fp": 237,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "paper_litter": {
+                  "tp": 0,
+                  "fp": 229,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                }
+              },
+              "macro_precision": 0.0,
+              "macro_recall": 0.0,
+              "macro_f1": 0.0,
+              "paper_precision": 0.0,
+              "paper_recall": 0.0,
+              "small_object_recall": 0.0,
+              "small_object_total": 778,
+              "small_object_matched": 0,
+              "all_gt_candidate_recall": 0.0,
+              "all_gt_candidate_total": 778,
+              "all_gt_candidate_matched": 0,
+              "negative_only_frames": 160,
+              "negative_only_fp_frames": 0,
+              "negative_only_fp_per_frame": 0.0,
+              "false_candidates_per_min": 862.8,
+              "total_false_positives": 719,
+              "frame_count": 500
+            },
+            "gates": {
+              "macro_precision_at_least_0_90": false,
+              "macro_recall_at_least_0_90": false,
+              "macro_f1_at_least_0_90": false,
+              "paper_precision_at_least_0_80": false,
+              "small_recall_at_least_0_70": false
+            },
+            "all_pass": false
+          },
+          {
+            "threshold": 0.3,
+            "metrics": {
+              "per_class": {
+                "plastic_bottle": {
+                  "tp": 0,
+                  "fp": 253,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "metal_can": {
+                  "tp": 0,
+                  "fp": 237,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "paper_litter": {
+                  "tp": 0,
+                  "fp": 229,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                }
+              },
+              "macro_precision": 0.0,
+              "macro_recall": 0.0,
+              "macro_f1": 0.0,
+              "paper_precision": 0.0,
+              "paper_recall": 0.0,
+              "small_object_recall": 0.0,
+              "small_object_total": 778,
+              "small_object_matched": 0,
+              "all_gt_candidate_recall": 0.0,
+              "all_gt_candidate_total": 778,
+              "all_gt_candidate_matched": 0,
+              "negative_only_frames": 160,
+              "negative_only_fp_frames": 0,
+              "negative_only_fp_per_frame": 0.0,
+              "false_candidates_per_min": 862.8,
+              "total_false_positives": 719,
+              "frame_count": 500
+            },
+            "gates": {
+              "macro_precision_at_least_0_90": false,
+              "macro_recall_at_least_0_90": false,
+              "macro_f1_at_least_0_90": false,
+              "paper_precision_at_least_0_80": false,
+              "small_recall_at_least_0_70": false
+            },
+            "all_pass": false
+          },
+          {
+            "threshold": 0.35,
+            "metrics": {
+              "per_class": {
+                "plastic_bottle": {
+                  "tp": 0,
+                  "fp": 253,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "metal_can": {
+                  "tp": 0,
+                  "fp": 237,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "paper_litter": {
+                  "tp": 0,
+                  "fp": 229,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                }
+              },
+              "macro_precision": 0.0,
+              "macro_recall": 0.0,
+              "macro_f1": 0.0,
+              "paper_precision": 0.0,
+              "paper_recall": 0.0,
+              "small_object_recall": 0.0,
+              "small_object_total": 778,
+              "small_object_matched": 0,
+              "all_gt_candidate_recall": 0.0,
+              "all_gt_candidate_total": 778,
+              "all_gt_candidate_matched": 0,
+              "negative_only_frames": 160,
+              "negative_only_fp_frames": 0,
+              "negative_only_fp_per_frame": 0.0,
+              "false_candidates_per_min": 862.8,
+              "total_false_positives": 719,
+              "frame_count": 500
+            },
+            "gates": {
+              "macro_precision_at_least_0_90": false,
+              "macro_recall_at_least_0_90": false,
+              "macro_f1_at_least_0_90": false,
+              "paper_precision_at_least_0_80": false,
+              "small_recall_at_least_0_70": false
+            },
+            "all_pass": false
+          },
+          {
+            "threshold": 0.4,
+            "metrics": {
+              "per_class": {
+                "plastic_bottle": {
+                  "tp": 0,
+                  "fp": 253,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "metal_can": {
+                  "tp": 0,
+                  "fp": 237,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "paper_litter": {
+                  "tp": 0,
+                  "fp": 229,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                }
+              },
+              "macro_precision": 0.0,
+              "macro_recall": 0.0,
+              "macro_f1": 0.0,
+              "paper_precision": 0.0,
+              "paper_recall": 0.0,
+              "small_object_recall": 0.0,
+              "small_object_total": 778,
+              "small_object_matched": 0,
+              "all_gt_candidate_recall": 0.0,
+              "all_gt_candidate_total": 778,
+              "all_gt_candidate_matched": 0,
+              "negative_only_frames": 160,
+              "negative_only_fp_frames": 0,
+              "negative_only_fp_per_frame": 0.0,
+              "false_candidates_per_min": 862.8,
+              "total_false_positives": 719,
+              "frame_count": 500
+            },
+            "gates": {
+              "macro_precision_at_least_0_90": false,
+              "macro_recall_at_least_0_90": false,
+              "macro_f1_at_least_0_90": false,
+              "paper_precision_at_least_0_80": false,
+              "small_recall_at_least_0_70": false
+            },
+            "all_pass": false
+          },
+          {
+            "threshold": 0.45,
+            "metrics": {
+              "per_class": {
+                "plastic_bottle": {
+                  "tp": 0,
+                  "fp": 253,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "metal_can": {
+                  "tp": 0,
+                  "fp": 237,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "paper_litter": {
+                  "tp": 0,
+                  "fp": 229,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                }
+              },
+              "macro_precision": 0.0,
+              "macro_recall": 0.0,
+              "macro_f1": 0.0,
+              "paper_precision": 0.0,
+              "paper_recall": 0.0,
+              "small_object_recall": 0.0,
+              "small_object_total": 778,
+              "small_object_matched": 0,
+              "all_gt_candidate_recall": 0.0,
+              "all_gt_candidate_total": 778,
+              "all_gt_candidate_matched": 0,
+              "negative_only_frames": 160,
+              "negative_only_fp_frames": 0,
+              "negative_only_fp_per_frame": 0.0,
+              "false_candidates_per_min": 862.8,
+              "total_false_positives": 719,
+              "frame_count": 500
+            },
+            "gates": {
+              "macro_precision_at_least_0_90": false,
+              "macro_recall_at_least_0_90": false,
+              "macro_f1_at_least_0_90": false,
+              "paper_precision_at_least_0_80": false,
+              "small_recall_at_least_0_70": false
+            },
+            "all_pass": false
+          },
+          {
+            "threshold": 0.5,
+            "metrics": {
+              "per_class": {
+                "plastic_bottle": {
+                  "tp": 0,
+                  "fp": 253,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "metal_can": {
+                  "tp": 0,
+                  "fp": 237,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "paper_litter": {
+                  "tp": 0,
+                  "fp": 229,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                }
+              },
+              "macro_precision": 0.0,
+              "macro_recall": 0.0,
+              "macro_f1": 0.0,
+              "paper_precision": 0.0,
+              "paper_recall": 0.0,
+              "small_object_recall": 0.0,
+              "small_object_total": 778,
+              "small_object_matched": 0,
+              "all_gt_candidate_recall": 0.0,
+              "all_gt_candidate_total": 778,
+              "all_gt_candidate_matched": 0,
+              "negative_only_frames": 160,
+              "negative_only_fp_frames": 0,
+              "negative_only_fp_per_frame": 0.0,
+              "false_candidates_per_min": 862.8,
+              "total_false_positives": 719,
+              "frame_count": 500
+            },
+            "gates": {
+              "macro_precision_at_least_0_90": false,
+              "macro_recall_at_least_0_90": false,
+              "macro_f1_at_least_0_90": false,
+              "paper_precision_at_least_0_80": false,
+              "small_recall_at_least_0_70": false
+            },
+            "all_pass": false
+          },
+          {
+            "threshold": 0.55,
+            "metrics": {
+              "per_class": {
+                "plastic_bottle": {
+                  "tp": 0,
+                  "fp": 253,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "metal_can": {
+                  "tp": 0,
+                  "fp": 234,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "paper_litter": {
+                  "tp": 0,
+                  "fp": 228,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                }
+              },
+              "macro_precision": 0.0,
+              "macro_recall": 0.0,
+              "macro_f1": 0.0,
+              "paper_precision": 0.0,
+              "paper_recall": 0.0,
+              "small_object_recall": 0.0,
+              "small_object_total": 778,
+              "small_object_matched": 0,
+              "all_gt_candidate_recall": 0.0,
+              "all_gt_candidate_total": 778,
+              "all_gt_candidate_matched": 0,
+              "negative_only_frames": 160,
+              "negative_only_fp_frames": 0,
+              "negative_only_fp_per_frame": 0.0,
+              "false_candidates_per_min": 858.0,
+              "total_false_positives": 715,
+              "frame_count": 500
+            },
+            "gates": {
+              "macro_precision_at_least_0_90": false,
+              "macro_recall_at_least_0_90": false,
+              "macro_f1_at_least_0_90": false,
+              "paper_precision_at_least_0_80": false,
+              "small_recall_at_least_0_70": false
+            },
+            "all_pass": false
+          },
+          {
+            "threshold": 0.6,
+            "metrics": {
+              "per_class": {
+                "plastic_bottle": {
+                  "tp": 0,
+                  "fp": 251,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "metal_can": {
+                  "tp": 0,
+                  "fp": 234,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "paper_litter": {
+                  "tp": 0,
+                  "fp": 227,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                }
+              },
+              "macro_precision": 0.0,
+              "macro_recall": 0.0,
+              "macro_f1": 0.0,
+              "paper_precision": 0.0,
+              "paper_recall": 0.0,
+              "small_object_recall": 0.0,
+              "small_object_total": 778,
+              "small_object_matched": 0,
+              "all_gt_candidate_recall": 0.0,
+              "all_gt_candidate_total": 778,
+              "all_gt_candidate_matched": 0,
+              "negative_only_frames": 160,
+              "negative_only_fp_frames": 0,
+              "negative_only_fp_per_frame": 0.0,
+              "false_candidates_per_min": 854.4,
+              "total_false_positives": 712,
+              "frame_count": 500
+            },
+            "gates": {
+              "macro_precision_at_least_0_90": false,
+              "macro_recall_at_least_0_90": false,
+              "macro_f1_at_least_0_90": false,
+              "paper_precision_at_least_0_80": false,
+              "small_recall_at_least_0_70": false
+            },
+            "all_pass": false
+          },
+          {
+            "threshold": 0.65,
+            "metrics": {
+              "per_class": {
+                "plastic_bottle": {
+                  "tp": 0,
+                  "fp": 250,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "metal_can": {
+                  "tp": 0,
+                  "fp": 231,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "paper_litter": {
+                  "tp": 0,
+                  "fp": 226,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                }
+              },
+              "macro_precision": 0.0,
+              "macro_recall": 0.0,
+              "macro_f1": 0.0,
+              "paper_precision": 0.0,
+              "paper_recall": 0.0,
+              "small_object_recall": 0.0,
+              "small_object_total": 778,
+              "small_object_matched": 0,
+              "all_gt_candidate_recall": 0.0,
+              "all_gt_candidate_total": 778,
+              "all_gt_candidate_matched": 0,
+              "negative_only_frames": 160,
+              "negative_only_fp_frames": 0,
+              "negative_only_fp_per_frame": 0.0,
+              "false_candidates_per_min": 848.4,
+              "total_false_positives": 707,
+              "frame_count": 500
+            },
+            "gates": {
+              "macro_precision_at_least_0_90": false,
+              "macro_recall_at_least_0_90": false,
+              "macro_f1_at_least_0_90": false,
+              "paper_precision_at_least_0_80": false,
+              "small_recall_at_least_0_70": false
+            },
+            "all_pass": false
+          },
+          {
+            "threshold": 0.7,
+            "metrics": {
+              "per_class": {
+                "plastic_bottle": {
+                  "tp": 0,
+                  "fp": 249,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "metal_can": {
+                  "tp": 0,
+                  "fp": 230,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "paper_litter": {
+                  "tp": 0,
+                  "fp": 226,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                }
+              },
+              "macro_precision": 0.0,
+              "macro_recall": 0.0,
+              "macro_f1": 0.0,
+              "paper_precision": 0.0,
+              "paper_recall": 0.0,
+              "small_object_recall": 0.0,
+              "small_object_total": 778,
+              "small_object_matched": 0,
+              "all_gt_candidate_recall": 0.0,
+              "all_gt_candidate_total": 778,
+              "all_gt_candidate_matched": 0,
+              "negative_only_frames": 160,
+              "negative_only_fp_frames": 0,
+              "negative_only_fp_per_frame": 0.0,
+              "false_candidates_per_min": 846.0,
+              "total_false_positives": 705,
+              "frame_count": 500
+            },
+            "gates": {
+              "macro_precision_at_least_0_90": false,
+              "macro_recall_at_least_0_90": false,
+              "macro_f1_at_least_0_90": false,
+              "paper_precision_at_least_0_80": false,
+              "small_recall_at_least_0_70": false
+            },
+            "all_pass": false
+          },
+          {
+            "threshold": 0.75,
+            "metrics": {
+              "per_class": {
+                "plastic_bottle": {
+                  "tp": 0,
+                  "fp": 249,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "metal_can": {
+                  "tp": 0,
+                  "fp": 227,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "paper_litter": {
+                  "tp": 0,
+                  "fp": 224,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                }
+              },
+              "macro_precision": 0.0,
+              "macro_recall": 0.0,
+              "macro_f1": 0.0,
+              "paper_precision": 0.0,
+              "paper_recall": 0.0,
+              "small_object_recall": 0.0,
+              "small_object_total": 778,
+              "small_object_matched": 0,
+              "all_gt_candidate_recall": 0.0,
+              "all_gt_candidate_total": 778,
+              "all_gt_candidate_matched": 0,
+              "negative_only_frames": 160,
+              "negative_only_fp_frames": 0,
+              "negative_only_fp_per_frame": 0.0,
+              "false_candidates_per_min": 840.0,
+              "total_false_positives": 700,
+              "frame_count": 500
+            },
+            "gates": {
+              "macro_precision_at_least_0_90": false,
+              "macro_recall_at_least_0_90": false,
+              "macro_f1_at_least_0_90": false,
+              "paper_precision_at_least_0_80": false,
+              "small_recall_at_least_0_70": false
+            },
+            "all_pass": false
+          },
+          {
+            "threshold": 0.8,
+            "metrics": {
+              "per_class": {
+                "plastic_bottle": {
+                  "tp": 0,
+                  "fp": 249,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "metal_can": {
+                  "tp": 0,
+                  "fp": 223,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "paper_litter": {
+                  "tp": 0,
+                  "fp": 223,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                }
+              },
+              "macro_precision": 0.0,
+              "macro_recall": 0.0,
+              "macro_f1": 0.0,
+              "paper_precision": 0.0,
+              "paper_recall": 0.0,
+              "small_object_recall": 0.0,
+              "small_object_total": 778,
+              "small_object_matched": 0,
+              "all_gt_candidate_recall": 0.0,
+              "all_gt_candidate_total": 778,
+              "all_gt_candidate_matched": 0,
+              "negative_only_frames": 160,
+              "negative_only_fp_frames": 0,
+              "negative_only_fp_per_frame": 0.0,
+              "false_candidates_per_min": 834.0,
+              "total_false_positives": 695,
+              "frame_count": 500
+            },
+            "gates": {
+              "macro_precision_at_least_0_90": false,
+              "macro_recall_at_least_0_90": false,
+              "macro_f1_at_least_0_90": false,
+              "paper_precision_at_least_0_80": false,
+              "small_recall_at_least_0_70": false
+            },
+            "all_pass": false
+          },
+          {
+            "threshold": 0.85,
+            "metrics": {
+              "per_class": {
+                "plastic_bottle": {
+                  "tp": 0,
+                  "fp": 247,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "metal_can": {
+                  "tp": 0,
+                  "fp": 221,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "paper_litter": {
+                  "tp": 0,
+                  "fp": 221,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                }
+              },
+              "macro_precision": 0.0,
+              "macro_recall": 0.0,
+              "macro_f1": 0.0,
+              "paper_precision": 0.0,
+              "paper_recall": 0.0,
+              "small_object_recall": 0.0,
+              "small_object_total": 778,
+              "small_object_matched": 0,
+              "all_gt_candidate_recall": 0.0,
+              "all_gt_candidate_total": 778,
+              "all_gt_candidate_matched": 0,
+              "negative_only_frames": 160,
+              "negative_only_fp_frames": 0,
+              "negative_only_fp_per_frame": 0.0,
+              "false_candidates_per_min": 826.8,
+              "total_false_positives": 689,
+              "frame_count": 500
+            },
+            "gates": {
+              "macro_precision_at_least_0_90": false,
+              "macro_recall_at_least_0_90": false,
+              "macro_f1_at_least_0_90": false,
+              "paper_precision_at_least_0_80": false,
+              "small_recall_at_least_0_70": false
+            },
+            "all_pass": false
+          },
+          {
+            "threshold": 0.9,
+            "metrics": {
+              "per_class": {
+                "plastic_bottle": {
+                  "tp": 0,
+                  "fp": 244,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "metal_can": {
+                  "tp": 0,
+                  "fp": 218,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "paper_litter": {
+                  "tp": 0,
+                  "fp": 217,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                }
+              },
+              "macro_precision": 0.0,
+              "macro_recall": 0.0,
+              "macro_f1": 0.0,
+              "paper_precision": 0.0,
+              "paper_recall": 0.0,
+              "small_object_recall": 0.0,
+              "small_object_total": 778,
+              "small_object_matched": 0,
+              "all_gt_candidate_recall": 0.0,
+              "all_gt_candidate_total": 778,
+              "all_gt_candidate_matched": 0,
+              "negative_only_frames": 160,
+              "negative_only_fp_frames": 0,
+              "negative_only_fp_per_frame": 0.0,
+              "false_candidates_per_min": 814.8,
+              "total_false_positives": 679,
+              "frame_count": 500
+            },
+            "gates": {
+              "macro_precision_at_least_0_90": false,
+              "macro_recall_at_least_0_90": false,
+              "macro_f1_at_least_0_90": false,
+              "paper_precision_at_least_0_80": false,
+              "small_recall_at_least_0_70": false
+            },
+            "all_pass": false
+          },
+          {
+            "threshold": 0.95,
+            "metrics": {
+              "per_class": {
+                "plastic_bottle": {
+                  "tp": 0,
+                  "fp": 241,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "metal_can": {
+                  "tp": 0,
+                  "fp": 213,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                },
+                "paper_litter": {
+                  "tp": 0,
+                  "fp": 215,
+                  "fn": 0,
+                  "precision": 0.0,
+                  "recall": 0.0,
+                  "f1": 0.0
+                }
+              },
+              "macro_precision": 0.0,
+              "macro_recall": 0.0,
+              "macro_f1": 0.0,
+              "paper_precision": 0.0,
+              "paper_recall": 0.0,
+              "small_object_recall": 0.0,
+              "small_object_total": 778,
+              "small_object_matched": 0,
+              "all_gt_candidate_recall": 0.0,
+              "all_gt_candidate_total": 778,
+              "all_gt_candidate_matched": 0,
+              "negative_only_frames": 160,
+              "negative_only_fp_frames": 0,
+              "negative_only_fp_per_frame": 0.0,
+              "false_candidates_per_min": 802.8,
+              "total_false_positives": 669,
+              "frame_count": 500
+            },
+            "gates": {
+              "macro_precision_at_least_0_90": false,
+              "macro_recall_at_least_0_90": false,
+              "macro_f1_at_least_0_90": false,
+              "paper_precision_at_least_0_80": false,
+              "small_recall_at_least_0_70": false
+            },
+            "all_pass": false
+          }
+        ],
+        "gate_pass": false
+      },
+      "duration_s": 290.0546422250045
+    },
+    "D1": {
+      "name": "D1",
+      "rows": 100,
+      "candidate": {
+        "all_gt_candidate_recall": 0.9583333333333334,
+        "matched_truth": 161,
+        "total_truth": 168,
+        "ap50": 0.9416047510173372,
+        "precision": 0.9526627218934911,
+        "false_proposals_per_frame": 0.08,
+        "total_false_positives": 8,
+        "negative_only_frames": 40,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 48.0,
+        "small_object_candidate_recall": 0.9583333333333334,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 168,
+            "matched": 161,
+            "recall": 0.9583333333333334
+          },
+          "medium_18_to_48px": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "large_ge_48px": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          }
+        },
+        "per_world": {
+          "world_g4_01_asphalt_campus": {
+            "total": 168,
+            "matched": 161,
+            "recall": 0.9583333333333334
+          }
+        }
+      },
+      "discrete": {
+        "per_class": {
+          "plastic_bottle": {
+            "tp": 0,
+            "fp": 49,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "metal_can": {
+            "tp": 0,
+            "fp": 56,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "paper_litter": {
+            "tp": 0,
+            "fp": 34,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        },
+        "macro_precision": 0.0,
+        "macro_recall": 0.0,
+        "macro_f1": 0.0,
+        "paper_precision": 0.0,
+        "paper_recall": 0.0,
+        "small_object_recall": 0.0,
+        "small_object_total": 168,
+        "small_object_matched": 0,
+        "all_gt_candidate_recall": 0.0,
+        "all_gt_candidate_total": 168,
+        "all_gt_candidate_matched": 0,
+        "negative_only_frames": 40,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 834.0,
+        "total_false_positives": 139,
+        "frame_count": 100
+      },
+      "area": {
+        "iou_by_class": {
+          "leaf_pile": 0.9168531374911546,
+          "puddle": 0.9383287436651008
+        },
+        "macro_miou": 0.9275909405781277,
+        "boundary_f1_by_class": {
+          "leaf_pile": 0.7182539682539683,
+          "puddle": 0.6941710062153537
+        },
+        "boundary_f1": 0.7062124872346609,
+        "boundary_intersection_pixels": [
+          7602,
+          10331
+        ],
+        "boundary_union_pixels": [
+          13566,
+          19434
+        ],
+        "negative_only_frames": 40,
+        "negative_only_fp_frames": 0,
+        "negative_area_fp_per_frame": 0.0,
+        "intersection_pixels": [
+          95879,
+          162192
+        ],
+        "union_pixels": [
+          104574,
+          172852
+        ]
+      },
+      "same_color_negative_specificity": {
+        "status": "not_evaluated",
+        "specificity": null,
+        "taxonomy_count": 0
+      },
+      "classifier_threshold": 0.95,
+      "classifier_calibration": null,
+      "duration_s": 55.756595539991395
+    },
+    "D2": {
+      "name": "D2",
+      "rows": 100,
+      "candidate": {
+        "all_gt_candidate_recall": 0.8394160583941606,
+        "matched_truth": 115,
+        "total_truth": 137,
+        "ap50": 0.8301405964772295,
+        "precision": 0.9829059829059829,
+        "false_proposals_per_frame": 0.02,
+        "total_false_positives": 2,
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 12.0,
+        "small_object_candidate_recall": 0.8394160583941606,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 137,
+            "matched": 115,
+            "recall": 0.8394160583941606
+          },
+          "medium_18_to_48px": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "large_ge_48px": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          }
+        },
+        "per_world": {
+          "world_g4_09_light_paver_pedestrian": {
+            "total": 137,
+            "matched": 115,
+            "recall": 0.8394160583941606
+          }
+        }
+      },
+      "discrete": {
+        "per_class": {
+          "plastic_bottle": {
+            "tp": 0,
+            "fp": 24,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "metal_can": {
+            "tp": 0,
+            "fp": 50,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "paper_litter": {
+            "tp": 0,
+            "fp": 24,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        },
+        "macro_precision": 0.0,
+        "macro_recall": 0.0,
+        "macro_f1": 0.0,
+        "paper_precision": 0.0,
+        "paper_recall": 0.0,
+        "small_object_recall": 0.0,
+        "small_object_total": 137,
+        "small_object_matched": 0,
+        "all_gt_candidate_recall": 0.0,
+        "all_gt_candidate_total": 137,
+        "all_gt_candidate_matched": 0,
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 588.0,
+        "total_false_positives": 98,
+        "frame_count": 100
+      },
+      "area": {
+        "iou_by_class": {
+          "leaf_pile": 0.9446288488183169,
+          "puddle": 0.9644367411773223
+        },
+        "macro_miou": 0.9545327949978195,
+        "boundary_f1_by_class": {
+          "leaf_pile": 0.7305896805896805,
+          "puddle": 0.7915138175593055
+        },
+        "boundary_f1": 0.761051749074493,
+        "boundary_intersection_pixels": [
+          5947,
+          12946
+        ],
+        "boundary_union_pixels": [
+          10333,
+          19766
+        ],
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 0,
+        "negative_area_fp_per_frame": 0.0,
+        "intersection_pixels": [
+          94768,
+          226470
+        ],
+        "union_pixels": [
+          100323,
+          234821
+        ]
+      },
+      "same_color_negative_specificity": {
+        "status": "not_evaluated",
+        "specificity": null,
+        "taxonomy_count": 0
+      },
+      "classifier_threshold": 0.95,
+      "classifier_calibration": null,
+      "duration_s": 45.49670216500817
+    },
+    "D3": {
+      "name": "D3",
+      "rows": 100,
+      "candidate": {
+        "all_gt_candidate_recall": 0.9349112426035503,
+        "matched_truth": 158,
+        "total_truth": 169,
+        "ap50": 0.9108493921288792,
+        "precision": 0.9518072289156626,
+        "false_proposals_per_frame": 0.08,
+        "total_false_positives": 8,
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 48.0,
+        "small_object_candidate_recall": 0.9349112426035503,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 169,
+            "matched": 158,
+            "recall": 0.9349112426035503
+          },
+          "medium_18_to_48px": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "large_ge_48px": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          }
+        },
+        "per_world": {
+          "world_auto05r_d3_factorized": {
+            "total": 169,
+            "matched": 158,
+            "recall": 0.9349112426035503
+          }
+        }
+      },
+      "discrete": {
+        "per_class": {
+          "plastic_bottle": {
+            "tp": 0,
+            "fp": 22,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "metal_can": {
+            "tp": 0,
+            "fp": 85,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "paper_litter": {
+            "tp": 0,
+            "fp": 38,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        },
+        "macro_precision": 0.0,
+        "macro_recall": 0.0,
+        "macro_f1": 0.0,
+        "paper_precision": 0.0,
+        "paper_recall": 0.0,
+        "small_object_recall": 0.0,
+        "small_object_total": 169,
+        "small_object_matched": 0,
+        "all_gt_candidate_recall": 0.0,
+        "all_gt_candidate_total": 169,
+        "all_gt_candidate_matched": 0,
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 870.0,
+        "total_false_positives": 145,
+        "frame_count": 100
+      },
+      "area": {
+        "iou_by_class": {
+          "leaf_pile": 0.8602114651309763,
+          "puddle": 0.9396805742766684
+        },
+        "macro_miou": 0.8999460197038224,
+        "boundary_f1_by_class": {
+          "leaf_pile": 0.6590898921651975,
+          "puddle": 0.7746232866573907
+        },
+        "boundary_f1": 0.7168565894112942,
+        "boundary_intersection_pixels": [
+          7365,
+          13083
+        ],
+        "boundary_union_pixels": [
+          14984,
+          20696
+        ],
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 4,
+        "negative_area_fp_per_frame": 0.13333333333333333,
+        "intersection_pixels": [
+          121141,
+          239814
+        ],
+        "union_pixels": [
+          140827,
+          255208
+        ]
+      },
+      "same_color_negative_specificity": {
+        "status": "not_evaluated",
+        "specificity": null,
+        "taxonomy_count": 0
+      },
+      "classifier_threshold": 0.95,
+      "classifier_calibration": null,
+      "duration_s": 43.95154432600248
+    },
+    "D4": {
+      "name": "D4",
+      "rows": 100,
+      "candidate": {
+        "all_gt_candidate_recall": 0.9081081081081082,
+        "matched_truth": 168,
+        "total_truth": 185,
+        "ap50": 0.8689591830977739,
+        "precision": 0.9333333333333333,
+        "false_proposals_per_frame": 0.12,
+        "total_false_positives": 12,
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 72.0,
+        "small_object_candidate_recall": 0.9081081081081082,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 185,
+            "matched": 168,
+            "recall": 0.9081081081081082
+          },
+          "medium_18_to_48px": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "large_ge_48px": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          }
+        },
+        "per_world": {
+          "world_auto05r_d4_factorized": {
+            "total": 185,
+            "matched": 168,
+            "recall": 0.9081081081081082
+          }
+        }
+      },
+      "discrete": {
+        "per_class": {
+          "plastic_bottle": {
+            "tp": 0,
+            "fp": 74,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "metal_can": {
+            "tp": 0,
+            "fp": 25,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "paper_litter": {
+            "tp": 0,
+            "fp": 56,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        },
+        "macro_precision": 0.0,
+        "macro_recall": 0.0,
+        "macro_f1": 0.0,
+        "paper_precision": 0.0,
+        "paper_recall": 0.0,
+        "small_object_recall": 0.0,
+        "small_object_total": 185,
+        "small_object_matched": 0,
+        "all_gt_candidate_recall": 0.0,
+        "all_gt_candidate_total": 185,
+        "all_gt_candidate_matched": 0,
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 930.0,
+        "total_false_positives": 155,
+        "frame_count": 100
+      },
+      "area": {
+        "iou_by_class": {
+          "leaf_pile": 0.9310393038498535,
+          "puddle": 0.4644403375457724
+        },
+        "macro_miou": 0.6977398206978129,
+        "boundary_f1_by_class": {
+          "leaf_pile": 0.6865936439370565,
+          "puddle": 0.3328258857944539
+        },
+        "boundary_f1": 0.5097097648657551,
+        "boundary_intersection_pixels": [
+          8901,
+          11150
+        ],
+        "boundary_union_pixels": [
+          17027,
+          55852
+        ],
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 26,
+        "negative_area_fp_per_frame": 0.8666666666666667,
+        "intersection_pixels": [
+          166481,
+          269903
+        ],
+        "union_pixels": [
+          178812,
+          581136
+        ]
+      },
+      "same_color_negative_specificity": {
+        "status": "not_evaluated",
+        "specificity": null,
+        "taxonomy_count": 0
+      },
+      "classifier_threshold": 0.95,
+      "classifier_calibration": null,
+      "duration_s": 45.367728379002074
+    },
+    "D5": {
+      "name": "D5",
+      "rows": 100,
+      "candidate": {
+        "all_gt_candidate_recall": 0.0,
+        "matched_truth": 0,
+        "total_truth": 0,
+        "ap50": 0.0,
+        "precision": 0.0,
+        "false_proposals_per_frame": 0.0,
+        "total_false_positives": 0,
+        "negative_only_frames": 100,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 0.0,
+        "small_object_candidate_recall": 0.0,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "medium_18_to_48px": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "large_ge_48px": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          }
+        },
+        "per_world": {
+          "world_g4_01_asphalt_campus": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          }
+        }
+      },
+      "discrete": {
+        "per_class": {
+          "plastic_bottle": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "metal_can": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "paper_litter": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        },
+        "macro_precision": 0.0,
+        "macro_recall": 0.0,
+        "macro_f1": 0.0,
+        "paper_precision": 0.0,
+        "paper_recall": 0.0,
+        "small_object_recall": 0.0,
+        "small_object_total": 0,
+        "small_object_matched": 0,
+        "all_gt_candidate_recall": 0.0,
+        "all_gt_candidate_total": 0,
+        "all_gt_candidate_matched": 0,
+        "negative_only_frames": 100,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 0.0,
+        "total_false_positives": 0,
+        "frame_count": 100
+      },
+      "area": {
+        "iou_by_class": {
+          "leaf_pile": 0.0,
+          "puddle": 0.0
+        },
+        "macro_miou": 0.0,
+        "boundary_f1_by_class": {
+          "leaf_pile": 0.0,
+          "puddle": 0.0
+        },
+        "boundary_f1": 0.0,
+        "boundary_intersection_pixels": [
+          0,
+          0
+        ],
+        "boundary_union_pixels": [
+          0,
+          0
+        ],
+        "negative_only_frames": 100,
+        "negative_only_fp_frames": 0,
+        "negative_area_fp_per_frame": 0.0,
+        "intersection_pixels": [
+          0,
+          0
+        ],
+        "union_pixels": [
+          0,
+          0
+        ]
+      },
+      "same_color_negative_specificity": {
+        "status": "not_evaluated",
+        "specificity": null,
+        "taxonomy_count": 0
+      },
+      "classifier_threshold": 0.95,
+      "classifier_calibration": null,
+      "duration_s": 45.265348937988165
+    }
+  },
+  "cross_world_aggregate": {
+    "name": "D1-D5-AGGREGATE",
+    "rows": 500,
+    "candidate": {
+      "all_gt_candidate_recall": 0.91350531107739,
+      "matched_truth": 602,
+      "total_truth": 659,
+      "ap50": 0.8933571816731288,
+      "precision": 0.9525316455696202,
+      "false_proposals_per_frame": 0.06,
+      "total_false_positives": 30,
+      "negative_only_frames": 230,
+      "negative_only_fp_frames": 0,
+      "negative_only_fp_per_frame": 0.0,
+      "false_candidates_per_min": 36.0,
+      "small_object_candidate_recall": 0.91350531107739,
+      "per_size": {
+        "small_lt_18px": {
+          "total": 659,
+          "matched": 602,
+          "recall": 0.91350531107739
+        },
+        "medium_18_to_48px": {
+          "total": 0,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "large_ge_48px": {
+          "total": 0,
+          "matched": 0,
+          "recall": 0.0
+        }
+      },
+      "per_world": {
+        "world_auto05r_d3_factorized": {
+          "total": 169,
+          "matched": 158,
+          "recall": 0.9349112426035503
+        },
+        "world_auto05r_d4_factorized": {
+          "total": 185,
+          "matched": 168,
+          "recall": 0.9081081081081082
+        },
+        "world_g4_01_asphalt_campus": {
+          "total": 168,
+          "matched": 161,
+          "recall": 0.9583333333333334
+        },
+        "world_g4_09_light_paver_pedestrian": {
+          "total": 137,
+          "matched": 115,
+          "recall": 0.8394160583941606
+        }
+      }
+    },
+    "discrete": {
+      "per_class": {
+        "plastic_bottle": {
+          "tp": 0,
+          "fp": 169,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "metal_can": {
+          "tp": 0,
+          "fp": 216,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        },
+        "paper_litter": {
+          "tp": 0,
+          "fp": 152,
+          "fn": 0,
+          "precision": 0.0,
+          "recall": 0.0,
+          "f1": 0.0
+        }
+      },
+      "macro_precision": 0.0,
+      "macro_recall": 0.0,
+      "macro_f1": 0.0,
+      "paper_precision": 0.0,
+      "paper_recall": 0.0,
+      "small_object_recall": 0.0,
+      "small_object_total": 659,
+      "small_object_matched": 0,
+      "all_gt_candidate_recall": 0.0,
+      "all_gt_candidate_total": 659,
+      "all_gt_candidate_matched": 0,
+      "negative_only_frames": 230,
+      "negative_only_fp_frames": 0,
+      "negative_only_fp_per_frame": 0.0,
+      "false_candidates_per_min": 644.4,
+      "total_false_positives": 537,
+      "frame_count": 500
+    },
+    "area": {
+      "iou_by_class": {
+        "leaf_pile": 0.9117944240242805,
+        "puddle": 0.7221597454054084
+      },
+      "macro_miou": 0.8169770847148444,
+      "boundary_f1_by_class": {
+        "leaf_pile": 0.6955963837853602,
+        "puddle": 0.5820235455536635
+      },
+      "boundary_f1": 0.6388099646695118,
+      "negative_only_frames": 230,
+      "negative_only_fp_frames": 30,
+      "negative_area_fp_per_frame": 0.13043478260869565,
+      "intersection_pixels": [
+        478269,
+        898379
+      ],
+      "union_pixels": [
+        524536,
+        1244017
+      ],
+      "boundary_intersection_pixels": [
+        29815,
+        47510
+      ],
+      "boundary_union_pixels": [
+        55910,
+        115748
+      ]
+    },
+    "same_color_negative_specificity": {
+      "status": "not_evaluated",
+      "specificity": null,
+      "taxonomy_count": 0
+    },
+    "classifier_threshold": 0.95,
+    "duration_s": 235.83791934799228
+  },
+  "G5_SEALED_FINAL_read": false,
+  "legacy_G4_D6_read": false,
+  "moving_camera_gate": "not_run_pending_static_gate",
+  "map_tracking_gate": "not_run_pending_moving_camera",
+  "PERCEPTION_ONLINE_X86_DEV_PASS": false,
+  "static_decision": {
+    "gates": {
+      "candidate_recall_at_least_0_80": true,
+      "small_candidate_recall_at_least_0_70": true,
+      "false_candidates_per_min_at_most_2": false,
+      "negative_fp_per_frame_at_most_0_05": true,
+      "in_domain_macro_precision_at_least_0_90": false,
+      "in_domain_macro_recall_at_least_0_90": false,
+      "in_domain_macro_f1_at_least_0_90": false,
+      "cross_world_macro_f1_at_least_0_70": false,
+      "each_cross_world_recall_at_least_0_70": false,
+      "paper_precision_at_least_0_80": false,
+      "small_final_recall_at_least_0_70": false,
+      "leaf_iou_at_least_0_75": true,
+      "puddle_iou_at_least_0_75": true,
+      "area_miou_at_least_0_75": true,
+      "boundary_f1_at_least_0_70": false,
+      "negative_area_fp_per_frame_at_most_0_05": false
+    },
+    "static_gate_pass": false
+  },
+  "next_action": "X1_failed_enter_X2"
+}

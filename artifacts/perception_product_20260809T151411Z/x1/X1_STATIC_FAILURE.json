@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-01",
+  "route": "ONLINE-X1_FCOS_R50",
+  "decision": "FAILED_STATIC_FULL_PIPELINE",
+  "source_commit": "31be4ce",
+  "report": "x1_full_static_report.json",
+  "report_sha256": "205100df6888c13f2deb4979848090b8bdd3793823ad5374da8cc5892e937e0b",
+  "execution": {
+    "environment": "tzcup/sanitation-jazzy:stage5b with RTX 4080 CUDA",
+    "script_contract_exit_code": 4,
+    "observed_result": "nonzero fail-closed",
+    "interrupted_attempt_before_formal_run": "bounded stop after identifying and fixing per-proposal classifier inference",
+    "formal_run_completed": true
+  },
+  "verification": {
+    "windows_fast_ci": "501 passed, 23 skipped",
+    "focused_docker_pytest": "8 passed",
+    "ros_packages": "361 tests, 0 errors, 0 failures, 2 skipped",
+    "ros_orchestration_note": "first two attempts exposed missing repo-root context and read-only test-fixture writes; final scoped rerun passed"
+  },
+  "fixed_inputs": {
+    "teacher_sha256": "a5884ac9bfa4e89f2ae8a25f4cae0521e263dd951ef895fa1185f013b2f04ee5",
+    "classifier_sha256": "d145090681551160b74aa0e43bb711561c8e4d3a1494535243f700935bcfb2e6",
+    "leaf_sha256": "ecba9043d0e0523ad5b79381bcc7c21583ccba2c9a806f2179e5ca7e3e14aa2e",
+    "puddle_sha256": "8b3aee52679105f857b9e43694dc08304e5cda73c9536a7904c52ed33b31d2e2",
+    "dataset_qa_sha256": "72baf192e70c59d369c284c8141dcc6e2c03350dca930212ae97cf2182d1ab01",
+    "top_k": 16,
+    "discovery_threshold": 0.7,
+    "classifier_threshold_selected_on_val": 0.95
+  },
+  "val_metrics": {
+    "candidate_recall": 0.9357326478149101,
+    "small_object_candidate_recall": 0.9357326478149101,
+    "false_candidates_per_min": 8.4,
+    "macro_precision": 0.0,
+    "macro_recall": 0.0,
+    "macro_f1": 0.0,
+    "area_miou": 0.9204812728576071,
+    "boundary_f1": 0.6880077913444143
+  },
+  "cross_world_metrics": {
+    "macro_f1": 0.0,
+    "negative_area_fp_per_frame": 0.13043478260869565
+  },
+  "passed_subgates": [
+    "candidate_recall_at_least_0_80",
+    "small_candidate_recall_at_least_0_70",
+    "leaf_iou_at_least_0_75",
+    "puddle_iou_at_least_0_75",
+    "area_miou_at_least_0_75"
+  ],
+  "failed_subgates": [
+    "false_candidates_per_min_at_most_2",
+    "in_domain_macro_precision_at_least_0_90",
+    "in_domain_macro_recall_at_least_0_90",
+    "in_domain_macro_f1_at_least_0_90",
+    "cross_world_macro_f1_at_least_0_70",
+    "each_cross_world_recall_at_least_0_70",
+    "paper_precision_at_least_0_80",
+    "small_final_recall_at_least_0_70",
+    "boundary_f1_at_least_0_70",
+    "negative_area_fp_per_frame_at_most_0_05"
+  ],
+  "G5_SEALED_FINAL_read": false,
+  "moving_camera_gate_run": false,
+  "reason_moving_camera_not_run": "static full-pipeline gate failed first",
+  "PERCEPTION_ONLINE_X86_DEV_PASS": false,
+  "next_action": "PERCEPTION-PROD-02 ONLINE-X2 Grounding DINO proposal plus fixed classifier"
+}

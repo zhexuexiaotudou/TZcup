@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-12",
+  "blockers": [
+    {
+      "id": "X86_MODEL_STATIC_GATE",
+      "classification": "internal_model",
+      "blocking": [
+        "PRODUCT_X86_PERCEPTION_READY",
+        "G5/freeze/moving-camera/map/spot-clean/soak/release"
+      ],
+      "evidence": "x3/X3_STATIC_FAILURE.json",
+      "facts": {
+        "routes_exhausted": [
+          "X1_FAILED_STATIC_FULL_PIPELINE",
+          "X2_BLOCKED_EXTERNAL_NETWORK_ASSET",
+          "X3_FAILED_STATIC_FULL_PIPELINE"
+        ],
+        "failed_subgates": [
+          "small_candidate_recall_at_least_0_70",
+          "in_domain_macro_recall_at_least_0_90",
+          "each_cross_world_recall_at_least_0_70",
+          "small_final_recall_at_least_0_70",
+          "boundary_f1_at_least_0_70",
+          "negative_area_fp_per_frame_at_most_0_05"
+        ]
+      }
+    },
+    {
+      "id": "X2_OFFICIAL_CHECKPOINT_BYTES",
+      "classification": "external_network_asset",
+      "blocking": [
+        "ONLINE-X2 evaluation"
+      ],
+      "evidence": "x2/X2_EXTERNAL_ASSET_BLOCKED.json"
+    },
+    {
+      "id": "J6_STUDENT_AND_TOOLCHAIN",
+      "classification": "internal_dependency",
+      "blocking": [
+        "PRODUCT_J6_TOOLCHAIN_READY"
+      ],
+      "evidence": "j6_toolchain/J6_TOOLCHAIN_LOCK.json",
+      "facts": {
+        "frozen_j6_student_available": false,
+        "version_compatibility_resolved": false,
+        "installation_root": null
+      }
+    },
+    {
+      "id": "PHYSICAL_J6_BOARD",
+      "classification": "external_resource",
+      "blocking": [
+        "PRODUCT_J6_BOARD_READY"
+      ],
+      "evidence": "j6_board/J6_BOARD_STATUS.json",
+      "facts": {
+        "board_device_count": 0
+      }
+    },
+    {
+      "id": "REAL_RGBD_AND_INDEPENDENT_GT",
+      "classification": "external_resource",
+      "blocking": [
+        "PRODUCT_FIELD_READY"
+      ],
+      "evidence": "field/FIELD_RESOURCE_AND_SOFTWARE_STATUS.json",
+      "facts": {
+        "software_preparation_complete": true,
+        "rgbd_device_present": false,
+        "qualifying_frames": 0,
+        "independent_map_gt_present": false
+      }
+    }
+  ],
+  "external_only": false,
+  "product_deployment_complete": false
+}

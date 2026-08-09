@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-02-X3",
+  "route": "ONLINE-X3_TORCHVISION_FCOS_R50_DIRECT_3CLASS",
+  "source_commit": "d958854",
+  "why_x1_failed": {
+    "candidate_recall": 0.9357326478149101,
+    "macro_f1": 0.0,
+    "mechanism": "The class-agnostic FCOS teacher found most objects, but the independently trained closed-set crop classifier rejected teacher proposal crops at every allowed VAL threshold; false candidate rate and two area subgates also failed."
+  },
+  "why_x2_did_not_run": {
+    "decision": "BLOCKED_EXTERNAL_NETWORK_ASSET",
+    "mechanism": "Three official distribution channels yielded no non-empty Grounding DINO checkpoint bytes, so the prerequisite failed closed before inference. This is not a performance failure."
+  },
+  "x3_change": {
+    "detector": "Torchvision FCOS ResNet50-FPN initialized from official COCO_V1 weights",
+    "head": "Direct three-class plastic_bottle/metal_can/paper_litter classification and box regression",
+    "removed_failure_surface": "No proposal-crop classifier handoff",
+    "asset_availability": "Official FCOS cache already present and exact expected SHA-256 verified",
+    "license_release_boundary": "Torchvision BSD-3-Clause code and documented reference-weight provenance; trained checkpoint remains repository-external until qualification."
+  },
+  "unchanged_conditions": [
+    "same QA-passed G4 train and VAL data",
+    "threshold and checkpoint selection use train_world_holdout only",
+    "full VAL and D1-D5 fixed static gates",
+    "top-K 16",
+    "no G5 sealed-final read before candidate freeze",
+    "no legacy G4 D6 read",
+    "no gate relaxation",
+    "existing leaf and puddle models remain unchanged"
+  ],
+  "route_count_after_start": 3,
+  "maximum_route_count": 3,
+  "G5_SEALED_FINAL_read": false,
+  "legacy_G4_D6_read": false,
+  "PERCEPTION_ONLINE_X86_DEV_PASS": false
+}

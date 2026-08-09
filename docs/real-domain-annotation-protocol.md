@@ -51,3 +51,9 @@ CameraInfo，时间差硬门为 20 ms、队列深度为 2，并继续要求显�
 `independent_of_perception=true`。允许的方法为 fiducial、surveyed fixture、
 total station 或 motion capture；不确定度必须不高于 0.05 m。使用
 `validate-placement` 子命令机器校验，模型预测和车辆自身里程计不能充当独立真值。
+
+产品级 RGB-D 采集使用 `scripts/real_rgbd_capture.py capture`。每帧必须同时保存 RGB、
+depth、CameraInfo 与指定时刻的 `map -> camera` TF；任一 TF 不可用即 fail-closed。
+`--privacy-regions` 指定的区域在 RGB 落盘前模糊，不能依赖采集后的补处理。独立 placement
+可用 `create-placement` 逐条录入，再用 `validate-placement` 校验；只有 fiducial、surveyed
+fixture、total station 或 motion capture 等独立方法可通过。

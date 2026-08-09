@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-12",
+  "evidence_source_commit": "f11c0f16e78c3c9592c27c01f94c63a5fdf1035c",
+  "statuses": {
+    "ONLINE_DYNAMIC_DISCOVERY_PASS": false,
+    "DYNAMIC_TRASH_MAP_PASS": false,
+    "POST_CLEAN_VERIFICATION_PASS": false,
+    "SPOT_CLEAN_PRODUCT_PASS": false,
+    "PRODUCT_X86_PERCEPTION_READY": false,
+    "PRODUCT_J6_TOOLCHAIN_READY": false,
+    "PRODUCT_J6_BOARD_READY": false,
+    "PRODUCT_FIELD_READY": false,
+    "COMPETITION_PERCEPTION_PASS": false
+  },
+  "model_route_status": {
+    "X1": "FAILED_STATIC_FULL_PIPELINE",
+    "X2": "BLOCKED_EXTERNAL_NETWORK_ASSET",
+    "X3": "FAILED_STATIC_FULL_PIPELINE",
+    "routes_exhausted": true,
+    "MODEL_BLOCKED_INTERNAL": true
+  },
+  "sealed_data": {
+    "G5_SEALED_FINAL_read": false,
+    "legacy_G4_D6_read": false,
+    "freeze_performed": false
+  },
+  "downstream_gates": {
+    "G5_final": "not_run_no_frozen_candidate",
+    "moving_camera_30_seed": "not_run_no_frozen_candidate",
+    "dynamic_trash_map": "not_run_no_frozen_candidate",
+    "spot_clean_post_clean": "not_run_no_frozen_candidate",
+    "x86_performance_2h_soak_replay_release": "not_run_no_frozen_candidate",
+    "J6_student_PTQ_compile": "not_run_no_frozen_x86_teacher",
+    "J6_board": "blocked_external_no_board",
+    "real_RGBD_field": "blocked_external_no_resources"
+  },
+  "product_deployment_complete": false,
+  "claim_boundary": "All three authorized model routes were exhausted without a static-pass candidate. No later gate is inferred from software-only evidence."
+}

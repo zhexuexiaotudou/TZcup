@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "camera_probe": {
+    "command": [
+      "powershell.exe",
+      "-NoProfile",
+      "-Command",
+      "Get-PnpDevice -PresentOnly -Class Camera -ErrorAction SilentlyContinue | Select-Object FriendlyName,InstanceId,Status | ConvertTo-Json -Compress"
+    ],
+    "exit_code": 0,
+    "stdout": "{\"FriendlyName\":\"Integrated Camera\",\"InstanceId\":\"USB\\\\VID_5986\\u0026PID_1196\\u0026MI_00\\\\6\\u00261CB02AB9\\u00260\\u00260000\",\"Status\":\"OK\"}",
+    "stderr": ""
+  },
+  "detected_camera_summary": "Integrated Camera only",
+  "rgbd_device_present": false,
+  "auditable_rgbd_recording_present": false,
+  "independent_map_gt_present": false,
+  "integrated_camera_accepted_as_rgbd": false,
+  "PRODUCT_FIELD_READY": false,
+  "REAL_DOMAIN_BLOCKED_EXTERNAL": true
+}

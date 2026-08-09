@@ -503,20 +503,24 @@ def classify_detections(
             for frame in frames:
                 rgb = read_rgb(frame["row"])
                 refined: list[dict] = []
-                for detection in frame["detections"]:
-                    crop = classifier_crop_for_detection(
-                        rgb, detection["bbox_xyxy"]
-                    )
+                detections = frame["detections"]
+                if detections:
+                    crops = [
+                        classifier_crop_for_detection(rgb, item["bbox_xyxy"])
+                        for item in detections
+                    ]
                     tensor = torch_from_numpy(
                         np.ascontiguousarray(
-                            crop.transpose(2, 0, 1)[None], dtype=np.float32
+                            np.stack(crops).transpose(0, 3, 1, 2),
+                            dtype=np.float32,
                         )
                         / 255.0
                     ).to(device)
-                    logits = classifier(tensor)[0].cpu().numpy()
-                    probabilities = np.exp(
-                        logits - logits.max(keepdims=True)
-                    )
+                    batch_logits = classifier(tensor).cpu().numpy()
+                else:
+                    batch_logits = np.empty((0, len(DISCRETE_NAMES) + 1))
+                for detection, logits in zip(detections, batch_logits):
+                    probabilities = np.exp(logits - logits.max(keepdims=True))
                     probabilities /= probabilities.sum(keepdims=True)
                     background_score = float(probabilities[0])
                     class_index = int(np.argmax(probabilities[1:])) + 1
@@ -532,6 +536,11 @@ def classify_detections(
                                 DISCRETE_NAMES[class_index - 1] if accepted else "background"
                             ),
                             "score": class_score if accepted else background_score,
+                            "candidate_class_index": class_index,
+                            "candidate_class_name": DISCRETE_NAMES[class_index - 1],
+                            "candidate_class_score": class_score,
+                            "background_score": background_score,
+                            "class_probabilities": probabilities.tolist(),
                             "bbox_xyxy": detection["bbox_xyxy"],
                         }
                     )
@@ -1008,6 +1017,8 @@ def area_metrics(predictions: list[dict]) -> dict:
             "puddle": boundary_f1[1],
         },
         "boundary_f1": float(np.mean(boundary_f1)),
+        "boundary_intersection_pixels": boundary_intersections.tolist(),
+        "boundary_union_pixels": boundary_unions.tolist(),
         "negative_only_frames": negative_frames,
         "negative_only_fp_frames": negative_fp_frames,
         "negative_area_fp_per_frame": negative_fp_frames / max(negative_frames, 1),

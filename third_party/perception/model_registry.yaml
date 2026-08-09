@@ -6,6 +6,8 @@ models:
     checkpoint_sha256: null
     redistribution_allowed: false
     shipped_in_product: false
+    qualification_status: blocked_external_network_asset
+    evidence: artifacts/perception_product_20260809T151411Z/x2/X2_EXTERNAL_ASSET_BLOCKED.json
   - model_id: sam2.1-reference-tracker
     upstream_dependency: SAM 2
     checkpoint: null
@@ -18,3 +20,13 @@ models:
     checkpoint_sha256: null
     redistribution_allowed: false
     shipped_in_product: false
+    qualification_status: rejected_for_product_route_gpl_3_0
+  - model_id: torchvision-fcos-r50-direct-3class-online-x3
+    upstream_dependency: Torchvision FCOS ResNet50-FPN COCO_V1
+    checkpoint: null
+    checkpoint_sha256: null
+    redistribution_allowed: false
+    shipped_in_product: false
+    qualification_status: failed_static_full_pipeline
+    external_checkpoint_sha256: 02869d3677a999a0d8cd0a73114a60fbc803c447717d129313bcf3dbfe68507b
+    evidence: artifacts/perception_product_20260809T151411Z/x3/X3_STATIC_FAILURE.json

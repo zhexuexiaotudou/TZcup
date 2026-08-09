@@ -1033,3 +1033,45 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_doc
 - 独立小场默认启用 0.48 m / DISCONTINUOUS 优化配置；保留 0.35 m / Dubins 连续旧配置作为显式回退。
 - 遥测升级为 v2 并分离规划清扫带、转接、补扫、当前组件及三类实际轨迹；保留旧字段和 `/coverage/current_path`。
 - Windows 快速门禁 202 项通过；ROS 选定包构建通过，coverage 与 Gazebo visualization 共 34 项 ROS 测试通过。真实多种子 Gazebo 结果以本任务验收报告为准，不用静态测试替代。
+
+# PERCEPTION-PROD-00 资源恢复（2026-08-09）
+
+- 在隔离工作树 `F:\Project\TZcup-perception-online-product` 继续 Draft PR #90；原始脏工作区未修改。规定的 `git fetch origin --prune` 因 GitHub Smart-HTTP 超时失败，远端 PR head `55c41e7` 与绿色 CI 改由 GitHub REST 核验。
+- 仓库外 FCOS-R50 teacher、classifier、leaf、puddle 四个 checkpoint 均存在且 SHA-256 与冻结历史证据逐项一致；这只恢复 X1 开发输入，不构成 `PERCEPTION_ONLINE_X86_DEV_PASS`。
+- G4/V5 正式 QA 哈希为 `72baf192...`，`12 worlds / 300 scenes / 3000 frames`、pose reset、manifest-pixel 和 leakage 门均通过；旧 D6 与 G5 未读。
+- 本机 RTX 4080 Laptop GPU、Docker Stage5b 镜像和官方 OE 3.7.0 离线包存在；Horizon 官方文档当前为 3.9.0，版本差异保留为工具链门禁。
+- 设备扫描只发现普通 Integrated Camera，未发现 RGB-D 或 J6 板；它们不能替代真实 field/J6 证据。
+- 可复现盘点入口为 `scripts/perception_prod_resource_inventory.py`，紧凑证据保存在 `artifacts/perception_prod00_resource_recovery_20260809T151411Z/` 和统一产品证据树 `artifacts/perception_product_20260809T151411Z/prod00_resources/`。
+
+# PERCEPTION-PROD-01 X1 FCOS-R50 完整静态开发门（2026-08-10）
+
+- 使用恢复且哈希匹配的 FCOS-R50 teacher、classifier、leaf、puddle，在 Stage5b CUDA 容器中对完整 VAL 500 帧和 D1-D5 各 100 帧重新运行 teacher → classifier → area 链；top-K 固定为 16，G5 和旧 D6 未读。
+- 首次运行发现共享 classifier 按 proposal 逐次推理，按产品要求修复为每帧 proposal batch；中断的首次运行不计模型结果，随后完整重跑并保存报告。
+- VAL candidate recall `0.9357`、small candidate recall `0.9357` 通过，但 false candidates/min `8.4 > 2.0`；固定 VAL 网格标定无法使现有 classifier 接受 teacher proposal，macro precision/recall/F1 均为 `0`。
+- VAL area mIoU `0.9205` 通过，但 boundary F1 `0.6880 < 0.70`；D1-D5 aggregate negative-area FP/frame `0.1304 > 0.05`。
+- `ONLINE-X1=FAILED_STATIC_FULL_PIPELINE`，因此不继续伪跑 moving-camera/map/export 门，按协议转入 ONLINE-X2。完整证据见 `artifacts/perception_product_20260809T151411Z/x1/`。
+
+# PERCEPTION-PROD-02 X2 外部资产阻断（2026-08-10）
+
+- Grounding DINO 官方 GitHub release、官方 README 指向的 Hugging Face 镜像、GitHub Release API 三条通道均已做有界下载尝试；元数据可达，但 checkpoint 有效载荷始终为 `0 bytes`。
+- 该状态记为 `BLOCKED_EXTERNAL_NETWORK_ASSET`，不是模型性能失败；零字节文件未加载、未登记 SHA-256、未进入推理，也没有读取 G5/D6。
+- 固定门槛未更改。按最多三条 route 的协议，继续最后一条 ONLINE-X3：官方 Torchvision FCOS-R50 直接三分类 detector，移除 X1 中分布失配的 proposal-crop classifier。
+
+# PERCEPTION-PROD-02 X3 直接三分类 FCOS（2026-08-10）
+
+- X3 在仓库外训练了官方 COCO 权重初始化的 FCOS-R50 直接三分类头，8 epochs / 600 train frames，checkpoint SHA-256 为 `02869d3677a999a0d8cd0a73114a60fbc803c447717d129313bcf3dbfe68507b`；阈值 0.60 只由 100-frame `train_world_holdout` 选择，训练与选择没有读取 VAL、D6 或 G5。
+- 完整 500-frame VAL + 500-frame D1-D5 静态门中，VAL candidate recall `0.855`、macro F1 `0.910`、false candidates/min `1.2` 通过；但 small recall `0.308`、macro recall `0.840`、跨域 metal-can recall `0.446`、area boundary F1 `0.688` 和 negative-area FP/frame `0.130` 未通过固定门。
+- 因 X1/X2/X3 三条路线已用尽，状态为 `PRODUCT_X86_PERCEPTION_READY=false`、`MODEL_BLOCKED_INTERNAL=true`。没有冻结模型、没有读取 G5、没有伪跑 moving-camera/spot-clean/soak/release；继续推进与合格模型无关的 J6/board/field 软件与审计工作。
+
+# PERCEPTION-PROD-09/10/11 独立前置工作（2026-08-10）
+
+- J6 lock 已记录：历史审计 OE `3.7.0` / HBDK `4.7.5` / HMCT `2.6.5`，当前官方文档入口显示 `3.9.0`。历史 2.85 GB 包只保留了完整性与 wheel 清单证据，当前没有安装根或 frozen J6 student，因此没有执行 operator audit/PTQ/compile，`PRODUCT_J6_TOOLCHAIN_READY=false`、`J6_MODEL_BLOCKED_INTERNAL=true`。
+- 当前 PnP 扫描没有 Horizon/D-Robotics/J6/RDK 设备，也没有配置远程板端点；`PRODUCT_J6_BOARD_READY=false`、`BLOCKED_EXTERNAL_J6_BOARD=true`，FPS/温度/功耗保持 null。
+- real RGB-D 工具现强制同步保存 RGB/depth/CameraInfo/map-to-camera TF，并在落盘前做声明区域隐私模糊；新增独立 placement 录入与校验。与已有内参标定、ingestion、annotation protocol、统一 evaluator 组成完整软件准备。
+- 实际资源仍只有 Integrated Camera，没有 RGB-D、合格移动录制或独立 map GT；`PRODUCT_FIELD_READY=false`、`REAL_DOMAIN_BLOCKED_EXTERNAL=true`，所有 field 指标保持 null。
+
+# PERCEPTION-PROD-12 最终 fail-closed 状态（2026-08-10）
+
+- 已生成提示词要求的六项最终工件：status、blockers、evidence index、model registry、third-party notices 和 release manifest，位于 `artifacts/perception_product_20260809T151411Z/`。
+- 九项最终产品状态全部为 false。主要内部阻断是三条授权模型 route 已用尽但没有静态门通过候选；X2 checkpoint 下载、实体 J6、真实 RGB-D/独立 GT 另列外部阻断。
+- release manifest 明确 `release_ready=false`、selected model/container/deployment 均为 null；这是一份阻断清单，不是发布或部署声明。

@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-09",
+  "artifacts": [
+    {
+      "path": "J6_TOOLCHAIN_LOCK.json",
+      "sha256": "0de2b47635de8e7f6260100ef85b96d1ff1a77856d36e17544a0efb5cf75da8c"
+    }
+  ],
+  "PRODUCT_J6_TOOLCHAIN_READY": false
+}

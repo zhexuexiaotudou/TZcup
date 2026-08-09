@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "models": [
+    {
+      "model_id": "x1_fcos_r50_teacher",
+      "logical_path": "F:/Project/TZcup-perception-product-runtime/p2-teacher-v5/fcos_resnet50_fpn_teacher.pt",
+      "exists": true,
+      "bytes": 128781674,
+      "expected_sha256": "a5884ac9bfa4e89f2ae8a25f4cae0521e263dd951ef895fa1185f013b2f04ee5",
+      "actual_sha256": "a5884ac9bfa4e89f2ae8a25f4cae0521e263dd951ef895fa1185f013b2f04ee5",
+      "hash_match": true
+    },
+    {
+      "model_id": "classifier",
+      "logical_path": "F:/Project/TZcup-perception-product-runtime/p4-screening-v5-a3-distilled-top16-batch16-v1/classifier.pt",
+      "exists": true,
+      "bytes": 12421090,
+      "expected_sha256": "d145090681551160b74aa0e43bb711561c8e4d3a1494535243f700935bcfb2e6",
+      "actual_sha256": "d145090681551160b74aa0e43bb711561c8e4d3a1494535243f700935bcfb2e6",
+      "hash_match": true
+    },
+    {
+      "model_id": "leaf",
+      "logical_path": "F:/Project/TZcup-perception-product-runtime/p4-screening-v5-a3-distilled-top16-batch16-v1/leaf.pt",
+      "exists": true,
+      "bytes": 322657738,
+      "expected_sha256": "ecba9043d0e0523ad5b79381bcc7c21583ccba2c9a806f2179e5ca7e3e14aa2e",
+      "actual_sha256": "ecba9043d0e0523ad5b79381bcc7c21583ccba2c9a806f2179e5ca7e3e14aa2e",
+      "hash_match": true
+    },
+    {
+      "model_id": "puddle",
+      "logical_path": "F:/Project/TZcup-perception-product-runtime/p4-screening-v5-a3-distilled-top16-batch16-v1/puddle.pt",
+      "exists": true,
+      "bytes": 322659230,
+      "expected_sha256": "8b3aee52679105f857b9e43694dc08304e5cda73c9536a7904c52ed33b31d2e2",
+      "actual_sha256": "8b3aee52679105f857b9e43694dc08304e5cda73c9536a7904c52ed33b31d2e2",
+      "hash_match": true
+    }
+  ],
+  "all_required_models_recovered": true,
+  "product_candidate_selected": false,
+  "claim_boundary": "asset recovery does not pass the X1 full-pipeline gate"
+}

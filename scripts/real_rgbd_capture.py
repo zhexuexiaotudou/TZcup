@@ -16,6 +16,40 @@ CLASSES = {
 INDEPENDENT_METHODS = {"fiducial", "surveyed_fixture", "total_station", "motion_capture"}
 
 
+def apply_privacy_regions(image, regions):
+    """Blur declared image regions before any RGB frame is persisted."""
+    import cv2
+
+    output = image.copy()
+    height, width = output.shape[:2]
+    for left, top, right, bottom in regions:
+        left = max(0, min(int(left), width))
+        right = max(0, min(int(right), width))
+        top = max(0, min(int(top), height))
+        bottom = max(0, min(int(bottom), height))
+        if right <= left or bottom <= top:
+            continue
+        patch = output[top:bottom, left:right]
+        output[top:bottom, left:right] = cv2.GaussianBlur(patch, (31, 31), 0)
+    return output
+
+
+def transform_record(transform):
+    """Serialize an audited map-to-camera transform without ROS-specific JSON."""
+    translation = transform.transform.translation
+    rotation = transform.transform.rotation
+    return {
+        "parent_frame": transform.header.frame_id,
+        "child_frame": transform.child_frame_id,
+        "timestamp_ns": (
+            int(transform.header.stamp.sec) * 1_000_000_000
+            + int(transform.header.stamp.nanosec)
+        ),
+        "translation_m": [translation.x, translation.y, translation.z],
+        "rotation_xyzw": [rotation.x, rotation.y, rotation.z, rotation.w],
+    }
+
+
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -74,6 +108,33 @@ def validate_command(args) -> int:
     return 0 if report["independent_placement_gate_pass"] else 2
 
 
+def create_placement_command(args) -> int:
+    target = Path(args.output).resolve()
+    payload = (
+        json.loads(target.read_text(encoding="utf-8"))
+        if target.is_file()
+        else {"schema_version": 1, "coordinate_frame": "map", "placements": []}
+    )
+    payload.setdefault("placements", []).append(
+        {
+            "frame_id": args.frame_id,
+            "object_id": args.object_id,
+            "class_id": args.class_id,
+            "position_map_m": [args.x, args.y, args.z],
+            "measurement_method": args.measurement_method,
+            "uncertainty_m": args.uncertainty_m,
+            "independent_of_perception": True,
+        }
+    )
+    report = validate_placement_protocol(payload)
+    if not report["independent_placement_gate_pass"]:
+        raise ValueError("placement contract failed: " + "; ".join(report["errors"]))
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    print(json.dumps(report, indent=2))
+    return 0
+
+
 def capture_command(args) -> int:
     if not args.consent:
         raise RuntimeError("real RGB-D capture requires explicit --consent")
@@ -85,18 +146,28 @@ def capture_command(args) -> int:
     from rclpy.node import Node
     from rclpy.qos import qos_profile_sensor_data
     from sensor_msgs.msg import CameraInfo, Image
+    from tf2_ros import Buffer, TransformException, TransformListener
+    from rclpy.duration import Duration
+    from rclpy.time import Time
 
     from sanitation_perception.frame_synchronizer import StrictFrameSynchronizer
 
     output = Path(args.output).resolve()
-    for name in ("rgb", "depth", "camera_info"):
+    for name in ("rgb", "depth", "camera_info", "pose"):
         (output / name).mkdir(parents=True, exist_ok=True)
     bridge = CvBridge()
+    privacy = (
+        json.loads(Path(args.privacy_regions).read_text(encoding="utf-8"))
+        if args.privacy_regions
+        else {}
+    )
 
     class CaptureNode(Node):
         def __init__(self):
             super().__init__("real_rgbd_capture")
             self.sync = StrictFrameSynchronizer(args.sync_tolerance_ms, 2)
+            self.tf_buffer = Buffer()
+            self.tf_listener = TransformListener(self.tf_buffer, self)
             self.rows = []
             self.done = False
             self.last_receive_s = time.monotonic()
@@ -125,9 +196,24 @@ def capture_command(args) -> int:
             index = len(self.rows)
             rgb = bridge.imgmsg_to_cv2(frame.rgb.payload, desired_encoding="rgb8")
             depth = bridge.imgmsg_to_cv2(frame.depth.payload, desired_encoding="passthrough")
+            regions = privacy.get(str(index), privacy.get("default", []))
+            rgb = apply_privacy_regions(rgb, regions)
+            camera_frame = args.camera_frame or frame.camera_info.payload.header.frame_id
+            try:
+                pose = self.tf_buffer.lookup_transform(
+                    args.map_frame,
+                    camera_frame,
+                    Time(nanoseconds=frame.rgb_stamp_ns),
+                    timeout=Duration(seconds=args.tf_timeout_ms / 1000.0),
+                )
+            except TransformException as exc:
+                raise RuntimeError(
+                    f"missing {args.map_frame}->{camera_frame} transform at frame {index}"
+                ) from exc
             rgb_path = output / "rgb" / f"frame_{index:06d}.png"
             depth_path = output / "depth" / f"frame_{index:06d}.npy"
             info_path = output / "camera_info" / f"frame_{index:06d}.json"
+            pose_path = output / "pose" / f"frame_{index:06d}.json"
             cv2.imwrite(str(rgb_path), cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR))
             np.save(depth_path, depth, allow_pickle=False)
             info = frame.camera_info.payload
@@ -138,6 +224,9 @@ def capture_command(args) -> int:
                             "p": list(info.p), "frame_id": info.header.frame_id}, indent=2)
                 + "\n", encoding="utf-8",
             )
+            pose_path.write_text(
+                json.dumps(transform_record(pose), indent=2) + "\n", encoding="utf-8"
+            )
             self.rows.append(
                 {"frame_id": f"frame_{index:06d}", "scene_id": args.scene_id,
                  "timestamp_ns": frame.rgb_stamp_ns,
@@ -145,8 +234,11 @@ def capture_command(args) -> int:
                  "rgb": rgb_path.relative_to(output).as_posix(),
                  "depth": depth_path.relative_to(output).as_posix(),
                  "camera_info": info_path.relative_to(output).as_posix(),
+                 "pose": pose_path.relative_to(output).as_posix(),
+                 "privacy_regions_applied": len(regions),
                  "rgb_sha256": sha256(rgb_path), "depth_sha256": sha256(depth_path),
-                 "camera_info_sha256": sha256(info_path)}
+                 "camera_info_sha256": sha256(info_path),
+                 "pose_sha256": sha256(pose_path)}
             )
             self.done = len(self.rows) >= args.frames
 
@@ -169,6 +261,10 @@ def capture_command(args) -> int:
         "sync_tolerance_ms": args.sync_tolerance_ms, "queue_depth": 2,
         "topics": {"rgb": args.rgb_topic, "depth": args.depth_topic,
                    "camera_info": args.camera_info_topic},
+        "map_frame": args.map_frame,
+        "camera_frame": args.camera_frame or "from_camera_info",
+        "pose_required_per_frame": True,
+        "privacy_filter_applied_before_persistence": True,
         "frames": node.rows, "ground_truth_status": "UNANNOTATED",
         "independent_map_ground_truth": False,
     }
@@ -188,6 +284,10 @@ def build_parser():
     capture.add_argument("--rgb-topic", default="/camera/color/image_raw")
     capture.add_argument("--depth-topic", default="/camera/depth/image_rect_raw")
     capture.add_argument("--camera-info-topic", default="/camera/color/camera_info")
+    capture.add_argument("--map-frame", default="map")
+    capture.add_argument("--camera-frame")
+    capture.add_argument("--tf-timeout-ms", type=float, default=100.0)
+    capture.add_argument("--privacy-regions")
     capture.add_argument("--sync-tolerance-ms", type=float, default=20.0)
     capture.add_argument("--timeout-s", type=float, default=300.0)
     capture.add_argument("--consent", action="store_true")
@@ -196,6 +296,19 @@ def build_parser():
     validate.add_argument("--protocol", required=True)
     validate.add_argument("--output", required=True)
     validate.set_defaults(handler=validate_command)
+    create = commands.add_parser("create-placement")
+    create.add_argument("--output", required=True)
+    create.add_argument("--frame-id", required=True)
+    create.add_argument("--object-id", required=True)
+    create.add_argument("--class-id", required=True, choices=sorted(CLASSES))
+    create.add_argument("--x", type=float, required=True)
+    create.add_argument("--y", type=float, required=True)
+    create.add_argument("--z", type=float, required=True)
+    create.add_argument(
+        "--measurement-method", required=True, choices=sorted(INDEPENDENT_METHODS)
+    )
+    create.add_argument("--uncertainty-m", type=float, required=True)
+    create.set_defaults(handler=create_placement_command)
     return parser
 
 

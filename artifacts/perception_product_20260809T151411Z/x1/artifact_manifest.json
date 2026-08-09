@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-01",
+  "files": [
+    {
+      "path": "X1_STATIC_FAILURE.json",
+      "bytes": 2877,
+      "sha256": "978e1d0845b6fef8dd44dec639482a3c2ab72443f2990067272eef43b1b9ad74"
+    },
+    {
+      "path": "x1_full_static_report.json",
+      "bytes": 59036,
+      "sha256": "205100df6888c13f2deb4979848090b8bdd3793823ad5374da8cc5892e937e0b"
+    }
+  ],
+  "raw_checkpoints_committed": false,
+  "G5_SEALED_FINAL_read": false
+}

@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-11",
+  "resource_scan": {
+    "schema_version": 1,
+    "camera_probe": {
+      "command": [
+        "powershell.exe",
+        "-NoProfile",
+        "-Command",
+        "Get-PnpDevice -PresentOnly -Class Camera -ErrorAction SilentlyContinue | Select-Object FriendlyName,InstanceId,Status | ConvertTo-Json -Compress"
+      ],
+      "exit_code": 0,
+      "stdout": "{\"FriendlyName\":\"Integrated Camera\",\"InstanceId\":\"USB\\\\VID_5986\\u0026PID_1196\\u0026MI_00\\\\6\\u00261CB02AB9\\u00260\\u00260000\",\"Status\":\"OK\"}",
+      "stderr": ""
+    },
+    "detected_camera_summary": "Integrated Camera only",
+    "rgbd_device_present": false,
+    "auditable_rgbd_recording_present": false,
+    "independent_map_gt_present": false,
+    "integrated_camera_accepted_as_rgbd": false,
+    "PRODUCT_FIELD_READY": false,
+    "REAL_DOMAIN_BLOCKED_EXTERNAL": true
+  },
+  "software_preparation": {
+    "roles": {
+      "real_rgbd_capture_with_intrinsics_extrinsics_sync_privacy": {
+        "path": "scripts/real_rgbd_capture.py",
+        "present": true,
+        "sha256": "308cebe0b125a09f8d17f9edd89a8649361daa263859540bcbe9821744d76f14"
+      },
+      "known_placement_and_independent_gt": {
+        "path": "scripts/real_rgbd_capture.py",
+        "present": true,
+        "sha256": "308cebe0b125a09f8d17f9edd89a8649361daa263859540bcbe9821744d76f14"
+      },
+      "intrinsic_calibration": {
+        "path": "scripts/auto13_real_domain.py",
+        "present": true,
+        "sha256": "19323eead4c3ab0dc4746865d00cc34b2b319dae7fe20f010161478691b61ec8"
+      },
+      "dataset_ingestion": {
+        "path": "scripts/auto13_real_domain.py",
+        "present": true,
+        "sha256": "19323eead4c3ab0dc4746865d00cc34b2b319dae7fe20f010161478691b61ec8"
+      },
+      "annotation_review_protocol": {
+        "path": "docs/real-domain-annotation-protocol.md",
+        "present": true,
+        "sha256": "c6e01d879090bd7819627a636041c75cc30b115be3224f903a36979a9164072c"
+      },
+      "unified_field_evaluator": {
+        "path": "scripts/auto13_real_domain.py",
+        "present": true,
+        "sha256": "19323eead4c3ab0dc4746865d00cc34b2b319dae7fe20f010161478691b61ec8"
+      },
+      "j6_onnx_contract": {
+        "path": "scripts/auto14_onnx_preflight.py",
+        "present": true,
+        "sha256": "7ad8b45693f262c049495241ae0998335db1b32a16b5e6748837c5398fcfa866"
+      },
+      "j6_operator_audit": {
+        "path": "scripts/j6_operator_audit.py",
+        "present": true,
+        "sha256": "95c834eb280043af3ba03d7118101b275b42727bb227140e6ef3a106ec665a52"
+      }
+    },
+    "all_required_software_present": true
+  },
+  "software_preparation_complete": true,
+  "minimum_real_scenes": 20,
+  "minimum_real_frames": 1000,
+  "actual_qualifying_scenes": 0,
+  "actual_qualifying_frames": 0,
+  "pseudo_labels_allowed_as_final_GT": false,
+  "Integrated_Camera_accepted_as_RGBD": false,
+  "PRODUCT_FIELD_READY": false,
+  "REAL_DOMAIN_BLOCKED_EXTERNAL": true,
+  "metrics": {
+    "discrete_macro_f1": null,
+    "each_class_recall": null,
+    "paper_precision": null,
+    "area_mIoU": null,
+    "negative_specificity": null,
+    "map_RMSE_m": null,
+    "pre_FOV_false_discovery": null
+  },
+  "truth_boundary": "The Integrated Camera is not RGB-D. No qualifying moving RGB-D recording, calibration, human-reviewed labels, or independent map ground truth exists."
+}

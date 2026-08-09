@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "observed_at": "2026-08-09T15:19:35.274271+00:00",
+  "repository": "https://github.com/zhexuexiaotudou/TZcup",
+  "local_head": "3d770be99c8e2b5fbff310826953a300f5d31e61",
+  "local_branch": "codex/perception-online-cleaning-intelligence",
+  "worktree_clean_before_inventory": false,
+  "remote_pr": 90,
+  "remote_head": "55c41e74768f8503622e294c840d2baea2501005",
+  "git_fetch_origin_prune": "timed_out_after_60s",
+  "git_transport_boundary": "GitHub Smart-HTTP timed out; remote state verified with GitHub REST"
+}

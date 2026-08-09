@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-02-X3",
+  "artifacts": [
+    {
+      "path": "X3_HYPOTHESIS.json",
+      "sha256": "62c02cb2d078be22f6386bda6e8bdd11a1b9646dcf3c8bac6b0f9adbfe3424bc"
+    },
+    {
+      "path": "X3_TRAIN_SUMMARY.json",
+      "sha256": "97484692a1fd4ed3172a920a53d103ba303b0943b0990f332ae0144199a0dc08"
+    },
+    {
+      "path": "x3_full_static_report.json",
+      "sha256": "66818ea01b4e03fb343a8ad1eee211e9abb8fe7a8eb198c6ecee6b2e0f77d195"
+    },
+    {
+      "path": "X3_STATIC_FAILURE.json",
+      "sha256": "d670770aefeb5e788f79df2c42627d25a14a1a4781abac1c6ea4d6f64ed0f6fe"
+    }
+  ],
+  "checkpoint_committed": false,
+  "G5_SEALED_FINAL_read": false,
+  "static_gate_pass": false
+}

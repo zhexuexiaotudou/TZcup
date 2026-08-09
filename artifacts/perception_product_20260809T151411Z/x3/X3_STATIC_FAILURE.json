@@ -1,0 +1,57 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-02-X3-STATIC",
+  "route": "ONLINE-X3_TORCHVISION_FCOS_R50_DIRECT_3CLASS",
+  "decision": "FAILED_STATIC_FULL_PIPELINE",
+  "source_commit": "d958854",
+  "report": "x3_full_static_report.json",
+  "report_sha256": "66818ea01b4e03fb343a8ad1eee211e9abb8fe7a8eb198c6ecee6b2e0f77d195",
+  "report_bytes": 28542,
+  "execution": {
+    "environment": "tzcup/sanitation-jazzy:stage5b with RTX 4080 CUDA",
+    "script_contract_exit_code": 4,
+    "formal_run_completed": true,
+    "VAL_frames": 500,
+    "D1_D5_frames": 500
+  },
+  "val_metrics": {
+    "candidate_recall": 0.8547557840616967,
+    "small_candidate_recall": 0.3076923076923077,
+    "false_candidates_per_min": 1.2,
+    "macro_precision": 0.9988425925925926,
+    "macro_recall": 0.8395703891432308,
+    "macro_f1": 0.9101074815611859,
+    "small_final_recall": 0.3076923076923077,
+    "boundary_f1": 0.6880077913444143
+  },
+  "cross_world_metrics": {
+    "macro_f1": 0.7985919439950085,
+    "plastic_bottle_recall": 0.9190283400809717,
+    "metal_can_recall": 0.44565217391304346,
+    "paper_litter_recall": 0.706140350877193,
+    "negative_candidate_fp_per_frame": 0.0,
+    "negative_area_fp_per_frame": 0.13043478260869565
+  },
+  "failed_subgates": [
+    "small_candidate_recall_at_least_0_70",
+    "in_domain_macro_recall_at_least_0_90",
+    "each_cross_world_recall_at_least_0_70",
+    "small_final_recall_at_least_0_70",
+    "boundary_f1_at_least_0_70",
+    "negative_area_fp_per_frame_at_most_0_05"
+  ],
+  "routes_exhausted": [
+    "X1_FAILED_STATIC_FULL_PIPELINE",
+    "X2_BLOCKED_EXTERNAL_NETWORK_ASSET",
+    "X3_FAILED_STATIC_FULL_PIPELINE"
+  ],
+  "route_count": 3,
+  "additional_model_routes_allowed": false,
+  "G5_SEALED_FINAL_read": false,
+  "legacy_G4_D6_read": false,
+  "moving_camera_gate_run": false,
+  "PERCEPTION_ONLINE_X86_DEV_PASS": false,
+  "PRODUCT_X86_PERCEPTION_READY": false,
+  "MODEL_BLOCKED_INTERNAL": true,
+  "next_action": "Continue model-independent J6, board, field, evidence-index, and release-preflight tooling; do not freeze or read G5."
+}

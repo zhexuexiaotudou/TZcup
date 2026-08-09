@@ -1,0 +1,47 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-PROD-00",
+  "files": [
+    {
+      "path": "dataset_inventory.json",
+      "bytes": 1853,
+      "sha256": "49962c4ef5e3ea101850dd6cb87afdcb932ec10db51085a812b8363cb15603ea"
+    },
+    {
+      "path": "docker_inventory.json",
+      "bytes": 524,
+      "sha256": "5ffee83334340dee7daab3af9a63702d09586c3b90b5b17df700134bd7d8e1b7"
+    },
+    {
+      "path": "gpu_inventory.json",
+      "bytes": 405,
+      "sha256": "9a8a62712758f1919c2e3d775662148eb77f761ea0cae8fb3d66ece37fb81cd6"
+    },
+    {
+      "path": "j6_inventory.json",
+      "bytes": 669,
+      "sha256": "bf02ee1b5d257d545f81322d78dd636847bd699c5f4177ac66e5e0e72b5f7941"
+    },
+    {
+      "path": "model_artifact_inventory.json",
+      "bytes": 1941,
+      "sha256": "188af0c0d9bfb15ad809e8a5e406a1c941b5efba34daf72126c86e7bbed4701f"
+    },
+    {
+      "path": "real_sensor_inventory.json",
+      "bytes": 815,
+      "sha256": "cde826a97b490d2de5e2e89d0c740264c76f0ef64180d7fb6023842dc343790d"
+    },
+    {
+      "path": "reference_dependency_inventory.json",
+      "bytes": 3783,
+      "sha256": "ddedebd18b41d13c88c7be5345ca6e8aed3924f6cd6fb66bfdd0bebd386f62b5"
+    },
+    {
+      "path": "repo_state.json",
+      "bytes": 552,
+      "sha256": "1a7793d53f6137011620c45f28524cb07537e2af27e00a5c6f26fe0ec5263c81"
+    }
+  ],
+  "all_inventory_files_present": true
+}

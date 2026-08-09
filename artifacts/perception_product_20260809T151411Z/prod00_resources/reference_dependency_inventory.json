@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "registry_path": "third_party/perception/dependency_registry.yaml",
+  "registry_sha256": "1f2856bf64f1bfbb2141a49e09b2ad31d5befe6269b48bb7314886680c3954b1",
+  "dependencies": [
+    {
+      "name": "Grounding DINO",
+      "upstream_repository": "https://github.com/IDEA-Research/GroundingDINO",
+      "upstream_commit": "856dde20aee659246248e20734ef9ba5214f5e44",
+      "license": "Apache-2.0",
+      "model_checkpoint_license": "pending_explicit_artifact_audit",
+      "redistribution_policy": "reference_only_until_checkpoint_audit",
+      "commercial_use_note": "repository license permits use; exact checkpoint provenance remains gated",
+      "local_modifications": "none",
+      "sha256": null,
+      "runtime_role": "ONLINE-X2 reference candidate proposal",
+      "shipped_in_product": false
+    },
+    {
+      "name": "Grounded SAM 2",
+      "upstream_repository": "https://github.com/IDEA-Research/Grounded-SAM-2",
+      "upstream_commit": "b7a9c29f196edff0eb54dbe14588d7ae5e3dde28",
+      "license": "Apache-2.0_with_transitive_notices",
+      "model_checkpoint_license": "component_specific",
+      "redistribution_policy": "reference_only_pending_transitive_audit",
+      "commercial_use_note": "no product shipment authorized by this registry",
+      "local_modifications": "none",
+      "sha256": null,
+      "runtime_role": "reference tracking and auto-label orchestration",
+      "shipped_in_product": false
+    },
+    {
+      "name": "SAM 2",
+      "upstream_repository": "https://github.com/facebookresearch/sam2",
+      "upstream_commit": "2b90b9f5ceec907a1c18123530e92e794ad901a4",
+      "license": "Apache-2.0",
+      "model_checkpoint_license": "Apache-2.0",
+      "redistribution_policy": "reference_only_by_default",
+      "commercial_use_note": "official repository states code and checkpoints are Apache-2.0",
+      "local_modifications": "none",
+      "sha256": null,
+      "runtime_role": "reference video tracking and pseudo-label refinement",
+      "shipped_in_product": false
+    },
+    {
+      "name": "YOLO-World",
+      "upstream_repository": "https://github.com/AILab-CVC/YOLO-World",
+      "upstream_commit": "4f70adbaacf5685bd9ec5bea85f1f91057f6fc0b",
+      "license": "GPL-3.0",
+      "model_checkpoint_license": "pending_explicit_artifact_audit",
+      "redistribution_policy": "benchmark_only_default_product_bundle_forbidden",
+      "commercial_use_note": "upstream also offers separate commercial licensing inquiries",
+      "local_modifications": "none",
+      "sha256": null,
+      "runtime_role": "ONLINE-X3 benchmark only",
+      "shipped_in_product": false
+    }
+  ],
+  "official_upstream_audit": [
+    {
+      "name": "Grounding DINO",
+      "repository": "https://github.com/IDEA-Research/GroundingDINO",
+      "pinned_commit": "856dde20aee659246248e20734ef9ba5214f5e44",
+      "pinned_commit_exists_upstream": true
+    },
+    {
+      "name": "Grounded SAM 2",
+      "repository": "https://github.com/IDEA-Research/Grounded-SAM-2",
+      "pinned_commit": "b7a9c29f196edff0eb54dbe14588d7ae5e3dde28",
+      "pinned_commit_exists_upstream": true
+    },
+    {
+      "name": "SAM 2",
+      "repository": "https://github.com/facebookresearch/sam2",
+      "pinned_commit": "2b90b9f5ceec907a1c18123530e92e794ad901a4",
+      "pinned_commit_exists_upstream": true
+    },
+    {
+      "name": "YOLO-World",
+      "repository": "https://github.com/AILab-CVC/YOLO-World",
+      "pinned_commit": "4f70adbaacf5685bd9ec5bea85f1f91057f6fc0b",
+      "pinned_commit_exists_upstream": true
+    }
+  ],
+  "all_pins_exist_upstream": true,
+  "checkpoint_cache_present": false,
+  "x2_checkpoint_ready": false,
+  "x3_product_authorized": false
+}
