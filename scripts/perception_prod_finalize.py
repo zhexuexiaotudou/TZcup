@@ -240,7 +240,7 @@ def release_manifest(source_commit: str) -> dict:
 
 
 def write_json(path: Path, payload: dict):
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    path.write_bytes((json.dumps(payload, indent=2) + "\n").encode("utf-8"))
 
 
 def main():
@@ -255,12 +255,12 @@ def main():
     field = load(root / "field/FIELD_RESOURCE_AND_SOFTWARE_STATUS.json")
     write_json(root / "PERCEPTION_PRODUCT_FINAL_STATUS.json", build_status(source))
     write_json(root / "PERCEPTION_PRODUCT_FINAL_BLOCKERS.json", build_blockers(x3, j6, board, field))
-    (root / "PERCEPTION_PRODUCT_FINAL_EVIDENCE_INDEX.md").write_text(
-        evidence_index(root, source), encoding="utf-8"
+    (root / "PERCEPTION_PRODUCT_FINAL_EVIDENCE_INDEX.md").write_bytes(
+        evidence_index(root, source).encode("utf-8")
     )
     write_json(root / "PERCEPTION_PRODUCT_FINAL_MODEL_REGISTRY.json", model_registry(x3, source))
-    (root / "PERCEPTION_PRODUCT_FINAL_THIRD_PARTY_NOTICES.md").write_text(
-        third_party_notices(), encoding="utf-8"
+    (root / "PERCEPTION_PRODUCT_FINAL_THIRD_PARTY_NOTICES.md").write_bytes(
+        third_party_notices().encode("utf-8")
     )
     write_json(root / "PERCEPTION_PRODUCT_RELEASE_MANIFEST.json", release_manifest(source))
     return 0

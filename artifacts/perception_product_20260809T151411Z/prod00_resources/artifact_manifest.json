@@ -4,43 +4,43 @@
   "files": [
     {
       "path": "dataset_inventory.json",
-      "bytes": 1853,
-      "sha256": "49962c4ef5e3ea101850dd6cb87afdcb932ec10db51085a812b8363cb15603ea"
+      "bytes": 1810,
+      "sha256": "cb458ce99c1290f3709ee6345483686aa7cef9696e0934fe4d5ff173749e68d1"
     },
     {
       "path": "docker_inventory.json",
-      "bytes": 524,
-      "sha256": "5ffee83334340dee7daab3af9a63702d09586c3b90b5b17df700134bd7d8e1b7"
+      "bytes": 504,
+      "sha256": "cd58ef40fd925e2e727211bd076543d60d5948d0b4c9db68ab28f1d4840acb7d"
     },
     {
       "path": "gpu_inventory.json",
-      "bytes": 405,
-      "sha256": "9a8a62712758f1919c2e3d775662148eb77f761ea0cae8fb3d66ece37fb81cd6"
+      "bytes": 390,
+      "sha256": "9ee7082160dd70a3f979951bc6054451317abc4ab2d01e1b127840423e5106e7"
     },
     {
       "path": "j6_inventory.json",
-      "bytes": 669,
-      "sha256": "bf02ee1b5d257d545f81322d78dd636847bd699c5f4177ac66e5e0e72b5f7941"
+      "bytes": 652,
+      "sha256": "9e96c6027ec4c07b2e157d328d6f045aa868d34ef645de869b8651afe84327e7"
     },
     {
       "path": "model_artifact_inventory.json",
-      "bytes": 1941,
-      "sha256": "188af0c0d9bfb15ad809e8a5e406a1c941b5efba34daf72126c86e7bbed4701f"
+      "bytes": 1897,
+      "sha256": "9c81f7fd21a3f1cf3760344fddd98232d658acca742f4104706149ff8a9bf44b"
     },
     {
       "path": "real_sensor_inventory.json",
-      "bytes": 815,
-      "sha256": "cde826a97b490d2de5e2e89d0c740264c76f0ef64180d7fb6023842dc343790d"
+      "bytes": 794,
+      "sha256": "636bba0ed4fc8eff9e35c5d486d9f59bf74b71d7676a74700e760406d6510919"
     },
     {
       "path": "reference_dependency_inventory.json",
-      "bytes": 3783,
-      "sha256": "ddedebd18b41d13c88c7be5345ca6e8aed3924f6cd6fb66bfdd0bebd386f62b5"
+      "bytes": 3694,
+      "sha256": "b95e6e1c91e9c823702d345866c68ce1f4aaea661e08678a08fb5eeda5b1a12b"
     },
     {
       "path": "repo_state.json",
-      "bytes": 552,
-      "sha256": "1a7793d53f6137011620c45f28524cb07537e2af27e00a5c6f26fe0ec5263c81"
+      "bytes": 540,
+      "sha256": "74232a76659bf901c82e434c27740ac3507d6877d13b29daac1783f0c33c8506"
     }
   ],
   "all_inventory_files_present": true

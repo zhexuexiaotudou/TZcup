@@ -4,7 +4,7 @@
   "artifacts": [
     {
       "path": "FIELD_RESOURCE_AND_SOFTWARE_STATUS.json",
-      "sha256": "5ab0b50a90d24011df160e271a38bd807eb8f709ea4bafe89376289e29a455be"
+      "sha256": "14c2b20d6449447a7689b760157fbf1c6ff5c2fc44e5ad68f3f231df5692eaf1"
     }
   ],
   "software_preparation_complete": true,

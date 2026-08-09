@@ -1075,3 +1075,4 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_doc
 - 已生成提示词要求的六项最终工件：status、blockers、evidence index、model registry、third-party notices 和 release manifest，位于 `artifacts/perception_product_20260809T151411Z/`。
 - 九项最终产品状态全部为 false。主要内部阻断是三条授权模型 route 已用尽但没有静态门通过候选；X2 checkpoint 下载、实体 J6、真实 RGB-D/独立 GT 另列外部阻断。
 - release manifest 明确 `release_ready=false`、selected model/container/deployment 均为 null；这是一份阻断清单，不是发布或部署声明。
+- Windows 证据生成器统一改为显式 LF 字节写入，并新增 staged/committed Git blob 级 SHA-256 校验；清单中的哈希对应 PR 远端实际字节，不再受工作区 CRLF 转换影响。

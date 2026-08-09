@@ -4,7 +4,7 @@
   "artifacts": [
     {
       "path": "J6_BOARD_STATUS.json",
-      "sha256": "2be0549b9a703b8d6e66a3cadb9388d059fdcf53ada5c5719f5c9c21826181db"
+      "sha256": "09ecc5d9bac7497fb74613b7cf298e27cbab94d3064c185c55ba5d661327976d"
     }
   ],
   "PRODUCT_J6_BOARD_READY": false,

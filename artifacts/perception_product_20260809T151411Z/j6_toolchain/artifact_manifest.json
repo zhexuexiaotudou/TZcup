@@ -4,7 +4,7 @@
   "artifacts": [
     {
       "path": "J6_TOOLCHAIN_LOCK.json",
-      "sha256": "0de2b47635de8e7f6260100ef85b96d1ff1a77856d36e17544a0efb5cf75da8c"
+      "sha256": "b0e50fc38899f6148ee0952cb31c2a5bf358484439565af0ddec7f4220761eb0"
     }
   ],
   "PRODUCT_J6_TOOLCHAIN_READY": false

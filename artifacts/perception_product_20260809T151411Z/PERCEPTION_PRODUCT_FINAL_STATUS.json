@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "stage": "PERCEPTION-PROD-12",
-  "evidence_source_commit": "f11c0f16e78c3c9592c27c01f94c63a5fdf1035c",
+  "evidence_source_commit": "cfdde8d9629cf637e5774ec70884f63510e3686b",
   "statuses": {
     "ONLINE_DYNAMIC_DISCOVERY_PASS": false,
     "DYNAMIC_TRASH_MAP_PASS": false,
