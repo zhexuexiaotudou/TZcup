@@ -233,6 +233,38 @@ def _subset_metrics(matched: list[dict], area: list[dict], indices: list[int]) -
     }
 
 
+def _taxonomy_specificity(candidate_frames: list[dict], metadata: dict) -> dict:
+    families: dict[str, dict[str, int]] = {}
+    for frame in candidate_frames:
+        if not frame["negative_only"]:
+            continue
+        key = (int(frame["scene_seed"]), int(frame["frame_index"]))
+        has_fp = bool(frame.get("detections"))
+        for taxonomy in metadata[key]["negative_taxonomies"]:
+            record = families.setdefault(taxonomy, {"frames": 0, "fp_frames": 0})
+            record["frames"] += 1
+            record["fp_frames"] += int(has_fp)
+    per_taxonomy = {
+        taxonomy: {
+            **record,
+            "specificity": 1.0 - record["fp_frames"] / max(record["frames"], 1),
+        }
+        for taxonomy, record in sorted(families.items())
+    }
+    eligible = [
+        record["specificity"]
+        for record in per_taxonomy.values()
+        if record["frames"] >= 5
+    ]
+    if not eligible:
+        raise ValueError("G5 has no negative taxonomy with at least five frames")
+    return {
+        "specificity": float(min(eligible)),
+        "per_taxonomy": per_taxonomy,
+        "minimum_frames_per_evaluated_taxonomy": 5,
+    }
+
+
 def preflight_frozen_evaluator(*, freeze: dict) -> dict:
     """Verify frozen graphs and providers without touching the sealed data."""
     model_root = Path(__file__).resolve().parent
@@ -315,14 +347,7 @@ def evaluate_sealed_final(*, dataset_root, freeze: dict, sealed_manifest: dict) 
             for value in values
         }
 
-    negative_indices = [i for i, row in enumerate(rows) if row["negative_only"]]
-    negative_frames_with_hallucination = sum(
-        bool([item for item in matched[index].get("predictions", []) if item["class_index"] > 0])
-        for index in negative_indices
-    )
-    same_color_specificity = 1.0 - (
-        negative_frames_with_hallucination / max(len(negative_indices), 1)
-    )
+    taxonomy_specificity = _taxonomy_specificity(candidates, metadata)
     missing_class_events = 0
     possible_missing_events = 0
     for frame in matched:
@@ -362,7 +387,8 @@ def evaluate_sealed_final(*, dataset_root, freeze: dict, sealed_manifest: dict) 
         "AP50": ap50,
         "AP50_95": ap50_95,
         "area": area_summary,
-        "same_color_specificity": same_color_specificity,
+        "same_color_specificity": taxonomy_specificity["specificity"],
+        "same_color_specificity_report": taxonomy_specificity,
         "missing_class_hallucination": (
             missing_class_events / max(possible_missing_events, 1)
         ),

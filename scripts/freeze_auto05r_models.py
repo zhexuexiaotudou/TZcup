@@ -142,6 +142,8 @@ def build_freeze(
         / "sanitation_learning"
         / "g4_models.py"
     )
+    import torch
+
     for task in MODEL_TYPES:
         checkpoint_path = model_dir / f"{task}.pt"
         onnx_path = model_dir / f"{task}.onnx"
@@ -156,6 +158,26 @@ def build_freeze(
         contract = training.get("model_contract")
         _require(isinstance(contract, dict), f"{task} model contract is missing")
         _require(contract.get("model_id"), f"{task} model_id is missing")
+        checkpoint = torch.load(
+            checkpoint_path, map_location="cpu", weights_only=False
+        )
+        _require(
+            checkpoint.get("checkpoint_status") == "training_complete",
+            f"{task} checkpoint training is incomplete",
+        )
+        _require(
+            isinstance(checkpoint.get("state_dict"), dict)
+            and bool(checkpoint["state_dict"]),
+            f"{task} checkpoint selected state_dict is missing",
+        )
+        _require(
+            checkpoint.get("selection", {}).get("product_eligible") is True,
+            f"{task} checkpoint selection is not product eligible",
+        )
+        _require(
+            checkpoint.get("model_contract") == contract,
+            f"{task} checkpoint model contract mismatch",
+        )
         onnx = report.get("onnx", {}).get(task, {})
         _require(onnx.get("sha256") == file_sha256(onnx_path), f"{task} ONNX SHA mismatch")
         _require(onnx.get("opset") == 17, f"{task} ONNX opset must be 17")

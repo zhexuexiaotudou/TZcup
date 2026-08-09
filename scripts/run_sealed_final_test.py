@@ -132,8 +132,11 @@ def main() -> int:
             raise ValueError("sealed evaluator must return a metrics mapping")
         policy = load_policy(P5_POLICY)
         policy_result = evaluate_policy(policy, metrics)
+        recorded_metrics = dict(metrics)
+        recorded_metrics["P5_FINAL_PASS"] = policy_result["pass"]
+        recorded_metrics["p5_policy_result"] = policy_result
         result = gate.evaluate_once(
-            metrics=metrics,
+            metrics=recorded_metrics,
             freeze_id=freeze["freeze_id"],
         )
         summary = {

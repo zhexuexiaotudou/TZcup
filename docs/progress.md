@@ -14,6 +14,10 @@
   SHA-256、固定 shape、opset 17、零 custom op、task-specific parity 与 evaluator
   SHA；G5 runner 会先做不接收 dataset path 的 evaluator/model/provider preflight，
   再原子消费唯一一次 sealed access。此时 G5 仍未创建或读取。
+- 新增从 freeze 自动生成 manifest v2 的单一事实源：P4 只生成 screening claim；
+  只有相同 freeze 的 append-only one-shot P5 pass 才生成 formal claim；live 与
+  competition claim 不会被封闭仿真结果提升。旧 placeholder 输入签名不再需要
+  手工改写。
 
 ## 2026-08-09：AUTO-05R P2 发现并修复 G4 跨场景资产泄漏
 
