@@ -330,6 +330,10 @@ def fit_model(
         if (
             early_stopping_patience > 0
             and epochs_without_improvement >= early_stopping_patience
+            and (
+                selector is None
+                or bool(selector.best().get("selected", False))
+            )
         ):
             early_stopped = True
             break

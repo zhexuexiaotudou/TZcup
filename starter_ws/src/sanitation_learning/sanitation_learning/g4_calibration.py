@@ -38,10 +38,18 @@ def filter_discovery_frames(frames: Iterable[dict], threshold: float) -> list[di
 def _discovery_violation(
     metrics: dict,
     *,
+    candidate_recall_min: float,
     false_candidates_per_min_max: float,
     negative_fp_per_frame_max: float,
 ) -> float:
     return (
+        max(
+            0.0,
+            candidate_recall_min
+            - float(metrics["all_gt_candidate_recall"]),
+        )
+        / max(candidate_recall_min, 1e-12)
+        +
         max(
             0.0,
             float(metrics["false_candidates_per_min"])
@@ -61,6 +69,7 @@ def select_discovery_threshold(
     frames: list[dict],
     *,
     thresholds: Iterable[float] = DISCOVERY_THRESHOLD_GRID,
+    candidate_recall_min: float = 0.80,
     false_candidates_per_min_max: float = 2.0,
     negative_fp_per_frame_max: float = 0.05,
 ) -> dict:
@@ -70,6 +79,7 @@ def select_discovery_threshold(
         metrics = discovery_metrics(filter_discovery_frames(frames, threshold))
         violation = _discovery_violation(
             metrics,
+            candidate_recall_min=candidate_recall_min,
             false_candidates_per_min_max=false_candidates_per_min_max,
             negative_fp_per_frame_max=negative_fp_per_frame_max,
         )
@@ -97,7 +107,7 @@ def select_discovery_threshold(
     return {
         **selected,
         "selection_split": "val",
-        "selection_rule": "fp_constraints_then_recall_ap50_precision",
+        "selection_rule": "recall_fp_constraints_then_recall_ap50_precision",
         "sweep": sweep,
     }
 
@@ -116,6 +126,7 @@ def select_area_threshold(
     task: str,
     *,
     thresholds: Iterable[float] = AREA_THRESHOLD_GRID,
+    iou_min: float = 0.75,
     negative_fp_per_frame_max: float = 0.05,
     boundary_f1_min: float = 0.70,
 ) -> dict:
@@ -130,7 +141,8 @@ def select_area_threshold(
         iou = float(metrics["iou_by_class"][key])
         negative_fp = float(metrics["negative_area_fp_per_frame"])
         violation = (
-            max(0.0, boundary_f1_min - boundary_f1)
+            max(0.0, iou_min - iou) / max(iou_min, 1e-12)
+            + max(0.0, boundary_f1_min - boundary_f1)
             / max(boundary_f1_min, 1e-12)
             + max(0.0, negative_fp - negative_fp_per_frame_max)
             / max(negative_fp_per_frame_max, 1e-12)
@@ -161,7 +173,7 @@ def select_area_threshold(
     return {
         **selected,
         "selection_split": "val",
-        "selection_rule": "negative_fp_boundary_constraints_then_iou",
+        "selection_rule": "iou_negative_fp_boundary_constraints_then_iou",
         "task": task,
         "sweep": sweep,
     }

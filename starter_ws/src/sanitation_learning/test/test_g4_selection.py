@@ -165,14 +165,20 @@ def test_infeasible_epochs_keep_diagnostic_checkpoint_by_constraint_distance() -
 def test_task_specific_selectors_use_p4_constraints() -> None:
     discovery = discovery_selector()
     assert discovery.constraints[0].metric == (
+        "validation_all_gt_candidate_recall"
+    )
+    assert discovery.constraints[0].threshold == 0.80
+    assert discovery.constraints[1].metric == (
         "validation_negative_only_fp_per_frame"
     )
-    assert discovery.constraints[0].threshold == 0.05
+    assert discovery.constraints[1].threshold == 0.05
     classifier = classifier_selector()
-    assert classifier.constraints[0].metric == "validation_paper_precision"
+    assert classifier.constraints[0].metric == "validation_macro_f1"
+    assert classifier.constraints[1].metric == "validation_min_discrete_recall"
     area = area_selector()
-    assert area.constraints[0].metric == "validation_negative_area_fp_per_frame"
-    assert area.constraints[0].threshold == 0.05
+    assert area.constraints[0].metric == "validation_iou"
+    assert area.constraints[1].metric == "validation_negative_area_fp_per_frame"
+    assert area.constraints[1].threshold == 0.05
     assert discovery.tie_breaker.metric == "validation_loss"
     assert discovery.tie_breaker.maximize is False
 
@@ -199,7 +205,8 @@ def test_task_selector_uses_validation_loss_only_to_break_objective_tie() -> Non
     )
     assert first["checkpoint_selected"] is True
     assert second["checkpoint_selected"] is True
-    assert selector.best()["selected_epoch"] == 2
+    assert selector.best()["selected"] is False
+    assert selector.best()["diagnostic_checkpoint"]["selected_epoch"] == 2
     better_recall_wins_even_with_worse_loss = selector.consider(
         3,
         {
@@ -210,7 +217,35 @@ def test_task_selector_uses_validation_loss_only_to_break_objective_tie() -> Non
         },
     )
     assert better_recall_wins_even_with_worse_loss["checkpoint_selected"] is True
-    assert selector.best()["selected_epoch"] == 3
+    assert selector.best()["selected"] is False
+    assert selector.best()["diagnostic_checkpoint"]["selected_epoch"] == 3
+
+
+def test_task_selectors_reject_metrics_below_primary_p4_quality_gates() -> None:
+    classifier = classifier_selector()
+    classifier_verdict = classifier.consider(
+        1,
+        {
+            "validation_macro_f1": 0.89,
+            "validation_min_discrete_recall": 0.70,
+            "validation_paper_precision": 1.0,
+            "validation_background_specificity": 1.0,
+            "validation_loss": 0.1,
+        },
+    )
+    assert classifier_verdict["product_eligible"] is False
+
+    area = area_selector()
+    area_verdict = area.consider(
+        1,
+        {
+            "validation_iou": 0.74,
+            "validation_boundary_f1": 1.0,
+            "validation_negative_area_fp_per_frame": 0.0,
+            "validation_loss": 0.1,
+        },
+    )
+    assert area_verdict["product_eligible"] is False
 
 
 def test_invalid_operator_rejected() -> None:

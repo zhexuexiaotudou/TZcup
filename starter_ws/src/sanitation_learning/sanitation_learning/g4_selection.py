@@ -368,6 +368,7 @@ def select_best_candidate(
 
 def discovery_selector(
     *,
+    candidate_recall_min: float = 0.80,
     negative_fp_per_frame_max: float = 0.05,
     false_candidates_per_min_max: float = 2.0,
     objective_metric: str = "validation_all_gt_candidate_recall",
@@ -375,6 +376,11 @@ def discovery_selector(
     """P4 discovery selection: constraints first, then recall."""
     return ConstraintAwareSelector(
         [
+            ConstraintSpec(
+                "validation_all_gt_candidate_recall",
+                "ge",
+                candidate_recall_min,
+            ),
             ConstraintSpec(
                 "validation_negative_only_fp_per_frame",
                 "le",
@@ -393,6 +399,8 @@ def discovery_selector(
 
 def classifier_selector(
     *,
+    macro_f1_min: float = 0.90,
+    min_discrete_recall_min: float = 0.70,
     paper_precision_min: float = 0.80,
     background_specificity_min: float = 0.95,
     objective_metric: str = "validation_macro_f1",
@@ -400,6 +408,14 @@ def classifier_selector(
     """P4 classifier selection: specificity constraints first, then F1."""
     return ConstraintAwareSelector(
         [
+            ConstraintSpec(
+                "validation_macro_f1", "ge", macro_f1_min
+            ),
+            ConstraintSpec(
+                "validation_min_discrete_recall",
+                "ge",
+                min_discrete_recall_min,
+            ),
             ConstraintSpec(
                 "validation_paper_precision", "ge", paper_precision_min
             ),
@@ -416,6 +432,7 @@ def classifier_selector(
 
 def area_selector(
     *,
+    iou_min: float = 0.75,
     negative_area_fp_per_frame_max: float = 0.05,
     boundary_f1_min: float = 0.70,
     objective_metric: str = "validation_iou",
@@ -423,6 +440,7 @@ def area_selector(
     """P4 area selection: negative-area FP and boundary first, then IoU."""
     return ConstraintAwareSelector(
         [
+            ConstraintSpec("validation_iou", "ge", iou_min),
             ConstraintSpec(
                 "validation_negative_area_fp_per_frame",
                 "le",

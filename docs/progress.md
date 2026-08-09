@@ -133,6 +133,10 @@
 - 长训 checkpoint 现于每次选中更优 epoch 时原子替换，并在正常结束时写入完整 EMA
   状态；即使随后训练进程中断，已选 best state 仍可审计恢复，且不会暴露半写入的
   Torch 文件。定向中断测试验证 epoch 1 落盘后 epoch 2 异常仍保留有效 checkpoint。
+- 进一步发现旧 `product_eligible` 只约束 discovery FP 与 area boundary/FP，可能把
+  零误报但零召回、或 boundary 合格但 IoU 不足的 epoch 当作正式候选；现将 discovery
+  recall、classifier macro F1/逐类最小 recall、area IoU 一并纳入 VAL 阈值和 checkpoint
+  硬约束。任何候选满足全部约束前禁用 early stopping，避免初始化期零输出提前终止。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 

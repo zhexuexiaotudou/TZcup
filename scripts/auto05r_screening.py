@@ -430,8 +430,12 @@ def _classifier_metrics_from_scores(
     macro_f1 = float(
         np.mean([per_class[name]["f1"] for name in DISCRETE_NAMES])
     )
+    min_discrete_recall = float(
+        min(per_class[name]["recall"] for name in DISCRETE_NAMES)
+    )
     return {
         "validation_macro_f1": macro_f1,
+        "validation_min_discrete_recall": min_discrete_recall,
         "validation_paper_precision": per_class["paper_litter"]["precision"],
         "validation_background_specificity": background_specificity(confusion),
         "validation_hard_negative_specificity": (
@@ -451,10 +455,21 @@ def _select_classifier_threshold(records: list[dict]) -> dict:
         paper_shortfall = max(
             0.0, 0.80 - metrics["validation_paper_precision"]
         ) / 0.80
+        macro_f1_shortfall = max(
+            0.0, 0.90 - metrics["validation_macro_f1"]
+        ) / 0.90
+        recall_shortfall = max(
+            0.0, 0.70 - metrics["validation_min_discrete_recall"]
+        ) / 0.70
         background_shortfall = max(
             0.0, 0.95 - metrics["validation_background_specificity"]
         ) / 0.95
-        violation = paper_shortfall + background_shortfall
+        violation = (
+            macro_f1_shortfall
+            + recall_shortfall
+            + paper_shortfall
+            + background_shortfall
+        )
         sweep.append(
             {
                 "threshold": threshold,
@@ -477,7 +492,9 @@ def _select_classifier_threshold(records: list[dict]) -> dict:
     return {
         **selected,
         "selection_split": "val",
-        "selection_rule": "precision_specificity_constraints_then_macro_f1",
+        "selection_rule": (
+            "macro_f1_min_recall_precision_specificity_constraints_then_macro_f1"
+        ),
         "sweep": sweep,
     }
 

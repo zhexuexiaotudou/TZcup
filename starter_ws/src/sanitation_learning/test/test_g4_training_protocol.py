@@ -351,6 +351,46 @@ def test_g4_fit_model_persists_selected_checkpoint_before_interruption(
     assert not list(tmp_path.glob(".best.pt.*.tmp"))
 
 
+def test_g4_fit_model_does_not_early_stop_before_a_feasible_checkpoint() -> None:
+    torch = pytest.importorskip("torch")
+    from torch.utils.data import DataLoader, TensorDataset
+
+    from sanitation_learning.g4_selection import (
+        ConstraintAwareSelector,
+        ConstraintSpec,
+        ObjectiveSpec,
+    )
+    from sanitation_learning.g4_train import fit_model
+
+    model = torch.nn.Linear(2, 1)
+    dataset = TensorDataset(torch.ones(1, 2), torch.zeros(1, 1))
+    loader = DataLoader(dataset, batch_size=1)
+    selector = ConstraintAwareSelector(
+        [ConstraintSpec("validation_recall", "ge", 0.8)],
+        ObjectiveSpec("validation_recall", maximize=True),
+    )
+
+    _, report = fit_model(
+        model,
+        loader,
+        loader,
+        loss_fn=lambda outputs, targets: ((outputs - targets) ** 2).mean(),
+        device=torch.device("cpu"),
+        epochs=3,
+        amp=False,
+        early_stopping_patience=1,
+        selector=selector,
+        validation_metric_fn=lambda _model, _loader, _device: {
+            "validation_recall": 0.0,
+            "validation_loss": 1.0,
+        },
+    )
+
+    assert report["epochs"] == 3
+    assert report["early_stopped"] is False
+    assert report["selection"]["selected"] is False
+
+
 def _frame(index: int, split: str, boxes=()) -> dict:
     return {
         "index": index,
