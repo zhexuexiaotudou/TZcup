@@ -4,6 +4,7 @@ from pathlib import Path
 import sys
 
 import pytest
+import numpy as np
 
 
 _PACKAGE_DIR = Path(__file__).resolve().parents[1]
@@ -14,6 +15,7 @@ if str(_PACKAGE_DIR) not in sys.path:
 from sanitation_learning.g4_evaluation import (  # noqa: E402
     average_precision,
     background_specificity,
+    decode_discovery_outputs,
 )
 
 
@@ -51,3 +53,22 @@ def test_background_specificity_is_true_background_rejection_rate() -> None:
         "background": {"tp": 80, "fp": 5, "fn": 20},
     }
     assert background_specificity(confusion) == pytest.approx(0.80)
+
+
+def test_decoded_discovery_boxes_are_clipped_to_model_canvas() -> None:
+    objectness = np.zeros((1, 120, 160), dtype=np.float32)
+    offset = np.zeros((2, 120, 160), dtype=np.float32)
+    size = np.zeros((2, 120, 160), dtype=np.float32)
+    objectness[0, 119, 159] = 0.9
+    offset[:, 119, 159] = 0.9
+    size[:, 119, 159] = 10.0
+    detections = decode_discovery_outputs(
+        objectness,
+        offset,
+        size,
+        score_threshold=0.5,
+    )
+    assert len(detections) == 1
+    x1, y1, x2, y2 = detections[0].bbox_xyxy
+    assert 0.0 <= x1 < x2 <= 640.0
+    assert 0.0 <= y1 < y2 <= 480.0

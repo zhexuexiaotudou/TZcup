@@ -737,10 +737,23 @@ def main() -> int:
             "architecture candidate"
         ),
     )
+    parser.add_argument(
+        "--recover-unreported-model-dir",
+        type=Path,
+        help=(
+            "diagnostic-only recovery when training completed but evaluation "
+            "failed before the source report was written"
+        ),
+    )
     args = parser.parse_args()
-    if args.reuse_model_dir and args.reuse_discrete_model_dir:
+    reuse_options = (
+        args.reuse_model_dir,
+        args.reuse_discrete_model_dir,
+        args.recover_unreported_model_dir,
+    )
+    if sum(value is not None for value in reuse_options) > 1:
         raise ValueError(
-            "--reuse-model-dir and --reuse-discrete-model-dir are mutually exclusive"
+            "model reuse/recovery options are mutually exclusive"
         )
 
     started = time.perf_counter()
@@ -791,12 +804,15 @@ def main() -> int:
         {**row, "split": "train_world_holdout"}
         for row in holdout_raw
     ]
-    train_rows = [
+    eligible_train_rows = [
         row
         for row in train_all
         if (str(row["world_id"]), int(row["scene_seed"]))
         not in holdout_keys
-    ][: args.max_train_frames]
+    ]
+    train_rows = stratified_row_sample(
+        eligible_train_rows, args.max_train_frames, seed=SEED + 8
+    )
     val_rows = by_role["val"]
     shift_rows = {
         role: by_role[role]
@@ -825,15 +841,28 @@ def main() -> int:
     discovery_ckpt = output / "discovery.pt"
     selection_val_rows = stratified_row_sample(val_rows, 100, seed=SEED + 9)
     reuse_discrete_source = (
-        args.reuse_model_dir or args.reuse_discrete_model_dir
+        args.reuse_model_dir
+        or args.reuse_discrete_model_dir
+        or args.recover_unreported_model_dir
     )
     if reuse_discrete_source:
-        previous_report_path = (
-            reuse_discrete_source / "auto05r_screening_report.json"
-        )
-        previous_report = json.loads(previous_report_path.read_text(encoding="utf-8"))
-        if previous_report.get("student_route", {}).get("dataset_qa_sha256") != dataset_qa["sha256"]:
-            raise RuntimeError("reused checkpoints were selected on a different formal G4 QA")
+        previous_report_path = reuse_discrete_source / "auto05r_screening_report.json"
+        if args.recover_unreported_model_dir:
+            if previous_report_path.exists():
+                raise RuntimeError(
+                    "recovery mode requires an interrupted run with no source report"
+                )
+            previous_report = None
+        else:
+            previous_report = json.loads(
+                previous_report_path.read_text(encoding="utf-8")
+            )
+            if previous_report.get("student_route", {}).get(
+                "dataset_qa_sha256"
+            ) != dataset_qa["sha256"]:
+                raise RuntimeError(
+                    "reused checkpoints were selected on a different formal G4 QA"
+                )
         discovery, discovery_training = _load_reused_model(
             "discovery", reuse_discrete_source, output, device
         )
@@ -933,17 +962,17 @@ def main() -> int:
         args.area_negative_frames // 2,
         SEED + 3,
     )
-    if args.reuse_model_dir:
+    if args.reuse_model_dir or args.recover_unreported_model_dir:
         leaf, leaf_training = _load_reused_model(
             "leaf",
-            args.reuse_model_dir,
+            reuse_discrete_source,
             output,
             device,
             area_architecture=args.area_architecture,
         )
         puddle, puddle_training = _load_reused_model(
             "puddle",
-            args.reuse_model_dir,
+            reuse_discrete_source,
             output,
             device,
             area_architecture=args.area_architecture,
@@ -1022,6 +1051,42 @@ def main() -> int:
             )
         ),
     )
+    reused_discrete_calibration = None
+    if args.reuse_discrete_model_dir:
+        calibration_frames = discovery_predictions(
+            discovery,
+            selection_val_rows,
+            instances_by_key,
+            device=device,
+            threshold=min(DISCOVERY_THRESHOLD_GRID),
+            max_detections=100,
+        )
+        discovery_operating_point = select_discovery_threshold(
+            calibration_frames
+        )
+        classifier_operating_point = _select_classifier_threshold(
+            _classifier_sample_scores(
+                classifier, classifier_val_samples, device
+            )
+        )
+        discovery_threshold = float(
+            discovery_operating_point["threshold"]
+        )
+        class_threshold = float(classifier_operating_point["threshold"])
+        reused_discrete_calibration = {
+            "selection_split": "val",
+            "diagnostic_area_comparison_only": True,
+            "discovery": {
+                key: value
+                for key, value in discovery_operating_point.items()
+                if key != "sweep"
+            },
+            "classifier": {
+                key: value
+                for key, value in classifier_operating_point.items()
+                if key != "sweep"
+            },
+        }
     selected_models_product_eligible = all(
         _selection_product_eligible(report)
         for report in (
@@ -1031,6 +1096,8 @@ def main() -> int:
             puddle_training,
         )
     )
+    if args.recover_unreported_model_dir or args.reuse_discrete_model_dir:
+        selected_models_product_eligible = False
 
     in_domain = _evaluate_split(
         discovery,
@@ -1284,9 +1351,13 @@ def main() -> int:
             "reused_discrete_checkpoints_for_area_comparison": bool(
                 args.reuse_discrete_model_dir
             ),
+            "recovered_after_post_training_evaluation_failure": bool(
+                args.recover_unreported_model_dir
+            ),
             "reuse_source_report_sha256": (
                 sha256(reuse_discrete_source / "auto05r_screening_report.json")
                 if reuse_discrete_source
+                and (reuse_discrete_source / "auto05r_screening_report.json").is_file()
                 else None
             ),
         },
@@ -1332,6 +1403,14 @@ def main() -> int:
             "train_world_holdout_frames": len(holdout),
             "val_frames": len(val_rows),
             "legacy_diagnostic_frames_read": 0,
+            "train_world_counts": {
+                world_id: sum(
+                    1 for row in train_rows if str(row["world_id"]) == world_id
+                )
+                for world_id in sorted(
+                    {str(row["world_id"]) for row in train_rows}
+                )
+            },
         },
         "selection": {
             "discovery": discovery_training.get("selection"),
@@ -1363,6 +1442,7 @@ def main() -> int:
             "classifier_threshold_grid": list(CLASSIFIER_THRESHOLD_GRID),
             "area_threshold_grid": list(AREA_THRESHOLD_GRID),
             "selected_models_product_eligible": selected_models_product_eligible,
+            "reused_discrete_operating_points": reused_discrete_calibration,
         },
         "policy": {
             "p4": str(P4_POLICY.relative_to(ROOT)),

@@ -9,7 +9,7 @@ from typing import Callable
 import cv2
 import numpy as np
 
-from .auto04_contract import box_iou, decode_centernet_outputs
+from .auto04_contract import Detection, box_iou, decode_centernet_outputs
 from .g4_data import (
     AREA_MODEL_SIZE,
     CLASSIFIER_MODEL_SIZE,
@@ -44,16 +44,18 @@ def decode_discovery_outputs(
 ):
     """Decode legacy single-grid or P3/P4/P5 channel-preserving outputs."""
     if objectness.shape[0] == 1:
-        return decode_centernet_outputs(
-            objectness,
-            offset,
-            size,
-            stride=DISCOVERY_STRIDE,
-            score_threshold=score_threshold,
-            nms_iou_threshold=nms_iou_threshold,
-            max_detections=max_detections,
-            local_maximum_radius=local_maximum_radius,
-            pre_nms_topk=pre_nms_topk,
+        return _clip_discovery_detections(
+            decode_centernet_outputs(
+                objectness,
+                offset,
+                size,
+                stride=DISCOVERY_STRIDE,
+                score_threshold=score_threshold,
+                nms_iou_threshold=nms_iou_threshold,
+                max_detections=max_detections,
+                local_maximum_radius=local_maximum_radius,
+                pre_nms_topk=pre_nms_topk,
+            )
         )
     if objectness.shape[0] != 3 or offset.shape[0] != 6 or size.shape[0] != 6:
         raise ValueError("discovery pyramid output must have 3/6/6 channels")
@@ -81,7 +83,31 @@ def decode_discovery_outputs(
         kept.append(item)
         if len(kept) >= max_detections:
             break
-    return kept
+    return _clip_discovery_detections(kept)
+
+
+def _clip_discovery_detections(detections) -> list[Detection]:
+    """Clip decoded proposals to the fixed model canvas and drop empty boxes."""
+    width, height = DISCOVERY_MODEL_SIZE
+    clipped = []
+    for item in detections:
+        x1, y1, x2, y2 = item.bbox_xyxy
+        bbox = (
+            min(float(width), max(0.0, float(x1))),
+            min(float(height), max(0.0, float(y1))),
+            min(float(width), max(0.0, float(x2))),
+            min(float(height), max(0.0, float(y2))),
+        )
+        if bbox[2] <= bbox[0] or bbox[3] <= bbox[1]:
+            continue
+        clipped.append(
+            Detection(
+                class_index=int(item.class_index),
+                score=float(item.score),
+                bbox_xyxy=bbox,
+            )
+        )
+    return clipped
 
 
 def discovery_predictions(

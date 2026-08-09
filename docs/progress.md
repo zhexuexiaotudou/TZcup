@@ -123,6 +123,13 @@
   `selected_models_product_eligible` 硬门。双分支 ResNet18 leaf 仍仅 IoU=0.0725，
   下一对照恢复 DeepLabV3-ResNet50 容量，但以保留 3-channel RGB stem、浅层 geometry
   分支和 decoder-feature boundary head 修复旧架构合同漂移。
+- 四模型完成后，评估先因预测框略越出 640×480 被严格坐标合同拒绝；现统一裁剪并
+  补最右下网格回归。恢复评估显示 fixed-threshold discovery recall 已达
+  in-domain/cross-world=0.9672/0.9717，但 proposal flood 仍为 3336.5/3562.8 per min。
+  cross-world leaf/puddle IoU=0.9043/0.9527，而 in-domain leaf=0.0452。根因审计发现
+  旧 `max_train_frames=600` 顺序截断只覆盖前三个 train world（220/180/200 帧），
+  holdout 却覆盖全部 8 world；现改为 world×正负分层确定性抽样并记录逐 world 计数，
+  旧结果仅保留为 `P4_A1_PYRAMID_DIAGNOSTIC_FAILURE.json`。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 

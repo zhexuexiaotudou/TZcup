@@ -1,0 +1,65 @@
+{
+  "schema_version": "1.0",
+  "stage": "PERCEPTION-P4",
+  "attempt": "A1_FCOS_lite_ResNet18_true_P3_P4_P5_dual_area",
+  "status": "FAILED_DIAGNOSTIC_BASELINE",
+  "product_eligible": false,
+  "source_report": {
+    "external_path": "F:/Project/TZcup-perception-product-runtime/p4-screening-v5-a1-pyramid-ema-recovered-eval/auto05r_screening_report.json",
+    "sha256": "beebccc5b81cea7c4435dc02f8d3e553263775a838a2155f682adc6254d284e8",
+    "duration_s": 563.9813366460003,
+    "recovered_after_post_training_bbox_clip_failure": true
+  },
+  "data_contract": {
+    "formal_g4_qa_sha256": "72baf192e70c59d369c284c8141dcc6e2c03350dca930212ae97cf2182d1ab01",
+    "train_sampling_issue": "first_600_eligible_manifest_rows_covered_only_3_of_8_train_worlds",
+    "old_train_world_counts": {
+      "world_g4_01_asphalt_campus": 220,
+      "world_g4_02_concrete_sidewalk": 180,
+      "world_g4_03_wet_courtyard": 200,
+      "worlds_g4_04_through_08": 0
+    },
+    "legacy_G4_D6_read": false,
+    "G5_read": false
+  },
+  "checkpoint_sha256": {
+    "discovery": "3ffa9e31785362f476aab0c2e343e581aa380722349f9d10086f37e9120871ff",
+    "classifier": "1c5213ebeeeee8ba1a396b6d0813b15046f93109438c4ccbe5aab83e34553a12",
+    "leaf": "a0567f4647ea3cdd9b646346b8dcdf975acf7b3164a5a895f2fdd4d83d54fb22",
+    "puddle": "40ee90454f7b77623e45d8f0af649200cab3689c18f71a580a423bc750ef668b"
+  },
+  "metrics_at_fixed_thresholds": {
+    "thresholds": {
+      "discovery": 0.35,
+      "classifier": 0.35,
+      "leaf": 0.5,
+      "puddle": 0.5
+    },
+    "in_domain": {
+      "candidate_recall": 0.9671945701357466,
+      "ap50": 0.8846477288351813,
+      "false_candidates_per_min": 3336.5217391304345,
+      "discrete_macro_f1": 0.43719472612515037,
+      "leaf_iou": 0.04523950346280646,
+      "puddle_iou": 0.7284886609266686,
+      "boundary_f1": 0.2809555878773773,
+      "negative_area_fp_per_frame": 0.21666666666666667
+    },
+    "cross_world": {
+      "candidate_recall": 0.9717223650385605,
+      "ap50": 0.8941869218585008,
+      "false_candidates_per_min": 3562.7999999999997,
+      "discrete_macro_f1": 0.39887504515103456,
+      "leaf_iou": 0.9042800246165279,
+      "puddle_iou": 0.9526546527765956,
+      "boundary_f1": 0.5931189688870571,
+      "negative_area_fp_per_frame": 0.0
+    }
+  },
+  "infrastructure_gates": {
+    "D1_D5_reports_complete": true,
+    "onnx_task_specific_parity_pass": true,
+    "onnx_custom_ops_zero": true
+  },
+  "conclusion": "The true pyramid repaired discovery recall but fixed-threshold proposal flood remains. Sequential max_train_frames truncation made the claimed in-domain holdout invalid by training on only three of eight train worlds; this attempt is diagnostic-only. Training is now sampled deterministically across world and positive/negative groups before the area architecture comparison."
+}

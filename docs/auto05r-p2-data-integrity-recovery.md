@@ -142,3 +142,14 @@ leaf/puddle 阈值网格、约束优先选择、`selected_models_product_eligibl
 boundary F1 `0.0861`、negative FP/frame `0.2167`），故保留为失败诊断；下一面积
 对照采用曾有强结果依据的 DeepLabV3-ResNet50，同时保持原始 RGB stem、零初始化
 浅层 geometry 分支，并从 256-channel decoder feature 生成独立 boundary head。
+
+四模型训练完成后的首次评估还暴露了预测框边界合同：右/下边界可略超出固定模型
+画布，严格 model→native 变换因此拒绝继续；decoder 现统一裁剪到 640×480 并丢弃
+空框，回归测试覆盖最右下网格。复用已保留 checkpoint 的 fail-closed 恢复评估完成，
+固定阈值下 in-domain/cross-world candidate recall 为 `0.9672/0.9717`，但 false
+candidates/min 为 `3336.5/3562.8`。更重要的是，cross-world leaf/puddle IoU 达到
+`0.9043/0.9527`，而 in-domain leaf 仅 `0.0452`。审计确认 `max_train_frames=600`
+此前按 manifest 顺序截断，实际只覆盖 8 个 train world 中的前三个（220/180/200
+帧），却用全部 8 个世界生成 holdout；该证据不能称为 in-domain。现改为按
+world×positive/negative 分层确定性抽样 600 帧，并在报告中写出逐 world 计数；
+旧结果紧凑保存在 `P4_A1_PYRAMID_DIAGNOSTIC_FAILURE.json`。
