@@ -307,6 +307,50 @@ def test_trainer_best_checkpoint_never_reads_test(tmp_path) -> None:
         )
 
 
+def test_g4_fit_model_persists_selected_checkpoint_before_interruption(
+    tmp_path,
+) -> None:
+    torch = pytest.importorskip("torch")
+    from torch.utils.data import DataLoader, TensorDataset
+
+    from sanitation_learning.g4_train import fit_model
+
+    model = torch.nn.Linear(2, 1)
+    dataset = TensorDataset(torch.ones(2, 2), torch.zeros(2, 1))
+    loader = DataLoader(dataset, batch_size=1)
+    metric_calls = 0
+
+    def loss_fn(outputs, targets):
+        return ((outputs - targets) ** 2).mean()
+
+    def metric_fn(_model, _loader, _device):
+        nonlocal metric_calls
+        metric_calls += 1
+        if metric_calls == 2:
+            raise RuntimeError("simulated interruption")
+        return {"validation_loss": 1.0}
+
+    checkpoint = tmp_path / "best.pt"
+    with pytest.raises(RuntimeError, match="simulated interruption"):
+        fit_model(
+            model,
+            loader,
+            loader,
+            loss_fn=loss_fn,
+            device=torch.device("cpu"),
+            epochs=2,
+            amp=False,
+            checkpoint_path=checkpoint,
+            validation_metric_fn=metric_fn,
+        )
+
+    saved = torch.load(checkpoint, map_location="cpu", weights_only=False)
+    assert saved["best_epoch"] == 1
+    assert saved["state_dict"]
+    assert saved["checkpoint_status"] == "in_progress_best"
+    assert not list(tmp_path.glob(".best.pt.*.tmp"))
+
+
 def _frame(index: int, split: str, boxes=()) -> dict:
     return {
         "index": index,

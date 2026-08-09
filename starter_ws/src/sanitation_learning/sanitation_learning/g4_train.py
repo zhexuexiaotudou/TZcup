@@ -5,6 +5,7 @@ from __future__ import annotations
 import math
 from pathlib import Path
 import random
+import tempfile
 import time
 from typing import Callable
 
@@ -25,6 +26,25 @@ from .g4_split_policy import assert_development_rows
 
 
 SEED = 20260806
+
+
+def _save_checkpoint_atomic(checkpoint_path: Path, payload: dict) -> None:
+    """Replace a checkpoint atomically without exposing a partial torch file."""
+    checkpoint_path.parent.mkdir(parents=True, exist_ok=True)
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            dir=checkpoint_path.parent,
+            prefix=f".{checkpoint_path.name}.",
+            suffix=".tmp",
+            delete=False,
+        ) as temporary:
+            temporary_path = Path(temporary.name)
+        torch.save(payload, temporary_path)
+        temporary_path.replace(checkpoint_path)
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
 
 
 class _AreaBalancedSampler(Sampler):
@@ -163,6 +183,7 @@ def fit_model(
     curves: list[dict] = []
     epochs_without_improvement = 0
     early_stopped = False
+    checkpoint_write_count = 0
     started = time.perf_counter()
     use_amp = bool(amp and torch.cuda.is_available())
     scaler = torch.amp.GradScaler("cuda", enabled=use_amp)
@@ -287,6 +308,23 @@ def fit_model(
                 for key, value in model.state_dict().items()
             }
             epochs_without_improvement = 0
+            if checkpoint_path is not None:
+                best_selection = (
+                    selector.checkpoint_best() if selector is not None else None
+                )
+                _save_checkpoint_atomic(
+                    Path(checkpoint_path),
+                    {
+                        "best_epoch": best_epoch,
+                        "best_metric": best_metric,
+                        "state_dict": best_state,
+                        "ema_state": None,
+                        "seed": seed,
+                        "selection": best_selection,
+                        "checkpoint_status": "in_progress_best",
+                    },
+                )
+                checkpoint_write_count += 1
         else:
             epochs_without_improvement += 1
         if (
@@ -299,8 +337,8 @@ def fit_model(
         model.load_state_dict(best_state)
     checkpoint_path_obj = Path(checkpoint_path) if checkpoint_path else None
     if checkpoint_path_obj is not None:
-        checkpoint_path_obj.parent.mkdir(parents=True, exist_ok=True)
-        torch.save(
+        _save_checkpoint_atomic(
+            checkpoint_path_obj,
             {
                 "best_epoch": best_epoch,
                 "best_metric": best_metric,
@@ -308,9 +346,10 @@ def fit_model(
                 "ema_state": ema_state,
                 "seed": seed,
                 "selection": best_selection,
+                "checkpoint_status": "training_complete",
             },
-            checkpoint_path_obj,
         )
+        checkpoint_write_count += 1
     selection_summary = None
     if selector is not None:
         selection_summary = selector.best()
@@ -327,6 +366,8 @@ def fit_model(
         "ema_decay_target": ema_decay,
         "ema_warmup": "min(target,(1+updates)/(10+updates))",
         "ema_updates": ema_updates,
+        "checkpoint_write_count": checkpoint_write_count,
+        "checkpoint_write_mode": "atomic_on_selection_and_completion",
     }
     return model, report
 

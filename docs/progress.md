@@ -130,6 +130,9 @@
   旧 `max_train_frames=600` 顺序截断只覆盖前三个 train world（220/180/200 帧），
   holdout 却覆盖全部 8 world；现改为 world×正负分层确定性抽样并记录逐 world 计数，
   旧结果仅保留为 `P4_A1_PYRAMID_DIAGNOSTIC_FAILURE.json`。
+- 长训 checkpoint 现于每次选中更优 epoch 时原子替换，并在正常结束时写入完整 EMA
+  状态；即使随后训练进程中断，已选 best state 仍可审计恢复，且不会暴露半写入的
+  Torch 文件。定向中断测试验证 epoch 1 落盘后 epoch 2 异常仍保留有效 checkpoint。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 
