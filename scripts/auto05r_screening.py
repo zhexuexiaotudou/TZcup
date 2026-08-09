@@ -243,6 +243,63 @@ def _selection_product_eligible(training_report: dict) -> bool:
     return bool(selection.get("product_eligible", False))
 
 
+def _load_qualified_task_reuse_report(
+    source_dir: Path,
+    dataset_qa_sha256: str,
+    tasks: tuple[str, ...],
+) -> tuple[dict, dict]:
+    """Validate task-level formal checkpoint reuse without promoting a failed run."""
+    report_path = source_dir / "auto05r_screening_report.json"
+    if not report_path.is_file():
+        raise FileNotFoundError(
+            f"qualified checkpoint reuse report is missing: {report_path}"
+        )
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    source_qa = report.get("student_route", {}).get("dataset_qa_sha256")
+    if source_qa != dataset_qa_sha256:
+        raise RuntimeError(
+            "qualified reused checkpoints were selected on a different "
+            "formal G4 QA"
+        )
+    training = report.get("training")
+    if not isinstance(training, dict):
+        raise RuntimeError("qualified reuse report has no task training records")
+    provenance = {
+        "source_dir": str(source_dir),
+        "source_report": str(report_path),
+        "source_report_sha256": sha256(report_path),
+        "dataset_qa_sha256": source_qa,
+        "tasks": {},
+    }
+    for task in tasks:
+        task_training = training.get(task)
+        if not isinstance(task_training, dict):
+            raise RuntimeError(
+                f"qualified reuse report has no {task} training record"
+            )
+        if not _selection_product_eligible(task_training):
+            raise RuntimeError(
+                f"qualified reuse source {task} checkpoint is not product eligible"
+            )
+        report_selection = report.get("selection", {}).get(task)
+        if report_selection != task_training.get("selection"):
+            raise RuntimeError(
+                f"qualified reuse source {task} selection records disagree"
+            )
+        checkpoint_path = source_dir / f"{task}.pt"
+        if not checkpoint_path.is_file():
+            raise FileNotFoundError(
+                f"qualified reuse source {task} checkpoint is missing: "
+                f"{checkpoint_path}"
+            )
+        provenance["tasks"][task] = {
+            "checkpoint": str(checkpoint_path),
+            "checkpoint_sha256": sha256(checkpoint_path),
+            "selection": task_training.get("selection"),
+        }
+    return report, provenance
+
+
 def _load_reused_model(
     task: str,
     source_dir: Path,
@@ -251,11 +308,23 @@ def _load_reused_model(
     *,
     area_architecture: str = "dual_resnet18",
     discovery_architecture: str = "resnet18_fpn_a1",
+    expected_selection: dict | None = None,
 ) -> tuple[torch.nn.Module, dict]:
     source = source_dir / f"{task}.pt"
     if not source.is_file():
         raise FileNotFoundError(f"reused {task} checkpoint is missing: {source}")
     checkpoint = torch.load(source, map_location=device, weights_only=False)
+    if checkpoint.get("checkpoint_status") != "training_complete":
+        raise RuntimeError(
+            f"reused {task} checkpoint is not marked training_complete"
+        )
+    if (
+        expected_selection is not None
+        and checkpoint.get("selection") != expected_selection
+    ):
+        raise RuntimeError(
+            f"reused {task} checkpoint selection disagrees with source report"
+        )
     state = checkpoint.get("state_dict")
     if not isinstance(state, dict) or not state:
         raise RuntimeError(f"reused {task} checkpoint has no selected state_dict")
@@ -950,11 +1019,21 @@ def main() -> int:
             "failed before the source report was written"
         ),
     )
+    parser.add_argument(
+        "--reuse-qualified-nondiscovery-model-dir",
+        type=Path,
+        help=(
+            "train a fresh discovery candidate while reusing only classifier, "
+            "leaf and puddle checkpoints that are task-level product eligible "
+            "in a same-QA formal report"
+        ),
+    )
     args = parser.parse_args()
     reuse_options = (
         args.reuse_model_dir,
         args.reuse_discrete_model_dir,
         args.recover_unreported_model_dir,
+        args.reuse_qualified_nondiscovery_model_dir,
     )
     if sum(value is not None for value in reuse_options) > 1:
         raise ValueError(
@@ -975,6 +1054,16 @@ def main() -> int:
         "reference_teacher_not_default_deployable"
     ):
         raise RuntimeError("teacher architecture role is not the reference contract")
+    _qualified_reuse_report = None
+    qualified_reuse_provenance = None
+    if args.reuse_qualified_nondiscovery_model_dir:
+        _qualified_reuse_report, qualified_reuse_provenance = (
+            _load_qualified_task_reuse_report(
+                args.reuse_qualified_nondiscovery_model_dir,
+                dataset_qa["sha256"],
+                ("classifier", "leaf", "puddle"),
+            )
+        )
     # Filter roles while streaming metadata, before resolving paths or loading
     # instance annotations.  The contaminated legacy split and sealed G5 are
     # therefore not read by the development-screening process at all.
@@ -1152,9 +1241,20 @@ def main() -> int:
         seed=SEED + 1,
     )
     classifier_ckpt = output / "classifier.pt"
-    if reuse_discrete_source:
+    classifier_reuse_source = (
+        reuse_discrete_source or args.reuse_qualified_nondiscovery_model_dir
+    )
+    if classifier_reuse_source:
         classifier, classifier_training = _load_reused_model(
-            "classifier", reuse_discrete_source, output, device
+            "classifier",
+            classifier_reuse_source,
+            output,
+            device,
+            expected_selection=(
+                qualified_reuse_provenance["tasks"]["classifier"]["selection"]
+                if qualified_reuse_provenance
+                else None
+            ),
         )
     else:
         classifier, classifier_training = train_classifier(
@@ -1207,20 +1307,35 @@ def main() -> int:
         args.area_negative_frames // 2,
         SEED + 3,
     )
-    if args.reuse_model_dir or args.recover_unreported_model_dir:
+    area_reuse_source = (
+        reuse_discrete_source
+        if args.reuse_model_dir or args.recover_unreported_model_dir
+        else args.reuse_qualified_nondiscovery_model_dir
+    )
+    if area_reuse_source:
         leaf, leaf_training = _load_reused_model(
             "leaf",
-            reuse_discrete_source,
+            area_reuse_source,
             output,
             device,
             area_architecture=args.area_architecture,
+            expected_selection=(
+                qualified_reuse_provenance["tasks"]["leaf"]["selection"]
+                if qualified_reuse_provenance
+                else None
+            ),
         )
         puddle, puddle_training = _load_reused_model(
             "puddle",
-            reuse_discrete_source,
+            area_reuse_source,
             output,
             device,
             area_architecture=args.area_architecture,
+            expected_selection=(
+                qualified_reuse_provenance["tasks"]["puddle"]["selection"]
+                if qualified_reuse_provenance
+                else None
+            ),
         )
     else:
         leaf, leaf_training = train_area(
@@ -1607,6 +1722,10 @@ def main() -> int:
             "recovered_after_post_training_evaluation_failure": bool(
                 args.recover_unreported_model_dir
             ),
+            "reused_qualified_nondiscovery_checkpoints": bool(
+                args.reuse_qualified_nondiscovery_model_dir
+            ),
+            "qualified_nondiscovery_reuse": qualified_reuse_provenance,
             "reuse_source_report_sha256": (
                 sha256(reuse_discrete_source / "auto05r_screening_report.json")
                 if reuse_discrete_source

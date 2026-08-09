@@ -167,3 +167,10 @@ in-domain macro recall `0.8837`、small-object recall `0.2889`、boundary F1 `0.
 MobileNetV3-FPN 同时启用独立 quality 监督与按 `<=48 / <=80 / >80 px` 的唯一尺度
 分配。area checkpoint 在硬门满足后改用 IoU 与 boundary F1 的调和均值选择；这些
 修改不降低任何 P4 门槛，也不读取旧 D6/G5。
+
+若 A2 的 discovery 正式失败但 classifier、leaf、puddle 各自的选择门已通过，最后登记的
+A3 路线允许只复用这三个非 discovery checkpoint。该复用入口要求源正式报告与当前
+G4 QA SHA-256 完全一致、逐任务 selection 记录一致、checkpoint 标记为
+`training_complete` 且逐任务 product eligible，并在新报告中记录源报告和每个 checkpoint
+的 SHA-256；任一条件不满足即拒绝运行。A3 discovery 仍从头训练并使用已冻结 teacher
+蒸馏目标，不能复用 A2 discovery，也不能把 A2 的整体失败提升为通过。
