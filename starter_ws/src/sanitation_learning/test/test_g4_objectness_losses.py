@@ -124,3 +124,34 @@ def test_a2_objectness_and_quality_heads_receive_independent_gradients() -> None
     assert quality.grad is not None and torch.isfinite(quality.grad).all()
     assert float(raw.grad.abs().sum()) > 0.0
     assert float(quality.grad.abs().sum()) > 0.0
+
+
+def test_discovery_box_size_has_direct_regression_gradient() -> None:
+    torch = pytest.importorskip("torch")
+    from sanitation_learning.g4_losses import discovery_loss
+
+    size = torch.full((1, 2, 8, 8), 0.25, requires_grad=True)
+    heatmap = torch.zeros(1, 1, 8, 8)
+    heatmap[0, 0, 3, 4] = 1.0
+    mask = torch.zeros(1, 1, 8, 8)
+    mask[0, 0, 3, 4] = 1.0
+    target_size = torch.zeros(1, 2, 8, 8)
+    target_size[0, :, 3, 4] = torch.tensor([8.0, 10.0])
+    report = discovery_loss(
+        {
+            "objectness_logits": torch.zeros(1, 1, 8, 8),
+            "offset": torch.zeros(1, 2, 8, 8),
+            "bbox_size": size,
+        },
+        {
+            "heatmap": heatmap,
+            "offset": torch.zeros(1, 2, 8, 8),
+            "size": target_size,
+            "regression_mask": mask,
+        },
+    )
+    report["total"].backward()
+    assert float(report["size"]) > 0.0
+    assert size.grad is not None
+    assert float(size.grad[0, :, 3, 4].abs().sum()) > 0.0
+    assert float(size.grad[..., :3, :].abs().sum()) == 0.0

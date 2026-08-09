@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "stage": "AUTO-05R",
+  "gate": "PERCEPTION-P4",
+  "finding": "implementation_bug",
+  "root_cause": "discovery_loss directly supervised center offset but omitted direct bbox-size/ltrb regression; a weak 0.25-weight GIoU term alone allowed predicted boxes to collapse around correctly learned centers",
+  "affected_attempts": [
+    "A1_FCOS_lite_ResNet18_FPN",
+    "A2_FCOS_lite_MobileNetV3_Small_FPN",
+    "A3_Teacher_Distilled_MobileNetV3_Small_FPN"
+  ],
+  "a3_checkpoint": {
+    "sha256": "c0851df22840e94406961468f883b24d75c42a2c786884530e4e1621eb6dac3e",
+    "checkpoint_status": "training_complete",
+    "best_epoch": 2,
+    "selected_recall": 0.0,
+    "selected_ap50": 0.0
+  },
+  "observed_examples": [
+    {
+      "gt_bbox_xyxy": [182.0, 47.0, 207.0, 90.0],
+      "predicted_bbox_xyxy": [191.6656, 63.8997, 196.1086, 69.1016],
+      "score": 0.98778
+    },
+    {
+      "gt_bbox_xyxy": [46.0, 243.0, 116.0, 307.0],
+      "predicted_bbox_xyxy": [78.6378, 271.6710, 85.3632, 279.7464],
+      "score": 0.97143
+    }
+  ],
+  "extended_threshold_diagnostic": {
+    "threshold_range": [0.0001, 0.2],
+    "recall": 0.0,
+    "interpretation": "not a threshold-grid calibration failure"
+  },
+  "repair": {
+    "direct_size_loss": "masked SmoothL1(predicted_size, target_size)",
+    "existing_giou_retained": true,
+    "architecture_attempt_consumed": false,
+    "required_next_run": "repaired A1 control on the same formal V5 G4 protocol"
+  },
+  "legacy_G4_D6_read": false,
+  "G5_sealed_final_read": false
+}

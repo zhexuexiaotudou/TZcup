@@ -219,6 +219,15 @@ def discovery_loss(
     yy = yy[None].float()
     predicted_size = torch.clamp(outputs["bbox_size"], min=1e-4)
     target_size = torch.clamp(targets["size"], min=1e-4)
+    size_loss = (
+        functional.smooth_l1_loss(
+            predicted_size,
+            target_size,
+            reduction="none",
+            beta=1.0,
+        )
+        * mask
+    ).sum() / denominator
     predicted_boxes = torch.stack(
         (
             (xx + outputs["offset"][:, 0]) * stride
@@ -254,6 +263,7 @@ def discovery_loss(
         objectness
         + 0.5 * quality
         + offset_loss
+        + size_loss
         + 0.25 * giou_loss
         + 0.1 * negative_penalty
     )
@@ -262,6 +272,7 @@ def discovery_loss(
         "objectness": objectness,
         "quality": quality,
         "offset": offset_loss,
+        "size": size_loss,
         "giou": giou_loss,
         "negative_penalty": negative_penalty,
         "objectness_positive": objectness_audit["positive"],

@@ -42,8 +42,10 @@
     "product_eligible": false,
     "status": "diagnostic_fallback_only",
     "P4_SCREENING_PASS": false,
-    "architecture_eliminated": true,
-    "next_registered_attempt": "A2_FCOS_lite_MobileNetV3_Small_FPN",
+    "architecture_eliminated": false,
+    "implementation_contaminated": true,
+    "superseded_reason": "The shared discovery loss omitted direct bbox-size regression; high-score centers could be correct while boxes collapsed to 4-8 px.",
+    "next_registered_attempt": "A1_REPAIRED_SIZE_REGRESSION_CONTROL",
     "additional_A1_epochs_allowed": false
   },
   "run_boundary": {

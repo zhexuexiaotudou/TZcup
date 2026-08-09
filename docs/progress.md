@@ -20,6 +20,12 @@
   的 FCOS teacher 在 train 帧生成 soft quality target；每个 GT/teacher box 按最大边
   `<=48 / <=80 / >80 px` 唯一分配到 P3/P4/P5，消除 A1/A2 将同一目标复制到三层的
   target 冲突。teacher 不读取 val 作为蒸馏输入，旧 D6/G5 仍不可读。
+- A3 跑满 30 epoch 后 selected recall/AP50 仍为 0；扩展到阈值 0.0001 也无召回，
+  因此不是校准范围问题。逐框诊断发现高分中心位置正确，但预测框仅 4–8 px、GT 为
+  20–70 px。根因是共享 `discovery_loss()` 只有 offset 直接监督，size/ltrb 仅靠
+  `0.25*GIoU` 间接约束，允许尺寸塌缩。A1/A2/A3 旧运行均受此实现 bug 污染，保留
+  为诊断但不再视作架构淘汰证据；修复为 masked SmoothL1 size loss 后必须先重跑
+  A1 repaired control。根因证据见 `P4_DISCOVERY_SIZE_REGRESSION_ROOT_CAUSE.json`。
 
 - 官方 FCOS-R50 教师全量训练启动后，像素尺度与实例数量审计发现单帧最多
   43 个离散真值，而 scene manifest 最多只声明 6 个离散目标。根因是 world
