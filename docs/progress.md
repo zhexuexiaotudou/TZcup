@@ -1,5 +1,20 @@
 # 项目推进记录
 
+## 2026-08-09：AUTO-05R 修复后正式 P4 与冻结链
+
+- 修复 bbox size/ltrb 直接监督后的 A1 discovery 在同一 V5 正式协议下达到
+  recall `0.9224`、AP50 `0.9208`、precision `1.0`、false candidate/min `0`、
+  negative-only FP/frame `0`；classifier macro F1 为 `0.9733`，paper
+  precision/background specificity/hard-negative specificity 均为 `1.0`。
+- leaf 已按约束感知选择与早停自然结束，冻结最优 epoch 22：IoU `0.9790`、
+  boundary F1 `0.7851`、negative-area FP/frame `0`。puddle 仍在同一不可变
+  `3b03227` 源码上训练；完整 P4 报告落盘前不宣称通过。
+- 新增正式 `MODEL_FREEZE.json` 生成器与冻结 G5 evaluator。冻结器必须同时
+  验证 P4 真通过、G4 QA、四模型产品资格、checkpoint/ONNX/官方预训练权重
+  SHA-256、固定 shape、opset 17、零 custom op、task-specific parity 与 evaluator
+  SHA；G5 runner 会先做不接收 dataset path 的 evaluator/model/provider preflight，
+  再原子消费唯一一次 sealed access。此时 G5 仍未创建或读取。
+
 ## 2026-08-09：AUTO-05R P2 发现并修复 G4 跨场景资产泄漏
 
 - 修复后的 A1（FCOS-lite ResNet18-FPN）在 V5 正式 G4 上从零训练，600 帧覆盖

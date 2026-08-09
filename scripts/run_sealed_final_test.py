@@ -80,6 +80,31 @@ def main() -> int:
             raise ValueError(
                 "sealed evaluator SHA-256 does not match MODEL_FREEZE.json"
             )
+        # Import and preflight the immutable evaluator and four frozen graphs
+        # before consuming the one-shot dataset access.  The preflight contract
+        # is forbidden from accepting a dataset path and therefore cannot read
+        # sealed payloads.
+        spec = importlib.util.spec_from_file_location(
+            "tzcup_frozen_g5_evaluator", args.evaluator
+        )
+        if spec is None or spec.loader is None:
+            raise RuntimeError("unable to load frozen G5 evaluator")
+        evaluator_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(evaluator_module)
+        evaluate_fn = getattr(
+            evaluator_module, "evaluate_sealed_final", None
+        )
+        preflight_fn = getattr(
+            evaluator_module, "preflight_frozen_evaluator", None
+        )
+        if not callable(evaluate_fn) or not callable(preflight_fn):
+            raise RuntimeError(
+                "frozen evaluator must define preflight_frozen_evaluator "
+                "and evaluate_sealed_final"
+            )
+        preflight = preflight_fn(freeze=freeze)
+        if not isinstance(preflight, dict) or preflight.get("passed") is not True:
+            raise RuntimeError("frozen evaluator preflight did not pass")
         gate = SealedFinalGate(args.evidence_dir)
         access = gate.open_once(
             freeze_path=args.freeze,
@@ -98,20 +123,6 @@ def main() -> int:
         # Only after the atomic access record exists may evaluator code open
         # the sealed dataset. There is no partial/open-only mode and no input
         # path for precomputed or user-supplied metrics.
-        spec = importlib.util.spec_from_file_location(
-            "tzcup_frozen_g5_evaluator", args.evaluator
-        )
-        if spec is None or spec.loader is None:
-            raise RuntimeError("unable to load frozen G5 evaluator")
-        evaluator_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(evaluator_module)
-        evaluate_fn = getattr(
-            evaluator_module, "evaluate_sealed_final", None
-        )
-        if not callable(evaluate_fn):
-            raise RuntimeError(
-                "frozen evaluator must define evaluate_sealed_final"
-            )
         metrics = evaluate_fn(
             dataset_root=args.dataset_root,
             freeze=freeze,
