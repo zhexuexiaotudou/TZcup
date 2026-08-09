@@ -35,6 +35,7 @@ CLASS_NAMES = {
     4: "leaf_pile",
     5: "puddle",
 }
+MIN_DECLARED_TARGET_VISIBLE_FRAMES = 2
 
 SCALE_GATES = {
     "worlds_12_and_8_2_2",
@@ -141,6 +142,8 @@ def finalize_g4_dataset(
     camera_info_valid_count = 0
     scene_pose_reset_valid_count = 0
     manifest_pixel_consistent_count = 0
+    declared_scene_class_total = 0
+    declared_scene_class_visible = 0
     distance_seen: set[tuple[float, float]] = set()
     size_seen: set[str] = set()
     distance_bucket_frame_counts: Counter = Counter()
@@ -231,6 +234,8 @@ def finalize_g4_dataset(
             for item in scene["objects"]
             if int(item.get("semantic_label") or 0) in CLASS_NAMES
         )
+        sequence_max_observed: Counter = Counter()
+        sequence_full_visibility_frames: Counter = Counter()
         positions = [tuple(record["vehicle_xy_m"]) for record in records]
         adjacent = [
             math.hypot(b[0] - a[0], b[1] - a[1])
@@ -340,6 +345,17 @@ def finalize_g4_dataset(
                         "mask_area_px": int(mask.sum()),
                     }
                 )
+            for semantic_id in CLASS_NAMES:
+                sequence_max_observed[semantic_id] = max(
+                    sequence_max_observed[semantic_id],
+                    observed_target_counts[semantic_id],
+                )
+                if (
+                    declared_target_counts[semantic_id] > 0
+                    and observed_target_counts[semantic_id]
+                    >= declared_target_counts[semantic_id]
+                ):
+                    sequence_full_visibility_frames[semantic_id] += 1
             target_count_mismatch = {
                 CLASS_NAMES[semantic_id]: {
                     "declared": int(declared_target_counts[semantic_id]),
@@ -347,7 +363,7 @@ def finalize_g4_dataset(
                 }
                 for semantic_id in CLASS_NAMES
                 if observed_target_counts[semantic_id]
-                != declared_target_counts[semantic_id]
+                > declared_target_counts[semantic_id]
             }
             manifest_pixel_consistent_count += int(not target_count_mismatch)
             if target_count_mismatch:
@@ -355,7 +371,7 @@ def finalize_g4_dataset(
                     {
                         "scene": scene_dir.name,
                         "frame": record["frame_index"],
-                        "reason": "manifest_pixel_target_count_mismatch",
+                        "reason": "undeclared_pixel_target_count_exceeded",
                         "classes": target_count_mismatch,
                         "negative_only": bool(scene["negative_only"]),
                     }
@@ -397,6 +413,32 @@ def finalize_g4_dataset(
                     "tf_valid": tf_valid,
                 }
             )
+        for semantic_id, declared_count in sorted(declared_target_counts.items()):
+            if declared_count <= 0:
+                continue
+            declared_scene_class_total += 1
+            visible_frames = sequence_full_visibility_frames[semantic_id]
+            visible = (
+                sequence_max_observed[semantic_id] >= declared_count
+                and visible_frames >= MIN_DECLARED_TARGET_VISIBLE_FRAMES
+            )
+            declared_scene_class_visible += int(visible)
+            if not visible:
+                errors.append(
+                    {
+                        "scene": scene_dir.name,
+                        "reason": "declared_target_sequence_visibility_failed",
+                        "semantic_class": CLASS_NAMES[semantic_id],
+                        "declared": int(declared_count),
+                        "maximum_observed_in_one_frame": int(
+                            sequence_max_observed[semantic_id]
+                        ),
+                        "full_visibility_frames": int(visible_frames),
+                        "minimum_required_frames": (
+                            MIN_DECLARED_TARGET_VISIBLE_FRAMES
+                        ),
+                    }
+                )
 
     semantic_error_rate = semantic_error_pixels / max(instance_pixels, 1)
     split_scene_actual = {
@@ -451,6 +493,9 @@ def finalize_g4_dataset(
         == len(scenes),
         "manifest_pixel_target_consistency_100_percent": (
             manifest_pixel_consistent_count == len(frames)
+        ),
+        "declared_target_sequence_visibility_100_percent": (
+            declared_scene_class_visible == declared_scene_class_total
         ),
         "asset_split_leakage_zero": not leakage["target_asset_leakage"]
         and not leakage["hard_negative_asset_leakage"],
@@ -526,6 +571,10 @@ def finalize_g4_dataset(
         / max(len(scenes), 1),
         "manifest_pixel_target_consistency_rate": manifest_pixel_consistent_count
         / max(len(frames), 1),
+        "declared_target_sequence_visibility_rate": (
+            declared_scene_class_visible / max(declared_scene_class_total, 1)
+        ),
+        "declared_target_scene_class_count": declared_scene_class_total,
         "instance_record_count": len(instances),
         "leakage": leakage,
         "distance_bucket_counts": dict(distance_bucket_frame_counts),

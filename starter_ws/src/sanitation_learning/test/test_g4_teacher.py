@@ -26,6 +26,7 @@ def test_teacher_dataset_gate_requires_new_integrity_gates(tmp_path) -> None:
         "gates": {
             "scene_pose_reset_contract_100_percent": True,
             "manifest_pixel_target_consistency_100_percent": True,
+            "declared_target_sequence_visibility_100_percent": True,
         },
     }
     qa_path.write_text(json.dumps(base), encoding="utf-8")

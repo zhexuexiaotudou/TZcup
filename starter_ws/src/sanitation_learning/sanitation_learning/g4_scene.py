@@ -40,8 +40,8 @@ PARKING_ORIGIN_X_M = -200.0
 PARKING_ORIGIN_Y_M = 200.0
 PARKING_Z_M = -5.0
 PARKING_SPACING_M = 0.3
-TARGET_DISTANCE_RANGE_M = (3.0, 4.6)
-TARGET_LATERAL_FRACTIONS = (-0.62, 0.62, -0.30, 0.30, 0.0)
+TARGET_DISTANCE_LANES_M = (1.20, 1.70, 2.20, 2.70, 3.20)
+TARGET_LATERAL_LANES_M = (-0.80, 0.80, -0.60, 0.60, -1.05)
 
 
 def negative_only_rule(split: str, scene_index: int) -> bool:
@@ -151,10 +151,8 @@ def randomize(
     if not force_negative:
         for class_id in sorted({item["class_id"] for item in assets}):
             pool = [item for item in split_assets if item["class_id"] == class_id]
-            # One variant per class keeps every declared target simultaneously
-            # visible during the moving 10-frame capture. Variant diversity is
-            # obtained across the 25 deterministic scenes, not by crowding a
-            # single camera view with duplicate instances.
+            # One variant per class gives each declaration a unique instance.
+            # Variant diversity is obtained across the 25 deterministic scenes.
             selected.extend(rng.sample(pool, min(1, len(pool))))
     negative_count = rng.randint(2, 3)
     selected_negatives = rng.sample(
@@ -178,12 +176,14 @@ def randomize(
     objects = []
     for index, item in enumerate(selected_all):
         if index < len(selected):
-            # The vehicle advances about 2.25 m over ten captured frames. Put
-            # every target far enough ahead to remain in the forward camera,
-            # while the trajectory itself supplies close-range observations.
-            distance = rng.uniform(*TARGET_DISTANCE_RANGE_M)
-            fraction = TARGET_LATERAL_FRACTIONS[index % len(TARGET_LATERAL_FRACTIONS)]
-            lateral = fraction * min(1.45, distance * 0.30)
+            # AUTO-05R uses the V5-derived downward primary perception pose. The
+            # vehicle advances about 2.25 m over ten frames, so targets are
+            # staggered along the path and become visible at different times.
+            # Lateral separation avoids target-on-target masking and keeps all
+            # physical target collision shapes outside the vehicle sweep.
+            lane = index % len(TARGET_DISTANCE_LANES_M)
+            distance = TARGET_DISTANCE_LANES_M[lane] + rng.uniform(-0.04, 0.04)
+            lateral = TARGET_LATERAL_LANES_M[lane]
         else:
             # Hard negatives remain visible around the target group. A frozen
             # subset spans the close bucket so the metric-scale audit retains
@@ -197,7 +197,7 @@ def randomize(
             else:
                 distance = rng.uniform(2.8, 4.8)
             sign = -1.0 if negative_index % 2 else 1.0
-            lateral = sign * 0.78 * min(1.55, distance * 0.32)
+            lateral = sign * 1.50
         geometry = item.get("physical_geometry_values_m", [0.16, 0.12, 0.08])
         geometry_kind = item.get("geometry_kind", "box")
         distance_bucket = next(
@@ -211,8 +211,8 @@ def randomize(
             "yaw": rng.uniform(-math.pi, math.pi),
         }
         updates.append(pose)
-        overlap = len(selected) >= 2 and scene_index % 5 == 2 and index < 2
-        occlusion_ratio = rng.uniform(0.18, 0.34) if overlap else 0.0
+        overlap = False
+        occlusion_ratio = 0.0
         truncation = lateral > 1.9 or abs(lateral) < 0.28
         estimated_visible_fraction = max(
             0.35,
@@ -311,7 +311,7 @@ def randomize(
         "missing_target_classes": sorted(
             set(classes) - {item["class_id"] for item in selected}
         ),
-        "overlap_executed": len(selected) >= 2 and scene_index % 5 == 2,
+        "overlap_executed": False,
         "dynamic_motion_plan": dynamic_plan,
         "native_gazebo_applied": True,
         "offline_sensor_augmentation": {

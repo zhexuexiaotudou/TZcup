@@ -32,6 +32,7 @@ TEACHER_THRESHOLDS = tuple(
 TEACHER_REQUIRED_DATA_GATES = (
     "scene_pose_reset_contract_100_percent",
     "manifest_pixel_target_consistency_100_percent",
+    "declared_target_sequence_visibility_100_percent",
 )
 
 

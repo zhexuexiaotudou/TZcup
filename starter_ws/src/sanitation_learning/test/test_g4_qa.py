@@ -201,6 +201,7 @@ def test_good_smoke_reports_expected_actual_and_quality_pass(
         "semantic_instance_error_zero",
         "scene_pose_reset_contract_100_percent",
         "manifest_pixel_target_consistency_100_percent",
+        "declared_target_sequence_visibility_100_percent",
         "asset_split_leakage_zero",
         "world_split_leakage_zero",
         "trajectory_split_leakage_zero",
@@ -341,7 +342,37 @@ def test_manifest_pixel_target_gate_rejects_stale_positive(
     assert report["gates"]["manifest_pixel_target_consistency_100_percent"] is False
     assert report["manifest_pixel_target_consistency_rate"] == 0.9
     assert any(
-        error["reason"] == "manifest_pixel_target_count_mismatch"
+        error["reason"] == "undeclared_pixel_target_count_exceeded"
+        for error in report["errors"]
+    )
+
+
+def test_sequence_visibility_gate_rejects_declared_target_never_seen(
+    tiny_worlds, tmp_path
+):
+    root, manifest_path = tiny_worlds
+    _tiny_scene(root, manifest_path, "world_g4_01_asphalt_campus", 1, "train")
+    scene_dir = root / "scenes" / "scene_0001"
+    scene = json.loads((scene_dir / "scene_manifest.json").read_text())
+    label = next(
+        int(item["semantic_label"])
+        for item in scene["objects"]
+        if int(item.get("semantic_label") or 0) > 0
+    )
+    for semantic_path in sorted((scene_dir / "semantic").glob("*.png")):
+        instance_path = scene_dir / "instance" / semantic_path.name
+        semantic = cv2.imread(str(semantic_path), cv2.IMREAD_UNCHANGED)
+        instance = cv2.imread(str(instance_path), cv2.IMREAD_UNCHANGED)
+        hidden = semantic == label
+        semantic[hidden] = 0
+        instance[hidden] = 0
+        cv2.imwrite(str(semantic_path), semantic)
+        cv2.imwrite(str(instance_path), instance)
+    report = finalize_g4_dataset(root, tmp_path / "qa", contract_path=str(CONTRACT))
+    assert report["gates"]["manifest_pixel_target_consistency_100_percent"] is True
+    assert report["gates"]["declared_target_sequence_visibility_100_percent"] is False
+    assert any(
+        error["reason"] == "declared_target_sequence_visibility_failed"
         for error in report["errors"]
     )
 

@@ -80,7 +80,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 | 软件工程与发布 | 已完成 | `AUTO-16=PASS`，源码、配置、测试、文档和发布工具齐全 |
 | 基础仿真与自主导航 | 已通过机器门 | 车辆、场景、定位、Nav2、覆盖规划、安全控制和回放链已验证 |
 | 调试可视化 | 可用 | Gazebo 显示物理场景，RViz 显示目标、障碍、区域、路径、车辆和系统状态 |
-| 学习感知 | G4 v3 被双向可见性复审推翻，v4 重采中 | 对 12 world / 300 scene / 3000 frame 的反向复审发现旧 QA 只拒绝“未声明的额外目标”，未拒绝“声明目标未渲染”；严格双向一致率仅 `0.388`，1836 帧缺少声明实例，因此 G4 数据门恢复为 false，2× teacher 在第 8 epoch 中止且未启动 student。现已修复双向 QA，并把每类单实例放在完整运动窗口内可见的 3.0–4.6 m 初始区间，正通过真实 Gazebo 烟测后从空目录重采。area 默认候选保留 RGB 预训练 stem 双分支；P6/P7/P10 软件合同及 G5 封存工具已具备，但 `AUTO_05R/P4/P5/formal/live/J6/field` 仍为 false，见 [`docs/auto05r-p2-data-integrity-recovery.md`](docs/auto05r-p2-data-integrity-recovery.md) |
+| 学习感知 | V5 下视产品相机烟测通过，G4 正式重采中 | 旧 G4 的 3000 帧复审暴露 1836 帧缺少声明实例，且 C0 水平相机下纸屑尺度严重不足，故数据门保持 false、2× teacher 在第 8 epoch 中止且未启动 student。新合同为“逐帧零额外目标 + 每个声明类别在十帧序列至少完整可见 2 帧”；AUTO-05R 以显式覆盖复用已有机器验证基础的 `V5_retracted` 位姿，不修改 Xacro 默认值。新烟测 4/4 场景、40/40 帧、15/15 序列类别可见、QA 零错误，纸屑最短边中位数由 3 px 提升到 30 px；正式 12 world / 300 scene / 3000 frame 已按四个中间件隔离分片从空目录重采。P6/P7/P10 软件合同及 G5 封存工具已具备，但 `AUTO_05R/P4/P5/formal/live/J6/field` 仍为 false，见 [`docs/auto05r-p2-data-integrity-recovery.md`](docs/auto05r-p2-data-integrity-recovery.md) |
 | 综合竞赛矩阵 | 未通过 | 受 AUTO-08 学习感知与定点清扫依赖阻断，正式综合任务未启动 |
 | 真实域 | 外部阻断 | 只发现普通 Integrated Camera，未发现 RGB-D 数据 manifest 或独立 map GT；严格采集/标定/摆位校验/ingestion/evaluator 工具已具备 |
 | J6 部署 | 未通过 | 本机官方 OE 3.7.0 离线包完整，但官方文档当前为 3.9.0；正式模型、当前工具链 PTQ/compile 与 J6 实板均缺失 |

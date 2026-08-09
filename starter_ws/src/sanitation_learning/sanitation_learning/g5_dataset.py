@@ -28,7 +28,7 @@ from .g4_assets import (
     load_g4_asset_registry,
 )
 from .g4_manifest import config_hash
-from .g4_qa import finite_pose, phash
+from .g4_qa import MIN_DECLARED_TARGET_VISIBLE_FRAMES, finite_pose, phash
 from .gazebo_g4 import (
     GAZEBO_SENSOR_TOPICS,
     GROUND_COLORS,
@@ -222,6 +222,9 @@ def generate_g5_worlds(
     assets_dir: str | Path,
     xacro_path: str | Path,
     output_dir: str | Path,
+    *,
+    camera_overrides: dict[str, float] | None = None,
+    camera_profile_id: str | None = None,
 ) -> dict:
     development_registry_path = Path(development_registry_path)
     assets_dir, output_dir = Path(assets_dir), Path(output_dir)
@@ -320,12 +323,15 @@ def generate_g5_worlds(
                 "split_eligibility": [SEALED_SPLIT],
             }
         )
+    camera_contract = read_production_camera_contract(
+        xacro_path,
+        xacro_overrides=camera_overrides,
+        profile_id=camera_profile_id,
+    )
     manifest = {
         "schema_version": 1, "dataset_domain": SEALED_SPLIT,
-        "camera_contract": read_production_camera_contract(xacro_path),
-        "native_capture_resolution": read_production_camera_contract(xacro_path)[
-            "native_resolution"
-        ],
+        "camera_contract": camera_contract,
+        "native_capture_resolution": camera_contract["native_resolution"],
         "training_only_ground_truth": True, "development_access_forbidden": True,
         "scenes_per_world": SCENES_PER_WORLD,
         "frames_per_scene": FRAMES_PER_SCENE,
@@ -376,6 +382,8 @@ def finalize_g5_dataset(
     scenes = sorted((root / "scenes").glob("scene_*"))
     frame_count = 0
     consistent = 0
+    declared_scene_class_total = 0
+    declared_scene_class_visible = 0
     pose_valid = 0
     sync_valid = 0
     camera_valid = 0
@@ -407,6 +415,8 @@ def finalize_g5_dataset(
             for item in scene.get("objects", [])
             if int(item.get("semantic_label") or 0) in range(1, 6)
         )
+        sequence_max_observed: Counter = Counter()
+        sequence_full_visibility_frames: Counter = Counter()
         for record in records:
             frame_count += 1
             paths = {name: scene_dir / relative for name, relative in record["paths"].items()}
@@ -422,10 +432,16 @@ def finalize_g5_dataset(
                 majority = int(np.bincount(values, minlength=6).argmax())
                 if majority in range(1, 6):
                     observed[majority] += 1
-            mismatch = any(observed[label] != declared[label] for label in range(1, 6))
+            for label in range(1, 6):
+                sequence_max_observed[label] = max(
+                    sequence_max_observed[label], observed[label]
+                )
+                if declared[label] > 0 and observed[label] >= declared[label]:
+                    sequence_full_visibility_frames[label] += 1
+            mismatch = any(observed[label] > declared[label] for label in range(1, 6))
             consistent += int(not mismatch)
             if mismatch:
-                errors.append({"scene": scene_dir.name, "frame": record.get("frame_index"), "reason": "manifest_pixel_target_count_mismatch"})
+                errors.append({"scene": scene_dir.name, "frame": record.get("frame_index"), "reason": "undeclared_pixel_target_count_exceeded"})
             sync_valid += int(record.get("exact_four_sensor_timestamp") is True)
             tf_valid += int(finite_pose(paths["tf"]))
             try:
@@ -447,6 +463,32 @@ def finalize_g5_dataset(
                     duplicates.append([previous, identity])
                 else:
                     seen[value] = identity
+        for label, declared_count in sorted(declared.items()):
+            if declared_count <= 0:
+                continue
+            declared_scene_class_total += 1
+            visible_frames = sequence_full_visibility_frames[label]
+            visible = (
+                sequence_max_observed[label] >= declared_count
+                and visible_frames >= MIN_DECLARED_TARGET_VISIBLE_FRAMES
+            )
+            declared_scene_class_visible += int(visible)
+            if not visible:
+                errors.append(
+                    {
+                        "scene": scene_dir.name,
+                        "reason": "declared_target_sequence_visibility_failed",
+                        "semantic_label": label,
+                        "declared": int(declared_count),
+                        "maximum_observed_in_one_frame": int(
+                            sequence_max_observed[label]
+                        ),
+                        "full_visibility_frames": int(visible_frames),
+                        "minimum_required_frames": (
+                            MIN_DECLARED_TARGET_VISIBLE_FRAMES
+                        ),
+                    }
+                )
     gates = {
         "worlds_at_least_4": len(worlds) >= 4,
         "scenes_at_least_100": len(scenes) >= 100,
@@ -457,6 +499,9 @@ def finalize_g5_dataset(
         "world_file_hashes_match_manifest": not world_file_mismatches,
         "pose_reset_100_percent": pose_valid == len(scenes),
         "manifest_pixel_consistency_100_percent": consistent == frame_count,
+        "declared_target_sequence_visibility_100_percent": (
+            declared_scene_class_visible == declared_scene_class_total
+        ),
         "four_sensor_sync_100_percent": sync_valid == frame_count,
         "camera_info_100_percent": camera_valid == frame_count,
         "tf_100_percent": tf_valid == frame_count,
@@ -488,6 +533,10 @@ def finalize_g5_dataset(
         "world_file_mismatches": world_file_mismatches,
         "scene_pose_reset_valid_rate": pose_valid / max(len(scenes), 1),
         "manifest_pixel_target_consistency_rate": consistent / max(frame_count, 1),
+        "declared_target_sequence_visibility_rate": (
+            declared_scene_class_visible / max(declared_scene_class_total, 1)
+        ),
+        "declared_target_scene_class_count": declared_scene_class_total,
         "four_sensor_sync_rate": sync_valid / max(frame_count, 1),
         "camera_info_valid_rate": camera_valid / max(frame_count, 1),
         "tf_valid_rate": tf_valid / max(frame_count, 1),
@@ -514,9 +563,32 @@ def main_generate() -> None:
     parser.add_argument("--assets-dir", required=True)
     parser.add_argument("--xacro", required=True)
     parser.add_argument("--output-dir", required=True)
+    parser.add_argument("--camera-x", type=float)
+    parser.add_argument("--camera-y", type=float)
+    parser.add_argument("--camera-z", type=float)
+    parser.add_argument("--camera-pitch-rad", type=float)
+    parser.add_argument("--camera-profile-id")
     args = parser.parse_args()
+    values = (args.camera_x, args.camera_y, args.camera_z, args.camera_pitch_rad)
+    if any(value is not None for value in values) and not all(
+        value is not None for value in values
+    ):
+        parser.error("all four production camera overrides must be provided together")
+    camera_overrides = None
+    if all(value is not None for value in values):
+        camera_overrides = dict(
+            camera_x=args.camera_x,
+            camera_y=args.camera_y,
+            camera_z=args.camera_z,
+            camera_pitch_rad=args.camera_pitch_rad,
+        )
     print(json.dumps(generate_g5_worlds(
-        args.development_registry, args.assets_dir, args.xacro, args.output_dir
+        args.development_registry,
+        args.assets_dir,
+        args.xacro,
+        args.output_dir,
+        camera_overrides=camera_overrides,
+        camera_profile_id=args.camera_profile_id,
     ), indent=2))
 
 

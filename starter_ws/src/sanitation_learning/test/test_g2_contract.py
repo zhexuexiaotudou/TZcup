@@ -18,3 +18,23 @@ def test_extracts_real_production_camera_contract():
     assert contract["horizontal_fov_rad"] == 1.50098
     assert contract["update_rate_hz"] == 15.0
     validate_sim_launch_topics(launch, contract)
+
+
+def test_explicit_product_profile_overrides_contract_without_changing_xacro():
+    xacro = ROOT / "sanitation_vehicle_description" / "urdf" / "sanitation_vehicle.urdf.xacro"
+    before = xacro.read_bytes()
+    contract = read_production_camera_contract(
+        xacro,
+        xacro_overrides={
+            "camera_x": 0.36,
+            "camera_y": 0.0,
+            "camera_z": 0.66,
+            "camera_pitch_rad": 0.872664626,
+        },
+        profile_id="auto05r_v5_retracted_primary_perception_v1",
+    )
+    assert contract["extrinsics"]["xyz_m"] == [0.36, 0.0, 0.66]
+    assert contract["extrinsics"]["rpy_rad"] == [0.0, 0.872664626, 0.0]
+    assert contract["profile_id"] == "auto05r_v5_retracted_primary_perception_v1"
+    assert contract["source_xacro_defaults_unchanged"] is True
+    assert xacro.read_bytes() == before

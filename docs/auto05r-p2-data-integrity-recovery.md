@@ -76,9 +76,20 @@ manifest 未声明的额外目标，却允许 manifest 声明的目标完全离�
 0。因此此前 `G4_dataset_gate_pass=true` 被正式撤销，2× teacher 在 epoch 8
 中止，未运行 formal val，也未启动 student。
 
-修复将 QA 改为双向相等，并把正样本从单场景每类 1–2 个拥挤实例改成每类 1 个，
-初始距离限定为 3.0–4.6 m、横向位置受前视 FOV 约束，使车辆约 2.25 m 的十帧
-运动后目标仍保持在前方；近距尺度由运动轨迹产生。旧 v3 完整复审 QA SHA-256
+第一次修复把 QA 改为逐帧双向相等，但真实运动相机并不要求所有世界目标在每帧
+同时可见；同时 C0 水平相机烟测显示纸屑最短边中位数仅 3 px、100% 小于 8 px。
+因此最终合同收敛为：逐帧不得出现 manifest 未声明目标；每个声明类别须在十帧序列
+中至少有 2 帧达到声明实例数。AUTO-05R 新增独立产品相机配置，以显式 Xacro 覆盖
+复用 `V5_retracted` 的 `[0.36, 0, 0.66] m`、俯角 50° 机械位姿，不修改历史默认
+C0；五类单实例沿 1.2–3.2 m 轨迹分层布置，横向避开扫掠走廊。旧 v3 完整复审 QA SHA-256
 为 `3fe950473267210052f662dcd4919433ce1f99dcefbaf49a5ebed80e5ce1f713`，
 紧凑证据见 `P2_BIDIRECTIONAL_VISIBILITY_FAILURE.json`。只有从空目录完成 v4
-全量重采并通过严格 QA 后，才允许重新启动 teacher。
+全量重采并通过严格 QA 后，才允许重新启动 teacher。专用配置见
+`starter_ws/src/sanitation_learning/config/auto05r_product_camera.yaml`。
+
+V5 第二轮真实 Gazebo 烟测已在全新外部目录完成：4/4 场景、40/40 帧采集通过，
+逐帧未声明目标一致率和序列声明可见率均为 1.0，15 个正场景类别检查全部通过，
+QA 错误为 0。纸屑最短边 p10/p50 为 19.9/30 px，离散三类总体 p50 为 32 px；
+这只通过相机与场景几何选择门，不是正式 G4 数据门。紧凑证据为
+`artifacts/auto05r_p2_evidence/P2_V5_CAMERA_SMOKE.json`。正式 G4 已从四个分别配置
+`ROS_DOMAIN_ID`、`GZ_PARTITION` 和 `IGN_PARTITION` 的空分片目录开始重采。

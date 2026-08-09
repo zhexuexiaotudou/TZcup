@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "stage": "PERCEPTION-P2_CAMERA_SCALE_RECOVERY",
+  "recorded_at": "2026-08-09",
+  "camera_profile_id": "auto05r_v5_retracted_primary_perception_v1",
+  "camera_extrinsics": {
+    "xyz_m": [0.36, 0.0, 0.66],
+    "xacro_pitch_rad": 0.872664626,
+    "physical_mount_pitch_deg": -50.0,
+    "source_xacro_defaults_unchanged": true
+  },
+  "failed_iteration": {
+    "external_data_root": "F:/Project/TZcup-perception-product-runtime/g4-v5-smoke1",
+    "result": "positive scene captured 9 of 10 frames",
+    "cause": "fifth target collision geometry intersected the vehicle sweep",
+    "action": "move the fifth target from y=0.0m to y=-1.05m and recapture from a new root"
+  },
+  "accepted_smoke": {
+    "external_data_root": "F:/Project/TZcup-perception-product-runtime/g4-v5-smoke2",
+    "worlds": 1,
+    "scenes": 4,
+    "frames": 40,
+    "capture_pass_scenes": 4,
+    "capture_failed_scenes": 0,
+    "qa_sha256": "8b43401fc9acb9ec69d5f8806f20c967fb78de6d3015a05391d1897836f5214e",
+    "world_manifest_sha256": "dc7c145e14ac62ba62d7e1542990959a5f6adde50dcdf5095cf8043cbc906670",
+    "per_frame_undeclared_target_consistency_rate": 1.0,
+    "declared_target_sequence_visibility_rate": 1.0,
+    "declared_positive_scene_class_checks": 15,
+    "qa_error_count": 0,
+    "formal_G4_dataset_gate_pass": false,
+    "formal_gate_boundary": "smoke scale is intentionally 1 world / 4 scenes / 40 frames, not 12 / 300 / 3000"
+  },
+  "native_bbox_shortest_side_px": {
+    "plastic_bottle": {"count": 30, "p10": 18.0, "p50": 24.0, "fraction_below_8px": 0.0},
+    "metal_can": {"count": 24, "p10": 32.0, "p50": 34.5, "fraction_below_8px": 0.041666666666666664},
+    "paper_litter": {"count": 30, "p10": 19.9, "p50": 30.0, "fraction_below_8px": 0.0},
+    "leaf_pile": {"count": 20, "p10": 49.8, "p50": 79.0, "fraction_below_8px": 0.0},
+    "puddle": {"count": 30, "p10": 25.9, "p50": 41.5, "fraction_below_8px": 0.0},
+    "discrete_classes_1_2_3": {"count": 84, "p10": 19.3, "p50": 32.0, "fraction_below_8px": 0.011904761904761904}
+  },
+  "decision": "camera_and_scene_geometry_smoke_pass_start_fresh_formal_G4_capture",
+  "claim_boundary": "This smoke selects capture geometry only. It is not the formal G4 data gate, teacher gate, model gate, live gate, field gate, or J6 gate."
+}

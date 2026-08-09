@@ -14,6 +14,11 @@ RUNTIME_WS="${AUTO05R_RUNTIME_WS:-/data/runtime_ws_g4}"
 SCENES_PER_WORLD="${AUTO05R_SCENES_PER_WORLD:-25}"
 MAX_WORLDS="${AUTO05R_MAX_WORLDS:-0}"
 START_WORLD_INDEX="${AUTO05R_START_WORLD_INDEX:-0}"
+CAMERA_PROFILE_ID="${AUTO05R_CAMERA_PROFILE_ID:-auto05r_v5_retracted_primary_perception_v1}"
+CAMERA_X="${AUTO05R_CAMERA_X:-0.36}"
+CAMERA_Y="${AUTO05R_CAMERA_Y:-0.0}"
+CAMERA_Z="${AUTO05R_CAMERA_Z:-0.66}"
+CAMERA_PITCH_RAD="${AUTO05R_CAMERA_PITCH_RAD:-0.872664626}"
 mkdir -p "${DATA_ROOT}/logs" "${DATA_ROOT}/scenes" "${RUNTIME_WS}"
 
 colcon --log-base "${RUNTIME_WS}/log" build \
@@ -39,6 +44,9 @@ ros2 run sanitation_learning auto05r_generate_g4_worlds \
   --assets-dir "${DATA_ROOT}/models" \
   --xacro "${REPO}/starter_ws/src/sanitation_vehicle_description/urdf/sanitation_vehicle.urdf.xacro" \
   --output-dir "${DATA_ROOT}/worlds" \
+  --camera-x "${CAMERA_X}" --camera-y "${CAMERA_Y}" \
+  --camera-z "${CAMERA_Z}" --camera-pitch-rad "${CAMERA_PITCH_RAD}" \
+  --camera-profile-id "${CAMERA_PROFILE_ID}" \
   >"${DATA_ROOT}/g4_world_generation.json"
 
 WORLD_MANIFEST="${DATA_ROOT}/worlds/g4_world_manifest.json"
@@ -83,7 +91,9 @@ capture_world() {
     wait 2>/dev/null || true
   }
   xacro "${REPO}/starter_ws/src/sanitation_vehicle_description/urdf/sanitation_vehicle.urdf.xacro" \
-    enable_training_gt:=true >"/tmp/auto05r_vehicle_${world_id}.urdf"
+    enable_training_gt:=true camera_x:="${CAMERA_X}" camera_y:="${CAMERA_Y}" \
+    camera_z:="${CAMERA_Z}" camera_pitch_rad:="${CAMERA_PITCH_RAD}" \
+    >"/tmp/auto05r_vehicle_${world_id}.urdf"
   (cd "${DATA_ROOT}/worlds" && exec gz sim -r -s --headless-rendering "${DATA_ROOT}/worlds/${world_id}.sdf") \
     >"${log_root}/gz.log" 2>&1 &
   pids+=("$!")
@@ -160,6 +170,7 @@ capture_world() {
         --output "${out}" \
         --frame-count 10 \
         --timeout 90 \
+        --camera-xyz "${CAMERA_X}" "${CAMERA_Y}" "${CAMERA_Z}" \
         >"${out}/capture.log"; then
         capture_pass=true
         break

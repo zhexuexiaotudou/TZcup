@@ -63,6 +63,26 @@ def test_g5_world_generator_has_four_new_world_hashes(tmp_path: Path) -> None:
     assert generated["dataset_id"] == SEALED_SPLIT
 
 
+def test_g5_world_generator_records_product_camera_override(tmp_path: Path) -> None:
+    manifest = generate_g5_worlds(
+        REGISTRY,
+        tmp_path / "models",
+        XACRO,
+        tmp_path / "worlds",
+        camera_overrides={
+            "camera_x": 0.36,
+            "camera_y": 0.0,
+            "camera_z": 0.66,
+            "camera_pitch_rad": 0.872664626,
+        },
+        camera_profile_id="auto05r_v5_retracted_primary_perception_v1",
+    )
+    assert manifest["camera_contract"]["extrinsics"]["xyz_m"] == [0.36, 0.0, 0.66]
+    assert manifest["camera_contract"]["profile_id"] == (
+        "auto05r_v5_retracted_primary_perception_v1"
+    )
+
+
 def test_g5_negative_only_prior_is_supported_without_becoming_development_data() -> None:
     hits = sum(negative_only_rule(SEALED_SPLIT, index) for index in range(25))
     assert hits == 7

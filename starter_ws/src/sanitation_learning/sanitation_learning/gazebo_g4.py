@@ -330,6 +330,9 @@ def write_g4_worlds(
     assets_dir: str | Path,
     xacro_path: str | Path,
     output_dir: str | Path,
+    *,
+    camera_overrides: dict[str, float] | None = None,
+    camera_profile_id: str | None = None,
 ) -> dict:
     """Generate G4 worlds and the g4_world_manifest.json contract."""
     registry_path, assets_dir, output_dir = (
@@ -339,7 +342,11 @@ def write_g4_worlds(
     )
     output_dir.mkdir(parents=True, exist_ok=True)
     registry = load_g4_asset_registry(registry_path)
-    contract = read_production_camera_contract(xacro_path)
+    contract = read_production_camera_contract(
+        xacro_path,
+        xacro_overrides=camera_overrides,
+        profile_id=camera_profile_id,
+    )
     registry_sha = hashlib.sha256(registry_path.read_bytes()).hexdigest()
     asset_manifest_path = assets_dir / "g4_generated_asset_manifest.json"
     if (
@@ -517,11 +524,34 @@ def main() -> None:
     parser.add_argument("--assets-dir", required=True)
     parser.add_argument("--xacro", required=True)
     parser.add_argument("--output-dir", required=True)
+    parser.add_argument("--camera-x", type=float)
+    parser.add_argument("--camera-y", type=float)
+    parser.add_argument("--camera-z", type=float)
+    parser.add_argument("--camera-pitch-rad", type=float)
+    parser.add_argument("--camera-profile-id")
     args = parser.parse_args()
+    values = (args.camera_x, args.camera_y, args.camera_z, args.camera_pitch_rad)
+    if any(value is not None for value in values) and not all(
+        value is not None for value in values
+    ):
+        parser.error("all four production camera overrides must be provided together")
+    camera_overrides = None
+    if all(value is not None for value in values):
+        camera_overrides = dict(
+            camera_x=args.camera_x,
+            camera_y=args.camera_y,
+            camera_z=args.camera_z,
+            camera_pitch_rad=args.camera_pitch_rad,
+        )
     print(
         json.dumps(
             write_g4_worlds(
-                args.registry, args.assets_dir, args.xacro, args.output_dir
+                args.registry,
+                args.assets_dir,
+                args.xacro,
+                args.output_dir,
+                camera_overrides=camera_overrides,
+                camera_profile_id=args.camera_profile_id,
             ),
             indent=2,
         )

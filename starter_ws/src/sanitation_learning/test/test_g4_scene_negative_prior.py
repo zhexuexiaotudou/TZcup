@@ -161,8 +161,19 @@ def test_negative_only_prior_and_scene_contract(
             assert positive == []
         else:
             assert len(positive) == 5
-            assert all(3.0 <= item["distance_m"] <= 4.6 for item in positive)
-            assert all(abs(item["xyz_m"][1]) <= 1.45 for item in positive)
+            assert all(1.16 <= item["distance_m"] <= 3.24 for item in positive)
+            assert {item["xyz_m"][1] for item in positive} == {
+                -1.05,
+                -0.8,
+                -0.6,
+                0.6,
+                0.8,
+            }
+            assert len({round(item["distance_m"], 1) for item in positive}) == 5
+            assert sorted(item["xyz_m"][1] for item in positive) == [
+                -1.05, -0.8, -0.6, 0.6, 0.8
+            ]
+            assert report["overlap_executed"] is False
     assert len(calls) == 300
     expected_asset_count = len(manifest["assets"]) + len(
         manifest["negative_assets"]
@@ -233,6 +244,9 @@ def test_g4_capture_script_uses_g4_modules_and_resume_skip():
     assert "AUTO05R_START_WORLD_INDEX" in script
     assert "START_WORLD_INDEX + local_world_index" in script
     assert "/opt/ros/jazzy/lib/ros_gz_bridge/parameter_bridge" in script
+    assert "auto05r_v5_retracted_primary_perception_v1" in script
+    assert '--camera-xyz "${CAMERA_X}" "${CAMERA_Y}" "${CAMERA_Z}"' in script
+    assert 'camera_pitch_rad:="${CAMERA_PITCH_RAD}"' in script
     wrapper = (REPO / "scripts" / "run_auto05r_g4_capture_docker.ps1").read_text(
         encoding="utf-8"
     )
