@@ -190,3 +190,17 @@ macro recall/F1 与 stress 门失败；cross-world area boundary F1 `0.6880` 也
 `artifacts/auto05r_p4_evidence/P4_A2_SMALLSCALE_FORMAL_FAILURE.json`。最后登记的 A3
 只从头训练 teacher-distilled discovery，并按同 QA/selection/checkpoint 哈希合同复用
 A2 的三个合格非 discovery 模型；仍不读取旧 D6/G5。
+
+A3 已在不可变 `21edd09` 源码上完成正式运行，容器退出码为 `2`、未发生 OOM；原始
+报告 SHA-256 为 `24d111512d125a40fa18e61e48ebe846b46af353f7ccdd97a2f9e7b7781ac2e7`。
+teacher 蒸馏目标仅由 600 个 train 帧生成，未读取旧 D6/G5；A2 的 classifier、leaf、
+puddle 也通过同 QA、selection 与 checkpoint 哈希合同复用，四模型 ONNX parity 和零
+custom op 门均通过。但新 discovery 的 in-domain candidate recall 仅 `0.0136`，macro
+recall/F1 为 `0.0111/0.0219`，small-object recall 为 `0`；cross-world macro F1 为
+`0.0607`，area boundary F1 为 `0.6880`，stress macro F1 为 `0`。因此 A3 严格失败，
+紧凑证据为 `artifacts/auto05r_p4_evidence/P4_A3_DISTILLED_FORMAL_FAILURE.json`。
+
+A1、A2、A3 三条已登记架构路线现已全部用尽，P4 仍为 false。按固定协议不得新增
+A4、降低门槛、冻结模型或读取 G5，也不得把合格的非 discovery 子模型提升为整链通过。
+因此 P5、P6 冻结模型 live、P7 soak、P8/P9、J6 编译与 field acceptance 均保持锁定；
+继续探索新的 discovery 架构或数据协议需要新的、显式批准的恢复方案。
