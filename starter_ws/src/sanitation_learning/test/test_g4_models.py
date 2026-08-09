@@ -109,6 +109,33 @@ def test_area_candidate_preserves_rgb_stem_and_separates_geometry_branch() -> No
     assert model.boundary_head.conv[0].in_channels > 1
 
 
+def test_deeplab_area_candidate_preserves_rgb_stem_and_rich_boundary_head() -> None:
+    torch = pytest.importorskip("torch")
+    pytest.importorskip("torchvision")
+    model = g4_models.build_g4_model(
+        "leaf",
+        from_scratch_control=True,
+        area_architecture="deeplab_resnet50",
+    )
+    assert model.deeplab.backbone.conv1.in_channels == 3
+    assert model.geometry_stem.in_channels == 7
+    assert model.boundary_head.conv[0].in_channels == 256
+    model.eval()
+    outputs = model(torch.zeros(1, 10, 64, 64))
+    assert outputs["logits"].shape == (1, 1, 64, 64)
+    assert outputs["boundary_logits"].shape == (1, 1, 64, 64)
+
+
+def test_unknown_area_architecture_fails_closed() -> None:
+    pytest.importorskip("torch")
+    with pytest.raises(ValueError, match="unknown area architecture"):
+        g4_models.build_g4_model(
+            "leaf",
+            from_scratch_control=True,
+            area_architecture="placeholder",
+        )
+
+
 def test_model_summary_cards_not_trained() -> None:
     pytest.importorskip("torch")
     cards = g4_models.model_summary()

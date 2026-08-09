@@ -70,6 +70,7 @@ def test_p4_thresholds_are_not_lowered_below_spec() -> None:
     assert P4_FIXED_THRESHOLDS["negative_area_fp_per_frame_le"] == 0.05
     assert P4_FIXED_THRESHOLDS["same_color_negative_specificity_ge"] == 0.95
     assert P4_FIXED_THRESHOLDS["color_material_stress_macro_f1_ge"] == 0.60
+    assert P4_FIXED_THRESHOLDS["selected_models_product_eligible"] is True
 
 
 def test_p5_thresholds_are_not_lowered_below_spec() -> None:

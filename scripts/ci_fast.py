@@ -216,6 +216,7 @@ def run_ros_independent_tests() -> None:
         learning_package / "test" / "test_g4_qa.py",
         learning_package / "test" / "test_g4_models.py",
         learning_package / "test" / "test_g4_losses.py",
+        learning_package / "test" / "test_g4_calibration.py",
         learning_package / "test" / "test_g4_data.py",
         learning_package / "test" / "test_g4_split_policy.py",
         learning_package / "test" / "test_g4_selection.py",

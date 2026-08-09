@@ -189,6 +189,7 @@ P4_FIXED_THRESHOLDS = {
     "color_material_stress_macro_f1_ge": 0.60,
     "same_color_negative_specificity_ge": 0.95,
     "D1_D5_reports_complete": True,
+    "selected_models_product_eligible": True,
     "onnx_task_specific_parity_pass": True,
     "onnx_custom_ops_zero": True,
 }

@@ -131,3 +131,14 @@ background/hard-negative specificity 均为 1.0，四个模型的 task-specific 
 基线保留在 `artifacts/auto05r_p4_evidence/P4_A1_SELECTION_FIXED_FAILURE.json`，不冒充
 P4。当前 A1 已按产品合同改为真正保留 P3/P4/P5 三层输出、跨层 NMS、EMA warmup、
 稀疏边界加权 BCE+Dice 后从零重训，不复用任何旧 checkpoint。
+
+该重训的中间诊断证明多尺度修复有效：discovery 在固定阈值 0.35 下已恢复到
+validation recall `0.9583`、AP50 `0.9157`，但仍有约 3024 false candidates/min，
+因此不能通过。进一步审计发现两处协议问题：所有阈值仍是 CLI 固定值而非只在 VAL
+选择；单任务 leaf/puddle selector 使用双通道平均 boundary F1，而另一个空通道使其
+理论上最高只有 0.5，却要求 0.7。现已加入预注册 VAL-only discovery/classifier/
+leaf/puddle 阈值网格、约束优先选择、`selected_models_product_eligible` 硬门，并改用
+任务自身 boundary F1。双分支 ResNet18 area 中间结果仍明显退化（leaf IoU `0.0725`、
+boundary F1 `0.0861`、negative FP/frame `0.2167`），故保留为失败诊断；下一面积
+对照采用曾有强结果依据的 DeepLabV3-ResNet50，同时保持原始 RGB stem、零初始化
+浅层 geometry 分支，并从 256-channel decoder feature 生成独立 boundary head。

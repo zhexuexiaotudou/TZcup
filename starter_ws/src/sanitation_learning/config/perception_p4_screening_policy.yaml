@@ -78,6 +78,10 @@ gates:
     metric: D1_D5_reports_complete
     operator: eq
     threshold: true
+  - id: selected_models_product_eligible
+    metric: selected_models_product_eligible
+    operator: eq
+    threshold: true
   - id: onnx_task_specific_parity_pass
     metric: onnx_task_specific_parity_pass
     operator: eq

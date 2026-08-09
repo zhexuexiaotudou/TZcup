@@ -645,7 +645,7 @@ def _model_classes() -> dict[str, type]:
         model_id = "g4_puddle_segmenter_v1"
 
     class DeepLabAreaSegmenter(_FlatOutputMixin, nn.Module):
-        """DeepLabV3-based independent area segmenter."""
+        """DeepLabV3 area model with preserved RGB stem and shallow geometry."""
 
         task: str | None = None
         model_id: str | None = None
@@ -689,32 +689,55 @@ def _model_classes() -> dict[str, type]:
                     ),
                     torchvision_version=torchvision.__version__,
                 )
-            pretrained_conv = self.deeplab.backbone.conv1
-            first_conv = nn.Conv2d(
-                10,
+            self.geometry_stem = nn.Conv2d(
+                7,
                 64,
                 kernel_size=7,
                 stride=2,
                 padding=3,
                 bias=False,
             )
-            with torch.no_grad():
-                first_conv.weight[:, :3] = pretrained_conv.weight
-                nn.init.kaiming_normal_(
-                    first_conv.weight[:, 3:],
-                    mode="fan_out",
-                    nonlinearity="relu",
-                )
-            self.deeplab.backbone.conv1 = first_conv
+            nn.init.zeros_(self.geometry_stem.weight)
             self.deeplab.classifier[4] = nn.Conv2d(256, 1, 1)
             self.deeplab.aux_classifier = None
-            self.boundary_head = _BoundaryHead(1)
+            self.boundary_head = _BoundaryHead(256)
+            self.architecture_role = (
+                "deeplab_resnet50_rgb_preserved_shallow_geometry"
+            )
 
         def forward(self, rgbd):
-            logits = self.deeplab(rgbd)["out"]
+            if rgbd.shape[1] != 10:
+                raise ValueError(
+                    f"DeepLab area model requires 10 channels, got {rgbd.shape[1]}"
+                )
+            backbone = self.deeplab.backbone
+            x = backbone.conv1(rgbd[:, :3]) + self.geometry_stem(rgbd[:, 3:])
+            x = backbone.bn1(x)
+            x = backbone.relu(x)
+            x = backbone.maxpool(x)
+            x = backbone.layer1(x)
+            x = backbone.layer2(x)
+            x = backbone.layer3(x)
+            x = backbone.layer4(x)
+            classifier_layers = tuple(self.deeplab.classifier.children())
+            decoder_features = x
+            for layer in classifier_layers[:-1]:
+                decoder_features = layer(decoder_features)
+            logits = classifier_layers[-1](decoder_features)
+            boundary_logits = self.boundary_head(decoder_features)
+            output_size = rgbd.shape[-2:]
+            logits = functional.interpolate(
+                logits, size=output_size, mode="bilinear", align_corners=False
+            )
+            boundary_logits = functional.interpolate(
+                boundary_logits,
+                size=output_size,
+                mode="bilinear",
+                align_corners=False,
+            )
             return {
                 "logits": logits,
-                "boundary_logits": self.boundary_head(logits),
+                "boundary_logits": boundary_logits,
             }
 
     class DeepLabLeafSegmenter(DeepLabAreaSegmenter):
@@ -808,6 +831,7 @@ def build_g4_model(
     *,
     from_scratch_control: bool = False,
     legacy_fpn_control: bool = False,
+    area_architecture: str = "dual_resnet18",
 ):
     """Build one task model without instantiating unrelated backbones."""
     classes = _model_classes()
@@ -824,7 +848,18 @@ def build_g4_model(
         )
     if task not in ("leaf", "puddle"):
         raise ValueError(f"unknown G4 model task {task!r}")
-    class_name = "LeafSegmenter" if task == "leaf" else "PuddleSegmenter"
+    if area_architecture not in ("dual_resnet18", "deeplab_resnet50"):
+        raise ValueError(
+            f"unknown area architecture {area_architecture!r}"
+        )
+    if area_architecture == "dual_resnet18":
+        class_name = "LeafSegmenter" if task == "leaf" else "PuddleSegmenter"
+    else:
+        class_name = (
+            "DeepLabLeafSegmenter"
+            if task == "leaf"
+            else "DeepLabPuddleSegmenter"
+        )
     try:
         import torchvision  # noqa: F401
     except Exception as exc:

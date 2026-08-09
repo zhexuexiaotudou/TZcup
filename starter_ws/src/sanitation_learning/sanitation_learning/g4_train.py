@@ -505,6 +505,7 @@ def train_area(
     crop_mode: str = "full",
     selector: ConstraintAwareSelector | None = None,
     validation_metric_fn: Callable | None = None,
+    model=None,
 ) -> tuple[torch.nn.Module, dict]:
     if task not in ("leaf", "puddle"):
         raise ValueError(f"unknown area task {task}")
@@ -539,7 +540,8 @@ def train_area(
             batch_size=batch_size,
             shuffle=False,
         )
-    model = build_g4_model(task)
+    if model is None:
+        model = build_g4_model(task)
     loss_fn = lambda outputs, targets, boundaries: area_loss(
         outputs, targets, boundaries
     )["total"]

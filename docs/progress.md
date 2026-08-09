@@ -116,6 +116,13 @@
   基线仍以 discovery recall=0、leaf IoU=0、puddle IoU≈0.22 严格失败；classifier
   四项验证指标均为 1.0，ONNX/D1–D5 基础门通过。现从零运行真正独立 P3/P4/P5、
   EMA warmup 和稀疏边界损失版本，不复用失败 checkpoint。
+- 真多尺度 A1 中间 checkpoint 已恢复 discovery recall=0.9583、AP50=0.9157，但固定
+  0.35 阈值仍产生约 3024 false candidates/min，严格保持失败。审计同时发现面积
+  selector 错把单任务 boundary F1 与空通道平均，导致 0.7 门理论不可达；现改为
+  任务通道指标，并加入只读 VAL 的预注册 discovery/classifier/area 阈值选择及
+  `selected_models_product_eligible` 硬门。双分支 ResNet18 leaf 仍仅 IoU=0.0725，
+  下一对照恢复 DeepLabV3-ResNet50 容量，但以保留 3-channel RGB stem、浅层 geometry
+  分支和 decoder-feature boundary head 修复旧架构合同漂移。
 
 ## 2026-08-09：AUTO-05R P0 可信基础落地（无新模型、无新门通过）
 

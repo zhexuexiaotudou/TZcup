@@ -47,6 +47,12 @@ from sanitation_learning.g4_data import (  # noqa: E402
     load_instance_records,
     load_scene_manifests,
 )
+from sanitation_learning.g4_calibration import (  # noqa: E402
+    AREA_THRESHOLD_GRID,
+    DISCOVERY_THRESHOLD_GRID,
+    select_area_threshold,
+    select_discovery_threshold,
+)
 from sanitation_learning.g4_evaluation import (  # noqa: E402
     area_metrics,
     area_predictions,
@@ -80,6 +86,7 @@ from sanitation_learning.g4_split_policy import (  # noqa: E402
     SEALED_FINAL_ROLE,
     partition_rows,
     screening_decision,
+    stratified_row_sample,
 )
 from sanitation_learning.g4_teacher import require_teacher_dataset_gate  # noqa: E402
 from sanitation_learning.g4_train import (  # noqa: E402
@@ -90,6 +97,9 @@ from sanitation_learning.g4_train import (  # noqa: E402
 
 
 SEED = 20260807
+CLASSIFIER_THRESHOLD_GRID = tuple(
+    round(value / 100.0, 2) for value in range(20, 96, 5)
+)
 P4_POLICY = (
     ROOT
     / "starter_ws"
@@ -104,11 +114,31 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _selected_validation_metrics(training_report: dict) -> dict:
+    """Return metrics for the state actually loaded after training."""
+    selection = training_report.get("selection") or {}
+    if selection.get("selected"):
+        return dict(selection.get("validation_metrics") or {})
+    diagnostic = selection.get("diagnostic_checkpoint") or {}
+    if diagnostic:
+        return dict(diagnostic.get("validation_metrics") or {})
+    return dict(selection.get("validation_metrics") or {})
+
+
+def _selection_product_eligible(training_report: dict) -> bool:
+    selection = training_report.get("selection") or {}
+    if selection.get("selected"):
+        return True
+    return bool(selection.get("product_eligible", False))
+
+
 def _load_reused_model(
     task: str,
     source_dir: Path,
     output_dir: Path,
     device: torch.device,
+    *,
+    area_architecture: str = "dual_resnet18",
 ) -> tuple[torch.nn.Module, dict]:
     source = source_dir / f"{task}.pt"
     if not source.is_file():
@@ -117,7 +147,9 @@ def _load_reused_model(
     state = checkpoint.get("state_dict")
     if not isinstance(state, dict) or not state:
         raise RuntimeError(f"reused {task} checkpoint has no selected state_dict")
-    model = build_g4_model(task).to(device)
+    model = build_g4_model(
+        task, area_architecture=area_architecture
+    ).to(device)
     model.load_state_dict(state, strict=True)
     model.eval()
     target = output_dir / source.name
@@ -210,7 +242,7 @@ def _evaluate_split(
     *,
     discovery_threshold: float,
     class_threshold: float,
-    area_threshold: float,
+    area_thresholds: tuple[float, float],
 ) -> dict:
     candidate_frames = discovery_predictions(
         discovery,
@@ -232,14 +264,14 @@ def _evaluate_split(
         leaf,
         rows,
         device=device,
-        thresholds=(area_threshold, area_threshold),
+        thresholds=area_thresholds,
         task="leaf",
     )
     puddle_preds = area_predictions(
         puddle,
         rows,
         device=device,
-        thresholds=(area_threshold, area_threshold),
+        thresholds=area_thresholds,
         task="puddle",
     )
     combined_area = []
@@ -328,11 +360,9 @@ def _same_color_specificity(frames: list[dict]) -> dict:
     }
 
 
-def _classifier_sample_metrics(model, samples: list[dict], device) -> dict:
-    """Macro F1, paper precision and specificity over classifier samples."""
-    confusion = {name: {"tp": 0, "fp": 0, "fn": 0} for name in ("background", *DISCRETE_NAMES)}
-    hard_negative_total = 0
-    hard_negative_misclassified = 0
+def _classifier_sample_scores(model, samples: list[dict], device) -> list[dict]:
+    """Infer classifier probabilities once for deterministic VAL calibration."""
+    records = []
     with torch.no_grad():
         for sample in samples:
             crop = load_classifier_crop(sample, CLASSIFIER_MODEL_SIZE)
@@ -343,16 +373,44 @@ def _classifier_sample_metrics(model, samples: list[dict], device) -> dict:
                 / 255.0
             ).to(device)
             logits = model(tensor)[0].cpu().numpy()
-            predicted = int(np.argmax(logits))
-            truth = int(sample["label"])
-            if predicted == truth:
-                confusion[("background", *DISCRETE_NAMES)[truth]]["tp"] += 1
-            else:
-                confusion[("background", *DISCRETE_NAMES)[predicted]]["fp"] += 1
-                confusion[("background", *DISCRETE_NAMES)[truth]]["fn"] += 1
-            if sample.get("hard_negative"):
-                hard_negative_total += 1
-                hard_negative_misclassified += int(predicted != 0)
+            probabilities = np.exp(logits - logits.max(keepdims=True))
+            probabilities /= probabilities.sum(keepdims=True)
+            records.append(
+                {
+                    "truth": int(sample["label"]),
+                    "hard_negative": bool(sample.get("hard_negative")),
+                    "probabilities": probabilities.tolist(),
+                }
+            )
+    return records
+
+
+def _classifier_metrics_from_scores(
+    records: list[dict], class_threshold: float
+) -> dict:
+    """Macro F1, paper precision and specificity at one operating point."""
+    confusion = {name: {"tp": 0, "fp": 0, "fn": 0} for name in ("background", *DISCRETE_NAMES)}
+    hard_negative_total = 0
+    hard_negative_misclassified = 0
+    names = ("background", *DISCRETE_NAMES)
+    for record in records:
+        probabilities = np.asarray(record["probabilities"], dtype=np.float64)
+        positive_class = int(np.argmax(probabilities[1:])) + 1
+        predicted = (
+            positive_class
+            if float(probabilities[positive_class]) >= class_threshold
+            and float(probabilities[positive_class]) > float(probabilities[0])
+            else 0
+        )
+        truth = int(record["truth"])
+        if predicted == truth:
+            confusion[names[truth]]["tp"] += 1
+        else:
+            confusion[names[predicted]]["fp"] += 1
+            confusion[names[truth]]["fn"] += 1
+        if record.get("hard_negative"):
+            hard_negative_total += 1
+            hard_negative_misclassified += int(predicted != 0)
     per_class = {}
     for name in ("background", *DISCRETE_NAMES):
         tp = confusion[name]["tp"]
@@ -382,12 +440,50 @@ def _classifier_sample_metrics(model, samples: list[dict], device) -> dict:
             if hard_negative_total
             else 0.0
         ),
-        "validation_sample_count": len(samples),
+        "validation_sample_count": len(records),
+    }
+
+
+def _select_classifier_threshold(records: list[dict]) -> dict:
+    sweep = []
+    for threshold in CLASSIFIER_THRESHOLD_GRID:
+        metrics = _classifier_metrics_from_scores(records, threshold)
+        paper_shortfall = max(
+            0.0, 0.80 - metrics["validation_paper_precision"]
+        ) / 0.80
+        background_shortfall = max(
+            0.0, 0.95 - metrics["validation_background_specificity"]
+        ) / 0.95
+        violation = paper_shortfall + background_shortfall
+        sweep.append(
+            {
+                "threshold": threshold,
+                "metrics": metrics,
+                "product_eligible": violation == 0.0,
+                "constraint_violation": violation,
+            }
+        )
+    selected = min(
+        sweep,
+        key=lambda item: (
+            not item["product_eligible"],
+            item["constraint_violation"],
+            -item["metrics"]["validation_macro_f1"],
+            -item["metrics"]["validation_paper_precision"],
+            -item["metrics"]["validation_background_specificity"],
+            -item["threshold"],
+        ),
+    )
+    return {
+        **selected,
+        "selection_split": "val",
+        "selection_rule": "precision_specificity_constraints_then_macro_f1",
+        "sweep": sweep,
     }
 
 
 def _discovery_validation_metric_fn(
-    rows, instances_by_key, device, threshold: float
+    rows, instances_by_key, device
 ):
     from sanitation_learning.g4_losses import discovery_loss
     from sanitation_learning.g4_train import _move_batch
@@ -408,10 +504,11 @@ def _discovery_validation_metric_fn(
             rows,
             instances_by_key,
             device=device,
-            threshold=threshold,
+            threshold=min(DISCOVERY_THRESHOLD_GRID),
             max_detections=100,
         )
-        candidate = discovery_metrics(frames)
+        operating_point = select_discovery_threshold(frames)
+        candidate = operating_point["metrics"]
         return {
             "validation_loss": total / max(steps, 1),
             "validation_all_gt_candidate_recall": candidate[
@@ -424,6 +521,10 @@ def _discovery_validation_metric_fn(
             ],
             "validation_negative_only_fp_per_frame": candidate[
                 "negative_only_fp_per_frame"
+            ],
+            "validation_discovery_threshold": operating_point["threshold"],
+            "validation_threshold_product_eligible": operating_point[
+                "product_eligible"
             ],
             "validation_frames": len(rows),
         }
@@ -446,18 +547,21 @@ def _classifier_validation_metric_fn(samples, device):
                     classifier_loss(model(inputs), targets[0]).detach().cpu()
                 )
                 steps += 1
-        metrics = _classifier_sample_metrics(model, samples, device)
+        scores = _classifier_sample_scores(model, samples, device)
+        operating_point = _select_classifier_threshold(scores)
         return {
             "validation_loss": total / max(steps, 1),
-            **metrics,
+            **operating_point["metrics"],
+            "validation_classifier_threshold": operating_point["threshold"],
+            "validation_threshold_product_eligible": operating_point[
+                "product_eligible"
+            ],
         }
 
     return metric_fn
 
 
-def _area_validation_metric_fn(
-    rows, device, task: str, area_threshold: float
-):
+def _area_validation_metric_fn(rows, device, task: str):
     def metric_fn(model, loader, device):
         from sanitation_learning.g4_losses import area_loss
         from sanitation_learning.g4_train import _move_batch
@@ -475,18 +579,23 @@ def _area_validation_metric_fn(
             model,
             rows,
             device=device,
-            thresholds=(area_threshold, area_threshold),
+            thresholds=(0.5, 0.5),
             task=task,
         )
-        metrics = area_metrics(predictions)
+        operating_point = select_area_threshold(predictions, task)
+        metrics = operating_point["metrics"]
         key = "leaf_pile" if task == "leaf" else "puddle"
         return {
             "validation_loss": total / max(steps, 1),
             "validation_iou": metrics["iou_by_class"][key],
             "validation_macro_miou": metrics["macro_miou"],
-            "validation_boundary_f1": metrics["boundary_f1"],
+            "validation_boundary_f1": metrics["boundary_f1_by_class"][key],
             "validation_negative_area_fp_per_frame": metrics[
                 "negative_area_fp_per_frame"
+            ],
+            "validation_area_threshold": operating_point["threshold"],
+            "validation_threshold_product_eligible": operating_point[
+                "product_eligible"
             ],
             "validation_frames": len(rows),
         }
@@ -505,7 +614,7 @@ def _stress_macro_f1(
     *,
     discovery_threshold: float,
     class_threshold: float,
-    area_threshold: float,
+    area_thresholds: tuple[float, float],
 ) -> float | None:
     from sanitation_learning.g4_evaluation import evaluate_pipeline
 
@@ -522,7 +631,7 @@ def _stress_macro_f1(
         device=device,
         discovery_threshold=discovery_threshold,
         class_threshold=class_threshold,
-        area_thresholds=(area_threshold, area_threshold),
+        area_thresholds=area_thresholds,
         stress_names=("grayscale", "hue_shift", "exposure"),
     )["stress"]["macro_f1"]
 
@@ -598,6 +707,7 @@ def main() -> int:
     parser.add_argument("--classifier-epochs", type=int, default=40)
     parser.add_argument("--area-epochs", type=int, default=40)
     parser.add_argument("--batch-size", type=int, default=8)
+    parser.add_argument("--area-batch-size", type=int, default=4)
     parser.add_argument("--learning-rate", type=float, default=5e-4)
     parser.add_argument("--max-train-frames", type=int, default=600)
     parser.add_argument("--max-eval-frames", type=int, default=0)
@@ -608,13 +718,30 @@ def main() -> int:
     parser.add_argument("--discovery-threshold", type=float, default=0.35)
     parser.add_argument("--class-threshold", type=float, default=0.35)
     parser.add_argument("--area-threshold", type=float, default=0.5)
+    parser.add_argument(
+        "--area-architecture",
+        choices=("dual_resnet18", "deeplab_resnet50"),
+        default="dual_resnet18",
+    )
     parser.add_argument("--holdout-fraction", type=float, default=0.2)
     parser.add_argument(
         "--reuse-model-dir",
         type=Path,
         help="reuse already-selected A1 checkpoints and rerun evaluation/export only",
     )
+    parser.add_argument(
+        "--reuse-discrete-model-dir",
+        type=Path,
+        help=(
+            "reuse discovery/classifier checkpoints while retraining an area "
+            "architecture candidate"
+        ),
+    )
     args = parser.parse_args()
+    if args.reuse_model_dir and args.reuse_discrete_model_dir:
+        raise ValueError(
+            "--reuse-model-dir and --reuse-discrete-model-dir are mutually exclusive"
+        )
 
     started = time.perf_counter()
     output = args.output
@@ -696,19 +823,19 @@ def main() -> int:
     )
 
     discovery_ckpt = output / "discovery.pt"
-    if args.reuse_model_dir:
-        previous_report_path = args.reuse_model_dir / "auto05r_screening_report.json"
+    selection_val_rows = stratified_row_sample(val_rows, 100, seed=SEED + 9)
+    reuse_discrete_source = (
+        args.reuse_model_dir or args.reuse_discrete_model_dir
+    )
+    if reuse_discrete_source:
+        previous_report_path = (
+            reuse_discrete_source / "auto05r_screening_report.json"
+        )
         previous_report = json.loads(previous_report_path.read_text(encoding="utf-8"))
         if previous_report.get("student_route", {}).get("dataset_qa_sha256") != dataset_qa["sha256"]:
             raise RuntimeError("reused checkpoints were selected on a different formal G4 QA")
-        if previous_report.get("thresholds") != {
-            "discovery": args.discovery_threshold,
-            "classifier": args.class_threshold,
-            "area": args.area_threshold,
-        }:
-            raise RuntimeError("reused checkpoint thresholds differ from this screening run")
         discovery, discovery_training = _load_reused_model(
-            "discovery", args.reuse_model_dir, output, device
+            "discovery", reuse_discrete_source, output, device
         )
     else:
         previous_report = None
@@ -720,16 +847,15 @@ def main() -> int:
             batch_size=args.batch_size,
             learning_rate=args.learning_rate,
             seed=SEED,
-            val_rows=holdout[:100],
+            val_rows=selection_val_rows,
             checkpoint_path=discovery_ckpt,
             early_stopping_patience=8,
             load_best=True,
             selector=discovery_selector(),
             validation_metric_fn=_discovery_validation_metric_fn(
-                holdout[:100],
+                selection_val_rows,
                 instances_by_key,
                 device,
-                threshold=args.discovery_threshold,
             ),
         )
 
@@ -743,7 +869,7 @@ def main() -> int:
         seed=SEED,
     )
     classifier_val_samples = build_classifier_samples(
-        holdout,
+        selection_val_rows,
         instances_by_key,
         positive_per_class=min(args.classifier_positives // 4, 50),
         background_per_positive=2,
@@ -752,9 +878,9 @@ def main() -> int:
         seed=SEED + 1,
     )
     classifier_ckpt = output / "classifier.pt"
-    if args.reuse_model_dir:
+    if reuse_discrete_source:
         classifier, classifier_training = _load_reused_model(
-            "classifier", args.reuse_model_dir, output, device
+            "classifier", reuse_discrete_source, output, device
         )
     else:
         classifier, classifier_training = train_classifier(
@@ -791,16 +917,16 @@ def main() -> int:
         args.area_negative_frames,
         SEED + 1,
     )
-    leaf_holdout = _select_area_rows(
-        holdout,
+    leaf_validation = _select_area_rows(
+        val_rows,
         instances_by_key,
         "leaf",
         args.area_positive_frames // 2,
         args.area_negative_frames // 2,
         SEED + 2,
     )
-    puddle_holdout = _select_area_rows(
-        holdout,
+    puddle_validation = _select_area_rows(
+        val_rows,
         instances_by_key,
         "puddle",
         args.area_positive_frames // 2,
@@ -809,10 +935,18 @@ def main() -> int:
     )
     if args.reuse_model_dir:
         leaf, leaf_training = _load_reused_model(
-            "leaf", args.reuse_model_dir, output, device
+            "leaf",
+            args.reuse_model_dir,
+            output,
+            device,
+            area_architecture=args.area_architecture,
         )
         puddle, puddle_training = _load_reused_model(
-            "puddle", args.reuse_model_dir, output, device
+            "puddle",
+            args.reuse_model_dir,
+            output,
+            device,
+            area_architecture=args.area_architecture,
         )
     else:
         leaf, leaf_training = train_area(
@@ -820,17 +954,20 @@ def main() -> int:
             leaf_rows,
             device=device,
             epochs=args.area_epochs,
-            batch_size=args.batch_size,
+            batch_size=args.area_batch_size,
             learning_rate=args.learning_rate,
             seed=SEED,
-            val_rows=leaf_holdout,
+            val_rows=leaf_validation,
             checkpoint_path=output / "leaf.pt",
             early_stopping_patience=8,
             load_best=True,
             cache_frames=True,
             selector=area_selector(),
             validation_metric_fn=_area_validation_metric_fn(
-                leaf_holdout, device, "leaf", args.area_threshold
+                leaf_validation, device, "leaf"
+            ),
+            model=build_g4_model(
+                "leaf", area_architecture=args.area_architecture
             ),
         )
         puddle, puddle_training = train_area(
@@ -838,19 +975,62 @@ def main() -> int:
             puddle_rows,
             device=device,
             epochs=args.area_epochs,
-            batch_size=args.batch_size,
+            batch_size=args.area_batch_size,
             learning_rate=args.learning_rate,
             seed=SEED + 1,
-            val_rows=puddle_holdout,
+            val_rows=puddle_validation,
             checkpoint_path=output / "puddle.pt",
             early_stopping_patience=8,
             load_best=True,
             cache_frames=True,
             selector=area_selector(),
             validation_metric_fn=_area_validation_metric_fn(
-                puddle_holdout, device, "puddle", args.area_threshold
+                puddle_validation, device, "puddle"
+            ),
+            model=build_g4_model(
+                "puddle", area_architecture=args.area_architecture
             ),
         )
+
+    discovery_selection_metrics = _selected_validation_metrics(
+        discovery_training
+    )
+    classifier_selection_metrics = _selected_validation_metrics(
+        classifier_training
+    )
+    leaf_selection_metrics = _selected_validation_metrics(leaf_training)
+    puddle_selection_metrics = _selected_validation_metrics(puddle_training)
+    discovery_threshold = float(
+        discovery_selection_metrics.get(
+            "validation_discovery_threshold", args.discovery_threshold
+        )
+    )
+    class_threshold = float(
+        classifier_selection_metrics.get(
+            "validation_classifier_threshold", args.class_threshold
+        )
+    )
+    area_thresholds = (
+        float(
+            leaf_selection_metrics.get(
+                "validation_area_threshold", args.area_threshold
+            )
+        ),
+        float(
+            puddle_selection_metrics.get(
+                "validation_area_threshold", args.area_threshold
+            )
+        ),
+    )
+    selected_models_product_eligible = all(
+        _selection_product_eligible(report)
+        for report in (
+            discovery_training,
+            classifier_training,
+            leaf_training,
+            puddle_training,
+        )
+    )
 
     in_domain = _evaluate_split(
         discovery,
@@ -860,9 +1040,9 @@ def main() -> int:
         holdout,
         instances_by_key,
         device,
-        discovery_threshold=args.discovery_threshold,
-        class_threshold=args.class_threshold,
-        area_threshold=args.area_threshold,
+        discovery_threshold=discovery_threshold,
+        class_threshold=class_threshold,
+        area_thresholds=area_thresholds,
     )
     cross_world = _evaluate_split(
         discovery,
@@ -872,9 +1052,9 @@ def main() -> int:
         val_rows,
         instances_by_key,
         device,
-        discovery_threshold=args.discovery_threshold,
-        class_threshold=args.class_threshold,
-        area_threshold=args.area_threshold,
+        discovery_threshold=discovery_threshold,
+        class_threshold=class_threshold,
+        area_thresholds=area_thresholds,
     )
     shift_reports = {
         role: _evaluate_split(
@@ -885,9 +1065,9 @@ def main() -> int:
             role_rows,
             instances_by_key,
             device,
-            discovery_threshold=args.discovery_threshold,
-            class_threshold=args.class_threshold,
-            area_threshold=args.area_threshold,
+            discovery_threshold=discovery_threshold,
+            class_threshold=class_threshold,
+            area_thresholds=area_thresholds,
         )
         for role, role_rows in shift_rows.items()
         if role_rows
@@ -898,8 +1078,8 @@ def main() -> int:
         val_rows,
         instances_by_key,
         device,
-        discovery_threshold=args.discovery_threshold,
-        class_threshold=args.class_threshold,
+        discovery_threshold=discovery_threshold,
+        class_threshold=class_threshold,
     )
     stress_holdout = _stress_macro_f1(
         discovery,
@@ -909,9 +1089,9 @@ def main() -> int:
         holdout,
         instances_by_key,
         device,
-        discovery_threshold=args.discovery_threshold,
-        class_threshold=args.class_threshold,
-        area_threshold=args.area_threshold,
+        discovery_threshold=discovery_threshold,
+        class_threshold=class_threshold,
+        area_thresholds=area_thresholds,
     )
     stress_val = _stress_macro_f1(
         discovery,
@@ -921,9 +1101,9 @@ def main() -> int:
         val_rows,
         instances_by_key,
         device,
-        discovery_threshold=args.discovery_threshold,
-        class_threshold=args.class_threshold,
-        area_threshold=args.area_threshold,
+        discovery_threshold=discovery_threshold,
+        class_threshold=class_threshold,
+        area_thresholds=area_thresholds,
     )
     stress_values = [
         value for value in (stress_holdout, stress_val) if value is not None
@@ -1064,6 +1244,7 @@ def main() -> int:
         ),
         "same_color_negative_specificity": same_color_value,
         "D1_D5_reports_complete": D1_D5_reports_complete,
+        "selected_models_product_eligible": selected_models_product_eligible,
         "onnx_task_specific_parity_pass": onnx_parity_pass,
         "onnx_custom_ops_zero": onnx_custom_ops_zero,
     }
@@ -1096,12 +1277,16 @@ def main() -> int:
             "dataset_qa_sha256": dataset_qa["sha256"],
             "architecture_attempt_limit": 3,
             "attempts_used": 1,
+            "area_architecture": args.area_architecture,
             "reused_selected_checkpoints_for_diagnostic_evaluation": bool(
                 args.reuse_model_dir
             ),
+            "reused_discrete_checkpoints_for_area_comparison": bool(
+                args.reuse_discrete_model_dir
+            ),
             "reuse_source_report_sha256": (
-                sha256(args.reuse_model_dir / "auto05r_screening_report.json")
-                if args.reuse_model_dir
+                sha256(reuse_discrete_source / "auto05r_screening_report.json")
+                if reuse_discrete_source
                 else None
             ),
         },
@@ -1153,6 +1338,7 @@ def main() -> int:
             "classifier": classifier_training.get("selection"),
             "leaf": leaf_training.get("selection"),
             "puddle": puddle_training.get("selection"),
+            "all_product_eligible": selected_models_product_eligible,
         },
         "training": {
             "discovery": discovery_training,
@@ -1163,9 +1349,20 @@ def main() -> int:
         "onnx": onnx,
         "onnx_task_specific_parity_pass": onnx_parity_pass,
         "thresholds": {
-            "discovery": args.discovery_threshold,
-            "classifier": args.class_threshold,
-            "area": args.area_threshold,
+            "discovery": discovery_threshold,
+            "classifier": class_threshold,
+            "area": {
+                "leaf": area_thresholds[0],
+                "puddle": area_thresholds[1],
+            },
+        },
+        "calibration": {
+            "selection_split": "val",
+            "sealed_final_read": False,
+            "discovery_threshold_grid": list(DISCOVERY_THRESHOLD_GRID),
+            "classifier_threshold_grid": list(CLASSIFIER_THRESHOLD_GRID),
+            "area_threshold_grid": list(AREA_THRESHOLD_GRID),
+            "selected_models_product_eligible": selected_models_product_eligible,
         },
         "policy": {
             "p4": str(P4_POLICY.relative_to(ROOT)),
