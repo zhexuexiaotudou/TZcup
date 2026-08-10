@@ -25,11 +25,13 @@ from sanitation_learning.g4_geometry import (  # noqa: E402
 )
 from sanitation_learning.g4_data import (  # noqa: E402
     DISCOVERY_MODEL_SIZE,
+    G4AreaDataset,
     G4DiscoveryDataset,
     encode_discovery_pyramid_targets,
     encode_teacher_quality_pyramid,
     load_frame_rows,
     load_instance_records,
+    _read_rgb_bgr,
 )
 
 
@@ -82,6 +84,55 @@ def test_discovery_dataset_does_not_read_unused_modalities(monkeypatch) -> None:
     assert tuple(targets["heatmap_s8"].shape) == (1, 60, 80)
     assert tuple(targets["heatmap_s16"].shape) == (1, 30, 40)
     assert calls == {"rgb": 1}
+
+
+def test_rgb_reader_retries_transient_bind_mount_failure(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from sanitation_learning import g4_data
+
+    expected = np.zeros((2, 3, 3), dtype=np.uint8)
+    attempts = iter((None, None, expected))
+    sleeps = []
+    monkeypatch.setattr(g4_data.cv2, "imread", lambda _path: next(attempts))
+    monkeypatch.setattr(g4_data.time, "sleep", sleeps.append)
+    assert _read_rgb_bgr("frame.png", attempts=3) is expected
+    assert sleeps == [0.05, 0.1]
+
+
+def test_area_cache_is_compressed_but_batches_remain_float32(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    pytest.importorskip("torch")
+    from sanitation_learning import g4_data
+
+    monkeypatch.setattr(
+        g4_data,
+        "read_frame",
+        lambda _row: (
+            np.zeros((8, 8, 3), dtype=np.uint8),
+            np.ones((8, 8), dtype=np.float32),
+            np.zeros((8, 8), dtype=np.uint8),
+            np.zeros((8, 8), dtype=np.uint16),
+        ),
+    )
+    monkeypatch.setattr(g4_data, "load_camera_info", lambda _row: {})
+    monkeypatch.setattr(
+        g4_data,
+        "build_area_input",
+        lambda *_args, **_kwargs: np.full((6, 7, 10), 0.25, dtype=np.float32),
+    )
+    dataset = G4AreaDataset(
+        [{"negative_only": True}], channel=0, cache_frames=True
+    )
+    inputs, targets, boundaries = dataset[0]
+    cached = dataset._frame_cache[0]
+    assert cached[0].dtype == np.float16
+    assert cached[1].dtype == np.uint8
+    assert cached[2].dtype == np.uint8
+    assert str(inputs.dtype) == "torch.float32"
+    assert str(targets.dtype) == "torch.float32"
+    assert str(boundaries.dtype) == "torch.float32"
 
 
 def _box(x1, y1, x2, y2):

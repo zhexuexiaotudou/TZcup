@@ -246,6 +246,10 @@ def fit_model(
 
     for epoch in range(1, epochs + 1):
         model.train()
+        if getattr(model, "force_batch_norm_eval", False):
+            for module in model.modules():
+                if isinstance(module, torch.nn.modules.batchnorm._BatchNorm):
+                    module.eval()
         losses: list[float] = []
         for batch in train_loader:
             inputs, targets = _move_batch(batch, device)

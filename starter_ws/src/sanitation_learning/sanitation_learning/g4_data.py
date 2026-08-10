@@ -11,6 +11,7 @@ import json
 import math
 from pathlib import Path
 import random
+import time
 from typing import Iterable
 
 import cv2
@@ -212,7 +213,7 @@ def load_scene_manifests(
 def read_frame(
     row: dict,
 ) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray]:
-    rgb = cv2.cvtColor(cv2.imread(str(row["rgb_path"])), cv2.COLOR_BGR2RGB)
+    rgb = cv2.cvtColor(_read_rgb_bgr(row["rgb_path"]), cv2.COLOR_BGR2RGB)
     depth = np.load(row["depth_path"], allow_pickle=False).astype(np.float32)
     semantic = np.load(row["semantic_path"], allow_pickle=False)
     instance = np.load(row["instance_path"], allow_pickle=False)
@@ -220,7 +221,21 @@ def read_frame(
 
 
 def read_rgb(row: dict) -> np.ndarray:
-    return cv2.cvtColor(cv2.imread(str(row["rgb_path"])), cv2.COLOR_BGR2RGB)
+    return cv2.cvtColor(_read_rgb_bgr(row["rgb_path"]), cv2.COLOR_BGR2RGB)
+
+
+def _read_rgb_bgr(path: str | Path, attempts: int = 3) -> np.ndarray:
+    """Fail closed after bounded retries for transient Windows bind reads."""
+    source = Path(path)
+    for attempt in range(attempts):
+        image = cv2.imread(str(source))
+        if image is not None:
+            return image
+        if attempt + 1 < attempts:
+            time.sleep(0.05 * (attempt + 1))
+    raise FileNotFoundError(
+        f"RGB frame could not be decoded after {attempts} attempts: {source}"
+    )
 
 
 def discrete_boxes_for_frame(
@@ -935,7 +950,14 @@ class G4AreaDataset:
                 targets = targets[self.channel : self.channel + 1]
                 boundaries = boundaries[self.channel : self.channel + 1]
             if self.cache_frames:
-                self._frame_cache[index] = (inputs, targets, boundaries)
+                # CUDA training consumes these inputs under float16 autocast;
+                # cache the same precision and exact binary masks so a full
+                # TRAIN-only Area pool fits within the Docker memory budget.
+                self._frame_cache[index] = (
+                    inputs.astype(np.float16),
+                    targets.astype(np.uint8),
+                    boundaries.astype(np.uint8),
+                )
         rng = random.Random(self.seed + index * 1009 + self.epoch * 7919)
         flip = self.augment and rng.random() < 0.5
         if flip:
@@ -947,8 +969,12 @@ class G4AreaDataset:
         )
         return (
             tensor,
-            torch.from_numpy(targets),
-            torch.from_numpy(boundaries),
+            torch.from_numpy(
+                np.ascontiguousarray(targets, dtype=np.float32)
+            ),
+            torch.from_numpy(
+                np.ascontiguousarray(boundaries, dtype=np.float32)
+            ),
         )
 
 

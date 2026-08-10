@@ -387,6 +387,80 @@ def _load_reused_model(
     }
 
 
+def _freeze_area_backbone(model: torch.nn.Module) -> dict:
+    frozen = []
+    trainable = []
+    for name, parameter in model.named_parameters():
+        if name.startswith(("deeplab.backbone.", "geometry_stem.")):
+            parameter.requires_grad_(False)
+            frozen.append(name)
+        else:
+            trainable.append(name)
+    if not frozen or not trainable:
+        raise RuntimeError(
+            "area backbone freeze requires both frozen backbone and trainable decoder parameters"
+        )
+    batch_norm_modules = 0
+    for module in model.modules():
+        if isinstance(module, torch.nn.modules.batchnorm._BatchNorm):
+            module.eval()
+            batch_norm_modules += 1
+            for parameter in module.parameters():
+                parameter.requires_grad_(False)
+    model.force_batch_norm_eval = True
+    return {
+        "frozen_parameter_tensors": len(frozen),
+        "trainable_parameter_tensors": len(trainable),
+        "frozen_prefixes": ["deeplab.backbone", "geometry_stem"],
+        "frozen_batch_norm_modules": batch_norm_modules,
+    }
+
+
+def _warm_start_area_model(
+    task: str,
+    source_dir: Path,
+    *,
+    area_architecture: str,
+    freeze_backbone: bool,
+) -> tuple[torch.nn.Module, dict]:
+    source = source_dir / f"{task}.pt"
+    if not source.is_file():
+        raise FileNotFoundError(f"area warm-start checkpoint is missing: {source}")
+    checkpoint = torch.load(source, map_location="cpu", weights_only=False)
+    if checkpoint.get("checkpoint_status") != "training_complete":
+        raise RuntimeError(
+            f"area warm-start {task} checkpoint is not marked training_complete"
+        )
+    model = build_g4_model(task, area_architecture=area_architecture)
+    expected_contract = {
+        "model_id": getattr(model, "model_id", None),
+        "architecture_role": getattr(model, "architecture_role", None),
+        "discovery_architecture": getattr(
+            model, "discovery_architecture", None
+        ),
+    }
+    checkpoint_contract = checkpoint.get("model_contract")
+    if checkpoint_contract is not None and checkpoint_contract != expected_contract:
+        raise RuntimeError(
+            f"area warm-start {task} model contract mismatch: "
+            f"expected {expected_contract}, got {checkpoint_contract}"
+        )
+    state = checkpoint.get("state_dict")
+    if not isinstance(state, dict) or not state:
+        raise RuntimeError(
+            f"area warm-start {task} checkpoint has no selected state_dict"
+        )
+    model.load_state_dict(state, strict=True)
+    freeze = _freeze_area_backbone(model) if freeze_backbone else None
+    return model, {
+        "source": str(source),
+        "source_sha256": sha256(source),
+        "checkpoint_status": checkpoint.get("checkpoint_status"),
+        "model_contract": checkpoint_contract,
+        "freeze": freeze,
+    }
+
+
 def _holdout_rows(rows: list[dict], fraction: float = 0.2) -> list[dict]:
     """Deterministic per-(world, scene) train-world holdout selection."""
     if not 0.0 < fraction < 1.0:
@@ -455,16 +529,66 @@ def _tag_rows_with_scene_metadata(
         updated["paper_like_hard_negative"] = bool(
             scene.get("paper_like_hard_negative_count", 0) > 0
         )
-        taxonomies = sorted(
-            {
-                str(item.get("taxonomy"))
-                for item in scene.get("objects", [])
-                if item.get("taxonomy") and not item.get("semantic_label")
-            }
-        )
-        updated["taxonomies"] = taxonomies
+        taxonomies = {
+            str(item.get("taxonomy"))
+            for item in scene.get("objects", [])
+            if item.get("taxonomy") and not item.get("semantic_label")
+        }
+        ground = scene.get("ground_material_executed_by_world")
+        lighting = scene.get("lighting_executed_by_world")
+        if ground:
+            taxonomies.add(f"ground:{ground}")
+        if lighting:
+            taxonomies.add(f"lighting:{lighting}")
+        updated["taxonomies"] = sorted(taxonomies)
         tagged.append(updated)
     return tagged
+
+
+def _taxonomy_balanced_negative_sample(
+    rows: list[dict], limit: int, seed: int
+) -> list[dict]:
+    """Deterministically cover negative taxonomy before stratified fill."""
+    if limit <= 0:
+        return []
+    rng = random.Random(seed)
+    buckets: dict[str, list[dict]] = {}
+    for row in rows:
+        for taxonomy in row.get("taxonomies", ()) or ("unclassified",):
+            buckets.setdefault(str(taxonomy), []).append(row)
+    for bucket in buckets.values():
+        rng.shuffle(bucket)
+
+    selected: list[dict] = []
+    selected_keys: set[tuple[str, int, int]] = set()
+    while len(selected) < limit:
+        added = False
+        for taxonomy in sorted(buckets):
+            bucket = buckets[taxonomy]
+            while bucket and _row_identity(bucket[-1]) in selected_keys:
+                bucket.pop()
+            if not bucket:
+                continue
+            row = bucket.pop()
+            key = _row_identity(row)
+            selected.append(row)
+            selected_keys.add(key)
+            added = True
+            if len(selected) >= limit:
+                break
+        if not added:
+            break
+
+    if len(selected) < limit:
+        remaining = [
+            row for row in rows if _row_identity(row) not in selected_keys
+        ]
+        selected.extend(
+            stratified_row_sample(
+                remaining, limit - len(selected), seed=seed + 1
+            )
+        )
+    return selected
 
 
 def _select_area_rows(
@@ -489,8 +613,9 @@ def _select_area_rows(
             positives.append(row)
     rng = random.Random(seed)
     rng.shuffle(positives)
-    rng.shuffle(negatives)
-    return positives[:positive_limit] + negatives[:negative_limit]
+    return positives[:positive_limit] + _taxonomy_balanced_negative_sample(
+        negatives, negative_limit, seed + 1
+    )
 
 
 def _evaluate_split(
@@ -1000,6 +1125,11 @@ def main() -> int:
     parser.add_argument("--area-epochs", type=int, default=40)
     parser.add_argument("--batch-size", type=int, default=8)
     parser.add_argument("--area-batch-size", type=int, default=4)
+    parser.add_argument(
+        "--disable-area-frame-cache",
+        action="store_true",
+        help="reread Area frames each epoch to bound memory for full TRAIN pools",
+    )
     parser.add_argument("--learning-rate", type=float, default=5e-4)
     parser.add_argument("--max-train-frames", type=int, default=600)
     parser.add_argument("--max-eval-frames", type=int, default=0)
@@ -1023,6 +1153,16 @@ def main() -> int:
         "--area-architecture",
         choices=("dual_resnet18", "deeplab_resnet50"),
         default="dual_resnet18",
+    )
+    parser.add_argument(
+        "--area-warm-start-dir",
+        type=Path,
+        help="initialize fresh area training from completed leaf/puddle checkpoints",
+    )
+    parser.add_argument(
+        "--area-freeze-backbone",
+        action="store_true",
+        help="freeze the warm-start DeepLab backbone and train decoder/boundary heads",
     )
     parser.add_argument("--holdout-fraction", type=float, default=0.2)
     parser.add_argument(
@@ -1066,6 +1206,8 @@ def main() -> int:
         raise ValueError(
             "model reuse/recovery options are mutually exclusive"
         )
+    if args.area_freeze_backbone and not args.area_warm_start_dir:
+        raise ValueError("--area-freeze-backbone requires --area-warm-start-dir")
 
     started = time.perf_counter()
     output = args.output
@@ -1175,9 +1317,18 @@ def main() -> int:
 
     discovery_ckpt = output / "discovery.pt"
     selection_val_rows = stratified_row_sample(val_rows, 100, seed=SEED + 9)
+    reuse_discrete_source = (
+        args.reuse_model_dir
+        or args.reuse_discrete_model_dir
+        or args.recover_unreported_model_dir
+    )
     teacher_detections_by_key = None
     distillation_summary = None
-    if args.discovery_architecture == "teacher_distilled_mobilenetv3_fpn_a3":
+    if (
+        not reuse_discrete_source
+        and args.discovery_architecture
+        == "teacher_distilled_mobilenetv3_fpn_a3"
+    ):
         teacher_detections_by_key, distillation_summary = (
             _prepare_a3_distillation_targets(
                 teacher_report=teacher_report,
@@ -1188,11 +1339,6 @@ def main() -> int:
                 output=output,
             )
         )
-    reuse_discrete_source = (
-        args.reuse_model_dir
-        or args.reuse_discrete_model_dir
-        or args.recover_unreported_model_dir
-    )
     if reuse_discrete_source:
         previous_report_path = reuse_discrete_source / "auto05r_screening_report.json"
         if args.recover_unreported_model_dir:
@@ -1302,8 +1448,11 @@ def main() -> int:
             ),
         )
 
+    # Area recovery uses the full TRAIN-only pool, independently of the
+    # discovery frame budget.  This prevents rare wet/reflection/shadow/paint
+    # negatives from being discarded by discrete-object sampling.
     leaf_rows = _select_area_rows(
-        train_rows,
+        eligible_train_rows,
         instances_by_key,
         "leaf",
         args.area_positive_frames,
@@ -1311,7 +1460,7 @@ def main() -> int:
         SEED,
     )
     puddle_rows = _select_area_rows(
-        train_rows,
+        eligible_train_rows,
         instances_by_key,
         "puddle",
         args.area_positive_frames,
@@ -1365,6 +1514,26 @@ def main() -> int:
             ),
         )
     else:
+        area_warm_start = {}
+        leaf_model = build_g4_model(
+            "leaf", area_architecture=args.area_architecture
+        )
+        puddle_model = build_g4_model(
+            "puddle", area_architecture=args.area_architecture
+        )
+        if args.area_warm_start_dir:
+            leaf_model, area_warm_start["leaf"] = _warm_start_area_model(
+                "leaf",
+                args.area_warm_start_dir,
+                area_architecture=args.area_architecture,
+                freeze_backbone=args.area_freeze_backbone,
+            )
+            puddle_model, area_warm_start["puddle"] = _warm_start_area_model(
+                "puddle",
+                args.area_warm_start_dir,
+                area_architecture=args.area_architecture,
+                freeze_backbone=args.area_freeze_backbone,
+            )
         leaf, leaf_training = train_area(
             "leaf",
             leaf_rows,
@@ -1377,15 +1546,16 @@ def main() -> int:
             checkpoint_path=output / "leaf.pt",
             early_stopping_patience=8,
             load_best=True,
-            cache_frames=True,
+            cache_frames=not args.disable_area_frame_cache,
             selector=area_selector(),
             validation_metric_fn=_area_validation_metric_fn(
                 leaf_validation, device, "leaf"
             ),
-            model=build_g4_model(
-                "leaf", area_architecture=args.area_architecture
-            ),
+            model=leaf_model,
         )
+        if args.area_freeze_backbone and device.type == "cuda":
+            leaf.to("cpu")
+            torch.cuda.empty_cache()
         puddle, puddle_training = train_area(
             "puddle",
             puddle_rows,
@@ -1398,15 +1568,15 @@ def main() -> int:
             checkpoint_path=output / "puddle.pt",
             early_stopping_patience=8,
             load_best=True,
-            cache_frames=True,
+            cache_frames=not args.disable_area_frame_cache,
             selector=area_selector(),
             validation_metric_fn=_area_validation_metric_fn(
                 puddle_validation, device, "puddle"
             ),
-            model=build_g4_model(
-                "puddle", area_architecture=args.area_architecture
-            ),
+            model=puddle_model,
         )
+        if args.area_freeze_backbone and device.type == "cuda":
+            leaf.to(device)
 
     discovery_selection_metrics = _selected_validation_metrics(
         discovery_training
@@ -1745,6 +1915,13 @@ def main() -> int:
             "discovery_architecture": args.discovery_architecture,
             "distillation": distillation_summary,
             "area_architecture": args.area_architecture,
+            "area_recovery": {
+                "taxonomy_balanced_negative_sampling": True,
+                "full_train_only_pool": True,
+                "warm_start": area_warm_start if not area_reuse_source else {},
+                "backbone_frozen": bool(args.area_freeze_backbone),
+                "frame_cache_enabled": not args.disable_area_frame_cache,
+            },
             "reused_selected_checkpoints_for_diagnostic_evaluation": bool(
                 args.reuse_model_dir
             ),

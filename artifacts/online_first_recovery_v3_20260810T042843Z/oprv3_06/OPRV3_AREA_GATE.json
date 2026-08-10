@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "protocol": "OPRV3-06",
+  "thresholds": {
+    "leaf_iou": 0.8,
+    "puddle_iou": 0.8,
+    "macro_miou": 0.8,
+    "boundary_f1": 0.75,
+    "negative_area_fp_per_frame": 0.05
+  },
+  "models": {
+    "leaf": {
+      "checkpoint_status": "training_complete",
+      "model_contract": {
+        "architecture_role": "deeplab_resnet50_rgb_preserved_shallow_geometry",
+        "discovery_architecture": null,
+        "model_id": "g4_leaf_segmenter_deeplab_v1"
+      },
+      "path": "/runtime/oprv3-area-recovery-v10/leaf.pt",
+      "sha256": "6037e400bc6386ba3c2f648f387cae5698d1597506a1799b0f8f05d4bac8e13e"
+    },
+    "puddle": {
+      "checkpoint_status": "training_complete",
+      "model_contract": {
+        "architecture_role": "deeplab_resnet50_rgb_preserved_shallow_geometry",
+        "discovery_architecture": null,
+        "model_id": "g4_puddle_segmenter_deeplab_v1"
+      },
+      "path": "/runtime/oprv3-area-recovery-v10/puddle.pt",
+      "sha256": "bc4f4b0217a2f19a97b12a6a23ec6750aa97b2ba16cb4e6bfc23f4d7395a6b96"
+    }
+  },
+  "selected_config": {
+    "by_class": {
+      "leaf_pile": {
+        "boundary_f1": 0.7038122392945774,
+        "development_target_pass": false,
+        "iou": 0.9118952952882093,
+        "morphology": "open_close3",
+        "negative_area_fp_per_frame": 0.0,
+        "threshold": 0.9
+      },
+      "puddle": {
+        "boundary_f1": 0.7274665702927359,
+        "development_target_pass": false,
+        "iou": 0.9669153104211964,
+        "morphology": "open_close3",
+        "negative_area_fp_per_frame": 0.0,
+        "threshold": 0.9
+      }
+    },
+    "morphologies": [
+      "open_close3",
+      "open_close3"
+    ],
+    "thresholds": [
+      0.9,
+      0.9
+    ]
+  },
+  "split_metrics": {
+    "VAL": {
+      "iou_by_class": {
+        "leaf_pile": 0.9118952952882093,
+        "puddle": 0.9669153104211964
+      },
+      "boundary_f1": 0.7156394047936566,
+      "negative_area_fp_per_frame": 0.0
+    },
+    "D1": {
+      "iou_by_class": {
+        "leaf_pile": 0.9206455629519659,
+        "puddle": 0.964419640499287
+      },
+      "boundary_f1": 0.7290472109869822,
+      "negative_area_fp_per_frame": 0.0
+    },
+    "D2": {
+      "iou_by_class": {
+        "leaf_pile": 0.9653036943633757,
+        "puddle": 0.9758608889079009
+      },
+      "boundary_f1": 0.7913429069496707,
+      "negative_area_fp_per_frame": 0.0
+    },
+    "D3": {
+      "iou_by_class": {
+        "leaf_pile": 0.9022644765815628,
+        "puddle": 0.9568897816469808
+      },
+      "boundary_f1": 0.7532003732183188,
+      "negative_area_fp_per_frame": 0.13333333333333333
+    },
+    "D4": {
+      "iou_by_class": {
+        "leaf_pile": 0.9454128388276308,
+        "puddle": 0.6347175697979707
+      },
+      "boundary_f1": 0.5156538575001706,
+      "negative_area_fp_per_frame": 0.5
+    },
+    "D5": {
+      "iou_by_class": {
+        "leaf_pile": 0.0,
+        "puddle": 0.0
+      },
+      "boundary_f1": 0.0,
+      "negative_area_fp_per_frame": 0.0
+    }
+  },
+  "cross_world_aggregate": {
+    "area": {
+      "iou_by_class": {
+        "leaf_pile": 0.9224392373004099,
+        "puddle": 0.9201181145419416
+      },
+      "macro_miou": 0.9212786759211757,
+      "boundary_f1_by_class": {
+        "leaf_pile": 0.7176199640344512,
+        "puddle": 0.6883894143624559
+      },
+      "boundary_f1": 0.7030046891984536,
+      "negative_only_frames": 390,
+      "negative_only_fp_frames": 19,
+      "negative_area_fp_per_frame": 0.04871794871794872,
+      "pixel_totals": {
+        "intersection": [
+          942589,
+          1892982
+        ],
+        "union": [
+          1021844,
+          2057325
+        ],
+        "boundary_intersection": [
+          56866,
+          104439
+        ],
+        "boundary_union": [
+          101619,
+          198991
+        ],
+        "negative_frames": 390,
+        "negative_fp_frames": 19
+      }
+    }
+  },
+  "gates": {
+    "leaf_iou": true,
+    "puddle_iou": true,
+    "macro_miou": true,
+    "boundary_f1": false,
+    "negative_area_fp_per_frame": true
+  },
+  "OPRV3_06_AREA_PASS": false,
+  "G5_SEALED_FINAL_read": false,
+  "legacy_G4_D6_read": false,
+  "input": {
+    "path": "F:/Project/TZcup/.workspace/artifacts/TZcup-perception-product-runtime/oprv3-area-audit-v10/AREA_BOUNDARY_AUDIT.json",
+    "sha256": "fd99669abc0640760bb645891a0b0a2237bcd0b46ccbbbf200d7bff5d687160a"
+  }
+}

@@ -60,6 +60,80 @@ def test_small_object_sampling_is_deterministic_when_over_capacity() -> None:
     ]
 
 
+def test_area_negative_sampling_covers_taxonomy_before_repeat() -> None:
+    screening = _load_screening()
+    rows = []
+    for index, taxonomy in enumerate(
+        ("wet_non_puddle", "reflection", "shadow_edge", "road_paint")
+    ):
+        for repeat in range(3):
+            row = _row(index * 10 + repeat, world=f"world_{index}")
+            row["negative_only"] = True
+            row["taxonomies"] = [taxonomy]
+            rows.append(row)
+    selected = screening._taxonomy_balanced_negative_sample(rows, 4, seed=31)
+    assert {row["taxonomies"][0] for row in selected} == {
+        "wet_non_puddle",
+        "reflection",
+        "shadow_edge",
+        "road_paint",
+    }
+    assert len({screening._row_identity(row) for row in selected}) == 4
+
+
+def test_scene_metadata_adds_ground_and_lighting_taxonomy() -> None:
+    screening = _load_screening()
+    row = _row(0)
+    tagged = screening._tag_rows_with_scene_metadata(
+        [row],
+        {
+            0: {
+                "objects": [
+                    {"taxonomy": "reflection", "semantic_label": 0}
+                ],
+                "ground_material_executed_by_world": "wet_dark_asphalt",
+                "lighting_executed_by_world": "low_sun_glare",
+            }
+        },
+    )[0]
+    assert tagged["taxonomies"] == [
+        "ground:wet_dark_asphalt",
+        "lighting:low_sun_glare",
+        "reflection",
+    ]
+
+
+def test_area_backbone_freeze_keeps_decoder_and_boundary_trainable() -> None:
+    screening = _load_screening()
+
+    class FakeArea(screening.torch.nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.deeplab = screening.torch.nn.Module()
+            self.deeplab.backbone = screening.torch.nn.Linear(2, 2)
+            self.deeplab.classifier = screening.torch.nn.Sequential(
+                screening.torch.nn.Linear(2, 2),
+                screening.torch.nn.BatchNorm1d(2),
+                screening.torch.nn.Linear(2, 1),
+            )
+            self.geometry_stem = screening.torch.nn.Linear(2, 2)
+            self.boundary_head = screening.torch.nn.Linear(2, 1)
+
+    model = FakeArea()
+    report = screening._freeze_area_backbone(model)
+    states = {name: value.requires_grad for name, value in model.named_parameters()}
+    assert not states["deeplab.backbone.weight"]
+    assert not states["geometry_stem.weight"]
+    assert states["deeplab.classifier.0.weight"]
+    assert not states["deeplab.classifier.1.weight"]
+    assert states["deeplab.classifier.2.weight"]
+    assert states["boundary_head.weight"]
+    assert report["frozen_parameter_tensors"] == 4
+    assert report["trainable_parameter_tensors"] == 8
+    assert report["frozen_batch_norm_modules"] == 1
+    assert model.force_batch_norm_eval
+
+
 def _write_qualified_reuse_fixture(
     source_dir: Path,
     *,

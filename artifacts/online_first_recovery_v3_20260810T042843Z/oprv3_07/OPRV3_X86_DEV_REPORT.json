@@ -78,18 +78,18 @@
     },
     "area": {
       "metrics": {
-        "leaf_iou": 0.9117944240242805,
-        "puddle_iou": 0.7221597454054084,
-        "macro_miou": 0.8169770847148444,
-        "boundary_f1": 0.6388099646695118,
-        "negative_area_fp_per_frame": 0.13043478260869565
+        "leaf_iou": 0.9224392373004099,
+        "puddle_iou": 0.9201181145419416,
+        "macro_miou": 0.9212786759211757,
+        "boundary_f1": 0.7030046891984536,
+        "negative_area_fp_per_frame": 0.04871794871794872
       },
       "gates": {
         "leaf_iou": true,
-        "puddle_iou": false,
+        "puddle_iou": true,
         "macro_miou": true,
         "boundary_f1": false,
-        "negative_area_fp_per_frame": false
+        "negative_area_fp_per_frame": true
       },
       "pass": false
     },
@@ -127,8 +127,8 @@
       "sha256": "186c2210ea1185aca1c5263f9571d9cae8f56e961273cb1ca7f97178e4a6a54c"
     },
     "area_static": {
-      "path": "artifacts/model_recovery_v2_20260810T004459Z/mrv2_a/MRV2_A_R960_FULL_STATIC.json",
-      "sha256": "b5f379fc82bf8a2f6831e1547d0d39332b1d21e07fca100951f28bced30d4ec2"
+      "path": "artifacts/online_first_recovery_v3_20260810T042843Z/oprv3_06/OPRV3_AREA_GATE.json",
+      "sha256": "9fc308b20c344aba29794fe775cc4639c155d250ca3e7dd31ab9da7ca921e49a"
     }
   }
 }

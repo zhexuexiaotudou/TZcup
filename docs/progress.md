@@ -1,5 +1,13 @@
 # 项目推进记录
 
+## 2026-08-11：OPRV3-06 有界 Area 恢复与固定门审计
+
+- Area 恢复改用完整 TRAIN-only 池、taxonomy/ground/lighting 均衡负样本、completed-checkpoint warm start、冻结 DeepLab backbone/geometry stem/BatchNorm 和压缩帧缓存；离散检测器保持冻结复用，G5 sealed final 与 legacy D6 均未读取。
+- 正式 v10 完成 leaf/puddle 各 12 epoch，选择 leaf epoch 12 与 puddle epoch 11；leaf/puddle ONNX 的 binary/boundary mask parity 均为 `1.0`，custom op 为 0。训练前 v1-v9 的依赖、显存、并发 CUDA、BatchNorm、缓存与 bind 失败均作为失败尝试保留，不计入门通过。
+- 独立 Area-only 审计只在 VAL 选择 `0.9 + open_close3`，再固定评估 VAL/D1-D5。像素总量聚合得到 leaf/puddle/macro IoU `0.922439/0.920118/0.921279`，negative-area FP/frame `19/390=0.048718`，均通过；boundary F1 `0.703005 < 0.75` 是唯一 OPRV3-06 失败项。
+- 退化主要集中于 D4：puddle IoU `0.634718`、boundary F1 `0.515654`、negative-area FP/frame `0.5`。不通过继续相同训练或在 D1-D5 上调参绕过；下一恢复必须针对 D4 的 wet/reflection/background 边界数据与损失设计，并重新走开发审计。
+- OPRV3-06 紧凑证据为 `artifacts/online_first_recovery_v3_20260810T042843Z/oprv3_06/OPRV3_AREA_GATE.json`；重算 OPRV3-07 后 `OPRV3_X86_DEV_PASS=false`、`MODEL_BLOCKED_INTERNAL=true`，Map/Track、两项错误行为和正式流水线性能仍为空。freeze、30-seed、Spot Cleaning、soak、J6、field 与 release 均未启动。
+
 ## 2026-08-10：OPRV3-00/01 门槛溯源、事件语义与解析几何
 
 - 在独立 `codex/oprv3-online-first-recovery` worktree 启动 OPRV3；X1/X3、Grounding DINO、MRV2-A/B/C 的静态失败以及 `MODEL_BLOCKED_INTERNAL=true` 原样保留，未读取 G5/legacy D6，也未创建 freeze。

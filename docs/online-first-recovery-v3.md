@@ -54,4 +54,12 @@ MRV2-A 是当前前向开发候选：核心 eventual recall/class 与错误率�
 
 `scripts/perception_oprv3_product_dev_gate.py` 以 fail-closed 方式合并 moving 核心与既有 MRV2-A 跨世界 Area 全量证据；没有正式产物的指标一律为 `null/false`，不由 smoke 或公式推导代替。对象级在线发现五项门全部通过：eventual detection/classification、small、metal-can 与 paper recall 均为 `1.0`。可行动目标 precision 为 `0.9919`、错误可行动率为 `0.00809`、GT 控制违规为 0，但“错误分类是否导致错误清扫动作”和“入视野前是否建图”尚无独立证据，故行为段仍失败。
 
-Area 段直接使用未读取 G5/D6 的 MRV2-A 固定跨世界结果：leaf IoU `0.9118` 与 macro mIoU `0.8170` 通过，puddle IoU `0.7222 < 0.80`、boundary F1 `0.6388 < 0.75`、negative-area FP/frame `0.1304 > 0.05` 失败。当前 moving observations 尚未经过产品 `DynamicTrashMap` evaluator，且没有正式端到端吞吐/延迟/drop profile，因此 Map/Track 与性能段也失败。报告位于 `artifacts/online_first_recovery_v3_20260810T042843Z/oprv3_07/OPRV3_X86_DEV_REPORT.json`；结论为 `OPRV3_X86_DEV_PASS=false`、`MODEL_BLOCKED_INTERNAL=true`，下一阶段严格路由到 OPRV3-06 Area 恢复，仍不允许 freeze、sealed final、30-seed 或后续产品门。
+首次 Area 段直接使用未读取 G5/D6 的 MRV2-A 固定跨世界结果：leaf IoU `0.9118` 与 macro mIoU `0.8170` 通过，puddle IoU `0.7222 < 0.80`、boundary F1 `0.6388 < 0.75`、negative-area FP/frame `0.1304 > 0.05` 失败，因此严格路由到 OPRV3-06 Area 恢复。
+
+## OPRV3-06 有界 Area 恢复与固定审计
+
+恢复实现保持离散检测器不变，只训练 Area 分支：Area 训练改用 scene holdout 后完整 TRAIN 池，负样本先按对象 taxonomy、ground 与 lighting 做确定性均衡，再分层补足；从既有 `training_complete` DeepLab checkpoint warm start，冻结 backbone、geometry stem 与 BatchNorm，只更新 decoder/semantic/boundary heads。压缩帧缓存以 `float16` RGB 和 `uint8` target/boundary 保存并在 batch 边界恢复 `float32`，降低全量训练内存；RGB 读取仅允许三次有界重试，错误仍 fail-closed。正式 v10 在 RTX 4080 上按预设 12 epoch 完成，leaf 选择 epoch 12、puddle 选择 epoch 11，四个 ONNX 均通过 task-specific parity 且 custom op 为 0。此前 v1-v9 的依赖缺失、OOM、并发 CUDA、BatchNorm、小内存与慢 bind 尝试均保留在仓库外任务证据目录，不冒充成功训练。
+
+`scripts/perception_mrv2_audit.py --area-only` 只在 VAL 扫描阈值/形态学，锁定 leaf/puddle `0.9 + open_close3` 后原样评估 VAL 与 D1-D5；G5 sealed final 和 legacy D6 均未读取。`scripts/perception_oprv3_area_gate.py` 再按像素交并总量聚合，结果为 leaf IoU `0.922439`、puddle IoU `0.920118`、macro mIoU `0.921279`、negative-area FP/frame `19/390=0.048718`，四项通过；boundary F1 为 `0.703005 < 0.75`，唯一硬失败。D4 是主要残差：puddle IoU `0.634718`、boundary F1 `0.515654`、negative-area FP/frame `0.5`；继续同分布 epoch 或在 D1-D5 上调参不构成合法恢复。
+
+紧凑固定门证据位于 `artifacts/online_first_recovery_v3_20260810T042843Z/oprv3_06/OPRV3_AREA_GATE.json`，完整审计与模型/ONNX 保留在仓库外 `F:\Project\TZcup\.workspace\artifacts\TZcup-perception-product-runtime\oprv3-area-audit-v10\` 与 `oprv3-area-recovery-v10\`。重算后的 `artifacts/online_first_recovery_v3_20260810T042843Z/oprv3_07/OPRV3_X86_DEV_REPORT.json` 仍为 `OPRV3_X86_DEV_PASS=false`、`MODEL_BLOCKED_INTERNAL=true`；当前 moving observations 尚未经过产品 `DynamicTrashMap` evaluator，也没有正式端到端吞吐/延迟/drop profile。OPRV3-06 未通过，所以不越级创建 freeze、不读取 sealed final、不启动 30-seed、Spot Cleaning、soak、J6 或现场门。
