@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "protocol": "ONLINE-FIRST-PRODUCT-RECOVERY-V3",
+  "stage": "OPRV3-00",
+  "source_commit": "82eae986c7f71c46fb92185e44b737d8e272a1d0",
+  "historical_truth_immutable": true,
+  "historical_routes": {
+    "X1": "FAILED_STATIC_FULL_PIPELINE",
+    "X2": "HISTORICALLY_NETWORK_BLOCKED_THEN_GROUNDING_DINO_REFERENCE_FAILED",
+    "X3": "FAILED_STATIC_FULL_PIPELINE",
+    "MRV2_A": "FAILED_STATIC_FULL_PIPELINE",
+    "MRV2_B": "FAILED_STATIC_FULL_PIPELINE",
+    "MRV2_C": "FAILED_STATIC_FULL_PIPELINE"
+  },
+  "historical_status": {
+    "MRV2_X86_STATIC_PASS": false,
+    "MODEL_BLOCKED_INTERNAL": true,
+    "MODEL_FREEZE_X86_created": false,
+    "G5_SEALED_FINAL_read": false,
+    "legacy_G4_D6_read": false
+  },
+  "mrv2_c_static_metrics": {
+    "VAL_candidate_recall": 0.897172236503856,
+    "VAL_macro_f1": 0.9298534125103172,
+    "VAL_small_object_recall": 0.46153846153846156,
+    "VAL_metal_can_recall": 0.8125,
+    "VAL_false_candidates_per_min": 20.4,
+    "cross_world_small_object_recall": 0.5263157894736842,
+    "D1_D2_D3_D4_metal_can_recall": [
+      0.6730769230769231,
+      0.6470588235294118,
+      0.8409090909090909,
+      0.5740740740740741
+    ],
+    "VAL_boundary_f1": 0.6880077913444143,
+    "D4_boundary_f1": 0.5097097648657551,
+    "D4_negative_area_fp_per_frame": 0.8666666666666667
+  },
+  "new_status": {
+    "OPRV3_AUTHORIZED": true,
+    "OPRV3_X86_DEV_PASS": false,
+    "ONLINE_DYNAMIC_DISCOVERY_PASS": false,
+    "PRODUCT_X86_PERCEPTION_READY": false,
+    "COMPETITION_PERCEPTION_PASS": false
+  },
+  "prior_evidence_files": [
+    {
+      "path": "artifacts/model_recovery_v2_20260810T004459Z/final/PERCEPTION_MRV2_FINAL_STATUS.json",
+      "sha256": "869680cd76ec846f4bc66a8a2f8d0204ce1c6a97a55856ee36cf3f4cbcb9e027"
+    },
+    {
+      "path": "artifacts/model_recovery_v2_20260810T004459Z/mrv2_c/MRV2_C_FULL_STATIC.json",
+      "sha256": "f80eef11818f9addc077f7ff1d3df41719273a71910afa9b6af0938ad873fbda"
+    }
+  ],
+  "prior_final_status_sha_matches_loaded": true,
+  "claim_boundary": "OPRV3 changes the product measurement question; it does not rewrite any historical static result or pass a downstream gate."
+}

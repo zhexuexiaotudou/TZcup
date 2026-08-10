@@ -1,5 +1,13 @@
 # 项目推进记录
 
+## 2026-08-10：OPRV3-00/01 门槛溯源、事件语义与解析几何
+
+- 在独立 `codex/oprv3-online-first-recovery` worktree 启动 OPRV3；X1/X3、Grounding DINO、MRV2-A/B/C 的静态失败以及 `MODEL_BLOCKED_INTERNAL=true` 原样保留，未读取 G5/legacy D6，也未创建 freeze。
+- 新增 evaluator-only `ObservableTargetEncounter`、生产无 GT 的 observation schema、独立 association、可行动窗口和 eventual detection/classification/track/map/clean-miss 聚合；四类 GT partition 必须覆盖全部 target，模型结果不能缩小分母。
+- 门槛溯源把旧静态阈值标为 `INTERNAL_DIAGNOSTIC_GATE`，把 OPRV3 对象级门标为 `ONLINE_PRODUCT_GATE`。仓库和公开一手材料未找到可核验的本项目官方感知统计定义，因此没有伪造 `OFFICIAL_GATE`，`COMPETITION_PERCEPTION_PASS=false`。
+- 从 AUTO-05R 产品相机、Nav2 与 Spot Cleaning 配置推导 `640×480`、15 Hz、HFOV `1.50098 rad`、相机 `[0.36,0,0.66] m`/下俯 50°、正常速度 `0.65 m/s`、减速度 `0.9 m/s²`、刷盘前偏置 `0.55 m`；含 0.15 s 控制延迟的不可再安全决策距离为 `0.8822 m`。五类 G4 真实尺寸在 8 px observation 层均存在解析非空窗口。
+- 新增 11 个定向测试并完成 `py -3 scripts/ci_fast.py`：`503 passed, 23 skipped`。解析几何不是 Gazebo 移动实测，故 OPRV3-01 继续 false，下一门是每类至少 20 个目标的 `PIXEL_DISTANCE_EMPIRICAL_REPORT.json`。
+
 ## 2026-08-09：PERCEPTION-ONLINE-00 新协议 inventory 与历史冻结
 
 - 从 Draft PR #89 的精确头提交 `d798784` 建立独立分支

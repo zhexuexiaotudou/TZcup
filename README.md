@@ -10,6 +10,8 @@ TZcup 是一个面向智慧环卫无人清扫车的 ROS 2 仿真与自主任务�
 
 任务契约显式区分 `AREA_FILL / TAUGHT_ROUTE / POINT_CLEAN`：小场默认 `AREA_FILL` 使用本页的覆盖优化；狭窄固定通道可离线生成带版本和 SHA-256 的教学路线，每段仍由 Nav2 FollowPath 做碰撞检查并执行速度/刷盘状态；`POINT_CLEAN` 继续由既有 `sanitation_spot_cleaning` 链执行，若误交给 Coverage 执行器会 fail-closed。
 地图监督台会分层显示仿真参考、SLAM、感知、规划与实际轨迹；安全状态、回放、操作边界和启动方式见 [`docs/human-visualization.md`](docs/human-visualization.md)。
+OPRV3 在线优先恢复现已建立独立 evaluator 事件语义和门槛溯源：旧的 X1/X3、MRV2-A/B/C 静态失败与 `<18 px` 指标完整保留，但产品开发新增从相机、速度、减速度、刷盘位置和目标物理尺寸预冻结的 `ActionableObservationWindow`，并按对象统计 eventual detection/classification/localization 与漏清扫机会。当前只完成 OPRV3-00 与 OPRV3-01 解析几何，尚无真实移动相机经验报告；因此 `MODEL_BLOCKED_INTERNAL=true`、所有 freeze/sealed/30-seed/spot-clean/soak/J6/field/competition 状态保持 false。协议与复现边界见 [`docs/online-first-recovery-v3.md`](docs/online-first-recovery-v3.md)。
+
 ## 实时可视化演示
 
 项目现在提供一条 Windows 命令启动的真实 Gazebo 导航与全覆盖演示：Gazebo GUI 跟随清扫车，RViz 以 `base_footprint` 为目标坐标系跟随显示地图、激光、规划路径与代价地图，浏览器看板按实际 `CoveragePlan` 动态显示任务阶段、融合位姿、速度、组件进度、刷盘、急停和车辆轨迹，并自动保存 MCAP、专用看板 MP4 与代表帧；代表帧从录像末尾抽取，用于直接展示完整轨迹和任务终态。演示复用正式 Stage4V 定位、Nav2 与 Coverage 链，不使用预制动画。

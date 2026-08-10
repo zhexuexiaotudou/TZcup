@@ -1,0 +1,26 @@
+{
+  "schema_version": 1,
+  "stage": "OPRV3-00",
+  "official_rule_source_verified": false,
+  "competition_perception_pass": false,
+  "mapping_status": "BLOCKED_UNVERIFIED_OFFICIAL_RULE_DEFINITION",
+  "repository_internal_thresholds_promoted_to_official": false,
+  "audit": {
+    "repository_formal_rule_found": false,
+    "current_official_primary_source_found": false,
+    "searched_on_utc_date": "2026-08-10",
+    "searches": [
+      "\"智慧环卫无人清扫车\" 赛题",
+      "\"3500\" \"垃圾识别准确率\" 清扫车 竞赛",
+      "\"200米×100米\" 清扫车 竞赛",
+      "\"TZcup\" 智慧环卫 无人清扫车"
+    ],
+    "rejected_false_mapping": {
+      "url": "https://www.tianzhibei.com/",
+      "reason": "The official Tianzhibei site describes an aerospace and remote-sensing AI competition, not this sanitation-vehicle task."
+    },
+    "decision": "No repository-internal threshold is promoted to OFFICIAL_GATE without a verifiable primary competition rule."
+  },
+  "metrics": [],
+  "next_required_external_input": "A primary competition rule document that defines the sanitation task, scoring unit, dataset/sequence conditions, and accuracy formula."
+}

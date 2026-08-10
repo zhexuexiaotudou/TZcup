@@ -1,0 +1,100 @@
+schema_version: 1
+protocol: OPRV3
+frozen_before_moving_model_measurement: true
+competition_material_audit:
+  repository_formal_rule_found: false
+  current_official_primary_source_found: false
+  searched_on_utc_date: "2026-08-10"
+  searches:
+    - '"智慧环卫无人清扫车" 赛题'
+    - '"3500" "垃圾识别准确率" 清扫车 竞赛'
+    - '"200米×100米" 清扫车 竞赛'
+    - '"TZcup" 智慧环卫 无人清扫车'
+  rejected_false_mapping:
+    url: https://www.tianzhibei.com/
+    reason: The official Tianzhibei site describes an aerospace and remote-sensing AI competition, not this sanitation-vehicle task.
+  decision: No repository-internal threshold is promoted to OFFICIAL_GATE without a verifiable primary competition rule.
+gates:
+  - id: legacy_val_candidate_recall
+    kind: INTERNAL_DIAGNOSTIC_GATE
+    source_type: existing_project_internal
+    metric: frame_level_candidate_recall
+    operator: ge
+    threshold: 0.80
+    source_paths: [scripts/perception_prod_x1_full_pipeline.py]
+    historical_result_preserved: true
+  - id: legacy_small_object_recall_lt18px
+    kind: INTERNAL_DIAGNOSTIC_GATE
+    source_type: existing_project_internal
+    metric: frame_level_small_object_recall_lt18px
+    operator: ge
+    threshold: 0.70
+    source_paths: [scripts/perception_prod_x1_full_pipeline.py, scripts/perception_mrv2_finalize.py]
+    historical_result_preserved: true
+  - id: legacy_cross_world_macro_f1
+    kind: INTERNAL_DIAGNOSTIC_GATE
+    source_type: existing_project_internal
+    metric: cross_world_macro_f1
+    operator: ge
+    threshold: 0.70
+    source_paths: [starter_ws/src/sanitation_learning/sanitation_learning/g4_gates.py]
+    historical_result_preserved: true
+  - id: legacy_static_ap50
+    kind: INTERNAL_DIAGNOSTIC_GATE
+    source_type: existing_project_internal
+    metric: AP50
+    operator: ge
+    threshold: 0.95
+    source_paths: [starter_ws/src/sanitation_learning/sanitation_learning/g4_gates.py]
+    historical_result_preserved: true
+  - id: legacy_static_ap50_95
+    kind: INTERNAL_DIAGNOSTIC_GATE
+    source_type: existing_project_internal
+    metric: AP50_95
+    operator: ge
+    threshold: 0.70
+    source_paths: [starter_ws/src/sanitation_learning/sanitation_learning/g4_gates.py]
+    historical_result_preserved: true
+  - id: legacy_area_boundary_f1
+    kind: INTERNAL_DIAGNOSTIC_GATE
+    source_type: existing_project_internal
+    metric: boundary_f1
+    operator: ge
+    threshold: 0.80
+    source_paths: [starter_ws/src/sanitation_learning/sanitation_learning/g4_gates.py]
+    historical_result_preserved: true
+  - id: online_eventual_discrete_recall
+    kind: ONLINE_PRODUCT_GATE
+    source_type: new_online_product_protocol
+    metric: eventual_detection_recall
+    operator: ge
+    threshold: 0.95
+    source_paths: [docs/online-first-recovery-v3.md]
+  - id: online_eventual_class_accuracy
+    kind: ONLINE_PRODUCT_GATE
+    source_type: new_online_product_protocol
+    metric: eventual_correct_class_recall
+    operator: ge
+    threshold: 0.95
+    source_paths: [docs/online-first-recovery-v3.md]
+  - id: online_wrong_actionable_target_rate
+    kind: ONLINE_PRODUCT_GATE
+    source_type: new_online_product_protocol
+    metric: wrong_actionable_target_rate
+    operator: le
+    threshold: 0.01
+    source_paths: [docs/online-first-recovery-v3.md]
+  - id: online_clean_opportunity_miss_rate
+    kind: ONLINE_PRODUCT_GATE
+    source_type: new_online_product_protocol
+    metric: clean_opportunity_miss_rate
+    operator: le
+    threshold: 0.02
+    source_paths: [docs/online-first-recovery-v3.md]
+  - id: online_low_confidence_observation_non_actionable
+    kind: ONLINE_PRODUCT_GATE
+    source_type: new_online_product_protocol
+    metric: low_confidence_observation_direct_clean_actions
+    operator: eq
+    threshold: 0
+    source_paths: [docs/online-first-recovery-v3.md]

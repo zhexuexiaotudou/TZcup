@@ -1,0 +1,571 @@
+{
+  "schema_version": 1,
+  "protocol": "OPRV3-01",
+  "frozen_before_moving_model_measurement": true,
+  "camera": {
+    "profile_id": "auto05r_v5_retracted_primary_perception_v1",
+    "resolution": [
+      640,
+      480
+    ],
+    "horizontal_fov_rad": 1.50098,
+    "vertical_fov_rad": 1.2206249800889384,
+    "focal_length_px": {
+      "fx": 343.15907310693535,
+      "fy": 343.1590731069354
+    },
+    "base_link_xyz_m": [
+      0.36,
+      0.0,
+      0.66
+    ],
+    "pitch_deg": -50.0,
+    "update_rate_hz": 15.0,
+    "near_ground_intersection_base_x_m": 0.4181101419057033,
+    "far_ground_intersection_base_x_m": 2.8177187295430373
+  },
+  "vehicle_and_action": {
+    "normal_product_speed_m_s": 0.65,
+    "maximum_deceleration_m_s2": 0.9,
+    "control_latency_s": 0.15,
+    "braking_distance_including_latency_m": 0.33222222222222225,
+    "brush_forward_offset_m": 0.55,
+    "no_return_range_from_base_m": 0.8822222222222222,
+    "spot_clean_confirmation_observations": 3,
+    "nav2_active_observation_standoff_m": {
+      "minimum": 0.65,
+      "maximum": 1.35
+    }
+  },
+  "observation_semantics": {
+    "low_confidence_observation_bbox_short_side_px": 8,
+    "legacy_static_diagnostic_bbox_short_side_px": 18,
+    "low_confidence_observation_is_actionable": false,
+    "action_requires_confirmed_track": true,
+    "actionable_window_eligibility_uses_model_result": false
+  },
+  "target_geometry": {
+    "plastic_bottle": {
+      "source": "sanitation_learning.g4_assets.GEOMETRY_PARAMS",
+      "variant_count": 6,
+      "variants": [
+        {
+          "geometry_family": "bottle_cylinder_smooth",
+          "kind": "cylinder",
+          "dimensions_m": [
+            0.07,
+            0.07,
+            0.17
+          ],
+          "conservative_short_side_m": 0.07,
+          "ground_face_area_m2": 0.004900000000000001
+        },
+        {
+          "geometry_family": "bottle_cylinder_ribbed",
+          "kind": "cylinder",
+          "dimensions_m": [
+            0.076,
+            0.076,
+            0.19
+          ],
+          "conservative_short_side_m": 0.076,
+          "ground_face_area_m2": 0.005776
+        },
+        {
+          "geometry_family": "bottle_dented",
+          "kind": "cylinder",
+          "dimensions_m": [
+            0.072,
+            0.072,
+            0.16
+          ],
+          "conservative_short_side_m": 0.072,
+          "ground_face_area_m2": 0.005183999999999999
+        },
+        {
+          "geometry_family": "bottle_crushed",
+          "kind": "cylinder",
+          "dimensions_m": [
+            0.09,
+            0.09,
+            0.12
+          ],
+          "conservative_short_side_m": 0.09,
+          "ground_face_area_m2": 0.0081
+        },
+        {
+          "geometry_family": "bottle_flattened",
+          "kind": "box",
+          "dimensions_m": [
+            0.1,
+            0.05,
+            0.16
+          ],
+          "conservative_short_side_m": 0.05,
+          "ground_face_area_m2": 0.005000000000000001
+        },
+        {
+          "geometry_family": "bottle_labeled",
+          "kind": "cylinder",
+          "dimensions_m": [
+            0.074,
+            0.074,
+            0.18
+          ],
+          "conservative_short_side_m": 0.074,
+          "ground_face_area_m2": 0.005475999999999999
+        }
+      ],
+      "conservative_short_side_m": 0.05,
+      "conservative_projected_area_m2": 0.004900000000000001
+    },
+    "metal_can": {
+      "source": "sanitation_learning.g4_assets.GEOMETRY_PARAMS",
+      "variant_count": 6,
+      "variants": [
+        {
+          "geometry_family": "can_cylinder_short",
+          "kind": "cylinder",
+          "dimensions_m": [
+            0.08,
+            0.08,
+            0.1
+          ],
+          "conservative_short_side_m": 0.08,
+          "ground_face_area_m2": 0.0064
+        },
+        {
+          "geometry_family": "can_cylinder_tall",
+          "kind": "cylinder",
+          "dimensions_m": [
+            0.076,
+            0.076,
+            0.14
+          ],
+          "conservative_short_side_m": 0.076,
+          "ground_face_area_m2": 0.005776
+        },
+        {
+          "geometry_family": "can_dented",
+          "kind": "cylinder",
+          "dimensions_m": [
+            0.082,
+            0.082,
+            0.11
+          ],
+          "conservative_short_side_m": 0.082,
+          "ground_face_area_m2": 0.006724000000000001
+        },
+        {
+          "geometry_family": "can_crushed",
+          "kind": "cylinder",
+          "dimensions_m": [
+            0.096,
+            0.096,
+            0.09
+          ],
+          "conservative_short_side_m": 0.096,
+          "ground_face_area_m2": 0.009216
+        },
+        {
+          "geometry_family": "can_flattened",
+          "kind": "box",
+          "dimensions_m": [
+            0.1,
+            0.04,
+            0.12
+          ],
+          "conservative_short_side_m": 0.04,
+          "ground_face_area_m2": 0.004
+        },
+        {
+          "geometry_family": "can_labeled",
+          "kind": "cylinder",
+          "dimensions_m": [
+            0.078,
+            0.078,
+            0.13
+          ],
+          "conservative_short_side_m": 0.078,
+          "ground_face_area_m2": 0.006084
+        }
+      ],
+      "conservative_short_side_m": 0.04,
+      "conservative_projected_area_m2": 0.004
+    },
+    "paper_litter": {
+      "source": "sanitation_learning.g4_assets.GEOMETRY_PARAMS",
+      "variant_count": 6,
+      "variants": [
+        {
+          "geometry_family": "paper_sheet_folded",
+          "kind": "box",
+          "dimensions_m": [
+            0.2,
+            0.13,
+            0.008
+          ],
+          "conservative_short_side_m": 0.13,
+          "ground_face_area_m2": 0.026000000000000002
+        },
+        {
+          "geometry_family": "paper_sheet_torn",
+          "kind": "box",
+          "dimensions_m": [
+            0.18,
+            0.12,
+            0.006
+          ],
+          "conservative_short_side_m": 0.12,
+          "ground_face_area_m2": 0.021599999999999998
+        },
+        {
+          "geometry_family": "paper_strip_long",
+          "kind": "box",
+          "dimensions_m": [
+            0.24,
+            0.09,
+            0.006
+          ],
+          "conservative_short_side_m": 0.09,
+          "ground_face_area_m2": 0.021599999999999998
+        },
+        {
+          "geometry_family": "paper_crumpled",
+          "kind": "ellipsoid",
+          "dimensions_m": [
+            0.09,
+            0.08,
+            0.05
+          ],
+          "conservative_short_side_m": 0.08,
+          "ground_face_area_m2": 0.0072
+        },
+        {
+          "geometry_family": "paper_sheet_wide",
+          "kind": "box",
+          "dimensions_m": [
+            0.22,
+            0.16,
+            0.007
+          ],
+          "conservative_short_side_m": 0.16,
+          "ground_face_area_m2": 0.0352
+        },
+        {
+          "geometry_family": "paper_wad",
+          "kind": "ellipsoid",
+          "dimensions_m": [
+            0.07,
+            0.07,
+            0.045
+          ],
+          "conservative_short_side_m": 0.07,
+          "ground_face_area_m2": 0.004900000000000001
+        }
+      ],
+      "conservative_short_side_m": 0.07,
+      "conservative_projected_area_m2": 0.004900000000000001
+    },
+    "leaf_pile": {
+      "source": "sanitation_learning.g4_assets.GEOMETRY_PARAMS",
+      "variant_count": 6,
+      "variants": [
+        {
+          "geometry_family": "leaf_pile_sparse",
+          "kind": "ellipsoid",
+          "dimensions_m": [
+            0.22,
+            0.13,
+            0.015
+          ],
+          "conservative_short_side_m": 0.13,
+          "ground_face_area_m2": 0.0286
+        },
+        {
+          "geometry_family": "leaf_pile_dense",
+          "kind": "ellipsoid",
+          "dimensions_m": [
+            0.3,
+            0.19,
+            0.035
+          ],
+          "conservative_short_side_m": 0.19,
+          "ground_face_area_m2": 0.056999999999999995
+        },
+        {
+          "geometry_family": "leaf_pile_windrow",
+          "kind": "box",
+          "dimensions_m": [
+            0.35,
+            0.12,
+            0.025
+          ],
+          "conservative_short_side_m": 0.12,
+          "ground_face_area_m2": 0.041999999999999996
+        },
+        {
+          "geometry_family": "leaf_pile_round",
+          "kind": "ellipsoid",
+          "dimensions_m": [
+            0.26,
+            0.22,
+            0.03
+          ],
+          "conservative_short_side_m": 0.22,
+          "ground_face_area_m2": 0.0572
+        },
+        {
+          "geometry_family": "leaf_pile_long",
+          "kind": "box",
+          "dimensions_m": [
+            0.3,
+            0.1,
+            0.02
+          ],
+          "conservative_short_side_m": 0.1,
+          "ground_face_area_m2": 0.03
+        },
+        {
+          "geometry_family": "leaf_pile_mixed",
+          "kind": "ellipsoid",
+          "dimensions_m": [
+            0.28,
+            0.18,
+            0.028
+          ],
+          "conservative_short_side_m": 0.18,
+          "ground_face_area_m2": 0.0504
+        }
+      ],
+      "conservative_short_side_m": 0.1,
+      "conservative_projected_area_m2": 0.0286
+    },
+    "puddle": {
+      "source": "sanitation_learning.g4_assets.GEOMETRY_PARAMS",
+      "variant_count": 6,
+      "variants": [
+        {
+          "geometry_family": "puddle_round",
+          "kind": "ellipsoid",
+          "dimensions_m": [
+            0.42,
+            0.3,
+            0.004
+          ],
+          "conservative_short_side_m": 0.3,
+          "ground_face_area_m2": 0.126
+        },
+        {
+          "geometry_family": "puddle_wide",
+          "kind": "ellipsoid",
+          "dimensions_m": [
+            0.55,
+            0.34,
+            0.005
+          ],
+          "conservative_short_side_m": 0.34,
+          "ground_face_area_m2": 0.18700000000000003
+        },
+        {
+          "geometry_family": "puddle_irregular",
+          "kind": "ellipsoid",
+          "dimensions_m": [
+            0.45,
+            0.28,
+            0.004
+          ],
+          "conservative_short_side_m": 0.28,
+          "ground_face_area_m2": 0.12600000000000003
+        },
+        {
+          "geometry_family": "puddle_long",
+          "kind": "box",
+          "dimensions_m": [
+            0.6,
+            0.22,
+            0.004
+          ],
+          "conservative_short_side_m": 0.22,
+          "ground_face_area_m2": 0.132
+        },
+        {
+          "geometry_family": "puddle_split",
+          "kind": "ellipsoid",
+          "dimensions_m": [
+            0.4,
+            0.26,
+            0.004
+          ],
+          "conservative_short_side_m": 0.26,
+          "ground_face_area_m2": 0.10400000000000001
+        },
+        {
+          "geometry_family": "puddle_shallow",
+          "kind": "ellipsoid",
+          "dimensions_m": [
+            0.34,
+            0.24,
+            0.003
+          ],
+          "conservative_short_side_m": 0.24,
+          "ground_face_area_m2": 0.0816
+        }
+      ],
+      "conservative_short_side_m": 0.22,
+      "conservative_projected_area_m2": 0.0816
+    }
+  },
+  "class_actionable_windows": {
+    "plastic_bottle": {
+      "minimum_actionable_range_m": 0.8822222222222222,
+      "maximum_actionable_range_m": 2.144744206918346,
+      "minimum_visible_frames": 3,
+      "minimum_visibility_ratio": 0.6,
+      "minimum_depth_valid_ratio": 0.8,
+      "window_duration_at_normal_speed_s": 1.9423415149171137,
+      "frames_in_actionable_window": 29,
+      "distance_at_bbox_short_side_px_m": {
+        "8": 2.144744206918346,
+        "12": 1.4298294712788975,
+        "18": 0.953219647519265,
+        "24": 0.7149147356394487,
+        "32": 0.5361860517295866
+      },
+      "estimated_pixel_area_by_distance_px2": {
+        "0.9": 712.3641139907335,
+        "1.2": 400.7048141197876,
+        "1.8": 178.09102849768337,
+        "2.4": 100.1762035299469,
+        "3.2": 56.34911448559512
+      },
+      "window_nonempty": true
+    },
+    "metal_can": {
+      "minimum_actionable_range_m": 0.8822222222222222,
+      "maximum_actionable_range_m": 1.7157953655346772,
+      "minimum_visible_frames": 3,
+      "minimum_visibility_ratio": 0.6,
+      "minimum_depth_valid_ratio": 0.8,
+      "window_duration_at_normal_speed_s": 1.2824202204806998,
+      "frames_in_actionable_window": 19,
+      "distance_at_bbox_short_side_px_m": {
+        "8": 1.7157953655346772,
+        "12": 1.143863577023118,
+        "18": 0.762575718015412,
+        "24": 0.571931788511559,
+        "32": 0.4289488413836693
+      },
+      "estimated_pixel_area_by_distance_px2": {
+        "0.9": 581.5217257067211,
+        "1.2": 327.10597071003065,
+        "1.8": 145.38043142668027,
+        "2.4": 81.77649267750766,
+        "3.2": 45.99927713109805
+      },
+      "window_nonempty": true
+    },
+    "paper_litter": {
+      "minimum_actionable_range_m": 0.8822222222222222,
+      "maximum_actionable_range_m": 2.8177187295430373,
+      "minimum_visible_frames": 3,
+      "minimum_visibility_ratio": 0.6,
+      "minimum_depth_valid_ratio": 0.8,
+      "window_duration_at_normal_speed_s": 2.977686934339715,
+      "frames_in_actionable_window": 44,
+      "distance_at_bbox_short_side_px_m": {
+        "8": 3.0026418896856852,
+        "12": 2.001761259790457,
+        "18": 1.3345075065269711,
+        "24": 1.0008806298952284,
+        "32": 0.7506604724214213
+      },
+      "estimated_pixel_area_by_distance_px2": {
+        "0.9": 712.3641139907335,
+        "1.2": 400.7048141197876,
+        "1.8": 178.09102849768337,
+        "2.4": 100.1762035299469,
+        "3.2": 56.34911448559512
+      },
+      "window_nonempty": true
+    },
+    "leaf_pile": {
+      "minimum_actionable_range_m": 0.8822222222222222,
+      "maximum_actionable_range_m": 2.8177187295430373,
+      "minimum_visible_frames": 3,
+      "minimum_visibility_ratio": 0.7,
+      "minimum_depth_valid_ratio": 0.8,
+      "window_duration_at_normal_speed_s": 2.977686934339715,
+      "frames_in_actionable_window": 44,
+      "distance_at_bbox_short_side_px_m": {
+        "8": 4.289488413836692,
+        "12": 2.859658942557795,
+        "18": 1.90643929503853,
+        "24": 1.4298294712788975,
+        "32": 1.072372103459173
+      },
+      "estimated_pixel_area_by_distance_px2": {
+        "0.9": 4157.880338803056,
+        "1.2": 2338.8076905767193,
+        "1.8": 1039.470084700764,
+        "2.4": 584.7019226441798,
+        "3.2": 328.89483148735104
+      },
+      "window_nonempty": true
+    },
+    "puddle": {
+      "minimum_actionable_range_m": 0.8822222222222222,
+      "maximum_actionable_range_m": 2.8177187295430373,
+      "minimum_visible_frames": 3,
+      "minimum_visibility_ratio": 0.7,
+      "minimum_depth_valid_ratio": 0.8,
+      "window_duration_at_normal_speed_s": 2.977686934339715,
+      "frames_in_actionable_window": 44,
+      "distance_at_bbox_short_side_px_m": {
+        "8": 9.436874510440724,
+        "12": 6.291249673627149,
+        "18": 4.194166449084766,
+        "24": 3.1456248368135746,
+        "32": 2.359218627610181
+      },
+      "estimated_pixel_area_by_distance_px2": {
+        "0.9": 11863.043204417112,
+        "1.2": 6672.961802484626,
+        "1.8": 2965.760801104278,
+        "2.4": 1668.2404506211565,
+        "3.2": 938.3852534744003
+      },
+      "window_nonempty": true
+    }
+  },
+  "all_classes_have_nonempty_window": true,
+  "source_files": [
+    {
+      "path": "starter_ws/src/sanitation_learning/config/auto05r_product_camera.yaml",
+      "sha256": "cef76a077e85f0b90303b900d860d9f4042f719f008a1ebff5f94922d6313a4a"
+    },
+    {
+      "path": "starter_ws/src/sanitation_navigation/config/nav2.yaml",
+      "sha256": "fcc132b9e86fd014c1a88806952b6206ed5221a56dccf4dee2cc8f0472928b68"
+    },
+    {
+      "path": "starter_ws/src/sanitation_spot_cleaning/config/spot_cleaning.yaml",
+      "sha256": "42a79d3dcfb0a221894eb088e7f0755f521374fad34b3d603522bc1a128ebc7a"
+    },
+    {
+      "path": "starter_ws/src/sanitation_tasks/config/competition_demo_area_skid_steer_optimized.yaml",
+      "sha256": "faa4e597060becdecd77d5a86c360ac1f46d67aa0ec2f77a7aebdfa9f3812f6a"
+    },
+    {
+      "path": "starter_ws/src/sanitation_learning/config/perception_evaluability_policy_v2_engineering.yaml",
+      "sha256": "25fd732da8ef878f118f9522d37c73fe7b24ed611e6a92013d89bb727e39ecae"
+    }
+  ],
+  "limitations": [
+    "Analytic pinhole geometry is not empirical Gazebo evidence.",
+    "Projected short-side and area estimates are conservative geometry proxies; empirical masks and bboxes remain required.",
+    "The actionable-window contract is frozen before model output is inspected."
+  ],
+  "source_commit": "82eae986c7f71c46fb92185e44b737d8e272a1d0",
+  "source_tree": "2db50f558855aa7a8426ac3cbefb56aa7874a27c"
+}

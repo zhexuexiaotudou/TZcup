@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "stages": [
+    "OPRV3-00",
+    "OPRV3-01_ANALYTIC_ONLY"
+  ],
+  "source_commit": "82eae986c7f71c46fb92185e44b737d8e272a1d0",
+  "source_tree": "2db50f558855aa7a8426ac3cbefb56aa7874a27c",
+  "command": [
+    "C:\\Users\\zhexu\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+    "scripts\\audit_online_observation_geometry.py",
+    "--output-root",
+    "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-oprv3-online-first\\artifacts\\online_first_recovery_v3_20260810T042843Z"
+  ],
+  "exit_code": 0,
+  "environment": {
+    "platform": "Windows-11-10.0.26200-SP0",
+    "python": "3.14.3"
+  },
+  "gt_boundary": "No production target is created here. Geometry uses repository configuration and target dimensions only; prior GT metrics are read solely as immutable audit history.",
+  "empirical_moving_camera_probe_executed": false,
+  "OPRV3_01_pass": false,
+  "OPRV3_01_blocked_by": "PIXEL_DISTANCE_EMPIRICAL_REPORT.json requires a real moving Gazebo probe with at least 20 targets per class.",
+  "files": [
+    {
+      "path": "baseline/OPRV3_BASELINE.json",
+      "bytes": 2217,
+      "sha256": "14373e0a901be1b64ba0bf803da3c469a55f98846e6ecede1f55606e636193f3"
+    },
+    {
+      "path": "gate_provenance/GATE_PROVENANCE.json",
+      "bytes": 5279,
+      "sha256": "2840ab5bcbc7e6862da51a45bc4a045df749b47642df992acc7539fd4a86daec"
+    },
+    {
+      "path": "gate_provenance/COMPETITION_GATE_MAPPING.json",
+      "bytes": 1207,
+      "sha256": "5f37a0078ba8ce5da1d07c0aff0f1d0f4e9ff797803dbf49bac1e72b038249a6"
+    },
+    {
+      "path": "geometry/CAMERA_PRODUCT_GEOMETRY_AUDIT.json",
+      "bytes": 17314,
+      "sha256": "40105b2244ad3b0d309dbc74c60f7b5fe47b02105272c3e59480d4f480624fd0"
+    }
+  ]
+}
