@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "stage": "MRV2-13-FINAL-BLOCKERS",
+  "primary_blocker": "MODEL_BLOCKED_INTERNAL",
+  "internal_blockers": [
+    {
+      "id": "small_object_recall",
+      "gate": 0.7,
+      "historical_X3": 0.3076923076923077,
+      "MRV2_A_VAL": 0.41025641025641024,
+      "MRV2_C_VAL": 0.46153846153846156,
+      "MRV2_C_cross_world": 0.5263157894736842
+    },
+    {
+      "id": "candidate_flood",
+      "gate_false_candidates_per_min": 2.0,
+      "MRV2_A_VAL": 21.599999999999998,
+      "MRV2_C_VAL": 20.4
+    },
+    {
+      "id": "metal_can_cross_domain",
+      "VAL_gate": 0.9,
+      "each_domain_gate": 0.7,
+      "MRV2_C_VAL": 0.8125,
+      "MRV2_C_D1_D4": {
+        "D1": 0.6730769230769231,
+        "D2": 0.6470588235294118,
+        "D3": 0.8409090909090909,
+        "D4": 0.5740740740740741
+      }
+    },
+    {
+      "id": "area_boundary_and_negative_fp",
+      "VAL_boundary_f1": 0.6880077913444143,
+      "D4_boundary_f1": 0.5097097648657551,
+      "D4_negative_area_fp_per_frame": 0.8666666666666667
+    },
+    {
+      "id": "grounding_dino_reference_not_viable",
+      "VAL_candidate_recall": 0.021850899742930592,
+      "VAL_small_recall": 0.0,
+      "VAL_false_candidates_per_min": 1.2,
+      "proposal_inference_p95_ms": 199.42621269919982,
+      "preprocess_p95_ms": 69.13727590035704
+    }
+  ],
+  "external_resources_also_absent_but_not_current_stop_reason": [
+    "physical J6 board",
+    "qualifying real RGB-D device/recording",
+    "independent map GT"
+  ],
+  "required_next_research": [
+    "Acquire or synthesize substantially more diverse native <18px TRAIN instances with independent annotation QA.",
+    "Train a dedicated small-object architecture with calibrated size-aware objectness rather than lowering a global threshold.",
+    "Add D1/D2/D4 metal material-lighting positives and explicit negative-area taxonomy frames to TRAIN only.",
+    "Replace or retrain the area boundary head with taxonomy-balanced hard negatives before reopening a new protocol."
+  ]
+}

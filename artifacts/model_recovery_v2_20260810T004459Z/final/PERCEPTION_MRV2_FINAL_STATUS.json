@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "stage": "MRV2-13-FINAL-STATUS",
+  "source": {
+    "local_commit": "07e9348b7680f4174d2823ffc7fe1d2e413791f2",
+    "remote_equivalent_commit": "c43e9732133f8a9caafdad435d0252c5333cc2bb",
+    "tree": "abf6e16ad4dc6275aeeb8aebec020ff68c375e4a",
+    "code_tree_equivalence_verified": true
+  },
+  "historical": {
+    "X1": "FAILED_STATIC_FULL_PIPELINE",
+    "X2": "BLOCKED_EXTERNAL_NETWORK_ASSET",
+    "X3": "FAILED_STATIC_FULL_PIPELINE",
+    "historical_states_rewritten": false
+  },
+  "routes": {
+    "MRV2-A": "FAILED_STATIC_FULL_PIPELINE",
+    "MRV2-B": "FAILED_STATIC_FULL_PIPELINE",
+    "MRV2-C": "FAILED_STATIC_FULL_PIPELINE",
+    "selected_route": null,
+    "routes_exhausted": true
+  },
+  "MRV2_X86_STATIC_PASS": false,
+  "MODEL_BLOCKED_INTERNAL": true,
+  "MODEL_FREEZE_X86_created": false,
+  "G5_SEALED_FINAL_read": false,
+  "legacy_G4_D6_read": false,
+  "SEALED_FINAL_PASS": false,
+  "ONLINE_DYNAMIC_DISCOVERY_PASS": false,
+  "DYNAMIC_TRASH_MAP_PASS": false,
+  "SPOT_CLEAN_PRODUCT_PASS": false,
+  "POST_CLEAN_VERIFICATION_PASS": false,
+  "SOAK_2H_PASS": false,
+  "MCAP_REPLAY_PASS": false,
+  "RELEASE_BUNDLE_PASS": false,
+  "PRODUCT_X86_PERCEPTION_READY": false,
+  "PRODUCT_J6_TOOLCHAIN_READY": false,
+  "PRODUCT_J6_BOARD_READY": false,
+  "PRODUCT_FIELD_READY": false,
+  "COMPETITION_PERCEPTION_PASS": false,
+  "GROUNDING_DINO_OFFICIAL_CHECKPOINT_OBTAINED": true,
+  "GROUNDING_DINO_BENCHMARK_EXECUTED": true,
+  "GROUNDING_DINO_REFERENCE_STATIC_PASS": false,
+  "blocked_follow_on_gates": [
+    "MRV2-06 freeze",
+    "MRV2-07 sealed final",
+    "MRV2-08 moving-camera",
+    "MRV2-09 spot-clean/post-clean",
+    "MRV2-10 soak/replay/release",
+    "MRV2-11 J6",
+    "MRV2-12 field"
+  ],
+  "claim_boundary": "All three authorized MRV2 model routes failed the fixed development gate. No freeze, sealed-final access, deployment, or product-ready claim is allowed."
+}

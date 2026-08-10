@@ -1,0 +1,975 @@
+{
+  "schema_version": 1,
+  "stage": "MRV2-C-STATIC",
+  "source_commit": "d958854",
+  "route": "MRV2-C",
+  "device": "cuda",
+  "environment": {
+    "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "torch": "2.5.1+cu124",
+    "cuda_available": true,
+    "gpu": "NVIDIA GeForce RTX 4080 Laptop GPU"
+  },
+  "thresholds": {
+    "direct_detector_from_train_world_holdout": 0.75,
+    "area": [
+      0.85,
+      0.85
+    ],
+    "top_k": 16,
+    "input_size": [
+      960,
+      720
+    ]
+  },
+  "models": {
+    "detector": {
+      "path": "/runtime/mrv2-c-p2-r960-v1/mrv2_c_p2_r960.pt",
+      "sha256": "8955e27d1e1192846f3eaa47b70c4fac715598db82979211ee729122af1df4e8",
+      "provenance": null
+    },
+    "leaf": {
+      "path": "/runtime/p4-screening-v5-a3-distilled-top16-batch16-v1/leaf.pt",
+      "sha256": "ecba9043d0e0523ad5b79381bcc7c21583ccba2c9a806f2179e5ca7e3e14aa2e",
+      "checkpoint_status": "training_complete",
+      "model_contract": {
+        "model_id": "g4_leaf_segmenter_deeplab_v1",
+        "architecture_role": "deeplab_resnet50_rgb_preserved_shallow_geometry",
+        "discovery_architecture": null
+      }
+    },
+    "puddle": {
+      "path": "/runtime/p4-screening-v5-a3-distilled-top16-batch16-v1/puddle.pt",
+      "sha256": "8b3aee52679105f857b9e43694dc08304e5cda73c9536a7904c52ed33b31d2e2",
+      "checkpoint_status": "training_complete",
+      "model_contract": {
+        "model_id": "g4_puddle_segmenter_deeplab_v1",
+        "architecture_role": "deeplab_resnet50_rgb_preserved_shallow_geometry",
+        "discovery_architecture": null
+      }
+    }
+  },
+  "splits": {
+    "VAL": {
+      "name": "VAL",
+      "rows": 500,
+      "candidate": {
+        "all_gt_candidate_recall": 0.897172236503856,
+        "matched_truth": 698,
+        "total_truth": 778,
+        "ap50": 0.8876602131463992,
+        "precision": 0.9762237762237762,
+        "false_proposals_per_frame": 0.034,
+        "total_false_positives": 17,
+        "negative_only_frames": 160,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 20.4,
+        "small_object_candidate_recall": 0.46153846153846156,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 39,
+            "matched": 18,
+            "recall": 0.46153846153846156
+          },
+          "medium_18_to_48px": {
+            "total": 621,
+            "matched": 567,
+            "recall": 0.9130434782608695
+          },
+          "large_ge_48px": {
+            "total": 118,
+            "matched": 113,
+            "recall": 0.9576271186440678
+          }
+        },
+        "per_world": {
+          "world_g4_09_light_paver_pedestrian": {
+            "total": 356,
+            "matched": 330,
+            "recall": 0.9269662921348315
+          },
+          "world_g4_10_dark_gravel_parking": {
+            "total": 422,
+            "matched": 368,
+            "recall": 0.8720379146919431
+          }
+        }
+      },
+      "discrete": {
+        "per_class": {
+          "plastic_bottle": {
+            "tp": 281,
+            "fp": 0,
+            "fn": 27,
+            "precision": 1.0,
+            "recall": 0.9123376623376623,
+            "f1": 0.9541595925297113
+          },
+          "metal_can": {
+            "tp": 156,
+            "fp": 0,
+            "fn": 36,
+            "precision": 1.0,
+            "recall": 0.8125,
+            "f1": 0.896551724137931
+          },
+          "paper_litter": {
+            "tp": 261,
+            "fp": 17,
+            "fn": 17,
+            "precision": 0.9388489208633094,
+            "recall": 0.9388489208633094,
+            "f1": 0.9388489208633094
+          }
+        },
+        "macro_precision": 0.9796163069544365,
+        "macro_recall": 0.8878955277336572,
+        "macro_f1": 0.9298534125103172,
+        "paper_precision": 0.9388489208633094,
+        "paper_recall": 0.9388489208633094,
+        "small_object_recall": 0.46153846153846156,
+        "small_object_total": 39,
+        "small_object_matched": 18,
+        "all_gt_candidate_recall": 0.897172236503856,
+        "all_gt_candidate_total": 778,
+        "all_gt_candidate_matched": 698,
+        "negative_only_frames": 160,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 20.4,
+        "total_false_positives": 17,
+        "frame_count": 500
+      },
+      "area": {
+        "iou_by_class": {
+          "leaf_pile": 0.8913577492098728,
+          "puddle": 0.9496047965053415
+        },
+        "macro_miou": 0.9204812728576071,
+        "boundary_f1_by_class": {
+          "leaf_pile": 0.6724210472632692,
+          "puddle": 0.7035945354255593
+        },
+        "boundary_f1": 0.6880077913444143,
+        "boundary_intersection_pixels": [
+          26370,
+          57528
+        ],
+        "boundary_union_pixels": [
+          52063,
+          105998
+        ],
+        "negative_only_frames": 160,
+        "negative_only_fp_frames": 0,
+        "negative_area_fp_per_frame": 0.0,
+        "intersection_pixels": [
+          463375,
+          1053879
+        ],
+        "union_pixels": [
+          519853,
+          1109808
+        ]
+      },
+      "same_color_negative_specificity": {
+        "status": "not_evaluated",
+        "specificity": null,
+        "taxonomy_count": 0
+      },
+      "direct_detector_threshold": 0.75,
+      "duration_s": 249.35147702299946
+    },
+    "D1": {
+      "name": "D1",
+      "rows": 100,
+      "candidate": {
+        "all_gt_candidate_recall": 0.875,
+        "matched_truth": 147,
+        "total_truth": 168,
+        "ap50": 0.8552170553750147,
+        "precision": 0.9671052631578947,
+        "false_proposals_per_frame": 0.05,
+        "total_false_positives": 5,
+        "negative_only_frames": 40,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 30.0,
+        "small_object_candidate_recall": 0.5714285714285714,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 7,
+            "matched": 4,
+            "recall": 0.5714285714285714
+          },
+          "medium_18_to_48px": {
+            "total": 136,
+            "matched": 120,
+            "recall": 0.8823529411764706
+          },
+          "large_ge_48px": {
+            "total": 25,
+            "matched": 23,
+            "recall": 0.92
+          }
+        },
+        "per_world": {
+          "world_g4_01_asphalt_campus": {
+            "total": 168,
+            "matched": 147,
+            "recall": 0.875
+          }
+        }
+      },
+      "discrete": {
+        "per_class": {
+          "plastic_bottle": {
+            "tp": 55,
+            "fp": 1,
+            "fn": 4,
+            "precision": 0.9821428571428571,
+            "recall": 0.9322033898305084,
+            "f1": 0.9565217391304348
+          },
+          "metal_can": {
+            "tp": 35,
+            "fp": 0,
+            "fn": 17,
+            "precision": 1.0,
+            "recall": 0.6730769230769231,
+            "f1": 0.8045977011494253
+          },
+          "paper_litter": {
+            "tp": 56,
+            "fp": 5,
+            "fn": 1,
+            "precision": 0.9180327868852459,
+            "recall": 0.9824561403508771,
+            "f1": 0.9491525423728813
+          }
+        },
+        "macro_precision": 0.9667252146760345,
+        "macro_recall": 0.8625788177527696,
+        "macro_f1": 0.9034239942175804,
+        "paper_precision": 0.9180327868852459,
+        "paper_recall": 0.9824561403508771,
+        "small_object_recall": 0.5714285714285714,
+        "small_object_total": 7,
+        "small_object_matched": 4,
+        "all_gt_candidate_recall": 0.8690476190476191,
+        "all_gt_candidate_total": 168,
+        "all_gt_candidate_matched": 146,
+        "negative_only_frames": 40,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 36.0,
+        "total_false_positives": 6,
+        "frame_count": 100
+      },
+      "area": {
+        "iou_by_class": {
+          "leaf_pile": 0.9168531374911546,
+          "puddle": 0.9383287436651008
+        },
+        "macro_miou": 0.9275909405781277,
+        "boundary_f1_by_class": {
+          "leaf_pile": 0.7182539682539683,
+          "puddle": 0.6941710062153537
+        },
+        "boundary_f1": 0.7062124872346609,
+        "boundary_intersection_pixels": [
+          7602,
+          10331
+        ],
+        "boundary_union_pixels": [
+          13566,
+          19434
+        ],
+        "negative_only_frames": 40,
+        "negative_only_fp_frames": 0,
+        "negative_area_fp_per_frame": 0.0,
+        "intersection_pixels": [
+          95879,
+          162192
+        ],
+        "union_pixels": [
+          104574,
+          172852
+        ]
+      },
+      "same_color_negative_specificity": {
+        "status": "not_evaluated",
+        "specificity": null,
+        "taxonomy_count": 0
+      },
+      "direct_detector_threshold": 0.75,
+      "duration_s": 51.330503335000685
+    },
+    "D2": {
+      "name": "D2",
+      "rows": 100,
+      "candidate": {
+        "all_gt_candidate_recall": 0.781021897810219,
+        "matched_truth": 107,
+        "total_truth": 137,
+        "ap50": 0.7780830835377113,
+        "precision": 0.981651376146789,
+        "false_proposals_per_frame": 0.02,
+        "total_false_positives": 2,
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 12.0,
+        "small_object_candidate_recall": 0.2631578947368421,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 19,
+            "matched": 5,
+            "recall": 0.2631578947368421
+          },
+          "medium_18_to_48px": {
+            "total": 90,
+            "matched": 75,
+            "recall": 0.8333333333333334
+          },
+          "large_ge_48px": {
+            "total": 28,
+            "matched": 27,
+            "recall": 0.9642857142857143
+          }
+        },
+        "per_world": {
+          "world_g4_09_light_paver_pedestrian": {
+            "total": 137,
+            "matched": 107,
+            "recall": 0.781021897810219
+          }
+        }
+      },
+      "discrete": {
+        "per_class": {
+          "plastic_bottle": {
+            "tp": 51,
+            "fp": 2,
+            "fn": 4,
+            "precision": 0.9622641509433962,
+            "recall": 0.9272727272727272,
+            "f1": 0.9444444444444444
+          },
+          "metal_can": {
+            "tp": 22,
+            "fp": 0,
+            "fn": 12,
+            "precision": 1.0,
+            "recall": 0.6470588235294118,
+            "f1": 0.7857142857142858
+          },
+          "paper_litter": {
+            "tp": 32,
+            "fp": 2,
+            "fn": 16,
+            "precision": 0.9411764705882353,
+            "recall": 0.6666666666666666,
+            "f1": 0.7804878048780487
+          }
+        },
+        "macro_precision": 0.9678135405105438,
+        "macro_recall": 0.7469994058229351,
+        "macro_f1": 0.836882178345593,
+        "paper_precision": 0.9411764705882353,
+        "paper_recall": 0.6666666666666666,
+        "small_object_recall": 0.2631578947368421,
+        "small_object_total": 19,
+        "small_object_matched": 5,
+        "all_gt_candidate_recall": 0.7664233576642335,
+        "all_gt_candidate_total": 137,
+        "all_gt_candidate_matched": 105,
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 24.0,
+        "total_false_positives": 4,
+        "frame_count": 100
+      },
+      "area": {
+        "iou_by_class": {
+          "leaf_pile": 0.9446288488183169,
+          "puddle": 0.9644367411773223
+        },
+        "macro_miou": 0.9545327949978195,
+        "boundary_f1_by_class": {
+          "leaf_pile": 0.7305896805896805,
+          "puddle": 0.7915138175593055
+        },
+        "boundary_f1": 0.761051749074493,
+        "boundary_intersection_pixels": [
+          5947,
+          12946
+        ],
+        "boundary_union_pixels": [
+          10333,
+          19766
+        ],
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 0,
+        "negative_area_fp_per_frame": 0.0,
+        "intersection_pixels": [
+          94768,
+          226470
+        ],
+        "union_pixels": [
+          100323,
+          234821
+        ]
+      },
+      "same_color_negative_specificity": {
+        "status": "not_evaluated",
+        "specificity": null,
+        "taxonomy_count": 0
+      },
+      "direct_detector_threshold": 0.75,
+      "duration_s": 50.630957305000265
+    },
+    "D3": {
+      "name": "D3",
+      "rows": 100,
+      "candidate": {
+        "all_gt_candidate_recall": 0.9289940828402367,
+        "matched_truth": 157,
+        "total_truth": 169,
+        "ap50": 0.9049832367911714,
+        "precision": 0.9573170731707317,
+        "false_proposals_per_frame": 0.07,
+        "total_false_positives": 7,
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 42.0,
+        "small_object_candidate_recall": 0.6666666666666666,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 9,
+            "matched": 6,
+            "recall": 0.6666666666666666
+          },
+          "medium_18_to_48px": {
+            "total": 126,
+            "matched": 119,
+            "recall": 0.9444444444444444
+          },
+          "large_ge_48px": {
+            "total": 34,
+            "matched": 32,
+            "recall": 0.9411764705882353
+          }
+        },
+        "per_world": {
+          "world_auto05r_d3_factorized": {
+            "total": 169,
+            "matched": 157,
+            "recall": 0.9289940828402367
+          }
+        }
+      },
+      "discrete": {
+        "per_class": {
+          "plastic_bottle": {
+            "tp": 65,
+            "fp": 2,
+            "fn": 1,
+            "precision": 0.9701492537313433,
+            "recall": 0.9848484848484849,
+            "f1": 0.9774436090225564
+          },
+          "metal_can": {
+            "tp": 37,
+            "fp": 0,
+            "fn": 7,
+            "precision": 1.0,
+            "recall": 0.8409090909090909,
+            "f1": 0.9135802469135803
+          },
+          "paper_litter": {
+            "tp": 53,
+            "fp": 7,
+            "fn": 6,
+            "precision": 0.8833333333333333,
+            "recall": 0.8983050847457628,
+            "f1": 0.8907563025210085
+          }
+        },
+        "macro_precision": 0.9511608623548922,
+        "macro_recall": 0.908020886834446,
+        "macro_f1": 0.9272600528190483,
+        "paper_precision": 0.8833333333333333,
+        "paper_recall": 0.8983050847457628,
+        "small_object_recall": 0.6666666666666666,
+        "small_object_total": 9,
+        "small_object_matched": 6,
+        "all_gt_candidate_recall": 0.9171597633136095,
+        "all_gt_candidate_total": 169,
+        "all_gt_candidate_matched": 155,
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 54.0,
+        "total_false_positives": 9,
+        "frame_count": 100
+      },
+      "area": {
+        "iou_by_class": {
+          "leaf_pile": 0.8602114651309763,
+          "puddle": 0.9396805742766684
+        },
+        "macro_miou": 0.8999460197038224,
+        "boundary_f1_by_class": {
+          "leaf_pile": 0.6590898921651975,
+          "puddle": 0.7746232866573907
+        },
+        "boundary_f1": 0.7168565894112942,
+        "boundary_intersection_pixels": [
+          7365,
+          13083
+        ],
+        "boundary_union_pixels": [
+          14984,
+          20696
+        ],
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 4,
+        "negative_area_fp_per_frame": 0.13333333333333333,
+        "intersection_pixels": [
+          121141,
+          239814
+        ],
+        "union_pixels": [
+          140827,
+          255208
+        ]
+      },
+      "same_color_negative_specificity": {
+        "status": "not_evaluated",
+        "specificity": null,
+        "taxonomy_count": 0
+      },
+      "direct_detector_threshold": 0.75,
+      "duration_s": 49.81578903300033
+    },
+    "D4": {
+      "name": "D4",
+      "rows": 100,
+      "candidate": {
+        "all_gt_candidate_recall": 0.8486486486486486,
+        "matched_truth": 157,
+        "total_truth": 185,
+        "ap50": 0.8399408013461447,
+        "precision": 0.98125,
+        "false_proposals_per_frame": 0.03,
+        "total_false_positives": 3,
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 18.0,
+        "small_object_candidate_recall": 0.6818181818181818,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 22,
+            "matched": 15,
+            "recall": 0.6818181818181818
+          },
+          "medium_18_to_48px": {
+            "total": 134,
+            "matched": 114,
+            "recall": 0.8507462686567164
+          },
+          "large_ge_48px": {
+            "total": 29,
+            "matched": 28,
+            "recall": 0.9655172413793104
+          }
+        },
+        "per_world": {
+          "world_auto05r_d4_factorized": {
+            "total": 185,
+            "matched": 157,
+            "recall": 0.8486486486486486
+          }
+        }
+      },
+      "discrete": {
+        "per_class": {
+          "plastic_bottle": {
+            "tp": 66,
+            "fp": 0,
+            "fn": 1,
+            "precision": 1.0,
+            "recall": 0.9850746268656716,
+            "f1": 0.9924812030075187
+          },
+          "metal_can": {
+            "tp": 31,
+            "fp": 0,
+            "fn": 23,
+            "precision": 1.0,
+            "recall": 0.5740740740740741,
+            "f1": 0.7294117647058824
+          },
+          "paper_litter": {
+            "tp": 60,
+            "fp": 3,
+            "fn": 4,
+            "precision": 0.9523809523809523,
+            "recall": 0.9375,
+            "f1": 0.9448818897637795
+          }
+        },
+        "macro_precision": 0.9841269841269842,
+        "macro_recall": 0.8322162336465819,
+        "macro_f1": 0.8889249524923936,
+        "paper_precision": 0.9523809523809523,
+        "paper_recall": 0.9375,
+        "small_object_recall": 0.6818181818181818,
+        "small_object_total": 22,
+        "small_object_matched": 15,
+        "all_gt_candidate_recall": 0.8486486486486486,
+        "all_gt_candidate_total": 185,
+        "all_gt_candidate_matched": 157,
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 18.0,
+        "total_false_positives": 3,
+        "frame_count": 100
+      },
+      "area": {
+        "iou_by_class": {
+          "leaf_pile": 0.9310393038498535,
+          "puddle": 0.4644403375457724
+        },
+        "macro_miou": 0.6977398206978129,
+        "boundary_f1_by_class": {
+          "leaf_pile": 0.6865936439370565,
+          "puddle": 0.3328258857944539
+        },
+        "boundary_f1": 0.5097097648657551,
+        "boundary_intersection_pixels": [
+          8901,
+          11150
+        ],
+        "boundary_union_pixels": [
+          17027,
+          55852
+        ],
+        "negative_only_frames": 30,
+        "negative_only_fp_frames": 26,
+        "negative_area_fp_per_frame": 0.8666666666666667,
+        "intersection_pixels": [
+          166481,
+          269903
+        ],
+        "union_pixels": [
+          178812,
+          581136
+        ]
+      },
+      "same_color_negative_specificity": {
+        "status": "not_evaluated",
+        "specificity": null,
+        "taxonomy_count": 0
+      },
+      "direct_detector_threshold": 0.75,
+      "duration_s": 49.16407181700015
+    },
+    "D5": {
+      "name": "D5",
+      "rows": 100,
+      "candidate": {
+        "all_gt_candidate_recall": 0.0,
+        "matched_truth": 0,
+        "total_truth": 0,
+        "ap50": 0.0,
+        "precision": 0.0,
+        "false_proposals_per_frame": 0.0,
+        "total_false_positives": 0,
+        "negative_only_frames": 100,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 0.0,
+        "small_object_candidate_recall": 0.0,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "medium_18_to_48px": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "large_ge_48px": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          }
+        },
+        "per_world": {
+          "world_g4_01_asphalt_campus": {
+            "total": 0,
+            "matched": 0,
+            "recall": 0.0
+          }
+        }
+      },
+      "discrete": {
+        "per_class": {
+          "plastic_bottle": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "metal_can": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          },
+          "paper_litter": {
+            "tp": 0,
+            "fp": 0,
+            "fn": 0,
+            "precision": 0.0,
+            "recall": 0.0,
+            "f1": 0.0
+          }
+        },
+        "macro_precision": 0.0,
+        "macro_recall": 0.0,
+        "macro_f1": 0.0,
+        "paper_precision": 0.0,
+        "paper_recall": 0.0,
+        "small_object_recall": 0.0,
+        "small_object_total": 0,
+        "small_object_matched": 0,
+        "all_gt_candidate_recall": 0.0,
+        "all_gt_candidate_total": 0,
+        "all_gt_candidate_matched": 0,
+        "negative_only_frames": 100,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 0.0,
+        "total_false_positives": 0,
+        "frame_count": 100
+      },
+      "area": {
+        "iou_by_class": {
+          "leaf_pile": 0.0,
+          "puddle": 0.0
+        },
+        "macro_miou": 0.0,
+        "boundary_f1_by_class": {
+          "leaf_pile": 0.0,
+          "puddle": 0.0
+        },
+        "boundary_f1": 0.0,
+        "boundary_intersection_pixels": [
+          0,
+          0
+        ],
+        "boundary_union_pixels": [
+          0,
+          0
+        ],
+        "negative_only_frames": 100,
+        "negative_only_fp_frames": 0,
+        "negative_area_fp_per_frame": 0.0,
+        "intersection_pixels": [
+          0,
+          0
+        ],
+        "union_pixels": [
+          0,
+          0
+        ]
+      },
+      "same_color_negative_specificity": {
+        "status": "not_evaluated",
+        "specificity": null,
+        "taxonomy_count": 0
+      },
+      "direct_detector_threshold": 0.75,
+      "duration_s": 51.484076124999774
+    }
+  },
+  "cross_world_aggregate": {
+    "name": "D1-D5-AGGREGATE",
+    "rows": 500,
+    "candidate": {
+      "all_gt_candidate_recall": 0.8619119878603946,
+      "matched_truth": 568,
+      "total_truth": 659,
+      "ap50": 0.8503858854792239,
+      "precision": 0.9709401709401709,
+      "false_proposals_per_frame": 0.034,
+      "total_false_positives": 17,
+      "negative_only_frames": 230,
+      "negative_only_fp_frames": 0,
+      "negative_only_fp_per_frame": 0.0,
+      "false_candidates_per_min": 20.4,
+      "small_object_candidate_recall": 0.5263157894736842,
+      "per_size": {
+        "small_lt_18px": {
+          "total": 57,
+          "matched": 30,
+          "recall": 0.5263157894736842
+        },
+        "medium_18_to_48px": {
+          "total": 486,
+          "matched": 428,
+          "recall": 0.8806584362139918
+        },
+        "large_ge_48px": {
+          "total": 116,
+          "matched": 110,
+          "recall": 0.9482758620689655
+        }
+      },
+      "per_world": {
+        "world_auto05r_d3_factorized": {
+          "total": 169,
+          "matched": 157,
+          "recall": 0.9289940828402367
+        },
+        "world_auto05r_d4_factorized": {
+          "total": 185,
+          "matched": 157,
+          "recall": 0.8486486486486486
+        },
+        "world_g4_01_asphalt_campus": {
+          "total": 168,
+          "matched": 147,
+          "recall": 0.875
+        },
+        "world_g4_09_light_paver_pedestrian": {
+          "total": 137,
+          "matched": 107,
+          "recall": 0.781021897810219
+        }
+      }
+    },
+    "discrete": {
+      "per_class": {
+        "plastic_bottle": {
+          "tp": 237,
+          "fp": 5,
+          "fn": 10,
+          "precision": 0.9793388429752066,
+          "recall": 0.9595141700404858,
+          "f1": 0.9693251533742331
+        },
+        "metal_can": {
+          "tp": 125,
+          "fp": 0,
+          "fn": 59,
+          "precision": 1.0,
+          "recall": 0.6793478260869565,
+          "f1": 0.8090614886731392
+        },
+        "paper_litter": {
+          "tp": 201,
+          "fp": 17,
+          "fn": 27,
+          "precision": 0.9220183486238532,
+          "recall": 0.881578947368421,
+          "f1": 0.9013452914798207
+        }
+      },
+      "macro_precision": 0.9671190638663533,
+      "macro_recall": 0.8401469811652879,
+      "macro_f1": 0.8932439778423977,
+      "paper_precision": 0.9220183486238532,
+      "paper_recall": 0.881578947368421,
+      "small_object_recall": 0.5263157894736842,
+      "small_object_total": 57,
+      "small_object_matched": 30,
+      "all_gt_candidate_recall": 0.8543247344461306,
+      "all_gt_candidate_total": 659,
+      "all_gt_candidate_matched": 563,
+      "negative_only_frames": 230,
+      "negative_only_fp_frames": 0,
+      "negative_only_fp_per_frame": 0.0,
+      "false_candidates_per_min": 26.4,
+      "total_false_positives": 22,
+      "frame_count": 500
+    },
+    "area": {
+      "iou_by_class": {
+        "leaf_pile": 0.9117944240242805,
+        "puddle": 0.7221597454054084
+      },
+      "macro_miou": 0.8169770847148444,
+      "boundary_f1_by_class": {
+        "leaf_pile": 0.6955963837853602,
+        "puddle": 0.5820235455536635
+      },
+      "boundary_f1": 0.6388099646695118,
+      "negative_only_frames": 230,
+      "negative_only_fp_frames": 30,
+      "negative_area_fp_per_frame": 0.13043478260869565,
+      "intersection_pixels": [
+        478269,
+        898379
+      ],
+      "union_pixels": [
+        524536,
+        1244017
+      ],
+      "boundary_intersection_pixels": [
+        29815,
+        47510
+      ],
+      "boundary_union_pixels": [
+        55910,
+        115748
+      ]
+    },
+    "same_color_negative_specificity": {
+      "status": "not_evaluated",
+      "specificity": null,
+      "taxonomy_count": 0
+    },
+    "direct_detector_threshold": 0.75,
+    "duration_s": 252.4253976150012
+  },
+  "G5_SEALED_FINAL_read": false,
+  "legacy_G4_D6_read": false,
+  "moving_camera_gate": "not_run_pending_static_gate",
+  "PERCEPTION_ONLINE_X86_DEV_PASS": false,
+  "static_decision": {
+    "gates": {
+      "candidate_recall_at_least_0_80": true,
+      "small_candidate_recall_at_least_0_70": false,
+      "false_candidates_per_min_at_most_2": false,
+      "negative_fp_per_frame_at_most_0_05": true,
+      "in_domain_macro_precision_at_least_0_90": true,
+      "in_domain_macro_recall_at_least_0_90": false,
+      "in_domain_macro_f1_at_least_0_90": true,
+      "cross_world_macro_f1_at_least_0_70": true,
+      "each_cross_world_recall_at_least_0_70": false,
+      "paper_precision_at_least_0_80": true,
+      "small_final_recall_at_least_0_70": false,
+      "leaf_iou_at_least_0_75": true,
+      "puddle_iou_at_least_0_75": true,
+      "area_miou_at_least_0_75": true,
+      "boundary_f1_at_least_0_70": false,
+      "negative_area_fp_per_frame_at_most_0_05": false
+    },
+    "static_gate_pass": false
+  },
+  "next_action": "MODEL_BLOCKED_INTERNAL_all_MRV2_routes_exhausted"
+}

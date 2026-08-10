@@ -1111,3 +1111,10 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_doc
 - MRV2-C 只在 TRAIN 上运行已通过历史数据可学习性门的 FCOS-R50 teacher；只接受 `score>=0.70`、与既有 TRAIN small GT `IoU>=0.50` 的框，并沿用 TRAIN GT 的闭集类别。补标只替换匹配的小目标几何，不追加重复框，也不读取 VAL/G5/D6。
 - 闭集 detector 增加显式 stride-4/P2：ResNet layer1 进入 FPN，anchor size 为 `4/8/16/32/64/128`，既有 MRV2-A 的 ResNet body、P3-P7 与三分类检测头张量按层移植，只有新 P2 lateral/output 卷积保持新初始化。
 - 官方 Grounding DINO benchmark 使用已核验 checkpoint、官方 source commit、TRAIN-world holdout 阈值选择和固定 VAL/D1-D5；reference 容器没有 nvcc 时，明确记录官方 PyTorch deformable-attention fallback 的最小兼容补丁与 SHA，不把 reference benchmark 当作历史 X2 状态回写或产品通过。
+
+## MRV2 最终结果与停止边界
+
+- MRV2-C teacher 在 TRAIN pool 的 102 个 `<18 px` truth 中产生 28 个合格几何补标；P2 正式完成 6×600 帧训练。固定 VAL 的 candidate recall `0.8972`、macro F1 `0.9299`，但 small recall `0.4615`、metal_can recall `0.8125`、FP/min `20.4`；跨域 small recall `0.5263`。D1-D4 metal_can recall 为 `0.6731/0.6471/0.8409/0.5741`，仍未满足每域 `>=0.70`。
+- Area 路线没有被 detector 改善掩盖：VAL boundary F1 `0.6880`；D4 boundary F1 `0.5097`、negative-area FP/frame `0.8667`，故 area 门仍失败。
+- Grounding DINO 官方 checkpoint 在 100 帧 train-world holdout 选阈值后完整运行 500 帧 VAL 与 D1-D5 各 100 帧；VAL candidate recall `0.0219`、small recall `0`、FP/min `1.2`，D1-D4 recall 为 `0.0655/0.0146/0.0237/0.0486`。proposal inference P95 `199.4 ms`，preprocess P95 `69.1 ms`，尚未包含 closed-set classifier/area/product 后处理。
+- MRV2-A/B/C 全部失败，`MRV2_X86_STATIC_PASS=false`、`MODEL_BLOCKED_INTERNAL=true`。协议要求的 fail-closed 边界生效：没有创建 freeze，没有读取 G5/旧 D6，没有运行 30-seed、soak、replay、J6 或 field 性能，也没有 release/deploy。最终状态、blocker、registry、release-null manifest、第三方说明和证据索引位于 `artifacts/model_recovery_v2_20260810T004459Z/final/`。

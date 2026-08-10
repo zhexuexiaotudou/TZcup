@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "release_created": false,
+  "release_path": null,
+  "release_sha256": null,
+  "deployed": false,
+  "rollback_point": null,
+  "reason": "MRV2_X86_STATIC_PASS=false; freeze and all downstream release gates are locked",
+  "source": {
+    "local_commit": "07e9348b7680f4174d2823ffc7fe1d2e413791f2",
+    "remote_equivalent_commit": "c43e9732133f8a9caafdad435d0252c5333cc2bb",
+    "tree": "abf6e16ad4dc6275aeeb8aebec020ff68c375e4a",
+    "code_tree_equivalence_verified": true
+  }
+}

@@ -63,6 +63,46 @@
       "sha256": "6a40237a9b4d9e00ebb5596f1b2837b8e5d8bdfc433976d38f13582853b8e2ac"
     },
     {
+      "path": "final/MODEL_RECOVERY_V2_REPORT.md",
+      "bytes": 2244,
+      "sha256": "a02d1c3fb5f3d0ad5052b922d4c9e315aae37921bff25366a251fac8114b32ef"
+    },
+    {
+      "path": "final/PERCEPTION_MRV2_EVIDENCE_INDEX.md",
+      "bytes": 1639,
+      "sha256": "b28554cb9ac6bc6572bac8f961913ce839b3b12efccc59354719b7fd475a09a1"
+    },
+    {
+      "path": "final/PERCEPTION_MRV2_FINAL_BLOCKERS.json",
+      "bytes": 2064,
+      "sha256": "e096fcae69e6cd0a977089473ba48fcdb2208dfe17eea67528924c6b683380da"
+    },
+    {
+      "path": "final/PERCEPTION_MRV2_FINAL_STATUS.json",
+      "bytes": 1948,
+      "sha256": "f9cc16af9593fbda4367f4a1b55e8fe7b47389e7cea17f459556d715c0cdb457"
+    },
+    {
+      "path": "final/PERCEPTION_MRV2_MODEL_REGISTRY.json",
+      "bytes": 3025,
+      "sha256": "4c4d7ce4f389e2c412dfe030e382e03394bd6731339270b908f3242d262dfdd1"
+    },
+    {
+      "path": "final/PERCEPTION_MRV2_RELEASE_MANIFEST.json",
+      "bytes": 518,
+      "sha256": "068024a2bb2234d4ddddda69608f32f12a296b78e34407d03415aced26dea2c9"
+    },
+    {
+      "path": "final/PERCEPTION_MRV2_THIRD_PARTY_NOTICES.md",
+      "bytes": 795,
+      "sha256": "663c71c3610c565899be012c8006a3f95b9825c8770c7907b9fa9a8e73d1b967"
+    },
+    {
+      "path": "grounding_dino/GROUNDING_DINO_BENCHMARK.json",
+      "bytes": 39463,
+      "sha256": "c0438ca0d336d3b2b1fb8dec41568eb89cddc40caa20d603a50e8308bcb5121f"
+    },
+    {
       "path": "grounding_dino/GROUNDING_DINO_PROVENANCE.json",
       "bytes": 5217,
       "sha256": "b4b10aa603e11cd98efd55951068d2255db8675d310812776faafe83f0a6447a"
@@ -81,6 +121,11 @@
       "path": "mrv2_b/MRV2_B_SCREEN.json",
       "bytes": 209788,
       "sha256": "4363f64ae9f8b0ddc333e9934404081a00cdedb9921318b156505c55bf6cbc1f"
+    },
+    {
+      "path": "mrv2_c/MRV2_C_FULL_STATIC.json",
+      "bytes": 28059,
+      "sha256": "f80eef11818f9addc077f7ff1d3df41719273a71910afa9b6af0938ad873fbda"
     }
   ]
 }

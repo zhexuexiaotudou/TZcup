@@ -1,0 +1,1391 @@
+{
+  "schema_version": 1,
+  "stage": "MRV2-05-GROUNDING-DINO-BENCHMARK",
+  "official_checkpoint": {
+    "path": "/runtime/reference-cache/grounding-dino/groundingdino_swint_ogc.pth",
+    "bytes": 693997677,
+    "sha256": "3b3ca2563c77c69f651d7bd133e97139c186df06231157a64c507099c52bc799"
+  },
+  "official_source": {
+    "path": "/runtime/reference-cache/grounding-dino/source-856dde20/GroundingDINO-856dde20aee659246248e20734ef9ba5214f5e44",
+    "upstream_commit": "856dde20aee659246248e20734ef9ba5214f5e44",
+    "local_cuda_fallback_patch_file": "groundingdino/models/GroundingDINO/ms_deform_attn.py",
+    "local_cuda_fallback_patch_sha256": "0f65b54c8e041856e49d7229912d5d11c679598b543b8fa0cf92356cd7ebeb16",
+    "compiled_custom_ops": false
+  },
+  "environment": {
+    "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "python": "3.12.3",
+    "torch": "2.5.1+cu124",
+    "gpu": "NVIDIA GeForce RTX 4080 Laptop GPU",
+    "device": "cuda"
+  },
+  "prompt": "plastic bottle . metal can . paper litter .",
+  "selection_policy": "train_world_holdout_only",
+  "selection": {
+    "threshold": 0.55,
+    "metrics": {
+      "all_gt_candidate_recall": 0.007142857142857143,
+      "matched_truth": 1,
+      "total_truth": 140,
+      "ap50": 0.009900990099009901,
+      "precision": 1.0,
+      "false_proposals_per_frame": 0.0,
+      "total_false_positives": 0,
+      "negative_only_frames": 38,
+      "negative_only_fp_frames": 0,
+      "negative_only_fp_per_frame": 0.0,
+      "false_candidates_per_min": 0.0,
+      "small_object_candidate_recall": 0.0,
+      "per_size": {
+        "small_lt_18px": {
+          "total": 7,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "medium_18_to_48px": {
+          "total": 107,
+          "matched": 1,
+          "recall": 0.009345794392523364
+        },
+        "large_ge_48px": {
+          "total": 26,
+          "matched": 0,
+          "recall": 0.0
+        }
+      },
+      "per_world": {
+        "world_g4_01_asphalt_campus": {
+          "total": 17,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "world_g4_02_concrete_sidewalk": {
+          "total": 17,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "world_g4_03_wet_courtyard": {
+          "total": 16,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "world_g4_04_cobblestone_arcade": {
+          "total": 20,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "world_g4_05_red_brick_promenade": {
+          "total": 21,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "world_g4_06_tiled_plaza": {
+          "total": 20,
+          "matched": 1,
+          "recall": 0.05
+        },
+        "world_g4_07_service_road": {
+          "total": 16,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "world_g4_08_mixed_curb_vegetation": {
+          "total": 13,
+          "matched": 0,
+          "recall": 0.0
+        }
+      },
+      "metal_can_candidate_recall": {
+        "total": 33,
+        "matched": 0,
+        "recall": 0.0
+      }
+    },
+    "gates": {
+      "candidate_recall_at_least_0_80": false,
+      "small_recall_at_least_0_70": false,
+      "false_candidates_per_min_at_most_2": true,
+      "negative_fp_per_frame_at_most_0_05": true
+    },
+    "all_pass": false,
+    "constraint_distance": 1.4928571428571429
+  },
+  "threshold_sweep": [
+    {
+      "threshold": 0.1,
+      "metrics": {
+        "all_gt_candidate_recall": 0.8285714285714286,
+        "matched_truth": 116,
+        "total_truth": 140,
+        "ap50": 0.2658764264949169,
+        "precision": 0.07254534083802376,
+        "false_proposals_per_frame": 14.83,
+        "total_false_positives": 1483,
+        "negative_only_frames": 38,
+        "negative_only_fp_frames": 38,
+        "negative_only_fp_per_frame": 1.0,
+        "false_candidates_per_min": 8898.0,
+        "small_object_candidate_recall": 0.0,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 7,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "medium_18_to_48px": {
+            "total": 107,
+            "matched": 95,
+            "recall": 0.8878504672897196
+          },
+          "large_ge_48px": {
+            "total": 26,
+            "matched": 21,
+            "recall": 0.8076923076923077
+          }
+        },
+        "per_world": {
+          "world_g4_01_asphalt_campus": {
+            "total": 17,
+            "matched": 14,
+            "recall": 0.8235294117647058
+          },
+          "world_g4_02_concrete_sidewalk": {
+            "total": 17,
+            "matched": 15,
+            "recall": 0.8823529411764706
+          },
+          "world_g4_03_wet_courtyard": {
+            "total": 16,
+            "matched": 12,
+            "recall": 0.75
+          },
+          "world_g4_04_cobblestone_arcade": {
+            "total": 20,
+            "matched": 15,
+            "recall": 0.75
+          },
+          "world_g4_05_red_brick_promenade": {
+            "total": 21,
+            "matched": 19,
+            "recall": 0.9047619047619048
+          },
+          "world_g4_06_tiled_plaza": {
+            "total": 20,
+            "matched": 17,
+            "recall": 0.85
+          },
+          "world_g4_07_service_road": {
+            "total": 16,
+            "matched": 12,
+            "recall": 0.75
+          },
+          "world_g4_08_mixed_curb_vegetation": {
+            "total": 13,
+            "matched": 12,
+            "recall": 0.9230769230769231
+          }
+        },
+        "metal_can_candidate_recall": {
+          "total": 33,
+          "matched": 29,
+          "recall": 0.8787878787878788
+        }
+      },
+      "gates": {
+        "candidate_recall_at_least_0_80": true,
+        "small_recall_at_least_0_70": false,
+        "false_candidates_per_min_at_most_2": false,
+        "negative_fp_per_frame_at_most_0_05": false
+      },
+      "all_pass": false,
+      "constraint_distance": 8897.650000000001
+    },
+    {
+      "threshold": 0.15,
+      "metrics": {
+        "all_gt_candidate_recall": 0.8285714285714286,
+        "matched_truth": 116,
+        "total_truth": 140,
+        "ap50": 0.2658764264949169,
+        "precision": 0.07596594629993451,
+        "false_proposals_per_frame": 14.11,
+        "total_false_positives": 1411,
+        "negative_only_frames": 38,
+        "negative_only_fp_frames": 38,
+        "negative_only_fp_per_frame": 1.0,
+        "false_candidates_per_min": 8466.0,
+        "small_object_candidate_recall": 0.0,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 7,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "medium_18_to_48px": {
+            "total": 107,
+            "matched": 95,
+            "recall": 0.8878504672897196
+          },
+          "large_ge_48px": {
+            "total": 26,
+            "matched": 21,
+            "recall": 0.8076923076923077
+          }
+        },
+        "per_world": {
+          "world_g4_01_asphalt_campus": {
+            "total": 17,
+            "matched": 14,
+            "recall": 0.8235294117647058
+          },
+          "world_g4_02_concrete_sidewalk": {
+            "total": 17,
+            "matched": 15,
+            "recall": 0.8823529411764706
+          },
+          "world_g4_03_wet_courtyard": {
+            "total": 16,
+            "matched": 12,
+            "recall": 0.75
+          },
+          "world_g4_04_cobblestone_arcade": {
+            "total": 20,
+            "matched": 15,
+            "recall": 0.75
+          },
+          "world_g4_05_red_brick_promenade": {
+            "total": 21,
+            "matched": 19,
+            "recall": 0.9047619047619048
+          },
+          "world_g4_06_tiled_plaza": {
+            "total": 20,
+            "matched": 17,
+            "recall": 0.85
+          },
+          "world_g4_07_service_road": {
+            "total": 16,
+            "matched": 12,
+            "recall": 0.75
+          },
+          "world_g4_08_mixed_curb_vegetation": {
+            "total": 13,
+            "matched": 12,
+            "recall": 0.9230769230769231
+          }
+        },
+        "metal_can_candidate_recall": {
+          "total": 33,
+          "matched": 29,
+          "recall": 0.8787878787878788
+        }
+      },
+      "gates": {
+        "candidate_recall_at_least_0_80": true,
+        "small_recall_at_least_0_70": false,
+        "false_candidates_per_min_at_most_2": false,
+        "negative_fp_per_frame_at_most_0_05": false
+      },
+      "all_pass": false,
+      "constraint_distance": 8465.650000000001
+    },
+    {
+      "threshold": 0.2,
+      "metrics": {
+        "all_gt_candidate_recall": 0.7928571428571428,
+        "matched_truth": 111,
+        "total_truth": 140,
+        "ap50": 0.26333304518943706,
+        "precision": 0.09711286089238845,
+        "false_proposals_per_frame": 10.32,
+        "total_false_positives": 1032,
+        "negative_only_frames": 38,
+        "negative_only_fp_frames": 38,
+        "negative_only_fp_per_frame": 1.0,
+        "false_candidates_per_min": 6192.0,
+        "small_object_candidate_recall": 0.0,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 7,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "medium_18_to_48px": {
+            "total": 107,
+            "matched": 90,
+            "recall": 0.8411214953271028
+          },
+          "large_ge_48px": {
+            "total": 26,
+            "matched": 21,
+            "recall": 0.8076923076923077
+          }
+        },
+        "per_world": {
+          "world_g4_01_asphalt_campus": {
+            "total": 17,
+            "matched": 14,
+            "recall": 0.8235294117647058
+          },
+          "world_g4_02_concrete_sidewalk": {
+            "total": 17,
+            "matched": 15,
+            "recall": 0.8823529411764706
+          },
+          "world_g4_03_wet_courtyard": {
+            "total": 16,
+            "matched": 11,
+            "recall": 0.6875
+          },
+          "world_g4_04_cobblestone_arcade": {
+            "total": 20,
+            "matched": 14,
+            "recall": 0.7
+          },
+          "world_g4_05_red_brick_promenade": {
+            "total": 21,
+            "matched": 18,
+            "recall": 0.8571428571428571
+          },
+          "world_g4_06_tiled_plaza": {
+            "total": 20,
+            "matched": 17,
+            "recall": 0.85
+          },
+          "world_g4_07_service_road": {
+            "total": 16,
+            "matched": 11,
+            "recall": 0.6875
+          },
+          "world_g4_08_mixed_curb_vegetation": {
+            "total": 13,
+            "matched": 11,
+            "recall": 0.8461538461538461
+          }
+        },
+        "metal_can_candidate_recall": {
+          "total": 33,
+          "matched": 28,
+          "recall": 0.8484848484848485
+        }
+      },
+      "gates": {
+        "candidate_recall_at_least_0_80": false,
+        "small_recall_at_least_0_70": false,
+        "false_candidates_per_min_at_most_2": false,
+        "negative_fp_per_frame_at_most_0_05": false
+      },
+      "all_pass": false,
+      "constraint_distance": 6191.657142857142
+    },
+    {
+      "threshold": 0.25,
+      "metrics": {
+        "all_gt_candidate_recall": 0.7214285714285714,
+        "matched_truth": 101,
+        "total_truth": 140,
+        "ap50": 0.2554995375301012,
+        "precision": 0.1335978835978836,
+        "false_proposals_per_frame": 6.55,
+        "total_false_positives": 655,
+        "negative_only_frames": 38,
+        "negative_only_fp_frames": 38,
+        "negative_only_fp_per_frame": 1.0,
+        "false_candidates_per_min": 3930.0,
+        "small_object_candidate_recall": 0.0,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 7,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "medium_18_to_48px": {
+            "total": 107,
+            "matched": 81,
+            "recall": 0.7570093457943925
+          },
+          "large_ge_48px": {
+            "total": 26,
+            "matched": 20,
+            "recall": 0.7692307692307693
+          }
+        },
+        "per_world": {
+          "world_g4_01_asphalt_campus": {
+            "total": 17,
+            "matched": 14,
+            "recall": 0.8235294117647058
+          },
+          "world_g4_02_concrete_sidewalk": {
+            "total": 17,
+            "matched": 12,
+            "recall": 0.7058823529411765
+          },
+          "world_g4_03_wet_courtyard": {
+            "total": 16,
+            "matched": 10,
+            "recall": 0.625
+          },
+          "world_g4_04_cobblestone_arcade": {
+            "total": 20,
+            "matched": 12,
+            "recall": 0.6
+          },
+          "world_g4_05_red_brick_promenade": {
+            "total": 21,
+            "matched": 18,
+            "recall": 0.8571428571428571
+          },
+          "world_g4_06_tiled_plaza": {
+            "total": 20,
+            "matched": 15,
+            "recall": 0.75
+          },
+          "world_g4_07_service_road": {
+            "total": 16,
+            "matched": 10,
+            "recall": 0.625
+          },
+          "world_g4_08_mixed_curb_vegetation": {
+            "total": 13,
+            "matched": 10,
+            "recall": 0.7692307692307693
+          }
+        },
+        "metal_can_candidate_recall": {
+          "total": 33,
+          "matched": 28,
+          "recall": 0.8484848484848485
+        }
+      },
+      "gates": {
+        "candidate_recall_at_least_0_80": false,
+        "small_recall_at_least_0_70": false,
+        "false_candidates_per_min_at_most_2": false,
+        "negative_fp_per_frame_at_most_0_05": false
+      },
+      "all_pass": false,
+      "constraint_distance": 3929.7285714285713
+    },
+    {
+      "threshold": 0.3,
+      "metrics": {
+        "all_gt_candidate_recall": 0.6285714285714286,
+        "matched_truth": 88,
+        "total_truth": 140,
+        "ap50": 0.23996037075301033,
+        "precision": 0.17922606924643583,
+        "false_proposals_per_frame": 4.03,
+        "total_false_positives": 403,
+        "negative_only_frames": 38,
+        "negative_only_fp_frames": 38,
+        "negative_only_fp_per_frame": 1.0,
+        "false_candidates_per_min": 2418.0,
+        "small_object_candidate_recall": 0.0,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 7,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "medium_18_to_48px": {
+            "total": 107,
+            "matched": 68,
+            "recall": 0.6355140186915887
+          },
+          "large_ge_48px": {
+            "total": 26,
+            "matched": 20,
+            "recall": 0.7692307692307693
+          }
+        },
+        "per_world": {
+          "world_g4_01_asphalt_campus": {
+            "total": 17,
+            "matched": 14,
+            "recall": 0.8235294117647058
+          },
+          "world_g4_02_concrete_sidewalk": {
+            "total": 17,
+            "matched": 11,
+            "recall": 0.6470588235294118
+          },
+          "world_g4_03_wet_courtyard": {
+            "total": 16,
+            "matched": 10,
+            "recall": 0.625
+          },
+          "world_g4_04_cobblestone_arcade": {
+            "total": 20,
+            "matched": 9,
+            "recall": 0.45
+          },
+          "world_g4_05_red_brick_promenade": {
+            "total": 21,
+            "matched": 15,
+            "recall": 0.7142857142857143
+          },
+          "world_g4_06_tiled_plaza": {
+            "total": 20,
+            "matched": 11,
+            "recall": 0.55
+          },
+          "world_g4_07_service_road": {
+            "total": 16,
+            "matched": 10,
+            "recall": 0.625
+          },
+          "world_g4_08_mixed_curb_vegetation": {
+            "total": 13,
+            "matched": 8,
+            "recall": 0.6153846153846154
+          }
+        },
+        "metal_can_candidate_recall": {
+          "total": 33,
+          "matched": 27,
+          "recall": 0.8181818181818182
+        }
+      },
+      "gates": {
+        "candidate_recall_at_least_0_80": false,
+        "small_recall_at_least_0_70": false,
+        "false_candidates_per_min_at_most_2": false,
+        "negative_fp_per_frame_at_most_0_05": false
+      },
+      "all_pass": false,
+      "constraint_distance": 2417.8214285714284
+    },
+    {
+      "threshold": 0.35,
+      "metrics": {
+        "all_gt_candidate_recall": 0.5,
+        "matched_truth": 70,
+        "total_truth": 140,
+        "ap50": 0.21543089425491585,
+        "precision": 0.2734375,
+        "false_proposals_per_frame": 1.86,
+        "total_false_positives": 186,
+        "negative_only_frames": 38,
+        "negative_only_fp_frames": 38,
+        "negative_only_fp_per_frame": 1.0,
+        "false_candidates_per_min": 1116.0,
+        "small_object_candidate_recall": 0.0,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 7,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "medium_18_to_48px": {
+            "total": 107,
+            "matched": 51,
+            "recall": 0.4766355140186916
+          },
+          "large_ge_48px": {
+            "total": 26,
+            "matched": 19,
+            "recall": 0.7307692307692307
+          }
+        },
+        "per_world": {
+          "world_g4_01_asphalt_campus": {
+            "total": 17,
+            "matched": 12,
+            "recall": 0.7058823529411765
+          },
+          "world_g4_02_concrete_sidewalk": {
+            "total": 17,
+            "matched": 7,
+            "recall": 0.4117647058823529
+          },
+          "world_g4_03_wet_courtyard": {
+            "total": 16,
+            "matched": 10,
+            "recall": 0.625
+          },
+          "world_g4_04_cobblestone_arcade": {
+            "total": 20,
+            "matched": 8,
+            "recall": 0.4
+          },
+          "world_g4_05_red_brick_promenade": {
+            "total": 21,
+            "matched": 13,
+            "recall": 0.6190476190476191
+          },
+          "world_g4_06_tiled_plaza": {
+            "total": 20,
+            "matched": 8,
+            "recall": 0.4
+          },
+          "world_g4_07_service_road": {
+            "total": 16,
+            "matched": 5,
+            "recall": 0.3125
+          },
+          "world_g4_08_mixed_curb_vegetation": {
+            "total": 13,
+            "matched": 7,
+            "recall": 0.5384615384615384
+          }
+        },
+        "metal_can_candidate_recall": {
+          "total": 33,
+          "matched": 22,
+          "recall": 0.6666666666666666
+        }
+      },
+      "gates": {
+        "candidate_recall_at_least_0_80": false,
+        "small_recall_at_least_0_70": false,
+        "false_candidates_per_min_at_most_2": false,
+        "negative_fp_per_frame_at_most_0_05": false
+      },
+      "all_pass": false,
+      "constraint_distance": 1115.95
+    },
+    {
+      "threshold": 0.4,
+      "metrics": {
+        "all_gt_candidate_recall": 0.32857142857142857,
+        "matched_truth": 46,
+        "total_truth": 140,
+        "ap50": 0.15837225564342128,
+        "precision": 0.34074074074074073,
+        "false_proposals_per_frame": 0.89,
+        "total_false_positives": 89,
+        "negative_only_frames": 38,
+        "negative_only_fp_frames": 30,
+        "negative_only_fp_per_frame": 0.7894736842105263,
+        "false_candidates_per_min": 534.0,
+        "small_object_candidate_recall": 0.0,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 7,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "medium_18_to_48px": {
+            "total": 107,
+            "matched": 31,
+            "recall": 0.2897196261682243
+          },
+          "large_ge_48px": {
+            "total": 26,
+            "matched": 15,
+            "recall": 0.5769230769230769
+          }
+        },
+        "per_world": {
+          "world_g4_01_asphalt_campus": {
+            "total": 17,
+            "matched": 11,
+            "recall": 0.6470588235294118
+          },
+          "world_g4_02_concrete_sidewalk": {
+            "total": 17,
+            "matched": 5,
+            "recall": 0.29411764705882354
+          },
+          "world_g4_03_wet_courtyard": {
+            "total": 16,
+            "matched": 6,
+            "recall": 0.375
+          },
+          "world_g4_04_cobblestone_arcade": {
+            "total": 20,
+            "matched": 3,
+            "recall": 0.15
+          },
+          "world_g4_05_red_brick_promenade": {
+            "total": 21,
+            "matched": 8,
+            "recall": 0.38095238095238093
+          },
+          "world_g4_06_tiled_plaza": {
+            "total": 20,
+            "matched": 5,
+            "recall": 0.25
+          },
+          "world_g4_07_service_road": {
+            "total": 16,
+            "matched": 3,
+            "recall": 0.1875
+          },
+          "world_g4_08_mixed_curb_vegetation": {
+            "total": 13,
+            "matched": 5,
+            "recall": 0.38461538461538464
+          }
+        },
+        "metal_can_candidate_recall": {
+          "total": 33,
+          "matched": 15,
+          "recall": 0.45454545454545453
+        }
+      },
+      "gates": {
+        "candidate_recall_at_least_0_80": false,
+        "small_recall_at_least_0_70": false,
+        "false_candidates_per_min_at_most_2": false,
+        "negative_fp_per_frame_at_most_0_05": false
+      },
+      "all_pass": false,
+      "constraint_distance": 533.9109022556391
+    },
+    {
+      "threshold": 0.45,
+      "metrics": {
+        "all_gt_candidate_recall": 0.22857142857142856,
+        "matched_truth": 32,
+        "total_truth": 140,
+        "ap50": 0.11942259471149679,
+        "precision": 0.41025641025641024,
+        "false_proposals_per_frame": 0.46,
+        "total_false_positives": 46,
+        "negative_only_frames": 38,
+        "negative_only_fp_frames": 24,
+        "negative_only_fp_per_frame": 0.631578947368421,
+        "false_candidates_per_min": 276.0,
+        "small_object_candidate_recall": 0.0,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 7,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "medium_18_to_48px": {
+            "total": 107,
+            "matched": 21,
+            "recall": 0.19626168224299065
+          },
+          "large_ge_48px": {
+            "total": 26,
+            "matched": 11,
+            "recall": 0.4230769230769231
+          }
+        },
+        "per_world": {
+          "world_g4_01_asphalt_campus": {
+            "total": 17,
+            "matched": 7,
+            "recall": 0.4117647058823529
+          },
+          "world_g4_02_concrete_sidewalk": {
+            "total": 17,
+            "matched": 5,
+            "recall": 0.29411764705882354
+          },
+          "world_g4_03_wet_courtyard": {
+            "total": 16,
+            "matched": 6,
+            "recall": 0.375
+          },
+          "world_g4_04_cobblestone_arcade": {
+            "total": 20,
+            "matched": 2,
+            "recall": 0.1
+          },
+          "world_g4_05_red_brick_promenade": {
+            "total": 21,
+            "matched": 5,
+            "recall": 0.23809523809523808
+          },
+          "world_g4_06_tiled_plaza": {
+            "total": 20,
+            "matched": 4,
+            "recall": 0.2
+          },
+          "world_g4_07_service_road": {
+            "total": 16,
+            "matched": 2,
+            "recall": 0.125
+          },
+          "world_g4_08_mixed_curb_vegetation": {
+            "total": 13,
+            "matched": 1,
+            "recall": 0.07692307692307693
+          }
+        },
+        "metal_can_candidate_recall": {
+          "total": 33,
+          "matched": 9,
+          "recall": 0.2727272727272727
+        }
+      },
+      "gates": {
+        "candidate_recall_at_least_0_80": false,
+        "small_recall_at_least_0_70": false,
+        "false_candidates_per_min_at_most_2": false,
+        "negative_fp_per_frame_at_most_0_05": false
+      },
+      "all_pass": false,
+      "constraint_distance": 275.85300751879697
+    },
+    {
+      "threshold": 0.5,
+      "metrics": {
+        "all_gt_candidate_recall": 0.06428571428571428,
+        "matched_truth": 9,
+        "total_truth": 140,
+        "ap50": 0.04667609618104667,
+        "precision": 0.2903225806451613,
+        "false_proposals_per_frame": 0.22,
+        "total_false_positives": 22,
+        "negative_only_frames": 38,
+        "negative_only_fp_frames": 18,
+        "negative_only_fp_per_frame": 0.47368421052631576,
+        "false_candidates_per_min": 132.0,
+        "small_object_candidate_recall": 0.0,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 7,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "medium_18_to_48px": {
+            "total": 107,
+            "matched": 5,
+            "recall": 0.04672897196261682
+          },
+          "large_ge_48px": {
+            "total": 26,
+            "matched": 4,
+            "recall": 0.15384615384615385
+          }
+        },
+        "per_world": {
+          "world_g4_01_asphalt_campus": {
+            "total": 17,
+            "matched": 4,
+            "recall": 0.23529411764705882
+          },
+          "world_g4_02_concrete_sidewalk": {
+            "total": 17,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "world_g4_03_wet_courtyard": {
+            "total": 16,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "world_g4_04_cobblestone_arcade": {
+            "total": 20,
+            "matched": 1,
+            "recall": 0.05
+          },
+          "world_g4_05_red_brick_promenade": {
+            "total": 21,
+            "matched": 1,
+            "recall": 0.047619047619047616
+          },
+          "world_g4_06_tiled_plaza": {
+            "total": 20,
+            "matched": 3,
+            "recall": 0.15
+          },
+          "world_g4_07_service_road": {
+            "total": 16,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "world_g4_08_mixed_curb_vegetation": {
+            "total": 13,
+            "matched": 0,
+            "recall": 0.0
+          }
+        },
+        "metal_can_candidate_recall": {
+          "total": 33,
+          "matched": 1,
+          "recall": 0.030303030303030304
+        }
+      },
+      "gates": {
+        "candidate_recall_at_least_0_80": false,
+        "small_recall_at_least_0_70": false,
+        "false_candidates_per_min_at_most_2": false,
+        "negative_fp_per_frame_at_most_0_05": false
+      },
+      "all_pass": false,
+      "constraint_distance": 131.8593984962406
+    },
+    {
+      "threshold": 0.55,
+      "metrics": {
+        "all_gt_candidate_recall": 0.007142857142857143,
+        "matched_truth": 1,
+        "total_truth": 140,
+        "ap50": 0.009900990099009901,
+        "precision": 1.0,
+        "false_proposals_per_frame": 0.0,
+        "total_false_positives": 0,
+        "negative_only_frames": 38,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 0.0,
+        "small_object_candidate_recall": 0.0,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 7,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "medium_18_to_48px": {
+            "total": 107,
+            "matched": 1,
+            "recall": 0.009345794392523364
+          },
+          "large_ge_48px": {
+            "total": 26,
+            "matched": 0,
+            "recall": 0.0
+          }
+        },
+        "per_world": {
+          "world_g4_01_asphalt_campus": {
+            "total": 17,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "world_g4_02_concrete_sidewalk": {
+            "total": 17,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "world_g4_03_wet_courtyard": {
+            "total": 16,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "world_g4_04_cobblestone_arcade": {
+            "total": 20,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "world_g4_05_red_brick_promenade": {
+            "total": 21,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "world_g4_06_tiled_plaza": {
+            "total": 20,
+            "matched": 1,
+            "recall": 0.05
+          },
+          "world_g4_07_service_road": {
+            "total": 16,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "world_g4_08_mixed_curb_vegetation": {
+            "total": 13,
+            "matched": 0,
+            "recall": 0.0
+          }
+        },
+        "metal_can_candidate_recall": {
+          "total": 33,
+          "matched": 0,
+          "recall": 0.0
+        }
+      },
+      "gates": {
+        "candidate_recall_at_least_0_80": false,
+        "small_recall_at_least_0_70": false,
+        "false_candidates_per_min_at_most_2": true,
+        "negative_fp_per_frame_at_most_0_05": true
+      },
+      "all_pass": false,
+      "constraint_distance": 1.4928571428571429
+    },
+    {
+      "threshold": 0.6,
+      "metrics": {
+        "all_gt_candidate_recall": 0.0,
+        "matched_truth": 0,
+        "total_truth": 140,
+        "ap50": 0.0,
+        "precision": 0.0,
+        "false_proposals_per_frame": 0.0,
+        "total_false_positives": 0,
+        "negative_only_frames": 38,
+        "negative_only_fp_frames": 0,
+        "negative_only_fp_per_frame": 0.0,
+        "false_candidates_per_min": 0.0,
+        "small_object_candidate_recall": 0.0,
+        "per_size": {
+          "small_lt_18px": {
+            "total": 7,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "medium_18_to_48px": {
+            "total": 107,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "large_ge_48px": {
+            "total": 26,
+            "matched": 0,
+            "recall": 0.0
+          }
+        },
+        "per_world": {
+          "world_g4_01_asphalt_campus": {
+            "total": 17,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "world_g4_02_concrete_sidewalk": {
+            "total": 17,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "world_g4_03_wet_courtyard": {
+            "total": 16,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "world_g4_04_cobblestone_arcade": {
+            "total": 20,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "world_g4_05_red_brick_promenade": {
+            "total": 21,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "world_g4_06_tiled_plaza": {
+            "total": 20,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "world_g4_07_service_road": {
+            "total": 16,
+            "matched": 0,
+            "recall": 0.0
+          },
+          "world_g4_08_mixed_curb_vegetation": {
+            "total": 13,
+            "matched": 0,
+            "recall": 0.0
+          }
+        },
+        "metal_can_candidate_recall": {
+          "total": 33,
+          "matched": 0,
+          "recall": 0.0
+        }
+      },
+      "gates": {
+        "candidate_recall_at_least_0_80": false,
+        "small_recall_at_least_0_70": false,
+        "false_candidates_per_min_at_most_2": true,
+        "negative_fp_per_frame_at_most_0_05": true
+      },
+      "all_pass": false,
+      "constraint_distance": 1.5
+    }
+  ],
+  "splits": {
+    "VAL": {
+      "all_gt_candidate_recall": 0.021850899742930592,
+      "matched_truth": 17,
+      "total_truth": 778,
+      "ap50": 0.0297029702970297,
+      "precision": 0.9444444444444444,
+      "false_proposals_per_frame": 0.002,
+      "total_false_positives": 1,
+      "negative_only_frames": 160,
+      "negative_only_fp_frames": 1,
+      "negative_only_fp_per_frame": 0.00625,
+      "false_candidates_per_min": 1.2,
+      "small_object_candidate_recall": 0.0,
+      "per_size": {
+        "small_lt_18px": {
+          "total": 39,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "medium_18_to_48px": {
+          "total": 621,
+          "matched": 7,
+          "recall": 0.011272141706924315
+        },
+        "large_ge_48px": {
+          "total": 118,
+          "matched": 10,
+          "recall": 0.0847457627118644
+        }
+      },
+      "per_world": {
+        "world_g4_09_light_paver_pedestrian": {
+          "total": 356,
+          "matched": 1,
+          "recall": 0.0028089887640449437
+        },
+        "world_g4_10_dark_gravel_parking": {
+          "total": 422,
+          "matched": 16,
+          "recall": 0.037914691943127965
+        }
+      },
+      "metal_can_candidate_recall": {
+        "total": 192,
+        "matched": 0,
+        "recall": 0.0
+      }
+    },
+    "D1": {
+      "all_gt_candidate_recall": 0.06547619047619048,
+      "matched_truth": 11,
+      "total_truth": 168,
+      "ap50": 0.06930693069306931,
+      "precision": 1.0,
+      "false_proposals_per_frame": 0.0,
+      "total_false_positives": 0,
+      "negative_only_frames": 40,
+      "negative_only_fp_frames": 0,
+      "negative_only_fp_per_frame": 0.0,
+      "false_candidates_per_min": 0.0,
+      "small_object_candidate_recall": 0.0,
+      "per_size": {
+        "small_lt_18px": {
+          "total": 7,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "medium_18_to_48px": {
+          "total": 136,
+          "matched": 9,
+          "recall": 0.0661764705882353
+        },
+        "large_ge_48px": {
+          "total": 25,
+          "matched": 2,
+          "recall": 0.08
+        }
+      },
+      "per_world": {
+        "world_g4_01_asphalt_campus": {
+          "total": 168,
+          "matched": 11,
+          "recall": 0.06547619047619048
+        }
+      },
+      "metal_can_candidate_recall": {
+        "total": 52,
+        "matched": 0,
+        "recall": 0.0
+      }
+    },
+    "D2": {
+      "all_gt_candidate_recall": 0.014598540145985401,
+      "matched_truth": 2,
+      "total_truth": 137,
+      "ap50": 0.019801980198019802,
+      "precision": 1.0,
+      "false_proposals_per_frame": 0.0,
+      "total_false_positives": 0,
+      "negative_only_frames": 30,
+      "negative_only_fp_frames": 0,
+      "negative_only_fp_per_frame": 0.0,
+      "false_candidates_per_min": 0.0,
+      "small_object_candidate_recall": 0.0,
+      "per_size": {
+        "small_lt_18px": {
+          "total": 19,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "medium_18_to_48px": {
+          "total": 90,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "large_ge_48px": {
+          "total": 28,
+          "matched": 2,
+          "recall": 0.07142857142857142
+        }
+      },
+      "per_world": {
+        "world_g4_09_light_paver_pedestrian": {
+          "total": 137,
+          "matched": 2,
+          "recall": 0.014598540145985401
+        }
+      },
+      "metal_can_candidate_recall": {
+        "total": 34,
+        "matched": 0,
+        "recall": 0.0
+      }
+    },
+    "D3": {
+      "all_gt_candidate_recall": 0.023668639053254437,
+      "matched_truth": 4,
+      "total_truth": 169,
+      "ap50": 0.0297029702970297,
+      "precision": 1.0,
+      "false_proposals_per_frame": 0.0,
+      "total_false_positives": 0,
+      "negative_only_frames": 30,
+      "negative_only_fp_frames": 0,
+      "negative_only_fp_per_frame": 0.0,
+      "false_candidates_per_min": 0.0,
+      "small_object_candidate_recall": 0.0,
+      "per_size": {
+        "small_lt_18px": {
+          "total": 9,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "medium_18_to_48px": {
+          "total": 126,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "large_ge_48px": {
+          "total": 34,
+          "matched": 4,
+          "recall": 0.11764705882352941
+        }
+      },
+      "per_world": {
+        "world_auto05r_d3_factorized": {
+          "total": 169,
+          "matched": 4,
+          "recall": 0.023668639053254437
+        }
+      },
+      "metal_can_candidate_recall": {
+        "total": 44,
+        "matched": 0,
+        "recall": 0.0
+      }
+    },
+    "D4": {
+      "all_gt_candidate_recall": 0.04864864864864865,
+      "matched_truth": 9,
+      "total_truth": 185,
+      "ap50": 0.04950495049504951,
+      "precision": 0.9,
+      "false_proposals_per_frame": 0.01,
+      "total_false_positives": 1,
+      "negative_only_frames": 30,
+      "negative_only_fp_frames": 0,
+      "negative_only_fp_per_frame": 0.0,
+      "false_candidates_per_min": 6.0,
+      "small_object_candidate_recall": 0.0,
+      "per_size": {
+        "small_lt_18px": {
+          "total": 22,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "medium_18_to_48px": {
+          "total": 134,
+          "matched": 7,
+          "recall": 0.05223880597014925
+        },
+        "large_ge_48px": {
+          "total": 29,
+          "matched": 2,
+          "recall": 0.06896551724137931
+        }
+      },
+      "per_world": {
+        "world_auto05r_d4_factorized": {
+          "total": 185,
+          "matched": 9,
+          "recall": 0.04864864864864865
+        }
+      },
+      "metal_can_candidate_recall": {
+        "total": 54,
+        "matched": 0,
+        "recall": 0.0
+      }
+    },
+    "D5": {
+      "all_gt_candidate_recall": 0.0,
+      "matched_truth": 0,
+      "total_truth": 0,
+      "ap50": 0.0,
+      "precision": 0.0,
+      "false_proposals_per_frame": 0.0,
+      "total_false_positives": 0,
+      "negative_only_frames": 100,
+      "negative_only_fp_frames": 0,
+      "negative_only_fp_per_frame": 0.0,
+      "false_candidates_per_min": 0.0,
+      "small_object_candidate_recall": 0.0,
+      "per_size": {
+        "small_lt_18px": {
+          "total": 0,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "medium_18_to_48px": {
+          "total": 0,
+          "matched": 0,
+          "recall": 0.0
+        },
+        "large_ge_48px": {
+          "total": 0,
+          "matched": 0,
+          "recall": 0.0
+        }
+      },
+      "per_world": {
+        "world_g4_01_asphalt_campus": {
+          "total": 0,
+          "matched": 0,
+          "recall": 0.0
+        }
+      },
+      "metal_can_candidate_recall": {
+        "total": 0,
+        "matched": 0,
+        "recall": 0.0
+      }
+    }
+  },
+  "performance": {
+    "preprocess": {
+      "count": 1100,
+      "mean_ms": 49.498661029997905,
+      "p50_ms": 47.980837999602954,
+      "p95_ms": 69.13727590035704,
+      "max_ms": 104.4461740002589
+    },
+    "inference": {
+      "count": 1100,
+      "mean_ms": 181.49860130998522,
+      "p50_ms": 178.5387734998949,
+      "p95_ms": 199.42621269919982,
+      "max_ms": 626.7136330006906
+    },
+    "implementation": "official_pytorch_deformable_attention_fallback_on_cuda"
+  },
+  "gates": {
+    "VAL_candidate_recall_at_least_0_80": false,
+    "VAL_small_recall_at_least_0_70": false,
+    "VAL_false_candidates_per_min_at_most_2": true,
+    "D1_D5_each_small_recall_at_least_0_70": false,
+    "D1_D5_each_metal_candidate_recall_at_least_0_70": false,
+    "inference_p95_at_most_200ms": true
+  },
+  "GROUNDING_DINO_REFERENCE_STATIC_PASS": false,
+  "moving_camera_development_benchmark": "not_run_reference_failed_static_gate",
+  "closed_set_classifier": "not_run_reference_proposal_gate_first",
+  "G5_SEALED_FINAL_read": false,
+  "legacy_G4_D6_read": false,
+  "claim_boundary": "Reference candidate-proposal benchmark only; it cannot freeze or overwrite historical X2 and does not prove closed-set or product readiness."
+}

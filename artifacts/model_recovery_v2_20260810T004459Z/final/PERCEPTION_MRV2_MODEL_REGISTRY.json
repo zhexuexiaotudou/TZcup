@@ -1,0 +1,74 @@
+{
+  "schema_version": 1,
+  "selected_model": null,
+  "freeze_id": null,
+  "models": [
+    {
+      "route": "historical-X3",
+      "status": "FAILED_STATIC_FULL_PIPELINE"
+    },
+    {
+      "route": "MRV2-A",
+      "status": "FAILED_STATIC_FULL_PIPELINE",
+      "checkpoint": {
+        "path": "/runtime/mrv2-a-r960-v1/mrv2_a_r960.pt",
+        "sha256": "0e8d20b493bb60c6f423e12300629c62ba26bf27499e6df926113502da9979d0",
+        "provenance": null
+      }
+    },
+    {
+      "route": "MRV2-B",
+      "status": "FAILED_STATIC_FULL_PIPELINE",
+      "checkpoint": {
+        "path": "/runtime/mrv2-a-r960-v1/mrv2_a_r960.pt",
+        "sha256": "0e8d20b493bb60c6f423e12300629c62ba26bf27499e6df926113502da9979d0",
+        "provenance": null
+      },
+      "postprocess": "bounded_ground3_tiling"
+    },
+    {
+      "route": "MRV2-C",
+      "status": "FAILED_STATIC_FULL_PIPELINE",
+      "training_report": {
+        "logical_external_path": "F:\\Project\\TZcup\\.workspace\\artifacts\\TZcup-perception-product-runtime\\mrv2-c-p2-r960-v1\\MRV2_C_TRAIN_REPORT.json",
+        "bytes": 276065,
+        "sha256": "dba8a42a46af6cb962fe7facc8068b6c34edce32e0fb667c8853052f3e5fcf44"
+      },
+      "checkpoint": {
+        "logical_external_path": "F:\\Project\\TZcup\\.workspace\\artifacts\\TZcup-perception-product-runtime\\mrv2-c-p2-r960-v1\\mrv2_c_p2_r960.pt",
+        "path": "mrv2_c_p2_r960.pt",
+        "bytes": 131419421,
+        "sha256": "8955e27d1e1192846f3eaa47b70c4fac715598db82979211ee729122af1df4e8"
+      },
+      "architecture": "torchvision_fcos_resnet50_fpn_p2_direct_3class",
+      "teacher": {
+        "report": "/runtime/p2-teacher-v5/P2_TEACHER_REPORT.json",
+        "report_sha256": "6a6930671867acb410149bebb76c720f9e615e61cff489fbd233537e078438b2",
+        "checkpoint": "/runtime/p2-teacher-v5/fcos_resnet50_fpn_teacher.pt",
+        "checkpoint_sha256": "a5884ac9bfa4e89f2ae8a25f4cae0521e263dd951ef895fa1185f013b2f04ee5",
+        "pseudo_labels": {
+          "teacher_score_threshold": 0.7,
+          "teacher_iou_threshold": 0.5,
+          "small_short_side_px": 18.0,
+          "small_train_truth": 102,
+          "matched_small_train_truth": 28,
+          "coverage": 0.27450980392156865,
+          "frames_with_pseudo_labels": 28,
+          "pseudo_label_count": 28
+        }
+      },
+      "reproduction_command": "python3 scripts/perception_mrv2_c_train.py --epochs 6 --epoch-frames 600 [recorded roots]"
+    },
+    {
+      "route": "MRV2-05-reference",
+      "status": "FAILED_REFERENCE_STATIC_BENCHMARK",
+      "checkpoint": {
+        "path": "/runtime/reference-cache/grounding-dino/groundingdino_swint_ogc.pth",
+        "bytes": 693997677,
+        "sha256": "3b3ca2563c77c69f651d7bd133e97139c186df06231157a64c507099c52bc799"
+      },
+      "shipped_in_product": false,
+      "reproduction_command": "python3 scripts/perception_grounding_dino_benchmark.py [recorded official source/checkpoint and fixed dataset roots]"
+    }
+  ]
+}
