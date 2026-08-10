@@ -19,7 +19,9 @@ sys.path.insert(0, str(ROOT / "scripts"))
 
 from sanitation_learning.g4_data import index_instance_records  # noqa: E402
 from sanitation_learning.g4_direct_fcos import (  # noqa: E402
+    MRV2_C_P2_ARCHITECTURE,
     build_direct_fcos,
+    build_p2_direct_fcos,
     direct_predictions,
 )
 from sanitation_learning.g4_evaluation import (  # noqa: E402
@@ -109,7 +111,11 @@ def main():
         raise RuntimeError("X3 checkpoint violates sealed-final policy")
     threshold = float(payload["frozen_threshold_from_train_world_holdout"])
     input_size = tuple(payload.get("input_size", (640, 480)))
-    detector = build_direct_fcos(input_size=input_size).to(device)
+    detector = (
+        build_p2_direct_fcos(input_size=input_size)
+        if payload.get("architecture") == MRV2_C_P2_ARCHITECTURE
+        else build_direct_fcos(input_size=input_size)
+    ).to(device)
     detector.load_state_dict(payload["state_dict"], strict=True)
     detector.eval()
     leaf, leaf_record = load_checkpoint_model(
@@ -159,7 +165,8 @@ def main():
     report = {
         "schema_version": 1,
         "stage": (
-            "MRV2-A-STATIC" if payload.get("route") == "MRV2-A"
+            f"{payload['route']}-STATIC"
+            if payload.get("route") in ("MRV2-A", "MRV2-C")
             else "PERCEPTION-PROD-02-X3-STATIC"
         ),
         "source_commit": "d958854",
@@ -211,7 +218,11 @@ def main():
         else (
             "execute_MRV2_B_tiled_refinement"
             if payload.get("route") == "MRV2-A"
-            else "all_three_routes_exhausted_model_blocked_internal"
+            else (
+                "MODEL_BLOCKED_INTERNAL_all_MRV2_routes_exhausted"
+                if payload.get("route") == "MRV2-C"
+                else "all_three_routes_exhausted_model_blocked_internal"
+            )
         )
     )
     write_json(args.output, report)

@@ -37,6 +37,7 @@ from sanitation_learning.g4_direct_fcos import (  # noqa: E402
 from sanitation_learning.g4_evaluation import discrete_metrics, match_discrete_predictions  # noqa: E402
 from sanitation_learning.g4_teacher import require_teacher_dataset_gate  # noqa: E402
 from sanitation_learning.mrv2_sampling import build_mrv2_epoch_rows, row_key  # noqa: E402
+from sanitation_learning.mrv2_teacher import replace_small_truth_with_teacher  # noqa: E402
 from sanitation_learning.g4_split_policy import stratified_row_sample  # noqa: E402
 
 
@@ -95,12 +96,16 @@ def _clip_boxes(boxes: list[dict], width: int, height: int) -> list[dict]:
 class MRV2AugmentedDataset:
     """TRAIN-only crop-scale, copy-paste and metal photometric augmentation."""
 
-    def __init__(self, rows, instances_by_key, *, input_size, donors, seed):
+    def __init__(
+        self, rows, instances_by_key, *, input_size, donors, seed,
+        teacher_pseudo_by_key=None,
+    ):
         self.rows = list(rows)
         self.instances_by_key = instances_by_key
         self.input_size = tuple(input_size)
         self.donors = list(donors)
         self.seed = int(seed)
+        self.teacher_pseudo_by_key = teacher_pseudo_by_key or {}
 
     def __len__(self):
         return len(self.rows)
@@ -191,6 +196,11 @@ class MRV2AugmentedDataset:
         native_size = (int(rgb.shape[1]), int(rgb.shape[0]))
         boxes = self._native_truth(row, native_size)
         bucket = str(row["mrv2_sampling_bucket"])
+        if bucket == "small_object":
+            key = row_key(row)
+            boxes = replace_small_truth_with_teacher(
+                boxes, self.teacher_pseudo_by_key.get(key, ())
+            )
         rgb, boxes = self._target_crop(rgb, boxes, rng, bucket)
         rgb, boxes, _ = self._copy_paste_small(rgb, boxes, rng) if bucket == "small_object" else (rgb, boxes, False)
         rgb = self._metal_photometric(rgb, boxes, rng, bucket)

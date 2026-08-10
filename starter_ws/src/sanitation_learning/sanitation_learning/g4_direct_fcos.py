@@ -14,6 +14,7 @@ from .g4_teacher import teacher_input_size
 
 X3_ARCHITECTURE = "torchvision_fcos_resnet50_fpn_direct_3class"
 X3_WEIGHT_SPEC = "fcos_resnet50_fpn_coco"
+MRV2_C_P2_ARCHITECTURE = "torchvision_fcos_resnet50_fpn_p2_direct_3class"
 
 
 def _torch():
@@ -75,6 +76,92 @@ def build_direct_fcos(
     model.model_id = "x3_fcos_resnet50_fpn_direct_3class_v1"
     model.input_size = input_size
     return model
+
+
+def build_p2_direct_fcos(*, input_size: tuple[int, int] = (960, 720)):
+    """Build the MRV2-C six-level FCOS variant with an explicit stride-4 P2.
+
+    The ordinary Torchvision FCOS factory starts at stride 8.  MRV2-C keeps
+    the same closed three-class head but exposes ResNet layer1 through the FPN
+    and assigns a 4-pixel anchor to the new first level.
+    """
+    _torch()
+    try:
+        from torchvision.models.detection import FCOS
+        from torchvision.models.detection.anchor_utils import AnchorGenerator
+        from torchvision.models.detection.backbone_utils import resnet_fpn_backbone
+        from torchvision.ops.feature_pyramid_network import LastLevelP6P7
+    except ImportError as exc:
+        raise RuntimeError("torchvision is required for P2 direct FCOS") from exc
+
+    input_size = direct_input_size(input_size=input_size)
+    backbone = resnet_fpn_backbone(
+        backbone_name="resnet50",
+        weights=None,
+        trainable_layers=5,
+        returned_layers=[1, 2, 3, 4],
+        extra_blocks=LastLevelP6P7(256, 256),
+    )
+    anchors = AnchorGenerator(
+        sizes=((4,), (8,), (16,), (32,), (64,), (128,)),
+        aspect_ratios=((1.0,),) * 6,
+    )
+    model = FCOS(
+        backbone,
+        num_classes=len(DISCRETE_NAMES),
+        anchor_generator=anchors,
+        min_size=input_size[1],
+        max_size=input_size[0],
+        box_score_thresh=0.01,
+        box_detections_per_img=100,
+        topk_candidates=1000,
+    )
+    model.architecture_role = "x86_product_candidate_not_frozen"
+    model.model_id = "mrv2_c_fcos_resnet50_fpn_p2_direct_3class_v1"
+    model.input_size = input_size
+    return model
+
+
+def load_direct_state_into_p2(model, direct_state: dict) -> dict:
+    """Transplant a trained five-level direct FCOS into the six-level P2 model.
+
+    ResNet body, detection heads, and P3-P7 FPN weights are preserved.  Only
+    the newly introduced P2 lateral/output convolutions remain initialized by
+    Torchvision.
+    """
+    destination = model.state_dict()
+    loaded = {}
+    skipped = []
+    for source_name, value in direct_state.items():
+        target_name = source_name
+        for prefix in ("backbone.fpn.inner_blocks.", "backbone.fpn.layer_blocks."):
+            if source_name.startswith(prefix):
+                suffix = source_name[len(prefix):]
+                index, separator, rest = suffix.partition(".")
+                if index.isdigit() and separator:
+                    target_name = f"{prefix}{int(index) + 1}.{rest}"
+                break
+        if target_name in destination and destination[target_name].shape == value.shape:
+            loaded[target_name] = value
+        else:
+            skipped.append(source_name)
+    missing, unexpected = model.load_state_dict(loaded, strict=False)
+    allowed_missing = {
+        name for name in missing
+        if name.startswith("backbone.fpn.inner_blocks.0.")
+        or name.startswith("backbone.fpn.layer_blocks.0.")
+    }
+    unresolved = sorted(set(missing) - allowed_missing)
+    if unresolved or unexpected:
+        raise RuntimeError(
+            f"P2 transplant unresolved missing={unresolved} unexpected={unexpected}"
+        )
+    return {
+        "loaded_tensor_count": len(loaded),
+        "new_p2_tensor_names": sorted(allowed_missing),
+        "source_tensor_count": len(direct_state),
+        "skipped_source_tensor_names": sorted(skipped),
+    }
 
 
 class DirectFCOSDataset:

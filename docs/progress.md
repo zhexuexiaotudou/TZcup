@@ -1105,3 +1105,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_doc
 - 固定 VAL 完整链上，MRV2-A 的 candidate recall 为 `0.9177`、macro F1 为 `0.9450`、metal_can recall 为 `0.9063`；然而 small recall 只有 `0.4103`、false candidates/min 为 `21.6`。D1-D4 small recall 为 `0.5714/0.2632/0.6667/0.5455`，跨域汇总 small recall 为 `0.4737`、metal_can recall 为 `0.6739`。既有 area boundary 与 D4 negative-area FP 门也仍未通过，故 `MRV2_A_PASS=false`。
 - MRV2-B 只运行协议允许的 ground ROI `ground3` 与 `ground2x2` 两种有界 tile，使用 native 坐标回映、全局 class-aware NMS 和独立 tile score。holdout 选择 `ground3@0.75`，但 tile 没有产生能通过全局筛选的额外有效 small 候选；固定 VAL/D1-D4 结果与 MRV2-A 相同，故 `MRV2_B_DETECTOR_PASS=false`。
 - A/B 失败证据分别保存在 `artifacts/model_recovery_v2_20260810T004459Z/mrv2_a/MRV2_A_R960_FULL_STATIC.json` 与 `mrv2_b/MRV2_B_SCREEN.json`。没有 freeze，没有读取 G5 或旧 D6；协议中的第三条也是最后一条 MRV2-C 教师辅助恢复路线现已解锁。
+
+## MRV2-C 与官方 Grounding DINO 执行实现
+
+- MRV2-C 只在 TRAIN 上运行已通过历史数据可学习性门的 FCOS-R50 teacher；只接受 `score>=0.70`、与既有 TRAIN small GT `IoU>=0.50` 的框，并沿用 TRAIN GT 的闭集类别。补标只替换匹配的小目标几何，不追加重复框，也不读取 VAL/G5/D6。
+- 闭集 detector 增加显式 stride-4/P2：ResNet layer1 进入 FPN，anchor size 为 `4/8/16/32/64/128`，既有 MRV2-A 的 ResNet body、P3-P7 与三分类检测头张量按层移植，只有新 P2 lateral/output 卷积保持新初始化。
+- 官方 Grounding DINO benchmark 使用已核验 checkpoint、官方 source commit、TRAIN-world holdout 阈值选择和固定 VAL/D1-D5；reference 容器没有 nvcc 时，明确记录官方 PyTorch deformable-attention fallback 的最小兼容补丁与 SHA，不把 reference benchmark 当作历史 X2 状态回写或产品通过。
