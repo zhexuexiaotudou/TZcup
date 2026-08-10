@@ -1,0 +1,72 @@
+{
+  "G5_SEALED_FINAL_read": false,
+  "MRV2_A_design": {
+    "R1280_status": "bounded_rejected_no_raw_small_recall_gain",
+    "augmentation": [
+      "target_centered_crop_scale",
+      "TRAIN_only_instance_mask_copy_paste",
+      "metal_photometric_highlight_shadow",
+      "horizontal_flip"
+    ],
+    "epoch_ratios": {
+      "general": 0.35,
+      "metal_can": 0.15,
+      "negative_only": 0.2,
+      "small_object": 0.3
+    },
+    "resolution": "R960_formal_with_R640_control",
+    "threshold": "constraint_aware_train_world_holdout_only"
+  },
+  "MRV2_X86_STATIC_PASS": false,
+  "area": {
+    "D4_negative_area_fp_per_frame": 0.8666666666666667,
+    "VAL_current_boundary_f1": 0.6880077913444143,
+    "VAL_raw_boundary_head_f1": 0.44076712164093024,
+    "VAL_selected_postprocess_boundary_f1": 0.6910460049666058,
+    "simple_postprocess_sufficient": false
+  },
+  "diagnosis_complete": true,
+  "grounding_dino": {
+    "benchmark_executed": false,
+    "official_checkpoint_provenance_verified": true
+  },
+  "historical_X1_pass": false,
+  "historical_X2_status": "BLOCKED_EXTERNAL_NETWORK_ASSET",
+  "historical_X3_pass": false,
+  "legacy_G4_D6_read": false,
+  "metal_can": {
+    "box_localization_is_primary_failure": false,
+    "primary_failure_mode": "score_below_threshold",
+    "recall_by_split": {
+      "D1": 0.3269230769230769,
+      "D2": 0.6764705882352942,
+      "D3": 0.7045454545454546,
+      "D4": 0.2037037037037037,
+      "TRAIN_effective_X3_batch": 0.8867924528301887,
+      "VAL": 0.734375,
+      "train_world_holdout": 0.8484848484848485
+    },
+    "wrong_class_is_primary_failure": false
+  },
+  "performance": {
+    "serial_full_frame_p95_ms": 435.9342793998167,
+    "within_200ms_budget": false
+  },
+  "schema_version": 1,
+  "selected_next_route": "MRV2-A",
+  "small_object": {
+    "VAL_frozen_recall": 0.3076923076923077,
+    "VAL_raw_recall": 0.5384615384615384,
+    "effective_X3_batch_frames": 600,
+    "effective_X3_batch_small_frame_ratio": 0.056666666666666664,
+    "effective_X3_batch_small_frames": 34,
+    "primary_causes": [
+      "5.67_percent_effective_small_frame_exposure",
+      "no_training_augmentation",
+      "no_P2_stride4",
+      "score_threshold_suppression"
+    ],
+    "top_k_is_primary_blocker": false
+  },
+  "stage": "MRV2-00-DIAGNOSTIC-DECISION"
+}

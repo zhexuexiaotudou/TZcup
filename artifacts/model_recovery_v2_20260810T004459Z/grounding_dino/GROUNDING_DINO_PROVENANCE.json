@@ -1,0 +1,107 @@
+{
+  "G5_SEALED_FINAL_read": false,
+  "GROUNDING_DINO_OFFICIAL_CHECKPOINT_PROVENANCE_VERIFIED": true,
+  "benchmark_executed": false,
+  "checkpoint_publisher_digest_available": false,
+  "gates": {
+    "checkpoint_is_model_state_dict": true,
+    "checkpoint_tensor_prefix_match": true,
+    "local_filename_match": true,
+    "local_size_match": true,
+    "official_release_asset_size_match": true,
+    "official_release_asset_url_match": true,
+    "release_source_archive_nonempty": true,
+    "runtime_source_archive_nonempty": true,
+    "runtime_source_license_apache_2_0": true,
+    "single_matching_official_release_asset": true
+  },
+  "legacy_G4_D6_read": false,
+  "local_checkpoint": {
+    "bytes": 693997677,
+    "first_model_keys": [
+      "module.transformer.level_embed",
+      "module.transformer.encoder.layers.0.self_attn.sampling_offsets.weight",
+      "module.transformer.encoder.layers.0.self_attn.sampling_offsets.bias",
+      "module.transformer.encoder.layers.0.self_attn.attention_weights.weight",
+      "module.transformer.encoder.layers.0.self_attn.attention_weights.bias",
+      "module.transformer.encoder.layers.0.self_attn.value_proj.weight",
+      "module.transformer.encoder.layers.0.self_attn.value_proj.bias",
+      "module.transformer.encoder.layers.0.self_attn.output_proj.weight",
+      "module.transformer.encoder.layers.0.self_attn.output_proj.bias",
+      "module.transformer.encoder.layers.0.norm1.weight"
+    ],
+    "model_tensor_count": 940,
+    "path": "/runtime/reference-cache/grounding-dino/groundingdino_swint_ogc.pth",
+    "sha256": "3b3ca2563c77c69f651d7bd133e97139c186df06231157a64c507099c52bc799",
+    "top_level_keys": [
+      "model"
+    ]
+  },
+  "official": {
+    "checkpoint_url": "https://github.com/IDEA-Research/GroundingDINO/releases/download/v0.1.0-alpha/groundingdino_swint_ogc.pth",
+    "release_api_http": {
+      "headers": {
+        "accept-ranges": "bytes",
+        "access-control-allow-origin": "*",
+        "access-control-expose-headers": "ETag, Link, Location, Retry-After, X-GitHub-OTP, X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Used, X-RateLimit-Resource, X-RateLimit-Reset, X-OAuth-Scopes, X-Accepted-OAuth-Scopes, X-Poll-Interval, X-GitHub-Media-Type, X-GitHub-SSO, X-GitHub-Request-Id, Deprecation, Sunset, Warning",
+        "cache-control": "public, max-age=60, s-maxage=60",
+        "connection": "close",
+        "content-length": "3497",
+        "content-security-policy": "default-src 'none'",
+        "content-type": "application/json; charset=utf-8",
+        "date": "Mon, 10 Aug 2026 01:30:27 GMT",
+        "etag": "W/\"402251ace2398527eb86eafa2fee70961589855d3af1463652e07248e97a080d\"",
+        "last-modified": "Tue, 21 Mar 2023 04:50:27 GMT",
+        "referrer-policy": "origin-when-cross-origin, strict-origin-when-cross-origin",
+        "server": "github.com",
+        "strict-transport-security": "max-age=31536000; includeSubdomains; preload",
+        "vary": "Accept,Accept-Encoding, Accept, X-Requested-With",
+        "x-content-type-options": "nosniff",
+        "x-frame-options": "deny",
+        "x-github-api-version-selected": "2022-11-28",
+        "x-github-edge-region": "japaneast",
+        "x-github-media-type": "github.v3; format=json",
+        "x-github-request-id": "DDA1:41351:24EB2EE:2A8F170:6A7929B3",
+        "x-ratelimit-limit": "60",
+        "x-ratelimit-remaining": "40",
+        "x-ratelimit-reset": "1786327442",
+        "x-ratelimit-resource": "core",
+        "x-ratelimit-used": "20",
+        "x-xss-protection": "0"
+      },
+      "status": 200,
+      "url": "https://api.github.com/repos/IDEA-Research/GroundingDINO/releases/tags/v0.1.0-alpha"
+    },
+    "release_asset": {
+      "browser_download_url": "https://github.com/IDEA-Research/GroundingDINO/releases/download/v0.1.0-alpha/groundingdino_swint_ogc.pth",
+      "content_type": "application/octet-stream",
+      "created_at": "2023-03-21T04:49:01Z",
+      "id": 100240415,
+      "name": "groundingdino_swint_ogc.pth",
+      "size": 693997677,
+      "updated_at": "2023-03-21T04:50:16Z"
+    },
+    "release_tag": "v0.1.0-alpha",
+    "release_tag_commit": "ddedf74b250249e0ae81f3781cbf98b3b4d3cb88",
+    "repository": "https://github.com/IDEA-Research/GroundingDINO",
+    "runtime_source_commit": "856dde20aee659246248e20734ef9ba5214f5e44"
+  },
+  "redistribution_status": "reference_only_pending_explicit_checkpoint_license_statement",
+  "schema_version": 1,
+  "shipped_in_product": false,
+  "source_archives": {
+    "license_path": "/runtime/reference-cache/grounding-dino/source-856dde20/GroundingDINO-856dde20aee659246248e20734ef9ba5214f5e44/LICENSE",
+    "license_sha256": "b403c98ec1ffaccb0124632592a3d99642cddc3031ca412b402568e6c06c202a",
+    "release_tag": {
+      "bytes": 6433121,
+      "path": "/runtime/reference-cache/grounding-dino/GroundingDINO-ddedf74.zip",
+      "sha256": "c821d4123bd4c98fc62ec3be2245b4d5a481e4585d9aff0852d8a4797a5b98be"
+    },
+    "runtime_source": {
+      "bytes": 11182185,
+      "path": "/runtime/reference-cache/grounding-dino/GroundingDINO-856dde20.zip",
+      "sha256": "d1045d1113de0acff91b6328672d4c3f168c4a8e4115b52cb4bbf19fcbe4e4c0"
+    }
+  },
+  "stage": "MRV2-05-GROUNDING-DINO-PROVENANCE"
+}

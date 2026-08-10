@@ -1082,3 +1082,19 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_doc
 - 新协议独立于历史 X1/X2/X3 路线限制；旧状态保持 `X1/X3=FAILED_STATIC_FULL_PIPELINE`、`X2=BLOCKED_EXTERNAL_NETWORK_ASSET`，没有回写。
 - 隔离工作树与 PR #90 远端 tree `5bc4a06e54c88338aebf290cf6bf226ad8df49aa` 一致；普通 fetch 仍因坏对象失败，使用 GitHub API 做远端真实性校验，原始脏目录未修改。
 - MRV2 开始时没有 freeze，没有读 G5/D6。仓库外 Grounding DINO 文件现在为非空 `693,997,677 bytes`，但在完成官方来源/格式/SHA/许可审计前不宣称资产合格。
+
+## MRV2-00 定量审计
+
+- X3 的精确 600 帧有效训练 batch 只有 34 帧、36 个 `<18 px` 目标，即 small-positive 帧占比 `5.67%`；TRAIN 全量有 141 个 small-positive 帧。原训练无增强，输入为 `640x480`，Torchvision FCOS-R50-FPN 最低检测层为 stride 8 的 P3，没有 P2。
+- top-K 不是 small recall 瓶颈：VAL 在 raw score `0.01` 下 top-100 与 top-16 的 small recall 均为 `0.5385`；冻结阈值后为 `0.3077`。D1-D4 raw small recall 分别为 `0.8571/0.7368/0.7778/0.6818`，冻结阈值后为 `0/0.2105/0.4444/0.4545`。
+- metal_can 的 VAL recall 为 `0.7344`；D1-D4 为 `0.3269/0.6765/0.7045/0.2037`。失败主要是 score below threshold（D1 `34/52`、D4 `40/54`），不是 wrong-class 或 IoU 错误，因此 MRV2-A 优先修训练曝光和约束阈值，不另建 crop classifier。
+- 历史 area boundary `0.6880` 是阈值分割掩膜轮廓，不是独立 boundary head。重新量得 raw boundary head F1 为 `0.4408`；VAL 允许的阈值/3x3 morphology 搜索最多只把后处理 boundary F1 提到 `0.6910`。D4 仍为 boundary `0.5097`、negative-area FP/frame `0.8667`，集中在 low-angle blue-hour、shadow edge、reflective area、road marking、paver/packaging 等 taxonomy，必须进入模型/约束级修复。
+- RTX 4080 全帧串行基线仍超过 200 ms 产品预算，area 两个独立大模型是主要成本；后续不得用无界高分辨率或全图 tile 换召回。
+- 官方 GitHub release API 证明 `groundingdino_swint_ogc.pth` 的名称、URL 与 `693,997,677` 字节匹配；本地 SHA256 为 `3b3ca2563c77c69f651d7bd133e97139c186df06231157a64c507099c52bc799`，可解析为 940 张量结构。历史 X2 状态不改写；MRV2-05 新来源核验通过，实际 benchmark 尚未执行。
+- R640/R960/R1280 旧 X3 探针显示 raw small recall 均为 `0.5385`。R960 旧阈值 small recall 增至 `0.4359`，但 metal_can 降至 `0.0365`；R1280 更差。因此 MRV2-A 采用 R960 重新训练并保留 R640 control，R1280 在本轮有界淘汰。
+
+## MRV2-A 训练实现
+
+- 每个 epoch 使用互斥配额：small-object `30%`、negative-only `20%`、metal-can targeted `15%`、general `35%`；稀缺 small 帧允许确定性有放回重采样，但负样本与通用样本不会被挤掉。
+- 增强仅使用 TRAIN：small 目标中心 crop-scale、通过 instance mask 的 small copy-paste、水平翻转，以及针对 metal_can 的亮度/对比度/局部高光扰动。阈值只在确定性 train-world-holdout 上按 small/metal/precision/recall/FP 约束选择。
+- Direct FCOS 输入显式支持 `640x480`、`960x720`、`1280x960`；R960 1 epoch/20-frame CUDA 烟测完成，张量、框和标签路径有效。正式 R960 完整训练结果仍待写入，当前不得宣称 MRV2-A 通过。

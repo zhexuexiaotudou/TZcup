@@ -1,0 +1,30 @@
+{
+  "artifacts": [
+    {
+      "bytes": 173497,
+      "path": "AREA_BOUNDARY_AUDIT.json",
+      "sha256": "e87ac9bace32954d0d56881995406eedadcc9be9e2d2d74ade86d842f9a3a3a1"
+    },
+    {
+      "bytes": 55711,
+      "path": "METAL_CAN_DOMAIN_AUDIT.json",
+      "sha256": "3cbfbeb48e63a9ad0dfa254f915deca6d0a6eb717d29ef45adce3d0d96c334a9"
+    },
+    {
+      "bytes": 628,
+      "path": "MRV2_00_AUDIT_INDEX.json",
+      "sha256": "2b036aca7abea2a2efc556a08dc261b32a7408c970ca705ae61fd00fec7801d6"
+    },
+    {
+      "bytes": 1706,
+      "path": "PERFORMANCE_BUDGET.json",
+      "sha256": "a5faece20cb020e9000ca3bc4cf4b9a20ade82851f56a350c2a351cac1688e61"
+    },
+    {
+      "bytes": 376552,
+      "path": "SMALL_OBJECT_AUDIT.json",
+      "sha256": "fbea18075f3db12a65e066906991a2275973d47ac9e43815960fb4bac6abd49c"
+    }
+  ],
+  "schema_version": 1
+}

@@ -1,0 +1,15 @@
+[MRV2 audit] detector TRAIN_effective_X3_batch: 600 frames
+[MRV2 audit] detector train_world_holdout: 100 frames
+[MRV2 audit] detector VAL: 500 frames
+[MRV2 audit] detector D1: 100 frames
+[MRV2 audit] detector D2: 100 frames
+[MRV2 audit] detector D3: 100 frames
+[MRV2 audit] detector D4: 100 frames
+[MRV2 audit] detector D5: 100 frames
+[MRV2 audit] area VAL development sweep: 500 frames
+[MRV2 audit] area VAL current/selected comparison
+[MRV2 audit] area D1: 100 frames
+[MRV2 audit] area D2: 100 frames
+[MRV2 audit] area D3: 100 frames
+[MRV2 audit] area D4: 100 frames
+[MRV2 audit] area D5: 100 frames

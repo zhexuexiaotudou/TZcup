@@ -1,0 +1,23 @@
+{
+  "G5_SEALED_FINAL_read": false,
+  "checkpoint": {
+    "path": "/runtime/x3-direct-fcos-3class-v1/x3_fcos_r50_direct_3class.pt",
+    "sha256": "02869d3677a999a0d8cd0a73114a60fbc803c447717d129313bcf3dbfe68507b"
+  },
+  "environment": {
+    "cuda": "12.4",
+    "gpu": "NVIDIA GeForce RTX 4080 Laptop GPU",
+    "torch": "2.5.1+cu124"
+  },
+  "files": [
+    "SMALL_OBJECT_AUDIT.json",
+    "METAL_CAN_DOMAIN_AUDIT.json",
+    "AREA_BOUNDARY_AUDIT.json",
+    "PERFORMANCE_BUDGET.json"
+  ],
+  "frozen_threshold": 0.6,
+  "legacy_G4_D6_read": false,
+  "schema_version": 1,
+  "source_commit": "81746ed",
+  "stage": "MRV2-00-AUDIT-INDEX"
+}

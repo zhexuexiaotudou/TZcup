@@ -1,0 +1,6213 @@
+{
+  "G5_SEALED_FINAL_read": false,
+  "current_config": {
+    "morphologies": [
+      "none",
+      "none"
+    ],
+    "thresholds": [
+      0.85,
+      0.85
+    ]
+  },
+  "development_selected_config": {
+    "by_class": {
+      "leaf_pile": {
+        "boundary_f1": 0.6770915180009016,
+        "development_target_pass": false,
+        "iou": 0.8922225688787203,
+        "morphology": "open_close3",
+        "negative_area_fp_per_frame": 0.0,
+        "threshold": 0.85
+      },
+      "puddle": {
+        "boundary_f1": 0.7050004919323101,
+        "development_target_pass": false,
+        "iou": 0.9482195703539527,
+        "morphology": "open_close3",
+        "negative_area_fp_per_frame": 0.0,
+        "threshold": 0.9
+      }
+    },
+    "morphologies": [
+      "open_close3",
+      "open_close3"
+    ],
+    "thresholds": [
+      0.85,
+      0.9
+    ]
+  },
+  "development_sweep_VAL_only": {
+    "0.70__close3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8804302807831745,
+        "puddle": 0.9494364326851146
+      },
+      "macro_miou": 0.9149333567341446,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          25763,
+          55187
+        ],
+        "boundary_union": [
+          53904,
+          108836
+        ],
+        "intersection": [
+          465546,
+          1061018
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          528771,
+          1117524
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6598424954193554,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6467671683382078,
+        "puddle": 0.672917822500503
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.70__none": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.880531860566284,
+        "puddle": 0.9494163841949467
+      },
+      "macro_miou": 0.9149741223806154,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          25763,
+          55186
+        ],
+        "boundary_union": [
+          53987,
+          108885
+        ],
+        "intersection": [
+          465546,
+          1060988
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          528710,
+          1117516
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6594014051069602,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6460940438871473,
+        "puddle": 0.6727087663267731
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.70__open3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8816075822059083,
+        "puddle": 0.9495647503748293
+      },
+      "macro_miou": 0.9155861662903688,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          25687,
+          55101
+        ],
+        "boundary_union": [
+          53245,
+          108471
+        ],
+        "intersection": [
+          465465,
+          1060830
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          527973,
+          1117175
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6622928493599516,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6508640348654539,
+        "puddle": 0.6737216638544494
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.70__open_close3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8815124140673826,
+        "puddle": 0.9495848039220074
+      },
+      "macro_miou": 0.9155486089946949,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          25687,
+          55102
+        ],
+        "boundary_union": [
+          53161,
+          108422
+        ],
+        "intersection": [
+          465465,
+          1060860
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          528030,
+          1117183
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6627445411201207,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.651557426948052,
+        "puddle": 0.6739316552921896
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.75__close3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8840692941885421,
+        "puddle": 0.949831636244614
+      },
+      "macro_miou": 0.9169504652165781,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          26151,
+          56196
+        ],
+        "boundary_union": [
+          53145,
+          107703
+        ],
+        "intersection": [
+          465062,
+          1059200
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          526047,
+          1115145
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6726593430513155,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6595792978208233,
+        "puddle": 0.6857393882818077
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.75__none": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8841444866920152,
+        "puddle": 0.9498196185760135
+      },
+      "macro_miou": 0.9169820526340143,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          26150,
+          56195
+        ],
+        "boundary_union": [
+          53210,
+          107733
+        ],
+        "intersection": [
+          465060,
+          1059179
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          526000,
+          1115137
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6723140265848422,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6590221774193549,
+        "puddle": 0.6856058757503294
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.75__open3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8852581054812073,
+        "puddle": 0.9499443407405148
+      },
+      "macro_miou": 0.917601223110861,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          26063,
+          56108
+        ],
+        "boundary_union": [
+          52433,
+          107339
+        ],
+        "intersection": [
+          464965,
+          1059016
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          525231,
+          1114819
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6753091304188135,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6640593151243376,
+        "puddle": 0.6865589457132893
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.75__open_close3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8851793329272007,
+        "puddle": 0.9499537597245855
+      },
+      "macro_miou": 0.9175665463258931,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          26064,
+          56109
+        ],
+        "boundary_union": [
+          52371,
+          107310
+        ],
+        "intersection": [
+          464967,
+          1059036
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          525280,
+          1114829
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6756450402526418,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6646012621916236,
+        "puddle": 0.68668881831366
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.80__close3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8876834728217441,
+        "puddle": 0.9498867558239862
+      },
+      "macro_miou": 0.9187851143228651,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          26358,
+          57000
+        ],
+        "boundary_union": [
+          52456,
+          106692
+        ],
+        "intersection": [
+          464349,
+          1056882
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          523102,
+          1112640
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6826479090155422,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6688659375237902,
+        "puddle": 0.6964298805072942
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.80__none": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.887774689033087,
+        "puddle": 0.9498765090344337
+      },
+      "macro_miou": 0.9188255990337604,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          26356,
+          57003
+        ],
+        "boundary_union": [
+          52540,
+          106723
+        ],
+        "intersection": [
+          464347,
+          1056863
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          523046,
+          1112632
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6822209802259689,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6681200567836139,
+        "puddle": 0.6963219036683239
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.80__open3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8887395665824336,
+        "puddle": 0.9499404866787251
+      },
+      "macro_miou": 0.9193400266305793,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          26257,
+          56890
+        ],
+        "boundary_union": [
+          51848,
+          106369
+        ],
+        "intersection": [
+          464242,
+          1056672
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          522360,
+          1112356
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6846403704186106,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6723513219384162,
+        "puddle": 0.696929418898805
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.80__open_close3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8886430240860306,
+        "puddle": 0.9499507355505932
+      },
+      "macro_miou": 0.9192968798183119,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          26259,
+          56887
+        ],
+        "boundary_union": [
+          51768,
+          106338
+        ],
+        "intersection": [
+          464244,
+          1056691
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          522419,
+          1112364
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.68505626806221,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6730747049098389,
+        "puddle": 0.6970378312145811
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.85__close3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8912842351465771,
+        "puddle": 0.9496258385406576
+      },
+      "macro_miou": 0.9204550368436173,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          26371,
+          57531
+        ],
+        "boundary_union": [
+          52006,
+          105943
+        ],
+        "intersection": [
+          463376,
+          1053909
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          519897,
+          1109815
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6883910269665826,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6729270066473583,
+        "puddle": 0.703855047285807
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.85__none": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8913577492098728,
+        "puddle": 0.9496047965053415
+      },
+      "macro_miou": 0.9204812728576071,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          26370,
+          57528
+        ],
+        "boundary_union": [
+          52063,
+          105998
+        ],
+        "intersection": [
+          463375,
+          1053879
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          519853,
+          1109808
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6880077913444143,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6724210472632692,
+        "puddle": 0.7035945354255593
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.85__open3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8922962546369236,
+        "puddle": 0.9496382323676583
+      },
+      "macro_miou": 0.920967243502291,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          26282,
+          57407
+        ],
+        "boundary_union": [
+          51407,
+          105657
+        ],
+        "intersection": [
+          463282,
+          1053673
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          519202,
+          1109552
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6903495261452992,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6765951421694191,
+        "puddle": 0.7041039101211795
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.85__open_close3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8922225688787203,
+        "puddle": 0.9496592790469006
+      },
+      "macro_miou": 0.9209409239628105,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          26283,
+          57410
+        ],
+        "boundary_union": [
+          51352,
+          105602
+        ],
+        "intersection": [
+          463283,
+          1053703
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          519246,
+          1109559
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6907284203996116,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6770915180009016,
+        "puddle": 0.7043653227983216
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.90__close3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8948561860075701,
+        "puddle": 0.9482744130184692
+      },
+      "macro_miou": 0.9215652995130197,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          25857,
+          57474
+        ],
+        "boundary_union": [
+          51949,
+          105686
+        ],
+        "intersection": [
+          461727,
+          1049314
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          515979,
+          1106551
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6845820105609379,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6646531115852248,
+        "puddle": 0.7045109095366512
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.90__none": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8949000575640521,
+        "puddle": 0.9482352728537926
+      },
+      "macro_miou": 0.9215676652089224,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          25855,
+          57475
+        ],
+        "boundary_union": [
+          52000,
+          105766
+        ],
+        "intersection": [
+          461721,
+          1049265
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          515947,
+          1106545
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6841785008672651,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6641834178922356,
+        "puddle": 0.7041735838422946
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.90__open3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8958771609778061,
+        "puddle": 0.9481822290517943
+      },
+      "macro_miou": 0.9220296950148001,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          25763,
+          57326
+        ],
+        "boundary_union": [
+          51324,
+          105379
+        ],
+        "intersection": [
+          461624,
+          1048974
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          515276,
+          1106300
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.686537710924658,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6684136105958203,
+        "puddle": 0.7046618112534956
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.90__open_close3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8958383869747043,
+        "puddle": 0.9482195703539527
+      },
+      "macro_miou": 0.9220289786643285,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          25765,
+          57325
+        ],
+        "boundary_union": [
+          51274,
+          105299
+        ],
+        "intersection": [
+          461630,
+          1049021
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          515305,
+          1106306
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6869412433830477,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6688819948337855,
+        "puddle": 0.7050004919323101
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.95__close3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8977845417384032,
+        "puddle": 0.9439000563285231
+      },
+      "macro_miou": 0.9208422990334632,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          23858,
+          55389
+        ],
+        "boundary_union": [
+          52996,
+          107250
+        ],
+        "intersection": [
+          458363,
+          1040613
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          510549,
+          1102461
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.650996839974427,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6208655372524527,
+        "puddle": 0.6811281426964012
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.95__none": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8978249883453536,
+        "puddle": 0.943845479827803
+      },
+      "macro_miou": 0.9208352340865783,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          23858,
+          55387
+        ],
+        "boundary_union": [
+          53034,
+          107358
+        ],
+        "intersection": [
+          458363,
+          1040550
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          510526,
+          1102458
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.65060931691275,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6205587057171097,
+        "puddle": 0.6806599281083904
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.95__open3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8987603467890628,
+        "puddle": 0.9437380131984098
+      },
+      "macro_miou": 0.9212491799937363,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          23715,
+          55218
+        ],
+        "boundary_union": [
+          52314,
+          107012
+        ],
+        "intersection": [
+          458206,
+          1040239
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          509820,
+          1102254
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.652289063870486,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6238409028134001,
+        "puddle": 0.6807372249275719
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    },
+    "0.95__open_close3": {
+      "boundary_error_by_width_shape": "not_collected_for_development_sweep",
+      "iou_by_class": {
+        "leaf_pile": 0.8987233274687598,
+        "puddle": 0.943792600092356
+      },
+      "macro_miou": 0.9212579637805579,
+      "negative_area_fp_per_frame": 0.0,
+      "negative_fp_taxonomy": {
+        "crack": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 60
+        },
+        "curb_corner": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "flat_stone": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "gravel_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "ground:dark_gravel": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "ground:light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "light_leaf_litter": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "light_paver": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        },
+        "lighting:bright_overcast": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "lighting:low_sun_glare": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 80
+        },
+        "packaging_graphic": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "paper_like_road_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "paver_joint": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "plastic_label": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "road_marking_fragment": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 30
+        },
+        "shadow_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 20
+        },
+        "truncated_object_edge": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "vehicle_white_gray_structure": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 40
+        },
+        "water_stain_patch": {
+          "fp_frames": 0,
+          "fp_per_frame": 0.0,
+          "frames": 10
+        }
+      },
+      "negative_only_fp_frames": 0,
+      "negative_only_frames": 160,
+      "pixel_totals": {
+        "boundary_intersection": [
+          23715,
+          55220
+        ],
+        "boundary_union": [
+          52274,
+          106904
+        ],
+        "intersection": [
+          458206,
+          1040302
+        ],
+        "negative_fp_frames": 0,
+        "negative_frames": 160,
+        "raw_boundary_intersection": [
+          29231,
+          68443
+        ],
+        "raw_boundary_union": [
+          111177,
+          225833
+        ],
+        "truth_pixels": [
+          468495,
+          1090980
+        ],
+        "union": [
+          509841,
+          1102257
+        ]
+      },
+      "positive_metric_eligibility_by_class": {
+        "leaf_pile": "evaluated",
+        "puddle": "evaluated"
+      },
+      "positive_truth_pixels_by_class": {
+        "leaf_pile": 468495,
+        "puddle": 1090980
+      },
+      "postprocessed_mask_boundary_f1": 0.6526881325176992,
+      "postprocessed_mask_boundary_f1_by_class": {
+        "leaf_pile": 0.6241692876600561,
+        "puddle": 0.6812069773753423
+      },
+      "raw_network_boundary_head_f1": 0.44076712164093024,
+      "raw_network_boundary_head_f1_by_class": {
+        "leaf_pile": 0.4163722864794029,
+        "puddle": 0.46516195680245753
+      }
+    }
+  },
+  "legacy_G4_D6_read": false,
+  "metric_semantics": {
+    "historical_X3_boundary_semantics": "postprocessed_mask_boundary_f1 only; boundary_logits were unused",
+    "postprocessed_mask_boundary_f1": "boundary extracted from thresholded semantic mask",
+    "raw_network_boundary_head_f1": "boundary_logits sigmoid >= 0.5 compared with truth boundary"
+  },
+  "models": {
+    "leaf": {
+      "checkpoint_status": "training_complete",
+      "model_contract": {
+        "architecture_role": "deeplab_resnet50_rgb_preserved_shallow_geometry",
+        "discovery_architecture": null,
+        "model_id": "g4_leaf_segmenter_deeplab_v1"
+      },
+      "path": "/runtime/p4-screening-v5-a3-distilled-top16-batch16-v1/leaf.pt",
+      "sha256": "ecba9043d0e0523ad5b79381bcc7c21583ccba2c9a806f2179e5ca7e3e14aa2e"
+    },
+    "puddle": {
+      "checkpoint_status": "training_complete",
+      "model_contract": {
+        "architecture_role": "deeplab_resnet50_rgb_preserved_shallow_geometry",
+        "discovery_architecture": null,
+        "model_id": "g4_puddle_segmenter_deeplab_v1"
+      },
+      "path": "/runtime/p4-screening-v5-a3-distilled-top16-batch16-v1/puddle.pt",
+      "sha256": "8b3aee52679105f857b9e43694dc08304e5cda73c9536a7904c52ed33b31d2e2"
+    }
+  },
+  "schema_version": 1,
+  "splits": {
+    "D1": {
+      "current": {
+        "boundary_error_by_width_shape": {
+          "leaf_pile": {
+            "shape": {
+              "compact": {
+                "frames": 21,
+                "postprocessed_boundary_error": 0.2757500974152487,
+                "postprocessed_boundary_f1": 0.7242499025847513,
+                "raw_network_boundary_error": 0.5350986576688916,
+                "raw_network_boundary_f1": 0.46490134233110836
+              },
+              "irregular": {
+                "frames": 26,
+                "postprocessed_boundary_error": 0.24828232354778268,
+                "postprocessed_boundary_f1": 0.7517176764522173,
+                "raw_network_boundary_error": 0.5432452957556324,
+                "raw_network_boundary_f1": 0.45675470424436754
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 32,
+                "postprocessed_boundary_error": 0.24110506488070327,
+                "postprocessed_boundary_f1": 0.7588949351192967,
+                "raw_network_boundary_error": 0.5345864089490906,
+                "raw_network_boundary_f1": 0.46541359105090935
+              },
+              "ge_64px": {
+                "frames": 8,
+                "postprocessed_boundary_error": 0.2305427008834665,
+                "postprocessed_boundary_f1": 0.7694572991165335,
+                "raw_network_boundary_error": 0.5139264308379363,
+                "raw_network_boundary_f1": 0.4860735691620637
+              },
+              "lt_32px": {
+                "frames": 7,
+                "postprocessed_boundary_error": 0.5292459478505991,
+                "postprocessed_boundary_f1": 0.47075405214940097,
+                "raw_network_boundary_error": 0.6871069182389937,
+                "raw_network_boundary_f1": 0.3128930817610063
+              }
+            }
+          },
+          "puddle": {
+            "shape": {
+              "compact": {
+                "frames": 19,
+                "postprocessed_boundary_error": 0.36585365853658536,
+                "postprocessed_boundary_f1": 0.6341463414634146,
+                "raw_network_boundary_error": 0.5745044105093426,
+                "raw_network_boundary_f1": 0.4254955894906573
+              },
+              "irregular": {
+                "frames": 41,
+                "postprocessed_boundary_error": 0.29161472616969997,
+                "postprocessed_boundary_f1": 0.7083852738303,
+                "raw_network_boundary_error": 0.5474056913056782,
+                "raw_network_boundary_f1": 0.4525943086943218
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 28,
+                "postprocessed_boundary_error": 0.2744421688045704,
+                "postprocessed_boundary_f1": 0.7255578311954296,
+                "raw_network_boundary_error": 0.522692801306732,
+                "raw_network_boundary_f1": 0.477307198693268
+              },
+              "ge_64px": {
+                "frames": 3,
+                "postprocessed_boundary_error": 0.21478307445099087,
+                "postprocessed_boundary_f1": 0.7852169255490091,
+                "raw_network_boundary_error": 0.5067290813341135,
+                "raw_network_boundary_f1": 0.49327091866588646
+              },
+              "lt_32px": {
+                "frames": 29,
+                "postprocessed_boundary_error": 0.3863441780821918,
+                "postprocessed_boundary_f1": 0.6136558219178082,
+                "raw_network_boundary_error": 0.6158107018015595,
+                "raw_network_boundary_f1": 0.38418929819844044
+              }
+            }
+          }
+        },
+        "iou_by_class": {
+          "leaf_pile": 0.9168531374911546,
+          "puddle": 0.9383287436651008
+        },
+        "macro_miou": 0.9275909405781277,
+        "negative_area_fp_per_frame": 0.0,
+        "negative_fp_taxonomy": {
+          "blue_obstacle": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "bottle_like_cone": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "crack": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "curb_corner": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "ground:asphalt_dark": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 40
+          },
+          "light_leaf_litter": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "light_paver": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "lighting:directional_high_noon": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 40
+          },
+          "paper_like_road_patch": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "paver_joint": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "plastic_label": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "road_marking_fragment": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          }
+        },
+        "negative_only_fp_frames": 0,
+        "negative_only_frames": 40,
+        "pixel_totals": {
+          "boundary_intersection": [
+            7602,
+            10331
+          ],
+          "boundary_union": [
+            13566,
+            19434
+          ],
+          "intersection": [
+            95879,
+            162192
+          ],
+          "negative_fp_frames": 0,
+          "negative_frames": 40,
+          "raw_boundary_intersection": [
+            8582,
+            12597
+          ],
+          "raw_boundary_union": [
+            29813,
+            43700
+          ],
+          "truth_pixels": [
+            97693,
+            167557
+          ],
+          "union": [
+            104574,
+            172852
+          ]
+        },
+        "positive_metric_eligibility_by_class": {
+          "leaf_pile": "evaluated",
+          "puddle": "evaluated"
+        },
+        "positive_truth_pixels_by_class": {
+          "leaf_pile": 97693,
+          "puddle": 167557
+        },
+        "postprocessed_mask_boundary_f1": 0.7062124872346609,
+        "postprocessed_mask_boundary_f1_by_class": {
+          "leaf_pile": 0.7182539682539683,
+          "puddle": 0.6941710062153537
+        },
+        "raw_network_boundary_head_f1": 0.44727839033279176,
+        "raw_network_boundary_head_f1_by_class": {
+          "leaf_pile": 0.4470373746581586,
+          "puddle": 0.4475194060074249
+        }
+      },
+      "development_selected_postprocess": {
+        "boundary_error_by_width_shape": {
+          "leaf_pile": {
+            "shape": {
+              "compact": {
+                "frames": 21,
+                "postprocessed_boundary_error": 0.27502606882168923,
+                "postprocessed_boundary_f1": 0.7249739311783108,
+                "raw_network_boundary_error": 0.5350986576688916,
+                "raw_network_boundary_f1": 0.46490134233110836
+              },
+              "irregular": {
+                "frames": 26,
+                "postprocessed_boundary_error": 0.249804228660924,
+                "postprocessed_boundary_f1": 0.750195771339076,
+                "raw_network_boundary_error": 0.5432452957556324,
+                "raw_network_boundary_f1": 0.45675470424436754
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 32,
+                "postprocessed_boundary_error": 0.24251329415057377,
+                "postprocessed_boundary_f1": 0.7574867058494262,
+                "raw_network_boundary_error": 0.5345864089490906,
+                "raw_network_boundary_f1": 0.46541359105090935
+              },
+              "ge_64px": {
+                "frames": 8,
+                "postprocessed_boundary_error": 0.22986081822016025,
+                "postprocessed_boundary_f1": 0.7701391817798398,
+                "raw_network_boundary_error": 0.5139264308379363,
+                "raw_network_boundary_f1": 0.4860735691620637
+              },
+              "lt_32px": {
+                "frames": 7,
+                "postprocessed_boundary_error": 0.5284090909090908,
+                "postprocessed_boundary_f1": 0.4715909090909091,
+                "raw_network_boundary_error": 0.6871069182389937,
+                "raw_network_boundary_f1": 0.3128930817610063
+              }
+            }
+          },
+          "puddle": {
+            "shape": {
+              "compact": {
+                "frames": 19,
+                "postprocessed_boundary_error": 0.37451464878220964,
+                "postprocessed_boundary_f1": 0.6254853512177904,
+                "raw_network_boundary_error": 0.5745044105093426,
+                "raw_network_boundary_f1": 0.4254955894906573
+              },
+              "irregular": {
+                "frames": 41,
+                "postprocessed_boundary_error": 0.30675590880568915,
+                "postprocessed_boundary_f1": 0.6932440911943109,
+                "raw_network_boundary_error": 0.5474056913056782,
+                "raw_network_boundary_f1": 0.4525943086943218
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 28,
+                "postprocessed_boundary_error": 0.287285335066905,
+                "postprocessed_boundary_f1": 0.712714664933095,
+                "raw_network_boundary_error": 0.522692801306732,
+                "raw_network_boundary_f1": 0.477307198693268
+              },
+              "ge_64px": {
+                "frames": 3,
+                "postprocessed_boundary_error": 0.21478307445099087,
+                "postprocessed_boundary_f1": 0.7852169255490091,
+                "raw_network_boundary_error": 0.5067290813341135,
+                "raw_network_boundary_f1": 0.49327091866588646
+              },
+              "lt_32px": {
+                "frames": 29,
+                "postprocessed_boundary_error": 0.40573282855597625,
+                "postprocessed_boundary_f1": 0.5942671714440237,
+                "raw_network_boundary_error": 0.6158107018015595,
+                "raw_network_boundary_f1": 0.38418929819844044
+              }
+            }
+          }
+        },
+        "iou_by_class": {
+          "leaf_pile": 0.9170302334481439,
+          "puddle": 0.9379297927701886
+        },
+        "macro_miou": 0.9274800131091663,
+        "negative_area_fp_per_frame": 0.0,
+        "negative_fp_taxonomy": {
+          "blue_obstacle": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "bottle_like_cone": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "crack": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "curb_corner": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "ground:asphalt_dark": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 40
+          },
+          "light_leaf_litter": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "light_paver": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "lighting:directional_high_noon": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 40
+          },
+          "paper_like_road_patch": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "paver_joint": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "plastic_label": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "road_marking_fragment": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          }
+        },
+        "negative_only_fp_frames": 0,
+        "negative_only_frames": 40,
+        "pixel_totals": {
+          "boundary_intersection": [
+            7571,
+            10058
+          ],
+          "boundary_union": [
+            13481,
+            19513
+          ],
+          "intersection": [
+            95848,
+            161489
+          ],
+          "negative_fp_frames": 0,
+          "negative_frames": 40,
+          "raw_boundary_intersection": [
+            8582,
+            12597
+          ],
+          "raw_boundary_union": [
+            29813,
+            43700
+          ],
+          "truth_pixels": [
+            97693,
+            167557
+          ],
+          "union": [
+            104520,
+            172176
+          ]
+        },
+        "positive_metric_eligibility_by_class": {
+          "leaf_pile": "evaluated",
+          "puddle": "evaluated"
+        },
+        "positive_truth_pixels_by_class": {
+          "leaf_pile": 97693,
+          "puddle": 167557
+        },
+        "postprocessed_mask_boundary_f1": 0.6997638222914231,
+        "postprocessed_mask_boundary_f1_by_class": {
+          "leaf_pile": 0.71926657799734,
+          "puddle": 0.6802610665855061
+        },
+        "raw_network_boundary_head_f1": 0.44727839033279176,
+        "raw_network_boundary_head_f1_by_class": {
+          "leaf_pile": 0.4470373746581586,
+          "puddle": 0.4475194060074249
+        }
+      }
+    },
+    "D2": {
+      "current": {
+        "boundary_error_by_width_shape": {
+          "leaf_pile": {
+            "shape": {
+              "compact": {
+                "frames": 21,
+                "postprocessed_boundary_error": 0.20614793467819403,
+                "postprocessed_boundary_f1": 0.793852065321806,
+                "raw_network_boundary_error": 0.5088661408513733,
+                "raw_network_boundary_f1": 0.49113385914862673
+              },
+              "irregular": {
+                "frames": 11,
+                "postprocessed_boundary_error": 0.24074461409746917,
+                "postprocessed_boundary_f1": 0.7592553859025308,
+                "raw_network_boundary_error": 0.5380687093779015,
+                "raw_network_boundary_f1": 0.4619312906220984
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 21,
+                "postprocessed_boundary_error": 0.21921737348903914,
+                "postprocessed_boundary_f1": 0.7807826265109609,
+                "raw_network_boundary_error": 0.5202223273415326,
+                "raw_network_boundary_f1": 0.4797776726584674
+              },
+              "ge_64px": {
+                "frames": 6,
+                "postprocessed_boundary_error": 0.19312039312039309,
+                "postprocessed_boundary_f1": 0.8068796068796069,
+                "raw_network_boundary_error": 0.5089457748417285,
+                "raw_network_boundary_f1": 0.4910542251582714
+              },
+              "lt_32px": {
+                "frames": 5,
+                "postprocessed_boundary_error": 0.2729948491537896,
+                "postprocessed_boundary_f1": 0.7270051508462104,
+                "raw_network_boundary_error": 0.5343412526997839,
+                "raw_network_boundary_f1": 0.465658747300216
+              }
+            }
+          },
+          "puddle": {
+            "shape": {
+              "compact": {
+                "frames": 48,
+                "postprocessed_boundary_error": 0.20638853249568645,
+                "postprocessed_boundary_f1": 0.7936114675043136,
+                "raw_network_boundary_error": 0.505758552966564,
+                "raw_network_boundary_f1": 0.494241447033436
+              },
+              "irregular": {
+                "frames": 18,
+                "postprocessed_boundary_error": 0.21317637748540907,
+                "postprocessed_boundary_f1": 0.7868236225145909,
+                "raw_network_boundary_error": 0.5605130508559166,
+                "raw_network_boundary_f1": 0.4394869491440834
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 25,
+                "postprocessed_boundary_error": 0.18049640182111915,
+                "postprocessed_boundary_f1": 0.8195035981788809,
+                "raw_network_boundary_error": 0.5016564126833886,
+                "raw_network_boundary_f1": 0.49834358731661144
+              },
+              "ge_64px": {
+                "frames": 18,
+                "postprocessed_boundary_error": 0.16741490490572197,
+                "postprocessed_boundary_f1": 0.832585095094278,
+                "raw_network_boundary_error": 0.492087617344658,
+                "raw_network_boundary_f1": 0.507912382655342
+              },
+              "lt_32px": {
+                "frames": 23,
+                "postprocessed_boundary_error": 0.33771737542013736,
+                "postprocessed_boundary_f1": 0.6622826245798626,
+                "raw_network_boundary_error": 0.6169396488121588,
+                "raw_network_boundary_f1": 0.3830603511878412
+              }
+            }
+          }
+        },
+        "iou_by_class": {
+          "leaf_pile": 0.9446288488183169,
+          "puddle": 0.9644367411773223
+        },
+        "macro_miou": 0.9545327949978195,
+        "negative_area_fp_per_frame": 0.0,
+        "negative_fp_taxonomy": {
+          "can_like_bollard": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "crack": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "ground:light_paver": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          },
+          "lighting:bright_overcast": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          },
+          "plastic_label": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "reflective_area": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "road_marking_fragment": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "truncated_object_edge": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          }
+        },
+        "negative_only_fp_frames": 0,
+        "negative_only_frames": 30,
+        "pixel_totals": {
+          "boundary_intersection": [
+            5947,
+            12946
+          ],
+          "boundary_union": [
+            10333,
+            19766
+          ],
+          "intersection": [
+            94768,
+            226470
+          ],
+          "negative_fp_frames": 0,
+          "negative_frames": 30,
+          "raw_boundary_intersection": [
+            6380,
+            14595
+          ],
+          "raw_boundary_union": [
+            21692,
+            46685
+          ],
+          "truth_pixels": [
+            96048,
+            230097
+          ],
+          "union": [
+            100323,
+            234821
+          ]
+        },
+        "positive_metric_eligibility_by_class": {
+          "leaf_pile": "evaluated",
+          "puddle": "evaluated"
+        },
+        "positive_truth_pixels_by_class": {
+          "leaf_pile": 96048,
+          "puddle": 230097
+        },
+        "postprocessed_mask_boundary_f1": 0.761051749074493,
+        "postprocessed_mask_boundary_f1_by_class": {
+          "leaf_pile": 0.7305896805896805,
+          "puddle": 0.7915138175593055
+        },
+        "raw_network_boundary_head_f1": 0.46544178732494657,
+        "raw_network_boundary_head_f1_by_class": {
+          "leaf_pile": 0.45454545454545453,
+          "puddle": 0.47633812010443866
+        }
+      },
+      "development_selected_postprocess": {
+        "boundary_error_by_width_shape": {
+          "leaf_pile": {
+            "shape": {
+              "compact": {
+                "frames": 21,
+                "postprocessed_boundary_error": 0.20615976900866217,
+                "postprocessed_boundary_f1": 0.7938402309913378,
+                "raw_network_boundary_error": 0.5088661408513733,
+                "raw_network_boundary_f1": 0.49113385914862673
+              },
+              "irregular": {
+                "frames": 11,
+                "postprocessed_boundary_error": 0.24683544303797467,
+                "postprocessed_boundary_f1": 0.7531645569620253,
+                "raw_network_boundary_error": 0.5380687093779015,
+                "raw_network_boundary_f1": 0.4619312906220984
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 21,
+                "postprocessed_boundary_error": 0.221856349043013,
+                "postprocessed_boundary_f1": 0.778143650956987,
+                "raw_network_boundary_error": 0.5202223273415326,
+                "raw_network_boundary_f1": 0.4797776726584674
+              },
+              "ge_64px": {
+                "frames": 6,
+                "postprocessed_boundary_error": 0.1930083702609552,
+                "postprocessed_boundary_f1": 0.8069916297390448,
+                "raw_network_boundary_error": 0.5089457748417285,
+                "raw_network_boundary_f1": 0.4910542251582714
+              },
+              "lt_32px": {
+                "frames": 5,
+                "postprocessed_boundary_error": 0.27555555555555555,
+                "postprocessed_boundary_f1": 0.7244444444444444,
+                "raw_network_boundary_error": 0.5343412526997839,
+                "raw_network_boundary_f1": 0.465658747300216
+              }
+            }
+          },
+          "puddle": {
+            "shape": {
+              "compact": {
+                "frames": 48,
+                "postprocessed_boundary_error": 0.20433546552949533,
+                "postprocessed_boundary_f1": 0.7956645344705047,
+                "raw_network_boundary_error": 0.505758552966564,
+                "raw_network_boundary_f1": 0.494241447033436
+              },
+              "irregular": {
+                "frames": 18,
+                "postprocessed_boundary_error": 0.2134340222575517,
+                "postprocessed_boundary_f1": 0.7865659777424483,
+                "raw_network_boundary_error": 0.5605130508559166,
+                "raw_network_boundary_f1": 0.4394869491440834
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 25,
+                "postprocessed_boundary_error": 0.1741242272593465,
+                "postprocessed_boundary_f1": 0.8258757727406535,
+                "raw_network_boundary_error": 0.5016564126833886,
+                "raw_network_boundary_f1": 0.49834358731661144
+              },
+              "ge_64px": {
+                "frames": 18,
+                "postprocessed_boundary_error": 0.16374077112387198,
+                "postprocessed_boundary_f1": 0.836259228876128,
+                "raw_network_boundary_error": 0.492087617344658,
+                "raw_network_boundary_f1": 0.507912382655342
+              },
+              "lt_32px": {
+                "frames": 23,
+                "postprocessed_boundary_error": 0.3509855839952928,
+                "postprocessed_boundary_f1": 0.6490144160047072,
+                "raw_network_boundary_error": 0.6169396488121588,
+                "raw_network_boundary_f1": 0.3830603511878412
+              }
+            }
+          }
+        },
+        "iou_by_class": {
+          "leaf_pile": 0.9455374878966649,
+          "puddle": 0.9645648107817264
+        },
+        "macro_miou": 0.9550511493391957,
+        "negative_area_fp_per_frame": 0.0,
+        "negative_fp_taxonomy": {
+          "can_like_bollard": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "crack": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "ground:light_paver": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          },
+          "lighting:bright_overcast": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          },
+          "plastic_label": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "reflective_area": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "road_marking_fragment": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "truncated_object_edge": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          }
+        },
+        "negative_only_fp_frames": 0,
+        "negative_only_frames": 30,
+        "pixel_totals": {
+          "boundary_intersection": [
+            5909,
+            12914
+          ],
+          "boundary_union": [
+            10174,
+            19662
+          ],
+          "intersection": [
+            94723,
+            225876
+          ],
+          "negative_fp_frames": 0,
+          "negative_frames": 30,
+          "raw_boundary_intersection": [
+            6380,
+            14595
+          ],
+          "raw_boundary_union": [
+            21692,
+            46685
+          ],
+          "truth_pixels": [
+            96048,
+            230097
+          ],
+          "union": [
+            100179,
+            234174
+          ]
+        },
+        "positive_metric_eligibility_by_class": {
+          "leaf_pile": "evaluated",
+          "puddle": "evaluated"
+        },
+        "positive_truth_pixels_by_class": {
+          "leaf_pile": 96048,
+          "puddle": 230097
+        },
+        "postprocessed_mask_boundary_f1": 0.7638333956634829,
+        "postprocessed_mask_boundary_f1_by_class": {
+          "leaf_pile": 0.7348131567493627,
+          "puddle": 0.7928536345776032
+        },
+        "raw_network_boundary_head_f1": 0.46544178732494657,
+        "raw_network_boundary_head_f1_by_class": {
+          "leaf_pile": 0.45454545454545453,
+          "puddle": 0.47633812010443866
+        }
+      }
+    },
+    "D3": {
+      "current": {
+        "boundary_error_by_width_shape": {
+          "leaf_pile": {
+            "shape": {
+              "compact": {
+                "frames": 24,
+                "postprocessed_boundary_error": 0.2197750259948955,
+                "postprocessed_boundary_f1": 0.7802249740051045,
+                "raw_network_boundary_error": 0.5212530323805507,
+                "raw_network_boundary_f1": 0.4787469676194494
+              },
+              "irregular": {
+                "frames": 19,
+                "postprocessed_boundary_error": 0.2139822794028402,
+                "postprocessed_boundary_f1": 0.7860177205971598,
+                "raw_network_boundary_error": 0.5343052026213722,
+                "raw_network_boundary_f1": 0.4656947973786278
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 20,
+                "postprocessed_boundary_error": 0.20430579964850615,
+                "postprocessed_boundary_f1": 0.7956942003514939,
+                "raw_network_boundary_error": 0.5256028670351698,
+                "raw_network_boundary_f1": 0.4743971329648302
+              },
+              "ge_64px": {
+                "frames": 10,
+                "postprocessed_boundary_error": 0.1671590732389986,
+                "postprocessed_boundary_f1": 0.8328409267610014,
+                "raw_network_boundary_error": 0.4874238813873445,
+                "raw_network_boundary_f1": 0.5125761186126555
+              },
+              "lt_32px": {
+                "frames": 13,
+                "postprocessed_boundary_error": 0.35120316783429795,
+                "postprocessed_boundary_f1": 0.648796832165702,
+                "raw_network_boundary_error": 0.6040509637373408,
+                "raw_network_boundary_f1": 0.39594903626265926
+              }
+            }
+          },
+          "puddle": {
+            "shape": {
+              "compact": {
+                "frames": 50,
+                "postprocessed_boundary_error": 0.22392156862745094,
+                "postprocessed_boundary_f1": 0.7760784313725491,
+                "raw_network_boundary_error": 0.5262759515570934,
+                "raw_network_boundary_f1": 0.47372404844290655
+              },
+              "irregular": {
+                "frames": 19,
+                "postprocessed_boundary_error": 0.18456561193087662,
+                "postprocessed_boundary_f1": 0.8154343880691234,
+                "raw_network_boundary_error": 0.5294412637385599,
+                "raw_network_boundary_f1": 0.47055873626144007
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 26,
+                "postprocessed_boundary_error": 0.22456046883324454,
+                "postprocessed_boundary_f1": 0.7754395311667555,
+                "raw_network_boundary_error": 0.5126615768387633,
+                "raw_network_boundary_f1": 0.48733842316123666
+              },
+              "ge_64px": {
+                "frames": 16,
+                "postprocessed_boundary_error": 0.1288831360946746,
+                "postprocessed_boundary_f1": 0.8711168639053254,
+                "raw_network_boundary_error": 0.4885259043992384,
+                "raw_network_boundary_f1": 0.5114740956007616
+              },
+              "lt_32px": {
+                "frames": 27,
+                "postprocessed_boundary_error": 0.295677392625328,
+                "postprocessed_boundary_f1": 0.704322607374672,
+                "raw_network_boundary_error": 0.6082730093071355,
+                "raw_network_boundary_f1": 0.39172699069286454
+              }
+            }
+          }
+        },
+        "iou_by_class": {
+          "leaf_pile": 0.8602114651309763,
+          "puddle": 0.9396805742766684
+        },
+        "macro_miou": 0.8999460197038224,
+        "negative_area_fp_per_frame": 0.13333333333333333,
+        "negative_fp_taxonomy": {
+          "curb_corner": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "ground:diagnostic_unseen_light_paver_wet_mix": {
+            "fp_frames": 4,
+            "fp_per_frame": 0.13333333333333333,
+            "frames": 30
+          },
+          "lighting:directional_high_noon": {
+            "fp_frames": 4,
+            "fp_per_frame": 0.13333333333333333,
+            "frames": 30
+          },
+          "packaging_graphic": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "red_obstacle": {
+            "fp_frames": 4,
+            "fp_per_frame": 0.4,
+            "frames": 10
+          },
+          "reflective_area": {
+            "fp_frames": 4,
+            "fp_per_frame": 0.2,
+            "frames": 20
+          },
+          "road_marking_fragment": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "vehicle_white_gray_structure": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "water_stain_patch": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          }
+        },
+        "negative_only_fp_frames": 4,
+        "negative_only_frames": 30,
+        "pixel_totals": {
+          "boundary_intersection": [
+            7365,
+            13083
+          ],
+          "boundary_union": [
+            14984,
+            20696
+          ],
+          "intersection": [
+            121141,
+            239814
+          ],
+          "negative_fp_frames": 4,
+          "negative_frames": 30,
+          "raw_boundary_intersection": [
+            8021,
+            14392
+          ],
+          "raw_boundary_union": [
+            32069,
+            47406
+          ],
+          "truth_pixels": [
+            122405,
+            250029
+          ],
+          "union": [
+            140827,
+            255208
+          ]
+        },
+        "positive_metric_eligibility_by_class": {
+          "leaf_pile": "evaluated",
+          "puddle": "evaluated"
+        },
+        "positive_truth_pixels_by_class": {
+          "leaf_pile": 122405,
+          "puddle": 250029
+        },
+        "postprocessed_mask_boundary_f1": 0.7168565894112942,
+        "postprocessed_mask_boundary_f1_by_class": {
+          "leaf_pile": 0.6590898921651975,
+          "puddle": 0.7746232866573907
+        },
+        "raw_network_boundary_head_f1": 0.4329626273503795,
+        "raw_network_boundary_head_f1_by_class": {
+          "leaf_pile": 0.40014966325767026,
+          "puddle": 0.4657755914430888
+        }
+      },
+      "development_selected_postprocess": {
+        "boundary_error_by_width_shape": {
+          "leaf_pile": {
+            "shape": {
+              "compact": {
+                "frames": 24,
+                "postprocessed_boundary_error": 0.21899886234357224,
+                "postprocessed_boundary_f1": 0.7810011376564278,
+                "raw_network_boundary_error": 0.5212530323805507,
+                "raw_network_boundary_f1": 0.4787469676194494
+              },
+              "irregular": {
+                "frames": 19,
+                "postprocessed_boundary_error": 0.21561928004881026,
+                "postprocessed_boundary_f1": 0.7843807199511897,
+                "raw_network_boundary_error": 0.5343052026213722,
+                "raw_network_boundary_f1": 0.4656947973786278
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 20,
+                "postprocessed_boundary_error": 0.20511407472721266,
+                "postprocessed_boundary_f1": 0.7948859252727873,
+                "raw_network_boundary_error": 0.5256028670351698,
+                "raw_network_boundary_f1": 0.4743971329648302
+              },
+              "ge_64px": {
+                "frames": 10,
+                "postprocessed_boundary_error": 0.1672110748172344,
+                "postprocessed_boundary_f1": 0.8327889251827656,
+                "raw_network_boundary_error": 0.4874238813873445,
+                "raw_network_boundary_f1": 0.5125761186126555
+              },
+              "lt_32px": {
+                "frames": 13,
+                "postprocessed_boundary_error": 0.3520518358531317,
+                "postprocessed_boundary_f1": 0.6479481641468683,
+                "raw_network_boundary_error": 0.6040509637373408,
+                "raw_network_boundary_f1": 0.39594903626265926
+              }
+            }
+          },
+          "puddle": {
+            "shape": {
+              "compact": {
+                "frames": 50,
+                "postprocessed_boundary_error": 0.23288075560802834,
+                "postprocessed_boundary_f1": 0.7671192443919717,
+                "raw_network_boundary_error": 0.5262759515570934,
+                "raw_network_boundary_f1": 0.47372404844290655
+              },
+              "irregular": {
+                "frames": 19,
+                "postprocessed_boundary_error": 0.19418089816571793,
+                "postprocessed_boundary_f1": 0.8058191018342821,
+                "raw_network_boundary_error": 0.5294412637385599,
+                "raw_network_boundary_f1": 0.47055873626144007
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 26,
+                "postprocessed_boundary_error": 0.23045047453548995,
+                "postprocessed_boundary_f1": 0.76954952546451,
+                "raw_network_boundary_error": 0.5126615768387633,
+                "raw_network_boundary_f1": 0.48733842316123666
+              },
+              "ge_64px": {
+                "frames": 16,
+                "postprocessed_boundary_error": 0.13511513918431517,
+                "postprocessed_boundary_f1": 0.8648848608156848,
+                "raw_network_boundary_error": 0.4885259043992384,
+                "raw_network_boundary_f1": 0.5114740956007616
+              },
+              "lt_32px": {
+                "frames": 27,
+                "postprocessed_boundary_error": 0.3167615608943203,
+                "postprocessed_boundary_f1": 0.6832384391056797,
+                "raw_network_boundary_error": 0.6082730093071355,
+                "raw_network_boundary_f1": 0.39172699069286454
+              }
+            }
+          }
+        },
+        "iou_by_class": {
+          "leaf_pile": 0.8619173012596968,
+          "puddle": 0.9397076735688186
+        },
+        "macro_miou": 0.9008124874142577,
+        "negative_area_fp_per_frame": 0.13333333333333333,
+        "negative_fp_taxonomy": {
+          "curb_corner": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "ground:diagnostic_unseen_light_paver_wet_mix": {
+            "fp_frames": 4,
+            "fp_per_frame": 0.13333333333333333,
+            "frames": 30
+          },
+          "lighting:directional_high_noon": {
+            "fp_frames": 4,
+            "fp_per_frame": 0.13333333333333333,
+            "frames": 30
+          },
+          "packaging_graphic": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "red_obstacle": {
+            "fp_frames": 4,
+            "fp_per_frame": 0.4,
+            "frames": 10
+          },
+          "reflective_area": {
+            "fp_frames": 4,
+            "fp_per_frame": 0.2,
+            "frames": 20
+          },
+          "road_marking_fragment": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "vehicle_white_gray_structure": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "water_stain_patch": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          }
+        },
+        "negative_only_fp_frames": 4,
+        "negative_only_frames": 30,
+        "pixel_totals": {
+          "boundary_intersection": [
+            7333,
+            12893
+          ],
+          "boundary_union": [
+            14614,
+            20712
+          ],
+          "intersection": [
+            121108,
+            239165
+          ],
+          "negative_fp_frames": 4,
+          "negative_frames": 30,
+          "raw_boundary_intersection": [
+            8021,
+            14392
+          ],
+          "raw_boundary_union": [
+            32069,
+            47406
+          ],
+          "truth_pixels": [
+            122405,
+            250029
+          ],
+          "union": [
+            140510,
+            254510
+          ]
+        },
+        "positive_metric_eligibility_by_class": {
+          "leaf_pile": "evaluated",
+          "puddle": "evaluated"
+        },
+        "positive_truth_pixels_by_class": {
+          "leaf_pile": 122405,
+          "puddle": 250029
+        },
+        "postprocessed_mask_boundary_f1": 0.71778626014178,
+        "postprocessed_mask_boundary_f1_by_class": {
+          "leaf_pile": 0.668246229553014,
+          "puddle": 0.767326290730546
+        },
+        "raw_network_boundary_head_f1": 0.4329626273503795,
+        "raw_network_boundary_head_f1_by_class": {
+          "leaf_pile": 0.40014966325767026,
+          "puddle": 0.4657755914430888
+        }
+      }
+    },
+    "D4": {
+      "current": {
+        "boundary_error_by_width_shape": {
+          "leaf_pile": {
+            "shape": {
+              "compact": {
+                "frames": 41,
+                "postprocessed_boundary_error": 0.24360249097284004,
+                "postprocessed_boundary_f1": 0.75639750902716,
+                "raw_network_boundary_error": 0.519831326773819,
+                "raw_network_boundary_f1": 0.480168673226181
+              },
+              "irregular": {
+                "frames": 9,
+                "postprocessed_boundary_error": 0.2564956695536309,
+                "postprocessed_boundary_f1": 0.7435043304463691,
+                "raw_network_boundary_error": 0.52275,
+                "raw_network_boundary_f1": 0.47725
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 29,
+                "postprocessed_boundary_error": 0.23616463696624013,
+                "postprocessed_boundary_f1": 0.7638353630337599,
+                "raw_network_boundary_error": 0.5226514486391571,
+                "raw_network_boundary_f1": 0.47734855136084287
+              },
+              "ge_64px": {
+                "frames": 14,
+                "postprocessed_boundary_error": 0.20792525047844201,
+                "postprocessed_boundary_f1": 0.792074749521558,
+                "raw_network_boundary_error": 0.5051352621333154,
+                "raw_network_boundary_f1": 0.49486473786668456
+              },
+              "lt_32px": {
+                "frames": 7,
+                "postprocessed_boundary_error": 0.5122507122507123,
+                "postprocessed_boundary_f1": 0.4877492877492878,
+                "raw_network_boundary_error": 0.5782223679895048,
+                "raw_network_boundary_f1": 0.42177763201049523
+              }
+            }
+          },
+          "puddle": {
+            "shape": {
+              "compact": {
+                "frames": 49,
+                "postprocessed_boundary_error": 0.603502443565278,
+                "postprocessed_boundary_f1": 0.3964975564347219,
+                "raw_network_boundary_error": 0.6462800118565359,
+                "raw_network_boundary_f1": 0.35371998814346406
+              },
+              "irregular": {
+                "frames": 21,
+                "postprocessed_boundary_error": 0.6239264335907001,
+                "postprocessed_boundary_f1": 0.3760735664092999,
+                "raw_network_boundary_error": 0.6680815696518152,
+                "raw_network_boundary_f1": 0.33191843034818486
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 33,
+                "postprocessed_boundary_error": 0.6142358773486749,
+                "postprocessed_boundary_f1": 0.38576412265132504,
+                "raw_network_boundary_error": 0.6501419878296146,
+                "raw_network_boundary_f1": 0.34985801217038537
+              },
+              "ge_64px": {
+                "frames": 14,
+                "postprocessed_boundary_error": 0.5987228607918262,
+                "postprocessed_boundary_f1": 0.4012771392081737,
+                "raw_network_boundary_error": 0.626102458247326,
+                "raw_network_boundary_f1": 0.37389754175267403
+              },
+              "lt_32px": {
+                "frames": 23,
+                "postprocessed_boundary_error": 0.6249450065992082,
+                "postprocessed_boundary_f1": 0.3750549934007919,
+                "raw_network_boundary_error": 0.7175025588536336,
+                "raw_network_boundary_f1": 0.28249744114636643
+              }
+            }
+          }
+        },
+        "iou_by_class": {
+          "leaf_pile": 0.9310393038498535,
+          "puddle": 0.4644403375457724
+        },
+        "macro_miou": 0.6977398206978129,
+        "negative_area_fp_per_frame": 0.8666666666666667,
+        "negative_fp_taxonomy": {
+          "can_like_bollard": {
+            "fp_frames": 8,
+            "fp_per_frame": 0.8,
+            "frames": 10
+          },
+          "ground:asphalt_dark": {
+            "fp_frames": 26,
+            "fp_per_frame": 0.8666666666666667,
+            "frames": 30
+          },
+          "light_paver": {
+            "fp_frames": 9,
+            "fp_per_frame": 0.9,
+            "frames": 10
+          },
+          "lighting:diagnostic_unseen_low_angle_blue_hour": {
+            "fp_frames": 26,
+            "fp_per_frame": 0.8666666666666667,
+            "frames": 30
+          },
+          "packaging_graphic": {
+            "fp_frames": 9,
+            "fp_per_frame": 0.9,
+            "frames": 10
+          },
+          "paper_like_road_patch": {
+            "fp_frames": 8,
+            "fp_per_frame": 0.8,
+            "frames": 10
+          },
+          "paver_joint": {
+            "fp_frames": 9,
+            "fp_per_frame": 0.9,
+            "frames": 10
+          },
+          "reflective_area": {
+            "fp_frames": 8,
+            "fp_per_frame": 0.8,
+            "frames": 10
+          },
+          "road_marking_fragment": {
+            "fp_frames": 8,
+            "fp_per_frame": 0.8,
+            "frames": 10
+          },
+          "shadow_edge": {
+            "fp_frames": 9,
+            "fp_per_frame": 0.9,
+            "frames": 10
+          }
+        },
+        "negative_only_fp_frames": 26,
+        "negative_only_frames": 30,
+        "pixel_totals": {
+          "boundary_intersection": [
+            8901,
+            11150
+          ],
+          "boundary_union": [
+            17027,
+            55852
+          ],
+          "intersection": [
+            166481,
+            269903
+          ],
+          "negative_fp_frames": 26,
+          "negative_frames": 30,
+          "raw_boundary_intersection": [
+            9766,
+            14541
+          ],
+          "raw_boundary_union": [
+            34100,
+            76872
+          ],
+          "truth_pixels": [
+            168500,
+            277025
+          ],
+          "union": [
+            178812,
+            581136
+          ]
+        },
+        "positive_metric_eligibility_by_class": {
+          "leaf_pile": "evaluated",
+          "puddle": "evaluated"
+        },
+        "positive_truth_pixels_by_class": {
+          "leaf_pile": 168500,
+          "puddle": 277025
+        },
+        "postprocessed_mask_boundary_f1": 0.5097097648657551,
+        "postprocessed_mask_boundary_f1_by_class": {
+          "leaf_pile": 0.6865936439370565,
+          "puddle": 0.3328258857944539
+        },
+        "raw_network_boundary_head_f1": 0.38170184179148325,
+        "raw_network_boundary_head_f1_by_class": {
+          "leaf_pile": 0.4452651256098117,
+          "puddle": 0.3181385579731548
+        }
+      },
+      "development_selected_postprocess": {
+        "boundary_error_by_width_shape": {
+          "leaf_pile": {
+            "shape": {
+              "compact": {
+                "frames": 41,
+                "postprocessed_boundary_error": 0.24113288844516845,
+                "postprocessed_boundary_f1": 0.7588671115548316,
+                "raw_network_boundary_error": 0.519831326773819,
+                "raw_network_boundary_f1": 0.480168673226181
+              },
+              "irregular": {
+                "frames": 9,
+                "postprocessed_boundary_error": 0.2568500779683671,
+                "postprocessed_boundary_f1": 0.7431499220316329,
+                "raw_network_boundary_error": 0.52275,
+                "raw_network_boundary_f1": 0.47725
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 29,
+                "postprocessed_boundary_error": 0.23584395519505597,
+                "postprocessed_boundary_f1": 0.764156044804944,
+                "raw_network_boundary_error": 0.5226514486391571,
+                "raw_network_boundary_f1": 0.47734855136084287
+              },
+              "ge_64px": {
+                "frames": 14,
+                "postprocessed_boundary_error": 0.2048383450146959,
+                "postprocessed_boundary_f1": 0.7951616549853041,
+                "raw_network_boundary_error": 0.5051352621333154,
+                "raw_network_boundary_f1": 0.49486473786668456
+              },
+              "lt_32px": {
+                "frames": 7,
+                "postprocessed_boundary_error": 0.5072296124927704,
+                "postprocessed_boundary_f1": 0.4927703875072296,
+                "raw_network_boundary_error": 0.5782223679895048,
+                "raw_network_boundary_f1": 0.42177763201049523
+              }
+            }
+          },
+          "puddle": {
+            "shape": {
+              "compact": {
+                "frames": 49,
+                "postprocessed_boundary_error": 0.6084525670313815,
+                "postprocessed_boundary_f1": 0.3915474329686185,
+                "raw_network_boundary_error": 0.6462800118565359,
+                "raw_network_boundary_f1": 0.35371998814346406
+              },
+              "irregular": {
+                "frames": 21,
+                "postprocessed_boundary_error": 0.6272065066809671,
+                "postprocessed_boundary_f1": 0.37279349331903294,
+                "raw_network_boundary_error": 0.6680815696518152,
+                "raw_network_boundary_f1": 0.33191843034818486
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 33,
+                "postprocessed_boundary_error": 0.6257555353731483,
+                "postprocessed_boundary_f1": 0.3742444646268516,
+                "raw_network_boundary_error": 0.6501419878296146,
+                "raw_network_boundary_f1": 0.34985801217038537
+              },
+              "ge_64px": {
+                "frames": 14,
+                "postprocessed_boundary_error": 0.5919989402569876,
+                "postprocessed_boundary_f1": 0.4080010597430123,
+                "raw_network_boundary_error": 0.626102458247326,
+                "raw_network_boundary_f1": 0.37389754175267403
+              },
+              "lt_32px": {
+                "frames": 23,
+                "postprocessed_boundary_error": 0.6218662952646239,
+                "postprocessed_boundary_f1": 0.37813370473537605,
+                "raw_network_boundary_error": 0.7175025588536336,
+                "raw_network_boundary_f1": 0.28249744114636643
+              }
+            }
+          }
+        },
+        "iou_by_class": {
+          "leaf_pile": 0.9318994810589308,
+          "puddle": 0.4831264870541985
+        },
+        "macro_miou": 0.7075129840565646,
+        "negative_area_fp_per_frame": 0.8666666666666667,
+        "negative_fp_taxonomy": {
+          "can_like_bollard": {
+            "fp_frames": 8,
+            "fp_per_frame": 0.8,
+            "frames": 10
+          },
+          "ground:asphalt_dark": {
+            "fp_frames": 26,
+            "fp_per_frame": 0.8666666666666667,
+            "frames": 30
+          },
+          "light_paver": {
+            "fp_frames": 9,
+            "fp_per_frame": 0.9,
+            "frames": 10
+          },
+          "lighting:diagnostic_unseen_low_angle_blue_hour": {
+            "fp_frames": 26,
+            "fp_per_frame": 0.8666666666666667,
+            "frames": 30
+          },
+          "packaging_graphic": {
+            "fp_frames": 9,
+            "fp_per_frame": 0.9,
+            "frames": 10
+          },
+          "paper_like_road_patch": {
+            "fp_frames": 8,
+            "fp_per_frame": 0.8,
+            "frames": 10
+          },
+          "paver_joint": {
+            "fp_frames": 9,
+            "fp_per_frame": 0.9,
+            "frames": 10
+          },
+          "reflective_area": {
+            "fp_frames": 8,
+            "fp_per_frame": 0.8,
+            "frames": 10
+          },
+          "road_marking_fragment": {
+            "fp_frames": 8,
+            "fp_per_frame": 0.8,
+            "frames": 10
+          },
+          "shadow_edge": {
+            "fp_frames": 9,
+            "fp_per_frame": 0.9,
+            "frames": 10
+          }
+        },
+        "negative_only_fp_frames": 26,
+        "negative_only_frames": 30,
+        "pixel_totals": {
+          "boundary_intersection": [
+            8889,
+            10684
+          ],
+          "boundary_union": [
+            16833,
+            53699
+          ],
+          "intersection": [
+            166468,
+            268642
+          ],
+          "negative_fp_frames": 26,
+          "negative_frames": 30,
+          "raw_boundary_intersection": [
+            9766,
+            14541
+          ],
+          "raw_boundary_union": [
+            34100,
+            76872
+          ],
+          "truth_pixels": [
+            168500,
+            277025
+          ],
+          "union": [
+            178633,
+            556049
+          ]
+        },
+        "positive_metric_eligibility_by_class": {
+          "leaf_pile": "evaluated",
+          "puddle": "evaluated"
+        },
+        "positive_truth_pixels_by_class": {
+          "leaf_pile": 168500,
+          "puddle": 277025
+        },
+        "postprocessed_mask_boundary_f1": 0.5115240857592217,
+        "postprocessed_mask_boundary_f1_by_class": {
+          "leaf_pile": 0.6911593188710053,
+          "puddle": 0.331888852647438
+        },
+        "raw_network_boundary_head_f1": 0.38170184179148325,
+        "raw_network_boundary_head_f1_by_class": {
+          "leaf_pile": 0.4452651256098117,
+          "puddle": 0.3181385579731548
+        }
+      }
+    },
+    "D5": {
+      "current": {
+        "boundary_error_by_width_shape": {
+          "leaf_pile": {
+            "shape": {},
+            "width": {}
+          },
+          "puddle": {
+            "shape": {},
+            "width": {}
+          }
+        },
+        "iou_by_class": {
+          "leaf_pile": 0.0,
+          "puddle": 0.0
+        },
+        "macro_miou": 0.0,
+        "negative_area_fp_per_frame": 0.0,
+        "negative_fp_taxonomy": {
+          "crack": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "curb_corner": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "flat_stone": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "gravel_patch": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "ground:asphalt_dark": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 100
+          },
+          "light_leaf_litter": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          },
+          "light_paver": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "lighting:directional_high_noon": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 100
+          },
+          "packaging_graphic": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          },
+          "plastic_label": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "reflective_area": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 40
+          },
+          "road_marking_fragment": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          },
+          "shadow_edge": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "vehicle_white_gray_structure": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "water_stain_patch": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          }
+        },
+        "negative_only_fp_frames": 0,
+        "negative_only_frames": 100,
+        "pixel_totals": {
+          "boundary_intersection": [
+            0,
+            0
+          ],
+          "boundary_union": [
+            0,
+            0
+          ],
+          "intersection": [
+            0,
+            0
+          ],
+          "negative_fp_frames": 0,
+          "negative_frames": 100,
+          "raw_boundary_intersection": [
+            0,
+            0
+          ],
+          "raw_boundary_union": [
+            0,
+            0
+          ],
+          "truth_pixels": [
+            0,
+            0
+          ],
+          "union": [
+            0,
+            0
+          ]
+        },
+        "positive_metric_eligibility_by_class": {
+          "leaf_pile": "not_applicable_no_positive_truth",
+          "puddle": "not_applicable_no_positive_truth"
+        },
+        "positive_truth_pixels_by_class": {
+          "leaf_pile": 0,
+          "puddle": 0
+        },
+        "postprocessed_mask_boundary_f1": 0.0,
+        "postprocessed_mask_boundary_f1_by_class": {
+          "leaf_pile": 0.0,
+          "puddle": 0.0
+        },
+        "raw_network_boundary_head_f1": 0.0,
+        "raw_network_boundary_head_f1_by_class": {
+          "leaf_pile": 0.0,
+          "puddle": 0.0
+        }
+      },
+      "development_selected_postprocess": {
+        "boundary_error_by_width_shape": {
+          "leaf_pile": {
+            "shape": {},
+            "width": {}
+          },
+          "puddle": {
+            "shape": {},
+            "width": {}
+          }
+        },
+        "iou_by_class": {
+          "leaf_pile": 0.0,
+          "puddle": 0.0
+        },
+        "macro_miou": 0.0,
+        "negative_area_fp_per_frame": 0.0,
+        "negative_fp_taxonomy": {
+          "crack": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "curb_corner": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "flat_stone": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "gravel_patch": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "ground:asphalt_dark": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 100
+          },
+          "light_leaf_litter": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          },
+          "light_paver": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "lighting:directional_high_noon": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 100
+          },
+          "packaging_graphic": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          },
+          "plastic_label": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "reflective_area": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 40
+          },
+          "road_marking_fragment": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          },
+          "shadow_edge": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "vehicle_white_gray_structure": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "water_stain_patch": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          }
+        },
+        "negative_only_fp_frames": 0,
+        "negative_only_frames": 100,
+        "pixel_totals": {
+          "boundary_intersection": [
+            0,
+            0
+          ],
+          "boundary_union": [
+            0,
+            0
+          ],
+          "intersection": [
+            0,
+            0
+          ],
+          "negative_fp_frames": 0,
+          "negative_frames": 100,
+          "raw_boundary_intersection": [
+            0,
+            0
+          ],
+          "raw_boundary_union": [
+            0,
+            0
+          ],
+          "truth_pixels": [
+            0,
+            0
+          ],
+          "union": [
+            0,
+            0
+          ]
+        },
+        "positive_metric_eligibility_by_class": {
+          "leaf_pile": "not_applicable_no_positive_truth",
+          "puddle": "not_applicable_no_positive_truth"
+        },
+        "positive_truth_pixels_by_class": {
+          "leaf_pile": 0,
+          "puddle": 0
+        },
+        "postprocessed_mask_boundary_f1": 0.0,
+        "postprocessed_mask_boundary_f1_by_class": {
+          "leaf_pile": 0.0,
+          "puddle": 0.0
+        },
+        "raw_network_boundary_head_f1": 0.0,
+        "raw_network_boundary_head_f1_by_class": {
+          "leaf_pile": 0.0,
+          "puddle": 0.0
+        }
+      }
+    },
+    "VAL": {
+      "current": {
+        "boundary_error_by_width_shape": {
+          "leaf_pile": {
+            "shape": {
+              "compact": {
+                "frames": 95,
+                "postprocessed_boundary_error": 0.23584092867183604,
+                "postprocessed_boundary_f1": 0.764159071328164,
+                "raw_network_boundary_error": 0.5195466383970055,
+                "raw_network_boundary_f1": 0.4804533616029945
+              },
+              "irregular": {
+                "frames": 52,
+                "postprocessed_boundary_error": 0.2568707058088695,
+                "postprocessed_boundary_f1": 0.7431292941911305,
+                "raw_network_boundary_error": 0.533869066752384,
+                "raw_network_boundary_f1": 0.466130933247616
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 69,
+                "postprocessed_boundary_error": 0.2540256980643447,
+                "postprocessed_boundary_f1": 0.7459743019356553,
+                "raw_network_boundary_error": 0.5320751943255113,
+                "raw_network_boundary_f1": 0.4679248056744887
+              },
+              "ge_64px": {
+                "frames": 52,
+                "postprocessed_boundary_error": 0.20147592474003595,
+                "postprocessed_boundary_f1": 0.798524075259964,
+                "raw_network_boundary_error": 0.4993938329087235,
+                "raw_network_boundary_f1": 0.5006061670912765
+              },
+              "lt_32px": {
+                "frames": 26,
+                "postprocessed_boundary_error": 0.4,
+                "postprocessed_boundary_f1": 0.6,
+                "raw_network_boundary_error": 0.6161185891974783,
+                "raw_network_boundary_f1": 0.38388141080252175
+              }
+            }
+          },
+          "puddle": {
+            "shape": {
+              "compact": {
+                "frames": 176,
+                "postprocessed_boundary_error": 0.2995111004247816,
+                "postprocessed_boundary_f1": 0.7004888995752184,
+                "raw_network_boundary_error": 0.5277367657675822,
+                "raw_network_boundary_f1": 0.4722632342324178
+              },
+              "irregular": {
+                "frames": 146,
+                "postprocessed_boundary_error": 0.29284523606389545,
+                "postprocessed_boundary_f1": 0.7071547639361045,
+                "raw_network_boundary_error": 0.5426074704505184,
+                "raw_network_boundary_f1": 0.4573925295494816
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 143,
+                "postprocessed_boundary_error": 0.27543146829686505,
+                "postprocessed_boundary_f1": 0.724568531703135,
+                "raw_network_boundary_error": 0.5218804769923365,
+                "raw_network_boundary_f1": 0.47811952300766347
+              },
+              "ge_64px": {
+                "frames": 71,
+                "postprocessed_boundary_error": 0.2521318516356358,
+                "postprocessed_boundary_f1": 0.7478681483643642,
+                "raw_network_boundary_error": 0.5068925329911592,
+                "raw_network_boundary_f1": 0.4931074670088408
+              },
+              "lt_32px": {
+                "frames": 108,
+                "postprocessed_boundary_error": 0.40505102331680065,
+                "postprocessed_boundary_f1": 0.5949489766831993,
+                "raw_network_boundary_error": 0.6015602970203966,
+                "raw_network_boundary_f1": 0.39843970297960335
+              }
+            }
+          }
+        },
+        "iou_by_class": {
+          "leaf_pile": 0.8913577492098728,
+          "puddle": 0.9496047965053415
+        },
+        "macro_miou": 0.9204812728576071,
+        "negative_area_fp_per_frame": 0.0,
+        "negative_fp_taxonomy": {
+          "crack": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 60
+          },
+          "curb_corner": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "flat_stone": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "gravel_patch": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          },
+          "ground:dark_gravel": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 80
+          },
+          "ground:light_paver": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 80
+          },
+          "light_leaf_litter": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "light_paver": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "lighting:bright_overcast": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 80
+          },
+          "lighting:low_sun_glare": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 80
+          },
+          "packaging_graphic": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 40
+          },
+          "paper_like_road_patch": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          },
+          "paver_joint": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "plastic_label": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "road_marking_fragment": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          },
+          "shadow_edge": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "truncated_object_edge": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 40
+          },
+          "vehicle_white_gray_structure": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 40
+          },
+          "water_stain_patch": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          }
+        },
+        "negative_only_fp_frames": 0,
+        "negative_only_frames": 160,
+        "pixel_totals": {
+          "boundary_intersection": [
+            26370,
+            57528
+          ],
+          "boundary_union": [
+            52063,
+            105998
+          ],
+          "intersection": [
+            463375,
+            1053879
+          ],
+          "negative_fp_frames": 0,
+          "negative_frames": 160,
+          "raw_boundary_intersection": [
+            29231,
+            68443
+          ],
+          "raw_boundary_union": [
+            111177,
+            225833
+          ],
+          "truth_pixels": [
+            468495,
+            1090980
+          ],
+          "union": [
+            519853,
+            1109808
+          ]
+        },
+        "positive_metric_eligibility_by_class": {
+          "leaf_pile": "evaluated",
+          "puddle": "evaluated"
+        },
+        "positive_truth_pixels_by_class": {
+          "leaf_pile": 468495,
+          "puddle": 1090980
+        },
+        "postprocessed_mask_boundary_f1": 0.6880077913444143,
+        "postprocessed_mask_boundary_f1_by_class": {
+          "leaf_pile": 0.6724210472632692,
+          "puddle": 0.7035945354255593
+        },
+        "raw_network_boundary_head_f1": 0.44076712164093024,
+        "raw_network_boundary_head_f1_by_class": {
+          "leaf_pile": 0.4163722864794029,
+          "puddle": 0.46516195680245753
+        }
+      },
+      "development_selected_postprocess": {
+        "boundary_error_by_width_shape": {
+          "leaf_pile": {
+            "shape": {
+              "compact": {
+                "frames": 95,
+                "postprocessed_boundary_error": 0.23584177301421505,
+                "postprocessed_boundary_f1": 0.764158226985785,
+                "raw_network_boundary_error": 0.5195466383970055,
+                "raw_network_boundary_f1": 0.4804533616029945
+              },
+              "irregular": {
+                "frames": 52,
+                "postprocessed_boundary_error": 0.25789618236748146,
+                "postprocessed_boundary_f1": 0.7421038176325185,
+                "raw_network_boundary_error": 0.533869066752384,
+                "raw_network_boundary_f1": 0.466130933247616
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 69,
+                "postprocessed_boundary_error": 0.2554063510046316,
+                "postprocessed_boundary_f1": 0.7445936489953684,
+                "raw_network_boundary_error": 0.5320751943255113,
+                "raw_network_boundary_f1": 0.4679248056744887
+              },
+              "ge_64px": {
+                "frames": 52,
+                "postprocessed_boundary_error": 0.20096541610656238,
+                "postprocessed_boundary_f1": 0.7990345838934376,
+                "raw_network_boundary_error": 0.4993938329087235,
+                "raw_network_boundary_f1": 0.5006061670912765
+              },
+              "lt_32px": {
+                "frames": 26,
+                "postprocessed_boundary_error": 0.4004718372161604,
+                "postprocessed_boundary_f1": 0.5995281627838396,
+                "raw_network_boundary_error": 0.6161185891974783,
+                "raw_network_boundary_f1": 0.38388141080252175
+              }
+            }
+          },
+          "puddle": {
+            "shape": {
+              "compact": {
+                "frames": 176,
+                "postprocessed_boundary_error": 0.29958183990442055,
+                "postprocessed_boundary_f1": 0.7004181600955794,
+                "raw_network_boundary_error": 0.5277367657675822,
+                "raw_network_boundary_f1": 0.4722632342324178
+              },
+              "irregular": {
+                "frames": 146,
+                "postprocessed_boundary_error": 0.2897216047422462,
+                "postprocessed_boundary_f1": 0.7102783952577538,
+                "raw_network_boundary_error": 0.5426074704505184,
+                "raw_network_boundary_f1": 0.4573925295494816
+              }
+            },
+            "width": {
+              "32_to_64px": {
+                "frames": 143,
+                "postprocessed_boundary_error": 0.27222708515693383,
+                "postprocessed_boundary_f1": 0.7277729148430662,
+                "raw_network_boundary_error": 0.5218804769923365,
+                "raw_network_boundary_f1": 0.47811952300766347
+              },
+              "ge_64px": {
+                "frames": 71,
+                "postprocessed_boundary_error": 0.2498015126822949,
+                "postprocessed_boundary_f1": 0.7501984873177051,
+                "raw_network_boundary_error": 0.5068925329911592,
+                "raw_network_boundary_f1": 0.4931074670088408
+              },
+              "lt_32px": {
+                "frames": 108,
+                "postprocessed_boundary_error": 0.4095194297539664,
+                "postprocessed_boundary_f1": 0.5904805702460336,
+                "raw_network_boundary_error": 0.6015602970203966,
+                "raw_network_boundary_f1": 0.39843970297960335
+              }
+            }
+          }
+        },
+        "iou_by_class": {
+          "leaf_pile": 0.8922225688787203,
+          "puddle": 0.9482195703539527
+        },
+        "macro_miou": 0.9202210696163364,
+        "negative_area_fp_per_frame": 0.0,
+        "negative_fp_taxonomy": {
+          "crack": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 60
+          },
+          "curb_corner": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "flat_stone": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "gravel_patch": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          },
+          "ground:dark_gravel": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 80
+          },
+          "ground:light_paver": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 80
+          },
+          "light_leaf_litter": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "light_paver": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          },
+          "lighting:bright_overcast": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 80
+          },
+          "lighting:low_sun_glare": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 80
+          },
+          "packaging_graphic": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 40
+          },
+          "paper_like_road_patch": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          },
+          "paver_joint": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "plastic_label": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "road_marking_fragment": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 30
+          },
+          "shadow_edge": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 20
+          },
+          "truncated_object_edge": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 40
+          },
+          "vehicle_white_gray_structure": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 40
+          },
+          "water_stain_patch": {
+            "fp_frames": 0,
+            "fp_per_frame": 0.0,
+            "frames": 10
+          }
+        },
+        "negative_only_fp_frames": 0,
+        "negative_only_frames": 160,
+        "pixel_totals": {
+          "boundary_intersection": [
+            26283,
+            57325
+          ],
+          "boundary_union": [
+            51352,
+            105299
+          ],
+          "intersection": [
+            463283,
+            1049021
+          ],
+          "negative_fp_frames": 0,
+          "negative_frames": 160,
+          "raw_boundary_intersection": [
+            29231,
+            68443
+          ],
+          "raw_boundary_union": [
+            111177,
+            225833
+          ],
+          "truth_pixels": [
+            468495,
+            1090980
+          ],
+          "union": [
+            519246,
+            1106306
+          ]
+        },
+        "positive_metric_eligibility_by_class": {
+          "leaf_pile": "evaluated",
+          "puddle": "evaluated"
+        },
+        "positive_truth_pixels_by_class": {
+          "leaf_pile": 468495,
+          "puddle": 1090980
+        },
+        "postprocessed_mask_boundary_f1": 0.6910460049666058,
+        "postprocessed_mask_boundary_f1_by_class": {
+          "leaf_pile": 0.6770915180009016,
+          "puddle": 0.7050004919323101
+        },
+        "raw_network_boundary_head_f1": 0.44076712164093024,
+        "raw_network_boundary_head_f1_by_class": {
+          "leaf_pile": 0.4163722864794029,
+          "puddle": 0.46516195680245753
+        }
+      }
+    }
+  },
+  "stage": "MRV2-00-AREA-BOUNDARY-AUDIT"
+}

@@ -1,0 +1,45 @@
+{
+  "classifier": {
+    "reason": "X3 is a direct closed-set three-class FCOS",
+    "status": "not_applicable"
+  },
+  "components": {
+    "detector_full_frame": {
+      "component": "detector_full_frame",
+      "latency_ms_max": 111.89527500027907,
+      "latency_ms_p50": 39.55308049989981,
+      "latency_ms_p95": 76.10887759990422,
+      "measurement_scope": "single full frame including repository preprocessing and file IO",
+      "peak_allocated_vram_bytes": 679807488,
+      "samples": 20
+    },
+    "leaf_full_frame": {
+      "component": "leaf_full_frame",
+      "latency_ms_max": 157.89085400001568,
+      "latency_ms_p50": 121.28544849997525,
+      "latency_ms_p95": 154.26785230017686,
+      "measurement_scope": "single full frame including repository preprocessing and file IO",
+      "peak_allocated_vram_bytes": 685553664,
+      "samples": 20
+    },
+    "puddle_full_frame": {
+      "component": "puddle_full_frame",
+      "latency_ms_max": 241.41578400030994,
+      "latency_ms_p50": 120.21133400003237,
+      "latency_ms_p95": 205.55754949973564,
+      "measurement_scope": "single full frame including repository preprocessing and file IO",
+      "peak_allocated_vram_bytes": 685553664,
+      "samples": 20
+    }
+  },
+  "device": {
+    "gpu": "NVIDIA GeForce RTX 4080 Laptop GPU",
+    "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "torch": "2.5.1+cu124"
+  },
+  "end_to_end_serial_estimate_ms_p95": 435.9342793998167,
+  "headroom_to_200ms": -235.93427939981672,
+  "measurement_warning": "serial component sum; projection/tracking/scheduler excluded and must be measured at product gate",
+  "schema_version": 1,
+  "stage": "MRV2-00-PERFORMANCE-BUDGET"
+}

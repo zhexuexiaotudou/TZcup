@@ -24,7 +24,21 @@ def _torch():
     return torch
 
 
-def build_direct_fcos(input_scale: int = 1):
+def direct_input_size(
+    input_scale: int = 1, input_size: tuple[int, int] | None = None
+) -> tuple[int, int]:
+    """Resolve an explicit width/height while preserving the X3 scale API."""
+    if input_size is None:
+        return teacher_input_size(input_scale)
+    width, height = (int(value) for value in input_size)
+    if width <= 0 or height <= 0 or width % 8 or height % 8:
+        raise ValueError("direct FCOS input dimensions must be positive multiples of 8")
+    return width, height
+
+
+def build_direct_fcos(
+    input_scale: int = 1, *, input_size: tuple[int, int] | None = None
+):
     """Build a three-class detector from exact official FCOS COCO weights."""
     torch = _torch()
     try:
@@ -32,7 +46,7 @@ def build_direct_fcos(input_scale: int = 1):
     except ImportError as exc:
         raise RuntimeError("torchvision is required for direct FCOS") from exc
 
-    input_size = teacher_input_size(input_scale)
+    input_size = direct_input_size(input_scale, input_size)
     weights = torchvision.models.detection.FCOS_ResNet50_FPN_Weights.COCO_V1
     model = torchvision.models.detection.fcos_resnet50_fpn(
         weights=weights,
@@ -64,10 +78,13 @@ def build_direct_fcos(input_scale: int = 1):
 
 
 class DirectFCOSDataset:
-    def __init__(self, rows, instances_by_key, *, input_scale: int = 1):
+    def __init__(
+        self, rows, instances_by_key, *, input_scale: int = 1,
+        input_size: tuple[int, int] | None = None,
+    ):
         self.rows = list(rows)
         self.instances_by_key = instances_by_key
-        self.input_size = teacher_input_size(input_scale)
+        self.input_size = direct_input_size(input_scale, input_size)
 
     def __len__(self):
         return len(self.rows)
@@ -115,12 +132,16 @@ def direct_predictions(
     score_threshold: float,
     batch_size: int = 4,
     input_scale: int = 1,
+    input_size: tuple[int, int] | None = None,
     top_k: int = 16,
 ):
     torch = _torch()
     from torch.utils.data import DataLoader
 
-    dataset = DirectFCOSDataset(rows, instances_by_key, input_scale=input_scale)
+    resolved_input_size = direct_input_size(input_scale, input_size)
+    dataset = DirectFCOSDataset(
+        rows, instances_by_key, input_scale=input_scale, input_size=resolved_input_size
+    )
     loader = DataLoader(
         dataset,
         batch_size=batch_size,
@@ -155,7 +176,7 @@ def direct_predictions(
                     )
                 items = sorted(items, key=lambda item: item["score"], reverse=True)[:top_k]
                 truth = discrete_boxes_for_frame(
-                    row, instances_by_key, model_size=teacher_input_size(input_scale)
+                    row, instances_by_key, model_size=resolved_input_size
                 )
                 frames.append(
                     {
@@ -175,6 +196,7 @@ def direct_predictions(
 
 __all__ = [
     "DirectFCOSDataset",
+    "direct_input_size",
     "X3_ARCHITECTURE",
     "X3_WEIGHT_SPEC",
     "build_direct_fcos",

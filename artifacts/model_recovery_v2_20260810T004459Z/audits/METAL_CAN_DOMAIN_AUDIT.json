@@ -1,0 +1,2015 @@
+{
+  "G5_SEALED_FINAL_read": false,
+  "aggregate": {
+    "asset": {
+      "g4_metal_can_001": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 7,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.875,
+        "total": 8
+      },
+      "g4_metal_can_002": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 16,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8888888888888888,
+        "total": 18
+      },
+      "g4_metal_can_003": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 9,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8181818181818182,
+        "total": 11
+      },
+      "g4_metal_can_004": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 14,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 3,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8235294117647058,
+        "total": 17
+      },
+      "g4_metal_can_005": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 11,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7857142857142857,
+        "total": 14
+      },
+      "g4_metal_can_006": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 16,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8888888888888888,
+        "total": 18
+      },
+      "g4_metal_can_007": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 11,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 7,
+          "top_k_truncated": 0
+        },
+        "recall": 0.5789473684210527,
+        "total": 19
+      },
+      "g4_metal_can_008": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 14,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 6,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7,
+        "total": 20
+      },
+      "g4_metal_can_009": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 10,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 4,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7142857142857143,
+        "total": 14
+      },
+      "g4_metal_can_010": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 21,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 6,
+          "top_k_truncated": 0
+        },
+        "recall": 0.75,
+        "total": 28
+      },
+      "g4_metal_can_011": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 14,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 5,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7368421052631579,
+        "total": 19
+      },
+      "g4_metal_can_012": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 15,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 15
+      },
+      "g4_metal_can_013": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 13,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 5,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7222222222222222,
+        "total": 18
+      },
+      "g4_metal_can_014": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 14,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.9333333333333333,
+        "total": 15
+      },
+      "g4_metal_can_015": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 9,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 10,
+          "top_k_truncated": 0
+        },
+        "recall": 0.47368421052631576,
+        "total": 19
+      },
+      "g4_metal_can_016": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 19,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8636363636363636,
+        "total": 22
+      },
+      "g4_metal_can_017": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 3,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 14,
+          "top_k_truncated": 0
+        },
+        "recall": 0.16666666666666666,
+        "total": 18
+      },
+      "g4_metal_can_018": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 9,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 6,
+          "top_k_truncated": 0
+        },
+        "recall": 0.6,
+        "total": 15
+      },
+      "g4_metal_can_019": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 3,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.75,
+        "total": 4
+      },
+      "g4_metal_can_020": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 6,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 6,
+          "top_k_truncated": 0
+        },
+        "recall": 0.5,
+        "total": 12
+      },
+      "g4_metal_can_021": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 19,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 13,
+          "top_k_truncated": 0
+        },
+        "recall": 0.59375,
+        "total": 32
+      },
+      "g4_metal_can_022": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 36,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 15,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7058823529411765,
+        "total": 51
+      },
+      "g4_metal_can_023": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 7,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 2,
+          "score_below_threshold": 19,
+          "top_k_truncated": 0
+        },
+        "recall": 0.25,
+        "total": 28
+      },
+      "g4_metal_can_024": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 43,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 20,
+          "top_k_truncated": 0
+        },
+        "recall": 0.671875,
+        "total": 64
+      },
+      "g4_metal_can_025": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 53,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 16,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7681159420289855,
+        "total": 69
+      }
+    },
+    "background_contrast_proxy": {
+      "asphalt_dark__vs__blue+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 11,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8461538461538461,
+        "total": 13
+      },
+      "asphalt_dark__vs__gray+orange": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 8,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 21,
+          "top_k_truncated": 0
+        },
+        "recall": 0.26666666666666666,
+        "total": 30
+      },
+      "asphalt_dark__vs__red+white": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 6,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 6,
+          "top_k_truncated": 0
+        },
+        "recall": 0.5,
+        "total": 12
+      },
+      "asphalt_dark__vs__stone+red": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 12,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 2,
+          "score_below_threshold": 18,
+          "top_k_truncated": 0
+        },
+        "recall": 0.375,
+        "total": 32
+      },
+      "asphalt_dark__vs__teal+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 5,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 18,
+          "top_k_truncated": 0
+        },
+        "recall": 0.20833333333333334,
+        "total": 24
+      },
+      "asphalt_dark__vs__white+green": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 6,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 12,
+          "top_k_truncated": 0
+        },
+        "recall": 0.3333333333333333,
+        "total": 18
+      },
+      "cobblestone_gray__vs__blue+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 8,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 8
+      },
+      "cobblestone_gray__vs__gray+orange": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 2,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 2
+      },
+      "cobblestone_gray__vs__green+blue": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 3,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 3,
+          "top_k_truncated": 0
+        },
+        "recall": 0.5,
+        "total": 6
+      },
+      "cobblestone_gray__vs__red+white": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 1,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 1
+      },
+      "cobblestone_gray__vs__teal+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 2,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.5,
+        "total": 4
+      },
+      "cobblestone_gray__vs__white+green": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 4,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 4
+      },
+      "cobblestone_gray__vs__yellow+stone": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 4,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 4
+      },
+      "concrete_light__vs__gray+orange": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 3,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 3
+      },
+      "concrete_light__vs__green+blue": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 2,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.6666666666666666,
+        "total": 3
+      },
+      "concrete_light__vs__stone+red": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 3,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 3
+      },
+      "concrete_light__vs__teal+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 2,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 2
+      },
+      "concrete_light__vs__white+green": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 3,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 3
+      },
+      "concrete_light__vs__yellow+stone": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 4,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8,
+        "total": 5
+      },
+      "dark_gravel__vs__blue+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 23,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 13,
+          "top_k_truncated": 0
+        },
+        "recall": 0.6388888888888888,
+        "total": 36
+      },
+      "dark_gravel__vs__gray+orange": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 0,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 2,
+          "score_below_threshold": 13,
+          "top_k_truncated": 0
+        },
+        "recall": 0.0,
+        "total": 15
+      },
+      "dark_gravel__vs__stone+red": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 6,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8571428571428571,
+        "total": 7
+      },
+      "dark_gravel__vs__teal+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 24,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 8,
+          "top_k_truncated": 0
+        },
+        "recall": 0.75,
+        "total": 32
+      },
+      "dark_gravel__vs__white+green": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 11,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 5,
+          "top_k_truncated": 0
+        },
+        "recall": 0.6875,
+        "total": 16
+      },
+      "diagnostic_unseen_light_paver_wet_mix__vs__green+blue": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 4,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8,
+        "total": 5
+      },
+      "diagnostic_unseen_light_paver_wet_mix__vs__red+white": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 7,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 7
+      },
+      "diagnostic_unseen_light_paver_wet_mix__vs__stone+red": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 14,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 4,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7777777777777778,
+        "total": 18
+      },
+      "diagnostic_unseen_light_paver_wet_mix__vs__teal+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 3,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.75,
+        "total": 4
+      },
+      "diagnostic_unseen_light_paver_wet_mix__vs__yellow+stone": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 3,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 7,
+          "top_k_truncated": 0
+        },
+        "recall": 0.3,
+        "total": 10
+      },
+      "light_paver__vs__blue+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 13,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8666666666666667,
+        "total": 15
+      },
+      "light_paver__vs__gray+orange": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 9,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8181818181818182,
+        "total": 11
+      },
+      "light_paver__vs__green+blue": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 6,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 3,
+          "top_k_truncated": 0
+        },
+        "recall": 0.6666666666666666,
+        "total": 9
+      },
+      "light_paver__vs__red+white": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 7,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 6,
+          "top_k_truncated": 0
+        },
+        "recall": 0.5384615384615384,
+        "total": 13
+      },
+      "light_paver__vs__stone+red": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 29,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 3,
+          "top_k_truncated": 0
+        },
+        "recall": 0.90625,
+        "total": 32
+      },
+      "light_paver__vs__teal+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 26,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 3,
+          "top_k_truncated": 0
+        },
+        "recall": 0.896551724137931,
+        "total": 29
+      },
+      "light_paver__vs__white+green": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 10,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.9090909090909091,
+        "total": 11
+      },
+      "mixed_curb_soil__vs__blue+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 1,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 1
+      },
+      "mixed_curb_soil__vs__green+blue": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 1,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 1
+      },
+      "mixed_curb_soil__vs__stone+red": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 4,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 4
+      },
+      "mixed_curb_soil__vs__teal+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 0,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.0,
+        "total": 1
+      },
+      "mixed_curb_soil__vs__white+green": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 4,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8,
+        "total": 5
+      },
+      "mixed_curb_soil__vs__yellow+stone": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 4,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 4
+      },
+      "red_brick_paving__vs__blue+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 2,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 0.6666666666666666,
+        "total": 3
+      },
+      "red_brick_paving__vs__green+blue": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 5,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 5
+      },
+      "red_brick_paving__vs__red+white": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 5,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8333333333333334,
+        "total": 6
+      },
+      "red_brick_paving__vs__stone+red": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 4,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 4
+      },
+      "red_brick_paving__vs__teal+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 3,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.75,
+        "total": 4
+      },
+      "red_brick_paving__vs__yellow+stone": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 2,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 2
+      },
+      "service_road_gray__vs__blue+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 1,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 1
+      },
+      "service_road_gray__vs__green+blue": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 1,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 1
+      },
+      "service_road_gray__vs__red+white": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 8,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8888888888888888,
+        "total": 9
+      },
+      "service_road_gray__vs__stone+red": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 1,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 1
+      },
+      "service_road_gray__vs__teal+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 8,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8888888888888888,
+        "total": 9
+      },
+      "service_road_gray__vs__yellow+stone": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 3,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 3
+      },
+      "tiled_plaza__vs__blue+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 7,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 7
+      },
+      "tiled_plaza__vs__green+blue": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 3,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 3
+      },
+      "tiled_plaza__vs__red+white": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 4,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 4
+      },
+      "tiled_plaza__vs__white+green": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 0,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.0,
+        "total": 2
+      },
+      "tiled_plaza__vs__yellow+stone": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 7,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 1,
+          "top_k_truncated": 0
+        },
+        "recall": 0.875,
+        "total": 8
+      },
+      "wet_dark_asphalt__vs__gray+orange": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 5,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 5
+      },
+      "wet_dark_asphalt__vs__green+blue": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 1,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 1
+      },
+      "wet_dark_asphalt__vs__red+white": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 8,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8888888888888888,
+        "total": 9
+      },
+      "wet_dark_asphalt__vs__stone+red": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 3,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.6,
+        "total": 5
+      },
+      "wet_dark_asphalt__vs__white+green": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 5,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 5
+      },
+      "wet_dark_asphalt__vs__yellow+stone": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 8,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 1.0,
+        "total": 8
+      }
+    },
+    "distance": {
+      "[0.5, 2.0]": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 288,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 5,
+          "score_below_threshold": 56,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8252148997134671,
+        "total": 349
+      },
+      "[2.0, 4.0]": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 104,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 4,
+          "score_below_threshold": 111,
+          "top_k_truncated": 0
+        },
+        "recall": 0.4748858447488584,
+        "total": 219
+      }
+    },
+    "geometry": {
+      "can_crushed": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 90,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 2,
+          "score_below_threshold": 26,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7627118644067796,
+        "total": 118
+      },
+      "can_cylinder_short": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 87,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 30,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7372881355932204,
+        "total": 118
+      },
+      "can_cylinder_tall": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 50,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 15,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7692307692307693,
+        "total": 65
+      },
+      "can_dented": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 47,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 29,
+          "top_k_truncated": 0
+        },
+        "recall": 0.618421052631579,
+        "total": 76
+      },
+      "can_flattened": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 35,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 4,
+          "score_below_threshold": 40,
+          "top_k_truncated": 0
+        },
+        "recall": 0.4430379746835443,
+        "total": 79
+      },
+      "can_labeled": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 83,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 2,
+          "score_below_threshold": 27,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7410714285714286,
+        "total": 112
+      }
+    },
+    "ground": {
+      "asphalt_dark": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 48,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 4,
+          "score_below_threshold": 77,
+          "top_k_truncated": 0
+        },
+        "recall": 0.37209302325581395,
+        "total": 129
+      },
+      "cobblestone_gray": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 24,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 5,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8275862068965517,
+        "total": 29
+      },
+      "concrete_light": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 17,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8947368421052632,
+        "total": 19
+      },
+      "dark_gravel": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 64,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 2,
+          "score_below_threshold": 40,
+          "top_k_truncated": 0
+        },
+        "recall": 0.6037735849056604,
+        "total": 106
+      },
+      "diagnostic_unseen_light_paver_wet_mix": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 31,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 13,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7045454545454546,
+        "total": 44
+      },
+      "light_paver": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 100,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 20,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8333333333333334,
+        "total": 120
+      },
+      "mixed_curb_soil": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 14,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.875,
+        "total": 16
+      },
+      "red_brick_paving": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 21,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.875,
+        "total": 24
+      },
+      "service_road_gray": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 22,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.9166666666666666,
+        "total": 24
+      },
+      "tiled_plaza": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 21,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.875,
+        "total": 24
+      },
+      "wet_dark_asphalt": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 30,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.9090909090909091,
+        "total": 33
+      }
+    },
+    "lighting": {
+      "backlight_evening": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 24,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 5,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8275862068965517,
+        "total": 29
+      },
+      "bright_overcast": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 100,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 20,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8333333333333334,
+        "total": 120
+      },
+      "dappled_tree_shadow": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 14,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.875,
+        "total": 16
+      },
+      "diagnostic_unseen_low_angle_blue_hour": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 11,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 3,
+          "score_below_threshold": 40,
+          "top_k_truncated": 0
+        },
+        "recall": 0.2037037037037037,
+        "total": 54
+      },
+      "directional_high_noon": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 68,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 50,
+          "top_k_truncated": 0
+        },
+        "recall": 0.5714285714285714,
+        "total": 119
+      },
+      "directional_late_afternoon": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 21,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.875,
+        "total": 24
+      },
+      "directional_soft_morning": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 17,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8947368421052632,
+        "total": 19
+      },
+      "hard_noon_shadow": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 22,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.9166666666666666,
+        "total": 24
+      },
+      "low_sun_glare": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 64,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 2,
+          "score_below_threshold": 40,
+          "top_k_truncated": 0
+        },
+        "recall": 0.6037735849056604,
+        "total": 106
+      },
+      "overcast_diffuse": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 30,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.9090909090909091,
+        "total": 33
+      },
+      "soft_morning_side": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 21,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.875,
+        "total": 24
+      }
+    },
+    "material": {
+      "aluminum_can_glossy": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 169,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 5,
+          "score_below_threshold": 99,
+          "top_k_truncated": 0
+        },
+        "recall": 0.6190476190476191,
+        "total": 273
+      },
+      "steel_can_matte": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 223,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 4,
+          "score_below_threshold": 68,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7559322033898305,
+        "total": 295
+      }
+    },
+    "occlusion": {
+      "none": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 392,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 9,
+          "score_below_threshold": 167,
+          "top_k_truncated": 0
+        },
+        "recall": 0.6901408450704225,
+        "total": 568
+      }
+    },
+    "palette": {
+      "blue+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 66,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 17,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7857142857142857,
+        "total": 84
+      },
+      "gray+orange": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 27,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 3,
+          "score_below_threshold": 36,
+          "top_k_truncated": 0
+        },
+        "recall": 0.4090909090909091,
+        "total": 66
+      },
+      "green+blue": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 26,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 8,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7647058823529411,
+        "total": 34
+      },
+      "red+white": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 46,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 14,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7540983606557377,
+        "total": 61
+      },
+      "stone+red": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 76,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 2,
+          "score_below_threshold": 28,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7169811320754716,
+        "total": 106
+      },
+      "teal+rust": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 73,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 35,
+          "top_k_truncated": 0
+        },
+        "recall": 0.6697247706422018,
+        "total": 109
+      },
+      "white+green": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 43,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 20,
+          "top_k_truncated": 0
+        },
+        "recall": 0.671875,
+        "total": 64
+      },
+      "yellow+stone": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 35,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 9,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7954545454545454,
+        "total": 44
+      }
+    },
+    "pixel_size": {
+      "12_to_18": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 0,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 8,
+          "top_k_truncated": 0
+        },
+        "recall": 0.0,
+        "total": 9
+      },
+      "18_to_32": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 77,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 78,
+          "top_k_truncated": 0
+        },
+        "recall": 0.4967741935483871,
+        "total": 155
+      },
+      "32_to_48": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 275,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 60,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8208955223880597,
+        "total": 335
+      },
+      "8_to_12": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 0,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 2,
+          "score_below_threshold": 3,
+          "top_k_truncated": 0
+        },
+        "recall": 0.0,
+        "total": 5
+      },
+      "ge_48": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 40,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 18,
+          "top_k_truncated": 0
+        },
+        "recall": 0.6896551724137931,
+        "total": 58
+      },
+      "lt_8": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 0,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 6,
+          "score_below_threshold": 0,
+          "top_k_truncated": 0
+        },
+        "recall": 0.0,
+        "total": 6
+      }
+    },
+    "specular_proxy": {
+      "matte_or_unknown": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 223,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 4,
+          "score_below_threshold": 68,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7559322033898305,
+        "total": 295
+      },
+      "specular_or_glossy": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 169,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 5,
+          "score_below_threshold": 99,
+          "top_k_truncated": 0
+        },
+        "recall": 0.6190476190476191,
+        "total": 273
+      }
+    },
+    "split": {
+      "D1": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 17,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 34,
+          "top_k_truncated": 0
+        },
+        "recall": 0.3269230769230769,
+        "total": 52
+      },
+      "D2": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 23,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 11,
+          "top_k_truncated": 0
+        },
+        "recall": 0.6764705882352942,
+        "total": 34
+      },
+      "D3": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 31,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 13,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7045454545454546,
+        "total": 44
+      },
+      "D4": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 11,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 3,
+          "score_below_threshold": 40,
+          "top_k_truncated": 0
+        },
+        "recall": 0.2037037037037037,
+        "total": 54
+      },
+      "TRAIN_effective_X3_batch": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 141,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 17,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8867924528301887,
+        "total": 159
+      },
+      "VAL": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 141,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 2,
+          "score_below_threshold": 49,
+          "top_k_truncated": 0
+        },
+        "recall": 0.734375,
+        "total": 192
+      },
+      "train_world_holdout": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 28,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 2,
+          "score_below_threshold": 3,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8484848484848485,
+        "total": 33
+      }
+    },
+    "texture": {
+      "crushed_folds": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 90,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 2,
+          "score_below_threshold": 26,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7627118644067796,
+        "total": 118
+      },
+      "label_patch": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 50,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 15,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7692307692307693,
+        "total": 65
+      },
+      "rings": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 87,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 30,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7372881355932204,
+        "total": 118
+      },
+      "speckle": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 47,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 29,
+          "top_k_truncated": 0
+        },
+        "recall": 0.618421052631579,
+        "total": 76
+      },
+      "stripe_pattern": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 35,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 4,
+          "score_below_threshold": 40,
+          "top_k_truncated": 0
+        },
+        "recall": 0.4430379746835443,
+        "total": 79
+      },
+      "text_blocks": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 83,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 2,
+          "score_below_threshold": 27,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7410714285714286,
+        "total": 112
+      }
+    },
+    "world": {
+      "world_auto05r_d3_factorized": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 31,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 13,
+          "top_k_truncated": 0
+        },
+        "recall": 0.7045454545454546,
+        "total": 44
+      },
+      "world_auto05r_d4_factorized": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 11,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 3,
+          "score_below_threshold": 40,
+          "top_k_truncated": 0
+        },
+        "recall": 0.2037037037037037,
+        "total": 54
+      },
+      "world_g4_01_asphalt_campus": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 37,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 37,
+          "top_k_truncated": 0
+        },
+        "recall": 0.49333333333333335,
+        "total": 75
+      },
+      "world_g4_02_concrete_sidewalk": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 17,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8947368421052632,
+        "total": 19
+      },
+      "world_g4_03_wet_courtyard": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 30,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.9090909090909091,
+        "total": 33
+      },
+      "world_g4_04_cobblestone_arcade": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 24,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 5,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8275862068965517,
+        "total": 29
+      },
+      "world_g4_05_red_brick_promenade": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 21,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.875,
+        "total": 24
+      },
+      "world_g4_06_tiled_plaza": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 21,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 1,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.875,
+        "total": 24
+      },
+      "world_g4_07_service_road": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 22,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.9166666666666666,
+        "total": 24
+      },
+      "world_g4_08_mixed_curb_vegetation": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 14,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 2,
+          "top_k_truncated": 0
+        },
+        "recall": 0.875,
+        "total": 16
+      },
+      "world_g4_09_light_paver_pedestrian": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 100,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 0,
+          "score_below_threshold": 20,
+          "top_k_truncated": 0
+        },
+        "recall": 0.8333333333333334,
+        "total": 120
+      },
+      "world_g4_10_dark_gravel_parking": {
+        "outcomes": {
+          "box_iou_below_0_5": 0,
+          "correct": 64,
+          "detector_found_but_wrong_class": 0,
+          "detector_missed": 2,
+          "score_below_threshold": 40,
+          "top_k_truncated": 0
+        },
+        "recall": 0.6037735849056604,
+        "total": 106
+      }
+    }
+  },
+  "background_contrast_and_specular_are_registry_proxies": true,
+  "fixed_top_k": 16,
+  "frozen_threshold": 0.6,
+  "legacy_G4_D6_read": false,
+  "outcome_taxonomy": [
+    "correct",
+    "detector_missed",
+    "detector_found_but_wrong_class",
+    "score_below_threshold",
+    "box_iou_below_0_5",
+    "top_k_truncated"
+  ],
+  "schema_version": 1,
+  "stage": "MRV2-00-METAL-CAN-DOMAIN-AUDIT"
+}

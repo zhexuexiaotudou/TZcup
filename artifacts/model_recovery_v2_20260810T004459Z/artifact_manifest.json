@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "stage": "MRV2-EVIDENCE-MANIFEST",
+  "artifacts": [
+    {
+      "path": "audits/AREA_BOUNDARY_AUDIT.json",
+      "bytes": 173497,
+      "sha256": "e87ac9bace32954d0d56881995406eedadcc9be9e2d2d74ade86d842f9a3a3a1"
+    },
+    {
+      "path": "audits/METAL_CAN_DOMAIN_AUDIT.json",
+      "bytes": 55711,
+      "sha256": "3cbfbeb48e63a9ad0dfa254f915deca6d0a6eb717d29ef45adce3d0d96c334a9"
+    },
+    {
+      "path": "audits/MRV2_00_AUDIT_INDEX.json",
+      "bytes": 628,
+      "sha256": "2b036aca7abea2a2efc556a08dc261b32a7408c970ca705ae61fd00fec7801d6"
+    },
+    {
+      "path": "audits/MRV2_00_DECISION.json",
+      "bytes": 2296,
+      "sha256": "86d033dab913f3b122f52c744501b77d30ecae75634670a67af1dce4debc533b"
+    },
+    {
+      "path": "audits/PERFORMANCE_BUDGET.json",
+      "bytes": 1706,
+      "sha256": "a5faece20cb020e9000ca3bc4cf4b9a20ade82851f56a350c2a351cac1688e61"
+    },
+    {
+      "path": "audits/SMALL_OBJECT_AUDIT.json",
+      "bytes": 376552,
+      "sha256": "fbea18075f3db12a65e066906991a2275973d47ac9e43815960fb4bac6abd49c"
+    },
+    {
+      "path": "baseline/ASSET_INVENTORY.json",
+      "bytes": 1026,
+      "sha256": "aa2e81e21a83270c21e533cf078d5ab58f70e634884a6fa0a190048cb1efc882"
+    },
+    {
+      "path": "baseline/BASELINE.json",
+      "bytes": 1010,
+      "sha256": "4c7f8d878c24acd6a77ae5828e8f64b697b88325bb854b778df9900a7727ef80"
+    },
+    {
+      "path": "baseline/BLOCKER_BASELINE.json",
+      "bytes": 731,
+      "sha256": "cba7e1d96ebf04468afa8aa89cb2162bcdace203250dcde1f911a9274d423634"
+    },
+    {
+      "path": "baseline/DATASET_INVENTORY.json",
+      "bytes": 2073,
+      "sha256": "e85457ad3c53ff474dd9a935d0126941e0d8aec2dc0f5724cd6b8e59575c2966"
+    },
+    {
+      "path": "baseline/ENVIRONMENT.json",
+      "bytes": 3491,
+      "sha256": "d99346af0ccccb94ffdca51d45df7d4343cf04a1a321277cbcab7d25f634621d"
+    },
+    {
+      "path": "baseline/MODEL_INVENTORY.json",
+      "bytes": 2711,
+      "sha256": "6a40237a9b4d9e00ebb5596f1b2837b8e5d8bdfc433976d38f13582853b8e2ac"
+    },
+    {
+      "path": "grounding_dino/GROUNDING_DINO_PROVENANCE.json",
+      "bytes": 5217,
+      "sha256": "b4b10aa603e11cd98efd55951068d2255db8675d310812776faafe83f0a6447a"
+    },
+    {
+      "path": "mrv2_a/RESOLUTION_PROBE.json",
+      "bytes": 16785,
+      "sha256": "a1c05c76a589bd9cd511e72dcbdbcd1975409e667e582057dbb6c4264ce7db1b"
+    }
+  ]
+}
