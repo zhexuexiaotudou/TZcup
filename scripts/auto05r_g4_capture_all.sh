@@ -33,6 +33,8 @@ CAPTURE_FRAME_COUNT="${AUTO05R_CAPTURE_FRAME_COUNT:-10}"
 CAPTURE_TIMEOUT_SECONDS="${AUTO05R_CAPTURE_TIMEOUT_SECONDS:-90}"
 CAPTURE_SPEED_MPS="${AUTO05R_CAPTURE_SPEED_MPS:-0.35}"
 CAPTURE_MIN_TRANSLATION_M="${AUTO05R_CAPTURE_MIN_TRANSLATION_M:-0.25}"
+CAPTURE_MIN_ROTATION_RAD="${AUTO05R_CAPTURE_MIN_ROTATION_RAD:-0.0}"
+OPRV3_COVERAGE_PROFILE="${AUTO05R_OPRV3_COVERAGE_PROFILE:-}"
 mkdir -p "${DATA_ROOT}/logs" "${DATA_ROOT}/scenes" "${RUNTIME_WS}"
 
 colcon --log-base "${RUNTIME_WS}/log" build \
@@ -206,6 +208,9 @@ capture_world() {
       if [[ "${FORCE_NEGATIVE_ONLY}" == "1" ]]; then
         randomize_args+=(--force-negative-only)
       fi
+      if [[ -n "${OPRV3_COVERAGE_PROFILE}" ]]; then
+        randomize_args+=(--oprv3-coverage-profile "${OPRV3_COVERAGE_PROFILE}")
+      fi
       ros2 run sanitation_learning auto05r_randomize_g4_scene \
         "${randomize_args[@]}" >"${out}/randomize.log"
       sleep 2
@@ -216,6 +221,7 @@ capture_world() {
         --timeout "${CAPTURE_TIMEOUT_SECONDS}" \
         --linear-speed-mps "${CAPTURE_SPEED_MPS}" \
         --minimum-adjacent-translation-m "${CAPTURE_MIN_TRANSLATION_M}" \
+        --minimum-adjacent-rotation-rad "${CAPTURE_MIN_ROTATION_RAD}" \
         --camera-xyz "${CAMERA_X}" "${CAMERA_Y}" "${CAMERA_Z}" \
         >"${out}/capture.log"; then
         capture_pass=true

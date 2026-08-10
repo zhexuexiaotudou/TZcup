@@ -39,3 +39,11 @@ MRV2-A 是当前前向开发候选：核心 eventual recall/class 与错误率�
 
 - `F:\Project\TZcup\.workspace\artifacts\TZcup-oprv3-moving-benchmark-v1\OPRV3_MOVING_BENCHMARK.json`，SHA256 `4b0368dfe2ef4b9c4abd2fb2b997c12d088fb1279d95bb1af60e5c3024233298`。
 - `F:\Project\TZcup\.workspace\artifacts\TZcup-oprv3-moving-benchmark-v1\PIXEL_DISTANCE_EMPIRICAL_REPORT.json`，SHA256 `1ae9660897117da3e23b486f58e3ba61930e1cc4259c78b6ed9755303586e6d9`。
+
+## OPRV3-02 特殊覆盖恢复
+
+采集器增加了显式 frame-counted SE(2) 运动剖面：普通直行仍必须满足邻帧平移门；转弯任务允许以独立的最小 yaw 变化接纳原地旋转帧，并在每条记录中持久化车辆 yaw、命令阶段、线速度和角速度。覆盖判定同时要求场景预声明与实测 GT 事实，不读取模型分数：转弯入视野要求目标先不可见、累计 yaw 后才可见；遮挡要求预声明的遮挡者与目标 GT 框产生实际重叠；反射要求湿地场景的完整通过 capture report。
+
+转弯入视野任务为 90/90 帧，最大传感器/里程计偏差 9 ms，车辆累计转角 `1.5559 rad`、最终 yaw `0.0149 rad`，随后直行约 5.43 m。五类目标均由不可见进入视野；MRV2-A 对 5/5 eligible 目标的 eventual detection、正确分类和三帧确认均为 `1.0`，错误可行动预测为 `0/86`。显式遮挡任务同为 90/90 帧、最大偏差 10 ms；metal-can 与 paper-litter 的 GT 框最大重叠 IoU 为 `0.0758`，MRV2-A 对 5/5 eligible 目标三项 recall 均为 `1.0`，错误可行动预测为 `0/42`。
+
+湿地 reflection 任务在不降低 90 帧门槛的情况下连续两次失败：300 秒墙钟内分别采到 79 与 77 帧，仿真实时因子分别为 `0.0420189` 与 `0.0420194`。因此 `behind_vehicle_fov_entry / turning / occlusion` 已有真实前向覆盖，`reflection=false`，完整 coverage 仍不通过。两条 5-target 开发任务不能替代 24-task 基础矩阵，更不能替代 area 正式 mIoU/boundary、30-seed、Spot Cleaning 或最终部署门；`OPRV3_01_pass=false`、`OPRV3_02_pass=false`、`MODEL_BLOCKED_INTERNAL=true` 保持不变。紧凑证据见 `artifacts/online_first_recovery_v3_20260810T042843Z/moving_dev/OPRV3_SPECIAL_COVERAGE_MATRIX.json`，完整外部报告保留在 `F:\Project\TZcup\.workspace\artifacts\TZcup-oprv3-special-benchmark-v1\`。

@@ -7,8 +7,9 @@ import pytest
 from sanitation_learning.g3_scene import randomize
 from sanitation_learning.gazebo_g3 import write_g3_worlds
 from sanitation_learning.g2_capture import (
-    adjacent_translation_gate, frame_translation_ready, nearest_stamp_within,
-    observed_speeds_from_records,
+    adjacent_motion_gate, adjacent_translation_gate, frame_motion_ready,
+    frame_translation_ready, motion_command_for_frame, nearest_stamp_within,
+    observed_speeds_from_records, wrapped_angle_delta,
 )
 
 
@@ -159,3 +160,39 @@ def test_adjacent_translation_gate_supports_full_rate_oprv3_capture():
         {"odom_timestamp_ns": 200_000_000, "timestamp_ns": 250_000_000, "vehicle_xy_m": [0.130, 0.0]},
     ]
     assert observed_speeds_from_records(records_with_odom) == pytest.approx([0.65, 0.65])
+
+
+def test_oprv3_turn_profile_accepts_rotation_without_weakening_straight_gate():
+    records = [
+        {"vehicle_xy_m": [0.0, 0.0], "vehicle_yaw_rad": 1.57},
+        {"vehicle_xy_m": [0.0, 0.0], "vehicle_yaw_rad": 1.47},
+        {"vehicle_xy_m": [0.05, 0.0], "vehicle_yaw_rad": 1.47},
+    ]
+    assert not adjacent_translation_gate(records, requested_frames=3)
+    assert adjacent_motion_gate(
+        records,
+        requested_frames=3,
+        minimum_translation_m=0.04,
+        minimum_rotation_rad=0.08,
+    )
+    assert frame_motion_ready(
+        (0.0, 0.0, 1.57),
+        (0.0, 0.0, 1.47),
+        minimum_translation_m=0.04,
+        minimum_rotation_rad=0.08,
+    )
+    assert wrapped_angle_delta(3.13, -3.13) == pytest.approx(0.023185, abs=1e-5)
+
+
+def test_motion_profile_is_frame_counted_and_fails_closed_when_exhausted():
+    profile = {
+        "name": "turn_then_approach",
+        "phases": [
+            {"name": "turn", "frame_count": 2, "angular_z_rad_s": -0.5},
+            {"name": "approach", "frame_count": 3, "linear_x_mps": 0.65},
+        ],
+    }
+    assert motion_command_for_frame(profile, 0, 0.35) == (0.0, -0.5, "turn")
+    assert motion_command_for_frame(profile, 2, 0.35) == (0.65, 0.0, "approach")
+    with pytest.raises(ValueError, match="does not cover"):
+        motion_command_for_frame(profile, 5, 0.35)

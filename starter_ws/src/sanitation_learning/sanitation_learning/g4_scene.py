@@ -131,6 +131,7 @@ def randomize(
     asset_source_split: str | None = None,
     negative_source_split: str | None = None,
     force_negative_only: bool = False,
+    oprv3_coverage_profile: str | None = None,
 ) -> dict:
     """Build and persist one G4 scene plan (no capture is performed here)."""
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -285,6 +286,76 @@ def randomize(
             "delta_per_frame_m": [0.08, 0.0, 0.0],
             "executed_by_capture": True,
         }
+    vehicle_start_yaw_rad = 0.0
+    motion_profile = None
+    coverage_requirements = {
+        "behind_vehicle_fov_entry": False,
+        "turning": False,
+        "occlusion": False,
+        "reflection": False,
+    }
+    overlap_executed = False
+    if oprv3_coverage_profile == "turn_entry":
+        if not selected:
+            raise ValueError("turn_entry coverage requires positive targets")
+        vehicle_start_yaw_rad = math.pi / 2.0
+        updates[0]["yaw"] = vehicle_start_yaw_rad
+        motion_profile = {
+            "name": "turn_then_approach",
+            "frame_counted": True,
+            "phases": [
+                {
+                    "name": "turn_into_target_fov",
+                    # The real 0.50 rad/s DiffDrive turn advances about
+                    # 0.10 rad per admitted 0.03-rad sample.  Sixteen samples
+                    # therefore produce the intended quarter turn instead of
+                    # rotating past the targets before the approach phase.
+                    "frame_count": 16,
+                    "linear_x_mps": 0.0,
+                    "angular_z_rad_s": -0.50,
+                },
+                {
+                    "name": "straight_approach",
+                    "frame_count": 4096,
+                    "linear_x_mps": 0.65,
+                    "angular_z_rad_s": 0.0,
+                },
+            ],
+        }
+        coverage_requirements["behind_vehicle_fov_entry"] = True
+        coverage_requirements["turning"] = True
+    elif oprv3_coverage_profile == "occlusion":
+        positives = [item for item in objects if item["class_id"] != "background"]
+        if len(positives) < 3:
+            raise ValueError("occlusion coverage requires at least three targets")
+        front = next(
+            (item for item in positives if item["class_id"] == "metal_can"),
+            positives[0],
+        )
+        behind = next(
+            (item for item in positives if item["class_id"] == "paper_litter"),
+            positives[1],
+        )
+        for item, distance in ((front, 2.10), (behind, 2.42)):
+            item["xyz_m"][0] = -8.0 + distance
+            item["xyz_m"][1] = 0.62
+            item["distance_m"] = distance
+            item["distance_bucket_m"] = [2.0, 4.0]
+            pose = next(update for update in updates if update["name"] == item["model_name"])
+            pose["xyz"] = list(item["xyz_m"])
+        behind["occlusion_ratio"] = 0.40
+        behind["occlusion_bucket"] = _occlusion_bucket(0.40)
+        behind["estimated_visible_fraction"] = 0.60
+        behind["visible_fraction_bucket"] = _visible_fraction_bucket(0.60)
+        behind["occluded_by_model_name"] = front["model_name"]
+        overlap_executed = True
+        coverage_requirements["occlusion"] = True
+    elif oprv3_coverage_profile == "reflection":
+        if "wet" not in world["world_id"].lower() and "wet" not in world["material_id"].lower():
+            raise ValueError("reflection coverage requires a wet world/material")
+        coverage_requirements["reflection"] = True
+    elif oprv3_coverage_profile is not None:
+        raise ValueError(f"unsupported OPRV3 coverage profile: {oprv3_coverage_profile}")
     if os.environ.get("G4_SCENE_PLAN_ONLY") != "1":
         set_poses(world_id, updates)
     classes = sorted({item["class_id"] for item in assets})
@@ -329,7 +400,7 @@ def randomize(
         "missing_target_classes": sorted(
             set(classes) - {item["class_id"] for item in selected}
         ),
-        "overlap_executed": False,
+        "overlap_executed": overlap_executed,
         "dynamic_motion_plan": dynamic_plan,
         "native_gazebo_applied": True,
         "offline_sensor_augmentation": {
@@ -352,7 +423,11 @@ def randomize(
         "occlusion_bucket_counts": occlusion_bucket_counts,
         "visible_fraction_bucket_counts": visible_fraction_bucket_counts,
         "vehicle_start_xyz_m": [-8.0, 0.0, 0.18],
+        "vehicle_start_yaw_rad": vehicle_start_yaw_rad,
         "vehicle_motion_command": {"linear_x_mps": 0.35, "duration_s": 8.0},
+        "oprv3_coverage_profile": oprv3_coverage_profile,
+        "oprv3_coverage_requirements": coverage_requirements,
+        "oprv3_motion_profile": motion_profile,
         "pose_reset_contract": {
             "all_world_assets_accounted_for": len(updates)
             == 1 + len(manifest["assets"]) + len(manifest["negative_assets"]),
@@ -382,6 +457,10 @@ def main() -> None:
     parser.add_argument("--asset-source-split", choices=("train", "val", "test"))
     parser.add_argument("--negative-source-split", choices=("train", "val", "test"))
     parser.add_argument("--force-negative-only", action="store_true")
+    parser.add_argument(
+        "--oprv3-coverage-profile",
+        choices=("turn_entry", "occlusion", "reflection"),
+    )
     args = parser.parse_args()
     print(
         json.dumps(
@@ -395,6 +474,7 @@ def main() -> None:
                 asset_source_split=args.asset_source_split,
                 negative_source_split=args.negative_source_split,
                 force_negative_only=args.force_negative_only,
+                oprv3_coverage_profile=args.oprv3_coverage_profile,
             ),
             indent=2,
         )

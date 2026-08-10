@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import math
 import numpy as np
 
 
@@ -152,12 +153,90 @@ def summarize_route(encounters, false_actions) -> dict:
     }
 
 
+def wrapped_yaw_change(first_rad: float, second_rad: float) -> float:
+    return abs((second_rad - first_rad + math.pi) % (2.0 * math.pi) - math.pi)
+
+
+def empirical_special_coverage(context: dict, routes: dict) -> dict:
+    """Require declared scene intent plus captured GT facts; never model output."""
+    requirements = {
+        seed: scene.get("oprv3_coverage_requirements", {})
+        for seed, scene in context["scenes"].items()
+    }
+    reports = context["capture_reports"]
+    representative = next(iter(routes.values()))["encounters"] if routes else []
+    turning_seeds = {
+        seed for seed, item in requirements.items() if item.get("turning")
+    }
+    behind_seeds = {
+        seed
+        for seed, item in requirements.items()
+        if item.get("behind_vehicle_fov_entry")
+    }
+    occlusion_seeds = {
+        seed for seed, item in requirements.items() if item.get("occlusion")
+    }
+    reflection_seeds = {
+        seed for seed, item in requirements.items() if item.get("reflection")
+    }
+    turning = bool(turning_seeds) and all(
+        float(reports[seed].get("observed_absolute_yaw_change_rad", 0.0)) >= 1.20
+        and {record.get("motion_phase") for record in reports[seed]["records"]}
+        >= {"turn_into_target_fov", "straight_approach"}
+        for seed in turning_seeds
+    )
+    behind_entry = False
+    for encounter in representative:
+        if encounter["scene_seed"] not in behind_seeds:
+            continue
+        frames = encounter["frames"]
+        visible_indices = [index for index, frame in enumerate(frames) if frame["visible"]]
+        if not visible_indices or visible_indices[0] == 0:
+            continue
+        first_visible = visible_indices[0]
+        yaw_change = wrapped_yaw_change(
+            frames[0]["vehicle_yaw_rad"], frames[first_visible]["vehicle_yaw_rad"]
+        )
+        if yaw_change >= 0.35 and any(
+            not frame["visible"] for frame in frames[:first_visible]
+        ):
+            behind_entry = True
+            break
+    occlusion = False
+    for encounter in representative:
+        if encounter["scene_seed"] not in occlusion_seeds:
+            continue
+        if encounter.get("occlusion_bucket") in (None, "none"):
+            continue
+        overlaps = [
+            float(frame.get("declared_occluder_bbox_iou", 0.0))
+            for frame in encounter["frames"]
+            if frame["visible"]
+        ]
+        if max(overlaps, default=0.0) >= 0.02:
+            occlusion = True
+            break
+    reflection = bool(reflection_seeds) and all(
+        reports[seed]["capture_pass"]
+        and "wet" in context["scenes"][seed]["world_id"].lower()
+        for seed in reflection_seeds
+    )
+    return {
+        "behind_vehicle_fov_entry": behind_entry,
+        "turning": turning,
+        "occlusion": occlusion,
+        "reflection": reflection,
+    }
+
+
 __all__ = [
     "CLASS_NAMES",
     "actionable_window_eligible",
     "bbox_from_mask",
     "bbox_iou",
+    "empirical_special_coverage",
     "percentile",
     "summarize_encounter",
     "summarize_route",
+    "wrapped_yaw_change",
 ]

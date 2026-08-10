@@ -44,6 +44,7 @@ from sanitation_learning.oprv3_moving import (  # noqa: E402
     actionable_window_eligible,
     bbox_from_mask,
     bbox_iou,
+    empirical_special_coverage,
     percentile,
     summarize_encounter,
     summarize_route,
@@ -316,7 +317,7 @@ def scaled_bbox(native_bbox: list[float], input_size: list[int]) -> list[float]:
 
 def target_frame_facts(
     *, row, capture_record, target, truth_fact, geometry_window, detector_frame,
-    area_frame, detector_metadata,
+    area_frame, detector_metadata, occluder_truth_fact=None,
 ) -> dict:
     class_name = target["class_id"]
     bbox = truth_fact["bbox"]
@@ -338,6 +339,8 @@ def target_frame_facts(
         "frame_index": int(row["frame_index"]),
         "frame_stamp_ns": int(capture_record["timestamp_ns"]),
         "distance_m": distance,
+        "vehicle_xy_m": list(vehicle_xy),
+        "vehicle_yaw_rad": float(capture_record.get("vehicle_yaw_rad", 0.0)),
         "visible": bbox is not None,
         "visible_mask_area_px": truth_fact["mask_area_px"],
         "visible_bbox_xyxy_px": bbox,
@@ -346,6 +349,14 @@ def target_frame_facts(
         ),
         "depth_valid_ratio": valid_depth_ratio,
         "scene_estimated_visibility_ratio": scene_visibility,
+        "declared_occluder_visible_bbox_xyxy_px": (
+            occluder_truth_fact["bbox"] if occluder_truth_fact else None
+        ),
+        "declared_occluder_bbox_iou": (
+            bbox_iou(bbox, occluder_truth_fact["bbox"])
+            if bbox and occluder_truth_fact and occluder_truth_fact["bbox"]
+            else 0.0
+        ),
         "actionable_window": actionable,
     }
     if class_name in DISCRETE_CLASSES:
@@ -462,6 +473,21 @@ def capture_audit(context: dict) -> dict:
             bool(context["scenes"][int(item["scene_seed"])].get("negative_only"))
             for item in reports
         ),
+        "oprv3_coverage_profiles": sorted(
+            {
+                context["scenes"][int(item["scene_seed"])].get(
+                    "oprv3_coverage_profile"
+                )
+                for item in reports
+                if context["scenes"][int(item["scene_seed"])].get(
+                    "oprv3_coverage_profile"
+                )
+            }
+        ),
+        "maximum_observed_absolute_yaw_change_rad": max(
+            (float(item.get("observed_absolute_yaw_change_rad", 0.0)) for item in reports),
+            default=0.0,
+        ),
     }
 
 
@@ -505,6 +531,9 @@ def main() -> int:
         encounters = []
         for seed, scene in sorted(context["scenes"].items()):
             report = context["capture_reports"][seed]
+            object_by_name = {
+                item["model_name"]: item for item in scene.get("objects", [])
+            }
             record_by_index = {
                 int(item["frame_index"]): item for item in report["records"]
             }
@@ -525,6 +554,15 @@ def main() -> int:
                             detector_frame=detector_frames[key],
                             area_frame=areas[key],
                             detector_metadata=metadata,
+                            occluder_truth_fact=(
+                                context["frame_truth"][key][
+                                    object_by_name[target["occluded_by_model_name"]][
+                                        "class_id"
+                                    ]
+                                ]
+                                if target.get("occluded_by_model_name")
+                                else None
+                            ),
                         )
                     )
                 encounter = summarize_encounter(
@@ -551,19 +589,14 @@ def main() -> int:
                 "encounters": encounters,
             }
     audit = capture_audit(context)
+    special_coverage = empirical_special_coverage(context, routes)
     coverage = {
         "far_first_appearance": True,
         "vehicle_gradually_approaches": True,
         "small_paper_and_can": True,
         "multiple_world_material_light": audit["world_count"] >= 3,
         "negative_regions": audit["negative_only_missions"] > 0,
-        "behind_vehicle_fov_entry": False,
-        "turning": False,
-        "occlusion": any(
-            item.get("occlusion_bucket") not in (None, "none")
-            for route in routes.values() for item in route["encounters"]
-        ),
-        "reflection": any("wet" in item.lower() for item in audit["world_ids"]),
+        **special_coverage,
     }
     payload = {
         "schema_version": 1,

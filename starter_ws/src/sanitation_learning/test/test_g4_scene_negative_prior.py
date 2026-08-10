@@ -199,6 +199,66 @@ def test_negative_only_rule_is_frozen():
     assert sum(negative_only_rule("test", i) for i in range(25)) == 7
 
 
+def test_oprv3_coverage_profiles_are_explicit_and_fail_closed(
+    monkeypatch, tmp_path, g4_world_manifest
+):
+    _, manifest_path = g4_world_manifest
+    monkeypatch.setattr(
+        "sanitation_learning.g4_scene.set_poses", lambda *_args: None
+    )
+    turn = g4_scene.randomize(
+        manifest_path,
+        "world_g4_01_asphalt_campus",
+        9002,
+        2,
+        tmp_path / "turn.json",
+        oprv3_coverage_profile="turn_entry",
+    )
+    assert turn["vehicle_start_yaw_rad"] == pytest.approx(1.5707963268)
+    assert turn["oprv3_motion_profile"]["name"] == "turn_then_approach"
+    assert turn["oprv3_coverage_requirements"] == {
+        "behind_vehicle_fov_entry": True,
+        "turning": True,
+        "occlusion": False,
+        "reflection": False,
+    }
+
+    occlusion = g4_scene.randomize(
+        manifest_path,
+        "world_g4_01_asphalt_campus",
+        9012,
+        2,
+        tmp_path / "occlusion.json",
+        oprv3_coverage_profile="occlusion",
+    )
+    paper = next(
+        item for item in occlusion["objects"] if item["class_id"] == "paper_litter"
+    )
+    assert occlusion["overlap_executed"] is True
+    assert paper["occlusion_bucket"] == "heavy"
+    assert paper["occluded_by_model_name"]
+    assert occlusion["occlusion_bucket_counts"]["heavy"] >= 1
+
+    reflection = g4_scene.randomize(
+        manifest_path,
+        "world_g4_03_wet_courtyard",
+        9022,
+        2,
+        tmp_path / "reflection.json",
+        oprv3_coverage_profile="reflection",
+    )
+    assert reflection["oprv3_coverage_requirements"]["reflection"] is True
+    with pytest.raises(ValueError, match="wet world"):
+        g4_scene.randomize(
+            manifest_path,
+            "world_g4_01_asphalt_campus",
+            9032,
+            2,
+            tmp_path / "bad-reflection.json",
+            oprv3_coverage_profile="reflection",
+        )
+
+
 def test_factorized_diagnostic_uses_explicit_asset_sources(
     monkeypatch, tmp_path, g4_world_manifest
 ):

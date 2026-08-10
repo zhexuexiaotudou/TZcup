@@ -22,6 +22,9 @@ param(
     [double]$CaptureTimeoutSeconds = 90.0,
     [double]$CaptureSpeedMps = 0.35,
     [double]$CaptureMinTranslationM = 0.25,
+    [double]$CaptureMinRotationRad = 0.0,
+    [ValidateSet("", "turn_entry", "occlusion", "reflection")]
+    [string]$Oprv3CoverageProfile = "",
     [switch]$SkipWorldGeneration,
     [switch]$ForceNegativeOnly
 )
@@ -88,6 +91,8 @@ docker run --rm --gpus all --shm-size 2g `
     -e AUTO05R_CAPTURE_TIMEOUT_SECONDS=$CaptureTimeoutSeconds `
     -e AUTO05R_CAPTURE_SPEED_MPS=$CaptureSpeedMps `
     -e AUTO05R_CAPTURE_MIN_TRANSLATION_M=$CaptureMinTranslationM `
+    -e AUTO05R_CAPTURE_MIN_ROTATION_RAD=$CaptureMinRotationRad `
+    -e AUTO05R_OPRV3_COVERAGE_PROFILE=$Oprv3CoverageProfile `
     -e AUTO05R_RUNTIME_WS=$runtimeWorkspaceInContainer `
     @volumeArgs `
     $Image `

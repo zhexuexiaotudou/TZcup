@@ -7,6 +7,7 @@ from sanitation_learning.oprv3_moving import (
     actionable_window_eligible,
     bbox_from_mask,
     bbox_iou,
+    empirical_special_coverage,
     summarize_encounter,
     summarize_route,
 )
@@ -140,3 +141,67 @@ def test_route_summary_keeps_every_gt_target_and_reports_exclusions():
     assert metrics["occluded_entirely"] == 1
     assert metrics["missed_in_window"] == 1
     assert metrics["eventual_detection_recall"] == 0.0
+
+
+def test_special_coverage_requires_declared_scene_and_empirical_gt_facts():
+    context = {
+        "scenes": {
+            1: {
+                "world_id": "world_g4_01_asphalt_campus",
+                "oprv3_coverage_requirements": {
+                    "turning": True,
+                    "behind_vehicle_fov_entry": True,
+                },
+            },
+            2: {
+                "world_id": "world_g4_01_asphalt_campus",
+                "oprv3_coverage_requirements": {"occlusion": True},
+            },
+            3: {
+                "world_id": "world_g4_03_wet_courtyard",
+                "oprv3_coverage_requirements": {"reflection": True},
+            },
+        },
+        "capture_reports": {
+            1: {
+                "capture_pass": True,
+                "observed_absolute_yaw_change_rad": 1.4,
+                "records": [
+                    {"motion_phase": "turn_into_target_fov"},
+                    {"motion_phase": "straight_approach"},
+                ],
+            },
+            2: {"capture_pass": True, "records": []},
+            3: {"capture_pass": True, "records": []},
+        },
+    }
+    routes = {
+        "MRV2-A": {
+            "encounters": [
+                {
+                    "scene_seed": 1,
+                    "occlusion_bucket": "none",
+                    "frames": [
+                        {"visible": False, "vehicle_yaw_rad": 1.57, "visible_mask_area_px": 0},
+                        {"visible": True, "vehicle_yaw_rad": 0.9, "visible_mask_area_px": 12},
+                    ],
+                },
+                {
+                    "scene_seed": 2,
+                    "occlusion_bucket": "heavy",
+                    "frames": [
+                        {"visible": False, "vehicle_yaw_rad": 0.0, "visible_mask_area_px": 0, "declared_occluder_bbox_iou": 0.0},
+                        {"visible": True, "vehicle_yaw_rad": 0.0, "visible_mask_area_px": 9, "declared_occluder_bbox_iou": 0.08},
+                    ],
+                },
+            ]
+        }
+    }
+    assert empirical_special_coverage(context, routes) == {
+        "behind_vehicle_fov_entry": True,
+        "turning": True,
+        "occlusion": True,
+        "reflection": True,
+    }
+    context["capture_reports"][1]["observed_absolute_yaw_change_rad"] = 0.4
+    assert not empirical_special_coverage(context, routes)["turning"]

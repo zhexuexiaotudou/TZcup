@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "protocol": "OPRV3-02-special-coverage-development",
+  "status": "turn_entry_and_occlusion_pass_reflection_blocked",
+  "production_candidate": "MRV2-A",
+  "G5_SEALED_FINAL_read": false,
+  "legacy_G4_D6_read": false,
+  "turn_entry": {
+    "capture_pass": true,
+    "captured_frames": 90,
+    "maximum_sensor_odom_skew_ns": 9000000,
+    "effective_captured_fps": 6.7088798432082015,
+    "observed_absolute_yaw_change_rad": 1.5559336337105334,
+    "vehicle_final_yaw_rad": 0.014862691837310343,
+    "all_gt_targets": 5,
+    "eligible_targets": 5,
+    "eventual_detection_recall": 1.0,
+    "eventual_correct_class_recall": 1.0,
+    "eventual_track_confirmation_recall": 1.0,
+    "wrong_actionable_predictions": 0,
+    "actionable_predictions": 86,
+    "behind_vehicle_fov_entry_coverage": true,
+    "turning_coverage": true,
+    "capture_report_sha256": "057202aae1c9fc643679bd340b20bb3e059d9c5c03d026451bbb5b95d15f7f7c",
+    "scene_manifest_sha256": "3a225065ca1fa325f6cba255b97eec0b6b926704f533b6016d0f5c21fcbb8ff8",
+    "benchmark_sha256": "6ece2ad40a533c40cb1335ddae90b88ebed37902e9e5f388f6d16ccc664220c9"
+  },
+  "occlusion": {
+    "capture_pass": true,
+    "captured_frames": 90,
+    "maximum_sensor_odom_skew_ns": 10000000,
+    "effective_captured_fps": 6.7088798432082015,
+    "declared_occluder": "metal_can",
+    "occluded_target": "paper_litter",
+    "maximum_gt_bbox_overlap_iou": 0.07581803671189145,
+    "all_gt_targets": 5,
+    "eligible_targets": 5,
+    "eventual_detection_recall": 1.0,
+    "eventual_correct_class_recall": 1.0,
+    "eventual_track_confirmation_recall": 1.0,
+    "wrong_actionable_predictions": 0,
+    "actionable_predictions": 42,
+    "occlusion_coverage": true,
+    "capture_report_sha256": "f744d87eb4903658397421b05b2b485a2ebe6e7245ae6af6e6e4a65ed981734c",
+    "scene_manifest_sha256": "a60282949e1452bce25e88b588e9accee25c948e7d13be5537c330858e89c304",
+    "benchmark_sha256": "85e96e70bf857967d41526d3dc57cf59e8118d0d666ecf6848b8858298481cf7"
+  },
+  "reflection": {
+    "capture_pass": false,
+    "world_id": "world_g4_03_wet_courtyard",
+    "requested_frames": 90,
+    "completed_failed_attempts": 2,
+    "captured_frames_by_attempt": [79, 77],
+    "simulator_realtime_factor_by_attempt": [
+      0.042018886484520984,
+      0.04201940035962606
+    ],
+    "failure_reason": "300 second wall-time budget expired before 90 frames",
+    "attempt_report_sha256": [
+      "b7b93d8e221dab958c6148981c4a8136f153adc2c29e74bbc39dd1fc5cd477e6",
+      "cd7f8cc93a6ca7d1cfc1c3470b0375e5b122d292c58f9e7b85ed1c4c98964af0"
+    ],
+    "reflection_coverage": false
+  },
+  "required_coverage": {
+    "far_first_appearance": true,
+    "vehicle_gradually_approaches": true,
+    "small_paper_and_can": true,
+    "multiple_world_material_light": true,
+    "negative_regions": true,
+    "behind_vehicle_fov_entry": true,
+    "turning": true,
+    "occlusion": true,
+    "reflection": false
+  },
+  "coverage_complete": false,
+  "OPRV3_01_pass": false,
+  "OPRV3_02_pass": false,
+  "MODEL_BLOCKED_INTERNAL": true,
+  "downstream_gates_started": false
+}
