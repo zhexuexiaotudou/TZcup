@@ -125,6 +125,10 @@ def test_g4_capture_timeout_is_explicitly_configurable():
     assert '--timeout "${CAPTURE_TIMEOUT_SECONDS}"' in capture_script
     assert "[double]$CaptureTimeoutSeconds = 90.0" in docker_wrapper
     assert "AUTO05R_CAPTURE_TIMEOUT_SECONDS=$CaptureTimeoutSeconds" in docker_wrapper
+    assert 'CAPTURE_MAX_ATTEMPTS="${AUTO05R_CAPTURE_MAX_ATTEMPTS:-3}"' in capture_script
+    assert 'for capture_attempt in $(seq 1 "${CAPTURE_MAX_ATTEMPTS}")' in capture_script
+    assert "[int]$CaptureMaxAttempts = 3" in docker_wrapper
+    assert "AUTO05R_CAPTURE_MAX_ATTEMPTS=$CaptureMaxAttempts" in docker_wrapper
 
 
 def test_adjacent_translation_gate_rejects_rotation_only_frames():

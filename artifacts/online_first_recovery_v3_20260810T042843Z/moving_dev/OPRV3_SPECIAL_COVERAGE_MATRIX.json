@@ -1,7 +1,7 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "protocol": "OPRV3-02-special-coverage-development",
-  "status": "turn_entry_and_occlusion_pass_reflection_blocked",
+  "status": "moving_core_and_required_coverage_pass_ready_for_oprv3_07",
   "production_candidate": "MRV2-A",
   "G5_SEALED_FINAL_read": false,
   "legacy_G4_D6_read": false,
@@ -46,21 +46,56 @@
     "benchmark_sha256": "85e96e70bf857967d41526d3dc57cf59e8118d0d666ecf6848b8858298481cf7"
   },
   "reflection": {
-    "capture_pass": false,
+    "capture_pass": true,
     "world_id": "world_g4_03_wet_courtyard",
+    "ground_material_executed_by_world": "wet_dark_asphalt",
+    "lighting_executed_by_world": "overcast_diffuse",
     "requested_frames": 90,
-    "completed_failed_attempts": 2,
-    "captured_frames_by_attempt": [79, 77],
-    "simulator_realtime_factor_by_attempt": [
+    "captured_frames": 90,
+    "maximum_sensor_odom_skew_ns": 9000000,
+    "effective_captured_fps": 7.172791747259833,
+    "all_gt_targets": 5,
+    "eligible_targets": 5,
+    "eventual_detection_recall": 1.0,
+    "eventual_correct_class_recall": 1.0,
+    "eventual_track_confirmation_recall": 0.8,
+    "wrong_actionable_predictions": 0,
+    "actionable_predictions": 54,
+    "capture_report_sha256": "a8cea0d0330a8d60059fa6b04e83e44975a3831f5f0bc3900965e97cf1b52491",
+    "scene_manifest_sha256": "641792e857f15c36b26225a2c4c64b43bbfebb953e62ee7695d2685a7e82ea21",
+    "benchmark_sha256": "8fdc6d23951ea300d50a0466308ab212c422f0275af7cd66f1e6402bb18e7ddd",
+    "reflection_coverage": true,
+    "current_runtime_instability": {
+      "completed_failed_attempts": 3,
+      "captured_frames_by_attempt": [79, 77, 48],
+      "simulator_realtime_factor_by_attempt": [
       0.042018886484520984,
-      0.04201940035962606
-    ],
-    "failure_reason": "300 second wall-time budget expired before 90 frames",
-    "attempt_report_sha256": [
-      "b7b93d8e221dab958c6148981c4a8136f153adc2c29e74bbc39dd1fc5cd477e6",
-      "cd7f8cc93a6ca7d1cfc1c3470b0375e5b122d292c58f9e7b85ed1c4c98964af0"
-    ],
-    "reflection_coverage": false
+        0.04201940035962606,
+        0.031585700129756054
+      ],
+      "failure_reason": "current wet-scene throughput is unstable; retained as an OPRV3-07 performance risk",
+      "attempt_report_sha256": [
+        "b7b93d8e221dab958c6148981c4a8136f153adc2c29e74bbc39dd1fc5cd477e6",
+        "cd7f8cc93a6ca7d1cfc1c3470b0375e5b122d292c58f9e7b85ed1c4c98964af0",
+        "18cad16694b0fc0e70f588a247495fe1547827000402032765f7ad27c580e4a2"
+      ]
+    }
+  },
+  "aggregate_mrv2_a": {
+    "all_gt_targets": 115,
+    "eligible_targets": 114,
+    "insufficient_sampled_actionable_frames": 1,
+    "detected_in_window": 114,
+    "correctly_classified_in_window": 114,
+    "track_confirmed_in_window": 111,
+    "eventual_detection_recall": 1.0,
+    "eventual_correct_class_recall": 1.0,
+    "eventual_track_confirmation_recall": 0.9736842105263158,
+    "actionable_window_miss_rate": 0.0,
+    "actionable_predictions": 1113,
+    "wrong_actionable_predictions": 9,
+    "wrong_actionable_target_rate": 0.008086253369272237,
+    "aggregation": "24-mission base plus three independent special-coverage mission shards; all GT retained"
   },
   "required_coverage": {
     "far_first_appearance": true,
@@ -71,11 +106,13 @@
     "behind_vehicle_fov_entry": true,
     "turning": true,
     "occlusion": true,
-    "reflection": false
+    "reflection": true
   },
-  "coverage_complete": false,
-  "OPRV3_01_pass": false,
-  "OPRV3_02_pass": false,
+  "coverage_complete": true,
+  "OPRV3_01_pass": true,
+  "OPRV3_02_pass": true,
   "MODEL_BLOCKED_INTERNAL": true,
+  "next_gate": "OPRV3-07",
+  "OPRV3_X86_DEV_PASS": false,
   "downstream_gates_started": false
 }

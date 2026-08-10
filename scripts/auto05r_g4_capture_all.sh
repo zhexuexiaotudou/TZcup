@@ -34,7 +34,12 @@ CAPTURE_TIMEOUT_SECONDS="${AUTO05R_CAPTURE_TIMEOUT_SECONDS:-90}"
 CAPTURE_SPEED_MPS="${AUTO05R_CAPTURE_SPEED_MPS:-0.35}"
 CAPTURE_MIN_TRANSLATION_M="${AUTO05R_CAPTURE_MIN_TRANSLATION_M:-0.25}"
 CAPTURE_MIN_ROTATION_RAD="${AUTO05R_CAPTURE_MIN_ROTATION_RAD:-0.0}"
+CAPTURE_MAX_ATTEMPTS="${AUTO05R_CAPTURE_MAX_ATTEMPTS:-3}"
 OPRV3_COVERAGE_PROFILE="${AUTO05R_OPRV3_COVERAGE_PROFILE:-}"
+if [[ "${CAPTURE_MAX_ATTEMPTS}" -lt 1 ]]; then
+  echo "AUTO05R_CAPTURE_MAX_ATTEMPTS must be >= 1" >&2
+  exit 2
+fi
 mkdir -p "${DATA_ROOT}/logs" "${DATA_ROOT}/scenes" "${RUNTIME_WS}"
 
 colcon --log-base "${RUNTIME_WS}/log" build \
@@ -188,7 +193,7 @@ capture_world() {
     fi
     local capture_pass=false
     local capture_attempt
-    for capture_attempt in 1 2 3; do
+    for capture_attempt in $(seq 1 "${CAPTURE_MAX_ATTEMPTS}"); do
       randomize_args=(
         --manifest "${WORLD_MANIFEST}"
         --world-id "${world_id}"
@@ -239,7 +244,7 @@ capture_world() {
       sleep 3
     done
     if [[ "${capture_pass}" != true ]]; then
-      echo "scene failed after 3 capture attempts: ${scene}" >&2
+      echo "scene failed after ${CAPTURE_MAX_ATTEMPTS} capture attempts: ${scene}" >&2
       return 2
     fi
   done

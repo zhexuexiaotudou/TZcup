@@ -177,7 +177,16 @@ def empirical_special_coverage(context: dict, routes: dict) -> dict:
         seed for seed, item in requirements.items() if item.get("occlusion")
     }
     reflection_seeds = {
-        seed for seed, item in requirements.items() if item.get("reflection")
+        seed
+        for seed, item in requirements.items()
+        if item.get("reflection")
+        or (
+            "wet" in context["scenes"][seed]["world_id"].lower()
+            and "wet"
+            in context["scenes"][seed]
+            .get("ground_material_executed_by_world", "")
+            .lower()
+        )
     }
     turning = bool(turning_seeds) and all(
         float(reports[seed].get("observed_absolute_yaw_change_rad", 0.0)) >= 1.20
@@ -219,6 +228,10 @@ def empirical_special_coverage(context: dict, routes: dict) -> dict:
     reflection = bool(reflection_seeds) and all(
         reports[seed]["capture_pass"]
         and "wet" in context["scenes"][seed]["world_id"].lower()
+        and "wet"
+        in context["scenes"][seed]
+        .get("ground_material_executed_by_world", "")
+        .lower()
         for seed in reflection_seeds
     )
     return {

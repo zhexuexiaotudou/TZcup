@@ -159,7 +159,8 @@ def test_special_coverage_requires_declared_scene_and_empirical_gt_facts():
             },
             3: {
                 "world_id": "world_g4_03_wet_courtyard",
-                "oprv3_coverage_requirements": {"reflection": True},
+                "ground_material_executed_by_world": "wet_dark_asphalt",
+                "oprv3_coverage_requirements": {},
             },
         },
         "capture_reports": {
