@@ -68,9 +68,19 @@
       "sha256": "b4b10aa603e11cd98efd55951068d2255db8675d310812776faafe83f0a6447a"
     },
     {
+      "path": "mrv2_a/MRV2_A_R960_FULL_STATIC.json",
+      "bytes": 27959,
+      "sha256": "b5f379fc82bf8a2f6831e1547d0d39332b1d21e07fca100951f28bced30d4ec2"
+    },
+    {
       "path": "mrv2_a/RESOLUTION_PROBE.json",
       "bytes": 16785,
       "sha256": "a1c05c76a589bd9cd511e72dcbdbcd1975409e667e582057dbb6c4264ce7db1b"
+    },
+    {
+      "path": "mrv2_b/MRV2_B_SCREEN.json",
+      "bytes": 209788,
+      "sha256": "4363f64ae9f8b0ddc333e9934404081a00cdedb9921318b156505c55bf6cbc1f"
     }
   ]
 }

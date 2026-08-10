@@ -1097,4 +1097,11 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_doc
 
 - 每个 epoch 使用互斥配额：small-object `30%`、negative-only `20%`、metal-can targeted `15%`、general `35%`；稀缺 small 帧允许确定性有放回重采样，但负样本与通用样本不会被挤掉。
 - 增强仅使用 TRAIN：small 目标中心 crop-scale、通过 instance mask 的 small copy-paste、水平翻转，以及针对 metal_can 的亮度/对比度/局部高光扰动。阈值只在确定性 train-world-holdout 上按 small/metal/precision/recall/FP 约束选择。
-- Direct FCOS 输入显式支持 `640x480`、`960x720`、`1280x960`；R960 1 epoch/20-frame CUDA 烟测完成，张量、框和标签路径有效。正式 R960 完整训练结果仍待写入，当前不得宣称 MRV2-A 通过。
+- Direct FCOS 输入显式支持 `640x480`、`960x720`、`1280x960`；R960 1 epoch/20-frame CUDA 烟测完成，张量、框和标签路径有效。
+
+## MRV2-A / MRV2-B 正式结果
+
+- MRV2-A R960 完成 6 epoch、每 epoch 600 帧的正式 CUDA 训练；最佳 epoch 3 checkpoint SHA256 为 `0e8d20b493bb60c6f423e12300629c62ba26bf27499e6df926113502da9979d0`。train-world holdout 的 macro F1 为 `0.9528`、metal_can recall 为 `0.9091`、FP/min 为 `0`，但 7 个 small truth 的 recall 为 `0`，因此选择门本身已经失败。
+- 固定 VAL 完整链上，MRV2-A 的 candidate recall 为 `0.9177`、macro F1 为 `0.9450`、metal_can recall 为 `0.9063`；然而 small recall 只有 `0.4103`、false candidates/min 为 `21.6`。D1-D4 small recall 为 `0.5714/0.2632/0.6667/0.5455`，跨域汇总 small recall 为 `0.4737`、metal_can recall 为 `0.6739`。既有 area boundary 与 D4 negative-area FP 门也仍未通过，故 `MRV2_A_PASS=false`。
+- MRV2-B 只运行协议允许的 ground ROI `ground3` 与 `ground2x2` 两种有界 tile，使用 native 坐标回映、全局 class-aware NMS 和独立 tile score。holdout 选择 `ground3@0.75`，但 tile 没有产生能通过全局筛选的额外有效 small 候选；固定 VAL/D1-D4 结果与 MRV2-A 相同，故 `MRV2_B_DETECTOR_PASS=false`。
+- A/B 失败证据分别保存在 `artifacts/model_recovery_v2_20260810T004459Z/mrv2_a/MRV2_A_R960_FULL_STATIC.json` 与 `mrv2_b/MRV2_B_SCREEN.json`。没有 freeze，没有读取 G5 或旧 D6；协议中的第三条也是最后一条 MRV2-C 教师辅助恢复路线现已解锁。

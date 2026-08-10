@@ -43,7 +43,10 @@ from perception_prod_x1_full_pipeline import (  # noqa: E402
 )
 
 
-def evaluate_rows(*, name, rows, instances, detector, leaf, puddle, device, threshold):
+def evaluate_rows(
+    *, name, rows, instances, detector, leaf, puddle, device, threshold,
+    input_size=(640, 480),
+):
     started = time.perf_counter()
     by_key = index_instance_records(instances)
     frames = direct_predictions(
@@ -53,6 +56,7 @@ def evaluate_rows(*, name, rows, instances, detector, leaf, puddle, device, thre
         device=device,
         score_threshold=threshold,
         batch_size=4,
+        input_size=input_size,
         top_k=16,
     )
     candidate = discovery_metrics(frames)
@@ -97,12 +101,15 @@ def main():
     if device.type != "cuda":
         raise RuntimeError("formal X3 static gate requires CUDA")
     payload = torch.load(args.checkpoint, map_location=device, weights_only=False)
-    if payload.get("checkpoint_status") != "training_complete":
-        raise RuntimeError("X3 checkpoint is not training_complete")
+    if payload.get("checkpoint_status") not in (
+        "training_complete", "training_complete_candidate_not_frozen"
+    ):
+        raise RuntimeError("direct FCOS checkpoint is not training complete")
     if payload.get("G5_SEALED_FINAL_read") is not False:
         raise RuntimeError("X3 checkpoint violates sealed-final policy")
     threshold = float(payload["frozen_threshold_from_train_world_holdout"])
-    detector = build_direct_fcos().to(device)
+    input_size = tuple(payload.get("input_size", (640, 480)))
+    detector = build_direct_fcos(input_size=input_size).to(device)
     detector.load_state_dict(payload["state_dict"], strict=True)
     detector.eval()
     leaf, leaf_record = load_checkpoint_model(
@@ -124,6 +131,7 @@ def main():
         puddle=puddle,
         device=device,
         threshold=threshold,
+        input_size=input_size,
     )
     cross_frames = []
     cross_matched = []
@@ -141,6 +149,7 @@ def main():
             puddle=puddle,
             device=device,
             threshold=threshold,
+            input_size=input_size,
         )
         splits[f"D{index}"] = split
         cross_frames.extend(frames)
@@ -149,9 +158,12 @@ def main():
     cross_candidate.update(candidate_size_metrics(cross_frames))
     report = {
         "schema_version": 1,
-        "stage": "PERCEPTION-PROD-02-X3-STATIC",
+        "stage": (
+            "MRV2-A-STATIC" if payload.get("route") == "MRV2-A"
+            else "PERCEPTION-PROD-02-X3-STATIC"
+        ),
         "source_commit": "d958854",
-        "route": "ONLINE-X3_TORCHVISION_FCOS_R50_DIRECT_3CLASS",
+        "route": payload.get("route", "ONLINE-X3_TORCHVISION_FCOS_R50_DIRECT_3CLASS"),
         "device": str(device),
         "environment": {
             "platform": platform.platform(),
@@ -163,6 +175,7 @@ def main():
             "direct_detector_from_train_world_holdout": threshold,
             "area": list(AREA_THRESHOLDS),
             "top_k": 16,
+            "input_size": list(input_size),
         },
         "models": {
             "detector": {
@@ -195,7 +208,11 @@ def main():
     report["next_action"] = (
         "run_moving_camera_and_export_gates"
         if report["static_decision"]["static_gate_pass"]
-        else "all_three_routes_exhausted_model_blocked_internal"
+        else (
+            "execute_MRV2_B_tiled_refinement"
+            if payload.get("route") == "MRV2-A"
+            else "all_three_routes_exhausted_model_blocked_internal"
+        )
     )
     write_json(args.output, report)
     print(json.dumps(report["static_decision"], indent=2), flush=True)
