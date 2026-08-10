@@ -2,9 +2,14 @@ import hashlib
 from pathlib import Path
 import xml.etree.ElementTree as ET
 
+import pytest
+
 from sanitation_learning.g3_scene import randomize
 from sanitation_learning.gazebo_g3 import write_g3_worlds
-from sanitation_learning.g2_capture import adjacent_translation_gate
+from sanitation_learning.g2_capture import (
+    adjacent_translation_gate, frame_translation_ready, nearest_stamp_within,
+    observed_speeds_from_records,
+)
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -108,6 +113,19 @@ def test_g3_capture_owns_the_real_bridge_process():
     assert "ros2 run ros_gz_bridge parameter_bridge" not in capture_script
 
 
+def test_g4_capture_timeout_is_explicitly_configurable():
+    capture_script = (REPO / "scripts" / "auto05r_g4_capture_all.sh").read_text(
+        encoding="utf-8"
+    )
+    docker_wrapper = (
+        REPO / "scripts" / "run_auto05r_g4_capture_docker.ps1"
+    ).read_text(encoding="utf-8")
+    assert 'CAPTURE_TIMEOUT_SECONDS="${AUTO05R_CAPTURE_TIMEOUT_SECONDS:-90}"' in capture_script
+    assert '--timeout "${CAPTURE_TIMEOUT_SECONDS}"' in capture_script
+    assert "[double]$CaptureTimeoutSeconds = 90.0" in docker_wrapper
+    assert "AUTO05R_CAPTURE_TIMEOUT_SECONDS=$CaptureTimeoutSeconds" in docker_wrapper
+
+
 def test_adjacent_translation_gate_rejects_rotation_only_frames():
     records = [
         {"vehicle_xy_m": [0.0, 0.0]},
@@ -117,3 +135,27 @@ def test_adjacent_translation_gate_rejects_rotation_only_frames():
     assert not adjacent_translation_gate(records, requested_frames=3)
     records[-1]["vehicle_xy_m"] = [0.50, 0.0]
     assert adjacent_translation_gate(records, requested_frames=3)
+
+
+def test_adjacent_translation_gate_supports_full_rate_oprv3_capture():
+    records = [
+        {"vehicle_xy_m": [0.00, 0.0]},
+        {"vehicle_xy_m": [0.04, 0.0]},
+        {"vehicle_xy_m": [0.08, 0.0]},
+    ]
+    assert adjacent_translation_gate(
+        records, requested_frames=3, minimum_translation_m=0.01
+    )
+    assert not adjacent_translation_gate(
+        records, requested_frames=3, minimum_translation_m=0.05
+    )
+    assert frame_translation_ready((0.0, 0.0), (0.04, 0.0), 0.01)
+    assert not frame_translation_ready((0.0, 0.0), (0.04, 0.0), 0.05)
+    assert nearest_stamp_within([900, 1_010, 1_100], 1_000, 50) == 1_010
+    assert nearest_stamp_within([900, 1_100], 1_000, 50) is None
+    records_with_odom = [
+        {"odom_timestamp_ns": 0, "timestamp_ns": 0, "vehicle_xy_m": [0.0, 0.0]},
+        {"odom_timestamp_ns": 100_000_000, "timestamp_ns": 50_000_000, "vehicle_xy_m": [0.065, 0.0]},
+        {"odom_timestamp_ns": 200_000_000, "timestamp_ns": 250_000_000, "vehicle_xy_m": [0.130, 0.0]},
+    ]
+    assert observed_speeds_from_records(records_with_odom) == pytest.approx([0.65, 0.65])

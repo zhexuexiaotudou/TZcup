@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "protocol": "OPRV3-02",
+  "status": "forward_matrix_complete_required_coverage_incomplete",
+  "execution_base_commit": "a62208b150a74e63abb166a6afd99e8c633a88a7",
+  "container_digest": "sha256:418550f48916d794bc0aff144c60a3b1353d0bb0bb1dcf086cda0ec8e2a5aadc",
+  "G5_SEALED_FINAL_read": false,
+  "legacy_G4_D6_read": false,
+  "eligible_targets": 99,
+  "all_gt_targets": 100,
+  "routes": {
+    "MRV2-C": {
+      "eventual_detection_recall": 1.0,
+      "eventual_correct_class_recall": 1.0,
+      "eventual_track_confirmation_recall": 0.9494949494949495,
+      "actionable_window_miss_rate": 0.0,
+      "wrong_actionable_target_rate": 0.011866235167206042,
+      "online_core_numeric_pass": false
+    },
+    "MRV2-A": {
+      "eventual_detection_recall": 1.0,
+      "eventual_correct_class_recall": 1.0,
+      "eventual_track_confirmation_recall": 0.9797979797979798,
+      "actionable_window_miss_rate": 0.0,
+      "wrong_actionable_target_rate": 0.00966702470461869,
+      "online_core_numeric_pass": true
+    },
+    "X3": {
+      "eventual_detection_recall": 0.98989898989899,
+      "eventual_correct_class_recall": 0.98989898989899,
+      "eventual_track_confirmation_recall": 0.9494949494949495,
+      "actionable_window_miss_rate": 0.010101010101010102,
+      "wrong_actionable_target_rate": 0.004581901489117984,
+      "online_core_numeric_pass": false
+    }
+  },
+  "current_forward_candidate": "MRV2-A",
+  "required_coverage": {
+    "far_first_appearance": true,
+    "vehicle_gradually_approaches": true,
+    "small_paper_and_can": true,
+    "multiple_world_material_light": true,
+    "negative_regions": true,
+    "behind_vehicle_fov_entry": false,
+    "turning": false,
+    "occlusion": false,
+    "reflection": false
+  },
+  "coverage_complete": false,
+  "OPRV3_01_pass": false,
+  "OPRV3_02_pass": false,
+  "MODEL_BLOCKED_INTERNAL": true,
+  "full_external_report": {
+    "path": "F:\\Project\\TZcup\\.workspace\\artifacts\\TZcup-oprv3-moving-benchmark-v1\\OPRV3_MOVING_BENCHMARK.json",
+    "size_bytes": 20955198,
+    "sha256": "4b0368dfe2ef4b9c4abd2fb2b997c12d088fb1279d95bb1af60e5c3024233298"
+  }
+}

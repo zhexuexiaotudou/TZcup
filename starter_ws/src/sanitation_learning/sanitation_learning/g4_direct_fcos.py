@@ -38,7 +38,8 @@ def direct_input_size(
 
 
 def build_direct_fcos(
-    input_scale: int = 1, *, input_size: tuple[int, int] | None = None
+    input_scale: int = 1, *, input_size: tuple[int, int] | None = None,
+    checkpoint_load_control: bool = False,
 ):
     """Build a three-class detector from exact official FCOS COCO weights."""
     torch = _torch()
@@ -48,9 +49,18 @@ def build_direct_fcos(
         raise RuntimeError("torchvision is required for direct FCOS") from exc
 
     input_size = direct_input_size(input_scale, input_size)
-    weights = torchvision.models.detection.FCOS_ResNet50_FPN_Weights.COCO_V1
+    weights = (
+        None
+        if checkpoint_load_control
+        else torchvision.models.detection.FCOS_ResNet50_FPN_Weights.COCO_V1
+    )
     model = torchvision.models.detection.fcos_resnet50_fpn(
         weights=weights,
+        # Never let the factory fetch a separate ResNet checkpoint.  The
+        # ordinary path receives the complete official FCOS weights above;
+        # the strict-checkpoint path is populated immediately afterwards by
+        # the caller's local state_dict.
+        weights_backbone=None,
         min_size=input_size[1],
         max_size=input_size[0],
         box_score_thresh=0.01,
@@ -67,10 +77,14 @@ def build_direct_fcos(
     )
     classification.cls_logits = replacement
     classification.num_classes = len(DISCRETE_NAMES)
-    model.provenance = provenance_record(
-        X3_WEIGHT_SPEC,
-        cache_path=torchvision_cache_path(X3_WEIGHT_SPEC),
-        torchvision_version=torchvision.__version__,
+    model.provenance = (
+        {"source": "strict_checkpoint_load", "download_required": False}
+        if checkpoint_load_control
+        else provenance_record(
+            X3_WEIGHT_SPEC,
+            cache_path=torchvision_cache_path(X3_WEIGHT_SPEC),
+            torchvision_version=torchvision.__version__,
+        )
     )
     model.architecture_role = "x86_product_candidate_not_frozen"
     model.model_id = "x3_fcos_resnet50_fpn_direct_3class_v1"

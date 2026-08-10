@@ -1,6 +1,8 @@
 param(
     [string]$DataRoot = "F:\Project\TZcup-autonomous-auto05r-g4-data",
     [string]$BaselineRoot = "",
+    [string]$ResourceRoot = "",
+    [string]$RuntimeWorkspaceRoot = "",
     [string]$UpstreamRoot = "F:\Project\TZcup-coverage-docker-src\linorobot2",
     [string]$Image = "tzcup/sanitation-jazzy:stage5b",
     [int]$ScenesPerWorld = 25,
@@ -15,6 +17,11 @@ param(
     [ValidateSet("", "train", "val", "test")]
     [string]$NegativeSourceSplit = "",
     [int]$SceneSeedOffset = 0,
+    [string]$OnlyScenes = "",
+    [int]$CaptureFrameCount = 10,
+    [double]$CaptureTimeoutSeconds = 90.0,
+    [double]$CaptureSpeedMps = 0.35,
+    [double]$CaptureMinTranslationM = 0.25,
     [switch]$SkipWorldGeneration,
     [switch]$ForceNegativeOnly
 )
@@ -46,6 +53,19 @@ if (-not [string]::IsNullOrWhiteSpace($UpstreamRoot) -and (Test-Path -LiteralPat
     $upstream = (Resolve-Path $UpstreamRoot).Path
     $volumeArgs += @("-v", "${upstream}:/upstream/linorobot2:ro")
 }
+if (-not [string]::IsNullOrWhiteSpace($ResourceRoot)) {
+    $resource = (Resolve-Path $ResourceRoot).Path
+    $volumeArgs += @("-v", "${resource}:/resource:ro")
+}
+if (-not [string]::IsNullOrWhiteSpace($RuntimeWorkspaceRoot)) {
+    $runtimeWorkspace = [System.IO.Path]::GetFullPath($RuntimeWorkspaceRoot)
+    New-Item -ItemType Directory -Force -Path $runtimeWorkspace | Out-Null
+    $volumeArgs += @("-v", "${runtimeWorkspace}:/runtime")
+}
+
+$resourceRootInContainer = if ([string]::IsNullOrWhiteSpace($ResourceRoot)) { "/data/g4_screening_native" } else { "/resource" }
+$worldManifestInContainer = "$resourceRootInContainer/worlds/g4_world_manifest.json"
+$runtimeWorkspaceInContainer = if ([string]::IsNullOrWhiteSpace($RuntimeWorkspaceRoot)) { "/data/runtime_ws_g4" } else { "/runtime" }
 
 docker run --rm --gpus all --shm-size 2g `
     -e AUTO05R_DATA_ROOT=/data/g4_screening_native `
@@ -61,6 +81,14 @@ docker run --rm --gpus all --shm-size 2g `
     -e AUTO05R_SCENE_SEED_OFFSET=$SceneSeedOffset `
     -e AUTO05R_SKIP_WORLD_GENERATION=$([int]$SkipWorldGeneration.IsPresent) `
     -e AUTO05R_FORCE_NEGATIVE_ONLY=$([int]$ForceNegativeOnly.IsPresent) `
+    -e AUTO05R_RESOURCE_ROOT=$resourceRootInContainer `
+    -e AUTO05R_WORLD_MANIFEST=$worldManifestInContainer `
+    -e AUTO05R_ONLY_SCENES=$OnlyScenes `
+    -e AUTO05R_CAPTURE_FRAME_COUNT=$CaptureFrameCount `
+    -e AUTO05R_CAPTURE_TIMEOUT_SECONDS=$CaptureTimeoutSeconds `
+    -e AUTO05R_CAPTURE_SPEED_MPS=$CaptureSpeedMps `
+    -e AUTO05R_CAPTURE_MIN_TRANSLATION_M=$CaptureMinTranslationM `
+    -e AUTO05R_RUNTIME_WS=$runtimeWorkspaceInContainer `
     @volumeArgs `
     $Image `
     bash /repo/scripts/auto05r_g4_capture_all.sh

@@ -773,7 +773,8 @@ def _model_classes() -> dict[str, type]:
             )
             if from_scratch_control:
                 self.deeplab = torchvision.models.segmentation.deeplabv3_resnet50(
-                    weights=None
+                    weights=None,
+                    weights_backbone=None,
                 )
                 self.provenance = from_scratch_control_record(
                     "deeplabv3_resnet50"

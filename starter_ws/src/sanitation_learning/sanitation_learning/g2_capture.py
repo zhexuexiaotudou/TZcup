@@ -65,6 +65,44 @@ def adjacent_translation_gate(
     return bool(translations) and min(translations) >= minimum_translation_m
 
 
+def frame_translation_ready(
+    previous_xy: tuple[float, float],
+    current_xy: tuple[float, float],
+    minimum_translation_m: float,
+) -> bool:
+    """Apply the same frozen spacing to capture admission and final QA."""
+    return math.hypot(
+        current_xy[0] - previous_xy[0], current_xy[1] - previous_xy[1]
+    ) >= minimum_translation_m
+
+
+def nearest_stamp_within(
+    available_stamps: list[int], target_stamp: int, maximum_skew_ns: int
+) -> int | None:
+    if not available_stamps:
+        return None
+    nearest = min(available_stamps, key=lambda value: abs(value - target_stamp))
+    return nearest if abs(nearest - target_stamp) <= maximum_skew_ns else None
+
+
+def observed_speeds_from_records(records: list[dict]) -> list[float]:
+    """Use synchronized odom stamps, not camera stamps, for odom velocity."""
+    speeds = []
+    for previous, current in zip(records, records[1:]):
+        elapsed_s = (
+            current["odom_timestamp_ns"] - previous["odom_timestamp_ns"]
+        ) / 1e9
+        if elapsed_s <= 0.0:
+            continue
+        speeds.append(
+            math.hypot(
+                current["vehicle_xy_m"][0] - previous["vehicle_xy_m"][0],
+                current["vehicle_xy_m"][1] - previous["vehicle_xy_m"][1],
+            ) / elapsed_s
+        )
+    return speeds
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", required=True)
@@ -81,7 +119,13 @@ def main() -> None:
     parser.add_argument("--camera-xyz", nargs=3, type=float, default=[0.53, 0.0, 0.22])
     parser.add_argument("--optical-frame", default="camera_depth_link")
     parser.add_argument("--node-name", default="stage5br3_g2_collector")
+    parser.add_argument("--linear-speed-mps", type=float, default=0.35)
+    parser.add_argument("--minimum-adjacent-translation-m", type=float, default=0.25)
     args = parser.parse_args()
+    if args.linear_speed_mps <= 0.0:
+        parser.error("--linear-speed-mps must be positive")
+    if args.minimum_adjacent_translation_m < 0.0:
+        parser.error("--minimum-adjacent-translation-m must be non-negative")
     from cv_bridge import CvBridge
     from geometry_msgs.msg import Twist
     from nav_msgs.msg import Odometry
@@ -100,7 +144,8 @@ def main() -> None:
         def __init__(self):
             super().__init__(args.node_name)
             self.bridge = CvBridge(); self.buffers = {topic: {} for topic in topics}
-            self.camera = None; self.odom = None; self.last_saved_pose = None; self.saved = []
+            self.camera = None; self.odom = None; self.odom_buffer = {}; self.last_saved_pose = None; self.saved = []
+            self.pending_writes = []
             self.dynamic_positions = []
             self.motion_enabled = False
             self.vehicle_reset_applied = False
@@ -109,13 +154,19 @@ def main() -> None:
             for topic in topics:
                 self.create_subscription(Image, topic, lambda msg, key=topic: self.receive(key, msg), qos_profile_sensor_data)
             self.create_subscription(CameraInfo, args.camera_info_topic, lambda msg: setattr(self, "camera", msg), qos_profile_sensor_data)
-            self.create_subscription(Odometry, args.odom_topic, lambda msg: setattr(self, "odom", msg), 20)
+            self.create_subscription(Odometry, args.odom_topic, self.receive_odom, 20)
             self.create_timer(0.05, self.tick)
+
+        def receive_odom(self, message):
+            self.odom = message
+            self.odom_buffer[stamp_ns(message)] = message
+            while len(self.odom_buffer) > 200:
+                self.odom_buffer.pop(next(iter(self.odom_buffer)))
 
         def tick(self):
             command = Twist()
             if self.motion_enabled and len(self.saved) < args.frame_count:
-                command.linear.x = 0.35
+                command.linear.x = args.linear_speed_mps
             self.publisher.publish(command)
 
         def receive(self, topic, message):
@@ -123,9 +174,15 @@ def main() -> None:
             for bucket in self.buffers.values():
                 while len(bucket) > 30: bucket.pop(next(iter(bucket)))
             common = set.intersection(*(set(bucket) for bucket in self.buffers.values()))
-            if not common or self.camera is None or self.odom is None or len(self.saved) >= args.frame_count:
+            if not common or self.camera is None or not self.odom_buffer or len(self.saved) >= args.frame_count:
                 return
-            pose = self.odom.pose.pose
+            stamp = min(common)
+            odom_stamp = nearest_stamp_within(
+                list(self.odom_buffer), stamp, 50_000_000
+            )
+            if odom_stamp is None:
+                return
+            pose = self.odom_buffer[odom_stamp].pose.pose
             current = (pose.position.x, pose.position.y, pose.orientation.z, pose.orientation.w)
             # A world-scoped DiffDrive controller can retain the prior scene's
             # velocity while RGB-D / segmentation sensors are warming up.
@@ -148,6 +205,7 @@ def main() -> None:
                 self.vehicle_reset_applied = True
                 self.vehicle_reset_started = time.monotonic()
                 self.odom = None
+                self.odom_buffer.clear()
                 for bucket in self.buffers.values():
                     bucket.clear()
                 return
@@ -168,15 +226,19 @@ def main() -> None:
                 )
                 self.vehicle_reset_started = time.monotonic()
                 self.odom = None
+                self.odom_buffer.clear()
                 for bucket in self.buffers.values():
                     bucket.clear()
                 return
             if self.last_saved_pose is not None:
-                translation = math.hypot(current[0] - self.last_saved_pose[0], current[1] - self.last_saved_pose[1])
-                if translation < 0.25:
+                if not frame_translation_ready(
+                    self.last_saved_pose[:2],
+                    current[:2],
+                    args.minimum_adjacent_translation_m,
+                ):
                     return
-            stamp = min(common); messages = [self.buffers[topic].pop(stamp) for topic in topics]
-            self.save(stamp, messages, current)
+            messages = [self.buffers[topic].pop(stamp) for topic in topics]
+            self.stage(stamp, messages, current, odom_stamp)
             self.apply_dynamic_step(len(self.saved))
             self.last_saved_pose = current
             self.motion_enabled = True
@@ -199,7 +261,14 @@ def main() -> None:
                 {"after_frame": frame_count - 1, "xyz_m": xyz}
             )
 
-        def save(self, stamp, messages, pose):
+        def stage(self, stamp, messages, pose, odom_stamp):
+            """Decode into a bounded in-memory batch; persist after motion stops.
+
+            Writing four image products from the ROS callback drops sensor
+            samples and makes the empirical observation cadence a disk-speed
+            benchmark.  ``frame_count`` bounds this queue (90 for OPRV3), so
+            collection remains finite while preserving the incoming cadence.
+            """
             index = len(self.saved); stem = f"frame_{index:02d}"
             rgb = self.bridge.imgmsg_to_cv2(messages[0], "rgb8")
             depth = self.bridge.imgmsg_to_cv2(messages[1], "passthrough").astype(np.float32)
@@ -208,17 +277,32 @@ def main() -> None:
             if not np.all(semantic_rgb[:, :, 0] == semantic_rgb[:, :, 1]) or not np.all(semantic_rgb[:, :, 1] == semantic_rgb[:, :, 2]):
                 raise RuntimeError("semantic labels are not repeated-channel IDs")
             paths = {"rgb": output/"rgb"/f"{stem}.png", "depth": output/"depth"/f"{stem}.npy", "semantic": output/"semantic"/f"{stem}.npy", "instance": output/"instance"/f"{stem}.npy", "camera": output/"camera"/f"{stem}.json", "tf": output/"tf"/f"{stem}.json", "capture": output/"capture"/f"{stem}.json"}
-            cv2.imwrite(str(paths["rgb"]), cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)); np.save(paths["depth"], depth, allow_pickle=False)
-            np.save(paths["semantic"], semantic_rgb[:, :, 0], allow_pickle=False); np.save(paths["instance"], decode_label(instance_rgb), allow_pickle=False)
-            paths["camera"].write_text(json.dumps({"width": self.camera.width, "height": self.camera.height, "k": list(self.camera.k), "p": list(self.camera.p), "frame_id": self.camera.header.frame_id}, indent=2)+"\n")
-            paths["tf"].write_text(json.dumps({"world_to_base_xy": list(pose[:2]), "base_to_camera_xyz_m": list(args.camera_xyz), "optical_frame": args.optical_frame}, indent=2)+"\n")
-            record = {"frame_index": index, "timestamp_ns": stamp, "vehicle_xy_m": list(pose[:2]), "exact_four_sensor_timestamp": len({stamp_ns(msg) for msg in messages}) == 1, "paths": {key: str(path.relative_to(output)).replace("\\", "/") for key, path in paths.items()}, "rgb_sha256": hashlib.sha256(paths["rgb"].read_bytes()).hexdigest()}
-            paths["capture"].write_text(json.dumps(record, indent=2)+"\n"); self.saved.append(record)
+            record = {"frame_index": index, "timestamp_ns": stamp, "odom_timestamp_ns": odom_stamp, "sensor_odom_skew_ns": abs(odom_stamp - stamp), "vehicle_xy_m": list(pose[:2]), "exact_four_sensor_timestamp": len({stamp_ns(msg) for msg in messages}) == 1, "paths": {key: str(path.relative_to(output)).replace("\\", "/") for key, path in paths.items()}, "rgb_sha256": None}
+            camera = {"width": self.camera.width, "height": self.camera.height, "k": list(self.camera.k), "p": list(self.camera.p), "frame_id": self.camera.header.frame_id}
+            self.pending_writes.append((paths, record, rgb, depth, semantic_rgb[:, :, 0].copy(), decode_label(instance_rgb), camera, pose))
+            self.saved.append(record)
+
+        def flush(self):
+            for paths, record, rgb, depth, semantic, instance, camera, pose in self.pending_writes:
+                if not cv2.imwrite(str(paths["rgb"]), cv2.cvtColor(rgb, cv2.COLOR_RGB2BGR)):
+                    raise RuntimeError(f"failed to write RGB frame: {paths['rgb']}")
+                np.save(paths["depth"], depth, allow_pickle=False)
+                np.save(paths["semantic"], semantic, allow_pickle=False)
+                np.save(paths["instance"], instance, allow_pickle=False)
+                paths["camera"].write_text(json.dumps(camera, indent=2)+"\n")
+                paths["tf"].write_text(json.dumps({"world_to_base_xy": list(pose[:2]), "base_to_camera_xyz_m": list(args.camera_xyz), "optical_frame": args.optical_frame}, indent=2)+"\n")
+                record["rgb_sha256"] = hashlib.sha256(paths["rgb"].read_bytes()).hexdigest()
+                paths["capture"].write_text(json.dumps(record, indent=2)+"\n")
+            self.pending_writes.clear()
 
     rclpy.init(); node = Collector()
     while rclpy.ok() and len(node.saved) < args.frame_count and time.monotonic() - node.started < args.timeout:
         rclpy.spin_once(node, timeout_sec=0.1)
+    finished_monotonic = time.monotonic()
     node.publisher.publish(Twist())
+    flush_started = time.monotonic()
+    node.flush()
+    persistence_duration_s = time.monotonic() - flush_started
     dynamic_plan = scene.get("dynamic_motion_plan")
     dynamic_executed = (
         dynamic_plan is None
@@ -226,9 +310,24 @@ def main() -> None:
         and len({tuple(item["xyz_m"]) for item in node.dynamic_positions}) > 1
     )
     adjacent_motion_gate_pass = adjacent_translation_gate(
-        node.saved, args.frame_count
+        node.saved,
+        args.frame_count,
+        minimum_translation_m=args.minimum_adjacent_translation_m,
     )
-    report = {"schema_version": 1, "scene_seed": scene["scene_seed"], "world_id": scene["world_id"], "split": scene["split"], "requested_frames": args.frame_count, "captured_frames": len(node.saved), "topics": list(topics), "camera_xyz_m": list(args.camera_xyz), "optical_frame": args.optical_frame, "records": node.saved, "adjacent_motion_gate_pass": adjacent_motion_gate_pass, "dynamic_motion_requested": dynamic_plan is not None, "dynamic_motion_executed": dynamic_executed, "dynamic_positions": node.dynamic_positions, "capture_pass": len(node.saved) == args.frame_count and adjacent_motion_gate_pass and all(item["exact_four_sensor_timestamp"] for item in node.saved) and dynamic_executed}
+    observed_speeds = observed_speeds_from_records(node.saved)
+    sensor_odom_skews = [item["sensor_odom_skew_ns"] for item in node.saved]
+    wall_duration_s = finished_monotonic - node.started
+    simulated_duration_s = (
+        (node.saved[-1]["timestamp_ns"] - node.saved[0]["timestamp_ns"]) / 1e9
+        if len(node.saved) > 1
+        else None
+    )
+    effective_captured_fps = (
+        (len(node.saved) - 1) / simulated_duration_s
+        if simulated_duration_s and simulated_duration_s > 0.0
+        else None
+    )
+    report = {"schema_version": 2, "scene_seed": scene["scene_seed"], "world_id": scene["world_id"], "split": scene["split"], "requested_frames": args.frame_count, "captured_frames": len(node.saved), "topics": list(topics), "camera_xyz_m": list(args.camera_xyz), "optical_frame": args.optical_frame, "commanded_linear_speed_mps": args.linear_speed_mps, "minimum_adjacent_translation_m": args.minimum_adjacent_translation_m, "capture_timing": {"persistence_mode": "bounded_memory_then_flush_after_motion_stop", "timeout_s": args.timeout, "wall_duration_s": wall_duration_s, "persistence_duration_s": persistence_duration_s, "simulated_duration_s": simulated_duration_s, "simulator_realtime_factor": simulated_duration_s / wall_duration_s if simulated_duration_s is not None and wall_duration_s > 0.0 else None, "effective_captured_fps": effective_captured_fps}, "sensor_odom_sync": {"maximum_skew_ns": max(sensor_odom_skews) if sensor_odom_skews else None, "gate_maximum_skew_ns": 50_000_000, "pass": bool(sensor_odom_skews) and max(sensor_odom_skews) <= 50_000_000}, "observed_linear_speed_mps": {"time_basis": "synchronized_odom_timestamp", "samples": len(observed_speeds), "median": float(np.median(observed_speeds)) if observed_speeds else None, "p05": float(np.percentile(observed_speeds, 5)) if observed_speeds else None, "p95": float(np.percentile(observed_speeds, 95)) if observed_speeds else None}, "records": node.saved, "adjacent_motion_gate_pass": adjacent_motion_gate_pass, "dynamic_motion_requested": dynamic_plan is not None, "dynamic_motion_executed": dynamic_executed, "dynamic_positions": node.dynamic_positions, "capture_pass": len(node.saved) == args.frame_count and adjacent_motion_gate_pass and bool(sensor_odom_skews) and max(sensor_odom_skews) <= 50_000_000 and all(item["exact_four_sensor_timestamp"] for item in node.saved) and all(item["rgb_sha256"] for item in node.saved) and dynamic_executed}
     (output/"capture_report.json").write_text(json.dumps(report, indent=2)+"\n"); print(json.dumps(report, indent=2))
     node.destroy_node(); rclpy.shutdown(); raise SystemExit(0 if report["capture_pass"] else 2)
 

@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "protocol": "OPRV3-01",
+  "status": "executed_with_one_sampling_insufficiency",
+  "execution_base_commit": "a62208b150a74e63abb166a6afd99e8c633a88a7",
+  "container_digest": "sha256:418550f48916d794bc0aff144c60a3b1353d0bb0bb1dcf086cda0ec8e2a5aadc",
+  "dataset": {
+    "logical_external_root": "F:\\Project\\TZcup\\.workspace\\artifacts\\TZcup-oprv3-moving-dev-v2-buffered\\g4_screening_native",
+    "passing_missions": 24,
+    "positive_missions": 20,
+    "negative_only_missions": 4,
+    "frames": 2160,
+    "worlds": 4,
+    "targets_per_class": 20,
+    "passing_scene_report_manifest_digest_sha256": "b7b50253693308e9bd0d00e4718c0d158edec3e090fceec1323065acabe5fe15",
+    "failed_wet_world_attempts_retained": true
+  },
+  "capture": {
+    "commanded_speed_mps": 0.65,
+    "frames_per_mission": 90,
+    "all_exact_four_sensor_timestamp": true,
+    "maximum_sensor_odom_skew_ns": 50000000,
+    "effective_captured_fps_min": 1.642490680249511,
+    "effective_captured_fps_median": 5.089781720982849,
+    "effective_captured_fps_max": 8.481036782923576
+  },
+  "target_partition": {
+    "all_gt_targets": 100,
+    "never_in_camera_frustum": 0,
+    "occluded_entirely": 0,
+    "entered_actionable_window": 99,
+    "insufficient_sampled_actionable_frames": 1,
+    "minimum_required_actionable_frames": 3
+  },
+  "gt_boundary": {
+    "ground_truth_used_by": "offline_evaluator_only",
+    "production_target_ids_or_coordinates_provided": false,
+    "actionable_eligibility_uses_model_output": false
+  },
+  "full_external_report": {
+    "path": "F:\\Project\\TZcup\\.workspace\\artifacts\\TZcup-oprv3-moving-benchmark-v1\\PIXEL_DISTANCE_EMPIRICAL_REPORT.json",
+    "size_bytes": 6257962,
+    "sha256": "1ae9660897117da3e23b486f58e3ba61930e1cc4259c78b6ed9755303586e6d9"
+  }
+}

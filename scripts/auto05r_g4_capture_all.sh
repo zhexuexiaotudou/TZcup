@@ -28,6 +28,11 @@ DIAGNOSTIC_ROLE="${AUTO05R_DIAGNOSTIC_ROLE:-}"
 ASSET_SOURCE_SPLIT="${AUTO05R_ASSET_SOURCE_SPLIT:-}"
 NEGATIVE_SOURCE_SPLIT="${AUTO05R_NEGATIVE_SOURCE_SPLIT:-}"
 FORCE_NEGATIVE_ONLY="${AUTO05R_FORCE_NEGATIVE_ONLY:-0}"
+RESOURCE_ROOT="${AUTO05R_RESOURCE_ROOT:-${DATA_ROOT}}"
+CAPTURE_FRAME_COUNT="${AUTO05R_CAPTURE_FRAME_COUNT:-10}"
+CAPTURE_TIMEOUT_SECONDS="${AUTO05R_CAPTURE_TIMEOUT_SECONDS:-90}"
+CAPTURE_SPEED_MPS="${AUTO05R_CAPTURE_SPEED_MPS:-0.35}"
+CAPTURE_MIN_TRANSLATION_M="${AUTO05R_CAPTURE_MIN_TRANSLATION_M:-0.25}"
 mkdir -p "${DATA_ROOT}/logs" "${DATA_ROOT}/scenes" "${RUNTIME_WS}"
 
 colcon --log-base "${RUNTIME_WS}/log" build \
@@ -79,7 +84,7 @@ else
   WORLD_IDS=("${WORLD_IDS[@]:${START_WORLD_INDEX}}")
 fi
 
-export GZ_SIM_RESOURCE_PATH="${DATA_ROOT}/worlds:${DATA_ROOT}/models"
+export GZ_SIM_RESOURCE_PATH="${RESOURCE_ROOT}/worlds:${RESOURCE_ROOT}/models"
 
 capture_world() {
   local world_id="$1"
@@ -109,7 +114,7 @@ capture_world() {
     enable_training_gt:=true camera_x:="${CAMERA_X}" camera_y:="${CAMERA_Y}" \
     camera_z:="${CAMERA_Z}" camera_pitch_rad:="${CAMERA_PITCH_RAD}" \
     >"/tmp/auto05r_vehicle_${world_id}.urdf"
-  (cd "${DATA_ROOT}/worlds" && exec gz sim -r -s --headless-rendering "${DATA_ROOT}/worlds/${world_id}.sdf") \
+  (cd "${RESOURCE_ROOT}/worlds" && exec gz sim -r -s --headless-rendering "${RESOURCE_ROOT}/worlds/${world_id}.sdf") \
     >"${log_root}/gz.log" 2>&1 &
   pids+=("$!")
   local ready=false
@@ -207,8 +212,10 @@ capture_world() {
       if ros2 run sanitation_learning stage5br3_capture_scene \
         --scene-manifest "${out}/scene_manifest.json" \
         --output "${out}" \
-        --frame-count 10 \
-        --timeout 90 \
+        --frame-count "${CAPTURE_FRAME_COUNT}" \
+        --timeout "${CAPTURE_TIMEOUT_SECONDS}" \
+        --linear-speed-mps "${CAPTURE_SPEED_MPS}" \
+        --minimum-adjacent-translation-m "${CAPTURE_MIN_TRANSLATION_M}" \
         --camera-xyz "${CAMERA_X}" "${CAMERA_Y}" "${CAMERA_Z}" \
         >"${out}/capture.log"; then
         capture_pass=true
