@@ -49,3 +49,9 @@ MRV2-A 是当前前向开发候选：核心 eventual recall/class 与错误率�
 反射覆盖采用物理场景事实而不是纯元数据标签：既有 buffered 湿地任务在 `wet_dark_asphalt + overcast_diffuse` 世界中完整取得 90/90 帧、最大同步偏差 9 ms，MRV2-A 对 5/5 eligible 目标 eventual detection/classification 为 `1.0`、三帧确认为 `0.8`、错误动作 `0/54`。当前环境的同场景重采吞吐仍不稳定：300 秒两次分别为 79/90、77/90（RTF 约 `0.042`），按实测上界设置的单次 420 秒重试反而只有 48/90（RTF `0.0316`）；这些失败完整保留为 OPRV3-07 性能风险，不覆盖已哈希的 90/90 物理证据。
 
 24 条基础任务与三条独立特殊覆盖任务合计保留 115 个 GT；114 个进入预冻结窗口，MRV2-A eventual detection/classification 为 `114/114`、三帧确认为 `111/114=0.9737`、错误可行动预测为 `9/1113=0.00809`、漏清扫机会为 0。全部九类 moving coverage 均有 GT 实证，因此 `OPRV3_01_pass=true`、`OPRV3_02_pass=true`，下一阶段为 OPRV3-07。两条 moving 核心通过不能替代 Map/Track、Area 正式 mIoU/boundary/negative-area、4080 性能、30-seed、Spot Cleaning 或最终部署门；在 OPRV3-07 完成前，`MODEL_BLOCKED_INTERNAL=true`、`OPRV3_X86_DEV_PASS=false`。紧凑证据见 `artifacts/online_first_recovery_v3_20260810T042843Z/moving_dev/OPRV3_SPECIAL_COVERAGE_MATRIX.json`，完整外部报告保留在 `F:\Project\TZcup\.workspace\artifacts\TZcup-oprv3-special-benchmark-v1\`。
+
+## OPRV3-07 首次产品开发门审计
+
+`scripts/perception_oprv3_product_dev_gate.py` 以 fail-closed 方式合并 moving 核心与既有 MRV2-A 跨世界 Area 全量证据；没有正式产物的指标一律为 `null/false`，不由 smoke 或公式推导代替。对象级在线发现五项门全部通过：eventual detection/classification、small、metal-can 与 paper recall 均为 `1.0`。可行动目标 precision 为 `0.9919`、错误可行动率为 `0.00809`、GT 控制违规为 0，但“错误分类是否导致错误清扫动作”和“入视野前是否建图”尚无独立证据，故行为段仍失败。
+
+Area 段直接使用未读取 G5/D6 的 MRV2-A 固定跨世界结果：leaf IoU `0.9118` 与 macro mIoU `0.8170` 通过，puddle IoU `0.7222 < 0.80`、boundary F1 `0.6388 < 0.75`、negative-area FP/frame `0.1304 > 0.05` 失败。当前 moving observations 尚未经过产品 `DynamicTrashMap` evaluator，且没有正式端到端吞吐/延迟/drop profile，因此 Map/Track 与性能段也失败。报告位于 `artifacts/online_first_recovery_v3_20260810T042843Z/oprv3_07/OPRV3_X86_DEV_REPORT.json`；结论为 `OPRV3_X86_DEV_PASS=false`、`MODEL_BLOCKED_INTERNAL=true`，下一阶段严格路由到 OPRV3-06 Area 恢复，仍不允许 freeze、sealed final、30-seed 或后续产品门。

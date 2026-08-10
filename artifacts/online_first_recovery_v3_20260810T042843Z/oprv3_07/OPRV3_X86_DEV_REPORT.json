@@ -1,0 +1,134 @@
+{
+  "schema_version": 1,
+  "protocol": "OPRV3-07",
+  "candidate": "MRV2-A",
+  "thresholds": {
+    "eventual_detection_recall": 0.95,
+    "eventual_correct_class_recall": 0.95,
+    "small_object_eventual_recall": 0.9,
+    "metal_can_eventual_recall": 0.9,
+    "paper_eventual_recall": 0.95,
+    "actionable_target_precision": 0.95,
+    "false_actionable_target_rate": 0.01,
+    "map_rmse_m": 0.1,
+    "id_consistency": 0.95,
+    "duplicate_target_rate": 0.01,
+    "track_fragmentation": 0.05,
+    "leaf_iou": 0.8,
+    "puddle_iou": 0.8,
+    "macro_miou": 0.8,
+    "boundary_f1": 0.75,
+    "negative_area_fp_per_frame": 0.05,
+    "minimum_effective_hz": 10.0,
+    "maximum_end_to_end_p95_ms": 200.0,
+    "maximum_drop_rate": 0.01
+  },
+  "sections": {
+    "object_level_online_discovery": {
+      "metrics": {
+        "eventual_detection_recall": 1.0,
+        "eventual_correct_class_recall": 1.0,
+        "small_object_eventual_recall": 1.0,
+        "metal_can_eventual_recall": 1.0,
+        "paper_eventual_recall": 1.0
+      },
+      "gates": {
+        "eventual_detection_recall": true,
+        "eventual_correct_class_recall": true,
+        "small_object_eventual_recall": true,
+        "metal_can_eventual_recall": true,
+        "paper_eventual_recall": true
+      },
+      "pass": true
+    },
+    "precision_and_wrong_behavior": {
+      "metrics": {
+        "actionable_target_precision": 0.9919137466307277,
+        "false_actionable_target_rate": 0.008086253369272238,
+        "wrong_class_leading_to_wrong_clean_action": null,
+        "pre_fov_target_creation": null,
+        "GT_control_violation": 0
+      },
+      "gates": {
+        "actionable_target_precision": true,
+        "false_actionable_target_rate": true,
+        "wrong_class_leading_to_wrong_clean_action": false,
+        "pre_fov_target_creation": false,
+        "GT_control_violation": true
+      },
+      "pass": false
+    },
+    "map_and_track": {
+      "metrics": {
+        "map_rmse_m": null,
+        "id_consistency": null,
+        "duplicate_target_rate": null,
+        "track_fragmentation": null,
+        "removed_target_stale_action": null
+      },
+      "gates": {
+        "map_rmse_m": false,
+        "id_consistency": false,
+        "duplicate_target_rate": false,
+        "track_fragmentation": false,
+        "removed_target_stale_action": false
+      },
+      "pass": false,
+      "reason": "current MRV2-A moving observations have not run through the product DynamicTrashMap evaluator"
+    },
+    "area": {
+      "metrics": {
+        "leaf_iou": 0.9117944240242805,
+        "puddle_iou": 0.7221597454054084,
+        "macro_miou": 0.8169770847148444,
+        "boundary_f1": 0.6388099646695118,
+        "negative_area_fp_per_frame": 0.13043478260869565
+      },
+      "gates": {
+        "leaf_iou": true,
+        "puddle_iou": false,
+        "macro_miou": true,
+        "boundary_f1": false,
+        "negative_area_fp_per_frame": false
+      },
+      "pass": false
+    },
+    "performance": {
+      "metrics": {
+        "effective_hz": null,
+        "end_to_end_p95_ms": null,
+        "drop_rate": null,
+        "formal_product_pipeline_executed": false
+      },
+      "gates": {
+        "effective_hz": false,
+        "end_to_end_p95_ms": false,
+        "drop_rate": false
+      },
+      "pass": false,
+      "reason": "no formal MRV2-A product pipeline latency/drop profile exists"
+    }
+  },
+  "failed_sections": [
+    "precision_and_wrong_behavior",
+    "map_and_track",
+    "area",
+    "performance"
+  ],
+  "OPRV3_X86_DEV_PASS": false,
+  "MODEL_BLOCKED_INTERNAL": true,
+  "next_action": "OPRV3-06 area recovery, then current-candidate map/track and performance integration",
+  "freeze_allowed": false,
+  "G5_SEALED_FINAL_read": false,
+  "legacy_G4_D6_read": false,
+  "inputs": {
+    "moving": {
+      "path": "artifacts/online_first_recovery_v3_20260810T042843Z/moving_dev/OPRV3_SPECIAL_COVERAGE_MATRIX.json",
+      "sha256": "186c2210ea1185aca1c5263f9571d9cae8f56e961273cb1ca7f97178e4a6a54c"
+    },
+    "area_static": {
+      "path": "artifacts/model_recovery_v2_20260810T004459Z/mrv2_a/MRV2_A_R960_FULL_STATIC.json",
+      "sha256": "b5f379fc82bf8a2f6831e1547d0d39332b1d21e07fca100951f28bced30d4ec2"
+    }
+  }
+}

@@ -97,6 +97,26 @@
     "wrong_actionable_target_rate": 0.008086253369272237,
     "aggregation": "24-mission base plus three independent special-coverage mission shards; all GT retained"
   },
+  "development_breakdown": {
+    "small_object_definition": "eligible encounter with any actionable GT bbox shortest side below 18 px",
+    "small_object_base_eligible_targets": 30,
+    "small_object_base_eventual_detections": 30,
+    "small_object_eventual_recall": 1.0,
+    "per_class_eligible_targets": {
+      "plastic_bottle": 23,
+      "metal_can": 22,
+      "paper_litter": 23,
+      "leaf_pile": 23,
+      "puddle": 23
+    },
+    "per_class_eventual_detection_recall": {
+      "plastic_bottle": 1.0,
+      "metal_can": 1.0,
+      "paper_litter": 1.0,
+      "leaf_pile": 1.0,
+      "puddle": 1.0
+    }
+  },
   "required_coverage": {
     "far_first_appearance": true,
     "vehicle_gradually_approaches": true,

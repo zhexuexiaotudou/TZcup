@@ -8,6 +8,13 @@
 - 从 AUTO-05R 产品相机、Nav2 与 Spot Cleaning 配置推导 `640×480`、15 Hz、HFOV `1.50098 rad`、相机 `[0.36,0,0.66] m`/下俯 50°、正常速度 `0.65 m/s`、减速度 `0.9 m/s²`、刷盘前偏置 `0.55 m`；含 0.15 s 控制延迟的不可再安全决策距离为 `0.8822 m`。五类 G4 真实尺寸在 8 px observation 层均存在解析非空窗口。
 - 新增 11 个定向测试并完成 `py -3 scripts/ci_fast.py`：`503 passed, 23 skipped`。解析几何不是 Gazebo 移动实测，故 OPRV3-01 继续 false，下一门是每类至少 20 个目标的 `PIXEL_DISTANCE_EMPIRICAL_REPORT.json`。
 
+## 2026-08-10：OPRV3-01/02 移动核心与 OPRV3-07 首次审计
+
+- 24 条基础移动任务与转弯入视野、显式遮挡、湿地反射三条独立任务合计 115 个 GT，114 个进入预冻结可行动窗口；MRV2-A eventual detection/classification 为 `114/114`、三帧确认为 `111/114`、错误可行动预测为 `9/1113`、漏清扫机会为 0，九类 moving coverage 均有 GT 实证，故 OPRV3-01/02 通过。
+- OPRV3-07 fail-closed 聚合确认对象级在线发现五项门全部通过，但错误分类到错误清扫动作、入视野前建图两项证据仍为空，Map/Track 与正式端到端性能尚未执行，均按失败处理。
+- 既有 MRV2-A 跨世界 Area 结果中 leaf IoU `0.9118`、macro mIoU `0.8170` 通过；puddle IoU `0.7222`、boundary F1 `0.6388`、negative-area FP/frame `0.1304` 失败。下一阶段严格路由到 OPRV3-06 Area 恢复，不创建 freeze、不读取 sealed final，不启动 30-seed 或后续产品门。
+- 审计报告位于 `artifacts/online_first_recovery_v3_20260810T042843Z/oprv3_07/OPRV3_X86_DEV_REPORT.json`；状态保持 `OPRV3_X86_DEV_PASS=false`、`MODEL_BLOCKED_INTERNAL=true`。
+
 ## 2026-08-09：PERCEPTION-ONLINE-00 新协议 inventory 与历史冻结
 
 - 从 Draft PR #89 的精确头提交 `d798784` 建立独立分支
