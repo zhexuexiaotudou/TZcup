@@ -1,0 +1,30 @@
+{
+  "schema_version": 1,
+  "stage": "MRV2-00-BASELINE",
+  "protocol": "MODEL-RECOVERY-V2 / PRODUCT-FINALIZATION",
+  "source_commit": "73075e6f569542d91721148793e47a5837e520ca",
+  "source_tree": "5bc4a06e54c88338aebf290cf6bf226ad8df49aa",
+  "remote_pr": {
+    "number": 90,
+    "head": "7e6455a53b2c4a5d6145e38eebfa0bdd46dd3d0a",
+    "tree": "5bc4a06e54c88338aebf290cf6bf226ad8df49aa",
+    "local_remote_tree_match": true,
+    "draft": true,
+    "ci": "SUCCESS"
+  },
+  "HISTORICAL_X1_PASS": false,
+  "HISTORICAL_X2_STATUS": "BLOCKED_EXTERNAL_NETWORK_ASSET",
+  "HISTORICAL_X3_PASS": false,
+  "NEW_MODEL_RECOVERY_V2_AUTHORIZED": true,
+  "MRV2_is_historical_X4": false,
+  "MODEL_FREEZE_X86_created": false,
+  "G5_SEALED_FINAL_read": false,
+  "legacy_G4_D6_read": false,
+  "AUTONOMOUS_EXECUTION": true,
+  "ASK_USER_DURING_RUN": false,
+  "fetch_attempt": {
+    "exit_code": 1,
+    "failure": "fatal bad object / remote did not send all necessary objects",
+    "fallback": "GitHub API commit/tree verification"
+  }
+}

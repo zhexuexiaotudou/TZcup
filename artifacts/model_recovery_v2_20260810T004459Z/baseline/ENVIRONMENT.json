@@ -1,0 +1,102 @@
+{
+  "schema_version": 1,
+  "stage": "MRV2-00-ENVIRONMENT",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "python": "3.14.3",
+  "docker_prior_inventory": {
+    "schema_version": 1,
+    "product_base_image": "tzcup/sanitation-jazzy:stage5b",
+    "probe": {
+      "command": [
+        "docker",
+        "image",
+        "inspect",
+        "tzcup/sanitation-jazzy:stage5b",
+        "--format",
+        "{{.Id}} {{.Size}}"
+      ],
+      "exit_code": 0,
+      "stdout": "sha256:418550f48916d794bc0aff144c60a3b1353d0bb0bb1dcf086cda0ec8e2a5aadc 4656554020",
+      "stderr": ""
+    },
+    "available": true,
+    "perception_product_image_built": false,
+    "perception_reference_image_built": false
+  },
+  "gpu_prior_inventory": {
+    "schema_version": 1,
+    "probe": {
+      "command": [
+        "nvidia-smi",
+        "--query-gpu=name,driver_version,memory.total,memory.free",
+        "--format=csv,noheader,nounits"
+      ],
+      "exit_code": 0,
+      "stdout": "NVIDIA GeForce RTX 4080 Laptop GPU, 595.79, 12282, 9638",
+      "stderr": ""
+    },
+    "cuda_gpu_available": true,
+    "required_reference_gpu": "NVIDIA RTX 4080 Laptop GPU"
+  },
+  "sensor_prior_inventory": {
+    "schema_version": 1,
+    "camera_probe": {
+      "command": [
+        "powershell.exe",
+        "-NoProfile",
+        "-Command",
+        "Get-PnpDevice -PresentOnly -Class Camera -ErrorAction SilentlyContinue | Select-Object FriendlyName,InstanceId,Status | ConvertTo-Json -Compress"
+      ],
+      "exit_code": 0,
+      "stdout": "{\"FriendlyName\":\"Integrated Camera\",\"InstanceId\":\"USB\\\\VID_5986\\u0026PID_1196\\u0026MI_00\\\\6\\u00261CB02AB9\\u00260\\u00260000\",\"Status\":\"OK\"}",
+      "stderr": ""
+    },
+    "detected_camera_summary": "Integrated Camera only",
+    "rgbd_device_present": false,
+    "auditable_rgbd_recording_present": false,
+    "independent_map_gt_present": false,
+    "integrated_camera_accepted_as_rgbd": false,
+    "PRODUCT_FIELD_READY": false,
+    "REAL_DOMAIN_BLOCKED_EXTERNAL": true
+  },
+  "j6_prior_inventory": {
+    "schema_version": 1,
+    "source_path": "F:/Project/TZcup-perception-product-runtime/j6-toolchain/toolchain_discovery.json",
+    "source_sha256": "5b25f2031a41297cea1b892a6ba55185eb45dee355fffccccd9b01948f4a3dc1",
+    "official_package_ready": true,
+    "local_oe_version": "3.7.0",
+    "official_docs_version": "3.9.0",
+    "official_docs_url": "https://doc.oe.horizon.auto/",
+    "version_difference_requires_resolution": true,
+    "hbdk_version": "4.7.5",
+    "hmct_version": "2.6.5",
+    "board_device_count": 0,
+    "frozen_j6_student_available": false,
+    "ptq_or_compile_executed": false,
+    "PRODUCT_J6_TOOLCHAIN_READY": false,
+    "PRODUCT_J6_BOARD_READY": false
+  },
+  "docker_live": {
+    "command": [
+      "docker",
+      "version",
+      "--format",
+      "{{.Server.Version}}"
+    ],
+    "exit_code": 1,
+    "stdout": "",
+    "stderr": "failed to connect to the docker API at npipe:////./pipe/dockerDesktopLinuxEngine; check if the path is correct and if the daemon is running: open //./pipe/dockerDesktopLinuxEngine: The system cannot find the file specified."
+  },
+  "gpu_live": {
+    "command": [
+      "nvidia-smi",
+      "--query-gpu=name,memory.total,driver_version",
+      "--format=csv,noheader"
+    ],
+    "exit_code": 0,
+    "stdout": "NVIDIA GeForce RTX 4080 Laptop GPU, 12282 MiB, 595.79",
+    "stderr": ""
+  },
+  "original_dirty_workspace_modified": false,
+  "isolated_worktree": "F:\\Project\\TZcup-perception-online-product"
+}

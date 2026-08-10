@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "stage": "MRV2-00",
+  "files": [
+    {
+      "path": "ASSET_INVENTORY.json",
+      "bytes": 1026,
+      "sha256": "aa2e81e21a83270c21e533cf078d5ab58f70e634884a6fa0a190048cb1efc882"
+    },
+    {
+      "path": "BASELINE.json",
+      "bytes": 1010,
+      "sha256": "4c7f8d878c24acd6a77ae5828e8f64b697b88325bb854b778df9900a7727ef80"
+    },
+    {
+      "path": "BLOCKER_BASELINE.json",
+      "bytes": 731,
+      "sha256": "cba7e1d96ebf04468afa8aa89cb2162bcdace203250dcde1f911a9274d423634"
+    },
+    {
+      "path": "DATASET_INVENTORY.json",
+      "bytes": 2073,
+      "sha256": "e85457ad3c53ff474dd9a935d0126941e0d8aec2dc0f5724cd6b8e59575c2966"
+    },
+    {
+      "path": "ENVIRONMENT.json",
+      "bytes": 3491,
+      "sha256": "d99346af0ccccb94ffdca51d45df7d4343cf04a1a321277cbcab7d25f634621d"
+    },
+    {
+      "path": "MODEL_INVENTORY.json",
+      "bytes": 2711,
+      "sha256": "6a40237a9b4d9e00ebb5596f1b2837b8e5d8bdfc433976d38f13582853b8e2ac"
+    }
+  ]
+}

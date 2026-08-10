@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "stage": "MRV2-00-BLOCKER-BASELINE",
+  "historical_routes": {
+    "X1": "FAILED_STATIC_FULL_PIPELINE",
+    "X2": "BLOCKED_EXTERNAL_NETWORK_ASSET",
+    "X3": "FAILED_STATIC_FULL_PIPELINE",
+    "immutable_history": true
+  },
+  "new_recovery_targets": {
+    "small_object_recall_lt_18px": 0.3076923076923077,
+    "cross_world_metal_can_recall": 0.44565217391304346,
+    "VAL_boundary_f1": 0.6880077913444143,
+    "cross_world_negative_area_fp_per_frame": 0.13043478260869565
+  },
+  "MRV2_routes_started": [],
+  "MRV2_routes_exhausted": false,
+  "MODEL_BLOCKED_INTERNAL": false,
+  "claim_boundary": "The historical internal blocker is reopened only under the new MRV2 protocol; no MRV2 route has run yet."
+}

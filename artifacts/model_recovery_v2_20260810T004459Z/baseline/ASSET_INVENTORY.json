@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "stage": "MRV2-00-ASSET-INVENTORY",
+  "assets": [
+    {
+      "role": "historical X3 failed-static checkpoint",
+      "logical_external_path": "F:/Project/TZcup-perception-product-runtime/x3-direct-fcos-3class-v1/x3_fcos_r50_direct_3class.pt",
+      "present": true,
+      "bytes": 128798634,
+      "sha256": "02869d3677a999a0d8cd0a73114a60fbc803c447717d129313bcf3dbfe68507b",
+      "valid_nonempty_file": true,
+      "repository_tracked": false
+    },
+    {
+      "role": "MRV2 official Grounding DINO acquisition candidate",
+      "logical_external_path": "F:/Project/TZcup-perception-product-runtime/reference-cache/grounding-dino/groundingdino_swint_ogc.pth",
+      "present": true,
+      "bytes": 693997677,
+      "sha256": "3b3ca2563c77c69f651d7bd133e97139c186df06231157a64c507099c52bc799",
+      "valid_nonempty_file": true,
+      "repository_tracked": false
+    }
+  ],
+  "grounding_dino_newly_nonempty": true,
+  "grounding_dino_provenance_verified": false,
+  "G5_SEALED_FINAL_read": false
+}

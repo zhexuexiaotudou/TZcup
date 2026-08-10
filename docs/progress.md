@@ -1076,3 +1076,9 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_doc
 - 九项最终产品状态全部为 false。主要内部阻断是三条授权模型 route 已用尽但没有静态门通过候选；X2 checkpoint 下载、实体 J6、真实 RGB-D/独立 GT 另列外部阻断。
 - release manifest 明确 `release_ready=false`、selected model/container/deployment 均为 null；这是一份阻断清单，不是发布或部署声明。
 - Windows 证据生成器统一改为显式 LF 字节写入，并新增 staged/committed Git blob 级 SHA-256 校验；清单中的哈希对应 PR 远端实际字节，不再受工作区 CRLF 转换影响。
+
+# MODEL-RECOVERY-V2 / MRV2-00 基线（2026-08-10）
+
+- 新协议独立于历史 X1/X2/X3 路线限制；旧状态保持 `X1/X3=FAILED_STATIC_FULL_PIPELINE`、`X2=BLOCKED_EXTERNAL_NETWORK_ASSET`，没有回写。
+- 隔离工作树与 PR #90 远端 tree `5bc4a06e54c88338aebf290cf6bf226ad8df49aa` 一致；普通 fetch 仍因坏对象失败，使用 GitHub API 做远端真实性校验，原始脏目录未修改。
+- MRV2 开始时没有 freeze，没有读 G5/D6。仓库外 Grounding DINO 文件现在为非空 `693,997,677 bytes`，但在完成官方来源/格式/SHA/许可审计前不宣称资产合格。

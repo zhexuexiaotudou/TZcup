@@ -89,8 +89,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 | 学习感知 | 历史 A1/A2/A3 仍失败；PROD-00 资源已恢复，ONLINE-X1/X3 静态完整链失败，ONLINE-X2 被外部 checkpoint 下载阻断；三条 route 已用尽，`MODEL_BLOCKED_INTERNAL=true`，冻结/G5 保持锁定 | X3 用官方 FCOS-R50 权重训练直接三分类头，VAL candidate recall `0.855`、macro F1 `0.910`、false candidates/min `1.2`，但 small recall `0.308`、macro recall `0.840`、跨域 metal-can recall `0.446` 及既有 area boundary/negative-FP 门未通过。故 `PRODUCT_X86_PERCEPTION_READY=false`，没有冻结、G5、moving-camera、spot-clean、soak 或发布通过声明。历史 A1/A2/A3 与 P4 失败事实保持不变；旧 D6/G5 仍未读，`AUTO_05R/P4/P5/formal/live/J6/field` 尚未通过，见 [`docs/auto05r-p2-data-integrity-recovery.md`](docs/auto05r-p2-data-integrity-recovery.md) |
 | J6 / 实机前置 | 软件与审计工具已就绪，实体资源仍独立阻断 | J6 历史审计包为 OE `3.7.0`，当前官方文档入口为 `3.9.0`；没有 frozen student/当前安装根，未执行 PTQ/compile。当前无 J6 板，运行指标为 null。real RGB-D 工具已覆盖同步 RGB/depth/CameraInfo/TF、隐私过滤、独立 placement、标定、ingestion、annotation review 与统一 evaluator；机器上只有 Integrated Camera，无 RGB-D/合格录制/独立 map GT。故 `PRODUCT_J6_TOOLCHAIN_READY=false`、`PRODUCT_J6_BOARD_READY=false`、`PRODUCT_FIELD_READY=false`。 |
 
-本轮产品级感知推进的最终 fail-closed 总状态、逐项阻断、证据哈希、模型注册表、第三方声明与阻断发布清单位于 [`artifacts/perception_product_20260809T151411Z/`](artifacts/perception_product_20260809T151411Z/)。该目录明确记录全部九项产品状态为 false；它不代表感知产品已经发布或部署。
-证据 JSON/Markdown 使用显式 LF 字节并通过 Git index/blob 级 SHA-256 复核，清单哈希对应 PR 中的实际内容，而不是仅对应 Windows 工作区换行形式。
+MODEL-RECOVERY-V2 已获独立授权并从历史 X1/X2/X3 失败之后启动；它不是旧协议的 X4，也不改写旧失败。新协议首先针对 `<18 px` 小目标、跨域 `metal_can` 和 area boundary/negative-FP 做只读诊断，G5/D6 继续保持未读，证据位于 [`artifacts/model_recovery_v2_20260810T004459Z/`](artifacts/model_recovery_v2_20260810T004459Z/)。
 | 综合竞赛矩阵 | 未通过 | 受 AUTO-08 学习感知与定点清扫依赖阻断，正式综合任务未启动 |
 | 真实域 | 外部阻断 | 只发现普通 Integrated Camera，未发现 RGB-D 数据 manifest 或独立 map GT；严格采集/标定/摆位校验/ingestion/evaluator 工具已具备 |
 | J6 部署 | 未通过 | 本机官方 OE 3.7.0 离线包完整，但官方文档当前为 3.9.0；正式模型、当前工具链 PTQ/compile 与 J6 实板均缺失 |
