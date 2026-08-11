@@ -1,5 +1,11 @@
 # 项目推进记录
 
+## 2026-08-11：DDRV4-02/03 failure taxonomy 与 D1 静态门
+
+- 冻结 OPR-C 在 G6 历史 VAL、G7 holdout 与 G7 VAL 做一次统一 failure taxonomy；G7 VAL recall/precision 为 `0.2089/0.00853`，raw proposal recall 为 `0.9644`，支持 domain mismatch、metal score/appearance shift、负样本混淆、小目标次要瓶颈和 RTMDet data-first 五项假设。G7 VAL 的本次读取只诊断旧模型，不参与 D1 选择。
+- D1-A/B 使用同一官方 MMDetection RTMDet-s、同一 6 epoch G7-only 协议和 `25/25/20/30%` 分层曝光。holdout-only 选择 D1-B 与阈值 `0.53`，随后仅该候选一次性读取 G7 VAL。
+- G7 VAL recall/precision/macro-F1 为 `0.9778/0.9778/0.9777`，metal recall `0.9867`、paper precision `0.9740`、FP/frame `0.0167`、small recall `0.9467`，全部静态硬门通过，`DDRV4_D1_PASS=true`；按协议不执行 D2/D3，进入 DDRV4-06 在线开发门。G5_V2 仍未打开。
+
 ## 2026-08-11：DDRV4-00 历史冻结与数据边界
 
 - 从 PR #90 当前远端 tree `2f7c1b400d35...` 的等价本地提交建立 `codex/ddrv4-detector-data-recovery` 独立 worktree；原始脏工作区未修改。旧 X1/X2/X3、MRV2-A/B/C、OPR-A/B/C 与 OPRV3 G5 one-shot 失败证据逐文件绑定 SHA-256。

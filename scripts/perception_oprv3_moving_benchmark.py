@@ -304,13 +304,15 @@ def load_area_gate(
         raise RuntimeError("Area gate violates the legacy D6 boundary")
     checkpoint_paths = {"leaf": leaf_checkpoint, "puddle": puddle_checkpoint}
     for task, checkpoint_path in checkpoint_paths.items():
-        expected = payload.get("models", {}).get(task, {}).get("sha256")
+        model_record = payload.get("models", {}).get(task, {})
+        expected = model_record.get("shared_training_checkpoint_sha256") or model_record.get("sha256")
         actual = sha256(checkpoint_path)
         if expected != actual:
             raise RuntimeError(
                 f"Area gate {task} hash mismatch: expected {expected}, got {actual}"
             )
-    selected = payload.get("selected_config", {}).get("by_class", {})
+    selected_config = payload.get("selected_config", {})
+    selected = selected_config.get("by_class", selected_config)
     configs = {}
     for class_name in ("leaf_pile", "puddle"):
         record = selected.get(class_name)
@@ -365,8 +367,10 @@ def detector_metadata_only(path: Path) -> dict:
 
 def area_metadata_only(task: str, path: Path) -> dict:
     checkpoint = torch.load(path, map_location="cpu", weights_only=False)
-    if checkpoint.get("checkpoint_status") != "training_complete":
-        raise RuntimeError(f"{task} checkpoint is not training_complete")
+    if checkpoint.get("checkpoint_status") not in {
+        "training_complete", "training_complete_candidate_not_frozen"
+    }:
+        raise RuntimeError(f"{task} checkpoint is not a complete development candidate")
     return {
         "path": path.as_posix(),
         "sha256": sha256(path),
@@ -374,6 +378,83 @@ def area_metadata_only(task: str, path: Path) -> dict:
         "model_contract": checkpoint.get("model_contract") or {},
         "load_initialization": "metadata_only_for_hash_bound_onnx_runtime",
     }
+
+
+def load_mmdet_detector(config: Path, checkpoint: Path, selection_path: Path):
+    """Load a hash-bound DDRV4 detector selected before G7 VAL was opened."""
+    from mmdet.apis import init_detector
+
+    selection = json.loads(selection_path.read_text(encoding="utf-8"))
+    route = str(selection.get("selected_route"))
+    route_record = selection.get("route_results", {}).get(route, {})
+    expected = route_record.get("checkpoint", {}).get("sha256")
+    if selection.get("selection_data") != "G7_IN_DOMAIN_HOLDOUT_ONLY":
+        raise RuntimeError("DDRV4 detector selection was not holdout-only")
+    if selection.get("G7_VAL_read_before_selection_freeze") is not False:
+        raise RuntimeError("DDRV4 detector selection violated the VAL boundary")
+    if expected != sha256(checkpoint):
+        raise RuntimeError("DDRV4 selected checkpoint SHA-256 mismatch")
+    metadata = {
+        "route": route,
+        "path": checkpoint.as_posix(),
+        "sha256": expected,
+        "architecture": "official_mmdetection_v3.3.0_rtmdet_s",
+        "input_size": [640, 480],
+        "action_threshold": float(selection["selected_threshold"]),
+        "checkpoint_status": "training_complete_candidate_not_frozen",
+        "execution_backend": "mmdetection_pytorch_cuda",
+        "selection_path": selection_path.as_posix(),
+        "selection_sha256": sha256(selection_path),
+        "G5_SEALED_FINAL_read": False,
+        "G5_V2_SEALED_FINAL_read": False,
+        "legacy_G4_D6_read": False,
+    }
+    return init_detector(str(config), str(checkpoint), device="cuda:0"), metadata
+
+
+def detector_frame_map_mmdet(model, metadata: dict, rows: list[dict], batch_size: int = 8) -> dict:
+    """Run MMDetection from RGB only and preserve native-image coordinates."""
+    from mmdet.apis import inference_detector
+
+    frames: dict[tuple[int, int], dict] = {}
+    for offset in range(0, len(rows), batch_size):
+        batch = rows[offset : offset + batch_size]
+        # MMDetection ndarray input follows the OpenCV BGR convention.
+        images = [np.ascontiguousarray(read_rgb(row)[..., ::-1]) for row in batch]
+        outputs = inference_detector(model, images)
+        if not isinstance(outputs, list):
+            outputs = [outputs]
+        for row, output in zip(batch, outputs):
+            predictions = output.pred_instances.to("cpu")
+            detections = []
+            for box, score, label in zip(
+                predictions.bboxes.tolist(),
+                predictions.scores.tolist(),
+                predictions.labels.tolist(),
+            ):
+                if float(score) < OBSERVATION_THRESHOLD:
+                    continue
+                class_index = int(label)
+                if not 0 <= class_index < len(DISCRETE_NAMES):
+                    raise RuntimeError(f"detector produced invalid class index {class_index}")
+                detections.append(
+                    {
+                        "class_name": DISCRETE_NAMES[class_index],
+                        "score": float(score),
+                        "bbox_xyxy": [float(value) for value in box],
+                    }
+                )
+            detections.sort(key=lambda item: item["score"], reverse=True)
+            key = (int(row["scene_seed"]), int(row["frame_index"]))
+            frames[key] = {
+                "scene_seed": key[0],
+                "frame_index": key[1],
+                "split": row["split"],
+                "world_id": row["world_id"],
+                "negative_only": bool(row.get("negative_only", False)),
+                "detections": detections[:100],
+            }
+    return frames
 
 
 def detector_frame_map_onnx(session, metadata, rows) -> dict:
@@ -1634,6 +1715,9 @@ def main() -> int:
     parser.add_argument("--leaf-checkpoint", type=Path, required=True)
     parser.add_argument("--puddle-checkpoint", type=Path, required=True)
     parser.add_argument("--detector-onnx", type=Path)
+    parser.add_argument("--mmdet-config", type=Path)
+    parser.add_argument("--mmdet-checkpoint", type=Path)
+    parser.add_argument("--mmdet-selection", type=Path)
     parser.add_argument("--leaf-onnx", type=Path)
     parser.add_argument("--puddle-onnx", type=Path)
     parser.add_argument("--area-gate", type=Path, required=True)
@@ -1643,15 +1727,23 @@ def main() -> int:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if device.type != "cuda":
         raise RuntimeError("formal OPRV3 moving benchmark requires CUDA")
-    onnx_paths = (args.detector_onnx, args.leaf_onnx, args.puddle_onnx)
-    if any(onnx_paths) and not all(onnx_paths):
-        raise RuntimeError("the detector, leaf and puddle ONNX paths are atomic")
-    use_onnx = all(onnx_paths)
+    mmdet_paths = (args.mmdet_config, args.mmdet_checkpoint, args.mmdet_selection)
+    if any(mmdet_paths) and not all(mmdet_paths):
+        raise RuntimeError("MMDetection config, checkpoint and selection are atomic")
+    use_mmdet = all(mmdet_paths)
+    if use_mmdet and args.detector_onnx:
+        raise RuntimeError("MMDetection and detector ONNX modes are mutually exclusive")
+    if bool(args.leaf_onnx) != bool(args.puddle_onnx):
+        raise RuntimeError("leaf and puddle ONNX paths are atomic")
+    use_area_onnx = bool(args.leaf_onnx and args.puddle_onnx)
+    use_onnx = bool(args.detector_onnx and use_area_onnx)
     if use_onnx and len(args.detector) != 1:
         raise RuntimeError("ONNX product benchmark accepts exactly one detector")
+    if use_mmdet and len(args.detector) != 1:
+        raise RuntimeError("MMDetection product benchmark accepts exactly one detector")
     geometry = load_geometry(args.geometry)
     rows, instances, context = load_development_rows(args.data_root)
-    if use_onnx:
+    if use_area_onnx:
         leaf_metadata = area_metadata_only("leaf", args.leaf_checkpoint)
         puddle_metadata = area_metadata_only("puddle", args.puddle_checkpoint)
         leaf = create_cuda_ort_session(args.leaf_onnx)
@@ -1725,6 +1817,25 @@ def main() -> int:
             },
         )
         del detector_session
+    elif use_area_onnx:
+        runtime_models = {
+            "execution_backend": "mixed_mmdetection_pytorch_and_onnxruntime",
+            "execution_provider": "CUDA",
+            "leaf": {"path": args.leaf_onnx.as_posix(), "sha256": sha256(args.leaf_onnx), "providers": leaf.get_providers()},
+            "puddle": {"path": args.puddle_onnx.as_posix(), "sha256": sha256(args.puddle_onnx), "providers": puddle.get_providers()},
+        }
+        areas, area_product_detections = area_frame_map_onnx(
+            leaf,
+            puddle,
+            rows,
+            area_configs=area_configs,
+            camera_pitch_down_rad=camera_pitch_down_rad,
+            minimum_physical_area_m2=float(product_manifest["runtime"]["minimum_area_region_m2"]),
+            minimum_physical_area_m2_by_class={
+                name: float(value)
+                for name, value in product_manifest["runtime"].get("minimum_area_region_m2_by_class", {}).items()
+            },
+        )
     else:
         runtime_models = {
             "execution_backend": "pytorch",
@@ -1760,6 +1871,19 @@ def main() -> int:
             metadata = onnx_detector_metadata
             detector_frames = onnx_detector_frames
             model = None
+        elif use_mmdet:
+            model, metadata = load_mmdet_detector(
+                args.mmdet_config, args.mmdet_checkpoint, args.mmdet_selection
+            )
+            if name != metadata["route"] or Path(raw_path) != args.mmdet_checkpoint:
+                raise RuntimeError("--detector must name the hash-bound DDRV4 selected checkpoint")
+            detector_frames = detector_frame_map_mmdet(model, metadata, rows)
+            runtime_models["detector"] = {
+                "path": args.mmdet_checkpoint.as_posix(),
+                "sha256": metadata["sha256"],
+                "selection_sha256": metadata["selection_sha256"],
+                "backend": metadata["execution_backend"],
+            }
         else:
             model, metadata = load_detector(Path(raw_path), device)
             detector_frames = detector_frame_map(

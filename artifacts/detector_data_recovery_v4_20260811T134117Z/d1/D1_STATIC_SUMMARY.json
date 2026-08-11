@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "stage": "DDRV4-03",
+  "source_commit": "fd27f83340f3a824360a13d2129ee478575dcf72",
+  "architecture": "official_mmdetection_v3.3.0_rtmdet_s",
+  "training": {
+    "external_root": "F:/Project/TZcup/.workspace/artifacts/TZcup-ddrv4-d1-training-v1",
+    "epochs": 6,
+    "epoch_exposures": 2000,
+    "sampling": {"metal_can": 0.25, "negative_only": 0.25, "small_positive": 0.20, "general_positive": 0.30},
+    "D1_A_checkpoint_sha256": "e8d03fff3b5deb0f54d395fbfa79a16beb8cc9a36a0ab804abb5107607ff75f5",
+    "D1_B_checkpoint_sha256": "481374d4839e72f05fff0d6d2f6135bc7d715d5c2faf84e75d7d97ca3fc6a361"
+  },
+  "selection": {
+    "data": "G7_IN_DOMAIN_HOLDOUT_ONLY",
+    "selected_route": "D1-B",
+    "threshold": 0.53,
+    "D1_A": {"recall": 0.9866666666666667, "precision": 0.961038961038961, "macro_f1": 0.973848862250886, "false_positive_per_frame": 0.03},
+    "D1_B": {"recall": 0.9866666666666667, "precision": 0.9823008849557522, "macro_f1": 0.9844550432785727, "false_positive_per_frame": 0.013333333333333334},
+    "external_report_sha256": "547ac63dbe7ec7cb96a317f7213efa69f4a1511d31d1b4c7ea9461846a11a1b1"
+  },
+  "one_time_G7_VAL": {
+    "candidate_count": 1,
+    "evaluation_count": 1,
+    "recall": 0.9777777777777777,
+    "precision": 0.9777777777777777,
+    "macro_f1": 0.9776536500507023,
+    "plastic_bottle_recall": 0.9466666666666667,
+    "metal_can_recall": 0.9866666666666667,
+    "paper_litter_recall": 1.0,
+    "paper_litter_precision": 0.974025974025974,
+    "false_positive_per_frame": 0.016666666666666666,
+    "small_lt18_recall": 0.9466666666666667,
+    "external_report_sha256": "4f3eb2502e0ccd613f9376314ad3c539d87aada10bb708d76b6cef9c283b00e0"
+  },
+  "DDRV4_D1_PASS": true,
+  "DDRV4_D2_EXECUTED": false,
+  "DDRV4_D3_EXECUTED": false,
+  "G6_used_for_selection": false,
+  "G5_read": false,
+  "G5_V2_read": false,
+  "next_action": "DDRV4-06 online product development gate"
+}

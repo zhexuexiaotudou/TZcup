@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "stage": "DDRV4-02",
+  "source_commit": "fd27f83340f3a824360a13d2129ee478575dcf72",
+  "external_report": {
+    "path": "F:/Project/TZcup/.workspace/artifacts/TZcup-ddrv4-failure-taxonomy-v3/DETECTOR_FAILURE_TAXONOMY.json",
+    "sha256": "095590fc68a3aa74f1bc34a87537b854e459d695d8f96e4c58398bb8954b2a02"
+  },
+  "frozen_opr_c_checkpoint_sha256": "833e6148f566aed60c27378c4c1f832bb0e3f7532dae780d12ce5424579e2dfa",
+  "fixed_operating_threshold": 0.3,
+  "results": {
+    "G6_HISTORICAL_VAL": {"recall": 0.9075, "precision": 0.884287, "false_positive_per_frame": 0.11875},
+    "G7_IN_DOMAIN_HOLDOUT": {"recall": 0.13777777777777778, "precision": 0.00594325, "false_positive_per_frame": 17.283333333333335},
+    "G7_CROSS_WORLD_VAL": {"recall": 0.2088888888888889, "precision": 0.00853149, "false_positive_per_frame": 18.206666666666667, "proposal_recall_at_0_001": 0.9644444444444444}
+  },
+  "hypotheses": {
+    "H1_domain_mismatch": "supported",
+    "H2_metal_score_calibration_appearance_shift": "supported",
+    "H3_named_negative_taxonomy_false_positives": "supported",
+    "H4_small_object_secondary": "supported",
+    "H5_rtmdet_capacity_data_first": "supported"
+  },
+  "data_boundary": {
+    "G6": "historical regression only",
+    "G7_VAL": "old-model diagnosis only; never D1 selection",
+    "G5_read": false,
+    "G5_V2_read": false
+  },
+  "failed_attempts_preserved": [
+    "F:/Project/TZcup/.workspace/artifacts/TZcup-ddrv4-failure-taxonomy-v1",
+    "F:/Project/TZcup/.workspace/artifacts/TZcup-ddrv4-failure-taxonomy-v2"
+  ]
+}
