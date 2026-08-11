@@ -60,6 +60,7 @@ from sanitation_learning.oprv3_moving import (  # noqa: E402
     summarize_encounter,
     summarize_route,
 )
+from sanitation_learning.opr_c_rtmdet import patch_mmdet_cuda_nms  # noqa: E402
 from sanitation_perception.camera_frustum_model import (  # noqa: E402
     CameraFrustumModel,
 )
@@ -383,6 +384,7 @@ def area_metadata_only(task: str, path: Path) -> dict:
 
 def load_mmdet_detector(config: Path, checkpoint: Path, selection_path: Path):
     """Load a hash-bound DDRV4 detector selected before G7 VAL was opened."""
+    patch_mmdet_cuda_nms()
     from mmdet.apis import init_detector
 
     selection = json.loads(selection_path.read_text(encoding="utf-8"))

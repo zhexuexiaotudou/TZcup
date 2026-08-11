@@ -11,6 +11,12 @@ def test_ddrv4_online_detector_is_hash_bound_to_holdout_selection():
     assert 'selection.get("G7_VAL_read_before_selection_freeze") is not False' in SOURCE
     assert 'expected != sha256(checkpoint)' in SOURCE
     assert '"G5_V2_SEALED_FINAL_read": False' in SOURCE
+    load_body = SOURCE.split("def load_mmdet_detector", 1)[1].split(
+        "def detector_frame_map_mmdet", 1
+    )[0]
+    assert load_body.index("patch_mmdet_cuda_nms()") < load_body.index(
+        "from mmdet.apis import init_detector"
+    )
 
 
 def test_online_product_inference_uses_rgb_without_gt_injection():
