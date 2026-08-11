@@ -6,6 +6,7 @@
 - D1-A/B 使用同一官方 MMDetection RTMDet-s、同一 6 epoch G7-only 协议和 `25/25/20/30%` 分层曝光。holdout-only 选择 D1-B 与阈值 `0.53`，随后仅该候选一次性读取 G7 VAL。
 - G7 VAL recall/precision/macro-F1 为 `0.9778/0.9778/0.9777`，metal recall `0.9867`、paper precision `0.9740`、FP/frame `0.0167`、small recall `0.9467`，全部静态硬门通过，`DDRV4_D1_PASS=true`；按协议不执行 D2/D3，进入 DDRV4-06 在线开发门。G5_V2 仍未打开。
 - DDRV4-06 前五次集成尝试均保留：v1 拒绝 CPU-only ORT，v2 捕获缺失 cuDNN 动态库，v3 捕获 G6 Area `leaf`/`leaf_pile` 键差异，v4 因临时容器移除而无可诊断终态，v5 持久日志最终定位在线适配器漏装既有 MMDetection CUDA NMS 兼容层。以上均未生成正式指标或读取 G5/G5_V2；只修软件集成，不改 D1/G6 模型或阈值。
+- v6 绑定提交 `5c5e096e5041085a1baf95edf3869d80eddd1d54`，在 24 mission/2160 帧上完整执行 D1、G6 Area、tracker、DynamicTrashMap 与 scheduler。离散 eventual recall `0.3898`、correct-class `0.1111`、small `0.3529`、metal `0.1053`、wrong-actionable `0.3510`，地图 precision/coverage `0.2111/0.19`，故基础兼容回归失败并禁止 freeze。该旧 OPRV3 数据还缺 behind-FOV/turn/occlusion/reflection，不能替代完整 G7 moving 门；`DDRV4_06_FORMAL_COMPLETE=false`、`DDRV4_X86_DEV_PASS=false`、G5_V2 未读取。
 
 ## 2026-08-11：DDRV4-00 历史冻结与数据边界
 

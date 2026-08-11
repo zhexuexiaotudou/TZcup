@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "stage": "DDRV4-06",
+  "source_commit": "5c5e096e5041085a1baf95edf3869d80eddd1d54",
+  "candidate": "D1-B",
+  "threshold": 0.53,
+  "runtime": {
+    "image": "tzcup/perception-ddrv4@sha256:65aa06d33dc47062632aa260a00354cfdaeffff0078a642f7de26757430f56b5",
+    "gpu": "NVIDIA GeForce RTX 4080 Laptop GPU",
+    "mmdetection": "3.3.0",
+    "onnxruntime": "1.20.2",
+    "area_provider": "CUDAExecutionProvider"
+  },
+  "base_regression": {
+    "data_role": "existing OPRV3 development moving-camera harness; not complete DDRV4 G7 moving coverage",
+    "missions": 24,
+    "frames": 2160,
+    "eligible_discrete_targets": 59,
+    "eventual_discrete_recall": 0.3898305084745763,
+    "eventual_correct_class_recall_all_targets": 0.1111111111111111,
+    "small_object_eventual_recall": 0.35294117647058826,
+    "per_class_eventual_detection_recall": {
+      "plastic_bottle": 0.35,
+      "metal_can": 0.10526315789473684,
+      "paper_litter": 0.7
+    },
+    "wrong_actionable_target_rate": 0.3510392609699769,
+    "negative_frame_actionable_predictions": 0,
+    "required_coverage_complete": false,
+    "missing_coverage": ["behind_vehicle_fov_entry", "turning", "occlusion", "reflection"],
+    "ONLINE_BASE_REGRESSION_PASS": false
+  },
+  "product_map": {
+    "product_target_precision": 0.2111111111111111,
+    "false_confirmed_target_rate": 0.7888888888888889,
+    "map_localization_coverage": 0.19,
+    "map_rmse_m": 0.10298075865973726,
+    "id_consistency": 0.9864357864357864,
+    "duplicate_target_rate": 0.02,
+    "track_fragmentation": 0.02,
+    "pre_fov_target_creation": 0
+  },
+  "evidence": {
+    "moving_report": {"external_path": "F:/Project/TZcup/.workspace/artifacts/TZcup-ddrv4-online-dev-v6/base/DDRV4_BASE_MOVING.json", "sha256": "0963971cbfd51ad177639a02fd9aca8dedc3f9a2346d855979e80a8bb2ae1083"},
+    "pixel_report": {"external_path": "F:/Project/TZcup/.workspace/artifacts/TZcup-ddrv4-online-dev-v6/base/DDRV4_BASE_PIXEL.json", "sha256": "95a959c51efa78673bbe112f4a9a07b30aba211e31d6fcc0e175800fb9022a46"},
+    "moving_gate": {"external_path": "F:/Project/TZcup/.workspace/artifacts/TZcup-ddrv4-online-dev-v6/gates/DDRV4_BASE_MOVING_GATE.json", "sha256": "49599e03a2f842d8dacee5a7fc37fef1dd8da3963786c353b17af23b2da5c95a"},
+    "product_map_gate": {"external_path": "F:/Project/TZcup/.workspace/artifacts/TZcup-ddrv4-online-dev-v6/gates/DDRV4_BASE_PRODUCT_MAP_GATE.json", "sha256": "8a5ab5358e62f05c56ae2ed94bc485b2495ff70a2f6e869d00da552ec94a1e60"}
+  },
+  "failed_attempts_preserved": ["v1_cpu_only_ort", "v2_cudnn_linkage", "v3_area_key_contract", "v4_unrecoverable_temporary_log", "v5_missing_cuda_nms_patch"],
+  "DDRV4_D1_STATIC_PASS": true,
+  "DDRV4_06_FORMAL_COMPLETE": false,
+  "DDRV4_X86_DEV_PASS": false,
+  "MODEL_FREEZE_X86_CREATED": false,
+  "G5_V2_read": false,
+  "next_action": "create and run the missing G7 development moving-camera coverage, while treating the failed OPRV3 base regression as a hard freeze blocker"
+}
