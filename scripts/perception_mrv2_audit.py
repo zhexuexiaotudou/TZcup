@@ -58,7 +58,15 @@ SIZE_BINS = ("lt_8", "8_to_12", "12_to_18", "18_to_32", "32_to_48", "ge_48")
 AREA_CLASSES = ("leaf_pile", "puddle")
 CURRENT_AREA_THRESHOLDS = (0.85, 0.85)
 DEVELOPMENT_THRESHOLDS = (0.70, 0.75, 0.80, 0.85, 0.90, 0.95)
-MORPHOLOGIES = ("none", "open3", "close3", "open_close3")
+MORPHOLOGIES = (
+    "none",
+    "open3",
+    "close3",
+    "open_close3",
+    "dilate3",
+    "dilate5",
+    "erode3",
+)
 
 
 def holdout_rows(rows, fraction):
@@ -92,19 +100,25 @@ def size_bin(value: float) -> str:
 
 def apply_morphology(mask: np.ndarray, name: str) -> np.ndarray:
     source = mask.astype(np.uint8)
-    kernel = np.ones((3, 3), dtype=np.uint8)
+    kernel3 = np.ones((3, 3), dtype=np.uint8)
     if name == "none":
         return source.astype(bool)
     if name == "open3":
-        result = cv2.morphologyEx(source, cv2.MORPH_OPEN, kernel)
+        result = cv2.morphologyEx(source, cv2.MORPH_OPEN, kernel3)
     elif name == "close3":
-        result = cv2.morphologyEx(source, cv2.MORPH_CLOSE, kernel)
+        result = cv2.morphologyEx(source, cv2.MORPH_CLOSE, kernel3)
     elif name == "open_close3":
         result = cv2.morphologyEx(
-            cv2.morphologyEx(source, cv2.MORPH_OPEN, kernel),
+            cv2.morphologyEx(source, cv2.MORPH_OPEN, kernel3),
             cv2.MORPH_CLOSE,
-            kernel,
+            kernel3,
         )
+    elif name == "dilate3":
+        result = cv2.dilate(source, kernel3)
+    elif name == "dilate5":
+        result = cv2.dilate(source, np.ones((5, 5), dtype=np.uint8))
+    elif name == "erode3":
+        result = cv2.erode(source, kernel3)
     else:
         raise ValueError(f"unknown morphology: {name}")
     return result.astype(bool)

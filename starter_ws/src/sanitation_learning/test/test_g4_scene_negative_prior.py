@@ -221,6 +221,7 @@ def test_oprv3_coverage_profiles_are_explicit_and_fail_closed(
         "turning": True,
         "occlusion": False,
         "reflection": False,
+        "dynamic_removal": False,
     }
 
     occlusion = g4_scene.randomize(
@@ -248,6 +249,44 @@ def test_oprv3_coverage_profiles_are_explicit_and_fail_closed(
         oprv3_coverage_profile="reflection",
     )
     assert reflection["oprv3_coverage_requirements"]["reflection"] is True
+    profile = reflection["oprv3_motion_profile"]
+    assert profile["name"] == "reflection_approach_turn_continue"
+    assert profile["phases"][0] == {
+        "name": "reflection_straight_approach",
+        "frame_count": 45,
+        "linear_x_mps": 0.35,
+        "angular_z_rad_s": 0.0,
+    }
+    assert profile["phases"][1]["linear_x_mps"] > 0.0
+    assert profile["phases"][1]["angular_z_rad_s"] != 0.0
+    assert profile["phases"][1]["frame_count"] == 10
+    assert profile["phases"][2] == {
+        "name": "reflection_diagonal_continue",
+        "frame_count": 4096,
+        "linear_x_mps": 0.35,
+        "angular_z_rad_s": 0.0,
+    }
+    removal = g4_scene.randomize(
+        manifest_path,
+        "world_g4_01_asphalt_campus",
+        9042,
+        2,
+        tmp_path / "removal.json",
+        oprv3_coverage_profile="dynamic_removal",
+    )
+    plan = removal["dynamic_removal_plan"]
+    target = next(
+        item for item in removal["objects"] if item["model_name"] == plan["model_name"]
+    )
+    assert removal["dynamic_motion_plan"] is None
+    assert removal["oprv3_coverage_requirements"]["dynamic_removal"] is True
+    assert target["class_id"] in {
+        "plastic_bottle",
+        "metal_can",
+        "paper_litter",
+    }
+    assert target["xyz_m"][:2] == pytest.approx([-5.60, 0.60])
+    assert plan["trigger_fraction"] == pytest.approx(0.55)
     with pytest.raises(ValueError, match="wet world"):
         g4_scene.randomize(
             manifest_path,

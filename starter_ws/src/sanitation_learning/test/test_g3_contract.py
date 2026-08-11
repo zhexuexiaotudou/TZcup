@@ -9,7 +9,7 @@ from sanitation_learning.gazebo_g3 import write_g3_worlds
 from sanitation_learning.g2_capture import (
     adjacent_motion_gate, adjacent_translation_gate, frame_motion_ready,
     frame_translation_ready, motion_command_for_frame, nearest_stamp_within,
-    observed_speeds_from_records, wrapped_angle_delta,
+    observed_speeds_from_records, removal_trigger_frame, wrapped_angle_delta,
 )
 
 
@@ -140,6 +140,15 @@ def test_adjacent_translation_gate_rejects_rotation_only_frames():
     assert not adjacent_translation_gate(records, requested_frames=3)
     records[-1]["vehicle_xy_m"] = [0.50, 0.0]
     assert adjacent_translation_gate(records, requested_frames=3)
+
+
+def test_dynamic_removal_trigger_preserves_pre_and_post_capture_windows():
+    assert removal_trigger_frame(90, 0.55) == 50
+    assert removal_trigger_frame(4, 0.9) == 2
+    with pytest.raises(ValueError, match="at least four"):
+        removal_trigger_frame(3, 0.5)
+    with pytest.raises(ValueError, match="trigger_fraction"):
+        removal_trigger_frame(90, 1.0)
 
 
 def test_adjacent_translation_gate_supports_full_rate_oprv3_capture():

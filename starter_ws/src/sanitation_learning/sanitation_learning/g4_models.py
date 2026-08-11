@@ -849,6 +849,51 @@ def _model_classes() -> dict[str, type]:
                 "boundary_logits": boundary_logits,
             }
 
+    class _HighResolutionAreaRefiner(nn.Module):
+        """Full-resolution residual head for exact semantic-mask boundaries."""
+
+        def __init__(self):
+            super().__init__()
+            self.features = nn.Sequential(
+                nn.Conv2d(10, 16, 3, padding=1),
+                nn.ReLU(inplace=True),
+                nn.Conv2d(16, 16, 3, padding=1),
+                nn.ReLU(inplace=True),
+            )
+            self.semantic_delta = nn.Conv2d(16, 1, 1)
+            self.boundary_delta = nn.Conv2d(16, 1, 1)
+            nn.init.zeros_(self.semantic_delta.weight)
+            nn.init.zeros_(self.semantic_delta.bias)
+            nn.init.zeros_(self.boundary_delta.weight)
+            nn.init.zeros_(self.boundary_delta.bias)
+
+        def forward(self, rgbd):
+            features = self.features(rgbd)
+            return {
+                "semantic_delta": self.semantic_delta(features),
+                "boundary_delta": self.boundary_delta(features),
+            }
+
+    class DeepLabBoundaryRefineAreaSegmenter(DeepLabAreaSegmenter):
+        """DeepLab coarse mask plus zero-initialized full-resolution residuals."""
+
+        def __init__(self, from_scratch_control: bool = False):
+            super().__init__(from_scratch_control=from_scratch_control)
+            self.highres_refiner = _HighResolutionAreaRefiner()
+            self.architecture_role = (
+                "deeplab_resnet50_rgb_geometry_highres_boundary_refine"
+            )
+
+        def forward(self, rgbd):
+            coarse = super().forward(rgbd)
+            residual = self.highres_refiner(rgbd)
+            return {
+                "logits": coarse["logits"] + residual["semantic_delta"],
+                "boundary_logits": (
+                    coarse["boundary_logits"] + residual["boundary_delta"]
+                ),
+            }
+
     class DeepLabLeafSegmenter(DeepLabAreaSegmenter):
         task = "leaf"
         model_id = "g4_leaf_segmenter_deeplab_v1"
@@ -856,6 +901,18 @@ def _model_classes() -> dict[str, type]:
     class DeepLabPuddleSegmenter(DeepLabAreaSegmenter):
         task = "puddle"
         model_id = "g4_puddle_segmenter_deeplab_v1"
+
+    class DeepLabBoundaryRefineLeafSegmenter(
+        DeepLabBoundaryRefineAreaSegmenter
+    ):
+        task = "leaf"
+        model_id = "g4_leaf_segmenter_deeplab_boundary_refine_v2"
+
+    class DeepLabBoundaryRefinePuddleSegmenter(
+        DeepLabBoundaryRefineAreaSegmenter
+    ):
+        task = "puddle"
+        model_id = "g4_puddle_segmenter_deeplab_boundary_refine_v2"
 
     class _FlatForwardWrapper(nn.Module):
         """Wraps a model for single-tensor ONNX export."""
@@ -876,6 +933,12 @@ def _model_classes() -> dict[str, type]:
             "DeepLabAreaSegmenter": DeepLabAreaSegmenter,
             "DeepLabLeafSegmenter": DeepLabLeafSegmenter,
             "DeepLabPuddleSegmenter": DeepLabPuddleSegmenter,
+            "DeepLabBoundaryRefineLeafSegmenter": (
+                DeepLabBoundaryRefineLeafSegmenter
+            ),
+            "DeepLabBoundaryRefinePuddleSegmenter": (
+                DeepLabBoundaryRefinePuddleSegmenter
+            ),
             "DiscoveryDetector": DiscoveryDetector,
             "LeafSegmenter": LeafSegmenter,
             "PuddleSegmenter": PuddleSegmenter,
@@ -962,17 +1025,27 @@ def build_g4_model(
         )
     if task not in ("leaf", "puddle"):
         raise ValueError(f"unknown G4 model task {task!r}")
-    if area_architecture not in ("dual_resnet18", "deeplab_resnet50"):
+    if area_architecture not in (
+        "dual_resnet18",
+        "deeplab_resnet50",
+        "deeplab_resnet50_boundary_refine",
+    ):
         raise ValueError(
             f"unknown area architecture {area_architecture!r}"
         )
     if area_architecture == "dual_resnet18":
         class_name = "LeafSegmenter" if task == "leaf" else "PuddleSegmenter"
-    else:
+    elif area_architecture == "deeplab_resnet50":
         class_name = (
             "DeepLabLeafSegmenter"
             if task == "leaf"
             else "DeepLabPuddleSegmenter"
+        )
+    else:
+        class_name = (
+            "DeepLabBoundaryRefineLeafSegmenter"
+            if task == "leaf"
+            else "DeepLabBoundaryRefinePuddleSegmenter"
         )
     try:
         import torchvision  # noqa: F401

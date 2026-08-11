@@ -37,3 +37,19 @@ def test_invalid_depth_region_is_dropped_fail_closed():
         np.eye(4),
     )
     assert regions == []
+
+
+def test_subminimum_physical_area_region_is_dropped():
+    mask = np.zeros((30, 30), dtype=np.uint8)
+    mask[10:15, 10:15] = 1
+    depth = np.full(mask.shape, 1.0, dtype=np.float32)
+    regions = mask_regions_to_map(
+        mask,
+        mask.astype(np.float32),
+        depth,
+        {"fx": 100.0, "fy": 100.0, "cx": 15.0, "cy": 15.0},
+        np.eye(4),
+        minimum_pixels=3,
+        minimum_physical_area_m2=0.02,
+    )
+    assert regions == []

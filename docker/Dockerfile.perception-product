@@ -5,6 +5,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 ARG ONNXRUNTIME_GPU_VERSION=1.20.2
 
 RUN python3 -m pip install --break-system-packages --no-cache-dir \
+      --timeout 120 --retries 5 \
       "onnxruntime-gpu==${ONNXRUNTIME_GPU_VERSION}"
 
 WORKDIR /opt/tzcup
@@ -19,7 +20,8 @@ RUN chmod 0555 /usr/local/bin/healthcheck_perception /usr/local/bin/perception_e
 
 ENV ROS_DOMAIN_ID=0 \
     PERCEPTION_PIPELINE_MANIFEST=/opt/tzcup/release/manifests/perception_pipeline_manifest.yaml \
-    PERCEPTION_MODEL_ROOT=/opt/tzcup/release/models
+    PERCEPTION_MODEL_ROOT=/opt/tzcup/release/models \
+    LD_LIBRARY_PATH=/usr/local/lib/python3.12/dist-packages/nvidia/cublas/lib:/usr/local/lib/python3.12/dist-packages/nvidia/curand/lib:/usr/local/lib/python3.12/dist-packages/nvidia/nvjitlink/lib:/usr/local/lib/python3.12/dist-packages/nvidia/cuda_runtime/lib:/usr/local/lib/python3.12/dist-packages/nvidia/cudnn/lib:/usr/local/lib/python3.12/dist-packages/nvidia/cusolver/lib:/usr/local/lib/python3.12/dist-packages/nvidia/nccl/lib:/usr/local/lib/python3.12/dist-packages/nvidia/cufft/lib:/usr/local/lib/python3.12/dist-packages/nvidia/cuda_nvrtc/lib:/usr/local/lib/python3.12/dist-packages/nvidia/cuda_cupti/lib:/usr/local/lib/python3.12/dist-packages/nvidia/cusparse/lib:/usr/local/lib/python3.12/dist-packages/nvidia/nvtx/lib
 HEALTHCHECK --interval=10s --timeout=4s --start-period=30s --retries=3 \
   CMD ["/usr/local/bin/healthcheck_perception"]
 ENTRYPOINT ["/usr/local/bin/perception_entrypoint"]

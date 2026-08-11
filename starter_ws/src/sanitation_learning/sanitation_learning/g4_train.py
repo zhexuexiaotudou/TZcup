@@ -578,6 +578,11 @@ def train_area(
     selector: ConstraintAwareSelector | None = None,
     validation_metric_fn: Callable | None = None,
     model=None,
+    low_light_appearance_augmentation: bool = False,
+    boundary_weight: float = 0.35,
+    negative_weight: float = 1.0,
+    boundary_pixel_weight: float = 2.0,
+    semantic_boundary_weight: float = 0.0,
 ) -> tuple[torch.nn.Module, dict]:
     if task not in ("leaf", "puddle"):
         raise ValueError(f"unknown area task {task}")
@@ -592,6 +597,7 @@ def train_area(
         channel=channel,
         cache_frames=cache_frames,
         crop_mode=crop_mode,
+        low_light_appearance_augmentation=low_light_appearance_augmentation,
     )
     loader = DataLoader(
         dataset,
@@ -615,7 +621,13 @@ def train_area(
     if model is None:
         model = build_g4_model(task)
     loss_fn = lambda outputs, targets, boundaries: area_loss(
-        outputs, targets, boundaries
+        outputs,
+        targets,
+        boundaries,
+        boundary_weight=boundary_weight,
+        negative_weight=negative_weight,
+        boundary_pixel_weight=boundary_pixel_weight,
+        semantic_boundary_weight=semantic_boundary_weight,
     )["total"]
     model, report = fit_model(
         model,

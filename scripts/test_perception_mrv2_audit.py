@@ -28,6 +28,12 @@ def test_morphology_is_deterministic_and_boolean():
     assert opened.dtype == bool
     assert not opened[0, 0]
     assert opened[4, 4]
+    dilated3 = apply_morphology(mask, "dilate3")
+    dilated5 = apply_morphology(mask, "dilate5")
+    eroded = apply_morphology(mask, "erode3")
+    assert dilated3.sum() > mask.sum()
+    assert dilated5.sum() > dilated3.sum()
+    assert eroded.sum() < mask.sum()
 
 
 def test_metal_outcomes_distinguish_wrong_class_threshold_iou_and_miss():

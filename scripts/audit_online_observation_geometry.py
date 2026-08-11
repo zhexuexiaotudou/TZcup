@@ -119,16 +119,21 @@ def build_baseline(source_commit: str, status: dict, static: dict, prior_files: 
 
 def competition_mapping(provenance: dict) -> dict:
     audit = provenance["competition_material_audit"]
+    official = [
+        gate for gate in provenance["gates"] if gate["kind"] == "OFFICIAL_GATE"
+    ]
     return {
         "schema_version": 1,
         "stage": "OPRV3-00",
-        "official_rule_source_verified": False,
+        "official_rule_source_verified": bool(
+            audit.get("current_official_primary_source_found")
+        ),
         "competition_perception_pass": False,
-        "mapping_status": "BLOCKED_UNVERIFIED_OFFICIAL_RULE_DEFINITION",
+        "mapping_status": "MAPPED_CONSERVATIVELY_PENDING_FINAL_EVIDENCE",
         "repository_internal_thresholds_promoted_to_official": False,
         "audit": audit,
-        "metrics": [],
-        "next_required_external_input": "A primary competition rule document that defines the sanitation task, scoring unit, dataset/sequence conditions, and accuracy formula.",
+        "metrics": official,
+        "next_required_external_input": "Organizer clarification of the accuracy formula can replace, but not weaken, the current conservative precision-recall-F1 mapping.",
     }
 
 

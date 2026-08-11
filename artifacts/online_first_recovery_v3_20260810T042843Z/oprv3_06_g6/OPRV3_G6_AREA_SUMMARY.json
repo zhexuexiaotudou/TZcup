@@ -1,0 +1,71 @@
+{
+  "schema_version": 1,
+  "stage": "OPRV3-06-G6-AREA",
+  "development_only": true,
+  "data_policy": {
+    "dataset": "G6_DEVELOPMENT_OPRV3_V1",
+    "fit_worlds": 10,
+    "checkpoint_selection_worlds": 1,
+    "untouched_evaluation_splits": ["VAL", "D1", "D2", "D3", "D4", "D5"],
+    "untouched_evaluation_frames": 2800,
+    "negative_area_taxonomies": 10,
+    "G5_SEALED_FINAL_read": false,
+    "G5_V2_SEALED_FINAL_read": false,
+    "legacy_G4_D6_read": false
+  },
+  "model": {
+    "architecture": "shared_high_resolution_boundary_aware_encoder_decoder",
+    "selected_epoch": 4,
+    "checkpoint_sha256": "f14e273305aec17750c9ab4cd5716db7e35706b800fb9e03a71284fe537007eb",
+    "leaf_onnx_sha256": "4363008d6d5a82f2167e94b415cc32e0fe2350c07b5811b153d316813b2456eb",
+    "puddle_onnx_sha256": "4189354d7d10ff61e2a76f153d1585cb8174d7440621dd7ee9af40e4359f3c2d",
+    "onnx_custom_ops": 0,
+    "onnx_semantic_mask_agreement": {"leaf": 1.0, "puddle": 1.0},
+    "onnx_parity_pass": true
+  },
+  "export_recovery": {
+    "formal_v1": "training completed; raw-logit-only ONNX tolerance failed",
+    "formal_v2": "decoded masks passed; probability tolerance remained too strict",
+    "formal_v3": "report/export recovery only; no additional training",
+    "failed_attempts_preserved": true
+  },
+  "selected_postprocess": {
+    "leaf": {"threshold": 0.7, "morphology": "none", "minimum_area_m2": 0.0005},
+    "puddle": {"threshold": 0.4, "morphology": "none", "minimum_area_m2": 0.001},
+    "minimum_valid_depth_ratio": 0.8,
+    "negative_actionable_overlap_pixels": 32,
+    "selection_split": "g6_train_world_10"
+  },
+  "cross_world_aggregate": {
+    "leaf_iou": 0.9556640400874933,
+    "puddle_iou": 0.9907517522418311,
+    "macro_miou": 0.9732078961646622,
+    "boundary_f1": 0.8472529635967864,
+    "negative_area_fp_frames": 2,
+    "negative_area_frames": 2800,
+    "negative_area_fp_per_frame": 0.0007142857142857143,
+    "D4_negative_area_fp_per_frame": 0.0025
+  },
+  "gates": {
+    "leaf_iou_at_least_0_80": true,
+    "puddle_iou_at_least_0_80": true,
+    "macro_miou_at_least_0_80": true,
+    "boundary_f1_at_least_0_75": true,
+    "negative_area_fp_per_frame_at_most_0_05": true
+  },
+  "temporal_persistence": {
+    "implemented_and_unit_tested": true,
+    "applied_to_static_gate": false,
+    "reason": "G6 scene frames are independently randomized and are not registered temporal observations"
+  },
+  "evidence_sha256": {
+    "training_report": "aa266a5d700e550d8a9ba49ebf0caa32fac22229de31fc44b5458e75a56354b5",
+    "area_boundary_audit": "02ef084d8c7c748c98dcc770dd0f0efd66044429715e99bab2e73c837bcf5496",
+    "area_gate": "71ad8b519cd94f75001413e58ebd16c700f6640ba5ad9ff96e7b2ac3495ab8db"
+  },
+  "OPRV3_06_AREA_PASS": true,
+  "discrete_detector_routes_passed": false,
+  "OPRV3_X86_DEV_PASS": false,
+  "MODEL_BLOCKED_INTERNAL": true,
+  "next_action": "Do not freeze or access G5_V2. Full x86 candidate recomputation remains blocked by the exhausted A/B/C discrete detector routes."
+}

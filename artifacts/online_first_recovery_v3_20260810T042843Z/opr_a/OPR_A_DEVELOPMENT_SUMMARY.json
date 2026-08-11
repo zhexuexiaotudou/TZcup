@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "stage": "OPRV3-05-OPR-A",
+  "route": "OPR-A_GENERAL_PLUS_SMALL_SPECIALIST_CLASSIFIER",
+  "data_policy": {
+    "dataset": "G6_DEVELOPMENT_OPRV3_V1",
+    "selection_split": "G6_TRAIN_WORLD_HOLDOUT",
+    "VAL_used_for_training_or_selection": false,
+    "G5_SEALED_FINAL_read": false
+  },
+  "small_specialist": {
+    "pass": true,
+    "threshold": 0.25,
+    "VAL_recall": 0.9884868421052632,
+    "VAL_precision": 0.9346811819595645,
+    "VAL_candidate_fp_per_tile": 0.05652759084791386,
+    "VAL_negative_candidate_fp_per_tile": 0.18518518518518517,
+    "VAL_per_class_recall": {
+      "plastic_bottle": 0.9900990099009901,
+      "metal_can": 0.9804878048780488,
+      "paper_litter": 0.9950248756218906
+    }
+  },
+  "closed_set_classifier_screen": {
+    "frame_count": 800,
+    "truth_count": 608,
+    "matched_correct_class": 527,
+    "false_actionable_predictions": 299,
+    "correct_class_recall": 0.8667763157894737,
+    "actionable_precision": 0.6380145278450363,
+    "false_actionable_rate": 0.3619854721549637,
+    "per_class_recall": {
+      "plastic_bottle": 0.9306930693069307,
+      "metal_can": 0.7024390243902439,
+      "paper_litter": 0.9701492537313433
+    }
+  },
+  "bounded_classifier_adaptations": [
+    {"version": "formal-v1", "pass": false},
+    {"version": "formal-v2", "pass": false},
+    {
+      "version": "formal-v3-proposal_mined",
+      "pass": false,
+      "holdout_macro_recall": 0.8707011590786123,
+      "holdout_macro_precision": 0.9380389003030514,
+      "holdout_background_specificity": 0.9389920424403183
+    }
+  ],
+  "evidence_sha256": {
+    "formal-v2/OPR_A_SPECIALIST_REPORT.json": "7a3a011e575c2da34937dd4989708a8c23f79dd6acd128ff7f62f7d0d3be4931",
+    "formal-v2/opr_a_small_specialist.pt": "3a0afa11bd19d1dba1ce33eeef28f44e22d674b9c1a7a2512b28df94b3662551",
+    "classifier-screen-formal-v1.json": "0113a9bd60f0234c48ad0a996760aa13dfcaccb8db33f4dbbb05e1e253011fa3",
+    "classifier-proposals-train-v2.json": "63e1a890b4ffa308d7f1cf15a1b4ff439e16db93ce08d51c53f485fc091d3496",
+    "classifier-adapt-formal-v1/OPR_A_CLASSIFIER_ADAPT_REPORT.json": "dbf5ce32dada13ae4cbe7587c87042ba8be437ca8e9cefa7c45b0bd24aff0bc0",
+    "classifier-adapt-formal-v2/OPR_A_CLASSIFIER_ADAPT_REPORT.json": "9d7885a69645d094545befc4ba1bfc358a06ed128475ada58ae8305a0c584fdc",
+    "classifier-adapt-formal-v3/OPR_A_CLASSIFIER_ADAPT_REPORT.json": "4877022dca99f3feb05b0e0d5c5649193444d1b343d229692685e710b662d76a"
+  },
+  "OPR_A_SPECIALIST_PASS": true,
+  "OPR_A_CLASSIFIER_PASS": false,
+  "OPR_A_PASS": false,
+  "next_action": "execute_OPR_B_two_stage_small_object_detector"
+}

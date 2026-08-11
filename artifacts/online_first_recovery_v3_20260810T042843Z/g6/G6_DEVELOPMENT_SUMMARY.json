@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "stage": "OPRV3-04-G6-DEVELOPMENT",
+  "dataset_id": "G6_DEVELOPMENT_OPRV3_V1",
+  "dataset_root": "F:/Project/TZcup/.workspace/artifacts/TZcup-oprv3-g6-development-v2",
+  "development_only": true,
+  "sealed_final_read": false,
+  "scene_count": 800,
+  "frame_count": 8000,
+  "world_count": 18,
+  "instance_count": 18732,
+  "native_resolution": [640, 480],
+  "train_small_bucket_counts": {
+    "lt8": 679,
+    "8_12": 1398,
+    "12_18": 2632,
+    "18_32": 3223
+  },
+  "train_small_class_counts": {
+    "plastic_bottle": 829,
+    "metal_can": 2161,
+    "paper_litter": 1719
+  },
+  "metal_domain_minimum_actual": 356,
+  "train_negative_area_hard_frames": 2000,
+  "negative_area_taxonomy_count": 10,
+  "exact_duplicate_count": 0,
+  "cross_split_phash_duplicate_count": 0,
+  "independent_audit": {
+    "checked_file_count": 40000,
+    "checked_instance_count": 18732,
+    "mismatch_count": 0,
+    "pass": true
+  },
+  "initial_generation_attempt": {
+    "root": "F:/Project/TZcup/.workspace/artifacts/TZcup-oprv3-g6-development-v1",
+    "status": "failed_closed_preserved",
+    "failure": "cross_split_phash_duplicate_at_scene_610523_frame_02",
+    "formal_report_emitted": false
+  },
+  "evidence_sha256": {
+    "G6_DATASET_QA.json": "3f11006d3d55d1d558b2597c75fccff746baf006dd76f8277cd14757f084db25",
+    "G6_SPLIT_MANIFEST.json": "ee3be72bb1b1643df25f90bcc6ff108a62f2b5f7e0457e849f0b3b53f38dbcac",
+    "G6_SMALL_OBJECT_DISTRIBUTION.json": "7f00ffc7a9be0d79f146c7faaa77847823da81d30b8d4b70f0abaced27948c3c",
+    "G6_METAL_CAN_DOMAIN_MATRIX.json": "97c06f235499c1a019c775d5ded6e88c74b371787697b9d5bf4e4e6b91f7ea64",
+    "G6_NEGATIVE_AREA_TAXONOMY.json": "547fdfb6d4398337ccb0766d807429de325c4f420a91aa2636e369281737ff68",
+    "G6_INDEPENDENT_AUDIT.json": "b35b3ae778cbd1a0c754bd5c444c6f20186ae763ee7a0a2914a267760bcc71b5",
+    "G6_FRAME_MANIFEST.jsonl": "c0f36c26469c7fc90faa98121f6e27764b56004450fba9a3effb38b39dff3bec",
+    "G6_INSTANCE_RECORDS.jsonl": "603fe811813195a395a546ad8689dd03b260418be2aaa8ac3721e887d1514fdc"
+  },
+  "G6_DATASET_PASS": true,
+  "G6_INDEPENDENT_AUDIT_PASS": true,
+  "next_action": "train_and_screen_OPR_A_on_development_only_data"
+}

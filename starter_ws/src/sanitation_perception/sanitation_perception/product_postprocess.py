@@ -100,6 +100,8 @@ def project_area_predictions(
     transform_map_camera: np.ndarray,
     *,
     minimum_pixels: int,
+    minimum_physical_area_m2: float,
+    minimum_physical_area_m2_by_class: dict[str, float] | None = None,
 ) -> list[dict]:
     projected = []
     for task, class_id in (("leaf", "leaf_pile"), ("puddle", "puddle")):
@@ -115,6 +117,13 @@ def project_area_predictions(
             camera,
             transform_map_camera,
             minimum_pixels=minimum_pixels,
+            minimum_physical_area_m2=(
+                minimum_physical_area_m2_by_class.get(
+                    class_id, minimum_physical_area_m2
+                )
+                if minimum_physical_area_m2_by_class
+                else minimum_physical_area_m2
+            ),
         )
         for region in regions:
             if region.region_id >= component_count:

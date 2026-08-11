@@ -46,6 +46,21 @@ class ObservedRegionMap:
             for sweep in reversed(self._sweeps)
         )
 
+    def reobserved_after(
+        self,
+        *,
+        x_m: float,
+        y_m: float,
+        after_stamp_ns: int,
+        up_to_stamp_ns: int,
+    ) -> bool:
+        """Return whether a later camera sweep covered a mapped location."""
+        return any(
+            after_stamp_ns < sweep.stamp_ns <= up_to_stamp_ns
+            and sweep.contains(x_m, y_m)
+            for sweep in reversed(self._sweeps)
+        )
+
     def to_records(self) -> list[dict]:
         return [sweep.to_record() for sweep in self._sweeps]
 

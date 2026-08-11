@@ -129,7 +129,16 @@ def test_projection_uses_predictions_and_rejects_invalid_depth() -> None:
         },
     }
     regions = project_area_predictions(
-        areas, depth, camera(), transform, minimum_pixels=20
+        areas,
+        depth,
+        camera(),
+        transform,
+        minimum_pixels=20,
+        minimum_physical_area_m2=0.05,
+        minimum_physical_area_m2_by_class={
+            "leaf_pile": 0.02,
+            "puddle": 0.05,
+        },
     )
     assert len(regions) == 1
     assert len(regions[0]["polygon_xy_m"]) >= 3

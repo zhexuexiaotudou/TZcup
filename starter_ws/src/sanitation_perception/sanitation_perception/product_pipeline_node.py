@@ -31,6 +31,12 @@ from sanitation_perception.trash_map_messages import TargetState
 
 
 SUPPORTED_RUNTIME_CONTRACT = "fcos_classifier_area_v1"
+AREA_CLASS_NAMES = {"leaf_pile", "puddle"}
+
+
+def area_minimum_physical_area_m2(runtime: dict, class_name: str) -> float:
+    by_class = runtime.get("minimum_area_region_m2_by_class", {})
+    return float(by_class.get(class_name, runtime["minimum_area_region_m2"]))
 
 
 def stamp_nanoseconds(message) -> int:
@@ -58,6 +64,18 @@ def validate_product_runtime_contract(pipeline: dict) -> None:
         raise RuntimeError("minimum_valid_depth_ratio must be in (0, 1]")
     if int(runtime.get("minimum_area_region_pixels", 0)) < 3:
         raise RuntimeError("minimum_area_region_pixels must be at least 3")
+    if float(runtime.get("minimum_area_region_m2", 0.0)) <= 0.0:
+        raise RuntimeError("minimum_area_region_m2 must be positive")
+    by_class = runtime.get("minimum_area_region_m2_by_class")
+    if by_class is not None:
+        if set(by_class) != AREA_CLASS_NAMES:
+            raise RuntimeError(
+                "minimum_area_region_m2_by_class must define leaf_pile and puddle"
+            )
+        if any(float(value) <= 0.0 for value in by_class.values()):
+            raise RuntimeError(
+                "minimum_area_region_m2_by_class values must be positive"
+            )
     if float(runtime.get("minimum_rgb_stddev", 0.0)) <= 0.0:
         raise RuntimeError("minimum_rgb_stddev must be positive")
     saturated = float(runtime.get("maximum_dark_or_saturated_fraction", 0.0))
@@ -115,7 +133,11 @@ def track_to_online_observation(
         ),
         bbox_xyxy=track.bbox_xyxy,
         polygon_xy_m=tuple(track.polygon_xy_m),
-        estimated_size_m=(0.0, 0.0, 0.0),
+        estimated_size_m=(
+            (float(track.physical_area_m2), 0.0, 0.0)
+            if str(track.target_type).upper() == "AREA"
+            else (0.0, 0.0, 0.0)
+        ),
         in_current_fov=True,
     )
 
@@ -444,6 +466,15 @@ def main() -> None:
                         camera,
                         transform_matrix,
                         minimum_pixels=int(runtime["minimum_area_region_pixels"]),
+                        minimum_physical_area_m2=float(
+                            runtime["minimum_area_region_m2"]
+                        ),
+                        minimum_physical_area_m2_by_class={
+                            class_name: area_minimum_physical_area_m2(
+                                runtime, class_name
+                            )
+                            for class_name in AREA_CLASS_NAMES
+                        },
                     )
                 )
                 projection_ms = (time.perf_counter() - projection_started) * 1000.0

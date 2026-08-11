@@ -67,11 +67,13 @@ def load_checkpoint_model(task: str, path: Path, device: torch.device):
     if checkpoint.get("checkpoint_status") != "training_complete":
         raise RuntimeError(f"{task} checkpoint is not training_complete")
     contract = checkpoint.get("model_contract") or {}
-    area_architecture = (
-        "deeplab_resnet50"
-        if "deeplab" in str(contract.get("model_id", ""))
-        else "dual_resnet18"
-    )
+    model_id = str(contract.get("model_id", ""))
+    if "deeplab_boundary_refine" in model_id:
+        area_architecture = "deeplab_resnet50_boundary_refine"
+    elif "deeplab" in model_id:
+        area_architecture = "deeplab_resnet50"
+    else:
+        area_architecture = "dual_resnet18"
     model = build_g4_model(task, area_architecture=area_architecture).to(device)
     model.load_state_dict(checkpoint["state_dict"], strict=True)
     model.eval()

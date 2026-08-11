@@ -1,4 +1,5 @@
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import yaml
@@ -7,6 +8,7 @@ from sanitation_perception.product_pipeline_node import (
     SUPPORTED_RUNTIME_CONTRACT,
     optical_forward_yaw,
     stamp_nanoseconds,
+    track_to_online_observation,
     validate_product_runtime_contract,
 )
 
@@ -42,6 +44,11 @@ def test_product_contract_rejects_cpu_or_missing_iobinding():
         "maximum_candidates": 16,
         "minimum_valid_depth_ratio": 0.05,
         "minimum_area_region_pixels": 20,
+        "minimum_area_region_m2": 0.05,
+        "minimum_area_region_m2_by_class": {
+            "leaf_pile": 0.02,
+            "puddle": 0.05,
+        },
         "minimum_rgb_stddev": 2.0,
         "maximum_dark_or_saturated_fraction": 0.98,
         "dynamic_trash_map": {
@@ -68,12 +75,48 @@ def test_product_contract_rejects_cpu_or_missing_iobinding():
         ("maximum_candidates", 0),
         ("minimum_valid_depth_ratio", 0.0),
         ("minimum_area_region_pixels", 2),
+        ("minimum_area_region_m2", 0.0),
         ("minimum_rgb_stddev", 0.0),
         ("maximum_dark_or_saturated_fraction", 1.0),
     ):
         invalid = {"runtime": {**runtime, key: value}}
         with pytest.raises(RuntimeError):
             validate_product_runtime_contract(invalid)
+
+    invalid = {
+        "runtime": {
+            **runtime,
+            "minimum_area_region_m2_by_class": {"leaf_pile": 0.02},
+        }
+    }
+    with pytest.raises(RuntimeError, match="leaf_pile and puddle"):
+        validate_product_runtime_contract(invalid)
+
+
+def test_area_track_preserves_physical_area_in_online_observation():
+    track = SimpleNamespace(
+        uuid="area-track",
+        source_backend="onnxruntime",
+        target_type="AREA",
+        class_posterior={"leaf_pile": 0.99, "background": 0.01},
+        score_ema=0.99,
+        x_m=1.0,
+        y_m=2.0,
+        z_m=0.0,
+        covariance_trace=0.01,
+        bbox_xyxy=None,
+        polygon_xy_m=((0.9, 1.9), (1.1, 1.9), (1.0, 2.1)),
+        physical_area_m2=0.038,
+    )
+    observation = track_to_online_observation(
+        track,
+        mission_id="mission",
+        stamp_ns=1,
+        camera_frame_id="camera",
+        image_frame_id="image",
+        source_model="leaf-onnx",
+    )
+    assert observation.estimated_size_m == (0.038, 0.0, 0.0)
 
 
 def test_repository_placeholder_cannot_activate_product_runtime():

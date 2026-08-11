@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "stage": "OPRV3-05-OPR-B",
+  "route": "OPR-B_TORCHVISION_FASTER_RCNN_R50_FPN_V2_P2_SMALL_ANCHORS",
+  "data_policy": {
+    "dataset": "G6_DEVELOPMENT_OPRV3_V1",
+    "fit_samples": 1600,
+    "selection_holdout_samples": 417,
+    "selection_holdout_world": "g6_train_world_10",
+    "VAL_samples": 743,
+    "VAL_used_for_training_or_selection": false,
+    "G5_SEALED_FINAL_read": false
+  },
+  "architecture": {
+    "upstream": "torchvision 0.20.1+cu124",
+    "model": "fasterrcnn_resnet50_fpn_v2",
+    "anchor_sizes": [[8, 12, 16], [16, 24, 32], [32, 48, 64], [64, 96, 128], [128, 192, 256]],
+    "classes_including_background": 4
+  },
+  "selected_holdout_operating_point": {
+    "threshold": 0.95,
+    "recall": 0.9788235294117648,
+    "precision": 0.9519450800915332,
+    "negative_false_positive_per_tile": 0.11538461538461539
+  },
+  "VAL": {
+    "threshold": 0.95,
+    "truth_count": 608,
+    "matched_correct_class": 493,
+    "recall": 0.8108552631578947,
+    "precision": 0.974308300395257,
+    "negative_false_positive_per_tile": 0.037037037037037035,
+    "per_class_recall": {
+      "plastic_bottle": 0.7722772277227723,
+      "metal_can": 0.6731707317073171,
+      "paper_litter": 0.9900497512437811
+    }
+  },
+  "failure_analysis": "The selected model controlled background false positives and precision, but did not generalize bottle and metal-can recall from the TRAIN-world holdout to isolated G6 VAL worlds.",
+  "evidence_sha256": {
+    "formal-v1/OPR_B_REPORT.json": "273c27ea06176573d5f4a777e226ea01744395ae164cbf3a7162446146d3c343",
+    "formal-v1/opr_b_fasterrcnn.pt": "4903a3103644f024bf25d03c997d2484295b5f89bb32ac5ed3a1650f7f58efef"
+  },
+  "OPR_B_PASS": false,
+  "next_action": "execute_OPR_C_official_RTMDet_s"
+}

@@ -27,6 +27,7 @@ from sanitation_learning.g4_data import (  # noqa: E402
     DISCOVERY_MODEL_SIZE,
     G4AreaDataset,
     G4DiscoveryDataset,
+    _augment_area_low_light,
     encode_discovery_pyramid_targets,
     encode_teacher_quality_pyramid,
     load_frame_rows,
@@ -133,6 +134,25 @@ def test_area_cache_is_compressed_but_batches_remain_float32(
     assert str(inputs.dtype) == "torch.float32"
     assert str(targets.dtype) == "torch.float32"
     assert str(boundaries.dtype) == "torch.float32"
+
+
+def test_puddle_low_light_augmentation_recomputes_hsv_only() -> None:
+    inputs = np.full((4, 5, 12), 0.5, dtype=np.float32)
+    inputs[:, :, 6:] = 0.75
+
+    class ForcedRandom:
+        values = iter((0.0, 0.6, 1.2, 0.8, 0.9, 1.1))
+
+        def random(self):
+            return next(self.values)
+
+        def uniform(self, _low, _high):
+            return next(self.values)
+
+    result = _augment_area_low_light(inputs, 1, ForcedRandom())
+    assert not np.array_equal(result[:, :, :3], inputs[:, :, :3])
+    assert not np.array_equal(result[:, :, 3:6], inputs[:, :, 3:6])
+    np.testing.assert_array_equal(result[:, :, 6:], inputs[:, :, 6:])
 
 
 def _box(x1, y1, x2, y2):

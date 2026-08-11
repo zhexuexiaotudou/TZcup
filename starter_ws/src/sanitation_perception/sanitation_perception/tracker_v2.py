@@ -160,6 +160,11 @@ class ProductTrackerV2:
         return track
 
     def _association_cost(self, track: ProductTrack, detection: dict, stamp: float):
+        incoming_target_type = str(
+            detection.get("target_type", track.target_type)
+        ).upper()
+        if str(track.target_type).upper() != incoming_target_type:
+            return None
         age = stamp - track.last_seen_s
         if age < 0.0 or age > self.config.occlusion_recovery_s:
             return None
@@ -241,6 +246,26 @@ class ProductTrackerV2:
             for duplicate in active[index + 1 :]:
                 if duplicate.uuid in removed:
                     continue
+                keeper_type = str(keeper.target_type).upper()
+                duplicate_type = str(duplicate.target_type).upper()
+                if keeper_type != duplicate_type:
+                    area = keeper if keeper_type == "AREA" else duplicate
+                    discrete = (
+                        duplicate if keeper_type == "AREA" else keeper
+                    )
+                    if {
+                        keeper_type,
+                        duplicate_type,
+                    } != {"AREA", "DISCRETE"} or not self._point_in_polygon(
+                        discrete.x_m,
+                        discrete.y_m,
+                        area.polygon_xy_m,
+                    ):
+                        continue
+                    removed.add(discrete.uuid)
+                    if discrete.uuid == keeper.uuid:
+                        break
+                    continue
                 if math.hypot(keeper.x_m - duplicate.x_m, keeper.y_m - duplicate.y_m) > self.config.duplicate_distance_m:
                     continue
                 total = keeper.observation_count + duplicate.observation_count
@@ -254,6 +279,24 @@ class ProductTrackerV2:
                 removed.add(duplicate.uuid)
         for track_uuid in removed:
             del self.tracks[track_uuid]
+
+    @staticmethod
+    def _point_in_polygon(
+        x_m: float,
+        y_m: float,
+        polygon_xy_m: tuple[tuple[float, float], ...],
+    ) -> bool:
+        if len(polygon_xy_m) < 3:
+            return False
+        inside = False
+        for index, (x1, y1) in enumerate(polygon_xy_m):
+            x2, y2 = polygon_xy_m[(index + 1) % len(polygon_xy_m)]
+            if (y1 > y_m) == (y2 > y_m):
+                continue
+            intersection_x = (x2 - x1) * (y_m - y1) / (y2 - y1) + x1
+            if x_m < intersection_x:
+                inside = not inside
+        return inside
 
     def update(self, detections: list[dict], stamp_s: float) -> list[ProductTrack]:
         matched: set[str] = set()

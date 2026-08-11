@@ -892,6 +892,7 @@ class G4AreaDataset:
         channel: int | None = None,
         cache_frames: bool = False,
         crop_mode: str = "full",
+        low_light_appearance_augmentation: bool = False,
     ):
         self.rows = rows
         self.augment = augment
@@ -900,6 +901,9 @@ class G4AreaDataset:
         self.channel = channel
         self.cache_frames = cache_frames
         self.crop_mode = crop_mode
+        self.low_light_appearance_augmentation = (
+            low_light_appearance_augmentation
+        )
         self._frame_cache: dict[
             int, tuple[np.ndarray, np.ndarray, np.ndarray]
         ] = {}
@@ -959,6 +963,8 @@ class G4AreaDataset:
                     boundaries.astype(np.uint8),
                 )
         rng = random.Random(self.seed + index * 1009 + self.epoch * 7919)
+        if self.augment and self.low_light_appearance_augmentation:
+            inputs = _augment_area_low_light(inputs, self.channel, rng)
         flip = self.augment and rng.random() < 0.5
         if flip:
             inputs = np.ascontiguousarray(inputs[:, ::-1])
@@ -976,6 +982,41 @@ class G4AreaDataset:
                 np.ascontiguousarray(boundaries, dtype=np.float32)
             ),
         )
+
+
+def _augment_area_low_light(
+    inputs: np.ndarray,
+    channel: int | None,
+    rng: random.Random,
+) -> np.ndarray:
+    """Apply deterministic TRAIN-only exposure/cool-light augmentation.
+
+    The first three channels are RGB for both Area models. Puddle inputs also
+    carry HSV in channels 3:6, so those channels are recomputed after the RGB
+    transform while depth/geometry/texture channels remain untouched.
+    """
+    result = inputs.astype(np.float32, copy=True)
+    if rng.random() >= 0.70:
+        return result
+    rgb = np.clip(result[:, :, :3], 0.0, 1.0)
+    exposure = rng.uniform(0.45, 0.82)
+    gamma = rng.uniform(1.05, 1.45)
+    color_scale = np.asarray(
+        [
+            rng.uniform(0.65, 0.90),
+            rng.uniform(0.75, 0.98),
+            rng.uniform(1.05, 1.25),
+        ],
+        dtype=np.float32,
+    )
+    rgb = np.clip(np.power(rgb, gamma) * exposure * color_scale, 0.0, 1.0)
+    result[:, :, :3] = rgb
+    if channel == 1:
+        hsv = cv2.cvtColor((rgb * 255.0).astype(np.float32), cv2.COLOR_RGB2HSV)
+        hsv[:, :, 0] /= 180.0
+        hsv[:, :, 1:] /= 255.0
+        result[:, :, 3:6] = hsv
+    return result
 
 
 def load_classifier_crop(

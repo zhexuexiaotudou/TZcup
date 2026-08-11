@@ -179,6 +179,25 @@ def test_deeplab_area_candidate_preserves_rgb_stem_and_rich_boundary_head() -> N
     assert outputs["boundary_logits"].shape == (1, 1, 64, 64)
 
 
+def test_deeplab_boundary_refiner_is_full_resolution_and_zero_initialized() -> None:
+    torch = pytest.importorskip("torch")
+    pytest.importorskip("torchvision")
+    model = g4_models.build_g4_model(
+        "puddle",
+        from_scratch_control=True,
+        area_architecture="deeplab_resnet50_boundary_refine",
+    )
+    assert model.model_id == "g4_puddle_segmenter_deeplab_boundary_refine_v2"
+    assert model.highres_refiner.features[0].in_channels == 10
+    assert torch.count_nonzero(model.highres_refiner.semantic_delta.weight) == 0
+    assert torch.count_nonzero(model.highres_refiner.boundary_delta.weight) == 0
+    model.eval()
+    with torch.no_grad():
+        outputs = model(torch.zeros(1, 10, 64, 64))
+    assert outputs["logits"].shape == (1, 1, 64, 64)
+    assert outputs["boundary_logits"].shape == (1, 1, 64, 64)
+
+
 def test_unknown_area_architecture_fails_closed() -> None:
     pytest.importorskip("torch")
     with pytest.raises(ValueError, match="unknown area architecture"):

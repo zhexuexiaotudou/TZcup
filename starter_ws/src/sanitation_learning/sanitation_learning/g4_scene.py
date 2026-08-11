@@ -293,7 +293,9 @@ def randomize(
         "turning": False,
         "occlusion": False,
         "reflection": False,
+        "dynamic_removal": False,
     }
+    dynamic_removal_plan = None
     overlap_executed = False
     if oprv3_coverage_profile == "turn_entry":
         if not selected:
@@ -353,7 +355,69 @@ def randomize(
     elif oprv3_coverage_profile == "reflection":
         if "wet" not in world["world_id"].lower() and "wet" not in world["material_id"].lower():
             raise ValueError("reflection coverage requires a wet world/material")
+        # The wet courtyard's straight lane ends after roughly eight metres.
+        # Preserve the full target approach, turn only long enough to leave
+        # the lane, then continue on the new heading.  A sustained circle can
+        # contact courtyard geometry near y=0.8; the short frame-counted turn
+        # avoids both that collision and the straight lane's x=0 boundary.
+        motion_profile = {
+            "name": "reflection_approach_turn_continue",
+            "frame_counted": True,
+            "phases": [
+                {
+                    "name": "reflection_straight_approach",
+                    "frame_count": 45,
+                    "linear_x_mps": 0.35,
+                    "angular_z_rad_s": 0.0,
+                },
+                {
+                    "name": "reflection_lane_exit_turn",
+                    "frame_count": 10,
+                    "linear_x_mps": 0.20,
+                    "angular_z_rad_s": 0.25,
+                },
+                {
+                    "name": "reflection_diagonal_continue",
+                    "frame_count": 4096,
+                    "linear_x_mps": 0.35,
+                    "angular_z_rad_s": 0.0,
+                },
+            ],
+        }
         coverage_requirements["reflection"] = True
+    elif oprv3_coverage_profile == "dynamic_removal":
+        removable = next(
+            (
+                item
+                for item in objects
+                if item["class_id"]
+                in {"plastic_bottle", "metal_can", "paper_litter"}
+            ),
+            None,
+        )
+        if removable is None:
+            raise ValueError(
+                "dynamic_removal coverage requires a discrete positive target"
+            )
+        removable["xyz_m"] = [-5.60, 0.60, removable["xyz_m"][2]]
+        removable["distance_m"] = 2.40
+        removable["distance_bucket_m"] = [2.0, 4.0]
+        pose = next(
+            update
+            for update in updates
+            if update["name"] == removable["model_name"]
+        )
+        pose["xyz"] = list(removable["xyz_m"])
+        dynamic_plan = None
+        dynamic_removal_plan = {
+            "model_name": removable["model_name"],
+            "class_id": removable["class_id"],
+            "initial_xyz_m": list(removable["xyz_m"]),
+            "parked_xyz_m": [PARKING_ORIGIN_X_M, PARKING_ORIGIN_Y_M, PARKING_Z_M],
+            "trigger_fraction": 0.55,
+            "executed_by_capture": True,
+        }
+        coverage_requirements["dynamic_removal"] = True
     elif oprv3_coverage_profile is not None:
         raise ValueError(f"unsupported OPRV3 coverage profile: {oprv3_coverage_profile}")
     if os.environ.get("G4_SCENE_PLAN_ONLY") != "1":
@@ -402,6 +466,7 @@ def randomize(
         ),
         "overlap_executed": overlap_executed,
         "dynamic_motion_plan": dynamic_plan,
+        "dynamic_removal_plan": dynamic_removal_plan,
         "native_gazebo_applied": True,
         "offline_sensor_augmentation": {
             "requested_only": False,
@@ -459,7 +524,7 @@ def main() -> None:
     parser.add_argument("--force-negative-only", action="store_true")
     parser.add_argument(
         "--oprv3-coverage-profile",
-        choices=("turn_entry", "occlusion", "reflection"),
+        choices=("turn_entry", "occlusion", "reflection", "dynamic_removal"),
     )
     args = parser.parse_args()
     print(

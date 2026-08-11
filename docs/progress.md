@@ -1,5 +1,13 @@
 # 项目推进记录
 
+## 2026-08-11：OPRV3-07 全量重算通过与 OPRV3-08 冻结工具
+
+- 提交 `7053ff879b926e089714870cdb97126bb241b31a` 的全量正式矩阵完成 27 条 moving 与 28 条产品地图任务；产品 precision/coverage 为 `0.991453/0.966667`、RMSE `0.052207 m`、ID consistency `1.0`，duplicate/fragmentation/pre-FOV/wrong-clean/stale-removal 均为 0。
+- OPRV3-06 v14 五项 Area 门继续通过；RTX 4080 Laptop GPU 正式 300 帧产品流水线为 `10.083979 Hz`、P95 `160.792 ms`、drop `0.01`。OPRV3-07 六个分区全部通过，`OPRV3_X86_DEV_PASS=true`、`MODEL_BLOCKED_INTERNAL=false`、`freeze_allowed=true`。
+- 新增 fail-closed `scripts/perception_oprv3_freeze.py`，逐项绑定正式报告、checkpoint/ONNX、产品配置、OCI digest、依赖与许可证哈希，并原子生成 OPRV3-08 冻结清单。G5 sealed final 与 legacy D6 此时仍未读取；冻结不替代 sealed final、30-seed、Spot Cleaning、soak、J6 或现场验收。
+- OPRV3-08 冻结进一步绑定 one-shot `scripts/perception_oprv3_sealed_final.py`、固定 OPRV3-09 策略、几何和 development manifest；访问记录原子独占创建，一次运行合并静态 AP/Area 与移动产品地图指标，访问后的失败或异常均禁止重跑。
+- `G5_SEALED_FINAL` 严格 QA 通过 4 worlds/100 scenes/1000 frames，唯一一次 OPRV3-09 评测已封存但失败：precision `1.0`、false-actionable `0.00713`、pre-FOV `0`、online-small `0.9474` 通过；object recall `0.5889`、AP50 `0.7844`、online recall `0.7810` 与 Area IoU/boundary 显著未过。该 G5 永不复测或用于调参；OPRV3-10+ 不启动，下一路线必须 development-only 并使用全新 G5_V2。
+
 ## 2026-08-11：OPRV3-06 有界 Area 恢复与固定门审计
 
 - Area 恢复改用完整 TRAIN-only 池、taxonomy/ground/lighting 均衡负样本、completed-checkpoint warm start、冻结 DeepLab backbone/geometry stem/BatchNorm 和压缩帧缓存；离散检测器保持冻结复用，G5 sealed final 与 legacy D6 均未读取。

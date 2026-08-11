@@ -416,12 +416,41 @@ def _freeze_area_backbone(model: torch.nn.Module) -> dict:
     }
 
 
+def _freeze_area_refiner_only(model: torch.nn.Module) -> dict:
+    frozen = []
+    trainable = []
+    for name, parameter in model.named_parameters():
+        if name.startswith("highres_refiner."):
+            parameter.requires_grad_(True)
+            trainable.append(name)
+        else:
+            parameter.requires_grad_(False)
+            frozen.append(name)
+    if not frozen or not trainable:
+        raise RuntimeError(
+            "area refiner-only tuning requires a highres_refiner and frozen base"
+        )
+    batch_norm_modules = 0
+    for module in model.modules():
+        if isinstance(module, torch.nn.modules.batchnorm._BatchNorm):
+            module.eval()
+            batch_norm_modules += 1
+    model.force_batch_norm_eval = True
+    return {
+        "frozen_parameter_tensors": len(frozen),
+        "trainable_parameter_tensors": len(trainable),
+        "trainable_prefixes": ["highres_refiner"],
+        "frozen_batch_norm_modules": batch_norm_modules,
+    }
+
+
 def _warm_start_area_model(
     task: str,
     source_dir: Path,
     *,
     area_architecture: str,
     freeze_backbone: bool,
+    refiner_only: bool = False,
 ) -> tuple[torch.nn.Module, dict]:
     source = source_dir / f"{task}.pt"
     if not source.is_file():
@@ -440,7 +469,19 @@ def _warm_start_area_model(
         ),
     }
     checkpoint_contract = checkpoint.get("model_contract")
-    if checkpoint_contract is not None and checkpoint_contract != expected_contract:
+    boundary_refine_upgrade = (
+        area_architecture == "deeplab_resnet50_boundary_refine"
+        and checkpoint_contract
+        and checkpoint_contract.get("architecture_role")
+        == "deeplab_resnet50_rgb_preserved_shallow_geometry"
+        and checkpoint_contract.get("model_id")
+        == f"g4_{task}_segmenter_deeplab_v1"
+    )
+    if (
+        checkpoint_contract is not None
+        and checkpoint_contract != expected_contract
+        and not boundary_refine_upgrade
+    ):
         raise RuntimeError(
             f"area warm-start {task} model contract mismatch: "
             f"expected {expected_contract}, got {checkpoint_contract}"
@@ -450,13 +491,36 @@ def _warm_start_area_model(
         raise RuntimeError(
             f"area warm-start {task} checkpoint has no selected state_dict"
         )
-    model.load_state_dict(state, strict=True)
-    freeze = _freeze_area_backbone(model) if freeze_backbone else None
+    if boundary_refine_upgrade:
+        incompatible = model.load_state_dict(state, strict=False)
+        unexpected = list(incompatible.unexpected_keys)
+        invalid_missing = [
+            name
+            for name in incompatible.missing_keys
+            if not name.startswith("highres_refiner.")
+        ]
+        if unexpected or invalid_missing:
+            raise RuntimeError(
+                "boundary-refine warm start has incompatible state: "
+                f"missing={invalid_missing}, unexpected={unexpected}"
+            )
+    else:
+        model.load_state_dict(state, strict=True)
+    freeze = (
+        _freeze_area_refiner_only(model)
+        if refiner_only
+        else (_freeze_area_backbone(model) if freeze_backbone else None)
+    )
     return model, {
         "source": str(source),
         "source_sha256": sha256(source),
         "checkpoint_status": checkpoint.get("checkpoint_status"),
         "model_contract": checkpoint_contract,
+        "architecture_upgrade": (
+            "deeplab_v1_to_highres_boundary_refine_v2"
+            if boundary_refine_upgrade
+            else None
+        ),
         "freeze": freeze,
     }
 
@@ -1151,7 +1215,11 @@ def main() -> int:
     )
     parser.add_argument(
         "--area-architecture",
-        choices=("dual_resnet18", "deeplab_resnet50"),
+        choices=(
+            "dual_resnet18",
+            "deeplab_resnet50",
+            "deeplab_resnet50_boundary_refine",
+        ),
         default="dual_resnet18",
     )
     parser.add_argument(
@@ -1163,6 +1231,27 @@ def main() -> int:
         "--area-freeze-backbone",
         action="store_true",
         help="freeze the warm-start DeepLab backbone and train decoder/boundary heads",
+    )
+    parser.add_argument(
+        "--area-refiner-only",
+        action="store_true",
+        help="freeze the complete warm-start base and tune only highres_refiner",
+    )
+    parser.add_argument(
+        "--reuse-leaf-model-dir",
+        type=Path,
+        help="reuse a completed leaf checkpoint while retraining only puddle",
+    )
+    parser.add_argument(
+        "--area-low-light-augmentation",
+        action="store_true",
+        help="apply deterministic TRAIN-only low-exposure cool-light augmentation",
+    )
+    parser.add_argument("--area-boundary-loss-weight", type=float, default=0.35)
+    parser.add_argument("--area-negative-loss-weight", type=float, default=1.0)
+    parser.add_argument("--area-boundary-pixel-weight", type=float, default=2.0)
+    parser.add_argument(
+        "--area-semantic-boundary-weight", type=float, default=0.0
     )
     parser.add_argument("--holdout-fraction", type=float, default=0.2)
     parser.add_argument(
@@ -1208,6 +1297,21 @@ def main() -> int:
         )
     if args.area_freeze_backbone and not args.area_warm_start_dir:
         raise ValueError("--area-freeze-backbone requires --area-warm-start-dir")
+    if args.area_refiner_only and not args.area_warm_start_dir:
+        raise ValueError("--area-refiner-only requires --area-warm-start-dir")
+    if args.area_refiner_only and args.area_freeze_backbone:
+        raise ValueError(
+            "--area-refiner-only and --area-freeze-backbone are mutually exclusive"
+        )
+    if (
+        args.area_refiner_only
+        and args.area_architecture != "deeplab_resnet50_boundary_refine"
+    ):
+        raise ValueError(
+            "--area-refiner-only requires deeplab_resnet50_boundary_refine"
+        )
+    if args.reuse_leaf_model_dir and not args.area_warm_start_dir:
+        raise ValueError("--reuse-leaf-model-dir requires --area-warm-start-dir")
 
     started = time.perf_counter()
     output = args.output
@@ -1515,45 +1619,65 @@ def main() -> int:
         )
     else:
         area_warm_start = {}
-        leaf_model = build_g4_model(
-            "leaf", area_architecture=args.area_architecture
-        )
         puddle_model = build_g4_model(
             "puddle", area_architecture=args.area_architecture
         )
-        if args.area_warm_start_dir:
+        if args.reuse_leaf_model_dir:
+            leaf, leaf_training = _load_reused_model(
+                "leaf",
+                args.reuse_leaf_model_dir,
+                output,
+                device,
+                area_architecture=args.area_architecture,
+            )
+        else:
+            leaf_model = build_g4_model(
+                "leaf", area_architecture=args.area_architecture
+            )
+        if args.area_warm_start_dir and not args.reuse_leaf_model_dir:
             leaf_model, area_warm_start["leaf"] = _warm_start_area_model(
                 "leaf",
                 args.area_warm_start_dir,
                 area_architecture=args.area_architecture,
                 freeze_backbone=args.area_freeze_backbone,
+                refiner_only=args.area_refiner_only,
             )
+        if args.area_warm_start_dir:
             puddle_model, area_warm_start["puddle"] = _warm_start_area_model(
                 "puddle",
                 args.area_warm_start_dir,
                 area_architecture=args.area_architecture,
                 freeze_backbone=args.area_freeze_backbone,
+                refiner_only=args.area_refiner_only,
             )
-        leaf, leaf_training = train_area(
-            "leaf",
-            leaf_rows,
-            device=device,
-            epochs=args.area_epochs,
-            batch_size=args.area_batch_size,
-            learning_rate=args.learning_rate,
-            seed=SEED,
-            val_rows=leaf_validation,
-            checkpoint_path=output / "leaf.pt",
-            early_stopping_patience=8,
-            load_best=True,
-            cache_frames=not args.disable_area_frame_cache,
-            selector=area_selector(),
-            validation_metric_fn=_area_validation_metric_fn(
-                leaf_validation, device, "leaf"
-            ),
-            model=leaf_model,
-        )
-        if args.area_freeze_backbone and device.type == "cuda":
+        if not args.reuse_leaf_model_dir:
+            leaf, leaf_training = train_area(
+                "leaf",
+                leaf_rows,
+                device=device,
+                epochs=args.area_epochs,
+                batch_size=args.area_batch_size,
+                learning_rate=args.learning_rate,
+                seed=SEED,
+                val_rows=leaf_validation,
+                checkpoint_path=output / "leaf.pt",
+                early_stopping_patience=8,
+                load_best=True,
+                cache_frames=not args.disable_area_frame_cache,
+                selector=area_selector(),
+                validation_metric_fn=_area_validation_metric_fn(
+                    leaf_validation, device, "leaf"
+                ),
+                model=leaf_model,
+                low_light_appearance_augmentation=(
+                    args.area_low_light_augmentation
+                ),
+                boundary_weight=args.area_boundary_loss_weight,
+                negative_weight=args.area_negative_loss_weight,
+                boundary_pixel_weight=args.area_boundary_pixel_weight,
+                semantic_boundary_weight=args.area_semantic_boundary_weight,
+            )
+        if device.type == "cuda":
             leaf.to("cpu")
             torch.cuda.empty_cache()
         puddle, puddle_training = train_area(
@@ -1574,8 +1698,15 @@ def main() -> int:
                 puddle_validation, device, "puddle"
             ),
             model=puddle_model,
+            low_light_appearance_augmentation=(
+                args.area_low_light_augmentation
+            ),
+            boundary_weight=args.area_boundary_loss_weight,
+            negative_weight=args.area_negative_loss_weight,
+            boundary_pixel_weight=args.area_boundary_pixel_weight,
+            semantic_boundary_weight=args.area_semantic_boundary_weight,
         )
-        if args.area_freeze_backbone and device.type == "cuda":
+        if device.type == "cuda":
             leaf.to(device)
 
     discovery_selection_metrics = _selected_validation_metrics(
@@ -1920,7 +2051,20 @@ def main() -> int:
                 "full_train_only_pool": True,
                 "warm_start": area_warm_start if not area_reuse_source else {},
                 "backbone_frozen": bool(args.area_freeze_backbone),
+                "refiner_only": bool(args.area_refiner_only),
                 "frame_cache_enabled": not args.disable_area_frame_cache,
+                "reused_leaf_checkpoint": (
+                    leaf_training if args.reuse_leaf_model_dir else None
+                ),
+                "low_light_appearance_augmentation": bool(
+                    args.area_low_light_augmentation
+                ),
+                "loss_weights": {
+                    "boundary": args.area_boundary_loss_weight,
+                    "negative": args.area_negative_loss_weight,
+                    "boundary_pixel": args.area_boundary_pixel_weight,
+                    "semantic_boundary": args.area_semantic_boundary_weight,
+                },
             },
             "reused_selected_checkpoints_for_diagnostic_evaluation": bool(
                 args.reuse_model_dir

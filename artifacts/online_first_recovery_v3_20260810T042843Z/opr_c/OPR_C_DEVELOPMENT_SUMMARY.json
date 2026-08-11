@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "stage": "OPRV3-05-OPR-C",
+  "route": "OPR-C_OFFICIAL_MMDTECTION_V3_3_0_RTMDET_S",
+  "official_provenance": {
+    "repository": "https://github.com/open-mmlab/mmdetection",
+    "release": "v3.3.0",
+    "release_commit_abbrev": "44ebd17",
+    "license": "Apache-2.0",
+    "config": "configs/rtmdet/rtmdet_s_8xb32-300e_coco.py",
+    "checkpoint_url": "https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet_s_8xb32-300e_coco/rtmdet_s_8xb32-300e_coco_20220905_161602-387a891e.pth",
+    "checkpoint_sha256": "387a891e157cf0ab57d76b3ffc17bf77247089d672532427930b3140f9e789d6"
+  },
+  "environment": {
+    "docker_image": "tzcup/opr-c-rtmdet:v3.3.0-ops",
+    "docker_digest": "sha256:fefe73290aed0018afe47c725b449b6c3da3db954d9d0ea01c12ed5778a42864",
+    "torch": "2.5.1+cu124",
+    "torchvision": "0.20.1+cu124",
+    "mmcv": "2.1.0",
+    "mmengine": "0.10.7",
+    "mmdetection": "3.3.0",
+    "local_modification": "MMCV CPU ops were compiled for import compatibility; RTMDet CUDA post-processing uses torchvision.ops.batched_nms with the same per-class IoU contract."
+  },
+  "data_policy": {
+    "dataset": "G6_DEVELOPMENT_OPRV3_V1",
+    "fit_frames": 2400,
+    "fit_instances": 3663,
+    "fit_worlds": 10,
+    "selection_holdout_frames": 470,
+    "selection_holdout_instances": 710,
+    "selection_holdout_world": "g6_train_world_10",
+    "VAL_frames": 800,
+    "VAL_instances": 800,
+    "VAL_worlds": 2,
+    "VAL_used_for_training_or_selection": false,
+    "G5_SEALED_FINAL_read": false
+  },
+  "training": {
+    "epochs": 8,
+    "batch_size": 8,
+    "duration_s": 569.1395245110034,
+    "selected_epoch": 7,
+    "selected_holdout_coco_AP50_95": 0.964,
+    "selected_holdout_coco_AP50": 0.993,
+    "selected_holdout_coco_small_AP": 0.957,
+    "selected_checkpoint_sha256": "833e6148f566aed60c27378c4c1f832bb0e3f7532dae780d12ce5424579e2dfa"
+  },
+  "selected_holdout_operating_point": {
+    "threshold": 0.3,
+    "recall": 0.9859154929577465,
+    "precision": 0.9776536312849162,
+    "unmatched_false_positive_per_frame": 0.03404255319148936,
+    "per_class_recall": {
+      "plastic_bottle": 0.9928571428571429,
+      "metal_can": 1.0,
+      "paper_litter": 0.9590909090909091
+    }
+  },
+  "VAL": {
+    "threshold": 0.3,
+    "recall": 0.9075,
+    "precision": 0.8842874543239951,
+    "unmatched_false_positive_per_frame": 0.11875,
+    "per_class_recall": {
+      "plastic_bottle": 0.9285714285714286,
+      "metal_can": 0.8277153558052435,
+      "paper_litter": 0.9662921348314607
+    }
+  },
+  "route_exhaustion": {
+    "OPR_A_PASS": false,
+    "OPR_B_PASS": false,
+    "OPR_C_PASS": false,
+    "additional_detector_routes_authorized": false,
+    "MODEL_BLOCKED_INTERNAL": true
+  },
+  "minimum_next_research_need": {
+    "hardware": "No additional accelerator is the minimum blocker; the current RTX 4080 completed the bounded route.",
+    "data": "Acquire an independently rendered or real, world-isolated development pack not derived from current G6 textures: at least 400 audited metal-can instances, 250 bottle instances, and 400 full-frame discrete-negative images spanning reflective/dark cans, wet/specular roads, shadows, paint and clutter. Do not use either sealed G5 set.",
+    "research": "Run one preregistered domain-generalization study on material/lighting invariance and background calibration using the new pack, with G6 VAL retained only as a diagnostic historical failure. Architecture search beyond OPR-C requires a new authorization cycle."
+  },
+  "evidence_sha256": {
+    "prepared-v1/OPR_C_COCO_PREP_REPORT.json": "81ac8e052e2ebf0e3a7cbc94fd1262d51471ed7f5617d45f6bf0236910c728f7",
+    "formal-v1/OPR_C_TRAIN_REPORT.json": "c30d73c8de298f726ed22272f8563349653065f179017d33865585c0fb328d3a",
+    "screen-formal-v1/OPR_C_REPORT.json": "90927e107b0fc4aa443a57676a1a0af8246668d29ae162a44b215354d4e877f8"
+  },
+  "OPR_C_PASS": false,
+  "next_action": "continue_independent_OPRV3_06_area_recovery_without_claiming_discrete_detector_readiness"
+}

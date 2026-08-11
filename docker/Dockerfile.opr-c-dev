@@ -1,0 +1,30 @@
+FROM tzcup/sanitation-jazzy:stage5b-tv
+
+ARG MMDETECTION_TAG=v3.3.0
+ARG MMCV_VERSION=2.1.0
+ARG MMENGINE_VERSION=0.10.7
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    TORCH_CUDA_ARCH_LIST="8.9" \
+    MMCV_WITH_OPS=1 \
+    MAX_JOBS=4
+
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends build-essential ninja-build \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN pip install --break-system-packages --no-cache-dir --no-deps \
+       "addict==2.4.0" "markdown-it-py==3.0.0" "mdurl==0.1.2" "rich==13.9.4" \
+       "termcolor==2.5.0" "platformdirs==4.3.6" "yapf==0.40.2" \
+       "pycocotools==2.0.8" "shapely==2.0.6" "terminaltables==3.1.10" \
+    && pip install --break-system-packages --no-cache-dir --no-deps \
+       "mmengine==${MMENGINE_VERSION}" "mmdet==3.3.0" \
+    && pip install --break-system-packages --no-cache-dir --no-deps --no-build-isolation \
+       "mmcv==${MMCV_VERSION}" \
+    && python3 -c "import cv2, numpy, mmcv, mmengine, mmdet; from mmcv.ops import batched_nms; print(cv2.__version__, numpy.__version__, mmcv.__version__, mmengine.__version__, mmdet.__version__)"
+
+RUN pip install --break-system-packages --no-cache-dir --no-deps "tqdm==4.67.1" \
+    && python3 -c "from mmdet.models.detectors import RTMDet; print(RTMDet.__name__)"
+
+WORKDIR /workspace

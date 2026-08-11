@@ -183,6 +183,11 @@ def generate(
             "maximum_candidates": maximum_candidates,
             "minimum_valid_depth_ratio": 0.05,
             "minimum_area_region_pixels": 20,
+            "minimum_area_region_m2": 0.05,
+            "minimum_area_region_m2_by_class": {
+                "leaf_pile": 0.02,
+                "puddle": 0.05,
+            },
             "minimum_rgb_stddev": 2.0,
             "maximum_dark_or_saturated_fraction": 0.98,
         }

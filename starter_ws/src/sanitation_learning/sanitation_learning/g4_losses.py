@@ -302,6 +302,7 @@ def area_loss(
     tversky_alpha: float = 0.3,
     tversky_beta: float = 0.8,
     boundary_pixel_weight: float = 2.0,
+    semantic_boundary_weight: float = 0.0,
 ) -> dict[str, torch.Tensor]:
     logits = outputs["logits"]
     positive_counts = targets.sum(dim=(0, 2, 3))
@@ -355,6 +356,22 @@ def area_loss(
         )
     ).mean()
     boundary_loss = boundary_binary + boundary_dice
+    semantic_eroded = -functional.max_pool2d(
+        -probability, kernel_size=3, stride=1, padding=1
+    )
+    semantic_boundary = torch.clamp(probability - semantic_eroded, min=0.0)
+    semantic_boundary_intersection = (
+        semantic_boundary * boundary_targets
+    ).sum(dim=(0, 2, 3))
+    semantic_boundary_dice = 1.0 - (
+        (2.0 * semantic_boundary_intersection + 1.0)
+        /
+        (
+            semantic_boundary.sum(dim=(0, 2, 3))
+            + boundary_targets.sum(dim=(0, 2, 3))
+            + 1.0
+        )
+    ).mean()
     negative_logits = logits[targets == 0].flatten()
     if negative_logits.numel() > 0:
         top_count = max(1, int(negative_logits.numel() * negative_ratio))
@@ -367,6 +384,7 @@ def area_loss(
         binary
         + tversky_loss
         + boundary_weight * boundary_loss
+        + semantic_boundary_weight * semantic_boundary_dice
         + negative_weight * negative_penalty
     )
     return {
@@ -376,6 +394,7 @@ def area_loss(
         "boundary": boundary_loss,
         "boundary_binary": boundary_binary,
         "boundary_dice": boundary_dice,
+        "semantic_boundary_dice": semantic_boundary_dice,
         "negative_penalty": negative_penalty,
     }
 

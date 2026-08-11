@@ -104,3 +104,42 @@ def test_area_polygon_and_physical_area_follow_the_latest_observation():
     updated = tracker.update([area], 0.1)[0]
     assert updated.polygon_xy_m[1] == (1.2, 0.0)
     assert updated.physical_area_m2 == pytest.approx(0.30)
+
+
+def test_area_and_discrete_observations_never_share_a_track():
+    tracker = ProductTrackerV2(config())
+    discrete = detection(cls="paper_litter")
+    discrete["target_type"] = "DISCRETE"
+    area = detection(x=1.01, cls="leaf_pile")
+    area["class_probabilities"] = {"leaf_pile": 0.9, "background": 0.1}
+    area["target_type"] = "AREA"
+
+    tracks = tracker.update([discrete, area], 0.0)
+
+    assert len(tracks) == 2
+    assert {track.target_type for track in tracks} == {"DISCRETE", "AREA"}
+
+
+def test_area_polygon_suppresses_contained_discrete_duplicate_only():
+    tracker = ProductTrackerV2(config())
+    discrete = detection(x=1.0, cls="paper_litter")
+    discrete["target_type"] = "DISCRETE"
+    area = detection(x=1.01, cls="leaf_pile")
+    area["class_probabilities"] = {"leaf_pile": 0.9, "background": 0.1}
+    area["target_type"] = "AREA"
+    area["polygon_xy_m"] = (
+        (0.8, 1.8),
+        (1.2, 1.8),
+        (1.2, 2.2),
+        (0.8, 2.2),
+    )
+
+    tracks = tracker.update([discrete, area], 0.0)
+
+    assert len(tracks) == 1
+    assert tracks[0].target_type == "AREA"
+
+    adjacent = detection(x=1.5, cls="metal_can")
+    adjacent["target_type"] = "DISCRETE"
+    tracks = tracker.update([area, adjacent], 0.1)
+    assert {track.target_type for track in tracks} == {"AREA", "DISCRETE"}

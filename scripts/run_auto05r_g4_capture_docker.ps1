@@ -25,7 +25,7 @@ param(
     [double]$CaptureMinRotationRad = 0.0,
     [ValidateRange(1, 10)]
     [int]$CaptureMaxAttempts = 3,
-    [ValidateSet("", "turn_entry", "occlusion", "reflection")]
+    [ValidateSet("", "turn_entry", "occlusion", "reflection", "dynamic_removal")]
     [string]$Oprv3CoverageProfile = "",
     [switch]$SkipWorldGeneration,
     [switch]$ForceNegativeOnly

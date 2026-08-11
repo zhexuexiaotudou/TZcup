@@ -1,0 +1,38 @@
+{
+  "schema_version": 1,
+  "stage": "OPRV3-05-OPR-C-HYPOTHESIS",
+  "created_utc": "2026-08-11T11:55:00Z",
+  "route_limit": "OPR-C is the third and final OPRV3 detector route; no OPR-D/E/F is authorized.",
+  "prior_failures": {
+    "OPR_A": "The class-agnostic small-object specialist passed proposal recall, but the bounded closed-set classifier adaptations could not simultaneously preserve cross-domain recall and background specificity.",
+    "OPR_B": "Faster R-CNN R50-FPN-v2 with explicit 8/12/16-pixel P2 anchors passed holdout recall/precision but fell to 0.810855 correct-class recall on isolated VAL; bottle and metal-can recall were 0.772277 and 0.673171 while precision and negative FP passed."
+  },
+  "selected_official_detector": {
+    "name": "RTMDet-s",
+    "official_repository": "https://github.com/open-mmlab/mmdetection",
+    "locked_release": "v3.3.0",
+    "official_config": "configs/rtmdet/rtmdet_s_8xb32-300e_coco.py",
+    "official_checkpoint": "https://download.openmmlab.com/mmdetection/v3.0/rtmdet/rtmdet_s_8xb32-300e_coco/rtmdet_s_8xb32-300e_coco_20220905_161602-387a891e.pth",
+    "checkpoint_sha256": "387a891e157cf0ab57d76b3ffc17bf77247089d672532427930b3140f9e789d6",
+    "checkpoint_sha256_status": "verified_from_official_download_before_formal_training",
+    "code_license": "Apache-2.0",
+    "checkpoint_provenance": "Official MMDetection RTMDet model-zoo link for the v3.3.0 config; redistribution remains subject to the upstream notice and local third-party audit.",
+    "release_eligibility": "development_candidate_only_until_third_party_notice_and_selected_weight_audit_are_complete"
+  },
+  "architecture_hypothesis": {
+    "targeted_failure": "cross-world bottle and metal-can appearance generalization at small native scale",
+    "mechanism": "RTMDet-s directly learns the three closed classes with an anchor-free dense head, CSPNeXt plus PA-FPN multi-scale features, and dynamic soft-label assignment. COCO-pretrained features provide an independent initialization from the failed Torchvision two-stage route.",
+    "falsification_gate": "Use TRAIN-world selection only, then require isolated G6 VAL recall >=0.95, precision >=0.95, unmatched background FP/frame <=0.05, and each-class recall >=0.90 without reading G5_SEALED_FINAL. G6 contains negative-area backgrounds but no full-frame discrete-negative VAL images, so a zero-denominator pure-negative metric is reported but never used as a pass gate."
+  },
+  "expected_inference_cost": {
+    "input": "640x640",
+    "parameters_million_official": 8.89,
+    "flops_g_official": 14.8,
+    "official_tensorrt_fp16_latency_ms_rtx3090_without_nms": 1.22,
+    "local_x86_latency": null,
+    "note": "Official benchmark is architecture-selection context, not local product acceptance; local end-to-end P95 must be measured later."
+  },
+  "j6_path": "If OPR-C passes x86 development, distill its three-class outputs into a fixed-input MobileNetV3/ResNet18-level J6 student; no claim of current J6 operator compatibility is made.",
+  "G5_SEALED_FINAL_read": false,
+  "status": "AUTHORIZED_FOR_BOUNDED_DEVELOPMENT_EXECUTION"
+}

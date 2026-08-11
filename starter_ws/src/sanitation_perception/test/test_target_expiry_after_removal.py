@@ -14,6 +14,7 @@ def test_target_expires_after_removal_without_navigation_action():
     target = dynamic_map.ingest(observation(dynamic_map, stamp))
     dynamic_map.expire(1_600_000_000)
     assert target.track_state == TargetState.LOST
+    record_sweep(dynamic_map, 2_100_000_000)
     dynamic_map.expire(2_100_000_000)
     assert target.track_state == TargetState.REJECTED
     assert dynamic_map.count == 0

@@ -47,6 +47,7 @@ def mask_regions_to_map(
     transform_map_camera: np.ndarray,
     *,
     minimum_pixels: int = 20,
+    minimum_physical_area_m2: float = 0.0,
     contour_epsilon_ratio: float = 0.02,
 ) -> list[ProjectedAreaRegion]:
     """Project every valid predicted region; no registry rectangle is used."""
@@ -89,7 +90,7 @@ def mask_regions_to_map(
         except ProjectionError:
             continue
         physical_area = _shoelace(polygon)
-        if physical_area <= 0.0:
+        if physical_area <= 0.0 or physical_area < minimum_physical_area_m2:
             continue
         covariance_xy = np.mean(covariances, axis=0)
         regions.append(

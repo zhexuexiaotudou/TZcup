@@ -48,6 +48,14 @@ def should_reapply_start(
     return saved_count == 0 and outside_start_envelope(current_xy, start_xyz)
 
 
+def removal_trigger_frame(frame_count: int, trigger_fraction: float) -> int:
+    if frame_count < 4:
+        raise ValueError("dynamic removal capture requires at least four frames")
+    if not 0.0 < trigger_fraction < 1.0:
+        raise ValueError("dynamic removal trigger_fraction must be in (0, 1)")
+    return max(2, min(frame_count - 2, int(round(frame_count * trigger_fraction))))
+
+
 def adjacent_translation_gate(
     records: list[dict],
     requested_frames: int,
@@ -221,6 +229,7 @@ def main() -> None:
             self.camera = None; self.odom = None; self.odom_buffer = {}; self.last_saved_pose = None; self.saved = []
             self.pending_writes = []
             self.dynamic_positions = []
+            self.dynamic_removal_events = []
             self.motion_enabled = False
             self.vehicle_reset_applied = False
             self.vehicle_reset_started = None
@@ -330,20 +339,53 @@ def main() -> None:
 
         def apply_dynamic_step(self, frame_count):
             plan = scene.get("dynamic_motion_plan")
-            if not plan:
+            if plan:
+                start = plan["start_xyz_m"]
+                delta = plan["delta_per_frame_m"]
+                xyz = [
+                    float(start[index]) + float(delta[index]) * frame_count
+                    for index in range(3)
+                ]
+                set_poses(
+                    scene["world_id"],
+                    [{"name": plan["model_name"], "xyz": xyz, "yaw": 0.0}],
+                )
+                self.dynamic_positions.append(
+                    {"after_frame": frame_count - 1, "xyz_m": xyz}
+                )
+            removal = scene.get("dynamic_removal_plan")
+            if not removal or self.dynamic_removal_events:
                 return
-            start = plan["start_xyz_m"]
-            delta = plan["delta_per_frame_m"]
-            xyz = [
-                float(start[index]) + float(delta[index]) * frame_count
-                for index in range(3)
-            ]
+            trigger = removal_trigger_frame(
+                args.frame_count, float(removal["trigger_fraction"])
+            )
+            if frame_count < trigger:
+                return
+            parked = [float(value) for value in removal["parked_xyz_m"]]
             set_poses(
                 scene["world_id"],
-                [{"name": plan["model_name"], "xyz": xyz, "yaw": 0.0}],
+                [
+                    {
+                        "name": removal["model_name"],
+                        "xyz": parked,
+                        "yaw": 0.0,
+                    }
+                ],
             )
-            self.dynamic_positions.append(
-                {"after_frame": frame_count - 1, "xyz_m": xyz}
+            # Sensor callbacks may already have queued synchronized images
+            # from immediately before the pose update.  Discard them so the
+            # declared first post-removal frame is genuinely captured after
+            # the target has left the world, rather than being a stale buffer.
+            for bucket in self.buffers.values():
+                bucket.clear()
+            self.dynamic_removal_events.append(
+                {
+                    "after_frame": frame_count - 1,
+                    "first_post_removal_frame": frame_count,
+                    "model_name": removal["model_name"],
+                    "class_id": removal["class_id"],
+                    "parked_xyz_m": parked,
+                }
             )
 
         def stage(self, stamp, messages, pose, odom_stamp):
@@ -397,6 +439,8 @@ def main() -> None:
         or len(node.dynamic_positions) == args.frame_count
         and len({tuple(item["xyz_m"]) for item in node.dynamic_positions}) > 1
     )
+    removal_plan = scene.get("dynamic_removal_plan")
+    removal_executed = removal_plan is None or len(node.dynamic_removal_events) == 1
     adjacent_motion_gate_pass = adjacent_motion_gate(
         node.saved,
         args.frame_count,
@@ -416,7 +460,73 @@ def main() -> None:
         if simulated_duration_s and simulated_duration_s > 0.0
         else None
     )
-    report = {"schema_version": 3, "scene_seed": scene["scene_seed"], "world_id": scene["world_id"], "split": scene["split"], "requested_frames": args.frame_count, "captured_frames": len(node.saved), "topics": list(topics), "camera_xyz_m": list(args.camera_xyz), "optical_frame": args.optical_frame, "commanded_linear_speed_mps": args.linear_speed_mps, "oprv3_motion_profile": scene.get("oprv3_motion_profile"), "minimum_adjacent_translation_m": args.minimum_adjacent_translation_m, "minimum_adjacent_rotation_rad": args.minimum_adjacent_rotation_rad, "capture_timing": {"persistence_mode": "bounded_memory_then_flush_after_motion_stop", "timeout_s": args.timeout, "wall_duration_s": wall_duration_s, "persistence_duration_s": persistence_duration_s, "simulated_duration_s": simulated_duration_s, "simulator_realtime_factor": simulated_duration_s / wall_duration_s if simulated_duration_s is not None and wall_duration_s > 0.0 else None, "effective_captured_fps": effective_captured_fps}, "sensor_odom_sync": {"maximum_skew_ns": max(sensor_odom_skews) if sensor_odom_skews else None, "gate_maximum_skew_ns": 50_000_000, "pass": bool(sensor_odom_skews) and max(sensor_odom_skews) <= 50_000_000}, "observed_linear_speed_mps": {"time_basis": "synchronized_odom_timestamp", "samples": len(observed_speeds), "median": float(np.median(observed_speeds)) if observed_speeds else None, "p05": float(np.percentile(observed_speeds, 5)) if observed_speeds else None, "p95": float(np.percentile(observed_speeds, 95)) if observed_speeds else None}, "observed_absolute_yaw_change_rad": sum(wrapped_angle_delta(float(a.get("vehicle_yaw_rad", 0.0)), float(b.get("vehicle_yaw_rad", 0.0))) for a, b in zip(node.saved, node.saved[1:])), "records": node.saved, "adjacent_motion_gate_pass": adjacent_motion_gate_pass, "dynamic_motion_requested": dynamic_plan is not None, "dynamic_motion_executed": dynamic_executed, "dynamic_positions": node.dynamic_positions, "capture_pass": len(node.saved) == args.frame_count and adjacent_motion_gate_pass and bool(sensor_odom_skews) and max(sensor_odom_skews) <= 50_000_000 and all(item["exact_four_sensor_timestamp"] for item in node.saved) and all(item["rgb_sha256"] for item in node.saved) and dynamic_executed}
+    capture_pass = (
+        len(node.saved) == args.frame_count
+        and adjacent_motion_gate_pass
+        and bool(sensor_odom_skews)
+        and max(sensor_odom_skews) <= 50_000_000
+        and all(item["exact_four_sensor_timestamp"] for item in node.saved)
+        and all(item["rgb_sha256"] for item in node.saved)
+        and dynamic_executed
+        and removal_executed
+    )
+    report = {
+        "schema_version": 4,
+        "scene_seed": scene["scene_seed"],
+        "world_id": scene["world_id"],
+        "split": scene["split"],
+        "requested_frames": args.frame_count,
+        "captured_frames": len(node.saved),
+        "topics": list(topics),
+        "camera_xyz_m": list(args.camera_xyz),
+        "optical_frame": args.optical_frame,
+        "commanded_linear_speed_mps": args.linear_speed_mps,
+        "oprv3_motion_profile": scene.get("oprv3_motion_profile"),
+        "minimum_adjacent_translation_m": args.minimum_adjacent_translation_m,
+        "minimum_adjacent_rotation_rad": args.minimum_adjacent_rotation_rad,
+        "capture_timing": {
+            "persistence_mode": "bounded_memory_then_flush_after_motion_stop",
+            "timeout_s": args.timeout,
+            "wall_duration_s": wall_duration_s,
+            "persistence_duration_s": persistence_duration_s,
+            "simulated_duration_s": simulated_duration_s,
+            "simulator_realtime_factor": (
+                simulated_duration_s / wall_duration_s
+                if simulated_duration_s is not None and wall_duration_s > 0.0
+                else None
+            ),
+            "effective_captured_fps": effective_captured_fps,
+        },
+        "sensor_odom_sync": {
+            "maximum_skew_ns": max(sensor_odom_skews) if sensor_odom_skews else None,
+            "gate_maximum_skew_ns": 50_000_000,
+            "pass": bool(sensor_odom_skews)
+            and max(sensor_odom_skews) <= 50_000_000,
+        },
+        "observed_linear_speed_mps": {
+            "time_basis": "synchronized_odom_timestamp",
+            "samples": len(observed_speeds),
+            "median": float(np.median(observed_speeds)) if observed_speeds else None,
+            "p05": float(np.percentile(observed_speeds, 5)) if observed_speeds else None,
+            "p95": float(np.percentile(observed_speeds, 95)) if observed_speeds else None,
+        },
+        "observed_absolute_yaw_change_rad": sum(
+            wrapped_angle_delta(
+                float(a.get("vehicle_yaw_rad", 0.0)),
+                float(b.get("vehicle_yaw_rad", 0.0)),
+            )
+            for a, b in zip(node.saved, node.saved[1:])
+        ),
+        "records": node.saved,
+        "adjacent_motion_gate_pass": adjacent_motion_gate_pass,
+        "dynamic_motion_requested": dynamic_plan is not None,
+        "dynamic_motion_executed": dynamic_executed,
+        "dynamic_positions": node.dynamic_positions,
+        "dynamic_removal_requested": removal_plan is not None,
+        "dynamic_removal_executed": removal_executed,
+        "dynamic_removal_events": node.dynamic_removal_events,
+        "capture_pass": capture_pass,
+    }
     (output/"capture_report.json").write_text(json.dumps(report, indent=2)+"\n"); print(json.dumps(report, indent=2))
     node.destroy_node(); rclpy.shutdown(); raise SystemExit(0 if report["capture_pass"] else 2)
 

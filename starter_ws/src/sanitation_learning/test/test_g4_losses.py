@@ -28,7 +28,27 @@ def test_area_boundary_loss_keeps_sparse_positive_gradient() -> None:
     report["total"].backward()
     assert report["boundary_binary"] > 0
     assert report["boundary_dice"] > 0
+    assert report["semantic_boundary_dice"] > 0
     assert boundary_logits.grad[0, 0, 10, 15] < 0
+
+
+def test_semantic_boundary_loss_backpropagates_to_mask_logits() -> None:
+    logits = torch.full((1, 1, 24, 24), -2.0, requires_grad=True)
+    boundary_logits = torch.zeros((1, 1, 24, 24), requires_grad=True)
+    target = torch.zeros((1, 1, 24, 24))
+    target[:, :, 6:18, 6:18] = 1.0
+    boundary = torch.zeros_like(target)
+    boundary[:, :, 6, 6:18] = 1.0
+    report = area_loss(
+        {"logits": logits, "boundary_logits": boundary_logits},
+        target,
+        boundary,
+        semantic_boundary_weight=1.0,
+    )
+    report["total"].backward()
+    assert report["semantic_boundary_dice"] > 0
+    assert logits.grad is not None
+    assert torch.isfinite(logits.grad).all()
 
 
 def test_pyramid_discovery_loss_backpropagates_every_level() -> None:

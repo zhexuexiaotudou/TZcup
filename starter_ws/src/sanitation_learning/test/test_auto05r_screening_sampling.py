@@ -134,6 +134,30 @@ def test_area_backbone_freeze_keeps_decoder_and_boundary_trainable() -> None:
     assert model.force_batch_norm_eval
 
 
+def test_area_refiner_only_freezes_every_base_parameter() -> None:
+    screening = _load_screening()
+
+    class FakeRefinedArea(screening.torch.nn.Module):
+        def __init__(self) -> None:
+            super().__init__()
+            self.base = screening.torch.nn.Linear(2, 2)
+            self.highres_refiner = screening.torch.nn.Sequential(
+                screening.torch.nn.Linear(2, 2),
+                screening.torch.nn.ReLU(),
+                screening.torch.nn.Linear(2, 1),
+            )
+
+    model = FakeRefinedArea()
+    report = screening._freeze_area_refiner_only(model)
+    states = {name: value.requires_grad for name, value in model.named_parameters()}
+    assert not states["base.weight"]
+    assert not states["base.bias"]
+    assert states["highres_refiner.0.weight"]
+    assert states["highres_refiner.2.weight"]
+    assert report["frozen_parameter_tensors"] == 2
+    assert report["trainable_parameter_tensors"] == 4
+
+
 def _write_qualified_reuse_fixture(
     source_dir: Path,
     *,

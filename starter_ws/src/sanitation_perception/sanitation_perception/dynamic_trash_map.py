@@ -21,6 +21,7 @@ from sanitation_perception.trash_map_messages import (
 @dataclass(frozen=True)
 class DynamicTrashMapConfig:
     association_distance_m: float = 0.30
+    area_association_distance_m: float = 0.50
     confirmation_observations: int = 3
     confirmation_class_posterior: float = 0.70
     confirmation_confidence: float = 0.60
@@ -28,10 +29,18 @@ class DynamicTrashMapConfig:
     lost_after_s: float = 1.0
     reject_after_s: float = 5.0
     maximum_observation_history: int = 64
+    area_confirmation_observations: int = 6
+    leaf_area_confirmation_observations: int = 4
+    puddle_area_confirmation_observations: int = 6
 
     def validate(self) -> None:
         if self.association_distance_m <= 0.0:
             raise ValueError("association_distance_m must be positive")
+        if self.area_association_distance_m < self.association_distance_m:
+            raise ValueError(
+                "area_association_distance_m must be at least "
+                "association_distance_m"
+            )
         if self.confirmation_observations < 2:
             raise ValueError("confirmation_observations must be at least 2")
         for value in (self.confirmation_class_posterior, self.confirmation_confidence):
@@ -43,6 +52,18 @@ class DynamicTrashMapConfig:
             raise ValueError("expiry thresholds must be positive and ordered")
         if self.maximum_observation_history < self.confirmation_observations:
             raise ValueError("observation history is smaller than confirmation window")
+        if self.area_confirmation_observations < self.confirmation_observations:
+            raise ValueError(
+                "area confirmation window cannot be shorter than the base window"
+            )
+        for value in (
+            self.leaf_area_confirmation_observations,
+            self.puddle_area_confirmation_observations,
+        ):
+            if value < self.confirmation_observations:
+                raise ValueError(
+                    "class-aware area confirmation cannot be shorter than the base window"
+                )
 
 
 @dataclass
@@ -204,6 +225,9 @@ class DynamicTrashMap:
         )
 
     def _association(self, observation: TargetObservation) -> DynamicTrashTarget | None:
+        maximum_distance_m = self.config.association_distance_m
+        if str(observation.target_type).upper() == "AREA":
+            maximum_distance_m = self.config.area_association_distance_m
         candidates = [
             target
             for target in self.targets.values()
@@ -212,7 +236,7 @@ class DynamicTrashMap:
             and math.hypot(
                 target.map_x_m - observation.map_pose.x_m,
                 target.map_y_m - observation.map_pose.y_m,
-            ) <= self.config.association_distance_m
+            ) <= maximum_distance_m
         ]
         return min(
             candidates,
@@ -318,10 +342,16 @@ class DynamicTrashMap:
     def _auto_state(self, target: DynamicTrashTarget, stamp_ns: int) -> None:
         requested = None
         reason = None
+        confirmation_observations = self.config.confirmation_observations
+        if str(target.target_type).upper() == "AREA":
+            confirmation_observations = {
+                "leaf_pile": self.config.leaf_area_confirmation_observations,
+                "puddle": self.config.puddle_area_confirmation_observations,
+            }.get(target.current_class, self.config.area_confirmation_observations)
         if target.track_state in {TargetState.CANDIDATE, TargetState.LOST} and target.observation_count >= 2:
             requested, reason = TargetState.TRACKED, "multi_frame_track"
         if (
-            target.observation_count >= self.config.confirmation_observations
+            target.observation_count >= confirmation_observations
             and target.class_posterior.get(target.current_class, 0.0) >= self.config.confirmation_class_posterior
             and target.confidence_ema >= self.config.confirmation_confidence
             and target.covariance_trace <= self.config.maximum_covariance_trace
@@ -370,8 +400,22 @@ class DynamicTrashMap:
             if target.track_state in TERMINAL_STATES:
                 continue
             age_s = (now_ns - target.last_seen_stamp_ns) / 1_000_000_000.0
-            if age_s >= self.config.reject_after_s and target.track_state == TargetState.LOST:
-                self.transition(target.uuid, TargetState.REJECTED, now_ns, "expired_after_removal")
+            if (
+                age_s >= self.config.reject_after_s
+                and target.track_state == TargetState.LOST
+                and self.observed_regions.reobserved_after(
+                    x_m=target.map_x_m,
+                    y_m=target.map_y_m,
+                    after_stamp_ns=target.last_seen_stamp_ns,
+                    up_to_stamp_ns=now_ns,
+                )
+            ):
+                self.transition(
+                    target.uuid,
+                    TargetState.REJECTED,
+                    now_ns,
+                    "expired_after_reobserved_absence",
+                )
                 changed.append(target.uuid)
             elif age_s >= self.config.lost_after_s and target.track_state not in {
                 TargetState.CLEANING,
