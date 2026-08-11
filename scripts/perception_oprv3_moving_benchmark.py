@@ -315,7 +315,8 @@ def load_area_gate(
     selected = selected_config.get("by_class", selected_config)
     configs = {}
     for class_name in ("leaf_pile", "puddle"):
-        record = selected.get(class_name)
+        gate_key = "leaf" if class_name == "leaf_pile" else class_name
+        record = selected.get(class_name) or selected.get(gate_key)
         if not isinstance(record, dict):
             raise RuntimeError(f"Area gate lacks {class_name} selected config")
         configs[class_name] = {

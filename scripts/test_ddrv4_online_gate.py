@@ -19,3 +19,10 @@ def test_online_product_inference_uses_rgb_without_gt_injection():
     assert "inference_detector(model, images)" in body
     assert "truth" not in body
     assert "target" not in body
+
+
+def test_g6_area_leaf_key_is_mapped_without_retuning():
+    assert 'gate_key = "leaf" if class_name == "leaf_pile" else class_name' in SOURCE
+    assert "selected.get(class_name) or selected.get(gate_key)" in SOURCE
+    assert 'float(record["threshold"])' in SOURCE
+    assert 'str(record["morphology"])' in SOURCE
