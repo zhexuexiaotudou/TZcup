@@ -1,0 +1,13 @@
+{
+  "G5_or_G5_V2_content_probed": false,
+  "docker_server": "29.5.2",
+  "generated_at_utc": "2026-08-11T13:41:17Z",
+  "gpu": {"driver": "595.79", "memory_mib": 12282, "name": "NVIDIA GeForce RTX 4080 Laptop GPU"},
+  "protocol": "DETECTOR-DATA-RECOVERY-V4",
+  "python": "3.14.3",
+  "required_runtime": {"d1_container": "tzcup/opr-c-rtmdet:v3.3.0-ops", "d1_container_digest": "sha256:fefe73290aed0018afe47c725b449b6c3da3db954d9d0ea01c12ed5778a42864"},
+  "schema_version": 1,
+  "source_commit": "d41e6a9b14eb5f8a4f6a7c4d10e9d2bea7a02dc0",
+  "source_tree": "2f7c1b400d35c4a94ae2188cdd59305da5511ae0",
+  "stage": "DDRV4-00"
+}

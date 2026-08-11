@@ -1,0 +1,52 @@
+{
+  "G7_DATASET_PASS": true,
+  "G7_INDEPENDENT_AUDIT_PASS": true,
+  "access_audit": {"G5_V2_read": false, "G5_read": false, "G6_read": false},
+  "class_counts": {"metal_can": 1235, "paper_litter": 818, "plastic_bottle": 757},
+  "dataset_id": "G7_DETECTOR_DEVELOPMENT",
+  "dataset_root": "F:/Project/TZcup/.workspace/artifacts/TZcup-ddrv4-g7-detector-development-v3",
+  "development_only": true,
+  "failed_attempts": [
+    {
+      "dataset_root": "F:/Project/TZcup/.workspace/artifacts/TZcup-ddrv4-g7-detector-development-v1",
+      "failure": "target_fully_occluded_before_bounded_placement_fix",
+      "formal_report_emitted": false,
+      "status": "failed_closed_preserved"
+    },
+    {
+      "dataset_root": "F:/Project/TZcup/.workspace/artifacts/TZcup-ddrv4-g7-detector-development-v2",
+      "failure": "negative_taxonomy_rotation_covered_4_of_16_categories",
+      "frame_count": 3200,
+      "instance_count": 2810,
+      "status": "failed_closed_preserved"
+    }
+  ],
+  "frame_count": 3200,
+  "full_negative_frame_count": 800,
+  "independent_audit": {
+    "checked_file_count": 16000,
+    "checked_frame_count": 3200,
+    "checked_instance_count": 2810,
+    "cross_split_phash_duplicate_count": 0,
+    "mismatch_count": 0
+  },
+  "instance_count": 2810,
+  "raw_file_count": 16010,
+  "raw_size_bytes": 988629458,
+  "report_sha256": {
+    "G7_ASSET_REGISTRY.json": "0a7ee938494c00b397f39186c761f90c25985534f8bcfd72f3cb32cd29e8dbe1",
+    "G7_DATASET_QA.json": "f380f956de5560286375a7d3ab5a74c0c63d8bc1d8115503d30b529a71be20cd",
+    "G7_DOMAIN_MATRIX.json": "a3beaf9aec1c8c8a2974ae9c105740c5899649850bddaf45a2a8793faf5dfde1",
+    "G7_INDEPENDENT_AUDIT.json": "39a050828d22c218844c4c5061ac306b25865d828a182b01ba60a9dd9e947c2c",
+    "G7_NEGATIVE_TAXONOMY.json": "9e94837eeee72ce132ee6a90e0840e8af59d07581dc4f6c0336e839b29dbf3d7",
+    "G7_SMALL_OBJECT_DISTRIBUTION.json": "2be79de6e3633da90637e4f8af6e360c6b407d49c50ade5c09295ee0806822a7",
+    "G7_SPLIT_MANIFEST.json": "e0b489dfe54c86a55b1db2fc6a7e5ca2a0db62955c5f0891ea19a0b50ea56635",
+    "G7_WORLD_REGISTRY.json": "357241719e22374d6d5a0c527ded917d9b60f8442ed49c6ba23e61f13b20d189"
+  },
+  "schema_version": 1,
+  "sealed_final": false,
+  "size_counts": {"large_gt48": 726, "medium_18_48": 1038, "small_lt18": 1046},
+  "source_commit": "d41e6a9b14eb5f8a4f6a7c4d10e9d2bea7a02dc0",
+  "stage": "DDRV4-01",
+  "world_count": 13
+}

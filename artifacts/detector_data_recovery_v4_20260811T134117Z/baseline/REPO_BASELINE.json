@@ -1,0 +1,20 @@
+{
+  "branch": "codex/ddrv4-detector-data-recovery",
+  "generated_at_utc": "2026-08-11T13:41:17Z",
+  "historical_evidence": [
+    {"path": "artifacts/online_first_recovery_v3_20260810T042843Z/oprv3_09/OPRV3_SEALED_FINAL_SUMMARY.json", "sha256": "911d994b6b5fa7d7e70b7a4095aa5caebfd292cee73377f7b2ee64ef9df6904b"},
+    {"path": "artifacts/online_first_recovery_v3_20260810T042843Z/g6/G6_DEVELOPMENT_SUMMARY.json", "sha256": "3b31d9dbeacc22b221e7a69cda5e9dc4a9a121c0975e5bd9f07eec0b28129b09"},
+    {"path": "artifacts/online_first_recovery_v3_20260810T042843Z/opr_a/OPR_A_DEVELOPMENT_SUMMARY.json", "sha256": "167c4d776b925a0c070a7fa578d72bf540b9332550532af10db4ef01e9dae758"},
+    {"path": "artifacts/online_first_recovery_v3_20260810T042843Z/opr_b/OPR_B_DEVELOPMENT_SUMMARY.json", "sha256": "5b73de5a1b17fc90f167759201fbd2237ca752e6e12d07a62bf472ef53f91dbe"},
+    {"path": "artifacts/online_first_recovery_v3_20260810T042843Z/opr_c/OPR_C_DEVELOPMENT_SUMMARY.json", "sha256": "2f914c7d6da72d8248aa7232094e7bd33e4152a112680602c99ad5cac69d833a"},
+    {"path": "artifacts/online_first_recovery_v3_20260810T042843Z/oprv3_06_g6/OPRV3_G6_AREA_SUMMARY.json", "sha256": "0072e361b607904a8909591c247339e005d6cf1a268737fc2b9ace43b5c272b4"}
+  ],
+  "pr": {"number": 90, "remote_head": "a8e08ff4bade35ac7e40bee5bdf9f0627fbd7fdd", "remote_tree": "2f7c1b400d35c4a94ae2188cdd59305da5511ae0"},
+  "protocol": "DETECTOR-DATA-RECOVERY-V4",
+  "schema_version": 1,
+  "sealed_content_opened": false,
+  "source_commit": "d41e6a9b14eb5f8a4f6a7c4d10e9d2bea7a02dc0",
+  "source_tree": "2f7c1b400d35c4a94ae2188cdd59305da5511ae0",
+  "stage": "DDRV4-00",
+  "worktree_clean_before_generation": true
+}

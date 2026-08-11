@@ -1,0 +1,12 @@
+{
+  "HISTORICAL_X1_X3_FAILED": true,
+  "HISTORICAL_X2_RESULT_PRESERVED": true,
+  "MRV2_A_B_C_FAILED": true,
+  "OPR_A_B_C_FAILED": true,
+  "generated_at_utc": "2026-08-11T13:41:17Z",
+  "protocol": "DETECTOR-DATA-RECOVERY-V4",
+  "schema_version": 1,
+  "source_commit": "d41e6a9b14eb5f8a4f6a7c4d10e9d2bea7a02dc0",
+  "source_tree": "2f7c1b400d35c4a94ae2188cdd59305da5511ae0",
+  "stage": "DDRV4-00"
+}

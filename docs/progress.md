@@ -1,5 +1,19 @@
 # 项目推进记录
 
+## 2026-08-11：DDRV4-00 历史冻结与数据边界
+
+- 从 PR #90 当前远端 tree `2f7c1b400d35...` 的等价本地提交建立 `codex/ddrv4-detector-data-recovery` 独立 worktree；原始脏工作区未修改。旧 X1/X2/X3、MRV2-A/B/C、OPR-A/B/C 与 OPRV3 G5 one-shot 失败证据逐文件绑定 SHA-256。
+- 新增 `sanitation_learning.ddrv4_boundary`：旧 `G5_SEALED_FINAL` 无条件永久拒绝，`G5_V2_SEALED_FINAL` 仅允许有效 DDRV4-07 one-shot freeze 预检后访问，G6 明确拒绝参与 DDRV4 checkpoint、阈值、增强或路线选择。
+- 新 detector 开发只授权 `G7_DETECTOR_DEVELOPMENT`；Area 保留 `OPRV3_06_AREA_PASS`，除非出现可复现的软件集成缺陷不再调参。`MODEL_BLOCKED_INTERNAL=true`、`PRODUCT_X86_PERCEPTION_READY=false` 保持不变。
+- DDRV4-00 五项紧凑证据位于 `artifacts/detector_data_recovery_v4_20260811T134117Z/baseline/`；基线生成过程未打开旧 G5 或 G5_V2 内容。
+
+## 2026-08-11：DDRV4-01 G7-DET 独立数据包
+
+- 新生成器采用 `g7v4_` namespace、独立 perspective-mosaic renderer、13 个新 world、8 个固定 split 和 split-specific assets；接口不接受任何已有 dataset root，G6 与两套 sealed set 均未读取。
+- v1 因随机遮挡使目标不可见而 fail-closed；v2 完整生成后发现负帧步长令 taxonomy 只覆盖 4/16 类，同样保留为失败。v3 修复为按负帧序号轮转，并新增对应退化测试。
+- v3 实际包含 3200 帧、320 场、13 世界、2810 实例；metal/bottle/paper 为 `1235/757/818`，small/medium 为 `1046/1038`，全负帧 800，所有关键 metal 域为 92–93 个实例。
+- 独立审计重读 16,000 个 RGB/depth/semantic/instance/metadata 文件与 2810 个实例，重建 bbox 和 semantic-instance 一致性；mismatch、exact duplicate、跨 split pHash duplicate 均为 0。`G7_DATASET_PASS=true`、`G7_INDEPENDENT_AUDIT_PASS=true`，只解锁 DDRV4-02/03，产品状态仍 false。
+
 ## 2026-08-11：OPRV3-07 全量重算通过与 OPRV3-08 冻结工具
 
 - 提交 `7053ff879b926e089714870cdb97126bb241b31a` 的全量正式矩阵完成 27 条 moving 与 28 条产品地图任务；产品 precision/coverage 为 `0.991453/0.966667`、RMSE `0.052207 m`、ID consistency `1.0`，duplicate/fragmentation/pre-FOV/wrong-clean/stale-removal 均为 0。
