@@ -18,11 +18,11 @@ def sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def checkpoint_preflight(path: Path | None) -> dict:
+def checkpoint_preflight(path: Path | None, expected_sha256: str = EXPECTED_CHECKPOINT) -> dict:
     if path is None or not path.is_file():
         return {
             "available": False,
-            "expected_sha256": EXPECTED_CHECKPOINT,
+            "expected_sha256": expected_sha256,
             "actual_sha256": None,
             "pass": False,
             "reason": "D1_B_CHECKPOINT_MISSING",
@@ -31,10 +31,10 @@ def checkpoint_preflight(path: Path | None) -> dict:
     return {
         "available": True,
         "path": path.as_posix(),
-        "expected_sha256": EXPECTED_CHECKPOINT,
+        "expected_sha256": expected_sha256,
         "actual_sha256": actual,
-        "pass": actual == EXPECTED_CHECKPOINT,
-        "reason": None if actual == EXPECTED_CHECKPOINT else "D1_B_CHECKPOINT_HASH_MISMATCH",
+        "pass": actual == expected_sha256,
+        "reason": None if actual == expected_sha256 else "D1_B_CHECKPOINT_HASH_MISMATCH",
     }
 
 
@@ -75,7 +75,11 @@ def evaluate(manifest: dict, traces: dict[str, dict], checkpoint: dict) -> dict:
     contract_agreement = not missing and all(
         contracts[name] == contracts["P0_NATIVE"] for name in required[1:]
     )
-    expected_contract = bool(not missing and contracts["P0_NATIVE"].get("checkpoint_sha256") == EXPECTED_CHECKPOINT)
+    expected_contract = bool(
+        not missing
+        and contracts["P0_NATIVE"].get("checkpoint_sha256")
+        == checkpoint.get("expected_sha256", EXPECTED_CHECKPOINT)
+    )
     expected_contract &= bool(not missing and contracts["P0_NATIVE"].get("class_names") == EXPECTED_CLASSES)
     expected_contract &= bool(not missing and contracts["P0_NATIVE"].get("input_color_order") == "BGR")
     expected_contract &= bool(not missing and float(contracts["P0_NATIVE"].get("observation_threshold", -1)) == 0.05)
@@ -175,6 +179,7 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--checkpoint", type=Path)
+    parser.add_argument("--expected-checkpoint-sha256", default=EXPECTED_CHECKPOINT)
     parser.add_argument("--trace", action="append", type=Path, default=[])
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
@@ -186,7 +191,11 @@ def main() -> int:
         if name in traces:
             raise ValueError(f"duplicate trace pipeline: {name}")
         traces[name] = trace
-    report = evaluate(manifest, traces, checkpoint_preflight(args.checkpoint))
+    report = evaluate(manifest, traces, checkpoint_preflight(args.checkpoint, args.expected_checkpoint_sha256))
+    if args.expected_checkpoint_sha256 != EXPECTED_CHECKPOINT:
+        report["protocol"] = "CHECKPOINT-RECONSTITUTION-V6"
+        report["stage"] = "CRV6-03"
+        report["CRV6_GOLDEN_PARITY_PASS"] = report["ODCV5_01_PASS"]
     report["inputs"] = {
         "manifest": {"path": args.manifest.as_posix(), "sha256": sha256(args.manifest)},
         "traces": [{"path": path.as_posix(), "sha256": sha256(path)} for path in args.trace],

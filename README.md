@@ -72,3 +72,9 @@ ROS、Gazebo、导航或运行时变更还需要执行对应的 Stage 验收，�
 ## 许可证
 
 项目代码及第三方组件的使用边界见 [LICENSE.md](LICENSE.md)。
+
+## CRV6 感知恢复进展
+
+`CHECKPOINT-RECONSTITUTION-V6` 已关闭历史 D1-B checkpoint 的最后一次有界恢复搜索：历史 SHA-256 `481374...a361` 的字节仍未找回，历史 DDRV4 D1 通过事实不改写。当前按 R1 使用已审计的 D1-B 初始化、冻结 G7 static TRAIN/HOLDOUT 边界和相同六轮协议重构出新候选；新候选必须以自己的 SHA 和 provenance 标识，不得冒充历史 D1-B。
+
+CRV6 工具链覆盖恢复审计、R1 provenance、static VAL 非门禁回归、golden native/runtime parity、G7-MOVING HOLDOUT/VAL 原生门和有界 MA1 moving-domain adaptation。大型数据、checkpoint 和逐帧 trace 保存在仓库外 evidence 根目录；进入 freeze、G5_V2 或产品就绪状态仍须通过后续 projection/tracker/map、完整在线、性能、sealed final、30-seed、soak、replay 与 release 门禁。
