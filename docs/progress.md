@@ -1,5 +1,11 @@
 # 项目推进记录
 
+## 2026-08-12：DetectorDataRecoveryV4 收口
+
+- 产品性能回放增加 D1-B MMDetection + CUDA ONNX Area 双头路径；300 帧实测为 `9.9974 Hz`、P95 `155.83 ms`、掉帧 `0`，严格吞吐门失败。
+- J6 与真实域资源复扫确认：本机只有历史 3.7.0 包审计，无当前已安装工具链、J6 板、RGB-D 录制或独立 map GT；现场采集、标定、annotation review 与 evaluator 软件齐全。
+- 在线质量回归仍为主阻断，未创建 freeze、未打开 G5_V2，30-seed、spot-clean、soak、replay、release、J6 和 field 正式门保持锁定。最终证据包记录最小下一数据、架构和硬件需求；README 已压缩为稳定项目首页，不再记录阶段流水。
+
 ## 2026-08-11：DDRV4-02/03 failure taxonomy 与 D1 静态门
 
 - 冻结 OPR-C 在 G6 历史 VAL、G7 holdout 与 G7 VAL 做一次统一 failure taxonomy；G7 VAL recall/precision 为 `0.2089/0.00853`，raw proposal recall 为 `0.9644`，支持 domain mismatch、metal score/appearance shift、负样本混淆、小目标次要瓶颈和 RTMDet data-first 五项假设。G7 VAL 的本次读取只诊断旧模型，不参与 D1 选择。

@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "stage": "DDRV4-COMPETITION-GATE-MAPPING",
+  "official_rule_source_verified": false,
+  "competition_perception_pass": false,
+  "mapping_status": "BLOCKED_UNVERIFIED_OFFICIAL_SANITATION_RULE_DEFINITION",
+  "audit": {
+    "searched_on_utc_date": "2026-08-12",
+    "official_site_checked": "https://www.tianzhibei.com/",
+    "site_identity": "Tianzhibei artificial-intelligence competition platform",
+    "sanitation_vehicle_rule_found": false,
+    "decision": "No internal DDRV4 threshold is promoted to an official competition requirement."
+  },
+  "metrics": [],
+  "next_required_external_input": "Primary sanitation-task rules defining scoring unit, sequences, accuracy formula and deployment target."
+}

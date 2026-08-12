@@ -254,6 +254,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_d1_threshold_selection_holdout_only.py",
         ROOT / "scripts" / "test_ddrv4_online_gate.py",
         ROOT / "scripts" / "test_ddrv4_runtime_contract.py",
+        ROOT / "scripts" / "test_perception_ddrv4_finalize.py",
         learning_package / "test" / "test_auto13_real_domain.py",
         learning_package / "test" / "test_g4_assets.py",
         learning_package / "test" / "test_g4_scene_negative_prior.py",

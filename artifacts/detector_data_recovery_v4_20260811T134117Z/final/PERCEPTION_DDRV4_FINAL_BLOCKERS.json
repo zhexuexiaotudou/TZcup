@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "stage": "DDRV4-14-FINAL-BLOCKERS",
+  "primary_blocker": "MODEL_BLOCKED_INTERNAL_ONLINE_DOMAIN",
+  "internal_blockers": [
+    {
+      "id": "moving_camera_eventual_recall",
+      "gate": 0.95,
+      "actual": 0.3898305084745763,
+      "eligible_targets": 59
+    },
+    {
+      "id": "moving_camera_correct_class_recall",
+      "gate": 0.95,
+      "actual": 0.1111111111111111
+    },
+    {
+      "id": "moving_camera_small_recall",
+      "gate": 0.9,
+      "actual": 0.35294117647058826
+    },
+    {
+      "id": "product_target_precision",
+      "gate": 0.95,
+      "actual": 0.2111111111111111
+    },
+    {
+      "id": "formal_special_coverage_missing",
+      "required": [
+        "behind_vehicle_fov_entry",
+        "turning",
+        "occlusion",
+        "reflection"
+      ],
+      "actual_missing": [
+        "behind_vehicle_fov_entry",
+        "turning",
+        "occlusion",
+        "reflection"
+      ]
+    },
+    {
+      "id": "strict_performance_throughput",
+      "gate_hz": 10.0,
+      "actual_hz": 9.997413847588144,
+      "p95_ms": 155.82581765484065,
+      "drop_rate": 0.0
+    }
+  ],
+  "minimum_next_data_requirement": {
+    "authorization": "new development protocol required; D2/D3 are not unlocked by a D1 static pass",
+    "training": "A new G7-derived moving-camera TRAIN pack matching product RGB/TF/depth rendering, with at least 20 missions and balanced actionable encounters for all three discrete classes.",
+    "independent_evaluation": "A disjoint moving-camera development evaluation of at least 20 missions covering behind-FOV entry, turns, occlusion, reflections, negative-only motion and <18 px targets.",
+    "sealed_data": "G5 and G5_V2 remain forbidden for recovery or selection."
+  },
+  "minimum_next_architecture_hypothesis": {
+    "first": "Retain RTMDet-s capacity but recover the train-to-online input distribution and calibrate scores only on a moving-camera holdout; static G7 accuracy shows capacity is not the first blocker.",
+    "fallback_if_new_data_fails": "Authorize a new protocol for a P2/small-object route or temporal proposal-plus-classifier with tracker-aware calibration; do not silently reinterpret D2/D3."
+  },
+  "minimum_external_hardware_requirement": {
+    "x86_internal_blocker": "none; the current failure is model/data quality, not missing x86 hardware",
+    "j6": "one identified Horizon J6E or J6M board plus a target-matched current OpenExplorer toolchain",
+    "field": "one synchronized RGB-D device on the moving platform plus independent map/placement ground truth"
+  },
+  "external_blockers": {
+    "J6_board": true,
+    "real_RGBD_and_independent_GT": true,
+    "verified_official_sanitation_competition_rule": false
+  }
+}

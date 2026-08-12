@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "stage": "DDRV4-EVIDENCE-MANIFEST",
+  "root": ".",
+  "files": [
+    {
+      "path": "baseline/DATA_BOUNDARY.json",
+      "bytes": 598,
+      "sha256": "b75b3b537a10e2add275aaadb79a1bdea01db23d68b8c70ceff525c4b5f35493"
+    },
+    {
+      "path": "baseline/ENVIRONMENT.json",
+      "bytes": 621,
+      "sha256": "bac1adaf97bed381973baa29e3ecd6d4c0a8ea55ada18104ed5b05c7e08574f8"
+    },
+    {
+      "path": "baseline/HISTORICAL_ROUTE_STATUS.json",
+      "bytes": 396,
+      "sha256": "a3b6a61fc7f59c4eaae446993a383f7e51b898a624536ae83fb9223af734f7f9"
+    },
+    {
+      "path": "baseline/MODEL_BOUNDARY.json",
+      "bytes": 580,
+      "sha256": "3027d962dddcc78eca68f2bf09f9d396d6fbc115bfb9b9934a40f2668d12212a"
+    },
+    {
+      "path": "baseline/REPO_BASELINE.json",
+      "bytes": 1667,
+      "sha256": "2777080dc27649f5ad4c6f2179285bf7481ec31abd383baeb5681d86f2c29935"
+    },
+    {
+      "path": "d1/D1_STATIC_SUMMARY.json",
+      "bytes": 1925,
+      "sha256": "75a1c066f9806f56f25cce72c13a2acdc4e3c30fc4a528aa22b74c9778702f0d"
+    },
+    {
+      "path": "diagnostics/DETECTOR_FAILURE_TAXONOMY_SUMMARY.json",
+      "bytes": 1563,
+      "sha256": "db0e75bb179dff81fd8ef82917c1f460cef630d50e1555a18d7057a9da000a8c"
+    },
+    {
+      "path": "field/FIELD_RESOURCE_AND_SOFTWARE_STATUS.json",
+      "bytes": 3403,
+      "sha256": "14c2b20d6449447a7689b760157fbf1c6ff5c2fc44e5ad68f3f231df5692eaf1"
+    },
+    {
+      "path": "field/REAL_SENSOR_INVENTORY.json",
+      "bytes": 794,
+      "sha256": "636bba0ed4fc8eff9e35c5d486d9f59bf74b71d7676a74700e760406d6510919"
+    },
+    {
+      "path": "final/COMPETITION_GATE_MAPPING.json",
+      "bytes": 747,
+      "sha256": "0e36862489782290aa09a9b96d33c9a6e129464ad242c92aaa5e69c5eab44e58"
+    },
+    {
+      "path": "final/DETECTOR_DATA_RECOVERY_V4_REPORT.md",
+      "bytes": 1603,
+      "sha256": "65f2cd40e38005fc7a19ba345762bbe292ac64ff784baef8b4ad8b874c47ad6e"
+    },
+    {
+      "path": "final/PERCEPTION_DDRV4_EVIDENCE_INDEX.md",
+      "bytes": 1952,
+      "sha256": "38aab59c540ed1da9dd236141713881cc9da8140386323eb9a2e9cf4a4d9e947"
+    },
+    {
+      "path": "final/PERCEPTION_DDRV4_FINAL_BLOCKERS.json",
+      "bytes": 2793,
+      "sha256": "e82df72bbad4881d9e984f7cee9bae1a9a4d30af9dcd4b85d8913f656f9b4df8"
+    },
+    {
+      "path": "final/PERCEPTION_DDRV4_FINAL_STATUS.json",
+      "bytes": 1871,
+      "sha256": "5ceb49b32849be0158f42b4758979c754d1a350d1166144326f268736279f5d7"
+    },
+    {
+      "path": "final/PERCEPTION_DDRV4_MODEL_REGISTRY.json",
+      "bytes": 707,
+      "sha256": "dfa4032197078491e8e90653f23efc25c0a759b3007544131ef8320b5ff8602f"
+    },
+    {
+      "path": "final/PERCEPTION_DDRV4_RELEASE_MANIFEST.json",
+      "bytes": 451,
+      "sha256": "7319671eb25d13a0e94f5b1e79df5aeb34d82152c76dfd775d50fa6ac278c134"
+    },
+    {
+      "path": "final/PERCEPTION_DDRV4_THIRD_PARTY_NOTICES.md",
+      "bytes": 838,
+      "sha256": "ec80772e4129d5c1c3169d08766408531045572190dd57395a79f929a10e4f88"
+    },
+    {
+      "path": "g7/G7_DEVELOPMENT_SUMMARY.json",
+      "bytes": 2376,
+      "sha256": "f159442713f918bc887e9251959b8bdd86fc8beb521db8eaeb603f1ea3afc3f2"
+    },
+    {
+      "path": "j6/J6_BOARD_STATUS.json",
+      "bytes": 571,
+      "sha256": "09ecc5d9bac7497fb74613b7cf298e27cbab94d3064c185c55ba5d661327976d"
+    },
+    {
+      "path": "j6/J6_INVENTORY.json",
+      "bytes": 679,
+      "sha256": "457012ef2b11b1d7cca03d055509416b32964f43eed72dac453135e77370ff08"
+    },
+    {
+      "path": "j6/J6_TOOLCHAIN_LOCK.json",
+      "bytes": 1150,
+      "sha256": "b0e50fc38899f6148ee0952cb31c2a5bf358484439565af0ddec7f4220761eb0"
+    },
+    {
+      "path": "online_dev/DDRV4_ONLINE_DEV_SUMMARY.json",
+      "bytes": 2973,
+      "sha256": "b14f4dfe0edb1cc80b5141eb51420585407ec8fef877ec347d74d4654540d24c"
+    },
+    {
+      "path": "performance/DDRV4_PRODUCT_PERFORMANCE.json",
+      "bytes": 4820,
+      "sha256": "c3105ea6f19ad8454694ed1d6797ea3d90506a2903f4460fd57775f024f810d9"
+    }
+  ]
+}

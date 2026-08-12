@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "selected_development_model": "D1-B",
+  "frozen_product_model": null,
+  "freeze_id": null,
+  "models": [
+    {
+      "route": "D1-A",
+      "status": "STATIC_PASS_NOT_SELECTED",
+      "checkpoint_sha256": "e8d03fff3b5deb0f54d395fbfa79a16beb8cc9a36a0ab804abb5107607ff75f5"
+    },
+    {
+      "route": "D1-B",
+      "status": "STATIC_PASS_SELECTED_ONLINE_FAIL",
+      "architecture": "official_mmdetection_v3.3.0_rtmdet_s",
+      "threshold": 0.53,
+      "checkpoint_sha256": "481374d4839e72f05fff0d6d2f6135bc7d715d5c2faf84e75d7d97ca3fc6a361",
+      "selection_data": "G7_IN_DOMAIN_HOLDOUT_ONLY",
+      "G5_read": false,
+      "G5_V2_read": false
+    }
+  ]
+}

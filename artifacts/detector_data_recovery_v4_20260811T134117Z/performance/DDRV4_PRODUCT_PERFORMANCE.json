@@ -1,0 +1,135 @@
+{
+  "schema_version": 1,
+  "protocol": "OPRV3-07-product-performance",
+  "source_commit": "1054512520c7bb716828635bd9e4db4270f2f27d",
+  "runtime": "mixed_mmdetection_pytorch_and_onnxruntime_cuda_product_pipeline",
+  "environment": {
+    "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+    "torch": "2.5.1+cu124",
+    "cuda": "12.4",
+    "gpu": "NVIDIA GeForce RTX 4080 Laptop GPU"
+  },
+  "input_contract": {
+    "source_hz": 10.0,
+    "queue": "LatestFrameScheduler(queue_depth=2)",
+    "detector_hz": 10.0,
+    "leaf_hz": 5.0,
+    "puddle_hz": 5.0,
+    "GT_inputs_loaded": false,
+    "product_inputs": [
+      "RGB",
+      "depth",
+      "camera_intrinsics",
+      "odometry_TF"
+    ]
+  },
+  "models": {
+    "detector": {
+      "route": "D1-B",
+      "path": "/artifacts/TZcup-ddrv4-d1-training-v1/d1-b/best_coco_bbox_mAP_epoch_5.pth",
+      "sha256": "481374d4839e72f05fff0d6d2f6135bc7d715d5c2faf84e75d7d97ca3fc6a361",
+      "architecture": "official_mmdetection_v3.3.0_rtmdet_s",
+      "input_size": [
+        640,
+        480
+      ],
+      "action_threshold": 0.53,
+      "checkpoint_status": "training_complete_candidate_not_frozen",
+      "execution_backend": "mmdetection_pytorch_cuda",
+      "selection_path": "/artifacts/TZcup-ddrv4-d1-screen-v1/D1_SELECTION.json",
+      "selection_sha256": "547ac63dbe7ec7cb96a317f7213efa69f4a1511d31d1b4c7ea9461846a11a1b1",
+      "G5_SEALED_FINAL_read": false,
+      "G5_V2_SEALED_FINAL_read": false,
+      "legacy_G4_D6_read": false
+    },
+    "leaf": {
+      "path": "/artifacts/TZcup-oprv3-g6-area-training/formal-v3/g6_area_shared.pt",
+      "sha256": "f14e273305aec17750c9ab4cd5716db7e35706b800fb9e03a71284fe537007eb",
+      "checkpoint_status": "training_complete_candidate_not_frozen",
+      "model_contract": {},
+      "load_initialization": "metadata_only_for_hash_bound_onnx_runtime"
+    },
+    "puddle": {
+      "path": "/artifacts/TZcup-oprv3-g6-area-training/formal-v3/g6_area_shared.pt",
+      "sha256": "f14e273305aec17750c9ab4cd5716db7e35706b800fb9e03a71284fe537007eb",
+      "checkpoint_status": "training_complete_candidate_not_frozen",
+      "model_contract": {},
+      "load_initialization": "metadata_only_for_hash_bound_onnx_runtime"
+    },
+    "area_gate": {
+      "path": "/artifacts/TZcup-oprv3-g6-area-screening/formal-v1/OPRV3_AREA_GATE.json",
+      "sha256": "71ad8b519cd94f75001413e58ebd16c700f6640ba5ad9ff96e7b2ac3495ab8db",
+      "protocol": "OPRV3-06",
+      "OPRV3_06_AREA_PASS": true,
+      "G5_SEALED_FINAL_read": false,
+      "legacy_G4_D6_read": false
+    },
+    "onnx": {
+      "provider": "CUDAExecutionProvider",
+      "detector": null,
+      "leaf": {
+        "path": "/artifacts/TZcup-oprv3-g6-area-training/formal-v3/leaf.onnx",
+        "sha256": "4363008d6d5a82f2167e94b415cc32e0fe2350c07b5811b153d316813b2456eb"
+      },
+      "puddle": {
+        "path": "/artifacts/TZcup-oprv3-g6-area-training/formal-v3/puddle.onnx",
+        "sha256": "4189354d7d10ff61e2a76f153d1585cb8174d7440621dd7ee9af40e4359f3c2d"
+      }
+    }
+  },
+  "execution": {
+    "model_inference_counts": {
+      "detector": 300,
+      "leaf": 150,
+      "puddle": 150
+    },
+    "clean_now_action_count": 0,
+    "mission_count": 4,
+    "latency_samples": 300
+  },
+  "metrics": {
+    "input_frames": 300,
+    "processed_frames": 300,
+    "dropped_frames": 0,
+    "effective_hz": 9.997413847588144,
+    "end_to_end_p95_ms": 155.82581765484065,
+    "drop_rate": 0.0,
+    "formal_product_pipeline_executed": true
+  },
+  "gates": {
+    "effective_hz": false,
+    "end_to_end_p95_ms": true,
+    "drop_rate": true,
+    "formal_product_pipeline_executed": true
+  },
+  "pass": false,
+  "thresholds": {
+    "effective_hz": 10.0,
+    "end_to_end_p95_ms": 200.0,
+    "drop_rate": 0.01
+  },
+  "G5_SEALED_FINAL_read": false,
+  "legacy_G4_D6_read": false,
+  "inputs": {
+    "geometry": {
+      "path": "/artifacts/oprv3-preflight/geometry/CAMERA_PRODUCT_GEOMETRY_AUDIT.json",
+      "sha256": "11b8281b795e0ec4efcec9e71b593bbaa65dd8933bcece0de71928effa9f7744"
+    },
+    "detector": {
+      "path": "/artifacts/TZcup-ddrv4-d1-training-v1/d1-b/best_coco_bbox_mAP_epoch_5.pth",
+      "sha256": "481374d4839e72f05fff0d6d2f6135bc7d715d5c2faf84e75d7d97ca3fc6a361"
+    },
+    "leaf": {
+      "path": "/artifacts/TZcup-oprv3-g6-area-training/formal-v3/g6_area_shared.pt",
+      "sha256": "f14e273305aec17750c9ab4cd5716db7e35706b800fb9e03a71284fe537007eb"
+    },
+    "puddle": {
+      "path": "/artifacts/TZcup-oprv3-g6-area-training/formal-v3/g6_area_shared.pt",
+      "sha256": "f14e273305aec17750c9ab4cd5716db7e35706b800fb9e03a71284fe537007eb"
+    },
+    "area_gate": {
+      "path": "/artifacts/TZcup-oprv3-g6-area-screening/formal-v1/OPRV3_AREA_GATE.json",
+      "sha256": "71ad8b519cd94f75001413e58ebd16c700f6640ba5ad9ff96e7b2ac3495ab8db"
+    }
+  }
+}
