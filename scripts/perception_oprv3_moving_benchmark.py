@@ -387,14 +387,22 @@ def load_mmdet_detector(config: Path, checkpoint: Path, selection_path: Path):
     patch_mmdet_cuda_nms()
     from mmdet.apis import init_detector
 
-    selection = json.loads(selection_path.read_text(encoding="utf-8"))
-    route = str(selection.get("selected_route"))
-    route_record = selection.get("route_results", {}).get(route, {})
-    expected = route_record.get("checkpoint", {}).get("sha256")
-    if selection.get("selection_data") != "G7_IN_DOMAIN_HOLDOUT_ONLY":
-        raise RuntimeError("DDRV4 detector selection was not holdout-only")
-    if selection.get("G7_VAL_read_before_selection_freeze") is not False:
-        raise RuntimeError("DDRV4 detector selection violated the VAL boundary")
+    # PowerShell 5 commonly emits a UTF-8 BOM.  Accept it without weakening
+    # the checkpoint SHA-256 or holdout-only selection checks below.
+    selection = json.loads(selection_path.read_text(encoding="utf-8-sig"))
+    if selection.get("selection_data") == "G7_MOVING_HOLDOUT_ONLY":
+        route = "MA1"
+        expected = selection.get("checkpoint_sha256")
+        val_read_before_freeze = selection.get("MOVING_VAL_read_before_selection_freeze")
+    else:
+        route = str(selection.get("selected_route"))
+        route_record = selection.get("route_results", {}).get(route, {})
+        expected = route_record.get("checkpoint", {}).get("sha256")
+        val_read_before_freeze = selection.get("G7_VAL_read_before_selection_freeze")
+    if selection.get("selection_data") not in {"G7_IN_DOMAIN_HOLDOUT_ONLY", "G7_MOVING_HOLDOUT_ONLY"}:
+        raise RuntimeError("MMDetection detector selection was not holdout-only")
+    if val_read_before_freeze is not False:
+        raise RuntimeError("MMDetection detector selection violated the VAL boundary")
     if expected != sha256(checkpoint):
         raise RuntimeError("DDRV4 selected checkpoint SHA-256 mismatch")
     metadata = {
@@ -1336,11 +1344,39 @@ def product_map_evaluation(
     total_eligible = 0
     total_matched = 0
     total_confirmed = 0
+    discrete_eligible = 0
+    discrete_matched = 0
+    discrete_confirmed = 0
+    area_eligible = 0
+    area_matched = 0
+    area_confirmed = 0
     pre_fov_creations = 0
     wrong_class_confirmed_actions = 0
     projection_failures = 0
+    projection_eligible_correct_detections = 0
+    projection_successful_correct_detections = 0
+    direct_projection_errors = []
     removed_target_stale_actions = 0
     removal_capture_count = 0
+    evaluator_truth_by_frame = defaultdict(list)
+    for encounter in encounters:
+        if encounter.get("class_name") not in DISCRETE_NAMES:
+            continue
+        for frame in encounter.get("frames", []):
+            if not frame.get("correct_action_detection"):
+                continue
+            bbox = frame.get("visible_bbox_xyxy_px")
+            if bbox is None:
+                continue
+            evaluator_truth_by_frame[
+                (int(encounter["scene_seed"]), int(frame["frame_index"]))
+            ].append(
+                {
+                    "class_name": encounter["class_name"],
+                    "bbox_xyxy": bbox,
+                    "world_xyz_m": encounter["world_xyz_m"],
+                }
+            )
     for seed, mission_rows in sorted(row_groups.items()):
         mission_id = f"oprv3-dev-{seed}"
         tracker = ProductTrackerV2(tracker_config)
@@ -1380,6 +1416,37 @@ def product_map_evaluation(
             except (OSError, ValueError, ProjectionError):
                 projection_failures += 1
                 detections = []
+            frame_truth = evaluator_truth_by_frame[key]
+            projection_eligible_correct_detections += len(frame_truth)
+            used_detection_indices = set()
+            for truth in frame_truth:
+                candidates = [
+                    (
+                        bbox_iou(
+                            detection["bbox_xyxy"], truth["bbox_xyxy"]
+                        ),
+                        index,
+                        detection,
+                    )
+                    for index, detection in enumerate(detections)
+                    if index not in used_detection_indices
+                    and detection["class_id"] == truth["class_name"]
+                ]
+                if not candidates:
+                    continue
+                overlap, index, detection = max(candidates, key=lambda item: item[0])
+                if overlap < 0.50:
+                    continue
+                used_detection_indices.add(index)
+                projection_successful_correct_detections += 1
+                direct_projection_errors.append(
+                    math.hypot(
+                        float(detection["x_m"])
+                        - float(truth["world_xyz_m"][0]),
+                        float(detection["y_m"])
+                        - float(truth["world_xyz_m"][1]),
+                    )
+                )
             detections.extend(area_detections[key])
             stamp_s = stamp_ns / 1_000_000_000.0
             tracks = tracker.update(detections, stamp_s)
@@ -1416,10 +1483,25 @@ def product_map_evaluation(
         actionable = actionable_encounter_groups[seed]
         map_scorable = map_scorable_encounter_groups[seed]
         total_eligible += len(map_scorable)
+        mission_discrete_gt = [
+            item for item in map_scorable if item["class_name"] in DISCRETE_NAMES
+        ]
+        mission_area_gt = [
+            item for item in map_scorable if item["class_name"] not in DISCRETE_NAMES
+        ]
+        discrete_eligible += len(mission_discrete_gt)
+        area_eligible += len(mission_area_gt)
         per_gt_ids = defaultdict(list)
         for record in accepted_records:
             target, _distance = _nearest_gt(
-                record["x_m"], record["y_m"], map_scorable, 0.50
+                record["x_m"],
+                record["y_m"],
+                [
+                    item
+                    for item in map_scorable
+                    if item["class_name"] == record["class_name"]
+                ],
+                0.50,
             )
             if target is not None:
                 per_gt_ids[target["target_id"]].append(record["map_uuid"])
@@ -1438,6 +1520,8 @@ def product_map_evaluation(
             )
         ]
         matched_gt_ids = set()
+        matched_discrete_gt_ids = set()
+        matched_area_gt_ids = set()
         mission_errors = []
         mission_wrong_class = 0
         mission_pre_fov = 0
@@ -1452,7 +1536,14 @@ def product_map_evaluation(
         )
         for target in confirmed:
             gt, distance = _nearest_gt(
-                target.map_x_m, target.map_y_m, map_scorable, 0.50
+                target.map_x_m,
+                target.map_y_m,
+                [
+                    item
+                    for item in map_scorable
+                    if item["class_name"] == target.current_class
+                ],
+                0.50,
             )
             if gt is None:
                 if (
@@ -1462,6 +1553,10 @@ def product_map_evaluation(
                     mission_pre_fov += 1
                 continue
             matched_gt_ids.add(gt["target_id"])
+            if gt["class_name"] in DISCRETE_NAMES:
+                matched_discrete_gt_ids.add(gt["target_id"])
+            else:
+                matched_area_gt_ids.add(gt["target_id"])
             mission_errors.append(float(distance))
             first_visible_stamps = [
                 int(frame["frame_stamp_ns"])
@@ -1473,6 +1568,14 @@ def product_map_evaluation(
             ):
                 mission_pre_fov += 1
         total_confirmed += len(confirmed)
+        mission_discrete_confirmed = sum(
+            target.target_type == "DISCRETE" for target in confirmed
+        )
+        mission_area_confirmed = sum(
+            target.target_type == "AREA" for target in confirmed
+        )
+        discrete_confirmed += mission_discrete_confirmed
+        area_confirmed += mission_area_confirmed
         clean_actions = [
             record
             for record in scheduler_records
@@ -1519,6 +1622,8 @@ def product_map_evaluation(
             )
             removed_target_stale_actions += mission_stale_actions
         total_matched += len(matched_gt_ids)
+        discrete_matched += len(matched_discrete_gt_ids)
+        area_matched += len(matched_area_gt_ids)
         all_final_errors.extend(mission_errors)
         pre_fov_creations += mission_pre_fov
         wrong_class_confirmed_actions += mission_wrong_class
@@ -1531,6 +1636,12 @@ def product_map_evaluation(
                 "eligible_targets": len(map_scorable),
                 "confirmed_product_targets": len(confirmed),
                 "matched_eligible_targets": len(matched_gt_ids),
+                "discrete_eligible_targets": len(mission_discrete_gt),
+                "discrete_matched_eligible_targets": len(matched_discrete_gt_ids),
+                "discrete_confirmed_product_targets": mission_discrete_confirmed,
+                "area_eligible_targets": len(mission_area_gt),
+                "area_matched_eligible_targets": len(matched_area_gt_ids),
+                "area_confirmed_product_targets": mission_area_confirmed,
                 "map_rmse_m": (
                     math.sqrt(
                         sum(value * value for value in mission_errors)
@@ -1611,7 +1722,41 @@ def product_map_evaluation(
                 / max(total_confirmed, 1)
             ),
             "map_localization_coverage": total_matched / max(total_eligible, 1),
+            "discrete_product_target_precision": (
+                discrete_matched / max(discrete_confirmed, 1)
+            ),
+            "discrete_map_coverage": discrete_matched / max(discrete_eligible, 1),
+            "area_product_target_precision": area_matched / max(area_confirmed, 1),
+            "area_map_coverage": area_matched / max(area_eligible, 1),
+            "combined_product_target_precision": (
+                total_matched / max(total_confirmed, 1)
+            ),
+            "combined_map_coverage": total_matched / max(total_eligible, 1),
             "map_rmse_m": map_rmse,
+            "map_localization_median_error_m": (
+                percentile(all_final_errors, 50.0)
+                if all_final_errors
+                else None
+            ),
+            "map_localization_p95_error_m": (
+                percentile(all_final_errors, 95.0)
+                if all_final_errors
+                else None
+            ),
+            "valid_depth_correct_detection_projection_success": (
+                projection_successful_correct_detections
+                / max(projection_eligible_correct_detections, 1)
+            ),
+            "direct_projection_median_error_m": (
+                percentile(direct_projection_errors, 50.0)
+                if direct_projection_errors
+                else None
+            ),
+            "direct_projection_p95_error_m": (
+                percentile(direct_projection_errors, 95.0)
+                if direct_projection_errors
+                else None
+            ),
             "id_consistency": (
                 sum(identity_numerators) / len(identity_numerators)
                 if identity_numerators
@@ -1640,6 +1785,12 @@ def product_map_evaluation(
             "eligible_target_count": total_eligible,
             "matched_target_count": total_matched,
             "confirmed_product_target_count": total_confirmed,
+            "discrete_eligible_target_count": discrete_eligible,
+            "discrete_matched_target_count": discrete_matched,
+            "discrete_confirmed_product_target_count": discrete_confirmed,
+            "area_eligible_target_count": area_eligible,
+            "area_matched_target_count": area_matched,
+            "area_confirmed_product_target_count": area_confirmed,
             "wrong_class_confirmed_action_count": (
                 wrong_class_confirmed_actions
             ),
@@ -1647,6 +1798,12 @@ def product_map_evaluation(
             "removed_target_stale_action_count": removed_target_stale_actions,
             "removal_capture_count": removal_capture_count,
             "projection_frame_failure_count": projection_failures,
+            "projection_eligible_correct_detection_count": (
+                projection_eligible_correct_detections
+            ),
+            "projection_successful_correct_detection_count": (
+                projection_successful_correct_detections
+            ),
         },
         "scheduler_evaluation": {
             "implementation": "CleaningTaskScheduler",

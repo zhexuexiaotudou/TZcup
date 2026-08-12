@@ -157,7 +157,7 @@ def main() -> int:
     holdout_frames, holdout_encounters = load_split(args.data_root, "MOVING_HOLDOUT", runtime)
     sweep = [evaluate(holdout_frames, holdout_encounters, threshold) for threshold in THRESHOLDS]
     selected = min(sweep, key=lambda row: (not row["all_required_gates_pass"], row["gate_distance"], -row["eventual_correct_class_recall"], -row["actionable_precision"], row["threshold"]))
-    selection = {"stage": "CRV6-04-SELECTION", "selection_data": "G7_MOVING_HOLDOUT_ONLY", "selected_threshold": selected["threshold"], "selected_metrics": selected, "threshold_sweep": sweep, "MOVING_VAL_read_before_selection_freeze": False, "MOVING_VAL_used_for_selection": False}
+    selection = {"stage": "CRV6-04-SELECTION", "selection_data": "G7_MOVING_HOLDOUT_ONLY", "checkpoint_sha256": args.expected_sha256, "selected_threshold": selected["threshold"], "selected_metrics": selected, "threshold_sweep": sweep, "MOVING_VAL_read_before_selection_freeze": False, "MOVING_VAL_used_for_selection": False}
     selection_path = args.output / "CRV6_MOVING_SELECTION.json"; selection_path.write_text(json.dumps(selection, indent=2) + "\n", encoding="utf-8")
     val_frames, val_encounters = load_split(args.data_root, "MOVING_VAL", runtime)
     val = evaluate(val_frames, val_encounters, selected["threshold"])

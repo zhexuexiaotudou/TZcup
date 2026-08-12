@@ -7,8 +7,10 @@ SOURCE = (ROOT / "scripts/perception_oprv3_moving_benchmark.py").read_text(encod
 
 def test_ddrv4_online_detector_is_hash_bound_to_holdout_selection():
     assert "def load_mmdet_detector(" in SOURCE
-    assert 'selection.get("selection_data") != "G7_IN_DOMAIN_HOLDOUT_ONLY"' in SOURCE
-    assert 'selection.get("G7_VAL_read_before_selection_freeze") is not False' in SOURCE
+    assert '"G7_IN_DOMAIN_HOLDOUT_ONLY", "G7_MOVING_HOLDOUT_ONLY"' in SOURCE
+    assert 'selection.get("G7_VAL_read_before_selection_freeze")' in SOURCE
+    assert 'selection.get("MOVING_VAL_read_before_selection_freeze")' in SOURCE
+    assert "if val_read_before_freeze is not False" in SOURCE
     assert 'expected != sha256(checkpoint)' in SOURCE
     assert '"G5_V2_SEALED_FINAL_read": False' in SOURCE
     load_body = SOURCE.split("def load_mmdet_detector", 1)[1].split(
