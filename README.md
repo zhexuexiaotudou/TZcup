@@ -114,3 +114,5 @@ Route A 保持官方 MMDetection RTMDet-s 和 640x480 产品输入，从 GA1 che
 Route B 只在 Route A 的高召回候选无法满足 wrong-actionable 门时启用：固定生成 TRAIN/HOLDOUT proposals，使用已有官方权重 MobileNetV3-Small 四分类 crop verifier（含 background），要求 TRAIN unique positive/background crops 各至少 3000；HOLDOUT proposals 只生成一次，不回流 detector，VAL 仍保持未读直到组合策略冻结。
 
 Route B verifier 从每类固定抽取 4000 个 unique TRAIN crops 并将 TRAIN/HOLDOUT 图像各预载一次，规避 Docker Desktop 小文件挂载的重复 I/O 阻塞；不改变 16-epoch、四类平衡、全量 HOLDOUT threshold sweep 或任何精度门槛。
+
+Route C 是有限 detector 恢复的最后路线：保留 Route B 已固定的 proposal 坐标与标签，使用产品可部署的 `square_crop(scale=6, minimum_side=64)` 增加地面上下文并强化同一个 MobileNetV3-Small verifier 的 hard-negative 能力；HOLDOUT 只用于冻结，VAL_NEW 在候选冻结前保持未读。
