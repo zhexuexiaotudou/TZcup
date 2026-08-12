@@ -56,6 +56,14 @@ def removal_trigger_frame(frame_count: int, trigger_fraction: float) -> int:
     return max(2, min(frame_count - 2, int(round(frame_count * trigger_fraction))))
 
 
+def insertion_trigger_frame(frame_count: int, trigger_fraction: float) -> int:
+    if frame_count < 4:
+        raise ValueError("dynamic insertion capture requires at least four frames")
+    if not 0.0 < trigger_fraction < 1.0:
+        raise ValueError("dynamic insertion trigger_fraction must be in (0, 1)")
+    return max(2, min(frame_count - 2, int(round(frame_count * trigger_fraction))))
+
+
 def adjacent_translation_gate(
     records: list[dict],
     requested_frames: int,
@@ -230,6 +238,7 @@ def main() -> None:
             self.pending_writes = []
             self.dynamic_positions = []
             self.dynamic_removal_events = []
+            self.dynamic_insertion_events = []
             self.motion_enabled = False
             self.vehicle_reset_applied = False
             self.vehicle_reset_started = None
@@ -353,6 +362,22 @@ def main() -> None:
                 self.dynamic_positions.append(
                     {"after_frame": frame_count - 1, "xyz_m": xyz}
                 )
+            insertion = scene.get("dynamic_insertion_plan")
+            if insertion and not self.dynamic_insertion_events:
+                trigger = insertion_trigger_frame(
+                    args.frame_count, float(insertion["trigger_fraction"])
+                )
+                if frame_count >= trigger:
+                    inserted = [float(value) for value in insertion["inserted_xyz_m"]]
+                    set_poses(
+                        scene["world_id"],
+                        [{"name": insertion["model_name"], "xyz": inserted, "yaw": float(insertion.get("yaw_rad", 0.0))}],
+                    )
+                    for bucket in self.buffers.values():
+                        bucket.clear()
+                    self.dynamic_insertion_events.append(
+                        {"after_frame": frame_count - 1, "first_post_insertion_frame": frame_count, "model_name": insertion["model_name"], "class_id": insertion["class_id"], "inserted_xyz_m": inserted}
+                    )
             removal = scene.get("dynamic_removal_plan")
             if not removal or self.dynamic_removal_events:
                 return
@@ -441,6 +466,8 @@ def main() -> None:
     )
     removal_plan = scene.get("dynamic_removal_plan")
     removal_executed = removal_plan is None or len(node.dynamic_removal_events) == 1
+    insertion_plan = scene.get("dynamic_insertion_plan")
+    insertion_executed = insertion_plan is None or len(node.dynamic_insertion_events) == 1
     adjacent_motion_gate_pass = adjacent_motion_gate(
         node.saved,
         args.frame_count,
@@ -469,6 +496,7 @@ def main() -> None:
         and all(item["rgb_sha256"] for item in node.saved)
         and dynamic_executed
         and removal_executed
+        and insertion_executed
     )
     report = {
         "schema_version": 4,
@@ -525,6 +553,9 @@ def main() -> None:
         "dynamic_removal_requested": removal_plan is not None,
         "dynamic_removal_executed": removal_executed,
         "dynamic_removal_events": node.dynamic_removal_events,
+        "dynamic_insertion_requested": insertion_plan is not None,
+        "dynamic_insertion_executed": insertion_executed,
+        "dynamic_insertion_events": node.dynamic_insertion_events,
         "capture_pass": capture_pass,
     }
     (output/"capture_report.json").write_text(json.dumps(report, indent=2)+"\n"); print(json.dumps(report, indent=2))

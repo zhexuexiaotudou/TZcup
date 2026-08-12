@@ -240,6 +240,30 @@ def test_rgdrv8_g8_negative_schedule_meets_each_split_quota():
     assert sum(g4_scene.g8_negative_only_rule(index, 10) for index in range(10)) == 3
 
 
+def test_rgdrv8_g8_auto_domain_matrix_is_deterministic_and_physical(
+    monkeypatch, tmp_path, g4_world_manifest
+):
+    _, manifest_path = g4_world_manifest
+    monkeypatch.setattr("sanitation_learning.g4_scene.set_poses", lambda *_args: None)
+    profiles = []
+    for index in range(15):
+        report = g4_scene.randomize(
+            manifest_path,
+            "world_g4_05_red_brick_promenade",
+            8200 + index,
+            index,
+            tmp_path / f"auto-{index}.json",
+            detector_instances_per_class=4,
+            detector_scene_cycle=15,
+            g8_auto_domain_matrix=True,
+        )
+        if not report["negative_only"]:
+            profiles.append(report["oprv3_coverage_profile"])
+    assert {"turn_entry", "occlusion", "dynamic_removal", "dynamic_insertion"}.issubset(profiles)
+    assert "reflection" not in profiles
+    assert profiles.count(None) >= 1
+
+
 def test_oprv3_coverage_profiles_are_explicit_and_fail_closed(
     monkeypatch, tmp_path, g4_world_manifest
 ):
@@ -260,9 +284,10 @@ def test_oprv3_coverage_profiles_are_explicit_and_fail_closed(
     assert turn["oprv3_coverage_requirements"] == {
         "behind_vehicle_fov_entry": True,
         "turning": True,
-        "occlusion": False,
-        "reflection": False,
-        "dynamic_removal": False,
+            "occlusion": False,
+            "reflection": False,
+            "dynamic_insertion": False,
+            "dynamic_removal": False,
     }
 
     occlusion = g4_scene.randomize(
@@ -328,6 +353,20 @@ def test_oprv3_coverage_profiles_are_explicit_and_fail_closed(
     }
     assert target["xyz_m"][:2] == pytest.approx([-5.60, 0.60])
     assert plan["trigger_fraction"] == pytest.approx(0.55)
+    insertion = g4_scene.randomize(
+        manifest_path,
+        "world_g4_01_asphalt_campus",
+        9052,
+        2,
+        tmp_path / "insertion.json",
+        oprv3_coverage_profile="dynamic_insertion",
+        detector_instances_per_class=4,
+        detector_scene_cycle=15,
+    )
+    inserted = insertion["dynamic_insertion_plan"]
+    assert inserted["trigger_fraction"] == pytest.approx(0.40)
+    assert inserted["initial_parked_xyz_m"][2] < 0.0
+    assert inserted["inserted_xyz_m"][2] > 0.0
     with pytest.raises(ValueError, match="wet world"):
         g4_scene.randomize(
             manifest_path,

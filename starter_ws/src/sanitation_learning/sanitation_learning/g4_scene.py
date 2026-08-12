@@ -73,6 +73,26 @@ def g8_negative_only_rule(scene_index: int, scene_cycle: int) -> bool:
     return (scene_index * 7) % scene_cycle < hit_count
 
 
+def g8_domain_profile(scene_index: int, scene_cycle: int, *, wet_world: bool) -> str | None:
+    """Assign one physical domain role to each positive G8 mission."""
+    if g8_negative_only_rule(scene_index, scene_cycle):
+        return None
+    positive_indices = [
+        index for index in range(scene_cycle)
+        if not g8_negative_only_rule(index, scene_cycle)
+    ]
+    positive_rank = positive_indices.index(scene_index)
+    profiles = (
+        None,
+        "turn_entry",
+        "occlusion",
+        "dynamic_removal",
+        "dynamic_insertion",
+        "reflection" if wet_world else None,
+    )
+    return profiles[positive_rank % len(profiles)]
+
+
 def _footprint_area_m2(geometry_kind: str, values: list[float]) -> float:
     if geometry_kind == "cylinder":
         return (2.0 * values[0]) * values[1]
@@ -152,6 +172,7 @@ def randomize(
     oprv3_coverage_profile: str | None = None,
     detector_instances_per_class: int = 1,
     detector_scene_cycle: int = SCENES_PER_WORLD,
+    g8_auto_domain_matrix: bool = False,
 ) -> dict:
     """Build and persist one G4 scene plan (no capture is performed here)."""
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -185,6 +206,16 @@ def randomize(
         if g8_mode
         else negative_only_rule(schedule_split, scene_index)
     )
+    effective_coverage_profile = oprv3_coverage_profile
+    if g8_auto_domain_matrix:
+        if not g8_mode:
+            raise ValueError("G8 auto domain matrix requires multi-instance detector mode")
+        if oprv3_coverage_profile is not None:
+            raise ValueError("G8 auto domain matrix cannot combine with an explicit profile")
+        wet_world = "wet" in world["world_id"].lower() or "wet" in world["material_id"].lower()
+        effective_coverage_profile = g8_domain_profile(
+            scene_index, detector_scene_cycle, wet_world=wet_world
+        )
     force_paper_like = negative_split == "train" and paper_like_train_rule(
         scene_index
     )
@@ -338,11 +369,13 @@ def randomize(
         "turning": False,
         "occlusion": False,
         "reflection": False,
+        "dynamic_insertion": False,
         "dynamic_removal": False,
     }
     dynamic_removal_plan = None
+    dynamic_insertion_plan = None
     overlap_executed = False
-    if oprv3_coverage_profile == "turn_entry":
+    if effective_coverage_profile == "turn_entry":
         if not selected:
             raise ValueError("turn_entry coverage requires positive targets")
         vehicle_start_yaw_rad = math.pi / 2.0
@@ -371,7 +404,7 @@ def randomize(
         }
         coverage_requirements["behind_vehicle_fov_entry"] = True
         coverage_requirements["turning"] = True
-    elif oprv3_coverage_profile == "occlusion":
+    elif effective_coverage_profile == "occlusion":
         positives = [item for item in objects if item["class_id"] != "background"]
         if len(positives) < 3:
             raise ValueError("occlusion coverage requires at least three targets")
@@ -397,7 +430,7 @@ def randomize(
         behind["occluded_by_model_name"] = front["model_name"]
         overlap_executed = True
         coverage_requirements["occlusion"] = True
-    elif oprv3_coverage_profile == "reflection":
+    elif effective_coverage_profile == "reflection":
         if "wet" not in world["world_id"].lower() and "wet" not in world["material_id"].lower():
             raise ValueError("reflection coverage requires a wet world/material")
         # The wet courtyard's straight lane ends after roughly eight metres.
@@ -430,7 +463,7 @@ def randomize(
             ],
         }
         coverage_requirements["reflection"] = True
-    elif oprv3_coverage_profile == "dynamic_removal":
+    elif effective_coverage_profile == "dynamic_removal":
         removable = next(
             (
                 item
@@ -463,8 +496,29 @@ def randomize(
             "executed_by_capture": True,
         }
         coverage_requirements["dynamic_removal"] = True
-    elif oprv3_coverage_profile is not None:
-        raise ValueError(f"unsupported OPRV3 coverage profile: {oprv3_coverage_profile}")
+    elif effective_coverage_profile == "dynamic_insertion":
+        insertable = next(
+            (item for item in objects if item["class_id"] in G8_DISCRETE_CLASSES),
+            None,
+        )
+        if insertable is None:
+            raise ValueError("dynamic_insertion coverage requires a discrete target")
+        desired_xyz = list(insertable["xyz_m"])
+        pose = next(update for update in updates if update["name"] == insertable["model_name"])
+        pose["xyz"] = [PARKING_ORIGIN_X_M, PARKING_ORIGIN_Y_M, PARKING_Z_M]
+        dynamic_plan = None
+        dynamic_insertion_plan = {
+            "model_name": insertable["model_name"],
+            "class_id": insertable["class_id"],
+            "initial_parked_xyz_m": list(pose["xyz"]),
+            "inserted_xyz_m": desired_xyz,
+            "yaw_rad": insertable["yaw_rad"],
+            "trigger_fraction": 0.40,
+            "executed_by_capture": True,
+        }
+        coverage_requirements["dynamic_insertion"] = True
+    elif effective_coverage_profile is not None:
+        raise ValueError(f"unsupported OPRV3 coverage profile: {effective_coverage_profile}")
     if os.environ.get("G4_SCENE_PLAN_ONLY") != "1":
         set_poses(world_id, updates)
     classes = sorted({item["class_id"] for item in assets})
@@ -512,6 +566,7 @@ def randomize(
         "overlap_executed": overlap_executed,
         "dynamic_motion_plan": dynamic_plan,
         "dynamic_removal_plan": dynamic_removal_plan,
+        "dynamic_insertion_plan": dynamic_insertion_plan,
         "native_gazebo_applied": True,
         "offline_sensor_augmentation": {
             "requested_only": False,
@@ -532,6 +587,7 @@ def randomize(
             "scene_cycle": detector_scene_cycle,
             "negative_only_schedule": "ceil(0.30 * scene_cycle)",
             "discrete_classes_only": g8_mode,
+            "auto_domain_matrix": bool(g8_auto_domain_matrix),
         },
         "lighting_executed_by_world": world["lighting_family"],
         "ground_material_executed_by_world": world["material_id"],
@@ -542,7 +598,7 @@ def randomize(
         "vehicle_start_xyz_m": [-8.0, 0.0, 0.18],
         "vehicle_start_yaw_rad": vehicle_start_yaw_rad,
         "vehicle_motion_command": {"linear_x_mps": 0.35, "duration_s": 8.0},
-        "oprv3_coverage_profile": oprv3_coverage_profile,
+        "oprv3_coverage_profile": effective_coverage_profile,
         "oprv3_coverage_requirements": coverage_requirements,
         "oprv3_motion_profile": motion_profile,
         "pose_reset_contract": {
@@ -576,9 +632,10 @@ def main() -> None:
     parser.add_argument("--force-negative-only", action="store_true")
     parser.add_argument("--detector-instances-per-class", type=int, default=1)
     parser.add_argument("--detector-scene-cycle", type=int, default=SCENES_PER_WORLD)
+    parser.add_argument("--g8-auto-domain-matrix", action="store_true")
     parser.add_argument(
         "--oprv3-coverage-profile",
-        choices=("turn_entry", "occlusion", "reflection", "dynamic_removal"),
+        choices=("turn_entry", "occlusion", "reflection", "dynamic_removal", "dynamic_insertion"),
     )
     args = parser.parse_args()
     print(
@@ -596,6 +653,7 @@ def main() -> None:
                 oprv3_coverage_profile=args.oprv3_coverage_profile,
                 detector_instances_per_class=args.detector_instances_per_class,
                 detector_scene_cycle=args.detector_scene_cycle,
+                g8_auto_domain_matrix=args.g8_auto_domain_matrix,
             ),
             indent=2,
         )
