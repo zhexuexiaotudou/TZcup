@@ -24,7 +24,7 @@ from sanitation_perception.rtmdet_product_runtime import decode_rtmdet_result  #
 
 
 CLASSES = ("plastic_bottle", "metal_can", "paper_litter")
-THRESHOLDS = tuple(round(0.05 + index * 0.02, 2) for index in range(21))
+THRESHOLDS = tuple(round(0.05 + index * 0.02, 2) for index in range(46))
 
 
 def sha256(path: Path) -> str:
@@ -95,21 +95,40 @@ def metrics(payload: dict, frames: dict[int, list[dict]], threshold: float) -> d
     negative_predictions = 0
     for image_id, rows in selected.items():
         truths = annotations[image_id]
-        actionable_truths = [truth for truth in truths if truth.get("actionable")]
-        actionable_predictions += len(rows)
         used = set()
         for prediction in rows:
-            candidates = [
-                (iou(prediction["bbox_xyxy"], truth["bbox_xyxy"]), index, truth)
-                for index, truth in enumerate(actionable_truths)
-                if index not in used and prediction["class_name"] == truth["class_name"]
+            candidates = sorted(
+                [
+                    (iou(prediction["bbox_xyxy"], truth["bbox_xyxy"]), index, truth)
+                    for index, truth in enumerate(truths)
+                ],
+                key=lambda item: item[0],
+                reverse=True,
+            )
+            best = candidates[0] if candidates else None
+            # The product pipeline rejects projected observations outside the
+            # frozen actionable range. A correct detection of such a visible
+            # target is neither an action nor a false action.
+            if best and best[0] >= 0.5 and not best[2].get("actionable"):
+                continue
+            actionable_predictions += 1
+            correct_candidates = [
+                (overlap, index, truth)
+                for overlap, index, truth in candidates
+                if (
+                    index not in used
+                    and overlap >= 0.5
+                    and truth.get("actionable")
+                    and prediction["class_name"] == truth["class_name"]
+                )
             ]
-            if candidates:
-                overlap, index, _truth = max(candidates, key=lambda item: item[0])
-                if overlap >= 0.5:
-                    used.add(index)
-                    correct_predictions += 1
-                    continue
+            if correct_candidates:
+                _overlap, index, _truth = max(
+                    correct_candidates, key=lambda item: item[0]
+                )
+                used.add(index)
+                correct_predictions += 1
+                continue
             if images[image_id].get("negative_only"):
                 negative_predictions += 1
     per_class = {}

@@ -20,7 +20,7 @@ def load_module(name):
 def test_ga1_threshold_grid_is_bounded_and_holdout_only():
     module = load_module("screen_gocv7_ga1.py")
     assert module.THRESHOLDS[0] == 0.05
-    assert module.THRESHOLDS[-1] == 0.45
+    assert module.THRESHOLDS[-1] == 0.95
     source = (ROOT / "scripts/screen_gocv7_ga1.py").read_text(encoding="utf-8")
     assert '"selection_data": "GOCV7_GA1_HOLDOUT_ONLY"' in source
     assert '"existing_24_mission_read_before_selection_freeze": False' in source
@@ -75,6 +75,38 @@ def test_ga1_metrics_count_wrong_class_matches_as_wrong_actionable():
     assert result["eventual_correct_class_recall"] == 0.0
     assert result["actionable_precision"] == 0.0
     assert result["wrong_actionable_rate"] == 1.0
+
+
+def test_ga1_precision_excludes_correct_visible_non_actionable_detection():
+    module = load_module("screen_gocv7_ga1.py")
+    payload = {
+        "categories": [{"id": 1, "name": "plastic_bottle"}],
+        "images": [{"id": 1, "frame_index": 1, "negative_only": False}],
+        "annotations": [
+            {
+                "id": 1,
+                "image_id": 1,
+                "category_id": 1,
+                "bbox": [10, 10, 20, 20],
+                "bbox_short_side_px": 20,
+                "target_id": "target",
+                "mission_id": "mission",
+                "actionable": False,
+            }
+        ],
+    }
+    frames = {
+        1: [
+            {
+                "class_name": "plastic_bottle",
+                "score": 0.9,
+                "bbox_xyxy": [10, 10, 30, 30],
+            }
+        ]
+    }
+    result = module.metrics(payload, frames, 0.5)
+    assert result["actionable_predictions"] == 0
+    assert result["wrong_actionable_rate"] == 0.0
 
 
 def test_formal_benchmark_recognizes_only_passing_frozen_ga1_selection(tmp_path):
