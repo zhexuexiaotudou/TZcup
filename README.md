@@ -108,3 +108,5 @@ G8 数据准备器独立重读每个 real-Gazebo 任务的 RGB、semantic/instan
 若独立像素审计发现跨 split 的 pHash 冲突，只允许按 `split:world:seed` 隔离整个任务并把原 manifest/capture SHA 写入 split manifest；禁止删除单帧来伪造任务完整性，隔离后全部配额和泄漏门必须从零重算。
 
 Route A 先物化 `LEGACY_GA1_TRAIN + G8_TRAIN_NEW` 的 TRAIN-only 源池，再用 SHA 绑定的 GA1 checkpoint 以低阈值挖掘至少 2000 个 proposal hard-negative crops；冻结 exposure 为 small 25%、metal 20%、general 25%、hard-negative 30%，训练阶段不读取 HOLDOUT_NEW、VAL_NEW 或 G5_V2，HOLDOUT_NEW 只用于 checkpoint 与阈值选择。
+
+Route A 保持官方 MMDetection RTMDet-s 和 640x480 产品输入，从 GA1 checkpoint warm-start；每个 epoch checkpoint 与全局阈值只在 HOLDOUT_NEW 上按 eventual correct-class recall、small eventual recall、actionable precision 和 wrong-actionable 硬约束联合选择，选择冻结前不得读取 VAL_NEW。
