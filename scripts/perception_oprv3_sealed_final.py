@@ -362,8 +362,9 @@ def evaluate_after_access(args, freeze, sealed) -> dict:
     require(coverage["pass"], "sealed static/moving coverage contract failed")
     detector_metadata = detector_metadata_only(args.detector_checkpoint)
     geometry = load_json(args.geometry)
-    area_configs, _ = load_area_gate(
-        args.area_gate, leaf_checkpoint=args.leaf_checkpoint, puddle_checkpoint=args.puddle_checkpoint
+    area_configs, area_provenance = load_area_gate(
+        args.area_gate, leaf_checkpoint=args.leaf_checkpoint, puddle_checkpoint=args.puddle_checkpoint,
+        leaf_onnx=args.leaf_onnx, puddle_onnx=args.puddle_onnx
     )
     detector = create_cuda_ort_session(args.detector_onnx)
     leaf = create_cuda_ort_session(args.leaf_onnx)
@@ -375,6 +376,7 @@ def evaluate_after_access(args, freeze, sealed) -> dict:
         area_configs=area_configs, camera_pitch_down_rad=camera_pitch,
         minimum_physical_area_m2=float(pipeline["runtime"]["minimum_area_region_m2"]),
         minimum_physical_area_m2_by_class=pipeline["runtime"]["minimum_area_region_m2_by_class"],
+        area_input_contract=area_provenance["runtime_input_contract"],
     )
     encounters = build_encounters(rows, context, geometry, detector_frames, detector_metadata, areas)
     route = summarize_route(encounters, false_discrete_actions(detector_frames, instances, detector_metadata))

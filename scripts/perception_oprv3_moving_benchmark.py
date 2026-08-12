@@ -61,6 +61,7 @@ from sanitation_learning.oprv3_moving import (  # noqa: E402
     summarize_route,
 )
 from sanitation_learning.opr_c_rtmdet import patch_mmdet_cuda_nms  # noqa: E402
+from sanitation_learning.g6_area_recovery import preprocess_g6_area  # noqa: E402
 from sanitation_perception.camera_frustum_model import (  # noqa: E402
     CameraFrustumModel,
 )
@@ -294,7 +295,12 @@ def load_area_checkpoint(task: str, path: Path, device: torch.device):
 
 
 def load_area_gate(
-    path: Path, *, leaf_checkpoint: Path, puddle_checkpoint: Path
+    path: Path,
+    *,
+    leaf_checkpoint: Path,
+    puddle_checkpoint: Path,
+    leaf_onnx: Path | None = None,
+    puddle_onnx: Path | None = None,
 ) -> tuple[dict, dict]:
     payload = json.loads(path.read_text(encoding="utf-8"))
     if payload.get("OPRV3_06_AREA_PASS") is not True:
@@ -312,6 +318,23 @@ def load_area_gate(
             raise RuntimeError(
                 f"Area gate {task} hash mismatch: expected {expected}, got {actual}"
             )
+    onnx_paths = {"leaf": leaf_onnx, "puddle": puddle_onnx}
+    if any(onnx_paths.values()) and not all(onnx_paths.values()):
+        raise RuntimeError("Area ONNX paths are atomic")
+    for task, onnx_path in onnx_paths.items():
+        if onnx_path is None:
+            continue
+        expected = payload.get("models", {}).get(task, {}).get("sha256")
+        actual = sha256(onnx_path)
+        if expected != actual:
+            raise RuntimeError(
+                f"Area gate {task} ONNX hash mismatch: expected {expected}, got {actual}"
+            )
+    shared_hashes = {
+        payload.get("models", {}).get(task, {}).get("shared_training_checkpoint_sha256")
+        for task in ("leaf", "puddle")
+    }
+    shared_g6 = len(shared_hashes) == 1 and None not in shared_hashes
     selected_config = payload.get("selected_config", {})
     selected = selected_config.get("by_class", selected_config)
     configs = {}
@@ -331,7 +354,39 @@ def load_area_gate(
         "OPRV3_06_AREA_PASS": True,
         "G5_SEALED_FINAL_read": False,
         "legacy_G4_D6_read": False,
+        "runtime_input_contract": (
+            "g6_shared_rgb_hsv_depth_geometry_texture_v1"
+            if shared_g6
+            else "g4_task_specific_area_v1"
+        ),
     }
+
+
+def area_runtime_input(
+    rgb: np.ndarray,
+    depth: np.ndarray,
+    *,
+    task: str,
+    camera_info: dict,
+    input_contract: str,
+) -> np.ndarray:
+    if input_contract == "g6_shared_rgb_hsv_depth_geometry_texture_v1":
+        # Persisted moving-capture depth is float32 metres, while the frozen
+        # G6 preprocessing contract was trained from uint16 millimetres.
+        depth_mm = np.asarray(depth, dtype=np.float32) * 1000.0
+        return preprocess_g6_area(rgb, depth_mm)
+    if input_contract == "g4_task_specific_area_v1":
+        return np.ascontiguousarray(
+            build_area_input(
+                rgb,
+                depth,
+                AREA_MODEL_SIZE,
+                task=task,
+                camera_info=camera_info,
+            ).transpose(2, 0, 1),
+            dtype=np.float32,
+        )
+    raise RuntimeError(f"unsupported Area runtime input contract: {input_contract}")
 
 
 def create_cuda_ort_session(path: Path):
@@ -378,6 +433,25 @@ def area_metadata_only(task: str, path: Path) -> dict:
         "sha256": sha256(path),
         "checkpoint_status": checkpoint["checkpoint_status"],
         "model_contract": checkpoint.get("model_contract") or {},
+        "load_initialization": "metadata_only_for_hash_bound_onnx_runtime",
+    }
+
+
+def g6_area_metadata_only(task: str, path: Path) -> dict:
+    checkpoint = torch.load(path, map_location="cpu", weights_only=False)
+    if checkpoint.get("checkpoint_status") != "training_complete_candidate_not_frozen":
+        raise RuntimeError(f"{task} G6 shared checkpoint is not a complete candidate")
+    if checkpoint.get("model") != "G6BoundaryAwareAreaNet":
+        raise RuntimeError(f"{task} checkpoint is not the G6 shared Area model")
+    return {
+        "path": path.as_posix(),
+        "sha256": sha256(path),
+        "checkpoint_status": checkpoint["checkpoint_status"],
+        "model_contract": {
+            "model_id": "g6_shared_boundary_aware_area_v1",
+            "input_contract": "g6_shared_rgb_hsv_depth_geometry_texture_v1",
+            "input_shape": [1, 10, 384, 512],
+        },
         "load_initialization": "metadata_only_for_hash_bound_onnx_runtime",
     }
 
@@ -520,6 +594,7 @@ def area_frame_map_onnx(
     camera_pitch_down_rad: float,
     minimum_physical_area_m2: float,
     minimum_physical_area_m2_by_class: dict[str, float] | None = None,
+    input_contract: str = "g4_task_specific_area_v1",
 ) -> tuple[dict, dict]:
     output = {
         (int(row["scene_seed"]), int(row["frame_index"])): {} for row in rows
@@ -534,7 +609,20 @@ def area_frame_map_onnx(
         dataset = G4AreaDataset(rows, channel=channel)
         input_name = session.get_inputs()[0].name
         for index in range(len(dataset)):
+            row = rows[index]
             inputs, target, _boundary = dataset[index]
+            if input_contract == "g6_shared_rgb_hsv_depth_geometry_texture_v1":
+                rgb = read_rgb(row)
+                depth = np.load(row["depth_path"], allow_pickle=False).astype(np.float32)
+                inputs = torch.from_numpy(
+                    area_runtime_input(
+                        rgb,
+                        depth,
+                        task="leaf" if class_name == "leaf_pile" else "puddle",
+                        camera_info=load_camera_info(row),
+                        input_contract=input_contract,
+                    )
+                )
             logits = session.run(
                 None,
                 {input_name: inputs.numpy()[None].astype(np.float32)},
@@ -550,7 +638,6 @@ def area_frame_map_onnx(
             intersection = int(np.logical_and(prediction, truth).sum())
             union = int(np.logical_or(prediction, truth).sum())
             target_pixels = int(truth.sum())
-            row = rows[index]
             key = (int(row["scene_seed"]), int(row["frame_index"]))
             output[key][class_name] = {
                 "score": (
@@ -593,6 +680,7 @@ def combined_frame_maps_onnx(
     camera_pitch_down_rad: float,
     minimum_physical_area_m2: float,
     minimum_physical_area_m2_by_class: dict[str, float] | None = None,
+    area_input_contract: str = "g4_task_specific_area_v1",
 ) -> tuple[dict, dict, dict]:
     """Run all three ONNX heads in one pass over persisted replay frames."""
     area_output = {}
@@ -652,18 +740,18 @@ def combined_frame_maps_onnx(
             ("puddle", "puddle", 5),
         ):
             session = area_sessions[class_name]
-            inputs = build_area_input(
+            inputs = area_runtime_input(
                 rgb,
                 depth,
-                AREA_MODEL_SIZE,
                 task=task,
                 camera_info=camera_info,
+                input_contract=area_input_contract,
             )
             logits = session.run(
                 None,
                 {
                     session.get_inputs()[0].name: np.ascontiguousarray(
-                        inputs.transpose(2, 0, 1)[None], dtype=np.float32
+                        inputs[None], dtype=np.float32
                     )
                 },
             )[0]
@@ -1904,8 +1992,6 @@ def main() -> int:
     geometry = load_geometry(args.geometry)
     rows, instances, context = load_development_rows(args.data_root)
     if use_area_onnx:
-        leaf_metadata = area_metadata_only("leaf", args.leaf_checkpoint)
-        puddle_metadata = area_metadata_only("puddle", args.puddle_checkpoint)
         leaf = create_cuda_ort_session(args.leaf_onnx)
         puddle = create_cuda_ort_session(args.puddle_onnx)
     else:
@@ -1919,7 +2005,18 @@ def main() -> int:
         args.area_gate,
         leaf_checkpoint=args.leaf_checkpoint,
         puddle_checkpoint=args.puddle_checkpoint,
+        leaf_onnx=args.leaf_onnx,
+        puddle_onnx=args.puddle_onnx,
     )
+    if use_area_onnx:
+        metadata_loader = (
+            g6_area_metadata_only
+            if area_gate_provenance["runtime_input_contract"]
+            == "g6_shared_rgb_hsv_depth_geometry_texture_v1"
+            else area_metadata_only
+        )
+        leaf_metadata = metadata_loader("leaf", args.leaf_checkpoint)
+        puddle_metadata = metadata_loader("puddle", args.puddle_checkpoint)
     manifest_path = (
         ROOT / "starter_ws" / "src" / "sanitation_perception" / "config"
         / "perception_pipeline_manifest.yaml"
@@ -1975,6 +2072,7 @@ def main() -> int:
                     "minimum_area_region_m2_by_class", {}
                 ).items()
             },
+            area_input_contract=area_gate_provenance["runtime_input_contract"],
         )
         del detector_session
     elif use_area_onnx:
@@ -1995,6 +2093,7 @@ def main() -> int:
                 name: float(value)
                 for name, value in product_manifest["runtime"].get("minimum_area_region_m2_by_class", {}).items()
             },
+            input_contract=area_gate_provenance["runtime_input_contract"],
         )
     else:
         runtime_models = {

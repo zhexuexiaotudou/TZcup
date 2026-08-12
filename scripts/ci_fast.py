@@ -283,6 +283,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_crv6_golden_parity.py",
         ROOT / "scripts" / "test_gocv7_real_gazebo_trace.py",
         ROOT / "scripts" / "test_gocv7_ga1_data.py",
+        ROOT / "scripts" / "test_gocv7_detector_gazebo_gate.py",
         ROOT / "scripts" / "test_crv6_reconstitution_provenance.py",
         ROOT / "scripts" / "test_crv6_native_moving_gate.py",
         ROOT / "scripts" / "test_crv6_moving_adaptation_holdout_only.py",

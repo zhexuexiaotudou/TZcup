@@ -7,7 +7,11 @@ import argparse
 from collections import Counter
 import hashlib
 import json
+import math
+import os
 from pathlib import Path
+import re
+import subprocess
 
 import numpy as np
 
@@ -15,6 +19,18 @@ import numpy as np
 CLASSES = ("plastic_bottle", "metal_can", "paper_litter")
 CLASS_LABELS = {name: index + 1 for index, name in enumerate(CLASSES)}
 SPLIT_BY_WORLD_INDEX = {0: "GA1_TRAIN", 1: "GA1_TRAIN", 2: "GA1_TRAIN", 3: "GA1_HOLDOUT"}
+ROOT = Path(__file__).resolve().parents[1]
+
+
+def repository_commit() -> str:
+    injected = os.environ.get("TZCUP_SOURCE_COMMIT", "").strip()
+    if injected:
+        if not re.fullmatch(r"[0-9a-fA-F]{40}", injected):
+            raise RuntimeError("TZCUP_SOURCE_COMMIT must be a full git SHA")
+        return injected.lower()
+    return subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+    ).strip()
 
 
 def sha256(path: Path) -> str:
@@ -38,9 +54,31 @@ def world_indices(manifest: dict) -> dict[str, int]:
     }
 
 
+def actionable(
+    *, mask: np.ndarray, depth: np.ndarray, target: dict, record: dict, window: dict
+) -> bool:
+    mask_depth = depth[mask]
+    depth_valid_ratio = (
+        float(np.isfinite(mask_depth).mean()) if mask_depth.size else 0.0
+    )
+    vehicle_xy = record["vehicle_xy_m"]
+    distance_m = math.hypot(
+        float(target["xyz_m"][0]) - float(vehicle_xy[0]),
+        float(target["xyz_m"][1]) - float(vehicle_xy[1]),
+    )
+    return bool(
+        window["minimum_actionable_range_m"] <= distance_m
+        <= window["maximum_actionable_range_m"]
+        and float(target.get("estimated_visible_fraction", 1.0))
+        >= window["minimum_visibility_ratio"]
+        and depth_valid_ratio >= window["minimum_depth_valid_ratio"]
+    )
+
+
 def prepare(
     data_root: Path,
     world_manifest_path: Path,
+    geometry_path: Path,
     output: Path,
     *,
     expected_seed_min: int = 2000,
@@ -49,6 +87,9 @@ def prepare(
     if output.exists():
         raise FileExistsError(output)
     world_manifest = json.loads(world_manifest_path.read_text(encoding="utf-8"))
+    geometry = json.loads(geometry_path.read_text(encoding="utf-8"))
+    if geometry.get("frozen_before_moving_model_measurement") is not True:
+        raise RuntimeError("GA1 actionable geometry was not frozen")
     indices = world_indices(world_manifest)
     scenes = []
     for scene_dir in sorted((data_root / "scenes").glob("scene_*")):
@@ -107,6 +148,7 @@ def prepare(
             for record in capture["records"]:
                 rgb_path = scene_dir / record["paths"]["rgb"]
                 semantic_path = scene_dir / record["paths"]["semantic"]
+                depth_path = scene_dir / record["paths"]["depth"]
                 rgb_hash = sha256(rgb_path)
                 prior = image_hashes.get(rgb_hash)
                 identity = (
@@ -134,11 +176,29 @@ def prepare(
                     }
                 )
                 semantic = np.load(semantic_path, allow_pickle=False)
+                depth = np.load(depth_path, allow_pickle=False)
                 frame_annotations = 0
+                targets_by_class = {
+                    item["class_id"]: item
+                    for item in manifest.get("objects", [])
+                    if item.get("class_id") in CLASSES
+                }
+                if len(targets_by_class) != len(
+                    [
+                        item
+                        for item in manifest.get("objects", [])
+                        if item.get("class_id") in CLASSES
+                    ]
+                ):
+                    raise RuntimeError(
+                        f"GA1 scene has duplicate discrete class targets: {scene_dir}"
+                    )
                 for class_name in CLASSES:
-                    box = bbox(semantic == CLASS_LABELS[class_name])
+                    mask = semantic == CLASS_LABELS[class_name]
+                    box = bbox(mask)
                     if box is None:
                         continue
+                    target = targets_by_class[class_name]
                     x1, y1, x2, y2 = box
                     annotations.append(
                         {
@@ -149,6 +209,15 @@ def prepare(
                             "area": (x2 - x1) * (y2 - y1),
                             "iscrowd": 0,
                             "bbox_short_side_px": min(x2 - x1, y2 - y1),
+                            "target_id": target["model_name"],
+                            "mission_id": f"ga1-{manifest['world_id']}-{manifest['scene_seed']}",
+                            "actionable": actionable(
+                                mask=mask,
+                                depth=depth,
+                                target=target,
+                                record=record,
+                                window=geometry["class_actionable_windows"][class_name],
+                            ),
                         }
                     )
                     annotation_id += 1
@@ -194,10 +263,15 @@ def prepare(
         "schema_version": 1,
         "protocol": "GAZEBO-ONLINE-CLOSURE-V7",
         "stage": "GOCV7-01-GA1-PREP",
+        "repository_commit": repository_commit(),
         "dataset_root": data_root.as_posix(),
         "world_manifest": {
             "path": world_manifest_path.as_posix(),
             "sha256": sha256(world_manifest_path),
+        },
+        "geometry": {
+            "path": geometry_path.as_posix(),
+            "sha256": sha256(geometry_path),
         },
         "splits": split_stats,
         "leakage_audit": leakage,
@@ -217,9 +291,10 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-root", type=Path, required=True)
     parser.add_argument("--world-manifest", type=Path, required=True)
+    parser.add_argument("--geometry", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    report = prepare(args.data_root, args.world_manifest, args.output)
+    report = prepare(args.data_root, args.world_manifest, args.geometry, args.output)
     print(json.dumps(report, indent=2))
     return 0 if report["GA1_PREP_PASS"] else 4
 

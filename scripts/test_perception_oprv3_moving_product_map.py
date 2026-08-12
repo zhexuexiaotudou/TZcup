@@ -155,6 +155,91 @@ def test_area_gate_binds_selected_postprocess_to_exact_checkpoints(tmp_path: Pat
         )
 
 
+def test_g6_area_gate_binds_onnx_and_selects_shared_input_contract(tmp_path: Path):
+    benchmark = _load_benchmark()
+    checkpoint = tmp_path / "g6_area_shared.pt"
+    leaf_onnx = tmp_path / "leaf.onnx"
+    puddle_onnx = tmp_path / "puddle.onnx"
+    checkpoint.write_bytes(b"shared")
+    leaf_onnx.write_bytes(b"leaf-onnx")
+    puddle_onnx.write_bytes(b"puddle-onnx")
+    shared_sha = benchmark.sha256(checkpoint)
+    payload = {
+        "OPRV3_06_AREA_PASS": True,
+        "G5_SEALED_FINAL_read": False,
+        "legacy_G4_D6_read": False,
+        "models": {
+            "leaf": {
+                "sha256": benchmark.sha256(leaf_onnx),
+                "shared_training_checkpoint_sha256": shared_sha,
+            },
+            "puddle": {
+                "sha256": benchmark.sha256(puddle_onnx),
+                "shared_training_checkpoint_sha256": shared_sha,
+            },
+        },
+        "selected_config": {
+            "leaf": {"threshold": 0.7, "morphology": "none"},
+            "puddle": {"threshold": 0.4, "morphology": "none"},
+        },
+    }
+    gate = tmp_path / "gate.json"
+    gate.write_text(json.dumps(payload), encoding="utf-8")
+    _configs, provenance = benchmark.load_area_gate(
+        gate,
+        leaf_checkpoint=checkpoint,
+        puddle_checkpoint=checkpoint,
+        leaf_onnx=leaf_onnx,
+        puddle_onnx=puddle_onnx,
+    )
+    assert provenance["runtime_input_contract"] == (
+        "g6_shared_rgb_hsv_depth_geometry_texture_v1"
+    )
+    leaf_onnx.write_bytes(b"changed")
+    with pytest.raises(RuntimeError, match="leaf ONNX hash mismatch"):
+        benchmark.load_area_gate(
+            gate,
+            leaf_checkpoint=checkpoint,
+            puddle_checkpoint=checkpoint,
+            leaf_onnx=leaf_onnx,
+            puddle_onnx=puddle_onnx,
+        )
+
+
+def test_g6_runtime_input_matches_training_preprocess():
+    benchmark = _load_benchmark()
+    rgb = np.zeros((480, 640, 3), dtype=np.uint8)
+    rgb[:, :, 1] = 128
+    depth = np.full((480, 640), 1.5, dtype=np.float32)
+    runtime = benchmark.area_runtime_input(
+        rgb,
+        depth,
+        task="leaf",
+        camera_info={},
+        input_contract="g6_shared_rgb_hsv_depth_geometry_texture_v1",
+    )
+    expected = benchmark.preprocess_g6_area(rgb, depth * 1000.0)
+    assert runtime.shape == (10, 384, 512)
+    assert runtime.dtype == np.float32
+    assert np.array_equal(runtime, expected)
+    assert runtime[6].max() > 0.3
+
+
+def test_g6_area_metadata_accepts_shared_complete_candidate(tmp_path: Path):
+    benchmark = _load_benchmark()
+    checkpoint = tmp_path / "g6.pt"
+    benchmark.torch.save(
+        {
+            "checkpoint_status": "training_complete_candidate_not_frozen",
+            "model": "G6BoundaryAwareAreaNet",
+        },
+        checkpoint,
+    )
+    metadata = benchmark.g6_area_metadata_only("leaf", checkpoint)
+    assert metadata["model_contract"]["input_shape"] == [1, 10, 384, 512]
+    assert metadata["sha256"] == benchmark.sha256(checkpoint)
+
+
 def test_runtime_source_commit_injection_is_strict(monkeypatch):
     benchmark = _load_benchmark()
     monkeypatch.setenv("TZCUP_SOURCE_COMMIT", "A" * 40)

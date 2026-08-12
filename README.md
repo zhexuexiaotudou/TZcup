@@ -80,3 +80,5 @@ ROS、Gazebo、导航或运行时变更还需要执行对应的 Stage 验收，�
 CRV6 工具链覆盖恢复审计、R1 provenance、static VAL 非门禁回归、golden native/runtime parity、G7-MOVING HOLDOUT/VAL 原生门、有界 MA1 moving-domain adaptation，以及严格分离 discrete/area/combined 指标的真实 Gazebo 在线审计。MA1 在独立 G7-MOVING VAL 通过，但真实 Gazebo 24-mission 回放的离散 detector/map 门未通过；现有 G6 Area 的 boundary F1 和 negative FP/frame 也未达到 CRV6 阈值。因此 `MODEL_BLOCKED_INTERNAL=true`，禁止 freeze、读取 G5_V2 或声明产品就绪。大型数据、checkpoint 和逐帧 trace 保存在仓库外 evidence 根目录。
 
 后续 GOCV7 工具可在不读取 G5_V2 或正式 30-seed 数据的前提下，对代表性真实 Gazebo mission 执行 native MMDetection、产品 adapter 与完整 detector 入口的同帧 trace，并准备 world 隔离、哈希去重的 development-only GA1 TRAIN/HOLDOUT 数据。只有这些开发门及下游在线门全部通过后，才允许进入 x86 freeze 与一次性 sealed-final 验收。
+
+GA1 路由严格限定为一次由 MA1 warm start 的真实 Gazebo TRAIN 微调，checkpoint 和 action threshold 只由 world 隔离的 GA1 HOLDOUT 选择；训练、选择报告同时绑定源码 commit、容器镜像 digest、checkpoint/config SHA，并显式证明既有 24-mission、G5、G5_V2 与正式 30-seed 在冻结前均未读取。现有 G6 Area 候选的跨世界固定门已达到 macro mIoU `0.973208`、boundary F1 `0.847253`、negative actionable FP/frame `0.000714`，GOCV7 不再启动 Area backbone 或额外 boundary-head 训练，后续仅允许验证固定 G6 模型的产品运行时接入与在线链路。
