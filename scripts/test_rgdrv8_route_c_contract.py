@@ -11,6 +11,7 @@ def test_route_c_context_preserves_fixed_proposals_and_val_boundary() -> None:
     assert '"HOLDOUT_proposals_fixed_once": True' in source
     assert '"VAL_NEW_read": False' in source
     assert "square_crop" in source and "scale=6.0" in source
+    assert '"source_train.json"' in source
 
 
 def test_route_c_verifier_is_single_model_hard_negative_extension() -> None:

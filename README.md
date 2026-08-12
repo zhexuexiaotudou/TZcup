@@ -116,3 +116,5 @@ Route B 只在 Route A 的高召回候选无法满足 wrong-actionable 门时启
 Route B verifier 从每类固定抽取 4000 个 unique TRAIN crops 并将 TRAIN/HOLDOUT 图像各预载一次，规避 Docker Desktop 小文件挂载的重复 I/O 阻塞；不改变 16-epoch、四类平衡、全量 HOLDOUT threshold sweep 或任何精度门槛。
 
 Route C 是有限 detector 恢复的最后路线：保留 Route B 已固定的 proposal 坐标与标签，使用产品可部署的 `square_crop(scale=6, minimum_side=64)` 增加地面上下文并强化同一个 MobileNetV3-Small verifier 的 hard-negative 能力；HOLDOUT 只用于冻结，VAL_NEW 在候选冻结前保持未读。
+
+Route C 的 contextual crop 必须回溯 Route A 的 `source_train.json`（`G8 TRAIN_NEW + legacy GA1 development`）和固定 `holdout.json`，以保持与 Route B proposal 的 image-id/source-pool 一致；不得把仅含 G8 的 `prepared_final_v2/fit.json` 误作完整 TRAIN_COMBINED 索引。

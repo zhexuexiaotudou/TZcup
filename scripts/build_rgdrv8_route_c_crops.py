@@ -87,7 +87,7 @@ def main() -> int:
     args.output.mkdir(parents=True)
     train = recrop(
         json.loads((args.route_b_crops / "train_crops.json").read_text()),
-        image_index(args.prepared / "fit.json", args.prepared),
+        image_index(args.prepared / "source_train.json", args.prepared),
         args.output,
         "TRAIN",
     )
