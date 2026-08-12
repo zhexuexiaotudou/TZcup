@@ -84,3 +84,5 @@ CRV6 工具链覆盖恢复审计、R1 provenance、static VAL 非门禁回归、
 GA1 路由严格限定为一次由 MA1 warm start 的真实 Gazebo TRAIN 微调，checkpoint 和 action threshold 只由 world 隔离的 GA1 HOLDOUT 选择；训练、选择报告同时绑定源码 commit、容器镜像 digest、checkpoint/config SHA，并显式证明既有 24-mission、G5、G5_V2 与正式 30-seed 在冻结前均未读取。现有 G6 Area 候选的跨世界固定门已达到 macro mIoU `0.973208`、boundary F1 `0.847253`、negative actionable FP/frame `0.000714`，GOCV7 不再启动 Area backbone 或额外 boundary-head 训练，后续仅允许验证固定 G6 模型的产品运行时接入与在线链路。
 
 正式 24-mission benchmark 只接受 `GOCV7_GA1_HOLDOUT_ONLY` 且已经通过的哈希绑定 selection；任何 selection 失败、checkpoint 不一致或在阈值冻结前读取正式回放的记录都会 fail-closed。
+
+GA1 数据准备要求 24 个固定 development seed 全部存在、每任务至少 30 个同步帧且总量不少于提示词要求的 300 帧；这一门槛允许低实时倍率 Gazebo 世界在保留超时失败证据后缩短单任务采集，但禁止缺 world、缺 seed、跨 split 重复或用不足样本冒充通过。

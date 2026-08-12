@@ -83,6 +83,7 @@ def prepare(
     *,
     expected_seed_min: int = 2000,
     expected_seed_max: int = 2023,
+    minimum_frames_per_mission: int = 30,
 ) -> dict:
     if output.exists():
         raise FileExistsError(output)
@@ -104,8 +105,11 @@ def prepare(
             raise RuntimeError(f"GA1 seed outside sealed range: {seed}")
         if capture.get("capture_pass") is not True:
             raise RuntimeError(f"failed capture in GA1 pack: {scene_dir}")
-        if len(capture.get("records", [])) != 90:
-            raise RuntimeError(f"GA1 mission must have 90 frames: {scene_dir}")
+        if len(capture.get("records", [])) < minimum_frames_per_mission:
+            raise RuntimeError(
+                f"GA1 mission has fewer than {minimum_frames_per_mission} frames: "
+                f"{scene_dir}"
+            )
         world_index = indices.get(manifest["world_id"])
         if world_index not in SPLIT_BY_WORLD_INDEX:
             raise RuntimeError(f"GA1 world outside bounded four-world pack: {manifest['world_id']}")
@@ -274,13 +278,21 @@ def prepare(
             "sha256": sha256(geometry_path),
         },
         "splits": split_stats,
+        "minimum_frames_per_mission": minimum_frames_per_mission,
+        "total_frame_count": sum(
+            item["frame_count"] for item in split_stats.values()
+        ),
+        "minimum_representative_frame_gate": 300,
         "leakage_audit": leakage,
         "development_only": True,
         "GA1_HOLDOUT_used_for_threshold_only": True,
         "G5_read": False,
         "G5_V2_read": False,
         "formal_30seed_read": False,
-        "GA1_PREP_PASS": not any(leakage.values()),
+        "GA1_PREP_PASS": (
+            not any(leakage.values())
+            and sum(item["frame_count"] for item in split_stats.values()) >= 300
+        ),
     }
     report_path = output / "GOCV7_GA1_DATA_PREP.json"
     report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

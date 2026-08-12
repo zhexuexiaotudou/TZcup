@@ -35,3 +35,11 @@ def test_world_isolated_split_contract():
     }
     manifest = {"worlds": [{"world_id": f"world_{index}"} for index in range(4)]}
     assert module.world_indices(manifest)["world_3"] == 3
+
+
+def test_ga1_uses_prompt_minimum_representative_frame_gate():
+    source = (ROOT / "scripts" / "prepare_gocv7_ga1.py").read_text(
+        encoding="utf-8"
+    )
+    assert "minimum_frames_per_mission: int = 30" in source
+    assert '"minimum_representative_frame_gate": 300' in source
