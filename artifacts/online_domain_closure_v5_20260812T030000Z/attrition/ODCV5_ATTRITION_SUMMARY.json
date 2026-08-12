@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "protocol": "ONLINE-DOMAIN-CLOSURE-V5",
+  "stage": "ODCV5-00",
+  "status": "legacy_attrition_reconstructed_downstream_trace_incomplete",
+  "source_commit": "5c5e096e5041085a1baf95edf3869d80eddd1d54",
+  "route": "D1-B",
+  "source_benchmark": {
+    "logical_path": "F:/Project/TZcup/.workspace/artifacts/TZcup-ddrv4-online-dev-v6/base/DDRV4_BASE_MOVING.json",
+    "size_bytes": 9869771,
+    "sha256": "0963971cbfd51ad177639a02fd9aca8dedc3f9a2346d855979e80a8bb2ae1083"
+  },
+  "full_outputs": {
+    "logical_root": "F:/Project/TZcup/.workspace/artifacts/TZcup-odcv5-20260812/attrition",
+    "ODCV5_ATTRITION_LADDER.json": "6206c5b2b9de33960510478a0eb1de1ee071b9f9510a0647707e78ef1c22ad7a",
+    "ODCV5_ATTRITION_BY_CLASS.json": "ce943c45c16de9fddde06b0fe4172dbfb313a94687460b887a07b14607c4d353",
+    "ODCV5_ATTRITION_BY_DOMAIN.json": "c038d0febf5585d7c1bfcaca7fcc869883ec745fc169bf8916882656a9e4a746"
+  },
+  "discrete_target_ladder": {
+    "GT_VISIBLE": {"count_in": 60, "count_passed": 60, "count_lost": 0},
+    "GT_ACTIONABLE_WINDOW": {"count_in": 60, "count_passed": 59, "count_lost": 1},
+    "NATIVE_DETECTOR_OBSERVATION": {"count_in": 59, "count_passed": 52, "count_lost": 7},
+    "NATIVE_DETECTOR_ACTION_THRESHOLD": {"count_in": 52, "count_passed": 23, "count_lost": 29},
+    "CORRECT_CLASS": {"count_in": 23, "count_passed": 10, "count_lost": 13},
+    "DEPTH_VALID": {"count_in": 10, "count_passed": 10, "count_lost": 0},
+    "PROJECTION_SUCCESS": {"count_in": 10, "count_passed": 3, "count_lost": 7},
+    "TRACK_CREATED": {"count_in": 3, "count_passed": 3, "count_lost": 0},
+    "TRACK_CONFIRMED": {"count_in": 3, "count_passed": 3, "count_lost": 0},
+    "DYNAMIC_MAP_ACCEPTED": {"count_in": 3, "count_passed": 3, "count_lost": 0},
+    "DYNAMIC_MAP_CONFIRMED": {"count_in": 3, "count_passed": 3, "count_lost": 0},
+    "SCHEDULER_ACTIONABLE": {"count_in": 3, "count_passed": 0, "count_lost": 0, "count_unknown": 3}
+  },
+  "root_cause_so_far": "primary losses are detector action-threshold and class; legacy evidence also shows a projection-to-map composite loss but cannot separate its internal stages",
+  "training_allowed": false,
+  "next_gate": "ODCV5-01 golden-frame runtime parity with target-addressable per-stage trace",
+  "G5_SEALED_FINAL_read": false,
+  "G5_V2_read": false,
+  "MODEL_FREEZE_X86_CREATED": false,
+  "PRODUCT_X86_PERCEPTION_READY": false
+}

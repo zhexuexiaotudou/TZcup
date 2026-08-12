@@ -25,7 +25,9 @@
 
 Detector Data Recovery V4 的 G7 静态候选达到 recall/precision `0.9778/0.9778`，但运动相机兼容回归的 eventual recall 为 `0.3898`，metal recall 为 `0.1053`，产品地图 precision 为 `0.2111`。性能回放达到 `9.9974 Hz`、P95 `155.83 ms`、掉帧率 `0`，仍未满足严格 `>=10 Hz` 门。
 
-这些结果只证明静态候选具备继续研究的价值，不能解锁 freeze、G5_V2、Spot Cleaning、J6 或现场发布。完整边界与复现入口见 [Detector Data Recovery V4](detector-data-recovery-v4.md)。
+ODCV5-00 对同一 24 mission 回放建立了严格单调的在线损失阶梯。60 个离散 GT 全部进入视野，59 个进入 actionable window；随后 observation/action-threshold/correct-class 只剩 `52/23/10`。10 个 correct-class 且 depth-valid 的目标中，只有 3 个能与同类 product-map target 审计关联。当前首要损失是 detector score 与类别，projection 到 map 仍有复合损失；旧格式缺逐目标 scheduler attribution，也不能把 projection、tracker、map 三者独立归因。
+
+这些结果只证明静态候选具备继续研究的价值，不能解锁训练、freeze、G5_V2、Spot Cleaning、J6 或现场发布。下一门是 ODCV5-01 golden-frame runtime parity 和逐帧 trace；完成前 `training_allowed=false`。完整边界与复现入口见 [ONLINE-DOMAIN-CLOSURE-V5](online-domain-closure-v5.md) 和 [Detector Data Recovery V4](detector-data-recovery-v4.md)。
 
 ## 权威入口
 
@@ -34,14 +36,16 @@ Detector Data Recovery V4 的 G7 静态候选达到 recall/precision `0.9778/0.9
 - 当前机器可读状态：[`FINAL_AUTONOMOUS_STATUS.json`](../FINAL_AUTONOMOUS_STATUS.json)
 - 当前阻塞项：[`FINAL_BLOCKER_REGISTER.json`](../FINAL_BLOCKER_REGISTER.json)
 - DDRV4 最终证据：[`artifacts/detector_data_recovery_v4_20260811T134117Z/final/`](../artifacts/detector_data_recovery_v4_20260811T134117Z/final/)
+- ODCV5 协议与当前阶梯：[ONLINE-DOMAIN-CLOSURE-V5](online-domain-closure-v5.md)
 - 开发和交付规则：[开发工作流](development-workflow.md)
 
 ## 下一步解锁条件
 
-后续工作只有在获得相应资源后继续：
+后续工作按以下边界继续：
 
-1. 获得覆盖 behind-FOV、转弯、遮挡和反光场景的独立运动相机开发数据，重新执行在线产品质量门；
-2. 获得当前 J6 工具链、冻结 student 和授权实体板，执行可追溯转换与实板验收；
-3. 获得正式 RGB-D 录制、独立地图真值和现场授权，执行真实场地验收。
+1. 先执行 ODCV5-01 golden-frame runtime parity 并补齐逐帧 stage trace，不做新的 detector 训练；
+2. 建立覆盖 behind-FOV、转弯、遮挡和反光场景的独立 G7-MOVING 开发包，执行 native detector moving gate；
+3. 获得当前 J6 工具链、冻结 student 和授权实体板，执行可追溯转换与实板验收；
+4. 获得正式 RGB-D 录制、独立地图真值和现场授权，执行真实场地验收。
 
 更新本页时应直接替换已经失效的结论，不追加日期、轮次或提交日志。
