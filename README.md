@@ -90,3 +90,5 @@ GA1 数据准备要求 24 个固定 development seed 全部存在、每任务至
 DDRV4、CRV6 与 GOCV7 三类 HOLDOUT selection 由同一正式 benchmark 入口兼容校验；旧路线的哈希、VAL 未读边界保持不变，GA1 另外要求 HOLDOUT gate 通过且正式 24-mission 在阈值冻结前未读取。GA1 精确 RGB 哈希重复在同一 split 内确定性保留首帧并审计丢弃，任何 TRAIN/HOLDOUT 跨 split 重复仍立即失败。
 
 GA1 HOLDOUT 的 actionable precision 与产品链一致：正确匹配到冻结行动距离之外、随后会被深度投影范围门拒绝的可见目标不计为动作或误动作；范围内正确匹配与未匹配/错类预测才进入 precision/wrong-actionable 统计。阈值只在预先固定的 `0.05–0.95` 网格内选择。
+
+若唯一 GA1 fine-tune 与有界阈值修复仍不能通过 HOLDOUT，GOCV7 必须在读取正式 24-mission 前停止，生成六个强制 BLOCKED 最终文件；性能、freeze、G5_V2、30-seed、Spot Cleaning、soak、MCAP、release、Ready/Merge 与部署保持锁定。
