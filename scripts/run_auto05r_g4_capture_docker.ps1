@@ -2,6 +2,7 @@ param(
     [string]$DataRoot = "F:\Project\TZcup-autonomous-auto05r-g4-data",
     [string]$BaselineRoot = "",
     [string]$ResourceRoot = "",
+    [string]$ModelResourceRoot = "",
     [string]$RuntimeWorkspaceRoot = "",
     [string]$UpstreamRoot = "F:\Project\TZcup-coverage-docker-src\linorobot2",
     [string]$Image = "tzcup/sanitation-jazzy:stage5b",
@@ -65,6 +66,10 @@ if (-not [string]::IsNullOrWhiteSpace($ResourceRoot)) {
     $resource = (Resolve-Path $ResourceRoot).Path
     $volumeArgs += @("-v", "${resource}:/resource:ro")
 }
+if (-not [string]::IsNullOrWhiteSpace($ModelResourceRoot)) {
+    $modelResource = (Resolve-Path $ModelResourceRoot).Path
+    $volumeArgs += @("-v", "${modelResource}:/model-resource:ro")
+}
 if (-not [string]::IsNullOrWhiteSpace($RuntimeWorkspaceRoot)) {
     $runtimeWorkspace = [System.IO.Path]::GetFullPath($RuntimeWorkspaceRoot)
     New-Item -ItemType Directory -Force -Path $runtimeWorkspace | Out-Null
@@ -72,6 +77,7 @@ if (-not [string]::IsNullOrWhiteSpace($RuntimeWorkspaceRoot)) {
 }
 
 $resourceRootInContainer = if ([string]::IsNullOrWhiteSpace($ResourceRoot)) { "/data/g4_screening_native" } else { "/resource" }
+$modelResourceRootInContainer = if ([string]::IsNullOrWhiteSpace($ModelResourceRoot)) { $resourceRootInContainer } else { "/model-resource" }
 $worldManifestInContainer = "$resourceRootInContainer/worlds/g4_world_manifest.json"
 $runtimeWorkspaceInContainer = if ([string]::IsNullOrWhiteSpace($RuntimeWorkspaceRoot)) { "/data/runtime_ws_g4" } else { "/runtime" }
 
@@ -90,6 +96,7 @@ docker run --rm --gpus all --shm-size 2g `
     -e AUTO05R_SKIP_WORLD_GENERATION=$([int]$SkipWorldGeneration.IsPresent) `
     -e AUTO05R_FORCE_NEGATIVE_ONLY=$([int]$ForceNegativeOnly.IsPresent) `
     -e AUTO05R_RESOURCE_ROOT=$resourceRootInContainer `
+    -e AUTO05R_MODEL_RESOURCE_ROOT=$modelResourceRootInContainer `
     -e AUTO05R_WORLD_MANIFEST=$worldManifestInContainer `
     -e AUTO05R_ONLY_SCENES=$OnlyScenes `
     -e AUTO05R_CAPTURE_FRAME_COUNT=$CaptureFrameCount `

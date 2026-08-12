@@ -130,6 +130,10 @@ def test_g4_capture_timeout_is_explicitly_configurable():
     assert 'for capture_attempt in $(seq 1 "${CAPTURE_MAX_ATTEMPTS}")' in capture_script
     assert "[int]$CaptureMaxAttempts = 3" in docker_wrapper
     assert "AUTO05R_CAPTURE_MAX_ATTEMPTS=$CaptureMaxAttempts" in docker_wrapper
+    assert 'MODEL_RESOURCE_ROOT="${AUTO05R_MODEL_RESOURCE_ROOT:-${RESOURCE_ROOT}}"' in capture_script
+    assert 'GZ_SIM_RESOURCE_PATH="${RESOURCE_ROOT}/worlds:${MODEL_RESOURCE_ROOT}/models"' in capture_script
+    assert "[string]$ModelResourceRoot" in docker_wrapper
+    assert "AUTO05R_MODEL_RESOURCE_ROOT=$modelResourceRootInContainer" in docker_wrapper
 
 
 def test_adjacent_translation_gate_rejects_rotation_only_frames():

@@ -102,3 +102,5 @@ G8 自动域矩阵只在显式开关下启用，正任务按冻结序列执行�
 G8 wet/specular 数据由可复跑派生器从对应 split 的独立 base world 生成：派生过程修改 Gazebo world id、地面 PBR roughness 与低角度高光灯，重新计算 SDF/manifest SHA，并逐字节校验地面纹理资源闭包；训练、HOLDOUT、VAL 各自使用其 split 内不同 base world，禁止跨 split 复用同一 world 或资产。
 
 G8 数据准备器独立重读每个 real-Gazebo 任务的 RGB、semantic/instance mask、TF 与 capture report，按稳定 instance id 统计真实 encounter 和首次可见尺寸，物化三份封闭 COCO 索引，并 fail-closed 检查任务/负样本配额、域角色、四传感器同步以及 world/seed/asset/RGB/pHash 跨 split 零重叠；帧数建议值不能替代 encounter 硬门槛。
+
+派生 wet world 运行时把只读 world/纹理根与只读模型资产根分别挂载，并在启动前验证 `models/` 存在；这使每个 wet SDF 保持独立 SHA 和 split 身份，同时继续使用同一 split 的原生 Gazebo 模型资产，而不会把模型复制进派生证据目录。
