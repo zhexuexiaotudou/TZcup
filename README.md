@@ -92,3 +92,5 @@ DDRV4、CRV6 与 GOCV7 三类 HOLDOUT selection 由同一正式 benchmark 入口
 GA1 HOLDOUT 的 actionable precision 与产品链一致：正确匹配到冻结行动距离之外、随后会被深度投影范围门拒绝的可见目标不计为动作或误动作；范围内正确匹配与未匹配/错类预测才进入 precision/wrong-actionable 统计。阈值只在预先固定的 `0.05–0.95` 网格内选择。
 
 若唯一 GA1 fine-tune 与有界阈值修复仍不能通过 HOLDOUT，GOCV7 必须在读取正式 24-mission 前停止，生成六个强制 BLOCKED 最终文件；性能、freeze、G5_V2、30-seed、Spot Cleaning、soak、MCAP、release、Ready/Merge 与部署保持锁定。
+
+`REAL-GAZEBO-DETECTOR-RECOVERY-V8` 在上述 fail-closed 基线上授权最多三条有限 detector 恢复路线。第一阶段只对已消费的 GA1 development HOLDOUT 做逐目标失败审计，固定使用 GOCV7 阈值且不得调参或读取新 VAL、G5_V2 与正式 30-seed；只有回答 small miss、false actionable 背景类型和最大错报类别后，才能构建 world/seed/asset 隔离的 G8 real-Gazebo development pack。最终仍以真实 detector、tracker/map、在线性能、冻结、sealed final、30-seed、清扫、soak、回放和 x86 release 全门通过为仿真产品完成条件。
