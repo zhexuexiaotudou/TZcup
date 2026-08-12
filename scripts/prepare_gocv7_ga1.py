@@ -83,7 +83,7 @@ def prepare(
     *,
     expected_seed_min: int = 2000,
     expected_seed_max: int = 2023,
-    minimum_frames_per_mission: int = 30,
+    minimum_frames_per_mission: int = 20,
 ) -> dict:
     if output.exists():
         raise FileExistsError(output)
