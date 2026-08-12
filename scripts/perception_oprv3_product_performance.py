@@ -60,6 +60,7 @@ from perception_oprv3_moving_benchmark import (  # noqa: E402
     load_area_checkpoint,
     load_area_gate,
     load_detector,
+    load_mmdet_detector,
     project_area_frame,
     project_discrete_frame,
     repository_commit,
@@ -99,8 +100,11 @@ def detector_metadata_only(path: Path) -> dict:
 
 def area_metadata_only(task: str, path: Path) -> dict:
     checkpoint = torch.load(path, map_location="cpu", weights_only=False)
-    if checkpoint.get("checkpoint_status") != "training_complete":
-        raise RuntimeError(f"{task} checkpoint is not training_complete")
+    if checkpoint.get("checkpoint_status") not in (
+        "training_complete",
+        "training_complete_candidate_not_frozen",
+    ):
+        raise RuntimeError(f"{task} checkpoint is not a completed candidate")
     return {
         "path": path.as_posix(),
         "sha256": sha256(path),
@@ -158,6 +162,34 @@ def detector_inference(model, metadata: dict, rgb: np.ndarray, device) -> dict:
         output["boxes"].detach().cpu().tolist(),
         output["scores"].detach().cpu().tolist(),
         output["labels"].detach().cpu().tolist(),
+    ):
+        if float(score) < OBSERVATION_THRESHOLD:
+            continue
+        class_index = int(label)
+        if not 0 <= class_index < len(DISCRETE_NAMES):
+            raise RuntimeError(f"detector produced invalid class index {class_index}")
+        detections.append(
+            {
+                "class_name": DISCRETE_NAMES[class_index],
+                "score": float(score),
+                "bbox_xyxy": [float(value) for value in box],
+            }
+        )
+    detections.sort(key=lambda item: item["score"], reverse=True)
+    return {"detections": detections[:100]}
+
+
+def detector_mmdet_inference(model, metadata: dict, rgb: np.ndarray) -> dict:
+    """Run the hash-bound DDRV4 MMDetection candidate from RGB only."""
+    from mmdet.apis import inference_detector
+
+    output = inference_detector(model, np.ascontiguousarray(rgb[..., ::-1]))
+    predictions = output.pred_instances.to("cpu")
+    detections = []
+    for box, score, label in zip(
+        predictions.bboxes.tolist(),
+        predictions.scores.tolist(),
+        predictions.labels.tolist(),
     ):
         if float(score) < OBSERVATION_THRESHOLD:
             continue
@@ -354,6 +386,8 @@ def main() -> int:
     parser.add_argument("--data-root", type=Path, required=True)
     parser.add_argument("--geometry", type=Path, required=True)
     parser.add_argument("--detector", type=Path, required=True)
+    parser.add_argument("--mmdet-config", type=Path)
+    parser.add_argument("--mmdet-selection", type=Path)
     parser.add_argument("--leaf-checkpoint", type=Path, required=True)
     parser.add_argument("--puddle-checkpoint", type=Path, required=True)
     parser.add_argument("--detector-onnx", type=Path)
@@ -370,19 +404,34 @@ def main() -> int:
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     if device.type != "cuda":
         raise RuntimeError("formal OPRV3 product performance requires CUDA")
-    onnx_paths = (args.detector_onnx, args.leaf_onnx, args.puddle_onnx)
-    if any(onnx_paths) and not all(onnx_paths):
-        raise RuntimeError("the detector, leaf and puddle ONNX paths are atomic")
-    use_onnx = all(onnx_paths)
+    mmdet_paths = (args.mmdet_config, args.mmdet_selection)
+    if any(mmdet_paths) and not all(mmdet_paths):
+        raise RuntimeError("MMDetection config and selection paths are atomic")
+    use_mmdet = all(mmdet_paths)
+    if use_mmdet and args.detector_onnx:
+        raise RuntimeError("MMDetection and detector ONNX paths are mutually exclusive")
+    if bool(args.leaf_onnx) != bool(args.puddle_onnx):
+        raise RuntimeError("leaf and puddle ONNX paths are atomic")
+    use_detector_onnx = bool(args.detector_onnx)
+    use_area_onnx = bool(args.leaf_onnx and args.puddle_onnx)
+    if use_detector_onnx and not use_area_onnx:
+        raise RuntimeError("the legacy detector ONNX route requires both area ONNX paths")
 
     rows = load_product_rows(args.data_root)[: args.maximum_frames]
-    if use_onnx:
+    if use_mmdet:
+        detector, detector_metadata = load_mmdet_detector(
+            args.mmdet_config, args.detector, args.mmdet_selection
+        )
+    elif use_detector_onnx:
         detector_metadata = detector_metadata_only(args.detector)
-        leaf_metadata = area_metadata_only("leaf", args.leaf_checkpoint)
-        puddle_metadata = area_metadata_only("puddle", args.puddle_checkpoint)
-        detector = leaf = puddle = None
+        detector = None
     else:
         detector, detector_metadata = load_detector(args.detector, device)
+    if use_area_onnx:
+        leaf_metadata = area_metadata_only("leaf", args.leaf_checkpoint)
+        puddle_metadata = area_metadata_only("puddle", args.puddle_checkpoint)
+        leaf = puddle = None
+    else:
         leaf, leaf_metadata = load_area_checkpoint(
             "leaf", args.leaf_checkpoint, device
         )
@@ -408,10 +457,18 @@ def main() -> int:
     tracker_config = TrackerV2Config.from_pipeline_manifest(manifest)
     map_config = DynamicTrashMapConfig(**manifest["runtime"]["dynamic_trash_map"])
     frustum = CameraFrustumModel(**manifest["runtime"]["camera_frustum"])
-    if use_onnx:
+    if use_detector_onnx:
         detector = create_cuda_ort_session(args.detector_onnx)
+    if use_area_onnx:
         leaf = create_cuda_ort_session(args.leaf_onnx)
         puddle = create_cuda_ort_session(args.puddle_onnx)
+
+    def run_detector(rgb: np.ndarray) -> dict:
+        if use_mmdet:
+            return detector_mmdet_inference(detector, detector_metadata, rgb)
+        if use_detector_onnx:
+            return detector_onnx_inference(detector, detector_metadata, rgb)
+        return detector_inference(detector, detector_metadata, rgb, device)
 
     # A replay file is only the transport for recorded camera messages.  Load
     # it before measurement so Windows bind-mount I/O is not misreported as
@@ -438,15 +495,11 @@ def main() -> int:
     for _ in range(args.warmup_iterations):
         rgb = warm["rgb"]
         depth = warm["depth"]
-        (
-            detector_onnx_inference(detector, detector_metadata, rgb)
-            if use_onnx
-            else detector_inference(detector, detector_metadata, rgb, device)
-        )
-        area_call = area_onnx_inference if use_onnx else area_inference
+        run_detector(rgb)
+        area_call = area_onnx_inference if use_area_onnx else area_inference
         area_call(
             leaf, "leaf", warm_row, rgb, depth, area_configs["leaf_pile"],
-            *(() if use_onnx else (device,)),
+            *(() if use_area_onnx else (device,)),
             camera_pitch_down_rad=camera_pitch_down_rad,
             minimum_physical_area_m2=float(
                 manifest["runtime"].get(
@@ -460,7 +513,7 @@ def main() -> int:
         )
         area_call(
             puddle, "puddle", warm_row, rgb, depth, area_configs["puddle"],
-            *(() if use_onnx else (device,)),
+            *(() if use_area_onnx else (device,)),
             camera_pitch_down_rad=camera_pitch_down_rad,
             minimum_physical_area_m2=float(
                 manifest["runtime"].get(
@@ -527,11 +580,7 @@ def main() -> int:
         state = mission_state[seed]
         rgb = replay["rgb"]
         depth = replay["depth"]
-        detector_frame = (
-            detector_onnx_inference(detector, detector_metadata, rgb)
-            if use_onnx
-            else detector_inference(detector, detector_metadata, rgb, device)
-        )
+        detector_frame = run_detector(rgb)
         model_counts["detector"] += 1
         detections = project_discrete_frame(
             detector_frame,
@@ -545,14 +594,14 @@ def main() -> int:
         class_name = "leaf_pile" if area_task == "leaf" else "puddle"
         area_model = leaf if area_task == "leaf" else puddle
         detections.extend(
-            (area_onnx_inference if use_onnx else area_inference)(
+            (area_onnx_inference if use_area_onnx else area_inference)(
                 area_model,
                 area_task,
                 row,
                 rgb,
                 depth,
                 area_configs[class_name],
-                *(() if use_onnx else (device,)),
+                *(() if use_area_onnx else (device,)),
                 camera_pitch_down_rad=camera_pitch_down_rad,
                 minimum_physical_area_m2=float(
                     manifest["runtime"].get(
@@ -595,7 +644,7 @@ def main() -> int:
                 stamp_ns=stamp_ns,
                 camera_frame_id="camera_depth_link",
                 image_frame_id=f"camera_depth_link:{stamp_ns}",
-                source_model="MRV2-A-oprv3-performance",
+                source_model=f"{detector_metadata['route']}-product-performance",
             )
             target = state["map"].ingest(observation)
             if target is None:
@@ -606,7 +655,7 @@ def main() -> int:
             if decision is not None and decision["action"] == "CLEAN_NOW":
                 action_count += 1
         state["map"].expire(stamp_ns)
-        if not use_onnx:
+        if use_mmdet or not (use_detector_onnx and use_area_onnx):
             torch.cuda.synchronize()
         completed = time.perf_counter()
         completion_times.append(completed)
@@ -640,8 +689,10 @@ def main() -> int:
         "protocol": "OPRV3-07-product-performance",
         "source_commit": repository_commit(),
         "runtime": (
-            "onnxruntime_cuda_prediction_derived_product_pipeline"
-            if use_onnx
+            "mixed_mmdetection_pytorch_and_onnxruntime_cuda_product_pipeline"
+            if use_mmdet and use_area_onnx
+            else "onnxruntime_cuda_prediction_derived_product_pipeline"
+            if use_detector_onnx and use_area_onnx
             else "pytorch_cuda_prediction_derived_product_pipeline"
         ),
         "environment": {
@@ -667,11 +718,14 @@ def main() -> int:
             "onnx": (
                 {
                     "provider": "CUDAExecutionProvider",
-                    "detector": {"path": args.detector_onnx.as_posix(), "sha256": sha256(args.detector_onnx)},
+                    "detector": (
+                        {"path": args.detector_onnx.as_posix(), "sha256": sha256(args.detector_onnx)}
+                        if use_detector_onnx else None
+                    ),
                     "leaf": {"path": args.leaf_onnx.as_posix(), "sha256": sha256(args.leaf_onnx)},
                     "puddle": {"path": args.puddle_onnx.as_posix(), "sha256": sha256(args.puddle_onnx)},
                 }
-                if use_onnx
+                if use_area_onnx
                 else None
             ),
         },

@@ -1,6 +1,8 @@
 import importlib.util
 from pathlib import Path
+from types import SimpleNamespace
 
+import numpy as np
 import pytest
 
 
@@ -67,3 +69,34 @@ def test_formal_pipeline_requires_every_consumed_frame_to_run_all_stages():
         latency_samples=90,
         mission_count=1,
     )
+
+
+def test_mmdet_inference_preserves_native_boxes_and_class_mapping(monkeypatch):
+    module = _module()
+
+    class Instances:
+        bboxes = SimpleNamespace(tolist=lambda: [[1.0, 2.0, 11.0, 22.0]])
+        scores = SimpleNamespace(tolist=lambda: [0.9])
+        labels = SimpleNamespace(tolist=lambda: [1])
+
+        def to(self, device):
+            assert device == "cpu"
+            return self
+
+    fake_api = SimpleNamespace(
+        inference_detector=lambda model, image: SimpleNamespace(
+            pred_instances=Instances()
+        )
+    )
+    monkeypatch.setitem(__import__("sys").modules, "mmdet.apis", fake_api)
+    rgb = np.zeros((24, 32, 3), dtype=np.uint8)
+    report = module.detector_mmdet_inference(object(), {}, rgb)
+    assert report == {
+        "detections": [
+            {
+                "class_name": "metal_can",
+                "score": 0.9,
+                "bbox_xyxy": [1.0, 2.0, 11.0, 22.0],
+            }
+        ]
+    }
