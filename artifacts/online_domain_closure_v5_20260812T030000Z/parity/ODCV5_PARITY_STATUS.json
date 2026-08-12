@@ -1,0 +1,54 @@
+{
+  "schema_version": 1,
+  "protocol": "ONLINE-DOMAIN-CLOSURE-V5",
+  "stage": "ODCV5-01",
+  "status": "blocked_missing_hash_bound_checkpoint_and_runtime_traces",
+  "golden_manifest": {
+    "logical_path": "F:/Project/TZcup/.workspace/artifacts/TZcup-odcv5-20260812/parity/G7_GOLDEN_FRAME_MANIFEST.json",
+    "sha256": "96b6d36f2273b9d79f5214dfc7d68fe5a4b6e2c2606d712dc7710b84b00a9380",
+    "positive_frames": 100,
+    "negative_frames": 50,
+    "exact_rgb_duplicates": 0,
+    "coverage_complete": true,
+    "coverage": {
+      "plastic_bottle": 96,
+      "metal_can": 77,
+      "paper_litter": 84,
+      "small": 88,
+      "turn": 6,
+      "behind_vehicle_fov_entry": 6,
+      "occlusion": 5,
+      "reflection": 6,
+      "wet_road": 6,
+      "shadow": 56,
+      "road_paint_or_marking": 5,
+      "clutter": 150,
+      "dark_background": 7,
+      "bright_pavement": 143,
+      "negative_only": 50
+    }
+  },
+  "parity_report": {
+    "logical_path": "F:/Project/TZcup/.workspace/artifacts/TZcup-odcv5-20260812/parity/GOLDEN_FRAME_PARITY_REPORT.json",
+    "sha256": "5f658939966ab95d9bda6a76b5d83fb50f14ae1300696b0f3b956545780355dd"
+  },
+  "checkpoint_preflight": {
+    "expected_sha256": "481374d4839e72f05fff0d6d2f6135bc7d715d5c2faf84e75d7d97ca3fc6a361",
+    "historical_logical_path": "F:/Project/TZcup/.workspace/artifacts/TZcup-ddrv4-d1-training-v1/d1-b/best_coco_bbox_mAP_epoch_5.pth",
+    "current_path_exists": false,
+    "matching_host_file_found": false,
+    "matching_container_file_found": false,
+    "matching_image_file_found": false
+  },
+  "P0_NATIVE_trace": false,
+  "P1_ADAPTER_trace": false,
+  "P2_PRODUCT_trace": false,
+  "RUNTIME_CONTRACT_BUG": null,
+  "ODCV5_01_PASS": false,
+  "training_allowed": false,
+  "next_required_input": "restore the exact hash-bound D1-B checkpoint bytes, then execute P0/P1/P2 on the frozen golden manifest",
+  "G5_SEALED_FINAL_read": false,
+  "G5_V2_read": false,
+  "MODEL_FREEZE_X86_CREATED": false,
+  "PRODUCT_X86_PERCEPTION_READY": false
+}

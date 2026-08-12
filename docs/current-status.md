@@ -27,7 +27,9 @@ Detector Data Recovery V4 的 G7 静态候选达到 recall/precision `0.9778/0.9
 
 ODCV5-00 对同一 24 mission 回放建立了严格单调的在线损失阶梯。60 个离散 GT 全部进入视野，59 个进入 actionable window；随后 observation/action-threshold/correct-class 只剩 `52/23/10`。10 个 correct-class 且 depth-valid 的目标中，只有 3 个能与同类 product-map target 审计关联。当前首要损失是 detector score 与类别，projection 到 map 仍有复合损失；旧格式缺逐目标 scheduler attribution，也不能把 projection、tracker、map 三者独立归因。
 
-这些结果只证明静态候选具备继续研究的价值，不能解锁训练、freeze、G5_V2、Spot Cleaning、J6 或现场发布。下一门是 ODCV5-01 golden-frame runtime parity 和逐帧 trace；完成前 `training_allowed=false`。完整边界与复现入口见 [ONLINE-DOMAIN-CLOSURE-V5](online-domain-closure-v5.md) 和 [Detector Data Recovery V4](detector-data-recovery-v4.md)。
+ODCV5-01 已从现存完整 RGB-D/GT capture 冻结 100 positive + 50 negative golden frames，覆盖三类、small、turn、behind-FOV、occlusion、reflection、wet road、shadow、road marking、clutter 和 dark/bright pavement，RGB 精确重复为 0。但 D1-B 历史 checkpoint 路径已不存在，宿主、旧容器和镜像中均未找到相同 SHA-256，因此 P0 native、P1 adapter、P2 product trace 未执行，runtime contract bug 仍未知。
+
+这些结果只证明静态候选具备继续研究的价值，不能解锁训练、freeze、G5_V2、Spot Cleaning、J6 或现场发布。下一项输入是恢复精确 SHA-256 为 `481374d4...a361` 的 D1-B checkpoint 字节，再执行 ODCV5-01 parity；完成前 `training_allowed=false`。完整边界与复现入口见 [ONLINE-DOMAIN-CLOSURE-V5](online-domain-closure-v5.md) 和 [Detector Data Recovery V4](detector-data-recovery-v4.md)。
 
 ## 权威入口
 
