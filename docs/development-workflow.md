@@ -32,7 +32,7 @@
 
 ### 1. `problem_verified`：问题已核实
 
-读取项目规则、当前分支和工作区状态，核对 `README.md`、`README_FIRST.md`、`PROJECT_SPEC.md`、`STAGE_GATES.md` 与 `docs/progress.md`。尽可能复现问题或确认现状，并把验收条件写清楚。缺少会改变结果的关键选择时才向用户询问。
+读取项目规则、当前分支和工作区状态，核对 `README.md`、`README_FIRST.md`、`PROJECT_SPEC.md`、`STAGE_GATES.md` 与 `docs/current-status.md`。尽可能复现问题或确认现状，并把验收条件写清楚。缺少会改变结果的关键选择时才向用户询问。
 
 ### 2. `isolated_workspace_ready`：隔离工作区已建立
 
@@ -48,7 +48,7 @@ git worktree list
 
 ### 3. `implementation_complete`：开发完成
 
-只修改本任务范围内的文件。每次改动都必须复核根目录中文 `README.md`；只有项目定位、使用方式、目录结构或当前能力边界变化时才更新。阶段过程写入 `docs/progress.md` 或对应专题文档，提交过程由 Git/PR 历史记录。接口、环境变量、数据格式、launch 参数或评测口径变化时，还要同步更新相应架构、运维或验收文档。
+只修改本任务范围内的文件。每次改动都必须复核根目录中文 `README.md`；只有项目定位、使用方式、目录结构或当前能力边界变化时才更新。`docs/current-status.md` 与专题文档只保留当前有效事实，日期、轮次、失败尝试和提交过程由 Git、PR 与紧凑 evidence 记录。接口、环境变量、数据格式、launch 参数或评测口径变化时，还要同步更新相应架构、运维或验收文档。
 
 ### 4. `local_verification_passed`：本地验证通过
 

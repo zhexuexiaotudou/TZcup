@@ -61,8 +61,8 @@ G5 数据集；未通过 AUTO-05R / P4 / P5 / formal / live / J6 / 真实现场�
     `scripts/auto05r_g4_data_gate_evidence.py` 确定性可复现，原始帧/包/模型
     二进制一律不入库。P2 后续新增 manifest—像素一致性审计并推翻了旧门，
     v3 隔离重采后虽通过旧单向检查，但双向可见性复审发现 1836/3000 帧缺少
-    manifest 声明的目标，紧凑证据已更新为 `G4_dataset_gate_pass=false`；详见
-    `docs/auto05r-p2-data-integrity-recovery.md`。
+    manifest 声明的目标，紧凑证据已更新为 `G4_dataset_gate_pass=false`；当前
+    恢复边界统一见 `docs/detector-data-recovery-v4.md`。
 12. **P0-12 micro 门加强**：discovery 增加 AP50/precision/FP rate；
     classifier 增加 background/hard-negative specificity；area 增加 boundary
     F1 与负样本帧 FP；报告显式标记 `gate_kind=capacity_only`，不得冒充

@@ -17,7 +17,7 @@ TZcup 是一个基于 ROS 2 与 Gazebo 的智慧环卫无人清扫车工程，�
 
 正式任务启动时只预载道路、可清扫区域、静态障碍和安全约束，不预载垃圾坐标。垃圾目标必须由车载 RGB-D 在车辆运动中发现，经多帧确认、时间戳 TF 投影和动态地图融合后，才能进入清扫调度；Gazebo 真值仅供独立评测使用。
 
-当前仿真、导航、覆盖清扫、安全链和可视化演示可运行。学习感知仍处于 fail-closed 验证阶段，尚未取得完整在线质量门、J6 实板和真实场地产品验收，因此本仓库不能被表述为已经完成实车产品部署。详细状态与证据见 [进展记录](docs/progress.md) 和 [Detector Data Recovery V4](docs/detector-data-recovery-v4.md)。
+当前仿真、导航、覆盖清扫、安全链和可视化演示可运行。学习感知仍处于 fail-closed 验证阶段，尚未取得完整在线质量门、J6 实板和真实场地产品验收，因此本仓库不能被表述为已经完成实车产品部署。详细边界见 [当前状态](docs/current-status.md) 和 [Detector Data Recovery V4](docs/detector-data-recovery-v4.md)。
 
 ## 快速体验
 
@@ -54,12 +54,13 @@ ROS、Gazebo、导航或运行时变更还需要执行对应的 Stage 验收，�
 | `starter_ws/src/` | 自研 ROS 2 功能包 |
 | `scripts/` | 安装、构建、启动、训练、评测与证据工具 |
 | `config/` | 系统、任务和验收配置 |
-| `docs/` | 架构、操作、验证协议与进展记录 |
+| `docs/` | 架构、操作、验证协议与当前状态 |
 | `artifacts/` | 适合纳入 Git 的紧凑验收证据 |
 
 ## 文档入口
 
 - [项目规格](PROJECT_SPEC.md)
+- [当前状态](docs/current-status.md)
 - [环境与启动](README_FIRST.md)
 - [操作指南](docs/operator-guide.md)
 - [车辆模型](docs/vehicle-model-guide.md)

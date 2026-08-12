@@ -170,7 +170,7 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_doc
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage5a_docker.ps1 -OutputName stage5a_formal -RecordBag
 ```
 
-完整门禁和证据要求见 [`STAGE_GATES.md`](STAGE_GATES.md) 与 [`docs/progress.md`](docs/progress.md)。
+完整门禁和当前边界见 [`STAGE_GATES.md`](STAGE_GATES.md) 与 [`docs/current-status.md`](docs/current-status.md)。
 
 ## 重要边界
 

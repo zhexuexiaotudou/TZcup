@@ -1,365 +1,141 @@
-# Codex 阶段推进与验收门
-
-## Gazebo 场景与车体数字孪生门
-
-状态：`PASS`（2026-07-31）。
-
-- `sanitation_structured_world.sdf` 已形成可读的校园/园区道路：沥青车道、边线与中心线、
-  人行横道、路缘、绿化带、建筑立面、树木、路灯、垃圾箱、长椅、安全锥、行人和五类
-  清扫对象均可在 Gazebo 场景内直接辨认；全部使用仓库内程序化基础几何与材质，不依赖
-  在线模型库。
-- 冻结的地图标定锚点、障碍物名称/位姿/碰撞尺寸、作业区和动态行人实体标识保持不变；
-  新增家具的碰撞体位于既有占用区或作业多边形之外，不改变既有导航与覆盖语义。
-- 车辆 Xacro 已补齐白色上车身、黄色底盘、绿色作业舱、保险杠、灯组、轮毂、传感器外壳、
-  箱盖和刷盘细节；关键上车身视觉与碰撞几何一致，车辆平面碰撞包络仍为冻结的
-  `1.15 m × 0.72 m`。
-- 独立入口为 `ros2 launch sanitation_bringup gazebo_scene.launch.py`，只启动 Gazebo 与车辆，
-  不要求网页控制台、SLAM、Nav2 或 RViz。
-- 本机快速回归 `184 passed`；干净 Docker Stage 1 连续两轮均为
-  `513 tests, 0 errors, 0 failures`（49 项按上游配置跳过）；Stage 2 为 43/43，
-  Xacro/URDF 与车辆/世界 SDF 均通过格式校验。
-- Stage 2 无界面 Gazebo 探针收到 12/12 类必需话题，5 秒位移 `1.1775 m`；WSLg 独立场景
-  验收同样收到 12/12 类话题，位移 `1.2425 m`，实时因子 `1.0002`。总览和车辆近景图
-  已人工检查，原始截图与日志保留在 Git 忽略的 `.codex-task/`。
-- [PR #56](https://github.com/zhexuexiaotudou/TZcup/pull/56) 在 `fast-validation` 绿灯后以
-  merge commit 合入 `main@1d8a45e`。该精确提交部署到隔离 WSL overlay 后再次收到
-  12/12 类话题，5 秒位移 `1.2050 m`、实时因子 `1.0011`，合并版总览图人工复核通过；
-  直接回滚点为 `8ec902e`。
-
-## AUTO-17：真实仿真可视化演示层
-
-状态：`PASS`（2026-07-31）。
-
-通过条件：单条 PowerShell 命令能启动正式定位/Nav2/Coverage 链、Gazebo GUI、跟随视角、RViz 和浏览器看板；车辆自动移动；看板实时接收任务、位姿、速度、刷盘、安全和轨迹；任务以 17/17 组件成功终止；MCAP、专用 MP4、代表帧和 fail-closed 汇总均落盘；真值边界明确。当前证据为 17/17、经验覆盖率 0.93667、0 碰撞、0 keepout 违规、205528 条 MCAP 消息，机器汇总 `PASS`。
-
-AUTO-17 不加入或改写 AUTO-00—AUTO-16 的依赖状态机终态；它是可观察性与比赛展示交付门。学习感知、真实域、J6 runtime 和综合竞赛矩阵仍保持 false。
-
-## 人类可读地图与数字孪生监督门（MONITORING READY / TASK EXECUTION BLOCKED）
-
-- 地图必须是主界面，至少独立呈现参考地图、SLAM 地图、作业语义、车辆、规划路径、
-  实际轨迹、仿真真值、感知预测、障碍物、禁行区和清扫覆盖；
-- `/world_overview/image`、`/camera/color/image_raw`、`/odom`、`/map` 和安全状态必须按
-  来源新鲜度显示，缺失或过期时标为不可用/降级，禁止使用参考配置冒充实时传感器；
-- 规划覆盖率和经验清扫覆盖率必须分栏；覆盖热图只能由带刷盘状态的实际轨迹推导；
-- 历史回放必须来自已记录轨迹或当前服务真实 ROS 会话，并明确不是实时运行；
-- 急停只有在外部安全订阅者已连接时可用；任务动作只有接入安全任务编排器时可用，
-  否则按钮保持禁用且 API fail closed；
-- `software_contract_pass=true` 只证明 UI/API/来源分离合同。只有 live odom、SLAM、两个
-  相机源、外部安全门和安全任务执行链全部通过时，才能设置
-  `human_visualization_ready=true`；
-- 机器门入口：`python scripts/human_visualization_gate.py --url http://127.0.0.1:8765`。
-- 2026-07-31 本机 WSLg 冷启动验收：`odom/map/camera/gazebo_overview/safety=live`，
-  `visual_monitoring_ready=true`；仓库暂无安全任务编排器，故
-  `human_visualization_ready=false`，阻塞项为 `safe_task_orchestrator_not_connected`。
-
-## AUTO-16 最终发布、复现与归档门
-
-- clean clone 的快速 CI 与全 ROS build/test 必须通过；
-- 提供一键 Validate、Build、Simulation、Matrix 和 Package 入口；
-- 最终状态、阻断清单、18 类矩阵、证据索引、manifest、SBOM、许可证、中文操作/演示/回滚说明必须完整；
-- 最终 ZIP 从绿色 `main` 精确提交生成并附 SHA-256；
-- 软件发布可在 AUTO-15、真实域和 J6 被结构化阻断时完成，但对应竞赛状态必须保持 false。
-
-## AUTO-15 全竞赛场景正式矩阵（BLOCKED）
-
-- 需求索引完整覆盖 18 类场景；
-- 正式规模要求：每类至少 10 seeds、至少 30 次综合任务、所有正式任务具备视频与 MCAP；
-- AUTO-08 为必需依赖且已阻断，AUTO-14 的 J6 runtime 也未通过；
-- 正式 integrated mission、视频、MCAP 和聚合竞赛指标均未执行；
-- `AUTO-15=BLOCKED`、`SIMULATION_COMPETITION_MATRIX_PASS=false`，不得用独立组件成绩冒充综合矩阵。
-
-## AUTO-14 Horizon J6 工具链与板端门（BLOCKED）
-
-- 官方 OpenExplorer 3.7.0 包完整性、版本和 `hb_compile --help` 已验证；
-- ONNX/operator/static-shape/calibration 预检与禁止静默 CPU fallback 的 runtime adapter 已落地；
-- AUTO-06 正式模型被 AUTO-05 阻断，因此量化、正式编译和精度回归未执行；
-- 未发现实体 J6/S100/S600 板卡，板端时延、FPS、温度、功耗和稳定性保持 `null`；
-- `J6_TOOLCHAIN_PASS=false`、`J6_RUNTIME_PASS=false`。
-
-## AUTO-05 G3 多世界数据与 screening 门（BLOCKED）
-
-- 数据合同：至少 8 world、4/2/2 split、120 scene/1200 native frame；每个 val/test world 至少 50 negative-only frame；
-- QA：annotation/sync/TF 100%，pixel/object label error `<=0.01`，asset/world/trajectory/exact/pHash leakage 为 0，semantic-instance error 为 0；
-- screening：discovery recall `>=0.80`、false candidates/min `<=2.0`；in-domain/cross-world macro F1 `>=0.90/0.70`、small recall `>=0.70`、negative FP/frame `<=0.05`；leaf/puddle/macro IoU 均 `>=0.75`；stress F1 `>=0.60`、same-color specificity `>=0.95`；
-- 当前状态：数据门通过；三次模型尝试后仍有 7 个冻结门失败，`AUTO-05=BLOCKED`，AUTO-06/07/08 依赖阻断；
-- 详细合同见 `docs/auto05-g3-screening.md`。
-## AUTO-11 20,000 m² 大地图与定时任务门（PASS）
-
-- map：20,000 m²、0.1 m resolution、20 zone/submap，serialization/reload 通过；
-- localization：10 trajectories，逐条 RMSE ≤ 0.05 m（max `0.03004 m`），lost recovery `0.95`，TF continuity `0.99998`；
-- missions：5 full coverage + 20 scheduled，zone accuracy `1.0`，boundary violation `0`，dynamic collision `0`，resume `0.96`；
-- truth source 与 estimate source 分离，`self_comparison_used=false`；
-- 状态：`AUTO-11=PASS`，证据等级 `OFFLINE_LARGE_MAP_SIMULATION`。
-
-## AUTO-10 APP / 语音 / LLM DSL 门（PASS）
-
-- APP/API：288 cases，合法成功率 `1.0`、非法拒绝率 `1.0`、鉴权/授权/幂等通过、P95 `16.03 ms`；
-- speech：500 cases，3 voices、3 rates、4 noise levels、3 reverb profiles、中英文，intent accuracy `0.9911`、unsafe rejection `1.0`、P95 `171.94 ms`；
-- DSL：1200 cases，semantic/tool/argument accuracy `1.0/1.0/1.0`，unsafe execution `0`、ambiguity fail-closed `1.0`、direct actuator access `0`；
-- 浏览器：桌面与 390×844 窄屏布局、合法急停 DSL、危险电机指令拒绝均通过；
-- 状态：`AUTO-10=PASS`。这不是机器人实际执行、真实域或 J6 板端证据。
-
-## AUTO-13 真实域机器评测门（BLOCKED_EXTERNAL）
-
-- 正式资源：至少 20 个真实 scene/1000 frame、五类完整、hard-negative、相机标定与独立 map localization GT；
-- 正式指标：discrete macro F1 `>=0.90`、逐类 recall `>=0.85`、area mIoU `>=0.75`、negative specificity `>=0.95`、map localization RMSE `<=0.15 m`、synthetic-to-real F1 drop `<=0.10`；
-- 无合格资源时交付采集、标定、接入、标注、隐私和评测工具，状态必须为 `BLOCKED_EXTERNAL`，不得以仿真或 fixture 冒充；
-- 资源发现：本机相机 1 个、仓库图像 249 个，但合格真实 GT dataset manifest 为 0；相机或无标注图像不满足正式资源门；
-- 当前状态：`AUTO-13=BLOCKED_EXTERNAL`、`REAL_DOMAIN_BLOCKED_EXTERNAL=true`、`REAL_DOMAIN_PASS=false`；正式 1000-frame 指标未执行且保持 null；
-- 证据：`artifacts/autonomous_auto13_20260730_evidence/`。
-
-## AUTO-04 双模型 micro-overfit 门（当前已通过）
-
-- direct object detector、独立 area segmenter 与正式 GPU 执行器已实现；
-- detector 必须直接预测 center/offset/bbox，并通过 confidence-ranked AP 与 NMS 门，禁止 segmentation connected-components 冒充；
-- area head 必须独立通过 leaf/puddle IoU、negative-only FP 与 ONNX parity；
-- 正式结果：detector AP50 `0.9966997`、逐类 recall `1.0`、negative-only FP/frame `0`；leaf/puddle IoU `0.9810641/0.9691405`、macro mIoU `0.9751023`、negative-only area FP/frame `0`；两模型 ONNX parity 均通过；
-- 当前状态：`AUTO-04=PASS`，下一阶段为 AUTO-05；真实域、J6 和最终竞赛状态不变；
-- 证据：`artifacts/autonomous_auto04_20260730_evidence/`；
-- 详细合同见 `docs/auto04-micro-overfit.md` 与全流程规划包的 `STAGE_ACCEPTANCE_STANDARDS.md`。
-
-## AUTO-03 Oracle 主动观察闭环门（当前已通过）
-
-- 数据矩阵：6 个 G2 Gazebo 世界、60 个 scene、250 条 trial；有效目标 200 条（五类各 40），reachable 170、unreachable/keepout 30、false 30、stale 20。
-- 任务链：Coverage 安全边界暂停、路径预检、可达导航、机器可判定和 Coverage 恢复均为 100%；false/stale/keepout 均 100% fail-closed。
-- 安全与隔离：碰撞、keepout 违规、GT 控制违规均为 0；planner、Nav2、控制器和执行器无 GT 订阅，GT 只进入 evaluation-only 节点。
-- 投影：170 个样本中心落入搜索 ROI 为 100%，中心误差 P50/P95 `7.89398/18.43392 px`，短边相对误差 P50/P95 `0.09270/0.29771`，ready 一致率 100%，自车像素 P95 `0.005495`、目标/自车重叠 P95 `0`。
-- 成本：每个确认目标的中位额外距离 `0.000128 m`、中位额外时间 `19.502 s`，按 AUTO-02 实测基线计算的吞吐损失 `19.598%`。
-- MCAP：六个世界均为 19/19 必需话题、消息级指标精确重算、实际 replay 启动和时间线重建通过。
-- 状态：`AUTO-03=PASS`，下一阶段为 AUTO-04；真人、真实域、J6 与最终竞赛状态不变。
-- 证据：`artifacts/autonomous_auto03_20260729_evidence/`。
-
-## AUTO-02 完整导航回归与冻结门（已通过）
-
-- 静态矩阵：`5/5`；每个 seed 均 `17/17`，经验覆盖率 `0.92733–0.94467`、计划覆盖率 `0.986`、定位 RMSE `0.03153–0.04050 m`，碰撞/keepout/刷盘违规 `0`。
-- 动态交互：`20/20`，碰撞 `0`，最小观测分离距离 `0.60439 m >= 0.12 m`，每次任务均恢复。
-- 过滤器：keepout 违规 `0`；限速区均速 `0.28613 m/s <= 0.3135 m/s`。
-- 急停：`30/30`，P95 `0.13994 s`、最大 `0.14063 s`，停止后输出持续为零，刷盘最终关闭。
-- 冷启动：`5/5`，全部 lifecycle、TF 和参数服务在 `24/24/24/24/25 s` 内就绪。
-- MCAP：静态 `5/5`、动态 `1/1`；必需主题 100%，任务终态可回放，经验覆盖率重算相对误差均为 `0`。
-- 状态：`AUTO-02=PASS`，已冻结 `autonomous_navigation_profile_v1`，下一阶段为 AUTO-03；真人、真实域、J6 与最终竞赛状态不变。
-- 证据：`artifacts/autonomous_auto02_20260729_evidence/`。
-
-## AUTO-01 自主几何与障碍安全门（已通过）
-
-- 选中配置：opt-in `G2-C3 / V5_retracted`；production 默认未改变。
-- 冷启动：`3/3`，Nav2 参数服务 `25/25/26 s` 内就绪。
-- seed0 覆盖：`17/17`、经验覆盖率 `0.932`、碰撞 `0`、keepout `0`、swath 冲突 `0`、定位 RMSE `0.0339096 m`，MCAP 回放通过。
-- 障碍矩阵：低障碍 `30/30`、高障碍 `30/30`，保护触发 `60/60`、碰撞 `0`、false-safe `0`。
-- 状态：`AUTO-01=PASS`，下一阶段为 AUTO-02；真人、真实域、J6 和竞赛效率状态不变。
-- 证据：`artifacts/autonomous_auto01_20260729_evidence/`。
-
-## Stage5BR6W 工程豁免支线（历史）
-
-- 工程豁免、V4 engineering camera、工程 policy 和 opt-in candidate footprint：已实现；正式人工状态未改变。
-- 运行时 footprint 一致性：通过；local/global costmap、Collision Monitor 订阅和 Coverage radius 与候选配置一致，production 默认不变。
-- Observation planner 加固与 ROS-independent 测试：通过；真实 projection calibration 未执行。
-- Phase 4 Stage4W candidate-footprint：seed 0 失败，`no_reachable_clean_route`；9 条 swath 全部与膨胀 exclusion 相交，组件 0、经验覆盖率 0、rosbag replay 未观察到 Coverage state。
-- 合并后独立复验复现相同 footprint、`6.89 m²` cleanable area、9 条 swath 冲突和 `no_reachable_clean_route`；该次定位 RMSE 为 `0.05342 m > 0.05 m`，因此定位门也未通过。首次复验曾因 Nav2 参数服务启动超时终止，原始日志仅本地保留。
-- 按停止条件，seed 1–4、dynamic interactions、estop 30 和 Phase 5 多世界 Oracle 均未执行。
-- `READY_FOR_STAGE5BR6W_ORACLE_ENGINEERING=false`、`READY_FOR_STAGE5BR7_ENGINEERING=false`；所有正式 Stage5BR6/Stage5B readiness 继续为 false。
-
-## Stage5BR6-A 双人盲审交付门（历史独立门）
-
-- V4 只作为预注册候选，`camera_selected=false`。
-- Reviewer A/B 各 270 张：Stage5BR5 正样本 200 张，真实 Gazebo no-target/hard-negative 70 张。
-- 七类负样本各 10 张，semantic 目标像素总数为 0；两个包的顺序、opaque ID 和 package ID 独立。
-- ZIP CRC、逐文件 SHA、sample ID 集合、PNG 元数据和 truth 泄漏审计通过。
-- 两名独立真人 response：`0/2`，因此 `AWAITING_HUMAN_REVIEW=true`、`READY_FOR_STAGE5BR6_ORACLE=false`。
-- V4/policy v2 冻结、candidate footprint、Stage4W footprint 回归、Oracle 主动观察和模型训练均未执行。
-- 当前 `REVIEW_PACKET_COMPLETE=true`、`READY_FOR_GPT_REVIEW_STAGE5BR6=false`、`READY_FOR_STAGE5BR7=false`、`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
+# TZcup 验收门
 
-## Stage5BR5 相机选择与主动观察前置门（历史）
+本文件定义稳定的验收条件，不记录某次运行成绩。当前结果见 [`docs/current-status.md`](docs/current-status.md)，机器证据见 `artifacts/` 和最终状态 JSON。
 
-- ActiveObservation 时间语义与回归：通过；16 项受影响测试覆盖 refresh、stale、长队列等待、空间合并、两次接近、动态 timeout、unreachable、迁移和 Coverage resume。
-- V1–V4 机械网格：通过执行；V1/V2/V4 可行，V3 因 trial footprint 冲突剔除，production footprint 未修改。
-- 六世界运行时相机门：V1/V2/V4 均通过；36 次 capture、360 帧精确同步证据，自像素 P95 和 target/self overlap 满足 `<=0.05`。
-- 平衡盲审数据门：通过；200 张、五类各 40 张、覆盖六世界。
-- 两名独立人工评审门：未执行，保持 false；accuracy/kappa/self-occlusion 指标为 null，脚本不替代评审者。
-- 相机选择、policy v2 冻结和正式 oracle active-observation：被人工门阻断，均未执行。
-- detector/area micro-overfit、120/1200、500/5000、live、真实 30 次 Nav2 spot-clean、真实域与 J6：按停止条件未执行。
-- 当前 `REVIEW_PACKET_COMPLETE=true`、`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
+## 通用规则
 
-## Stage5BR4 前置恢复门（历史）
+- 所有正式结果绑定精确 commit、配置、模型、数据和证据哈希；
+- test、sealed final 和 evaluation truth 不参与选模、阈值选择或生产控制；
+- 前置门失败时停止下游执行，未运行指标保持 `null` 或明确的 `not_executed`；
+- 语法、smoke、micro、离线、仿真、实板和现场证据不得互相冒充；
+- 任一碰撞、keepout、真值泄漏、许可问题或不可解释的数据泄漏均为硬失败。
 
-- 在任何新模型训练前冻结 `perception_evaluability_policy.yaml`，同时报告 all-visible、recognition-ready、non-ready。
-- C0–C3 必须使用相同 world、asset、scene seed、目标 pose 与车辆轨迹做真实运行消融；相机配置需同时通过可辨识性、主动观察 ready conversion `>=0.90` 和安装/遮挡审计。
-- 当前 C3 conversion 为 `0.50`，人工审计失败，相机未选定；因此 detector/area micro-overfit、120/1200 和后续 screening 被阻断。
-- `REVIEW_PACKET_COMPLETE=true` 不改变 `READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
+## G0：仓库与环境
 
-## Stage5BR3：G2 真实车辆数据与 split-model screening
+通过条件：
 
-- 证据字节修复、六世界真实车辆相机运行时契约、生产 GT 隔离：通过。
-- G2 80 scene/800 frame 原生采集与逐实例 QA：一次失败后修复并重采，通过。
-- 四档分辨率扫描：通过，选择 640×384 与 512×384；模型实际筛查使用 512×384。
-- detector + area segmenter 三次 architecture screening：失败；所有 screening 门未同时通过。
-- 停止条件已执行：500/5000、live、真实 Nav2、真实域与 J6 均未启动。
-- Stage5BR2 的 16 个证据文件四表面逐字节审计通过，紧凑复核包完整：`REVIEW_PACKET_COMPLETE=true`。
-- 曝光、白平衡、噪声、模糊和动态障碍请求没有原生逐项施加证据，不得外推为已验证的数据增强。
-- 当前 `READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
+- `py -3 scripts/ci_fast.py` 通过；
+- Ubuntu 24.04、ROS 2 Jazzy、Gazebo Harmonic 及所需依赖可验证；
+- 新环境可重复构建，`colcon test` 无关键失败；
+- README、当前状态、项目规范、门禁和许可引用有效；
+- 原始 rosbag、数据集、SDK、缓存和密钥未进入 Git。
 
-## Stage5BR：Gazebo-camera 数据恢复与模型筛查
+## G1：车辆、场景与传感器
 
-状态：训练链与 G1 smoke 通过，模型恢复 screening 失败，正式 Stage5B 阻断。
+通过条件：
 
-- Phase A：micro-overfit 与 PyTorch/ONNX/ROS preprocessing parity 通过。
-- G1 smoke：50 scene/500 frame actual Gazebo camera，annotation/sync/split QA 通过。
-- 模型 screening：三次均未同时达到 in-domain、跨资产/世界、leaf/puddle 和颜色压力门。
-- 停止条件：未执行 500 scene/5000 frame formal G1、30 seed/10 min live、真实 Nav2 spot-clean 或 J6。
-- 复核状态：`REVIEW_PACKET_COMPLETE=true`，`READY_FOR_GPT_REVIEW_STAGE5B=false`，`READY_FOR_STAGE5C=false`。
+- 车辆稳定落地，碰撞体、惯量、轮距、刷盘和 footprint 一致；
+- `/scan`、RGB-D、CameraInfo、IMU、odom 与 TF 完整且时间语义一致；
+- Gazebo world、可清扫区域、keepout、动态障碍和材质可重复加载；
+- 生产启动不挂载或订阅 evaluation-only 真值；
+- headless 与可视化入口均能完成真实启动检查。
 
-## Stage5B 正式门禁与 Stage5BR 前历史结果（2026-07-19）
+## G2：定位、导航与基础安全
 
-正式通过需要：D0 Stage5A 回归、D1 真实 Gazebo-camera RGB-D 的 500 seed/5000 帧独立数据、学习模型未见测试、颜色捷径压力、30 seed/至少 10 分钟实时 Gazebo、30 次真实 Nav2 spot-clean、D2 状态披露和 J6 fail-closed 预检全部满足规划包阈值。只有全部通过时才可设置 `READY_FOR_GPT_REVIEW_STAGE5B=true` 与 `READY_FOR_STAGE5C=true`。
+通过条件：
 
-Stage5BR 前历史结果：D0 与 Stage4W seed 0 回归通过；两种候选确为梯度训练模型，第三种因 ONNX/J6 算子风险未训练。三次结构性筛查后，100 个未见 scene / 1000 帧离散 macro P/R/F1 为 `0.00752/0.00784/0.00768`，leaf/puddle IoU 为 `0.00376/0.2494`，颜色压力 aggregate macro F1 为 `0.05192`；仅 map RMSE `0.09731 m` 通过。该轮数据域为 `D1_procedural_rendered_not_gazebo_camera`。Stage5BR 已补齐真实 Gazebo-camera G1 smoke 数据链，但新的模型筛查仍未过门，因此仍未启动 500/5000 正式集与后续正式 E2E。
+- 地图加载、SLAM/定位和 Nav2 lifecycle 正常；
+- 正式轨迹定位 XY RMSE 不高于 `0.05 m`；
+- footprint 在 local/global costmap、Collision Monitor 和路径预检中一致；
+- 静态与动态障碍零碰撞，keepout 违规为 0；
+- 急停至少 30 次，P95 不高于 `1.0 s`、最大不高于 `1.5 s`，停止后速度持续为零且刷盘关闭；
+- 关键 topic、TF、状态和任务终态可由 rosbag 重放重算。
 
-该历史轮次结论：`REVIEW_PACKET_COMPLETE=true` 仅表示失败证据可审计；`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`、`competition_perception_pass=false`、`j6_runtime_pass=false`、`competition_efficiency_pass=false`。当时第一阻塞层为 `G1_model_recovery_in_domain_cross_asset_world_and_color_stress`；真实 G1 smoke 数据链已通过，不再把“完全没有 Gazebo-camera pipeline”列为该轮阻断。
+## G3：覆盖清扫
 
-## Stage5A 当前门禁（2026-07-17）
+通过条件：
 
-只有 Stage4W 最小回归、GT registry/遮挡、held-out synthetic perception、30-seed spot-clean、Gazebo 实时 RGB-D/ONNX/非空 2D-3D-map 输出和正式 rosbag 全部通过时，才可设置 `READY_FOR_GPT_REVIEW_STAGE5A=true` 与 `READY_FOR_STAGE5B=true`。机器门以 `artifacts/stage5a_20260717_review/stage5a_summary.json` 为准。
+- 所有由当前几何生成的 swath、turn、connector 和 repair 组件成功或明确 fail closed；
+- 计划覆盖率不低于 `0.95`，经验覆盖率不低于 `0.90`；
+- 清扫区、keepout、规划路径、实际轨迹和清扫足迹独立记录；
+- 碰撞、边界违规、刷盘状态违规为 0；
+- 动态干预后任务可恢复，回放重算与报告相对误差不高于 `1%`；
+- 效率按真实刷幅、速度、转弯、重复与停顿计算，不以理论上限冒充实测。
 
-正式结果：上述 9 个机器 gate 全部为 true，故 `READY_FOR_GPT_REVIEW_STAGE5A=true`、`READY_FOR_STAGE5B=true`。该 Ready 仅表示 synthetic-domain 内部工程门通过。无真实数据和 J6 实板证据时保持 `competition_perception_pass=false`、`j6_quantization_pass=false`、`j6_runtime_pass=false`；理论效率 `1053 m²/h` 未达 `3500 m²/h`，故 `competition_efficiency_pass=false`。
+## G4：感知数据与静态模型
 
-## Stage4W 回归基线（2026-07-17）
+通过条件：
 
-- Hybrid 定位回归：通过（10/10 完整、导航成功、TF 单所有者、扫描精化参与；GT 控制违规 0）。
-- 定位 XY RMSE：通过（P50/P95/max `0.02825/0.03726/0.03778 m`，每 seed ≤0.05 m）。
-- 静态 Coverage：通过（5/5；每 seed 为统一几何生成的 17/17 组件；经验覆盖率 `92.93%–94.53%`）。
-- 动态障碍：通过（20/20 有效交互、碰撞 0、最大恢复时间小于 1 s）。
-- keepout/speed filter：通过（keepout 违规 0，限速区平均 `0.288 m/s`）。
-- 急停与失联安全：通过（30/30，P95 `0.188 s`；停止上游命令后 `1.694 s` 稳定归零）。
-- MCAP 回放：静态 5/5 与动态完整回放通过。
-- 历史 Stage4V 固定 23 组件检查：不适用；统一 headland/cutout 几何当前生成 9 swath + 8 turn = 17 组件，门禁要求全部生成组件成功。
-- 竞赛效率：失败（`0.65 × 0.45 × 3600 = 1053 m²/h < 3500 m²/h`）。
-- `READY_FOR_GPT_REVIEW_STAGE4W=true`；`READY_FOR_STAGE5A=true`。进入感知/J6/实板前仍需 GPT/人工复核。
+- 数据来自授权域，RGB/depth/CameraInfo/TF/annotation 同步完整；
+- world、asset、trajectory、相邻帧和 exact/pHash 跨 split 零泄漏；
+- detector 与 area heads 独立训练、评测、导出和注册；
+- 阈值只由 development/validation 数据选择，test 与 sealed final 不参与；
+- 指标覆盖逐类 recall/precision、macro-F1、small-object、negative FP、area IoU 和 PyTorch/ONNX parity；
+- checkpoint、预处理、阈值、模型许可、算子与 SHA-256 完整。
 
-## Stage4U 当前门禁（2026-07-16）
+静态门只允许进入在线开发，不产生产品 Ready。
 
-- Oracle 10-seed 有效性：通过（10/10 完整、导航成功、TF 连续、粒子仪器有效）。
-- Oracle map-relative XY RMSE ≤ 0.05 m：失败（P50/P95/max `0.06767/0.07983/0.08022 m`）。
-- Realistic 10-seed：未执行；前置 Oracle 硬门失败。
-- 完整 Coverage/动态障碍/急停/replay：未执行；前置 realistic 硬门未满足。
-- `READY_FOR_GPT_REVIEW_STAGE4U=false`；`READY_FOR_STAGE5A=false`。
+## G5：运动相机在线感知
 
-## Stage 0：预检与基线锁定
+正式任务需覆盖直行、转弯、behind-FOV、遮挡、反光、不同距离/尺寸、负样本和动态背景，并检查：
 
-### 任务
+- eventual recall、逐类 recall 和 small-object recall；
+- wrong-actionable、重复目标、地图 precision/coverage 与目标衰减；
+- detector、tracker、RGB-D 投影、动态地图和调度队列的真实串联；
+- 输入频率、端到端 P95、掉帧和 GPU/CPU provider；
+- 运行输入、模型、配置和输出与证据哈希绑定。
 
-- 识别操作系统、ROS 2、Gazebo、GPU、磁盘和显示环境；
-- 确认 Ubuntu 24.04 + Jazzy + Harmonic；
-- 检查本包文件；
-- 建立 `docs/progress.md` 和 `artifacts/`；
-- 锁定第三方 commit。
+所有冻结阈值必须同时通过。缺失正式任务类型时只能报告开发回归，不能报告在线产品通过。
 
-### 验收
+## G6：综合仿真产品链
 
-- `scripts/check_env.sh` 返回 0；
-- 生成 `artifacts/preflight.json`；
-- 输出版本矩阵和已知风险。
+前置条件为 G2、G3、G5 全部通过。正式矩阵至少覆盖：
 
-## Stage 1：工作空间可重复构建
+- Coverage 主任务空垃圾地图启动；
+- 车载感知发现、跟踪、三维投影和动态地图融合；
+- 可达目标确认、Spot Cleaning、Coverage 恢复和返航；
+- 动态障碍、急停、传感器 stale、TF 缺失与任务恢复；
+- 多 seed、长时 soak、完整视频/rosbag 和独立重算。
 
-### 任务
+任何使用 Gazebo 真值参与生产决策的运行无效。
 
-- 导入 starter 包和第三方仓库；
-- `rosdep install`；
-- 修复依赖、包清单和安装规则；
-- 增加 CI/headless 构建脚本。
+## G7：J6 工具链与实板
 
-### 验收
+工具链门要求授权版本、环境、模型、校准集、编译命令、产物和 SHA 可追溯，并完成量化精度回归。实板门额外要求：
 
-- 全新 shell 中 `colcon build --symlink-install` 成功；
-- 连续执行两次构建均成功；
-- `colcon test` 无关键失败；
-- 第三方源码无本地修改。
+- 正式输入链真实运行；
+- 精度与 x86 冻结候选满足一致性阈值；
+- 频率、P95、内存、功耗和温度通过；
+- 至少 30 分钟稳定运行，无未解释崩溃、掉帧或 provider 回退。
 
-## Stage 2：车辆和场景启动
+没有实体板时 `J6_RUNTIME_PASS` 必须为 false，实板指标保持 `null`。
 
-### 任务
+## G8：真实场地
 
-- 修复/完善 `sanitation_vehicle.urdf.xacro`；
-- 修复/完善 SDF 场景；
-- 一键 launch；
-- 校验 TF、传感器和 `/cmd_vel`；
-- 添加 headless 参数。
+通过条件：
 
-### 验收
+- 已获得采集授权、隐私处理、相机标定和数据 manifest；
+- 至少 20 个真实 scene、1000 帧、目标类别完整、hard-negative 和独立地图真值；
+- 同地点、同轨迹和连续帧按组隔离；
+- 离散 macro-F1 不低于 `0.90`，逐类 recall 不低于 `0.85`；
+- area mIoU 不低于 `0.75`，negative specificity 不低于 `0.95`；
+- 地图定位 RMSE 不高于 `0.15 m`，synthetic-to-real F1 drop 不高于 `0.10`；
+- 现场关键路径、安全事件和回滚均完成真人验收。
 
-- Gazebo 不崩溃，实时率可接受；
-- 车辆落地稳定，不弹飞、不沉降；
-- 键盘可控；
-- `/scan`、相机、IMU、里程计、TF 均存在；
-- 冒烟检查 JSON 全部通过。
+Gazebo、程序化 fixture、无标注公开图像或模型伪标签不能通过本门。
 
-## Stage 3：SLAM、定位与导航
+## G9：发布与产品验收
 
-### 任务
+通过条件：
 
-- 接入 SLAM Toolbox；
-- 保存地图；
-- 接入 Nav2/AMCL；
-- 配置 footprint、速度、加速度、costmap；
-- keepout zone 和 emergency stop 速度门控。
+- PR CI 与受影响门全绿，精确修订已合并到远端 `main`；
+- 发布包从该修订生成，含 manifest、SBOM、许可、配置、操作和回滚说明；
+- 部署目标、修订、时间、健康检查和回滚点有记录；
+- 真实部署后的关键用户路径、节点、话题、日志和状态通过；
+- `neat-freak` 已使代码、README、规范、当前状态和项目规则一致。
 
-### 验收
+只有 G6、G7、G8 中产品声明所需的门均通过时，才能设置对应产品 Ready。软件完整不等于竞赛矩阵、J6 实板或真实场地通过。
 
-- 建图成功；
-- 地图加载后可完成 10 个点位导航；
-- 无静态碰撞；
-- 定位误差脚本可输出 RMSE/P95；
-- 急停延迟可测量。
+## 运行入口映射
 
-## Stage 4：区域全覆盖任务
+| 改动范围 | 最低验证入口 |
+|---|---|
+| 通用代码与文档 | `py -3 scripts/ci_fast.py` |
+| 车辆、传感器、SDF/Xacro | Stage 2 Docker/ROS 门 |
+| SLAM、Nav2、安全 | Stage 3 与受影响安全回归 |
+| Coverage | Stage 4 / Stage4W 回归 |
+| 学习感知 | 对应数据 QA、静态、在线和性能脚本 |
+| 页面与看板 | 真实渲染、API 和窄屏检查 |
+| J6 / field | 授权环境中的实板或现场协议 |
 
-### 任务
-
-- 接入 OpenNav Coverage/Fields2Cover；
-- 读取 `demo_area.yaml`；
-- 生成覆盖路径；
-- 通过 Nav2 跟踪；
-- 清扫 footprint 随轨迹累积；
-- 输出覆盖率、漏扫率、重复率、效率。
-
-### 验收
-
-- 单个命令启动完整覆盖任务；
-- 目标区覆盖率达到项目阶段阈值（初始 ≥90%，后续优化）；
-- 任务中断后可恢复或明确失败；
-- 输出 `coverage_report.json` 和轨迹图；
-- 形成 3–5 分钟基础演示素材。
-
-## 第一 GPT 复核门
-
-完成 Stage 4 后停止继续扩展，提交：
-
-- 最终文件树；
-- commit SHA；
-- 构建日志；
-- 一键运行命令；
-- 关键 topic/node/action 列表；
-- URDF 检查结果；
-- 场景截图；
-- 轨迹、地图和覆盖结果；
-- 所有 JSON 指标；
-- 已知问题；
-- 下一阶段的 3 个可选路线。
-
-不要在没有复核的情况下直接进入大规模感知训练、J6 量化或机械臂抓取。
-
-## Stage 5：复核后计划
-
-- 垃圾检测/定位与仿真真值；
-- 动态行人和移动障碍；
-- J6 量化推理节点；
-- 自然语言任务分解；
-- 机械臂抓取；
-- 多车集群；
-- 20,000 m² headless 压测。
-
-### Stage5BR6：双人盲审、V4 冻结与 Oracle 主动观察
-
-Stage5BR6 分为两个不可越级的阶段。A 阶段只生成两个互相独立、无 truth 泄漏的人工盲审包；没有两份完整真人 response 时必须设置 `AWAITING_HUMAN_REVIEW=true` 并停止。B 阶段首先校验 package ID/SHA、独立性、完整字段、时间和 sample ID 集合，人工门通过后才允许冻结 V4/policy v2、生成 candidate footprint、重跑 Stage4W 和执行多世界 Oracle 主动观察。
-
-Stage5BR6-A 的当前结论为：两个 270 张盲审包已生成，正样本 200、真实 Gazebo hard-negative/no-target 70；人工 response 为 0/2，故 `READY_FOR_STAGE5BR6_ORACLE=false`、`READY_FOR_GPT_REVIEW_STAGE5BR6=false`、`READY_FOR_STAGE5BR7=false`。脚本、LLM 或 truth mapping 不得代替真人作答。
+快速检查永远不能替代受影响的真实运行门。

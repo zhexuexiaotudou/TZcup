@@ -24,6 +24,7 @@ def require_project_files() -> None:
         ROOT / "README_FIRST.md",
         ROOT / "PROJECT_SPEC.md",
         ROOT / "STAGE_GATES.md",
+        ROOT / "docs" / "current-status.md",
         ROOT / "docs" / "development-workflow.md",
         ROOT / "docs" / "artifact-policy.md",
         ROOT / ".github" / "workflows" / "development-workflow.yml",
@@ -52,6 +53,25 @@ def validate_repository_hygiene() -> None:
     if found:
         raise RuntimeError(
             "README.md contains progress-log headings: " + ", ".join(found)
+        )
+
+    forbidden_ledger_files = [ROOT / "docs" / "progress.md", ROOT / "CODEX_MASTER_PROMPT.md"]
+    forbidden_ledger_files.extend(ROOT.glob("GPT_REVIEW_STAGE*.md"))
+    forbidden_ledger_files.extend(
+        ROOT / "docs" / name
+        for name in (
+            "auto05-attempts.md",
+            "auto05r-2-3-models-training-status.md",
+            "auto05r-p2-data-integrity-recovery.md",
+        )
+    )
+    present_ledgers = sorted(
+        str(path.relative_to(ROOT)) for path in forbidden_ledger_files if path.exists()
+    )
+    if present_ledgers:
+        raise RuntimeError(
+            "chronological task ledgers must stay in Git/PR history, not the project front door: "
+            + ", ".join(present_ledgers)
         )
 
     artifact_root = ROOT / "artifacts"

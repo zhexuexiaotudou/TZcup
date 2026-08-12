@@ -10,7 +10,7 @@
   "files": {
     "localization": "stage4v_localization_report.json",
     "coverage": "stage4v_coverage_report.json",
-    "review": "../../GPT_REVIEW_STAGE4V.md"
+    "review": "review.md"
   },
   "raw_evidence": {
     "localization": "../stage4v_formal_hybrid_fixed20_20260716/",
