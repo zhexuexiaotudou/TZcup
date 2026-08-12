@@ -43,3 +43,12 @@ def test_ga1_uses_prompt_minimum_representative_frame_gate():
     )
     assert "minimum_frames_per_mission: int = 20" in source
     assert '"minimum_representative_frame_gate": 300' in source
+
+
+def test_ga1_dedupes_within_split_but_fails_cross_split():
+    source = (ROOT / "scripts" / "prepare_gocv7_ga1.py").read_text(
+        encoding="utf-8"
+    )
+    assert "if prior[0] != split:" in source
+    assert "exact RGB duplicate across GA1 TRAIN/HOLDOUT" in source
+    assert "within_split_duplicates.append" in source

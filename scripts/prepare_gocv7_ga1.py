@@ -135,6 +135,7 @@ def prepare(
         for index, name in enumerate(CLASSES)
     ]
     image_hashes: dict[str, tuple[str, int, int]] = {}
+    within_split_duplicates: list[dict] = []
     split_payloads = {}
     split_stats = {}
     for split in ("GA1_TRAIN", "GA1_HOLDOUT"):
@@ -161,9 +162,19 @@ def prepare(
                     int(record["frame_index"]),
                 )
                 if prior is not None:
-                    raise RuntimeError(
-                        f"exact RGB duplicate across GA1 frames: {prior} and {identity}"
+                    if prior[0] != split:
+                        raise RuntimeError(
+                            "exact RGB duplicate across GA1 TRAIN/HOLDOUT: "
+                            f"{prior} and {identity}"
+                        )
+                    within_split_duplicates.append(
+                        {
+                            "rgb_sha256": rgb_hash,
+                            "kept": list(prior),
+                            "dropped": list(identity),
+                        }
                     )
+                    continue
                 image_hashes[rgb_hash] = identity
                 relative = rgb_path.relative_to(data_root).as_posix()
                 images.append(
@@ -262,6 +273,9 @@ def prepare(
         "world_overlap": sorted(train_worlds & holdout_worlds),
         "seed_overlap": sorted(train_seeds & holdout_seeds),
         "exact_rgb_duplicate_count": 0,
+        "within_split_exact_rgb_duplicates_dropped": len(
+            within_split_duplicates
+        ),
     }
     report = {
         "schema_version": 1,
@@ -284,13 +298,19 @@ def prepare(
         ),
         "minimum_representative_frame_gate": 300,
         "leakage_audit": leakage,
+        "deduplication": {
+            "policy": "drop_later_exact_RGB_duplicates_within_split; fail_cross_split",
+            "within_split_dropped": within_split_duplicates,
+        },
         "development_only": True,
         "GA1_HOLDOUT_used_for_threshold_only": True,
         "G5_read": False,
         "G5_V2_read": False,
         "formal_30seed_read": False,
         "GA1_PREP_PASS": (
-            not any(leakage.values())
+            not leakage["world_overlap"]
+            and not leakage["seed_overlap"]
+            and leakage["exact_rgb_duplicate_count"] == 0
             and sum(item["frame_count"] for item in split_stats.values()) >= 300
         ),
     }
