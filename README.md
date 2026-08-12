@@ -104,3 +104,5 @@ G8 wet/specular 数据由可复跑派生器从对应 split 的独立 base world 
 G8 数据准备器独立重读每个 real-Gazebo 任务的 RGB、semantic/instance mask、TF 与 capture report，按稳定 instance id 统计真实 encounter 和首次可见尺寸，物化三份封闭 COCO 索引，并 fail-closed 检查任务/负样本配额、域角色、四传感器同步以及 world/seed/asset/RGB/pHash 跨 split 零重叠；帧数建议值不能替代 encounter 硬门槛。
 
 派生 wet world 运行时把只读 world/纹理根与只读模型资产根分别挂载，并在启动前验证 `models/` 存在；这使每个 wet SDF 保持独立 SHA 和 split 身份，同时继续使用同一 split 的原生 Gazebo 模型资产，而不会把模型复制进派生证据目录。
+
+若独立像素审计发现跨 split 的 pHash 冲突，只允许按 `split:world:seed` 隔离整个任务并把原 manifest/capture SHA 写入 split manifest；禁止删除单帧来伪造任务完整性，隔离后全部配额和泄漏门必须从零重算。

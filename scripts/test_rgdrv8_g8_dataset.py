@@ -39,3 +39,7 @@ def test_bbox_uses_coco_xywh_and_short_side() -> None:
 def test_split_intersections_cover_every_pair() -> None:
     parts = {"TRAIN_NEW": {"a", "x"}, "HOLDOUT_NEW": {"b", "x"}, "VAL_NEW": {"a", "c"}}
     assert MODULE.intersections(parts) == ["a", "x"]
+
+
+def test_mission_quarantine_key_is_split_world_seed() -> None:
+    assert "VAL_NEW:world_11:10108".split(":") == ["VAL_NEW", "world_11", "10108"]

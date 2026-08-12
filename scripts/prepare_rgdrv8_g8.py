@@ -100,6 +100,12 @@ def main() -> int:
     parser.add_argument("--split-root", action="append", type=split_arg, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--frames-per-mission", type=int, default=20)
+    parser.add_argument(
+        "--exclude-mission",
+        action="append",
+        default=[],
+        help="Quarantine one whole mission as SPLIT:WORLD:SEED; never excludes frames partially",
+    )
     args = parser.parse_args()
     roots: dict[str, list[Path]] = defaultdict(list)
     for split, root in args.split_root:
@@ -123,6 +129,8 @@ def main() -> int:
     domain_counts: dict[str, Counter] = defaultdict(Counter)
     hard_negatives: dict[str, Counter] = defaultdict(Counter)
     materialization = Counter()
+    exclusions = set(args.exclude_mission)
+    excluded_missions: list[dict] = []
     image_id = annotation_id = 0
     semantic_error_pixels = instance_pixels = 0
 
@@ -141,6 +149,16 @@ def main() -> int:
                 scene, capture = read_json(manifest_path), read_json(capture_path)
                 seed, world = int(scene["scene_seed"]), str(scene["world_id"])
                 mission_key = f"{split}:{world}:{seed}"
+                if mission_key in exclusions:
+                    excluded_missions.append(
+                        {
+                            "mission_key": mission_key,
+                            "reason": "whole_mission_cross_split_phash_quarantine",
+                            "manifest_sha256": sha256(manifest_path),
+                            "capture_report_sha256": sha256(capture_path),
+                        }
+                    )
+                    continue
                 source_split = str(scene.get("source_world_split", scene.get("split")))
                 expected_source = {"TRAIN_NEW": "train", "HOLDOUT_NEW": "val", "VAL_NEW": "test"}[split]
                 if source_split != expected_source:
@@ -264,7 +282,7 @@ def main() -> int:
     qa = {"schema_version": 1, "protocol": "REAL-GAZEBO-DETECTOR-RECOVERY-V8", "stage": "G8-REAL-GAZEBO-DATA-QA", "mission_counts": dict(mission_counts), "mission_targets": MISSION_TARGETS, "frame_counts": dict(frame_counts), "negative_only_counts": dict(negative_counts), "encounter_counts_by_class": {s: dict(encounter_counts[s]) for s in SPLITS}, "first_visible_lt18_counts_by_class": {s: dict(small_counts[s]) for s in SPLITS}, "semantic_instance_error_rate": semantic_error_rate, "errors": errors, "cross_split": {"world_overlap": world_overlap, "seed_overlap": seed_overlap, "asset_overlap": asset_overlap, "exact_rgb_duplicates": exact_duplicates, "phash_duplicates": perceptual_duplicates}, "materialization": dict(materialization), "gates": gates, "G8_REAL_GAZEBO_DATA_PASS": all(gates.values())}
     reports = {
         "G8_DATASET_QA.json": qa,
-        "G8_SPLIT_MANIFEST.json": {"schema_version": 1, "missions": missions, "counts": {"missions": dict(mission_counts), "frames": dict(frame_counts), "negative_only": dict(negative_counts)}, "HOLDOUT_NEW_selection_only": True, "VAL_NEW_used_before_route_freeze": False},
+        "G8_SPLIT_MANIFEST.json": {"schema_version": 1, "missions": missions, "excluded_whole_missions": excluded_missions, "counts": {"missions": dict(mission_counts), "frames": dict(frame_counts), "negative_only": dict(negative_counts)}, "HOLDOUT_NEW_selection_only": True, "VAL_NEW_used_before_route_freeze": False},
         "G8_WORLD_REGISTRY.json": {"schema_version": 1, "worlds_by_split": {s: sorted(worlds[s]) for s in SPLITS}, "cross_split_overlap": world_overlap},
         "G8_ASSET_REGISTRY.json": {"schema_version": 1, "assets_by_split": {s: sorted(assets[s]) for s in SPLITS}, "cross_split_overlap": asset_overlap},
         "G8_DOMAIN_MATRIX.json": {"schema_version": 1, "counts_by_split": {s: dict(domain_counts[s]) for s in SPLITS}},
