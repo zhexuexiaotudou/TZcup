@@ -50,43 +50,43 @@
     },
     {
       "path": "final/COMPETITION_GATE_MAPPING.json",
-      "bytes": 747,
-      "sha256": "0e36862489782290aa09a9b96d33c9a6e129464ad242c92aaa5e69c5eab44e58"
+      "bytes": 731,
+      "sha256": "79d7a5b2874cce45a760d5dd67d279ff09c0bb6249c041faf78a04f64af5bc83"
     },
     {
       "path": "final/DETECTOR_DATA_RECOVERY_V4_REPORT.md",
-      "bytes": 1603,
-      "sha256": "65f2cd40e38005fc7a19ba345762bbe292ac64ff784baef8b4ad8b874c47ad6e"
+      "bytes": 1584,
+      "sha256": "333a7c348aad187c1ddd82fc82d58ee5a25725c48922eeaf7a8955614bda111c"
     },
     {
       "path": "final/PERCEPTION_DDRV4_EVIDENCE_INDEX.md",
-      "bytes": 1952,
-      "sha256": "38aab59c540ed1da9dd236141713881cc9da8140386323eb9a2e9cf4a4d9e947"
+      "bytes": 1933,
+      "sha256": "cb88ced2187256fa4ba045296e326d8b25a9f638de57aa6faf6d6577b2f06e56"
     },
     {
       "path": "final/PERCEPTION_DDRV4_FINAL_BLOCKERS.json",
-      "bytes": 2793,
-      "sha256": "e82df72bbad4881d9e984f7cee9bae1a9a4d30af9dcd4b85d8913f656f9b4df8"
+      "bytes": 2723,
+      "sha256": "700f30e1be6cc203ceb441d32a4ee1e8590847e6bda5e83013f370ee22dbe6a2"
     },
     {
       "path": "final/PERCEPTION_DDRV4_FINAL_STATUS.json",
-      "bytes": 1871,
-      "sha256": "5ceb49b32849be0158f42b4758979c754d1a350d1166144326f268736279f5d7"
+      "bytes": 1824,
+      "sha256": "96272205a9acae9ed429c6c0085956c7b9d4573728040829c3832240d0a88578"
     },
     {
       "path": "final/PERCEPTION_DDRV4_MODEL_REGISTRY.json",
-      "bytes": 707,
-      "sha256": "dfa4032197078491e8e90653f23efc25c0a759b3007544131ef8320b5ff8602f"
+      "bytes": 684,
+      "sha256": "605de046f8736226ec1bd0073507761e88cca211426b3492a76184713d20c49a"
     },
     {
       "path": "final/PERCEPTION_DDRV4_RELEASE_MANIFEST.json",
-      "bytes": 451,
-      "sha256": "7319671eb25d13a0e94f5b1e79df5aeb34d82152c76dfd775d50fa6ac278c134"
+      "bytes": 436,
+      "sha256": "bccca7c530552ccbd23e0d75956d98b90ad0c106b4f18cae32ba54d6c10d0fe5"
     },
     {
       "path": "final/PERCEPTION_DDRV4_THIRD_PARTY_NOTICES.md",
-      "bytes": 838,
-      "sha256": "ec80772e4129d5c1c3169d08766408531045572190dd57395a79f929a10e4f88"
+      "bytes": 812,
+      "sha256": "e0262334bc67663069effb0947f35089edf4dee376f19d66f391755a9bb6568b"
     },
     {
       "path": "g7/G7_DEVELOPMENT_SUMMARY.json",

@@ -24,7 +24,12 @@ def load(path: Path) -> dict:
 
 def write_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+    path.write_bytes((json.dumps(payload, indent=2) + "\n").encode("utf-8"))
+
+
+def write_text(path: Path, payload: str) -> None:
+    """Write deterministic UTF-8/LF bytes on Windows and Linux."""
+    path.write_bytes(payload.replace("\r\n", "\n").encode("utf-8"))
 
 
 def record(path: Path, *, logical_path: str | None = None) -> dict:
@@ -261,7 +266,8 @@ def main() -> int:
     write_json(competition_path, competition)
 
     notices_path = final / "PERCEPTION_DDRV4_THIRD_PARTY_NOTICES.md"
-    notices_path.write_text(
+    write_text(
+        notices_path,
         f"""# PERCEPTION DDRV4 third-party notices
 
 No DDRV4 product release bundle was created.
@@ -289,13 +295,13 @@ No DDRV4 product release bundle was created.
 - External public dataset ingested: no
 - G5/G5_V2 used for training or selection: no
 """,
-        encoding="utf-8",
     )
 
     report_path = final / "DETECTOR_DATA_RECOVERY_V4_REPORT.md"
     base = online["base_regression"]
     perf = performance["metrics"]
-    report_path.write_text(
+    write_text(
+        report_path,
         f"""# Detector Data Recovery V4 final report
 
 ## Outcome
@@ -316,7 +322,6 @@ D2/D3 were not executed because the authorized protocol sends a static D1 pass d
 
 PR #90 remains Draft. Historical A1/A2/A3, X1/X2/X3, MRV2, OPR-A/B/C and the original G5 failure remain preserved in its body.
 """,
-        encoding="utf-8",
     )
 
     evidence_sources = [
@@ -341,7 +346,7 @@ PR #90 remains Draft. Historical A1/A2/A3, X1/X2/X3, MRV2, OPR-A/B/C and the ori
     for path, logical in evidence_sources:
         item = record(path, logical_path=logical)
         lines.append(f"- `{item['path']}` - {item['bytes']} bytes - `{item['sha256']}`")
-    index_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    write_text(index_path, "\n".join(lines) + "\n")
     manifest_path = root / "artifact_manifest.json"
     manifest_records = []
     for path in sorted(root.rglob("*")):
