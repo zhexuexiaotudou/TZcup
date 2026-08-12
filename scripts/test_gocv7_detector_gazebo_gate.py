@@ -1,5 +1,8 @@
 import importlib.util
+import json
 from pathlib import Path
+
+import pytest
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -72,3 +75,22 @@ def test_ga1_metrics_count_wrong_class_matches_as_wrong_actionable():
     assert result["eventual_correct_class_recall"] == 0.0
     assert result["actionable_precision"] == 0.0
     assert result["wrong_actionable_rate"] == 1.0
+
+
+def test_formal_benchmark_recognizes_only_passing_frozen_ga1_selection(tmp_path):
+    pytest.importorskip("torch")
+    pytest.importorskip("torchvision")
+    benchmark = load_module("perception_oprv3_moving_benchmark.py")
+    checkpoint = tmp_path / "ga1.pth"
+    checkpoint.write_bytes(b"ga1")
+    selection = tmp_path / "selection.json"
+    payload = {
+        "selection_data": "GOCV7_GA1_HOLDOUT_ONLY",
+        "checkpoint_sha256": benchmark.sha256(checkpoint),
+        "selected_threshold": 0.21,
+        "existing_24_mission_read_before_selection_freeze": False,
+        "GOCV7_GA1_HOLDOUT_PASS": False,
+    }
+    selection.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(RuntimeError, match="did not pass"):
+        benchmark.load_mmdet_detector(tmp_path / "config.py", checkpoint, selection)

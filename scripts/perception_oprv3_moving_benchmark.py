@@ -464,21 +464,32 @@ def load_mmdet_detector(config: Path, checkpoint: Path, selection_path: Path):
     # PowerShell 5 commonly emits a UTF-8 BOM.  Accept it without weakening
     # the checkpoint SHA-256 or holdout-only selection checks below.
     selection = json.loads(selection_path.read_text(encoding="utf-8-sig"))
-    if selection.get("selection_data") == "G7_MOVING_HOLDOUT_ONLY":
-        route = "MA1"
+    selection_data = selection.get("selection_data")
+    if selection_data in {"G7_MOVING_HOLDOUT_ONLY", "GOCV7_GA1_HOLDOUT_ONLY"}:
+        route = "GA1" if selection_data == "GOCV7_GA1_HOLDOUT_ONLY" else "MA1"
         expected = selection.get("checkpoint_sha256")
-        val_read_before_freeze = selection.get("MOVING_VAL_read_before_selection_freeze")
+        val_read_before_freeze = selection.get(
+            "existing_24_mission_read_before_selection_freeze"
+            if route == "GA1"
+            else "MOVING_VAL_read_before_selection_freeze"
+        )
     else:
         route = str(selection.get("selected_route"))
         route_record = selection.get("route_results", {}).get(route, {})
         expected = route_record.get("checkpoint", {}).get("sha256")
         val_read_before_freeze = selection.get("G7_VAL_read_before_selection_freeze")
-    if selection.get("selection_data") not in {"G7_IN_DOMAIN_HOLDOUT_ONLY", "G7_MOVING_HOLDOUT_ONLY"}:
+    if selection_data not in {
+        "G7_IN_DOMAIN_HOLDOUT_ONLY",
+        "G7_MOVING_HOLDOUT_ONLY",
+        "GOCV7_GA1_HOLDOUT_ONLY",
+    }:
         raise RuntimeError("MMDetection detector selection was not holdout-only")
     if val_read_before_freeze is not False:
         raise RuntimeError("MMDetection detector selection violated the VAL boundary")
     if expected != sha256(checkpoint):
         raise RuntimeError("DDRV4 selected checkpoint SHA-256 mismatch")
+    if route == "GA1" and selection.get("GOCV7_GA1_HOLDOUT_PASS") is not True:
+        raise RuntimeError("GA1 HOLDOUT selection did not pass before formal replay")
     metadata = {
         "route": route,
         "path": checkpoint.as_posix(),
