@@ -3,9 +3,11 @@ from pathlib import Path
 
 def test_formal_moving_evaluator_accepts_hash_bound_crv6_selection():
     source=(Path(__file__).parent/"perception_oprv3_moving_benchmark.py").read_text(encoding="utf-8")
-    assert 'selection.get("selection_data") == "G7_MOVING_HOLDOUT_ONLY"' in source
+    assert 'selection_data = selection.get("selection_data")' in source
+    assert '"G7_MOVING_HOLDOUT_ONLY"' in source
+    assert '"GOCV7_GA1_HOLDOUT_ONLY"' in source
     assert 'expected = selection.get("checkpoint_sha256")' in source
-    assert 'selection.get("MOVING_VAL_read_before_selection_freeze")' in source
+    assert '"MOVING_VAL_read_before_selection_freeze"' in source
     assert 'read_text(encoding="utf-8-sig")' in source
 
 

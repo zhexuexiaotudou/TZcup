@@ -86,3 +86,5 @@ GA1 路由严格限定为一次由 MA1 warm start 的真实 Gazebo TRAIN 微调�
 正式 24-mission benchmark 只接受 `GOCV7_GA1_HOLDOUT_ONLY` 且已经通过的哈希绑定 selection；任何 selection 失败、checkpoint 不一致或在阈值冻结前读取正式回放的记录都会 fail-closed。
 
 GA1 数据准备要求 24 个固定 development seed 全部存在、每任务至少 30 个同步帧且总量不少于提示词要求的 300 帧；这一门槛允许低实时倍率 Gazebo 世界在保留超时失败证据后缩短单任务采集，但禁止缺 world、缺 seed、跨 split 重复或用不足样本冒充通过。
+
+DDRV4、CRV6 与 GOCV7 三类 HOLDOUT selection 由同一正式 benchmark 入口兼容校验；旧路线的哈希、VAL 未读边界保持不变，GA1 另外要求 HOLDOUT gate 通过且正式 24-mission 在阈值冻结前未读取。
