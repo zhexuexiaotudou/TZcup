@@ -42,6 +42,15 @@ PARKING_Z_M = -5.0
 PARKING_SPACING_M = 0.3
 TARGET_DISTANCE_LANES_M = (1.80, 2.10, 2.40, 2.80, 3.40)
 TARGET_LATERAL_LANES_M = (-0.80, 0.80, -0.60, 0.60, -1.05)
+G8_DISCRETE_CLASSES = ("metal_can", "paper_litter", "plastic_bottle")
+G8_TARGET_DISTANCE_LANES_M = (
+    1.80, 2.20, 2.60, 3.00, 3.40, 3.80,
+    4.20, 4.60, 5.00, 5.40, 5.80, 6.20,
+)
+G8_TARGET_LATERAL_LANES_M = (
+    -0.80, 0.80, -0.60, 0.60, -0.95, 0.95,
+    -0.72, 0.72, -1.05, 1.05, -0.52, 0.52,
+)
 
 
 def negative_only_rule(split: str, scene_index: int) -> bool:
@@ -53,6 +62,15 @@ def negative_only_rule(split: str, scene_index: int) -> bool:
 def paper_like_train_rule(scene_index: int) -> bool:
     """Guarantees >= 9 paper-like hard-negative scenes per train world."""
     return (scene_index * 11) % SCENES_PER_WORLD < 9
+
+
+def g8_negative_only_rule(scene_index: int, scene_cycle: int) -> bool:
+    """Freeze an approximately 30% G8 negative-only schedule per world."""
+    if scene_cycle < 3:
+        raise ValueError("G8 scene cycle must be at least three")
+    hit_count = math.ceil(scene_cycle * 0.30)
+    # A coprime-ish multiplier distributes hits rather than grouping them.
+    return (scene_index * 7) % scene_cycle < hit_count
 
 
 def _footprint_area_m2(geometry_kind: str, values: list[float]) -> float:
@@ -132,6 +150,8 @@ def randomize(
     negative_source_split: str | None = None,
     force_negative_only: bool = False,
     oprv3_coverage_profile: str | None = None,
+    detector_instances_per_class: int = 1,
+    detector_scene_cycle: int = SCENES_PER_WORLD,
 ) -> dict:
     """Build and persist one G4 scene plan (no capture is performed here)."""
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -157,19 +177,39 @@ def randomize(
     schedule_split = (
         asset_split if asset_split in NEGATIVE_ONLY_HITS else "train"
     )
-    force_negative = force_negative_only or negative_only_rule(
-        schedule_split, scene_index
+    if detector_instances_per_class < 1:
+        raise ValueError("detector_instances_per_class must be at least one")
+    g8_mode = detector_instances_per_class > 1
+    force_negative = force_negative_only or (
+        g8_negative_only_rule(scene_index, detector_scene_cycle)
+        if g8_mode
+        else negative_only_rule(schedule_split, scene_index)
     )
     force_paper_like = negative_split == "train" and paper_like_train_rule(
         scene_index
     )
     selected = []
     if not force_negative:
-        for class_id in sorted({item["class_id"] for item in assets}):
+        selected_by_class = {}
+        class_ids = G8_DISCRETE_CLASSES if g8_mode else sorted(
+            {item["class_id"] for item in assets}
+        )
+        for class_id in class_ids:
             pool = [item for item in split_assets if item["class_id"] == class_id]
-            # One variant per class gives each declaration a unique instance.
-            # Variant diversity is obtained across the 25 deterministic scenes.
-            selected.extend(rng.sample(pool, min(1, len(pool))))
+            count = detector_instances_per_class if g8_mode else 1
+            if len(pool) < count:
+                raise ValueError(
+                    f"{class_id} split {asset_split} has {len(pool)} assets, needs {count}"
+                )
+            selected_by_class[class_id] = rng.sample(pool, count)
+        if g8_mode:
+            # Interleave classes so distance/side bands are not class shortcuts.
+            for instance_index in range(detector_instances_per_class):
+                for class_id in G8_DISCRETE_CLASSES:
+                    selected.append(selected_by_class[class_id][instance_index])
+        else:
+            for class_id in class_ids:
+                selected.extend(selected_by_class[class_id])
     negative_count = rng.randint(2, 3)
     selected_negatives = rng.sample(
         split_negatives, min(negative_count, len(split_negatives))
@@ -199,9 +239,14 @@ def randomize(
             # the downward camera footprint in at least two sampled frames.
             # Lateral separation avoids target-on-target masking and keeps all
             # physical target collision shapes outside the vehicle sweep.
-            lane = index % len(TARGET_DISTANCE_LANES_M)
-            distance = TARGET_DISTANCE_LANES_M[lane] + rng.uniform(-0.04, 0.04)
-            lateral = TARGET_LATERAL_LANES_M[lane]
+            if g8_mode:
+                lane = index % len(G8_TARGET_DISTANCE_LANES_M)
+                distance = G8_TARGET_DISTANCE_LANES_M[lane] + rng.uniform(-0.04, 0.04)
+                lateral = G8_TARGET_LATERAL_LANES_M[lane]
+            else:
+                lane = index % len(TARGET_DISTANCE_LANES_M)
+                distance = TARGET_DISTANCE_LANES_M[lane] + rng.uniform(-0.04, 0.04)
+                lateral = TARGET_LATERAL_LANES_M[lane]
         else:
             # Hard negatives remain visible around the target group. A frozen
             # subset spans the close bucket so the metric-scale audit retains
@@ -481,6 +526,13 @@ def randomize(
             "force_negative_only": bool(force_negative_only),
             "single_factor_capture": diagnostic_role is not None,
         },
+        "rgdrv8_g8_detector_mode": {
+            "enabled": g8_mode,
+            "instances_per_discrete_class": detector_instances_per_class,
+            "scene_cycle": detector_scene_cycle,
+            "negative_only_schedule": "ceil(0.30 * scene_cycle)",
+            "discrete_classes_only": g8_mode,
+        },
         "lighting_executed_by_world": world["lighting_family"],
         "ground_material_executed_by_world": world["material_id"],
         "distance_bucket_counts": distance_bucket_counts,
@@ -522,6 +574,8 @@ def main() -> None:
     parser.add_argument("--asset-source-split", choices=("train", "val", "test"))
     parser.add_argument("--negative-source-split", choices=("train", "val", "test"))
     parser.add_argument("--force-negative-only", action="store_true")
+    parser.add_argument("--detector-instances-per-class", type=int, default=1)
+    parser.add_argument("--detector-scene-cycle", type=int, default=SCENES_PER_WORLD)
     parser.add_argument(
         "--oprv3-coverage-profile",
         choices=("turn_entry", "occlusion", "reflection", "dynamic_removal"),
@@ -540,6 +594,8 @@ def main() -> None:
                 negative_source_split=args.negative_source_split,
                 force_negative_only=args.force_negative_only,
                 oprv3_coverage_profile=args.oprv3_coverage_profile,
+                detector_instances_per_class=args.detector_instances_per_class,
+                detector_scene_cycle=args.detector_scene_cycle,
             ),
             indent=2,
         )

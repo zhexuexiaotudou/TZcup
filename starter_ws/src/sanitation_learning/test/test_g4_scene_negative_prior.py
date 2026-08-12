@@ -199,6 +199,47 @@ def test_negative_only_rule_is_frozen():
     assert sum(negative_only_rule("test", i) for i in range(25)) == 7
 
 
+def test_rgdrv8_g8_detector_mode_has_real_instance_quota(
+    monkeypatch, tmp_path, g4_world_manifest
+):
+    _, manifest_path = g4_world_manifest
+    monkeypatch.setattr(
+        "sanitation_learning.g4_scene.set_poses", lambda *_args: None
+    )
+    reports = [
+        g4_scene.randomize(
+            manifest_path,
+            "world_g4_05_red_brick_promenade",
+            8000 + index,
+            index,
+            tmp_path / f"g8-{index}.json",
+            detector_instances_per_class=4,
+            detector_scene_cycle=15,
+        )
+        for index in range(15)
+    ]
+    assert sum(report["negative_only"] for report in reports) == 5
+    positives = [report for report in reports if not report["negative_only"]]
+    assert len(positives) == 10
+    for report in positives:
+        assert report["target_count_by_class"]["plastic_bottle"] == 4
+        assert report["target_count_by_class"]["metal_can"] == 4
+        assert report["target_count_by_class"]["paper_litter"] == 4
+        assert report["target_count_by_class"]["leaf_pile"] == 0
+        assert report["target_count_by_class"]["puddle"] == 0
+        assert report["rgdrv8_g8_detector_mode"]["enabled"] is True
+        target_names = [
+            item["model_name"] for item in report["objects"]
+            if item["class_id"] != "background"
+        ]
+        assert len(target_names) == len(set(target_names)) == 12
+
+
+def test_rgdrv8_g8_negative_schedule_meets_each_split_quota():
+    assert sum(g4_scene.g8_negative_only_rule(index, 15) for index in range(15)) == 5
+    assert sum(g4_scene.g8_negative_only_rule(index, 10) for index in range(10)) == 3
+
+
 def test_oprv3_coverage_profiles_are_explicit_and_fail_closed(
     monkeypatch, tmp_path, g4_world_manifest
 ):

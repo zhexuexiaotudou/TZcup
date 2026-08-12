@@ -36,6 +36,7 @@ CAPTURE_MIN_TRANSLATION_M="${AUTO05R_CAPTURE_MIN_TRANSLATION_M:-0.25}"
 CAPTURE_MIN_ROTATION_RAD="${AUTO05R_CAPTURE_MIN_ROTATION_RAD:-0.0}"
 CAPTURE_MAX_ATTEMPTS="${AUTO05R_CAPTURE_MAX_ATTEMPTS:-3}"
 OPRV3_COVERAGE_PROFILE="${AUTO05R_OPRV3_COVERAGE_PROFILE:-}"
+DETECTOR_INSTANCES_PER_CLASS="${AUTO05R_DETECTOR_INSTANCES_PER_CLASS:-1}"
 if [[ "${CAPTURE_MAX_ATTEMPTS}" -lt 1 ]]; then
   echo "AUTO05R_CAPTURE_MAX_ATTEMPTS must be >= 1" >&2
   exit 2
@@ -200,6 +201,8 @@ capture_world() {
         --scene-seed "${seed}"
         --scene-index "${index}"
         --output "${out}/scene_manifest.json"
+        --detector-instances-per-class "${DETECTOR_INSTANCES_PER_CLASS}"
+        --detector-scene-cycle "${SCENES_PER_WORLD}"
       )
       if [[ -n "${DIAGNOSTIC_ROLE}" ]]; then
         randomize_args+=(--diagnostic-role "${DIAGNOSTIC_ROLE}")

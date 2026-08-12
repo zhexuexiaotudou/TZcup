@@ -94,3 +94,5 @@ GA1 HOLDOUT 的 actionable precision 与产品链一致：正确匹配到冻结�
 若唯一 GA1 fine-tune 与有界阈值修复仍不能通过 HOLDOUT，GOCV7 必须在读取正式 24-mission 前停止，生成六个强制 BLOCKED 最终文件；性能、freeze、G5_V2、30-seed、Spot Cleaning、soak、MCAP、release、Ready/Merge 与部署保持锁定。
 
 `REAL-GAZEBO-DETECTOR-RECOVERY-V8` 在上述 fail-closed 基线上授权最多三条有限 detector 恢复路线。第一阶段只对已消费的 GA1 development HOLDOUT 做逐目标失败审计，固定使用 GOCV7 阈值且不得调参或读取新 VAL、G5_V2 与正式 30-seed；只有回答 small miss、false actionable 背景类型和最大错报类别后，才能构建 world/seed/asset 隔离的 G8 real-Gazebo development pack。最终仍以真实 detector、tracker/map、在线性能、冻结、sealed final、30-seed、清扫、soak、回放和 x86 release 全门通过为仿真产品完成条件。
+
+G8 的显式 detector 采集模式在每个正任务中放置三类各 4 个独立 Gazebo 实体，并使用 instance camera 的稳定实体标签逐个计数；旧 G4 默认仍保持每类 1 个目标。G8 的 15-mission 训练周期固定 5 个 negative-only，10-mission HOLDOUT/VAL 周期固定 3 个 negative-only，从而用真实 encounter 数满足配额，禁止把同一目标的多帧重复观察冒充多个 encounter。
