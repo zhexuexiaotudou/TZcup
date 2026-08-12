@@ -287,6 +287,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_crv6_projection_attrition.py",
         ROOT / "scripts" / "test_crv6_real_moving_evaluator.py",
         ROOT / "scripts" / "test_audit_crv6_online_dev.py",
+        ROOT / "scripts" / "test_finalize_crv6.py",
         learning_package / "test" / "test_auto13_real_domain.py",
         learning_package / "test" / "test_g4_assets.py",
         learning_package / "test" / "test_g4_scene_negative_prior.py",
