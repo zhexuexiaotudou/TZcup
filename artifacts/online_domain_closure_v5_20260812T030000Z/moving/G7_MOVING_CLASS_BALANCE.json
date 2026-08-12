@@ -1,0 +1,24 @@
+{
+  "actionable_encounters_by_split": {
+    "MOVING_HOLDOUT": {
+      "metal_can": 18,
+      "paper_litter": 18,
+      "plastic_bottle": 18
+    },
+    "MOVING_TRAIN": {
+      "metal_can": 58,
+      "paper_litter": 58,
+      "plastic_bottle": 58
+    },
+    "MOVING_VAL": {
+      "metal_can": 28,
+      "paper_litter": 28,
+      "plastic_bottle": 28
+    }
+  },
+  "small_first_visible_val": {
+    "metal_can": 14,
+    "paper_litter": 14,
+    "plastic_bottle": 14
+  }
+}

@@ -36,6 +36,25 @@ STAGES = (
 )
 DISCRETE_CLASSES = ("plastic_bottle", "metal_can", "paper_litter")
 MATCH_DISTANCE_M = 0.50
+ROOT_CAUSE_TAXONOMY = (
+    "NOT_VISIBLE",
+    "OUTSIDE_ACTIONABLE_WINDOW",
+    "DETECTOR_NO_PROPOSAL",
+    "DETECTOR_SCORE_LOW",
+    "DETECTOR_WRONG_CLASS",
+    "DETECTOR_BOX_IOU_FAIL",
+    "DEPTH_INVALID",
+    "PROJECTION_FAILURE",
+    "PROJECTION_OUTLIER",
+    "TRACK_ASSOCIATION_FAILURE",
+    "TRACK_NOT_CONFIRMED",
+    "TRACK_DUPLICATE",
+    "MAP_INGEST_REJECT",
+    "MAP_DUPLICATE",
+    "MAP_CLASS_SWITCH",
+    "MAP_COVARIANCE_REJECT",
+    "SCHEDULER_REJECT",
+)
 
 
 def sha256(path: Path) -> str:
@@ -163,6 +182,7 @@ def _legacy_target_record(encounter: dict, products: list[dict]) -> dict:
                 f"UPSTREAM_{previous}_FAILED" if previous and passed[previous] is False
                 else f"{stage}_FAILED"
             )
+    root_cause = _root_cause(passed)
     return {
         "target_id": encounter["target_id"],
         "class_name": encounter["class_name"],
@@ -171,6 +191,7 @@ def _legacy_target_record(encounter: dict, products: list[dict]) -> dict:
         "domains": _domain_labels(encounter),
         "stage_pass": passed,
         "stage_reason": reasons,
+        "root_cause": root_cause,
         "diagnostics": {
             "median_model_score": (
                 statistics.median(_finite(frame.get("model_score") for frame in actionable))
@@ -189,6 +210,58 @@ def _legacy_target_record(encounter: dict, products: list[dict]) -> dict:
             "matched_product_distance_m": product_distance,
         },
     }
+
+
+def _root_cause(passed: dict[str, bool | None]) -> dict:
+    """Classify the first causal loss without inventing missing legacy traces."""
+    if passed["GT_VISIBLE"] is False:
+        return {"status": "ATTRIBUTED", "taxonomy": "NOT_VISIBLE"}
+    if passed["GT_ACTIONABLE_WINDOW"] is False:
+        return {"status": "ATTRIBUTED", "taxonomy": "OUTSIDE_ACTIONABLE_WINDOW"}
+    if passed["NATIVE_DETECTOR_OBSERVATION"] is False:
+        return {
+            "status": "UNRESOLVED_LEGACY_TRACE_GAP",
+            "taxonomy": None,
+            "candidates": ["DETECTOR_NO_PROPOSAL", "DETECTOR_BOX_IOU_FAIL"],
+            "reason": "legacy target facts retain no full proposal list below the GT IoU gate",
+        }
+    if passed["NATIVE_DETECTOR_ACTION_THRESHOLD"] is False:
+        return {"status": "ATTRIBUTED", "taxonomy": "DETECTOR_SCORE_LOW"}
+    if passed["CORRECT_CLASS"] is False:
+        return {"status": "ATTRIBUTED", "taxonomy": "DETECTOR_WRONG_CLASS"}
+    if passed["DEPTH_VALID"] is False:
+        return {"status": "ATTRIBUTED", "taxonomy": "DEPTH_INVALID"}
+    if passed["PROJECTION_SUCCESS"] is False:
+        return {
+            "status": "UNRESOLVED_LEGACY_TRACE_GAP",
+            "taxonomy": None,
+            "candidates": [
+                "PROJECTION_FAILURE", "PROJECTION_OUTLIER",
+                "TRACK_ASSOCIATION_FAILURE", "TRACK_NOT_CONFIRMED",
+                "TRACK_DUPLICATE", "MAP_INGEST_REJECT", "MAP_DUPLICATE",
+                "MAP_CLASS_SWITCH", "MAP_COVARIANCE_REJECT",
+            ],
+            "reason": "legacy evidence emits only the final product-map target",
+        }
+    if passed["TRACK_CONFIRMED"] is False:
+        return {"status": "ATTRIBUTED", "taxonomy": "TRACK_NOT_CONFIRMED"}
+    if passed["DYNAMIC_MAP_CONFIRMED"] is False:
+        return {
+            "status": "UNRESOLVED_LEGACY_TRACE_GAP",
+            "taxonomy": None,
+            "candidates": ["MAP_INGEST_REJECT", "MAP_COVARIANCE_REJECT"],
+            "reason": "legacy evidence lacks per-ingest rejection codes",
+        }
+    if passed["SCHEDULER_ACTIONABLE"] is False:
+        return {"status": "ATTRIBUTED", "taxonomy": "SCHEDULER_REJECT"}
+    if passed["SCHEDULER_ACTIONABLE"] is None:
+        return {
+            "status": "UNKNOWN_LEGACY_EVIDENCE_GAP",
+            "taxonomy": None,
+            "candidates": ["SCHEDULER_REJECT"],
+            "reason": "legacy evidence has no target-addressable scheduler decision",
+        }
+    return {"status": "NO_LOSS", "taxonomy": None}
 
 
 def _summarize(records: list[dict], group: str) -> dict:
@@ -238,7 +311,40 @@ def _summarize(records: list[dict], group: str) -> dict:
     return summary
 
 
-def build_reports(payload: dict, *, route: str, input_path: Path) -> tuple[dict, dict, dict]:
+def _root_cause_decision(records: list[dict], shared: dict) -> dict:
+    attributed = Counter(
+        record["root_cause"]["taxonomy"] for record in records
+        if record["root_cause"]["status"] == "ATTRIBUTED"
+    )
+    unresolved = Counter(
+        "+".join(record["root_cause"].get("candidates", [])) for record in records
+        if record["root_cause"]["status"] in {
+            "UNRESOLVED_LEGACY_TRACE_GAP", "UNKNOWN_LEGACY_EVIDENCE_GAP"
+        }
+    )
+    ranked = sorted(attributed.items(), key=lambda item: (-item[1], item[0]))
+    primary = ranked[0][0] if ranked else None
+    return {
+        **shared,
+        "taxonomy_contract": list(ROOT_CAUSE_TAXONOMY),
+        "target_count": len(records),
+        "attributed_loss_counts": dict(sorted(attributed.items())),
+        "unresolved_legacy_trace_gap_counts": dict(sorted(unresolved.items())),
+        "primary_directly_attributed_loss": primary,
+        "primary_directly_attributed_loss_count": ranked[0][1] if ranked else 0,
+        "decision": (
+            "DETECTOR_SCORE_AND_CLASS_ARE_THE_LARGEST_DIRECTLY_OBSERVED_LOSSES;_"
+            "RUNTIME_PARITY_AND_FULL_STAGE_TRACES_REMAIN_REQUIRED_BEFORE_TRAINING"
+        ),
+        "training_allowed": False,
+        "reason_training_blocked": (
+            "ODCV5-01 native/adapter/product parity has not passed and legacy evidence "
+            "cannot separate detector proposal-vs-IoU or projection/tracker/map causes"
+        ),
+    }
+
+
+def build_reports(payload: dict, *, route: str, input_path: Path) -> tuple[dict, dict, dict, dict]:
     if payload.get("G5_SEALED_FINAL_read") is not False:
         raise ValueError("input violates the sealed-final boundary")
     route_payload = payload.get("routes", {}).get(route)
@@ -298,25 +404,46 @@ def build_reports(payload: dict, *, route: str, input_path: Path) -> tuple[dict,
             for domain in domains
         },
     }
-    return overall, by_class, by_domain
+    return overall, by_class, by_domain, _root_cause_decision(records, shared)
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--benchmark", type=Path, required=True)
+    sources = parser.add_mutually_exclusive_group(required=True)
+    sources.add_argument("--benchmark", type=Path)
+    sources.add_argument("--existing-ladder", type=Path)
     parser.add_argument("--route", default="D1-B")
     parser.add_argument("--output-dir", type=Path, required=True)
     args = parser.parse_args()
-    payload = json.loads(args.benchmark.read_text(encoding="utf-8"))
-    overall, by_class, by_domain = build_reports(
-        payload, route=args.route, input_path=args.benchmark
-    )
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    outputs = {
-        "ODCV5_ATTRITION_LADDER.json": overall,
-        "ODCV5_ATTRITION_BY_CLASS.json": by_class,
-        "ODCV5_ATTRITION_BY_DOMAIN.json": by_domain,
-    }
+    if args.existing_ladder:
+        overall = json.loads(args.existing_ladder.read_text(encoding="utf-8"))
+        records = list(overall.get("targets", []))
+        if not records:
+            raise ValueError("existing ladder contains no targets")
+        for record in records:
+            record["root_cause"] = _root_cause(record["stage_pass"])
+        shared = {
+            key: overall[key] for key in (
+                "schema_version", "protocol", "stage", "source_commit", "route",
+                "input", "GT_used_by_product_pipeline", "GT_used_only_by_attrition_evaluator",
+                "G5_SEALED_FINAL_read", "legacy_scheduler_target_attribution_available",
+                "scheduler_unknown_is_not_a_pass",
+            ) if key in overall
+        }
+        root_cause = _root_cause_decision(records, shared)
+        outputs = {"ODCV5_ROOT_CAUSE_DECISION.json": root_cause}
+    else:
+        payload = json.loads(args.benchmark.read_text(encoding="utf-8"))
+        overall, by_class, by_domain, root_cause = build_reports(
+            payload, route=args.route, input_path=args.benchmark
+        )
+        outputs = {
+            "ODCV5_ATTRITION_LADDER.json": overall,
+            "ODCV5_ATTRITION_BY_CLASS.json": by_class,
+            "ODCV5_ATTRITION_BY_DOMAIN.json": by_domain,
+            "ODCV5_ROOT_CAUSE_DECISION.json": root_cause,
+        }
     for name, report in outputs.items():
         (args.output_dir / name).write_text(
             json.dumps(report, indent=2) + "\n", encoding="utf-8"

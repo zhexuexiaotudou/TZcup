@@ -1,0 +1,41 @@
+{
+  "G7_MOVING_PASS": true,
+  "access_audit": {
+    "G5_V2_read": false,
+    "G5_read": false
+  },
+  "dataset_id": "G7_MOVING_DEVELOPMENT",
+  "development_only": true,
+  "duplicate_counts": {
+    "exact": 0,
+    "phash_cross_split": 0
+  },
+  "frame_count": 990,
+  "gates": {
+    "capture_contract_complete": true,
+    "exact_duplicate_zero": true,
+    "exact_requested_frame_count": true,
+    "gt_evaluator_only": true,
+    "mission_complete_100_percent": true,
+    "mission_count_minimum": true,
+    "phash_cross_split_duplicate_zero": true,
+    "product_manifest_has_no_gt_class_coordinates_or_instance_id": true,
+    "required_coverage_complete": true,
+    "sealed_data_not_read": true,
+    "seed_isolation": true,
+    "sensor_sync_bounded": true,
+    "train_class_actionable_at_least_40": true,
+    "val_class_actionable_at_least_20": true,
+    "val_small_each_class_at_least_10": true,
+    "world_split_isolation": true
+  },
+  "isolation": {
+    "seed_overlap": 0,
+    "world_overlap": 0
+  },
+  "mission_count": 55,
+  "required_coverage_complete": true,
+  "schema_version": 1,
+  "sealed_final": false,
+  "stage": "ODCV5-02"
+}

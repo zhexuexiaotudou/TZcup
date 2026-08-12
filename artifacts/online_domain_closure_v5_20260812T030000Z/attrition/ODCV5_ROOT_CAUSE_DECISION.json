@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "protocol": "ONLINE-DOMAIN-CLOSURE-V5",
+  "stage": "ODCV5-00",
+  "source_commit": "5c5e096e5041085a1baf95edf3869d80eddd1d54",
+  "route": "D1-B",
+  "input": {
+    "path": "F:/Project/TZcup/.workspace/artifacts/TZcup-ddrv4-online-dev-v6/base/DDRV4_BASE_MOVING.json",
+    "sha256": "0963971cbfd51ad177639a02fd9aca8dedc3f9a2346d855979e80a8bb2ae1083"
+  },
+  "GT_used_by_product_pipeline": false,
+  "GT_used_only_by_attrition_evaluator": true,
+  "G5_SEALED_FINAL_read": false,
+  "legacy_scheduler_target_attribution_available": false,
+  "scheduler_unknown_is_not_a_pass": true,
+  "taxonomy_contract": [
+    "NOT_VISIBLE",
+    "OUTSIDE_ACTIONABLE_WINDOW",
+    "DETECTOR_NO_PROPOSAL",
+    "DETECTOR_SCORE_LOW",
+    "DETECTOR_WRONG_CLASS",
+    "DETECTOR_BOX_IOU_FAIL",
+    "DEPTH_INVALID",
+    "PROJECTION_FAILURE",
+    "PROJECTION_OUTLIER",
+    "TRACK_ASSOCIATION_FAILURE",
+    "TRACK_NOT_CONFIRMED",
+    "TRACK_DUPLICATE",
+    "MAP_INGEST_REJECT",
+    "MAP_DUPLICATE",
+    "MAP_CLASS_SWITCH",
+    "MAP_COVARIANCE_REJECT",
+    "SCHEDULER_REJECT"
+  ],
+  "target_count": 60,
+  "attributed_loss_counts": {
+    "DETECTOR_SCORE_LOW": 29,
+    "DETECTOR_WRONG_CLASS": 13,
+    "OUTSIDE_ACTIONABLE_WINDOW": 1
+  },
+  "unresolved_legacy_trace_gap_counts": {
+    "DETECTOR_NO_PROPOSAL+DETECTOR_BOX_IOU_FAIL": 7,
+    "PROJECTION_FAILURE+PROJECTION_OUTLIER+TRACK_ASSOCIATION_FAILURE+TRACK_NOT_CONFIRMED+TRACK_DUPLICATE+MAP_INGEST_REJECT+MAP_DUPLICATE+MAP_CLASS_SWITCH+MAP_COVARIANCE_REJECT": 7,
+    "SCHEDULER_REJECT": 3
+  },
+  "primary_directly_attributed_loss": "DETECTOR_SCORE_LOW",
+  "primary_directly_attributed_loss_count": 29,
+  "decision": "DETECTOR_SCORE_AND_CLASS_ARE_THE_LARGEST_DIRECTLY_OBSERVED_LOSSES;_RUNTIME_PARITY_AND_FULL_STAGE_TRACES_REMAIN_REQUIRED_BEFORE_TRAINING",
+  "training_allowed": false,
+  "reason_training_blocked": "ODCV5-01 native/adapter/product parity has not passed and legacy evidence cannot separate detector proposal-vs-IoU or projection/tracker/map causes"
+}

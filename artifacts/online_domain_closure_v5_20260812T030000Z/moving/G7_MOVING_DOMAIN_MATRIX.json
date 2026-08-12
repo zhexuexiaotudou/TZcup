@@ -1,0 +1,40 @@
+{
+  "counts_by_split": {
+    "MOVING_HOLDOUT": {
+      "bright_pavement": 1,
+      "clutter": 1,
+      "dark_road": 2,
+      "reflection": 2,
+      "road_paint": 1,
+      "shadow": 1,
+      "wet_road": 2
+    },
+    "MOVING_TRAIN": {
+      "bright_pavement": 4,
+      "clutter": 4,
+      "dark_road": 4,
+      "reflection": 5,
+      "road_paint": 4,
+      "shadow": 4,
+      "wet_road": 5
+    },
+    "MOVING_VAL": {
+      "bright_pavement": 2,
+      "clutter": 2,
+      "dark_road": 2,
+      "reflection": 3,
+      "road_paint": 2,
+      "shadow": 2,
+      "wet_road": 2
+    }
+  },
+  "surface_domains": [
+    "reflection",
+    "wet_road",
+    "dark_road",
+    "bright_pavement",
+    "shadow",
+    "road_paint",
+    "clutter"
+  ]
+}

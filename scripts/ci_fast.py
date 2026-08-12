@@ -277,6 +277,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_perception_ddrv4_finalize.py",
         ROOT / "scripts" / "test_odcv5_attrition_ladder.py",
         ROOT / "scripts" / "test_odcv5_golden_frame_parity.py",
+        ROOT / "scripts" / "test_odcv5_g7_moving.py",
         learning_package / "test" / "test_auto13_real_domain.py",
         learning_package / "test" / "test_g4_assets.py",
         learning_package / "test" / "test_g4_scene_negative_prior.py",
