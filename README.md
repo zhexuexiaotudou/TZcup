@@ -106,3 +106,5 @@ G8 数据准备器独立重读每个 real-Gazebo 任务的 RGB、semantic/instan
 派生 wet world 运行时把只读 world/纹理根与只读模型资产根分别挂载，并在启动前验证 `models/` 存在；这使每个 wet SDF 保持独立 SHA 和 split 身份，同时继续使用同一 split 的原生 Gazebo 模型资产，而不会把模型复制进派生证据目录。
 
 若独立像素审计发现跨 split 的 pHash 冲突，只允许按 `split:world:seed` 隔离整个任务并把原 manifest/capture SHA 写入 split manifest；禁止删除单帧来伪造任务完整性，隔离后全部配额和泄漏门必须从零重算。
+
+Route A 先物化 `LEGACY_GA1_TRAIN + G8_TRAIN_NEW` 的 TRAIN-only 源池，再用 SHA 绑定的 GA1 checkpoint 以低阈值挖掘至少 2000 个 proposal hard-negative crops；冻结 exposure 为 small 25%、metal 20%、general 25%、hard-negative 30%，训练阶段不读取 HOLDOUT_NEW、VAL_NEW 或 G5_V2，HOLDOUT_NEW 只用于 checkpoint 与阈值选择。
