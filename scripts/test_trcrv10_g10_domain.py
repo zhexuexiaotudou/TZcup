@@ -16,7 +16,7 @@ def test_g10_mission_plan_meets_protocol_minimums() -> None:
 
 
 def test_g10_approach_lanes_preserve_safe_drive_by_geometry() -> None:
-    assert g4_scene.G10_TARGET_START_DISTANCE_M == 6.7
+    assert g4_scene.G10_TARGET_START_DISTANCE_M == 7.1
     assert g4_scene.G10_TARGET_LATERAL_BY_CLASS_M == {
         "metal_can": -0.57,
         "paper_litter": 0.66,
@@ -74,8 +74,8 @@ def test_g10_capture_orchestrator_denies_sealed_dev_val() -> None:
     assert "[ValidateSet('train', 'val')]" in source
     assert "'test'" not in source
     assert "-G10ApproachSequence" in source
-    assert "g10\\route_v13" in source
-    assert "-CaptureFrameCount 150" in source
+    assert "g10\\route_v15" in source
+    assert "-CaptureFrameCount 180" in source
     assert "-CaptureMinTranslationM 0.02" in source
     assert "-CaptureTimeoutSeconds 1200" in source
 

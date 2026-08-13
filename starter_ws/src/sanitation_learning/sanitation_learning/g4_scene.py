@@ -51,7 +51,7 @@ G8_TARGET_LATERAL_LANES_M = (
     -0.80, 0.80, -0.60, 0.60, -0.95, 0.95,
     -0.72, 0.72, -1.05, 1.05, -0.52, 0.52,
 )
-G10_TARGET_START_DISTANCE_M = 6.7
+G10_TARGET_START_DISTANCE_M = 7.1
 G10_TARGET_LATERAL_BY_CLASS_M = {
     "metal_can": -0.57,
     "paper_litter": 0.66,
