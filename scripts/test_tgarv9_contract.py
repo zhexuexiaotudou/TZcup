@@ -70,3 +70,11 @@ def test_t2_training_defers_holdout_selection_until_all_checkpoints_exist() -> N
     assert '"val_interval": args.epochs + 1' in source
     assert "checkpoint.save_best = None" in source
     assert "checkpoint.interval = 1" in source
+
+
+def test_checkpoint_selector_is_bounded_and_keeps_val_unread() -> None:
+    source = (Path(__file__).resolve().parent / "select_tgarv9_checkpoints.py").read_text(encoding="utf-8")
+    assert "len(checkpoints) != args.expected_checkpoints" in source
+    assert '"VAL_NEW_read": False' in source
+    assert '"G5_V2_read": False' in source
+    assert "for checkpoint in checkpoints" in source
