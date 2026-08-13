@@ -149,4 +149,10 @@ G10 approach 模式显式 opt-in，使用独立 `g10v1_*` world/asset 命名空�
 
 视觉可辨识性诊断是与产品路线隔离的 development-only 模式：只在 TRAIN_DIAG/HOLDOUT_DIAG 世界与 seed 上用同一产品相机采集 0.85–3.0m 单目标图像，允许 evaluator 离线生成 GT tight/context crop，但这些 GT 信息与诊断姿态均禁止进入 proposal、产品 classifier crop 和 runtime；它只回答资产在足够像素下是否含有类别信息。
 
+TRCRV10 proposal 候选严格限于已经完成训练的 RGDRV8 Route A、GA1 与 TGARV9 Grounding-DINO。候选登记器会逐项绑定历史选择证据和 checkpoint SHA；只有本地可解析且哈希匹配的候选才能进入 G10 HOLDOUT 推理，缺失 checkpoint 的 GA1 必须标记为不可执行，禁止新开第四个 detector。proposal 只使用 `max class score` 作为 class-agnostic objectness，原 detector 类别输出不具有行动授权语义。
+
+proposal operating point 只允许在 G10 HOLDOUT 上联合选择阈值与 2–5 帧连续持久性：先满足 eventual proposal recall `>=0.98`、small eventual proposal recall `>=0.95` 和 proposal FP/frame `<=1.0` 三个硬门，再最小化 FP/frame；若没有候选通过，必须保留失败状态而不是冻结最优失败候选。`G10_DEV_VAL_SEALED`、`VAL_NEW` 与 `G5_V2` 在完整 integrated HOLDOUT 通过前继续保持未读。
+
+G10 长序列采集对每个 mission 要求完整 125 帧、传感器同步、真实运动和相邻帧位移门全部通过。若 Gazebo 长尾导致部分帧或运动门失败，原失败 report/log 必须单独封存；恢复仅可在相同 world/seed/asset/route 上使用新 ROS domain/partition 幂等重试，已通过 mission 跳过，失败或部分 mission 不计入配额。
+
 最终 evidence index 以 `RGDRV8_GA1_FAILURE_TAXONOMY.json` 作为 GA1 failure-forensics 主记录，并单独保留 confusion、score 和 size/domain 辅助矩阵；发布器在所有必需外部证据存在且三条路线状态确认为失败后才生成 final 目录。
