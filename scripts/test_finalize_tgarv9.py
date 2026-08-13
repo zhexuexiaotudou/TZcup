@@ -9,6 +9,8 @@ def test_tgarv9_finalizer_is_fail_closed_and_preserves_seals() -> None:
     assert '"TGARV9_ALL_ROUTES_EXHAUSTED": True' in source
     assert '"MODEL_BLOCKED_INTERNAL": True' in source
     assert '"SIMULATION_PRODUCT_COMPLETE": False' in source
+    assert '"TGARV9_VAL_NEW_PASS": None' in source
+    assert '"TGARV9_VAL_NEW_STATUS": "NOT_RUN_HOLDOUT_DEPENDENCY_BLOCKED"' in source
     assert '"VAL_NEW_read": False' in source
     assert '"G5_V2_read": False' in source
     assert "T1 did not fail" in source
