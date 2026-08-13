@@ -10,10 +10,10 @@ param(
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $artifact = [System.IO.Path]::GetFullPath($ArtifactRoot)
-$domain = Join-Path $artifact 'g10\domain_route_v8'
+$domain = Join-Path $artifact 'g10\domain_route_v10'
 $runtime = Join-Path $artifact 'g10\runtime'
-$capture = Join-Path $artifact ("g10\route_v8\capture_{0}" -f $Split)
-$logRoot = Join-Path $artifact 'g10\route_v8\capture_logs'
+$capture = Join-Path $artifact ("g10\route_v10\capture_{0}" -f $Split)
+$logRoot = Join-Path $artifact 'g10\route_v10\capture_logs'
 New-Item -ItemType Directory -Force -Path $logRoot | Out-Null
 
 $config = if ($Split -eq 'train') {
@@ -44,11 +44,10 @@ for ($local = 0; $local -lt $config.Worlds; $local++) {
         -AssetSourceSplit $Split `
         -NegativeSourceSplit $Split `
         -SceneSeedOffset $config.Seed `
-        -CaptureFrameCount 150 `
+        -CaptureFrameCount 125 `
         -CaptureTimeoutSeconds 1200 `
         -CaptureSpeedMps 0.20 `
-        -CaptureMinTranslationM 0.04 `
-        -CaptureMinRotationRad 0.12 `
+        -CaptureMinTranslationM 0.02 `
         -CaptureMaxAttempts 2 `
         -DetectorInstancesPerClass 1 `
         -G10ApproachSequence `

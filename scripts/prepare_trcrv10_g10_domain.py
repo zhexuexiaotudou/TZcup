@@ -11,7 +11,7 @@ import shutil
 import xml.etree.ElementTree as ET
 
 
-DOMAIN = "g10_physical_close_range_route_v8"
+DOMAIN = "g10_physical_close_range_route_v10"
 SPLIT_MAP = {
     "train": "G10_TRAIN",
     "val": "G10_HOLDOUT",
@@ -151,7 +151,7 @@ def main() -> int:
     all_rows += [(row, negative_splits[row["model_name"]], True) for row in negatives]
     for row, split, is_negative in all_rows:
         old_id = row["model_name"]
-        new_id = f"g10v1_{split}_{old_id.removeprefix('g4_')}"
+        new_id = f"g10v10_{split}_{old_id.removeprefix('g4_')}"
         hashes = clone_asset(args.source_assets / old_id, output_assets / new_id, old_id, new_id)
         cloned = {
             **row,
@@ -175,7 +175,7 @@ def main() -> int:
     for split, group in world_groups:
         for local_index, row in enumerate(group, 1):
             suffix = row["world_id"].removeprefix("world_g4_")
-            world_id = f"g10v1_{split}_w{local_index:02d}_{suffix}"
+            world_id = f"g10v10_{split}_w{local_index:02d}_{suffix}"
             destination = output_worlds / f"{world_id}.sdf"
             rewrite_world(args.source_worlds / row["path"], destination, world_id, model_ids)
             world_rows.append({
@@ -227,12 +227,11 @@ def main() -> int:
                 "plastic_bottle": -0.57,
             },
             "capture_speed_mps": 0.20,
-            "capture_minimum_translation_m": 0.04,
-            "capture_frames": 150,
-            "capture_minimum_rotation_rad": 0.12,
-            "reobserve_switch_lead_m": 1.50,
-            "close_observation_approach_frames": 18,
-            "close_observation_approach_minimum_travel_m": 0.68,
+            "capture_minimum_translation_m": 0.02,
+            "capture_frames": 125,
+            "minimum_motion_gate_travel_m": 2.48,
+            "frozen_minimum_reliable_classification_short_side_px": 18,
+            "required_size_stages_px": ["<18", "18-32", "32-64"],
             "unreachable_for_visual_confirmation_must_be_retained": True,
             "product_inputs": ["RGB", "depth", "CameraInfo", "TF"],
             "GT_role": "training_and_evaluator_only",
@@ -267,7 +266,7 @@ def main() -> int:
             "world_overlap_zero": all(not value for value in overlaps["world"].values()),
             "asset_overlap_zero": all(not value for value in overlaps["asset"].values()),
             "negative_overlap_zero": all(not value for value in overlaps["negative"].values()),
-            "namespaced_assets_only": all(row["model_name"].startswith("g10v1_") for row in asset_rows + negative_rows),
+            "namespaced_assets_only": all(row["model_name"].startswith("g10v10_") for row in asset_rows + negative_rows),
             "physical_scale_one": all(row["scale_factor"] == 1.0 for row in asset_rows),
             "safe_lateral_drive_by_clearance": all(value >= 0.15 for value in (
                 0.57 - 0.36 - 0.05,

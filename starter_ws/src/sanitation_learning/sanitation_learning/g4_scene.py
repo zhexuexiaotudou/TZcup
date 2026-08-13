@@ -60,6 +60,8 @@ G10_TARGET_LATERAL_BY_CLASS_M = {
 G10_DIAGNOSTIC_DISTANCES_M = (0.85, 0.95, 1.10, 1.30, 1.55, 1.90, 2.40, 3.00)
 G10_REOBSERVE_SWITCH_LEAD_M = 1.50
 G10_REOBSERVE_ANGULAR_SPEED_RAD_S = 1.0
+G10_ORBIT_SWITCH_WORLD_X_M = -0.50
+G10_ORBIT_ANGULAR_SPEED_RAD_S = 0.35
 
 
 def g10_target_class(world_id: str, scene_index: int) -> str:
@@ -391,52 +393,17 @@ def randomize(
             "executed_by_capture": True,
         }
     vehicle_start_yaw_rad = 0.0
-    g10_target = next(
-        (item for item in objects if item["class_id"] in G8_DISCRETE_CLASSES),
-        None,
-    )
-    g10_reobserve_anchor_x = (
-        float(g10_target["xyz_m"][0]) if g10_target is not None else -0.80
-    )
-    g10_reobserve_side = (
-        float(g10_target["xyz_m"][1]) if g10_target is not None else 1.0
-    )
     motion_profile = (
         {
-            "name": "g10_turn_approach_verify_depart_v3",
+            "name": "g10_safe_drive_by_then_orbit_v1",
             "control_mode": "latched_world_x_switch",
-            "switch_world_x_m": g10_reobserve_anchor_x - G10_REOBSERVE_SWITCH_LEAD_M,
+            "switch_world_x_m": G10_ORBIT_SWITCH_WORLD_X_M,
             "straight_linear_x_mps": 0.20,
-            "post_switch_phases": [
-                {
-                    "name": "rotate_toward_candidate",
-                    "frame_count": 3,
-                    "angular_z_rad_s": math.copysign(
-                        G10_REOBSERVE_ANGULAR_SPEED_RAD_S, g10_reobserve_side
-                    ),
-                },
-                {
-                    "name": "close_range_observation_approach",
-                    "frame_count": 18,
-                    "linear_x_mps": 0.20,
-                },
-                {
-                    "name": "rotate_away_after_observation",
-                    "frame_count": 10,
-                    "angular_z_rad_s": math.copysign(
-                        G10_REOBSERVE_ANGULAR_SPEED_RAD_S, g10_reobserve_side
-                    ),
-                },
-                {
-                    "name": "safe_departure",
-                    "frame_count": 4096,
-                    "linear_x_mps": 0.20,
-                },
-            ],
+            "orbit_linear_x_mps": 0.20,
+            "orbit_angular_z_rad_s": G10_ORBIT_ANGULAR_SPEED_RAD_S,
             "route_contract": (
-                "at 1.5 m lead rotate toward the frozen candidate side, take "
-                "an odom-spaced close observation approach, rotate away in "
-                "place, then depart without entering the target keepout"
+                "pass the candidate on the straight approach, then latch a left "
+                "orbit before the wet-courtyard transverse drain"
             ),
         }
         if g10_approach_sequence

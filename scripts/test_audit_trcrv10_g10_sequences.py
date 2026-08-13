@@ -21,10 +21,27 @@ def test_missing_label_is_not_a_bbox() -> None:
     assert audit.bbox_row(np.zeros((4, 4), dtype=np.uint8), 1, 0) is None
 
 
+def test_size_transition_must_be_temporally_ordered() -> None:
+    ordered = [
+        {"frame_index": 1, "short_side_px": 12},
+        {"frame_index": 2, "short_side_px": 24},
+        {"frame_index": 3, "short_side_px": 40},
+    ]
+    assert audit.ordered_size_transition(ordered)
+    wrong_order = [
+        {"frame_index": 1, "short_side_px": 40},
+        {"frame_index": 2, "short_side_px": 24},
+        {"frame_index": 3, "short_side_px": 12},
+    ]
+    assert not audit.ordered_size_transition(wrong_order)
+
+
 def test_capture_qa_requires_protocol_minimum_mission_counts() -> None:
     source = open(audit.__file__, encoding="utf-8").read()
     assert 'split_counts.get("G10_TRAIN", 0) >= 45' in source
     assert 'split_counts.get("G10_HOLDOUT", 0) >= 18' in source
+    assert '"positive_targets_cross_required_size_stages"' in source
+    assert '"positive_targets_reach_frozen_minimum"' in source
 
 
 def test_capture_qa_emits_all_protocol_artifacts_and_identity_gates() -> None:

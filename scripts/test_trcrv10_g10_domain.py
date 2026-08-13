@@ -15,20 +15,15 @@ def test_g10_mission_plan_meets_protocol_minimums() -> None:
     assert 3 * g10.SCENES_PER_WORLD["test"] >= 18
 
 
-def test_g10_approach_lanes_cover_far_mid_close_travel() -> None:
+def test_g10_approach_lanes_preserve_safe_drive_by_geometry() -> None:
     assert g4_scene.G10_TARGET_START_DISTANCE_M == 6.2
     assert g4_scene.G10_TARGET_LATERAL_BY_CLASS_M == {
         "metal_can": -0.57,
         "paper_litter": 0.66,
         "plastic_bottle": -0.57,
     }
-    # Route-v6 must reach the target's longitudinal close-view band by a
-    # machine-independent motion lower bound, not an assumed sensor cadence.
-    assert 18 * 0.04 >= 0.72
-    initial_center_distance = (
-        g4_scene.G10_REOBSERVE_SWITCH_LEAD_M**2 + 0.66**2
-    ) ** 0.5
-    assert initial_center_distance - 18 * 0.04 >= 0.80
+    assert g4_scene.G10_ORBIT_SWITCH_WORLD_X_M == -0.50
+    assert g4_scene.G10_ORBIT_ANGULAR_SPEED_RAD_S == 0.35
 
 
 def test_g10_centered_route_balances_target_classes() -> None:
@@ -46,20 +41,12 @@ def test_g10_drive_by_lanes_keep_physical_clearance() -> None:
 
 
 def test_g10_route_orbits_before_transverse_wet_world_drain() -> None:
-    latest_target_x = -8.0 + g4_scene.G10_TARGET_START_DISTANCE_M + 0.03
-    latest_switch_x = latest_target_x - g4_scene.G10_REOBSERVE_SWITCH_LEAD_M
-    maximum_center_x = latest_switch_x + 18 * 0.04
     drain_collision_front_x = 1.0 - 0.35 / 2.0
     conservative_vehicle_x_extent = 0.45
-    assert maximum_center_x + conservative_vehicle_x_extent < drain_collision_front_x
-
-
-def test_g10_target_side_reobserve_is_safe_for_both_lanes() -> None:
-    half_widths = {"metal_can": 0.05, "paper_litter": 0.11, "plastic_bottle": 0.05}
-    for class_id, lateral in g4_scene.G10_TARGET_LATERAL_BY_CLASS_M.items():
-        initial = (g4_scene.G10_REOBSERVE_SWITCH_LEAD_M**2 + lateral**2) ** 0.5
-        final = initial - 18 * 0.04
-        assert final >= 0.36 + half_widths[class_id] + 0.30
+    assert (
+        g4_scene.G10_ORBIT_SWITCH_WORLD_X_M + conservative_vehicle_x_extent
+        < drain_collision_front_x
+    )
 
 
 def test_g10_identifiability_grid_is_development_only() -> None:
@@ -75,10 +62,9 @@ def test_g10_capture_orchestrator_denies_sealed_dev_val() -> None:
     assert "[ValidateSet('train', 'val')]" in source
     assert "'test'" not in source
     assert "-G10ApproachSequence" in source
-    assert "g10\\route_v8" in source
-    assert "-CaptureFrameCount 150" in source
-    assert "-CaptureMinTranslationM 0.04" in source
-    assert "-CaptureMinRotationRad 0.12" in source
+    assert "g10\\route_v10" in source
+    assert "-CaptureFrameCount 125" in source
+    assert "-CaptureMinTranslationM 0.02" in source
     assert "-CaptureTimeoutSeconds 1200" in source
 
 

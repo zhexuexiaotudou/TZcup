@@ -62,7 +62,23 @@ def bucket_counts(rows: list[dict]) -> dict[str, int]:
     }
 
 
-def audit_scene(scene: Path, split: str) -> tuple[dict, list[dict]]:
+def ordered_size_transition(frames: list[dict]) -> bool:
+    """Require far, mid, then close observations in temporal order."""
+    stages = ((0, 18), (18, 32), (32, 64))
+    cursor = -1
+    for low, high in stages:
+        match = next(
+            (row["frame_index"] for row in frames
+             if row["frame_index"] > cursor and low <= row["short_side_px"] < high),
+            None,
+        )
+        if match is None:
+            return False
+        cursor = match
+    return True
+
+
+def audit_scene(scene: Path, split: str, minimum_reliable_short_side: int) -> tuple[dict, list[dict]]:
     manifest = read(scene / "scene_manifest.json")
     report = read(scene / "capture_report.json")
     requested = int(report["requested_frames"])
@@ -75,20 +91,20 @@ def audit_scene(scene: Path, split: str) -> tuple[dict, list[dict]]:
             if row:
                 frames.append(row)
         if frames:
+            counts = bucket_counts(frames)
+            maximum = max(frames, key=lambda item: item["short_side_px"])
             target_rows.append({
                 "class_id": class_id,
                 "visible_frames": len(frames),
                 "first_visible": frames[0],
-                "maximum": max(frames, key=lambda item: item["short_side_px"]),
+                "maximum": maximum,
                 "last_visible": frames[-1],
-                "bucket_counts": bucket_counts(frames),
-                "crosses_lt18_to_32_64": (
-                    bucket_counts(frames)["<18"] > 0
-                    and bucket_counts(frames)["18-32"] > 0
-                    and bucket_counts(frames)["32-64"] > 0
-                ),
-                "reaches_64": max(item["short_side_px"] for item in frames) >= 64,
-                "reaches_96": max(item["short_side_px"] for item in frames) >= 96,
+                "bucket_counts": counts,
+                "crosses_lt18_to_32_64": ordered_size_transition(frames),
+                "minimum_reliable_short_side_px": minimum_reliable_short_side,
+                "reaches_minimum_reliable": maximum["short_side_px"] >= minimum_reliable_short_side,
+                "reaches_64": maximum["short_side_px"] >= 64,
+                "reaches_96": maximum["short_side_px"] >= 96,
             })
     expected = 0 if manifest["negative_only"] else int(
         manifest.get("trcrv10_g10_approach_sequence", {}).get("targets_per_positive_mission", 3)
@@ -149,6 +165,7 @@ def main() -> int:
     parser.add_argument("--capture", action="append", required=True,
                         help="SPLIT=path containing g4_screening_native/scenes")
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--minimum-reliable-short-side", type=int, required=True)
     args = parser.parse_args()
     missions, frames = [], []
     for value in args.capture:
@@ -156,7 +173,9 @@ def main() -> int:
         scenes = Path(raw_path) / "g4_screening_native" / "scenes"
         for scene in sorted(path for path in scenes.glob("scene_*")
                             if (path / "capture_report.json").is_file()):
-            mission, mission_frames = audit_scene(scene, split)
+            mission, mission_frames = audit_scene(
+                scene, split, args.minimum_reliable_short_side
+            )
             missions.append(mission)
             frames.extend(mission_frames)
     split_counts = Counter(row["split"] for row in missions)
@@ -193,6 +212,16 @@ def main() -> int:
         "capture_pass": all(row["capture_pass"] for row in missions),
         "sensor_sync_pass": all(row["sensor_odom_sync_pass"] for row in missions),
         "partial_mission_zero": not any(row["partial_mission"] for row in missions),
+        "positive_targets_cross_required_size_stages": all(
+            target["crosses_lt18_to_32_64"]
+            for row in missions if not row["negative_only"]
+            for target in row["targets"]
+        ),
+        "positive_targets_reach_frozen_minimum": all(
+            target["reaches_minimum_reliable"]
+            for row in missions if not row["negative_only"]
+            for target in row["targets"]
+        ),
         "train_missions_at_least_45": split_counts.get("G10_TRAIN", 0) >= 45,
         "holdout_missions_at_least_18": split_counts.get("G10_HOLDOUT", 0) >= 18,
         "world_overlap_zero": not world_overlap,
@@ -207,6 +236,7 @@ def main() -> int:
         "schema_version": 1,
         "protocol": "TRCRV10",
         "semantic_gt_role": "offline_QA_and_evaluator_only",
+        "minimum_reliable_classification_short_side_px": args.minimum_reliable_short_side,
         "mission_counts": dict(split_counts),
         "missions": missions,
         "cross_split_duplicates": {"exact": exact_overlap, "phash": phash_overlap},
@@ -248,6 +278,11 @@ def main() -> int:
         ],
         "targets_crossing_lt18_to_32_64": sum(
             target["crosses_lt18_to_32_64"]
+            for row in missions for target in row["targets"]
+        ),
+        "minimum_reliable_classification_short_side_px": args.minimum_reliable_short_side,
+        "targets_reaching_minimum_reliable": sum(
+            target["reaches_minimum_reliable"]
             for row in missions for target in row["targets"]
         ),
         "targets_reaching_64": sum(
