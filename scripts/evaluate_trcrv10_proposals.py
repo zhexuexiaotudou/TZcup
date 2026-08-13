@@ -115,7 +115,10 @@ def main() -> int:
     raw = json.loads(args.raw_inference.read_text(encoding="utf-8"))
     predictions: dict[tuple[str, int], list[dict]] = defaultdict(list)
     for row in raw["frames"]:
-        predictions[(row["scene"], int(row["frame_index"]))].extend(row["detections"])
+        scene = row.get("scene", row.get("mission_id"))
+        if not scene:
+            raise ValueError("raw inference frame lacks scene/mission_id")
+        predictions[(scene, int(row["frame_index"]))].extend(row["detections"])
     truth = {}
     for scene in sorted(path for path in args.capture_scenes.glob("scene_*") if path.is_dir()):
         report = json.loads((scene / "capture_report.json").read_text(encoding="utf-8"))

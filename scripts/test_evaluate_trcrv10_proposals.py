@@ -38,3 +38,8 @@ def test_flood_gate_is_fail_closed() -> None:
     assert result["metrics"]["proposal_fp_per_frame"] == 2.0
     assert not result["gates"]["proposal_flood_hard_limit"]
     assert not result["pass"]
+
+
+def test_raw_inference_contract_accepts_historical_mission_id() -> None:
+    source = open(proposal.__file__, encoding="utf-8").read()
+    assert 'row.get("scene", row.get("mission_id"))' in source
