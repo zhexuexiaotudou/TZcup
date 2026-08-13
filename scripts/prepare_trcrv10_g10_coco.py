@@ -66,6 +66,7 @@ def build(scenes_root: Path) -> dict:
                 "mission_id": scene.name,
                 "frame_index": index,
                 "negative_only": bool(manifest["negative_only"]),
+                "source_split": manifest["split"],
                 "world_id": manifest["world_id"],
                 "scene_seed": int(manifest["scene_seed"]),
             })
