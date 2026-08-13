@@ -23,6 +23,7 @@ def test_training_result_is_bound_to_dataset_and_sealed_boundaries() -> None:
     source = Path(train.__file__).read_text(encoding="utf-8")
     for field in (
         "dataset_manifest_sha256", "train_samples", "holdout_samples",
+        "by_size_support", "recommended_100_frames_per_class_met", "scene_seeds",
         "production_runtime_eligible", "G10_DEV_VAL_SEALED_read", "VAL_NEW_read", "G5_V2_read",
     ):
         assert field in source

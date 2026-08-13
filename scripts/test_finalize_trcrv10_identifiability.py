@@ -40,3 +40,9 @@ def test_combined_confusion_recomputes_metrics() -> None:
     result = final.combine_confusions([perfect(2), perfect(3)])
     assert result["macro_f1"] == 1.0
     assert all(row["support"] == 5 for row in result["per_class"].values())
+
+
+def test_sample_recommendation_is_disclosed_not_promoted_to_hard_gate() -> None:
+    source = open(final.__file__, encoding="utf-8").read()
+    assert "holdout_support_by_run" in source
+    assert '"sample_recommendation_is_not_a_hard_gate": True' in source

@@ -130,17 +130,30 @@ def main() -> int:
             torch.save({"model": model.state_dict(), "classes": CLASSES, "model_name": model_name, "view": view,
                         "official_weights": str(weights), "epochs": args.epochs, "seed": args.seed}, checkpoint)
             aggregate = metrics(truth, predicted)
-            by_size, by_domain = {}, {}
+            by_size, by_domain, by_size_support = {}, {}, {}
             for size in sorted({row["size_bucket"] for row in evaluated}):
                 selected = [row for row in evaluated if row["size_bucket"] == size]
                 by_size[size] = metrics([class_to_index[row["truth"]] for row in selected], [class_to_index[row["predicted"]] for row in selected])
+                by_size_support[size] = {
+                    "raw_frames": len(selected),
+                    "scenes": len({row["scene"] for row in selected}),
+                    "worlds": len({row["world_id"] for row in selected}),
+                    "scene_seeds": len({row["scene_seed"] for row in selected}),
+                    "per_class_raw_frames": {
+                        class_id: sum(row["truth"] == class_id for row in selected) for class_id in CLASSES
+                    },
+                    "recommended_100_frames_per_class_met": all(
+                        sum(row["truth"] == class_id for row in selected) >= 100 for class_id in CLASSES
+                    ),
+                }
             for world in sorted({row["world_id"] for row in evaluated}):
                 selected = [row for row in evaluated if row["world_id"] == world]
                 by_domain[world] = metrics([class_to_index[row["truth"]] for row in selected], [class_to_index[row["predicted"]] for row in selected])
             results.append({"model": model_name, "view": view, "official_weights": str(weights),
                             "train_samples": len(train_rows), "holdout_samples": len(holdout_rows),
                             "checkpoint": str(checkpoint.resolve()), "checkpoint_sha256": sha256(checkpoint),
-                            "aggregate": aggregate, "by_size": by_size, "by_domain": by_domain})
+                            "aggregate": aggregate, "by_size": by_size, "by_size_support": by_size_support,
+                            "by_domain": by_domain})
     write(args.output / "IDENTIFIABILITY_RAW_RESULTS.json", {
         "schema_version": 1,
         "protocol": "TRCRV10",

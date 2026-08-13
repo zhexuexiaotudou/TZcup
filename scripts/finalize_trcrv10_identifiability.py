@@ -111,6 +111,11 @@ def main() -> int:
         "selected_bucket": selected_bucket,
         "MIN_RELIABLE_CLASSIFICATION_SHORT_SIDE_PX": selected_px,
         "large_target_asset_rule": large_gates,
+        "holdout_support_by_run": [
+            {"model": run["model"], "view": run["view"], "by_size_support": run.get("by_size_support", {})}
+            for run in results
+        ],
+        "sample_recommendation_is_not_a_hard_gate": True,
         "VISUAL_IDENTIFIABILITY_FAIL": asset_fail,
         "VISUAL_IDENTIFIABILITY_PASS": not asset_fail and selected_px is not None,
         "production_runtime_uses_GT_crop": False,
