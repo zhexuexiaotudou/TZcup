@@ -85,6 +85,8 @@ def test_checkpoint_selector_is_bounded_and_keeps_val_unread() -> None:
     assert '"lt_18px"' in source
     assert '"18_to_32px"' in source
     assert '"gt_32px"' in source
+    assert '"per_class": per_class_metrics' in source
+    assert '"recall": class_recall' in source
 
 
 def test_deployability_prescreen_is_holdout_gated_and_bounded() -> None:

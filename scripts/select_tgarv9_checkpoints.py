@@ -127,6 +127,17 @@ def detector_diagnostics(coco_payload: dict, raw_frames: list[dict], score_thres
         evaluation.accumulate()
         evaluation.summarize()
         ap_50_95, ap_50 = float(evaluation.stats[0]), float(evaluation.stats[1])
+    category_names = {int(row["id"]): row["name"] for row in coco_payload["categories"]}
+    per_class_metrics = {}
+    for category_id, counts in per_class.items():
+        class_precision = counts["true_positive"] / max(counts["true_positive"] + counts["false_positive"], 1)
+        class_recall = counts["true_positive"] / max(counts["true_positive"] + counts["false_negative"], 1)
+        per_class_metrics[category_names[category_id]] = {
+            **counts,
+            "precision": class_precision,
+            "recall": class_recall,
+            "f1": 2.0 * class_precision * class_recall / max(class_precision + class_recall, 1e-12),
+        }
     return {
         "score_threshold": score_threshold,
         "iou_threshold": 0.5,
@@ -136,7 +147,7 @@ def detector_diagnostics(coco_payload: dict, raw_frames: list[dict], score_thres
         "AP50": ap_50,
         "AP50_95": ap_50_95,
         "wrong_class_match_count": wrong_class_match,
-        "per_class": per_class,
+        "per_class": per_class_metrics,
         "size_recall": {
             name: {**counts, "recall": counts["matched"] / max(counts["total"], 1)}
             for name, counts in size_recall.items()
