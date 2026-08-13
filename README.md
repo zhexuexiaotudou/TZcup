@@ -122,3 +122,5 @@ Route C 的 contextual crop 必须回溯 Route A 的 `source_train.json`（`G8 T
 RGDRV8 specialist 使用 G8 校准相机的固定 3×3 overlapping ground-mask tiles（原生 320×240、统一放大到 640×480）。G8 的远地面目标可投影至图像顶边，因此旧 G6 仅覆盖下 75% 的六块 ROI 不适用于 G8；九块 ROI 覆盖完整 640×480 cleanable image mask，且生产选区函数不接收 GT。
 
 RGDRV8 严格执行有限路线停止条件：仅当 A/B/C 都有 HOLDOUT 失败证据时，发布 `MODEL_BLOCKED_INTERNAL_REAL_GAZEBO_DETECTOR=true`、`SIMULATION_PRODUCT_COMPLETE=false` 和 `NEXT_ARCHITECTURE_RESEARCH_REQUIRED.json`；此状态下保持 VAL_NEW/G5_V2 未读，并将 tracker/map、在线任务、性能、freeze、30-seed、清扫、soak/replay 与 x86 release 明确标为 dependency-blocked，而不是用未执行结果冒充产品完成。
+
+最终 evidence index 以 `RGDRV8_GA1_FAILURE_TAXONOMY.json` 作为 GA1 failure-forensics 主记录，并单独保留 confusion、score 和 size/domain 辅助矩阵；发布器在所有必需外部证据存在且三条路线状态确认为失败后才生成 final 目录。

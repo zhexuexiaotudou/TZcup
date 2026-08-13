@@ -29,7 +29,7 @@ def main() -> int:
     if args.output.exists(): raise FileExistsError(args.output)
     root = args.artifact_root
     paths = {
-        "ga1": root / "ga1_forensics/GA1_FAILURE_FORENSICS_REPORT.json",
+        "ga1": root / "ga1_forensics/RGDRV8_GA1_FAILURE_TAXONOMY.json",
         "g8": root / "g8_data/prepared_final_v2/G8_DATASET_QA.json",
         "route_a": root / "route_a/selection/ROUTE_A_HOLDOUT_SELECTION.json",
         "route_b": root / "route_b/verifier/run/ROUTE_B_VERIFIER_REPORT.json",

@@ -14,6 +14,7 @@ def test_fail_closed_publisher_requires_all_three_route_failures() -> None:
     assert "Route C specialist did not fail" in source
     assert '"VAL_NEW_read": False' in source
     assert '"G5_V2_read": False' in source
+    assert "RGDRV8_GA1_FAILURE_TAXONOMY.json" in source
 
 
 def test_fail_closed_publisher_produces_required_deliverables() -> None:
