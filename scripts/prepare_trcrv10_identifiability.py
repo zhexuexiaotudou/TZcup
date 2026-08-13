@@ -176,6 +176,18 @@ def main() -> int:
     world_sets = {split: {row["world_id"] for row in rows if row["split"] == split} for split in ALLOWED_SPLITS}
     seed_sets = {split: {row["scene_seed"] for row in rows if row["split"] == split} for split in ALLOWED_SPLITS}
     asset_sets = {split: {row["asset_id"] for row in rows if row["split"] == split} for split in ALLOWED_SPLITS}
+    effective_counts = {}
+    for split in sorted(ALLOWED_SPLITS):
+        selected = [row for row in rows if row["split"] == split]
+        effective_counts[split] = {
+            "raw_crop_rows": len(selected),
+            "unique_exact_crops": len({row["sha256"] for row in selected}),
+            "unique_phash_crops": len({row["phash"] for row in selected}),
+            "worlds": len({row["world_id"] for row in selected}),
+            "scene_seeds": len({row["scene_seed"] for row in selected}),
+            "asset_variants": len({row["asset_id"] for row in selected}),
+            "independence_unit": "world_scene_seed_asset_variant",
+        }
     gates = {
         "both_splits_present": all(any(row["split"] == split for row in rows) for split in ALLOWED_SPLITS),
         "world_overlap_zero": not world_sets["TRAIN_DIAG"] & world_sets["HOLDOUT_DIAG"],
@@ -191,6 +203,7 @@ def main() -> int:
         "inputs": inputs,
         "views": {"tight": 1.0, "context": CONTEXT_SCALE},
         "counts": count_table,
+        "effective_sample_counts": effective_counts,
         "world_overlap": sorted(world_sets["TRAIN_DIAG"] & world_sets["HOLDOUT_DIAG"]),
         "seed_overlap": sorted(seed_sets["TRAIN_DIAG"] & seed_sets["HOLDOUT_DIAG"]),
         "asset_overlap": sorted(asset_sets["TRAIN_DIAG"] & asset_sets["HOLDOUT_DIAG"]),
