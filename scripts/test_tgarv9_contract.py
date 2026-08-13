@@ -140,3 +140,16 @@ def test_t3_decision_is_single_route_and_t2_failure_gated() -> None:
     assert '"one_route_only": True' in source
     assert '"VAL_NEW_read": False' in source
     assert '"G5_V2_read": False' in source
+
+
+def test_t3_training_is_offline_hash_bound_negative_retaining_and_no_val() -> None:
+    source = (Path(__file__).resolve().parent / "train_tgarv9_grounding_dino.py").read_text(encoding="utf-8")
+    assert "official Grounding-DINO checkpoint SHA mismatch" in source
+    assert '"filter_empty_gt": False' in source
+    assert "loader.dataset.return_classes = True" in source
+    assert "cfg.model.language_model.name = str(args.bert)" in source
+    assert "cfg.val_cfg = None" in source
+    assert 'config._attn_implementation = "eager"' in source
+    assert '"bert_attention_backend": "eager_for_mmdet_3d_subsentence_mask"' in source
+    assert '"VAL_NEW_read": False' in source
+    assert '"G5_V2_read": False' in source
