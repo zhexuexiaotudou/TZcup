@@ -104,3 +104,17 @@ def test_t2_provenance_is_hash_bound_and_sealed_data_unread() -> None:
     assert '"license": "Apache-2.0"' in source
     assert '"VAL_NEW_read": False' in source
     assert '"G5_V2_read": False' in source
+
+
+def test_evaluator_geometry_and_reobserve_control_do_not_use_gt() -> None:
+    evaluator = (Path(__file__).resolve().parent / "evaluate_tgarv9_t1.py").read_text(encoding="utf-8")
+    policy = (Path(__file__).resolve().parents[1] / "starter_ws/src/sanitation_perception/sanitation_perception/temporal_geometry_evidence.py").read_text(encoding="utf-8")
+    assert "def product_geometry(detection" in evaluator
+    assert "np.load(depth_path)" in evaluator
+    assert '"candidate_observed": True' in evaluator
+    assert "def product_tracks(" in evaluator
+    assert "evaluator_assignments" in evaluator
+    assert "track_tube_overlap" in evaluator
+    assert "assigned_tracks" in evaluator
+    assert 'observation.get("candidate_observed")' in policy
+    assert 'observation.get("clean_opportunity_exists")' not in policy

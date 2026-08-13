@@ -5,10 +5,13 @@ from __future__ import annotations
 
 import argparse
 from collections import Counter, defaultdict
+from functools import lru_cache
 import json
 import math
 from pathlib import Path
 import sys
+
+import numpy as np
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -34,80 +37,162 @@ def iou(first: list[float], second_xywh: list[float]) -> float:
     return intersection / max(first_area + second_area - intersection, 1e-9)
 
 
-def distribution(detections: list[dict], gt_box: list[float], observation_threshold: float) -> tuple[dict[str, float], bool]:
-    matches = sorted((row for row in detections if float(row["score"]) >= observation_threshold and iou(row["bbox_xyxy"], gt_box) >= 0.5), key=lambda row: row["score"], reverse=True)
-    values = {name: 1e-4 for name in CLASSES}
-    for row in matches:
-        name, score = LABELS[int(row["label"])], float(row["score"])
-        values[name] += score
-    values["background"] += max(1e-4, 1.0 - max((float(row["score"]) for row in matches), default=0.0))
-    total = sum(values.values())
-    return ({name: value / total for name, value in values.items()}, bool(matches))
+@lru_cache(maxsize=128)
+def frame_sensors(depth_path: str, camera_info_path: str) -> tuple[np.ndarray, dict]:
+    return np.load(depth_path), json.loads(Path(camera_info_path).read_text())
 
 
-def track_observations(tube: dict, frames: dict[int, dict], raw: dict[int, dict], threshold: float) -> tuple[list[dict], bool]:
-    observations, observed = [], False
-    for item in tube["frames"]:
-        probabilities, found = distribution(raw[item["frame_ref"]]["detections"], item["bbox_xywh"], threshold)
-        observed |= found
-        frame = frames[item["frame_ref"]]
-        camera = frame["camera_pose"]
-        vehicle = camera.get("vehicle_xy_m") or camera.get("world_to_base_xy") or [0.0, 0.0]
-        distance = item["distance_m"] if item["distance_m"] is not None else math.inf
-        angle = item["geometry"].get("view_angle_rad") or 0.0
-        yaw = float(camera.get("vehicle_yaw_rad", 0.0)) + angle
-        map_xy = (float(vehicle[0]) + distance * math.cos(yaw), float(vehicle[1]) + distance * math.sin(yaw)) if math.isfinite(distance) else None
-        geom = item["geometry"]
-        plausible = geom.get("local_depth_residual_m") is None or geom["local_depth_residual_m"] <= 1.5
-        observations.append({"class_probabilities": probabilities, "distance_m": distance, "short_side_px": item["short_side_px"], "depth_valid_ratio": item["depth_valid_ratio"], "map_xy_m": map_xy, "physical_plausible": plausible, "clean_opportunity_exists": bool(item["gt_actionable"])})
-    return observations, observed
+def product_geometry(detection: dict | None, frame: dict, sensors: tuple[np.ndarray, dict] | None = None) -> dict:
+    """Derive action geometry only from a predicted box and product sensors."""
+    if detection is None:
+        return {"distance_m": math.inf, "short_side_px": 0, "depth_valid_ratio": 0.0, "map_xy_m": None, "physical_plausible": False}
+    depth, camera_info = sensors or frame_sensors(frame["depth_path"], frame["camera_info_path"])
+    box = detection["bbox_xyxy"]
+    x0, y0 = max(0, int(math.floor(box[0]))), max(0, int(math.floor(box[1])))
+    x1, y1 = min(depth.shape[1], int(math.ceil(box[2]))), min(depth.shape[0], int(math.ceil(box[3])))
+    if x1 <= x0 or y1 <= y0:
+        return {"distance_m": math.inf, "short_side_px": 0, "depth_valid_ratio": 0.0, "map_xy_m": None, "physical_plausible": False}
+    local = depth[y0:y1, x0:x1].astype(np.float64)
+    valid = local[np.isfinite(local) & (local > 0.05) & (local < 20.0)]
+    valid_ratio = float(valid.size / max(local.size, 1))
+    distance = float(np.median(valid)) if valid.size else math.inf
+    residual = float(np.percentile(valid, 90) - np.percentile(valid, 10)) if valid.size else math.inf
+    short_side = min(x1 - x0, y1 - y0)
+    fx, cx = float(camera_info["k"][0]), float(camera_info["k"][2])
+    view_angle = math.atan2((x0 + x1) / 2.0 - cx, fx)
+    pose = frame["camera_pose"]
+    vehicle = pose.get("vehicle_xy_m") or pose.get("world_to_base_xy") or [0.0, 0.0]
+    yaw = float(pose.get("vehicle_yaw_rad", 0.0)) + view_angle
+    map_xy = (float(vehicle[0]) + distance * math.cos(yaw), float(vehicle[1]) + distance * math.sin(yaw)) if math.isfinite(distance) else None
+    return {"distance_m": distance, "short_side_px": short_side, "depth_valid_ratio": valid_ratio, "map_xy_m": map_xy, "physical_plausible": residual <= 1.5}
+
+
+def detection_probabilities(detection: dict) -> dict[str, float]:
+    score, cls = float(detection["score"]), LABELS[int(detection["label"])]
+    return {name: (score if name == cls else (1.0 - score) / 3.0) for name in CLASSES}
+
+
+def product_tracks(mission_id: str, frames: dict[int, dict], raw: dict[int, dict], cfg: TemporalGeometryConfig) -> list[dict]:
+    """Run class-agnostic map association without evaluator labels or boxes."""
+    active: list[dict] = []
+    completed: list[dict] = []
+    mission_frames = sorted((frame_ref, frame) for frame_ref, frame in frames.items() if frame["mission_id"] == mission_id)
+    for frame_ref, frame in mission_frames:
+        frame_index = int(frame["frame_index"])
+        for state in list(active):
+            if frame_index - state["last_frame"] > 3:
+                completed.append(state)
+                active.remove(state)
+        detections = [row for row in raw[frame_ref]["detections"] if float(row["score"]) >= cfg.observation_threshold]
+        sensors = frame_sensors(frame["depth_path"], frame["camera_info_path"])
+        observations = []
+        for detection in detections:
+            geometry = product_geometry(detection, frame, sensors)
+            observations.append({"class_probabilities": detection_probabilities(detection), **geometry, "candidate_observed": True, "frame_ref": frame_ref, "frame_index": frame_index, "bbox_xyxy": detection["bbox_xyxy"]})
+        used: set[int] = set()
+        for observation in observations:
+            position = observation["map_xy_m"]
+            candidates = []
+            if position is not None:
+                for index, state in enumerate(active):
+                    if index in used or state["position"] is None:
+                        continue
+                    distance = math.dist(position, state["position"])
+                    if distance <= 0.50:
+                        candidates.append((distance, index))
+            if candidates:
+                _, index = min(candidates)
+                state = active[index]
+                used.add(index)
+            else:
+                state = {"track": TemporalGeometryTrack(cfg), "position": None, "last_frame": frame_index, "observations": [], "first_confirmed_frame": None, "confirmed_class": None}
+                active.append(state)
+                used.add(len(active) - 1)
+            state["track"].update(observation)
+            state["position"] = position
+            state["last_frame"] = frame_index
+            state["observations"].append({key: observation[key] for key in ("frame_ref", "frame_index", "bbox_xyxy")})
+            if state["track"].state == "CONFIRMED" and state["first_confirmed_frame"] is None:
+                state["first_confirmed_frame"] = frame_index
+                state["confirmed_class"] = state["track"].final_class
+    completed.extend(active)
+    return completed
+
+
+def tube_observed(tube: dict, raw: dict[int, dict], threshold: float) -> bool:
+    return any(
+        float(detection["score"]) >= threshold and iou(detection["bbox_xyxy"], frame["bbox_xywh"]) >= 0.5
+        for frame in tube["frames"]
+        for detection in raw[frame["frame_ref"]]["detections"]
+    )
+
+
+def track_tube_overlap(track: dict, tube: dict) -> tuple[int, float]:
+    truth = {int(frame["frame_ref"]): frame["bbox_xywh"] for frame in tube["frames"]}
+    overlaps = [iou(observation["bbox_xyxy"], truth[observation["frame_ref"]]) for observation in track["observations"] if observation["frame_ref"] in truth]
+    matches = [value for value in overlaps if value >= 0.5]
+    return len(matches), max(overlaps, default=0.0)
+
+
+def evaluator_assignments(tracks: list[dict], tubes: list[dict]) -> dict[int, int]:
+    """Greedy one-to-one evaluator match after product tracking is complete."""
+    candidates = []
+    for track_index, track in enumerate(tracks):
+        for tube_index, tube in enumerate(tubes):
+            count, peak = track_tube_overlap(track, tube)
+            if count:
+                candidates.append((count, peak, track_index, tube_index))
+    assignments, used_tracks, used_tubes = {}, set(), set()
+    for _, _, track_index, tube_index in sorted(candidates, reverse=True):
+        if track_index in used_tracks or tube_index in used_tubes:
+            continue
+        assignments[tube_index] = track_index
+        used_tracks.add(track_index)
+        used_tubes.add(tube_index)
+    return assignments
 
 
 def run(policy: dict, tubes: list[dict], frames: dict[int, dict], raw: dict[int, dict], negative_missions: set[str]) -> dict:
     cfg = TemporalGeometryConfig(**policy["config"])
     correct = observed_count = small_correct = small_total = wrong = clean_miss = false_clean = wrong_clean = 0
-    confirmed = negative_confirmed = reobserve = 0
+    confirmed = negative_confirmed = reobserve = pre_fov = 0
     per_class = defaultdict(lambda: Counter(total=0, correct=0))
+    tubes_by_mission = defaultdict(list)
     for tube in tubes:
-        observations, observed = track_observations(tube, frames, raw, cfg.observation_threshold)
-        actionable = any(row["clean_opportunity_exists"] for row in observations)
-        if not actionable:
-            continue
-        observed_count += int(observed)
-        first_small = tube["frames"][0]["short_side_px"] < 18
-        small_total += int(first_small)
-        per_class[tube["class"]]["total"] += 1
-        track = TemporalGeometryTrack(cfg)
-        for observation in observations:
-            track.update(observation)
-        reobserve += track.reobserve_count
-        if track.state == "CONFIRMED":
-            confirmed += 1
-            is_correct = track.final_class == tube["class"]
+        if any(bool(row["gt_actionable"]) for row in tube["frames"]):
+            tubes_by_mission[tube["mission_id"]].append(tube)
+    mission_ids = {frame["mission_id"] for frame in frames.values()}
+    for mission_id in mission_ids:
+        mission_tracks = product_tracks(mission_id, frames, raw, cfg)
+        mission_tubes = tubes_by_mission.get(mission_id, [])
+        assignments = evaluator_assignments(mission_tracks, mission_tubes)
+        assigned_tracks = set(assignments.values())
+        mission_confirmed = [index for index, track in enumerate(mission_tracks) if track["first_confirmed_frame"] is not None]
+        confirmed += len(mission_confirmed)
+        if mission_id in negative_missions:
+            negative_confirmed += int(bool(mission_confirmed))
+            false_clean += len(mission_confirmed)
+        else:
+            false_clean += sum(int(index not in assigned_tracks) for index in mission_confirmed)
+        for tube_index, tube in enumerate(mission_tubes):
+            observed_count += int(tube_observed(tube, raw, cfg.observation_threshold))
+            first_small = tube["frames"][0]["short_side_px"] < 18
+            small_total += int(first_small)
+            per_class[tube["class"]]["total"] += 1
+            track = mission_tracks[assignments[tube_index]] if tube_index in assignments else None
+            is_confirmed = track is not None and track["first_confirmed_frame"] is not None
+            is_correct = is_confirmed and track["confirmed_class"] == tube["class"]
             correct += int(is_correct)
-            wrong += int(not is_correct)
+            wrong += int(is_confirmed and not is_correct)
+            wrong_clean += int(is_confirmed and not is_correct)
+            clean_miss += int(not is_correct)
             per_class[tube["class"]]["correct"] += int(is_correct)
             small_correct += int(first_small and is_correct)
-            wrong_clean += int(not is_correct and track.clean_action_allowed)
-        else:
-            clean_miss += 1
-    # Negative missions are evaluated as product streams without evaluator GT.
-    for mission_id in negative_missions:
-        false_observations = []
-        for frame_ref, frame in frames.items():
-            if frame["mission_id"] != mission_id:
-                continue
-            for detection in raw[frame_ref]["detections"]:
-                if float(detection["score"]) < cfg.observation_threshold:
-                    continue
-                score = float(detection["score"]); cls = LABELS[int(detection["label"])]
-                probs = {name: (score if name == cls else (1.0 - score) / 3.0) for name in CLASSES}
-                false_observations.append({"class_probabilities": probs, "distance_m": 3.0, "short_side_px": max(1, int(min(detection["bbox_xyxy"][2] - detection["bbox_xyxy"][0], detection["bbox_xyxy"][3] - detection["bbox_xyxy"][1]))), "depth_valid_ratio": 1.0, "map_xy_m": (float(len(false_observations)), 0.0), "physical_plausible": False, "clean_opportunity_exists": False})
-        false_track = TemporalGeometryTrack(cfg)
-        for observation in false_observations:
-            false_track.update(observation)
-        negative_confirmed += int(false_track.state == "CONFIRMED")
-        false_clean += int(false_track.clean_action_allowed)
+            if track is not None:
+                reobserve += track["track"].reobserve_count
+                first_visible = min(int(row["frame_ref"]) for row in tube["frames"])
+                first_confirmed_ref = next((row["frame_ref"] for row in track["observations"] if row["frame_index"] == track["first_confirmed_frame"]), None)
+                pre_fov += int(first_confirmed_ref is not None and first_confirmed_ref < first_visible)
     eligible = sum(value["total"] for value in per_class.values())
     precision = correct / max(confirmed, 1)
     metrics = {
@@ -120,7 +205,7 @@ def run(policy: dict, tubes: list[dict], frames: dict[int, dict], raw: dict[int,
         "clean_opportunity_miss": clean_miss / max(eligible, 1),
         "false_CLEAN_NOW": false_clean,
         "wrong_class_CLEAN_NOW": wrong_clean,
-        "pre_FOV_creation": 0,
+        "pre_FOV_creation": pre_fov,
         "GT_control_violation": 0,
         "OBSERVE_AGAIN_count": reobserve,
         "OBSERVE_AGAIN_per_target": reobserve / max(eligible, 1),
@@ -129,7 +214,7 @@ def run(policy: dict, tubes: list[dict], frames: dict[int, dict], raw: dict[int,
         "extra_time_s": reobserve * 1.5,
         "per_class_correct_recall": {name: value["correct"] / max(value["total"], 1) for name, value in per_class.items()},
     }
-    gates = {"observation_recall": metrics["eventual_observation_recall"] >= 0.97, "correct_class_recall": metrics["eventual_correct_class_recall"] >= 0.95, "small_recall": metrics["small_eventual_correct_class_recall"] >= 0.90, "precision_hard_minimum": precision >= 0.95, "wrong_confirmed_rate": metrics["wrong_confirmed_actionable_rate"] <= 0.01, "negative_confirmed_rate": metrics["negative_only_confirmed_actionable_rate"] <= 0.01, "clean_opportunity_miss": metrics["clean_opportunity_miss"] <= 0.02, "false_clean_zero": false_clean == 0, "wrong_clean_zero": wrong_clean == 0, "pre_fov_zero": True, "gt_violation_zero": True, "reobserve_bounded": cfg.maximum_reobserve_count <= 2}
+    gates = {"observation_recall": metrics["eventual_observation_recall"] >= 0.97, "correct_class_recall": metrics["eventual_correct_class_recall"] >= 0.95, "small_recall": metrics["small_eventual_correct_class_recall"] >= 0.90, "precision_hard_minimum": precision >= 0.95, "wrong_confirmed_rate": metrics["wrong_confirmed_actionable_rate"] <= 0.01, "negative_confirmed_rate": metrics["negative_only_confirmed_actionable_rate"] <= 0.01, "clean_opportunity_miss": metrics["clean_opportunity_miss"] <= 0.02, "false_clean_zero": false_clean == 0, "wrong_clean_zero": wrong_clean == 0, "pre_fov_zero": pre_fov == 0, "gt_violation_zero": True, "reobserve_bounded": cfg.maximum_reobserve_count <= 2}
     return {"algorithm": policy["name"], "config": policy["config"], "metrics": metrics, "gates": gates, "pass": all(gates.values())}
 
 

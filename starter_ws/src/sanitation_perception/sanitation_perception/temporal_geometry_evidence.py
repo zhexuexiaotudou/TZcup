@@ -73,7 +73,7 @@ class TemporalGeometryTrack:
             self.state, self.final_class = "CONFIRMED", candidate
         elif self.observation_count >= self.config.minimum_observations and posterior.get("background", 0.0) >= self.config.confirmation_probability:
             self.state, self.final_class = "REJECTED", "UNKNOWN"
-        elif bool(observation.get("clean_opportunity_exists")) and self.reobserve_count < self.config.maximum_reobserve_count:
+        elif bool(observation.get("candidate_observed")) and self.reobserve_count < self.config.maximum_reobserve_count:
             self.reobserve_count += 1
             self.state, self.final_class = "OBSERVE_AGAIN", "UNKNOWN"
         else:

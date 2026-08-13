@@ -8,7 +8,7 @@ def observation(cls="plastic_bottle", *, distance=2.0, short=24, probability=0.9
     rest = (1.0 - probability) / 3.0
     probabilities = {name: rest for name in ("plastic_bottle", "metal_can", "paper_litter", "background")}
     probabilities[cls] = probability
-    return {"class_probabilities": probabilities, "distance_m": distance, "short_side_px": short, "depth_valid_ratio": 1.0, "map_xy_m": position, "physical_plausible": True, "clean_opportunity_exists": True}
+    return {"class_probabilities": probabilities, "distance_m": distance, "short_side_px": short, "depth_valid_ratio": 1.0, "map_xy_m": position, "physical_plausible": True, "candidate_observed": True}
 
 
 def test_far_tiny_evidence_cannot_trigger_clean_now() -> None:
