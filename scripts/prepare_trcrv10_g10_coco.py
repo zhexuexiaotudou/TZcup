@@ -60,6 +60,7 @@ def build(scenes_root: Path) -> dict:
             images.append({
                 "id": image_id,
                 "file_name": str(rgb.resolve()),
+                "depth_file_name": str((scene / "depth" / f"frame_{index:02d}.npy").resolve()),
                 "width": int(width),
                 "height": int(height),
                 "scene": scene.name,
@@ -69,6 +70,7 @@ def build(scenes_root: Path) -> dict:
                 "source_split": manifest["split"],
                 "world_id": manifest["world_id"],
                 "scene_seed": int(manifest["scene_seed"]),
+                "scene_manifest": str((scene / "scene_manifest.json").resolve()),
             })
             new_rows, annotation_id = annotations(mask, image_id, annotation_id)
             labels.extend(new_rows)
