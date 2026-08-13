@@ -184,6 +184,43 @@ def _parked_asset_updates(manifest: dict, selected_names: set[str]) -> list[dict
     return updates
 
 
+def g10_motion_profile(world_id: str) -> dict:
+    """Return the GT-independent route selected from the static world layout."""
+    profile = {
+        "name": "g10_safe_drive_by_then_orbit_v1",
+        "control_mode": "latched_world_x_switch",
+        "switch_world_x_m": G10_ORBIT_SWITCH_WORLD_X_M,
+        "straight_linear_x_mps": 0.20,
+        "orbit_linear_x_mps": 0.20,
+        "orbit_angular_z_rad_s": G10_ORBIT_ANGULAR_SPEED_RAD_S,
+        "route_contract": (
+            "pass the candidate on the straight approach; use a bounded "
+            "shallow-left then straight exit around the mapped mixed-curb "
+            "layout, otherwise latch a left orbit before transverse obstacles"
+        ),
+    }
+    if world_id.endswith("_08_mixed_curb_vegetation"):
+        profile.update(
+            {
+                "post_switch_phases": [
+                    {
+                        "name": "mixed_curb_shallow_left_departure",
+                        "frame_count": 9,
+                        "linear_x_mps": 0.20,
+                        "angular_z_rad_s": G10_ORBIT_ANGULAR_SPEED_RAD_S,
+                    },
+                    {
+                        "name": "mixed_curb_straight_exit",
+                        "frame_count": 4096,
+                        "linear_x_mps": 0.20,
+                    },
+                ],
+                "layout_specific_route": "08_mixed_curb_vegetation",
+            }
+        )
+    return profile
+
+
 def randomize(
     manifest_path: Path,
     world_id: str,
@@ -403,18 +440,7 @@ def randomize(
         }
     vehicle_start_yaw_rad = 0.0
     motion_profile = (
-        {
-            "name": "g10_safe_drive_by_then_orbit_v1",
-            "control_mode": "latched_world_x_switch",
-            "switch_world_x_m": G10_ORBIT_SWITCH_WORLD_X_M,
-            "straight_linear_x_mps": 0.20,
-            "orbit_linear_x_mps": 0.20,
-            "orbit_angular_z_rad_s": G10_ORBIT_ANGULAR_SPEED_RAD_S,
-            "route_contract": (
-                "pass the candidate on the straight approach, then latch a left "
-                "orbit before the wet-courtyard transverse drain"
-            ),
-        }
+        g10_motion_profile(world_id)
         if g10_approach_sequence
         else None
     )

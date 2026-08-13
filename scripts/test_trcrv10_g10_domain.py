@@ -61,6 +61,30 @@ def test_g10_route_orbits_before_transverse_wet_world_drain() -> None:
     )
 
 
+def test_mixed_curb_route_uses_bounded_shallow_departure() -> None:
+    mixed_curb = g4_scene.g10_motion_profile(
+        "g10v15_val_w02_08_mixed_curb_vegetation"
+    )
+    assert mixed_curb["layout_specific_route"] == "08_mixed_curb_vegetation"
+    assert mixed_curb["post_switch_phases"] == [
+        {
+            "name": "mixed_curb_shallow_left_departure",
+            "frame_count": 9,
+            "linear_x_mps": 0.20,
+            "angular_z_rad_s": g4_scene.G10_ORBIT_ANGULAR_SPEED_RAD_S,
+        },
+        {
+            "name": "mixed_curb_straight_exit",
+            "frame_count": 4096,
+            "linear_x_mps": 0.20,
+        },
+    ]
+
+    wet_world = g4_scene.g10_motion_profile("g10v15_train_w05_05_wet_courtyard")
+    assert "post_switch_phases" not in wet_world
+    assert "layout_specific_route" not in wet_world
+
+
 def test_g10_identifiability_grid_is_development_only() -> None:
     assert g4_scene.G10_DIAGNOSTIC_DISTANCES_M == (0.85, 0.95, 1.10, 1.30, 1.55, 1.90, 2.40, 3.00)
     source = Path(g4_scene.__file__).read_text(encoding="utf-8")
