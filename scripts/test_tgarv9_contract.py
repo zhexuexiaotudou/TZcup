@@ -131,3 +131,12 @@ def test_training_report_recovery_requires_all_valid_checkpoints() -> None:
     assert '"original_container_exit_code": 1' in source
     assert '"training_complete": True' in source
     assert '"VAL_NEW_read": False' in source
+
+
+def test_t3_decision_is_single_route_and_t2_failure_gated() -> None:
+    source = (Path(__file__).resolve().parent / "record_tgarv9_t3_decision.py").read_text(encoding="utf-8")
+    assert "T3 decision is forbidden unless T2 HOLDOUT failed" in source
+    assert '"selected_route": "grounding_dino_swin_t_closed_set"' in source
+    assert '"one_route_only": True' in source
+    assert '"VAL_NEW_read": False' in source
+    assert '"G5_V2_read": False' in source

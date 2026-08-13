@@ -133,4 +133,6 @@ T2 使用哈希绑定的 MMDetection v3.3.0 官方 DINO 4-scale R50 improved 权
 
 T2/T3 的 MMEngine 训练循环完全禁用内置 val/test；若训练后基础设施失败，只有预期数量的全部 epoch checkpoint 均能反序列化且含非空 `state_dict` 时，才允许生成明确标注原 exit code 与恢复范围的训练完成报告，HOLDOUT 结果仍必须由独立选型器产生。
 
+T2 的六 checkpoint 严格选型最终失败：epoch 5 的 correct-class recall `0.7736`、small `0.8529`、precision `0.8367`、wrong-confirmed `0.0476`，且有 17 个 false 与 7 个 wrong-class `CLEAN_NOW`。唯一 T3 冻结为 MMDetection v3.3.0 官方 Grounding-DINO Swin-T 闭集微调，以 grounded pretraining 和语言条件分类正面检验域外外观与类别分离；禁止追加第二条 T3 或 T4。
+
 最终 evidence index 以 `RGDRV8_GA1_FAILURE_TAXONOMY.json` 作为 GA1 failure-forensics 主记录，并单独保留 confusion、score 和 size/domain 辅助矩阵；发布器在所有必需外部证据存在且三条路线状态确认为失败后才生成 final 目录。

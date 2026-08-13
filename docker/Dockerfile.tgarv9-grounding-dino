@@ -1,0 +1,10 @@
+FROM tzcup/opr-c-rtmdet:v3.3.0-ops
+
+# MMDetection v3.3.0 official multimodal requirements are listed at:
+# https://github.com/open-mmlab/mmdetection/blob/v3.3.0/requirements/multimodal.txt
+RUN python3 -m pip install --break-system-packages --no-cache-dir \
+    fairscale==0.4.13 \
+    jsonlines==4.0.0 \
+    nltk==3.9.2 \
+    pycocoevalcap==1.2 \
+    transformers==4.44.2
