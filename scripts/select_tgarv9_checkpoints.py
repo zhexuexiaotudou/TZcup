@@ -269,6 +269,7 @@ def main() -> int:
             "detector_separation_limited": metrics["eventual_correct_class_recall"] < 0.95 or metrics["wrong_confirmed_actionable_rate"] > 0.01,
             "temporal_limited": metrics["eventual_observation_recall"] >= 0.97 and metrics["eventual_correct_class_recall"] < 0.95,
             "geometry_limited": not selected["selected_gates"]["clean_opportunity_miss"],
+            "track_fragmentation_or_false_confirmation_limited": metrics["false_CLEAN_NOW"] > 0 or metrics["confirmed_actionable_precision"] < 0.95,
             "paper_specific": metrics["per_class_correct_recall"].get("paper_litter", 0.0) < 0.95,
             "small_specific": metrics["small_eventual_correct_class_recall"] < 0.90,
             "failed_gates": [name for name, passed in selected["selected_gates"].items() if not passed],

@@ -127,6 +127,8 @@ TGARV9 在不改写上述失败事实的前提下，将单帧 detector P/R/F1/AP
 
 重观察触发、预测框几何和 negative-stream track 关联只使用 detector 候选与产品传感器；`gt_actionable`、GT bbox/距离/角度只能用于 evaluator 匹配与计分，禁止进入产品状态机。
 
+严格重算后的 T1 仍失败：eventual observation recall 为 `0.9874`，但 correct-class recall `0.7044`、small recall `0.7745`、confirmed actionable precision `0.6154`，并产生 70 个未匹配 `CLEAN_NOW`。因此 T2 同时检验 query-based detector 的类别分离与对碎片/误确认 track 的抑制，不得沿用早期含 GT 控制泄漏的 T1 指标。
+
 T2 使用哈希绑定的 MMDetection v3.3.0 官方 DINO 4-scale R50 improved 权重；选型先满足全部 track-level 产品硬门，再以 detector AP50:95 作为次级优化量，并报告逐类 P/R/F1 与 `<18 / 18–32 / >32 px` 召回。只有 G9 产品门通过后才允许执行 300–500 帧、batch=1、CUDA AMP 的 `>=5 Hz` 部署性预筛；预筛失败直接进入最后一条 T3，不得读取 `VAL_NEW`。
 
 最终 evidence index 以 `RGDRV8_GA1_FAILURE_TAXONOMY.json` 作为 GA1 failure-forensics 主记录，并单独保留 confusion、score 和 size/domain 辅助矩阵；发布器在所有必需外部证据存在且三条路线状态确认为失败后才生成 final 目录。
