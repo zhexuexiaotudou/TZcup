@@ -67,7 +67,9 @@ def main() -> int:
 
     if not torch.cuda.is_available():
         raise RuntimeError("TRCRV10 identifiability training requires CUDA")
-    rows = read(args.dataset / "IDENTIFIABILITY_CROP_MANIFEST.json")["rows"]
+    manifest_path = args.dataset / "IDENTIFIABILITY_CROP_MANIFEST.json"
+    manifest_sha256 = sha256(manifest_path)
+    rows = read(manifest_path)["rows"]
     if not rows or {row["split"] for row in rows} != {"TRAIN_DIAG", "HOLDOUT_DIAG"}:
         raise ValueError("both isolated diagnostic splits are required")
     if any(row.get("production_runtime_eligible") is not False for row in rows):
@@ -136,9 +138,24 @@ def main() -> int:
                 selected = [row for row in evaluated if row["world_id"] == world]
                 by_domain[world] = metrics([class_to_index[row["truth"]] for row in selected], [class_to_index[row["predicted"]] for row in selected])
             results.append({"model": model_name, "view": view, "official_weights": str(weights),
+                            "train_samples": len(train_rows), "holdout_samples": len(holdout_rows),
                             "checkpoint": str(checkpoint.resolve()), "checkpoint_sha256": sha256(checkpoint),
                             "aggregate": aggregate, "by_size": by_size, "by_domain": by_domain})
-    write(args.output / "IDENTIFIABILITY_RAW_RESULTS.json", {"schema_version": 1, "models": list(MODELS), "views": list(VIEWS), "results": results})
+    write(args.output / "IDENTIFIABILITY_RAW_RESULTS.json", {
+        "schema_version": 1,
+        "protocol": "TRCRV10",
+        "stage": "TRCRV10-01-IDENTIFIABILITY-RAW-RESULTS",
+        "dataset_manifest_sha256": manifest_sha256,
+        "models": list(MODELS),
+        "views": list(VIEWS),
+        "seed": args.seed,
+        "epochs": args.epochs,
+        "results": results,
+        "production_runtime_eligible": False,
+        "G10_DEV_VAL_SEALED_read": False,
+        "VAL_NEW_read": False,
+        "G5_V2_read": False,
+    })
     print(json.dumps({"runs": len(results), "output": str(args.output.resolve())}, indent=2))
     return 0
 
