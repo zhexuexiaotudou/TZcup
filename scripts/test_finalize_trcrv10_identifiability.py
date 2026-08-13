@@ -36,6 +36,32 @@ def test_missing_bucket_cannot_pass_vacuously() -> None:
     assert final.reliable_bucket(rows, "tight") == "ge96"
 
 
+def test_zero_support_bucket_is_not_a_performance_pass() -> None:
+    result = perfect()
+    result["per_class"]["metal_can"].update(
+        {"precision": 0.0, "recall": 0.0, "f1": 0.0, "support": 0}
+    )
+    assert final.all_classes_supported(result) is False
+    assert final.passes(result, .95, .90) is False
+
+
+def test_unsupported_larger_bucket_does_not_invalidate_supported_bucket() -> None:
+    unsupported = perfect()
+    for class_id in ("metal_can", "plastic_bottle"):
+        unsupported["per_class"][class_id].update(
+            {"precision": 0.0, "recall": 0.0, "f1": 0.0, "support": 0}
+        )
+    rows = [
+        {
+            "model": model,
+            "view": "tight",
+            "by_size": {"64_96": perfect(), "ge96": unsupported},
+        }
+        for model in ("convnext_tiny", "resnet18")
+    ]
+    assert final.reliable_bucket(rows, "tight") == "64_96"
+
+
 def test_combined_confusion_recomputes_metrics() -> None:
     result = final.combine_confusions([perfect(2), perfect(3)])
     assert result["macro_f1"] == 1.0

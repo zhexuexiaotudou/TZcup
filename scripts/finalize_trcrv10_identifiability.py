@@ -28,10 +28,15 @@ def write(path: Path, payload: dict) -> None:
 
 def passes(result: dict, macro: float, per_class: float) -> bool:
     return (
-        result["macro_f1"] >= macro
+        all(row["support"] > 0 for row in result["per_class"].values())
+        and result["macro_f1"] >= macro
         and all(row["precision"] >= per_class and row["recall"] >= per_class
                 for row in result["per_class"].values())
     )
+
+
+def all_classes_supported(result: dict) -> bool:
+    return all(row["support"] > 0 for row in result["per_class"].values())
 
 
 def combine_confusions(rows: list[dict]) -> dict:
@@ -50,7 +55,14 @@ def reliable_bucket(results: list[dict], view: str) -> str | None:
         raise ValueError(f"view {view} does not have exactly two model runs")
     for index, candidate in enumerate(BUCKETS):
         larger = BUCKETS[index:]
-        observed = [bucket for bucket in larger if any(bucket in run["by_size"] for run in runs)]
+        observed = [
+            bucket for bucket in larger
+            if all(
+                bucket in run["by_size"]
+                and all_classes_supported(run["by_size"][bucket])
+                for run in runs
+            )
+        ]
         if candidate not in observed:
             continue
         if all(all(bucket in run["by_size"] and passes(run["by_size"][bucket], .97, .95)
@@ -91,10 +103,22 @@ def main() -> int:
         for run in results:
             available = [run["by_size"][bucket] for bucket in buckets if bucket in run["by_size"]]
             combined = combine_confusions(available) if available else None
-            per_run.append({"model": run["model"], "view": run["view"], "metrics": combined,
-                            "pass": combined is not None and passes(combined, .95, .90)})
+            evaluable = combined is not None and all_classes_supported(combined)
+            per_run.append({
+                "model": run["model"], "view": run["view"], "metrics": combined,
+                "all_classes_supported": evaluable,
+                "status": (
+                    "PASS" if evaluable and passes(combined, .95, .90)
+                    else "FAIL" if evaluable
+                    else "NOT_EVALUABLE_FOR_ALL_CLASS_GATE"
+                ),
+                "pass": evaluable and passes(combined, .95, .90),
+            })
         by_view = {
-            view: all(row["pass"] for row in per_run if row["view"] == view)
+            view: (
+                all(row["all_classes_supported"] for row in per_run if row["view"] == view)
+                and all(row["pass"] for row in per_run if row["view"] == view)
+            )
             for view in ("tight", "context")
         }
         large_gates[str(threshold)] = {"runs": per_run, "by_view_both_models_pass": by_view,

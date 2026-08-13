@@ -143,7 +143,7 @@ TRCRV10 从上述精确失败提交继续，但不再扩展 detector 模型 zoo�
 
 G10 资产域只修复可审计的仿真表达缺口：瓶体透明与瓶颈/瓶盖、罐体金属 rim/inset、纸张不规则边缘与浅折痕；保留真实物理尺寸和跨类别调色板，禁止颜色、文字、二维码或尺寸作弊。旧 G4/G8/G9 资产与结果永久保留，新域必须重新采集并通过独立近距辨识性门。
 
-资产结构通过不等于视觉辨识门通过。G10 要求 cold-start positive Gazebo smoke 同时验证三类目标、RGB/depth/CameraInfo/TF/semantic/instance 同步和完整 world 资源闭包；该 smoke 只证明可渲染性，最终 `MIN_RELIABLE_CLASSIFICATION_SHORT_SIDE_PX` 仍必须由 world/seed 独立的 TRAIN_DIAG/HOLDOUT_DIAG 分类曲线确定。
+资产结构通过不等于视觉辨识门通过。G10 要求 cold-start positive Gazebo smoke 同时验证三类目标、RGB/depth/CameraInfo/TF/semantic/instance 同步和完整 world 资源闭包；该 smoke 只证明可渲染性。world/seed/asset 独立的 TRAIN_DIAG/HOLDOUT_DIAG 已完成 144/72 scenes、9792/4896 tight+context crops，跨 split world/seed/asset/exact/pHash 重叠均为 0。协议限定的 ConvNeXt-Tiny 与 ResNet18 在 tight view 的 18–32、32–48、48–64、64–96px 三类支持桶均达到冻结门，故 `VISUAL_IDENTIFIABILITY_PASS=true` 且 `MIN_RELIABLE_CLASSIFICATION_SHORT_SIDE_PX=18`；≥96px HOLDOUT 只有 paper 支持，明确标为 `NOT_EVALUABLE_FOR_ALL_CLASS_GATE`，不伪造三类 PASS/FAIL。
 
 G10 approach 模式显式 opt-in，使用独立 `g10v1_*` world/asset 命名空间和 6/3/3 个 TRAIN/HOLDOUT/DEV-VAL 世界。每个正 mission 只包含一个约 6.2m 前方候选目标，can/paper/bottle 在各 split 的 mission 间均衡轮换；当前可执行基线 route-v8 冻结 150 帧，平移/旋转相邻采样门分别为 0.04m/0.12rad。在目标前 1.5m，odom 状态机依次原地转向冻结的目标侧、执行 18 帧近距观察、原地转离并安全驶离；采集器只在实际 odom 运动与当前 phase 命令一致后接纳帧。目标侧只在离线场景生成时冻结，production capture 控制仍只读 odom，不读取 GT topic。真实 can smoke 为 150/150、四段状态机和同步门全绿，峰值 59px；是否足够必须由独立 identifiability 曲线冻结 `MIN_RELIABLE_CLASSIFICATION_SHORT_SIDE_PX`，不得先验降低门。默认 G4/G8 随机化行为不变，DEV-VAL 只在综合 HOLDOUT 通过并冻结完整链路后原子读取。
 
