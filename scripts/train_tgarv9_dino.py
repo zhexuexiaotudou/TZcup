@@ -95,12 +95,15 @@ def main() -> int:
         loader.batch_size = args.batch_size; loader.num_workers = 2; loader.persistent_workers = True
         loader.dataset.data_root = image_root; loader.dataset.ann_file = str(coco); loader.dataset.data_prefix = {"img": ""}
         loader.dataset.metainfo = {"classes": CLASS_NAMES}; loader.dataset.filter_cfg = {"filter_empty_gt": False, "min_size": 1}; loader.dataset.pipeline = pipeline
-    cfg.test_dataloader = cfg.val_dataloader
-    cfg.val_evaluator.ann_file = str(args.holdout_coco); cfg.test_evaluator = cfg.val_evaluator
-    # G9 is a checkpoint-selection holdout, not a per-epoch training signal.
-    # Persist every bounded epoch first, then evaluate all checkpoints once
-    # through the shared temporal/geometry protocol.  A val_interval beyond
-    # max_epochs prevents costly and potentially biasing in-loop selection.
+    # G9 is a checkpoint-selection holdout, not a training-loop signal.
+    # Disable MMEngine validation completely; the separate bounded selector
+    # evaluates all completed checkpoints once under the product protocol.
+    cfg.val_cfg = None
+    cfg.val_dataloader = None
+    cfg.val_evaluator = None
+    cfg.test_cfg = None
+    cfg.test_dataloader = None
+    cfg.test_evaluator = None
     cfg.train_cfg = {
         "type": "EpochBasedTrainLoop",
         "max_epochs": args.epochs,

@@ -131,4 +131,6 @@ TGARV9 在不改写上述失败事实的前提下，将单帧 detector P/R/F1/AP
 
 T2 使用哈希绑定的 MMDetection v3.3.0 官方 DINO 4-scale R50 improved 权重；选型先满足全部 track-level 产品硬门，再以 detector AP50:95 作为次级优化量，并报告逐类 P/R/F1 与 `<18 / 18–32 / >32 px` 召回。只有 G9 产品门通过后才允许执行 300–500 帧、batch=1、CUDA AMP 的 `>=5 Hz` 部署性预筛；预筛失败直接进入最后一条 T3，不得读取 `VAL_NEW`。
 
+T2/T3 的 MMEngine 训练循环完全禁用内置 val/test；若训练后基础设施失败，只有预期数量的全部 epoch checkpoint 均能反序列化且含非空 `state_dict` 时，才允许生成明确标注原 exit code 与恢复范围的训练完成报告，HOLDOUT 结果仍必须由独立选型器产生。
+
 最终 evidence index 以 `RGDRV8_GA1_FAILURE_TAXONOMY.json` 作为 GA1 failure-forensics 主记录，并单独保留 confusion、score 和 size/domain 辅助矩阵；发布器在所有必需外部证据存在且三条路线状态确认为失败后才生成 final 目录。

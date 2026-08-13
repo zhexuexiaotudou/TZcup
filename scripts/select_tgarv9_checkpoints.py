@@ -175,7 +175,11 @@ def main() -> int:
         raise RuntimeError(f"expected {args.expected_checkpoints} checkpoints, found {len(checkpoints)}")
 
     manifest = json.loads((args.g9 / "G9_HOLDOUT_MANIFEST.json").read_text())
-    frames = {row["frame_ref"]: row for row in json.loads((args.g9 / "G9_PRODUCT_FRAME_STREAM.json").read_text())["frames"]}
+    frame_rows = json.loads((args.g9 / "G9_PRODUCT_FRAME_STREAM.json").read_text())["frames"]
+    for frame in frame_rows:
+        for key in ("rgb_path", "depth_path", "camera_info_path", "tf_path"):
+            frame[key] = frame[key].replace(args.windows_root, args.container_root).replace("\\", "/")
+    frames = {row["frame_ref"]: row for row in frame_rows}
     tubes = json.loads((args.g9 / "G9_TARGET_TUBES.json").read_text())["tubes"]
     negatives = {row["mission_id"] for row in manifest["missions"] if row["negative_only"]}
     coco = json.loads(args.coco.read_text())
