@@ -145,7 +145,7 @@ G10 资产域只修复可审计的仿真表达缺口：瓶体透明与瓶颈/瓶
 
 资产结构通过不等于视觉辨识门通过。G10 要求 cold-start positive Gazebo smoke 同时验证三类目标、RGB/depth/CameraInfo/TF/semantic/instance 同步和完整 world 资源闭包；该 smoke 只证明可渲染性，最终 `MIN_RELIABLE_CLASSIFICATION_SHORT_SIDE_PX` 仍必须由 world/seed 独立的 TRAIN_DIAG/HOLDOUT_DIAG 分类曲线确定。
 
-G10 approach 模式显式 opt-in，使用独立 `g10v1_*` world/asset 命名空间和 6/3/3 个 TRAIN/HOLDOUT/DEV-VAL 世界。每个正 mission 只包含一个约 6.2m 前方候选目标，can/paper/bottle 在各 split 的 mission 间均衡轮换；route-v6 冻结 150 帧并采用 0.20m/s、0.04m 相邻帧位移门，以 `149×0.04=5.96m` 的机器无关运动下界到达目标纵向近距带，同时保留至少 0.15m 名义物理净距，完成 far→mid→close 重观察。目标尺度与产品相机不变；未达到冻结可靠尺寸的目标必须标记 `unreachable-for-visual-confirmation`，不能删样本。默认 G4/G8 随机化行为不变，DEV-VAL 只在综合 HOLDOUT 通过并冻结完整链路后原子读取。
+G10 approach 模式显式 opt-in，使用独立 `g10v1_*` world/asset 命名空间和 6/3/3 个 TRAIN/HOLDOUT/DEV-VAL 世界。每个正 mission 只包含一个约 6.2m 前方候选目标，can/paper/bottle 在各 split 的 mission 间均衡轮换；当前可执行基线 route-v8 冻结 150 帧，平移/旋转相邻采样门分别为 0.04m/0.12rad。在目标前 1.5m，odom 状态机依次原地转向冻结的目标侧、执行 18 帧近距观察、原地转离并安全驶离；采集器只在实际 odom 运动与当前 phase 命令一致后接纳帧。目标侧只在离线场景生成时冻结，production capture 控制仍只读 odom，不读取 GT topic。真实 can smoke 为 150/150、四段状态机和同步门全绿，峰值 59px；是否足够必须由独立 identifiability 曲线冻结 `MIN_RELIABLE_CLASSIFICATION_SHORT_SIDE_PX`，不得先验降低门。默认 G4/G8 随机化行为不变，DEV-VAL 只在综合 HOLDOUT 通过并冻结完整链路后原子读取。
 
 视觉可辨识性诊断是与产品路线隔离的 development-only 模式：只在 TRAIN_DIAG/HOLDOUT_DIAG 世界与 seed 上用同一产品相机采集 0.85–3.0m 单目标图像，允许 evaluator 离线生成 GT tight/context crop，但这些 GT 信息与诊断姿态均禁止进入 proposal、产品 classifier crop 和 runtime；它只回答资产在足够像素下是否含有类别信息。
 
@@ -155,6 +155,6 @@ proposal operating point 只允许在 G10 HOLDOUT 上联合选择阈值与 2–5
 
 G10 长序列采集对每个 mission 要求完整 125 帧、传感器同步、真实运动和相邻帧位移门全部通过。若 Gazebo 长尾导致部分帧或运动门失败，原失败 report/log 必须单独封存；恢复仅可在相同 world/seed/asset/route 上使用新 ROS domain/partition 幂等重试，已通过 mission 跳过，失败或部分 mission 不计入配额。
 
-接受主机上的湿表面 world 实测低于 `0.08` RTF，因此 G10 runner 使用 1200 秒基础设施超时。route-v4 进一步暴露了湿地 world 横跨直行线的排水碰撞体：车辆在目标后方被阻挡，1200 秒也只能得到 111/125 帧。route-v5 保持 world/seed/asset/camera、0.20 m/s 和全部验收门不变，在 world `x=-0.50m` 锁存切换到 `0.35rad/s` 左弧，使车辆先完成候选 drive-by，再在排水构件前持续安全运动；但对前 23 个完整 mission 的离线 QA 显示固定 125 帧在不同 RTF/采样节奏下经常于目标纵向位置之前结束，只有 4 个目标达到 64px，0 个达到 96px。route-v6 因而不改变 world/seed/asset/camera 或类别语义，只把序列冻结为 150 帧、0.04m 相邻位移门，确保至少 5.96m 可审计运动并覆盖近距段。route-v4/route-v5 的失败和已通过数据全部保留但不计入 route-v6 配额。
+接受主机上的湿表面 world 实测低于 `0.08` RTF，因此 G10 runner 使用 1200 秒基础设施超时。route-v4 暴露湿地排水碰撞体，route-v5 的前 23 个完整 mission 又证明固定 125 帧常在目标纵向位置前结束（仅 4 个目标达到 64px，0 个达到 96px）。route-v6 将序列扩展至 150 帧但 can 峰值仍仅 58px。route-v7 的离散原地转向受切相延迟影响，峰值仅 51px；route-v8 增加命令—odom 一致性门后四段 150/150 全绿，峰值 59px。route-v9 尝试连续曲率缓弧，但真实车辆在 `(-2.434,-0.570)`、yaw≈0、距 can 中心约 0.61m 处物理停滞，虽 `/clock` 正常推进仍无法形成报告，故有界终止并保留 manifest/capture log。route-v4 至 route-v9 的全部证据永久保留；当前回到 route-v8，先由独立两模型 identifiability 门判定 59px 是否达到可靠视觉条件。
 
 最终 evidence index 以 `RGDRV8_GA1_FAILURE_TAXONOMY.json` 作为 GA1 failure-forensics 主记录，并单独保留 confusion、score 和 size/domain 辅助矩阵；发布器在所有必需外部证据存在且三条路线状态确认为失败后才生成 final 目录。

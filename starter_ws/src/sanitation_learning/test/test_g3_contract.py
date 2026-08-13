@@ -7,7 +7,7 @@ import pytest
 from sanitation_learning.g3_scene import randomize
 from sanitation_learning.gazebo_g3 import write_g3_worlds
 from sanitation_learning.g2_capture import (
-    adjacent_motion_gate, adjacent_translation_gate, frame_motion_ready,
+    adjacent_motion_gate, adjacent_translation_gate, commanded_motion_ready, frame_motion_ready,
     frame_translation_ready, motion_command_for_frame, nearest_stamp_within,
     observed_speeds_from_records, insertion_trigger_frame, removal_trigger_frame,
     wrapped_angle_delta,
@@ -233,3 +233,49 @@ def test_latched_world_switch_preserves_safe_orbit_command():
     assert motion_command_for_frame(
         profile, 81, 0.2, world_switch_triggered=True
     ) == (0.2, 0.35, "safe_orbit_after_candidate")
+
+
+def test_latched_world_switch_runs_relative_post_switch_phases():
+    profile = {
+        "control_mode": "latched_world_x_switch",
+        "straight_linear_x_mps": 0.2,
+        "post_switch_phases": [
+            {"name": "rotate", "frame_count": 3, "angular_z_rad_s": -1.0},
+            {"name": "observe", "frame_count": 2, "linear_x_mps": 0.2},
+        ],
+    }
+    assert motion_command_for_frame(profile, 80, 0.2) == (
+        0.2, 0.0, "straight_candidate_drive_by"
+    )
+    assert motion_command_for_frame(
+        profile, 83, 0.2, world_switch_triggered=True, world_switch_frame_index=83
+    ) == (0.0, -1.0, "rotate")
+    assert motion_command_for_frame(
+        profile, 86, 0.2, world_switch_triggered=True, world_switch_frame_index=83
+    ) == (0.2, 0.0, "observe")
+    with pytest.raises(ValueError, match="does not cover"):
+        motion_command_for_frame(
+            profile, 88, 0.2, world_switch_triggered=True, world_switch_frame_index=83
+        )
+
+
+def test_commanded_motion_gate_rejects_transition_lag():
+    previous = (0.0, 0.0, 0.0)
+    translated = (0.05, 0.0, 0.0)
+    rotated = (0.0, 0.0, 0.13)
+    assert not commanded_motion_ready(
+        previous, translated, linear_x_mps=0.0, angular_z_rad_s=1.0,
+        minimum_translation_m=0.04, minimum_rotation_rad=0.12,
+    )
+    assert commanded_motion_ready(
+        previous, rotated, linear_x_mps=0.0, angular_z_rad_s=1.0,
+        minimum_translation_m=0.04, minimum_rotation_rad=0.12,
+    )
+    assert not commanded_motion_ready(
+        previous, rotated, linear_x_mps=0.2, angular_z_rad_s=0.0,
+        minimum_translation_m=0.04, minimum_rotation_rad=0.12,
+    )
+    assert commanded_motion_ready(
+        previous, translated, linear_x_mps=0.2, angular_z_rad_s=0.0,
+        minimum_translation_m=0.04, minimum_rotation_rad=0.12,
+    )

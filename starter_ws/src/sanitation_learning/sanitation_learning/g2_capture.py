@@ -140,18 +140,63 @@ def frame_motion_ready(
     )
 
 
+def commanded_motion_ready(
+    previous_pose: tuple[float, float, float],
+    current_pose: tuple[float, float, float],
+    *,
+    linear_x_mps: float,
+    angular_z_rad_s: float,
+    minimum_translation_m: float,
+    minimum_rotation_rad: float,
+) -> bool:
+    """Admit a frame only after odometry reflects its commanded phase."""
+    translation = math.hypot(
+        current_pose[0] - previous_pose[0], current_pose[1] - previous_pose[1]
+    )
+    rotation = wrapped_angle_delta(previous_pose[2], current_pose[2])
+    if abs(linear_x_mps) <= 1e-9 and abs(angular_z_rad_s) > 1e-9:
+        return minimum_rotation_rad > 0.0 and rotation >= minimum_rotation_rad
+    if abs(linear_x_mps) > 1e-9 and abs(angular_z_rad_s) <= 1e-9:
+        return translation >= minimum_translation_m
+    return frame_motion_ready(
+        previous_pose,
+        current_pose,
+        minimum_translation_m=minimum_translation_m,
+        minimum_rotation_rad=minimum_rotation_rad,
+    )
+
+
 def motion_command_for_frame(
     profile: dict | None,
     frame_index: int,
     default_linear_speed_mps: float,
     *,
     world_switch_triggered: bool = False,
+    world_switch_frame_index: int | None = None,
 ) -> tuple[float, float, str]:
     """Resolve a deterministic frame-counted motion phase."""
     if not profile:
         return default_linear_speed_mps, 0.0, "straight_approach"
     if profile.get("control_mode") == "latched_world_x_switch":
         if world_switch_triggered:
+            post_switch = profile.get("post_switch_phases")
+            if post_switch:
+                if world_switch_frame_index is None:
+                    raise ValueError("latched post-switch phases require a switch frame index")
+                relative_index = max(0, frame_index - world_switch_frame_index)
+                offset = 0
+                for phase in post_switch:
+                    count = int(phase["frame_count"])
+                    if count <= 0:
+                        raise ValueError("post-switch phase frame_count must be positive")
+                    if relative_index < offset + count:
+                        return (
+                            float(phase.get("linear_x_mps", 0.0)),
+                            float(phase.get("angular_z_rad_s", 0.0)),
+                            str(phase["name"]),
+                        )
+                    offset += count
+                raise ValueError("post-switch motion profile does not cover requested frames")
             return (
                 float(profile["orbit_linear_x_mps"]),
                 float(profile["orbit_angular_z_rad_s"]),
@@ -255,6 +300,7 @@ def main() -> None:
             self.dynamic_insertion_events = []
             self.motion_enabled = False
             self.world_switch_triggered = False
+            self.world_switch_frame_index = None
             self.vehicle_reset_applied = False
             self.vehicle_reset_started = None
             self.started = time.monotonic(); self.publisher = self.create_publisher(Twist, args.cmd_topic, 10)
@@ -280,13 +326,16 @@ def main() -> None:
                     and self.odom is not None
                     and self.odom.pose.pose.position.x
                     >= float(profile["switch_world_x_m"])
+                    and not self.world_switch_triggered
                 ):
                     self.world_switch_triggered = True
+                    self.world_switch_frame_index = len(self.saved)
                 linear, angular, _ = motion_command_for_frame(
                     profile,
                     len(self.saved),
                     args.linear_speed_mps,
                     world_switch_triggered=self.world_switch_triggered,
+                    world_switch_frame_index=self.world_switch_frame_index,
                 )
                 command.linear.x = linear
                 command.angular.z = angular
@@ -358,9 +407,18 @@ def main() -> None:
                     bucket.clear()
                 return
             if self.last_saved_pose is not None:
-                if not frame_motion_ready(
+                linear, angular, _ = motion_command_for_frame(
+                    scene.get("oprv3_motion_profile"),
+                    len(self.saved),
+                    args.linear_speed_mps,
+                    world_switch_triggered=self.world_switch_triggered,
+                    world_switch_frame_index=self.world_switch_frame_index,
+                )
+                if not commanded_motion_ready(
                     self.last_saved_pose,
                     current,
+                    linear_x_mps=linear,
+                    angular_z_rad_s=angular,
                     minimum_translation_m=args.minimum_adjacent_translation_m,
                     minimum_rotation_rad=args.minimum_adjacent_rotation_rad,
                 ):
@@ -457,6 +515,7 @@ def main() -> None:
             linear, angular, phase = motion_command_for_frame(
                 scene.get("oprv3_motion_profile"), index, args.linear_speed_mps,
                 world_switch_triggered=self.world_switch_triggered,
+                world_switch_frame_index=self.world_switch_frame_index,
             )
             record = {"frame_index": index, "timestamp_ns": stamp, "odom_timestamp_ns": odom_stamp, "sensor_odom_skew_ns": abs(odom_stamp - stamp), "vehicle_xy_m": list(pose[:2]), "vehicle_yaw_rad": float(pose[2]), "motion_phase": phase, "commanded_linear_x_mps": linear, "commanded_angular_z_rad_s": angular, "exact_four_sensor_timestamp": len({stamp_ns(msg) for msg in messages}) == 1, "paths": {key: str(path.relative_to(output)).replace("\\", "/") for key, path in paths.items()}, "rgb_sha256": None}
             camera = {"width": self.camera.width, "height": self.camera.height, "k": list(self.camera.k), "p": list(self.camera.p), "frame_id": self.camera.header.frame_id}
