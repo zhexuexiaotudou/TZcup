@@ -25,3 +25,19 @@ def test_capture_qa_requires_protocol_minimum_mission_counts() -> None:
     source = open(audit.__file__, encoding="utf-8").read()
     assert 'split_counts.get("G10_TRAIN", 0) >= 45' in source
     assert 'split_counts.get("G10_HOLDOUT", 0) >= 18' in source
+
+
+def test_capture_qa_emits_all_protocol_artifacts_and_identity_gates() -> None:
+    source = open(audit.__file__, encoding="utf-8").read()
+    for name in (
+        "G10_APPROACH_SEQUENCE_STATS.json",
+        "G10_SIZE_TRANSITION_STATS.json",
+        "G10_HARD_NEGATIVE_MATRIX.json",
+        "G10_SPLIT_MANIFEST.json",
+    ):
+        assert name in source
+    for gate in (
+        "world_overlap_zero", "seed_overlap_zero", "trajectory_overlap_zero",
+        "target_asset_overlap_zero",
+    ):
+        assert gate in source

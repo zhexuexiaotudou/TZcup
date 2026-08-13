@@ -93,6 +93,14 @@ def audit_scene(scene: Path, split: str) -> tuple[dict, list[dict]]:
     expected = 0 if manifest["negative_only"] else int(
         manifest.get("trcrv10_g10_approach_sequence", {}).get("targets_per_positive_mission", 3)
     )
+    target_assets = [
+        row["asset_id"] for row in manifest["objects"]
+        if row["class_id"] in TARGETS.values()
+    ]
+    hard_negatives = [
+        {"asset_id": row["asset_id"], "taxonomy": row.get("taxonomy")}
+        for row in manifest["objects"] if row["class_id"] == "background"
+    ]
     exact_hashes, perceptual_hashes = [], []
     for index in range(requested):
         rgb = scene / "rgb" / f"frame_{index:02d}.png"
@@ -106,6 +114,7 @@ def audit_scene(scene: Path, split: str) -> tuple[dict, list[dict]]:
         "scene": scene.name,
         "world_id": manifest["world_id"],
         "scene_seed": manifest["scene_seed"],
+        "trajectory_id": manifest["trajectory_id"],
         "split": split,
         "negative_only": manifest["negative_only"],
         "captured_frames": report["captured_frames"],
@@ -117,6 +126,10 @@ def audit_scene(scene: Path, split: str) -> tuple[dict, list[dict]]:
         "target_classes_observed": sorted(row["class_id"] for row in target_rows),
         "target_count_expected": expected,
         "target_count_observed": len(target_rows),
+        "target_asset_ids": target_assets,
+        "hard_negatives": hard_negatives,
+        "route_profile": report.get("oprv3_motion_profile"),
+        "motion_phase_counts": dict(Counter(row.get("motion_phase") for row in records)),
         "partial_mission": len(target_rows) != expected,
         "gt_product_input_violation": not bool(
             manifest.get("trcrv10_g10_approach_sequence", {}).get("gt_runtime_forbidden")
@@ -147,6 +160,21 @@ def main() -> int:
             missions.append(mission)
             frames.extend(mission_frames)
     split_counts = Counter(row["split"] for row in missions)
+    split_names = sorted(split_counts)
+    def overlap(key: str) -> list:
+        values = {
+            split: {
+                value
+                for row in missions if row["split"] == split
+                for value in (row[key] if isinstance(row[key], list) else [row[key]])
+            }
+            for split in split_names
+        }
+        return sorted(set.intersection(*values.values())) if len(values) > 1 else []
+    world_overlap = overlap("world_id")
+    seed_overlap = overlap("scene_seed")
+    trajectory_overlap = overlap("trajectory_id")
+    asset_overlap = overlap("target_asset_ids")
     exact_overlap, phash_overlap = [], []
     exact_seen: dict[str, dict] = {}
     phash_seen: dict[str, dict] = {}
@@ -167,6 +195,10 @@ def main() -> int:
         "partial_mission_zero": not any(row["partial_mission"] for row in missions),
         "train_missions_at_least_45": split_counts.get("G10_TRAIN", 0) >= 45,
         "holdout_missions_at_least_18": split_counts.get("G10_HOLDOUT", 0) >= 18,
+        "world_overlap_zero": not world_overlap,
+        "seed_overlap_zero": not seed_overlap,
+        "trajectory_overlap_zero": not trajectory_overlap,
+        "target_asset_overlap_zero": not asset_overlap,
         "gt_product_input_violation_zero": not any(row["gt_product_input_violation"] for row in missions),
         "exact_rgb_cross_split_duplicate_zero": not exact_overlap,
         "phash_cross_split_duplicate_zero": not phash_overlap,
@@ -178,10 +210,89 @@ def main() -> int:
         "mission_counts": dict(split_counts),
         "missions": missions,
         "cross_split_duplicates": {"exact": exact_overlap, "phash": phash_overlap},
+        "cross_split_identity_overlap": {
+            "world": world_overlap,
+            "seed": seed_overlap,
+            "trajectory": trajectory_overlap,
+            "target_asset": asset_overlap,
+        },
         "gates": gates,
         "G10_CAPTURE_QA_PASS": bool(missions) and all(gates.values()),
     }
     write(args.output, payload)
+    positive = [row for row in missions if not row["negative_only"]]
+    write(args.output.parent / "G10_APPROACH_SEQUENCE_STATS.json", {
+        "schema_version": 1,
+        "protocol": "TRCRV10",
+        "mission_counts": dict(split_counts),
+        "positive_missions": len(positive),
+        "negative_only_missions": len(missions) - len(positive),
+        "route_profiles": dict(Counter(
+            (row.get("route_profile") or {}).get("name", "straight_approach")
+            for row in missions
+        )),
+        "motion_phase_counts": dict(Counter(
+            phase
+            for row in missions
+            for phase, count in row["motion_phase_counts"].items()
+            for _ in range(count)
+        )),
+        "partial_missions": sum(row["partial_mission"] for row in missions),
+    })
+    write(args.output.parent / "G10_SIZE_TRANSITION_STATS.json", {
+        "schema_version": 1,
+        "protocol": "TRCRV10",
+        "targets": [
+            {"split": row["split"], "scene": row["scene"], **target}
+            for row in missions for target in row["targets"]
+        ],
+        "targets_crossing_lt18_to_32_64": sum(
+            target["crosses_lt18_to_32_64"]
+            for row in missions for target in row["targets"]
+        ),
+        "targets_reaching_64": sum(
+            target["reaches_64"] for row in missions for target in row["targets"]
+        ),
+        "targets_reaching_96": sum(
+            target["reaches_96"] for row in missions for target in row["targets"]
+        ),
+    })
+    write(args.output.parent / "G10_HARD_NEGATIVE_MATRIX.json", {
+        "schema_version": 1,
+        "protocol": "TRCRV10",
+        "by_split_taxonomy": {
+            split: dict(Counter(
+                item.get("taxonomy") or "unspecified"
+                for row in missions if row["split"] == split
+                for item in row["hard_negatives"]
+            ))
+            for split in split_names
+        },
+        "by_split_asset_count": {
+            split: len({
+                item["asset_id"]
+                for row in missions if row["split"] == split
+                for item in row["hard_negatives"]
+            })
+            for split in split_names
+        },
+    })
+    write(args.output.parent / "G10_SPLIT_MANIFEST.json", {
+        "schema_version": 1,
+        "protocol": "TRCRV10",
+        "splits": {
+            split: [
+                {key: row[key] for key in (
+                    "scene", "world_id", "scene_seed", "trajectory_id",
+                    "target_asset_ids", "negative_only",
+                )}
+                for row in missions if row["split"] == split
+            ]
+            for split in split_names
+        },
+        "cross_split_identity_overlap": payload["cross_split_identity_overlap"],
+        "G10_DEV_VAL_SEALED_read": False,
+    })
     print(json.dumps(payload, indent=2))
     return 0 if payload["G10_CAPTURE_QA_PASS"] else 2
 
