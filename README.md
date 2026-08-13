@@ -123,4 +123,6 @@ RGDRV8 specialist 使用 G8 校准相机的固定 3×3 overlapping ground-mask t
 
 RGDRV8 严格执行有限路线停止条件：仅当 A/B/C 都有 HOLDOUT 失败证据时，发布 `MODEL_BLOCKED_INTERNAL_REAL_GAZEBO_DETECTOR=true`、`SIMULATION_PRODUCT_COMPLETE=false` 和 `NEXT_ARCHITECTURE_RESEARCH_REQUIRED.json`；此状态下保持 VAL_NEW/G5_V2 未读，并将 tracker/map、在线任务、性能、freeze、30-seed、清扫、soak/replay 与 x86 release 明确标为 dependency-blocked，而不是用未执行结果冒充产品完成。
 
+TGARV9 在不改写上述失败事实的前提下，将单帧 detector 诊断、track 级确认、产品 actionable target 与实际清扫动作分层审计；任何 temporal/geometry 恢复都必须先通过全新 G9 真实 Gazebo HOLDOUT，生产输入仅限 RGB、depth、CameraInfo 与 TF，TargetTube 真值只进入独立 evaluator。最终 wrong confirmed actionable 仍要求不高于 1%，错误或虚假目标清扫仍必须为零。
+
 最终 evidence index 以 `RGDRV8_GA1_FAILURE_TAXONOMY.json` 作为 GA1 failure-forensics 主记录，并单独保留 confusion、score 和 size/domain 辅助矩阵；发布器在所有必需外部证据存在且三条路线状态确认为失败后才生成 final 目录。

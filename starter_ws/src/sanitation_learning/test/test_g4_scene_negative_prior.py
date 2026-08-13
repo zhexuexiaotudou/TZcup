@@ -264,6 +264,19 @@ def test_rgdrv8_g8_auto_domain_matrix_is_deterministic_and_physical(
     assert profiles.count(None) >= 1
 
 
+def test_g8_wet_domain_matrix_executes_reflection_for_every_positive_mission() -> None:
+    positive_indices = [
+        index for index in range(24) if not g4_scene.g8_negative_only_rule(index, 24)
+    ]
+    profiles = [
+        g4_scene.g8_domain_profile(index, 24, wet_world=True)
+        for index in positive_indices
+    ]
+    assert profiles
+    assert "reflection" in profiles
+    assert None not in profiles
+
+
 def test_oprv3_coverage_profiles_are_explicit_and_fail_closed(
     monkeypatch, tmp_path, g4_world_manifest
 ):

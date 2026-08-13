@@ -82,13 +82,13 @@ def g8_domain_profile(scene_index: int, scene_cycle: int, *, wet_world: bool) ->
         if not g8_negative_only_rule(index, scene_cycle)
     ]
     positive_rank = positive_indices.index(scene_index)
+    # Wet worlds must actually exercise their reflective material.  Keep the
+    # non-wet schedule unchanged so the G8 split contract and old evidence
+    # remain stable, but rotate reflection into every positive wet mission.
     profiles = (
-        None,
-        "turn_entry",
-        "occlusion",
-        "dynamic_removal",
-        "dynamic_insertion",
-        "reflection" if wet_world else None,
+        ("reflection", "turn_entry", "occlusion", "dynamic_removal", "dynamic_insertion")
+        if wet_world
+        else (None, "turn_entry", "occlusion", "dynamic_removal", "dynamic_insertion", None)
     )
     return profiles[positive_rank % len(profiles)]
 
