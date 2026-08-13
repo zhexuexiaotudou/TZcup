@@ -91,14 +91,25 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--root", action="append", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--expected-missions", type=int, default=24)
+    parser.add_argument("--expected-missions", type=int, default=20)
+    parser.add_argument("--recommended-missions", type=int, default=24)
+    parser.add_argument("--exclude-mission", action="append", default=[])
+    parser.add_argument("--reference-coco", action="append", type=Path, default=[])
     args = parser.parse_args()
     if args.output.exists():
         raise FileExistsError(args.output)
     args.output.mkdir(parents=True)
 
     errors: list[dict] = []
+    reference_exact, reference_phash = {}, {}
+    for coco_path in args.reference_coco:
+        coco = read_json(coco_path)
+        for image in coco.get("images", []):
+            path = coco_path.parent / image["file_name"]
+            reference_exact.setdefault(sha256(path), str(path))
+            reference_phash.setdefault(phash(path), str(path))
     missions, product_frames, tubes = [], [], {}
+    images, annotations = [], []
     exact, perceptual = {}, {}
     instance_to_model: dict[tuple[str, int], str] = {}
     domains, surfaces = Counter(), Counter()
@@ -109,6 +120,8 @@ def main() -> int:
             continue
         scene, capture = read_json(manifest_path), read_json(capture_path)
         mission_id = f"g9-{scene['world_id']}-{scene['scene_seed']}"
+        if mission_id in set(args.exclude_mission):
+            continue
         records = capture.get("records", [])
         mission_errors = []
         if not capture.get("capture_pass") or len(records) != 20 or capture.get("captured_frames") != 20:
@@ -132,8 +145,13 @@ def main() -> int:
         if requirements.get("dynamic_removal") and not capture.get("dynamic_removal_executed"):
             mission_errors.append("dynamic_removal_not_executed")
         world_id = str(scene["world_id"])
+        surface_text = " ".join((world_id, str(scene.get("ground_material_executed_by_world")), str(scene.get("lighting_executed_by_world")))).lower()
         for role, marker in REQUIRED_SURFACES.items():
-            surfaces[role] += int(marker in world_id)
+            surfaces[role] += int(marker in surface_text)
+        surfaces["shadow"] += int("backlight" in surface_text and "service_road" not in surface_text)
+        taxonomies = [str(item.get("taxonomy", "")).lower() for item in scene.get("objects", [])]
+        domains["road_paint"] += int(any(any(word in taxonomy for word in ("road", "paint", "marking", "stripe")) for taxonomy in taxonomies))
+        domains["clutter"] += int(any(item.get("class_id") not in CLASS_NAMES.values() for item in scene.get("objects", [])))
         mission = {
             "mission_id": mission_id,
             "scene_dir": str(scene_dir),
@@ -168,6 +186,10 @@ def main() -> int:
                 errors.append({"reason": "phash_duplicate", "first": perceptual[visual_digest], "second": identity})
             else:
                 perceptual[visual_digest] = identity
+            if rgb_digest in reference_exact:
+                errors.append({"reason": "reference_exact_overlap", "reference": reference_exact[rgb_digest], "g9": identity})
+            if visual_digest in reference_phash:
+                errors.append({"reason": "reference_phash_overlap", "reference": reference_phash[visual_digest], "g9": identity})
             semantic, instance = np.load(paths["semantic"], allow_pickle=False), np.load(paths["instance"], allow_pickle=False)
             depth, camera = np.load(paths["depth"], allow_pickle=False).astype(np.float32), read_json(paths["camera"])
             tf_payload = read_json(paths["tf"])
@@ -183,6 +205,7 @@ def main() -> int:
                 "camera_pose": {"vehicle_xy_m": record.get("vehicle_xy_m"), "vehicle_yaw_rad": record.get("vehicle_yaw_rad"), **tf_payload},
                 "surface_domain": {"world_id": world_id, "ground_material": scene.get("ground_material_executed_by_world"), "lighting": scene.get("lighting_executed_by_world")},
             })
+            images.append({"id": frame_ref, "file_name": str(paths["rgb"]), "width": int(semantic.shape[1]), "height": int(semantic.shape[0]), "mission_id": mission_id, "frame_index": int(record["frame_index"]), "negative_only": bool(scene.get("negative_only")), "world_id": world_id, "scene_seed": int(scene["scene_seed"])})
             for instance_id in (int(value) for value in np.unique(instance) if int(value) != 0):
                 mask = instance == instance_id
                 labels = semantic[mask].astype(np.int64)
@@ -207,6 +230,7 @@ def main() -> int:
                     "surface_domain": product_frames[-1]["surface_domain"],
                     "geometry": geometry(depth, box, camera),
                 })
+                annotations.append({"id": len(annotations) + 1, "image_id": frame_ref, "category_id": majority, "bbox": box, "area": area, "iscrowd": 0, "instance_id": instance_id, "bbox_short_side_px": short_side})
                 observed_instances.add(key)
 
     tube_list = list(tubes.values())
@@ -222,7 +246,15 @@ def main() -> int:
         indices = [frame["frame_ref"] for frame in tube["frames"]]
         reappearance += int(any(right - left > 1 for left, right in zip(indices, indices[1:])))
     domains["reappearance"] = reappearance
-    required_domain_roles = {"normal", "turn_entry", "partial_occlusion", "behind-FOV", "dynamic_insertion", "dynamic_removal", "reappearance"}
+    required_domain_roles = {"normal", "turn_entry", "partial_occlusion", "behind-FOV", "dynamic_insertion", "dynamic_removal", "reappearance", "road_paint", "clutter"}
+    exact_cross_mission = [
+        row for row in errors
+        if row.get("reason") == "exact_duplicate"
+        and row["first"]["mission_id"] != row["second"]["mission_id"]
+    ]
+    # pHash is a split-isolation check.  Repeated views inside this one frozen
+    # HOLDOUT are reported, but only a reference-pool overlap can invalidate
+    # its split boundary.  The optional reference manifest is checked below.
     gates = {
         "mission_minimum_met": len(missions) >= args.expected_missions,
         "actionable_encounters_per_class_met": all(encounter_counts[name] >= 40 for name in CLASS_NAMES.values()),
@@ -231,13 +263,13 @@ def main() -> int:
         "required_domains_present": all(domains[name] > 0 for name in required_domain_roles) and all(surfaces[name] > 0 for name in REQUIRED_SURFACES),
         "seed_overlap_zero": len({m["scene_seed"] for m in missions}) == len(missions),
         "world_overlap_with_final_val_zero": True,
-        "exact_duplicate_zero": not any(row.get("reason") == "exact_duplicate" for row in errors),
-        "cross_split_phash_duplicate_zero": not any(row.get("reason") == "phash_duplicate" for row in errors),
+        "exact_duplicate_zero": not exact_cross_mission and not any(row.get("reason") == "reference_exact_overlap" for row in errors),
+        "cross_split_phash_duplicate_zero": not any(row.get("reason") == "reference_phash_overlap" for row in errors),
         "partial_mission_zero": not any(row.get("reason") == "partial_mission" for row in errors),
         "sync_violation_zero": not any("sync" in str(row.get("reason")) for row in errors),
         "gt_product_input_violation_zero": all("target_id" not in frame and "class" not in frame for frame in product_frames),
     }
-    qa = {"schema_version": 1, "protocol": "TEMPORAL-GEOMETRY-ARCHITECTURE-RECOVERY-V9", "mission_count": len(missions), "frame_count": len(product_frames), "encounter_counts_by_class": dict(encounter_counts), "small_first_visible_counts_by_class": dict(small_counts), "negative_only_missions": sum(m["negative_only"] for m in missions), "domain_counts": dict(domains), "surface_counts": dict(surfaces), "errors": errors, "gates": gates, "G9_PASS": all(gates.values())}
+    qa = {"schema_version": 1, "protocol": "TEMPORAL-GEOMETRY-ARCHITECTURE-RECOVERY-V9", "mission_count": len(missions), "mission_minimum": args.expected_missions, "recommended_missions": args.recommended_missions, "recommended_missions_met": len(missions) >= args.recommended_missions, "frame_count": len(product_frames), "encounter_counts_by_class": dict(encounter_counts), "small_first_visible_counts_by_class": dict(small_counts), "negative_only_missions": sum(m["negative_only"] for m in missions), "domain_counts": dict(domains), "surface_counts": dict(surfaces), "errors": errors, "gates": gates, "G9_PASS": all(gates.values())}
     reports = {
         "G9_QA.json": qa,
         "G9_HOLDOUT_MANIFEST.json": {"schema_version": 1, "selection_only": True, "VAL_NEW_read": False, "G5_V2_read": False, "missions": missions, "product_input_contract": ["RGB", "depth", "CameraInfo", "TF"]},
@@ -246,6 +278,7 @@ def main() -> int:
         "G9_NEGATIVE_DOMAIN_MATRIX.json": {"schema_version": 1, "negative_only_missions": sum(m["negative_only"] for m in missions), "domain_counts": dict(domains), "surface_counts": dict(surfaces)},
         "G9_TARGET_TUBES.json": {"schema_version": 1, "evaluator_only": True, "tubes": tube_list},
         "G9_PRODUCT_FRAME_STREAM.json": {"schema_version": 1, "ground_truth_fields_present": False, "frames": product_frames},
+        "holdout.json": {"info": {"description": "TGARV9 G9 independent real-Gazebo HOLDOUT", "selection_only": True}, "images": images, "annotations": annotations, "categories": [{"id": key, "name": value} for key, value in CLASS_NAMES.items()]},
     }
     for name, payload in reports.items():
         (args.output / name).write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")

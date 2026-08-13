@@ -49,3 +49,10 @@ def test_baseline_gate_provenance_separates_frame_track_and_cleaning_units() -> 
     assert '"frame"' in text
     assert '"track"' in text
     assert '"cleaning action"' in text
+
+
+def test_g9_preparer_treats_phash_as_a_cross_split_gate() -> None:
+    source = Path(g9.__file__).read_text(encoding="utf-8")
+    assert "reference_phash_overlap" in source
+    assert 'row.get("reason") == "reference_phash_overlap"' in source
+    assert "phash_duplicate" in source  # within-HOLDOUT duplicates remain reported
