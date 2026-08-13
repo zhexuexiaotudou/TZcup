@@ -120,3 +120,5 @@ Route C 是有限 detector 恢复的最后路线：保留 Route B 已固定的 p
 Route C 的 contextual crop 必须回溯 Route A 的 `source_train.json`（`G8 TRAIN_NEW + legacy GA1 development`）和固定 `holdout.json`，以保持与 Route B proposal 的 image-id/source-pool 一致；不得把仅含 G8 的 `prepared_final_v2/fit.json` 误作完整 TRAIN_COMBINED 索引。
 
 RGDRV8 specialist 使用 G8 校准相机的固定 3×3 overlapping ground-mask tiles（原生 320×240、统一放大到 640×480）。G8 的远地面目标可投影至图像顶边，因此旧 G6 仅覆盖下 75% 的六块 ROI 不适用于 G8；九块 ROI 覆盖完整 640×480 cleanable image mask，且生产选区函数不接收 GT。
+
+RGDRV8 严格执行有限路线停止条件：仅当 A/B/C 都有 HOLDOUT 失败证据时，发布 `MODEL_BLOCKED_INTERNAL_REAL_GAZEBO_DETECTOR=true`、`SIMULATION_PRODUCT_COMPLETE=false` 和 `NEXT_ARCHITECTURE_RESEARCH_REQUIRED.json`；此状态下保持 VAL_NEW/G5_V2 未读，并将 tracker/map、在线任务、性能、freeze、30-seed、清扫、soak/replay 与 x86 release 明确标为 dependency-blocked，而不是用未执行结果冒充产品完成。
