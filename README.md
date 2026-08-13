@@ -139,4 +139,6 @@ T3 使用 SHA-256 `822d7e9d…24e3` 的官方 MMDet 转换 checkpoint、本地�
 
 T3 六 checkpoint 的严格 G9 HOLDOUT 选型也未通过。最优失败候选 epoch 6 的 correct-class recall 为 `0.8302`、small recall `0.8922`、confirmed precision `0.9296`、wrong-confirmed `0.0352`，并产生 5 个 false 与 5 个 wrong-class `CLEAN_NOW`。因此 TGARV9 按停止条件 B fail-closed：T1/T2/T3 全部穷尽，`VAL_NEW`/`G5_V2` 保持未读，禁止进入部署预筛、下游冻结或仿真产品完成声明。
 
+TRCRV10 从上述精确失败提交继续，但不再扩展 detector 模型 zoo。产品链被重构为远距 class-agnostic proposal、持久候选、RGB-D 地图定位、安全接近/重观察、近距四分类、独立 ActionVerifier、多帧确认与调度。`CLASSIFIED` 不等于可清扫；只有 `ACTION_VERIFIED` 后才允许进入 `CONFIRMED`。新 G10 综合 HOLDOUT 通过并冻结完整链路前，`G10_DEV_VAL_SEALED`、历史 `VAL_NEW`、`G5_V2` 和正式 30-seed 继续保持未读。协议见 [TRCRV10](docs/task-reformulation-close-range-verification-v10.md)。
+
 最终 evidence index 以 `RGDRV8_GA1_FAILURE_TAXONOMY.json` 作为 GA1 failure-forensics 主记录，并单独保留 confusion、score 和 size/domain 辅助矩阵；发布器在所有必需外部证据存在且三条路线状态确认为失败后才生成 final 目录。
