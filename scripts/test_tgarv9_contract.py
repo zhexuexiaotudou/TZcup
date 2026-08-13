@@ -63,3 +63,10 @@ def test_t2_training_retains_negative_frames() -> None:
     assert '"filter_empty_gt": False' in source
     assert "negative_count == 0" in source
     assert '"negative_frames_retained": True' in source
+
+
+def test_t2_training_defers_holdout_selection_until_all_checkpoints_exist() -> None:
+    source = (Path(__file__).resolve().parent / "train_tgarv9_dino.py").read_text(encoding="utf-8")
+    assert '"val_interval": args.epochs + 1' in source
+    assert "checkpoint.save_best = None" in source
+    assert "checkpoint.interval = 1" in source

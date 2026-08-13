@@ -97,11 +97,22 @@ def main() -> int:
         loader.dataset.metainfo = {"classes": CLASS_NAMES}; loader.dataset.filter_cfg = {"filter_empty_gt": False, "min_size": 1}; loader.dataset.pipeline = pipeline
     cfg.test_dataloader = cfg.val_dataloader
     cfg.val_evaluator.ann_file = str(args.holdout_coco); cfg.test_evaluator = cfg.val_evaluator
-    cfg.train_cfg = {"type": "EpochBasedTrainLoop", "max_epochs": args.epochs, "val_interval": 1}
+    # G9 is a checkpoint-selection holdout, not a per-epoch training signal.
+    # Persist every bounded epoch first, then evaluate all checkpoints once
+    # through the shared temporal/geometry protocol.  A val_interval beyond
+    # max_epochs prevents costly and potentially biasing in-loop selection.
+    cfg.train_cfg = {
+        "type": "EpochBasedTrainLoop",
+        "max_epochs": args.epochs,
+        "val_interval": args.epochs + 1,
+    }
     cfg.optim_wrapper.type = "AmpOptimWrapper"; cfg.optim_wrapper.loss_scale = "dynamic"
     cfg.optim_wrapper.optimizer.lr = 1e-5; cfg.optim_wrapper.clip_grad = {"max_norm": 0.1, "norm_type": 2}
     cfg.param_scheduler = [{"type": "LinearLR", "start_factor": 0.1, "by_epoch": False, "begin": 0, "end": 100}, {"type": "CosineAnnealingLR", "eta_min": 1e-6, "begin": 0, "end": args.epochs, "T_max": args.epochs, "by_epoch": True}]
-    cfg.default_hooks.logger.interval = 25; cfg.default_hooks.checkpoint.interval = 1; cfg.default_hooks.checkpoint.max_keep_ckpts = args.epochs; cfg.default_hooks.checkpoint.save_best = "coco/bbox_mAP"; cfg.default_hooks.checkpoint.rule = "greater"
+    cfg.default_hooks.logger.interval = 25
+    cfg.default_hooks.checkpoint.interval = 1
+    cfg.default_hooks.checkpoint.max_keep_ckpts = args.epochs
+    cfg.default_hooks.checkpoint.save_best = None
     # Deformable-DETR positional encoding calls CUDA cumsum, which PyTorch
     # does not implement under strict deterministic-algorithm mode.  The seed
     # stays frozen and every checkpoint/config is hash-bound; this flag is the
