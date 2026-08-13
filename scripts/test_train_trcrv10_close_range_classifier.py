@@ -23,6 +23,14 @@ def test_wrong_target_is_fail_closed() -> None:
     assert not result["pass"]
 
 
+def test_background_specificity_is_background_recall_and_macro_has_four_classes() -> None:
+    # All targets correct, but one of two background rows is called bottle.
+    result = classifier.classification_metrics([0, 1, 2, 3, 3], [0, 1, 2, 3, 0])
+    assert result["metrics"]["background_specificity"] == .5
+    assert result["metrics"]["macro_f1"] < 1.0
+    assert not result["gates"]["background_specificity"]
+
+
 def test_sealed_boundaries_and_c1_first_are_explicit() -> None:
     source = Path(classifier.__file__).read_text(encoding="utf-8")
     assert 'default=PRIMARY_MODEL' in source

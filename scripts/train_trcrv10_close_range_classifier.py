@@ -26,7 +26,7 @@ def classification_metrics(truth: list[int], predicted: list[int]) -> dict:
     confusion = np.zeros((len(CLASSES), len(CLASSES)), dtype=np.int64)
     for expected, actual in zip(truth, predicted):
         confusion[expected, actual] += 1
-    per_class, target_f1 = {}, []
+    per_class, f1_values = {}, []
     for index, name in enumerate(CLASSES):
         tp = int(confusion[index, index])
         fp = int(confusion[:, index].sum() - tp)
@@ -38,14 +38,19 @@ def classification_metrics(truth: list[int], predicted: list[int]) -> dict:
         specificity = tn / max(tn + fp, 1)
         per_class[name] = {"precision": precision, "recall": recall, "f1": f1, "specificity": specificity,
                            "support": int(confusion[index].sum())}
-        if name != "background_or_unknown":
-            target_f1.append(f1)
-    metrics = {"macro_target_f1": float(np.mean(target_f1)), "per_class": per_class, "confusion": confusion.tolist()}
+        f1_values.append(f1)
+    background_specificity = per_class["background_or_unknown"]["recall"]
+    metrics = {
+        "macro_f1": float(np.mean(f1_values)),
+        "background_specificity": background_specificity,
+        "per_class": per_class,
+        "confusion": confusion.tolist(),
+    }
     gates = {
-        "macro_f1": metrics["macro_target_f1"] >= .98,
+        "macro_f1": metrics["macro_f1"] >= .98,
         "each_target_precision": all(per_class[name]["precision"] >= .97 for name in CLASSES[:3]),
         "each_target_recall": all(per_class[name]["recall"] >= .97 for name in CLASSES[:3]),
-        "background_specificity": per_class["background_or_unknown"]["specificity"] >= .995,
+        "background_specificity": background_specificity >= .995,
         "paper_precision": per_class["paper_litter"]["precision"] >= .98,
         "metal_recall": per_class["metal_can"]["recall"] >= .97,
     }
