@@ -16,7 +16,7 @@ def test_g10_mission_plan_meets_protocol_minimums() -> None:
 
 
 def test_g10_approach_lanes_preserve_safe_drive_by_geometry() -> None:
-    assert g4_scene.G10_TARGET_START_DISTANCE_M == 6.2
+    assert g4_scene.G10_TARGET_START_DISTANCE_M == 6.7
     assert g4_scene.G10_TARGET_LATERAL_BY_CLASS_M == {
         "metal_can": -0.57,
         "paper_litter": 0.66,
@@ -30,6 +30,18 @@ def test_g10_centered_route_balances_target_classes() -> None:
     classes = [g4_scene.g10_target_class(f"world_{index}", scene) for index in range(6) for scene in range(8)]
     counts = {class_id: classes.count(class_id) for class_id in g4_scene.G8_DISCRETE_CLASSES}
     assert max(counts.values()) - min(counts.values()) <= 1
+
+
+def test_g10_target_class_is_stable_across_route_namespaces() -> None:
+    route_v10 = "g10v10_train_w02_02_concrete_sidewalk"
+    route_v12 = "g10v12_train_w02_02_concrete_sidewalk"
+    for scene in range(8):
+        assert g4_scene.g10_target_class(route_v10, scene) == g4_scene.g10_target_class(route_v12, scene)
+    assert any(
+        g4_scene.g10_target_class(route_v12, scene)
+        != g4_scene.g10_target_class("g10v12_train_w03_03_red_paver_plaza", scene)
+        for scene in range(8)
+    )
 
 
 def test_g10_drive_by_lanes_keep_physical_clearance() -> None:
@@ -62,8 +74,8 @@ def test_g10_capture_orchestrator_denies_sealed_dev_val() -> None:
     assert "[ValidateSet('train', 'val')]" in source
     assert "'test'" not in source
     assert "-G10ApproachSequence" in source
-    assert "g10\\route_v10" in source
-    assert "-CaptureFrameCount 125" in source
+    assert "g10\\route_v13" in source
+    assert "-CaptureFrameCount 150" in source
     assert "-CaptureMinTranslationM 0.02" in source
     assert "-CaptureTimeoutSeconds 1200" in source
 

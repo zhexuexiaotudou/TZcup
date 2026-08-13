@@ -51,7 +51,7 @@ G8_TARGET_LATERAL_LANES_M = (
     -0.80, 0.80, -0.60, 0.60, -0.95, 0.95,
     -0.72, 0.72, -1.05, 1.05, -0.52, 0.52,
 )
-G10_TARGET_START_DISTANCE_M = 6.2
+G10_TARGET_START_DISTANCE_M = 6.7
 G10_TARGET_LATERAL_BY_CLASS_M = {
     "metal_can": -0.57,
     "paper_litter": 0.66,
@@ -66,7 +66,16 @@ G10_ORBIT_ANGULAR_SPEED_RAD_S = 0.35
 
 def g10_target_class(world_id: str, scene_index: int) -> str:
     """Balance one centered target per positive mission across each split."""
-    world_rotation = sum(world_id.encode("utf-8")) % len(G8_DISCRETE_CLASSES)
+    # Derived G10 domains deliberately change their namespace on every route
+    # recovery.  Use only the stable source-world suffix so the same physical
+    # world/scene remains the same class across route versions.
+    parts = world_id.split("_", 4)
+    stable_world_id = (
+        f"{parts[3]}_{parts[4]}"
+        if len(parts) == 5 and parts[0].startswith("g10v")
+        else world_id
+    )
+    world_rotation = sum(stable_world_id.encode("utf-8")) % len(G8_DISCRETE_CLASSES)
     return G8_DISCRETE_CLASSES[(scene_index + world_rotation) % len(G8_DISCRETE_CLASSES)]
 
 
