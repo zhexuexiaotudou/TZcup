@@ -80,6 +80,12 @@ def test_mixed_curb_route_uses_bounded_shallow_departure() -> None:
         },
     ]
 
+    light_paver = g4_scene.g10_motion_profile(
+        "g10v15_val_w03_09_light_paver_pedestrian"
+    )
+    assert light_paver["layout_specific_route"] == "09_light_paver_pedestrian"
+    assert light_paver["post_switch_phases"] == mixed_curb["post_switch_phases"]
+
     wet_world = g4_scene.g10_motion_profile("g10v15_train_w05_05_wet_courtyard")
     assert "post_switch_phases" not in wet_world
     assert "layout_specific_route" not in wet_world

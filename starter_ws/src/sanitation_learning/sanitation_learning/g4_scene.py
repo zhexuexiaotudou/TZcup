@@ -199,7 +199,15 @@ def g10_motion_profile(world_id: str) -> dict:
             "layout, otherwise latch a left orbit before transverse obstacles"
         ),
     }
-    if world_id.endswith("_08_mixed_curb_vegetation"):
+    bounded_departure_layouts = (
+        "08_mixed_curb_vegetation",
+        "09_light_paver_pedestrian",
+    )
+    layout_specific_route = next(
+        (layout for layout in bounded_departure_layouts if world_id.endswith(f"_{layout}")),
+        None,
+    )
+    if layout_specific_route is not None:
         profile.update(
             {
                 "post_switch_phases": [
@@ -215,7 +223,7 @@ def g10_motion_profile(world_id: str) -> dict:
                         "linear_x_mps": 0.20,
                     },
                 ],
-                "layout_specific_route": "08_mixed_curb_vegetation",
+                "layout_specific_route": layout_specific_route,
             }
         )
     return profile
