@@ -7,3 +7,5 @@ TRCRV10 继承 TGARV9 的完整失败事实，但重构产品决策链，不再�
 开发顺序固定为视觉可辨识性/资产审计、G10 approach sequences、class-agnostic proposal、近距分类器、ActionVerifier、主动重观察和综合 HOLDOUT。综合 HOLDOUT 通过并冻结全部阈值前，`G10_DEV_VAL_SEALED`、历史 `VAL_NEW`、`G5_V2` 和正式 30-seed 数据保持未读。禁止 T4/T5/T6 或无界 detector 搜索。
 
 允许停止的结果只有仿真产品全门通过，或协议定义的可辨识性/资产、综合 HOLDOUT、一次针对性恢复、一次性 DEV-VAL 硬阻断。所有失败均 fail-closed，不得以未执行或不支持的指标冒充通过。
+
+视觉资产审计保留 G4/G8/G9 原域不变，并为 G10 创建独立 `g10_physical_close_range_v1` 域。该域沿用既有跨类别调色板、程序纹理、PBR 参数和真实物理尺寸，只补足塑料瓶的透明体/瓶肩/瓶颈/瓶盖、金属罐的上下 rim/顶面 inset，以及纸张的不规则边缘/浅折痕。禁止固定类别色、文字、二维码、类别标记或不真实尺寸放大；结构审计通过后仍须由真实 Gazebo 近距图像和独立 HOLDOUT 证明可辨识性。

@@ -141,4 +141,8 @@ T3 六 checkpoint 的严格 G9 HOLDOUT 选型也未通过。最优失败候选 e
 
 TRCRV10 从上述精确失败提交继续，但不再扩展 detector 模型 zoo。产品链被重构为远距 class-agnostic proposal、持久候选、RGB-D 地图定位、安全接近/重观察、近距四分类、独立 ActionVerifier、多帧确认与调度。`CLASSIFIED` 不等于可清扫；只有 `ACTION_VERIFIED` 后才允许进入 `CONFIRMED`。新 G10 综合 HOLDOUT 通过并冻结完整链路前，`G10_DEV_VAL_SEALED`、历史 `VAL_NEW`、`G5_V2` 和正式 30-seed 继续保持未读。协议见 [TRCRV10](docs/task-reformulation-close-range-verification-v10.md)。
 
+G10 资产域只修复可审计的仿真表达缺口：瓶体透明与瓶颈/瓶盖、罐体金属 rim/inset、纸张不规则边缘与浅折痕；保留真实物理尺寸和跨类别调色板，禁止颜色、文字、二维码或尺寸作弊。旧 G4/G8/G9 资产与结果永久保留，新域必须重新采集并通过独立近距辨识性门。
+
+资产结构通过不等于视觉辨识门通过。G10 要求 cold-start positive Gazebo smoke 同时验证三类目标、RGB/depth/CameraInfo/TF/semantic/instance 同步和完整 world 资源闭包；该 smoke 只证明可渲染性，最终 `MIN_RELIABLE_CLASSIFICATION_SHORT_SIDE_PX` 仍必须由 world/seed 独立的 TRAIN_DIAG/HOLDOUT_DIAG 分类曲线确定。
+
 最终 evidence index 以 `RGDRV8_GA1_FAILURE_TAXONOMY.json` 作为 GA1 failure-forensics 主记录，并单独保留 confusion、score 和 size/domain 辅助矩阵；发布器在所有必需外部证据存在且三条路线状态确认为失败后才生成 final 目录。
