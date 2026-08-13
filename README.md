@@ -137,4 +137,6 @@ T2 的六 checkpoint 严格选型最终失败：epoch 5 的 correct-class recall
 
 T3 使用 SHA-256 `822d7e9d…24e3` 的官方 MMDet 转换 checkpoint、本地逐文件哈希的 `bert-base-uncased` 与 transformers 4.44.2；训练、检查点选型、独立推理和部署性预筛均显式选择支持 MMDetection v3.3.0 三维 sub-sentence mask 的 eager BERT attention，避免自动 SDPA 的二维 mask 限制。预检与正式训练均离线、保留 empty-GT 帧并禁用内置 val，G9 只由训练完成后的统一选型器读取。
 
+T3 六 checkpoint 的严格 G9 HOLDOUT 选型也未通过。最优失败候选 epoch 6 的 correct-class recall 为 `0.8302`、small recall `0.8922`、confirmed precision `0.9296`、wrong-confirmed `0.0352`，并产生 5 个 false 与 5 个 wrong-class `CLEAN_NOW`。因此 TGARV9 按停止条件 B fail-closed：T1/T2/T3 全部穷尽，`VAL_NEW`/`G5_V2` 保持未读，禁止进入部署预筛、下游冻结或仿真产品完成声明。
+
 最终 evidence index 以 `RGDRV8_GA1_FAILURE_TAXONOMY.json` 作为 GA1 failure-forensics 主记录，并单独保留 confusion、score 和 size/domain 辅助矩阵；发布器在所有必需外部证据存在且三条路线状态确认为失败后才生成 final 目录。
