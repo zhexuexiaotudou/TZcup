@@ -61,6 +61,7 @@ def build(scenes_root: Path) -> dict:
                 "id": image_id,
                 "file_name": str(rgb.resolve()),
                 "depth_file_name": str((scene / "depth" / f"frame_{index:02d}.npy").resolve()),
+                "camera_file_name": str((scene / "camera" / f"frame_{index:02d}.json").resolve()),
                 "width": int(width),
                 "height": int(height),
                 "scene": scene.name,

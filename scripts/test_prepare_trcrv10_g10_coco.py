@@ -18,3 +18,8 @@ def test_categories_are_fixed() -> None:
     assert [row["name"] for row in prepare.CATEGORIES] == [
         "plastic_bottle", "metal_can", "paper_litter"
     ]
+
+
+def test_coco_index_binds_camera_intrinsics_path() -> None:
+    source = open(prepare.__file__, encoding="utf-8").read()
+    assert '"camera_file_name"' in source

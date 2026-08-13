@@ -45,6 +45,28 @@ def median_depth(depth: np.ndarray, box: list[float]) -> float | None:
     return float(np.median(values)) if values.size else None
 
 
+def depth_statistics(depth: np.ndarray, box: list[float], camera: dict) -> dict:
+    height, width = depth.shape[:2]
+    x1, y1, x2, y2 = [int(round(value)) for value in box]
+    x1, x2 = max(0, min(width - 1, x1)), max(1, min(width, x2))
+    y1, y2 = max(0, min(height - 1, y1)), max(1, min(height, y2))
+    roi = depth[y1:y2, x1:x2]
+    valid = roi[np.isfinite(roi) & (roi > 0)]
+    valid_fraction = float(valid.size / max(roi.size, 1))
+    if not valid.size:
+        return {"median_m": None, "valid_fraction": valid_fraction, "robust_sigma_m": None,
+                "projection_covariance_m2": None}
+    median = float(np.median(valid))
+    robust_sigma = float(1.4826 * np.median(np.abs(valid - median)))
+    k = camera["k"]
+    fx, fy = float(k[0]), float(k[4])
+    if fx <= 0 or fy <= 0:
+        raise ValueError("camera focal lengths must be positive")
+    covariance = robust_sigma ** 2 + (median / fx) ** 2 + (median / fy) ** 2
+    return {"median_m": median, "valid_fraction": valid_fraction,
+            "robust_sigma_m": robust_sigma, "projection_covariance_m2": covariance}
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--coco", type=Path, required=True)
@@ -72,6 +94,7 @@ def main() -> int:
     for image_id, meta in sorted(images.items()):
         image = cv2.imread(meta["file_name"], cv2.IMREAD_COLOR)
         depth = np.load(meta["depth_file_name"])
+        camera = json.loads(Path(meta["camera_file_name"]).read_text(encoding="utf-8"))
         if image is None:
             raise ValueError(f"unreadable RGB: {meta['file_name']}")
         truth = annotations.get(image_id, [])
@@ -85,7 +108,8 @@ def main() -> int:
             matches = sorted(((iou(box, target["bbox"]), target) for target in truth), reverse=True, key=lambda value: value[0])
             matched = matches[0][1] if matches and matches[0][0] >= .5 else None
             class_id = matched["class_id"] if matched else "background_or_unknown"
-            depth_m = median_depth(depth, box)
+            depth_stats = depth_statistics(depth, box, camera)
+            depth_m = depth_stats["median_m"]
             for view, crop_box in (("tight", box), ("context", expand(box, 1.6))):
                 relative = Path(class_id) / view / f"{meta['scene']}_{meta['frame_index']:03d}_{proposal_index}.png"
                 write_crop(image, crop_box, args.output / relative)
@@ -96,7 +120,9 @@ def main() -> int:
                     "scene_seed": meta["scene_seed"], "source_split": "G10_HOLDOUT",
                     "source_bbox_xyxy": box, "proposal_score": proposal["score"], "size_bucket": size_bucket(short_side),
                     "distance_m": depth_m, "distance_bucket": distance_bucket(depth_m),
-                    "depth_valid_fraction": float(np.mean(np.isfinite(depth) & (depth > 0))),
+                    "depth_valid_fraction": depth_stats["valid_fraction"],
+                    "depth_robust_sigma_m": depth_stats["robust_sigma_m"],
+                    "projection_covariance_m2": depth_stats["projection_covariance_m2"],
                     "occlusion_bucket": "not_available_from_product_inputs",
                     "gt_role": "offline_label_assignment_only", "production_runtime_eligible": True,
                 })

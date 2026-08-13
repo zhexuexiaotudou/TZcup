@@ -9,6 +9,7 @@ import json
 from pathlib import Path
 
 from trcrv10_action_verifier import VerifierConfig, verify
+from evaluate_trcrv10_proposals import iou
 
 
 TARGETS = {"plastic_bottle", "metal_can", "paper_litter"}
@@ -32,8 +33,43 @@ def group_classifier_rows(report: dict) -> dict[tuple[str, int, int], dict[str, 
     return groups
 
 
+def persistence_by_proposal(groups: dict[tuple[str, int, int], dict[str, dict]]) -> dict[tuple[str, int, int], int]:
+    """Associate adjacent-frame proposal boxes without using GT identity."""
+    result = {}
+    by_scene: dict[str, dict[int, list[tuple[int, dict]]]] = defaultdict(lambda: defaultdict(list))
+    for (scene, frame, proposal_index), views in groups.items():
+        tight = views.get("tight")
+        if tight:
+            by_scene[scene][frame].append((proposal_index, tight))
+    for scene, frames in by_scene.items():
+        active: list[tuple[list[float], int]] = []
+        previous_frame = None
+        for frame in sorted(frames):
+            if previous_frame is None or frame != previous_frame + 1:
+                active = []
+            used = set()
+            next_active = []
+            for proposal_index, row in frames[frame]:
+                box = row["source_bbox_xyxy"]
+                matches = sorted(
+                    ((iou(box, prior_box), index, count) for index, (prior_box, count) in enumerate(active)),
+                    reverse=True,
+                )
+                if matches and matches[0][0] >= .5 and matches[0][1] not in used:
+                    used.add(matches[0][1])
+                    count = matches[0][2] + 1
+                else:
+                    count = 1
+                result[(scene, frame, proposal_index)] = count
+                next_active.append((box, count))
+            active = next_active
+            previous_frame = frame
+    return result
+
+
 def build(classifier: dict, proposal: dict, minimum_short_side: int) -> tuple[list[dict], list[dict], list[dict]]:
     grouped = group_classifier_rows(classifier)
+    persistence = persistence_by_proposal(grouped)
     proposal_missions = {row["scene"]: row for row in proposal["missions"]}
     per_scene: dict[str, list[dict]] = defaultdict(list)
     for (scene, frame, proposal_index), views in sorted(grouped.items()):
@@ -52,8 +88,8 @@ def build(classifier: dict, proposal: dict, minimum_short_side: int) -> tuple[li
             "tight_probability": tight["predicted_probability"],
             "context_probability": context["predicted_probability"],
             "depth_valid_fraction": min(tight["depth_valid_fraction"], context["depth_valid_fraction"]),
-            "map_covariance_m2": 0.01,
-            "persistence_frames": 3,
+            "map_covariance_m2": tight.get("projection_covariance_m2", float("inf")),
+            "persistence_frames": persistence[(scene, frame, proposal_index)],
             "bbox_short_side_px": short_side,
             "physical_impossibility": False,
         }

@@ -16,3 +16,18 @@ def test_trace_builder_is_holdout_and_sealed_safe() -> None:
     assert '"G10_DEV_VAL_SEALED_read": False' in source
     assert '"VAL_NEW_read": False' in source
     assert '"G5_V2_read": False' in source
+    assert '"map_covariance_m2": tight.get("projection_covariance_m2"' in source
+
+
+def test_persistence_is_derived_from_adjacent_bbox_association() -> None:
+    def row(box):
+        return {"tight": {"source_bbox_xyxy": box}}
+    groups = {
+        ("s", 0, 0): row([0, 0, 10, 10]),
+        ("s", 1, 0): row([1, 0, 11, 10]),
+        ("s", 2, 0): row([2, 0, 12, 10]),
+        ("s", 4, 0): row([2, 0, 12, 10]),
+    }
+    result = traces.persistence_by_proposal(groups)
+    assert result[("s", 2, 0)] == 3
+    assert result[("s", 4, 0)] == 1
