@@ -40,6 +40,8 @@ def main() -> int:
     if sha256(args.checkpoint) != args.expected_sha256:
         raise RuntimeError("checkpoint SHA-256 mismatch")
     patch_mmdet_cuda_nms()
+    import mmcv.ops.multi_scale_deform_attn as deform_attn
+    deform_attn.IS_CUDA_AVAILABLE = False
     from mmdet.apis import inference_detector, init_detector
 
     payload = json.loads(args.coco.read_text(encoding="utf-8"))
