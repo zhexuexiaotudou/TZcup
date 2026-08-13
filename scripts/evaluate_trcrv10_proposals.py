@@ -41,6 +41,26 @@ def longest_consecutive(values: list[int]) -> int:
     return best
 
 
+def load_truth(capture_scenes: Path) -> dict[tuple[str, int], dict | None]:
+    truth = {}
+    for scene in sorted(path for path in capture_scenes.glob("scene_*") if path.is_dir()):
+        report = json.loads((scene / "capture_report.json").read_text(encoding="utf-8"))
+        for index in range(int(report["captured_frames"])):
+            truth[(scene.name, index)] = truth_bbox(np.load(scene / "semantic" / f"frame_{index:02d}.npy"))
+    return truth
+
+
+def load_predictions(raw_path: Path) -> dict[tuple[str, int], list[dict]]:
+    raw = json.loads(raw_path.read_text(encoding="utf-8"))
+    predictions: dict[tuple[str, int], list[dict]] = defaultdict(list)
+    for row in raw["frames"]:
+        scene = row.get("scene", row.get("mission_id"))
+        if not scene:
+            raise ValueError("raw inference frame lacks scene/mission_id")
+        predictions[(scene, int(row["frame_index"]))].extend(row["detections"])
+    return predictions
+
+
 def evaluate_records(truth: dict[tuple[str, int], dict | None], predictions: dict[tuple[str, int], list[dict]],
                      threshold: float, persistence: int) -> dict:
     scenes = sorted({scene for scene, _ in truth})
@@ -112,18 +132,8 @@ def main() -> int:
     parser.add_argument("--persistence", type=int, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
-    raw = json.loads(args.raw_inference.read_text(encoding="utf-8"))
-    predictions: dict[tuple[str, int], list[dict]] = defaultdict(list)
-    for row in raw["frames"]:
-        scene = row.get("scene", row.get("mission_id"))
-        if not scene:
-            raise ValueError("raw inference frame lacks scene/mission_id")
-        predictions[(scene, int(row["frame_index"]))].extend(row["detections"])
-    truth = {}
-    for scene in sorted(path for path in args.capture_scenes.glob("scene_*") if path.is_dir()):
-        report = json.loads((scene / "capture_report.json").read_text(encoding="utf-8"))
-        for index in range(int(report["captured_frames"])):
-            truth[(scene.name, index)] = truth_bbox(np.load(scene / "semantic" / f"frame_{index:02d}.npy"))
+    predictions = load_predictions(args.raw_inference)
+    truth = load_truth(args.capture_scenes)
     result = evaluate_records(truth, predictions, args.threshold, args.persistence)
     payload = {
         "schema_version": 1,
