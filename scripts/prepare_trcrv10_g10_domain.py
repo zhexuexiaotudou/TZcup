@@ -11,7 +11,7 @@ import shutil
 import xml.etree.ElementTree as ET
 
 
-DOMAIN = "g10_physical_close_range_route_v4"
+DOMAIN = "g10_physical_close_range_route_v6"
 SPLIT_MAP = {
     "train": "G10_TRAIN",
     "val": "G10_HOLDOUT",
@@ -227,9 +227,9 @@ def main() -> int:
                 "plastic_bottle": -0.57,
             },
             "capture_speed_mps": 0.20,
-            "capture_minimum_translation_m": 0.02,
-            "capture_frames": 125,
-            "minimum_motion_gate_travel_m": 2.48,
+            "capture_minimum_translation_m": 0.04,
+            "capture_frames": 150,
+            "minimum_motion_gate_travel_m": 5.96,
             "unreachable_for_visual_confirmation_must_be_retained": True,
             "product_inputs": ["RGB", "depth", "CameraInfo", "TF"],
             "GT_role": "training_and_evaluator_only",

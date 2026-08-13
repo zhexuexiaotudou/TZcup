@@ -22,7 +22,11 @@ def test_g10_approach_lanes_cover_far_mid_close_travel() -> None:
         "paper_litter": 0.66,
         "plastic_bottle": -0.57,
     }
-    assert 125 * 0.02 >= 2.48
+    # Route-v6 must reach the target's longitudinal close-view band by a
+    # machine-independent motion lower bound, not an assumed sensor cadence.
+    assert (150 - 1) * 0.04 >= 5.96
+    residual = g4_scene.G10_TARGET_START_DISTANCE_M - (150 - 1) * 0.04
+    assert residual <= 0.24 + 1e-9
 
 
 def test_g10_centered_route_balances_target_classes() -> None:
@@ -60,7 +64,9 @@ def test_g10_capture_orchestrator_denies_sealed_dev_val() -> None:
     assert "[ValidateSet('train', 'val')]" in source
     assert "'test'" not in source
     assert "-G10ApproachSequence" in source
-    assert "-CaptureFrameCount 125" in source
+    assert "g10\\route_v6" in source
+    assert "-CaptureFrameCount 150" in source
+    assert "-CaptureMinTranslationM 0.04" in source
     assert "-CaptureTimeoutSeconds 1200" in source
 
 
