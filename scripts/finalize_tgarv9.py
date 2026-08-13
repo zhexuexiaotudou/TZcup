@@ -62,9 +62,9 @@ def main() -> int:
         raise FileExistsError(args.output)
     root = args.artifact_root
     paths = {
-        "baseline": root / "00_baseline/HISTORICAL_RESULTS.json",
-        "boundary": root / "00_baseline/UNREAD_DATA_BOUNDARY.json",
-        "gate_provenance": root / "00_baseline/GATE_PROVENANCE_V9.json",
+        "baseline": root / "baseline/HISTORICAL_RESULTS.json",
+        "boundary": root / "baseline/UNREAD_DATA_BOUNDARY.json",
+        "gate_provenance": root / "baseline/GATE_PROVENANCE_V9.json",
         "g9_qa": root / "01_g9/prepared_final_v2/G9_QA.json",
         "g9_manifest": root / "01_g9/prepared_final_v2/G9_HOLDOUT_MANIFEST.json",
         "g9_tubes": root / "01_g9/prepared_final_v2/G9_TARGET_TUBES.json",
