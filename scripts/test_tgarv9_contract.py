@@ -78,3 +78,6 @@ def test_checkpoint_selector_is_bounded_and_keeps_val_unread() -> None:
     assert '"VAL_NEW_read": False' in source
     assert '"G5_V2_read": False' in source
     assert "for checkpoint in checkpoints" in source
+    assert '"AP50"' in source
+    assert '"AP50_95"' in source
+    assert '"detector_diagnostics"' in source

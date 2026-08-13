@@ -9,6 +9,7 @@ import hashlib
 import json
 from pathlib import Path
 import sys
+import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -42,6 +43,83 @@ def rank(result: dict) -> tuple:
         metrics["small_eventual_correct_class_recall"],
         -metrics["clean_opportunity_miss"],
     )
+
+
+def detector_diagnostics(coco_payload: dict, raw_frames: list[dict], score_threshold: float = 0.05) -> dict:
+    """Return COCO AP plus deterministic one-to-one IoU=.5 diagnostics."""
+    from pycocotools.coco import COCO
+    from pycocotools.cocoeval import COCOeval
+
+    category_ids = sorted(int(row["id"]) for row in coco_payload["categories"])
+    annotations_by_image: dict[int, list[dict]] = {}
+    for annotation in coco_payload["annotations"]:
+        annotations_by_image.setdefault(int(annotation["image_id"]), []).append(annotation)
+    predictions = []
+    true_positive = false_positive = false_negative = wrong_class_match = 0
+    per_class = {category_id: {"true_positive": 0, "false_positive": 0, "false_negative": 0} for category_id in category_ids}
+    for frame in raw_frames:
+        image_id = int(frame["image_id"])
+        detections = sorted(frame["detections"], key=lambda row: float(row["score"]), reverse=True)
+        for row in detections:
+            box = row["bbox_xyxy"]
+            predictions.append({
+                "image_id": image_id,
+                "category_id": int(row["label"]) + 1,
+                "bbox": [box[0], box[1], box[2] - box[0], box[3] - box[1]],
+                "score": float(row["score"]),
+            })
+        ground_truth = annotations_by_image.get(image_id, [])
+        matched: set[int] = set()
+        for row in (item for item in detections if float(item["score"]) >= score_threshold):
+            predicted_category = int(row["label"]) + 1
+            candidates = [(index, evaluator.iou(row["bbox_xyxy"], annotation["bbox"])) for index, annotation in enumerate(ground_truth) if index not in matched]
+            candidates = [item for item in candidates if item[1] >= 0.5]
+            if not candidates:
+                false_positive += 1
+                per_class[predicted_category]["false_positive"] += 1
+                continue
+            index, _ = max(candidates, key=lambda item: item[1])
+            matched.add(index)
+            actual_category = int(ground_truth[index]["category_id"])
+            if actual_category == predicted_category:
+                true_positive += 1
+                per_class[actual_category]["true_positive"] += 1
+            else:
+                wrong_class_match += 1
+                false_positive += 1
+                false_negative += 1
+                per_class[predicted_category]["false_positive"] += 1
+                per_class[actual_category]["false_negative"] += 1
+        for index, annotation in enumerate(ground_truth):
+            if index not in matched:
+                false_negative += 1
+                per_class[int(annotation["category_id"])]["false_negative"] += 1
+
+    precision = true_positive / max(true_positive + false_positive, 1)
+    recall = true_positive / max(true_positive + false_negative, 1)
+    with tempfile.TemporaryDirectory() as temporary:
+        ground_truth_path = Path(temporary) / "ground_truth.json"
+        predictions_path = Path(temporary) / "predictions.json"
+        ground_truth_path.write_text(json.dumps(coco_payload))
+        predictions_path.write_text(json.dumps(predictions))
+        coco = COCO(str(ground_truth_path))
+        results = coco.loadRes(str(predictions_path))
+        evaluation = COCOeval(coco, results, "bbox")
+        evaluation.evaluate()
+        evaluation.accumulate()
+        evaluation.summarize()
+        ap_50_95, ap_50 = float(evaluation.stats[0]), float(evaluation.stats[1])
+    return {
+        "score_threshold": score_threshold,
+        "iou_threshold": 0.5,
+        "precision": precision,
+        "recall": recall,
+        "f1": 2.0 * precision * recall / max(precision + recall, 1e-12),
+        "AP50": ap_50,
+        "AP50_95": ap_50_95,
+        "wrong_class_match_count": wrong_class_match,
+        "per_class": per_class,
+    }
 
 
 def main() -> int:
@@ -123,6 +201,7 @@ def main() -> int:
             "selected_algorithm": selected["algorithm"],
             "selected_metrics": selected["metrics"],
             "selected_gates": selected["gates"],
+            "detector_diagnostics": detector_diagnostics(coco, raw_frames),
             "pass": selected["pass"],
         }
         (candidate_dir / "G9_REPORT.json").write_text(json.dumps(candidate, indent=2) + "\n")
