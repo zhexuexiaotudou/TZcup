@@ -56,3 +56,10 @@ def test_g9_preparer_treats_phash_as_a_cross_split_gate() -> None:
     assert "reference_phash_overlap" in source
     assert 'row.get("reason") == "reference_phash_overlap"' in source
     assert "phash_duplicate" in source  # within-HOLDOUT duplicates remain reported
+
+
+def test_t2_training_retains_negative_frames() -> None:
+    source = (Path(__file__).resolve().parent / "train_tgarv9_dino.py").read_text(encoding="utf-8")
+    assert '"filter_empty_gt": False' in source
+    assert "negative_count == 0" in source
+    assert '"negative_frames_retained": True' in source

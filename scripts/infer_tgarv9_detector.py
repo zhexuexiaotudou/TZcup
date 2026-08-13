@@ -7,6 +7,13 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+import sys
+
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "starter_ws/src/sanitation_learning"))
+
+from sanitation_learning.opr_c_rtmdet import patch_mmdet_cuda_nms  # noqa: E402
 
 
 def sha256(path: Path) -> str:
@@ -32,6 +39,7 @@ def main() -> int:
         raise FileExistsError(args.output)
     if sha256(args.checkpoint) != args.expected_sha256:
         raise RuntimeError("checkpoint SHA-256 mismatch")
+    patch_mmdet_cuda_nms()
     from mmdet.apis import inference_detector, init_detector
 
     payload = json.loads(args.coco.read_text(encoding="utf-8"))
