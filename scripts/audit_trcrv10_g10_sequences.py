@@ -165,6 +165,8 @@ def main() -> int:
         "capture_pass": all(row["capture_pass"] for row in missions),
         "sensor_sync_pass": all(row["sensor_odom_sync_pass"] for row in missions),
         "partial_mission_zero": not any(row["partial_mission"] for row in missions),
+        "train_missions_at_least_45": split_counts.get("G10_TRAIN", 0) >= 45,
+        "holdout_missions_at_least_18": split_counts.get("G10_HOLDOUT", 0) >= 18,
         "gt_product_input_violation_zero": not any(row["gt_product_input_violation"] for row in missions),
         "exact_rgb_cross_split_duplicate_zero": not exact_overlap,
         "phash_cross_split_duplicate_zero": not phash_overlap,

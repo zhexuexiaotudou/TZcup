@@ -19,3 +19,9 @@ def test_bbox_row_and_buckets() -> None:
 
 def test_missing_label_is_not_a_bbox() -> None:
     assert audit.bbox_row(np.zeros((4, 4), dtype=np.uint8), 1, 0) is None
+
+
+def test_capture_qa_requires_protocol_minimum_mission_counts() -> None:
+    source = open(audit.__file__, encoding="utf-8").read()
+    assert 'split_counts.get("G10_TRAIN", 0) >= 45' in source
+    assert 'split_counts.get("G10_HOLDOUT", 0) >= 18' in source
