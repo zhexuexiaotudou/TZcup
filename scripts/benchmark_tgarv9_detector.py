@@ -17,6 +17,17 @@ sys.path.insert(0, str(ROOT / "starter_ws/src/sanitation_learning"))
 from sanitation_learning.opr_c_rtmdet import patch_mmdet_cuda_nms  # noqa: E402
 
 
+CLASS_PROMPT = ("plastic_bottle", "metal_can", "paper_litter")
+
+
+def prepare_inference_model(model):
+    if model.cfg.get("test_dataloader") is None:
+        model.cfg.test_dataloader = {"dataset": {"pipeline": model.cfg.test_pipeline}}
+    if model.__class__.__name__ == "GroundingDINO":
+        return {"text_prompt": CLASS_PROMPT, "custom_entities": True}
+    return {}
+
+
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -56,21 +67,35 @@ def main() -> int:
     images = [payload["images"][index % len(payload["images"])] for index in range(args.frame_count)]
     paths = [row["file_name"].replace(args.windows_root, args.container_root).replace("\\", "/") for row in images]
     patch_mmdet_cuda_nms()
+    try:
+        from transformers import BertConfig
+    except ImportError:
+        BertConfig = None
+    if BertConfig is not None:
+        original_bert_config_from_pretrained = BertConfig.from_pretrained
+
+        def eager_bert_config_from_pretrained(*config_args, **config_kwargs):
+            config = original_bert_config_from_pretrained(*config_args, **config_kwargs)
+            config._attn_implementation = "eager"
+            return config
+
+        BertConfig.from_pretrained = eager_bert_config_from_pretrained
     import mmcv.ops.multi_scale_deform_attn as deform_attn
     deform_attn.IS_CUDA_AVAILABLE = False
     import torch
     from mmdet.apis import inference_detector, init_detector
-    model = init_detector(str(args.config), str(args.checkpoint), device="cuda:0")
+    model = init_detector(str(args.config), str(args.checkpoint), palette="random", device="cuda:0")
+    inference_kwargs = prepare_inference_model(model)
     for path in paths[:20]:
         with torch.inference_mode(), torch.autocast(device_type="cuda", dtype=torch.float16):
-            inference_detector(model, path)
+            inference_detector(model, path, **inference_kwargs)
     torch.cuda.synchronize()
     durations = []
     with torch.inference_mode():
         for path in paths:
             started = time.perf_counter()
             with torch.autocast(device_type="cuda", dtype=torch.float16):
-                inference_detector(model, path)
+                inference_detector(model, path, **inference_kwargs)
             torch.cuda.synchronize()
             durations.append(time.perf_counter() - started)
     total = sum(durations)

@@ -16,6 +16,17 @@ sys.path.insert(0, str(ROOT / "starter_ws/src/sanitation_learning"))
 from sanitation_learning.opr_c_rtmdet import patch_mmdet_cuda_nms  # noqa: E402
 
 
+CLASS_PROMPT = ("plastic_bottle", "metal_can", "paper_litter")
+
+
+def prepare_inference_model(model):
+    if model.cfg.get("test_dataloader") is None:
+        model.cfg.test_dataloader = {"dataset": {"pipeline": model.cfg.test_pipeline}}
+    if model.__class__.__name__ == "GroundingDINO":
+        return {"text_prompt": CLASS_PROMPT, "custom_entities": True}
+    return {}
+
+
 def sha256(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
@@ -40,19 +51,33 @@ def main() -> int:
     if sha256(args.checkpoint) != args.expected_sha256:
         raise RuntimeError("checkpoint SHA-256 mismatch")
     patch_mmdet_cuda_nms()
+    try:
+        from transformers import BertConfig
+    except ImportError:
+        BertConfig = None
+    if BertConfig is not None:
+        original_bert_config_from_pretrained = BertConfig.from_pretrained
+
+        def eager_bert_config_from_pretrained(*config_args, **config_kwargs):
+            config = original_bert_config_from_pretrained(*config_args, **config_kwargs)
+            config._attn_implementation = "eager"
+            return config
+
+        BertConfig.from_pretrained = eager_bert_config_from_pretrained
     import mmcv.ops.multi_scale_deform_attn as deform_attn
     deform_attn.IS_CUDA_AVAILABLE = False
     from mmdet.apis import inference_detector, init_detector
 
     payload = json.loads(args.coco.read_text(encoding="utf-8"))
-    model = init_detector(str(args.config), str(args.checkpoint), device="cuda:0")
+    model = init_detector(str(args.config), str(args.checkpoint), palette="random", device="cuda:0")
+    inference_kwargs = prepare_inference_model(model)
     frames = []
     for offset in range(0, len(payload["images"]), args.batch_size):
         batch = payload["images"][offset : offset + args.batch_size]
         paths = [row["file_name"] for row in batch]
         if args.windows_root and args.container_root:
             paths = [path.replace(args.windows_root, args.container_root).replace("\\", "/") for path in paths]
-        outputs = inference_detector(model, paths)
+        outputs = inference_detector(model, paths, **inference_kwargs)
         outputs = outputs if isinstance(outputs, list) else [outputs]
         for image, output in zip(batch, outputs):
             pred = output.pred_instances.to("cpu")

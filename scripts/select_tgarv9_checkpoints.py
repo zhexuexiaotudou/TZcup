@@ -25,6 +25,16 @@ POLICIES = [
     {"name": "weighted_log_conservative", "config": {"observation_threshold": 0.10, "confirmation_probability": 0.95, "minimum_observations": 3, "maximum_map_scatter_m": 0.20}},
     {"name": "weighted_log_reobserve", "config": {"observation_threshold": 0.05, "confirmation_probability": 0.97, "minimum_observations": 4, "maximum_map_scatter_m": 0.25}},
 ]
+CLASS_PROMPT = ("plastic_bottle", "metal_can", "paper_litter")
+
+
+def prepare_inference_model(model):
+    """Restore the read-only pipeline omitted from the training loop."""
+    if model.cfg.get("test_dataloader") is None:
+        model.cfg.test_dataloader = {"dataset": {"pipeline": model.cfg.test_pipeline}}
+    if model.__class__.__name__ == "GroundingDINO":
+        return {"text_prompt": CLASS_PROMPT, "custom_entities": True}
+    return {}
 
 
 def sha256(path: Path) -> str:
@@ -185,6 +195,19 @@ def main() -> int:
     coco = json.loads(args.coco.read_text())
 
     patch_mmdet_cuda_nms()
+    try:
+        from transformers import BertConfig
+    except ImportError:
+        BertConfig = None
+    if BertConfig is not None:
+        original_bert_config_from_pretrained = BertConfig.from_pretrained
+
+        def eager_bert_config_from_pretrained(*config_args, **config_kwargs):
+            config = original_bert_config_from_pretrained(*config_args, **config_kwargs)
+            config._attn_implementation = "eager"
+            return config
+
+        BertConfig.from_pretrained = eager_bert_config_from_pretrained
     import mmcv.ops.multi_scale_deform_attn as deform_attn
     deform_attn.IS_CUDA_AVAILABLE = False
     import torch
@@ -196,12 +219,16 @@ def main() -> int:
         candidate_dir = args.output / checkpoint.stem
         candidate_dir.mkdir()
         checkpoint_hash = sha256(checkpoint)
-        model = init_detector(str(args.config), str(checkpoint), device="cuda:0")
+        # The training config deliberately has no test_dataloader; a fixed
+        # palette avoids init_detector consulting that disabled loader while
+        # inference_detector continues to use the frozen test_pipeline.
+        model = init_detector(str(args.config), str(checkpoint), palette="random", device="cuda:0")
+        inference_kwargs = prepare_inference_model(model)
         raw_frames = []
         for offset in range(0, len(coco["images"]), args.batch_size):
             batch = coco["images"][offset : offset + args.batch_size]
             paths = [row["file_name"].replace(args.windows_root, args.container_root).replace("\\", "/") for row in batch]
-            outputs = inference_detector(model, paths)
+            outputs = inference_detector(model, paths, **inference_kwargs)
             outputs = outputs if isinstance(outputs, list) else [outputs]
             for image, output in zip(batch, outputs):
                 pred = output.pred_instances.to("cpu")

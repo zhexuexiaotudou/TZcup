@@ -91,6 +91,10 @@ def test_checkpoint_selector_is_bounded_and_keeps_val_unread() -> None:
     assert '"gt_32px"' in source
     assert '"per_class": per_class_metrics' in source
     assert '"recall": class_recall' in source
+    assert 'config._attn_implementation = "eager"' in source
+    assert 'palette="random"' in source
+    assert '"text_prompt": CLASS_PROMPT' in source
+    assert 'model.cfg.test_dataloader = {"dataset": {"pipeline": model.cfg.test_pipeline}}' in source
 
 
 def test_deployability_prescreen_is_holdout_gated_and_bounded() -> None:
@@ -100,6 +104,9 @@ def test_deployability_prescreen_is_holdout_gated_and_bounded() -> None:
     assert '"minimum_effective_hz": 5.0' in source
     assert "torch.inference_mode()" in source
     assert "torch.autocast" in source
+    assert 'config._attn_implementation = "eager"' in source
+    assert 'palette="random"' in source
+    assert '"text_prompt": CLASS_PROMPT' in source
 
 
 def test_t2_provenance_is_hash_bound_and_sealed_data_unread() -> None:
