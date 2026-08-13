@@ -31,3 +31,13 @@ def test_tgarv9_finalizer_emits_complete_contract() -> None:
         assert name in source
     for question in range(1, 30):
         assert f"{question}. " in source
+
+
+def test_tgarv9_finalizer_accepts_powershell_utf16_ci_logs() -> None:
+    import finalize_tgarv9 as finalizer
+    import tempfile
+
+    with tempfile.TemporaryDirectory() as temporary:
+        path = Path(temporary) / "ci.log"
+        path.write_text("development workflow fast validation passed\n", encoding="utf-16")
+        assert "fast validation passed" in finalizer.read_ci_log(path)

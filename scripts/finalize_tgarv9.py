@@ -34,6 +34,13 @@ def write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
+def read_ci_log(path: Path) -> str:
+    payload = path.read_bytes()
+    if payload.startswith((b"\xff\xfe", b"\xfe\xff")):
+        return payload.decode("utf-16")
+    return payload.decode("utf-8", errors="replace")
+
+
 def evidence_ref(path: Path) -> dict:
     return {
         "path": str(path.resolve()),
@@ -92,7 +99,7 @@ def main() -> int:
     if records["t3"]["TGARV9_T3_HOLDOUT_PASS"]:
         raise RuntimeError("T3 did not fail")
     require_unread(records["boundary"], records["g9_manifest"], records["t1"], records["t2"], records["t3"])
-    if "development workflow fast validation passed" not in args.ci_log.read_text(encoding="utf-8", errors="replace"):
+    if "development workflow fast validation passed" not in read_ci_log(args.ci_log):
         raise RuntimeError("full local CI pass evidence missing")
 
     commit = subprocess.check_output(["git", "rev-parse", "HEAD"], text=True).strip()
