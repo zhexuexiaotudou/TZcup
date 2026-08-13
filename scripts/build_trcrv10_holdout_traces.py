@@ -24,6 +24,11 @@ def write(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
 
+def value_or_default(value: object, default: float) -> float:
+    """Normalize nullable numeric evidence without turning missing data into a pass."""
+    return default if value is None else float(value)
+
+
 def group_classifier_rows(report: dict) -> dict[tuple[str, int, int], dict[str, dict]]:
     groups: dict[tuple[str, int, int], dict[str, dict]] = defaultdict(dict)
     for row in report.get("evaluated_rows", []):
@@ -88,7 +93,9 @@ def build(classifier: dict, proposal: dict, minimum_short_side: int) -> tuple[li
             "tight_probability": tight["predicted_probability"],
             "context_probability": context["predicted_probability"],
             "depth_valid_fraction": min(tight["depth_valid_fraction"], context["depth_valid_fraction"]),
-            "map_covariance_m2": tight.get("projection_covariance_m2", float("inf")),
+            "map_covariance_m2": value_or_default(
+                tight.get("projection_covariance_m2"), float("inf")
+            ),
             "persistence_frames": persistence[(scene, frame, proposal_index)],
             "bbox_short_side_px": short_side,
             "physical_impossibility": False,
