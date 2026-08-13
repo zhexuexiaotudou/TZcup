@@ -125,6 +125,6 @@ RGDRV8 严格执行有限路线停止条件：仅当 A/B/C 都有 HOLDOUT 失败
 
 TGARV9 在不改写上述失败事实的前提下，将单帧 detector P/R/F1/AP 诊断、track 级确认、产品 actionable target 与实际清扫动作分层审计；任何 temporal/geometry 恢复都必须先通过全新 G9 真实 Gazebo HOLDOUT，生产输入仅限 RGB、depth、CameraInfo 与 TF，TargetTube 真值只进入独立 evaluator。T2/T3 的有界训练逐轮保留 checkpoint，并在训练结束后由统一选型器对全部 checkpoint 运行相同 G9 与三种冻结 temporal/geometry policy，禁止把 HOLDOUT 反馈写回训练。最终 wrong confirmed actionable 仍要求不高于 1%，错误或虚假目标清扫仍必须为零。
 
-T2 使用哈希绑定的 MMDetection v3.3.0 官方 DINO 4-scale R50 improved 权重，只有 G9 产品门通过后才允许执行 300–500 帧、batch=1、CUDA AMP 的 `>=5 Hz` 部署性预筛；预筛失败直接进入最后一条 T3，不得读取 `VAL_NEW`。
+T2 使用哈希绑定的 MMDetection v3.3.0 官方 DINO 4-scale R50 improved 权重；选型先满足全部 track-level 产品硬门，再以 detector AP50:95 作为次级优化量，并报告 `<18 / 18–32 / >32 px` 召回。只有 G9 产品门通过后才允许执行 300–500 帧、batch=1、CUDA AMP 的 `>=5 Hz` 部署性预筛；预筛失败直接进入最后一条 T3，不得读取 `VAL_NEW`。
 
 最终 evidence index 以 `RGDRV8_GA1_FAILURE_TAXONOMY.json` 作为 GA1 failure-forensics 主记录，并单独保留 confusion、score 和 size/domain 辅助矩阵；发布器在所有必需外部证据存在且三条路线状态确认为失败后才生成 final 目录。

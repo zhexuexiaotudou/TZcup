@@ -37,8 +37,11 @@ def sha256(path: Path) -> str:
 
 def rank(result: dict) -> tuple:
     metrics = result["selected_metrics"]
+    if result["pass"]:
+        # Once all product constraints pass, AP50:95 is the only optimizer.
+        return (1, result["detector_diagnostics"]["AP50_95"])
     return (
-        result["pass"],
+        0,
         min(metrics["eventual_correct_class_recall"], metrics["confirmed_actionable_precision"]),
         metrics["small_eventual_correct_class_recall"],
         -metrics["clean_opportunity_miss"],
@@ -57,6 +60,18 @@ def detector_diagnostics(coco_payload: dict, raw_frames: list[dict], score_thres
     predictions = []
     true_positive = false_positive = false_negative = wrong_class_match = 0
     per_class = {category_id: {"true_positive": 0, "false_positive": 0, "false_negative": 0} for category_id in category_ids}
+    size_recall = {
+        "lt_18px": {"matched": 0, "total": 0},
+        "18_to_32px": {"matched": 0, "total": 0},
+        "gt_32px": {"matched": 0, "total": 0},
+    }
+    def size_bin(annotation: dict) -> str:
+        short_side = min(float(annotation["bbox"][2]), float(annotation["bbox"][3]))
+        if short_side < 18.0:
+            return "lt_18px"
+        if short_side <= 32.0:
+            return "18_to_32px"
+        return "gt_32px"
     for frame in raw_frames:
         image_id = int(frame["image_id"])
         detections = sorted(frame["detections"], key=lambda row: float(row["score"]), reverse=True)
@@ -69,6 +84,8 @@ def detector_diagnostics(coco_payload: dict, raw_frames: list[dict], score_thres
                 "score": float(row["score"]),
             })
         ground_truth = annotations_by_image.get(image_id, [])
+        for annotation in ground_truth:
+            size_recall[size_bin(annotation)]["total"] += 1
         matched: set[int] = set()
         for row in (item for item in detections if float(item["score"]) >= score_threshold):
             predicted_category = int(row["label"]) + 1
@@ -84,6 +101,7 @@ def detector_diagnostics(coco_payload: dict, raw_frames: list[dict], score_thres
             if actual_category == predicted_category:
                 true_positive += 1
                 per_class[actual_category]["true_positive"] += 1
+                size_recall[size_bin(ground_truth[index])]["matched"] += 1
             else:
                 wrong_class_match += 1
                 false_positive += 1
@@ -119,6 +137,10 @@ def detector_diagnostics(coco_payload: dict, raw_frames: list[dict], score_thres
         "AP50_95": ap_50_95,
         "wrong_class_match_count": wrong_class_match,
         "per_class": per_class,
+        "size_recall": {
+            name: {**counts, "recall": counts["matched"] / max(counts["total"], 1)}
+            for name, counts in size_recall.items()
+        },
     }
 
 
