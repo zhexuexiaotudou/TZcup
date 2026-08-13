@@ -25,5 +25,5 @@ def test_identifiability_rejects_sealed_split_by_contract() -> None:
 
 def test_identifiability_qa_reports_effective_sample_counts() -> None:
     source = open(prep.__file__, encoding="utf-8").read()
-    for field in ("unique_exact_crops", "unique_phash_crops", "scene_seeds", "independence_unit"):
+    for field in ("unique_exact_crops", "unique_phash_crops", '"scene": scene.name', "scene_seeds", "independence_unit"):
         assert field in source

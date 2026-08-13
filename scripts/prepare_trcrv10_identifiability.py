@@ -125,6 +125,7 @@ def build_scene(scene: Path, split: str, output: Path) -> list[dict]:
                 "class_id": target["class_id"],
                 "view": view,
                 "world_id": manifest["world_id"],
+                "scene": scene.name,
                 "scene_seed": manifest["scene_seed"],
                 "frame_index": index,
                 "asset_id": target["asset_id"],
