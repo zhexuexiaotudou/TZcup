@@ -217,3 +217,19 @@ def test_motion_profile_is_frame_counted_and_fails_closed_when_exhausted():
     assert motion_command_for_frame(profile, 2, 0.35) == (0.65, 0.0, "approach")
     with pytest.raises(ValueError, match="does not cover"):
         motion_command_for_frame(profile, 5, 0.35)
+
+
+def test_latched_world_switch_preserves_safe_orbit_command():
+    profile = {
+        "control_mode": "latched_world_x_switch",
+        "switch_world_x_m": -0.5,
+        "straight_linear_x_mps": 0.2,
+        "orbit_linear_x_mps": 0.2,
+        "orbit_angular_z_rad_s": 0.35,
+    }
+    assert motion_command_for_frame(profile, 80, 0.2) == (
+        0.2, 0.0, "straight_candidate_drive_by"
+    )
+    assert motion_command_for_frame(
+        profile, 81, 0.2, world_switch_triggered=True
+    ) == (0.2, 0.35, "safe_orbit_after_candidate")

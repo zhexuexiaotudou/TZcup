@@ -12,8 +12,8 @@ $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $artifact = [System.IO.Path]::GetFullPath($ArtifactRoot)
 $domain = Join-Path $artifact 'g10\domain_route_v4'
 $runtime = Join-Path $artifact 'g10\runtime'
-$capture = Join-Path $artifact ("g10\route_v4\capture_{0}" -f $Split)
-$logRoot = Join-Path $artifact 'g10\route_v4\capture_logs'
+$capture = Join-Path $artifact ("g10\route_v5\capture_{0}" -f $Split)
+$logRoot = Join-Path $artifact 'g10\route_v5\capture_logs'
 New-Item -ItemType Directory -Force -Path $logRoot | Out-Null
 
 $config = if ($Split -eq 'train') {

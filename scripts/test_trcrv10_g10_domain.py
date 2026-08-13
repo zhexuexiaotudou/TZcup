@@ -39,6 +39,14 @@ def test_g10_drive_by_lanes_keep_physical_clearance() -> None:
     )
 
 
+def test_g10_route_orbits_before_transverse_wet_world_drain() -> None:
+    radius = 0.20 / g4_scene.G10_ORBIT_ANGULAR_SPEED_RAD_S
+    maximum_center_x = g4_scene.G10_ORBIT_SWITCH_WORLD_X_M + radius
+    drain_collision_front_x = 1.0 - 0.35 / 2.0
+    conservative_vehicle_x_extent = 0.45
+    assert maximum_center_x + conservative_vehicle_x_extent < drain_collision_front_x
+
+
 def test_g10_identifiability_grid_is_development_only() -> None:
     assert g4_scene.G10_DIAGNOSTIC_DISTANCES_M == (0.85, 0.95, 1.10, 1.30, 1.55, 1.90, 2.40, 3.00)
     source = Path(g4_scene.__file__).read_text(encoding="utf-8")

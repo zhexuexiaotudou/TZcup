@@ -144,10 +144,24 @@ def motion_command_for_frame(
     profile: dict | None,
     frame_index: int,
     default_linear_speed_mps: float,
+    *,
+    world_switch_triggered: bool = False,
 ) -> tuple[float, float, str]:
     """Resolve a deterministic frame-counted motion phase."""
     if not profile:
         return default_linear_speed_mps, 0.0, "straight_approach"
+    if profile.get("control_mode") == "latched_world_x_switch":
+        if world_switch_triggered:
+            return (
+                float(profile["orbit_linear_x_mps"]),
+                float(profile["orbit_angular_z_rad_s"]),
+                "safe_orbit_after_candidate",
+            )
+        return (
+            float(profile["straight_linear_x_mps"]),
+            0.0,
+            "straight_candidate_drive_by",
+        )
     offset = 0
     for phase in profile.get("phases", []):
         count = int(phase["frame_count"])
@@ -240,6 +254,7 @@ def main() -> None:
             self.dynamic_removal_events = []
             self.dynamic_insertion_events = []
             self.motion_enabled = False
+            self.world_switch_triggered = False
             self.vehicle_reset_applied = False
             self.vehicle_reset_started = None
             self.started = time.monotonic(); self.publisher = self.create_publisher(Twist, args.cmd_topic, 10)
@@ -258,10 +273,20 @@ def main() -> None:
         def tick(self):
             command = Twist()
             if self.motion_enabled and len(self.saved) < args.frame_count:
+                profile = scene.get("oprv3_motion_profile")
+                if (
+                    profile
+                    and profile.get("control_mode") == "latched_world_x_switch"
+                    and self.odom is not None
+                    and self.odom.pose.pose.position.x
+                    >= float(profile["switch_world_x_m"])
+                ):
+                    self.world_switch_triggered = True
                 linear, angular, _ = motion_command_for_frame(
-                    scene.get("oprv3_motion_profile"),
+                    profile,
                     len(self.saved),
                     args.linear_speed_mps,
+                    world_switch_triggered=self.world_switch_triggered,
                 )
                 command.linear.x = linear
                 command.angular.z = angular
@@ -430,7 +455,8 @@ def main() -> None:
                 raise RuntimeError("semantic labels are not repeated-channel IDs")
             paths = {"rgb": output/"rgb"/f"{stem}.png", "depth": output/"depth"/f"{stem}.npy", "semantic": output/"semantic"/f"{stem}.npy", "instance": output/"instance"/f"{stem}.npy", "camera": output/"camera"/f"{stem}.json", "tf": output/"tf"/f"{stem}.json", "capture": output/"capture"/f"{stem}.json"}
             linear, angular, phase = motion_command_for_frame(
-                scene.get("oprv3_motion_profile"), index, args.linear_speed_mps
+                scene.get("oprv3_motion_profile"), index, args.linear_speed_mps,
+                world_switch_triggered=self.world_switch_triggered,
             )
             record = {"frame_index": index, "timestamp_ns": stamp, "odom_timestamp_ns": odom_stamp, "sensor_odom_skew_ns": abs(odom_stamp - stamp), "vehicle_xy_m": list(pose[:2]), "vehicle_yaw_rad": float(pose[2]), "motion_phase": phase, "commanded_linear_x_mps": linear, "commanded_angular_z_rad_s": angular, "exact_four_sensor_timestamp": len({stamp_ns(msg) for msg in messages}) == 1, "paths": {key: str(path.relative_to(output)).replace("\\", "/") for key, path in paths.items()}, "rgb_sha256": None}
             camera = {"width": self.camera.width, "height": self.camera.height, "k": list(self.camera.k), "p": list(self.camera.p), "frame_id": self.camera.header.frame_id}

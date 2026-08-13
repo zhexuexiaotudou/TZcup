@@ -58,6 +58,8 @@ G10_TARGET_LATERAL_BY_CLASS_M = {
     "plastic_bottle": -0.57,
 }
 G10_DIAGNOSTIC_DISTANCES_M = (0.85, 0.95, 1.10, 1.30, 1.55, 1.90, 2.40, 3.00)
+G10_ORBIT_SWITCH_WORLD_X_M = -0.50
+G10_ORBIT_ANGULAR_SPEED_RAD_S = 0.35
 
 
 def g10_target_class(world_id: str, scene_index: int) -> str:
@@ -389,7 +391,22 @@ def randomize(
             "executed_by_capture": True,
         }
     vehicle_start_yaw_rad = 0.0
-    motion_profile = None
+    motion_profile = (
+        {
+            "name": "g10_safe_drive_by_then_orbit_v1",
+            "control_mode": "latched_world_x_switch",
+            "switch_world_x_m": G10_ORBIT_SWITCH_WORLD_X_M,
+            "straight_linear_x_mps": 0.20,
+            "orbit_linear_x_mps": 0.20,
+            "orbit_angular_z_rad_s": G10_ORBIT_ANGULAR_SPEED_RAD_S,
+            "route_contract": (
+                "pass the candidate on the straight approach, then latch a left "
+                "orbit before the wet-courtyard transverse drain"
+            ),
+        }
+        if g10_approach_sequence
+        else None
+    )
     coverage_requirements = {
         "behind_vehicle_fov_entry": False,
         "turning": False,
