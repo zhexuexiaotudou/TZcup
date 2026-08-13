@@ -27,6 +27,9 @@ for ($local = 0; $local -lt $config.Worlds; $local++) {
     $rosDomain = $config.Domain + $local
     $partition = "trcrv10_g10_{0}_{1}" -f $Split, $worldIndex
     $log = Join-Path $logRoot ("{0}_world_{1:D2}.log" -f $Split, $worldIndex)
+    # Wet-surface worlds can run below 0.08 RTF on the acceptance host.
+    # This is an infrastructure bound only: frame count, route, camera,
+    # motion gates, seeds, and all product acceptance semantics stay fixed.
     & (Join-Path $repo 'scripts\run_auto05r_g4_capture_docker.ps1') `
         -DataRoot $capture `
         -ResourceRoot $domain `
@@ -42,9 +45,6 @@ for ($local = 0; $local -lt $config.Worlds; $local++) {
         -NegativeSourceSplit $Split `
         -SceneSeedOffset $config.Seed `
         -CaptureFrameCount 125 `
-        # Wet-surface worlds can run below 0.08 RTF on the acceptance host.
-        # This is an infrastructure bound only: frame count, route, camera,
-        # motion gates, seeds, and all product acceptance semantics stay fixed.
         -CaptureTimeoutSeconds 1200 `
         -CaptureSpeedMps 0.20 `
         -CaptureMinTranslationM 0.02 `

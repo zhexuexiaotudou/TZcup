@@ -52,6 +52,8 @@ def test_g10_capture_orchestrator_denies_sealed_dev_val() -> None:
     assert "[ValidateSet('train', 'val')]" in source
     assert "'test'" not in source
     assert "-G10ApproachSequence" in source
+    assert "-CaptureFrameCount 125" in source
+    assert "-CaptureTimeoutSeconds 1200" in source
 
 
 def test_capture_wrapper_keeps_product_camera_defaults_and_allows_audited_diagnostic_override() -> None:
