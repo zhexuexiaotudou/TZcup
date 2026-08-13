@@ -42,7 +42,10 @@ for ($local = 0; $local -lt $config.Worlds; $local++) {
         -NegativeSourceSplit $Split `
         -SceneSeedOffset $config.Seed `
         -CaptureFrameCount 125 `
-        -CaptureTimeoutSeconds 600 `
+        # Wet-surface worlds can run below 0.08 RTF on the acceptance host.
+        # This is an infrastructure bound only: frame count, route, camera,
+        # motion gates, seeds, and all product acceptance semantics stay fixed.
+        -CaptureTimeoutSeconds 1200 `
         -CaptureSpeedMps 0.20 `
         -CaptureMinTranslationM 0.02 `
         -CaptureMaxAttempts 2 `

@@ -155,4 +155,6 @@ proposal operating point 只允许在 G10 HOLDOUT 上联合选择阈值与 2–5
 
 G10 长序列采集对每个 mission 要求完整 125 帧、传感器同步、真实运动和相邻帧位移门全部通过。若 Gazebo 长尾导致部分帧或运动门失败，原失败 report/log 必须单独封存；恢复仅可在相同 world/seed/asset/route 上使用新 ROS domain/partition 幂等重试，已通过 mission 跳过，失败或部分 mission 不计入配额。
 
+接受主机上的湿表面 world 实测低于 `0.08` RTF，因此 G10 runner 使用 1200 秒基础设施超时。该调整不改变 125 帧、相机、路线、world/seed/asset、速度或运动验收门；仍不允许把部分序列计入配额。
+
 最终 evidence index 以 `RGDRV8_GA1_FAILURE_TAXONOMY.json` 作为 GA1 failure-forensics 主记录，并单独保留 confusion、score 和 size/domain 辅助矩阵；发布器在所有必需外部证据存在且三条路线状态确认为失败后才生成 final 目录。
