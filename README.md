@@ -118,3 +118,5 @@ Route B verifier 从每类固定抽取 4000 个 unique TRAIN crops 并将 TRAIN/
 Route C 是有限 detector 恢复的最后路线：保留 Route B 已固定的 proposal 坐标与标签，使用产品可部署的 `square_crop(scale=6, minimum_side=64)` 增加地面上下文并强化同一个 MobileNetV3-Small verifier 的 hard-negative 能力；HOLDOUT 只用于冻结，VAL_NEW 在候选冻结前保持未读。
 
 Route C 的 contextual crop 必须回溯 Route A 的 `source_train.json`（`G8 TRAIN_NEW + legacy GA1 development`）和固定 `holdout.json`，以保持与 Route B proposal 的 image-id/source-pool 一致；不得把仅含 G8 的 `prepared_final_v2/fit.json` 误作完整 TRAIN_COMBINED 索引。
+
+RGDRV8 specialist 使用 G8 校准相机的固定 3×3 overlapping ground-mask tiles（原生 320×240、统一放大到 640×480）。G8 的远地面目标可投影至图像顶边，因此旧 G6 仅覆盖下 75% 的六块 ROI 不适用于 G8；九块 ROI 覆盖完整 640×480 cleanable image mask，且生产选区函数不接收 GT。

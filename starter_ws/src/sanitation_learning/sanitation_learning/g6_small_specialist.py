@@ -16,6 +16,25 @@ from .g6_dataset import load_jsonl
 TILE_INPUT_SIZE = (640, 480)
 
 
+def rgdrv8_ground_roi_tiles(
+    width: int = 640, height: int = 480
+) -> list[tuple[int, int, int, int]]:
+    """Nine fixed overlapping tiles for the RGDRV8 cleanable camera mask.
+
+    The G8 camera contract renders projected ground at every image row (far
+    ground reaches the top boundary).  Therefore the older G6 lower-75% mask
+    is not valid for G8.  This fixed, inference-time-only 3x3 tiling covers
+    the complete calibrated cleanable image mask without reading targets.
+    """
+    if (width, height) != (640, 480):
+        raise ValueError("RGDRV8 tile contract requires native 640x480 input")
+    return [
+        (x, y, x + 320, y + 240)
+        for y in (0, 120, 240)
+        for x in (0, 160, 320)
+    ]
+
+
 def ground_roi_tiles(width: int = 640, height: int = 480) -> list[tuple[int, int, int, int]]:
     """Six overlapping 320x240 native tiles over the lower 75% ground ROI."""
     if (width, height) != (640, 480):
@@ -322,5 +341,6 @@ __all__ = [
     "ground_roi_tiles",
     "load_g6_rows",
     "map_tile_box_to_native",
+    "rgdrv8_ground_roi_tiles",
     "small_specialist_collate",
 ]
