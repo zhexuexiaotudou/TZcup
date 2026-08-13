@@ -27,6 +27,7 @@ param(
     [ValidateRange(1, 8)]
     [int]$DetectorInstancesPerClass = 1,
     [switch]$G8AutoDomainMatrix,
+    [switch]$G10ApproachSequence,
     [ValidateRange(1, 10)]
     [int]$CaptureMaxAttempts = 3,
     [ValidateSet("", "turn_entry", "occlusion", "reflection", "dynamic_removal", "dynamic_insertion")]
@@ -108,6 +109,7 @@ docker run --rm --gpus all --shm-size 2g `
     -e AUTO05R_OPRV3_COVERAGE_PROFILE=$Oprv3CoverageProfile `
     -e AUTO05R_DETECTOR_INSTANCES_PER_CLASS=$DetectorInstancesPerClass `
     -e AUTO05R_G8_AUTO_DOMAIN_MATRIX=$([int]$G8AutoDomainMatrix.IsPresent) `
+    -e AUTO05R_G10_APPROACH_SEQUENCE=$([int]$G10ApproachSequence.IsPresent) `
     -e AUTO05R_RUNTIME_WS=$runtimeWorkspaceInContainer `
     @volumeArgs `
     $Image `

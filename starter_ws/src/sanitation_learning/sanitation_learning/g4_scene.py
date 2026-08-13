@@ -51,6 +51,18 @@ G8_TARGET_LATERAL_LANES_M = (
     -0.80, 0.80, -0.60, 0.60, -0.95, 0.95,
     -0.72, 0.72, -1.05, 1.05, -0.52, 0.52,
 )
+G10_TARGET_START_DISTANCE_M = 6.2
+G10_TARGET_LATERAL_BY_CLASS_M = {
+    "metal_can": -0.57,
+    "paper_litter": 0.66,
+    "plastic_bottle": -0.57,
+}
+
+
+def g10_target_class(world_id: str, scene_index: int) -> str:
+    """Balance one centered target per positive mission across each split."""
+    world_rotation = sum(world_id.encode("utf-8")) % len(G8_DISCRETE_CLASSES)
+    return G8_DISCRETE_CLASSES[(scene_index + world_rotation) % len(G8_DISCRETE_CLASSES)]
 
 
 def negative_only_rule(split: str, scene_index: int) -> bool:
@@ -173,6 +185,7 @@ def randomize(
     detector_instances_per_class: int = 1,
     detector_scene_cycle: int = SCENES_PER_WORLD,
     g8_auto_domain_matrix: bool = False,
+    g10_approach_sequence: bool = False,
 ) -> dict:
     """Build and persist one G4 scene plan (no capture is performed here)."""
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -203,7 +216,7 @@ def randomize(
     g8_mode = detector_instances_per_class > 1
     force_negative = force_negative_only or (
         g8_negative_only_rule(scene_index, detector_scene_cycle)
-        if g8_mode
+        if g8_mode or g10_approach_sequence
         else negative_only_rule(schedule_split, scene_index)
     )
     effective_coverage_profile = oprv3_coverage_profile
@@ -222,8 +235,11 @@ def randomize(
     selected = []
     if not force_negative:
         selected_by_class = {}
-        class_ids = G8_DISCRETE_CLASSES if g8_mode else sorted(
-            {item["class_id"] for item in assets}
+        class_ids = (
+            (g10_target_class(world_id, scene_index),)
+            if g10_approach_sequence
+            else G8_DISCRETE_CLASSES if g8_mode
+            else sorted({item["class_id"] for item in assets})
         )
         for class_id in class_ids:
             pool = [item for item in split_assets if item["class_id"] == class_id]
@@ -270,7 +286,10 @@ def randomize(
             # the downward camera footprint in at least two sampled frames.
             # Lateral separation avoids target-on-target masking and keeps all
             # physical target collision shapes outside the vehicle sweep.
-            if g8_mode:
+            if g10_approach_sequence:
+                distance = G10_TARGET_START_DISTANCE_M + rng.uniform(-0.03, 0.03)
+                lateral = G10_TARGET_LATERAL_BY_CLASS_M[item["class_id"]]
+            elif g8_mode:
                 lane = index % len(G8_TARGET_DISTANCE_LANES_M)
                 distance = G8_TARGET_DISTANCE_LANES_M[lane] + rng.uniform(-0.04, 0.04)
                 lateral = G8_TARGET_LATERAL_LANES_M[lane]
@@ -589,6 +608,21 @@ def randomize(
             "discrete_classes_only": g8_mode,
             "auto_domain_matrix": bool(g8_auto_domain_matrix),
         },
+        "trcrv10_g10_approach_sequence": {
+            "enabled": bool(g10_approach_sequence),
+            "target_classes": list(G8_DISCRETE_CLASSES),
+            "selected_target_class": (
+                None if force_negative else g10_target_class(world_id, scene_index)
+            ),
+            "targets_per_positive_mission": 1,
+            "target_start_distance_m": G10_TARGET_START_DISTANCE_M,
+            "target_lateral_by_class_m": dict(G10_TARGET_LATERAL_BY_CLASS_M),
+            "minimum_nominal_lateral_clearance_m": 0.16,
+            "sequence_contract": "one candidate per positive mission retains far_to_mid_to_close safe drive-by re-observation frames",
+            "unreachable_targets_must_be_retained": True,
+            "negative_only_schedule": "ceil(0.30 * scene_cycle)",
+            "gt_runtime_forbidden": True,
+        },
         "lighting_executed_by_world": world["lighting_family"],
         "ground_material_executed_by_world": world["material_id"],
         "distance_bucket_counts": distance_bucket_counts,
@@ -633,6 +667,7 @@ def main() -> None:
     parser.add_argument("--detector-instances-per-class", type=int, default=1)
     parser.add_argument("--detector-scene-cycle", type=int, default=SCENES_PER_WORLD)
     parser.add_argument("--g8-auto-domain-matrix", action="store_true")
+    parser.add_argument("--g10-approach-sequence", action="store_true")
     parser.add_argument(
         "--oprv3-coverage-profile",
         choices=("turn_entry", "occlusion", "reflection", "dynamic_removal", "dynamic_insertion"),
@@ -654,6 +689,7 @@ def main() -> None:
                 detector_instances_per_class=args.detector_instances_per_class,
                 detector_scene_cycle=args.detector_scene_cycle,
                 g8_auto_domain_matrix=args.g8_auto_domain_matrix,
+                g10_approach_sequence=args.g10_approach_sequence,
             ),
             indent=2,
         )

@@ -145,4 +145,6 @@ G10 资产域只修复可审计的仿真表达缺口：瓶体透明与瓶颈/瓶
 
 资产结构通过不等于视觉辨识门通过。G10 要求 cold-start positive Gazebo smoke 同时验证三类目标、RGB/depth/CameraInfo/TF/semantic/instance 同步和完整 world 资源闭包；该 smoke 只证明可渲染性，最终 `MIN_RELIABLE_CLASSIFICATION_SHORT_SIDE_PX` 仍必须由 world/seed 独立的 TRAIN_DIAG/HOLDOUT_DIAG 分类曲线确定。
 
+G10 approach 模式显式 opt-in，使用独立 `g10v1_*` world/asset 命名空间和 6/3/3 个 TRAIN/HOLDOUT/DEV-VAL 世界。每个正 mission 只包含一个约 6.2m 前方候选目标，can/paper/bottle 在各 split 的 mission 间均衡轮换；冻结 125 帧并采用 0.20m/s、0.02m 相邻帧位移门，通过保留至少 0.15m 名义物理净距的侧向驶过完成 far→mid→close 重观察。目标尺度与产品相机不变；未达到冻结可靠尺寸的目标必须标记 `unreachable-for-visual-confirmation`，不能删样本。默认 G4/G8 随机化行为不变，DEV-VAL 只在综合 HOLDOUT 通过并冻结完整链路后原子读取。
+
 最终 evidence index 以 `RGDRV8_GA1_FAILURE_TAXONOMY.json` 作为 GA1 failure-forensics 主记录，并单独保留 confusion、score 和 size/domain 辅助矩阵；发布器在所有必需外部证据存在且三条路线状态确认为失败后才生成 final 目录。
