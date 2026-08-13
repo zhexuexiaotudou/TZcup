@@ -133,10 +133,19 @@ def main() -> int:
     model.eval()
     with torch.no_grad():
         for images, labels, indexes in loader:
-            choices = model(images.to(device, non_blocking=True)).argmax(1).cpu()
+            probabilities = model(images.to(device, non_blocking=True)).softmax(1).cpu()
+            choices = probabilities.argmax(1)
             truth.extend(labels.tolist()); predicted.extend(choices.tolist())
-            evaluated.extend({**holdout_rows[int(index)], "truth": CLASSES[int(expected)], "predicted": CLASSES[int(actual)]}
-                             for index, expected, actual in zip(indexes, labels, choices))
+            evaluated.extend({
+                **holdout_rows[int(index)],
+                "truth": CLASSES[int(expected)],
+                "predicted": CLASSES[int(actual)],
+                "predicted_probability": float(probability[int(actual)]),
+                "class_probabilities": {
+                    class_id: float(probability[class_index])
+                    for class_index, class_id in enumerate(CLASSES)
+                },
+            } for index, expected, actual, probability in zip(indexes, labels, choices, probabilities))
     aggregate = classification_metrics(truth, predicted)
     breakdown = {}
     for field in ("world_id", "distance_bucket", "size_bucket", "occlusion_bucket"):
@@ -156,6 +165,7 @@ def main() -> int:
         "holdout_manifest_sha256": sha256(holdout_manifest), "checkpoint": str(checkpoint.resolve()),
         "checkpoint_sha256": sha256(checkpoint), "train_samples": len(train_rows), "holdout_samples": len(holdout_rows),
         "aggregate": aggregate, "breakdown": breakdown,
+        "evaluated_rows": evaluated,
         "CLOSE_RANGE_CLASSIFICATION_BLOCKED": not aggregate["pass"],
         "TRCRV10_CLOSE_RANGE_CLASSIFIER_PASS": aggregate["pass"],
         "G10_DEV_VAL_SEALED_read": False, "VAL_NEW_read": False, "G5_V2_read": False,

@@ -17,3 +17,5 @@ def test_holdout_is_runtime_proposal_only_and_sealed_safe() -> None:
     assert '"gt_role": "offline_label_assignment_only"' in source
     assert '"production_runtime_eligible": True' in source
     assert '"G10_DEV_VAL_SEALED_read": False' in source
+    assert '"proposal_index": proposal_index' in source
+    assert '"depth_valid_fraction"' in source

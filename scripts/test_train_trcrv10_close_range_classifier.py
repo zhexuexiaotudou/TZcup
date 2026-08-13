@@ -37,3 +37,5 @@ def test_sealed_boundaries_and_c1_first_are_explicit() -> None:
     assert '"G10_DEV_VAL_SEALED_read": False' in source
     assert '"VAL_NEW_read": False' in source
     assert '"G5_V2_read": False' in source
+    assert '"predicted_probability"' in source
+    assert '"evaluated_rows"' in source

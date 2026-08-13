@@ -92,9 +92,11 @@ def main() -> int:
                 rows.append({
                     "path": relative.as_posix(), "class_id": class_id, "view": view,
                     "scene": meta["scene"], "frame_index": meta["frame_index"], "world_id": meta["world_id"],
+                    "proposal_index": proposal_index,
                     "scene_seed": meta["scene_seed"], "source_split": "G10_HOLDOUT",
                     "source_bbox_xyxy": box, "proposal_score": proposal["score"], "size_bucket": size_bucket(short_side),
                     "distance_m": depth_m, "distance_bucket": distance_bucket(depth_m),
+                    "depth_valid_fraction": float(np.mean(np.isfinite(depth) & (depth > 0))),
                     "occlusion_bucket": "not_available_from_product_inputs",
                     "gt_role": "offline_label_assignment_only", "production_runtime_eligible": True,
                 })
