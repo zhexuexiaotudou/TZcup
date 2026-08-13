@@ -1,0 +1,19 @@
+from pathlib import Path
+
+import train_trcrv10_identifiability as train
+
+
+def test_only_protocol_bounded_models_and_views() -> None:
+    assert train.MODELS == ("convnext_tiny", "resnet18")
+    assert train.VIEWS == ("tight", "context")
+    source = Path(train.__file__).read_text(encoding="utf-8")
+    assert "ConvNeXt_Tiny_Weights.IMAGENET1K_V1" in source
+    assert "ResNet18_Weights.IMAGENET1K_V1" in source
+    assert "requires CUDA" in source
+
+
+def test_metrics_are_per_class_and_macro() -> None:
+    result = train.metrics([0, 0, 1, 1, 2, 2], [0, 1, 1, 1, 2, 0])
+    assert set(result) == {"macro_f1", "per_class", "confusion"}
+    assert set(result["per_class"]) == set(train.CLASSES)
+    assert result["confusion"] == [[1, 1, 0], [0, 2, 0], [1, 0, 1]]

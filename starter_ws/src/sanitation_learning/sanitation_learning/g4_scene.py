@@ -57,6 +57,7 @@ G10_TARGET_LATERAL_BY_CLASS_M = {
     "paper_litter": 0.66,
     "plastic_bottle": -0.57,
 }
+G10_DIAGNOSTIC_DISTANCES_M = (0.85, 0.95, 1.10, 1.30, 1.55, 1.90, 2.40, 3.00)
 
 
 def g10_target_class(world_id: str, scene_index: int) -> str:
@@ -186,6 +187,7 @@ def randomize(
     detector_scene_cycle: int = SCENES_PER_WORLD,
     g8_auto_domain_matrix: bool = False,
     g10_approach_sequence: bool = False,
+    g10_identifiability_diagnostic: bool = False,
 ) -> dict:
     """Build and persist one G4 scene plan (no capture is performed here)."""
     manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
@@ -214,11 +216,11 @@ def randomize(
     if detector_instances_per_class < 1:
         raise ValueError("detector_instances_per_class must be at least one")
     g8_mode = detector_instances_per_class > 1
-    force_negative = force_negative_only or (
+    force_negative = force_negative_only or (False if g10_identifiability_diagnostic else (
         g8_negative_only_rule(scene_index, detector_scene_cycle)
         if g8_mode or g10_approach_sequence
         else negative_only_rule(schedule_split, scene_index)
-    )
+    ))
     effective_coverage_profile = oprv3_coverage_profile
     if g8_auto_domain_matrix:
         if not g8_mode:
@@ -237,7 +239,7 @@ def randomize(
         selected_by_class = {}
         class_ids = (
             (g10_target_class(world_id, scene_index),)
-            if g10_approach_sequence
+            if g10_approach_sequence or g10_identifiability_diagnostic
             else G8_DISCRETE_CLASSES if g8_mode
             else sorted({item["class_id"] for item in assets})
         )
@@ -286,7 +288,12 @@ def randomize(
             # the downward camera footprint in at least two sampled frames.
             # Lateral separation avoids target-on-target masking and keeps all
             # physical target collision shapes outside the vehicle sweep.
-            if g10_approach_sequence:
+            if g10_identifiability_diagnostic:
+                distance = G10_DIAGNOSTIC_DISTANCES_M[
+                    scene_index % len(G10_DIAGNOSTIC_DISTANCES_M)
+                ] + rng.uniform(-0.015, 0.015)
+                lateral = 0.0
+            elif g10_approach_sequence:
                 distance = G10_TARGET_START_DISTANCE_M + rng.uniform(-0.03, 0.03)
                 lateral = G10_TARGET_LATERAL_BY_CLASS_M[item["class_id"]]
             elif g8_mode:
@@ -623,6 +630,19 @@ def randomize(
             "negative_only_schedule": "ceil(0.30 * scene_cycle)",
             "gt_runtime_forbidden": True,
         },
+        "trcrv10_identifiability_diagnostic": {
+            "enabled": bool(g10_identifiability_diagnostic),
+            "role": "development_GT_crop_upper_bound_only",
+            "production_runtime_eligible": False,
+            "target_classes": list(G8_DISCRETE_CLASSES),
+            "selected_target_class": (
+                None if force_negative else g10_target_class(world_id, scene_index)
+            ),
+            "targets_per_scene": 1,
+            "distance_grid_m": list(G10_DIAGNOSTIC_DISTANCES_M),
+            "GT_crop_allowed_offline_only": True,
+            "GT_runtime_forbidden": True,
+        },
         "lighting_executed_by_world": world["lighting_family"],
         "ground_material_executed_by_world": world["material_id"],
         "distance_bucket_counts": distance_bucket_counts,
@@ -668,6 +688,7 @@ def main() -> None:
     parser.add_argument("--detector-scene-cycle", type=int, default=SCENES_PER_WORLD)
     parser.add_argument("--g8-auto-domain-matrix", action="store_true")
     parser.add_argument("--g10-approach-sequence", action="store_true")
+    parser.add_argument("--g10-identifiability-diagnostic", action="store_true")
     parser.add_argument(
         "--oprv3-coverage-profile",
         choices=("turn_entry", "occlusion", "reflection", "dynamic_removal", "dynamic_insertion"),
@@ -690,6 +711,7 @@ def main() -> None:
                 detector_scene_cycle=args.detector_scene_cycle,
                 g8_auto_domain_matrix=args.g8_auto_domain_matrix,
                 g10_approach_sequence=args.g10_approach_sequence,
+                g10_identifiability_diagnostic=args.g10_identifiability_diagnostic,
             ),
             indent=2,
         )

@@ -39,6 +39,47 @@ def test_g10_drive_by_lanes_keep_physical_clearance() -> None:
     )
 
 
+def test_g10_identifiability_grid_is_development_only() -> None:
+    assert g4_scene.G10_DIAGNOSTIC_DISTANCES_M == (0.85, 0.95, 1.10, 1.30, 1.55, 1.90, 2.40, 3.00)
+    source = Path(g4_scene.__file__).read_text(encoding="utf-8")
+    assert '"production_runtime_eligible": False' in source
+    assert '"GT_crop_allowed_offline_only": True' in source
+    assert "--g10-identifiability-diagnostic" in source
+
+
+def test_g10_capture_orchestrator_denies_sealed_dev_val() -> None:
+    source = (Path(__file__).parent / "run_trcrv10_g10_capture.ps1").read_text(encoding="utf-8")
+    assert "[ValidateSet('train', 'val')]" in source
+    assert "'test'" not in source
+    assert "-G10ApproachSequence" in source
+
+
+def test_capture_wrapper_keeps_product_camera_defaults_and_allows_audited_diagnostic_override() -> None:
+    source = (Path(__file__).parent / "run_auto05r_g4_capture_docker.ps1").read_text(encoding="utf-8")
+    for contract in (
+        '[double]$CameraX = 0.36',
+        '[double]$CameraY = 0.0',
+        '[double]$CameraZ = 0.66',
+        '[double]$CameraPitchRad = 0.872664626',
+        'AUTO05R_CAMERA_PROFILE_ID=$CameraProfileId',
+    ):
+        assert contract in source
+
+
+def test_identifiability_capture_is_split_isolated_and_balanced() -> None:
+    source = (Path(__file__).parent / "run_trcrv10_identifiability_capture.ps1").read_text(encoding="utf-8")
+    assert "[ValidateSet('train_diag', 'holdout_diag')]" in source
+    assert "-ScenesPerWorld 24" in source
+    assert "-CaptureFrameCount 34" in source
+    assert "-G10IdentifiabilityDiagnostic" in source
+    assert "trcrv10_diag_v1_low_oblique_evaluator_only" in source
+    combinations = {
+        (scene % 8, g4_scene.g10_target_class("world_fixed", scene))
+        for scene in range(24)
+    }
+    assert len(combinations) == 24
+
+
 def test_g10_new_mode_is_opt_in_and_gt_forbidden_at_runtime() -> None:
     source = Path(g4_scene.__file__).read_text(encoding="utf-8")
     assert "g10_approach_sequence: bool = False" in source

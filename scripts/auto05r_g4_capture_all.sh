@@ -40,6 +40,7 @@ OPRV3_COVERAGE_PROFILE="${AUTO05R_OPRV3_COVERAGE_PROFILE:-}"
 DETECTOR_INSTANCES_PER_CLASS="${AUTO05R_DETECTOR_INSTANCES_PER_CLASS:-1}"
 G8_AUTO_DOMAIN_MATRIX="${AUTO05R_G8_AUTO_DOMAIN_MATRIX:-0}"
 G10_APPROACH_SEQUENCE="${AUTO05R_G10_APPROACH_SEQUENCE:-0}"
+G10_IDENTIFIABILITY_DIAGNOSTIC="${AUTO05R_G10_IDENTIFIABILITY_DIAGNOSTIC:-0}"
 if [[ "${CAPTURE_MAX_ATTEMPTS}" -lt 1 ]]; then
   echo "AUTO05R_CAPTURE_MAX_ATTEMPTS must be >= 1" >&2
   exit 2
@@ -231,6 +232,9 @@ capture_world() {
       fi
       if [[ "${G10_APPROACH_SEQUENCE}" == "1" ]]; then
         randomize_args+=(--g10-approach-sequence)
+      fi
+      if [[ "${G10_IDENTIFIABILITY_DIAGNOSTIC}" == "1" ]]; then
+        randomize_args+=(--g10-identifiability-diagnostic)
       fi
       ros2 run sanitation_learning auto05r_randomize_g4_scene \
         "${randomize_args[@]}" >"${out}/randomize.log"

@@ -6,6 +6,11 @@ param(
     [string]$RuntimeWorkspaceRoot = "",
     [string]$UpstreamRoot = "F:\Project\TZcup-coverage-docker-src\linorobot2",
     [string]$Image = "tzcup/sanitation-jazzy:stage5b",
+    [string]$CameraProfileId = "auto05r_v5_retracted_primary_perception_v1",
+    [double]$CameraX = 0.36,
+    [double]$CameraY = 0.0,
+    [double]$CameraZ = 0.66,
+    [double]$CameraPitchRad = 0.872664626,
     [int]$ScenesPerWorld = 25,
     [int]$MaxWorlds = 0,
     [int]$StartWorldIndex = 0,
@@ -28,6 +33,7 @@ param(
     [int]$DetectorInstancesPerClass = 1,
     [switch]$G8AutoDomainMatrix,
     [switch]$G10ApproachSequence,
+    [switch]$G10IdentifiabilityDiagnostic,
     [ValidateRange(1, 10)]
     [int]$CaptureMaxAttempts = 3,
     [ValidateSet("", "turn_entry", "occlusion", "reflection", "dynamic_removal", "dynamic_insertion")]
@@ -84,6 +90,11 @@ $runtimeWorkspaceInContainer = if ([string]::IsNullOrWhiteSpace($RuntimeWorkspac
 
 docker run --rm --gpus all --shm-size 2g `
     -e AUTO05R_DATA_ROOT=/data/g4_screening_native `
+    -e AUTO05R_CAMERA_PROFILE_ID=$CameraProfileId `
+    -e AUTO05R_CAMERA_X=$CameraX `
+    -e AUTO05R_CAMERA_Y=$CameraY `
+    -e AUTO05R_CAMERA_Z=$CameraZ `
+    -e AUTO05R_CAMERA_PITCH_RAD=$CameraPitchRad `
     -e AUTO05R_SCENES_PER_WORLD=$ScenesPerWorld `
     -e AUTO05R_MAX_WORLDS=$MaxWorlds `
     -e AUTO05R_START_WORLD_INDEX=$StartWorldIndex `
@@ -110,6 +121,7 @@ docker run --rm --gpus all --shm-size 2g `
     -e AUTO05R_DETECTOR_INSTANCES_PER_CLASS=$DetectorInstancesPerClass `
     -e AUTO05R_G8_AUTO_DOMAIN_MATRIX=$([int]$G8AutoDomainMatrix.IsPresent) `
     -e AUTO05R_G10_APPROACH_SEQUENCE=$([int]$G10ApproachSequence.IsPresent) `
+    -e AUTO05R_G10_IDENTIFIABILITY_DIAGNOSTIC=$([int]$G10IdentifiabilityDiagnostic.IsPresent) `
     -e AUTO05R_RUNTIME_WS=$runtimeWorkspaceInContainer `
     @volumeArgs `
     $Image `
