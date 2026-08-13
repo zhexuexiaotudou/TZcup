@@ -81,3 +81,20 @@ def test_checkpoint_selector_is_bounded_and_keeps_val_unread() -> None:
     assert '"AP50"' in source
     assert '"AP50_95"' in source
     assert '"detector_diagnostics"' in source
+
+
+def test_deployability_prescreen_is_holdout_gated_and_bounded() -> None:
+    source = (Path(__file__).resolve().parent / "benchmark_tgarv9_detector.py").read_text(encoding="utf-8")
+    assert "deployability pre-screen is forbidden before HOLDOUT pass" in source
+    assert "300 <= args.frame_count <= 500" in source
+    assert '"minimum_effective_hz": 5.0' in source
+    assert "torch.inference_mode()" in source
+    assert "torch.autocast" in source
+
+
+def test_t2_provenance_is_hash_bound_and_sealed_data_unread() -> None:
+    source = (Path(__file__).resolve().parent / "record_tgarv9_t2_provenance.py").read_text(encoding="utf-8")
+    assert "official checkpoint SHA-256 mismatch" in source
+    assert '"license": "Apache-2.0"' in source
+    assert '"VAL_NEW_read": False' in source
+    assert '"G5_V2_read": False' in source
