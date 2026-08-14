@@ -1,7 +1,7 @@
 import numpy as np
 
 from build_crcrv11_c11_dataset import (
-    clip_crop, development_partition, ground_taxonomy, phash, proposal_label,
+    assign_development_partitions, clip_crop, ground_taxonomy, phash, proposal_label,
 )
 
 
@@ -15,7 +15,18 @@ def test_proposal_label_separates_ambiguous_near_miss():
 def test_ground_taxonomy_is_world_deterministic():
     assert ground_taxonomy("g10_wet_courtyard", 0) == "wet_specular_highlight"
     assert ground_taxonomy("g10_asphalt", 1) == "seam_crack"
-    assert development_partition("g10v15_train_w06_06_tiled_plaza") == "dev"
+
+
+def test_development_partition_is_whole_mission_and_class_complete():
+    pairs = []
+    for class_id in ("plastic_bottle", "metal_can", "paper_litter", "background_or_unknown"):
+        for mission in range(5):
+            pairs.append({"class": class_id, "source_mission": f"{class_id}_{mission}"})
+    selected = assign_development_partitions(pairs)
+    assert selected
+    for class_id in ("plastic_bottle", "metal_can", "paper_litter", "background_or_unknown"):
+        assert any(row["class"] == class_id and row["development_partition"] == "dev" for row in pairs)
+        assert any(row["class"] == class_id and row["development_partition"] == "fit" for row in pairs)
 
 
 def test_phash_and_crop_are_deterministic():

@@ -84,8 +84,26 @@ def ground_taxonomy(world_id: str, slot: int) -> str:
     return ("seam_crack", "shadow")[slot]
 
 
-def development_partition(world_id: str) -> str:
-    return "dev" if "_w06_" in world_id else "fit"
+def assign_development_partitions(pairs: list[dict], fraction: float = .20) -> list[str]:
+    """Select whole missions per class, keeping every source frame in one partition."""
+    missions_by_class: dict[str, set[str]] = defaultdict(set)
+    by_mission: dict[str, list[dict]] = defaultdict(list)
+    for row in pairs:
+        by_mission[row["source_mission"]].append(row)
+    for mission, rows in by_mission.items():
+        for class_id in {row["class"] for row in rows}:
+            missions_by_class[class_id].add(mission)
+    selected: set[str] = set()
+    for class_id in CLASSES:
+        missions = sorted(
+            missions_by_class[class_id],
+            key=lambda mission: hashlib.sha256(f"CRCRV11:{class_id}:{mission}".encode()).hexdigest(),
+        )
+        count = max(1, int(np.ceil(len(missions) * fraction)))
+        selected.update(missions[:count])
+    for row in pairs:
+        row["development_partition"] = "dev" if row["source_mission"] in selected else "fit"
+    return sorted(selected)
 
 
 def build_index(coco: dict) -> tuple[dict[int, dict], dict[int, list[dict]]]:
@@ -191,7 +209,7 @@ def build_split(coco: dict, raw: dict, output: Path, split: str, threshold: floa
             pair, _ = make_pair(
                 output, split, pair_id, class_id, taxonomy, image, box, meta, score,
                 best_iou, depth_meta, source_kind,
-                development_partition(meta["world_id"]) if split == "G10_TRAIN" else "formal_holdout",
+                "unassigned" if split == "G10_TRAIN" else "formal_holdout",
             )
             pairs.append(pair)
         if include_train_bank and meta.get("negative_only"):
@@ -203,7 +221,7 @@ def build_split(coco: dict, raw: dict, output: Path, split: str, threshold: floa
                 pair, _ = make_pair(
                     output, split, pair_id, CLASSES[-1], ground_taxonomy(meta["world_id"], slot),
                     image, box, meta, None, 0.0, depth_meta, "negative_only_ground_control",
-                    development_partition(meta["world_id"]),
+                    "unassigned",
                 )
                 pairs.append(pair)
     return pairs, ambiguous
@@ -252,6 +270,7 @@ def main() -> int:
         holdout_coco, load_json(args.holdout_raw), args.output, "G10_HOLDOUT", args.threshold,
         args.min_reliable_short_side, mappings, False,
     )
+    dev_missions = assign_development_partitions(train_pairs)
     train_worlds = {row["source_world"] for row in train_pairs}
     holdout_worlds = {row["source_world"] for row in holdout_pairs}
     train_frames = {(row["source_mission"], row["source_frame_index"]) for row in train_pairs}
@@ -292,7 +311,9 @@ def main() -> int:
     write_json(args.output / "C11_DATA_QA.json", {
         **common, "stage": "CRCRV11-03-C11-DATA-QA", "gates": qa_gates,
         "duplicate_audit": duplicates, "train_worlds": sorted(train_worlds),
-        "holdout_worlds": sorted(holdout_worlds), "C11_DATA_PASS": c11_pass,
+        "holdout_worlds": sorted(holdout_worlds),
+        "development_split_policy": "deterministic whole-mission stratified 20 percent per class",
+        "development_missions": dev_missions, "C11_DATA_PASS": c11_pass,
     })
     write_json(args.output / "C11_CLASS_COUNTS.json", {
         **common, "stage": "CRCRV11-03-C11-CLASS-COUNTS",
@@ -312,6 +333,7 @@ def main() -> int:
         "train_pairs": len(train_pairs), "holdout_pairs": len(holdout_pairs),
         "train_ambiguous_ignored": len(train_ambiguous), "holdout_ambiguous_ignored": len(holdout_ambiguous),
         "train_unique_source_frames": len(train_frames), "holdout_unique_source_frames": len(holdout_frames),
+        "development_missions": dev_missions,
         "train_manifest_sources": {"coco_sha256": sha256(args.train_coco), "raw_sha256": sha256(args.train_raw)},
         "holdout_manifest_sources": {"coco_sha256": sha256(args.holdout_coco), "raw_sha256": sha256(args.holdout_raw)},
     })
