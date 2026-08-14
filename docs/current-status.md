@@ -23,17 +23,13 @@
 
 ## 当前感知结论
 
-Detector Data Recovery V4 的 G7 静态候选达到 recall/precision `0.9778/0.9778`，但运动相机兼容回归的 eventual recall 为 `0.3898`，metal recall 为 `0.1053`，产品地图 precision 为 `0.2111`。性能回放达到 `9.9974 Hz`、P95 `155.83 ms`、掉帧率 `0`，仍未满足严格 `>=10 Hz` 门。
+TRCRV10 已证明三类近距目标在短边 `>=18 px` 时可辨识，并冻结 T3 Grounding-DINO proposal operating point：threshold `0.37`、2 帧 persistence、eventual/small proposal recall 均为 `1.0`、FP/frame `0.00926`。这不等于产品四分类通过；V10 ConvNeXt-Tiny targeted recovery 的 macro-F1 只有 `0.6318`，background specificity 只有 `0.0833`。
 
-ODCV5-00 对同一 24 mission 回放建立了严格单调的在线损失阶梯。60 个离散 GT 全部进入视野，59 个进入 actionable window；随后 observation/action-threshold/correct-class 只剩 `52/23/10`。10 个 correct-class 且 depth-valid 的目标中，只有 3 个能与同类 product-map target 审计关联。当前首要损失是 detector score 与类别，projection 到 map 仍有复合损失；旧格式缺逐目标 scheduler attribution，也不能把 projection、tracker、map 三者独立归因。
+CRCRV11 的冻结审计确认 proposal crop 不是主要退化来源：GT tight 到 proposal tight 的 macro-F1 只下降 `0.0064`，context 反而提高 `0.0058`。真正的数据合同缺口是 TRAIN 只有 9 个 unique background crop、replacement sampler 期望重复约 `186.64` 次，且 runtime-faithful positive view 只占 `40%`。100 个 source→PNG→torchvision 样本全部通过像素与 RGB 通道一致性；V10 HOLDOUT context manifest 另有记录 proposal box 而非实际 1.6x context box 的元数据缺陷。
 
-细粒度根因决策将直接可证的损失归因为 `DETECTOR_SCORE_LOW=29`、`DETECTOR_WRONG_CLASS=13` 和 `OUTSIDE_ACTIONABLE_WINDOW=1`。7 个 observation miss 因旧报告未保留完整 proposal 列表而不能在 `DETECTOR_NO_PROPOSAL` 与 `DETECTOR_BOX_IOU_FAIL` 间伪拆；7 个 projection-to-map 复合 miss 和 3 个 scheduler 决策同样保持 legacy trace gap。
+C11 只用 G10_TRAIN 重建 matched proposal tight/context positive、真实 FP、0.05–0.37 hard negatives 和 negative-only 固定地面 ROI，得到 7,491 个 TRAIN candidate pairs、6,576 个 unique background tight crop；与 298 个 HOLDOUT pairs 的 world、source frame、exact crop 和 pHash 交叉均为 0。R1 将 background specificity 恢复到 `1.0`，但 target macro-F1 只有 `0.5397`；R2 combined macro-F1 为 `0.6311`、background specificity `0.6333`；有 22.76% tight/context 互补证据的 R3 macro-F1 仍只有 `0.4561`。
 
-CRV6 已完成历史 D1-B 最终恢复审计，精确 SHA-256 `481374d4...a361` 仍不可恢复；历史通过事实不改写。R1 以已审计初始化重构出 hash-new candidate `0d6f4e83...aa8d`，static historical regression、150-frame P0/P1/P2 parity 均通过。原生 G7-MOVING gate 失败后，仅执行授权的 MA1；MA1 checkpoint `7e823494...0b9f3` 在 HOLDOUT 选阈值 `0.21`，独立 MOVING VAL 的 eventual/correct/per-class/small/precision 均为 `1.0`，wrong 与 negative 均为 `0`，AP50/AP50:95 为 `0.9988/0.9929`。
-
-ODCV5-02 已建立独立的 G7-MOVING 开发包：`MOVING_TRAIN/HOLDOUT/VAL=30/10/15` missions、990 帧，完整保存同步 RGB-D、CameraInfo、timestamp、vehicle pose/TF 与 evaluator-only semantic/instance GT。world/seed split 交叉、RGB exact 重复和跨 split pHash 重复均为 0，规定覆盖在三个 split 中完整。TRAIN 每类 58 个、VAL 每类 28 个 actionable encounter，VAL 每类 14 个 first-visible `<18 px` encounter；`required_coverage_complete=true`、`G7_MOVING_PASS=true`。
-
-MA1 随后在现存物理一致的真实 Gazebo 24-mission/2160-frame 开发回放上执行 RGB-D→projection→tracker→DynamicTrashMap→scheduler。Projection 误差门通过（median `0.0278 m`、P95 `0.0350 m`、map RMSE `0.0732 m`），但真实 Gazebo 离散 eventual correct-class recall 仅 `0.1356`，离散 map precision/coverage 为 `0.6667/0.0333`；behind-FOV、turn、occlusion、reflection coverage 也不完整。现有 G6 Area 的 mIoU `0.9502`，但 boundary F1 `0.7672 < 0.80`，negative actionable FP/frame `0.02051 > 0.02`。因此 CRV6-07 fail-closed，`MODEL_BLOCKED_INTERNAL=true`；freeze、G5_V2、30-seed、Spot Cleaning、soak、release、J6 student 和 field evaluation 未解锁。
+因此 R1/R2/R3 已按唯一授权路线全部失败，当前停止条件为 B：`CLOSE_RANGE_CLASSIFIER_CONTRACT_BLOCKED=true`、`MODEL_BLOCKED_INTERNAL=true`、`SIMULATION_PRODUCT_COMPLETE=false`。ActionVerifier、integrated HOLDOUT、`G10_DEV_VAL_SEALED`、`VAL_NEW`、Tracker/Map、在线仿真、性能、x86 Freeze、`G5_V2`、30-seed、Spot Cleaning、soak、MCAP replay 和 release 均未执行；禁止追加 R4、重开 detector 搜索或降低安全门。
 
 ## 权威入口
 

@@ -1,0 +1,9 @@
+# Close-Range Classifier Contract Recovery V11
+
+CRCRV11 preserves every RGDRV8, TGARV9, and TRCRV10 failure and keeps `G10_DEV_VAL_SEALED`, `VAL_NEW`, `G5_V2`, and formal 30-seed data unread. It tests only three bounded classifier routes after the frozen T3 Grounding-DINO proposal gate.
+
+The forensic contract distinguishes target identifiability from product classification. It audits unique crops and source frames, replacement-sampler exposure, background labels, crop geometry, pixel/channel parity, per-view behavior, and candidate-level tight/context fusion. A C11 dataset may use only G10_TRAIN for development: matched proposal tight/context positives, unmatched proposals, score-band hard negatives, and fixed negative-only ground controls. Ambiguous proposals with `0.20 <= IoU < 0.50` are ignored rather than labeled pure background.
+
+The observed V10 root cause is not proposal geometry: GT-to-proposal macro-F1 degradation is near zero. V10 had only nine unique TRAIN background crops, an expected replacement-sampler repeat factor of about 186.64, and only 40% runtime-faithful positive views. Frozen background controls failed catastrophically while 100 sampled crop round trips passed pixel and RGB channel parity. C11 rebuilt 6,576 unique background tight crops with zero cross-split exact or pHash overlap.
+
+R1 restored HOLDOUT background specificity to 1.0 but did not recover target classes. R2's binary and three-class stages both missed their hard gates. R3 was authorized by 22.76% tight/context complementary correctness, but its shared ConvNeXt-Tiny fusion also failed. Therefore the protocol stops at condition B: no classifier route is selected, `CLOSE_RANGE_CLASSIFIER_CONTRACT_BLOCKED=true`, `MODEL_BLOCKED_INTERNAL=true`, and all verifier, sealed, online, performance, freeze, cleaning, soak, replay, and release stages remain dependency-blocked.
