@@ -16,6 +16,12 @@ import numpy as np
 CLASSES = ("plastic_bottle", "metal_can", "paper_litter", "background_or_unknown")
 PRIMARY_MODEL = "convnext_tiny"
 CONTROL_MODEL = "mobilenet_v3_large"
+TARGETED_RECOVERY = {
+    "reason": "TRAIN-to-HOLDOUT target color correlation and background overconfidence",
+    "color_jitter": {"brightness": .35, "contrast": .35, "saturation": .45, "hue": .12},
+    "random_grayscale_probability": .35,
+    "label_smoothing": .08,
+}
 
 
 def sha256(path: Path) -> str:
@@ -96,7 +102,11 @@ def main() -> int:
             self.root, self.rows = root, rows
             ops = [v2.ToDtype(torch.float32, scale=True), v2.Resize((224, 224), antialias=True)]
             if train:
-                ops.extend([v2.RandomHorizontalFlip(), v2.ColorJitter(brightness=.12, contrast=.12, saturation=.08)])
+                ops.extend([
+                    v2.RandomHorizontalFlip(),
+                    v2.ColorJitter(**TARGETED_RECOVERY["color_jitter"]),
+                    v2.RandomGrayscale(p=TARGETED_RECOVERY["random_grayscale_probability"]),
+                ])
             ops.append(v2.Normalize(mean=(.485, .456, .406), std=(.229, .224, .225)))
             self.transform = v2.Compose(ops)
         def __len__(self): return len(self.rows)
@@ -120,7 +130,7 @@ def main() -> int:
     train_loader = DataLoader(Crops(args.train, train_rows, True), batch_size=args.batch_size, sampler=sampler,
                               num_workers=4, pin_memory=True)
     optimizer = torch.optim.AdamW(model.parameters(), lr=2e-4, weight_decay=1e-4)
-    loss_fn = nn.CrossEntropyLoss()
+    loss_fn = nn.CrossEntropyLoss(label_smoothing=TARGETED_RECOVERY["label_smoothing"])
     for _ in range(args.epochs):
         model.train()
         for images, labels, _ in train_loader:
@@ -164,6 +174,7 @@ def main() -> int:
         "model": args.model, "official_weights": str(weights), "train_manifest_sha256": sha256(train_manifest),
         "holdout_manifest_sha256": sha256(holdout_manifest), "checkpoint": str(checkpoint.resolve()),
         "checkpoint_sha256": sha256(checkpoint), "train_samples": len(train_rows), "holdout_samples": len(holdout_rows),
+        "targeted_recovery": TARGETED_RECOVERY,
         "aggregate": aggregate, "breakdown": breakdown,
         "evaluated_rows": evaluated,
         "CLOSE_RANGE_CLASSIFICATION_BLOCKED": not aggregate["pass"],

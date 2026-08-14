@@ -153,6 +153,8 @@ TRCRV10 proposal 候选严格限于已经完成训练的 RGDRV8 Route A、GA1 �
 
 proposal operating point 只允许在 G10 HOLDOUT 上联合选择阈值与 2–5 帧连续持久性：先满足 eventual proposal recall `>=0.98`、small eventual proposal recall `>=0.95` 和 proposal FP/frame `<=1.0` 三个硬门，再最小化 FP/frame；若没有候选通过，必须保留失败状态而不是冻结最优失败候选。`G10_DEV_VAL_SEALED`、`VAL_NEW` 与 `G5_V2` 在完整 integrated HOLDOUT 通过前继续保持未读。
 
+C1 首次产品 crop 训练在 HOLDOUT 暴露明确的颜色捷径：TRAIN bottle/can 的材质颜色与 HOLDOUT 变化相关，且仅 9 个 TRAIN proposal false positives 使背景输出过度自信。协议唯一一次 targeted recovery 保持 ConvNeXt-Tiny、数据边界、12 epochs 与 proposal operating point 不变，只增强颜色不变性并加入轻量 label smoothing；不得借此读取 HOLDOUT 训练、扩展模型搜索或挖掘 sealed negatives。
+
 G10 长序列采集对每个 mission 要求完整 125 帧、传感器同步、真实运动和相邻帧位移门全部通过。若 Gazebo 长尾导致部分帧或运动门失败，原失败 report/log 必须单独封存；恢复仅可在相同 world/seed/asset/route 上使用新 ROS domain/partition 幂等重试，已通过 mission 跳过，失败或部分 mission 不计入配额。
 
 接受主机上的湿表面 world 实测低于 `0.08` RTF，因此 G10 runner 使用 1200 秒基础设施超时。route-v4 暴露湿地排水碰撞体；route-v5 的既有正样本全部跨越 `<18 → 18-32 → 32-64`，峰值 41–94px，但其采集发生在可靠尺寸冻结前，因此只作为后续设计证据、不直接混入最终配额。route-v6 将序列扩展至 150 帧但 can 峰值仍仅 58px。route-v7 的离散原地转向受切相延迟影响，峰值仅 51px；route-v8 首个正式 can 正样本峰值只有 28px。route-v9 连续曲率缓弧在距 can 中心约 0.61m 处物理停滞。route-v10 首世界三类全过，但 `scene_30012` paper 首次可见已为 18px、缺失 `<18` 档，故在 16/48 处停止。route-v11 增距 smoke 揭示 route namespace 会改变类别，因此在 1 个样本后停止。route-v12 冻结稳定类别映射并增距到 6.7m，can/paper 均获得远距档，但 125 帧峰值仅 20px。route-v13 延长到 150 帧后边界 smoke 通过，正式第二世界的 `scene_30012` can 又从图像上边缘以 18px 首次进入，故在 16/48 处停止。route-v14 固定蛇形扫描产生约 1.51m 横向漂移且无完整报告，故有界停止。route-v15 将起距调到7.1m并以180帧补足近距行程；TRAIN 48/48 全部通过，但 HOLDOUT world8 的持续圆弧在 north curb 下缘重复停滞，world9 的持续旋转又在 scene40052 扫回已驶过的 bottle，故为这两个静态 layout 冻结同一有限浅弧离场。route-v4 至各恢复尝试的证据永久保留。

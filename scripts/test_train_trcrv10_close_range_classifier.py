@@ -39,3 +39,10 @@ def test_sealed_boundaries_and_c1_first_are_explicit() -> None:
     assert '"G5_V2_read": False' in source
     assert '"predicted_probability"' in source
     assert '"evaluated_rows"' in source
+
+
+def test_single_targeted_recovery_attacks_color_shortcut_and_overconfidence() -> None:
+    recovery = classifier.TARGETED_RECOVERY
+    assert recovery["random_grayscale_probability"] > 0
+    assert recovery["color_jitter"]["hue"] > 0
+    assert recovery["label_smoothing"] > 0
