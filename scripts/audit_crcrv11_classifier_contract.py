@@ -56,6 +56,14 @@ def intersection_area(first: list[float], second: list[float]) -> float:
     )
 
 
+def expand(box: list[float], scale: float = 1.6) -> list[float]:
+    x1, y1, x2, y2 = box
+    cx, cy = (x1 + x2) / 2.0, (y1 + y2) / 2.0
+    half_width = (x2 - x1) * scale / 2.0
+    half_height = (y2 - y1) * scale / 2.0
+    return [cx - half_width, cy - half_height, cx + half_width, cy + half_height]
+
+
 def candidate_key(row: dict) -> str:
     stem = Path(row["path"]).stem
     suffix = stem.rsplit("_", 1)[-1]
@@ -209,6 +217,7 @@ def pixel_parity(train_rows: list[dict], holdout_rows: list[dict], train_root: P
         raise ValueError(f"pixel parity needs {sample_count} rows, found {len(candidates)}")
     failures = []
     channel_checks = 0
+    derived_holdout_context_boxes = 0
     for split, row, root in candidates[:sample_count]:
         source_path = remap_path(source_lookup[(split, row["scene"], int(row["frame_index"]))], mappings)
         crop_path = root / row["path"]
@@ -218,7 +227,14 @@ def pixel_parity(train_rows: list[dict], holdout_rows: list[dict], train_root: P
             failures.append({"path": row["path"], "reason": "unreadable_source_or_crop"})
             continue
         height, width = source.shape[:2]
-        x1, y1, x2, y2 = row["source_bbox_xyxy"]
+        crop_box = row["source_bbox_xyxy"]
+        # V10 HOLDOUT stores the proposal box in both tight and context rows even
+        # though the context PNG is generated from expand(proposal_box, 1.6).
+        # Derive the actual writer geometry here and report the metadata defect.
+        if split == "G10_HOLDOUT" and row["view"] == "context":
+            crop_box = expand(crop_box)
+            derived_holdout_context_boxes += 1
+        x1, y1, x2, y2 = crop_box
         x1 = max(0, min(width - 1, int(round(x1))))
         y1 = max(0, min(height - 1, int(round(y1))))
         x2 = max(1, min(width, int(round(x2))))
@@ -236,6 +252,11 @@ def pixel_parity(train_rows: list[dict], holdout_rows: list[dict], train_root: P
     return {
         "requested_samples": sample_count, "evaluated_samples": sample_count,
         "torchvision_available": torchvision_available, "torchvision_channel_checks": channel_checks,
+        "derived_holdout_context_boxes": derived_holdout_context_boxes,
+        "manifest_context_geometry_defect": derived_holdout_context_boxes > 0,
+        "manifest_context_geometry_note": (
+            "V10 HOLDOUT context rows store proposal source_bbox_xyxy; parity derives the actual 1.6x writer box."
+        ),
         "failure_count": len(failures), "failures": failures[:20],
         "pass": torchvision_available and channel_checks == sample_count and not failures,
     }

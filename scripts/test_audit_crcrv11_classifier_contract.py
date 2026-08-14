@@ -1,5 +1,5 @@
 from audit_crcrv11_classifier_contract import (
-    area, candidate_key, describe, expected_sampler_stats, intersection_area, remap_path,
+    area, candidate_key, describe, expand, expected_sampler_stats, intersection_area, remap_path,
 )
 from pathlib import Path
 
@@ -8,6 +8,7 @@ def test_geometry_helpers():
     assert area([0, 0, 10, 5]) == 50
     assert intersection_area([0, 0, 10, 10], [5, 5, 20, 20]) == 25
     assert describe([1, 2, 3])["p50"] == 2
+    assert expand([0, 0, 10, 10]) == [-3.0, -3.0, 13.0, 13.0]
 
 
 def test_candidate_key_pairs_tight_and_context():
