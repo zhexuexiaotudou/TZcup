@@ -175,7 +175,10 @@ def main() -> int:
                             num_workers=4, pin_memory=True, persistent_workers=True)
         labels = [int(row["class"] != CLASSES[-1]) if stage == "binary" else TARGETS.index(row["class"]) for row in fit_rows]
         counts = Counter(labels); maximum = max(counts.values())
-        class_weights = torch.tensor([np.sqrt(maximum / counts[index]) for index in range(outputs)], device="cuda")
+        class_weights = torch.tensor(
+            [np.sqrt(maximum / counts[index]) for index in range(outputs)],
+            dtype=torch.float32, device="cuda",
+        )
         optimizer = torch.optim.AdamW(model.parameters(), lr=2e-4, weight_decay=1e-4)
         loss_fn = nn.CrossEntropyLoss(weight=class_weights)
         scaler = torch.cuda.amp.GradScaler(enabled=True)

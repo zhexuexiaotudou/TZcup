@@ -1,4 +1,6 @@
 from train_crcrv11_r2 import binary_metrics, select_binary_threshold, target_metrics
+import ast
+from pathlib import Path
 
 
 def test_binary_gate_requires_both_recall_and_specificity():
@@ -17,3 +19,9 @@ def test_threshold_selection_is_dev_only_deterministic():
 def test_three_class_gate():
     result = target_metrics([0, 1, 2], [0, 1, 2])
     assert result["pass"] is True
+
+
+def test_training_source_pins_loss_weights_to_float32():
+    source = Path(__file__).with_name("train_crcrv11_r2.py").read_text(encoding="utf-8")
+    ast.parse(source)
+    assert "dtype=torch.float32" in source
