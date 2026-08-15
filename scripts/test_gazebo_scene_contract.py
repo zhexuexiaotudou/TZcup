@@ -3,6 +3,8 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 WORLD = (
@@ -185,6 +187,15 @@ def test_multiscale_worlds_have_exact_dimensions_and_realistic_furniture() -> No
         ground = _model(world, "asphalt_ground")
         size = tuple(map(float, _text(ground, "./link/collision/geometry/box/size").split()))
         assert size[:2] == dimensions
+        for sidewalk_name in ("north_sidewalk", "south_sidewalk"):
+            sidewalk = _model(world, sidewalk_name)
+            sidewalk_pose = tuple(map(float, _text(sidewalk, "./pose").split()))
+            sidewalk_size = tuple(
+                map(float, _text(sidewalk, "./link/visual/geometry/box/size").split())
+            )
+            assert not sidewalk.findall(".//collision")
+            assert sidewalk_size[2] == pytest.approx(0.002)
+            assert sidewalk_pose[2] + sidewalk_size[2] / 2.0 <= 0.002
         names = {model.get("name") for model in world.findall("model")}
         assert {
             "north_sidewalk",

@@ -75,7 +75,7 @@ controller_server:
     failure_tolerance: 5.0
     progress_checker_plugins: [progress_checker]
     goal_checker_plugins: [goal_checker, frontier_goal_checker, cusp_goal_checker, primitive_goal_checker, connector_goal_checker, swath_exit_goal_checker]
-    controller_plugins: [FollowPath, FrontierPath, DubinsPath, ReversePath, CleanPath, RepairPath]
+    controller_plugins: [FollowPath, FrontierPath, DubinsPath, ReversePath, ConnectorPath, CleanPath, RepairPath]
     progress_checker:
       plugin: nav2_controller::PoseProgressChecker
       required_movement_radius: 0.10
@@ -247,6 +247,88 @@ controller_server:
       max_angular_accel: 1.2
       max_robot_pose_search_dist: 1.0
       stateful: true
+    # Boundary lane-shift forward arcs use a frozen, online-costmap-checked
+    # Dubins path. RPP skipped maneuvers and a bidirectional MPPI optimizer
+    # reversed away from the forward-only path until pruning emptied it. Keep
+    # vx_min at zero as a hard direction constraint; reverse Hybrid-A* sections
+    # are dispatched separately through ReversePath.
+    ConnectorPath:
+      plugin: nav2_mppi_controller::MPPIController
+      time_steps: 56
+      # Must equal the 15 Hz controller period in Nav2 Jazzy 1.3.12.
+      model_dt: 0.0666666667
+      batch_size: 2000
+      ax_max: 0.50
+      ax_min: -0.50
+      az_max: 1.20
+      vx_std: 0.15
+      wz_std: 0.12
+      vx_max: 0.25
+      vx_min: 0.0
+      wz_max: 0.25
+      iteration_count: 1
+      prune_distance: 1.0
+      transform_tolerance: 0.2
+      temperature: 0.3
+      gamma: 0.015
+      motion_model: Ackermann
+      visualize: false
+      regenerate_noises: false
+      retry_attempt_limit: 2
+      AckermannConstraints:
+        min_turning_r: 1.429
+      critics: [ConstraintCritic, CostCritic, GoalCritic, GoalAngleCritic, PathAlignCritic, PathFollowCritic, PathAngleCritic, PreferForwardCritic]
+      ConstraintCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 4.0
+      CostCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 3.81
+        critical_cost: 300.0
+        consider_footprint: true
+        collision_cost: 1000000.0
+        near_goal_distance: 0.5
+        trajectory_point_step: 1
+      GoalCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        threshold_to_consider: 1.4
+      GoalAngleCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 3.0
+        threshold_to_consider: 0.5
+      PathAlignCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 14.0
+        max_path_occupancy_ratio: 0.05
+        trajectory_point_step: 1
+        threshold_to_consider: 0.20
+        offset_from_furthest: 1
+        use_path_orientations: true
+      PathFollowCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        offset_from_furthest: 1
+        threshold_to_consider: 0.40
+      PathAngleCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 2.2
+        offset_from_furthest: 1
+        threshold_to_consider: 0.20
+        max_angle_to_furthest: 1.0
+        mode: 2
+      PreferForwardCritic:
+        enabled: true
+        cost_power: 1
+        cost_weight: 5.0
+        threshold_to_consider: 0.5
     CleanPath:
       plugin: nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
       # Straight cleaning needs a deliberately long carrot.  With the brush

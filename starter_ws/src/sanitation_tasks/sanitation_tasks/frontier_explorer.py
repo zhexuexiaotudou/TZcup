@@ -19,7 +19,11 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from tf2_ros import Buffer, TransformException, TransformListener
 
-from sanitation_coverage.ackermann_connector import split_hybrid_path_by_direction
+from sanitation_coverage.ackermann_connector import (
+    plan_forward_dubins_path,
+    split_hybrid_path_by_direction,
+)
+from sanitation_coverage.metrics import split_path_at_curvature_reversals
 
 from .frontier_core import (
     frontier_sweep_targets,
@@ -83,11 +87,16 @@ class FrontierExplorer(Node):
         self.declare_parameter("reverse_escape_distance_m", 2.0)
         self.declare_parameter("reverse_escape_speed_mps", 0.15)
         self.declare_parameter("frontier_sweep_enabled", False)
+        self.declare_parameter("frontier_sweep_initial_target_index", 0)
+        # A millimetre north of the centre removes the otherwise platform-
+        # dependent tie between the -10 m and +10 m first sweep lanes.
+        self.declare_parameter("frontier_sweep_reference_pose_xyyaw_m_rad", [0.0, 0.001, 0.0])
         self.declare_parameter("mapping_sensor_range_m", 12.0)
         self.declare_parameter("frontier_sweep_lane_overlap_m", 2.0)
         self.declare_parameter("frontier_sweep_target_tolerance_m", 2.0)
         self.declare_parameter("frontier_sweep_mapped_target_radius_m", 5.0)
         self.declare_parameter("frontier_sweep_lane_shift_backup_distance_m", 4.0)
+        self.declare_parameter("frontier_sweep_lane_shift_backup_max_attempts", 2)
         self.declare_parameter(
             "frontier_sweep_lane_shift_connector_distances_m", [6.0, 4.0, 2.0]
         )
@@ -148,14 +157,20 @@ class FrontierExplorer(Node):
         self.frontier_exclusion_wait_count = 0
         self.reverse_escape_goal_count = 0
         self.sweep_targets = []
-        self.sweep_target_index = 0
+        self.sweep_target_index = int(
+            self.get_parameter("frontier_sweep_initial_target_index").value
+        )
+        if self.sweep_target_index < 0:
+            raise ValueError("frontier_sweep_initial_target_index must be non-negative")
         self.sweep_completed = False
         self.sweep_active_anchor = None
         self.sweep_active_preference = None
         self.sweep_active_axis = None
         self.sweep_lane_shift_backup_completed = set()
+        self.sweep_lane_shift_backup_skipped = set()
         self.sweep_lane_shift_backup_pending = None
         self.sweep_lane_shift_backup_count = 0
+        self.sweep_lane_shift_backup_attempts = {}
         self.sweep_lane_shift_locked_x = {}
         self.sweep_lane_shift_connector_completed = set()
         self.sweep_lane_shift_connector_pending = None
@@ -441,6 +456,42 @@ class FrontierExplorer(Node):
             return False
         if self.sweep_lane_shift_backup_pending == index:
             return True
+        target = self.sweep_targets[index]
+        candidates = lane_shift_connector_goals(
+            robot_pose,
+            target[1],
+            candidate_distances_m=tuple(
+                float(value) for value in self.get_parameter(
+                    "frontier_sweep_lane_shift_connector_distances_m"
+                ).value
+            ),
+            allowed_bounds_xyxy_m=self.required_bounds,
+            boundary_margin_m=float(
+                self.get_parameter("required_bounds_goal_margin_m").value
+            ),
+        )
+        # BackUp is a safety-checked fallback, not a mandatory maneuver.  At a
+        # boundary with a non-tangent heading the rear collision envelope may
+        # correctly stop reverse motion even though a forward Dubins turn is
+        # fully known and clear.  Prefer that forward path and never bypass the
+        # Collision Monitor merely to force a backup through.
+        if any(
+            self._forward_sweep_lane_shift_path(robot_pose, candidate)
+            for candidate in candidates
+            if self._goal_is_costmap_clear(candidate)
+        ):
+            self.sweep_lane_shift_backup_completed.add(index)
+            self.sweep_lane_shift_backup_skipped.add(index)
+            self.sweep_lane_shift_locked_x.setdefault(index, robot_pose[0])
+            return False
+        attempts = self.sweep_lane_shift_backup_attempts.get(index, 0)
+        if attempts >= int(
+            self.get_parameter(
+                "frontier_sweep_lane_shift_backup_max_attempts"
+            ).value
+        ):
+            self._finish(False, "sweep_lane_shift_backup_exhausted")
+            return True
         escape = reverse_escape_goal(
             robot_pose[:2],
             robot_pose[2],
@@ -466,6 +517,7 @@ class FrontierExplorer(Node):
             return False
         self.sweep_lane_shift_backup_pending = index
         self.sweep_lane_shift_backup_count += 1
+        self.sweep_lane_shift_backup_attempts[index] = attempts + 1
         self.last_error = "sweep_lane_shift_backup"
         return True
 
@@ -477,10 +529,20 @@ class FrontierExplorer(Node):
             self.sweep_active_axis = None
             return None
         if not self.sweep_targets:
+            sweep_reference = tuple(
+                float(value)
+                for value in self.get_parameter(
+                    "frontier_sweep_reference_pose_xyyaw_m_rad"
+                ).value
+            )
+            if len(sweep_reference) != 3:
+                raise ValueError(
+                    "frontier_sweep_reference_pose_xyyaw_m_rad must contain three values"
+                )
             self.sweep_targets = frontier_sweep_targets(
                 self.required_bounds,
-                robot_pose[:2],
-                robot_pose[2],
+                sweep_reference[:2],
+                sweep_reference[2],
                 sensor_range_m=float(
                     self.get_parameter("mapping_sensor_range_m").value
                 ),
@@ -548,16 +610,17 @@ class FrontierExplorer(Node):
         return None
 
     def _start_sweep_lane_shift_connector(self, robot_pose) -> bool:
-        """Plan once, split gear cusps, and turn onto the next sweep lane.
+        """Turn onto the next sweep lane through a frozen feasible path.
 
         Frontier waypoints intentionally ignore terminal yaw.  That is correct
         for short observation hops, but it means a sequence of synthesized arc
         endpoints cannot change the vehicle's actual heading at a lane edge.
-        After the collision-checked BackUp creates room, this one-shot staging
-        goal asks the existing Hybrid-A*/Reeds-Shepp stack for one path, splits
-        that frozen path at every direction cusp, and executes each section
-        explicitly through FollowPath.  This prevents BT replanning from
-        changing the first gear every second while the chassis is stationary.
+        After collision-checked BackUp creates room, prefer a forward-only
+        Dubins path derived from the fused pose and verify every sample against
+        the online costmap.  If that path is unavailable, ask Hybrid-A*/
+        Reeds-Shepp once, split the frozen result at every direction cusp, and
+        execute each section through a direction-constrained FollowPath
+        controller.  No BT replanning may change the first gear in place.
         """
         if self.sweep_active_axis != "vertical":
             return False
@@ -599,7 +662,7 @@ class FrontierExplorer(Node):
         self.sweep_lane_shift_connector_attempts[index] = attempt + 1
         self.sweep_lane_shift_connector_pending = index
         self.last_error = "sweep_lane_shift_connector"
-        self._send_sweep_lane_shift_plan(goal, index)
+        self._send_sweep_lane_shift_plan(goal, index, robot_pose)
         return True
 
     def _set_lane_shift_active_goal(self, goal, handle=None) -> None:
@@ -620,7 +683,102 @@ class FrontierExplorer(Node):
         )
         self.active_goal_cancel_requested = False
 
-    def _send_sweep_lane_shift_plan(self, goal, sweep_target_index: int) -> None:
+    def _path_poses_are_costmap_clear(self, poses) -> bool:
+        return all(
+            world_disk_is_traversable(
+                self.latest_costmap_data,
+                self.latest_costmap_geometry,
+                (pose[0], pose[1]),
+                radius_m=float(
+                    self.get_parameter("goal_clearance_radius_m").value
+                ),
+                maximum_cost=int(self.get_parameter("maximum_goal_cost").value),
+            )
+            for pose in poses
+        )
+
+    def _forward_sweep_lane_shift_path(self, robot_pose, goal):
+        margin = float(
+            self.get_parameter("required_bounds_goal_margin_m").value
+        )
+        min_x, min_y, max_x, max_y = self.required_bounds
+        apron = [
+            (min_x + margin, min_y + margin),
+            (max_x - margin, min_y + margin),
+            (max_x - margin, max_y - margin),
+            (min_x + margin, max_y - margin),
+        ]
+        path = plan_forward_dubins_path(
+            robot_pose,
+            (goal.world_x_m, goal.world_y_m, goal.yaw_rad),
+            apron,
+            [],
+        )
+        return path if path and self._path_poses_are_costmap_clear(path) else None
+
+    @staticmethod
+    def _forward_dubins_sections(path):
+        points = [(pose[0], pose[1]) for pose in path]
+        headings = [pose[2] for pose in path]
+        primitives = split_path_at_curvature_reversals(points, headings)
+        sections = []
+        for index, (primitive_points, primitive_headings) in enumerate(primitives):
+            sections.append({
+                "direction": "FORWARD",
+                "poses": [
+                    (point[0], point[1], heading)
+                    for point, heading in zip(
+                        primitive_points, primitive_headings
+                    )
+                ],
+                "cusp_before": False,
+                "controller_id": "DubinsPath",
+                "goal_checker_id": (
+                    "connector_goal_checker"
+                    if index == len(primitives) - 1
+                    else "primitive_goal_checker"
+                ),
+            })
+        return sections
+
+    def _accept_sweep_lane_shift_sections(
+        self,
+        sections,
+        *,
+        planned_path_pose_count: int,
+        planner_id: str,
+    ) -> None:
+        row = self.sweep_lane_shift_connector_row
+        if row is None:
+            return
+        row["accepted"] = True
+        row["planner_id"] = planner_id
+        row["planned_path_pose_count"] = int(planned_path_pose_count)
+        row["planned_section_directions"] = [
+            section["direction"] for section in sections
+        ]
+        row["planned_sections"] = [
+            {
+                "direction": section["direction"],
+                "controller_id": section.get("controller_id", "ConnectorPath"),
+                "goal_checker_id": section.get(
+                    "goal_checker_id", "connector_goal_checker"
+                ),
+                "pose_count": len(section["poses"]),
+                "start_pose": list(section["poses"][0]),
+                "end_pose": list(section["poses"][-1]),
+            }
+            for section in sections
+        ]
+        row["path_costmap_clearance_checked"] = True
+        self.sweep_lane_shift_connector_sections = sections
+        self.sweep_lane_shift_connector_section_index = 0
+        self._clear_active_goal()
+        self._send_next_sweep_lane_shift_section()
+
+    def _send_sweep_lane_shift_plan(
+        self, goal, sweep_target_index: int, robot_pose
+    ) -> None:
         if not self.compute_path_client.server_is_ready():
             self._fail_sweep_lane_shift_connector(
                 GoalStatus.STATUS_ABORTED, "compute_path_server_unavailable"
@@ -629,9 +787,14 @@ class FrontierExplorer(Node):
         row = {
             **asdict(goal),
             "goal_kind": "lane_shift_connector",
-            "execution": "smac_plan_once_segmented_follow_path",
+            "execution": "analytic_forward_dubins_then_smac_fallback",
             "sweep_target_index": sweep_target_index,
             "sequence": len(self.goal_history) + 1,
+            "pre_connector_backup": (
+                "skipped_online_costmap_clear_forward_dubins"
+                if sweep_target_index in self.sweep_lane_shift_backup_skipped
+                else "nav2_behaviors_BackUp_collision_checked"
+            ),
             "accepted": None,
             "terminal_status": None,
             "planned_path_pose_count": None,
@@ -644,6 +807,20 @@ class FrontierExplorer(Node):
         self.sweep_lane_shift_connector_sections = []
         self.sweep_lane_shift_connector_section_index = 0
         self._set_lane_shift_active_goal(goal)
+
+        forward_path = self._forward_sweep_lane_shift_path(robot_pose, goal)
+        if forward_path:
+            row["execution"] = "online_costmap_checked_forward_dubins"
+            sections = self._forward_dubins_sections(forward_path)
+            self._accept_sweep_lane_shift_sections(
+                sections,
+                planned_path_pose_count=len(forward_path),
+                planner_id="curvature_segmented_analytic_forward_dubins",
+            )
+            return
+        row["analytic_forward_dubins_fallback_reason"] = (
+            "costmap_clearance_failed" if forward_path else "no_feasible_path"
+        )
         message = ComputePathToPose.Goal()
         message.goal = self._pose_stamped(goal)
         message.planner_id = "GridBased"
@@ -691,43 +868,24 @@ class FrontierExplorer(Node):
                 GoalStatus.STATUS_ABORTED, "compute_path_has_no_motion_sections"
             )
             return
-        if not all(
-            world_disk_is_traversable(
-                self.latest_costmap_data,
-                self.latest_costmap_geometry,
-                (pose[0], pose[1]),
-                radius_m=float(
-                    self.get_parameter("goal_clearance_radius_m").value
-                ),
-                maximum_cost=int(self.get_parameter("maximum_goal_cost").value),
+        for section in sections:
+            section["controller_id"] = (
+                "ReversePath"
+                if section["direction"] == "REVERSE"
+                else "ConnectorPath"
             )
-            for section in sections for pose in section["poses"]
+        if not self._path_poses_are_costmap_clear(
+            pose for section in sections for pose in section["poses"]
         ):
             self._fail_sweep_lane_shift_connector(
                 GoalStatus.STATUS_ABORTED, "planned_path_costmap_clearance_failed"
             )
             return
-        row = self.sweep_lane_shift_connector_row
-        if row is None:
-            return
-        row["planned_path_pose_count"] = len(path_poses)
-        row["planned_section_directions"] = [
-            section["direction"] for section in sections
-        ]
-        row["planned_sections"] = [
-            {
-                "direction": section["direction"],
-                "pose_count": len(section["poses"]),
-                "start_pose": list(section["poses"][0]),
-                "end_pose": list(section["poses"][-1]),
-            }
-            for section in sections
-        ]
-        row["path_costmap_clearance_checked"] = True
-        self.sweep_lane_shift_connector_sections = sections
-        self.sweep_lane_shift_connector_section_index = 0
-        self._clear_active_goal()
-        self._send_next_sweep_lane_shift_section()
+        self._accept_sweep_lane_shift_sections(
+            sections,
+            planned_path_pose_count=len(path_poses),
+            planner_id="smac_hybrid_reeds_shepp",
+        )
 
     def _send_next_sweep_lane_shift_section(self) -> None:
         index = self.sweep_lane_shift_connector_section_index
@@ -742,13 +900,12 @@ class FrontierExplorer(Node):
         section = self.sweep_lane_shift_connector_sections[index]
         message = FollowPath.Goal()
         message.path = self._path_message(section["poses"])
-        message.controller_id = (
-            "ReversePath" if section["direction"] == "REVERSE" else "DubinsPath"
-        )
-        message.goal_checker_id = (
+        message.controller_id = section.get("controller_id", "ConnectorPath")
+        message.goal_checker_id = section.get(
+            "goal_checker_id",
             "cusp_goal_checker"
             if index < len(self.sweep_lane_shift_connector_sections) - 1
-            else "connector_goal_checker"
+            else "connector_goal_checker",
         )
         message.progress_checker_id = "progress_checker"
         self._set_lane_shift_active_goal(self.sweep_lane_shift_connector_goal)
@@ -1166,8 +1323,22 @@ class FrontierExplorer(Node):
             "frontier_sweep_lane_shift_backup_count": (
                 self.sweep_lane_shift_backup_count
             ),
+            "frontier_sweep_lane_shift_backup_max_attempts": int(
+                self.get_parameter(
+                    "frontier_sweep_lane_shift_backup_max_attempts"
+                ).value
+            ),
+            "frontier_sweep_lane_shift_backup_attempts_by_index": {
+                str(index): attempts
+                for index, attempts in sorted(
+                    self.sweep_lane_shift_backup_attempts.items()
+                )
+            },
             "frontier_sweep_lane_shift_backup_completed_indices": sorted(
                 self.sweep_lane_shift_backup_completed
+            ),
+            "frontier_sweep_lane_shift_backup_skipped_indices": sorted(
+                self.sweep_lane_shift_backup_skipped
             ),
             "frontier_sweep_lane_shift_locked_x_by_index": {
                 str(index): value
@@ -1179,7 +1350,7 @@ class FrontierExplorer(Node):
                 ).value
             ],
             "frontier_sweep_lane_shift_connector_execution": (
-                "smac_plan_once_segmented_follow_path"
+                "analytic_forward_dubins_then_smac_fallback"
             ),
             "frontier_sweep_lane_shift_connector_timeout_sec": float(
                 self.get_parameter("lane_shift_connector_timeout_sec").value

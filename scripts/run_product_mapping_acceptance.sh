@@ -12,6 +12,11 @@ SMOKE=0
 SEED=2028
 MAPPING_TIMEOUT_SEC=7200
 NAVIGATION_TIMEOUT_SEC=900
+SPAWN_X=0.0
+SPAWN_Y=0.0
+SPAWN_YAW=0.0
+INITIAL_SWEEP_TARGET_INDEX=0
+DIAGNOSTIC_OVERRIDE=0
 
 usage() {
   cat <<'EOF'
@@ -28,6 +33,11 @@ Options:
   --seed N              Gazebo random seed (default: 2028)
   --mapping-timeout N   Frontier exploration budget (default: 7200 seconds)
   --navigation-timeout N Reload navigation budget (default: 900 seconds)
+  --spawn-x X           Diagnostic initial X in map/world metres (default: 0.0)
+  --spawn-y Y           Diagnostic initial Y in map/world metres (default: 0.0)
+  --spawn-yaw RAD       Diagnostic initial yaw in radians (default: 0.0)
+  --initial-sweep-target-index N
+                        Diagnostic sweep target index (default: 0)
   --skip-build          Reuse an existing overlay install
   --smoke               40 x 20 m wiring check; can never pass the formal gate
   -h, --help            Show this help
@@ -42,6 +52,11 @@ while [[ $# -gt 0 ]]; do
     --seed) SEED="$2"; shift 2 ;;
     --mapping-timeout) MAPPING_TIMEOUT_SEC="$2"; shift 2 ;;
     --navigation-timeout) NAVIGATION_TIMEOUT_SEC="$2"; shift 2 ;;
+    --spawn-x) SPAWN_X="$2"; DIAGNOSTIC_OVERRIDE=1; shift 2 ;;
+    --spawn-y) SPAWN_Y="$2"; DIAGNOSTIC_OVERRIDE=1; shift 2 ;;
+    --spawn-yaw) SPAWN_YAW="$2"; DIAGNOSTIC_OVERRIDE=1; shift 2 ;;
+    --initial-sweep-target-index)
+      INITIAL_SWEEP_TARGET_INDEX="$2"; DIAGNOSTIC_OVERRIDE=1; shift 2 ;;
     --skip-build) BUILD=0; shift ;;
     --smoke) SMOKE=1; shift ;;
     -h|--help) usage; exit 0 ;;
@@ -52,9 +67,15 @@ done
 [[ "$SEED" =~ ^[0-9]+$ ]] || { echo "--seed must be a non-negative integer" >&2; exit 2; }
 [[ "$MAPPING_TIMEOUT_SEC" =~ ^[0-9]+$ ]] || { echo "--mapping-timeout must be an integer" >&2; exit 2; }
 [[ "$NAVIGATION_TIMEOUT_SEC" =~ ^[0-9]+$ ]] || { echo "--navigation-timeout must be an integer" >&2; exit 2; }
+numeric_re='^-?([0-9]+([.][0-9]*)?|[.][0-9]+)$'
+[[ "$SPAWN_X" =~ $numeric_re ]] || { echo "--spawn-x must be numeric" >&2; exit 2; }
+[[ "$SPAWN_Y" =~ $numeric_re ]] || { echo "--spawn-y must be numeric" >&2; exit 2; }
+[[ "$SPAWN_YAW" =~ $numeric_re ]] || { echo "--spawn-yaw must be numeric" >&2; exit 2; }
+[[ "$INITIAL_SWEEP_TARGET_INDEX" =~ ^[0-9]+$ ]] || { echo "--initial-sweep-target-index must be a non-negative integer" >&2; exit 2; }
 if [[ -z "$OUTPUT_DIR" ]]; then
   scope="formal"
   [[ "$SMOKE" -eq 1 ]] && scope="smoke"
+  [[ "$DIAGNOSTIC_OVERRIDE" -eq 1 ]] && scope="diagnostic"
   OUTPUT_DIR="$ROOT/artifacts/product_mapping_${scope}_$(date -u +%Y%m%dT%H%M%SZ)"
 fi
 mkdir -p "$OUTPUT_DIR"
@@ -248,7 +269,10 @@ config.pop("speed_filter_mask_server", None)
 config.pop("speed_costmap_filter_info_server", None)
 manager = config.get("filter_lifecycle_manager", {}).get("ros__parameters", {})
 manager["node_names"] = []
-for name in ("FollowPath", "DubinsPath", "ReversePath", "CleanPath", "RepairPath"):
+for name in (
+    "FollowPath", "DubinsPath", "ReversePath", "ConnectorPath",
+    "CleanPath", "RepairPath",
+):
     config["controller_server"]["ros__parameters"][name]["transform_tolerance"] = 0.5
 target.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 PY
@@ -301,12 +325,15 @@ if [[ "$SMOKE" -eq 1 ]]; then
   BOUNDS=(-20.0 -10.0 20.0 10.0)
   MIN_SPAN_X=40.0; MIN_SPAN_Y=20.0; MIN_AREA=800.0
   ROUTE_SEPARATION=3.0; MAX_GOALS=160; MAX_FRONTIER_GOAL_DISTANCE=2.0
-  MAX_LINEAR_VELOCITY=0.30; FORMAL_SCOPE=false
+  MAX_LINEAR_VELOCITY=0.30; FORMAL_SCOPE=false; SWEEP_ENABLED=false
 else
   BOUNDS=(-100.0 -50.0 100.0 50.0)
   MIN_SPAN_X=200.0; MIN_SPAN_Y=100.0; MIN_AREA=20000.0
   ROUTE_SEPARATION=15.0; MAX_GOALS=800; MAX_FRONTIER_GOAL_DISTANCE=3.0
-  MAX_LINEAR_VELOCITY=0.45; FORMAL_SCOPE=true
+  MAX_LINEAR_VELOCITY=0.45; FORMAL_SCOPE=true; SWEEP_ENABLED=true
+fi
+if [[ "$DIAGNOSTIC_OVERRIDE" -eq 1 ]]; then
+  FORMAL_SCOPE=false
 fi
 
 wait_for_topic() {
@@ -408,7 +435,7 @@ start_simulation() {
   start_group "$name" "$log" ros2 launch sanitation_bringup sim.launch.py \
     gui:=false headless_rendering:=true drive_model:=ackermann \
     random_seed:="$SEED" world_file:="$runtime_world" \
-    world_name:=sanitation_campus_large spawn_x:=0.0 spawn_y:=0.0 spawn_yaw:=0.0 \
+    world_name:=sanitation_campus_large spawn_x:="$SPAWN_X" spawn_y:="$SPAWN_Y" spawn_yaw:="$SPAWN_YAW" \
     world_to_map_x:=0.0 world_to_map_y:=0.0 world_to_map_yaw:=0.0 \
     ekf_config:="$mapping_ekf_params"
 }
@@ -424,7 +451,7 @@ start_positioning_chain() {
     ros2 launch sanitation_scan_refiner hybrid_localization.launch.py \
     hybrid_config_file:="$hybrid_params" fusion_mode:=rtk_imu_wheel \
     enable_scan_refiner:=false publish_map_to_odom:=true \
-    initial_pose_x:=0.0 initial_pose_y:=0.0 initial_pose_yaw:=0.0
+    initial_pose_x:="$SPAWN_X" initial_pose_y:="$SPAWN_Y" initial_pose_yaw:="$SPAWN_YAW"
   FUSION_PID="$STARTED_PID"
 }
 
@@ -434,8 +461,8 @@ start_navigation() {
     rviz:=false localization_backend:="$backend" enable_filters:=false \
     params_file:="$nav_params" map_file:="$map_file" \
     operational_profile:=precision_mapping max_linear_velocity:="$MAX_LINEAR_VELOCITY" \
-    max_angular_velocity:=0.25 initial_pose_x:=0.0 initial_pose_y:=0.0 \
-    initial_pose_yaw:=0.0
+    max_angular_velocity:=0.25 initial_pose_x:="$SPAWN_X" initial_pose_y:="$SPAWN_Y" \
+    initial_pose_yaw:="$SPAWN_YAW"
 }
 
 echo "[PRODUCT-MAPPING] phase 1: continuous first-principles mapping"
@@ -485,12 +512,15 @@ start_group mapping_explorer "$mapping/frontier_exploration.log" \
   -p failed_goal_exclusion_ttl_sec:=180.0 \
   -p reverse_escape_distance_m:=2.0 \
   -p reverse_escape_speed_mps:=0.15 \
-  -p frontier_sweep_enabled:="$FORMAL_SCOPE" \
+  -p frontier_sweep_enabled:="$SWEEP_ENABLED" \
+  -p frontier_sweep_initial_target_index:="$INITIAL_SWEEP_TARGET_INDEX" \
+  -p frontier_sweep_reference_pose_xyyaw_m_rad:="[0.0, 0.001, 0.0]" \
   -p mapping_sensor_range_m:=12.0 \
   -p frontier_sweep_lane_overlap_m:=2.0 \
   -p frontier_sweep_target_tolerance_m:=2.0 \
   -p frontier_sweep_mapped_target_radius_m:=5.0 \
   -p frontier_sweep_lane_shift_backup_distance_m:=4.0 \
+  -p frontier_sweep_lane_shift_backup_max_attempts:=2 \
   -p frontier_sweep_lane_shift_connector_distances_m:="[6.0, 4.0, 2.0]" \
   -p lane_shift_connector_timeout_sec:=180.0 \
   -p behavior_tree:="$navigation_share/behavior_trees/navigate_to_pose_ackermann_frontier.xml" \
@@ -568,7 +598,8 @@ PRODUCT_RUN_COMMAND="$RUN_COMMAND" python3 - \
   "$EXPLORATION_CODE" "$MAP_SAVE_CODE" "$POSEGRAPH_CODE" "$MAP_QUALITY_CODE" \
   "$MAP_GEOMETRY_CODE" "$ROUTE_CODE" "$NAVIGATION_CODE" "$ROOT" "$SEED" \
   "$runtime_world" "$nav_params" "$slam_params" "$mapping_ekf_params" \
-  "$hybrid_params" <<'PY'
+  "$hybrid_params" "$DIAGNOSTIC_OVERRIDE" "$SPAWN_X" "$SPAWN_Y" \
+  "$SPAWN_YAW" "$INITIAL_SWEEP_TARGET_INDEX" <<'PY'
 import hashlib
 import json
 import os
@@ -581,6 +612,7 @@ names = ("exploration", "map_save", "posegraph_serialize", "map_quality",
 root = Path(sys.argv[11])
 seed = int(sys.argv[12])
 config_paths = [Path(item) for item in sys.argv[13:]]
+config_paths = config_paths[:5]
 
 def git(*args):
     try:
@@ -608,6 +640,13 @@ def sha256(file_path):
 
 payload = {
     "formal_scope": sys.argv[2].lower() == "true",
+    "diagnostic_override": {
+        "enabled": sys.argv[18] == "1",
+        "spawn_x": float(sys.argv[19]),
+        "spawn_y": float(sys.argv[20]),
+        "spawn_yaw": float(sys.argv[21]),
+        "initial_sweep_target_index": int(sys.argv[22]),
+    },
     "restart_completed": sys.argv[3].lower() == "true",
     "exit_codes": dict(zip(names, map(int, sys.argv[4:]))),
     "sensor_provenance": {

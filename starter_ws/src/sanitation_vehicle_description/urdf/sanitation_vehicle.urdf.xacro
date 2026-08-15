@@ -281,27 +281,24 @@
   </xacro:macro>
 
   <!-- Ackermann wheel: a free-spin wheel under a steered front knuckle, or a
-       rear traction wheel on the chassis. Both wheel and steering joints use
+       driven rear wheel on the chassis. Both wheel and steering joints use
        finite effort, velocity and damping; the steering joint carries the
        frozen symmetric +/-38.5 deg position limit. -->
   <xacro:macro name="sanitation_ackermann_wheel" params="side pos_x pos_y steered parent_link red green blue">
     <link name="${side}_wheel_link">
       <visual name="tire_visual">
-        <origin rpy="${pi / 2.0} 0 0"/>
         <geometry><cylinder radius="${physical_wheel_radius}" length="${wheel_width}"/></geometry>
         <material name="${side}_wheel_material">
           <color rgba="0.035 0.045 0.05 1.0"/>
         </material>
       </visual>
       <visual name="hub_visual">
-        <origin rpy="${pi / 2.0} 0 0"/>
         <geometry><cylinder radius="${physical_wheel_radius * 0.43}" length="${wheel_width + 0.006}"/></geometry>
         <material name="${side}_hub_material">
           <color rgba="${red} ${green} ${blue} 1.0"/>
         </material>
       </visual>
       <collision>
-        <origin rpy="${pi / 2.0} 0 0"/>
         <geometry><cylinder radius="${physical_wheel_radius}" length="${wheel_width}"/></geometry>
       </collision>
       <inertial>
@@ -309,9 +306,9 @@
         <inertia
           ixx="${(wheel_mass / 12.0) * (3.0 * physical_wheel_radius**2 + wheel_width**2)}"
           ixy="0" ixz="0"
-          iyy="${0.5 * wheel_mass * physical_wheel_radius**2}"
+          iyy="${(wheel_mass / 12.0) * (3.0 * physical_wheel_radius**2 + wheel_width**2)}"
           iyz="0"
-          izz="${(wheel_mass / 12.0) * (3.0 * physical_wheel_radius**2 + wheel_width**2)}"/>
+          izz="${0.5 * wheel_mass * physical_wheel_radius**2}"/>
       </inertial>
     </link>
     <xacro:if value="${steered}">
@@ -331,21 +328,28 @@
       </joint>
     </xacro:if>
     <joint name="${side}_wheel_joint" type="continuous">
-      <axis xyz="0 1 0"/>
+      <axis xyz="0 0 1"/>
       <parent link="${parent_link}"/>
       <child link="${side}_wheel_link"/>
       <xacro:if value="${steered}">
-        <origin xyz="0 0 0" rpy="0 0 0"/>
+        <origin xyz="0 0 0" rpy="${-pi / 2.0} 0 0"/>
       </xacro:if>
       <xacro:if value="${not steered}">
-        <origin xyz="${pos_x} ${pos_y} ${wheel_pos_z}" rpy="0 0 0"/>
+        <origin xyz="${pos_x} ${pos_y} ${wheel_pos_z}" rpy="${-pi / 2.0} 0 0"/>
       </xacro:if>
       <limit effort="30.0" velocity="30.0"/>
       <dynamics damping="0.01"/>
     </joint>
     <gazebo reference="${side}_wheel_link">
-      <mu1>${wheel_mu_longitudinal}</mu1>
-      <mu2>${wheel_mu_lateral}</mu2>
+      <!-- Gazebo's Ackermann reference model fixes friction direction 1 to
+           the axle. Without this wheel-local direction ODE may choose an
+           arbitrary contact tangent and a visibly steered tire can slide
+           almost straight. mu1 is lateral/axle friction; mu2 is rolling. -->
+      <mu1>0.5</mu1>
+      <mu2>${wheel_mu_longitudinal}</mu2>
+      <!-- Geometry, joint and contact friction share the wheel-local Z axle,
+           matching Gazebo's reference Ackermann model. -->
+      <fdir1>0 0 1</fdir1>
     </gazebo>
   </xacro:macro>
 
@@ -697,7 +701,13 @@
       <geometry><box size="0.30 0.035 0.012"/></geometry>
       <material name="left_brush_bristle_2"><color rgba="0.38 0.24 0.08 1.0"/></material>
     </visual>
-    <collision><geometry><cylinder radius="0.14" length="0.03"/></geometry></collision>
+    <!-- The visible bristles reach the ground, but the rigid collision models
+         the elevated hub.  Treating the full brush disk as a rigid body at
+         bristle height creates a non-physical brake foot at paving joints. -->
+    <collision>
+      <origin xyz="0 0 0.04"/>
+      <geometry><cylinder radius="0.14" length="0.03"/></geometry>
+    </collision>
     <inertial>
       <mass value="1.0"/>
       <inertia ixx="0.00495" ixy="0" ixz="0" iyy="0.00495" iyz="0" izz="0.0098"/>
@@ -729,7 +739,10 @@
       <geometry><box size="0.30 0.035 0.012"/></geometry>
       <material name="right_brush_bristle_2"><color rgba="0.38 0.24 0.08 1.0"/></material>
     </visual>
-    <collision><geometry><cylinder radius="0.14" length="0.03"/></geometry></collision>
+    <collision>
+      <origin xyz="0 0 0.04"/>
+      <geometry><cylinder radius="0.14" length="0.03"/></geometry>
+    </collision>
     <inertial>
       <mass value="1.0"/>
       <inertia ixx="0.00495" ixy="0" ixz="0" iyy="0.00495" iyz="0" izz="0.0098"/>

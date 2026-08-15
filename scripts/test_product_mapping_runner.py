@@ -68,7 +68,13 @@ def test_formal_runner_has_real_restart_and_20k_fail_closed_scope():
     assert "-p minimum_frontier_arc_yaw_change_rad:=0.15" in text
     assert "-p reverse_escape_distance_m:=2.0" in text
     assert "-p reverse_escape_speed_mps:=0.15" in text
-    assert '-p frontier_sweep_enabled:="$FORMAL_SCOPE"' in text
+    assert '-p frontier_sweep_enabled:="$SWEEP_ENABLED"' in text
+    assert '-p frontier_sweep_initial_target_index:="$INITIAL_SWEEP_TARGET_INDEX"' in text
+    assert '-p frontier_sweep_reference_pose_xyyaw_m_rad:="[0.0, 0.001, 0.0]"' in text
+    assert '[[ "$DIAGNOSTIC_OVERRIDE" -eq 1 ]]' in text
+    assert 'FORMAL_SCOPE=false' in text
+    assert 'spawn_x:="$SPAWN_X" spawn_y:="$SPAWN_Y" spawn_yaw:="$SPAWN_YAW"' in text
+    assert 'initial_pose_x:="$SPAWN_X" initial_pose_y:="$SPAWN_Y"' in text
     assert "-p mapping_sensor_range_m:=12.0" in text
     assert "-p frontier_sweep_lane_overlap_m:=2.0" in text
     assert "-p frontier_sweep_target_tolerance_m:=2.0" in text
@@ -200,11 +206,24 @@ def test_frontier_reverse_escape_uses_collision_checked_backup_action():
     assert 'goal_kind="lane_shift_backup"' in explorer
     assert "self._start_sweep_lane_shift_backup(robot_pose)" in explorer
     assert "self.sweep_lane_shift_backup_completed.add(int(index))" in explorer
+    assert 'declare_parameter("frontier_sweep_lane_shift_backup_max_attempts", 2)' in explorer
+    assert '"sweep_lane_shift_backup_exhausted"' in explorer
+    assert "self._forward_sweep_lane_shift_path(robot_pose, candidate)" in explorer
+    assert '"skipped_online_costmap_clear_forward_dubins"' in explorer
     assert "self.sweep_lane_shift_locked_x.setdefault(" in explorer
     assert '"goal_kind": "lane_shift_connector"' in explorer
     assert "self._start_sweep_lane_shift_connector(robot_pose)" in explorer
     assert "self.sweep_lane_shift_connector_completed.add(int(index))" in explorer
     assert 'message.planner_id = "GridBased"' in explorer
     assert "split_hybrid_path_by_direction(path_poses)" in explorer
-    assert '"ReversePath" if section["direction"] == "REVERSE" else "DubinsPath"' in explorer
+    assert 'plan_forward_dubins_path(' in explorer
+    assert "split_path_at_curvature_reversals" in explorer
+    assert '"controller_id": "DubinsPath"' in explorer
+    assert '"goal_checker_id": (' in explorer
+    assert 'section.get("controller_id", "ConnectorPath")' in explorer
+    assert 'if section["direction"] == "REVERSE"' in explorer
     assert '"planned_sections"' in explorer
+    runner = (ROOT / "scripts/run_product_mapping_acceptance.sh").read_text(
+        encoding="utf-8"
+    )
+    assert "-p frontier_sweep_lane_shift_backup_max_attempts:=2" in runner

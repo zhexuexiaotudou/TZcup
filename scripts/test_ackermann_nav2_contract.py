@@ -17,6 +17,8 @@ import yaml
 
 from ackermann_profile_validation import resolve_profiles
 from sanitation_coverage import ackermann_model
+from sanitation_coverage.ackermann_connector import plan_forward_dubins_path
+from sanitation_coverage.metrics import split_path_at_curvature_reversals
 
 
 NAV2_ACKERMANN = (
@@ -31,6 +33,42 @@ NAV2_ACKERMANN = (
 
 def _load() -> dict:
     return yaml.safe_load(NAV2_ACKERMANN.read_text(encoding="utf-8"))
+
+
+@pytest.mark.parametrize(
+    ("start_pose", "goal_pose"),
+    [
+        ((-81.0, 8.0, math.pi), (-81.0, 14.0, math.pi / 2.0)),
+        ((81.0, 28.0, 0.0), (81.0, 34.0, math.pi / 2.0)),
+        ((-81.0, 38.0, math.pi), (-81.0, 32.0, -math.pi / 2.0)),
+        ((81.0, -8.0, 0.0), (81.0, -14.0, -math.pi / 2.0)),
+    ],
+    ids=("west-north", "east-north", "west-south", "east-south"),
+)
+def test_formal_boundary_lane_shift_has_forward_dubins_solution(
+    start_pose, goal_pose
+):
+    apron = [(-98.5, -48.5), (98.5, -48.5), (98.5, 48.5), (-98.5, 48.5)]
+    path = plan_forward_dubins_path(start_pose, goal_pose, apron, [])
+    assert path is not None
+    assert len(path) >= 100
+    assert path[0] == start_pose
+    assert path[-1] == goal_pose
+    primitives = split_path_at_curvature_reversals(
+        [(pose[0], pose[1]) for pose in path],
+        [pose[2] for pose in path],
+    )
+    assert [len(points) for points, _ in primitives] == [56, 50, 11]
+    assert min(pose[0] for pose in path) >= -98.5
+    assert max(pose[0] for pose in path) <= 98.5
+    assert min(pose[1] for pose in path) >= -48.5
+    assert max(pose[1] for pose in path) <= 48.5
+    for start, end in zip(path, path[1:]):
+        projection = (
+            (end[0] - start[0]) * math.cos(start[2])
+            + (end[1] - start[1]) * math.sin(start[2])
+        )
+        assert projection >= -1.0e-6
 
 
 def test_hybrid_reeds_shepp_planner_contract():
@@ -76,8 +114,8 @@ def test_rpp_controllers_have_explicit_direction_and_no_rotate():
         controllers["primitive_goal_checker"]["yaw_goal_tolerance"]
     ) == 1.0
     for name in (
-        "FollowPath", "FrontierPath", "DubinsPath", "ReversePath", "CleanPath",
-        "RepairPath",
+        "FollowPath", "FrontierPath", "DubinsPath", "ReversePath",
+        "CleanPath", "RepairPath",
     ):
         controller = controllers[name]
         assert (
@@ -103,6 +141,18 @@ def test_rpp_controllers_have_explicit_direction_and_no_rotate():
     assert frontier["use_velocity_scaled_lookahead_dist"] is False
     assert frontier["allow_reversing"] is True
     assert float(controllers["DubinsPath"]["max_robot_pose_search_dist"]) == 2.0
+    connector = controllers["ConnectorPath"]
+    assert connector["plugin"] == "nav2_mppi_controller::MPPIController"
+    assert connector["motion_model"] == "Ackermann"
+    assert float(connector["AckermannConstraints"]["min_turning_r"]) == 1.429
+    assert float(connector["vx_max"]) == 0.25
+    assert float(connector["vx_min"]) == 0.0
+    assert float(connector["wz_max"]) == 0.25
+    assert float(connector["model_dt"]) == pytest.approx(1.0 / 15.0)
+    assert connector["PathAlignCritic"]["use_path_orientations"] is True
+    assert int(connector["PathAngleCritic"]["mode"]) == 2
+    assert "PreferForwardCritic" in connector["critics"]
+    assert connector["PreferForwardCritic"]["enabled"] is True
     assert float(controllers["DubinsPath"]["desired_linear_vel"]) == 0.25
     assert float(controllers["DubinsPath"]["regulated_linear_scaling_min_speed"]) == 0.10
     assert controllers["FollowPath"]["allow_reversing"] is True

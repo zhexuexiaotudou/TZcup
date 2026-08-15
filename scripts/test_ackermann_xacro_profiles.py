@@ -100,7 +100,8 @@ def test_ackermann_joint_topology_limits_and_axes():
         assert wheel.get("type") == "continuous"
         assert wheel.find("parent").get("link") == f"{side}_steering_link"
         assert wheel.find("child").get("link") == f"{side}_wheel_link"
-        assert wheel.find("axis").get("xyz") == "0 1 0"
+        assert wheel.find("axis").get("xyz") == "0 0 1"
+        assert wheel.find("origin").get("rpy").startswith("-1.570796")
         wheel_limit = _limit(wheel)
         assert wheel_limit["effort"] > 0.0 and wheel_limit["velocity"] > 0.0
         assert _dynamics(wheel)["damping"] >= 0.0
@@ -109,7 +110,8 @@ def test_ackermann_joint_topology_limits_and_axes():
         assert wheel.get("type") == "continuous"
         assert wheel.find("parent").get("link") == "base_link"
         assert wheel.find("child").get("link") == f"{side}_wheel_link"
-        assert wheel.find("axis").get("xyz") == "0 1 0"
+        assert wheel.find("axis").get("xyz") == "0 0 1"
+        assert wheel.find("origin").get("rpy").startswith("-1.570796")
 
 
 def test_ackermann_front_wheels_are_children_of_steering_links():
@@ -118,6 +120,27 @@ def test_ackermann_front_wheels_are_children_of_steering_links():
     for side in ("front_left", "front_right"):
         assert f"{side}_steering_link" in links
         assert f"{side}_wheel_link" in links
+
+
+def test_ackermann_wheel_contacts_freeze_axle_friction_direction():
+    root = expand_vehicle("ackermann")
+    wheel_surfaces = {
+        element.get("reference"): element
+        for element in root.iter("gazebo")
+        if element.get("reference", "").endswith("_wheel_link")
+    }
+    assert len(wheel_surfaces) == 4
+    for surface in wheel_surfaces.values():
+        assert surface.find("fdir1").text == "0 0 1"
+        assert float(surface.find("mu1").text) == pytest.approx(0.5)
+        assert float(surface.find("mu2").text) == pytest.approx(1.0)
+
+    legacy = expand_vehicle("skid_steer_legacy")
+    assert all(
+        element.find("fdir1") is None
+        for element in legacy.iter("gazebo")
+        if element.get("reference", "").endswith("_wheel_link")
+    )
 
 
 def test_ackermann_plugin_counts_and_configuration():
@@ -140,8 +163,6 @@ def test_ackermann_plugin_counts_and_configuration():
     expected = {
         "left_steering_joint": "front_left_steering_joint",
         "right_steering_joint": "front_right_steering_joint",
-        "left_joint": "rear_left_wheel_joint",
-        "right_joint": "rear_right_wheel_joint",
         "wheel_base": "0.76",
         "wheel_separation": "0.80",
         "kingpin_width": "0.80",
@@ -155,6 +176,12 @@ def test_ackermann_plugin_counts_and_configuration():
     for key, value in expected.items():
         child = plugin.find(key)
         assert child is not None and child.text == value, key
+    assert [item.text for item in plugin.findall("left_joint")] == [
+        "rear_left_wheel_joint"
+    ]
+    assert [item.text for item in plugin.findall("right_joint")] == [
+        "rear_right_wheel_joint"
+    ]
     clamp = float(plugin.find("steering_limit").text)
     assert clamp == pytest.approx(
         ackermann_model.plugin_steering_clamp_rad(), abs=1e-9
@@ -320,6 +347,17 @@ def test_ackermann_brush_boom_position():
         if joint.get("name") == "left_brush_joint"
     )
     assert legacy_left.find("origin").get("xyz").startswith("0.58 ")
+
+
+def test_rigid_brush_hubs_are_elevated_above_compliant_bristles():
+    root = expand_vehicle("ackermann")
+    for side in ("left", "right"):
+        link = next(
+            item for item in root.iter("link")
+            if item.get("name") == f"{side}_brush_link"
+        )
+        collision = link.find("collision")
+        assert collision.find("origin").get("xyz") == "0 0 0.04"
 
 
 if __name__ == "__main__":
