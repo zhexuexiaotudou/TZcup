@@ -26,6 +26,7 @@ from sanitation_coverage.ackermann_connector import (
 from sanitation_coverage.metrics import split_path_at_curvature_reversals
 
 from .frontier_core import (
+    frontier_goal_exclusion_centers,
     frontier_sweep_targets,
     frontier_sweep_target_axis,
     GridGeometry,
@@ -154,6 +155,7 @@ class FrontierExplorer(Node):
         self.latest_costmap_data = None
         self.latest_costmap_geometry = None
         self.costmap_rejected_goal_count = 0
+        self.raw_frontier_exclusion_count = 0
         self.frontier_exclusion_wait_count = 0
         self.reverse_escape_goal_count = 0
         self.sweep_targets = []
@@ -348,8 +350,8 @@ class FrontierExplorer(Node):
             if self._goal_is_costmap_clear(candidate):
                 goal = candidate
                 break
-            temporary_exclusions.append((candidate.world_x_m, candidate.world_y_m))
-            self._add_excluded_goal(candidate.world_x_m, candidate.world_y_m)
+            centers = self._add_goal_exclusions(candidate)
+            temporary_exclusions.extend(centers)
             self.costmap_rejected_goal_count += 1
         if goal is None:
             escape = reverse_escape_goal(
@@ -1010,6 +1012,14 @@ class FrontierExplorer(Node):
             time.monotonic() + ttl,
         ))
 
+    def _add_goal_exclusions(self, goal) -> tuple[tuple[float, float], ...]:
+        centers = frontier_goal_exclusion_centers(goal, self.latest_geometry)
+        for center in centers:
+            self._add_excluded_goal(*center)
+        if len(centers) > 1:
+            self.raw_frontier_exclusion_count += 1
+        return centers
+
     def _send_goal(self, goal, *, goal_kind: str = "frontier") -> None:
         message = NavigateToPose.Goal()
         message.pose = PoseStamped()
@@ -1079,9 +1089,7 @@ class FrontierExplorer(Node):
             if self.goal_history[-1].get("goal_kind") == "lane_shift_backup":
                 self.sweep_lane_shift_backup_pending = None
             self._update_adaptive_goal_distance(False)
-            self._add_excluded_goal(
-                self.active_goal.world_x_m, self.active_goal.world_y_m
-            )
+            self._add_goal_exclusions(self.active_goal)
             self.active_goal = None
             self.active_goal_handle = None
             self.active_goal_started_monotonic = None
@@ -1152,8 +1160,7 @@ class FrontierExplorer(Node):
         )
 
     def _exclude_failed_goal(self, goal, *, wide_exclusion: bool) -> None:
-        center = (goal.world_x_m, goal.world_y_m)
-        self._add_excluded_goal(*center)
+        centers = self._add_goal_exclusions(goal)
         if not wide_exclusion:
             return
         base_radius = float(
@@ -1165,12 +1172,13 @@ class FrontierExplorer(Node):
         ring_radius = max(0.0, timeout_radius - base_radius)
         if ring_radius <= 1.0e-9:
             return
-        for index in range(8):
-            angle = index * math.pi / 4.0
-            self._add_excluded_goal(
-                center[0] + ring_radius * math.cos(angle),
-                center[1] + ring_radius * math.sin(angle),
-            )
+        for center in centers:
+            for index in range(8):
+                angle = index * math.pi / 4.0
+                self._add_excluded_goal(
+                    center[0] + ring_radius * math.cos(angle),
+                    center[1] + ring_radius * math.sin(angle),
+                )
 
     def _begin_nav_recovery(self) -> None:
         self.nav_recovery_count += 1
@@ -1391,6 +1399,7 @@ class FrontierExplorer(Node):
             ),
             "map_update_count": self.map_update_count,
             "costmap_rejected_goal_count": self.costmap_rejected_goal_count,
+            "raw_frontier_exclusion_count": self.raw_frontier_exclusion_count,
             "map_metrics": metrics,
             "goal_count": len(self.goal_history),
             "goal_success_count": sum(

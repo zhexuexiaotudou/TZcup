@@ -3,6 +3,7 @@ import math
 import pytest
 
 from sanitation_tasks.frontier_core import (
+    frontier_goal_exclusion_centers,
     frontier_sweep_targets,
     frontier_sweep_target_axis,
     lane_shift_connector_goals,
@@ -403,6 +404,65 @@ def test_off_heading_frontier_becomes_forward_minimum_radius_arc_goal():
     assert goal.yaw_rad == pytest.approx(0.35)
     assert goal.distance_m == pytest.approx(
         2.0 * 1.429 * math.sin(0.35 / 2.0)
+    )
+
+
+def test_frontier_exclusion_centers_preserve_raw_frontier_behind_local_arc():
+    geometry = GridGeometry(21, 21, 1.0, -10.5, -10.5)
+    data = [-1] * (geometry.width * geometry.height)
+    for y in range(10, 19):
+        data[y * geometry.width + 10] = 0
+    goal = rank_frontiers(
+        data,
+        geometry,
+        (0.0, 0.0),
+        robot_yaw_rad=0.0,
+        minimum_cells=1,
+        minimum_goal_distance_m=0.40,
+        maximum_goal_distance_m=4.0,
+        maximum_goal_yaw_change_rad=0.35,
+        minimum_turning_radius_m=1.429,
+    )[0]
+
+    endpoint, raw_frontier = frontier_goal_exclusion_centers(goal, geometry)
+    assert endpoint == pytest.approx((goal.world_x_m, goal.world_y_m))
+    assert raw_frontier == pytest.approx(
+        grid_to_world(goal.grid_x, goal.grid_y, geometry)
+    )
+    assert math.dist(endpoint, raw_frontier) > 1.0
+
+
+def test_raw_frontier_exclusion_prevents_reselection_with_new_local_arc():
+    geometry = GridGeometry(9, 9, 1.0, -4.5, -4.5)
+    data = [-1] * (geometry.width * geometry.height)
+    data[4 * geometry.width + 7] = 0
+    data[7 * geometry.width + 4] = 0
+    kwargs = {
+        "robot_yaw_rad": math.pi,
+        "minimum_cells": 1,
+        "minimum_goal_distance_m": 0.40,
+        "maximum_goal_distance_m": 4.0,
+        "maximum_goal_yaw_change_rad": 0.35,
+        "minimum_turning_radius_m": 1.429,
+        "preferred_world_xy": (10.0, 10.0),
+    }
+    selected = rank_frontiers(data, geometry, (0.0, 0.0), **kwargs)[0]
+    raw_frontier = grid_to_world(
+        selected.grid_x, selected.grid_y, geometry
+    )
+
+    alternatives = rank_frontiers(
+        data,
+        geometry,
+        (0.0, 0.0),
+        excluded_world_xy=[raw_frontier],
+        exclusion_radius_m=0.25,
+        **kwargs,
+    )
+    assert alternatives
+    assert (alternatives[0].grid_x, alternatives[0].grid_y) != (
+        selected.grid_x,
+        selected.grid_y,
     )
 
 

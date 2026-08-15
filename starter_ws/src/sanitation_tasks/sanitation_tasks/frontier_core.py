@@ -74,6 +74,28 @@ def reverse_escape_goal(
     )
 
 
+def frontier_goal_exclusion_centers(
+    goal: FrontierGoal,
+    geometry: GridGeometry | None,
+) -> tuple[tuple[float, float], ...]:
+    """Return both the commanded endpoint and its source frontier location.
+
+    Ackermann heading limits can turn a distant raw frontier into a short local
+    arc endpoint.  Cooling only that endpoint allows the same unreachable raw
+    frontier to be selected again with a slightly different local arc, which
+    can produce an indefinitely successful but zero-map-gain loop.
+    """
+    endpoint = (float(goal.world_x_m), float(goal.world_y_m))
+    if geometry is None or goal.grid_x < 0 or goal.grid_y < 0:
+        return (endpoint,)
+    raw_frontier = grid_to_world(goal.grid_x, goal.grid_y, geometry)
+    if math.hypot(
+        raw_frontier[0] - endpoint[0], raw_frontier[1] - endpoint[1]
+    ) <= 1.0e-9:
+        return (endpoint,)
+    return (endpoint, raw_frontier)
+
+
 def lane_shift_connector_goals(
     robot_pose: tuple[float, float, float],
     target_y_m: float,
@@ -647,14 +669,16 @@ def rank_frontiers(
                         continue
             if distance + 1.0e-9 < minimum_goal_distance_m:
                 continue
+            raw_world = grid_to_world(grid_x, grid_y, geometry)
             if any(
                 math.hypot(world_x - x, world_y - y) <= exclusion_radius_m
+                or math.hypot(raw_world[0] - x, raw_world[1] - y)
+                <= exclusion_radius_m
                 for x, y in excluded
             ):
                 continue
             preference_distance = None
             if preferred_world_xy is not None:
-                raw_world = grid_to_world(grid_x, grid_y, geometry)
                 preference_distance = math.hypot(
                     raw_world[0] - preferred_world_xy[0],
                     raw_world[1] - preferred_world_xy[1],

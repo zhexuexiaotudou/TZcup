@@ -4,6 +4,8 @@ Ackermann Nav2 profile 使用 `SmacPlannerHybrid`、`REEDS_SHEPP`、72 航向 bi
 
 未知栅格正式建图的短 frontier waypoint 使用宽松终点航向，避免把观察点误当停车位；蛇形扫图发生横向到纵向换带时，从当前融合位姿、在线 costmap 与扫带方向选择短距已知自由区 staging pose。在线净空允许直接前进时跳过倒车；否则最多执行两次 Nav2 原生碰撞检查 BackUp，耗尽后失效关闭。换带优先构造解析 forward Dubins 并按曲率反转点拆成曲线/直线/曲线原语；解析路径不可用时才使用 Smac Hybrid/Reeds-Shepp 规划一次，再按前进/倒车 cusp 分段。所有段在整路径在线 costmap 净空复核后分别交给 forward-only `DubinsPath` 与 `ReversePath` 完成动作终态交接；禁止用连续宽松 frontier waypoint 暗示车辆已经改变航向，也禁止每秒重规划或允许倒车的通用控制器在静止车位改变起始档位。
 
+前沿排序保留原始栅格坐标，同时将远端前沿转换为满足 Ackermann 航向变化上限的短距本地圆弧端点。若代价图拒绝或 Nav2 执行失败，冷却集合必须同时包含原始前沿与实际下发端点；只排除本地端点会让同一远端前沿以另一个短圆弧重复入选，形成“动作成功但地图零增益”的循环。报告通过 `raw_frontier_exclusion_count` 显式记录该恢复分支。
+
 Coverage 保留 Fields2Cover 弓字条带生成，产品刷宽为 `1.32 m`，规划间距候选为 `1.06/1.10/1.15/1.20 m`。连接器优先使用曲率和 footprint 均受检的 forward Dubins 路径，再尝试 forward U-turn、forward teardrop、Reeds-Shepp-like three-point 与 Smac Hybrid；仍不可行则延期下一条带。forward Dubins 在执行时按曲线/直线/曲线原语拆分，并在原语边界由 Nav2 goal checker 完成闭环交接。计划只含 `FORWARD/REVERSE/CUSP_STOP/DEFERRED_SWATH`，每个方向切换必须停车到实测 `|vx|<0.03 m/s`。不得出现 `ROTATE/SHIFT/Spin` 或瞬时换挡。
 
 专用世界把外部 turning apron 扩展到 `15.6 m × 10.0 m`（`156.0 m²`）；青色 `x=[-2,2], y=[-3,0]` 清扫区和 12 m² 面积保持不变。额外空间用于容纳物理最小中心半径 `1.429 m`、执行保守半径 `1.8 m` 的前进式连接和直线引入段，不计入覆盖率。启动方式：
