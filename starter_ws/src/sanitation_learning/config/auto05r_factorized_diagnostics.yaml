@@ -1,0 +1,120 @@
+schema_version: 1
+stage: AUTO-05R
+contract_version: 1
+legacy_g3_test_used_as_selection: false
+seen_metadata:
+  # Populated only when a G4-style dataset manifest with split provenance
+  # exists.  Empty sets keep every diagnosis in the "unseen" branch until real
+  # split metadata lands; they must never be filled from the legacy G3 test.
+  seen_world_ids: []
+  seen_asset_families: []
+  seen_geometry_families: []
+  seen_material_ids: []
+  seen_lighting_families: []
+  seen_negative_asset_families: []
+  seen_trajectory_ids: []
+diagnoses:
+  D1:
+    name: same world / unseen asset
+    description: 已见世界中出现未见资产家族，隔离纯资产泛化失败。
+    filter:
+      world_seen: true
+      asset_seen: false
+    required_metrics:
+      - macro_f1
+      - per_class_precision
+      - per_class_recall
+      - per_class_f1
+      - ap50
+      - ap50_95
+      - negative_fp_per_frame
+      - discovery_recall
+      - leaf_iou
+      - puddle_iou
+  D2:
+    name: unseen world / seen asset
+    description: 未见世界中放置已见资产，隔离世界布局/环境迁移。
+    filter:
+      world_seen: false
+      asset_seen: true
+    required_metrics:
+      - macro_f1
+      - per_class_precision
+      - per_class_recall
+      - per_class_f1
+      - ap50
+      - ap50_95
+      - negative_fp_per_frame
+      - discovery_recall
+      - leaf_iou
+      - puddle_iou
+  D3:
+    name: unseen material / seen geometry
+    description: 未见地面/目标材质但几何家族已见，隔离材质与纹理迁移。
+    filter:
+      material_seen: false
+      geometry_seen: true
+    required_metrics:
+      - macro_f1
+      - per_class_precision
+      - per_class_recall
+      - per_class_f1
+      - ap50
+      - ap50_95
+      - negative_fp_per_frame
+      - discovery_recall
+      - leaf_iou
+      - puddle_iou
+  D4:
+    name: unseen lighting / seen asset
+    description: 未见光照家族搭配已见资产，隔离光照/阴影迁移。
+    filter:
+      lighting_seen: false
+      asset_seen: true
+    required_metrics:
+      - macro_f1
+      - per_class_precision
+      - per_class_recall
+      - per_class_f1
+      - ap50
+      - ap50_95
+      - negative_fp_per_frame
+      - discovery_recall
+      - leaf_iou
+      - puddle_iou
+  D5:
+    name: unseen negative assets
+    description: 纯负样本帧中引入未见负样本资产，隔离误检泛化。
+    filter:
+      negative_only: true
+      negative_asset_unseen: true
+    required_metrics:
+      - macro_f1
+      - per_class_precision
+      - per_class_recall
+      - per_class_f1
+      - ap50
+      - ap50_95
+      - negative_fp_per_frame
+      - discovery_recall
+      - leaf_iou
+      - puddle_iou
+  D6:
+    name: full unseen world+asset+negative+trajectory
+    description: 世界、目标资产、负样本资产与轨迹全部未见，隔离端到端组合泛化。
+    filter:
+      world_seen: false
+      asset_seen: false
+      negative_asset_unseen: true
+      trajectory_seen: false
+    required_metrics:
+      - macro_f1
+      - per_class_precision
+      - per_class_recall
+      - per_class_f1
+      - ap50
+      - ap50_95
+      - negative_fp_per_frame
+      - discovery_recall
+      - leaf_iou
+      - puddle_iou

@@ -1,8 +1,0 @@
-{
-  "stage": "AUTO-05",
-  "status": "BLOCKED",
-  "machine_gate_pass": false,
-  "first_blocking_layer": "G3_split_model_screening_gates_failed_after_3_attempts",
-  "implementation_commit": "df7ed632b006fc1310ab088784e856ec75dd0754",
-  "evidence_dir": "artifacts/autonomous_auto05_20260730_evidence"
-}

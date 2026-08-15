@@ -202,10 +202,10 @@ def assemble(
             "learned_perception_pass": False,
             "real_domain_pass": False,
             "j6_runtime_pass": False,
-            "simulation_competition_matrix_pass": False,
+            "product_acceptance_pass": False,
             "note": (
-                "AUTO-17 improves observability and repeatable demonstration; "
-                "it does not change AUTO-05/06/07/08/13/14/15 status."
+                "This run improves observability and repeatable demonstration; "
+                "it does not change any A-P product acceptance gate."
             ),
         },
     }

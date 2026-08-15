@@ -1,0 +1,66 @@
+schema_version: 2
+pipeline_id: perception_pipeline_g4_placeholder
+model_manifests:
+  detector: detector_manifest.yaml
+  classifier: classifier_manifest.yaml
+  leaf_segmenter: leaf_segmenter_manifest.yaml
+  puddle_segmenter: puddle_segmenter_manifest.yaml
+runtime:
+  backend: onnxruntime
+  required_provider: CUDAExecutionProvider
+  io_binding_required: true
+  cpu_fallback_forbidden: true
+  sync_tolerance_ms: 20.0
+  frame_queue_depth: 2
+  preprocess_spec: preprocess_spec.yaml
+  postprocess_spec: postprocess_spec.yaml
+  minimum_area_region_m2: 0.05
+  minimum_area_region_m2_by_class:
+    leaf_pile: 0.02
+    puddle: 0.05
+  tracker_v2:
+    association_distance_m: 0.30
+    close_recovery_distance_m: 0.10
+    minimum_image_iou: 0.05
+    maximum_observation_gap_s: 0.50
+    occlusion_recovery_s: 2.0
+    duplicate_distance_m: 0.08
+    confirmation_observations: 3
+    confirmation_class_posterior: 0.70
+    confirmation_score_ema: 0.60
+    score_ema_alpha: 0.35
+    defer_after_observations: 5
+  dynamic_trash_map:
+    association_distance_m: 0.30
+    area_association_distance_m: 0.50
+    confirmation_observations: 3
+    confirmation_class_posterior: 0.70
+    confirmation_confidence: 0.60
+    maximum_covariance_trace: 0.03
+    lost_after_s: 1.0
+    reject_after_s: 5.0
+    maximum_observation_history: 64
+    area_confirmation_observations: 6
+    leaf_area_confirmation_observations: 4
+    puddle_area_confirmation_observations: 6
+  camera_frustum:
+    horizontal_fov_rad: 1.40
+    minimum_range_m: 0.10
+    maximum_range_m: 8.0
+  watchdog:
+    camera_stale_ms: 500.0
+    maximum_latency_ms: 200.0
+    sustained_latency_samples: 5
+    maximum_consecutive_tf_errors: 3
+    maximum_consecutive_session_errors: 2
+  performance:
+    inference_p95_ms: 150.0
+    end_to_end_p95_ms: 200.0
+    minimum_effective_hz: 10.0
+    maximum_drop_rate: 0.01
+    soak_duration_s: 7200.0
+    maximum_memory_growth_ratio: 0.05
+status:
+  formal_pipeline_pass: false
+  live_pipeline_pass: false
+  competition_pipeline_claim_allowed: false

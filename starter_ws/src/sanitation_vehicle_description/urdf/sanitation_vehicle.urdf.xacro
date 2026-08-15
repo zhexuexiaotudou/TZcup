@@ -8,6 +8,15 @@
 
   <!-- Stage4S separates physical geometry from the DiffDrive estimator / command
        model. Defaults reproduce the Stage4R vehicle exactly. -->
+  <!-- The product model is Ackermann: physical front steering + rear traction
+       with exactly one Gazebo AckermannSteering plugin. `skid_steer_legacy`
+       remains available only for explicit historical regression. -->
+  <xacro:arg name="drive_model" default="ackermann"/>
+  <xacro:property name="drive_model_name" value="$(arg drive_model)"/>
+  <xacro:if value="${drive_model_name != 'ackermann' and drive_model_name != 'skid_steer_legacy'}">
+    <!-- Deliberately undefined: direct xacro use must fail closed for an invalid profile. -->
+    <xacro:invalid_drive_model_selection/>
+  </xacro:if>
   <xacro:arg name="physical_wheel_radius" default="0.14"/>
   <xacro:arg name="physical_track_width" default="0.80"/>
   <xacro:arg name="drive_wheel_radius" default="0.14"/>
@@ -19,10 +28,14 @@
   <xacro:arg name="enable_wheel_slip" default="false"/>
   <xacro:arg name="lidar_samples" default="360"/>
   <xacro:arg name="lidar_update_rate" default="10"/>
-  <!-- AUTO-12 opt-in efficiency envelope. Defaults preserve the frozen
-       0.65 m production vehicle; launch with 1.32 / 0.52 for the candidate. -->
-  <xacro:arg name="cleaning_width" default="0.65"/>
-  <xacro:arg name="brush_center_y" default="0.23"/>
+  <!-- Product cleaning envelope: two physical 0.14 m side brushes deployed
+       at +/-0.52 m produce a truthful 1.32 m effective width. -->
+  <xacro:arg name="cleaning_width" default="1.32"/>
+  <xacro:arg name="brush_center_y" default="0.52"/>
+  <!-- Side-brush boom X position. The legacy baseline keeps 0.58 m; the
+       Ackermann profile moves the boom to 0.68 m so the sampled wheel/brush
+       clearance stays positive over the complete steering range. -->
+  <xacro:arg name="brush_forward_x" default="0.68"/>
   <!-- Offline G2 capture only. Production launch never overrides this false default. -->
   <xacro:arg name="enable_training_gt" default="false"/>
   <!-- Stage5BR4 camera ablation. Defaults are the frozen C0 production candidate. -->
@@ -65,6 +78,7 @@
   <xacro:property name="wheel_mass" value="3.0"/>
   <xacro:property name="cleaning_width" value="$(arg cleaning_width)"/>
   <xacro:property name="brush_center_y" value="$(arg brush_center_y)"/>
+  <xacro:property name="brush_forward_x" value="$(arg brush_forward_x)"/>
   <xacro:property name="lidar_samples" value="$(arg lidar_samples)"/>
   <xacro:property name="lidar_update_rate" value="$(arg lidar_update_rate)"/>
 
@@ -181,9 +195,29 @@
       <geometry><box size="0.32 0.010 0.055"/></geometry>
       <material name="safety_stripe_green_right"><color rgba="0.02 0.52 0.30 1.0"/></material>
     </visual>
+    <!-- Keep this source-level collision name stable for downstream scene
+         contracts. Legacy expands the original full box; Ackermann expands
+         a full-width centre crossmember between the wheel wells. -->
     <collision name="lower_chassis_collision">
-      <geometry><box size="${base_length} ${base_width} ${base_height}"/></geometry>
+      <geometry>
+        <box size="${base_length if drive_model_name == 'skid_steer_legacy' else 0.44} ${base_width} ${base_height}"/>
+      </geometry>
     </collision>
+    <xacro:if value="${drive_model_name == 'ackermann'}">
+      <!-- Truthful wheel-well collision geometry. The Ackermann front wheels
+           sweep +/-38.5 deg around their own vertical centreline, so the
+           lower chassis is split into a centre spine plus front/rear stubs
+           that leave the wheel wells open. The exterior visual, sensors,
+           brushes, upper body and the 80 kg chassis inertial are preserved. -->
+      <collision name="lower_chassis_front_stub_collision">
+        <origin xyz="0.3975 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.355 0.52 0.28"/></geometry>
+      </collision>
+      <collision name="lower_chassis_rear_stub_collision">
+        <origin xyz="-0.3975 0 0" rpy="0 0 0"/>
+        <geometry><box size="0.355 0.52 0.28"/></geometry>
+      </collision>
+    </xacro:if>
     <collision name="upper_body_collision">
       <origin xyz="0.10 0 0.20" rpy="0 0 0"/>
       <geometry><box size="0.72 0.64 0.22"/></geometry>
@@ -246,14 +280,95 @@
     </gazebo>
   </xacro:macro>
 
-  <xacro:sanitation_wheel side="front_left" pos_x="${wheel_pos_x}" pos_y="${wheel_pos_y}"
-    red="0.12" green="0.32" blue="0.62"/>
-  <xacro:sanitation_wheel side="front_right" pos_x="${wheel_pos_x}" pos_y="${-wheel_pos_y}"
-    red="0.13" green="0.33" blue="0.63"/>
-  <xacro:sanitation_wheel side="rear_left" pos_x="${-wheel_pos_x}" pos_y="${wheel_pos_y}"
-    red="0.14" green="0.34" blue="0.64"/>
-  <xacro:sanitation_wheel side="rear_right" pos_x="${-wheel_pos_x}" pos_y="${-wheel_pos_y}"
-    red="0.15" green="0.35" blue="0.65"/>
+  <!-- Ackermann wheel: a free-spin wheel under a steered front knuckle, or a
+       rear traction wheel on the chassis. Both wheel and steering joints use
+       finite effort, velocity and damping; the steering joint carries the
+       frozen symmetric +/-38.5 deg position limit. -->
+  <xacro:macro name="sanitation_ackermann_wheel" params="side pos_x pos_y steered parent_link red green blue">
+    <link name="${side}_wheel_link">
+      <visual name="tire_visual">
+        <origin rpy="${pi / 2.0} 0 0"/>
+        <geometry><cylinder radius="${physical_wheel_radius}" length="${wheel_width}"/></geometry>
+        <material name="${side}_wheel_material">
+          <color rgba="0.035 0.045 0.05 1.0"/>
+        </material>
+      </visual>
+      <visual name="hub_visual">
+        <origin rpy="${pi / 2.0} 0 0"/>
+        <geometry><cylinder radius="${physical_wheel_radius * 0.43}" length="${wheel_width + 0.006}"/></geometry>
+        <material name="${side}_hub_material">
+          <color rgba="${red} ${green} ${blue} 1.0"/>
+        </material>
+      </visual>
+      <collision>
+        <origin rpy="${pi / 2.0} 0 0"/>
+        <geometry><cylinder radius="${physical_wheel_radius}" length="${wheel_width}"/></geometry>
+      </collision>
+      <inertial>
+        <mass value="${wheel_mass}"/>
+        <inertia
+          ixx="${(wheel_mass / 12.0) * (3.0 * physical_wheel_radius**2 + wheel_width**2)}"
+          ixy="0" ixz="0"
+          iyy="${0.5 * wheel_mass * physical_wheel_radius**2}"
+          iyz="0"
+          izz="${(wheel_mass / 12.0) * (3.0 * physical_wheel_radius**2 + wheel_width**2)}"/>
+      </inertial>
+    </link>
+    <xacro:if value="${steered}">
+      <link name="${side}_steering_link">
+        <inertial>
+          <mass value="1.0"/>
+          <inertia ixx="0.004" ixy="0" ixz="0" iyy="0.004" iyz="0" izz="0.006"/>
+        </inertial>
+      </link>
+      <joint name="${side}_steering_joint" type="revolute">
+        <axis xyz="0 0 1"/>
+        <parent link="base_link"/>
+        <child link="${side}_steering_link"/>
+        <origin xyz="${pos_x} ${pos_y} ${wheel_pos_z}" rpy="0 0 0"/>
+        <limit lower="-0.671951764" upper="0.671951764" effort="40.0" velocity="0.8"/>
+        <dynamics damping="0.5"/>
+      </joint>
+    </xacro:if>
+    <joint name="${side}_wheel_joint" type="continuous">
+      <axis xyz="0 1 0"/>
+      <parent link="${parent_link}"/>
+      <child link="${side}_wheel_link"/>
+      <xacro:if value="${steered}">
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </xacro:if>
+      <xacro:if value="${not steered}">
+        <origin xyz="${pos_x} ${pos_y} ${wheel_pos_z}" rpy="0 0 0"/>
+      </xacro:if>
+      <limit effort="30.0" velocity="30.0"/>
+      <dynamics damping="0.01"/>
+    </joint>
+    <gazebo reference="${side}_wheel_link">
+      <mu1>${wheel_mu_longitudinal}</mu1>
+      <mu2>${wheel_mu_lateral}</mu2>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:if value="${drive_model_name == 'skid_steer_legacy'}">
+    <xacro:sanitation_wheel side="front_left" pos_x="${wheel_pos_x}" pos_y="${wheel_pos_y}"
+      red="0.12" green="0.32" blue="0.62"/>
+    <xacro:sanitation_wheel side="front_right" pos_x="${wheel_pos_x}" pos_y="${-wheel_pos_y}"
+      red="0.13" green="0.33" blue="0.63"/>
+    <xacro:sanitation_wheel side="rear_left" pos_x="${-wheel_pos_x}" pos_y="${wheel_pos_y}"
+      red="0.14" green="0.34" blue="0.64"/>
+    <xacro:sanitation_wheel side="rear_right" pos_x="${-wheel_pos_x}" pos_y="${-wheel_pos_y}"
+      red="0.15" green="0.35" blue="0.65"/>
+  </xacro:if>
+  <xacro:if value="${drive_model_name == 'ackermann'}">
+    <xacro:sanitation_ackermann_wheel side="front_left" pos_x="${wheel_pos_x}" pos_y="${wheel_pos_y}"
+      steered="true" parent_link="front_left_steering_link" red="0.12" green="0.32" blue="0.62"/>
+    <xacro:sanitation_ackermann_wheel side="front_right" pos_x="${wheel_pos_x}" pos_y="${-wheel_pos_y}"
+      steered="true" parent_link="front_right_steering_link" red="0.13" green="0.33" blue="0.63"/>
+    <xacro:sanitation_ackermann_wheel side="rear_left" pos_x="${-wheel_pos_x}" pos_y="${wheel_pos_y}"
+      steered="false" parent_link="base_link" red="0.14" green="0.34" blue="0.64"/>
+    <xacro:sanitation_ackermann_wheel side="rear_right" pos_x="${-wheel_pos_x}" pos_y="${-wheel_pos_y}"
+      steered="false" parent_link="base_link" red="0.15" green="0.35" blue="0.65"/>
+  </xacro:if>
 
   <xacro:imu/>
 
@@ -431,14 +546,59 @@
     </gazebo>
   </xacro:if>
 
-  <xacro:diff_drive_controller
-    wheel_separation="${drive_wheel_separation}"
-    wheel_radius="${drive_wheel_radius}"
-  />
+  <!-- Exactly one joint command writer per profile. Ackermann loads the
+       single gz-sim-ackermann-steering-system writer and never a DiffDrive;
+       legacy keeps the frozen DiffDrive writer. -->
+  <xacro:if value="${drive_model_name == 'skid_steer_legacy'}">
+    <xacro:diff_drive_controller
+      wheel_separation="${drive_wheel_separation}"
+      wheel_radius="${drive_wheel_radius}"
+    />
+  </xacro:if>
+  <xacro:if value="${drive_model_name == 'ackermann'}">
+    <gazebo>
+      <plugin filename="gz-sim-ackermann-steering-system" name="gz::sim::systems::AckermannSteering">
+        <left_joint>rear_left_wheel_joint</left_joint>
+        <right_joint>rear_right_wheel_joint</right_joint>
+        <left_steering_joint>front_left_steering_joint</left_steering_joint>
+        <right_steering_joint>front_right_steering_joint</right_steering_joint>
+        <!-- Plugin clamp = asin(L / R_min) = 32.121 deg, NOT the 28 deg
+             virtual angle. Gazebo clamps through R = L / sin(limit), so this
+             value reproduces the frozen 1.429 m minimum radius. -->
+        <steering_limit>0.5606176830324433</steering_limit>
+        <steer_p_gain>3.0</steer_p_gain>
+        <wheel_base>0.76</wheel_base>
+        <wheel_separation>0.80</wheel_separation>
+        <kingpin_width>0.80</kingpin_width>
+        <wheel_radius>0.14</wheel_radius>
+        <topic>/cmd_vel</topic>
+        <odom_topic>/wheel/odom_raw</odom_topic>
+        <tf_topic>/wheel/odom_raw_tf</tf_topic>
+        <frame_id>odom</frame_id>
+        <child_frame_id>base_footprint</child_frame_id>
+        <odom_publish_frequency>50</odom_publish_frequency>
+        <min_velocity>-0.75</min_velocity>
+        <max_velocity>0.75</max_velocity>
+        <min_acceleration>-0.8</min_acceleration>
+        <max_acceleration>0.8</max_acceleration>
+        <min_jerk>-2.0</min_jerk>
+        <max_jerk>2.0</max_jerk>
+      </plugin>
+    </gazebo>
+  </xacro:if>
+
+  <!-- Publish measured steering and wheel states for odometry auditing and
+       read-only operator telemetry. This observer does not command joints. -->
+  <gazebo>
+    <plugin filename="gz-sim-joint-state-publisher-system" name="gz::sim::systems::JointStatePublisher">
+      <topic>/joint_states</topic>
+    </plugin>
+  </gazebo>
 
   <!-- Disabled by default so the split-parameter baseline exactly preserves
        Stage4R contact behavior. It is enabled only for an explicit slip scan. -->
   <xacro:if value="$(arg enable_wheel_slip)">
+    <xacro:if value="${drive_model_name == 'skid_steer_legacy'}">
     <gazebo>
       <plugin filename="gz-sim-wheel-slip-system" name="gz::sim::systems::WheelSlip">
         <xacro:macro name="slip_wheel" params="link_name">
@@ -455,6 +615,7 @@
         <xacro:slip_wheel link_name="rear_right_wheel_link"/>
       </plugin>
     </gazebo>
+    </xacro:if>
   </xacro:if>
 
   <!-- Model-scoped Gazebo truth. Unlike the world Pose_V bridge, this topic
@@ -513,9 +674,9 @@
     <origin xyz="-0.18 0 0.25" rpy="0 0 0"/>
   </joint>
 
-  <!-- Side-brush links carry both visual and collision geometry. AUTO-12 can
-       materialize the deployed envelope by setting brush_center_y=0.52 while
-       the production default remains retracted at 0.23. -->
+  <!-- Side-brush links carry both visual and collision geometry.  The product
+       default is the deployed envelope; a legacy caller must opt into another
+       position explicitly. -->
   <link name="left_brush_link">
     <visual name="left_brush_support_arm_visual">
       <origin xyz="-0.12 -0.06 0.025" rpy="0 0 -0.35"/>
@@ -545,7 +706,7 @@
   <joint name="left_brush_joint" type="fixed">
     <parent link="base_link"/>
     <child link="left_brush_link"/>
-    <origin xyz="0.58 ${brush_center_y} -0.14" rpy="0 0 0"/>
+    <origin xyz="$(arg brush_forward_x) ${brush_center_y} -0.14" rpy="0 0 0"/>
   </joint>
 
   <link name="right_brush_link">
@@ -577,7 +738,7 @@
   <joint name="right_brush_joint" type="fixed">
     <parent link="base_link"/>
     <child link="right_brush_link"/>
-    <origin xyz="0.58 ${-brush_center_y} -0.14" rpy="0 0 0"/>
+    <origin xyz="$(arg brush_forward_x) ${-brush_center_y} -0.14" rpy="0 0 0"/>
   </joint>
 
   <!-- Non-colliding visualization of the nominal cleaning footprint. -->

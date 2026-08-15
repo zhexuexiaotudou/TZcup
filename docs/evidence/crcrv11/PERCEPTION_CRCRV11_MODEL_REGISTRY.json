@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "protocol": "CRCRV11",
+  "source_commit": "261f0d62d9e7bf6f844c0faf1fa72fe02486e0ce",
+  "models": [
+    {
+      "route": "R1",
+      "status": "failed",
+      "candidate_macro_f1": 0.6075,
+      "checkpoint_retained_in_active_repository": false
+    },
+    {
+      "route": "R2",
+      "status": "failed",
+      "candidate_macro_f1": 0.6311,
+      "checkpoint_retained_in_active_repository": false
+    },
+    {
+      "route": "R3",
+      "status": "failed",
+      "candidate_macro_f1": 0.4561,
+      "checkpoint_retained_in_active_repository": false
+    }
+  ],
+  "selected_product_route": null,
+  "frozen_product_model": null,
+  "retention_note": "Failed checkpoints and training intermediates were intentionally excluded from the cleaned active repository."
+}

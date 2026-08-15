@@ -85,6 +85,22 @@ artifacts/autonomous_auto03_*_smoke/
 artifacts/autonomous_auto04_*_raw/
 artifacts/autonomous_auto05_*_raw/
 
+# Product mapping acceptance runtime directories contain raw Gazebo/ROS logs,
+# generated maps, and failed smoke attempts. Commit only a deliberately curated
+# compact evidence directory after a formal run.
+artifacts/product_mapping_*/
+!artifacts/product_mapping_*_evidence/
+!artifacts/product_mapping_*_evidence/**
+
+# AUTO-05R training runs contain local checkpoints and generated ONNX models.
+# Keep raw/smoke/failed-attempt payloads local; only explicitly named compact
+# evidence directories or deliberately force-added JSON reports are versioned.
+artifacts/auto05r_*/
+!artifacts/auto05r_*_evidence/
+!artifacts/auto05r_*_evidence/**
+!artifacts/auto05r_g4_data_gate/
+!artifacts/auto05r_g4_data_gate/**
+
 # AUTO-17 full GUI/dashboard runs contain MP4, frame sequences, logs, and bags.
 # Keep them local; only explicitly named compact evidence directories are versioned.
 artifacts/auto17_visual_demo_*/

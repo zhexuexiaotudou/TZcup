@@ -35,3 +35,10 @@ TEST(FusionFilter, BoundsAlphaAndRejectsInconsistentAbsoluteFixes)
   EXPECT_FALSE(sanitation_scan_refiner::measurementsConsistent(
       {0.0, 0.0}, {0.08, 0.08}, 0.10));
 }
+
+TEST(FusionFilter, PropagatesDelayedHeadingWithLocalYawAndWraps)
+{
+  const double propagated = sanitation_scan_refiner::propagateHeading(
+    3.13, -3.10, 3.08);
+  EXPECT_NEAR(propagated, -3.05, 1e-12);
+}

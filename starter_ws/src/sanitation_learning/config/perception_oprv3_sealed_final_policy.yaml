@@ -1,0 +1,24 @@
+schema_version: 1
+stage: OPRV3-09
+policy_id: perception_oprv3_sealed_final_policy
+description: >
+  One-shot G5 thresholds frozen before first access. Values are fixed and
+  include static recognition, online discovery, wrong behavior and Area gates.
+gates:
+  object_precision: {metric: object.precision, operator: ge, threshold: 0.95}
+  object_recall: {metric: object.recall, operator: ge, threshold: 0.95}
+  object_f1: {metric: object.f1, operator: ge, threshold: 0.95}
+  per_class_recall: {metric: discrete.minimum_per_class_recall, operator: ge, threshold: 0.90}
+  paper_precision: {metric: discrete.per_class.paper_litter.precision, operator: ge, threshold: 0.90}
+  AP50: {metric: discrete.AP50, operator: ge, threshold: 0.95}
+  AP50_95: {metric: discrete.AP50_95, operator: ge, threshold: 0.70}
+  online_eventual_detection: {metric: online.eventual_detection_recall, operator: ge, threshold: 0.95}
+  online_eventual_correct_class: {metric: online.eventual_correct_class_recall, operator: ge, threshold: 0.95}
+  online_small_object: {metric: online.small_object_eventual_recall, operator: ge, threshold: 0.90}
+  online_pre_fov: {metric: online.pre_fov_target_creation, operator: eq, threshold: 0}
+  online_false_actionable: {metric: online.false_actionable_target_rate, operator: le, threshold: 0.01}
+  leaf_iou: {metric: area.iou_by_class.leaf_pile, operator: ge, threshold: 0.80}
+  puddle_iou: {metric: area.iou_by_class.puddle, operator: ge, threshold: 0.80}
+  macro_miou: {metric: area.macro_miou, operator: ge, threshold: 0.80}
+  boundary_f1: {metric: area.boundary_f1, operator: ge, threshold: 0.80}
+  negative_area_fp_per_frame: {metric: area.negative_area_fp_per_frame, operator: le, threshold: 0.02}

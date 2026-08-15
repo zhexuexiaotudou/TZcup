@@ -19,3 +19,14 @@ def test_no_connector_crosses_the_field_when_upstream_is_already_alternating():
         for left, right in zip(result.swaths, result.swaths[1:])
     ]
     assert max(connector_lengths) == 0.5
+
+
+def test_ackermann_skip_lane_order_avoids_repeated_sub_diameter_turns():
+    swaths = [((0, y), (100, y)) for y in range(12)]
+    result = route_oriented_swaths(swaths, (0, 0), lane_skip=3)
+    centers = [round((a[1] + b[1]) / 2) for a, b in result.swaths]
+    differences = [abs(b - a) for a, b in zip(centers, centers[1:])]
+    assert sorted(centers) == list(range(12))
+    assert differences.count(1) == 2
+    assert all(value in (1, 3) for value in differences)
+    assert "lane_skip_3" in result.ordering

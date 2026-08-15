@@ -13,8 +13,10 @@ param(
     [string]$MapSize = "small",
     [ValidateSet("normal", "fast", "turbo")]
     [string]$SimulationSpeed = "fast",
-    [ValidateSet("optimized", "legacy")]
-    [string]$CoverageProfile = "optimized",
+    [ValidateSet("ackermann", "optimized", "legacy")]
+    [string]$CoverageProfile = "ackermann",
+    [ValidateSet("ackermann", "skid_steer_legacy")]
+    [string]$DriveModel = "ackermann",
     [ValidateRange(0, 1000)]
     [int]$DynamicObstacleTrials = 0,
     [ValidateSet("ogre2", "ogre")]
@@ -36,6 +38,7 @@ $launchParameters = @{
     ManualControl = $true
     SimulationSpeed = $SimulationSpeed
     CoverageProfile = $CoverageProfile
+    DriveModel = $DriveModel
     DynamicObstacleTrials = $DynamicObstacleTrials
     SimulationRenderEngine = $SimulationRenderEngine
 }

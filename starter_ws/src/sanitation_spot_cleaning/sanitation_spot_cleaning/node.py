@@ -19,7 +19,7 @@ def main() -> None:
             self.event_publisher = self.create_publisher(CleaningEvent, "/garbage/cleaning_events", 20)
             self.state_publisher = self.create_publisher(String, "/spot_clean/state", 20)
             self.brush_publisher = self.create_publisher(Bool, "/brush_enabled", 20)
-            self.create_subscription(GarbageTargetArray, "/perception/garbage/targets", self.on_targets, 20)
+            self.create_subscription(GarbageTargetArray, "/perception/product/targets", self.on_targets, 20)
             self.create_subscription(String, "/coverage/state", self.on_coverage_state, 20)
             self.create_timer(0.2, self.publish_state)
 

@@ -1,56 +1,54 @@
 # 操作员指南
 
-## 环境
+本指南只描述当前可执行路径。产品准入以仓库根目录的固定 A–P 合同为唯一口径；任何单项演示、历史 AUTO 阶段记录或人工改写状态，都不能替代正式验收。
 
-推荐 Windows 11 + Docker Desktop + NVIDIA GPU，或 Ubuntu 24.04、
-ROS 2 Jazzy、Gazebo Harmonic。首次使用先阅读根目录 `README.md`、
-`README_FIRST.md` 和 `docs/compatibility.md`。
+## 1. 环境与预检
 
-## 一键入口
+推荐 Windows 11 + WSL2 Ubuntu 24.04，ROS 2 Jazzy 与 Gazebo Harmonic。首次运行先阅读 `README_FIRST.md` 和 `docs/compatibility.md`。
 
 ```powershell
-# 快速 CI、状态不变量和秘密扫描
-powershell -ExecutionPolicy Bypass -File scripts/run_auto16_release.ps1 -Mode Validate
-
-# Docker 内执行基础构建门
-powershell -ExecutionPolicy Bypass -File scripts/run_auto16_release.ps1 -Mode Build
-
-# 在已安装 ROS 2/Gazebo 的 TZcup-Ubuntu-24.04 WSL 中启动基线
-powershell -ExecutionPolicy Bypass -File scripts/run_auto16_release.ps1 -Mode Simulation
-
-# 查看正式竞赛矩阵；依赖未通过时以非零退出并给出阻断层
-powershell -ExecutionPolicy Bypass -File scripts/run_auto16_release.ps1 -Mode Matrix
+py -3 scripts/ci_fast.py
+py -3 scripts/product_acceptance.py validate-contract
 ```
 
-地图优先的人类监督台使用 ROS 2 launch 启动，并在 Windows 浏览器打开
-`http://127.0.0.1:8765`：
+两条命令必须以零退出码结束。合同校验会检查验收标准原文的 SHA-256，禁止静默修改阈值。
 
-```bash
-source /opt/ros/jazzy/setup.bash
-source "$HOME/sanitation_ws/install/setup.bash"
-ros2 launch sanitation_hmi human_visualization_demo.launch.py \
-  operator_token:=replace-with-a-local-token
+## 2. 启动默认 Ackermann 仿真
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run_visual_demo.ps1
 ```
 
-已有 Gazebo、SLAM 与安全门时使用 `human_visualization.launch.py` 只附着监督台。令牌只
-保存在本机；未接入安全任务编排器时，Coverage、暂停/恢复和返航按钮按设计保持禁用。
+默认车型、覆盖规划和地图档位分别为 `ackermann`、`ackermann` 和 `small`。训练/控制不得读取 Gazebo ground truth。启动后依次检查 `/clock`、TF、里程计、激光雷达、RGB-D、Nav2 lifecycle 和安全节点，再派发任务。急停、安全区和命令超时保护不得关闭。
 
-启动后先检查 `/clock`、TF、里程计、激光雷达、RGB-D、Nav2 lifecycle 和安全
-节点，再下发任务。急停、安全区和命令超时不得关闭。训练 GT 默认必须关闭。
+只需要 Gazebo 原生任务控制界面时，可运行 `scripts\run_gazebo_cleaning_demo.ps1`；它使用同一 Ackermann 默认链，不改变验收口径。
 
-## 当前运行边界
+需要保留证据时，将输出目录放在仓库外的专用目录，并保存完整命令、退出码、原始日志、JSON 报告和文件哈希。
 
-AUTO-15 综合矩阵未通过，因此 `Matrix` 模式会按设计 fail closed。真实域与
-J6 实机也没有通过。操作员不得把 AUTO-02、09、10、11、12 的独立组件证据
-描述成综合比赛成绩。
+## 3. 生成并评估 A–P 证据
 
-## 故障排除
+```powershell
+py -3 scripts/product_acceptance.py template --output F:\Project\TZcup-product-evidence\formal-run
+py -3 scripts/product_acceptance.py evaluate --evidence-root F:\Project\TZcup-product-evidence\formal-run
+```
 
-- Docker 镜像缺失：先运行 `scripts/run_docker_preflight.ps1`；
-- ROS 依赖缺失：按 `README_FIRST.md` 导入 `repos/simulation.repos` 后运行
-  `rosdep install`；
-- Gazebo 无画面：检查 WSLg、D3D12/OpenGL 和 `DISPLAY`；
-- Nav2 未激活：查看 lifecycle、TF 树、map/odom/base_link 和参数服务；
-- 地图监督台显示降级：切换工程模式，逐项检查 `/odom`、`/map`、两路相机和安全来源；
-- 地图监督台任务按钮禁用：先确认安全任务编排器是否存在，禁止绕过 503 失败关闭边界；
-- Matrix 阻断：读取 `FINAL_BLOCKER_REGISTER.json`，禁止手工改写状态。
+`template` 只生成待填写的证据骨架，不代表通过。`evaluate` 默认拒绝覆盖已有最终结果；只有 16 个门、131 项检查、14 个全局否决项和最终发布物全部满足时，顶层状态才可能为 `true`。
+
+最终输出为：
+
+- `FINAL_ACCEPTANCE_STATUS.json`
+- `FINAL_ACCEPTANCE_MATRIX.json`
+- `FINAL_EVIDENCE_INDEX.md`
+- 恰好一个匹配合同命名规则的发布 ZIP
+
+## 4. 当前运行边界
+
+当前真实 Ackermann 基线已经完成一次完整小场景任务，但定位 P95、重复覆盖率和全流程效率未达到 V1 硬门槛。因此产品准入状态为失败；不得把“仿真能跑完”描述成“产品验收通过”。详见 `docs/current-status.md`。
+
+## 5. 故障排查
+
+- Docker 镜像缺失：运行 `scripts/run_docker_preflight.ps1`。
+- ROS 依赖缺失：按 `README_FIRST.md` 导入 `repos/simulation.repos`，再运行 `rosdep install`。
+- Gazebo 无画面：检查 WSLg、D3D12/OpenGL 与 `DISPLAY`。
+- Nav2 未激活：检查 lifecycle、TF 树、`map/odom/base_link` 和参数服务。
+- 验收失败：读取 `FINAL_ACCEPTANCE_MATRIX.json` 的首个失败检查及原始证据，修复实现或重新采样；禁止调低合同阈值。

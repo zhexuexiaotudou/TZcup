@@ -1,17 +1,29 @@
+import math
+
+import pytest
+
 from sanitation_coverage.metrics import (
     empirical_swept_metrics,
     semantic_path_distances,
     path_length,
+    projected_path_progress,
     raster_coverage_metrics,
     repair_degenerate_swaths,
     summarize_distances,
     swath_absolute_cross_track_errors,
     swath_lateral_errors,
     swath_straightness_errors,
+    synchronized_pose_errors,
     synchronized_xy_errors,
     uncovered_cell_centers,
     horizontal_repair_segments,
 )
+
+
+def test_projected_path_progress_uses_arc_distance_not_callback_rate():
+    points = [(0.0, 0.0), (1.0, 0.0), (1.0, 2.0)]
+    assert projected_path_progress(points, (0.4, 0.2)) == pytest.approx(0.4)
+    assert projected_path_progress(points, (1.2, 0.75)) == pytest.approx(1.75)
 
 
 def test_summarize_distances_reports_rmse_and_tail():
@@ -19,6 +31,8 @@ def test_summarize_distances_reports_rmse_and_tail():
     assert summary['sample_count'] == 4
     assert summary['p95_m'] == 0.04
     assert summary['max_m'] == 0.04
+    assert summary['mean_m'] == pytest.approx(0.025)
+    assert summary['median_m'] == pytest.approx(0.025)
     assert 0.02 < summary['rmse_m'] < 0.04
 
 
@@ -36,6 +50,47 @@ def test_synchronized_xy_errors_use_ros_time_not_callback_arrival_order():
     assert len(errors) == 2
     assert max(errors) <= 0.0200001
     assert max(sync_errors) <= 0.0200001
+
+
+def test_synchronized_xy_errors_interpolate_fast_linear_motion():
+    estimates = [(0.05, 0.05, 0.0, 0.0)]
+    truths = [
+        (0.00, 0.00, 0.0, 0.0, False),
+        (0.10, 0.10, 0.0, 0.0, False),
+    ]
+    errors, sync_errors, dropped = synchronized_xy_errors(
+        estimates, truths, tolerance_sec=0.05
+    )
+    assert dropped == 0
+    assert errors == [0.0]
+    assert sync_errors == [0.05]
+
+
+def test_synchronized_xy_errors_drop_unsupported_truth_gap():
+    estimates = [(0.10, 0.10, 0.0, 0.0)]
+    truths = [
+        (0.00, 0.00, 0.0, 0.0, False),
+        (0.21, 0.21, 0.0, 0.0, False),
+    ]
+    errors, sync_errors, dropped = synchronized_xy_errors(
+        estimates, truths, tolerance_sec=0.05
+    )
+    assert errors == []
+    assert sync_errors == []
+    assert dropped == 1
+
+
+def test_synchronized_pose_errors_interpolate_wrapped_yaw():
+    estimates = [(0.05, 0.05, 0.0, -math.pi)]
+    truths = [
+        (0.00, 0.00, 0.0, math.radians(179.0), False),
+        (0.10, 0.10, 0.0, math.radians(-179.0), False),
+    ]
+    xy, yaw, sync, dropped = synchronized_pose_errors(estimates, truths, 0.05)
+    assert dropped == 0
+    assert xy == [0.0]
+    assert yaw[0] == pytest.approx(0.0, abs=1e-12)
+    assert sync == [0.05]
 
 
 def test_empirical_metrics_use_brush_on_ground_truth_points():
@@ -155,3 +210,54 @@ def test_brush_center_swath_is_shifted_back_from_base_path():
     )
     assert start == (-0.75, 0.0)
     assert end == (3.65, 0.0)
+
+
+def test_curvature_reversal_split_shares_primitive_boundaries():
+    from sanitation_coverage.metrics import split_path_at_curvature_reversals
+
+    points = [(float(index), 0.0) for index in range(7)]
+    headings = [0.0, 0.1, 0.2, 0.1, 0.0, 0.1, 0.2]
+    sections = split_path_at_curvature_reversals(points, headings)
+    assert [section[0] for section in sections] == [
+        points[0:3],
+        points[2:5],
+        points[4:7],
+    ]
+    assert sections[0][0][-1] == sections[1][0][0]
+    assert sections[1][0][-1] == sections[2][0][0]
+
+
+def test_curvature_reversal_split_keeps_straight_path_whole():
+    from sanitation_coverage.metrics import split_path_at_curvature_reversals
+
+    points = [(0.0, 0.0), (1.0, 0.0), (2.0, 0.0)]
+    headings = [0.0, 0.0, 0.0]
+    assert split_path_at_curvature_reversals(points, headings) == [
+        (points, headings)
+    ]
+
+
+def test_curvature_reversal_split_separates_curve_straight_curve():
+    from sanitation_coverage.metrics import split_path_at_curvature_reversals
+
+    points = [(float(index), 0.0) for index in range(7)]
+    headings = [0.0, 0.1, 0.2, 0.2, 0.2, 0.3, 0.4]
+    sections = split_path_at_curvature_reversals(points, headings)
+    assert [section[0] for section in sections] == [
+        points[0:3],
+        points[2:5],
+        points[4:7],
+    ]
+
+
+def test_path_heading_variation_accumulates_wrapped_turns():
+    from sanitation_coverage.metrics import path_heading_variation
+
+    assert math.isclose(
+        path_heading_variation([0.0, math.pi / 2.0, math.pi]),
+        math.pi,
+    )
+    assert math.isclose(
+        path_heading_variation([3.1, -3.1]),
+        2.0 * (math.pi - 3.1),
+    )

@@ -3,6 +3,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from sanitation_perception.tracking import TargetTracker, Track
+from sanitation_spot_cleaning.post_clean_verification import (
+    PostCleanVerifier,
+    VerificationOutcome,
+)
 
 
 @dataclass(frozen=True)
@@ -23,10 +27,12 @@ class SpotCleaningCoordinator:
         self.mode = mode
         self.maximum_retries = maximum_retries
         self.retries: dict[str, int] = {}
+        self.clean_attempts: dict[str, int] = {}
         self.events: list[dict] = []
         self.coverage_paused = False
         self.coverage_resumed = False
         self.brush_enabled = False
+        self.verifier = PostCleanVerifier()
 
     def queue_confirmed(self) -> list[Track]:
         queued = []
@@ -65,22 +71,24 @@ class SpotCleaningCoordinator:
         self.coverage_resumed = False
         self.tracker.transition(track_uuid, "APPROACHING")
         self.tracker.transition(track_uuid, "CLEANING")
+        self.clean_attempts[track_uuid] = self.clean_attempts.get(track_uuid, 0) + 1
+        if self.clean_attempts[track_uuid] > self.verifier.config.maximum_clean_attempts:
+            self.tracker.transition(track_uuid, "REJECTED")
+            self.coverage_paused = False
+            return {"target_uuid": track_uuid, "result": "manual_attention", "reason": "clean_attempt_limit"}
         self.brush_enabled = True
-        threshold = 0.90 if track.target_type == "area" else 1.0
-        result = "cleaned" if cleaned_fraction >= threshold else "incomplete"
-        if result == "cleaned":
-            self.tracker.transition(track_uuid, "CLEANED")
-        else:
-            self.tracker.transition(track_uuid, "QUEUED")
+        # The action-reported fraction is diagnostic only. A cleaning command cannot
+        # certify its own result; the target remains pending until camera verification.
+        _ = cleaned_fraction
+        self.tracker.transition(track_uuid, "POST_VERIFY")
         self.brush_enabled = False
-        self.coverage_paused = False
-        self.coverage_resumed = True
+        self.coverage_resumed = False
         event = {
             "target_uuid": track_uuid,
             "class_id": track.class_id,
             "cleaning_policy": track.cleaning_policy,
-            "result": result,
-            "cleaned_fraction": cleaned_fraction,
+            "result": "post_verify_pending",
+            "cleaned_fraction": None,
             "brush_enabled_during_event": True,
             "brush_final": self.brush_enabled,
             "in_keepout": False,
@@ -88,3 +96,50 @@ class SpotCleaningCoordinator:
         }
         self.events.append(event)
         return event
+
+    def _finish_verification(self, track_uuid: str, outcome: VerificationOutcome) -> dict:
+        if outcome == VerificationOutcome.CLEANED:
+            self.tracker.transition(track_uuid, "CLEANED")
+            result = "cleaned"
+        elif outcome == VerificationOutcome.RECLEAN:
+            self.tracker.transition(track_uuid, "QUEUED")
+            result = "reclean_queued"
+        elif outcome == VerificationOutcome.MANUAL_ATTENTION:
+            self.tracker.transition(track_uuid, "REJECTED")
+            result = "manual_attention"
+        else:
+            return {"target_uuid": track_uuid, "result": "post_verify_pending"}
+        self.coverage_paused = False
+        self.coverage_resumed = True
+        event = {"target_uuid": track_uuid, "result": result, "brush_final": self.brush_enabled}
+        self.events.append(event)
+        return event
+
+    def verify_discrete(
+        self,
+        track_uuid: str,
+        observations: list[tuple[bool, float]],
+    ) -> dict:
+        attempt = self.clean_attempts.get(track_uuid, 1)
+        self.verifier.begin(track_uuid, target_type="DISCRETE", clean_attempt=attempt)
+        outcome = VerificationOutcome.CONTINUE_OBSERVING
+        for detected, confidence in observations:
+            outcome = self.verifier.observe_discrete(
+                track_uuid, detected=detected, confidence=confidence
+            )
+        if outcome != VerificationOutcome.CLEANED:
+            outcome = self.verifier.finalize(track_uuid)
+        return self._finish_verification(track_uuid, outcome)
+
+    def verify_area(self, track_uuid: str, *, area_before_m2: float, area_after_m2: float) -> dict:
+        attempt = self.clean_attempts.get(track_uuid, 1)
+        self.verifier.begin(
+            track_uuid,
+            target_type="AREA",
+            clean_attempt=attempt,
+            area_before_m2=area_before_m2,
+        )
+        outcome = self.verifier.observe_area(track_uuid, area_after_m2=area_after_m2)
+        if outcome != VerificationOutcome.CLEANED:
+            outcome = self.verifier.finalize(track_uuid)
+        return self._finish_verification(track_uuid, outcome)

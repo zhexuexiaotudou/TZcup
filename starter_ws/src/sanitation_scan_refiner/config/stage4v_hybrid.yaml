@@ -24,10 +24,13 @@ hybrid_global_fuser:
     base_frame: base_footprint
     local_odom_topic: /odom
     gnss_topic: /gnss/fix
+    gnss_heading_topic: /gnss/heading
     refined_pose_topic: /localization/refined_pose
     origin_latitude_deg: 31.2304
     origin_longitude_deg: 121.4737
     maximum_gnss_age_s: 0.5
+    maximum_gnss_heading_age_s: 0.5
+    gnss_heading_variance_rad2: 0.0001
     # Retain the last scan global correction while wheel/IMU odometry
     # propagates it through brief low-feature turns. MCAP gaps leave only
     # 24.5 s uncovered at 5 s versus 52.5 s at the old 0.5 s limit.

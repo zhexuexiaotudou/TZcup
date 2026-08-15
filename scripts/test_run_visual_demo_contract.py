@@ -17,19 +17,24 @@ def test_representative_frame_is_taken_from_the_completed_end_of_video():
     assert 'ffmpeg -nostdin -y -ss 5 -i "${OUTPUT_DIR}/visual_demo.mp4"' not in launcher
 
 
-def test_launcher_exposes_optimized_and_legacy_coverage_profiles():
+def test_launcher_defaults_to_ackermann_and_keeps_legacy_profiles_explicit():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
     wrapper = (ROOT / "scripts" / "run_visual_demo.ps1").read_text(encoding="utf-8")
     frozen = (ROOT / "scripts" / "run_frozen_coverage_trial.ps1").read_text(
         encoding="utf-8"
     )
 
-    assert 'COVERAGE_PROFILE="optimized"' in launcher
+    assert 'COVERAGE_PROFILE="ackermann"' in launcher
+    assert 'DRIVE_MODEL="ackermann"' in launcher
+    assert 'MAP_SIZE="small"' in launcher
     assert '--coverage-profile) COVERAGE_PROFILE="$2"' in launcher
     assert '"${COVERAGE_PROFILE}" == "legacy"' in launcher
     assert 'competition_demo_area.yaml' in launcher
     assert 'coverage_demo_overlap.yaml' in launcher
-    assert '[ValidateSet("optimized", "legacy")]' in wrapper
+    assert '[ValidateSet("ackermann", "optimized", "legacy")]' in wrapper
+    assert '[ValidateSet("ackermann", "skid_steer_legacy")]' in wrapper
+    assert '[string]$CoverageProfile = "ackermann"' in wrapper
+    assert '[string]$DriveModel = "ackermann"' in wrapper
     assert '"--coverage-profile", $CoverageProfile' in wrapper
     assert '[ValidateSet("optimized", "legacy")]' in frozen
 
@@ -205,7 +210,7 @@ def test_readiness_bypasses_stale_ros_daemon():
     )
 
     assert "ros2 node list --no-daemon --spin-time 3" in launcher
-    assert 'timeout 155 python3 "${ROOT}/scripts/ros_runtime_readiness.py"' in launcher
+    assert 'timeout 305 python3 "${ROOT}/scripts/ros_runtime_readiness.py"' in launcher
     assert '"${OUTPUT_DIR}/runtime_readiness.json"' in launcher
     assert "node.get_topic_names_and_types()" in readiness
     assert "node.get_service_names_and_types()" in readiness
@@ -293,11 +298,11 @@ def test_emergency_stop_availability_waits_for_dashboard_but_stays_bounded():
 def test_wslg_gui_is_launched_directly_for_native_plugin_backend():
     launcher = (ROOT / "scripts" / "run_visual_demo.sh").read_text(encoding="utf-8")
 
-    assert 'gui:=false random_seed:="${RANDOM_SEED}"' in launcher
+    assert 'gui:=false drive_model:="${DRIVE_MODEL}" random_seed:="${RANDOM_SEED}"' in launcher
     assert 'setsid "${gazebo_gui_env[@]}" gz sim -g --gui-config "${gui_config}"' in launcher
     assert '> "${OUTPUT_DIR}/gazebo_gui.log" 2>&1 &' in launcher
     assert 'gui:="${gui_value}"' not in launcher
-    assert launcher.index('timeout 155 python3 "${ROOT}/scripts/ros_runtime_readiness.py"') < launcher.index(
+    assert launcher.index('timeout 305 python3 "${ROOT}/scripts/ros_runtime_readiness.py"') < launcher.index(
         'setsid "${gazebo_gui_env[@]}" gz sim -g --gui-config "${gui_config}"'
     )
 

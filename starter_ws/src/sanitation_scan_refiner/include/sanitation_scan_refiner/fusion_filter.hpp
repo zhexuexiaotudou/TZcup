@@ -40,4 +40,12 @@ inline bool measurementsConsistent(
          std::max(0.0, maximum_disagreement_m);
 }
 
+inline double propagateHeading(
+  const double measured_heading, const double current_local_heading,
+  const double measurement_local_heading)
+{
+  const double angle = measured_heading + current_local_heading - measurement_local_heading;
+  return std::atan2(std::sin(angle), std::cos(angle));
+}
+
 }  // namespace sanitation_scan_refiner

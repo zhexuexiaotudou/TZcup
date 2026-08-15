@@ -1,2 +1,0 @@
-py -3 scripts/auto15_competition_matrix.py --output artifacts/autonomous_auto15_20260730_evidence --implementation-commit <sha>
-py -3 scripts/ci_fast.py

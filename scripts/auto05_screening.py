@@ -30,6 +30,13 @@ from sanitation_learning.auto04_contract import (  # noqa: E402
     decode_centernet_outputs,
     encode_centernet_targets,
 )
+from sanitation_learning.metric_scale import (  # noqa: E402
+    InstanceScaleRecord,
+    MetricScale,
+    derive_model_scale_record,
+    machine_evaluable_bucket,
+    small_object_bucket,
+)
 
 
 DISCRETE_NAMES = ("plastic_bottle", "metal_can", "paper_litter")
@@ -37,6 +44,8 @@ AREA_NAMES = ("leaf_pile", "puddle")
 SEMANTIC_TO_DISCRETE = {1: 0, 2: 1, 3: 2}
 INPUT_WIDTH = 384
 INPUT_HEIGHT = 288
+NATIVE_WIDTH = 640
+NATIVE_HEIGHT = 480
 STRIDE = 4
 SEED = 20260730
 
@@ -67,6 +76,7 @@ def instance_boxes(semantic: np.ndarray, instance: np.ndarray) -> list[dict]:
         int(value) for value in np.unique(instance) if int(value) != 0
     ):
         mask = instance == instance_id
+        mask = np.asarray(mask, dtype=bool)
         labels = semantic[mask].astype(np.int64)
         label = int(np.bincount(labels, minlength=6).argmax())
         if label not in SEMANTIC_TO_DISCRETE:
@@ -74,19 +84,24 @@ def instance_boxes(semantic: np.ndarray, instance: np.ndarray) -> list[dict]:
         ys, xs = np.nonzero(mask)
         if xs.size == 0:
             continue
+        bbox_xyxy = [
+            float(xs.min()),
+            float(ys.min()),
+            float(xs.max() + 1),
+            float(ys.max() + 1),
+        ]
+        short_side = float(min(bbox_xyxy[2] - bbox_xyxy[0], bbox_xyxy[3] - bbox_xyxy[1]))
+        mask_area = int(mask.sum())
         boxes.append(
             {
                 "class_index": SEMANTIC_TO_DISCRETE[label],
-                "bbox_xyxy": [
-                    float(xs.min()),
-                    float(ys.min()),
-                    float(xs.max() + 1),
-                    float(ys.max() + 1),
-                ],
-                "short_side": float(
-                    min(xs.max() - xs.min() + 1, ys.max() - ys.min() + 1)
-                ),
-                "mask_area": int(mask.sum()),
+                "mask": mask,
+                "native_bbox_xyxy": list(bbox_xyxy),
+                "native_short_side_px": short_side,
+                "native_mask_area_px": mask_area,
+                "bbox_xyxy": list(bbox_xyxy),
+                "short_side": short_side,
+                "mask_area": mask_area,
             }
         )
     return boxes
@@ -542,18 +557,31 @@ def detector_raw_predictions(
                 local_maximum_radius=2 if attempt >= 3 else 1,
                 max_detections=60 if attempt >= 3 else 100,
             )
-            scaled_truth = [
-                {
-                    **item,
-                    "bbox_xyxy": [
-                        item["bbox_xyxy"][0] * INPUT_WIDTH / 640.0,
-                        item["bbox_xyxy"][1] * INPUT_HEIGHT / 480.0,
-                        item["bbox_xyxy"][2] * INPUT_WIDTH / 640.0,
-                        item["bbox_xyxy"][3] * INPUT_HEIGHT / 480.0,
-                    ],
-                }
-                for item in truth
-            ]
+            scaled_truth = []
+            for item in truth:
+                derived = derive_model_scale_record(
+                    item,
+                    (NATIVE_WIDTH, NATIVE_HEIGHT),
+                    (INPUT_WIDTH, INPUT_HEIGHT),
+                    model_mask=item["mask"],
+                )
+                scaled_truth.append(
+                    {
+                        "class_index": item["class_index"],
+                        "native_bbox_xyxy": list(derived.native_bbox_xyxy),
+                        "native_short_side_px": derived.native_short_side_px,
+                        "native_mask_area_px": derived.native_mask_area_px,
+                        "model_bbox_xyxy": list(derived.model_bbox_xyxy),
+                        "model_short_side_px": derived.model_short_side_px,
+                        "model_mask_area_px": derived.model_mask_area_px,
+                        # Matching alias: predictions are decoded on the
+                        # model-input grid, so bbox_xyxy points to model scale.
+                        "bbox_xyxy": list(derived.model_bbox_xyxy),
+                        "short_side": derived.model_short_side_px,
+                        "mask_area": derived.model_mask_area_px,
+                        "scale_contract_version": 1,
+                    }
+                )
             predictions.append(decoded)
             truths.append(scaled_truth)
     return predictions, truths
@@ -580,7 +608,7 @@ def detector_metrics(
         ready_truth = [
             item
             for item in frame_truth
-            if item["short_side"] >= 8 and item["mask_area"] >= 20
+            if machine_evaluable_bucket(item, MetricScale.NATIVE_SCALE)
         ]
         evaluable_count += len(ready_truth)
         used_predictions = set()
@@ -606,13 +634,18 @@ def detector_metrics(
                     tp[class_index] += 1
                     matched_truth.add(best)
                     used_predictions.add(prediction_index)
-                    if class_truth[best]["short_side"] < 18:
+                    if small_object_bucket(class_truth[best], MetricScale.NATIVE_SCALE):
                         small_tp += 1
                 else:
                     fp[class_index] += 1
             fn[class_index] += len(class_truth) - len(matched_truth)
-            small_total += sum(item["short_side"] < 18 for item in class_truth)
-        visible_truth = [item for item in frame_truth if item["mask_area"] >= 4]
+            small_total += sum(
+                small_object_bucket(item, MetricScale.NATIVE_SCALE)
+                for item in class_truth
+            )
+        visible_truth = [
+            item for item in frame_truth if item["native_mask_area_px"] >= 4
+        ]
         discovery_total += len(visible_truth)
         matched_visible = set()
         matched_candidates = set()
@@ -641,6 +674,9 @@ def detector_metrics(
     negative_frames = sum(row["negative_only"] for row in rows)
     return {
         "threshold": threshold,
+        "machine_evaluable_scale": MetricScale.NATIVE_SCALE.value,
+        "small_object_scale": MetricScale.NATIVE_SCALE.value,
+        "scale_contract_version": 1,
         "machine_evaluable_object_count": evaluable_count,
         "precision_by_class": dict(zip(DISCRETE_NAMES, precision)),
         "recall_by_class": dict(zip(DISCRETE_NAMES, recall)),

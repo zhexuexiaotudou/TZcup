@@ -1,7 +1,0 @@
-schema_version: 1
-stage: AUTO-13
-minimum_frames: 1000
-minimum_scenes: 20
-classes_complete: true
-hard_negatives_required: true
-independent_map_ground_truth_required: true

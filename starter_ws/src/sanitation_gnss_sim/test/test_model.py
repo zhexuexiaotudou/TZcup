@@ -9,8 +9,8 @@ from sanitation_gnss_sim.model import (
 
 
 def test_fixed_profile_is_deterministic_and_within_expected_noise():
-    assert PROFILES["rtk_fixed"].random_walk_standard_deviation_m_sqrt_s == 0.001
-    assert PROFILES["rtk_float"].random_walk_standard_deviation_m_sqrt_s == 0.002
+    assert PROFILES["rtk_fixed"].correlated_drift_standard_deviation_m == 0.01
+    assert PROFILES["rtk_float"].correlated_drift_standard_deviation_m == 0.08
     first = GnssNoiseModel(PROFILES["rtk_fixed"], seed=23)
     second = GnssNoiseModel(PROFILES["rtk_fixed"], seed=23)
     first_samples = [first.sample(2.0, -1.0, 0.1) for _ in range(1000)]
@@ -26,17 +26,40 @@ def test_denied_profile_never_publishes():
     assert not any(model.sample(0.0, 0.0, 0.1).publish for _ in range(100))
 
 
-def test_fixed_profile_covariance_includes_bias_and_accumulated_random_walk():
+def test_fixed_profile_covariance_is_bounded_for_long_missions():
     profile = PROFILES["rtk_fixed"]
     model = GnssNoiseModel(profile, seed=1)
     first = model.sample(0.0, 0.0, 0.1)
     second = model.sample(0.0, 0.0, 9.9)
     base = profile.standard_deviation_m**2
     bias = profile.fixed_bias_standard_deviation_m**2
-    walk_rate = profile.random_walk_standard_deviation_m_sqrt_s**2
-    assert math.isclose(first.variance_m2, base + bias + walk_rate * 0.1)
-    assert math.isclose(second.variance_m2, base + bias + walk_rate * 10.0)
-    assert second.variance_m2 > first.variance_m2
+    drift = profile.correlated_drift_standard_deviation_m**2
+    assert math.isclose(first.variance_m2, base + bias + drift)
+    assert math.isclose(second.variance_m2, base + bias + drift)
+
+
+def test_fixed_profile_does_not_diverge_over_hour_long_mission():
+    profile = PROFILES["rtk_fixed"]
+    model = GnssNoiseModel(profile, seed=2019)
+    samples = [model.sample(0.0, 0.0, 0.1) for _ in range(36_000)]
+    errors = [math.hypot(item.x_m, item.y_m) for item in samples]
+    assert statistics.quantiles(errors, n=100)[94] < 0.06
+    assert max(errors) < 0.13
+
+
+def test_fixed_dual_antenna_heading_is_noisy_bounded_and_wrap_safe():
+    profile = PROFILES["rtk_fixed"]
+    model = GnssNoiseModel(profile, seed=2022)
+    truth = math.pi - 0.002
+    samples = [model.sample(0.0, 0.0, 0.1, truth) for _ in range(36_000)]
+    errors = [
+        abs(math.atan2(math.sin(item.heading_rad - truth), math.cos(item.heading_rad - truth)))
+        for item in samples
+    ]
+    assert all(-math.pi <= item.heading_rad <= math.pi for item in samples)
+    assert statistics.quantiles(errors, n=100)[94] < math.radians(0.8)
+    assert max(errors) < math.radians(1.5)
+    assert all(item.heading_variance_rad2 > 0.0 for item in samples)
 
 
 def test_multipath_profile_injects_approximately_one_percent_outliers():

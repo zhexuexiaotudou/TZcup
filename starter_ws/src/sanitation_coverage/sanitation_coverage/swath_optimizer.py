@@ -26,7 +26,10 @@ class AngleCandidate:
 
 
 def evaluate_swath_angle(
-    polygon: Iterable[Point], angle_deg: float, spacing_m: float
+    polygon: Iterable[Point],
+    angle_deg: float,
+    spacing_m: float,
+    connector_penalty_m: float | None = None,
 ) -> AngleCandidate:
     points = [_rotate(point, math.radians(angle_deg)) for point in polygon]
     if len(points) < 3 or spacing_m <= 0.0:
@@ -36,17 +39,29 @@ def evaluate_swath_angle(
     count = max(1, int(math.ceil(height / spacing_m)))
     primary = count * width
     connectors = max(0, count - 1) * spacing_m
-    # Path length dominates; a small component penalty breaks near-ties toward
-    # fewer turns, which is especially important for skid-steer vehicles.
-    score = primary + 2.0 * connectors + 0.20 * max(0, count - 1)
+    # Ackermann lane changes are not the Euclidean lane spacing: a forward-only
+    # turn can cost tens of metres. Callers with a validated connector model
+    # supply that per-turn cost so angle selection does not save a few metres
+    # of straight line by adding expensive non-holonomic turns.
+    per_turn = (
+        2.0 * spacing_m + 0.20
+        if connector_penalty_m is None
+        else float(connector_penalty_m)
+    )
+    score = primary + max(0, count - 1) * per_turn
     return AngleCandidate(angle_deg % 180.0, count, primary, connectors, score)
 
 
 def optimize_swath_angle(
-    polygon: Iterable[Point], spacing_m: float, step_deg: int = 5
+    polygon: Iterable[Point],
+    spacing_m: float,
+    step_deg: int = 5,
+    connector_penalty_m: float | None = None,
 ) -> tuple[AngleCandidate, list[AngleCandidate]]:
     candidates = [
-        evaluate_swath_angle(polygon, angle, spacing_m)
+        evaluate_swath_angle(
+            polygon, angle, spacing_m, connector_penalty_m=connector_penalty_m
+        )
         for angle in range(0, 180, step_deg)
     ]
     best = min(candidates, key=lambda item: (round(item.score, 9), item.angle_deg))

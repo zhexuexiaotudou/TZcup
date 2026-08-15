@@ -1,0 +1,92 @@
+schema_version: 1
+stage: AUTO-05R
+policy_id: perception_p4_screening_policy
+description: |
+  Canonical AUTO-05R P4 development screening thresholds.  All values are
+  fixed and must never be lowered.  Evaluation is development-only:
+  legacy_G4_D6_diagnostic and G5_SEALED_FINAL never influence these gates.
+gates:
+  - id: in_domain_candidate_recall_ge
+    metric: screening.candidate.all_gt_candidate_recall
+    operator: ge
+    threshold: 0.80
+  - id: in_domain_false_candidates_per_min_le
+    metric: screening.candidate.false_candidates_per_min
+    operator: le
+    threshold: 2.0
+  - id: in_domain_negative_only_fp_per_frame_le
+    metric: screening.candidate.negative_only_fp_per_frame
+    operator: le
+    threshold: 0.05
+  - id: in_domain_macro_precision_ge
+    metric: in_domain.discrete.macro_precision
+    operator: ge
+    threshold: 0.90
+  - id: in_domain_macro_recall_ge
+    metric: in_domain.discrete.macro_recall
+    operator: ge
+    threshold: 0.90
+  - id: in_domain_macro_f1_ge
+    metric: in_domain.discrete.macro_f1
+    operator: ge
+    threshold: 0.90
+  - id: cross_world_macro_f1_ge
+    metric: cross_world.macro_f1
+    operator: ge
+    threshold: 0.70
+  - id: val_per_class_recall_ge
+    metric: val_per_class_recall
+    operator: ge
+    threshold: 0.70
+  - id: paper_precision_ge
+    metric: screening.discrete.paper_precision
+    operator: ge
+    threshold: 0.80
+  - id: small_object_recall_ge
+    metric: screening.discrete.small_object_recall
+    operator: ge
+    threshold: 0.70
+  - id: leaf_iou_ge
+    metric: screening.area.iou_by_class.leaf_pile
+    operator: ge
+    threshold: 0.75
+  - id: puddle_iou_ge
+    metric: screening.area.iou_by_class.puddle
+    operator: ge
+    threshold: 0.75
+  - id: macro_miou_ge
+    metric: screening.area.macro_miou
+    operator: ge
+    threshold: 0.75
+  - id: boundary_f1_ge
+    metric: screening.area.boundary_f1
+    operator: ge
+    threshold: 0.70
+  - id: negative_area_fp_per_frame_le
+    metric: screening.area.negative_area_fp_per_frame
+    operator: le
+    threshold: 0.05
+  - id: color_material_stress_macro_f1_ge
+    metric: color_material_stress_macro_f1
+    operator: ge
+    threshold: 0.60
+  - id: same_color_negative_specificity_ge
+    metric: same_color_negative_specificity
+    operator: ge
+    threshold: 0.95
+  - id: D1_D5_reports_complete
+    metric: D1_D5_reports_complete
+    operator: eq
+    threshold: true
+  - id: selected_models_product_eligible
+    metric: selected_models_product_eligible
+    operator: eq
+    threshold: true
+  - id: onnx_task_specific_parity_pass
+    metric: onnx_task_specific_parity_pass
+    operator: eq
+    threshold: true
+  - id: onnx_custom_ops_zero
+    metric: onnx_custom_ops_zero
+    operator: eq
+    threshold: true

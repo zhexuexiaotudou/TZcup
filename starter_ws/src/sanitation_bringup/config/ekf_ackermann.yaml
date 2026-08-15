@@ -1,0 +1,37 @@
+# Ackermann wheel/IMU fusion candidate.
+#
+# The Gazebo AckermannSteering plugin integrates odometry from the rear
+# traction joint positions plus the actual front steering joint positions, so
+# /measurements/wheel_odom already represents Ackermann longitudinal motion
+# and yaw increment/rate. This profile consumes vx and yaw rate (plus the
+# integrated yaw) from the wheel lane, and yaw + yaw rate from the IMU. It
+# deliberately does NOT use a diff-drive effective wheel separation and never
+# routes ground truth into control.
+ekf_filter_node:
+  ros__parameters:
+    frequency: 50.0
+    sensor_timeout: 0.2
+    two_d_mode: true
+    publish_tf: true
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: odom
+    odom0: /measurements/wheel_odom
+    # Ackermann wheel lane: pose yaw + twist vx + twist yaw rate.
+    # [x, y, z, roll, pitch, yaw, vx, vy, vz, roll_rate, pitch_rate, yaw_rate,
+    #  ax, ay, az]
+    odom0_config: [false, false, false,
+                   false, false, true,
+                   true, false, false,
+                   false, false, true,
+                   false, false, false]
+    odom0_differential: false
+    imu0: /measurements/imu
+    imu0_config: [false, false, false,
+                  false, false, true,
+                  false, false, false,
+                  false, false, true,
+                  false, false, false]
+    imu0_differential: false
+    imu0_remove_gravitational_acceleration: true

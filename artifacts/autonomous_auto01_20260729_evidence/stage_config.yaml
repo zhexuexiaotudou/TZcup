@@ -1,7 +1,0 @@
-schema_version: 1
-stage: AUTO-01
-selected_architecture: G2
-selected_attempt: AUTO-01-G2-C3
-navigation_profile: auto01_g2_v5_retracted
-camera_profile: V5_retracted
-production_default_unchanged: true

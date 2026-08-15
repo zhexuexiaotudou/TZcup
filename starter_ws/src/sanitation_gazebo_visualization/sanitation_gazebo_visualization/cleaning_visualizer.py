@@ -18,9 +18,17 @@ from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy, qos_profile_sensor_data
 from std_msgs.msg import Bool, String
+from sensor_msgs.msg import JointState
 import yaml
 
-from .telemetry_v2 import SCHEMA as TELEMETRY_V2_SCHEMA, classify_motion_state, decimate_xy
+from .telemetry_v2 import (
+    SCHEMA as TELEMETRY_V2_SCHEMA,
+    classify_motion_state,
+    decimate_xy,
+    measured_motion,
+    resolve_cleanable_polygon,
+    virtual_steering_angle,
+)
 
 
 def yaw_from_quaternion(quaternion) -> float:
@@ -133,6 +141,9 @@ class CleaningVisualizer(Node):
         self.world_name = str(
             self.declare_parameter("world_name", "sanitation_competition_demo").value
         )
+        self.configured_min_turning_radius_m = float(
+            self.declare_parameter("configured_min_turning_radius_m", 1.429352).value
+        )
 
         self.gz_binary = shutil.which("gz")
         if not self.gz_binary:
@@ -151,15 +162,25 @@ class CleaningVisualizer(Node):
         self.planned_path_map: list[Point2] = []
         self.planned_swaths_map: list[list[Point2]] = []
         self.planned_connectors_map: list[list[Point2]] = []
+        self.planned_ackermann_forward_map: list[list[Point2]] = []
+        self.planned_ackermann_reverse_map: list[list[Point2]] = []
         self.planned_repairs_map: list[list[Point2]] = []
         self.actual_cleaning_map: list[list[Point2]] = []
         self.actual_transit_map: list[list[Point2]] = []
         self.actual_repair_map: list[list[Point2]] = []
+        self.actual_forward_map: list[list[Point2]] = []
+        self.actual_reverse_map: list[list[Point2]] = []
         self.blocked_intervals_map: list[list[Point2]] = []
         self.deferred_swaths: list[str] = []
         self.last_motion_layer = ""
         self.brush_enabled = False
         self.coverage_state = "WAITING"
+        self.current_connector_type = "NONE"
+        self.front_left_steering_rad = 0.0
+        self.front_right_steering_rad = 0.0
+        self.measured_linear_x_mps = 0.0
+        self.measured_yaw_rate_rad_s = 0.0
+        self.measured_gear = "STOP"
         self.completed_components = 0
         self.last_component_signature = ""
         self.last_brush_point: Point2 | None = None
@@ -201,6 +222,8 @@ class CleaningVisualizer(Node):
             self._on_truth,
             qos_profile_sensor_data,
         )
+        self.create_subscription(Odometry, "/odom", self._on_measured_odom, 10)
+        self.create_subscription(JointState, "/joint_states", self._on_joint_state, 10)
         self.create_subscription(Bool, "/brush_enabled", self._on_brush, 10)
         self.create_subscription(String, "/coverage/state", self._on_state, 10)
         self.create_subscription(
@@ -284,18 +307,13 @@ class CleaningVisualizer(Node):
         self.show_zone_fill = (
             len(self.outer_polygon_map) == 4 and not keepouts and not exclusions
         )
-        self.cleanable_polygon_map = list(self.outer_polygon_map)
-        if len(self.outer_polygon_map) == 4:
-            inset = float(config.get("headland", {}).get("width_m", 0.0))
-            min_x = min(point.x for point in self.outer_polygon_map) + inset
-            max_x = max(point.x for point in self.outer_polygon_map) - inset
-            min_y = min(point.y for point in self.outer_polygon_map) + inset
-            max_y = max(point.y for point in self.outer_polygon_map) - inset
-            if min_x < max_x and min_y < max_y:
-                self.cleanable_polygon_map = [
-                    Point2(min_x, min_y), Point2(max_x, min_y),
-                    Point2(max_x, max_y), Point2(min_x, max_y),
-                ]
+        try:
+            self.cleanable_polygon_map = [
+                Point2(x, y) for x, y in resolve_cleanable_polygon(config)
+            ]
+        except (TypeError, ValueError, IndexError):
+            self.cleanable_polygon_map = []
+            self.get_logger().warning("Mission cleanable polygon is malformed")
         self._build_cleanable_grid()
 
     def _build_cleanable_grid(self) -> None:
@@ -363,6 +381,25 @@ class CleaningVisualizer(Node):
                     segment.append(current)
                     if len(segment) > 1200:
                         del segment[:-1200]
+            directional_segments = (
+                self.actual_reverse_map
+                if self.measured_gear == "REVERSE"
+                else self.actual_forward_map
+            )
+            if self.measured_gear != "STOP":
+                if not directional_segments or (
+                    self.measured_gear != getattr(self, "last_directional_gear", "")
+                ):
+                    directional_segments.append([current])
+                else:
+                    segment = directional_segments[-1]
+                    if not segment or math.hypot(
+                        current.x - segment[-1].x, current.y - segment[-1].y
+                    ) >= 0.12:
+                        segment.append(current)
+                        if len(segment) > 1200:
+                            del segment[:-1200]
+                self.last_directional_gear = self.measured_gear
         self.last_pose_map = current
         self.last_pose_stamp_sec = stamp_sec
         if self.home_world is None:
@@ -370,6 +407,23 @@ class CleaningVisualizer(Node):
         self.have_pose = True
         if self.brush_enabled:
             self._record_cleaning_footprint()
+
+    def _on_measured_odom(self, message: Odometry) -> None:
+        twist = message.twist.twist
+        self.measured_linear_x_mps = float(twist.linear.x)
+        self.measured_yaw_rate_rad_s = float(twist.angular.z)
+        self.measured_gear = measured_motion(
+            self.measured_linear_x_mps, self.measured_yaw_rate_rad_s
+        )["gear"]
+
+    def _on_joint_state(self, message: JointState) -> None:
+        positions = dict(zip(message.name, message.position))
+        self.front_left_steering_rad = float(
+            positions.get("front_left_steering_joint", self.front_left_steering_rad)
+        )
+        self.front_right_steering_rad = float(
+            positions.get("front_right_steering_joint", self.front_right_steering_rad)
+        )
 
     def _on_brush(self, message: Bool) -> None:
         next_enabled = bool(message.data)
@@ -396,6 +450,11 @@ class CleaningVisualizer(Node):
         except (TypeError, json.JSONDecodeError):
             return
         self.coverage_state = str(payload.get("state", self.coverage_state))
+        self.current_connector_type = str(
+            payload.get("connector_class")
+            or payload.get("kind")
+            or self.current_connector_type
+        )
         blocked_interval = payload.get("blocked_interval")
         if (
             isinstance(blocked_interval, list)
@@ -450,9 +509,12 @@ class CleaningVisualizer(Node):
         self.actual_cleaning_map = []
         self.actual_transit_map = []
         self.actual_repair_map = []
+        self.actual_forward_map = []
+        self.actual_reverse_map = []
         self.blocked_intervals_map = []
         self.deferred_swaths = []
         self.last_motion_layer = ""
+        self.last_directional_gear = ""
         self.cleaned_cells.clear()
         self.completed_components = 0
         for target in self.targets:
@@ -516,6 +578,14 @@ class CleaningVisualizer(Node):
             if item.get("kind") in {"TRANSIT", "ROTATE", "SHIFT", "BACKUP", "OBSTACLE_BYPASS", "RETURN_HOME"}
             and len(item.get("points", [])) >= 2
         ]
+        self.planned_ackermann_forward_map = [
+            self._component_points(item) for item in components
+            if item.get("kind") == "FORWARD" and len(item.get("points", [])) >= 2
+        ]
+        self.planned_ackermann_reverse_map = [
+            self._component_points(item) for item in components
+            if item.get("kind") == "REVERSE" and len(item.get("points", [])) >= 2
+        ]
 
     def _on_repairs(self, message: String) -> None:
         try:
@@ -567,7 +637,21 @@ class CleaningVisualizer(Node):
             "actual_transit": [decimate_xy(points) for points in self.actual_transit_map],
             "actual_repair": [decimate_xy(points) for points in self.actual_repair_map],
             "blocked_intervals": [decimate_xy(points, 80) for points in self.blocked_intervals_map],
+            "planned_ackermann_forward": [
+                decimate_xy(points, 120) for points in self.planned_ackermann_forward_map
+            ],
+            "planned_ackermann_reverse": [
+                decimate_xy(points, 120) for points in self.planned_ackermann_reverse_map
+            ],
+            "actual_forward": [decimate_xy(points) for points in self.actual_forward_map],
+            "actual_reverse": [decimate_xy(points) for points in self.actual_reverse_map],
         }
+        steering_virtual = virtual_steering_angle(
+            self.front_left_steering_rad, self.front_right_steering_rad
+        )
+        motion = measured_motion(
+            self.measured_linear_x_mps, self.measured_yaw_rate_rad_s
+        )
         payload = {
             "schema": TELEMETRY_V2_SCHEMA,
             "compatible_schema": "tzcup.gazebo_cleaning_telemetry.v1",
@@ -585,6 +669,20 @@ class CleaningVisualizer(Node):
             "elapsed_sim_sec": elapsed_sec,
             "distance_m": self.total_distance_m,
             "speed_mps": self.current_speed_mps,
+            "steering": {
+                "front_left_rad": self.front_left_steering_rad,
+                "front_right_rad": self.front_right_steering_rad,
+                "virtual_rad": steering_virtual,
+                "virtual_deg": math.degrees(steering_virtual),
+                "configured_min_radius_m": self.configured_min_turning_radius_m,
+            },
+            "motion": {
+                **motion,
+                "linear_x_mps": self.measured_linear_x_mps,
+                "yaw_rate_rad_s": self.measured_yaw_rate_rad_s,
+                "connector_type": self.current_connector_type,
+                "measurement_source": "/odom_and_joint_states",
+            },
             "simulation_speed": self.simulation_speed_label,
             "robot": {"x": self.map_x, "y": self.map_y, "yaw": self.map_yaw},
             "field_boundary": [[point.x, point.y] for point in self.outer_polygon_map],

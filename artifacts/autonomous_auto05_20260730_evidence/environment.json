@@ -1,9 +1,0 @@
-{
-  "python": "3.12.3",
-  "platform": "Linux-6.6.114.1-microsoft-standard-WSL2-x86_64-with-glibc2.39",
-  "torch": "2.5.1+cu124",
-  "cuda_available": true,
-  "cuda": "12.4",
-  "gpu": "NVIDIA GeForce RTX 4080 Laptop GPU",
-  "random_seed": 20260730
-}

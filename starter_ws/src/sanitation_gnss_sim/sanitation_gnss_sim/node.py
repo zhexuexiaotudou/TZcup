@@ -5,6 +5,7 @@ from diagnostic_msgs.msg import DiagnosticArray, DiagnosticStatus, KeyValue
 from geometry_msgs.msg import TwistStamped
 from nav_msgs.msg import Odometry
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from sensor_msgs.msg import NavSatFix, NavSatStatus
 from std_msgs.msg import Float64
@@ -76,7 +77,10 @@ class GnssSimNode(Node):
             dt = max(0.0, now_seconds - self.last_sample_time)
         self.last_sample_time = now_seconds
         measurement = self.model.sample(
-            message.pose.pose.position.x, message.pose.pose.position.y, dt
+            message.pose.pose.position.x,
+            message.pose.pose.position.y,
+            dt,
+            _yaw_from_quaternion(message.pose.pose.orientation),
         )
         if not measurement.publish:
             return
@@ -99,8 +103,9 @@ class GnssSimNode(Node):
         fix.position_covariance[8] = max(0.01, measurement.variance_m2 * 4.0)
         fix.position_covariance_type = NavSatFix.COVARIANCE_TYPE_DIAGONAL_KNOWN
         release_time = now_seconds + self.profile.latency_s
-        heading = _yaw_from_quaternion(message.pose.pose.orientation)
-        self.queue.append((release_time, fix, heading, message.twist.twist))
+        self.queue.append(
+            (release_time, fix, measurement.heading_rad, message.twist.twist)
+        )
 
     def _flush_queue(self):
         now_seconds = self.get_clock().now().nanoseconds / 1e9
@@ -134,6 +139,10 @@ class GnssSimNode(Node):
             "latency_s": self.profile.latency_s,
             "dropout_probability": self.profile.dropout_probability,
             "multipath_probability": self.profile.multipath_probability,
+            "heading_standard_deviation_rad": (
+                self.profile.heading_standard_deviation_rad
+            ),
+            "heading_ground_truth_direct_fusion": "false",
             "queued_measurements": len(self.queue),
         }
         status.values = [KeyValue(key=str(key), value=str(value)) for key, value in values.items()]
@@ -146,6 +155,8 @@ def main(args=None):
     node = GnssSimNode()
     try:
         rclpy.spin(node)
+    except ExternalShutdownException:
+        pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        rclpy.try_shutdown()

@@ -1,0 +1,625 @@
+# Ackermann Nav2 profile (frozen turning radius 1.429 m).
+#
+# Planner: REEDS_SHEPP is the generic BT default and its paired FollowPath
+# controller explicitly follows direction changes at cusps. DUBIN remains
+# available for explicitly forward-only coverage segments. Both use 72 heading
+# bins and allow_unknown=false. Controllers use Regulated Pure Pursuit with
+# explicit direction, rotate-to-heading disabled, and curvature scaling at
+# the frozen minimum radius. Behavior plugins
+# exclude Spin.  The footprint is the honest swept body+wheels hull
+# (approximately 1.395 x 1.32 m including the forward side brushes),
+# not the legacy 0.80 x 0.72 skid-steer footprint.
+amcl:
+  ros__parameters:
+    use_sim_time: true
+    alpha1: 0.001
+    alpha2: 0.001
+    alpha3: 0.002
+    alpha4: 0.002
+    alpha5: 0.001
+    base_frame_id: base_footprint
+    global_frame_id: map
+    odom_frame_id: odom
+    scan_topic: scan
+    # Best available Nav2 motion model for an Ackermann chassis; formal
+    # Ackermann-specific motion noise remains a runtime calibration gate.
+    robot_model_type: nav2_amcl::DifferentialMotionModel
+    laser_model_type: likelihood_field_prob
+    laser_likelihood_max_dist: 2.0
+    max_beams: 180
+    min_particles: 2000
+    max_particles: 8000
+    pf_err: 0.02
+    pf_z: 0.99
+    transform_tolerance: 0.5
+    update_min_a: 0.02
+    update_min_d: 0.02
+    laser_z_hit: 0.30
+    laser_z_rand: 0.70
+    laser_sigma_hit: 0.30
+    do_beamskip: false
+    set_initial_pose: true
+    initial_pose:
+      x: 0.0
+      y: 0.0
+      z: 0.0
+      yaw: 0.0
+
+bt_navigator:
+  ros__parameters:
+    use_sim_time: true
+    global_frame: map
+    robot_base_frame: base_footprint
+    odom_topic: /odom
+    bt_loop_duration: 10
+    default_server_timeout: 20
+    wait_for_service_timeout: 1000
+    action_server_result_timeout: 900.0
+    # The Ackermann profile must never invoke Spin; the default Nav2 tree is
+    # replaced by the no-Spin trees shipped in this package.
+    default_nav_to_pose_bt_xml: __ACKERMANN_NAV_TO_POSE_BT__
+    default_nav_through_poses_bt_xml: __ACKERMANN_NAV_THROUGH_POSES_BT__
+    navigators: [navigate_to_pose, navigate_through_poses]
+    navigate_to_pose:
+      plugin: nav2_bt_navigator::NavigateToPoseNavigator
+    navigate_through_poses:
+      plugin: nav2_bt_navigator::NavigateThroughPosesNavigator
+
+controller_server:
+  ros__parameters:
+    use_sim_time: true
+    controller_frequency: 15.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.5
+    min_theta_velocity_threshold: 0.001
+    failure_tolerance: 5.0
+    progress_checker_plugins: [progress_checker]
+    goal_checker_plugins: [goal_checker, frontier_goal_checker, cusp_goal_checker, primitive_goal_checker, connector_goal_checker, swath_exit_goal_checker]
+    controller_plugins: [FollowPath, FrontierPath, DubinsPath, ReversePath, CleanPath, RepairPath]
+    progress_checker:
+      plugin: nav2_controller::PoseProgressChecker
+      required_movement_radius: 0.10
+      required_movement_angle: 0.10
+      movement_time_allowance: 30.0
+    goal_checker:
+      plugin: nav2_controller::SimpleGoalChecker
+      # An Ackermann vehicle cannot satisfy yaw after position by spinning in
+      # place. Position and heading therefore have to be true together.
+      stateful: false
+      xy_goal_tolerance: 0.25
+      yaw_goal_tolerance: 0.30
+    # Mapping frontiers are intermediate motion goals. This tolerance avoids
+    # rejecting a reached point for finite steering noise while still requiring
+    # materially more progress than the 0.498 m minimum-radius arc step.
+    frontier_goal_checker:
+      plugin: nav2_controller::SimpleGoalChecker
+      stateful: false
+      xy_goal_tolerance: 0.25
+      # Frontier waypoints are intermediate observation positions, not final
+      # parking poses. Requiring an Ackermann vehicle to converge on heading
+      # at every short frontier creates false progress failures near the goal
+      # and implicitly asks for point-turn behavior. Position remains strict;
+      # final/reload navigation continues to use goal_checker (0.30 rad).
+      yaw_goal_tolerance: 3.141592654
+    # Intermediate Reeds-Shepp cusps are discretized at ~0.125 m.  This
+    # checker accepts a physically stopped, correctly oriented cusp without
+    # relaxing the final operation goal checker above.
+    cusp_goal_checker:
+      plugin: nav2_controller::SimpleGoalChecker
+      stateful: false
+      xy_goal_tolerance: 0.25
+      yaw_goal_tolerance: 0.35
+    # Consecutive forward Dubins primitives share a boundary and immediately
+    # continue in the same gear. Accept the first topological arrival instead
+    # of replaying a near-closed arc to chase noisy intermediate yaw.
+    primitive_goal_checker:
+      plugin: nav2_controller::SimpleGoalChecker
+      stateful: false
+      xy_goal_tolerance: 0.40
+      yaw_goal_tolerance: 1.00
+    # A connector hands off to a separately scored straight swath. The 3 m
+    # brush-off lead-in settles this finite steering error; tighter endpoint
+    # tolerances made the forward-only base circle a passed Dubins endpoint.
+    connector_goal_checker:
+      plugin: nav2_controller::SimpleGoalChecker
+      stateful: false
+      xy_goal_tolerance: 0.40
+      yaw_goal_tolerance: 0.50
+    # The brush is already disabled throughout the extended swath exit.  A
+    # forward-only Ackermann base must be allowed to terminate there instead
+    # of circling a passed endpoint to chase a final yaw value.
+    swath_exit_goal_checker:
+      plugin: nav2_controller::SimpleGoalChecker
+      stateful: false
+      xy_goal_tolerance: 0.30
+      yaw_goal_tolerance: 1.00
+    # Shared RPP contract: no rotate-to-heading, reverse allowed, collision
+    # detection and regulated curvature speed scaling at the frozen radius.
+    FollowPath:
+      plugin: nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
+      desired_linear_vel: 0.45
+      # Tight Hybrid-A* arcs need a short fixed carrot.  The previous 0.50 m
+      # carrot cut the first reverse-cusp corner by ~0.33 m / 0.95 rad.
+      lookahead_dist: 0.25
+      min_lookahead_dist: 0.18
+      max_lookahead_dist: 0.45
+      lookahead_time: 1.0
+      rotate_to_heading_angular_vel: 0.0
+      transform_tolerance: 0.2
+      use_velocity_scaled_lookahead_dist: false
+      min_approach_linear_velocity: 0.05
+      approach_velocity_scaling_dist: 0.8
+      use_collision_detection: true
+      max_allowed_time_to_collision_up_to_carrot: 1.0
+      use_regulated_linear_velocity_scaling: true
+      use_cost_regulated_linear_velocity_scaling: true
+      regulated_linear_scaling_min_radius: 1.429
+      regulated_linear_scaling_min_speed: 0.20
+      use_rotate_to_heading: false
+      allow_reversing: true
+      rotate_to_heading_min_angle: 0.785
+      max_angular_accel: 1.2
+      # Do not jump across a nearby geometric loop to a topologically later
+      # Reeds-Shepp pose; that can flip a reverse section back to forward.
+      max_robot_pose_search_dist: 1.0
+      stateful: true
+    # Mapping goals are short observation hops and may begin after a recovery
+    # with finite cross-track error.  The cusp-accurate 0.25 m carrot above can
+    # then request curvature far beyond the frozen 1.429 m physical radius and
+    # leave the steering plant saturated.  A dedicated 1.0 m carrot follows
+    # the same collision-checked Reeds-Shepp path without changing the strict
+    # final-navigation or coverage controllers.
+    FrontierPath:
+      plugin: nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
+      desired_linear_vel: 0.45
+      lookahead_dist: 1.00
+      min_lookahead_dist: 1.00
+      max_lookahead_dist: 1.00
+      lookahead_time: 1.0
+      rotate_to_heading_angular_vel: 0.0
+      transform_tolerance: 0.2
+      use_velocity_scaled_lookahead_dist: false
+      min_approach_linear_velocity: 0.15
+      approach_velocity_scaling_dist: 0.8
+      use_collision_detection: true
+      max_allowed_time_to_collision_up_to_carrot: 1.0
+      use_regulated_linear_velocity_scaling: true
+      use_cost_regulated_linear_velocity_scaling: true
+      regulated_linear_scaling_min_radius: 1.429
+      regulated_linear_scaling_min_speed: 0.20
+      use_rotate_to_heading: false
+      allow_reversing: true
+      rotate_to_heading_min_angle: 0.785
+      max_angular_accel: 1.2
+      max_robot_pose_search_dist: 1.5
+      stateful: true
+    # A curvature primitive cannot self-intersect, so it is safe to search a
+    # little farther than the generic loop-sensitive controller. This keeps a
+    # finite previous-primitive hand-off from being rejected as INVALID_PATH.
+    DubinsPath:
+      plugin: nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
+      desired_linear_vel: 0.25
+      lookahead_dist: 0.25
+      min_lookahead_dist: 0.18
+      max_lookahead_dist: 0.45
+      lookahead_time: 1.0
+      rotate_to_heading_angular_vel: 0.0
+      transform_tolerance: 0.2
+      use_velocity_scaled_lookahead_dist: false
+      min_approach_linear_velocity: 0.05
+      approach_velocity_scaling_dist: 0.8
+      use_collision_detection: true
+      max_allowed_time_to_collision_up_to_carrot: 1.0
+      use_regulated_linear_velocity_scaling: true
+      use_cost_regulated_linear_velocity_scaling: true
+      regulated_linear_scaling_min_radius: 1.429
+      regulated_linear_scaling_min_speed: 0.10
+      use_rotate_to_heading: false
+      allow_reversing: false
+      rotate_to_heading_min_angle: 0.785
+      max_angular_accel: 1.2
+      max_robot_pose_search_dist: 2.0
+      stateful: true
+    # Reverse pure pursuit needs a longer carrot than the tight forward cusp
+    # approach. Keeping it separate prevents reverse-error oscillation without
+    # making the forward section cut across its cusp.
+    ReversePath:
+      plugin: nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
+      desired_linear_vel: 0.20
+      lookahead_dist: 0.50
+      min_lookahead_dist: 0.35
+      max_lookahead_dist: 0.65
+      lookahead_time: 1.0
+      rotate_to_heading_angular_vel: 0.0
+      transform_tolerance: 0.2
+      use_velocity_scaled_lookahead_dist: false
+      min_approach_linear_velocity: 0.05
+      approach_velocity_scaling_dist: 0.8
+      use_collision_detection: true
+      max_allowed_time_to_collision_up_to_carrot: 1.0
+      use_regulated_linear_velocity_scaling: true
+      use_cost_regulated_linear_velocity_scaling: true
+      regulated_linear_scaling_min_radius: 1.429
+      regulated_linear_scaling_min_speed: 0.05
+      use_rotate_to_heading: false
+      allow_reversing: true
+      rotate_to_heading_min_angle: 0.785
+      max_angular_accel: 1.2
+      max_robot_pose_search_dist: 1.0
+      stateful: true
+    CleanPath:
+      plugin: nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
+      # Straight cleaning needs a deliberately long carrot.  With the brush
+      # 0.66 m ahead of base_link, short-carrot steering chatter is amplified
+      # into large brush cross-track error even when the chassis stays close
+      # to the swath centreline.
+      desired_linear_vel: 0.60
+      lookahead_dist: 1.20
+      min_lookahead_dist: 1.20
+      max_lookahead_dist: 1.20
+      lookahead_time: 1.5
+      rotate_to_heading_angular_vel: 0.0
+      transform_tolerance: 0.2
+      use_velocity_scaled_lookahead_dist: false
+      min_approach_linear_velocity: 0.10
+      approach_velocity_scaling_dist: 1.2
+      use_collision_detection: true
+      max_allowed_time_to_collision_up_to_carrot: 1.0
+      use_regulated_linear_velocity_scaling: true
+      use_cost_regulated_linear_velocity_scaling: true
+      regulated_linear_scaling_min_radius: 1.429
+      regulated_linear_scaling_min_speed: 0.20
+      use_rotate_to_heading: false
+      allow_reversing: false
+      rotate_to_heading_min_angle: 0.785
+      max_angular_accel: 0.6
+      max_robot_pose_search_dist: 10.0
+      stateful: true
+    RepairPath:
+      plugin: nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
+      desired_linear_vel: 0.40
+      lookahead_dist: 0.35
+      min_lookahead_dist: 0.25
+      max_lookahead_dist: 0.50
+      lookahead_time: 1.5
+      rotate_to_heading_angular_vel: 0.0
+      transform_tolerance: 0.2
+      use_velocity_scaled_lookahead_dist: false
+      min_approach_linear_velocity: 0.05
+      approach_velocity_scaling_dist: 0.8
+      use_collision_detection: true
+      max_allowed_time_to_collision_up_to_carrot: 1.0
+      use_regulated_linear_velocity_scaling: true
+      use_cost_regulated_linear_velocity_scaling: true
+      regulated_linear_scaling_min_radius: 1.429
+      regulated_linear_scaling_min_speed: 0.05
+      use_rotate_to_heading: false
+      allow_reversing: false
+      rotate_to_heading_min_angle: 0.785
+      max_angular_accel: 1.2
+      max_robot_pose_search_dist: 10.0
+      stateful: true
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      use_sim_time: true
+      update_frequency: 8.0
+      publish_frequency: 4.0
+      global_frame: odom
+      robot_base_frame: base_footprint
+      rolling_window: true
+      width: 8
+      height: 8
+      resolution: 0.05
+      footprint: "[[0.82, 0.66], [0.82, -0.66], [-0.575, -0.66], [-0.575, 0.66]]"
+      plugins: [obstacle_layer, inflation_layer]
+      obstacle_layer:
+        plugin: nav2_costmap_2d::ObstacleLayer
+        enabled: true
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          clearing: true
+          marking: true
+          data_type: LaserScan
+          inf_is_valid: true
+          raytrace_max_range: 10.0
+          obstacle_max_range: 9.0
+      inflation_layer:
+        plugin: nav2_costmap_2d::InflationLayer
+        cost_scaling_factor: 2.0
+        inflation_radius: 1.20
+      always_send_full_costmap: true
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      use_sim_time: true
+      update_frequency: 2.0
+      publish_frequency: 1.0
+      global_frame: map
+      robot_base_frame: base_footprint
+      footprint: "[[0.82, 0.66], [0.82, -0.66], [-0.575, -0.66], [-0.575, 0.66]]"
+      resolution: 0.05
+      track_unknown_space: true
+      plugins: [static_layer, obstacle_layer, keepout_filter, speed_filter, inflation_layer]
+      static_layer:
+        plugin: nav2_costmap_2d::StaticLayer
+        map_subscribe_transient_local: true
+      obstacle_layer:
+        plugin: nav2_costmap_2d::ObstacleLayer
+        enabled: true
+        observation_sources: scan
+        scan:
+          topic: /scan
+          max_obstacle_height: 2.0
+          clearing: true
+          marking: true
+          data_type: LaserScan
+          inf_is_valid: true
+          raytrace_max_range: 10.0
+          obstacle_max_range: 9.0
+      keepout_filter:
+        plugin: nav2_costmap_2d::KeepoutFilter
+        enabled: true
+        filter_info_topic: /costmap_filter_info/keepout
+      speed_filter:
+        plugin: nav2_costmap_2d::SpeedFilter
+        enabled: true
+        filter_info_topic: /costmap_filter_info/speed
+        speed_limit_topic: /speed_limit
+      inflation_layer:
+        plugin: nav2_costmap_2d::InflationLayer
+        cost_scaling_factor: 2.0
+        inflation_radius: 1.20
+      always_send_full_costmap: true
+
+map_server:
+  ros__parameters:
+    use_sim_time: true
+    yaml_filename: ""
+
+map_saver:
+  ros__parameters:
+    use_sim_time: true
+    save_map_timeout: 10.0
+    free_thresh_default: 0.25
+    occupied_thresh_default: 0.65
+    map_subscribe_transient_local: true
+
+planner_server:
+  ros__parameters:
+    use_sim_time: true
+    expected_planner_frequency: 5.0
+    planner_plugins: [GridBased, GridBasedForward]
+    GridBased:
+      plugin: nav2_smac_planner::SmacPlannerHybrid
+      tolerance: 0.25
+      allow_unknown: false
+      angle_quantization_bins: 72
+      minimum_turning_radius: 1.429
+      motion_model_for_search: REEDS_SHEPP
+      reverse_penalty: 2.0
+      change_penalty: 0.1
+      non_straight_penalty: 1.1
+      cost_penalty: 1.5
+      retrospective_penalty: 0.015
+      analytic_expansion_ratio: 3.5
+      max_iterations: 1000000
+      max_on_approach_iterations: 1000
+      terminal_checking_interval: 100
+      smooth_path: false
+      smoother:
+        max_iterations: 1000
+        w_smooth: 0.3
+        w_data: 0.2
+        tolerance: 1.0e-10
+    # Coverage connectors try a forward-only finite-radius loop first.  The
+    # REEDS_SHEPP planner above remains the formal default and fallback for
+    # genuinely constrained three-point maneuvers.
+    GridBasedForward:
+      plugin: nav2_smac_planner::SmacPlannerHybrid
+      tolerance: 0.25
+      allow_unknown: false
+      angle_quantization_bins: 72
+      minimum_turning_radius: 1.429
+      motion_model_for_search: DUBIN
+      reverse_penalty: 2.0
+      change_penalty: 0.1
+      non_straight_penalty: 1.1
+      cost_penalty: 1.5
+      retrospective_penalty: 0.015
+      analytic_expansion_ratio: 3.5
+      max_iterations: 1000000
+      max_on_approach_iterations: 1000
+      terminal_checking_interval: 100
+      smooth_path: false
+      smoother:
+        max_iterations: 1000
+        w_smooth: 0.3
+        w_data: 0.2
+        tolerance: 1.0e-10
+
+smoother_server:
+  ros__parameters:
+    use_sim_time: true
+    smoother_plugins: [simple_smoother]
+    simple_smoother:
+      plugin: nav2_smoother::SimpleSmoother
+      tolerance: 1.0e-10
+      max_its: 1000
+      do_refinement: true
+
+behavior_server:
+  ros__parameters:
+    use_sim_time: true
+    local_costmap_topic: local_costmap/costmap_raw
+    global_costmap_topic: global_costmap/costmap_raw
+    local_footprint_topic: local_costmap/published_footprint
+    global_footprint_topic: global_costmap/published_footprint
+    cycle_frequency: 10.0
+    # Spin is deliberately excluded: the Ackermann chassis cannot rotate in
+    # place. Backup, DriveOnHeading and Wait remain available.
+    behavior_plugins: [backup, drive_on_heading, wait]
+    backup:
+      plugin: nav2_behaviors::BackUp
+    drive_on_heading:
+      plugin: nav2_behaviors::DriveOnHeading
+    wait:
+      plugin: nav2_behaviors::Wait
+    local_frame: odom
+    global_frame: map
+    robot_base_frame: base_footprint
+    transform_tolerance: 0.2
+    simulate_ahead_time: 2.0
+    max_rotational_vel: 0.0
+    min_rotational_vel: 0.0
+    rotational_acc_lim: 1.2
+
+waypoint_follower:
+  ros__parameters:
+    use_sim_time: true
+    loop_rate: 20
+    stop_on_failure: true
+    action_server_result_timeout: 900.0
+    waypoint_task_executor_plugin: wait_at_waypoint
+    wait_at_waypoint:
+      plugin: nav2_waypoint_follower::WaitAtWaypoint
+      enabled: true
+      waypoint_pause_duration: 0
+
+velocity_smoother:
+  ros__parameters:
+    use_sim_time: true
+    smoothing_frequency: 20.0
+    scale_velocities: false
+    feedback: OPEN_LOOP
+    # Angular command remains available for steering while driving; the zero
+    # lower bound pair [.., 0.0, ..] and zero rotational behavior limits mean
+    # no command path can request body yaw in place.
+    max_velocity: [1.00, 0.0, 0.70]
+    min_velocity: [-0.30, 0.0, -0.70]
+    max_accel: [1.00, 0.0, 1.20]
+    max_decel: [-1.20, 0.0, -1.50]
+    odom_topic: odom
+    odom_duration: 0.1
+    deadband_velocity: [0.0, 0.0, 0.0]
+    velocity_timeout: 1.0
+
+collision_monitor:
+  ros__parameters:
+    use_sim_time: true
+    base_frame_id: base_footprint
+    odom_frame_id: odom
+    cmd_vel_in_topic: cmd_vel_smoothed
+    cmd_vel_out_topic: /cmd_vel_gate
+    state_topic: collision_monitor_state
+    transform_tolerance: 0.2
+    source_timeout: 1.0
+    base_shift_correction: true
+    stop_pub_timeout: 2.0
+    polygons: [FootprintApproach]
+    FootprintApproach:
+      type: polygon
+      action_type: approach
+      # Keep this envelope explicit in base_footprint coordinates. The Jazzy
+      # dynamic odom-frame footprint did not produce chained velocity output.
+      points: "[[0.82, 0.66], [0.82, -0.66], [-0.575, -0.66], [-0.575, 0.66]]"
+      time_before_collision: 1.2
+      simulation_time_step: 0.1
+      min_points: 6
+      visualize: false
+      enabled: true
+    observation_sources: [scan]
+    scan:
+      type: scan
+      topic: scan
+      min_height: 0.05
+      max_height: 2.0
+      enabled: true
+
+docking_server:
+  ros__parameters:
+    use_sim_time: true
+    controller_frequency: 20.0
+    initial_perception_timeout: 5.0
+    wait_charge_timeout: 5.0
+    dock_approach_timeout: 30.0
+    undock_linear_tolerance: 0.05
+    undock_angular_tolerance: 0.1
+    max_retries: 3
+    base_frame: base_footprint
+    fixed_frame: odom
+    dock_backwards: false
+    dock_prestaging_tolerance: 0.5
+    dock_plugins: [simple_charging_dock]
+    simple_charging_dock:
+      plugin: opennav_docking::SimpleChargingDock
+      docking_threshold: 0.05
+      staging_x_offset: -0.7
+      use_external_detection_pose: true
+      use_battery_status: false
+      use_stall_detection: false
+      external_detection_timeout: 1.0
+      external_detection_translation_x: -0.18
+      external_detection_translation_y: 0.0
+      external_detection_rotation_roll: -1.57
+      external_detection_rotation_pitch: -1.57
+      external_detection_rotation_yaw: 0.0
+      filter_coef: 0.1
+    controller:
+      k_phi: 3.0
+      k_delta: 2.0
+      v_linear_min: 0.10
+      v_linear_max: 0.15
+      use_collision_detection: true
+      costmap_topic: local_costmap/costmap_raw
+      footprint_topic: local_costmap/published_footprint
+      transform_tolerance: 0.2
+      projection_time: 5.0
+      simulation_step: 0.1
+      dock_collision_threshold: 0.3
+
+keepout_filter_mask_server:
+  ros__parameters:
+    use_sim_time: true
+    yaml_filename: ""
+    topic_name: keepout_filter_mask
+    frame_id: map
+
+keepout_costmap_filter_info_server:
+  ros__parameters:
+    use_sim_time: true
+    type: 0
+    filter_info_topic: /costmap_filter_info/keepout
+    mask_topic: /keepout_filter_mask
+    base: 0.0
+    multiplier: 1.0
+
+speed_filter_mask_server:
+  ros__parameters:
+    use_sim_time: true
+    yaml_filename: ""
+    topic_name: speed_filter_mask
+    frame_id: map
+
+speed_costmap_filter_info_server:
+  ros__parameters:
+    use_sim_time: true
+    type: 1
+    filter_info_topic: /costmap_filter_info/speed
+    mask_topic: /speed_filter_mask
+    base: 0.0
+    multiplier: 1.0
+
+filter_lifecycle_manager:
+  ros__parameters:
+    use_sim_time: true
+    autostart: true
+    node_names:
+      - keepout_filter_mask_server
+      - keepout_costmap_filter_info_server
+      - speed_filter_mask_server
+      - speed_costmap_filter_info_server

@@ -32,7 +32,10 @@ import yaml
 
 from sanitation_coverage.metrics import (
     empirical_swept_metrics,
+    path_heading_variation,
     path_length,
+    projected_path_progress,
+    split_path_at_curvature_reversals,
     point_in_cleanable_area,
     point_in_polygon,
     raster_coverage_metrics,
@@ -41,22 +44,34 @@ from sanitation_coverage.metrics import (
     swath_absolute_cross_track_errors,
     summarize_distances,
     swath_straightness_errors,
-    synchronized_xy_errors,
+    synchronized_pose_errors,
     uncovered_cell_centers,
 )
-from sanitation_coverage.coverage_components import ComponentType, CoverageComponent
+from sanitation_coverage.coverage_components import (
+    ComponentType,
+    CoverageComponent,
+    connector_handoff_replan_decision,
+)
 from sanitation_coverage.coverage_plan import CoveragePlan
 from sanitation_coverage.blocked_swath_manager import BlockedSwathManager
 from sanitation_coverage.oriented_swath_router import route_oriented_swaths
 from sanitation_coverage.residual_region_planner import plan_residual_regions
 from sanitation_coverage.skid_steer_connector import plan_skid_steer_connector
 from sanitation_coverage.skid_steer_rotation import normalized_yaw_error
+from sanitation_coverage.ackermann_turn_planner import build_ackermann_plan
+from sanitation_coverage.ackermann_connector import (
+    plan_forward_dubins_path,
+    plan_reverse_dubins_path,
+    split_hybrid_path_by_direction,
+)
 from sanitation_coverage.swath_optimizer import optimize_swath_angle
 from sanitation_coverage.taught_route import load_taught_route
 from sanitation_coverage.mission_geometry import (
     compile_mission_geometry,
+    coverage_planning_geometry,
     exclusion_clearance,
     target_grid_viable,
+    should_generate_internal_headland,
 )
 from sanitation_coverage.route_entry import (
     apply_lateral_affine,
@@ -138,6 +153,7 @@ class CoverageProbe(Node):
         self.declare_parameter("rotation_timeout_sec", 45.0)
         self.declare_parameter("translation_timeout_sec", 45.0)
         self.declare_parameter("manual_start", False)
+        self.mission_geometry = None
         self.coverage_client = ActionClient(self, ComputeCoveragePath, "/compute_coverage_path")
         self.follow_client = ActionClient(self, FollowPath, "/follow_path")
         self.navigate_client = ActionClient(self, NavigateToPose, "/navigate_to_pose")
@@ -186,6 +202,7 @@ class CoverageProbe(Node):
             String, "/coverage/diagnostics", 10
         )
         self.brush_enabled = False
+        self.ackermann_profile_active = False
         self.state = "READY" if self.get_parameter("manual_start").value else "PLANNING"
         self.run_requested = not bool(self.get_parameter("manual_start").value)
         self.pause_requested = False
@@ -197,6 +214,7 @@ class CoverageProbe(Node):
         self.truth_samples = []
         self.estimate_samples = []
         self.brush_samples = []
+        self.brush_forward_offset_m = 0.55
         self.minimum_scan_range = math.inf
         self.global_costmap = None
         self.keepout_mask = None
@@ -208,7 +226,9 @@ class CoverageProbe(Node):
         self.evaluation_dropout_config = {"enabled": False}
         self.evaluation_dropout_events = []
         self._evaluation_dropout_active = False
+        self._odom_vx = None
         self.create_subscription(Odometry, "/ground_truth/odom", self._on_truth, 20)
+        self.create_subscription(Odometry, "/odom", self._on_odom, 20)
         self.create_subscription(
             PoseWithCovarianceStamped,
             "/localization/fused_pose",
@@ -256,12 +276,26 @@ class CoverageProbe(Node):
             "connectors": [item.to_dict() for item in plan.components if item.kind in {
                 ComponentType.ROTATE, ComponentType.SHIFT, ComponentType.BACKUP,
                 ComponentType.OBSTACLE_BYPASS, ComponentType.TRANSIT,
+                ComponentType.FORWARD, ComponentType.REVERSE, ComponentType.CUSP_STOP,
             }],
             "repairs": [item.to_dict() for item in plan.components if item.kind is ComponentType.REPAIR_SWATH],
+            "deferred": [
+                item.to_dict()
+                for item in plan.components
+                if item.kind is ComponentType.DEFERRED_SWATH
+            ],
         }
         self.planned_swaths_publisher.publish(String(data=json.dumps(layers["swaths"], separators=(",", ":"))))
         self.planned_connectors_publisher.publish(String(data=json.dumps(layers["connectors"], separators=(",", ":"))))
         self.planned_repairs_publisher.publish(String(data=json.dumps(layers["repairs"], separators=(",", ":"))))
+        self.planned_swaths_publisher.publish(
+            String(
+                data=json.dumps(
+                    layers["swaths"] + layers["deferred"],
+                    separators=(",", ":"),
+                )
+            )
+        )
 
     def _on_start(self, _request, response):
         if self.state != "READY" or self.run_requested:
@@ -344,8 +378,11 @@ class CoverageProbe(Node):
             )
         )
         if self.brush_enabled:
-            # Cleaning footprint is 0.55 m forward of base_footprint in URDF.
-            self.brush_samples.append((stamp, pose.position.x + 0.55 * math.cos(yaw), pose.position.y + 0.55 * math.sin(yaw)))
+            self.brush_samples.append((
+                stamp,
+                pose.position.x + self.brush_forward_offset_m * math.cos(yaw),
+                pose.position.y + self.brush_forward_offset_m * math.sin(yaw),
+            ))
 
     def _on_estimate(self, message):
         pose = message.pose.pose
@@ -434,7 +471,12 @@ class CoverageProbe(Node):
         self.brush_publisher.publish(Bool(data=self.brush_enabled))
 
     def run(self):
+        mission_started_wall = time.monotonic()
+        mission_started_ros_sec = self.get_clock().now().nanoseconds * 1e-9
         config = yaml.safe_load(Path(self.get_parameter("config_path").value).read_text(encoding="utf-8"))
+        self.brush_forward_offset_m = float(
+            config.get("brush_forward_offset_m", 0.55)
+        )
         self.evaluation_dropout_config = dict(
             config.get("evaluation_brush_dropout", {"enabled": False})
         )
@@ -457,6 +499,7 @@ class CoverageProbe(Node):
             ),
         )
         geometry = compile_mission_geometry(config)
+        self.mission_geometry = geometry
         polygon = geometry["outer_polygon"]
         exclusions = geometry["exclusion_polygons"]
         cleanable_polygon = geometry["cleanable_outer_polygon"]
@@ -474,6 +517,38 @@ class CoverageProbe(Node):
                 "success": False,
                 "error": "planning_swath_spacing_m_must_be_positive_and_at_most_operation_width_m",
             })
+        profile = str(config.get("coverage_planner_profile", "LEGACY_DUBINS"))
+        optimized_profile = profile == "SKID_STEER_OPTIMIZED"
+        ackermann_profile = profile == "ACKERMANN"
+        self.ackermann_profile_active = ackermann_profile
+        if ackermann_profile:
+            candidates = config.get("ackermann_swath_spacing_candidates_m")
+            if not candidates:
+                return self._write_report({
+                    "success": False,
+                    "error": "ackermann_swath_spacing_candidates_m_required",
+                })
+            if not all(
+                0.0 < float(item) <= width for item in candidates
+            ):
+                return self._write_report({
+                    "success": False,
+                    "error": (
+                        "ackermann_swath_spacing_candidates_m_must_be_positive_"
+                        "and_at_most_operation_width_m"
+                    ),
+                })
+            path_type = str(config.get("path_type", "")).upper()
+            if path_type in ("SKID_STEER_RTR", "RTR"):
+                return self._write_report({
+                    "success": False,
+                    "error": "ackermann_profile_rejects_skid_steer_rtr",
+                })
+            if "spin" in str(config.get("path_type", "")).lower():
+                return self._write_report({
+                    "success": False,
+                    "error": "ackermann_profile_rejects_spin",
+                })
         if (endpoint_extension < 0.0 or not 0.0 <= empirical_threshold <= 1.0
                 or not 0.0 <= empirical_repeat_threshold <= 1.0
                 or lateral_p95_threshold <= 0.0):
@@ -508,18 +583,26 @@ class CoverageProbe(Node):
                 "error": "configured_headland_below_compiled_clearance",
                 "mission_geometry": geometry,
             })
-        planning = self._plan(config, polygon, exclusions)
+        planning_polygon, planning_exclusions = coverage_planning_geometry(
+            profile, geometry
+        )
+        planning = self._plan(config, planning_polygon, planning_exclusions)
         if "error" in planning:
             self._set_state("FAILED", planning)
             return self._write_report({"success": False, **planning})
         raw_swaths, turns, nav_points, result = planning["raw_swaths"], planning["turns"], planning["nav_points"], planning["result"]
         angle_selection = planning.get("angle_selection")
         swaths, repaired = repair_degenerate_swaths(raw_swaths, turns, nav_points)
-        optimized_profile = str(config.get("coverage_planner_profile", "LEGACY_DUBINS")) == "SKID_STEER_OPTIMIZED"
-        if optimized_profile:
+        if optimized_profile or ackermann_profile:
             self._wait_for_estimated_pose(15.0)
             route_start = self.estimated_pose[:2] if self.estimated_pose else swaths[0][0]
-            routed = route_oriented_swaths(swaths, route_start)
+            lane_skip = (
+                int(config.get("ackermann_lane_skip", 1))
+                if ackermann_profile else 1
+            )
+            routed = route_oriented_swaths(
+                swaths, route_start, lane_skip=lane_skip
+            )
             swaths = list(routed.swaths)
         if optimized_profile:
             brush_offset = float(config.get("brush_forward_offset_m", 0.55))
@@ -536,6 +619,17 @@ class CoverageProbe(Node):
                     start, end, brush_offset, endpoint_extension
                 )
                 for start, end in calibrated_swaths
+            ]
+        elif ackermann_profile:
+            calibration_scale = 1.0
+            calibration_offset = 0.0
+            calibrated_swaths = swaths
+            brush_offset = float(config.get("brush_forward_offset_m", 0.55))
+            execution_swaths = [
+                brush_center_to_base_swath(
+                    start, end, brush_offset, endpoint_extension
+                )
+                for start, end in swaths
             ]
         else:
             calibration_scale = 1.0
@@ -557,7 +651,51 @@ class CoverageProbe(Node):
             "excluded_area_m2": geometry["excluded_area_m2"],
             "cleanable_area_m2": geometry["cleanable_area_m2"],
         })
-        if optimized_profile:
+        ackermann_plan_summary = None
+        if ackermann_profile:
+            semantic_components, ackermann_plan_summary = build_ackermann_plan(
+                execution_swaths,
+                geometry["outer_polygon"],
+                geometry["exclusion_polygons"],
+            )
+            components = [
+                {
+                    "component_id": item.component_id,
+                    "kind": item.kind.value,
+                    "index": index,
+                    "brush": item.brush_enabled,
+                    "points": list(item.points),
+                    "speed_profile": item.speed_profile,
+                    "metadata": item.metadata,
+                }
+                for index, item in enumerate(semantic_components)
+            ]
+            semantic_plan = CoveragePlan(
+                mission_id=str(config["mission_id"]), frame_id=str(config["frame_id"]),
+                components=semantic_components,
+                route_mode=str(config.get("route_mode", "AREA_FILL")),
+                metadata={
+                    "planning_swath_spacing_m": planning_spacing,
+                    "ackermann_swath_spacing_candidates_m": list(
+                        config.get("ackermann_swath_spacing_candidates_m", [])
+                    ),
+                    "physical_operation_width_m": width,
+                    "legacy_dubins_turns_discarded": len(turns),
+                    "selected_swath_angle_deg": angle_selection.angle_deg if angle_selection else None,
+                    "selected_angle_score": angle_selection.score if angle_selection else None,
+                    "ackermann_connector_summary": ackermann_plan_summary,
+                    "ackermann_lane_skip": int(
+                        config.get("ackermann_lane_skip", 1)
+                    ),
+                    "swath_route_ordering": routed.ordering,
+                    "execution_lateral_scale": calibration_scale,
+                    "execution_lateral_offset_m": calibration_offset,
+                    "execution_calibration_source": config.get(
+                        "execution_calibration_source", "unspecified"
+                    ),
+                },
+            )
+        elif optimized_profile:
             semantic_components = self._build_optimized_components(
                 execution_swaths, geometry["outer_polygon"]
             )
@@ -604,13 +742,24 @@ class CoverageProbe(Node):
         )
         self._set_state("TRANSIT_PREFLIGHT", {"expected_components": len(components)})
         self._wait_for_estimated_pose(15.0)
-        staging_offset = float(
-            config.get("optimized_staging_offset_m", config["staging_offset_m"])
-            if optimized_profile else config["staging_offset_m"]
-        )
+        if ackermann_profile:
+            staging_offset = float(
+                config.get("ackermann_staging_offset_m", config["staging_offset_m"])
+            )
+        elif optimized_profile:
+            staging_offset = float(
+                config.get("optimized_staging_offset_m", config["staging_offset_m"])
+            )
+        else:
+            staging_offset = float(config["staging_offset_m"])
         selection = self._select_route(
             components, geometry, staging_offset,
-            allow_reverse=not optimized_profile,
+            allow_reverse=not (optimized_profile or ackermann_profile),
+            preserve_staging_heading=ackermann_profile,
+            # Ackermann transit may legitimately reverse.  The REEDS_SHEPP
+            # preflight is costmap checked and avoids forcing a large forward
+            # loop merely to reach a staging pose behind the vehicle.
+            planner_id="GridBased",
         )
         path_report = {
             "frame_id": result.nav_path.header.frame_id,
@@ -631,11 +780,18 @@ class CoverageProbe(Node):
             "swath_exclusion_intersection_count": intersection_count,
             "route_selection": selection["report"],
             "staging_offset_m": staging_offset,
-            "execution_strategy": "ordered adjacent swaths with semantic skid-steer connectors" if optimized_profile else "legacy preflight forward/reverse staging and Dubins turns",
+            "execution_strategy": (
+                "skip-lane swaths with Ackermann forward/reverse/cusp connectors"
+                if ackermann_profile else (
+                    "ordered adjacent swaths with semantic skid-steer connectors"
+                    if optimized_profile else
+                    "legacy preflight forward/reverse staging and Dubins turns"
+                )
+            ),
+            "ackermann_connector_summary": ackermann_plan_summary,
         }
         self._write_json(self.get_parameter("path_output_path").value, path_report)
 
-        execution_started_wall = time.monotonic()
         if selection["selected"] is None or intersection_count:
             transit = {
                 "success": False,
@@ -648,7 +804,13 @@ class CoverageProbe(Node):
             selected = selection["selected"]
             selected_components = selected["components"]
             self._set_state("TRANSIT", {"selected_direction": selected["direction"]})
-            transit = self._navigate_to(selected["staging_pose"])
+            if self.ackermann_profile_active:
+                transit = self._follow_ackermann_hybrid_plan(
+                    selected["staging_pose"],
+                    precomputed_plan=selected.get("preflight"),
+                )
+            else:
+                transit = self._navigate_to(selected["staging_pose"])
             if transit["success"]:
                 self._set_state("ALIGNING")
                 current_point = self.estimated_pose[:2] if self.estimated_pose else (
@@ -666,11 +828,20 @@ class CoverageProbe(Node):
                 # Publish the commanded brush state before the component state
                 # so the Gazebo panel and diagnostics never show a stale brush
                 # value at swath / turn boundaries.
-                self._set_brush(component["brush"])
+                self._set_brush(
+                    component["brush"]
+                    and not (
+                        ackermann_profile and component["kind"] == "SWATH"
+                    )
+                )
                 component_state = {
                     "SWATH": "EXECUTING_SWATH", "ROTATE": "EXECUTING_ROTATE",
                     "SHIFT": "EXECUTING_SHIFT", "BACKUP": "EXECUTING_BACKUP",
                     "OBSTACLE_BYPASS": "EXECUTING_BYPASS",
+                    "FORWARD": "EXECUTING_FORWARD",
+                    "REVERSE": "EXECUTING_REVERSE",
+                    "CUSP_STOP": "EXECUTING_CUSP_STOP",
+                    "DEFERRED_SWATH": "DEFERRED_SWATH",
                 }.get(component["kind"], "EXECUTING_TURN")
                 self._set_state(component_state, {
                     "component_id": component.get("component_id"),
@@ -678,9 +849,20 @@ class CoverageProbe(Node):
                     "speed_profile": component.get("speed_profile", "TRANSIT"),
                     "completed_components": len(component_results),
                     "expected_components": len(selected_components),
+                    "connector_class": component.get("metadata", {}).get(
+                        "connector_class"
+                    ),
+                    "direction": component.get("metadata", {}).get("direction"),
                 })
                 self.active_component = component
-                component_results.append(self._execute_component(component))
+                if ackermann_profile and component["kind"] == "SWATH":
+                    component_results.append(
+                        self._execute_ackermann_swath(
+                            component, endpoint_extension
+                        )
+                    )
+                else:
+                    component_results.append(self._execute_component(component))
                 self.active_component = None
                 if not component_results[-1]["success"]:
                     if component_results[-1].get("stopped_by_operator"):
@@ -690,6 +872,12 @@ class CoverageProbe(Node):
                     break
         self._set_brush(False)
         complete = bool(selected_components and transit["success"] and len(component_results) == len(selected_components) and all(item["success"] for item in component_results))
+        ackermann_deferred_swaths = (
+            list(ackermann_plan_summary.get("deferred_swath_ids", []))
+            if ackermann_plan_summary else []
+        )
+        if ackermann_deferred_swaths:
+            complete = False
         primary_execution_complete = complete
         empirical = empirical_swept_metrics(
             cleanable_polygon, self.brush_samples, width, resolution=0.10,
@@ -714,7 +902,9 @@ class CoverageProbe(Node):
                 cleanable_polygon, self.brush_samples, width, resolution=0.10,
                 exclusion_polygons=cleanable_exclusions,
             )
-        execution_duration = time.monotonic() - execution_started_wall
+        wall_duration = time.monotonic() - mission_started_wall
+        mission_finished_ros_sec = self.get_clock().now().nanoseconds * 1e-9
+        operational_duration = mission_finished_ros_sec - mission_started_ros_sec
         actual_path_points = [(sample[1], sample[2]) for sample in self.truth_samples]
         actual_path_length = path_length(actual_path_points)
         semantic_distances = semantic_path_distances(self.truth_samples)
@@ -745,9 +935,15 @@ class CoverageProbe(Node):
             "primary_swath_lateral_error": absolute_cross_track,
             "primary_swath_absolute_cross_track_error": absolute_cross_track,
             "primary_swath_straightness_error": straightness,
-            "actual_duration_sec": execution_duration,
-            "gross_efficiency_m2_h": empirical["covered_area_m2"] / execution_duration * 3600.0 if execution_duration > 0 else 0.0,
-            "net_efficiency_m2_h": empirical["covered_area_m2"] / execution_duration * 3600.0 if execution_duration > 0 else 0.0,
+            "actual_duration_sec": operational_duration,
+            "simulated_operational_duration_sec": operational_duration,
+            "wall_duration_sec": wall_duration,
+            "duration_basis": (
+                "ROS simulation time from mission evaluation start through "
+                "planning, transit, turns, cleaning, repair and stop"
+            ),
+            "gross_efficiency_m2_h": empirical["covered_area_m2"] / operational_duration * 3600.0 if operational_duration > 0 else 0.0,
+            "net_efficiency_m2_h": empirical["covered_area_m2"] / operational_duration * 3600.0 if operational_duration > 0 else 0.0,
         })
         empirical_pass = complete and empirical["coverage_rate"] >= empirical_threshold
         repeat_pass = empirical["repeat_rate"] <= empirical_repeat_threshold
@@ -763,12 +959,20 @@ class CoverageProbe(Node):
             and sample[5] != "REPAIR_SWATH"
             for sample in self.truth_samples
         )
-        recovery_count = sum(item["retries"] for item in component_results) + int(transit.get("retries", 0))
+        recovery_count = sum(
+            int(item.get("retries", 0)) for item in component_results
+        ) + int(transit.get("retries", 0))
         efficiency_pass = empirical["net_efficiency_m2_h"] >= 3500.0
-        localization_xy_errors, localization_sync_errors, dropped_estimates = (
-            synchronized_xy_errors(self.estimate_samples, self.truth_samples, 0.05)
+        (
+            localization_xy_errors,
+            localization_yaw_errors,
+            localization_sync_errors,
+            dropped_estimates,
+        ) = (
+            synchronized_pose_errors(self.estimate_samples, self.truth_samples, 0.05)
         )
         localization = summarize_distances(localization_xy_errors)
+        localization_yaw = summarize_distances(localization_yaw_errors)
         sync_summary = summarize_distances(localization_sync_errors)
         localization.update({
             "estimate_sample_count": len(self.estimate_samples),
@@ -781,7 +985,18 @@ class CoverageProbe(Node):
                 "p95_sec": sync_summary["p95_m"],
                 "max_sec": sync_summary["max_m"],
             },
-            "metric_basis": "nearest_neighbour_ros_timestamp_without_truth_reuse",
+            "metric_basis": (
+                "linear_ground_truth_interpolation_at_estimate_ros_stamp;"
+                "evaluation_only_without_truth_reuse_in_control"
+            ),
+            "yaw_error_rad": {
+                "sample_count": localization_yaw["sample_count"],
+                "mean_rad": localization_yaw["mean_m"],
+                "median_rad": localization_yaw["median_m"],
+                "rmse_rad": localization_yaw["rmse_m"],
+                "p95_rad": localization_yaw["p95_m"],
+                "max_rad": localization_yaw["max_m"],
+            },
         })
         localization["pass_rmse_and_p95_at_most_0_05m"] = bool(
             localization["rmse_m"] is not None
@@ -793,9 +1008,10 @@ class CoverageProbe(Node):
             and localization["rmse_m"] <= 0.05
         )
         localization["formal_gate_basis"] = (
-            "Stage4V-compatible per-seed XY RMSE <= 0.05 m; pointwise P95 is diagnostic"
+            "Product gate B requires per-seed XY RMSE and pointwise P95 "
+            "both <= 0.05 m"
         )
-        localization_pass = localization["pass_rmse_at_most_0_05m"]
+        localization_pass = localization["pass_rmse_and_p95_at_most_0_05m"]
         self._write_trajectory()
         report = {
             "schema_version": 2,
@@ -813,8 +1029,9 @@ class CoverageProbe(Node):
             "localization_success": localization_pass,
             "competition_efficiency_pass": efficiency_pass,
             "success": bool(
-                complete and coverage_quality_pass and lateral_tracking_pass and safety_pass
-                and localization_pass and not self.brush_enabled
+                complete and coverage_quality_pass and lateral_tracking_pass
+                and safety_pass and localization_pass and efficiency_pass
+                and not self.brush_enabled
             ),
             "operation_width_m": width,
             "planning_swath_spacing_m": planning_spacing,
@@ -837,6 +1054,8 @@ class CoverageProbe(Node):
             "planned_metrics": planned_metrics,
             "empirical_metrics": empirical,
             "coverage_repair": repair_report,
+            "ackermann_connector_summary": ackermann_plan_summary,
+            "deferred_swath_ids": ackermann_deferred_swaths,
             "blocked_swaths": (
                 self.blocked_swath_manager.snapshot()
                 if self.blocked_swath_manager else []
@@ -859,7 +1078,12 @@ class CoverageProbe(Node):
             "minimum_lidar_range_m": self.minimum_scan_range if math.isfinite(self.minimum_scan_range) else None,
             "brush_disabled_on_exit": not self.brush_enabled,
             "localization_regression_during_coverage": localization,
-            "execution_boundary": "All path components were required to terminate SUCCEEDED; no 180-pose shortcut or bounded cancellation is accepted.",
+            "execution_boundary": (
+                "All path components were required to terminate SUCCEEDED; no "
+                "180-pose shortcut, point rotation, SHIFT or bounded "
+                "cancellation is accepted. Ackermann DEFERRED_SWATH records "
+                "are reported as incomplete rather than cheated."
+            ),
         }
         if self.stop_requested:
             report["stopped_by_operator"] = True
@@ -943,13 +1167,20 @@ class CoverageProbe(Node):
         if not self.coverage_client.wait_for_server(timeout_sec=60.0):
             return {"error": "coverage_action_timeout"}
         goal = ComputeCoveragePath.Goal()
-        goal.generate_headland = bool(config["headland"]["enabled"]); goal.generate_route = True; goal.generate_path = True
+        goal.generate_headland = should_generate_internal_headland(config); goal.generate_route = True; goal.generate_path = True
         goal.frame_id = str(config["frame_id"])
         angle_selection = None
-        if str(config.get("coverage_planner_profile", "")) == "SKID_STEER_OPTIMIZED":
+        if str(config.get("coverage_planner_profile", "")) in (
+            "SKID_STEER_OPTIMIZED", "ACKERMANN",
+        ):
             angle_selection, candidates = optimize_swath_angle(
                 polygon, float(config.get("planning_swath_spacing_m", config["operation_width_m"])),
                 step_deg=int(config.get("swath_angle_step_deg", 5)),
+                connector_penalty_m=(
+                    float(config.get("ackermann_angle_connector_penalty_m", 22.6))
+                    if str(config.get("coverage_planner_profile", "")) == "ACKERMANN"
+                    else None
+                ),
             )
             goal.swath_mode.objective = "LENGTH"
             goal.swath_mode.mode = "SET_ANGLE"
@@ -969,11 +1200,27 @@ class CoverageProbe(Node):
                 Coordinate(axis1=x, axis2=y) for x, y in closed_exclusion
             ]
             goal.polygons.append(cutout)
-        future = self.coverage_client.send_goal_async(goal)
-        rclpy.spin_until_future_complete(self, future, timeout_sec=30.0)
-        handle = future.result() if future.done() else None
-        if handle is None or not handle.accepted:
-            return {"error": "coverage_goal_rejected"}
+        handle = None
+        coverage_goal_attempts = 3
+        for attempt in range(coverage_goal_attempts):
+            future = self.coverage_client.send_goal_async(goal)
+            rclpy.spin_until_future_complete(self, future, timeout_sec=30.0)
+            candidate = future.result() if future.done() else None
+            if candidate is not None and candidate.accepted:
+                handle = candidate
+                break
+            if attempt + 1 < coverage_goal_attempts:
+                # A lifecycle-active action server can briefly reject its
+                # first request while DDS discovery settles. Retry is bounded
+                # and the planning gate remains fail-closed.
+                deadline = time.monotonic() + 1.0
+                while rclpy.ok() and time.monotonic() < deadline:
+                    rclpy.spin_once(self, timeout_sec=0.05)
+        if handle is None:
+            return {
+                "error": "coverage_goal_rejected",
+                "attempts": coverage_goal_attempts,
+            }
         result_future = handle.get_result_async(); rclpy.spin_until_future_complete(self, result_future, timeout_sec=120.0)
         if not result_future.done():
             return {"error": "coverage_result_timeout"}
@@ -1148,19 +1395,32 @@ class CoverageProbe(Node):
                     "REPAIR_TRANSIT",
                     {"pass_index": pass_index, "segment_index": segment_index},
                 )
-                entry = {
-                    "kind": "repair_entry",
-                    "index": segment_index,
-                    "brush": False,
-                    "speed_profile": "BYPASS",
-                    "points": self._interpolate(current, staging, spacing=0.05),
-                    # Align to the repair line while the brush is still off.
-                    # Otherwise FollowPath accepts the entry position and the
-                    # RepairPath controller performs its heading correction
-                    # after brush-on, drawing an unreported repeat-coverage arc.
-                    "goal_yaw": heading,
-                }
-                entry_result = self._follow_component(entry)
+                if self.ackermann_profile_active:
+                    # Two arbitrary SE(2) poses cannot be joined by the old
+                    # straight interpolation. Use the same footprint-checked
+                    # forward Dubins transit as the primary operation entry.
+                    entry_result = self._navigate_to({
+                        "x": staging[0], "y": staging[1], "yaw": heading,
+                    })
+                    entry_result.update({
+                        "kind": "repair_entry",
+                        "index": segment_index,
+                        "brush_enabled": False,
+                    })
+                else:
+                    entry = {
+                        "kind": "repair_entry",
+                        "index": segment_index,
+                        "brush": False,
+                        "speed_profile": "BYPASS",
+                        "points": self._interpolate(current, staging, spacing=0.05),
+                        # Align to the repair line while the brush is still off.
+                        # Otherwise FollowPath accepts the entry position and the
+                        # RepairPath controller performs its heading correction
+                        # after brush-on, drawing an unreported repeat-coverage arc.
+                        "goal_yaw": heading,
+                    }
+                    entry_result = self._follow_component(entry)
                 repair_result = None
                 if entry_result["success"]:
                     self._set_brush(True)
@@ -1176,6 +1436,7 @@ class CoverageProbe(Node):
                         "points": self._interpolate(
                             base_start, base_end,
                         ),
+                        "metadata": {"retry_limit_override": 0},
                     }
                     repair_result = self._follow_component(repair)
                 self._set_brush(False)
@@ -1194,6 +1455,20 @@ class CoverageProbe(Node):
                 })
                 if not segment_success:
                     all_success = False
+                    break
+                current_empirical = empirical_swept_metrics(
+                    cleanable_polygon, self.brush_samples, width,
+                    resolution=0.10,
+                    exclusion_polygons=cleanable_exclusions,
+                )
+                pass_report["segments"][-1]["coverage_after"] = (
+                    current_empirical["coverage_rate"]
+                )
+                # Residual swaths are planned from one frozen raster snapshot.
+                # A wide brush may cover later residuals incidentally, so
+                # re-evaluate after every bounded segment and stop immediately
+                # once the formal threshold is met.
+                if current_empirical["coverage_rate"] >= threshold:
                     break
             executed_repair_length = sum(
                 float(item.get("repair", {}).get("planned_length_m", 0.0))
@@ -1227,7 +1502,10 @@ class CoverageProbe(Node):
             "success": bool(all_success and final["coverage_rate"] >= threshold),
         }
 
-    def _select_route(self, components, geometry, offset_m, allow_reverse=True):
+    def _select_route(
+        self, components, geometry, offset_m, allow_reverse=True,
+        preserve_staging_heading=False, planner_id="GridBased",
+    ):
         candidates = route_candidates(components, offset_m)
         if not allow_reverse:
             candidates = candidates[:1]
@@ -1249,19 +1527,28 @@ class CoverageProbe(Node):
                     "error": "fused_pose_unavailable_for_explicit_transit_yaw",
                 })
                 continue
-            pose = transit_pose(self.estimated_pose[:2], candidate["staging_pose"])
+            if preserve_staging_heading:
+                pose = candidate["staging_pose"]
+                transit_yaw_source = "operation_entry_heading"
+            else:
+                pose = transit_pose(
+                    self.estimated_pose[:2], candidate["staging_pose"]
+                )
+                transit_yaw_source = "fused_pose_to_staging_pose"
             candidate["staging_pose"] = pose
             clearance = exclusion_clearance(
                 (pose["x"], pose["y"]),
                 geometry["exclusion_polygons"],
             )
-            preflight = self._compute_path(pose)
+            preflight = self._compute_path(
+                pose, include_path=True, planner_id=planner_id
+            )
             target_grid_values = self._target_grid_values(pose)
             target_cost_clear = target_grid_viable(target_grid_values)
             report = {
                 "direction": candidate["direction"],
                 "staging_pose": pose,
-                "transit_yaw_source": "fused_pose_to_staging_pose",
+                "transit_yaw_source": transit_yaw_source,
                 "operation_entry_yaw": operation_entry_yaw,
                 "footprint_clearance_m": clearance,
                 "target_grid_values": target_grid_values,
@@ -1270,6 +1557,7 @@ class CoverageProbe(Node):
                     pose["x"], pose["y"], geometry["outer_polygon"], []
                 ),
                 "collision_free_footprint_path": preflight["success"],
+                "planner_id": planner_id,
                 **preflight,
             }
             reports.append(report)
@@ -1288,7 +1576,10 @@ class CoverageProbe(Node):
                 "candidates": reports,
                 "selected_direction": selected["direction"] if selected else None,
                 "grid_diagnostics_ready": grid_diagnostics_ready,
-                "selection_basis": "shortest reachable staging path with geometry clearance",
+                "selection_basis": (
+                    "shortest reachable staging path with geometry clearance "
+                    f"using {planner_id}"
+                ),
             },
         }
 
@@ -1335,12 +1626,14 @@ class CoverageProbe(Node):
             rclpy.spin_once(self, timeout_sec=0.1)
         return False
 
-    def _compute_path(self, pose):
+    def _compute_path(
+        self, pose, *, include_path=False, planner_id="GridBased"
+    ):
         if not self.compute_path_client.wait_for_server(timeout_sec=30.0):
             return {"success": False, "error": "compute_path_server_unavailable"}
         goal = ComputePathToPose.Goal()
         goal.goal = self._pose_message(pose)
-        goal.planner_id = "GridBased"
+        goal.planner_id = planner_id
         goal.use_start = False
         future = self.compute_path_client.send_goal_async(goal)
         rclpy.spin_until_future_complete(self, future, timeout_sec=10.0)
@@ -1357,9 +1650,17 @@ class CoverageProbe(Node):
             (item.pose.position.x, item.pose.position.y)
             for item in result.path.poses
         ]
+        path_poses = [
+            (
+                item.pose.position.x,
+                item.pose.position.y,
+                yaw_from_quaternion(item.pose.orientation),
+            )
+            for item in result.path.poses
+        ]
         error_code = int(getattr(result, "error_code", 0))
         success = wrapped.status == GoalStatus.STATUS_SUCCEEDED and error_code == 0 and bool(points)
-        return {
+        report = {
             "success": success,
             "terminal_status": int(wrapped.status),
             "error_code": error_code,
@@ -1370,6 +1671,9 @@ class CoverageProbe(Node):
             "path_start": points[0] if points else None,
             "path_goal": points[-1] if points else None,
         }
+        if include_path:
+            report["path_poses"] = path_poses
+        return report
 
     @staticmethod
     def _pose_message(pose):
@@ -1380,14 +1684,20 @@ class CoverageProbe(Node):
         message.pose.orientation.w = math.cos(float(pose["yaw"]) / 2.0)
         return message
 
-    def _path_message(self, points, final_yaw=None):
+    def _path_message(self, points, final_yaw=None, headings=None):
         path = NavPath(); path.header.frame_id = "map"
         if len(points) < 2:
             raise ValueError("a coverage path needs at least two points for yaw")
         for index, (x, y) in enumerate(points):
             next_point = points[min(index + 1, len(points) - 1)]
             previous = points[max(0, index - 1)]
-            yaw = math.atan2(next_point[1] - previous[1], next_point[0] - previous[0])
+            if headings is not None and index < len(headings):
+                yaw = float(headings[index])
+            else:
+                yaw = math.atan2(
+                    next_point[1] - previous[1],
+                    next_point[0] - previous[0],
+                )
             if index == len(points) - 1 and final_yaw is not None:
                 yaw = float(final_yaw)
             pose = PoseStamped(); pose.header.frame_id = "map"
@@ -1398,6 +1708,8 @@ class CoverageProbe(Node):
 
     def _navigate_to(self, pose):
         self._set_brush(False)
+        if self.ackermann_profile_active:
+            return self._follow_ackermann_hybrid_plan(pose)
         if not self._wait_controller_active() or not self.navigate_client.wait_for_server(timeout_sec=30.0):
             return {"success": False, "error": "navigate_server_unavailable", "retries": 0}
         goal = NavigateToPose.Goal(); goal.pose = self._pose_message(pose)
@@ -1410,8 +1722,214 @@ class CoverageProbe(Node):
         result["terminal_tracking_error"] = self._tracking_error(pose)
         return result
 
+    def _follow_ackermann_hybrid_plan(
+        self, pose, *, precomputed_plan=None, replan_depth=0
+    ):
+        """Plan once, split reverse cusps, and follow each section explicitly."""
+        if replan_depth > 6:
+            return {
+                "success": False,
+                "error": "hybrid_cusp_replan_limit_exceeded",
+                "controller": "Smac Hybrid cusp-replan + segmented FollowPath",
+            }
+        if not self._wait_controller_active():
+            return {
+                "success": False,
+                "error": "controller_server_inactive",
+                "retries": 0,
+            }
+        # Route preflight is computed by Nav2 against the live global costmap.
+        # A staging pose directly behind the chassis is the one case where a
+        # single reverse-only Dubins-equivalent path is both shorter and more
+        # controllable than a multi-cusp Reeds-Shepp result.
+        plan = precomputed_plan
+        if self.estimated_pose is not None and self.mission_geometry is not None:
+            start_pose = tuple(float(value) for value in self.estimated_pose[:3])
+            goal_pose = (
+                float(pose["x"]), float(pose["y"]), float(pose["yaw"])
+            )
+            reverse_poses = plan_reverse_dubins_path(
+                start_pose,
+                goal_pose,
+                self.mission_geometry["outer_polygon"],
+                self.mission_geometry["exclusion_polygons"],
+            )
+            direct_distance = math.dist(start_pose[:2], goal_pose[:2])
+            reverse_length = path_length(
+                [(item[0], item[1]) for item in reverse_poses]
+            ) if reverse_poses else math.inf
+            if reverse_poses and reverse_length <= max(
+                direct_distance * 1.25, direct_distance + 0.50
+            ):
+                reverse_points = [(item[0], item[1]) for item in reverse_poses]
+                plan = {
+                    "success": True,
+                    "error_code": 0,
+                    "error_name": "NONE",
+                    "path_length_m": reverse_length,
+                    "path_pose_count": len(reverse_poses),
+                    "path_start": reverse_points[0],
+                    "path_goal": reverse_points[-1],
+                    "path_poses": reverse_poses,
+                    "planner_id": "FootprintCheckedReverseDubins",
+                }
+            else:
+                # A single-gear forward path is substantially more robust
+                # than a shorter Reeds-Shepp path whose cusp must be handed
+                # between two independent controller actions. Prefer it
+                # whenever the complete deployed-brush footprint fits.
+                forward_poses = plan_forward_dubins_path(
+                    start_pose,
+                    goal_pose,
+                    self.mission_geometry["outer_polygon"],
+                    self.mission_geometry["exclusion_polygons"],
+                )
+                if forward_poses:
+                    forward_points = [(item[0], item[1]) for item in forward_poses]
+                    plan = {
+                        "success": True,
+                        "error_code": 0,
+                        "error_name": "NONE",
+                        "path_length_m": path_length(forward_points),
+                        "path_pose_count": len(forward_poses),
+                        "path_start": forward_points[0],
+                        "path_goal": forward_points[-1],
+                        "path_poses": forward_poses,
+                        "planner_id": "FootprintCheckedForwardDubins",
+                    }
+        if not plan or not plan.get("success") or not plan.get("path_poses"):
+            plan = self._compute_path(
+                pose, include_path=True, planner_id="GridBasedForward"
+            )
+            if not plan.get("success"):
+                plan = self._compute_path(
+                    pose, include_path=True, planner_id="GridBased"
+                )
+        if not plan.get("success"):
+            return {
+                **plan,
+                "success": False,
+                "controller": "Smac Hybrid plan-once + segmented FollowPath",
+            }
+        planner_source = plan.get("planner_id", "Smac Hybrid")
+        sections = split_hybrid_path_by_direction(plan.get("path_poses", []))
+        if not sections:
+            return {
+                **plan,
+                "success": False,
+                "error": "hybrid_path_has_no_motion_sections",
+                "controller": "Smac Hybrid plan-once + segmented FollowPath",
+            }
+
+        section_results = []
+        cusp_stop_count = 0
+        for index, section in enumerate(sections):
+            if section["cusp_before"]:
+                cusp_stop_count += 1
+                if not self._wait_for_cusp_stop(
+                    float(self.get_parameter("translation_timeout_sec").value)
+                ):
+                    section_results.append({
+                        "success": False,
+                        "section_index": index,
+                        "direction": section["direction"],
+                        "error": "cusp_stop_speed_timeout",
+                    })
+                    break
+            path_poses = list(section["poses"])
+            section_component = {
+                "kind": section["direction"],
+                "index": index,
+                "brush": False,
+                "points": [(item[0], item[1]) for item in path_poses],
+                "goal_yaw": path_poses[-1][2],
+                "speed_profile": section["direction"],
+                "metadata": {
+                    "direction": section["direction"],
+                    "headings_rad": [item[2] for item in path_poses],
+                    # A transit endpoint is immediately followed by a
+                    # separately controlled entry segment, so use the
+                    # dedicated hand-off tolerance on the final section too.
+                    # This prevents stateful RPP goal handling from driving a
+                    # non-holonomic chassis around the completed loop merely
+                    # to improve yaw by a few tenths of a radian.
+                    "goal_checker_id": (
+                        "cusp_goal_checker"
+                        if index < len(sections) - 1
+                        else "connector_goal_checker"
+                    ),
+                    "speed_limit_mps": (
+                        0.20 if section["direction"] == "REVERSE" else 0.45
+                    ),
+                    # Replaying a plan whose start is now metres behind the
+                    # robot is unsafe and lets RPP select the wrong branch of
+                    # a looping path. Fail closed; the caller may replan from
+                    # the measured stopped pose instead.
+                    "retry_limit_override": 0,
+                },
+            }
+            section_result = self._follow_component(section_component)
+            section_result.update({
+                "section_index": index,
+                "direction": section["direction"],
+                "cusp_before": section["cusp_before"],
+            })
+            section_results.append(section_result)
+            if not section_result.get("success"):
+                break
+            if index < len(sections) - 1:
+                # Replan from the measured stopped cusp. If the planner cannot
+                # find a continuation, retain the original kinematically
+                # feasible section. Never splice the measured pose directly
+                # onto that section: such a chord can introduce an unplanned
+                # direction change exactly at the cusp.
+                continuation = self._follow_ackermann_hybrid_plan(
+                    pose, replan_depth=replan_depth + 1
+                )
+                section_result["replanned_continuation"] = continuation
+                if continuation.get("success"):
+                    return {
+                        "success": True,
+                        "error": None,
+                        "controller": (
+                            "Smac Hybrid cusp-replan + segmented FollowPath"
+                        ),
+                        "planner": planner_source,
+                        "goal_pose": pose,
+                        "planned_length_m": plan.get("path_length_m"),
+                        "path_pose_count": plan.get("path_pose_count"),
+                        "direction_section_count": len(sections),
+                        "cusp_stop_count": cusp_stop_count,
+                        "replan_depth": replan_depth,
+                        "section_results": section_results,
+                        "terminal_tracking_error": self._tracking_error(pose),
+                    }
+                section_result["replan_failed_fallback_to_precomputed"] = True
+
+        success = (
+            len(section_results) == len(sections)
+            and all(item.get("success") for item in section_results)
+        )
+        return {
+            "success": success,
+            "error": None if success else (
+                section_results[-1].get("error", "hybrid_section_failed")
+                if section_results else "hybrid_section_failed"
+            ),
+            "controller": "Smac Hybrid plan-once + segmented FollowPath",
+            "planner": planner_source,
+            "goal_pose": pose,
+            "planned_length_m": plan.get("path_length_m"),
+            "path_pose_count": plan.get("path_pose_count"),
+            "direction_section_count": len(sections),
+            "cusp_stop_count": cusp_stop_count,
+            "section_results": section_results,
+            "terminal_tracking_error": self._tracking_error(pose),
+        }
+
     def _follow_component(self, component):
-        speed_limit = component.get("metadata", {}).get("speed_limit_mps")
+        metadata = component.get("metadata", {})
+        speed_limit = metadata.get("speed_limit_mps")
         if speed_limit is not None:
             limit = SpeedLimit()
             limit.percentage = False
@@ -1419,21 +1937,64 @@ class CoverageProbe(Node):
             self.speed_limit_publisher.publish(limit)
         final_yaw = component.get("goal_yaw")
         goal = FollowPath.Goal(); goal.path = self._path_message(
-            component["points"], final_yaw=final_yaw
+            component["points"],
+            final_yaw=final_yaw,
+            headings=metadata.get("headings_rad"),
         )
         self.current_path_publisher.publish(goal.path)
         self.current_component_path_publisher.publish(goal.path)
         controller_by_profile = {
             "CLEAN": "CleanPath",
             "REPAIR": "RepairPath",
+            "REVERSE": "ReversePath",
         }
-        goal.controller_id = controller_by_profile.get(
-            component.get("speed_profile", "TRANSIT"), "FollowPath"
+        goal.controller_id = metadata.get(
+            "controller_id",
+            controller_by_profile.get(
+                component.get("speed_profile", "TRANSIT"), "FollowPath"
+            ),
         )
-        goal.goal_checker_id = "goal_checker"; goal.progress_checker_id = "progress_checker"
-        timeout = max(self.get_parameter("minimum_component_timeout_sec").value, path_length(component["points"]) / 0.10 + 30.0)
+        default_goal_checker = (
+            "connector_goal_checker"
+            if self.ackermann_profile_active and component.get("kind") == "FORWARD"
+            else "goal_checker"
+        )
+        goal.goal_checker_id = metadata.get(
+            "goal_checker_id", default_goal_checker
+        )
+        goal.progress_checker_id = "progress_checker"
+        # Tight Ackermann arcs, in either direction, are commonly
+        # curvature-regulated down to the controller's 0.05 m/s floor.
+        # Budget against that measured lower bound so a physically
+        # progressing manoeuvre is not cancelled just before the endpoint.
+        is_ackermann_connector = (
+            self.ackermann_profile_active and component.get("kind") == "FORWARD"
+        )
+        timeout_speed = (
+            0.05
+            if component.get("speed_profile") == "REVERSE"
+            or is_ackermann_connector
+            else 0.10
+        )
+        timeout = max(
+            self.get_parameter("minimum_component_timeout_sec").value,
+            path_length(component["points"]) / timeout_speed + 30.0,
+        )
+        planned_length = path_length(component["points"])
         result = self._run_action(
-            self.follow_client, goal, component["brush"], timeout, "follow_path"
+            self.follow_client, goal, component["brush"], timeout, "follow_path",
+            retry_limit_override=metadata.get("retry_limit_override"),
+            action_path_length_m=planned_length,
+            brush_enable_after_distance_m=metadata.get(
+                "brush_enable_after_distance_m"
+            ),
+            speed_limit_release_after_distance_m=metadata.get(
+                "speed_limit_release_after_distance_m"
+            ),
+            brush_disable_after_distance_m=metadata.get(
+                "brush_disable_after_distance_m"
+            ),
+            action_path_points=component["points"],
         )
         if speed_limit is not None:
             reset = SpeedLimit()
@@ -1447,8 +2008,179 @@ class CoverageProbe(Node):
                 component["points"][-2], component["points"][-1]
             ),
         }
-        result.update({"kind": component["kind"], "index": component["index"], "brush_enabled": component["brush"], "path_pose_count": len(component["points"]), "planned_length_m": path_length(component["points"]), "goal_pose": goal_pose, "terminal_tracking_error": self._tracking_error(goal_pose)})
+        result.update({"kind": component["kind"], "index": component["index"], "brush_enabled": component["brush"], "path_pose_count": len(component["points"]), "planned_length_m": planned_length, "goal_pose": goal_pose, "terminal_tracking_error": self._tracking_error(goal_pose)})
         return result
+
+    def _follow_forward_dubins_primitives(self, component):
+        """Follow a looping Dubins connector one curvature primitive at a time."""
+        headings = component.get("metadata", {}).get("headings_rad")
+        if not headings:
+            return self._follow_component(component)
+        heading_variation = path_heading_variation(headings)
+        if heading_variation <= math.pi + math.radians(2.0):
+            # A simple forward U-turn is topologically unambiguous. Keeping its
+            # short straight lead-in and constant-curvature arc in one action
+            # avoids demanding a full stop at an artificial primitive boundary.
+            continuous = {
+                **component,
+                "metadata": {
+                    **component.get("metadata", {}),
+                    "goal_checker_id": "connector_goal_checker",
+                    "controller_id": "DubinsPath",
+                    "retry_limit_override": 0,
+                },
+            }
+            result = self._follow_component(continuous)
+            result["continuous_simple_connector"] = True
+            result["heading_variation_rad"] = heading_variation
+            return result
+        sections = split_path_at_curvature_reversals(
+            component["points"], headings
+        )
+        if len(sections) <= 1:
+            return self._follow_component(component)
+
+        primitive_results = []
+        for primitive_index, (points, primitive_headings) in enumerate(sections):
+            if primitive_index > 0 and self.estimated_pose is not None:
+                handoff = connector_handoff_replan_decision(
+                    tuple(float(value) for value in self.estimated_pose[:3]),
+                    (
+                        float(points[0][0]),
+                        float(points[0][1]),
+                        float(primitive_headings[0]),
+                    ),
+                )
+                if handoff["requires_replan"]:
+                    # Primitive goal checkers intentionally tolerate finite
+                    # curvature-end error, but the next static arc is unsafe
+                    # once that error exceeds the RPP pruning envelope. Plan
+                    # the remaining brush-off connector from the measured
+                    # pose and follow it as one direction-continuous section.
+                    final_goal = {
+                        "x": float(component["points"][-1][0]),
+                        "y": float(component["points"][-1][1]),
+                        "yaw": float(headings[-1]),
+                    }
+                    recovery = self._follow_ackermann_hybrid_plan(final_goal)
+                    return {
+                        "success": bool(recovery.get("success")),
+                        "error": None if recovery.get("success") else recovery.get(
+                            "error", "live_primitive_handoff_replan_failed"
+                        ),
+                        "attempts": [
+                            attempt
+                            for item in primitive_results
+                            for attempt in item.get("attempts", [])
+                        ],
+                        "primitive_results": primitive_results,
+                        "primitive_count": len(sections),
+                        "completed_primitive_count": sum(
+                            bool(item.get("success")) for item in primitive_results
+                        ),
+                        "path_pose_count": len(component["points"]),
+                        "planned_length_m": path_length(component["points"]),
+                        "goal_pose": final_goal,
+                        "terminal_tracking_error": recovery.get(
+                            "terminal_tracking_error"
+                        ),
+                        "controller": (
+                            "curvature-segmented FollowPath + live hybrid replan"
+                        ),
+                        "live_handoff_replan": True,
+                        "handoff_error": handoff,
+                        "handoff_after_primitive_index": primitive_index - 1,
+                        "live_handoff_replan_result": recovery,
+                    }
+            primitive = {
+                **component,
+                "points": points,
+                "goal_yaw": primitive_headings[-1],
+                "metadata": {
+                    **component.get("metadata", {}),
+                    "headings_rad": primitive_headings,
+                    "goal_checker_id": (
+                        "connector_goal_checker"
+                        if primitive_index == len(sections) - 1
+                        else "primitive_goal_checker"
+                    ),
+                    "controller_id": "DubinsPath",
+                    "retry_limit_override": 0,
+                },
+            }
+            result = self._follow_component(primitive)
+            result["primitive_index"] = primitive_index
+            result["primitive_count"] = len(sections)
+            primitive_results.append(result)
+            if not result.get("success"):
+                break
+        success = (
+            len(primitive_results) == len(sections)
+            and all(item.get("success") for item in primitive_results)
+        )
+        terminal = primitive_results[-1] if primitive_results else {}
+        return {
+            "success": success,
+            "error": None if success else terminal.get(
+                "error", "dubins_primitive_failed"
+            ),
+            "attempts": [
+                attempt
+                for item in primitive_results
+                for attempt in (
+                    item.get("attempts", [])
+                    if isinstance(item.get("attempts"), list)
+                    else [item.get("attempts")]
+                    if item.get("attempts")
+                    else []
+                )
+            ],
+            "primitive_results": primitive_results,
+            "primitive_count": len(sections),
+            "completed_primitive_count": sum(
+                bool(item.get("success")) for item in primitive_results
+            ),
+            "path_pose_count": len(component["points"]),
+            "planned_length_m": path_length(component["points"]),
+            "goal_pose": terminal.get("goal_pose"),
+            "terminal_tracking_error": terminal.get("terminal_tracking_error"),
+            "controller": "curvature-segmented FollowPath",
+        }
+
+    def _execute_ackermann_swath(self, component, alignment_distance_m):
+        """Use one continuous path, settling before cleaning at full speed."""
+        brush_enable_distance = max(0.0, float(alignment_distance_m) - 0.20)
+        brush_disable_distance = max(
+            brush_enable_distance,
+            path_length(component["points"])
+            - float(alignment_distance_m) + 0.20,
+        )
+        ramp_distance = float(alignment_distance_m) + 1.0
+        cleaning = {
+            **component,
+            "metadata": {
+                **component.get("metadata", {}),
+                "speed_limit_mps": 0.45,
+                "goal_checker_id": "swath_exit_goal_checker",
+                "brush_enable_after_distance_m": brush_enable_distance,
+                "brush_disable_after_distance_m": brush_disable_distance,
+                "speed_limit_release_after_distance_m": ramp_distance,
+                "retry_limit_override": 0,
+            },
+        }
+        self._set_state("EXECUTING_SWATH", {
+            "component_id": component.get("component_id"),
+            "kind": component["kind"],
+            "index": component["index"],
+            "alignment_distance_m": float(alignment_distance_m),
+            "brush_enabled": False,
+        })
+        cleaning_result = self._execute_component(cleaning)
+        cleaning_result["alignment_distance_m"] = float(alignment_distance_m)
+        cleaning_result["brush_enable_distance_m"] = brush_enable_distance
+        cleaning_result["brush_disable_distance_m"] = brush_disable_distance
+        cleaning_result["speed_ramp_release_distance_m"] = ramp_distance
+        return cleaning_result
 
     def _execute_component(self, component):
         if component["kind"] == "ROTATE":
@@ -1463,6 +2195,100 @@ class CoverageProbe(Node):
                 "brush_enabled": False, "planned_length_m": 0.0,
             })
             return result
+        if component["kind"] == "CUSP_STOP":
+            waited = self._wait_for_cusp_stop(
+                float(self.get_parameter("translation_timeout_sec").value)
+            )
+            return {
+                "success": waited,
+                "kind": component["kind"],
+                "index": component["index"],
+                "component_id": component.get("component_id"),
+                "brush_enabled": False,
+                "planned_length_m": 0.0,
+                "waiting_for_measured_speed_below_mps": 0.03,
+                "terminal_odom_vx_mps": self._odom_vx,
+                "error": None if waited else "cusp_stop_speed_timeout",
+            }
+        if component.get("metadata", {}).get("deferred_to_nav2"):
+            metadata = component["metadata"]
+            goal = component["points"][-1]
+            result = self._navigate_to({
+                "x": goal[0],
+                "y": goal[1],
+                "yaw": float(metadata["goal_yaw_rad"]),
+            })
+            result.update({
+                "kind": component["kind"],
+                "index": component["index"],
+                "component_id": component.get("component_id"),
+                "brush_enabled": False,
+                "connector_class": "SMAC_HYBRID_CONNECTOR",
+                "deferred_swath_id": (
+                    metadata.get("target_swath_id")
+                    if not result.get("success") else None
+                ),
+            })
+            return result
+        if component["kind"] in {"FORWARD", "REVERSE"}:
+            if component.get("metadata", {}).get(
+                "connector_class"
+            ) == "FORWARD_DUBINS_TURN":
+                metadata = component.get("metadata", {})
+                headings = metadata.get("headings_rad") or []
+                handoff = None
+                if self.estimated_pose is not None and headings:
+                    handoff = connector_handoff_replan_decision(
+                        tuple(float(value) for value in self.estimated_pose[:3]),
+                        (
+                            float(component["points"][0][0]),
+                            float(component["points"][0][1]),
+                            float(headings[0]),
+                        ),
+                    )
+                if handoff and handoff["requires_replan"]:
+                    # A long swath may legally finish with finite Ackermann
+                    # endpoint error. Replan this brush-off connector from the
+                    # measured map pose instead of handing RPP a stale loop.
+                    goal = {
+                        "x": float(component["points"][-1][0]),
+                        "y": float(component["points"][-1][1]),
+                        "yaw": float(headings[-1]),
+                    }
+                    result = self._follow_ackermann_hybrid_plan(goal)
+                    result["live_handoff_replan"] = True
+                    result["handoff_error"] = handoff
+                    result["nominal_connector_class"] = (
+                        "FORWARD_DUBINS_TURN"
+                    )
+                else:
+                    result = self._follow_forward_dubins_primitives(component)
+                    result.setdefault("live_handoff_replan", False)
+                    if handoff is not None:
+                        result.setdefault("handoff_error", handoff)
+            else:
+                result = self._follow_component(component)
+            result.update({
+                "kind": component["kind"], "index": component["index"],
+                "component_id": component.get("component_id"),
+                "brush_enabled": False,
+                "connector_class": component.get("metadata", {}).get(
+                    "connector_class"
+                ),
+                "direction": component.get("metadata", {}).get("direction"),
+            })
+            return result
+        if component["kind"] == "DEFERRED_SWATH":
+            return {
+                "success": False,
+                "kind": component["kind"],
+                "index": component["index"],
+                "component_id": component.get("component_id"),
+                "brush_enabled": False,
+                "planned_length_m": path_length(component["points"]),
+                "error": "swath_deferred_no_feasible_connector",
+                "deferred": True,
+            }
         if component["kind"] in {"SHIFT", "BACKUP"}:
             result = self._translate_to_goal(component)
             result.update({
@@ -1476,6 +2302,18 @@ class CoverageProbe(Node):
         result = self._follow_component(component)
         result["component_id"] = component.get("component_id")
         return result
+
+    def _wait_for_cusp_stop(self, timeout_sec=30.0):
+        """Wait for measured longitudinal speed below 0.03 m/s (fail closed)."""
+        deadline = time.monotonic() + float(timeout_sec)
+        while rclpy.ok() and time.monotonic() < deadline:
+            if self._odom_vx is not None and abs(self._odom_vx) < 0.03:
+                return True
+            rclpy.spin_once(self, timeout_sec=0.05)
+        return False
+
+    def _on_odom(self, message):
+        self._odom_vx = float(message.twist.twist.linear.x)
 
     def _translate_to_goal(self, component):
         """Execute a connector through Nav2's collision-checked behaviors."""
@@ -1554,9 +2392,17 @@ class CoverageProbe(Node):
         return result
 
     def _run_action(
-        self, client, goal, brush, timeout, action_kind, goal_factory=None
+        self, client, goal, brush, timeout, action_kind, goal_factory=None,
+        retry_limit_override=None, action_path_length_m=None,
+        brush_enable_after_distance_m=None,
+        brush_disable_after_distance_m=None,
+        speed_limit_release_after_distance_m=None,
+        action_path_points=None,
     ):
-        retry_limit = int(self.get_parameter("component_retry_limit").value)
+        retry_limit = (
+            int(self.get_parameter("component_retry_limit").value)
+            if retry_limit_override is None else int(retry_limit_override)
+        )
         attempts = []
         attempt = 0
         pause_count = 0
@@ -1564,14 +2410,66 @@ class CoverageProbe(Node):
             active_goal = goal_factory() if goal_factory is not None else goal
             feedback_samples = []
             last_feedback_sample_time = 0.0
+            brush_active = bool(
+                brush and brush_enable_after_distance_m is None
+            )
+            brush_window_completed = False
+            speed_limit_released = False
+
+            def apply_progress(travelled):
+                nonlocal brush_active, brush_window_completed
+                nonlocal speed_limit_released
+                if (
+                    brush and not brush_active and not brush_window_completed
+                    and brush_enable_after_distance_m is not None
+                    and travelled >= float(brush_enable_after_distance_m)
+                ):
+                    brush_active = True
+                    self._set_brush(True)
+                if (
+                    brush_active
+                    and brush_disable_after_distance_m is not None
+                    and travelled >= float(brush_disable_after_distance_m)
+                ):
+                    brush_active = False
+                    brush_window_completed = True
+                    self._set_brush(False)
+                if (
+                    not speed_limit_released
+                    and speed_limit_release_after_distance_m is not None
+                    and travelled >= float(speed_limit_release_after_distance_m)
+                ):
+                    reset = SpeedLimit()
+                    reset.percentage = False
+                    reset.speed_limit = 0.0
+                    self.speed_limit_publisher.publish(reset)
+                    speed_limit_released = True
 
             def on_feedback(message):
-                nonlocal last_feedback_sample_time
+                nonlocal last_feedback_sample_time, brush_active
+                nonlocal speed_limit_released
                 now = time.monotonic()
+                feedback = message.feedback
+                remaining = getattr(feedback, "distance_remaining", None)
+                if remaining is None:
+                    remaining = getattr(feedback, "distance_to_goal", None)
+                travelled = None
+                if remaining is not None and action_path_length_m is not None:
+                    travelled = max(
+                        0.0, float(action_path_length_m) - float(remaining)
+                    )
+                # FollowPath feedback may report only the controller's
+                # transformed local path (observed as ~9.5 m for a 15 m
+                # westbound swath).  Using it against the global path length
+                # releases the speed limiter and brush several metres early.
+                # When geometry is available, the fused-pose projection in
+                # the action loop is the direction-independent source of
+                # truth for operational progress.
+                if travelled is not None and not action_path_points:
+                    apply_progress(travelled)
                 if now - last_feedback_sample_time < 1.0 or len(feedback_samples) >= 300:
                     return
                 last_feedback_sample_time = now
-                feedback = message.feedback
                 sample = {}
                 for name in (
                     "distance_remaining", "distance_to_goal", "speed",
@@ -1583,7 +2481,7 @@ class CoverageProbe(Node):
                         sample[name] = float(value)
                 feedback_samples.append(sample)
 
-            self._set_brush(brush)
+            self._set_brush(brush_active)
             send = client.send_goal_async(active_goal, feedback_callback=on_feedback); rclpy.spin_until_future_complete(self, send, timeout_sec=10.0)
             handle = send.result() if send.done() else None
             if handle is None or not handle.accepted:
@@ -1595,6 +2493,10 @@ class CoverageProbe(Node):
             stopped = False
             while rclpy.ok() and not result_future.done() and time.monotonic() < deadline:
                 rclpy.spin_once(self, timeout_sec=0.05)
+                if action_path_points and self.estimated_pose is not None:
+                    apply_progress(projected_path_progress(
+                        action_path_points, self.estimated_pose[:2]
+                    ))
                 if self.stop_requested or self.pause_requested:
                     cancel = handle.cancel_goal_async()
                     rclpy.spin_until_future_complete(self, cancel, timeout_sec=5.0)
@@ -1625,7 +2527,7 @@ class CoverageProbe(Node):
                         "resumed": True,
                     })
                     break
-                self._set_brush(brush)
+                self._set_brush(brush_active)
                 time.sleep(0.02)
             if stopped:
                 self._set_brush(False)
@@ -1684,7 +2586,10 @@ class CoverageProbe(Node):
                     active_goal.controller_id if action_kind == "follow_path" else None
                 ),
                 "progress_checker_id": "progress_checker",
-                "goal_checker_id": "goal_checker",
+                "goal_checker_id": (
+                    active_goal.goal_checker_id
+                    if action_kind == "follow_path" else None
+                ),
             })
             if succeeded:
                 if (

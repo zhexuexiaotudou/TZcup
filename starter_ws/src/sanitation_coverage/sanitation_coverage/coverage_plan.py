@@ -43,7 +43,7 @@ class CoveragePlan:
             item for item in serialized
             if item["kind"] in {
                 "TRANSIT", "ROTATE", "SHIFT", "BACKUP", "OBSTACLE_BYPASS",
-                "RETURN_HOME",
+                "RETURN_HOME", "FORWARD", "REVERSE", "CUSP_STOP",
             }
         ]
         repairs = [item for item in serialized if item["kind"] == "REPAIR_SWATH"]

@@ -111,6 +111,7 @@ def decode_centernet_outputs(
     nms_iou_threshold: float = 0.5,
     local_maximum_radius: int = 1,
     max_detections: int | None = None,
+    pre_nms_topk: int | None = None,
 ) -> list[Detection]:
     if heatmap_probability.ndim != 3:
         raise ValueError("heatmap must be CxHxW")
@@ -150,6 +151,12 @@ def decode_centernet_outputs(
                         ),
                     )
                 )
+    if pre_nms_topk is not None:
+        if pre_nms_topk < 1:
+            raise ValueError("pre_nms_topk must be positive")
+        detections = sorted(
+            detections, key=lambda item: item.score, reverse=True
+        )[:pre_nms_topk]
     decoded = classwise_nms(detections, nms_iou_threshold)
     if max_detections is not None:
         if max_detections < 1:

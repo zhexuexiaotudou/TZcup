@@ -1,0 +1,72 @@
+frame_id: map
+mission_id: competition_demo_ackermann_001
+mode: coverage
+route_mode: AREA_FILL
+coverage_planner_profile: ACKERMANN
+robot_width_m: 1.32
+operation_width_m: 1.32
+planning_swath_spacing_m: 1.10
+ackermann_swath_spacing_candidates_m: [1.06, 1.10, 1.15, 1.20]
+swath_angle_step_deg: 5
+swath_endpoint_extension_m: 2.20
+empirical_coverage_threshold: 0.995
+empirical_repeat_rate_threshold: 0.20
+empirical_swath_lateral_p95_threshold_m: 0.08
+coverage_repair_max_passes: 1
+repair_max_primary_length_ratio: 0.10
+blocked_swath_max_retries: 2
+blocked_swath_minimum_retry_delay_sec: 10.0
+brush_forward_offset_m: 0.68
+execution_lateral_scale: 1.0
+execution_lateral_offset_m: 0.0
+execution_calibration_source: identity_conservative_connector_closed_loop_leadin
+min_turning_radius_m: 1.4293521136632124
+minimum_outer_swept_radius_m: 2.0132125020714295
+route_type: ORIENTED_BOUSTROPHEDON
+path_type: ACKERMANN_CONNECTORS
+path_continuity_type: CUSP_STOP
+allow_overlap: true
+speed_profiles:
+  CLEAN: {linear_mps: 1.00, angular_radps: 0.55}
+  FORWARD: {linear_mps: 0.45, angular_radps: 0.55}
+  REVERSE: {linear_mps: 0.20, angular_radps: 0.35}
+  STOP: {linear_mps: 0.0, angular_radps: 0.0}
+  BYPASS: {linear_mps: 0.45, angular_radps: 0.55}
+  REPAIR: {linear_mps: 0.40, angular_radps: 0.45}
+outer_polygon:
+  - [-7.8, -6.5]
+  - [7.8, -6.5]
+  - [7.8, 3.5]
+  - [-7.8, 3.5]
+cleanable_outer_polygon:
+  - [-2.0, -3.0]
+  - [2.0, -3.0]
+  - [2.0, 0.0]
+  - [-2.0, 0.0]
+exclusion_polygons: []
+keepout_polygons: []
+static_obstacles: []
+cleaning_targets:
+  - {id: bottle_01, class: bottle, model_name: target_bottle_demo, position: [-1.60, -2.65], collection_radius_m: 0.55}
+  - {id: bottle_02, class: bottle, model_name: target_bottle_demo_02, position: [1.65, -0.80], collection_radius_m: 0.55}
+  - {id: can_01, class: can, model_name: target_can_demo, position: [0.40, -2.70], collection_radius_m: 0.55}
+  - {id: can_02, class: can, model_name: target_can_demo_02, position: [-1.20, -1.25], collection_radius_m: 0.55}
+  - {id: paper_01, class: paper, model_name: target_paper_demo, position: [-0.65, -2.45], collection_radius_m: 0.55}
+  - {id: paper_02, class: paper, model_name: target_paper_demo_02, position: [0.65, -0.95], collection_radius_m: 0.55}
+  - {id: cardboard_01, class: cardboard, model_name: target_cardboard_demo, position: [1.45, -2.30], collection_radius_m: 0.60}
+  - {id: cardboard_02, class: cardboard, model_name: target_cardboard_demo_02, position: [-1.55, -0.55], collection_radius_m: 0.60}
+  - {id: leaf_pile_01, class: leaves, model_name: target_leaf_pile_demo, position: [-0.15, -1.80], collection_radius_m: 0.65}
+  - {id: leaf_pile_02, class: leaves, model_name: target_leaf_pile_demo_02, position: [1.45, -1.55], collection_radius_m: 0.65}
+world_to_map_translation: [8.0, 0.0]
+headland:
+  enabled: true
+  width_m: 2.5
+safety_margin_m: 0.10
+staging_offset_m: 0.50
+optimized_staging_offset_m: 0.15
+ackermann_staging_offset_m: 0.0
+robot_footprint:
+  - [0.82, 0.66]
+  - [0.82, -0.66]
+  - [-0.575, -0.66]
+  - [-0.575, 0.66]

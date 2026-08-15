@@ -15,15 +15,17 @@ KEEP_OPEN=0
 OPEN_DASHBOARD=1
 GAZEBO_TRAIL=1
 SHOWCASE=0
-MAP_SIZE="medium"
+MAP_SIZE="small"
 MANUAL_CONTROL=0
 COMPETITION_PROFILE=0
+COMPETITION_LANE="representative"
 EXPECTED_COMPONENTS=17
 MISSION_TIMEOUT_SEC=1800
 RANDOM_SEED=0
 GAZEBO_GUI_RENDERER="auto"
 SIMULATION_SPEED="fast"
-COVERAGE_PROFILE="optimized"
+COVERAGE_PROFILE="ackermann"
+DRIVE_MODEL="ackermann"
 DYNAMIC_OBSTACLE_TRIALS=0
 SIMULATION_RENDER_ENGINE="ogre2"
 REPAIR_EVALUATION_INJECTION=0
@@ -46,10 +48,11 @@ Options:
   --showcase            Use the bounded 6 m x 5 m demonstration task
   --map-size SIZE       small (independent 16x12 demo), medium (80x50), or large (200x100)
   --simulation-speed MODE
-                        normal (1x), fast (2x / 0.70 m/s), or turbo
-                        (3x / 0.90 m/s; default: fast)
+                        normal (1x), fast (2x), or turbo (3x) simulator RTF;
+                        product Ackermann speed stays physically fixed
   --coverage-profile PROFILE
-                        optimized (skid-steer RTR) or legacy (Dubins baseline)
+                        ackermann (default), optimized (legacy skid-steer RTR), or legacy
+  --drive-model MODEL   ackermann (default) or skid_steer_legacy
   --dynamic-obstacle-trials N
                         Run N physical SetEntityPose interactions (formal: 20)
   --simulation-render-engine ENGINE
@@ -57,8 +60,10 @@ Options:
   --repair-evaluation-injection
                         Inject one fused-pose brush dropout for repair testing
   --manual-control      Wait for the native Gazebo Start button
-  --competition-profile Use the 20,000 m2 map and AUTO-12 vehicle candidate;
-                        execute one representative live zone
+  --competition-profile Use the 20,000 m2 map with one representative live
+                        zone; map-scale compatibility only, not full-map evidence
+  --competition-lane LANE
+                        representative (default) or long-lane efficiency candidate
   --no-browser          Keep the read-only dashboard server hidden
   --no-gazebo-trail     Disable Gazebo cleaned-swath and mission markers
   --keep-open           Keep GUI/dashboard open after mission termination
@@ -86,6 +91,7 @@ while [[ $# -gt 0 ]]; do
     --map-size) MAP_SIZE="$2"; shift 2 ;;
     --manual-control) MANUAL_CONTROL=1; shift ;;
     --competition-profile) COMPETITION_PROFILE=1; MAP_SIZE=large; EXPECTED_COMPONENTS=7; shift ;;
+    --competition-lane) COMPETITION_LANE="$2"; shift 2 ;;
     --no-browser) OPEN_DASHBOARD=0; shift ;;
     --no-gazebo-trail) GAZEBO_TRAIL=0; shift ;;
     --keep-open) KEEP_OPEN=1; shift ;;
@@ -94,6 +100,7 @@ while [[ $# -gt 0 ]]; do
     --gazebo-gui-renderer) GAZEBO_GUI_RENDERER="$2"; shift 2 ;;
     --simulation-speed) SIMULATION_SPEED="$2"; shift 2 ;;
     --coverage-profile) COVERAGE_PROFILE="$2"; shift 2 ;;
+    --drive-model) DRIVE_MODEL="$2"; shift 2 ;;
     --dynamic-obstacle-trials) DYNAMIC_OBSTACLE_TRIALS="$2"; shift 2 ;;
     --simulation-render-engine) SIMULATION_RENDER_ENGINE="$2"; shift 2 ;;
     --repair-evaluation-injection) REPAIR_EVALUATION_INJECTION=1; shift ;;
@@ -106,7 +113,26 @@ case "${VIDEO_MODE}" in auto|on|off) ;; *) echo "--video must be auto, on, or of
 case "${MAP_SIZE}" in small|medium|large) ;; *) echo "--map-size must be small, medium, or large" >&2; exit 2 ;; esac
 case "${GAZEBO_GUI_RENDERER}" in auto|d3d12|software) ;; *) echo "--gazebo-gui-renderer must be auto, d3d12, or software" >&2; exit 2 ;; esac
 case "${SIMULATION_SPEED}" in normal|fast|turbo) ;; *) echo "--simulation-speed must be normal, fast, or turbo" >&2; exit 2 ;; esac
-case "${COVERAGE_PROFILE}" in optimized|legacy) ;; *) echo "--coverage-profile must be optimized or legacy" >&2; exit 2 ;; esac
+case "${COVERAGE_PROFILE}" in ackermann|optimized|legacy) ;; *) echo "--coverage-profile must be ackermann, optimized, or legacy" >&2; exit 2 ;; esac
+case "${DRIVE_MODEL}" in ackermann|skid_steer_legacy) ;; *) echo "--drive-model must be ackermann or skid_steer_legacy" >&2; exit 2 ;; esac
+case "${COMPETITION_LANE}" in representative|efficiency) ;; *) echo "--competition-lane must be representative or efficiency" >&2; exit 2 ;; esac
+if [[ "${COMPETITION_LANE}" != "representative" && "${COMPETITION_PROFILE}" -eq 0 ]]; then
+  echo "--competition-lane requires --competition-profile" >&2
+  exit 2
+fi
+if [[ "${DRIVE_MODEL}" == "ackermann" && "${COVERAGE_PROFILE}" != "ackermann" ]]; then
+  echo "Ackermann drive requires --coverage-profile ackermann; skid-steer RTR/Spin is forbidden." >&2
+  exit 2
+fi
+if [[ "${DRIVE_MODEL}" == "skid_steer_legacy" && "${COVERAGE_PROFILE}" == "ackermann" ]]; then
+  echo "Ackermann connectors require --drive-model ackermann." >&2
+  exit 2
+fi
+if [[ "${DRIVE_MODEL}" == "ackermann" && "${COMPETITION_PROFILE}" -eq 0 ]]; then
+  MAP_SIZE="small"
+  SHOWCASE=1
+  EXPECTED_COMPONENTS=17
+fi
 case "${SIMULATION_RENDER_ENGINE}" in ogre2|ogre) ;; *) echo "--simulation-render-engine must be ogre2 or ogre" >&2; exit 2 ;; esac
 if [[ "${MAP_SIZE}" == "small" ]]; then SHOWCASE=1; EXPECTED_COMPONENTS=17; fi
 [[ "${DASHBOARD_PORT}" =~ ^[0-9]+$ ]] || { echo "dashboard port must be numeric" >&2; exit 2; }
@@ -116,13 +142,17 @@ if [[ "${DYNAMIC_OBSTACLE_TRIALS}" -gt 0 && "${MAP_SIZE}" != "small" ]]; then
   echo "dynamic obstacle trials are currently defined only for the independent small field" >&2
   exit 2
 fi
-if [[ "${REPAIR_EVALUATION_INJECTION}" -eq 1 && ( "${MAP_SIZE}" != "small" || "${COVERAGE_PROFILE}" != "optimized" ) ]]; then
+if [[ "${REPAIR_EVALUATION_INJECTION}" -eq 1 && ( "${MAP_SIZE}" != "small" || "${COVERAGE_PROFILE}" != "optimized" || "${DRIVE_MODEL}" != "skid_steer_legacy" ) ]]; then
   echo "repair evaluation injection requires the optimized independent small field" >&2
   exit 2
 fi
 
 if [[ -z "${OUTPUT_DIR}" ]]; then
-  OUTPUT_DIR="${ROOT}/artifacts/auto17_visual_demo_$(date -u +%Y%m%dT%H%M%SZ)"
+  if [[ "${DRIVE_MODEL}" == "ackermann" ]]; then
+    OUTPUT_DIR="${ROOT}/artifacts/ackermann_realism_$(date -u +%Y%m%dT%H%M%SZ)"
+  else
+    OUTPUT_DIR="${ROOT}/artifacts/auto17_visual_demo_$(date -u +%Y%m%dT%H%M%SZ)"
+  fi
 fi
 mkdir -p "${OUTPUT_DIR}"
 OUTPUT_DIR="$(cd "${OUTPUT_DIR}" && pwd)"
@@ -304,14 +334,16 @@ keepout_map="${map_root}/stage4v_filters/keepout_mask.yaml"
 speed_map="${map_root}/stage4v_filters/speed_mask.yaml"
 spawn_x="-8.0"
 spawn_y="0.0"
+spawn_yaw="0.0"
 world_to_map_x="8.0"
 world_to_map_y="0.0"
 initial_pose_x="0.0"
 initial_pose_y="0.0"
-cleaning_width="0.65"
-brush_center_y="0.23"
-max_linear_velocity="0.45"
-max_angular_velocity="0.35"
+initial_pose_yaw="0.0"
+cleaning_width="1.32"
+brush_center_y="0.52"
+max_linear_velocity="1.0"
+max_angular_velocity="0.70"
 localization_fusion_mode="hybrid_rtk_scan_imu_wheel"
 enable_scan_refiner="true"
 profile_label="STANDARD DEMO"
@@ -339,23 +371,64 @@ if [[ "${MAP_SIZE}" == "small" ]]; then
   # scan corrections. Medium/large retain hybrid scan fallback.
   localization_fusion_mode="rtk_imu_wheel"
   enable_scan_refiner="false"
+  if [[ "${DRIVE_MODEL}" != "ackermann" ]]; then
+    cleaning_width="0.65"
+    brush_center_y="0.23"
+    max_linear_velocity="0.65"
+    max_angular_velocity="0.55"
+  fi
   if [[ "${COVERAGE_PROFILE}" == "legacy" ]]; then
     mission_template="${tasks_share}/config/competition_demo_area.yaml"
     profile_label="LEGACY DUBINS BASELINE"
     coverage_params="${coverage_share}/config/coverage_demo_overlap.yaml"
   fi
-  if [[ "${SIMULATION_SPEED}" == "fast" ]]; then max_linear_velocity="0.70"; max_angular_velocity="0.60"; fi
-  if [[ "${SIMULATION_SPEED}" == "turbo" ]]; then max_linear_velocity="0.90"; max_angular_velocity="0.75"; fi
+  if [[ "${COVERAGE_PROFILE}" == "ackermann" ]]; then
+    mission_template="${tasks_share}/config/competition_ackermann_demo_area.yaml"
+    mission_config="${runtime}/competition_ackermann_demo_area.yaml"
+    nav_params="${runtime}/nav2_ackermann.yaml"
+    profile_label="ACKERMANN REALISM DEMO"
+    mission_scope="OUTER TURNING APRON 156.0 M2 / CLEANABLE 12 M2"
+    map_area_m2="156.0"
+    coverage_params="${coverage_share}/config/coverage_ackermann.yaml"
+    # The expanded footprint-checked turning apron is intentionally larger
+    # than the Stage4V surveyed scan map. Scan correction is disabled for this
+    # independent world, so use the repository's bounded free-space map.
+    map_file="${map_root}/sanitation_test_map.yaml"
+    cleaning_width="1.32"
+    brush_center_y="0.52"
+    max_linear_velocity="1.0"
+    max_angular_velocity="0.70"
+  fi
+  if [[ "${DRIVE_MODEL}" != "ackermann" && "${SIMULATION_SPEED}" == "fast" ]]; then max_linear_velocity="0.70"; max_angular_velocity="0.60"; fi
+  if [[ "${DRIVE_MODEL}" != "ackermann" && "${SIMULATION_SPEED}" == "turbo" ]]; then max_linear_velocity="0.90"; max_angular_velocity="0.75"; fi
 fi
 if [[ "${COMPETITION_PROFILE}" -eq 1 ]]; then
   competition_runtime="${runtime}/competition_profile"
   python3 "${ROOT}/scripts/generate_competition_gazebo_profile.py" \
     --output "${competition_runtime}" \
     > "${OUTPUT_DIR}/competition_profile_generation.json"
-  nav_params="${navigation_share}/config/nav2_auto12.yaml"
-  mission_config="${competition_runtime}/competition_zone_auto12.yaml"
-  footprint_profile="auto12_efficiency_v1"
-  coverage_params="${DEMO_WS}/install/sanitation_coverage/share/sanitation_coverage/config/coverage_auto12.yaml"
+  if [[ "${DRIVE_MODEL}" == "ackermann" ]]; then
+    nav_params="${runtime}/nav2_ackermann.yaml"
+    mission_config="${competition_runtime}/competition_zone_ackermann.yaml"
+    coverage_params="${competition_runtime}/competition_coverage_ackermann.yaml"
+    EXPECTED_COMPONENTS=17
+    profile_label="ACKERMANN COMPETITION MAP VALIDATION"
+    mission_scope="LIVE ACKERMANN ZONE 108 M2 / FULL MAP 20,000 M2"
+    if [[ "${COMPETITION_LANE}" == "efficiency" ]]; then
+      mission_config="${competition_runtime}/competition_efficiency_ackermann.yaml"
+      coverage_params="${competition_runtime}/competition_coverage_efficiency_ackermann.yaml"
+      EXPECTED_COMPONENTS=95
+      profile_label="ACKERMANN EFFICIENCY CANDIDATE LANE"
+      mission_scope="EFFICIENCY CANDIDATE 10,440 M2 / FULL MAP 20,000 M2"
+    fi
+  else
+    nav_params="${navigation_share}/config/nav2_auto12.yaml"
+    mission_config="${competition_runtime}/competition_zone_auto12.yaml"
+    footprint_profile="auto12_efficiency_v1"
+    coverage_params="${DEMO_WS}/install/sanitation_coverage/share/sanitation_coverage/config/coverage_auto12.yaml"
+    profile_label="LEGACY COMPETITION VISUALIZATION"
+    mission_scope="LIVE ZONE 108 M2 / FULL MAP"
+  fi
   map_file="${competition_runtime}/competition_map.yaml"
   keepout_map="${competition_runtime}/competition_keepout.yaml"
   speed_map="${competition_runtime}/competition_speed.yaml"
@@ -369,9 +442,24 @@ if [[ "${COMPETITION_PROFILE}" -eq 1 ]]; then
   brush_center_y="0.52"
   max_linear_velocity="1.0"
   max_angular_velocity="0.72"
-  profile_label="COMPETITION AUTO-12"
-  mission_scope="LIVE ZONE 108 M2 / FULL MAP"
   map_area_m2="20000.0"
+  if [[ "${DRIVE_MODEL}" == "ackermann" ]]; then
+    # Product entry starts inside the external apron, behind and aligned with
+    # the first swath.  This avoids using a long reverse-only map transit as
+    # the normal deployment path while preserving a measured brush-off lead-in.
+    spawn_x="-94.80"
+    spawn_y="-4.05"
+    spawn_yaw="0.0"
+    initial_pose_x="5.20"
+    initial_pose_y="45.95"
+    initial_pose_yaw="0.0"
+    if [[ "${COMPETITION_LANE}" == "efficiency" ]]; then
+      spawn_x="-94.80"
+      spawn_y="-30.05"
+      initial_pose_x="5.20"
+      initial_pose_y="19.95"
+    fi
+  fi
 fi
 world_file="$(ros2 pkg prefix sanitation_worlds)/share/sanitation_worlds/worlds/sanitation_campus_${MAP_SIZE}.sdf"
 world_name="sanitation_campus_${MAP_SIZE}"
@@ -380,6 +468,10 @@ if [[ "${MAP_SIZE}" == "small" ]]; then
   world_file="$(ros2 pkg prefix sanitation_worlds)/share/sanitation_worlds/worlds/sanitation_competition_demo.sdf"
   world_name="sanitation_competition_demo"
   gui_config="${control_share}/config/mission_control_demo.config"
+fi
+if [[ "${DRIVE_MODEL}" == "ackermann" && "${COMPETITION_PROFILE}" -eq 0 ]]; then
+  world_file="$(ros2 pkg prefix sanitation_worlds)/share/sanitation_worlds/worlds/sanitation_competition_ackermann_demo.sdf"
+  world_name="sanitation_competition_ackermann_demo"
 fi
 if [[ "${MANUAL_CONTROL}" -eq 1 ]]; then
   manual_gui_config="${runtime}/mission_control_${MAP_SIZE}_manual.config"
@@ -433,7 +525,7 @@ then
   exit 3
 fi
 
-if [[ "${COMPETITION_PROFILE}" -eq 0 ]]; then
+if [[ "${COMPETITION_PROFILE}" -eq 0 && "${DRIVE_MODEL}" != "ackermann" ]]; then
   python3 "${ROOT}/scripts/stage5br6w_profile.py" \
     --base-nav2 "${navigation_share}/config/nav2.yaml" \
     --base-mission "${mission_template}" \
@@ -441,7 +533,20 @@ if [[ "${COMPETITION_PROFILE}" -eq 0 ]]; then
     --nav2-output "${nav_params}" \
     --mission-output "${mission_config}"
 fi
-python3 - "${nav_params}" "${max_linear_velocity}" "${max_angular_velocity}" "${MAP_SIZE}" <<'PY'
+if [[ "${DRIVE_MODEL}" == "ackermann" ]]; then
+  cp "${navigation_share}/config/nav2_ackermann.yaml" "${nav_params}"
+  if [[ "${COMPETITION_PROFILE}" -eq 0 ]]; then
+    cp "${mission_template}" "${mission_config}"
+  fi
+  ackermann_filter_dir="${runtime}/ackermann_filters"
+  python3 "${ROOT}/scripts/generate_ackermann_keepout_mask.py" \
+    --map-yaml "${map_file}" \
+    --mission-yaml "${mission_config}" \
+    --output-dir "${ackermann_filter_dir}" \
+    > "${OUTPUT_DIR}/ackermann_keepout_generation.txt"
+  keepout_map="${ackermann_filter_dir}/ackermann_keepout_mask.yaml"
+fi
+python3 - "${nav_params}" "${max_linear_velocity}" "${max_angular_velocity}" "${MAP_SIZE}" "${DRIVE_MODEL}" "${COMPETITION_LANE}" <<'PY'
 from pathlib import Path
 import sys
 import yaml
@@ -451,11 +556,37 @@ follow = config["controller_server"]["ros__parameters"]["FollowPath"]
 linear_velocity = float(sys.argv[2])
 angular_velocity = float(sys.argv[3])
 map_size = sys.argv[4]
-follow["desired_linear_vel"] = linear_velocity
-follow["rotate_to_heading_angular_vel"] = angular_velocity
+drive_model = sys.argv[5]
+competition_lane = sys.argv[6]
 smoother = config["velocity_smoother"]["ros__parameters"]
-smoother["max_velocity"] = [linear_velocity, 0.0, angular_velocity]
-smoother["min_velocity"] = [-min(linear_velocity, 0.15), 0.0, -angular_velocity]
+if drive_model != "ackermann":
+    follow["desired_linear_vel"] = linear_velocity
+    follow["rotate_to_heading_angular_vel"] = angular_velocity
+    smoother["max_velocity"] = [linear_velocity, 0.0, angular_velocity]
+    smoother["min_velocity"] = [-min(linear_velocity, 0.15), 0.0, -angular_velocity]
+else:
+    # The Ackermann profile owns its controller and reverse limits. Replacing
+    # them with generic demo speeds defeats curvature tracking and can drive a
+    # Reeds-Shepp connector into an occupied start pose during replanning.
+    assert follow["use_rotate_to_heading"] is False
+    assert follow["allow_reversing"] is False
+    assert config["controller_server"]["ros__parameters"]["ReversePath"]["allow_reversing"] is True
+    if competition_lane == "efficiency":
+        controllers = config["controller_server"]["ros__parameters"]
+        controllers["CleanPath"]["desired_linear_vel"] = 1.0
+        controllers["CleanPath"]["lookahead_dist"] = 2.0
+        controllers["CleanPath"]["min_lookahead_dist"] = 2.0
+        controllers["CleanPath"]["max_lookahead_dist"] = 2.0
+        # A 1 m/s swath needs enough distance to settle onto the extended
+        # endpoint before the strict connector hand-off.  Without this ramp,
+        # the westbound 186 m swath reached the loose endpoint at 0.73 rad and
+        # the next Dubins primitive was pruned to an empty path.
+        controllers["CleanPath"]["min_approach_linear_velocity"] = 0.2
+        controllers["CleanPath"]["approach_velocity_scaling_dist"] = 5.0
+        controllers["DubinsPath"]["desired_linear_vel"] = 0.6
+        controllers["DubinsPath"]["regulated_linear_scaling_min_speed"] = 0.5
+        controllers["DubinsPath"]["min_approach_linear_velocity"] = 0.2
+        controllers["RepairPath"]["desired_linear_vel"] = 0.6
 if map_size == "small":
     # Debris is intentionally traversable in the cleaning demonstration. Keep
     # the production RGB-D source alive for observation, but do not let a
@@ -514,14 +645,14 @@ for node in /controller_server /coverage_server /sanitation_live_dashboard; do
 done
 
 setsid ros2 launch sanitation_bringup stage4v_localization.launch.py \
-  gui:=false random_seed:="${RANDOM_SEED}" gnss_profile:=rtk_fixed \
+  gui:=false drive_model:="${DRIVE_MODEL}" random_seed:="${RANDOM_SEED}" gnss_profile:=rtk_fixed \
   headless_rendering:="${server_headless_rendering}" \
   world_file:="${world_file}" world_name:="${world_name}" \
   gui_config:="${gui_config}" \
-  map_file:="${map_file}" spawn_x:="${spawn_x}" spawn_y:="${spawn_y}" \
+  map_file:="${map_file}" spawn_x:="${spawn_x}" spawn_y:="${spawn_y}" spawn_yaw:="${spawn_yaw}" \
   cleaning_width:="${cleaning_width}" brush_center_y:="${brush_center_y}" \
   world_to_map_x:="${world_to_map_x}" world_to_map_y:="${world_to_map_y}" \
-  initial_pose_x:="${initial_pose_x}" initial_pose_y:="${initial_pose_y}" \
+  initial_pose_x:="${initial_pose_x}" initial_pose_y:="${initial_pose_y}" initial_pose_yaw:="${initial_pose_yaw}" \
   camera_profile:=V5_retracted fusion_mode:="${localization_fusion_mode}" \
   enable_scan_refiner:="${enable_scan_refiner}" \
   > "${OUTPUT_DIR}/localization.log" 2>&1 &
@@ -598,6 +729,8 @@ if [[ "${GAZEBO_TRAIL}" -eq 1 ]]; then
   setsid ros2 run sanitation_gazebo_visualization cleaning_visualizer --ros-args \
     -p use_sim_time:=true \
     -p operation_width_m:="${cleaning_width}" \
+    -p brush_forward_offset_m:="$([[ "${DRIVE_MODEL}" == "ackermann" ]] && echo 0.68 || echo 0.55)" \
+    -p configured_min_turning_radius_m:=1.429352 \
     -p expected_components:="${EXPECTED_COMPONENTS}" \
     -p profile_label:="${profile_label}" \
     -p map_area_m2:="${map_area_m2}" \
@@ -621,8 +754,8 @@ if [[ "${RVIZ}" -eq 1 ]]; then
   pids+=("$!")
 fi
 
-if ! timeout 155 python3 "${ROOT}/scripts/ros_runtime_readiness.py" \
-  --timeout 150 \
+if ! timeout 305 python3 "${ROOT}/scripts/ros_runtime_readiness.py" \
+  --timeout 300 \
   --dashboard-url "http://127.0.0.1:${DASHBOARD_PORT}/healthz" \
   --output "${OUTPUT_DIR}/runtime_readiness.json"
 then
@@ -630,7 +763,7 @@ then
     echo "Live dashboard process exited before readiness." >&2
     tail -50 "${OUTPUT_DIR}/dashboard.log" >&2 || true
   fi
-  echo "AUTO-17 runtime did not become ready within 150 seconds." >&2
+  echo "AUTO-17 runtime did not become ready within 300 seconds." >&2
   cat "${OUTPUT_DIR}/runtime_readiness.json" >&2 2>/dev/null || true
   exit 4
 fi
@@ -726,7 +859,7 @@ fi
 if [[ "${RECORD_MCAP}" -eq 1 ]]; then
   setsid ros2 bag record --storage mcap \
     --output "${OUTPUT_DIR}/visual_demo_bag" \
-    /clock /tf /tf_static /scan /odom /localization/fused_pose \
+    /clock /tf /tf_static /scan /odom /wheel/odom_raw /joint_states /localization/fused_pose \
     /ground_truth/odom /cmd_vel /cmd_vel_gate /brush_enabled \
     /emergency_stop /coverage/state /coverage/component_state \
     /coverage/current_path /coverage/evaluation_sample \

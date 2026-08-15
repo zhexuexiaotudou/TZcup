@@ -1,0 +1,19 @@
+# Ackermann 导航与 Coverage
+
+Ackermann Nav2 profile 使用 `SmacPlannerHybrid`、`REEDS_SHEPP`、72 航向 bins、冻结最小半径 `1.429352 m`。四个 RPP controller 按用途拆分：`FollowPath/CleanPath/RepairPath` 只允许前进，`ReversePath` 只服务显式倒车段；它们都开启碰撞/曲率限速并关闭 rotate-to-heading，行为插件与 BT 不含 Spin。返回库位同样走 Hybrid/Reeds-Shepp，不允许在车位前原地对齐。
+
+未知栅格正式建图的短 frontier waypoint 使用宽松终点航向，避免把观察点误当停车位；蛇形扫图发生横向到纵向换带时则先执行 Nav2 原生碰撞检查 BackUp，再从当前融合位姿、在线 costmap 与扫带方向选择短距已知自由区 staging pose。换带使用 Smac Hybrid/Reeds-Shepp 只规划一次、在线 costmap 全路径净空复核、按前进/倒车 cusp 分段，并分别交给 forward-only `DubinsPath` 与 `ReversePath` 完成动作终态交接；禁止用连续宽松 frontier waypoint 暗示车辆已经改变航向，也禁止每秒重规划或允许倒车的通用控制器在静止车位改变起始档位。
+
+Coverage 保留 Fields2Cover 弓字条带生成，产品刷宽为 `1.32 m`，规划间距候选为 `1.06/1.10/1.15/1.20 m`。连接器优先使用曲率和 footprint 均受检的 forward Dubins 路径，再尝试 forward U-turn、forward teardrop、Reeds-Shepp-like three-point 与 Smac Hybrid；仍不可行则延期下一条带。forward Dubins 在执行时按曲线/直线/曲线原语拆分，并在原语边界由 Nav2 goal checker 完成闭环交接。计划只含 `FORWARD/REVERSE/CUSP_STOP/DEFERRED_SWATH`，每个方向切换必须停车到实测 `|vx|<0.03 m/s`。不得出现 `ROTATE/SHIFT/Spin` 或瞬时换挡。
+
+专用世界把外部 turning apron 扩展到 `15.6 m × 10.0 m`（`156.0 m²`）；青色 `x=[-2,2], y=[-3,0]` 清扫区和 12 m² 面积保持不变。额外空间用于容纳物理最小中心半径 `1.429 m`、执行保守半径 `1.8 m` 的前进式连接和直线引入段，不计入覆盖率。启动方式：
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_gazebo_cleaning_demo.ps1 -DriveModel ackermann -CoverageProfile ackermann
+```
+
+```bash
+./scripts/run_visual_demo.sh --drive-model ackermann --coverage-profile ackermann
+```
+
+机器状态由九个证据门的逻辑与产生。完整 5 m/圆周/零速转向/三点掉头、轮式里程计、10-seed 定位、5-seed Coverage、20 次动态交互、30 次急停和 MCAP replay 未全部通过时，默认仍是 legacy；不得手动把 `ACKERMANN_DEFAULT_PROFILE_READY` 改成 true。

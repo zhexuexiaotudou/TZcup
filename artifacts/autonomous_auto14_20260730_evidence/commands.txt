@@ -1,4 +1,0 @@
-py -3 scripts/ci_fast.py
-py -3 scripts/auto14_toolchain_discovery.py <official-package>
-py -3 scripts/auto14_onnx_preflight.py <AUTO-06-model.onnx> --calibration-dir <500-frames>
-hb_compile -c <generated-config>

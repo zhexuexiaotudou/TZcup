@@ -243,7 +243,7 @@ Stage4S 在首个失败层 `layer_1_body_command_tracking` 停止。专用 Gazeb
 - P1：EKF 消融、新地图与 10-seed AMCL 尚未执行，因为其前置门未通过。
 - P2：WheelSlip 插件候选使高速转向更差；后续应研究速度相关运动模型或控制瞬态，而非继续盲扫静态摩擦。
 """
-    (ROOT / "GPT_REVIEW_STAGE4S.md").write_text(review, encoding="utf-8")
+    (OUT / "review.md").write_text(review, encoding="utf-8")
     print(OUT)
 
 

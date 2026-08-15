@@ -84,6 +84,16 @@ def test_reverse_route_reverses_component_and_point_order():
     }
 
 
+def test_ackermann_staging_pose_is_aligned_behind_westbound_swath():
+    components = [
+        {'kind': 'SWATH', 'points': [(2.66, -0.30), (-2.66, -0.30)]},
+    ]
+    staging = route_candidates(components, 0.50)[0]['staging_pose']
+    assert math.isclose(staging['x'], 3.16, abs_tol=1e-9)
+    assert math.isclose(staging['y'], -0.30, abs_tol=1e-9)
+    assert math.isclose(abs(staging['yaw']), math.pi, abs_tol=1e-9)
+
+
 def test_cleanable_geometry_excludes_keepout_and_static_obstacle():
     config = {
         'outer_polygon': [[0, 0], [8, 0], [8, 8], [0, 8]],

@@ -1,4 +1,0 @@
-C:\Users\zhexu\AppData\Local\Python\pythoncore-3.14-64\python.exe scripts/ci_fast.py
-C:\Users\zhexu\AppData\Local\Python\pythoncore-3.14-64\python.exe scripts/verify_state_invariants.py
-C:\Users\zhexu\AppData\Local\Python\pythoncore-3.14-64\python.exe scripts/scan_secrets.py
-git diff --check

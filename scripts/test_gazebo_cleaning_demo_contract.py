@@ -100,7 +100,8 @@ def test_gazebo_only_launcher_contract() -> None:
     assert "[switch]$FullArea" in dedicated_launcher
     assert '[string]$MapSize = "small"' in dedicated_launcher
     assert '[string]$SimulationSpeed = "fast"' in dedicated_launcher
-    assert '[string]$CoverageProfile = "optimized"' in dedicated_launcher
+    assert '[string]$CoverageProfile = "ackermann"' in dedicated_launcher
+    assert '[string]$DriveModel = "ackermann"' in dedicated_launcher
     assert "CoverageProfile = $CoverageProfile" in dedicated_launcher
     assert "DynamicObstacleTrials = $DynamicObstacleTrials" in dedicated_launcher
     assert "SimulationRenderEngine = $SimulationRenderEngine" in dedicated_launcher
@@ -124,7 +125,7 @@ def test_operator_docs_name_the_gazebo_only_entry() -> None:
     command = "scripts\\run_gazebo_cleaning_demo.ps1"
     assert command in read("README.md")
     assert command in read("README_FIRST.md")
-    assert command in read("docs/auto17-visual-demo.md")
+    assert command in read("docs/operator-guide.md")
     assert "青绿色" in read("README.md")
     assert "橙色外框" in read("README.md")
 
@@ -342,8 +343,8 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     assert 'mission_control_demo.config' in shell
     assert 'EXPECTED_COMPONENTS=17' in shell
     assert 'coverage_skid_steer_optimized.yaml' in shell
-    assert 'max_linear_velocity="0.70"; max_angular_velocity="0.60"' in shell
-    assert 'max_linear_velocity="0.90"; max_angular_velocity="0.75"' in shell
+    assert 'DRIVE_MODEL}" != "ackermann" && "${SIMULATION_SPEED}" == "fast"' in shell
+    assert 'DRIVE_MODEL}" != "ackermann" && "${SIMULATION_SPEED}" == "turbo"' in shell
     assert 'smoother["max_velocity"] = [linear_velocity, 0.0, angular_velocity]' in shell
     assert 'smoother["min_velocity"] = [-min(linear_velocity, 0.15), 0.0, -angular_velocity]' in shell
 

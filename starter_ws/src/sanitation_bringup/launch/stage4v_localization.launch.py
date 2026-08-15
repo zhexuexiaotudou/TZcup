@@ -47,6 +47,14 @@ def generate_launch_description():
         [
             DeclareLaunchArgument('use_sim_time', default_value='true'),
             DeclareLaunchArgument('gui', default_value='false'),
+            DeclareLaunchArgument(
+                'drive_model',
+                default_value='ackermann',
+                description=(
+                    'ackermann or skid_steer_legacy; forwarded to the Xacro '
+                    'and the measurement/EKF chain. Product default is Ackermann.'
+                ),
+            ),
             DeclareLaunchArgument('world_file', default_value=default_world),
             DeclareLaunchArgument('world_name', default_value='sanitation_structured_world'),
             DeclareLaunchArgument('gui_config', default_value=''),
@@ -61,8 +69,8 @@ def generate_launch_description():
             DeclareLaunchArgument('spawn_x', default_value='-8.0'),
             DeclareLaunchArgument('spawn_y', default_value='0.0'),
             DeclareLaunchArgument('spawn_yaw', default_value='0.0'),
-            DeclareLaunchArgument('cleaning_width', default_value='0.65'),
-            DeclareLaunchArgument('brush_center_y', default_value='0.23'),
+            DeclareLaunchArgument('cleaning_width', default_value='1.32'),
+            DeclareLaunchArgument('brush_center_y', default_value='0.52'),
             DeclareLaunchArgument('world_to_map_x', default_value='8.0'),
             DeclareLaunchArgument('world_to_map_y', default_value='0.0'),
             DeclareLaunchArgument('world_to_map_yaw', default_value='0.0'),
@@ -78,6 +86,7 @@ def generate_launch_description():
                 PythonLaunchDescriptionSource(sim_launch),
                 launch_arguments={
                     'gui': LaunchConfiguration('gui'),
+                    'drive_model': LaunchConfiguration('drive_model'),
                     'headless_rendering': LaunchConfiguration('headless_rendering'),
                     'use_sim_time': use_sim_time,
                     'world_file': LaunchConfiguration('world_file'),

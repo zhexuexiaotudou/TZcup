@@ -23,6 +23,7 @@ def generate_launch_description():
     enable_command_timeout = LaunchConfiguration("enable_command_timeout")
     enable_ekf = LaunchConfiguration("enable_ekf")
     enable_measurement_adapter = LaunchConfiguration("enable_measurement_adapter")
+    drive_model = LaunchConfiguration("drive_model")
     ekf_config = LaunchConfiguration("ekf_config")
     physical_wheel_radius = LaunchConfiguration("physical_wheel_radius")
     physical_track_width = LaunchConfiguration("physical_track_width")
@@ -73,12 +74,36 @@ def generate_launch_description():
     default_ekf_config = PathJoinSubstitution(
         [FindPackageShare("sanitation_bringup"), "config", "selected_ekf.yaml"]
     )
+    ackermann_ekf_config = PathJoinSubstitution(
+        [FindPackageShare("sanitation_bringup"), "config", "ekf_ackermann.yaml"]
+    )
+    selected_ekf_by_drive = PythonExpression(
+        [
+            "'",
+            ackermann_ekf_config,
+            "' if '",
+            drive_model,
+            "' == 'ackermann' else '",
+            default_ekf_config,
+            "'",
+        ]
+    )
+    ackermann_condition = IfCondition(
+        PythonExpression(["'", drive_model, "' == 'ackermann'"])
+    )
+    legacy_condition = IfCondition(
+        PythonExpression(["'", drive_model, "' != 'ackermann'"])
+    )
+    brush_forward_x = PythonExpression(
+        ["'0.68' if '", drive_model, "' == 'ackermann' else '0.58'"]
+    )
 
     robot_description = ParameterValue(
         Command(
             [
                 "xacro ",
                 urdf_path,
+                " drive_model:=", drive_model,
                 " physical_wheel_radius:=", physical_wheel_radius,
                 " physical_track_width:=", physical_track_width,
                 " drive_wheel_radius:=", drive_wheel_radius,
@@ -92,6 +117,7 @@ def generate_launch_description():
                 " lidar_update_rate:=", lidar_update_rate,
                 " cleaning_width:=", cleaning_width,
                 " brush_center_y:=", brush_center_y,
+                " brush_forward_x:=", brush_forward_x,
                 " enable_verification_camera:=", PythonExpression(
                     [
                         "'true' if '",
@@ -168,7 +194,16 @@ def generate_launch_description():
             DeclareLaunchArgument("enable_command_timeout", default_value="true"),
             DeclareLaunchArgument("enable_ekf", default_value="true"),
             DeclareLaunchArgument("enable_measurement_adapter", default_value="true"),
-            DeclareLaunchArgument("ekf_config", default_value=default_ekf_config),
+            DeclareLaunchArgument(
+                "drive_model",
+                default_value="ackermann",
+                description=(
+                    "ackermann (physical front steering + rear traction) or "
+                    "skid_steer_legacy (explicit legacy regression only); "
+                    "the product default is Ackermann"
+                ),
+            ),
+            DeclareLaunchArgument("ekf_config", default_value=selected_ekf_by_drive),
             DeclareLaunchArgument("physical_wheel_radius", default_value="0.14"),
             DeclareLaunchArgument("physical_track_width", default_value="0.80"),
             DeclareLaunchArgument("drive_wheel_radius", default_value="0.14"),
@@ -180,8 +215,8 @@ def generate_launch_description():
             DeclareLaunchArgument("enable_wheel_slip", default_value="false"),
             DeclareLaunchArgument("lidar_samples", default_value="360"),
             DeclareLaunchArgument("lidar_update_rate", default_value="10"),
-            DeclareLaunchArgument("cleaning_width", default_value="0.65"),
-            DeclareLaunchArgument("brush_center_y", default_value="0.23"),
+            DeclareLaunchArgument("cleaning_width", default_value="1.32"),
+            DeclareLaunchArgument("brush_center_y", default_value="0.52"),
             DeclareLaunchArgument("world_file", default_value=world_path),
             DeclareLaunchArgument("world_name", default_value="sanitation_test_world"),
             DeclareLaunchArgument("gui_config", default_value=""),
@@ -244,7 +279,41 @@ def generate_launch_description():
             Node(
                 package="ros_gz_bridge",
                 executable="parameter_bridge",
+                name="ackermann_wheel_odom_bridge",
                 output="screen",
+                condition=ackermann_condition,
+                arguments=[
+                    "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
+                    "/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist",
+                    "/wheel/odom_raw@nav_msgs/msg/Odometry[gz.msgs.Odometry",
+                    "/ground_truth/model_odom_raw@nav_msgs/msg/Odometry[gz.msgs.Odometry",
+                    "/imu/data@sensor_msgs/msg/Imu[gz.msgs.IMU",
+                    "/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model",
+                    "/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan",
+                    "/camera/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
+                    "/camera/image@sensor_msgs/msg/Image[gz.msgs.Image",
+                    "/camera/depth_image@sensor_msgs/msg/Image[gz.msgs.Image",
+                    "/camera/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked",
+                    ["/world/", world_name, "/dynamic_pose/info@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V"],
+                    "/world_overview/image@sensor_msgs/msg/Image[gz.msgs.Image",
+                ],
+                remappings=[
+                    ("/camera/camera_info", "/camera/color/camera_info"),
+                    ("/camera/image", "/camera/color/image_raw"),
+                    ("/camera/depth_image", "/camera/depth/image_rect_raw"),
+                    ("/camera/points", "/camera/depth/color/points"),
+                    (
+                        ["/world/", world_name, "/dynamic_pose/info"],
+                        "/ground_truth/dynamic_pose",
+                    ),
+                ],
+            ),
+            Node(
+                package="ros_gz_bridge",
+                executable="parameter_bridge",
+                name="legacy_wheel_odom_bridge",
+                output="screen",
+                condition=legacy_condition,
                 arguments=[
                     "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
                     "/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist",
@@ -363,7 +432,18 @@ def generate_launch_description():
                 executable="sanitation_measurement_adapter",
                 name="measurement_adapter",
                 output="screen",
-                parameters=[{"use_sim_time": sim_time_parameter}],
+                parameters=[
+                    {
+                        "use_sim_time": sim_time_parameter,
+                        "wheel_input_topic": PythonExpression(
+                            [
+                                "'/wheel/odom_raw' if '",
+                                drive_model,
+                                "' == 'ackermann' else '/odom/unfiltered'",
+                            ]
+                        ),
+                    }
+                ],
                 condition=IfCondition(enable_measurement_adapter),
             ),
             Node(
