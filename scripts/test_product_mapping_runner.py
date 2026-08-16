@@ -122,6 +122,7 @@ def test_mapping_scan_turns_no_return_rays_into_observed_free_space():
     text = RUNNER.read_text(encoding="utf-8")
     assert "output_topic:=/scan/mapping" in text
     assert "replace_infinite_ranges_with_max:=true" in text
+    assert "maximum_range_margin_m:=0.01" in text
     assert '"]["scan_topic"] = "/scan/mapping"' in text
     filter_script = (
         ROOT
@@ -135,11 +136,15 @@ def test_mapping_scan_turns_no_return_rays_into_observed_free_space():
     assert "float(message.range_max) - self._maximum_range_margin" in filter_script
 
 
-def test_product_slam_profile_is_map_scale_and_loop_closure_enabled():
+def test_product_slam_profile_treats_no_return_sentinel_as_free_space():
     config = yaml.safe_load(SLAM_CONFIG.read_text(encoding="utf-8"))
     params = config["slam_toolbox"]["ros__parameters"]
     assert params["resolution"] <= 0.10
-    assert params["max_laser_range"] == 12.0
+    physical_range_max_m = 12.0
+    no_return_margin_m = 0.01
+    no_return_sentinel_m = physical_range_max_m - no_return_margin_m
+    assert params["max_laser_range"] < no_return_sentinel_m
+    assert params["max_laser_range"] > 0.95 * physical_range_max_m
     assert params["do_loop_closing"] is True
     assert params["use_scan_matching"] is False
     assert params["map_frame"] == "map"

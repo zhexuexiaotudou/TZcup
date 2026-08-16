@@ -19,9 +19,12 @@ slam_toolbox:
     # 2 million cells cover 200 x 100 m. This keeps the full product map
     # tractable while remaining below the 0.15 m topology-error threshold.
     resolution: 0.10
-    # The simulated product lidar reports a 12 m maximum. Matching that limit
-    # avoids accepting free space beyond actual sensor capability.
-    max_laser_range: 12.0
+    # The physical scan maximum is 12.0 m. The mapping normalizer represents
+    # a no-return ray as 11.99 m so Karto can raytrace observed free space.
+    # Karto only suppresses the occupied endpoint when the reading is at or
+    # above this threshold, so it must remain below the no-return sentinel.
+    # Otherwise every no-return ray becomes a false wall at the lidar horizon.
+    max_laser_range: 11.95
     minimum_time_interval: 0.20
     transform_timeout: 0.30
     tf_buffer_duration: 60.0
