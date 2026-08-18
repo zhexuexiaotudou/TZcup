@@ -70,6 +70,8 @@ def test_formal_runner_has_real_restart_and_20k_fail_closed_scope():
         '-p horizontal_sweep_staging_distances_m:="[8.0, 6.0, 4.0, 3.0, 2.0]"'
         in text
     )
+    assert "-p horizontal_sweep_staging_path_sample_spacing_m:=0.25" in text
+    assert "-p horizontal_sweep_staging_timeout_sec:=20.0" in text
     assert "-p minimum_goal_distance_m:=0.80" in text
     assert "-p minimum_turning_radius_m:=1.429" in text
     assert "-p maximum_frontier_goal_yaw_change_rad:=0.70" in text
@@ -212,9 +214,11 @@ def test_frontier_timeout_restarts_nav2_before_next_goal():
     assert '"horizontal_sweep_staging_attempt_count"' in explorer
     assert '"horizontal_sweep_staging_arm_count"' in explorer
     assert '"horizontal_sweep_staging_behind_chassis_count"' in explorer
+    assert '"horizontal_sweep_staging_path_rejected_count"' in explorer
     assert '"frontier_success_without_map_progress_staging_armed"' in explorer
     assert 'goal_kind="horizontal_sweep_staging"' in explorer
     assert '"horizontal_sweep_staging_behind_chassis"' in explorer
+    assert '"horizontal_sweep_staging_no_clear_path"' in explorer
 
 
 def test_frontier_reverse_escape_uses_collision_checked_backup_action():

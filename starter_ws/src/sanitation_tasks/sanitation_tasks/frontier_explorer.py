@@ -40,6 +40,7 @@ from .frontier_core import (
     reverse_escape_goal,
     sweep_anchor_is_behind_chassis,
     sweep_staging_goals,
+    straight_staging_path_poses,
     vertical_sweep_anchor_reached,
     world_disk_has_known_cell,
     world_disk_is_traversable,
@@ -95,6 +96,10 @@ class FrontierExplorer(Node):
         self.declare_parameter(
             "horizontal_sweep_staging_distances_m", [8.0, 6.0, 4.0, 3.0, 2.0]
         )
+        self.declare_parameter(
+            "horizontal_sweep_staging_path_sample_spacing_m", 0.25
+        )
+        self.declare_parameter("horizontal_sweep_staging_timeout_sec", 20.0)
         self.declare_parameter("reverse_escape_distance_m", 2.0)
         self.declare_parameter("reverse_escape_speed_mps", 0.15)
         self.declare_parameter("frontier_sweep_enabled", False)
@@ -177,6 +182,7 @@ class FrontierExplorer(Node):
         self.horizontal_sweep_staging_failure_count = 0
         self.horizontal_sweep_staging_unavailable_count = 0
         self.horizontal_sweep_staging_behind_chassis_count = 0
+        self.horizontal_sweep_staging_path_rejected_count = 0
         self.frontier_exclusion_wait_count = 0
         self.reverse_escape_goal_count = 0
         self.sweep_targets = []
@@ -515,14 +521,29 @@ class FrontierExplorer(Node):
                 self.get_parameter("required_bounds_goal_margin_m").value
             ),
         )
-        goal = next(
-            (candidate for candidate in candidates
-             if self._goal_is_costmap_clear(candidate)),
-            None,
-        )
+        endpoint_clear_candidates = [
+            candidate for candidate in candidates
+            if self._goal_is_costmap_clear(candidate)
+        ]
+        goal = next((
+            candidate for candidate in endpoint_clear_candidates
+            if self._path_poses_are_costmap_clear(
+                straight_staging_path_poses(
+                    robot_pose,
+                    candidate,
+                    sample_spacing_m=float(self.get_parameter(
+                        "horizontal_sweep_staging_path_sample_spacing_m"
+                    ).value),
+                )
+            )
+        ), None)
         if goal is None:
             self.horizontal_sweep_staging_unavailable_count += 1
-            self.last_error = "horizontal_sweep_staging_no_clear_endpoint"
+            if endpoint_clear_candidates:
+                self.horizontal_sweep_staging_path_rejected_count += 1
+                self.last_error = "horizontal_sweep_staging_no_clear_path"
+            else:
+                self.last_error = "horizontal_sweep_staging_no_clear_endpoint"
             return False
         self.horizontal_sweep_staging_attempt_count += 1
         self.last_error = "horizontal_sweep_staging"
@@ -1134,6 +1155,11 @@ class FrontierExplorer(Node):
         self.goal_history.append(row)
         self.active_goal = goal
         self.active_goal_started_monotonic = time.monotonic()
+        self.active_goal_timeout_sec = float(self.get_parameter(
+            "horizontal_sweep_staging_timeout_sec"
+            if goal_kind == "horizontal_sweep_staging"
+            else "goal_timeout_sec"
+        ).value)
         self.active_goal_cancel_requested = False
         future = self.action_client.send_goal_async(message)
         future.add_done_callback(self._on_goal_response)
@@ -1478,6 +1504,14 @@ class FrontierExplorer(Node):
                     "horizontal_sweep_staging_distances_m"
                 ).value
             ],
+            "horizontal_sweep_staging_path_sample_spacing_m": float(
+                self.get_parameter(
+                    "horizontal_sweep_staging_path_sample_spacing_m"
+                ).value
+            ),
+            "horizontal_sweep_staging_timeout_sec": float(
+                self.get_parameter("horizontal_sweep_staging_timeout_sec").value
+            ),
             "active_failed_goal_exclusion_count": len(self.excluded_goals),
             "frontier_exclusion_wait_count": self.frontier_exclusion_wait_count,
             "reverse_escape_goal_count": self.reverse_escape_goal_count,
@@ -1619,6 +1653,9 @@ class FrontierExplorer(Node):
             ),
             "horizontal_sweep_staging_behind_chassis_count": (
                 self.horizontal_sweep_staging_behind_chassis_count
+            ),
+            "horizontal_sweep_staging_path_rejected_count": (
+                self.horizontal_sweep_staging_path_rejected_count
             ),
             "map_metrics": metrics,
             "goal_count": len(self.goal_history),

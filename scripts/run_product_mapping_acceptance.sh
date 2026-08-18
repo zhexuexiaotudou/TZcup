@@ -515,6 +515,8 @@ start_group mapping_explorer "$mapping/frontier_exploration.log" \
   -p no_progress_raw_frontier_success_limit:=12 \
   -p no_progress_raw_exclusion_ttl_sec:=900.0 \
   -p horizontal_sweep_staging_distances_m:="[8.0, 6.0, 4.0, 3.0, 2.0]" \
+  -p horizontal_sweep_staging_path_sample_spacing_m:=0.25 \
+  -p horizontal_sweep_staging_timeout_sec:=20.0 \
   -p reverse_escape_distance_m:=2.0 \
   -p reverse_escape_speed_mps:=0.15 \
   -p frontier_sweep_enabled:="$SWEEP_ENABLED" \

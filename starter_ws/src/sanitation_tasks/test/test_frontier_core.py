@@ -19,6 +19,7 @@ from sanitation_tasks.frontier_core import (
     reverse_escape_goal,
     sweep_anchor_is_behind_chassis,
     sweep_staging_goals,
+    straight_staging_path_poses,
     vertical_sweep_anchor_reached,
     world_disk_has_known_cell,
     world_disk_is_traversable,
@@ -247,6 +248,36 @@ def test_sweep_anchor_detects_rear_half_plane_without_oracle_input():
     assert not sweep_anchor_is_behind_chassis(
         (10.0, 1.0, math.pi), (10.0, 1.0)
     )
+
+
+def test_straight_staging_path_samples_complete_corridor():
+    goal = sweep_staging_goals(
+        (0.0, 0.0, 0.0),
+        (8.0, 0.0),
+        candidate_distances_m=(8.0,),
+    )[0]
+    poses = straight_staging_path_poses(
+        (0.0, 0.0, 0.0), goal, sample_spacing_m=0.25
+    )
+    assert len(poses) == 33
+    assert poses[0] == pytest.approx((0.0, 0.0, 0.0))
+    assert poses[-1] == pytest.approx((8.0, 0.0, 0.0))
+    assert max(
+        math.dist(left[:2], right[:2])
+        for left, right in zip(poses, poses[1:])
+    ) <= 0.25 + 1.0e-9
+
+
+def test_straight_staging_path_rejects_invalid_spacing():
+    goal = sweep_staging_goals(
+        (0.0, 0.0, 0.0),
+        (2.0, 0.0),
+        candidate_distances_m=(2.0,),
+    )[0]
+    with pytest.raises(ValueError):
+        straight_staging_path_poses(
+            (0.0, 0.0, 0.0), goal, sample_spacing_m=0.0
+        )
 
 
 def _grid(width=12, height=10):

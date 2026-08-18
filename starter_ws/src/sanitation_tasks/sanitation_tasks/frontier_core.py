@@ -226,6 +226,33 @@ def sweep_anchor_is_behind_chassis(
     return forward_projection < 0.0
 
 
+def straight_staging_path_poses(
+    robot_pose: tuple[float, float, float],
+    goal: FrontierGoal,
+    *,
+    sample_spacing_m: float,
+) -> list[tuple[float, float, float]]:
+    """Sample the complete straight staging corridor for costmap checks."""
+    spacing = float(sample_spacing_m)
+    if not math.isfinite(spacing) or spacing <= 0.0:
+        raise ValueError("sample_spacing_m must be finite and positive")
+    start_x, start_y, _ = robot_pose
+    delta_x = float(goal.world_x_m) - float(start_x)
+    delta_y = float(goal.world_y_m) - float(start_y)
+    distance = math.hypot(delta_x, delta_y)
+    if distance <= 1.0e-9:
+        return [(float(start_x), float(start_y), float(goal.yaw_rad))]
+    sample_count = max(1, int(math.ceil(distance / spacing)))
+    return [
+        (
+            float(start_x) + delta_x * index / sample_count,
+            float(start_y) + delta_y * index / sample_count,
+            float(goal.yaw_rad),
+        )
+        for index in range(sample_count + 1)
+    ]
+
+
 def frontier_sweep_targets(
     required_bounds_xyxy_m: tuple[float, float, float, float],
     robot_xy_m: tuple[float, float],
