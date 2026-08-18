@@ -38,6 +38,7 @@ from .frontier_core import (
     prune_timed_exclusions,
     rank_frontiers,
     reverse_escape_goal,
+    sweep_staging_goals,
     vertical_sweep_anchor_reached,
     world_disk_has_known_cell,
     world_disk_is_traversable,
@@ -87,10 +88,11 @@ class FrontierExplorer(Node):
         self.declare_parameter("failed_goal_cooldown_sec", 10.0)
         self.declare_parameter("failed_goal_exclusion_ttl_sec", 180.0)
         self.declare_parameter("minimum_frontier_map_gain_m2", 2.0)
-        self.declare_parameter("no_progress_endpoint_success_limit", 3)
         self.declare_parameter("no_progress_raw_frontier_success_limit", 12)
-        self.declare_parameter("no_progress_endpoint_exclusion_ttl_sec", 60.0)
         self.declare_parameter("no_progress_raw_exclusion_ttl_sec", 900.0)
+        self.declare_parameter(
+            "horizontal_sweep_staging_distances_m", [8.0, 6.0, 4.0]
+        )
         self.declare_parameter("reverse_escape_distance_m", 2.0)
         self.declare_parameter("reverse_escape_speed_mps", 0.15)
         self.declare_parameter("frontier_sweep_enabled", False)
@@ -165,8 +167,12 @@ class FrontierExplorer(Node):
         self.frontier_no_progress_success_count = 0
         self.frontier_no_progress_success_streak = 0
         self.frontier_no_progress_exclusion_count = 0
-        self.frontier_no_progress_endpoint_exclusion_count = 0
         self.frontier_no_progress_raw_exclusion_count = 0
+        self.horizontal_sweep_staging_pending = False
+        self.horizontal_sweep_staging_attempt_count = 0
+        self.horizontal_sweep_staging_success_count = 0
+        self.horizontal_sweep_staging_failure_count = 0
+        self.horizontal_sweep_staging_unavailable_count = 0
         self.frontier_exclusion_wait_count = 0
         self.reverse_escape_goal_count = 0
         self.sweep_targets = []
@@ -343,6 +349,8 @@ class FrontierExplorer(Node):
         if robot_pose is None:
             return
         self._sweep_preference(robot_pose)
+        if self._start_horizontal_sweep_staging(robot_pose):
+            return
         if self._start_sweep_lane_shift_backup(robot_pose):
             return
         if self._start_sweep_lane_shift_connector(robot_pose):
@@ -459,6 +467,51 @@ class FrontierExplorer(Node):
             ),
             preferred_world_xy=sweep_preference,
         )
+
+    def _start_horizontal_sweep_staging(self, robot_pose) -> bool:
+        """Drive a short known-free step toward the active sweep anchor.
+
+        This is only armed by a long sequence of successful frontier motions
+        with no map gain. The anchor is derived from required bounds, while
+        every candidate endpoint remains inside the live costmap and the path
+        is still planned and collision-checked by Nav2.
+        """
+        if not self.horizontal_sweep_staging_pending:
+            return False
+        self.horizontal_sweep_staging_pending = False
+        if (
+            self.sweep_active_axis != "horizontal"
+            or self.sweep_active_preference is None
+        ):
+            self.horizontal_sweep_staging_unavailable_count += 1
+            self.last_error = "horizontal_sweep_staging_not_applicable"
+            return False
+        candidates = sweep_staging_goals(
+            robot_pose,
+            self.sweep_active_preference,
+            candidate_distances_m=tuple(
+                float(value) for value in self.get_parameter(
+                    "horizontal_sweep_staging_distances_m"
+                ).value
+            ),
+            allowed_bounds_xyxy_m=self.required_bounds,
+            boundary_margin_m=float(
+                self.get_parameter("required_bounds_goal_margin_m").value
+            ),
+        )
+        goal = next(
+            (candidate for candidate in candidates
+             if self._goal_is_costmap_clear(candidate)),
+            None,
+        )
+        if goal is None:
+            self.horizontal_sweep_staging_unavailable_count += 1
+            self.last_error = "horizontal_sweep_staging_no_clear_endpoint"
+            return False
+        self.horizontal_sweep_staging_attempt_count += 1
+        self.last_error = "horizontal_sweep_staging"
+        self._send_goal(goal, goal_kind="horizontal_sweep_staging")
+        return True
 
     def _start_sweep_lane_shift_backup(self, robot_pose) -> bool:
         """Back inward once before an Ackermann lane-shift turn at an edge."""
@@ -1145,7 +1198,7 @@ class FrontierExplorer(Node):
             if self.map_update_count > int(row["map_update_count_before"]):
                 (
                     self.frontier_no_progress_success_streak,
-                    exclusion_scope,
+                    should_recover,
                     map_gain,
                 ) = next_no_progress_frontier_state(
                     self.frontier_no_progress_success_streak,
@@ -1154,12 +1207,7 @@ class FrontierExplorer(Node):
                     minimum_gain_m2=float(
                         self.get_parameter("minimum_frontier_map_gain_m2").value
                     ),
-                    endpoint_successes_before_exclusion=int(
-                        self.get_parameter(
-                            "no_progress_endpoint_success_limit"
-                        ).value
-                    ),
-                    raw_successes_before_exclusion=int(
+                    successes_before_recovery=int(
                         self.get_parameter(
                             "no_progress_raw_frontier_success_limit"
                         ).value
@@ -1173,26 +1221,7 @@ class FrontierExplorer(Node):
                 row["mapping_progress"] = mapping_progress
                 if not mapping_progress:
                     self.frontier_no_progress_success_count += 1
-                if exclusion_scope == "endpoint":
-                    center = (
-                        float(self.active_goal.world_x_m),
-                        float(self.active_goal.world_y_m),
-                    )
-                    self._add_excluded_goal(
-                        *center,
-                        ttl_sec=float(self.get_parameter(
-                            "no_progress_endpoint_exclusion_ttl_sec"
-                        ).value),
-                    )
-                    row["no_progress_exclusion"] = True
-                    row["no_progress_exclusion_scope"] = "endpoint"
-                    row["excluded_centers_xy_m"] = [list(center)]
-                    self.frontier_no_progress_exclusion_count += 1
-                    self.frontier_no_progress_endpoint_exclusion_count += 1
-                    self.last_error = (
-                        "frontier_success_without_map_progress_endpoint_excluded"
-                    )
-                elif exclusion_scope == "endpoint_and_raw":
+                if should_recover:
                     centers = self._add_goal_exclusions(
                         self.active_goal,
                         ttl_sec=float(self.get_parameter(
@@ -1201,11 +1230,13 @@ class FrontierExplorer(Node):
                     )
                     row["no_progress_exclusion"] = True
                     row["no_progress_exclusion_scope"] = "endpoint_and_raw"
+                    row["horizontal_sweep_staging_armed"] = True
                     row["excluded_centers_xy_m"] = [
                         list(center) for center in centers
                     ]
                     self.frontier_no_progress_exclusion_count += 1
                     self.frontier_no_progress_raw_exclusion_count += 1
+                    self.horizontal_sweep_staging_pending = True
                     self.last_error = (
                         "frontier_success_without_map_progress_raw_excluded"
                     )
@@ -1219,6 +1250,11 @@ class FrontierExplorer(Node):
             if succeeded and index is not None:
                 self.sweep_lane_shift_backup_completed.add(int(index))
             self.sweep_lane_shift_backup_pending = None
+        if row.get("goal_kind") == "horizontal_sweep_staging":
+            if succeeded:
+                self.horizontal_sweep_staging_success_count += 1
+            else:
+                self.horizontal_sweep_staging_failure_count += 1
         self._update_adaptive_goal_distance(mapping_progress)
         if not succeeded:
             self._exclude_failed_goal(
@@ -1395,22 +1431,19 @@ class FrontierExplorer(Node):
             "minimum_frontier_map_gain_m2": float(
                 self.get_parameter("minimum_frontier_map_gain_m2").value
             ),
-            "no_progress_endpoint_success_limit": int(
-                self.get_parameter("no_progress_endpoint_success_limit").value
-            ),
             "no_progress_raw_frontier_success_limit": int(
                 self.get_parameter(
                     "no_progress_raw_frontier_success_limit"
                 ).value
             ),
-            "no_progress_endpoint_exclusion_ttl_sec": float(
-                self.get_parameter(
-                    "no_progress_endpoint_exclusion_ttl_sec"
-                ).value
-            ),
             "no_progress_raw_exclusion_ttl_sec": float(
                 self.get_parameter("no_progress_raw_exclusion_ttl_sec").value
             ),
+            "horizontal_sweep_staging_distances_m": [
+                float(value) for value in self.get_parameter(
+                    "horizontal_sweep_staging_distances_m"
+                ).value
+            ],
             "active_failed_goal_exclusion_count": len(self.excluded_goals),
             "frontier_exclusion_wait_count": self.frontier_exclusion_wait_count,
             "reverse_escape_goal_count": self.reverse_escape_goal_count,
@@ -1529,11 +1562,23 @@ class FrontierExplorer(Node):
             "frontier_no_progress_exclusion_count": (
                 self.frontier_no_progress_exclusion_count
             ),
-            "frontier_no_progress_endpoint_exclusion_count": (
-                self.frontier_no_progress_endpoint_exclusion_count
-            ),
             "frontier_no_progress_raw_exclusion_count": (
                 self.frontier_no_progress_raw_exclusion_count
+            ),
+            "horizontal_sweep_staging_pending": (
+                self.horizontal_sweep_staging_pending
+            ),
+            "horizontal_sweep_staging_attempt_count": (
+                self.horizontal_sweep_staging_attempt_count
+            ),
+            "horizontal_sweep_staging_success_count": (
+                self.horizontal_sweep_staging_success_count
+            ),
+            "horizontal_sweep_staging_failure_count": (
+                self.horizontal_sweep_staging_failure_count
+            ),
+            "horizontal_sweep_staging_unavailable_count": (
+                self.horizontal_sweep_staging_unavailable_count
             ),
             "map_metrics": metrics,
             "goal_count": len(self.goal_history),

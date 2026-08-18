@@ -17,6 +17,7 @@ from sanitation_tasks.frontier_core import (
     prune_timed_exclusions,
     rank_frontiers,
     reverse_escape_goal,
+    sweep_staging_goals,
     vertical_sweep_anchor_reached,
     world_disk_has_known_cell,
     world_disk_is_traversable,
@@ -160,41 +161,34 @@ def test_adaptive_frontier_stride_grows_after_success_and_contracts_on_failure()
     assert (distance, streak) == (2.5, 0)
 
 
-def test_successful_motion_uses_endpoint_then_raw_frontier_exclusion():
+def test_successful_motion_triggers_recovery_after_long_zero_gain_streak():
     streak = 0
-    actions = []
+    recoveries = []
     for index in range(1, 13):
-        streak, action, gain = next_no_progress_frontier_state(
+        streak, should_recover, gain = next_no_progress_frontier_state(
             streak,
             map_area_before_m2=100.0,
             map_area_after_m2=100.4,
             minimum_gain_m2=2.0,
-            endpoint_successes_before_exclusion=3,
-            raw_successes_before_exclusion=12,
+            successes_before_recovery=12,
         )
         assert gain == pytest.approx(0.4)
-        if action is not None:
-            actions.append((index, action))
-    assert actions == [
-        (3, "endpoint"),
-        (6, "endpoint"),
-        (9, "endpoint"),
-        (12, "endpoint_and_raw"),
-    ]
+        if should_recover:
+            recoveries.append(index)
+    assert recoveries == [12]
     assert streak == 0
 
 
 def test_real_map_gain_resets_no_progress_streak():
-    streak, action, gain = next_no_progress_frontier_state(
+    streak, should_recover, gain = next_no_progress_frontier_state(
         2,
         map_area_before_m2=100.0,
         map_area_after_m2=102.0,
         minimum_gain_m2=2.0,
-        endpoint_successes_before_exclusion=3,
-        raw_successes_before_exclusion=12,
+        successes_before_recovery=12,
     )
     assert streak == 0
-    assert action is None
+    assert should_recover is False
     assert gain == pytest.approx(2.0)
 
 
@@ -205,9 +199,33 @@ def test_no_progress_policy_rejects_invalid_contract_values():
             map_area_before_m2=0.0,
             map_area_after_m2=0.0,
             minimum_gain_m2=2.0,
-            endpoint_successes_before_exclusion=0,
-            raw_successes_before_exclusion=12,
+            successes_before_recovery=0,
         )
+
+
+def test_sweep_staging_goals_advance_toward_anchor_with_bounded_fallbacks():
+    goals = sweep_staging_goals(
+        (0.0, 0.0, math.pi / 2.0),
+        (100.0, 10.0),
+        candidate_distances_m=(8.0, 6.0, 4.0),
+        allowed_bounds_xyxy_m=(-100.0, -50.0, 100.0, 50.0),
+        boundary_margin_m=1.5,
+    )
+    assert [goal.distance_m for goal in goals] == [8.0, 6.0, 4.0]
+    assert all(goal.grid_x == -1 and goal.grid_y == -1 for goal in goals)
+    assert all(goal.world_x_m > 0.0 and goal.world_y_m > 0.0 for goal in goals)
+    assert all(goal.yaw_rad == pytest.approx(math.atan2(10.0, 100.0)) for goal in goals)
+
+
+def test_sweep_staging_goals_respect_boundary_margin():
+    goals = sweep_staging_goals(
+        (97.0, 10.0, 0.0),
+        (100.0, 10.0),
+        candidate_distances_m=(8.0, 2.0, 1.0),
+        allowed_bounds_xyxy_m=(-100.0, -50.0, 100.0, 50.0),
+        boundary_margin_m=1.5,
+    )
+    assert [goal.world_x_m for goal in goals] == pytest.approx([98.0])
 
 
 def _grid(width=12, height=10):

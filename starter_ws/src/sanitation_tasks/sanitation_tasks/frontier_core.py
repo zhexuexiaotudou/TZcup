@@ -156,6 +156,59 @@ def lane_shift_connector_goals(
     return goals
 
 
+def sweep_staging_goals(
+    robot_pose: tuple[float, float, float],
+    target_xy_m: tuple[float, float],
+    *,
+    candidate_distances_m: Iterable[float],
+    allowed_bounds_xyxy_m: tuple[float, float, float, float] | None = None,
+    boundary_margin_m: float = 0.0,
+) -> list[FrontierGoal]:
+    """Build short bounds-derived staging goals toward a sweep anchor.
+
+    The caller must validate every endpoint against the live costmap before
+    sending it to Nav2. No world obstacle geometry or ground-truth pose enters
+    this construction.
+    """
+    robot_x, robot_y, _ = robot_pose
+    delta_x = float(target_xy_m[0]) - robot_x
+    delta_y = float(target_xy_m[1]) - robot_y
+    target_distance = math.hypot(delta_x, delta_y)
+    if target_distance <= 1.0e-9:
+        return []
+    heading = math.atan2(delta_y, delta_x)
+    goals = []
+    seen_distances = set()
+    for requested_distance in candidate_distances_m:
+        distance = min(target_distance, max(0.0, float(requested_distance)))
+        rounded_distance = round(distance, 9)
+        if distance <= 1.0e-9 or rounded_distance in seen_distances:
+            continue
+        seen_distances.add(rounded_distance)
+        world_x = robot_x + distance * math.cos(heading)
+        world_y = robot_y + distance * math.sin(heading)
+        if allowed_bounds_xyxy_m is not None:
+            min_x, min_y, max_x, max_y = allowed_bounds_xyxy_m
+            margin = max(0.0, float(boundary_margin_m))
+            if not (
+                min_x + margin <= world_x <= max_x - margin
+                and min_y + margin <= world_y <= max_y - margin
+            ):
+                continue
+        goals.append(FrontierGoal(
+            grid_x=-1,
+            grid_y=-1,
+            world_x_m=world_x,
+            world_y_m=world_y,
+            yaw_rad=heading,
+            frontier_cell_count=0,
+            information_gain_m=0.0,
+            distance_m=distance,
+            score=-distance,
+        ))
+    return goals
+
+
 def frontier_sweep_targets(
     required_bounds_xyxy_m: tuple[float, float, float, float],
     robot_xy_m: tuple[float, float],
@@ -301,17 +354,15 @@ def next_no_progress_frontier_state(
     map_area_before_m2: float,
     map_area_after_m2: float,
     minimum_gain_m2: float,
-    endpoint_successes_before_exclusion: int,
-    raw_successes_before_exclusion: int,
-) -> tuple[int, str | None, float]:
+    successes_before_recovery: int,
+) -> tuple[int, bool, float]:
     """Classify successful motion by whether it actually expanded the map.
 
     Nav2 success only proves that the commanded endpoint was reached. It is
     not exploration progress. Repeated short Ackermann arcs can succeed near
     the same raw frontier while the known map area stays constant. The caller
-    first cools only local arc endpoints so a valid distant frontier can still
-    be approached through multiple curvature-limited stages. A longer streak
-    cools both the endpoint and source frontier.
+    preserves valid multi-stage Ackermann approaches until a long zero-gain
+    streak proves that a different recovery action is required.
     """
     before = float(map_area_before_m2)
     after = float(map_area_after_m2)
@@ -320,22 +371,17 @@ def next_no_progress_frontier_state(
         raise ValueError("map areas and minimum gain must be finite")
     if minimum_gain < 0.0:
         raise ValueError("minimum gain must be non-negative")
-    endpoint_limit = int(endpoint_successes_before_exclusion)
-    raw_limit = int(raw_successes_before_exclusion)
-    if endpoint_limit < 1:
-        raise ValueError("endpoint exclusion limit must be positive")
-    if raw_limit < endpoint_limit:
-        raise ValueError("raw exclusion limit must be at least endpoint limit")
+    limit = int(successes_before_recovery)
+    if limit < 1:
+        raise ValueError("successes_before_recovery must be positive")
 
     gain = after - before
     if gain + 1.0e-9 >= minimum_gain:
-        return 0, None, gain
+        return 0, False, gain
     streak = max(0, int(current_streak)) + 1
-    if streak >= raw_limit:
-        return 0, "endpoint_and_raw", gain
-    if streak % endpoint_limit == 0:
-        return streak, "endpoint", gain
-    return streak, None, gain
+    if streak >= limit:
+        return 0, True, gain
+    return streak, False, gain
 
 
 def _index(x: int, y: int, geometry: GridGeometry) -> int:
