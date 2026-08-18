@@ -518,6 +518,7 @@ start_group mapping_explorer "$mapping/frontier_exploration.log" \
   -p horizontal_sweep_staging_path_sample_spacing_m:=0.25 \
   -p horizontal_sweep_staging_timeout_sec:=20.0 \
   -p horizontal_sweep_alignment_distance_m:=2.0 \
+  -p horizontal_sweep_alignment_tolerance_rad:=0.15 \
   -p reverse_escape_distance_m:=2.0 \
   -p reverse_escape_speed_mps:=0.15 \
   -p frontier_sweep_enabled:="$SWEEP_ENABLED" \

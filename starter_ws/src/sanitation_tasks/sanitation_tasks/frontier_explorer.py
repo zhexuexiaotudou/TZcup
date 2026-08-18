@@ -39,6 +39,7 @@ from .frontier_core import (
     rank_frontiers,
     reverse_escape_goal,
     sweep_anchor_is_behind_chassis,
+    sweep_anchor_heading_error_rad,
     sweep_alignment_goal,
     sweep_staging_goals,
     straight_staging_path_poses,
@@ -102,6 +103,7 @@ class FrontierExplorer(Node):
         )
         self.declare_parameter("horizontal_sweep_staging_timeout_sec", 20.0)
         self.declare_parameter("horizontal_sweep_alignment_distance_m", 2.0)
+        self.declare_parameter("horizontal_sweep_alignment_tolerance_rad", 0.15)
         self.declare_parameter("reverse_escape_distance_m", 2.0)
         self.declare_parameter("reverse_escape_speed_mps", 0.15)
         self.declare_parameter("frontier_sweep_enabled", False)
@@ -502,10 +504,16 @@ class FrontierExplorer(Node):
             self.horizontal_sweep_staging_unavailable_count += 1
             self.last_error = "horizontal_sweep_staging_not_applicable"
             return False
-        if sweep_anchor_is_behind_chassis(
+        heading_error = sweep_anchor_heading_error_rad(
             robot_pose, self.sweep_active_preference
+        )
+        if heading_error is not None and abs(heading_error) > float(
+            self.get_parameter("horizontal_sweep_alignment_tolerance_rad").value
         ):
-            self.horizontal_sweep_staging_behind_chassis_count += 1
+            if sweep_anchor_is_behind_chassis(
+                robot_pose, self.sweep_active_preference
+            ):
+                self.horizontal_sweep_staging_behind_chassis_count += 1
             goal = sweep_alignment_goal(
                 robot_pose,
                 self.sweep_active_preference,
@@ -1551,6 +1559,11 @@ class FrontierExplorer(Node):
             ),
             "horizontal_sweep_alignment_distance_m": float(
                 self.get_parameter("horizontal_sweep_alignment_distance_m").value
+            ),
+            "horizontal_sweep_alignment_tolerance_rad": float(
+                self.get_parameter(
+                    "horizontal_sweep_alignment_tolerance_rad"
+                ).value
             ),
             "active_failed_goal_exclusion_count": len(self.excluded_goals),
             "frontier_exclusion_wait_count": self.frontier_exclusion_wait_count,

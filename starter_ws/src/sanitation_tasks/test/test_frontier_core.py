@@ -17,6 +17,7 @@ from sanitation_tasks.frontier_core import (
     prune_timed_exclusions,
     rank_frontiers,
     reverse_escape_goal,
+    sweep_anchor_heading_error_rad,
     sweep_anchor_is_behind_chassis,
     sweep_alignment_goal,
     sweep_staging_goals,
@@ -249,6 +250,18 @@ def test_sweep_anchor_detects_rear_half_plane_without_oracle_input():
     assert not sweep_anchor_is_behind_chassis(
         (10.0, 1.0, math.pi), (10.0, 1.0)
     )
+
+
+def test_sweep_anchor_heading_error_is_signed_and_wrapped():
+    assert sweep_anchor_heading_error_rad(
+        (0.0, 0.0, 0.0), (10.0, 10.0)
+    ) == pytest.approx(math.pi / 4.0)
+    assert sweep_anchor_heading_error_rad(
+        (0.0, 0.0, math.pi), (10.0, 0.0)
+    ) == pytest.approx(-math.pi)
+    assert sweep_anchor_heading_error_rad(
+        (10.0, 0.0, 1.0), (10.0, 0.0)
+    ) is None
 
 
 def test_straight_staging_path_samples_complete_corridor():
