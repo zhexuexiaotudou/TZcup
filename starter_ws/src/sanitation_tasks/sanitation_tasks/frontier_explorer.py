@@ -88,15 +88,12 @@ class FrontierExplorer(Node):
         self.declare_parameter("goal_timeout_sec", 60.0)
         self.declare_parameter("failed_goal_cooldown_sec", 10.0)
         self.declare_parameter("failed_goal_exclusion_ttl_sec", 180.0)
-        self.declare_parameter("minimum_frontier_map_gain_m2", 5.0)
+        self.declare_parameter("minimum_frontier_map_gain_m2", 2.0)
         self.declare_parameter("no_progress_staging_success_limit", 3)
         self.declare_parameter("no_progress_raw_frontier_success_limit", 12)
         self.declare_parameter("no_progress_raw_exclusion_ttl_sec", 900.0)
         self.declare_parameter(
             "horizontal_sweep_staging_distances_m", [8.0, 6.0, 4.0, 3.0, 2.0]
-        )
-        self.declare_parameter(
-            "horizontal_sweep_staging_reverse_distance_m", 2.0
         )
         self.declare_parameter("reverse_escape_distance_m", 2.0)
         self.declare_parameter("reverse_escape_speed_mps", 0.15)
@@ -179,7 +176,7 @@ class FrontierExplorer(Node):
         self.horizontal_sweep_staging_success_count = 0
         self.horizontal_sweep_staging_failure_count = 0
         self.horizontal_sweep_staging_unavailable_count = 0
-        self.horizontal_sweep_staging_reverse_count = 0
+        self.horizontal_sweep_staging_behind_chassis_count = 0
         self.frontier_exclusion_wait_count = 0
         self.reverse_escape_goal_count = 0
         self.sweep_targets = []
@@ -496,36 +493,15 @@ class FrontierExplorer(Node):
         if sweep_anchor_is_behind_chassis(
             robot_pose, self.sweep_active_preference
         ):
-            goal = reverse_escape_goal(
-                robot_pose[:2],
-                robot_pose[2],
-                distance_m=float(self.get_parameter(
-                    "horizontal_sweep_staging_reverse_distance_m"
-                ).value),
-                allowed_bounds_xyxy_m=self.required_bounds,
-                boundary_margin_m=float(
-                    self.get_parameter("required_bounds_goal_margin_m").value
-                ),
-            )
-            if goal is None or not self._goal_is_costmap_clear(goal):
-                self.horizontal_sweep_staging_unavailable_count += 1
-                self.last_error = (
-                    "horizontal_sweep_staging_reverse_no_clear_endpoint"
-                )
-                return False
-            self.last_error = "horizontal_sweep_staging_reverse"
-            if not self._send_backup(
-                goal, goal_kind="horizontal_sweep_staging"
-            ):
-                self.horizontal_sweep_staging_unavailable_count += 1
-                self.last_error = (
-                    "horizontal_sweep_staging_backup_server_unavailable"
-                )
-                return False
-            self.horizontal_sweep_staging_attempt_count += 1
-            self.horizontal_sweep_staging_reverse_count += 1
-            self._write_report()
-            return True
+            # A direct staging goal behind the chassis asks an Ackermann
+            # vehicle for an infeasible near-point U-turn. Reversing here
+            # merely oscillates against the next online frontier. Leave the
+            # choice to normal frontier ranking instead of consuming the
+            # 60-second navigation watchdog or bypassing collision checks.
+            self.horizontal_sweep_staging_unavailable_count += 1
+            self.horizontal_sweep_staging_behind_chassis_count += 1
+            self.last_error = "horizontal_sweep_staging_behind_chassis"
+            return False
         candidates = sweep_staging_goals(
             robot_pose,
             self.sweep_active_preference,
@@ -1502,11 +1478,6 @@ class FrontierExplorer(Node):
                     "horizontal_sweep_staging_distances_m"
                 ).value
             ],
-            "horizontal_sweep_staging_reverse_distance_m": float(
-                self.get_parameter(
-                    "horizontal_sweep_staging_reverse_distance_m"
-                ).value
-            ),
             "active_failed_goal_exclusion_count": len(self.excluded_goals),
             "frontier_exclusion_wait_count": self.frontier_exclusion_wait_count,
             "reverse_escape_goal_count": self.reverse_escape_goal_count,
@@ -1646,8 +1617,8 @@ class FrontierExplorer(Node):
             "horizontal_sweep_staging_unavailable_count": (
                 self.horizontal_sweep_staging_unavailable_count
             ),
-            "horizontal_sweep_staging_reverse_count": (
-                self.horizontal_sweep_staging_reverse_count
+            "horizontal_sweep_staging_behind_chassis_count": (
+                self.horizontal_sweep_staging_behind_chassis_count
             ),
             "map_metrics": metrics,
             "goal_count": len(self.goal_history),
