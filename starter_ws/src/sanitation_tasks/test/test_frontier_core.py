@@ -17,6 +17,7 @@ from sanitation_tasks.frontier_core import (
     prune_timed_exclusions,
     rank_frontiers,
     reverse_escape_goal,
+    sweep_anchor_is_behind_chassis,
     sweep_staging_goals,
     vertical_sweep_anchor_reached,
     world_disk_has_known_cell,
@@ -234,6 +235,18 @@ def test_sweep_staging_goals_respect_boundary_margin():
         boundary_margin_m=1.5,
     )
     assert [goal.world_x_m for goal in goals] == pytest.approx([98.0])
+
+
+def test_sweep_anchor_detects_rear_half_plane_without_oracle_input():
+    assert sweep_anchor_is_behind_chassis(
+        (0.0, 0.0, math.pi), (10.0, 1.0)
+    )
+    assert not sweep_anchor_is_behind_chassis(
+        (0.0, 0.0, 0.0), (10.0, 1.0)
+    )
+    assert not sweep_anchor_is_behind_chassis(
+        (10.0, 1.0, math.pi), (10.0, 1.0)
+    )
 
 
 def _grid(width=12, height=10):

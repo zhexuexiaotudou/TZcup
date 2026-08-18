@@ -209,6 +209,23 @@ def sweep_staging_goals(
     return goals
 
 
+def sweep_anchor_is_behind_chassis(
+    robot_pose: tuple[float, float, float],
+    target_xy_m: tuple[float, float],
+) -> bool:
+    """Return whether the sweep anchor lies in the chassis rear half-plane."""
+    robot_x, robot_y, robot_yaw = robot_pose
+    delta_x = float(target_xy_m[0]) - float(robot_x)
+    delta_y = float(target_xy_m[1]) - float(robot_y)
+    if math.hypot(delta_x, delta_y) <= 1.0e-9:
+        return False
+    forward_projection = (
+        delta_x * math.cos(float(robot_yaw))
+        + delta_y * math.sin(float(robot_yaw))
+    )
+    return forward_projection < 0.0
+
+
 def frontier_sweep_targets(
     required_bounds_xyxy_m: tuple[float, float, float, float],
     robot_xy_m: tuple[float, float],

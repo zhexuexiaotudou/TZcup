@@ -38,6 +38,7 @@ from .frontier_core import (
     prune_timed_exclusions,
     rank_frontiers,
     reverse_escape_goal,
+    sweep_anchor_is_behind_chassis,
     sweep_staging_goals,
     vertical_sweep_anchor_reached,
     world_disk_has_known_cell,
@@ -87,12 +88,15 @@ class FrontierExplorer(Node):
         self.declare_parameter("goal_timeout_sec", 60.0)
         self.declare_parameter("failed_goal_cooldown_sec", 10.0)
         self.declare_parameter("failed_goal_exclusion_ttl_sec", 180.0)
-        self.declare_parameter("minimum_frontier_map_gain_m2", 2.0)
+        self.declare_parameter("minimum_frontier_map_gain_m2", 5.0)
         self.declare_parameter("no_progress_staging_success_limit", 3)
         self.declare_parameter("no_progress_raw_frontier_success_limit", 12)
         self.declare_parameter("no_progress_raw_exclusion_ttl_sec", 900.0)
         self.declare_parameter(
-            "horizontal_sweep_staging_distances_m", [8.0, 6.0, 4.0]
+            "horizontal_sweep_staging_distances_m", [8.0, 6.0, 4.0, 3.0, 2.0]
+        )
+        self.declare_parameter(
+            "horizontal_sweep_staging_reverse_distance_m", 2.0
         )
         self.declare_parameter("reverse_escape_distance_m", 2.0)
         self.declare_parameter("reverse_escape_speed_mps", 0.15)
@@ -175,6 +179,7 @@ class FrontierExplorer(Node):
         self.horizontal_sweep_staging_success_count = 0
         self.horizontal_sweep_staging_failure_count = 0
         self.horizontal_sweep_staging_unavailable_count = 0
+        self.horizontal_sweep_staging_reverse_count = 0
         self.frontier_exclusion_wait_count = 0
         self.reverse_escape_goal_count = 0
         self.sweep_targets = []
@@ -473,10 +478,10 @@ class FrontierExplorer(Node):
     def _start_horizontal_sweep_staging(self, robot_pose) -> bool:
         """Drive a short known-free step toward the active sweep anchor.
 
-        This is only armed by a long sequence of successful frontier motions
-        with no map gain. The anchor is derived from required bounds, while
-        every candidate endpoint remains inside the live costmap and the path
-        is still planned and collision-checked by Nav2.
+        This is armed periodically by successful frontier motions with
+        insufficient map gain. The anchor is derived from required bounds,
+        while every candidate endpoint remains inside the live costmap and
+        the motion is still collision-checked by Nav2.
         """
         if not self.horizontal_sweep_staging_pending:
             return False
@@ -488,6 +493,39 @@ class FrontierExplorer(Node):
             self.horizontal_sweep_staging_unavailable_count += 1
             self.last_error = "horizontal_sweep_staging_not_applicable"
             return False
+        if sweep_anchor_is_behind_chassis(
+            robot_pose, self.sweep_active_preference
+        ):
+            goal = reverse_escape_goal(
+                robot_pose[:2],
+                robot_pose[2],
+                distance_m=float(self.get_parameter(
+                    "horizontal_sweep_staging_reverse_distance_m"
+                ).value),
+                allowed_bounds_xyxy_m=self.required_bounds,
+                boundary_margin_m=float(
+                    self.get_parameter("required_bounds_goal_margin_m").value
+                ),
+            )
+            if goal is None or not self._goal_is_costmap_clear(goal):
+                self.horizontal_sweep_staging_unavailable_count += 1
+                self.last_error = (
+                    "horizontal_sweep_staging_reverse_no_clear_endpoint"
+                )
+                return False
+            self.last_error = "horizontal_sweep_staging_reverse"
+            if not self._send_backup(
+                goal, goal_kind="horizontal_sweep_staging"
+            ):
+                self.horizontal_sweep_staging_unavailable_count += 1
+                self.last_error = (
+                    "horizontal_sweep_staging_backup_server_unavailable"
+                )
+                return False
+            self.horizontal_sweep_staging_attempt_count += 1
+            self.horizontal_sweep_staging_reverse_count += 1
+            self._write_report()
+            return True
         candidates = sweep_staging_goals(
             robot_pose,
             self.sweep_active_preference,
@@ -1464,6 +1502,11 @@ class FrontierExplorer(Node):
                     "horizontal_sweep_staging_distances_m"
                 ).value
             ],
+            "horizontal_sweep_staging_reverse_distance_m": float(
+                self.get_parameter(
+                    "horizontal_sweep_staging_reverse_distance_m"
+                ).value
+            ),
             "active_failed_goal_exclusion_count": len(self.excluded_goals),
             "frontier_exclusion_wait_count": self.frontier_exclusion_wait_count,
             "reverse_escape_goal_count": self.reverse_escape_goal_count,
@@ -1602,6 +1645,9 @@ class FrontierExplorer(Node):
             ),
             "horizontal_sweep_staging_unavailable_count": (
                 self.horizontal_sweep_staging_unavailable_count
+            ),
+            "horizontal_sweep_staging_reverse_count": (
+                self.horizontal_sweep_staging_reverse_count
             ),
             "map_metrics": metrics,
             "goal_count": len(self.goal_history),
