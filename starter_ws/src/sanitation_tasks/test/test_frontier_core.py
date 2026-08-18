@@ -13,6 +13,7 @@ from sanitation_tasks.frontier_core import (
     map_extent_metrics,
     mapping_completion_reached,
     next_adaptive_goal_distance,
+    next_no_progress_frontier_state,
     prune_timed_exclusions,
     rank_frontiers,
     reverse_escape_goal,
@@ -157,6 +158,45 @@ def test_adaptive_frontier_stride_grows_after_success_and_contracts_on_failure()
         growth_step_m=1.0,
     )
     assert (distance, streak) == (2.5, 0)
+
+
+def test_successful_motion_without_map_gain_is_excluded_after_fixed_streak():
+    streak = 0
+    for index, after in enumerate((100.4, 100.7, 101.0), start=1):
+        streak, should_exclude, gain = next_no_progress_frontier_state(
+            streak,
+            map_area_before_m2=100.0,
+            map_area_after_m2=after,
+            minimum_gain_m2=2.0,
+            successes_before_exclusion=3,
+        )
+        assert gain == pytest.approx(after - 100.0)
+        assert should_exclude is (index == 3)
+    assert streak == 0
+
+
+def test_real_map_gain_resets_no_progress_streak():
+    streak, should_exclude, gain = next_no_progress_frontier_state(
+        2,
+        map_area_before_m2=100.0,
+        map_area_after_m2=102.0,
+        minimum_gain_m2=2.0,
+        successes_before_exclusion=3,
+    )
+    assert streak == 0
+    assert should_exclude is False
+    assert gain == pytest.approx(2.0)
+
+
+def test_no_progress_policy_rejects_invalid_contract_values():
+    with pytest.raises(ValueError, match="positive"):
+        next_no_progress_frontier_state(
+            0,
+            map_area_before_m2=0.0,
+            map_area_after_m2=0.0,
+            minimum_gain_m2=2.0,
+            successes_before_exclusion=0,
+        )
 
 
 def _grid(width=12, height=10):
@@ -430,6 +470,36 @@ def test_frontier_exclusion_centers_preserve_raw_frontier_behind_local_arc():
         grid_to_world(goal.grid_x, goal.grid_y, geometry)
     )
     assert math.dist(endpoint, raw_frontier) > 1.0
+
+
+def test_frontier_exclusion_uses_dispatch_world_coordinate_after_map_expands():
+    geometry = GridGeometry(21, 21, 1.0, -10.5, -10.5)
+    data = [-1] * (geometry.width * geometry.height)
+    for y in range(10, 19):
+        data[y * geometry.width + 10] = 0
+    goal = rank_frontiers(
+        data,
+        geometry,
+        (0.0, 0.0),
+        robot_yaw_rad=0.0,
+        minimum_cells=1,
+        minimum_goal_distance_m=0.40,
+        maximum_goal_distance_m=4.0,
+        maximum_goal_yaw_change_rad=0.35,
+        minimum_turning_radius_m=1.429,
+    )[0]
+    expanded_geometry = GridGeometry(41, 41, 1.0, -20.5, -20.5)
+
+    _, raw_frontier = frontier_goal_exclusion_centers(
+        goal, expanded_geometry
+    )
+
+    assert raw_frontier == pytest.approx(
+        (goal.raw_world_x_m, goal.raw_world_y_m)
+    )
+    assert raw_frontier != pytest.approx(
+        grid_to_world(goal.grid_x, goal.grid_y, expanded_geometry)
+    )
 
 
 def test_raw_frontier_exclusion_prevents_reselection_with_new_local_arc():

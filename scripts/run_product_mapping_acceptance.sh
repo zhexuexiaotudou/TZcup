@@ -510,6 +510,8 @@ start_group mapping_explorer "$mapping/frontier_exploration.log" \
   -p maximum_goal_count:="$MAX_GOALS" -p timeout_sec:="${MAPPING_TIMEOUT_SEC}.0" \
   -p goal_timeout_sec:=60.0 -p failed_goal_cooldown_sec:=10.0 \
   -p failed_goal_exclusion_ttl_sec:=180.0 \
+  -p minimum_frontier_map_gain_m2:=2.0 \
+  -p no_progress_frontier_success_limit:=3 \
   -p reverse_escape_distance_m:=2.0 \
   -p reverse_escape_speed_mps:=0.15 \
   -p frontier_sweep_enabled:="$SWEEP_ENABLED" \

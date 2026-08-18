@@ -62,6 +62,8 @@ def test_formal_runner_has_real_restart_and_20k_fail_closed_scope():
     assert "-p goal_timeout_sec:=60.0" in text
     assert "-p failed_goal_cooldown_sec:=10.0" in text
     assert "-p failed_goal_exclusion_ttl_sec:=180.0" in text
+    assert "-p minimum_frontier_map_gain_m2:=2.0" in text
+    assert "-p no_progress_frontier_success_limit:=3" in text
     assert "-p minimum_goal_distance_m:=0.80" in text
     assert "-p minimum_turning_radius_m:=1.429" in text
     assert "-p maximum_frontier_goal_yaw_change_rad:=0.70" in text
@@ -198,6 +200,8 @@ def test_frontier_timeout_restarts_nav2_before_next_goal():
     assert 'declare_parameter("failed_goal_exclusion_ttl_sec", 180.0)' in explorer
     assert 'self._rank_goals(robot_pose, [])' in explorer
     assert '"frontier_candidates_temporarily_excluded"' in explorer
+    assert '"frontier_no_progress_exclusion_count"' in explorer
+    assert '"frontier_success_without_map_progress"' in explorer
 
 
 def test_frontier_reverse_escape_uses_collision_checked_backup_action():

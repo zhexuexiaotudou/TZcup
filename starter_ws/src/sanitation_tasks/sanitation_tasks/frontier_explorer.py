@@ -34,6 +34,7 @@ from .frontier_core import (
     map_extent_metrics,
     mapping_completion_reached,
     next_adaptive_goal_distance,
+    next_no_progress_frontier_state,
     prune_timed_exclusions,
     rank_frontiers,
     reverse_escape_goal,
@@ -85,6 +86,8 @@ class FrontierExplorer(Node):
         self.declare_parameter("goal_timeout_sec", 60.0)
         self.declare_parameter("failed_goal_cooldown_sec", 10.0)
         self.declare_parameter("failed_goal_exclusion_ttl_sec", 180.0)
+        self.declare_parameter("minimum_frontier_map_gain_m2", 2.0)
+        self.declare_parameter("no_progress_frontier_success_limit", 3)
         self.declare_parameter("reverse_escape_distance_m", 2.0)
         self.declare_parameter("reverse_escape_speed_mps", 0.15)
         self.declare_parameter("frontier_sweep_enabled", False)
@@ -156,6 +159,9 @@ class FrontierExplorer(Node):
         self.latest_costmap_geometry = None
         self.costmap_rejected_goal_count = 0
         self.raw_frontier_exclusion_count = 0
+        self.frontier_no_progress_success_count = 0
+        self.frontier_no_progress_success_streak = 0
+        self.frontier_no_progress_exclusion_count = 0
         self.frontier_exclusion_wait_count = 0
         self.reverse_escape_goal_count = 0
         self.sweep_targets = []
@@ -1037,6 +1043,10 @@ class FrontierExplorer(Node):
             "sequence": len(self.goal_history) + 1,
             "accepted": None,
             "terminal_status": None,
+            "map_area_before_m2": float(
+                (self.latest_metrics or {}).get("known_area_m2") or 0.0
+            ),
+            "map_update_count_before": self.map_update_count,
         }
         self.goal_history.append(row)
         self.active_goal = goal
@@ -1107,19 +1117,63 @@ class FrontierExplorer(Node):
         wrapped = future.result()
         status = int(wrapped.status)
         timed_out = self.active_goal_cancel_requested
-        self.goal_history[-1]["terminal_status"] = status
-        self.goal_history[-1]["succeeded"] = (
-            status == GoalStatus.STATUS_SUCCEEDED
-        )
-        if self.goal_history[-1].get("goal_kind") == "lane_shift_backup":
-            index = self.goal_history[-1].get("sweep_target_index")
-            if status == GoalStatus.STATUS_SUCCEEDED and index is not None:
+        row = self.goal_history[-1]
+        succeeded = status == GoalStatus.STATUS_SUCCEEDED
+        row["terminal_status"] = status
+        row["succeeded"] = succeeded
+        mapping_progress = succeeded
+        if succeeded and row.get("goal_kind") == "frontier":
+            area_after = float(
+                (self.latest_metrics or {}).get("known_area_m2") or 0.0
+            )
+            row["map_area_after_m2"] = area_after
+            row["map_update_count_after"] = self.map_update_count
+            if self.map_update_count > int(row["map_update_count_before"]):
+                (
+                    self.frontier_no_progress_success_streak,
+                    should_exclude,
+                    map_gain,
+                ) = next_no_progress_frontier_state(
+                    self.frontier_no_progress_success_streak,
+                    map_area_before_m2=float(row["map_area_before_m2"]),
+                    map_area_after_m2=area_after,
+                    minimum_gain_m2=float(
+                        self.get_parameter("minimum_frontier_map_gain_m2").value
+                    ),
+                    successes_before_exclusion=int(
+                        self.get_parameter(
+                            "no_progress_frontier_success_limit"
+                        ).value
+                    ),
+                )
+                row["map_progress_evaluated"] = True
+                row["map_area_gain_m2"] = map_gain
+                mapping_progress = map_gain + 1.0e-9 >= float(
+                    self.get_parameter("minimum_frontier_map_gain_m2").value
+                )
+                row["mapping_progress"] = mapping_progress
+                if not mapping_progress:
+                    self.frontier_no_progress_success_count += 1
+                if should_exclude:
+                    centers = self._add_goal_exclusions(self.active_goal)
+                    row["no_progress_exclusion"] = True
+                    row["excluded_centers_xy_m"] = [
+                        list(center) for center in centers
+                    ]
+                    self.frontier_no_progress_exclusion_count += 1
+                    self.last_error = "frontier_success_without_map_progress"
+            else:
+                # Do not classify against stale map state. The next goal will
+                # carry a new baseline once an OccupancyGrid update arrives.
+                row["map_progress_evaluated"] = False
+                row["mapping_progress"] = None
+        if row.get("goal_kind") == "lane_shift_backup":
+            index = row.get("sweep_target_index")
+            if succeeded and index is not None:
                 self.sweep_lane_shift_backup_completed.add(int(index))
             self.sweep_lane_shift_backup_pending = None
-        self._update_adaptive_goal_distance(
-            status == GoalStatus.STATUS_SUCCEEDED
-        )
-        if status != GoalStatus.STATUS_SUCCEEDED:
+        self._update_adaptive_goal_distance(mapping_progress)
+        if not succeeded:
             self._exclude_failed_goal(
                 self.active_goal,
                 wide_exclusion=(
@@ -1291,6 +1345,12 @@ class FrontierExplorer(Node):
             "failed_goal_exclusion_ttl_sec": float(
                 self.get_parameter("failed_goal_exclusion_ttl_sec").value
             ),
+            "minimum_frontier_map_gain_m2": float(
+                self.get_parameter("minimum_frontier_map_gain_m2").value
+            ),
+            "no_progress_frontier_success_limit": int(
+                self.get_parameter("no_progress_frontier_success_limit").value
+            ),
             "active_failed_goal_exclusion_count": len(self.excluded_goals),
             "frontier_exclusion_wait_count": self.frontier_exclusion_wait_count,
             "reverse_escape_goal_count": self.reverse_escape_goal_count,
@@ -1400,6 +1460,15 @@ class FrontierExplorer(Node):
             "map_update_count": self.map_update_count,
             "costmap_rejected_goal_count": self.costmap_rejected_goal_count,
             "raw_frontier_exclusion_count": self.raw_frontier_exclusion_count,
+            "frontier_no_progress_success_count": (
+                self.frontier_no_progress_success_count
+            ),
+            "frontier_no_progress_success_streak": (
+                self.frontier_no_progress_success_streak
+            ),
+            "frontier_no_progress_exclusion_count": (
+                self.frontier_no_progress_exclusion_count
+            ),
             "map_metrics": metrics,
             "goal_count": len(self.goal_history),
             "goal_success_count": sum(

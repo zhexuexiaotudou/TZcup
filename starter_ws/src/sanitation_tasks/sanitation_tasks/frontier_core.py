@@ -37,6 +37,8 @@ class FrontierGoal:
     distance_m: float
     score: float
     preference_distance_m: float | None = None
+    raw_world_x_m: float | None = None
+    raw_world_y_m: float | None = None
 
 
 def reverse_escape_goal(
@@ -86,9 +88,15 @@ def frontier_goal_exclusion_centers(
     can produce an indefinitely successful but zero-map-gain loop.
     """
     endpoint = (float(goal.world_x_m), float(goal.world_y_m))
-    if geometry is None or goal.grid_x < 0 or goal.grid_y < 0:
+    if goal.raw_world_x_m is not None and goal.raw_world_y_m is not None:
+        raw_frontier = (
+            float(goal.raw_world_x_m),
+            float(goal.raw_world_y_m),
+        )
+    elif geometry is not None and goal.grid_x >= 0 and goal.grid_y >= 0:
+        raw_frontier = grid_to_world(goal.grid_x, goal.grid_y, geometry)
+    else:
         return (endpoint,)
-    raw_frontier = grid_to_world(goal.grid_x, goal.grid_y, geometry)
     if math.hypot(
         raw_frontier[0] - endpoint[0], raw_frontier[1] - endpoint[1]
     ) <= 1.0e-9:
@@ -285,6 +293,41 @@ def next_adaptive_goal_distance(
     if streak < threshold:
         return current, streak
     return min(maximum, current + max(0.0, float(growth_step_m))), 0
+
+
+def next_no_progress_frontier_state(
+    current_streak: int,
+    *,
+    map_area_before_m2: float,
+    map_area_after_m2: float,
+    minimum_gain_m2: float,
+    successes_before_exclusion: int,
+) -> tuple[int, bool, float]:
+    """Classify successful motion by whether it actually expanded the map.
+
+    Nav2 success only proves that the commanded endpoint was reached. It is
+    not exploration progress. Repeated short Ackermann arcs can succeed near
+    the same raw frontier while the known map area stays constant. The caller
+    cools that endpoint and its source frontier when ``should_exclude`` is true.
+    """
+    before = float(map_area_before_m2)
+    after = float(map_area_after_m2)
+    minimum_gain = float(minimum_gain_m2)
+    if not all(math.isfinite(value) for value in (before, after, minimum_gain)):
+        raise ValueError("map areas and minimum gain must be finite")
+    if minimum_gain < 0.0:
+        raise ValueError("minimum gain must be non-negative")
+    limit = int(successes_before_exclusion)
+    if limit < 1:
+        raise ValueError("successes_before_exclusion must be positive")
+
+    gain = after - before
+    if gain + 1.0e-9 >= minimum_gain:
+        return 0, False, gain
+    streak = max(0, int(current_streak)) + 1
+    if streak >= limit:
+        return 0, True, gain
+    return streak, False, gain
 
 
 def _index(x: int, y: int, geometry: GridGeometry) -> int:
@@ -691,6 +734,7 @@ def rank_frontiers(
                 distance,
                 goal_yaw,
                 preference_distance,
+                raw_world,
             )
             break
         if selected is None:
@@ -703,6 +747,7 @@ def rank_frontiers(
             distance,
             goal_yaw,
             preference_distance,
+            raw_world,
         ) = selected
         gain = len(cluster) * geometry.resolution_m
         goals.append(
@@ -720,6 +765,8 @@ def rank_frontiers(
                 distance_m=distance,
                 score=gain - distance_weight * distance,
                 preference_distance_m=preference_distance,
+                raw_world_x_m=raw_world[0],
+                raw_world_y_m=raw_world[1],
             )
         )
     if preferred_world_xy is not None:
