@@ -87,7 +87,10 @@ class FrontierExplorer(Node):
         self.declare_parameter("failed_goal_cooldown_sec", 10.0)
         self.declare_parameter("failed_goal_exclusion_ttl_sec", 180.0)
         self.declare_parameter("minimum_frontier_map_gain_m2", 2.0)
-        self.declare_parameter("no_progress_frontier_success_limit", 3)
+        self.declare_parameter("no_progress_endpoint_success_limit", 3)
+        self.declare_parameter("no_progress_raw_frontier_success_limit", 12)
+        self.declare_parameter("no_progress_endpoint_exclusion_ttl_sec", 60.0)
+        self.declare_parameter("no_progress_raw_exclusion_ttl_sec", 900.0)
         self.declare_parameter("reverse_escape_distance_m", 2.0)
         self.declare_parameter("reverse_escape_speed_mps", 0.15)
         self.declare_parameter("frontier_sweep_enabled", False)
@@ -162,6 +165,8 @@ class FrontierExplorer(Node):
         self.frontier_no_progress_success_count = 0
         self.frontier_no_progress_success_streak = 0
         self.frontier_no_progress_exclusion_count = 0
+        self.frontier_no_progress_endpoint_exclusion_count = 0
+        self.frontier_no_progress_raw_exclusion_count = 0
         self.frontier_exclusion_wait_count = 0
         self.reverse_escape_goal_count = 0
         self.sweep_targets = []
@@ -1008,9 +1013,16 @@ class FrontierExplorer(Node):
             message.poses.append(pose)
         return message
 
-    def _add_excluded_goal(self, world_x_m: float, world_y_m: float) -> None:
+    def _add_excluded_goal(
+        self,
+        world_x_m: float,
+        world_y_m: float,
+        *,
+        ttl_sec: float | None = None,
+    ) -> None:
         ttl = max(0.0, float(
             self.get_parameter("failed_goal_exclusion_ttl_sec").value
+            if ttl_sec is None else ttl_sec
         ))
         self.excluded_goals.append((
             float(world_x_m),
@@ -1018,10 +1030,12 @@ class FrontierExplorer(Node):
             time.monotonic() + ttl,
         ))
 
-    def _add_goal_exclusions(self, goal) -> tuple[tuple[float, float], ...]:
+    def _add_goal_exclusions(
+        self, goal, *, ttl_sec: float | None = None
+    ) -> tuple[tuple[float, float], ...]:
         centers = frontier_goal_exclusion_centers(goal, self.latest_geometry)
         for center in centers:
-            self._add_excluded_goal(*center)
+            self._add_excluded_goal(*center, ttl_sec=ttl_sec)
         if len(centers) > 1:
             self.raw_frontier_exclusion_count += 1
         return centers
@@ -1131,7 +1145,7 @@ class FrontierExplorer(Node):
             if self.map_update_count > int(row["map_update_count_before"]):
                 (
                     self.frontier_no_progress_success_streak,
-                    should_exclude,
+                    exclusion_scope,
                     map_gain,
                 ) = next_no_progress_frontier_state(
                     self.frontier_no_progress_success_streak,
@@ -1140,9 +1154,14 @@ class FrontierExplorer(Node):
                     minimum_gain_m2=float(
                         self.get_parameter("minimum_frontier_map_gain_m2").value
                     ),
-                    successes_before_exclusion=int(
+                    endpoint_successes_before_exclusion=int(
                         self.get_parameter(
-                            "no_progress_frontier_success_limit"
+                            "no_progress_endpoint_success_limit"
+                        ).value
+                    ),
+                    raw_successes_before_exclusion=int(
+                        self.get_parameter(
+                            "no_progress_raw_frontier_success_limit"
                         ).value
                     ),
                 )
@@ -1154,14 +1173,42 @@ class FrontierExplorer(Node):
                 row["mapping_progress"] = mapping_progress
                 if not mapping_progress:
                     self.frontier_no_progress_success_count += 1
-                if should_exclude:
-                    centers = self._add_goal_exclusions(self.active_goal)
+                if exclusion_scope == "endpoint":
+                    center = (
+                        float(self.active_goal.world_x_m),
+                        float(self.active_goal.world_y_m),
+                    )
+                    self._add_excluded_goal(
+                        *center,
+                        ttl_sec=float(self.get_parameter(
+                            "no_progress_endpoint_exclusion_ttl_sec"
+                        ).value),
+                    )
                     row["no_progress_exclusion"] = True
+                    row["no_progress_exclusion_scope"] = "endpoint"
+                    row["excluded_centers_xy_m"] = [list(center)]
+                    self.frontier_no_progress_exclusion_count += 1
+                    self.frontier_no_progress_endpoint_exclusion_count += 1
+                    self.last_error = (
+                        "frontier_success_without_map_progress_endpoint_excluded"
+                    )
+                elif exclusion_scope == "endpoint_and_raw":
+                    centers = self._add_goal_exclusions(
+                        self.active_goal,
+                        ttl_sec=float(self.get_parameter(
+                            "no_progress_raw_exclusion_ttl_sec"
+                        ).value),
+                    )
+                    row["no_progress_exclusion"] = True
+                    row["no_progress_exclusion_scope"] = "endpoint_and_raw"
                     row["excluded_centers_xy_m"] = [
                         list(center) for center in centers
                     ]
                     self.frontier_no_progress_exclusion_count += 1
-                    self.last_error = "frontier_success_without_map_progress"
+                    self.frontier_no_progress_raw_exclusion_count += 1
+                    self.last_error = (
+                        "frontier_success_without_map_progress_raw_excluded"
+                    )
             else:
                 # Do not classify against stale map state. The next goal will
                 # carry a new baseline once an OccupancyGrid update arrives.
@@ -1348,8 +1395,21 @@ class FrontierExplorer(Node):
             "minimum_frontier_map_gain_m2": float(
                 self.get_parameter("minimum_frontier_map_gain_m2").value
             ),
-            "no_progress_frontier_success_limit": int(
-                self.get_parameter("no_progress_frontier_success_limit").value
+            "no_progress_endpoint_success_limit": int(
+                self.get_parameter("no_progress_endpoint_success_limit").value
+            ),
+            "no_progress_raw_frontier_success_limit": int(
+                self.get_parameter(
+                    "no_progress_raw_frontier_success_limit"
+                ).value
+            ),
+            "no_progress_endpoint_exclusion_ttl_sec": float(
+                self.get_parameter(
+                    "no_progress_endpoint_exclusion_ttl_sec"
+                ).value
+            ),
+            "no_progress_raw_exclusion_ttl_sec": float(
+                self.get_parameter("no_progress_raw_exclusion_ttl_sec").value
             ),
             "active_failed_goal_exclusion_count": len(self.excluded_goals),
             "frontier_exclusion_wait_count": self.frontier_exclusion_wait_count,
@@ -1468,6 +1528,12 @@ class FrontierExplorer(Node):
             ),
             "frontier_no_progress_exclusion_count": (
                 self.frontier_no_progress_exclusion_count
+            ),
+            "frontier_no_progress_endpoint_exclusion_count": (
+                self.frontier_no_progress_endpoint_exclusion_count
+            ),
+            "frontier_no_progress_raw_exclusion_count": (
+                self.frontier_no_progress_raw_exclusion_count
             ),
             "map_metrics": metrics,
             "goal_count": len(self.goal_history),

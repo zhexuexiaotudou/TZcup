@@ -33,7 +33,7 @@ slam_toolbox:
     # The 200 x 100 m campus contains long open stretches where max-range
     # no-return rays are rotationally symmetric. Sequential scan matching can
     # therefore pin motion to the scan centroid. Product mapping uses the RTK
-    # GNSS + wheel/IMU odometry chain; loop closure remains enabled below.
+    # GNSS + wheel/IMU odometry chain as its global pose authority.
     use_scan_matching: false
     use_scan_barycenter: true
     minimum_travel_distance: 0.20
@@ -43,7 +43,10 @@ slam_toolbox:
     link_match_minimum_response_fine: 0.10
     link_scan_maximum_distance: 2.0
     loop_search_maximum_distance: 4.0
-    do_loop_closing: true
+    # Repetitive campus rows produced parallel duplicate obstacle boundaries
+    # when Karto added loop constraints on top of authoritative RTK odometry.
+    # Keep the graph in odometric mapping mode for this product profile.
+    do_loop_closing: false
     loop_match_minimum_chain_size: 10
     loop_match_maximum_variance_coarse: 3.0
     loop_match_minimum_response_coarse: 0.35

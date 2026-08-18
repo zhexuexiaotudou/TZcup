@@ -511,7 +511,10 @@ start_group mapping_explorer "$mapping/frontier_exploration.log" \
   -p goal_timeout_sec:=60.0 -p failed_goal_cooldown_sec:=10.0 \
   -p failed_goal_exclusion_ttl_sec:=180.0 \
   -p minimum_frontier_map_gain_m2:=2.0 \
-  -p no_progress_frontier_success_limit:=3 \
+  -p no_progress_endpoint_success_limit:=3 \
+  -p no_progress_raw_frontier_success_limit:=12 \
+  -p no_progress_endpoint_exclusion_ttl_sec:=60.0 \
+  -p no_progress_raw_exclusion_ttl_sec:=900.0 \
   -p reverse_escape_distance_m:=2.0 \
   -p reverse_escape_speed_mps:=0.15 \
   -p frontier_sweep_enabled:="$SWEEP_ENABLED" \

@@ -160,31 +160,41 @@ def test_adaptive_frontier_stride_grows_after_success_and_contracts_on_failure()
     assert (distance, streak) == (2.5, 0)
 
 
-def test_successful_motion_without_map_gain_is_excluded_after_fixed_streak():
+def test_successful_motion_uses_endpoint_then_raw_frontier_exclusion():
     streak = 0
-    for index, after in enumerate((100.4, 100.7, 101.0), start=1):
-        streak, should_exclude, gain = next_no_progress_frontier_state(
+    actions = []
+    for index in range(1, 13):
+        streak, action, gain = next_no_progress_frontier_state(
             streak,
             map_area_before_m2=100.0,
-            map_area_after_m2=after,
+            map_area_after_m2=100.4,
             minimum_gain_m2=2.0,
-            successes_before_exclusion=3,
+            endpoint_successes_before_exclusion=3,
+            raw_successes_before_exclusion=12,
         )
-        assert gain == pytest.approx(after - 100.0)
-        assert should_exclude is (index == 3)
+        assert gain == pytest.approx(0.4)
+        if action is not None:
+            actions.append((index, action))
+    assert actions == [
+        (3, "endpoint"),
+        (6, "endpoint"),
+        (9, "endpoint"),
+        (12, "endpoint_and_raw"),
+    ]
     assert streak == 0
 
 
 def test_real_map_gain_resets_no_progress_streak():
-    streak, should_exclude, gain = next_no_progress_frontier_state(
+    streak, action, gain = next_no_progress_frontier_state(
         2,
         map_area_before_m2=100.0,
         map_area_after_m2=102.0,
         minimum_gain_m2=2.0,
-        successes_before_exclusion=3,
+        endpoint_successes_before_exclusion=3,
+        raw_successes_before_exclusion=12,
     )
     assert streak == 0
-    assert should_exclude is False
+    assert action is None
     assert gain == pytest.approx(2.0)
 
 
@@ -195,7 +205,8 @@ def test_no_progress_policy_rejects_invalid_contract_values():
             map_area_before_m2=0.0,
             map_area_after_m2=0.0,
             minimum_gain_m2=2.0,
-            successes_before_exclusion=0,
+            endpoint_successes_before_exclusion=0,
+            raw_successes_before_exclusion=12,
         )
 
 

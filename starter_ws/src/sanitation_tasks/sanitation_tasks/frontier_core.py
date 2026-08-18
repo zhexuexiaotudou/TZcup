@@ -301,14 +301,17 @@ def next_no_progress_frontier_state(
     map_area_before_m2: float,
     map_area_after_m2: float,
     minimum_gain_m2: float,
-    successes_before_exclusion: int,
-) -> tuple[int, bool, float]:
+    endpoint_successes_before_exclusion: int,
+    raw_successes_before_exclusion: int,
+) -> tuple[int, str | None, float]:
     """Classify successful motion by whether it actually expanded the map.
 
     Nav2 success only proves that the commanded endpoint was reached. It is
     not exploration progress. Repeated short Ackermann arcs can succeed near
     the same raw frontier while the known map area stays constant. The caller
-    cools that endpoint and its source frontier when ``should_exclude`` is true.
+    first cools only local arc endpoints so a valid distant frontier can still
+    be approached through multiple curvature-limited stages. A longer streak
+    cools both the endpoint and source frontier.
     """
     before = float(map_area_before_m2)
     after = float(map_area_after_m2)
@@ -317,17 +320,22 @@ def next_no_progress_frontier_state(
         raise ValueError("map areas and minimum gain must be finite")
     if minimum_gain < 0.0:
         raise ValueError("minimum gain must be non-negative")
-    limit = int(successes_before_exclusion)
-    if limit < 1:
-        raise ValueError("successes_before_exclusion must be positive")
+    endpoint_limit = int(endpoint_successes_before_exclusion)
+    raw_limit = int(raw_successes_before_exclusion)
+    if endpoint_limit < 1:
+        raise ValueError("endpoint exclusion limit must be positive")
+    if raw_limit < endpoint_limit:
+        raise ValueError("raw exclusion limit must be at least endpoint limit")
 
     gain = after - before
     if gain + 1.0e-9 >= minimum_gain:
-        return 0, False, gain
+        return 0, None, gain
     streak = max(0, int(current_streak)) + 1
-    if streak >= limit:
-        return 0, True, gain
-    return streak, False, gain
+    if streak >= raw_limit:
+        return 0, "endpoint_and_raw", gain
+    if streak % endpoint_limit == 0:
+        return streak, "endpoint", gain
+    return streak, None, gain
 
 
 def _index(x: int, y: int, geometry: GridGeometry) -> int:
