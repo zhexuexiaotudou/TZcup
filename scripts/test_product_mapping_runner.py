@@ -71,7 +71,8 @@ def test_formal_runner_has_real_restart_and_20k_fail_closed_scope():
         in text
     )
     assert "-p horizontal_sweep_staging_path_sample_spacing_m:=0.25" in text
-    assert "-p horizontal_sweep_staging_timeout_sec:=20.0" in text
+    assert "-p horizontal_sweep_staging_timeout_sec:=60.0" in text
+    assert "-p horizontal_sweep_alignment_timeout_sec:=20.0" in text
     assert "-p horizontal_sweep_alignment_distance_m:=2.0" in text
     assert "-p horizontal_sweep_alignment_tolerance_rad:=0.15" in text
     assert "-p minimum_goal_distance_m:=0.80" in text

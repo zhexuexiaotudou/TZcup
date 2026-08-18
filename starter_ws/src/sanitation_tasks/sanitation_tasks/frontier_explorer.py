@@ -101,7 +101,8 @@ class FrontierExplorer(Node):
         self.declare_parameter(
             "horizontal_sweep_staging_path_sample_spacing_m", 0.25
         )
-        self.declare_parameter("horizontal_sweep_staging_timeout_sec", 20.0)
+        self.declare_parameter("horizontal_sweep_staging_timeout_sec", 60.0)
+        self.declare_parameter("horizontal_sweep_alignment_timeout_sec", 20.0)
         self.declare_parameter("horizontal_sweep_alignment_distance_m", 2.0)
         self.declare_parameter("horizontal_sweep_alignment_tolerance_rad", 0.15)
         self.declare_parameter("reverse_escape_distance_m", 2.0)
@@ -1192,13 +1193,14 @@ class FrontierExplorer(Node):
         self.goal_history.append(row)
         self.active_goal = goal
         self.active_goal_started_monotonic = time.monotonic()
-        self.active_goal_timeout_sec = float(self.get_parameter(
-            "horizontal_sweep_staging_timeout_sec"
-            if goal_kind in {
-                "horizontal_sweep_staging", "horizontal_sweep_alignment"
-            }
-            else "goal_timeout_sec"
-        ).value)
+        timeout_parameter = "goal_timeout_sec"
+        if goal_kind == "horizontal_sweep_staging":
+            timeout_parameter = "horizontal_sweep_staging_timeout_sec"
+        elif goal_kind == "horizontal_sweep_alignment":
+            timeout_parameter = "horizontal_sweep_alignment_timeout_sec"
+        self.active_goal_timeout_sec = float(
+            self.get_parameter(timeout_parameter).value
+        )
         self.active_goal_cancel_requested = False
         future = self.action_client.send_goal_async(message)
         future.add_done_callback(self._on_goal_response)
@@ -1556,6 +1558,11 @@ class FrontierExplorer(Node):
             ),
             "horizontal_sweep_staging_timeout_sec": float(
                 self.get_parameter("horizontal_sweep_staging_timeout_sec").value
+            ),
+            "horizontal_sweep_alignment_timeout_sec": float(
+                self.get_parameter(
+                    "horizontal_sweep_alignment_timeout_sec"
+                ).value
             ),
             "horizontal_sweep_alignment_distance_m": float(
                 self.get_parameter("horizontal_sweep_alignment_distance_m").value
