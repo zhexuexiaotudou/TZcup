@@ -63,6 +63,7 @@ def test_formal_runner_has_real_restart_and_20k_fail_closed_scope():
     assert "-p failed_goal_cooldown_sec:=10.0" in text
     assert "-p failed_goal_exclusion_ttl_sec:=180.0" in text
     assert "-p minimum_frontier_map_gain_m2:=2.0" in text
+    assert "-p no_progress_staging_success_limit:=3" in text
     assert "-p no_progress_raw_frontier_success_limit:=12" in text
     assert "-p no_progress_raw_exclusion_ttl_sec:=900.0" in text
     assert '-p horizontal_sweep_staging_distances_m:="[8.0, 6.0, 4.0]"' in text
@@ -206,6 +207,8 @@ def test_frontier_timeout_restarts_nav2_before_next_goal():
     assert '"frontier_no_progress_raw_exclusion_count"' in explorer
     assert '"frontier_success_without_map_progress_raw_excluded"' in explorer
     assert '"horizontal_sweep_staging_attempt_count"' in explorer
+    assert '"horizontal_sweep_staging_arm_count"' in explorer
+    assert '"frontier_success_without_map_progress_staging_armed"' in explorer
     assert 'goal_kind="horizontal_sweep_staging"' in explorer
 
 

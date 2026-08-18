@@ -354,15 +354,16 @@ def next_no_progress_frontier_state(
     map_area_before_m2: float,
     map_area_after_m2: float,
     minimum_gain_m2: float,
-    successes_before_recovery: int,
-) -> tuple[int, bool, float]:
+    successes_before_staging: int,
+    successes_before_raw_exclusion: int,
+) -> tuple[int, str | None, float]:
     """Classify successful motion by whether it actually expanded the map.
 
     Nav2 success only proves that the commanded endpoint was reached. It is
     not exploration progress. Repeated short Ackermann arcs can succeed near
     the same raw frontier while the known map area stays constant. The caller
-    preserves valid multi-stage Ackermann approaches until a long zero-gain
-    streak proves that a different recovery action is required.
+    periodically requests a known-free staging step while preserving the raw
+    frontier. A longer streak requests raw-frontier cooling as well.
     """
     before = float(map_area_before_m2)
     after = float(map_area_after_m2)
@@ -371,17 +372,22 @@ def next_no_progress_frontier_state(
         raise ValueError("map areas and minimum gain must be finite")
     if minimum_gain < 0.0:
         raise ValueError("minimum gain must be non-negative")
-    limit = int(successes_before_recovery)
-    if limit < 1:
-        raise ValueError("successes_before_recovery must be positive")
+    staging_limit = int(successes_before_staging)
+    raw_limit = int(successes_before_raw_exclusion)
+    if staging_limit < 1:
+        raise ValueError("successes_before_staging must be positive")
+    if raw_limit < staging_limit:
+        raise ValueError("raw exclusion limit must be at least staging limit")
 
     gain = after - before
     if gain + 1.0e-9 >= minimum_gain:
-        return 0, False, gain
+        return 0, None, gain
     streak = max(0, int(current_streak)) + 1
-    if streak >= limit:
-        return 0, True, gain
-    return streak, False, gain
+    if streak >= raw_limit:
+        return 0, "raw_and_staging", gain
+    if streak % staging_limit == 0:
+        return streak, "staging", gain
+    return streak, None, gain
 
 
 def _index(x: int, y: int, geometry: GridGeometry) -> int:

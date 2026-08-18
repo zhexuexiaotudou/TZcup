@@ -161,34 +161,41 @@ def test_adaptive_frontier_stride_grows_after_success_and_contracts_on_failure()
     assert (distance, streak) == (2.5, 0)
 
 
-def test_successful_motion_triggers_recovery_after_long_zero_gain_streak():
+def test_successful_motion_stages_before_raw_frontier_exclusion():
     streak = 0
-    recoveries = []
+    actions = []
     for index in range(1, 13):
-        streak, should_recover, gain = next_no_progress_frontier_state(
+        streak, action, gain = next_no_progress_frontier_state(
             streak,
             map_area_before_m2=100.0,
             map_area_after_m2=100.4,
             minimum_gain_m2=2.0,
-            successes_before_recovery=12,
+            successes_before_staging=3,
+            successes_before_raw_exclusion=12,
         )
         assert gain == pytest.approx(0.4)
-        if should_recover:
-            recoveries.append(index)
-    assert recoveries == [12]
+        if action is not None:
+            actions.append((index, action))
+    assert actions == [
+        (3, "staging"),
+        (6, "staging"),
+        (9, "staging"),
+        (12, "raw_and_staging"),
+    ]
     assert streak == 0
 
 
 def test_real_map_gain_resets_no_progress_streak():
-    streak, should_recover, gain = next_no_progress_frontier_state(
+    streak, action, gain = next_no_progress_frontier_state(
         2,
         map_area_before_m2=100.0,
         map_area_after_m2=102.0,
         minimum_gain_m2=2.0,
-        successes_before_recovery=12,
+        successes_before_staging=3,
+        successes_before_raw_exclusion=12,
     )
     assert streak == 0
-    assert should_recover is False
+    assert action is None
     assert gain == pytest.approx(2.0)
 
 
@@ -199,7 +206,8 @@ def test_no_progress_policy_rejects_invalid_contract_values():
             map_area_before_m2=0.0,
             map_area_after_m2=0.0,
             minimum_gain_m2=2.0,
-            successes_before_recovery=0,
+            successes_before_staging=0,
+            successes_before_raw_exclusion=12,
         )
 
 

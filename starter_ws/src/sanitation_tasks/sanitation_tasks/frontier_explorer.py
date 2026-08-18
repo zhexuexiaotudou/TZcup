@@ -88,6 +88,7 @@ class FrontierExplorer(Node):
         self.declare_parameter("failed_goal_cooldown_sec", 10.0)
         self.declare_parameter("failed_goal_exclusion_ttl_sec", 180.0)
         self.declare_parameter("minimum_frontier_map_gain_m2", 2.0)
+        self.declare_parameter("no_progress_staging_success_limit", 3)
         self.declare_parameter("no_progress_raw_frontier_success_limit", 12)
         self.declare_parameter("no_progress_raw_exclusion_ttl_sec", 900.0)
         self.declare_parameter(
@@ -169,6 +170,7 @@ class FrontierExplorer(Node):
         self.frontier_no_progress_exclusion_count = 0
         self.frontier_no_progress_raw_exclusion_count = 0
         self.horizontal_sweep_staging_pending = False
+        self.horizontal_sweep_staging_arm_count = 0
         self.horizontal_sweep_staging_attempt_count = 0
         self.horizontal_sweep_staging_success_count = 0
         self.horizontal_sweep_staging_failure_count = 0
@@ -1198,7 +1200,7 @@ class FrontierExplorer(Node):
             if self.map_update_count > int(row["map_update_count_before"]):
                 (
                     self.frontier_no_progress_success_streak,
-                    should_recover,
+                    recovery_action,
                     map_gain,
                 ) = next_no_progress_frontier_state(
                     self.frontier_no_progress_success_streak,
@@ -1207,7 +1209,12 @@ class FrontierExplorer(Node):
                     minimum_gain_m2=float(
                         self.get_parameter("minimum_frontier_map_gain_m2").value
                     ),
-                    successes_before_recovery=int(
+                    successes_before_staging=int(
+                        self.get_parameter(
+                            "no_progress_staging_success_limit"
+                        ).value
+                    ),
+                    successes_before_raw_exclusion=int(
                         self.get_parameter(
                             "no_progress_raw_frontier_success_limit"
                         ).value
@@ -1221,7 +1228,15 @@ class FrontierExplorer(Node):
                 row["mapping_progress"] = mapping_progress
                 if not mapping_progress:
                     self.frontier_no_progress_success_count += 1
-                if should_recover:
+                if recovery_action == "staging":
+                    row["horizontal_sweep_staging_armed"] = True
+                    row["no_progress_recovery_action"] = "staging"
+                    self.horizontal_sweep_staging_pending = True
+                    self.horizontal_sweep_staging_arm_count += 1
+                    self.last_error = (
+                        "frontier_success_without_map_progress_staging_armed"
+                    )
+                elif recovery_action == "raw_and_staging":
                     centers = self._add_goal_exclusions(
                         self.active_goal,
                         ttl_sec=float(self.get_parameter(
@@ -1231,12 +1246,14 @@ class FrontierExplorer(Node):
                     row["no_progress_exclusion"] = True
                     row["no_progress_exclusion_scope"] = "endpoint_and_raw"
                     row["horizontal_sweep_staging_armed"] = True
+                    row["no_progress_recovery_action"] = "raw_and_staging"
                     row["excluded_centers_xy_m"] = [
                         list(center) for center in centers
                     ]
                     self.frontier_no_progress_exclusion_count += 1
                     self.frontier_no_progress_raw_exclusion_count += 1
                     self.horizontal_sweep_staging_pending = True
+                    self.horizontal_sweep_staging_arm_count += 1
                     self.last_error = (
                         "frontier_success_without_map_progress_raw_excluded"
                     )
@@ -1431,6 +1448,9 @@ class FrontierExplorer(Node):
             "minimum_frontier_map_gain_m2": float(
                 self.get_parameter("minimum_frontier_map_gain_m2").value
             ),
+            "no_progress_staging_success_limit": int(
+                self.get_parameter("no_progress_staging_success_limit").value
+            ),
             "no_progress_raw_frontier_success_limit": int(
                 self.get_parameter(
                     "no_progress_raw_frontier_success_limit"
@@ -1567,6 +1587,9 @@ class FrontierExplorer(Node):
             ),
             "horizontal_sweep_staging_pending": (
                 self.horizontal_sweep_staging_pending
+            ),
+            "horizontal_sweep_staging_arm_count": (
+                self.horizontal_sweep_staging_arm_count
             ),
             "horizontal_sweep_staging_attempt_count": (
                 self.horizontal_sweep_staging_attempt_count
