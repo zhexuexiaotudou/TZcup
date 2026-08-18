@@ -628,18 +628,69 @@ def _ackermann_arc_endpoint(
     # completing the minimum-radius arc. This remains forward-drivable.
     required = max(0.0, float(minimum_goal_distance_m))
     distance = math.hypot(world_x - robot_xy_m[0], world_y - robot_xy_m[1])
-    extension = max(0.0, required - distance)
-    for _ in range(3):
-        candidate_x = world_x + extension * math.cos(goal_yaw)
-        candidate_y = world_y + extension * math.sin(goal_yaw)
-        candidate_distance = math.hypot(
-            candidate_x - robot_xy_m[0], candidate_y - robot_xy_m[1]
+    if distance + 1.0e-9 < required:
+        relative_x = world_x - robot_xy_m[0]
+        relative_y = world_y - robot_xy_m[1]
+        tangent_x = math.cos(goal_yaw)
+        tangent_y = math.sin(goal_yaw)
+        projection = relative_x * tangent_x + relative_y * tangent_y
+        discriminant = max(
+            0.0,
+            projection * projection + required * required - distance * distance,
         )
-        if candidate_distance + 1.0e-9 >= required:
-            world_x, world_y = candidate_x, candidate_y
-            break
-        extension += required - candidate_distance + 1.0e-6
+        extension = max(0.0, -projection + math.sqrt(discriminant))
+        world_x += extension * tangent_x
+        world_y += extension * tangent_y
     return world_x, world_y, goal_yaw
+
+
+def sweep_alignment_goal(
+    robot_pose: tuple[float, float, float],
+    target_xy_m: tuple[float, float],
+    *,
+    maximum_heading_change_rad: float,
+    minimum_turning_radius_m: float,
+    minimum_goal_distance_m: float,
+    allowed_bounds_xyxy_m: tuple[float, float, float, float] | None = None,
+    boundary_margin_m: float = 0.0,
+) -> FrontierGoal | None:
+    """Build one forward Ackermann arc that rotates toward a sweep anchor."""
+    robot_x, robot_y, robot_yaw = robot_pose
+    delta_x = float(target_xy_m[0]) - robot_x
+    delta_y = float(target_xy_m[1]) - robot_y
+    if math.hypot(delta_x, delta_y) <= 1.0e-9:
+        return None
+    desired_heading = math.atan2(delta_y, delta_x)
+    world_x, world_y, goal_yaw = _ackermann_arc_endpoint(
+        (robot_x, robot_y),
+        robot_yaw,
+        desired_heading,
+        maximum_heading_change_rad=maximum_heading_change_rad,
+        minimum_turning_radius_m=minimum_turning_radius_m,
+        minimum_goal_distance_m=minimum_goal_distance_m,
+    )
+    distance = math.hypot(world_x - robot_x, world_y - robot_y)
+    if distance <= 1.0e-9:
+        return None
+    if allowed_bounds_xyxy_m is not None:
+        min_x, min_y, max_x, max_y = allowed_bounds_xyxy_m
+        margin = max(0.0, float(boundary_margin_m))
+        if not (
+            min_x + margin <= world_x <= max_x - margin
+            and min_y + margin <= world_y <= max_y - margin
+        ):
+            return None
+    return FrontierGoal(
+        grid_x=-1,
+        grid_y=-1,
+        world_x_m=world_x,
+        world_y_m=world_y,
+        yaw_rad=goal_yaw,
+        frontier_cell_count=0,
+        information_gain_m=0.0,
+        distance_m=distance,
+        score=-distance,
+    )
 
 
 def rank_frontiers(

@@ -18,6 +18,7 @@ from sanitation_tasks.frontier_core import (
     rank_frontiers,
     reverse_escape_goal,
     sweep_anchor_is_behind_chassis,
+    sweep_alignment_goal,
     sweep_staging_goals,
     straight_staging_path_poses,
     vertical_sweep_anchor_reached,
@@ -278,6 +279,39 @@ def test_straight_staging_path_rejects_invalid_spacing():
         straight_staging_path_poses(
             (0.0, 0.0, 0.0), goal, sample_spacing_m=0.0
         )
+
+
+def test_sweep_alignment_goal_turns_forward_toward_rear_anchor():
+    goal = sweep_alignment_goal(
+        (0.0, 0.0, math.pi),
+        (10.0, 0.0),
+        maximum_heading_change_rad=0.7,
+        minimum_turning_radius_m=1.429,
+        minimum_goal_distance_m=2.0,
+        allowed_bounds_xyxy_m=(-100.0, -50.0, 100.0, 50.0),
+        boundary_margin_m=1.5,
+    )
+    assert goal is not None
+    yaw_change = math.atan2(
+        math.sin(goal.yaw_rad - math.pi),
+        math.cos(goal.yaw_rad - math.pi),
+    )
+    assert abs(yaw_change) == pytest.approx(0.7)
+    assert goal.distance_m >= 2.0
+    assert goal.world_x_m < 0.0
+
+
+def test_sweep_alignment_goal_respects_bounds():
+    goal = sweep_alignment_goal(
+        (98.4, 0.0, 0.0),
+        (-100.0, 0.0),
+        maximum_heading_change_rad=0.7,
+        minimum_turning_radius_m=1.429,
+        minimum_goal_distance_m=2.0,
+        allowed_bounds_xyxy_m=(-100.0, -50.0, 100.0, 50.0),
+        boundary_margin_m=1.5,
+    )
+    assert goal is None
 
 
 def _grid(width=12, height=10):

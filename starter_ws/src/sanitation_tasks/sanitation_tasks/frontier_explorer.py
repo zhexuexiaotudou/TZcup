@@ -39,6 +39,7 @@ from .frontier_core import (
     rank_frontiers,
     reverse_escape_goal,
     sweep_anchor_is_behind_chassis,
+    sweep_alignment_goal,
     sweep_staging_goals,
     straight_staging_path_poses,
     vertical_sweep_anchor_reached,
@@ -100,6 +101,7 @@ class FrontierExplorer(Node):
             "horizontal_sweep_staging_path_sample_spacing_m", 0.25
         )
         self.declare_parameter("horizontal_sweep_staging_timeout_sec", 20.0)
+        self.declare_parameter("horizontal_sweep_alignment_distance_m", 2.0)
         self.declare_parameter("reverse_escape_distance_m", 2.0)
         self.declare_parameter("reverse_escape_speed_mps", 0.15)
         self.declare_parameter("frontier_sweep_enabled", False)
@@ -183,6 +185,10 @@ class FrontierExplorer(Node):
         self.horizontal_sweep_staging_unavailable_count = 0
         self.horizontal_sweep_staging_behind_chassis_count = 0
         self.horizontal_sweep_staging_path_rejected_count = 0
+        self.horizontal_sweep_alignment_attempt_count = 0
+        self.horizontal_sweep_alignment_success_count = 0
+        self.horizontal_sweep_alignment_failure_count = 0
+        self.horizontal_sweep_alignment_unavailable_count = 0
         self.frontier_exclusion_wait_count = 0
         self.reverse_escape_goal_count = 0
         self.sweep_targets = []
@@ -499,15 +505,38 @@ class FrontierExplorer(Node):
         if sweep_anchor_is_behind_chassis(
             robot_pose, self.sweep_active_preference
         ):
-            # A direct staging goal behind the chassis asks an Ackermann
-            # vehicle for an infeasible near-point U-turn. Reversing here
-            # merely oscillates against the next online frontier. Leave the
-            # choice to normal frontier ranking instead of consuming the
-            # 60-second navigation watchdog or bypassing collision checks.
-            self.horizontal_sweep_staging_unavailable_count += 1
             self.horizontal_sweep_staging_behind_chassis_count += 1
-            self.last_error = "horizontal_sweep_staging_behind_chassis"
-            return False
+            goal = sweep_alignment_goal(
+                robot_pose,
+                self.sweep_active_preference,
+                maximum_heading_change_rad=float(self.get_parameter(
+                    "maximum_frontier_goal_yaw_change_rad"
+                ).value),
+                minimum_turning_radius_m=float(
+                    self.get_parameter("minimum_turning_radius_m").value
+                ),
+                minimum_goal_distance_m=float(self.get_parameter(
+                    "horizontal_sweep_alignment_distance_m"
+                ).value),
+                allowed_bounds_xyxy_m=self.required_bounds,
+                boundary_margin_m=float(
+                    self.get_parameter("required_bounds_goal_margin_m").value
+                ),
+            )
+            path = (
+                self._forward_costmap_clear_dubins_path(robot_pose, goal)
+                if goal is not None and self._goal_is_costmap_clear(goal)
+                else None
+            )
+            if path is None:
+                self.horizontal_sweep_staging_unavailable_count += 1
+                self.horizontal_sweep_alignment_unavailable_count += 1
+                self.last_error = "horizontal_sweep_alignment_no_clear_path"
+                return False
+            self.horizontal_sweep_alignment_attempt_count += 1
+            self.last_error = "horizontal_sweep_alignment"
+            self._send_goal(goal, goal_kind="horizontal_sweep_alignment")
+            return True
         candidates = sweep_staging_goals(
             robot_pose,
             self.sweep_active_preference,
@@ -579,7 +608,7 @@ class FrontierExplorer(Node):
         # fully known and clear.  Prefer that forward path and never bypass the
         # Collision Monitor merely to force a backup through.
         if any(
-            self._forward_sweep_lane_shift_path(robot_pose, candidate)
+            self._forward_costmap_clear_dubins_path(robot_pose, candidate)
             for candidate in candidates
             if self._goal_is_costmap_clear(candidate)
         ):
@@ -800,7 +829,7 @@ class FrontierExplorer(Node):
             for pose in poses
         )
 
-    def _forward_sweep_lane_shift_path(self, robot_pose, goal):
+    def _forward_costmap_clear_dubins_path(self, robot_pose, goal):
         margin = float(
             self.get_parameter("required_bounds_goal_margin_m").value
         )
@@ -911,7 +940,7 @@ class FrontierExplorer(Node):
         self.sweep_lane_shift_connector_section_index = 0
         self._set_lane_shift_active_goal(goal)
 
-        forward_path = self._forward_sweep_lane_shift_path(robot_pose, goal)
+        forward_path = self._forward_costmap_clear_dubins_path(robot_pose, goal)
         if forward_path:
             row["execution"] = "online_costmap_checked_forward_dubins"
             sections = self._forward_dubins_sections(forward_path)
@@ -1157,7 +1186,9 @@ class FrontierExplorer(Node):
         self.active_goal_started_monotonic = time.monotonic()
         self.active_goal_timeout_sec = float(self.get_parameter(
             "horizontal_sweep_staging_timeout_sec"
-            if goal_kind == "horizontal_sweep_staging"
+            if goal_kind in {
+                "horizontal_sweep_staging", "horizontal_sweep_alignment"
+            }
             else "goal_timeout_sec"
         ).value)
         self.active_goal_cancel_requested = False
@@ -1312,6 +1343,12 @@ class FrontierExplorer(Node):
                 self.horizontal_sweep_staging_success_count += 1
             else:
                 self.horizontal_sweep_staging_failure_count += 1
+        if row.get("goal_kind") == "horizontal_sweep_alignment":
+            if succeeded:
+                self.horizontal_sweep_alignment_success_count += 1
+                self.horizontal_sweep_staging_pending = True
+            else:
+                self.horizontal_sweep_alignment_failure_count += 1
         self._update_adaptive_goal_distance(mapping_progress)
         if not succeeded:
             self._exclude_failed_goal(
@@ -1512,6 +1549,9 @@ class FrontierExplorer(Node):
             "horizontal_sweep_staging_timeout_sec": float(
                 self.get_parameter("horizontal_sweep_staging_timeout_sec").value
             ),
+            "horizontal_sweep_alignment_distance_m": float(
+                self.get_parameter("horizontal_sweep_alignment_distance_m").value
+            ),
             "active_failed_goal_exclusion_count": len(self.excluded_goals),
             "frontier_exclusion_wait_count": self.frontier_exclusion_wait_count,
             "reverse_escape_goal_count": self.reverse_escape_goal_count,
@@ -1656,6 +1696,18 @@ class FrontierExplorer(Node):
             ),
             "horizontal_sweep_staging_path_rejected_count": (
                 self.horizontal_sweep_staging_path_rejected_count
+            ),
+            "horizontal_sweep_alignment_attempt_count": (
+                self.horizontal_sweep_alignment_attempt_count
+            ),
+            "horizontal_sweep_alignment_success_count": (
+                self.horizontal_sweep_alignment_success_count
+            ),
+            "horizontal_sweep_alignment_failure_count": (
+                self.horizontal_sweep_alignment_failure_count
+            ),
+            "horizontal_sweep_alignment_unavailable_count": (
+                self.horizontal_sweep_alignment_unavailable_count
             ),
             "map_metrics": metrics,
             "goal_count": len(self.goal_history),
