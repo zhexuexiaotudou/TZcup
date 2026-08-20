@@ -364,6 +364,24 @@ def vertical_sweep_anchor_reached(
     return float(mapped_envelope_bounds_xyxy_m[1]) <= float(target_y_m) + radius
 
 
+def sweep_target_completion_reached(
+    *,
+    axis: str | None,
+    pose_reached: bool,
+    mapped_reached: bool,
+) -> bool:
+    """Require chassis lane arrival for vertical sweep transitions.
+
+    A laser can observe the next lateral envelope while the chassis remains on
+    the wrong side of an obstacle. Horizontal endpoints may advance once either
+    the chassis or its mapped neighborhood reaches the anchor, but a vertical
+    lane shift is complete only after both the map and chassis reach it.
+    """
+    if axis == "vertical":
+        return bool(pose_reached) and bool(mapped_reached)
+    return bool(pose_reached) or bool(mapped_reached)
+
+
 def prune_timed_exclusions(
     records: Iterable[tuple[float, float, float]],
     *,

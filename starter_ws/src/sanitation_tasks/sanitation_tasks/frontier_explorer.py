@@ -45,6 +45,7 @@ from .frontier_core import (
     sweep_alignment_goal,
     sweep_staging_goals,
     straight_staging_path_poses,
+    sweep_target_completion_reached,
     vertical_sweep_anchor_reached,
     world_disk_has_known_cell,
     world_disk_is_traversable,
@@ -754,7 +755,11 @@ class FrontierExplorer(Node):
                     target,
                     radius_m=mapped_radius,
                 )
-            if not pose_reached and not mapped_reached:
+            if not sweep_target_completion_reached(
+                axis=axis,
+                pose_reached=pose_reached,
+                mapped_reached=mapped_reached,
+            ):
                 self.sweep_active_anchor = target
                 self.sweep_active_preference = preference
                 self.sweep_active_axis = axis

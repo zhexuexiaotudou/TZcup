@@ -24,6 +24,7 @@ from sanitation_tasks.frontier_core import (
     sweep_alignment_goal,
     sweep_staging_goals,
     straight_staging_path_poses,
+    sweep_target_completion_reached,
     vertical_sweep_anchor_reached,
     world_disk_has_known_cell,
     world_disk_is_traversable,
@@ -132,6 +133,21 @@ def test_vertical_sweep_anchor_uses_live_envelope_without_fixed_corner():
         previous_y_m=10.0,
         target_y_m=-30.0,
         radius_m=5.0,
+    )
+
+
+def test_vertical_sweep_requires_both_map_and_chassis_lane_arrival():
+    assert not sweep_target_completion_reached(
+        axis="vertical", pose_reached=False, mapped_reached=True
+    )
+    assert not sweep_target_completion_reached(
+        axis="vertical", pose_reached=True, mapped_reached=False
+    )
+    assert sweep_target_completion_reached(
+        axis="vertical", pose_reached=True, mapped_reached=True
+    )
+    assert sweep_target_completion_reached(
+        axis="horizontal", pose_reached=False, mapped_reached=True
     )
 
 
