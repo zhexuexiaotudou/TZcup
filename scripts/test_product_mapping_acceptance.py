@@ -75,6 +75,19 @@ def _evaluation_args(tmp_path, *, formal_scope=True):
         "processes": _write_json(tmp_path / "processes.json", {
             "formal_scope": formal_scope,
             "restart_completed": True,
+            "runtime_shutdown": {
+                "all_started_service_groups_clean": True,
+                "missing_shutdown_records": [],
+                "started_service_groups": ["mapping_sim"],
+                "records": {
+                    "mapping_sim": {
+                        "clean": True,
+                        "wrapper_exit_code": 0,
+                        "residual_process_present": False,
+                        "signal_stage": "sigint",
+                    }
+                },
+            },
             "sensor_provenance": {
                 "positioning": (
                     "gazebo_dual_navsat_rtk_plus_wheel_imu_plus_scan_matching"
@@ -170,8 +183,35 @@ def test_mapping_adjudicator_rejects_self_declared_or_incomplete_gt_isolation(tm
         "pass": False,
         "ground_truth_subscription_present": True,
     }
-    processes["sensor_provenance"]["ground_truth_ros_subscription_in_positioning"] = True
+    processes["sensor_provenance"][
+        "ground_truth_ros_subscription_in_positioning"
+    ] = True
     _write_json(args.processes, processes)
     assert evaluate(args) == 2
     report = json.loads(args.output.read_text(encoding="utf-8"))
     assert report["checks"]["ground_truth_not_used_for_control"] is False
+
+
+def test_mapping_adjudicator_rejects_unclean_runtime_shutdown(tmp_path):
+    args = _evaluation_args(tmp_path)
+    processes = json.loads(args.processes.read_text(encoding="utf-8"))
+    processes["runtime_shutdown"] = {
+        "all_started_service_groups_clean": False,
+        "missing_shutdown_records": ["mapping_sim"],
+        "records": {},
+    }
+    _write_json(args.processes, processes)
+    assert evaluate(args) == 2
+    report = json.loads(args.output.read_text(encoding="utf-8"))
+    assert report["checks"]["runtime_shutdown_clean"] is False
+
+
+def test_mapping_adjudicator_recomputes_shutdown_truth_from_records(tmp_path):
+    args = _evaluation_args(tmp_path)
+    processes = json.loads(args.processes.read_text(encoding="utf-8"))
+    processes["runtime_shutdown"]["records"]["mapping_sim"]["clean"] = False
+    processes["runtime_shutdown"]["all_started_service_groups_clean"] = True
+    _write_json(args.processes, processes)
+    assert evaluate(args) == 2
+    report = json.loads(args.output.read_text(encoding="utf-8"))
+    assert report["checks"]["runtime_shutdown_clean"] is False

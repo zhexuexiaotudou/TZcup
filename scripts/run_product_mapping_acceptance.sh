@@ -123,37 +123,139 @@ on_error() {
   return "$code"
 }
 
-stop_group() {
+group_alive() {
   local pid="${1:-}"
+  [[ -n "$pid" ]] || return 1
+  kill -0 "$pid" 2>/dev/null || \
+    pgrep -g "$pid" >/dev/null 2>&1 || \
+    pgrep -s "$pid" >/dev/null 2>&1
+}
+
+signal_supervised_command() {
+  local signal_name="$1" name="$2" supervisor_pid="$3"
+  local mode="direct" command_pid node_pid
+  local mode_file="$pid_dir/${name}.signal_mode"
+  [[ -s "$mode_file" ]] && mode="$(<"$mode_file")"
+  mapfile -t command_pids < <(pgrep -P "$supervisor_pid" 2>/dev/null || true)
+  for command_pid in "${command_pids[@]}"; do
+    if [[ "$mode" == "ros2_run_leaf" ]]; then
+      mapfile -t node_pids < <(pgrep -P "$command_pid" 2>/dev/null || true)
+      if [[ "${#node_pids[@]}" -gt 0 ]]; then
+        for node_pid in "${node_pids[@]}"; do
+          kill -s "$signal_name" "$node_pid" 2>/dev/null || true
+        done
+        continue
+      fi
+    fi
+    kill -s "$signal_name" "$command_pid" 2>/dev/null || true
+  done
+}
+
+write_shutdown_report() {
+  local name="$1" pid="$2" signal_stage="$3" residual="$4"
+  local exit_file="$pid_dir/${name}.exit"
+  local exit_code=125
+  if [[ -s "$exit_file" ]]; then
+    exit_code="$(<"$exit_file")"
+  fi
+  [[ "$exit_code" =~ ^[0-9]+$ ]] || exit_code=125
+  SHUTDOWN_NAME="$name" SHUTDOWN_PID="$pid" \
+    SHUTDOWN_SIGNAL_STAGE="$signal_stage" SHUTDOWN_RESIDUAL="$residual" \
+    SHUTDOWN_EXIT_CODE="$exit_code" \
+    python3 - "$pid_dir/${name}.shutdown.json" <<'PY'
+import json
+import os
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+exit_code = int(os.environ["SHUTDOWN_EXIT_CODE"])
+residual = os.environ["SHUTDOWN_RESIDUAL"].lower() == "true"
+signal_stage = os.environ["SHUTDOWN_SIGNAL_STAGE"]
+payload = {
+    "name": os.environ["SHUTDOWN_NAME"],
+    "process_group_id": int(os.environ["SHUTDOWN_PID"]),
+    "signal_stage": signal_stage,
+    "wrapper_exit_code": exit_code,
+    "residual_process_present": residual,
+    "clean": bool(
+        not residual and exit_code == 0 and signal_stage != "sigkill"
+    ),
+}
+path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+PY
+}
+
+stop_group() {
+  local name="$1" pid="${2:-}"
   [[ -n "$pid" ]] || return
-  pkill -INT -s "$pid" 2>/dev/null || true
-  kill -INT -- "-$pid" 2>/dev/null || true
-  kill -INT "$pid" 2>/dev/null || true
+  local signal_stage="already_stopped"
+  group_alive "$pid" && signal_stage="sigint"
+  # ros2 launch owns orderly child shutdown, so signal only the launcher.
+  # ros2 run adds an extra executable child, so signal that leaf and let the
+  # ros2 CLI reap it.  In both cases the Python wrapper persists the exit code.
+  signal_supervised_command INT "$name" "$pid"
+  for _ in $(seq 1 300); do
+    if ! group_alive "$pid"; then
+      wait "$pid" 2>/dev/null || true
+      write_shutdown_report "$name" "$pid" "$signal_stage" false
+      return
+    fi
+    sleep 0.1
+  done
+  signal_stage="sigterm"
+  signal_supervised_command TERM "$name" "$pid"
   for _ in $(seq 1 100); do
-    if ! kill -0 "$pid" 2>/dev/null && \
-       ! pgrep -g "$pid" >/dev/null 2>&1 && \
-       ! pgrep -s "$pid" >/dev/null 2>&1; then
+    if ! group_alive "$pid"; then
       wait "$pid" 2>/dev/null || true
+      write_shutdown_report "$name" "$pid" "$signal_stage" false
       return
     fi
     sleep 0.1
   done
-  pkill -TERM -s "$pid" 2>/dev/null || true
-  kill -TERM -- "-$pid" 2>/dev/null || true
-  kill -TERM "$pid" 2>/dev/null || true
-  for _ in $(seq 1 30); do
-    if ! kill -0 "$pid" 2>/dev/null && \
-       ! pgrep -g "$pid" >/dev/null 2>&1 && \
-       ! pgrep -s "$pid" >/dev/null 2>&1; then
-      wait "$pid" 2>/dev/null || true
-      return
-    fi
-    sleep 0.1
-  done
+  signal_stage="sigkill"
   pkill -KILL -s "$pid" 2>/dev/null || true
   kill -KILL -- "-$pid" 2>/dev/null || true
   kill -KILL "$pid" 2>/dev/null || true
   wait "$pid" 2>/dev/null || true
+  sleep 0.2
+  if group_alive "$pid"; then
+    write_shutdown_report "$name" "$pid" "$signal_stage" true
+    return 1
+  fi
+  write_shutdown_report "$name" "$pid" "$signal_stage" false
+}
+
+stop_simulation_group() {
+  local name="$1" pid="$2" directory="$3"
+  set +e
+  timeout 10s gz service -s /server_control \
+    --reqtype gz.msgs.ServerControl --reptype gz.msgs.Boolean \
+    --timeout 5000 --req 'stop: true' \
+    > "$directory/server_stop.log" 2>&1
+  local service_code=$?
+  set -e
+  printf '%s\n' "$service_code" > "$directory/server_stop.exit"
+  stop_group "$name" "$pid"
+  SERVER_CONTROL_CODE="$service_code" python3 - \
+    "$pid_dir/${name}.shutdown.json" "$directory/server_stop.log" <<'PY'
+import json
+import os
+from pathlib import Path
+import sys
+
+report_path = Path(sys.argv[1])
+service_log = Path(sys.argv[2]).read_text(encoding="utf-8")
+report = json.loads(report_path.read_text(encoding="utf-8"))
+accepted = (
+    int(os.environ["SERVER_CONTROL_CODE"]) == 0
+    and "data: true" in service_log.lower()
+)
+report["server_control_exit_code"] = int(os.environ["SERVER_CONTROL_CODE"])
+report["server_control_stop_accepted"] = accepted
+report["clean"] = bool(report.get("clean") and accepted)
+report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+PY
 }
 cleanup() {
   local sessions=("${pids[@]}")
@@ -379,24 +481,46 @@ activate_slam_toolbox() {
   return 1
 }
 
-# GNU setsid can fork when invoked from a background shell. In WSL, $! can
-# therefore identify a short-lived wrapper rather than the real ROS session.
-# The inner shell records its own PID after setsid; that PID is also the process
-# group/session leader used by stop_group.
+# The Python supervisor is the setsid process-group/session leader.  It starts
+# the real command with default executable signal semantics, persists the real
+# exit code, and remains alive while stop_group signals the launcher or ros2-run
+# leaf according to the recorded command type.
 start_group() {
   local name="$1" log="$2"
   shift 2
   local pid_file="$pid_dir/${name}.pid"
   local exit_file="$pid_dir/${name}.exit"
+  local signal_mode="direct"
+  if [[ "${1:-}" == "ros2" && "${2:-}" == "run" ]]; then
+    signal_mode="ros2_run_leaf"
+  fi
+  printf '%s\n' "$signal_mode" > "$pid_dir/${name}.signal_mode"
   rm -f -- "$pid_file" "$exit_file"
-  setsid bash -c '
-    pid_file="$1"; exit_file="$2"; shift 2
-    printf "%s\n" "$$" > "$pid_file"
-    "$@"
-    code=$?
-    printf "%s\n" "$code" > "$exit_file"
-    exit "$code"
-  ' _ "$pid_file" "$exit_file" "$@" > "$log" 2>&1 &
+  setsid python3 - "$pid_file" "$exit_file" "$@" > "$log" 2>&1 <<'PY' &
+from pathlib import Path
+import os
+import signal
+import subprocess
+import sys
+
+pid_file = Path(sys.argv[1])
+exit_file = Path(sys.argv[2])
+command = sys.argv[3:]
+pid_file.write_text(f"{os.getpid()}\n", encoding="utf-8")
+
+
+def reset_command_signals():
+    # The supervisor itself is a background process and intentionally keeps
+    # the shell's ignored SIGINT.  The command must not inherit that state.
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+
+process = subprocess.Popen(command, preexec_fn=reset_command_signals)
+code = process.wait()
+normalized = 128 - code if code < 0 else code
+exit_file.write_text(f"{normalized}\n", encoding="utf-8")
+raise SystemExit(normalized)
+PY
   local launcher_pid=$!
   for _ in $(seq 1 100); do
     if [[ -s "$pid_file" ]]; then
@@ -435,6 +559,7 @@ start_simulation() {
   local name="$1" log="$2"
   start_group "$name" "$log" ros2 launch sanitation_bringup sim.launch.py \
     gui:=false headless_rendering:=true drive_model:=ackermann \
+    enable_command_timeout:=false \
     random_seed:="$SEED" world_file:="$runtime_world" \
     world_name:=sanitation_campus_large spawn_x:="$SPAWN_X" spawn_y:="$SPAWN_Y" spawn_yaw:="$SPAWN_YAW" \
     world_to_map_x:=0.0 world_to_map_y:=0.0 world_to_map_yaw:=0.0 \
@@ -512,11 +637,13 @@ start_group mapping_slam "$mapping/slam.log" ros2 launch slam_toolbox \
 slam_pid="$STARTED_PID"
 activate_slam_toolbox "$mapping/slam_lifecycle.txt"
 start_navigation mapping_nav external "$mapping/unused_map.yaml" "$mapping/navigation.log"; nav_pid="$STARTED_PID"
+nav_name=mapping_nav
 wait_for_topic /map nav_msgs/msg/OccupancyGrid 180 "$mapping/first_map.txt"
 if ! wait_for_lifecycle_active /bt_navigator 90 "$mapping/bt_navigator_active.txt"; then
-  stop_group "$nav_pid"
+  stop_group "$nav_name" "$nav_pid"
   start_navigation mapping_nav_retry external "$mapping/unused_map.yaml" "$mapping/navigation_retry.log"
   nav_pid="$STARTED_PID"
+  nav_name=mapping_nav_retry
   wait_for_lifecycle_active /bt_navigator 180 "$mapping/bt_navigator_active_retry.txt"
 fi
 start_group mapping_tf "$mapping/tf_continuity.log" \
@@ -589,7 +716,13 @@ POSEGRAPH_CODE=$?
 set -e
 
 # This is the required hard process restart, not a lifecycle transition.
-stop_group "$mapping_tf_pid"; stop_group "$nav_pid"; stop_group "$slam_pid"; stop_group "$scan_pid"; stop_group "$fusion_pid"; stop_group "$navsat_adapter_pid"; stop_group "$sim_pid"
+stop_group mapping_tf "$mapping_tf_pid"
+stop_group "$nav_name" "$nav_pid"
+stop_group mapping_slam "$slam_pid"
+stop_group mapping_scan "$scan_pid"
+stop_group mapping_fusion "$fusion_pid"
+stop_group mapping_navsat_adapter "$navsat_adapter_pid"
+stop_simulation_group mapping_sim "$sim_pid" "$mapping"
 pids=()
 sleep 2
 RESTART_COMPLETED=true
@@ -637,7 +770,11 @@ if [[ "$EXPLORATION_CODE" -eq 0 && "$MAP_SAVE_CODE" -eq 0 && \
   wait_group reload_probe "$reload_probe_pid"
   NAVIGATION_CODE="$GROUP_EXIT_CODE"
   set -e
-  stop_group "$reload_tf_pid"; stop_group "$reload_nav_pid"; stop_group "$reload_fusion_pid"; stop_group "$reload_navsat_adapter_pid"; stop_group "$reload_sim_pid"
+  stop_group reload_tf "$reload_tf_pid"
+  stop_group reload_nav "$reload_nav_pid"
+  stop_group reload_fusion "$reload_fusion_pid"
+  stop_group reload_navsat_adapter "$reload_navsat_adapter_pid"
+  stop_simulation_group reload_sim "$reload_sim_pid" "$reload"
   pids=()
 else
   printf '%s\n' "phase 2 skipped because a phase 1 prerequisite failed" > "$reload/skipped.txt"
@@ -699,6 +836,34 @@ positioning_graph_audits = {
     phase: positioning_graph_audit(phase) for phase in ("mapping", "reload")
 }
 
+pid_dir = path.parent / "runtime_pids"
+shutdown_records = {}
+for report_path in sorted(pid_dir.glob("*.shutdown.json")):
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    shutdown_records[str(report["name"])] = report
+one_shot_groups = {"mapping_explorer", "reload_probe"}
+started_service_groups = {
+    item.stem
+    for item in pid_dir.glob("*.pid")
+    if item.stem not in one_shot_groups
+}
+missing_shutdown_records = sorted(
+    started_service_groups - set(shutdown_records)
+)
+runtime_shutdown = {
+    "started_service_groups": sorted(started_service_groups),
+    "missing_shutdown_records": missing_shutdown_records,
+    "records": shutdown_records,
+    "all_started_service_groups_clean": bool(
+        started_service_groups
+        and not missing_shutdown_records
+        and all(
+            report.get("clean") is True
+            for report in shutdown_records.values()
+        )
+    ),
+}
+
 def git(*args):
     try:
         return subprocess.check_output(
@@ -733,6 +898,7 @@ payload = {
         "initial_sweep_target_index": int(sys.argv[22]),
     },
     "restart_completed": sys.argv[3].lower() == "true",
+    "runtime_shutdown": runtime_shutdown,
     "exit_codes": dict(zip(names, map(int, sys.argv[4:]))),
     "sensor_provenance": {
         "positioning": "gazebo_dual_navsat_rtk_plus_wheel_imu_plus_scan_matching",

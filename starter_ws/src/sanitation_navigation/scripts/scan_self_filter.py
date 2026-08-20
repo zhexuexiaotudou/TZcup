@@ -19,6 +19,8 @@ from __future__ import annotations
 import math
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
+from rclpy.impl.implementation_singleton import rclpy_implementation as _rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import LaserScan
@@ -97,10 +99,15 @@ def main() -> None:
     node = ScanSelfFilter()
     try:
         rclpy.spin(node)
+    except (ExternalShutdownException, KeyboardInterrupt):
+        pass
+    except _rclpy.RCLError:
+        if rclpy.ok():
+            raise
     finally:
         node.destroy_node()
-        if rclpy.ok():
-            rclpy.shutdown()
+        # The launch context can already be invalid when the executor unwinds.
+        rclpy.try_shutdown()
 
 
 if __name__ == '__main__':

@@ -26,7 +26,7 @@ SLAM_CONFIG = (
 
 def test_formal_runner_has_real_restart_and_20k_fail_closed_scope():
     text = RUNNER.read_text(encoding="utf-8")
-    phase_one_stop = text.index('stop_group "$mapping_tf_pid"')
+    phase_one_stop = text.index('stop_group mapping_tf "$mapping_tf_pid"')
     phase_two_start = text.index('echo "[PRODUCT-MAPPING] phase 2')
     assert phase_one_stop < phase_two_start
     assert "BOUNDS=(-100.0 -50.0 100.0 50.0)" in text
@@ -48,7 +48,20 @@ def test_formal_runner_has_real_restart_and_20k_fail_closed_scope():
     assert "autostart:=false" in text
     assert 'activate_slam_toolbox "$mapping/slam_lifecycle.txt"' in text
     assert 'STARTED_PID="$(<"$pid_file")"' in text
+    assert 'setsid python3 - "$pid_file" "$exit_file" "$@"' in text
+    assert "signal_supervised_command()" in text
+    assert 'signal_supervised_command INT "$name" "$pid"' in text
+    assert 'signal_mode="ros2_run_leaf"' in text
+    assert 'kill -s "$signal_name" "$node_pid"' in text
+    assert "process = subprocess.Popen(command, preexec_fn=reset_command_signals)" in text
+    assert "preexec_fn=reset_command_signals" in text
+    assert "signal.signal(signal.SIGINT, signal.SIG_DFL)" in text
     assert 'kill -TERM -- "-$pid"' in text
+    assert "stop_simulation_group()" in text
+    assert "gz service -s /server_control" in text
+    assert '"server_control_stop_accepted"' in text
+    assert 'runtime_shutdown = {' in text
+    assert '"all_started_service_groups_clean"' in text
     assert 'pkill -TERM -s "$pid"' in text
     assert 'pgrep -s "$pid"' in text
     assert "trap on_error ERR" in text
@@ -102,6 +115,7 @@ def test_formal_runner_has_real_restart_and_20k_fail_closed_scope():
     assert "MAX_LINEAR_VELOCITY=0.30; FORMAL_SCOPE=false" in text
     assert "MAX_LINEAR_VELOCITY=0.45; FORMAL_SCOPE=true" in text
     assert 'max_linear_velocity:="$MAX_LINEAR_VELOCITY"' in text
+    assert "enable_command_timeout:=false" in text
     assert '-p maximum_frontier_goal_distance_m:="$MAX_FRONTIER_GOAL_DISTANCE"' in text
     assert "-p initial_frontier_goal_distance_m:=2.0" in text
     assert "-p goal_distance_growth_success_count:=5" in text
@@ -164,6 +178,25 @@ def test_mapping_scan_turns_no_return_rays_into_observed_free_space():
     ).read_text(encoding="utf-8")
     assert "replace_infinite_ranges_with_max" in filter_script
     assert "float(message.range_max) - self._maximum_range_margin" in filter_script
+
+
+def test_runtime_probe_and_self_filters_use_idempotent_launch_shutdown():
+    scripts = (
+        ROOT
+        / "starter_ws/src/sanitation_tasks/sanitation_tasks/tf_continuity_probe.py",
+        ROOT
+        / "starter_ws/src/sanitation_navigation/scripts/scan_self_filter.py",
+        ROOT
+        / "starter_ws/src/sanitation_navigation/scripts/pointcloud_self_filter.py",
+    )
+    for script in scripts:
+        text = script.read_text(encoding="utf-8")
+        assert "from rclpy.executors import ExternalShutdownException" in text
+        assert "except (ExternalShutdownException, KeyboardInterrupt):" in text
+        assert "rclpy_implementation as _rclpy" in text
+        assert "except _rclpy.RCLError:" in text
+        assert "if rclpy.ok():" in text
+        assert "rclpy.try_shutdown()" in text
 
 
 def test_product_slam_profile_treats_no_return_sentinel_as_free_space():

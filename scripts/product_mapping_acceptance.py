@@ -170,6 +170,26 @@ def evaluate(args) -> int:
         "map_quality", "map_geometry", "route_build", "navigation",
     )
     process_pass = all(process_codes.get(name) == 0 for name in required_zero_codes)
+    runtime_shutdown = processes.get("runtime_shutdown", {})
+    shutdown_records = runtime_shutdown.get("records", {})
+    started_service_groups = set(
+        runtime_shutdown.get("started_service_groups", [])
+    )
+    runtime_shutdown_pass = bool(
+        runtime_shutdown.get("all_started_service_groups_clean") is True
+        and runtime_shutdown.get("missing_shutdown_records") == []
+        and isinstance(shutdown_records, dict)
+        and started_service_groups
+        and started_service_groups == set(shutdown_records)
+        and all(
+            isinstance(record, dict)
+            and record.get("clean") is True
+            and record.get("wrapper_exit_code") == 0
+            and record.get("residual_process_present") is False
+            and record.get("signal_stage") != "sigkill"
+            for record in shutdown_records.values()
+        )
+    )
     reproducibility = processes.get("reproducibility", {})
     config_hashes = reproducibility.get("config_sha256", {})
     reproducibility_pass = bool(
@@ -219,6 +239,7 @@ def evaluate(args) -> int:
         "coordinate_frame_break_count_zero": coordinate_frame_break_count == 0,
         "topology_damage_count_zero": topology_damage_count == 0,
         "all_processes_exit_zero": process_pass,
+        "runtime_shutdown_clean": runtime_shutdown_pass,
         "reproducibility_bound": reproducibility_pass,
         "ground_truth_not_used_for_control": (
             exploration.get("ground_truth_used_for_control") is False

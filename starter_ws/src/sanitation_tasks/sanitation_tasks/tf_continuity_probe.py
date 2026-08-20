@@ -7,6 +7,8 @@ from pathlib import Path
 import time
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
+from rclpy.impl.implementation_singleton import rclpy_implementation as _rclpy
 from rclpy.node import Node
 from tf2_ros import Buffer, TransformException, TransformListener
 
@@ -168,9 +170,16 @@ def main(args=None) -> None:
     node = TfContinuityProbe()
     try:
         rclpy.spin(node)
+    except (ExternalShutdownException, KeyboardInterrupt):
+        pass
+    except _rclpy.RCLError:
+        if rclpy.ok():
+            raise
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        # Launch shutdown may invalidate the shared context before spin exits.
+        # Keep cleanup idempotent so a normal stop cannot become a failure.
+        rclpy.try_shutdown()
 
 
 if __name__ == "__main__":
