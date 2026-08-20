@@ -67,7 +67,8 @@ def test_formal_runner_has_real_restart_and_20k_fail_closed_scope():
     assert "-p no_progress_raw_frontier_success_limit:=12" in text
     assert "-p no_progress_raw_exclusion_ttl_sec:=900.0" in text
     assert (
-        '-p horizontal_sweep_staging_distances_m:="[8.0, 6.0, 4.0, 3.0, 2.0]"'
+        '-p horizontal_sweep_staging_distances_m:'
+        '="[8.0, 6.0, 4.0, 3.0, 2.0, 1.5, 1.0]"'
         in text
     )
     assert "-p horizontal_sweep_staging_path_sample_spacing_m:=0.25" in text

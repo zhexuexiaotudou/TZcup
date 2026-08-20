@@ -96,7 +96,8 @@ class FrontierExplorer(Node):
         self.declare_parameter("no_progress_raw_frontier_success_limit", 12)
         self.declare_parameter("no_progress_raw_exclusion_ttl_sec", 900.0)
         self.declare_parameter(
-            "horizontal_sweep_staging_distances_m", [8.0, 6.0, 4.0, 3.0, 2.0]
+            "horizontal_sweep_staging_distances_m",
+            [8.0, 6.0, 4.0, 3.0, 2.0, 1.5, 1.0],
         )
         self.declare_parameter(
             "horizontal_sweep_staging_path_sample_spacing_m", 0.25
