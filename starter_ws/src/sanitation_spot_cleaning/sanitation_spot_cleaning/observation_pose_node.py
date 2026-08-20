@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import math
 import threading
+import time
 
 from .observation_pose_planner import (
     CandidateRegion,
@@ -19,7 +20,7 @@ def main() -> None:
     from nav_msgs.msg import OccupancyGrid
     from nav2_msgs.action import ComputePathToPose
     from rclpy.action import ActionClient
-    from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
+    from rclpy.executors import ExternalShutdownException, SingleThreadedExecutor
     from rclpy.node import Node
     from sensor_msgs.msg import CameraInfo
     from std_msgs.msg import String
@@ -83,6 +84,11 @@ def main() -> None:
             self.camera_info = None
             self.global_costmap = None
             self._busy = threading.Lock()
+            self._shutdown_event = threading.Event()
+            self._worker_lock = threading.Lock()
+            self._worker = None
+            self._future_lock = threading.Lock()
+            self._action_futures = set()
 
         def _on_camera_info(self, message):
             self.camera_info = message
@@ -147,7 +153,54 @@ def main() -> None:
             if not self._busy.acquire(blocking=False):
                 self.status_publisher.publish(String(data=json.dumps({"accepted": False, "reason": "planner_busy"})))
                 return
-            threading.Thread(target=self.plan_candidate, args=(payload,), daemon=True).start()
+            # Planning may wait for a Nav2 action result. Keep the ROS executor
+            # free to dispatch that result, but retain and join the worker so
+            # no daemon work can outlive node teardown.
+            worker = threading.Thread(
+                target=self.plan_candidate,
+                args=(payload,),
+                daemon=False,
+                name="observation-pose-planner",
+            )
+            with self._worker_lock:
+                self._worker = worker
+            worker.start()
+
+        def _track_future(self, future):
+            with self._future_lock:
+                self._action_futures.add(future)
+
+            def forget(done):
+                # Fetch any action-layer exception while the executor is alive,
+                # then release the retained future.
+                if done.done():
+                    try:
+                        done.exception()
+                    except Exception:
+                        pass
+                with self._future_lock:
+                    self._action_futures.discard(done)
+
+            future.add_done_callback(forget)
+            return future
+
+        def begin_shutdown(self):
+            self._shutdown_event.set()
+            with self._future_lock:
+                pending = tuple(self._action_futures)
+            for future in pending:
+                if not future.done() and not future.cancelled():
+                    future.cancel()
+
+        def join_worker(self):
+            with self._worker_lock:
+                worker = self._worker
+            if worker is not None and worker.is_alive():
+                worker.join(
+                    timeout=float(
+                        self.get_parameter("compute_path_timeout_s").value
+                    ) + 1.0
+                )
 
         def _current_pose(self) -> Pose2D:
             transform = self.tf_buffer.lookup_transform(
@@ -197,13 +250,20 @@ def main() -> None:
                     if not handle.accepted:
                         completed.set()
                         return
-                    handle.get_result_async().add_done_callback(result_done)
+                    result_future = self._track_future(handle.get_result_async())
+                    result_future.add_done_callback(result_done)
                 except Exception as error:
                     result_holder["error"] = str(error)
                     completed.set()
 
-            self.path_client.send_goal_async(goal).add_done_callback(goal_done)
-            completed.wait(float(self.get_parameter("compute_path_timeout_s").value))
+            sent = self._track_future(self.path_client.send_goal_async(goal))
+            sent.add_done_callback(goal_done)
+            deadline = time.monotonic() + float(
+                self.get_parameter("compute_path_timeout_s").value
+            )
+            while not completed.wait(0.05):
+                if self._shutdown_event.is_set() or time.monotonic() >= deadline:
+                    return None
             path = result_holder.get("path")
             return path if path and len(path) >= 2 else None
 
@@ -287,6 +347,8 @@ def main() -> None:
                     footprint_cost=self._costmap_footprint_cost if engineering_mode else None,
                     self_overlap_estimator=self._self_overlap if engineering_mode else None,
                 )
+                if self._shutdown_event.is_set() or not rclpy.ok():
+                    return
                 if result is None:
                     self.status_publisher.publish(String(data=json.dumps({
                         "candidate_id": region.candidate_id,
@@ -307,20 +369,23 @@ def main() -> None:
                 record.update({"candidate_id": region.candidate_id, "accepted": True, "ground_truth_pose_used": False})
                 self.status_publisher.publish(String(data=json.dumps(record, sort_keys=True)))
             except Exception as error:
-                self.status_publisher.publish(String(data=json.dumps({"accepted": False, "reason": f"planner_exception:{error}"})))
+                if not self._shutdown_event.is_set() and rclpy.ok():
+                    self.status_publisher.publish(String(data=json.dumps({"accepted": False, "reason": f"planner_exception:{error}"})))
             finally:
                 self._busy.release()
 
     rclpy.init()
     node = ObservationPoseNode()
-    executor = MultiThreadedExecutor(num_threads=4)
+    executor = SingleThreadedExecutor()
     executor.add_node(node)
     try:
         executor.spin()
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
+        node.begin_shutdown()
         executor.shutdown()
+        node.join_worker()
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()

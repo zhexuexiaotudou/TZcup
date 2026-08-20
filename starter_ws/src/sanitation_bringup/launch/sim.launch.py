@@ -46,6 +46,7 @@ def generate_launch_description():
     world_to_map_yaw = LaunchConfiguration("world_to_map_yaw")
     camera_profile = LaunchConfiguration("camera_profile")
     enable_training_gt = LaunchConfiguration("enable_training_gt")
+    enable_evaluation_gt = LaunchConfiguration("enable_evaluation_gt")
     gui_config = LaunchConfiguration("gui_config")
     gui_config_arg = PythonExpression(
         ["'--gui-config ' + '", gui_config, "' if '", gui_config, "' else ''"]
@@ -234,6 +235,14 @@ def generate_launch_description():
                 default_value="false",
                 description="evaluation-only semantic/instance labels; never enabled by production defaults",
             ),
+            DeclareLaunchArgument(
+                "enable_evaluation_gt",
+                default_value="true",
+                description=(
+                    "Launch the post-run odometry truth adapter. Product runtime "
+                    "must set false so no GT subscriber is present."
+                ),
+            ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(gz_launch),
                 launch_arguments={
@@ -286,7 +295,6 @@ def generate_launch_description():
                     "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
                     "/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist",
                     "/wheel/odom_raw@nav_msgs/msg/Odometry[gz.msgs.Odometry",
-                    "/ground_truth/model_odom_raw@nav_msgs/msg/Odometry[gz.msgs.Odometry",
                     "/imu/data@sensor_msgs/msg/Imu[gz.msgs.IMU",
                     "/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model",
                     "/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan",
@@ -294,7 +302,6 @@ def generate_launch_description():
                     "/camera/image@sensor_msgs/msg/Image[gz.msgs.Image",
                     "/camera/depth_image@sensor_msgs/msg/Image[gz.msgs.Image",
                     "/camera/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked",
-                    ["/world/", world_name, "/dynamic_pose/info@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V"],
                     "/world_overview/image@sensor_msgs/msg/Image[gz.msgs.Image",
                 ],
                 remappings=[
@@ -302,10 +309,6 @@ def generate_launch_description():
                     ("/camera/image", "/camera/color/image_raw"),
                     ("/camera/depth_image", "/camera/depth/image_rect_raw"),
                     ("/camera/points", "/camera/depth/color/points"),
-                    (
-                        ["/world/", world_name, "/dynamic_pose/info"],
-                        "/ground_truth/dynamic_pose",
-                    ),
                 ],
             ),
             Node(
@@ -318,7 +321,6 @@ def generate_launch_description():
                     "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
                     "/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist",
                     "/odom/unfiltered@nav_msgs/msg/Odometry[gz.msgs.Odometry",
-                    "/ground_truth/model_odom_raw@nav_msgs/msg/Odometry[gz.msgs.Odometry",
                     "/imu/data@sensor_msgs/msg/Imu[gz.msgs.IMU",
                     "/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model",
                     "/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan",
@@ -326,7 +328,6 @@ def generate_launch_description():
                     "/camera/image@sensor_msgs/msg/Image[gz.msgs.Image",
                     "/camera/depth_image@sensor_msgs/msg/Image[gz.msgs.Image",
                     "/camera/points@sensor_msgs/msg/PointCloud2[gz.msgs.PointCloudPacked",
-                    ["/world/", world_name, "/dynamic_pose/info@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V"],
                     "/world_overview/image@sensor_msgs/msg/Image[gz.msgs.Image",
                 ],
                 remappings=[
@@ -334,6 +335,23 @@ def generate_launch_description():
                     ("/camera/image", "/camera/color/image_raw"),
                     ("/camera/depth_image", "/camera/depth/image_rect_raw"),
                     ("/camera/points", "/camera/depth/color/points"),
+                ],
+            ),
+            Node(
+                package="ros_gz_bridge",
+                executable="parameter_bridge",
+                name="evaluation_only_gt_bridge",
+                output="screen",
+                condition=IfCondition(enable_evaluation_gt),
+                arguments=[
+                    "/ground_truth/model_odom_raw@nav_msgs/msg/Odometry[gz.msgs.Odometry",
+                    [
+                        "/world/",
+                        world_name,
+                        "/dynamic_pose/info@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V",
+                    ],
+                ],
+                remappings=[
                     (
                         ["/world/", world_name, "/dynamic_pose/info"],
                         "/ground_truth/dynamic_pose",
@@ -385,6 +403,7 @@ def generate_launch_description():
                 executable="sanitation_ground_truth_adapter",
                 name="ground_truth_adapter",
                 output="screen",
+                condition=IfCondition(enable_evaluation_gt),
                 parameters=[
                     {
                         "use_sim_time": sim_time_parameter,

@@ -17,13 +17,13 @@ PRODUCT_FIELD_READY=false
 
 | 领域 | 当前代码能力 | 当前证据边界 |
 |---|---|---|
-| 车辆与仿真 | Ackermann Xacro、Gazebo steering plugin、wheel/steering state、Ackermann EKF、Nav2 与 Coverage profile；默认入口已切换为 Ackermann | 静态/单元合同通过；仍需正式运行矩阵 |
+| 车辆与仿真 | Ackermann Xacro、Gazebo steering plugin、wheel/steering state、Ackermann EKF、Nav2 与 Coverage profile；产品入口默认 headless、独立 Gazebo Transport 分区和有界 1× 时钟 | 静态/单元合同及一次完整拓扑烟测通过；仍需正式运行矩阵 |
 | 清扫机构 | 默认有效刷宽 1.32 m、40 L 箱体几何、真实 footprint 清扫足迹 | 几何合同存在；效率与长期运行未通过 |
-| 定位/导航/覆盖 | SLAM/定位、双天线 GNSS 航向融合、Nav2、未知栅格 frontier 探索、地图保存/硬重启/加载/重定位/多航点导航、keepout、Collision Monitor、skip-lane Ackermann Coverage、repair 与可视化链 | 40 m × 20 m 整链烟测已通过，但不能替代 20,000 m²、30-seed 和 3500 m²/h 正式门 |
+| 定位/导航/覆盖 | SLAM/定位、双天线 GNSS 航向融合、Nav2、未知栅格 frontier 探索、地图保存/硬重启/加载/重定位/多航点导航、keepout、Collision Monitor、skip-lane Ackermann Coverage、repair 与可视化链；产品 ROS 图不桥接/订阅 evaluation GT | 40 m × 20 m 整链烟测及产品拓扑 TF 烟测已通过，但不能替代 20,000 m²、30-seed 和 3500 m²/h 正式门 |
 | 离散感知 | proposal、近距四分类接口、Tracking、RGB-D 投影、独立 ActionVerifier、最多两次重观察与 DynamicTrashMap；Tracker/Map 均不能自行 CONFIRMED | 当前已知近距分类结果低于 macro-F1 0.98；placeholder manifest 不可激活，真实 ROS/Gazebo 链与 V1 正式证据未建立 |
 | Area 感知 | leaf/puddle runtime、训练评估与独立指标代码 | 需在固定 split 与完整产品链重新冻结/验收 |
 | Spot/Post-Clean | 产品入口已接真实 keepout/global costmap 全车 footprint、Coverage pause/resume acknowledgement、Nav2 path/approach、刷盘互锁、Pre-Clean、camera-frustum 离散后验与 Area 残余/单次重清 | 纯逻辑门已覆盖；仍缺 ROS build、完整 Gazebo 实链和 ≥30 seeds 零错误清扫正式证据 |
-| 交互 | HMI、Speech/任务接口与安全边界代码 | 缺固定集 ≥95% 与两个模态综合正式报告 |
+| 交互/安全 | HMI、Speech/任务接口；单一 E-stop 权威上电急停并心跳，速度/点清洁/重观察在权威失联时失效关闭；产品 HMI 不订阅垃圾 GT | 缺固定集 ≥95%、两个模态综合、心跳故障注入与 30 次延迟正式报告 |
 | 冻结/发布 | sealed one-shot、manifest、hash、x86 packaging、SBOM/许可工具基础 | 尚未形成 V1 freeze、sealed final、release 与真实 rollback 证据 |
 
 ## 固定裁决能力

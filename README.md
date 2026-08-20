@@ -23,7 +23,7 @@ SIMULATION_PRODUCT_COMPLETE=true
 
 ## 当前结论
 
-仓库已有 Ackermann 模型/控制、Nav2 与 Coverage profile，以及生产感知、独立 ActionVerifier、最多两次主动重观察、DynamicTrashMap、真实 Coverage/Nav2 点清洁、受控滚刷所有权和 camera-backed Post-Clean 的失效关闭代码链。仓库内模型清单仍是不可激活的 placeholder，且当前尚无一套与本合同绑定的完整 A–P 正式证据，因此：
+仓库已有 Ackermann 模型/控制、Nav2 与 Coverage profile，以及上电急停/权威心跳安全层、GT 隔离的产品启动拓扑、生产感知、独立 ActionVerifier、最多两次主动重观察、DynamicTrashMap、真实 Coverage/Nav2 点清洁、受控滚刷所有权和 camera-backed Post-Clean 的失效关闭代码链。产品入口默认无 GUI、以 ROS domain 派生独立 Gazebo Transport 分区，并用有界 1× 物理时钟阻止并发试验串场。仓库内模型清单仍是不可激活的 placeholder，且当前尚无一套与本合同绑定的完整 A–P 正式证据，因此：
 
 ```text
 SIMULATION_PRODUCT_COMPLETE=false
@@ -96,6 +96,7 @@ py -3 scripts/product_acceptance.py evaluate `
 | 路径 | 作用 |
 |---|---|
 | `starter_ws/src/` | 自研 ROS 2 功能包 |
+| `starter_ws/src/sanitation_product_bringup/` | 严格安全、GT 隔离的完整产品仿真入口 |
 | `reference_vision/` | 只用于开发参考的第三方感知适配，禁止进入产品控制 |
 | `config/product_acceptance_v1.json` | 固定、机器可判定的 A–P 验收合同 |
 | `scripts/product_acceptance.py` | 失效关闭的最终裁决器 |

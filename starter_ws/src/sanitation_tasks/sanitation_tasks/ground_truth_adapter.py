@@ -103,7 +103,7 @@ def main(args=None):
     node = GroundTruthAdapter()
     try:
         rclpy.spin(node)
-    except ExternalShutdownException:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()

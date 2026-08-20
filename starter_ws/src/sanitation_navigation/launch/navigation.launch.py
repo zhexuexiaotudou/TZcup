@@ -193,6 +193,14 @@ def generate_launch_description():
             DeclareLaunchArgument('operational_profile', default_value='localization_coverage'),
             DeclareLaunchArgument('max_linear_velocity', default_value='0.45'),
             DeclareLaunchArgument('max_angular_velocity', default_value='0.35'),
+            DeclareLaunchArgument(
+                'safety_startup_stopped',
+                default_value='false',
+                description=(
+                    'Engineering compatibility default. Product launch must '
+                    'override this to true and require an operator clear.'
+                ),
+            ),
             DeclareLaunchArgument('initial_pose_x', default_value='0.0'),
             DeclareLaunchArgument('initial_pose_y', default_value='0.0'),
             DeclareLaunchArgument('initial_pose_yaw', default_value='0.0'),
@@ -267,6 +275,19 @@ def generate_launch_description():
                     'use_sim_time': use_sim_time,
                     'autostart': LaunchConfiguration('autostart'),
                     'node_names': ['ground_collision_monitor'],
+                }],
+            ),
+            Node(
+                package='sanitation_safety',
+                executable='safety_authority',
+                name='safety_authority',
+                output='screen',
+                parameters=[{
+                    'use_sim_time': use_sim_time,
+                    'startup_emergency_stopped': ParameterValue(
+                        LaunchConfiguration('safety_startup_stopped'),
+                        value_type=bool,
+                    ),
                 }],
             ),
             Node(

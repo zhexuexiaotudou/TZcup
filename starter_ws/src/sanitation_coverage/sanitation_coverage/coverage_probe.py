@@ -23,6 +23,7 @@ from opennav_coverage_msgs.action import ComputeCoveragePath
 from opennav_coverage_msgs.msg import Coordinate, Coordinates
 import rclpy
 from rclpy.action import ActionClient
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import LaserScan
@@ -139,7 +140,7 @@ def yaw_from_quaternion(q):
 
 
 class CoverageProbe(Node):
-    """Plan and execute every coverage component, then score actual GT sweep."""
+    """Plan and execute coverage; GT scoring is an explicit non-product mode."""
 
     def __init__(self):
         super().__init__("sanitation_coverage_probe")
@@ -153,6 +154,7 @@ class CoverageProbe(Node):
         self.declare_parameter("rotation_timeout_sec", 45.0)
         self.declare_parameter("translation_timeout_sec", 45.0)
         self.declare_parameter("manual_start", False)
+        self.declare_parameter("allow_ground_truth_evaluation", True)
         self.mission_geometry = None
         self.coverage_client = ActionClient(self, ComputeCoveragePath, "/compute_coverage_path")
         self.follow_client = ActionClient(self, FollowPath, "/follow_path")
@@ -227,7 +229,10 @@ class CoverageProbe(Node):
         self.evaluation_dropout_events = []
         self._evaluation_dropout_active = False
         self._odom_vx = None
-        self.create_subscription(Odometry, "/ground_truth/odom", self._on_truth, 20)
+        if bool(self.get_parameter("allow_ground_truth_evaluation").value):
+            self.create_subscription(
+                Odometry, "/ground_truth/odom", self._on_truth, 20
+            )
         self.create_subscription(Odometry, "/odom", self._on_odom, 20)
         self.create_subscription(
             PoseWithCovarianceStamped,
@@ -2783,8 +2788,16 @@ def main(args=None):
     rclpy.init(args=args); node = CoverageProbe()
     try:
         code = node.run() if node.wait_for_start() else 130
+    except (KeyboardInterrupt, ExternalShutdownException):
+        # SIGINT/SIGTERM is the normal launch-system shutdown path.  A task
+        # timeout remains non-zero through wait_for_start()/run() reporting.
+        code = 0
     finally:
-        node._set_brush(False); node.destroy_node(); rclpy.shutdown()
+        if rclpy.ok():
+            node._set_brush(False)
+        node.destroy_node()
+        if rclpy.ok():
+            rclpy.shutdown()
     raise SystemExit(code)
 
 

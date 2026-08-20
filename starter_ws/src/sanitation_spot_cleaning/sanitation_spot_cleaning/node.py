@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import time
 
 from sanitation_perception.camera_frustum_model import FrustumSweep
 from sanitation_perception.grid_safety import footprint_costmap_clear, keepout_clear
@@ -95,6 +96,7 @@ def main() -> None:
             self.declare_parameter("maximum_localization_age_s", 0.5)
             self.declare_parameter("maximum_localization_covariance_trace", 0.25)
             self.declare_parameter("maximum_perception_health_age_s", 1.0)
+            self.declare_parameter("maximum_estop_heartbeat_age_s", 0.5)
             self.declare_parameter("transition_timeout_s", 15.0)
             self.declare_parameter("navigation_timeout_s", 60.0)
             self.declare_parameter("post_clean_timeout_s", 8.0)
@@ -110,6 +112,7 @@ def main() -> None:
             self.perception_health: dict = {}
             self.perception_health_received_ns = 0
             self.emergency_stopped = True
+            self.emergency_stop_received_monotonic = 0.0
             self.collision_clear = False
             self.global_costmap = None
             self.keepout_mask = None
@@ -254,6 +257,7 @@ def main() -> None:
 
         def _on_emergency_stop(self, message) -> None:
             self.emergency_stopped = bool(message.data)
+            self.emergency_stop_received_monotonic = time.monotonic()
 
         def _on_collision_state(self, message) -> None:
             self.collision_clear = int(message.action_type) == int(
@@ -325,8 +329,13 @@ def main() -> None:
                 max(0.0, (now_ns - observation_stamp_ns) / 1e9)
                 if observation_stamp_ns > 0 else math.inf
             )
+            estop_stale = (
+                self.emergency_stop_received_monotonic <= 0.0
+                or time.monotonic() - self.emergency_stop_received_monotonic
+                > float(self.get_parameter("maximum_estop_heartbeat_age_s").value)
+            )
             return ProductSafety(
-                emergency_stopped=self.emergency_stopped,
+                emergency_stopped=bool(self.emergency_stopped or estop_stale),
                 collision_clear=self.collision_clear,
                 localization_healthy=(
                     localization_age_s
@@ -857,7 +866,8 @@ def main() -> None:
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
-        node.brush_publisher.publish(Bool(data=False))
+        if rclpy.ok():
+            node.brush_publisher.publish(Bool(data=False))
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()

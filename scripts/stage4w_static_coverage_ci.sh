@@ -181,7 +181,7 @@ setsid ros2 bag record --storage mcap --output "${OUT}/static_coverage_bag" \
   /coverage/evaluation_sample \
   > "${OUT}/rosbag.log" 2>&1 & bag_pid=$!; pids+=("${bag_pid}")
 sleep 2
-ros2 topic pub --once /emergency_stop std_msgs/msg/Bool "{data: false}" \
+ros2 topic pub --once /safety/operator_estop_command std_msgs/msg/Bool "{data: false}" \
   > "${OUT}/emergency_stop_available.log" 2>&1
 
 set +e

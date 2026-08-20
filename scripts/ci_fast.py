@@ -170,6 +170,7 @@ def run_ros_independent_tests() -> None:
     manipulation_package = SOURCE_ROOT / "sanitation_manipulation"
     debug_visualization_package = SOURCE_ROOT / "sanitation_debug_visualization"
     gazebo_visualization_package = SOURCE_ROOT / "sanitation_gazebo_visualization"
+    safety_package = SOURCE_ROOT / "sanitation_safety"
     sys.path.insert(0, str(ROOT))
     sys.path.insert(0, str(coverage_package))
     sys.path.insert(0, str(tasks_package))
@@ -183,6 +184,7 @@ def run_ros_independent_tests() -> None:
     sys.path.insert(0, str(manipulation_package))
     sys.path.insert(0, str(debug_visualization_package))
     sys.path.insert(0, str(gazebo_visualization_package))
+    sys.path.insert(0, str(safety_package))
     test_paths = (
         coverage_package / "test" / "test_metrics.py",
         coverage_package / "test" / "test_stage4w_geometry.py",
@@ -338,6 +340,8 @@ def run_ros_independent_tests() -> None:
         debug_visualization_package / "test" / "test_debug_visualization_model.py",
         gazebo_visualization_package / "test" / "test_coverage_telemetry_v2.py",
         spot_cleaning_package / "test" / "test_auto01_geometry.py",
+        safety_package / "test" / "test_authority.py",
+        safety_package / "test" / "test_velocity_gate.py",
         ROOT / "scripts" / "test_autonomous_runner.py",
         ROOT / "scripts" / "test_auto02_tools.py",
         ROOT / "scripts" / "test_auto03_matrix.py",

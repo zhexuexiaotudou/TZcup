@@ -89,21 +89,26 @@ class RosAdapter:
         self._rclpy = None
         self._bool_type = None
         self._estop_publisher = None
+        self._external_shutdown_exception = RuntimeError
         self._last_image_at: dict[str, float] = {}
 
     def start(self) -> None:
         import rclpy
         from nav_msgs.msg import OccupancyGrid, Odometry, Path
+        from rclpy.executors import ExternalShutdownException
         from rosgraph_msgs.msg import Clock
         from sensor_msgs.msg import Image, LaserScan
         from std_msgs.msg import Bool, Float32, String
 
         self._rclpy = rclpy
+        self._external_shutdown_exception = ExternalShutdownException
         self._bool_type = Bool
         rclpy.init(args=[])
         node = rclpy.create_node("sanitation_hmi_adapter")
         self.node = node
-        self._estop_publisher = node.create_publisher(Bool, "/emergency_stop", 10)
+        self._estop_publisher = node.create_publisher(
+            Bool, "/safety/operator_estop_command", 10
+        )
         node.create_timer(1.0, self._check_safety_interface)
         node.create_subscription(Clock, "/clock", lambda _msg: self.state.touch("clock"), 10)
         node.create_subscription(Odometry, "/odom", self._on_odom, 20)
@@ -122,16 +127,20 @@ class RosAdapter:
         node.create_subscription(Float32, "/metrics/empirical_coverage_ratio", self._on_actual_ratio, 10)
         self._install_perception_subscriptions(node)
         self.state.add_event("connection", "ROS 数据适配器已启动", "等待真实话题进入界面", source="hmi")
-        self.thread = threading.Thread(target=rclpy.spin, args=(node,), daemon=True)
+        self.thread = threading.Thread(target=self._spin, daemon=True)
         self.thread.start()
+
+    def _spin(self) -> None:
+        try:
+            self._rclpy.spin(self.node)
+        except self._external_shutdown_exception:
+            pass
 
     def _check_safety_interface(self) -> None:
         if self._estop_publisher is None:
             self.state.touch("safety", error="safety_publisher_unavailable")
             return
-        # One subscription is this adapter's own state echo. A second one proves
-        # that an external safety gate is actually attached to the command path.
-        if self._estop_publisher.get_subscription_count() >= 2:
+        if self._estop_publisher.get_subscription_count() >= 1:
             self.state.touch("safety")
         else:
             self.state.touch("safety", error="no_external_safety_subscriber")
@@ -144,12 +153,6 @@ class RosAdapter:
                 GarbageTargetArray,
                 "/perception/garbage/targets",
                 lambda msg: self._on_targets("perception", msg),
-                10,
-            )
-            node.create_subscription(
-                GarbageTargetArray,
-                "/garbage/ground_truth",
-                lambda msg: self._on_targets("truth", msg),
                 10,
             )
             node.create_subscription(CleaningEvent, "/garbage/cleaning_events", self._on_cleaning_event, 10)
@@ -175,7 +178,7 @@ class RosAdapter:
             self.state.add_event(
                 "safety",
                 "触发急停" if message.data else "请求解除急停",
-                "命令已通过 /emergency_stop 安全接口发布",
+                "命令已提交给 /safety/operator_estop_command 安全权威",
                 severity="critical" if message.data else "warning",
                 source="operator",
             )

@@ -91,7 +91,8 @@ def test_gazebo_only_launcher_contract() -> None:
     assert "keep_open_stop=1" in shell_launcher
     assert 'timeout 20 python3 "${ROOT}/scripts/emergency_stop_availability.py"' in shell_launcher
     assert "publisher.get_subscription_count()" in emergency_availability
-    assert "subscription_count >= 2" in emergency_availability
+    assert '"/safety/operator_estop_command"' in emergency_availability
+    assert "subscription_count >= 1" in emergency_availability
     assert "[switch]$GazeboOnly" in powershell_launcher
     assert '"--gazebo-only"' in powershell_launcher
     assert "[switch]$Showcase" in powershell_launcher
@@ -108,6 +109,25 @@ def test_gazebo_only_launcher_contract() -> None:
     assert "ManualControl = $true" in dedicated_launcher
     assert "NoRviz" not in dedicated_launcher
     assert "Start-Process" not in dedicated_launcher
+
+
+def test_product_world_clock_is_bounded_to_real_time() -> None:
+    world_path = (
+        ROOT / "starter_ws" / "src" / "sanitation_worlds" / "worlds"
+        / "sanitation_test_world.sdf"
+    )
+    root = __import__("xml.etree.ElementTree", fromlist=["ElementTree"]).parse(
+        world_path
+    ).getroot()
+    physics = root.find("./world/physics")
+    assert physics is not None
+    step_s = float(physics.findtext("max_step_size", "0"))
+    update_hz = float(physics.findtext("real_time_update_rate", "0"))
+    requested_factor = float(physics.findtext("real_time_factor", "0"))
+    assert step_s > 0.0
+    assert update_hz > 0.0, "zero means Gazebo runs the product world unbounded"
+    assert requested_factor == 1.0
+    assert step_s * update_hz == requested_factor
 
 
 def test_small_demo_default_camera_is_close_enough_for_target_counting() -> None:

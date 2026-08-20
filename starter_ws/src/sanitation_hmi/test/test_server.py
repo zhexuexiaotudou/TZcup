@@ -1,6 +1,31 @@
 import sys
+from types import SimpleNamespace
 
 from sanitation_hmi import server
+
+
+def test_live_ros_mode_does_not_autoload_ground_truth_reference() -> None:
+    args = SimpleNamespace(
+        registry_path=None,
+        scene_path=None,
+        mission_path=None,
+        ros=True,
+    )
+    assert server._reference_paths(args) is None
+
+
+def test_offline_reference_requires_all_paths() -> None:
+    args = SimpleNamespace(
+        registry_path="registry.yaml",
+        scene_path="scene.yaml",
+        mission_path="mission.yaml",
+        ros=False,
+    )
+    assert server._reference_paths(args) == (
+        server.Path("registry.yaml"),
+        server.Path("scene.yaml"),
+        server.Path("mission.yaml"),
+    )
 
 
 def test_main_accepts_ros_launch_arguments(monkeypatch):

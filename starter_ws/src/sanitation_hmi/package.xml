@@ -18,7 +18,6 @@
   <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>sanitation_perception_interfaces</exec_depend>
   <exec_depend>sanitation_perception</exec_depend>
-  <exec_depend>sanitation_ground_truth</exec_depend>
   <exec_depend>sanitation_tasks</exec_depend>
   <exec_depend>sanitation_bringup</exec_depend>
   <exec_depend>sanitation_navigation</exec_depend>

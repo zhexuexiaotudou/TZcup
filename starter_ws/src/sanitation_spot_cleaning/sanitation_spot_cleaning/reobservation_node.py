@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import math
+import time
 
 from sanitation_perception.grid_safety import footprint_costmap_clear, keepout_clear
 
@@ -38,6 +39,7 @@ def main() -> None:
             self.declare_parameter("transition_timeout_s", 15.0)
             self.declare_parameter("navigation_timeout_s", 60.0)
             self.declare_parameter("fresh_verdict_timeout_s", 4.0)
+            self.declare_parameter("maximum_estop_heartbeat_age_s", 0.5)
             self.core = ProductReobservationOrchestrator(maximum_reobserve_count=2)
             self.requests: dict[str, ReobservationRequest] = {}
             self.handled: set[str] = set()
@@ -50,6 +52,7 @@ def main() -> None:
             self.localized_pose = None
             self.localization_received_ns = 0
             self.emergency_stopped = True
+            self.emergency_stop_received_monotonic = 0.0
             self.collision_clear = False
             self.global_costmap = None
             self.keepout_mask = None
@@ -222,6 +225,7 @@ def main() -> None:
 
         def _on_emergency_stop(self, message) -> None:
             self.emergency_stopped = bool(message.data)
+            self.emergency_stop_received_monotonic = time.monotonic()
 
         def _on_collision_state(self, message) -> None:
             self.collision_clear = int(message.action_type) == int(
@@ -263,8 +267,13 @@ def main() -> None:
                 yaw,
                 PRODUCT_FOOTPRINT_XY,
             )
+            estop_stale = (
+                self.emergency_stop_received_monotonic <= 0.0
+                or time.monotonic() - self.emergency_stop_received_monotonic
+                > float(self.get_parameter("maximum_estop_heartbeat_age_s").value)
+            )
             return ReobservationSafety(
-                emergency_stopped=self.emergency_stopped,
+                emergency_stopped=bool(self.emergency_stopped or estop_stale),
                 collision_clear=self.collision_clear,
                 localization_healthy=(
                     age_s <= float(self.get_parameter("maximum_localization_age_s").value)

@@ -12,6 +12,10 @@
     <gravity>0 0 -9.81</gravity>
     <physics name="1ms" type="ignored">
       <max_step_size>0.005</max_step_size>
+      <!-- Gazebo treats an omitted/zero update rate as unbounded.  Keep the
+           product clock at 1x so sensors, TF and Nav2 share a sustainable
+           time base: 200 Hz * 5 ms = real_time_factor 1.0. -->
+      <real_time_update_rate>200</real_time_update_rate>
       <real_time_factor>1.0</real_time_factor>
     </physics>
 

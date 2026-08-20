@@ -12,6 +12,8 @@
 
 Cleaning Intelligence 只通过 Nav2 action 移动，通过 Coverage service 请求安全暂停/恢复，并在每次动作前重新读取 Safety Plane 的权威状态。
 
+Safety Plane 由单一 `safety_authority` 持有 `/emergency_stop`。它上电默认急停并以 10 Hz 发布权威心跳；HMI 只能向 `/safety/operator_estop_command` 提交请求。速度门、点清洁和主动重观察都要求心跳新鲜，权威节点消失或心跳超过 0.5 s 时分别自动输出零速度、关闭滚刷或取消运动。
+
 ## 在线目标链
 
 ```text
@@ -74,15 +76,17 @@ Pre-Clean 会重新检查目标仍存在、identity/class/persistence/covariance
 
 ## 启动边界
 
-产品组件入口为 `sanitation_bringup/launch/product_cleaning.launch.py`。调用者必须显式提供：
+完整产品仿真入口为 `sanitation_product_bringup/launch/product_simulation.launch.py`，组件级入口为 `sanitation_bringup/launch/product_cleaning.launch.py`。完整入口固定 Ackermann、1.32 m 车辆/刷宽、上电急停、Coverage 人工启动、生产相机、训练 GT 关闭，并要求生产 Coverage 控制器的 GT 订阅关闭。入口默认 headless，以 `ROS_DOMAIN_ID` 派生 `GZ_PARTITION`/`IGN_PARTITION`；产品世界用 5 ms 步长与 200 Hz 更新上限形成 1× 时间基准，防止遗留或并发 Gazebo 世界向本次任务串入时钟和传感器数据。调用者必须显式提供：
 
 - 冻结的 `pipeline_manifest`；
 - 哈希匹配的 `artifact_root`；
 - 非空 `mission_id`；
 - mission-scoped `dynamic_map_path`；
 - 静态 `cleanable_polygon_json`。
+- 不含 `cleaning_targets` 的 `mission_config`、地图/keepout/speed map 与 Ackermann Nav2 参数；
+- 输出目录和非空 HMI `operator_token`。
 
-该 launch 不启动 `sanitation_ground_truth` 或任何垃圾 oracle。仓库自带 perception manifests 是不可激活的 placeholder；没有正式模型、哈希、CUDA provider 与支持的 postprocess contract 时，生命周期配置必须失败。
+产品 HMI 不订阅 `/garbage/ground_truth`，Coverage 产品实例不订阅 `/ground_truth/odom`，launch 不启动垃圾 oracle，原始 model odometry 与 world dynamic pose 也不桥接到产品 ROS 图；这些真值桥仅在显式 `enable_evaluation_gt=true` 的独立评估模式存在。仓库自带 perception manifests 是不可激活的 placeholder；没有正式模型、哈希、CUDA provider 与支持的 postprocess contract 时，生命周期配置必须失败。
 
 ## 尚不能据此宣称的状态
 

@@ -18,7 +18,9 @@ class SafetyProbe(Node):
         self.declare_parameter("output_path", "safety_probe.json")
         self.declare_parameter("trial_count", 30)
         self.command_publisher = self.create_publisher(Twist, "/cmd_vel_nav", 10)
-        self.estop_publisher = self.create_publisher(Bool, "/emergency_stop", 10)
+        self.estop_publisher = self.create_publisher(
+            Bool, "/safety/operator_estop_command", 10
+        )
         self.samples = []
         self.create_subscription(Twist, "/cmd_vel", self._on_output, 50)
 

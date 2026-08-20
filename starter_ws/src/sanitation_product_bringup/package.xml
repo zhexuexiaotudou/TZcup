@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>sanitation_product_bringup</name>
+  <version>0.1.0</version>
+  <description>Strict, ground-truth-isolated product runtime composition.</description>
+  <maintainer email="team@example.com">Sanitation Vehicle Team</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>sanitation_bringup</exec_depend>
+  <exec_depend>sanitation_navigation</exec_depend>
+  <exec_depend>sanitation_coverage</exec_depend>
+  <exec_depend>sanitation_hmi</exec_depend>
+  <exec_depend>sanitation_safety</exec_depend>
+  <exec_depend>sanitation_perception</exec_depend>
+  <exec_depend>sanitation_spot_cleaning</exec_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>

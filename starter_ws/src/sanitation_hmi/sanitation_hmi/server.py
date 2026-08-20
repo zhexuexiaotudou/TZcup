@@ -160,15 +160,9 @@ def build_handler(
 def _reference_paths(args) -> tuple[Path, Path, Path] | None:
     if args.registry_path and args.scene_path and args.mission_path:
         return Path(args.registry_path), Path(args.scene_path), Path(args.mission_path)
-    if not args.ros:
-        return None
-    from ament_index_python.packages import get_package_share_directory
-
-    return (
-        Path(get_package_share_directory("sanitation_perception")) / "config" / "garbage_registry.yaml",
-        Path(get_package_share_directory("sanitation_ground_truth")) / "config" / "stage5a_scene.yaml",
-        Path(get_package_share_directory("sanitation_tasks")) / "config" / "demo_area.yaml",
-    )
+    # Product/live mode must never auto-load an oracle.  Reference overlays are
+    # available only when all three offline paths are supplied explicitly.
+    return None
 
 
 def main() -> None:
