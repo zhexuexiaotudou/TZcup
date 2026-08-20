@@ -92,6 +92,7 @@ class DynamicTrashTarget:
     track_state: TargetState = TargetState.CANDIDATE
     task_state: TargetState = TargetState.CANDIDATE
     clean_attempts: int = 0
+    reobserve_count: int = 0
     post_clean_verification_state: PostCleanState = PostCleanState.NOT_STARTED
     transitions: list[dict] = field(default_factory=list)
 
@@ -146,7 +147,7 @@ class DynamicTrashTarget:
 class DynamicTrashMap:
     """Online-only map. A new mission is always empty unless explicitly resumed."""
 
-    SCHEMA_VERSION = 1
+    SCHEMA_VERSION = 2
     UUID_NAMESPACE = uuid.UUID("3b077391-b0b2-5b63-a772-3b1805386c1a")
 
     def __init__(
@@ -188,6 +189,10 @@ class DynamicTrashMap:
     @classmethod
     def resume_same_mission(cls, path: str | Path, mission_id: str) -> "DynamicTrashMap":
         payload = json.loads(Path(path).read_text(encoding="utf-8"))
+        if payload.get("schema_version") != cls.SCHEMA_VERSION:
+            raise ValueError(
+                "persisted map schema is incompatible with ActionVerifier states"
+            )
         if payload.get("mission_id") != mission_id:
             raise ValueError("persisted map belongs to a different mission")
         config = DynamicTrashMapConfig(**payload["config"])
@@ -340,25 +345,47 @@ class DynamicTrashMap:
             ]
 
     def _auto_state(self, target: DynamicTrashTarget, stamp_ns: int) -> None:
+        # Observation fusion may establish a persistent track, but only the
+        # independent ProductActionVerifier may authorize CONFIRMED.
         requested = None
         reason = None
-        confirmation_observations = self.config.confirmation_observations
-        if str(target.target_type).upper() == "AREA":
-            confirmation_observations = {
-                "leaf_pile": self.config.leaf_area_confirmation_observations,
-                "puddle": self.config.puddle_area_confirmation_observations,
-            }.get(target.current_class, self.config.area_confirmation_observations)
         if target.track_state in {TargetState.CANDIDATE, TargetState.LOST} and target.observation_count >= 2:
             requested, reason = TargetState.TRACKED, "multi_frame_track"
-        if (
-            target.observation_count >= confirmation_observations
-            and target.class_posterior.get(target.current_class, 0.0) >= self.config.confirmation_class_posterior
-            and target.confidence_ema >= self.config.confirmation_confidence
-            and target.covariance_trace <= self.config.maximum_covariance_trace
-        ):
-            requested, reason = TargetState.CONFIRMED, "temporal_class_pose_confirmation"
         if requested is not None and requested != target.track_state:
             self.transition(target.uuid, requested, stamp_ns, reason)
+
+    def apply_action_verdict(
+        self,
+        target_uuid: str,
+        verdict: str,
+        stamp_ns: int,
+        reason: str,
+        reobserve_count: int | None = None,
+    ) -> DynamicTrashTarget:
+        """Apply only a recorded verdict from the independent ActionVerifier."""
+        requested = {
+            "ACCEPT": TargetState.CONFIRMED,
+            "OBSERVE_AGAIN": TargetState.OBSERVE_AGAIN,
+            "DEFER": TargetState.DEFERRED,
+            "REJECT": TargetState.REJECTED,
+        }.get(str(verdict).upper())
+        if requested is None:
+            raise ValueError(f"unsupported action-verifier verdict: {verdict}")
+        target = self.targets[target_uuid]
+        if requested == TargetState.OBSERVE_AGAIN:
+            if reobserve_count is None or not 1 <= int(reobserve_count) <= 2:
+                raise ValueError("OBSERVE_AGAIN requires a reobserve_count in [1, 2]")
+            if int(reobserve_count) < target.reobserve_count:
+                raise ValueError("reobserve_count cannot move backwards")
+            target.reobserve_count = int(reobserve_count)
+        if requested != target.track_state:
+            self.transition(
+                target_uuid,
+                requested,
+                stamp_ns,
+                f"action_verifier:{reason}",
+            )
+        return target
 
     def ingest(self, observation: TargetObservation) -> DynamicTrashTarget | None:
         observation.validate()

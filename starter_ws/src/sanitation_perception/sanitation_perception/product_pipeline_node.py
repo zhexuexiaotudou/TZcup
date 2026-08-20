@@ -8,10 +8,16 @@ enabled only by a frozen manifest declaring the supported runtime contract.
 from __future__ import annotations
 
 import json
+import importlib
 import math
 from pathlib import Path
 import time
 
+from sanitation_perception.action_verifier import (
+    ActionVerifierConfig,
+    ActionVerdict,
+    ProductActionVerifier,
+)
 from sanitation_perception.camera_frustum_model import CameraFrustumModel
 from sanitation_perception.dynamic_trash_map import (
     DynamicTrashMap,
@@ -21,6 +27,7 @@ from sanitation_perception.frame_synchronizer import (
     LatestFrameScheduler,
     StrictFrameSynchronizer,
 )
+from sanitation_perception.grid_safety import keepout_clear
 from sanitation_perception.lifecycle_health import ProductHealth, WatchdogConfig
 from sanitation_perception.observation_model import (
     MapPoseMeasurement,
@@ -32,6 +39,40 @@ from sanitation_perception.trash_map_messages import TargetState
 
 SUPPORTED_RUNTIME_CONTRACT = "fcos_classifier_area_v1"
 AREA_CLASS_NAMES = {"leaf_pile", "puddle"}
+_CLEANING_EVENT_STATES = {
+    "scheduled": TargetState.SCHEDULED,
+    "approaching": TargetState.APPROACHING,
+    "pre_clean_verify": TargetState.VERIFYING,
+    "cleaning": TargetState.CLEANING,
+    "post_verify_pending": TargetState.POST_VERIFY,
+    "cleaned": TargetState.CLEANED,
+    "reclean_queued": TargetState.SCHEDULED,
+    "deferred": TargetState.DEFERRED,
+    "rejected": TargetState.REJECTED,
+}
+
+
+def load_onnxruntime(import_module=importlib.import_module):
+    """Load the runtime at lifecycle configure time so absence is observable."""
+    try:
+        return import_module("onnxruntime")
+    except ImportError as exc:
+        raise RuntimeError(
+            "onnxruntime unavailable; product perception remains inactive"
+        ) from exc
+
+
+def cleaning_event_target_state(result: str) -> TargetState:
+    try:
+        return _CLEANING_EVENT_STATES[str(result).strip().lower()]
+    except KeyError as exc:
+        raise ValueError(f"unsupported product cleaning event: {result}") from exc
+
+
+def product_target_size(track, discrete_size) -> tuple[float, float, float]:
+    """Preserve physical area for AREA post-clean residual verification."""
+    values = track.estimated_size_m if track.target_type == "AREA" else discrete_size
+    return tuple(float(value) for value in values)
 
 
 def area_minimum_physical_area_m2(runtime: dict, class_name: str) -> float:
@@ -82,6 +123,7 @@ def validate_product_runtime_contract(pipeline: dict) -> None:
     if not 0.0 < saturated < 1.0:
         raise RuntimeError("maximum_dark_or_saturated_fraction must be in (0, 1)")
     DynamicTrashMapConfig(**runtime["dynamic_trash_map"]).validate()
+    ActionVerifierConfig.from_pipeline_manifest(pipeline)
     frustum = CameraFrustumModel(**runtime["camera_frustum"])
     frustum.make_sweep(
         sweep_id="contract",
@@ -148,15 +190,20 @@ def main() -> None:
     from geometry_msgs.msg import Point32
     import message_filters
     import numpy as np
-    import onnxruntime as ort
     import rclpy
     from rclpy.executors import ExternalShutdownException
     from rclpy.lifecycle import LifecycleNode, TransitionCallbackReturn
     from rclpy.qos import qos_profile_sensor_data
     from rclpy.time import Time
+    from nav_msgs.msg import OccupancyGrid
+    from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
     from sensor_msgs.msg import CameraInfo, Image
     from std_msgs.msg import String
-    from sanitation_perception_interfaces.msg import GarbageTarget, GarbageTargetArray
+    from sanitation_perception_interfaces.msg import (
+        CleaningEvent,
+        GarbageTarget,
+        GarbageTargetArray,
+    )
     from tf2_ros import Buffer, TransformException, TransformListener
 
     from sanitation_perception.inference_engine import ProductInferenceEngine
@@ -188,6 +235,7 @@ def main() -> None:
             self.declare_parameter("mission_id", "")
             self.declare_parameter("resume_same_mission", False)
             self.declare_parameter("dynamic_map_path", "")
+            self.declare_parameter("keepout_mask_topic", "/keepout_filter_mask")
             self.health = ProductHealth(default_watchdog)
             self.last_error = None
             self.pipeline = None
@@ -204,6 +252,8 @@ def main() -> None:
             self.last_runtime_metrics = None
             self.dynamic_map = None
             self.camera_frustum = None
+            self.action_verifier = None
+            self.keepout_mask = None
             self.tf_buffer = Buffer()
             self.tf_listener = TransformListener(self.tf_buffer, self)
             self.health_publisher = self.create_publisher(
@@ -230,6 +280,12 @@ def main() -> None:
             self.area_region_publisher = self.create_publisher(
                 String, "/perception/product/area_regions", 10
             )
+            self.verification_publisher = self.create_publisher(
+                String, "/perception/product/action_verdicts", 20
+            )
+            self.reobserve_publisher = self.create_publisher(
+                String, "/perception/product/reobserve_requests", 20
+            )
             self.leaf_mask_publisher = self.create_publisher(
                 Image, "/perception/product/leaf_mask", 10
             )
@@ -239,6 +295,67 @@ def main() -> None:
             self.create_timer(0.25, self._publish_health)
             self.create_timer(0.001, self._consume_latest)
             self.autostart_timer = self.create_timer(1.0, self._autostart)
+            latched_grid_qos = QoSProfile(depth=1)
+            latched_grid_qos.reliability = ReliabilityPolicy.RELIABLE
+            latched_grid_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
+            self.create_subscription(
+                OccupancyGrid,
+                str(self.get_parameter("keepout_mask_topic").value),
+                self._on_keepout_mask,
+                latched_grid_qos,
+            )
+            self.create_subscription(
+                CleaningEvent,
+                "/garbage/cleaning_events",
+                self._on_cleaning_event,
+                20,
+            )
+
+        def _on_keepout_mask(self, message) -> None:
+            self.keepout_mask = message
+
+        def _on_cleaning_event(self, message) -> None:
+            if self.dynamic_map is None:
+                return
+            source = str(message.source_backend).lower()
+            if any(
+                token in source
+                for token in (
+                    "ground_truth",
+                    "gazebo_registry",
+                    "evaluation_registry",
+                )
+            ):
+                self.last_error = "GT control violation: cleaning event rejected"
+                self.health.record_session_error()
+                return
+            target_uuid = str(message.target_uuid)
+            if target_uuid not in self.dynamic_map.targets:
+                self.last_error = f"unknown cleaning-event target: {target_uuid}"
+                self.health.record_session_error()
+                return
+            try:
+                requested = cleaning_event_target_state(message.result)
+                stamp_ns = stamp_nanoseconds(message)
+                if stamp_ns <= 0:
+                    raise ValueError("cleaning event requires a positive timestamp")
+                self.dynamic_map.transition(
+                    target_uuid,
+                    requested,
+                    stamp_ns,
+                    f"spot_cleaning_event:{str(message.result).lower()}",
+                )
+                dynamic_map_path = str(
+                    self.get_parameter("dynamic_map_path").value
+                ).strip()
+                if dynamic_map_path:
+                    self.dynamic_map.persist(dynamic_map_path)
+                self.last_error = None
+            except Exception as exc:
+                self.last_error = (
+                    f"cleaning event rejected: {type(exc).__name__}: {exc}"
+                )
+                self.health.record_session_error()
 
         def _autostart(self) -> None:
             self.autostart_timer.cancel()
@@ -250,6 +367,7 @@ def main() -> None:
 
         def on_configure(self, _state):
             try:
+                ort = load_onnxruntime()
                 pipeline_path = Path(
                     str(self.get_parameter("pipeline_manifest").value)
                 ).resolve()
@@ -294,6 +412,9 @@ def main() -> None:
                 )
                 self.tracker = ProductTrackerV2(
                     TrackerV2Config.from_pipeline_manifest(self.pipeline)
+                )
+                self.action_verifier = ProductActionVerifier(
+                    ActionVerifierConfig.from_pipeline_manifest(self.pipeline)
                 )
                 share = Path(get_package_share_directory("sanitation_perception"))
                 self.garbage_registry = GarbageRegistry.load(
@@ -359,6 +480,7 @@ def main() -> None:
             self.registry_entries = {}
             self.dynamic_map = None
             self.camera_frustum = None
+            self.action_verifier = None
             self.sensor_subscribers.clear()
             if self.health.state == "INACTIVE":
                 self.health.transition("UNCONFIGURED", "cleaned_up")
@@ -494,9 +616,71 @@ def main() -> None:
                         source_model=str(self.pipeline["pipeline_id"]),
                     )
                     target = self.dynamic_map.ingest(observation)
+                    verification = None
+                    if target is not None:
+                        verification = self.action_verifier.evaluate(
+                            track, target, depth_valid=True
+                        )
+                        if target.track_state in {
+                            TargetState.CANDIDATE,
+                            TargetState.TRACKED,
+                            TargetState.OBSERVE_AGAIN,
+                            TargetState.CONFIRMED,
+                            TargetState.DEFERRED,
+                            TargetState.LOST,
+                        }:
+                            self.dynamic_map.apply_action_verdict(
+                                target.uuid,
+                                verification.verdict.value,
+                                stamp_ns,
+                                ",".join(verification.reasons) or "all_checks_passed",
+                                reobserve_count=verification.reobserve_count,
+                            )
+                        track.state = {
+                            ActionVerdict.ACCEPT: "VERIFIED",
+                            ActionVerdict.OBSERVE_AGAIN: "OBSERVE_AGAIN",
+                            ActionVerdict.DEFER: "DEFERRED",
+                            ActionVerdict.REJECT: "REJECTED",
+                        }[verification.verdict]
+                        verification_record = verification.to_record()
+                        verification_record["target_uuid"] = target.uuid
+                        verification_record["stamp_ns"] = stamp_ns
+                        self.verification_publisher.publish(String(data=json.dumps(
+                            verification_record, sort_keys=True
+                        )))
+                        if verification.verdict == ActionVerdict.OBSERVE_AGAIN:
+                            self.reobserve_publisher.publish(String(data=json.dumps({
+                                "request_id": (
+                                    f"{track.uuid}:reobserve:"
+                                    f"{verification.reobserve_count}"
+                                ),
+                                "track_uuid": track.uuid,
+                                "target_uuid": target.uuid,
+                                "stamp_ns": stamp_ns,
+                                "x_m": target.map_x_m,
+                                "y_m": target.map_y_m,
+                                "covariance_trace": target.covariance_trace,
+                                "class_id": target.current_class,
+                                "target_size_m": (
+                                    math.sqrt(max(target.estimated_size_m[0], 1e-6))
+                                    if target.target_type == "AREA"
+                                    else min(
+                                        self.registry_entries[target.current_class].size_m[:2]
+                                    )
+                                ),
+                                "reobserve_count": verification.reobserve_count,
+                                "maximum_reobserve_count": (
+                                    self.action_verifier.config.maximum_reobserve_count
+                                ),
+                                "source_backend": "product_action_verifier",
+                                "ground_truth_control_allowed": False,
+                            }, sort_keys=True)))
                     online_observations.append({
                         **observation.to_record(),
                         "accepted_target_uuid": target.uuid if target else None,
+                        "action_verdict": (
+                            verification.verdict.value if verification else None
+                        ),
                     })
                 self.dynamic_map.expire(stamp_ns)
                 tracking_ms = (time.perf_counter() - tracking_started) * 1000.0
@@ -619,8 +803,14 @@ def main() -> None:
                     target.polygon.points.append(
                         Point32(x=float(x_m), y=float(y_m), z=0.0)
                     )
+                # AREA targets carry physical area in size.x so a post-clean
+                # observation can compute a real residual ratio. Discrete
+                # targets retain their physical XYZ dimensions.
+                published_size = product_target_size(track, size)
                 target.size.x, target.size.y, target.size.z = (
-                    float(size[0]), float(size[1]), float(size[2])
+                    float(published_size[0]),
+                    float(published_size[1]),
+                    float(published_size[2]),
                 )
                 target.first_seen = Time(
                     nanoseconds=int(track.first_seen_stamp_ns)
@@ -635,9 +825,12 @@ def main() -> None:
                 target.source_stamp = rgb_message.header.stamp
                 target.visibility = 1.0
                 target.occlusion_ratio = 0.0
-                # Keepout membership has no authoritative product map input at
-                # P6 yet. Mark unknown as blocked rather than action-safe.
-                target.in_keepout = True
+                # Missing/out-of-bounds/unknown masks remain fail-closed. Only
+                # an explicit zero from Nav2's authoritative keepout layer is
+                # eligible for scheduling.
+                target.in_keepout = not keepout_clear(
+                    self.keepout_mask, track.map_x_m, track.map_y_m
+                )
                 message.targets.append(target)
             self.target_publisher.publish(message)
 
@@ -664,6 +857,7 @@ def main() -> None:
                 if self.synchronizer is not None
                 else None
             )
+            snapshot["keepout_mask_received"] = self.keepout_mask is not None
             snapshot["frame_queue"] = (
                 {"depth": self.scheduler.depth, "submitted": self.scheduler.submitted,
                  "consumed": self.scheduler.consumed, "dropped": self.scheduler.dropped}

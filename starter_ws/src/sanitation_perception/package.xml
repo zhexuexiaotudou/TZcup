@@ -10,6 +10,7 @@
   <exec_depend>cv_bridge</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>message_filters</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
   <exec_depend>rclpy</exec_depend>
   <exec_depend>sanitation_perception_interfaces</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>

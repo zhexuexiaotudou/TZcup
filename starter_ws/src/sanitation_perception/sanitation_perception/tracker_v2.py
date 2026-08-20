@@ -222,12 +222,12 @@ class ProductTrackerV2:
         if track.state == "LOST":
             track.state = track.state_before_occlusion
         if (
-            track.state in {"TENTATIVE", "DEFERRED"}
+            track.state in {"TENTATIVE", "OBSERVE_AGAIN", "DEFERRED"}
             and track.observation_count >= self.config.confirmation_observations
             and track.class_confidence >= self.config.confirmation_class_posterior
             and track.score_ema >= self.config.confirmation_score_ema
         ):
-            track.state = "CONFIRMED"
+            track.state = "READY_FOR_VERIFICATION"
         elif (
             track.state == "TENTATIVE"
             and track.observation_count >= self.config.defer_after_observations

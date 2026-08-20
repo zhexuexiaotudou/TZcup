@@ -23,7 +23,7 @@ SIMULATION_PRODUCT_COMPLETE=true
 
 ## 当前结论
 
-仓库已有 Ackermann 模型/控制、Nav2 与 Coverage profile、生产感知状态机、DynamicTrashMap、Spot Cleaning/Post-Clean 组件、密封测试和发布工具的代码基线。当前尚无一套与本合同绑定的完整 A–P 正式证据，因此：
+仓库已有 Ackermann 模型/控制、Nav2 与 Coverage profile，以及生产感知、独立 ActionVerifier、最多两次主动重观察、DynamicTrashMap、真实 Coverage/Nav2 点清洁和 camera-backed Post-Clean 的失效关闭代码链。仓库内模型清单仍是不可激活的 placeholder，且当前尚无一套与本合同绑定的完整 A–P 正式证据，因此：
 
 ```text
 SIMULATION_PRODUCT_COMPLETE=false
@@ -31,7 +31,7 @@ PRODUCT_INTEGRATION_READY=false
 PRODUCT_FIELD_READY=false
 ```
 
-主要缺口是产品近距四分类、20,000 m² 正式范围建图闭环、30-seed 综合链、3500 m²/h 实测效率、完整 10 Hz/10 min 性能、2 h soak、故障矩阵、5-bag replay、一次性 sealed final 和最终 release/rollback。详情见 [当前状态](docs/current-status.md)。
+主要缺口是合格且可冻结的产品近距四分类/Area 模型、上述新链的真实 ROS/Gazebo 集成验证、20,000 m² 正式范围建图闭环、30-seed 综合链、3500 m²/h 实测效率、完整 10 Hz/10 min 性能、2 h soak、故障矩阵、5-bag replay、一次性 sealed final 和最终 release/rollback。详情见 [当前状态](docs/current-status.md)，运行时不变量见 [产品运行时基础架构](docs/product-runtime-architecture.md)。
 
 近距分类已完成协议限定的 [CRCRV11 R1/R2/R3](docs/close-range-classifier-contract-recovery-v11.md)，但三条路线全部失败并触发停止条件 B；sealed 数据保持未读，禁止以增加 R4/R5、重开 detector 搜索或降低门槛绕过该阻塞。强制要求的紧凑最终状态、blocker、model registry、release manifest、evidence index 与报告保存在 [`docs/evidence/crcrv11`](docs/evidence/crcrv11/PERCEPTION_CRCRV11_EVIDENCE_INDEX.md)，失败 checkpoint 和训练流水账不进入当前仓库。
 
@@ -110,6 +110,7 @@ py -3 scripts/product_acceptance.py evaluate `
 - [系统技术规范](PROJECT_SPEC.md)
 - [产品验收门](STAGE_GATES.md)
 - [当前状态](docs/current-status.md)
+- [产品运行时基础架构](docs/product-runtime-architecture.md)
 - [Ackermann 车辆模型](docs/ackermann-vehicle-model.md)
 - [Ackermann 导航](docs/ackermann-navigation.md)
 - [操作指南](docs/operator-guide.md)

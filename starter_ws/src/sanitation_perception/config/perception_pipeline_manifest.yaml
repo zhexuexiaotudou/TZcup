@@ -30,6 +30,22 @@ runtime:
     confirmation_score_ema: 0.60
     score_ema_alpha: 0.35
     defer_after_observations: 5
+  action_verifier:
+    actionable_classes:
+      - plastic_bottle
+      - metal_can
+      - paper_litter
+      - leaf_pile
+      - puddle
+    minimum_class_confidence: 0.80
+    maximum_background_probability: 0.10
+    reject_background_probability: 0.90
+    minimum_observations: 3
+    defer_after_observations: 6
+    maximum_covariance_trace: 0.03
+    maximum_map_disagreement_m: 0.15
+    minimum_view_separation_rad: 0.0
+    maximum_reobserve_count: 2
   dynamic_trash_map:
     association_distance_m: 0.30
     area_association_distance_m: 0.50

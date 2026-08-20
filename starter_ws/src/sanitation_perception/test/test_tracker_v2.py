@@ -47,7 +47,7 @@ def test_class_agnostic_association_accumulates_posterior_and_ema():
     assert track.uuid == stable_uuid
     assert track.class_id == "plastic_bottle"
     assert track.score_ema > 0.4
-    assert track.state == "CONFIRMED"
+    assert track.state == "READY_FOR_VERIFICATION"
 
 
 def test_time_distance_and_iou_gate_then_occlusion_recovery():

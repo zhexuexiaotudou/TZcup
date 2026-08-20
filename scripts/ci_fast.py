@@ -211,6 +211,8 @@ def run_ros_independent_tests() -> None:
         perception_package / "test" / "test_model_activation.py",
         perception_package / "test" / "test_inference_engine.py",
         perception_package / "test" / "test_product_pipeline_contract.py",
+        perception_package / "test" / "test_grid_safety.py",
+        perception_package / "test" / "test_action_verifier.py",
         perception_package / "test" / "test_performance_monitor.py",
         perception_package / "test" / "test_backends.py",
         perception_package / "test" / "test_pipeline_manifest.py",
@@ -234,6 +236,9 @@ def run_ros_independent_tests() -> None:
         spot_cleaning_package / "test" / "test_auto03_replay_audit.py",
         spot_cleaning_package / "test" / "test_cleaning_task_scheduler.py",
         spot_cleaning_package / "test" / "test_post_clean_verification.py",
+        spot_cleaning_package / "test" / "test_product_orchestrator.py",
+        spot_cleaning_package / "test" / "test_product_spot_node_helpers.py",
+        spot_cleaning_package / "test" / "test_reobservation_orchestrator.py",
         ROOT / "reference_vision" / "test" / "test_reference_adapter_contract.py",
         ROOT / "reference_vision" / "test" / "test_third_party_registry.py",
         ROOT / "reference_vision" / "test" / "test_product_reference_isolation.py",
@@ -362,6 +367,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_product_acceptance.py",
         ROOT / "scripts" / "test_product_mapping_acceptance.py",
         ROOT / "scripts" / "test_product_mapping_runner.py",
+        ROOT / "scripts" / "test_product_cleaning_launch.py",
         ROOT / "scripts" / "test_crcrv11_blocker_package.py",
     )
     test_paths = tuple(path for path in test_paths if path.is_file())

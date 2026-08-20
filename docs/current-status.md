@@ -20,9 +20,9 @@ PRODUCT_FIELD_READY=false
 | 车辆与仿真 | Ackermann Xacro、Gazebo steering plugin、wheel/steering state、Ackermann EKF、Nav2 与 Coverage profile；默认入口已切换为 Ackermann | 静态/单元合同通过；仍需正式运行矩阵 |
 | 清扫机构 | 默认有效刷宽 1.32 m、40 L 箱体几何、真实 footprint 清扫足迹 | 几何合同存在；效率与长期运行未通过 |
 | 定位/导航/覆盖 | SLAM/定位、双天线 GNSS 航向融合、Nav2、未知栅格 frontier 探索、地图保存/硬重启/加载/重定位/多航点导航、keepout、Collision Monitor、skip-lane Ackermann Coverage、repair 与可视化链 | 40 m × 20 m 整链烟测已通过，但不能替代 20,000 m²、30-seed 和 3500 m²/h 正式门 |
-| 离散感知 | proposal、近距四分类接口、ActionVerifier、重观察、Tracking、RGB-D 投影、DynamicTrashMap | 当前已知近距分类结果低于 macro-F1 0.98，且新 V1 正式证据未建立 |
+| 离散感知 | proposal、近距四分类接口、Tracking、RGB-D 投影、独立 ActionVerifier、最多两次重观察与 DynamicTrashMap；Tracker/Map 均不能自行 CONFIRMED | 当前已知近距分类结果低于 macro-F1 0.98；placeholder manifest 不可激活，真实 ROS/Gazebo 链与 V1 正式证据未建立 |
 | Area 感知 | leaf/puddle runtime、训练评估与独立指标代码 | 需在固定 split 与完整产品链重新冻结/验收 |
-| Spot/Post-Clean | Scheduler、Pre-Clean、执行协调、camera-backed Post-Clean 状态机 | 缺少 ≥30 seeds 的零错误清扫正式证据 |
+| Spot/Post-Clean | 产品入口已接真实 keepout/global costmap 全车 footprint、Coverage pause/resume acknowledgement、Nav2 path/approach、刷盘互锁、Pre-Clean、camera-frustum 离散后验与 Area 残余/单次重清 | 纯逻辑门已覆盖；仍缺 ROS build、完整 Gazebo 实链和 ≥30 seeds 零错误清扫正式证据 |
 | 交互 | HMI、Speech/任务接口与安全边界代码 | 缺固定集 ≥95% 与两个模态综合正式报告 |
 | 冻结/发布 | sealed one-shot、manifest、hash、x86 packaging、SBOM/许可工具基础 | 尚未形成 V1 freeze、sealed final、release 与真实 rollback 证据 |
 
@@ -48,7 +48,7 @@ costmap 临时排除绑定候选与当前地图几何，并由 AST 回归门约�
 
 ## 当前近距分类硬边界
 
-[CRCRV11](close-range-classifier-contract-recovery-v11.md) 已完成协议允许的 R1/R2/R3 三条路线并触发停止条件 B。C11 虽将 unique background tight crop 从 9 扩展到 6,576，R1 background specificity 也恢复为 `1.0`，但最佳正式 candidate macro-F1 仍只有 `0.6311`。因此不得继续 R4/R5、搜索新 detector、读取 sealed 数据调参或降低 E 门；ActionVerifier 之后的感知产品链保持 dependency-blocked。
+[CRCRV11](close-range-classifier-contract-recovery-v11.md) 已完成协议允许的 R1/R2/R3 三条路线并触发停止条件 B。C11 虽将 unique background tight crop 从 9 扩展到 6,576，R1 background specificity 也恢复为 `1.0`，但最佳正式 candidate macro-F1 仍只有 `0.6311`。因此不得继续 R4/R5、搜索新 detector、读取 sealed 数据调参或降低 E 门；ActionVerifier/重观察/清洁闭环代码可继续验证，但产品模型激活与 E–I 正式运行保持 dependency-blocked。
 
 ## 当前阻塞顺序
 

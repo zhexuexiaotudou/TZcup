@@ -8,6 +8,7 @@ from enum import Enum
 class TargetState(str, Enum):
     CANDIDATE = "CANDIDATE"
     TRACKED = "TRACKED"
+    OBSERVE_AGAIN = "OBSERVE_AGAIN"
     CONFIRMED = "CONFIRMED"
     SCHEDULED = "SCHEDULED"
     APPROACHING = "APPROACHING"
@@ -40,17 +41,27 @@ TERMINAL_STATES = {
 ALLOWED_TRANSITIONS: dict[TargetState, set[TargetState]] = {
     TargetState.CANDIDATE: {
         TargetState.TRACKED,
+        TargetState.OBSERVE_AGAIN,
         TargetState.DEFERRED,
         TargetState.REJECTED,
         TargetState.LOST,
     },
     TargetState.TRACKED: {
+        TargetState.OBSERVE_AGAIN,
+        TargetState.CONFIRMED,
+        TargetState.DEFERRED,
+        TargetState.REJECTED,
+        TargetState.LOST,
+    },
+    TargetState.OBSERVE_AGAIN: {
+        TargetState.TRACKED,
         TargetState.CONFIRMED,
         TargetState.DEFERRED,
         TargetState.REJECTED,
         TargetState.LOST,
     },
     TargetState.CONFIRMED: {
+        TargetState.OBSERVE_AGAIN,
         TargetState.SCHEDULED,
         TargetState.VERIFYING,
         TargetState.DEFERRED,
@@ -89,6 +100,7 @@ ALLOWED_TRANSITIONS: dict[TargetState, set[TargetState]] = {
     },
     TargetState.DEFERRED: {
         TargetState.TRACKED,
+        TargetState.OBSERVE_AGAIN,
         TargetState.CONFIRMED,
         TargetState.SCHEDULED,
         TargetState.VERIFYING,
@@ -98,6 +110,7 @@ ALLOWED_TRANSITIONS: dict[TargetState, set[TargetState]] = {
     },
     TargetState.LOST: {
         TargetState.TRACKED,
+        TargetState.OBSERVE_AGAIN,
         TargetState.CONFIRMED,
         TargetState.REJECTED,
     },

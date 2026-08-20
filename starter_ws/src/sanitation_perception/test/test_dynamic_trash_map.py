@@ -19,6 +19,10 @@ def test_multiframe_confirmation_and_removal_expiry():
         target = dynamic_map.ingest(observation(dynamic_map, stamp))
 
     assert target is not None
+    assert target.track_state == TargetState.TRACKED
+    dynamic_map.apply_action_verdict(
+        target.uuid, "ACCEPT", 1_200_000_000, "all_checks_passed"
+    )
     assert target.track_state == TargetState.CONFIRMED
     assert target.observation_count == 3
     assert dynamic_map.count == 1
@@ -87,7 +91,7 @@ def test_ground_truth_ingress_is_rejected():
     assert dynamic_map.count == 0
 
 
-def test_area_target_requires_the_longer_temporal_confirmation_window():
+def test_area_target_cannot_auto_confirm_without_action_verifier():
     dynamic_map = DynamicTrashMap.start_new("mission-area")
     target = None
     for index in range(5):
@@ -112,10 +116,14 @@ def test_area_target_requires_the_longer_temporal_confirmation_window():
             polygon_xy_m=((1.9, -0.1), (2.1, -0.1), (2.0, 0.1)),
         )
     )
+    assert target.track_state == TargetState.TRACKED
+    dynamic_map.apply_action_verdict(
+        target.uuid, "ACCEPT", stamp, "all_checks_passed"
+    )
     assert target.track_state == TargetState.CONFIRMED
 
 
-def test_leaf_area_uses_the_class_aware_four_frame_window():
+def test_leaf_area_requires_explicit_action_verifier_acceptance():
     dynamic_map = DynamicTrashMap.start_new("mission-leaf")
     target = None
     for index in range(4):
@@ -131,4 +139,28 @@ def test_leaf_area_uses_the_class_aware_four_frame_window():
         )
     assert target is not None
     assert target.current_class == "leaf_pile"
+    assert target.track_state == TargetState.TRACKED
+    dynamic_map.apply_action_verdict(
+        target.uuid, "ACCEPT", stamp, "all_checks_passed"
+    )
     assert target.track_state == TargetState.CONFIRMED
+
+
+def test_observe_again_is_explicit_and_bounded_by_external_verifier():
+    dynamic_map = DynamicTrashMap.start_new("mission-reobserve")
+    stamp = 1_000_000_000
+    record_sweep(dynamic_map, stamp)
+    target = dynamic_map.ingest(observation(dynamic_map, stamp))
+    dynamic_map.apply_action_verdict(
+        target.uuid,
+        "OBSERVE_AGAIN",
+        stamp,
+        "insufficient_evidence",
+        reobserve_count=1,
+    )
+    assert target.track_state == TargetState.OBSERVE_AGAIN
+    assert target.reobserve_count == 1
+    dynamic_map.apply_action_verdict(
+        target.uuid, "DEFER", stamp + 1, "reobserve_budget_exhausted"
+    )
+    assert target.track_state == TargetState.DEFERRED
