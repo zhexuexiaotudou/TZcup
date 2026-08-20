@@ -123,6 +123,7 @@ class RosAdapter:
         node.create_subscription(Bool, "/emergency_stop", self._on_estop, 10)
         node.create_subscription(String, "/coverage/state", self._on_coverage_state, 10)
         node.create_subscription(String, "/spot_clean/state", self._on_spot_state, 10)
+        node.create_subscription(String, "/product/health", self._on_product_health, 10)
         node.create_subscription(Float32, "/metrics/coverage_ratio", self._on_planned_ratio, 10)
         node.create_subscription(Float32, "/metrics/empirical_coverage_ratio", self._on_actual_ratio, 10)
         self._install_perception_subscriptions(node)
@@ -254,6 +255,15 @@ class RosAdapter:
             value = message.data or "UNKNOWN"
         self.state.spot_state = value
         self.state.touch("spot_state")
+
+    def _on_product_health(self, message) -> None:
+        try:
+            payload = json.loads(message.data)
+            if not isinstance(payload, dict):
+                raise TypeError("product health must be an object")
+            self.state.set_product_health(payload)
+        except (json.JSONDecodeError, TypeError, ValueError) as exc:
+            self.state.touch("product_health", error=f"invalid_health:{exc}")
 
     def _on_planned_ratio(self, message) -> None:
         self.state.coverage_metrics["planned_ratio"] = float(message.data)

@@ -23,6 +23,7 @@ setup(
     entry_points={
         "console_scripts": [
             "safety_authority = sanitation_safety.authority:main",
+            "product_supervisor = sanitation_safety.supervisor:main",
             "velocity_gate = sanitation_safety.velocity_gate:main",
         ],
     },

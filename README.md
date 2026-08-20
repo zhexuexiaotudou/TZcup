@@ -23,7 +23,7 @@ SIMULATION_PRODUCT_COMPLETE=true
 
 ## 当前结论
 
-仓库已有 Ackermann 模型/控制、Nav2 与 Coverage profile，以及上电急停/权威心跳安全层、GT 隔离的产品启动拓扑、生产感知、独立 ActionVerifier、最多两次主动重观察、DynamicTrashMap、真实 Coverage/Nav2 点清洁、受控滚刷所有权和 camera-backed Post-Clean 的失效关闭代码链。产品入口默认无 GUI、以 ROS domain 派生独立 Gazebo Transport 分区，并用有界 1× 物理时钟阻止并发试验串场。仓库内模型清单仍是不可激活的 placeholder，且当前尚无一套与本合同绑定的完整 A–P 正式证据，因此：
+仓库已有 Ackermann 模型/控制、Nav2 与 Coverage profile，以及上电急停/权威心跳安全层、区分运动故障与清扫降级的产品监督器、GT 隔离的产品启动拓扑、统一全局位姿契约、生产感知、独立 ActionVerifier、最多两次主动重观察、DynamicTrashMap、真实 Coverage/Nav2 点清洁、受控滚刷所有权和 camera-backed Post-Clean 的失效关闭代码链。产品入口默认无 GUI、以 ROS domain 派生独立 Gazebo Transport 分区，并用有界 1× 物理时钟阻止并发试验串场。仓库内模型清单仍是不可激活的 placeholder，且当前尚无一套与本合同绑定的完整 A–P 正式证据，因此：
 
 ```text
 SIMULATION_PRODUCT_COMPLETE=false

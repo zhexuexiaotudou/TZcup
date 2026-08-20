@@ -341,6 +341,7 @@ def run_ros_independent_tests() -> None:
         gazebo_visualization_package / "test" / "test_coverage_telemetry_v2.py",
         spot_cleaning_package / "test" / "test_auto01_geometry.py",
         safety_package / "test" / "test_authority.py",
+        safety_package / "test" / "test_supervisor.py",
         safety_package / "test" / "test_velocity_gate.py",
         ROOT / "scripts" / "test_autonomous_runner.py",
         ROOT / "scripts" / "test_auto02_tools.py",

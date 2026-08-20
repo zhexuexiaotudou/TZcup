@@ -44,6 +44,7 @@ def test_full_product_topology_is_operator_started_and_gt_isolated() -> None:
     assert '"enable_training_gt": "false"' in text
     assert '"enable_evaluation_gt": "false"' in text
     assert '"safety_startup_stopped": "true"' in text
+    assert '"safety_require_supervisor": "true"' in text
     assert '"manual_start": True' in text
     assert '"allow_ground_truth_evaluation": False' in text
     assert 'DeclareLaunchArgument(\n            "gui",\n            default_value="false"' in text
@@ -52,6 +53,9 @@ def test_full_product_topology_is_operator_started_and_gt_isolated() -> None:
     assert 'SetEnvironmentVariable("IGN_PARTITION", transport_partition)' in text
     assert 'executable="coverage_probe"' in text
     assert 'FindPackageShare("sanitation_hmi")' in text
+    assert 'executable="product_supervisor"' in text
+    assert "respawn=True" in text
+    assert '"localization_pose_topic": "/localization/fused_pose"' in text
 
 
 def test_product_mission_contains_geometry_but_no_preknown_targets() -> None:
@@ -93,3 +97,5 @@ def test_product_profiles_use_full_width_and_authoritative_estop() -> None:
     assert "('production', 'auto12_efficiency_v1'" in coverage
     assert "executable='safety_authority'" in navigation
     assert "startup_emergency_stopped" in navigation
+    assert "DeclareLaunchArgument(\n                'localization_pose_topic'" in navigation
+    assert "('amcl_pose', LaunchConfiguration('localization_pose_topic'))" in navigation

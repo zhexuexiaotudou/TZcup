@@ -12,7 +12,7 @@
 
 Cleaning Intelligence 只通过 Nav2 action 移动，通过 Coverage service 请求安全暂停/恢复，并在每次动作前重新读取 Safety Plane 的权威状态。
 
-Safety Plane 由单一 `safety_authority` 持有 `/emergency_stop`。它上电默认急停并以 10 Hz 发布权威心跳；HMI 只能向 `/safety/operator_estop_command` 提交请求。速度门、点清洁和主动重观察都要求心跳新鲜，权威节点消失或心跳超过 0.5 s 时分别自动输出零速度、关闭滚刷或取消运动。
+Safety Plane 由单一 `safety_authority` 持有 `/emergency_stop`。它上电默认急停并以 10 Hz 发布权威心跳；HMI 只能向 `/safety/operator_estop_command` 提交请求。`product_supervisor` 独立汇总扫描、定位、Coverage、相机、感知、点清扫和重观察心跳：运动平面缺失、超时或定位协方差异常会触发并锁存 E-stop，监督心跳缺失时人工清除请求必须被拒绝；监督进程由产品入口自动重启，但健康恢复不会自动解除已经锁存的急停。感知/清扫平面故障只进入 `DEGRADED` 并禁止不安全清扫，Safety/Nav2 仍保持可用。速度门、点清洁和主动重观察都要求权威心跳新鲜，权威节点消失或心跳超过 0.5 s 时分别自动输出零速度、关闭滚刷或取消运动。
 
 ## 在线目标链
 
@@ -76,7 +76,7 @@ Pre-Clean 会重新检查目标仍存在、identity/class/persistence/covariance
 
 ## 启动边界
 
-完整产品仿真入口为 `sanitation_product_bringup/launch/product_simulation.launch.py`，组件级入口为 `sanitation_bringup/launch/product_cleaning.launch.py`。完整入口固定 Ackermann、1.32 m 车辆/刷宽、上电急停、Coverage 人工启动、生产相机、训练 GT 关闭，并要求生产 Coverage 控制器的 GT 订阅关闭。入口默认 headless，以 `ROS_DOMAIN_ID` 派生 `GZ_PARTITION`/`IGN_PARTITION`；产品世界用 5 ms 步长与 200 Hz 更新上限形成 1× 时间基准，防止遗留或并发 Gazebo 世界向本次任务串入时钟和传感器数据。调用者必须显式提供：
+完整产品仿真入口为 `sanitation_product_bringup/launch/product_simulation.launch.py`，组件级入口为 `sanitation_bringup/launch/product_cleaning.launch.py`。完整入口固定 Ackermann、1.32 m 车辆/刷宽、上电急停、Coverage 人工启动、生产相机、训练 GT 关闭，并要求生产 Coverage 控制器的 GT 订阅关闭。局部 `/odom` 由 wheel/IMU EKF 发布；AMCL 独占 `map→odom` 并把原始全局位姿契约化为 `/localization/fused_pose`，供 Coverage、HMI、重观察、点清扫和健康监督共同使用。监督节点以持续的 `map→odom` TF 作为 AMCL 运行心跳，同时保留位姿协方差判定，避免把静止时低频位姿事件误判为定位失联。入口默认 headless，以 `ROS_DOMAIN_ID` 派生 `GZ_PARTITION`/`IGN_PARTITION`；产品世界用 5 ms 步长与 200 Hz 更新上限形成 1× 时间基准，防止遗留或并发 Gazebo 世界向本次任务串入时钟和传感器数据。调用者必须显式提供：
 
 - 冻结的 `pipeline_manifest`；
 - 哈希匹配的 `artifact_root`；

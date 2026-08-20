@@ -112,6 +112,9 @@ def generate_launch_description():
                 'initial_pose.y': ParameterValue(initial_pose_y, value_type=float),
                 'initial_pose.yaw': ParameterValue(initial_pose_yaw, value_type=float),
             }],
+            remappings=[
+                ('amcl_pose', LaunchConfiguration('localization_pose_topic')),
+            ],
         ),
         Node(
             package='nav2_lifecycle_manager',
@@ -201,10 +204,27 @@ def generate_launch_description():
                     'override this to true and require an operator clear.'
                 ),
             ),
+            DeclareLaunchArgument(
+                'safety_require_supervisor',
+                default_value='false',
+                description=(
+                    'Engineering compatibility default. Product launch must '
+                    'require the product supervisor heartbeat.'
+                ),
+            ),
             DeclareLaunchArgument('initial_pose_x', default_value='0.0'),
             DeclareLaunchArgument('initial_pose_y', default_value='0.0'),
             DeclareLaunchArgument('initial_pose_yaw', default_value='0.0'),
             DeclareLaunchArgument('localization_backend', default_value='amcl'),
+            DeclareLaunchArgument(
+                'localization_pose_topic',
+                default_value='/amcl_pose',
+                description=(
+                    'Canonical global pose output. Product launch remaps AMCL '
+                    'to /localization/fused_pose; engineering launches retain '
+                    'the Nav2-compatible /amcl_pose default.'
+                ),
+            ),
             DeclareLaunchArgument(
                 'enable_filters', default_value='true',
                 description=(
@@ -286,6 +306,10 @@ def generate_launch_description():
                     'use_sim_time': use_sim_time,
                     'startup_emergency_stopped': ParameterValue(
                         LaunchConfiguration('safety_startup_stopped'),
+                        value_type=bool,
+                    ),
+                    'require_supervisor_heartbeat': ParameterValue(
+                        LaunchConfiguration('safety_require_supervisor'),
                         value_type=bool,
                     ),
                 }],

@@ -70,6 +70,14 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument("random_seed", default_value="0"),
         SetEnvironmentVariable("GZ_PARTITION", transport_partition),
         SetEnvironmentVariable("IGN_PARTITION", transport_partition),
+        Node(
+            package="sanitation_safety",
+            executable="product_supervisor",
+            name="product_supervisor",
+            output="screen",
+            respawn=True,
+            respawn_delay=1.0,
+        ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(sim_launch),
             launch_arguments={
@@ -97,7 +105,9 @@ def generate_launch_description() -> LaunchDescription:
                 "keepout_map": LaunchConfiguration("keepout_map"),
                 "speed_map": LaunchConfiguration("speed_map"),
                 "footprint_profile": "production",
+                "localization_pose_topic": "/localization/fused_pose",
                 "safety_startup_stopped": "true",
+                "safety_require_supervisor": "true",
                 "enable_filters": "true",
             }.items(),
         ),

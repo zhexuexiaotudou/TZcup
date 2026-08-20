@@ -18,6 +18,7 @@ SOURCE_TIMEOUTS = {
     "camera": 3.0,
     "gazebo_overview": 3.0,
     "perception": 5.0,
+    "product_health": 2.0,
     "safety": 3.0,
 }
 
@@ -58,6 +59,7 @@ class VisualizationState:
     spot_state: str = "数据不可用"
     brush_enabled: bool | None = None
     emergency_stop: bool | None = None
+    product_health: dict[str, Any] | None = None
     mode: str = "live"
     replay: dict[str, Any] | None = None
     images: dict[str, tuple[bytes, float]] = field(default_factory=dict)
@@ -170,6 +172,15 @@ class VisualizationState:
         with self.lock:
             self.replay = deepcopy(replay)
 
+    def set_product_health(self, health: dict[str, Any]) -> None:
+        if health.get("state") not in {"ACTIVE", "DEGRADED", "ERROR"}:
+            self.touch("product_health", error="invalid_product_health_state")
+            return
+        with self.lock:
+            self.product_health = deepcopy(health)
+            self.updated_at["product_health"] = _now()
+            self.source_errors.pop("product_health", None)
+
     def _source_status(self, now: float) -> dict[str, dict[str, Any]]:
         names = sorted(set(SOURCE_TIMEOUTS) | set(self.updated_at) | set(self.source_errors))
         result: dict[str, dict[str, Any]] = {}
@@ -243,6 +254,7 @@ class VisualizationState:
                 },
                 "safety": {
                     "emergency_stop": self.emergency_stop,
+                    "product_health": deepcopy(self.product_health),
                     "status": (
                         "emergency_stopped"
                         if self.emergency_stop is True
