@@ -403,7 +403,9 @@ class FrontierExplorer(Node):
             # A current costmap rejection is not a navigation failure. Keep
             # it local to this ranking pass so a rolling-costmap refresh can
             # reconsider the frontier without a 180 s failed-goal penalty.
-            centers = frontier_goal_exclusion_centers(candidate)
+            centers = frontier_goal_exclusion_centers(
+                candidate, self.latest_geometry
+            )
             temporary_exclusions.extend(centers)
             self.costmap_rejected_goal_count += 1
         if goal is None:

@@ -1,3 +1,4 @@
+import ast
 from pathlib import Path
 
 import yaml
@@ -224,7 +225,15 @@ def test_frontier_timeout_restarts_nav2_before_next_goal():
     assert "sweep_target_completion_reached(" in explorer
     assert "chassis_lane_y = self._sweep_chassis_lane_y(index)" in explorer
     assert '"horizontal_sweep_staging_exhaustion_arm_count"' in explorer
-    assert "centers = frontier_goal_exclusion_centers(candidate)" in explorer
+    exclusion_calls = [
+        node
+        for node in ast.walk(ast.parse(explorer))
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "frontier_goal_exclusion_centers"
+    ]
+    assert exclusion_calls
+    assert all(len(call.args) == 2 for call in exclusion_calls)
     assert "self._sweep_horizontal_preference_y(" in explorer
     assert 'declare_parameter("required_bounds_goal_margin_m", 0.80)' in explorer
     assert 0.80 >= 0.66 + 0.05

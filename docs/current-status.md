@@ -44,6 +44,8 @@ PRODUCT_FIELD_READY=false
 
 10,440 m² 长直道候选现使用 skip-lane 顺序、连续简单 Dubins 跟踪、目标清扫带刷盘关闭引导重叠和 `0.20 m/s` 绝对曲率限速；限时 Gazebo 诊断已连续跨过多个 U 形连接器。双天线 GNSS 航向融合也使若干单次诊断的 XY RMSE/P95 低于 `0.05 m`，但同步配对样本不足，且没有整场与 30-seed 报告，不能计作正式 B/C/D 证据。未知栅格 frontier 链已在 40 m × 20 m 烟测中完成 995.34 m² 建图、地图与位姿图保存、硬重启、加载重定位和 5 航点导航，两阶段 TF 断裂均为 0；该证据明确标记 `formal_scope=false`。全范围链保持真实 Ackermann 前轮转向/后轮驱动、双天线 GNSS + wheel/IMU 定位、物理可达 frontier、失败双中心冷却和无 oracle 控制。当前固定候选在 7,200 s 内达到 15,349.33 m² 已知区域、687 个成功目标、11 个失败目标、39 次碰撞检查倒车恢复和 11/12 个扫描锚点，因未达到 20,000 m² 而诚实终止；后续保存地图用于诊断，不计作正式 PASS。真值叠加确认 11.99 m 无回波哨兵曾被旧 12.0 m 阈值误写成量程边缘伪墙；11.95 m 阈值已消除该结构性伪影。局部图仍出现平行重复边界，因此 RTK 全局位姿权威的产品 profile 关闭 Karto loop closure。运行诊断还确认 Nav2 可连续返回成功而已知面积不增长。探索器冻结下发时的原始前沿世界坐标，仅在收到新 OccupancyGrid 后评估面积；低于 2 m² 的成功计作低增益，每连续 3 个向当前 bounds-derived sweep anchor 构造 8/6/4/3/2/1.5/1 m staging 候选，累计 12 个时才长时冷却原始前沿与端点。只要锚点航向误差大于 0.15 rad，就连续生成单步不超过 0.70 rad 的前向 Ackermann 对准弧；每次 staging 成功后继续重入同一 sweep anchor，直到锚点到达或实时 costmap 不再存在完整净空路径。对准弧使用 20 s、最长 8 m 推进使用 60 s 看门狗，实际运动与碰撞仍由生产 Nav2、controller 和 Collision Monitor 检查。所有恢复分支通过独立计数和逐目标字段审计。仍须从新提交通过同世界诊断，再重跑完整 7,200 s / 20,000 m²、保存、硬重启、加载重定位和多航点正式链，因此 B 门继续失效关闭。完整感知、Tracking、Spot Cleaning 与 re-observation 继续受下述分类器停止条件阻塞。
 
+costmap 临时排除绑定候选与当前地图几何，并由 AST 回归门约束全部调用签名，避免该真实运行分支再次出现参数缺失。
+
 ## 当前近距分类硬边界
 
 [CRCRV11](close-range-classifier-contract-recovery-v11.md) 已完成协议允许的 R1/R2/R3 三条路线并触发停止条件 B。C11 虽将 unique background tight crop 从 9 扩展到 6,576，R1 background specificity 也恢复为 `1.0`，但最佳正式 candidate macro-F1 仍只有 `0.6311`。因此不得继续 R4/R5、搜索新 detector、读取 sealed 数据调参或降低 E 门；ActionVerifier 之后的感知产品链保持 dependency-blocked。
