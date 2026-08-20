@@ -3,6 +3,8 @@
 import json
 from pathlib import Path
 
+from .evaluation import product_estop_latency_pass
+
 
 def load(root: Path, name: str):
     return json.loads((root / name).read_text(encoding="utf-8"))
@@ -54,9 +56,9 @@ def assemble(root: Path, exit_codes: dict[str, int] | None = None):
             filters.get("speed_zone", {}).get("speed_compliance_pass")
         ),
         "emergency_stop_30_trials": int(safety.get("trial_count", 0)) == 30,
-        "emergency_stop_p95_at_most_1s": float(
-            safety.get("latency_sec", {}).get("p95") or 999.0
-        ) <= 1.0,
+        "emergency_stop_p95_at_most_200ms": product_estop_latency_pass(
+            safety.get("latency_sec", {}).get("p95")
+        ),
         "complete_rosbag_replay": replay_pass,
         "all_processes_exit_zero": not any(exit_codes.values()),
     }

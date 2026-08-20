@@ -12,7 +12,7 @@
 
 Cleaning Intelligence 只通过 Nav2 action 移动，通过 Coverage service 请求安全暂停/恢复，并在每次动作前重新读取 Safety Plane 的权威状态。
 
-Safety Plane 由单一 `safety_authority` 持有 `/emergency_stop`。它上电默认急停并以 10 Hz 发布权威心跳；HMI 只能向 `/safety/operator_estop_command` 提交请求。`product_supervisor` 独立汇总扫描、定位、Coverage、相机、感知、点清扫和重观察心跳：运动平面缺失、超时或定位协方差异常会触发并锁存 E-stop，监督心跳缺失时人工清除请求必须被拒绝；监督进程由产品入口自动重启，但健康恢复不会自动解除已经锁存的急停。感知/清扫平面故障只进入 `DEGRADED` 并禁止不安全清扫，Safety/Nav2 仍保持可用。速度门、点清洁和主动重观察都要求权威心跳新鲜，权威节点消失或心跳超过 0.5 s 时分别自动输出零速度、关闭滚刷或取消运动。
+Safety Plane 由单一 `safety_authority` 持有 `/emergency_stop`。它上电默认急停并以 50 Hz 发布权威心跳；HMI 只能向 `/safety/operator_estop_command` 提交请求。`product_supervisor` 独立汇总扫描、定位、Coverage、相机、感知、点清扫和重观察心跳：运动平面缺失、超时或定位协方差异常会触发并锁存 E-stop，监督心跳缺失时人工清除请求必须被拒绝；监督进程由产品入口自动重启，但健康恢复不会自动解除已经锁存的急停。感知/清扫平面故障只进入 `DEGRADED` 并禁止不安全清扫，Safety/Nav2 仍保持可用。速度门要求命令与权威心跳都在 0.12 s 内更新、以 0.02 s 周期向 `/cmd_vel_safe` 发布并拒绝非有限数；`actuator_command_gate` 是产品拓扑中唯一允许把非零安全命令串联到最终 `/cmd_vel` 的节点。独立 `actuator_timeout_guard` 只订阅最终话题并只可能补发零速，任何非零最终命令中断 0.08 s 即制动。安全权威、速度门、串联门和 sentinel 都在异常退出后快速重启，所以任一单进程退出仍有另一层把底盘拉回零速。点清洁和主动重观察仍独立要求权威心跳新鲜，超时即关闭滚刷或取消运动。
 
 ## 在线目标链
 
@@ -91,6 +91,12 @@ Pre-Clean 会重新检查目标仍存在、identity/class/persistence/covariance
 - 输出目录和非空 HMI `operator_token`。
 
 产品 HMI 不订阅 `/garbage/ground_truth`，Coverage 产品实例不订阅 `/ground_truth/odom`，launch 不启动垃圾 oracle，原始 model odometry 与 world dynamic pose 也不桥接到产品 ROS 图；这些真值桥仅在显式 `enable_evaluation_gt=true` 的独立评估模式存在。仓库自带 perception manifests 是不可激活的 placeholder；没有正式模型、哈希、CUDA provider 与支持的 postprocess contract 时，生命周期配置必须失败。
+
+Coverage 的运行闭环同样遵守该边界：刷盘开启时由 `/localization/fused_pose` 积累运行覆盖栅格，漏扫判定、补扫规划、任务终态和产品效率都只读取该运行栅格。显式评估模式可额外采集 Gazebo 真值并生成定位/覆盖评分，但该评分在全部运动和补扫结束后才计算，不能改变路径、补扫或产品终态。产品模式没有真值时仍能完整执行、补扫和结束，不会因缺少评估输入被伪判失败。
+
+Ackermann 任务的 `CLEAN/FORWARD/REVERSE/BYPASS/REPAIR` 线速度是运行合同，不是注释字段。Coverage 启动时要求五项齐全、数值有限且位于 `(0, 1.0] m/s`，随后把对应上限发布给 Nav2；直线 `CleanPath` 的能力上限为 1.0 m/s。这样 1.32 m 刷宽才具有高于 3500 m²/h 的物理毛效率余量，最终是否合格仍只能由包含转弯、连接、避障、感知和点清扫时间的真实任务总时长判定。
+
+产品 Coverage 在最后一条主刷道和补扫结束后不会立即宣布完成，而是进入 `WAITING_PRODUCT_TASKS`。此状态仍接受重观察/点清扫发起的安全暂停和续扫；只有 `/spot_clean/state` 与 `/reobserve/state` 都保持新鲜、无当前目标、无排队任务、刷盘关闭且已释放 Coverage 达到连续静默窗口，才结算终态与总效率。状态缺失、陈旧、队列未排空或超时均失败关闭；普通组件试验可显式不启用这道产品屏障。
 
 ## 尚不能据此宣称的状态
 

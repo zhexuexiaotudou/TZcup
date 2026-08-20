@@ -1,4 +1,7 @@
 import json
+import math
+
+import pytest
 
 from auto02_acceptance import build_report
 from auto02_replay_audit import relative_delta
@@ -104,7 +107,7 @@ def passing_auto02_fixture(root):
                 "keepout_violations_zero": True,
                 "speed_zone_pass": True,
                 "emergency_stop_30_trials": True,
-                "emergency_stop_p95_at_most_1s": True,
+                "emergency_stop_p95_at_most_200ms": True,
                 "brush_final_state_false": True,
                 "complete_rosbag_replay": True,
             },
@@ -161,6 +164,18 @@ def test_auto02_acceptance_rejects_speed_above_tolerance(tmp_path):
         result["checks"]["filter_speed_mean_within_limit_plus_0_03_m_s"]
         is False
     )
+
+
+@pytest.mark.parametrize("p95_sec", [0.201, -0.001, math.nan, math.inf, None])
+def test_auto02_acceptance_rejects_invalid_estop_latency(tmp_path, p95_sec):
+    passing_auto02_fixture(tmp_path)
+    path = tmp_path / "dynamic" / "stage4w_dynamic_report.json"
+    report = json.loads(path.read_text(encoding="utf-8"))
+    report["emergency_stop"]["latency_sec"]["p95"] = p95_sec
+    write_json(path, report)
+    result = build_report(tmp_path)
+    assert result["machine_gate_pass"] is False
+    assert result["checks"]["estop_latency_p95_at_most_200ms"] is False
 
 
 def test_replay_relative_delta():

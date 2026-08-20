@@ -29,7 +29,7 @@ TZcup 在结构化道路与安全约束内完成建图定位、导航、覆盖�
 当前基线：
 
 - Xacro 默认 `drive_model=ackermann`；
-- 默认有效清扫宽度 `0.65 m`；
+- 默认有效清扫宽度 `1.32 m`；
 - 垃圾箱几何 `0.50 × 0.40 × 0.20 m = 40 L`；
 - Ackermann Nav2 禁止 rotate-to-heading，Coverage connector 禁止零速原地转向；
 - `skid_steer_legacy` 只保留为显式历史回归，不能计入 V1 产品门。

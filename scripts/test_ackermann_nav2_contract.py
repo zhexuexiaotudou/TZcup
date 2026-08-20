@@ -163,12 +163,12 @@ def test_rpp_controllers_have_explicit_direction_and_no_rotate():
     assert float(controllers["ReversePath"]["lookahead_dist"]) == 0.50
     assert float(controllers["ReversePath"]["max_robot_pose_search_dist"]) <= 1.0
     clean_speed = float(controllers["CleanPath"]["desired_linear_vel"])
-    assert clean_speed == 0.60
+    assert clean_speed == 1.00
     assert float(controllers["CleanPath"]["lookahead_dist"]) == 1.20
     assert controllers["CleanPath"]["use_velocity_scaled_lookahead_dist"] is False
     assert float(controllers["CleanPath"]["min_lookahead_dist"]) == 1.20
     assert float(controllers["CleanPath"]["max_lookahead_dist"]) == 1.20
-    assert ackermann_model.OPERATION_WIDTH_M * clean_speed * 3600.0 >= 2500.0
+    assert ackermann_model.OPERATION_WIDTH_M * clean_speed * 3600.0 > 3500.0
 
 
 def test_no_spin_behavior_plugins_and_no_spin_bt():
@@ -223,8 +223,9 @@ def test_frontier_bt_uses_intermediate_ackermann_goal_checker_only():
     assert 'controller_id="FrontierPath"' in frontier
     assert "ControllerSelector" not in frontier
     assert 'goal_checker_id="goal_checker"' in strict
-    assert "SequenceWithMemory" in frontier
-    assert "RateController" not in frontier
+    assert "PipelineSequence" in frontier
+    assert '<RateController hz="1.0">' in frontier
+    assert "SequenceWithMemory" not in frontier
     assert "<Spin" not in frontier
 
 
@@ -340,7 +341,9 @@ def test_ackermann_connector_timeout_matches_tight_curve_floor():
         ROOT
         / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
     ).read_text(encoding="utf-8")
-    assert '0.20 if section["direction"] == "REVERSE" else 0.45' in probe
+    assert 'self.speed_limits_mps["REVERSE"]' in probe
+    assert 'self.speed_limits_mps["FORWARD"]' in probe
+    assert 'self.speed_limits_mps["CLEAN"]' in probe
     assert 'is_ackermann_connector = (' in probe
     assert 'self.ackermann_profile_active and component.get("kind") == "FORWARD"' in probe
     assert 'or is_ackermann_connector' in probe

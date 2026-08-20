@@ -48,3 +48,30 @@ def test_connector_settle_overlap_is_bounded_by_short_swath_length():
     assert math.isclose(
         connector.metadata["target_swath_settle_overlap_m"], 1.0
     )
+
+
+def test_runtime_speed_contract_reaches_swaths_and_connectors():
+    swaths = [
+        ((2.0, 4.0), (18.0, 4.0)),
+        ((18.0, 8.0), (2.0, 8.0)),
+    ]
+    apron = [(0.0, 0.0), (24.0, 0.0), (24.0, 12.0), (0.0, 12.0)]
+    limits = {"CLEAN": 1.0, "FORWARD": 0.55, "REVERSE": 0.25}
+
+    components, summary = build_ackermann_plan(
+        swaths, apron, [], speed_limits_mps=limits
+    )
+
+    assert summary["speed_limits_mps"]["CLEAN"] == 1.0
+    assert all(
+        item.metadata["speed_limit_mps"] == 1.0
+        for item in components
+        if item.kind is ComponentType.SWATH
+    )
+    connector = next(
+        item for item in components
+        if item.kind in (ComponentType.FORWARD, ComponentType.REVERSE)
+    )
+    assert connector.metadata["speed_limit_mps"] == limits[
+        connector.speed_profile
+    ]

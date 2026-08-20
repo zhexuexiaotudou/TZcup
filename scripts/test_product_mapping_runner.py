@@ -205,6 +205,17 @@ def test_frontier_recovery_reverses_before_slow_recovery_actions():
     assert recovery.index("<BackUp") < recovery.index("<Wait")
 
 
+def test_frontier_navigation_replans_against_the_growing_map():
+    tree = (
+        NAV_LAUNCH.parent.parent
+        / "behavior_trees"
+        / "navigate_to_pose_ackermann_frontier.xml"
+    ).read_text(encoding="utf-8")
+    assert '<PipelineSequence name="NavigateWithGrowingMapReplanning">' in tree
+    assert '<RateController hz="1.0">' in tree
+    assert "NavigateWithoutMapResizeReplanning" not in tree
+
+
 def test_ros_duration_overrides_are_explicit_floats():
     text = RUNNER.read_text(encoding="utf-8")
     assert '-p timeout_sec:="${MAPPING_TIMEOUT_SEC}.0"' in text
@@ -227,6 +238,10 @@ def test_frontier_timeout_restarts_nav2_before_next_goal():
     assert "self.nav_recovery_in_progress" in explorer
     assert "status == GoalStatus.STATUS_ABORTED" in explorer
     assert 'declare_parameter("maximum_goal_cost", 99)' in explorer
+    assert 'declare_parameter("footprint_front_m", 0.82)' in explorer
+    assert 'declare_parameter("footprint_rear_m", 0.575)' in explorer
+    assert 'declare_parameter("footprint_half_width_m", 0.66)' in explorer
+    assert 'declare_parameter("footprint_clearance_margin_m", 0.15)' in explorer
     assert 'declare_parameter("failed_goal_exclusion_ttl_sec", 180.0)' in explorer
     assert 'self._rank_goals(robot_pose, [])' in explorer
     assert '"frontier_candidates_temporarily_excluded"' in explorer
@@ -267,6 +282,38 @@ def test_frontier_timeout_restarts_nav2_before_next_goal():
     assert '"horizontal_sweep_alignment_no_clear_path"' in explorer
     assert '"horizontal_sweep_staging_no_clear_path"' in explorer
     assert 'goal_kind="horizontal_sweep_alignment"' in explorer
+    assert '"execution": "nav2_global_path_lookahead"' in explorer
+    assert "frontier_detour_path_goal(" in explorer
+    assert 'message.planner_id = "GridBased"' in explorer
+    assert '"path_costmap_clearance_checked": False' in explorer
+    assert '"frontier_detour_plan_failure_count"' in explorer
+    assert '"frontier_detour_path_rejected_count"' in explorer
+    assert '"frontier_detour_fallback_queued_count"' in explorer
+    assert 'row["detour_fallback_queued"] = True' in explorer
+    assert "self.pending_frontier_detour_source_goal" in explorer
+    assert "known_free_route_recovery_goals(" in explorer
+    assert 'trigger="horizontal_sweep_deadlock"' in explorer
+    assert '"horizontal_sweep_frontier_deadlock_no_safe_recovery"' in explorer
+    assert "route_now=True" in explorer
+    assert '"horizontal_sweep_excluded_frontier_route_unavailable"' in explorer
+    assert '"online_map_rejected_goal_count"' in explorer
+    assert '"goal_and_path_clearance_sources"' in explorer
+    assert '"goal_and_path_clearance_footprint"' in explorer
+    assert '"oriented_production_footprint_plus_0.15m_reserve"' in explorer
+    assert '"occupied_veto_unknown_deferred"' in explorer
+    assert '"unknown_occupied_and_cost_veto"' in explorer
+    assert "allow_unknown=True" in explorer
+    assert "allow_unknown=False" in explorer
+    assert "self._goal_clearance_sources(candidate)" in explorer
+    assert '"planned_path_endpoints_match"' in explorer
+    assert '"planned_path_endpoint_mismatch"' in explorer
+    assert "self._dispatch_navigation_goal(detour_goal)" in explorer
+    assert 'declare_parameter("goal_cancel_grace_sec", 5.0)' in explorer
+    assert '"goal_cancel_grace_exhausted:' in explorer
+    runner = RUNNER.read_text(encoding="utf-8")
+    assert "-p frontier_detour_plan_endpoint_tolerance_m:=0.75" in runner
+    assert "-p goal_cancel_grace_sec:=5.0" in runner
+    assert "-p horizontal_sweep_frontier_wait_failure_limit:=30" in runner
 
 
 def test_frontier_reverse_escape_uses_collision_checked_backup_action():

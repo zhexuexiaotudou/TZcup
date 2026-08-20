@@ -1,12 +1,17 @@
+from dataclasses import replace
 import math
 
 import pytest
 
 from sanitation_tasks.frontier_core import (
+    FrontierGoal,
+    frontier_detour_goal,
+    frontier_detour_path_goal,
     frontier_goal_exclusion_centers,
     frontier_sweep_targets,
     frontier_sweep_target_axis,
     horizontal_sweep_should_wait_for_frontier,
+    known_free_route_recovery_goals,
     lane_shift_connector_goals,
     GridGeometry,
     frontier_clusters,
@@ -16,9 +21,11 @@ from sanitation_tasks.frontier_core import (
     next_adaptive_goal_distance,
     next_no_progress_frontier_state,
     no_progress_recovery_action_for_sweep,
+    path_lookahead_pose,
     prune_timed_exclusions,
     rank_frontiers,
     reverse_escape_goal,
+    sample_path_poses,
     sweep_anchor_heading_error_rad,
     sweep_anchor_is_behind_chassis,
     sweep_alignment_goal,
@@ -29,6 +36,7 @@ from sanitation_tasks.frontier_core import (
     vertical_sweep_anchor_reached,
     world_disk_has_known_cell,
     world_disk_is_traversable,
+    world_footprint_is_traversable,
 )
 
 
@@ -676,6 +684,182 @@ def test_frontier_exclusion_centers_preserve_raw_frontier_behind_local_arc():
     assert math.dist(endpoint, raw_frontier) > 1.0
 
 
+def test_detour_goal_extends_past_blocked_local_projection_for_global_planner():
+    local_goal = FrontierGoal(
+        grid_x=1,
+        grid_y=2,
+        world_x_m=67.2,
+        world_y_m=47.4,
+        yaw_rad=math.pi,
+        frontier_cell_count=100,
+        information_gain_m=10.0,
+        distance_m=3.0,
+        score=9.25,
+        preference_distance_m=12.0,
+        raw_world_x_m=-94.0,
+        raw_world_y_m=39.0,
+    )
+    detour = frontier_detour_goal(
+        local_goal,
+        (70.2, 47.6),
+        goal_backoff_m=1.5,
+        maximum_distance_m=30.0,
+        minimum_distance_m=3.0,
+        allowed_bounds_xyxy_m=(-100.0, -50.0, 100.0, 50.0),
+        boundary_margin_m=0.8,
+    )
+    assert detour is not None
+    assert detour.distance_m == pytest.approx(30.0)
+    assert detour.world_x_m < 51.0, "endpoint must extend past north building"
+    assert detour.raw_world_x_m == -94.0
+    assert detour.raw_world_y_m == 39.0
+    assert detour.grid_x == local_goal.grid_x
+    assert detour.frontier_cell_count == local_goal.frontier_cell_count
+
+
+def test_detour_goal_requires_raw_frontier_and_respects_bounds():
+    local_goal = FrontierGoal(1, 2, 1.0, 0.0, 0.0, 10, 1.0, 1.0, 0.75)
+    assert frontier_detour_goal(
+        local_goal,
+        (0.0, 0.0),
+        goal_backoff_m=1.0,
+        maximum_distance_m=30.0,
+        minimum_distance_m=3.0,
+    ) is None
+    outside_goal = replace(
+        local_goal,
+        raw_world_x_m=100.0,
+        raw_world_y_m=0.0,
+    )
+    assert frontier_detour_goal(
+        outside_goal,
+        (98.0, 0.0),
+        goal_backoff_m=0.0,
+        maximum_distance_m=30.0,
+        minimum_distance_m=1.0,
+        allowed_bounds_xyxy_m=(-100.0, -50.0, 100.0, 50.0),
+        boundary_margin_m=0.8,
+    ) is None
+
+
+def test_path_lookahead_interpolates_on_computed_detour_route():
+    result = path_lookahead_pose(
+        [(0.0, 0.0, 0.0), (0.0, -10.0, -math.pi / 2.0),
+         (-30.0, -10.0, math.pi)],
+        maximum_distance_m=25.0,
+    )
+    assert result is not None
+    pose, distance = result
+    assert distance == pytest.approx(25.0)
+    assert pose == pytest.approx((-15.0, -10.0, math.pi))
+
+
+def test_path_lookahead_returns_short_path_end_and_rejects_bad_limit():
+    result = path_lookahead_pose(
+        [(0.0, 0.0, 0.0), (3.0, 4.0, 0.5)],
+        maximum_distance_m=30.0,
+    )
+    assert result is not None
+    pose, distance = result
+    assert pose == pytest.approx((3.0, 4.0, 0.5))
+    assert distance == pytest.approx(5.0)
+    with pytest.raises(ValueError):
+        path_lookahead_pose([(0.0, 0.0, 0.0)], maximum_distance_m=0.0)
+    with pytest.raises(ValueError):
+        path_lookahead_pose(
+            [(0.0, 0.0, 0.0), (math.nan, 1.0, 0.0)],
+            maximum_distance_m=1.0,
+        )
+
+
+def test_detour_path_goal_preserves_raw_frontier_and_uses_route_distance():
+    source = FrontierGoal(
+        grid_x=17,
+        grid_y=23,
+        world_x_m=67.2,
+        world_y_m=47.4,
+        yaw_rad=math.pi,
+        frontier_cell_count=100,
+        information_gain_m=10.0,
+        distance_m=3.0,
+        score=9.25,
+        preference_distance_m=12.0,
+        raw_world_x_m=-94.0,
+        raw_world_y_m=39.0,
+    )
+    goal = frontier_detour_path_goal(
+        source,
+        [(70.2, 47.6, math.pi), (70.2, 35.0, -math.pi / 2.0),
+         (40.0, 35.0, math.pi)],
+        maximum_distance_m=30.0,
+        minimum_distance_m=0.8,
+    )
+    assert goal is not None
+    assert goal.world_x_m == pytest.approx(52.8)
+    assert goal.world_y_m == pytest.approx(35.0)
+    assert goal.distance_m == pytest.approx(30.0)
+    assert goal.yaw_rad == pytest.approx(math.pi)
+    assert goal.raw_world_x_m == source.raw_world_x_m
+    assert goal.raw_world_y_m == source.raw_world_y_m
+    assert goal.grid_x == source.grid_x
+
+
+def test_detour_path_goal_rejects_empty_and_too_short_route():
+    source = FrontierGoal(1, 2, 1.0, 0.0, 0.0, 10, 1.0, 1.0, 0.75)
+    assert frontier_detour_path_goal(
+        source,
+        [(0.0, 0.0, 0.0)],
+        maximum_distance_m=30.0,
+        minimum_distance_m=0.8,
+    ) is None
+    assert frontier_detour_path_goal(
+        source,
+        [(0.0, 0.0, 0.0), (0.2, 0.0, 0.0)],
+        maximum_distance_m=30.0,
+        minimum_distance_m=0.8,
+    ) is None
+
+
+def test_path_clearance_sampling_densifies_sparse_segments_and_wraps_yaw():
+    samples = sample_path_poses(
+        [(0.0, 0.0, math.radians(170.0)),
+         (1.0, 0.0, math.radians(-170.0))],
+        maximum_spacing_m=0.25,
+    )
+    assert len(samples) == 5
+    assert [pose[0] for pose in samples] == pytest.approx(
+        [0.0, 0.25, 0.5, 0.75, 1.0]
+    )
+    assert math.degrees(samples[2][2]) == pytest.approx(180.0)
+    with pytest.raises(ValueError):
+        sample_path_poses([(0.0, 0.0, 0.0)], maximum_spacing_m=0.0)
+
+
+def test_known_free_route_recovery_advances_toward_sweep_on_live_map():
+    geometry = GridGeometry(41, 21, 0.5, -10.25, -5.25)
+    data = [0] * (geometry.width * geometry.height)
+    for grid_y in range(4, 16):
+        for grid_x in range(16, 25):
+            data[grid_y * geometry.width + grid_x] = 100
+    goals = known_free_route_recovery_goals(
+        data,
+        geometry,
+        (8.0, 4.0),
+        (-10.0, 4.0),
+        allowed_bounds_xyxy_m=(-10.0, -5.0, 10.0, 5.0),
+        boundary_margin_m=0.8,
+        minimum_distance_m=3.0,
+        maximum_distance_m=15.0,
+        sample_spacing_m=0.5,
+    )
+    assert goals
+    assert goals[0].world_x_m < 0.0
+    assert goals[0].world_y_m > 3.0
+    assert goals[0].raw_world_x_m == goals[0].world_x_m
+    assert goals[0].raw_world_y_m == goals[0].world_y_m
+    assert all(goal.distance_m <= 15.0 for goal in goals)
+
+
 def test_frontier_exclusion_uses_dispatch_world_coordinate_after_map_expands():
     geometry = GridGeometry(21, 21, 1.0, -10.5, -10.5)
     data = [-1] * (geometry.width * geometry.height)
@@ -825,6 +1009,54 @@ def test_world_disk_traversability_rejects_unknown_and_inflated_costs():
     data[4 * geometry.width + 5] = -1
     assert not world_disk_is_traversable(
         data, geometry, (0.0, 0.0), radius_m=0.7, maximum_cost=50
+    )
+
+
+def test_oriented_footprint_rejects_front_corner_without_disk_overreach():
+    geometry = GridGeometry(81, 81, 0.1, -4.05, -4.05)
+    data = [0] * (geometry.width * geometry.height)
+
+    def set_cell(world_x: float, world_y: float, value: int) -> None:
+        grid_x = int(math.floor((world_x - geometry.origin_x_m) / 0.1))
+        grid_y = int(math.floor((world_y - geometry.origin_y_m) / 0.1))
+        data[grid_y * geometry.width + grid_x] = value
+
+    parameters = {
+        "footprint_front_m": 0.82,
+        "footprint_rear_m": 0.575,
+        "footprint_half_width_m": 0.66,
+        "clearance_margin_m": 0.15,
+        "maximum_cost": 99,
+    }
+    assert world_footprint_is_traversable(
+        data, geometry, (0.0, 0.0, 0.0), **parameters
+    )
+    set_cell(0.85, 0.65, 100)
+    assert not world_footprint_is_traversable(
+        data, geometry, (0.0, 0.0, 0.0), **parameters
+    )
+    assert world_footprint_is_traversable(
+        data, geometry, (0.0, 0.0, math.pi), **parameters
+    )
+    set_cell(0.85, 0.65, 0)
+    set_cell(-0.65, 0.85, -1)
+    assert not world_footprint_is_traversable(
+        data, geometry, (0.0, 0.0, math.pi / 2.0), **parameters
+    )
+    assert world_footprint_is_traversable(
+        data,
+        geometry,
+        (0.0, 0.0, math.pi / 2.0),
+        **parameters,
+        allow_unknown=True,
+    )
+    set_cell(-0.65, 0.85, 100)
+    assert not world_footprint_is_traversable(
+        data,
+        geometry,
+        (0.0, 0.0, math.pi / 2.0),
+        **parameters,
+        allow_unknown=True,
     )
 
 

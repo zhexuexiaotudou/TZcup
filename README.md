@@ -23,7 +23,9 @@ SIMULATION_PRODUCT_COMPLETE=true
 
 ## 当前结论
 
-仓库已有 Ackermann 模型/控制、Nav2 与 Coverage profile，以及上电急停/权威心跳安全层、区分运动故障与清扫降级的产品监督器、GT 隔离的产品启动拓扑、统一全局位姿契约、生产感知、独立 ActionVerifier、最多两次主动重观察、DynamicTrashMap、真实 Coverage/Nav2 点清洁、受控滚刷所有权和 camera-backed Post-Clean 的失效关闭代码链。产品仿真以 Gazebo 内部双 NavSat 传感器形成 0.80 m 基线，经标准 `gps_msgs/GPSFix` 桥接、确定性 RTK 误差模型和 world→map 标定后，与 wheel/IMU 里程计共同产生唯一 `/localization/fused_pose` 和 `map→odom`；产品 ROS 图不订阅任何 GT 位姿。产品入口默认无 GUI、以 ROS domain 派生独立 Gazebo Transport 分区，并用有界 1× 物理时钟阻止并发试验串场。仓库内模型清单仍是不可激活的 placeholder，且当前尚无一套与本合同绑定的完整 A–P 正式证据，因此：
+底盘最终速度门拒绝超时或非有限数命令；解除 E-stop 后必须收到新的运动命令，不能重放停机前或停机期间缓存的速度。非零命令沿 `/cmd_vel_gate → velocity_gate → /cmd_vel_safe → actuator_command_gate → /cmd_vel` 串联，另一个独立 sentinel 只允许在最终命令中断 `0.080 s` 后补发零速；速度门以 20 ms 周期持续刷新安全命令，安全权威、速度门、串联门和 sentinel 均快速重启，从而避免任一单进程崩溃留下持续非零命令。正式 E-stop 探针和所有聚合器统一执行 30 次试验、P95 不超过 `0.200 s` 的产品硬门，并同时保留 median、P95 与 max 原始统计。
+
+仓库已有 Ackermann 模型/控制、Nav2 与 Coverage profile，以及上电急停/权威心跳安全层、区分运动故障与清扫降级的产品监督器、GT 隔离的产品启动拓扑、统一全局位姿契约、生产感知、独立 ActionVerifier、最多两次主动重观察、DynamicTrashMap、真实 Coverage/Nav2 点清洁、受控滚刷所有权和 camera-backed Post-Clean 的失效关闭代码链。Coverage 的漏扫判定、补扫规划、产品任务终态和运行效率现统一由 `/localization/fused_pose` 积累的刷盘轨迹驱动；Gazebo 真值只在显式评估模式结束后生成独立评分，不能改变控制。Ackermann 五类任务速度现在是启动时失效关闭校验并实际下发的运行合同，1.32 m 刷宽的直线清扫链已贯通到 1.0 m/s 控制能力，为全耗时 3500 m²/h 留出物理余量。最后一条刷道后还必须等待重观察与点清扫队列保持新鲜并稳定排空，期间暂停、移动、清扫和复检仍计入任务总时间；状态丢失或超时会失败关闭。产品仿真以 Gazebo 内部双 NavSat 传感器形成 0.80 m 基线，经标准 `gps_msgs/GPSFix` 桥接、确定性 RTK 误差模型和 world→map 标定后，与 wheel/IMU 里程计共同产生唯一 `/localization/fused_pose` 和 `map→odom`；产品 ROS 图不订阅任何 GT 位姿。产品入口默认无 GUI、以 ROS domain 派生独立 Gazebo Transport 分区，并用有界 1× 物理时钟阻止并发试验串场。仓库内模型清单仍是不可激活的 placeholder，且当前尚无一套与本合同绑定的完整 A–P 正式证据，因此：
 
 ```text
 SIMULATION_PRODUCT_COMPLETE=false
@@ -44,6 +46,10 @@ PRODUCT_FIELD_READY=false
 costmap 临时排除同时绑定候选与对应地图几何，且由 AST 回归门保证所有调用都提供完整参数，避免只在真实 costmap 拒绝路径才暴露参数错误。
 
 规划中心边界 margin 为 0.80 m，由产品 footprint 半宽 0.66 m、定位 P95 0.05 m 与 0.09 m 仿真/控制余量组成；Nav2 与 Collision Monitor 中的完整 1.32 m footprint 没有缩小。
+
+被建筑阻挡的短距 frontier 投影，以及无路、超时或中止的普通短 frontier，现在会为同一原始前沿排队一次 Nav2 全局路径 fallback：返回路径需与当前位姿和已知侧接近点一致，并按在线 SLAM 栅格与 Nav2 costmap 的较细分辨率加密检查整段净空；探索器只沿验证后的路线下发最长 30 m 前视点。目标与整段路径按每个规划姿态旋转并检查真实非对称 footprint（前伸 0.82 m、后伸 0.575 m、半宽 0.66 m），四边增加 0.15 m 安全余量，并以半个栅格对角线覆盖相交单元，避免漏掉前角碰撞，也不再用外接圆过度拒绝合法 frontier。原始 SLAM 图对任何 occupied 单元独立否决，但把稀疏射线间的 unknown 交给 Nav2 融合 costmap 裁决；后者对 unknown、占据和膨胀成本全部失效关闭。frontier 行为树还以 1 Hz PipelineSequence 持续按增长中的 SLAM/costmap 重规划，不再让一次性旧路径在新障碍出现后由控制器原地拒绝至 180 s 看门狗。该链已有 ROS action 级“首次导航失败→fallback→绕障导航成功”回归，但尚未通过同一校园世界的全新长时诊断和 7,200 s 正式闭环，因此 Mapping Gate 继续为 FAIL。
+
+水平 sweep 没有安全 frontier 时不再无限等待：连续 5 次后从在线已知自由栅格选择朝 sweep 锚点推进的 30 m 内候选并复用上述全局路径门；某个 route 候选失败后立即冷却并尝试下一个，不等待整段 frontier TTL。连续 30 次仍无安全路线则只尝试碰撞检查倒车，倒车也不可用即失败关闭。运行 evidence 的原子写入已串行化，避免 action/map 回调争用同一临时文件。
 
 ## 快速启动
 

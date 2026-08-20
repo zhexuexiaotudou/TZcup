@@ -57,6 +57,7 @@ from sanitation_coverage.coverage_plan import CoveragePlan
 from sanitation_coverage.blocked_swath_manager import BlockedSwathManager
 from sanitation_coverage.oriented_swath_router import route_oriented_swaths
 from sanitation_coverage.residual_region_planner import plan_residual_regions
+from sanitation_coverage.product_task_drain import product_task_drain_snapshot
 from sanitation_coverage.skid_steer_connector import plan_skid_steer_connector
 from sanitation_coverage.skid_steer_rotation import normalized_yaw_error
 from sanitation_coverage.ackermann_turn_planner import build_ackermann_plan
@@ -155,6 +156,10 @@ class CoverageProbe(Node):
         self.declare_parameter("translation_timeout_sec", 45.0)
         self.declare_parameter("manual_start", False)
         self.declare_parameter("allow_ground_truth_evaluation", True)
+        self.declare_parameter("require_product_task_drain", False)
+        self.declare_parameter("product_task_drain_timeout_sec", 1800.0)
+        self.declare_parameter("product_task_quiescence_sec", 3.0)
+        self.declare_parameter("product_task_state_maximum_age_sec", 1.0)
         self.mission_geometry = None
         self.coverage_client = ActionClient(self, ComputeCoveragePath, "/compute_coverage_path")
         self.follow_client = ActionClient(self, FollowPath, "/follow_path")
@@ -205,6 +210,13 @@ class CoverageProbe(Node):
         )
         self.brush_enabled = False
         self.ackermann_profile_active = False
+        self.speed_limits_mps = {
+            "CLEAN": 0.60,
+            "FORWARD": 0.45,
+            "REVERSE": 0.20,
+            "BYPASS": 0.45,
+            "REPAIR": 0.40,
+        }
         self.state = "READY" if self.get_parameter("manual_start").value else "PLANNING"
         self.run_requested = not bool(self.get_parameter("manual_start").value)
         self.pause_requested = False
@@ -215,7 +227,9 @@ class CoverageProbe(Node):
         self.truth_pose = None
         self.truth_samples = []
         self.estimate_samples = []
+        self.estimated_trajectory_samples = []
         self.brush_samples = []
+        self.estimated_brush_samples = []
         self.brush_forward_offset_m = 0.55
         self.minimum_scan_range = math.inf
         self.global_costmap = None
@@ -229,11 +243,24 @@ class CoverageProbe(Node):
         self.evaluation_dropout_events = []
         self._evaluation_dropout_active = False
         self._odom_vx = None
-        if bool(self.get_parameter("allow_ground_truth_evaluation").value):
+        self.spot_clean_state = None
+        self.reobserve_state = None
+        self.spot_clean_state_received_monotonic = 0.0
+        self.reobserve_state_received_monotonic = 0.0
+        self.ground_truth_evaluation_enabled = bool(
+            self.get_parameter("allow_ground_truth_evaluation").value
+        )
+        if self.ground_truth_evaluation_enabled:
             self.create_subscription(
                 Odometry, "/ground_truth/odom", self._on_truth, 20
             )
         self.create_subscription(Odometry, "/odom", self._on_odom, 20)
+        self.create_subscription(
+            String, "/spot_clean/state", self._on_spot_clean_state, 20
+        )
+        self.create_subscription(
+            String, "/reobserve/state", self._on_reobserve_state, 20
+        )
         self.create_subscription(
             PoseWithCovarianceStamped,
             "/localization/fused_pose",
@@ -398,6 +425,35 @@ class CoverageProbe(Node):
             yaw_from_quaternion(pose.orientation),
         )
         self.estimate_samples.append((stamp, *self.estimated_pose))
+        self.estimated_trajectory_samples.append((
+            stamp,
+            *self.estimated_pose,
+            self.brush_enabled,
+            self.state,
+        ))
+        if self.brush_enabled:
+            yaw = self.estimated_pose[2]
+            self.estimated_brush_samples.append((
+                stamp,
+                pose.position.x + self.brush_forward_offset_m * math.cos(yaw),
+                pose.position.y + self.brush_forward_offset_m * math.sin(yaw),
+            ))
+
+    def _on_spot_clean_state(self, message):
+        try:
+            payload = json.loads(message.data)
+            self.spot_clean_state = payload if isinstance(payload, dict) else None
+        except (TypeError, ValueError):
+            self.spot_clean_state = None
+        self.spot_clean_state_received_monotonic = time.monotonic()
+
+    def _on_reobserve_state(self, message):
+        try:
+            payload = json.loads(message.data)
+            self.reobserve_state = payload if isinstance(payload, dict) else None
+        except (TypeError, ValueError):
+            self.reobserve_state = None
+        self.reobserve_state_received_monotonic = time.monotonic()
 
     def _set_state(self, state, details=None):
         self.state = state
@@ -554,6 +610,41 @@ class CoverageProbe(Node):
                     "success": False,
                     "error": "ackermann_profile_rejects_spin",
                 })
+            configured_profiles = config.get("speed_profiles")
+            required_speed_profiles = (
+                "CLEAN", "FORWARD", "REVERSE", "BYPASS", "REPAIR"
+            )
+            if not isinstance(configured_profiles, dict) or any(
+                name not in configured_profiles
+                or not isinstance(configured_profiles[name], dict)
+                or "linear_mps" not in configured_profiles[name]
+                for name in required_speed_profiles
+            ):
+                return self._write_report({
+                    "success": False,
+                    "error": "ackermann_speed_profiles_incomplete",
+                    "required_profiles": list(required_speed_profiles),
+                })
+            try:
+                configured_speed_limits = {
+                    name: float(configured_profiles[name]["linear_mps"])
+                    for name in required_speed_profiles
+                }
+            except (TypeError, ValueError):
+                return self._write_report({
+                    "success": False,
+                    "error": "ackermann_speed_profile_not_numeric",
+                })
+            if any(
+                not math.isfinite(speed) or not 0.0 < speed <= 1.0
+                for speed in configured_speed_limits.values()
+            ):
+                return self._write_report({
+                    "success": False,
+                    "error": "ackermann_speed_profile_outside_0_to_1_mps",
+                    "configured_speed_limits_mps": configured_speed_limits,
+                })
+            self.speed_limits_mps = configured_speed_limits
         if (endpoint_extension < 0.0 or not 0.0 <= empirical_threshold <= 1.0
                 or not 0.0 <= empirical_repeat_threshold <= 1.0
                 or lateral_p95_threshold <= 0.0):
@@ -662,6 +753,7 @@ class CoverageProbe(Node):
                 execution_swaths,
                 geometry["outer_polygon"],
                 geometry["exclusion_polygons"],
+                speed_limits_mps=self.speed_limits_mps,
             )
             components = [
                 {
@@ -884,8 +976,8 @@ class CoverageProbe(Node):
         if ackermann_deferred_swaths:
             complete = False
         primary_execution_complete = complete
-        empirical = empirical_swept_metrics(
-            cleanable_polygon, self.brush_samples, width, resolution=0.10,
+        operational = empirical_swept_metrics(
+            cleanable_polygon, self.estimated_brush_samples, width, resolution=0.10,
             exclusion_polygons=cleanable_exclusions,
         )
         repair_report = {
@@ -893,7 +985,7 @@ class CoverageProbe(Node):
             "passes": [],
             "success": True,
         }
-        if complete and empirical["coverage_rate"] < empirical_threshold:
+        if complete and operational["coverage_rate"] < empirical_threshold:
             repair_report = self._execute_coverage_repairs(
                 config,
                 cleanable_polygon,
@@ -901,28 +993,55 @@ class CoverageProbe(Node):
                 width,
                 empirical_threshold,
                 sum(math.dist(*swath) for swath in swaths),
+                self.estimated_brush_samples,
             )
             complete = complete and repair_report["success"]
-            empirical = empirical_swept_metrics(
-                cleanable_polygon, self.brush_samples, width, resolution=0.10,
+            operational = empirical_swept_metrics(
+                cleanable_polygon, self.estimated_brush_samples, width, resolution=0.10,
                 exclusion_polygons=cleanable_exclusions,
             )
+        product_task_drain = (
+            self._wait_for_product_tasks_to_drain()
+            if complete else {
+                "required": bool(
+                    self.get_parameter("require_product_task_drain").value
+                ),
+                "success": False,
+                "reason": "not_started_because_coverage_execution_incomplete",
+            }
+        )
+        complete = complete and product_task_drain["success"]
         wall_duration = time.monotonic() - mission_started_wall
         mission_finished_ros_sec = self.get_clock().now().nanoseconds * 1e-9
         operational_duration = mission_finished_ros_sec - mission_started_ros_sec
-        actual_path_points = [(sample[1], sample[2]) for sample in self.truth_samples]
+        metric_samples = (
+            self.truth_samples
+            if self.ground_truth_evaluation_enabled
+            else self.estimated_trajectory_samples
+        )
+        empirical = (
+            empirical_swept_metrics(
+                cleanable_polygon, self.brush_samples, width, resolution=0.10,
+                exclusion_polygons=cleanable_exclusions,
+            )
+            if self.ground_truth_evaluation_enabled
+            else dict(operational)
+        )
+        actual_path_points = [(sample[1], sample[2]) for sample in metric_samples]
         actual_path_length = path_length(actual_path_points)
-        semantic_distances = semantic_path_distances(self.truth_samples)
+        semantic_distances = semantic_path_distances(metric_samples)
         absolute_cross_track = summarize_distances(swath_absolute_cross_track_errors(
-            self.truth_samples,
+            metric_samples,
             calibrated_swaths,
             float(config.get("brush_forward_offset_m", 0.55)),
         ))
         absolute_cross_track["metric_basis"] = (
             "gazebo_ground_truth_brush_center_to_nearest_primary_swath_infinite_line"
+            if self.ground_truth_evaluation_enabled else
+            "fused_pose_brush_center_to_nearest_primary_swath_infinite_line"
         )
         straightness = summarize_distances(swath_straightness_errors(
-            self.truth_samples,
+            metric_samples,
             calibrated_swaths,
             float(config.get("brush_forward_offset_m", 0.55)),
         ))
@@ -933,6 +1052,8 @@ class CoverageProbe(Node):
         )
         straightness["metric_basis"] = (
             "per_continuous_swath_ground_truth_brush_center_residual_after_median_offset;_central_80_percent"
+            if self.ground_truth_evaluation_enabled else
+            "per_continuous_swath_fused_pose_brush_center_residual_after_median_offset;_central_80_percent"
         )
         empirical.update({
             "actual_path_length_m": actual_path_length,
@@ -950,6 +1071,39 @@ class CoverageProbe(Node):
             "gross_efficiency_m2_h": empirical["covered_area_m2"] / operational_duration * 3600.0 if operational_duration > 0 else 0.0,
             "net_efficiency_m2_h": empirical["covered_area_m2"] / operational_duration * 3600.0 if operational_duration > 0 else 0.0,
         })
+        operational.update({
+            "actual_path_length_m": path_length([
+                (sample[1], sample[2])
+                for sample in self.estimated_trajectory_samples
+            ]),
+            "actual_duration_sec": operational_duration,
+            "simulated_operational_duration_sec": operational_duration,
+            "wall_duration_sec": wall_duration,
+            "metric_basis": "fused_pose_brush_footprint_used_by_runtime_control",
+            "gross_efficiency_m2_h": operational["covered_area_m2"] / operational_duration * 3600.0 if operational_duration > 0 else 0.0,
+            "net_efficiency_m2_h": operational["covered_area_m2"] / operational_duration * 3600.0 if operational_duration > 0 else 0.0,
+        })
+        operational_straightness = summarize_distances(
+            swath_straightness_errors(
+                self.estimated_trajectory_samples,
+                calibrated_swaths,
+                float(config.get("brush_forward_offset_m", 0.55)),
+            )
+        )
+        operational_straightness.update({
+            "threshold_p95_m": lateral_p95_threshold,
+            "pass": bool(
+                operational_straightness["p95_m"] is not None
+                and operational_straightness["p95_m"] <= lateral_p95_threshold
+            ),
+            "metric_basis": (
+                "per_continuous_swath_fused_pose_brush_center_residual_"
+                "after_median_offset;_central_80_percent"
+            ),
+        })
+        operational["primary_swath_straightness_error"] = (
+            operational_straightness
+        )
         empirical_pass = complete and empirical["coverage_rate"] >= empirical_threshold
         repeat_pass = empirical["repeat_rate"] <= empirical_repeat_threshold
         coverage_quality_pass = empirical_pass and repeat_pass
@@ -957,12 +1111,12 @@ class CoverageProbe(Node):
         safety_pass = self.collision_events == 0
         keepout_violation_samples = sum(
             any(point_in_polygon(sample[1], sample[2], polygon) for polygon in exclusions)
-            for sample in self.truth_samples
+            for sample in metric_samples
         )
         brush_state_violation_samples = sum(
             bool(sample[4]) and sample[5] != "EXECUTING_SWATH"
             and sample[5] != "REPAIR_SWATH"
-            for sample in self.truth_samples
+            for sample in metric_samples
         )
         recovery_count = sum(
             int(item.get("retries", 0)) for item in component_results
@@ -1016,7 +1170,33 @@ class CoverageProbe(Node):
             "Product gate B requires per-seed XY RMSE and pointwise P95 "
             "both <= 0.05 m"
         )
-        localization_pass = localization["pass_rmse_and_p95_at_most_0_05m"]
+        localization_pass = (
+            localization["pass_rmse_and_p95_at_most_0_05m"]
+            if self.ground_truth_evaluation_enabled else None
+        )
+        operational_coverage_pass = bool(
+            complete and operational["coverage_rate"] >= empirical_threshold
+        )
+        operational_repeat_pass = bool(
+            operational["repeat_rate"] <= empirical_repeat_threshold
+        )
+        operational_efficiency_pass = bool(
+            operational["net_efficiency_m2_h"] >= 3500.0
+        )
+        operational_lateral_tracking_pass = operational_straightness["pass"]
+        operational_success = bool(
+            complete and operational_coverage_pass and operational_repeat_pass
+            and operational_lateral_tracking_pass and safety_pass
+            and operational_efficiency_pass and not self.brush_enabled
+        )
+        formal_evaluation_success = (
+            bool(
+                complete and coverage_quality_pass and lateral_tracking_pass
+                and safety_pass and localization_pass and efficiency_pass
+                and not self.brush_enabled
+            )
+            if self.ground_truth_evaluation_enabled else None
+        )
         self._write_trajectory()
         report = {
             "schema_version": 2,
@@ -1033,10 +1213,18 @@ class CoverageProbe(Node):
             "safety_success": safety_pass,
             "localization_success": localization_pass,
             "competition_efficiency_pass": efficiency_pass,
-            "success": bool(
-                complete and coverage_quality_pass and lateral_tracking_pass
-                and safety_pass and localization_pass and efficiency_pass
-                and not self.brush_enabled
+            "product_operational_coverage_success": operational_coverage_pass,
+            "product_operational_repeat_success": operational_repeat_pass,
+            "product_operational_lateral_tracking_success": (
+                operational_lateral_tracking_pass
+            ),
+            "product_operational_efficiency_pass": operational_efficiency_pass,
+            "product_operational_success": operational_success,
+            "formal_evaluation_enabled": self.ground_truth_evaluation_enabled,
+            "formal_evaluation_success": formal_evaluation_success,
+            "success": (
+                formal_evaluation_success
+                if self.ground_truth_evaluation_enabled else operational_success
             ),
             "operation_width_m": width,
             "planning_swath_spacing_m": planning_spacing,
@@ -1057,8 +1245,13 @@ class CoverageProbe(Node):
             "route_selection": selection["report"],
             "swath_exclusion_intersection_count": intersection_count,
             "planned_metrics": planned_metrics,
+            "operational_metrics": operational,
             "empirical_metrics": empirical,
+            "formal_evaluation_metrics": (
+                empirical if self.ground_truth_evaluation_enabled else None
+            ),
             "coverage_repair": repair_report,
+            "product_task_drain": product_task_drain,
             "ackermann_connector_summary": ackermann_plan_summary,
             "deferred_swath_ids": ackermann_deferred_swaths,
             "blocked_swaths": (
@@ -1097,6 +1290,110 @@ class CoverageProbe(Node):
         else:
             self._set_state("COMPLETED" if report["success"] else "FAILED", report)
         return self._write_report(report)
+
+    def _wait_for_product_tasks_to_drain(self):
+        required = bool(self.get_parameter("require_product_task_drain").value)
+        if not required:
+            return {
+                "required": False,
+                "success": True,
+                "reason": "product_task_drain_not_required_for_component_run",
+            }
+        timeout_sec = float(
+            self.get_parameter("product_task_drain_timeout_sec").value
+        )
+        quiescence_sec = float(
+            self.get_parameter("product_task_quiescence_sec").value
+        )
+        maximum_age_sec = float(
+            self.get_parameter("product_task_state_maximum_age_sec").value
+        )
+        if (
+            not math.isfinite(timeout_sec) or timeout_sec <= 0.0
+            or not math.isfinite(quiescence_sec) or quiescence_sec < 0.0
+            or not math.isfinite(maximum_age_sec) or maximum_age_sec <= 0.0
+        ):
+            return {
+                "required": True,
+                "success": False,
+                "reason": "invalid_product_task_drain_parameters",
+            }
+        started = time.monotonic()
+        deadline = started + timeout_sec
+        quiet_since = None
+        last_snapshot = product_task_drain_snapshot(None, None)
+        self._set_state("WAITING_PRODUCT_TASKS", {
+            "brush_disabled": not self.brush_enabled,
+        })
+        while rclpy.ok() and time.monotonic() < deadline:
+            self._set_brush(False)
+            rclpy.spin_once(self, timeout_sec=0.05)
+            if self.stop_requested:
+                return {
+                    "required": True,
+                    "success": False,
+                    "reason": "operator_stop_during_product_task_drain",
+                    "last_snapshot": last_snapshot,
+                }
+            if self.pause_requested:
+                self.pause_requested = False
+                self.resume_requested = False
+                self._set_state("PAUSED", {
+                    "phase": "product_task_drain",
+                    "brush_disabled": True,
+                })
+                while (
+                    rclpy.ok() and not self.resume_requested
+                    and not self.stop_requested
+                ):
+                    self._set_brush(False)
+                    rclpy.spin_once(self, timeout_sec=0.05)
+                if self.stop_requested:
+                    continue
+                self.resume_requested = False
+                self._set_state("WAITING_PRODUCT_TASKS", {
+                    "phase": "product_task_drain",
+                    "resumed": True,
+                })
+            now = time.monotonic()
+            spot_fresh = (
+                self.spot_clean_state_received_monotonic > 0.0
+                and now - self.spot_clean_state_received_monotonic
+                <= maximum_age_sec
+            )
+            reobserve_fresh = (
+                self.reobserve_state_received_monotonic > 0.0
+                and now - self.reobserve_state_received_monotonic
+                <= maximum_age_sec
+            )
+            last_snapshot = product_task_drain_snapshot(
+                self.spot_clean_state if spot_fresh else None,
+                self.reobserve_state if reobserve_fresh else None,
+            )
+            last_snapshot.update({
+                "spot_state_fresh": spot_fresh,
+                "reobserve_state_fresh": reobserve_fresh,
+            })
+            if last_snapshot["drained"]:
+                quiet_since = quiet_since or now
+                if now - quiet_since >= quiescence_sec:
+                    return {
+                        "required": True,
+                        "success": True,
+                        "reason": "queues_stably_drained",
+                        "elapsed_wall_sec": now - started,
+                        "quiescence_sec": now - quiet_since,
+                        "last_snapshot": last_snapshot,
+                    }
+            else:
+                quiet_since = None
+        return {
+            "required": True,
+            "success": False,
+            "reason": "product_task_drain_timeout",
+            "elapsed_wall_sec": time.monotonic() - started,
+            "last_snapshot": last_snapshot,
+        }
 
     def _execute_taught_route(
         self, config, geometry, safe_polygon, safe_exclusions
@@ -1308,22 +1605,22 @@ class CoverageProbe(Node):
 
     def _execute_coverage_repairs(
         self, config, cleanable_polygon, cleanable_exclusions, width, threshold,
-        primary_length_m,
+        primary_length_m, operational_brush_samples,
     ):
-        """Run bounded brush-footprint repairs until the actual gate is met."""
+        """Run bounded repairs from fused-pose coverage, never evaluator truth."""
         max_passes = max(0, int(config.get("coverage_repair_max_passes", 0)))
         forward_offset = float(config.get("brush_forward_offset_m", 0.55))
         reports = []
         all_success = True
         for pass_index in range(max_passes):
             empirical = empirical_swept_metrics(
-                cleanable_polygon, self.brush_samples, width, resolution=0.10,
+                cleanable_polygon, operational_brush_samples, width, resolution=0.10,
                 exclusion_polygons=cleanable_exclusions,
             )
             if empirical["coverage_rate"] >= threshold:
                 break
             missed = uncovered_cell_centers(
-                cleanable_polygon, self.brush_samples, width, resolution=0.10,
+                cleanable_polygon, operational_brush_samples, width, resolution=0.10,
                 exclusion_polygons=cleanable_exclusions,
             )
             residual = plan_residual_regions(
@@ -1462,7 +1759,7 @@ class CoverageProbe(Node):
                     all_success = False
                     break
                 current_empirical = empirical_swept_metrics(
-                    cleanable_polygon, self.brush_samples, width,
+                    cleanable_polygon, operational_brush_samples, width,
                     resolution=0.10,
                     exclusion_polygons=cleanable_exclusions,
                 )
@@ -1487,7 +1784,7 @@ class CoverageProbe(Node):
             if not pass_report["repair_length_gate_pass"]:
                 all_success = False
             after = empirical_swept_metrics(
-                cleanable_polygon, self.brush_samples, width, resolution=0.10,
+                cleanable_polygon, operational_brush_samples, width, resolution=0.10,
                 exclusion_polygons=cleanable_exclusions,
             )
             pass_report["coverage_after"] = after["coverage_rate"]
@@ -1496,7 +1793,7 @@ class CoverageProbe(Node):
             if not all_success or after["coverage_rate"] >= threshold:
                 break
         final = empirical_swept_metrics(
-            cleanable_polygon, self.brush_samples, width, resolution=0.10,
+            cleanable_polygon, operational_brush_samples, width, resolution=0.10,
             exclusion_polygons=cleanable_exclusions,
         )
         return {
@@ -1864,7 +2161,9 @@ class CoverageProbe(Node):
                         else "connector_goal_checker"
                     ),
                     "speed_limit_mps": (
-                        0.20 if section["direction"] == "REVERSE" else 0.45
+                        self.speed_limits_mps["REVERSE"]
+                        if section["direction"] == "REVERSE"
+                        else self.speed_limits_mps["FORWARD"]
                     ),
                     # Replaying a plan whose start is now metres behind the
                     # robot is unsafe and lets RPP select the wrong branch of
@@ -1934,7 +2233,10 @@ class CoverageProbe(Node):
 
     def _follow_component(self, component):
         metadata = component.get("metadata", {})
-        speed_limit = metadata.get("speed_limit_mps")
+        speed_limit = metadata.get(
+            "speed_limit_mps",
+            self.speed_limits_mps.get(component.get("speed_profile")),
+        )
         if speed_limit is not None:
             limit = SpeedLimit()
             limit.percentage = False
@@ -2165,7 +2467,7 @@ class CoverageProbe(Node):
             **component,
             "metadata": {
                 **component.get("metadata", {}),
-                "speed_limit_mps": 0.45,
+                "speed_limit_mps": self.speed_limits_mps["CLEAN"],
                 "goal_checker_id": "swath_exit_goal_checker",
                 "brush_enable_after_distance_m": brush_enable_distance,
                 "brush_disable_after_distance_m": brush_disable_distance,
@@ -2772,7 +3074,12 @@ class CoverageProbe(Node):
     def _write_trajectory(self):
         output = Path(self.get_parameter("trajectory_output_path").value); output.parent.mkdir(parents=True, exist_ok=True)
         with output.open("w", newline="", encoding="utf-8") as stream:
-            writer = csv.writer(stream); writer.writerow(["stamp_sec", "base_x_m", "base_y_m", "yaw_rad", "brush_enabled", "coverage_state"]); writer.writerows(self.truth_samples)
+            samples = (
+                self.truth_samples
+                if self.ground_truth_evaluation_enabled
+                else self.estimated_trajectory_samples
+            )
+            writer = csv.writer(stream); writer.writerow(["stamp_sec", "base_x_m", "base_y_m", "yaw_rad", "brush_enabled", "coverage_state"]); writer.writerows(samples)
 
     @staticmethod
     def _write_json(path, data):

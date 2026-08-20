@@ -5,11 +5,20 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 from pathlib import Path
 
 
 def load(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
+
+
+def product_estop_p95_pass(value) -> bool:
+    try:
+        p95_sec = float(value)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(p95_sec) and 0.0 <= p95_sec <= 0.200
 
 
 def build_report(root: Path) -> dict:
@@ -117,10 +126,9 @@ def build_report(root: Path) -> dict:
             and safety["trial_count"] == 30
             and safety["emergency_stop_zeroed"] is True
         ),
-        "estop_latency_p95_and_max_pass": (
-            dynamic_gates["emergency_stop_p95_at_most_1s"] is True
-            and float(safety["latency_sec"]["p95"]) <= 1.0
-            and float(safety["latency_sec"]["max"]) <= 1.5
+        "estop_latency_p95_at_most_200ms": (
+            dynamic_gates["emergency_stop_p95_at_most_200ms"] is True
+            and product_estop_p95_pass(safety["latency_sec"]["p95"])
         ),
         "estop_post_stop_output_zero": (
             safety["post_stop_command_output_zero"] is True

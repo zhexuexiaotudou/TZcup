@@ -104,6 +104,277 @@ def frontier_goal_exclusion_centers(
     return (endpoint, raw_frontier)
 
 
+def frontier_detour_goal(
+    goal: FrontierGoal,
+    robot_xy_m: tuple[float, float],
+    *,
+    goal_backoff_m: float,
+    maximum_distance_m: float,
+    minimum_distance_m: float,
+    allowed_bounds_xyxy_m: tuple[float, float, float, float] | None = None,
+    boundary_margin_m: float = 0.0,
+) -> FrontierGoal | None:
+    """Build a longer known-map goal so Nav2 can route around an obstacle.
+
+    A short straight projection toward a distant frontier can land inside a
+    building even though the frontier itself is reachable by a known-free
+    detour. The returned endpoint stays on the same online frontier ray and
+    retains the raw frontier identity, but extends far enough for the global
+    planner to select a route around the blocking geometry.
+    """
+    if goal.raw_world_x_m is None or goal.raw_world_y_m is None:
+        return None
+    robot_x, robot_y = (float(value) for value in robot_xy_m)
+    raw_x = float(goal.raw_world_x_m)
+    raw_y = float(goal.raw_world_y_m)
+    if not all(math.isfinite(value) for value in (robot_x, robot_y, raw_x, raw_y)):
+        return None
+    delta_x = raw_x - robot_x
+    delta_y = raw_y - robot_y
+    raw_distance = math.hypot(delta_x, delta_y)
+    backoff = float(goal_backoff_m)
+    minimum = float(minimum_distance_m)
+    maximum = float(maximum_distance_m)
+    margin = float(boundary_margin_m)
+    if not all(
+        math.isfinite(value) for value in (backoff, minimum, maximum, margin)
+    ):
+        return None
+    minimum = max(0.0, minimum)
+    maximum = max(minimum, maximum)
+    approach_distance = min(
+        maximum,
+        max(0.0, raw_distance - max(0.0, backoff)),
+    )
+    if approach_distance + 1.0e-9 < minimum or raw_distance <= 1.0e-9:
+        return None
+    scale = approach_distance / raw_distance
+    world_x = robot_x + scale * delta_x
+    world_y = robot_y + scale * delta_y
+    if allowed_bounds_xyxy_m is not None:
+        min_x, min_y, max_x, max_y = (
+            float(value) for value in allowed_bounds_xyxy_m
+        )
+        margin = max(0.0, margin)
+        if not (
+            min_x + margin <= world_x <= max_x - margin
+            and min_y + margin <= world_y <= max_y - margin
+        ):
+            return None
+    yaw = math.atan2(delta_y, delta_x)
+    return FrontierGoal(
+        grid_x=int(goal.grid_x),
+        grid_y=int(goal.grid_y),
+        world_x_m=world_x,
+        world_y_m=world_y,
+        yaw_rad=yaw,
+        frontier_cell_count=int(goal.frontier_cell_count),
+        information_gain_m=float(goal.information_gain_m),
+        distance_m=approach_distance,
+        score=float(goal.score),
+        preference_distance_m=goal.preference_distance_m,
+        raw_world_x_m=raw_x,
+        raw_world_y_m=raw_y,
+    )
+
+
+def path_lookahead_pose(
+    poses: Sequence[tuple[float, float, float]],
+    *,
+    maximum_distance_m: float,
+) -> tuple[tuple[float, float, float], float] | None:
+    """Interpolate a bounded forward point along a computed global path."""
+    maximum = float(maximum_distance_m)
+    if not math.isfinite(maximum) or maximum <= 0.0:
+        raise ValueError("maximum_distance_m must be finite and positive")
+    if len(poses) < 2:
+        return None
+    if any(
+        len(pose) != 3
+        or not all(math.isfinite(float(value)) for value in pose)
+        for pose in poses
+    ):
+        raise ValueError("poses must contain finite x, y, yaw triples")
+    travelled = 0.0
+    for previous, current in zip(poses, poses[1:]):
+        delta_x = float(current[0]) - float(previous[0])
+        delta_y = float(current[1]) - float(previous[1])
+        segment = math.hypot(delta_x, delta_y)
+        if segment <= 1.0e-12:
+            continue
+        if travelled + segment >= maximum:
+            ratio = (maximum - travelled) / segment
+            x = float(previous[0]) + ratio * delta_x
+            y = float(previous[1]) + ratio * delta_y
+            return (x, y, math.atan2(delta_y, delta_x)), maximum
+        travelled += segment
+    final = poses[-1]
+    return (
+        (float(final[0]), float(final[1]), float(final[2])),
+        travelled,
+    )
+
+
+def sample_path_poses(
+    poses: Sequence[tuple[float, float, float]],
+    *,
+    maximum_spacing_m: float,
+) -> list[tuple[float, float, float]]:
+    """Densify a path so collision checks cannot skip a sparse segment."""
+    spacing = float(maximum_spacing_m)
+    if not math.isfinite(spacing) or spacing <= 0.0:
+        raise ValueError("maximum_spacing_m must be finite and positive")
+    if not poses:
+        return []
+    if any(
+        len(pose) != 3
+        or not all(math.isfinite(float(value)) for value in pose)
+        for pose in poses
+    ):
+        raise ValueError("poses must contain finite x, y, yaw triples")
+    sampled = [tuple(float(value) for value in poses[0])]
+    for previous, current in zip(poses, poses[1:]):
+        start_x, start_y, start_yaw = (float(value) for value in previous)
+        end_x, end_y, end_yaw = (float(value) for value in current)
+        segment = math.hypot(end_x - start_x, end_y - start_y)
+        steps = max(1, int(math.ceil(segment / spacing)))
+        yaw_delta = math.atan2(
+            math.sin(end_yaw - start_yaw),
+            math.cos(end_yaw - start_yaw),
+        )
+        for step in range(1, steps + 1):
+            ratio = step / steps
+            sampled.append((
+                start_x + ratio * (end_x - start_x),
+                start_y + ratio * (end_y - start_y),
+                start_yaw + ratio * yaw_delta,
+            ))
+    return sampled
+
+
+def frontier_detour_path_goal(
+    source_goal: FrontierGoal,
+    poses: Sequence[tuple[float, float, float]],
+    *,
+    maximum_distance_m: float,
+    minimum_distance_m: float,
+) -> FrontierGoal | None:
+    """Create a bounded command while retaining its online frontier identity."""
+    minimum = float(minimum_distance_m)
+    if not math.isfinite(minimum) or minimum < 0.0:
+        raise ValueError("minimum_distance_m must be finite and non-negative")
+    lookahead = path_lookahead_pose(
+        poses,
+        maximum_distance_m=maximum_distance_m,
+    )
+    if lookahead is None:
+        return None
+    pose, travelled_m = lookahead
+    if travelled_m + 1.0e-9 < minimum:
+        return None
+    return FrontierGoal(
+        grid_x=int(source_goal.grid_x),
+        grid_y=int(source_goal.grid_y),
+        world_x_m=float(pose[0]),
+        world_y_m=float(pose[1]),
+        yaw_rad=float(pose[2]),
+        frontier_cell_count=int(source_goal.frontier_cell_count),
+        information_gain_m=float(source_goal.information_gain_m),
+        distance_m=float(travelled_m),
+        score=float(source_goal.score),
+        preference_distance_m=source_goal.preference_distance_m,
+        raw_world_x_m=source_goal.raw_world_x_m,
+        raw_world_y_m=source_goal.raw_world_y_m,
+    )
+
+
+def known_free_route_recovery_goals(
+    data: Sequence[int],
+    geometry: GridGeometry,
+    robot_xy_m: tuple[float, float],
+    preferred_world_xy: tuple[float, float],
+    *,
+    allowed_bounds_xyxy_m: tuple[float, float, float, float],
+    boundary_margin_m: float,
+    minimum_distance_m: float,
+    maximum_distance_m: float,
+    sample_spacing_m: float = 0.5,
+    free_max: int = 25,
+    maximum_results: int = 64,
+) -> list[FrontierGoal]:
+    """Rank online-known free staging cells toward a blocked sweep anchor."""
+    if len(data) != geometry.width * geometry.height:
+        raise ValueError("grid data length does not match geometry")
+    robot_x, robot_y = (float(value) for value in robot_xy_m)
+    preferred_x, preferred_y = (float(value) for value in preferred_world_xy)
+    direction_x = preferred_x - robot_x
+    direction_y = preferred_y - robot_y
+    direction_length = math.hypot(direction_x, direction_y)
+    if direction_length <= 1.0e-9:
+        return []
+    direction_x /= direction_length
+    direction_y /= direction_length
+    minimum = max(0.0, float(minimum_distance_m))
+    maximum = max(minimum, float(maximum_distance_m))
+    spacing = float(sample_spacing_m)
+    if not all(math.isfinite(value) for value in (
+        robot_x,
+        robot_y,
+        preferred_x,
+        preferred_y,
+        minimum,
+        maximum,
+        spacing,
+    )) or spacing <= 0.0:
+        raise ValueError("route recovery inputs must be finite and spacing positive")
+    min_x, min_y, max_x, max_y = (
+        float(value) for value in allowed_bounds_xyxy_m
+    )
+    margin = max(0.0, float(boundary_margin_m))
+    stride = max(1, int(math.ceil(spacing / geometry.resolution_m)))
+    ranked = []
+    for grid_y in range(0, geometry.height, stride):
+        for grid_x in range(0, geometry.width, stride):
+            value = int(data[_index(grid_x, grid_y, geometry)])
+            if value < 0 or value > int(free_max):
+                continue
+            world_x, world_y = grid_to_world(grid_x, grid_y, geometry)
+            if not (
+                min_x + margin <= world_x <= max_x - margin
+                and min_y + margin <= world_y <= max_y - margin
+            ):
+                continue
+            offset_x = world_x - robot_x
+            offset_y = world_y - robot_y
+            distance = math.hypot(offset_x, offset_y)
+            if distance + 1.0e-9 < minimum or distance > maximum + 1.0e-9:
+                continue
+            forward_progress = offset_x * direction_x + offset_y * direction_y
+            if forward_progress <= 0.0:
+                continue
+            lateral = abs(offset_x * direction_y - offset_y * direction_x)
+            score = forward_progress - 0.35 * lateral - 0.01 * distance
+            ranked.append(FrontierGoal(
+                grid_x=grid_x,
+                grid_y=grid_y,
+                world_x_m=world_x,
+                world_y_m=world_y,
+                yaw_rad=math.atan2(direction_y, direction_x),
+                frontier_cell_count=0,
+                information_gain_m=0.0,
+                distance_m=distance,
+                score=score,
+                preference_distance_m=math.hypot(
+                    preferred_x - world_x,
+                    preferred_y - world_y,
+                ),
+                raw_world_x_m=world_x,
+                raw_world_y_m=world_y,
+            ))
+    ranked.sort(key=lambda goal: (-goal.score, goal.distance_m, goal.grid_y, goal.grid_x))
+    return ranked[:max(0, int(maximum_results))]
+
+
 def lane_shift_connector_goals(
     robot_pose: tuple[float, float, float],
     target_y_m: float,
@@ -589,6 +860,100 @@ def world_disk_is_traversable(
             if not (0 <= x < geometry.width and 0 <= y < geometry.height):
                 return False
             value = int(data[_index(x, y, geometry)])
+            if value < 0 or value > int(maximum_cost):
+                return False
+    return True
+
+
+def world_footprint_is_traversable(
+    data: Sequence[int],
+    geometry: GridGeometry,
+    pose_xyyaw_m_rad: tuple[float, float, float],
+    *,
+    footprint_front_m: float,
+    footprint_rear_m: float,
+    footprint_half_width_m: float,
+    clearance_margin_m: float,
+    maximum_cost: int,
+    allow_unknown: bool = False,
+) -> bool:
+    """Check the complete oriented rectangular vehicle footprint in a grid.
+
+    The configured clearance expands every footprint edge.  An additional
+    half-cell diagonal is included while classifying cell centres so an
+    occupied or unknown cell intersecting the expanded footprint cannot be
+    missed solely because its centre lies just outside the polygon.
+    """
+    if len(data) != geometry.width * geometry.height:
+        raise ValueError("grid data length does not match geometry")
+    x_m, y_m, yaw_rad = (float(value) for value in pose_xyyaw_m_rad)
+    front = float(footprint_front_m)
+    rear = float(footprint_rear_m)
+    half_width = float(footprint_half_width_m)
+    margin = float(clearance_margin_m)
+    values = (x_m, y_m, yaw_rad, front, rear, half_width, margin)
+    if not all(math.isfinite(value) for value in values):
+        raise ValueError("footprint traversal inputs must be finite")
+    if front <= 0.0 or rear <= 0.0 or half_width <= 0.0 or margin < 0.0:
+        raise ValueError("footprint dimensions must be positive and margin nonnegative")
+
+    expanded_front = front + margin
+    expanded_rear = rear + margin
+    expanded_half_width = half_width + margin
+    cell_pad = geometry.resolution_m / math.sqrt(2.0)
+    pose_cosine = math.cos(yaw_rad)
+    pose_sine = math.sin(yaw_rad)
+    origin_cosine = math.cos(geometry.origin_yaw_rad)
+    origin_sine = math.sin(geometry.origin_yaw_rad)
+
+    grid_corners = []
+    for local_x in (-expanded_rear, expanded_front):
+        for local_y in (-expanded_half_width, expanded_half_width):
+            world_x = x_m + pose_cosine * local_x - pose_sine * local_y
+            world_y = y_m + pose_sine * local_x + pose_cosine * local_y
+            origin_dx = world_x - geometry.origin_x_m
+            origin_dy = world_y - geometry.origin_y_m
+            grid_corners.append((
+                (origin_cosine * origin_dx + origin_sine * origin_dy)
+                / geometry.resolution_m,
+                (-origin_sine * origin_dx + origin_cosine * origin_dy)
+                / geometry.resolution_m,
+            ))
+    minimum_corner_x = min(value[0] for value in grid_corners)
+    maximum_corner_x = max(value[0] for value in grid_corners)
+    minimum_corner_y = min(value[1] for value in grid_corners)
+    maximum_corner_y = max(value[1] for value in grid_corners)
+    if (
+        minimum_corner_x < 0.0
+        or minimum_corner_y < 0.0
+        or maximum_corner_x > geometry.width
+        or maximum_corner_y > geometry.height
+    ):
+        return False
+    minimum_grid_x = max(0, math.floor(minimum_corner_x - 0.5))
+    maximum_grid_x = min(
+        geometry.width - 1, math.floor(maximum_corner_x + 0.5)
+    )
+    minimum_grid_y = max(0, math.floor(minimum_corner_y - 0.5))
+    maximum_grid_y = min(
+        geometry.height - 1, math.floor(maximum_corner_y + 0.5)
+    )
+
+    for grid_y in range(minimum_grid_y, maximum_grid_y + 1):
+        for grid_x in range(minimum_grid_x, maximum_grid_x + 1):
+            world_x, world_y = grid_to_world(grid_x, grid_y, geometry)
+            dx = world_x - x_m
+            dy = world_y - y_m
+            local_x = pose_cosine * dx + pose_sine * dy
+            local_y = -pose_sine * dx + pose_cosine * dy
+            if not (
+                -expanded_rear - cell_pad <= local_x <= expanded_front + cell_pad
+                and abs(local_y) <= expanded_half_width + cell_pad
+            ):
+                continue
+            value = int(data[_index(grid_x, grid_y, geometry)])
+            if value < 0 and bool(allow_unknown):
+                continue
             if value < 0 or value > int(maximum_cost):
                 return False
     return True

@@ -34,7 +34,9 @@ def test_coverage_success_includes_the_formal_localization_gate():
         ROOT / "starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py"
     ).read_text(encoding="utf-8")
     assert '"localization_success": localization_pass' in probe
-    assert "and localization_pass and not self.brush_enabled" in probe
+    assert "and safety_pass and localization_pass and efficiency_pass" in probe
+    assert "if self.ground_truth_evaluation_enabled else None" in probe
+    assert '"formal_evaluation_success": formal_evaluation_success' in probe
 
 
 def test_optimized_profile_has_bounded_repair_and_legacy_fallback():

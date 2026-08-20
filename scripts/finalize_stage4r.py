@@ -33,7 +33,7 @@ def main():
         "full_coverage_execution": coverage["full_execution_success"],
         "empirical_coverage_at_least_90pct": coverage["empirical_metrics"]["coverage_rate"] >= 0.90,
         "no_collision": coverage["collision_count"] == 0,
-        "estop_p95_at_most_1s": safety["competition_estop_pass"],
+        "estop_p95_at_most_200ms": safety["product_estop_pass"],
         "complete_rosbag_and_replay": complete_bag,
         "real_gazebo_images": images_ok,
     }

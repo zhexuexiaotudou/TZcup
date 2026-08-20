@@ -13,6 +13,7 @@ HMI_PACKAGE = ROOT / "starter_ws" / "src" / "sanitation_hmi" / "package.xml"
 NAVIGATION_LAUNCH = ROOT / "starter_ws" / "src" / "sanitation_navigation" / "launch" / "navigation.launch.py"
 FUSER_SOURCE = ROOT / "starter_ws" / "src" / "sanitation_scan_refiner" / "src" / "hybrid_global_fuser_node.cpp"
 HYBRID_LAUNCH = ROOT / "starter_ws" / "src" / "sanitation_scan_refiner" / "launch" / "hybrid_localization.launch.py"
+COVERAGE_PROBE = ROOT / "starter_ws" / "src" / "sanitation_coverage" / "sanitation_coverage" / "coverage_probe.py"
 
 
 def test_product_launch_uses_only_product_control_nodes() -> None:
@@ -89,6 +90,36 @@ def test_product_runtime_has_no_ground_truth_target_subscriber() -> None:
     assert "sanitation_ground_truth" not in HMI_PACKAGE.read_text(encoding="utf-8")
     product = PRODUCT_SOURCE.read_text(encoding="utf-8")
     assert '"allow_ground_truth_evaluation": False' in product
+    assert '"require_product_task_drain": True' in product
+
+
+def test_product_coverage_control_uses_fused_pose_not_evaluator_truth() -> None:
+    text = COVERAGE_PROBE.read_text(encoding="utf-8")
+    repair_start = text.index("    def _execute_coverage_repairs(")
+    repair_end = text.index("    def _select_route(", repair_start)
+    repair = text[repair_start:repair_end]
+    assert "operational_brush_samples" in repair
+    assert "self.brush_samples" not in repair
+    assert "self.estimated_brush_samples" in text
+    assert '"product_operational_success": operational_success' in text
+    assert '"formal_evaluation_enabled": self.ground_truth_evaluation_enabled' in text
+    assert "if self.ground_truth_evaluation_enabled else operational_success" in text
+    assert "_wait_for_product_tasks_to_drain" in text
+    assert '"product_task_drain": product_task_drain' in text
+
+
+def test_product_ackermann_speed_contract_is_executable_and_fail_closed() -> None:
+    probe = COVERAGE_PROBE.read_text(encoding="utf-8")
+    mission = MISSION.read_text(encoding="utf-8")
+    nav = (ROOT / "starter_ws/src/sanitation_navigation/config/nav2_ackermann.yaml").read_text(
+        encoding="utf-8"
+    )
+    assert "ackermann_speed_profiles_incomplete" in probe
+    assert "ackermann_speed_profile_outside_0_to_1_mps" in probe
+    assert "speed_limits_mps=self.speed_limits_mps" in probe
+    assert '"speed_limit_mps": self.speed_limits_mps["CLEAN"]' in probe
+    assert "CLEAN: {linear_mps: 1.00" in mission
+    assert "desired_linear_vel: 1.00" in nav
 
 
 def test_simulator_oracle_bridges_are_evaluation_only() -> None:
@@ -115,6 +146,17 @@ def test_product_profiles_use_full_width_and_authoritative_estop() -> None:
     navigation = NAVIGATION_LAUNCH.read_text(encoding="utf-8")
     assert "('production', 'auto12_efficiency_v1'" in coverage
     assert "executable='safety_authority'" in navigation
+    assert "executable='velocity_gate'" in navigation
+    assert "executable='actuator_timeout_guard'" in navigation
+    assert "'output_topic': '/cmd_vel_safe'" in navigation
+    assert "name='actuator_command_gate'" in navigation
+    assert "'input_topic': '/cmd_vel_safe'" in navigation
+    assert "'output_topic': '/cmd_vel'" in navigation
+    assert "'forward_commands': True" in navigation
+    assert "'forward_commands': False" in navigation
+    assert "'timeout_sec': 0.08" in navigation
+    assert "'publish_period_sec': 0.02" in navigation
+    assert navigation.count("respawn_delay=0.05") >= 4
     assert "startup_emergency_stopped" in navigation
     assert "DeclareLaunchArgument(\n                'localization_pose_topic'" in navigation
     assert "('amcl_pose', LaunchConfiguration('localization_pose_topic'))" in navigation

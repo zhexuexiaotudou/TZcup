@@ -6,6 +6,7 @@ from dataclasses import asdict
 import json
 import math
 from pathlib import Path
+import threading
 import time
 
 import rclpy
@@ -26,11 +27,14 @@ from sanitation_coverage.ackermann_connector import (
 from sanitation_coverage.metrics import split_path_at_curvature_reversals
 
 from .frontier_core import (
+    frontier_detour_goal,
+    frontier_detour_path_goal,
     frontier_goal_exclusion_centers,
     frontier_sweep_targets,
     frontier_sweep_target_axis,
     GridGeometry,
     horizontal_sweep_should_wait_for_frontier,
+    known_free_route_recovery_goals,
     lane_shift_connector_goals,
     map_extent_metrics,
     mapping_completion_reached,
@@ -40,6 +44,7 @@ from .frontier_core import (
     prune_timed_exclusions,
     rank_frontiers,
     reverse_escape_goal,
+    sample_path_poses,
     sweep_anchor_is_behind_chassis,
     sweep_anchor_heading_error_rad,
     sweep_alignment_goal,
@@ -49,7 +54,7 @@ from .frontier_core import (
     sweep_target_completion_reached,
     vertical_sweep_anchor_reached,
     world_disk_has_known_cell,
-    world_disk_is_traversable,
+    world_footprint_is_traversable,
 )
 
 
@@ -87,6 +92,9 @@ class FrontierExplorer(Node):
         self.declare_parameter("required_bounds_goal_margin_m", 0.80)
         self.declare_parameter("frontier_goal_backoff_m", 1.5)
         self.declare_parameter("maximum_frontier_goal_distance_m", 4.0)
+        self.declare_parameter("maximum_frontier_detour_distance_m", 30.0)
+        self.declare_parameter("frontier_detour_timeout_sec", 180.0)
+        self.declare_parameter("frontier_detour_plan_endpoint_tolerance_m", 0.75)
         self.declare_parameter("initial_frontier_goal_distance_m", 2.0)
         self.declare_parameter("goal_distance_growth_success_count", 3)
         self.declare_parameter("goal_distance_growth_step_m", 1.0)
@@ -96,6 +104,7 @@ class FrontierExplorer(Node):
         self.declare_parameter("boundary_turn_buffer_m", 1.429)
         self.declare_parameter("maximum_goal_count", 160)
         self.declare_parameter("goal_timeout_sec", 60.0)
+        self.declare_parameter("goal_cancel_grace_sec", 5.0)
         self.declare_parameter("failed_goal_cooldown_sec", 10.0)
         self.declare_parameter("failed_goal_exclusion_ttl_sec", 180.0)
         self.declare_parameter("minimum_frontier_map_gain_m2", 2.0)
@@ -113,6 +122,12 @@ class FrontierExplorer(Node):
         self.declare_parameter("horizontal_sweep_alignment_timeout_sec", 20.0)
         self.declare_parameter("horizontal_sweep_alignment_distance_m", 2.0)
         self.declare_parameter("horizontal_sweep_alignment_tolerance_rad", 0.15)
+        self.declare_parameter(
+            "horizontal_sweep_frontier_wait_before_route_recovery_count", 5
+        )
+        self.declare_parameter("horizontal_sweep_frontier_wait_failure_limit", 30)
+        self.declare_parameter("horizontal_sweep_route_recovery_max_distance_m", 30.0)
+        self.declare_parameter("horizontal_sweep_route_recovery_sample_spacing_m", 0.5)
         self.declare_parameter("reverse_escape_distance_m", 2.0)
         self.declare_parameter("reverse_escape_speed_mps", 0.15)
         self.declare_parameter("frontier_sweep_enabled", False)
@@ -134,13 +149,17 @@ class FrontierExplorer(Node):
         self.declare_parameter("completion_stable_map_updates", 3)
         self.declare_parameter("map_topic", "/map")
         self.declare_parameter("global_costmap_topic", "/global_costmap/costmap")
-        self.declare_parameter("goal_clearance_radius_m", 0.70)
+        self.declare_parameter("footprint_front_m", 0.82)
+        self.declare_parameter("footprint_rear_m", 0.575)
+        self.declare_parameter("footprint_half_width_m", 0.66)
+        self.declare_parameter("footprint_clearance_margin_m", 0.15)
         self.declare_parameter("maximum_goal_cost", 99)
         self.declare_parameter("map_frame", "map")
         self.declare_parameter("base_frame", "base_footprint")
         self.declare_parameter("positioning_source", "wheel_imu_scan_matching")
         self.declare_parameter("behavior_tree", "")
         self.output_path = Path(str(self.get_parameter("output_path").value))
+        self.report_write_lock = threading.Lock()
         self.required_bounds = tuple(
             float(value)
             for value in self.get_parameter("required_bounds_xyxy_m").value
@@ -183,6 +202,11 @@ class FrontierExplorer(Node):
         self.latest_costmap_data = None
         self.latest_costmap_geometry = None
         self.costmap_rejected_goal_count = 0
+        self.online_map_rejected_goal_count = 0
+        self.frontier_detour_goal_count = 0
+        self.frontier_detour_plan_failure_count = 0
+        self.frontier_detour_path_rejected_count = 0
+        self.frontier_detour_fallback_queued_count = 0
         self.raw_frontier_exclusion_count = 0
         self.frontier_no_progress_success_count = 0
         self.frontier_no_progress_success_streak = 0
@@ -190,6 +214,9 @@ class FrontierExplorer(Node):
         self.frontier_no_progress_raw_exclusion_count = 0
         self.horizontal_sweep_raw_exclusion_suppressed_count = 0
         self.horizontal_sweep_frontier_wait_count = 0
+        self.horizontal_sweep_frontier_wait_streak = 0
+        self.horizontal_sweep_route_recovery_attempt_count = 0
+        self.horizontal_sweep_route_recovery_unavailable_count = 0
         self.horizontal_sweep_staging_exhaustion_arm_count = 0
         self.horizontal_sweep_staging_pending = False
         self.horizontal_sweep_staging_arm_count = 0
@@ -229,6 +256,9 @@ class FrontierExplorer(Node):
         self.sweep_lane_shift_connector_section_index = 0
         self.sweep_lane_shift_connector_goal = None
         self.sweep_lane_shift_connector_row = None
+        self.frontier_detour_source_goal = None
+        self.frontier_detour_row = None
+        self.pending_frontier_detour_source_goal = None
         maximum_goal_distance = float(
             self.get_parameter("maximum_frontier_goal_distance_m").value
         )
@@ -248,6 +278,7 @@ class FrontierExplorer(Node):
             self.get_parameter("goal_timeout_sec").value
         )
         self.active_goal_cancel_requested = False
+        self.active_goal_cancel_requested_monotonic = None
         self.next_goal_not_before_monotonic = self.started_monotonic
         self.nav_recovery_in_progress = False
         self.nav_recovery_count = 0
@@ -322,15 +353,53 @@ class FrontierExplorer(Node):
         self.latest_costmap_data = tuple(int(value) for value in message.data)
 
     def _goal_is_costmap_clear(self, goal) -> bool:
-        if self.latest_costmap_data is None or self.latest_costmap_geometry is None:
-            return False
-        return world_disk_is_traversable(
-            self.latest_costmap_data,
-            self.latest_costmap_geometry,
-            (goal.world_x_m, goal.world_y_m),
-            radius_m=float(self.get_parameter("goal_clearance_radius_m").value),
-            maximum_cost=int(self.get_parameter("maximum_goal_cost").value),
+        return all(self._goal_clearance_sources(goal))
+
+    def _goal_clearance_sources(self, goal) -> tuple[bool, bool]:
+        """Check the live SLAM grid and Nav2 costmap independently."""
+        maximum_cost = int(self.get_parameter("maximum_goal_cost").value)
+        footprint_parameters = self._footprint_clearance_parameters()
+        map_clear = (
+            self.latest_data is not None
+            and self.latest_geometry is not None
+            and world_footprint_is_traversable(
+                self.latest_data,
+                self.latest_geometry,
+                (goal.world_x_m, goal.world_y_m, goal.yaw_rad),
+                **footprint_parameters,
+                maximum_cost=maximum_cost,
+                allow_unknown=True,
+            )
         )
+        costmap_clear = (
+            self.latest_costmap_data is not None
+            and self.latest_costmap_geometry is not None
+            and world_footprint_is_traversable(
+                self.latest_costmap_data,
+                self.latest_costmap_geometry,
+                (goal.world_x_m, goal.world_y_m, goal.yaw_rad),
+                **footprint_parameters,
+                maximum_cost=maximum_cost,
+                allow_unknown=False,
+            )
+        )
+        return bool(map_clear), bool(costmap_clear)
+
+    def _footprint_clearance_parameters(self) -> dict[str, float]:
+        return {
+            "footprint_front_m": float(
+                self.get_parameter("footprint_front_m").value
+            ),
+            "footprint_rear_m": float(
+                self.get_parameter("footprint_rear_m").value
+            ),
+            "footprint_half_width_m": float(
+                self.get_parameter("footprint_half_width_m").value
+            ),
+            "clearance_margin_m": float(
+                self.get_parameter("footprint_clearance_margin_m").value
+            ),
+        }
 
     def _tick(self) -> None:
         if self.terminal:
@@ -353,12 +422,46 @@ class FrontierExplorer(Node):
             goal_elapsed = time.monotonic() - float(
                 self.active_goal_started_monotonic or time.monotonic()
             )
+            if self.active_goal_cancel_requested:
+                cancel_elapsed = time.monotonic() - float(
+                    self.active_goal_cancel_requested_monotonic
+                    or time.monotonic()
+                )
+                if cancel_elapsed >= float(
+                    self.get_parameter("goal_cancel_grace_sec").value
+                ):
+                    self._force_active_goal_timeout(cancel_elapsed)
+                return
+            if (
+                goal_elapsed >= self.active_goal_timeout_sec
+                and self.frontier_detour_row is not None
+                and self.active_goal_handle is None
+            ):
+                self.active_goal_cancel_requested = True
+                self.active_goal_cancel_requested_monotonic = time.monotonic()
+                phase = str(self.frontier_detour_row.get("phase") or "unknown")
+                self._fail_frontier_detour_plan(
+                    self.frontier_detour_row,
+                    GoalStatus.STATUS_ABORTED,
+                    f"{phase}_response_timeout:{goal_elapsed:.3f}s",
+                )
+                return
+            if (
+                goal_elapsed >= self.active_goal_timeout_sec
+                and self.active_goal_handle is None
+            ):
+                self._force_active_goal_timeout(
+                    0.0,
+                    error=f"goal_response_timeout:{goal_elapsed:.3f}s",
+                )
+                return
             if (
                 goal_elapsed >= self.active_goal_timeout_sec
                 and self.active_goal_handle is not None
                 and not self.active_goal_cancel_requested
             ):
                 self.active_goal_cancel_requested = True
+                self.active_goal_cancel_requested_monotonic = time.monotonic()
                 self.last_error = f"frontier_goal_timeout:{goal_elapsed:.3f}s"
                 self.active_goal_handle.cancel_goal_async()
                 self._write_report()
@@ -379,6 +482,18 @@ class FrontierExplorer(Node):
         robot_pose = self._robot_pose()
         if robot_pose is None:
             return
+        if self.pending_frontier_detour_source_goal is not None:
+            detour_status = self._start_frontier_detour_plan(
+                self.pending_frontier_detour_source_goal,
+                robot_pose,
+                trigger="failed_short_frontier",
+            )
+            if detour_status in {"started", "planner_unavailable"}:
+                if detour_status == "planner_unavailable":
+                    self.next_goal_not_before_monotonic = time.monotonic() + 1.0
+                    self._write_report()
+                return
+            self.pending_frontier_detour_source_goal = None
         self._sweep_preference(robot_pose)
         if self._start_horizontal_sweep_staging(robot_pose):
             return
@@ -397,9 +512,23 @@ class FrontierExplorer(Node):
             if not goals:
                 break
             candidate = goals[0]
-            if self._goal_is_costmap_clear(candidate):
+            map_clear, costmap_clear = self._goal_clearance_sources(candidate)
+            if map_clear and costmap_clear:
                 goal = candidate
                 break
+            if not map_clear:
+                self.online_map_rejected_goal_count += 1
+            if not costmap_clear:
+                self.costmap_rejected_goal_count += 1
+            detour_status = self._start_frontier_detour_plan(
+                candidate, robot_pose
+            )
+            if detour_status == "started":
+                return
+            if detour_status == "planner_unavailable":
+                self.next_goal_not_before_monotonic = now + 1.0
+                self._write_report()
+                return
             # A current costmap rejection is not a navigation failure. Keep
             # it local to this ranking pass so a rolling-costmap refresh can
             # reconsider the frontier without a 180 s failed-goal penalty.
@@ -407,7 +536,6 @@ class FrontierExplorer(Node):
                 candidate, self.latest_geometry
             )
             temporary_exclusions.extend(centers)
-            self.costmap_rejected_goal_count += 1
         if goal is None:
             if (
                 self.sweep_active_axis == "horizontal"
@@ -436,6 +564,13 @@ class FrontierExplorer(Node):
             # not collapse onto the same dead end. Wait only if that escape
             # endpoint is itself unavailable.
             if self.excluded_goals and self._rank_goals(robot_pose, []):
+                if self._handle_horizontal_sweep_frontier_wait(
+                    robot_pose,
+                    escape,
+                    now,
+                    route_now=True,
+                ):
+                    return
                 if escape is not None and self._goal_is_costmap_clear(escape):
                     self.last_error = "frontier_dead_end_reverse_escape"
                     if self._send_backup(escape):
@@ -458,10 +593,12 @@ class FrontierExplorer(Node):
                 has_active_preference=self.sweep_active_preference is not None,
                 has_failed_goal_exclusions=bool(self.excluded_goals),
             ):
-                self.horizontal_sweep_frontier_wait_count += 1
-                self.last_error = "horizontal_sweep_frontier_temporarily_unavailable"
-                self.next_goal_not_before_monotonic = now + 1.0
-                self._write_report()
+                self._handle_horizontal_sweep_frontier_wait(
+                    robot_pose,
+                    escape,
+                    now,
+                    route_now=False,
+                )
                 return
             # Reaching an envelope edge can temporarily leave every online
             # frontier outside the permitted goal margin even though the
@@ -478,6 +615,7 @@ class FrontierExplorer(Node):
                 return
             self._finish(False, "frontiers_exhausted_before_required_bounds")
             return
+        self.horizontal_sweep_frontier_wait_streak = 0
         self._send_goal(goal)
 
     def _rank_goals(self, robot_pose, excluded_world_xy):
@@ -887,6 +1025,7 @@ class FrontierExplorer(Node):
             self.get_parameter("lane_shift_connector_timeout_sec").value
         )
         self.active_goal_cancel_requested = False
+        self.active_goal_cancel_requested_monotonic = None
 
     def _clear_active_goal(self) -> None:
         self.active_goal = None
@@ -896,20 +1035,489 @@ class FrontierExplorer(Node):
             self.get_parameter("goal_timeout_sec").value
         )
         self.active_goal_cancel_requested = False
+        self.active_goal_cancel_requested_monotonic = None
+
+    def _force_active_goal_timeout(
+        self,
+        cancel_elapsed_sec: float,
+        *,
+        error: str | None = None,
+    ) -> None:
+        """Fail closed when an action ignores cancellation past its grace."""
+        if error is None:
+            error = f"goal_cancel_grace_exhausted:{cancel_elapsed_sec:.3f}s"
+        if self.frontier_detour_row is not None:
+            self._fail_frontier_detour_plan(
+                self.frontier_detour_row,
+                GoalStatus.STATUS_ABORTED,
+                error,
+            )
+            return
+        if self.sweep_lane_shift_connector_row is not None:
+            self._fail_sweep_lane_shift_connector(
+                GoalStatus.STATUS_ABORTED,
+                error,
+            )
+            self._begin_nav_recovery()
+            return
+        row = self.goal_history[-1] if self.goal_history else None
+        if row is not None:
+            row["terminal_status"] = GoalStatus.STATUS_ABORTED
+            row["succeeded"] = False
+            row["error"] = error
+            if row.get("goal_kind") == "lane_shift_backup":
+                self.sweep_lane_shift_backup_pending = None
+        goal = self.active_goal
+        if row is not None and row.get("goal_kind") == "frontier":
+            self._queue_frontier_detour_fallback(goal, row)
+        if goal is not None:
+            self._exclude_failed_goal(goal, wide_exclusion=True)
+        self.last_error = error
+        self._clear_active_goal()
+        self._update_adaptive_goal_distance(False)
+        self.next_goal_not_before_monotonic = time.monotonic() + float(
+            self.get_parameter("failed_goal_cooldown_sec").value
+        )
+        self._begin_nav_recovery()
+        self._write_report()
 
     def _path_poses_are_costmap_clear(self, poses) -> bool:
-        return all(
-            world_disk_is_traversable(
-                self.latest_costmap_data,
-                self.latest_costmap_geometry,
-                (pose[0], pose[1]),
-                radius_m=float(
-                    self.get_parameter("goal_clearance_radius_m").value
+        if (
+            self.latest_data is None
+            or self.latest_geometry is None
+            or self.latest_costmap_data is None
+            or self.latest_costmap_geometry is None
+        ):
+            return False
+        try:
+            sampled_poses = sample_path_poses(
+                tuple(poses),
+                maximum_spacing_m=max(
+                    0.01,
+                    min(
+                        float(self.latest_geometry.resolution_m),
+                        float(self.latest_costmap_geometry.resolution_m),
+                    ),
                 ),
-                maximum_cost=int(self.get_parameter("maximum_goal_cost").value),
             )
-            for pose in poses
+        except ValueError:
+            return False
+        maximum_cost = int(self.get_parameter("maximum_goal_cost").value)
+        footprint_parameters = self._footprint_clearance_parameters()
+        return bool(sampled_poses) and all(
+            world_footprint_is_traversable(
+                data,
+                geometry,
+                pose,
+                **footprint_parameters,
+                maximum_cost=maximum_cost,
+                allow_unknown=allow_unknown,
+            )
+            for pose in sampled_poses
+            for data, geometry, allow_unknown in (
+                (self.latest_data, self.latest_geometry, True),
+                (self.latest_costmap_data, self.latest_costmap_geometry, False),
+            )
         )
+
+    def _handle_horizontal_sweep_frontier_wait(
+        self,
+        robot_pose,
+        escape,
+        now_monotonic: float,
+        *,
+        route_now: bool,
+    ) -> bool:
+        if (
+            self.sweep_active_axis != "horizontal"
+            or self.sweep_active_preference is None
+        ):
+            return False
+        self.horizontal_sweep_frontier_wait_count += 1
+        self.horizontal_sweep_frontier_wait_streak += 1
+        route_threshold = int(self.get_parameter(
+            "horizontal_sweep_frontier_wait_before_route_recovery_count"
+        ).value)
+        if route_now or self.horizontal_sweep_frontier_wait_streak >= route_threshold:
+            recovery_status = self._start_horizontal_sweep_route_recovery(
+                robot_pose
+            )
+            if recovery_status == "started":
+                return True
+            if recovery_status == "planner_unavailable":
+                self.next_goal_not_before_monotonic = now_monotonic + 1.0
+                self._write_report()
+                return True
+        failure_limit = int(self.get_parameter(
+            "horizontal_sweep_frontier_wait_failure_limit"
+        ).value)
+        if self.horizontal_sweep_frontier_wait_streak >= failure_limit:
+            if escape is not None and self._goal_is_costmap_clear(escape):
+                self.last_error = "horizontal_sweep_deadlock_reverse_escape"
+                if self._send_backup(escape):
+                    self.reverse_escape_goal_count += 1
+                    self.horizontal_sweep_frontier_wait_streak = 0
+                    return True
+            self._finish(
+                False,
+                "horizontal_sweep_frontier_deadlock_no_safe_recovery",
+            )
+            return True
+        self.last_error = (
+            "horizontal_sweep_excluded_frontier_route_unavailable"
+            if route_now
+            else "horizontal_sweep_frontier_temporarily_unavailable"
+        )
+        self.next_goal_not_before_monotonic = now_monotonic + 1.0
+        self._write_report()
+        return True
+
+    def _start_horizontal_sweep_route_recovery(self, robot_pose) -> str:
+        """Route to online-known free space when a sweep frontier disappears."""
+        if self.sweep_active_preference is None:
+            return "not_applicable"
+        candidates = known_free_route_recovery_goals(
+            self.latest_data,
+            self.latest_geometry,
+            robot_pose[:2],
+            self.sweep_active_preference,
+            allowed_bounds_xyxy_m=self.required_bounds,
+            boundary_margin_m=float(
+                self.get_parameter("required_bounds_goal_margin_m").value
+            ),
+            minimum_distance_m=max(3.0, self.adaptive_goal_distance_m),
+            maximum_distance_m=float(
+                self.get_parameter(
+                    "horizontal_sweep_route_recovery_max_distance_m"
+                ).value
+            ),
+            sample_spacing_m=float(
+                self.get_parameter(
+                    "horizontal_sweep_route_recovery_sample_spacing_m"
+                ).value
+            ),
+        )
+        exclusion_radius = float(
+            self.get_parameter("failed_goal_exclusion_radius_m").value
+        )
+        for candidate in candidates:
+            if any(
+                math.hypot(candidate.world_x_m - x, candidate.world_y_m - y)
+                <= exclusion_radius
+                for x, y, _ in self.excluded_goals
+            ):
+                continue
+            if not self._goal_is_costmap_clear(candidate):
+                continue
+            status = self._start_frontier_detour_plan(
+                candidate,
+                robot_pose,
+                approach_goal=candidate,
+                trigger="horizontal_sweep_deadlock",
+            )
+            if status == "started":
+                self.horizontal_sweep_route_recovery_attempt_count += 1
+                self.horizontal_sweep_frontier_wait_streak = 0
+                return status
+            if status == "planner_unavailable":
+                return status
+        self.horizontal_sweep_route_recovery_unavailable_count += 1
+        return "not_applicable"
+
+    def _start_frontier_detour_plan(
+        self,
+        source_goal,
+        robot_pose,
+        *,
+        approach_goal=None,
+        trigger: str = "blocked_local_projection",
+    ) -> str:
+        """Plan around a blocked local projection using only online maps."""
+        if not self.compute_path_client.server_is_ready():
+            self.last_error = "frontier_detour_compute_path_server_unavailable"
+            return "planner_unavailable"
+        if approach_goal is None:
+            min_x, min_y, max_x, max_y = self.required_bounds
+            approach_goal = frontier_detour_goal(
+                source_goal,
+                robot_pose[:2],
+                goal_backoff_m=float(
+                    self.get_parameter("frontier_goal_backoff_m").value
+                ),
+                maximum_distance_m=math.hypot(max_x - min_x, max_y - min_y),
+                minimum_distance_m=max(
+                    self.adaptive_goal_distance_m,
+                    float(self.get_parameter("minimum_goal_distance_m").value),
+                ),
+                allowed_bounds_xyxy_m=self.required_bounds,
+                boundary_margin_m=float(
+                    self.get_parameter("required_bounds_goal_margin_m").value
+                ),
+            )
+        if (
+            approach_goal is None
+            or not self._goal_is_costmap_clear(approach_goal)
+        ):
+            return "not_applicable"
+
+        row = {
+            **asdict(source_goal),
+            "goal_kind": "frontier_detour",
+            "execution": "nav2_global_path_lookahead",
+            "detour_trigger": trigger,
+            "phase": "planning_pending",
+            "behavior_tree": str(self.get_parameter("behavior_tree").value),
+            "sequence": len(self.goal_history) + 1,
+            "local_projection_xyyaw_m_rad": [
+                float(source_goal.world_x_m),
+                float(source_goal.world_y_m),
+                float(source_goal.yaw_rad),
+            ],
+            "detour_approach_goal": asdict(approach_goal),
+            "planner_start_xy_m": [float(robot_pose[0]), float(robot_pose[1])],
+            "detour_lookahead_limit_m": float(
+                self.get_parameter("maximum_frontier_detour_distance_m").value
+            ),
+            "planner_id": "GridBased",
+            "planner_accepted": None,
+            "planner_terminal_status": None,
+            "planned_path_pose_count": None,
+            "planned_path_length_m": None,
+            "path_costmap_clearance_checked": False,
+            "accepted": None,
+            "terminal_status": None,
+            "map_area_before_m2": float(
+                (self.latest_metrics or {}).get("known_area_m2") or 0.0
+            ),
+            "map_update_count_before": self.map_update_count,
+        }
+        self.goal_history.append(row)
+        self.pending_frontier_detour_source_goal = None
+        self.frontier_detour_source_goal = source_goal
+        self.frontier_detour_row = row
+        self.frontier_detour_goal_count += 1
+        self.active_goal = approach_goal
+        self.active_goal_handle = None
+        self.active_goal_started_monotonic = time.monotonic()
+        self.active_goal_timeout_sec = float(
+            self.get_parameter("frontier_detour_timeout_sec").value
+        )
+        self.active_goal_cancel_requested = False
+        self.active_goal_cancel_requested_monotonic = None
+
+        message = ComputePathToPose.Goal()
+        message.goal = self._pose_stamped(approach_goal)
+        message.planner_id = "GridBased"
+        message.use_start = False
+        try:
+            future = self.compute_path_client.send_goal_async(message)
+        except Exception as error:  # pragma: no cover - middleware failure path
+            self._fail_frontier_detour_plan(
+                row,
+                GoalStatus.STATUS_ABORTED,
+                f"compute_path_dispatch_exception:{error}",
+            )
+            return "started"
+        future.add_done_callback(
+            lambda completed, active_row=row:
+            self._on_frontier_detour_plan_response(completed, active_row)
+        )
+        self.last_error = "frontier_detour_global_plan_requested"
+        self._write_report()
+        return "started"
+
+    def _queue_frontier_detour_fallback(self, goal, row) -> None:
+        """Retry one failed short frontier through a global route plan."""
+        if (
+            goal is None
+            or goal.raw_world_x_m is None
+            or goal.raw_world_y_m is None
+        ):
+            return
+        self.pending_frontier_detour_source_goal = goal
+        self.frontier_detour_fallback_queued_count += 1
+        row["detour_fallback_queued"] = True
+
+    def _on_frontier_detour_plan_response(self, future, row) -> None:
+        if self.frontier_detour_row is not row:
+            return
+        try:
+            handle = future.result()
+        except Exception as error:  # pragma: no cover - middleware failure path
+            self._fail_frontier_detour_plan(
+                row,
+                GoalStatus.STATUS_ABORTED,
+                f"compute_path_response_exception:{error}",
+            )
+            return
+        row["planner_accepted"] = bool(handle and handle.accepted)
+        if handle is None or not handle.accepted:
+            self._fail_frontier_detour_plan(
+                row, GoalStatus.STATUS_ABORTED, "compute_path_rejected"
+            )
+            return
+        self.active_goal_handle = handle
+        row["phase"] = "planning_active"
+        result_future = handle.get_result_async()
+        result_future.add_done_callback(
+            lambda completed, active_row=row:
+            self._on_frontier_detour_plan_result(completed, active_row)
+        )
+        self._write_report()
+
+    def _on_frontier_detour_plan_result(self, future, row) -> None:
+        if self.frontier_detour_row is not row:
+            return
+        try:
+            wrapped = future.result()
+            status = int(wrapped.status)
+            result = wrapped.result
+        except Exception as error:  # pragma: no cover - middleware failure path
+            self._fail_frontier_detour_plan(
+                row,
+                GoalStatus.STATUS_ABORTED,
+                f"compute_path_result_exception:{error}",
+            )
+            return
+        row["planner_terminal_status"] = status
+        error_code = int(getattr(result, "error_code", 0))
+        row["planner_error_code"] = error_code
+        if status != GoalStatus.STATUS_SUCCEEDED or error_code != 0:
+            self._fail_frontier_detour_plan(
+                row, status, f"compute_path_failed:{error_code}"
+            )
+            return
+        try:
+            path_poses = [
+                (
+                    float(item.pose.position.x),
+                    float(item.pose.position.y),
+                    _yaw_from_quaternion(item.pose.orientation),
+                )
+                for item in result.path.poses
+            ]
+        except Exception as error:
+            self.frontier_detour_path_rejected_count += 1
+            self._fail_frontier_detour_plan(
+                row,
+                GoalStatus.STATUS_ABORTED,
+                f"invalid_planned_path_message:{error}",
+            )
+            return
+        row["planned_path_pose_count"] = len(path_poses)
+        tolerance = float(
+            self.get_parameter(
+                "frontier_detour_plan_endpoint_tolerance_m"
+            ).value
+        )
+        start_xy = row["planner_start_xy_m"]
+        approach = row["detour_approach_goal"]
+        endpoints_match = (
+            len(path_poses) >= 2
+            and math.hypot(
+                path_poses[0][0] - float(start_xy[0]),
+                path_poses[0][1] - float(start_xy[1]),
+            ) <= tolerance
+            and math.hypot(
+                path_poses[-1][0] - float(approach["world_x_m"]),
+                path_poses[-1][1] - float(approach["world_y_m"]),
+            ) <= tolerance
+        )
+        row["planned_path_endpoints_match"] = endpoints_match
+        if not endpoints_match:
+            self.frontier_detour_path_rejected_count += 1
+            self._fail_frontier_detour_plan(
+                row,
+                GoalStatus.STATUS_ABORTED,
+                "planned_path_endpoint_mismatch",
+            )
+            return
+        source_goal = self.frontier_detour_source_goal
+        if source_goal is None:
+            self._fail_frontier_detour_plan(
+                row, GoalStatus.STATUS_ABORTED, "detour_source_goal_lost"
+            )
+            return
+        try:
+            detour_goal = frontier_detour_path_goal(
+                source_goal,
+                path_poses,
+                maximum_distance_m=float(
+                    self.get_parameter(
+                        "maximum_frontier_detour_distance_m"
+                    ).value
+                ),
+                minimum_distance_m=float(
+                    self.get_parameter("minimum_goal_distance_m").value
+                ),
+            )
+        except ValueError as error:
+            self.frontier_detour_path_rejected_count += 1
+            self._fail_frontier_detour_plan(
+                row, GoalStatus.STATUS_ABORTED, f"invalid_planned_path:{error}"
+            )
+            return
+        if (
+            detour_goal is None
+            or not self._path_poses_are_costmap_clear(path_poses)
+        ):
+            self.frontier_detour_path_rejected_count += 1
+            self._fail_frontier_detour_plan(
+                row,
+                GoalStatus.STATUS_ABORTED,
+                "planned_path_empty_short_or_costmap_clearance_failed",
+            )
+            return
+        if not self._goal_is_costmap_clear(detour_goal):
+            self.frontier_detour_path_rejected_count += 1
+            self._fail_frontier_detour_plan(
+                row, GoalStatus.STATUS_ABORTED, "detour_lookahead_costmap_blocked"
+            )
+            return
+        path_length = sum(
+            math.hypot(current[0] - previous[0], current[1] - previous[1])
+            for previous, current in zip(path_poses, path_poses[1:])
+        )
+        row.update(asdict(detour_goal))
+        row["planned_path_length_m"] = path_length
+        row["detour_lookahead_distance_m"] = detour_goal.distance_m
+        row["path_costmap_clearance_checked"] = True
+        row["phase"] = "navigation_pending"
+        self.active_goal = detour_goal
+        self.active_goal_handle = None
+        self.active_goal_started_monotonic = time.monotonic()
+        self.active_goal_timeout_sec = float(
+            self.get_parameter("frontier_detour_timeout_sec").value
+        )
+        self.active_goal_cancel_requested = False
+        self.active_goal_cancel_requested_monotonic = None
+        self.last_error = "frontier_detour_navigation_requested"
+        self._dispatch_navigation_goal(detour_goal)
+
+    def _fail_frontier_detour_plan(self, row, status: int, error: str) -> None:
+        if self.frontier_detour_row is not row:
+            return
+        timed_out = self.active_goal_cancel_requested
+        row["terminal_status"] = int(status)
+        row["succeeded"] = False
+        row["error"] = error
+        row["phase"] = "failed"
+        source_goal = self.frontier_detour_source_goal
+        if source_goal is not None:
+            centers = self._add_goal_exclusions(source_goal)
+            row["excluded_centers_xy_m"] = [list(center) for center in centers]
+        self.frontier_detour_plan_failure_count += 1
+        self.last_error = error
+        self.frontier_detour_source_goal = None
+        self.frontier_detour_row = None
+        self._clear_active_goal()
+        self._update_adaptive_goal_distance(False)
+        self.next_goal_not_before_monotonic = time.monotonic() + float(
+            self.get_parameter("failed_goal_cooldown_sec").value
+        )
+        if timed_out:
+            self._begin_nav_recovery()
+        self._write_report()
 
     def _forward_costmap_clear_dubins_path(self, robot_pose, goal):
         margin = float(
@@ -1241,20 +1849,47 @@ class FrontierExplorer(Node):
             self.raw_frontier_exclusion_count += 1
         return centers
 
-    def _send_goal(self, goal, *, goal_kind: str = "frontier") -> None:
+    def _dispatch_navigation_goal(self, goal, row=None) -> None:
         message = NavigateToPose.Goal()
-        message.pose = PoseStamped()
-        message.pose.header.frame_id = str(self.get_parameter("map_frame").value)
-        message.pose.header.stamp = self.get_clock().now().to_msg()
-        message.pose.pose.position.x = goal.world_x_m
-        message.pose.pose.position.y = goal.world_y_m
-        message.pose.pose.orientation.z = math.sin(goal.yaw_rad / 2.0)
-        message.pose.pose.orientation.w = math.cos(goal.yaw_rad / 2.0)
+        message.pose = self._pose_stamped(goal)
         message.behavior_tree = str(self.get_parameter("behavior_tree").value)
+        if row is None:
+            row = self.goal_history[-1]
+        try:
+            future = self.action_client.send_goal_async(message)
+        except Exception as error:  # pragma: no cover - middleware failure path
+            if row.get("goal_kind") == "frontier_detour":
+                self._fail_frontier_detour_plan(
+                    row,
+                    GoalStatus.STATUS_ABORTED,
+                    f"navigation_dispatch_exception:{error}",
+                )
+                return
+            row["terminal_status"] = GoalStatus.STATUS_ABORTED
+            row["succeeded"] = False
+            row["error"] = f"navigation_dispatch_exception:{error}"
+            self.last_error = str(row["error"])
+            if self.active_goal is not None:
+                self._add_goal_exclusions(self.active_goal)
+            self._clear_active_goal()
+            self._update_adaptive_goal_distance(False)
+            self.next_goal_not_before_monotonic = time.monotonic() + float(
+                self.get_parameter("failed_goal_cooldown_sec").value
+            )
+            self._write_report()
+            return
+        future.add_done_callback(
+            lambda completed, active_row=row:
+            self._on_goal_response(completed, active_row)
+        )
+        self._write_report()
+
+    def _send_goal(self, goal, *, goal_kind: str = "frontier") -> None:
+        behavior_tree = str(self.get_parameter("behavior_tree").value)
         row = {
             **asdict(goal),
             "goal_kind": goal_kind,
-            "behavior_tree": message.behavior_tree,
+            "behavior_tree": behavior_tree,
             "sequence": len(self.goal_history) + 1,
             "accepted": None,
             "terminal_status": None,
@@ -1271,13 +1906,14 @@ class FrontierExplorer(Node):
             timeout_parameter = "horizontal_sweep_staging_timeout_sec"
         elif goal_kind == "horizontal_sweep_alignment":
             timeout_parameter = "horizontal_sweep_alignment_timeout_sec"
+        elif goal_kind == "frontier_detour":
+            timeout_parameter = "frontier_detour_timeout_sec"
         self.active_goal_timeout_sec = float(
             self.get_parameter(timeout_parameter).value
         )
         self.active_goal_cancel_requested = False
-        future = self.action_client.send_goal_async(message)
-        future.add_done_callback(self._on_goal_response)
-        self._write_report()
+        self.active_goal_cancel_requested_monotonic = None
+        self._dispatch_navigation_goal(goal, row)
 
     def _send_backup(
         self,
@@ -1310,42 +1946,87 @@ class FrontierExplorer(Node):
         self.active_goal = goal
         self.active_goal_started_monotonic = time.monotonic()
         self.active_goal_cancel_requested = False
+        self.active_goal_cancel_requested_monotonic = None
         future = self.backup_client.send_goal_async(message)
-        future.add_done_callback(self._on_goal_response)
+        future.add_done_callback(
+            lambda completed, active_row=row:
+            self._on_goal_response(completed, active_row)
+        )
         self._write_report()
         return True
 
-    def _on_goal_response(self, future) -> None:
-        handle = future.result()
-        self.goal_history[-1]["accepted"] = bool(handle and handle.accepted)
+    def _on_goal_response(self, future, row) -> None:
+        if (
+            not self.goal_history
+            or self.goal_history[-1] is not row
+            or self.active_goal is None
+        ):
+            return
+        try:
+            handle = future.result()
+        except Exception as error:  # pragma: no cover - middleware failure path
+            handle = None
+            row["error"] = f"goal_response_exception:{error}"
+        row["accepted"] = bool(handle and handle.accepted)
         if handle is None or not handle.accepted:
-            if self.goal_history[-1].get("goal_kind") == "lane_shift_backup":
+            row["terminal_status"] = GoalStatus.STATUS_ABORTED
+            row["succeeded"] = False
+            row.setdefault("error", "goal_rejected")
+            if row.get("goal_kind") == "frontier_detour":
+                row["phase"] = "failed"
+            self.last_error = str(row["error"])
+            if row.get("goal_kind") == "lane_shift_backup":
                 self.sweep_lane_shift_backup_pending = None
+            if row.get("goal_kind") == "frontier":
+                self._queue_frontier_detour_fallback(self.active_goal, row)
             self._update_adaptive_goal_distance(False)
-            self._add_goal_exclusions(self.active_goal)
-            self.active_goal = None
-            self.active_goal_handle = None
-            self.active_goal_started_monotonic = None
-            self.active_goal_cancel_requested = False
+            if self.active_goal is not None:
+                self._add_goal_exclusions(self.active_goal)
+            if row.get("goal_kind") == "frontier_detour":
+                self.frontier_detour_source_goal = None
+                self.frontier_detour_row = None
+            self._clear_active_goal()
             self.next_goal_not_before_monotonic = time.monotonic() + float(
                 self.get_parameter("failed_goal_cooldown_sec").value
             )
             self._write_report()
             return
         self.active_goal_handle = handle
+        if row.get("goal_kind") == "frontier_detour":
+            row["phase"] = "navigation_active"
         result_future = handle.get_result_async()
-        result_future.add_done_callback(self._on_goal_result)
+        result_future.add_done_callback(
+            lambda completed, active_row=row:
+            self._on_goal_result(completed, active_row)
+        )
 
-    def _on_goal_result(self, future) -> None:
-        wrapped = future.result()
-        status = int(wrapped.status)
+    def _on_goal_result(self, future, row) -> None:
+        if (
+            not self.goal_history
+            or self.goal_history[-1] is not row
+            or self.active_goal is None
+        ):
+            return
+        try:
+            wrapped = future.result()
+            status = int(wrapped.status)
+        except Exception as error:  # pragma: no cover - middleware failure path
+            status = GoalStatus.STATUS_ABORTED
+            row["error"] = f"goal_result_exception:{error}"
+            self.last_error = str(row["error"])
         timed_out = self.active_goal_cancel_requested
-        row = self.goal_history[-1]
         succeeded = status == GoalStatus.STATUS_SUCCEEDED
         row["terminal_status"] = status
         row["succeeded"] = succeeded
+        if row.get("goal_kind") == "frontier_detour":
+            row["phase"] = "completed" if succeeded else "failed"
         mapping_progress = succeeded
-        if succeeded and row.get("goal_kind") == "frontier":
+        if succeeded:
+            self.horizontal_sweep_frontier_wait_streak = 0
+        if succeeded and row.get("goal_kind") in {
+            "frontier",
+            "frontier_detour",
+        }:
             area_after = float(
                 (self.latest_metrics or {}).get("known_area_m2") or 0.0
             )
@@ -1445,6 +2126,8 @@ class FrontierExplorer(Node):
                 self.horizontal_sweep_alignment_failure_count += 1
         self._update_adaptive_goal_distance(mapping_progress)
         if not succeeded:
+            if row.get("goal_kind") == "frontier":
+                self._queue_frontier_detour_fallback(self.active_goal, row)
             self._exclude_failed_goal(
                 self.active_goal,
                 wide_exclusion=(
@@ -1454,10 +2137,10 @@ class FrontierExplorer(Node):
             self.next_goal_not_before_monotonic = time.monotonic() + float(
                 self.get_parameter("failed_goal_cooldown_sec").value
             )
-        self.active_goal = None
-        self.active_goal_handle = None
-        self.active_goal_started_monotonic = None
-        self.active_goal_cancel_requested = False
+        if row.get("goal_kind") == "frontier_detour":
+            self.frontier_detour_source_goal = None
+            self.frontier_detour_row = None
+        self._clear_active_goal()
         if timed_out:
             self._begin_nav_recovery()
         self._write_report()
@@ -1599,6 +2282,17 @@ class FrontierExplorer(Node):
             "maximum_frontier_goal_distance_m": float(
                 self.get_parameter("maximum_frontier_goal_distance_m").value
             ),
+            "maximum_frontier_detour_distance_m": float(
+                self.get_parameter("maximum_frontier_detour_distance_m").value
+            ),
+            "frontier_detour_timeout_sec": float(
+                self.get_parameter("frontier_detour_timeout_sec").value
+            ),
+            "frontier_detour_plan_endpoint_tolerance_m": float(
+                self.get_parameter(
+                    "frontier_detour_plan_endpoint_tolerance_m"
+                ).value
+            ),
             "adaptive_frontier_goal_distance_m": self.adaptive_goal_distance_m,
             "goal_distance_success_streak": self.goal_distance_success_streak,
             "maximum_frontier_goal_yaw_change_rad": float(
@@ -1609,6 +2303,9 @@ class FrontierExplorer(Node):
             ),
             "goal_timeout_sec": float(
                 self.get_parameter("goal_timeout_sec").value
+            ),
+            "goal_cancel_grace_sec": float(
+                self.get_parameter("goal_cancel_grace_sec").value
             ),
             "failed_goal_cooldown_sec": float(
                 self.get_parameter("failed_goal_cooldown_sec").value
@@ -1654,6 +2351,26 @@ class FrontierExplorer(Node):
             "horizontal_sweep_alignment_tolerance_rad": float(
                 self.get_parameter(
                     "horizontal_sweep_alignment_tolerance_rad"
+                ).value
+            ),
+            "horizontal_sweep_frontier_wait_before_route_recovery_count": int(
+                self.get_parameter(
+                    "horizontal_sweep_frontier_wait_before_route_recovery_count"
+                ).value
+            ),
+            "horizontal_sweep_frontier_wait_failure_limit": int(
+                self.get_parameter(
+                    "horizontal_sweep_frontier_wait_failure_limit"
+                ).value
+            ),
+            "horizontal_sweep_route_recovery_max_distance_m": float(
+                self.get_parameter(
+                    "horizontal_sweep_route_recovery_max_distance_m"
+                ).value
+            ),
+            "horizontal_sweep_route_recovery_sample_spacing_m": float(
+                self.get_parameter(
+                    "horizontal_sweep_route_recovery_sample_spacing_m"
                 ).value
             ),
             "active_failed_goal_exclusion_count": len(self.excluded_goals),
@@ -1764,6 +2481,49 @@ class FrontierExplorer(Node):
             ),
             "map_update_count": self.map_update_count,
             "costmap_rejected_goal_count": self.costmap_rejected_goal_count,
+            "online_map_rejected_goal_count": (
+                self.online_map_rejected_goal_count
+            ),
+            "goal_and_path_clearance_sources": [
+                "online_occupancy_map",
+                "nav2_global_costmap",
+            ],
+            "goal_and_path_clearance_source_policies": {
+                "online_occupancy_map": "occupied_veto_unknown_deferred",
+                "nav2_global_costmap": "unknown_occupied_and_cost_veto",
+            },
+            "goal_and_path_clearance_footprint": {
+                "front_m": float(self.get_parameter("footprint_front_m").value),
+                "rear_m": float(self.get_parameter("footprint_rear_m").value),
+                "half_width_m": float(
+                    self.get_parameter("footprint_half_width_m").value
+                ),
+                "clearance_margin_m": float(
+                    self.get_parameter("footprint_clearance_margin_m").value
+                ),
+                "cell_intersection_padding": "half_cell_diagonal",
+            },
+            "goal_and_path_clearance_basis": (
+                "oriented_production_footprint_plus_0.15m_reserve"
+            ),
+            "frontier_detour_goal_count": self.frontier_detour_goal_count,
+            "frontier_detour_plan_failure_count": (
+                self.frontier_detour_plan_failure_count
+            ),
+            "frontier_detour_path_rejected_count": (
+                self.frontier_detour_path_rejected_count
+            ),
+            "frontier_detour_fallback_queued_count": (
+                self.frontier_detour_fallback_queued_count
+            ),
+            "pending_frontier_detour_source_xy_m": (
+                [
+                    self.pending_frontier_detour_source_goal.world_x_m,
+                    self.pending_frontier_detour_source_goal.world_y_m,
+                ]
+                if self.pending_frontier_detour_source_goal is not None
+                else None
+            ),
             "raw_frontier_exclusion_count": self.raw_frontier_exclusion_count,
             "frontier_no_progress_success_count": (
                 self.frontier_no_progress_success_count
@@ -1782,6 +2542,15 @@ class FrontierExplorer(Node):
             ),
             "horizontal_sweep_frontier_wait_count": (
                 self.horizontal_sweep_frontier_wait_count
+            ),
+            "horizontal_sweep_frontier_wait_streak": (
+                self.horizontal_sweep_frontier_wait_streak
+            ),
+            "horizontal_sweep_route_recovery_attempt_count": (
+                self.horizontal_sweep_route_recovery_attempt_count
+            ),
+            "horizontal_sweep_route_recovery_unavailable_count": (
+                self.horizontal_sweep_route_recovery_unavailable_count
             ),
             "horizontal_sweep_staging_exhaustion_arm_count": (
                 self.horizontal_sweep_staging_exhaustion_arm_count
@@ -1852,13 +2621,16 @@ class FrontierExplorer(Node):
         }
 
     def _write_report(self) -> None:
-        self.output_path.parent.mkdir(parents=True, exist_ok=True)
-        temporary = self.output_path.with_suffix(self.output_path.suffix + ".tmp")
-        temporary.write_text(
-            json.dumps(self._report(), ensure_ascii=False, indent=2) + "\n",
-            encoding="utf-8",
-        )
-        temporary.replace(self.output_path)
+        with self.report_write_lock:
+            self.output_path.parent.mkdir(parents=True, exist_ok=True)
+            temporary = self.output_path.with_suffix(
+                self.output_path.suffix + ".tmp"
+            )
+            temporary.write_text(
+                json.dumps(self._report(), ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            temporary.replace(self.output_path)
 
 
 def main(args=None) -> None:

@@ -335,7 +335,9 @@ controller_server:
       # 0.66 m ahead of base_link, short-carrot steering chatter is amplified
       # into large brush cross-track error even when the chassis stays close
       # to the swath centreline.
-      desired_linear_vel: 0.60
+      # The 1.32 m brush needs 1.0 m/s straight cruise to leave enough
+      # physical headroom for the all-inclusive 3500 m2/h product gate.
+      desired_linear_vel: 1.00
       lookahead_dist: 1.20
       min_lookahead_dist: 1.20
       max_lookahead_dist: 1.20

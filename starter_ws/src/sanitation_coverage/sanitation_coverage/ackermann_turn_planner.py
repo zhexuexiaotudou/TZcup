@@ -52,8 +52,15 @@ def build_ackermann_plan(
     swaths: list[tuple[tuple[float, float], tuple[float, float]]],
     apron: list[tuple[float, float]],
     keepouts: list[list[tuple[float, float]]],
+    speed_limits_mps: dict[str, float] | None = None,
 ) -> tuple[tuple[CoverageComponent, ...], dict]:
     """Build the full Ackermann component sequence and a summary."""
+    speed_limits = {
+        "CLEAN": 0.45,
+        "FORWARD": 0.20,
+        "REVERSE": 0.15,
+        **(speed_limits_mps or {}),
+    }
     components: list[CoverageComponent] = []
     summary = {
         "profile": "ACKERMANN",
@@ -73,6 +80,7 @@ def build_ackermann_plan(
             "SMAC_HYBRID_CONNECTOR": 0,
         },
         "deferred_swath_ids": [],
+        "speed_limits_mps": dict(speed_limits),
     }
     for index, swath in enumerate(swaths):
         swath_id = f"swath-{index:02d}"
@@ -83,7 +91,11 @@ def build_ackermann_plan(
                 points=tuple(_interpolate(*swath)),
                 brush_enabled=True,
                 speed_profile="CLEAN",
-                metadata={"swath_index": index, "swath_id": swath_id},
+                metadata={
+                    "swath_index": index,
+                    "swath_id": swath_id,
+                    "speed_limit_mps": speed_limits["CLEAN"],
+                },
             )
         )
         if index >= len(swaths) - 1:
@@ -125,13 +137,11 @@ def build_ackermann_plan(
                         **component.metadata,
                         "target_swath_settle_overlap_m": settle_distance_m,
                         "target_swath_geometric_start": list(next_swath[0]),
-                        **(
-                            {"speed_limit_mps": 0.20}
-                            if component.kind is ComponentType.FORWARD
-                            else {"speed_limit_mps": 0.15}
-                            if component.kind is ComponentType.REVERSE
-                            else {}
-                        ),
+                        **({
+                            "speed_limit_mps": speed_limits[
+                                component.speed_profile
+                            ]
+                        } if component.speed_profile in speed_limits else {}),
                     },
                 )
                 for component in connector

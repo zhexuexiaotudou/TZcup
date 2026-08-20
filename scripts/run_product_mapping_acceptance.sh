@@ -536,11 +536,15 @@ start_group mapping_explorer "$mapping/frontier_exploration.log" \
   -p minimum_frontier_arc_yaw_change_rad:=0.15 \
   -p boundary_turn_buffer_m:=1.429 \
   -p maximum_frontier_goal_distance_m:="$MAX_FRONTIER_GOAL_DISTANCE" \
+  -p maximum_frontier_detour_distance_m:=30.0 \
+  -p frontier_detour_timeout_sec:=180.0 \
+  -p frontier_detour_plan_endpoint_tolerance_m:=0.75 \
   -p initial_frontier_goal_distance_m:=2.0 \
   -p goal_distance_growth_success_count:=5 -p goal_distance_growth_step_m:=0.5 \
   -p failed_goal_exclusion_radius_m:=1.0 -p timed_out_goal_exclusion_radius_m:=1.5 \
   -p maximum_goal_count:="$MAX_GOALS" -p timeout_sec:="${MAPPING_TIMEOUT_SEC}.0" \
-  -p goal_timeout_sec:=60.0 -p failed_goal_cooldown_sec:=10.0 \
+  -p goal_timeout_sec:=60.0 -p goal_cancel_grace_sec:=5.0 \
+  -p failed_goal_cooldown_sec:=10.0 \
   -p failed_goal_exclusion_ttl_sec:=180.0 \
   -p minimum_frontier_map_gain_m2:=2.0 \
   -p no_progress_staging_success_limit:=3 \
@@ -552,6 +556,10 @@ start_group mapping_explorer "$mapping/frontier_exploration.log" \
   -p horizontal_sweep_alignment_timeout_sec:=20.0 \
   -p horizontal_sweep_alignment_distance_m:=2.0 \
   -p horizontal_sweep_alignment_tolerance_rad:=0.15 \
+  -p horizontal_sweep_frontier_wait_before_route_recovery_count:=5 \
+  -p horizontal_sweep_frontier_wait_failure_limit:=30 \
+  -p horizontal_sweep_route_recovery_max_distance_m:=30.0 \
+  -p horizontal_sweep_route_recovery_sample_spacing_m:=0.5 \
   -p reverse_escape_distance_m:=2.0 \
   -p reverse_escape_speed_mps:=0.15 \
   -p frontier_sweep_enabled:="$SWEEP_ENABLED" \

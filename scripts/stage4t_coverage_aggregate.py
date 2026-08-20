@@ -3,10 +3,19 @@
 
 import argparse
 import json
+import math
 from pathlib import Path
 
 
 def load(root, name): return json.loads((root / name).read_text(encoding="utf-8"))
+
+
+def product_estop_p95_pass(value):
+    try:
+        p95_sec = float(value)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(p95_sec) and 0.0 <= p95_sec <= 0.200
 
 
 def main():
@@ -22,7 +31,7 @@ def main():
         "keepout_violations_zero": int(filters.get("keepout", {}).get("violation_sample_count", -1)) == 0,
         "speed_zone_pass": bool(filters.get("speed_zone", {}).get("speed_compliance_pass")),
         "dynamic_obstacle_valid_trials_at_least_20": int(dynamic.get("dynamic_obstacle_valid_trials", 0)) >= 20,
-        "emergency_stop_p95_at_most_1s": float(safety.get("latency_sec", {}).get("p95") or 999.0) <= 1.0,
+        "emergency_stop_p95_at_most_200ms": product_estop_p95_pass(safety.get("latency_sec", {}).get("p95")),
     }
     report = {
         "schema_version": 1, "lane": "realistic", "competition_evidence": True,

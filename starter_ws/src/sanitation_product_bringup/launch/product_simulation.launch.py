@@ -98,7 +98,7 @@ def generate_launch_description() -> LaunchDescription:
             name="product_supervisor",
             output="screen",
             respawn=True,
-            respawn_delay=1.0,
+            respawn_delay=0.05,
         ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(sim_launch),
@@ -182,6 +182,7 @@ def generate_launch_description() -> LaunchDescription:
                 "config_path": LaunchConfiguration("mission_config"),
                 "manual_start": True,
                 "allow_ground_truth_evaluation": False,
+                "require_product_task_drain": True,
                 "output_path": PathJoinSubstitution(
                     [output_dir, "coverage_metrics.json"]
                 ),

@@ -92,8 +92,8 @@ def main():
                 "dynamic_obstacle_valid_trials_at_least_20"
             )
         ),
-        "estop_p95_at_most_1s": bool(
-            dynamic.get("gates", {}).get("emergency_stop_p95_at_most_1s")
+        "estop_p95_at_most_200ms": bool(
+            dynamic.get("gates", {}).get("emergency_stop_p95_at_most_200ms")
         ),
         "complete_rosbag_replay": (
             all(bool(trial.get("rosbag_replay")) for trial in static["trials"])

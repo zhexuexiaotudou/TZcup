@@ -1,18 +1,21 @@
-<!-- Continuous mapping waypoint tree: no spin, bounded recoveries, and the
-     intermediate primitive checker. Final product navigation uses the stricter
+<!-- Continuous-mapping waypoint tree: no spin, bounded recoveries, 1 Hz
+     replanning against the growing map, and the intermediate primitive
+     checker. Final product navigation uses the stricter
      navigate_to_pose_ackermann.xml goal checker instead. -->
 <root BTCPP_format="4" main_tree_to_execute="MainTree">
   <BehaviorTree ID="MainTree">
     <RecoveryNode number_of_retries="6" name="NavigateRecovery">
-      <SequenceWithMemory name="NavigateWithoutMapResizeReplanning">
+      <PipelineSequence name="NavigateWithGrowingMapReplanning">
         <PlannerSelector selected_planner="{selected_planner}" default_planner="GridBased" topic_name="planner_selector"/>
-        <RecoveryNode number_of_retries="1" name="ComputePathToPose">
-          <ComputePathToPose goal="{goal}" path="{path}" planner_id="{selected_planner}" error_code_id="{compute_path_error_code}"/>
-          <Sequence>
-            <WouldAPlannerRecoveryHelp error_code="{compute_path_error_code}"/>
-            <ClearEntireCostmap name="ClearGlobalCostmap-Context" service_name="global_costmap/clear_entirely_global_costmap"/>
-          </Sequence>
-        </RecoveryNode>
+        <RateController hz="1.0">
+          <RecoveryNode number_of_retries="1" name="ComputePathToPose">
+            <ComputePathToPose goal="{goal}" path="{path}" planner_id="{selected_planner}" error_code_id="{compute_path_error_code}"/>
+            <Sequence>
+              <WouldAPlannerRecoveryHelp error_code="{compute_path_error_code}"/>
+              <ClearEntireCostmap name="ClearGlobalCostmap-Context" service_name="global_costmap/clear_entirely_global_costmap"/>
+            </Sequence>
+          </RecoveryNode>
+        </RateController>
         <RecoveryNode number_of_retries="1" name="FollowPath">
           <FollowPath path="{path}" controller_id="FrontierPath" goal_checker_id="frontier_goal_checker" error_code_id="{follow_path_error_code}"/>
           <Sequence>
@@ -20,7 +23,7 @@
             <ClearEntireCostmap name="ClearLocalCostmap-Context" service_name="local_costmap/clear_entirely_local_costmap"/>
           </Sequence>
         </RecoveryNode>
-      </SequenceWithMemory>
+      </PipelineSequence>
       <ReactiveFallback name="RecoveryFallback">
         <GoalUpdated/>
         <RoundRobin name="RecoveryActions">

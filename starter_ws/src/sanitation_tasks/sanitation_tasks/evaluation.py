@@ -4,6 +4,18 @@ import bisect
 import math
 import statistics
 
+PRODUCT_ESTOP_P95_MAX_SEC = 0.200
+
+
+def product_estop_latency_pass(p95_sec):
+    if p95_sec is None:
+        return False
+    try:
+        value = float(p95_sec)
+    except (TypeError, ValueError):
+        return False
+    return math.isfinite(value) and 0.0 <= value <= PRODUCT_ESTOP_P95_MAX_SEC
+
 
 def normalize_angle(angle):
     return math.atan2(math.sin(angle), math.cos(angle))
