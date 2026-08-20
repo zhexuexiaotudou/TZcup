@@ -190,12 +190,18 @@ def main(args=None) -> None:
         rclpy.spin(node)
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
+    except RuntimeError:
+        if rclpy.ok():
+            raise
     finally:
         if rclpy.ok():
             node.estop_publisher.publish(Bool(data=True))
-        node.destroy_node()
-        if rclpy.ok():
-            rclpy.shutdown()
+        try:
+            node.destroy_node()
+        except RuntimeError:
+            if rclpy.ok():
+                raise
+        rclpy.try_shutdown()
 
 
 if __name__ == "__main__":

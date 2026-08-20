@@ -198,6 +198,19 @@ def test_runtime_probe_and_self_filters_use_idempotent_launch_shutdown():
         assert "if rclpy.ok():" in text
         assert "rclpy.try_shutdown()" in text
 
+    safety_nodes = (
+        "actuator_timeout_guard.py",
+        "authority.py",
+        "supervisor.py",
+        "velocity_gate.py",
+    )
+    safety_root = ROOT / "starter_ws/src/sanitation_safety/sanitation_safety"
+    for filename in safety_nodes:
+        text = (safety_root / filename).read_text(encoding="utf-8")
+        assert "except RuntimeError:" in text
+        assert "if rclpy.ok():" in text
+        assert "rclpy.try_shutdown()" in text
+
 
 def test_product_slam_profile_treats_no_return_sentinel_as_free_space():
     config = yaml.safe_load(SLAM_CONFIG.read_text(encoding="utf-8"))

@@ -272,10 +272,16 @@ def main(args=None) -> None:
         rclpy.spin(node)
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
-    finally:
-        node.destroy_node()
+    except RuntimeError:
         if rclpy.ok():
-            rclpy.shutdown()
+            raise
+    finally:
+        try:
+            node.destroy_node()
+        except RuntimeError:
+            if rclpy.ok():
+                raise
+        rclpy.try_shutdown()
 
 
 if __name__ == "__main__":
