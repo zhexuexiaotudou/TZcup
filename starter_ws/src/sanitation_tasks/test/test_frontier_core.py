@@ -24,6 +24,7 @@ from sanitation_tasks.frontier_core import (
     sweep_alignment_goal,
     sweep_staging_goals,
     straight_staging_path_poses,
+    sweep_chassis_lane_y,
     sweep_target_completion_reached,
     vertical_sweep_anchor_reached,
     world_disk_has_known_cell,
@@ -149,6 +150,27 @@ def test_vertical_sweep_requires_both_map_and_chassis_lane_arrival():
     assert sweep_target_completion_reached(
         axis="horizontal", pose_reached=False, mapped_reached=True
     )
+
+
+def test_boundary_sweep_chassis_lane_reserves_ackermann_turning_radius():
+    kwargs = {
+        "allowed_bounds_xyxy_m": (-100.0, -50.0, 100.0, 50.0),
+        "boundary_margin_m": 1.5,
+        "minimum_turning_radius_m": 1.429,
+    }
+    assert sweep_chassis_lane_y(50.0, **kwargs) == pytest.approx(47.071)
+    assert sweep_chassis_lane_y(-50.0, **kwargs) == pytest.approx(-47.071)
+    assert sweep_chassis_lane_y(30.0, **kwargs) == pytest.approx(30.0)
+
+
+def test_boundary_sweep_chassis_lane_rejects_impossible_geometry():
+    with pytest.raises(ValueError, match="no feasible sweep lane"):
+        sweep_chassis_lane_y(
+            0.0,
+            allowed_bounds_xyxy_m=(-1.0, -1.0, 1.0, 1.0),
+            boundary_margin_m=0.5,
+            minimum_turning_radius_m=1.0,
+        )
 
 
 def test_failed_frontier_exclusions_expire_in_long_missions():

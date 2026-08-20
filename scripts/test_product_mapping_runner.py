@@ -221,6 +221,7 @@ def test_frontier_timeout_restarts_nav2_before_next_goal():
     assert '"horizontal_sweep_frontier_wait_count"' in explorer
     assert '"horizontal_sweep_frontier_temporarily_unavailable"' in explorer
     assert "sweep_target_completion_reached(" in explorer
+    assert "chassis_lane_y = self._sweep_chassis_lane_y(index)" in explorer
     assert '"frontier_success_without_map_progress_raw_excluded"' in explorer
     assert '"horizontal_sweep_staging_attempt_count"' in explorer
     assert '"horizontal_sweep_staging_arm_count"' in explorer

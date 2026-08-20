@@ -364,6 +364,31 @@ def vertical_sweep_anchor_reached(
     return float(mapped_envelope_bounds_xyxy_m[1]) <= float(target_y_m) + radius
 
 
+def sweep_chassis_lane_y(
+    target_y_m: float,
+    *,
+    allowed_bounds_xyxy_m: tuple[float, float, float, float],
+    boundary_margin_m: float,
+    minimum_turning_radius_m: float,
+) -> float:
+    """Place the chassis lane inside the map anchor by one turning radius.
+
+    The map envelope may extend to the requested bounds through laser range,
+    while an Ackermann chassis needs room to turn onto the next horizontal
+    pass. Keeping the chassis one minimum radius inside the permitted centre
+    bounds prevents a boundary wait or point-turn temptation at y extrema.
+    """
+    _, min_y, _, max_y = (float(value) for value in allowed_bounds_xyxy_m)
+    inset = max(0.0, float(boundary_margin_m)) + max(
+        0.0, float(minimum_turning_radius_m)
+    )
+    lower = min_y + inset
+    upper = max_y - inset
+    if lower > upper:
+        raise ValueError("turning-radius inset leaves no feasible sweep lane")
+    return min(upper, max(lower, float(target_y_m)))
+
+
 def sweep_target_completion_reached(
     *,
     axis: str | None,

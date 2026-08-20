@@ -45,6 +45,7 @@ from .frontier_core import (
     sweep_alignment_goal,
     sweep_staging_goals,
     straight_staging_path_poses,
+    sweep_chassis_lane_y,
     sweep_target_completion_reached,
     vertical_sweep_anchor_reached,
     world_disk_has_known_cell,
@@ -615,9 +616,10 @@ class FrontierExplorer(Node):
         if self.sweep_lane_shift_backup_pending == index:
             return True
         target = self.sweep_targets[index]
+        chassis_lane_y = self._sweep_chassis_lane_y(index)
         candidates = lane_shift_connector_goals(
             robot_pose,
-            target[1],
+            chassis_lane_y,
             candidate_distances_m=tuple(
                 float(value) for value in self.get_parameter(
                     "frontier_sweep_lane_shift_connector_distances_m"
@@ -741,13 +743,16 @@ class FrontierExplorer(Node):
                     target_y_m=target[1],
                     radius_m=mapped_radius,
                 )
-                pose_reached = abs(target[1] - robot_pose[1]) <= tolerance
+                chassis_lane_y = self._sweep_chassis_lane_y(
+                    self.sweep_target_index
+                )
+                pose_reached = abs(chassis_lane_y - robot_pose[1]) <= tolerance
                 locked_x = robot_pose[0]
                 if self.sweep_target_index in self.sweep_lane_shift_backup_completed:
                     locked_x = self.sweep_lane_shift_locked_x.setdefault(
                         self.sweep_target_index, robot_pose[0]
                     )
-                preference = (locked_x, target[1])
+                preference = (locked_x, chassis_lane_y)
             else:
                 mapped_reached = world_disk_has_known_cell(
                     self.latest_data,
@@ -770,6 +775,18 @@ class FrontierExplorer(Node):
         self.sweep_active_preference = None
         self.sweep_active_axis = None
         return None
+
+    def _sweep_chassis_lane_y(self, index: int) -> float:
+        return sweep_chassis_lane_y(
+            self.sweep_targets[index][1],
+            allowed_bounds_xyxy_m=self.required_bounds,
+            boundary_margin_m=float(
+                self.get_parameter("required_bounds_goal_margin_m").value
+            ),
+            minimum_turning_radius_m=float(
+                self.get_parameter("minimum_turning_radius_m").value
+            ),
+        )
 
     def _start_sweep_lane_shift_connector(self, robot_pose) -> bool:
         """Turn onto the next sweep lane through a frozen feasible path.
@@ -799,9 +816,10 @@ class FrontierExplorer(Node):
                 self._send_next_sweep_lane_shift_section()
             return True
         target = self.sweep_targets[index]
+        chassis_lane_y = self._sweep_chassis_lane_y(index)
         candidates = lane_shift_connector_goals(
             robot_pose,
-            target[1],
+            chassis_lane_y,
             candidate_distances_m=tuple(
                 float(value) for value in self.get_parameter(
                     "frontier_sweep_lane_shift_connector_distances_m"
