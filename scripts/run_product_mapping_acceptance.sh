@@ -23,8 +23,9 @@ usage() {
 Usage: bash scripts/run_product_mapping_acceptance.sh [options]
 
 Runs the fail-closed map -> save -> stop -> restart -> load -> relocalize ->
-NavigateThroughPoses acceptance chain. Gazebo truth drives the simulated RTK
-sensor and post-run evaluator, but no oracle pose topic enters a controller.
+NavigateThroughPoses acceptance chain. A Gazebo-internal dual-antenna NavSat
+pair drives the RTK sensor model. Gazebo truth is restricted to the independent
+post-run evaluator; no oracle pose topic enters positioning or control.
 
 Options:
   --output DIR          Evidence directory
@@ -289,8 +290,8 @@ PY
 
 # Build a two-level odometry tree for RTK-aided mapping:
 # map(SLAM) -> odom(RTK global) -> wheel_odom(local EKF) -> base_footprint.
-# The GNSS simulator is a noisy sensor model; its internal oracle input is
-# never remapped or exposed as an odometry/control input.
+# The RTK adapter consumes only the two Gazebo NavSat sensor outputs and never
+# subscribes to an oracle odometry or pose topic.
 python3 - "$bringup_share/config/ekf_ackermann.yaml" "$mapping_ekf_params" <<'PY'
 from pathlib import Path
 import sys
@@ -437,22 +438,44 @@ start_simulation() {
     random_seed:="$SEED" world_file:="$runtime_world" \
     world_name:=sanitation_campus_large spawn_x:="$SPAWN_X" spawn_y:="$SPAWN_Y" spawn_yaw:="$SPAWN_YAW" \
     world_to_map_x:=0.0 world_to_map_y:=0.0 world_to_map_yaw:=0.0 \
+    enable_training_gt:=false enable_evaluation_gt:=true \
     ekf_config:="$mapping_ekf_params"
 }
 
 start_positioning_chain() {
   local directory="$1"
   local prefix="$2"
-  start_group "${prefix}_gnss" "$directory/gnss_sensor.log" \
-    ros2 launch sanitation_gnss_sim gnss_sim.launch.py \
-    profile:=rtk_fixed random_seed:="$SEED"
-  GNSS_PID="$STARTED_PID"
+  start_group "${prefix}_navsat_adapter" "$directory/dual_navsat_adapter.log" \
+    ros2 run sanitation_gnss_sim dual_navsat_adapter --ros-args \
+    -p use_sim_time:=true -p profile:=rtk_fixed -p random_seed:="$SEED"
+  NAVSAT_ADAPTER_PID="$STARTED_PID"
   start_group "${prefix}_fusion" "$directory/rtk_fusion.log" \
     ros2 launch sanitation_scan_refiner hybrid_localization.launch.py \
     hybrid_config_file:="$hybrid_params" fusion_mode:=rtk_imu_wheel \
     enable_scan_refiner:=false publish_map_to_odom:=true \
     initial_pose_x:="$SPAWN_X" initial_pose_y:="$SPAWN_Y" initial_pose_yaw:="$SPAWN_YAW"
   FUSION_PID="$STARTED_PID"
+}
+
+verify_positioning_chain() {
+  local directory="$1"
+  wait_for_topic /gnss/front/gps_raw gps_msgs/msg/GPSFix 180 \
+    "$directory/first_front_navsat.txt"
+  wait_for_topic /gnss/rear/gps_raw gps_msgs/msg/GPSFix 180 \
+    "$directory/first_rear_navsat.txt"
+  wait_for_topic /gnss/diagnostics diagnostic_msgs/msg/DiagnosticArray 60 \
+    "$directory/first_gnss_diagnostics.txt"
+  timeout 30s ros2 node info /dual_navsat_adapter \
+    > "$directory/dual_navsat_adapter_node_info.txt"
+  grep -Fq '/gnss/front/gps_raw' "$directory/dual_navsat_adapter_node_info.txt"
+  grep -Fq '/gnss/rear/gps_raw' "$directory/dual_navsat_adapter_node_info.txt"
+  if grep -Fq '/ground_truth/' "$directory/dual_navsat_adapter_node_info.txt"; then
+    echo "dual_navsat_adapter must not subscribe to Gazebo truth" >&2
+    return 1
+  fi
+  wait_for_topic /localization/fused_pose \
+    geometry_msgs/msg/PoseWithCovarianceStamped 180 \
+    "$directory/first_fused_pose.txt"
 }
 
 start_navigation() {
@@ -467,8 +490,8 @@ start_navigation() {
 
 echo "[PRODUCT-MAPPING] phase 1: continuous first-principles mapping"
 start_simulation mapping_sim "$mapping/simulation.log"; sim_pid="$STARTED_PID"
-start_positioning_chain "$mapping" mapping; gnss_pid="$GNSS_PID"; fusion_pid="$FUSION_PID"
-wait_for_topic /localization/fused_pose geometry_msgs/msg/PoseWithCovarianceStamped 180 "$mapping/first_fused_pose.txt"
+start_positioning_chain "$mapping" mapping; navsat_adapter_pid="$NAVSAT_ADAPTER_PID"; fusion_pid="$FUSION_PID"
+verify_positioning_chain "$mapping"
 start_group mapping_scan "$mapping/scan_normalizer.log" \
   ros2 run sanitation_navigation scan_self_filter --ros-args \
   -p use_sim_time:=true -p input_topic:=/scan -p output_topic:=/scan/mapping \
@@ -549,7 +572,7 @@ POSEGRAPH_CODE=$?
 set -e
 
 # This is the required hard process restart, not a lifecycle transition.
-stop_group "$mapping_tf_pid"; stop_group "$nav_pid"; stop_group "$slam_pid"; stop_group "$scan_pid"; stop_group "$fusion_pid"; stop_group "$gnss_pid"; stop_group "$sim_pid"
+stop_group "$mapping_tf_pid"; stop_group "$nav_pid"; stop_group "$slam_pid"; stop_group "$scan_pid"; stop_group "$fusion_pid"; stop_group "$navsat_adapter_pid"; stop_group "$sim_pid"
 pids=()
 sleep 2
 RESTART_COMPLETED=true
@@ -578,8 +601,8 @@ if [[ "$EXPLORATION_CODE" -eq 0 && "$MAP_SAVE_CODE" -eq 0 && \
       "$MAP_GEOMETRY_CODE" -eq 0 && "$ROUTE_CODE" -eq 0 ]]; then
   echo "[PRODUCT-MAPPING] phase 2: fresh simulator, saved map, AMCL, Nav2"
   start_simulation reload_sim "$reload/simulation.log"; reload_sim_pid="$STARTED_PID"
-  start_positioning_chain "$reload" reload; reload_gnss_pid="$GNSS_PID"; reload_fusion_pid="$FUSION_PID"
-  wait_for_topic /localization/fused_pose geometry_msgs/msg/PoseWithCovarianceStamped 180 "$reload/first_fused_pose.txt"
+  start_positioning_chain "$reload" reload; reload_navsat_adapter_pid="$NAVSAT_ADAPTER_PID"; reload_fusion_pid="$FUSION_PID"
+  verify_positioning_chain "$reload"
   start_navigation reload_nav amcl "$mapping/product_map.yaml" "$reload/navigation.log"; reload_nav_pid="$STARTED_PID"
   wait_for_topic /amcl_pose geometry_msgs/msg/PoseWithCovarianceStamped 180 "$reload/first_amcl.txt"
   start_group reload_tf "$reload/tf_continuity.log" \
@@ -597,7 +620,7 @@ if [[ "$EXPLORATION_CODE" -eq 0 && "$MAP_SAVE_CODE" -eq 0 && \
   wait_group reload_probe "$reload_probe_pid"
   NAVIGATION_CODE="$GROUP_EXIT_CODE"
   set -e
-  stop_group "$reload_tf_pid"; stop_group "$reload_nav_pid"; stop_group "$reload_fusion_pid"; stop_group "$reload_gnss_pid"; stop_group "$reload_sim_pid"
+  stop_group "$reload_tf_pid"; stop_group "$reload_nav_pid"; stop_group "$reload_fusion_pid"; stop_group "$reload_navsat_adapter_pid"; stop_group "$reload_sim_pid"
   pids=()
 else
   printf '%s\n' "phase 2 skipped because a phase 1 prerequisite failed" > "$reload/skipped.txt"
@@ -660,8 +683,10 @@ payload = {
     "restart_completed": sys.argv[3].lower() == "true",
     "exit_codes": dict(zip(names, map(int, sys.argv[4:]))),
     "sensor_provenance": {
-        "positioning": "simulated_rtk_gnss_plus_wheel_imu_plus_scan_matching",
-        "gazebo_truth_to_gnss_sensor_model": True,
+        "positioning": "gazebo_dual_navsat_rtk_plus_wheel_imu_plus_scan_matching",
+        "gazebo_dual_navsat_sensor_pair": True,
+        "gazebo_truth_to_gnss_sensor_model": False,
+        "ground_truth_ros_subscription_in_positioning": False,
         "oracle_pose_topic_to_controller": False,
     },
     "reproducibility": {

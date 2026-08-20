@@ -116,13 +116,25 @@ def test_formal_runner_has_real_restart_and_20k_fail_closed_scope():
 
 def test_mapping_control_does_not_subscribe_to_ground_truth():
     text = RUNNER.read_text(encoding="utf-8")
-    control_prefix = text.split("stage4t_map_geometry.py", maxsplit=1)[0]
-    assert "/ground_truth" not in control_prefix
+    assert "ros2 launch sanitation_gnss_sim gnss_sim.launch.py" not in text
+    assert "ros2 run sanitation_gnss_sim dual_navsat_adapter" in text
+    assert "wait_for_topic /gnss/front/gps_raw gps_msgs/msg/GPSFix" in text
+    assert "wait_for_topic /gnss/rear/gps_raw gps_msgs/msg/GPSFix" in text
+    assert "ros2 node info /dual_navsat_adapter" in text
+    assert "ground_truth_ros_subscription_in_positioning" in text
+    assert '"gazebo_truth_to_gnss_sensor_model": False' in text
     assert "--world-sdf" in text
-    assert "no oracle pose topic enters a controller" in text
+    assert "no oracle pose topic enters positioning or control" in text
     assert '"oracle_pose_topic_to_controller": False' in text
     assert "positioning_source:=rtk_gnss_sensor_wheel_imu_scan_matching" in text
     assert "world_to_map_x:=0.0 world_to_map_y:=0.0 world_to_map_yaw:=0.0" in text
+    adapter = (
+        ROOT
+        / "starter_ws/src/sanitation_gnss_sim/sanitation_gnss_sim/dual_navsat.py"
+    ).read_text(encoding="utf-8")
+    assert '"/gnss/front/gps_raw"' in adapter
+    assert '"/gnss/rear/gps_raw"' in adapter
+    assert '"/ground_truth/' not in adapter
 
 
 def test_prior_map_filters_are_removed_for_first_principles_mapping():
