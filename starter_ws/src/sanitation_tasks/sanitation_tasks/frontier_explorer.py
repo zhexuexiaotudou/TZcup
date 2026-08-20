@@ -522,6 +522,20 @@ class FrontierExplorer(Node):
                     self.next_goal_not_before_monotonic = time.monotonic() + 1.0
                     self._write_report()
                 return
+            if (
+                self.sweep_active_axis == "horizontal"
+                and self.sweep_active_preference is not None
+            ):
+                recovery_status = self._start_horizontal_sweep_route_recovery(
+                    robot_pose
+                )
+                if recovery_status in {"started", "planner_unavailable"}:
+                    if recovery_status == "planner_unavailable":
+                        self.next_goal_not_before_monotonic = (
+                            time.monotonic() + 1.0
+                        )
+                        self._write_report()
+                    return
             self.pending_frontier_detour_source_goal = None
         self._sweep_preference(robot_pose)
         if self._start_horizontal_sweep_staging(robot_pose):

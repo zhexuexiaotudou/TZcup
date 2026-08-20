@@ -51,7 +51,7 @@ costmap 临时排除同时绑定候选与对应地图几何，且由 AST 回归�
 
 TF 连续性探针、激光与点云自过滤器，以及安全权威、速度门、产品监督器和两级 actuator timeout guard，统一捕获 ROS 2 launch 的外部关闭信号/失效上下文并使用幂等清理；运行期 context 仍有效时的真实异常继续上抛。建图专用 runner 也显式关闭与产品速度门重复发布的上游 `command_timeout`。每个长驻进程组都必须留下 wrapper 退出码、最终信号阶段和残留扫描的 shutdown 记录；Gazebo 先走 `/server_control stop` 再进入通用信号收口，缺记录、残留或被迫 `SIGKILL` 都会让 Mapping Gate 失败关闭。
 
-水平 sweep 没有安全 frontier 时不再无限等待：连续 5 次后从在线已知自由栅格选择朝 sweep 锚点推进的 30 m 内候选并复用上述全局路径门；局部 frontier、staging 或 alignment 弧一旦失败且仍存在被排除的原始候选，必须先升级为全局已知自由区绕障，不能在同一姿态再次武断重排 staging。某个 route 候选失败后立即冷却并尝试下一个，不等待整段 frontier TTL。连续 30 次仍无安全路线则只尝试碰撞检查倒车，倒车也不可用即失败关闭。运行 evidence 的原子写入已串行化，避免 action/map 回调争用同一临时文件。
+水平 sweep 没有安全 frontier 时不再无限等待：连续 5 次后从在线已知自由栅格选择朝 sweep 锚点推进的 30 m 内候选并复用上述全局路径门；局部 frontier 失败后若其直接 backoff endpoint 不可用于全局规划，会立即升级为朝 sweep anchor 的已知自由区 route recovery。局部 frontier、staging 或 alignment 弧一旦失败且仍存在被排除的原始候选，也必须先全局绕障，不能在同一姿态再次武断重排 staging。某个 route 候选失败后立即冷却并尝试下一个，不等待整段 frontier TTL。连续 30 次仍无安全路线则只尝试碰撞检查倒车，倒车也不可用即失败关闭。运行 evidence 的原子写入已串行化，避免 action/map 回调争用同一临时文件。
 
 ## 快速启动
 

@@ -264,6 +264,15 @@ def test_failed_horizontal_projection_routes_before_rearming_staging():
         "self.horizontal_sweep_staging_pending = True"
     )
     assert route_first < staging_rearm
+    pending_fallback = explorer.split(
+        "if self.pending_frontier_detour_source_goal is not None:", maxsplit=1
+    )[1].split("self._sweep_preference(robot_pose)", maxsplit=1)[0]
+    assert "self._start_horizontal_sweep_route_recovery(" in pending_fallback
+    assert pending_fallback.index(
+        "self._start_horizontal_sweep_route_recovery("
+    ) < pending_fallback.index(
+        "self.pending_frontier_detour_source_goal = None"
+    )
 
 
 def test_frontier_navigation_replans_against_the_growing_map():
