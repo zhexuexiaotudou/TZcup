@@ -47,7 +47,7 @@ costmap 临时排除同时绑定候选与对应地图几何，且由 AST 回归�
 
 规划中心边界 margin 为 0.80 m，由产品 footprint 半宽 0.66 m、定位 P95 0.05 m 与 0.09 m 仿真/控制余量组成；Nav2 与 Collision Monitor 中的完整 1.32 m footprint 没有缩小。
 
-被建筑阻挡的短距 frontier 投影，以及无路、超时或中止的普通短 frontier，现在会为同一原始前沿排队一次 Nav2 全局路径 fallback：返回路径需与当前位姿和已知侧接近点一致，并按在线 SLAM 栅格与 Nav2 costmap 的较细分辨率加密检查整段净空；探索器只沿验证后的路线下发最长 30 m 前视点。目标与整段路径按每个规划姿态旋转并检查真实非对称 footprint（前伸 0.82 m、后伸 0.575 m、半宽 0.66 m），四边增加 0.15 m 安全余量，并以半个栅格对角线覆盖相交单元，避免漏掉前角碰撞，也不再用外接圆过度拒绝合法 frontier。原始 SLAM 图对任何 occupied 单元独立否决，但把稀疏射线间的 unknown 交给 Nav2 融合 costmap 裁决；后者对 unknown、占据和膨胀成本全部失效关闭。frontier 行为树还以 1 Hz PipelineSequence 持续按增长中的 SLAM/costmap 重规划，不再让一次性旧路径在新障碍出现后由控制器原地拒绝至 180 s 看门狗。该链已有 ROS action 级“首次导航失败→fallback→绕障导航成功”回归，但尚未通过同一校园世界的全新长时诊断和 7,200 s 正式闭环，因此 Mapping Gate 继续为 FAIL。
+被建筑阻挡的短距 frontier 投影，以及无路、超时或中止的普通短 frontier，现在会为同一原始前沿排队一次 Nav2 全局路径 fallback：返回路径需与当前位姿和已知侧接近点一致，并按在线 SLAM 栅格与 Nav2 costmap 的较细分辨率加密检查净空；远端路径尚未建图时只截取到第一个不安全姿态之前的连续安全前缀，达到最小前进距离才下发，随后随地图增长重规划，最长前视仍为 30 m。目标与路径前缀按每个规划姿态旋转并检查真实非对称 footprint（前伸 0.82 m、后伸 0.575 m、半宽 0.66 m），四边增加 0.15 m 安全余量，并以半个栅格对角线覆盖相交单元，避免漏掉前角碰撞，也不再用外接圆过度拒绝合法 frontier。原始 SLAM 图对任何 occupied 单元独立否决，但把稀疏射线间的 unknown 交给 Nav2 融合 costmap 裁决；后者对 unknown、占据和膨胀成本全部失效关闭。frontier 行为树还以 1 Hz PipelineSequence 持续按增长中的 SLAM/costmap 重规划，不再让一次性旧路径在新障碍出现后由控制器原地拒绝至 180 s 看门狗。该链已有 ROS action 级“首次导航失败→fallback→绕障导航成功”和“远端未知→仅推进连续安全前缀”回归，但尚未通过同一校园世界的全新长时诊断和 7,200 s 正式闭环，因此 Mapping Gate 继续为 FAIL。
 
 水平 sweep 没有安全 frontier 时不再无限等待：连续 5 次后从在线已知自由栅格选择朝 sweep 锚点推进的 30 m 内候选并复用上述全局路径门；某个 route 候选失败后立即冷却并尝试下一个，不等待整段 frontier TTL。连续 30 次仍无安全路线则只尝试碰撞检查倒车，倒车也不可用即失败关闭。运行 evidence 的原子写入已串行化，避免 action/map 回调争用同一临时文件。
 

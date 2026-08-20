@@ -110,6 +110,17 @@ def _obstacle_costmap():
     return tuple(data), geometry
 
 
+def _unknown_route_band_costmap(geometry):
+    data = [0] * (geometry.width * geometry.height)
+    for grid_x in range(geometry.width):
+        x = geometry.origin_x_m + (grid_x + 0.5) * geometry.resolution_m
+        if not 58.0 <= x <= 60.0:
+            continue
+        for grid_y in range(geometry.height):
+            data[grid_y * geometry.width + grid_x] = -1
+    return tuple(data)
+
+
 def test_blocked_projection_uses_global_route_lookahead(tmp_path: Path):
     rclpy.init()
     explorer = FrontierExplorer()
@@ -195,6 +206,73 @@ def test_blocked_projection_uses_global_route_lookahead(tmp_path: Path):
         assert harness.navigation_goal is not None
         assert harness.navigation_goal[0] < 60.0
         assert harness.navigation_goal[1] < 38.5
+    finally:
+        executor.shutdown(timeout_sec=2.0)
+        spin_thread.join(timeout=2.0)
+        explorer.destroy_node()
+        harness.destroy_node()
+        rclpy.shutdown()
+
+
+def test_global_route_advances_only_through_continuous_safe_prefix(
+    tmp_path: Path,
+):
+    rclpy.init()
+    explorer = FrontierExplorer()
+    harness = _PlannerHarness()
+    executor = MultiThreadedExecutor(num_threads=4)
+    executor.add_node(explorer)
+    executor.add_node(harness)
+    spin_thread = threading.Thread(target=executor.spin, daemon=True)
+    spin_thread.start()
+    try:
+        assert explorer.compute_path_client.wait_for_server(timeout_sec=3.0)
+        assert explorer.action_client.wait_for_server(timeout_sec=3.0)
+        explorer.terminal = True
+        explorer.output_path = tmp_path / "frontier_detour_safe_prefix.json"
+        obstacle_map, geometry = _obstacle_costmap()
+        explorer.latest_data = obstacle_map
+        explorer.latest_geometry = geometry
+        explorer.latest_costmap_data = _unknown_route_band_costmap(geometry)
+        explorer.latest_costmap_geometry = geometry
+        explorer.latest_metrics = {"known_area_m2": 9014.25}
+        explorer.map_update_count = 1017
+        source_goal = FrontierGoal(
+            grid_x=17,
+            grid_y=23,
+            world_x_m=67.2,
+            world_y_m=47.4,
+            yaw_rad=math.pi,
+            frontier_cell_count=100,
+            information_gain_m=10.0,
+            distance_m=3.0,
+            score=9.25,
+            preference_distance_m=147.0,
+            raw_world_x_m=-94.0,
+            raw_world_y_m=39.0,
+        )
+        assert explorer._start_frontier_detour_plan(
+            source_goal, (70.2, 47.6, math.pi)
+        ) == "started"
+        assert harness.navigation_completed.wait(timeout=5.0)
+        deadline = time.monotonic() + 5.0
+        while (
+            not explorer.goal_history[-1].get("succeeded")
+            and time.monotonic() < deadline
+        ):
+            time.sleep(0.01)
+        row = explorer.goal_history[-1]
+        assert row["planner_accepted"] is True
+        assert row["planned_path_endpoints_match"] is True
+        assert row["path_costmap_clearance_checked"] is True
+        assert row["planned_path_fully_costmap_clear"] is False
+        assert row["costmap_clear_prefix_pose_count"] > 1
+        assert 0.8 <= row["costmap_clear_prefix_length_m"] < row[
+            "planned_path_length_m"
+        ]
+        assert row["succeeded"] is True
+        assert harness.navigation_goal is not None
+        assert harness.navigation_goal[0] > 60.0
     finally:
         executor.shutdown(timeout_sec=2.0)
         spin_thread.join(timeout=2.0)

@@ -1082,13 +1082,24 @@ class FrontierExplorer(Node):
         self._write_report()
 
     def _path_poses_are_costmap_clear(self, poses) -> bool:
+        sampled_poses, clear_prefix = self._costmap_clear_path_prefix(poses)
+        return bool(sampled_poses) and len(clear_prefix) == len(sampled_poses)
+
+    def _costmap_clear_path_prefix(self, poses):
+        """Return the sampled prefix that is clear in both live map products.
+
+        A global planner may legally return a route whose remote suffix crosses
+        cells that are still unknown while mapping. Rejecting the whole route
+        prevents the robot from advancing through the already-known prefix and
+        therefore prevents the map from ever making that suffix observable.
+        """
         if (
             self.latest_data is None
             or self.latest_geometry is None
             or self.latest_costmap_data is None
             or self.latest_costmap_geometry is None
         ):
-            return False
+            return [], []
         try:
             sampled_poses = sample_path_poses(
                 tuple(poses),
@@ -1101,24 +1112,28 @@ class FrontierExplorer(Node):
                 ),
             )
         except ValueError:
-            return False
+            return [], []
         maximum_cost = int(self.get_parameter("maximum_goal_cost").value)
         footprint_parameters = self._footprint_clearance_parameters()
-        return bool(sampled_poses) and all(
-            world_footprint_is_traversable(
-                data,
-                geometry,
-                pose,
-                **footprint_parameters,
-                maximum_cost=maximum_cost,
-                allow_unknown=allow_unknown,
-            )
-            for pose in sampled_poses
-            for data, geometry, allow_unknown in (
-                (self.latest_data, self.latest_geometry, True),
-                (self.latest_costmap_data, self.latest_costmap_geometry, False),
-            )
-        )
+        clear_prefix = []
+        for pose in sampled_poses:
+            if not all(
+                world_footprint_is_traversable(
+                    data,
+                    geometry,
+                    pose,
+                    **footprint_parameters,
+                    maximum_cost=maximum_cost,
+                    allow_unknown=allow_unknown,
+                )
+                for data, geometry, allow_unknown in (
+                    (self.latest_data, self.latest_geometry, True),
+                    (self.latest_costmap_data, self.latest_costmap_geometry, False),
+                )
+            ):
+                break
+            clear_prefix.append(pose)
+        return sampled_poses, clear_prefix
 
     def _handle_horizontal_sweep_frontier_wait(
         self,
@@ -1283,6 +1298,9 @@ class FrontierExplorer(Node):
             "planner_terminal_status": None,
             "planned_path_pose_count": None,
             "planned_path_length_m": None,
+            "costmap_clear_prefix_pose_count": None,
+            "costmap_clear_prefix_length_m": None,
+            "planned_path_fully_costmap_clear": None,
             "path_costmap_clearance_checked": False,
             "accepted": None,
             "terminal_status": None,
@@ -1438,10 +1456,28 @@ class FrontierExplorer(Node):
                 row, GoalStatus.STATUS_ABORTED, "detour_source_goal_lost"
             )
             return
+        sampled_path_poses, clear_path_prefix = self._costmap_clear_path_prefix(
+            path_poses
+        )
+        full_path_length = sum(
+            math.hypot(current[0] - previous[0], current[1] - previous[1])
+            for previous, current in zip(sampled_path_poses, sampled_path_poses[1:])
+        )
+        clear_prefix_length = sum(
+            math.hypot(current[0] - previous[0], current[1] - previous[1])
+            for previous, current in zip(clear_path_prefix, clear_path_prefix[1:])
+        )
+        row["planned_path_length_m"] = full_path_length
+        row["costmap_clear_prefix_pose_count"] = len(clear_path_prefix)
+        row["costmap_clear_prefix_length_m"] = clear_prefix_length
+        row["planned_path_fully_costmap_clear"] = bool(sampled_path_poses) and (
+            len(clear_path_prefix) == len(sampled_path_poses)
+        )
+        row["path_costmap_clearance_checked"] = True
         try:
             detour_goal = frontier_detour_path_goal(
                 source_goal,
-                path_poses,
+                clear_path_prefix,
                 maximum_distance_m=float(
                     self.get_parameter(
                         "maximum_frontier_detour_distance_m"
@@ -1457,15 +1493,12 @@ class FrontierExplorer(Node):
                 row, GoalStatus.STATUS_ABORTED, f"invalid_planned_path:{error}"
             )
             return
-        if (
-            detour_goal is None
-            or not self._path_poses_are_costmap_clear(path_poses)
-        ):
+        if detour_goal is None:
             self.frontier_detour_path_rejected_count += 1
             self._fail_frontier_detour_plan(
                 row,
                 GoalStatus.STATUS_ABORTED,
-                "planned_path_empty_short_or_costmap_clearance_failed",
+                "planned_path_has_no_minimum_safe_prefix",
             )
             return
         if not self._goal_is_costmap_clear(detour_goal):
@@ -1474,14 +1507,8 @@ class FrontierExplorer(Node):
                 row, GoalStatus.STATUS_ABORTED, "detour_lookahead_costmap_blocked"
             )
             return
-        path_length = sum(
-            math.hypot(current[0] - previous[0], current[1] - previous[1])
-            for previous, current in zip(path_poses, path_poses[1:])
-        )
         row.update(asdict(detour_goal))
-        row["planned_path_length_m"] = path_length
         row["detour_lookahead_distance_m"] = detour_goal.distance_m
-        row["path_costmap_clearance_checked"] = True
         row["phase"] = "navigation_pending"
         self.active_goal = detour_goal
         self.active_goal_handle = None
