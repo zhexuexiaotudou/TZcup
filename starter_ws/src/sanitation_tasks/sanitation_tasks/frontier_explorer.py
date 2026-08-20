@@ -185,6 +185,7 @@ class FrontierExplorer(Node):
         self.horizontal_sweep_staging_attempt_count = 0
         self.horizontal_sweep_staging_success_count = 0
         self.horizontal_sweep_staging_failure_count = 0
+        self.horizontal_sweep_staging_chain_rearm_count = 0
         self.horizontal_sweep_staging_unavailable_count = 0
         self.horizontal_sweep_staging_behind_chassis_count = 0
         self.horizontal_sweep_staging_path_rejected_count = 0
@@ -1351,6 +1352,9 @@ class FrontierExplorer(Node):
         if row.get("goal_kind") == "horizontal_sweep_staging":
             if succeeded:
                 self.horizontal_sweep_staging_success_count += 1
+                self.horizontal_sweep_staging_pending = True
+                self.horizontal_sweep_staging_chain_rearm_count += 1
+                row["horizontal_sweep_staging_chain_rearmed"] = True
             else:
                 self.horizontal_sweep_staging_failure_count += 1
         if row.get("goal_kind") == "horizontal_sweep_alignment":
@@ -1707,6 +1711,9 @@ class FrontierExplorer(Node):
             ),
             "horizontal_sweep_staging_failure_count": (
                 self.horizontal_sweep_staging_failure_count
+            ),
+            "horizontal_sweep_staging_chain_rearm_count": (
+                self.horizontal_sweep_staging_chain_rearm_count
             ),
             "horizontal_sweep_staging_unavailable_count": (
                 self.horizontal_sweep_staging_unavailable_count

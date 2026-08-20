@@ -218,6 +218,8 @@ def test_frontier_timeout_restarts_nav2_before_next_goal():
     assert '"horizontal_sweep_staging_arm_count"' in explorer
     assert '"horizontal_sweep_staging_behind_chassis_count"' in explorer
     assert '"horizontal_sweep_staging_path_rejected_count"' in explorer
+    assert '"horizontal_sweep_staging_chain_rearm_count"' in explorer
+    assert '"horizontal_sweep_staging_chain_rearmed"' in explorer
     assert '"horizontal_sweep_alignment_attempt_count"' in explorer
     assert '"horizontal_sweep_alignment_success_count"' in explorer
     assert '"horizontal_sweep_alignment_failure_count"' in explorer
