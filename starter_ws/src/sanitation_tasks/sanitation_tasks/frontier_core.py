@@ -443,6 +443,26 @@ def next_no_progress_frontier_state(
     return streak, None, gain
 
 
+def no_progress_recovery_action_for_sweep(
+    recovery_action: str | None,
+    *,
+    sweep_axis: str | None,
+) -> str | None:
+    """Preserve a reachable frontier while traversing a known sweep lane.
+
+    A horizontal bounds-derived sweep necessarily crosses already observed
+    space on its way to the opposite anchor. Successful low-gain motion there
+    is expected transit, not proof that the raw frontier is stale. Cooling that
+    frontier can leave no ranked goal and trigger a reverse escape that exactly
+    cancels the forward progress. Navigation failures still use the independent
+    failed-goal exclusion path; only successful low-gain raw exclusion is
+    suppressed while a horizontal sweep anchor is active.
+    """
+    if recovery_action == "raw_and_staging" and sweep_axis == "horizontal":
+        return "staging"
+    return recovery_action
+
+
 def _index(x: int, y: int, geometry: GridGeometry) -> int:
     return y * geometry.width + x
 

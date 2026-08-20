@@ -35,6 +35,7 @@ from .frontier_core import (
     mapping_completion_reached,
     next_adaptive_goal_distance,
     next_no_progress_frontier_state,
+    no_progress_recovery_action_for_sweep,
     prune_timed_exclusions,
     rank_frontiers,
     reverse_escape_goal,
@@ -181,6 +182,7 @@ class FrontierExplorer(Node):
         self.frontier_no_progress_success_streak = 0
         self.frontier_no_progress_exclusion_count = 0
         self.frontier_no_progress_raw_exclusion_count = 0
+        self.horizontal_sweep_raw_exclusion_suppressed_count = 0
         self.horizontal_sweep_staging_pending = False
         self.horizontal_sweep_staging_arm_count = 0
         self.horizontal_sweep_staging_attempt_count = 0
@@ -1311,6 +1313,14 @@ class FrontierExplorer(Node):
                 row["mapping_progress"] = mapping_progress
                 if not mapping_progress:
                     self.frontier_no_progress_success_count += 1
+                adjusted_recovery_action = no_progress_recovery_action_for_sweep(
+                    recovery_action,
+                    sweep_axis=self.sweep_active_axis,
+                )
+                if adjusted_recovery_action != recovery_action:
+                    row["horizontal_sweep_raw_exclusion_suppressed"] = True
+                    self.horizontal_sweep_raw_exclusion_suppressed_count += 1
+                recovery_action = adjusted_recovery_action
                 if recovery_action == "staging":
                     row["horizontal_sweep_staging_armed"] = True
                     row["no_progress_recovery_action"] = "staging"
@@ -1697,6 +1707,9 @@ class FrontierExplorer(Node):
             ),
             "frontier_no_progress_raw_exclusion_count": (
                 self.frontier_no_progress_raw_exclusion_count
+            ),
+            "horizontal_sweep_raw_exclusion_suppressed_count": (
+                self.horizontal_sweep_raw_exclusion_suppressed_count
             ),
             "horizontal_sweep_staging_pending": (
                 self.horizontal_sweep_staging_pending

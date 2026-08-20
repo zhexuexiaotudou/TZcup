@@ -14,6 +14,7 @@ from sanitation_tasks.frontier_core import (
     mapping_completion_reached,
     next_adaptive_goal_distance,
     next_no_progress_frontier_state,
+    no_progress_recovery_action_for_sweep,
     prune_timed_exclusions,
     rank_frontiers,
     reverse_escape_goal,
@@ -201,6 +202,18 @@ def test_real_map_gain_resets_no_progress_streak():
     assert streak == 0
     assert action is None
     assert gain == pytest.approx(2.0)
+
+
+def test_horizontal_sweep_transit_preserves_low_gain_raw_frontier():
+    assert no_progress_recovery_action_for_sweep(
+        "raw_and_staging", sweep_axis="horizontal"
+    ) == "staging"
+    assert no_progress_recovery_action_for_sweep(
+        "raw_and_staging", sweep_axis="vertical"
+    ) == "raw_and_staging"
+    assert no_progress_recovery_action_for_sweep(
+        "staging", sweep_axis="horizontal"
+    ) == "staging"
 
 
 def test_no_progress_policy_rejects_invalid_contract_values():
