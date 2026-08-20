@@ -104,6 +104,9 @@ class FrontierExplorer(Node):
         self.declare_parameter("boundary_turn_buffer_m", 1.429)
         self.declare_parameter("maximum_goal_count", 160)
         self.declare_parameter("goal_timeout_sec", 60.0)
+        self.declare_parameter("goal_progress_distance_m", 0.5)
+        self.declare_parameter("goal_progress_map_gain_m2", 2.0)
+        self.declare_parameter("goal_absolute_timeout_multiplier", 3.0)
         self.declare_parameter("goal_cancel_grace_sec", 5.0)
         self.declare_parameter("failed_goal_cooldown_sec", 10.0)
         self.declare_parameter("failed_goal_exclusion_ttl_sec", 180.0)
@@ -274,9 +277,17 @@ class FrontierExplorer(Node):
         self.active_goal = None
         self.active_goal_handle = None
         self.active_goal_started_monotonic = None
+        self.active_goal_last_progress_monotonic = None
         self.active_goal_timeout_sec = float(
             self.get_parameter("goal_timeout_sec").value
         )
+        self.active_goal_absolute_timeout_sec = (
+            self.active_goal_timeout_sec
+            * float(self.get_parameter("goal_absolute_timeout_multiplier").value)
+        )
+        self.active_goal_progress_reference_pose = None
+        self.active_goal_progress_reference_map_area_m2 = 0.0
+        self.active_goal_progress_event_count = 0
         self.active_goal_cancel_requested = False
         self.active_goal_cancel_requested_monotonic = None
         self.next_goal_not_before_monotonic = self.started_monotonic
@@ -404,11 +415,12 @@ class FrontierExplorer(Node):
     def _tick(self) -> None:
         if self.terminal:
             return
-        if self.nav_recovery_in_progress:
-            return
-        elapsed = time.monotonic() - self.started_monotonic
+        now_monotonic = time.monotonic()
+        elapsed = now_monotonic - self.started_monotonic
         if elapsed >= float(self.get_parameter("timeout_sec").value):
             self._finish(False, "exploration_timeout")
+            return
+        if self.nav_recovery_in_progress:
             return
         stable_required = int(
             self.get_parameter("completion_stable_map_updates").value
@@ -419,8 +431,8 @@ class FrontierExplorer(Node):
             self._finish(True, "required_mapping_bounds_and_area_mapped")
             return
         if self.active_goal is not None:
-            goal_elapsed = time.monotonic() - float(
-                self.active_goal_started_monotonic or time.monotonic()
+            goal_elapsed = now_monotonic - float(
+                self.active_goal_started_monotonic or now_monotonic
             )
             if self.active_goal_cancel_requested:
                 cancel_elapsed = time.monotonic() - float(
@@ -431,6 +443,33 @@ class FrontierExplorer(Node):
                     self.get_parameter("goal_cancel_grace_sec").value
                 ):
                     self._force_active_goal_timeout(cancel_elapsed)
+                return
+            if (
+                self.active_goal_handle is not None
+                and not self.active_goal_cancel_requested
+            ):
+                no_progress_elapsed = self._active_goal_no_progress_elapsed(
+                    now_monotonic
+                )
+                absolute_timeout = (
+                    goal_elapsed >= self.active_goal_absolute_timeout_sec
+                )
+                no_progress_timeout = (
+                    no_progress_elapsed >= self.active_goal_timeout_sec
+                )
+                if absolute_timeout or no_progress_timeout:
+                    self.active_goal_cancel_requested = True
+                    self.active_goal_cancel_requested_monotonic = now_monotonic
+                    timeout_kind = (
+                        "absolute" if absolute_timeout else "no_progress"
+                    )
+                    self.last_error = (
+                        f"frontier_goal_{timeout_kind}_timeout:"
+                        f"wall={goal_elapsed:.3f}s,"
+                        f"idle={no_progress_elapsed:.3f}s"
+                    )
+                    self.active_goal_handle.cancel_goal_async()
+                    self._write_report()
                 return
             if (
                 goal_elapsed >= self.active_goal_timeout_sec
@@ -455,16 +494,6 @@ class FrontierExplorer(Node):
                     error=f"goal_response_timeout:{goal_elapsed:.3f}s",
                 )
                 return
-            if (
-                goal_elapsed >= self.active_goal_timeout_sec
-                and self.active_goal_handle is not None
-                and not self.active_goal_cancel_requested
-            ):
-                self.active_goal_cancel_requested = True
-                self.active_goal_cancel_requested_monotonic = time.monotonic()
-                self.last_error = f"frontier_goal_timeout:{goal_elapsed:.3f}s"
-                self.active_goal_handle.cancel_goal_async()
-                self._write_report()
             return
         if len(self.goal_history) >= int(
             self.get_parameter("maximum_goal_count").value
@@ -1020,20 +1049,91 @@ class FrontierExplorer(Node):
     def _set_lane_shift_active_goal(self, goal, handle=None) -> None:
         self.active_goal = goal
         self.active_goal_handle = handle
-        self.active_goal_started_monotonic = time.monotonic()
-        self.active_goal_timeout_sec = float(
-            self.get_parameter("lane_shift_connector_timeout_sec").value
+        self._start_active_goal_watchdog(
+            float(self.get_parameter("lane_shift_connector_timeout_sec").value)
         )
         self.active_goal_cancel_requested = False
         self.active_goal_cancel_requested_monotonic = None
+
+    def _start_active_goal_watchdog(self, timeout_sec: float) -> None:
+        timeout = float(timeout_sec)
+        multiplier = float(
+            self.get_parameter("goal_absolute_timeout_multiplier").value
+        )
+        if not math.isfinite(timeout) or timeout <= 0.0:
+            raise ValueError("active goal timeout must be finite and positive")
+        if not math.isfinite(multiplier) or multiplier < 1.0:
+            raise ValueError(
+                "goal_absolute_timeout_multiplier must be finite and at least one"
+            )
+        now_monotonic = time.monotonic()
+        self.active_goal_started_monotonic = now_monotonic
+        self.active_goal_last_progress_monotonic = now_monotonic
+        self.active_goal_timeout_sec = timeout
+        self.active_goal_absolute_timeout_sec = timeout * multiplier
+        self.active_goal_progress_reference_pose = None
+        self.active_goal_progress_reference_map_area_m2 = float(
+            (self.latest_metrics or {}).get("known_area_m2") or 0.0
+        )
+        self.active_goal_progress_event_count = 0
+
+    def _active_goal_no_progress_elapsed(self, now_monotonic: float) -> float:
+        pose = self._robot_pose()
+        area_m2 = float(
+            (self.latest_metrics or {}).get("known_area_m2") or 0.0
+        )
+        if self.active_goal_progress_reference_pose is None and pose is not None:
+            self.active_goal_progress_reference_pose = pose
+            self.active_goal_progress_reference_map_area_m2 = area_m2
+        reference_pose = self.active_goal_progress_reference_pose
+        moved_m = (
+            math.hypot(pose[0] - reference_pose[0], pose[1] - reference_pose[1])
+            if pose is not None and reference_pose is not None
+            else 0.0
+        )
+        map_gain_m2 = area_m2 - self.active_goal_progress_reference_map_area_m2
+        progress_reason = None
+        if moved_m >= float(
+            self.get_parameter("goal_progress_distance_m").value
+        ):
+            progress_reason = "pose"
+        if map_gain_m2 >= float(
+            self.get_parameter("goal_progress_map_gain_m2").value
+        ):
+            progress_reason = (
+                "pose_and_map" if progress_reason == "pose" else "map"
+            )
+        if progress_reason is not None:
+            self.active_goal_last_progress_monotonic = now_monotonic
+            if pose is not None:
+                self.active_goal_progress_reference_pose = pose
+            self.active_goal_progress_reference_map_area_m2 = area_m2
+            self.active_goal_progress_event_count += 1
+            if self.goal_history:
+                row = self.goal_history[-1]
+                row["progress_event_count"] = self.active_goal_progress_event_count
+                row["last_progress_reason"] = progress_reason
+                row["last_progress_moved_m"] = moved_m
+                row["last_progress_map_gain_m2"] = map_gain_m2
+        return now_monotonic - float(
+            self.active_goal_last_progress_monotonic or now_monotonic
+        )
 
     def _clear_active_goal(self) -> None:
         self.active_goal = None
         self.active_goal_handle = None
         self.active_goal_started_monotonic = None
+        self.active_goal_last_progress_monotonic = None
         self.active_goal_timeout_sec = float(
             self.get_parameter("goal_timeout_sec").value
         )
+        self.active_goal_absolute_timeout_sec = (
+            self.active_goal_timeout_sec
+            * float(self.get_parameter("goal_absolute_timeout_multiplier").value)
+        )
+        self.active_goal_progress_reference_pose = None
+        self.active_goal_progress_reference_map_area_m2 = 0.0
+        self.active_goal_progress_event_count = 0
         self.active_goal_cancel_requested = False
         self.active_goal_cancel_requested_monotonic = None
 
@@ -1316,9 +1416,8 @@ class FrontierExplorer(Node):
         self.frontier_detour_goal_count += 1
         self.active_goal = approach_goal
         self.active_goal_handle = None
-        self.active_goal_started_monotonic = time.monotonic()
-        self.active_goal_timeout_sec = float(
-            self.get_parameter("frontier_detour_timeout_sec").value
+        self._start_active_goal_watchdog(
+            float(self.get_parameter("frontier_detour_timeout_sec").value)
         )
         self.active_goal_cancel_requested = False
         self.active_goal_cancel_requested_monotonic = None
@@ -1512,9 +1611,8 @@ class FrontierExplorer(Node):
         row["phase"] = "navigation_pending"
         self.active_goal = detour_goal
         self.active_goal_handle = None
-        self.active_goal_started_monotonic = time.monotonic()
-        self.active_goal_timeout_sec = float(
-            self.get_parameter("frontier_detour_timeout_sec").value
+        self._start_active_goal_watchdog(
+            float(self.get_parameter("frontier_detour_timeout_sec").value)
         )
         self.active_goal_cancel_requested = False
         self.active_goal_cancel_requested_monotonic = None
@@ -1927,7 +2025,6 @@ class FrontierExplorer(Node):
         }
         self.goal_history.append(row)
         self.active_goal = goal
-        self.active_goal_started_monotonic = time.monotonic()
         timeout_parameter = "goal_timeout_sec"
         if goal_kind == "horizontal_sweep_staging":
             timeout_parameter = "horizontal_sweep_staging_timeout_sec"
@@ -1935,8 +2032,8 @@ class FrontierExplorer(Node):
             timeout_parameter = "horizontal_sweep_alignment_timeout_sec"
         elif goal_kind == "frontier_detour":
             timeout_parameter = "frontier_detour_timeout_sec"
-        self.active_goal_timeout_sec = float(
-            self.get_parameter(timeout_parameter).value
+        self._start_active_goal_watchdog(
+            float(self.get_parameter(timeout_parameter).value)
         )
         self.active_goal_cancel_requested = False
         self.active_goal_cancel_requested_monotonic = None
@@ -1971,7 +2068,9 @@ class FrontierExplorer(Node):
         }
         self.goal_history.append(row)
         self.active_goal = goal
-        self.active_goal_started_monotonic = time.monotonic()
+        self._start_active_goal_watchdog(
+            float(self.get_parameter("goal_timeout_sec").value)
+        )
         self.active_goal_cancel_requested = False
         self.active_goal_cancel_requested_monotonic = None
         future = self.backup_client.send_goal_async(message)
@@ -2330,6 +2429,19 @@ class FrontierExplorer(Node):
             ),
             "goal_timeout_sec": float(
                 self.get_parameter("goal_timeout_sec").value
+            ),
+            "goal_progress_distance_m": float(
+                self.get_parameter("goal_progress_distance_m").value
+            ),
+            "goal_progress_map_gain_m2": float(
+                self.get_parameter("goal_progress_map_gain_m2").value
+            ),
+            "goal_absolute_timeout_multiplier": float(
+                self.get_parameter("goal_absolute_timeout_multiplier").value
+            ),
+            "active_goal_progress_event_count": (
+                self.active_goal_progress_event_count
+                if self.active_goal is not None else 0
             ),
             "goal_cancel_grace_sec": float(
                 self.get_parameter("goal_cancel_grace_sec").value

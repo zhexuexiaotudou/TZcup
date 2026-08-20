@@ -118,7 +118,13 @@ def main(args=None) -> None:
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
-        node.publisher.publish(Twist())
+        if rclpy.ok():
+            try:
+                node.publisher.publish(Twist())
+            except RuntimeError:
+                # The context can become invalid between the readiness check
+                # and the final best-effort zero publish during graph teardown.
+                pass
         node.destroy_node()
         if rclpy.ok():
             rclpy.shutdown()
