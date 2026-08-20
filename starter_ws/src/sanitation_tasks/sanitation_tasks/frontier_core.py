@@ -463,6 +463,28 @@ def no_progress_recovery_action_for_sweep(
     return recovery_action
 
 
+def horizontal_sweep_should_wait_for_frontier(
+    *,
+    sweep_axis: str | None,
+    has_active_preference: bool,
+    has_failed_goal_exclusions: bool,
+) -> bool:
+    """Wait for a fresh frontier instead of reversing away from an anchor.
+
+    Map and rolling-costmap callbacks are asynchronous. During a horizontal
+    sweep transition, a valid frontier can disappear for one tick and return
+    on the next update. A reverse escape in that gap moves exactly away from
+    the active anchor and can create a forward/backward limit cycle. Failed
+    navigation exclusions remain an explicit reason to use the normal escape
+    path; this guard applies only to transient exhaustion without failures.
+    """
+    return (
+        sweep_axis == "horizontal"
+        and bool(has_active_preference)
+        and not bool(has_failed_goal_exclusions)
+    )
+
+
 def _index(x: int, y: int, geometry: GridGeometry) -> int:
     return y * geometry.width + x
 

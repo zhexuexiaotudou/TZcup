@@ -30,6 +30,7 @@ from .frontier_core import (
     frontier_sweep_targets,
     frontier_sweep_target_axis,
     GridGeometry,
+    horizontal_sweep_should_wait_for_frontier,
     lane_shift_connector_goals,
     map_extent_metrics,
     mapping_completion_reached,
@@ -183,6 +184,7 @@ class FrontierExplorer(Node):
         self.frontier_no_progress_exclusion_count = 0
         self.frontier_no_progress_raw_exclusion_count = 0
         self.horizontal_sweep_raw_exclusion_suppressed_count = 0
+        self.horizontal_sweep_frontier_wait_count = 0
         self.horizontal_sweep_staging_pending = False
         self.horizontal_sweep_staging_arm_count = 0
         self.horizontal_sweep_staging_attempt_count = 0
@@ -429,6 +431,16 @@ class FrontierExplorer(Node):
                 self.next_goal_not_before_monotonic = max(
                     now + 1.0, earliest_expiry
                 )
+                self._write_report()
+                return
+            if horizontal_sweep_should_wait_for_frontier(
+                sweep_axis=self.sweep_active_axis,
+                has_active_preference=self.sweep_active_preference is not None,
+                has_failed_goal_exclusions=bool(self.excluded_goals),
+            ):
+                self.horizontal_sweep_frontier_wait_count += 1
+                self.last_error = "horizontal_sweep_frontier_temporarily_unavailable"
+                self.next_goal_not_before_monotonic = now + 1.0
                 self._write_report()
                 return
             # Reaching an envelope edge can temporarily leave every online
@@ -1710,6 +1722,9 @@ class FrontierExplorer(Node):
             ),
             "horizontal_sweep_raw_exclusion_suppressed_count": (
                 self.horizontal_sweep_raw_exclusion_suppressed_count
+            ),
+            "horizontal_sweep_frontier_wait_count": (
+                self.horizontal_sweep_frontier_wait_count
             ),
             "horizontal_sweep_staging_pending": (
                 self.horizontal_sweep_staging_pending

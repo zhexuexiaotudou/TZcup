@@ -6,6 +6,7 @@ from sanitation_tasks.frontier_core import (
     frontier_goal_exclusion_centers,
     frontier_sweep_targets,
     frontier_sweep_target_axis,
+    horizontal_sweep_should_wait_for_frontier,
     lane_shift_connector_goals,
     GridGeometry,
     frontier_clusters,
@@ -214,6 +215,24 @@ def test_horizontal_sweep_transit_preserves_low_gain_raw_frontier():
     assert no_progress_recovery_action_for_sweep(
         "staging", sweep_axis="horizontal"
     ) == "staging"
+
+
+def test_horizontal_sweep_waits_only_for_transient_frontier_exhaustion():
+    assert horizontal_sweep_should_wait_for_frontier(
+        sweep_axis="horizontal",
+        has_active_preference=True,
+        has_failed_goal_exclusions=False,
+    )
+    assert not horizontal_sweep_should_wait_for_frontier(
+        sweep_axis="horizontal",
+        has_active_preference=True,
+        has_failed_goal_exclusions=True,
+    )
+    assert not horizontal_sweep_should_wait_for_frontier(
+        sweep_axis="vertical",
+        has_active_preference=True,
+        has_failed_goal_exclusions=False,
+    )
 
 
 def test_no_progress_policy_rejects_invalid_contract_values():
