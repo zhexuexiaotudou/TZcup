@@ -13,8 +13,10 @@ param(
     [string]$GazeboGuiRenderer = "auto",
     [ValidateSet("normal", "fast", "turbo")]
     [string]$SimulationSpeed = "fast",
-    [ValidateSet("optimized", "legacy")]
-    [string]$CoverageProfile = "optimized",
+    [ValidateSet("ackermann", "optimized", "legacy")]
+    [string]$CoverageProfile = "ackermann",
+    [ValidateSet("ackermann", "skid_steer_legacy")]
+    [string]$DriveModel = "ackermann",
     [ValidateRange(0, 1000)]
     [int]$DynamicObstacleTrials = 0,
     [ValidateSet("ogre2", "ogre")]
@@ -27,9 +29,11 @@ param(
     [switch]$GazeboOnly,
     [switch]$Showcase,
     [ValidateSet("small", "medium", "large")]
-    [string]$MapSize = "medium",
+    [string]$MapSize = "small",
     [switch]$ManualControl,
     [switch]$CompetitionProfile,
+    [ValidateSet("representative", "efficiency")]
+    [string]$CompetitionLane = "representative",
     [switch]$NoBrowser,
     [switch]$NoGazeboTrail,
     [switch]$KeepOpen
@@ -105,9 +109,11 @@ $arguments = @(
     "--gazebo-gui-renderer", $GazeboGuiRenderer,
     "--simulation-speed", $SimulationSpeed,
     "--coverage-profile", $CoverageProfile,
+    "--drive-model", $DriveModel,
     "--dynamic-obstacle-trials", "$DynamicObstacleTrials",
     "--simulation-render-engine", $SimulationRenderEngine,
     "--map-size", $MapSize
+    "--competition-lane", $CompetitionLane
 )
 if ($Workspace) {
     $arguments += @("--workspace", $Workspace)

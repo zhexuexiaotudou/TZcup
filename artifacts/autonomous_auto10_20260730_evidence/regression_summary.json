@@ -1,8 +1,0 @@
-{
-  "schema_version": 1,
-  "command": "py -3 scripts/ci_fast.py",
-  "returncode": 0,
-  "stdout_tail": "........................................................................ [ 55%]\n..........................................................               [100%]\n130 passed in 4.32s\ndevelopment workflow fast validation passed\n",
-  "stderr_tail": "",
-  "pass": true
-}

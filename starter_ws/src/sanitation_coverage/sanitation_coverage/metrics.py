@@ -11,6 +11,93 @@ def path_length(points):
     return sum(segment_length(a, b) for a, b in zip(points, points[1:]))
 
 
+def path_heading_variation(headings):
+    """Return total absolute wrapped heading change along a sampled path."""
+    return sum(
+        abs(
+            math.atan2(
+                math.sin(float(second) - float(first)),
+                math.cos(float(second) - float(first)),
+            )
+        )
+        for first, second in zip(headings, headings[1:])
+    )
+
+
+def projected_path_progress(points, position):
+    """Arc distance of the closest projected point on a polyline."""
+    if len(points) < 2:
+        return 0.0
+    best_distance = math.inf
+    best_progress = 0.0
+    cumulative = 0.0
+    px, py = map(float, position[:2])
+    for start, end in zip(points, points[1:]):
+        dx = float(end[0]) - float(start[0])
+        dy = float(end[1]) - float(start[1])
+        length_sq = dx * dx + dy * dy
+        length = math.sqrt(length_sq)
+        fraction = 0.0 if length_sq <= 1e-12 else min(
+            1.0,
+            max(
+                0.0,
+                ((px - start[0]) * dx + (py - start[1]) * dy) / length_sq,
+            ),
+        )
+        closest_x = float(start[0]) + fraction * dx
+        closest_y = float(start[1]) + fraction * dy
+        distance = math.hypot(px - closest_x, py - closest_y)
+        if distance < best_distance:
+            best_distance = distance
+            best_progress = cumulative + fraction * length
+        cumulative += length
+    return best_progress
+
+
+def split_path_at_curvature_reversals(points, headings, *, tolerance_rad=1e-4):
+    """Split a sampled path where signed curvature changes direction.
+
+    Dubins CCC paths can pass close to an earlier branch of the same path.
+    Giving each curvature primitive to a stateful path follower separately
+    preserves path topology without changing the collision-checked geometry.
+    The boundary pose is intentionally shared by adjacent sections.
+    """
+    if len(points) != len(headings):
+        raise ValueError("points and headings must have the same length")
+    if len(points) < 2:
+        return [(list(points), list(headings))] if points else []
+
+    boundaries = [0]
+    active_class = None
+    for edge_index, (first, second) in enumerate(
+        zip(headings, headings[1:])
+    ):
+        delta = math.atan2(
+            math.sin(float(second) - float(first)),
+            math.cos(float(second) - float(first)),
+        )
+        curvature_class = (
+            1 if delta > tolerance_rad
+            else -1 if delta < -tolerance_rad
+            else 0
+        )
+        if active_class is not None and curvature_class != active_class:
+            boundary = edge_index
+            if boundary > boundaries[-1]:
+                boundaries.append(boundary)
+        active_class = curvature_class
+    if boundaries[-1] != len(points) - 1:
+        boundaries.append(len(points) - 1)
+    return [
+        (
+            list(points[start : end + 1]),
+            list(headings[start : end + 1]),
+        )
+        for start, end in zip(boundaries, boundaries[1:])
+        if end > start
+    ]
+
+
 def semantic_path_distances(timed_samples):
     """Split executed base motion by the brush state at both segment ends."""
     brush_on = 0.0
@@ -150,52 +237,94 @@ def swath_straightness_errors(
 def summarize_distances(values):
     ordered = sorted(float(value) for value in values)
     if not ordered:
-        return {'sample_count': 0, 'rmse_m': None, 'p95_m': None, 'max_m': None}
+        return {
+            'sample_count': 0,
+            'mean_m': None,
+            'median_m': None,
+            'rmse_m': None,
+            'p95_m': None,
+            'max_m': None,
+        }
     p95_index = min(len(ordered) - 1, math.ceil(0.95 * len(ordered)) - 1)
     return {
         'sample_count': len(ordered),
+        'mean_m': statistics.fmean(ordered),
+        'median_m': statistics.median(ordered),
         'rmse_m': math.sqrt(sum(value * value for value in ordered) / len(ordered)),
         'p95_m': ordered[p95_index],
         'max_m': ordered[-1],
     }
 
 
-def synchronized_xy_errors(estimates, truths, tolerance_sec=0.05):
-    """Pair pose samples by ROS stamp and return XY and synchronization errors.
+def synchronized_pose_errors(estimates, truths, tolerance_sec=0.05):
+    """Interpolate truth at estimate ROS stamps and return XY/yaw errors.
 
     The callback arrival order is deliberately ignored: comparing the latest
     estimate against the latest truth turns transport latency into apparent
-    localization error while the vehicle is moving.
+    localization error while the vehicle is moving.  Ground truth is used only
+    here in the evaluator.  Linear interpolation avoids converting a bounded
+    sensor timestamp phase offset into distance error; no truth sample or
+    interpolated pose is published back to the production graph.
     """
-    truth_times = [float(sample[0]) for sample in truths]
-    used = set()
+    ordered_truths = sorted(truths, key=lambda sample: float(sample[0]))
+    truth_times = [float(sample[0]) for sample in ordered_truths]
     xy_errors = []
+    yaw_errors = []
     sync_errors = []
     dropped = 0
     for estimate in estimates:
-        index = bisect.bisect_left(truth_times, float(estimate[0]))
-        candidates = [
-            item for item in (index - 1, index)
-            if 0 <= item < len(truths) and item not in used
-        ]
-        if not candidates:
+        stamp = float(estimate[0])
+        index = bisect.bisect_left(truth_times, stamp)
+        if index < len(ordered_truths) and abs(truth_times[index] - stamp) <= 1e-9:
+            truth_x = float(ordered_truths[index][1])
+            truth_y = float(ordered_truths[index][2])
+            truth_yaw = float(ordered_truths[index][3])
+            support_error = 0.0
+        elif index == 0 or index >= len(ordered_truths):
             dropped += 1
             continue
-        chosen = min(
-            candidates,
-            key=lambda item: abs(truth_times[item] - float(estimate[0])),
-        )
-        sync_error = abs(truth_times[chosen] - float(estimate[0]))
-        if sync_error > tolerance_sec:
+        else:
+            left = ordered_truths[index - 1]
+            right = ordered_truths[index]
+            left_stamp = float(left[0])
+            right_stamp = float(right[0])
+            span = right_stamp - left_stamp
+            if span <= 0.0 or span > 2.0 * tolerance_sec:
+                dropped += 1
+                continue
+            fraction = (stamp - left_stamp) / span
+            truth_x = float(left[1]) + fraction * (
+                float(right[1]) - float(left[1])
+            )
+            truth_y = float(left[2]) + fraction * (
+                float(right[2]) - float(left[2])
+            )
+            yaw_span = math.atan2(
+                math.sin(float(right[3]) - float(left[3])),
+                math.cos(float(right[3]) - float(left[3])),
+            )
+            truth_yaw = float(left[3]) + fraction * yaw_span
+            support_error = min(stamp - left_stamp, right_stamp - stamp)
+        if support_error > tolerance_sec:
             dropped += 1
             continue
-        used.add(chosen)
-        truth = truths[chosen]
         xy_errors.append(math.hypot(
-            float(estimate[1]) - float(truth[1]),
-            float(estimate[2]) - float(truth[2]),
+            float(estimate[1]) - truth_x,
+            float(estimate[2]) - truth_y,
         ))
-        sync_errors.append(sync_error)
+        yaw_errors.append(abs(math.atan2(
+            math.sin(float(estimate[3]) - truth_yaw),
+            math.cos(float(estimate[3]) - truth_yaw),
+        )))
+        sync_errors.append(support_error)
+    return xy_errors, yaw_errors, sync_errors, dropped
+
+
+def synchronized_xy_errors(estimates, truths, tolerance_sec=0.05):
+    """Backward-compatible XY-only view of :func:`synchronized_pose_errors`."""
+    xy_errors, _yaw_errors, sync_errors, dropped = synchronized_pose_errors(
+        estimates, truths, tolerance_sec
+    )
     return xy_errors, sync_errors, dropped
 
 

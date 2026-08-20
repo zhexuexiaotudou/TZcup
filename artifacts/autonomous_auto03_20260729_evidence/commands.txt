@@ -1,2 +1,0 @@
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run_auto03_matrix_docker.ps1 -OutputName autonomous_auto03_formal_20260729 -SkipMatrixGeneration -SkipBuild
-python scripts/finalize_auto03.py --raw-root artifacts/autonomous_auto03_formal_20260729 --output artifacts/autonomous_auto03_20260729_evidence

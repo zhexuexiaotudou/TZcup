@@ -52,3 +52,19 @@ def test_state_summary_omits_replay_samples_until_requested():
     assert "samples" not in summary["replay"]
     assert summary["replay"]["sample_count"] == 2
     assert len(full["replay"]["samples"]) == 2
+
+
+def test_product_health_is_exposed_without_inventing_readiness():
+    state = VisualizationState()
+    state.set_product_health({
+        "state": "DEGRADED",
+        "motion_healthy": True,
+        "cleaning_healthy": False,
+        "cleaning_faults": ["perception:state_error"],
+    })
+    snapshot = state.snapshot()
+    assert snapshot["safety"]["product_health"]["state"] == "DEGRADED"
+    assert snapshot["sources"]["product_health"]["status"] == "live"
+
+    state.set_product_health({"state": "UNKNOWN"})
+    assert state.snapshot()["sources"]["product_health"]["status"] == "error"

@@ -1,3 +1,0 @@
-py -3 scripts/ci_fast.py
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/run_auto04_micro_overfit_docker.ps1 -DataRoot F:\Project\TZcup-stage5br3-data\g2_screening_native -OutputName autonomous_auto04_20260730_evidence -ImplementationCommit 152e7a55f89a83b395bca55445cf1c7c3353e8ba -Attempt 2 -DetectorEpochs 180 -AreaEpochs 260
-py -3 scripts/finalize_auto04.py --evidence artifacts/autonomous_auto04_20260730_evidence --implementation-commit 152e7a55f89a83b395bca55445cf1c7c3353e8ba --ci-test-count 121

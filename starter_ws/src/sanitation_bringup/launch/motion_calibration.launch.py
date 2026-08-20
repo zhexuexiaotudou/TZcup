@@ -73,6 +73,16 @@ def generate_launch_description():
             ),
             Node(
                 package="sanitation_safety",
+                executable="safety_authority",
+                name="calibration_safety_authority",
+                output="screen",
+                parameters=[{
+                    "use_sim_time": True,
+                    "startup_emergency_stopped": False,
+                }],
+            ),
+            Node(
+                package="sanitation_safety",
                 executable="velocity_gate",
                 name="calibration_velocity_gate",
                 output="screen",

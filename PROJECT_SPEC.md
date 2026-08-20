@@ -1,341 +1,102 @@
-# 项目技术规范：智慧环卫无人清扫车仿真主线
+# TZcup 系统技术规范
 
-## AUTO-17 可视化演示架构
+## 1. 产品目标与状态
 
-AUTO-17 是既有自主控制面的只读观察层，不是新的控制器。`sanitation_live_dashboard` 订阅 `/coverage/state`、`/coverage/component_state`、`/coverage/current_path`、`/localization/fused_pose`、`/cmd_vel`、`/brush_enabled`、`/emergency_stop` 与 evaluation-only 的 `/coverage/evaluation_sample`，通过本机 HTTP `/api/v1/telemetry` 和 `/healthz` 提供快照；网页不得发布底盘命令。Gazebo `/gui/track` 跟随 `sanitation_vehicle`，RViz `TopDownOrtho` 以 `base_footprint` 为目标帧。专用录像直接轮询只读遥测并绘制任务画面，不抓取用户桌面。
+TZcup 在结构化道路与安全约束内完成建图定位、导航、覆盖清扫、垃圾发现、跟踪与地图融合、定点清扫、清扫后验证和人工监督。系统以 ROS 2 Jazzy、Gazebo Harmonic 与 x86 产品链为仿真基线。
 
-控制面继续使用 AUTO-02 冻结 profile、Stage4V 混合定位、Nav2 和 OpenNav Coverage/Fields2Cover。真值只允许进入评估轨迹、覆盖率与定位误差统计，禁止进入规划、导航、控制或安全决策。AUTO-17 的 PASS 不得推导出学习感知、真实域、J6 或综合竞赛矩阵 PASS。
+状态严格分层：
 
-## 地图优先的人类监督架构
+- `SIMULATION_PRODUCT_COMPLETE`：固定 A–P 仿真合同全部通过；
+- `PRODUCT_INTEGRATION_READY`：仿真通过，并完成目标计算平台部署和板端性能验收；
+- `PRODUCT_FIELD_READY`：冻结版本在真实车辆、真实传感器和真实道路独立通过。
 
-`sanitation_hmi_server --ros` 是 AUTO-17 实时看板之外的地图监督入口，默认监听本机
-`http://127.0.0.1:8765`。ROS 适配器把 `/odom`、`/map`、规划路径、两路图像、感知、
-清扫事件、刷盘和急停状态写入线程安全快照；每个实时来源独立计算
-`live/stale/error/unavailable`。Gazebo world 与项目 YAML 只进入参考层，不得补写缺失的
-SLAM、感知或执行状态。浏览器通过 `/api/v1/state`、`/api/v1/replay`、
-`/api/v1/export` 和 `/api/v1/images/<source>` 读取快照，不直接连接 ROS 或发布
-`/cmd_vel`。
+下游状态不能由上游 smoke、单元测试或离线指标推导。
 
-`POST /api/v1/commands` 继续使用 AUTO-10 token、角色、严格 schema、幂等键和受限 DSL。
-急停只有在 ROS 图中检测到 HMI 之外的 `/emergency_stop` 订阅者时才可派发；Coverage、
-暂停/恢复和返航只有接入可审计任务编排器时才可用。编排器缺失时 API 必须返回 503
-`safe_task_orchestrator_unavailable`，UI 同步禁用对应按钮。参考地图、SLAM 地图、规划结果、
-实际轨迹、仿真真值、感知预测和刷盘轨迹推导覆盖率必须保持独立语义，不能相互代替。
+## 2. 三平面架构
 
-## AUTO-16 最终发布契约
+| 平面 | 职责 | 禁止事项 |
+|---|---|---|
+| Safety Plane | E-stop、Collision Monitor、keepout、边界/悬崖保护、速度安全门 | 不受 LLM、感知或清扫智能覆盖 |
+| Autonomy Plane | 定位、地图、Nav2、Coverage、任务生命周期 | 不读取垃圾真值，不绕过 Safety |
+| Cleaning Intelligence Plane | proposal、重观察、近距分类、ActionVerifier、Tracking、DynamicTrashMap、Scheduler、Post-Clean | 不直接写危险底盘命令，不把 CANDIDATE 当作可执行目标 |
 
-- 最终状态必须区分软件交付、仿真综合矩阵、真实域、J6 工具链、J6 实机和完整竞赛证据；
-- ZIP 只能从已合入且通过 CI 的精确 `origin/main` commit 生成，文件名包含完整 commit SHA，并输出 SHA-256 sidecar；
-- 发布包包含 Git 跟踪的源码、配置、模型、紧凑证据、SBOM、许可、操作/演示/回滚说明和内部逐文件 manifest，不包含 `.git`、外部原始数据、构建目录或厂商 SDK；
-- `AUTONOMOUS_SOFTWARE_COMPLETE=true` 允许与结构化外部/依赖阻断并存；其他最终 PASS 字段必须分别满足自己的证据门。
+任何输入过期、TF 缺失、深度无效、provider 失败、模型哈希不匹配、路径不可达或状态冲突都必须降级、取消或延后清扫。
 
-## AUTO-15 综合竞赛矩阵边界
+## 3. 车辆与清扫机构
 
-- 正式矩阵固定为 18 类场景、每类至少 10 seeds、至少 30 次综合任务，并为全部正式任务提供视频和 MCAP；
-- 独立阶段证据只可作为依赖和组件证据索引，不能拼接为 AUTO-15 综合任务成绩；
-- AUTO-08 学习感知/定点清扫未通过时，离散垃圾、落叶堆、积水和定点清扫不能进入综合矩阵；
-- 任一必需依赖阻断时 `SIMULATION_COMPETITION_MATRIX_PASS=false`，未执行指标保持 0 或 `null`。
+产品默认是 Ackermann：物理前轮转向、后轮牵引、单一 Gazebo AckermannSteering writer。冻结几何包括车长/宽、轴距、轮距、轮半径、转角、最小转弯半径、传感器安装、brush footprint、垃圾箱和清扫机构位姿。
 
-## AUTO-14 J6 工具链边界
+当前基线：
 
-- 只允许使用 D-Robotics 官方 OpenExplorer/SDK，并记录包、wheel、编译产物 SHA；
-- `hb_compile` 可启动只表示官方工具链可用，不表示项目模型已量化或编译；
-- `J6_TOOLCHAIN_PASS=true` 要求 AUTO-06 正式 detector/area 模型完成预检、至少 500 帧校准、官方编译和量化精度回归；
-- `J6_RUNTIME_PASS=true` 必须有实体板 30 分钟稳定性、性能、功耗、温度和精度一致性证据；无板时这些值必须为 `null`。
+- Xacro 默认 `drive_model=ackermann`；
+- 默认有效清扫宽度 `1.32 m`；
+- 垃圾箱几何 `0.50 × 0.40 × 0.20 m = 40 L`；
+- Ackermann Nav2 禁止 rotate-to-heading，Coverage connector 禁止零速原地转向；
+- `skid_steer_legacy` 只保留为显式历史回归，不能计入 V1 产品门。
 
-## AUTO-05 G3 多世界数据与 screening 契约
+正式验收不得缩小 footprint、虚增 brush width、缩小转弯半径或移动传感器。
 
-- G3 必须至少包含 8 个 material/layout/lighting/SHA 独立的真实 Gazebo 世界，并按世界固定为 train/val/test `4/2/2`；至少采集 120 scene/1200 native frame，每个 val/test 世界至少 50 个 negative-only frame。
-- target asset、hard-negative asset、world 和 trajectory 必须跨 split 零泄漏；RGB/depth/semantic/instance exact sync、TF、标注完整性、semantic-instance 一致性、exact/pHash duplicate 必须自动审计。
-- 动态障碍、重叠、材质和光照只有在 Gazebo 运行中实际执行并留痕时才能计入覆盖；manifest 中的请求字段不得冒充执行证据。
-- detector 阈值和 area threshold 只能在 validation worlds 上选择，test worlds 不参与选模。离散类必须继续使用 direct detector；区域类必须独立训练、评测和导出。
-- 全部 discovery、discrete recognition、area、robustness、negative-only 与 ONNX 门通过后才允许进入 AUTO-06；AUTO-05 通过只表示 native Gazebo G3 离线 screening。
-## AUTO-11 大地图与定时任务契约
+## 4. 生产输入与真值隔离
 
-- 地图固定为 200 m × 100 m、0.1 m resolution，并建立 20 个互不重叠的 zone/submap；
-- localization truth 必须来自独立 simulator world-state，estimate 使用单独观测模型，禁止 odometry self-comparison；
-- 正式门包含至少 10 条定位轨迹、5 次全覆盖任务和 20 次定时任务；
-- 每条轨迹 RMSE ≤ 0.05 m，恢复率 ≥ 0.95、TF continuity ≥ 0.999；zone accuracy 100%，boundary/collision 为 0，中断恢复率 ≥ 0.95。
+允许进入生产链的输入只有 RGB、Depth、CameraInfo、LiDAR、IMU、wheel odometry、带时间戳 TF、Nav2 map 和静态清扫边界。
 
-## AUTO-10 多模态任务入口契约
+任务开始时：
 
-- APP/API 必须经过 token 鉴权、角色授权、严格请求 schema 和 idempotency key；重复键同载荷返回同一结果，不同载荷冲突；
-- 语言层输出固定 `intent / ordered_subtasks / tool_calls / arguments / constraints / expected_terminal_state`，工具调用必须属于任务级 allowlist；
-- `/cmd_vel`、关节、电机和其他直接执行器请求 fail closed；网关只验证和形成任务，不在 HTTP 请求中执行车辆动作；
-- 正式门由 288 个 HTTP/API/UI、500 个 TTS→噪声/混响→ASR 和 1200 个 DSL 用例组成，详见 `docs/auto10-multimodal-hmi.md`。
-
-## AUTO-13 真实域机器评测契约
-
-- 只有真实相机/车辆数据和可审计 GT 才能进入真实域指标；程序化 fixture、Gazebo、公开无标注图像或模型伪标签均不得设置 `REAL_DOMAIN_PASS=true`。
-- 正式资源至少包含 20 scene/1000 frame、五类完整、hard-negative、相机标定和独立 map localization truth；同轨迹、地点和连续帧必须按组隔离。
-- 采集必须显式记录同意，个人可识别区域在落盘前隐私处理，原始帧默认留在仓库外；dataset manifest 保存文件 SHA、标定 SHA、标注 SHA 和隐私状态。
-- 资源缺失时必须完成 capture/calibration/ingestion/annotation/evaluator/privacy 工具并设置 `REAL_DOMAIN_BLOCKED_EXTERNAL=true`、`REAL_DOMAIN_PASS=false`，继续其他独立阶段。
-
-## AUTO-04 双模型 micro-overfit 契约
-
-- 离散类必须使用直接 object detector 输出中心 heatmap、中心 offset 和 bbox 尺寸，再经 confidence-ranked decode 与 class-wise NMS 形成检测框；禁止使用 segmentation connected-components 冒充 detector。
-- detector micro 数据必须来自留存的真实 Gazebo RGB/semantic/instance train split，覆盖三类、negative-only、多实例和小/中/大尺寸；正式门同时检查 AP50、逐类 recall、negative-only FP、NMS 和 PyTorch/ONNX 一致性。
-- `leaf_pile` 与 `puddle` 必须使用与 detector 独立训练、独立导出的 area heads，并分别报告 IoU、macro mIoU、negative-only area FP 和 ONNX argmax agreement；不得用一个任务的成绩替代另一个任务。
-- 正式模型和报告必须绑定实现提交 SHA；失败尝试不得覆盖，selected attempt、attempt ledger、冻结阈值、算子清单、模型许可与逐文件 SHA-256 manifest 必须进入紧凑证据。
-- AUTO-04 通过只证明 task-specific Gazebo micro train-set capacity；不得外推为 AUTO-05 跨世界 screening、AUTO-06 正式感知、真实域、J6 或竞赛感知通过。
-
-## AUTO-03 Oracle 主动观察闭环契约
-
-- Oracle 只能发布带噪候选位置、协方差、时间戳、通用类别/尺寸及 false/stale 状态，不得输出观察位姿、路径、机器判定或成功状态，也不得设置车辆位姿。
-- 可达候选必须在 Coverage 组件边界暂停，经观察位姿采样、`ComputePathToPose` 预检、`NavigateToPose`、同步图像捕获、evaluation-only 机器判定、返回边界和 Coverage 恢复形成完整任务链。
-- planner、Nav2、控制器和执行器不得订阅 semantic/instance ground truth；GT 只能进入独立评估节点，节点图审计和 `gt_control_violation_count=0` 是硬门。
-- 正式矩阵至少覆盖六个世界、60 个 scene、200 个有效目标（五类各至少 30）、30 个 unreachable/keepout、30 个 false 与 20 个 stale 用例，并保存可逐消息重算的 MCAP。
-- 路径预检、可达导航、机器可判定、Coverage 恢复及 fail-closed 必须达到阶段阈值；投影误差、自车遮挡、额外距离/时间和吞吐损失必须如实报告。AUTO-03 通过不代表真实域、J6 或最终竞赛通过。
-
-## AUTO-02 完整回归与冻结配置契约
-
-- `autonomous_navigation_profile_v1` 只能从 AUTO-01 已选择的 opt-in `auto01_g2_v5_retracted` 配置冻结；不得隐式替换 production 默认 profile，也不得借冻结改写 G1、G2-C1、G2-C2 或 Stage5BR6W 的失败事实。
-- 静态门必须覆盖五个固定 seed；每次均须任务完整结束、当前几何生成的组件全部成功、计划覆盖率 `>=0.95`、经验覆盖率 `>=0.90`、碰撞/keepout/刷盘状态违规为 `0`、结束时刷盘关闭且 XY 轨迹 RMSE `<=0.05 m`。
-- 动态门至少包含 20 次有效交互，要求障碍真实移动、碰撞为 `0`、最小分离距离不低于报告中冻结的硬阈值，并且每次干预后 Coverage 能恢复。
-- keepout 采样违规必须为 `0`；限速区均速不得超过 `maximum_vehicle_speed × configured_speed_limit_percent + 0.03 m/s`，报告必须同时保存配置值、计算上限和实际均速。
-- 急停必须完成 `30/30`，P95 `<=1.0 s`、最大值 `<=1.5 s`；每次停止后的控制输出必须保持为零，刷盘最终状态必须为关闭。
-- 冷启动必须 `5/5` 验证全部 lifecycle 节点 active、TF 链完整、Nav2/点云自滤波关键参数服务可读。ROS domain 必须在 DDS 有效范围 `0–232` 内。
-- 每个正式静态/动态 MCAP 必须读取元数据并验证场景所需主题 100% 存在；Coverage 状态需实际录制和回放。经验覆盖率必须从 `/coverage/evaluation_sample` 重算，定位 RMSE 必须限定在同一 evaluation 时间窗重算，两项相对误差均须 `<=1%`。
-- 失败尝试、首次失败层、修复决策和原始证据位置必须进入 attempt ledger；紧凑证据由逐文件 SHA-256 manifest 约束，原始 bag 和日志不得写入 Git。
-
-## AUTO-01 自主导航几何契约
-
-- AUTO-01 冻结的自主候选为 opt-in `camera_profile:=V5_retracted` 与 `footprint_profile:=auto01_g2_v5_retracted`；production 默认相机和 Stage4W navigation footprint 不得被隐式替换。
-- 验证相机原始点云必须先转换到 `base_footprint`，仅剔除配置中冻结的已知车体 AABB，再发布到 `/verification_camera/depth/color/points/navigation`。Collision Monitor 不得直接消费未滤波的向下点云。
-- 单级 Collision Monitor 必须融合未掩膜 LiDAR 与自滤波 RGB-D；local/global costmap、Collision Monitor、Coverage mission geometry 和运行时审计必须使用同一导航 footprint。
-- 几何变更必须保持 cleanable-area ratio `>=0.90`、swath 冲突 `0`、合法 staging、完整覆盖 `17/17`、经验覆盖率 `>=0.90`、碰撞/keepout `0`、定位 RMSE `<=0.05 m` 和可回放证据。
-- 低障碍与高障碍正式门各至少 30 次，碰撞和 height-classification false-safe 均为 `0`。G1、G2-C1 和 G2-C2 的失败结论不得通过降低门槛改写。
-
-## Stage5BR6W 工程豁免与 candidate-footprint 契约
-
-- 工程支线不得改变 Stage5BR6-A 的人工状态；V4 只能称为 engineering verification candidate，工程 policy 不具备人工或竞赛指标资格。
-- `camera_profile:=V4_engineering` 和 `footprint_profile:=stage5br6w_v4` 必须显式 opt-in；production 默认相机、footprint 和历史证据不可修改。
-- candidate footprint 由 V4 相机 AABB、production footprint 与支架裕量可重复推导，并统一供 local/global costmap、Nav2 碰撞检查、Collision Monitor、keepout、Coverage mission geometry 与 observation planner 使用。
-- 工程 observation planner 必须使用完整 camera SE(3)、V4 lateral offset、实际 CameraInfo、完整 footprint polygon、polygon-vs-boundary/keepout、costmap footprint cost 和位姿相关 self-overlap；缺失输入或无可行 pose 时 fail-closed 为 `UNREACHABLE`。
-- Stage4W candidate-footprint 回归是 Oracle 前置硬门；任一静态 seed 失败时停止，不执行 dynamic、estop 或多世界 Oracle，也不得设置工程 readiness。
-
-## Stage5BR5 相机、审计与观测位姿契约
-
-- 主动观察候选必须分别保存 `first_seen_s`、`last_seen_s`、`queued_at_s`、`preflight_started_s`、`approach_started_s`、`approach_deadline_s` 与 `last_observation_s`；sensor stale 不得与 queue timeout 混用，approach timeout 必须包含路径长度/最小速度项。
-- verification 相机候选必须同时保存 base_link 和保险杠相对坐标，并按车体、保险杠、刷盘、机械臂预留体积、地面、安装高度、旋转 AABB 与 footprint 做实际机械门。生产 footprint 只有在相机选择通过后才能修改。
-- 相机运行消融至少覆盖六世界、每 role 10 组同步帧，并报告 self pixels、target/self overlap、bbox/mask/depth、可见比例与 boundary completeness。静态同 pose view replay 不得命名为主动观察。
-- 人工可辨识门必须使用五类各至少 40 张、至少六世界的平衡盲审集和两名独立评审；脚本不能代替人工。准确率 `>=0.90`、Cohen kappa `>=0.75`、self-occlusion failure `<=0.05` 才通过。
-- policy v1 不修改；policy v2 在人工审计完成前不得冻结或允许训练。任何阈值变化使用新 policy id 与新 SHA-256。
-- Observation pose planner 必须包含 ROS-independent 几何核心和 Nav2 `ComputePathToPose` wrapper；无可达候选时进入 `UNREACHABLE`，不得用 GT 直接输出车辆最终位姿。
-- 只有机械、运行时、人工和正式六世界 oracle active-observation 门全部通过，才允许进入 detector/area micro-overfit 与 120/1200 screening。
-
-## Stage5BR4 感知可评测与主动观察契约
-
-感知报告必须保留 `all_visible`、`recognition_ready`、`non_ready` 三个互斥视图。离散类 ready 以最短边、mask area 和最大深度联合判定；区域类独立使用 mask area 门。阈值在训练前冻结并记录 SHA-256，修改必须新建 policy id 和人工审计证据。
-
-主动观察使用稳定 candidate-id 关联 discovery 与 recognition，状态为 `DISCOVERED`、`OBSERVATION_QUEUED`、`APPROACH_PREFLIGHT`、`APPROACHING`、`RECOGNITION_READY`、`CONFIRMED`、`REJECTED`、`UNREACHABLE`。只有 component 边界、ComputePath、keepout、footprint、visibility 和定位不确定性均通过才能接近；stale、timeout、不可达和最大次数均 fail-closed，并记录额外里程与时间。
-
-C0 是生产默认单相机；C1/C2 只用于消融；C3 verification 相机和所有训练 GT/self-mask 默认关闭。生产控制不得订阅这些训练话题。
-
-## Stage5BR3 G2 真实车辆数据与筛选契约
-
-- G2 必须使用实际 `sanitation_vehicle` 的生产相机外参、内参、光学帧和车辆运动；禁止独立静态相机 rig。semantic/instance GT 只能由默认关闭的训练开关挂载，生产 Xacro/launch 和控制订阅不得包含 GT。
-- 至少六个材料、几何、布局和 SHA 均不同的世界，按 3/1/2 固定分给 train/val/test；目标、hard negative、轨迹族和相邻帧不得跨 split 泄漏，测试 split 不得参与模型选择。
-- screening 数据为 80 scene/800 frame，每场景 10 帧且相邻帧车辆位移至少 0.25 m；逐实例保存 bbox、最短边、mask area、距离、遮挡与可见性，并检查 semantic-instance 一致、negative-only、exact/pHash 重复。
-- 原生相机只采集一次，再离线扫描 256×192、384×288、512×384 与 640×384。离散目标使用置信度排序 detector 指标，leaf/puddle 使用 area segmentation 指标，不得把 IoU 匹配值冒充 AP。
-- architecture screening 最多三次；只有 detector in-domain F1 ≥0.90、cross-world F1 ≥0.70、small-object recall ≥0.70、area cross-world mIoU ≥0.75、color-stress F1 ≥0.60、same-color negative FP ≤0.05/frame 全部通过，才允许扩大到 500/5000。
-- 场景 manifest 中的曝光、白平衡、噪声、模糊或动态障碍“请求”不等于已在 Gazebo 原生图像逐项施加；缺少实际执行证据时必须明确保留为边界。
-- screening 失败后，500/5000、30-seed/10-min live、真实 Nav2 spot-clean、真实域和 J6 均保持未执行，readiness 必须为 false。
-
-## Stage5BR G1 数据与训练链契约
-
-- `P1` 仅指 NumPy/OpenCV 程序化筛查；`G1` 必须来自 Gazebo Harmonic 实际 RGB-D 与 SegmentationCamera topics，二者不得混名。
-- G1 RGB、depth、semantic、instance 必须同 pose、同分辨率/FOV、同仿真时间戳；CameraInfo、固定/动态 transform、world/registry/scene hash 和 annotation source 必须落盘。
-- 整个 scene 只属于一个 split；asset 不得跨 train/val/test，测试集不得用于结构或 checkpoint 选择。
-- 训练链进入 G1 前必须通过 micro F1 ≥0.98、micro mIoU ≥0.95、PyTorch/ONNX logit error ≤1e-4 和 argmax agreement ≥99.99%。
-- 50 scene/500 frame 只用于 smoke 与 screening；只有 in-domain F1 ≥0.90、leaf/puddle mIoU ≥0.75、cross asset/world F1 ≥0.70、color stress F1 ≥0.60 后，才允许扩到正式 500 scene/5000 frame。
-
-## Stage5B 学习型感知契约
-
-- D0 固定颜色模型只作 Stage5A 回归基线；Stage5B 候选必须从随机初始化经优化器训练，模型卡必须记录数据域、种子、环境、候选选择和权重来源。
-- D1 正式门必须使用 Gazebo 相机实际渲染的 RGB-D，不得把 NumPy/OpenCV 程序化图像命名为 Gazebo camera 数据。scene、asset、texture、world 和相邻帧必须按合同隔离，测试集不得参与候选选择。
-- 每类至少六个许可明确的变体，并加入同色异类、异色同类、背景换色、纹理/形状、曝光和积水混淆等压力测试；颜色捷径失败即停止正式端到端推进。
-- AP 只有在保留置信度排序预测并形成 precision-recall 曲线时才可报告；IoU 匹配 Jaccard 分数不得命名为 AP。
-- D2 真实数据、J6 转换/量化、J6 实板运行、真实 Nav2 spot-clean 和竞赛效率均是独立 fail-closed 门，禁止以 ONNX 可加载、单次 Gazebo 运行或理论接口兼容替代。
-
-## Stage5A 感知与定点清扫契约
-
-- 类别必须由版本化 registry 的精确 Gazebo identity 解析；模型名子串不得决定目标/障碍语义。
-- 正式 x86 仿真后端为 ONNX Runtime；GT 仅用于标注与评估，进入决策 tracker 必须 fail-closed；J6 不可用时不得回退伪装。
-- RGB、depth、camera_info 和 TF 必须共同形成 2D、3D、分割与 `map` 目标；任何关键输入缺失时 map 输出 fail-closed 并记录原因。
-- train/val/test 按 scene seed 分割，COCO detection/segmentation、map pose、相机参数、TF、场景 manifest、split hash 和重复图像检查均须保留。
-- spot-clean 默认 `deferred`，状态为 TENTATIVE、CONFIRMED、QUEUED、APPROACHING、CLEANING、CLEANED、LOST、REJECTED；同一目标不得逐帧重复建任务。
-- synthetic、真实数据、J6、实车与竞赛效率是互相独立的门，禁止跨门替代。
-
-## Stage4W 完整任务契约
-
-- 规划、执行与评测必须使用同一份编译后的 mission geometry，包括 outer、headland、keepout、显式 exclusion、world→map 固定障碍、footprint 和安全裕量。
-- staging 必须经当前全局 costmap、keepout/speed mask、footprint clearance 和 ComputePathToPose 验证；costmap 未覆盖候选点时不得提前规划。
-- Coverage 硬门要求当前统一几何生成的全部组件终态成功。当前几何为 9 swath + 8 turn = 17；历史固定 23 组件口径不适用。
-- 动态障碍服务必须 fail-closed；20 次有效交互均需 set-pose 成功、路径走廊命中、LiDAR 观测、碰撞 0 和任务恢复推进。
-- 覆盖期定位沿用 Stage4V-compatible 每 seed XY RMSE ≤0.05 m；GT 仅评分，不参与控制。
-- 急停 P95 必须 ≤1 s；上游失联必须观察到连续稳定零输出。竞赛效率单独按作业宽度×速度×3600 计算，不能用覆盖率替代。
-
-## Stage4U 定位评测契约
-
-- 坐标变换统一命名为 `T_target_source`，使用同一冻结标定覆盖全部 seed，禁止逐 trial 拟合。
-- 正式精度以 map-relative localization error 为主；地图地理配准误差独立报告，不与定位器误差相加后冒充单一指标。
-- AMCL 粒子话题类型为 `nav2_msgs/msg/ParticleCloud`，订阅 QoS 必须与运行时 publisher 兼容；0 次有效更新一律 fail-closed。
-- 地图的 generation/basic-quality/localization-geometry 三个门彼此独立；surveyed reference 只属于定位基线，不属于 SLAM 建图成绩。
-- 正式 10-seed 只有在有效同步样本、导航完成、TF 连续和必需粒子仪器有效时才计入完成种子。
-
-## 1. 目标
-
-构建一套面向“仿真 + 实车”并行开发的 ROS 2 仿真底座，使同一套上层算法可以在 Gazebo 和实车之间切换。第一轮目标不是追求高精度外观模型，而是先完成：
-
-1. 可运行的清扫车 URDF/Xacro；
-2. 可复现的环卫场景；
-3. 建图、定位、导航、循迹和区域全覆盖；
-4. 感知接口和垃圾对象真值；
-5. 动态避障、急停和任务恢复；
-6. 自动化指标采集；
-7. 为地平线 J6 推理节点预留 ROS 2 接口。
-
-## 2. 架构
-
-```mermaid
-flowchart LR
-  GZ[Gazebo Harmonic<br/>车辆/道路/垃圾/行人/传感器]
-  BR[ros_gz_bridge]
-  LOC[robot_localization<br/>SLAM Toolbox / AMCL]
-  NAV[Nav2<br/>Planner/Controller/Collision Monitor]
-  COV[OpenNav Coverage<br/>Fields2Cover]
-  PER[垃圾检测与定位<br/>GT评估 / ONNX Runtime / J6边界]
-  TASK[任务管理器<br/>规则/BT/大模型任务分解]
-  CLEAN[清扫执行器语义<br/>刷盘/作业宽度/尘箱]
-  MET[评测与证据系统]
-  REAL[实车驱动节点]
-
-  GZ --> BR
-  BR --> LOC
-  LOC --> NAV
-  COV --> NAV
-  PER --> TASK
-  TASK --> COV
-  TASK --> NAV
-  TASK --> CLEAN
-  NAV --> CLEAN
-  LOC --> MET
-  NAV --> MET
-  PER --> MET
-  CLEAN --> MET
-  REAL -.相同ROS接口.-> LOC
-  REAL -.相同ROS接口.-> NAV
+```text
+Production Target List = EMPTY
+DynamicTrashMap = EMPTY
 ```
 
-## 3. 主接口
+垃圾坐标、类别、instance ID、未来出现时间和真实清扫结果不得预载。Gazebo semantic/instance/world state 与 `/ground_truth/*` 只进入独立 post-run evaluator。生产链无观测时必须报告 unavailable/blocked，不能用 GT 补写。
 
-### 3.1 底盘与传感器
+## 5. 定位、导航与覆盖
 
-- `/cmd_vel_gate` — `geometry_msgs/msg/Twist`，Nav2/任务侧进入最终安全门的命令
-- `/cmd_vel` — `geometry_msgs/msg/Twist`，仅由最终安全门向车辆发布
-- `/odom/unfiltered` — `nav_msgs/msg/Odometry`，保留的原始轮速里程计
-- `/measurements/wheel_odom` — `nav_msgs/msg/Odometry`，规范 frame 并注入非零 covariance 的轮速量测
-- `/measurements/imu` — `sensor_msgs/msg/Imu`，规范 frame 并注入非零 covariance 的 IMU 量测
-- `/odom` — `nav_msgs/msg/Odometry`，selected EKF 的融合输出
-- `/ground_truth/odom` — `nav_msgs/msg/Odometry`，仅用于评分；除显式 `oracle_only` 隔离通道外不得参与控制
-- `/tf`, `/tf_static`
-- `/scan` — `sensor_msgs/msg/LaserScan`
-- `/imu/data` — `sensor_msgs/msg/Imu`，永久保留的原始 IMU topic
-- `/camera/color/image_raw`
-- `/camera/color/camera_info`
-- `/camera/depth/image_rect_raw`
-- `/camera/depth/color/points`
+- 定位使用 odom/IMU/GNSS/scan 的产品融合链，评测真值独立；
+- Nav2 的 local/global costmap、Collision Monitor、Coverage 几何和路径预检使用同一 footprint；
+- Coverage 分开记录规划路径、实际轨迹、brush-swept area、connector、repair 和刷盘状态；
+- 正式 Ackermann 路径使用曲率连续的前进/显式倒车 connector，不使用 Spin/RotateInPlace；
+- map save/load/relocalize/navigation、动态避障、E-stop 与 keepout 都由正式运行重算。
 
-### 3.2 环卫任务接口
+## 6. 感知与 DynamicTrashMap
 
-第一阶段允许使用标准消息，后续再固化自定义 action。
+离散链路：
 
-- `/cleaning/enable` — `std_msgs/msg/Bool`
-- `/cleaning/brush_speed` — `std_msgs/msg/Float32`
-- `/cleaning/bin_fill_ratio` — `std_msgs/msg/Float32`
-- `/emergency_stop` — `std_msgs/msg/Bool`
-- `/perception/garbage/detections_2d` — `vision_msgs/msg/Detection2DArray`
-- `/perception/garbage/detections_3d` — `vision_msgs/msg/Detection3DArray`
-- `/perception/garbage/segmentation` — `sensor_msgs/msg/Image`
-- `/perception/garbage/targets` — `sanitation_perception_interfaces/msg/GarbageTargetArray`
-- `/perception/garbage/diagnostics` — `std_msgs/msg/String`
-- `/garbage/ground_truth` — `sanitation_perception_interfaces/msg/GarbageTargetArray`，仅标注/评估
-- `/garbage/cleaning_events` — `sanitation_perception_interfaces/msg/CleaningEvent`
-- `/spot_clean/state` — `std_msgs/msg/String`
-- `/coverage/path` — `nav_msgs/msg/Path`
-- `/metrics/coverage_ratio` — `std_msgs/msg/Float32`
+```text
+class-agnostic proposal
+→ persistent CANDIDATE
+→ OBSERVE_AGAIN / safe approach
+→ close-range four-class decision
+→ ActionVerifier
+→ CONFIRMED
+→ Scheduler
+```
 
-### 3.3 J6 推理边界
+四类为 `plastic_bottle`、`metal_can`、`paper_litter`、`background_or_unknown`。Classifier 不能直接发出 `CLEAN_NOW`。ActionVerifier 至少检查类别置信、unknown、多帧/多视角一致性、depth、投影协方差、track persistence 和地图一致性。
 
-J6 节点只承担推理和必要预处理，保持与仿真/主控解耦：
+DynamicTrashMap 使用可审计状态：`CANDIDATE`、`OBSERVE_AGAIN`、`CONFIRMED`、`DEFERRED`、`SCHEDULED`、`CLEANING`、`VERIFYING`、`CLEANED`、`REJECTED`、`EXPIRED`。动态插入只允许观察后建图；动态移除不得留下 stale cleaning action。
 
-输入：
+leaf 与 puddle 使用独立 Area segmentation 语义，逐类 IoU、macro mIoU、boundary F1 与 negative actionable FP/frame 分别报告。
 
-- 图像或压缩图像；
-- 可选深度图；
-- 模型配置与阈值。
+## 7. Spot Cleaning 与 Post-Clean
 
-输出：
+完整链路是 Coverage 安全暂停、Nav2 approach、Pre-Clean Verification、执行、Post-Clean Verification 和 Coverage 恢复。Pre-Clean 必须重新确认目标存在、identity、定位、分类、ActionVerifier 与 Safety。
 
-- `vision_msgs/msg/Detection2DArray`；
-- 可选 `Detection3DArray`；
-- 运行耗时、置信度、模型版本和量化版本。
+执行器成功不等于 `CLEANED`。离散目标只有在目标区域重新进入真实 camera FOV 且连续帧不存在后才能标记 CLEANED；Area remaining ratio 超过阈值时只允许一次 retry，否则 defer。
 
-## 4. 车辆模型原则
+## 8. 多模态与 LLM
 
-- 优先使用参数化 primitive 完成清晰、实时、离线可复现的工业车辆外观，不依赖在线网格；
-- 底盘默认使用 4WD skid-steer，真实底盘若为 Ackermann，再新增并行车型；
-- 清扫宽度默认 0.65 m；
-- 尘箱几何容积 0.04 m³，即 40 L；
-- 保留 `arm_mount_link`，为抓取演示预留安装位；
-- 传感器坐标必须集中配置，不散落硬编码；
-- 碰撞几何可简化，但与视觉/导航几何的差异必须记录；新增刚性上车体应具有匹配碰撞体；
-- 仿真和实车必须使用相同 frame 命名。
+至少实现两个官方允许的交互模态。命令先经过固定 schema 与安全策略，再进入任务编排；LLM 只输出受限任务 DSL，不能直接控制底盘、执行器或 Safety。
 
-## 5. 场景原则
+## 9. 数据、冻结和 sealed final
 
-基础测试场景至少包含：
+数据分为 `TRAIN`、`DEVELOPMENT_HOLDOUT`、`SEALED_DEV_VAL`、`SEALED_FINAL`，要求 world/seed/exact RGB/pHash 零交叉泄漏。Final 一次访问、freeze-bound、原子记录、不可重考。
 
-- 直路和转弯；
-- 600 mm 以上清扫通道；
-- 狭窄路段；
-- 路缘/禁行区；
-- 锥桶、垃圾桶和箱体障碍；
-- 瓶、罐、纸盒等离散垃圾；
-- 落叶堆；
-- 不超过 1 cm 的低摩擦积水区域；
-- 后续加入行人和移动障碍。
+`MODEL_FREEZE_X86.json` 固定模型、权重、阈值、预/后处理、proposal、classifier、ActionVerifier、tracking、DynamicTrashMap、scheduler、re-observation、Area、projection、cadence、container 与 dependency。任何影响结果的修改都会使 freeze 失效。
 
-代表性演示场景还应提供道路材质、标线、斑马线、人行/绿化区域、建筑、树木、
-路灯和垃圾桶等人类可读参照物；动态障碍必须来自真实仿真服务或运动插件，不能用
-预制画面冒充运行结果。涂料和地表颜色可以是 visual-only，刚性障碍必须有碰撞体，
-所有视觉/碰撞/导航差异必须在场景文档中明示。
+## 10. 证据与发布
 
-所有模型应使用项目自建 primitive 或许可证清晰的资源，不依赖运行时在线下载 Fuel 模型。
+每个 Gate 同时提供 machine JSON、human Markdown、raw log 和 artifact SHA-256，并绑定 dataset、source commit、model/config/dataset SHA、container digest、dependency lock、seed、command 与 exit code。
 
-## 6. 工程约束
+最终 release 只从 CI 全绿且已合并的精确 `origin/main` 生成，包含 models、manifests、configs、launch、licenses、SBOM、SHA256SUMS、dependency lock、container digest、操作/健康检查/回滚说明和 evidence index。上线前完成 inactive warmup、healthcheck、atomic switch，并真实演练一次回滚。
 
-- 不修改第三方仓库源码；通过 overlay 包、参数和 launch 文件集成；
-- 第三方版本必须锁定到分支、tag 或 commit；
-- 所有脚本可重复执行；
-- 支持 `gui:=false` 的 headless 模式；
-- 每个阶段必须有可自动判定的验收脚本；
-- 所有结果落盘到 `artifacts/<timestamp>/`；
-- 禁止只以“RViz 看起来能跑”作为完成标准；
-- 不得伪造运行日志、截图或指标。
-
-## 7. 第一 GPT 复核门
-
-Codex 推进到以下状态后停止：
-
-1. 仿真一键启动；
-2. 车辆可稳定接收 `/cmd_vel`；
-3. LiDAR、相机、IMU、里程计、TF 正常；
-4. SLAM 和 Nav2 可启动；
-5. 完成一个多边形区域的覆盖路径规划和跟踪；
-6. 生成自动化评测 JSON；
-7. 打包完整证据；
-8. 输出剩余风险和下一阶段建议。
-
-感知模型训练、J6 量化、大模型任务分解和机械臂抓取不应在第一复核门前大规模展开。
+固定机器合同为 [`config/product_acceptance_v1.json`](config/product_acceptance_v1.json)，完整自然语言规范为 [`docs/product-acceptance-spec-v1.md`](docs/product-acceptance-spec-v1.md)。

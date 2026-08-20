@@ -1,0 +1,64 @@
+schema_version: 1
+stage: AUTO-05R
+policy_id: perception_p5_final_policy
+description: |
+  Canonical P5 sealed-final thresholds.  These apply only to a one-shot
+  G5_SEALED_FINAL evaluation unlocked by a validated MODEL_FREEZE.json.
+  Values are fixed and must never be lowered.
+gates:
+  - id: discrete_macro_precision_ge
+    metric: discrete.macro_precision
+    operator: ge
+    threshold: 0.95
+  - id: discrete_macro_recall_ge
+    metric: discrete.macro_recall
+    operator: ge
+    threshold: 0.95
+  - id: discrete_macro_f1_ge
+    metric: discrete.macro_f1
+    operator: ge
+    threshold: 0.95
+  - id: per_class_recall_ge
+    metric: per_class_recall
+    operator: ge
+    threshold: 0.90
+  - id: paper_precision_ge
+    metric: discrete.per_class.paper_litter.precision
+    operator: ge
+    threshold: 0.90
+  - id: AP50_ge
+    metric: AP50
+    operator: ge
+    threshold: 0.95
+  - id: AP50_95_ge
+    metric: AP50_95
+    operator: ge
+    threshold: 0.70
+  - id: small_object_recall_ge
+    metric: discrete.small_object_recall
+    operator: ge
+    threshold: 0.85
+  - id: leaf_iou_ge
+    metric: area.iou_by_class.leaf_pile
+    operator: ge
+    threshold: 0.80
+  - id: puddle_iou_ge
+    metric: area.iou_by_class.puddle
+    operator: ge
+    threshold: 0.80
+  - id: macro_miou_ge
+    metric: area.macro_miou
+    operator: ge
+    threshold: 0.80
+  - id: boundary_f1_ge
+    metric: area.boundary_f1
+    operator: ge
+    threshold: 0.80
+  - id: same_color_specificity_ge
+    metric: same_color_specificity
+    operator: ge
+    threshold: 0.98
+  - id: missing_class_hallucination_le
+    metric: missing_class_hallucination
+    operator: le
+    threshold: 0.01

@@ -25,6 +25,7 @@ setup(
     entry_points={
         "console_scripts": [
             "sanitation_gnss_sim = sanitation_gnss_sim.node:main",
+            "dual_navsat_adapter = sanitation_gnss_sim.dual_navsat:main",
         ],
     },
 )

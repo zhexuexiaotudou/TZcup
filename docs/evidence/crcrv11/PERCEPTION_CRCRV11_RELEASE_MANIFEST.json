@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "protocol": "CRCRV11",
+  "source_commit": "261f0d62d9e7bf6f844c0faf1fa72fe02486e0ce",
+  "release_bundle_created": false,
+  "release_zip": null,
+  "release_sha256": null,
+  "MODEL_FREEZE_X86_created": false,
+  "RELEASE_BUNDLE_PASS": false,
+  "reason": "R1/R2/R3 all failed; product freeze and release gates remain locked."
+}

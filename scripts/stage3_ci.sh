@@ -122,11 +122,17 @@ setsid ros2 run sanitation_safety velocity_gate \
 SAFETY_PID=$!
 PIDS+=("$SAFETY_PID")
 
+setsid ros2 run sanitation_safety safety_authority \
+  > "$OUT/safety_authority.log" 2>&1 &
+SAFETY_AUTHORITY_PID=$!
+PIDS+=("$SAFETY_AUTHORITY_PID")
+
 ros2 run sanitation_tasks sanitation_safety_probe --ros-args \
   -p output_path:="$OUT/safety_probe.json" \
   2>&1 | tee "$OUT/safety_probe.log"
 
 stop_pid "$SAFETY_PID"
+stop_pid "$SAFETY_AUTHORITY_PID"
 PIDS=("$SIM_PID")
 
 if ! kill -0 -- "-$SIM_PID" 2>/dev/null; then

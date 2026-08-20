@@ -1,0 +1,25 @@
+coverage_server:
+  ros__parameters:
+    use_sim_time: true
+    action_server_result_timeout: 30.0
+    coordinates_in_cartesian_frame: true
+    robot_width: 1.32
+    # The physical deployed envelope is 1.32 m.  A 1.10 m planning spacing
+    # leaves 16.7% nominal overlap, below the V1 20% repeat ceiling while
+    # retaining tolerance for lateral tracking error.
+    operation_width: 1.10
+    min_turning_radius: 1.4293521136632124
+    linear_curv_change: 0.70
+    default_headland_width: 2.50
+    default_headland_type: CONSTANT
+    default_allow_overlap: true
+    default_swath_type: COVERAGE
+    default_swath_angle_type: SET_ANGLE
+    default_swath_angle: 0.0
+    default_route_type: BOUSTROPHEDON
+    # Fields2Cover supplies swaths only; the returned compatibility turns are
+    # discarded and rebuilt as footprint-checked Ackermann connectors.
+    default_path_type: DUBIN
+    default_path_continuity_type: DISCONTINUOUS
+    default_turn_point_distance: 0.10
+    max_turn_angular_velocity: 0.70

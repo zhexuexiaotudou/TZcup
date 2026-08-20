@@ -15,9 +15,48 @@ class ComponentType(str, Enum):
     OBSTACLE_BYPASS = "OBSTACLE_BYPASS"
     REPAIR_SWATH = "REPAIR_SWATH"
     RETURN_HOME = "RETURN_HOME"
+    # Ackermann profile semantics. FORWARD/REVERSE are collision-checked
+    # connector arcs executed through FollowPath with correct headings;
+    # CUSP_STOP is a single-point standstill between direction changes;
+    # DEFERRED_SWATH records a swath left to a later pass rather than cheating
+    # it with an impossible maneuver.
+    FORWARD = "FORWARD"
+    REVERSE = "REVERSE"
+    CUSP_STOP = "CUSP_STOP"
+    DEFERRED_SWATH = "DEFERRED_SWATH"
 
 
 CLEANING_COMPONENTS = {ComponentType.SWATH, ComponentType.REPAIR_SWATH}
+
+
+def connector_handoff_replan_decision(
+    current_pose: tuple[float, float, float],
+    nominal_start_pose: tuple[float, float, float],
+    *,
+    max_position_error_m: float = 0.75,
+    max_heading_error_rad: float = 0.35,
+) -> dict[str, float | bool]:
+    """Decide whether a stale static connector needs a live replan.
+
+    The decision uses localization only; simulator ground truth is
+    deliberately absent from the execution path.
+    """
+    position_error_m = math.dist(current_pose[:2], nominal_start_pose[:2])
+    heading_error_rad = abs(math.atan2(
+        math.sin(float(current_pose[2]) - float(nominal_start_pose[2])),
+        math.cos(float(current_pose[2]) - float(nominal_start_pose[2])),
+    ))
+    requires_replan = (
+        position_error_m > float(max_position_error_m)
+        or heading_error_rad > float(max_heading_error_rad)
+    )
+    return {
+        "requires_replan": requires_replan,
+        "position_error_m": position_error_m,
+        "heading_error_rad": heading_error_rad,
+        "max_position_error_m": float(max_position_error_m),
+        "max_heading_error_rad": float(max_heading_error_rad),
+    }
 
 
 def _point(value: Any) -> tuple[float, float]:
@@ -43,10 +82,11 @@ class CoverageComponent:
         object.__setattr__(self, "points", tuple(_point(point) for point in self.points))
         if not self.component_id:
             raise ValueError("component_id is required")
-        if self.kind not in {ComponentType.ROTATE} and len(self.points) < 2:
+        single_point_kinds = {ComponentType.ROTATE, ComponentType.CUSP_STOP}
+        if self.kind not in single_point_kinds and len(self.points) < 2:
             raise ValueError(f"{self.kind.value} requires at least two points")
-        if self.kind == ComponentType.ROTATE and len(self.points) < 1:
-            raise ValueError("ROTATE requires an anchor point")
+        if self.kind in single_point_kinds and len(self.points) < 1:
+            raise ValueError(f"{self.kind.value} requires an anchor point")
         expected_brush = self.kind in CLEANING_COMPONENTS
         if bool(self.brush_enabled) != expected_brush:
             raise ValueError(

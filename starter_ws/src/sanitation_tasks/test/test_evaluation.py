@@ -1,6 +1,12 @@
+import math
+
 import pytest
 
-from sanitation_tasks.evaluation import assert_comparable_frames, synchronize_samples
+from sanitation_tasks.evaluation import (
+    assert_comparable_frames,
+    product_estop_latency_pass,
+    synchronize_samples,
+)
 
 
 def test_rejects_direct_map_odom_comparison():
@@ -18,3 +24,15 @@ def test_timestamp_sync_respects_tolerance_and_no_reuse():
     pairs, dropped = synchronize_samples(estimates, truths, 0.05)
     assert len(pairs) == 1
     assert dropped == 2
+
+
+@pytest.mark.parametrize("p95_sec", [0.0, 0.02, 0.200])
+def test_product_estop_latency_accepts_finite_nonnegative_values_at_gate(p95_sec):
+    assert product_estop_latency_pass(p95_sec)
+
+
+@pytest.mark.parametrize(
+    "p95_sec", [0.201, -0.001, math.nan, math.inf, -math.inf, None, "invalid"]
+)
+def test_product_estop_latency_rejects_invalid_or_over_gate_values(p95_sec):
+    assert not product_estop_latency_pass(p95_sec)

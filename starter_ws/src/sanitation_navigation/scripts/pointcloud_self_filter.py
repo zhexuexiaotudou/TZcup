@@ -19,6 +19,8 @@ from __future__ import annotations
 import numpy as np
 import rclpy
 from rclpy.duration import Duration
+from rclpy.executors import ExternalShutdownException
+from rclpy.impl.implementation_singleton import rclpy_implementation as _rclpy
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from rclpy.time import Time
@@ -145,9 +147,16 @@ def main() -> None:
     node = PointCloudSelfFilter()
     try:
         rclpy.spin(node)
+    except (ExternalShutdownException, KeyboardInterrupt):
+        pass
+    except _rclpy.RCLError:
+        if rclpy.ok():
+            raise
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        # Launch shutdown can invalidate the context before this finally block
+        # runs; cleanup must stay quiet and idempotent.
+        rclpy.try_shutdown()
 
 
 if __name__ == '__main__':

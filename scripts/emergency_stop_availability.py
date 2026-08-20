@@ -24,7 +24,9 @@ def run(telemetry_path: Path, output_path: Path, timeout_sec: float) -> int:
 
     rclpy.init()
     node = Node("auto17_emergency_stop_availability")
-    publisher = node.create_publisher(Bool, "/emergency_stop", 10)
+    publisher = node.create_publisher(
+        Bool, "/safety/operator_estop_command", 10
+    )
     deadline = time.monotonic() + timeout_sec
     publish_count = 0
     subscription_count = 0
@@ -39,7 +41,7 @@ def run(telemetry_path: Path, output_path: Path, timeout_sec: float) -> int:
             # reader is ready to consume data. Keep sending a bounded false
             # availability heartbeat until the dashboard confirms receipt.
             if (
-                subscription_count >= 2
+                subscription_count >= 1
                 and publish_count < 50
                 and now - last_publish >= 0.25
             ):

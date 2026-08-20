@@ -97,8 +97,17 @@ def add_world_details(world, key, width, height, tree_count):
     # the outer campus expands independently for medium and competition maps.
     box_model(world, "asphalt_ground", (0, 0, -0.05), (width, height, 0.10), "0.13 0.15 0.17 1")
     road_width = min(18.0, height * 0.48)
-    box_model(world, "north_sidewalk", (0, road_width / 2 + 1.5, 0.08), (width - 2, 3.0, 0.16), "0.55 0.56 0.54 1")
-    box_model(world, "south_sidewalk", (0, -road_width / 2 - 1.5, 0.08), (width - 2, 3.0, 0.16), "0.55 0.56 0.54 1")
+    # These bands are flush accessible paving within the cleaning envelope,
+    # not continuous curbs.  A full-width collision partitions the 20,000 m2
+    # formal world into unreachable strips while remaining below the planar
+    # lidar, so Nav2 cannot plan around the physical obstruction.  Keep the
+    # material / visual-domain change as a thin visual layer over the single
+    # asphalt contact plane; duplicate coplanar contacts also destabilize the
+    # Ackermann tire constraints at an oblique crossing.
+    sidewalk_height = 0.002
+    sidewalk_z = sidewalk_height / 2.0
+    box_model(world, "north_sidewalk", (0, road_width / 2 + 1.5, sidewalk_z), (width - 2, 3.0, sidewalk_height), "0.55 0.56 0.54 1", False)
+    box_model(world, "south_sidewalk", (0, -road_width / 2 - 1.5, sidewalk_z), (width - 2, 3.0, sidewalk_height), "0.55 0.56 0.54 1", False)
     box_model(world, "north_green_verge", (0, road_width / 2 + 3.7, 0.03), (width - 3, 1.4, 0.06), "0.12 0.36 0.14 1", False)
     box_model(world, "south_green_verge", (0, -road_width / 2 - 3.7, 0.03), (width - 3, 1.4, 0.06), "0.12 0.36 0.14 1", False)
 

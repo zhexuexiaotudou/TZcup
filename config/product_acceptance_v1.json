@@ -1,0 +1,270 @@
+{
+  "schema_version": 1,
+  "contract_id": "TZCUP-SIMULATION-PRODUCT-ACCEPTANCE-V1",
+  "immutable": true,
+  "source_document": "docs/product-acceptance-spec-v1.md",
+  "source_document_sha256": "56466de739f873173bfba57789ceaa86e22aefecf3561712aa17d11c9ec3d1c4",
+  "decision": "all gates A-P and all provenance checks must pass; gates cannot compensate for one another",
+  "required_gate_ids": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P"],
+  "required_final_artifacts": [
+    "MODEL_FREEZE_X86.json",
+    "PERCEPTION_X86_FREEZE_MANIFEST.json",
+    "30SEED_DYNAMIC_DISCOVERY_REPORT.json",
+    "30SEED_SPOT_CLEAN_REPORT.json",
+    "POST_CLEAN_VERIFICATION_REPORT.json",
+    "PERFORMANCE_REPORT.json",
+    "SOAK_2H_REPORT.json",
+    "FAULT_MATRIX_REPORT.json",
+    "MCAP_REPLAY_REPORT.json",
+    "COMPETITION_GATE_MAPPING.json",
+    "THIRD_PARTY_NOTICES.md",
+    "SBOM.json",
+    "SHA256SUMS"
+  ],
+  "required_release_zip_glob": "release/TZcup_*_*.zip",
+  "global_vetoes": [
+    {"id": "VETO-01", "metric": "gt_control_violation", "op": "eq", "threshold": 0, "unit": "count", "requirement": "GT must never control the production chain"},
+    {"id": "VETO-02", "metric": "preknown_target_coordinates", "op": "eq", "threshold": false, "unit": "boolean", "requirement": "mission cannot preload target coordinates"},
+    {"id": "VETO-03", "metric": "wrong_target_cleaning", "op": "eq", "threshold": 0, "unit": "count", "requirement": "wrong-target cleaning is forbidden"},
+    {"id": "VETO-04", "metric": "false_candidate_cleaning", "op": "eq", "threshold": 0, "unit": "count", "requirement": "false-candidate cleaning is forbidden"},
+    {"id": "VETO-05", "metric": "false_clean_now", "op": "eq", "threshold": 0, "unit": "count", "requirement": "false CLEAN_NOW is forbidden"},
+    {"id": "VETO-06", "metric": "wrong_class_clean_now", "op": "eq", "threshold": 0, "unit": "count", "requirement": "wrong-class CLEAN_NOW is forbidden"},
+    {"id": "VETO-07", "metric": "collision_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "formal acceptance permits no collision"},
+    {"id": "VETO-08", "metric": "keepout_violation_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "formal acceptance permits no keepout violation"},
+    {"id": "VETO-09", "metric": "sealed_final_leak", "op": "eq", "threshold": false, "unit": "boolean", "requirement": "sealed final must remain one-shot and immutable"},
+    {"id": "VETO-10", "metric": "post_final_tuning", "op": "eq", "threshold": false, "unit": "boolean", "requirement": "no tuning after final-set access"},
+    {"id": "VETO-11", "metric": "release_model_hash_mismatch", "op": "eq", "threshold": false, "unit": "boolean", "requirement": "release models must match the freeze"},
+    {"id": "VETO-12", "metric": "silent_cpu_fallback", "op": "eq", "threshold": false, "unit": "boolean", "requirement": "provider fallback must not be silent"},
+    {"id": "VETO-13", "metric": "safety_bypass_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "Cleaning Intelligence cannot bypass Safety"},
+    {"id": "VETO-14", "metric": "unhashed_formal_evidence_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "all formal evidence must have a SHA-256"}
+  ],
+  "gates": [
+    {
+      "id": "A",
+      "name": "Vehicle / Simulation Fidelity",
+      "checks": [
+        {"id": "A-01", "metric": "production_target_list_start_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "production target list starts empty"},
+        {"id": "A-02", "metric": "dynamic_trash_map_start_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "DynamicTrashMap starts empty"},
+        {"id": "A-03", "metric": "pre_fov_false_target_creation", "op": "eq", "threshold": 0, "unit": "count", "requirement": "targets appear only after observation"},
+        {"id": "A-04", "metric": "ackermann_runtime", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "formal vehicle uses Ackermann kinematics"},
+        {"id": "A-05", "metric": "point_turn_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "point turns are forbidden"},
+        {"id": "A-06", "metric": "zero_speed_yaw_command_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "zero-speed yaw commands are forbidden"},
+        {"id": "A-07", "metric": "frozen_vehicle_geometry_verified", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "vehicle, sensor, brush and bin geometry match the freeze"},
+        {"id": "A-08", "metric": "effective_cleaning_width_mm", "op": "gte", "threshold": 600, "unit": "mm", "requirement": "effective cleaning width is at least 600 mm"},
+        {"id": "A-09", "metric": "bin_capacity_l", "op": "gte", "threshold": 40, "unit": "L", "requirement": "bin capacity is at least 40 L"},
+        {"id": "A-10", "metric": "gt_runtime_subscriber_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "release runtime has no GT/oracle subscriber"}
+      ]
+    },
+    {
+      "id": "B",
+      "name": "Localization & Mapping",
+      "checks": [
+        {"id": "B-01", "metric": "localization_xy_rmse_m", "op": "lte", "threshold": 0.05, "unit": "m", "requirement": "XY RMSE is at most 50 mm"},
+        {"id": "B-02", "metric": "localization_xy_p95_m", "op": "lte", "threshold": 0.05, "unit": "m", "requirement": "XY P95 is at most 50 mm"},
+        {"id": "B-03", "metric": "mapping_area_m2", "op": "gte", "threshold": 20000, "unit": "m2", "requirement": "continuous mapped area is at least 20,000 m2"},
+        {"id": "B-04", "metric": "map_save_load_relocalize_navigation_pass", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "saved map reloads, relocalizes and supports Nav2"},
+        {"id": "B-05", "metric": "coordinate_frame_break_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "no coordinate-frame break"},
+        {"id": "B-06", "metric": "topology_damage_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "no obvious topology damage"}
+      ]
+    },
+    {
+      "id": "C",
+      "name": "Coverage & Efficiency",
+      "checks": [
+        {"id": "C-01", "metric": "empirical_brush_coverage_ratio", "op": "gte", "threshold": 0.95, "unit": "ratio", "requirement": "brush-swept empirical coverage is at least 95%"},
+        {"id": "C-02", "metric": "repeat_coverage_ratio", "op": "lte", "threshold": 0.20, "unit": "ratio", "requirement": "repeat coverage is at most 20%"},
+        {"id": "C-03", "metric": "effective_cleaning_efficiency_m2h", "op": "gte", "threshold": 3500, "unit": "m2/h", "requirement": "all-inclusive effective cleaning efficiency is at least 3500 m2/h"},
+        {"id": "C-04", "metric": "efficiency_includes_full_pipeline_time", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "efficiency includes turns, avoidance, perception, tracking, spot-clean and re-observation"}
+      ]
+    },
+    {
+      "id": "D",
+      "name": "Navigation & Safety",
+      "checks": [
+        {"id": "D-01", "metric": "formal_navigation_seed_count", "op": "gte", "threshold": 30, "unit": "count", "requirement": "navigation evaluation uses at least 30 independent seeds"},
+        {"id": "D-02", "metric": "navigation_success_ratio", "op": "gte", "threshold": 0.95, "unit": "ratio", "requirement": "navigation success is at least 95%"},
+        {"id": "D-03", "metric": "cleaning_boundary_violation_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "no cleaning boundary violation"},
+        {"id": "D-04", "metric": "forbidden_region_violation_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "no forbidden-region violation"},
+        {"id": "D-05", "metric": "cliff_violation_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "no simulated drop or cliff violation"},
+        {"id": "D-06", "metric": "estop_trial_count", "op": "gte", "threshold": 30, "unit": "count", "requirement": "E-stop evaluation uses at least 30 trials"},
+        {"id": "D-07", "metric": "estop_command_acceptance_ratio", "op": "eq", "threshold": 1.0, "unit": "ratio", "requirement": "all E-stop commands are accepted"},
+        {"id": "D-08", "metric": "estop_safe_stop_ratio", "op": "eq", "threshold": 1.0, "unit": "ratio", "requirement": "all E-stop trials reach a safe stop"},
+        {"id": "D-09", "metric": "estop_response_p95_s", "op": "lte", "threshold": 0.2, "unit": "s", "requirement": "E-stop response P95 is at most 200 ms"},
+        {"id": "D-10", "metric": "safety_plane_independent", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "Safety Plane remains independent of Cleaning Intelligence"}
+      ]
+    },
+    {
+      "id": "E",
+      "name": "Discrete Perception",
+      "checks": [
+        {"id": "E-01", "metric": "eventual_proposal_recall", "op": "gte", "threshold": 0.98, "unit": "ratio", "requirement": "eventual proposal recall is at least 98%"},
+        {"id": "E-02", "metric": "first_visible_small_proposal_recall", "op": "gte", "threshold": 0.95, "unit": "ratio", "requirement": "first-visible small proposal recall is at least 95%"},
+        {"id": "E-03", "metric": "proposal_fp_per_frame", "op": "lte", "threshold": 1.0, "unit": "count/frame", "requirement": "proposal load does not exceed the default hard ceiling"},
+        {"id": "E-04", "metric": "close_range_macro_f1", "op": "gte", "threshold": 0.98, "unit": "ratio", "requirement": "candidate-level four-class macro F1 is at least 98%"},
+        {"id": "E-05", "metric": "minimum_target_precision", "op": "gte", "threshold": 0.97, "unit": "ratio", "requirement": "each target class precision is at least 97%"},
+        {"id": "E-06", "metric": "minimum_target_recall", "op": "gte", "threshold": 0.97, "unit": "ratio", "requirement": "each target class recall is at least 97%"},
+        {"id": "E-07", "metric": "background_specificity", "op": "gte", "threshold": 0.995, "unit": "ratio", "requirement": "background specificity is at least 99.5%"},
+        {"id": "E-08", "metric": "paper_precision", "op": "gte", "threshold": 0.98, "unit": "ratio", "requirement": "paper precision is at least 98%"},
+        {"id": "E-09", "metric": "metal_recall", "op": "gte", "threshold": 0.97, "unit": "ratio", "requirement": "metal recall is at least 97%"},
+        {"id": "E-10", "metric": "first_visible_small_eventual_correct_class_recall", "op": "gte", "threshold": 0.90, "unit": "ratio", "requirement": "small-cohort eventual correct-class recall is at least 90%"},
+        {"id": "E-11", "metric": "action_verifier_target_recall", "op": "gte", "threshold": 0.95, "unit": "ratio", "requirement": "ActionVerifier target acceptance recall is at least 95%"},
+        {"id": "E-12", "metric": "action_verifier_small_recall", "op": "gte", "threshold": 0.90, "unit": "ratio", "requirement": "ActionVerifier small acceptance recall is at least 90%"},
+        {"id": "E-13", "metric": "confirmed_actionable_precision", "op": "gte", "threshold": 0.95, "unit": "ratio", "requirement": "confirmed actionable precision meets the 95% hard minimum"},
+        {"id": "E-14", "metric": "wrong_confirmed_actionable_ratio", "op": "lte", "threshold": 0.01, "unit": "ratio", "requirement": "wrong confirmed actionable is at most 1%"},
+        {"id": "E-15", "metric": "negative_confirmed_actionable_ratio", "op": "lte", "threshold": 0.01, "unit": "ratio", "requirement": "negative-only confirmed actionable is at most 1%"},
+        {"id": "E-16", "metric": "max_reobserve_per_candidate", "op": "lte", "threshold": 2, "unit": "count", "requirement": "a candidate is re-observed at most twice"}
+      ]
+    },
+    {
+      "id": "F",
+      "name": "Area Perception",
+      "checks": [
+        {"id": "F-01", "metric": "area_macro_miou", "op": "gte", "threshold": 0.80, "unit": "ratio", "requirement": "leaf/puddle macro mIoU is at least 80%"},
+        {"id": "F-02", "metric": "area_boundary_f1", "op": "gte", "threshold": 0.80, "unit": "ratio", "requirement": "area boundary F1 is at least 80%"},
+        {"id": "F-03", "metric": "area_negative_actionable_fp_per_frame", "op": "lte", "threshold": 0.02, "unit": "count/frame", "requirement": "area negative actionable FP/frame is at most 0.02"},
+        {"id": "F-04", "metric": "leaf_iou_reported", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "leaf IoU is reported separately"},
+        {"id": "F-05", "metric": "puddle_iou_reported", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "puddle IoU is reported separately"}
+      ]
+    },
+    {
+      "id": "G",
+      "name": "Tracking & DynamicTrashMap",
+      "checks": [
+        {"id": "G-01", "metric": "track_creation_recall", "op": "gte", "threshold": 0.98, "unit": "ratio", "requirement": "track creation recall is at least 98%"},
+        {"id": "G-02", "metric": "far_close_identity_continuity", "op": "gte", "threshold": 0.95, "unit": "ratio", "requirement": "far-to-close identity continuity is at least 95%"},
+        {"id": "G-03", "metric": "confirmed_track_correct_class_recall", "op": "gte", "threshold": 0.95, "unit": "ratio", "requirement": "confirmed-track correct-class recall is at least 95%"},
+        {"id": "G-04", "metric": "id_consistency", "op": "gte", "threshold": 0.97, "unit": "ratio", "requirement": "ID consistency is at least 97%"},
+        {"id": "G-05", "metric": "duplicate_track_ratio", "op": "lte", "threshold": 0.01, "unit": "ratio", "requirement": "duplicate tracks are at most 1%"},
+        {"id": "G-06", "metric": "fragmentation_ratio", "op": "lte", "threshold": 0.03, "unit": "ratio", "requirement": "track fragmentation is at most 3%"},
+        {"id": "G-07", "metric": "rgbd_projection_success_ratio", "op": "gte", "threshold": 0.98, "unit": "ratio", "requirement": "depth-valid projection success is at least 98%"},
+        {"id": "G-08", "metric": "projection_map_error_median_m", "op": "lte", "threshold": 0.05, "unit": "m", "requirement": "projection median map error is at most 5 cm"},
+        {"id": "G-09", "metric": "projection_map_error_p95_m", "op": "lte", "threshold": 0.15, "unit": "m", "requirement": "projection P95 map error is at most 15 cm"},
+        {"id": "G-10", "metric": "dynamic_trash_map_rmse_m", "op": "lte", "threshold": 0.10, "unit": "m", "requirement": "DynamicTrashMap RMSE is at most 10 cm"},
+        {"id": "G-11", "metric": "dynamic_trash_map_precision", "op": "gte", "threshold": 0.95, "unit": "ratio", "requirement": "confirmed target map precision is at least 95%"},
+        {"id": "G-12", "metric": "dynamic_trash_map_coverage", "op": "gte", "threshold": 0.95, "unit": "ratio", "requirement": "target map coverage is at least 95%"},
+        {"id": "G-13", "metric": "duplicate_target_ratio", "op": "lte", "threshold": 0.01, "unit": "ratio", "requirement": "duplicate mapped targets are at most 1%"},
+        {"id": "G-14", "metric": "removed_target_stale_scheduling_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "removed targets are never scheduled stale"}
+      ]
+    },
+    {
+      "id": "H",
+      "name": "Spot Cleaning",
+      "checks": [
+        {"id": "H-01", "metric": "formal_spot_clean_seed_count", "op": "gte", "threshold": 30, "unit": "count", "requirement": "spot-clean evaluation uses at least 30 formal seeds"},
+        {"id": "H-02", "metric": "spot_clean_mission_success_ratio", "op": "gte", "threshold": 0.90, "unit": "ratio", "requirement": "spot-clean mission success is at least 90%"},
+        {"id": "H-03", "metric": "confirmed_target_cleaning_success_ratio", "op": "gte", "threshold": 0.90, "unit": "ratio", "requirement": "confirmed-target cleaning success is at least 90%"},
+        {"id": "H-04", "metric": "duplicate_cleaning_ratio", "op": "lte", "threshold": 0.01, "unit": "ratio", "requirement": "duplicate cleaning is at most 1%"},
+        {"id": "H-05", "metric": "coverage_safe_pause_ratio", "op": "eq", "threshold": 1.0, "unit": "ratio", "requirement": "coverage always pauses safely"},
+        {"id": "H-06", "metric": "coverage_resume_ratio", "op": "gte", "threshold": 0.90, "unit": "ratio", "requirement": "coverage resumes in at least 90% of eligible missions"},
+        {"id": "H-07", "metric": "pre_clean_verification_enforced", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "pre-clean verification cancels or defers unhealthy targets"}
+      ]
+    },
+    {
+      "id": "I",
+      "name": "Post-Clean Verification",
+      "checks": [
+        {"id": "I-01", "metric": "camera_backed_cleaned_claim_ratio", "op": "eq", "threshold": 1.0, "unit": "ratio", "requirement": "all CLEANED claims are camera-backed"},
+        {"id": "I-02", "metric": "false_cleaned_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "false CLEANED claims are forbidden"},
+        {"id": "I-03", "metric": "area_remaining_ratio", "op": "lte", "threshold": 0.10, "unit": "ratio", "requirement": "area remaining after clean is at most 10%"},
+        {"id": "I-04", "metric": "maximum_area_retry_count", "op": "lte", "threshold": 1, "unit": "count", "requirement": "area cleaning retries at most once"}
+      ]
+    },
+    {
+      "id": "J",
+      "name": "Multimodal / LLM",
+      "checks": [
+        {"id": "J-01", "metric": "interaction_modality_count", "op": "gte", "threshold": 2, "unit": "count", "requirement": "at least two interaction modalities are implemented"},
+        {"id": "J-02", "metric": "command_reception_success_ratio", "op": "gte", "threshold": 0.95, "unit": "ratio", "requirement": "command reception succeeds at least 95%"},
+        {"id": "J-03", "metric": "task_decomposition_accuracy", "op": "gte", "threshold": 0.95, "unit": "ratio", "requirement": "fixed-set task decomposition accuracy is at least 95%"},
+        {"id": "J-04", "metric": "unsafe_llm_action_bypass_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "LLM cannot bypass Safety or directly control the chassis"}
+      ]
+    },
+    {
+      "id": "K",
+      "name": "Performance",
+      "checks": [
+        {"id": "K-01", "metric": "unpaced_frame_count", "op": "gte", "threshold": 1200, "unit": "frames", "requirement": "unpaced capacity uses at least 1200 frames"},
+        {"id": "K-02", "metric": "sustainable_throughput_hz", "op": "gte", "threshold": 10, "unit": "Hz", "requirement": "full-pipeline sustainable throughput is at least 10 Hz"},
+        {"id": "K-03", "metric": "realtime_source_rate_hz", "op": "gte", "threshold": 15, "unit": "Hz", "requirement": "real-time source rate is at least 15 Hz"},
+        {"id": "K-04", "metric": "realtime_duration_s", "op": "gte", "threshold": 600, "unit": "s", "requirement": "real-time test lasts at least 10 minutes"},
+        {"id": "K-05", "metric": "processed_rate_hz", "op": "gte", "threshold": 10, "unit": "Hz", "requirement": "processed rate is at least 10 Hz"},
+        {"id": "K-06", "metric": "end_to_end_latency_p95_ms", "op": "lte", "threshold": 200, "unit": "ms", "requirement": "end-to-end latency P95 is at most 200 ms"},
+        {"id": "K-07", "metric": "drop_ratio", "op": "lte", "threshold": 0.01, "unit": "ratio", "requirement": "frame drop is at most 1%"},
+        {"id": "K-08", "metric": "queue_bounded", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "queues remain bounded without latency accumulation"},
+        {"id": "K-09", "metric": "resource_telemetry_complete", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "GPU, VRAM, CPU and RAM are recorded"}
+      ]
+    },
+    {
+      "id": "L",
+      "name": "Reliability / Soak",
+      "checks": [
+        {"id": "L-01", "metric": "soak_duration_s", "op": "gte", "threshold": 7200, "unit": "s", "requirement": "frozen full-product pipeline runs continuously for two hours"},
+        {"id": "L-02", "metric": "crash_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "no crash"},
+        {"id": "L-03", "metric": "deadlock_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "no deadlock"},
+        {"id": "L-04", "metric": "memory_growth_ratio", "op": "lte", "threshold": 0.05, "unit": "ratio", "requirement": "memory growth is at most 5%"},
+        {"id": "L-05", "metric": "queue_growth_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "queues do not grow persistently"},
+        {"id": "L-06", "metric": "unexpected_model_reload_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "models are not unexpectedly reloaded"},
+        {"id": "L-07", "metric": "persistent_tf_failure_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "no persistent TF failure"},
+        {"id": "L-08", "metric": "unrecoverable_watchdog_event_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "no unrecoverable watchdog event"},
+        {"id": "L-09", "metric": "soak_full_pipeline_components_present", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "soak includes coverage, perception, tracking, map, spot-clean and post-clean"}
+      ]
+    },
+    {
+      "id": "M",
+      "name": "Fault Injection",
+      "checks": [
+        {"id": "M-01", "metric": "required_fault_case_count", "op": "gte", "threshold": 18, "unit": "count", "requirement": "all specified sensor, perception, provider and Nav2 faults are injected"},
+        {"id": "M-02", "metric": "unsafe_cleaning_action_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "faults cause no unsafe cleaning action"},
+        {"id": "M-03", "metric": "unsafe_pending_clean_cancelled_ratio", "op": "eq", "threshold": 1.0, "unit": "ratio", "requirement": "unsafe pending cleans are cancelled or deferred"},
+        {"id": "M-04", "metric": "health_degraded_or_error_ratio", "op": "eq", "threshold": 1.0, "unit": "ratio", "requirement": "faults are surfaced as DEGRADED or ERROR"},
+        {"id": "M-05", "metric": "safety_nav_operational_ratio", "op": "eq", "threshold": 1.0, "unit": "ratio", "requirement": "Safety and Nav2 remain operational where required"}
+      ]
+    },
+    {
+      "id": "N",
+      "name": "Replay / Reproducibility",
+      "checks": [
+        {"id": "N-01", "metric": "formal_bag_count", "op": "gte", "threshold": 5, "unit": "count", "requirement": "at least five formal bags are replayed through ros2 bag play"},
+        {"id": "N-02", "metric": "maximum_replay_result_difference_ratio", "op": "lte", "threshold": 0.01, "unit": "ratio", "requirement": "key replay results differ by at most 1%"},
+        {"id": "N-03", "metric": "replay_recomputes_full_chain", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "replay recomputes observation through post-clean metrics"},
+        {"id": "N-04", "metric": "reproducibility_fields_complete", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "commit, model/config/dataset hashes, container, lock, seed, command and exit code are bound"},
+        {"id": "N-05", "metric": "world_overlap_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "data split worlds do not overlap"},
+        {"id": "N-06", "metric": "seed_overlap_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "data split seeds do not overlap"},
+        {"id": "N-07", "metric": "exact_rgb_duplicate_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "cross-split exact RGB duplicates are absent"},
+        {"id": "N-08", "metric": "cross_split_phash_duplicate_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "cross-split pHash duplicates are absent"},
+        {"id": "N-09", "metric": "final_set_training_access_count", "op": "eq", "threshold": 0, "unit": "count", "requirement": "sealed final is never used for training"}
+      ]
+    },
+    {
+      "id": "O",
+      "name": "Freeze / Release / Supply Chain",
+      "checks": [
+        {"id": "O-01", "metric": "git_diff_check_pass", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "git diff --check passes"},
+        {"id": "O-02", "metric": "fast_ci_pass", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "fast CI passes"},
+        {"id": "O-03", "metric": "ros_build_pass", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "ROS build passes"},
+        {"id": "O-04", "metric": "ros_tests_pass", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "ROS tests pass"},
+        {"id": "O-05", "metric": "secret_scan_pass", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "secret scan passes"},
+        {"id": "O-06", "metric": "model_freeze_created_before_final_access", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "x86 model/pipeline freeze precedes sealed access"},
+        {"id": "O-07", "metric": "sealed_unseen_world_count", "op": "gte", "threshold": 4, "unit": "count", "requirement": "sealed final has at least four unseen worlds"},
+        {"id": "O-08", "metric": "sealed_scene_count", "op": "gte", "threshold": 100, "unit": "count", "requirement": "sealed final has at least 100 scenes"},
+        {"id": "O-09", "metric": "sealed_frame_count", "op": "gte", "threshold": 1000, "unit": "frames", "requirement": "sealed final has at least 1000 frames"},
+        {"id": "O-10", "metric": "sealed_moving_sequence_count", "op": "gte", "threshold": 20, "unit": "count", "requirement": "sealed final has at least 20 moving sequences"},
+        {"id": "O-11", "metric": "sealed_final_pass", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "one-shot freeze-bound sealed final passes"},
+        {"id": "O-12", "metric": "release_bundle_verified", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "release ZIP contents and hashes are verified"},
+        {"id": "O-13", "metric": "rollback_exercised", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "rollback to last-known-good is exercised once"},
+        {"id": "O-14", "metric": "license_inventory_complete", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "all shipped code, models, weights and runtime have known redistribution status"}
+      ]
+    },
+    {
+      "id": "P",
+      "name": "Competition Mapping",
+      "checks": [
+        {"id": "P-01", "metric": "official_hard_gate_pass", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "all official competition hard gates pass"},
+        {"id": "P-02", "metric": "formal_integrated_seed_count", "op": "gte", "threshold": 30, "unit": "count", "requirement": "integrated final simulation uses at least 30 independent seeds"},
+        {"id": "P-03", "metric": "required_scenario_domain_count", "op": "gte", "threshold": 18, "unit": "count", "requirement": "the formal matrix covers every required domain and all target classes"},
+        {"id": "P-04", "metric": "competition_gate_mapping_complete", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "official claims map to machine evidence without semantic substitution"},
+        {"id": "P-05", "metric": "live_demo_full_chain_pass", "op": "eq", "threshold": true, "unit": "boolean", "requirement": "live unedited demo shows mapping through post-clean and resumed coverage"}
+      ]
+    }
+  ]
+}

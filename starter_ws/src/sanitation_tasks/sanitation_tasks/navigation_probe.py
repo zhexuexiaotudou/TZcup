@@ -13,6 +13,8 @@ from rclpy.action import ActionClient
 from rclpy.node import Node
 from rclpy.qos import QoSProfile
 
+from .route_config import load_waypoints
+
 
 WAYPOINTS = [
     (0.8, 0.0, 0.0),
@@ -36,6 +38,12 @@ class NavigationProbe(Node):
         self.declare_parameter("initial_pose_x", 0.0)
         self.declare_parameter("initial_pose_y", 0.0)
         self.declare_parameter("initial_pose_yaw", 0.0)
+        self.declare_parameter("waypoints_json", json.dumps(WAYPOINTS))
+        self.declare_parameter("waypoints_file", "")
+        self.waypoints = load_waypoints(
+            str(self.get_parameter("waypoints_json").value),
+            str(self.get_parameter("waypoints_file").value),
+        )
         self.action_client = ActionClient(
             self, NavigateThroughPoses, "/navigate_through_poses"
         )
@@ -102,7 +110,7 @@ class NavigationProbe(Node):
                 break
 
         goal = NavigateThroughPoses.Goal()
-        goal.poses = [self._pose(x, y, yaw) for x, y, yaw in WAYPOINTS]
+        goal.poses = [self._pose(x, y, yaw) for x, y, yaw in self.waypoints]
         sent = self.action_client.send_goal_async(goal, feedback_callback=self._feedback)
         rclpy.spin_until_future_complete(self, sent, timeout_sec=15.0)
         goal_handle = sent.result() if sent.done() else None
@@ -135,7 +143,7 @@ class NavigationProbe(Node):
         status = int(wrapped_result.status)
         report = {
             "success": status == GoalStatus.STATUS_SUCCEEDED,
-            "waypoint_count": len(WAYPOINTS),
+            "waypoint_count": len(self.waypoints),
             "status": status,
             "status_expected": GoalStatus.STATUS_SUCCEEDED,
             "feedback_samples": self.feedback_samples,

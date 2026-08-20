@@ -39,3 +39,21 @@ annotation JSON 顶层包含 `schema_version` 和 `frames`。每帧至少包含�
 - 标定应使用至少 12 张清晰棋盘格图像，保存相机矩阵、畸变和重投影误差；
 - map localization 必须由独立可测位姿系统、fiducial 或其他可审计真值获得，不得用里程计自比较；
 - 没有完整 GT 时只能标记资源待补，不能设置 `REAL_DOMAIN_PASS=true`。
+
+## RGB-D 与独立摆位记录
+
+产品采集使用 `scripts/real_rgbd_capture.py capture` 同步保存 RGB、depth 与
+CameraInfo，时间差硬门为 20 ms、队列深度为 2，并继续要求显式 `--consent`。
+普通笔记本 RGB 摄像头不满足此合同。
+
+每个可测目标需在 placement JSON 中记录 `frame_id/object_id/class_id`、map 坐标
+`position_map_m`、`measurement_method`、`uncertainty_m` 和
+`independent_of_perception=true`。允许的方法为 fiducial、surveyed fixture、
+total station 或 motion capture；不确定度必须不高于 0.05 m。使用
+`validate-placement` 子命令机器校验，模型预测和车辆自身里程计不能充当独立真值。
+
+产品级 RGB-D 采集使用 `scripts/real_rgbd_capture.py capture`。每帧必须同时保存 RGB、
+depth、CameraInfo 与指定时刻的 `map -> camera` TF；任一 TF 不可用即 fail-closed。
+`--privacy-regions` 指定的区域在 RGB 落盘前模糊，不能依赖采集后的补处理。独立 placement
+可用 `create-placement` 逐条录入，再用 `validate-placement` 校验；只有 fiducial、surveyed
+fixture、total station 或 motion capture 等独立方法可通过。

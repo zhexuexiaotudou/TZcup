@@ -17,6 +17,7 @@ from std_msgs.msg import Bool, String
 import yaml
 
 from .live_state import LiveMissionState
+from .snapshot_io import write_text_snapshot
 
 
 def _yaw_from_quaternion(quaternion) -> float:
@@ -233,15 +234,18 @@ class LiveDashboardNode(Node):
         if self.output_dir is None:
             return
         target = self.output_dir / "dashboard_telemetry.json"
-        temporary = target.with_suffix(".json.tmp")
-        temporary.write_text(
+        written = write_text_snapshot(
+            target,
             json.dumps(
                 self.state.snapshot(), ensure_ascii=False, indent=2
             )
             + "\n",
-            encoding="utf-8",
         )
-        temporary.replace(target)
+        if not written:
+            self.get_logger().warning(
+                "dashboard snapshot replace blocked by a transient file lock; "
+                "the live server remains active and will retry on the next tick"
+            )
 
     def destroy_node(self):
         self._write_snapshot()

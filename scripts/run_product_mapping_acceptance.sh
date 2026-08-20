@@ -1,0 +1,1096 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+ORIGINAL_ARGS=("$@")
+RUN_COMMAND="$(printf '%q ' "$0" "${ORIGINAL_ARGS[@]}")"
+BASE_WS="${SANITATION_BASE_WS:-$HOME/sanitation_ws}"
+PRODUCT_WS="${TZCUP_PRODUCT_MAPPING_WS:-$HOME/tzcup_product_mapping_ws}"
+OUTPUT_DIR=""
+BUILD=1
+SMOKE=0
+SEED=2028
+MAPPING_TIMEOUT_SEC=7200
+NAVIGATION_TIMEOUT_SEC=900
+SPAWN_X=0.0
+SPAWN_Y=0.0
+SPAWN_YAW=0.0
+INITIAL_SWEEP_TARGET_INDEX=0
+DIAGNOSTIC_OVERRIDE=0
+
+usage() {
+  cat <<'EOF'
+Usage: bash scripts/run_product_mapping_acceptance.sh [options]
+
+Runs the fail-closed map -> save -> stop -> restart -> load -> relocalize ->
+NavigateThroughPoses acceptance chain. A Gazebo-internal dual-antenna NavSat
+pair drives the RTK sensor model. Gazebo truth is restricted to the independent
+post-run evaluator; no oracle pose topic enters positioning or control.
+
+Options:
+  --output DIR          Evidence directory
+  --workspace DIR       Dedicated ROS overlay workspace
+  --base-workspace DIR  Existing ROS 2 Jazzy dependency workspace
+  --seed N              Gazebo random seed (default: 2028)
+  --mapping-timeout N   Frontier exploration budget (default: 7200 seconds)
+  --navigation-timeout N Reload navigation budget (default: 900 seconds)
+  --spawn-x X           Diagnostic initial X in map/world metres (default: 0.0)
+  --spawn-y Y           Diagnostic initial Y in map/world metres (default: 0.0)
+  --spawn-yaw RAD       Diagnostic initial yaw in radians (default: 0.0)
+  --initial-sweep-target-index N
+                        Diagnostic sweep target index (default: 0)
+  --skip-build          Reuse an existing overlay install
+  --smoke               40 x 20 m wiring check; can never pass the formal gate
+  -h, --help            Show this help
+EOF
+}
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --output) OUTPUT_DIR="$2"; shift 2 ;;
+    --workspace) PRODUCT_WS="$2"; shift 2 ;;
+    --base-workspace) BASE_WS="$2"; shift 2 ;;
+    --seed) SEED="$2"; shift 2 ;;
+    --mapping-timeout) MAPPING_TIMEOUT_SEC="$2"; shift 2 ;;
+    --navigation-timeout) NAVIGATION_TIMEOUT_SEC="$2"; shift 2 ;;
+    --spawn-x) SPAWN_X="$2"; DIAGNOSTIC_OVERRIDE=1; shift 2 ;;
+    --spawn-y) SPAWN_Y="$2"; DIAGNOSTIC_OVERRIDE=1; shift 2 ;;
+    --spawn-yaw) SPAWN_YAW="$2"; DIAGNOSTIC_OVERRIDE=1; shift 2 ;;
+    --initial-sweep-target-index)
+      INITIAL_SWEEP_TARGET_INDEX="$2"; DIAGNOSTIC_OVERRIDE=1; shift 2 ;;
+    --skip-build) BUILD=0; shift ;;
+    --smoke) SMOKE=1; shift ;;
+    -h|--help) usage; exit 0 ;;
+    *) echo "Unknown option: $1" >&2; usage >&2; exit 2 ;;
+  esac
+done
+
+[[ "$SEED" =~ ^[0-9]+$ ]] || { echo "--seed must be a non-negative integer" >&2; exit 2; }
+[[ "$MAPPING_TIMEOUT_SEC" =~ ^[0-9]+$ ]] || { echo "--mapping-timeout must be an integer" >&2; exit 2; }
+[[ "$NAVIGATION_TIMEOUT_SEC" =~ ^[0-9]+$ ]] || { echo "--navigation-timeout must be an integer" >&2; exit 2; }
+numeric_re='^-?([0-9]+([.][0-9]*)?|[.][0-9]+)$'
+[[ "$SPAWN_X" =~ $numeric_re ]] || { echo "--spawn-x must be numeric" >&2; exit 2; }
+[[ "$SPAWN_Y" =~ $numeric_re ]] || { echo "--spawn-y must be numeric" >&2; exit 2; }
+[[ "$SPAWN_YAW" =~ $numeric_re ]] || { echo "--spawn-yaw must be numeric" >&2; exit 2; }
+[[ "$INITIAL_SWEEP_TARGET_INDEX" =~ ^[0-9]+$ ]] || { echo "--initial-sweep-target-index must be a non-negative integer" >&2; exit 2; }
+if [[ -z "$OUTPUT_DIR" ]]; then
+  scope="formal"
+  [[ "$SMOKE" -eq 1 ]] && scope="smoke"
+  [[ "$DIAGNOSTIC_OVERRIDE" -eq 1 ]] && scope="diagnostic"
+  OUTPUT_DIR="$ROOT/artifacts/product_mapping_${scope}_$(date -u +%Y%m%dT%H%M%SZ)"
+fi
+mkdir -p "$OUTPUT_DIR"
+OUTPUT_DIR="$(cd "$OUTPUT_DIR" && pwd)"
+
+if [[ ! -f /opt/ros/jazzy/setup.bash ]]; then
+  echo "ROS 2 Jazzy is not installed at /opt/ros/jazzy." >&2
+  exit 3
+fi
+if [[ ! -f "$BASE_WS/install/setup.bash" ]]; then
+  echo "Base workspace is missing: $BASE_WS/install/setup.bash" >&2
+  exit 3
+fi
+
+pids=()
+failure_file="$OUTPUT_DIR/run_failure.json"
+pid_dir="$OUTPUT_DIR/runtime_pids"
+mkdir -p "$pid_dir"
+
+record_failure() {
+  local code="$1" line="$2" command="$3"
+  FAILURE_CODE="$code" FAILURE_LINE="$line" FAILURE_COMMAND="$command" \
+    python3 - "$failure_file" <<'PY'
+import json
+import os
+from pathlib import Path
+import time
+
+path = Path(__import__("sys").argv[1])
+payload = {
+    "status": "failed",
+    "exit_code": int(os.environ["FAILURE_CODE"]),
+    "line": int(os.environ["FAILURE_LINE"]),
+    "command": os.environ["FAILURE_COMMAND"],
+    "recorded_unix_time": time.time(),
+}
+path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+PY
+}
+
+on_error() {
+  local code="$?"
+  record_failure "$code" "${BASH_LINENO[0]:-0}" "${BASH_COMMAND:-unknown}"
+  return "$code"
+}
+
+group_alive() {
+  local pid="${1:-}"
+  [[ -n "$pid" ]] || return 1
+  # A terminated child remains visible to kill(2) and pgrep while it is a
+  # zombie waiting for this runner to reap it. Treating that bookkeeping
+  # state as live makes a clean shutdown run through every escalation stage
+  # and eventually report a false residual. Inspect the process group and
+  # session, but count only executable members.
+  ps -eo pid=,pgid=,sid=,stat= | awk -v target="$pid" '
+    ($1 == target || $2 == target || $3 == target) && $4 !~ /^Z/ { live = 1 }
+    END { exit(live ? 0 : 1) }
+  '
+}
+
+signal_supervised_command() {
+  local signal_name="$1" name="$2" supervisor_pid="$3"
+  local mode="direct" command_pid node_pid
+  local mode_file="$pid_dir/${name}.signal_mode"
+  [[ -s "$mode_file" ]] && mode="$(<"$mode_file")"
+  mapfile -t command_pids < <(pgrep -P "$supervisor_pid" 2>/dev/null || true)
+  for command_pid in "${command_pids[@]}"; do
+    if [[ "$mode" == "ros2_run_leaf" ]]; then
+      mapfile -t node_pids < <(pgrep -P "$command_pid" 2>/dev/null || true)
+      if [[ "${#node_pids[@]}" -gt 0 ]]; then
+        for node_pid in "${node_pids[@]}"; do
+          kill -s "$signal_name" "$node_pid" 2>/dev/null || true
+        done
+        continue
+      fi
+    fi
+    kill -s "$signal_name" "$command_pid" 2>/dev/null || true
+  done
+}
+
+write_shutdown_report() {
+  local name="$1" pid="$2" signal_stage="$3" residual="$4"
+  local exit_file="$pid_dir/${name}.exit"
+  local exit_code=125
+  if [[ -s "$exit_file" ]]; then
+    exit_code="$(<"$exit_file")"
+  fi
+  [[ "$exit_code" =~ ^[0-9]+$ ]] || exit_code=125
+  SHUTDOWN_NAME="$name" SHUTDOWN_PID="$pid" \
+    SHUTDOWN_SIGNAL_STAGE="$signal_stage" SHUTDOWN_RESIDUAL="$residual" \
+    SHUTDOWN_EXIT_CODE="$exit_code" \
+    python3 - "$pid_dir/${name}.shutdown.json" <<'PY'
+import json
+import os
+from pathlib import Path
+import sys
+
+path = Path(sys.argv[1])
+exit_code = int(os.environ["SHUTDOWN_EXIT_CODE"])
+residual = os.environ["SHUTDOWN_RESIDUAL"].lower() == "true"
+signal_stage = os.environ["SHUTDOWN_SIGNAL_STAGE"]
+payload = {
+    "name": os.environ["SHUTDOWN_NAME"],
+    "process_group_id": int(os.environ["SHUTDOWN_PID"]),
+    "signal_stage": signal_stage,
+    "wrapper_exit_code": exit_code,
+    "residual_process_present": residual,
+    "clean": bool(
+        not residual and exit_code == 0 and signal_stage != "sigkill"
+    ),
+}
+path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+PY
+}
+
+stop_group() {
+  local name="$1" pid="${2:-}"
+  [[ -n "$pid" ]] || return
+  local signal_stage="already_stopped"
+  group_alive "$pid" && signal_stage="sigint"
+  # ros2 launch owns orderly child shutdown, so signal only the launcher.
+  # ros2 run adds an extra executable child, so signal that leaf and let the
+  # ros2 CLI reap it.  In both cases the Python wrapper persists the exit code.
+  signal_supervised_command INT "$name" "$pid"
+  for _ in $(seq 1 300); do
+    if ! group_alive "$pid"; then
+      wait "$pid" 2>/dev/null || true
+      write_shutdown_report "$name" "$pid" "$signal_stage" false
+      return
+    fi
+    sleep 0.1
+  done
+  signal_stage="sigterm"
+  signal_supervised_command TERM "$name" "$pid"
+  for _ in $(seq 1 100); do
+    if ! group_alive "$pid"; then
+      wait "$pid" 2>/dev/null || true
+      write_shutdown_report "$name" "$pid" "$signal_stage" false
+      return
+    fi
+    sleep 0.1
+  done
+  signal_stage="sigkill"
+  pkill -KILL -s "$pid" 2>/dev/null || true
+  kill -KILL -- "-$pid" 2>/dev/null || true
+  kill -KILL "$pid" 2>/dev/null || true
+  wait "$pid" 2>/dev/null || true
+  sleep 0.2
+  if group_alive "$pid"; then
+    write_shutdown_report "$name" "$pid" "$signal_stage" true
+    return 1
+  fi
+  write_shutdown_report "$name" "$pid" "$signal_stage" false
+}
+
+stop_simulation_group() {
+  local name="$1" pid="$2" directory="$3"
+  local stop_code=0
+  set +e
+  timeout 10s gz service -s /server_control \
+    --reqtype gz.msgs.ServerControl --reptype gz.msgs.Boolean \
+    --timeout 5000 --req 'stop: true' \
+    > "$directory/server_stop.log" 2>&1
+  local service_code=$?
+  set -e
+  printf '%s\n' "$service_code" > "$directory/server_stop.exit"
+  stop_group "$name" "$pid" || stop_code=$?
+  SERVER_CONTROL_CODE="$service_code" python3 - \
+    "$pid_dir/${name}.shutdown.json" "$directory/server_stop.log" <<'PY'
+import json
+import os
+from pathlib import Path
+import sys
+
+report_path = Path(sys.argv[1])
+service_log = Path(sys.argv[2]).read_text(encoding="utf-8")
+report = json.loads(report_path.read_text(encoding="utf-8"))
+accepted = (
+    int(os.environ["SERVER_CONTROL_CODE"]) == 0
+    and "data: true" in service_log.lower()
+)
+report["server_control_exit_code"] = int(os.environ["SERVER_CONTROL_CODE"])
+report["server_control_stop_accepted"] = accepted
+report["clean"] = bool(report.get("clean") and accepted)
+report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+PY
+  return "$stop_code"
+}
+cleanup() {
+  local sessions=("${pids[@]}")
+  local file pid any
+  shopt -s nullglob
+  for file in "$pid_dir"/*.pid; do
+    pid="$(<"$file")"
+    [[ "$pid" =~ ^[0-9]+$ ]] && sessions+=("$pid")
+  done
+  shopt -u nullglob
+  for pid in "${sessions[@]}"; do
+    pkill -INT -s "$pid" 2>/dev/null || true
+    kill -INT -- "-$pid" 2>/dev/null || true
+    kill -INT "$pid" 2>/dev/null || true
+  done
+  for _ in $(seq 1 100); do
+    any=0
+    for pid in "${sessions[@]}"; do
+      if group_alive "$pid"; then
+        any=1
+        break
+      fi
+    done
+    [[ "$any" -eq 0 ]] && return
+    sleep 0.1
+  done
+  for pid in "${sessions[@]}"; do
+    pkill -TERM -s "$pid" 2>/dev/null || true
+    kill -TERM -- "-$pid" 2>/dev/null || true
+    kill -TERM "$pid" 2>/dev/null || true
+  done
+  sleep 2
+  for pid in "${sessions[@]}"; do
+    pkill -KILL -s "$pid" 2>/dev/null || true
+    kill -KILL -- "-$pid" 2>/dev/null || true
+    kill -KILL "$pid" 2>/dev/null || true
+  done
+}
+trap on_error ERR
+trap cleanup EXIT
+trap 'exit 130' INT
+trap 'exit 143' TERM
+
+set +u
+source /opt/ros/jazzy/setup.bash
+source "$BASE_WS/install/setup.bash"
+set -u
+
+mkdir -p "$PRODUCT_WS/src"
+rsync -a --delete "$ROOT/starter_ws/src/" "$PRODUCT_WS/src/"
+if [[ "$BUILD" -eq 1 ]]; then
+  (
+    cd "$PRODUCT_WS"
+    colcon build --packages-select-regex '^sanitation_' --symlink-install \
+      --event-handlers console_direct+
+  ) > "$OUTPUT_DIR/build.log" 2>&1
+fi
+set +u
+source "$PRODUCT_WS/install/setup.bash"
+set -u
+
+runtime="$OUTPUT_DIR/runtime"
+mapping="$OUTPUT_DIR/mapping"
+reload="$OUTPUT_DIR/reload"
+mkdir -p "$runtime" "$mapping" "$reload"
+navigation_share="$(ros2 pkg prefix sanitation_navigation)/share/sanitation_navigation"
+bringup_share="$(ros2 pkg prefix sanitation_bringup)/share/sanitation_bringup"
+refiner_share="$(ros2 pkg prefix sanitation_scan_refiner)/share/sanitation_scan_refiner"
+worlds_share="$(ros2 pkg prefix sanitation_worlds)/share/sanitation_worlds"
+source_world="$worlds_share/worlds/sanitation_campus_large.sdf"
+runtime_world="$runtime/sanitation_campus_large_product.sdf"
+nav_params="$runtime/nav2_mapping_no_prior_filters.yaml"
+slam_params="$runtime/slam_product_20000_runtime.yaml"
+mapping_ekf_params="$runtime/ekf_mapping_local.yaml"
+hybrid_params="$runtime/hybrid_mapping_rtk.yaml"
+reload_ekf_params="$runtime/ekf_reload_local.yaml"
+reload_hybrid_params="$runtime/hybrid_reload_rtk.yaml"
+
+# Keep smoke at real-time rate too. A 3x rate overloaded SLAM/Nav2 while the
+# vehicle continued advancing, creating stale maps and severe goal overshoot.
+simulation_rtf="1.0"
+python3 - "$source_world" "$runtime_world" "$simulation_rtf" <<'PY'
+from pathlib import Path
+import re
+import sys
+source, target = map(Path, sys.argv[1:3])
+factor = sys.argv[3]
+text = source.read_text(encoding="utf-8")
+text, count = re.subn(
+    r"<real_time_factor>[^<]+</real_time_factor>",
+    f"<real_time_factor>{factor}</real_time_factor>", text, count=1,
+)
+if count != 1:
+    raise SystemExit("large world must define exactly one real_time_factor")
+target.write_text(text, encoding="utf-8")
+PY
+
+# First-principles mapping must not consume keepout/speed masks derived from a
+# prior map. Remove the filter plugins as well as disabling their servers.
+python3 - "$navigation_share/config/nav2_ackermann.yaml" "$nav_params" <<'PY'
+from pathlib import Path
+import sys
+import yaml
+source, target = map(Path, sys.argv[1:])
+config = yaml.safe_load(source.read_text(encoding="utf-8"))
+global_params = config["global_costmap"]["global_costmap"]["ros__parameters"]
+global_params["plugins"] = [
+    item for item in global_params["plugins"]
+    if item not in {"keepout_filter", "speed_filter"}
+]
+global_params.pop("keepout_filter", None)
+global_params.pop("speed_filter", None)
+config["amcl"]["ros__parameters"]["tf_broadcast"] = False
+config.pop("keepout_filter_mask_server", None)
+config.pop("keepout_costmap_filter_info_server", None)
+config.pop("speed_filter_mask_server", None)
+config.pop("speed_costmap_filter_info_server", None)
+manager = config.get("filter_lifecycle_manager", {}).get("ros__parameters", {})
+manager["node_names"] = []
+for name in (
+    "FollowPath", "DubinsPath", "ReversePath", "ConnectorPath",
+    "CleanPath", "RepairPath",
+):
+    config["controller_server"]["ros__parameters"][name]["transform_tolerance"] = 0.5
+target.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+PY
+
+python3 - "$navigation_share/config/slam_product_20000.yaml" "$slam_params" <<'PY'
+from pathlib import Path
+import sys
+import yaml
+source, target = map(Path, sys.argv[1:])
+config = yaml.safe_load(source.read_text(encoding="utf-8"))
+config["slam_toolbox"]["ros__parameters"]["scan_topic"] = "/scan/mapping"
+target.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+PY
+
+# Build a two-level odometry tree for RTK-aided mapping:
+# map(SLAM) -> odom(RTK global) -> wheel_odom(local EKF) -> base_footprint.
+# The RTK adapter consumes only the two Gazebo NavSat sensor outputs and never
+# subscribes to an oracle odometry or pose topic.
+python3 - "$bringup_share/config/ekf_ackermann.yaml" "$mapping_ekf_params" <<'PY'
+from pathlib import Path
+import sys
+import yaml
+source, target = map(Path, sys.argv[1:])
+config = yaml.safe_load(source.read_text(encoding="utf-8"))
+params = config["ekf_filter_node"]["ros__parameters"]
+params["map_frame"] = "odom"
+params["odom_frame"] = "wheel_odom"
+params["world_frame"] = "wheel_odom"
+target.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+PY
+
+python3 - "$bringup_share/config/ekf_ackermann.yaml" "$reload_ekf_params" <<'PY'
+from pathlib import Path
+import sys
+import yaml
+source, target = map(Path, sys.argv[1:])
+config = yaml.safe_load(source.read_text(encoding="utf-8"))
+params = config["ekf_filter_node"]["ros__parameters"]
+params["map_frame"] = "map"
+params["odom_frame"] = "odom"
+params["world_frame"] = "odom"
+target.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+PY
+python3 - "$refiner_share/config/stage4v_hybrid.yaml" "$hybrid_params" <<'PY'
+from pathlib import Path
+import sys
+import yaml
+source, target = map(Path, sys.argv[1:])
+config = yaml.safe_load(source.read_text(encoding="utf-8"))
+params = config["hybrid_global_fuser"]["ros__parameters"]
+params["map_frame"] = "odom"
+params["odom_frame"] = "wheel_odom"
+params["base_frame"] = "base_footprint"
+params["local_odom_topic"] = "/odom"
+params["mode"] = "rtk_imu_wheel"
+params["publish_map_to_odom"] = True
+target.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+PY
+python3 - "$refiner_share/config/stage4v_hybrid.yaml" "$reload_hybrid_params" <<'PY'
+from pathlib import Path
+import sys
+import yaml
+source, target = map(Path, sys.argv[1:])
+config = yaml.safe_load(source.read_text(encoding="utf-8"))
+params = config["hybrid_global_fuser"]["ros__parameters"]
+params["map_frame"] = "map"
+params["odom_frame"] = "odom"
+params["base_frame"] = "base_footprint"
+params["local_odom_topic"] = "/odom"
+params["mode"] = "rtk_imu_wheel"
+params["publish_map_to_odom"] = True
+target.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+PY
+
+if [[ "$SMOKE" -eq 1 ]]; then
+  # Larger than one lidar footprint so the smoke path exercises multiple
+  # successful frontier goals and can derive a non-trivial reload route.
+  BOUNDS=(-20.0 -10.0 20.0 10.0)
+  MIN_SPAN_X=40.0; MIN_SPAN_Y=20.0; MIN_AREA=800.0
+  ROUTE_SEPARATION=3.0; MAX_GOALS=160; MAX_FRONTIER_GOAL_DISTANCE=2.0
+  MAX_LINEAR_VELOCITY=0.30; FORMAL_SCOPE=false; SWEEP_ENABLED=false
+else
+  BOUNDS=(-100.0 -50.0 100.0 50.0)
+  MIN_SPAN_X=200.0; MIN_SPAN_Y=100.0; MIN_AREA=20000.0
+  ROUTE_SEPARATION=15.0; MAX_GOALS=800; MAX_FRONTIER_GOAL_DISTANCE=3.0
+  MAX_LINEAR_VELOCITY=0.45; FORMAL_SCOPE=true; SWEEP_ENABLED=true
+fi
+if [[ "$DIAGNOSTIC_OVERRIDE" -eq 1 ]]; then
+  FORMAL_SCOPE=false
+fi
+RELOAD_ROUTE_MAX_LENGTH_M="$(python3 - \
+  "$NAVIGATION_TIMEOUT_SEC" "$MAX_LINEAR_VELOCITY" <<'PY'
+import sys
+print(float(sys.argv[1]) * float(sys.argv[2]) * 0.20)
+PY
+)"
+
+wait_for_topic() {
+  local topic="$1" type="$2" timeout_sec="$3" output="$4"
+  timeout "${timeout_sec}s" ros2 topic echo --once "$topic" "$type" > "$output"
+}
+
+wait_for_lifecycle_active() {
+  local node="$1" timeout_sec="$2" output="$3"
+  local deadline=$((SECONDS + timeout_sec))
+  while (( SECONDS < deadline )); do
+    state="$(timeout 10s ros2 lifecycle get "$node" 2>&1 || true)"
+    printf '%s\n' "$state" > "$output"
+    if grep -Eq '^active( |$)' <<< "$state"; then
+      return 0
+    fi
+    sleep 1
+  done
+  echo "Lifecycle node did not become active: $node" >&2
+  return 1
+}
+
+activate_slam_toolbox() {
+  local output="$1"
+  local state=""
+  : > "$output"
+  for _ in $(seq 1 60); do
+    state="$(timeout 5s ros2 lifecycle get /slam_toolbox 2>&1 || true)"
+    printf 'state: %s\n' "$state" >> "$output"
+    if grep -Eq '^unconfigured( |$)' <<< "$state"; then
+      timeout 30s ros2 service call /slam_toolbox/change_state \
+        lifecycle_msgs/srv/ChangeState '{transition: {id: 1}}' >> "$output" 2>&1
+    elif grep -Eq '^inactive( |$)' <<< "$state"; then
+      timeout 30s ros2 service call /slam_toolbox/change_state \
+        lifecycle_msgs/srv/ChangeState '{transition: {id: 3}}' >> "$output" 2>&1
+    elif grep -Eq '^active( |$)' <<< "$state"; then
+      return 0
+    fi
+    sleep 1
+  done
+  echo "slam_toolbox did not reach active state" >&2
+  return 1
+}
+
+# The Python supervisor is the setsid process-group/session leader.  It starts
+# the real command with default executable signal semantics, persists the real
+# exit code, and remains alive while stop_group signals the launcher or ros2-run
+# leaf according to the recorded command type.
+start_group() {
+  local name="$1" log="$2"
+  shift 2
+  local pid_file="$pid_dir/${name}.pid"
+  local exit_file="$pid_dir/${name}.exit"
+  local signal_mode="direct"
+  if [[ "${1:-}" == "ros2" && "${2:-}" == "run" ]]; then
+    signal_mode="ros2_run_leaf"
+  fi
+  printf '%s\n' "$signal_mode" > "$pid_dir/${name}.signal_mode"
+  rm -f -- "$pid_file" "$exit_file"
+  setsid python3 - "$pid_file" "$exit_file" "$@" > "$log" 2>&1 <<'PY' &
+from pathlib import Path
+import os
+import signal
+import subprocess
+import sys
+
+pid_file = Path(sys.argv[1])
+exit_file = Path(sys.argv[2])
+command = sys.argv[3:]
+pid_file.write_text(f"{os.getpid()}\n", encoding="utf-8")
+
+
+def reset_command_signals():
+    # The supervisor itself is a background process and intentionally keeps
+    # the shell's ignored SIGINT.  The command must not inherit that state.
+    signal.signal(signal.SIGINT, signal.SIG_DFL)
+    signal.signal(signal.SIGTERM, signal.SIG_DFL)
+
+process = subprocess.Popen(command, preexec_fn=reset_command_signals)
+code = process.wait()
+normalized = 128 - code if code < 0 else code
+exit_file.write_text(f"{normalized}\n", encoding="utf-8")
+raise SystemExit(normalized)
+PY
+  local launcher_pid=$!
+  for _ in $(seq 1 100); do
+    if [[ -s "$pid_file" ]]; then
+      STARTED_PID="$(<"$pid_file")"
+      [[ "$STARTED_PID" =~ ^[0-9]+$ ]] || break
+      pids+=("$STARTED_PID")
+      return 0
+    fi
+    if ! kill -0 "$launcher_pid" 2>/dev/null; then
+      wait "$launcher_pid" 2>/dev/null || true
+      break
+    fi
+    sleep 0.05
+  done
+  echo "Failed to capture process-group leader for $name" >&2
+  return 1
+}
+
+wait_group() {
+  local name="$1" pid="$2"
+  local exit_file="$pid_dir/${name}.exit"
+  while group_alive "$pid"; do
+    sleep 0.2
+  done
+  if [[ -s "$exit_file" ]]; then
+    GROUP_EXIT_CODE="$(<"$exit_file")"
+  else
+    GROUP_EXIT_CODE=125
+  fi
+  [[ "$GROUP_EXIT_CODE" =~ ^[0-9]+$ ]] || GROUP_EXIT_CODE=125
+}
+
+start_simulation() {
+  local name="$1" log="$2"
+  local ekf_config="${3:-$mapping_ekf_params}"
+  start_group "$name" "$log" ros2 launch sanitation_bringup sim.launch.py \
+    gui:=false headless_rendering:=true drive_model:=ackermann \
+    enable_command_timeout:=false \
+    random_seed:="$SEED" world_file:="$runtime_world" \
+    world_name:=sanitation_campus_large spawn_x:="$SPAWN_X" spawn_y:="$SPAWN_Y" spawn_yaw:="$SPAWN_YAW" \
+    world_to_map_x:=0.0 world_to_map_y:=0.0 world_to_map_yaw:=0.0 \
+    enable_training_gt:=false enable_evaluation_gt:=true \
+    ekf_config:="$ekf_config"
+}
+
+start_positioning_chain() {
+  local directory="$1"
+  local prefix="$2"
+  local publish_global_to_local_tf="$3"
+  local hybrid_config="$4"
+  start_group "${prefix}_navsat_adapter" "$directory/dual_navsat_adapter.log" \
+    ros2 run sanitation_gnss_sim dual_navsat_adapter --ros-args \
+    -p use_sim_time:=true -p profile:=rtk_fixed -p random_seed:="$SEED"
+  NAVSAT_ADAPTER_PID="$STARTED_PID"
+  start_group "${prefix}_fusion" "$directory/rtk_fusion.log" \
+    ros2 launch sanitation_scan_refiner hybrid_localization.launch.py \
+    hybrid_config_file:="$hybrid_config" fusion_mode:=rtk_imu_wheel \
+    enable_scan_refiner:=false publish_map_to_odom:="$publish_global_to_local_tf" \
+    initial_pose_x:="$SPAWN_X" initial_pose_y:="$SPAWN_Y" initial_pose_yaw:="$SPAWN_YAW"
+  FUSION_PID="$STARTED_PID"
+}
+
+start_tf_ownership_audit() {
+  local directory="$1"
+  local prefix="$2"
+  local expected_owner="$3"
+  local forbidden_owners="$4"
+  start_group "${prefix}_tf_owner" "$directory/tf_ownership.log" \
+    timeout 45s ros2 run sanitation_tasks sanitation_tf_ownership_audit --ros-args \
+    -p duration_s:=20.0 \
+    -p output_path:="$directory/tf_ownership.json" \
+    -p required_child_frame:=odom -p expected_owner_node:="$expected_owner" \
+    -p forbidden_owner_nodes:="$forbidden_owners"
+  TF_OWNER_PID="$STARTED_PID"
+}
+
+verify_positioning_chain() {
+  local directory="$1"
+  local expected_map_to_odom_owner="$2"
+  local expected_parent_frame="$3"
+  local expected_child_frame="$4"
+  wait_for_topic /gnss/front/gps_raw gps_msgs/msg/GPSFix 180 \
+    "$directory/first_front_navsat.txt"
+  wait_for_topic /gnss/rear/gps_raw gps_msgs/msg/GPSFix 180 \
+    "$directory/first_rear_navsat.txt"
+  wait_for_topic /gnss/diagnostics diagnostic_msgs/msg/DiagnosticArray 60 \
+    "$directory/first_gnss_diagnostics.txt"
+  timeout 30s ros2 node info /dual_navsat_adapter \
+    > "$directory/dual_navsat_adapter_node_info.txt"
+  grep -Fq '/gnss/front/gps_raw' "$directory/dual_navsat_adapter_node_info.txt"
+  grep -Fq '/gnss/rear/gps_raw' "$directory/dual_navsat_adapter_node_info.txt"
+  if grep -Fq '/ground_truth/' "$directory/dual_navsat_adapter_node_info.txt"; then
+    echo "dual_navsat_adapter must not subscribe to Gazebo truth" >&2
+    return 1
+  fi
+  timeout 30s ros2 node info /hybrid_global_fuser \
+    > "$directory/hybrid_global_fuser_node_info.txt"
+  timeout 30s ros2 param get /hybrid_global_fuser publish_map_to_odom \
+    > "$directory/hybrid_global_fuser_map_to_odom.txt"
+  grep -Fqi "Boolean value is: $expected_map_to_odom_owner" \
+    "$directory/hybrid_global_fuser_map_to_odom.txt"
+  timeout 30s ros2 param get /hybrid_global_fuser map_frame \
+    > "$directory/hybrid_global_fuser_map_frame.txt"
+  timeout 30s ros2 param get /hybrid_global_fuser odom_frame \
+    > "$directory/hybrid_global_fuser_odom_frame.txt"
+  grep -Fq "String value is: $expected_parent_frame" \
+    "$directory/hybrid_global_fuser_map_frame.txt"
+  grep -Fq "String value is: $expected_child_frame" \
+    "$directory/hybrid_global_fuser_odom_frame.txt"
+  grep -Fq '/gnss/fix' "$directory/hybrid_global_fuser_node_info.txt"
+  grep -Fq '/gnss/heading' "$directory/hybrid_global_fuser_node_info.txt"
+  grep -Fq '/odom' "$directory/hybrid_global_fuser_node_info.txt"
+  if grep -Fq '/ground_truth/' "$directory/hybrid_global_fuser_node_info.txt"; then
+    echo "hybrid_global_fuser must not subscribe to Gazebo truth" >&2
+    return 1
+  fi
+  wait_for_topic /localization/fused_pose \
+    geometry_msgs/msg/PoseWithCovarianceStamped 180 \
+    "$directory/first_fused_pose.txt"
+}
+
+start_navigation() {
+  local name="$1" backend="$2" map_file="$3" log="$4"
+  start_group "$name" "$log" ros2 launch sanitation_navigation navigation.launch.py \
+    rviz:=false localization_backend:="$backend" enable_filters:=false \
+    params_file:="$nav_params" map_file:="$map_file" \
+    operational_profile:=precision_mapping max_linear_velocity:="$MAX_LINEAR_VELOCITY" \
+    max_angular_velocity:=0.25 initial_pose_x:="$SPAWN_X" initial_pose_y:="$SPAWN_Y" \
+    initial_pose_yaw:="$SPAWN_YAW"
+}
+
+echo "[PRODUCT-MAPPING] phase 1: continuous first-principles mapping"
+start_simulation mapping_sim "$mapping/simulation.log" "$mapping_ekf_params"; sim_pid="$STARTED_PID"
+start_positioning_chain "$mapping" mapping true "$hybrid_params"; navsat_adapter_pid="$NAVSAT_ADAPTER_PID"; fusion_pid="$FUSION_PID"
+verify_positioning_chain "$mapping" true odom wheel_odom
+start_group mapping_scan "$mapping/scan_normalizer.log" \
+  ros2 run sanitation_navigation scan_self_filter --ros-args \
+  -p use_sim_time:=true -p input_topic:=/scan -p output_topic:=/scan/mapping \
+  -p replace_infinite_ranges_with_max:=true -p maximum_range_margin_m:=0.05
+scan_pid="$STARTED_PID"
+start_group mapping_slam "$mapping/slam.log" ros2 launch slam_toolbox \
+  online_async_launch.py use_sim_time:=true autostart:=false \
+  slam_params_file:="$slam_params"
+slam_pid="$STARTED_PID"
+activate_slam_toolbox "$mapping/slam_lifecycle.txt"
+start_navigation mapping_nav external "$mapping/unused_map.yaml" "$mapping/navigation.log"; nav_pid="$STARTED_PID"
+nav_name=mapping_nav
+wait_for_topic /map nav_msgs/msg/OccupancyGrid 180 "$mapping/first_map.txt"
+if ! wait_for_lifecycle_active /bt_navigator 90 "$mapping/bt_navigator_active.txt"; then
+  stop_group "$nav_name" "$nav_pid"
+  start_navigation mapping_nav_retry external "$mapping/unused_map.yaml" "$mapping/navigation_retry.log"
+  nav_pid="$STARTED_PID"
+  nav_name=mapping_nav_retry
+  wait_for_lifecycle_active /bt_navigator 180 "$mapping/bt_navigator_active_retry.txt"
+fi
+start_tf_ownership_audit "$mapping" mapping slam_toolbox \
+  "[amcl]"
+mapping_tf_owner_pid="$TF_OWNER_PID"
+start_group mapping_tf "$mapping/tf_continuity.log" \
+  ros2 run sanitation_tasks sanitation_tf_continuity_probe --ros-args \
+  -p use_sim_time:=true -p output_path:="$mapping/tf_continuity.json"
+mapping_tf_pid="$STARTED_PID"
+
+start_group mapping_explorer "$mapping/frontier_exploration.log" \
+  timeout "$((MAPPING_TIMEOUT_SEC + 180))s" \
+  ros2 run sanitation_tasks sanitation_frontier_explorer --ros-args \
+  -p use_sim_time:=true \
+  -p output_path:="$mapping/frontier_exploration.json" \
+  -p required_bounds_xyxy_m:="[${BOUNDS[0]},${BOUNDS[1]},${BOUNDS[2]},${BOUNDS[3]}]" \
+  -p required_bounds_coverage_ratio:=1.0 -p required_bounds_goal_margin_m:=0.80 \
+  -p minimum_goal_distance_m:=0.80 -p minimum_turning_radius_m:=1.429 \
+  -p maximum_frontier_goal_yaw_change_rad:=0.70 \
+  -p minimum_frontier_arc_yaw_change_rad:=0.15 \
+  -p boundary_turn_buffer_m:=1.429 \
+  -p maximum_frontier_goal_distance_m:="$MAX_FRONTIER_GOAL_DISTANCE" \
+  -p maximum_frontier_detour_distance_m:=30.0 \
+  -p frontier_detour_timeout_sec:=180.0 \
+  -p frontier_detour_plan_endpoint_tolerance_m:=0.75 \
+  -p initial_frontier_goal_distance_m:=2.0 \
+  -p goal_distance_growth_success_count:=5 -p goal_distance_growth_step_m:=0.5 \
+  -p failed_goal_exclusion_radius_m:=1.0 -p timed_out_goal_exclusion_radius_m:=1.5 \
+  -p maximum_goal_count:="$MAX_GOALS" -p timeout_sec:="${MAPPING_TIMEOUT_SEC}.0" \
+  -p goal_timeout_sec:=60.0 -p goal_cancel_grace_sec:=5.0 \
+  -p failed_goal_cooldown_sec:=10.0 \
+  -p failed_goal_exclusion_ttl_sec:=180.0 \
+  -p minimum_frontier_map_gain_m2:=2.0 \
+  -p no_progress_staging_success_limit:=3 \
+  -p no_progress_raw_frontier_success_limit:=12 \
+  -p no_progress_raw_exclusion_ttl_sec:=900.0 \
+  -p horizontal_sweep_staging_distances_m:="[8.0, 6.0, 4.0, 3.0, 2.0, 1.5, 1.0]" \
+  -p horizontal_sweep_staging_path_sample_spacing_m:=0.25 \
+  -p horizontal_sweep_staging_timeout_sec:=60.0 \
+  -p horizontal_sweep_alignment_timeout_sec:=20.0 \
+  -p horizontal_sweep_alignment_distance_m:=2.0 \
+  -p horizontal_sweep_alignment_tolerance_rad:=0.15 \
+  -p horizontal_sweep_frontier_wait_before_route_recovery_count:=5 \
+  -p horizontal_sweep_frontier_wait_failure_limit:=30 \
+  -p horizontal_sweep_route_recovery_max_distance_m:=30.0 \
+  -p horizontal_sweep_route_recovery_sample_spacing_m:=0.5 \
+  -p reverse_escape_distance_m:=2.0 \
+  -p reverse_escape_speed_mps:=0.15 \
+  -p frontier_sweep_enabled:="$SWEEP_ENABLED" \
+  -p frontier_sweep_initial_target_index:="$INITIAL_SWEEP_TARGET_INDEX" \
+  -p frontier_sweep_reference_pose_xyyaw_m_rad:="[0.0, 0.001, 0.0]" \
+  -p mapping_sensor_range_m:=12.0 \
+  -p frontier_sweep_lane_overlap_m:=2.0 \
+  -p frontier_sweep_target_tolerance_m:=2.0 \
+  -p frontier_sweep_mapped_target_radius_m:=5.0 \
+  -p frontier_sweep_lane_shift_backup_distance_m:=4.0 \
+  -p frontier_sweep_lane_shift_backup_max_attempts:=2 \
+  -p frontier_sweep_lane_shift_connector_distances_m:="[6.0, 4.0, 2.0]" \
+  -p lane_shift_connector_timeout_sec:=180.0 \
+  -p behavior_tree:="$navigation_share/behavior_trees/navigate_to_pose_ackermann_frontier.xml" \
+  -p positioning_source:=rtk_gnss_sensor_wheel_imu_scan_matching
+mapping_explorer_pid="$STARTED_PID"
+set +e
+wait_group mapping_explorer "$mapping_explorer_pid"
+EXPLORATION_CODE="$GROUP_EXIT_CODE"
+wait_group mapping_tf_owner "$mapping_tf_owner_pid"
+MAPPING_TF_OWNER_CODE="$GROUP_EXIT_CODE"
+ros2 run nav2_map_server map_saver_cli -f "$mapping/product_map" --ros-args \
+  -p use_sim_time:=true -p save_map_timeout:=60.0 > "$mapping/map_save.log" 2>&1
+MAP_SAVE_CODE=$?
+timeout 120s ros2 service call /slam_toolbox/serialize_map \
+  slam_toolbox/srv/SerializePoseGraph \
+  "{filename: '$mapping/product_posegraph'}" > "$mapping/posegraph_serialize.log" 2>&1
+POSEGRAPH_CODE=$?
+set -e
+
+# This is the required hard process restart, not a lifecycle transition.
+stop_group mapping_tf "$mapping_tf_pid"
+stop_group "$nav_name" "$nav_pid"
+stop_group mapping_slam "$slam_pid"
+stop_group mapping_scan "$scan_pid"
+stop_group mapping_fusion "$fusion_pid"
+stop_group mapping_navsat_adapter "$navsat_adapter_pid"
+stop_simulation_group mapping_sim "$sim_pid" "$mapping"
+pids=()
+sleep 2
+RESTART_COMPLETED=true
+
+set +e
+ros2 run sanitation_tasks sanitation_map_quality \
+  --map-yaml "$mapping/product_map.yaml" --output "$mapping/map_quality.json" \
+  --preview "$mapping/map_preview.png" --maximum-resolution-m 0.10 \
+  --minimum-span-x-m "$MIN_SPAN_X" --minimum-span-y-m "$MIN_SPAN_Y" \
+  --minimum-known-area-m2 "$MIN_AREA"
+MAP_QUALITY_CODE=$?
+python3 "$ROOT/scripts/stage4t_map_geometry.py" \
+  --map-yaml "$mapping/product_map.yaml" --world-sdf "$source_world" \
+  --output "$mapping/map_geometry.json" --overlay "$mapping/map_truth_overlay.png" \
+  --alignment-x 0.0 --alignment-y 0.0 --alignment-yaw 0.0 \
+  --lidar-height-m 0.64 --lidar-height-tolerance-m 0.05
+MAP_GEOMETRY_CODE=$?
+python3 "$ROOT/scripts/product_mapping_acceptance.py" build-route \
+  --exploration "$mapping/frontier_exploration.json" --output "$reload/route.json" \
+  --minimum-separation-m "$ROUTE_SEPARATION" --minimum-waypoints 3 --maximum-waypoints 3 \
+  --maximum-route-length-m "$RELOAD_ROUTE_MAX_LENGTH_M"
+ROUTE_CODE=$?
+set -e
+
+NAVIGATION_CODE=125
+if [[ "$EXPLORATION_CODE" -eq 0 && "$MAP_SAVE_CODE" -eq 0 && \
+      "$POSEGRAPH_CODE" -eq 0 && "$MAP_QUALITY_CODE" -eq 0 && \
+      "$MAP_GEOMETRY_CODE" -eq 0 && "$ROUTE_CODE" -eq 0 && \
+      "$MAPPING_TF_OWNER_CODE" -eq 0 ]]; then
+  echo "[PRODUCT-MAPPING] phase 2: fresh simulator, saved map, AMCL, Nav2"
+  start_simulation reload_sim "$reload/simulation.log" "$reload_ekf_params"; reload_sim_pid="$STARTED_PID"
+  start_positioning_chain "$reload" reload true "$reload_hybrid_params"; reload_navsat_adapter_pid="$NAVSAT_ADAPTER_PID"; reload_fusion_pid="$FUSION_PID"
+  verify_positioning_chain "$reload" true map odom
+  start_navigation reload_nav amcl "$mapping/product_map.yaml" "$reload/navigation.log"; reload_nav_pid="$STARTED_PID"
+  wait_for_topic /amcl_pose geometry_msgs/msg/PoseWithCovarianceStamped 180 "$reload/first_amcl.txt"
+  timeout 30s ros2 param get /amcl tf_broadcast \
+    > "$reload/amcl_tf_broadcast.txt"
+  grep -Fqi "Boolean value is: false" "$reload/amcl_tf_broadcast.txt"
+  start_tf_ownership_audit "$reload" reload hybrid_global_fuser \
+    "[slam_toolbox]"
+  reload_tf_owner_pid="$TF_OWNER_PID"
+  start_group reload_tf "$reload/tf_continuity.log" \
+    ros2 run sanitation_tasks sanitation_tf_continuity_probe --ros-args \
+    -p use_sim_time:=true -p warmup_sec:=15.0 \
+    -p output_path:="$reload/tf_continuity.json"
+  reload_tf_pid="$STARTED_PID"
+  start_group reload_probe "$reload/navigation_probe.log" \
+    timeout "$((NAVIGATION_TIMEOUT_SEC + 180))s" \
+    ros2 run sanitation_tasks sanitation_navigation_probe --ros-args \
+    -p use_sim_time:=true -p waypoints_file:="$reload/route.json" \
+    -p output_path:="$reload/navigation_probe.json" \
+    -p timeout_sec:="${NAVIGATION_TIMEOUT_SEC}.0"
+  reload_probe_pid="$STARTED_PID"
+  set +e
+  wait_group reload_probe "$reload_probe_pid"
+  NAVIGATION_CODE="$GROUP_EXIT_CODE"
+  wait_group reload_tf_owner "$reload_tf_owner_pid"
+  set -e
+  stop_group reload_tf "$reload_tf_pid"
+  stop_group reload_nav "$reload_nav_pid"
+  stop_group reload_fusion "$reload_fusion_pid"
+  stop_group reload_navsat_adapter "$reload_navsat_adapter_pid"
+  stop_simulation_group reload_sim "$reload_sim_pid" "$reload"
+  pids=()
+else
+  printf '%s\n' "phase 2 skipped because a phase 1 prerequisite failed" > "$reload/skipped.txt"
+fi
+
+PRODUCT_RUN_COMMAND="$RUN_COMMAND" python3 - \
+  "$OUTPUT_DIR/processes.json" "$FORMAL_SCOPE" "$RESTART_COMPLETED" \
+  "$EXPLORATION_CODE" "$MAP_SAVE_CODE" "$POSEGRAPH_CODE" "$MAP_QUALITY_CODE" \
+  "$MAP_GEOMETRY_CODE" "$ROUTE_CODE" "$NAVIGATION_CODE" "$ROOT" "$SEED" \
+  "$runtime_world" "$nav_params" "$slam_params" "$mapping_ekf_params" \
+  "$hybrid_params" "$reload_ekf_params" "$reload_hybrid_params" \
+  "$DIAGNOSTIC_OVERRIDE" "$SPAWN_X" "$SPAWN_Y" \
+  "$SPAWN_YAW" "$INITIAL_SWEEP_TARGET_INDEX" <<'PY'
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+path = Path(sys.argv[1])
+names = ("exploration", "map_save", "posegraph_serialize", "map_quality",
+         "map_geometry", "route_build", "navigation")
+root = Path(sys.argv[11])
+seed = int(sys.argv[12])
+config_paths = [Path(item) for item in sys.argv[13:20]]
+
+def positioning_graph_audit(phase):
+    directory = path.parent / phase
+    adapter_path = directory / "dual_navsat_adapter_node_info.txt"
+    fuser_path = directory / "hybrid_global_fuser_node_info.txt"
+    ownership_path = directory / "hybrid_global_fuser_map_to_odom.txt"
+    map_frame_path = directory / "hybrid_global_fuser_map_frame.txt"
+    odom_frame_path = directory / "hybrid_global_fuser_odom_frame.txt"
+    amcl_tf_path = directory / "amcl_tf_broadcast.txt"
+    adapter = adapter_path.read_text(encoding="utf-8") if adapter_path.is_file() else ""
+    fuser = fuser_path.read_text(encoding="utf-8") if fuser_path.is_file() else ""
+    ownership = ownership_path.read_text(encoding="utf-8") if ownership_path.is_file() else ""
+    map_frame = map_frame_path.read_text(encoding="utf-8") if map_frame_path.is_file() else ""
+    odom_frame = odom_frame_path.read_text(encoding="utf-8") if odom_frame_path.is_file() else ""
+    adapter_inputs_present = all(
+        topic in adapter for topic in ("/gnss/front/gps_raw", "/gnss/rear/gps_raw")
+    )
+    fuser_inputs_present = all(
+        topic in fuser for topic in ("/gnss/fix", "/gnss/heading", "/odom")
+    )
+    ground_truth_subscription_present = any(
+        "/ground_truth/" in text for text in (adapter, fuser)
+    )
+    # The generic flag publishes the configured global-to-local edge: mapping
+    # uses odom -> wheel_odom, while reload uses map -> odom. Exact frame
+    # parameters and the live target edge are audited below.
+    expected_ownership = "true"
+    ownership_pass = f"boolean value is: {expected_ownership}" in ownership.lower()
+    expected_fuser_frames = (
+        ("odom", "wheel_odom") if phase == "mapping" else ("map", "odom")
+    )
+    fuser_tf_edge_pass = bool(
+        f"String value is: {expected_fuser_frames[0]}" in map_frame
+        and f"String value is: {expected_fuser_frames[1]}" in odom_frame
+    )
+    amcl_tf_disabled = bool(
+        phase == "mapping"
+        or (
+            amcl_tf_path.is_file()
+            and "boolean value is: false"
+            in amcl_tf_path.read_text(encoding="utf-8").lower()
+        )
+    )
+    tf_ownership_path = directory / "tf_ownership.json"
+    tf_ownership = (
+        json.loads(tf_ownership_path.read_text(encoding="utf-8"))
+        if tf_ownership_path.is_file()
+        else {}
+    )
+    files_present = all(
+        item.is_file()
+        for item in (
+            adapter_path, fuser_path, ownership_path, map_frame_path,
+            odom_frame_path, tf_ownership_path,
+        )
+    ) and (phase == "mapping" or amcl_tf_path.is_file())
+    return {
+        "adapter_node_info": str(adapter_path),
+        "fuser_node_info": str(fuser_path),
+        "map_to_odom_ownership": str(ownership_path),
+        "configured_fuser_tf_edge": "_to_".join(expected_fuser_frames),
+        "files_present": files_present,
+        "adapter_inputs_present": adapter_inputs_present,
+        "fuser_inputs_present": fuser_inputs_present,
+        "ground_truth_subscription_present": ground_truth_subscription_present,
+        "map_to_odom_ownership_pass": ownership_pass,
+        "fuser_tf_edge_pass": fuser_tf_edge_pass,
+        "amcl_tf_broadcast_disabled": amcl_tf_disabled,
+        "tf_ownership": tf_ownership,
+        "tf_single_owner_pass": tf_ownership.get("single_owner") is True,
+        "pass": bool(
+            files_present
+            and adapter_inputs_present
+            and fuser_inputs_present
+            and not ground_truth_subscription_present
+            and ownership_pass
+            and fuser_tf_edge_pass
+            and amcl_tf_disabled
+            and tf_ownership.get("single_owner") is True
+        ),
+    }
+
+positioning_graph_audits = {
+    phase: positioning_graph_audit(phase) for phase in ("mapping", "reload")
+}
+
+pid_dir = path.parent / "runtime_pids"
+shutdown_records = {}
+for report_path in sorted(pid_dir.glob("*.shutdown.json")):
+    report = json.loads(report_path.read_text(encoding="utf-8"))
+    shutdown_records[str(report["name"])] = report
+one_shot_groups = {
+    "mapping_explorer", "reload_probe", "mapping_tf_owner", "reload_tf_owner"
+}
+started_service_groups = {
+    item.stem
+    for item in pid_dir.glob("*.pid")
+    if item.stem not in one_shot_groups
+}
+missing_shutdown_records = sorted(
+    started_service_groups - set(shutdown_records)
+)
+runtime_shutdown = {
+    "started_service_groups": sorted(started_service_groups),
+    "missing_shutdown_records": missing_shutdown_records,
+    "records": shutdown_records,
+    "all_started_service_groups_clean": bool(
+        started_service_groups
+        and not missing_shutdown_records
+        and all(
+            report.get("clean") is True
+            for report in shutdown_records.values()
+        )
+    ),
+}
+
+def git(*args):
+    try:
+        return subprocess.check_output(
+            ["git", "-C", str(root), *args], text=True,
+            stderr=subprocess.DEVNULL,
+        ).strip()
+    except (FileNotFoundError, subprocess.CalledProcessError):
+        # Git worktrees created by Windows store a Windows gitdir in .git.
+        # WSL git interprets that pointer as a Linux-relative path, so use the
+        # host Git executable with an explicitly converted worktree path.
+        windows_root = subprocess.check_output(
+            ["wslpath", "-m", str(root)], text=True
+        ).strip()
+        return subprocess.check_output(
+            ["git.exe", "-C", windows_root, *args], text=True
+        ).strip()
+
+def sha256(file_path):
+    digest = hashlib.sha256()
+    with file_path.open("rb") as stream:
+        for block in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(block)
+    return digest.hexdigest()
+
+payload = {
+    "formal_scope": sys.argv[2].lower() == "true",
+    "diagnostic_override": {
+        "enabled": sys.argv[20] == "1",
+        "spawn_x": float(sys.argv[21]),
+        "spawn_y": float(sys.argv[22]),
+        "spawn_yaw": float(sys.argv[23]),
+        "initial_sweep_target_index": int(sys.argv[24]),
+    },
+    "restart_completed": sys.argv[3].lower() == "true",
+    "runtime_shutdown": runtime_shutdown,
+    "exit_codes": dict(zip(names, map(int, sys.argv[4:]))),
+    "sensor_provenance": {
+        "positioning": "gazebo_dual_navsat_rtk_plus_wheel_imu_plus_scan_matching",
+        "gazebo_dual_navsat_sensor_pair": True,
+        "gazebo_truth_to_gnss_sensor_model": False,
+        "runtime_graph_audits": positioning_graph_audits,
+        "all_runtime_graph_audits_pass": all(
+            audit["pass"] for audit in positioning_graph_audits.values()
+        ),
+        "ground_truth_ros_subscription_in_positioning": any(
+            audit["ground_truth_subscription_present"]
+            for audit in positioning_graph_audits.values()
+        ),
+        "oracle_pose_topic_to_controller": False,
+    },
+    "reproducibility": {
+        "source_commit": git("rev-parse", "HEAD"),
+        "source_dirty": bool(git("status", "--porcelain", "--untracked-files=no")),
+        "seed": seed,
+        "command": os.environ["PRODUCT_RUN_COMMAND"].strip(),
+        "ros_distro": os.environ.get("ROS_DISTRO", "unknown"),
+        "model_sha256": "not_applicable_mapping_pipeline_has_no_model",
+        "dataset_sha256": "not_applicable_seeded_gazebo_world",
+        "container_digest": "not_applicable_host_ros_runtime",
+        "config_sha256": {
+            str(item): sha256(item) for item in config_paths
+        },
+    },
+}
+path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+PY
+
+if python3 "$ROOT/scripts/product_mapping_acceptance.py" evaluate \
+  --exploration "$mapping/frontier_exploration.json" \
+  --map-quality "$mapping/map_quality.json" --map-geometry "$mapping/map_geometry.json" \
+  --mapping-tf "$mapping/tf_continuity.json" --reload-tf "$reload/tf_continuity.json" \
+  --navigation "$reload/navigation_probe.json" --processes "$OUTPUT_DIR/processes.json" \
+  --map-yaml "$mapping/product_map.yaml" \
+  --posegraph "$mapping/product_posegraph.posegraph" \
+  --posegraph-data "$mapping/product_posegraph.data" --reload-route "$reload/route.json" \
+  --output "$OUTPUT_DIR/product_mapping_acceptance.json"; then
+  EVALUATION_CODE=0
+else
+  EVALUATION_CODE=$?
+fi
+
+echo "$OUTPUT_DIR"
+if [[ "$SMOKE" -eq 1 ]]; then
+  echo "Smoke wiring run finished; inspect smoke_chain_pass. formal_scope=false, so it cannot pass PRODUCT-MAPPING-20000M2."
+  exit "$EVALUATION_CODE"
+fi
+exit "$EVALUATION_CODE"

@@ -1,4 +1,8 @@
 import json
+import math
+
+import pytest
+
 from sanitation_tasks.stage4w_gate import assemble
 
 
@@ -55,3 +59,15 @@ def test_stage4w_dynamic_aggregate_rejects_invalid_trial(tmp_path):
     report = assemble(tmp_path)
     assert report["success"] is False
     assert report["gates"]["dynamic_obstacle_valid_trials_at_least_20"] is False
+
+
+@pytest.mark.parametrize("p95_sec", [0.201, -0.001, math.nan, math.inf, None])
+def test_stage4w_dynamic_aggregate_rejects_invalid_estop_p95(tmp_path, p95_sec):
+    passing_fixture(tmp_path)
+    write_json(tmp_path, "safety_latency_report.json", {
+        "trial_count": 30,
+        "latency_sec": {"p95": p95_sec},
+    })
+    report = assemble(tmp_path)
+    assert report["success"] is False
+    assert report["gates"]["emergency_stop_p95_at_most_200ms"] is False

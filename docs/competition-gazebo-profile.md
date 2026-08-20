@@ -1,48 +1,39 @@
-# 竞赛仿真配置与剩余差距
+# 20,000 m² Gazebo 地图档位
 
-## 当前交付边界
+## 用途与限制
 
-`CompetitionProfile` 把原先分离的比赛尺度地图、AUTO-12 清扫机构参数和
-Gazebo 原生任务控制串成同一条可运行链：
+`CompetitionProfile` 提供 `200 m × 100 m = 20,000 m²` 的完整仿真地图、20 个可审计分区和代表性现场任务。它同时提供产品默认 Ackermann 与显式 legacy 驱动入口，但单区运行只验证大地图上的车辆、地图和任务链兼容性，不能作为全场 V1 验收证据。
 
-- Gazebo 世界和 Nav2 栅格均为 `200 m × 100 m = 20,000 m²`；
-- 地图按 `10 × 2` 划分为 20 个可审计分区；
-- 车辆使用 `1.32 m` 展开清扫宽度、`0.52 m` 刷盘中心和 `1.0 m/s`
-  候选上限；
-- Gazebo 页面显示完整地图面积、当前现场演示范围、任务状态、任务段进度和
-  刷盘状态，并保留开始、暂停、继续、停止和关闭按钮；
-- 现场运行 `Z01_00` 内的 `12 m × 9 m = 108 m²` 代表性分区，便于在评审时间内
-  看完规划、转场、清扫、转弯、暂停续扫和完成过程。
-
-启动命令：
+Ackermann 大地图兼容性运行：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File scripts/run_visual_demo.ps1 `
-  -CompetitionProfile -GazeboOnly -ManualControl -KeepOpen
+  -CompetitionProfile -DriveModel ackermann -CoverageProfile ackermann `
+  -NoGui -NoRviz -NoMcap -Video off
 ```
 
-运行时会在证据目录生成 `competition_profile_manifest.json`、完整占据栅格、
-keepout/speed mask 和现场任务配置。2 MB 原始栅格不提交 Git。
+legacy 资产演示：
 
-## 为什么现场只跑一个分区
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/run_visual_demo.ps1 `
+  -CompetitionProfile -DriveModel skid_steer_legacy -CoverageProfile optimized `
+  -GazeboOnly -ManualControl -KeepOpen
+```
 
-以 AUTO-12 离线均值 `4205.8 m²/h` 估算，纯清扫完整 20,000 m² 仍需约
-4.75 小时，现场从启动到结束全程观看不现实。代表性分区不是“缩小比赛地图”：
-完整地图仍由 map server 加载，车辆也在该地图坐标系中定位；只把本次派发任务
-限定为其中一个可重复验证的分区。任何报告都必须使用
-`LIVE_REPRESENTATIVE_ZONE_ON_FULL_SCALE_MAP`，不得写成全场耐久通过。
+生成器为两个入口输出独立任务配置。Ackermann 配置冻结 `1.32 m` 刷宽、`1.429352 m` 物理最小半径、真实 footprint 与外部 turning apron；legacy 配置不进入产品裁决。正式 V1 仍需连续多区调度、保存/加载/重定位、Nav2 规划闭环和全场运行证据。
 
-## 距离最终比赛作品的差距
+## 代表性分区
 
-| 能力 | 当前状态 | 还需完成 |
-|---|---|---|
-| 比赛尺度地图与分区 | 仿真完整接入 | 增加全场多分区连续调度与约 5 小时耐久证据 |
-| 清扫效率候选 | 离线通过，现场参数接入 | 在当前 Gazebo 动力学中做多种子有效面积/小时实测 |
-| 动态避障与安全 | 现有 Nav2/碰撞监控链 | 在竞赛大图内注入行人/车辆并形成零碰撞回归矩阵 |
-| 五类垃圾与点清扫 | 场景有五类目标外观 | 学习检测、决策和真实点清扫闭环仍未集成 |
-| 定位精度 | 小场景有仿真证据 | 大图多区域、多种子和失锁恢复的在线统计 |
-| 实车与 J6 | 未通过 | 真实数据、实车安全试验、J6 工具链和目标设备运行 |
+现场任务限定在 `Z01_00` 的 `12 m × 9 m = 108 m²` 分区，以便验证规划、转场、清扫、转弯、暂停续扫和完成过程。Ackermann 报告必须标记为 `representative_ackermann_zone_on_full_competition_map`，不得描述为全场耐久、完整建图或全地图任务通过。
 
-因此本配置提升的是“比赛尺度的可信现场演示”和“人类可监督性”，不会将
-`SIMULATION_COMPETITION_MATRIX_PASS`、`REAL_DOMAIN_PASS`、`J6_TOOLCHAIN_PASS`
-或 `FINAL_COMPETITION_EVIDENCE_COMPLETE` 改为 `true`。
+当前冻结的兼容性配置使用 `1.12 m` 中心线间距、`3.0 m` 刷盘关闭前导/出口段、`0.60 m/s` 清扫速度和 `0.25 m/s` Dubins 曲率段速度。单区实测 coverage `1.0`、repeat `0.1403`、直线度 P95 `0.0205 m`、横向误差 P95 `0.0572 m`，碰撞与禁区侵入为 `0`；定位 P95 `0.0618 m` 和净效率 `273.9 m²/h` 未过产品门，因此总体状态保持失败。
+
+## 产品准入仍需补齐
+
+- Ackermann 在完整 20,000 m² 地图上的建图、存图、加载、重定位和导航闭环。
+- 多分区连续调度、30 种子导航/覆盖/动态障碍矩阵及 2 小时耐久。
+- 覆盖率不低于 95%、重复覆盖率不高于 20%、零碰撞与零越界。
+- 包含规划、转场、避障、回充、暂停、点清扫等全部时间的净效率不低于 3500 m²/h。
+- 五类垃圾感知、点清扫、清后复检、故障注入和确定性回放的完整证据。
+
+在这些证据齐备前，该档位只能证明场景资产和可视化链路存在。

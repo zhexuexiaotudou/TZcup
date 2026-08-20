@@ -1,0 +1,40 @@
+{
+  "schema_version": 1,
+  "protocol": "CRCRV11",
+  "source_commit": "261f0d62d9e7bf6f844c0faf1fa72fe02486e0ce",
+  "primary_blockers": [
+    {
+      "id": "TARGET_CLASS_DOMAIN_GENERALIZATION",
+      "severity": "critical",
+      "evidence": {
+        "R1_combined_macro_f1": 0.6075,
+        "R1_target_macro_f1": 0.5397,
+        "R1_background_specificity": 1.0,
+        "R2_combined_macro_f1": 0.6311,
+        "R2_target_macro_f1": 0.5829,
+        "R2_background_specificity": 0.6333,
+        "R3_combined_macro_f1": 0.4561,
+        "R3_target_macro_f1": 0.4819,
+        "R3_background_specificity": 0.2333
+      }
+    },
+    {
+      "id": "V10_BACKGROUND_AND_VIEW_CONTRACT",
+      "severity": "high",
+      "evidence": {
+        "V10_background_unique_crops": 9,
+        "V10_sampler_expected_repeat_factor": 186.64,
+        "V10_runtime_faithful_positive_fraction": 0.4,
+        "C11_unique_background_tight_crops": 6576,
+        "GT_to_proposal_tight_macro_f1_delta": 0.0064,
+        "tight_context_complementary_correctness_fraction": 0.2276
+      }
+    }
+  ],
+  "forbidden_next_actions": [
+    "classifier R4/R5",
+    "new detector search",
+    "sealed-data tuning",
+    "lowering product gates"
+  ]
+}

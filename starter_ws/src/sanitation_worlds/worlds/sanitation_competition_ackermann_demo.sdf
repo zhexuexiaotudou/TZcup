@@ -1,0 +1,239 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <world name="sanitation_competition_ackermann_demo">
+    <plugin filename="gz-sim-physics-system" name="gz::sim::systems::Physics"/>
+    <plugin filename="gz-sim-user-commands-system" name="gz::sim::systems::UserCommands"/>
+    <plugin filename="gz-sim-scene-broadcaster-system" name="gz::sim::systems::SceneBroadcaster"/>
+    <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors"><render_engine>ogre2</render_engine></plugin>
+    <plugin filename="gz-sim-navsat-system" name="gz::sim::systems::NavSat"/>
+    <spherical_coordinates><surface_model>EARTH_WGS84</surface_model><world_frame_orientation>ENU</world_frame_orientation><latitude_deg>31.2304</latitude_deg><longitude_deg>121.4737</longitude_deg><elevation>0</elevation><heading_deg>0</heading_deg></spherical_coordinates>
+    <gravity>0 0 -9.81</gravity>
+    <physics name="developer_fast_2x" type="ignored">
+      <max_step_size>0.005</max_step_size>
+      <real_time_factor>2.0</real_time_factor>
+    </physics>
+    <scene>
+      <ambient>0.68 0.70 0.72 1</ambient>
+      <background>0.58 0.76 0.91 1</background>
+      <shadows>true</shadows>
+      <grid>false</grid>
+    </scene>
+    <light type="directional" name="sun">
+      <cast_shadows>true</cast_shadows><pose>-4 -6 20 0 0 0</pose>
+      <diffuse>0.98 0.94 0.84 1</diffuse><direction>-0.35 0.25 -1</direction>
+    </light>
+
+    <!-- Dedicated Ackermann turning-apron arena. The cyan scored rectangle
+         and all ten target poses are unchanged; only the grey/orange apron
+        grows to admit collision-free forward Dubins connectors at the
+        1.429 m centre radius / 2.01 m swept envelope. -->
+    <model name="demo_arena_floor">
+      <static>true</static><pose>-8 -1.5 -0.04 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>16 12 0.08</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>16 12 0.08</size></box></geometry>
+          <material><ambient>0.22 0.25 0.27 1</ambient><diffuse>0.28 0.30 0.31 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <model name="cleaning_lane_surface">
+      <static>true</static><pose>-8 -1.5 0.008 0 0 0</pose><link name="link">
+        <visual name="visual"><geometry><box><size>15.6 10.0 0.012</size></box></geometry>
+          <material><ambient>0.34 0.38 0.41 1</ambient><diffuse>0.34 0.38 0.41 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    <!-- Orange: full task allocation. Cyan: the inset area that is actually
+         scored for cleaning after the 1.0 m safety headland is reserved. -->
+    <model name="cleaning_boundary_north"><static>true</static><pose>-8 3.54 0.02 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>15.7 0.08 0.02</size></box></geometry><material><ambient>0.96 0.55 0.08 1</ambient><diffuse>0.96 0.55 0.08 1</diffuse></material></visual></link></model>
+    <model name="cleaning_boundary_south"><static>true</static><pose>-8 -6.54 0.02 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>15.7 0.08 0.02</size></box></geometry><material><ambient>0.96 0.55 0.08 1</ambient><diffuse>0.96 0.55 0.08 1</diffuse></material></visual></link></model>
+    <model name="cleaning_boundary_west"><static>true</static><pose>-15.84 -1.50 0.02 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>0.08 10.1 0.02</size></box></geometry><material><ambient>0.96 0.55 0.08 1</ambient><diffuse>0.96 0.55 0.08 1</diffuse></material></visual></link></model>
+    <model name="cleaning_boundary_east"><static>true</static><pose>-0.16 -1.50 0.02 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>0.08 10.1 0.02</size></box></geometry><material><ambient>0.96 0.55 0.08 1</ambient><diffuse>0.96 0.55 0.08 1</diffuse></material></visual></link></model>
+    <model name="actual_cleaning_boundary_north"><static>true</static><pose>-8 0.04 0.025 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>4.1 0.07 0.025</size></box></geometry><material><ambient>0.08 0.82 1 1</ambient><diffuse>0.08 0.82 1 1</diffuse></material></visual></link></model>
+    <model name="actual_cleaning_boundary_south"><static>true</static><pose>-8 -3.04 0.025 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>4.1 0.07 0.025</size></box></geometry><material><ambient>0.08 0.82 1 1</ambient><diffuse>0.08 0.82 1 1</diffuse></material></visual></link></model>
+    <model name="actual_cleaning_boundary_west"><static>true</static><pose>-10.04 -1.5 0.025 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>0.07 3.1 0.025</size></box></geometry><material><ambient>0.08 0.82 1 1</ambient><diffuse>0.08 0.82 1 1</diffuse></material></visual></link></model>
+    <model name="actual_cleaning_boundary_east"><static>true</static><pose>-5.96 -1.5 0.025 0 0 0</pose><link name="link"><visual name="v"><geometry><box><size>0.07 3.1 0.025</size></box></geometry><material><ambient>0.08 0.82 1 1</ambient><diffuse>0.08 0.82 1 1</diffuse></material></visual></link></model>
+
+    <model name="home_dock">
+      <static>true</static><pose>-8 3.00 0.16 0 0 0</pose><link name="link">
+        <collision name="collision"><geometry><box><size>1.3 0.45 0.32</size></box></geometry></collision>
+        <visual name="body"><geometry><box><size>1.3 0.45 0.32</size></box></geometry><material><ambient>0.05 0.24 0.39 1</ambient><diffuse>0.05 0.35 0.55 1</diffuse></material></visual>
+        <visual name="charge"><pose>0 -0.235 0 0 0 0</pose><geometry><box><size>0.5 0.02 0.15</size></box></geometry><material><ambient>0.1 1 0.55 1</ambient><diffuse>0.1 1 0.55 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="start_zone"><static>true</static><pose>-8 0 0.018 0 0 0</pose><link name="link"><visual name="v"><geometry><cylinder><radius>0.6</radius><length>0.015</length></cylinder></geometry><material><ambient>0.12 0.72 1 0.75</ambient><diffuse>0.12 0.72 1 0.75</diffuse></material></visual></link></model>
+
+    <!-- Safety furniture around the test cell creates curb, narrow-passage and
+         pedestrian interactions without obstructing the nominal cleaning zone. -->
+    <model name="curb_north"><static>true</static><pose>-8 3.95 0.10 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>16.2 0.25 0.20</size></box></geometry></collision><visual name="v"><geometry><box><size>16.2 0.25 0.20</size></box></geometry><material><ambient>0.75 0.76 0.72 1</ambient><diffuse>0.75 0.76 0.72 1</diffuse></material></visual></link></model>
+    <model name="curb_south"><static>true</static><pose>-8 -6.95 0.10 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>16.2 0.25 0.20</size></box></geometry></collision><visual name="v"><geometry><box><size>16.2 0.25 0.20</size></box></geometry><material><ambient>0.75 0.76 0.72 1</ambient><diffuse>0.75 0.76 0.72 1</diffuse></material></visual></link></model>
+    <model name="safety_barrier_west"><static>true</static><pose>-16.5 -1.5 0.35 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.25 10.5 0.7</size></box></geometry></collision><visual name="v"><geometry><box><size>0.25 10.5 0.7</size></box></geometry><material><ambient>0.92 0.45 0.06 1</ambient><diffuse>0.92 0.45 0.06 1</diffuse></material></visual></link></model>
+    <model name="safety_barrier_east"><static>true</static><pose>0.5 -1.5 0.35 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.25 10.5 0.7</size></box></geometry></collision><visual name="v"><geometry><box><size>0.25 10.5 0.7</size></box></geometry><material><ambient>0.92 0.45 0.06 1</ambient><diffuse>0.92 0.45 0.06 1</diffuse></material></visual></link></model>
+    <model name="competition_bin"><static>true</static><pose>-17.2 -4.8 0.55 0 0 0</pose><link name="link"><collision name="c"><geometry><box><size>0.75 0.65 1.1</size></box></geometry></collision><visual name="v"><geometry><box><size>0.75 0.65 1.1</size></box></geometry><material><ambient>0.08 0.45 0.25 1</ambient><diffuse>0.08 0.45 0.25 1</diffuse></material></visual></link></model>
+    <!-- Static scene dressing is parked east of the safety barrier.  The
+         separately named dynamic_pedestrian_box is the only pedestrian moved
+         through the arena by formal obstacle trials. -->
+    <model name="pedestrian_dummy"><static>true</static><pose>1.2 2.25 0 0 0 0</pose><link name="link"><collision name="c"><pose>0 0 0.9 0 0 0</pose><geometry><cylinder><radius>0.25</radius><length>1.8</length></cylinder></geometry></collision><visual name="body"><pose>0 0 0.9 0 0 0</pose><geometry><cylinder><radius>0.24</radius><length>1.35</length></cylinder></geometry><material><ambient>0.92 0.24 0.18 1</ambient><diffuse>0.92 0.24 0.18 1</diffuse></material></visual><visual name="head"><pose>0 0 1.72 0 0 0</pose><geometry><sphere><radius>0.22</radius></sphere></geometry><material><ambient>0.86 0.65 0.48 1</ambient><diffuse>0.86 0.65 0.48 1</diffuse></material></visual></link></model>
+
+    <!-- Parked outside the arena during nominal demos. Formal dynamic trials
+         move this physical model through the active swath using SetEntityPose. -->
+    <model name="dynamic_pedestrian_box">
+      <static>false</static><pose>25 18 0 0 0 0</pose>
+      <link name="link">
+        <gravity>false</gravity><kinematic>true</kinematic>
+        <collision name="collision"><pose>0 0 0.85 0 0 0</pose><geometry><cylinder><radius>0.25</radius><length>1.70</length></cylinder></geometry></collision>
+        <visual name="body"><pose>0 0 0.85 0 0 0</pose><geometry><cylinder><radius>0.24</radius><length>1.30</length></cylinder></geometry><material><ambient>0.96 0.38 0.08 1</ambient><diffuse>0.96 0.38 0.08 1</diffuse></material></visual>
+        <visual name="head"><pose>0 0 1.62 0 0 0</pose><geometry><sphere><radius>0.22</radius></sphere></geometry><material><ambient>0.86 0.65 0.48 1</ambient><diffuse>0.86 0.65 0.48 1</diffuse></material></visual>
+      </link>
+    </model>
+
+    <!-- Competition cleaning targets. Their map coordinates are declared in
+         competition_demo_area.yaml and judged only while the brush is on. -->
+    <model name="target_bottle_demo">
+      <static>true</static>
+      <pose>-9.60 -2.65 0.035 0 1.57 0.2</pose>
+      <link name="link">
+        <visual name="body"><pose>0 0 -0.025 0 0 0</pose><geometry><cylinder><radius>0.033</radius><length>0.145</length></cylinder></geometry><material><ambient>0.05 0.52 0.86 0.72</ambient><diffuse>0.05 0.52 0.86 0.72</diffuse></material></visual>
+        <visual name="base_ring"><pose>0 0 -0.1005 0 0 0</pose><geometry><cylinder><radius>0.034</radius><length>0.006</length></cylinder></geometry><material><ambient>0.04 0.40 0.68 0.82</ambient><diffuse>0.04 0.40 0.68 0.82</diffuse></material></visual>
+        <visual name="label"><pose>0 0 -0.020 0 0 0</pose><geometry><cylinder><radius>0.034</radius><length>0.045</length></cylinder></geometry><material><ambient>0.92 0.92 0.85 0.95</ambient><diffuse>0.92 0.92 0.85 0.95</diffuse></material></visual>
+        <visual name="shoulder"><pose>0 0 0.056 0 0 0</pose><geometry><cylinder><radius>0.027</radius><length>0.022</length></cylinder></geometry><material><ambient>0.05 0.52 0.86 0.72</ambient><diffuse>0.05 0.52 0.86 0.72</diffuse></material></visual>
+        <visual name="neck"><pose>0 0 0.079 0 0 0</pose><geometry><cylinder><radius>0.013</radius><length>0.025</length></cylinder></geometry><material><ambient>0.05 0.52 0.86 0.72</ambient><diffuse>0.05 0.52 0.86 0.72</diffuse></material></visual>
+        <visual name="cap"><pose>0 0 0.0965 0 0 0</pose><geometry><cylinder><radius>0.016</radius><length>0.012</length></cylinder></geometry><material><ambient>0.90 0.20 0.15 1</ambient><diffuse>0.90 0.20 0.15 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="target_can_demo">
+      <static>true</static>
+      <pose>-7.60 -2.70 0.034 0 1.57 0.4</pose>
+      <link name="link">
+        <visual name="body"><geometry><cylinder><radius>0.033</radius><length>0.103</length></cylinder></geometry><material><ambient>0.76 0.79 0.82 1</ambient><diffuse>0.76 0.79 0.82 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name="label_band"><geometry><cylinder><radius>0.034</radius><length>0.062</length></cylinder></geometry><material><ambient>0.82 0.13 0.10 1</ambient><diffuse>0.88 0.16 0.11 1</diffuse></material></visual>
+        <visual name="bottom_rim"><pose>0 0 -0.0545 0 0 0</pose><geometry><cylinder><radius>0.035</radius><length>0.006</length></cylinder></geometry><material><ambient>0.55 0.57 0.60 1</ambient><diffuse>0.70 0.72 0.74 1</diffuse></material></visual>
+        <visual name="top_rim"><pose>0 0 0.0545 0 0 0</pose><geometry><cylinder><radius>0.035</radius><length>0.006</length></cylinder></geometry><material><ambient>0.55 0.57 0.60 1</ambient><diffuse>0.70 0.72 0.74 1</diffuse></material></visual>
+        <visual name="pull_tab"><pose>0.009 0 0.058 0 0 0</pose><geometry><box><size>0.020 0.008 0.002</size></box></geometry><material><ambient>0.20 0.21 0.22 1</ambient><diffuse>0.30 0.31 0.32 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="target_paper_demo">
+      <static>true</static>
+      <pose>-8.65 -2.45 0.003 0 0 0.25</pose>
+      <link name="link">
+        <visual name="sheet_shadow"><pose>0 0 -0.001 0 0 0</pose><geometry><polyline><height>0.002</height><point>-0.112 -0.078</point><point>0.112 -0.078</point><point>0.112 0.078</point><point>-0.112 0.078</point></polyline></geometry><material><ambient>0.12 0.14 0.16 1</ambient><diffuse>0.12 0.14 0.16 1</diffuse></material></visual>
+        <visual name="sheet_body"><pose>0 0 0.006 0.03 -0.02 0</pose><geometry><box><size>0.205 0.140 0.012</size></box></geometry><material><ambient>1.00 0.82 0.12 1</ambient><diffuse>1.00 0.86 0.16 1</diffuse><emissive>0.12 0.08 0.01 1</emissive></material></visual>
+        <visual name="sheet"><geometry><polyline><height>0.004</height><point>-0.105 -0.068</point><point>-0.045 -0.075</point><point>0.018 -0.067</point><point>0.105 -0.075</point><point>0.098 0.020</point><point>0.105 0.075</point><point>0.025 0.068</point><point>-0.030 0.074</point><point>-0.105 0.066</point></polyline></geometry><material><ambient>0.96 0.95 0.80 1</ambient><diffuse>0.96 0.95 0.80 1</diffuse></material></visual>
+        <visual name="printed_line_1"><pose>0.010 0.025 0.003 0 0 0.03</pose><geometry><box><size>0.120 0.004 0.001</size></box></geometry><material><ambient>0.20 0.38 0.66 1</ambient><diffuse>0.20 0.38 0.66 1</diffuse></material></visual>
+        <visual name="printed_line_2"><pose>-0.015 0.005 0.003 0 0 -0.02</pose><geometry><box><size>0.085 0.004 0.001</size></box></geometry><material><ambient>0.20 0.38 0.66 1</ambient><diffuse>0.20 0.38 0.66 1</diffuse></material></visual>
+        <visual name="folded_corner"><pose>0.085 0.058 0.006 0.16 -0.12 0</pose><geometry><box><size>0.038 0.032 0.002</size></box></geometry><material><ambient>0.85 0.84 0.69 1</ambient><diffuse>0.85 0.84 0.69 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="target_cardboard_demo">
+      <static>true</static>
+      <pose>-6.55 -2.30 0.03 0 0 0.5</pose>
+      <link name="link">
+        <visual name="carton_body"><geometry><box><size>0.205 0.145 0.052</size></box></geometry><material><ambient>0.58 0.36 0.16 1</ambient><diffuse>0.67 0.43 0.22 1</diffuse></material></visual>
+        <visual name="left_flap"><pose>-0.112 0 0.023 0 -0.18 0</pose><geometry><box><size>0.055 0.135 0.005</size></box></geometry><material><ambient>0.66 0.43 0.22 1</ambient><diffuse>0.72 0.48 0.25 1</diffuse></material></visual>
+        <visual name="right_flap"><pose>0.112 0 0.023 0 0.18 0</pose><geometry><box><size>0.055 0.135 0.005</size></box></geometry><material><ambient>0.66 0.43 0.22 1</ambient><diffuse>0.72 0.48 0.25 1</diffuse></material></visual>
+        <visual name="packing_tape"><pose>0 0 0.029 0 0 0</pose><geometry><box><size>0.018 0.148 0.002</size></box></geometry><material><ambient>0.86 0.72 0.42 0.9</ambient><diffuse>0.86 0.72 0.42 0.9</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="target_leaf_pile_demo">
+      <static>true</static>
+      <pose>-8.15 -1.80 0.003 0 0 0</pose>
+      <link name="link">
+        <visual name="pile_shadow"><pose>0 0 -0.001 0 0 0</pose><geometry><polyline><height>0.002</height><point>-0.155 -0.025</point><point>-0.105 -0.095</point><point>-0.015 -0.108</point><point>0.090 -0.085</point><point>0.155 -0.020</point><point>0.120 0.075</point><point>0.025 0.110</point><point>-0.085 0.090</point></polyline></geometry><material><ambient>0.14 0.09 0.03 1</ambient><diffuse>0.14 0.09 0.03 1</diffuse></material></visual>
+        <visual name="solid_a"><pose>-0.080 0.020 0.007 0.04 -0.03 0.35</pose><geometry><box><size>0.110 0.040 0.010</size></box></geometry><material><ambient>0.62 0.32 0.05 1</ambient><diffuse>0.70 0.38 0.06 1</diffuse><emissive>0.08 0.03 0 1</emissive></material></visual>
+        <visual name="solid_b"><pose>0.020 0.050 0.007 -0.03 0.04 -0.45</pose><geometry><box><size>0.096 0.036 0.010</size></box></geometry><material><ambient>0.78 0.46 0.06 1</ambient><diffuse>0.86 0.52 0.07 1</diffuse><emissive>0.08 0.04 0 1</emissive></material></visual>
+        <visual name="solid_c"><pose>0.085 -0.020 0.007 0.03 -0.02 0.75</pose><geometry><box><size>0.100 0.038 0.010</size></box></geometry><material><ambient>0.52 0.24 0.03 1</ambient><diffuse>0.62 0.30 0.04 1</diffuse><emissive>0.08 0.03 0 1</emissive></material></visual>
+        <visual name="solid_d"><pose>-0.015 -0.060 0.007 -0.02 0.03 -0.15</pose><geometry><box><size>0.084 0.030 0.010</size></box></geometry><material><ambient>0.70 0.40 0.04 1</ambient><diffuse>0.80 0.46 0.05 1</diffuse><emissive>0.08 0.04 0 1</emissive></material></visual>
+        <visual name="solid_e"><pose>-0.020 0.005 0.010 0.04 -0.03 1.05</pose><geometry><box><size>0.104 0.038 0.010</size></box></geometry><material><ambient>0.96 0.24 0.04 1</ambient><diffuse>1.00 0.30 0.05 1</diffuse><emissive>0.10 0.02 0 1</emissive></material></visual>
+        <visual name="solid_f"><pose>0.065 0.050 0.010 -0.03 0.04 -1.10</pose><geometry><box><size>0.092 0.034 0.010</size></box></geometry><material><ambient>0.98 0.72 0.06 1</ambient><diffuse>1.00 0.78 0.08 1</diffuse><emissive>0.10 0.06 0 1</emissive></material></visual>
+        <visual name="leaf_a"><pose>-0.080 0.020 0 0 0 0.35</pose><geometry><polyline><height>0.003</height><point>-0.055 0</point><point>-0.030 -0.014</point><point>0 -0.022</point><point>0.032 -0.013</point><point>0.055 0</point><point>0.032 0.013</point><point>0 0.022</point><point>-0.030 0.014</point></polyline></geometry><material><ambient>0.62 0.32 0.05 1</ambient><diffuse>0.62 0.32 0.05 1</diffuse></material></visual>
+        <visual name="vein_a"><pose>-0.080 0.020 0.003 0 0 0.35</pose><geometry><box><size>0.082 0.003 0.001</size></box></geometry><material><ambient>0.32 0.16 0.02 1</ambient><diffuse>0.32 0.16 0.02 1</diffuse></material></visual>
+        <visual name="stem_a"><pose>-0.132 0.001 0.002 0 1.57 0.35</pose><geometry><cylinder><radius>0.002</radius><length>0.025</length></cylinder></geometry><material><ambient>0.28 0.15 0.02 1</ambient><diffuse>0.28 0.15 0.02 1</diffuse></material></visual>
+        <visual name="leaf_b"><pose>0.020 0.065 0 0 0 -0.55</pose><geometry><polyline><height>0.003</height><point>-0.048 0</point><point>-0.026 -0.012</point><point>0 -0.019</point><point>0.028 -0.011</point><point>0.048 0</point><point>0.028 0.011</point><point>0 0.019</point><point>-0.026 0.012</point></polyline></geometry><material><ambient>0.78 0.48 0.04 1</ambient><diffuse>0.78 0.48 0.04 1</diffuse></material></visual>
+        <visual name="vein_b"><pose>0.020 0.065 0.003 0 0 -0.55</pose><geometry><box><size>0.070 0.003 0.001</size></box></geometry><material><ambient>0.38 0.21 0.02 1</ambient><diffuse>0.38 0.21 0.02 1</diffuse></material></visual>
+        <visual name="leaf_c"><pose>0.085 -0.020 0 0 0 0.75</pose><geometry><polyline><height>0.003</height><point>-0.050 0</point><point>-0.027 -0.013</point><point>0 -0.020</point><point>0.030 -0.012</point><point>0.050 0</point><point>0.030 0.012</point><point>0 0.020</point><point>-0.027 0.013</point></polyline></geometry><material><ambient>0.46 0.24 0.03 1</ambient><diffuse>0.46 0.24 0.03 1</diffuse></material></visual>
+        <visual name="vein_c"><pose>0.085 -0.020 0.003 0 0 0.75</pose><geometry><box><size>0.074 0.003 0.001</size></box></geometry><material><ambient>0.25 0.12 0.01 1</ambient><diffuse>0.25 0.12 0.01 1</diffuse></material></visual>
+        <visual name="leaf_d"><pose>-0.015 -0.060 0 0 0 -0.15</pose><geometry><polyline><height>0.003</height><point>-0.042 0</point><point>-0.022 -0.010</point><point>0 -0.016</point><point>0.024 -0.010</point><point>0.042 0</point><point>0.024 0.010</point><point>0 0.016</point><point>-0.022 0.010</point></polyline></geometry><material><ambient>0.70 0.40 0.04 1</ambient><diffuse>0.70 0.40 0.04 1</diffuse></material></visual>
+        <visual name="vein_d"><pose>-0.015 -0.060 0.003 0 0 -0.15</pose><geometry><box><size>0.060 0.0025 0.001</size></box></geometry><material><ambient>0.34 0.18 0.02 1</ambient><diffuse>0.34 0.18 0.02 1</diffuse></material></visual>
+        <visual name="leaf_e"><pose>-0.020 0.005 0.004 0.04 -0.03 1.05</pose><geometry><polyline><height>0.003</height><point>-0.052 0</point><point>-0.028 -0.013</point><point>0 -0.021</point><point>0.030 -0.012</point><point>0.052 0</point><point>0.030 0.012</point><point>0 0.021</point><point>-0.028 0.013</point></polyline></geometry><material><ambient>0.92 0.18 0.03 1</ambient><diffuse>0.96 0.24 0.04 1</diffuse><emissive>0.10 0.02 0 1</emissive></material></visual>
+        <visual name="leaf_f"><pose>0.065 0.050 0.004 -0.03 0.04 -1.10</pose><geometry><polyline><height>0.003</height><point>-0.046 0</point><point>-0.025 -0.012</point><point>0 -0.019</point><point>0.027 -0.011</point><point>0.046 0</point><point>0.027 0.011</point><point>0 0.019</point><point>-0.025 0.012</point></polyline></geometry><material><ambient>0.96 0.68 0.04 1</ambient><diffuse>0.98 0.72 0.06 1</diffuse><emissive>0.10 0.06 0 1</emissive></material></visual>
+      </link>
+    </model>
+    <model name="target_bottle_demo_02">
+      <static>true</static>
+      <pose>-6.35 -0.80 0.035 0 1.57 -0.35</pose>
+      <link name="link">
+        <visual name="body"><pose>0 0 -0.025 0 0 0</pose><geometry><cylinder><radius>0.033</radius><length>0.145</length></cylinder></geometry><material><ambient>0.10 0.62 0.32 0.78</ambient><diffuse>0.10 0.62 0.32 0.78</diffuse></material></visual>
+        <visual name="base_ring"><pose>0 0 -0.1005 0 0 0</pose><geometry><cylinder><radius>0.034</radius><length>0.006</length></cylinder></geometry><material><ambient>0.06 0.44 0.22 0.9</ambient><diffuse>0.06 0.44 0.22 0.9</diffuse></material></visual>
+        <visual name="label"><pose>0 0 -0.020 0 0 0</pose><geometry><cylinder><radius>0.034</radius><length>0.045</length></cylinder></geometry><material><ambient>0.96 0.86 0.24 0.96</ambient><diffuse>0.96 0.86 0.24 0.96</diffuse></material></visual>
+        <visual name="shoulder"><pose>0 0 0.056 0 0 0</pose><geometry><cylinder><radius>0.027</radius><length>0.022</length></cylinder></geometry><material><ambient>0.10 0.62 0.32 0.78</ambient><diffuse>0.10 0.62 0.32 0.78</diffuse></material></visual>
+        <visual name="neck"><pose>0 0 0.079 0 0 0</pose><geometry><cylinder><radius>0.013</radius><length>0.025</length></cylinder></geometry><material><ambient>0.10 0.62 0.32 0.78</ambient><diffuse>0.10 0.62 0.32 0.78</diffuse></material></visual>
+        <visual name="cap"><pose>0 0 0.0965 0 0 0</pose><geometry><cylinder><radius>0.016</radius><length>0.012</length></cylinder></geometry><material><ambient>0.18 0.30 0.86 1</ambient><diffuse>0.18 0.30 0.86 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="target_can_demo_02">
+      <static>true</static>
+      <pose>-9.20 -1.25 0.034 0 1.57 -0.55</pose>
+      <link name="link">
+        <visual name="body"><geometry><cylinder><radius>0.033</radius><length>0.103</length></cylinder></geometry><material><ambient>0.76 0.79 0.82 1</ambient><diffuse>0.76 0.79 0.82 1</diffuse><specular>0.60 0.60 0.60 1</specular></material></visual>
+        <visual name="label_band"><geometry><cylinder><radius>0.034</radius><length>0.062</length></cylinder></geometry><material><ambient>0.12 0.35 0.88 1</ambient><diffuse>0.14 0.40 0.94 1</diffuse></material></visual>
+        <visual name="bottom_rim"><pose>0 0 -0.0545 0 0 0</pose><geometry><cylinder><radius>0.035</radius><length>0.006</length></cylinder></geometry><material><ambient>0.55 0.57 0.60 1</ambient><diffuse>0.70 0.72 0.74 1</diffuse></material></visual>
+        <visual name="top_rim"><pose>0 0 0.0545 0 0 0</pose><geometry><cylinder><radius>0.035</radius><length>0.006</length></cylinder></geometry><material><ambient>0.55 0.57 0.60 1</ambient><diffuse>0.70 0.72 0.74 1</diffuse></material></visual>
+        <visual name="pull_tab"><pose>0.009 0 0.058 0 0 0</pose><geometry><box><size>0.020 0.008 0.002</size></box></geometry><material><ambient>0.20 0.21 0.22 1</ambient><diffuse>0.30 0.31 0.32 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="target_paper_demo_02">
+      <static>true</static>
+      <pose>-7.35 -0.95 0.003 0 0 -0.45</pose>
+      <link name="link">
+        <visual name="sheet_shadow"><pose>0 0 -0.001 0 0 0</pose><geometry><polyline><height>0.002</height><point>-0.112 -0.078</point><point>0.112 -0.078</point><point>0.112 0.078</point><point>-0.112 0.078</point></polyline></geometry><material><ambient>0.12 0.14 0.16 1</ambient><diffuse>0.12 0.14 0.16 1</diffuse></material></visual>
+        <visual name="sheet_body"><pose>0 0 0.006 -0.03 0.02 0</pose><geometry><box><size>0.205 0.140 0.012</size></box></geometry><material><ambient>0.20 0.82 1.00 1</ambient><diffuse>0.24 0.88 1.00 1</diffuse><emissive>0.01 0.08 0.12 1</emissive></material></visual>
+        <visual name="sheet"><geometry><polyline><height>0.004</height><point>-0.105 -0.068</point><point>-0.045 -0.075</point><point>0.018 -0.067</point><point>0.105 -0.075</point><point>0.098 0.020</point><point>0.105 0.075</point><point>0.025 0.068</point><point>-0.030 0.074</point><point>-0.105 0.066</point></polyline></geometry><material><ambient>0.90 0.95 0.99 1</ambient><diffuse>0.90 0.95 0.99 1</diffuse></material></visual>
+        <visual name="printed_line_1"><pose>0.010 0.025 0.003 0 0 0.03</pose><geometry><box><size>0.120 0.004 0.001</size></box></geometry><material><ambient>0.65 0.18 0.22 1</ambient><diffuse>0.65 0.18 0.22 1</diffuse></material></visual>
+        <visual name="printed_line_2"><pose>-0.015 0.005 0.003 0 0 -0.02</pose><geometry><box><size>0.085 0.004 0.001</size></box></geometry><material><ambient>0.65 0.18 0.22 1</ambient><diffuse>0.65 0.18 0.22 1</diffuse></material></visual>
+        <visual name="folded_corner"><pose>0.085 0.058 0.006 0.16 -0.12 0</pose><geometry><box><size>0.038 0.032 0.002</size></box></geometry><material><ambient>0.72 0.79 0.84 1</ambient><diffuse>0.72 0.79 0.84 1</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="target_cardboard_demo_02">
+      <static>true</static>
+      <pose>-9.55 -0.55 0.03 0 0 -0.35</pose>
+      <link name="link">
+        <visual name="carton_body"><geometry><box><size>0.205 0.145 0.052</size></box></geometry><material><ambient>0.58 0.36 0.16 1</ambient><diffuse>0.67 0.43 0.22 1</diffuse></material></visual>
+        <visual name="left_flap"><pose>-0.112 0 0.023 0 -0.18 0</pose><geometry><box><size>0.055 0.135 0.005</size></box></geometry><material><ambient>0.66 0.43 0.22 1</ambient><diffuse>0.72 0.48 0.25 1</diffuse></material></visual>
+        <visual name="right_flap"><pose>0.112 0 0.023 0 0.18 0</pose><geometry><box><size>0.055 0.135 0.005</size></box></geometry><material><ambient>0.66 0.43 0.22 1</ambient><diffuse>0.72 0.48 0.25 1</diffuse></material></visual>
+        <visual name="packing_tape"><pose>0 0 0.029 0 0 0</pose><geometry><box><size>0.018 0.148 0.002</size></box></geometry><material><ambient>0.86 0.72 0.42 0.9</ambient><diffuse>0.86 0.72 0.42 0.9</diffuse></material></visual>
+      </link>
+    </model>
+    <model name="target_leaf_pile_demo_02">
+      <static>true</static>
+      <pose>-6.55 -1.55 0.003 0 0 0.25</pose>
+      <link name="link">
+        <visual name="pile_shadow"><pose>0 0 -0.001 0 0 0</pose><geometry><polyline><height>0.002</height><point>-0.155 -0.025</point><point>-0.105 -0.095</point><point>-0.015 -0.108</point><point>0.090 -0.085</point><point>0.155 -0.020</point><point>0.120 0.075</point><point>0.025 0.110</point><point>-0.085 0.090</point></polyline></geometry><material><ambient>0.14 0.09 0.03 1</ambient><diffuse>0.14 0.09 0.03 1</diffuse></material></visual>
+        <visual name="solid_a"><pose>-0.080 0.020 0.007 0.04 -0.03 0.35</pose><geometry><box><size>0.110 0.040 0.010</size></box></geometry><material><ambient>0.76 0.24 0.04 1</ambient><diffuse>0.86 0.30 0.05 1</diffuse><emissive>0.08 0.02 0 1</emissive></material></visual>
+        <visual name="solid_b"><pose>0.020 0.050 0.007 -0.03 0.04 -0.45</pose><geometry><box><size>0.096 0.036 0.010</size></box></geometry><material><ambient>0.90 0.52 0.06 1</ambient><diffuse>0.98 0.60 0.08 1</diffuse><emissive>0.08 0.04 0 1</emissive></material></visual>
+        <visual name="solid_c"><pose>0.085 -0.020 0.007 0.03 -0.02 0.75</pose><geometry><box><size>0.100 0.038 0.010</size></box></geometry><material><ambient>0.60 0.18 0.03 1</ambient><diffuse>0.70 0.24 0.04 1</diffuse><emissive>0.08 0.02 0 1</emissive></material></visual>
+        <visual name="solid_d"><pose>-0.015 -0.060 0.007 -0.02 0.03 -0.15</pose><geometry><box><size>0.084 0.030 0.010</size></box></geometry><material><ambient>0.74 0.46 0.04 1</ambient><diffuse>0.84 0.52 0.05 1</diffuse><emissive>0.08 0.04 0 1</emissive></material></visual>
+        <visual name="solid_e"><pose>-0.020 0.005 0.010 0.04 -0.03 1.05</pose><geometry><box><size>0.104 0.038 0.010</size></box></geometry><material><ambient>0.96 0.24 0.04 1</ambient><diffuse>1.00 0.30 0.05 1</diffuse><emissive>0.10 0.02 0 1</emissive></material></visual>
+        <visual name="solid_f"><pose>0.065 0.050 0.010 -0.03 0.04 -1.10</pose><geometry><box><size>0.092 0.034 0.010</size></box></geometry><material><ambient>0.98 0.72 0.06 1</ambient><diffuse>1.00 0.78 0.08 1</diffuse><emissive>0.10 0.06 0 1</emissive></material></visual>
+        <visual name="leaf_a"><pose>-0.080 0.020 0 0 0 0.35</pose><geometry><polyline><height>0.003</height><point>-0.055 0</point><point>-0.030 -0.014</point><point>0 -0.022</point><point>0.032 -0.013</point><point>0.055 0</point><point>0.032 0.013</point><point>0 0.022</point><point>-0.030 0.014</point></polyline></geometry><material><ambient>0.70 0.20 0.04 1</ambient><diffuse>0.76 0.24 0.04 1</diffuse></material></visual>
+        <visual name="vein_a"><pose>-0.080 0.020 0.003 0 0 0.35</pose><geometry><box><size>0.082 0.003 0.001</size></box></geometry><material><ambient>0.32 0.09 0.01 1</ambient><diffuse>0.32 0.09 0.01 1</diffuse></material></visual>
+        <visual name="stem_a"><pose>-0.132 0.001 0.002 0 1.57 0.35</pose><geometry><cylinder><radius>0.002</radius><length>0.025</length></cylinder></geometry><material><ambient>0.28 0.15 0.02 1</ambient><diffuse>0.28 0.15 0.02 1</diffuse></material></visual>
+        <visual name="leaf_b"><pose>0.020 0.065 0 0 0 -0.55</pose><geometry><polyline><height>0.003</height><point>-0.048 0</point><point>-0.026 -0.012</point><point>0 -0.019</point><point>0.028 -0.011</point><point>0.048 0</point><point>0.028 0.011</point><point>0 0.019</point><point>-0.026 0.012</point></polyline></geometry><material><ambient>0.88 0.58 0.04 1</ambient><diffuse>0.88 0.58 0.04 1</diffuse></material></visual>
+        <visual name="vein_b"><pose>0.020 0.065 0.003 0 0 -0.55</pose><geometry><box><size>0.070 0.003 0.001</size></box></geometry><material><ambient>0.38 0.21 0.02 1</ambient><diffuse>0.38 0.21 0.02 1</diffuse></material></visual>
+        <visual name="leaf_c"><pose>0.085 -0.020 0 0 0 0.75</pose><geometry><polyline><height>0.003</height><point>-0.050 0</point><point>-0.027 -0.013</point><point>0 -0.020</point><point>0.030 -0.012</point><point>0.050 0</point><point>0.030 0.012</point><point>0 0.020</point><point>-0.027 0.013</point></polyline></geometry><material><ambient>0.52 0.30 0.03 1</ambient><diffuse>0.52 0.30 0.03 1</diffuse></material></visual>
+        <visual name="vein_c"><pose>0.085 -0.020 0.003 0 0 0.75</pose><geometry><box><size>0.074 0.003 0.001</size></box></geometry><material><ambient>0.25 0.12 0.01 1</ambient><diffuse>0.25 0.12 0.01 1</diffuse></material></visual>
+        <visual name="leaf_d"><pose>-0.015 -0.060 0 0 0 -0.15</pose><geometry><polyline><height>0.003</height><point>-0.042 0</point><point>-0.022 -0.010</point><point>0 -0.016</point><point>0.024 -0.010</point><point>0.042 0</point><point>0.024 0.010</point><point>0 0.016</point><point>-0.022 0.010</point></polyline></geometry><material><ambient>0.74 0.46 0.04 1</ambient><diffuse>0.74 0.46 0.04 1</diffuse></material></visual>
+        <visual name="vein_d"><pose>-0.015 -0.060 0.003 0 0 -0.15</pose><geometry><box><size>0.060 0.0025 0.001</size></box></geometry><material><ambient>0.34 0.18 0.02 1</ambient><diffuse>0.34 0.18 0.02 1</diffuse></material></visual>
+        <visual name="leaf_e"><pose>-0.020 0.005 0.004 0.04 -0.03 1.05</pose><geometry><polyline><height>0.003</height><point>-0.052 0</point><point>-0.028 -0.013</point><point>0 -0.021</point><point>0.030 -0.012</point><point>0.052 0</point><point>0.030 0.012</point><point>0 0.021</point><point>-0.028 0.013</point></polyline></geometry><material><ambient>0.92 0.18 0.03 1</ambient><diffuse>0.96 0.24 0.04 1</diffuse><emissive>0.10 0.02 0 1</emissive></material></visual>
+        <visual name="leaf_f"><pose>0.065 0.050 0.004 -0.03 0.04 -1.10</pose><geometry><polyline><height>0.003</height><point>-0.046 0</point><point>-0.025 -0.012</point><point>0 -0.019</point><point>0.027 -0.011</point><point>0.046 0</point><point>0.027 0.011</point><point>0 0.019</point><point>-0.025 0.012</point></polyline></geometry><material><ambient>0.96 0.68 0.04 1</ambient><diffuse>0.98 0.72 0.06 1</diffuse><emissive>0.10 0.06 0 1</emissive></material></visual>
+      </link>
+    </model>
+    <model name="puddle_demo">
+      <static>true</static>
+      <pose>-12.6 -0.8 0.003 0 0 0</pose>
+      <link name="link">
+        <visual name="water_patch"><geometry><polyline><height>0.003</height><point>-0.250 -0.025</point><point>-0.205 -0.135</point><point>-0.095 -0.185</point><point>0.015 -0.145</point><point>0.120 -0.175</point><point>0.235 -0.085</point><point>0.250 0.025</point><point>0.170 0.130</point><point>0.055 0.190</point><point>-0.055 0.150</point><point>-0.165 0.175</point><point>-0.235 0.080</point></polyline></geometry><material><ambient>0.04 0.32 0.52 0.48</ambient><diffuse>0.04 0.32 0.52 0.48</diffuse><specular>0.55 0.70 0.78 1</specular></material></visual>
+        <visual name="water_highlight"><pose>-0.055 0.055 0.002 0 0 -0.12</pose><geometry><polyline><height>0.001</height><point>-0.090 -0.012</point><point>-0.045 -0.028</point><point>0.035 -0.024</point><point>0.085 0</point><point>0.030 0.020</point><point>-0.045 0.025</point></polyline></geometry><material><ambient>0.55 0.82 0.95 0.52</ambient><diffuse>0.55 0.82 0.95 0.52</diffuse></material></visual>
+      </link>
+    </model>
+  </world>
+</sdf>

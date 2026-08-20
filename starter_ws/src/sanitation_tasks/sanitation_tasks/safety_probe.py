@@ -7,7 +7,11 @@ from geometry_msgs.msg import Twist
 from rclpy.node import Node
 from std_msgs.msg import Bool
 
-from .evaluation import percentile
+from .evaluation import (
+    PRODUCT_ESTOP_P95_MAX_SEC,
+    percentile,
+    product_estop_latency_pass,
+)
 
 
 class SafetyProbe(Node):
@@ -18,7 +22,9 @@ class SafetyProbe(Node):
         self.declare_parameter("output_path", "safety_probe.json")
         self.declare_parameter("trial_count", 30)
         self.command_publisher = self.create_publisher(Twist, "/cmd_vel_nav", 10)
-        self.estop_publisher = self.create_publisher(Bool, "/emergency_stop", 10)
+        self.estop_publisher = self.create_publisher(
+            Bool, "/safety/operator_estop_command", 10
+        )
         self.samples = []
         self.create_subscription(Twist, "/cmd_vel", self._on_output, 50)
 
@@ -108,8 +114,9 @@ class SafetyProbe(Node):
         timeout_zero = stale_command["stable_zero_observed"]
         latencies = [item["latency_sec"] for item in trials if item["latency_sec"] is not None]
         p50 = percentile(latencies, 0.50); p95 = percentile(latencies, 0.95); maximum = max(latencies) if latencies else None
+        product_estop_pass = product_estop_latency_pass(p95)
         report = {
-            "schema_version": 2, "trial_count": len(trials), "completed_trial_count": len(latencies),
+            "schema_version": 3, "trial_count": len(trials), "completed_trial_count": len(latencies),
             "command_passed": command_passed, "emergency_stop_zeroed": len(latencies) == len(trials),
             "post_stop_command_output_zero": bool(
                 trials
@@ -117,8 +124,17 @@ class SafetyProbe(Node):
             ),
             "resume_after_release": releases_ok, "stale_command_zeroed": timeout_zero,
             "stale_command": stale_command,
-            "latency_sec": {"p50": p50, "p95": p95, "max": maximum},
-            "competition_estop_pass": bool(p95 is not None and p95 <= 1.0),
+            "latency_sec": {
+                "median": p50,
+                "p50": p50,
+                "p95": p95,
+                "max": maximum,
+            },
+            "threshold_sec": {"p95_max": PRODUCT_ESTOP_P95_MAX_SEC},
+            "product_estop_pass": product_estop_pass,
+            # Kept for old report readers, but no longer carries a relaxed
+            # competition-only threshold.
+            "competition_estop_pass": product_estop_pass,
             "trials": trials,
         }
         report["success"] = all([
@@ -127,7 +143,7 @@ class SafetyProbe(Node):
             report["post_stop_command_output_zero"],
             report["resume_after_release"],
             report["stale_command_zeroed"],
-            report["competition_estop_pass"],
+            report["product_estop_pass"],
         ])
         output = Path(self.get_parameter("output_path").value); output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

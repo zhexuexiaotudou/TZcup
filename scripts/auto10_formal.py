@@ -317,21 +317,25 @@ def run_app(output: Path) -> int:
             ]
         )
         html = (web_root / "index.html").read_text(encoding="utf-8")
+        javascript = (web_root / "app.js").read_text(encoding="utf-8")
+        stylesheet = (web_root / "app.css").read_text(encoding="utf-8")
         ui_checks = {
             "viewport": 'name="viewport"' in html,
-            "command_form": 'id="command-form"' in html,
-            "command_input_label": 'aria-label="任务指令"' in html,
-            "token_input_label": 'aria-label="访问令牌"' in html,
-            "live_result": 'aria-live="polite"' in html,
-            "authorization_header": '"Authorization"' in html,
-            "idempotency_header": '"Idempotency-Key"' in html,
-            "api_endpoint": '"/api/v1/commands"' in html,
-            "no_direct_cmd_vel": "/cmd_vel" not in html,
-            "fail_closed_copy": "fail closed" in html,
-            "bilingual_copy": "Authenticated task gateway" in html,
-            "responsive_width": "max-width: 880px" in html
-            and "@media (max-width: 620px)" in html,
-            "keyboard_submit": 'type="submit"' in html,
+            "task_controls": 'class="task-controls"' in html
+            and html.count("data-needs-dispatch") >= 4,
+            "token_input_label": '<label for="operator-token">' in html
+            and 'id="operator-token"' in html,
+            "live_result": 'id="command-result" aria-live="polite"' in html,
+            "authorization_header": '"Authorization"' in javascript,
+            "idempotency_header": '"Idempotency-Key"' in javascript,
+            "api_endpoint": '"/api/v1/commands"' in javascript,
+            "no_direct_cmd_vel": "/cmd_vel" not in html
+            and "/cmd_vel" not in javascript,
+            "fail_closed_status_copy": "不会显示虚假成功状态" in html,
+            "safety_controls": 'class="safety-controls"' in html
+            and 'data-command="紧急停止"' in html,
+            "responsive_layout": "@media (max-width: 900px)" in stylesheet,
+            "keyboard_operable_commands": html.count("<button") >= 8,
         }
         case_count = 210 + 60 + 5 + len(ui_checks)
         metrics = {

@@ -88,14 +88,18 @@ def run(timeout_sec: float, dashboard_url: str, output: Path) -> int:
             time.sleep(0.2)
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        # GNU timeout may deliver SIGTERM while rclpy's signal handler is
+        # already shutting the context down.  try_shutdown keeps this cleanup
+        # idempotent instead of masking the useful readiness diagnostics with
+        # RCLError("rcl_shutdown already called").
+        rclpy.try_shutdown()
     output.write_text(json.dumps(last, indent=2) + "\n", encoding="utf-8")
     return 0 if last.get("ready") else 4
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--timeout", type=float, default=150.0)
+    parser.add_argument("--timeout", type=float, default=300.0)
     parser.add_argument("--dashboard-url", required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()

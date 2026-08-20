@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import math
 from pathlib import Path
 import re
 import xml.etree.ElementTree as ET
@@ -36,11 +37,29 @@ def _numbers(text: str | None, defaults: dict[str, str] | None = None) -> list[f
     return [float(value) for value in resolved.split()]
 
 
-def read_production_camera_contract(xacro_path: str | Path) -> dict:
+def read_production_camera_contract(
+    xacro_path: str | Path,
+    *,
+    xacro_overrides: dict[str, float] | None = None,
+    profile_id: str | None = None,
+) -> dict:
     """Extract the simulated production camera contract from the vehicle Xacro."""
     path = Path(xacro_path)
     root = ET.parse(path).getroot()
     defaults = _xacro_arg_defaults(root)
+    overrides = dict(xacro_overrides or {})
+    allowed_overrides = {"camera_x", "camera_y", "camera_z", "camera_pitch_rad"}
+    unknown = sorted(set(overrides) - allowed_overrides)
+    if unknown:
+        raise ValueError(f"unsupported production camera Xacro overrides: {unknown}")
+    if overrides and set(overrides) != allowed_overrides:
+        missing = sorted(allowed_overrides - set(overrides))
+        raise ValueError(f"production camera override must be complete; missing: {missing}")
+    for name, value in overrides.items():
+        numeric = float(value)
+        if not math.isfinite(numeric):
+            raise ValueError(f"production camera override is not finite: {name}")
+        defaults[name] = str(numeric)
     joint = next(
         (candidate for candidate in root.findall("./joint")
          if candidate.find("./child") is not None
@@ -61,7 +80,7 @@ def read_production_camera_contract(xacro_path: str | Path) -> dict:
     optical_joint = root.find("./joint[@name='camera_depth_joint']")
     optical_child = optical_joint.find("./child") if optical_joint is not None else None
     source_sha = hashlib.sha256(path.read_bytes()).hexdigest()
-    return {
+    contract = {
         "schema_version": 1,
         "source": str(path).replace("\\", "/"),
         "source_sha256": source_sha,
@@ -83,6 +102,13 @@ def read_production_camera_contract(xacro_path: str | Path) -> dict:
         "gazebo_base_topic": sensor.findtext("topic"),
         "production_ros_topics": dict(PRODUCTION_TOPICS),
     }
+    if overrides:
+        contract["profile_id"] = profile_id or "explicit_xacro_override"
+        contract["xacro_overrides"] = {
+            name: float(overrides[name]) for name in sorted(overrides)
+        }
+        contract["source_xacro_defaults_unchanged"] = True
+    return contract
 
 
 def validate_sim_launch_topics(launch_path: str | Path, contract: dict) -> None:

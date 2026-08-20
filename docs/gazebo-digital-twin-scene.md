@@ -1,5 +1,7 @@
 # Gazebo 数字孪生场景与车辆模型
 
+道路式 profile 使用 `sanitation_competition_ackermann_demo.sdf`：外部任务/apron 为 `12.6 m × 9.2 m`，青色清扫区仍精确为 4 m × 3 m、10 个目标的位置和数量不变。扩大 apron 是因为 1.429 m 中心半径、约 2.013 m 外扫掠半径无法诚实塞入旧 constrained small world；它不扩大清扫面积。Ackermann Xacro 的前轮 visual/collision/inertia 均挂在转向 knuckle 下，底盘 collision 使用真实 wheel well，录屏中可直接看到内外前轮不同角度。legacy 世界与碰撞/驱动 profile 完整保留用于回归。
+
 ## 目标与启动
 
 本场景把 `sanitation_structured_world.sdf` 从工程方盒测试场改造成可直接在 Gazebo

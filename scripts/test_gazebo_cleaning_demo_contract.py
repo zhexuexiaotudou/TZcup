@@ -91,7 +91,8 @@ def test_gazebo_only_launcher_contract() -> None:
     assert "keep_open_stop=1" in shell_launcher
     assert 'timeout 20 python3 "${ROOT}/scripts/emergency_stop_availability.py"' in shell_launcher
     assert "publisher.get_subscription_count()" in emergency_availability
-    assert "subscription_count >= 2" in emergency_availability
+    assert '"/safety/operator_estop_command"' in emergency_availability
+    assert "subscription_count >= 1" in emergency_availability
     assert "[switch]$GazeboOnly" in powershell_launcher
     assert '"--gazebo-only"' in powershell_launcher
     assert "[switch]$Showcase" in powershell_launcher
@@ -100,13 +101,83 @@ def test_gazebo_only_launcher_contract() -> None:
     assert "[switch]$FullArea" in dedicated_launcher
     assert '[string]$MapSize = "small"' in dedicated_launcher
     assert '[string]$SimulationSpeed = "fast"' in dedicated_launcher
-    assert '[string]$CoverageProfile = "optimized"' in dedicated_launcher
+    assert '[string]$CoverageProfile = "ackermann"' in dedicated_launcher
+    assert '[string]$DriveModel = "ackermann"' in dedicated_launcher
     assert "CoverageProfile = $CoverageProfile" in dedicated_launcher
     assert "DynamicObstacleTrials = $DynamicObstacleTrials" in dedicated_launcher
     assert "SimulationRenderEngine = $SimulationRenderEngine" in dedicated_launcher
     assert "ManualControl = $true" in dedicated_launcher
     assert "NoRviz" not in dedicated_launcher
     assert "Start-Process" not in dedicated_launcher
+
+
+def test_product_world_clock_is_bounded_to_real_time() -> None:
+    world_path = (
+        ROOT / "starter_ws" / "src" / "sanitation_worlds" / "worlds"
+        / "sanitation_test_world.sdf"
+    )
+    root = __import__("xml.etree.ElementTree", fromlist=["ElementTree"]).parse(
+        world_path
+    ).getroot()
+    physics = root.find("./world/physics")
+    assert physics is not None
+    step_s = float(physics.findtext("max_step_size", "0"))
+    update_hz = float(physics.findtext("real_time_update_rate", "0"))
+    requested_factor = float(physics.findtext("real_time_factor", "0"))
+    assert step_s > 0.0
+    assert update_hz > 0.0, "zero means Gazebo runs the product world unbounded"
+    assert requested_factor == 1.0
+    assert step_s * update_hz == requested_factor
+
+
+def test_all_simulation_worlds_share_the_product_navsat_datum() -> None:
+    worlds_dir = (
+        ROOT / "starter_ws" / "src" / "sanitation_worlds" / "worlds"
+    )
+    expected_worlds = {
+        "motion_calibration_world.sdf",
+        "sanitation_campus_large.sdf",
+        "sanitation_campus_medium.sdf",
+        "sanitation_campus_small.sdf",
+        "sanitation_competition_ackermann_demo.sdf",
+        "sanitation_competition_demo.sdf",
+        "sanitation_structured_world.sdf",
+        "sanitation_test_world.sdf",
+    }
+    assert {path.name for path in worlds_dir.glob("*.sdf")} == expected_worlds
+
+    xml = __import__("xml.etree.ElementTree", fromlist=["ElementTree"])
+    for world_path in sorted(worlds_dir.glob("*.sdf")):
+        world = xml.parse(world_path).getroot().find("world")
+        assert world is not None
+        navsat_plugins = [
+            plugin
+            for plugin in world.findall("plugin")
+            if plugin.get("filename") == "gz-sim-navsat-system"
+        ]
+        assert len(navsat_plugins) == 1, world_path.name
+        coordinates = world.find("spherical_coordinates")
+        assert coordinates is not None, world_path.name
+        assert coordinates.findtext("surface_model") == "EARTH_WGS84"
+        assert coordinates.findtext("world_frame_orientation") == "ENU"
+        assert float(coordinates.findtext("latitude_deg", "nan")) == 31.2304
+        assert float(coordinates.findtext("longitude_deg", "nan")) == 121.4737
+        assert float(coordinates.findtext("heading_deg", "nan")) == 0.0
+
+
+def test_vehicle_dual_navsat_geometry_is_symmetric_and_sensor_driven() -> None:
+    xacro = read(
+        "starter_ws/src/sanitation_vehicle_description/urdf/"
+        "sanitation_vehicle.urdf.xacro"
+    )
+    assert '<xacro:arg name="gnss_baseline_m" default="0.80"/>' in xacro
+    assert '<xacro:arg name="gnss_update_rate" default="10"/>' in xacro
+    assert 'name="front" x="${gnss_baseline_m / 2.0}"' in xacro
+    assert 'name="rear" x="${-gnss_baseline_m / 2.0}"' in xacro
+    assert '<sensor name="gnss_${name}_navsat" type="navsat">' in xacro
+    assert '<update_rate>${gnss_update_rate}</update_rate>' in xacro
+    assert 'topic="gnss/front/fix_raw"' in xacro
+    assert 'topic="gnss/rear/fix_raw"' in xacro
 
 
 def test_small_demo_default_camera_is_close_enough_for_target_counting() -> None:
@@ -124,7 +195,7 @@ def test_operator_docs_name_the_gazebo_only_entry() -> None:
     command = "scripts\\run_gazebo_cleaning_demo.ps1"
     assert command in read("README.md")
     assert command in read("README_FIRST.md")
-    assert command in read("docs/auto17-visual-demo.md")
+    assert command in read("docs/operator-guide.md")
     assert "青绿色" in read("README.md")
     assert "橙色外框" in read("README.md")
 
@@ -342,8 +413,8 @@ def test_small_mode_is_a_physically_independent_competition_demo() -> None:
     assert 'mission_control_demo.config' in shell
     assert 'EXPECTED_COMPONENTS=17' in shell
     assert 'coverage_skid_steer_optimized.yaml' in shell
-    assert 'max_linear_velocity="0.70"; max_angular_velocity="0.60"' in shell
-    assert 'max_linear_velocity="0.90"; max_angular_velocity="0.75"' in shell
+    assert 'DRIVE_MODEL}" != "ackermann" && "${SIMULATION_SPEED}" == "fast"' in shell
+    assert 'DRIVE_MODEL}" != "ackermann" && "${SIMULATION_SPEED}" == "turbo"' in shell
     assert 'smoother["max_velocity"] = [linear_velocity, 0.0, angular_velocity]' in shell
     assert 'smoother["min_velocity"] = [-min(linear_velocity, 0.15), 0.0, -angular_velocity]' in shell
 

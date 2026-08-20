@@ -31,6 +31,16 @@ inline std::pair<double, double> smoothAnchor(
     previous.second + bounded * (measurement.second - previous.second)};
 }
 
+inline double smoothHeading(
+  const double previous, const double measurement, const double alpha)
+{
+  const double bounded = std::clamp(alpha, 0.0, 1.0);
+  const double innovation = std::atan2(
+    std::sin(measurement - previous), std::cos(measurement - previous));
+  const double filtered = previous + bounded * innovation;
+  return std::atan2(std::sin(filtered), std::cos(filtered));
+}
+
 inline bool measurementsConsistent(
   const std::pair<double, double> & first,
   const std::pair<double, double> & second,
@@ -38,6 +48,32 @@ inline bool measurementsConsistent(
 {
   return std::hypot(first.first - second.first, first.second - second.second) <=
          std::max(0.0, maximum_disagreement_m);
+}
+
+inline double propagateHeading(
+  const double measured_heading, const double current_local_heading,
+  const double measurement_local_heading)
+{
+  const double angle = measured_heading + current_local_heading - measurement_local_heading;
+  return std::atan2(std::sin(angle), std::cos(angle));
+}
+
+inline std::pair<double, double> worldToMap(
+  const double world_x, const double world_y,
+  const double translation_x, const double translation_y,
+  const double rotation_yaw)
+{
+  const double cosine = std::cos(rotation_yaw);
+  const double sine = std::sin(rotation_yaw);
+  return {
+    translation_x + cosine * world_x - sine * world_y,
+    translation_y + sine * world_x + cosine * world_y};
+}
+
+inline double worldHeadingToMap(const double world_heading, const double rotation_yaw)
+{
+  const double heading = world_heading + rotation_yaw;
+  return std::atan2(std::sin(heading), std::cos(heading));
 }
 
 }  // namespace sanitation_scan_refiner

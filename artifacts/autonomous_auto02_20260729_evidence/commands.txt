@@ -1,3 +1,0 @@
-py -3 scripts/ci_fast.py
-powershell -File scripts/run_auto02_regression_docker.ps1 -OutputName autonomous_auto02_raw_20260729
-py -3 scripts/auto02_acceptance.py --root F:\Project\TZcup-autonomous-auto02\artifacts\autonomous_auto02_raw_20260729

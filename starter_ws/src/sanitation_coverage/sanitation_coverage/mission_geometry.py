@@ -188,7 +188,16 @@ def compile_mission_geometry(config):
             compiled_obstacles.append({**record, 'inflated_polygon': polygon})
     exclusions = merge_axis_aligned_exclusions(exclusions)
     base_excluded_area = sum(polygon_area(polygon) for polygon in exclusions)
-    cleanable_outer = _inset_rectangle(outer, configured_headland)
+    explicit_cleanable = config.get('cleanable_outer_polygon')
+    if explicit_cleanable:
+        # Ackermann turning-apron demo: the scored cleanable polygon is given
+        # explicitly (map x [-2,2], y [-3,0], 12 m2); legacy configurations
+        # continue to derive it by insetting the outer polygon.
+        cleanable_outer = [
+            tuple(map(float, point)) for point in explicit_cleanable
+        ]
+    else:
+        cleanable_outer = _inset_rectangle(outer, configured_headland)
     cleanable_exclusions = merge_axis_aligned_exclusions([
         clipped
         for polygon in exclusions
@@ -201,6 +210,23 @@ def compile_mission_geometry(config):
         polygon_area(cleanable_outer)
         - sum(polygon_area(polygon) for polygon in cleanable_exclusions),
     )
+    if explicit_cleanable:
+        cx1, cy1, cx2, cy2 = _bounds(cleanable_outer)
+        ox1, oy1, ox2, oy2 = _bounds(outer)
+        apron_gaps = [
+            cx1 - ox1,
+            ox2 - cx2,
+            cy1 - oy1,
+            oy2 - cy2,
+        ]
+        headland_clearance_valid = (
+            min(apron_gaps) >= required_headland - 1e-9
+        )
+        effective_headland = min(apron_gaps)
+    else:
+        apron_gaps = []
+        headland_clearance_valid = configured_headland >= required_headland
+        effective_headland = configured_headland
     excluded_area = polygon_area(outer) - cleanable_area
     return {
         'outer_polygon': outer,
@@ -214,9 +240,31 @@ def compile_mission_geometry(config):
         'footprint_radius_m': footprint_radius,
         'safety_margin_m': safety_margin,
         'configured_headland_width_m': configured_headland,
+        'effective_headland_width_m': effective_headland,
+        'apron_gaps_m': apron_gaps,
+        'cleanable_polygon_explicit': bool(explicit_cleanable),
         'required_headland_width_m': required_headland,
-        'headland_clearance_valid': configured_headland >= required_headland,
+        'headland_clearance_valid': headland_clearance_valid,
         'world_to_map_translation': translation,
         'compiled_static_obstacles': compiled_obstacles,
         'ignored_static_obstacles': ignored_obstacles,
     }
+
+
+def coverage_planning_geometry(profile, geometry):
+    """Select the scored swath region while retaining the outer turning apron."""
+    if str(profile).upper() == 'ACKERMANN' and geometry.get(
+        'cleanable_polygon_explicit', False
+    ):
+        return (
+            geometry['cleanable_outer_polygon'],
+            geometry['cleanable_exclusion_polygons'],
+        )
+    return geometry['outer_polygon'], geometry['exclusion_polygons']
+
+
+def should_generate_internal_headland(config):
+    """External Ackermann aprons must not be inset from the scored polygon."""
+    return bool(config.get('headland', {}).get('enabled', False)) and not bool(
+        config.get('cleanable_outer_polygon')
+    )

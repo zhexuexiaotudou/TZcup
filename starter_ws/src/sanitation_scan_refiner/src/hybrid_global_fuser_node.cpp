@@ -31,6 +31,7 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/nav_sat_fix.hpp"
+#include "std_msgs/msg/float64.hpp"
 #include "tf2/LinearMath/Quaternion.h"
 #include "tf2/LinearMath/Transform.h"
 #include "tf2/utils.h"
@@ -89,7 +90,16 @@ public:
     base_frame_ = declare_parameter<std::string>("base_frame", "base_footprint");
     origin_latitude_deg_ = declare_parameter<double>("origin_latitude_deg", 31.2304);
     origin_longitude_deg_ = declare_parameter<double>("origin_longitude_deg", 121.4737);
+    world_to_map_x_ = declare_parameter<double>("world_to_map_x", 0.0);
+    world_to_map_y_ = declare_parameter<double>("world_to_map_y", 0.0);
+    world_to_map_yaw_ = declare_parameter<double>("world_to_map_yaw", 0.0);
     maximum_gnss_age_s_ = declare_parameter<double>("maximum_gnss_age_s", 0.5);
+    maximum_gnss_heading_age_s_ = declare_parameter<double>(
+      "maximum_gnss_heading_age_s", 0.5);
+    gnss_heading_variance_rad2_ = declare_parameter<double>(
+      "gnss_heading_variance_rad2", 0.0001);
+    gnss_heading_smoothing_alpha_ = declare_parameter<double>(
+      "gnss_heading_smoothing_alpha", 0.1);
     maximum_refined_age_s_ = declare_parameter<double>("maximum_refined_age_s", 0.5);
     gnss_variance_scale_ = declare_parameter<double>("gnss_variance_scale", 1.0);
     gnss_outlier_threshold_m_ = declare_parameter<double>("gnss_outlier_threshold_m", 0.75);
@@ -107,11 +117,14 @@ public:
     initial_pose_yaw_ = declare_parameter<double>("initial_pose_yaw", 0.0);
     const auto local_topic = declare_parameter<std::string>("local_odom_topic", "/odom");
     const auto gnss_topic = declare_parameter<std::string>("gnss_topic", "/gnss/fix");
+    const auto gnss_heading_topic = declare_parameter<std::string>(
+      "gnss_heading_topic", "/gnss/heading");
     const auto refined_topic = declare_parameter<std::string>(
       "refined_pose_topic", "/localization/refined_pose");
 
     pose_publisher_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-      "/localization/fused_pose", 20);
+      "/localization/fused_pose",
+      rclcpp::QoS(rclcpp::KeepLast(1)).reliable().transient_local());
     odom_publisher_ = create_publisher<nav_msgs::msg::Odometry>(
       "/localization/fused_odom", 20);
     diagnostics_publisher_ = create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
@@ -120,6 +133,9 @@ public:
       local_topic, 50, std::bind(&HybridGlobalFuserNode::onLocal, this, std::placeholders::_1));
     gnss_subscription_ = create_subscription<sensor_msgs::msg::NavSatFix>(
       gnss_topic, 20, std::bind(&HybridGlobalFuserNode::onGnss, this, std::placeholders::_1));
+    gnss_heading_subscription_ = create_subscription<std_msgs::msg::Float64>(
+      gnss_heading_topic, 20,
+      std::bind(&HybridGlobalFuserNode::onGnssHeading, this, std::placeholders::_1));
     refined_subscription_ =
       create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
       refined_topic, 20,
@@ -155,18 +171,22 @@ private:
     }
     const double latitude_rad = message->latitude * kPi / 180.0;
     const double origin_latitude_rad = origin_latitude_deg_ * kPi / 180.0;
-    const double raw_x = (message->longitude - origin_longitude_deg_) * kPi / 180.0 *
+    const double world_x = (message->longitude - origin_longitude_deg_) * kPi / 180.0 *
       kEarthRadiusM * std::cos(origin_latitude_rad);
-    const double raw_y = (latitude_rad - origin_latitude_rad) * kEarthRadiusM;
+    const double world_y = (latitude_rad - origin_latitude_rad) * kEarthRadiusM;
+    const auto map_position = worldToMap(
+      world_x, world_y, world_to_map_x_, world_to_map_y_, world_to_map_yaw_);
     const double variance = gnss_variance_scale_ * std::max(
       1e-6, std::max(message->position_covariance[0], message->position_covariance[4]));
 
-    double projected_x = raw_x;
-    double projected_y = raw_y;
+    double projected_x = map_position.first;
+    double projected_y = map_position.second;
     const double measurement_stamp = stampSeconds(message->header.stamp);
+    last_gnss_measurement_stamp_ = measurement_stamp;
     const auto sample = closestLocal(measurement_stamp);
     if (sample && have_local_) {
-      const auto projected = propagateGlobal(raw_x, raw_y, *sample);
+      const auto projected = propagateGlobal(
+        map_position.first, map_position.second, *sample);
       projected_x = projected.first;
       projected_y = projected.second;
     }
@@ -191,6 +211,27 @@ private:
     gnss_local_anchor_ = local_;
     gnss_receive_stamp_ = now().seconds();
     have_gnss_ = true;
+  }
+
+  void onGnssHeading(const std_msgs::msg::Float64::SharedPtr message)
+  {
+    if (!std::isfinite(message->data) || !have_local_) {
+      return;
+    }
+    const double measurement = worldHeadingToMap(message->data, world_to_map_yaw_);
+    const auto sample = closestLocal(last_gnss_measurement_stamp_);
+    const OdomSample anchor = sample.value_or(local_);
+    if (have_gnss_heading_) {
+      const double previous = propagateHeading(
+        gnss_heading_, anchor.yaw, gnss_heading_local_anchor_.yaw);
+      gnss_heading_ = smoothHeading(
+        previous, measurement, gnss_heading_smoothing_alpha_);
+    } else {
+      gnss_heading_ = measurement;
+    }
+    gnss_heading_local_anchor_ = anchor;
+    gnss_heading_receive_stamp_ = now().seconds();
+    have_gnss_heading_ = true;
   }
 
   void onRefined(const geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr message)
@@ -250,12 +291,16 @@ private:
   {
     const double current = now().seconds();
     const bool gnss_fresh = have_gnss_ && current - gnss_receive_stamp_ <= maximum_gnss_age_s_;
+    const bool gnss_heading_fresh = have_gnss_heading_ &&
+      current - gnss_heading_receive_stamp_ <= maximum_gnss_heading_age_s_;
     const bool refined_fresh = have_refined_ &&
       current - refined_receive_stamp_ <= maximum_refined_age_s_;
     const auto gnss_position = propagateGlobal(gnss_x_, gnss_y_, gnss_local_anchor_);
     const auto refined_position = propagateGlobal(
       refined_x_, refined_y_, refined_local_anchor_);
     const double refined_yaw = refined_yaw_ + local_.yaw - refined_local_anchor_.yaw;
+    const double gnss_heading = propagateHeading(
+      gnss_heading_, local_.yaw, gnss_heading_local_anchor_.yaw);
 
     double x = 0.0;
     double y = 0.0;
@@ -267,7 +312,13 @@ private:
       x = gnss_position.first;
       y = gnss_position.second;
       xy_variance = gnss_variance_;
-      source = "rtk_plus_local_yaw";
+      if (gnss_heading_fresh) {
+        yaw = gnss_heading;
+        yaw_variance = gnss_heading_variance_rad2_;
+        source = "rtk_plus_gnss_heading";
+      } else {
+        source = "rtk_plus_local_yaw";
+      }
     } else if (mode_ == "gnss_denied_scan_fallback" && refined_fresh) {
       x = refined_position.first;
       y = refined_position.second;
@@ -286,15 +337,28 @@ private:
         y = (gnss_weight * gnss_position.second + scan_weight * refined_position.second) /
           (gnss_weight + scan_weight);
         xy_variance = 1.0 / (gnss_weight + scan_weight);
-        yaw = local_.yaw;
-        yaw_variance = 0.01;
-        source = "rtk_scan_local";
+        if (gnss_heading_fresh) {
+          yaw = gnss_heading;
+          yaw_variance = gnss_heading_variance_rad2_;
+          source = "rtk_scan_gnss_heading";
+        } else {
+          yaw = local_.yaw;
+          yaw_variance = 0.01;
+          source = "rtk_scan_local";
+        }
       } else if (gnss_fresh) {
         x = gnss_position.first;
         y = gnss_position.second;
         xy_variance = gnss_variance_;
-        source = refined_fresh ? "rtk_local_refined_innovation_rejected" :
-          "rtk_local_fallback";
+        if (gnss_heading_fresh) {
+          yaw = gnss_heading;
+          yaw_variance = gnss_heading_variance_rad2_;
+          source = refined_fresh ? "rtk_heading_refined_innovation_rejected" :
+            "rtk_heading_fallback";
+        } else {
+          source = refined_fresh ? "rtk_local_refined_innovation_rejected" :
+            "rtk_local_fallback";
+        }
       } else {
         x = refined_position.first;
         y = refined_position.second;
@@ -374,7 +438,14 @@ private:
     status.values.push_back(keyValue("global_available", available));
     status.values.push_back(keyValue("gnss_outlier_rejected", outlier));
     status.values.push_back(keyValue("rejected_gnss_count", rejected_gnss_count_));
+    status.values.push_back(keyValue("gnss_heading_available", have_gnss_heading_));
+    status.values.push_back(keyValue("gnss_heading_receive_stamp", gnss_heading_receive_stamp_));
+    status.values.push_back(keyValue("gnss_heading_smoothing_alpha",
+        gnss_heading_smoothing_alpha_));
     status.values.push_back(keyValue("map_to_odom_owner", publish_map_to_odom_));
+    status.values.push_back(keyValue("world_to_map_x", world_to_map_x_));
+    status.values.push_back(keyValue("world_to_map_y", world_to_map_y_));
+    status.values.push_back(keyValue("world_to_map_yaw", world_to_map_yaw_));
     status.values.push_back(keyValue("ground_truth_direct_fusion", false));
     array.status.push_back(status);
     diagnostics_publisher_->publish(array);
@@ -386,7 +457,13 @@ private:
   std::string base_frame_;
   double origin_latitude_deg_{0.0};
   double origin_longitude_deg_{0.0};
+  double world_to_map_x_{0.0};
+  double world_to_map_y_{0.0};
+  double world_to_map_yaw_{0.0};
   double maximum_gnss_age_s_{0.5};
+  double maximum_gnss_heading_age_s_{0.5};
+  double gnss_heading_variance_rad2_{0.0001};
+  double gnss_heading_smoothing_alpha_{0.1};
   double maximum_refined_age_s_{0.5};
   double gnss_variance_scale_{1.0};
   double gnss_outlier_threshold_m_{0.75};
@@ -400,6 +477,7 @@ private:
   double initial_pose_yaw_{0.0};
   bool have_local_{false};
   bool have_gnss_{false};
+  bool have_gnss_heading_{false};
   bool have_refined_{false};
   bool have_global_{false};
   OdomSample local_;
@@ -410,7 +488,11 @@ private:
   double gnss_y_{0.0};
   double gnss_variance_{0.04};
   double gnss_receive_stamp_{0.0};
+  double last_gnss_measurement_stamp_{0.0};
   OdomSample gnss_local_anchor_;
+  double gnss_heading_{0.0};
+  double gnss_heading_receive_stamp_{0.0};
+  OdomSample gnss_heading_local_anchor_;
   double refined_x_{0.0};
   double refined_y_{0.0};
   double refined_yaw_{0.0};
@@ -427,6 +509,7 @@ private:
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr diagnostics_publisher_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr local_subscription_;
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr gnss_subscription_;
+  rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr gnss_heading_subscription_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr
     refined_subscription_;
 };

@@ -1,9 +1,0 @@
-{
-  "schema_version": 1,
-  "ci_fast_pass": true,
-  "ci_fast_test_count": 121,
-  "auto03_evidence_modified": false,
-  "historical_stage4w_to_stage5br6w_modified": false,
-  "stage5br6a_human_review_completed": false,
-  "stage5br6a_manual_audit_pass": false
-}

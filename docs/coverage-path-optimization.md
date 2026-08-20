@@ -1,5 +1,11 @@
 # Coverage path optimization and semantic visualization
 
+## Ackermann profile
+
+`coverage_profile=ackermann` 不复用 skid-steer 的 `ROTATE → SHIFT → ROTATE`。相邻条带按 forward U-turn、forward teardrop、Reeds-Shepp-like three-point、Smac Hybrid、defer swath 的顺序求解；前进/倒车段满足 `|curvature| <= 1/1.429352`，方向切换之间插入 `CUSP_STOP` 并等待实测纵向速度低于 `0.03 m/s`。连接器刷盘始终关闭并采样完整 `1.15 m × 1.04 m` swept footprint。Ackermann 条带间距候选独立为 `0.50/0.55/0.60/0.65 m`，不能沿用 skid-steer 的 0.52 m 结论。
+
+清扫区仍为 `x=[-2,2], y=[-3,0]` 的 12 m²，新增 `12.6 m × 9.2 m` 外部 apron 只提供运动学回转空间。正式 5-seed Coverage、动态障碍和 replay 证据未全部通过前，Ackermann 仅 opt-in；旧 optimized/legacy 路径继续作为历史 A/B 回归。
+
 ## Purpose
 
 The small Gazebo competition demo now uses `SKID_STEER_OPTIMIZED` by default.

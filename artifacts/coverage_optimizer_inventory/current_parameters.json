@@ -1,9 +1,0 @@
-{
-  "mission_config": "starter_ws/src/sanitation_tasks/config/competition_demo_area.yaml",
-  "coverage_config": "starter_ws/src/sanitation_coverage/config/coverage_demo_overlap.yaml",
-  "expected_components": 17,
-  "empirical_coverage_threshold": 0.995,
-  "coverage_repair_max_passes": 2,
-  "demo_simulation_rtf": 3.0,
-  "legacy_profile_retained": true
-}

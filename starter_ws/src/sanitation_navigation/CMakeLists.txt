@@ -3,7 +3,7 @@ project(sanitation_navigation)
 
 find_package(ament_cmake REQUIRED)
 
-install(DIRECTORY config launch maps
+install(DIRECTORY config launch maps behavior_trees
   DESTINATION share/${PROJECT_NAME}
 )
 install(PROGRAMS scripts/scan_self_filter.py

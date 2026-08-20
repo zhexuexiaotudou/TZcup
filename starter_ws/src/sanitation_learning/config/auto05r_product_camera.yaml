@@ -1,0 +1,31 @@
+schema_version: 1
+stage: AUTO-05R
+profile_id: auto05r_v5_retracted_primary_perception_v1
+purpose: deployment_aligned_primary_perception
+source_mechanical_profile:
+  path: sanitation_navigation/config/autonomous_navigation_profile_v1.yaml
+  profile: V5_retracted
+  machine_regression_basis: AUTO-01-G2-C3_and_AUTO-02-FREEZE-V1
+production_xacro_defaults_unchanged: true
+xacro_overrides:
+  camera_x: 0.36
+  camera_y: 0.0
+  camera_z: 0.66
+  camera_pitch_rad: 0.872664626
+physical_mount_pitch_deg: -50.0
+observation_contract:
+  native_resolution: [640, 480]
+  horizontal_fov_rad: 1.50098
+  update_rate_hz: 15.0
+  production_ros_topics:
+    camera_info: /camera/color/camera_info
+    rgb: /camera/color/image_raw
+    depth: /camera/depth/image_rect_raw
+    points: /camera/depth/color/points
+capture_contract:
+  per_frame_undeclared_target_count: 0
+  declared_target_minimum_full_visibility_frames_per_sequence: 2
+  frames_per_sequence: 10
+  ground_truth_training_only: true
+  target_initial_distance_lanes_m: [1.8, 2.1, 2.4, 2.8, 3.4]
+  target_lateral_lanes_m: [-0.8, 0.8, -0.6, 0.6, -1.05]

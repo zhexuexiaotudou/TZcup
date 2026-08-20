@@ -1,0 +1,3051 @@
+schema_version: 2
+registry_version: 2026.08-g4-d1
+dataset_domain: G4_deployment_aligned_vehicle_camera_gazebo
+license_manifest: asset_license_manifest.json
+palette_rgb:
+  teal:
+  - 38
+  - 142
+  - 146
+  blue:
+  - 54
+  - 94
+  - 168
+  red:
+  - 176
+  - 54
+  - 58
+  green:
+  - 68
+  - 132
+  - 74
+  yellow:
+  - 190
+  - 157
+  - 48
+  rust:
+  - 154
+  - 76
+  - 48
+  stone:
+  - 112
+  - 118
+  - 126
+  white:
+  - 222
+  - 222
+  - 214
+  gray:
+  - 128
+  - 130
+  - 128
+  dark_gray:
+  - 72
+  - 74
+  - 76
+  orange:
+  - 214
+  - 122
+  - 38
+  brown:
+  - 122
+  - 82
+  - 46
+  leaf_green:
+  - 96
+  - 122
+  - 52
+  leaf_amber:
+  - 168
+  - 122
+  - 38
+  leaf_brown:
+  - 140
+  - 92
+  - 40
+  water_blue:
+  - 58
+  - 108
+  - 140
+  water_dark:
+  - 42
+  - 72
+  - 96
+  water_light:
+  - 92
+  - 140
+  - 156
+  asphalt:
+  - 58
+  - 60
+  - 62
+  concrete:
+  - 148
+  - 148
+  - 144
+  paver:
+  - 168
+  - 158
+  - 148
+classes:
+  plastic_bottle:
+  - id: g4_plastic_bottle_001
+    geometry_family: bottle_cylinder_smooth
+    material_family: pet_plastic_glossy
+    texture_family: ribbed_bands
+    palette: &id001
+    - teal
+    - white
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 42dd80e30c47690b45ae4a2b4afb63b4375a6ea2d79db94888143c8e4bc0aa4c
+  - id: g4_plastic_bottle_002
+    geometry_family: bottle_cylinder_ribbed
+    material_family: pet_plastic_matte
+    texture_family: grid_lines
+    palette: &id002
+    - red
+    - stone
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: db658f0cc1dd5832b69a24ddef05a73c9fa2107e60fd4818fc8dadb2afa0c115
+  - id: g4_plastic_bottle_003
+    geometry_family: bottle_dented
+    material_family: hdpe_opaque
+    texture_family: speckle
+    palette: &id003
+    - blue
+    - yellow
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: bacecc36c3be27618787df0fba6bc26310066e9630c7d1530bb0205c8d1c219e
+  - id: g4_plastic_bottle_004
+    geometry_family: bottle_crushed
+    material_family: pet_plastic_matte
+    texture_family: crushed_folds
+    palette: &id004
+    - green
+    - rust
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 94f8b6bdd9d9b88fc83e17a89154d5a74fa8a24ca38b4e2cd14733a8929786ff
+  - id: g4_plastic_bottle_005
+    geometry_family: bottle_flattened
+    material_family: hdpe_opaque
+    texture_family: crosshatch
+    palette: &id005
+    - white
+    - blue
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 95fa6561744a24683af25041028fd482c19dba772d137120e6c910d28e40839e
+  - id: g4_plastic_bottle_006
+    geometry_family: bottle_labeled
+    material_family: pet_plastic_glossy
+    texture_family: label_patch
+    palette: &id006
+    - yellow
+    - teal
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 275ad75245a2cafbf77b87aa6fc8cd823f2cdbbf9ac7cd0d09d889e69ff35ed1
+  - id: g4_plastic_bottle_007
+    geometry_family: bottle_cylinder_smooth
+    material_family: pet_plastic_glossy
+    texture_family: ribbed_bands
+    palette: &id007
+    - orange
+    - gray
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 5019581cd9d29b703568b244a1111eb3eeea6757c8a0438ca6261ef5ddc1a0de
+  - id: g4_plastic_bottle_008
+    geometry_family: bottle_cylinder_ribbed
+    material_family: pet_plastic_matte
+    texture_family: grid_lines
+    palette: &id008
+    - brown
+    - white
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: d3d103ece0b9c7798d832045106a69af4b2cba968c32620a1a0c107e8ea904e0
+  - id: g4_plastic_bottle_009
+    geometry_family: bottle_dented
+    material_family: hdpe_opaque
+    texture_family: speckle
+    palette: *id001
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 7538eba7d9d5a0217f037bc8549be32f8e259b4a5250a5386579d22c5f0089bc
+  - id: g4_plastic_bottle_010
+    geometry_family: bottle_crushed
+    material_family: pet_plastic_matte
+    texture_family: crushed_folds
+    palette: *id002
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: b12cc1b96ac239a2be45af564cad49a8bcf639a07797eb134c1d29fb4e7f23c3
+  - id: g4_plastic_bottle_011
+    geometry_family: bottle_flattened
+    material_family: hdpe_opaque
+    texture_family: crosshatch
+    palette: *id003
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: a58bc63295d88bdd1213071512a57d05e7228b4d8b5852ebb745ef1b98262303
+  - id: g4_plastic_bottle_012
+    geometry_family: bottle_labeled
+    material_family: pet_plastic_glossy
+    texture_family: label_patch
+    palette: *id004
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 59bf2db8d1d252881c23c3799afe7a020f7b95107e1507eaf815e83c8fd32dee
+  - id: g4_plastic_bottle_013
+    geometry_family: bottle_cylinder_smooth
+    material_family: pet_plastic_glossy
+    texture_family: ribbed_bands
+    palette: *id005
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 2732a9d84d8d5f7eff84add6e20ebde2d5838262bf9ab90761c93dc67bf7660d
+  - id: g4_plastic_bottle_014
+    geometry_family: bottle_cylinder_ribbed
+    material_family: pet_plastic_matte
+    texture_family: grid_lines
+    palette: *id006
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 5ecb9607aa8ff3de649853b53ab5390067b5c2150d9db88c395a2d1996d2f2a7
+  - id: g4_plastic_bottle_015
+    geometry_family: bottle_dented
+    material_family: hdpe_opaque
+    texture_family: speckle
+    palette: *id007
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: adb8f58bd31366a8e630163581cd61c21167b47c8f3420526e0e029bddefa7b8
+  - id: g4_plastic_bottle_016
+    geometry_family: bottle_crushed
+    material_family: pet_plastic_matte
+    texture_family: crushed_folds
+    palette: *id008
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 4d67cf5285c82abe69fc771797083a039e13af1b94ed3431910fccc866ae16ef
+  - id: g4_plastic_bottle_017
+    geometry_family: bottle_flattened
+    material_family: hdpe_opaque
+    texture_family: crosshatch
+    palette: *id001
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 283558e96a058c9895174e5180a28e0f2edd32c2a4db5843456c4cdffb8e148a
+  - id: g4_plastic_bottle_018
+    geometry_family: bottle_labeled
+    material_family: pet_plastic_glossy
+    texture_family: label_patch
+    palette: *id002
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 51846dc3c15fe2cbb0ad8444c4acdd6166b68652f551192f4bef62718e6beb5c
+  - id: g4_plastic_bottle_019
+    geometry_family: bottle_cylinder_smooth
+    material_family: pet_plastic_glossy
+    texture_family: ribbed_bands
+    palette: *id003
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: dd063082ebc34146eddf7bc8d13c113a52ad89044f5e38de51859b25948f394f
+  - id: g4_plastic_bottle_020
+    geometry_family: bottle_cylinder_ribbed
+    material_family: pet_plastic_matte
+    texture_family: grid_lines
+    palette: *id004
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: c25b534f163d84f8715610ffd7c37a3b7b119fa4263b00eebb9e7d3ea40ac9a8
+  - id: g4_plastic_bottle_021
+    geometry_family: bottle_dented
+    material_family: hdpe_opaque
+    texture_family: speckle
+    palette: *id005
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: eaf3902d193c6e9bad1d9f3068c4c87045bf759259d45c86f47f38ba7c4e8d12
+  - id: g4_plastic_bottle_022
+    geometry_family: bottle_crushed
+    material_family: pet_plastic_matte
+    texture_family: crushed_folds
+    palette: *id006
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 9dfb9e97abc979defe0e697d311cbfbc2eadb82b5655fe9441864fb2bb55950e
+  - id: g4_plastic_bottle_023
+    geometry_family: bottle_flattened
+    material_family: hdpe_opaque
+    texture_family: crosshatch
+    palette: *id007
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 6ed5f0bd4d544504c10e40bccdbee6d29c4073d16d378a4f84f5c547a191147a
+  - id: g4_plastic_bottle_024
+    geometry_family: bottle_labeled
+    material_family: pet_plastic_glossy
+    texture_family: label_patch
+    palette: *id008
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: f790ea17307ced46716832f0a94ba3644af9e3a49eab9b4666b4ff63a801e157
+  - id: g4_plastic_bottle_025
+    geometry_family: bottle_cylinder_smooth
+    material_family: pet_plastic_glossy
+    texture_family: ribbed_bands
+    palette: *id001
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: fe29ebdba012e1c1dd09d9c28ae54b7129722ced677a9b641460f7feca47ac48
+  - id: g4_plastic_bottle_026
+    geometry_family: bottle_cylinder_ribbed
+    material_family: pet_plastic_matte
+    texture_family: grid_lines
+    palette: *id002
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 4975198547daeff5e61321c5d2bda91fe8f4e4f54ea763de7acde5cf5eced936
+  - id: g4_plastic_bottle_027
+    geometry_family: bottle_dented
+    material_family: hdpe_opaque
+    texture_family: speckle
+    palette: *id003
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 3c86a9f8d1dfeb25c638fa80e374dfa8fe76e13a89d1029b1b3bc646d7ffc58d
+  - id: g4_plastic_bottle_028
+    geometry_family: bottle_crushed
+    material_family: pet_plastic_matte
+    texture_family: crushed_folds
+    palette: *id004
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 9e61208a9f828675b45fd2cc55faec7281765d5b747d6e05be49c56e0d8623e4
+  - id: g4_plastic_bottle_029
+    geometry_family: bottle_flattened
+    material_family: hdpe_opaque
+    texture_family: crosshatch
+    palette: *id005
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: fb9ba74a20f2e16f529f1c44090e404d2664e5a394aa18283257139e3c3edc4b
+  - id: g4_plastic_bottle_030
+    geometry_family: bottle_labeled
+    material_family: pet_plastic_glossy
+    texture_family: label_patch
+    palette: *id006
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 249f3782cb0c580e3a14bba63d6ac6893ec80aa2f0dc7e8d1c029327d9405d07
+  metal_can:
+  - id: g4_metal_can_001
+    geometry_family: can_cylinder_short
+    material_family: aluminum_can_glossy
+    texture_family: rings
+    palette: &id009
+    - teal
+    - rust
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 29f2716042aabb39e7a516445559ce3b8391152cb8524ba408e5951d677abb98
+  - id: g4_metal_can_002
+    geometry_family: can_cylinder_tall
+    material_family: steel_can_matte
+    texture_family: label_patch
+    palette: &id010
+    - red
+    - white
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 2b8df33d21167fc0ea46b1f620b84b70d56fb21381970e10f3bd0def6fda3d58
+  - id: g4_metal_can_003
+    geometry_family: can_dented
+    material_family: aluminum_can_glossy
+    texture_family: speckle
+    palette: &id011
+    - green
+    - blue
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: ea65cb84f37bcd1cb6da38701219d813e60166e4cd882020cac3f4b776652eeb
+  - id: g4_metal_can_004
+    geometry_family: can_crushed
+    material_family: steel_can_matte
+    texture_family: crushed_folds
+    palette: &id012
+    - yellow
+    - stone
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 13953d4ae044ff3e1fa919b5b2debf4487d7dfd905b716b4c8ca2cc15a9dc749
+  - id: g4_metal_can_005
+    geometry_family: can_flattened
+    material_family: aluminum_can_glossy
+    texture_family: stripe_pattern
+    palette: &id013
+    - white
+    - green
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 65812ca759935f551ffaedd20dcd20aa38e81e9f6e783b0ce53b95a7cdba5aaf
+  - id: g4_metal_can_006
+    geometry_family: can_labeled
+    material_family: steel_can_matte
+    texture_family: text_blocks
+    palette: &id014
+    - blue
+    - rust
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 27c46e602d45bfd6b2c09c5d69797ecb55fc6005a09c2819ff491417d1c56f83
+  - id: g4_metal_can_007
+    geometry_family: can_cylinder_short
+    material_family: aluminum_can_glossy
+    texture_family: rings
+    palette: &id015
+    - gray
+    - orange
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 7d981cbff5784bae570640262bab53560604db79fe72d75df311455ee21c74a4
+  - id: g4_metal_can_008
+    geometry_family: can_cylinder_tall
+    material_family: steel_can_matte
+    texture_family: label_patch
+    palette: &id016
+    - stone
+    - red
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 4b6f0599c0b4b9b0750eb5982b154ef8e647e47feb568d3c152da5593fd43d40
+  - id: g4_metal_can_009
+    geometry_family: can_dented
+    material_family: aluminum_can_glossy
+    texture_family: speckle
+    palette: *id009
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 366bdd611040474f5aeb1f577c5bdf55cd267f873676bc85a24ba4b76d375cf1
+  - id: g4_metal_can_010
+    geometry_family: can_crushed
+    material_family: steel_can_matte
+    texture_family: crushed_folds
+    palette: *id010
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 288b8aae7fa04d547f3dfc500e3968608845b25c73827d8455be7424848d8a32
+  - id: g4_metal_can_011
+    geometry_family: can_flattened
+    material_family: aluminum_can_glossy
+    texture_family: stripe_pattern
+    palette: *id011
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 37568dc2a30cea0d32afba7d6790aa63874e21b37b66c1074cb177aaebba0980
+  - id: g4_metal_can_012
+    geometry_family: can_labeled
+    material_family: steel_can_matte
+    texture_family: text_blocks
+    palette: *id012
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 4f4bbed4bbd3c4eca5a75099b2f1a220e0bdbea58cb145d5806cfaa423b33a37
+  - id: g4_metal_can_013
+    geometry_family: can_cylinder_short
+    material_family: aluminum_can_glossy
+    texture_family: rings
+    palette: *id013
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 346ed532a30034fe97a1aabf2f9a6b0056fa7866ddc56086d6eaa47c78bdfe4b
+  - id: g4_metal_can_014
+    geometry_family: can_cylinder_tall
+    material_family: steel_can_matte
+    texture_family: label_patch
+    palette: *id014
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: eccddc6e3174d35e3ee6bc3a05de611c8dc97a69ced337a1675ead2bc97568eb
+  - id: g4_metal_can_015
+    geometry_family: can_dented
+    material_family: aluminum_can_glossy
+    texture_family: speckle
+    palette: *id015
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 71c7f7e7c088bd4886dcc6ca3a503feed6f7e96f42e06d62dae15e6dc61a62c5
+  - id: g4_metal_can_016
+    geometry_family: can_crushed
+    material_family: steel_can_matte
+    texture_family: crushed_folds
+    palette: *id016
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 8a9c33f8afef5149465c3ba6c6380ef9ed3f19a2ff538a47b6e6b58f49d7e21d
+  - id: g4_metal_can_017
+    geometry_family: can_flattened
+    material_family: aluminum_can_glossy
+    texture_family: stripe_pattern
+    palette: *id009
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 2e29c77ead011a5750c8f3266e110e5f6a81a0ab4362e1e5c8f2409d82e157b6
+  - id: g4_metal_can_018
+    geometry_family: can_labeled
+    material_family: steel_can_matte
+    texture_family: text_blocks
+    palette: *id010
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 788a60d915161205606edb6b4848095a6f60f6ed037925002e7c729ebc37f494
+  - id: g4_metal_can_019
+    geometry_family: can_cylinder_short
+    material_family: aluminum_can_glossy
+    texture_family: rings
+    palette: *id011
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 05a2f1ebb4341fc27a805646b7a116d7b4c21f4c60e8bddd635714002fccdab3
+  - id: g4_metal_can_020
+    geometry_family: can_cylinder_tall
+    material_family: steel_can_matte
+    texture_family: label_patch
+    palette: *id012
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 7b280f45bc3640f8398a98e044a2622c01ac05e1774fcf5306edc7ceacf5997d
+  - id: g4_metal_can_021
+    geometry_family: can_dented
+    material_family: aluminum_can_glossy
+    texture_family: speckle
+    palette: *id013
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: aa31ca7a33807bd2f29b325728e22173a86a0ef231a138ba856358a2dc857a5d
+  - id: g4_metal_can_022
+    geometry_family: can_crushed
+    material_family: steel_can_matte
+    texture_family: crushed_folds
+    palette: *id014
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 2fffe351c2f9e993db94c60afcb91e967b53289dfa4998b7913ebadf54738b13
+  - id: g4_metal_can_023
+    geometry_family: can_flattened
+    material_family: aluminum_can_glossy
+    texture_family: stripe_pattern
+    palette: *id015
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 7642eefaf9d662bd3e6d4415919f5050cb50a0619e121dc225f0da79e568eccd
+  - id: g4_metal_can_024
+    geometry_family: can_labeled
+    material_family: steel_can_matte
+    texture_family: text_blocks
+    palette: *id016
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: c715d8f525b4e86bc590a9d87c1610fd3ffe54c1c9ef387be9a2d2369aa88105
+  - id: g4_metal_can_025
+    geometry_family: can_cylinder_short
+    material_family: aluminum_can_glossy
+    texture_family: rings
+    palette: *id009
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: ea00e816c809c3b8796ea26cb5be9ad6d833b6a89746bc3fc1e314cd0df80752
+  - id: g4_metal_can_026
+    geometry_family: can_cylinder_tall
+    material_family: steel_can_matte
+    texture_family: label_patch
+    palette: *id010
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 3e02b3b28c3516d8f3bf198c7b7f2400e6c44a9e497dad1525ed9cb5a7317ac2
+  - id: g4_metal_can_027
+    geometry_family: can_dented
+    material_family: aluminum_can_glossy
+    texture_family: speckle
+    palette: *id011
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 7ff92b7b537c6abe34dfc932262709dba1ef1b17068dc35449c24833bcbbb1ad
+  - id: g4_metal_can_028
+    geometry_family: can_crushed
+    material_family: steel_can_matte
+    texture_family: crushed_folds
+    palette: *id012
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: e84a99bafbd89db14931cd7e178127a5fe47f7ad5cc4a191c2b0ea3e4ae1732e
+  - id: g4_metal_can_029
+    geometry_family: can_flattened
+    material_family: aluminum_can_glossy
+    texture_family: stripe_pattern
+    palette: *id013
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 8dff9b27e2c00cdc9e0a4cf3a5b63fe79f191481636bb023493b3ef965e6dd7b
+  - id: g4_metal_can_030
+    geometry_family: can_labeled
+    material_family: steel_can_matte
+    texture_family: text_blocks
+    palette: *id014
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: cf229296238d2ba1cd7c0191f32bd0e94201a6a14fd5cba3893d081f6ba3f6f7
+  paper_litter:
+  - id: g4_paper_litter_001
+    geometry_family: paper_sheet_folded
+    material_family: paper_matte
+    texture_family: grid_lines
+    palette: &id017
+    - white
+    - blue
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 9fbe068800237a781dde5411a5336c97e68c6606f7f218298fd8698cae6ca225
+  - id: g4_paper_litter_002
+    geometry_family: paper_sheet_torn
+    material_family: paper_glossy
+    texture_family: text_blocks
+    palette: &id018
+    - stone
+    - red
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: e2e2413611569109d6ed7af061d3d8d79d0e2cec60ec8db6333244f795e3fde7
+  - id: g4_paper_litter_003
+    geometry_family: paper_strip_long
+    material_family: paper_matte
+    texture_family: dashed_line
+    palette: &id019
+    - white
+    - green
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: f4efccbdc0f5852c1a8b2fc644da0a0d71e6df072a39561c9d979cb18be24037
+  - id: g4_paper_litter_004
+    geometry_family: paper_crumpled
+    material_family: paper_glossy
+    texture_family: crushed_folds
+    palette: &id020
+    - yellow
+    - rust
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: c145e96e7d61ac061d7be6182a820d03be99c19e00e6ea2b6f1d558dd77c4ad5
+  - id: g4_paper_litter_005
+    geometry_family: paper_sheet_wide
+    material_family: paper_matte
+    texture_family: patchwork
+    palette: &id021
+    - gray
+    - teal
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 177fb5e347d123ef830c5af134563541a481a06f47edf626cb44aedf5730ab75
+  - id: g4_paper_litter_006
+    geometry_family: paper_wad
+    material_family: kraft_cardboard
+    texture_family: speckle
+    palette: &id022
+    - white
+    - dark_gray
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: c30696bd6b47a40f1f7018588391f8e2491f24322ddef9b7717525c73e52308c
+  - id: g4_paper_litter_007
+    geometry_family: paper_sheet_folded
+    material_family: paper_matte
+    texture_family: grid_lines
+    palette: &id023
+    - stone
+    - brown
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: a0b811acd9a0bb4d3fb2f5417a2efa10e48daa10d4390594ae536e30e50cae78
+  - id: g4_paper_litter_008
+    geometry_family: paper_sheet_torn
+    material_family: paper_glossy
+    texture_family: text_blocks
+    palette: &id024
+    - white
+    - orange
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: ff5adbdab07da3fc924a990a0b714e45c71e83f9cb1ed45a829d2f557c586079
+  - id: g4_paper_litter_009
+    geometry_family: paper_strip_long
+    material_family: paper_matte
+    texture_family: dashed_line
+    palette: *id017
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 9bb772227ffc6b3da5f122960d0a2ed93b3bfb24621ec9f7c7815c68ae58b489
+  - id: g4_paper_litter_010
+    geometry_family: paper_crumpled
+    material_family: paper_glossy
+    texture_family: crushed_folds
+    palette: *id018
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: f47fbb8b13a8fbf260709ce3a6e1e6f3ebd70c6618cb0c549401e1871efaa1fc
+  - id: g4_paper_litter_011
+    geometry_family: paper_sheet_wide
+    material_family: paper_matte
+    texture_family: patchwork
+    palette: *id019
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 032c6c10b828750c621103330921c3584c09c50ad9ae3d57aca59855a40dc713
+  - id: g4_paper_litter_012
+    geometry_family: paper_wad
+    material_family: kraft_cardboard
+    texture_family: speckle
+    palette: *id020
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: f146de81a93d86058667d32b3966f65e9fd7ff5a95650436b7ee2a00a590e6da
+  - id: g4_paper_litter_013
+    geometry_family: paper_sheet_folded
+    material_family: paper_matte
+    texture_family: grid_lines
+    palette: *id021
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: e06cc099761167c1867009bbf447edbb5911cd24e274cc77192b9d7ba41a01a9
+  - id: g4_paper_litter_014
+    geometry_family: paper_sheet_torn
+    material_family: paper_glossy
+    texture_family: text_blocks
+    palette: *id022
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 016c02ea32115f1ddfc742e4bd0292a6b51aef2ef3dbd970326f7ba0b9dedd62
+  - id: g4_paper_litter_015
+    geometry_family: paper_strip_long
+    material_family: paper_matte
+    texture_family: dashed_line
+    palette: *id023
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: cc2c0f9d299b6e72df6c04ed9cfcc1c30ebc9eb3df57356d1b98e8b885552a35
+  - id: g4_paper_litter_016
+    geometry_family: paper_crumpled
+    material_family: paper_glossy
+    texture_family: crushed_folds
+    palette: *id024
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 082f0ab01931d30f6e0605eba116e314ac459dadfafe40418447e3919c31ea4f
+  - id: g4_paper_litter_017
+    geometry_family: paper_sheet_wide
+    material_family: paper_matte
+    texture_family: patchwork
+    palette: *id017
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 10e7fe86d0a2ebee29df47581fcda14184371193c2a7211752d502f9d07d7926
+  - id: g4_paper_litter_018
+    geometry_family: paper_wad
+    material_family: kraft_cardboard
+    texture_family: speckle
+    palette: *id018
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 43bd75f6fefe5c9a434df27964bb7d0c56b278cf7f95049d7c634a5f78ea9587
+  - id: g4_paper_litter_019
+    geometry_family: paper_sheet_folded
+    material_family: paper_matte
+    texture_family: grid_lines
+    palette: *id019
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 735939086dda6d4344fd112dce218142ca2d1f97528d70beb3a48027b70e1958
+  - id: g4_paper_litter_020
+    geometry_family: paper_sheet_torn
+    material_family: paper_glossy
+    texture_family: text_blocks
+    palette: *id020
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 9435d724d4851a4e742c79aa30ac167d72e1dfb974569d9f18c71d6f978cccf2
+  - id: g4_paper_litter_021
+    geometry_family: paper_strip_long
+    material_family: paper_matte
+    texture_family: dashed_line
+    palette: *id021
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: c0613f2c07a348a1ffc49a107fb8d8e1948196f5a082a2ed4a53ef2fe071eb0c
+  - id: g4_paper_litter_022
+    geometry_family: paper_crumpled
+    material_family: paper_glossy
+    texture_family: crushed_folds
+    palette: *id022
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: c9769a124f153af678ac20273f9fb98726b96057976472301a1b57dc43eaef16
+  - id: g4_paper_litter_023
+    geometry_family: paper_sheet_wide
+    material_family: paper_matte
+    texture_family: patchwork
+    palette: *id023
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 5183b873f510a1f927238e5e69b3515c20a97b438bc5ccabbe1075409c86818e
+  - id: g4_paper_litter_024
+    geometry_family: paper_wad
+    material_family: kraft_cardboard
+    texture_family: speckle
+    palette: *id024
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: fb33b088a624d24aa2750c9dfe3a194b181bc834f3b3500af50b610cad3df65e
+  - id: g4_paper_litter_025
+    geometry_family: paper_sheet_folded
+    material_family: paper_matte
+    texture_family: grid_lines
+    palette: *id017
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: ce563d09b4c91b5a546bb9d97bd24877748c79b91d7bf78d5b70683d0110ef37
+  - id: g4_paper_litter_026
+    geometry_family: paper_sheet_torn
+    material_family: paper_glossy
+    texture_family: text_blocks
+    palette: *id018
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 53be13e0128215f4b875c6ffa42e0aee8f7bf8ba485f299381b4ec181f18e2d1
+  - id: g4_paper_litter_027
+    geometry_family: paper_strip_long
+    material_family: paper_matte
+    texture_family: dashed_line
+    palette: *id019
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 0dd0375737139f36011ce7c72b2632fdb7d9e6df16e4ba375f8cec9ae3983c2a
+  - id: g4_paper_litter_028
+    geometry_family: paper_crumpled
+    material_family: paper_glossy
+    texture_family: crushed_folds
+    palette: *id020
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 6e28ffa0a2883eafbc782d0b1c866aec2a3c085619a5abec26f8a7ba30c7dd2f
+  - id: g4_paper_litter_029
+    geometry_family: paper_sheet_wide
+    material_family: paper_matte
+    texture_family: patchwork
+    palette: *id021
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 24c679093981b84902fc69082d54c1c6d48ebb0dbf3f32c57cf4c6df88cfba43
+  - id: g4_paper_litter_030
+    geometry_family: paper_wad
+    material_family: kraft_cardboard
+    texture_family: speckle
+    palette: *id022
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 53a95ecd86aa74506a0d0c04504d2d5efdf2915dd2bd8d1d3f2a7d3af141c6c1
+  - id: g4_paper_litter_031
+    geometry_family: paper_sheet_folded
+    material_family: paper_matte
+    texture_family: grid_lines
+    palette: *id023
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 354861520a3a397eda9783ff7716e7a0bbb5f28279be39728ae098be9ff0c833
+  - id: g4_paper_litter_032
+    geometry_family: paper_sheet_torn
+    material_family: paper_glossy
+    texture_family: text_blocks
+    palette: *id024
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 36e5f2207d16493b57ffb74ab0397e7f541b0e8bf93388da1cfd04a0c5c6946b
+  - id: g4_paper_litter_033
+    geometry_family: paper_strip_long
+    material_family: paper_matte
+    texture_family: dashed_line
+    palette: *id017
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 947f5239215737d7a7f4788fd0e92d020894f778582afe04bff10229a615f890
+  - id: g4_paper_litter_034
+    geometry_family: paper_crumpled
+    material_family: paper_glossy
+    texture_family: crushed_folds
+    palette: *id018
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: e2ce74e573ce9464f18c70101f5970a87039857d5cb4533ed67d69587607138a
+  - id: g4_paper_litter_035
+    geometry_family: paper_sheet_wide
+    material_family: paper_matte
+    texture_family: patchwork
+    palette: *id019
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: a69d341624c9252e5d65c34734fb5df70fc912557832a53c646bb0487756e49f
+  - id: g4_paper_litter_036
+    geometry_family: paper_wad
+    material_family: kraft_cardboard
+    texture_family: speckle
+    palette: *id020
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 3370493eac30b89ff2279a7042dcd4abc3c6383258b74f84c450708cc38c49ca
+  - id: g4_paper_litter_037
+    geometry_family: paper_sheet_folded
+    material_family: paper_matte
+    texture_family: grid_lines
+    palette: *id021
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: dbc3b990625ed73bb6939b46d39530dac832cf5cf89fb4a8d8f9b7c3430a2029
+  - id: g4_paper_litter_038
+    geometry_family: paper_sheet_torn
+    material_family: paper_glossy
+    texture_family: text_blocks
+    palette: *id022
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: cfb3405b1b0deea60ba1e69812fbd21a330cc4dab9bccb8245eef04fb3e65fe7
+  - id: g4_paper_litter_039
+    geometry_family: paper_strip_long
+    material_family: paper_matte
+    texture_family: dashed_line
+    palette: *id023
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 1f2f402c55906183a632576c760e60875fb45a154dcb524452ed1c4e71b114b3
+  - id: g4_paper_litter_040
+    geometry_family: paper_crumpled
+    material_family: paper_glossy
+    texture_family: crushed_folds
+    palette: *id024
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 8f0a8595093dcffec5ca3f6e44c22bf851f0a9499491f9e53a84c7d5e3fcfae9
+  - id: g4_paper_litter_041
+    geometry_family: paper_sheet_wide
+    material_family: paper_matte
+    texture_family: patchwork
+    palette: *id017
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: df8c5031aedd30e4f201c3b194172f2e75e58f21a35b249bbf9bba1e902f6269
+  - id: g4_paper_litter_042
+    geometry_family: paper_wad
+    material_family: kraft_cardboard
+    texture_family: speckle
+    palette: *id018
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 6ba8bb05d9c8337cd49841cc4e335b8fdaecbe8ad0a1bbd6c55aa8815ac23f36
+  - id: g4_paper_litter_043
+    geometry_family: paper_sheet_folded
+    material_family: paper_matte
+    texture_family: grid_lines
+    palette: *id019
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 588728c732934bd34a10874beaa2f263a3bb03e11302a0d34b042c9a5a12e71e
+  - id: g4_paper_litter_044
+    geometry_family: paper_sheet_torn
+    material_family: paper_glossy
+    texture_family: text_blocks
+    palette: *id020
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 2de37cb9aacc72938b4189698b1b5c826cc74443cd5fdaa6864a768c3ae91f23
+  - id: g4_paper_litter_045
+    geometry_family: paper_strip_long
+    material_family: paper_matte
+    texture_family: dashed_line
+    palette: *id021
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: c90dcb92e78f23f5e8c71fd2b37d7ec95335531291ca6d257c41cc924d848aa9
+  - id: g4_paper_litter_046
+    geometry_family: paper_crumpled
+    material_family: paper_glossy
+    texture_family: crushed_folds
+    palette: *id022
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    sha256: 32a8f6612958d3889785716b7a4e5a2a24d25493ac64b6e489ca3f48a380fc08
+  leaf_pile:
+  - id: g4_leaf_pile_001
+    geometry_family: leaf_pile_sparse
+    material_family: dry_leaf
+    texture_family: leaf_mosaic
+    palette: &id025
+    - leaf_green
+    - leaf_amber
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_high
+    - density_sparse
+    - leaf_shape_round
+    - condition_wet
+    - shadow_coverage
+    sha256: 85b57206b42469ce6214bc99e2f7463feca4674b852289b3b3acbd097edbc95d
+  - id: g4_leaf_pile_002
+    geometry_family: leaf_pile_dense
+    material_family: wet_leaf
+    texture_family: veins
+    palette: &id026
+    - leaf_amber
+    - leaf_brown
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_low
+    - density_dense
+    - leaf_shape_pointed
+    - condition_dry
+    - partial_occlusion
+    sha256: 966903bf56ce500370640e74239ca59e1bc648bfc75e27bee8a49b7424d74911
+  - id: g4_leaf_pile_003
+    geometry_family: leaf_pile_windrow
+    material_family: dry_leaf
+    texture_family: mottled
+    palette: &id027
+    - leaf_brown
+    - leaf_green
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_high
+    - density_sparse
+    - leaf_shape_lobed
+    - condition_wet
+    - background_leaf_discrimination
+    sha256: 844718d81717e4b9b20936fd99fad1a35261e0b7720c1557c1e45ea18ed7a64a
+  - id: g4_leaf_pile_004
+    geometry_family: leaf_pile_round
+    material_family: wet_leaf
+    texture_family: leaf_mosaic
+    palette: &id028
+    - leaf_green
+    - brown
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_low
+    - density_dense
+    - leaf_shape_round
+    - condition_dry
+    - shadow_coverage
+    sha256: a82cfca54a9350564a3b1e4ae4a64a157173fdfe912e915ec2fd13b926667dd1
+  - id: g4_leaf_pile_005
+    geometry_family: leaf_pile_long
+    material_family: dry_leaf
+    texture_family: speckle
+    palette: &id029
+    - leaf_amber
+    - rust
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_high
+    - density_sparse
+    - leaf_shape_pointed
+    - condition_wet
+    - partial_occlusion
+    sha256: 49a945ae9d9dd137683266102ddbd6331d72d949ae7f031917e9de394cbfb166
+  - id: g4_leaf_pile_006
+    geometry_family: leaf_pile_mixed
+    material_family: wet_leaf
+    texture_family: mottled
+    palette: &id030
+    - leaf_brown
+    - yellow
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_low
+    - density_dense
+    - leaf_shape_lobed
+    - condition_dry
+    - background_leaf_discrimination
+    sha256: 7bec7cc995f8b3696523245e3d18c6be1f8feba83123b5662f5abdbebb4f50b1
+  - id: g4_leaf_pile_007
+    geometry_family: leaf_pile_sparse
+    material_family: dry_leaf
+    texture_family: leaf_mosaic
+    palette: &id031
+    - leaf_green
+    - yellow
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_high
+    - density_sparse
+    - leaf_shape_round
+    - condition_wet
+    - shadow_coverage
+    sha256: 640adeea49ce5df3bc8620712543c26e97c46342a06fc04442b0aad761c98e7c
+  - id: g4_leaf_pile_008
+    geometry_family: leaf_pile_dense
+    material_family: wet_leaf
+    texture_family: veins
+    palette: &id032
+    - leaf_amber
+    - green
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_low
+    - density_dense
+    - leaf_shape_pointed
+    - condition_dry
+    - partial_occlusion
+    sha256: 5887e6765617231ee3c3181a65c67f9cee5509e8032dfb2810cecdf94a477549
+  - id: g4_leaf_pile_009
+    geometry_family: leaf_pile_windrow
+    material_family: dry_leaf
+    texture_family: mottled
+    palette: *id025
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_high
+    - density_sparse
+    - leaf_shape_lobed
+    - condition_wet
+    - background_leaf_discrimination
+    sha256: 9df9339da9cb6fb026c49b0df6d582913040948bb4e35ab0b1d95ced7ba105ab
+  - id: g4_leaf_pile_010
+    geometry_family: leaf_pile_round
+    material_family: wet_leaf
+    texture_family: leaf_mosaic
+    palette: *id026
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_low
+    - density_dense
+    - leaf_shape_round
+    - condition_dry
+    - shadow_coverage
+    sha256: 44b46eecd4ad6ec91133edb19ab3fc98dcb51656db33c6c1ba3b3585726f48d0
+  - id: g4_leaf_pile_011
+    geometry_family: leaf_pile_long
+    material_family: dry_leaf
+    texture_family: speckle
+    palette: *id027
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_high
+    - density_sparse
+    - leaf_shape_pointed
+    - condition_wet
+    - partial_occlusion
+    sha256: c3be49b63092882b19a0ad49d5222685c52c78575737139ae02fbdadfc9b036c
+  - id: g4_leaf_pile_012
+    geometry_family: leaf_pile_mixed
+    material_family: wet_leaf
+    texture_family: mottled
+    palette: *id028
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_low
+    - density_dense
+    - leaf_shape_lobed
+    - condition_dry
+    - background_leaf_discrimination
+    sha256: ffd2b8eee2c2235ebf3c93f06977b3d8d50cbde20568480ac3ca184a9d191f99
+  - id: g4_leaf_pile_013
+    geometry_family: leaf_pile_sparse
+    material_family: dry_leaf
+    texture_family: leaf_mosaic
+    palette: *id029
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_high
+    - density_sparse
+    - leaf_shape_round
+    - condition_wet
+    - shadow_coverage
+    sha256: 1a77abe4104ed85d6ba39c7e4739963a14092f41050d5feb75b0364857081a50
+  - id: g4_leaf_pile_014
+    geometry_family: leaf_pile_dense
+    material_family: wet_leaf
+    texture_family: veins
+    palette: *id030
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_low
+    - density_dense
+    - leaf_shape_pointed
+    - condition_dry
+    - partial_occlusion
+    sha256: 96849868d47344da6c12e84b2e28643d2eb90bc0f7f1ef6c38a472250297063e
+  - id: g4_leaf_pile_015
+    geometry_family: leaf_pile_windrow
+    material_family: dry_leaf
+    texture_family: mottled
+    palette: *id031
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_high
+    - density_sparse
+    - leaf_shape_lobed
+    - condition_wet
+    - background_leaf_discrimination
+    sha256: 7f945f849a7e63fbaaf53f5980a6cf3ce1ddbaa3f19ad36aa4551f9a1c50383b
+  - id: g4_leaf_pile_016
+    geometry_family: leaf_pile_round
+    material_family: wet_leaf
+    texture_family: leaf_mosaic
+    palette: *id032
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_low
+    - density_dense
+    - leaf_shape_round
+    - condition_dry
+    - shadow_coverage
+    sha256: d8704e36da4482e6e5501aa599659d3b3508843bee4924a8764048935c7702e0
+  - id: g4_leaf_pile_017
+    geometry_family: leaf_pile_long
+    material_family: dry_leaf
+    texture_family: speckle
+    palette: *id025
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_high
+    - density_sparse
+    - leaf_shape_pointed
+    - condition_wet
+    - partial_occlusion
+    sha256: bee0b10881805e62c5bdb09837e2a1fe137192c40b7527b7a944e6739ae1d0e6
+  - id: g4_leaf_pile_018
+    geometry_family: leaf_pile_mixed
+    material_family: wet_leaf
+    texture_family: mottled
+    palette: *id026
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_low
+    - density_dense
+    - leaf_shape_lobed
+    - condition_dry
+    - background_leaf_discrimination
+    sha256: fc8d56081461000eb4766d9680f093e84f701a3f65c131538195418e8d92bcee
+  - id: g4_leaf_pile_019
+    geometry_family: leaf_pile_sparse
+    material_family: dry_leaf
+    texture_family: leaf_mosaic
+    palette: *id027
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_high
+    - density_sparse
+    - leaf_shape_round
+    - condition_wet
+    - shadow_coverage
+    sha256: 24d4579ba7ea4cb8479e0d2c110b0cc7a4d9b74cfbddebbe1bc6f69f69348ae8
+  - id: g4_leaf_pile_020
+    geometry_family: leaf_pile_dense
+    material_family: wet_leaf
+    texture_family: veins
+    palette: *id028
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_low
+    - density_dense
+    - leaf_shape_pointed
+    - condition_dry
+    - partial_occlusion
+    sha256: 4d1b7993812eb904ddc39b1ab50cad4b2b4cb10de077263c3b4f529fc759a929
+  - id: g4_leaf_pile_021
+    geometry_family: leaf_pile_windrow
+    material_family: dry_leaf
+    texture_family: mottled
+    palette: *id029
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_high
+    - density_sparse
+    - leaf_shape_lobed
+    - condition_wet
+    - background_leaf_discrimination
+    sha256: fdc0bd290836c9ee68ec912b10ca0e60704a37127a6dd5aaad22f6dcaba272fd
+  - id: g4_leaf_pile_022
+    geometry_family: leaf_pile_round
+    material_family: wet_leaf
+    texture_family: leaf_mosaic
+    palette: *id030
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_low
+    - density_dense
+    - leaf_shape_round
+    - condition_dry
+    - shadow_coverage
+    sha256: ee4b6926d83e2866c7853d1faa09717fd4bdc605ec4b0e7fd7cfb23ae05ed7b3
+  - id: g4_leaf_pile_023
+    geometry_family: leaf_pile_long
+    material_family: dry_leaf
+    texture_family: speckle
+    palette: *id031
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_high
+    - density_sparse
+    - leaf_shape_pointed
+    - condition_wet
+    - partial_occlusion
+    sha256: 0efa6bc067e9f95a24c7261645e88091280db95d48d0009fb19833789404b136
+  - id: g4_leaf_pile_024
+    geometry_family: leaf_pile_mixed
+    material_family: wet_leaf
+    texture_family: mottled
+    palette: *id032
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_low
+    - density_dense
+    - leaf_shape_lobed
+    - condition_dry
+    - background_leaf_discrimination
+    sha256: ac11162a8ac14a3c5b52d7522bd2278c71854728f744f843694f207322496f8d
+  - id: g4_leaf_pile_025
+    geometry_family: leaf_pile_sparse
+    material_family: dry_leaf
+    texture_family: leaf_mosaic
+    palette: *id025
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_high
+    - density_sparse
+    - leaf_shape_round
+    - condition_wet
+    - shadow_coverage
+    sha256: f8ca60f110dc990cd1e4eda5b5a36c13eca7bf060070d237bf68cf3e9a34d742
+  - id: g4_leaf_pile_026
+    geometry_family: leaf_pile_dense
+    material_family: wet_leaf
+    texture_family: veins
+    palette: *id026
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_low
+    - density_dense
+    - leaf_shape_pointed
+    - condition_dry
+    - partial_occlusion
+    sha256: 037f9d92cef2dd32b9a89803953ab1dd7ed37b6daae47352d9d8af5db90db80d
+  - id: g4_leaf_pile_027
+    geometry_family: leaf_pile_windrow
+    material_family: dry_leaf
+    texture_family: mottled
+    palette: *id027
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_high
+    - density_sparse
+    - leaf_shape_lobed
+    - condition_wet
+    - background_leaf_discrimination
+    sha256: b5e0ca32c5594ca7721c885b7b2c506195f66dd515dae6103f53b7e13c4f2f01
+  - id: g4_leaf_pile_028
+    geometry_family: leaf_pile_round
+    material_family: wet_leaf
+    texture_family: leaf_mosaic
+    palette: *id028
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_low
+    - density_dense
+    - leaf_shape_round
+    - condition_dry
+    - shadow_coverage
+    sha256: 9c8347ef4f18a1d150a41a3ce81366bc9f95c991e0ca9431cf6c3809f690b934
+  - id: g4_leaf_pile_029
+    geometry_family: leaf_pile_long
+    material_family: dry_leaf
+    texture_family: speckle
+    palette: *id029
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_high
+    - density_sparse
+    - leaf_shape_pointed
+    - condition_wet
+    - partial_occlusion
+    sha256: 2ec4ef478d2e9ac28cb9047354f4110ad1957666b534edae4d10266eabc849ef
+  - id: g4_leaf_pile_030
+    geometry_family: leaf_pile_mixed
+    material_family: wet_leaf
+    texture_family: mottled
+    palette: *id030
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - thickness_low
+    - density_dense
+    - leaf_shape_lobed
+    - condition_dry
+    - background_leaf_discrimination
+    sha256: e3835853dfeeb041c56f1c1102d75881f45fd217404d2a89f5c461cfa47822ef
+  puddle:
+  - id: g4_puddle_001
+    geometry_family: puddle_round
+    material_family: water_shallow
+    texture_family: puddle_ripple
+    palette: &id033
+    - water_blue
+    - water_light
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_irregular
+    - reflectivity_shallow
+    - ground_asphalt
+    - shadow_coverage
+    sha256: ac3cd066121e21f1a79babadc9f9b3961a740b5826cdda98fd4f3f841800555f
+  - id: g4_puddle_002
+    geometry_family: puddle_wide
+    material_family: water_deep
+    texture_family: reflective_ripple
+    palette: &id034
+    - water_dark
+    - water_blue
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_round
+    - reflectivity_deep
+    - ground_concrete
+    - wet_non_puddle
+    sha256: fef09847c51360f002ff917a35a53914e3efcb01ca31d56887d648cebc7f55e7
+  - id: g4_puddle_003
+    geometry_family: puddle_irregular
+    material_family: water_shallow
+    texture_family: puddle_ripple
+    palette: &id035
+    - water_light
+    - water_dark
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_irregular
+    - reflectivity_shallow
+    - ground_paving
+    - specular_highlight
+    sha256: 5ade7214278f01a078e81b8f12c2939fb289b14f2ab79b49d618079a195551de
+  - id: g4_puddle_004
+    geometry_family: puddle_long
+    material_family: water_deep
+    texture_family: reflective_ripple
+    palette: &id036
+    - asphalt
+    - water_dark
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_round
+    - reflectivity_deep
+    - ground_soil
+    - partial_occlusion
+    sha256: 423ed697aab6b65b9b69df7b4d62f8308faf0c920b06a80cdc5ebe3c7bbdd610
+  - id: g4_puddle_005
+    geometry_family: puddle_split
+    material_family: water_shallow
+    texture_family: edge_fade
+    palette: &id037
+    - concrete
+    - water_light
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_irregular
+    - reflectivity_shallow
+    - ground_asphalt
+    - boundary_blur
+    sha256: 0c0a875a4e83f4779efeac1dd302c40031f2f9e06a1feee743b11c1e5845126a
+  - id: g4_puddle_006
+    geometry_family: puddle_shallow
+    material_family: water_deep
+    texture_family: puddle_ripple
+    palette: &id038
+    - water_blue
+    - white
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_round
+    - reflectivity_deep
+    - ground_concrete
+    - shadow_coverage
+    sha256: 23b63c12d93b438fea2ee63f5555b6b3157e7bfaa03b0bc63c8432f7449cbfa3
+  - id: g4_puddle_007
+    geometry_family: puddle_round
+    material_family: water_shallow
+    texture_family: puddle_ripple
+    palette: &id039
+    - water_dark
+    - stone
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_irregular
+    - reflectivity_shallow
+    - ground_paving
+    - wet_non_puddle
+    sha256: fda28548f4be9f377e251a66ad9912e9837365a2c816e84b400bfeca56ebd7b4
+  - id: g4_puddle_008
+    geometry_family: puddle_wide
+    material_family: water_deep
+    texture_family: reflective_ripple
+    palette: &id040
+    - water_light
+    - blue
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_round
+    - reflectivity_deep
+    - ground_soil
+    - specular_highlight
+    sha256: 9faba0c88ebcac2d0b688ead51442c8c3dc792113c2c0a8bd58c2f013001330b
+  - id: g4_puddle_009
+    geometry_family: puddle_irregular
+    material_family: water_shallow
+    texture_family: puddle_ripple
+    palette: *id033
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_irregular
+    - reflectivity_shallow
+    - ground_asphalt
+    - partial_occlusion
+    sha256: 8bc1302b636128ae56ee78323f071f7fdb9771001fafcd064f143bbdc7830d92
+  - id: g4_puddle_010
+    geometry_family: puddle_long
+    material_family: water_deep
+    texture_family: reflective_ripple
+    palette: *id034
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_round
+    - reflectivity_deep
+    - ground_concrete
+    - boundary_blur
+    sha256: 828cf6bd59ff2504b407c687246721fb07a9ed5ce7b6de39babd866820422127
+  - id: g4_puddle_011
+    geometry_family: puddle_split
+    material_family: water_shallow
+    texture_family: edge_fade
+    palette: *id035
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_irregular
+    - reflectivity_shallow
+    - ground_paving
+    - shadow_coverage
+    sha256: c25e8edaa302b59ac68406e22d14cae44e8fcaa707a044113dc6c6e6f2c33bdb
+  - id: g4_puddle_012
+    geometry_family: puddle_shallow
+    material_family: water_deep
+    texture_family: puddle_ripple
+    palette: *id036
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_round
+    - reflectivity_deep
+    - ground_soil
+    - wet_non_puddle
+    sha256: b7fbd9f14f8a07923e57b8714f95c3166c7bde4f214589d35e42e1b06197586a
+  - id: g4_puddle_013
+    geometry_family: puddle_round
+    material_family: water_shallow
+    texture_family: puddle_ripple
+    palette: *id037
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_irregular
+    - reflectivity_shallow
+    - ground_asphalt
+    - specular_highlight
+    sha256: 8acfa3c62aaec68c98d64475bf13272fc580de154f29a32fdc143605f8df66ae
+  - id: g4_puddle_014
+    geometry_family: puddle_wide
+    material_family: water_deep
+    texture_family: reflective_ripple
+    palette: *id038
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_round
+    - reflectivity_deep
+    - ground_concrete
+    - partial_occlusion
+    sha256: 4e8b8014472ac950500033f95fc12d53325231700a9663d42b0a023fb572f44c
+  - id: g4_puddle_015
+    geometry_family: puddle_irregular
+    material_family: water_shallow
+    texture_family: puddle_ripple
+    palette: *id039
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_irregular
+    - reflectivity_shallow
+    - ground_paving
+    - boundary_blur
+    sha256: 4ecf0c9682da22ddb7db83562853d4f4296b78d1b24d83278086d011d367b77d
+  - id: g4_puddle_016
+    geometry_family: puddle_long
+    material_family: water_deep
+    texture_family: reflective_ripple
+    palette: *id040
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_round
+    - reflectivity_deep
+    - ground_soil
+    - shadow_coverage
+    sha256: e985e7bdb7aedb4e9a7f392191b31d2142764ca8caf6f37732ad42f9d165b560
+  - id: g4_puddle_017
+    geometry_family: puddle_split
+    material_family: water_shallow
+    texture_family: edge_fade
+    palette: *id033
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_irregular
+    - reflectivity_shallow
+    - ground_asphalt
+    - wet_non_puddle
+    sha256: 171fc5c343f4a55a30c14c4334f656fcc524ed0eaf55bf13c0d8ba8f4914b454
+  - id: g4_puddle_018
+    geometry_family: puddle_shallow
+    material_family: water_deep
+    texture_family: puddle_ripple
+    palette: *id034
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_round
+    - reflectivity_deep
+    - ground_concrete
+    - specular_highlight
+    sha256: d843a2b745b5106c18f1507a2b9ae3e01126cacba5c2407755ac07ad573e85b2
+  - id: g4_puddle_019
+    geometry_family: puddle_round
+    material_family: water_shallow
+    texture_family: puddle_ripple
+    palette: *id035
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_irregular
+    - reflectivity_shallow
+    - ground_paving
+    - partial_occlusion
+    sha256: b561d7940ab78bed53aa9655dd7915ef183f1e98643453fdfa5d8639313ae9f1
+  - id: g4_puddle_020
+    geometry_family: puddle_wide
+    material_family: water_deep
+    texture_family: reflective_ripple
+    palette: *id036
+    split_eligibility:
+    - train
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_round
+    - reflectivity_deep
+    - ground_soil
+    - boundary_blur
+    sha256: 46399a7e02d809de85131ad5b9d720b423995ebb22dbf408e00f597033a18f9c
+  - id: g4_puddle_021
+    geometry_family: puddle_irregular
+    material_family: water_shallow
+    texture_family: puddle_ripple
+    palette: *id037
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_irregular
+    - reflectivity_shallow
+    - ground_asphalt
+    - shadow_coverage
+    sha256: 9ceffbfadf5a86e937e3a7bab1acb0df798a222a1608888c054e0d185a5550e1
+  - id: g4_puddle_022
+    geometry_family: puddle_long
+    material_family: water_deep
+    texture_family: reflective_ripple
+    palette: *id038
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_round
+    - reflectivity_deep
+    - ground_concrete
+    - wet_non_puddle
+    sha256: 808fd7c93be8b5257b58e0365e528a28984db22f71b745fe3278b3fb6550d83b
+  - id: g4_puddle_023
+    geometry_family: puddle_split
+    material_family: water_shallow
+    texture_family: edge_fade
+    palette: *id039
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_irregular
+    - reflectivity_shallow
+    - ground_paving
+    - specular_highlight
+    sha256: dc1f0e92e7b49baa029ef9688b021d52e15b5456b0ea65642bfb901b8fc4efe5
+  - id: g4_puddle_024
+    geometry_family: puddle_shallow
+    material_family: water_deep
+    texture_family: puddle_ripple
+    palette: *id040
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_round
+    - reflectivity_deep
+    - ground_soil
+    - partial_occlusion
+    sha256: 0f9982834ee5c6ddc23561927207d6fb2bb10cd43abeb960086ff9522b52b7ad
+  - id: g4_puddle_025
+    geometry_family: puddle_round
+    material_family: water_shallow
+    texture_family: puddle_ripple
+    palette: *id033
+    split_eligibility:
+    - val
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_irregular
+    - reflectivity_shallow
+    - ground_asphalt
+    - boundary_blur
+    sha256: ceb5cd221b085c58cf0b467eb4f584a1caf95fa696192064fec8f1dfae1e8f3b
+  - id: g4_puddle_026
+    geometry_family: puddle_wide
+    material_family: water_deep
+    texture_family: reflective_ripple
+    palette: *id034
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_round
+    - reflectivity_deep
+    - ground_concrete
+    - shadow_coverage
+    sha256: c17ed03a61d53602db2202f1d5fc06283b901a0a938c61d5c6d7db272ffadf37
+  - id: g4_puddle_027
+    geometry_family: puddle_irregular
+    material_family: water_shallow
+    texture_family: puddle_ripple
+    palette: *id035
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_irregular
+    - reflectivity_shallow
+    - ground_paving
+    - wet_non_puddle
+    sha256: c5d9efd3a0e509207fe0eedcec070d45ef1517555f262aa5789189afdd636511
+  - id: g4_puddle_028
+    geometry_family: puddle_long
+    material_family: water_deep
+    texture_family: reflective_ripple
+    palette: *id036
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_round
+    - reflectivity_deep
+    - ground_soil
+    - specular_highlight
+    sha256: 7fe9bad1fd00a26c7f7c2de714a9cc27fbbde16a26747f45a400d9fd78e7eeaa
+  - id: g4_puddle_029
+    geometry_family: puddle_split
+    material_family: water_shallow
+    texture_family: edge_fade
+    palette: *id037
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_irregular
+    - reflectivity_shallow
+    - ground_asphalt
+    - partial_occlusion
+    sha256: 923784b8c124b715a37c7f84e0a24911df7fe2a72c05e949ae099ca331b92fff
+  - id: g4_puddle_030
+    geometry_family: puddle_shallow
+    material_family: water_deep
+    texture_family: puddle_ripple
+    palette: *id038
+    split_eligibility:
+    - test
+    source: project-authored procedural G4 model
+    license: Apache-2.0
+    area_attributes:
+    - contour_round
+    - reflectivity_deep
+    - ground_concrete
+    - boundary_blur
+    sha256: 39f477754bc3d578ee28f145712691a4c3559286bd19b89802c1c2e496f3deeb
+hard_negatives:
+- id: g4_neg_road_marking_fragment_01
+  taxonomy: road_marking_fragment
+  geometry_family: flat_patch
+  material_family: paint_mark
+  texture_family: dashed_line
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: de011aa81e6783a128c5777e43e92f8ae3d4b90215d639270e5c349ae4d76727
+- id: g4_neg_road_marking_fragment_02
+  taxonomy: road_marking_fragment
+  geometry_family: thin_slab
+  material_family: concrete
+  texture_family: edge_fade
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: dd863fe2b2ab880a002d23eca9f73b1261e59d33ba9ea537ff653475ff7e1309
+- id: g4_neg_road_marking_fragment_03
+  taxonomy: road_marking_fragment
+  geometry_family: stripe_strip
+  material_family: asphalt
+  texture_family: crack_network
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 04cbce962371511f77f0918eff562287cb24657cf70dc75af9f50708dfda9aa4
+- id: g4_neg_road_marking_fragment_04
+  taxonomy: road_marking_fragment
+  geometry_family: flat_patch
+  material_family: paint_mark
+  texture_family: dashed_line
+  split_eligibility:
+  - val
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 352400f59299d0fc5fa6b83e6cfc0be946872d895187634032fc054bba94921f
+- id: g4_neg_road_marking_fragment_05
+  taxonomy: road_marking_fragment
+  geometry_family: thin_slab
+  material_family: concrete
+  texture_family: edge_fade
+  split_eligibility:
+  - test
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 6d2943adcc7108b361ea81d50e144f0516f659b7515dc8af79572baf9f452eec
+- id: g4_neg_light_paver_01
+  taxonomy: light_paver
+  geometry_family: paver_block
+  material_family: paver_stone
+  texture_family: paver_grid
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: c1cf768f4d10750f4673b8bb598816696e539ab9b6f30231dd4309231ce6c214
+- id: g4_neg_light_paver_02
+  taxonomy: light_paver
+  geometry_family: flat_patch
+  material_family: concrete
+  texture_family: clean_stone
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 0558dae838f1a9936509bfd63b6d056630dbdeb8b80890b6da202fd72ebd4663
+- id: g4_neg_light_paver_03
+  taxonomy: light_paver
+  geometry_family: thin_slab
+  material_family: paint_mark
+  texture_family: patchwork
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 562ce942f550b60c2efa17ea80719f991ed195c79ad704ee5b9d057acc94a470
+- id: g4_neg_light_paver_04
+  taxonomy: light_paver
+  geometry_family: paver_block
+  material_family: paver_stone
+  texture_family: paver_grid
+  split_eligibility:
+  - val
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 8042a72a46d34e56ad187670b7375d844d7a2a60523f4973d6b5dd791e93fc9a
+- id: g4_neg_light_paver_05
+  taxonomy: light_paver
+  geometry_family: flat_patch
+  material_family: concrete
+  texture_family: clean_stone
+  split_eligibility:
+  - test
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 5cc3b5f3e86ac54a3caf6c8d12a43eb612212a4497b611ba433ecac4d8dba064
+- id: g4_neg_paver_joint_01
+  taxonomy: paver_joint
+  geometry_family: paver_joint_line
+  material_family: paver_stone
+  texture_family: gradient_shadow
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 47f81428d15977fb91e2fde78b0beabc708eaa4273a49da6163d952bac35e6f3
+- id: g4_neg_paver_joint_02
+  taxonomy: paver_joint
+  geometry_family: crack_line
+  material_family: asphalt
+  texture_family: edge_fade
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: f005b97f4b0deab6e49817af4d81b7660d9425ed4d0455453705461676409ba7
+- id: g4_neg_paver_joint_03
+  taxonomy: paver_joint
+  geometry_family: stripe_strip
+  material_family: concrete
+  texture_family: mottled
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: dda572a420a5f20055f389929b6d8e81ef9fcf0347ceac50b3ce51e2f4cebd91
+- id: g4_neg_paver_joint_04
+  taxonomy: paver_joint
+  geometry_family: paver_joint_line
+  material_family: paver_stone
+  texture_family: gradient_shadow
+  split_eligibility:
+  - val
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 3548c26c2e9bcf1cc61bbdeb08a0d51c08859fcc095cbea4cd4858705a48caf5
+- id: g4_neg_paver_joint_05
+  taxonomy: paver_joint
+  geometry_family: crack_line
+  material_family: asphalt
+  texture_family: edge_fade
+  split_eligibility:
+  - test
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 83fb41c76e7af325b3c5586b726696a570ce3c0394de5b524d6fda7cc8a69297
+- id: g4_neg_paper_like_road_patch_01
+  taxonomy: paper_like_road_patch
+  geometry_family: thin_slab
+  material_family: paper_matte
+  texture_family: text_blocks
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 89c201a69c240da4e06058caaf90292c784c64c9868d27f1193e0cd2e4bc6c1f
+- id: g4_neg_paper_like_road_patch_02
+  taxonomy: paper_like_road_patch
+  geometry_family: flat_patch
+  material_family: concrete
+  texture_family: grid_lines
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 5a0b517e04c1a2aadb4ac495155132fb4625fb90c688e336a18717e7ca010825
+- id: g4_neg_paper_like_road_patch_03
+  taxonomy: paper_like_road_patch
+  geometry_family: paper_sheet_wide
+  material_family: paint_mark
+  texture_family: patchwork
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: aa56e00d4a20dff2ddf7c30e5450d654e4bb12710ca7323b90c3be8429aa3523
+- id: g4_neg_paper_like_road_patch_04
+  taxonomy: paper_like_road_patch
+  geometry_family: thin_slab
+  material_family: paper_matte
+  texture_family: text_blocks
+  split_eligibility:
+  - val
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: c5f0f13879d235841b4ac4184d2366d6312a3577e2decbcf9bf3199126b358c9
+- id: g4_neg_paper_like_road_patch_05
+  taxonomy: paper_like_road_patch
+  geometry_family: flat_patch
+  material_family: concrete
+  texture_family: grid_lines
+  split_eligibility:
+  - test
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 5cdde5c1dd00c708170769bed3ce69a33ae65a15052b03a991200f0d031ab291
+- id: g4_neg_crack_01
+  taxonomy: crack
+  geometry_family: crack_line
+  material_family: asphalt
+  texture_family: crack_network
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 86c33143f00c99958af3c7ccdddd952fd24c8ff8bafa8973433a7c5135c1e763
+- id: g4_neg_crack_02
+  taxonomy: crack
+  geometry_family: stripe_strip
+  material_family: concrete
+  texture_family: gradient_shadow
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: f8cee277bc4da7560c4c74b114e01e5f9491aa7ce9e3dadefae5d7d6ee411663
+- id: g4_neg_crack_03
+  taxonomy: crack
+  geometry_family: paver_joint_line
+  material_family: rubber_shadow
+  texture_family: mottled
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 3cf656c6315e3d05d2a5cbb524b542129a032845017f0b3490f3a07b05b59f86
+- id: g4_neg_crack_04
+  taxonomy: crack
+  geometry_family: crack_line
+  material_family: asphalt
+  texture_family: crack_network
+  split_eligibility:
+  - val
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 60991361c47b2822505e7e17c7140f550c614e15ed46247cc35810b3bcc2026c
+- id: g4_neg_crack_05
+  taxonomy: crack
+  geometry_family: stripe_strip
+  material_family: concrete
+  texture_family: gradient_shadow
+  split_eligibility:
+  - test
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 047a2bf3684569a09febc8d61d0b8e93ecd1dc4dfe0d48ee90ef99f818b45f1e
+- id: g4_neg_shadow_edge_01
+  taxonomy: shadow_edge
+  geometry_family: shadow_patch
+  material_family: rubber_shadow
+  texture_family: gradient_shadow
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 9c30ca47aa3cae42914acf0c815d36a672433beb1d6d9a3834e63be877f7ee58
+- id: g4_neg_shadow_edge_02
+  taxonomy: shadow_edge
+  geometry_family: flat_patch
+  material_family: asphalt
+  texture_family: edge_fade
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 73f9dddd57eab5c3021e9d422c642c9f78e62a8a54c253c31cd15b5afff8ecf0
+- id: g4_neg_shadow_edge_03
+  taxonomy: shadow_edge
+  geometry_family: thin_slab
+  material_family: concrete
+  texture_family: mottled
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 107239a10620d63b986b831f7ac1b80d2f16e2601a575891e9981ef4718a56a2
+- id: g4_neg_shadow_edge_04
+  taxonomy: shadow_edge
+  geometry_family: shadow_patch
+  material_family: rubber_shadow
+  texture_family: gradient_shadow
+  split_eligibility:
+  - val
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 68fef606690f7bf235f7206b0deddea2ba448f1133ef6d148973eef3788a2c65
+- id: g4_neg_shadow_edge_05
+  taxonomy: shadow_edge
+  geometry_family: flat_patch
+  material_family: asphalt
+  texture_family: edge_fade
+  split_eligibility:
+  - test
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: b899e4a647cffc6f836e445f07af86a4bafd75c5306f01e901aacd5154b26d63
+- id: g4_neg_plastic_label_01
+  taxonomy: plastic_label
+  geometry_family: thin_slab
+  material_family: pet_plastic_glossy
+  texture_family: label_patch
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: cf473e805df7c0562cc6062876e26293d565a2c583af2fe67067b0aebd2c7a76
+- id: g4_neg_plastic_label_02
+  taxonomy: plastic_label
+  geometry_family: flat_patch
+  material_family: pet_plastic_matte
+  texture_family: text_blocks
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: c3bff83a1bb6d32bed2788c547ed48910ee5573e3dd91432aa52a310f015e93f
+- id: g4_neg_plastic_label_03
+  taxonomy: plastic_label
+  geometry_family: paper_sheet_folded
+  material_family: hdpe_opaque
+  texture_family: grid_lines
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: fd57e47c9d68cfa20c33933afc0ffb5ade8658cb6adcc65f81a4f5542fd9aa7a
+- id: g4_neg_plastic_label_04
+  taxonomy: plastic_label
+  geometry_family: thin_slab
+  material_family: pet_plastic_glossy
+  texture_family: label_patch
+  split_eligibility:
+  - val
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: edf013550e7eff4660e74d1234966e38fbca490f488093d3ac8af326d66277f1
+- id: g4_neg_plastic_label_05
+  taxonomy: plastic_label
+  geometry_family: flat_patch
+  material_family: pet_plastic_matte
+  texture_family: text_blocks
+  split_eligibility:
+  - test
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: c6d162d7479021bb8c3ed893ce59089a8ce12e35d9a9d9d443cbe42f7f75972d
+- id: g4_neg_packaging_graphic_01
+  taxonomy: packaging_graphic
+  geometry_family: paper_sheet_wide
+  material_family: paper_glossy
+  texture_family: patchwork
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: fc510ff2a9a130992c1b694bc9cfc9764640260bf9e31924190fd7317351d9e5
+- id: g4_neg_packaging_graphic_02
+  taxonomy: packaging_graphic
+  geometry_family: thin_slab
+  material_family: kraft_cardboard
+  texture_family: text_blocks
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 67ae480330acbbaaa84131bdcc153eb9954aebea6da13d76bcd7315df0b76312
+- id: g4_neg_packaging_graphic_03
+  taxonomy: packaging_graphic
+  geometry_family: cardboard_box
+  material_family: paper_matte
+  texture_family: label_patch
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: ee4771066803ffc1d2b559775850091a508f46f4989880ae2238deca15701d41
+- id: g4_neg_packaging_graphic_04
+  taxonomy: packaging_graphic
+  geometry_family: paper_sheet_wide
+  material_family: paper_glossy
+  texture_family: patchwork
+  split_eligibility:
+  - val
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: b31b0ec9c5a360ac204068c3a6bd65cf9f3716cdb7a0b29351455c8c52af0087
+- id: g4_neg_packaging_graphic_05
+  taxonomy: packaging_graphic
+  geometry_family: thin_slab
+  material_family: kraft_cardboard
+  texture_family: text_blocks
+  split_eligibility:
+  - test
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 62339b74a52ae090756c1f21adb2315b9a208f6ce8a694aa5033e581bacbc673
+- id: g4_neg_flat_stone_01
+  taxonomy: flat_stone
+  geometry_family: flat_patch
+  material_family: paver_stone
+  texture_family: clean_stone
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 79faea51c31f734ee0c65108cf7a65f12ef816c65ff3ad16d602d6711bc89bde
+- id: g4_neg_flat_stone_02
+  taxonomy: flat_stone
+  geometry_family: paver_block
+  material_family: concrete
+  texture_family: mottled
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 9ed90dfaca408ddada95994646f14c1824dbab7b107371cd207d92405488390b
+- id: g4_neg_flat_stone_03
+  taxonomy: flat_stone
+  geometry_family: thin_slab
+  material_family: gravel
+  texture_family: paver_grid
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 4f5a2b86ae95da41eb1c4380c98ef4a64674c7c7c41f900985222f4b014f0576
+- id: g4_neg_flat_stone_04
+  taxonomy: flat_stone
+  geometry_family: flat_patch
+  material_family: paver_stone
+  texture_family: clean_stone
+  split_eligibility:
+  - val
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 8774de611cb5b6acbe11e151c7980fb97b8c12aace4a1a1ae23c3f90427064cb
+- id: g4_neg_flat_stone_05
+  taxonomy: flat_stone
+  geometry_family: paver_block
+  material_family: concrete
+  texture_family: mottled
+  split_eligibility:
+  - test
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: ad5df18c9eff4a90ca082a22e9ab43b987eaa39a950ab772b121595f12049bf7
+- id: g4_neg_light_leaf_litter_01
+  taxonomy: light_leaf_litter
+  geometry_family: flat_patch
+  material_family: dry_leaf
+  texture_family: leaf_mosaic
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 36bd83b2a2f7cdc7b3473985c620c000c330cc553e628d1c7735b9d6f9bed3b0
+- id: g4_neg_light_leaf_litter_02
+  taxonomy: light_leaf_litter
+  geometry_family: shadow_patch
+  material_family: wet_leaf
+  texture_family: speckle
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 5290f1a2ddf59742876be4dd6eb1060a79a655799957be95cdc93b254c83d402
+- id: g4_neg_light_leaf_litter_03
+  taxonomy: light_leaf_litter
+  geometry_family: leaf_pile_sparse
+  material_family: gravel
+  texture_family: mottled
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 9005a9e76345aea1d4195092ffad1d797a54c3bb4a51bd276ad645ba907d15d9
+- id: g4_neg_light_leaf_litter_04
+  taxonomy: light_leaf_litter
+  geometry_family: flat_patch
+  material_family: dry_leaf
+  texture_family: leaf_mosaic
+  split_eligibility:
+  - val
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 171d843b9e807d5f7e4258d30bf4a4504ade7a172885a2232202eecab4ebe1e4
+- id: g4_neg_light_leaf_litter_05
+  taxonomy: light_leaf_litter
+  geometry_family: shadow_patch
+  material_family: wet_leaf
+  texture_family: speckle
+  split_eligibility:
+  - test
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: a63c464903b5110b82939496d7dac5e952a33220ad013cd711ca3b72023e837a
+- id: g4_neg_reflective_area_01
+  taxonomy: reflective_area
+  geometry_family: reflective_patch
+  material_family: water_deep
+  texture_family: reflective_ripple
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: c52417580721f37bfa754c0cf5cb65080ac356af9c41b015d927a160479f14ec
+- id: g4_neg_reflective_area_02
+  taxonomy: reflective_area
+  geometry_family: flat_patch
+  material_family: water_shallow
+  texture_family: puddle_ripple
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 27f08a703f7045206ddb1c34d9b250b9a4fccc6b8e2411ba79bcffeb05449409
+- id: g4_neg_reflective_area_03
+  taxonomy: reflective_area
+  geometry_family: shadow_patch
+  material_family: aluminum_can_glossy
+  texture_family: gradient_shadow
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 091cae3694cab6cde29394dfb1fd29d94001cfa530cc0254efcb2d15fede8bd6
+- id: g4_neg_reflective_area_04
+  taxonomy: reflective_area
+  geometry_family: reflective_patch
+  material_family: water_deep
+  texture_family: reflective_ripple
+  split_eligibility:
+  - val
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 900110a2c87515728f11012ad9c5a4785cbcdff1faf04b1e62c3a246acaa3b83
+- id: g4_neg_reflective_area_05
+  taxonomy: reflective_area
+  geometry_family: flat_patch
+  material_family: water_shallow
+  texture_family: puddle_ripple
+  split_eligibility:
+  - test
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: dbfbf1fb253fc09e8f6ba91bb217dce4abebfad7345f5dbd5d3b985ae13d99a2
+- id: g4_neg_vehicle_white_gray_structure_01
+  taxonomy: vehicle_white_gray_structure
+  geometry_family: object_edge_block
+  material_family: obstacle_plastic
+  texture_family: clean_stone
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 816214c5dc21977c73a16f50f531d1201394333c5dc76b8c1ba153a8ff04d021
+- id: g4_neg_vehicle_white_gray_structure_02
+  taxonomy: vehicle_white_gray_structure
+  geometry_family: bollard_cone
+  material_family: steel_can_matte
+  texture_family: grid_lines
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: dbccc2a917c0cace977e8d6f36b49fe542bbcae57bb96df7aeb1be9795d426cc
+- id: g4_neg_vehicle_white_gray_structure_03
+  taxonomy: vehicle_white_gray_structure
+  geometry_family: obstacle_box
+  material_family: concrete
+  texture_family: mottled
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 54ccf2545b09527fe6312ef795c88126291843dc1e5145f7a4730f53f4a6a265
+- id: g4_neg_vehicle_white_gray_structure_04
+  taxonomy: vehicle_white_gray_structure
+  geometry_family: object_edge_block
+  material_family: obstacle_plastic
+  texture_family: clean_stone
+  split_eligibility:
+  - val
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: c3eb99a3c568009e1c4bfdf6231a4d328b05f50876ebbc15125d04f3a549da33
+- id: g4_neg_vehicle_white_gray_structure_05
+  taxonomy: vehicle_white_gray_structure
+  geometry_family: bollard_cone
+  material_family: steel_can_matte
+  texture_family: grid_lines
+  split_eligibility:
+  - test
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 46048ea763eef32c6d81bfcafaa8f986f5441c3d074c47d7e990f1c776311781
+- id: g4_neg_curb_corner_01
+  taxonomy: curb_corner
+  geometry_family: curb_corner_block
+  material_family: concrete
+  texture_family: clean_stone
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: a4bec9127f85572ee0373d54838953ba0cd459a223f669a963b1cf378a669c15
+- id: g4_neg_curb_corner_02
+  taxonomy: curb_corner
+  geometry_family: object_edge_block
+  material_family: paver_stone
+  texture_family: paver_grid
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 350e655c567749d23b6828d65bf78f0ce796a178ccd3faa831f88b3014ac34e0
+- id: g4_neg_curb_corner_03
+  taxonomy: curb_corner
+  geometry_family: paver_block
+  material_family: asphalt
+  texture_family: edge_fade
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 2cbdacfec7000997de27efaa182421608d0dbf045a6fbdf8bb1aa7b728102d35
+- id: g4_neg_curb_corner_04
+  taxonomy: curb_corner
+  geometry_family: curb_corner_block
+  material_family: concrete
+  texture_family: clean_stone
+  split_eligibility:
+  - val
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: fe12eec9ea9b3506a6b8b9a5241f6924b3fef8900c9c018258ec34e3c45ce8b1
+- id: g4_neg_curb_corner_05
+  taxonomy: curb_corner
+  geometry_family: object_edge_block
+  material_family: paver_stone
+  texture_family: paver_grid
+  split_eligibility:
+  - test
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 6ef5c023bd929cba475ca447a067cfe15ad502c418bc838dc6d4a27d1753e0de
+- id: g4_neg_truncated_object_edge_01
+  taxonomy: truncated_object_edge
+  geometry_family: object_edge_block
+  material_family: obstacle_plastic
+  texture_family: edge_fade
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 60d46d555942fcf1611b6afd4c605cab71085281c54b8d1dfabcab92af1a795a
+- id: g4_neg_truncated_object_edge_02
+  taxonomy: truncated_object_edge
+  geometry_family: obstacle_box
+  material_family: steel_can_matte
+  texture_family: mottled
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 10cbf884256cf2569a12f8b7aa3928597a23a0ed83c779503690126e9e7847a4
+- id: g4_neg_truncated_object_edge_03
+  taxonomy: truncated_object_edge
+  geometry_family: curb_corner_block
+  material_family: concrete
+  texture_family: grid_lines
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 545da6549584bca44c4ce2a14b9364fc112c40f883ad30ec57a5d7841cfb8c1d
+- id: g4_neg_truncated_object_edge_04
+  taxonomy: truncated_object_edge
+  geometry_family: object_edge_block
+  material_family: obstacle_plastic
+  texture_family: edge_fade
+  split_eligibility:
+  - val
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: c23a3e1259ab4cbdee510db286e8b278c895b32c0537a59e1e138628ef5a5999
+- id: g4_neg_truncated_object_edge_05
+  taxonomy: truncated_object_edge
+  geometry_family: obstacle_box
+  material_family: steel_can_matte
+  texture_family: mottled
+  split_eligibility:
+  - test
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 7c9131e800caefb4ee29ce0658623db8265040b04f345f14ad34ecb2318ca30d
+- id: g4_neg_bottle_like_cone_train
+  taxonomy: bottle_like_cone
+  geometry_family: bollard_cone
+  material_family: obstacle_plastic
+  texture_family: ribbed_bands
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: f8f3a276bdd7d70e57db834acfe26f1cc35adfda381774785b0a4e0331149d5d
+- id: g4_neg_can_like_bollard_train
+  taxonomy: can_like_bollard
+  geometry_family: bollard_cone
+  material_family: steel_can_matte
+  texture_family: rings
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 5d9c0d7f14b09f570e77812030200bce8d327553fcaf312b1f1b7b304647a064
+- id: g4_neg_red_obstacle_train
+  taxonomy: red_obstacle
+  geometry_family: obstacle_box
+  material_family: obstacle_plastic
+  texture_family: speckle
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 8588f623b45ae553d8f0410b815b77b2214e79402fc6aa1e94d415244129479c
+- id: g4_neg_green_obstacle_train
+  taxonomy: green_obstacle
+  geometry_family: obstacle_box
+  material_family: obstacle_plastic
+  texture_family: speckle
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 502f60f52b7734859b97b2f19443b0b78e1b02a14b029e550a7b63d82b372a9a
+- id: g4_neg_blue_obstacle_train
+  taxonomy: blue_obstacle
+  geometry_family: obstacle_box
+  material_family: obstacle_plastic
+  texture_family: speckle
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: c01247227e81b96a7ab88f6a8aeed106703ef4605273f000a0c6a06236b4f980
+- id: g4_neg_cardboard_box_train
+  taxonomy: cardboard_box
+  geometry_family: cardboard_box
+  material_family: kraft_cardboard
+  texture_family: patchwork
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 92e55043a94d645376f70907485b6fd13463600d6300293144e50d5f76822e6b
+- id: g4_neg_fixed_bin_train
+  taxonomy: fixed_bin
+  geometry_family: obstacle_box
+  material_family: steel_can_matte
+  texture_family: mottled
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 8e9650cedfbfa77d71fa987e9180d1a5c2512e71714b8f848dbec1287c14ed3d
+- id: g4_neg_dark_metal_grill_train
+  taxonomy: dark_metal_grill
+  geometry_family: metal_grill_patch
+  material_family: metal_grill
+  texture_family: crosshatch
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: a17befe0ee0f26cb257c542e1f31c47f8a4954c8c88a9fc3adb97b1cd7800ced
+- id: g4_neg_gravel_patch_train
+  taxonomy: gravel_patch
+  geometry_family: gravel_cluster
+  material_family: gravel
+  texture_family: mottled
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 7565530ce577337b97b55401d483605cb4f728e83e17abc012ec26ba9bd2f814
+- id: g4_neg_gravel_patch_val
+  taxonomy: gravel_patch
+  geometry_family: flat_patch
+  material_family: asphalt
+  texture_family: speckle
+  split_eligibility:
+  - val
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 68b12df53ab31c0e153b8fa3b50cee7e86f5c327bee1100dc934c4a8bb405ce8
+- id: g4_neg_gravel_patch_test
+  taxonomy: gravel_patch
+  geometry_family: shadow_patch
+  material_family: concrete
+  texture_family: clean_stone
+  split_eligibility:
+  - test
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: cf4689849d0440be202105b9d4c5ec6f3d2a326a6f92a0cc45d620086e6f7dff
+- id: g4_neg_water_stain_patch_train
+  taxonomy: water_stain_patch
+  geometry_family: shadow_patch
+  material_family: water_shallow
+  texture_family: puddle_ripple
+  split_eligibility:
+  - train
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: 41742a81e4345a0cbed9902cf798f9251aab720242b9075a23beb6c0815d631f
+- id: g4_neg_water_stain_patch_val
+  taxonomy: water_stain_patch
+  geometry_family: flat_patch
+  material_family: water_deep
+  texture_family: edge_fade
+  split_eligibility:
+  - val
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: ef10278c87c11d98f99eebf463d2cd25f65af0c37730130523ff8ac1a72d6500
+- id: g4_neg_water_stain_patch_test
+  taxonomy: water_stain_patch
+  geometry_family: reflective_patch
+  material_family: concrete
+  texture_family: reflective_ripple
+  split_eligibility:
+  - test
+  source: project-authored procedural G4 hard negative
+  license: Apache-2.0
+  sha256: e6fc0f1c6d665c6eccd9f8025f5a70f970a314f7d8c37779c291174521d7cedd
+area_coverage:
+  leaf_pile:
+    required_attributes:
+    - background_leaf_discrimination
+    - condition_dry
+    - condition_wet
+    - density_dense
+    - density_sparse
+    - leaf_shape_lobed
+    - leaf_shape_pointed
+    - leaf_shape_round
+    - partial_occlusion
+    - shadow_coverage
+    - thickness_high
+    - thickness_low
+    minimum_train_variants_per_attribute: 4
+  puddle:
+    required_attributes:
+    - boundary_blur
+    - contour_irregular
+    - contour_round
+    - ground_asphalt
+    - ground_concrete
+    - ground_paving
+    - ground_soil
+    - partial_occlusion
+    - reflectivity_deep
+    - reflectivity_shallow
+    - shadow_coverage
+    - specular_highlight
+    - wet_non_puddle
+    minimum_train_variants_per_attribute: 4
+split_contract:
+  worlds: 12
+  world_split_counts:
+    train: 8
+    val: 2
+    test: 2
+  scenes: 300
+  scenes_per_world: 25
+  frames: 3000
+  frames_per_scene: 10
+  test_used_for_model_selection: false
+  G4_dataset_gate_pass: false
+  full_capture_executed: false

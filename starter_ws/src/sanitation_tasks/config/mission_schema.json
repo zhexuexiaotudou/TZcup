@@ -70,6 +70,17 @@
     "empirical_coverage_threshold": {"type": "number", "minimum": 0, "maximum": 1},
     "coverage_repair_max_passes": {"type": "integer", "minimum": 0},
     "brush_forward_offset_m": {"type": "number", "minimum": 0},
+    "speed_profiles": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": ["linear_mps", "angular_radps"],
+        "properties": {
+          "linear_mps": {"type": "number", "minimum": 0, "maximum": 1},
+          "angular_radps": {"type": "number", "minimum": 0}
+        }
+      }
+    },
     "robot_footprint": {"type": "array"},
     "targets": {
       "type": "array"

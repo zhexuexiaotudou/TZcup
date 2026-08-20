@@ -17,3 +17,12 @@ def test_rotated_long_axis_is_discovered_with_five_degree_search():
     polygon = [(x * math.cos(angle) - y * math.sin(angle), x * math.sin(angle) + y * math.cos(angle)) for x, y in base]
     best, _ = optimize_swath_angle(polygon, 0.5)
     assert best.angle_deg == 30.0
+
+
+def test_ackermann_connector_penalty_prefers_fewer_turns_on_rectangle():
+    polygon = [(6.0, 45.5), (18.0, 45.5), (18.0, 54.5), (6.0, 54.5)]
+    selected, _ = optimize_swath_angle(
+        polygon, 1.10, step_deg=5, connector_penalty_m=22.6
+    )
+    assert selected.angle_deg == 0.0
+    assert selected.swath_count == 9

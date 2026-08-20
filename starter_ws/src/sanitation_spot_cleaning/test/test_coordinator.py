@@ -16,8 +16,11 @@ def test_deferred_cleaning_requires_preflight_and_resumes_coverage():
     rejected = coordinator.clean(track.uuid, Preflight(False, True, True, 0.3, 0.002, 0.1))
     assert rejected["result"] == "deferred"
     event = coordinator.clean(track.uuid, Preflight(True, True, True, 0.3, 0.002, 0.1), 0.95)
-    assert event["result"] == "cleaned"
+    assert event["result"] == "post_verify_pending"
     assert event["brush_final"] is False
+    assert not coordinator.coverage_resumed
+    verified = coordinator.verify_area(track.uuid, area_before_m2=1.0, area_after_m2=0.05)
+    assert verified["result"] == "cleaned"
     assert coordinator.coverage_resumed
 
 

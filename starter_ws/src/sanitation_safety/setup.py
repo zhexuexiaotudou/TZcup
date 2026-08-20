@@ -22,7 +22,10 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
+            "safety_authority = sanitation_safety.authority:main",
+            "product_supervisor = sanitation_safety.supervisor:main",
             "velocity_gate = sanitation_safety.velocity_gate:main",
+            "actuator_timeout_guard = sanitation_safety.actuator_timeout_guard:main",
         ],
     },
 )

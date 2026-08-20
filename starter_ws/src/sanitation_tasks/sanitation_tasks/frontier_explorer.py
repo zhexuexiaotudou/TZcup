@@ -1,0 +1,2800 @@
+"""Autonomous frontier exploration for formal large-map SLAM runs."""
+
+from __future__ import annotations
+
+from dataclasses import asdict
+import json
+import math
+from pathlib import Path
+import threading
+import time
+
+import rclpy
+from action_msgs.msg import GoalStatus
+from geometry_msgs.msg import PoseStamped
+from nav2_msgs.action import BackUp, ComputePathToPose, FollowPath, NavigateToPose
+from nav2_msgs.srv import ManageLifecycleNodes
+from nav_msgs.msg import OccupancyGrid, Path as NavPath
+from rclpy.action import ActionClient
+from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
+from tf2_ros import Buffer, TransformException, TransformListener
+
+from sanitation_coverage.ackermann_connector import (
+    plan_forward_dubins_path,
+    split_hybrid_path_by_direction,
+)
+from sanitation_coverage.metrics import split_path_at_curvature_reversals
+
+from .frontier_core import (
+    frontier_detour_goal,
+    frontier_detour_path_goal,
+    frontier_goal_exclusion_centers,
+    frontier_sweep_targets,
+    frontier_sweep_target_axis,
+    GridGeometry,
+    horizontal_sweep_should_wait_for_frontier,
+    known_free_route_recovery_goals,
+    lane_shift_connector_goals,
+    map_extent_metrics,
+    mapping_completion_reached,
+    next_adaptive_goal_distance,
+    next_no_progress_frontier_state,
+    no_progress_recovery_action_for_sweep,
+    prune_timed_exclusions,
+    rank_frontiers,
+    reverse_escape_goal,
+    sample_path_poses,
+    sweep_anchor_is_behind_chassis,
+    sweep_anchor_heading_error_rad,
+    sweep_alignment_goal,
+    sweep_staging_goals,
+    straight_staging_path_poses,
+    sweep_chassis_lane_y,
+    sweep_target_completion_reached,
+    vertical_sweep_anchor_reached,
+    world_disk_has_known_cell,
+    world_footprint_is_traversable,
+)
+
+
+def _yaw_from_quaternion(quaternion) -> float:
+    siny = 2.0 * (
+        quaternion.w * quaternion.z + quaternion.x * quaternion.y
+    )
+    cosy = 1.0 - 2.0 * (
+        quaternion.y * quaternion.y + quaternion.z * quaternion.z
+    )
+    return math.atan2(siny, cosy)
+
+
+class FrontierExplorer(Node):
+    """Select map frontiers and send collision-checked Nav2 goals.
+
+    This node has no ground-truth subscription and never reads the SDF. Its
+    only exploration input is the online occupancy grid plus the production
+    map-to-base TF used by Nav2.
+    """
+
+    def __init__(self) -> None:
+        super().__init__("sanitation_frontier_explorer")
+        self.declare_parameter("output_path", "/tmp/frontier_exploration.json")
+        self.declare_parameter("required_bounds_xyxy_m", [-100.0, -50.0, 100.0, 50.0])
+        self.declare_parameter("required_bounds_coverage_ratio", 1.0)
+        self.declare_parameter("minimum_frontier_cells", 8)
+        self.declare_parameter("frontier_connection_radius_cells", 3)
+        self.declare_parameter("minimum_goal_distance_m", 1.5)
+        self.declare_parameter("failed_goal_exclusion_radius_m", 3.0)
+        self.declare_parameter("timed_out_goal_exclusion_radius_m", 1.5)
+        # Product footprint half-width 0.66 m + 0.05 m localization P95 +
+        # 0.09 m simulation/control reserve. The full 1.32 m footprint remains
+        # active in Nav2 and Collision Monitor; this is only a centre bound.
+        self.declare_parameter("required_bounds_goal_margin_m", 0.80)
+        self.declare_parameter("frontier_goal_backoff_m", 1.5)
+        self.declare_parameter("maximum_frontier_goal_distance_m", 4.0)
+        self.declare_parameter("maximum_frontier_detour_distance_m", 30.0)
+        self.declare_parameter("frontier_detour_timeout_sec", 180.0)
+        self.declare_parameter("frontier_detour_plan_endpoint_tolerance_m", 0.75)
+        self.declare_parameter("initial_frontier_goal_distance_m", 2.0)
+        self.declare_parameter("goal_distance_growth_success_count", 3)
+        self.declare_parameter("goal_distance_growth_step_m", 1.0)
+        self.declare_parameter("maximum_frontier_goal_yaw_change_rad", 0.35)
+        self.declare_parameter("minimum_frontier_arc_yaw_change_rad", 0.15)
+        self.declare_parameter("minimum_turning_radius_m", 1.429)
+        self.declare_parameter("boundary_turn_buffer_m", 1.429)
+        self.declare_parameter("maximum_goal_count", 160)
+        self.declare_parameter("goal_timeout_sec", 60.0)
+        self.declare_parameter("goal_progress_distance_m", 0.5)
+        self.declare_parameter("goal_progress_map_gain_m2", 2.0)
+        self.declare_parameter("goal_absolute_timeout_multiplier", 3.0)
+        self.declare_parameter("goal_cancel_grace_sec", 5.0)
+        self.declare_parameter("failed_goal_cooldown_sec", 10.0)
+        self.declare_parameter("failed_goal_exclusion_ttl_sec", 180.0)
+        self.declare_parameter("minimum_frontier_map_gain_m2", 2.0)
+        self.declare_parameter("no_progress_staging_success_limit", 3)
+        self.declare_parameter("no_progress_raw_frontier_success_limit", 12)
+        self.declare_parameter("no_progress_raw_exclusion_ttl_sec", 900.0)
+        self.declare_parameter(
+            "horizontal_sweep_staging_distances_m",
+            [8.0, 6.0, 4.0, 3.0, 2.0, 1.5, 1.0],
+        )
+        self.declare_parameter(
+            "horizontal_sweep_staging_path_sample_spacing_m", 0.25
+        )
+        self.declare_parameter("horizontal_sweep_staging_timeout_sec", 60.0)
+        self.declare_parameter("horizontal_sweep_alignment_timeout_sec", 20.0)
+        self.declare_parameter("horizontal_sweep_alignment_distance_m", 2.0)
+        self.declare_parameter("horizontal_sweep_alignment_tolerance_rad", 0.15)
+        self.declare_parameter(
+            "horizontal_sweep_frontier_wait_before_route_recovery_count", 5
+        )
+        self.declare_parameter("horizontal_sweep_frontier_wait_failure_limit", 30)
+        self.declare_parameter("horizontal_sweep_route_recovery_max_distance_m", 30.0)
+        self.declare_parameter("horizontal_sweep_route_recovery_sample_spacing_m", 0.5)
+        self.declare_parameter("reverse_escape_distance_m", 2.0)
+        self.declare_parameter("reverse_escape_speed_mps", 0.15)
+        self.declare_parameter("frontier_sweep_enabled", False)
+        self.declare_parameter("frontier_sweep_initial_target_index", 0)
+        # A millimetre north of the centre removes the otherwise platform-
+        # dependent tie between the -10 m and +10 m first sweep lanes.
+        self.declare_parameter("frontier_sweep_reference_pose_xyyaw_m_rad", [0.0, 0.001, 0.0])
+        self.declare_parameter("mapping_sensor_range_m", 12.0)
+        self.declare_parameter("frontier_sweep_lane_overlap_m", 2.0)
+        self.declare_parameter("frontier_sweep_target_tolerance_m", 2.0)
+        self.declare_parameter("frontier_sweep_mapped_target_radius_m", 5.0)
+        self.declare_parameter("frontier_sweep_lane_shift_backup_distance_m", 4.0)
+        self.declare_parameter("frontier_sweep_lane_shift_backup_max_attempts", 2)
+        self.declare_parameter(
+            "frontier_sweep_lane_shift_connector_distances_m", [6.0, 4.0, 2.0]
+        )
+        self.declare_parameter("lane_shift_connector_timeout_sec", 180.0)
+        self.declare_parameter("timeout_sec", 7200.0)
+        self.declare_parameter("completion_stable_map_updates", 3)
+        self.declare_parameter("map_topic", "/map")
+        self.declare_parameter("global_costmap_topic", "/global_costmap/costmap")
+        self.declare_parameter("footprint_front_m", 0.82)
+        self.declare_parameter("footprint_rear_m", 0.575)
+        self.declare_parameter("footprint_half_width_m", 0.66)
+        self.declare_parameter("footprint_clearance_margin_m", 0.15)
+        self.declare_parameter("maximum_goal_cost", 99)
+        self.declare_parameter("map_frame", "map")
+        self.declare_parameter("base_frame", "base_footprint")
+        self.declare_parameter("positioning_source", "wheel_imu_scan_matching")
+        self.declare_parameter("behavior_tree", "")
+        self.output_path = Path(str(self.get_parameter("output_path").value))
+        self.report_write_lock = threading.Lock()
+        self.required_bounds = tuple(
+            float(value)
+            for value in self.get_parameter("required_bounds_xyxy_m").value
+        )
+        if len(self.required_bounds) != 4:
+            raise ValueError("required_bounds_xyxy_m must contain four values")
+
+        map_qos = QoSProfile(depth=1)
+        map_qos.reliability = ReliabilityPolicy.RELIABLE
+        map_qos.durability = DurabilityPolicy.TRANSIENT_LOCAL
+        self.create_subscription(
+            OccupancyGrid,
+            str(self.get_parameter("map_topic").value),
+            self._on_map,
+            map_qos,
+        )
+        self.create_subscription(
+            OccupancyGrid,
+            str(self.get_parameter("global_costmap_topic").value),
+            self._on_costmap,
+            map_qos,
+        )
+        self.action_client = ActionClient(self, NavigateToPose, "/navigate_to_pose")
+        self.backup_client = ActionClient(self, BackUp, "/backup")
+        self.compute_path_client = ActionClient(
+            self, ComputePathToPose, "/compute_path_to_pose"
+        )
+        self.follow_path_client = ActionClient(self, FollowPath, "/follow_path")
+        self.nav_manager_client = self.create_client(
+            ManageLifecycleNodes, "/lifecycle_manager_navigation/manage_nodes"
+        )
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
+        self.create_timer(1.0, self._tick)
+
+        self.started_monotonic = time.monotonic()
+        self.latest_data = None
+        self.latest_geometry = None
+        self.latest_metrics = None
+        self.latest_costmap_data = None
+        self.latest_costmap_geometry = None
+        self.costmap_rejected_goal_count = 0
+        self.online_map_rejected_goal_count = 0
+        self.frontier_detour_goal_count = 0
+        self.frontier_detour_plan_failure_count = 0
+        self.frontier_detour_path_rejected_count = 0
+        self.frontier_detour_fallback_queued_count = 0
+        self.raw_frontier_exclusion_count = 0
+        self.frontier_no_progress_success_count = 0
+        self.frontier_no_progress_success_streak = 0
+        self.frontier_no_progress_exclusion_count = 0
+        self.frontier_no_progress_raw_exclusion_count = 0
+        self.horizontal_sweep_raw_exclusion_suppressed_count = 0
+        self.horizontal_sweep_frontier_wait_count = 0
+        self.horizontal_sweep_frontier_wait_streak = 0
+        self.horizontal_sweep_route_recovery_attempt_count = 0
+        self.horizontal_sweep_route_recovery_unavailable_count = 0
+        self.horizontal_sweep_staging_exhaustion_arm_count = 0
+        self.horizontal_sweep_staging_pending = False
+        self.horizontal_sweep_staging_arm_count = 0
+        self.horizontal_sweep_staging_attempt_count = 0
+        self.horizontal_sweep_staging_success_count = 0
+        self.horizontal_sweep_staging_failure_count = 0
+        self.horizontal_sweep_staging_chain_rearm_count = 0
+        self.horizontal_sweep_staging_unavailable_count = 0
+        self.horizontal_sweep_staging_behind_chassis_count = 0
+        self.horizontal_sweep_staging_path_rejected_count = 0
+        self.horizontal_sweep_alignment_attempt_count = 0
+        self.horizontal_sweep_alignment_success_count = 0
+        self.horizontal_sweep_alignment_failure_count = 0
+        self.horizontal_sweep_alignment_unavailable_count = 0
+        self.frontier_exclusion_wait_count = 0
+        self.reverse_escape_goal_count = 0
+        self.sweep_targets = []
+        self.sweep_target_index = int(
+            self.get_parameter("frontier_sweep_initial_target_index").value
+        )
+        if self.sweep_target_index < 0:
+            raise ValueError("frontier_sweep_initial_target_index must be non-negative")
+        self.sweep_completed = False
+        self.sweep_active_anchor = None
+        self.sweep_active_preference = None
+        self.sweep_active_axis = None
+        self.sweep_lane_shift_backup_completed = set()
+        self.sweep_lane_shift_backup_skipped = set()
+        self.sweep_lane_shift_backup_pending = None
+        self.sweep_lane_shift_backup_count = 0
+        self.sweep_lane_shift_backup_attempts = {}
+        self.sweep_lane_shift_locked_x = {}
+        self.sweep_lane_shift_connector_completed = set()
+        self.sweep_lane_shift_connector_pending = None
+        self.sweep_lane_shift_connector_attempts = {}
+        self.sweep_lane_shift_connector_sections = []
+        self.sweep_lane_shift_connector_section_index = 0
+        self.sweep_lane_shift_connector_goal = None
+        self.sweep_lane_shift_connector_row = None
+        self.frontier_detour_source_goal = None
+        self.frontier_detour_row = None
+        self.pending_frontier_detour_source_goal = None
+        maximum_goal_distance = float(
+            self.get_parameter("maximum_frontier_goal_distance_m").value
+        )
+        self.adaptive_goal_distance_m = min(
+            maximum_goal_distance,
+            float(self.get_parameter("initial_frontier_goal_distance_m").value),
+        )
+        self.goal_distance_success_streak = 0
+        self.map_update_count = 0
+        self.stable_pass_updates = 0
+        self.goal_history = []
+        self.excluded_goals = []
+        self.active_goal = None
+        self.active_goal_handle = None
+        self.active_goal_started_monotonic = None
+        self.active_goal_last_progress_monotonic = None
+        self.active_goal_timeout_sec = float(
+            self.get_parameter("goal_timeout_sec").value
+        )
+        self.active_goal_absolute_timeout_sec = (
+            self.active_goal_timeout_sec
+            * float(self.get_parameter("goal_absolute_timeout_multiplier").value)
+        )
+        self.active_goal_progress_reference_pose = None
+        self.active_goal_progress_reference_map_area_m2 = 0.0
+        self.active_goal_progress_event_count = 0
+        self.active_goal_cancel_requested = False
+        self.active_goal_cancel_requested_monotonic = None
+        self.next_goal_not_before_monotonic = self.started_monotonic
+        self.nav_recovery_in_progress = False
+        self.nav_recovery_count = 0
+        self.nav_recovery_status = "not_required"
+        self.terminal = False
+        self.success = False
+        self.terminal_reason = None
+        self.last_pose = None
+        self.last_error = None
+
+    def _on_map(self, message: OccupancyGrid) -> None:
+        origin = message.info.origin
+        geometry = GridGeometry(
+            width=int(message.info.width),
+            height=int(message.info.height),
+            resolution_m=float(message.info.resolution),
+            origin_x_m=float(origin.position.x),
+            origin_y_m=float(origin.position.y),
+            origin_yaw_rad=_yaw_from_quaternion(origin.orientation),
+        )
+        data = tuple(int(value) for value in message.data)
+        metrics = map_extent_metrics(
+            data,
+            geometry,
+            required_bounds_xyxy_m=self.required_bounds,
+        )
+        self.latest_data = data
+        self.latest_geometry = geometry
+        self.latest_metrics = metrics
+        self.map_update_count += 1
+        required = float(
+            self.get_parameter("required_bounds_coverage_ratio").value
+        )
+        if mapping_completion_reached(
+            metrics, required_envelope_coverage_ratio=required
+        ):
+            self.stable_pass_updates += 1
+        else:
+            self.stable_pass_updates = 0
+        self._write_report()
+
+    def _robot_pose(self):
+        try:
+            transform = self.tf_buffer.lookup_transform(
+                str(self.get_parameter("map_frame").value),
+                str(self.get_parameter("base_frame").value),
+                rclpy.time.Time(),
+            )
+        except TransformException as error:
+            self.last_error = f"tf_unavailable: {error}"
+            return None
+        translation = transform.transform.translation
+        rotation = transform.transform.rotation
+        pose = (
+            float(translation.x),
+            float(translation.y),
+            _yaw_from_quaternion(rotation),
+        )
+        self.last_pose = pose
+        return pose
+
+    def _on_costmap(self, message: OccupancyGrid) -> None:
+        origin = message.info.origin
+        self.latest_costmap_geometry = GridGeometry(
+            width=int(message.info.width),
+            height=int(message.info.height),
+            resolution_m=float(message.info.resolution),
+            origin_x_m=float(origin.position.x),
+            origin_y_m=float(origin.position.y),
+            origin_yaw_rad=_yaw_from_quaternion(origin.orientation),
+        )
+        self.latest_costmap_data = tuple(int(value) for value in message.data)
+
+    def _goal_is_costmap_clear(self, goal) -> bool:
+        return all(self._goal_clearance_sources(goal))
+
+    def _goal_clearance_sources(self, goal) -> tuple[bool, bool]:
+        """Check the live SLAM grid and Nav2 costmap independently."""
+        maximum_cost = int(self.get_parameter("maximum_goal_cost").value)
+        footprint_parameters = self._footprint_clearance_parameters()
+        map_clear = (
+            self.latest_data is not None
+            and self.latest_geometry is not None
+            and world_footprint_is_traversable(
+                self.latest_data,
+                self.latest_geometry,
+                (goal.world_x_m, goal.world_y_m, goal.yaw_rad),
+                **footprint_parameters,
+                maximum_cost=maximum_cost,
+                allow_unknown=True,
+            )
+        )
+        costmap_clear = (
+            self.latest_costmap_data is not None
+            and self.latest_costmap_geometry is not None
+            and world_footprint_is_traversable(
+                self.latest_costmap_data,
+                self.latest_costmap_geometry,
+                (goal.world_x_m, goal.world_y_m, goal.yaw_rad),
+                **footprint_parameters,
+                maximum_cost=maximum_cost,
+                allow_unknown=False,
+            )
+        )
+        return bool(map_clear), bool(costmap_clear)
+
+    def _footprint_clearance_parameters(self) -> dict[str, float]:
+        return {
+            "footprint_front_m": float(
+                self.get_parameter("footprint_front_m").value
+            ),
+            "footprint_rear_m": float(
+                self.get_parameter("footprint_rear_m").value
+            ),
+            "footprint_half_width_m": float(
+                self.get_parameter("footprint_half_width_m").value
+            ),
+            "clearance_margin_m": float(
+                self.get_parameter("footprint_clearance_margin_m").value
+            ),
+        }
+
+    def _tick(self) -> None:
+        if self.terminal:
+            return
+        now_monotonic = time.monotonic()
+        elapsed = now_monotonic - self.started_monotonic
+        if elapsed >= float(self.get_parameter("timeout_sec").value):
+            self._finish(False, "exploration_timeout")
+            return
+        if self.nav_recovery_in_progress:
+            return
+        stable_required = int(
+            self.get_parameter("completion_stable_map_updates").value
+        )
+        if self.stable_pass_updates >= stable_required:
+            if self.active_goal_handle is not None:
+                self.active_goal_handle.cancel_goal_async()
+            self._finish(True, "required_mapping_bounds_and_area_mapped")
+            return
+        if self.active_goal is not None:
+            goal_elapsed = now_monotonic - float(
+                self.active_goal_started_monotonic or now_monotonic
+            )
+            if self.active_goal_cancel_requested:
+                cancel_elapsed = time.monotonic() - float(
+                    self.active_goal_cancel_requested_monotonic
+                    or time.monotonic()
+                )
+                if cancel_elapsed >= float(
+                    self.get_parameter("goal_cancel_grace_sec").value
+                ):
+                    self._force_active_goal_timeout(cancel_elapsed)
+                return
+            if (
+                self.active_goal_handle is not None
+                and not self.active_goal_cancel_requested
+            ):
+                no_progress_elapsed = self._active_goal_no_progress_elapsed(
+                    now_monotonic
+                )
+                absolute_timeout = (
+                    goal_elapsed >= self.active_goal_absolute_timeout_sec
+                )
+                no_progress_timeout = (
+                    no_progress_elapsed >= self.active_goal_timeout_sec
+                )
+                if absolute_timeout or no_progress_timeout:
+                    self.active_goal_cancel_requested = True
+                    self.active_goal_cancel_requested_monotonic = now_monotonic
+                    timeout_kind = (
+                        "absolute" if absolute_timeout else "no_progress"
+                    )
+                    self.last_error = (
+                        f"frontier_goal_{timeout_kind}_timeout:"
+                        f"wall={goal_elapsed:.3f}s,"
+                        f"idle={no_progress_elapsed:.3f}s"
+                    )
+                    self.active_goal_handle.cancel_goal_async()
+                    self._write_report()
+                return
+            if (
+                goal_elapsed >= self.active_goal_timeout_sec
+                and self.frontier_detour_row is not None
+                and self.active_goal_handle is None
+            ):
+                self.active_goal_cancel_requested = True
+                self.active_goal_cancel_requested_monotonic = time.monotonic()
+                phase = str(self.frontier_detour_row.get("phase") or "unknown")
+                self._fail_frontier_detour_plan(
+                    self.frontier_detour_row,
+                    GoalStatus.STATUS_ABORTED,
+                    f"{phase}_response_timeout:{goal_elapsed:.3f}s",
+                )
+                return
+            if (
+                goal_elapsed >= self.active_goal_timeout_sec
+                and self.active_goal_handle is None
+            ):
+                self._force_active_goal_timeout(
+                    0.0,
+                    error=f"goal_response_timeout:{goal_elapsed:.3f}s",
+                )
+                return
+            return
+        if len(self.goal_history) >= int(
+            self.get_parameter("maximum_goal_count").value
+        ):
+            self._finish(False, "maximum_goal_count_exhausted")
+            return
+        if time.monotonic() < self.next_goal_not_before_monotonic:
+            return
+        if (
+            self.latest_data is None
+            or self.latest_costmap_data is None
+            or not self.action_client.server_is_ready()
+        ):
+            return
+        robot_pose = self._robot_pose()
+        if robot_pose is None:
+            return
+        if self.pending_frontier_detour_source_goal is not None:
+            detour_status = self._start_frontier_detour_plan(
+                self.pending_frontier_detour_source_goal,
+                robot_pose,
+                trigger="failed_short_frontier",
+            )
+            if detour_status in {"started", "planner_unavailable"}:
+                if detour_status == "planner_unavailable":
+                    self.next_goal_not_before_monotonic = time.monotonic() + 1.0
+                    self._write_report()
+                return
+            if (
+                self.sweep_active_axis == "horizontal"
+                and self.sweep_active_preference is not None
+            ):
+                recovery_status = self._start_horizontal_sweep_route_recovery(
+                    robot_pose
+                )
+                if recovery_status in {"started", "planner_unavailable"}:
+                    if recovery_status == "planner_unavailable":
+                        self.next_goal_not_before_monotonic = (
+                            time.monotonic() + 1.0
+                        )
+                        self._write_report()
+                    return
+            self.pending_frontier_detour_source_goal = None
+        self._sweep_preference(robot_pose)
+        if self._start_horizontal_sweep_staging(robot_pose):
+            return
+        if self._start_sweep_lane_shift_backup(robot_pose):
+            return
+        if self._start_sweep_lane_shift_connector(robot_pose):
+            return
+        goal = None
+        now = time.monotonic()
+        self.excluded_goals, temporary_exclusions = prune_timed_exclusions(
+            self.excluded_goals,
+            now_monotonic=now,
+        )
+        for _ in range(32):
+            goals = self._rank_goals(robot_pose, temporary_exclusions)
+            if not goals:
+                break
+            candidate = goals[0]
+            map_clear, costmap_clear = self._goal_clearance_sources(candidate)
+            if map_clear and costmap_clear:
+                goal = candidate
+                break
+            if not map_clear:
+                self.online_map_rejected_goal_count += 1
+            if not costmap_clear:
+                self.costmap_rejected_goal_count += 1
+            detour_status = self._start_frontier_detour_plan(
+                candidate, robot_pose
+            )
+            if detour_status == "started":
+                return
+            if detour_status == "planner_unavailable":
+                self.next_goal_not_before_monotonic = now + 1.0
+                self._write_report()
+                return
+            # A current costmap rejection is not a navigation failure. Keep
+            # it local to this ranking pass so a rolling-costmap refresh can
+            # reconsider the frontier without a 180 s failed-goal penalty.
+            centers = frontier_goal_exclusion_centers(
+                candidate, self.latest_geometry
+            )
+            temporary_exclusions.extend(centers)
+        if goal is None:
+            escape = reverse_escape_goal(
+                robot_pose[:2],
+                robot_pose[2],
+                distance_m=float(
+                    self.get_parameter("reverse_escape_distance_m").value
+                ),
+                allowed_bounds_xyxy_m=self.required_bounds,
+                boundary_margin_m=float(
+                    self.get_parameter("required_bounds_goal_margin_m").value
+                ),
+            )
+            # A failed local frontier, staging step, or alignment arc proves
+            # that another short projection from the same pose is not enough.
+            # Escalate to a global known-free route before arming staging again.
+            if self.excluded_goals and self._rank_goals(robot_pose, []):
+                if self._handle_horizontal_sweep_frontier_wait(
+                    robot_pose,
+                    escape,
+                    now,
+                    route_now=True,
+                ):
+                    return
+                if escape is not None and self._goal_is_costmap_clear(escape):
+                    self.last_error = "frontier_dead_end_reverse_escape"
+                    if self._send_backup(escape):
+                        self.reverse_escape_goal_count += 1
+                        return
+                    self.last_error = "backup_action_server_unavailable"
+                    self.next_goal_not_before_monotonic = now + 1.0
+                    self._write_report()
+                    return
+                self.frontier_exclusion_wait_count += 1
+                self.last_error = "frontier_candidates_temporarily_excluded"
+                earliest_expiry = min(row[2] for row in self.excluded_goals)
+                self.next_goal_not_before_monotonic = max(
+                    now + 1.0, earliest_expiry
+                )
+                self._write_report()
+                return
+            if (
+                self.sweep_active_axis == "horizontal"
+                and self.sweep_active_preference is not None
+            ):
+                self.horizontal_sweep_staging_pending = True
+                self.horizontal_sweep_staging_arm_count += 1
+                self.horizontal_sweep_staging_exhaustion_arm_count += 1
+                if self._start_horizontal_sweep_staging(robot_pose):
+                    return
+            if horizontal_sweep_should_wait_for_frontier(
+                sweep_axis=self.sweep_active_axis,
+                has_active_preference=self.sweep_active_preference is not None,
+                has_failed_goal_exclusions=bool(self.excluded_goals),
+            ):
+                self._handle_horizontal_sweep_frontier_wait(
+                    robot_pose,
+                    escape,
+                    now,
+                    route_now=False,
+                )
+                return
+            # Reaching an envelope edge can temporarily leave every online
+            # frontier outside the permitted goal margin even though the
+            # required envelope is incomplete. Reverse into verified free
+            # space and recompute instead of declaring false exhaustion.
+            if escape is not None and self._goal_is_costmap_clear(escape):
+                self.last_error = "frontier_exhaustion_reverse_escape"
+                if self._send_backup(escape):
+                    self.reverse_escape_goal_count += 1
+                    return
+                self.last_error = "backup_action_server_unavailable"
+                self.next_goal_not_before_monotonic = now + 1.0
+                self._write_report()
+                return
+            self._finish(False, "frontiers_exhausted_before_required_bounds")
+            return
+        self.horizontal_sweep_frontier_wait_streak = 0
+        self._send_goal(goal)
+
+    def _rank_goals(self, robot_pose, excluded_world_xy):
+        sweep_preference = self._sweep_preference(robot_pose)
+        return rank_frontiers(
+            self.latest_data,
+            self.latest_geometry,
+            robot_pose[:2],
+            robot_yaw_rad=robot_pose[2],
+            excluded_world_xy=excluded_world_xy,
+            exclusion_radius_m=float(
+                self.get_parameter("failed_goal_exclusion_radius_m").value
+            ),
+            minimum_goal_distance_m=float(
+                self.get_parameter("minimum_goal_distance_m").value
+            ),
+            minimum_cells=int(
+                self.get_parameter("minimum_frontier_cells").value
+            ),
+            connection_radius_cells=int(
+                self.get_parameter("frontier_connection_radius_cells").value
+            ),
+            allowed_bounds_xyxy_m=self.required_bounds,
+            boundary_margin_m=float(
+                self.get_parameter("required_bounds_goal_margin_m").value
+            ),
+            goal_backoff_m=float(
+                self.get_parameter("frontier_goal_backoff_m").value
+            ),
+            maximum_goal_distance_m=self.adaptive_goal_distance_m,
+            maximum_goal_yaw_change_rad=float(
+                self.get_parameter("maximum_frontier_goal_yaw_change_rad").value
+            ),
+            minimum_goal_arc_yaw_change_rad=float(
+                self.get_parameter("minimum_frontier_arc_yaw_change_rad").value
+            ),
+            minimum_turning_radius_m=float(
+                self.get_parameter("minimum_turning_radius_m").value
+            ),
+            boundary_turn_buffer_m=float(
+                self.get_parameter("boundary_turn_buffer_m").value
+            ),
+            preferred_world_xy=sweep_preference,
+        )
+
+    def _start_horizontal_sweep_staging(self, robot_pose) -> bool:
+        """Drive a short known-free step toward the active sweep anchor.
+
+        This is armed periodically by successful frontier motions with
+        insufficient map gain. The anchor is derived from required bounds,
+        while every candidate endpoint remains inside the live costmap and
+        the motion is still collision-checked by Nav2.
+        """
+        if not self.horizontal_sweep_staging_pending:
+            return False
+        self.horizontal_sweep_staging_pending = False
+        if (
+            self.sweep_active_axis != "horizontal"
+            or self.sweep_active_preference is None
+        ):
+            self.horizontal_sweep_staging_unavailable_count += 1
+            self.last_error = "horizontal_sweep_staging_not_applicable"
+            return False
+        heading_error = sweep_anchor_heading_error_rad(
+            robot_pose, self.sweep_active_preference
+        )
+        if heading_error is not None and abs(heading_error) > float(
+            self.get_parameter("horizontal_sweep_alignment_tolerance_rad").value
+        ):
+            if sweep_anchor_is_behind_chassis(
+                robot_pose, self.sweep_active_preference
+            ):
+                self.horizontal_sweep_staging_behind_chassis_count += 1
+            goal = sweep_alignment_goal(
+                robot_pose,
+                self.sweep_active_preference,
+                maximum_heading_change_rad=float(self.get_parameter(
+                    "maximum_frontier_goal_yaw_change_rad"
+                ).value),
+                minimum_turning_radius_m=float(
+                    self.get_parameter("minimum_turning_radius_m").value
+                ),
+                minimum_goal_distance_m=float(self.get_parameter(
+                    "horizontal_sweep_alignment_distance_m"
+                ).value),
+                allowed_bounds_xyxy_m=self.required_bounds,
+                boundary_margin_m=float(
+                    self.get_parameter("required_bounds_goal_margin_m").value
+                ),
+            )
+            path = (
+                self._forward_costmap_clear_dubins_path(robot_pose, goal)
+                if goal is not None and self._goal_is_costmap_clear(goal)
+                else None
+            )
+            if path is None:
+                self.horizontal_sweep_staging_unavailable_count += 1
+                self.horizontal_sweep_alignment_unavailable_count += 1
+                self.last_error = "horizontal_sweep_alignment_no_clear_path"
+                return False
+            self.horizontal_sweep_alignment_attempt_count += 1
+            self.last_error = "horizontal_sweep_alignment"
+            self._send_goal(goal, goal_kind="horizontal_sweep_alignment")
+            return True
+        candidates = sweep_staging_goals(
+            robot_pose,
+            self.sweep_active_preference,
+            candidate_distances_m=tuple(
+                float(value) for value in self.get_parameter(
+                    "horizontal_sweep_staging_distances_m"
+                ).value
+            ),
+            allowed_bounds_xyxy_m=self.required_bounds,
+            boundary_margin_m=float(
+                self.get_parameter("required_bounds_goal_margin_m").value
+            ),
+        )
+        endpoint_clear_candidates = [
+            candidate for candidate in candidates
+            if self._goal_is_costmap_clear(candidate)
+        ]
+        goal = next((
+            candidate for candidate in endpoint_clear_candidates
+            if self._path_poses_are_costmap_clear(
+                straight_staging_path_poses(
+                    robot_pose,
+                    candidate,
+                    sample_spacing_m=float(self.get_parameter(
+                        "horizontal_sweep_staging_path_sample_spacing_m"
+                    ).value),
+                )
+            )
+        ), None)
+        if goal is None:
+            self.horizontal_sweep_staging_unavailable_count += 1
+            if endpoint_clear_candidates:
+                self.horizontal_sweep_staging_path_rejected_count += 1
+                self.last_error = "horizontal_sweep_staging_no_clear_path"
+            else:
+                self.last_error = "horizontal_sweep_staging_no_clear_endpoint"
+            return False
+        self.horizontal_sweep_staging_attempt_count += 1
+        self.last_error = "horizontal_sweep_staging"
+        self._send_goal(goal, goal_kind="horizontal_sweep_staging")
+        return True
+
+    def _start_sweep_lane_shift_backup(self, robot_pose) -> bool:
+        """Back inward once before an Ackermann lane-shift turn at an edge."""
+        if self.sweep_active_axis != "vertical":
+            return False
+        index = self.sweep_target_index
+        if index in self.sweep_lane_shift_backup_completed:
+            return False
+        if self.sweep_lane_shift_backup_pending == index:
+            return True
+        target = self.sweep_targets[index]
+        chassis_lane_y = self._sweep_chassis_lane_y(index)
+        candidates = lane_shift_connector_goals(
+            robot_pose,
+            chassis_lane_y,
+            candidate_distances_m=tuple(
+                float(value) for value in self.get_parameter(
+                    "frontier_sweep_lane_shift_connector_distances_m"
+                ).value
+            ),
+            allowed_bounds_xyxy_m=self.required_bounds,
+            boundary_margin_m=float(
+                self.get_parameter("required_bounds_goal_margin_m").value
+            ),
+        )
+        # BackUp is a safety-checked fallback, not a mandatory maneuver.  At a
+        # boundary with a non-tangent heading the rear collision envelope may
+        # correctly stop reverse motion even though a forward Dubins turn is
+        # fully known and clear.  Prefer that forward path and never bypass the
+        # Collision Monitor merely to force a backup through.
+        if any(
+            self._forward_costmap_clear_dubins_path(robot_pose, candidate)
+            for candidate in candidates
+            if self._goal_is_costmap_clear(candidate)
+        ):
+            self.sweep_lane_shift_backup_completed.add(index)
+            self.sweep_lane_shift_backup_skipped.add(index)
+            self.sweep_lane_shift_locked_x.setdefault(index, robot_pose[0])
+            return False
+        attempts = self.sweep_lane_shift_backup_attempts.get(index, 0)
+        if attempts >= int(
+            self.get_parameter(
+                "frontier_sweep_lane_shift_backup_max_attempts"
+            ).value
+        ):
+            self._finish(False, "sweep_lane_shift_backup_exhausted")
+            return True
+        escape = reverse_escape_goal(
+            robot_pose[:2],
+            robot_pose[2],
+            distance_m=float(
+                self.get_parameter(
+                    "frontier_sweep_lane_shift_backup_distance_m"
+                ).value
+            ),
+            allowed_bounds_xyxy_m=self.required_bounds,
+            boundary_margin_m=float(
+                self.get_parameter("required_bounds_goal_margin_m").value
+            ),
+        )
+        if escape is None or not self._goal_is_costmap_clear(escape):
+            self.last_error = "sweep_lane_shift_backup_unavailable"
+            return False
+        if not self._send_backup(
+            escape,
+            goal_kind="lane_shift_backup",
+            sweep_target_index=index,
+        ):
+            self.last_error = "backup_action_server_unavailable"
+            return False
+        self.sweep_lane_shift_backup_pending = index
+        self.sweep_lane_shift_backup_count += 1
+        self.sweep_lane_shift_backup_attempts[index] = attempts + 1
+        self.last_error = "sweep_lane_shift_backup"
+        return True
+
+    def _sweep_preference(self, robot_pose):
+        """Keep one bounds-derived sweep target until the chassis reaches it."""
+        if not bool(self.get_parameter("frontier_sweep_enabled").value):
+            self.sweep_active_anchor = None
+            self.sweep_active_preference = None
+            self.sweep_active_axis = None
+            return None
+        if not self.sweep_targets:
+            sweep_reference = tuple(
+                float(value)
+                for value in self.get_parameter(
+                    "frontier_sweep_reference_pose_xyyaw_m_rad"
+                ).value
+            )
+            if len(sweep_reference) != 3:
+                raise ValueError(
+                    "frontier_sweep_reference_pose_xyyaw_m_rad must contain three values"
+                )
+            self.sweep_targets = frontier_sweep_targets(
+                self.required_bounds,
+                sweep_reference[:2],
+                sweep_reference[2],
+                sensor_range_m=float(
+                    self.get_parameter("mapping_sensor_range_m").value
+                ),
+                lane_overlap_m=float(
+                    self.get_parameter("frontier_sweep_lane_overlap_m").value
+                ),
+                boundary_margin_m=float(
+                    self.get_parameter("required_bounds_goal_margin_m").value
+                ),
+            )
+        tolerance = max(0.0, float(
+            self.get_parameter("frontier_sweep_target_tolerance_m").value
+        ))
+        while self.sweep_target_index < len(self.sweep_targets):
+            target = self.sweep_targets[self.sweep_target_index]
+            axis = frontier_sweep_target_axis(
+                self.sweep_targets, self.sweep_target_index
+            )
+            pose_reached = math.hypot(
+                target[0] - robot_pose[0], target[1] - robot_pose[1]
+            ) <= tolerance
+            mapped_radius = float(
+                self.get_parameter(
+                    "frontier_sweep_mapped_target_radius_m"
+                ).value
+            )
+            preference = target
+            if axis == "vertical":
+                previous_y = self.sweep_targets[
+                    self.sweep_target_index - 1
+                ][1]
+                envelope = (self.latest_metrics or {}).get(
+                    "mapped_envelope_bounds_xyxy_m"
+                )
+                mapped_reached = vertical_sweep_anchor_reached(
+                    envelope,
+                    previous_y_m=previous_y,
+                    target_y_m=target[1],
+                    radius_m=mapped_radius,
+                )
+                chassis_lane_y = self._sweep_chassis_lane_y(
+                    self.sweep_target_index
+                )
+                pose_reached = abs(chassis_lane_y - robot_pose[1]) <= tolerance
+                locked_x = robot_pose[0]
+                if self.sweep_target_index in self.sweep_lane_shift_backup_completed:
+                    locked_x = self.sweep_lane_shift_locked_x.setdefault(
+                        self.sweep_target_index, robot_pose[0]
+                    )
+                preference = (locked_x, chassis_lane_y)
+            else:
+                preference = (
+                    target[0],
+                    self._sweep_horizontal_preference_y(
+                        self.sweep_target_index
+                    ),
+                )
+                mapped_reached = world_disk_has_known_cell(
+                    self.latest_data,
+                    self.latest_geometry,
+                    target,
+                    radius_m=mapped_radius,
+                )
+            if not sweep_target_completion_reached(
+                axis=axis,
+                pose_reached=pose_reached,
+                mapped_reached=mapped_reached,
+            ):
+                self.sweep_active_anchor = target
+                self.sweep_active_preference = preference
+                self.sweep_active_axis = axis
+                return preference
+            self.sweep_target_index += 1
+        self.sweep_completed = True
+        self.sweep_active_anchor = None
+        self.sweep_active_preference = None
+        self.sweep_active_axis = None
+        return None
+
+    def _sweep_chassis_lane_y(self, index: int) -> float:
+        return sweep_chassis_lane_y(
+            self.sweep_targets[index][1],
+            allowed_bounds_xyxy_m=self.required_bounds,
+            boundary_margin_m=float(
+                self.get_parameter("required_bounds_goal_margin_m").value
+            ),
+            minimum_turning_radius_m=float(
+                self.get_parameter("minimum_turning_radius_m").value
+            ),
+        )
+
+    def _sweep_horizontal_preference_y(self, index: int) -> float:
+        return sweep_chassis_lane_y(
+            self.sweep_targets[index][1],
+            allowed_bounds_xyxy_m=self.required_bounds,
+            boundary_margin_m=float(
+                self.get_parameter("required_bounds_goal_margin_m").value
+            ),
+            minimum_turning_radius_m=0.0,
+        )
+
+    def _start_sweep_lane_shift_connector(self, robot_pose) -> bool:
+        """Turn onto the next sweep lane through a frozen feasible path.
+
+        Frontier waypoints intentionally ignore terminal yaw.  That is correct
+        for short observation hops, but it means a sequence of synthesized arc
+        endpoints cannot change the vehicle's actual heading at a lane edge.
+        After collision-checked BackUp creates room, prefer a forward-only
+        Dubins path derived from the fused pose and verify every sample against
+        the online costmap.  If that path is unavailable, ask Hybrid-A*/
+        Reeds-Shepp once, split the frozen result at every direction cusp, and
+        execute each section through a direction-constrained FollowPath
+        controller.  No BT replanning may change the first gear in place.
+        """
+        if self.sweep_active_axis != "vertical":
+            return False
+        index = self.sweep_target_index
+        if index not in self.sweep_lane_shift_backup_completed:
+            return False
+        if index in self.sweep_lane_shift_connector_completed:
+            return False
+        if self.sweep_lane_shift_connector_pending == index:
+            if (
+                self.active_goal is None
+                and self.sweep_lane_shift_connector_sections
+            ):
+                self._send_next_sweep_lane_shift_section()
+            return True
+        target = self.sweep_targets[index]
+        chassis_lane_y = self._sweep_chassis_lane_y(index)
+        candidates = lane_shift_connector_goals(
+            robot_pose,
+            chassis_lane_y,
+            candidate_distances_m=tuple(
+                float(value) for value in self.get_parameter(
+                    "frontier_sweep_lane_shift_connector_distances_m"
+                ).value
+            ),
+            allowed_bounds_xyxy_m=self.required_bounds,
+            boundary_margin_m=float(
+                self.get_parameter("required_bounds_goal_margin_m").value
+            ),
+        )
+        attempt = self.sweep_lane_shift_connector_attempts.get(index, 0)
+        clear_candidates = [
+            candidate for candidate in candidates
+            if self._goal_is_costmap_clear(candidate)
+        ]
+        if attempt >= len(clear_candidates):
+            self._finish(False, "sweep_lane_shift_connector_exhausted")
+            return True
+        goal = clear_candidates[attempt]
+        self.sweep_lane_shift_connector_attempts[index] = attempt + 1
+        self.sweep_lane_shift_connector_pending = index
+        self.last_error = "sweep_lane_shift_connector"
+        self._send_sweep_lane_shift_plan(goal, index, robot_pose)
+        return True
+
+    def _set_lane_shift_active_goal(self, goal, handle=None) -> None:
+        self.active_goal = goal
+        self.active_goal_handle = handle
+        self._start_active_goal_watchdog(
+            float(self.get_parameter("lane_shift_connector_timeout_sec").value)
+        )
+        self.active_goal_cancel_requested = False
+        self.active_goal_cancel_requested_monotonic = None
+
+    def _start_active_goal_watchdog(self, timeout_sec: float) -> None:
+        timeout = float(timeout_sec)
+        multiplier = float(
+            self.get_parameter("goal_absolute_timeout_multiplier").value
+        )
+        if not math.isfinite(timeout) or timeout <= 0.0:
+            raise ValueError("active goal timeout must be finite and positive")
+        if not math.isfinite(multiplier) or multiplier < 1.0:
+            raise ValueError(
+                "goal_absolute_timeout_multiplier must be finite and at least one"
+            )
+        now_monotonic = time.monotonic()
+        self.active_goal_started_monotonic = now_monotonic
+        self.active_goal_last_progress_monotonic = now_monotonic
+        self.active_goal_timeout_sec = timeout
+        self.active_goal_absolute_timeout_sec = timeout * multiplier
+        self.active_goal_progress_reference_pose = None
+        self.active_goal_progress_reference_map_area_m2 = float(
+            (self.latest_metrics or {}).get("known_area_m2") or 0.0
+        )
+        self.active_goal_progress_event_count = 0
+
+    def _active_goal_no_progress_elapsed(self, now_monotonic: float) -> float:
+        pose = self._robot_pose()
+        area_m2 = float(
+            (self.latest_metrics or {}).get("known_area_m2") or 0.0
+        )
+        if self.active_goal_progress_reference_pose is None and pose is not None:
+            self.active_goal_progress_reference_pose = pose
+            self.active_goal_progress_reference_map_area_m2 = area_m2
+        reference_pose = self.active_goal_progress_reference_pose
+        moved_m = (
+            math.hypot(pose[0] - reference_pose[0], pose[1] - reference_pose[1])
+            if pose is not None and reference_pose is not None
+            else 0.0
+        )
+        map_gain_m2 = area_m2 - self.active_goal_progress_reference_map_area_m2
+        progress_reason = None
+        if moved_m >= float(
+            self.get_parameter("goal_progress_distance_m").value
+        ):
+            progress_reason = "pose"
+        if map_gain_m2 >= float(
+            self.get_parameter("goal_progress_map_gain_m2").value
+        ):
+            progress_reason = (
+                "pose_and_map" if progress_reason == "pose" else "map"
+            )
+        if progress_reason is not None:
+            self.active_goal_last_progress_monotonic = now_monotonic
+            if pose is not None:
+                self.active_goal_progress_reference_pose = pose
+            self.active_goal_progress_reference_map_area_m2 = area_m2
+            self.active_goal_progress_event_count += 1
+            if self.goal_history:
+                row = self.goal_history[-1]
+                row["progress_event_count"] = self.active_goal_progress_event_count
+                row["last_progress_reason"] = progress_reason
+                row["last_progress_moved_m"] = moved_m
+                row["last_progress_map_gain_m2"] = map_gain_m2
+        return now_monotonic - float(
+            self.active_goal_last_progress_monotonic or now_monotonic
+        )
+
+    def _clear_active_goal(self) -> None:
+        self.active_goal = None
+        self.active_goal_handle = None
+        self.active_goal_started_monotonic = None
+        self.active_goal_last_progress_monotonic = None
+        self.active_goal_timeout_sec = float(
+            self.get_parameter("goal_timeout_sec").value
+        )
+        self.active_goal_absolute_timeout_sec = (
+            self.active_goal_timeout_sec
+            * float(self.get_parameter("goal_absolute_timeout_multiplier").value)
+        )
+        self.active_goal_progress_reference_pose = None
+        self.active_goal_progress_reference_map_area_m2 = 0.0
+        self.active_goal_progress_event_count = 0
+        self.active_goal_cancel_requested = False
+        self.active_goal_cancel_requested_monotonic = None
+
+    def _force_active_goal_timeout(
+        self,
+        cancel_elapsed_sec: float,
+        *,
+        error: str | None = None,
+    ) -> None:
+        """Fail closed when an action ignores cancellation past its grace."""
+        if error is None:
+            error = f"goal_cancel_grace_exhausted:{cancel_elapsed_sec:.3f}s"
+        if self.frontier_detour_row is not None:
+            self._fail_frontier_detour_plan(
+                self.frontier_detour_row,
+                GoalStatus.STATUS_ABORTED,
+                error,
+            )
+            return
+        if self.sweep_lane_shift_connector_row is not None:
+            self._fail_sweep_lane_shift_connector(
+                GoalStatus.STATUS_ABORTED,
+                error,
+            )
+            self._begin_nav_recovery()
+            return
+        row = self.goal_history[-1] if self.goal_history else None
+        if row is not None:
+            row["terminal_status"] = GoalStatus.STATUS_ABORTED
+            row["succeeded"] = False
+            row["error"] = error
+            if row.get("goal_kind") == "lane_shift_backup":
+                self.sweep_lane_shift_backup_pending = None
+        goal = self.active_goal
+        if row is not None and row.get("goal_kind") == "frontier":
+            self._queue_frontier_detour_fallback(goal, row)
+        if goal is not None:
+            self._exclude_failed_goal(goal, wide_exclusion=True)
+        self.last_error = error
+        self._clear_active_goal()
+        self._update_adaptive_goal_distance(False)
+        self.next_goal_not_before_monotonic = time.monotonic() + float(
+            self.get_parameter("failed_goal_cooldown_sec").value
+        )
+        self._begin_nav_recovery()
+        self._write_report()
+
+    def _path_poses_are_costmap_clear(self, poses) -> bool:
+        sampled_poses, clear_prefix = self._costmap_clear_path_prefix(poses)
+        return bool(sampled_poses) and len(clear_prefix) == len(sampled_poses)
+
+    def _costmap_clear_path_prefix(self, poses):
+        """Return the sampled prefix that is clear in both live map products.
+
+        A global planner may legally return a route whose remote suffix crosses
+        cells that are still unknown while mapping. Rejecting the whole route
+        prevents the robot from advancing through the already-known prefix and
+        therefore prevents the map from ever making that suffix observable.
+        """
+        if (
+            self.latest_data is None
+            or self.latest_geometry is None
+            or self.latest_costmap_data is None
+            or self.latest_costmap_geometry is None
+        ):
+            return [], []
+        try:
+            sampled_poses = sample_path_poses(
+                tuple(poses),
+                maximum_spacing_m=max(
+                    0.01,
+                    min(
+                        float(self.latest_geometry.resolution_m),
+                        float(self.latest_costmap_geometry.resolution_m),
+                    ),
+                ),
+            )
+        except ValueError:
+            return [], []
+        maximum_cost = int(self.get_parameter("maximum_goal_cost").value)
+        footprint_parameters = self._footprint_clearance_parameters()
+        clear_prefix = []
+        for pose in sampled_poses:
+            if not all(
+                world_footprint_is_traversable(
+                    data,
+                    geometry,
+                    pose,
+                    **footprint_parameters,
+                    maximum_cost=maximum_cost,
+                    allow_unknown=allow_unknown,
+                )
+                for data, geometry, allow_unknown in (
+                    (self.latest_data, self.latest_geometry, True),
+                    (self.latest_costmap_data, self.latest_costmap_geometry, False),
+                )
+            ):
+                break
+            clear_prefix.append(pose)
+        return sampled_poses, clear_prefix
+
+    def _handle_horizontal_sweep_frontier_wait(
+        self,
+        robot_pose,
+        escape,
+        now_monotonic: float,
+        *,
+        route_now: bool,
+    ) -> bool:
+        if (
+            self.sweep_active_axis != "horizontal"
+            or self.sweep_active_preference is None
+        ):
+            return False
+        self.horizontal_sweep_frontier_wait_count += 1
+        self.horizontal_sweep_frontier_wait_streak += 1
+        route_threshold = int(self.get_parameter(
+            "horizontal_sweep_frontier_wait_before_route_recovery_count"
+        ).value)
+        if route_now or self.horizontal_sweep_frontier_wait_streak >= route_threshold:
+            recovery_status = self._start_horizontal_sweep_route_recovery(
+                robot_pose
+            )
+            if recovery_status == "started":
+                return True
+            if recovery_status == "planner_unavailable":
+                self.next_goal_not_before_monotonic = now_monotonic + 1.0
+                self._write_report()
+                return True
+        failure_limit = int(self.get_parameter(
+            "horizontal_sweep_frontier_wait_failure_limit"
+        ).value)
+        if self.horizontal_sweep_frontier_wait_streak >= failure_limit:
+            if escape is not None and self._goal_is_costmap_clear(escape):
+                self.last_error = "horizontal_sweep_deadlock_reverse_escape"
+                if self._send_backup(escape):
+                    self.reverse_escape_goal_count += 1
+                    self.horizontal_sweep_frontier_wait_streak = 0
+                    return True
+            self._finish(
+                False,
+                "horizontal_sweep_frontier_deadlock_no_safe_recovery",
+            )
+            return True
+        self.last_error = (
+            "horizontal_sweep_excluded_frontier_route_unavailable"
+            if route_now
+            else "horizontal_sweep_frontier_temporarily_unavailable"
+        )
+        self.next_goal_not_before_monotonic = now_monotonic + 1.0
+        self._write_report()
+        return True
+
+    def _start_horizontal_sweep_route_recovery(self, robot_pose) -> str:
+        """Route to online-known free space when a sweep frontier disappears."""
+        if self.sweep_active_preference is None:
+            return "not_applicable"
+        candidates = known_free_route_recovery_goals(
+            self.latest_data,
+            self.latest_geometry,
+            robot_pose[:2],
+            self.sweep_active_preference,
+            allowed_bounds_xyxy_m=self.required_bounds,
+            boundary_margin_m=float(
+                self.get_parameter("required_bounds_goal_margin_m").value
+            ),
+            minimum_distance_m=max(3.0, self.adaptive_goal_distance_m),
+            maximum_distance_m=float(
+                self.get_parameter(
+                    "horizontal_sweep_route_recovery_max_distance_m"
+                ).value
+            ),
+            sample_spacing_m=float(
+                self.get_parameter(
+                    "horizontal_sweep_route_recovery_sample_spacing_m"
+                ).value
+            ),
+        )
+        exclusion_radius = float(
+            self.get_parameter("failed_goal_exclusion_radius_m").value
+        )
+        for candidate in candidates:
+            if any(
+                math.hypot(candidate.world_x_m - x, candidate.world_y_m - y)
+                <= exclusion_radius
+                for x, y, _ in self.excluded_goals
+            ):
+                continue
+            if not self._goal_is_costmap_clear(candidate):
+                continue
+            status = self._start_frontier_detour_plan(
+                candidate,
+                robot_pose,
+                approach_goal=candidate,
+                trigger="horizontal_sweep_deadlock",
+            )
+            if status == "started":
+                self.horizontal_sweep_route_recovery_attempt_count += 1
+                self.horizontal_sweep_frontier_wait_streak = 0
+                return status
+            if status == "planner_unavailable":
+                return status
+        self.horizontal_sweep_route_recovery_unavailable_count += 1
+        return "not_applicable"
+
+    def _start_frontier_detour_plan(
+        self,
+        source_goal,
+        robot_pose,
+        *,
+        approach_goal=None,
+        trigger: str = "blocked_local_projection",
+    ) -> str:
+        """Plan around a blocked local projection using only online maps."""
+        if not self.compute_path_client.server_is_ready():
+            self.last_error = "frontier_detour_compute_path_server_unavailable"
+            return "planner_unavailable"
+        if approach_goal is None:
+            min_x, min_y, max_x, max_y = self.required_bounds
+            approach_goal = frontier_detour_goal(
+                source_goal,
+                robot_pose[:2],
+                goal_backoff_m=float(
+                    self.get_parameter("frontier_goal_backoff_m").value
+                ),
+                maximum_distance_m=math.hypot(max_x - min_x, max_y - min_y),
+                minimum_distance_m=max(
+                    self.adaptive_goal_distance_m,
+                    float(self.get_parameter("minimum_goal_distance_m").value),
+                ),
+                allowed_bounds_xyxy_m=self.required_bounds,
+                boundary_margin_m=float(
+                    self.get_parameter("required_bounds_goal_margin_m").value
+                ),
+            )
+        if (
+            approach_goal is None
+            or not self._goal_is_costmap_clear(approach_goal)
+        ):
+            return "not_applicable"
+
+        row = {
+            **asdict(source_goal),
+            "goal_kind": "frontier_detour",
+            "execution": "nav2_global_path_lookahead",
+            "detour_trigger": trigger,
+            "phase": "planning_pending",
+            "behavior_tree": str(self.get_parameter("behavior_tree").value),
+            "sequence": len(self.goal_history) + 1,
+            "local_projection_xyyaw_m_rad": [
+                float(source_goal.world_x_m),
+                float(source_goal.world_y_m),
+                float(source_goal.yaw_rad),
+            ],
+            "detour_approach_goal": asdict(approach_goal),
+            "planner_start_xy_m": [float(robot_pose[0]), float(robot_pose[1])],
+            "detour_lookahead_limit_m": float(
+                self.get_parameter("maximum_frontier_detour_distance_m").value
+            ),
+            "planner_id": "GridBased",
+            "planner_accepted": None,
+            "planner_terminal_status": None,
+            "planned_path_pose_count": None,
+            "planned_path_length_m": None,
+            "costmap_clear_prefix_pose_count": None,
+            "costmap_clear_prefix_length_m": None,
+            "planned_path_fully_costmap_clear": None,
+            "path_costmap_clearance_checked": False,
+            "accepted": None,
+            "terminal_status": None,
+            "map_area_before_m2": float(
+                (self.latest_metrics or {}).get("known_area_m2") or 0.0
+            ),
+            "map_update_count_before": self.map_update_count,
+        }
+        self.goal_history.append(row)
+        self.pending_frontier_detour_source_goal = None
+        self.frontier_detour_source_goal = source_goal
+        self.frontier_detour_row = row
+        self.frontier_detour_goal_count += 1
+        self.active_goal = approach_goal
+        self.active_goal_handle = None
+        self._start_active_goal_watchdog(
+            float(self.get_parameter("frontier_detour_timeout_sec").value)
+        )
+        self.active_goal_cancel_requested = False
+        self.active_goal_cancel_requested_monotonic = None
+
+        message = ComputePathToPose.Goal()
+        message.goal = self._pose_stamped(approach_goal)
+        message.planner_id = "GridBased"
+        message.use_start = False
+        try:
+            future = self.compute_path_client.send_goal_async(message)
+        except Exception as error:  # pragma: no cover - middleware failure path
+            self._fail_frontier_detour_plan(
+                row,
+                GoalStatus.STATUS_ABORTED,
+                f"compute_path_dispatch_exception:{error}",
+            )
+            return "started"
+        future.add_done_callback(
+            lambda completed, active_row=row:
+            self._on_frontier_detour_plan_response(completed, active_row)
+        )
+        self.last_error = "frontier_detour_global_plan_requested"
+        self._write_report()
+        return "started"
+
+    def _queue_frontier_detour_fallback(self, goal, row) -> None:
+        """Retry one failed short frontier through a global route plan."""
+        if (
+            goal is None
+            or goal.raw_world_x_m is None
+            or goal.raw_world_y_m is None
+        ):
+            return
+        self.pending_frontier_detour_source_goal = goal
+        self.frontier_detour_fallback_queued_count += 1
+        row["detour_fallback_queued"] = True
+
+    def _on_frontier_detour_plan_response(self, future, row) -> None:
+        if self.frontier_detour_row is not row:
+            return
+        try:
+            handle = future.result()
+        except Exception as error:  # pragma: no cover - middleware failure path
+            self._fail_frontier_detour_plan(
+                row,
+                GoalStatus.STATUS_ABORTED,
+                f"compute_path_response_exception:{error}",
+            )
+            return
+        row["planner_accepted"] = bool(handle and handle.accepted)
+        if handle is None or not handle.accepted:
+            self._fail_frontier_detour_plan(
+                row, GoalStatus.STATUS_ABORTED, "compute_path_rejected"
+            )
+            return
+        self.active_goal_handle = handle
+        row["phase"] = "planning_active"
+        result_future = handle.get_result_async()
+        result_future.add_done_callback(
+            lambda completed, active_row=row:
+            self._on_frontier_detour_plan_result(completed, active_row)
+        )
+        self._write_report()
+
+    def _on_frontier_detour_plan_result(self, future, row) -> None:
+        if self.frontier_detour_row is not row:
+            return
+        try:
+            wrapped = future.result()
+            status = int(wrapped.status)
+            result = wrapped.result
+        except Exception as error:  # pragma: no cover - middleware failure path
+            self._fail_frontier_detour_plan(
+                row,
+                GoalStatus.STATUS_ABORTED,
+                f"compute_path_result_exception:{error}",
+            )
+            return
+        row["planner_terminal_status"] = status
+        error_code = int(getattr(result, "error_code", 0))
+        row["planner_error_code"] = error_code
+        if status != GoalStatus.STATUS_SUCCEEDED or error_code != 0:
+            self._fail_frontier_detour_plan(
+                row, status, f"compute_path_failed:{error_code}"
+            )
+            return
+        try:
+            path_poses = [
+                (
+                    float(item.pose.position.x),
+                    float(item.pose.position.y),
+                    _yaw_from_quaternion(item.pose.orientation),
+                )
+                for item in result.path.poses
+            ]
+        except Exception as error:
+            self.frontier_detour_path_rejected_count += 1
+            self._fail_frontier_detour_plan(
+                row,
+                GoalStatus.STATUS_ABORTED,
+                f"invalid_planned_path_message:{error}",
+            )
+            return
+        row["planned_path_pose_count"] = len(path_poses)
+        tolerance = float(
+            self.get_parameter(
+                "frontier_detour_plan_endpoint_tolerance_m"
+            ).value
+        )
+        start_xy = row["planner_start_xy_m"]
+        approach = row["detour_approach_goal"]
+        endpoints_match = (
+            len(path_poses) >= 2
+            and math.hypot(
+                path_poses[0][0] - float(start_xy[0]),
+                path_poses[0][1] - float(start_xy[1]),
+            ) <= tolerance
+            and math.hypot(
+                path_poses[-1][0] - float(approach["world_x_m"]),
+                path_poses[-1][1] - float(approach["world_y_m"]),
+            ) <= tolerance
+        )
+        row["planned_path_endpoints_match"] = endpoints_match
+        if not endpoints_match:
+            self.frontier_detour_path_rejected_count += 1
+            self._fail_frontier_detour_plan(
+                row,
+                GoalStatus.STATUS_ABORTED,
+                "planned_path_endpoint_mismatch",
+            )
+            return
+        source_goal = self.frontier_detour_source_goal
+        if source_goal is None:
+            self._fail_frontier_detour_plan(
+                row, GoalStatus.STATUS_ABORTED, "detour_source_goal_lost"
+            )
+            return
+        sampled_path_poses, clear_path_prefix = self._costmap_clear_path_prefix(
+            path_poses
+        )
+        full_path_length = sum(
+            math.hypot(current[0] - previous[0], current[1] - previous[1])
+            for previous, current in zip(sampled_path_poses, sampled_path_poses[1:])
+        )
+        clear_prefix_length = sum(
+            math.hypot(current[0] - previous[0], current[1] - previous[1])
+            for previous, current in zip(clear_path_prefix, clear_path_prefix[1:])
+        )
+        row["planned_path_length_m"] = full_path_length
+        row["costmap_clear_prefix_pose_count"] = len(clear_path_prefix)
+        row["costmap_clear_prefix_length_m"] = clear_prefix_length
+        row["planned_path_fully_costmap_clear"] = bool(sampled_path_poses) and (
+            len(clear_path_prefix) == len(sampled_path_poses)
+        )
+        row["path_costmap_clearance_checked"] = True
+        try:
+            detour_goal = frontier_detour_path_goal(
+                source_goal,
+                clear_path_prefix,
+                maximum_distance_m=float(
+                    self.get_parameter(
+                        "maximum_frontier_detour_distance_m"
+                    ).value
+                ),
+                minimum_distance_m=float(
+                    self.get_parameter("minimum_goal_distance_m").value
+                ),
+            )
+        except ValueError as error:
+            self.frontier_detour_path_rejected_count += 1
+            self._fail_frontier_detour_plan(
+                row, GoalStatus.STATUS_ABORTED, f"invalid_planned_path:{error}"
+            )
+            return
+        if detour_goal is None:
+            self.frontier_detour_path_rejected_count += 1
+            self._fail_frontier_detour_plan(
+                row,
+                GoalStatus.STATUS_ABORTED,
+                "planned_path_has_no_minimum_safe_prefix",
+            )
+            return
+        if not self._goal_is_costmap_clear(detour_goal):
+            self.frontier_detour_path_rejected_count += 1
+            self._fail_frontier_detour_plan(
+                row, GoalStatus.STATUS_ABORTED, "detour_lookahead_costmap_blocked"
+            )
+            return
+        row.update(asdict(detour_goal))
+        row["detour_lookahead_distance_m"] = detour_goal.distance_m
+        row["phase"] = "navigation_pending"
+        self.active_goal = detour_goal
+        self.active_goal_handle = None
+        self._start_active_goal_watchdog(
+            float(self.get_parameter("frontier_detour_timeout_sec").value)
+        )
+        self.active_goal_cancel_requested = False
+        self.active_goal_cancel_requested_monotonic = None
+        self.last_error = "frontier_detour_navigation_requested"
+        self._dispatch_navigation_goal(detour_goal)
+
+    def _fail_frontier_detour_plan(self, row, status: int, error: str) -> None:
+        if self.frontier_detour_row is not row:
+            return
+        timed_out = self.active_goal_cancel_requested
+        row["terminal_status"] = int(status)
+        row["succeeded"] = False
+        row["error"] = error
+        row["phase"] = "failed"
+        source_goal = self.frontier_detour_source_goal
+        if source_goal is not None:
+            centers = self._add_goal_exclusions(source_goal)
+            row["excluded_centers_xy_m"] = [list(center) for center in centers]
+        self.frontier_detour_plan_failure_count += 1
+        self.last_error = error
+        self.frontier_detour_source_goal = None
+        self.frontier_detour_row = None
+        self._clear_active_goal()
+        self._update_adaptive_goal_distance(False)
+        self.next_goal_not_before_monotonic = time.monotonic() + float(
+            self.get_parameter("failed_goal_cooldown_sec").value
+        )
+        if timed_out:
+            self._begin_nav_recovery()
+        self._write_report()
+
+    def _forward_costmap_clear_dubins_path(self, robot_pose, goal):
+        margin = float(
+            self.get_parameter("required_bounds_goal_margin_m").value
+        )
+        min_x, min_y, max_x, max_y = self.required_bounds
+        apron = [
+            (min_x + margin, min_y + margin),
+            (max_x - margin, min_y + margin),
+            (max_x - margin, max_y - margin),
+            (min_x + margin, max_y - margin),
+        ]
+        path = plan_forward_dubins_path(
+            robot_pose,
+            (goal.world_x_m, goal.world_y_m, goal.yaw_rad),
+            apron,
+            [],
+        )
+        return path if path and self._path_poses_are_costmap_clear(path) else None
+
+    @staticmethod
+    def _forward_dubins_sections(path):
+        points = [(pose[0], pose[1]) for pose in path]
+        headings = [pose[2] for pose in path]
+        primitives = split_path_at_curvature_reversals(points, headings)
+        sections = []
+        for index, (primitive_points, primitive_headings) in enumerate(primitives):
+            sections.append({
+                "direction": "FORWARD",
+                "poses": [
+                    (point[0], point[1], heading)
+                    for point, heading in zip(
+                        primitive_points, primitive_headings
+                    )
+                ],
+                "cusp_before": False,
+                "controller_id": "DubinsPath",
+                "goal_checker_id": (
+                    "connector_goal_checker"
+                    if index == len(primitives) - 1
+                    else "primitive_goal_checker"
+                ),
+            })
+        return sections
+
+    def _accept_sweep_lane_shift_sections(
+        self,
+        sections,
+        *,
+        planned_path_pose_count: int,
+        planner_id: str,
+    ) -> None:
+        row = self.sweep_lane_shift_connector_row
+        if row is None:
+            return
+        row["accepted"] = True
+        row["planner_id"] = planner_id
+        row["planned_path_pose_count"] = int(planned_path_pose_count)
+        row["planned_section_directions"] = [
+            section["direction"] for section in sections
+        ]
+        row["planned_sections"] = [
+            {
+                "direction": section["direction"],
+                "controller_id": section.get("controller_id", "ConnectorPath"),
+                "goal_checker_id": section.get(
+                    "goal_checker_id", "connector_goal_checker"
+                ),
+                "pose_count": len(section["poses"]),
+                "start_pose": list(section["poses"][0]),
+                "end_pose": list(section["poses"][-1]),
+            }
+            for section in sections
+        ]
+        row["path_costmap_clearance_checked"] = True
+        self.sweep_lane_shift_connector_sections = sections
+        self.sweep_lane_shift_connector_section_index = 0
+        self._clear_active_goal()
+        self._send_next_sweep_lane_shift_section()
+
+    def _send_sweep_lane_shift_plan(
+        self, goal, sweep_target_index: int, robot_pose
+    ) -> None:
+        if not self.compute_path_client.server_is_ready():
+            self._fail_sweep_lane_shift_connector(
+                GoalStatus.STATUS_ABORTED, "compute_path_server_unavailable"
+            )
+            return
+        row = {
+            **asdict(goal),
+            "goal_kind": "lane_shift_connector",
+            "execution": "analytic_forward_dubins_then_smac_fallback",
+            "sweep_target_index": sweep_target_index,
+            "sequence": len(self.goal_history) + 1,
+            "pre_connector_backup": (
+                "skipped_online_costmap_clear_forward_dubins"
+                if sweep_target_index in self.sweep_lane_shift_backup_skipped
+                else "nav2_behaviors_BackUp_collision_checked"
+            ),
+            "accepted": None,
+            "terminal_status": None,
+            "planned_path_pose_count": None,
+            "planned_section_directions": [],
+            "completed_section_count": 0,
+        }
+        self.goal_history.append(row)
+        self.sweep_lane_shift_connector_row = row
+        self.sweep_lane_shift_connector_goal = goal
+        self.sweep_lane_shift_connector_sections = []
+        self.sweep_lane_shift_connector_section_index = 0
+        self._set_lane_shift_active_goal(goal)
+
+        forward_path = self._forward_costmap_clear_dubins_path(robot_pose, goal)
+        if forward_path:
+            row["execution"] = "online_costmap_checked_forward_dubins"
+            sections = self._forward_dubins_sections(forward_path)
+            self._accept_sweep_lane_shift_sections(
+                sections,
+                planned_path_pose_count=len(forward_path),
+                planner_id="curvature_segmented_analytic_forward_dubins",
+            )
+            return
+        row["analytic_forward_dubins_fallback_reason"] = (
+            "costmap_clearance_failed" if forward_path else "no_feasible_path"
+        )
+        message = ComputePathToPose.Goal()
+        message.goal = self._pose_stamped(goal)
+        message.planner_id = "GridBased"
+        message.use_start = False
+        future = self.compute_path_client.send_goal_async(message)
+        future.add_done_callback(self._on_sweep_lane_shift_plan_response)
+        self._write_report()
+
+    def _on_sweep_lane_shift_plan_response(self, future) -> None:
+        handle = future.result()
+        row = self.sweep_lane_shift_connector_row
+        if row is None:
+            return
+        row["accepted"] = bool(handle and handle.accepted)
+        if handle is None or not handle.accepted:
+            self._fail_sweep_lane_shift_connector(
+                GoalStatus.STATUS_ABORTED, "compute_path_rejected"
+            )
+            return
+        self.active_goal_handle = handle
+        result_future = handle.get_result_async()
+        result_future.add_done_callback(self._on_sweep_lane_shift_plan_result)
+
+    def _on_sweep_lane_shift_plan_result(self, future) -> None:
+        wrapped = future.result()
+        status = int(wrapped.status)
+        result = wrapped.result
+        error_code = int(getattr(result, "error_code", 0))
+        if status != GoalStatus.STATUS_SUCCEEDED or error_code != 0:
+            self._fail_sweep_lane_shift_connector(
+                status, f"compute_path_failed:{error_code}"
+            )
+            return
+        path_poses = [
+            (
+                float(item.pose.position.x),
+                float(item.pose.position.y),
+                _yaw_from_quaternion(item.pose.orientation),
+            )
+            for item in result.path.poses
+        ]
+        sections = split_hybrid_path_by_direction(path_poses)
+        if not sections:
+            self._fail_sweep_lane_shift_connector(
+                GoalStatus.STATUS_ABORTED, "compute_path_has_no_motion_sections"
+            )
+            return
+        for section in sections:
+            section["controller_id"] = (
+                "ReversePath"
+                if section["direction"] == "REVERSE"
+                else "ConnectorPath"
+            )
+        if not self._path_poses_are_costmap_clear(
+            pose for section in sections for pose in section["poses"]
+        ):
+            self._fail_sweep_lane_shift_connector(
+                GoalStatus.STATUS_ABORTED, "planned_path_costmap_clearance_failed"
+            )
+            return
+        self._accept_sweep_lane_shift_sections(
+            sections,
+            planned_path_pose_count=len(path_poses),
+            planner_id="smac_hybrid_reeds_shepp",
+        )
+
+    def _send_next_sweep_lane_shift_section(self) -> None:
+        index = self.sweep_lane_shift_connector_section_index
+        if index >= len(self.sweep_lane_shift_connector_sections):
+            self._complete_sweep_lane_shift_connector()
+            return
+        if not self.follow_path_client.server_is_ready():
+            self._fail_sweep_lane_shift_connector(
+                GoalStatus.STATUS_ABORTED, "follow_path_server_unavailable"
+            )
+            return
+        section = self.sweep_lane_shift_connector_sections[index]
+        message = FollowPath.Goal()
+        message.path = self._path_message(section["poses"])
+        message.controller_id = section.get("controller_id", "ConnectorPath")
+        message.goal_checker_id = section.get(
+            "goal_checker_id",
+            "cusp_goal_checker"
+            if index < len(self.sweep_lane_shift_connector_sections) - 1
+            else "connector_goal_checker",
+        )
+        message.progress_checker_id = "progress_checker"
+        self._set_lane_shift_active_goal(self.sweep_lane_shift_connector_goal)
+        future = self.follow_path_client.send_goal_async(message)
+        future.add_done_callback(self._on_sweep_lane_shift_section_response)
+        self._write_report()
+
+    def _on_sweep_lane_shift_section_response(self, future) -> None:
+        handle = future.result()
+        if handle is None or not handle.accepted:
+            self._fail_sweep_lane_shift_connector(
+                GoalStatus.STATUS_ABORTED, "follow_path_rejected"
+            )
+            return
+        self.active_goal_handle = handle
+        result_future = handle.get_result_async()
+        result_future.add_done_callback(self._on_sweep_lane_shift_section_result)
+
+    def _on_sweep_lane_shift_section_result(self, future) -> None:
+        wrapped = future.result()
+        status = int(wrapped.status)
+        if status != GoalStatus.STATUS_SUCCEEDED:
+            self._fail_sweep_lane_shift_connector(status, "follow_path_failed")
+            return
+        self.sweep_lane_shift_connector_section_index += 1
+        row = self.sweep_lane_shift_connector_row
+        if row is not None:
+            row["completed_section_count"] = (
+                self.sweep_lane_shift_connector_section_index
+            )
+        self._clear_active_goal()
+        self.next_goal_not_before_monotonic = time.monotonic() + 1.0
+        self._write_report()
+
+    def _complete_sweep_lane_shift_connector(self) -> None:
+        index = self.sweep_lane_shift_connector_pending
+        row = self.sweep_lane_shift_connector_row
+        if row is not None:
+            row["terminal_status"] = GoalStatus.STATUS_SUCCEEDED
+            row["succeeded"] = True
+        if index is not None:
+            self.sweep_lane_shift_connector_completed.add(int(index))
+        self.sweep_lane_shift_connector_pending = None
+        self.sweep_lane_shift_connector_sections = []
+        self.sweep_lane_shift_connector_section_index = 0
+        self.sweep_lane_shift_connector_goal = None
+        self.sweep_lane_shift_connector_row = None
+        self._clear_active_goal()
+        self._update_adaptive_goal_distance(True)
+        self._write_report()
+
+    def _fail_sweep_lane_shift_connector(self, status: int, error: str) -> None:
+        row = self.sweep_lane_shift_connector_row
+        if row is not None:
+            row["terminal_status"] = int(status)
+            row["succeeded"] = False
+            row["error"] = error
+        self.last_error = error
+        self.sweep_lane_shift_connector_pending = None
+        self.sweep_lane_shift_connector_sections = []
+        self.sweep_lane_shift_connector_section_index = 0
+        self.sweep_lane_shift_connector_goal = None
+        self.sweep_lane_shift_connector_row = None
+        self._clear_active_goal()
+        self._update_adaptive_goal_distance(False)
+        self.next_goal_not_before_monotonic = time.monotonic() + float(
+            self.get_parameter("failed_goal_cooldown_sec").value
+        )
+        self._write_report()
+
+    def _pose_stamped(self, goal) -> PoseStamped:
+        message = PoseStamped()
+        message.header.frame_id = str(self.get_parameter("map_frame").value)
+        message.header.stamp = self.get_clock().now().to_msg()
+        message.pose.position.x = goal.world_x_m
+        message.pose.position.y = goal.world_y_m
+        message.pose.orientation.z = math.sin(goal.yaw_rad / 2.0)
+        message.pose.orientation.w = math.cos(goal.yaw_rad / 2.0)
+        return message
+
+    def _path_message(self, poses) -> NavPath:
+        message = NavPath()
+        message.header.frame_id = str(self.get_parameter("map_frame").value)
+        message.header.stamp = self.get_clock().now().to_msg()
+        for x, y, yaw in poses:
+            pose = PoseStamped()
+            pose.header = message.header
+            pose.pose.position.x = float(x)
+            pose.pose.position.y = float(y)
+            pose.pose.orientation.z = math.sin(float(yaw) / 2.0)
+            pose.pose.orientation.w = math.cos(float(yaw) / 2.0)
+            message.poses.append(pose)
+        return message
+
+    def _add_excluded_goal(
+        self,
+        world_x_m: float,
+        world_y_m: float,
+        *,
+        ttl_sec: float | None = None,
+    ) -> None:
+        ttl = max(0.0, float(
+            self.get_parameter("failed_goal_exclusion_ttl_sec").value
+            if ttl_sec is None else ttl_sec
+        ))
+        self.excluded_goals.append((
+            float(world_x_m),
+            float(world_y_m),
+            time.monotonic() + ttl,
+        ))
+
+    def _add_goal_exclusions(
+        self, goal, *, ttl_sec: float | None = None
+    ) -> tuple[tuple[float, float], ...]:
+        centers = frontier_goal_exclusion_centers(goal, self.latest_geometry)
+        for center in centers:
+            self._add_excluded_goal(*center, ttl_sec=ttl_sec)
+        if len(centers) > 1:
+            self.raw_frontier_exclusion_count += 1
+        return centers
+
+    def _dispatch_navigation_goal(self, goal, row=None) -> None:
+        message = NavigateToPose.Goal()
+        message.pose = self._pose_stamped(goal)
+        message.behavior_tree = str(self.get_parameter("behavior_tree").value)
+        if row is None:
+            row = self.goal_history[-1]
+        try:
+            future = self.action_client.send_goal_async(message)
+        except Exception as error:  # pragma: no cover - middleware failure path
+            if row.get("goal_kind") == "frontier_detour":
+                self._fail_frontier_detour_plan(
+                    row,
+                    GoalStatus.STATUS_ABORTED,
+                    f"navigation_dispatch_exception:{error}",
+                )
+                return
+            row["terminal_status"] = GoalStatus.STATUS_ABORTED
+            row["succeeded"] = False
+            row["error"] = f"navigation_dispatch_exception:{error}"
+            self.last_error = str(row["error"])
+            if self.active_goal is not None:
+                self._add_goal_exclusions(self.active_goal)
+            self._clear_active_goal()
+            self._update_adaptive_goal_distance(False)
+            self.next_goal_not_before_monotonic = time.monotonic() + float(
+                self.get_parameter("failed_goal_cooldown_sec").value
+            )
+            self._write_report()
+            return
+        future.add_done_callback(
+            lambda completed, active_row=row:
+            self._on_goal_response(completed, active_row)
+        )
+        self._write_report()
+
+    def _send_goal(self, goal, *, goal_kind: str = "frontier") -> None:
+        behavior_tree = str(self.get_parameter("behavior_tree").value)
+        row = {
+            **asdict(goal),
+            "goal_kind": goal_kind,
+            "behavior_tree": behavior_tree,
+            "sequence": len(self.goal_history) + 1,
+            "accepted": None,
+            "terminal_status": None,
+            "map_area_before_m2": float(
+                (self.latest_metrics or {}).get("known_area_m2") or 0.0
+            ),
+            "map_update_count_before": self.map_update_count,
+        }
+        self.goal_history.append(row)
+        self.active_goal = goal
+        timeout_parameter = "goal_timeout_sec"
+        if goal_kind == "horizontal_sweep_staging":
+            timeout_parameter = "horizontal_sweep_staging_timeout_sec"
+        elif goal_kind == "horizontal_sweep_alignment":
+            timeout_parameter = "horizontal_sweep_alignment_timeout_sec"
+        elif goal_kind == "frontier_detour":
+            timeout_parameter = "frontier_detour_timeout_sec"
+        self._start_active_goal_watchdog(
+            float(self.get_parameter(timeout_parameter).value)
+        )
+        self.active_goal_cancel_requested = False
+        self.active_goal_cancel_requested_monotonic = None
+        self._dispatch_navigation_goal(goal, row)
+
+    def _send_backup(
+        self,
+        goal,
+        *,
+        goal_kind: str = "reverse_escape",
+        sweep_target_index: int | None = None,
+    ) -> bool:
+        """Execute a collision-checked straight reverse without global replanning."""
+        if not self.backup_client.server_is_ready():
+            return False
+        message = BackUp.Goal()
+        message.target.x = -goal.distance_m
+        message.speed = -abs(float(
+            self.get_parameter("reverse_escape_speed_mps").value
+        ))
+        message.time_allowance.sec = max(1, int(math.ceil(float(
+            self.get_parameter("goal_timeout_sec").value
+        ))))
+        row = {
+            **asdict(goal),
+            "goal_kind": goal_kind,
+            "execution": "nav2_behaviors_BackUp_collision_checked",
+            "sweep_target_index": sweep_target_index,
+            "sequence": len(self.goal_history) + 1,
+            "accepted": None,
+            "terminal_status": None,
+        }
+        self.goal_history.append(row)
+        self.active_goal = goal
+        self._start_active_goal_watchdog(
+            float(self.get_parameter("goal_timeout_sec").value)
+        )
+        self.active_goal_cancel_requested = False
+        self.active_goal_cancel_requested_monotonic = None
+        future = self.backup_client.send_goal_async(message)
+        future.add_done_callback(
+            lambda completed, active_row=row:
+            self._on_goal_response(completed, active_row)
+        )
+        self._write_report()
+        return True
+
+    def _on_goal_response(self, future, row) -> None:
+        if (
+            not self.goal_history
+            or self.goal_history[-1] is not row
+            or self.active_goal is None
+        ):
+            return
+        try:
+            handle = future.result()
+        except Exception as error:  # pragma: no cover - middleware failure path
+            handle = None
+            row["error"] = f"goal_response_exception:{error}"
+        row["accepted"] = bool(handle and handle.accepted)
+        if handle is None or not handle.accepted:
+            row["terminal_status"] = GoalStatus.STATUS_ABORTED
+            row["succeeded"] = False
+            row.setdefault("error", "goal_rejected")
+            if row.get("goal_kind") == "frontier_detour":
+                row["phase"] = "failed"
+            self.last_error = str(row["error"])
+            if row.get("goal_kind") == "lane_shift_backup":
+                self.sweep_lane_shift_backup_pending = None
+            if row.get("goal_kind") == "frontier":
+                self._queue_frontier_detour_fallback(self.active_goal, row)
+            self._update_adaptive_goal_distance(False)
+            if self.active_goal is not None:
+                self._add_goal_exclusions(self.active_goal)
+            if row.get("goal_kind") == "frontier_detour":
+                self.frontier_detour_source_goal = None
+                self.frontier_detour_row = None
+            self._clear_active_goal()
+            self.next_goal_not_before_monotonic = time.monotonic() + float(
+                self.get_parameter("failed_goal_cooldown_sec").value
+            )
+            self._write_report()
+            return
+        self.active_goal_handle = handle
+        if row.get("goal_kind") == "frontier_detour":
+            row["phase"] = "navigation_active"
+        result_future = handle.get_result_async()
+        result_future.add_done_callback(
+            lambda completed, active_row=row:
+            self._on_goal_result(completed, active_row)
+        )
+
+    def _on_goal_result(self, future, row) -> None:
+        if (
+            not self.goal_history
+            or self.goal_history[-1] is not row
+            or self.active_goal is None
+        ):
+            return
+        try:
+            wrapped = future.result()
+            status = int(wrapped.status)
+        except Exception as error:  # pragma: no cover - middleware failure path
+            status = GoalStatus.STATUS_ABORTED
+            row["error"] = f"goal_result_exception:{error}"
+            self.last_error = str(row["error"])
+        timed_out = self.active_goal_cancel_requested
+        succeeded = status == GoalStatus.STATUS_SUCCEEDED
+        row["terminal_status"] = status
+        row["succeeded"] = succeeded
+        if row.get("goal_kind") == "frontier_detour":
+            row["phase"] = "completed" if succeeded else "failed"
+        mapping_progress = succeeded
+        if succeeded:
+            self.horizontal_sweep_frontier_wait_streak = 0
+        if succeeded and row.get("goal_kind") in {
+            "frontier",
+            "frontier_detour",
+        }:
+            area_after = float(
+                (self.latest_metrics or {}).get("known_area_m2") or 0.0
+            )
+            row["map_area_after_m2"] = area_after
+            row["map_update_count_after"] = self.map_update_count
+            if self.map_update_count > int(row["map_update_count_before"]):
+                (
+                    self.frontier_no_progress_success_streak,
+                    recovery_action,
+                    map_gain,
+                ) = next_no_progress_frontier_state(
+                    self.frontier_no_progress_success_streak,
+                    map_area_before_m2=float(row["map_area_before_m2"]),
+                    map_area_after_m2=area_after,
+                    minimum_gain_m2=float(
+                        self.get_parameter("minimum_frontier_map_gain_m2").value
+                    ),
+                    successes_before_staging=int(
+                        self.get_parameter(
+                            "no_progress_staging_success_limit"
+                        ).value
+                    ),
+                    successes_before_raw_exclusion=int(
+                        self.get_parameter(
+                            "no_progress_raw_frontier_success_limit"
+                        ).value
+                    ),
+                )
+                row["map_progress_evaluated"] = True
+                row["map_area_gain_m2"] = map_gain
+                mapping_progress = map_gain + 1.0e-9 >= float(
+                    self.get_parameter("minimum_frontier_map_gain_m2").value
+                )
+                row["mapping_progress"] = mapping_progress
+                if not mapping_progress:
+                    self.frontier_no_progress_success_count += 1
+                adjusted_recovery_action = no_progress_recovery_action_for_sweep(
+                    recovery_action,
+                    sweep_axis=self.sweep_active_axis,
+                )
+                if adjusted_recovery_action != recovery_action:
+                    row["horizontal_sweep_raw_exclusion_suppressed"] = True
+                    self.horizontal_sweep_raw_exclusion_suppressed_count += 1
+                recovery_action = adjusted_recovery_action
+                if recovery_action == "staging":
+                    row["horizontal_sweep_staging_armed"] = True
+                    row["no_progress_recovery_action"] = "staging"
+                    self.horizontal_sweep_staging_pending = True
+                    self.horizontal_sweep_staging_arm_count += 1
+                    self.last_error = (
+                        "frontier_success_without_map_progress_staging_armed"
+                    )
+                elif recovery_action == "raw_and_staging":
+                    centers = self._add_goal_exclusions(
+                        self.active_goal,
+                        ttl_sec=float(self.get_parameter(
+                            "no_progress_raw_exclusion_ttl_sec"
+                        ).value),
+                    )
+                    row["no_progress_exclusion"] = True
+                    row["no_progress_exclusion_scope"] = "endpoint_and_raw"
+                    row["horizontal_sweep_staging_armed"] = True
+                    row["no_progress_recovery_action"] = "raw_and_staging"
+                    row["excluded_centers_xy_m"] = [
+                        list(center) for center in centers
+                    ]
+                    self.frontier_no_progress_exclusion_count += 1
+                    self.frontier_no_progress_raw_exclusion_count += 1
+                    self.horizontal_sweep_staging_pending = True
+                    self.horizontal_sweep_staging_arm_count += 1
+                    self.last_error = (
+                        "frontier_success_without_map_progress_raw_excluded"
+                    )
+            else:
+                # Do not classify against stale map state. The next goal will
+                # carry a new baseline once an OccupancyGrid update arrives.
+                row["map_progress_evaluated"] = False
+                row["mapping_progress"] = None
+        if row.get("goal_kind") == "lane_shift_backup":
+            index = row.get("sweep_target_index")
+            if succeeded and index is not None:
+                self.sweep_lane_shift_backup_completed.add(int(index))
+            self.sweep_lane_shift_backup_pending = None
+        if row.get("goal_kind") == "horizontal_sweep_staging":
+            if succeeded:
+                self.horizontal_sweep_staging_success_count += 1
+                self.horizontal_sweep_staging_pending = True
+                self.horizontal_sweep_staging_chain_rearm_count += 1
+                row["horizontal_sweep_staging_chain_rearmed"] = True
+            else:
+                self.horizontal_sweep_staging_failure_count += 1
+        if row.get("goal_kind") == "horizontal_sweep_alignment":
+            if succeeded:
+                self.horizontal_sweep_alignment_success_count += 1
+                self.horizontal_sweep_staging_pending = True
+            else:
+                self.horizontal_sweep_alignment_failure_count += 1
+        self._update_adaptive_goal_distance(mapping_progress)
+        if not succeeded:
+            if row.get("goal_kind") == "frontier":
+                self._queue_frontier_detour_fallback(self.active_goal, row)
+            self._exclude_failed_goal(
+                self.active_goal,
+                wide_exclusion=(
+                    timed_out or status == GoalStatus.STATUS_ABORTED
+                ),
+            )
+            self.next_goal_not_before_monotonic = time.monotonic() + float(
+                self.get_parameter("failed_goal_cooldown_sec").value
+            )
+        if row.get("goal_kind") == "frontier_detour":
+            self.frontier_detour_source_goal = None
+            self.frontier_detour_row = None
+        self._clear_active_goal()
+        if timed_out:
+            self._begin_nav_recovery()
+        self._write_report()
+
+    def _update_adaptive_goal_distance(self, succeeded: bool) -> None:
+        (
+            self.adaptive_goal_distance_m,
+            self.goal_distance_success_streak,
+        ) = next_adaptive_goal_distance(
+            self.adaptive_goal_distance_m,
+            self.goal_distance_success_streak,
+            succeeded=succeeded,
+            minimum_distance_m=float(
+                self.get_parameter("initial_frontier_goal_distance_m").value
+            ),
+            maximum_distance_m=float(
+                self.get_parameter("maximum_frontier_goal_distance_m").value
+            ),
+            successes_per_growth=int(
+                self.get_parameter("goal_distance_growth_success_count").value
+            ),
+            growth_step_m=float(
+                self.get_parameter("goal_distance_growth_step_m").value
+            ),
+        )
+
+    def _exclude_failed_goal(self, goal, *, wide_exclusion: bool) -> None:
+        centers = self._add_goal_exclusions(goal)
+        if not wide_exclusion:
+            return
+        base_radius = float(
+            self.get_parameter("failed_goal_exclusion_radius_m").value
+        )
+        timeout_radius = float(
+            self.get_parameter("timed_out_goal_exclusion_radius_m").value
+        )
+        ring_radius = max(0.0, timeout_radius - base_radius)
+        if ring_radius <= 1.0e-9:
+            return
+        for center in centers:
+            for index in range(8):
+                angle = index * math.pi / 4.0
+                self._add_excluded_goal(
+                    center[0] + ring_radius * math.cos(angle),
+                    center[1] + ring_radius * math.sin(angle),
+                )
+
+    def _begin_nav_recovery(self) -> None:
+        self.nav_recovery_count += 1
+        if not self.nav_manager_client.service_is_ready():
+            self.nav_recovery_status = "manager_service_unavailable"
+            self.next_goal_not_before_monotonic = time.monotonic() + 30.0
+            return
+        self.nav_recovery_in_progress = True
+        self.nav_recovery_status = "reset_requested"
+        request = ManageLifecycleNodes.Request()
+        request.command = ManageLifecycleNodes.Request.RESET
+        future = self.nav_manager_client.call_async(request)
+        future.add_done_callback(self._on_nav_reset)
+
+    def _on_nav_reset(self, future) -> None:
+        try:
+            response = future.result()
+        except Exception as error:  # pragma: no cover - middleware failure path
+            self.nav_recovery_in_progress = False
+            self.nav_recovery_status = f"reset_exception:{error}"
+            self.next_goal_not_before_monotonic = time.monotonic() + 30.0
+            self._write_report()
+            return
+        if response is None or not response.success:
+            self.nav_recovery_in_progress = False
+            self.nav_recovery_status = "reset_failed"
+            self.next_goal_not_before_monotonic = time.monotonic() + 30.0
+            self._write_report()
+            return
+        self.nav_recovery_status = "startup_requested"
+        request = ManageLifecycleNodes.Request()
+        request.command = ManageLifecycleNodes.Request.STARTUP
+        startup = self.nav_manager_client.call_async(request)
+        startup.add_done_callback(self._on_nav_startup)
+
+    def _on_nav_startup(self, future) -> None:
+        try:
+            response = future.result()
+            success = bool(response and response.success)
+        except Exception as error:  # pragma: no cover - middleware failure path
+            success = False
+            self.nav_recovery_status = f"startup_exception:{error}"
+        if success:
+            self.nav_recovery_status = "recovered"
+            self.next_goal_not_before_monotonic = time.monotonic() + 5.0
+        elif not self.nav_recovery_status.startswith("startup_exception:"):
+            self.nav_recovery_status = "startup_failed"
+            self.next_goal_not_before_monotonic = time.monotonic() + 30.0
+        self.nav_recovery_in_progress = False
+        self._write_report()
+
+    def _finish(self, success: bool, reason: str) -> None:
+        self.terminal = True
+        self.success = success
+        self.terminal_reason = reason
+        self._write_report()
+        self.get_logger().info(
+            json.dumps(
+                {"success": success, "terminal_reason": reason},
+                ensure_ascii=False,
+            )
+        )
+
+    def _report(self) -> dict:
+        metrics = self.latest_metrics or {}
+        required_area = metrics.get("required_bounds_area_m2")
+        coverage = metrics.get("required_bounds_known_coverage_ratio")
+        mapping_area = metrics.get("known_area_m2") or 0.0
+        return {
+            "schema_version": 1,
+            "stage": "PRODUCT-MAPPING-EXPLORATION",
+            "success": self.success,
+            "terminal": self.terminal,
+            "terminal_reason": self.terminal_reason,
+            "elapsed_wall_sec": time.monotonic() - self.started_monotonic,
+            "mapping_area_m2": mapping_area,
+            "required_bounds_xyxy_m": list(self.required_bounds),
+            "required_bounds_coverage_threshold": float(
+                self.get_parameter("required_bounds_coverage_ratio").value
+            ),
+            "completion_basis": (
+                "required_bounds_envelope_coverage_and_total_known_area"
+            ),
+            "required_bounds_goal_margin_m": float(
+                self.get_parameter("required_bounds_goal_margin_m").value
+            ),
+            "frontier_connection_radius_cells": int(
+                self.get_parameter("frontier_connection_radius_cells").value
+            ),
+            "frontier_goal_backoff_m": float(
+                self.get_parameter("frontier_goal_backoff_m").value
+            ),
+            "maximum_frontier_goal_distance_m": float(
+                self.get_parameter("maximum_frontier_goal_distance_m").value
+            ),
+            "maximum_frontier_detour_distance_m": float(
+                self.get_parameter("maximum_frontier_detour_distance_m").value
+            ),
+            "frontier_detour_timeout_sec": float(
+                self.get_parameter("frontier_detour_timeout_sec").value
+            ),
+            "frontier_detour_plan_endpoint_tolerance_m": float(
+                self.get_parameter(
+                    "frontier_detour_plan_endpoint_tolerance_m"
+                ).value
+            ),
+            "adaptive_frontier_goal_distance_m": self.adaptive_goal_distance_m,
+            "goal_distance_success_streak": self.goal_distance_success_streak,
+            "maximum_frontier_goal_yaw_change_rad": float(
+                self.get_parameter("maximum_frontier_goal_yaw_change_rad").value
+            ),
+            "minimum_frontier_arc_yaw_change_rad": float(
+                self.get_parameter("minimum_frontier_arc_yaw_change_rad").value
+            ),
+            "goal_timeout_sec": float(
+                self.get_parameter("goal_timeout_sec").value
+            ),
+            "goal_progress_distance_m": float(
+                self.get_parameter("goal_progress_distance_m").value
+            ),
+            "goal_progress_map_gain_m2": float(
+                self.get_parameter("goal_progress_map_gain_m2").value
+            ),
+            "goal_absolute_timeout_multiplier": float(
+                self.get_parameter("goal_absolute_timeout_multiplier").value
+            ),
+            "active_goal_progress_event_count": (
+                self.active_goal_progress_event_count
+                if self.active_goal is not None else 0
+            ),
+            "goal_cancel_grace_sec": float(
+                self.get_parameter("goal_cancel_grace_sec").value
+            ),
+            "failed_goal_cooldown_sec": float(
+                self.get_parameter("failed_goal_cooldown_sec").value
+            ),
+            "failed_goal_exclusion_ttl_sec": float(
+                self.get_parameter("failed_goal_exclusion_ttl_sec").value
+            ),
+            "minimum_frontier_map_gain_m2": float(
+                self.get_parameter("minimum_frontier_map_gain_m2").value
+            ),
+            "no_progress_staging_success_limit": int(
+                self.get_parameter("no_progress_staging_success_limit").value
+            ),
+            "no_progress_raw_frontier_success_limit": int(
+                self.get_parameter(
+                    "no_progress_raw_frontier_success_limit"
+                ).value
+            ),
+            "no_progress_raw_exclusion_ttl_sec": float(
+                self.get_parameter("no_progress_raw_exclusion_ttl_sec").value
+            ),
+            "horizontal_sweep_staging_distances_m": [
+                float(value) for value in self.get_parameter(
+                    "horizontal_sweep_staging_distances_m"
+                ).value
+            ],
+            "horizontal_sweep_staging_path_sample_spacing_m": float(
+                self.get_parameter(
+                    "horizontal_sweep_staging_path_sample_spacing_m"
+                ).value
+            ),
+            "horizontal_sweep_staging_timeout_sec": float(
+                self.get_parameter("horizontal_sweep_staging_timeout_sec").value
+            ),
+            "horizontal_sweep_alignment_timeout_sec": float(
+                self.get_parameter(
+                    "horizontal_sweep_alignment_timeout_sec"
+                ).value
+            ),
+            "horizontal_sweep_alignment_distance_m": float(
+                self.get_parameter("horizontal_sweep_alignment_distance_m").value
+            ),
+            "horizontal_sweep_alignment_tolerance_rad": float(
+                self.get_parameter(
+                    "horizontal_sweep_alignment_tolerance_rad"
+                ).value
+            ),
+            "horizontal_sweep_frontier_wait_before_route_recovery_count": int(
+                self.get_parameter(
+                    "horizontal_sweep_frontier_wait_before_route_recovery_count"
+                ).value
+            ),
+            "horizontal_sweep_frontier_wait_failure_limit": int(
+                self.get_parameter(
+                    "horizontal_sweep_frontier_wait_failure_limit"
+                ).value
+            ),
+            "horizontal_sweep_route_recovery_max_distance_m": float(
+                self.get_parameter(
+                    "horizontal_sweep_route_recovery_max_distance_m"
+                ).value
+            ),
+            "horizontal_sweep_route_recovery_sample_spacing_m": float(
+                self.get_parameter(
+                    "horizontal_sweep_route_recovery_sample_spacing_m"
+                ).value
+            ),
+            "active_failed_goal_exclusion_count": len(self.excluded_goals),
+            "frontier_exclusion_wait_count": self.frontier_exclusion_wait_count,
+            "reverse_escape_goal_count": self.reverse_escape_goal_count,
+            "reverse_escape_distance_m": float(
+                self.get_parameter("reverse_escape_distance_m").value
+            ),
+            "reverse_escape_speed_mps": float(
+                self.get_parameter("reverse_escape_speed_mps").value
+            ),
+            "reverse_escape_execution": (
+                "nav2_behaviors_BackUp_collision_checked"
+            ),
+            "frontier_sweep_enabled": bool(
+                self.get_parameter("frontier_sweep_enabled").value
+            ),
+            "frontier_sweep_source": (
+                "required_bounds_and_configured_lidar_range"
+            ),
+            "mapping_sensor_range_m": float(
+                self.get_parameter("mapping_sensor_range_m").value
+            ),
+            "frontier_sweep_lane_overlap_m": float(
+                self.get_parameter("frontier_sweep_lane_overlap_m").value
+            ),
+            "frontier_sweep_target_tolerance_m": float(
+                self.get_parameter("frontier_sweep_target_tolerance_m").value
+            ),
+            "frontier_sweep_mapped_target_radius_m": float(
+                self.get_parameter(
+                    "frontier_sweep_mapped_target_radius_m"
+                ).value
+            ),
+            "frontier_sweep_lane_shift_backup_distance_m": float(
+                self.get_parameter(
+                    "frontier_sweep_lane_shift_backup_distance_m"
+                ).value
+            ),
+            "frontier_sweep_lane_shift_backup_count": (
+                self.sweep_lane_shift_backup_count
+            ),
+            "frontier_sweep_lane_shift_backup_max_attempts": int(
+                self.get_parameter(
+                    "frontier_sweep_lane_shift_backup_max_attempts"
+                ).value
+            ),
+            "frontier_sweep_lane_shift_backup_attempts_by_index": {
+                str(index): attempts
+                for index, attempts in sorted(
+                    self.sweep_lane_shift_backup_attempts.items()
+                )
+            },
+            "frontier_sweep_lane_shift_backup_completed_indices": sorted(
+                self.sweep_lane_shift_backup_completed
+            ),
+            "frontier_sweep_lane_shift_backup_skipped_indices": sorted(
+                self.sweep_lane_shift_backup_skipped
+            ),
+            "frontier_sweep_lane_shift_locked_x_by_index": {
+                str(index): value
+                for index, value in sorted(self.sweep_lane_shift_locked_x.items())
+            },
+            "frontier_sweep_lane_shift_connector_distances_m": [
+                float(value) for value in self.get_parameter(
+                    "frontier_sweep_lane_shift_connector_distances_m"
+                ).value
+            ],
+            "frontier_sweep_lane_shift_connector_execution": (
+                "analytic_forward_dubins_then_smac_fallback"
+            ),
+            "frontier_sweep_lane_shift_connector_timeout_sec": float(
+                self.get_parameter("lane_shift_connector_timeout_sec").value
+            ),
+            "frontier_sweep_lane_shift_connector_completed_indices": sorted(
+                self.sweep_lane_shift_connector_completed
+            ),
+            "frontier_sweep_lane_shift_connector_attempts_by_index": {
+                str(index): value for index, value in sorted(
+                    self.sweep_lane_shift_connector_attempts.items()
+                )
+            },
+            "frontier_sweep_target_index": self.sweep_target_index,
+            "frontier_sweep_target_count": len(self.sweep_targets),
+            "frontier_sweep_targets_xy_m": [
+                list(target) for target in self.sweep_targets
+            ],
+            "frontier_sweep_active_target_xy_m": (
+                list(self.sweep_active_anchor)
+                if self.sweep_active_anchor is not None else None
+            ),
+            "frontier_sweep_active_preference_xy_m": (
+                list(self.sweep_active_preference)
+                if self.sweep_active_preference is not None else None
+            ),
+            "frontier_sweep_active_axis": self.sweep_active_axis,
+            "frontier_sweep_completed": self.sweep_completed,
+            "timed_out_goal_exclusion_radius_m": float(
+                self.get_parameter("timed_out_goal_exclusion_radius_m").value
+            ),
+            "nav_recovery_count": self.nav_recovery_count,
+            "nav_recovery_status": self.nav_recovery_status,
+            "minimum_turning_radius_m": float(
+                self.get_parameter("minimum_turning_radius_m").value
+            ),
+            "boundary_turn_buffer_m": float(
+                self.get_parameter("boundary_turn_buffer_m").value
+            ),
+            "map_update_count": self.map_update_count,
+            "costmap_rejected_goal_count": self.costmap_rejected_goal_count,
+            "online_map_rejected_goal_count": (
+                self.online_map_rejected_goal_count
+            ),
+            "goal_and_path_clearance_sources": [
+                "online_occupancy_map",
+                "nav2_global_costmap",
+            ],
+            "goal_and_path_clearance_source_policies": {
+                "online_occupancy_map": "occupied_veto_unknown_deferred",
+                "nav2_global_costmap": "unknown_occupied_and_cost_veto",
+            },
+            "goal_and_path_clearance_footprint": {
+                "front_m": float(self.get_parameter("footprint_front_m").value),
+                "rear_m": float(self.get_parameter("footprint_rear_m").value),
+                "half_width_m": float(
+                    self.get_parameter("footprint_half_width_m").value
+                ),
+                "clearance_margin_m": float(
+                    self.get_parameter("footprint_clearance_margin_m").value
+                ),
+                "cell_intersection_padding": "half_cell_diagonal",
+            },
+            "goal_and_path_clearance_basis": (
+                "oriented_production_footprint_plus_0.15m_reserve"
+            ),
+            "frontier_detour_goal_count": self.frontier_detour_goal_count,
+            "frontier_detour_plan_failure_count": (
+                self.frontier_detour_plan_failure_count
+            ),
+            "frontier_detour_path_rejected_count": (
+                self.frontier_detour_path_rejected_count
+            ),
+            "frontier_detour_fallback_queued_count": (
+                self.frontier_detour_fallback_queued_count
+            ),
+            "pending_frontier_detour_source_xy_m": (
+                [
+                    self.pending_frontier_detour_source_goal.world_x_m,
+                    self.pending_frontier_detour_source_goal.world_y_m,
+                ]
+                if self.pending_frontier_detour_source_goal is not None
+                else None
+            ),
+            "raw_frontier_exclusion_count": self.raw_frontier_exclusion_count,
+            "frontier_no_progress_success_count": (
+                self.frontier_no_progress_success_count
+            ),
+            "frontier_no_progress_success_streak": (
+                self.frontier_no_progress_success_streak
+            ),
+            "frontier_no_progress_exclusion_count": (
+                self.frontier_no_progress_exclusion_count
+            ),
+            "frontier_no_progress_raw_exclusion_count": (
+                self.frontier_no_progress_raw_exclusion_count
+            ),
+            "horizontal_sweep_raw_exclusion_suppressed_count": (
+                self.horizontal_sweep_raw_exclusion_suppressed_count
+            ),
+            "horizontal_sweep_frontier_wait_count": (
+                self.horizontal_sweep_frontier_wait_count
+            ),
+            "horizontal_sweep_frontier_wait_streak": (
+                self.horizontal_sweep_frontier_wait_streak
+            ),
+            "horizontal_sweep_route_recovery_attempt_count": (
+                self.horizontal_sweep_route_recovery_attempt_count
+            ),
+            "horizontal_sweep_route_recovery_unavailable_count": (
+                self.horizontal_sweep_route_recovery_unavailable_count
+            ),
+            "horizontal_sweep_staging_exhaustion_arm_count": (
+                self.horizontal_sweep_staging_exhaustion_arm_count
+            ),
+            "horizontal_sweep_staging_pending": (
+                self.horizontal_sweep_staging_pending
+            ),
+            "horizontal_sweep_staging_arm_count": (
+                self.horizontal_sweep_staging_arm_count
+            ),
+            "horizontal_sweep_staging_attempt_count": (
+                self.horizontal_sweep_staging_attempt_count
+            ),
+            "horizontal_sweep_staging_success_count": (
+                self.horizontal_sweep_staging_success_count
+            ),
+            "horizontal_sweep_staging_failure_count": (
+                self.horizontal_sweep_staging_failure_count
+            ),
+            "horizontal_sweep_staging_chain_rearm_count": (
+                self.horizontal_sweep_staging_chain_rearm_count
+            ),
+            "horizontal_sweep_staging_unavailable_count": (
+                self.horizontal_sweep_staging_unavailable_count
+            ),
+            "horizontal_sweep_staging_behind_chassis_count": (
+                self.horizontal_sweep_staging_behind_chassis_count
+            ),
+            "horizontal_sweep_staging_path_rejected_count": (
+                self.horizontal_sweep_staging_path_rejected_count
+            ),
+            "horizontal_sweep_alignment_attempt_count": (
+                self.horizontal_sweep_alignment_attempt_count
+            ),
+            "horizontal_sweep_alignment_success_count": (
+                self.horizontal_sweep_alignment_success_count
+            ),
+            "horizontal_sweep_alignment_failure_count": (
+                self.horizontal_sweep_alignment_failure_count
+            ),
+            "horizontal_sweep_alignment_unavailable_count": (
+                self.horizontal_sweep_alignment_unavailable_count
+            ),
+            "map_metrics": metrics,
+            "goal_count": len(self.goal_history),
+            "goal_success_count": sum(
+                row.get("succeeded") is True for row in self.goal_history
+            ),
+            "goal_failure_count": sum(
+                row.get("succeeded") is False for row in self.goal_history
+            ),
+            "goals": self.goal_history,
+            "last_pose_map": list(self.last_pose) if self.last_pose else None,
+            "last_error": self.last_error,
+            "ground_truth_used_for_control": False,
+            "ground_truth_subscription_count": 0,
+            "preknown_target_coordinates": False,
+            "control_input": (
+                "online_occupancy_grid_frontiers_map_to_base_tf_and_"
+                "bounds_derived_lidar_sweep_preference"
+                if bool(self.get_parameter("frontier_sweep_enabled").value)
+                else "online_occupancy_grid_frontiers_and_map_to_base_tf"
+            ),
+            "positioning_source": str(
+                self.get_parameter("positioning_source").value
+            ),
+            "behavior_tree": str(self.get_parameter("behavior_tree").value),
+        }
+
+    def _write_report(self) -> None:
+        with self.report_write_lock:
+            self.output_path.parent.mkdir(parents=True, exist_ok=True)
+            temporary = self.output_path.with_suffix(
+                self.output_path.suffix + ".tmp"
+            )
+            temporary.write_text(
+                json.dumps(self._report(), ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            temporary.replace(self.output_path)
+
+
+def main(args=None) -> None:
+    rclpy.init(args=args)
+    node = FrontierExplorer()
+    try:
+        while rclpy.ok() and not node.terminal:
+            rclpy.spin_once(node, timeout_sec=0.2)
+        code = 0 if node.success else 2
+    finally:
+        node.destroy_node()
+        rclpy.shutdown()
+    raise SystemExit(code)
+
+
+if __name__ == "__main__":
+    main()

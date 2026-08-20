@@ -1,8 +1,0 @@
-{
-  "source_commit": "8549422a3968942a807e2d517879e72c6c1083f4",
-  "clone_type": "fresh detached clean worktree from fetched origin/main",
-  "git_status_clean": true,
-  "ci_fast_pass": true,
-  "ci_fast_tests": 154,
-  "ros_build_test_pass": true
-}

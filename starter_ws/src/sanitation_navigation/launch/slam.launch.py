@@ -43,6 +43,16 @@ def generate_launch_description():
             ),
             Node(
                 package='sanitation_safety',
+                executable='safety_authority',
+                name='mapping_safety_authority',
+                output='screen',
+                parameters=[{
+                    'use_sim_time': LaunchConfiguration('use_sim_time'),
+                    'startup_emergency_stopped': False,
+                }],
+            ),
+            Node(
+                package='sanitation_safety',
                 executable='velocity_gate',
                 name='mapping_velocity_gate',
                 output='screen',

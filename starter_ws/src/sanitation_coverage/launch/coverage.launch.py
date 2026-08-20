@@ -24,7 +24,8 @@ def generate_launch_description():
                     'robot_width': ParameterValue(
                         PythonExpression([
                             "1.32 if '", LaunchConfiguration('footprint_profile'),
-                            "' == 'auto12_efficiency_v1' else (0.83 if '",
+                            "' in ('production', 'auto12_efficiency_v1', "
+                            "'autonomous_navigation_profile_v1') else (0.83 if '",
                             LaunchConfiguration('footprint_profile'),
                             "' == 'stage5br6w_v4' else 0.72)",
                         ]),

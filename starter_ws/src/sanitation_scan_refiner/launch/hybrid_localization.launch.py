@@ -42,6 +42,10 @@ def generate_launch_description():
             DeclareLaunchArgument('initial_pose_x', default_value='0.0'),
             DeclareLaunchArgument('initial_pose_y', default_value='0.0'),
             DeclareLaunchArgument('initial_pose_yaw', default_value='0.0'),
+            DeclareLaunchArgument('world_to_map_x', default_value='0.0'),
+            DeclareLaunchArgument('world_to_map_y', default_value='0.0'),
+            DeclareLaunchArgument('world_to_map_yaw', default_value='0.0'),
+            DeclareLaunchArgument('respawn_fuser', default_value='false'),
             Node(
                 package='sanitation_scan_refiner',
                 executable='scan_refiner_node',
@@ -63,6 +67,8 @@ def generate_launch_description():
                 executable='hybrid_global_fuser_node',
                 name='hybrid_global_fuser',
                 output='screen',
+                respawn=LaunchConfiguration('respawn_fuser'),
+                respawn_delay=1.0,
                 parameters=[
                     LaunchConfiguration('hybrid_config_file'),
                     {
@@ -74,6 +80,9 @@ def generate_launch_description():
                         'initial_pose_x': LaunchConfiguration('initial_pose_x'),
                         'initial_pose_y': LaunchConfiguration('initial_pose_y'),
                         'initial_pose_yaw': LaunchConfiguration('initial_pose_yaw'),
+                        'world_to_map_x': LaunchConfiguration('world_to_map_x'),
+                        'world_to_map_y': LaunchConfiguration('world_to_map_y'),
+                        'world_to_map_yaw': LaunchConfiguration('world_to_map_yaw'),
                     },
                 ],
             ),

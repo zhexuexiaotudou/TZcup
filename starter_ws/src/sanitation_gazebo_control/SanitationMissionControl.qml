@@ -28,6 +28,14 @@ Rectangle {
     var v = Number(value(name, 0))
     return (isFinite(v) ? v.toFixed(digits) : "--") + suffix
   }
+  function nested(group, name, fallback) {
+    var value = telemetry[group]
+    return (!value || value[name] === undefined || value[name] === null) ? fallback : value[name]
+  }
+  function nestedNumber(group, name, digits, suffix) {
+    var v = Number(nested(group, name, NaN))
+    return (isFinite(v) ? v.toFixed(digits) : "--") + suffix
+  }
 
   Connections {
     target: SanitationMissionControl
@@ -187,6 +195,10 @@ Rectangle {
             for (j = 0; j < layer.length; ++j) line(layer[j], "#a855f7", 2.2, false)
             layer = paths.planned_connectors || []
             for (j = 0; j < layer.length; ++j) line(layer[j], "#aab7c4", 1.6, true)
+            layer = paths.planned_ackermann_forward || []
+            for (j = 0; j < layer.length; ++j) line(layer[j], "#36a3ff", 2.0, false)
+            layer = paths.planned_ackermann_reverse || []
+            for (j = 0; j < layer.length; ++j) line(layer[j], "#ff9f43", 2.0, true)
             line(paths.current_component || root.value("planned_path", []), "#ffffff", 3.0, false)
           }
           if (root.showRepairs) {
@@ -200,6 +212,10 @@ Rectangle {
             for (j = 0; j < layer.length; ++j) line(layer[j], "#5f6b76", 1.8, false)
             layer = paths.actual_cleaning || []
             for (j = 0; j < layer.length; ++j) line(layer[j], "#2ed47a", 2.8, false)
+            layer = paths.actual_forward || []
+            for (j = 0; j < layer.length; ++j) line(layer[j], "#36a3ff", 2.2, false)
+            layer = paths.actual_reverse || []
+            for (j = 0; j < layer.length; ++j) line(layer[j], "#ff9f43", 2.2, true)
             if (!layer.length) line(root.value("trajectory", []), "#2ed47a", 2.8, false)
           }
           layer = paths.blocked_intervals || root.value("blocked_intervals", [])
@@ -265,6 +281,27 @@ Rectangle {
               Label { anchors.horizontalCenter: parent.horizontalCenter; text: modelData[1]; color: "#f4f7fb"; font.pixelSize: 14; font.bold: true }
             }
           }
+        }
+      }
+
+      Rectangle {
+        Layout.fillWidth: true
+        Layout.leftMargin: 16
+        Layout.rightMargin: 16
+        height: 112
+        radius: 6
+        color: "#15283b"
+        border.color: "#2b4965"
+        GridLayout {
+          anchors.fill: parent
+          anchors.margins: 10
+          columns: 2
+          Label { text: "GEAR  " + root.nested("motion", "gear", "STOP"); color: "#ffc857"; font.bold: true }
+          Label { text: "CONNECTOR  " + root.nested("motion", "connector_type", "NONE"); color: "#d9e4ef" }
+          Label { text: "STEER L/R  " + root.nestedNumber("steering", "front_left_rad", 3, "") + " / " + root.nestedNumber("steering", "front_right_rad", 3, " rad"); color: "#d9e4ef" }
+          Label { text: "VIRTUAL  " + root.nestedNumber("steering", "virtual_deg", 1, " deg"); color: "#57e0b5" }
+          Label { text: "CURVATURE  " + root.nestedNumber("motion", "curvature_1pm", 3, " 1/m"); color: "#d9e4ef" }
+          Label { text: "RADIUS  " + root.nestedNumber("motion", "turning_radius_m", 2, " m") + "  (min " + root.nestedNumber("steering", "configured_min_radius_m", 2, " m") + ")"; color: "#d9e4ef" }
         }
       }
 

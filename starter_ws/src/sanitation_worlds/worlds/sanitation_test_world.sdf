@@ -8,10 +8,23 @@
     <plugin filename="gz-sim-sensors-system" name="gz::sim::systems::Sensors">
       <render_engine>ogre2</render_engine>
     </plugin>
+    <plugin filename="gz-sim-navsat-system" name="gz::sim::systems::NavSat"/>
+    <spherical_coordinates>
+      <surface_model>EARTH_WGS84</surface_model>
+      <world_frame_orientation>ENU</world_frame_orientation>
+      <latitude_deg>31.2304</latitude_deg>
+      <longitude_deg>121.4737</longitude_deg>
+      <elevation>0</elevation>
+      <heading_deg>0</heading_deg>
+    </spherical_coordinates>
 
     <gravity>0 0 -9.81</gravity>
     <physics name="1ms" type="ignored">
       <max_step_size>0.005</max_step_size>
+      <!-- Gazebo treats an omitted/zero update rate as unbounded.  Keep the
+           product clock at 1x so sensors, TF and Nav2 share a sustainable
+           time base: 200 Hz * 5 ms = real_time_factor 1.0. -->
+      <real_time_update_rate>200</real_time_update_rate>
       <real_time_factor>1.0</real_time_factor>
     </physics>
 

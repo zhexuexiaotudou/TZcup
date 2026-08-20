@@ -27,6 +27,7 @@ from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PythonExpression
 from launch_ros.actions import Node, SetRemap
 from launch_ros.parameter_descriptions import ParameterValue
+from nav2_common.launch import ReplaceString
 
 
 def generate_launch_description():
@@ -47,6 +48,19 @@ def generate_launch_description():
 
     use_sim_time = LaunchConfiguration('use_sim_time')
     params_file = LaunchConfiguration('params_file')
+    configured_params = ReplaceString(
+        source_file=params_file,
+        replacements={
+            '__ACKERMANN_NAV_TO_POSE_BT__': os.path.join(
+                package_share, 'behavior_trees', 'navigate_to_pose_ackermann.xml'
+            ),
+            '__ACKERMANN_NAV_THROUGH_POSES_BT__': os.path.join(
+                package_share,
+                'behavior_trees',
+                'navigate_through_poses_ackermann.xml',
+            ),
+        },
+    )
     map_file = LaunchConfiguration('map_file')
     keepout_map = LaunchConfiguration('keepout_map')
     speed_map = LaunchConfiguration('speed_map')
@@ -56,12 +70,16 @@ def generate_launch_description():
     initial_pose_y = LaunchConfiguration('initial_pose_y')
     initial_pose_yaw = LaunchConfiguration('initial_pose_yaw')
     localization_backend = LaunchConfiguration('localization_backend')
+    enable_filters = LaunchConfiguration('enable_filters')
     slam_params_file = LaunchConfiguration('slam_params_file')
     amcl_condition = IfCondition(
         PythonExpression(["'", localization_backend, "' == 'amcl'"])
     )
     slam_condition = IfCondition(
         PythonExpression(["'", localization_backend, "' == 'slam_toolbox'"])
+    )
+    external_condition = IfCondition(
+        PythonExpression(["'", localization_backend, "' == 'external'"])
     )
     auto01_height_banded_condition = IfCondition(
         PythonExpression([
@@ -84,7 +102,7 @@ def generate_launch_description():
             name='map_server',
             output='screen',
             condition=amcl_condition,
-            parameters=[params_file, {'yaml_filename': map_file}],
+            parameters=[configured_params, {'yaml_filename': map_file}],
         ),
         Node(
             package='nav2_amcl',
@@ -92,11 +110,14 @@ def generate_launch_description():
             name='amcl',
             output='screen',
             condition=amcl_condition,
-            parameters=[params_file, {
+            parameters=[configured_params, {
                 'initial_pose.x': ParameterValue(initial_pose_x, value_type=float),
                 'initial_pose.y': ParameterValue(initial_pose_y, value_type=float),
                 'initial_pose.yaw': ParameterValue(initial_pose_yaw, value_type=float),
             }],
+            remappings=[
+                ('amcl_pose', LaunchConfiguration('localization_pose_topic')),
+            ],
         ),
         Node(
             package='nav2_lifecycle_manager',
@@ -112,6 +133,28 @@ def generate_launch_description():
                 }
             ],
         ),
+        Node(
+            package='nav2_map_server',
+            executable='map_server',
+            name='map_server',
+            output='screen',
+            condition=external_condition,
+            parameters=[configured_params, {'yaml_filename': map_file}],
+        ),
+        Node(
+            package='nav2_lifecycle_manager',
+            executable='lifecycle_manager',
+            name='lifecycle_manager_localization',
+            output='screen',
+            condition=external_condition,
+            parameters=[
+                {
+                    'use_sim_time': use_sim_time,
+                    'autostart': LaunchConfiguration('autostart'),
+                    'node_names': ['map_server'],
+                }
+            ],
+        ),
     ]
 
     filter_nodes = [
@@ -120,7 +163,8 @@ def generate_launch_description():
             executable='map_server',
             name='keepout_filter_mask_server',
             output='screen',
-            parameters=[params_file, {'yaml_filename': keepout_map}],
+            condition=IfCondition(enable_filters),
+            parameters=[configured_params, {'yaml_filename': keepout_map}],
             remappings=[('map', 'keepout_filter_mask')],
         ),
         Node(
@@ -128,14 +172,16 @@ def generate_launch_description():
             executable='costmap_filter_info_server',
             name='keepout_costmap_filter_info_server',
             output='screen',
-            parameters=[params_file],
+            condition=IfCondition(enable_filters),
+            parameters=[configured_params],
         ),
         Node(
             package='nav2_map_server',
             executable='map_server',
             name='speed_filter_mask_server',
             output='screen',
-            parameters=[params_file, {'yaml_filename': speed_map}],
+            condition=IfCondition(enable_filters),
+            parameters=[configured_params, {'yaml_filename': speed_map}],
             remappings=[('map', 'speed_filter_mask')],
         ),
         Node(
@@ -143,14 +189,16 @@ def generate_launch_description():
             executable='costmap_filter_info_server',
             name='speed_costmap_filter_info_server',
             output='screen',
-            parameters=[params_file],
+            condition=IfCondition(enable_filters),
+            parameters=[configured_params],
         ),
         Node(
             package='nav2_lifecycle_manager',
             executable='lifecycle_manager',
             name='filter_lifecycle_manager',
             output='screen',
-            parameters=[params_file],
+            condition=IfCondition(enable_filters),
+            parameters=[configured_params],
         ),
     ]
 
@@ -173,10 +221,50 @@ def generate_launch_description():
             DeclareLaunchArgument('operational_profile', default_value='localization_coverage'),
             DeclareLaunchArgument('max_linear_velocity', default_value='0.45'),
             DeclareLaunchArgument('max_angular_velocity', default_value='0.35'),
+            DeclareLaunchArgument(
+                'safety_startup_stopped',
+                default_value='false',
+                description=(
+                    'Engineering compatibility default. Product launch must '
+                    'override this to true and require an operator clear.'
+                ),
+            ),
+            DeclareLaunchArgument(
+                'safety_require_supervisor',
+                default_value='false',
+                description=(
+                    'Engineering compatibility default. Product launch must '
+                    'require the product supervisor heartbeat.'
+                ),
+            ),
             DeclareLaunchArgument('initial_pose_x', default_value='0.0'),
             DeclareLaunchArgument('initial_pose_y', default_value='0.0'),
             DeclareLaunchArgument('initial_pose_yaw', default_value='0.0'),
-            DeclareLaunchArgument('localization_backend', default_value='amcl'),
+            DeclareLaunchArgument(
+                'localization_backend',
+                default_value='amcl',
+                description=(
+                    'amcl, slam_toolbox, or external. The external backend '
+                    'keeps the map server but delegates fused pose and '
+                    'map-to-odom ownership to a separate localization stack.'
+                ),
+            ),
+            DeclareLaunchArgument(
+                'localization_pose_topic',
+                default_value='/amcl_pose',
+                description=(
+                    'Canonical global pose output. Product launch remaps AMCL '
+                    'to /localization/fused_pose; engineering launches retain '
+                    'the Nav2-compatible /amcl_pose default.'
+                ),
+            ),
+            DeclareLaunchArgument(
+                'enable_filters', default_value='true',
+                description=(
+                    'Disable only for first-principles mapping acceptance; '
+                    'normal product navigation keeps safety filters enabled.'
+                ),
+            ),
             DeclareLaunchArgument(
                 'slam_params_file', default_value=default_slam_localization_params
             ),
@@ -187,7 +275,7 @@ def generate_launch_description():
                 name='scan_self_filter',
                 output='screen',
                 condition=auto01_height_banded_condition,
-                parameters=[params_file],
+                parameters=[configured_params],
             ),
             Node(
                 package='sanitation_navigation',
@@ -195,7 +283,7 @@ def generate_launch_description():
                 name='pointcloud_self_filter',
                 output='screen',
                 condition=auto01_g2_condition,
-                parameters=[params_file],
+                parameters=[configured_params],
             ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(slam_localization_launch),
@@ -214,7 +302,7 @@ def generate_launch_description():
                         launch_arguments={
                             'use_sim_time': use_sim_time,
                             'autostart': LaunchConfiguration('autostart'),
-                            'params_file': params_file,
+                            'params_file': configured_params,
                             'use_composition': 'False',
                             'use_localization': 'False',
                         }.items(),
@@ -228,7 +316,7 @@ def generate_launch_description():
                 name='ground_collision_monitor',
                 output='screen',
                 condition=auto01_height_banded_condition,
-                parameters=[params_file],
+                parameters=[configured_params],
             ),
             Node(
                 package='nav2_lifecycle_manager',
@@ -244,14 +332,73 @@ def generate_launch_description():
             ),
             Node(
                 package='sanitation_safety',
+                executable='safety_authority',
+                name='safety_authority',
+                output='screen',
+                respawn=True,
+                respawn_delay=0.05,
+                parameters=[{
+                    'use_sim_time': use_sim_time,
+                    'heartbeat_period_sec': 0.02,
+                    'supervisor_heartbeat_timeout_sec': 0.20,
+                    'startup_emergency_stopped': ParameterValue(
+                        LaunchConfiguration('safety_startup_stopped'),
+                        value_type=bool,
+                    ),
+                    'require_supervisor_heartbeat': ParameterValue(
+                        LaunchConfiguration('safety_require_supervisor'),
+                        value_type=bool,
+                    ),
+                }],
+            ),
+            Node(
+                package='sanitation_safety',
                 executable='velocity_gate',
                 name='velocity_gate',
                 output='screen',
+                respawn=True,
+                respawn_delay=0.05,
                 parameters=[{
                     'use_sim_time': use_sim_time,
+                    'command_timeout_sec': 0.12,
+                    'estop_heartbeat_timeout_sec': 0.12,
+                    'publish_period_sec': 0.02,
+                    'output_topic': '/cmd_vel_safe',
                     'profile_name': LaunchConfiguration('operational_profile'),
                     'max_linear_velocity': ParameterValue(max_linear_velocity, value_type=float),
                     'max_angular_velocity': ParameterValue(max_angular_velocity, value_type=float),
+                }],
+            ),
+            Node(
+                package='sanitation_safety',
+                executable='actuator_timeout_guard',
+                name='actuator_command_gate',
+                output='screen',
+                respawn=True,
+                respawn_delay=0.05,
+                parameters=[{
+                    'use_sim_time': use_sim_time,
+                    'input_topic': '/cmd_vel_safe',
+                    'output_topic': '/cmd_vel',
+                    'forward_commands': True,
+                    'timeout_sec': 0.08,
+                    'check_period_sec': 0.01,
+                }],
+            ),
+            Node(
+                package='sanitation_safety',
+                executable='actuator_timeout_guard',
+                name='actuator_timeout_guard',
+                output='screen',
+                respawn=True,
+                respawn_delay=0.05,
+                parameters=[{
+                    'use_sim_time': use_sim_time,
+                    'input_topic': '/cmd_vel',
+                    'output_topic': '/cmd_vel',
+                    'forward_commands': False,
+                    'timeout_sec': 0.08,
+                    'check_period_sec': 0.01,
                 }],
             ),
             Node(

@@ -1,4 +1,4 @@
-"""Order swaths into a stable adjacent boustrophedon route."""
+"""Order swaths into a stable Ackermann-compatible boustrophedon route."""
 
 from dataclasses import dataclass
 import math
@@ -40,7 +40,19 @@ def _candidate(swaths: list[Swath], start: Point, label: str) -> RoutedSwaths:
     return min(choices, key=lambda item: (item.start_distance_m + item.connector_distance_m, item.ordering))
 
 
-def route_oriented_swaths(swaths: Iterable[Swath], start: Point) -> RoutedSwaths:
+def _skip_lane_order(swaths: list[Swath], lane_skip: int) -> list[Swath]:
+    if lane_skip <= 1 or len(swaths) <= 2:
+        return swaths
+    groups = [swaths[offset::lane_skip] for offset in range(lane_skip)]
+    ordered = []
+    for index, group in enumerate(groups):
+        ordered.extend(group if index % 2 == 0 else reversed(group))
+    return ordered
+
+
+def route_oriented_swaths(
+    swaths: Iterable[Swath], start: Point, *, lane_skip: int = 1
+) -> RoutedSwaths:
     normalized = [
         ((float(a[0]), float(a[1])), (float(b[0]), float(b[1]))) for a, b in swaths
     ]
@@ -62,9 +74,16 @@ def route_oriented_swaths(swaths: Iterable[Swath], start: Point) -> RoutedSwaths
             else (swath[1], swath[0])
         )
     ascending = sorted(aligned, key=lambda swath: _normal_projection(swath, heading))
+    lane_skip = max(1, int(lane_skip))
     candidates = [
-        _candidate(ascending, start, "ascending"),
-        _candidate(list(reversed(ascending)), start, "descending"),
+        _candidate(
+            _skip_lane_order(ascending, lane_skip), start,
+            f"ascending:lane_skip_{lane_skip}",
+        ),
+        _candidate(
+            _skip_lane_order(list(reversed(ascending)), lane_skip), start,
+            f"descending:lane_skip_{lane_skip}",
+        ),
     ]
     return min(
         candidates,

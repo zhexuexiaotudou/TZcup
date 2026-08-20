@@ -3,6 +3,8 @@ from __future__ import annotations
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
+import pytest
+
 
 ROOT = Path(__file__).resolve().parents[1]
 WORLD = (
@@ -22,6 +24,7 @@ VEHICLE = (
     / "sanitation_vehicle.urdf.xacro"
 )
 VARIANT_DIR = ROOT / "starter_ws" / "src" / "sanitation_worlds" / "worlds"
+ACKERMANN_WORLD = VARIANT_DIR / "sanitation_competition_ackermann_demo.sdf"
 MISSION_CONTROL_CONFIG_DIR = (
     ROOT / "starter_ws" / "src" / "sanitation_gazebo_control" / "config"
 )
@@ -111,6 +114,17 @@ def test_new_furniture_has_collision_and_stays_outside_operation_polygon() -> No
         assert not (-10.0 <= x <= -2.0 and -4.0 <= y <= 4.0), name
 
 
+def test_ackermann_nominal_furniture_stays_outside_turning_apron() -> None:
+    world = ET.parse(ACKERMANN_WORLD).getroot().find("world")
+    assert world is not None
+    for name in ("competition_bin", "pedestrian_dummy"):
+        model = _model(world, name)
+        assert model.findall(".//collision"), name
+        world_x, map_y, *_ = map(float, _text(model, "pose").split())
+        map_x = world_x + 8.0
+        assert not (-7.8 <= map_x <= 7.8 and -6.5 <= map_y <= 3.5), name
+
+
 def test_vehicle_visual_detail_preserves_frozen_planar_envelope() -> None:
     root = ET.parse(VEHICLE).getroot()
     base = root.find("./link[@name='base_link']")
@@ -145,7 +159,10 @@ def test_vehicle_visual_detail_preserves_frozen_planar_envelope() -> None:
         "./collision[@name='lower_chassis_collision']/geometry/box"
     )
     assert lower_collision_box is not None
-    assert lower_collision_box.get("size") == "${base_length} ${base_width} ${base_height}"
+    lower_size = lower_collision_box.get("size")
+    assert lower_size is not None
+    assert "${base_width}" in lower_size and "${base_height}" in lower_size
+    assert "skid_steer_legacy" in lower_size
 
     wheel_macro_link = root.find(".//link[@name='${side}_wheel_link']")
     assert wheel_macro_link is not None
@@ -170,6 +187,15 @@ def test_multiscale_worlds_have_exact_dimensions_and_realistic_furniture() -> No
         ground = _model(world, "asphalt_ground")
         size = tuple(map(float, _text(ground, "./link/collision/geometry/box/size").split()))
         assert size[:2] == dimensions
+        for sidewalk_name in ("north_sidewalk", "south_sidewalk"):
+            sidewalk = _model(world, sidewalk_name)
+            sidewalk_pose = tuple(map(float, _text(sidewalk, "./pose").split()))
+            sidewalk_size = tuple(
+                map(float, _text(sidewalk, "./link/visual/geometry/box/size").split())
+            )
+            assert not sidewalk.findall(".//collision")
+            assert sidewalk_size[2] == pytest.approx(0.002)
+            assert sidewalk_pose[2] + sidewalk_size[2] / 2.0 <= 0.002
         names = {model.get("name") for model in world.findall("model")}
         assert {
             "north_sidewalk",
