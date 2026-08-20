@@ -34,6 +34,7 @@ hybrid_global_fuser:
     maximum_gnss_age_s: 0.5
     maximum_gnss_heading_age_s: 0.5
     gnss_heading_variance_rad2: 0.0001
+    gnss_heading_smoothing_alpha: 0.10
     # Retain the last scan global correction while wheel/IMU odometry
     # propagates it through brief low-feature turns. MCAP gaps leave only
     # 24.5 s uncovered at 5 s versus 52.5 s at the old 0.5 s limit.

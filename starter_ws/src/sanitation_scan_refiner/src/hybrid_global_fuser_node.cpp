@@ -98,6 +98,8 @@ public:
       "maximum_gnss_heading_age_s", 0.5);
     gnss_heading_variance_rad2_ = declare_parameter<double>(
       "gnss_heading_variance_rad2", 0.0001);
+    gnss_heading_smoothing_alpha_ = declare_parameter<double>(
+      "gnss_heading_smoothing_alpha", 0.1);
     maximum_refined_age_s_ = declare_parameter<double>("maximum_refined_age_s", 0.5);
     gnss_variance_scale_ = declare_parameter<double>("gnss_variance_scale", 1.0);
     gnss_outlier_threshold_m_ = declare_parameter<double>("gnss_outlier_threshold_m", 0.75);
@@ -216,9 +218,18 @@ private:
     if (!std::isfinite(message->data) || !have_local_) {
       return;
     }
-    gnss_heading_ = worldHeadingToMap(message->data, world_to_map_yaw_);
+    const double measurement = worldHeadingToMap(message->data, world_to_map_yaw_);
     const auto sample = closestLocal(last_gnss_measurement_stamp_);
-    gnss_heading_local_anchor_ = sample.value_or(local_);
+    const OdomSample anchor = sample.value_or(local_);
+    if (have_gnss_heading_) {
+      const double previous = propagateHeading(
+        gnss_heading_, anchor.yaw, gnss_heading_local_anchor_.yaw);
+      gnss_heading_ = smoothHeading(
+        previous, measurement, gnss_heading_smoothing_alpha_);
+    } else {
+      gnss_heading_ = measurement;
+    }
+    gnss_heading_local_anchor_ = anchor;
     gnss_heading_receive_stamp_ = now().seconds();
     have_gnss_heading_ = true;
   }
@@ -429,6 +440,8 @@ private:
     status.values.push_back(keyValue("rejected_gnss_count", rejected_gnss_count_));
     status.values.push_back(keyValue("gnss_heading_available", have_gnss_heading_));
     status.values.push_back(keyValue("gnss_heading_receive_stamp", gnss_heading_receive_stamp_));
+    status.values.push_back(keyValue("gnss_heading_smoothing_alpha",
+        gnss_heading_smoothing_alpha_));
     status.values.push_back(keyValue("map_to_odom_owner", publish_map_to_odom_));
     status.values.push_back(keyValue("world_to_map_x", world_to_map_x_));
     status.values.push_back(keyValue("world_to_map_y", world_to_map_y_));
@@ -450,6 +463,7 @@ private:
   double maximum_gnss_age_s_{0.5};
   double maximum_gnss_heading_age_s_{0.5};
   double gnss_heading_variance_rad2_{0.0001};
+  double gnss_heading_smoothing_alpha_{0.1};
   double maximum_refined_age_s_{0.5};
   double gnss_variance_scale_{1.0};
   double gnss_outlier_threshold_m_{0.75};

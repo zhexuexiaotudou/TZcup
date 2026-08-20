@@ -34,6 +34,7 @@ class TfContinuityProbe(Node):
         self.declare_parameter("child_frame", "odom")
         self.declare_parameter("sample_period_sec", 0.10)
         self.declare_parameter("maximum_gap_sec", 0.50)
+        self.declare_parameter("warmup_sec", 0.0)
         self.declare_parameter("jump_translation_threshold_m", 1.0)
         self.declare_parameter("jump_yaw_threshold_rad", 0.35)
         self.output_path = Path(str(self.get_parameter("output_path").value))
@@ -48,17 +49,39 @@ class TfContinuityProbe(Node):
         self.break_count = 0
         self.stamp_regression_count = 0
         self.jump_count = 0
+        self.jump_events = []
         self.max_success_gap_sec = 0.0
         self.max_translation_jump_m = 0.0
         self.max_yaw_jump_rad = 0.0
         self.outage_active = False
         self.last_error = None
+        self.measurement_started_wall = None
         self.create_timer(
             float(self.get_parameter("sample_period_sec").value), self._tick
         )
 
     def _tick(self) -> None:
         now = time.monotonic()
+        warmup_sec = float(self.get_parameter("warmup_sec").value)
+        if (
+            self.measurement_started_wall is None
+            and now - self.started_wall >= warmup_sec
+        ):
+            self.measurement_started_wall = now
+            self.last_success_wall = None
+            self.last_stamp = None
+            self.last_transform = None
+            self.sample_count = 0
+            self.lookup_failure_count = 0
+            self.break_count = 0
+            self.stamp_regression_count = 0
+            self.jump_count = 0
+            self.jump_events = []
+            self.max_success_gap_sec = 0.0
+            self.max_translation_jump_m = 0.0
+            self.max_yaw_jump_rad = 0.0
+            self.outage_active = False
+            self.last_error = None
         try:
             transform = self.tf_buffer.lookup_transform(
                 str(self.get_parameter("parent_frame").value),
@@ -66,6 +89,9 @@ class TfContinuityProbe(Node):
                 rclpy.time.Time(),
             )
         except TransformException as error:
+            if self.measurement_started_wall is None:
+                self._write_report(now)
+                return
             self.lookup_failure_count += 1
             self.last_error = str(error)
             maximum_gap = float(self.get_parameter("maximum_gap_sec").value)
@@ -114,6 +140,18 @@ class TfContinuityProbe(Node):
                 self.max_yaw_jump_rad, float(jump["yaw_rad"])
             )
             self.jump_count += int(jump["exceeds_diagnostic_threshold"])
+            if jump["exceeds_diagnostic_threshold"] and len(self.jump_events) < 20:
+                self.jump_events.append(
+                    {
+                        "measurement_elapsed_sec": (
+                            now - self.measurement_started_wall
+                        ),
+                        "translation_m": float(jump["translation_m"]),
+                        "yaw_rad": float(jump["yaw_rad"]),
+                        "previous_xyyaw": list(self.last_transform),
+                        "current_xyyaw": list(current),
+                    }
+                )
         self.sample_count += 1
         self.last_success_wall = now
         self.last_stamp = stamp
@@ -135,6 +173,13 @@ class TfContinuityProbe(Node):
             "parent_frame": str(self.get_parameter("parent_frame").value),
             "child_frame": str(self.get_parameter("child_frame").value),
             "elapsed_wall_sec": now - self.started_wall,
+            "warmup_sec": float(self.get_parameter("warmup_sec").value),
+            "warmup_complete": self.measurement_started_wall is not None,
+            "measurement_elapsed_sec": (
+                now - self.measurement_started_wall
+                if self.measurement_started_wall is not None
+                else 0.0
+            ),
             "sample_count": self.sample_count,
             "lookup_failure_count": self.lookup_failure_count,
             "coordinate_frame_break_count": self.break_count,
@@ -143,12 +188,15 @@ class TfContinuityProbe(Node):
             "last_success_age_sec": success_age,
             "maximum_allowed_gap_sec": maximum_gap,
             "continuous": bool(
-                self.sample_count >= 10
+                self.measurement_started_wall is not None
+                and self.sample_count >= 10
                 and self.break_count == 0
+                and self.jump_count == 0
                 and success_age is not None
                 and success_age <= maximum_gap
             ),
             "diagnostic_transform_jump_count": self.jump_count,
+            "diagnostic_transform_jump_events": self.jump_events,
             "maximum_translation_jump_m": self.max_translation_jump_m,
             "maximum_yaw_jump_rad": self.max_yaw_jump_rad,
             "last_transform_xyyaw": list(self.last_transform)

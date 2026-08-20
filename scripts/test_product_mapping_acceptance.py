@@ -1,7 +1,9 @@
 import argparse
 import json
+import math
 
 from PIL import Image
+import pytest
 
 from scripts.product_mapping_acceptance import evaluate, select_reload_waypoints
 
@@ -28,6 +30,47 @@ def test_reload_route_uses_spatially_separated_successful_frontiers():
     assert [21.0, 0.0, 0.0] in route or [20.0, 0.0, 0.0] in route
     assert [-20.0, 0.0, 3.14] in route
     assert [0.0, 20.0, 1.57] in route
+
+
+def test_reload_route_respects_physical_travel_budget():
+    exploration = {
+        "goals": [
+            {"world_x_m": x, "world_y_m": y, "yaw_rad": 0.0, "succeeded": True}
+            for x, y in (
+                (90, -45), (-90, -45), (90, 45), (-90, 45),
+                (50, 0), (50, 30), (20, 30), (-20, 30), (-50, 0),
+            )
+        ]
+    }
+
+    route = select_reload_waypoints(
+        exploration,
+        initial_xy=(0.0, 0.0),
+        minimum_separation_m=20.0,
+        minimum_waypoints=3,
+        maximum_waypoints=5,
+        maximum_route_length_m=225.0,
+    )
+
+    assert len(route) >= 3
+    current = (0.0, 0.0)
+    length = 0.0
+    for waypoint in route:
+        length += ((waypoint[0] - current[0]) ** 2 + (waypoint[1] - current[1]) ** 2) ** 0.5
+        current = waypoint[:2]
+    assert length <= 225.0
+    for index, waypoint in enumerate(route):
+        anchors = [[0.0, 0.0], *route[:index]]
+        assert min(
+            ((waypoint[0] - anchor[0]) ** 2 + (waypoint[1] - anchor[1]) ** 2) ** 0.5
+            for anchor in anchors
+        ) >= 20.0
+    current = [0.0, 0.0]
+    for waypoint in route:
+        assert waypoint[2] == pytest.approx(
+            math.atan2(waypoint[1] - current[1], waypoint[0] - current[0])
+        )
+        current = waypoint[:2]
 
 
 def _evaluation_args(tmp_path, *, formal_scope=True):
@@ -57,16 +100,19 @@ def _evaluation_args(tmp_path, *, formal_scope=True):
         }),
         "map_geometry": _write_json(tmp_path / "geometry.json", {
             "boundary_rmse_m": 0.10,
+            "visible_truth_boundary_recall": 0.96,
             "loop_ghosting_ratio": 0.01,
             "rigid_alignment": {"optimizer_success": True},
         }),
         "mapping_tf": _write_json(tmp_path / "mapping_tf.json", {
             "continuous": True,
             "coordinate_frame_break_count": 0,
+            "diagnostic_transform_jump_count": 0,
         }),
         "reload_tf": _write_json(tmp_path / "reload_tf.json", {
             "continuous": True,
             "coordinate_frame_break_count": 0,
+            "diagnostic_transform_jump_count": 0,
         }),
         "navigation": _write_json(tmp_path / "navigation.json", {
             "success": True,
@@ -127,6 +173,7 @@ def _evaluation_args(tmp_path, *, formal_scope=True):
         reload_route=route,
         output=tmp_path / "final.json",
         max_boundary_rmse_m=0.15,
+        min_visible_boundary_recall=0.95,
         max_loop_ghosting_ratio=0.02,
         allow_overwrite=False,
     )
@@ -152,6 +199,20 @@ def test_mapping_adjudicator_never_promotes_smoke_scope(tmp_path):
     assert "formal_scope" not in report["smoke_chain_checks"]
     assert "mapping_area_at_least_20000m2" not in report["smoke_chain_checks"]
     assert "topology_damage_count_zero" not in report["smoke_chain_checks"]
+
+
+def test_mapping_adjudicator_rejects_missing_visible_obstacle_surfaces(tmp_path):
+    args = _evaluation_args(tmp_path)
+    geometry = json.loads(args.map_geometry.read_text(encoding="utf-8"))
+    geometry["visible_truth_boundary_recall"] = 0.949
+    _write_json(args.map_geometry, geometry)
+
+    assert evaluate(args) == 2
+    report = json.loads(args.output.read_text(encoding="utf-8"))
+    assert report["topology_failures"][
+        "visible_boundary_recall_below_minimum"
+    ] is True
+    assert report["checks"]["topology_damage_count_zero"] is False
 
 
 def test_mapping_adjudicator_writes_fail_closed_report_for_missing_phase2(tmp_path):
@@ -204,6 +265,18 @@ def test_mapping_adjudicator_rejects_unclean_runtime_shutdown(tmp_path):
     assert evaluate(args) == 2
     report = json.loads(args.output.read_text(encoding="utf-8"))
     assert report["checks"]["runtime_shutdown_clean"] is False
+
+
+def test_mapping_adjudicator_rejects_transform_owner_jumps(tmp_path):
+    args = _evaluation_args(tmp_path)
+    reload_tf = json.loads(args.reload_tf.read_text(encoding="utf-8"))
+    reload_tf["diagnostic_transform_jump_count"] = 1
+    _write_json(args.reload_tf, reload_tf)
+
+    assert evaluate(args) == 2
+    report = json.loads(args.output.read_text(encoding="utf-8"))
+    assert report["transform_jump_count"] == 1
+    assert report["checks"]["coordinate_frame_break_count_zero"] is False
 
 
 def test_mapping_adjudicator_recomputes_shutdown_truth_from_records(tmp_path):

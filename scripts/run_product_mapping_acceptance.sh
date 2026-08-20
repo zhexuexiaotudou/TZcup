@@ -126,9 +126,15 @@ on_error() {
 group_alive() {
   local pid="${1:-}"
   [[ -n "$pid" ]] || return 1
-  kill -0 "$pid" 2>/dev/null || \
-    pgrep -g "$pid" >/dev/null 2>&1 || \
-    pgrep -s "$pid" >/dev/null 2>&1
+  # A terminated child remains visible to kill(2) and pgrep while it is a
+  # zombie waiting for this runner to reap it. Treating that bookkeeping
+  # state as live makes a clean shutdown run through every escalation stage
+  # and eventually report a false residual. Inspect the process group and
+  # session, but count only executable members.
+  ps -eo pid=,pgid=,sid=,stat= | awk -v target="$pid" '
+    ($1 == target || $2 == target || $3 == target) && $4 !~ /^Z/ { live = 1 }
+    END { exit(live ? 0 : 1) }
+  '
 }
 
 signal_supervised_command() {
@@ -228,6 +234,7 @@ stop_group() {
 
 stop_simulation_group() {
   local name="$1" pid="$2" directory="$3"
+  local stop_code=0
   set +e
   timeout 10s gz service -s /server_control \
     --reqtype gz.msgs.ServerControl --reptype gz.msgs.Boolean \
@@ -236,7 +243,7 @@ stop_simulation_group() {
   local service_code=$?
   set -e
   printf '%s\n' "$service_code" > "$directory/server_stop.exit"
-  stop_group "$name" "$pid"
+  stop_group "$name" "$pid" || stop_code=$?
   SERVER_CONTROL_CODE="$service_code" python3 - \
     "$pid_dir/${name}.shutdown.json" "$directory/server_stop.log" <<'PY'
 import json
@@ -256,6 +263,7 @@ report["server_control_stop_accepted"] = accepted
 report["clean"] = bool(report.get("clean") and accepted)
 report_path.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
 PY
+  return "$stop_code"
 }
 cleanup() {
   local sessions=("${pids[@]}")
@@ -274,7 +282,7 @@ cleanup() {
   for _ in $(seq 1 100); do
     any=0
     for pid in "${sessions[@]}"; do
-      if kill -0 "$pid" 2>/dev/null || pgrep -s "$pid" >/dev/null 2>&1; then
+      if group_alive "$pid"; then
         any=1
         break
       fi
@@ -331,6 +339,8 @@ nav_params="$runtime/nav2_mapping_no_prior_filters.yaml"
 slam_params="$runtime/slam_product_20000_runtime.yaml"
 mapping_ekf_params="$runtime/ekf_mapping_local.yaml"
 hybrid_params="$runtime/hybrid_mapping_rtk.yaml"
+reload_ekf_params="$runtime/ekf_reload_local.yaml"
+reload_hybrid_params="$runtime/hybrid_reload_rtk.yaml"
 
 # Keep smoke at real-time rate too. A 3x rate overloaded SLAM/Nav2 while the
 # vehicle continued advancing, creating stale maps and severe goal overshoot.
@@ -366,6 +376,7 @@ global_params["plugins"] = [
 ]
 global_params.pop("keepout_filter", None)
 global_params.pop("speed_filter", None)
+config["amcl"]["ros__parameters"]["tf_broadcast"] = False
 config.pop("keepout_filter_mask_server", None)
 config.pop("keepout_costmap_filter_info_server", None)
 config.pop("speed_filter_mask_server", None)
@@ -406,6 +417,19 @@ params["odom_frame"] = "wheel_odom"
 params["world_frame"] = "wheel_odom"
 target.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
 PY
+
+python3 - "$bringup_share/config/ekf_ackermann.yaml" "$reload_ekf_params" <<'PY'
+from pathlib import Path
+import sys
+import yaml
+source, target = map(Path, sys.argv[1:])
+config = yaml.safe_load(source.read_text(encoding="utf-8"))
+params = config["ekf_filter_node"]["ros__parameters"]
+params["map_frame"] = "map"
+params["odom_frame"] = "odom"
+params["world_frame"] = "odom"
+target.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+PY
 python3 - "$refiner_share/config/stage4v_hybrid.yaml" "$hybrid_params" <<'PY'
 from pathlib import Path
 import sys
@@ -415,6 +439,21 @@ config = yaml.safe_load(source.read_text(encoding="utf-8"))
 params = config["hybrid_global_fuser"]["ros__parameters"]
 params["map_frame"] = "odom"
 params["odom_frame"] = "wheel_odom"
+params["base_frame"] = "base_footprint"
+params["local_odom_topic"] = "/odom"
+params["mode"] = "rtk_imu_wheel"
+params["publish_map_to_odom"] = True
+target.write_text(yaml.safe_dump(config, sort_keys=False), encoding="utf-8")
+PY
+python3 - "$refiner_share/config/stage4v_hybrid.yaml" "$reload_hybrid_params" <<'PY'
+from pathlib import Path
+import sys
+import yaml
+source, target = map(Path, sys.argv[1:])
+config = yaml.safe_load(source.read_text(encoding="utf-8"))
+params = config["hybrid_global_fuser"]["ros__parameters"]
+params["map_frame"] = "map"
+params["odom_frame"] = "odom"
 params["base_frame"] = "base_footprint"
 params["local_odom_topic"] = "/odom"
 params["mode"] = "rtk_imu_wheel"
@@ -438,6 +477,12 @@ fi
 if [[ "$DIAGNOSTIC_OVERRIDE" -eq 1 ]]; then
   FORMAL_SCOPE=false
 fi
+RELOAD_ROUTE_MAX_LENGTH_M="$(python3 - \
+  "$NAVIGATION_TIMEOUT_SEC" "$MAX_LINEAR_VELOCITY" <<'PY'
+import sys
+print(float(sys.argv[1]) * float(sys.argv[2]) * 0.20)
+PY
+)"
 
 wait_for_topic() {
   local topic="$1" type="$2" timeout_sec="$3" output="$4"
@@ -542,9 +587,7 @@ PY
 wait_group() {
   local name="$1" pid="$2"
   local exit_file="$pid_dir/${name}.exit"
-  while kill -0 "$pid" 2>/dev/null || \
-        pgrep -g "$pid" >/dev/null 2>&1 || \
-        pgrep -s "$pid" >/dev/null 2>&1; do
+  while group_alive "$pid"; do
     sleep 0.2
   done
   if [[ -s "$exit_file" ]]; then
@@ -557,6 +600,7 @@ wait_group() {
 
 start_simulation() {
   local name="$1" log="$2"
+  local ekf_config="${3:-$mapping_ekf_params}"
   start_group "$name" "$log" ros2 launch sanitation_bringup sim.launch.py \
     gui:=false headless_rendering:=true drive_model:=ackermann \
     enable_command_timeout:=false \
@@ -564,26 +608,45 @@ start_simulation() {
     world_name:=sanitation_campus_large spawn_x:="$SPAWN_X" spawn_y:="$SPAWN_Y" spawn_yaw:="$SPAWN_YAW" \
     world_to_map_x:=0.0 world_to_map_y:=0.0 world_to_map_yaw:=0.0 \
     enable_training_gt:=false enable_evaluation_gt:=true \
-    ekf_config:="$mapping_ekf_params"
+    ekf_config:="$ekf_config"
 }
 
 start_positioning_chain() {
   local directory="$1"
   local prefix="$2"
+  local publish_global_to_local_tf="$3"
+  local hybrid_config="$4"
   start_group "${prefix}_navsat_adapter" "$directory/dual_navsat_adapter.log" \
     ros2 run sanitation_gnss_sim dual_navsat_adapter --ros-args \
     -p use_sim_time:=true -p profile:=rtk_fixed -p random_seed:="$SEED"
   NAVSAT_ADAPTER_PID="$STARTED_PID"
   start_group "${prefix}_fusion" "$directory/rtk_fusion.log" \
     ros2 launch sanitation_scan_refiner hybrid_localization.launch.py \
-    hybrid_config_file:="$hybrid_params" fusion_mode:=rtk_imu_wheel \
-    enable_scan_refiner:=false publish_map_to_odom:=true \
+    hybrid_config_file:="$hybrid_config" fusion_mode:=rtk_imu_wheel \
+    enable_scan_refiner:=false publish_map_to_odom:="$publish_global_to_local_tf" \
     initial_pose_x:="$SPAWN_X" initial_pose_y:="$SPAWN_Y" initial_pose_yaw:="$SPAWN_YAW"
   FUSION_PID="$STARTED_PID"
 }
 
+start_tf_ownership_audit() {
+  local directory="$1"
+  local prefix="$2"
+  local expected_owner="$3"
+  local forbidden_owners="$4"
+  start_group "${prefix}_tf_owner" "$directory/tf_ownership.log" \
+    timeout 45s ros2 run sanitation_tasks sanitation_tf_ownership_audit --ros-args \
+    -p duration_s:=20.0 \
+    -p output_path:="$directory/tf_ownership.json" \
+    -p required_child_frame:=odom -p expected_owner_node:="$expected_owner" \
+    -p forbidden_owner_nodes:="$forbidden_owners"
+  TF_OWNER_PID="$STARTED_PID"
+}
+
 verify_positioning_chain() {
   local directory="$1"
+  local expected_map_to_odom_owner="$2"
+  local expected_parent_frame="$3"
+  local expected_child_frame="$4"
   wait_for_topic /gnss/front/gps_raw gps_msgs/msg/GPSFix 180 \
     "$directory/first_front_navsat.txt"
   wait_for_topic /gnss/rear/gps_raw gps_msgs/msg/GPSFix 180 \
@@ -600,6 +663,18 @@ verify_positioning_chain() {
   fi
   timeout 30s ros2 node info /hybrid_global_fuser \
     > "$directory/hybrid_global_fuser_node_info.txt"
+  timeout 30s ros2 param get /hybrid_global_fuser publish_map_to_odom \
+    > "$directory/hybrid_global_fuser_map_to_odom.txt"
+  grep -Fqi "Boolean value is: $expected_map_to_odom_owner" \
+    "$directory/hybrid_global_fuser_map_to_odom.txt"
+  timeout 30s ros2 param get /hybrid_global_fuser map_frame \
+    > "$directory/hybrid_global_fuser_map_frame.txt"
+  timeout 30s ros2 param get /hybrid_global_fuser odom_frame \
+    > "$directory/hybrid_global_fuser_odom_frame.txt"
+  grep -Fq "String value is: $expected_parent_frame" \
+    "$directory/hybrid_global_fuser_map_frame.txt"
+  grep -Fq "String value is: $expected_child_frame" \
+    "$directory/hybrid_global_fuser_odom_frame.txt"
   grep -Fq '/gnss/fix' "$directory/hybrid_global_fuser_node_info.txt"
   grep -Fq '/gnss/heading' "$directory/hybrid_global_fuser_node_info.txt"
   grep -Fq '/odom' "$directory/hybrid_global_fuser_node_info.txt"
@@ -623,9 +698,9 @@ start_navigation() {
 }
 
 echo "[PRODUCT-MAPPING] phase 1: continuous first-principles mapping"
-start_simulation mapping_sim "$mapping/simulation.log"; sim_pid="$STARTED_PID"
-start_positioning_chain "$mapping" mapping; navsat_adapter_pid="$NAVSAT_ADAPTER_PID"; fusion_pid="$FUSION_PID"
-verify_positioning_chain "$mapping"
+start_simulation mapping_sim "$mapping/simulation.log" "$mapping_ekf_params"; sim_pid="$STARTED_PID"
+start_positioning_chain "$mapping" mapping true "$hybrid_params"; navsat_adapter_pid="$NAVSAT_ADAPTER_PID"; fusion_pid="$FUSION_PID"
+verify_positioning_chain "$mapping" true odom wheel_odom
 start_group mapping_scan "$mapping/scan_normalizer.log" \
   ros2 run sanitation_navigation scan_self_filter --ros-args \
   -p use_sim_time:=true -p input_topic:=/scan -p output_topic:=/scan/mapping \
@@ -646,6 +721,9 @@ if ! wait_for_lifecycle_active /bt_navigator 90 "$mapping/bt_navigator_active.tx
   nav_name=mapping_nav_retry
   wait_for_lifecycle_active /bt_navigator 180 "$mapping/bt_navigator_active_retry.txt"
 fi
+start_tf_ownership_audit "$mapping" mapping slam_toolbox \
+  "[amcl]"
+mapping_tf_owner_pid="$TF_OWNER_PID"
 start_group mapping_tf "$mapping/tf_continuity.log" \
   ros2 run sanitation_tasks sanitation_tf_continuity_probe --ros-args \
   -p use_sim_time:=true -p output_path:="$mapping/tf_continuity.json"
@@ -706,6 +784,8 @@ mapping_explorer_pid="$STARTED_PID"
 set +e
 wait_group mapping_explorer "$mapping_explorer_pid"
 EXPLORATION_CODE="$GROUP_EXIT_CODE"
+wait_group mapping_tf_owner "$mapping_tf_owner_pid"
+MAPPING_TF_OWNER_CODE="$GROUP_EXIT_CODE"
 ros2 run nav2_map_server map_saver_cli -f "$mapping/product_map" --ros-args \
   -p use_sim_time:=true -p save_map_timeout:=60.0 > "$mapping/map_save.log" 2>&1
 MAP_SAVE_CODE=$?
@@ -737,27 +817,37 @@ MAP_QUALITY_CODE=$?
 python3 "$ROOT/scripts/stage4t_map_geometry.py" \
   --map-yaml "$mapping/product_map.yaml" --world-sdf "$source_world" \
   --output "$mapping/map_geometry.json" --overlay "$mapping/map_truth_overlay.png" \
-  --alignment-x 0.0 --alignment-y 0.0 --alignment-yaw 0.0
+  --alignment-x 0.0 --alignment-y 0.0 --alignment-yaw 0.0 \
+  --lidar-height-m 0.64 --lidar-height-tolerance-m 0.05
 MAP_GEOMETRY_CODE=$?
 python3 "$ROOT/scripts/product_mapping_acceptance.py" build-route \
   --exploration "$mapping/frontier_exploration.json" --output "$reload/route.json" \
-  --minimum-separation-m "$ROUTE_SEPARATION" --minimum-waypoints 3 --maximum-waypoints 5
+  --minimum-separation-m "$ROUTE_SEPARATION" --minimum-waypoints 3 --maximum-waypoints 3 \
+  --maximum-route-length-m "$RELOAD_ROUTE_MAX_LENGTH_M"
 ROUTE_CODE=$?
 set -e
 
 NAVIGATION_CODE=125
 if [[ "$EXPLORATION_CODE" -eq 0 && "$MAP_SAVE_CODE" -eq 0 && \
       "$POSEGRAPH_CODE" -eq 0 && "$MAP_QUALITY_CODE" -eq 0 && \
-      "$MAP_GEOMETRY_CODE" -eq 0 && "$ROUTE_CODE" -eq 0 ]]; then
+      "$MAP_GEOMETRY_CODE" -eq 0 && "$ROUTE_CODE" -eq 0 && \
+      "$MAPPING_TF_OWNER_CODE" -eq 0 ]]; then
   echo "[PRODUCT-MAPPING] phase 2: fresh simulator, saved map, AMCL, Nav2"
-  start_simulation reload_sim "$reload/simulation.log"; reload_sim_pid="$STARTED_PID"
-  start_positioning_chain "$reload" reload; reload_navsat_adapter_pid="$NAVSAT_ADAPTER_PID"; reload_fusion_pid="$FUSION_PID"
-  verify_positioning_chain "$reload"
+  start_simulation reload_sim "$reload/simulation.log" "$reload_ekf_params"; reload_sim_pid="$STARTED_PID"
+  start_positioning_chain "$reload" reload true "$reload_hybrid_params"; reload_navsat_adapter_pid="$NAVSAT_ADAPTER_PID"; reload_fusion_pid="$FUSION_PID"
+  verify_positioning_chain "$reload" true map odom
   start_navigation reload_nav amcl "$mapping/product_map.yaml" "$reload/navigation.log"; reload_nav_pid="$STARTED_PID"
   wait_for_topic /amcl_pose geometry_msgs/msg/PoseWithCovarianceStamped 180 "$reload/first_amcl.txt"
+  timeout 30s ros2 param get /amcl tf_broadcast \
+    > "$reload/amcl_tf_broadcast.txt"
+  grep -Fqi "Boolean value is: false" "$reload/amcl_tf_broadcast.txt"
+  start_tf_ownership_audit "$reload" reload hybrid_global_fuser \
+    "[slam_toolbox]"
+  reload_tf_owner_pid="$TF_OWNER_PID"
   start_group reload_tf "$reload/tf_continuity.log" \
     ros2 run sanitation_tasks sanitation_tf_continuity_probe --ros-args \
-    -p use_sim_time:=true -p output_path:="$reload/tf_continuity.json"
+    -p use_sim_time:=true -p warmup_sec:=15.0 \
+    -p output_path:="$reload/tf_continuity.json"
   reload_tf_pid="$STARTED_PID"
   start_group reload_probe "$reload/navigation_probe.log" \
     timeout "$((NAVIGATION_TIMEOUT_SEC + 180))s" \
@@ -769,6 +859,7 @@ if [[ "$EXPLORATION_CODE" -eq 0 && "$MAP_SAVE_CODE" -eq 0 && \
   set +e
   wait_group reload_probe "$reload_probe_pid"
   NAVIGATION_CODE="$GROUP_EXIT_CODE"
+  wait_group reload_tf_owner "$reload_tf_owner_pid"
   set -e
   stop_group reload_tf "$reload_tf_pid"
   stop_group reload_nav "$reload_nav_pid"
@@ -785,7 +876,8 @@ PRODUCT_RUN_COMMAND="$RUN_COMMAND" python3 - \
   "$EXPLORATION_CODE" "$MAP_SAVE_CODE" "$POSEGRAPH_CODE" "$MAP_QUALITY_CODE" \
   "$MAP_GEOMETRY_CODE" "$ROUTE_CODE" "$NAVIGATION_CODE" "$ROOT" "$SEED" \
   "$runtime_world" "$nav_params" "$slam_params" "$mapping_ekf_params" \
-  "$hybrid_params" "$DIAGNOSTIC_OVERRIDE" "$SPAWN_X" "$SPAWN_Y" \
+  "$hybrid_params" "$reload_ekf_params" "$reload_hybrid_params" \
+  "$DIAGNOSTIC_OVERRIDE" "$SPAWN_X" "$SPAWN_Y" \
   "$SPAWN_YAW" "$INITIAL_SWEEP_TARGET_INDEX" <<'PY'
 import hashlib
 import json
@@ -798,15 +890,21 @@ names = ("exploration", "map_save", "posegraph_serialize", "map_quality",
          "map_geometry", "route_build", "navigation")
 root = Path(sys.argv[11])
 seed = int(sys.argv[12])
-config_paths = [Path(item) for item in sys.argv[13:]]
-config_paths = config_paths[:5]
+config_paths = [Path(item) for item in sys.argv[13:20]]
 
 def positioning_graph_audit(phase):
     directory = path.parent / phase
     adapter_path = directory / "dual_navsat_adapter_node_info.txt"
     fuser_path = directory / "hybrid_global_fuser_node_info.txt"
+    ownership_path = directory / "hybrid_global_fuser_map_to_odom.txt"
+    map_frame_path = directory / "hybrid_global_fuser_map_frame.txt"
+    odom_frame_path = directory / "hybrid_global_fuser_odom_frame.txt"
+    amcl_tf_path = directory / "amcl_tf_broadcast.txt"
     adapter = adapter_path.read_text(encoding="utf-8") if adapter_path.is_file() else ""
     fuser = fuser_path.read_text(encoding="utf-8") if fuser_path.is_file() else ""
+    ownership = ownership_path.read_text(encoding="utf-8") if ownership_path.is_file() else ""
+    map_frame = map_frame_path.read_text(encoding="utf-8") if map_frame_path.is_file() else ""
+    odom_frame = odom_frame_path.read_text(encoding="utf-8") if odom_frame_path.is_file() else ""
     adapter_inputs_present = all(
         topic in adapter for topic in ("/gnss/front/gps_raw", "/gnss/rear/gps_raw")
     )
@@ -816,19 +914,62 @@ def positioning_graph_audit(phase):
     ground_truth_subscription_present = any(
         "/ground_truth/" in text for text in (adapter, fuser)
     )
-    files_present = adapter_path.is_file() and fuser_path.is_file()
+    # The generic flag publishes the configured global-to-local edge: mapping
+    # uses odom -> wheel_odom, while reload uses map -> odom. Exact frame
+    # parameters and the live target edge are audited below.
+    expected_ownership = "true"
+    ownership_pass = f"boolean value is: {expected_ownership}" in ownership.lower()
+    expected_fuser_frames = (
+        ("odom", "wheel_odom") if phase == "mapping" else ("map", "odom")
+    )
+    fuser_tf_edge_pass = bool(
+        f"String value is: {expected_fuser_frames[0]}" in map_frame
+        and f"String value is: {expected_fuser_frames[1]}" in odom_frame
+    )
+    amcl_tf_disabled = bool(
+        phase == "mapping"
+        or (
+            amcl_tf_path.is_file()
+            and "boolean value is: false"
+            in amcl_tf_path.read_text(encoding="utf-8").lower()
+        )
+    )
+    tf_ownership_path = directory / "tf_ownership.json"
+    tf_ownership = (
+        json.loads(tf_ownership_path.read_text(encoding="utf-8"))
+        if tf_ownership_path.is_file()
+        else {}
+    )
+    files_present = all(
+        item.is_file()
+        for item in (
+            adapter_path, fuser_path, ownership_path, map_frame_path,
+            odom_frame_path, tf_ownership_path,
+        )
+    ) and (phase == "mapping" or amcl_tf_path.is_file())
     return {
         "adapter_node_info": str(adapter_path),
         "fuser_node_info": str(fuser_path),
+        "map_to_odom_ownership": str(ownership_path),
+        "configured_fuser_tf_edge": "_to_".join(expected_fuser_frames),
         "files_present": files_present,
         "adapter_inputs_present": adapter_inputs_present,
         "fuser_inputs_present": fuser_inputs_present,
         "ground_truth_subscription_present": ground_truth_subscription_present,
+        "map_to_odom_ownership_pass": ownership_pass,
+        "fuser_tf_edge_pass": fuser_tf_edge_pass,
+        "amcl_tf_broadcast_disabled": amcl_tf_disabled,
+        "tf_ownership": tf_ownership,
+        "tf_single_owner_pass": tf_ownership.get("single_owner") is True,
         "pass": bool(
             files_present
             and adapter_inputs_present
             and fuser_inputs_present
             and not ground_truth_subscription_present
+            and ownership_pass
+            and fuser_tf_edge_pass
+            and amcl_tf_disabled
+            and tf_ownership.get("single_owner") is True
         ),
     }
 
@@ -841,7 +982,9 @@ shutdown_records = {}
 for report_path in sorted(pid_dir.glob("*.shutdown.json")):
     report = json.loads(report_path.read_text(encoding="utf-8"))
     shutdown_records[str(report["name"])] = report
-one_shot_groups = {"mapping_explorer", "reload_probe"}
+one_shot_groups = {
+    "mapping_explorer", "reload_probe", "mapping_tf_owner", "reload_tf_owner"
+}
 started_service_groups = {
     item.stem
     for item in pid_dir.glob("*.pid")
@@ -891,11 +1034,11 @@ def sha256(file_path):
 payload = {
     "formal_scope": sys.argv[2].lower() == "true",
     "diagnostic_override": {
-        "enabled": sys.argv[18] == "1",
-        "spawn_x": float(sys.argv[19]),
-        "spawn_y": float(sys.argv[20]),
-        "spawn_yaw": float(sys.argv[21]),
-        "initial_sweep_target_index": int(sys.argv[22]),
+        "enabled": sys.argv[20] == "1",
+        "spawn_x": float(sys.argv[21]),
+        "spawn_y": float(sys.argv[22]),
+        "spawn_yaw": float(sys.argv[23]),
+        "initial_sweep_target_index": int(sys.argv[24]),
     },
     "restart_completed": sys.argv[3].lower() == "true",
     "runtime_shutdown": runtime_shutdown,

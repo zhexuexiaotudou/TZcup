@@ -44,12 +44,17 @@ def test_formal_runner_has_real_restart_and_20k_fail_closed_scope():
     assert "--posegraph-data" in text
     assert "localization_backend:=\"$backend\"" in text
     assert "sanitation_navigation_probe" in text
+    assert "RELOAD_ROUTE_MAX_LENGTH_M" in text
+    assert "--maximum-route-length-m" in text
+    assert "float(sys.argv[2]) * 0.20" in text
+    assert '--minimum-waypoints 3 --maximum-waypoints 3' in text
     assert "wait_for_lifecycle_active /bt_navigator" in text
     assert "autostart:=false" in text
     assert 'activate_slam_toolbox "$mapping/slam_lifecycle.txt"' in text
     assert 'STARTED_PID="$(<"$pid_file")"' in text
     assert 'setsid python3 - "$pid_file" "$exit_file" "$@"' in text
     assert "signal_supervised_command()" in text
+    assert 'while group_alive "$pid"; do' in text
     assert 'signal_supervised_command INT "$name" "$pid"' in text
     assert 'signal_mode="ros2_run_leaf"' in text
     assert 'kill -s "$signal_name" "$node_pid"' in text
@@ -63,7 +68,14 @@ def test_formal_runner_has_real_restart_and_20k_fail_closed_scope():
     assert 'runtime_shutdown = {' in text
     assert '"all_started_service_groups_clean"' in text
     assert 'pkill -TERM -s "$pid"' in text
-    assert 'pgrep -s "$pid"' in text
+    assert "ps -eo pid=,pgid=,sid=,stat=" in text
+    assert "$4 !~ /^Z/" in text
+    assert 'if group_alive "$pid"; then' in text
+    assert 'kill -0 "$pid" 2>/dev/null || pgrep -s "$pid"' not in text
+    stop_function = text.split("stop_simulation_group() {", 1)[1].split("\n}", 1)[0]
+    assert 'stop_group "$name" "$pid" || stop_code=$?' in stop_function
+    assert 'report["server_control_stop_accepted"] = accepted' in stop_function
+    assert 'return "$stop_code"' in stop_function
     assert "trap on_error ERR" in text
     assert "if python3 \"$ROOT/scripts/product_mapping_acceptance.py\" evaluate" in text
     assert "trap 'exit 143' TERM" in text
@@ -138,6 +150,25 @@ def test_mapping_control_does_not_subscribe_to_ground_truth():
     assert "ros2 node info /hybrid_global_fuser" in text
     assert "ground_truth_ros_subscription_in_positioning" in text
     assert "all_runtime_graph_audits_pass" in text
+    assert 'start_positioning_chain "$mapping" mapping true' in text
+    assert 'start_positioning_chain "$reload" reload true' in text
+    assert '"$mapping_ekf_params"' in text
+    assert '"$reload_ekf_params"' in text
+    assert '"$reload_hybrid_params"' in text
+    assert 'verify_positioning_chain "$mapping" true odom wheel_odom' in text
+    assert 'verify_positioning_chain "$reload" true map odom' in text
+    assert 'config["amcl"]["ros__parameters"]["tf_broadcast"] = False' in text
+    assert 'ros2 param get /amcl tf_broadcast' in text
+    assert 'reload hybrid_global_fuser' in text
+    assert "hybrid_global_fuser_map_to_odom.txt" in text
+    assert 'grep -Fqi "Boolean value is: $expected_map_to_odom_owner"' in text
+    assert "map_to_odom_ownership_pass" in text
+    assert "start_tf_ownership_audit" in text
+    assert "tf_single_owner_pass" in text
+    assert "tf_sample_publisher_gid_to_runtime_endpoint_graph" in (
+        ROOT
+        / "starter_ws/src/sanitation_tasks/sanitation_tasks/tf_ownership_audit.py"
+    ).read_text(encoding="utf-8")
     assert '"gazebo_truth_to_gnss_sensor_model": False' in text
     assert "--world-sdf" in text
     assert "no oracle pose topic enters positioning or control" in text
@@ -197,6 +228,11 @@ def test_runtime_probe_and_self_filters_use_idempotent_launch_shutdown():
         assert "except _rclpy.RCLError:" in text
         assert "if rclpy.ok():" in text
         assert "rclpy.try_shutdown()" in text
+
+    tf_probe = scripts[0].read_text(encoding="utf-8")
+    assert "and self.jump_count == 0" in tf_probe
+    assert 'self.declare_parameter("warmup_sec", 0.0)' in tf_probe
+    assert '"diagnostic_transform_jump_events": self.jump_events' in tf_probe
 
     safety_nodes = (
         "actuator_timeout_guard.py",

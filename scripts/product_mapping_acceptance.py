@@ -42,6 +42,8 @@ def select_reload_waypoints(
     initial_xy=(0.0, 0.0),
     minimum_separation_m=15.0,
     maximum_waypoints=5,
+    minimum_waypoints=3,
+    maximum_route_length_m=None,
 ) -> list[list[float]]:
     candidates = []
     for row in exploration.get("goals", []):
@@ -57,6 +59,62 @@ def select_reload_waypoints(
     selected = []
     anchors = [(float(initial_xy[0]), float(initial_xy[1]))]
     remaining = list(candidates)
+    if maximum_route_length_m is not None:
+        # Retain one deterministic representative per occupancy-map decimetre,
+        # then search exactly for the required number of points.  A bounded
+        # acceptance route deliberately stops at the minimum required count:
+        # additional points consume failure budget without proving another
+        # contract property.
+        unique = {}
+        for point in candidates:
+            unique.setdefault((round(point[0], 1), round(point[1], 1)), point)
+        points = tuple(unique.values())
+        start = (float(initial_xy[0]), float(initial_xy[1]))
+        required_count = int(minimum_waypoints)
+        best = None
+
+        def search(indices, current, length, score):
+            nonlocal best
+            if len(indices) == required_count:
+                candidate = (score, -length, tuple(-index for index in indices), indices)
+                if best is None or candidate[:3] > best[:3]:
+                    best = candidate
+                return
+            selected_xy = [start] + [points[index][:2] for index in indices]
+            used = set(indices)
+            points_left_after_next = required_count - len(indices) - 1
+            for index, point in enumerate(points):
+                if index in used:
+                    continue
+                separation = min(
+                    math.hypot(point[0] - x, point[1] - y)
+                    for x, y in selected_xy
+                )
+                if separation < float(minimum_separation_m):
+                    continue
+                leg = math.hypot(point[0] - current[0], point[1] - current[1])
+                new_length = length + leg
+                minimum_remaining = points_left_after_next * float(minimum_separation_m)
+                if new_length + minimum_remaining > float(maximum_route_length_m) + 1.0e-9:
+                    continue
+                search(
+                    indices + (index,), point[:2], new_length,
+                    score + separation,
+                )
+
+        search(tuple(), start, 0.0, 0.0)
+        if best is None:
+            return []
+        route = []
+        current = start
+        for index in best[3]:
+            point = points[index]
+            route.append([
+                point[0], point[1],
+                math.atan2(point[1] - current[1], point[0] - current[0]),
+            ])
+            current = point[:2]
+        return route
     while remaining and len(selected) < int(maximum_waypoints):
         ranked = sorted(
             remaining,
@@ -84,6 +142,8 @@ def build_route(args) -> int:
         initial_xy=(args.initial_x, args.initial_y),
         minimum_separation_m=args.minimum_separation_m,
         maximum_waypoints=args.maximum_waypoints,
+        minimum_waypoints=args.minimum_waypoints,
+        maximum_route_length_m=args.maximum_route_length_m,
     )
     if len(waypoints) < args.minimum_waypoints:
         raise ValueError(
@@ -147,6 +207,7 @@ def evaluate(args) -> int:
         float(quality.get("known_area_m2") or 0.0),
     )
     boundary_rmse = geometry.get("boundary_rmse_m")
+    visible_boundary_recall = geometry.get("visible_truth_boundary_recall")
     ghost_ratio = geometry.get("loop_ghosting_ratio")
     topology_failures = {
         "registration_failed": not bool(
@@ -155,15 +216,24 @@ def evaluate(args) -> int:
         "boundary_rmse_exceeded": (
             boundary_rmse is None or float(boundary_rmse) > args.max_boundary_rmse_m
         ),
+        "visible_boundary_recall_below_minimum": (
+            visible_boundary_recall is None
+            or float(visible_boundary_recall) < args.min_visible_boundary_recall
+        ),
         "loop_ghosting_exceeded": (
             ghost_ratio is None or float(ghost_ratio) > args.max_loop_ghosting_ratio
         ),
     }
     topology_damage_count = sum(topology_failures.values())
-    coordinate_frame_break_count = sum(
+    temporal_frame_break_count = sum(
         int(inputs[name].get("coordinate_frame_break_count", 1))
         for name in ("mapping_tf", "reload_tf")
     )
+    transform_jump_count = sum(
+        int(inputs[name].get("diagnostic_transform_jump_count", 1))
+        for name in ("mapping_tf", "reload_tf")
+    )
+    coordinate_frame_break_count = temporal_frame_break_count + transform_jump_count
     process_codes = processes.get("exit_codes", {})
     required_zero_codes = (
         "exploration", "map_save", "posegraph_serialize",
@@ -267,9 +337,12 @@ def evaluate(args) -> int:
         "mapping_area_m2": mapping_area_m2,
         "map_save_load_relocalize_navigation_pass": reload_navigation_pass,
         "coordinate_frame_break_count": coordinate_frame_break_count,
+        "temporal_frame_break_count": temporal_frame_break_count,
+        "transform_jump_count": transform_jump_count,
         "topology_damage_count": topology_damage_count,
         "topology_thresholds": {
             "maximum_boundary_rmse_m": args.max_boundary_rmse_m,
+            "minimum_visible_boundary_recall": args.min_visible_boundary_recall,
             "maximum_loop_ghosting_ratio": args.max_loop_ghosting_ratio,
         },
         "topology_failures": topology_failures,
@@ -314,6 +387,7 @@ def parser() -> argparse.ArgumentParser:
     route.add_argument("--minimum-separation-m", type=float, default=15.0)
     route.add_argument("--minimum-waypoints", type=int, default=3)
     route.add_argument("--maximum-waypoints", type=int, default=5)
+    route.add_argument("--maximum-route-length-m", type=float)
     route.set_defaults(handler=build_route)
     adjudicate = subparsers.add_parser("evaluate")
     for name in (
@@ -327,6 +401,7 @@ def parser() -> argparse.ArgumentParser:
     adjudicate.add_argument("--reload-route", required=True, type=Path)
     adjudicate.add_argument("--output", required=True, type=Path)
     adjudicate.add_argument("--max-boundary-rmse-m", type=float, default=0.15)
+    adjudicate.add_argument("--min-visible-boundary-recall", type=float, default=0.95)
     adjudicate.add_argument("--max-loop-ghosting-ratio", type=float, default=0.02)
     adjudicate.add_argument("--allow-overwrite", action="store_true")
     adjudicate.set_defaults(handler=evaluate)

@@ -43,6 +43,15 @@ TEST(FusionFilter, PropagatesDelayedHeadingWithLocalYawAndWraps)
   EXPECT_NEAR(propagated, -3.05, 1e-12);
 }
 
+TEST(FusionFilter, SmoothsHeadingAcrossTheWrapBoundary)
+{
+  const double filtered = sanitation_scan_refiner::smoothHeading(
+    3.13, -3.13, 0.1);
+  EXPECT_GT(filtered, 3.13);
+  EXPECT_LT(filtered, std::acos(-1.0));
+  EXPECT_NEAR(filtered, 3.132318530717959, 1e-12);
+}
+
 TEST(FusionFilter, ConvertsGazeboWorldDatumIntoMissionMapFrame)
 {
   const double pi = std::acos(-1.0);

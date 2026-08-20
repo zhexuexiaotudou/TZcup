@@ -31,6 +31,16 @@ inline std::pair<double, double> smoothAnchor(
     previous.second + bounded * (measurement.second - previous.second)};
 }
 
+inline double smoothHeading(
+  const double previous, const double measurement, const double alpha)
+{
+  const double bounded = std::clamp(alpha, 0.0, 1.0);
+  const double innovation = std::atan2(
+    std::sin(measurement - previous), std::cos(measurement - previous));
+  const double filtered = previous + bounded * innovation;
+  return std::atan2(std::sin(filtered), std::cos(filtered));
+}
+
 inline bool measurementsConsistent(
   const std::pair<double, double> & first,
   const std::pair<double, double> & second,
