@@ -77,6 +77,7 @@ def test_formal_runner_has_real_restart_and_20k_fail_closed_scope():
     assert "-p horizontal_sweep_alignment_distance_m:=2.0" in text
     assert "-p horizontal_sweep_alignment_tolerance_rad:=0.15" in text
     assert "-p minimum_goal_distance_m:=0.80" in text
+    assert "-p required_bounds_goal_margin_m:=0.80" in text
     assert "-p minimum_turning_radius_m:=1.429" in text
     assert "-p maximum_frontier_goal_yaw_change_rad:=0.70" in text
     assert "-p minimum_frontier_arc_yaw_change_rad:=0.15" in text
@@ -225,6 +226,8 @@ def test_frontier_timeout_restarts_nav2_before_next_goal():
     assert '"horizontal_sweep_staging_exhaustion_arm_count"' in explorer
     assert "centers = frontier_goal_exclusion_centers(candidate)" in explorer
     assert "self._sweep_horizontal_preference_y(" in explorer
+    assert 'declare_parameter("required_bounds_goal_margin_m", 0.80)' in explorer
+    assert 0.80 >= 0.66 + 0.05
     assert '"frontier_success_without_map_progress_raw_excluded"' in explorer
     assert '"horizontal_sweep_staging_attempt_count"' in explorer
     assert '"horizontal_sweep_staging_arm_count"' in explorer

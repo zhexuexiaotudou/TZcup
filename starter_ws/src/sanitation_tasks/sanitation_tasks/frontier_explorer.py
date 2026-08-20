@@ -81,7 +81,10 @@ class FrontierExplorer(Node):
         self.declare_parameter("minimum_goal_distance_m", 1.5)
         self.declare_parameter("failed_goal_exclusion_radius_m", 3.0)
         self.declare_parameter("timed_out_goal_exclusion_radius_m", 1.5)
-        self.declare_parameter("required_bounds_goal_margin_m", 1.5)
+        # Product footprint half-width 0.66 m + 0.05 m localization P95 +
+        # 0.09 m simulation/control reserve. The full 1.32 m footprint remains
+        # active in Nav2 and Collision Monitor; this is only a centre bound.
+        self.declare_parameter("required_bounds_goal_margin_m", 0.80)
         self.declare_parameter("frontier_goal_backoff_m", 1.5)
         self.declare_parameter("maximum_frontier_goal_distance_m", 4.0)
         self.declare_parameter("initial_frontier_goal_distance_m", 2.0)

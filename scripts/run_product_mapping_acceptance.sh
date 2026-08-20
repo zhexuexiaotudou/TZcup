@@ -498,7 +498,7 @@ start_group mapping_explorer "$mapping/frontier_exploration.log" \
   -p use_sim_time:=true \
   -p output_path:="$mapping/frontier_exploration.json" \
   -p required_bounds_xyxy_m:="[${BOUNDS[0]},${BOUNDS[1]},${BOUNDS[2]},${BOUNDS[3]}]" \
-  -p required_bounds_coverage_ratio:=1.0 -p required_bounds_goal_margin_m:=1.5 \
+  -p required_bounds_coverage_ratio:=1.0 -p required_bounds_goal_margin_m:=0.80 \
   -p minimum_goal_distance_m:=0.80 -p minimum_turning_radius_m:=1.429 \
   -p maximum_frontier_goal_yaw_change_rad:=0.70 \
   -p minimum_frontier_arc_yaw_change_rad:=0.15 \
