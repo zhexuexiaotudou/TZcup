@@ -5,6 +5,7 @@ from sanitation_gnss_sim.model import (
     GnssNoiseModel,
     PROFILES,
     local_xy_to_wgs84,
+    wgs84_to_local_xy,
 )
 
 
@@ -72,12 +73,8 @@ def test_multipath_profile_injects_approximately_one_percent_outliers():
 
 def test_local_xy_wgs84_round_trip_scale():
     latitude, longitude = local_xy_to_wgs84(10.0, -4.0, 31.2304, 121.4737)
-    earth_radius = 6378137.0
-    recovered_y = math.radians(latitude - 31.2304) * earth_radius
-    recovered_x = (
-        math.radians(longitude - 121.4737)
-        * earth_radius
-        * math.cos(math.radians(31.2304))
+    recovered_x, recovered_y = wgs84_to_local_xy(
+        latitude, longitude, 31.2304, 121.4737
     )
     assert math.isclose(recovered_x, 10.0, abs_tol=1e-6)
     assert math.isclose(recovered_y, -4.0, abs_tol=1e-6)

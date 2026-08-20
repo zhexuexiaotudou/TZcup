@@ -146,7 +146,7 @@ def localization_health(covariance: list[float] | tuple[float, ...]) -> tuple[bo
 
 
 def has_localization_transform(transforms) -> bool:
-    """Return true only for the AMCL-owned global transform heartbeat."""
+    """Return true only for the configured global localization heartbeat."""
     for transform in transforms:
         parent = str(transform.header.frame_id).lstrip("/")
         child = str(transform.child_frame_id).lstrip("/")
@@ -224,10 +224,10 @@ def main(args=None) -> None:
             self._observe("localization", healthy, reason)
 
         def _tf(self, message) -> None:
-            # AMCL publishes its pose on motion/initialization events, while
-            # map->odom is its continuous operational heartbeat.  Refresh the
-            # source only when both the canonical pose and AMCL authority are
-            # present; a stopped AMCL process therefore becomes stale.
+            # The global backend may publish pose only on measurement events,
+            # while map->odom is its continuous operational heartbeat. Refresh
+            # only when both canonical pose and transform authority are present;
+            # a stopped localization process therefore becomes stale.
             if (
                 self._localization_message is not None
                 and has_localization_transform(message.transforms)

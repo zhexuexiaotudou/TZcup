@@ -76,7 +76,11 @@ Pre-Clean 会重新检查目标仍存在、identity/class/persistence/covariance
 
 ## 启动边界
 
-完整产品仿真入口为 `sanitation_product_bringup/launch/product_simulation.launch.py`，组件级入口为 `sanitation_bringup/launch/product_cleaning.launch.py`。完整入口固定 Ackermann、1.32 m 车辆/刷宽、上电急停、Coverage 人工启动、生产相机、训练 GT 关闭，并要求生产 Coverage 控制器的 GT 订阅关闭。局部 `/odom` 由 wheel/IMU EKF 发布；AMCL 独占 `map→odom` 并把原始全局位姿契约化为 `/localization/fused_pose`，供 Coverage、HMI、重观察、点清扫和健康监督共同使用。监督节点以持续的 `map→odom` TF 作为 AMCL 运行心跳，同时保留位姿协方差判定，避免把静止时低频位姿事件误判为定位失联。入口默认 headless，以 `ROS_DOMAIN_ID` 派生 `GZ_PARTITION`/`IGN_PARTITION`；产品世界用 5 ms 步长与 200 Hz 更新上限形成 1× 时间基准，防止遗留或并发 Gazebo 世界向本次任务串入时钟和传感器数据。调用者必须显式提供：
+完整产品仿真入口为 `sanitation_product_bringup/launch/product_simulation.launch.py`，组件级入口为 `sanitation_bringup/launch/product_cleaning.launch.py`。完整入口固定 Ackermann、1.32 m 车辆/刷宽、上电急停、Coverage 人工启动、生产相机、训练 GT 关闭，并要求生产 Coverage 控制器的 GT 订阅关闭。
+
+产品定位不再由 ROS 侧 GT 派生。车辆 Xacro 在车体纵轴前后各布置一只 Gazebo NavSat，物理基线固定为 0.80 m；两个 `gz.msgs.NavSat` 经 `gps_msgs/msg/GPSFix` 桥接后由 `dual_navsat_adapter` 做同历元配对、基线合理性检查和确定性 RTK 误差/延迟/丢包注入，输出标准 `/gnss/fix`、`/gnss/heading` 与 `/gnss/velocity`。局部 `/odom` 只由 wheel/IMU EKF 发布。`hybrid_global_fuser` 把 WGS84 投影先变换到任务 map 坐标，再用 wheel/IMU 传播延迟的 RTK 位置与双天线航向；它是产品 `/localization/fused_pose` 和 `map→odom` 的唯一权威。Nav2 的 `external` 定位后端只保留 map server，不再启动 AMCL，因此不会形成双发布者或双 TF 权威。适配器和融合器异常退出时由产品入口重启，但安全监督仍必须因定位缺失/协方差降级重新锁存 E-stop；恢复不得自动开车。
+
+监督节点以持续的 `map→odom` TF 作为全局定位运行心跳，同时保留位姿协方差判定，避免把静止时低频位姿事件误判为定位失联。入口默认 headless，以 `ROS_DOMAIN_ID` 派生 `GZ_PARTITION`/`IGN_PARTITION`；产品世界用 5 ms 步长与 200 Hz 更新上限形成 1× 时间基准，防止遗留或并发 Gazebo 世界向本次任务串入时钟和传感器数据。调用者必须显式提供：
 
 - 冻结的 `pipeline_manifest`；
 - 哈希匹配的 `artifact_root`；

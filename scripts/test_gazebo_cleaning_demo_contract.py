@@ -130,6 +130,56 @@ def test_product_world_clock_is_bounded_to_real_time() -> None:
     assert step_s * update_hz == requested_factor
 
 
+def test_all_simulation_worlds_share_the_product_navsat_datum() -> None:
+    worlds_dir = (
+        ROOT / "starter_ws" / "src" / "sanitation_worlds" / "worlds"
+    )
+    expected_worlds = {
+        "motion_calibration_world.sdf",
+        "sanitation_campus_large.sdf",
+        "sanitation_campus_medium.sdf",
+        "sanitation_campus_small.sdf",
+        "sanitation_competition_ackermann_demo.sdf",
+        "sanitation_competition_demo.sdf",
+        "sanitation_structured_world.sdf",
+        "sanitation_test_world.sdf",
+    }
+    assert {path.name for path in worlds_dir.glob("*.sdf")} == expected_worlds
+
+    xml = __import__("xml.etree.ElementTree", fromlist=["ElementTree"])
+    for world_path in sorted(worlds_dir.glob("*.sdf")):
+        world = xml.parse(world_path).getroot().find("world")
+        assert world is not None
+        navsat_plugins = [
+            plugin
+            for plugin in world.findall("plugin")
+            if plugin.get("filename") == "gz-sim-navsat-system"
+        ]
+        assert len(navsat_plugins) == 1, world_path.name
+        coordinates = world.find("spherical_coordinates")
+        assert coordinates is not None, world_path.name
+        assert coordinates.findtext("surface_model") == "EARTH_WGS84"
+        assert coordinates.findtext("world_frame_orientation") == "ENU"
+        assert float(coordinates.findtext("latitude_deg", "nan")) == 31.2304
+        assert float(coordinates.findtext("longitude_deg", "nan")) == 121.4737
+        assert float(coordinates.findtext("heading_deg", "nan")) == 0.0
+
+
+def test_vehicle_dual_navsat_geometry_is_symmetric_and_sensor_driven() -> None:
+    xacro = read(
+        "starter_ws/src/sanitation_vehicle_description/urdf/"
+        "sanitation_vehicle.urdf.xacro"
+    )
+    assert '<xacro:arg name="gnss_baseline_m" default="0.80"/>' in xacro
+    assert '<xacro:arg name="gnss_update_rate" default="10"/>' in xacro
+    assert 'name="front" x="${gnss_baseline_m / 2.0}"' in xacro
+    assert 'name="rear" x="${-gnss_baseline_m / 2.0}"' in xacro
+    assert '<sensor name="gnss_${name}_navsat" type="navsat">' in xacro
+    assert '<update_rate>${gnss_update_rate}</update_rate>' in xacro
+    assert 'topic="gnss/front/fix_raw"' in xacro
+    assert 'topic="gnss/rear/fix_raw"' in xacro
+
+
 def test_small_demo_default_camera_is_close_enough_for_target_counting() -> None:
     small_config = read(
         "starter_ws/src/sanitation_gazebo_control/config/mission_control_small.config"

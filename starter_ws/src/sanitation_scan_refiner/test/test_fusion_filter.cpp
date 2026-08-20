@@ -42,3 +42,20 @@ TEST(FusionFilter, PropagatesDelayedHeadingWithLocalYawAndWraps)
     3.13, -3.10, 3.08);
   EXPECT_NEAR(propagated, -3.05, 1e-12);
 }
+
+TEST(FusionFilter, ConvertsGazeboWorldDatumIntoMissionMapFrame)
+{
+  const double pi = std::acos(-1.0);
+  const auto translated = sanitation_scan_refiner::worldToMap(
+    -8.0, 2.0, 8.0, -2.0, 0.0);
+  EXPECT_NEAR(translated.first, 0.0, 1e-12);
+  EXPECT_NEAR(translated.second, 0.0, 1e-12);
+
+  const auto rotated = sanitation_scan_refiner::worldToMap(
+    2.0, 0.0, 1.0, 2.0, pi / 2.0);
+  EXPECT_NEAR(rotated.first, 1.0, 1e-12);
+  EXPECT_NEAR(rotated.second, 4.0, 1e-12);
+  EXPECT_NEAR(
+    sanitation_scan_refiner::worldHeadingToMap(pi, pi / 2.0),
+    -pi / 2.0, 1e-12);
+}

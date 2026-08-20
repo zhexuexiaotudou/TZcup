@@ -28,6 +28,9 @@ hybrid_global_fuser:
     refined_pose_topic: /localization/refined_pose
     origin_latitude_deg: 31.2304
     origin_longitude_deg: 121.4737
+    world_to_map_x: 0.0
+    world_to_map_y: 0.0
+    world_to_map_yaw: 0.0
     maximum_gnss_age_s: 0.5
     maximum_gnss_heading_age_s: 0.5
     gnss_heading_variance_rad2: 0.0001

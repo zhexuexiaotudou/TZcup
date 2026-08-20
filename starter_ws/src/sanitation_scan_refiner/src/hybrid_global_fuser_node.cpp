@@ -90,6 +90,9 @@ public:
     base_frame_ = declare_parameter<std::string>("base_frame", "base_footprint");
     origin_latitude_deg_ = declare_parameter<double>("origin_latitude_deg", 31.2304);
     origin_longitude_deg_ = declare_parameter<double>("origin_longitude_deg", 121.4737);
+    world_to_map_x_ = declare_parameter<double>("world_to_map_x", 0.0);
+    world_to_map_y_ = declare_parameter<double>("world_to_map_y", 0.0);
+    world_to_map_yaw_ = declare_parameter<double>("world_to_map_yaw", 0.0);
     maximum_gnss_age_s_ = declare_parameter<double>("maximum_gnss_age_s", 0.5);
     maximum_gnss_heading_age_s_ = declare_parameter<double>(
       "maximum_gnss_heading_age_s", 0.5);
@@ -118,7 +121,8 @@ public:
       "refined_pose_topic", "/localization/refined_pose");
 
     pose_publisher_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
-      "/localization/fused_pose", 20);
+      "/localization/fused_pose",
+      rclcpp::QoS(rclcpp::KeepLast(1)).reliable().transient_local());
     odom_publisher_ = create_publisher<nav_msgs::msg::Odometry>(
       "/localization/fused_odom", 20);
     diagnostics_publisher_ = create_publisher<diagnostic_msgs::msg::DiagnosticArray>(
@@ -165,19 +169,22 @@ private:
     }
     const double latitude_rad = message->latitude * kPi / 180.0;
     const double origin_latitude_rad = origin_latitude_deg_ * kPi / 180.0;
-    const double raw_x = (message->longitude - origin_longitude_deg_) * kPi / 180.0 *
+    const double world_x = (message->longitude - origin_longitude_deg_) * kPi / 180.0 *
       kEarthRadiusM * std::cos(origin_latitude_rad);
-    const double raw_y = (latitude_rad - origin_latitude_rad) * kEarthRadiusM;
+    const double world_y = (latitude_rad - origin_latitude_rad) * kEarthRadiusM;
+    const auto map_position = worldToMap(
+      world_x, world_y, world_to_map_x_, world_to_map_y_, world_to_map_yaw_);
     const double variance = gnss_variance_scale_ * std::max(
       1e-6, std::max(message->position_covariance[0], message->position_covariance[4]));
 
-    double projected_x = raw_x;
-    double projected_y = raw_y;
+    double projected_x = map_position.first;
+    double projected_y = map_position.second;
     const double measurement_stamp = stampSeconds(message->header.stamp);
     last_gnss_measurement_stamp_ = measurement_stamp;
     const auto sample = closestLocal(measurement_stamp);
     if (sample && have_local_) {
-      const auto projected = propagateGlobal(raw_x, raw_y, *sample);
+      const auto projected = propagateGlobal(
+        map_position.first, map_position.second, *sample);
       projected_x = projected.first;
       projected_y = projected.second;
     }
@@ -209,7 +216,7 @@ private:
     if (!std::isfinite(message->data) || !have_local_) {
       return;
     }
-    gnss_heading_ = std::atan2(std::sin(message->data), std::cos(message->data));
+    gnss_heading_ = worldHeadingToMap(message->data, world_to_map_yaw_);
     const auto sample = closestLocal(last_gnss_measurement_stamp_);
     gnss_heading_local_anchor_ = sample.value_or(local_);
     gnss_heading_receive_stamp_ = now().seconds();
@@ -423,6 +430,9 @@ private:
     status.values.push_back(keyValue("gnss_heading_available", have_gnss_heading_));
     status.values.push_back(keyValue("gnss_heading_receive_stamp", gnss_heading_receive_stamp_));
     status.values.push_back(keyValue("map_to_odom_owner", publish_map_to_odom_));
+    status.values.push_back(keyValue("world_to_map_x", world_to_map_x_));
+    status.values.push_back(keyValue("world_to_map_y", world_to_map_y_));
+    status.values.push_back(keyValue("world_to_map_yaw", world_to_map_yaw_));
     status.values.push_back(keyValue("ground_truth_direct_fusion", false));
     array.status.push_back(status);
     diagnostics_publisher_->publish(array);
@@ -434,6 +444,9 @@ private:
   std::string base_frame_;
   double origin_latitude_deg_{0.0};
   double origin_longitude_deg_{0.0};
+  double world_to_map_x_{0.0};
+  double world_to_map_y_{0.0};
+  double world_to_map_yaw_{0.0};
   double maximum_gnss_age_s_{0.5};
   double maximum_gnss_heading_age_s_{0.5};
   double gnss_heading_variance_rad2_{0.0001};

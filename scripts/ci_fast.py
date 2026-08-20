@@ -202,6 +202,7 @@ def run_ros_independent_tests() -> None:
         tasks_package / "test" / "test_stage4w_dynamic_aggregate.py",
         tasks_package / "test" / "test_auto11_large_map.py",
         gnss_package / "test" / "test_model.py",
+        gnss_package / "test" / "test_dual_navsat.py",
         perception_package / "test" / "test_registry.py",
         perception_package / "test" / "test_projection.py",
         perception_package / "test" / "test_tracking.py",

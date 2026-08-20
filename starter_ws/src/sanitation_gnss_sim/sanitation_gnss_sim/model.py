@@ -168,3 +168,14 @@ def local_xy_to_wgs84(x_m, y_m, origin_latitude_deg, origin_longitude_deg):
         x_m / (EARTH_RADIUS_M * math.cos(origin_latitude_rad))
     )
     return latitude, longitude
+
+
+def wgs84_to_local_xy(latitude_deg, longitude_deg, origin_latitude_deg, origin_longitude_deg):
+    origin_latitude_rad = math.radians(origin_latitude_deg)
+    y_m = math.radians(latitude_deg - origin_latitude_deg) * EARTH_RADIUS_M
+    x_m = (
+        math.radians(longitude_deg - origin_longitude_deg)
+        * EARTH_RADIUS_M
+        * math.cos(origin_latitude_rad)
+    )
+    return x_m, y_m

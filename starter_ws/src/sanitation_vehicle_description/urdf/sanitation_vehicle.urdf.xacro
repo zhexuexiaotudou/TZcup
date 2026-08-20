@@ -28,6 +28,10 @@
   <xacro:arg name="enable_wheel_slip" default="false"/>
   <xacro:arg name="lidar_samples" default="360"/>
   <xacro:arg name="lidar_update_rate" default="10"/>
+  <!-- Frozen dual-antenna GNSS geometry. Gazebo publishes raw NavSat sensor
+       measurements; the ROS adapter applies the deterministic RTK profile. -->
+  <xacro:arg name="gnss_baseline_m" default="0.80"/>
+  <xacro:arg name="gnss_update_rate" default="10"/>
   <!-- Product cleaning envelope: two physical 0.14 m side brushes deployed
        at +/-0.52 m produce a truthful 1.32 m effective width. -->
   <xacro:arg name="cleaning_width" default="1.32"/>
@@ -81,6 +85,8 @@
   <xacro:property name="brush_forward_x" value="$(arg brush_forward_x)"/>
   <xacro:property name="lidar_samples" value="$(arg lidar_samples)"/>
   <xacro:property name="lidar_update_rate" value="$(arg lidar_update_rate)"/>
+  <xacro:property name="gnss_baseline_m" value="$(arg gnss_baseline_m)"/>
+  <xacro:property name="gnss_update_rate" value="$(arg gnss_update_rate)"/>
 
   <!-- Local primitive chassis avoids the upstream Gazebo-classic visual
        override colliding with URDF materials in Ogre2 / Gazebo Harmonic. -->
@@ -375,6 +381,38 @@
   </xacro:if>
 
   <xacro:imu/>
+
+  <xacro:macro name="sanitation_navsat_antenna" params="name x topic color">
+    <link name="gnss_${name}_link">
+      <visual name="gnss_${name}_visual">
+        <geometry><cylinder radius="0.045" length="0.025"/></geometry>
+        <material name="gnss_${name}_material"><color rgba="${color}"/></material>
+      </visual>
+      <inertial>
+        <mass value="0.05"/>
+        <inertia ixx="0.000012" ixy="0" ixz="0" iyy="0.000012" iyz="0" izz="0.000020"/>
+      </inertial>
+    </link>
+    <joint name="gnss_${name}_joint" type="fixed">
+      <parent link="base_link"/>
+      <child link="gnss_${name}_link"/>
+      <origin xyz="${x} 0 0.50" rpy="0 0 0"/>
+    </joint>
+    <gazebo reference="gnss_${name}_link">
+      <sensor name="gnss_${name}_navsat" type="navsat">
+        <topic>${topic}</topic>
+        <update_rate>${gnss_update_rate}</update_rate>
+        <always_on>true</always_on>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:sanitation_navsat_antenna
+    name="front" x="${gnss_baseline_m / 2.0}"
+    topic="gnss/front/fix_raw" color="0.08 0.32 0.80 1.0"/>
+  <xacro:sanitation_navsat_antenna
+    name="rear" x="${-gnss_baseline_m / 2.0}"
+    topic="gnss/rear/fix_raw" color="0.04 0.62 0.92 1.0"/>
 
   <link name="laser">
     <visual name="lidar_body_visual">

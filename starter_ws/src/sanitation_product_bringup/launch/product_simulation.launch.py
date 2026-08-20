@@ -26,6 +26,13 @@ def generate_launch_description() -> LaunchDescription:
     navigation_launch = PathJoinSubstitution(
         [FindPackageShare("sanitation_navigation"), "launch", "navigation.launch.py"]
     )
+    hybrid_localization_launch = PathJoinSubstitution(
+        [
+            FindPackageShare("sanitation_scan_refiner"),
+            "launch",
+            "hybrid_localization.launch.py",
+        ]
+    )
     coverage_launch = PathJoinSubstitution(
         [FindPackageShare("sanitation_coverage"), "launch", "coverage.launch.py"]
     )
@@ -34,6 +41,13 @@ def generate_launch_description() -> LaunchDescription:
     )
     hmi_launch = PathJoinSubstitution(
         [FindPackageShare("sanitation_hmi"), "launch", "human_visualization.launch.py"]
+    )
+    default_world = PathJoinSubstitution(
+        [
+            FindPackageShare("sanitation_worlds"),
+            "worlds",
+            "sanitation_test_world.sdf",
+        ]
     )
 
     return LaunchDescription([
@@ -49,6 +63,14 @@ def generate_launch_description() -> LaunchDescription:
         DeclareLaunchArgument("keepout_map"),
         DeclareLaunchArgument("speed_map"),
         DeclareLaunchArgument("navigation_params_file"),
+        DeclareLaunchArgument("world_file", default_value=default_world),
+        DeclareLaunchArgument("world_name", default_value="sanitation_test_world"),
+        DeclareLaunchArgument("spawn_x", default_value="-8.0"),
+        DeclareLaunchArgument("spawn_y", default_value="0.0"),
+        DeclareLaunchArgument("spawn_yaw", default_value="0.0"),
+        DeclareLaunchArgument("world_to_map_x", default_value="8.0"),
+        DeclareLaunchArgument("world_to_map_y", default_value="0.0"),
+        DeclareLaunchArgument("world_to_map_yaw", default_value="0.0"),
         DeclareLaunchArgument("use_sim_time", default_value="true"),
         DeclareLaunchArgument(
             "transport_partition",
@@ -85,6 +107,11 @@ def generate_launch_description() -> LaunchDescription:
                 "gui": LaunchConfiguration("gui"),
                 "headless_rendering": LaunchConfiguration("headless_rendering"),
                 "random_seed": LaunchConfiguration("random_seed"),
+                "world_file": LaunchConfiguration("world_file"),
+                "world_name": LaunchConfiguration("world_name"),
+                "spawn_x": LaunchConfiguration("spawn_x"),
+                "spawn_y": LaunchConfiguration("spawn_y"),
+                "spawn_yaw": LaunchConfiguration("spawn_yaw"),
                 "drive_model": "ackermann",
                 # Velocity gate owns the product watchdog and fails closed on
                 # stale commands or a missing safety heartbeat.  Do not run
@@ -96,6 +123,35 @@ def generate_launch_description() -> LaunchDescription:
                 "cleaning_width": "1.32",
             }.items(),
         ),
+        Node(
+            package="sanitation_gnss_sim",
+            executable="dual_navsat_adapter",
+            name="dual_navsat_adapter",
+            output="screen",
+            respawn=True,
+            respawn_delay=1.0,
+            parameters=[{
+                "use_sim_time": use_sim_time,
+                "profile": "rtk_fixed",
+                "random_seed": LaunchConfiguration("random_seed"),
+            }],
+        ),
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(hybrid_localization_launch),
+            launch_arguments={
+                "use_sim_time": use_sim_time,
+                "fusion_mode": "rtk_imu_wheel",
+                "enable_scan_refiner": "false",
+                "publish_map_to_odom": "true",
+                "respawn_fuser": "true",
+                "initial_pose_x": "0.0",
+                "initial_pose_y": "0.0",
+                "initial_pose_yaw": LaunchConfiguration("spawn_yaw"),
+                "world_to_map_x": LaunchConfiguration("world_to_map_x"),
+                "world_to_map_y": LaunchConfiguration("world_to_map_y"),
+                "world_to_map_yaw": LaunchConfiguration("world_to_map_yaw"),
+            }.items(),
+        ),
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(navigation_launch),
             launch_arguments={
@@ -105,6 +161,7 @@ def generate_launch_description() -> LaunchDescription:
                 "keepout_map": LaunchConfiguration("keepout_map"),
                 "speed_map": LaunchConfiguration("speed_map"),
                 "footprint_profile": "production",
+                "localization_backend": "external",
                 "localization_pose_topic": "/localization/fused_pose",
                 "safety_startup_stopped": "true",
                 "safety_require_supervisor": "true",

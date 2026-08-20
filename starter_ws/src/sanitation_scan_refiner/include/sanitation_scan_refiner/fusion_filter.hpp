@@ -48,4 +48,22 @@ inline double propagateHeading(
   return std::atan2(std::sin(angle), std::cos(angle));
 }
 
+inline std::pair<double, double> worldToMap(
+  const double world_x, const double world_y,
+  const double translation_x, const double translation_y,
+  const double rotation_yaw)
+{
+  const double cosine = std::cos(rotation_yaw);
+  const double sine = std::sin(rotation_yaw);
+  return {
+    translation_x + cosine * world_x - sine * world_y,
+    translation_y + sine * world_x + cosine * world_y};
+}
+
+inline double worldHeadingToMap(const double world_heading, const double rotation_yaw)
+{
+  const double heading = world_heading + rotation_yaw;
+  return std::atan2(std::sin(heading), std::cos(heading));
+}
+
 }  // namespace sanitation_scan_refiner

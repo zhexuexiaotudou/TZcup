@@ -78,6 +78,9 @@ def generate_launch_description():
     slam_condition = IfCondition(
         PythonExpression(["'", localization_backend, "' == 'slam_toolbox'"])
     )
+    external_condition = IfCondition(
+        PythonExpression(["'", localization_backend, "' == 'external'"])
+    )
     auto01_height_banded_condition = IfCondition(
         PythonExpression([
             "'", LaunchConfiguration('footprint_profile'),
@@ -127,6 +130,28 @@ def generate_launch_description():
                     'use_sim_time': use_sim_time,
                     'autostart': LaunchConfiguration('autostart'),
                     'node_names': ['map_server', 'amcl'],
+                }
+            ],
+        ),
+        Node(
+            package='nav2_map_server',
+            executable='map_server',
+            name='map_server',
+            output='screen',
+            condition=external_condition,
+            parameters=[configured_params, {'yaml_filename': map_file}],
+        ),
+        Node(
+            package='nav2_lifecycle_manager',
+            executable='lifecycle_manager',
+            name='lifecycle_manager_localization',
+            output='screen',
+            condition=external_condition,
+            parameters=[
+                {
+                    'use_sim_time': use_sim_time,
+                    'autostart': LaunchConfiguration('autostart'),
+                    'node_names': ['map_server'],
                 }
             ],
         ),
@@ -215,7 +240,15 @@ def generate_launch_description():
             DeclareLaunchArgument('initial_pose_x', default_value='0.0'),
             DeclareLaunchArgument('initial_pose_y', default_value='0.0'),
             DeclareLaunchArgument('initial_pose_yaw', default_value='0.0'),
-            DeclareLaunchArgument('localization_backend', default_value='amcl'),
+            DeclareLaunchArgument(
+                'localization_backend',
+                default_value='amcl',
+                description=(
+                    'amcl, slam_toolbox, or external. The external backend '
+                    'keeps the map server but delegates fused pose and '
+                    'map-to-odom ownership to a separate localization stack.'
+                ),
+            ),
             DeclareLaunchArgument(
                 'localization_pose_topic',
                 default_value='/amcl_pose',

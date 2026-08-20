@@ -11,6 +11,8 @@ HMI_SERVER = ROOT / "starter_ws" / "src" / "sanitation_hmi" / "sanitation_hmi" /
 SIM_LAUNCH = ROOT / "starter_ws" / "src" / "sanitation_bringup" / "launch" / "sim.launch.py"
 HMI_PACKAGE = ROOT / "starter_ws" / "src" / "sanitation_hmi" / "package.xml"
 NAVIGATION_LAUNCH = ROOT / "starter_ws" / "src" / "sanitation_navigation" / "launch" / "navigation.launch.py"
+FUSER_SOURCE = ROOT / "starter_ws" / "src" / "sanitation_scan_refiner" / "src" / "hybrid_global_fuser_node.cpp"
+HYBRID_LAUNCH = ROOT / "starter_ws" / "src" / "sanitation_scan_refiner" / "launch" / "hybrid_localization.launch.py"
 
 
 def test_product_launch_uses_only_product_control_nodes() -> None:
@@ -56,6 +58,19 @@ def test_full_product_topology_is_operator_started_and_gt_isolated() -> None:
     assert 'executable="product_supervisor"' in text
     assert "respawn=True" in text
     assert '"localization_pose_topic": "/localization/fused_pose"' in text
+    assert 'executable="dual_navsat_adapter"' in text
+    assert 'FindPackageShare("sanitation_scan_refiner")' in text
+    assert '"fusion_mode": "rtk_imu_wheel"' in text
+    assert '"enable_scan_refiner": "false"' in text
+    assert '"publish_map_to_odom": "true"' in text
+    assert '"respawn_fuser": "true"' in text
+    assert "respawn=True" in text
+    assert '"localization_backend": "external"' in text
+    assert '"world_to_map_x": LaunchConfiguration("world_to_map_x")' in text
+    assert 'DeclareLaunchArgument("world_file", default_value=default_world)' in text
+    assert 'DeclareLaunchArgument("world_name", default_value="sanitation_test_world")' in text
+    assert 'executable="gnss_sim_node"' not in text
+    assert '"/ground_truth/odom"' not in text
 
 
 def test_product_mission_contains_geometry_but_no_preknown_targets() -> None:
@@ -89,6 +104,10 @@ def test_simulator_oracle_bridges_are_evaluation_only() -> None:
         production_bridge = text[start:end]
         assert "/ground_truth/" not in production_bridge
         assert "/dynamic_pose/info" not in production_bridge
+        assert "/gnss/front/fix_raw@gps_msgs/msg/GPSFix" in production_bridge
+        assert "/gnss/rear/fix_raw@gps_msgs/msg/GPSFix" in production_bridge
+        assert '("/gnss/front/fix_raw", "/gnss/front/gps_raw")' in production_bridge
+        assert '("/gnss/rear/fix_raw", "/gnss/rear/gps_raw")' in production_bridge
 
 
 def test_product_profiles_use_full_width_and_authoritative_estop() -> None:
@@ -99,3 +118,17 @@ def test_product_profiles_use_full_width_and_authoritative_estop() -> None:
     assert "startup_emergency_stopped" in navigation
     assert "DeclareLaunchArgument(\n                'localization_pose_topic'" in navigation
     assert "('amcl_pose', LaunchConfiguration('localization_pose_topic'))" in navigation
+    assert "localization_backend, \"' == 'external'\"" in navigation
+    assert "'node_names': ['map_server']" in navigation
+
+
+def test_product_fuser_owns_one_calibrated_global_pose_contract() -> None:
+    fuser = FUSER_SOURCE.read_text(encoding="utf-8")
+    hybrid_launch = HYBRID_LAUNCH.read_text(encoding="utf-8")
+    assert 'declare_parameter<double>("world_to_map_x", 0.0)' in fuser
+    assert "worldToMap(" in fuser
+    assert "worldHeadingToMap(" in fuser
+    assert '"/localization/fused_pose"' in fuser
+    assert ".reliable().transient_local()" in fuser
+    assert 'DeclareLaunchArgument(\'respawn_fuser\', default_value=\'false\')' in hybrid_launch
+    assert "respawn=LaunchConfiguration('respawn_fuser')" in hybrid_launch
