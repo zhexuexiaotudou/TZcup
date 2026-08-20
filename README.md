@@ -23,7 +23,7 @@ SIMULATION_PRODUCT_COMPLETE=true
 
 ## 当前结论
 
-仓库已有 Ackermann 模型/控制、Nav2 与 Coverage profile，以及生产感知、独立 ActionVerifier、最多两次主动重观察、DynamicTrashMap、真实 Coverage/Nav2 点清洁和 camera-backed Post-Clean 的失效关闭代码链。仓库内模型清单仍是不可激活的 placeholder，且当前尚无一套与本合同绑定的完整 A–P 正式证据，因此：
+仓库已有 Ackermann 模型/控制、Nav2 与 Coverage profile，以及生产感知、独立 ActionVerifier、最多两次主动重观察、DynamicTrashMap、真实 Coverage/Nav2 点清洁、受控滚刷所有权和 camera-backed Post-Clean 的失效关闭代码链。仓库内模型清单仍是不可激活的 placeholder，且当前尚无一套与本合同绑定的完整 A–P 正式证据，因此：
 
 ```text
 SIMULATION_PRODUCT_COMPLETE=false

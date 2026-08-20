@@ -63,6 +63,8 @@ Nav2 path precheck
 
 Pre-Clean 会重新检查目标仍存在、identity/class/persistence/covariance、感知健康、定位健康、E-stop、Collision Monitor、keepout、完整 footprint 和路径。刷盘只在 Coverage 已确认暂停且 Nav2 到达后开启。
 
+`/brush_enabled` 是共享执行器命令。Coverage 是常态所有者；Spot Cleaning 只在持有当前任务时发布，并在任务结束前显式发布一次 `false` 后释放所有权。Spot Cleaning 空闲时保持静默，禁止周期性 `false` 覆盖 Coverage 的清扫命令。
+
 执行器成功只进入 `POST_CLEAN_VERIFY`：
 
 - 离散垃圾必须在目标位置重新进入真实在线 camera frustum 后连续 3 帧未检出；

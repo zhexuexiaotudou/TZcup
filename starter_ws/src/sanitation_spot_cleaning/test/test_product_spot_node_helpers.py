@@ -5,6 +5,7 @@ import pytest
 from sanitation_spot_cleaning.node import (
     approach_pose_xyyaw,
     frustum_record_contains,
+    spot_brush_command,
 )
 
 
@@ -32,3 +33,14 @@ def test_persisted_camera_frustum_is_required_for_absence_evidence() -> None:
     assert frustum_record_contains(record, 2.0, 0.0)
     assert not frustum_record_contains(record, -2.0, 0.0)
     assert not frustum_record_contains({}, 2.0, 0.0)
+
+
+def test_idle_spot_cleaner_does_not_override_coverage_brush_command() -> None:
+    assert spot_brush_command(
+        has_current_target=False, brush_enabled=False
+    ) is None
+    assert spot_brush_command(
+        has_current_target=False, brush_enabled=True
+    ) is None
+    assert spot_brush_command(has_current_target=True, brush_enabled=False) is False
+    assert spot_brush_command(has_current_target=True, brush_enabled=True) is True

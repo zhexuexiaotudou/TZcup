@@ -62,6 +62,16 @@ def frustum_record_contains(record: dict, x_m: float, y_m: float) -> bool:
     return sweep.contains(float(x_m), float(y_m))
 
 
+def spot_brush_command(
+    *, has_current_target: bool, brush_enabled: bool
+) -> bool | None:
+    """Return a spot-clean command, or silence when coverage owns the brush."""
+
+    if not has_current_target:
+        return None
+    return bool(brush_enabled)
+
+
 def main() -> None:
     import rclpy
     from action_msgs.msg import GoalStatus
@@ -693,6 +703,8 @@ def main() -> None:
                 self._finish_current()
 
         def _finish_current(self) -> None:
+            # Release the brush before returning command ownership to coverage.
+            self.brush_publisher.publish(Bool(data=False))
             if self.current_message is not None:
                 self.handled.add(str(self.current_message.uuid))
             self.current_message = None
@@ -734,10 +746,17 @@ def main() -> None:
 
         def _step(self) -> None:
             state = self.core.state
-            self.brush_publisher.publish(Bool(data=bool(self.core.brush_enabled)))
             if self.current_message is None:
                 self._prepare_next_target()
                 return
+            # Coverage cleaning is the normal owner of /brush_enabled.  An idle
+            # False command here would continuously overwrite coverage's True.
+            brush_command = spot_brush_command(
+                has_current_target=self.current_message is not None,
+                brush_enabled=self.core.brush_enabled,
+            )
+            if brush_command is not None:
+                self.brush_publisher.publish(Bool(data=brush_command))
             if state in {
                 ProductCleanState.WAITING_SAFE_PAUSE,
                 ProductCleanState.APPROACHING,
