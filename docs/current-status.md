@@ -40,7 +40,7 @@ PRODUCT_FIELD_READY=false
 
 ## 当前真实 Ackermann 基线
 
-未知栅格 frontier 正式入口已从真值派生 GNSS 模拟器切换到 Gazebo 内部双 NavSat 原始传感器、RTK 误差模型和 wheel/IMU 融合链。map/save/restart/reload 两阶段都必须收到双天线原始观测，并动态证明 adapter 没有订阅 `/ground_truth/*`；此前烟测和长时结果只作历史诊断，必须从当前链路重跑。
+未知栅格 frontier 正式入口已从真值派生 GNSS 模拟器切换到 Gazebo 内部双 NavSat 原始传感器、RTK 误差模型和 wheel/IMU 融合链。map/save/restart/reload 两阶段都必须收到双天线原始观测，并保存 adapter 与融合器的实时订阅图；裁决器要求两个阶段的输入完整且均无 `/ground_truth/*`，不再接受手写 provenance 布尔值。此前烟测和长时结果只作历史诊断，必须从当前链路重跑。
 
 当前无头 Gazebo 开发基线已在完整 `200 m × 100 m` 地图的 108 m² 代表区完成全部 15 个 Ackermann Coverage 组件。运行时参数实测为物理车宽 `1.32 m`、规划间距 `1.12 m`；brush-swept coverage `1.0`、repeat coverage `0.1365`、直线度 P95 `0.0178 m`、横向误差 P95 `0.0614 m`、collision `0`、keepout violation `0`，但全任务效率仅 `267.4 m²/h`，所以总判定仍为 FAIL。
 

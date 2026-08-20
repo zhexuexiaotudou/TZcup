@@ -75,6 +75,19 @@ def _evaluation_args(tmp_path, *, formal_scope=True):
         "processes": _write_json(tmp_path / "processes.json", {
             "formal_scope": formal_scope,
             "restart_completed": True,
+            "sensor_provenance": {
+                "positioning": (
+                    "gazebo_dual_navsat_rtk_plus_wheel_imu_plus_scan_matching"
+                ),
+                "gazebo_dual_navsat_sensor_pair": True,
+                "gazebo_truth_to_gnss_sensor_model": False,
+                "runtime_graph_audits": {
+                    phase: {"pass": True} for phase in ("mapping", "reload")
+                },
+                "all_runtime_graph_audits_pass": True,
+                "ground_truth_ros_subscription_in_positioning": False,
+                "oracle_pose_topic_to_controller": False,
+            },
             "reproducibility": {
                 "source_commit": "a" * 40,
                 "source_dirty": False,
@@ -140,3 +153,25 @@ def test_mapping_adjudicator_writes_fail_closed_report_for_missing_phase2(tmp_pa
     assert report["checks"]["reload_relocalize_navigation_pass"] is False
     assert str(args.reload_tf) in report["input_errors"]
     assert str(args.navigation) in report["input_errors"]
+
+
+def test_mapping_adjudicator_rejects_self_declared_or_incomplete_gt_isolation(tmp_path):
+    args = _evaluation_args(tmp_path)
+    processes = json.loads(args.processes.read_text(encoding="utf-8"))
+    processes["sensor_provenance"]["runtime_graph_audits"].pop("reload")
+    processes["sensor_provenance"]["all_runtime_graph_audits_pass"] = True
+    _write_json(args.processes, processes)
+    assert evaluate(args) == 2
+    report = json.loads(args.output.read_text(encoding="utf-8"))
+    assert report["checks"]["ground_truth_not_used_for_control"] is False
+
+    args.output.unlink()
+    processes["sensor_provenance"]["runtime_graph_audits"]["reload"] = {
+        "pass": False,
+        "ground_truth_subscription_present": True,
+    }
+    processes["sensor_provenance"]["ground_truth_ros_subscription_in_positioning"] = True
+    _write_json(args.processes, processes)
+    assert evaluate(args) == 2
+    report = json.loads(args.output.read_text(encoding="utf-8"))
+    assert report["checks"]["ground_truth_not_used_for_control"] is False

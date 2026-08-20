@@ -184,6 +184,23 @@ def evaluate(args) -> int:
     )
     formal_scope = bool(processes.get("formal_scope"))
     restart_pass = bool(processes.get("restart_completed"))
+    sensor_provenance = processes.get("sensor_provenance", {})
+    positioning_graph_audits = sensor_provenance.get("runtime_graph_audits", {})
+    positioning_provenance_pass = bool(
+        sensor_provenance.get("positioning")
+        == "gazebo_dual_navsat_rtk_plus_wheel_imu_plus_scan_matching"
+        and sensor_provenance.get("gazebo_dual_navsat_sensor_pair") is True
+        and sensor_provenance.get("gazebo_truth_to_gnss_sensor_model") is False
+        and sensor_provenance.get("all_runtime_graph_audits_pass") is True
+        and sensor_provenance.get("ground_truth_ros_subscription_in_positioning")
+        is False
+        and sensor_provenance.get("oracle_pose_topic_to_controller") is False
+        and set(positioning_graph_audits) == {"mapping", "reload"}
+        and all(
+            isinstance(audit, dict) and audit.get("pass") is True
+            for audit in positioning_graph_audits.values()
+        )
+    )
     reload_navigation_pass = bool(
         artifacts_complete
         and restart_pass
@@ -205,6 +222,7 @@ def evaluate(args) -> int:
         "reproducibility_bound": reproducibility_pass,
         "ground_truth_not_used_for_control": (
             exploration.get("ground_truth_used_for_control") is False
+            and positioning_provenance_pass
         ),
     }
     success = all(checks.values())

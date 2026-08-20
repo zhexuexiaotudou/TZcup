@@ -121,7 +121,9 @@ def test_mapping_control_does_not_subscribe_to_ground_truth():
     assert "wait_for_topic /gnss/front/gps_raw gps_msgs/msg/GPSFix" in text
     assert "wait_for_topic /gnss/rear/gps_raw gps_msgs/msg/GPSFix" in text
     assert "ros2 node info /dual_navsat_adapter" in text
+    assert "ros2 node info /hybrid_global_fuser" in text
     assert "ground_truth_ros_subscription_in_positioning" in text
+    assert "all_runtime_graph_audits_pass" in text
     assert '"gazebo_truth_to_gnss_sensor_model": False' in text
     assert "--world-sdf" in text
     assert "no oracle pose topic enters positioning or control" in text

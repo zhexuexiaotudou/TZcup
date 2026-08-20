@@ -473,6 +473,15 @@ verify_positioning_chain() {
     echo "dual_navsat_adapter must not subscribe to Gazebo truth" >&2
     return 1
   fi
+  timeout 30s ros2 node info /hybrid_global_fuser \
+    > "$directory/hybrid_global_fuser_node_info.txt"
+  grep -Fq '/gnss/fix' "$directory/hybrid_global_fuser_node_info.txt"
+  grep -Fq '/gnss/heading' "$directory/hybrid_global_fuser_node_info.txt"
+  grep -Fq '/odom' "$directory/hybrid_global_fuser_node_info.txt"
+  if grep -Fq '/ground_truth/' "$directory/hybrid_global_fuser_node_info.txt"; then
+    echo "hybrid_global_fuser must not subscribe to Gazebo truth" >&2
+    return 1
+  fi
   wait_for_topic /localization/fused_pose \
     geometry_msgs/msg/PoseWithCovarianceStamped 180 \
     "$directory/first_fused_pose.txt"
@@ -647,6 +656,41 @@ seed = int(sys.argv[12])
 config_paths = [Path(item) for item in sys.argv[13:]]
 config_paths = config_paths[:5]
 
+def positioning_graph_audit(phase):
+    directory = path.parent / phase
+    adapter_path = directory / "dual_navsat_adapter_node_info.txt"
+    fuser_path = directory / "hybrid_global_fuser_node_info.txt"
+    adapter = adapter_path.read_text(encoding="utf-8") if adapter_path.is_file() else ""
+    fuser = fuser_path.read_text(encoding="utf-8") if fuser_path.is_file() else ""
+    adapter_inputs_present = all(
+        topic in adapter for topic in ("/gnss/front/gps_raw", "/gnss/rear/gps_raw")
+    )
+    fuser_inputs_present = all(
+        topic in fuser for topic in ("/gnss/fix", "/gnss/heading", "/odom")
+    )
+    ground_truth_subscription_present = any(
+        "/ground_truth/" in text for text in (adapter, fuser)
+    )
+    files_present = adapter_path.is_file() and fuser_path.is_file()
+    return {
+        "adapter_node_info": str(adapter_path),
+        "fuser_node_info": str(fuser_path),
+        "files_present": files_present,
+        "adapter_inputs_present": adapter_inputs_present,
+        "fuser_inputs_present": fuser_inputs_present,
+        "ground_truth_subscription_present": ground_truth_subscription_present,
+        "pass": bool(
+            files_present
+            and adapter_inputs_present
+            and fuser_inputs_present
+            and not ground_truth_subscription_present
+        ),
+    }
+
+positioning_graph_audits = {
+    phase: positioning_graph_audit(phase) for phase in ("mapping", "reload")
+}
+
 def git(*args):
     try:
         return subprocess.check_output(
@@ -686,7 +730,14 @@ payload = {
         "positioning": "gazebo_dual_navsat_rtk_plus_wheel_imu_plus_scan_matching",
         "gazebo_dual_navsat_sensor_pair": True,
         "gazebo_truth_to_gnss_sensor_model": False,
-        "ground_truth_ros_subscription_in_positioning": False,
+        "runtime_graph_audits": positioning_graph_audits,
+        "all_runtime_graph_audits_pass": all(
+            audit["pass"] for audit in positioning_graph_audits.values()
+        ),
+        "ground_truth_ros_subscription_in_positioning": any(
+            audit["ground_truth_subscription_present"]
+            for audit in positioning_graph_audits.values()
+        ),
         "oracle_pose_topic_to_controller": False,
     },
     "reproducibility": {
