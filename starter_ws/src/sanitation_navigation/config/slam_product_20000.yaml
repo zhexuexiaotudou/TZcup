@@ -20,10 +20,10 @@ slam_toolbox:
     # tractable while remaining below the 0.15 m topology-error threshold.
     resolution: 0.10
     # The physical scan maximum is 12.0 m. The mapping normalizer represents
-    # a no-return ray as 11.99 m so Karto can raytrace observed free space.
-    # Karto only suppresses the occupied endpoint when the reading is at or
-    # above this threshold, so it must remain below the no-return sentinel.
-    # Otherwise every no-return ray becomes a false wall at the lidar horizon.
+    # a no-return ray as exactly 11.95 m. Karto builds the occupancy-grid bounds
+    # only from readings at or below this threshold, but marks an endpoint as
+    # occupied only when it is strictly below the threshold. Keeping both values
+    # equal therefore expands observed free space without drawing a false wall.
     max_laser_range: 11.95
     minimum_time_interval: 0.20
     transform_timeout: 0.30

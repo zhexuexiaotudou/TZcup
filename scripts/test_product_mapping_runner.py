@@ -136,7 +136,7 @@ def test_mapping_scan_turns_no_return_rays_into_observed_free_space():
     text = RUNNER.read_text(encoding="utf-8")
     assert "output_topic:=/scan/mapping" in text
     assert "replace_infinite_ranges_with_max:=true" in text
-    assert "maximum_range_margin_m:=0.01" in text
+    assert "maximum_range_margin_m:=0.05" in text
     assert '"]["scan_topic"] = "/scan/mapping"' in text
     filter_script = (
         ROOT
@@ -155,9 +155,11 @@ def test_product_slam_profile_treats_no_return_sentinel_as_free_space():
     params = config["slam_toolbox"]["ros__parameters"]
     assert params["resolution"] <= 0.10
     physical_range_max_m = 12.0
-    no_return_margin_m = 0.01
+    no_return_margin_m = 0.05
     no_return_sentinel_m = physical_range_max_m - no_return_margin_m
-    assert params["max_laser_range"] < no_return_sentinel_m
+    # Karto includes readings <= RangeThreshold in the scan bounding box, while
+    # only readings < RangeThreshold - tolerance produce occupied endpoints.
+    assert abs(params["max_laser_range"] - no_return_sentinel_m) < 1e-9
     assert params["max_laser_range"] > 0.95 * physical_range_max_m
     assert params["do_loop_closing"] is False
     assert params["use_scan_matching"] is False

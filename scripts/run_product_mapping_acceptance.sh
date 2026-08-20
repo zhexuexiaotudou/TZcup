@@ -472,7 +472,7 @@ wait_for_topic /localization/fused_pose geometry_msgs/msg/PoseWithCovarianceStam
 start_group mapping_scan "$mapping/scan_normalizer.log" \
   ros2 run sanitation_navigation scan_self_filter --ros-args \
   -p use_sim_time:=true -p input_topic:=/scan -p output_topic:=/scan/mapping \
-  -p replace_infinite_ranges_with_max:=true -p maximum_range_margin_m:=0.01
+  -p replace_infinite_ranges_with_max:=true -p maximum_range_margin_m:=0.05
 scan_pid="$STARTED_PID"
 start_group mapping_slam "$mapping/slam.log" ros2 launch slam_toolbox \
   online_async_launch.py use_sim_time:=true autostart:=false \
