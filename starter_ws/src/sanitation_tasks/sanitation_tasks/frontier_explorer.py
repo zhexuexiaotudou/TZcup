@@ -566,15 +566,6 @@ class FrontierExplorer(Node):
             )
             temporary_exclusions.extend(centers)
         if goal is None:
-            if (
-                self.sweep_active_axis == "horizontal"
-                and self.sweep_active_preference is not None
-            ):
-                self.horizontal_sweep_staging_pending = True
-                self.horizontal_sweep_staging_arm_count += 1
-                self.horizontal_sweep_staging_exhaustion_arm_count += 1
-                if self._start_horizontal_sweep_staging(robot_pose):
-                    return
             escape = reverse_escape_goal(
                 robot_pose[:2],
                 robot_pose[2],
@@ -586,12 +577,9 @@ class FrontierExplorer(Node):
                     self.get_parameter("required_bounds_goal_margin_m").value
                 ),
             )
-            # A long mission must not permanently lose its only reachable
-            # frontier because of one historical controller failure. If a
-            # candidate exists without the active timed exclusions, first
-            # reverse into verified free space so the next forward arc does
-            # not collapse onto the same dead end. Wait only if that escape
-            # endpoint is itself unavailable.
+            # A failed local frontier, staging step, or alignment arc proves
+            # that another short projection from the same pose is not enough.
+            # Escalate to a global known-free route before arming staging again.
             if self.excluded_goals and self._rank_goals(robot_pose, []):
                 if self._handle_horizontal_sweep_frontier_wait(
                     robot_pose,
@@ -617,6 +605,15 @@ class FrontierExplorer(Node):
                 )
                 self._write_report()
                 return
+            if (
+                self.sweep_active_axis == "horizontal"
+                and self.sweep_active_preference is not None
+            ):
+                self.horizontal_sweep_staging_pending = True
+                self.horizontal_sweep_staging_arm_count += 1
+                self.horizontal_sweep_staging_exhaustion_arm_count += 1
+                if self._start_horizontal_sweep_staging(robot_pose):
+                    return
             if horizontal_sweep_should_wait_for_frontier(
                 sweep_axis=self.sweep_active_axis,
                 has_active_preference=self.sweep_active_preference is not None,

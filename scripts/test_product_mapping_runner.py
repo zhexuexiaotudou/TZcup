@@ -251,6 +251,21 @@ def test_frontier_recovery_reverses_before_slow_recovery_actions():
     assert recovery.index("<BackUp") < recovery.index("<Wait")
 
 
+def test_failed_horizontal_projection_routes_before_rearming_staging():
+    explorer = (
+        ROOT
+        / "starter_ws/src/sanitation_tasks/sanitation_tasks/frontier_explorer.py"
+    ).read_text(encoding="utf-8")
+    goal_none = explorer.split("if goal is None:", maxsplit=1)[1]
+    route_first = goal_none.index(
+        "if self.excluded_goals and self._rank_goals(robot_pose, []):"
+    )
+    staging_rearm = goal_none.index(
+        "self.horizontal_sweep_staging_pending = True"
+    )
+    assert route_first < staging_rearm
+
+
 def test_frontier_navigation_replans_against_the_growing_map():
     tree = (
         NAV_LAUNCH.parent.parent
