@@ -187,6 +187,7 @@ class FrontierExplorer(Node):
         self.frontier_no_progress_raw_exclusion_count = 0
         self.horizontal_sweep_raw_exclusion_suppressed_count = 0
         self.horizontal_sweep_frontier_wait_count = 0
+        self.horizontal_sweep_staging_exhaustion_arm_count = 0
         self.horizontal_sweep_staging_pending = False
         self.horizontal_sweep_staging_arm_count = 0
         self.horizontal_sweep_staging_attempt_count = 0
@@ -396,10 +397,22 @@ class FrontierExplorer(Node):
             if self._goal_is_costmap_clear(candidate):
                 goal = candidate
                 break
-            centers = self._add_goal_exclusions(candidate)
+            # A current costmap rejection is not a navigation failure. Keep
+            # it local to this ranking pass so a rolling-costmap refresh can
+            # reconsider the frontier without a 180 s failed-goal penalty.
+            centers = frontier_goal_exclusion_centers(candidate)
             temporary_exclusions.extend(centers)
             self.costmap_rejected_goal_count += 1
         if goal is None:
+            if (
+                self.sweep_active_axis == "horizontal"
+                and self.sweep_active_preference is not None
+            ):
+                self.horizontal_sweep_staging_pending = True
+                self.horizontal_sweep_staging_arm_count += 1
+                self.horizontal_sweep_staging_exhaustion_arm_count += 1
+                if self._start_horizontal_sweep_staging(robot_pose):
+                    return
             escape = reverse_escape_goal(
                 robot_pose[:2],
                 robot_pose[2],
@@ -754,6 +767,12 @@ class FrontierExplorer(Node):
                     )
                 preference = (locked_x, chassis_lane_y)
             else:
+                preference = (
+                    target[0],
+                    self._sweep_horizontal_preference_y(
+                        self.sweep_target_index
+                    ),
+                )
                 mapped_reached = world_disk_has_known_cell(
                     self.latest_data,
                     self.latest_geometry,
@@ -786,6 +805,16 @@ class FrontierExplorer(Node):
             minimum_turning_radius_m=float(
                 self.get_parameter("minimum_turning_radius_m").value
             ),
+        )
+
+    def _sweep_horizontal_preference_y(self, index: int) -> float:
+        return sweep_chassis_lane_y(
+            self.sweep_targets[index][1],
+            allowed_bounds_xyxy_m=self.required_bounds,
+            boundary_margin_m=float(
+                self.get_parameter("required_bounds_goal_margin_m").value
+            ),
+            minimum_turning_radius_m=0.0,
         )
 
     def _start_sweep_lane_shift_connector(self, robot_pose) -> bool:
@@ -1748,6 +1777,9 @@ class FrontierExplorer(Node):
             ),
             "horizontal_sweep_frontier_wait_count": (
                 self.horizontal_sweep_frontier_wait_count
+            ),
+            "horizontal_sweep_staging_exhaustion_arm_count": (
+                self.horizontal_sweep_staging_exhaustion_arm_count
             ),
             "horizontal_sweep_staging_pending": (
                 self.horizontal_sweep_staging_pending

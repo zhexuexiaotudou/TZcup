@@ -161,6 +161,12 @@ def test_boundary_sweep_chassis_lane_reserves_ackermann_turning_radius():
     assert sweep_chassis_lane_y(50.0, **kwargs) == pytest.approx(47.071)
     assert sweep_chassis_lane_y(-50.0, **kwargs) == pytest.approx(-47.071)
     assert sweep_chassis_lane_y(30.0, **kwargs) == pytest.approx(30.0)
+    assert sweep_chassis_lane_y(
+        50.0,
+        allowed_bounds_xyxy_m=kwargs["allowed_bounds_xyxy_m"],
+        boundary_margin_m=kwargs["boundary_margin_m"],
+        minimum_turning_radius_m=0.0,
+    ) == pytest.approx(48.5)
 
 
 def test_boundary_sweep_chassis_lane_rejects_impossible_geometry():
