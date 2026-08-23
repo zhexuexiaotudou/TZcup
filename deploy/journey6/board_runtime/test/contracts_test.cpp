@@ -1,6 +1,5 @@
 #include "tzcup_j6/contracts.hpp"
 
-#include <cassert>
 #include <stdexcept>
 
 int main() {
@@ -15,13 +14,19 @@ int main() {
   } catch (const std::invalid_argument&) {
     rejected_auto = true;
   }
-  assert(rejected_auto);
+  if (!rejected_auto) {
+    return 1;
+  }
 
   CommandAuthority authority("j6-algorithm");
   const AckermannCommand command{1.0, 1, 0.5, 0.1, 0.5, "j6-algorithm", 1.2};
   authority.Accept(command, 1.0);
-  assert(authority.Output(1.1).has_value());
-  assert(!authority.Output(1.2).has_value());
+  if (!authority.Output(1.1).has_value()) {
+    return 2;
+  }
+  if (authority.Output(1.2).has_value()) {
+    return 3;
+  }
   authority.NetworkLost();
   authority.NetworkRestored();
   bool rejected_without_resume = false;
@@ -30,9 +35,13 @@ int main() {
   } catch (const std::runtime_error&) {
     rejected_without_resume = true;
   }
-  assert(rejected_without_resume);
+  if (!rejected_without_resume) {
+    return 4;
+  }
   authority.OperatorResume();
   authority.Accept(AckermannCommand{1.1, 2, 0.5, 0.1, 0.5, "j6-algorithm", 1.3}, 1.1);
-  assert(authority.Output(1.2).has_value());
+  if (!authority.Output(1.2).has_value()) {
+    return 5;
+  }
   return 0;
 }

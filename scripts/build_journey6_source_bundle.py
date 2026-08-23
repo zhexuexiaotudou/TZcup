@@ -212,6 +212,8 @@ def build(template_path: Path, output_dir: Path, repo_root: Path, *, replace: bo
             continue
         if not path.exists():
             block("source_component_missing", component=component_id, path=str(path))
+            if component_id == "model_license_audit":
+                block("model_license_not_release_clear", component=component_id)
             continue
         try:
             observed, rows = path_digest(path)

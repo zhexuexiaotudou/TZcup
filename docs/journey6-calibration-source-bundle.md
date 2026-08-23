@@ -110,4 +110,4 @@ J6_SOURCE_BUNDLE_SHA256SUMS
 J6_SOURCE_BUNDLE_STATUS.json
 ```
 
-当前外部证据 manifest SHA-256 为 `479b70e038582031e9eb1839ca2b3d07ef9c0699904bd8d53b2db0a28994f4e9`，checksums SHA-256 为 `041989dc4edb351fa55fb17a68fbc0b86e1f0fd8e0737fefdc7982cfe7da2c9b`。D1 canonical ONNX、Area ONNX 和真实 TRAIN 图生成的 golden tensor lock 已有引用锁；由于模型未冻结、发布许可未闭合、1000+ 校准包不足、nash profile/toolchain 未经官方 SDK 验证，source bundle 仍为 `blocked_external`。只有全部 source prerequisite 真实存在、语义门通过并完成引用锁时，`J6_SOURCE_DEPLOYMENT_BUNDLE_READY` 才能改为 `true`；它仍不等于 HBM 编译、x86 runtime、板端部署或产品验收通过。
+当前外部证据 manifest SHA-256 为 `ef6c8572c471f3906e97c6f77518560b6ec04567f475b80b58c812cc45d62ea8`，checksums SHA-256 为 `4707fe4805e61cdd57350a2eee0a7916bbe8a4ff4b73c9303f482f15d1f14476`。D1 canonical ONNX、Area ONNX 和真实 TRAIN 图生成的 golden tensor lock 已有引用锁；由于模型未冻结、发布许可未闭合、1000+ 校准包不足、nash profile/toolchain 未经官方 SDK 验证，source bundle 仍为 `blocked_external`。只有全部 source prerequisite 真实存在、语义门通过并完成引用锁时，`J6_SOURCE_DEPLOYMENT_BUNDLE_READY` 才能改为 `true`；它仍不等于 HBM 编译、x86 runtime、板端部署或产品验收通过。
