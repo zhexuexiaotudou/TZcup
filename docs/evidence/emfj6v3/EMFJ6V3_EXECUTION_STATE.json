@@ -31,12 +31,13 @@
     "classifier_nontraining_grid": "C1_C3_fixed_50_candidate_G10_HOLDOUT_grid_zero_eligible_no_selection_no_freeze",
     "classifier_candidate_dispositions_closed": true,
     "area_dataset": "G2_four_scenes_40_frames_leaf_positive_13_puddle_positive_11_a4_area_dataset_ready",
-    "area_ewasr_resnet18": "TRAIN_004_60_of_60_native_water_activation_rejected_direct_target_mapping",
-    "area_nvidia_segformer_b0_ade20k": "artifact_contract_verified_direct_target_mapping_rejected_release_blocked_runtime_unavailable",
+    "area_auto05_recovered_attempt3": "terminal_blocked_exact_artifact_missing_after_bounded_search",
+    "area_ewasr_resnet18": "G2_TRAIN_and_HOLDOUT_negative_20_of_20_native_water_activation_semantic_mapping_rejected",
+    "area_nvidia_segformer_b0_ade20k": "G2_native_negative_executed_target_mapping_null_semantics_not_exact_release_license_blocked",
     "area_candidate_dispositions_closed": true,
-    "area_screening_complete": false,
+    "area_screening_complete": true,
     "formal_negative_only_domain_ready": true,
     "complete": false
   },
-  "truth_boundary": "Bounded discovery, D1 attribution, six terminal classifier dispositions, strict C1/C3 G10 HOLDOUT inference, and the fixed 50-candidate grid are complete with zero eligible classifier candidates. A new four-scene G2 Area dataset now contains leaf and puddle positive GT, but the frozen Area routes have not been evaluated on it. Global screening and nontraining adjustment remain incomplete; training, PC closure, Journey 6 runtime, HBM, board, product and release claims remain false."
+  "truth_boundary": "Bounded discovery, D1 attribution, six terminal classifier dispositions, strict C1/C3 G10 HOLDOUT inference, and the fixed 50-candidate grid are complete with zero eligible classifier candidates. The three frozen Area routes now have G2-bound terminal dispositions: one exact artifact is missing, eWaSR floods both negative splits in native water semantics, and SegFormer runs safely but has no exact target mapping and is release-license blocked. Global screening and nontraining adjustment remain incomplete because G10 size-stage/TRAIN QA and downstream A5 gates are not closed; training, PC closure, Journey 6 runtime, HBM, board, product and release claims remain false."
 }
