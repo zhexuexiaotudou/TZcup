@@ -319,8 +319,8 @@ candidates:
     framework: transformers_pytorch_safetensors
     onnx_exportability: standard_vit_export_route_unverified_no_source_onnx
     journey6_preflight_status: not_run_large_model_risk
-    disposition: development_screening_pending
-    reason: useful_material_and_nontarget_classes_but_dataset_provenance_and_background_rejection_unresolved
+    disposition: native_GT_smoke_failed_all_targets_rejected_background
+    reason: fixed_183_TRAIN_native_smoke_predicted_background_183_of_183_target_macro_f1_0
 
   - model_id: c6_giecom_recycling_vit
     role: classifier
@@ -344,8 +344,8 @@ candidates:
     framework: transformers_pytorch_safetensors
     onnx_exportability: standard_vit_export_route_unverified_no_source_onnx
     journey6_preflight_status: not_run_large_model_risk
-    disposition: development_screening_pending
-    reason: useful_material_evidence_but_no_shape_background_unknown_or_outdoor_specificity_proof
+    disposition: native_GT_smoke_failed_zero_plastic_metal_recall_background_flood
+    reason: fixed_183_TRAIN_native_smoke_background_specificity_0_0196_plastic_metal_recall_0_paper_recall_0_4
 
   - model_id: area_auto05_recovered_attempt3
     role: area

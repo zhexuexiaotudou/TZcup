@@ -53,6 +53,10 @@ C4 SigLIP2 safetensors 已在 non-root、断网、只读挂载、`trust_remote_c
 
 C5/C6 ViT 已通过固定镜像摘要、包版本、artifact SHA、原生 processor/类序和 183-crop identity lock 的断网只读 CUDA smoke。C5 将 183/183 全部拒为 background，三目标 recall 均为 0；C6 的 paper recall 为 `0.4`，但 plastic/metal recall 为 0 且 background specificity 仅 `0.0196`，形成严重前景 flood。二者 direct-use 均失败，所有 functional/product/training flag 保持 false；C6 的 hard/soft plastics 只按显式 many-to-one 概率求和，不把 cups 等未映射类猜成目标。
 
+C5/C6 完整外置 raw 分别锁为 `cea51529…aab1`（244605 bytes）与 `702c9a7a…846f`（246003 bytes），仓库内紧凑证据绑定 worker source commit `084e74e6868d2e1a502a548c98837904328d70e4`。classifier 冻结清单中还剩 C2/C3 未完成 full smoke，仍不得把 screening 标为 complete。
+
+C3 TrashNet H5 已在 immutable TensorFlow 1.15.5 Jupyter 镜像中以 non-root、断网、只读输入/rootfs 完成 183-crop CPU smoke；worker 保持 Python 3.6 兼容，并明确不导入上游会删除输入图像的 `prediction.py`。结果 macro-F1 `0.4411`、background specificity `0.7353`；metal recall `1.0`，但 plastic recall 仅 `0.0714`、paper recall `0`，因此 direct-use 仍失败且不能进入 functional gate。
+
 Journey 6 校准数据与源码部署包同样失效关闭：当前只读盘点两个明确 TRAIN 根得到 `471` 个 RGB PNG 候选和 `0` 个 ROI/crop，尚无逐文件 SHA 与分层元数据，因此 `J6_CALIBRATION_PACK_READY=false`。reference-only source bundle 已锁定 D1 E1 canonical ONNX、development-only Area ONNX、C++ graph-external 后处理和真实 TRAIN golden tensor lock；但模型选择/发布许可、正式校准、nash profile 与官方工具链仍未齐备，因此 `J6_SOURCE_DEPLOYMENT_BUNDLE_READY=false`。许可审计文件缺失本身也会显式保持 `model_license_not_release_clear`，不会因干净 CI 环境缺少本地 `.workspace` 证据而漏报。`G5_V2`、`SEALED_FINAL`、`DEV_VAL` 始终禁止进入校准链，详见 [Journey 6 校准与源码部署包](docs/journey6-calibration-source-bundle.md)。
 
 主要缺口是合格且可冻结的产品近距四分类/Area 模型、完整感知清扫链的真实 ROS/Gazebo 集成验证、20,000 m² 正式范围建图闭环、30-seed 综合链、3500 m²/h 实测效率、完整 10 Hz/10 min 性能、2 h soak、故障矩阵、5-bag replay、一次性 sealed final 和最终 release/rollback。详情见 [当前状态](docs/current-status.md)，运行时不变量见 [产品运行时基础架构](docs/product-runtime-architecture.md)。
