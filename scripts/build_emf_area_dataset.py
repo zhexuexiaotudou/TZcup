@@ -290,6 +290,11 @@ def build_manifest(root_specs: Iterable[tuple[str, Path]]) -> dict[str, Any]:
     source_object_counts: Counter[int] = Counter()
     small_object_counts: Counter[int] = Counter()
     negative_domain_counts: Counter[str] = Counter()
+    negative_only_scene_counts: Counter[str] = Counter()
+    negative_only_frame_counts: Counter[str] = Counter()
+    negative_only_world_ids: dict[str, set[str]] = {
+        split: set() for split in ALLOWED_SPLITS
+    }
     seen_frame_keys: set[tuple[str, str, str, str, int]] = set()
     seen_triplets: set[tuple[str, str, str]] = set()
 
@@ -339,6 +344,11 @@ def build_manifest(root_specs: Iterable[tuple[str, Path]]) -> dict[str, Any]:
                 raise DatasetContractError(
                     f"objects must be a list in {scene_manifest_path}"
                 )
+            negative_only = scene_manifest.get("negative_only")
+            if negative_only is not None and type(negative_only) is not bool:
+                raise DatasetContractError(
+                    f"negative_only must be boolean when declared in {scene_manifest_path}"
+                )
             scene_negative_domains: set[str] = set()
             for object_index, item in enumerate(objects):
                 if not isinstance(item, dict):
@@ -355,6 +365,10 @@ def build_manifest(root_specs: Iterable[tuple[str, Path]]) -> dict[str, Any]:
                         f"object {object_index} has invalid semantic_label in {scene_manifest_path}"
                     )
                 source_object_counts[semantic_label] += 1
+                if negative_only is True and semantic_label != 0:
+                    raise DatasetContractError(
+                        f"negative_only scene declares target objects in {scene_manifest_path}"
+                    )
                 if str(item.get("size_bucket", "")).lower() in {"small", "small_area"}:
                     small_object_counts[semantic_label] += 1
                 if semantic_label == 0:
@@ -371,6 +385,9 @@ def build_manifest(root_specs: Iterable[tuple[str, Path]]) -> dict[str, Any]:
                 raise DatasetContractError(
                     f"capture report has no records: {capture_report_path}"
                 )
+            if negative_only is True:
+                negative_only_scene_counts[split] += 1
+                negative_only_world_ids[split].add(world_id)
 
             scene_record = {
                 "root_id": root_id,
@@ -384,6 +401,8 @@ def build_manifest(root_specs: Iterable[tuple[str, Path]]) -> dict[str, Any]:
                 "scene_manifest_sha256": _sha256_file(scene_manifest_path),
                 "capture_report_path": capture_report_path.relative_to(root).as_posix(),
                 "capture_report_sha256": _sha256_file(capture_report_path),
+                "negative_only": negative_only,
+                "negative_only_declared": negative_only is not None,
                 "negative_domains": sorted(scene_negative_domains),
             }
             scenes.append(scene_record)
@@ -430,6 +449,12 @@ def build_manifest(root_specs: Iterable[tuple[str, Path]]) -> dict[str, Any]:
                     )
                 seen_triplets.add(triplet)
                 counts, modality_contract = _validate_modalities(resolved)
+                if negative_only is True and any(
+                    count > 0 for semantic_id, count in counts.items() if semantic_id != 0
+                ):
+                    raise DatasetContractError(
+                        f"negative_only scene contains positive semantic GT: {scene_manifest_path}"
+                    )
                 pixel_counts.update(counts)
                 for semantic_id, count in counts.items():
                     if semantic_id != 0 and count > 0:
@@ -442,6 +467,7 @@ def build_manifest(root_specs: Iterable[tuple[str, Path]]) -> dict[str, Any]:
                         "world_id": world_id,
                         "scene_id": scene_id,
                         "mission_id": scene_id,
+                        "negative_only": negative_only,
                         "frame_index": frame_index,
                         "timestamp_ns": record.get("timestamp_ns"),
                         "paths": {
@@ -464,6 +490,8 @@ def build_manifest(root_specs: Iterable[tuple[str, Path]]) -> dict[str, Any]:
                         "modality_contract": modality_contract,
                     }
                 )
+                if negative_only is True:
+                    negative_only_frame_counts[split] += 1
 
     scenes.sort(
         key=lambda row: (row["split"], row["world_id"], row["scene_id"], row["root_id"])
@@ -492,6 +520,13 @@ def build_manifest(root_specs: Iterable[tuple[str, Path]]) -> dict[str, Any]:
         failure_reasons.append(
             f"excluded_incomplete_scene_count:{len(excluded_scenes)}"
         )
+    missing_negative_only_splits = [
+        split for split in ALLOWED_SPLITS if negative_only_scene_counts[split] <= 0
+    ]
+    failure_reasons.extend(
+        f"missing_negative_only_scene:{split}"
+        for split in missing_negative_only_splits
+    )
     manifest: dict[str, Any] = {
         "schema_version": SCHEMA_VERSION,
         "protocol_id": "EMFJ6V3",
@@ -544,12 +579,29 @@ def build_manifest(root_specs: Iterable[tuple[str, Path]]) -> dict[str, Any]:
                 for semantic_id in ALLOWED_SEMANTIC_IDS
             },
             "negative_domain_counts": dict(sorted(negative_domain_counts.items())),
+            "negative_only_scene_field": "scenes[].negative_only",
+            "negative_only_frame_field": "frames[].negative_only",
+            "negative_only_scene_counts_by_split": {
+                split: negative_only_scene_counts[split] for split in ALLOWED_SPLITS
+            },
+            "negative_only_frame_counts_by_split": {
+                split: negative_only_frame_counts[split] for split in ALLOWED_SPLITS
+            },
+            "negative_only_world_ids_by_split": {
+                split: sorted(negative_only_world_ids[split])
+                for split in ALLOWED_SPLITS
+            },
         },
-        "a4_area_dataset_ready": not missing_targets and not excluded_scenes,
+        "a4_area_dataset_ready": (
+            not missing_targets
+            and not excluded_scenes
+            and not missing_negative_only_splits
+        ),
         "failure_reasons": failure_reasons,
         "truth_boundary": (
             "a4_area_dataset_ready proves only this non-sealed manifest's pairing, "
-            "hash lock, semantic-ID audit, and positive presence of IDs 4 and 5; "
+            "hash lock, semantic-ID audit, positive presence of IDs 4 and 5, "
+            "and declared negative-only scenes in each split; "
             "it is not an overall A4 gate result"
         ),
     }

@@ -22,6 +22,7 @@ def _make_scene(
     frame_index: int,
     semantic: np.ndarray,
     source_split: str | None = None,
+    negative_only: bool = False,
 ) -> Path:
     scene = root / "scenes" / scene_id
     scene.mkdir(parents=True)
@@ -32,6 +33,7 @@ def _make_scene(
                 "world_id": world_id,
                 "scene_id": scene_id,
                 "scene_seed": 123,
+                "negative_only": negative_only,
             },
             sort_keys=True,
         ),
@@ -84,6 +86,24 @@ def _valid_roots(tmp_path: Path) -> tuple[Path, Path]:
         frame_index=3,
         semantic=np.array([[0, 5], [5, 2]], dtype=np.uint8),
     )
+    _make_scene(
+        train,
+        split="TRAIN",
+        world_id="outdoor_world_a",
+        scene_id="scene_train_negative_002",
+        frame_index=11,
+        semantic=np.zeros((2, 2), dtype=np.uint8),
+        negative_only=True,
+    )
+    _make_scene(
+        holdout,
+        split="HOLDOUT",
+        world_id="outdoor_world_b",
+        scene_id="scene_holdout_negative_002",
+        frame_index=13,
+        semantic=np.zeros((2, 2), dtype=np.uint8),
+        negative_only=True,
+    )
     return train, holdout
 
 
@@ -106,7 +126,9 @@ def test_manifest_is_deterministic_sha_locked_and_preserves_identity(tmp_path: P
     }
     assert identities == {
         ("TRAIN", "outdoor_world_a", "scene_train_001", 7),
+        ("TRAIN", "outdoor_world_a", "scene_train_negative_002", 11),
         ("HOLDOUT", "outdoor_world_b", "scene_holdout_001", 3),
+        ("HOLDOUT", "outdoor_world_b", "scene_holdout_negative_002", 13),
     }
     assert {row["source_split"] for row in first["scenes"]} == {"train", "holdout"}
     for row in first["frames"]:
@@ -128,6 +150,20 @@ def test_manifest_is_deterministic_sha_locked_and_preserves_identity(tmp_path: P
     assert first["screening_dataset_contract"]["mission_field"] == (
         "frames[].mission_id"
     )
+    contract = first["screening_dataset_contract"]
+    assert contract["negative_only_scene_counts_by_split"] == {
+        "TRAIN": 1,
+        "HOLDOUT": 1,
+    }
+    assert contract["negative_only_frame_counts_by_split"] == {
+        "TRAIN": 1,
+        "HOLDOUT": 1,
+    }
+    assert contract["negative_only_world_ids_by_split"] == {
+        "TRAIN": ["outdoor_world_a"],
+        "HOLDOUT": ["outdoor_world_b"],
+    }
+    assert sum(frame["negative_only"] is True for frame in first["frames"]) == 2
 
     output = tmp_path / "area_manifest.json"
     write_manifest(first, output)
@@ -312,3 +348,38 @@ def test_depth_positive_infinity_is_audited_but_nan_fails_closed(tmp_path: Path)
         DatasetContractError, match="depth tensor contains invalid values"
     ):
         build_manifest([("TRAIN", train), ("HOLDOUT", holdout)])
+
+
+def test_negative_only_declaration_rejects_positive_objects_and_gt(tmp_path: Path):
+    train, holdout = _valid_roots(tmp_path)
+    scene_manifest_path = next(
+        train.rglob("scene_train_negative_002/scene_manifest.json")
+    )
+    scene_manifest = json.loads(scene_manifest_path.read_text(encoding="utf-8"))
+    scene_manifest["objects"] = [{"semantic_label": 4}]
+    scene_manifest_path.write_text(json.dumps(scene_manifest), encoding="utf-8")
+    with pytest.raises(DatasetContractError, match="declares target objects"):
+        build_manifest([("TRAIN", train), ("HOLDOUT", holdout)])
+
+    train, holdout = _valid_roots(tmp_path / "positive_gt")
+    semantic_path = next(
+        train.rglob("scene_train_negative_002/semantic_*.npy")
+    )
+    np.save(semantic_path, np.array([[0, 4], [0, 0]], dtype=np.uint8))
+    with pytest.raises(DatasetContractError, match="contains positive semantic GT"):
+        build_manifest([("TRAIN", train), ("HOLDOUT", holdout)])
+
+
+def test_ready_requires_declared_negative_only_scene_in_each_split(tmp_path: Path):
+    train, holdout = _valid_roots(tmp_path)
+    holdout_negative = next(
+        holdout.rglob("scene_holdout_negative_002/scene_manifest.json")
+    )
+    payload = json.loads(holdout_negative.read_text(encoding="utf-8"))
+    payload.pop("negative_only")
+    holdout_negative.write_text(json.dumps(payload), encoding="utf-8")
+
+    report = build_manifest([("TRAIN", train), ("HOLDOUT", holdout)])
+
+    assert report["a4_area_dataset_ready"] is False
+    assert "missing_negative_only_scene:HOLDOUT" in report["failure_reasons"]

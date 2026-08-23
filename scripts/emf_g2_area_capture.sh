@@ -317,6 +317,11 @@ assert payload["semantic_audit"]["leaf_pile_positive_frame_count"] > 0
 assert payload["semantic_audit"]["puddle_positive_frame_count"] > 0
 assert {scene["split"] for scene in payload["scenes"]} == {"TRAIN", "HOLDOUT"}
 assert len(payload["scenes"]) == 4
+contract = payload["screening_dataset_contract"]
+assert contract["negative_only_scene_counts_by_split"] == {"TRAIN": 1, "HOLDOUT": 1}
+assert contract["negative_only_frame_counts_by_split"] == {"TRAIN": 10, "HOLDOUT": 10}
+assert sum(scene["negative_only"] is True for scene in payload["scenes"]) == 2
+assert sum(frame["negative_only"] is True for frame in payload["frames"]) == 20
 PY
 
 echo "EMF G2 Area capture and paired-manifest validation completed"
