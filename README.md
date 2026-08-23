@@ -49,6 +49,10 @@ C4 SigLIP2 safetensors 已在 non-root、断网、只读挂载、`trust_remote_c
 
 上述完整外置证据分别锁为 classifier 非训练诊断 `6971887e…762a`（50 candidates）、Area 清单 `8c9f4c06…1720`（910 complete frames）和 eWaSR 负向屏 `6c317295…82a1`；仓库内的紧凑证据记录 source commit `de3a4aa24a7fe07c862f850485d0def83d7fc07c`。现存模型 screening 仍未完成：C2/C3/C5/C6 与其余 Area 合同尚需按冻结清单处理，不能据此越级训练。
 
+第三个 Area 候选 SegFormer-B0 的三件 artifact、150 类头与原生类序已完成非执行完整性审计；ADE20K 的 water/vegetation 代理类不能映射为 road puddle/leaf pile，本地又缺少可复核许可、完整离线 runtime 与 ONNX parity，因此终态为 direct-use rejected、release blocked。至此 3/3 Area 候选都有明确 disposition，但 Area 正例 GT 仍为 0，`area_screening_complete=false`。
+
+C5/C6 ViT 已通过固定镜像摘要、包版本、artifact SHA、原生 processor/类序和 183-crop identity lock 的断网只读 CUDA smoke。C5 将 183/183 全部拒为 background，三目标 recall 均为 0；C6 的 paper recall 为 `0.4`，但 plastic/metal recall 为 0 且 background specificity 仅 `0.0196`，形成严重前景 flood。二者 direct-use 均失败，所有 functional/product/training flag 保持 false；C6 的 hard/soft plastics 只按显式 many-to-one 概率求和，不把 cups 等未映射类猜成目标。
+
 Journey 6 校准数据与源码部署包同样失效关闭：当前只读盘点两个明确 TRAIN 根得到 `471` 个 RGB PNG 候选和 `0` 个 ROI/crop，尚无逐文件 SHA 与分层元数据，因此 `J6_CALIBRATION_PACK_READY=false`。reference-only source bundle 已锁定 D1 E1 canonical ONNX、development-only Area ONNX、C++ graph-external 后处理和真实 TRAIN golden tensor lock；但模型选择/发布许可、正式校准、nash profile 与官方工具链仍未齐备，因此 `J6_SOURCE_DEPLOYMENT_BUNDLE_READY=false`。许可审计文件缺失本身也会显式保持 `model_license_not_release_clear`，不会因干净 CI 环境缺少本地 `.workspace` 证据而漏报。`G5_V2`、`SEALED_FINAL`、`DEV_VAL` 始终禁止进入校准链，详见 [Journey 6 校准与源码部署包](docs/journey6-calibration-source-bundle.md)。
 
 主要缺口是合格且可冻结的产品近距四分类/Area 模型、完整感知清扫链的真实 ROS/Gazebo 集成验证、20,000 m² 正式范围建图闭环、30-seed 综合链、3500 m²/h 实测效率、完整 10 Hz/10 min 性能、2 h soak、故障矩阵、5-bag replay、一次性 sealed final 和最终 release/rollback。详情见 [当前状态](docs/current-status.md)，运行时不变量见 [产品运行时基础架构](docs/product-runtime-architecture.md)。

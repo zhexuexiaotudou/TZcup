@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "protocol_id": "EMFJ6V3",
+  "source_commit": "afa63df52399851f1abf6b6bd2c52926773651e2",
+  "audited_at": "2026-08-24T01:45:32+08:00",
+  "model_id": "area_nvidia_segformer_b0_ade20k",
+  "artifacts": {
+    "model.safetensors": {
+      "bytes": 15036944,
+      "sha256": "6ae39addd01de6b1b8bde2cf677d43a5cd733424b8d186de3f95d1c51fee23f9",
+      "tensor_count": 208,
+      "header_bytes": 24104,
+      "payload_bytes": 15012832,
+      "offsets_contiguous": true,
+      "classifier_weight_shape": [150, 256, 1, 1],
+      "classifier_bias_shape": [150]
+    },
+    "config.json": {
+      "bytes": 6884,
+      "sha256": "209caa9091e4632f7c8883c11170cd08ad29af68b23c09590aa4a5befb1a2a7f"
+    },
+    "preprocessor_config.json": {
+      "bytes": 271,
+      "sha256": "8039d1d210abaa7117ad78e58cdfd6141a2ec72c03dae891b3cd76737e422c6c"
+    }
+  },
+  "native_contract": {
+    "architecture": "SegformerForSemanticSegmentation_MiT_B0",
+    "class_count": 150,
+    "input": "RGB_512_bilinear_1_over_255_ImageNet_normalized",
+    "output": "quarter_resolution_150_channel_logits",
+    "relevant_native_classes": {
+      "tree": 4,
+      "grass": 9,
+      "plant": 17,
+      "water": 21,
+      "sea": 26,
+      "field": 29,
+      "river": 60,
+      "flower": 66,
+      "palm": 72,
+      "bottle": 98,
+      "bag": 115,
+      "lake": 128,
+      "ashcan": 138
+    },
+    "target_class_mapping": null
+  },
+  "runtime_audit": {
+    "complete_offline_torch_transformers_safetensors_environment_available": false,
+    "source_onnx_available": false,
+    "native_screen_executed": false,
+    "reason": "No complete pinned offline runtime or ONNX is available, and downloading dependencies is outside this frozen audit."
+  },
+  "license": {
+    "status": "blocked_license",
+    "local_model_card_or_license_file_present": false,
+    "release_allowed": false,
+    "journey6_bundle_allowed": false
+  },
+  "semantic_decision": {
+    "direct_leaf_pile_candidate": false,
+    "direct_puddle_candidate": false,
+    "negative_proxy_information_gain": "low",
+    "reason": "ADE20K vegetation and water classes are not leaf_pile or road_puddle, and the fixed Area dataset has no positive semantic IDs 4 or 5."
+  },
+  "disposition": "development_reference_only_rejected_direct_area_candidate_release_blocked",
+  "EMF_EXISTING_MODEL_FUNCTIONAL_CANDIDATE": false,
+  "EMF_EXISTING_MODEL_PRODUCT_CANDIDATE": false,
+  "training_authorized": false,
+  "truth_boundary": "Artifact integrity and the native ADE20K contract are verified without executing weights. Semantic mismatch, blocked licensing, missing positive Area GT, absent offline runtime, absent ONNX parity, and absent official Journey 6 compile prevent direct-use, A4, product, release, or board claims."
+}

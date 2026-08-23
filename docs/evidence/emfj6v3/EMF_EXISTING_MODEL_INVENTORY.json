@@ -859,7 +859,7 @@
         "tree": "generic_vegetation_reference_not_leaf_pile",
         "water": "generic_water_reference_not_road_puddle"
       },
-      "disposition": "development_reference_screening_pending_release_blocked",
+      "disposition": "development_reference_only_rejected_direct_area_candidate_release_blocked",
       "files": [
         {
           "name": "model.safetensors",
@@ -880,7 +880,7 @@
       "license": "blocked_license",
       "model_id": "area_nvidia_segformer_b0_ade20k",
       "onnx_exportability": "no_source_onnx_static_PT_export_and_numeric_parity_required",
-      "reason": "generic_water_and_vegetation_proxies_are_not_leaf_pile_or_road_puddle_and_license_is_noncommercial",
+      "reason": "artifact_contract_verified_but_ADE20K_water_vegetation_are_not_leaf_pile_or_road_puddle_positive_GT_absent_license_blocked_and_offline_runtime_unavailable",
       "revision": "489d5cd81a0b59fab9b7ea758d3548ebe99677da",
       "role": "area",
       "source_uri": "https://huggingface.co/nvidia/segformer-b0-finetuned-ade-512-512",
@@ -932,7 +932,7 @@
   "protocol_id": "EMFJ6V3",
   "registry_id": "tzcup_existing_model_candidates_v3",
   "registry_path": "config/existing_model_candidates_v3.yaml",
-  "registry_sha256": "7d0fce963d16942029cbcbd11d44ec3fc8a1f11425c40ddb35fb5c0b8a060451",
+  "registry_sha256": "3e1c2b2988437c54c06fe466b180c2fd2f5b04d8af9e35ff81235c7e58434567",
   "release_allowed": false,
   "schema_version": 1,
   "sealed_access_allowed": false,

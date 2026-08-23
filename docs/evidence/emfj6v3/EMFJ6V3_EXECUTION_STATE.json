@@ -27,6 +27,9 @@
     "classifier_nontraining_grid": "executed_diagnostic_only_no_threshold_selected",
     "area_dataset": "910_complete_frames_but_leaf_and_puddle_positive_GT_absent_two_interrupted_scenes_excluded",
     "area_ewasr_resnet18": "TRAIN_004_60_of_60_native_water_activation_rejected_direct_target_mapping",
+    "area_nvidia_segformer_b0_ade20k": "artifact_contract_verified_direct_target_mapping_rejected_release_blocked_runtime_unavailable",
+    "area_candidate_dispositions_closed": true,
+    "area_screening_complete": false,
     "formal_negative_only_domain_ready": false,
     "complete": false
   },

@@ -110,6 +110,7 @@ jobs:
             scripts/test_evaluate_emf_classifier_nontraining.py \
             scripts/test_build_emf_area_dataset.py \
             scripts/test_screen_emf_ewasr_negative.py \
+            scripts/test_vit_native_worker.py \
             scripts/test_candidate_cap.py \
             scripts/test_no_training_before_exhaustion.py
 
