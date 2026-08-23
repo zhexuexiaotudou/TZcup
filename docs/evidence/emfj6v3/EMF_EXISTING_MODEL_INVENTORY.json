@@ -522,11 +522,19 @@
         "paper": "material_evidence_for_paper_litter",
         "plastic": "material_evidence_for_plastic_bottle"
       },
-      "disposition": "development_screening_pending",
+      "disposition": "native_GT_smoke_failed_nontraining_adjustment_pending",
       "files": [
         {
           "name": "model.safetensors",
           "sha256": "a67e2f6a82914be03cfb85218bc4e7683c8e81fe3fc4a5f9bed3abc8e93757c8"
+        },
+        {
+          "name": "config.json",
+          "sha256": "341bb75a50a7dbd13034e189a02ad7cf54e8a6af28357d66c138a397e0d28c6e"
+        },
+        {
+          "name": "preprocessor_config.json",
+          "sha256": "9b36b57ebaf20f09bf4c22100ccc21877ea6bfe5aead0c00c59f8af8ccefacfc"
         }
       ],
       "framework": "transformers_pytorch_safetensors",
@@ -535,7 +543,7 @@
       "license": "development_only",
       "model_id": "c4_prithiv_trash_net_siglip2",
       "onnx_exportability": "transformers_export_route_unverified_no_source_onnx",
-      "reason": "exact_material_evidence_but_large_graph_and_no_background_unknown_or_outdoor_specificity_proof",
+      "reason": "mapped_argmax_zero_recall_all_three_targets_macro_f1_0_1911_background_specificity_0_9706",
       "revision": "6ee65c533db3702e5cbf196634bf04ed13ef583e",
       "role": "classifier",
       "source_uri": "https://huggingface.co/prithivMLmods/Trash-Net",
@@ -924,7 +932,7 @@
   "protocol_id": "EMFJ6V3",
   "registry_id": "tzcup_existing_model_candidates_v3",
   "registry_path": "config/existing_model_candidates_v3.yaml",
-  "registry_sha256": "615a47d6c9e47bf5974181bde9d4adb276bd63059a7015bc07775dd72af498a1",
+  "registry_sha256": "23ad2a36c938b9de5dde1ebefb7db8192027c85862bb7d0ac1df4462bde3d052",
   "release_allowed": false,
   "schema_version": 1,
   "sealed_access_allowed": false,

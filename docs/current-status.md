@@ -26,6 +26,8 @@ d6 YOLOX-Tiny COCO ONNX 已作为首个新增 reference 在相同 410/81 TRAIN �
 
 C1 WasteWise ONNX 已在 183 个明确标记为 development-only、非 formal 的 GT crops 上真实 smoke：102 background、14 plastic、47 metal、20 paper；mapped argmax 的 macro-F1 为 `0.1369`、background specificity 为 `0.6765`，三个目标类召回全部为 `0`。这关闭了 C1 direct-use 路线，但不替代 proposal-crop A4，也不跳过一次有界的 target-mass/unknown-rejection 非训练调整。
 
+C4 SigLIP2 已在 non-root、`--network none`、只读模型/数据、safetensors-only、`trust_remote_code=false` 的 CUDA 容器完成相同 GT-crop smoke。固定 native processor 为 Transformers 4.50.2 slow bilinear RGB 224、`/255`、mean/std 0.5、channels-last；macro-F1 `0.1911`、background specificity `0.9706`，三目标召回仍均为 `0`。direct-use 失败，但 canonical ONNX/parity 和有界 nontraining adjustment 尚未完成。
+
 原因不是裁决工具缺失，而是当前没有一套绑定固定 V1 合同、覆盖 A–P 且通过全部硬门的正式证据。历史实验报告、旧分支和旧运行目录不迁移为新合同的通过证据。
 
 ## 已具备的产品基线
