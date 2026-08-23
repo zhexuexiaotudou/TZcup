@@ -1,12 +1,17 @@
 from pathlib import Path
+import hashlib
+import json
 import sys
 
 import prepare_trcrv10_g10_domain as g10
+import prepare_trcrv10_g10_coco as prepare_coco
+import audit_trcrv10_g10_sequences as audit_sequences
 
 PACKAGE = Path(__file__).resolve().parents[1] / "starter_ws/src/sanitation_learning"
 sys.path.insert(0, str(PACKAGE))
 
 from sanitation_learning import g4_scene
+from sanitation_learning.g2_capture import motion_command_for_frame
 
 
 def test_g10_mission_plan_meets_protocol_minimums() -> None:
@@ -22,7 +27,7 @@ def test_g10_approach_lanes_preserve_safe_drive_by_geometry() -> None:
         "paper_litter": 0.66,
         "plastic_bottle": -0.57,
     }
-    assert g4_scene.G10_ORBIT_SWITCH_WORLD_X_M == -0.50
+    assert g4_scene.G10_ORBIT_SWITCH_WORLD_X_M == -1.50
     assert g4_scene.G10_ORBIT_ANGULAR_SPEED_RAD_S == 0.35
 
 
@@ -52,7 +57,7 @@ def test_g10_drive_by_lanes_keep_physical_clearance() -> None:
     )
 
 
-def test_g10_route_orbits_before_transverse_wet_world_drain() -> None:
+def test_g10_route_stops_before_transverse_wet_world_drain() -> None:
     drain_collision_front_x = 1.0 - 0.35 / 2.0
     conservative_vehicle_x_extent = 0.45
     assert (
@@ -61,40 +66,43 @@ def test_g10_route_orbits_before_transverse_wet_world_drain() -> None:
     )
 
 
-def test_mixed_curb_route_uses_mapped_center_corridor() -> None:
-    mixed_curb = g4_scene.g10_motion_profile(
-        "g10v15_val_w02_08_mixed_curb_vegetation"
-    )
-    assert mixed_curb["layout_specific_route"] == "08_mixed_curb_vegetation"
-    assert mixed_curb["post_switch_phases"] == [
-        {
-            "name": "mapped_center_corridor_straight_exit",
-            "frame_count": 4096,
-            "linear_x_mps": 0.20,
-        },
+def test_all_g10_worlds_share_the_frozen_stationary_spin_route() -> None:
+    profiles = [
+        g4_scene.g10_motion_profile(world)
+        for world in (
+            "g10v15_train_w03_03_wet_courtyard",
+            "g10v15_val_w02_08_mixed_curb_vegetation",
+            "g10v15_val_w03_09_light_paver_pedestrian",
+        )
     ]
+    assert profiles[0] == profiles[1] == profiles[2]
+    profile = profiles[0]
+    assert profile["route_id"] == "g10_route_v19_spin_xneg1p5"
+    assert profile["straight_linear_x_mps"] == 0.05
+    assert profile["orbit_linear_x_mps"] == 0.0
+    declared_sha = profile.pop("route_config_sha256")
+    assert declared_sha == hashlib.sha256(
+        json.dumps(profile, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    assert declared_sha == prepare_coco.EXPECTED_ROUTE_CONFIG_SHA256
+    assert declared_sha == audit_sequences.EXPECTED_ROUTE_CONFIG_SHA256
+    assert g4_scene.G10_ROUTE_ID == prepare_coco.EXPECTED_ROUTE_ID
+    assert g4_scene.G10_ROUTE_ID == audit_sequences.EXPECTED_ROUTE_ID
 
-    light_paver = g4_scene.g10_motion_profile(
-        "g10v15_val_w03_09_light_paver_pedestrian"
-    )
-    assert light_paver["layout_specific_route"] == "09_light_paver_pedestrian"
-    assert light_paver["post_switch_phases"] == [
-        {
-            "name": "light_paver_shallow_left_departure",
-            "frame_count": 9,
-            "linear_x_mps": 0.20,
-            "angular_z_rad_s": g4_scene.G10_ORBIT_ANGULAR_SPEED_RAD_S,
-        },
-        {
-            "name": "light_paver_straight_exit",
-            "frame_count": 4096,
-            "linear_x_mps": 0.20,
-        },
-    ]
 
-    wet_world = g4_scene.g10_motion_profile("g10v15_train_w05_05_wet_courtyard")
-    assert "post_switch_phases" not in wet_world
-    assert "layout_specific_route" not in wet_world
+def test_route_v19_runtime_switches_from_straight_to_zero_linear_spin() -> None:
+    profile = g4_scene.g10_motion_profile("g10v15_train_w01_01_asphalt_campus")
+    assert motion_command_for_frame(
+        profile, 0, 0.05, maximum_linear_speed_mps=0.05
+    ) == (0.05, 0.0, "straight_candidate_drive_by")
+    assert motion_command_for_frame(
+        profile,
+        200,
+        0.05,
+        world_switch_triggered=True,
+        world_switch_frame_index=199,
+        maximum_linear_speed_mps=0.05,
+    ) == (0.0, 0.35, "safe_orbit_after_candidate")
 
 
 def test_g10_identifiability_grid_is_development_only() -> None:
@@ -110,10 +118,14 @@ def test_g10_capture_orchestrator_denies_sealed_dev_val() -> None:
     assert "[ValidateSet('train', 'val')]" in source
     assert "'test'" not in source
     assert "-G10ApproachSequence" in source
-    assert "g10\\route_v15" in source
-    assert "-CaptureFrameCount 180" in source
+    assert "[string]$DomainRoot" in source
+    assert "g10\\route_v19_spin_xneg1p5" in source
+    assert "-CaptureFrameCount 360" in source
+    assert "-CaptureSpeedMps 0.05" in source
     assert "-CaptureMinTranslationM 0.02" in source
-    assert "-CaptureTimeoutSeconds 1200" in source
+    assert "-CaptureMinRotationRad 0.03" in source
+    assert "-CaptureTimeoutSeconds 2400" in source
+    assert "3bdb3006226943e4149cd84144b488e5eb112ab35ad3692c5da8cc48c88b5208" in source
 
 
 def test_capture_wrapper_keeps_product_camera_defaults_and_allows_audited_diagnostic_override() -> None:

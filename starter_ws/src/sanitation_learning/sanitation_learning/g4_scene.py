@@ -60,7 +60,8 @@ G10_TARGET_LATERAL_BY_CLASS_M = {
 G10_DIAGNOSTIC_DISTANCES_M = (0.85, 0.95, 1.10, 1.30, 1.55, 1.90, 2.40, 3.00)
 G10_REOBSERVE_SWITCH_LEAD_M = 1.50
 G10_REOBSERVE_ANGULAR_SPEED_RAD_S = 1.0
-G10_ORBIT_SWITCH_WORLD_X_M = -0.50
+G10_ROUTE_ID = "g10_route_v19_spin_xneg1p5"
+G10_ORBIT_SWITCH_WORLD_X_M = -1.50
 G10_ORBIT_ANGULAR_SPEED_RAD_S = 0.35
 
 
@@ -185,61 +186,24 @@ def _parked_asset_updates(manifest: dict, selected_names: set[str]) -> list[dict
 
 
 def g10_motion_profile(world_id: str) -> dict:
-    """Return the GT-independent route selected from the static world layout."""
+    """Return the frozen GT-independent route used by every G10 world."""
+    del world_id
     profile = {
-        "name": "g10_safe_drive_by_then_orbit_v1",
+        "route_id": G10_ROUTE_ID,
+        "name": "g10_straight_then_stationary_spin_v1",
         "control_mode": "latched_world_x_switch",
         "switch_world_x_m": G10_ORBIT_SWITCH_WORLD_X_M,
-        "straight_linear_x_mps": 0.20,
-        "orbit_linear_x_mps": 0.20,
+        "straight_linear_x_mps": 0.05,
+        "orbit_linear_x_mps": 0.0,
         "orbit_angular_z_rad_s": G10_ORBIT_ANGULAR_SPEED_RAD_S,
         "route_contract": (
-            "pass the candidate on the straight approach; remain in the "
-            "GT-independent mapped center corridor for the mixed-curb layout; "
-            "use a bounded shallow departure for light pavers; otherwise "
-            "latch a left orbit before transverse obstacles"
+            "drive straight using odometry only until world x reaches -1.50 m, "
+            "then latch a zero-linear-speed left spin for all remaining frames"
         ),
     }
-    bounded_departure_layouts = (
-        "08_mixed_curb_vegetation",
-        "09_light_paver_pedestrian",
-    )
-    layout_specific_route = next(
-        (layout for layout in bounded_departure_layouts if world_id.endswith(f"_{layout}")),
-        None,
-    )
-    if layout_specific_route == "08_mixed_curb_vegetation":
-        profile.update(
-            {
-                "post_switch_phases": [
-                    {
-                        "name": "mapped_center_corridor_straight_exit",
-                        "frame_count": 4096,
-                        "linear_x_mps": 0.20,
-                    },
-                ],
-                "layout_specific_route": layout_specific_route,
-            }
-        )
-    elif layout_specific_route == "09_light_paver_pedestrian":
-        profile.update(
-            {
-                "post_switch_phases": [
-                    {
-                        "name": "light_paver_shallow_left_departure",
-                        "frame_count": 9,
-                        "linear_x_mps": 0.20,
-                        "angular_z_rad_s": G10_ORBIT_ANGULAR_SPEED_RAD_S,
-                    },
-                    {
-                        "name": "light_paver_straight_exit",
-                        "frame_count": 4096,
-                        "linear_x_mps": 0.20,
-                    },
-                ],
-                "layout_specific_route": layout_specific_route,
-            }
-        )
+    profile["route_config_sha256"] = hashlib.sha256(
+        json.dumps(profile, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
     return profile
 
 
@@ -650,7 +614,11 @@ def randomize(
         "split": split,
         "source_world_split": world_split,
         "world_sha256": world["sha256"],
-        "trajectory_id": f"{world_id}_trajectory_{scene_seed:04d}",
+        "trajectory_id": (
+            f"{world_id}_{G10_ROUTE_ID}_trajectory_{scene_seed:04d}"
+            if g10_approach_sequence
+            else f"{world_id}_trajectory_{scene_seed:04d}"
+        ),
         "objects": objects,
         "target_count_by_class": {
             class_id: sum(item.get("class_id") == class_id for item in selected)
@@ -705,6 +673,15 @@ def randomize(
             "unreachable_targets_must_be_retained": True,
             "negative_only_schedule": "ceil(0.30 * scene_cycle)",
             "gt_runtime_forbidden": True,
+            "route_id": motion_profile.get("route_id") if motion_profile else None,
+            "route_config_sha256": (
+                motion_profile.get("route_config_sha256") if motion_profile else None
+            ),
+            "source_domain_manifest_sha256": (
+                hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+                if g10_approach_sequence
+                else None
+            ),
         },
         "trcrv10_identifiability_diagnostic": {
             "enabled": bool(g10_identifiability_diagnostic),

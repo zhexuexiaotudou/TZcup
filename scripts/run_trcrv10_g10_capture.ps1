@@ -4,16 +4,30 @@ param(
     [string]$Split,
     [Parameter(Mandatory = $true)]
     [string]$ArtifactRoot,
-    [string]$Image = 'tzcup/sanitation-jazzy:stage5b'
+    [Parameter(Mandatory = $true)]
+    [string]$DomainRoot,
+    [string]$Image = 'tzcup/sanitation-jazzy@sha256:418550f48916d794bc0aff144c60a3b1353d0bb0bb1dcf086cda0ec8e2a5aadc'
 )
 
 $ErrorActionPreference = 'Stop'
 $repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $artifact = [System.IO.Path]::GetFullPath($ArtifactRoot)
-$domain = Join-Path $artifact 'g10\domain_route_v15'
+$domain = (Resolve-Path -LiteralPath $DomainRoot).Path
+$domainManifest = Join-Path $domain 'worlds\g4_world_manifest.json'
+$expectedDomainSha256 = '3bdb3006226943e4149cd84144b488e5eb112ab35ad3692c5da8cc48c88b5208'
+if (-not (Test-Path -LiteralPath $domainManifest -PathType Leaf)) {
+    throw "fixed G10 domain manifest missing: $domainManifest"
+}
+$actualDomainSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $domainManifest).Hash.ToLowerInvariant()
+if ($actualDomainSha256 -ne $expectedDomainSha256) {
+    throw "fixed G10 domain manifest SHA-256 mismatch: $actualDomainSha256"
+}
 $runtime = Join-Path $artifact 'g10\runtime'
-$capture = Join-Path $artifact ("g10\route_v15\capture_{0}" -f $Split)
-$logRoot = Join-Path $artifact 'g10\route_v15\capture_logs'
+$capture = Join-Path $artifact ("g10\route_v19_spin_xneg1p5\capture_{0}" -f $Split)
+$logRoot = Join-Path $artifact 'g10\route_v19_spin_xneg1p5\capture_logs'
+if ((Test-Path -LiteralPath $capture) -and (Get-ChildItem -LiteralPath $capture -Force | Select-Object -First 1)) {
+    throw "route v19 capture output must be fresh and empty: $capture"
+}
 New-Item -ItemType Directory -Force -Path $logRoot | Out-Null
 
 $config = if ($Split -eq 'train') {
@@ -44,10 +58,11 @@ for ($local = 0; $local -lt $config.Worlds; $local++) {
         -AssetSourceSplit $Split `
         -NegativeSourceSplit $Split `
         -SceneSeedOffset $config.Seed `
-        -CaptureFrameCount 180 `
-        -CaptureTimeoutSeconds 1200 `
-        -CaptureSpeedMps 0.20 `
+        -CaptureFrameCount 360 `
+        -CaptureTimeoutSeconds 2400 `
+        -CaptureSpeedMps 0.05 `
         -CaptureMinTranslationM 0.02 `
+        -CaptureMinRotationRad 0.03 `
         -CaptureMaxAttempts 2 `
         -DetectorInstancesPerClass 1 `
         -G10ApproachSequence `
