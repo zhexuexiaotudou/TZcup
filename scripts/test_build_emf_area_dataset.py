@@ -338,7 +338,13 @@ def test_depth_positive_infinity_is_audited_but_nan_fails_closed(tmp_path: Path)
     depth[0, 0] = np.inf
     np.save(depth_path, depth)
     report = build_manifest([("TRAIN", train), ("HOLDOUT", holdout)])
-    train_frame = next(frame for frame in report["frames"] if frame["split"] == "TRAIN")
+    relative_depth = depth_path.resolve().relative_to(train.resolve()).as_posix()
+    train_frame = next(
+        frame
+        for frame in report["frames"]
+        if frame["split"] == "TRAIN"
+        and frame["paths"]["depth"] == relative_depth
+    )
     assert train_frame["modality_contract"]["depth_positive_inf_pixel_count"] == 1
     assert train_frame["modality_contract"]["depth_finite_pixel_fraction"] == 0.75
 
