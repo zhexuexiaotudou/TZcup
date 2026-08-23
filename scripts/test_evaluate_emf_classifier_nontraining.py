@@ -2,6 +2,7 @@ import hashlib
 import json
 
 import pytest
+import evaluate_emf_classifier_nontraining as evaluator
 from evaluate_emf_classifier_nontraining import (
     EXPECTED_SOURCE_MANIFEST_SHA256,
     MAXIMUM_UNKNOWN_PROBABILITIES,
@@ -9,6 +10,16 @@ from evaluate_emf_classifier_nontraining import (
     EvaluationError,
     evaluate_files,
 )
+
+C3_RAW_SHA256 = "3323a4bec168e02da7e72e9cde076d12d578aa79870309b4724b326794e32048"
+
+
+@pytest.fixture(autouse=True)
+def restore_c3_raw_contract():
+    yield
+    evaluator.MODEL_CONTRACTS["c3_vasantvohra_trashnet"]["source_file_sha256"] = (
+        C3_RAW_SHA256
+    )
 
 
 def write_smoke(tmp_path, model_id, rows, *, suffix="smoke"):
@@ -41,17 +52,14 @@ def write_smoke(tmp_path, model_id, rows, *, suffix="smoke"):
     else:
         class_order = ["cardboard", "glass", "metal", "paper", "plastic", "trash"]
         model_sha256 = None
-        artifacts = {
-            "config.json": "341bb75a50a7dbd13034e189a02ad7cf54e8a6af28357d66c138a397e0d28c6e",
-            "model.safetensors": "a67e2f6a82914be03cfb85218bc4e7683c8e81fe3fc4a5f9bed3abc8e93757c8",
-            "preprocessor_config.json": "9b36b57ebaf20f09bf4c22100ccc21877ea6bfe5aead0c00c59f8af8ccefacfc",
+        artifact = {
+            "sha256": "013afdc86a673cb2354f4559c165301d5abda1c5878bb523a5995e483d4cc90a"
         }
     payload = {
         "schema_version": 1,
         "protocol_id": "EMFJ6V3",
         "model_id": model_id,
         "model_sha256": model_sha256,
-        "artifacts": artifacts,
         "source_manifest_sha256": EXPECTED_SOURCE_MANIFEST_SHA256,
         "class_order": class_order,
         "class_mapping": {
@@ -61,8 +69,14 @@ def write_smoke(tmp_path, model_id, rows, *, suffix="smoke"):
         },
         "rows": rows,
     }
+    if model_id == "c3_vasantvohra_trashnet":
+        payload["artifact"] = artifact
     path = tmp_path / f"{suffix}.json"
     path.write_text(json.dumps(payload), encoding="utf-8")
+    if model_id == "c3_vasantvohra_trashnet":
+        evaluator.MODEL_CONTRACTS[model_id]["source_file_sha256"] = hashlib.sha256(
+            path.read_bytes()
+        ).hexdigest()
     return path
 
 
@@ -108,9 +122,9 @@ def test_fixed_grid_reports_all_candidates_but_never_selects_or_trains(tmp_path)
         ),
     ]
     c1 = write_smoke(tmp_path, "c1_wastewise_yolov8n_cls", rows, suffix="c1")
-    c4 = write_smoke(tmp_path, "c4_prithiv_trash_net_siglip2", rows, suffix="c4")
+    c3 = write_smoke(tmp_path, "c3_vasantvohra_trashnet", rows, suffix="c3")
 
-    report = evaluate_files([c1, c4])
+    report = evaluate_files([c3, c1])
 
     expected = 2 * len(TARGET_PROBABILITY_MINIMUMS) * len(MAXIMUM_UNKNOWN_PROBABILITIES)
     assert len(report["candidates"]) == expected
@@ -122,8 +136,8 @@ def test_fixed_grid_reports_all_candidates_but_never_selects_or_trains(tmp_path)
         "selected": False,
         "frozen": False,
         "reason": (
-            "A5 threshold selection requires an untouched complete HOLDOUT; the current "
-            "HOLDOUT has no plastic_bottle examples."
+            "A5 threshold selection requires an untouched complete four-class HOLDOUT "
+            "and an independent unknown/background bank; neither is currently complete."
         ),
     }
     assert report["EMF_NONTRAINING_ADJUSTMENT_COMPLETE"] is False
@@ -148,13 +162,13 @@ def test_forbidden_data_markers_are_rejected_anywhere_in_payload(tmp_path, marke
 def test_non_train_rows_and_mismatched_probability_schema_fail_closed(tmp_path):
     rows = [row("one", "background", metal=0.1, paper=0.1, plastic=0.1, unknown=0.7)]
     rows[0]["record_id"] = "G10_HOLDOUT:one"
-    path = write_smoke(tmp_path, "c4_prithiv_trash_net_siglip2", rows)
+    path = write_smoke(tmp_path, "c3_vasantvohra_trashnet", rows)
     with pytest.raises(EvaluationError, match="G10_TRAIN"):
         evaluate_files([path])
 
     rows[0]["record_id"] = "G10_TRAIN:one"
     rows[0]["probabilities"].pop("trash")
-    path = write_smoke(tmp_path, "c4_prithiv_trash_net_siglip2", rows, suffix="bad")
+    path = write_smoke(tmp_path, "c3_vasantvohra_trashnet", rows, suffix="bad")
     with pytest.raises(EvaluationError, match="class_order"):
         evaluate_files([path])
 
@@ -162,33 +176,52 @@ def test_non_train_rows_and_mismatched_probability_schema_fail_closed(tmp_path):
 def test_requires_both_models_and_the_fixed_source_manifest(tmp_path):
     rows = [row("one", "background", metal=0.1, paper=0.1, plastic=0.1, unknown=0.7)]
     c1 = write_smoke(tmp_path, "c1_wastewise_yolov8n_cls", rows, suffix="c1")
-    with pytest.raises(EvaluationError, match="exactly one C1 and one C4"):
+    with pytest.raises(EvaluationError, match="exactly one C1 and one C3"):
         evaluate_files([c1])
 
-    c4 = write_smoke(tmp_path, "c4_prithiv_trash_net_siglip2", rows, suffix="c4")
-    payload = json.loads(c4.read_text(encoding="utf-8"))
+    c3 = write_smoke(tmp_path, "c3_vasantvohra_trashnet", rows, suffix="c3")
+    payload = json.loads(c3.read_text(encoding="utf-8"))
     payload["source_manifest_sha256"] = "a" * 64
-    c4.write_text(json.dumps(payload), encoding="utf-8")
+    c3.write_text(json.dumps(payload), encoding="utf-8")
+    evaluator.MODEL_CONTRACTS["c3_vasantvohra_trashnet"]["source_file_sha256"] = hashlib.sha256(
+        c3.read_bytes()
+    ).hexdigest()
     with pytest.raises(EvaluationError, match="fixed crop bank"):
-        evaluate_files([c1, c4])
+        evaluate_files([c1, c3])
 
 
 def test_rejects_artifact_schema_and_crop_identity_mismatch(tmp_path):
     rows = [row("one", "background", metal=0.1, paper=0.1, plastic=0.1, unknown=0.7)]
     c1 = write_smoke(tmp_path, "c1_wastewise_yolov8n_cls", rows, suffix="c1")
-    c4 = write_smoke(tmp_path, "c4_prithiv_trash_net_siglip2", rows, suffix="c4")
+    c3 = write_smoke(tmp_path, "c3_vasantvohra_trashnet", rows, suffix="c3")
 
     payload = json.loads(c1.read_text(encoding="utf-8"))
     payload["model_sha256"] = "0" * 64
     c1.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(EvaluationError, match="model SHA-256 contract"):
-        evaluate_files([c1, c4])
+        evaluate_files([c1, c3])
 
     c1 = write_smoke(tmp_path, "c1_wastewise_yolov8n_cls", rows, suffix="c1-fixed")
-    payload = json.loads(c4.read_text(encoding="utf-8"))
+    payload = json.loads(c3.read_text(encoding="utf-8"))
     payload["rows"][0]["source_image_sha256"] = "f" * 64
-    c4.write_text(json.dumps(payload), encoding="utf-8")
+    c3.write_text(json.dumps(payload), encoding="utf-8")
+    evaluator.MODEL_CONTRACTS["c3_vasantvohra_trashnet"]["source_file_sha256"] = hashlib.sha256(
+        c3.read_bytes()
+    ).hexdigest()
     with pytest.raises(
         EvaluationError, match="crop identities are not exactly aligned"
     ):
-        evaluate_files([c1, c4])
+        evaluate_files([c1, c3])
+
+
+def test_rejects_c3_raw_evidence_sha_mismatch(tmp_path):
+    rows = [row("one", "background", metal=0.1, paper=0.1, plastic=0.1, unknown=0.7)]
+    c1 = write_smoke(tmp_path, "c1_wastewise_yolov8n_cls", rows, suffix="c1")
+    c3 = write_smoke(tmp_path, "c3_vasantvohra_trashnet", rows, suffix="c3")
+    payload = json.loads(c3.read_text(encoding="utf-8"))
+    payload["rows"][0]["probabilities"]["metal"] = 0.2
+    payload["rows"][0]["probabilities"]["cardboard"] = 0.6
+    c3.write_text(json.dumps(payload), encoding="utf-8")
+
+    with pytest.raises(EvaluationError, match="raw evidence SHA-256 contract"):
+        evaluate_files([c1, c3])

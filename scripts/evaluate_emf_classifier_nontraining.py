@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Run the one bounded EMFJ6V3 classifier non-training diagnostic grid.
 
-This evaluator consumes already-produced C1/C4 TRAIN smoke probabilities.  It
+This evaluator consumes already-produced C1/C3 TRAIN smoke probabilities.  It
 does not load a model, train, select a threshold, or authorize later gates.
 """
 
@@ -20,7 +20,8 @@ TARGET_CLASSES = PRODUCT_CLASSES[1:]
 MODEL_CONTRACTS = {
     "c1_wastewise_yolov8n_cls": {
         "model_sha256": "2b46d491091dbc0ed98a0f1eaee7fe5739c8fd3eb5bd5935396c3b2712e1f7a6",
-        "artifacts": None,
+        "artifact_sha256": None,
+        "source_file_sha256": None,
         "class_order": [
             "battery",
             "biological",
@@ -32,17 +33,15 @@ MODEL_CONTRACTS = {
             "trash",
         ],
     },
-    "c4_prithiv_trash_net_siglip2": {
+    "c3_vasantvohra_trashnet": {
         "model_sha256": None,
-        "artifacts": {
-            "config.json": "341bb75a50a7dbd13034e189a02ad7cf54e8a6af28357d66c138a397e0d28c6e",
-            "model.safetensors": "a67e2f6a82914be03cfb85218bc4e7683c8e81fe3fc4a5f9bed3abc8e93757c8",
-            "preprocessor_config.json": "9b36b57ebaf20f09bf4c22100ccc21877ea6bfe5aead0c00c59f8af8ccefacfc",
-        },
+        "artifact_sha256": "013afdc86a673cb2354f4559c165301d5abda1c5878bb523a5995e483d4cc90a",
+        "source_file_sha256": "3323a4bec168e02da7e72e9cde076d12d578aa79870309b4724b326794e32048",
         "class_order": ["cardboard", "glass", "metal", "paper", "plastic", "trash"],
     },
 }
-SUPPORTED_MODELS = set(MODEL_CONTRACTS)
+MODEL_ORDER = tuple(MODEL_CONTRACTS)
+SUPPORTED_MODELS = set(MODEL_ORDER)
 EXPECTED_CLASS_MAPPING = {
     "metal": "metal_can",
     "paper": "paper_litter",
@@ -103,8 +102,18 @@ def load_smoke(path: Path) -> dict[str, Any]:
     contract = MODEL_CONTRACTS[model_id]
     if payload.get("model_sha256") != contract["model_sha256"]:
         raise EvaluationError(f"{model_id} model SHA-256 contract mismatch")
-    if payload.get("artifacts") != contract["artifacts"]:
-        raise EvaluationError(f"{model_id} artifact SHA-256 contract mismatch")
+    expected_artifact_sha256 = contract["artifact_sha256"]
+    if expected_artifact_sha256 is not None:
+        artifact = payload.get("artifact")
+        if not isinstance(artifact, dict) or artifact.get("sha256") != expected_artifact_sha256:
+            raise EvaluationError(f"{model_id} artifact SHA-256 contract mismatch")
+    source_file_sha256 = sha256(path)
+    expected_source_file_sha256 = contract["source_file_sha256"]
+    if (
+        expected_source_file_sha256 is not None
+        and source_file_sha256 != expected_source_file_sha256
+    ):
+        raise EvaluationError(f"{model_id} raw evidence SHA-256 contract mismatch")
     rows = payload.get("rows")
     if not isinstance(rows, list) or not rows:
         raise EvaluationError("classifier smoke rows must be a non-empty list")
@@ -197,7 +206,7 @@ def load_smoke(path: Path) -> dict[str, Any]:
     return {
         "model_id": model_id,
         "source_manifest_sha256": source_manifest_sha256,
-        "source_file_sha256": sha256(path),
+        "source_file_sha256": source_file_sha256,
         "rows": normalized_rows,
     }
 
@@ -286,6 +295,7 @@ def evaluate_smoke(smoke: dict[str, Any]) -> list[dict[str, Any]]:
                     "maximum_unknown_probability": unknown_maximum,
                     "metrics": classification_metrics(truth, predicted),
                     "diagnostic_only": True,
+                    "evidence_role": "TRAIN_upper_bound_only",
                     "selected": False,
                     "frozen": False,
                 }
@@ -330,15 +340,16 @@ def upper_bound_summary(candidates: list[dict[str, Any]]) -> dict[str, Any]:
 
 def evaluate_files(paths: list[Path]) -> dict[str, Any]:
     if not paths:
-        raise EvaluationError("both C1/C4 smoke inputs are required")
+        raise EvaluationError("both C1/C3 smoke inputs are required")
     smokes = [load_smoke(path) for path in paths]
     model_ids = [smoke["model_id"] for smoke in smokes]
     if len(model_ids) != len(set(model_ids)):
         raise EvaluationError("each supported model may be supplied only once")
     if set(model_ids) != SUPPORTED_MODELS:
         raise EvaluationError(
-            "the bounded diagnostic requires exactly one C1 and one C4 input"
+            "the bounded diagnostic requires exactly one C1 and one C3 input"
         )
+    smokes.sort(key=lambda smoke: MODEL_ORDER.index(smoke["model_id"]))
     identity_sets = [
         sorted(
             (row["identity"] for row in smoke["rows"]),
@@ -347,7 +358,7 @@ def evaluate_files(paths: list[Path]) -> dict[str, Any]:
         for smoke in smokes
     ]
     if identity_sets[0] != identity_sets[1]:
-        raise EvaluationError("C1 and C4 crop identities are not exactly aligned")
+        raise EvaluationError("C1 and C3 crop identities are not exactly aligned")
     source_hashes = {smoke["source_manifest_sha256"] for smoke in smokes}
     if None in source_hashes or len(source_hashes) != 1:
         raise EvaluationError("all inputs must bind the same source manifest SHA-256")
@@ -355,7 +366,8 @@ def evaluate_files(paths: list[Path]) -> dict[str, Any]:
     return {
         "schema_version": 1,
         "protocol_id": "EMFJ6V3",
-        "stage": "A5_NONTRAINING_ADJUSTMENT_TRAIN_DIAGNOSTIC",
+        "stage": "A5_NONTRAINING_ADJUSTMENT_TRAIN_DIAGNOSTIC_V2",
+        "evidence_role": "TRAIN_upper_bound_only",
         "source_split": "G10_TRAIN",
         "source_manifest_sha256": next(iter(source_hashes)),
         "inputs": [
@@ -385,8 +397,8 @@ def evaluate_files(paths: list[Path]) -> dict[str, Any]:
             "selected": False,
             "frozen": False,
             "reason": (
-                "A5 threshold selection requires an untouched complete HOLDOUT; the current "
-                "HOLDOUT has no plastic_bottle examples."
+                "A5 threshold selection requires an untouched complete four-class HOLDOUT "
+                "and an independent unknown/background bank; neither is currently complete."
             ),
         },
         "diagnostic_only": True,
