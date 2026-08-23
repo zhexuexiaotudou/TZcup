@@ -414,7 +414,7 @@
         "paper": "paper_litter",
         "plastic": "plastic_bottle"
       },
-      "disposition": "native_GT_smoke_failed_nontraining_adjustment_pending",
+      "disposition": "bounded_TRAIN_nontraining_grid_failed_no_HOLDOUT_selection",
       "files": [
         {
           "name": "wastewise-yolo.onnx",
@@ -427,7 +427,7 @@
       "license": "blocked_license",
       "model_id": "c1_wastewise_yolov8n_cls",
       "onnx_exportability": "source_onnx_checker_pass",
-      "reason": "mapped_argmax_zero_recall_all_three_targets_macro_f1_0_1369_background_specificity_0_6765",
+      "reason": "fixed_5x5_TRAIN_grid_max_macro_f1_0_2237_no_threshold_selected_complete_HOLDOUT_and_unknown_bank_missing",
       "revision": "a30c36c6b181ac0d2eb387bbd4f6d4a5b88ee078",
       "role": "classifier",
       "source_uri": "https://huggingface.co/SriramRokkam/wastewise-garbage-cls",
@@ -522,7 +522,7 @@
         "paper": "material_evidence_for_paper_litter",
         "plastic": "material_evidence_for_plastic_bottle"
       },
-      "disposition": "native_GT_smoke_failed_nontraining_adjustment_pending",
+      "disposition": "bounded_TRAIN_nontraining_grid_failed_no_HOLDOUT_selection",
       "files": [
         {
           "name": "model.safetensors",
@@ -543,7 +543,7 @@
       "license": "development_only",
       "model_id": "c4_prithiv_trash_net_siglip2",
       "onnx_exportability": "transformers_export_route_unverified_no_source_onnx",
-      "reason": "mapped_argmax_zero_recall_all_three_targets_macro_f1_0_1911_background_specificity_0_9706",
+      "reason": "fixed_5x5_TRAIN_grid_max_macro_f1_0_1948_target_macro_f1_0_no_threshold_selected_complete_HOLDOUT_and_unknown_bank_missing",
       "revision": "6ee65c533db3702e5cbf196634bf04ed13ef583e",
       "role": "classifier",
       "source_uri": "https://huggingface.co/prithivMLmods/Trash-Net",
@@ -676,7 +676,7 @@
       "class_semantics": {
         "water": "generic_maritime_water_reference_not_road_puddle"
       },
-      "disposition": "development_reference_screening_pending",
+      "disposition": "native_negative_proxy_screen_rejected_direct_area_candidate",
       "files": [
         {
           "name": "ewasr_resnet18.onnx",
@@ -689,7 +689,7 @@
       "license": "development_only",
       "model_id": "area_ewasr_resnet18",
       "onnx_exportability": "official_IR7_opset12_ONNX_checker_pass_no_external_data_or_custom_domains",
-      "reason": "official_water_segmentation_reference_but_maritime_water_is_not_unambiguous_road_puddle_and_no_leaf_class",
+      "reason": "TRAIN_004_60_of_60_native_water_activation_0_2732_pixel_fraction_but_water_is_not_road_puddle_and_leaf_class_absent",
       "revision": "37f2d61e08148a49fe20f1ee574130351234fbb7",
       "role": "area",
       "source_uri": "https://github.com/tersekmatija/eWaSR/releases/tag/0.1.0",
@@ -932,7 +932,7 @@
   "protocol_id": "EMFJ6V3",
   "registry_id": "tzcup_existing_model_candidates_v3",
   "registry_path": "config/existing_model_candidates_v3.yaml",
-  "registry_sha256": "23ad2a36c938b9de5dde1ebefb7db8192027c85862bb7d0ac1df4462bde3d052",
+  "registry_sha256": "7d0fce963d16942029cbcbd11d44ec3fc8a1f11425c40ddb35fb5c0b8a060451",
   "release_allowed": false,
   "schema_version": 1,
   "sealed_access_allowed": false,

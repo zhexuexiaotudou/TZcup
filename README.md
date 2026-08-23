@@ -47,6 +47,8 @@ C4 SigLIP2 safetensors 已在 non-root、断网、只读挂载、`trust_remote_c
 
 现已增加有界非训练与 Area 数据合同工具：C1/C4 只允许同一锁定 183-crop TRAIN 清单、精确 artifact/class schema 和逐 crop 身份对齐，固定 5x5 网格始终不选择/冻结阈值；Area 清单显式绑定 TRAIN/HOLDOUT 根、world/seed/mission/GT/三模态 SHA、small counts 与 negative domains，并对 RGB/depth/semantic 做内容和尺寸审计。eWaSR 仅允许锁定 Area 清单中的 `TRAIN_004` 60 帧负向根，保持原生 water 语义；真实 CPU 诊断为 60/60 water 激活、原生网格水像素 `27.32%`，不得映射为 puddle、Area IoU 或 A4 PASS。当前 Area 清单仍缺 leaf/puddle 正例且排除 2 个无 capture report 的中断场景，因此 `a4_area_dataset_ready=false`；训练仍未授权。
 
+上述完整外置证据分别锁为 classifier 非训练诊断 `6971887e…762a`（50 candidates）、Area 清单 `8c9f4c06…1720`（910 complete frames）和 eWaSR 负向屏 `6c317295…82a1`；仓库内的紧凑证据记录 source commit `de3a4aa24a7fe07c862f850485d0def83d7fc07c`。现存模型 screening 仍未完成：C2/C3/C5/C6 与其余 Area 合同尚需按冻结清单处理，不能据此越级训练。
+
 Journey 6 校准数据与源码部署包同样失效关闭：当前只读盘点两个明确 TRAIN 根得到 `471` 个 RGB PNG 候选和 `0` 个 ROI/crop，尚无逐文件 SHA 与分层元数据，因此 `J6_CALIBRATION_PACK_READY=false`。reference-only source bundle 已锁定 D1 E1 canonical ONNX、development-only Area ONNX、C++ graph-external 后处理和真实 TRAIN golden tensor lock；但模型选择/发布许可、正式校准、nash profile 与官方工具链仍未齐备，因此 `J6_SOURCE_DEPLOYMENT_BUNDLE_READY=false`。许可审计文件缺失本身也会显式保持 `model_license_not_release_clear`，不会因干净 CI 环境缺少本地 `.workspace` 证据而漏报。`G5_V2`、`SEALED_FINAL`、`DEV_VAL` 始终禁止进入校准链，详见 [Journey 6 校准与源码部署包](docs/journey6-calibration-source-bundle.md)。
 
 主要缺口是合格且可冻结的产品近距四分类/Area 模型、完整感知清扫链的真实 ROS/Gazebo 集成验证、20,000 m² 正式范围建图闭环、30-seed 综合链、3500 m²/h 实测效率、完整 10 Hz/10 min 性能、2 h soak、故障矩阵、5-bag replay、一次性 sealed final 和最终 release/rollback。详情见 [当前状态](docs/current-status.md)，运行时不变量见 [产品运行时基础架构](docs/product-runtime-architecture.md)。

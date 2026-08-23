@@ -219,8 +219,8 @@ candidates:
     framework: onnx_ultralytics
     onnx_exportability: source_onnx_checker_pass
     journey6_preflight_status: static_audit_only_official_sdk_not_run
-    disposition: native_GT_smoke_failed_nontraining_adjustment_pending
-    reason: mapped_argmax_zero_recall_all_three_targets_macro_f1_0_1369_background_specificity_0_6765
+    disposition: bounded_TRAIN_nontraining_grid_failed_no_HOLDOUT_selection
+    reason: fixed_5x5_TRAIN_grid_max_macro_f1_0_2237_no_threshold_selected_complete_HOLDOUT_and_unknown_bank_missing
 
   - model_id: c2_ecodetect_efficientnetb0
     role: classifier
@@ -295,8 +295,8 @@ candidates:
     framework: transformers_pytorch_safetensors
     onnx_exportability: transformers_export_route_unverified_no_source_onnx
     journey6_preflight_status: not_run_large_model_risk
-    disposition: native_GT_smoke_failed_nontraining_adjustment_pending
-    reason: mapped_argmax_zero_recall_all_three_targets_macro_f1_0_1911_background_specificity_0_9706
+    disposition: bounded_TRAIN_nontraining_grid_failed_no_HOLDOUT_selection
+    reason: fixed_5x5_TRAIN_grid_max_macro_f1_0_1948_target_macro_f1_0_no_threshold_selected_complete_HOLDOUT_and_unknown_bank_missing
 
   - model_id: c5_dima806_garbage_types_vit
     role: classifier
@@ -389,8 +389,8 @@ candidates:
     framework: source_onnx
     onnx_exportability: official_IR7_opset12_ONNX_checker_pass_no_external_data_or_custom_domains
     journey6_preflight_status: static_graph_only_Resize_attributes_dual_outputs_and_numeric_parity_require_official_compile
-    disposition: development_reference_screening_pending
-    reason: official_water_segmentation_reference_but_maritime_water_is_not_unambiguous_road_puddle_and_no_leaf_class
+    disposition: native_negative_proxy_screen_rejected_direct_area_candidate
+    reason: TRAIN_004_60_of_60_native_water_activation_0_2732_pixel_fraction_but_water_is_not_road_puddle_and_leaf_class_absent
 
   - model_id: area_nvidia_segformer_b0_ade20k
     role: area
