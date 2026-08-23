@@ -15,6 +15,8 @@
   "EMF_TRANSFER_LEARNING_REQUIRED": false,
   "EMF_ADAPTED_MODEL_DEV_PASS": false,
   "training_authorized": false,
+  "formal_g10_train_capture_authorized": true,
+  "formal_g10_holdout_capture_authorized": false,
   "candidate_counts_frozen": {
     "detector": 6,
     "classifier": 6,
@@ -37,7 +39,8 @@
     "area_candidate_dispositions_closed": true,
     "area_screening_complete": true,
     "formal_negative_only_domain_ready": true,
+    "g10_route_v21_train_smoke": "five_positive_missions_three_classes_two_paper_geometries_capture_sync_and_ordered_size_transition_pass",
     "complete": false
   },
-  "truth_boundary": "Bounded discovery, D1 attribution, six terminal classifier dispositions, strict C1/C3 G10 HOLDOUT inference, and the fixed 50-candidate grid are complete with zero eligible classifier candidates. The three frozen Area routes now have G2-bound terminal dispositions: one exact artifact is missing, eWaSR floods both negative splits in native water semantics, and SegFormer runs safely but has no exact target mapping and is release-license blocked. Global screening and nontraining adjustment remain incomplete because G10 size-stage/TRAIN QA and downstream A5 gates are not closed; training, PC closure, Journey 6 runtime, HBM, board, product and release claims remain false."
+  "truth_boundary": "Bounded discovery, D1 attribution, six terminal classifier dispositions, strict C1/C3 G10 HOLDOUT inference, and the fixed 50-candidate grid are complete with zero eligible classifier candidates. The three frozen Area routes have G2-bound terminal dispositions. G10 route v19 was rejected by a real pre-switch brush collision and v20 by the Ackermann zero-linear-spin contract; TRAIN-only route v21 passed five positive smoke missions covering all three target classes and two paper geometries, so only the formal 48-mission TRAIN capture is authorized next. HOLDOUT recapture, training, PC closure, Journey 6 runtime, HBM, board, product and release claims remain false."
 }

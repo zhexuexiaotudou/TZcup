@@ -27,7 +27,7 @@ def test_g10_approach_lanes_preserve_safe_drive_by_geometry() -> None:
         "paper_litter": 0.66,
         "plastic_bottle": -0.57,
     }
-    assert g4_scene.G10_ORBIT_SWITCH_WORLD_X_M == -1.50
+    assert g4_scene.G10_ORBIT_SWITCH_WORLD_X_M == -1.95
     assert g4_scene.G10_ORBIT_ANGULAR_SPEED_RAD_S == 0.35
 
 
@@ -77,9 +77,10 @@ def test_all_g10_worlds_share_the_frozen_stationary_spin_route() -> None:
     ]
     assert profiles[0] == profiles[1] == profiles[2]
     profile = profiles[0]
-    assert profile["route_id"] == "g10_route_v19_spin_xneg1p5"
+    assert profile["route_id"] == "g10_route_v21_reverse_xneg1p95"
     assert profile["straight_linear_x_mps"] == 0.05
-    assert profile["orbit_linear_x_mps"] == 0.0
+    assert profile["orbit_linear_x_mps"] == -0.05
+    assert profile["orbit_angular_z_rad_s"] == 0.0
     declared_sha = profile.pop("route_config_sha256")
     assert declared_sha == hashlib.sha256(
         json.dumps(profile, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -90,7 +91,7 @@ def test_all_g10_worlds_share_the_frozen_stationary_spin_route() -> None:
     assert g4_scene.G10_ROUTE_ID == audit_sequences.EXPECTED_ROUTE_ID
 
 
-def test_route_v19_runtime_switches_from_straight_to_zero_linear_spin() -> None:
+def test_route_v21_runtime_switches_from_straight_to_reverse() -> None:
     profile = g4_scene.g10_motion_profile("g10v15_train_w01_01_asphalt_campus")
     assert motion_command_for_frame(
         profile, 0, 0.05, maximum_linear_speed_mps=0.05
@@ -102,7 +103,7 @@ def test_route_v19_runtime_switches_from_straight_to_zero_linear_spin() -> None:
         world_switch_triggered=True,
         world_switch_frame_index=199,
         maximum_linear_speed_mps=0.05,
-    ) == (0.0, 0.35, "safe_orbit_after_candidate")
+    ) == (-0.05, 0.0, "straight_reverse_after_candidate")
 
 
 def test_g10_identifiability_grid_is_development_only() -> None:
@@ -119,13 +120,17 @@ def test_g10_capture_orchestrator_denies_sealed_dev_val() -> None:
     assert "'test'" not in source
     assert "-G10ApproachSequence" in source
     assert "[string]$DomainRoot" in source
-    assert "g10\\route_v19_spin_xneg1p5" in source
+    assert "[string]$UpstreamRoot" in source
+    assert "g10\\route_v21_reverse_xneg1p95" in source
     assert "-CaptureFrameCount 360" in source
     assert "-CaptureSpeedMps 0.05" in source
     assert "-CaptureMinTranslationM 0.02" in source
     assert "-CaptureMinRotationRad 0.03" in source
     assert "-CaptureTimeoutSeconds 2400" in source
     assert "3bdb3006226943e4149cd84144b488e5eb112ab35ad3692c5da8cc48c88b5208" in source
+    assert "b96aa42fbfa4390a77e0aab90935fe55d66d04ba" in source
+    assert "val capture requires the completed G10 TRAIN route QA" in source
+    assert "G10_HOLDOUT_AUTHORIZATION.json" in source
 
 
 def test_capture_wrapper_keeps_product_camera_defaults_and_allows_audited_diagnostic_override() -> None:

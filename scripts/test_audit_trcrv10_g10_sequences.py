@@ -42,6 +42,8 @@ def test_capture_qa_requires_protocol_minimum_mission_counts() -> None:
     source = open(audit.__file__, encoding="utf-8").read()
     assert 'split_counts.get("G10_TRAIN", 0) >= 45' in source
     assert 'split_counts.get("G10_HOLDOUT", 0) >= 18' in source
+    assert '"G10_TRAIN_ROUTE_QA_PASS"' in source
+    assert '"--train-only-authorization"' in source
     assert '"positive_targets_cross_required_size_stages"' in source
     assert '"positive_targets_reach_frozen_minimum"' in source
 

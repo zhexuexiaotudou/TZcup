@@ -23,9 +23,9 @@ BUCKETS = (("<18", 0, 18), ("18-32", 18, 32), ("32-64", 32, 64),
 EXPECTED_DOMAIN_MANIFEST_SHA256 = (
     "3bdb3006226943e4149cd84144b488e5eb112ab35ad3692c5da8cc48c88b5208"
 )
-EXPECTED_ROUTE_ID = "g10_route_v19_spin_xneg1p5"
+EXPECTED_ROUTE_ID = "g10_route_v21_reverse_xneg1p95"
 EXPECTED_ROUTE_CONFIG_SHA256 = (
-    "1ffc51411821b1350b63e35e081b9fd9280e5ac3372f8827e648b64f48cffe28"
+    "ad6cb131739626827296cb37bcd365f58e3a0e4455f9c11f11dfe2b8111b4e36"
 )
 SPLIT_CONTRACT = {
     "G10_TRAIN": {
@@ -233,6 +233,11 @@ def main() -> int:
                         help="SPLIT=path containing g4_screening_native/scenes")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--minimum-reliable-short-side", type=int, required=True)
+    parser.add_argument(
+        "--train-only-authorization",
+        action="store_true",
+        help="return success only for a complete TRAIN route QA before HOLDOUT capture",
+    )
     args = parser.parse_args()
     missions, frames = [], []
     declared_splits = set()
@@ -318,6 +323,56 @@ def main() -> int:
         "exact_rgb_cross_split_duplicate_zero": not exact_overlap,
         "phash_cross_split_duplicate_zero": not phash_overlap,
     }
+    train_missions = [row for row in missions if row["split"] == "G10_TRAIN"]
+    train_positive_missions = [row for row in train_missions if not row["negative_only"]]
+    train_negative_missions = [row for row in train_missions if row["negative_only"]]
+    train_world_counts = Counter(row["world_id"] for row in train_missions)
+    train_route_gates = {
+        "only_train_declared": declared_splits == {"G10_TRAIN"},
+        "train_missions_exactly_48": len(train_missions) == 48,
+        "train_world_missions_exactly_8": all(
+            train_world_counts[world_id] == 8
+            for world_id in SPLIT_CONTRACT["G10_TRAIN"]["world_ids"]
+        ),
+        "train_positive_missions_exactly_30": len(train_positive_missions) == 30,
+        "train_negative_missions_exactly_18": len(train_negative_missions) == 18,
+        "train_target_classes_exact": {
+            target["class_id"]
+            for row in train_positive_missions for target in row["targets"]
+        } == set(TARGETS.values()),
+        "approved_train_world_set_exact": {
+            row["world_id"] for row in train_missions
+        } == SPLIT_CONTRACT["G10_TRAIN"]["world_ids"],
+        "capture_pass": bool(train_missions) and all(
+            row["capture_pass"] for row in train_missions
+        ),
+        "sensor_sync_pass": bool(train_missions) and all(
+            row["sensor_odom_sync_pass"] for row in train_missions
+        ),
+        "partial_mission_zero": not any(
+            row["partial_mission"] for row in train_missions
+        ),
+        "positive_targets_cross_required_size_stages": bool(train_missions) and all(
+            target["crosses_lt18_to_32_64"]
+            for row in train_missions if not row["negative_only"]
+            for target in row["targets"]
+        ),
+        "positive_targets_reach_frozen_minimum": bool(train_missions) and all(
+            target["reaches_minimum_reliable"]
+            for row in train_missions if not row["negative_only"]
+            for target in row["targets"]
+        ),
+        "mission_id_unique": len({row["mission_id"] for row in train_missions})
+        == len(train_missions),
+        "scene_seed_unique": len({row["scene_seed"] for row in train_missions})
+        == len(train_missions),
+        "trajectory_id_unique": len({row["trajectory_id"] for row in train_missions})
+        == len(train_missions),
+        "gt_product_input_violation_zero": not any(
+            row["gt_product_input_violation"] for row in train_missions
+        ),
+    }
+    train_route_qa_pass = all(train_route_gates.values())
     payload = {
         "schema_version": 1,
         "protocol": "TRCRV10",
@@ -336,6 +391,8 @@ def main() -> int:
             "target_asset": asset_overlap,
         },
         "gates": gates,
+        "train_route_gates": train_route_gates,
+        "G10_TRAIN_ROUTE_QA_PASS": train_route_qa_pass,
         "G10_CAPTURE_QA_PASS": bool(missions) and all(gates.values()),
     }
     write(args.output, payload)
@@ -418,6 +475,8 @@ def main() -> int:
         "G10_DEV_VAL_SEALED_read": False,
     })
     print(json.dumps(payload, indent=2))
+    if args.train_only_authorization:
+        return 0 if train_route_qa_pass else 2
     return 0 if payload["G10_CAPTURE_QA_PASS"] else 2
 
 

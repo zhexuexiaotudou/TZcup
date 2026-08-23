@@ -9,15 +9,16 @@ import pytest
 def route_profile() -> dict:
     return {
         "route_id": prepare.EXPECTED_ROUTE_ID,
-        "name": "g10_straight_then_stationary_spin_v1",
+        "name": "g10_straight_then_reverse_v1",
         "control_mode": "latched_world_x_switch",
-        "switch_world_x_m": -1.5,
+        "switch_world_x_m": -1.95,
         "straight_linear_x_mps": 0.05,
-        "orbit_linear_x_mps": 0.0,
-        "orbit_angular_z_rad_s": 0.35,
+        "orbit_linear_x_mps": -0.05,
+        "orbit_angular_z_rad_s": 0.0,
+        "post_switch_phase_name": "straight_reverse_after_candidate",
         "route_contract": (
-            "drive straight using odometry only until world x reaches -1.50 m, "
-            "then latch a zero-linear-speed left spin for all remaining frames"
+            "drive straight using odometry only until world x reaches -1.95 m, "
+            "then latch a straight reverse command for all remaining frames"
         ),
         "route_config_sha256": prepare.EXPECTED_ROUTE_CONFIG_SHA256,
     }

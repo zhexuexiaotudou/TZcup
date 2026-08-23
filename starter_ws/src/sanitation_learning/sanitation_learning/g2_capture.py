@@ -206,7 +206,7 @@ def motion_command_for_frame(
             return bounded(
                 float(profile["orbit_linear_x_mps"]),
                 float(profile["orbit_angular_z_rad_s"]),
-                "safe_orbit_after_candidate",
+                str(profile.get("post_switch_phase_name", "safe_orbit_after_candidate")),
             )
         return bounded(
             float(profile["straight_linear_x_mps"]),

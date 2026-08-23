@@ -60,8 +60,8 @@ G10_TARGET_LATERAL_BY_CLASS_M = {
 G10_DIAGNOSTIC_DISTANCES_M = (0.85, 0.95, 1.10, 1.30, 1.55, 1.90, 2.40, 3.00)
 G10_REOBSERVE_SWITCH_LEAD_M = 1.50
 G10_REOBSERVE_ANGULAR_SPEED_RAD_S = 1.0
-G10_ROUTE_ID = "g10_route_v19_spin_xneg1p5"
-G10_ORBIT_SWITCH_WORLD_X_M = -1.50
+G10_ROUTE_ID = "g10_route_v21_reverse_xneg1p95"
+G10_ORBIT_SWITCH_WORLD_X_M = -1.95
 G10_ORBIT_ANGULAR_SPEED_RAD_S = 0.35
 
 
@@ -190,15 +190,16 @@ def g10_motion_profile(world_id: str) -> dict:
     del world_id
     profile = {
         "route_id": G10_ROUTE_ID,
-        "name": "g10_straight_then_stationary_spin_v1",
+        "name": "g10_straight_then_reverse_v1",
         "control_mode": "latched_world_x_switch",
         "switch_world_x_m": G10_ORBIT_SWITCH_WORLD_X_M,
         "straight_linear_x_mps": 0.05,
-        "orbit_linear_x_mps": 0.0,
-        "orbit_angular_z_rad_s": G10_ORBIT_ANGULAR_SPEED_RAD_S,
+        "orbit_linear_x_mps": -0.05,
+        "orbit_angular_z_rad_s": 0.0,
+        "post_switch_phase_name": "straight_reverse_after_candidate",
         "route_contract": (
-            "drive straight using odometry only until world x reaches -1.50 m, "
-            "then latch a zero-linear-speed left spin for all remaining frames"
+            "drive straight using odometry only until world x reaches -1.95 m, "
+            "then latch a straight reverse command for all remaining frames"
         ),
     }
     profile["route_config_sha256"] = hashlib.sha256(
