@@ -585,6 +585,145 @@ def infer_development(
     }
 
 
+def dual_detect_primary(output: Any):
+    """Select the official detect_dual.py primary head without guessing layout."""
+    if not isinstance(output, (list, tuple)) or len(output) != 2:
+        raise RuntimeError("native DualDDetect output must contain two branches")
+    inference = output[0]
+    if not isinstance(inference, (list, tuple)) or len(inference) != 2:
+        raise RuntimeError("native DualDDetect inference output must contain two heads")
+    primary = inference[1]
+    if getattr(primary, "ndim", None) != 3 or tuple(primary.shape[:2]) != (1, 14):
+        raise RuntimeError(
+            f"unexpected native DualDDetect primary shape: {getattr(primary, 'shape', None)}"
+        )
+    return primary
+
+
+def infer_development_native(
+    checkpoint_path: Path,
+    source: Path,
+    selection_path: Path,
+    development_root: Path,
+) -> dict[str, Any]:
+    """Run official native PT semantics on the hashed 410-image TRAIN selection."""
+    sys.path.insert(0, str(source))
+    import cv2
+    import torch
+    from models.experimental import attempt_load
+    from utils.augmentations import letterbox
+    from utils.general import non_max_suppression, scale_boxes
+
+    require_pinned_checkpoint(checkpoint_path)
+    selection = json.loads(selection_path.read_text(encoding="utf-8"))
+    images = selection.get("images", [])
+    if not images:
+        raise RuntimeError("development selection contains no images")
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model = attempt_load(str(checkpoint_path), device=device, inplace=False, fuse=True)
+    model.eval()
+    model_dtype = next(model.parameters()).dtype
+    source_to_target = {1: 1, 2: 2, 7: 3}
+    records: list[dict[str, Any]] = []
+    global_class_max = np.zeros(10, dtype=np.float32)
+    top1_class_counts = Counter()
+    for item in images:
+        relative = Path(item["relative_path"])
+        image_path = (development_root / relative).resolve()
+        if not image_path.is_relative_to(development_root.resolve()):
+            raise RuntimeError(f"development image escapes root: {relative}")
+        if sha256(image_path) != item["sha256"]:
+            raise RuntimeError(f"development image SHA mismatch: {relative}")
+        original = cv2.imread(str(image_path), cv2.IMREAD_COLOR)
+        if original is None:
+            raise RuntimeError(f"cannot read development image: {relative}")
+        prepared = letterbox(original, (640, 640), stride=32, auto=False)[0]
+        prepared = prepared[:, :, ::-1].transpose(2, 0, 1)
+        batch = np.ascontiguousarray(prepared, dtype=np.float32)[None] / 255.0
+        tensor = torch.from_numpy(batch).to(device=device, dtype=model_dtype)
+        with torch.inference_mode():
+            primary = dual_detect_primary(model(tensor))
+        class_scores = primary[0, 4:, :].detach().float().cpu().numpy()
+        global_class_max = np.maximum(global_class_max, class_scores.max(axis=1))
+        top1_class_counts.update(int(value) for value in class_scores.argmax(axis=0).tolist())
+        detections = non_max_suppression(
+            primary.float(),
+            conf_thres=0.001,
+            iou_thres=0.45,
+            classes=None,
+            agnostic=False,
+            max_det=300,
+        )[0]
+        if len(detections):
+            detections[:, :4] = scale_boxes(
+                prepared.shape[:2], detections[:, :4], original.shape
+            )
+        predictions = []
+        for row in detections.detach().cpu().numpy():
+            source_class = int(row[5])
+            predictions.append(
+                {
+                    "bbox_xyxy": [float(value) for value in row[:4]],
+                    "confidence": float(row[4]),
+                    "source_class_index": source_class,
+                    "target_category_id": source_to_target.get(source_class),
+                }
+            )
+        records.append(
+            {
+                "image_id": int(item["image_id"]),
+                "relative_path": item["relative_path"],
+                "sha256": item["sha256"],
+                "predictions": predictions,
+            }
+        )
+    return {
+        "schema_version": 1,
+        "development_only": True,
+        "source_split": "train",
+        "runtime": "native_pytorch",
+        "checkpoint_sha256": D1_PT_SHA256,
+        "selection_manifest_sha256": sha256(selection_path),
+        "device": str(device),
+        "preprocessing": {
+            "letterbox": [640, 640],
+            "auto": False,
+            "stride": 32,
+            "color": "BGR_to_RGB",
+            "normalization": "uint8_div_255_native_model_dtype",
+        },
+        "output_contract": {
+            "detection_head": "DualDDetect",
+            "primary_output_index": 1,
+            "official_runtime_reference": "detect_dual.py: pred = pred[0][1]",
+        },
+        "nms": {
+            "minimum_confidence": 0.001,
+            "iou_threshold": 0.45,
+            "embedded_in_model": False,
+            "source_class_filter": None,
+            "max_detections": 300,
+        },
+        "raw_score_diagnostics": {
+            "maximum_score_by_source_class": {
+                str(index): float(value)
+                for index, value in enumerate(global_class_max.tolist())
+            },
+            "top1_candidate_count_by_source_class": {
+                str(index): int(top1_class_counts.get(index, 0))
+                for index in range(10)
+            },
+        },
+        "source_to_target_category": {
+            "1": {"source_name": "plastic_bottle", "target_id": 1},
+            "2": {"source_name": "drinks_can", "target_id": 2},
+            "7": {"source_name": "paper_waste", "target_id": 3},
+        },
+        "image_count": len(records),
+        "images": records,
+    }
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     sub = parser.add_subparsers(dest="command", required=True)
@@ -613,6 +752,12 @@ def parse_args() -> argparse.Namespace:
     infer.add_argument("--selection", type=Path, required=True)
     infer.add_argument("--development-root", type=Path, required=True)
     infer.add_argument("--output", type=Path, required=True)
+    native = sub.add_parser("infer-development-native")
+    native.add_argument("--checkpoint", type=Path, required=True)
+    native.add_argument("--source", type=Path, required=True)
+    native.add_argument("--selection", type=Path, required=True)
+    native.add_argument("--development-root", type=Path, required=True)
+    native.add_argument("--output", type=Path, required=True)
     return parser.parse_args()
 
 
@@ -634,10 +779,17 @@ def main() -> int:
             args.selection,
             args.development_root,
         )
-    else:
+    elif args.command == "infer-development":
         sys.path.insert(0, str(args.source))
         payload = infer_development(
             args.model,
+            args.selection,
+            args.development_root,
+        )
+    else:
+        payload = infer_development_native(
+            args.checkpoint,
+            args.source,
             args.selection,
             args.development_root,
         )

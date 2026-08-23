@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Evaluate canonical D1 ONNX on the explicitly TRAIN-only development index."""
+"""Evaluate pinned D1 ONNX or native PT on the TRAIN-only development index."""
 
 from __future__ import annotations
 
@@ -14,7 +14,8 @@ from typing import Any
 
 
 ROOT = Path(__file__).resolve().parents[1]
-BLOCKED_PATH_TOKENS = ("DEV_VAL", "G5_V2", "SEALED_FINAL")
+BLOCKED_PATH_TOKENS = ("DEV_VAL", "VAL_NEW", "G5", "G5_V2", "SEALED_FINAL")
+D1_PT_SHA256 = "1cf60873661811f51cd84fb6aafb403646b67d2add57c4851b0be48ebdff2873"
 D1_ONNX_SHA256 = "01c72cdbcd08b6fd91c9a56a065f19837bffd67cca175a75b39e295c3afc01f5"
 CATEGORY_NAMES = {1: "plastic_bottle", 2: "metal_can", 3: "paper_litter"}
 SOURCE_CLASS_NAMES = {
@@ -124,7 +125,8 @@ def prepare_development_selection(
         "release_allowed": False,
         "selection_rule": (
             "every COCO image must have source_split=train; reject paths containing "
-            "DEV_VAL, G5_V2, or SEALED_FINAL; remap only the declared stale prefix; "
+            "DEV_VAL, VAL_NEW, G5, G5_V2, or SEALED_FINAL; remap only the declared "
+            "stale prefix; "
             "verify every image SHA256"
         ),
         "source_coco": str(coco_path.resolve()),
@@ -410,8 +412,12 @@ def build_report(
             )
         },
         "model": {
-            "onnx_sha256": inference["onnx_sha256"],
-            "providers": inference["providers"],
+            "runtime": inference.get("runtime", "onnxruntime"),
+            "artifact_sha256": inference.get(
+                "checkpoint_sha256", inference.get("onnx_sha256")
+            ),
+            "providers": inference.get("providers"),
+            "device": inference.get("device"),
             "preprocessing": inference["preprocessing"],
             "output_contract": inference["output_contract"],
             "nms": inference["nms"],
@@ -433,9 +439,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--coco", type=Path, required=True)
     parser.add_argument("--old-prefix", type=Path, required=True)
     parser.add_argument("--development-root", type=Path, required=True)
-    parser.add_argument("--model", type=Path, required=True)
+    parser.add_argument("--model", type=Path)
+    parser.add_argument("--runtime", choices=("onnx", "native-pt"), default="onnx")
+    parser.add_argument("--checkpoint", type=Path)
     parser.add_argument("--yolov9-source", type=Path, required=True)
-    parser.add_argument("--site-packages", type=Path, required=True)
+    site = parser.add_mutually_exclusive_group(required=True)
+    site.add_argument("--site-packages", type=Path)
+    site.add_argument("--site-packages-volume")
     parser.add_argument("--evidence-root", type=Path, required=True)
     parser.add_argument("--image", default="tzcup/perception-product:v12-functional")
     parser.add_argument("--expected-images", type=int, default=410)
@@ -445,8 +455,12 @@ def parse_args() -> argparse.Namespace:
 
 def main() -> int:
     args = parse_args()
-    if sha256(args.model.resolve()) != D1_ONNX_SHA256:
-        raise RuntimeError("refusing development evaluation of an unpinned ONNX")
+    if args.runtime == "onnx":
+        if args.model is None or sha256(args.model.resolve()) != D1_ONNX_SHA256:
+            raise RuntimeError("refusing development evaluation of an unpinned ONNX")
+    if args.runtime == "native-pt":
+        if args.checkpoint is None or sha256(args.checkpoint.resolve()) != D1_PT_SHA256:
+            raise RuntimeError("refusing native evaluation of an unpinned checkpoint")
     evidence = args.evidence_root.resolve()
     evidence.mkdir(parents=True, exist_ok=True)
     selection = prepare_development_selection(
@@ -472,31 +486,59 @@ def main() -> int:
         "--rm",
         "--gpus",
         "all",
+        "--user",
+        "65534:65534",
+        "--network",
+        "none",
+        "--read-only",
+        "--tmpfs",
+        "/tmp:rw,noexec,nosuid,size=1g",
         "--entrypoint",
-        "/bin/bash",
+        "python3",
         "-e",
-        "PYTHONPATH=/opt/d1site",
-        "-v",
-        mount(args.model.resolve().parent, "/onnx", "ro"),
+        "HOME=/tmp",
+        "-e",
+        "PYTHONPATH=/opt/d1site:/source",
         "-v",
         mount(args.yolov9_source, "/source", "ro"),
-        "-v",
-        mount(args.site_packages, "/opt/d1site", "ro"),
         "-v",
         mount(args.development_root, "/devroot", "ro"),
         "-v",
         mount(evidence, "/evidence"),
         "-v",
         mount(ROOT / "scripts", "/tools", "ro"),
-        args.image,
-        "-lc",
-        "python3 /tools/d1_export_worker.py infer-development "
-        "--source /source "
-        f"--model /onnx/{args.model.name} "
-        "--selection /evidence/D1_DEVELOPMENT_IMAGE_SELECTION.json "
-        "--development-root /devroot "
-        "--output /evidence/D1_DEVELOPMENT_RAW_INFERENCE.json",
     ]
+    site_source = (
+        mount(args.site_packages, "/opt/d1site", "ro")
+        if args.site_packages is not None
+        else f"{args.site_packages_volume}:/opt/d1site:ro"
+    )
+    command.extend(["-v", site_source])
+    if args.runtime == "onnx":
+        command.extend(["-v", mount(args.model.resolve().parent, "/onnx", "ro")])
+        worker = [
+            "/tools/d1_export_worker.py",
+            "infer-development",
+            "--source", "/source",
+            "--model", f"/onnx/{args.model.name}",
+        ]
+    else:
+        command.extend(["-v", mount(args.checkpoint.resolve().parent, "/models", "ro")])
+        worker = [
+            "/tools/d1_export_worker.py",
+            "infer-development-native",
+            "--checkpoint", f"/models/{args.checkpoint.name}",
+            "--source", "/source",
+        ]
+    command.extend(
+        [
+            args.image,
+            *worker,
+            "--selection", "/evidence/D1_DEVELOPMENT_IMAGE_SELECTION.json",
+            "--development-root", "/devroot",
+            "--output", "/evidence/D1_DEVELOPMENT_RAW_INFERENCE.json",
+        ]
+    )
     result = subprocess.run(
         command,
         text=True,

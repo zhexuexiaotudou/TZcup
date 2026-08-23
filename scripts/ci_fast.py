@@ -385,6 +385,8 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_model_semantic_contract.py",
         ROOT / "scripts" / "test_candidate_cap.py",
         ROOT / "scripts" / "test_no_training_before_exhaustion.py",
+        ROOT / "scripts" / "test_native_vs_onnx.py",
+        ROOT / "scripts" / "test_d1_golden_attribution.py",
         ROOT / "scripts" / "test_real_rgbd_capture.py",
         ROOT / "scripts" / "test_merge_auto05r_capture_shards.py",
         ROOT / "scripts" / "test_overlay_auto05r_capture_scenes.py",
