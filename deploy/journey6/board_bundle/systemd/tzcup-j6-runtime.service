@@ -1,0 +1,17 @@
+[Unit]
+Description=TZcup Journey 6 runtime
+After=network-online.target
+Wants=network-online.target
+ConditionPathIsSymbolicLink=/opt/tzcup/journey6/active
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/tzcup/journey6.env
+WorkingDirectory=/opt/tzcup/journey6/active
+ExecStart=/opt/tzcup/journey6/active/bin/tzcup_j6_runtime
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

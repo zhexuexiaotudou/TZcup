@@ -11,6 +11,23 @@ PRODUCT_INTEGRATION_READY=false
 PRODUCT_FIELD_READY=false
 ```
 
+Journey 6 PC-first 状态同样保持失效关闭：
+
+```text
+J6_PC_FUNCTIONAL_PASS=false
+J6_X86_SIMULATION_READY=false
+J6_LOOPBACK_HIL_READY=false
+J6_DEPLOYMENT_BUNDLE_READY=false
+```
+
+目标家族已固定为 `journey6`，但真实板卡 SKU 与 `march` 仍为 `auto`。当前本机未发现经过身份、版本和哈希验证的官方 Journey 6 OpenExplorer/HUCP SDK；历史 RDK S100/S100P 包明确拒绝复用。D1 `best.pt` 已按固定 SHA 以 non-root、只读输入、断网容器真实加载，并由官方 YOLOv9 E1 路线导出 canonical ONNX：静态 `[1,3,640,640]`、opset 17、IR 8、FP32、无自定义算子、无内嵌 NMS，精确十类从 checkpoint 读取。100 张 TRAIN 图的严格 PT/ONNX parity 历史实跑失败（主输出最大框误差 `1.6038 px`、分类分数误差 `0.003521`）；本轮 native PT 在同一 410 张 TRAIN 图、81 个标注上重新实跑，三类 TP 仍均为 `0`，proposal FP/frame 为 `2.0122`、negative FP/frame 为 `2.0152`，与 canonical ONNX 语义结果一致，主失败归因为 domain/semantic mismatch。发布者固定 revision 没有模型卡引用的 `road.jpg` 或其他 sample，固定集也没有 10 个明显大目标（最大短边 21 px），所以 A0 最终归因文件已生成但 `A0_COMPLETE=false`；D1 仍不得激活、调参或训练，15 个 moving Gazebo mission 与 Spot/Post-Clean 未启动。D1 second-pass 的 fail-closed provider、Tracker→ActionVerifier→DynamicTrashMap 合同与恢复的 development-only Area ONNX 已落地；Area 负样本回放暴露 puddle 全帧误报，正式 Area gate保持 false。1800.049 秒 PC_ONNX/Jazzy synthetic+D2 诊断真实执行了 ROS、同步、命令权威与 network fault，但因非 Gazebo、非 Humble、required-D1 mismatch 和 model contract false，transport/algorithm/emulation/official HIL 四状态均为 false；另有 30.011 秒 Humble split smoke，同样不满足正式门。校准盘点仅 `471` 个 TRAIN RGB、`0` ROI；source bundle、官方 SDK/x86、HBM、物理板端和产品状态均保持 false。所有板端 FPS、BPU/CPU/DDR、温度、功耗、HBM 与网络 HIL 时延、30-seed 字段保持 `null/not_run`。
+
+d6 YOLOX-Tiny COCO ONNX 已作为首个新增 reference 在相同 410/81 TRAIN 上真实运行。`0.001–0.5` 全阈值 proposal recall 均为 `0`，阈值 `0.5` 的 FP/frame 仍为 `1.4439`；COCO 缺目标 can/paper 语义，semantic 指标强制 `not_applicable`，因此 d6 不能成为现存功能或产品候选。当前 fixed 数据没有独立 negative-only frame，partial HOLDOUT 又缺 plastic_bottle，完整 A4 与 background specificity 仍保持 blocked。
+
+C1 WasteWise ONNX 已在 183 个明确标记为 development-only、非 formal 的 GT crops 上真实 smoke：102 background、14 plastic、47 metal、20 paper；mapped argmax 的 macro-F1 为 `0.1369`、background specificity 为 `0.6765`，三个目标类召回全部为 `0`。这关闭了 C1 direct-use 路线，但不替代 proposal-crop A4，也不跳过一次有界的 target-mass/unknown-rejection 非训练调整。
+
+C4 SigLIP2 已在 non-root、`--network none`、只读模型/数据、safetensors-only、`trust_remote_code=false` 的 CUDA 容器完成相同 GT-crop smoke。固定 native processor 为 Transformers 4.50.2 slow bilinear RGB 224、`/255`、mean/std 0.5、channels-last；macro-F1 `0.1911`、background specificity `0.9706`，三目标召回仍均为 `0`。direct-use 失败，但 canonical ONNX/parity 和有界 nontraining adjustment 尚未完成。
+
 原因不是裁决工具缺失，而是当前没有一套绑定固定 V1 合同、覆盖 A–P 且通过全部硬门的正式证据。历史实验报告、旧分支和旧运行目录不迁移为新合同的通过证据。
 
 ## 已具备的产品基线
@@ -54,11 +71,11 @@ costmap 临时排除绑定候选与当前地图几何，并由 AST 回归门约�
 
 ## 当前近距分类硬边界
 
-[CRCRV11](close-range-classifier-contract-recovery-v11.md) 已完成协议允许的 R1/R2/R3 三条路线并触发停止条件 B。C11 虽将 unique background tight crop 从 9 扩展到 6,576，R1 background specificity 也恢复为 `1.0`，但最佳正式 candidate macro-F1 仍只有 `0.6311`。因此不得继续 R4/R5、搜索新 detector、读取 sealed 数据调参或降低 E 门；ActionVerifier/重观察/清洁闭环代码可继续验证，但产品模型激活与 E–I 正式运行保持 dependency-blocked。
+[CRCRV11](close-range-classifier-contract-recovery-v11.md) 已完成协议允许的 R1/R2/R3 三条路线并触发停止条件 B。C11 虽将 unique background tight crop 从 9 扩展到 6,576，R1 background specificity 也恢复为 `1.0`，但最佳正式 candidate macro-F1 仍只有 `0.6311`。该失败事实、R1/R2/R3 路线耗尽和 sealed 禁区保持不变；新的 `EMFJ6V3` 已完成有上限、可审计的现存模型发现并冻结 `6 detector / 6 classifier / 3 Area` 清单。`EMF_EXISTING_MODEL_INVENTORY_READY=true` 只证明发现和 source artifact intake 闭合；TACO 类序绑定、全部固定开发集筛选、非训练调整、functional/product 候选及训练授权仍为 false。
 
 ## 当前阻塞顺序
 
-1. 近距四分类已按 CRCRV11 耗尽 R1/R2/R3 并失败；在新的、明确解除 V11 路线限制且不污染 sealed 数据的产品方案获批前，E 门是硬阻塞。
+1. 近距四分类已按 CRCRV11 耗尽 R1/R2/R3 并失败；`EMFJ6V3` 的 D1 主失败已归因到域/语义不匹配，候选清单已冻结，但 A0 的发布者样图与明显大目标人审条件仍失败关闭，固定开发集 screening 和非训练调整尚未完成，因此 E 门继续硬阻塞，训练也继续禁止。
 2. 在边界锚点蛇形 frontier 默认链上完成 7,200 s / 20,000 m² 建图闭环，再完成 B/C/D：≥30 navigation seeds、95% brush coverage、零碰撞/keepout 和 ≥3500 m²/h 全耗时效率。
 3. 串联 E–I，完成动态插入/移除、Tracking/Map、≥30 Spot Cleaning seeds 和 camera-backed Post-Clean。
 4. 完成 J/K：固定交互/LLM 集与完整 pipeline 的 10 Hz、10 min、P95/drop/资源门。

@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "golden_tensor_ready": true,
+  "development_only": true,
+  "competition_claim_allowed": false,
+  "release_allowed": false,
+  "reference_only": true,
+  "external_tensor_not_committed": true,
+  "model": {
+    "model_id": "d1_littercam_yolov9c_development_export",
+    "path": ".workspace/d1_export/evidence/routes/E1.onnx",
+    "sha256": "01c72cdbcd08b6fd91c9a56a065f19837bffd67cca175a75b39e295c3afc01f5",
+    "primary_output_index": 1,
+    "primary_output_name": "1774"
+  },
+  "source_image": {
+    "source_split": "train",
+    "selection_manifest": ".workspace/d1_export/evidence/D1_DEVELOPMENT_IMAGE_SELECTION.json",
+    "selection_manifest_sha256": "a16008ba7df36857fcfdfd99dbf1761ed798e4277d805edb62381e6f98b75df1",
+    "relative_path": "perception_v12_g10_25d9dc0/g10/smoke_positive_train_world0/g4_screening_native/scenes/scene_30001/rgb/frame_00.png",
+    "sha256": "227d7648bcab2eb2543e5568e7b574594b4fc56b530b4e35c47ed7aeda7d5cf4",
+    "shape_hwc": [480, 640, 3]
+  },
+  "preprocess": {
+    "letterbox_hw": [640, 640],
+    "auto": false,
+    "stride": 32,
+    "pad_value": 114,
+    "color": "BGR_to_RGB",
+    "normalization": "uint8_div_255_float32",
+    "input_tensor_sha256": "47a8251daceaa0224e75e882fce7b2e6e2ac5a9bc8d1388aac2b802b467ed4e8"
+  },
+  "class_order": [
+    "cigarette_butt",
+    "plastic_bottle",
+    "drinks_can",
+    "fast_food_packaging",
+    "plastic_bag",
+    "coffee_cup",
+    "glass_bottle",
+    "paper_waste",
+    "food_wrapper",
+    "general_litter"
+  ],
+  "actionable_source_indices": {
+    "1": "plastic_bottle",
+    "2": "metal_can",
+    "7": "paper_litter"
+  },
+  "postprocess": {
+    "score_threshold": 0.25,
+    "nms_iou_threshold": 0.45,
+    "class_aware": true,
+    "has_objectness": false,
+    "maximum_detections": 100
+  },
+  "tensors": [
+    {
+      "name": "1774",
+      "path": "../../../.workspace/evidence/j6/d1_postprocess_golden/E1_scene30001_frame00_primary.f32",
+      "format": "raw_f32_le",
+      "dtype": "float32",
+      "shape": [1, 14, 8400],
+      "size_bytes": 470400,
+      "sha256": "4700a73487db964bda276e92c5b7de24e6325691b688a94efd665ad22845dc15"
+    }
+  ],
+  "expected_detections": [
+    {
+      "bbox_xyxy": [0.0, 78.56005859375, 639.722412109375, 441.71563720703125],
+      "score": 0.8742088675498962,
+      "source_class_index": 9,
+      "source_class": "general_litter",
+      "product_class": "background_or_unknown"
+    },
+    {
+      "bbox_xyxy": [0.0, 428.32679748535156, 640.0, 568.1257171630859],
+      "score": 0.7494193315505981,
+      "source_class_index": 9,
+      "source_class": "general_litter",
+      "product_class": "background_or_unknown"
+    }
+  ],
+  "truth_boundary": "This lock is one TRAIN-only PC ONNX graph-output postprocess golden. Both detections are non-actionable general_litter mapped to background_or_unknown. It is not accuracy, competition, release, HBM, SDK, Journey 6 runtime, or board evidence."
+}

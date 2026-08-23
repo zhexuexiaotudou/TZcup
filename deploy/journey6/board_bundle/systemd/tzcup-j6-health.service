@@ -1,0 +1,17 @@
+[Unit]
+Description=TZcup Journey 6 health monitor
+Requires=tzcup-j6-runtime.service
+After=tzcup-j6-runtime.service tzcup-j6-perception.service tzcup-j6-autonomy.service
+ConditionPathIsSymbolicLink=/opt/tzcup/journey6/active
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/tzcup/journey6.env
+WorkingDirectory=/opt/tzcup/journey6/active
+ExecStart=/opt/tzcup/journey6/active/bin/tzcup_j6_health
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+
+[Install]
+WantedBy=multi-user.target

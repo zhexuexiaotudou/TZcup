@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "protocol_id": "EMFJ6V3",
+  "source_commit": "084e74e6868d2e1a502a548c98837904328d70e4",
+  "executed_at": "2026-08-24T02:04:54+08:00",
+  "model_id": "c6_giecom_recycling_vit",
+  "isolation": {
+    "runtime_image_digest": "sha256:bf61e2b6bca3b1fc6a66100986b59b2eec8aef91a24079b2560bd365622ecf86",
+    "uid": 65534,
+    "non_root": true,
+    "network": "none",
+    "read_only_rootfs": true,
+    "input_mounts_read_only": true,
+    "trust_remote_code": false,
+    "weight_format": "safetensors"
+  },
+  "runtime": {
+    "device": "cuda:0",
+    "torch": "2.5.1+cu124",
+    "transformers": "4.44.2",
+    "safetensors": "0.8.0",
+    "numpy": "1.26.4",
+    "pillow": "10.2.0",
+    "records": 183,
+    "elapsed_seconds": 10.5843177899997
+  },
+  "dataset": {
+    "split": "G10_TRAIN",
+    "source_manifest_sha256": "2f226ed4925779348e218c49c16d0b33ba719958289e493948fd5427e94e3166",
+    "identity_lock_sha256": "998f5666410ef5893cbbddbe22e8831fd70eb548559cda9739ba84086c8d37f8",
+    "records": 183,
+    "all_image_sha_bbox_record_identities_verified": true,
+    "formal_eligible": false,
+    "independent_negative_only_domain": false
+  },
+  "metrics": {
+    "prediction_counts": {
+      "background": 10,
+      "plastic_bottle": 116,
+      "metal_can": 23,
+      "paper_litter": 34
+    },
+    "macro_f1": 0.08300264550264551,
+    "target_macro_f1": 0.09876543209876544,
+    "background_specificity": 0.0196078431372549,
+    "target_recall": {
+      "plastic_bottle": 0.0,
+      "metal_can": 0.0,
+      "paper_litter": 0.4
+    },
+    "paper_precision": 0.23529411764705882,
+    "paper_f1": 0.29629629629629634
+  },
+  "external_evidence": {
+    "name": "C6_GT_TRAIN_NATIVE_SMOKE.json",
+    "bytes": 246003,
+    "sha256": "702c9a7a6dc7d79b1389102b7f912d759acccac64924eef7cf5b433f4541846f"
+  },
+  "EMF_EXISTING_MODEL_FUNCTIONAL_CANDIDATE": false,
+  "EMF_EXISTING_MODEL_PRODUCT_CANDIDATE": false,
+  "training_authorized": false,
+  "decision": "direct_use_failed_zero_plastic_and_metal_recall_with_background_flood",
+  "truth_boundary": "Development-only native safetensors smoke on offline GT-derived TRAIN crops. C6 many-to-one plastic probabilities use only explicit hard-plastic and soft-plastics labels. It is not proposal-crop A4, independent negative-domain, HOLDOUT, ONNX parity, product, release, Journey 6, or training evidence."
+}

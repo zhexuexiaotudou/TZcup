@@ -1,0 +1,61 @@
+{
+  "schema_version": 1,
+  "protocol_id": "EMFJ6V3",
+  "model_id": "c1_wastewise_yolov8n_cls",
+  "source_commit": "9459120ca0ebce83f292fef565df943bc27e3f60",
+  "executed_at": "2026-08-24T01:10:00+08:00",
+  "runtime": {
+    "provider": "onnx_cpu",
+    "fallback_used": false,
+    "model_sha256": "2b46d491091dbc0ed98a0f1eaee7fe5739c8fd3eb5bd5935396c3b2712e1f7a6",
+    "source_manifest_sha256": "2f226ed4925779348e218c49c16d0b33ba719958289e493948fd5427e94e3166"
+  },
+  "dataset": {
+    "split": "G10_TRAIN",
+    "records": 183,
+    "class_counts": {
+      "background": 102,
+      "plastic_bottle": 14,
+      "metal_can": 47,
+      "paper_litter": 20
+    },
+    "crop_source": "offline_gt_box_development_only",
+    "formal_eligible": false,
+    "independent_negative_only_domain": false
+  },
+  "metrics": {
+    "macro_f1": 0.13690476190476192,
+    "background_specificity": 0.6764705882352942,
+    "per_class": {
+      "background": {"precision": 0.46, "recall": 0.6764705882352942, "f1": 0.5476190476190477, "support": 102},
+      "plastic_bottle": {"precision": 0.0, "recall": 0.0, "f1": 0.0, "support": 14},
+      "metal_can": {"precision": 0.0, "recall": 0.0, "f1": 0.0, "support": 47},
+      "paper_litter": {"precision": 0.0, "recall": 0.0, "f1": 0.0, "support": 20}
+    },
+    "confusion": {
+      "background": {"background": 69, "plastic_bottle": 20, "metal_can": 13, "paper_litter": 0},
+      "plastic_bottle": {"background": 14, "plastic_bottle": 0, "metal_can": 0, "paper_litter": 0},
+      "metal_can": {"background": 47, "plastic_bottle": 0, "metal_can": 0, "paper_litter": 0},
+      "paper_litter": {"background": 20, "plastic_bottle": 0, "metal_can": 0, "paper_litter": 0}
+    }
+  },
+  "external_evidence": {
+    "raw_inference": {
+      "name": "C1_GT_TRAIN_RAW_INFERENCE.json",
+      "bytes": 204468,
+      "sha256": "22fa3432ac588e263bbf0cab182cc9860564a41ad2eb91fe2507e240cb782581"
+    },
+    "full_report": {
+      "name": "C1_GT_TRAIN_SMOKE_REPORT.json",
+      "bytes": 2532,
+      "sha256": "2a854cf82e2897a0eced9a86cc9085e65f15d70cf55901bbe4f76fc0d3bdd2a7"
+    }
+  },
+  "EMF_EXISTING_MODEL_SCREENING_COMPLETE": false,
+  "EMF_NONTRAINING_ADJUSTMENT_COMPLETE": false,
+  "EMF_EXISTING_MODEL_FUNCTIONAL_CANDIDATE": false,
+  "EMF_EXISTING_MODEL_PRODUCT_CANDIDATE": false,
+  "training_authorized": false,
+  "decision": "direct_use_failed_nontraining_adjustment_pending",
+  "truth_boundary": "Development-only native ONNX smoke on offline GT-derived crops. It is not proposal-crop A4, threshold selection, independent negative-domain specificity, HOLDOUT, product, release, Journey 6, or training evidence."
+}

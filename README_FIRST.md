@@ -140,3 +140,19 @@ FINAL_EVIDENCE_INDEX.md
 - 原始数据、bag、缓存、SDK、checkpoint 和逐帧日志不提交 Git。
 
 门槛与当前缺口分别见 [STAGE_GATES.md](STAGE_GATES.md) 和 [docs/current-status.md](docs/current-status.md)。
+
+## 8. Journey 6 PC 先行检查
+
+在板卡或官方 SDK 到货前，只执行发现、合同和 bundle dry-run，不猜 SKU 或
+`march`：
+
+```powershell
+py -3 scripts/j6_discover_sdk.py --output C:\tzcup-j6\J6_SDK_INVENTORY.json
+py -3 scripts/j6_pc_status.py --output-dir C:\tzcup-j6\status
+```
+
+缺少官方 J6 SDK、通过固定开发集门槛的预训练模型证据，或缺少/未通过 30 分钟正式 HIL 证据时，命令以非零退出并
+写入 blocker JSON，这是预期的失效关闭结果。完整流程见
+[OpenExplorer 工作流](docs/journey6-openexplorer-workflow.md)、
+[板端部署](docs/journey6-board-deployment.md) 与
+[板卡到货手册](docs/journey6-board-arrival-runbook.md)。

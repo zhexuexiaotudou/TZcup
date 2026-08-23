@@ -46,3 +46,146 @@ jobs:
           Get-ChildItem scripts -Filter *.ps1 | ForEach-Object {
             [void][scriptblock]::Create((Get-Content -LiteralPath $_.FullName -Raw))
           }
+
+  model-contract-tests:
+    name: model-contract-tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install model contract dependencies
+        run: python -m pip install --disable-pip-version-check numpy opencv-python-headless Pillow pytest PyYAML
+      - name: Run Journey 6 model and HIL contracts
+        env:
+          PYTHONPATH: scripts:starter_ws/src/sanitation_perception
+        run: |
+          python -m pytest -q \
+            starter_ws/src/sanitation_perception/test/test_journey6_contract.py \
+            starter_ws/src/sanitation_perception/test/test_journey6_nv12.py \
+            starter_ws/src/sanitation_perception/test/test_journey6_provider.py \
+            starter_ws/src/sanitation_perception/test/test_journey6_hil.py \
+            starter_ws/src/sanitation_perception/test/test_onnx_provider.py \
+            starter_ws/src/sanitation_perception/test/test_pretrained_contracts.py \
+            starter_ws/src/journey6_hil_gateway/test/test_contract.py \
+            starter_ws/src/journey6_hil_gateway/test/test_journey6_hil_gateway_core.py \
+            starter_ws/src/journey6_hil_gateway/test/test_network_faults.py \
+            starter_ws/src/journey6_hil_gateway/test/test_placement.py \
+            scripts/test_j6_pc_status.py \
+            scripts/test_j6_tensor_parity.py \
+            scripts/test_pretrained_model_tooling.py \
+            scripts/test_j6_deployment_tooling.py
+      - name: Build and test host board-runtime contracts
+        run: |
+          cmake -S deploy/journey6/board_runtime -B build/j6-host -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/j6-host --parallel 2
+          ctest --test-dir build/j6-host --output-on-failure
+
+  existing-model-screening-contract:
+    name: existing-model-screening-contract
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install existing-model contract dependencies
+        run: python -m pip install --disable-pip-version-check numpy opencv-python-headless Pillow pytest PyYAML
+      - name: Verify frozen inventory and phase-order guards
+        env:
+          PYTHONPATH: scripts
+        run: |
+          python scripts/emfj6v3_contract.py --require-frozen
+          python -m pytest -q \
+            scripts/test_existing_model_inventory.py \
+            scripts/test_model_semantic_contract.py \
+            scripts/test_screen_emf_yolox_reference.py \
+            scripts/test_screen_emf_c1_gt_smoke.py \
+            scripts/test_c4_native_worker.py \
+            scripts/test_evaluate_emf_classifier_nontraining.py \
+            scripts/test_prepare_trcrv10_g10_coco.py \
+            scripts/test_build_emf_classifier_holdout_gt.py \
+            scripts/test_c1_holdout_native_worker.py \
+            scripts/test_c3_holdout_native_worker.py \
+            scripts/test_evaluate_emf_classifier_holdout.py \
+            scripts/test_build_emf_area_dataset.py \
+            scripts/test_emf_g2_area_capture_contract.py \
+            scripts/test_screen_emf_ewasr_negative.py \
+            scripts/test_vit_native_worker.py \
+            scripts/test_c3_native_worker.py \
+            scripts/test_candidate_cap.py \
+            scripts/test_no_training_before_exhaustion.py
+
+  ros-jazzy-build:
+    name: ros-jazzy-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build the Jazzy transport/gateway image
+        run: |
+          docker build \
+            --file docker/journey6/Dockerfile.algorithm-host \
+            --build-arg J6_ALGORITHM_BASE_IMAGE=ros:jazzy-ros-base \
+            --build-arg ROS_SETUP=/opt/ros/jazzy/setup.bash \
+            --build-arg RUNTIME_BACKEND=TRANSPORT_ONLY \
+            --tag tzcup/j6-jazzy-ci:${{ github.sha }} \
+            .
+
+  ros-humble-build:
+    name: ros-humble-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build the Humble PC-ONNX algorithm-host image
+        run: |
+          docker build \
+            --file docker/journey6/Dockerfile.algorithm-host \
+            --build-arg J6_ALGORITHM_BASE_IMAGE=ros:humble-ros-base \
+            --build-arg ROS_SETUP=/opt/ros/humble/setup.bash \
+            --build-arg RUNTIME_BACKEND=PC_ONNX \
+            --tag tzcup/j6-humble-ci:${{ github.sha }} \
+            .
+
+  aarch64-generic-build:
+    name: aarch64-generic-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Install generic aarch64 cross compiler
+        run: sudo apt-get update && sudo apt-get install -y g++-aarch64-linux-gnu
+      - name: Cross-build board-runtime safety core
+        run: |
+          cmake -S deploy/journey6/board_runtime -B build/j6-aarch64 \
+            -DCMAKE_SYSTEM_NAME=Linux \
+            -DCMAKE_SYSTEM_PROCESSOR=aarch64 \
+            -DCMAKE_C_COMPILER=aarch64-linux-gnu-gcc \
+            -DCMAKE_CXX_COMPILER=aarch64-linux-gnu-g++ \
+            -DBUILD_TESTING=OFF \
+            -DCMAKE_BUILD_TYPE=Release
+          cmake --build build/j6-aarch64 --parallel 2
+          file build/j6-aarch64/tzcup-j6-runtime | grep -E 'ARM aarch64|ARM64'
+
+  journey6-sdk-build:
+    name: journey6-sdk-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    if: ${{ vars.J6_SDK_CI_AVAILABLE == 'true' }}
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Require protected official SDK environment
+        run: |
+          test -n "${J6_SDK_ROOT:-}"
+          test -x "${J6_SDK_ROOT}/bin/hb_compile"
+          echo "Official Journey 6 SDK-specific build is enabled by the protected runner."

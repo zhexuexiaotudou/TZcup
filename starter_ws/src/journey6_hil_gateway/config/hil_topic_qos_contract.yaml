@@ -1,0 +1,128 @@
+schema_version: 2
+contract_id: tzcup.journey6.hil.v2
+transport: ros2_dds
+clock_authority: pc_gazebo
+runtime_identity:
+  allowed_backends: [PC_ONNX, JOURNEY6_OE]
+  pc_onnx:
+    runtime_backend: PC_ONNX
+    not_journey6_runtime: true
+    algorithm_host_os: ubuntu-22.04
+    algorithm_host_ros_distro: humble
+    may_satisfy_legacy_J6_LOOPBACK_HIL_READY: false
+formal_transport:
+  minimum_duration_s: 1800
+  sensor_source: gazebo
+  pc_ros_distro: jazzy
+  require_full_fault_and_authority_matrix: true
+  sensor_provenance_manifest: HIL_GAZEBO_SENSOR_PROVENANCE.json
+  sensor_provenance_required:
+    - audited_launch
+    - gazebo_process_verified
+    - publisher_endpoints_verified
+    - pc_sensor_and_plant_only
+    - evidence_sha256
+  endpoint_provenance_required:
+    publisher_process_links_verified: true
+    harness_sensor_publishers_present: false
+    unexpected_publishers: []
+model_qualification:
+  manifest_path: /opt/tzcup/models/model_qualification_manifest.json
+  self_reported_boolean_allowed: false
+  bind_to_fields: [model_id, model_sha256]
+  required_hashed_evidence:
+    - pt_onnx_parity
+    - pc_inference
+    - full_stack
+readiness_states:
+  J6_LOOPBACK_TRANSPORT_READY: real ROS 2 transport and sensor contract
+  J6_LOOPBACK_ALGORITHM_READY: qualified model loaded by the declared backend
+  J6_LOOPBACK_HIL_EMULATION_READY: 1800 s PC_ONNX split-loopback plus fault matrix
+  J6_LOOPBACK_HIL_READY: official Journey6 runtime only; legacy meaning unchanged
+formal_attestation:
+  evaluator_available: false
+  blocker: trusted_run_bound_attestation_collector_not_implemented
+  current_behavior: all_loopback_and_official_readiness_states_false
+  required_future_binding:
+    - run_id_and_monotonic_time_window
+    - complete_node_process_endpoint_inventory
+    - model_qualification_raw_metrics
+    - sdk_inventory_sha256
+    - board_identity
+    - runtime_digest
+node_placement:
+  pc_namespace: /pc
+  j6_namespace: /j6
+  unnamespaced_algorithm_nodes_fail_closed: true
+command_authority:
+  nonzero_vehicle_command_source: j6-algorithm
+  pc_capability: zero_only_safety_gate
+  reconnect_requires_operator_resume: true
+  stale_command_replay_allowed: false
+command_schema:
+  encoding: std_msgs/msg/String JSON
+  required_fields:
+    - stamp_s
+    - sequence
+    - speed_mps
+    - steering_angle_rad
+    - acceleration_limit_mps2
+    - source_id
+    - valid_until_s
+qos_profiles:
+  sensor_data:
+    reliability: best_effort
+    durability: volatile
+    history: keep_last
+    depth: 5
+  control_deadline:
+    reliability: reliable
+    durability: volatile
+    history: keep_last
+    depth: 1
+    deadline_ms: 80
+    lifespan_ms: 120
+  health:
+    reliability: reliable
+    durability: volatile
+    history: keep_last
+    depth: 10
+  static_config:
+    reliability: reliable
+    durability: transient_local
+    history: keep_last
+    depth: 1
+topics:
+  - {name: /hil/camera/color, type: sensor_msgs/msg/Image, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/camera/depth, type: sensor_msgs/msg/Image, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/camera/camera_info, type: sensor_msgs/msg/CameraInfo, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/scan, type: sensor_msgs/msg/LaserScan, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/imu, type: sensor_msgs/msg/Imu, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/wheel_odom, type: nav_msgs/msg/Odometry, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/gnss/fix, type: sensor_msgs/msg/NavSatFix, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/gnss/heading, type: geometry_msgs/msg/QuaternionStamped, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/clock, type: rosgraph_msgs/msg/Clock, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/tf, type: tf2_msgs/msg/TFMessage, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/tf_static, type: tf2_msgs/msg/TFMessage, direction: pc_to_j6, qos: static_config}
+  - {name: /hil/cleanable_boundary, type: geometry_msgs/msg/PolygonStamped, direction: pc_to_j6, qos: static_config}
+  - {name: /hil/keepout, type: geometry_msgs/msg/PolygonStamped, direction: pc_to_j6, qos: static_config}
+  - {name: /hil/vehicle/ackermann_command, type: std_msgs/msg/String, direction: j6_to_pc, qos: control_deadline}
+  - {name: /hil/vehicle/brake_command, type: std_msgs/msg/Bool, direction: j6_to_pc, qos: control_deadline}
+  - {name: /hil/brush/command, type: std_msgs/msg/Float32, direction: j6_to_pc, qos: control_deadline}
+  - {name: /hil/safety/estop_request, type: std_msgs/msg/Bool, direction: j6_to_pc, qos: control_deadline}
+  - {name: /hil/task/state, type: std_msgs/msg/String, direction: j6_to_pc, qos: health}
+  - {name: /hil/health, type: std_msgs/msg/String, direction: j6_to_pc, qos: health}
+  - {name: /hil/operator/resume, type: std_msgs/msg/Bool, direction: pc_operator_local, qos: health}
+  - {name: /hil/vehicle/validated_ackermann_command, type: std_msgs/msg/String, direction: pc_gateway_to_actuator, qos: control_deadline}
+  - {name: /hil/harness/algorithm_pause, type: std_msgs/msg/Bool, direction: pc_harness_to_algorithm, qos: health}
+  - {name: /hil/harness/network_fault, type: std_msgs/msg/String, direction: pc_harness_to_fault_agent, qos: health}
+forbidden_j6_subscriptions:
+  - /ground_truth/*
+  - /world/*
+  - /gazebo/model/*
+  - /sealed/*
+forbidden_algorithm_container_mount_tokens:
+  - ground_truth
+  - world
+  - sealed
+  - evaluator

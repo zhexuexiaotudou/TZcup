@@ -1,0 +1,33 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "b54897a49316c8ec7984befa3ecb54d588f1d0ca",
+  "stacked_pr": 93,
+  "stacked_pr_base": "codex/simulation-product-acceptance",
+  "stacked_pr_state": "open_draft",
+  "baseline_ci": {
+    "fast-validation": "success",
+    "model-contract-tests": "success",
+    "aarch64-generic-build": "success",
+    "journey6-sdk-build": "skipped_official_sdk_unavailable"
+  },
+  "target_family": "journey6",
+  "target_sku": "auto",
+  "target_march": "auto",
+  "development_lane_authorization": {
+    "real_unredistributed_model_allowed": true,
+    "mock_model_allowed": false,
+    "sealed_access_allowed": false,
+    "automatic_training_allowed": false,
+    "competition_claim_allowed": false,
+    "release_allowed": false
+  },
+  "preexisting_statuses": {
+    "J6_PC_FUNCTIONAL_PASS": false,
+    "J6_X86_SIMULATION_READY": false,
+    "J6_LOOPBACK_HIL_READY": false,
+    "J6_DEPLOYMENT_BUNDLE_READY": false,
+    "SIMULATION_PRODUCT_COMPLETE": false,
+    "PRODUCT_INTEGRATION_READY": false,
+    "PRODUCT_FIELD_READY": false
+  }
+}

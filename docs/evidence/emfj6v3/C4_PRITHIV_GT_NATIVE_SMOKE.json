@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "protocol_id": "EMFJ6V3",
+  "model_id": "c4_prithiv_trash_net_siglip2",
+  "source_commit": "67018d9714de6b9163ef3d49e266184dbfbe5492",
+  "executed_at": "2026-08-24T01:20:00+08:00",
+  "isolation": {
+    "non_root": true,
+    "network": "none",
+    "read_only_rootfs": true,
+    "model_mount": "read_only",
+    "data_mount": "read_only",
+    "trust_remote_code": false,
+    "weight_format": "safetensors",
+    "credentials_mounted": false
+  },
+  "runtime": {
+    "device": "cuda",
+    "cuda_available": true,
+    "torch": "2.5.1+cu124",
+    "transformers": "4.50.2",
+    "safetensors": "0.5.3",
+    "numpy": "1.26.4",
+    "records": 183,
+    "elapsed_seconds": 15.2460214140001
+  },
+  "artifacts": {
+    "model.safetensors": "a67e2f6a82914be03cfb85218bc4e7683c8e81fe3fc4a5f9bed3abc8e93757c8",
+    "config.json": "341bb75a50a7dbd13034e189a02ad7cf54e8a6af28357d66c138a397e0d28c6e",
+    "preprocessor_config.json": "9b36b57ebaf20f09bf4c22100ccc21877ea6bfe5aead0c00c59f8af8ccefacfc",
+    "source_manifest": "2f226ed4925779348e218c49c16d0b33ba719958289e493948fd5427e94e3166"
+  },
+  "processor_contract": {
+    "processor_class": "SiglipImageProcessor",
+    "use_fast": false,
+    "forced_rgb": true,
+    "input_data_format": "channels_last",
+    "size": {"height": 224, "width": 224},
+    "resample": 2,
+    "rescale_factor": 0.00392156862745098,
+    "image_mean": [0.5, 0.5, 0.5],
+    "image_std": [0.5, 0.5, 0.5]
+  },
+  "dataset": {
+    "split": "G10_TRAIN",
+    "records": 183,
+    "class_counts": {"background": 102, "plastic_bottle": 14, "metal_can": 47, "paper_litter": 20},
+    "crop_source": "offline_gt_box_development_only",
+    "formal_eligible": false,
+    "independent_negative_only_domain": false
+  },
+  "metrics": {
+    "macro_f1": 0.1911196911196911,
+    "background_specificity": 0.9705882352941176,
+    "per_class": {
+      "background": {"precision": 0.6305732484076433, "recall": 0.9705882352941176, "f1": 0.7644787644787644, "support": 102},
+      "plastic_bottle": {"precision": 0.0, "recall": 0.0, "f1": 0.0, "support": 14},
+      "metal_can": {"precision": 0.0, "recall": 0.0, "f1": 0.0, "support": 47},
+      "paper_litter": {"precision": 0.0, "recall": 0.0, "f1": 0.0, "support": 20}
+    },
+    "confusion": {
+      "background": {"background": 99, "plastic_bottle": 0, "metal_can": 0, "paper_litter": 3},
+      "plastic_bottle": {"background": 14, "plastic_bottle": 0, "metal_can": 0, "paper_litter": 0},
+      "metal_can": {"background": 41, "plastic_bottle": 6, "metal_can": 0, "paper_litter": 0},
+      "paper_litter": {"background": 3, "plastic_bottle": 17, "metal_can": 0, "paper_litter": 0}
+    }
+  },
+  "failed_attempts": [
+    "truncated_config_and_processor_hash_input_rejected",
+    "numpy_2_5_2_incompatible_with_base_scipy_then_locked_to_numpy_1_26_4",
+    "one_pixel_crop_channel_ambiguity_then_input_data_format_locked_channels_last"
+  ],
+  "external_evidence": {
+    "name": "C4_GT_TRAIN_NATIVE_SMOKE.json",
+    "bytes": 155613,
+    "sha256": "998f5666410ef5893cbbddbe22e8831fd70eb548559cda9739ba84086c8d37f8"
+  },
+  "EMF_EXISTING_MODEL_SCREENING_COMPLETE": false,
+  "EMF_NONTRAINING_ADJUSTMENT_COMPLETE": false,
+  "EMF_EXISTING_MODEL_FUNCTIONAL_CANDIDATE": false,
+  "EMF_EXISTING_MODEL_PRODUCT_CANDIDATE": false,
+  "training_authorized": false,
+  "decision": "direct_use_failed_nontraining_adjustment_pending",
+  "truth_boundary": "Development-only native safetensors smoke on offline GT-derived crops. It is not proposal-crop A4, independent negative-domain, HOLDOUT, ONNX parity, product, release, Journey 6, or training evidence."
+}

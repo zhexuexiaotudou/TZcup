@@ -20,6 +20,34 @@ import numpy as np
 TARGETS = {1: "plastic_bottle", 2: "metal_can", 3: "paper_litter"}
 BUCKETS = (("<18", 0, 18), ("18-32", 18, 32), ("32-64", 32, 64),
            ("64-96", 64, 96), (">=96", 96, 1_000_000))
+EXPECTED_DOMAIN_MANIFEST_SHA256 = (
+    "3bdb3006226943e4149cd84144b488e5eb112ab35ad3692c5da8cc48c88b5208"
+)
+EXPECTED_ROUTE_ID = "g10_route_v21_reverse_xneg1p95"
+EXPECTED_ROUTE_CONFIG_SHA256 = (
+    "ad6cb131739626827296cb37bcd365f58e3a0e4455f9c11f11dfe2b8111b4e36"
+)
+SPLIT_CONTRACT = {
+    "G10_TRAIN": {
+        "capture_split": "train",
+        "world_ids": {
+            "g10v15_train_w01_01_asphalt_campus",
+            "g10v15_train_w02_02_concrete_sidewalk",
+            "g10v15_train_w03_03_wet_courtyard",
+            "g10v15_train_w04_04_cobblestone_arcade",
+            "g10v15_train_w05_05_red_brick_promenade",
+            "g10v15_train_w06_06_tiled_plaza",
+        },
+    },
+    "G10_HOLDOUT": {
+        "capture_split": "val",
+        "world_ids": {
+            "g10v15_val_w01_07_service_road",
+            "g10v15_val_w02_08_mixed_curb_vegetation",
+            "g10v15_val_w03_09_light_paver_pedestrian",
+        },
+    },
+}
 
 
 def read(path: Path) -> dict:
@@ -29,6 +57,14 @@ def read(path: Path) -> dict:
 def write(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
+
+
+def route_config_sha256(profile: dict) -> str:
+    unsigned = dict(profile)
+    unsigned.pop("route_config_sha256", None)
+    return hashlib.sha256(
+        json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
 
 
 def phash(path: Path) -> str:
@@ -79,8 +115,35 @@ def ordered_size_transition(frames: list[dict]) -> bool:
 
 
 def audit_scene(scene: Path, split: str, minimum_reliable_short_side: int) -> tuple[dict, list[dict]]:
+    if split not in SPLIT_CONTRACT:
+        raise ValueError(f"unsupported G10 split: {split}")
     manifest = read(scene / "scene_manifest.json")
     report = read(scene / "capture_report.json")
+    split_contract = SPLIT_CONTRACT[split]
+    if manifest.get("split") != split_contract["capture_split"]:
+        raise RuntimeError(f"{split} capture split mismatch: {scene}")
+    if manifest.get("world_id") not in split_contract["world_ids"]:
+        raise RuntimeError(f"{split} contains an unapproved world: {scene}")
+    sequence_contract = manifest.get("trcrv10_g10_approach_sequence", {})
+    profile = manifest.get("oprv3_motion_profile")
+    if not isinstance(profile, dict) or report.get("oprv3_motion_profile") != profile:
+        raise RuntimeError(f"scene/report route profile mismatch: {scene}")
+    if (
+        sequence_contract.get("route_id") != EXPECTED_ROUTE_ID
+        or profile.get("route_id") != EXPECTED_ROUTE_ID
+        or sequence_contract.get("route_config_sha256") != EXPECTED_ROUTE_CONFIG_SHA256
+        or profile.get("route_config_sha256") != EXPECTED_ROUTE_CONFIG_SHA256
+        or route_config_sha256(profile) != EXPECTED_ROUTE_CONFIG_SHA256
+    ):
+        raise RuntimeError(f"fixed G10 route identity mismatch: {scene}")
+    if sequence_contract.get("source_domain_manifest_sha256") != EXPECTED_DOMAIN_MANIFEST_SHA256:
+        raise RuntimeError(f"fixed G10 domain identity mismatch: {scene}")
+    expected_trajectory = (
+        f"{manifest['world_id']}_{EXPECTED_ROUTE_ID}_trajectory_"
+        f"{int(manifest['scene_seed']):04d}"
+    )
+    if manifest.get("trajectory_id") != expected_trajectory:
+        raise RuntimeError(f"G10 trajectory identity mismatch: {scene}")
     requested = int(report["requested_frames"])
     records = report.get("records", [])
     target_rows = []
@@ -128,6 +191,7 @@ def audit_scene(scene: Path, split: str, minimum_reliable_short_side: int) -> tu
         travel += float(np.linalg.norm(np.asarray(second) - np.asarray(first)))
     summary = {
         "scene": scene.name,
+        "mission_id": scene.name,
         "world_id": manifest["world_id"],
         "scene_seed": manifest["scene_seed"],
         "trajectory_id": manifest["trajectory_id"],
@@ -145,6 +209,9 @@ def audit_scene(scene: Path, split: str, minimum_reliable_short_side: int) -> tu
         "target_asset_ids": target_assets,
         "hard_negatives": hard_negatives,
         "route_profile": report.get("oprv3_motion_profile"),
+        "route_id": EXPECTED_ROUTE_ID,
+        "route_config_sha256": EXPECTED_ROUTE_CONFIG_SHA256,
+        "g10_domain_manifest_sha256": EXPECTED_DOMAIN_MANIFEST_SHA256,
         "motion_phase_counts": dict(Counter(row.get("motion_phase") for row in records)),
         "partial_mission": len(target_rows) != expected,
         "gt_product_input_violation": not bool(
@@ -166,10 +233,21 @@ def main() -> int:
                         help="SPLIT=path containing g4_screening_native/scenes")
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--minimum-reliable-short-side", type=int, required=True)
+    parser.add_argument(
+        "--train-only-authorization",
+        action="store_true",
+        help="return success only for a complete TRAIN route QA before HOLDOUT capture",
+    )
     args = parser.parse_args()
     missions, frames = [], []
+    declared_splits = set()
     for value in args.capture:
         split, raw_path = value.split("=", 1)
+        if split not in SPLIT_CONTRACT:
+            raise ValueError(f"unsupported G10 split declaration: {split}")
+        if split in declared_splits:
+            raise ValueError(f"duplicate G10 split declaration: {split}")
+        declared_splits.add(split)
         scenes = Path(raw_path) / "g4_screening_native" / "scenes"
         for scene in sorted(path for path in scenes.glob("scene_*")
                             if (path / "capture_report.json").is_file()):
@@ -208,6 +286,10 @@ def main() -> int:
             phash_overlap.append([prior, row])
         else:
             phash_seen.setdefault(row["phash"], row)
+    def unique(key: str) -> bool:
+        values = [row[key] for row in missions]
+        return len(values) == len(set(values))
+
     gates = {
         "capture_pass": all(row["capture_pass"] for row in missions),
         "sensor_sync_pass": all(row["sensor_odom_sync_pass"] for row in missions),
@@ -224,6 +306,15 @@ def main() -> int:
         ),
         "train_missions_at_least_45": split_counts.get("G10_TRAIN", 0) >= 45,
         "holdout_missions_at_least_18": split_counts.get("G10_HOLDOUT", 0) >= 18,
+        "approved_world_sets_exact": all(
+            {
+                row["world_id"] for row in missions if row["split"] == split
+            } == contract["world_ids"]
+            for split, contract in SPLIT_CONTRACT.items()
+        ),
+        "mission_id_unique": unique("mission_id"),
+        "scene_seed_unique": unique("scene_seed"),
+        "trajectory_id_unique": unique("trajectory_id"),
         "world_overlap_zero": not world_overlap,
         "seed_overlap_zero": not seed_overlap,
         "trajectory_overlap_zero": not trajectory_overlap,
@@ -232,9 +323,62 @@ def main() -> int:
         "exact_rgb_cross_split_duplicate_zero": not exact_overlap,
         "phash_cross_split_duplicate_zero": not phash_overlap,
     }
+    train_missions = [row for row in missions if row["split"] == "G10_TRAIN"]
+    train_positive_missions = [row for row in train_missions if not row["negative_only"]]
+    train_negative_missions = [row for row in train_missions if row["negative_only"]]
+    train_world_counts = Counter(row["world_id"] for row in train_missions)
+    train_route_gates = {
+        "only_train_declared": declared_splits == {"G10_TRAIN"},
+        "train_missions_exactly_48": len(train_missions) == 48,
+        "train_world_missions_exactly_8": all(
+            train_world_counts[world_id] == 8
+            for world_id in SPLIT_CONTRACT["G10_TRAIN"]["world_ids"]
+        ),
+        "train_positive_missions_exactly_30": len(train_positive_missions) == 30,
+        "train_negative_missions_exactly_18": len(train_negative_missions) == 18,
+        "train_target_classes_exact": {
+            target["class_id"]
+            for row in train_positive_missions for target in row["targets"]
+        } == set(TARGETS.values()),
+        "approved_train_world_set_exact": {
+            row["world_id"] for row in train_missions
+        } == SPLIT_CONTRACT["G10_TRAIN"]["world_ids"],
+        "capture_pass": bool(train_missions) and all(
+            row["capture_pass"] for row in train_missions
+        ),
+        "sensor_sync_pass": bool(train_missions) and all(
+            row["sensor_odom_sync_pass"] for row in train_missions
+        ),
+        "partial_mission_zero": not any(
+            row["partial_mission"] for row in train_missions
+        ),
+        "positive_targets_cross_required_size_stages": bool(train_missions) and all(
+            target["crosses_lt18_to_32_64"]
+            for row in train_missions if not row["negative_only"]
+            for target in row["targets"]
+        ),
+        "positive_targets_reach_frozen_minimum": bool(train_missions) and all(
+            target["reaches_minimum_reliable"]
+            for row in train_missions if not row["negative_only"]
+            for target in row["targets"]
+        ),
+        "mission_id_unique": len({row["mission_id"] for row in train_missions})
+        == len(train_missions),
+        "scene_seed_unique": len({row["scene_seed"] for row in train_missions})
+        == len(train_missions),
+        "trajectory_id_unique": len({row["trajectory_id"] for row in train_missions})
+        == len(train_missions),
+        "gt_product_input_violation_zero": not any(
+            row["gt_product_input_violation"] for row in train_missions
+        ),
+    }
+    train_route_qa_pass = all(train_route_gates.values())
     payload = {
         "schema_version": 1,
         "protocol": "TRCRV10",
+        "route_id": EXPECTED_ROUTE_ID,
+        "route_config_sha256": EXPECTED_ROUTE_CONFIG_SHA256,
+        "g10_domain_manifest_sha256": EXPECTED_DOMAIN_MANIFEST_SHA256,
         "semantic_gt_role": "offline_QA_and_evaluator_only",
         "minimum_reliable_classification_short_side_px": args.minimum_reliable_short_side,
         "mission_counts": dict(split_counts),
@@ -247,6 +391,8 @@ def main() -> int:
             "target_asset": asset_overlap,
         },
         "gates": gates,
+        "train_route_gates": train_route_gates,
+        "G10_TRAIN_ROUTE_QA_PASS": train_route_qa_pass,
         "G10_CAPTURE_QA_PASS": bool(missions) and all(gates.values()),
     }
     write(args.output, payload)
@@ -318,7 +464,7 @@ def main() -> int:
         "splits": {
             split: [
                 {key: row[key] for key in (
-                    "scene", "world_id", "scene_seed", "trajectory_id",
+                    "scene", "mission_id", "world_id", "scene_seed", "trajectory_id",
                     "target_asset_ids", "negative_only",
                 )}
                 for row in missions if row["split"] == split
@@ -329,6 +475,8 @@ def main() -> int:
         "G10_DEV_VAL_SEALED_read": False,
     })
     print(json.dumps(payload, indent=2))
+    if args.train_only_authorization:
+        return 0 if train_route_qa_pass else 2
     return 0 if payload["G10_CAPTURE_QA_PASS"] else 2
 
 

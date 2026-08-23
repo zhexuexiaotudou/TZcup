@@ -173,8 +173,14 @@ def motion_command_for_frame(
     *,
     world_switch_triggered: bool = False,
     world_switch_frame_index: int | None = None,
+    maximum_linear_speed_mps: float | None = None,
 ) -> tuple[float, float, str]:
     """Resolve a deterministic frame-counted motion phase."""
+    def bounded(linear: float, angular: float, phase: str) -> tuple[float, float, str]:
+        if maximum_linear_speed_mps is not None and abs(linear) > maximum_linear_speed_mps:
+            linear = math.copysign(maximum_linear_speed_mps, linear)
+        return linear, angular, phase
+
     if not profile:
         return default_linear_speed_mps, 0.0, "straight_approach"
     if profile.get("control_mode") == "latched_world_x_switch":
@@ -190,19 +196,19 @@ def motion_command_for_frame(
                     if count <= 0:
                         raise ValueError("post-switch phase frame_count must be positive")
                     if relative_index < offset + count:
-                        return (
+                        return bounded(
                             float(phase.get("linear_x_mps", 0.0)),
                             float(phase.get("angular_z_rad_s", 0.0)),
                             str(phase["name"]),
                         )
                     offset += count
                 raise ValueError("post-switch motion profile does not cover requested frames")
-            return (
+            return bounded(
                 float(profile["orbit_linear_x_mps"]),
                 float(profile["orbit_angular_z_rad_s"]),
-                "safe_orbit_after_candidate",
+                str(profile.get("post_switch_phase_name", "safe_orbit_after_candidate")),
             )
-        return (
+        return bounded(
             float(profile["straight_linear_x_mps"]),
             0.0,
             "straight_candidate_drive_by",
@@ -213,7 +219,7 @@ def motion_command_for_frame(
         if count <= 0:
             raise ValueError("motion phase frame_count must be positive")
         if frame_index < offset + count:
-            return (
+            return bounded(
                 float(phase.get("linear_x_mps", 0.0)),
                 float(phase.get("angular_z_rad_s", 0.0)),
                 str(phase.get("name", f"phase_{offset}")),
@@ -336,6 +342,7 @@ def main() -> None:
                     args.linear_speed_mps,
                     world_switch_triggered=self.world_switch_triggered,
                     world_switch_frame_index=self.world_switch_frame_index,
+                    maximum_linear_speed_mps=args.linear_speed_mps,
                 )
                 command.linear.x = linear
                 command.angular.z = angular
@@ -413,6 +420,7 @@ def main() -> None:
                     args.linear_speed_mps,
                     world_switch_triggered=self.world_switch_triggered,
                     world_switch_frame_index=self.world_switch_frame_index,
+                    maximum_linear_speed_mps=args.linear_speed_mps,
                 )
                 if not commanded_motion_ready(
                     self.last_saved_pose,
@@ -516,6 +524,7 @@ def main() -> None:
                 scene.get("oprv3_motion_profile"), index, args.linear_speed_mps,
                 world_switch_triggered=self.world_switch_triggered,
                 world_switch_frame_index=self.world_switch_frame_index,
+                maximum_linear_speed_mps=args.linear_speed_mps,
             )
             record = {"frame_index": index, "timestamp_ns": stamp, "odom_timestamp_ns": odom_stamp, "sensor_odom_skew_ns": abs(odom_stamp - stamp), "vehicle_xy_m": list(pose[:2]), "vehicle_yaw_rad": float(pose[2]), "motion_phase": phase, "commanded_linear_x_mps": linear, "commanded_angular_z_rad_s": angular, "exact_four_sensor_timestamp": len({stamp_ns(msg) for msg in messages}) == 1, "paths": {key: str(path.relative_to(output)).replace("\\", "/") for key, path in paths.items()}, "rgb_sha256": None}
             camera = {"width": self.camera.width, "height": self.camera.height, "k": list(self.camera.k), "p": list(self.camera.p), "frame_id": self.camera.header.frame_id}

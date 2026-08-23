@@ -1,0 +1,38 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://tzcup.local/schemas/journey6-toolchain-lock-v1
+title: TZcup Journey 6 toolchain lock
+type: object
+additionalProperties: false
+required:
+  - schema_version
+  - target_family
+  - target_sku
+  - target_march
+  - status
+  - source
+  - tools
+properties:
+  schema_version:
+    const: 1
+  target_family:
+    const: journey6
+  target_sku:
+    const: auto
+  target_march:
+    enum: [auto, nash-e, nash-m, nash-p]
+  status:
+    enum: [blocked_external, discovered, validated]
+  source:
+    type: object
+    required: [package_name, sha256]
+    properties:
+      package_name: {type: [string, "null"]}
+      version: {type: [string, "null"]}
+      sha256: {type: [string, "null"], pattern: "^[0-9a-f]{64}$"}
+    additionalProperties: true
+  tools:
+    type: object
+    additionalProperties:
+      type: [string, "null"]
+  blocker:
+    type: [object, "null"]

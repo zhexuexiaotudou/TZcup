@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "protocol_id": "EMFJ6V3",
+  "source_commit": "0803af8a176f6c2329a7441681ebdc086b9068af",
+  "executed_at": "2026-08-24T05:05:00+08:00",
+  "development_only": true,
+  "sealed_access_allowed": false,
+  "training_performed": false,
+  "classifier_holdout": {
+    "source_split": "G10_HOLDOUT",
+    "mission_count": 18,
+    "frame_count": 3240,
+    "world_count": 3,
+    "coco": {
+      "name": "G10_HOLDOUT_COCO.json",
+      "bytes": 3818596,
+      "sha256": "732504368dcbf5a1b50e1b0e8d21d34f45f6acb61074fb93b23156ab9383b234"
+    },
+    "capture_qa": {
+      "name": "G10_CAPTURE_QA.json",
+      "bytes": 51658,
+      "sha256": "8d28bb7151567c946d84c2737b73c0bf29203c39e76cc751fdcaa49bdf0fadf2",
+      "pass": false,
+      "passed_gates": [
+        "capture_pass",
+        "sensor_sync_pass",
+        "partial_mission_zero",
+        "holdout_missions_at_least_18",
+        "world_overlap_zero",
+        "seed_overlap_zero",
+        "trajectory_overlap_zero",
+        "target_asset_overlap_zero",
+        "gt_product_input_violation_zero",
+        "exact_rgb_cross_split_duplicate_zero",
+        "phash_cross_split_duplicate_zero"
+      ],
+      "failed_gates": [
+        "positive_targets_cross_required_size_stages",
+        "positive_targets_reach_frozen_minimum",
+        "train_missions_at_least_45"
+      ]
+    },
+    "crop_bank": {
+      "manifest_name": "CLASSIFIER_HOLDOUT_GT_MANIFEST.json",
+      "manifest_bytes": 2750052,
+      "manifest_sha256": "d67cd91d6d20a731a9e0d56a8a26049e3b166058215cd78f023dea023a9d419a",
+      "identity_lock_sha256": "065656889ad70e29035c4ca84343f3b9216f0fc4941730f6b8e790493b2c7409",
+      "counts": {
+        "background_or_unknown": 1080,
+        "metal_can": 60,
+        "paper_litter": 60,
+        "plastic_bottle": 60,
+        "total": 1260
+      }
+    },
+    "raw_inference": {
+      "c1_wastewise_yolov8n_cls": {
+        "name": "C1_HOLDOUT_RAW.json",
+        "bytes": 1560836,
+        "sha256": "3c3a74af64db3a2392ad2956e29ff5fddc222fa5df7386e844fa252d6b903ccd",
+        "native_target_macro_f1": 0.11221464892350969,
+        "native_background_specificity": 0.799074074074074
+      },
+      "c3_vasantvohra_trashnet": {
+        "name": "C3_HOLDOUT_RAW.json",
+        "bytes": 1518845,
+        "sha256": "25008b71c96d16067150362c5fb4ad53df5be4109775c70f6957c563d0b7b49a",
+        "native_target_macro_f1": 0.12508439836026042,
+        "native_background_specificity": 0.29907407407407405
+      }
+    },
+    "fixed_grid_evaluation": {
+      "name": "EMF_CLASSIFIER_HOLDOUT_EVALUATION.json",
+      "bytes": 137221,
+      "sha256": "581c208fb080ee89320aa16d1abc3a5b63d61442121c44f32f9523251e80684a",
+      "candidate_count": 50,
+      "eligible_candidate_count": 0,
+      "selection_reason": "no candidate satisfies target TP and independent background non-flood eligibility",
+      "selected": false,
+      "frozen": false,
+      "best_background_specificity_by_model": {
+        "c1_wastewise_yolov8n_cls": 0.9074074074074074,
+        "c3_vasantvohra_trashnet": 0.3148148148148148
+      }
+    }
+  },
+  "g2_area_dataset": {
+    "dataset_role": "area_model_screening_development_only",
+    "scene_count": 4,
+    "frame_count": 40,
+    "train_scene_count": 2,
+    "holdout_scene_count": 2,
+    "leaf_pile_positive_frame_count": 13,
+    "puddle_positive_frame_count": 11,
+    "a4_area_dataset_ready": true,
+    "manifest": {
+      "name": "EMF_G2_AREA_DATASET_MANIFEST.json",
+      "bytes": 74154,
+      "sha256": "40e84acfa0b2af61c7d95190db65440282a1b336e4513f5f519b433de68ae2a6",
+      "canonical_manifest_sha256": "4269af7df02a0c08ccbc113c09a5969082d3dec3b981543b7ec5269b23c30436"
+    }
+  },
+  "EMF_EXISTING_MODEL_FUNCTIONAL_CANDIDATE": false,
+  "EMF_EXISTING_MODEL_PRODUCT_CANDIDATE": false,
+  "EMF_NONTRAINING_ADJUSTMENT_COMPLETE": false,
+  "EMF_TRANSFER_LEARNING_REQUIRED": false,
+  "training_authorized": false,
+  "next_step": "Screen the three frozen Area routes on the now-positive G2 Area dataset, while preserving the failed classifier HOLDOUT and capture-QA gates. Do not enter classifier transfer learning until all remaining nontraining gates authorize it.",
+  "truth_boundary": "The strict 1260-crop classifier HOLDOUT evaluation rejects both bounded classifier candidates and authorizes neither training nor PC integration. The separate four-scene G2 capture closes the missing Area positive-GT data prerequisite only; it is not an Area model metric, A4 pass, functional candidate, product result, or Journey 6 deployment result."
+}

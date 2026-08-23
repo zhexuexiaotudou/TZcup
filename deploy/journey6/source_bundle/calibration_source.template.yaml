@@ -1,0 +1,36 @@
+schema_version: 1
+source:
+  source_id: replace_with_nonsealed_calibration_source
+  provenance_uri: replace_with_immutable_source_record
+  record_inventory_sha256: "0000000000000000000000000000000000000000000000000000000000000000"
+  sealed_access_allowed: false
+  allowed_splits: [calibration_train]
+preprocess:
+  source_color: rgb
+  input_width: 640
+  input_height: 640
+  letterbox:
+    enabled: true
+    preserve_aspect_ratio: true
+    placement: center
+    pad_value: 114
+    interpolation: bilinear
+  nv12:
+    layout: nv12
+    matrix: bt601
+    value_range: limited
+    chroma_order: uv
+    width_alignment: 2
+    height_alignment: 2
+stratification:
+  required_dimensions: [target_class, scene, lighting, distance_bucket]
+  minimum_distinct_values:
+    target_class: 4
+    scene: 3
+    lighting: 3
+    distance_bucket: 3
+  minimum_per_value:
+    target_class: 20
+    scene: 20
+    lighting: 20
+    distance_bucket: 20

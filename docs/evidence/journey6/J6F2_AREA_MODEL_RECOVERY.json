@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "stage": "J6F2_AREA_MODEL_RECOVERY",
+  "development_only": true,
+  "competition_claim_allowed": false,
+  "release_allowed": false,
+  "sealed_access_allowed": false,
+  "model": {
+    "source": "recovered AUTO-05 attempt-3 development artifact",
+    "filename": "auto05_rgbd_area_segmenter.onnx",
+    "sha256": "82a408f17c81f0aebe68debcb5385eccde859308f59fe8ab2e8bcff72414b3eb",
+    "bytes": 2035107,
+    "onnx_checker_pass": true,
+    "input_shape": [1, 7, 384, 512],
+    "output_shape": [1, 2, 384, 512],
+    "opset": 17,
+    "custom_operator_count": 0,
+    "embedded_nms": false,
+    "class_order": ["leaf_pile", "puddle"],
+    "thresholds": {"leaf_pile": 0.9, "puddle": 0.3}
+  },
+  "development_train_replays": [
+    {
+      "source": "smoke_train_world0",
+      "frame_count": 60,
+      "positive_frames": {"leaf_pile": 0, "puddle": 0},
+      "negative_false_positive_frames": {"leaf_pile": 4, "puddle": 60}
+    },
+    {
+      "source": "smoke_positive_train_world0",
+      "frame_count": 120,
+      "positive_frames": {"leaf_pile": 0, "puddle": 0},
+      "negative_false_positive_frames": {"leaf_pile": 10, "puddle": 120},
+      "note": "the positive label in this dataset is discrete litter, not an area class"
+    }
+  ],
+  "J6_PC_AREA_FUNCTIONAL_PASS": false,
+  "blockers": [
+    "no recovered TRAIN/development replay contains leaf_pile or puddle ground truth",
+    "puddle false-positive frame rate is 100 percent on both negative replays",
+    "formal live Gazebo Area Gate has not run"
+  ],
+  "truth_boundary": "Recovery and CPU ONNX execution prove compatibility only; they do not prove the Area functional gate, official Journey 6 runtime, competition acceptance, or release readiness."
+}

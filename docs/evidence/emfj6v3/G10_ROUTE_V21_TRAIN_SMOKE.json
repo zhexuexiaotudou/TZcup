@@ -1,0 +1,131 @@
+{
+  "schema_version": 1,
+  "protocol": "TRCRV10",
+  "role": "TRAIN_only_route_recovery_smoke",
+  "artifact_root": "F:\\Project\\TZcup-emfj6v3-artifacts\\smoke\\g10_route_v21_train_w01_classes_20260824",
+  "route": {
+    "route_id": "g10_route_v21_reverse_xneg1p95",
+    "route_config_sha256": "ad6cb131739626827296cb37bcd365f58e3a0e4455f9c11f11dfe2b8111b4e36",
+    "switch_world_x_m": -1.95,
+    "straight_linear_x_mps": 0.05,
+    "post_switch_linear_x_mps": -0.05,
+    "post_switch_angular_z_rad_s": 0.0,
+    "capture_frames": 360,
+    "minimum_adjacent_translation_m": 0.02,
+    "minimum_adjacent_rotation_rad": 0.03
+  },
+  "fixed_inputs": {
+    "domain_manifest_sha256": "3bdb3006226943e4149cd84144b488e5eb112ab35ad3692c5da8cc48c88b5208",
+    "runtime_image_digest": "sha256:418550f48916d794bc0aff144c60a3b1353d0bb0bb1dcf086cda0ec8e2a5aadc",
+    "linorobot2_revision": "b96aa42fbfa4390a77e0aab90935fe55d66d04ba",
+    "linorobot2_checkout_clean": true,
+    "world_id": "g10v15_train_w01_01_asphalt_campus",
+    "source_file_sha256": {
+      "g4_scene.py": "65fd579087325032927d2f391089d145e0a732d7f984b00af2acad878f6dabf1",
+      "g2_capture.py": "d8602ab063860e0183867e9b7103bc24a1757e1a1a5949921c27e1edab54861b",
+      "run_trcrv10_g10_capture.ps1": "f109ea80cced6c0775bb01c7784dcce00244f6ee3e9b34f7bc1e808f5ea05fb0",
+      "audit_trcrv10_g10_sequences.py": "211cc07ce38b43f3376ccf642f86dbdd9625421869918981c231bddb526acd61",
+      "prepare_trcrv10_g10_coco.py": "5e56daf165a548acd31f6800b27a78095a28b421dd6d52e27e191dcf8acf458a"
+    }
+  },
+  "rejected_routes": [
+    {
+      "route_id": "g10_route_v19_spin_xneg1p5",
+      "artifact_root": "F:\\Project\\TZcup-emfj6v3-artifacts\\smoke\\g10_route_v19_train_w01_s01_v2_20260824",
+      "rejection": "vehicle_stalled_on_target_before_switch",
+      "read_only_live_odom_x_m": -1.7325719157,
+      "capture_report_present": false
+    },
+    {
+      "route_id": "g10_route_v20_spin_xneg1p95",
+      "artifact_root": "F:\\Project\\TZcup-emfj6v3-artifacts\\smoke\\g10_route_v20_train_w01_s01_20260824",
+      "rejection": "zero_linear_spin_is_not_a_valid_Ackermann_motion_admission_contract",
+      "capture_report_present": false
+    }
+  ],
+  "missions": [
+    {
+      "scene": "scene_70001",
+      "class_id": "metal_can",
+      "geometry_m": [0.041, 0.11],
+      "captured_frames": 360,
+      "maximum_sensor_odom_skew_ns": 10000000,
+      "observed_travel_m": 9.249550023,
+      "motion_phase_counts": {"straight_candidate_drive_by": 239, "straight_reverse_after_candidate": 121},
+      "maximum_short_side_px": 43,
+      "bucket_counts": {"<18": 62, "18-32": 88, "32-64": 31, "64-96": 0, ">=96": 0},
+      "ordered_size_transition": true,
+      "scene_manifest_sha256": "2ecdd4876f912802bde538636f44861cced7e02f004bb00fd61af728d1432c3e",
+      "capture_report_sha256": "33285b36faa6db0baeda8811e785b6956a03faca667d7a992a520e3e052bb1b9"
+    },
+    {
+      "scene": "scene_70002",
+      "class_id": "paper_litter",
+      "geometry_m": [0.2, 0.13, 0.008],
+      "captured_frames": 360,
+      "maximum_sensor_odom_skew_ns": 10000000,
+      "observed_travel_m": 9.993150021,
+      "motion_phase_counts": {"straight_candidate_drive_by": 222, "straight_reverse_after_candidate": 138},
+      "maximum_short_side_px": 55,
+      "bucket_counts": {"<18": 73, "18-32": 53, "32-64": 42, "64-96": 0, ">=96": 0},
+      "ordered_size_transition": true,
+      "scene_manifest_sha256": "4bbd180ba60e70db1970f97774d822a63d5ca9cc909eabcbbab567eaaea415fe",
+      "capture_report_sha256": "dcc97c2ce436da1c4570e9b0fa9da1ccf0a670bba80a480d32ac6ab601890e4c"
+    },
+    {
+      "scene": "scene_70003",
+      "class_id": "plastic_bottle",
+      "geometry_m": [0.037, 0.18],
+      "captured_frames": 360,
+      "maximum_sensor_odom_skew_ns": 10000000,
+      "observed_travel_m": 9.453050022,
+      "motion_phase_counts": {"straight_candidate_drive_by": 224, "straight_reverse_after_candidate": 136},
+      "maximum_short_side_px": 53,
+      "bucket_counts": {"<18": 52, "18-32": 81, "32-64": 49, "64-96": 0, ">=96": 0},
+      "ordered_size_transition": true,
+      "scene_manifest_sha256": "c6a8a48d86647dfe442357777a41fdf8c114a329d81daed7646b9bb2c13c597f",
+      "capture_report_sha256": "001122c8be2aee42dc660a4db62915f83b8dda41614c42deadeb11ab0054581f"
+    },
+    {
+      "scene": "scene_70004",
+      "class_id": "metal_can",
+      "geometry_m": [0.038, 0.14],
+      "captured_frames": 360,
+      "maximum_sensor_odom_skew_ns": 32000000,
+      "observed_travel_m": 11.670412683,
+      "motion_phase_counts": {"straight_candidate_drive_by": 205, "straight_reverse_after_candidate": 155},
+      "maximum_short_side_px": 48,
+      "bucket_counts": {"<18": 44, "18-32": 61, "32-64": 23, "64-96": 0, ">=96": 0},
+      "ordered_size_transition": true,
+      "scene_manifest_sha256": "b5aadf94de26e07c27877ea87b55cd04759006fa35f0edd2374c3bdb4315ce42",
+      "capture_report_sha256": "0c3f9bb770a4f48ae3c9aca17c1f4a2181b044ad812d39c55bec647bad32eeaf"
+    },
+    {
+      "scene": "scene_70005",
+      "class_id": "paper_litter",
+      "geometry_m": [0.09, 0.08, 0.05],
+      "captured_frames": 360,
+      "maximum_sensor_odom_skew_ns": 10000000,
+      "observed_travel_m": 9.549650022,
+      "motion_phase_counts": {"straight_candidate_drive_by": 223, "straight_reverse_after_candidate": 137},
+      "maximum_short_side_px": 44,
+      "bucket_counts": {"<18": 40, "18-32": 105, "32-64": 36, "64-96": 0, ">=96": 0},
+      "ordered_size_transition": true,
+      "scene_manifest_sha256": "7ffb09b6c1576a057824987eb46dc2697bc356c7ac822a71edfe3f356f5069de",
+      "capture_report_sha256": "7df317e02eb87fd71df6c499e31a8605c0858ec523fbc2de6ce678812d210934"
+    }
+  ],
+  "gates": {
+    "mission_count": 5,
+    "three_target_classes_present": true,
+    "two_paper_geometries_present": true,
+    "capture_pass_all": true,
+    "sensor_sync_pass_all": true,
+    "ordered_size_transition_all": true,
+    "route_v21_train_smoke_pass": true,
+    "formal_train_capture_authorized": true,
+    "formal_holdout_capture_authorized": false,
+    "training_authorized": false
+  },
+  "sealed_or_forbidden_data_read": false
+}

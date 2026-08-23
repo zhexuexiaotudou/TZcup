@@ -1,0 +1,19 @@
+schema_version: 1
+profile_id: journey6_generic
+target_family: journey6
+target_sku: auto
+target_march: auto
+toolchain_lock: deploy/journey6/J6_TOOLCHAIN_LOCK.yaml
+status: blocked_external
+artifact_stages: [canonical_onnx, optimized_onnx, quantized_intermediate, hbm]
+requirements:
+  official_journey6_sdk: true
+  fixed_batch_one: true
+  static_shapes: true
+  custom_operator_count: 0
+  hb_model_info_pass: true
+  hb_verifier_pass: true
+  x86_runtime_load_pass: true
+selection:
+  selectable_before_board_inventory: true
+  compile_before_inventory: false

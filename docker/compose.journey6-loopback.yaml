@@ -1,0 +1,211 @@
+name: tzcup-j6-loopback
+
+services:
+  j6-oe-wrapper:
+    profiles: [build-only]
+    image: ${J6_OE_WRAPPER_IMAGE:-tzcup/journey6-oe-wrapper:local}
+    build:
+      context: ..
+      dockerfile: docker/journey6/Dockerfile.oe-wrapper
+      args:
+        J6_OE_BASE_IMAGE: ${J6_OE_BASE_IMAGE:-tzcup/missing-j6-oe-base:blocked}
+        J6_OE_ROOT: ${J6_OE_ROOT:-/opt/journey6}
+    command: ["/bin/true"]
+
+  discovery:
+    image: ${J6_PC_GATEWAY_IMAGE:-tzcup/journey6-pc-gateway:local}
+    build:
+      context: ..
+      dockerfile: docker/journey6/Dockerfile.algorithm-host
+      args:
+        J6_ALGORITHM_BASE_IMAGE: ${J6_PC_ROS_IMAGE:-ros:jazzy-ros-base}
+        ROS_SETUP: /opt/ros/jazzy/setup.bash
+        RUNTIME_BACKEND: TRANSPORT_ONLY
+    command:
+      - /bin/bash
+      - -lc
+      - exec /usr/bin/fast-discovery-server -i 0 -l 0.0.0.0 -p 11811
+    ports:
+      - "127.0.0.1:11811:11811/udp"
+    networks: [hil_transport]
+    read_only: true
+    tmpfs: [/tmp:size=64m]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+
+  pc-gateway:
+    image: ${J6_PC_GATEWAY_IMAGE:-tzcup/journey6-pc-gateway:local}
+    build:
+      context: ..
+      dockerfile: docker/journey6/Dockerfile.algorithm-host
+      args:
+        J6_ALGORITHM_BASE_IMAGE: ${J6_PC_ROS_IMAGE:-ros:jazzy-ros-base}
+        ROS_SETUP: /opt/ros/jazzy/setup.bash
+        RUNTIME_BACKEND: TRANSPORT_ONLY
+    depends_on: [discovery]
+    command:
+      - /bin/bash
+      - -lc
+      - source "$${TZCUP_ROS_SETUP}" && source "$${TZCUP_WS_SETUP}" && exec ros2 run journey6_hil_gateway journey6_hil_gateway --ros-args -p evidence_directory:=/evidence -p runtime_backend:="$${HIL_RUNTIME_BACKEND}" -p not_journey6_runtime:="$${HIL_NOT_JOURNEY6_RUNTIME}" -p use_sim_time:=true -r /clock:=/hil/clock
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-66}
+      ROS_DISCOVERY_SERVER: discovery:11811
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      HIL_RUNTIME_BACKEND: ${HIL_RUNTIME_BACKEND:-JOURNEY6_OE}
+      HIL_NOT_JOURNEY6_RUNTIME: ${HIL_NOT_JOURNEY6_RUNTIME:-false}
+      ROS_LOG_DIR: /tmp/ros-log
+    volumes:
+      - ${HIL_EVIDENCE_DIR:?set HIL evidence directory}:/evidence
+      - ../starter_ws/src/journey6_hil_gateway/config/hil_topic_qos_contract.yaml:/opt/tzcup/config/hil_topic_qos_contract.yaml:ro
+    networks: [hil_transport]
+    read_only: true
+    tmpfs: [/tmp:size=128m]
+    security_opt: [no-new-privileges:true]
+    restart: unless-stopped
+
+  j6-algorithm:
+    profiles: [journey6]
+    image: ${J6_ALGORITHM_IMAGE:-tzcup/journey6-algorithm-host:local}
+    build:
+      context: ..
+      dockerfile: docker/journey6/Dockerfile.algorithm-host
+      args:
+        J6_ALGORITHM_BASE_IMAGE: ${J6_OE_WRAPPER_IMAGE:-tzcup/journey6-oe-wrapper:local}
+        ROS_SETUP: ${J6_ROS_SETUP:-/missing/journey6/ros/setup.bash}
+        RUNTIME_BACKEND: JOURNEY6_OE
+    depends_on: [discovery, pc-gateway]
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        source "$${TZCUP_ROS_SETUP}"
+        source "$${TZCUP_WS_SETUP}"
+        ps -ef > /evidence/HIL_J6_PROCESS_LIST.txt
+        test -n "$${J6_ALGORITHM_COMMAND:-}"
+        exec /bin/bash -lc "$${J6_ALGORITHM_COMMAND}"
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-66}
+      ROS_DISCOVERY_SERVER: discovery:11811
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      J6_ALGORITHM_COMMAND: ${J6_ALGORITHM_COMMAND:-}
+      TZCUP_HIL_NODE_NAMESPACE: /j6
+      TZCUP_HIL_CONTRACT: /opt/tzcup/config/hil_topic_qos_contract.yaml
+      TZCUP_RUNTIME_BUNDLE: /opt/tzcup/runtime
+      TZCUP_MODEL_ARTIFACTS: /opt/tzcup/models
+      ROS_LOG_DIR: /tmp/ros-log
+    volumes:
+      - ${J6_RUNTIME_BUNDLE:-.}:/opt/tzcup/runtime:ro
+      - ${J6_MODEL_ARTIFACTS:-.}:/opt/tzcup/models:ro
+      - ${HIL_EVIDENCE_DIR:?set HIL evidence directory}:/evidence
+      - ../starter_ws/src/journey6_hil_gateway/config/hil_topic_qos_contract.yaml:/opt/tzcup/config/hil_topic_qos_contract.yaml:ro
+    networks: [hil_transport]
+    cap_add: [NET_ADMIN]
+    read_only: true
+    tmpfs: [/tmp:size=512m]
+    security_opt: [no-new-privileges:true]
+    restart: "no"
+
+  pc-onnx-algorithm:
+    profiles: [pc-onnx]
+    image: ${PC_ONNX_ALGORITHM_IMAGE:-tzcup/pc-onnx-algorithm-host:local}
+    build:
+      context: ..
+      dockerfile: docker/journey6/Dockerfile.algorithm-host
+      args:
+        J6_ALGORITHM_BASE_IMAGE: ${J6_ALGORITHM_ROS_IMAGE:-ros:humble-ros-base}
+        ROS_SETUP: ${J6_ALGORITHM_ROS_SETUP:-/opt/ros/humble/setup.bash}
+        RUNTIME_BACKEND: PC_ONNX
+    depends_on: [discovery, pc-gateway]
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        source "$${TZCUP_ROS_SETUP}"
+        source "$${TZCUP_WS_SETUP}"
+        ps -ef > /evidence/HIL_J6_PROCESS_LIST.txt
+        exec ros2 run journey6_hil_gateway pc_onnx_algorithm_host --ros-args \
+          -p runtime_backend:=PC_ONNX \
+          -p not_journey6_runtime:=true \
+          -p run_id:="$${HIL_RUN_ID}" \
+          -p model_path:="/opt/tzcup/models/$${PC_ONNX_MODEL_FILENAME}" \
+          -p model_id:="$${PC_ONNX_MODEL_ID}" \
+          -p required_model_id:="$${PC_ONNX_REQUIRED_MODEL_ID}" \
+          -p expected_sha256:="$${PC_ONNX_MODEL_SHA256}" \
+          -p qualification_manifest_path:=/opt/tzcup/models/model_qualification_manifest.json \
+          -p evidence_directory:=/evidence \
+          -p apply_network_faults:="$${HIL_APPLY_NETWORK_FAULTS}" \
+          -p use_sim_time:=true -r /clock:=/hil/clock
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-66}
+      ROS_DISCOVERY_SERVER: discovery:11811
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      PC_ONNX_MODEL_FILENAME: ${PC_ONNX_MODEL_FILENAME:-missing.onnx}
+      PC_ONNX_MODEL_ID: ${PC_ONNX_MODEL_ID:-missing}
+      PC_ONNX_REQUIRED_MODEL_ID: ${PC_ONNX_REQUIRED_MODEL_ID:-d1_littercam_yolov9c}
+      PC_ONNX_MODEL_SHA256: ${PC_ONNX_MODEL_SHA256:-}
+      HIL_APPLY_NETWORK_FAULTS: ${HIL_APPLY_NETWORK_FAULTS:-true}
+      HIL_RUN_ID: ${HIL_RUN_ID:?runner must set a non-empty HIL run UUID}
+      TZCUP_HIL_NODE_NAMESPACE: /j6
+      TZCUP_RUNTIME_BACKEND: PC_ONNX
+      TZCUP_NOT_JOURNEY6_RUNTIME: "true"
+      ROS_LOG_DIR: /tmp/ros-log
+    volumes:
+      - ${J6_MODEL_ARTIFACTS:-.}:/opt/tzcup/models:ro
+      - ${HIL_EVIDENCE_DIR:?set HIL evidence directory}:/evidence
+      - ../starter_ws/src/journey6_hil_gateway/config/hil_topic_qos_contract.yaml:/opt/tzcup/config/hil_topic_qos_contract.yaml:ro
+    networks: [hil_transport]
+    cap_add: [NET_ADMIN]
+    read_only: true
+    tmpfs: [/tmp:size=512m]
+    security_opt: [no-new-privileges:true]
+    restart: "no"
+
+  pc-harness:
+    profiles: [pc-onnx]
+    image: ${J6_PC_GATEWAY_IMAGE:-tzcup/journey6-pc-gateway:local}
+    build:
+      context: ..
+      dockerfile: docker/journey6/Dockerfile.algorithm-host
+      args:
+        J6_ALGORITHM_BASE_IMAGE: ${J6_PC_ROS_IMAGE:-ros:jazzy-ros-base}
+        ROS_SETUP: /opt/ros/jazzy/setup.bash
+        RUNTIME_BACKEND: TRANSPORT_ONLY
+    depends_on: [discovery, pc-gateway, pc-onnx-algorithm]
+    command:
+      - /bin/bash
+      - -lc
+      - |
+        source "$${TZCUP_ROS_SETUP}"
+        source "$${TZCUP_WS_SETUP}"
+        exec ros2 run journey6_hil_gateway journey6_loopback_harness --ros-args \
+          -p runtime_backend:=PC_ONNX \
+          -p not_journey6_runtime:=true \
+          -p run_id:="$${HIL_RUN_ID}" \
+          -p duration_s:="$${HIL_DURATION_S}" \
+          -p sensor_source:="$${HIL_SENSOR_SOURCE}" \
+          -p evidence_directory:=/evidence \
+          -p apply_network_faults:="$${HIL_APPLY_NETWORK_FAULTS}"
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-66}
+      ROS_DISCOVERY_SERVER: discovery:11811
+      RMW_IMPLEMENTATION: rmw_fastrtps_cpp
+      HIL_DURATION_S: ${HIL_DURATION_S:-30}
+      HIL_SENSOR_SOURCE: ${HIL_SENSOR_SOURCE:-synthetic_transport_probe}
+      HIL_APPLY_NETWORK_FAULTS: ${HIL_APPLY_NETWORK_FAULTS:-true}
+      HIL_RUN_ID: ${HIL_RUN_ID:?runner must set a non-empty HIL run UUID}
+      TZCUP_RUNTIME_BACKEND: PC_ONNX
+      TZCUP_NOT_JOURNEY6_RUNTIME: "true"
+      ROS_LOG_DIR: /tmp/ros-log
+    volumes:
+      - ${HIL_EVIDENCE_DIR:?set HIL evidence directory}:/evidence
+      - ../starter_ws/src/journey6_hil_gateway/config/hil_topic_qos_contract.yaml:/opt/tzcup/config/hil_topic_qos_contract.yaml:ro
+    networks: [hil_transport]
+    read_only: true
+    tmpfs: [/tmp:size=128m]
+    security_opt: [no-new-privileges:true]
+    restart: "no"
+
+networks:
+  hil_transport:
+    driver: bridge
+    internal: true

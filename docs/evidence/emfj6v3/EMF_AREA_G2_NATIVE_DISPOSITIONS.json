@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "protocol_id": "EMFJ6V3",
+  "source_commit": "2c89de61f8f8c238112999e9bc25944494a01a3f",
+  "executed_at": "2026-08-24T05:35:00+08:00",
+  "development_only": true,
+  "sealed_access_allowed": false,
+  "training_performed": false,
+  "source_dataset": {
+    "name": "EMF_G2_AREA_DATASET_MANIFEST_V2.json",
+    "bytes": 78361,
+    "sha256": "767edad22fcbe1d52666188c7d1a803e34e93ac97225649b55f70488fd22f2f5",
+    "canonical_manifest_sha256": "5d52c3af6c55ed73dcdec0bd4b587c7ea7b5169b289142d3537d690d25f5e72f",
+    "scene_count": 4,
+    "frame_count": 40,
+    "negative_only_scene_counts_by_split": {
+      "TRAIN": 1,
+      "HOLDOUT": 1
+    },
+    "negative_only_frame_counts_by_split": {
+      "TRAIN": 10,
+      "HOLDOUT": 10
+    },
+    "leaf_pile_positive_frame_count": 13,
+    "puddle_positive_frame_count": 11,
+    "a4_area_dataset_ready": true
+  },
+  "tool_sha256": {
+    "scripts/build_emf_area_dataset.py": "471d8b7f143ac388914379e1d18adcdaa2a47045a50dbb09a5937eed403d0af9",
+    "scripts/screen_emf_ewasr_negative.py": "7ab4bc35ec29ecb296b57c712e386d028d7ed5346fb3a5ed624e04dc16e46dd1",
+    "scripts/screen_emf_segformer_negative.py": "edc6731e4885a6c15f82b4754b59a0a6e1a2b8da2209640e5e24b0794e92ba4e"
+  },
+  "routes": {
+    "area_auto05_recovered_attempt3": {
+      "expected_artifact": "auto05_rgbd_area_segmenter.onnx",
+      "expected_sha256": "82a408f17c81f0aebe68debcb5385eccde859308f59fe8ab2e8bcff72414b3eb",
+      "exact_target_heads": [
+        "leaf_pile",
+        "puddle"
+      ],
+      "bounded_search_roots": [
+        "external task artifact root",
+        "project workspace artifact root",
+        "F drive project file index by exact filename and expected byte count"
+      ],
+      "artifact_found": false,
+      "native_g2_executed": false,
+      "disposition": "terminal_blocked_exact_artifact_missing",
+      "selected": false,
+      "frozen": false,
+      "training_authorized": false
+    },
+    "area_ewasr_resnet18": {
+      "artifact_sha256": "15e520fc5f7e910c9367556db9a9c1107bdc9c74e7982b3bf89c7050509411d7",
+      "native_class_order": [
+        "obstacles_or_environment",
+        "water",
+        "sky"
+      ],
+      "raw": {
+        "TRAIN": {
+          "name": "EWASR_G2_TRAIN_NEGATIVE_RAW.json",
+          "bytes": 6713,
+          "sha256": "7f7d5fce882e9fa49120fec134883af76d9cd6685f2cc6e8ee6f5d95e9c44318",
+          "frame_count": 10,
+          "water_activated_frame_count": 10,
+          "water_pixel_fraction": 0.4795166015625
+        },
+        "HOLDOUT": {
+          "name": "EWASR_G2_HOLDOUT_NEGATIVE_RAW.json",
+          "bytes": 6873,
+          "sha256": "a69e9dd976ca0f0e74cdae3e84e10044ddd59781807922e8e55f0ae46503780c",
+          "frame_count": 10,
+          "water_activated_frame_count": 10,
+          "water_pixel_fraction": 0.4125162760416667
+        }
+      },
+      "target_class_mapping": null,
+      "target_area_metrics": "not_applicable_semantics_not_exact",
+      "disposition": "terminal_rejected_native_water_flood_and_no_leaf_class",
+      "selected": false,
+      "frozen": false,
+      "training_authorized": false
+    },
+    "area_nvidia_segformer_b0_ade20k": {
+      "artifact_sha256": "6ae39addd01de6b1b8bde2cf677d43a5cd733424b8d186de3f95d1c51fee23f9",
+      "runtime_image_digest": "sha256:bf61e2b6bca3b1fc6a66100986b59b2eec8aef91a24079b2560bd365622ecf86",
+      "native_class_count": 150,
+      "raw": {
+        "TRAIN": {
+          "name": "SEGFORMER_G2_TRAIN_NEGATIVE_RAW.json",
+          "bytes": 27180,
+          "sha256": "58a35a59dd5f04807b6e87a1fcb5e4e15b630007c710700f6b9cc60ce655e509",
+          "frame_count": 10,
+          "water_tree_grass_plant_pixel_fraction": 0.0
+        },
+        "HOLDOUT": {
+          "name": "SEGFORMER_G2_HOLDOUT_NEGATIVE_RAW.json",
+          "bytes": 21233,
+          "sha256": "1cb1e280144bfcb5820173b79d1b4e63c486c4ba6d071176e050fdb162bb3f3f",
+          "frame_count": 10,
+          "water_tree_grass_plant_pixel_fraction": 0.0
+        }
+      },
+      "target_class_mapping": null,
+      "target_area_metrics": "not_applicable_semantics_not_exact",
+      "license_release_allowed": false,
+      "disposition": "terminal_development_reference_semantics_not_exact_release_license_blocked",
+      "selected": false,
+      "frozen": false,
+      "training_authorized": false
+    }
+  },
+  "area_candidate_dispositions_closed": true,
+  "area_screening_complete": true,
+  "area_existing_model_functional_candidate": false,
+  "area_existing_model_product_candidate": false,
+  "EMF_NONTRAINING_ADJUSTMENT_COMPLETE": false,
+  "EMF_TRANSFER_LEARNING_REQUIRED": false,
+  "training_authorized": false,
+  "next_step": "Repair the G10 positive-size-stage route, generate at least 45 independent TRAIN missions, rerun non-empty TRAIN/HOLDOUT QA, and only then close the remaining classifier/detector A4 and A5 gates.",
+  "truth_boundary": "The frozen three-route Area candidate pool now has G2-bound terminal dispositions. Only negative native behavior was executable for the two semantically mismatched reference models; exact target Area IoU remains not applicable, and the exact historical leaf/puddle artifact is missing. This closes bounded existing Area candidate screening but does not authorize Area adaptation, global nontraining completion, transfer learning, PC integration, product acceptance, or Journey 6 deployment."
+}

@@ -1,0 +1,75 @@
+{
+  "schema_version": 1,
+  "protocol_id": "EMFJ6V3",
+  "source_commit": "f8383d60be7469aef4e13e690d6591c43a5ea419",
+  "executed_at": "2026-08-24T02:06:17+08:00",
+  "model_id": "c3_vasantvohra_trashnet",
+  "artifact": {
+    "name": "trained_model.h5",
+    "bytes": 34180888,
+    "sha256": "013afdc86a673cb2354f4559c165301d5abda1c5878bb523a5995e483d4cc90a"
+  },
+  "isolation": {
+    "runtime_image_digest": "sha256:47aa058918aa7b09343c05ccbd23ccef976006a07b579143e9adde34a937b419",
+    "uid": 65534,
+    "non_root": true,
+    "network": "none",
+    "read_only_rootfs": true,
+    "input_mounts_read_only": true,
+    "upstream_prediction_script_executed": false
+  },
+  "runtime": {
+    "device": "cpu",
+    "python": "3.6.9",
+    "tensorflow": "1.15.5",
+    "numpy": "1.18.5",
+    "pillow": "8.1.0",
+    "h5py": "2.10.0",
+    "records": 183,
+    "elapsed_seconds": 6.28880422400016
+  },
+  "dataset": {
+    "split": "G10_TRAIN",
+    "source_manifest_sha256": "2f226ed4925779348e218c49c16d0b33ba719958289e493948fd5427e94e3166",
+    "identity_lock_sha256": "998f5666410ef5893cbbddbe22e8831fd70eb548559cda9739ba84086c8d37f8",
+    "records": 183,
+    "all_image_sha_bbox_record_identities_verified": true,
+    "formal_eligible": false,
+    "independent_negative_only_domain": false
+  },
+  "preprocess": {
+    "crop_bounds": "floor_xy1_ceil_xy2_clamped",
+    "color": "PIL_RGB",
+    "resize": [300, 300],
+    "resample": "PIL_NEAREST",
+    "layout": "NHWC",
+    "source_dtype": "uint8",
+    "rescale": "divide_by_255.0"
+  },
+  "metrics": {
+    "prediction_counts": {
+      "background": 108,
+      "plastic_bottle": 26,
+      "metal_can": 47,
+      "paper_litter": 2
+    },
+    "macro_f1": 0.4410714285714286,
+    "target_macro_f1": 0.35,
+    "background_specificity": 0.7352941176470589,
+    "target_recall": {
+      "plastic_bottle": 0.07142857142857142,
+      "metal_can": 1.0,
+      "paper_litter": 0.0
+    }
+  },
+  "external_evidence": {
+    "name": "C3_GT_TRAIN_NATIVE_SMOKE.json",
+    "bytes": 157442,
+    "sha256": "3323a4bec168e02da7e72e9cde076d12d578aa79870309b4724b326794e32048"
+  },
+  "EMF_EXISTING_MODEL_FUNCTIONAL_CANDIDATE": false,
+  "EMF_EXISTING_MODEL_PRODUCT_CANDIDATE": false,
+  "training_authorized": false,
+  "decision": "direct_use_failed_zero_paper_recall_and_near_zero_plastic_recall",
+  "truth_boundary": "Development-only native H5 smoke on offline GT-derived TRAIN crops. It is not proposal-crop A4, independent negative-domain, HOLDOUT, license clearance, product, release, Journey 6, or training evidence."
+}

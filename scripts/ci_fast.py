@@ -171,6 +171,7 @@ def run_ros_independent_tests() -> None:
     debug_visualization_package = SOURCE_ROOT / "sanitation_debug_visualization"
     gazebo_visualization_package = SOURCE_ROOT / "sanitation_gazebo_visualization"
     safety_package = SOURCE_ROOT / "sanitation_safety"
+    journey6_hil_package = SOURCE_ROOT / "journey6_hil_gateway"
     sys.path.insert(0, str(ROOT))
     sys.path.insert(0, str(coverage_package))
     sys.path.insert(0, str(tasks_package))
@@ -185,6 +186,7 @@ def run_ros_independent_tests() -> None:
     sys.path.insert(0, str(debug_visualization_package))
     sys.path.insert(0, str(gazebo_visualization_package))
     sys.path.insert(0, str(safety_package))
+    sys.path.insert(0, str(journey6_hil_package))
     test_paths = (
         coverage_package / "test" / "test_metrics.py",
         coverage_package / "test" / "test_stage4w_geometry.py",
@@ -217,11 +219,20 @@ def run_ros_independent_tests() -> None:
         perception_package / "test" / "test_product_pipeline_contract.py",
         perception_package / "test" / "test_grid_safety.py",
         perception_package / "test" / "test_action_verifier.py",
+        perception_package / "test" / "test_second_pass_provider.py",
+        perception_package / "test" / "test_second_pass_product_integration.py",
+        perception_package / "test" / "test_legacy_area_development.py",
         perception_package / "test" / "test_performance_monitor.py",
         perception_package / "test" / "test_backends.py",
         perception_package / "test" / "test_pipeline_manifest.py",
         perception_package / "test" / "test_preprocessing.py",
         perception_package / "test" / "test_j6_runtime.py",
+        perception_package / "test" / "test_journey6_contract.py",
+        perception_package / "test" / "test_journey6_nv12.py",
+        perception_package / "test" / "test_journey6_provider.py",
+        perception_package / "test" / "test_journey6_hil.py",
+        perception_package / "test" / "test_onnx_provider.py",
+        perception_package / "test" / "test_pretrained_contracts.py",
         perception_package / "test" / "test_dynamic_trash_map.py",
         perception_package / "test" / "test_no_preknown_targets.py",
         perception_package / "test" / "test_fov_visibility_contract.py",
@@ -346,6 +357,11 @@ def run_ros_independent_tests() -> None:
         safety_package / "test" / "test_actuator_timeout_guard.py",
         safety_package / "test" / "test_supervisor.py",
         safety_package / "test" / "test_velocity_gate.py",
+        journey6_hil_package / "test" / "test_contract.py",
+        journey6_hil_package / "test" / "test_emulation.py",
+        journey6_hil_package / "test" / "test_journey6_hil_gateway_core.py",
+        journey6_hil_package / "test" / "test_network_faults.py",
+        journey6_hil_package / "test" / "test_placement.py",
         ROOT / "scripts" / "test_autonomous_runner.py",
         ROOT / "scripts" / "test_auto02_tools.py",
         ROOT / "scripts" / "test_auto03_matrix.py",
@@ -358,6 +374,34 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_x1_full_pipeline.py",
         ROOT / "scripts" / "test_generate_perception_product_status.py",
         ROOT / "scripts" / "test_j6_product_contract.py",
+        ROOT / "scripts" / "test_j6_pc_status.py",
+        ROOT / "scripts" / "test_j6_calibration_manifest.py",
+        ROOT / "scripts" / "test_j6_no_sealed_calibration.py",
+        ROOT / "scripts" / "test_j6_source_bundle.py",
+        ROOT / "scripts" / "test_audit_j6f2_area_dev.py",
+        ROOT / "scripts" / "test_j6_tensor_parity.py",
+        ROOT / "scripts" / "test_pretrained_model_tooling.py",
+        ROOT / "scripts" / "test_existing_model_inventory.py",
+        ROOT / "scripts" / "test_model_semantic_contract.py",
+        ROOT / "scripts" / "test_screen_emf_yolox_reference.py",
+        ROOT / "scripts" / "test_screen_emf_c1_gt_smoke.py",
+        ROOT / "scripts" / "test_c4_native_worker.py",
+        ROOT / "scripts" / "test_evaluate_emf_classifier_nontraining.py",
+        ROOT / "scripts" / "test_prepare_trcrv10_g10_coco.py",
+        ROOT / "scripts" / "test_build_emf_classifier_holdout_gt.py",
+        ROOT / "scripts" / "test_c1_holdout_native_worker.py",
+        ROOT / "scripts" / "test_c3_holdout_native_worker.py",
+        ROOT / "scripts" / "test_evaluate_emf_classifier_holdout.py",
+        ROOT / "scripts" / "test_build_emf_area_dataset.py",
+        ROOT / "scripts" / "test_emf_g2_area_capture_contract.py",
+        ROOT / "scripts" / "test_screen_emf_ewasr_negative.py",
+        ROOT / "scripts" / "test_screen_emf_segformer_negative.py",
+        ROOT / "scripts" / "test_vit_native_worker.py",
+        ROOT / "scripts" / "test_c3_native_worker.py",
+        ROOT / "scripts" / "test_candidate_cap.py",
+        ROOT / "scripts" / "test_no_training_before_exhaustion.py",
+        ROOT / "scripts" / "test_native_vs_onnx.py",
+        ROOT / "scripts" / "test_d1_golden_attribution.py",
         ROOT / "scripts" / "test_real_rgbd_capture.py",
         ROOT / "scripts" / "test_merge_auto05r_capture_shards.py",
         ROOT / "scripts" / "test_overlay_auto05r_capture_scenes.py",
