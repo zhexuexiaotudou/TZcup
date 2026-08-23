@@ -35,7 +35,7 @@ PRODUCT_FIELD_READY=false
 
 目标计算平台已收敛为地平线 Journey 6，当前 SKU 与 `march` 均保持 `auto`。仓库新增 PC 先行的预训练模型、NV12、严格 provider、分离式 HIL 与板到即部署合同，并在 CI 中分别构建 Jazzy transport/gateway 与 Humble PC-ONNX algorithm-host 镜像；但真实 detector/classifier 激活与评测、官方 J6 OpenExplorer x86 仿真、30 分钟 loopback HIL 和物理板端证据尚未通过，因此所有 `J6_*_READY/PASS` 状态仍失效关闭。RDK S100/S100P 产物不得作为 Journey 6 证据。架构与到板流程见 [Journey 6 目标架构](docs/journey6-target-architecture.md) 和 [板卡到货手册](docs/journey6-board-arrival-runbook.md)。
 
-当前已按 `EMFJ6V3` 授权有界的“现存模型优先”路线：先完成最多 12 个 detector、6 个 classifier、3 个 Area artifact 的来源/语义/许可与固定开发集筛选，再做有界非训练调整；只有筛选和非训练调整均完成且明确判定需要迁移学习时，训练入口才可解锁。当前只是协议与顺序门生效，候选清单尚未冻结，所有 EMF 功能/产品/训练状态均为 false，sealed 数据继续禁止访问。
+当前已按 `EMFJ6V3` 完成有界现存模型发现并冻结 `6 detector / 6 classifier / 3 Area` 清单，全部来源 revision 与登记 artifact SHA 可审计。库存 READY 只表示发现阶段闭合：TACO 类序绑定仍隔离，pLitter/COCO detector 仅作 proposal/reference，四个新 classifier 均没有 background/unknown，eWaSR/SegFormer 只有域错位或 generic Area 代理语义；固定开发集筛选、非训练调整、功能/产品候选与训练授权仍全部为 false，sealed 数据继续禁止访问。
 
 D1 native PT 已在同一 410 张 TRAIN 图、81 个目标上重新实跑，三类 TP 仍全为 0，negative FP/frame 仍为 `2.0152`，与历史 canonical ONNX 语义结果一致，因此主失败归因为 domain/semantic mismatch，禁止继续围绕 D1 调参或训练。发布者固定 revision 未提供模型卡所引用的样图，且当前固定集最大目标短边只有 21 px，A0 的 source-domain sanity 与 10 个明显目标人审条件仍失败关闭。
 

@@ -4,8 +4,10 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -56,14 +58,61 @@ def load_yaml(path: Path) -> dict[str, Any]:
     return payload
 
 
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
 def validate_registry(payload: dict[str, Any]) -> dict[str, int]:
     if payload.get("schema_version") != 3 or payload.get("protocol_id") != "EMFJ6V3":
         raise ContractError("registry must declare EMFJ6V3 schema version 3")
     if payload.get("sealed_access_allowed") is not False:
         raise ContractError("sealed access must remain disabled")
+    frozen = payload.get("inventory_frozen")
+    if not isinstance(frozen, bool):
+        raise ContractError("inventory_frozen must be boolean")
+    discovery_status = payload.get("discovery_status")
+    expected_roles = {"detector", "classifier", "area"}
+    if not isinstance(discovery_status, dict) or set(discovery_status) != expected_roles:
+        raise ContractError("discovery_status must declare detector, classifier, and area")
+    if any(not isinstance(value, bool) for value in discovery_status.values()):
+        raise ContractError("discovery_status values must be boolean")
+    discovery_complete = all(discovery_status.values())
+    if frozen != discovery_complete:
+        raise ContractError("inventory freeze requires all discovery roles complete")
+    completed_at = payload.get("discovery_completed_at")
+    if frozen:
+        if not isinstance(completed_at, str) or not completed_at.strip():
+            raise ContractError("frozen inventory requires discovery_completed_at")
+        try:
+            datetime.fromisoformat(completed_at)
+        except ValueError as exc:
+            raise ContractError("discovery_completed_at must be ISO-8601") from exc
+    elif completed_at is not None:
+        raise ContractError("unfrozen inventory must not declare discovery_completed_at")
+    states = payload.get("states")
+    if not isinstance(states, dict):
+        raise ContractError("registry states must be a mapping")
+    if states.get("EMF_EXISTING_MODEL_INVENTORY_READY") is not frozen:
+        raise ContractError("inventory ready state must match inventory freeze")
     limits = payload.get("candidate_limits")
     if limits != {"detector": 12, "classifier": 6, "area": 3}:
         raise ContractError("candidate limits must remain detector=12 classifier=6 area=3")
+    exclusions = payload.get("discovery_exclusions")
+    if not isinstance(exclusions, list):
+        raise ContractError("discovery_exclusions must be a list")
+    for exclusion in exclusions:
+        if not isinstance(exclusion, dict):
+            raise ContractError("discovery exclusions must be mappings")
+        if exclusion.get("role") not in ROLES:
+            raise ContractError("discovery exclusion role is invalid")
+        if not isinstance(exclusion.get("source_uri"), str) or not exclusion["source_uri"]:
+            raise ContractError("discovery exclusion source_uri is required")
+        if not isinstance(exclusion.get("reason"), str) or not exclusion["reason"]:
+            raise ContractError("discovery exclusion reason is required")
     candidates = payload.get("candidates")
     if not isinstance(candidates, list) or not candidates:
         raise ContractError("registry must contain candidates")
@@ -115,11 +164,51 @@ def training_allowed(state: dict[str, Any]) -> bool:
     )
 
 
+def build_inventory(payload: dict[str, Any], registry_path: Path) -> dict[str, Any]:
+    counts = validate_registry(payload)
+    try:
+        registry_relative = registry_path.resolve().relative_to(ROOT).as_posix()
+    except ValueError as exc:
+        raise ContractError("registry must be inside the repository") from exc
+    frozen = payload.get("inventory_frozen") is True
+    completed_at = payload.get("discovery_completed_at")
+    discovery_status = payload["discovery_status"]
+    ready = frozen and all(discovery_status.values())
+    return {
+        "schema_version": 1,
+        "protocol_id": "EMFJ6V3",
+        "registry_id": payload["registry_id"],
+        "registry_path": registry_relative,
+        "registry_sha256": sha256(registry_path),
+        "inventory_frozen": frozen,
+        "discovery_completed_at": completed_at,
+        "discovery_status": discovery_status,
+        "candidate_limits": payload["candidate_limits"],
+        "candidate_counts": counts,
+        "candidate_count_total": sum(counts.values()),
+        "discovery_exclusions": payload["discovery_exclusions"],
+        "development_only": True,
+        "competition_claim_allowed": False,
+        "release_allowed": False,
+        "sealed_access_allowed": False,
+        "EMF_EXISTING_MODEL_INVENTORY_READY": ready,
+        "EMF_EXISTING_MODEL_SCREENING_COMPLETE": False,
+        "candidates": payload["candidates"],
+        "truth_boundary": (
+            "Inventory readiness freezes bounded discovery and source metadata only. "
+            "It does not prove artifact availability, inference, screening, product "
+            "fitness, release licensing, Journey 6 conversion, or training authority."
+        ),
+    }
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--registry", type=Path, default=DEFAULT_REGISTRY)
     parser.add_argument("--state", type=Path)
     parser.add_argument("--authorize-training", action="store_true")
+    parser.add_argument("--output-inventory", type=Path)
+    parser.add_argument("--require-frozen", action="store_true")
     arguments = parser.parse_args()
     payload = load_yaml(arguments.registry)
     counts = validate_registry(payload)
@@ -132,7 +221,19 @@ def main() -> int:
                 "training blocked until existing-model screening and non-training "
                 "adjustment are complete and transfer learning is explicitly required"
             )
-    print(json.dumps({"valid": True, "candidate_counts": counts}, sort_keys=True))
+    inventory = build_inventory(payload, arguments.registry.resolve())
+    if arguments.require_frozen and not inventory["EMF_EXISTING_MODEL_INVENTORY_READY"]:
+        raise ContractError("existing-model inventory is not frozen and complete")
+    if arguments.output_inventory is not None:
+        arguments.output_inventory.parent.mkdir(parents=True, exist_ok=True)
+        arguments.output_inventory.write_text(
+            json.dumps(inventory, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+    print(json.dumps({
+        "valid": True,
+        "candidate_counts": counts,
+        "inventory_ready": inventory["EMF_EXISTING_MODEL_INVENTORY_READY"],
+    }, sort_keys=True))
     return 0
 
 

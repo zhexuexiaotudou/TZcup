@@ -7,7 +7,7 @@
   "A0_COMPLETE": false,
   "D1_FINAL_ATTRIBUTION_COMPLETE": false,
   "D1_PRIMARY_FAILURE": "DOMAIN_OR_SEMANTIC_MISMATCH",
-  "EMF_EXISTING_MODEL_INVENTORY_READY": false,
+  "EMF_EXISTING_MODEL_INVENTORY_READY": true,
   "EMF_EXISTING_MODEL_SCREENING_COMPLETE": false,
   "EMF_EXISTING_MODEL_FUNCTIONAL_CANDIDATE": false,
   "EMF_EXISTING_MODEL_PRODUCT_CANDIDATE": false,
@@ -15,10 +15,10 @@
   "EMF_TRANSFER_LEARNING_REQUIRED": false,
   "EMF_ADAPTED_MODEL_DEV_PASS": false,
   "training_authorized": false,
-  "candidate_counts_carried_forward": {
-    "detector": 2,
-    "classifier": 2,
-    "area": 1
+  "candidate_counts_frozen": {
+    "detector": 6,
+    "classifier": 6,
+    "area": 3
   },
-  "truth_boundary": "This state authorizes the bounded existing-model-first V3 workflow only. Inventory, screening, adjustment, training, PC closure, Journey 6 runtime, HBM, board, product and release claims remain false."
+  "truth_boundary": "Bounded existing-model discovery and source artifact intake are complete. Screening, adjustment, training, PC closure, Journey 6 runtime, HBM, board, product and release claims remain false."
 }

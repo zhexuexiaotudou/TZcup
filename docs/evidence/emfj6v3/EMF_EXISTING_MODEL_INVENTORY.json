@@ -1,0 +1,932 @@
+{
+  "EMF_EXISTING_MODEL_INVENTORY_READY": true,
+  "EMF_EXISTING_MODEL_SCREENING_COMPLETE": false,
+  "candidate_count_total": 15,
+  "candidate_counts": {
+    "area": 3,
+    "classifier": 6,
+    "detector": 6
+  },
+  "candidate_limits": {
+    "area": 3,
+    "classifier": 6,
+    "detector": 12
+  },
+  "candidates": [
+    {
+      "architecture": "YOLOv9-C DualDDetect",
+      "class_order": [
+        "cigarette_butt",
+        "plastic_bottle",
+        "drinks_can",
+        "fast_food_packaging",
+        "plastic_bag",
+        "coffee_cup",
+        "glass_bottle",
+        "paper_waste",
+        "food_wrapper",
+        "general_litter"
+      ],
+      "class_order_source": "checkpoint_model_names",
+      "class_semantics": {
+        "drinks_can": "metal_can",
+        "paper_waste": "paper_litter",
+        "plastic_bottle": "plastic_bottle"
+      },
+      "disposition": "rejected_product_candidate_diagnostic_only",
+      "files": [
+        {
+          "name": "best.pt",
+          "sha256": "1cf60873661811f51cd84fb6aafb403646b67d2add57c4851b0be48ebdff2873"
+        },
+        {
+          "name": "canonical.onnx",
+          "provenance": "locally_exported_e1",
+          "sha256": "01c72cdbcd08b6fd91c9a56a065f19837bffd67cca175a75b39e295c3afc01f5"
+        }
+      ],
+      "framework": "pytorch_yolov9_and_onnx",
+      "input_output": "static_fp32_1x3x640x640_graph_external_nms",
+      "journey6_preflight_status": "static_contract_pass_official_sdk_not_run",
+      "license": "blocked_license",
+      "model_id": "d1_littercam_yolov9c",
+      "onnx_exportability": "canonical_exported_strict_parity_failed",
+      "reason": "fixed_train_gate_zero_tp_all_actionable_classes_and_strict_parity_fail",
+      "revision": "861363597e109f9f0840f537f48d890cef5b5461",
+      "role": "detector",
+      "source_uri": "https://huggingface.co/aryanshh/littercamv3",
+      "training_data": "unresolved",
+      "weight_distribution": "unresolved"
+    },
+    {
+      "architecture": "YOLO11n",
+      "class_order": [
+        "class_0",
+        "class_1",
+        "class_2",
+        "class_3",
+        "class_4",
+        "class_5",
+        "class_6",
+        "class_7"
+      ],
+      "class_order_source": "embedded_metadata_conflicts_with_model_card",
+      "class_semantics": {},
+      "disposition": "rejected",
+      "files": [
+        {
+          "name": "yolo11_trash_detection.onnx",
+          "sha256": "bce5b56cc825efaf4912a7137f74ad147634ac99ef6585662d003d39329ab100"
+        }
+      ],
+      "framework": "onnx_ultralytics",
+      "input_output": "static_1x3x640x640_to_1x12x8400",
+      "journey6_preflight_status": "fail_ir10_exceeds_current_ir9_limit",
+      "license": "blocked_license",
+      "model_id": "d2_suhan_yolo11n",
+      "onnx_exportability": "source_onnx_ir10",
+      "reason": "anonymous_conflicting_class_contract_and_journey6_ir_preflight_fail",
+      "revision": "d7a78128455ef607a922f50681187f8b32b2af53",
+      "role": "detector",
+      "source_uri": "https://huggingface.co/SUHAN-I/YOLO11",
+      "training_data": "unresolved",
+      "weight_distribution": "unresolved"
+    },
+    {
+      "architecture": "Matterport_Mask_RCNN_TensorFlow1_Keras2_four_fold",
+      "class_order": [
+        "unresolved_release_numeric_binding"
+      ],
+      "class_order_source": "release_proves_10_foreground_plus_background_but_omits_training_map_10_csv",
+      "class_semantics": {},
+      "disposition": "quarantined_class_binding_unproven",
+      "files": [
+        {
+          "name": "taco_10_0.release-1.0.zip",
+          "sha256": "d61a58aed158adb30bac5e2f7c59beb67aa82c6eb09ef52d2f30a5e2325e4a38"
+        },
+        {
+          "name": "taco_10_0.zip::mask_rcnn_taco_0100.h5",
+          "sha256": "d79517accf4e4a0858db5fbe02df3c1f7572def76abf8ecf981398d67a4e73f1"
+        },
+        {
+          "name": "taco_10_1.release-1.0.zip",
+          "sha256": "f1ad8d8053dd704e8649ab8bace3837c3470f9793a6dade3bda756acf01ef5cb"
+        },
+        {
+          "name": "taco_10_1.zip::mask_rcnn_taco_0100.h5",
+          "sha256": "2c34d604da797f63dbde0c160e2676c1682919e1a8d1c1e553fd8c3382d7b6d9"
+        },
+        {
+          "name": "taco_10_2.release-1.0.zip",
+          "sha256": "c00a23e15bd04b55aa1b7084a9c989e4a3d7d9032b8d5098072e46db38b9cc96"
+        },
+        {
+          "name": "taco_10_2.zip::mask_rcnn_taco_0100.h5",
+          "sha256": "01277d432f72a89c85135e07eee551713bdd7d6b98b3c675c284d3647f87dd4b"
+        },
+        {
+          "name": "taco_10_3.release-1.0.zip",
+          "sha256": "b6eb31dbba8614f0aef297bf70b862474c4abb75ceac1ff52644ffad6de57a23"
+        },
+        {
+          "name": "taco_10_3.zip::mask_rcnn_taco_0100.h5",
+          "sha256": "7074730da580b9436737965d5c156246a98aa896e7f84c09d1c49c005a4d1cda"
+        }
+      ],
+      "framework": "tensorflow1_keras2_hdf5",
+      "input_output": "Keras2_Mask_RCNN_dynamic_proposals_11_class_logits_44_bbox_11_masks",
+      "journey6_preflight_status": "not_run_legacy_dynamic_graph_high_risk",
+      "license": "development_only",
+      "model_id": "d3_taco10_mask_rcnn_four_fold",
+      "onnx_exportability": "legacy_Mask_RCNN_ROIAlign_dynamic_proposal_export_high_risk_not_run",
+      "reason": "release_weights_do_not_immutably_bind_numeric_channels_to_map_10_and_paper_is_only_Other",
+      "revision": "ad8a693f16c0bab2208786c6e97e1075546400d5",
+      "role": "detector",
+      "source_uri": "https://github.com/pedropro/TACO/releases/tag/1.0",
+      "training_data": "TACO_outdoor_litter_CC_BY_4_0_release_weight_mapping_provenance_incomplete",
+      "weight_distribution": "four_official_release_ZIPs_and_internal_H5_SHA_locked_each_H5_179375072_bytes"
+    },
+    {
+      "architecture": "YOLOv5l",
+      "class_order": [
+        "Plastic",
+        "Pile",
+        "Face mask",
+        "Trash bin"
+      ],
+      "class_order_source": "nonexecuting_pickle_opcode_checkpoint_metadata_audit",
+      "class_semantics": {
+        "Pile": "generic_litter_pile_not_paper_plastic_litter_class",
+        "Plastic": "generic_plastic_litter_proposal_not_plastic_bottle"
+      },
+      "disposition": "development_reference_only_product_excluded",
+      "files": [
+        {
+          "name": "pLitterStreet_YOLOv5l.pt",
+          "sha256": "c08e00cd42f12de3a87fa37daded947e46f098455dd7fb41c56649d15868a00f"
+        }
+      ],
+      "framework": "pytorch_yolov5",
+      "input_output": "native_YOLOv5l_checkpoint_preprocess_output_contract_pending_isolated_load",
+      "journey6_preflight_status": "not_run_large_model_and_license_risk",
+      "license": "blocked_license",
+      "model_id": "d4_plitterstreet_yolov5l",
+      "onnx_exportability": "standard_YOLOv5_route_plausible_but_not_run",
+      "reason": "exact_target_semantics_absent_and_repository_license_unresolved",
+      "revision": "f955250cd58c3ce2eedc89ce248658340b11ccf5",
+      "role": "detector",
+      "source_uri": "https://github.com/gicait/pLitter/releases/tag/v0.0.0-street",
+      "training_data": "pLitterStreet_Thailand_Vietnam_Sri_Lanka_roadside_domain_redistribution_terms_unresolved",
+      "weight_distribution": "official_release_PT_locally_verified_93106725_bytes"
+    },
+    {
+      "architecture": "RTMDet_Tiny_COCO",
+      "class_order": [
+        "person",
+        "bicycle",
+        "car",
+        "motorcycle",
+        "airplane",
+        "bus",
+        "train",
+        "truck",
+        "boat",
+        "traffic light",
+        "fire hydrant",
+        "stop sign",
+        "parking meter",
+        "bench",
+        "bird",
+        "cat",
+        "dog",
+        "horse",
+        "sheep",
+        "cow",
+        "elephant",
+        "bear",
+        "zebra",
+        "giraffe",
+        "backpack",
+        "umbrella",
+        "handbag",
+        "tie",
+        "suitcase",
+        "frisbee",
+        "skis",
+        "snowboard",
+        "sports ball",
+        "kite",
+        "baseball bat",
+        "baseball glove",
+        "skateboard",
+        "surfboard",
+        "tennis racket",
+        "bottle",
+        "wine glass",
+        "cup",
+        "fork",
+        "knife",
+        "spoon",
+        "bowl",
+        "banana",
+        "apple",
+        "sandwich",
+        "orange",
+        "broccoli",
+        "carrot",
+        "hot dog",
+        "pizza",
+        "donut",
+        "cake",
+        "chair",
+        "couch",
+        "potted plant",
+        "bed",
+        "dining table",
+        "toilet",
+        "tv",
+        "laptop",
+        "mouse",
+        "remote",
+        "keyboard",
+        "cell phone",
+        "microwave",
+        "oven",
+        "toaster",
+        "sink",
+        "refrigerator",
+        "book",
+        "clock",
+        "vase",
+        "scissors",
+        "teddy bear",
+        "hair drier",
+        "toothbrush"
+      ],
+      "class_order_source": "pinned_official_MMDetection_COCO_config_checkpoint_has_no_embedded_names",
+      "class_semantics": {
+        "bottle": "generic_bottle_proposal_not_plastic_bottle"
+      },
+      "disposition": "development_reference_only_product_excluded",
+      "files": [
+        {
+          "name": "rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth",
+          "sha256": "78e30dcce0c6f594eaff0d6977b84b4103688b4aff0ad1aa16008a8cc854a7fb"
+        }
+      ],
+      "framework": "mmdetection_pytorch",
+      "input_output": "native_RTMDet_Tiny_COCO_contract_pending_isolated_load_and_static_export",
+      "journey6_preflight_status": "reference_structure_only_official_compile_not_run",
+      "license": "development_only",
+      "model_id": "d5_rtmdet_tiny_coco",
+      "onnx_exportability": "official_MMDeploy_route_available_graph_external_decode_NMS_preferred_not_run",
+      "reason": "COCO_has_bottle_but_no_target_can_or_paper_plastic_litter_semantics",
+      "revision": "cfd5d3a985b0249de009b67d04f37263e11cdf3d",
+      "role": "detector",
+      "source_uri": "https://github.com/open-mmlab/mmdetection/tree/cfd5d3a985b0249de009b67d04f37263e11cdf3d/configs/rtmdet",
+      "training_data": "COCO80_dataset_and_pretrained_weight_release_layers_pending_final_audit",
+      "weight_distribution": "official_OpenMMLab_checkpoint_locally_verified_57532893_bytes_filename_digest_prefix_matched"
+    },
+    {
+      "architecture": "YOLOX_Tiny_COCO",
+      "class_order": [
+        "person",
+        "bicycle",
+        "car",
+        "motorcycle",
+        "airplane",
+        "bus",
+        "train",
+        "truck",
+        "boat",
+        "traffic light",
+        "fire hydrant",
+        "stop sign",
+        "parking meter",
+        "bench",
+        "bird",
+        "cat",
+        "dog",
+        "horse",
+        "sheep",
+        "cow",
+        "elephant",
+        "bear",
+        "zebra",
+        "giraffe",
+        "backpack",
+        "umbrella",
+        "handbag",
+        "tie",
+        "suitcase",
+        "frisbee",
+        "skis",
+        "snowboard",
+        "sports ball",
+        "kite",
+        "baseball bat",
+        "baseball glove",
+        "skateboard",
+        "surfboard",
+        "tennis racket",
+        "bottle",
+        "wine glass",
+        "cup",
+        "fork",
+        "knife",
+        "spoon",
+        "bowl",
+        "banana",
+        "apple",
+        "sandwich",
+        "orange",
+        "broccoli",
+        "carrot",
+        "hot dog",
+        "pizza",
+        "donut",
+        "cake",
+        "chair",
+        "couch",
+        "potted plant",
+        "bed",
+        "dining table",
+        "toilet",
+        "tv",
+        "laptop",
+        "mouse",
+        "remote",
+        "keyboard",
+        "cell phone",
+        "microwave",
+        "oven",
+        "toaster",
+        "sink",
+        "refrigerator",
+        "book",
+        "clock",
+        "vase",
+        "scissors",
+        "teddy bear",
+        "hair drier",
+        "toothbrush"
+      ],
+      "class_order_source": "pinned_official_YOLOX_COCO_class_table_and_85_channel_output_contract",
+      "class_semantics": {
+        "bottle": "generic_bottle_proposal_not_plastic_bottle"
+      },
+      "disposition": "development_reference_only_product_excluded",
+      "files": [
+        {
+          "name": "yolox_tiny.onnx",
+          "sha256": "427cc366d34e27ff7a03e2899b5e3671425c262ea2291f88bb942bc1cc70b0f7"
+        }
+      ],
+      "framework": "onnx_pytorch_export",
+      "input_output": "static_1x3x416x416_to_1x3549x85_graph_external_decode_and_NMS",
+      "journey6_preflight_status": "static_standard_graph_reference_only_official_compile_not_run",
+      "license": "development_only",
+      "model_id": "d6_yolox_tiny_coco_onnx",
+      "onnx_exportability": "official_opset11_ONNX_checker_pass_no_embedded_class_metadata",
+      "reason": "COCO_has_bottle_but_no_target_can_or_paper_plastic_litter_semantics",
+      "revision": "e1052df71842031413f6030723c3607b839c80ce",
+      "role": "detector",
+      "source_uri": "https://github.com/Megvii-BaseDetection/YOLOX/releases/tag/0.1.1rc0",
+      "training_data": "COCO80_dataset_and_pretrained_weight_release_layers_pending_final_audit",
+      "weight_distribution": "official_release_ONNX_locally_verified_20219662_bytes"
+    },
+    {
+      "architecture": "YOLOv8n-cls",
+      "class_order": [
+        "battery",
+        "biological",
+        "cardboard",
+        "glass",
+        "metal",
+        "paper",
+        "plastic",
+        "trash"
+      ],
+      "class_order_source": "embedded_onnx_metadata",
+      "class_semantics": {
+        "metal": "metal_can",
+        "paper": "paper_litter",
+        "plastic": "plastic_bottle"
+      },
+      "disposition": "development_screening_pending",
+      "files": [
+        {
+          "name": "wastewise-yolo.onnx",
+          "sha256": "2b46d491091dbc0ed98a0f1eaee7fe5739c8fd3eb5bd5935396c3b2712e1f7a6"
+        }
+      ],
+      "framework": "onnx_ultralytics",
+      "input_output": "static_1x3x224x224_to_1x8",
+      "journey6_preflight_status": "static_audit_only_official_sdk_not_run",
+      "license": "blocked_license",
+      "model_id": "c1_wastewise_yolov8n_cls",
+      "onnx_exportability": "source_onnx_checker_pass",
+      "reason": "semantic_mapping_available_but_license_and_fixed_screening_unresolved",
+      "revision": "a30c36c6b181ac0d2eb387bbd4f6d4a5b88ee078",
+      "role": "classifier",
+      "source_uri": "https://huggingface.co/SriramRokkam/wastewise-garbage-cls",
+      "training_data": "unresolved",
+      "weight_distribution": "unresolved"
+    },
+    {
+      "architecture": "EfficientNet-B0",
+      "class_order": [
+        "cardboard",
+        "glass",
+        "metal",
+        "paper",
+        "plastic",
+        "trash"
+      ],
+      "class_order_source": "official_model_card",
+      "class_semantics": {
+        "metal": "metal_can",
+        "paper": "paper_litter",
+        "plastic": "plastic_bottle"
+      },
+      "disposition": "blocked_pending_isolated_source_audit",
+      "files": [
+        {
+          "name": "ecodetect_model.h5",
+          "sha256": "2886fe9514920376e9e7284edfd3e72e87b85b39420e119cef54f9cc593f2e3d"
+        }
+      ],
+      "framework": "tensorflow_keras",
+      "input_output": "source_h5_contract_requires_isolated_audit",
+      "journey6_preflight_status": "not_run",
+      "license": "blocked_license",
+      "model_id": "c2_ecodetect_efficientnetb0",
+      "onnx_exportability": "source_revision_has_no_onnx",
+      "reason": "source_h5_requires_nonroot_readonly_offline_load_and_canonical_export",
+      "revision": "9719e6fc9a352d62209529e0e0573fff3bb7dc3d",
+      "role": "classifier",
+      "source_uri": "https://huggingface.co/nabaouladyahich/ecodetect-waste-classifier",
+      "training_data": "unresolved",
+      "weight_distribution": "unresolved"
+    },
+    {
+      "architecture": "custom_tensorflow_keras_cnn",
+      "class_order": [
+        "cardboard",
+        "glass",
+        "metal",
+        "paper",
+        "plastic",
+        "trash"
+      ],
+      "class_order_source": "pinned_repository_inference_code",
+      "class_semantics": {
+        "metal": "material_evidence_for_metal_can",
+        "paper": "material_evidence_for_paper_litter",
+        "plastic": "material_evidence_for_plastic_bottle"
+      },
+      "disposition": "development_screening_pending",
+      "files": [
+        {
+          "name": "trained_model.h5",
+          "sha256": "013afdc86a673cb2354f4559c165301d5abda1c5878bb523a5995e483d4cc90a"
+        }
+      ],
+      "framework": "tensorflow_keras_hdf5",
+      "input_output": "RGB_300x300_nearest_uint8_div255_NHWC_to_1x6_version_fragile_native_stack",
+      "journey6_preflight_status": "not_run",
+      "license": "development_only",
+      "model_id": "c3_vasantvohra_trashnet",
+      "onnx_exportability": "no_source_onnx_tf2onnx_route_unverified",
+      "reason": "lightweight_exact_material_evidence_but_no_background_unknown_or_outdoor_specificity_proof",
+      "revision": "db53f56e140e38e42b948d377b814fec2954da51",
+      "role": "classifier",
+      "source_uri": "https://github.com/vasantvohra/TrashNet",
+      "training_data": "trashnet_six_material_classes_dataset_layer_license_pending_audit",
+      "weight_distribution": "pinned_repository_H5_locally_verified_34180888_bytes_and_git_blob_matched"
+    },
+    {
+      "architecture": "SigLIP2_base_patch16_224_image_classifier",
+      "class_order": [
+        "cardboard",
+        "glass",
+        "metal",
+        "paper",
+        "plastic",
+        "trash"
+      ],
+      "class_order_source": "pinned_config_json_and_model_card",
+      "class_semantics": {
+        "metal": "material_evidence_for_metal_can",
+        "paper": "material_evidence_for_paper_litter",
+        "plastic": "material_evidence_for_plastic_bottle"
+      },
+      "disposition": "development_screening_pending",
+      "files": [
+        {
+          "name": "model.safetensors",
+          "sha256": "a67e2f6a82914be03cfb85218bc4e7683c8e81fe3fc4a5f9bed3abc8e93757c8"
+        }
+      ],
+      "framework": "transformers_pytorch_safetensors",
+      "input_output": "RGB_example_path_224x224_bilinear_rescale_1_over_255_mean_std_point5_NCHW_to_1x6",
+      "journey6_preflight_status": "not_run_large_model_risk",
+      "license": "development_only",
+      "model_id": "c4_prithiv_trash_net_siglip2",
+      "onnx_exportability": "transformers_export_route_unverified_no_source_onnx",
+      "reason": "exact_material_evidence_but_large_graph_and_no_background_unknown_or_outdoor_specificity_proof",
+      "revision": "6ee65c533db3702e5cbf196634bf04ed13ef583e",
+      "role": "classifier",
+      "source_uri": "https://huggingface.co/prithivMLmods/Trash-Net",
+      "training_data": "garythung_trashnet_base_model_and_dataset_layers_pending_final_audit",
+      "weight_distribution": "pinned_huggingface_safetensors_locally_verified_371580296_bytes_LFS_sha_matched"
+    },
+    {
+      "architecture": "ViT_base_patch16_224_image_classifier",
+      "class_order": [
+        "battery",
+        "biological",
+        "brown-glass",
+        "cardboard",
+        "clothes",
+        "green-glass",
+        "metal",
+        "paper",
+        "plastic",
+        "shoes",
+        "trash",
+        "white-glass"
+      ],
+      "class_order_source": "pinned_config_json",
+      "class_semantics": {
+        "metal": "material_evidence_for_metal_can",
+        "paper": "material_evidence_for_paper_litter",
+        "plastic": "material_evidence_for_plastic_bottle"
+      },
+      "disposition": "development_screening_pending",
+      "files": [
+        {
+          "name": "model.safetensors",
+          "sha256": "b9d9dec6fe465c468dd9f4cd986e633c5ad770d2a5603c22a74cfeaf6c8327b4"
+        }
+      ],
+      "framework": "transformers_pytorch_safetensors",
+      "input_output": "color_conversion_unresolved_224x224_bilinear_rescale_1_over_255_mean_std_point5_NCHW_to_1x12",
+      "journey6_preflight_status": "not_run_large_model_risk",
+      "license": "development_only",
+      "model_id": "c5_dima806_garbage_types_vit",
+      "onnx_exportability": "standard_vit_export_route_unverified_no_source_onnx",
+      "reason": "useful_material_and_nontarget_classes_but_dataset_provenance_and_background_rejection_unresolved",
+      "revision": "766892e572f51ff457be945d0e80654e1c7c874d",
+      "role": "classifier",
+      "source_uri": "https://huggingface.co/dima806/garbage_types_image_detection",
+      "training_data": "linked_kaggle_notebook_exact_dataset_identity_and_license_unresolved",
+      "weight_distribution": "pinned_huggingface_safetensors_locally_verified_343254736_bytes_LFS_sha_matched"
+    },
+    {
+      "architecture": "ViT_base_patch16_224_recycling_classifier",
+      "class_order": [
+        "aluminium",
+        "batteries",
+        "cardboard",
+        "disposable_plates",
+        "glass",
+        "hard_plastic",
+        "paper",
+        "paper_towel",
+        "polystyrene",
+        "soft_plastics",
+        "takeaway_cups"
+      ],
+      "class_order_source": "pinned_config_json",
+      "class_semantics": {
+        "aluminium": "material_evidence_for_metal_can",
+        "hard_plastic": "material_evidence_for_plastic_bottle",
+        "paper": "material_evidence_for_paper_litter",
+        "soft_plastics": "material_evidence_for_plastic_bottle"
+      },
+      "disposition": "development_screening_pending",
+      "files": [
+        {
+          "name": "model.safetensors",
+          "sha256": "ccba6310d281d99efeac188c4c76bcafa48488f02d4c554a86f1d594b480e4ef"
+        }
+      ],
+      "framework": "transformers_pytorch_safetensors",
+      "input_output": "color_conversion_unresolved_224x224_bilinear_rescale_1_over_255_mean_std_point5_NCHW_to_1x11",
+      "journey6_preflight_status": "not_run_large_model_risk",
+      "license": "development_only",
+      "model_id": "c6_giecom_recycling_vit",
+      "onnx_exportability": "standard_vit_export_route_unverified_no_source_onnx",
+      "reason": "useful_material_evidence_but_no_shape_background_unknown_or_outdoor_specificity_proof",
+      "revision": "49101a014c16be969b2c9210011681745449c63b",
+      "role": "classifier",
+      "source_uri": "https://huggingface.co/Giecom/giecom-vit-model-clasification-waste",
+      "training_data": "viola77data_recycling_dataset_layer_pending_final_audit",
+      "weight_distribution": "pinned_huggingface_safetensors_locally_verified_343251660_bytes_LFS_sha_matched"
+    },
+    {
+      "architecture": "recovered_rgbd_area_segmenter",
+      "class_order": [
+        "leaf_pile",
+        "puddle"
+      ],
+      "class_order_source": "audited_output_contract",
+      "class_semantics": {
+        "leaf_pile": "leaf_pile",
+        "puddle": "puddle"
+      },
+      "disposition": "rejected_current_contract_recovery_candidate",
+      "files": [
+        {
+          "name": "auto05_rgbd_area_segmenter.onnx",
+          "sha256": "82a408f17c81f0aebe68debcb5385eccde859308f59fe8ab2e8bcff72414b3eb"
+        }
+      ],
+      "framework": "onnx",
+      "input_output": "static_1x7x384x512_to_1x2x384x512",
+      "journey6_preflight_status": "static_standard_ops_official_sdk_not_run",
+      "license": "development_only",
+      "model_id": "area_auto05_recovered_attempt3",
+      "onnx_exportability": "recovered_onnx_checker_pass",
+      "reason": "puddle_false_positive_60_of_60_and_no_positive_area_gt_in_replay",
+      "revision": "82a408f17c81f0aebe68debcb5385eccde859308f59fe8ab2e8bcff72414b3eb",
+      "role": "area",
+      "source_uri": "docs/evidence/journey6/J6F2_AREA_MODEL_RECOVERY.json",
+      "training_data": "historical_auto05_development_data_license_unresolved",
+      "weight_distribution": "local_development_artifact_only"
+    },
+    {
+      "architecture": "eWaSR_ResNet18_no_IMU",
+      "class_order": [
+        "obstacles_or_environment",
+        "water",
+        "sky"
+      ],
+      "class_order_source": "official_MaSTr_ID_contract_plus_current_immutable_eWaSR_loader_release_tag_lacks_embedded_mapping",
+      "class_semantics": {
+        "water": "generic_maritime_water_reference_not_road_puddle"
+      },
+      "disposition": "development_reference_screening_pending",
+      "files": [
+        {
+          "name": "ewasr_resnet18.onnx",
+          "sha256": "15e520fc5f7e910c9367556db9a9c1107bdc9c74e7982b3bf89c7050509411d7"
+        }
+      ],
+      "framework": "source_onnx",
+      "input_output": "RGB_ImageNet_normalized_1x3x384x512_to_raw_logits_1x3x96x128_plus_intermediate_1x256x24x32",
+      "journey6_preflight_status": "static_graph_only_Resize_attributes_dual_outputs_and_numeric_parity_require_official_compile",
+      "license": "development_only",
+      "model_id": "area_ewasr_resnet18",
+      "onnx_exportability": "official_IR7_opset12_ONNX_checker_pass_no_external_data_or_custom_domains",
+      "reason": "official_water_segmentation_reference_but_maritime_water_is_not_unambiguous_road_puddle_and_no_leaf_class",
+      "revision": "37f2d61e08148a49fe20f1ee574130351234fbb7",
+      "role": "area",
+      "source_uri": "https://github.com/tersekmatija/eWaSR/releases/tag/0.1.0",
+      "training_data": "MaSTr1325_maritime_USV_domain_dataset_layer_pending_final_audit",
+      "weight_distribution": "official_release_onnx_locally_sha_locked_241076632_bytes"
+    },
+    {
+      "architecture": "SegFormer_MiT_B0_ADE20K_512",
+      "class_order": [
+        "wall",
+        "building",
+        "sky",
+        "floor",
+        "tree",
+        "ceiling",
+        "road",
+        "bed ",
+        "windowpane",
+        "grass",
+        "cabinet",
+        "sidewalk",
+        "person",
+        "earth",
+        "door",
+        "table",
+        "mountain",
+        "plant",
+        "curtain",
+        "chair",
+        "car",
+        "water",
+        "painting",
+        "sofa",
+        "shelf",
+        "house",
+        "sea",
+        "mirror",
+        "rug",
+        "field",
+        "armchair",
+        "seat",
+        "fence",
+        "desk",
+        "rock",
+        "wardrobe",
+        "lamp",
+        "bathtub",
+        "railing",
+        "cushion",
+        "base",
+        "box",
+        "column",
+        "signboard",
+        "chest of drawers",
+        "counter",
+        "sand",
+        "sink",
+        "skyscraper",
+        "fireplace",
+        "refrigerator",
+        "grandstand",
+        "path",
+        "stairs",
+        "runway",
+        "case",
+        "pool table",
+        "pillow",
+        "screen door",
+        "stairway",
+        "river",
+        "bridge",
+        "bookcase",
+        "blind",
+        "coffee table",
+        "toilet",
+        "flower",
+        "book",
+        "hill",
+        "bench",
+        "countertop",
+        "stove",
+        "palm",
+        "kitchen island",
+        "computer",
+        "swivel chair",
+        "boat",
+        "bar",
+        "arcade machine",
+        "hovel",
+        "bus",
+        "towel",
+        "light",
+        "truck",
+        "tower",
+        "chandelier",
+        "awning",
+        "streetlight",
+        "booth",
+        "television receiver",
+        "airplane",
+        "dirt track",
+        "apparel",
+        "pole",
+        "land",
+        "bannister",
+        "escalator",
+        "ottoman",
+        "bottle",
+        "buffet",
+        "poster",
+        "stage",
+        "van",
+        "ship",
+        "fountain",
+        "conveyer belt",
+        "canopy",
+        "washer",
+        "plaything",
+        "swimming pool",
+        "stool",
+        "barrel",
+        "basket",
+        "waterfall",
+        "tent",
+        "bag",
+        "minibike",
+        "cradle",
+        "oven",
+        "ball",
+        "food",
+        "step",
+        "tank",
+        "trade name",
+        "microwave",
+        "pot",
+        "animal",
+        "bicycle",
+        "lake",
+        "dishwasher",
+        "screen",
+        "blanket",
+        "sculpture",
+        "hood",
+        "sconce",
+        "vase",
+        "traffic light",
+        "tray",
+        "ashcan",
+        "fan",
+        "pier",
+        "crt screen",
+        "plate",
+        "monitor",
+        "bulletin board",
+        "shower",
+        "radiator",
+        "glass",
+        "clock",
+        "flag"
+      ],
+      "class_order_source": "pinned_config_json_sha256_209caa9091e4632f7c8883c11170cd08ad29af68b23c09590aa4a5befb1a2a7f",
+      "class_semantics": {
+        "ashcan": "generic_receptacle_reference_not_litter_area",
+        "lake": "generic_water_reference_not_road_puddle",
+        "plant": "generic_vegetation_reference_not_leaf_pile",
+        "river": "generic_water_reference_not_road_puddle",
+        "tree": "generic_vegetation_reference_not_leaf_pile",
+        "water": "generic_water_reference_not_road_puddle"
+      },
+      "disposition": "development_reference_screening_pending_release_blocked",
+      "files": [
+        {
+          "name": "model.safetensors",
+          "sha256": "6ae39addd01de6b1b8bde2cf677d43a5cd733424b8d186de3f95d1c51fee23f9"
+        },
+        {
+          "name": "config.json",
+          "sha256": "209caa9091e4632f7c8883c11170cd08ad29af68b23c09590aa4a5befb1a2a7f"
+        },
+        {
+          "name": "preprocessor_config.json",
+          "sha256": "8039d1d210abaa7117ad78e58cdfd6141a2ec72c03dae891b3cd76737e422c6c"
+        }
+      ],
+      "framework": "transformers_pytorch_safetensors",
+      "input_output": "RGB_expected_512_bilinear_rescale_1_over_255_ImageNet_normalize_reduce_labels_to_150_channel_quarter_resolution_logits",
+      "journey6_preflight_status": "not_run_transformer_LayerNorm_Softmax_MatMul_Resize_and_150_channel_risk",
+      "license": "blocked_license",
+      "model_id": "area_nvidia_segformer_b0_ade20k",
+      "onnx_exportability": "no_source_onnx_static_PT_export_and_numeric_parity_required",
+      "reason": "generic_water_and_vegetation_proxies_are_not_leaf_pile_or_road_puddle_and_license_is_noncommercial",
+      "revision": "489d5cd81a0b59fab9b7ea758d3548ebe99677da",
+      "role": "area",
+      "source_uri": "https://huggingface.co/nvidia/segformer-b0-finetuned-ade-512-512",
+      "training_data": "ImageNet1K_pretrain_then_ADE20K_SceneParse150_finetune_model_license_noncommercial",
+      "weight_distribution": "pinned_safetensors_locally_verified_15036944_bytes_LFS_sha_matched_header_only"
+    }
+  ],
+  "competition_claim_allowed": false,
+  "development_only": true,
+  "discovery_completed_at": "2026-08-24T00:45:07+08:00",
+  "discovery_exclusions": [
+    {
+      "reason": "mutable_google_drive_weights_without_immutable_checkpoint_config_or_sha_binding",
+      "role": "detector",
+      "source_uri": "https://github.com/wimlds-trojmiasto/detect-waste"
+    },
+    {
+      "reason": "official_weight_direct_artifact_not_frozen_and_gpl_release_boundary_unresolved",
+      "role": "detector",
+      "source_uri": "https://github.com/AILab-CVC/YOLO-World"
+    },
+    {
+      "reason": "open_vocabulary_teacher_only_with_dynamic_text_and_deformable_operator_Journey6_risk",
+      "role": "detector",
+      "source_uri": "https://github.com/IDEA-Research/GroundingDINO"
+    },
+    {
+      "reason": "pinned_config_has_no_id2label_or_label2id_and_numeric_class_order_cannot_be_guessed",
+      "role": "classifier",
+      "source_uri": "https://huggingface.co/AmadFR/ecovision_mobilenetv3"
+    },
+    {
+      "reason": "repository_tags_and_model_card_disagree_on_base_model_contract",
+      "role": "classifier",
+      "source_uri": "https://huggingface.co/prithivMLmods/Recycling-Net-11"
+    },
+    {
+      "reason": "open_vocabulary_reference_only_without_fixed_leaf_pile_or_puddle_output_contract",
+      "role": "area",
+      "source_uri": "https://github.com/IDEA-Research/Grounded-Segment-Anything"
+    }
+  ],
+  "discovery_status": {
+    "area": true,
+    "classifier": true,
+    "detector": true
+  },
+  "inventory_frozen": true,
+  "protocol_id": "EMFJ6V3",
+  "registry_id": "tzcup_existing_model_candidates_v3",
+  "registry_path": "config/existing_model_candidates_v3.yaml",
+  "registry_sha256": "bb0905ae71d9598d0345449705573c4917320c8e7cb247e4c9f91ae9868a896d",
+  "release_allowed": false,
+  "schema_version": 1,
+  "sealed_access_allowed": false,
+  "truth_boundary": "Inventory readiness freezes bounded discovery and source metadata only. It does not prove artifact availability, inference, screening, product fitness, release licensing, Journey 6 conversion, or training authority."
+}
