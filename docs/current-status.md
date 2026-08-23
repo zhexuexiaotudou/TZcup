@@ -22,6 +22,8 @@ J6_DEPLOYMENT_BUNDLE_READY=false
 
 目标家族已固定为 `journey6`，但真实板卡 SKU 与 `march` 仍为 `auto`。当前本机未发现经过身份、版本和哈希验证的官方 Journey 6 OpenExplorer/HUCP SDK；历史 RDK S100/S100P 包明确拒绝复用。D1 `best.pt` 已按固定 SHA 以 non-root、只读输入、断网容器真实加载，并由官方 YOLOv9 E1 路线导出 canonical ONNX：静态 `[1,3,640,640]`、opset 17、IR 8、FP32、无自定义算子、无内嵌 NMS，精确十类从 checkpoint 读取。100 张 TRAIN 图的严格 PT/ONNX parity 历史实跑失败（主输出最大框误差 `1.6038 px`、分类分数误差 `0.003521`）；本轮 native PT 在同一 410 张 TRAIN 图、81 个标注上重新实跑，三类 TP 仍均为 `0`，proposal FP/frame 为 `2.0122`、negative FP/frame 为 `2.0152`，与 canonical ONNX 语义结果一致，主失败归因为 domain/semantic mismatch。发布者固定 revision 没有模型卡引用的 `road.jpg` 或其他 sample，固定集也没有 10 个明显大目标（最大短边 21 px），所以 A0 最终归因文件已生成但 `A0_COMPLETE=false`；D1 仍不得激活、调参或训练，15 个 moving Gazebo mission 与 Spot/Post-Clean 未启动。D1 second-pass 的 fail-closed provider、Tracker→ActionVerifier→DynamicTrashMap 合同与恢复的 development-only Area ONNX 已落地；Area 负样本回放暴露 puddle 全帧误报，正式 Area gate保持 false。1800.049 秒 PC_ONNX/Jazzy synthetic+D2 诊断真实执行了 ROS、同步、命令权威与 network fault，但因非 Gazebo、非 Humble、required-D1 mismatch 和 model contract false，transport/algorithm/emulation/official HIL 四状态均为 false；另有 30.011 秒 Humble split smoke，同样不满足正式门。校准盘点仅 `471` 个 TRAIN RGB、`0` ROI；source bundle、官方 SDK/x86、HBM、物理板端和产品状态均保持 false。所有板端 FPS、BPU/CPU/DDR、温度、功耗、HBM 与网络 HIL 时延、30-seed 字段保持 `null/not_run`。
 
+d6 YOLOX-Tiny COCO ONNX 已作为首个新增 reference 在相同 410/81 TRAIN 上真实运行。`0.001–0.5` 全阈值 proposal recall 均为 `0`，阈值 `0.5` 的 FP/frame 仍为 `1.4439`；COCO 缺目标 can/paper 语义，semantic 指标强制 `not_applicable`，因此 d6 不能成为现存功能或产品候选。当前 fixed 数据没有独立 negative-only frame，partial HOLDOUT 又缺 plastic_bottle，完整 A4 与 background specificity 仍保持 blocked。
+
 原因不是裁决工具缺失，而是当前没有一套绑定固定 V1 合同、覆盖 A–P 且通过全部硬门的正式证据。历史实验报告、旧分支和旧运行目录不迁移为新合同的通过证据。
 
 ## 已具备的产品基线

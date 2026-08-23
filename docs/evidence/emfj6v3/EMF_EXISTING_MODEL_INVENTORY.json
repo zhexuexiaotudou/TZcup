@@ -268,7 +268,7 @@
       "class_semantics": {
         "bottle": "generic_bottle_proposal_not_plastic_bottle"
       },
-      "disposition": "development_reference_only_product_excluded",
+      "disposition": "rejected_existing_product_candidate_reference_screen_failed",
       "files": [
         {
           "name": "rtmdet_tiny_8xb32-300e_coco_20220902_112414-78e30dcc.pth",
@@ -281,7 +281,7 @@
       "license": "development_only",
       "model_id": "d5_rtmdet_tiny_coco",
       "onnx_exportability": "official_MMDeploy_route_available_graph_external_decode_NMS_preferred_not_run",
-      "reason": "COCO_has_bottle_but_no_target_can_or_paper_plastic_litter_semantics",
+      "reason": "fixed_410_TRAIN_proposal_recall_zero_at_all_thresholds_and_COCO_target_semantics_incomplete",
       "revision": "cfd5d3a985b0249de009b67d04f37263e11cdf3d",
       "role": "detector",
       "source_uri": "https://github.com/open-mmlab/mmdetection/tree/cfd5d3a985b0249de009b67d04f37263e11cdf3d/configs/rtmdet",
@@ -924,7 +924,7 @@
   "protocol_id": "EMFJ6V3",
   "registry_id": "tzcup_existing_model_candidates_v3",
   "registry_path": "config/existing_model_candidates_v3.yaml",
-  "registry_sha256": "bb0905ae71d9598d0345449705573c4917320c8e7cb247e4c9f91ae9868a896d",
+  "registry_sha256": "34012835add2c2fd7526ec8638290b84ae8fc3dacd1042eb86f91a12e927752c",
   "release_allowed": false,
   "schema_version": 1,
   "sealed_access_allowed": false,

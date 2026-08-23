@@ -173,8 +173,8 @@ candidates:
     framework: mmdetection_pytorch
     onnx_exportability: official_MMDeploy_route_available_graph_external_decode_NMS_preferred_not_run
     journey6_preflight_status: reference_structure_only_official_compile_not_run
-    disposition: development_reference_only_product_excluded
-    reason: COCO_has_bottle_but_no_target_can_or_paper_plastic_litter_semantics
+    disposition: rejected_existing_product_candidate_reference_screen_failed
+    reason: fixed_410_TRAIN_proposal_recall_zero_at_all_thresholds_and_COCO_target_semantics_incomplete
 
   - model_id: d6_yolox_tiny_coco_onnx
     role: detector

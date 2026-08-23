@@ -20,5 +20,10 @@
     "classifier": 6,
     "area": 3
   },
+  "screening_progress": {
+    "d6_yolox_tiny_coco_onnx": "proposal_reference_failed_zero_recall",
+    "formal_negative_only_domain_ready": false,
+    "complete": false
+  },
   "truth_boundary": "Bounded existing-model discovery and source artifact intake are complete. Screening, adjustment, training, PC closure, Journey 6 runtime, HBM, board, product and release claims remain false."
 }
