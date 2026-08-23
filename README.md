@@ -69,6 +69,8 @@ A5 的最小固定调整集已收敛为 C1 baseline + C3 information-bearing can
 
 分类 HOLDOUT 的 C1 ONNX 与 C3 TensorFlow 1.15.5 原生 worker 现已统一为同一 raw-probability 合同：manifest 文件、canonical/record identity、固定 domain SHA、精确三个 HOLDOUT world、逐 crop/source SHA 与容器隔离均 fail-closed，固定 5×5 evaluator 只允许在三目标均有 TP 且 independent negative background specificity `>=0.995` 时选择 development threshold；即使选择也不代表 track、CLEAN_NOW、runtime、functional 或 product 通过。首次 `08_mixed_curb_vegetation` 采集留下 `62/180` 的失败报告，定位为 9 个 admitted-frame 左转把车辆确定性送入 `curb_a`；修复只把该静态布局的 post-switch 路线改为 GT 无关的中心走廊直行，不改 world、seed、asset、camera、碰撞或 GT，旧失败证据保留并将在新外置根完整重采该 world。
 
+中心走廊复跑进一步发现正例实物会在车辆完成 180 帧前与侧刷接触；采集器因此把 CLI `--linear-speed-mps` 明确落实为 motion profile 的线速度上限，默认合同不变，而本次 HOLDOUT 以 `.05 m/s`、相邻位移仍为 `.02 m` 完成固定 approach 段，避免按目标 GT 选择绕行或修改目标/碰撞体。该调整只影响数据采集运动上限，不改变 world、样本身份、阈值网格或运行时产品速度。
+
 Journey 6 校准数据与源码部署包同样失效关闭：当前只读盘点两个明确 TRAIN 根得到 `471` 个 RGB PNG 候选和 `0` 个 ROI/crop，尚无逐文件 SHA 与分层元数据，因此 `J6_CALIBRATION_PACK_READY=false`。reference-only source bundle 已锁定 D1 E1 canonical ONNX、development-only Area ONNX、C++ graph-external 后处理和真实 TRAIN golden tensor lock；但模型选择/发布许可、正式校准、nash profile 与官方工具链仍未齐备，因此 `J6_SOURCE_DEPLOYMENT_BUNDLE_READY=false`。许可审计文件缺失本身也会显式保持 `model_license_not_release_clear`，不会因干净 CI 环境缺少本地 `.workspace` 证据而漏报。`G5_V2`、`SEALED_FINAL`、`DEV_VAL` 始终禁止进入校准链，详见 [Journey 6 校准与源码部署包](docs/journey6-calibration-source-bundle.md)。
 
 主要缺口是合格且可冻结的产品近距四分类/Area 模型、完整感知清扫链的真实 ROS/Gazebo 集成验证、20,000 m² 正式范围建图闭环、30-seed 综合链、3500 m²/h 实测效率、完整 10 Hz/10 min 性能、2 h soak、故障矩阵、5-bag replay、一次性 sealed final 和最终 release/rollback。详情见 [当前状态](docs/current-status.md)，运行时不变量见 [产品运行时基础架构](docs/product-runtime-architecture.md)。

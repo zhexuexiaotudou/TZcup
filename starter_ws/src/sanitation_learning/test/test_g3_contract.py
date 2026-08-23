@@ -233,6 +233,13 @@ def test_latched_world_switch_preserves_safe_orbit_command():
     assert motion_command_for_frame(
         profile, 81, 0.2, world_switch_triggered=True
     ) == (0.2, 0.35, "safe_orbit_after_candidate")
+    assert motion_command_for_frame(
+        profile,
+        81,
+        0.05,
+        world_switch_triggered=True,
+        maximum_linear_speed_mps=0.05,
+    ) == (0.05, 0.35, "safe_orbit_after_candidate")
 
 
 def test_latched_world_switch_runs_relative_post_switch_phases():
