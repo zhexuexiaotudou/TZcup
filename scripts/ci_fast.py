@@ -395,6 +395,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_build_emf_area_dataset.py",
         ROOT / "scripts" / "test_emf_g2_area_capture_contract.py",
         ROOT / "scripts" / "test_screen_emf_ewasr_negative.py",
+        ROOT / "scripts" / "test_screen_emf_segformer_negative.py",
         ROOT / "scripts" / "test_vit_native_worker.py",
         ROOT / "scripts" / "test_c3_native_worker.py",
         ROOT / "scripts" / "test_candidate_cap.py",

@@ -28,6 +28,18 @@ AREA_MANIFEST_SHA256_ALLOWLIST = frozenset(
         (
             "8c9f4c06bcf2a59a3ce15bc53c716c6411945b92870eaee18789bf4ddc291720",
             "056a3b599e8b2b3aa5de141a0e6234ec6b1dbe1ed561c999b7e43123a827828e",
+        ),
+        (
+            "767edad22fcbe1d52666188c7d1a803e34e93ac97225649b55f70488fd22f2f5",
+            "5d52c3af6c55ed73dcdec0bd4b587c7ea7b5169b289142d3537d690d25f5e72f",
+        ),
+    }
+)
+STRICT_NEGATIVE_IDENTITY_SHA_PAIRS = frozenset(
+    {
+        (
+            "767edad22fcbe1d52666188c7d1a803e34e93ac97225649b55f70488fd22f2f5",
+            "5d52c3af6c55ed73dcdec0bd4b587c7ea7b5169b289142d3537d690d25f5e72f",
         )
     }
 )
@@ -185,7 +197,10 @@ def _validate_negative_record(
 
 
 def _load_area_dataset_manifest(
-    manifest: Path, payload: dict, source_root_id: str | None
+    manifest: Path,
+    payload: dict,
+    source_root_id: str | None,
+    source_root_path: str | Path | None,
 ) -> list[dict]:
     if payload.get("protocol_id") != "EMFJ6V3":
         raise ValueError("area dataset manifest protocol_id must be EMFJ6V3")
@@ -227,10 +242,15 @@ def _load_area_dataset_manifest(
     if len(selected) != 1:
         raise ValueError("source_root_id must select exactly one source root")
     root_record = selected[0]
-    if root_record.get("split") != "TRAIN":
-        raise ValueError("selected eWaSR negative source root must use split=TRAIN")
+    root_split = root_record.get("split")
+    if root_split not in {"TRAIN", "HOLDOUT"}:
+        raise ValueError("selected eWaSR negative source root must use TRAIN/HOLDOUT")
     validate_nonsealed_value(root_record["root_id"], field="source root id")
-    raw_root_path = root_record.get("path")
+    raw_root_path = (
+        str(source_root_path)
+        if source_root_path is not None
+        else root_record.get("path")
+    )
     if not isinstance(raw_root_path, str) or not raw_root_path:
         raise ValueError("selected source root path is missing")
     validate_nonsealed_value(raw_root_path, field="source root path")
@@ -244,10 +264,24 @@ def _load_area_dataset_manifest(
     raw_frames = payload.get("frames")
     if not isinstance(raw_frames, list):
         raise TypeError("area dataset manifest frames must be a list")
+    strict_negative_identity = (file_sha, canonical_sha) in (
+        STRICT_NEGATIVE_IDENTITY_SHA_PAIRS
+    )
+    if strict_negative_identity:
+        contract = payload.get("screening_dataset_contract")
+        if not isinstance(contract, dict):
+            raise ValueError("strict negative-only manifest contract is missing")
+        scene_counts = contract.get("negative_only_scene_counts_by_split")
+        frame_counts = contract.get("negative_only_frame_counts_by_split")
+        if scene_counts != {"HOLDOUT": 1, "TRAIN": 1}:
+            raise ValueError("strict negative-only scene counts changed")
+        if frame_counts != {"HOLDOUT": 10, "TRAIN": 10}:
+            raise ValueError("strict negative-only frame counts changed")
     selected_frames = [
         item
         for item in raw_frames
         if isinstance(item, dict) and item.get("root_id") == source_root_id
+        and (not strict_negative_identity or item.get("negative_only") is True)
     ]
     if not selected_frames:
         raise ValueError("selected source root has no frames")
@@ -256,8 +290,8 @@ def _load_area_dataset_manifest(
     seen_ids: set[str] = set()
     seen_rgb_hashes: set[str] = set()
     for raw in selected_frames:
-        if raw.get("split") != "TRAIN":
-            raise ValueError("selected source-root frame must use split=TRAIN")
+        if raw.get("split") != root_split:
+            raise ValueError("selected source-root frame split must match its root")
         for field in ("world_id", "scene_id"):
             value = raw.get(field)
             if not isinstance(value, str) or not value:
@@ -310,11 +344,16 @@ def _load_area_dataset_manifest(
                 seen_rgb_hashes=seen_rgb_hashes,
             )
         )
+    if strict_negative_identity and len(records) != 10:
+        raise ValueError("strict selected source root must expose exactly 10 negative frames")
     return records
 
 
 def load_negative_manifest(
-    path: str | Path, *, source_root_id: str | None = None
+    path: str | Path,
+    *,
+    source_root_id: str | None = None,
+    source_root_path: str | Path | None = None,
 ) -> tuple[dict, list[dict]]:
     manifest = Path(path)
     validate_nonsealed_value(str(manifest), field="manifest path")
@@ -325,7 +364,7 @@ def load_negative_manifest(
         raise TypeError("negative manifest root must be an object")
     if payload.get("schema_version") == AREA_DATASET_SCHEMA:
         return payload, _load_area_dataset_manifest(
-            manifest, payload, source_root_id
+            manifest, payload, source_root_id, source_root_path
         )
     if payload.get("schema_version") != 1:
         raise ValueError("negative manifest schema_version is unsupported")
@@ -414,6 +453,7 @@ def evaluate(
     manifest_path: str | Path,
     *,
     source_root_id: str | None = None,
+    source_root_path: str | Path | None = None,
     session_factory: Callable[..., object] | None = None,
 ) -> dict:
     model = Path(model_path)
@@ -424,7 +464,9 @@ def evaluate(
         raise ValueError("fixed eWaSR model SHA-256 mismatch")
     manifest = Path(manifest_path)
     payload, records = load_negative_manifest(
-        manifest, source_root_id=source_root_id
+        manifest,
+        source_root_id=source_root_id,
+        source_root_path=source_root_path,
     )
     manifest = manifest.resolve(strict=True)
 
@@ -512,7 +554,13 @@ def evaluate(
         "dataset": {
             "dataset_id": payload.get("dataset_id"),
             "split": (
-                "TRAIN" if area_manifest_selected else payload["split"]
+                next(
+                    root["split"]
+                    for root in payload["source_roots"]
+                    if root["root_id"] == source_root_id
+                )
+                if area_manifest_selected
+                else payload["split"]
             ),
             "manifest_sha256": sha256(manifest),
             "source_root_id": (
@@ -552,6 +600,7 @@ def main() -> int:
     parser.add_argument("--model", type=Path, required=True)
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--source-root-id", required=True)
+    parser.add_argument("--source-root-path", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     validate_nonsealed_value(str(args.output), field="output path")
@@ -559,6 +608,7 @@ def main() -> int:
         args.model,
         args.manifest,
         source_root_id=args.source_root_id,
+        source_root_path=args.source_root_path,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

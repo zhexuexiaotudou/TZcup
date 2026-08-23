@@ -261,6 +261,10 @@ def test_final_area_manifest_sha_pair_is_locked():
         "8c9f4c06bcf2a59a3ce15bc53c716c6411945b92870eaee18789bf4ddc291720",
         "056a3b599e8b2b3aa5de141a0e6234ec6b1dbe1ed561c999b7e43123a827828e",
     ) in screening.AREA_MANIFEST_SHA256_ALLOWLIST
+    assert (
+        "767edad22fcbe1d52666188c7d1a803e34e93ac97225649b55f70488fd22f2f5",
+        "5d52c3af6c55ed73dcdec0bd4b587c7ea7b5169b289142d3537d690d25f5e72f",
+    ) in screening.AREA_MANIFEST_SHA256_ALLOWLIST
 
 
 def test_area_dataset_manifest_requires_source_root_and_unique_train_selection(
@@ -285,7 +289,7 @@ def test_area_dataset_manifest_requires_source_root_and_unique_train_selection(
         tmp_path / "holdout_case", selected_split="HOLDOUT"
     )
     _allow_area_manifest(monkeypatch, manifest)
-    with pytest.raises(ValueError, match="split=TRAIN"):
+    with pytest.raises(ValueError, match="frame split must match its root"):
         screening.load_negative_manifest(manifest, source_root_id="TRAIN_004")
 
 
