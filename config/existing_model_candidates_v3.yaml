@@ -243,8 +243,8 @@ candidates:
     framework: tensorflow_keras
     onnx_exportability: source_revision_has_no_onnx
     journey6_preflight_status: not_run
-    disposition: blocked_pending_isolated_source_audit
-    reason: source_h5_requires_nonroot_readonly_offline_load_and_canonical_export
+    disposition: blocked_official_keras3_runtime_deserialization_shape_mismatch
+    reason: pinned_H5_complete_but_Keras_3_11_builds_1_channel_stem_for_saved_3_channel_weights_no_inference_or_route_selection
 
   - model_id: c3_vasantvohra_trashnet
     role: classifier

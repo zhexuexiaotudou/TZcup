@@ -450,7 +450,7 @@
         "paper": "paper_litter",
         "plastic": "plastic_bottle"
       },
-      "disposition": "blocked_pending_isolated_source_audit",
+      "disposition": "blocked_official_keras3_runtime_deserialization_shape_mismatch",
       "files": [
         {
           "name": "ecodetect_model.h5",
@@ -463,7 +463,7 @@
       "license": "blocked_license",
       "model_id": "c2_ecodetect_efficientnetb0",
       "onnx_exportability": "source_revision_has_no_onnx",
-      "reason": "source_h5_requires_nonroot_readonly_offline_load_and_canonical_export",
+      "reason": "pinned_H5_complete_but_Keras_3_11_builds_1_channel_stem_for_saved_3_channel_weights_no_inference_or_route_selection",
       "revision": "9719e6fc9a352d62209529e0e0573fff3bb7dc3d",
       "role": "classifier",
       "source_uri": "https://huggingface.co/nabaouladyahich/ecodetect-waste-classifier",
@@ -932,7 +932,7 @@
   "protocol_id": "EMFJ6V3",
   "registry_id": "tzcup_existing_model_candidates_v3",
   "registry_path": "config/existing_model_candidates_v3.yaml",
-  "registry_sha256": "45da905ddb0b4515ccd7ad2fe842057e1f028237ffa283294b8e3623b2ad00aa",
+  "registry_sha256": "dc3832f69d9763f492a4b29c4f36a8a076ecd84c212639fdf2fbaf68cfebf2be",
   "release_allowed": false,
   "schema_version": 1,
   "sealed_access_allowed": false,
