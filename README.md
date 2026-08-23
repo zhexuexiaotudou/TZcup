@@ -71,6 +71,10 @@ A5 的最小固定调整集已收敛为 C1 baseline + C3 information-bearing can
 
 中心走廊复跑进一步发现正例实物会在车辆完成 180 帧前与侧刷接触；采集器因此把 CLI `--linear-speed-mps` 明确落实为 motion profile 的线速度上限，默认合同不变，而本次 HOLDOUT 以 `.05 m/s`、相邻位移仍为 `.02 m` 完成固定 approach 段，避免按目标 GT 选择绕行或修改目标/碰撞体。该调整只影响数据采集运动上限，不改变 world、样本身份、阈值网格或运行时产品速度。
 
+现已在新外置根完成严格 G10 HOLDOUT：精确 18 个 mission / 3240 帧 / 3 个 world，生成 1260 个逐源图与裁剪 SHA 锁定的 offline-GT 样本（negative-only `1080`，三目标各 `60`）。C1/C3 分别在固定 ONNX CPU 与 TensorFlow 1.15.5 容器中以 non-root、断网、只读输入完成 1260/1260 原生推理；固定 5×5 网格共 50 个候选均不满足“三目标各有 TP 且背景 specificity `>=0.995`”，所以 `selected=false`、`frozen=false`、`training_authorized=false`，不得进入 PC 在线链。采集完整性与隔离门通过，但正式 G10 capture QA 仍因正例尺寸阶段覆盖和 TRAIN mission 数门失败，不能伪报 A4 PASS。完整外置评估锁为 `581c208f…0684a`。
+
+Area 数据缺口也已通过固定 G2 入口真实补齐为独立 development 数据集：TRAIN/HOLDOUT 各一个 positive 与 negative-only mission，共 4 scene / 40 帧，leaf-pile 正例 13 帧、puddle 正例 11 帧，配对 RGB/depth/semantic/instance/TF 清单校验 `a4_area_dataset_ready=true`。这只授权后续在冻结的三条 Area 路线上做筛选，不是 Area IoU、A4、功能、产品或 Journey 6 通过；物理清单 SHA 为 `40e84acf…e2a6`，canonical manifest SHA 为 `4269af7d…0436`。
+
 Journey 6 校准数据与源码部署包同样失效关闭：当前只读盘点两个明确 TRAIN 根得到 `471` 个 RGB PNG 候选和 `0` 个 ROI/crop，尚无逐文件 SHA 与分层元数据，因此 `J6_CALIBRATION_PACK_READY=false`。reference-only source bundle 已锁定 D1 E1 canonical ONNX、development-only Area ONNX、C++ graph-external 后处理和真实 TRAIN golden tensor lock；但模型选择/发布许可、正式校准、nash profile 与官方工具链仍未齐备，因此 `J6_SOURCE_DEPLOYMENT_BUNDLE_READY=false`。许可审计文件缺失本身也会显式保持 `model_license_not_release_clear`，不会因干净 CI 环境缺少本地 `.workspace` 证据而漏报。`G5_V2`、`SEALED_FINAL`、`DEV_VAL` 始终禁止进入校准链，详见 [Journey 6 校准与源码部署包](docs/journey6-calibration-source-bundle.md)。
 
 主要缺口是合格且可冻结的产品近距四分类/Area 模型、完整感知清扫链的真实 ROS/Gazebo 集成验证、20,000 m² 正式范围建图闭环、30-seed 综合链、3500 m²/h 实测效率、完整 10 Hz/10 min 性能、2 h soak、故障矩阵、5-bag replay、一次性 sealed final 和最终 release/rollback。详情见 [当前状态](docs/current-status.md)，运行时不变量见 [产品运行时基础架构](docs/product-runtime-architecture.md)。

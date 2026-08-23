@@ -22,21 +22,21 @@
   },
   "screening_progress": {
     "d6_yolox_tiny_coco_onnx": "proposal_reference_failed_zero_recall",
-    "c1_wastewise_yolov8n_cls": "fixed_TRAIN_grid_max_macro_f1_0_2237_no_HOLDOUT_selection",
+    "c1_wastewise_yolov8n_cls": "fixed_G10_HOLDOUT_grid_25_candidates_zero_eligible_best_background_specificity_0_9074",
     "c2_ecodetect_efficientnetb0": "artifact_complete_official_Keras_runtime_deserialization_shape_mismatch",
-    "c3_vasantvohra_trashnet": "native_GT_smoke_failed_paper_recall_0_plastic_recall_0_0714",
+    "c3_vasantvohra_trashnet": "fixed_G10_HOLDOUT_grid_25_candidates_zero_eligible_best_background_specificity_0_3148",
     "c4_prithiv_trash_net_siglip2": "fixed_TRAIN_grid_max_macro_f1_0_1948_target_macro_f1_zero_no_HOLDOUT_selection",
     "c5_dima806_garbage_types_vit": "native_GT_smoke_failed_all_183_rejected_background",
     "c6_giecom_recycling_vit": "native_GT_smoke_failed_background_specificity_0_0196_zero_plastic_metal_recall",
-    "classifier_nontraining_grid": "C1_C3_fixed_50_candidate_TRAIN_upper_bound_C3_max_macro_f1_0_7351_no_HOLDOUT_selection",
+    "classifier_nontraining_grid": "C1_C3_fixed_50_candidate_G10_HOLDOUT_grid_zero_eligible_no_selection_no_freeze",
     "classifier_candidate_dispositions_closed": true,
-    "area_dataset": "910_complete_frames_but_leaf_and_puddle_positive_GT_absent_two_interrupted_scenes_excluded",
+    "area_dataset": "G2_four_scenes_40_frames_leaf_positive_13_puddle_positive_11_a4_area_dataset_ready",
     "area_ewasr_resnet18": "TRAIN_004_60_of_60_native_water_activation_rejected_direct_target_mapping",
     "area_nvidia_segformer_b0_ade20k": "artifact_contract_verified_direct_target_mapping_rejected_release_blocked_runtime_unavailable",
     "area_candidate_dispositions_closed": true,
     "area_screening_complete": false,
-    "formal_negative_only_domain_ready": false,
+    "formal_negative_only_domain_ready": true,
     "complete": false
   },
-  "truth_boundary": "Bounded discovery, D1 attribution, six terminal classifier dispositions, one TRAIN-only nontraining grid, and three explicit Area dispositions are complete. The missing complete HOLDOUT, independent unknown bank, and Area positive GT keep global screening and nontraining adjustment incomplete; training, PC closure, Journey 6 runtime, HBM, board, product and release claims remain false."
+  "truth_boundary": "Bounded discovery, D1 attribution, six terminal classifier dispositions, strict C1/C3 G10 HOLDOUT inference, and the fixed 50-candidate grid are complete with zero eligible classifier candidates. A new four-scene G2 Area dataset now contains leaf and puddle positive GT, but the frozen Area routes have not been evaluated on it. Global screening and nontraining adjustment remain incomplete; training, PC closure, Journey 6 runtime, HBM, board, product and release claims remain false."
 }
