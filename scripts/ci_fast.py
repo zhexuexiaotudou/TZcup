@@ -383,6 +383,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_pretrained_model_tooling.py",
         ROOT / "scripts" / "test_existing_model_inventory.py",
         ROOT / "scripts" / "test_model_semantic_contract.py",
+        ROOT / "scripts" / "test_screen_emf_yolox_reference.py",
         ROOT / "scripts" / "test_candidate_cap.py",
         ROOT / "scripts" / "test_no_training_before_exhaustion.py",
         ROOT / "scripts" / "test_native_vs_onnx.py",
