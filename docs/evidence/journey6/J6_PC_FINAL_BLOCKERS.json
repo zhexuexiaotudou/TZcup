@@ -1,0 +1,45 @@
+{
+  "schema_version": 1,
+  "blockers": [
+    {
+      "id": "PRETRAINED_DETECTOR_EXHAUSTED",
+      "type": "model_contract",
+      "detail": "D1 has no source ONNX; D2 exposes eight anonymous classes instead of the advertised six and uses IR version 10."
+    },
+    {
+      "id": "PRETRAINED_CLASSIFIER_RELEASE_BLOCKED",
+      "type": "license",
+      "detail": "C1 passes static ONNX checks but its embedded Ultralytics AGPL-3.0 metadata conflicts with the model-card Apache-2.0 declaration; C2 has no source ONNX."
+    },
+    {
+      "id": "CALIBRATION_DATASET_MISSING",
+      "type": "evidence_not_run",
+      "detail": "No 1000-record calibration manifest is frozen for the pretrained candidates."
+    },
+    {
+      "id": "OFFICIAL_JOURNEY6_SDK",
+      "type": "blocked_external",
+      "detail": "No official Journey 6 OpenExplorer/HUCP package was discovered; RDK S100/S100P/S600 substitution is forbidden."
+    },
+    {
+      "id": "PHYSICAL_JOURNEY6_BOARD",
+      "type": "blocked_external",
+      "detail": "Board identity, SKU, march, BSP, runtime ABI, and runtime version are unavailable."
+    },
+    {
+      "id": "LOOPBACK_HIL_30_MIN",
+      "type": "evidence_not_run",
+      "detail": "HIL contracts and ROS package build pass, but the official-runtime 30-minute loop and network fault matrix were not run."
+    },
+    {
+      "id": "DEPLOYMENT_BUNDLE_MODELS",
+      "type": "evidence_not_ready",
+      "detail": "The checksum-bound bundle is a skeleton because no releasable model, exact SDK/runtime profile, or board inventory exists."
+    },
+    {
+      "id": "CRCRV11_PRODUCT_GATE",
+      "type": "model_blocked_internal",
+      "detail": "The existing close-range V1 classifier stop condition remains in force and is not replaced by this development-only pretrained audit."
+    }
+  ]
+}

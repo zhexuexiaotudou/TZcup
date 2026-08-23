@@ -1,0 +1,149 @@
+schema_version: 1
+registry_id: tzcup_journey6_pretrained_candidates
+artifact_root_default: .workspace/models
+truth_boundary: >-
+  Repository metadata is pinned to immutable Hugging Face revisions. A model is
+  fetchable only when that exact revision contains an ONNX file with a known
+  SHA-256; local conversion from another format is a separate, audited artifact.
+models:
+  d1_littercam_yolov9c:
+    candidate: D1
+    role: detector
+    architecture: YOLOv9-C
+    source:
+      provider: huggingface
+      repo_id: aryanshh/littercamv3
+      uri: https://huggingface.co/aryanshh/littercamv3
+      revision: 861363597e109f9f0840f537f48d890cef5b5461
+      filename: best.onnx
+      file_present_at_revision: false
+      expected_sha256: null
+      expected_size_bytes: null
+    model_card:
+      filename: README.md
+      sha256: f72abf393cdcb7a27567e832df48b225b9edfd3eade8e049b4e685ae8b84c59f
+      size_bytes: 1067
+    available_source_artifacts:
+      - filename: best.pt
+        sha256: 1cf60873661811f51cd84fb6aafb403646b67d2add57c4851b0be48ebdff2873
+        size_bytes: 409848737
+    license:
+      model_card_spdx: Apache-2.0
+      architecture: unresolved_ultralytics_yolov9_boundary
+      training_code: unresolved
+      training_data: unresolved
+      weight_distribution: unresolved
+      status: blocked_license
+    fetch_status: blocked_missing_source_onnx
+    download_command: >-
+      py -3 scripts/fetch_pretrained_models.py --model-id
+      d1_littercam_yolov9c --artifact-root .workspace/models
+
+  d2_suhan_yolo11n:
+    candidate: D2
+    role: detector
+    architecture: YOLO11n
+    source:
+      provider: huggingface
+      repo_id: SUHAN-I/YOLO11
+      uri: https://huggingface.co/SUHAN-I/YOLO11
+      revision: d7a78128455ef607a922f50681187f8b32b2af53
+      filename: yolo11_trash_detection.onnx
+      file_present_at_revision: true
+      expected_sha256: bce5b56cc825efaf4912a7137f74ad147634ac99ef6585662d003d39329ab100
+      expected_size_bytes: 10499931
+    model_card:
+      filename: README.md
+      sha256: bc4f0a1bc1743cd012493228e4375e7a915bc3076399f4bc77af2df04c009ed6
+      size_bytes: 1240
+    audited_artifact_contract:
+      onnx_checker_pass: true
+      input: [1, 3, 640, 640]
+      output: [1, 12, 8400]
+      embedded_class_names: [class_0, class_1, class_2, class_3, class_4, class_5, class_6, class_7]
+      model_card_class_count: 6
+      semantic_contract_match: false
+      ir_version: 10
+      j6_ir_maximum: 9
+      j6_static_preflight_pass: false
+    license:
+      model_card_spdx: null
+      architecture: AGPL-3.0_embedded_onnx_metadata_ultralytics_yolo11
+      training_code: unresolved
+      training_data: unresolved
+      weight_distribution: unresolved
+      status: blocked_license
+    fetch_status: blocked_semantic_contract_mismatch
+    download_command: >-
+      py -3 scripts/fetch_pretrained_models.py --model-id d2_suhan_yolo11n
+      --artifact-root .workspace/models
+
+  c1_wastewise_yolov8n_cls:
+    candidate: C1
+    role: close_range_classifier
+    architecture: YOLOv8n-cls
+    source:
+      provider: huggingface
+      repo_id: SriramRokkam/wastewise-garbage-cls
+      uri: https://huggingface.co/SriramRokkam/wastewise-garbage-cls
+      revision: a30c36c6b181ac0d2eb387bbd4f6d4a5b88ee078
+      filename: wastewise-yolo.onnx
+      file_present_at_revision: true
+      expected_sha256: 2b46d491091dbc0ed98a0f1eaee7fe5739c8fd3eb5bd5935396c3b2712e1f7a6
+      expected_size_bytes: 5809886
+    model_card:
+      filename: README.md
+      sha256: 188a67cd1708fbb08cc99981c3bf4fea468892eff4273e0b4dc82a7dac31f1a7
+      size_bytes: 1727
+    audited_artifact_contract:
+      onnx_checker_pass: true
+      input: [1, 3, 224, 224]
+      output: [1, 8]
+      embedded_class_names: [battery, biological, cardboard, glass, metal, paper, plastic, trash]
+      model_card_opset: 17
+      actual_opset: 12
+      semantic_contract_match: true
+    license:
+      model_card_spdx: Apache-2.0
+      architecture: AGPL-3.0_embedded_onnx_metadata_ultralytics_yolov8
+      training_code: unresolved
+      training_data: unresolved
+      weight_distribution: unresolved
+      status: blocked_license
+    fetch_status: fetchable_for_development_audit
+    download_command: >-
+      py -3 scripts/fetch_pretrained_models.py --model-id
+      c1_wastewise_yolov8n_cls --artifact-root .workspace/models
+
+  c2_ecodetect_efficientnetb0:
+    candidate: C2
+    role: close_range_classifier
+    architecture: EfficientNet-B0
+    source:
+      provider: huggingface
+      repo_id: nabaouladyahich/ecodetect-waste-classifier
+      uri: https://huggingface.co/nabaouladyahich/ecodetect-waste-classifier
+      revision: 9719e6fc9a352d62209529e0e0573fff3bb7dc3d
+      filename: ecodetect_model.onnx
+      file_present_at_revision: false
+      expected_sha256: null
+      expected_size_bytes: null
+    model_card:
+      filename: README.md
+      sha256: c910e2016eb0180cb036ce84fac063fc54ecf9a0580694fe5b9a17ace80457fc
+      size_bytes: 1328
+    available_source_artifacts:
+      - filename: ecodetect_model.h5
+        sha256: 2886fe9514920376e9e7284edfd3e72e87b85b39420e119cef54f9cc593f2e3d
+        size_bytes: 46455368
+    license:
+      model_card_spdx: Apache-2.0
+      architecture: unresolved_tensorflow_efficientnet_boundary
+      training_code: unresolved
+      training_data: unresolved
+      weight_distribution: unresolved
+      status: blocked_license
+    fetch_status: blocked_missing_source_onnx
+    download_command: >-
+      py -3 scripts/fetch_pretrained_models.py --model-id
+      c2_ecodetect_efficientnetb0 --artifact-root .workspace/models

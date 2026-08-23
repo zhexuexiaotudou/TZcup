@@ -171,6 +171,7 @@ def run_ros_independent_tests() -> None:
     debug_visualization_package = SOURCE_ROOT / "sanitation_debug_visualization"
     gazebo_visualization_package = SOURCE_ROOT / "sanitation_gazebo_visualization"
     safety_package = SOURCE_ROOT / "sanitation_safety"
+    journey6_hil_package = SOURCE_ROOT / "journey6_hil_gateway"
     sys.path.insert(0, str(ROOT))
     sys.path.insert(0, str(coverage_package))
     sys.path.insert(0, str(tasks_package))
@@ -185,6 +186,7 @@ def run_ros_independent_tests() -> None:
     sys.path.insert(0, str(debug_visualization_package))
     sys.path.insert(0, str(gazebo_visualization_package))
     sys.path.insert(0, str(safety_package))
+    sys.path.insert(0, str(journey6_hil_package))
     test_paths = (
         coverage_package / "test" / "test_metrics.py",
         coverage_package / "test" / "test_stage4w_geometry.py",
@@ -222,6 +224,12 @@ def run_ros_independent_tests() -> None:
         perception_package / "test" / "test_pipeline_manifest.py",
         perception_package / "test" / "test_preprocessing.py",
         perception_package / "test" / "test_j6_runtime.py",
+        perception_package / "test" / "test_journey6_contract.py",
+        perception_package / "test" / "test_journey6_nv12.py",
+        perception_package / "test" / "test_journey6_provider.py",
+        perception_package / "test" / "test_journey6_hil.py",
+        perception_package / "test" / "test_onnx_provider.py",
+        perception_package / "test" / "test_pretrained_contracts.py",
         perception_package / "test" / "test_dynamic_trash_map.py",
         perception_package / "test" / "test_no_preknown_targets.py",
         perception_package / "test" / "test_fov_visibility_contract.py",
@@ -346,6 +354,10 @@ def run_ros_independent_tests() -> None:
         safety_package / "test" / "test_actuator_timeout_guard.py",
         safety_package / "test" / "test_supervisor.py",
         safety_package / "test" / "test_velocity_gate.py",
+        journey6_hil_package / "test" / "test_contract.py",
+        journey6_hil_package / "test" / "test_journey6_hil_gateway_core.py",
+        journey6_hil_package / "test" / "test_network_faults.py",
+        journey6_hil_package / "test" / "test_placement.py",
         ROOT / "scripts" / "test_autonomous_runner.py",
         ROOT / "scripts" / "test_auto02_tools.py",
         ROOT / "scripts" / "test_auto03_matrix.py",
@@ -358,6 +370,9 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_x1_full_pipeline.py",
         ROOT / "scripts" / "test_generate_perception_product_status.py",
         ROOT / "scripts" / "test_j6_product_contract.py",
+        ROOT / "scripts" / "test_j6_pc_status.py",
+        ROOT / "scripts" / "test_j6_tensor_parity.py",
+        ROOT / "scripts" / "test_pretrained_model_tooling.py",
         ROOT / "scripts" / "test_real_rgbd_capture.py",
         ROOT / "scripts" / "test_merge_auto05r_capture_shards.py",
         ROOT / "scripts" / "test_overlay_auto05r_capture_scenes.py",

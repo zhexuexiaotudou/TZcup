@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "e1d900faa255c8c2e56ca20d2b17b7af6d59ca7d",
+  "gaps": [
+    "no_semantically_valid_pretrained_detector",
+    "no_release_cleared_pretrained_classifier",
+    "no_fixed_development_benchmark_or_live_gazebo_run",
+    "no_frozen_1000_record_calibration_manifest",
+    "no_official_journey6_openexplorer_hucp_sdk",
+    "no_official_runtime_sanity_hbm",
+    "no_physical_board_inventory_or_march",
+    "no_journey6_x86_ptq_hbm_or_runtime_parity",
+    "no_30_min_loopback_hil_evidence",
+    "no_real_board_performance_hil_or_rollback_evidence"
+  ],
+  "claim_boundary": "All J6 readiness and product completion flags remain false."
+}

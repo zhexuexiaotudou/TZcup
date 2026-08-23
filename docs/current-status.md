@@ -11,6 +11,17 @@ PRODUCT_INTEGRATION_READY=false
 PRODUCT_FIELD_READY=false
 ```
 
+Journey 6 PC-first 状态同样保持失效关闭：
+
+```text
+J6_PC_FUNCTIONAL_PASS=false
+J6_X86_SIMULATION_READY=false
+J6_LOOPBACK_HIL_READY=false
+J6_DEPLOYMENT_BUNDLE_READY=false
+```
+
+目标家族已固定为 `journey6`，但真实板卡 SKU 与 `march` 仍为 `auto`。当前本机未发现经过身份、版本和哈希验证的官方 Journey 6 OpenExplorer/HUCP SDK；历史 RDK S100/S100P 包明确拒绝复用。D2/C1 ONNX 已真实下载并通过 SHA、ONNX checker、静态 shape、自定义算子和图内 NMS 审计，但 D2 的八个匿名类别与模型卡六类合同不符且 IR 10 超过当前 J6 预检上限，C1 的 Ultralytics AGPL 元数据与模型卡 Apache-2.0 仍有发布许可冲突；因此没有可激活 detector/classifier 组合，固定开发集评测未启动。分离式 HIL 与部署工具合同已提供，但未形成 30 分钟运行证据或可安装模型 bundle。所有板端 FPS、BPU/CPU/DDR、温度、功耗、HBM 与网络 HIL 时延、30-seed 字段保持 `null/not_run`。
+
 原因不是裁决工具缺失，而是当前没有一套绑定固定 V1 合同、覆盖 A–P 且通过全部硬门的正式证据。历史实验报告、旧分支和旧运行目录不迁移为新合同的通过证据。
 
 ## 已具备的产品基线

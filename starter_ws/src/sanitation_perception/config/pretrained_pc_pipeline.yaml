@@ -1,0 +1,50 @@
+schema_version: 1
+pipeline_id: pretrained_pc_integration_dev
+activation_allowed: false
+claim_level: integration_dev
+competition_claim_allowed: false
+provider: onnx_cuda
+fallback_provider: null
+artifact_root_env: TZCUP_PRETRAINED_ARTIFACT_ROOT
+detector:
+  candidate_id: D2
+  source_model: SUHAN-I/YOLO11
+  source_revision: d7a78128455ef607a922f50681187f8b32b2af53
+  source_filename: yolo11_trash_detection.onnx
+  artifact_sha256: null
+  contract: yolo11_detect_v1
+  input_shape: [1, 3, 640, 640]
+  class_mapping:
+    paper: paper_litter
+    plastic: background_or_unknown
+    metal: background_or_unknown
+    cardboard: background_or_unknown
+    glass: background_or_unknown
+    trash: background_or_unknown
+classifier:
+  candidate_id: C1
+  source_model: SriramRokkam/wastewise-garbage-cls
+  source_revision: a30c36c6b181ac0d2eb387bbd4f6d4a5b88ee078
+  source_filename: wastewise-yolo.onnx
+  artifact_sha256: null
+  contract: yolo_cls_v1
+  class_mapping:
+    plastic: plastic_bottle
+    metal: metal_can
+    paper: paper_litter
+    battery: background_or_unknown
+    biological: background_or_unknown
+    cardboard: background_or_unknown
+    glass: background_or_unknown
+    trash: background_or_unknown
+fusion:
+  stable_track_required: true
+  valid_depth_required: true
+  detector_classifier_agreement_required: true
+  action_verifier_required: true
+  maximum_reobserve_count: 2
+blocked_reasons:
+  - d2_source_onnx_class_contract_mismatch_and_ir10
+  - c1_license_layers_unresolved
+  - fixed_development_evaluation_not_executed
+  - CRCRV11_product_classifier_gate_remains_blocked

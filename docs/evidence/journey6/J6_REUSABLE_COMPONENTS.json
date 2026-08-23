@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "e1d900faa255c8c2e56ca20d2b17b7af6d59ca7d",
+  "components": [
+    "ProductInferenceEngine lifecycle and artifact registry",
+    "RGB-D projection and ProductTrackerV2",
+    "ProductActionVerifier and DynamicTrashMap",
+    "reobserve spot-clean post-clean and Coverage resume contracts",
+    "Ackermann safety authority and actuator gates",
+    "existing hash-checked Journey6 external-runner adapter",
+    "AUTO-14 ONNX preflight and J6 operator audit",
+    "product acceptance contract and fail-closed evidence tooling"
+  ],
+  "reuse_boundary": "Contracts and code are reusable; no listed component proves a Journey 6 runtime, model, board, or product gate."
+}

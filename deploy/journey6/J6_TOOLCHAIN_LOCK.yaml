@@ -1,0 +1,22 @@
+schema_version: 1
+target_family: journey6
+target_sku: auto
+target_march: auto
+status: blocked_external
+source:
+  package_name: null
+  version: null
+  sha256: null
+tools:
+  horizon_tc_ui: null
+  hmct: null
+  hbdk4_compiler: null
+  hb_compile: null
+  hb_model_info: null
+  hb_verifier: null
+  hucp_runtime: null
+  dnn_runtime: null
+blocker:
+  code: journey6_official_sdk_missing
+  status: blocked_external
+  required: Official Journey 6 OpenExplorer/OE release package supplied with the board

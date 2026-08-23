@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "selected_detector": null,
+  "selected_classifier": null,
+  "competition_claim_allowed": false,
+  "release_allowed": false,
+  "models": [
+    {
+      "id": "D1",
+      "source": "aryanshh/littercamv3",
+      "revision": "861363597e109f9f0840f537f48d890cef5b5461",
+      "source_onnx": null,
+      "status": "blocked_missing_source_onnx"
+    },
+    {
+      "id": "D2",
+      "source": "SUHAN-I/YOLO11",
+      "revision": "d7a78128455ef607a922f50681187f8b32b2af53",
+      "source_filename": "yolo11_trash_detection.onnx",
+      "artifact_sha256": "bce5b56cc825efaf4912a7137f74ad147634ac99ef6585662d003d39329ab100",
+      "artifact_bytes": 10499931,
+      "input": [1, 3, 640, 640],
+      "output": [1, 12, 8400],
+      "opset": 18,
+      "ir_version": 10,
+      "custom_operator_count": 0,
+      "embedded_nms": false,
+      "embedded_classes": ["class_0", "class_1", "class_2", "class_3", "class_4", "class_5", "class_6", "class_7"],
+      "status": "blocked_semantic_contract_and_j6_ir"
+    },
+    {
+      "id": "C1",
+      "source": "SriramRokkam/wastewise-garbage-cls",
+      "revision": "a30c36c6b181ac0d2eb387bbd4f6d4a5b88ee078",
+      "source_filename": "wastewise-yolo.onnx",
+      "artifact_sha256": "2b46d491091dbc0ed98a0f1eaee7fe5739c8fd3eb5bd5935396c3b2712e1f7a6",
+      "artifact_bytes": 5809886,
+      "input": [1, 3, 224, 224],
+      "output": [1, 8],
+      "opset": 12,
+      "ir_version": 7,
+      "custom_operator_count": 0,
+      "embedded_nms": false,
+      "embedded_classes": ["battery", "biological", "cardboard", "glass", "metal", "paper", "plastic", "trash"],
+      "status": "development_audit_only_license_blocked"
+    },
+    {
+      "id": "C2",
+      "source": "nabaouladyahich/ecodetect-waste-classifier",
+      "revision": "9719e6fc9a352d62209529e0e0573fff3bb7dc3d",
+      "source_onnx": null,
+      "status": "blocked_missing_source_onnx"
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+schema_version: 1
+profile_id: journey6_nash_e
+target_family: journey6
+target_sku: auto
+target_march: nash-e
+toolchain_lock: deploy/journey6/J6_TOOLCHAIN_LOCK.yaml
+status: blocked_external
+artifact_stages: [canonical_onnx, optimized_onnx, quantized_intermediate, hbm]
+selection:
+  requires_inventory_match: true
+  requires_sdk_march_support: true
+  selectable_before_board_inventory: false

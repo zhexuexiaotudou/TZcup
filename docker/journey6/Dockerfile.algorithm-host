@@ -1,0 +1,29 @@
+# syntax=docker/dockerfile:1.7
+ARG J6_ALGORITHM_BASE_IMAGE
+FROM ${J6_ALGORITHM_BASE_IMAGE}
+
+ARG ROS_SETUP
+USER root
+RUN test -r "${ROS_SETUP}" && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      fastdds-tools iproute2 procps python3-colcon-common-extensions python3-yaml && \
+    rm -rf /var/lib/apt/lists/*
+
+WORKDIR /opt/tzcup_ws
+COPY starter_ws/src/sanitation_perception/ src/sanitation_perception/
+COPY starter_ws/src/journey6_hil_gateway/ src/journey6_hil_gateway/
+COPY scripts/j6_hil_network_faults.py /opt/tzcup/bin/j6_hil_network_faults.py
+
+RUN /bin/bash -c "source '${ROS_SETUP}' && colcon build \
+      --merge-install \
+      --packages-select sanitation_perception journey6_hil_gateway"
+
+ENV TZCUP_ROS_SETUP=${ROS_SETUP} \
+    TZCUP_WS_SETUP=/opt/tzcup_ws/install/setup.bash \
+    PYTHONUNBUFFERED=1
+
+RUN mkdir -p /evidence /opt/tzcup/runtime /opt/tzcup/models /opt/tzcup/config && \
+    chmod 0555 /opt/tzcup/bin/j6_hil_network_faults.py
+
+CMD ["/bin/bash", "-lc", "source \"${TZCUP_ROS_SETUP}\" && source \"${TZCUP_WS_SETUP}\" && exec ros2 run journey6_hil_gateway journey6_hil_gateway"]

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tzcup.local/schemas/journey6-bundle-manifest-v1",
+  "title": "TZcup Journey 6 deployment bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "bundle_id", "target_family", "target_sku", "target_march", "status", "profiles", "models", "runtime_contract"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "bundle_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9._-]+$"},
+    "source_commit": {"type": ["string", "null"]},
+    "target_family": {"const": "journey6"},
+    "target_sku": {"const": "auto"},
+    "target_march": {"const": "auto"},
+    "status": {"enum": ["skeleton", "candidate", "validated"]},
+    "profiles": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+    "models": {"type": "array", "items": {"type": "object"}},
+    "runtime_contract": {
+      "type": "object",
+      "required": ["inventory_required", "checksum_required", "inactive_warmup_required", "atomic_switch_required", "rollback_required"],
+      "properties": {
+        "inventory_required": {"const": true},
+        "checksum_required": {"const": true},
+        "inactive_warmup_required": {"const": true},
+        "atomic_switch_required": {"const": true},
+        "rollback_required": {"const": true}
+      },
+      "additionalProperties": false
+    },
+    "external_blockers": {"type": "array", "items": {"type": "object"}}
+  }
+}

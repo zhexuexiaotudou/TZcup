@@ -33,6 +33,8 @@ PRODUCT_INTEGRATION_READY=false
 PRODUCT_FIELD_READY=false
 ```
 
+目标计算平台已收敛为地平线 Journey 6，当前 SKU 与 `march` 均保持 `auto`。仓库新增 PC 先行的预训练模型、NV12、严格 provider、分离式 HIL 与板到即部署合同，但真实模型下载/评测、官方 J6 OpenExplorer x86 仿真、30 分钟 loopback HIL 和物理板端证据尚未通过，因此所有 `J6_*_READY/PASS` 状态仍失效关闭。RDK S100/S100P 产物不得作为 Journey 6 证据。架构与到板流程见 [Journey 6 目标架构](docs/journey6-target-architecture.md) 和 [板卡到货手册](docs/journey6-board-arrival-runbook.md)。
+
 主要缺口是合格且可冻结的产品近距四分类/Area 模型、完整感知清扫链的真实 ROS/Gazebo 集成验证、20,000 m² 正式范围建图闭环、30-seed 综合链、3500 m²/h 实测效率、完整 10 Hz/10 min 性能、2 h soak、故障矩阵、5-bag replay、一次性 sealed final 和最终 release/rollback。详情见 [当前状态](docs/current-status.md)，运行时不变量见 [产品运行时基础架构](docs/product-runtime-architecture.md)。
 
 近距分类已完成协议限定的 [CRCRV11 R1/R2/R3](docs/close-range-classifier-contract-recovery-v11.md)，但三条路线全部失败并触发停止条件 B；sealed 数据保持未读，禁止以增加 R4/R5、重开 detector 搜索或降低门槛绕过该阻塞。强制要求的紧凑最终状态、blocker、model registry、release manifest、evidence index 与报告保存在 [`docs/evidence/crcrv11`](docs/evidence/crcrv11/PERCEPTION_CRCRV11_EVIDENCE_INDEX.md)，失败 checkpoint 和训练流水账不进入当前仓库。

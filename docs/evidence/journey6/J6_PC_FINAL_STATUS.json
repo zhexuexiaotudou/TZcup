@@ -1,0 +1,29 @@
+{
+  "schema_version": 1,
+  "baseline_commit": "e1d900faa255c8c2e56ca20d2b17b7af6d59ca7d",
+  "target_family": "journey6",
+  "target_sku": "auto",
+  "target_march": "auto",
+  "statuses": {
+    "J6_PC_FUNCTIONAL_PASS": false,
+    "J6_X86_SIMULATION_READY": false,
+    "J6_LOOPBACK_HIL_READY": false,
+    "J6_DEPLOYMENT_BUNDLE_READY": false,
+    "SIMULATION_PRODUCT_COMPLETE": false,
+    "PRODUCT_X86_PERCEPTION_READY": false,
+    "PRODUCT_INTEGRATION_READY": false,
+    "PRODUCT_FIELD_READY": false
+  },
+  "board_metrics": {
+    "FPS": null,
+    "BPU_utilization": null,
+    "CPU_utilization": null,
+    "DDR_utilization": null,
+    "temperature_c": null,
+    "power_w": null,
+    "HBM_latency_ms": null,
+    "network_HIL_latency_ms": null,
+    "board_30_seed": "not_run"
+  },
+  "truth_boundary": "Implementation and static audits do not prove a usable pretrained detector, official Journey 6 x86 simulation, physical-board performance, V1 product acceptance, or field readiness."
+}

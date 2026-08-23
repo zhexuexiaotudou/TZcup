@@ -1,0 +1,78 @@
+schema_version: 1
+contract_id: tzcup.journey6.hil.v1
+transport: ros2_dds
+clock_authority: pc_gazebo
+node_placement:
+  pc_namespace: /pc
+  j6_namespace: /j6
+  unnamespaced_algorithm_nodes_fail_closed: true
+command_authority:
+  nonzero_vehicle_command_source: j6-algorithm
+  pc_capability: zero_only_safety_gate
+  reconnect_requires_operator_resume: true
+  stale_command_replay_allowed: false
+command_schema:
+  encoding: std_msgs/msg/String JSON
+  required_fields:
+    - stamp_s
+    - sequence
+    - speed_mps
+    - steering_angle_rad
+    - acceleration_limit_mps2
+    - source_id
+    - valid_until_s
+qos_profiles:
+  sensor_data:
+    reliability: best_effort
+    durability: volatile
+    history: keep_last
+    depth: 5
+  control_deadline:
+    reliability: reliable
+    durability: volatile
+    history: keep_last
+    depth: 1
+    deadline_ms: 80
+    lifespan_ms: 120
+  health:
+    reliability: reliable
+    durability: volatile
+    history: keep_last
+    depth: 10
+  static_config:
+    reliability: reliable
+    durability: transient_local
+    history: keep_last
+    depth: 1
+topics:
+  - {name: /hil/camera/color, type: sensor_msgs/msg/Image, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/camera/depth, type: sensor_msgs/msg/Image, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/camera/camera_info, type: sensor_msgs/msg/CameraInfo, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/scan, type: sensor_msgs/msg/LaserScan, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/imu, type: sensor_msgs/msg/Imu, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/wheel_odom, type: nav_msgs/msg/Odometry, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/gnss/fix, type: sensor_msgs/msg/NavSatFix, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/gnss/heading, type: geometry_msgs/msg/QuaternionStamped, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/clock, type: rosgraph_msgs/msg/Clock, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/tf, type: tf2_msgs/msg/TFMessage, direction: pc_to_j6, qos: sensor_data}
+  - {name: /hil/tf_static, type: tf2_msgs/msg/TFMessage, direction: pc_to_j6, qos: static_config}
+  - {name: /hil/cleanable_boundary, type: geometry_msgs/msg/PolygonStamped, direction: pc_to_j6, qos: static_config}
+  - {name: /hil/keepout, type: geometry_msgs/msg/PolygonStamped, direction: pc_to_j6, qos: static_config}
+  - {name: /hil/vehicle/ackermann_command, type: std_msgs/msg/String, direction: j6_to_pc, qos: control_deadline}
+  - {name: /hil/vehicle/brake_command, type: std_msgs/msg/Bool, direction: j6_to_pc, qos: control_deadline}
+  - {name: /hil/brush/command, type: std_msgs/msg/Float32, direction: j6_to_pc, qos: control_deadline}
+  - {name: /hil/safety/estop_request, type: std_msgs/msg/Bool, direction: j6_to_pc, qos: control_deadline}
+  - {name: /hil/task/state, type: std_msgs/msg/String, direction: j6_to_pc, qos: health}
+  - {name: /hil/health, type: std_msgs/msg/String, direction: j6_to_pc, qos: health}
+  - {name: /hil/operator/resume, type: std_msgs/msg/Bool, direction: pc_operator_local, qos: health}
+  - {name: /hil/vehicle/validated_ackermann_command, type: std_msgs/msg/String, direction: pc_gateway_to_actuator, qos: control_deadline}
+forbidden_j6_subscriptions:
+  - /ground_truth/*
+  - /world/*
+  - /gazebo/model/*
+  - /sealed/*
+forbidden_algorithm_container_mount_tokens:
+  - ground_truth
+  - world
+  - sealed
+  - evaluator

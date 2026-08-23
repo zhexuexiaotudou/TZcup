@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "target_family": "journey6",
+  "target_sku": "auto",
+  "target_march": "auto",
+  "profiles": [
+    "journey6_generic",
+    "journey6_nash_e",
+    "journey6_nash_m",
+    "journey6_nash_p"
+  ],
+  "bundle_status": "skeleton_blocked_external",
+  "bundle_ready": false,
+  "generated_bundle_manifest_sha256": "0af621649a52c3dd81e724829b8dcdb62693e43d4ca19ac2501d820f15308d61",
+  "generated_sha256sums_sha256": "9ee3c93b0366dba579926af6140d166a5dbed6fe2b0031b0e16e440bed2cde24",
+  "models": [],
+  "external_blockers": [
+    "journey6_official_sdk_missing",
+    "journey6_board_inventory_missing",
+    "releasable_pretrained_model_missing"
+  ],
+  "board_metrics": "not_run"
+}

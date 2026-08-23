@@ -1,0 +1,19 @@
+# syntax=docker/dockerfile:1.7
+ARG J6_OE_BASE_IMAGE
+FROM ${J6_OE_BASE_IMAGE}
+
+ARG J6_OE_ROOT=/opt/journey6
+USER root
+
+# The proprietary image is user-supplied and is never copied into this repo.
+# Building without a real OE/HUCP/HBDK runtime fails here instead of silently
+# turning the algorithm host into a generic CPU/ONNX container.
+RUN test -d "${J6_OE_ROOT}" && \
+    test -n "$(find "${J6_OE_ROOT}" -type f \
+      \( -name hb_model_info -o -name hrt_model_exec -o -name hbdk4 -o -name horizon_tc_ui \) \
+      -print -quit)"
+
+ENV J6_OE_ROOT=${J6_OE_ROOT}
+LABEL org.tzcup.target-family="journey6" \
+      org.tzcup.oe-provenance="user-supplied-proprietary-image" \
+      org.tzcup.cpu-fallback="forbidden"
