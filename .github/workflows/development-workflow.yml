@@ -84,6 +84,40 @@ jobs:
           cmake --build build/j6-host --parallel 2
           ctest --test-dir build/j6-host --output-on-failure
 
+  ros-jazzy-build:
+    name: ros-jazzy-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build the Jazzy transport/gateway image
+        run: |
+          docker build \
+            --file docker/journey6/Dockerfile.algorithm-host \
+            --build-arg J6_ALGORITHM_BASE_IMAGE=ros:jazzy-ros-base \
+            --build-arg ROS_SETUP=/opt/ros/jazzy/setup.bash \
+            --build-arg RUNTIME_BACKEND=TRANSPORT_ONLY \
+            --tag tzcup/j6-jazzy-ci:${{ github.sha }} \
+            .
+
+  ros-humble-build:
+    name: ros-humble-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Build the Humble PC-ONNX algorithm-host image
+        run: |
+          docker build \
+            --file docker/journey6/Dockerfile.algorithm-host \
+            --build-arg J6_ALGORITHM_BASE_IMAGE=ros:humble-ros-base \
+            --build-arg ROS_SETUP=/opt/ros/humble/setup.bash \
+            --build-arg RUNTIME_BACKEND=PC_ONNX \
+            --tag tzcup/j6-humble-ci:${{ github.sha }} \
+            .
+
   aarch64-generic-build:
     name: aarch64-generic-build
     runs-on: ubuntu-24.04
