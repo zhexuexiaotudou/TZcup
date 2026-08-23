@@ -25,6 +25,8 @@ setup(
     entry_points={
         "console_scripts": [
             "journey6_hil_gateway = journey6_hil_gateway.gateway_node:main",
+            "journey6_loopback_harness = journey6_hil_gateway.loopback_harness_node:main",
+            "pc_onnx_algorithm_host = journey6_hil_gateway.pc_onnx_algorithm_node:main",
         ],
     },
 )

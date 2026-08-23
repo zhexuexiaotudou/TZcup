@@ -10,10 +10,9 @@ selected:
   detector: null
   close_range_classifier: null
 download_candidates:
-  - d2_suhan_yolo11n
-  - c1_wastewise_yolov8n_cls
+  - d1_littercam_yolov9c
 blocked_candidates:
-  d1_littercam_yolov9c: source_revision_has_no_onnx
+  d1_littercam_yolov9c: canonical_onnx_exported_but_strict_pt_onnx_parity_failed_and_fixed_train_development_gate_has_zero_true_positives_for_all_three_actionable_classes
   d2_suhan_yolo11n: source_onnx_has_8_anonymous_classes_but_model_card_declares_6_and_ir10_exceeds_j6_preflight
   c2_ecodetect_efficientnetb0: source_revision_has_no_onnx
 benchmark_combinations:
@@ -44,5 +43,7 @@ activation_requirements:
   - thresholds_and_nms_frozen
   - crop_unknown_and_geometry_policies_frozen
 truth_boundary: >-
-  This file declares the candidate matrix only. No detector or classifier is
-  selected, activated, releasable, or competition-qualified yet.
+  D1 was loaded from the pinned checkpoint and exported to a canonical ONNX,
+  but it failed strict PT/ONNX parity and the fixed TRAIN-only development
+  semantic gate. This file declares the candidate matrix only. No detector or
+  classifier is selected, activated, releasable, or competition-qualified.

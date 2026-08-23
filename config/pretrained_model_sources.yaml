@@ -2,9 +2,10 @@ schema_version: 1
 registry_id: tzcup_journey6_pretrained_candidates
 artifact_root_default: .workspace/models
 truth_boundary: >-
-  Repository metadata is pinned to immutable Hugging Face revisions. A model is
-  fetchable only when that exact revision contains an ONNX file with a known
-  SHA-256; local conversion from another format is a separate, audited artifact.
+  Repository metadata is pinned to immutable Hugging Face revisions. A source
+  artifact is fetchable only with an explicit path and SHA-256. A locally
+  exported canonical ONNX remains a separate audited artifact and cannot be
+  promoted merely because the source checkpoint was fetched.
 models:
   d1_littercam_yolov9c:
     candidate: D1
@@ -34,10 +35,13 @@ models:
       training_data: unresolved
       weight_distribution: unresolved
       status: blocked_license
-    fetch_status: blocked_missing_source_onnx
+    source_onnx_status: absent_at_pinned_revision
+    fetch_status: source_checkpoint_fetchable_canonical_onnx_exported_diagnostic_only
     download_command: >-
       py -3 scripts/fetch_pretrained_models.py --model-id
-      d1_littercam_yolov9c --artifact-root .workspace/models
+      d1_littercam_yolov9c --source-artifact best.pt --expected-sha256
+      1cf60873661811f51cd84fb6aafb403646b67d2add57c4851b0be48ebdff2873
+      --artifact-root .workspace/models
 
   d2_suhan_yolo11n:
     candidate: D2

@@ -13,6 +13,7 @@ from .core import (
     command_from_mapping,
     command_to_mapping,
 )
+from .emulation import RuntimeIdentity
 from .placement import audit_pc_nodes
 
 
@@ -77,6 +78,8 @@ def main(args=None) -> None:
         def __init__(self) -> None:
             super().__init__("journey6_hil_gateway")
             self.declare_parameter("j6_source_id", "j6-algorithm")
+            self.declare_parameter("runtime_backend", "JOURNEY6_OE")
+            self.declare_parameter("not_journey6_runtime", False)
             self.declare_parameter("health_timeout_s", 0.25)
             self.declare_parameter("maximum_speed_mps", 2.0)
             self.declare_parameter("maximum_steering_angle_rad", 0.60)
@@ -87,6 +90,13 @@ def main(args=None) -> None:
             self.evidence_directory = Path(
                 str(self.get_parameter("evidence_directory").value)
             )
+            self.runtime_identity = RuntimeIdentity(
+                runtime_backend=str(self.get_parameter("runtime_backend").value),
+                not_journey6_runtime=bool(
+                    self.get_parameter("not_journey6_runtime").value
+                ),
+            )
+            self.runtime_identity.validate()
             self.gate = CommandSafetyGate(
                 j6_source_id=str(self.get_parameter("j6_source_id").value),
                 health_timeout_s=float(self.get_parameter("health_timeout_s").value),
@@ -209,6 +219,10 @@ def main(args=None) -> None:
 
         def _write_authority_evidence(self) -> None:
             snapshot = self.gate.snapshot(now_monotonic_s=time.monotonic())
+            snapshot["runtime_backend"] = self.runtime_identity.runtime_backend
+            snapshot["not_journey6_runtime"] = (
+                self.runtime_identity.not_journey6_runtime
+            )
             _atomic_json(
                 self.evidence_directory / "HIL_COMMAND_AUTHORITY.json", snapshot
             )

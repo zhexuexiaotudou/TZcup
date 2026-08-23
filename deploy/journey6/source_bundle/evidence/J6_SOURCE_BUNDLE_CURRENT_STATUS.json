@@ -1,0 +1,23 @@
+{
+  "schema_version": 1,
+  "status": "blocked_external",
+  "source_bundle_ready": false,
+  "area_canonical_onnx_reference_locked": true,
+  "area_canonical_onnx_sha256": "82a408f17c81f0aebe68debcb5385eccde859308f59fe8ab2e8bcff72414b3eb",
+  "d1_canonical_onnx_reference_locked": true,
+  "d1_canonical_onnx_sha256": "01c72cdbcd08b6fd91c9a56a065f19837bffd67cca175a75b39e295c3afc01f5",
+  "cpp_postprocess_present": true,
+  "golden_tensor_lock_present": true,
+  "generated_external_evidence": ".workspace/evidence/j6f2/source_bundle",
+  "generated_manifest_sha256": "479b70e038582031e9eb1839ca2b3d07ef9c0699904bd8d53b2db0a28994f4e9",
+  "generated_checksums_sha256": "041989dc4edb351fa55fb17a68fbc0b86e1f0fd8e0737fefdc7982cfe7da2c9b",
+  "blockers": [
+    "model_selection_not_frozen",
+    "model_license_not_release_clear",
+    "calibration_manifest_not_ready",
+    "calibration_distribution_not_ready",
+    "journey6_toolchain_not_validated",
+    "nash_profile_matrix_not_validated"
+  ],
+  "large_payloads_committed": false
+}

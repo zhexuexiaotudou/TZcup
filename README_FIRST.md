@@ -151,7 +151,7 @@ py -3 scripts/j6_discover_sdk.py --output C:\tzcup-j6\J6_SDK_INVENTORY.json
 py -3 scripts/j6_pc_status.py --output-dir C:\tzcup-j6\status
 ```
 
-缺少官方 J6 SDK、真实预训练权重或 30 分钟 HIL 证据时，命令以非零退出并
+缺少官方 J6 SDK、通过固定开发集门槛的预训练模型证据，或缺少/未通过 30 分钟正式 HIL 证据时，命令以非零退出并
 写入 blocker JSON，这是预期的失效关闭结果。完整流程见
 [OpenExplorer 工作流](docs/journey6-openexplorer-workflow.md)、
 [板端部署](docs/journey6-board-deployment.md) 与

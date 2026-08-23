@@ -1,0 +1,43 @@
+$schema: https://json-schema.org/draft/2020-12/schema
+$id: https://tzcup.local/schemas/journey6-calibration-source-v1
+type: object
+additionalProperties: false
+required: [schema_version, source, preprocess, stratification]
+properties:
+  schema_version: {const: 1}
+  source:
+    type: object
+    additionalProperties: false
+    required: [source_id, provenance_uri, record_inventory_sha256, sealed_access_allowed, allowed_splits]
+    properties:
+      source_id: {type: string, minLength: 1}
+      provenance_uri: {type: string, minLength: 1}
+      record_inventory_sha256: {type: string, pattern: "^[0-9a-f]{64}$"}
+      sealed_access_allowed: {const: false}
+      allowed_splits:
+        type: array
+        minItems: 1
+        uniqueItems: true
+        items: {type: string, minLength: 1}
+  preprocess:
+    type: object
+    additionalProperties: false
+    required: [source_color, input_width, input_height, letterbox, nv12]
+    properties:
+      source_color: {const: rgb}
+      input_width: {type: integer, minimum: 2, multipleOf: 2}
+      input_height: {type: integer, minimum: 2, multipleOf: 2}
+      letterbox: {type: object}
+      nv12: {type: object}
+  stratification:
+    type: object
+    additionalProperties: false
+    required: [required_dimensions, minimum_distinct_values, minimum_per_value]
+    properties:
+      required_dimensions:
+        type: array
+        minItems: 1
+        uniqueItems: true
+        items: {type: string}
+      minimum_distinct_values: {type: object}
+      minimum_per_value: {type: object}

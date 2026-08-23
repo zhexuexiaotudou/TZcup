@@ -9,8 +9,18 @@
       "id": "D1",
       "source": "aryanshh/littercamv3",
       "revision": "861363597e109f9f0840f537f48d890cef5b5461",
-      "source_onnx": null,
-      "status": "blocked_missing_source_onnx"
+      "source_checkpoint_sha256": "1cf60873661811f51cd84fb6aafb403646b67d2add57c4851b0be48ebdff2873",
+      "canonical_onnx_export_route": "E1 official YOLOv9 export.py",
+      "canonical_onnx_sha256": "01c72cdbcd08b6fd91c9a56a065f19837bffd67cca175a75b39e295c3afc01f5",
+      "artifact_bytes": 203423811,
+      "input": [1, 3, 640, 640],
+      "outputs": [[1, 14, 8400], [1, 14, 8400]],
+      "primary_output_index": 1,
+      "opset": 17,
+      "ir_version": 8,
+      "custom_operator_count": 0,
+      "embedded_nms": false,
+      "status": "diagnostic_only_failed_strict_parity_and_fixed_train_zero_tp"
     },
     {
       "id": "D2",

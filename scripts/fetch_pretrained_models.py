@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Fetch pinned Hugging Face ONNX artifacts into a non-Git artifact root."""
+"""Fetch pinned Hugging Face artifacts into a non-Git artifact root."""
 
 from __future__ import annotations
 
@@ -96,6 +96,53 @@ def validate_fetchable(model_id: str, entry: dict[str, Any]) -> dict[str, Any]:
     if repo_id.count("/") != 1:
         raise FetchBlocked(f"{model_id}: invalid Hugging Face repo_id")
     return source
+
+
+def resolve_source_artifact(
+    model_id: str, entry: dict[str, Any], filename: str
+) -> dict[str, Any]:
+    source = entry.get("source")
+    if not isinstance(source, dict) or source.get("provider") != "huggingface":
+        raise FetchBlocked(f"{model_id}: missing or unsupported source metadata")
+    revision = str(source.get("revision", ""))
+    if len(revision) != 40 or any(char not in "0123456789abcdef" for char in revision):
+        raise FetchBlocked(f"{model_id}: revision must be a full lowercase commit SHA")
+    filename = _safe_filename(filename)
+    artifacts = entry.get("available_source_artifacts", [])
+    match = next(
+        (
+            artifact
+            for artifact in artifacts
+            if isinstance(artifact, dict) and artifact.get("filename") == filename
+        ),
+        None,
+    )
+    if match is None:
+        raise FetchBlocked(
+            f"{model_id}: {filename} is not a pinned available source artifact"
+        )
+    expected_sha = match.get("sha256")
+    expected_size = match.get("size_bytes")
+    if (
+        not isinstance(expected_sha, str)
+        or len(expected_sha) != SHA256_LENGTH
+        or any(char not in "0123456789abcdef" for char in expected_sha)
+    ):
+        raise FetchBlocked(f"{model_id}: {filename} has no valid expected SHA-256")
+    if not isinstance(expected_size, int) or expected_size <= 0:
+        raise FetchBlocked(f"{model_id}: {filename} has no valid expected size")
+    repo_id = str(source.get("repo_id", ""))
+    if repo_id.count("/") != 1:
+        raise FetchBlocked(f"{model_id}: invalid Hugging Face repo_id")
+    return {
+        "provider": "huggingface",
+        "repo_id": repo_id,
+        "uri": source.get("uri"),
+        "revision": revision,
+        "filename": filename,
+        "expected_sha256": expected_sha,
+        "expected_size_bytes": expected_size,
+    }
 
 
 def huggingface_url(source: dict[str, Any]) -> str:
@@ -222,9 +269,14 @@ def fetch_one(
     timeout: float,
     retries: int,
     asserted_sha256: str | None = None,
+    source_artifact: str | None = None,
 ) -> dict[str, Any]:
     model_id = _safe_model_id(model_id)
-    source = validate_fetchable(model_id, entry)
+    source = (
+        resolve_source_artifact(model_id, entry, source_artifact)
+        if source_artifact
+        else validate_fetchable(model_id, entry)
+    )
     expected_sha = str(source["expected_sha256"])
     if asserted_sha256 is not None and asserted_sha256.lower() != expected_sha:
         raise FetchBlocked(
@@ -271,6 +323,7 @@ def fetch_one(
     return {
         "model_id": model_id,
         "candidate": entry.get("candidate"),
+        "artifact_kind": "pinned_source" if source_artifact else "source_onnx",
         "source_uri": source.get("uri"),
         "repo_id": source["repo_id"],
         "revision": source["revision"],
@@ -291,6 +344,10 @@ def parse_args() -> argparse.Namespace:
     selection.add_argument("--model-id", action="append")
     selection.add_argument("--all", action="store_true")
     parser.add_argument("--expected-sha256")
+    parser.add_argument(
+        "--source-artifact",
+        help="fetch a pinned non-ONNX artifact listed in available_source_artifacts",
+    )
     parser.add_argument("--cache-dir", type=Path)
     parser.add_argument("--offline", action="store_true")
     parser.add_argument("--timeout", type=float, default=60.0)
@@ -308,6 +365,9 @@ def main() -> int:
     selected = list(models) if args.all else list(args.model_id)
     if args.expected_sha256 and len(selected) != 1:
         print("ERROR: --expected-sha256 requires exactly one --model-id", file=sys.stderr)
+        return 2
+    if args.source_artifact and len(selected) != 1:
+        print("ERROR: --source-artifact requires exactly one --model-id", file=sys.stderr)
         return 2
     unknown = sorted(set(selected) - set(models))
     if unknown:
@@ -330,6 +390,7 @@ def main() -> int:
                     timeout=args.timeout,
                     retries=args.retries,
                     asserted_sha256=args.expected_sha256,
+                    source_artifact=args.source_artifact,
                 )
             )
         except FetchBlocked as error:

@@ -1,18 +1,18 @@
 # Journey 6 PC-first evidence index
 
-| Evidence | Current conclusion |
-|---|---|
-| `J6_PC_FIRST_BASELINE.json` | PR #92 baseline and the verified starting facts |
-| `J6_CURRENT_GAPS.json` | Model, SDK, runtime, HIL, and board evidence gaps |
-| `J6_REUSABLE_COMPONENTS.json` | Existing product contracts retained without overclaiming readiness |
-| `J6_PC_FINAL_STATUS.json` | All J6 and product completion states remain false |
-| `J6_PC_FINAL_BLOCKERS.json` | Model, calibration, SDK, board, HIL, and bundle blockers |
-| `J6_MODEL_REGISTRY.json` | Four pinned candidates; no selected pipeline |
-| `J6_MODEL_SELECTION_REPORT.md` | Pretrained detector route exhausted at static audit |
-| `J6_X86_SIM_REPORT.md` | Official SDK/x86 simulation blocked external |
-| `J6_LOOPBACK_HIL_REPORT.md` | Contracts implemented; 30-minute run not executed |
-| `J6_DEPLOYMENT_BUNDLE_MANIFEST.json` | Four profiles, checksum skeleton, not deployable |
-| `J6_THIRD_PARTY_NOTICES.md` | No third-party model or proprietary SDK redistributed |
-
-Raw downloads, ONNX files, local venv, full audit JSON, generated bundle, and
-tool discovery output remain under the ignored `.workspace` task artifact root.
+- `D1_SECOND_PASS_CONTRACT_REPORT.json`: `b11a52b4d495881af2cb1253b5aa4040d41d23e9345a49d29816ed67d2702861`
+- `J6_CURRENT_GAPS.json`: `6f3b7e0684fd57466c2b42cdf4f2d7dc8dc853df3f7506c92e91f8ff12a721f9`
+- `J6_DEPLOYMENT_BUNDLE_MANIFEST.json`: `387beef21392f680fde08bcf95c10379aa5e5642e03ad7ad809c6af87ea9799a`
+- `J6_LOOPBACK_HIL_REPORT.md`: `beb967cbf07f32d20eab3e93522d14f28739d71d15902a6f07e6c5e9bcc9b877`
+- `J6_MODEL_REGISTRY.json`: `ba1f4507ca220dd5a9e2b7b165c94b9220c51e66d63e582bebfaa65eb9f8cef9`
+- `J6_MODEL_SELECTION_REPORT.md`: `291a2207a3d6576546803ba2ce0a53d3bba7249afd3f28eb0ed0382e2d7e3acd`
+- `J6_PC_FINAL_BLOCKERS.json`: `8665c39e14843974ff22bc70bc71013bac0db3da2f7158bf3c0ef5a2fee2c5a6`
+- `J6_PC_FINAL_STATUS.json`: `14fbe015f3bcc9b33c56be62a8794ce087c72b6eac4d2d88e69fdc95e76fe1d3`
+- `J6_PC_FIRST_BASELINE.json`: `9f81f0c75f9a96a8cffc9fdce4dbea5b9d53e2d22bbb6614022713fed1f63e02`
+- `J6_REUSABLE_COMPONENTS.json`: `f651435e06ec49a501fb171f1535f3939d7309ca8a151fb8ec8545e6c28e25dd`
+- `J6_THIRD_PARTY_NOTICES.md`: `3944800841acd2d54a7bee44e9038fa9fb99090ab71afff5d13aaa2665b8ea9e`
+- `J6_X86_SIM_REPORT.md`: `7816048c47411f460a28864f1f852461d814d75e05d2da095f0537e0994e742a`
+- `J6F2_AREA_MODEL_RECOVERY.json`: `ea44376899012c9d03ab071ff1db5c5fb295c1a96484c08fedb415f1207a1249`
+- `J6F2_BASELINE.json`: `ea10d26d68c5ee4c6358f8511ab9452fbda8f56efdeba9b52b5706e4ae78894c`
+- `J6F2_D1_MODEL_AND_OFFLINE.json`: `2f893fb7c348e15a3d9d1d4caf822b79479bb765a9447d720611089d2d3f4392`
+- `J6F2_STATE_SEMANTICS.json`: `402b26e7ea3e78537039a71a3925dd9efa6e5ccfdfeb48060ee883b0693dcc21`

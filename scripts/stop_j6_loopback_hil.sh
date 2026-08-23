@@ -12,6 +12,9 @@ export J6_RUNTIME_BUNDLE="${J6_RUNTIME_BUNDLE:-/tmp}"
 export J6_MODEL_ARTIFACTS="${J6_MODEL_ARTIFACTS:-/tmp}"
 export J6_ALGORITHM_COMMAND="${J6_ALGORITHM_COMMAND:-/bin/false}"
 export HIL_EVIDENCE_DIR="${HIL_EVIDENCE_DIR:-/tmp}"
+export HIL_RUN_ID="${HIL_RUN_ID:-00000000-0000-4000-8000-000000000000}"
 
-docker compose -f "$compose_file" -p tzcup-j6-loopback down --remove-orphans
+docker compose -f "$compose_file" -p tzcup-j6-loopback \
+  --profile build-only --profile journey6 --profile pc-onnx \
+  down --remove-orphans
 echo "Journey 6 loopback containers stopped; images and evidence were retained."

@@ -2,44 +2,69 @@
   "schema_version": 1,
   "blockers": [
     {
-      "id": "PRETRAINED_DETECTOR_EXHAUSTED",
-      "type": "model_contract",
-      "detail": "D1 has no source ONNX; D2 exposes eight anonymous classes instead of the advertised six and uses IR version 10."
+      "id": "DEVELOPMENT_MODEL",
+      "type": "external_or_evidence",
+      "detail": "the real D1 checkpoint and ONNX run on PC, but strict PT/ONNX parity failed"
     },
     {
-      "id": "PRETRAINED_CLASSIFIER_RELEASE_BLOCKED",
-      "type": "license",
-      "detail": "C1 passes static ONNX checks but its embedded Ultralytics AGPL-3.0 metadata conflicts with the model-card Apache-2.0 declaration; C2 has no source ONNX."
-    },
-    {
-      "id": "CALIBRATION_DATASET_MISSING",
+      "id": "PC_DISCRETE_FUNCTIONAL",
       "type": "evidence_not_run",
-      "detail": "No 1000-record calibration manifest is frozen for the pretrained candidates."
+      "detail": "D1 failed strict parity and fixed-development semantics, so the three-class no-GT Gazebo loop was not started"
+    },
+    {
+      "id": "PC_AREA_FUNCTIONAL",
+      "type": "evidence_not_run",
+      "detail": "the recovered development Area model has not passed the live Gazebo Area gate"
+    },
+    {
+      "id": "CALIBRATION_PACK",
+      "type": "evidence_not_ready",
+      "detail": "only 471 TRAIN RGB candidates and 0 ROI candidates were inventoried; 0/1000 detector frames and 0/1000 second-pass ROIs are audited"
     },
     {
       "id": "OFFICIAL_JOURNEY6_SDK",
       "type": "blocked_external",
-      "detail": "No official Journey 6 OpenExplorer/HUCP package was discovered; RDK S100/S100P/S600 substitution is forbidden."
+      "detail": "official Journey 6 OpenExplorer/HUCP package is not verified"
     },
     {
-      "id": "PHYSICAL_JOURNEY6_BOARD",
-      "type": "blocked_external",
-      "detail": "Board identity, SKU, march, BSP, runtime ABI, and runtime version are unavailable."
-    },
-    {
-      "id": "LOOPBACK_HIL_30_MIN",
+      "id": "LOOPBACK_TRANSPORT_30_MIN",
       "type": "evidence_not_run",
-      "detail": "HIL contracts and ROS package build pass, but the official-runtime 30-minute loop and network fault matrix were not run."
+      "detail": "30 minute Ubuntu 22.04/Humble PC_ONNX Gazebo evidence and a trusted run-bound attestation collector are not complete"
     },
     {
-      "id": "DEPLOYMENT_BUNDLE_MODELS",
+      "id": "SOURCE_DEPLOYMENT_BUNDLE",
       "type": "evidence_not_ready",
-      "detail": "The checksum-bound bundle is a skeleton because no releasable model, exact SDK/runtime profile, or board inventory exists."
+      "detail": "D1/Area references and source runtime exist, but model freeze, release license, calibration, nash profiles, or official toolchain locks remain incomplete"
     },
     {
-      "id": "CRCRV11_PRODUCT_GATE",
+      "id": "LOOPBACK_ALGORITHM_HOST",
+      "type": "evidence_not_run",
+      "detail": "the D1 full algorithm-host stack has not passed 30 minutes on Gazebo transport"
+    },
+    {
+      "id": "OFFICIAL_JOURNEY6_HIL",
+      "type": "blocked_external",
+      "detail": "official Journey 6 runtime and physical-board HIL evidence are unavailable"
+    },
+    {
+      "id": "COMPILED_HBM_BUNDLE",
+      "type": "blocked_external",
+      "detail": "SDK, calibration, source bundle, release license, HBM verification, or runtime load evidence is incomplete"
+    },
+    {
+      "id": "DEPLOYABLE_JOURNEY6_BUNDLE",
+      "type": "blocked_external",
+      "detail": "no checksum-locked installable Journey 6 bundle has passed all prerequisite gates"
+    },
+    {
+      "id": "COMPETITION_MODEL",
       "type": "model_blocked_internal",
-      "detail": "The existing close-range V1 classifier stop condition remains in force and is not replaced by this development-only pretrained audit."
+      "detail": "development evidence is not competition model acceptance"
+    },
+    {
+      "id": "MODEL_LICENSE_RELEASE",
+      "type": "license",
+      "detail": "model and exporter license layers are not release-clear"
     }
   ]
 }

@@ -63,14 +63,32 @@ pretrained detector is not converted into a six-channel RGB-D network.
 
 The following states are independent:
 
+- `J6_DEV_MODEL_AVAILABLE`: a real, SHA-locked, non-mock development model has
+  verified checkpoint classes and PC inference. It does not imply a release
+  license or competition acceptance.
+- `J6_PC_DISCRETE_FUNCTIONAL_PASS` and `J6_PC_AREA_FUNCTIONAL_PASS`: the live
+  no-GT Gazebo gates for discrete and Area targets pass independently.
 - `J6_PC_FUNCTIONAL_PASS`: a real pretrained pipeline completes the live PC
-  chain without GT, mocks, or preloaded targets.
+  chain without GT, mocks, or preloaded targets; it requires both preceding
+  functional states.
 - `J6_X86_SIMULATION_READY`: the official J6 x86 runtime passes sanity and
   model parity.
-- `J6_LOOPBACK_HIL_READY`: a 30-minute split-process HIL run passes authority,
-  timeout, network-loss, and replay gates.
+- `J6_LOOPBACK_TRANSPORT_READY`: Ubuntu 22.04/Humble PC_ONNX algorithm-host and
+  PC Gazebo complete the 30-minute topic/QoS/timestamp/authority/fault matrix.
+- `J6_LOOPBACK_ALGORITHM_READY` and `J6_LOOPBACK_HIL_EMULATION_READY`: the same
+  run additionally hosts the complete planned algorithm stack with no PC
+  duplicate. Neither is official Journey 6 evidence.
+- `J6_LOOPBACK_HIL_READY`: the legacy official-runtime Journey 6 HIL definition;
+  PC_ONNX emulation can never set it.
+- `J6_CALIBRATION_PACK_READY` and `J6_SOURCE_DEPLOYMENT_BUNDLE_READY`: audited
+  non-sealed calibration records and a checksum-locked source-only board bundle
+  exist. They do not imply HBM compilation.
+- `J6_COMPILED_HBM_BUNDLE_READY`: the official toolchain, resolved march, model
+  conversion/verifier, and runtime-load gates pass.
 - `J6_DEPLOYMENT_BUNDLE_READY`: the checksum-bound, installable model bundle
   and rollback contract pass.
+- `J6_COMPETITION_MODEL_READY` and `J6_LICENSE_RELEASE_READY`: competition and
+  redistribution/release acceptance; development-only evidence cannot set them.
 
 None of these implies `SIMULATION_PRODUCT_COMPLETE`,
 `PRODUCT_INTEGRATION_READY`, or `PRODUCT_FIELD_READY`. Those remain governed by

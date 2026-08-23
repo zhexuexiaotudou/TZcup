@@ -1,9 +1,32 @@
 # Journey 6 PC loopback HIL
 
 This lane separates the PC sensor/plant from the Journey 6 algorithm graph. It
-freezes the ROS 2 topic and QoS contract before hardware arrival without
-claiming that proprietary OE, HBM execution, a 30-minute loop, or physical-board
-acceptance has run.
+freezes and executes the ROS 2 topic/QoS contract before hardware arrival. Two
+runtime identities are deliberately distinct: `JOURNEY6_OE` is the official
+board-runtime path, while `PC_ONNX` is an x86 emulation path that must always
+emit `not_journey6_runtime=true`.
+
+The readiness flags are independent and fail closed:
+
+The current trusted, run-bound attestation collector is not implemented, so
+both the raw report evaluator and final status generator keep all four flags
+false regardless of hand-authored JSON. Each diagnostic run now carries a
+fresh UUID, but formal promotion remains blocked until one reviewed collector
+binds its monotonic window to model metrics, process command lines, ROS endpoint
+GIDs, Gazebo provenance, and official runtime/board identity.
+
+- `J6_LOOPBACK_TRANSPORT_READY` requires at least 1800 seconds and proves a real
+  ROS 2 split process graph, monotonic sensor/clock timestamps, TF/static TF,
+  image-depth synchronization, the fixed QoS endpoints, zero GT-control use,
+  the PC placement audit, command authority, and the complete fault matrix.
+- `J6_LOOPBACK_ALGORITHM_READY` additionally requires the selected required
+  model, a SHA-bound qualification manifest covering PT/ONNX parity, real PC
+  inference, and a prior 1800-second full-stack run, a declared ONNX Runtime
+  provider, no provider fallback, and successful inference.
+- `J6_LOOPBACK_HIL_EMULATION_READY` additionally requires a real Gazebo sensor
+  source, at least 1800 seconds, and the complete control/fault matrix.
+- `J6_LOOPBACK_HIL_READY` retains its old meaning and can only be set by
+  official Journey 6 OE/runtime evidence. `PC_ONNX` can never set it.
 
 ## Placement and authority
 
@@ -60,6 +83,64 @@ inside the J6 container network namespace (`NET_ADMIN`); host networking is not
 used.
 
 ## Start and stop
+
+### PC_ONNX emulation
+
+The PC path loads and executes a real ONNX model with ONNX Runtime; it is not a
+pure-function loop. The launcher verifies the model SHA-256 before starting.
+It refuses to label an alternate diagnostic model as the required D1 model.
+The algorithm-host default is Ubuntu 22.04/ROS 2 Humble
+(`ros:humble-ros-base`); the PC gateway and synthetic compatibility harness use
+Jazzy. `J6_ALGORITHM_ROS_IMAGE` and `J6_ALGORITHM_ROS_SETUP` may override the
+algorithm image/setup explicitly, but a Jazzy algorithm-host run is diagnostic
+and does not satisfy the V2 platform contract.
+
+```bash
+export J6_MODEL_ARTIFACTS=/absolute/path/to/model-directory
+export PC_ONNX_MODEL_FILENAME=model.onnx
+export PC_ONNX_MODEL_ID=d1_littercam_yolov9c
+export PC_ONNX_MODEL_SHA256=<lowercase-sha256>
+export PC_ONNX_REQUIRED_MODEL_ID=d1_littercam_yolov9c
+export HIL_APPLY_NETWORK_FAULTS=true
+bash scripts/run_j6_loopback_hil.sh \
+  --runtime-backend PC_ONNX --duration-seconds 1800 --sensor-source gazebo
+```
+
+On PowerShell, the equivalent invocation is:
+
+```powershell
+$env:J6_MODEL_ARTIFACTS = 'C:\absolute\model-directory'
+$env:PC_ONNX_MODEL_FILENAME = 'model.onnx'
+$env:PC_ONNX_MODEL_ID = 'd1_littercam_yolov9c'
+$env:PC_ONNX_MODEL_SHA256 = '<lowercase-sha256>'
+$env:PC_ONNX_REQUIRED_MODEL_ID = 'd1_littercam_yolov9c'
+$env:HIL_APPLY_NETWORK_FAULTS = 'true'
+powershell -NoProfile -ExecutionPolicy Bypass -File `
+  .\scripts\run_j6_loopback_hil.ps1 -RuntimeBackend PC_ONNX `
+  -DurationSeconds 1800 -SensorSource gazebo
+```
+
+`synthetic_transport_probe` is useful only as a transport endurance diagnostic.
+Even at 1800 seconds it cannot set any formal readiness flag, because V2 formal
+transport acceptance requires the PC Gazebo/Jazzy sensor graph.
+
+`J6_MODEL_ARTIFACTS` must also contain
+`model_qualification_manifest.json`. Its model ID/SHA and three referenced
+evidence files are hashed and content-checked; an environment boolean cannot
+qualify a model. The Gazebo lane separately requires a hashed
+`HIL_GAZEBO_SENSOR_PROVENANCE.json` binding the audited sensor/plant-only
+launch, live Gazebo processes, and publisher endpoints. In Gazebo mode the
+harness creates no sensor/clock/TF publishers of its own.
+
+The launcher does not substitute the repository's full product simulation for
+that PC graph: the full launch contains algorithm nodes and evaluator/truth
+components that are forbidden in this split. For `--sensor-source gazebo`, an
+operator must first provide a dedicated Jazzy **sensor/plant-only** launch that
+publishes the fixed `/hil/*` sensor topics and consumes only the validated
+actuator topics. If that launch is absent, the harness records zero sensor
+traffic and all readiness flags remain false.
+
+### Official Journey 6 runtime
 
 Set these values to real local resources. The algorithm command must start the
 J6-side graph, not a PC duplicate:
@@ -133,10 +214,15 @@ The gateway continuously updates:
 - `HIL_PC_GATEWAY_PROCESS_LIST.txt` (the gateway container namespace);
 - `HIL_ROS_GRAPH.json`;
 - `HIL_COMMAND_AUTHORITY.json`.
+- `HIL_ROS_QOS_INFO.txt` (live DDS endpoint QoS captured with a Fast DDS super
+  client);
+- `HIL_ALGORITHM_RUNTIME.json` (runtime identity, model/hash/provider, actual
+  inference counters, synchronization counters, and actual network actions);
+- `J6_LOOPBACK_HIL_EMULATION_REPORT.json` (machine-derived V2 statuses and the
+  safety/fault matrix).
 
-The algorithm container writes `HIL_J6_PROCESS_LIST.txt` at graph startup. A
-formal `J6_LOOPBACK_HIL_READY=true` decision additionally requires a real
-30-minute loop, zero GT-control violations, zero PC duplicates, command-authority
-pass, timeout/network safe-stop, and stale-replay rejection. Until those machine
-results and a real OE image exist, this implementation is an interface-ready,
-fail-closed lane rather than a passed HIL acceptance.
+The algorithm container writes `HIL_J6_PROCESS_LIST.txt` at graph startup. The
+PC_ONNX harness exercises command timeout, an actual container-network
+disconnect/restore, manual resume, stale-sequence injection, E-stop, and a live
+blacklisted PC node injection. A 30-minute PC result remains emulation evidence,
+never official Journey 6 runtime or board acceptance.

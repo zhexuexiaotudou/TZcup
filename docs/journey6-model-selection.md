@@ -4,7 +4,7 @@
 
 | ID | Role | Source revision | Available format at audit | Current status |
 |---|---|---|---|---|
-| D1 | YOLOv9-C litter detector | `aryanshh/littercamv3@861363597e109f9f0840f537f48d890cef5b5461` | PT weights only | ONNX/J6 preflight blocked |
+| D1 | YOLOv9-C litter detector | `aryanshh/littercamv3@861363597e109f9f0840f537f48d890cef5b5461` | pinned PT + locally exported canonical ONNX | strict parity and fixed-development semantics failed |
 | D2 | YOLO11n material detector | `SUHAN-I/YOLO11@d7a78128455ef607a922f50681187f8b32b2af53` | ONNX and PT | SHA/checker pass; semantic/J6 preflight blocked |
 | C1 | YOLOv8n material classifier | `SriramRokkam/wastewise-garbage-cls@a30c36c6b181ac0d2eb387bbd4f6d4a5b88ee078` | ONNX | SHA/checker pass; release license blocked |
 | C2 | EfficientNet-B0 material classifier | `nabaouladyahich/ecodetect-waste-classifier@9719e6fc9a352d62209529e0e0573fff3bb7dc3d` | H5 only | reproducible ONNX export pending |
@@ -15,6 +15,17 @@ D2 and C1 were downloaded outside Git and verified as
 and `2b46d491091dbc0ed98a0f1eaee7fe5739c8fd3eb5bd5935396c3b2712e1f7a6`.
 Both pass ONNX checker, have static batch-1 inputs, no custom operators, and no
 embedded NMS.
+
+D1's pinned `best.pt` (`1cf60873661811f51cd84fb6aafb403646b67d2add57c4851b0be48ebdff2873`)
+loads as `models.yolo.DetectionModel` with a `DualDDetect` head. The official
+YOLOv9 E1 route exported a static FP32 opset-17/IR-8 ONNX
+(`01c72cdbcd08b6fd91c9a56a065f19837bffd67cca175a75b39e295c3afc01f5`)
+with no custom operators or embedded NMS. It is diagnostic-only: strict
+PT/ONNX parity failed on 100 TRAIN images (maximum box error `1.604 px`, class
+score error `0.003521`), and the 410-image TRAIN-only offline gate produced
+zero true positives for all three actionable classes, with class-agnostic
+proposal FP/frame `2.0122`. It is neither selected nor activated, and
+moving-online evaluation was not started.
 
 D2 nevertheless fails closed: both advertised ONNX filenames resolve to the
 same artifact, whose graph exposes eight anonymous `class_0...class_7` outputs

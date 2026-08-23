@@ -1,4 +1,5 @@
 import numpy as np
+import pytest
 
 from sanitation_perception.pretrained_contracts import (
     decode_material_classifier,
@@ -23,6 +24,25 @@ def test_yolo_decode_supports_transposed_layout_and_graph_external_nms():
     assert [item.product_class for item in detections] == ["metal_can", "plastic_bottle"]
 
 
+def test_yolo_nms_keeps_overlapping_different_unknown_source_classes():
+    output = np.zeros((1, 6, 2), dtype=np.float32)
+    output[0, :, 0] = [100, 100, 40, 40, 0.9, 0.1]
+    output[0, :, 1] = [100, 100, 40, 40, 0.1, 0.8]
+    detections = decode_yolo_detect(
+        output,
+        class_order=["cigarette_butt", "plastic_bag"],
+        class_mapping={},
+        score_threshold=0.5,
+        nms_iou_threshold=0.5,
+        input_size=(640, 640),
+    )
+    assert [item.source_class for item in detections] == [
+        "cigarette_butt",
+        "plastic_bag",
+    ]
+    assert {item.product_class for item in detections} == {"background_or_unknown"}
+
+
 def test_yolov5_objectness_is_explicit_in_the_contract():
     output = np.array([[[100, 100, 20, 20, 0.5, 0.9]]], dtype=np.float32)
     assert decode_yolo_detect(
@@ -45,6 +65,20 @@ def test_yolov5_objectness_is_explicit_in_the_contract():
             has_objectness=True,
         )
     ) == 1
+
+
+def test_yolo_decode_rejects_nonfinite_output_and_invalid_thresholds():
+    output = np.zeros((1, 5, 1), dtype=np.float32)
+    output[0, 0, 0] = np.nan
+    with pytest.raises(ValueError, match="non-finite"):
+        decode_yolo_detect(
+            output,
+            class_order=["plastic_bottle"],
+            class_mapping={"plastic_bottle": "plastic_bottle"},
+            score_threshold=0.5,
+            nms_iou_threshold=0.5,
+            input_size=(640, 640),
+        )
 
 
 def test_classifier_unknown_rejection_and_fusion_never_confirms():

@@ -46,6 +46,14 @@ def decode_yolo_detect(
     tensor = np.asarray(output, dtype=np.float32)
     if tensor.ndim != 3 or tensor.shape[0] != 1:
         raise ValueError(f"YOLO output must be rank-3 batch=1: {tensor.shape}")
+    if not np.isfinite(tensor).all():
+        raise ValueError("YOLO output contains non-finite values")
+    if not 0.0 <= score_threshold <= 1.0:
+        raise ValueError("YOLO score threshold must be in [0, 1]")
+    if not 0.0 <= nms_iou_threshold <= 1.0:
+        raise ValueError("YOLO NMS IoU threshold must be in [0, 1]")
+    if maximum_detections < 1:
+        raise ValueError("maximum detections must be positive")
     class_offset = 5 if has_objectness else 4
     attribute_count = class_offset + len(class_order)
     if tensor.shape[1] == attribute_count:
@@ -81,7 +89,7 @@ def decode_yolo_detect(
     kept: list[Detection] = []
     for candidate in sorted(candidates, key=lambda item: item.score, reverse=True):
         if any(
-            prior.product_class == candidate.product_class
+            prior.source_class == candidate.source_class
             and _iou(candidate, prior) >= nms_iou_threshold
             for prior in kept
         ):

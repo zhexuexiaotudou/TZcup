@@ -1,5 +1,4 @@
-# syntax=docker/dockerfile:1.7
-ARG J6_OE_BASE_IMAGE
+ARG J6_OE_BASE_IMAGE=tzcup/missing-j6-oe-base:blocked
 FROM ${J6_OE_BASE_IMAGE}
 
 ARG J6_OE_ROOT=/opt/journey6
