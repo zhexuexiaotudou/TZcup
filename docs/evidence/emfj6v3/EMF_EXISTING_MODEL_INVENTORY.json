@@ -486,7 +486,7 @@
         "paper": "material_evidence_for_paper_litter",
         "plastic": "material_evidence_for_plastic_bottle"
       },
-      "disposition": "development_screening_pending",
+      "disposition": "native_GT_smoke_failed_zero_paper_and_near_zero_plastic_recall",
       "files": [
         {
           "name": "trained_model.h5",
@@ -499,7 +499,7 @@
       "license": "development_only",
       "model_id": "c3_vasantvohra_trashnet",
       "onnx_exportability": "no_source_onnx_tf2onnx_route_unverified",
-      "reason": "lightweight_exact_material_evidence_but_no_background_unknown_or_outdoor_specificity_proof",
+      "reason": "fixed_183_TRAIN_native_smoke_metal_recall_1_paper_recall_0_plastic_recall_0_0714_background_specificity_0_7353",
       "revision": "db53f56e140e38e42b948d377b814fec2954da51",
       "role": "classifier",
       "source_uri": "https://github.com/vasantvohra/TrashNet",
@@ -932,7 +932,7 @@
   "protocol_id": "EMFJ6V3",
   "registry_id": "tzcup_existing_model_candidates_v3",
   "registry_path": "config/existing_model_candidates_v3.yaml",
-  "registry_sha256": "6c9df8ee587fb0e18e44a9ed84d2f65bdc82a19893d10d19ab81e1f46886a57e",
+  "registry_sha256": "45da905ddb0b4515ccd7ad2fe842057e1f028237ffa283294b8e3623b2ad00aa",
   "release_allowed": false,
   "schema_version": 1,
   "sealed_access_allowed": false,

@@ -267,8 +267,8 @@ candidates:
     framework: tensorflow_keras_hdf5
     onnx_exportability: no_source_onnx_tf2onnx_route_unverified
     journey6_preflight_status: not_run
-    disposition: development_screening_pending
-    reason: lightweight_exact_material_evidence_but_no_background_unknown_or_outdoor_specificity_proof
+    disposition: native_GT_smoke_failed_zero_paper_and_near_zero_plastic_recall
+    reason: fixed_183_TRAIN_native_smoke_metal_recall_1_paper_recall_0_plastic_recall_0_0714_background_specificity_0_7353
 
   - model_id: c4_prithiv_trash_net_siglip2
     role: classifier

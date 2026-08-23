@@ -23,6 +23,7 @@
   "screening_progress": {
     "d6_yolox_tiny_coco_onnx": "proposal_reference_failed_zero_recall",
     "c1_wastewise_yolov8n_cls": "fixed_TRAIN_grid_max_macro_f1_0_2237_no_HOLDOUT_selection",
+    "c3_vasantvohra_trashnet": "native_GT_smoke_failed_paper_recall_0_plastic_recall_0_0714",
     "c4_prithiv_trash_net_siglip2": "fixed_TRAIN_grid_max_macro_f1_0_1948_target_macro_f1_zero_no_HOLDOUT_selection",
     "c5_dima806_garbage_types_vit": "native_GT_smoke_failed_all_183_rejected_background",
     "c6_giecom_recycling_vit": "native_GT_smoke_failed_background_specificity_0_0196_zero_plastic_metal_recall",
@@ -35,5 +36,5 @@
     "formal_negative_only_domain_ready": false,
     "complete": false
   },
-  "truth_boundary": "Bounded discovery, D1 attribution, selected detector/classifier direct-use diagnostics, one TRAIN-only nontraining grid, and an eWaSR negative proxy screen are complete. Remaining classifier/Area candidates and the missing complete HOLDOUT/Area positive GT keep screening and nontraining adjustment incomplete; training, PC closure, Journey 6 runtime, HBM, board, product and release claims remain false."
+  "truth_boundary": "Bounded discovery, D1 attribution, five classifier direct-use diagnostics, one TRAIN-only nontraining grid, and three explicit Area dispositions are complete. C2 and the missing complete HOLDOUT/Area positive GT keep screening and nontraining adjustment incomplete; training, PC closure, Journey 6 runtime, HBM, board, product and release claims remain false."
 }

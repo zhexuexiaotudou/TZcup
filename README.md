@@ -57,6 +57,8 @@ C5/C6 完整外置 raw 分别锁为 `cea51529…aab1`（244605 bytes）与 `702c
 
 C3 TrashNet H5 已在 immutable TensorFlow 1.15.5 Jupyter 镜像中以 non-root、断网、只读输入/rootfs 完成 183-crop CPU smoke；worker 保持 Python 3.6 兼容，并明确不导入上游会删除输入图像的 `prediction.py`。结果 macro-F1 `0.4411`、background specificity `0.7353`；metal recall `1.0`，但 plastic recall 仅 `0.0714`、paper recall `0`，因此 direct-use 仍失败且不能进入 functional gate。
 
+C3 完整 raw 锁为 `3323a4be…2048`（157442 bytes），仓库紧凑证据绑定 worker source commit `f8383d60be7469aef4e13e690d6591c43a5ea419`。至此 C1/C3/C4/C5/C6 direct-use 均有真实失败证据；C2 仍是 classifier screening 的最后缺口。
+
 Journey 6 校准数据与源码部署包同样失效关闭：当前只读盘点两个明确 TRAIN 根得到 `471` 个 RGB PNG 候选和 `0` 个 ROI/crop，尚无逐文件 SHA 与分层元数据，因此 `J6_CALIBRATION_PACK_READY=false`。reference-only source bundle 已锁定 D1 E1 canonical ONNX、development-only Area ONNX、C++ graph-external 后处理和真实 TRAIN golden tensor lock；但模型选择/发布许可、正式校准、nash profile 与官方工具链仍未齐备，因此 `J6_SOURCE_DEPLOYMENT_BUNDLE_READY=false`。许可审计文件缺失本身也会显式保持 `model_license_not_release_clear`，不会因干净 CI 环境缺少本地 `.workspace` 证据而漏报。`G5_V2`、`SEALED_FINAL`、`DEV_VAL` 始终禁止进入校准链，详见 [Journey 6 校准与源码部署包](docs/journey6-calibration-source-bundle.md)。
 
 主要缺口是合格且可冻结的产品近距四分类/Area 模型、完整感知清扫链的真实 ROS/Gazebo 集成验证、20,000 m² 正式范围建图闭环、30-seed 综合链、3500 m²/h 实测效率、完整 10 Hz/10 min 性能、2 h soak、故障矩阵、5-bag replay、一次性 sealed final 和最终 release/rollback。详情见 [当前状态](docs/current-status.md)，运行时不变量见 [产品运行时基础架构](docs/product-runtime-architecture.md)。
