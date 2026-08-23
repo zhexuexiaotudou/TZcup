@@ -58,7 +58,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install model contract dependencies
-        run: python -m pip install --disable-pip-version-check numpy opencv-python-headless pytest PyYAML
+        run: python -m pip install --disable-pip-version-check numpy opencv-python-headless Pillow pytest PyYAML
       - name: Run Journey 6 model and HIL contracts
         env:
           PYTHONPATH: scripts:starter_ws/src/sanitation_perception
@@ -95,7 +95,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install existing-model contract dependencies
-        run: python -m pip install --disable-pip-version-check numpy opencv-python-headless pytest PyYAML
+        run: python -m pip install --disable-pip-version-check numpy opencv-python-headless Pillow pytest PyYAML
       - name: Verify frozen inventory and phase-order guards
         env:
           PYTHONPATH: scripts

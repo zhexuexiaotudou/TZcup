@@ -59,6 +59,8 @@ C3 TrashNet H5 已在 immutable TensorFlow 1.15.5 Jupyter 镜像中以 non-root�
 
 C3 完整 raw 锁为 `3323a4be…2048`（157442 bytes），仓库紧凑证据绑定 worker source commit `f8383d60be7469aef4e13e690d6591c43a5ea419`。C1/C3/C4/C5/C6 direct-use 均有真实失败证据。
 
+C3 worker 的图像预处理合同测试依赖 Pillow；`existing-model-screening-contract` clean-runner job 已显式安装该依赖，避免本机环境掩盖 CI collection 缺包。
+
 C2 的 pinned H5/README 已补齐并通过大小/SHA 与非执行 H5 合同审计，但官方 TensorFlow 2.20/Keras 3.11.2 安全反序列化把 EfficientNet stem 构造成 `(3,3,1,32)`，无法绑定冻结的 `(3,3,3,32)` 权重；因此两条预处理路径均未执行、未选择、未冻结，也没有用手工重建或 `skip_mismatch` 绕过。至此 6/6 classifier 都有终态 disposition；全局 screening 仍因完整 HOLDOUT、independent unknown bank 与 Area positive GT 缺失而保持 false。
 
 A5 的最小固定调整集已收敛为 C1 baseline + C3 information-bearing candidate，并在同一 183 条 G10 TRAIN GT crop identity 上执行不可扩展的 5×5 网格。C3 的 optimistic TRAIN macro-F1 上界为 `0.7351`，但对应背景 specificity 仅 `0.5980`，且两项 unknown limit 并列；因此该结果明确标为 `TRAIN_upper_bound_only`，未选择/冻结阈值。旧 C1+C4 证据保留不覆盖，新 C1+C3 完整证据锁为 `c0f847a8…cb40`（101542 bytes）。
