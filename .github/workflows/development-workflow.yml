@@ -110,6 +110,9 @@ jobs:
             scripts/test_evaluate_emf_classifier_nontraining.py \
             scripts/test_prepare_trcrv10_g10_coco.py \
             scripts/test_build_emf_classifier_holdout_gt.py \
+            scripts/test_c1_holdout_native_worker.py \
+            scripts/test_c3_holdout_native_worker.py \
+            scripts/test_evaluate_emf_classifier_holdout.py \
             scripts/test_build_emf_area_dataset.py \
             scripts/test_emf_g2_area_capture_contract.py \
             scripts/test_screen_emf_ewasr_negative.py \

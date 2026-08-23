@@ -194,9 +194,10 @@ def g10_motion_profile(world_id: str) -> dict:
         "orbit_linear_x_mps": 0.20,
         "orbit_angular_z_rad_s": G10_ORBIT_ANGULAR_SPEED_RAD_S,
         "route_contract": (
-            "pass the candidate on the straight approach; use a bounded "
-            "shallow-left then straight exit around the mapped mixed-curb "
-            "layout, otherwise latch a left orbit before transverse obstacles"
+            "pass the candidate on the straight approach; remain in the "
+            "GT-independent mapped center corridor for the mixed-curb layout; "
+            "use a bounded shallow departure for light pavers; otherwise "
+            "latch a left orbit before transverse obstacles"
         ),
     }
     bounded_departure_layouts = (
@@ -207,18 +208,31 @@ def g10_motion_profile(world_id: str) -> dict:
         (layout for layout in bounded_departure_layouts if world_id.endswith(f"_{layout}")),
         None,
     )
-    if layout_specific_route is not None:
+    if layout_specific_route == "08_mixed_curb_vegetation":
         profile.update(
             {
                 "post_switch_phases": [
                     {
-                        "name": "mixed_curb_shallow_left_departure",
+                        "name": "mapped_center_corridor_straight_exit",
+                        "frame_count": 4096,
+                        "linear_x_mps": 0.20,
+                    },
+                ],
+                "layout_specific_route": layout_specific_route,
+            }
+        )
+    elif layout_specific_route == "09_light_paver_pedestrian":
+        profile.update(
+            {
+                "post_switch_phases": [
+                    {
+                        "name": "light_paver_shallow_left_departure",
                         "frame_count": 9,
                         "linear_x_mps": 0.20,
                         "angular_z_rad_s": G10_ORBIT_ANGULAR_SPEED_RAD_S,
                     },
                     {
-                        "name": "mixed_curb_straight_exit",
+                        "name": "light_paver_straight_exit",
                         "frame_count": 4096,
                         "linear_x_mps": 0.20,
                     },

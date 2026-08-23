@@ -674,6 +674,10 @@ def build_dataset(
     scenes = _scenes_root(capture_root)
     coco = _load_json(coco_path, field="COCO")
     images, annotations = _validate_coco(coco)
+    if {row["world_id"] for row in images.values()} != set(HOLDOUT_WORLD_SHA256):
+        raise HoldoutContractError(
+            "COCO images do not cover the exact frozen HOLDOUT world set"
+        )
 
     prepared: dict[int, dict[str, Any]] = {}
     candidates: dict[str, list[tuple[str, int, dict]]] = defaultdict(list)
@@ -893,6 +897,8 @@ def build_dataset(
             "protocol_id": "EMFJ6V3",
             "stage": "CLASSIFIER_HOLDOUT_OFFLINE_GT_DEVELOPMENT",
             "source_split": SOURCE_SPLIT,
+            "g10_domain_manifest_sha256": G10_DOMAIN_MANIFEST_SHA256,
+            "holdout_world_ids": sorted(HOLDOUT_WORLD_SHA256),
             "input_coco_sha256": _sha256_file(coco_path),
             "all_validated_source_frames_sha256": _canonical_sha256(
                 [

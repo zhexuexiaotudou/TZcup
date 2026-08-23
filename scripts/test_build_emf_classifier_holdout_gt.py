@@ -183,10 +183,11 @@ def _valid_fixture(tmp_path: Path) -> tuple[Path, Path]:
     annotations = []
     image_id = 1
     annotation_id = 1
-    holdout_world = "g10v15_val_w01_07_service_road"
-    for category_id, class_name in builder.TARGET_CLASSES.items():
+    holdout_worlds = sorted(builder.HOLDOUT_WORLD_SHA256)
+    holdout_world = holdout_worlds[0]
+    for class_index, (category_id, class_name) in enumerate(builder.TARGET_CLASSES.items()):
         scene_name = f"scene_{class_name}"
-        world = holdout_world
+        world = holdout_worlds[class_index]
         scene_dir = _write_scene(
             capture,
             scene=scene_name,
@@ -277,6 +278,8 @@ def test_build_is_deterministic_sha_locked_and_gt_runtime_forbidden(tmp_path: Pa
     assert first == second
     assert first["pass"] is True
     assert first["source_split"] == "G10_HOLDOUT"
+    assert first["g10_domain_manifest_sha256"] == builder.G10_DOMAIN_MANIFEST_SHA256
+    assert first["holdout_world_ids"] == sorted(builder.HOLDOUT_WORLD_SHA256)
     assert first["counts"] == {
         "background_or_unknown": 2,
         "metal_can": builder.POSITIVE_PER_CLASS,

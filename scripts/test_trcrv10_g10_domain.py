@@ -61,20 +61,14 @@ def test_g10_route_orbits_before_transverse_wet_world_drain() -> None:
     )
 
 
-def test_mixed_curb_route_uses_bounded_shallow_departure() -> None:
+def test_mixed_curb_route_uses_mapped_center_corridor() -> None:
     mixed_curb = g4_scene.g10_motion_profile(
         "g10v15_val_w02_08_mixed_curb_vegetation"
     )
     assert mixed_curb["layout_specific_route"] == "08_mixed_curb_vegetation"
     assert mixed_curb["post_switch_phases"] == [
         {
-            "name": "mixed_curb_shallow_left_departure",
-            "frame_count": 9,
-            "linear_x_mps": 0.20,
-            "angular_z_rad_s": g4_scene.G10_ORBIT_ANGULAR_SPEED_RAD_S,
-        },
-        {
-            "name": "mixed_curb_straight_exit",
+            "name": "mapped_center_corridor_straight_exit",
             "frame_count": 4096,
             "linear_x_mps": 0.20,
         },
@@ -84,7 +78,19 @@ def test_mixed_curb_route_uses_bounded_shallow_departure() -> None:
         "g10v15_val_w03_09_light_paver_pedestrian"
     )
     assert light_paver["layout_specific_route"] == "09_light_paver_pedestrian"
-    assert light_paver["post_switch_phases"] == mixed_curb["post_switch_phases"]
+    assert light_paver["post_switch_phases"] == [
+        {
+            "name": "light_paver_shallow_left_departure",
+            "frame_count": 9,
+            "linear_x_mps": 0.20,
+            "angular_z_rad_s": g4_scene.G10_ORBIT_ANGULAR_SPEED_RAD_S,
+        },
+        {
+            "name": "light_paver_straight_exit",
+            "frame_count": 4096,
+            "linear_x_mps": 0.20,
+        },
+    ]
 
     wet_world = g4_scene.g10_motion_profile("g10v15_train_w05_05_wet_courtyard")
     assert "post_switch_phases" not in wet_world
