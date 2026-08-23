@@ -65,6 +65,8 @@ C2 的 pinned H5/README 已补齐并通过大小/SHA 与非执行 H5 合同审�
 
 A5 的最小固定调整集已收敛为 C1 baseline + C3 information-bearing candidate，并在同一 183 条 G10 TRAIN GT crop identity 上执行不可扩展的 5×5 网格。C3 的 optimistic TRAIN macro-F1 上界为 `0.7351`，但对应背景 specificity 仅 `0.5980`，且两项 unknown limit 并列；因此该结果明确标为 `TRAIN_upper_bound_only`，未选择/冻结阈值。旧 C1+C4 证据保留不覆盖，新 C1+C3 完整证据锁为 `c0f847a8…cb40`（101542 bytes）。
 
+缺失开发数据的补齐路径已改成显式、可审计的工具合同：G10 COCO 只有在调用方提供固定 domain manifest 并明确声明 `G10_HOLDOUT` 时，才把三个 val capture worlds 输出为 capture-root-relative POSIX identity；offline-GT crop builder 会先全量核验 capture records、RGB-D/semantic/instance、场景与逐文件 SHA，再按固定规则抽取三类和 negative-only unknown bank。Area 侧新增固定四场景 G2 捕获入口，使用 immutable Jazzy 镜像与外置 overlay，只接受 TRAIN/HOLDOUT 各一个 positive 和一个 negative-only mission；这些工具均保持 development-only，不自动选择阈值、训练或宣称 A4/PC/product 通过。
+
 Journey 6 校准数据与源码部署包同样失效关闭：当前只读盘点两个明确 TRAIN 根得到 `471` 个 RGB PNG 候选和 `0` 个 ROI/crop，尚无逐文件 SHA 与分层元数据，因此 `J6_CALIBRATION_PACK_READY=false`。reference-only source bundle 已锁定 D1 E1 canonical ONNX、development-only Area ONNX、C++ graph-external 后处理和真实 TRAIN golden tensor lock；但模型选择/发布许可、正式校准、nash profile 与官方工具链仍未齐备，因此 `J6_SOURCE_DEPLOYMENT_BUNDLE_READY=false`。许可审计文件缺失本身也会显式保持 `model_license_not_release_clear`，不会因干净 CI 环境缺少本地 `.workspace` 证据而漏报。`G5_V2`、`SEALED_FINAL`、`DEV_VAL` 始终禁止进入校准链，详见 [Journey 6 校准与源码部署包](docs/journey6-calibration-source-bundle.md)。
 
 主要缺口是合格且可冻结的产品近距四分类/Area 模型、完整感知清扫链的真实 ROS/Gazebo 集成验证、20,000 m² 正式范围建图闭环、30-seed 综合链、3500 m²/h 实测效率、完整 10 Hz/10 min 性能、2 h soak、故障矩阵、5-bag replay、一次性 sealed final 和最终 release/rollback。详情见 [当前状态](docs/current-status.md)，运行时不变量见 [产品运行时基础架构](docs/product-runtime-architecture.md)。
