@@ -95,7 +95,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install existing-model contract dependencies
-        run: python -m pip install --disable-pip-version-check pytest PyYAML
+        run: python -m pip install --disable-pip-version-check numpy opencv-python-headless pytest PyYAML
       - name: Verify frozen inventory and phase-order guards
         env:
           PYTHONPATH: scripts
