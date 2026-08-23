@@ -35,6 +35,8 @@ PRODUCT_FIELD_READY=false
 
 目标计算平台已收敛为地平线 Journey 6，当前 SKU 与 `march` 均保持 `auto`。仓库新增 PC 先行的预训练模型、NV12、严格 provider、分离式 HIL 与板到即部署合同，并在 CI 中分别构建 Jazzy transport/gateway 与 Humble PC-ONNX algorithm-host 镜像；但真实 detector/classifier 激活与评测、官方 J6 OpenExplorer x86 仿真、30 分钟 loopback HIL 和物理板端证据尚未通过，因此所有 `J6_*_READY/PASS` 状态仍失效关闭。RDK S100/S100P 产物不得作为 Journey 6 证据。架构与到板流程见 [Journey 6 目标架构](docs/journey6-target-architecture.md) 和 [板卡到货手册](docs/journey6-board-arrival-runbook.md)。
 
+当前已按 `EMFJ6V3` 授权有界的“现存模型优先”路线：先完成最多 12 个 detector、6 个 classifier、3 个 Area artifact 的来源/语义/许可与固定开发集筛选，再做有界非训练调整；只有筛选和非训练调整均完成且明确判定需要迁移学习时，训练入口才可解锁。当前只是协议与顺序门生效，候选清单尚未冻结，所有 EMF 功能/产品/训练状态均为 false，sealed 数据继续禁止访问。
+
 Journey 6 校准数据与源码部署包同样失效关闭：当前只读盘点两个明确 TRAIN 根得到 `471` 个 RGB PNG 候选和 `0` 个 ROI/crop，尚无逐文件 SHA 与分层元数据，因此 `J6_CALIBRATION_PACK_READY=false`。reference-only source bundle 已锁定 D1 E1 canonical ONNX、development-only Area ONNX、C++ graph-external 后处理和真实 TRAIN golden tensor lock；但模型选择/发布许可、正式校准、nash profile 与官方工具链仍未齐备，因此 `J6_SOURCE_DEPLOYMENT_BUNDLE_READY=false`。许可审计文件缺失本身也会显式保持 `model_license_not_release_clear`，不会因干净 CI 环境缺少本地 `.workspace` 证据而漏报。`G5_V2`、`SEALED_FINAL`、`DEV_VAL` 始终禁止进入校准链，详见 [Journey 6 校准与源码部署包](docs/journey6-calibration-source-bundle.md)。
 
 主要缺口是合格且可冻结的产品近距四分类/Area 模型、完整感知清扫链的真实 ROS/Gazebo 集成验证、20,000 m² 正式范围建图闭环、30-seed 综合链、3500 m²/h 实测效率、完整 10 Hz/10 min 性能、2 h soak、故障矩阵、5-bag replay、一次性 sealed final 和最终 release/rollback。详情见 [当前状态](docs/current-status.md)，运行时不变量见 [产品运行时基础架构](docs/product-runtime-architecture.md)。

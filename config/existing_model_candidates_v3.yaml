@@ -1,0 +1,142 @@
+schema_version: 3
+protocol_id: EMFJ6V3
+registry_id: tzcup_existing_model_candidates_v3
+development_only: true
+competition_claim_allowed: false
+release_allowed: false
+sealed_access_allowed: false
+candidate_limits:
+  detector: 12
+  classifier: 6
+  area: 3
+states:
+  EMF_EXISTING_MODEL_INVENTORY_READY: false
+  EMF_EXISTING_MODEL_SCREENING_COMPLETE: false
+  EMF_EXISTING_MODEL_FUNCTIONAL_CANDIDATE: false
+  EMF_EXISTING_MODEL_PRODUCT_CANDIDATE: false
+  EMF_NONTRAINING_ADJUSTMENT_COMPLETE: false
+  EMF_TRANSFER_LEARNING_REQUIRED: false
+  EMF_ADAPTED_MODEL_DEV_PASS: false
+truth_boundary: >-
+  This initial registry carries forward only previously audited artifacts. It
+  authorizes bounded existing-model discovery but does not declare the
+  inventory complete, select a model, authorize training, or permit sealed data.
+candidates:
+  - model_id: d1_littercam_yolov9c
+    role: detector
+    source_uri: https://huggingface.co/aryanshh/littercamv3
+    revision: 861363597e109f9f0840f537f48d890cef5b5461
+    files:
+      - name: best.pt
+        sha256: 1cf60873661811f51cd84fb6aafb403646b67d2add57c4851b0be48ebdff2873
+      - name: canonical.onnx
+        sha256: 01c72cdbcd08b6fd91c9a56a065f19837bffd67cca175a75b39e295c3afc01f5
+        provenance: locally_exported_e1
+    architecture: YOLOv9-C DualDDetect
+    class_order: [cigarette_butt, plastic_bottle, drinks_can, fast_food_packaging, plastic_bag, coffee_cup, glass_bottle, paper_waste, food_wrapper, general_litter]
+    class_order_source: checkpoint_model_names
+    class_semantics:
+      plastic_bottle: plastic_bottle
+      drinks_can: metal_can
+      paper_waste: paper_litter
+    license: blocked_license
+    training_data: unresolved
+    weight_distribution: unresolved
+    input_output: static_fp32_1x3x640x640_graph_external_nms
+    framework: pytorch_yolov9_and_onnx
+    onnx_exportability: canonical_exported_strict_parity_failed
+    journey6_preflight_status: static_contract_pass_official_sdk_not_run
+    disposition: rejected_product_candidate_diagnostic_only
+    reason: fixed_train_gate_zero_tp_all_actionable_classes_and_strict_parity_fail
+
+  - model_id: d2_suhan_yolo11n
+    role: detector
+    source_uri: https://huggingface.co/SUHAN-I/YOLO11
+    revision: d7a78128455ef607a922f50681187f8b32b2af53
+    files:
+      - name: yolo11_trash_detection.onnx
+        sha256: bce5b56cc825efaf4912a7137f74ad147634ac99ef6585662d003d39329ab100
+    architecture: YOLO11n
+    class_order: [class_0, class_1, class_2, class_3, class_4, class_5, class_6, class_7]
+    class_order_source: embedded_metadata_conflicts_with_model_card
+    class_semantics: {}
+    license: blocked_license
+    training_data: unresolved
+    weight_distribution: unresolved
+    input_output: static_1x3x640x640_to_1x12x8400
+    framework: onnx_ultralytics
+    onnx_exportability: source_onnx_ir10
+    journey6_preflight_status: fail_ir10_exceeds_current_ir9_limit
+    disposition: rejected
+    reason: anonymous_conflicting_class_contract_and_journey6_ir_preflight_fail
+
+  - model_id: c1_wastewise_yolov8n_cls
+    role: classifier
+    source_uri: https://huggingface.co/SriramRokkam/wastewise-garbage-cls
+    revision: a30c36c6b181ac0d2eb387bbd4f6d4a5b88ee078
+    files:
+      - name: wastewise-yolo.onnx
+        sha256: 2b46d491091dbc0ed98a0f1eaee7fe5739c8fd3eb5bd5935396c3b2712e1f7a6
+    architecture: YOLOv8n-cls
+    class_order: [battery, biological, cardboard, glass, metal, paper, plastic, trash]
+    class_order_source: embedded_onnx_metadata
+    class_semantics:
+      metal: metal_can
+      paper: paper_litter
+      plastic: plastic_bottle
+    license: blocked_license
+    training_data: unresolved
+    weight_distribution: unresolved
+    input_output: static_1x3x224x224_to_1x8
+    framework: onnx_ultralytics
+    onnx_exportability: source_onnx_checker_pass
+    journey6_preflight_status: static_audit_only_official_sdk_not_run
+    disposition: development_screening_pending
+    reason: semantic_mapping_available_but_license_and_fixed_screening_unresolved
+
+  - model_id: c2_ecodetect_efficientnetb0
+    role: classifier
+    source_uri: https://huggingface.co/nabaouladyahich/ecodetect-waste-classifier
+    revision: 9719e6fc9a352d62209529e0e0573fff3bb7dc3d
+    files:
+      - name: ecodetect_model.h5
+        sha256: 2886fe9514920376e9e7284edfd3e72e87b85b39420e119cef54f9cc593f2e3d
+    architecture: EfficientNet-B0
+    class_order: [cardboard, glass, metal, paper, plastic, trash]
+    class_order_source: official_model_card
+    class_semantics:
+      metal: metal_can
+      paper: paper_litter
+      plastic: plastic_bottle
+    license: blocked_license
+    training_data: unresolved
+    weight_distribution: unresolved
+    input_output: source_h5_contract_requires_isolated_audit
+    framework: tensorflow_keras
+    onnx_exportability: source_revision_has_no_onnx
+    journey6_preflight_status: not_run
+    disposition: blocked_pending_isolated_source_audit
+    reason: source_h5_requires_nonroot_readonly_offline_load_and_canonical_export
+
+  - model_id: area_auto05_recovered_attempt3
+    role: area
+    source_uri: docs/evidence/journey6/J6F2_AREA_MODEL_RECOVERY.json
+    revision: 82a408f17c81f0aebe68debcb5385eccde859308f59fe8ab2e8bcff72414b3eb
+    files:
+      - name: auto05_rgbd_area_segmenter.onnx
+        sha256: 82a408f17c81f0aebe68debcb5385eccde859308f59fe8ab2e8bcff72414b3eb
+    architecture: recovered_rgbd_area_segmenter
+    class_order: [leaf_pile, puddle]
+    class_order_source: audited_output_contract
+    class_semantics:
+      leaf_pile: leaf_pile
+      puddle: puddle
+    license: development_only
+    training_data: historical_auto05_development_data_license_unresolved
+    weight_distribution: local_development_artifact_only
+    input_output: static_1x7x384x512_to_1x2x384x512
+    framework: onnx
+    onnx_exportability: recovered_onnx_checker_pass
+    journey6_preflight_status: static_standard_ops_official_sdk_not_run
+    disposition: rejected_current_contract_recovery_candidate
+    reason: puddle_false_positive_60_of_60_and_no_positive_area_gt_in_replay

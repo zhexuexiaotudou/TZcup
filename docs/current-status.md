@@ -65,11 +65,11 @@ costmap 临时排除绑定候选与当前地图几何，并由 AST 回归门约�
 
 ## 当前近距分类硬边界
 
-[CRCRV11](close-range-classifier-contract-recovery-v11.md) 已完成协议允许的 R1/R2/R3 三条路线并触发停止条件 B。C11 虽将 unique background tight crop 从 9 扩展到 6,576，R1 background specificity 也恢复为 `1.0`，但最佳正式 candidate macro-F1 仍只有 `0.6311`。因此不得继续 R4/R5、搜索新 detector、读取 sealed 数据调参或降低 E 门；ActionVerifier/重观察/清洁闭环代码可继续验证，但产品模型激活与 E–I 正式运行保持 dependency-blocked。
+[CRCRV11](close-range-classifier-contract-recovery-v11.md) 已完成协议允许的 R1/R2/R3 三条路线并触发停止条件 B。C11 虽将 unique background tight crop 从 9 扩展到 6,576，R1 background specificity 也恢复为 `1.0`，但最佳正式 candidate macro-F1 仍只有 `0.6311`。该失败事实、R1/R2/R3 路线耗尽和 sealed 禁区保持不变；新的 `EMFJ6V3` 协议不重开 CRCRV11 的 R4/R5，而是单独授权有上限、可审计的现存 detector/classifier/Area artifact 筛选，并要求先完成不训练调整，之后才能裁决是否进入一条最佳现存模型微调、RTMDet、YOLOX 的有限顺序路线。当前只是协议与顺序门生效，候选 inventory/screening/functional/product/training 状态全部为 false。
 
 ## 当前阻塞顺序
 
-1. 近距四分类已按 CRCRV11 耗尽 R1/R2/R3 并失败；在新的、明确解除 V11 路线限制且不污染 sealed 数据的产品方案获批前，E 门是硬阻塞。
+1. 近距四分类已按 CRCRV11 耗尽 R1/R2/R3 并失败；`EMFJ6V3` 已授权新的现存模型优先方案，但尚未完成 D1 最终归因、候选清单冻结、固定开发集筛选与非训练调整，因此 E 门继续硬阻塞，训练也继续禁止。
 2. 在边界锚点蛇形 frontier 默认链上完成 7,200 s / 20,000 m² 建图闭环，再完成 B/C/D：≥30 navigation seeds、95% brush coverage、零碰撞/keepout 和 ≥3500 m²/h 全耗时效率。
 3. 串联 E–I，完成动态插入/移除、Tracking/Map、≥30 Spot Cleaning seeds 和 camera-backed Post-Clean。
 4. 完成 J/K：固定交互/LLM 集与完整 pipeline 的 10 Hz、10 min、P95/drop/资源门。
