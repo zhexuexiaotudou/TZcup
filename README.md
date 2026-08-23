@@ -37,6 +37,8 @@ PRODUCT_FIELD_READY=false
 
 当前已按 `EMFJ6V3` 授权有界的“现存模型优先”路线：先完成最多 12 个 detector、6 个 classifier、3 个 Area artifact 的来源/语义/许可与固定开发集筛选，再做有界非训练调整；只有筛选和非训练调整均完成且明确判定需要迁移学习时，训练入口才可解锁。当前只是协议与顺序门生效，候选清单尚未冻结，所有 EMF 功能/产品/训练状态均为 false，sealed 数据继续禁止访问。
 
+D1 native PT 已在同一 410 张 TRAIN 图、81 个目标上重新实跑，三类 TP 仍全为 0，negative FP/frame 仍为 `2.0152`，与历史 canonical ONNX 语义结果一致，因此主失败归因为 domain/semantic mismatch，禁止继续围绕 D1 调参或训练。发布者固定 revision 未提供模型卡所引用的样图，且当前固定集最大目标短边只有 21 px，A0 的 source-domain sanity 与 10 个明显目标人审条件仍失败关闭。
+
 Journey 6 校准数据与源码部署包同样失效关闭：当前只读盘点两个明确 TRAIN 根得到 `471` 个 RGB PNG 候选和 `0` 个 ROI/crop，尚无逐文件 SHA 与分层元数据，因此 `J6_CALIBRATION_PACK_READY=false`。reference-only source bundle 已锁定 D1 E1 canonical ONNX、development-only Area ONNX、C++ graph-external 后处理和真实 TRAIN golden tensor lock；但模型选择/发布许可、正式校准、nash profile 与官方工具链仍未齐备，因此 `J6_SOURCE_DEPLOYMENT_BUNDLE_READY=false`。许可审计文件缺失本身也会显式保持 `model_license_not_release_clear`，不会因干净 CI 环境缺少本地 `.workspace` 证据而漏报。`G5_V2`、`SEALED_FINAL`、`DEV_VAL` 始终禁止进入校准链，详见 [Journey 6 校准与源码部署包](docs/journey6-calibration-source-bundle.md)。
 
 主要缺口是合格且可冻结的产品近距四分类/Area 模型、完整感知清扫链的真实 ROS/Gazebo 集成验证、20,000 m² 正式范围建图闭环、30-seed 综合链、3500 m²/h 实测效率、完整 10 Hz/10 min 性能、2 h soak、故障矩阵、5-bag replay、一次性 sealed final 和最终 release/rollback。详情见 [当前状态](docs/current-status.md)，运行时不变量见 [产品运行时基础架构](docs/product-runtime-architecture.md)。
