@@ -22,6 +22,7 @@
   },
   "screening_progress": {
     "d6_yolox_tiny_coco_onnx": "proposal_reference_failed_zero_recall",
+    "c1_wastewise_yolov8n_cls": "direct_mapped_argmax_GT_smoke_failed_nontraining_adjustment_pending",
     "formal_negative_only_domain_ready": false,
     "complete": false
   },

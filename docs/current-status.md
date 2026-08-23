@@ -24,6 +24,8 @@ J6_DEPLOYMENT_BUNDLE_READY=false
 
 d6 YOLOX-Tiny COCO ONNX 已作为首个新增 reference 在相同 410/81 TRAIN 上真实运行。`0.001–0.5` 全阈值 proposal recall 均为 `0`，阈值 `0.5` 的 FP/frame 仍为 `1.4439`；COCO 缺目标 can/paper 语义，semantic 指标强制 `not_applicable`，因此 d6 不能成为现存功能或产品候选。当前 fixed 数据没有独立 negative-only frame，partial HOLDOUT 又缺 plastic_bottle，完整 A4 与 background specificity 仍保持 blocked。
 
+C1 WasteWise ONNX 已在 183 个明确标记为 development-only、非 formal 的 GT crops 上真实 smoke：102 background、14 plastic、47 metal、20 paper；mapped argmax 的 macro-F1 为 `0.1369`、background specificity 为 `0.6765`，三个目标类召回全部为 `0`。这关闭了 C1 direct-use 路线，但不替代 proposal-crop A4，也不跳过一次有界的 target-mass/unknown-rejection 非训练调整。
+
 原因不是裁决工具缺失，而是当前没有一套绑定固定 V1 合同、覆盖 A–P 且通过全部硬门的正式证据。历史实验报告、旧分支和旧运行目录不迁移为新合同的通过证据。
 
 ## 已具备的产品基线

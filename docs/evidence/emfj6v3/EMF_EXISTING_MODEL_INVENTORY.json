@@ -414,7 +414,7 @@
         "paper": "paper_litter",
         "plastic": "plastic_bottle"
       },
-      "disposition": "development_screening_pending",
+      "disposition": "native_GT_smoke_failed_nontraining_adjustment_pending",
       "files": [
         {
           "name": "wastewise-yolo.onnx",
@@ -427,7 +427,7 @@
       "license": "blocked_license",
       "model_id": "c1_wastewise_yolov8n_cls",
       "onnx_exportability": "source_onnx_checker_pass",
-      "reason": "semantic_mapping_available_but_license_and_fixed_screening_unresolved",
+      "reason": "mapped_argmax_zero_recall_all_three_targets_macro_f1_0_1369_background_specificity_0_6765",
       "revision": "a30c36c6b181ac0d2eb387bbd4f6d4a5b88ee078",
       "role": "classifier",
       "source_uri": "https://huggingface.co/SriramRokkam/wastewise-garbage-cls",
@@ -924,7 +924,7 @@
   "protocol_id": "EMFJ6V3",
   "registry_id": "tzcup_existing_model_candidates_v3",
   "registry_path": "config/existing_model_candidates_v3.yaml",
-  "registry_sha256": "34012835add2c2fd7526ec8638290b84ae8fc3dacd1042eb86f91a12e927752c",
+  "registry_sha256": "615a47d6c9e47bf5974181bde9d4adb276bd63059a7015bc07775dd72af498a1",
   "release_allowed": false,
   "schema_version": 1,
   "sealed_access_allowed": false,

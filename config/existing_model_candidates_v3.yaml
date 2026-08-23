@@ -219,8 +219,8 @@ candidates:
     framework: onnx_ultralytics
     onnx_exportability: source_onnx_checker_pass
     journey6_preflight_status: static_audit_only_official_sdk_not_run
-    disposition: development_screening_pending
-    reason: semantic_mapping_available_but_license_and_fixed_screening_unresolved
+    disposition: native_GT_smoke_failed_nontraining_adjustment_pending
+    reason: mapped_argmax_zero_recall_all_three_targets_macro_f1_0_1369_background_specificity_0_6765
 
   - model_id: c2_ecodetect_efficientnetb0
     role: classifier
