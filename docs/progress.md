@@ -13,7 +13,7 @@
 - 任务 schema 同时支持 `AREA_FILL / TAUGHT_ROUTE / POINT_CLEAN`。教学路线必须带版本和 SHA-256，逐段保留速度、刷盘、方向、禁扫区、交互点和恢复点并由 Nav2 执行；篡改或越界 fail-closed。定点清扫继续委派 `sanitation_spot_cleaning`，不会被面积覆盖执行器误吞。
 - 边界：以上是 ROS 2/Nav2/Gazebo SIL 证据，不证明垃圾视觉泛化、真实吸扫效果、真实 RTK/轮滑参数、J6 板端、真实行人制动或 20,000 m² 全场耐久。实车前必须重标刷宽/前置偏移、轮胎侧滑和旋转超调，加入电流/温升限制，用真实刷盘接触与定位替代 Gazebo 真值覆盖，并依次通过 HIL、封闭场低速和操作员回滚验收。
 
-> 仓库清理说明：当前树只保留源码、配置、最终状态和紧凑评审证据。早期 Stage 0–4S 的原始构建日志、MCAP、逐点轨迹 CSV 和重复标定运行已从当前树移除；历史结论仍记录在本页及 `GPT_REVIEW_STAGE*.md`，原始字节可从清理前 Git 历史恢复。新的原始运行数据必须留在 Git 忽略目录，详见 [`artifact-policy.md`](artifact-policy.md)。
+> 仓库清理说明：当前树只保留源码、配置、最终状态和紧凑评审证据。早期 Stage 0–4S 的原始构建日志、MCAP、逐点轨迹 CSV 和重复标定运行已从当前树移除；历史结论仍记录在本页及 `reports/reviews/GPT_REVIEW_STAGE*.md`，原始字节可从清理前 Git 历史恢复。新的原始运行数据必须留在 Git 忽略目录，详见 [`artifact-policy.md`](artifact-policy.md)。
 
 ## 2026-08-03：小场目标密度
 
@@ -357,7 +357,7 @@ Stage5BR3 将 `artifacts/stage5br2_*_review/**` 改为 binary，避免 Git blob 
 - 修正指标语义：历史 G1 `cross_asset_world` 规范化为 `cross_asset_same_world`，单世界 `cross_world=null`；新增逐 instance-id bbox、最短边、mask area、距离、遮挡和 `not_visible` 统计。
 - ROS-independent 快速门通过：68 tests。当前尚未采集 G2 80 scene/800 frame，故分辨率实测、detector/area segmenter、500/5000、live、真实 Nav2 和 J6 均未执行。
 - 首个阻断层：`G2_screening_dataset_80_scene_800_frame_not_executed`；`READY_FOR_GPT_REVIEW_STAGE5B=false`、`READY_FOR_STAGE5C=false`。
-- 证据：`GPT_REVIEW_STAGE5BR2.md`、`artifacts/stage5br2_20260720_review/`、`docs/stage5br2-g2-vehicle-camera.md`。
+- 证据：`reports/reviews/GPT_REVIEW_STAGE5BR2.md`、`artifacts/stage5br2_20260720_review/`、`docs/stage5br2-g2-vehicle-camera.md`。
 
 ## Stage5BR：Gazebo-camera 数据恢复、训练链审计与泛化修复
 
@@ -380,7 +380,7 @@ Stage5BR3 将 `artifacts/stage5br2_*_review/**` 改为 binary，避免 Git blob 
 - 不运行真实 Nav2 spot-clean；
 - R1、J6 实板、竞赛感知和 `1053 < 3500 m²/h` 效率门保持 false。
 
-证据：`GPT_REVIEW_STAGE5BR.md`、`docs/stage5br-gazebo-camera-recovery.md`、`artifacts/stage5br_20260719_review/`。
+证据：`reports/reviews/GPT_REVIEW_STAGE5BR.md`、`docs/stage5br-gazebo-camera-recovery.md`、`artifacts/stage5br_20260719_review/`。
 
 ## Stage5B：学习型感知、域隔离与颜色捷径筛查
 
@@ -401,13 +401,13 @@ Stage5BR3 将 `artifacts/stage5br2_*_review/**` 改为 binary，避免 Git blob 
 - 颜色捷径和未见泛化失败后，按规划包停止条件不执行 30-seed 正式实时门与 30 次真实 Nav2 spot-clean，避免用运行可达性替代精度。
 - D2 无授权真实数据；J6 官方工具链、转换/量化和实板 FPS 均无证据；理论效率 `1053 m²/h < 3500 m²/h`。
 
-复核入口：`GPT_REVIEW_STAGE5B.md`、`docs/stage5b-learned-perception.md` 与 `artifacts/stage5b_20260719_review/`。原始三次筛查、Docker workspace、数据卷与 rosbag 在用户确认前保留本机。
+复核入口：`reports/reviews/GPT_REVIEW_STAGE5B.md`、`docs/stage5b-learned-perception.md` 与 `artifacts/stage5b_20260719_review/`。原始三次筛查、Docker workspace、数据卷与 rosbag 在用户确认前保留本机。
 
 ## Stage5A：垃圾感知真值闭环、数据集与定点清扫
 
 状态：正式实现已覆盖 registry、GT、20-scene 数据、ONNX Runtime、RGB-D 到 map、多帧 tracker、30-seed synthetic task-state E2E 和 Stage4W 回归。紧凑复核目录的 9 个机器 gate 全部通过，`READY_FOR_GPT_REVIEW_STAGE5A=true`、`READY_FOR_STAGE5B=true`。
 
-已验证边界：Stage5A 仅为 synthetic-domain 工程证据。30-seed 状态闭环不等于 30 次真实车辆/Nav2 定点任务；J6 工具链/量化/运行、真实数据精度、原生 GUI、实车、机械臂与竞赛效率仍未通过。详细复现与结果见 `docs/stage5a-garbage-perception.md` 和 `GPT_REVIEW_STAGE5A.md`。
+已验证边界：Stage5A 仅为 synthetic-domain 工程证据。30-seed 状态闭环不等于 30 次真实车辆/Nav2 定点任务；J6 工具链/量化/运行、真实数据精度、原生 GUI、实车、机械臂与竞赛效率仍未通过。详细复现与结果见 `docs/stage5a-garbage-perception.md` 和 `reports/reviews/GPT_REVIEW_STAGE5A.md`。
 
 ## Stage4W：可达清扫域、完整覆盖与动态交互闭环
 
@@ -431,7 +431,7 @@ Stage5BR3 将 `artifacts/stage5br2_*_review/**` 改为 binary，避免 Git blob 
 - 垃圾感知训练、J6 量化和实板部署未执行；原生 Ubuntu/WSLg GUI 的历史缺口已由 2026-07-29 本机 WSLg 基础图形验收补齐。
 - 紧凑证据位于 `artifacts/stage4w_20260717_review/`；原始 MCAP、筛查和失败诊断在用户确认前保留本机。
 
-复核入口：`GPT_REVIEW_STAGE4W.md`、`artifacts/stage4w_20260717_review/stage4w_summary.json` 与 `MANIFEST.json`。
+复核入口：`reports/reviews/GPT_REVIEW_STAGE4W.md`、`artifacts/stage4w_20260717_review/stage4w_summary.json` 与 `MANIFEST.json`。
 
 ## Stage4V：混合定位与完整任务复核
 
@@ -439,7 +439,7 @@ Stage5BR3 将 `artifacts/stage5br2_*_review/**` 改为 binary，避免 Git blob 
 
 新增 `sanitation_scan_refiner`、`sanitation_gnss_sim`、混合全局融合器和 TF 所有权审计。正式 10-seed 的 XY RMSE P50/P95/max 为 `0.033438/0.037916/0.038717 m`；定位、导航、TF 单所有者及扫描参与均为 10/10，GT 控制违规 0。完整任务随后真实运行：规划覆盖率 97.5%，但 transit-to-start 超时/终止，完整执行 false、经验覆盖率 0%；动态障碍有效交互 0/20、碰撞 0；keepout 违规 0、速度区通过；30 次急停 P95 `0.1705 s`；MCAP 融合位姿回放通过。理论效率 `1053 m²/h` 未达 `3500 m²/h`。最终 `READY_FOR_GPT_REVIEW_STAGE4V=false`、`READY_FOR_STAGE5A=false`。
 
-证据入口：`GPT_REVIEW_STAGE4V.md`、`artifacts/stage4v_20260716_review/`；原始 10-seed、Coverage 和 MCAP 在用户确认前保留。
+证据入口：`GPT_REVIEW_STAGE4V.md`、`artifacts/stage4v_20260716_review/`；原始 10-seed、Coverage 和 MCAP 在用户确认前保留。该根目录兼容入口由历史二进制清单固定引用，不随其他评审包迁移。
 
 ## Stage4U：坐标标定、定位地图与 5 cm 定位闭环
 
@@ -451,7 +451,7 @@ Stage5BR3 将 `artifacts/stage5br2_*_review/**` 改为 binary，避免 Git blob 
 
 边界：M2 posegraph 已序列化，但没有执行独立离线优化/重渲染；M3 是定位参考图，不是 SLAM 建图成绩；realistic、完整 Coverage、动态障碍和急停按停止条件未执行；理论效率仍为 `1053 m²/h`，`READY_FOR_GPT_REVIEW_STAGE4U=false`、`READY_FOR_STAGE5A=false`。
 
-复核入口：`GPT_REVIEW_STAGE4U.md`、`artifacts/stage4u_20260716_review/stage4u_summary.json`、`oracle_10seed_compact.json` 与 `MANIFEST.json`。
+复核入口：`reports/reviews/GPT_REVIEW_STAGE4U.md`、`artifacts/stage4u_20260716_review/stage4u_summary.json`、`oracle_10seed_compact.json` 与 `MANIFEST.json`。
 
 发布与合并后验证：[PR #9](https://github.com/zhexuexiaotudou/TZcup/pull/9) 的 `fast-validation` 通过，已按 merge-commit 策略合入 `main@efd5e34cbb3c8ba1016118c63a6e35402704e787`。远端 main tree `00f2b33c5866025421bc5e9bea224945b58eafbd` 与本地验证树一致；合并树真实 Gazebo core smoke 再验通过 covariance 与 operational envelope，MCAP 17.5 MiB、48,255 条消息且元数据可读。回滚点为 `de5106cdaf0948888c0225a1076cad790280efa3`。
 
@@ -476,7 +476,7 @@ Stage5BR3 将 `artifacts/stage5br2_*_review/**` 改为 binary，避免 Git blob 
 
 复核入口：
 
-- `GPT_REVIEW_STAGE4T.md`
+- `reports/reviews/GPT_REVIEW_STAGE4T.md`
 - `artifacts/stage4t_20260715_review/stage4t_summary.json`
 - `artifacts/stage4t_20260715_review/MANIFEST.json`
 
@@ -508,7 +508,7 @@ Stage5BR3 将 `artifacts/stage5br2_*_review/**` 改为 binary，避免 Git blob 
 
 复核入口：
 
-- `GPT_REVIEW_STAGE4S.md`
+- `reports/reviews/GPT_REVIEW_STAGE4S.md`
 - `artifacts/stage4s_20260715_review/stage4s_summary.json`
 - `artifacts/stage4s_20260715_review/manifest.sha256`
 

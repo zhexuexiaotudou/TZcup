@@ -9,7 +9,7 @@
 5. 演示受限 DSL 对合法任务的分解，以及对直接电机/关节命令的拒绝。
 6. 展示离线抓取与满箱 fail-closed 证据，明确其不是实体机械臂运行。
 7. 展示 AUTO-12 的离线动力学/栅格效率报告，并说明不是实车测量。
-8. 打开 `FINAL_COMPETITION_MATRIX.json`，现场说明 AUTO-08 与 J6 阻断，
+8. 打开 `reports/release/FINAL_COMPETITION_MATRIX.json`，现场说明 AUTO-08 与 J6 阻断，
    以及为什么综合 mission、视频和 MCAP 计数保持 0。
 
 禁止展示或口播：

@@ -5,8 +5,8 @@
 ## 权威文件
 
 - `config/autonomous_stage_registry.yaml`：阶段、依赖、可选依赖、lane 和执行命令。
-- `AUTONOMOUS_STATE.json`：当前运行状态和不可伪造的历史边界。
-- `AUTONOMOUS_RUN_PLAN.json`：由 registry 推导的拓扑层级。
+- `config/autonomy/AUTONOMOUS_STATE.json`：当前运行状态和不可伪造的历史边界。
+- `config/autonomy/AUTONOMOUS_RUN_PLAN.json`：由 registry 推导的拓扑层级。
 - `scripts/autonomous_runner.py`：校验、调度、锁、断点续跑、幂等复用和证据生成。
 - `scripts/autonomous_git_adapter.py`：显式 `--execute` 保护下的 push、开 PR 和绿灯合并适配器。
 - `scripts/verify_state_invariants.py`：状态/计划一致性与历史人工标志保护。

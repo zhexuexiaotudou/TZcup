@@ -8,7 +8,7 @@
 - 自动生成的 Gazebo 世界、配置与本项目训练得到的模型随其所属 ROS 2 包采用相同许可证；
 - 第三方依赖不复制进仓库，其许可证由上游项目保留。
 
-SPDX 全量清单见 [`SBOM.spdx.json`](SBOM.spdx.json)，模型与资产来源见
+SPDX 全量清单见 [`reports/release/SBOM.spdx.json`](reports/release/SBOM.spdx.json)，模型与资产来源见
 [`MODEL_AND_ASSET_LICENSES.md`](MODEL_AND_ASSET_LICENSES.md)。Apache-2.0
 与 MIT 的标准条款可从 [SPDX License List](https://spdx.org/licenses/)
 获取。本文件是工程清单，不替代各上游许可证正文。

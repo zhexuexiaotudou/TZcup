@@ -53,4 +53,4 @@ J6 实机也没有通过。操作员不得把 AUTO-02、09、10、11、12 的独
 - Nav2 未激活：查看 lifecycle、TF 树、map/odom/base_link 和参数服务；
 - 地图监督台显示降级：切换工程模式，逐项检查 `/odom`、`/map`、两路相机和安全来源；
 - 地图监督台任务按钮禁用：先确认安全任务编排器是否存在，禁止绕过 503 失败关闭边界；
-- Matrix 阻断：读取 `FINAL_BLOCKER_REGISTER.json`，禁止手工改写状态。
+- Matrix 阻断：读取 `reports/release/FINAL_BLOCKER_REGISTER.json`，禁止手工改写状态。

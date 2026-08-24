@@ -11,7 +11,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_matrix_is_complete_and_fail_closed() -> None:
     state = json.loads(
-        (ROOT / "AUTONOMOUS_STATE.json").read_text(encoding="utf-8")
+        (ROOT / "config" / "autonomy" / "AUTONOMOUS_STATE.json").read_text(
+            encoding="utf-8"
+        )
     )
     matrix = build_matrix(state)
     assert matrix["scenario_count"] == 18
@@ -26,7 +28,9 @@ def test_matrix_is_complete_and_fail_closed() -> None:
 
 def test_passing_components_are_not_promoted_to_integrated_results() -> None:
     state = json.loads(
-        (ROOT / "AUTONOMOUS_STATE.json").read_text(encoding="utf-8")
+        (ROOT / "config" / "autonomy" / "AUTONOMOUS_STATE.json").read_text(
+            encoding="utf-8"
+        )
     )
     matrix = build_matrix(state)
     app = next(row for row in matrix["scenarios"] if row["scenario_id"] == "app")

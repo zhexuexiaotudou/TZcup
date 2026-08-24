@@ -12,7 +12,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_final_blockers_include_required_truth_boundaries() -> None:
     state = json.loads(
-        (ROOT / "AUTONOMOUS_STATE.json").read_text(encoding="utf-8")
+        (ROOT / "config" / "autonomy" / "AUTONOMOUS_STATE.json").read_text(
+            encoding="utf-8"
+        )
     )
     blockers = {item["stage"] for item in blockers_from_state(state)}
     assert {"AUTO-05", "AUTO-08", "AUTO-13", "AUTO-14", "AUTO-15"} <= blockers
@@ -20,7 +22,9 @@ def test_final_blockers_include_required_truth_boundaries() -> None:
 
 def test_evidence_index_does_not_promote_blocked_stages() -> None:
     state = json.loads(
-        (ROOT / "AUTONOMOUS_STATE.json").read_text(encoding="utf-8")
+        (ROOT / "config" / "autonomy" / "AUTONOMOUS_STATE.json").read_text(
+            encoding="utf-8"
+        )
     )
     index = evidence_index(state)
     assert "| AUTO-15 | BLOCKED |" in index

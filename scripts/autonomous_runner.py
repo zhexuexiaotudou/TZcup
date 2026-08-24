@@ -27,8 +27,9 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 REGISTRY_PATH = ROOT / "config" / "autonomous_stage_registry.yaml"
-STATE_PATH = ROOT / "AUTONOMOUS_STATE.json"
-PLAN_PATH = ROOT / "AUTONOMOUS_RUN_PLAN.json"
+AUTONOMY_CONFIG_DIR = ROOT / "config" / "autonomy"
+STATE_PATH = AUTONOMY_CONFIG_DIR / "AUTONOMOUS_STATE.json"
+PLAN_PATH = AUTONOMY_CONFIG_DIR / "AUTONOMOUS_RUN_PLAN.json"
 LOCK_PATH = ROOT / ".git" / "autonomous-runner.lock"
 TERMINAL_STATUSES = {"PASS", "BLOCKED", "BLOCKED_EXTERNAL"}
 VALID_STATUSES = {"PENDING", "RUNNING", "PASS", "FAIL", "BLOCKED", "BLOCKED_EXTERNAL"}

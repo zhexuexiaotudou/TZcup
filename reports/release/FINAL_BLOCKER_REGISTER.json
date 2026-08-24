@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_from": "AUTONOMOUS_STATE.json",
+  "generated_from": "config/autonomy/AUTONOMOUS_STATE.json",
   "blocker_count": 7,
   "blockers": [
     {

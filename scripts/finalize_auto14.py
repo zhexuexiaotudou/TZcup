@@ -149,7 +149,7 @@ def main() -> int:
         encoding="utf-8",
     )
 
-    state_path = ROOT / "AUTONOMOUS_STATE.json"
+    state_path = ROOT / "config" / "autonomy" / "AUTONOMOUS_STATE.json"
     state = json.loads(state_path.read_text(encoding="utf-8"))
     state["stages"]["AUTO-14"].update(
         {

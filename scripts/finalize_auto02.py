@@ -369,7 +369,7 @@ def main() -> int:
         evidence_dir / "artifact_manifest.json", build_manifest(evidence_dir)
     )
 
-    state_path = ROOT / "AUTONOMOUS_STATE.json"
+    state_path = ROOT / "config" / "autonomy" / "AUTONOMOUS_STATE.json"
     state = load(state_path)
     state["stages"]["AUTO-02"].update(
         {

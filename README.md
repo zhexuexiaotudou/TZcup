@@ -54,8 +54,7 @@ Coverage 启动器直接执行已安装的 `coverage_probe`，不经过 `ros2 ru
 在同一条 Gazebo/Nav2/Coverage 运行链加载 20,000 m² 完整地图、20 分区和
 AUTO-12 的 1.32 m 刷盘/1.0 m/s 参数，并现场运行一个 108 m² 代表性分区；
 Gazebo 状态标记使用显式浮点面积参数，避免 ROS 参数类型不匹配。需要诊断渲染器时可显式增加 `-GazeboGuiRenderer d3d12|software`；日常使用保留默认 `auto`。
-这不等价于全场耐久通过；边界和剩余差距见
-[`docs/competition-gazebo-profile.md`](docs/competition-gazebo-profile.md)。
+这不等价于全场耐久通过；边界和剩余差距见 [`docs/competition-gazebo-profile.md`](docs/competition-gazebo-profile.md)。
 
 ## Gazebo 数字孪生场景
 
@@ -85,7 +84,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 | 真实域 | 外部阻断 | 缺少满足数量、标定和独立真值要求的真实数据集 |
 | J6 部署 | 未通过 | 官方工具链已准备，但正式模型尚未产生，本机也没有 J6 实板 |
 
-权威机器状态见 [`FINAL_AUTONOMOUS_STATUS.json`](FINAL_AUTONOMOUS_STATUS.json) 和 [`FINAL_BLOCKER_REGISTER.json`](FINAL_BLOCKER_REGISTER.json)。详细阶段过程、指标和失败边界保存在 [`docs/progress.md`](docs/progress.md)，不在本页重复记录逐步变更。
+权威机器状态见 [`reports/release/FINAL_AUTONOMOUS_STATUS.json`](reports/release/FINAL_AUTONOMOUS_STATUS.json) 和 [`reports/release/FINAL_BLOCKER_REGISTER.json`](reports/release/FINAL_BLOCKER_REGISTER.json)。详细阶段过程、指标和失败边界保存在 [`docs/progress.md`](docs/progress.md)，不在本页重复记录逐步变更。
 
 ## 主要能力
 
@@ -138,6 +137,7 @@ ros2 launch sanitation_debug_visualization debug_sim.launch.py
 | `config/` | 自主阶段 registry 与冻结配置 |
 | `docs/` | 架构补充、运行指南、阶段记录与开发流程 |
 | `artifacts/` | 已评审的紧凑机器证据，不存放原始数据和构建日志 |
+| `reports/` | 跨运行批次的发布汇总与阶段复核包 |
 | `.github/` | PR 模板和快速 CI |
 
 原始 rosbag、训练集、运行日志、构建目录和临时模型应留在 Git 忽略的本机工作区；仓库只提交可审计的摘要、清单和必要小型模型。规则见 [`docs/artifact-policy.md`](docs/artifact-policy.md)。
@@ -150,7 +150,7 @@ ros2 launch sanitation_debug_visualization debug_sim.launch.py
 - [`docs/progress.md`](docs/progress.md)：详细进度、指标和历史边界；
 - [`docs/compatibility.md`](docs/compatibility.md)：Docker、WSLg、GPU 和 ROS/Gazebo 兼容性；
 - [`docs/development-workflow.md`](docs/development-workflow.md)：分支、测试、PR、CI 和收尾流程；
-- [`FINAL_EVIDENCE_INDEX.md`](FINAL_EVIDENCE_INDEX.md)：最终证据索引。
+- [`reports/release/FINAL_EVIDENCE_INDEX.md`](reports/release/FINAL_EVIDENCE_INDEX.md)：最终证据索引。
 
 ## 开发与验证
 

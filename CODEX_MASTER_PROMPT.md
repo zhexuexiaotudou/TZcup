@@ -1,6 +1,6 @@
 # 给 Codex 的主提示词：无人清扫车仿真环境与覆盖任务
 
-> 历史入口：本文定义最初 Stage 0–4 推进和第一复核门。当前项目已推进到 Stage5A；继续开发前以根目录 `README.md`、`STAGE_GATES.md`、`docs/progress.md` 和最新 `GPT_REVIEW_STAGE*.md` 为准，不得按本文末尾的 Stage4 停止条件回退当前状态。
+> 历史入口：本文定义最初 Stage 0–4 推进和第一复核门。当前项目已推进到 Stage5A；继续开发前以根目录 `README.md`、`STAGE_GATES.md`、`docs/progress.md` 和最新 `reports/reviews/GPT_REVIEW_STAGE*.md` 为准，不得按本文末尾的 Stage4 停止条件回退当前状态。
 
 你现在是本项目的 ROS 2 / Gazebo / Nav2 主工程师。请在当前仓库中直接推进，不要只给建议。
 
@@ -177,7 +177,7 @@
 
 完成 Stage 4 后停止，不要继续做大规模感知模型训练或 J6 量化。输出：
 
-1. `GPT_REVIEW_STAGE4.md`
+1. `reports/reviews/GPT_REVIEW_STAGE4.md`
 2. 完整 git diff 概要
 3. 当前 commit SHA
 4. 最终文件树

@@ -24,4 +24,6 @@
 
 原始产物写入 `.gitignore` 覆盖的本机目录。阶段完成后，由 finalize 工具生成紧凑 evidence；提交前检查清单、哈希、敏感信息和结论边界。详细历史写入 `docs/progress.md`，README 只保留当前项目入口。
 
+仓库内生成文件按用途固定归档：自主控制面的计划与状态写入 `config/autonomy/`；单次运行证据写入 `artifacts/`；跨运行批次的发布汇总和阶段复核包写入 `reports/release/` 与 `reports/reviews/`。根目录不接受裸放 JSON、`GPT_REVIEW_*.md` 或 `ENGINEERING_WAIVER_*.md`，快速 CI 会拒绝这类路径回退。唯一例外是历史 `GPT_REVIEW_STAGE4V.md`，其路径被只读二进制清单固定引用；迁移它会改写历史证据字节。
+
 删除已经进入历史的原始产物只会缩小当前检出和发布包，不会改写既有 Git 历史；需要追溯时可按清理前提交恢复。除非另行授权，不做破坏性的历史重写。

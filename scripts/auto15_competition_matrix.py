@@ -104,7 +104,10 @@ def build_matrix(state: dict) -> dict:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--state", default=str(ROOT / "AUTONOMOUS_STATE.json"))
+    parser.add_argument(
+        "--state",
+        default=str(ROOT / "config" / "autonomy" / "AUTONOMOUS_STATE.json"),
+    )
     parser.add_argument("--output", required=True)
     parser.add_argument("--implementation-commit", required=True)
     args = parser.parse_args()

@@ -69,7 +69,7 @@ TZcup/
 ├─ COMPETITION_REQUIREMENTS.md
 ├─ THIRD_PARTY_SELECTION.md
 ├─ STAGE_GATES.md
-└─ GPT_REVIEW_STAGE4.md
+└─ reports/reviews/GPT_REVIEW_STAGE4.md
 ```
 
 可用 `git ls-files` 输出无省略的逐文件清单。
