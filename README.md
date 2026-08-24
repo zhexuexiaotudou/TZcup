@@ -92,7 +92,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 - 人类可读的园区道路、路缘、人行道、绿化、积水、垃圾、落叶和静态/动态障碍 Gazebo 场景；
 - SLAM、AMCL、混合定位、Nav2、keepout/speed filter、碰撞监控和急停；
 - 全覆盖规划、任务几何、覆盖率/定位/安全指标与 rosbag 回放审计；
-- 五类清扫目标链；另有无精确URDF的多长宽比园区、belief-only主动清扫/RL、3 cm方块投箱占位闭环，均不具实车证据权威；
+- 五类清扫目标链；另有无精确URDF的多长宽比园区、belief-only主动清扫/RL、3 cm方块投箱占位闭环，以及尚未实施的竞赛级高保真整车规划，均不具实车证据权威；
 - APP/API、语音入口和受限任务 DSL；
 - RViz 调试图层与 Gazebo 三维物理界面；
 - 分阶段验收、紧凑证据、SBOM、许可清单和发布打包工具。
@@ -147,7 +147,7 @@ ros2 launch sanitation_debug_visualization debug_sim.launch.py
 - [`README_FIRST.md`](README_FIRST.md)：环境准备和启动步骤；
 - [`PROJECT_SPEC.md`](PROJECT_SPEC.md)：系统架构与接口边界；
 - [`STAGE_GATES.md`](STAGE_GATES.md)：Stage 与 AUTO 阶段验收条件；
-- [`docs/progress.md`](docs/progress.md)：详细进度；[`docs/urdf-independent-research-demo.md`](docs/urdf-independent-research-demo.md)：无精确URDF研发闭环；
+- [`docs/progress.md`](docs/progress.md)：详细进度；[`docs/urdf-independent-research-demo.md`](docs/urdf-independent-research-demo.md)：无精确URDF研发闭环；[`docs/high-fidelity-competition-vehicle-plan.md`](docs/high-fidelity-competition-vehicle-plan.md)：竞赛级高保真整车规划与条件可行性评估；
 - [`docs/compatibility.md`](docs/compatibility.md)：Docker、WSLg、GPU 和 ROS/Gazebo 兼容性；
 - [`docs/development-workflow.md`](docs/development-workflow.md)：分支、测试、PR、CI 和收尾流程；
 - [`reports/release/FINAL_EVIDENCE_INDEX.md`](reports/release/FINAL_EVIDENCE_INDEX.md)：最终证据索引。
