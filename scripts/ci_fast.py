@@ -40,6 +40,11 @@ def require_project_files() -> None:
         ROOT / "scripts" / "verify_evidence_manifest.py",
         ROOT / "scripts" / "verify_state_invariants.py",
         ROOT / "scripts" / "scan_secrets.py",
+        ROOT / "docs" / "pre-urdf-readiness.md",
+        ROOT / "config" / "high_fidelity_vehicle" / "pre_urdf_contract.yaml",
+        ROOT / "repos" / "high_fidelity_vehicle.repos",
+        REPORTS_ROOT / "engineering" / "pre_urdf_readiness.json",
+        ROOT / "scripts" / "validate_pre_urdf_readiness.py",
     )
     missing = [str(path.relative_to(ROOT)) for path in required if not path.is_file()]
     if missing:
@@ -132,6 +137,19 @@ def validate_structured_files() -> None:
     )
     yaml.safe_load(
         (ROOT / "config" / "autonomous_stage_registry.yaml").read_text(encoding="utf-8")
+    )
+    yaml.safe_load(
+        (ROOT / "config" / "high_fidelity_vehicle" / "pre_urdf_contract.yaml").read_text(
+            encoding="utf-8"
+        )
+    )
+    yaml.safe_load(
+        (ROOT / "repos" / "high_fidelity_vehicle.repos").read_text(encoding="utf-8")
+    )
+    json.loads(
+        (REPORTS_ROOT / "engineering" / "pre_urdf_readiness.json").read_text(
+            encoding="utf-8"
+        )
     )
 
     xml_patterns = ("package.xml", "*.xacro", "*.sdf", "*.urdf", "*.srdf")
@@ -259,6 +277,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_gazebo_viewport_probe.py",
         ROOT / "scripts" / "test_human_visualization_gate.py",
         ROOT / "scripts" / "test_gazebo_scene_contract.py",
+        ROOT / "scripts" / "test_pre_urdf_readiness.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])
     if result != pytest.ExitCode.OK:

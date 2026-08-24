@@ -1,5 +1,5 @@
 {
-  "verified_at_utc": "2026-07-14T14:12:00Z",
+  "verified_at_utc": "2026-08-25T08:00:00Z",
   "repositories": {
     "linorobot2": {
       "url": "https://github.com/linorobot/linorobot2.git",
@@ -21,6 +21,36 @@
       "preferred_source": "Ubuntu package ros-jazzy-fields2cover",
       "source_repository": "https://github.com/Fields2Cover/Fields2Cover.git",
       "observed_main_commit": "0ce7fcce82f3f79f773699448769bcd679c739bc",
+      "license": "BSD-3-Clause"
+    },
+    "clearpath_common": {
+      "url": "https://github.com/clearpathrobotics/clearpath_common.git",
+      "selected_branch": "jazzy",
+      "commit": "b0f6d920422ad302372a1c65e31d61648da884ed",
+      "license": "BSD-3-Clause"
+    },
+    "clearpath_simulator": {
+      "url": "https://github.com/clearpathrobotics/clearpath_simulator.git",
+      "selected_branch": "jazzy",
+      "commit": "ee098ad6f67b4e35d77841ed6f004b8f86cd77e4",
+      "license": "BSD-3-Clause"
+    },
+    "universal_robots_description": {
+      "url": "https://github.com/UniversalRobots/Universal_Robots_ROS2_Description.git",
+      "selected_branch": "jazzy",
+      "commit": "39242984dc8d1fff9584c922c17c69c58df3591d",
+      "license": "BSD-3-Clause"
+    },
+    "robotiq_ros": {
+      "url": "https://github.com/robotiq/ros.git",
+      "selected_branch": "main",
+      "commit": "3ab3befccaa10468f80803ba687105c9d224d567",
+      "license": "BSD-3-Clause"
+    },
+    "robotnik_sensors": {
+      "url": "https://github.com/RobotnikAutomation/robotnik_sensors.git",
+      "selected_branch": "jazzy-devel",
+      "commit": "11852f4f14d6e0a561117396187f7674ed33ab2b",
       "license": "BSD-3-Clause"
     }
   }
