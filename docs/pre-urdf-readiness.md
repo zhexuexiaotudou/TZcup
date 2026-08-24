@@ -1,6 +1,6 @@
 # 竞赛级整车 URDF 实施前准备包
 
-> 状态：`READY_FOR_URDF_IMPLEMENTATION_WITH_LAYOUT_GATES`，2026-08-25。本文和配套配置只冻结正式 CAD/Xacro 的输入，不表示正式 URDF、网格、Gazebo 执行器或高保真闭环已经完成。
+> 状态：输入门 `READY_FOR_URDF_IMPLEMENTATION_WITH_LAYOUT_GATES` 已于2026-08-25关闭并被名义整车使用。本文和配套配置只记录正式 CAD/Xacro 的冻结输入；实际URDF、Gazebo运行证据和剩余高保真门以[正式整车 URDF/CAD](formal-vehicle-urdf-cad.md)为准。
 
 ## 1. 已完成的准备
 

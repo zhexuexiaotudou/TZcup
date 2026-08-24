@@ -147,7 +147,7 @@ ros2 launch sanitation_debug_visualization debug_sim.launch.py
 - [`README_FIRST.md`](README_FIRST.md)：环境准备和启动步骤；
 - [`PROJECT_SPEC.md`](PROJECT_SPEC.md)：系统架构与接口边界；
 - [`STAGE_GATES.md`](STAGE_GATES.md)：Stage 与 AUTO 阶段验收条件；
-- [`docs/progress.md`](docs/progress.md)：详细进度；[`docs/urdf-independent-research-demo.md`](docs/urdf-independent-research-demo.md)：无精确URDF研发闭环；[`docs/high-fidelity-competition-vehicle-plan.md`](docs/high-fidelity-competition-vehicle-plan.md)：竞赛级高保真整车规划与条件可行性评估；
+- [`docs/progress.md`](docs/progress.md)：详细进度；[`docs/urdf-independent-research-demo.md`](docs/urdf-independent-research-demo.md)：无精确URDF研发闭环；[`docs/high-fidelity-competition-vehicle-plan.md`](docs/high-fidelity-competition-vehicle-plan.md)：竞赛级高保真整车规划与条件可行性评估；[`docs/formal-vehicle-urdf-cad.md`](docs/formal-vehicle-urdf-cad.md)：正式名义整车、复现入口、运行证据与未通过边界；
 - [`docs/compatibility.md`](docs/compatibility.md)：Docker、WSLg、GPU 和 ROS/Gazebo 兼容性；
 - [`docs/development-workflow.md`](docs/development-workflow.md)：分支、测试、PR、CI 和收尾流程；
 - [`reports/release/FINAL_EVIDENCE_INDEX.md`](reports/release/FINAL_EVIDENCE_INDEX.md)：最终证据索引。

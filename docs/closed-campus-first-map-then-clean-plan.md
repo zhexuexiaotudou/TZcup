@@ -585,4 +585,4 @@ Contact-GraspNet、GraspGen等通用方法同样偏CUDA；GPD可走CPU点云路�
 
 正式profile改为条件候选Husky A300、UTM-30LX、MID-360、前向RGB-D、两个侧后鱼眼、末端相机、UR5e、Robotiq 2F-85、征程6/S100、可用容积不小于`40 L`的干垃圾舱和显式刷盘/刮吸/污水舱总成。干湿舱可以共用后部箱柜外壳，但使用固定水密隔板且污水舱不得侵占40 L干舱；污水容量按A300剩余载荷、重心和安装空间反算。积水首版采用赛题允许的简化L1稀疏水层模型，只有在刷盘、刮条和回收机满足条件时才从地面扣减并等量增加污水舱质量；不做全场粒子/CFD。3 cm垃圾按纸板、PP、PET、铝材料随机质量生成，投箱后保留为箱内刚体并改变总质量和重心。
 
-完整BOM、动力学分层、流量公式、质量预算、阶段门、工作量和已关闭/剩余工程项见[高保真竞赛清扫车虚拟样机规划与可行性评估](high-fidelity-competition-vehicle-plan.md)，已冻结的机器输入见[URDF实施前准备包](pre-urdf-readiness.md)。这些文件仍不是正式URDF或高保真仿真通过证据。
+完整BOM、动力学分层、流量公式、质量预算、阶段门、工作量和已关闭/剩余工程项见[高保真竞赛清扫车虚拟样机规划与可行性评估](high-fidelity-competition-vehicle-plan.md)，冻结输入见[URDF实施前准备包](pre-urdf-readiness.md)，已实现的名义整车、运行证据与未通过边界见[正式整车 URDF/CAD](formal-vehicle-urdf-cad.md)。规划稿和准备包本身仍不是高保真通过证据。
