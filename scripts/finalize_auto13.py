@@ -241,7 +241,7 @@ def main() -> int:
         "Real-domain tooling and resource-discovery boundary. Synthetic fixtures validate only software behavior and are not real-domain evidence.\n",
         encoding="utf-8",
     )
-    state_path = ROOT / "AUTONOMOUS_STATE.json"
+    state_path = ROOT / "config" / "autonomy" / "AUTONOMOUS_STATE.json"
     state = json.loads(state_path.read_text(encoding="utf-8"))
     state["stages"]["AUTO-13"].update(
         {

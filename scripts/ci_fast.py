@@ -15,6 +15,8 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_ROOT = ROOT / "starter_ws" / "src"
+AUTONOMY_CONFIG_ROOT = ROOT / "config" / "autonomy"
+REPORTS_ROOT = ROOT / "reports"
 
 
 def require_project_files() -> None:
@@ -27,9 +29,13 @@ def require_project_files() -> None:
         ROOT / "docs" / "development-workflow.md",
         ROOT / "docs" / "artifact-policy.md",
         ROOT / ".github" / "workflows" / "development-workflow.yml",
-        ROOT / "AUTONOMOUS_STATE.json",
-        ROOT / "AUTONOMOUS_RUN_PLAN.json",
+        AUTONOMY_CONFIG_ROOT / "README.md",
+        AUTONOMY_CONFIG_ROOT / "AUTONOMOUS_STATE.json",
+        AUTONOMY_CONFIG_ROOT / "AUTONOMOUS_RUN_PLAN.json",
         ROOT / "config" / "autonomous_stage_registry.yaml",
+        REPORTS_ROOT / "README.md",
+        REPORTS_ROOT / "release" / "FINAL_AUTONOMOUS_STATUS.json",
+        REPORTS_ROOT / "release" / "FINAL_BLOCKER_REGISTER.json",
         ROOT / "scripts" / "autonomous_runner.py",
         ROOT / "scripts" / "verify_evidence_manifest.py",
         ROOT / "scripts" / "verify_state_invariants.py",
@@ -52,6 +58,20 @@ def validate_repository_hygiene() -> None:
     if found:
         raise RuntimeError(
             "README.md contains progress-log headings: " + ", ".join(found)
+        )
+
+    root_json = sorted(path.name for path in ROOT.glob("*.json"))
+    allowed_legacy_reviews = {"GPT_REVIEW_STAGE4V.md"}
+    root_reviews = sorted(
+        path.name
+        for pattern in ("GPT_REVIEW_*.md", "ENGINEERING_WAIVER_*.md")
+        for path in ROOT.glob(pattern)
+        if path.name not in allowed_legacy_reviews
+    )
+    if root_json or root_reviews:
+        raise RuntimeError(
+            "root-level generated files must use config/autonomy or reports/: "
+            + ", ".join(root_json + root_reviews)
         )
 
     artifact_root = ROOT / "artifacts"
@@ -100,8 +120,16 @@ def validate_structured_files() -> None:
         for path in sorted(SOURCE_ROOT.rglob(pattern)):
             yaml.safe_load(path.read_text(encoding="utf-8"))
 
-    json.loads((ROOT / "AUTONOMOUS_STATE.json").read_text(encoding="utf-8"))
-    json.loads((ROOT / "AUTONOMOUS_RUN_PLAN.json").read_text(encoding="utf-8"))
+    json.loads(
+        (AUTONOMY_CONFIG_ROOT / "AUTONOMOUS_STATE.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    json.loads(
+        (AUTONOMY_CONFIG_ROOT / "AUTONOMOUS_RUN_PLAN.json").read_text(
+            encoding="utf-8"
+        )
+    )
     yaml.safe_load(
         (ROOT / "config" / "autonomous_stage_registry.yaml").read_text(encoding="utf-8")
     )
@@ -236,9 +264,9 @@ def main() -> int:
     from autonomous_runner import build_plan, load_json, load_registry, validate_registry, validate_state
 
     registry = load_registry()
-    state = load_json(ROOT / "AUTONOMOUS_STATE.json")
+    state = load_json(AUTONOMY_CONFIG_ROOT / "AUTONOMOUS_STATE.json")
     errors = validate_registry(registry) + validate_state(state, registry)
-    if load_json(ROOT / "AUTONOMOUS_RUN_PLAN.json") != build_plan(registry):
+    if load_json(AUTONOMY_CONFIG_ROOT / "AUTONOMOUS_RUN_PLAN.json") != build_plan(registry):
         errors.append("AUTONOMOUS_RUN_PLAN.json differs from registry")
     if errors:
         raise RuntimeError("autonomous control-plane validation failed: " + "; ".join(errors))

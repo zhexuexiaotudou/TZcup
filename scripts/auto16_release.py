@@ -13,15 +13,17 @@ import zipfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
+AUTONOMY_STATE_PATH = ROOT / "config" / "autonomy" / "AUTONOMOUS_STATE.json"
+RELEASE_REPORT_DIR = ROOT / "reports" / "release"
 FINAL_FILES = (
-    "FINAL_AUTONOMOUS_STATUS.json",
-    "FINAL_BLOCKER_REGISTER.json",
-    "FINAL_EVIDENCE_INDEX.md",
-    "FINAL_COMPETITION_MATRIX.json",
-    "FINAL_RELEASE_CHECKLIST_STATUS.json",
-    "SBOM.spdx.json",
-    "LICENSE.md",
-    "MODEL_AND_ASSET_LICENSES.md",
+    RELEASE_REPORT_DIR / "FINAL_AUTONOMOUS_STATUS.json",
+    RELEASE_REPORT_DIR / "FINAL_BLOCKER_REGISTER.json",
+    RELEASE_REPORT_DIR / "FINAL_EVIDENCE_INDEX.md",
+    RELEASE_REPORT_DIR / "FINAL_COMPETITION_MATRIX.json",
+    RELEASE_REPORT_DIR / "FINAL_RELEASE_CHECKLIST_STATUS.json",
+    RELEASE_REPORT_DIR / "SBOM.spdx.json",
+    ROOT / "LICENSE.md",
+    ROOT / "MODEL_AND_ASSET_LICENSES.md",
 )
 
 
@@ -183,7 +185,8 @@ def blockers_from_state(state: dict) -> list[dict]:
 
 
 def finalize(args: argparse.Namespace) -> None:
-    state_path = ROOT / "AUTONOMOUS_STATE.json"
+    state_path = AUTONOMY_STATE_PATH
+    RELEASE_REPORT_DIR.mkdir(parents=True, exist_ok=True)
     state = json.loads(state_path.read_text(encoding="utf-8"))
     unresolved = [
         stage_id
@@ -205,19 +208,19 @@ def finalize(args: argparse.Namespace) -> None:
         "competition_matrix.json"
     )
     matrix = json.loads(matrix_path.read_text(encoding="utf-8"))
-    write_json(ROOT / "FINAL_COMPETITION_MATRIX.json", matrix)
+    write_json(RELEASE_REPORT_DIR / "FINAL_COMPETITION_MATRIX.json", matrix)
 
     blockers = blockers_from_state(state)
     write_json(
-        ROOT / "FINAL_BLOCKER_REGISTER.json",
+        RELEASE_REPORT_DIR / "FINAL_BLOCKER_REGISTER.json",
         {
             "schema_version": 1,
-            "generated_from": "AUTONOMOUS_STATE.json",
+            "generated_from": "config/autonomy/AUTONOMOUS_STATE.json",
             "blocker_count": len(blockers),
             "blockers": blockers,
         },
     )
-    (ROOT / "FINAL_EVIDENCE_INDEX.md").write_text(
+    (RELEASE_REPORT_DIR / "FINAL_EVIDENCE_INDEX.md").write_text(
         evidence_index(state), encoding="utf-8"
     )
 
@@ -269,7 +272,7 @@ def finalize(args: argparse.Namespace) -> None:
         json.dumps(state, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    (ROOT / "FINAL_EVIDENCE_INDEX.md").write_text(
+    (RELEASE_REPORT_DIR / "FINAL_EVIDENCE_INDEX.md").write_text(
         evidence_index(state), encoding="utf-8"
     )
 
@@ -297,9 +300,9 @@ def finalize(args: argparse.Namespace) -> None:
             "runtime are not passed."
         ),
     }
-    write_json(ROOT / "FINAL_AUTONOMOUS_STATUS.json", final_status)
+    write_json(RELEASE_REPORT_DIR / "FINAL_AUTONOMOUS_STATUS.json", final_status)
     write_json(
-        ROOT / "SBOM.spdx.json",
+        RELEASE_REPORT_DIR / "SBOM.spdx.json",
         build_sbom(args.implementation_commit),
     )
     checklist = {
@@ -322,7 +325,9 @@ def finalize(args: argparse.Namespace) -> None:
             "scripts/auto16_release.py --package"
         ),
     }
-    write_json(ROOT / "FINAL_RELEASE_CHECKLIST_STATUS.json", checklist)
+    write_json(
+        RELEASE_REPORT_DIR / "FINAL_RELEASE_CHECKLIST_STATUS.json", checklist
+    )
 
     evidence = ROOT / "artifacts/autonomous_auto16_20260730_evidence"
     evidence.mkdir(parents=True, exist_ok=True)
@@ -414,11 +419,11 @@ def finalize(args: argparse.Namespace) -> None:
     )
 
     final_entries = []
-    for name in FINAL_FILES:
-        path = ROOT / name
+    for path in FINAL_FILES:
+        relative_path = path.relative_to(ROOT).as_posix()
         final_entries.append(
             {
-                "path": name,
+                "path": relative_path,
                 "bytes": path.stat().st_size,
                 "sha256": sha256(path),
             }
@@ -432,7 +437,7 @@ def finalize(args: argparse.Namespace) -> None:
         }
     )
     write_json(
-        ROOT / "FINAL_ARTIFACT_MANIFEST.json",
+        RELEASE_REPORT_DIR / "FINAL_ARTIFACT_MANIFEST.json",
         {
             "schema_version": 1,
             "implementation_commit": args.implementation_commit,

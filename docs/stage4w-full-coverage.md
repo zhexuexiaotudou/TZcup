@@ -38,4 +38,4 @@ Nav2 的局部和全局 obstacle layer 显式启用 `inf_is_valid=true`，使障
 
 正式 hybrid 定位回归 10/10 通过，XY RMSE P50/P95/max 为 `0.02825/0.03726/0.03778 m`。静态覆盖 5/5 通过，每次均为 17/17，经验覆盖率 `92.93%–94.53%`、覆盖期 RMSE `0.02930–0.04620 m`。动态任务为 20/20 有效交互、碰撞 0，完整任务 17/17、覆盖率 93.53%、覆盖期 RMSE 0.03014 m；30 次急停 P95 0.188 s，stale command 在 1.694 s 达到连续 5 帧稳定零输出。
 
-全部 Stage4W 硬门已通过，因此 `READY_FOR_GPT_REVIEW_STAGE4W=true`、`READY_FOR_STAGE5A=true`。紧凑证据写入 `GPT_REVIEW_STAGE4W.md` 和 `artifacts/stage4w_20260717_review/`，不复制原始 MCAP；原始运行证据保留在本机 artifact 目录直到用户确认。
+全部 Stage4W 硬门已通过，因此 `READY_FOR_GPT_REVIEW_STAGE4W=true`、`READY_FOR_STAGE5A=true`。紧凑证据写入 `reports/reviews/GPT_REVIEW_STAGE4W.md` 和 `artifacts/stage4w_20260717_review/`，不复制原始 MCAP；原始运行证据保留在本机 artifact 目录直到用户确认。

@@ -18,7 +18,7 @@ READY_FOR_STAGE5C=false
 
 ## 优先复核
 
-1. `ENGINEERING_WAIVER_STAGE5BR6W.md` 与 `config/engineering_waiver_stage5br6w.json`：正式状态和工程状态严格分离。
+1. `reports/reviews/ENGINEERING_WAIVER_STAGE5BR6W.md` 与 `config/engineering_waiver_stage5br6w.json`：正式状态和工程状态严格分离。
 2. `artifacts/stage5br6w_20260721_review/stage5br6w_status.json`：机器可读总状态与停止边界。
 3. `runtime_footprint_audit.json`：local/global costmap、Collision Monitor、Coverage 使用同一候选 footprint；production 默认未改变。
 4. `stage4w_candidate_footprint_regression.json` 与 `seed0_coverage_report.json`：真实 Phase 4 首次失败。

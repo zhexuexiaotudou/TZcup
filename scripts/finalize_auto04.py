@@ -13,7 +13,7 @@ import yaml
 
 
 ROOT = Path(__file__).resolve().parents[1]
-STATE_PATH = ROOT / "AUTONOMOUS_STATE.json"
+STATE_PATH = ROOT / "config" / "autonomy" / "AUTONOMOUS_STATE.json"
 
 
 def sha256(path: Path) -> str:

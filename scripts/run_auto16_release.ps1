@@ -35,7 +35,7 @@ try {
             if ($LASTEXITCODE -ne 0) { throw "baseline simulation failed" }
         }
         "Matrix" {
-            $matrix = Get-Content -LiteralPath "FINAL_COMPETITION_MATRIX.json" `
+            $matrix = Get-Content -LiteralPath "reports/release/FINAL_COMPETITION_MATRIX.json" `
                 -Raw -Encoding UTF8 | ConvertFrom-Json
             $matrix | ConvertTo-Json -Depth 4
             if (-not $matrix.simulation_competition_matrix_pass) {

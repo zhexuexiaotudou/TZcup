@@ -170,7 +170,7 @@ def main() -> int:
         {"schema_version": 1, "files": manifest},
     )
 
-    state_path = repo / "AUTONOMOUS_STATE.json"
+    state_path = repo / "config" / "autonomy" / "AUTONOMOUS_STATE.json"
     state = json.loads(state_path.read_text(encoding="utf-8"))
     stage = state["stages"]["AUTO-05"]
     stage.update(
