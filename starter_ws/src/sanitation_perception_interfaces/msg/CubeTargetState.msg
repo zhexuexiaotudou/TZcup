@@ -1,0 +1,20 @@
+uint8 DISCOVERED=0
+uint8 NAVIGATING=1
+uint8 PARKED=2
+uint8 SAFETY_PAUSED=3
+uint8 PLANNING=4
+uint8 GRASPING=5
+uint8 VERIFYING=6
+uint8 TRANSPORTING=7
+uint8 PLACING=8
+uint8 CLEARED=9
+uint8 DEFERRED=10
+
+std_msgs/Header header
+string target_id
+uint8 state
+uint8 attempt_count
+bool holding_target
+bool placed_in_bin
+bool placeholder_geometry
+string reason

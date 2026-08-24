@@ -1,0 +1,39 @@
+schema_version: 1
+profiles:
+  research:
+    width_m: 106.0
+    height_m: 53.0
+    building_count: 6
+    pole_count: 18
+    bin_count: 12
+    tree_count: 16
+    bench_count: 8
+  formal:
+    width_m: 200.0
+    height_m: 100.0
+    building_count: 12
+    pole_count: 36
+    bin_count: 24
+    tree_count: 32
+    bench_count: 16
+episode:
+  cube_count: 20
+  cube_edge_m: 0.03
+  grasp_clearance_m: 0.75
+  dirt_patch_count: 18
+  dirt_patch_area_m2: 1.0
+  dirt_spacing_m: 0.25
+  pedestrian_count: 8
+split:
+  master_seed: 73012026
+  train:
+    map_count: 32
+    missions_per_map: 200
+  val:
+    map_count: 8
+    missions_per_map: 100
+  hidden:
+    map_count: 12
+    missions_per_map: 100
+truth:
+  evaluator_namespace: /evaluation/scenario_ground_truth

@@ -1,0 +1,26 @@
+schema_version: 1
+profile_id: dosod_edgesam_s100_development_v1
+platform: rdk_s100
+development_only: true
+journey6_evidence_allowed: false
+ground_truth_control_allowed: false
+detector:
+  name: DOSOD
+  backend: pc_onnx_or_external_s100_port
+  artifact_relative_path: null
+  source_revision_required: true
+  platform_support: unverified_s100_port
+  source_url: https://github.com/D-Robotics-AI-Lab/DOSOD
+segmenter:
+  name: EdgeSAM
+  backend: tros_bpu_official
+  artifact_relative_path: null
+  source_revision_required: true
+  platform_support: official_s100
+  source_url: https://github.com/D-Robotics/mono_edgesam
+runtime_boundary:
+  bpu_components: [DOSOD, EdgeSAM]
+  arm_cpu_components: [depth_geometry, tf2, tracking, task_state_machine]
+  status: dosod_s100_port_unverified_and_external_artifacts_runtime_required
+  gazebo_truth_allowed_for_control: false
+  note: This profile records the S100 integration contract and is not a bundled or validated board deployment.

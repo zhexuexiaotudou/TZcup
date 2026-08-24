@@ -1,5 +1,12 @@
 # 项目推进记录
 
+## 2026-08-24：无精确URDF的园区主动清扫与3 cm立方体抓取占位闭环
+
+- 新增ROS无关的地面RANSAC、高度筛选、空间哈希聚类、30 mm包围盒筛选和规则顶抓Pose生成；新增最多两次尝试、安全暂停、两类证据验证、20目标后箱与mock导航/规划/夹爪闭环。
+- 新增参数化`0.60 m × 0.40 m`麦克纳姆小车、通用六轴臂、夹爪、传感器frame和`0.20 m × 0.20 m × 0.10 m`后箱的placeholder Xacro/SRDF/profile，以及立方体抓取ROS消息/action合同。
+- 新增固定面积多长宽比园区生成器、public/environment/evaluator隔离、随机移动行人、主动清扫环境、全覆盖/感知贪心/Oracle、belief-only Q-learning、单目标投箱清除适配和统一命令；ROS Jazzy构建23包，变更包87项ROS测试通过，完整研发场占位任务达到观测`97.43%`、地污`100%`、离散垃圾`95%`和零安全违规。
+- 以上能力明确为`evidence_authority=false`，不证明实车几何、模型精度、机械臂可达性、板端性能或sim-to-real。真实闭环等待实测URDF、`ros2_control`、MoveIt 2、传感器/手眼标定和DOSOD/EdgeSAM实际运行，详见[`urdf-independent-research-demo.md`](urdf-independent-research-demo.md)。
+
 ## 2026-08-04：skid-steer 覆盖路径优化与语义可视化
 
 - 历史基线完整保留：OpenNav Coverage + Fields2Cover 的 `BOUSTROPHEDON / DUBIN / CONTINUOUS`、`0.35 m` 条带间距、约 46% 重叠、最多两轮补扫、固定 17 组件和全局 turbo 速度仍可用 `-CoverageProfile legacy` 回归。该汽车式大圆弧基线不适合可原地旋转的 skid-steer，且正式 5-seed 基线的重复率和横向误差不满足新门，因此不再是小场默认值。

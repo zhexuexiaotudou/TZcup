@@ -1,0 +1,82 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tzcup.local/schemas/campus-scenario-v1.json",
+  "title": "TZcup URDF-independent campus scenario configuration",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "profiles", "episode", "split", "truth"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "profiles": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["research", "formal"],
+      "properties": {
+        "research": {"$ref": "#/$defs/profile"},
+        "formal": {"$ref": "#/$defs/profile"}
+      }
+    },
+    "episode": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["cube_count", "cube_edge_m", "grasp_clearance_m", "dirt_patch_count", "dirt_patch_area_m2", "dirt_spacing_m", "pedestrian_count"],
+      "properties": {
+        "cube_count": {"type": "integer", "minimum": 0, "maximum": 20},
+        "cube_edge_m": {"const": 0.03},
+        "grasp_clearance_m": {"type": "number", "exclusiveMinimum": 0},
+        "dirt_patch_count": {"type": "integer", "minimum": 0},
+        "dirt_patch_area_m2": {"const": 1.0},
+        "dirt_spacing_m": {"type": "number", "exclusiveMinimum": 0},
+        "pedestrian_count": {"type": "integer", "minimum": 0}
+      }
+    },
+    "split": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["master_seed", "train", "val", "hidden"],
+      "properties": {
+        "master_seed": {"type": "integer", "minimum": 0},
+        "train": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["map_count", "missions_per_map"],
+          "properties": {"map_count": {"const": 32}, "missions_per_map": {"const": 200}}
+        },
+        "val": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["map_count", "missions_per_map"],
+          "properties": {"map_count": {"const": 8}, "missions_per_map": {"const": 100}}
+        },
+        "hidden": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["map_count", "missions_per_map"],
+          "properties": {"map_count": {"const": 12}, "missions_per_map": {"const": 100}}
+        }
+      }
+    },
+    "truth": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["evaluator_namespace"],
+      "properties": {"evaluator_namespace": {"const": "/evaluation/scenario_ground_truth"}}
+    }
+  },
+  "$defs": {
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["width_m", "height_m", "building_count", "pole_count", "bin_count", "tree_count", "bench_count"],
+      "properties": {
+        "width_m": {"type": "number", "exclusiveMinimum": 0},
+        "height_m": {"type": "number", "exclusiveMinimum": 0},
+        "building_count": {"type": "integer", "minimum": 0},
+        "pole_count": {"type": "integer", "minimum": 0},
+        "bin_count": {"type": "integer", "minimum": 0},
+        "tree_count": {"type": "integer", "minimum": 0},
+        "bench_count": {"type": "integer", "minimum": 0}
+      }
+    }
+  }
+}

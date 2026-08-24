@@ -3,8 +3,7 @@ import os
 
 from setuptools import find_packages, setup
 
-
-package_name = "sanitation_manipulation"
+package_name = "sanitation_campus_scenario"
 
 setup(
     name=package_name,
@@ -12,22 +11,20 @@ setup(
     packages=find_packages(exclude=["test"]),
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
-        ("share/" + package_name, ["package.xml"]),
+        ("share/" + package_name, ["package.xml", "README.md"]),
         (os.path.join("share", package_name, "config"), glob("config/*")),
-        (os.path.join("share", package_name, "launch"), glob("launch/*.launch.py")),
-        (os.path.join("share", package_name, "urdf"), glob("urdf/*.xacro")),
     ],
     install_requires=["setuptools", "PyYAML"],
     zip_safe=True,
     maintainer="Sanitation Vehicle Team",
     maintainer_email="team@example.com",
-    description="Safe grasp planning, URDF-independent cube demo, bin state, and recovery.",
+    description="Deterministic URDF-independent campus world and episode generation.",
     license="Apache-2.0",
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
-            "active_cleaning_grasp_adapter = sanitation_manipulation.active_cleaning_adapter:main",
-            "placeholder_cube_demo = sanitation_manipulation.placeholder_demo:main",
-        ],
+            "sanitation-campus-scenario = sanitation_campus_scenario.cli:main",
+            "sanitation-campus-pedestrian-driver = sanitation_campus_scenario.pedestrian_driver:main",
+        ]
     },
 )

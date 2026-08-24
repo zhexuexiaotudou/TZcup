@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>sanitation_active_cleaning</name>
+  <version>0.1.0</version>
+  <description>URDF-independent active-cleaning environment, policies, and paired evaluation.</description>
+  <maintainer email="team@example.com">Sanitation Vehicle Team</maintainer>
+  <license>Apache-2.0</license>
+
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

@@ -1,0 +1,44 @@
+schema_version: 1
+profile_id: urdf_independent_mobile_manipulator_placeholder_v1
+placeholder: true
+evidence_authority: false
+evidence_exclusions:
+  - real_robot_geometry
+  - reachability
+  - collision_clearance
+  - payload
+  - grasp_force
+  - camera_visibility
+  - sim_to_real
+vehicle:
+  body_size_m: [0.60, 0.40, 0.16]
+  physical_drive: mecanum_placeholder
+  planning_constraint: virtual_ackermann
+  forbid_lateral_shortcut: true
+manipulator:
+  degrees_of_freedom: 6
+  backend: mock
+  base_stationary_during_manipulation: true
+  max_grasp_attempts: 2
+  grasp_strategy: geometry_top_grasp
+object:
+  shape: cube
+  edge_m: 0.030
+  single_layer: true
+  stacked: false
+  max_targets_per_episode: 20
+bin:
+  internal_size_m: [0.20, 0.20, 0.10]
+  max_task_targets: 20
+  unload_during_task: false
+safety:
+  human_in_arm_zone: pause_or_retract
+  resume_requires_safe_zone: true
+  gazebo_truth_allowed_for_control: false
+replacement_gate:
+  requires:
+    - measured_urdf
+    - moveit_srdf
+    - ros2_control_configuration
+    - gripper_feedback_contract
+    - camera_and_hand_eye_calibration

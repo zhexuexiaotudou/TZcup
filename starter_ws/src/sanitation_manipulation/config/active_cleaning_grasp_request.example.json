@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "target_id": "cube-demo-001",
+  "cube": {
+    "center_m": [0.35, 0.08, 0.015],
+    "size_m": [0.03, 0.03, 0.03],
+    "yaw_rad": 0.4014257279586958,
+    "point_count": 49,
+    "dimension_error_m": 0.0
+  }
+}

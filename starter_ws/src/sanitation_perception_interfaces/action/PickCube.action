@@ -1,0 +1,15 @@
+# Goal: estimated geometry only; simulator truth is forbidden from this action.
+string target_id
+geometry_msgs/PoseStamped estimated_cube_pose
+geometry_msgs/Vector3 estimated_size
+---
+bool success
+uint8 final_state
+uint8 attempt_count
+bool placed_in_bin
+string reason
+---
+uint8 state
+uint8 attempt_count
+bool safety_paused
+string detail

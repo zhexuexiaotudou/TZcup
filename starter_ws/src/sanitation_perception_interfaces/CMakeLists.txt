@@ -9,8 +9,12 @@ find_package(std_msgs REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
   "msg/CleaningEvent.msg"
+  "msg/CubeGraspCandidate.msg"
+  "msg/CubeTargetState.msg"
   "msg/GarbageTarget.msg"
   "msg/GarbageTargetArray.msg"
+  "msg/GraspVerification.msg"
+  "action/PickCube.action"
   DEPENDENCIES builtin_interfaces geometry_msgs std_msgs
 )
 

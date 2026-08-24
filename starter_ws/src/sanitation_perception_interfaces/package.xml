@@ -2,7 +2,7 @@
 <package format="3">
   <name>sanitation_perception_interfaces</name>
   <version>0.1.0</version>
-  <description>Versioned garbage perception, tracking, and cleaning event interfaces.</description>
+  <description>Versioned garbage perception, cube grasp, tracking, and cleaning event interfaces.</description>
   <maintainer email="team@example.com">Sanitation Vehicle Team</maintainer>
   <license>Apache-2.0</license>
 
