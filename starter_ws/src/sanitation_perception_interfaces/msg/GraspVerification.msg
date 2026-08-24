@@ -1,0 +1,8 @@
+std_msgs/Header header
+string target_id
+bool gripper_width_ok
+bool gripper_effort_ok
+bool target_follows_tool
+bool source_location_absent
+uint8 independent_evidence_categories
+bool accepted

@@ -1,0 +1,178 @@
+<?xml version="1.0"?>
+<!--
+  PLACEHOLDER ONLY: this model is an interface fixture for an unavailable URDF.
+  It is deliberately excluded from real-robot, collision-clearance, reachability,
+  payload and sim-to-real evidence.  Replace every parameter from measured data.
+-->
+<robot name="placeholder_mobile_manipulator" xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:arg name="base_length" default="0.60"/>
+  <xacro:arg name="base_width" default="0.40"/>
+  <xacro:arg name="base_height" default="0.16"/>
+  <xacro:arg name="base_mass" default="18.0"/>
+  <xacro:arg name="wheel_radius" default="0.065"/>
+  <xacro:arg name="wheel_width" default="0.040"/>
+  <xacro:arg name="wheel_x" default="0.22"/>
+  <xacro:arg name="wheel_y" default="0.21"/>
+  <xacro:arg name="arm_mount_x" default="0.02"/>
+  <xacro:arg name="arm_mount_y" default="0.00"/>
+  <xacro:arg name="arm_mount_z" default="0.18"/>
+  <xacro:arg name="arm_link_radius" default="0.022"/>
+  <xacro:arg name="arm_link_1" default="0.10"/>
+  <xacro:arg name="arm_link_2" default="0.18"/>
+  <xacro:arg name="arm_link_3" default="0.16"/>
+  <xacro:arg name="arm_link_4" default="0.10"/>
+  <xacro:arg name="arm_link_5" default="0.08"/>
+  <xacro:arg name="arm_link_6" default="0.06"/>
+  <xacro:arg name="gripper_opening" default="0.070"/>
+  <xacro:arg name="finger_length" default="0.060"/>
+  <xacro:arg name="finger_width" default="0.010"/>
+  <xacro:arg name="finger_height" default="0.018"/>
+  <xacro:arg name="bin_length" default="0.20"/>
+  <xacro:arg name="bin_width" default="0.20"/>
+  <xacro:arg name="bin_depth" default="0.10"/>
+  <xacro:arg name="bin_wall" default="0.008"/>
+  <xacro:arg name="bin_x" default="-0.19"/>
+  <xacro:arg name="bin_y" default="0.00"/>
+  <xacro:arg name="bin_z" default="0.21"/>
+  <xacro:arg name="front_rgbd_xyz" default="0.27 0 0.15"/>
+  <xacro:arg name="front_rgbd_rpy" default="0 0.35 0"/>
+  <xacro:arg name="single_lidar_xyz" default="0.05 0 0.22"/>
+  <xacro:arg name="mid360_xyz" default="0 0 0.30"/>
+  <xacro:arg name="rear_fisheye_x" default="-0.25"/>
+  <xacro:arg name="rear_fisheye_y" default="0.17"/>
+  <xacro:arg name="rear_fisheye_z" default="0.15"/>
+  <xacro:arg name="wrist_stereo_baseline" default="0.055"/>
+
+  <xacro:property name="base_length" value="$(arg base_length)"/>
+  <xacro:property name="base_width" value="$(arg base_width)"/>
+  <xacro:property name="base_height" value="$(arg base_height)"/>
+  <xacro:property name="base_mass" value="$(arg base_mass)"/>
+  <xacro:property name="wheel_radius" value="$(arg wheel_radius)"/>
+  <xacro:property name="wheel_width" value="$(arg wheel_width)"/>
+  <xacro:property name="wheel_x" value="$(arg wheel_x)"/>
+  <xacro:property name="wheel_y" value="$(arg wheel_y)"/>
+  <xacro:property name="arm_radius" value="$(arg arm_link_radius)"/>
+  <xacro:property name="finger_length" value="$(arg finger_length)"/>
+  <xacro:property name="finger_width" value="$(arg finger_width)"/>
+  <xacro:property name="finger_height" value="$(arg finger_height)"/>
+  <xacro:property name="gripper_opening" value="$(arg gripper_opening)"/>
+  <xacro:property name="bin_length" value="$(arg bin_length)"/>
+  <xacro:property name="bin_width" value="$(arg bin_width)"/>
+  <xacro:property name="bin_depth" value="$(arg bin_depth)"/>
+  <xacro:property name="bin_wall" value="$(arg bin_wall)"/>
+  <xacro:property name="rear_fisheye_y" value="$(arg rear_fisheye_y)"/>
+  <xacro:property name="wrist_stereo_baseline" value="$(arg wrist_stereo_baseline)"/>
+
+  <material name="placeholder_orange"><color rgba="0.92 0.43 0.08 1"/></material>
+  <material name="placeholder_gray"><color rgba="0.25 0.28 0.31 1"/></material>
+  <material name="placeholder_blue"><color rgba="0.10 0.35 0.80 1"/></material>
+
+  <link name="base_footprint"/>
+  <link name="base_link">
+    <visual><geometry><box size="${base_length} ${base_width} ${base_height}"/></geometry><material name="placeholder_orange"/></visual>
+    <collision><geometry><box size="${base_length} ${base_width} ${base_height}"/></geometry></collision>
+    <inertial>
+      <mass value="${base_mass}"/>
+      <inertia ixx="${base_mass * (base_width * base_width + base_height * base_height) / 12}" ixy="0" ixz="0" iyy="${base_mass * (base_length * base_length + base_height * base_height) / 12}" iyz="0" izz="${base_mass * (base_length * base_length + base_width * base_width) / 12}"/>
+    </inertial>
+  </link>
+  <joint name="base_footprint_joint" type="fixed">
+    <parent link="base_footprint"/><child link="base_link"/>
+    <origin xyz="0 0 ${base_height / 2 + wheel_radius}"/>
+  </joint>
+
+  <xacro:macro name="placeholder_wheel" params="name x y roller_sign">
+    <link name="${name}_wheel_link">
+      <visual><origin rpy="${pi / 2} 0 0"/><geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry><material name="placeholder_gray"/></visual>
+      <collision><origin rpy="${pi / 2} 0 0"/><geometry><cylinder radius="${wheel_radius}" length="${wheel_width}"/></geometry></collision>
+      <inertial><mass value="0.7"/><inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/></inertial>
+    </link>
+    <joint name="${name}_wheel_joint" type="continuous">
+      <parent link="base_link"/><child link="${name}_wheel_link"/>
+      <origin xyz="${x} ${y} ${-base_height / 2}"/><axis xyz="0 1 0"/><limit effort="8" velocity="20"/>
+    </joint>
+    <!-- roller_sign is retained for a future measured mecanum contact model. -->
+    <gazebo reference="${name}_wheel_link"><material>Gazebo/DarkGrey</material><mu1>1.0</mu1><mu2>1.0</mu2><fdir1>1 ${roller_sign} 0</fdir1></gazebo>
+  </xacro:macro>
+  <xacro:placeholder_wheel name="front_left" x="${wheel_x}" y="${wheel_y}" roller_sign="1"/>
+  <xacro:placeholder_wheel name="front_right" x="${wheel_x}" y="${-wheel_y}" roller_sign="-1"/>
+  <xacro:placeholder_wheel name="rear_left" x="${-wheel_x}" y="${wheel_y}" roller_sign="-1"/>
+  <xacro:placeholder_wheel name="rear_right" x="${-wheel_x}" y="${-wheel_y}" roller_sign="1"/>
+
+  <link name="arm_mount_link"/>
+  <joint name="arm_mount_joint" type="fixed">
+    <parent link="base_link"/><child link="arm_mount_link"/>
+    <origin xyz="$(arg arm_mount_x) $(arg arm_mount_y) $(arg arm_mount_z)"/>
+  </joint>
+
+  <xacro:macro name="placeholder_arm_link" params="index parent parent_offset length axis lower upper mass">
+    <link name="placeholder_arm_link_${index}">
+      <visual><origin xyz="0 0 ${length / 2}"/><geometry><cylinder radius="${arm_radius}" length="${length}"/></geometry><material name="placeholder_blue"/></visual>
+      <collision><origin xyz="0 0 ${length / 2}"/><geometry><cylinder radius="${arm_radius}" length="${length}"/></geometry></collision>
+      <inertial><origin xyz="0 0 ${length / 2}"/><mass value="${mass}"/><inertia ixx="${mass * (3 * arm_radius * arm_radius + length * length) / 12}" ixy="0" ixz="0" iyy="${mass * (3 * arm_radius * arm_radius + length * length) / 12}" iyz="0" izz="${0.5 * mass * arm_radius * arm_radius}"/></inertial>
+    </link>
+    <joint name="placeholder_arm_joint_${index}" type="revolute">
+      <parent link="${parent}"/><child link="placeholder_arm_link_${index}"/>
+      <origin xyz="0 0 ${parent_offset}"/><axis xyz="${axis}"/><limit lower="${lower}" upper="${upper}" effort="20" velocity="1.0"/>
+    </joint>
+  </xacro:macro>
+  <xacro:placeholder_arm_link index="1" parent="arm_mount_link" parent_offset="0" length="$(arg arm_link_1)" axis="0 0 1" lower="-${pi}" upper="${pi}" mass="1.0"/>
+  <xacro:placeholder_arm_link index="2" parent="placeholder_arm_link_1" parent_offset="$(arg arm_link_1)" length="$(arg arm_link_2)" axis="0 1 0" lower="-2.2" upper="2.2" mass="0.9"/>
+  <xacro:placeholder_arm_link index="3" parent="placeholder_arm_link_2" parent_offset="$(arg arm_link_2)" length="$(arg arm_link_3)" axis="0 1 0" lower="-2.5" upper="2.5" mass="0.8"/>
+  <xacro:placeholder_arm_link index="4" parent="placeholder_arm_link_3" parent_offset="$(arg arm_link_3)" length="$(arg arm_link_4)" axis="1 0 0" lower="-${pi}" upper="${pi}" mass="0.5"/>
+  <xacro:placeholder_arm_link index="5" parent="placeholder_arm_link_4" parent_offset="$(arg arm_link_4)" length="$(arg arm_link_5)" axis="0 1 0" lower="-2.2" upper="2.2" mass="0.4"/>
+  <xacro:placeholder_arm_link index="6" parent="placeholder_arm_link_5" parent_offset="$(arg arm_link_5)" length="$(arg arm_link_6)" axis="1 0 0" lower="-${pi}" upper="${pi}" mass="0.3"/>
+
+  <link name="gripper_palm_link">
+    <visual><geometry><box size="0.045 0.090 0.025"/></geometry><material name="placeholder_gray"/></visual>
+    <collision><geometry><box size="0.045 0.090 0.025"/></geometry></collision>
+    <inertial><mass value="0.20"/><inertia ixx="0.0002" ixy="0" ixz="0" iyy="0.0002" iyz="0" izz="0.0002"/></inertial>
+  </link>
+  <joint name="placeholder_tool_joint" type="fixed"><parent link="placeholder_arm_link_6"/><child link="gripper_palm_link"/><origin xyz="0 0 $(arg arm_link_6)"/></joint>
+
+  <xacro:macro name="placeholder_finger" params="side direction">
+    <link name="${side}_finger_link">
+      <visual><origin xyz="0 0 ${-finger_length / 2}"/><geometry><box size="${finger_width} ${finger_height} ${finger_length}"/></geometry><material name="placeholder_gray"/></visual>
+      <collision><origin xyz="0 0 ${-finger_length / 2}"/><geometry><box size="${finger_width} ${finger_height} ${finger_length}"/></geometry></collision>
+      <inertial><mass value="0.04"/><inertia ixx="0.00002" ixy="0" ixz="0" iyy="0.00002" iyz="0" izz="0.00001"/></inertial>
+    </link>
+    <joint name="${side}_finger_joint" type="prismatic">
+      <parent link="gripper_palm_link"/><child link="${side}_finger_link"/>
+      <origin xyz="0 ${direction * 0.012} -0.012"/><axis xyz="0 ${direction} 0"/>
+      <limit lower="0" upper="${gripper_opening / 2}" effort="12" velocity="0.05"/>
+    </joint>
+  </xacro:macro>
+  <xacro:placeholder_finger side="left" direction="1"/>
+  <xacro:placeholder_finger side="right" direction="-1"/>
+
+  <!-- Open-top rear bin: base plus four walls, not a solid collision box. -->
+  <link name="rear_collection_bin_link">
+    <visual name="bin_floor_visual"><origin xyz="0 0 ${-bin_wall / 2}"/><geometry><box size="${bin_length} ${bin_width} ${bin_wall}"/></geometry><material name="placeholder_orange"/></visual>
+    <visual name="bin_front_visual"><origin xyz="${bin_length / 2} 0 ${bin_depth / 2}"/><geometry><box size="${bin_wall} ${bin_width} ${bin_depth}"/></geometry><material name="placeholder_orange"/></visual>
+    <visual name="bin_rear_visual"><origin xyz="${-bin_length / 2} 0 ${bin_depth / 2}"/><geometry><box size="${bin_wall} ${bin_width} ${bin_depth}"/></geometry><material name="placeholder_orange"/></visual>
+    <visual name="bin_left_visual"><origin xyz="0 ${bin_width / 2} ${bin_depth / 2}"/><geometry><box size="${bin_length} ${bin_wall} ${bin_depth}"/></geometry><material name="placeholder_orange"/></visual>
+    <visual name="bin_right_visual"><origin xyz="0 ${-bin_width / 2} ${bin_depth / 2}"/><geometry><box size="${bin_length} ${bin_wall} ${bin_depth}"/></geometry><material name="placeholder_orange"/></visual>
+    <collision name="bin_floor"><origin xyz="0 0 ${-bin_wall / 2}"/><geometry><box size="${bin_length} ${bin_width} ${bin_wall}"/></geometry></collision>
+    <collision name="bin_front"><origin xyz="${bin_length / 2} 0 ${bin_depth / 2}"/><geometry><box size="${bin_wall} ${bin_width} ${bin_depth}"/></geometry></collision>
+    <collision name="bin_rear"><origin xyz="${-bin_length / 2} 0 ${bin_depth / 2}"/><geometry><box size="${bin_wall} ${bin_width} ${bin_depth}"/></geometry></collision>
+    <collision name="bin_left"><origin xyz="0 ${bin_width / 2} ${bin_depth / 2}"/><geometry><box size="${bin_length} ${bin_wall} ${bin_depth}"/></geometry></collision>
+    <collision name="bin_right"><origin xyz="0 ${-bin_width / 2} ${bin_depth / 2}"/><geometry><box size="${bin_length} ${bin_wall} ${bin_depth}"/></geometry></collision>
+    <inertial><mass value="0.6"/><inertia ixx="0.003" ixy="0" ixz="0" iyy="0.003" iyz="0" izz="0.003"/></inertial>
+  </link>
+  <joint name="rear_collection_bin_joint" type="fixed"><parent link="base_link"/><child link="rear_collection_bin_link"/><origin xyz="$(arg bin_x) $(arg bin_y) $(arg bin_z)"/></joint>
+  <link name="bin_drop_frame"/>
+  <joint name="bin_drop_joint" type="fixed"><parent link="rear_collection_bin_link"/><child link="bin_drop_frame"/><origin xyz="0 0 ${bin_depth + 0.03}"/></joint>
+
+  <xacro:macro name="placeholder_sensor_frame" params="name parent xyz rpy">
+    <link name="${name}"/>
+    <joint name="${name}_joint" type="fixed"><parent link="${parent}"/><child link="${name}"/><origin xyz="${xyz}" rpy="${rpy}"/></joint>
+  </xacro:macro>
+  <xacro:placeholder_sensor_frame name="single_lidar_link" parent="base_link" xyz="$(arg single_lidar_xyz)" rpy="0 0 0"/>
+  <xacro:placeholder_sensor_frame name="mid360_link" parent="base_link" xyz="$(arg mid360_xyz)" rpy="0 0 0"/>
+  <xacro:placeholder_sensor_frame name="front_rgbd_link" parent="base_link" xyz="$(arg front_rgbd_xyz)" rpy="$(arg front_rgbd_rpy)"/>
+  <xacro:placeholder_sensor_frame name="rear_left_fisheye_link" parent="base_link" xyz="$(arg rear_fisheye_x) $(arg rear_fisheye_y) $(arg rear_fisheye_z)" rpy="0 0 ${3 * pi / 4}"/>
+  <xacro:placeholder_sensor_frame name="rear_right_fisheye_link" parent="base_link" xyz="$(arg rear_fisheye_x) ${-rear_fisheye_y} $(arg rear_fisheye_z)" rpy="0 0 ${-3 * pi / 4}"/>
+  <xacro:placeholder_sensor_frame name="wrist_stereo_center_link" parent="gripper_palm_link" xyz="0 0.05 0" rpy="0 0 0"/>
+  <xacro:placeholder_sensor_frame name="wrist_stereo_left_optical_frame" parent="wrist_stereo_center_link" xyz="0 ${wrist_stereo_baseline / 2} 0" rpy="0 0 0"/>
+  <xacro:placeholder_sensor_frame name="wrist_stereo_right_optical_frame" parent="wrist_stereo_center_link" xyz="0 ${-wrist_stereo_baseline / 2} 0" rpy="0 0 0"/>
+</robot>

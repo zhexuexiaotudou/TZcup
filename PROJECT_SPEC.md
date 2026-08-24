@@ -1,5 +1,11 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## 无精确URDF的缩比研发链边界
+
+`sanitation_campus_scenario`、`sanitation_active_cleaning`、`sanitation_manipulation`和`sanitation_research_demo`构成独立缩比研发链。场景生成器必须把controller可见文件、环境驱动文件和评测真值分开；策略只能收到公开地图、当前障碍和belief observation，评测种子、地污/垃圾真值及行人未来轨迹不得进入策略或抓取控制。离散目标每次只处理一个，只有外部抓取适配返回`verified_in_bin=true`才可清除。
+
+占位Xacro/SRDF、合成近距点云、mock后端和S100开发profile均固定`evidence_authority=false`，不得替代真实URDF、MoveIt 2/`ros2_control`、实测相机、实机投箱、Journey 6或RDK S100证据。该研发链的通过也不得改变AUTO-08、AUTO-15、真实域或J6发布状态。
+
 ## AUTO-17 可视化演示架构
 
 AUTO-17 是既有自主控制面的只读观察层，不是新的控制器。`sanitation_live_dashboard` 订阅 `/coverage/state`、`/coverage/component_state`、`/coverage/current_path`、`/localization/fused_pose`、`/cmd_vel`、`/brush_enabled`、`/emergency_stop` 与 evaluation-only 的 `/coverage/evaluation_sample`，通过本机 HTTP `/api/v1/telemetry` 和 `/healthz` 提供快照；网页不得发布底盘命令。Gazebo `/gui/track` 跟随 `sanitation_vehicle`，RViz `TopDownOrtho` 以 `base_footprint` 为目标帧。专用录像直接轮询只读遥测并绘制任务画面，不抓取用户桌面。

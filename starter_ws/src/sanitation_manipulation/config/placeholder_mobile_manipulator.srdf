@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<!-- PLACEHOLDER ONLY. Not measured geometry and not valid real-robot evidence. -->
+<robot name="placeholder_mobile_manipulator">
+  <virtual_joint name="placeholder_world_joint" type="planar" parent_frame="map" child_link="base_footprint"/>
+  <group name="placeholder_manipulator">
+    <chain base_link="arm_mount_link" tip_link="gripper_palm_link"/>
+  </group>
+  <group name="placeholder_gripper">
+    <joint name="left_finger_joint"/>
+    <joint name="right_finger_joint"/>
+  </group>
+  <end_effector name="placeholder_end_effector" parent_link="gripper_palm_link" group="placeholder_gripper" parent_group="placeholder_manipulator"/>
+  <group_state name="placeholder_home" group="placeholder_manipulator">
+    <joint name="placeholder_arm_joint_1" value="0"/>
+    <joint name="placeholder_arm_joint_2" value="0"/>
+    <joint name="placeholder_arm_joint_3" value="0"/>
+    <joint name="placeholder_arm_joint_4" value="0"/>
+    <joint name="placeholder_arm_joint_5" value="0"/>
+    <joint name="placeholder_arm_joint_6" value="0"/>
+  </group_state>
+  <disable_collisions link1="arm_mount_link" link2="placeholder_arm_link_1" reason="Adjacent"/>
+  <disable_collisions link1="placeholder_arm_link_1" link2="placeholder_arm_link_2" reason="Adjacent"/>
+  <disable_collisions link1="placeholder_arm_link_2" link2="placeholder_arm_link_3" reason="Adjacent"/>
+  <disable_collisions link1="placeholder_arm_link_3" link2="placeholder_arm_link_4" reason="Adjacent"/>
+  <disable_collisions link1="placeholder_arm_link_4" link2="placeholder_arm_link_5" reason="Adjacent"/>
+  <disable_collisions link1="placeholder_arm_link_5" link2="placeholder_arm_link_6" reason="Adjacent"/>
+  <disable_collisions link1="placeholder_arm_link_6" link2="gripper_palm_link" reason="Adjacent"/>
+</robot>

@@ -175,6 +175,9 @@ def run_ros_independent_tests() -> None:
     manipulation_package = SOURCE_ROOT / "sanitation_manipulation"
     debug_visualization_package = SOURCE_ROOT / "sanitation_debug_visualization"
     gazebo_visualization_package = SOURCE_ROOT / "sanitation_gazebo_visualization"
+    active_cleaning_package = SOURCE_ROOT / "sanitation_active_cleaning"
+    campus_scenario_package = SOURCE_ROOT / "sanitation_campus_scenario"
+    research_demo_package = SOURCE_ROOT / "sanitation_research_demo"
     sys.path.insert(0, str(coverage_package))
     sys.path.insert(0, str(tasks_package))
     sys.path.insert(0, str(gnss_package))
@@ -187,6 +190,9 @@ def run_ros_independent_tests() -> None:
     sys.path.insert(0, str(manipulation_package))
     sys.path.insert(0, str(debug_visualization_package))
     sys.path.insert(0, str(gazebo_visualization_package))
+    sys.path.insert(0, str(active_cleaning_package))
+    sys.path.insert(0, str(campus_scenario_package))
+    sys.path.insert(0, str(research_demo_package))
     test_paths = (
         coverage_package / "test" / "test_metrics.py",
         coverage_package / "test" / "test_stage4w_geometry.py",
@@ -203,6 +209,7 @@ def run_ros_independent_tests() -> None:
         perception_package / "test" / "test_backends.py",
         perception_package / "test" / "test_preprocessing.py",
         perception_package / "test" / "test_j6_runtime.py",
+        perception_package / "test" / "test_open_vocab.py",
         dataset_package / "test" / "test_synthetic.py",
         ground_truth_package / "test" / "test_visibility.py",
         spot_cleaning_package / "test" / "test_coordinator.py",
@@ -229,9 +236,13 @@ def run_ros_independent_tests() -> None:
         hmi_package / "test" / "test_reference.py",
         hmi_package / "test" / "test_ros_adapter.py",
         hmi_package / "test" / "test_server.py",
-        manipulation_package / "test" / "test_core.py",
+        *sorted((manipulation_package / "test").glob("test_*.py")),
         debug_visualization_package / "test" / "test_debug_visualization_model.py",
         gazebo_visualization_package / "test" / "test_coverage_telemetry_v2.py",
+        *sorted((active_cleaning_package / "test").glob("test_*.py")),
+        *sorted((campus_scenario_package / "test").glob("test_*.py")),
+        *sorted((research_demo_package / "test").glob("test_*.py")),
+        active_cleaning_package / "test" / "test_performance.py",
         spot_cleaning_package / "test" / "test_auto01_geometry.py",
         ROOT / "scripts" / "test_autonomous_runner.py",
         ROOT / "scripts" / "test_auto02_tools.py",

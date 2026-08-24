@@ -1,0 +1,26 @@
+{
+  "geofence": [[0.0, 0.0], [12.0, 0.0], [12.0, 8.0], [0.0, 8.0]],
+  "static_obstacles": [
+    [[5.0, 3.0], [6.2, 3.0], [6.2, 4.2], [5.0, 4.2]]
+  ],
+  "start": {"x": 1.0, "y": 1.0, "yaw": 0.0},
+  "grid_resolution": 0.5,
+  "sensing_radius": 3.0,
+  "sensing_fov_rad": 3.141592653589793,
+  "cleaning_width": 0.8,
+  "vehicle_radius": 0.3,
+  "grasp_radius": 0.5,
+  "min_turn_radius": 0.3,
+  "path_sample_spacing": 0.1,
+  "observation_threshold": 0.95,
+  "ground_clear_threshold": 0.95,
+  "discrete_clear_threshold": 0.95,
+  "ground_dirt_count": 5,
+  "ground_dirt_radius_range": [0.25, 0.65],
+  "discrete_target_count": 4,
+  "pedestrian_count": 1,
+  "pedestrian": {"radius": 0.3, "step_distance": 0.15},
+  "max_grasp_attempts": 2,
+  "grasp_success_probability": 1.0,
+  "max_steps": 160
+}
