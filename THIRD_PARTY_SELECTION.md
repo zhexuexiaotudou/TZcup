@@ -81,7 +81,7 @@ Codex 必须记录最终 commit。
 
 - `ros-navigation/navigation2`：导航核心；
 - `PlanSys2/ros2_planning_system`：后续结构化任务规划；
-- MoveIt 2：后续抓取；
+- MoveIt 2：真实 URDF 到达后的运动学、碰撞与抓取执行；当前仅有不声明真实可达性的占位研发闭环；
 - `vision_msgs`：统一检测输出；
 - rosbag2：证据记录；
 - `launch_testing`：自动化系统测试。

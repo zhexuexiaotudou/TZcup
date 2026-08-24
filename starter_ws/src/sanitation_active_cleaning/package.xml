@@ -6,6 +6,7 @@
   <maintainer email="team@example.com">Sanitation Vehicle Team</maintainer>
   <license>Apache-2.0</license>
 
+  <buildtool_depend>ament_python</buildtool_depend>
   <test_depend>python3-pytest</test_depend>
 
   <export>

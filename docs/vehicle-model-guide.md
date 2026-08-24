@@ -1,5 +1,9 @@
 # 清扫车模型部件说明
 
+> 适用范围：本文描述仓库既有的大型 4WD 差速/滑移转向清扫车，不是
+> `sanitation_manipulation` 中用于 URDF 到达前验证协议的麦克纳姆小车与六轴臂占位模型。
+> 新小车当前边界见 [无精确 URDF 的研发闭环](urdf-independent-research-demo.md)。
+
 车辆前进方向为 `base_link` 的 `+X`，左侧为 `+Y`，车顶为 `+Z`。本次只增强可视外观，冻结的二维 footprint、轮距、车轮动力学、传感器外参、碰撞包络和 ROS 话题没有改变。
 
 | 区域 | URDF 部件 | 作用 |
