@@ -1,0 +1,65 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro">
+  <!-- ros2_control contracts are separated from link geometry so that the same
+       assembly can be expanded for RViz, Gazebo or a hardware adapter. -->
+  <xacro:macro name="hf_position_joint" params="name lower upper velocity effort initial_position:=0.0">
+    <joint name="${name}">
+      <command_interface name="position">
+        <param name="min">${lower}</param>
+        <param name="max">${upper}</param>
+      </command_interface>
+      <state_interface name="position">
+        <param name="initial_value">${initial_position}</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="hf_velocity_joint" params="name max_velocity max_effort">
+    <joint name="${name}">
+      <command_interface name="velocity">
+        <param name="min">${-max_velocity}</param>
+        <param name="max">${max_velocity}</param>
+      </command_interface>
+      <state_interface name="position"/>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="hf_formal_ros2_control" params="use_sim:=true">
+    <ros2_control name="formal_vehicle_system" type="system">
+      <hardware>
+        <xacro:if value="${use_sim}">
+          <plugin>gz_ros2_control/GazeboSimSystem</plugin>
+        </xacro:if>
+        <xacro:unless value="${use_sim}">
+          <plugin>mock_components/GenericSystem</plugin>
+        </xacro:unless>
+      </hardware>
+
+      <xacro:hf_velocity_joint name="front_left_wheel_joint" max_velocity="12.0" max_effort="165.0"/>
+      <xacro:hf_velocity_joint name="front_right_wheel_joint" max_velocity="12.0" max_effort="165.0"/>
+      <xacro:hf_velocity_joint name="rear_left_wheel_joint" max_velocity="12.0" max_effort="165.0"/>
+      <xacro:hf_velocity_joint name="rear_right_wheel_joint" max_velocity="12.0" max_effort="165.0"/>
+
+      <xacro:hf_position_joint name="shoulder_pan_joint" lower="${-2*pi}" upper="${2*pi}" velocity="3.14" effort="150.0"/>
+      <xacro:hf_position_joint name="shoulder_lift_joint" lower="${-2*pi}" upper="${2*pi}" velocity="3.14" effort="150.0"/>
+      <xacro:hf_position_joint name="elbow_joint" lower="${-pi}" upper="${pi}" velocity="3.14" effort="150.0"/>
+      <xacro:hf_position_joint name="wrist_1_joint" lower="${-2*pi}" upper="${2*pi}" velocity="6.28" effort="28.0"/>
+      <xacro:hf_position_joint name="wrist_2_joint" lower="${-2*pi}" upper="${2*pi}" velocity="6.28" effort="28.0"/>
+      <xacro:hf_position_joint name="wrist_3_joint" lower="${-2*pi}" upper="${2*pi}" velocity="6.28" effort="28.0"/>
+      <xacro:hf_position_joint name="robotiq_85_left_knuckle_joint" lower="0.0" upper="0.8" velocity="2.0" effort="100.0"/>
+
+      <xacro:hf_velocity_joint name="left_side_brush_joint" max_velocity="31.416" max_effort="12.0"/>
+      <xacro:hf_velocity_joint name="right_side_brush_joint" max_velocity="31.416" max_effort="12.0"/>
+      <xacro:hf_velocity_joint name="central_roller_joint" max_velocity="52.36" max_effort="20.0"/>
+      <xacro:hf_position_joint name="cleaning_lift_joint" lower="0.0" upper="0.1" velocity="0.05" effort="1000.0" initial_position="0.1"/>
+      <xacro:hf_position_joint name="squeegee_pitch_joint" lower="-0.2" upper="0.2" velocity="0.3" effort="120.0"/>
+      <xacro:hf_position_joint name="squeegee_float_joint" lower="0.0" upper="0.035" velocity="0.08" effort="250.0" initial_position="0.035"/>
+      <xacro:hf_position_joint name="dry_bin_lid_joint" lower="0.0" upper="1.75" velocity="0.5" effort="60.0"/>
+      <xacro:hf_position_joint name="wastewater_lid_joint" lower="0.0" upper="1.57" velocity="0.5" effort="45.0"/>
+    </ros2_control>
+  </xacro:macro>
+</robot>

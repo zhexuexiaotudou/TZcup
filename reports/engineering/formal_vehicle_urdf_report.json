@@ -1,0 +1,123 @@
+{
+  "approximate_fov_passed_sensors": [
+    "utm30lx",
+    "mid360",
+    "front_d435_depth",
+    "rear_left_fisheye",
+    "rear_right_fisheye",
+    "gnss",
+    "imu"
+  ],
+  "approximate_fov_pending_sensors": [
+    "wrist_d435_depth"
+  ],
+  "claim_boundary": "Numeric initial layout and deterministic budgets pass. Expanded URDF inertials/names/limits must pass separately; final CoG, wastewater capacity, mesh swept volumes, exact occlusion, ground contact and Gazebo sensor visibility remain fail-closed.",
+  "counts": {
+    "approximate_fov_passed": 7,
+    "approximate_fov_pending": 1,
+    "component_envelopes": 8,
+    "installation_frames": 24,
+    "sensor_layouts": 8
+  },
+  "dry_bin_usable_l": 40.0,
+  "effective_cleaning_width_m": 1.32,
+  "layout_id": "tzcup_formal_vehicle_layout_v1",
+  "passed_deterministic_checks": [
+    "pre_urdf_contract_and_four_budget_csvs",
+    "required_installation_frames_have_numeric_initial_poses",
+    "declared_component_envelopes_fit_transport_envelope",
+    "dry_bin_geometry_and_usable_volume_at_least_40_l",
+    "mass_installation_and_design_caps_bound_preliminary_wastewater_fill",
+    "payload_limit_at_preliminary_usable_wastewater_fill",
+    "effective_cleaning_width_at_least_0_6_m",
+    "declared_arm_stowed_and_operating_envelopes_are_bounded",
+    "static_sensor_layout_approximate_fov_clearance",
+    "expanded_urdf_xml_and_robot_identity",
+    "unique_link_and_joint_names",
+    "all_physical_link_mass_and_inertia",
+    "required_frames_joints_and_sensor_frames",
+    "joint_limits_axes_and_tree_topology",
+    "no_symbolic_placeholders_in_expanded_urdf",
+    "non_pending_static_frame_poses_match_layout"
+  ],
+  "payload": {
+    "at_preliminary_usable_fill_kg": 88.9234,
+    "design_limit_kg": 91.35,
+    "remaining_margin_kg": 2.4266
+  },
+  "pending_external_gates": [
+    "exact_s100_board_envelope",
+    "full_inertia_and_cog_scan",
+    "fov_occlusion_solve",
+    "final_wastewater_capacity",
+    "detailed_power_topology",
+    "arm_exact_swept_volume",
+    "cleaning_ground_contact",
+    "gazebo_sensor_ray_and_visibility_scan"
+  ],
+  "preliminary_wastewater": {
+    "cog_limit_l": null,
+    "final_capacity_frozen": false,
+    "installation_limit_l": 14.0,
+    "mass_limit_l": 12.133,
+    "nominal_before_usable_fraction_l": 12.133,
+    "usable_l": 9.7064
+  },
+  "robot_name": "tzcup_formal_sanitation_vehicle",
+  "status": "FORMAL_URDF_DETERMINISTIC_CHECKS_PASSED_EXTERNAL_GATES_PENDING",
+  "transport_envelope_m": {
+    "height": 1.4,
+    "length": 1.16,
+    "width": 1.35
+  },
+  "urdf_validation": {
+    "all_physical_links_have_positive_mass_and_positive_definite_physical_inertia": true,
+    "all_required_frames_joints_and_sensors_present": true,
+    "evaluated": true,
+    "joint_count": 103,
+    "joint_limits_and_tree_topology_valid": true,
+    "link_count": 104,
+    "massless_virtual_frames": [
+      "base_footprint"
+    ],
+    "passed": true,
+    "path": "reports/engineering/formal_competition_vehicle.urdf",
+    "sensor_frame_count": 8,
+    "static_frame_pose_consistency": {
+      "checked_count": 22,
+      "checked_frames": [
+        "base_footprint",
+        "base_link",
+        "payload_deck_link",
+        "arm_mount_link",
+        "sensor_mast_link",
+        "lidar_2d_link",
+        "lidar_3d_link",
+        "front_rgbd_link",
+        "front_rgbd_depth_optical_frame",
+        "rear_left_fisheye_link",
+        "rear_left_fisheye_optical_frame",
+        "rear_right_fisheye_link",
+        "rear_right_fisheye_optical_frame",
+        "gnss_antenna_link",
+        "imu_link",
+        "dry_bin_link",
+        "wastewater_tank_link",
+        "left_side_brush_link",
+        "right_side_brush_link",
+        "central_roller_link",
+        "squeegee_link",
+        "suction_nozzle_link"
+      ],
+      "pending_count": 2,
+      "pending_frames": [
+        "wrist_rgbd_link",
+        "wrist_rgbd_depth_optical_frame"
+      ],
+      "position_tolerance_m": 0.005,
+      "rotation_tolerance_rad": 0.02
+    },
+    "symbolic_placeholders_absent": true,
+    "total_empty_vehicle_mass_kg": 134.252001
+  }
+}

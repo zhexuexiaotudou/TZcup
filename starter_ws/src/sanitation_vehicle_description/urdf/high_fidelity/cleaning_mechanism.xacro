@@ -1,0 +1,461 @@
+<?xml version="1.0"?>
+<!--
+  Project-authored high-fidelity cleaning and wastewater-recovery mechanism.
+
+  The geometry is deliberately assembled from redistributable URDF primitives;
+  no vendor CAD is embedded. Dimensions and masses for the Pololu 4694,
+  Actuonix P16-100-256-12-P and Jabsco Q402J-118S-3A are bounded by the frozen
+  pre-URDF contract. Flexible hose deformation and water transport are runtime
+  simulation concerns and are exposed through named links and couplings here.
+-->
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:macro name="hf_cleaning_box_inertial" params="mass sx sy sz xyz:='0 0 0'">
+    <inertial>
+      <origin xyz="${xyz}" rpy="0 0 0"/>
+      <mass value="${mass}"/>
+      <inertia
+        ixx="${mass * (sy*sy + sz*sz) / 12.0}" ixy="0" ixz="0"
+        iyy="${mass * (sx*sx + sz*sz) / 12.0}" iyz="0"
+        izz="${mass * (sx*sx + sy*sy) / 12.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="hf_cleaning_cylinder_z_inertial" params="mass radius length xyz:='0 0 0'">
+    <inertial>
+      <origin xyz="${xyz}" rpy="0 0 0"/>
+      <mass value="${mass}"/>
+      <inertia
+        ixx="${mass * (3.0*radius*radius + length*length) / 12.0}" ixy="0" ixz="0"
+        iyy="${mass * (3.0*radius*radius + length*length) / 12.0}" iyz="0"
+        izz="${0.5 * mass * radius*radius}"/>
+    </inertial>
+  </xacro:macro>
+
+  <xacro:macro name="hf_cleaning_cylinder_y_inertial" params="mass radius length xyz:='0 0 0'">
+    <inertial>
+      <origin xyz="${xyz}" rpy="0 0 0"/>
+      <mass value="${mass}"/>
+      <inertia
+        ixx="${mass * (3.0*radius*radius + length*length) / 12.0}" ixy="0" ixz="0"
+        iyy="${0.5 * mass * radius*radius}" iyz="0"
+        izz="${mass * (3.0*radius*radius + length*length) / 12.0}"/>
+    </inertial>
+  </xacro:macro>
+
+  <!-- A visible bristle sector. Six sectors form one serviceable side-brush ring. -->
+  <xacro:macro name="hf_bristle_sector" params="name yaw">
+    <visual name="${name}">
+      <origin xyz="${0.095 * cos(yaw)} ${0.095 * sin(yaw)} -0.018" rpy="0 0 ${yaw}"/>
+      <geometry><box size="0.105 0.038 0.026"/></geometry>
+      <material name="hf_bristle_brown"><color rgba="0.30 0.19 0.065 1"/></material>
+    </visual>
+  </xacro:macro>
+
+  <xacro:macro name="hf_side_brush_assembly" params="side lateral_sign">
+    <!-- The 37D motor mass is partitioned across stator, gearbox and rotor/shaft;
+         their sum is the vendor 0.205 kg per Pololu 4694 assembly. -->
+    <link name="${side}_side_brush_motor_stator_link">
+      <visual name="motor_can">
+        <origin rpy="0 0 0"/>
+        <geometry><cylinder radius="0.0185" length="0.057"/></geometry>
+        <material name="hf_motor_dark"><color rgba="0.10 0.11 0.12 1"/></material>
+      </visual>
+      <visual name="encoder_cap">
+        <origin xyz="0 0 0.034"/>
+        <geometry><cylinder radius="0.0195" length="0.011"/></geometry>
+        <material name="hf_encoder_blue"><color rgba="0.05 0.25 0.45 1"/></material>
+      </visual>
+      <collision><geometry><cylinder radius="0.0195" length="0.068"/></geometry></collision>
+      <xacro:hf_cleaning_cylinder_z_inertial mass="0.130" radius="0.0185" length="0.057"/>
+    </link>
+    <joint name="${side}_side_brush_motor_mount_joint" type="fixed">
+      <parent link="cleaning_lift_carriage_link"/>
+      <child link="${side}_side_brush_motor_stator_link"/>
+      <origin xyz="0.385 ${lateral_sign * 0.545} 0.0455" rpy="0 0 0"/>
+    </joint>
+
+    <link name="${side}_side_brush_gearbox_link">
+      <visual name="planetary_gearbox">
+        <geometry><cylinder radius="0.0185" length="0.028"/></geometry>
+        <material name="hf_gearbox_silver"><color rgba="0.55 0.58 0.60 1"/></material>
+      </visual>
+      <collision><geometry><cylinder radius="0.0185" length="0.028"/></geometry></collision>
+      <xacro:hf_cleaning_cylinder_z_inertial mass="0.055" radius="0.0185" length="0.028"/>
+    </link>
+    <joint name="${side}_side_brush_gearbox_mount_joint" type="fixed">
+      <parent link="${side}_side_brush_motor_stator_link"/>
+      <child link="${side}_side_brush_gearbox_link"/>
+      <origin xyz="0 0 -0.0425" rpy="0 0 0"/>
+    </joint>
+
+    <link name="${side}_side_brush_link">
+      <visual name="motor_rotor">
+        <origin xyz="0 0 0.014"/>
+        <geometry><cylinder radius="0.006" length="0.028"/></geometry>
+        <material name="hf_rotor_copper"><color rgba="0.70 0.31 0.10 1"/></material>
+      </visual>
+      <visual name="output_shaft">
+        <origin xyz="0 0 -0.023"/>
+        <geometry><cylinder radius="0.004" length="0.046"/></geometry>
+        <material name="hf_shaft_steel"><color rgba="0.62 0.65 0.68 1"/></material>
+      </visual>
+      <collision>
+        <origin xyz="0 0 -0.012"/>
+        <geometry><cylinder radius="0.006" length="0.052"/></geometry>
+      </collision>
+      <xacro:hf_cleaning_cylinder_z_inertial mass="0.020" radius="0.006" length="0.052" xyz="0 0 -0.012"/>
+    </link>
+    <joint name="${side}_side_brush_joint" type="continuous">
+      <parent link="${side}_side_brush_gearbox_link"/>
+      <child link="${side}_side_brush_link"/>
+      <origin xyz="0 0 -0.014" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="8.0" velocity="20.0"/>
+      <dynamics damping="0.01" friction="0.01"/>
+    </joint>
+
+    <link name="${side}_side_brush_disk_link">
+      <visual name="glass_filled_nylon_disk">
+        <geometry><cylinder radius="0.072" length="0.012"/></geometry>
+        <material name="hf_brush_disk"><color rgba="0.045 0.055 0.06 1"/></material>
+      </visual>
+      <visual name="shaft_hub">
+        <origin xyz="0 0 0.014"/>
+        <geometry><cylinder radius="0.020" length="0.028"/></geometry>
+        <material name="hf_brush_hub"><color rgba="0.16 0.18 0.19 1"/></material>
+      </visual>
+      <collision><geometry><cylinder radius="0.072" length="0.012"/></geometry></collision>
+      <xacro:hf_cleaning_cylinder_z_inertial mass="0.230" radius="0.072" length="0.012"/>
+    </link>
+    <joint name="${side}_side_brush_disk_joint" type="fixed">
+      <parent link="${side}_side_brush_link"/>
+      <child link="${side}_side_brush_disk_link"/>
+      <origin xyz="0 0 -0.052" rpy="0 0 0"/>
+    </joint>
+
+    <link name="${side}_side_brush_bristle_sectors_link">
+      <xacro:hf_bristle_sector name="sector_0" yaw="0.0"/>
+      <xacro:hf_bristle_sector name="sector_1" yaw="${pi / 3.0}"/>
+      <xacro:hf_bristle_sector name="sector_2" yaw="${2.0 * pi / 3.0}"/>
+      <xacro:hf_bristle_sector name="sector_3" yaw="${pi}"/>
+      <xacro:hf_bristle_sector name="sector_4" yaw="${4.0 * pi / 3.0}"/>
+      <xacro:hf_bristle_sector name="sector_5" yaw="${5.0 * pi / 3.0}"/>
+      <!-- The conservative disk collision represents flexible bristle sweep. -->
+      <collision name="bristle_sweep_collision">
+        <origin xyz="0 0 -0.018"/>
+        <geometry><cylinder radius="0.150" length="0.026"/></geometry>
+      </collision>
+      <xacro:hf_cleaning_cylinder_z_inertial mass="0.290" radius="0.125" length="0.026" xyz="0 0 -0.018"/>
+    </link>
+    <joint name="${side}_side_brush_bristle_sectors_joint" type="fixed">
+      <parent link="${side}_side_brush_disk_link"/>
+      <child link="${side}_side_brush_bristle_sectors_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="high_fidelity_cleaning_mechanism"
+               params="parent origin_xyz:='0 0 0' origin_rpy:='0 0 0'">
+    <link name="cleaning_mechanism_mount_link">
+      <visual name="cross_member">
+        <geometry><box size="0.34 0.58 0.045"/></geometry>
+        <material name="hf_cleaning_frame"><color rgba="0.20 0.23 0.24 1"/></material>
+      </visual>
+      <visual name="left_mount_plate">
+        <origin xyz="0 0.285 0.045"/>
+        <geometry><box size="0.26 0.012 0.09"/></geometry>
+        <material name="hf_cleaning_frame_left"><color rgba="0.20 0.23 0.24 1"/></material>
+      </visual>
+      <visual name="right_mount_plate">
+        <origin xyz="0 -0.285 0.045"/>
+        <geometry><box size="0.26 0.012 0.09"/></geometry>
+        <material name="hf_cleaning_frame_right"><color rgba="0.20 0.23 0.24 1"/></material>
+      </visual>
+      <collision><geometry><box size="0.34 0.58 0.045"/></geometry></collision>
+      <xacro:hf_cleaning_box_inertial mass="0.650" sx="0.34" sy="0.58" sz="0.045"/>
+    </link>
+    <joint name="cleaning_mechanism_mount_joint" type="fixed">
+      <parent link="${parent}"/>
+      <child link="cleaning_mechanism_mount_link"/>
+      <origin xyz="${origin_xyz}" rpy="${origin_rpy}"/>
+    </joint>
+
+    <!-- Four rigid guide columns constrain the 100 mm cleaning lift. -->
+    <xacro:macro name="hf_lift_guide" params="name x y">
+      <link name="${name}_link">
+        <visual><geometry><cylinder radius="0.010" length="0.180"/></geometry><material name="hf_guide_chrome"><color rgba="0.66 0.69 0.71 1"/></material></visual>
+        <collision><geometry><cylinder radius="0.010" length="0.180"/></geometry></collision>
+        <xacro:hf_cleaning_cylinder_z_inertial mass="0.110" radius="0.010" length="0.180"/>
+      </link>
+      <joint name="${name}_joint" type="fixed">
+        <parent link="cleaning_mechanism_mount_link"/><child link="${name}_link"/>
+        <origin xyz="${x} ${y} -0.065" rpy="0 0 0"/>
+      </joint>
+    </xacro:macro>
+    <xacro:hf_lift_guide name="cleaning_front_left_guide" x="0.12" y="0.25"/>
+    <xacro:hf_lift_guide name="cleaning_front_right_guide" x="0.12" y="-0.25"/>
+    <xacro:hf_lift_guide name="cleaning_rear_left_guide" x="-0.12" y="0.25"/>
+    <xacro:hf_lift_guide name="cleaning_rear_right_guide" x="-0.12" y="-0.25"/>
+
+    <link name="cleaning_lift_carriage_link">
+      <visual name="carriage_plate"><geometry><box size="0.46 0.62 0.035"/></geometry><material name="hf_lift_carriage"><color rgba="0.08 0.34 0.24 1"/></material></visual>
+      <visual name="front_stiffener"><origin xyz="0.205 0 -0.035"/><geometry><box size="0.035 0.56 0.07"/></geometry><material name="hf_lift_stiffener"><color rgba="0.13 0.16 0.17 1"/></material></visual>
+      <visual name="rear_stiffener"><origin xyz="-0.205 0 -0.035"/><geometry><box size="0.035 0.56 0.07"/></geometry><material name="hf_lift_stiffener_rear"><color rgba="0.13 0.16 0.17 1"/></material></visual>
+      <collision><geometry><box size="0.46 0.62 0.035"/></geometry></collision>
+      <xacro:hf_cleaning_box_inertial mass="0.750" sx="0.46" sy="0.62" sz="0.035"/>
+    </link>
+    <joint name="cleaning_lift_joint" type="prismatic">
+      <parent link="cleaning_mechanism_mount_link"/>
+      <child link="cleaning_lift_carriage_link"/>
+      <origin xyz="0 0 -0.080" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="0.0" upper="0.100" effort="1000.0" velocity="0.020"/>
+      <dynamics damping="80.0" friction="35.0"/>
+    </joint>
+
+    <!-- Actuonix P16 body is chassis-fixed; its rod and clevis ride with the carriage. -->
+    <link name="cleaning_lift_actuator_body_link">
+      <visual name="p16_gearcase"><origin xyz="0 0 0.058"/><geometry><box size="0.020 0.035 0.055"/></geometry><material name="hf_p16_black"><color rgba="0.055 0.06 0.065 1"/></material></visual>
+      <visual name="p16_tube"><origin xyz="0 0 -0.030"/><geometry><cylinder radius="0.009" length="0.120"/></geometry><material name="hf_p16_tube"><color rgba="0.30 0.32 0.33 1"/></material></visual>
+      <collision><origin xyz="0 0 -0.005"/><geometry><cylinder radius="0.012" length="0.170"/></geometry></collision>
+      <xacro:hf_cleaning_cylinder_z_inertial mass="0.075" radius="0.012" length="0.170" xyz="0 0 -0.005"/>
+    </link>
+    <joint name="cleaning_lift_actuator_body_mount_joint" type="fixed">
+      <parent link="cleaning_mechanism_mount_link"/><child link="cleaning_lift_actuator_body_link"/>
+      <origin xyz="0 0.18 0.020" rpy="0 0 0"/>
+    </joint>
+
+    <link name="cleaning_lift_actuator_rod_link">
+      <visual><origin xyz="0 0 0.050"/><geometry><cylinder radius="0.0045" length="0.100"/></geometry><material name="hf_p16_rod"><color rgba="0.72 0.74 0.75 1"/></material></visual>
+      <collision><origin xyz="0 0 0.050"/><geometry><cylinder radius="0.0045" length="0.100"/></geometry></collision>
+      <xacro:hf_cleaning_cylinder_z_inertial mass="0.025" radius="0.0045" length="0.100" xyz="0 0 0.050"/>
+    </link>
+    <joint name="cleaning_lift_actuator_rod_mount_joint" type="fixed">
+      <parent link="cleaning_lift_carriage_link"/><child link="cleaning_lift_actuator_rod_link"/>
+      <origin xyz="0 0.18 0.010" rpy="0 0 0"/>
+    </joint>
+
+    <link name="cleaning_lift_actuator_clevis_link">
+      <visual><geometry><box size="0.024 0.012 0.020"/></geometry><material name="hf_p16_clevis"><color rgba="0.50 0.52 0.53 1"/></material></visual>
+      <collision><geometry><box size="0.024 0.012 0.020"/></geometry></collision>
+      <xacro:hf_cleaning_box_inertial mass="0.010" sx="0.024" sy="0.012" sz="0.020"/>
+    </link>
+    <joint name="cleaning_lift_actuator_clevis_joint" type="fixed">
+      <parent link="cleaning_lift_actuator_rod_link"/><child link="cleaning_lift_actuator_clevis_link"/>
+      <origin xyz="0 0 0.105" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Paired lift links model the physical load path without introducing an
+         unsolvable closed kinematic loop into URDF's tree. -->
+    <xacro:macro name="hf_lift_linkage" params="name y pitch">
+      <link name="${name}_link">
+        <visual><geometry><box size="0.250 0.018 0.030"/></geometry><material name="hf_lift_link"><color rgba="0.42 0.45 0.47 1"/></material></visual>
+        <collision><geometry><box size="0.250 0.018 0.030"/></geometry></collision>
+        <xacro:hf_cleaning_box_inertial mass="0.220" sx="0.250" sy="0.018" sz="0.030"/>
+      </link>
+      <joint name="${name}_joint" type="fixed">
+        <parent link="cleaning_lift_carriage_link"/><child link="${name}_link"/>
+        <origin xyz="0 ${y} 0.055" rpy="0 ${pitch} 0"/>
+      </joint>
+    </xacro:macro>
+    <xacro:hf_lift_linkage name="cleaning_left_lift_linkage" y="0.285" pitch="0.36"/>
+    <xacro:hf_lift_linkage name="cleaning_right_lift_linkage" y="-0.285" pitch="-0.36"/>
+
+    <xacro:hf_side_brush_assembly side="left" lateral_sign="1.0"/>
+    <xacro:hf_side_brush_assembly side="right" lateral_sign="-1.0"/>
+
+    <!-- Central brush: two bearings, one Pololu drive, shaft/core and six
+         independent elastomer-bristle bars. The 0.62 m roller spans the intake. -->
+    <link name="central_roller_left_bearing_link">
+      <visual><origin xyz="0 0.332 0" rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.030" length="0.025"/></geometry><material name="hf_bearing"><color rgba="0.45 0.47 0.48 1"/></material></visual>
+      <collision><origin xyz="0 0.332 0" rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.030" length="0.025"/></geometry></collision>
+      <xacro:hf_cleaning_cylinder_y_inertial mass="0.090" radius="0.030" length="0.025" xyz="0 0.332 0"/>
+    </link>
+    <joint name="central_roller_left_bearing_mount_joint" type="fixed">
+      <parent link="cleaning_lift_carriage_link"/><child link="central_roller_left_bearing_link"/>
+      <origin xyz="0.155 0 -0.016" rpy="0 0 0"/>
+    </joint>
+
+    <link name="central_roller_motor_stator_link">
+      <visual><origin xyz="0 -0.367 0" rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.0185" length="0.057"/></geometry><material name="hf_central_motor"><color rgba="0.10 0.11 0.12 1"/></material></visual>
+      <collision><origin xyz="0 -0.367 0" rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.0195" length="0.068"/></geometry></collision>
+      <xacro:hf_cleaning_cylinder_y_inertial mass="0.130" radius="0.0185" length="0.057" xyz="0 -0.367 0"/>
+    </link>
+    <joint name="central_roller_motor_mount_joint" type="fixed">
+      <parent link="cleaning_lift_carriage_link"/><child link="central_roller_motor_stator_link"/>
+      <origin xyz="0.155 0 -0.016" rpy="0 0 0"/>
+    </joint>
+
+    <link name="central_roller_drive_gearbox_link">
+      <visual><origin xyz="0 -0.325 0" rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.0185" length="0.028"/></geometry><material name="hf_central_gearbox"><color rgba="0.55 0.58 0.60 1"/></material></visual>
+      <collision><origin xyz="0 -0.325 0" rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.0185" length="0.028"/></geometry></collision>
+      <xacro:hf_cleaning_cylinder_y_inertial mass="0.055" radius="0.0185" length="0.028" xyz="0 -0.325 0"/>
+    </link>
+    <joint name="central_roller_drive_gearbox_mount_joint" type="fixed">
+      <parent link="central_roller_motor_stator_link"/><child link="central_roller_drive_gearbox_link"/>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <link name="central_roller_link">
+      <visual name="roller_core"><origin rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.060" length="0.620"/></geometry><material name="hf_roller_core"><color rgba="0.06 0.08 0.09 1"/></material></visual>
+      <visual name="roller_shaft"><origin rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.010" length="0.680"/></geometry><material name="hf_roller_shaft"><color rgba="0.62 0.65 0.68 1"/></material></visual>
+      <visual name="bristle_bar_0"><origin xyz="0.070 0 0"/><geometry><box size="0.055 0.600 0.025"/></geometry><material name="hf_roller_bristle"><color rgba="0.18 0.43 0.24 1"/></material></visual>
+      <visual name="bristle_bar_1"><origin xyz="0.035 0 0.0606" rpy="0 0 ${pi/3.0}"/><geometry><box size="0.055 0.600 0.025"/></geometry><material name="hf_roller_bristle_1"><color rgba="0.18 0.43 0.24 1"/></material></visual>
+      <visual name="bristle_bar_2"><origin xyz="-0.035 0 0.0606" rpy="0 0 ${2*pi/3.0}"/><geometry><box size="0.055 0.600 0.025"/></geometry><material name="hf_roller_bristle_2"><color rgba="0.18 0.43 0.24 1"/></material></visual>
+      <visual name="bristle_bar_3"><origin xyz="-0.070 0 0"/><geometry><box size="0.055 0.600 0.025"/></geometry><material name="hf_roller_bristle_3"><color rgba="0.18 0.43 0.24 1"/></material></visual>
+      <visual name="bristle_bar_4"><origin xyz="-0.035 0 -0.0606" rpy="0 0 ${4*pi/3.0}"/><geometry><box size="0.055 0.600 0.025"/></geometry><material name="hf_roller_bristle_4"><color rgba="0.18 0.43 0.24 1"/></material></visual>
+      <visual name="bristle_bar_5"><origin xyz="0.035 0 -0.0606" rpy="0 0 ${5*pi/3.0}"/><geometry><box size="0.055 0.600 0.025"/></geometry><material name="hf_roller_bristle_5"><color rgba="0.18 0.43 0.24 1"/></material></visual>
+      <collision><origin rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.100" length="0.620"/></geometry></collision>
+      <!-- Includes the 0.020 kg rotor/shaft share of the third Pololu motor. -->
+      <xacro:hf_cleaning_cylinder_y_inertial mass="1.220" radius="0.085" length="0.620"/>
+    </link>
+    <joint name="central_roller_joint" type="continuous">
+      <parent link="central_roller_drive_gearbox_link"/><child link="central_roller_link"/>
+      <origin xyz="0 0 0" rpy="0 ${pi/2.0} 0"/>
+      <axis xyz="0 1 0"/>
+      <limit effort="10.0" velocity="20.0"/>
+      <dynamics damping="0.015" friction="0.012"/>
+    </joint>
+
+    <link name="central_roller_guard_link">
+      <visual name="upper_guard"><origin xyz="-0.04 0 0.020"/><geometry><box size="0.250 0.680 0.025"/></geometry><material name="hf_roller_guard"><color rgba="0.08 0.31 0.22 1"/></material></visual>
+      <visual name="front_skirt"><origin xyz="0.085 0 -0.040"/><geometry><box size="0.018 0.680 0.120"/></geometry><material name="hf_guard_skirt"><color rgba="0.13 0.14 0.15 1"/></material></visual>
+      <collision><origin xyz="-0.04 0 0.020"/><geometry><box size="0.250 0.680 0.025"/></geometry></collision>
+      <xacro:hf_cleaning_box_inertial mass="0.400" sx="0.250" sy="0.680" sz="0.025" xyz="-0.04 0 0.020"/>
+    </link>
+    <joint name="central_roller_guard_mount_joint" type="fixed">
+      <parent link="cleaning_lift_carriage_link"/><child link="central_roller_guard_link"/>
+      <origin xyz="0 0 -0.080" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Two-axis passive squeegee suspension. The Gazebo joint extensions set
+         actual spring stiffness; URDF dynamics retain fail-safe damping. -->
+    <link name="squeegee_float_carrier_link">
+      <visual><geometry><box size="0.075 0.84 0.045"/></geometry><material name="hf_squeegee_carrier"><color rgba="0.23 0.25 0.26 1"/></material></visual>
+      <collision><geometry><box size="0.075 0.84 0.045"/></geometry></collision>
+      <xacro:hf_cleaning_box_inertial mass="0.250" sx="0.075" sy="0.84" sz="0.045"/>
+    </link>
+    <joint name="squeegee_float_joint" type="prismatic">
+      <parent link="cleaning_lift_carriage_link"/><child link="squeegee_float_carrier_link"/>
+      <origin xyz="-0.445 0 -0.011" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit lower="-0.015" upper="0.015" effort="250.0" velocity="0.10"/>
+      <dynamics damping="45.0" friction="4.0"/>
+    </joint>
+
+    <link name="squeegee_spring_pack_link">
+      <visual name="left_spring"><origin xyz="0 0.30 0.050"/><geometry><cylinder radius="0.016" length="0.085"/></geometry><material name="hf_spring"><color rgba="0.70 0.72 0.73 1"/></material></visual>
+      <visual name="right_spring"><origin xyz="0 -0.30 0.050"/><geometry><cylinder radius="0.016" length="0.085"/></geometry><material name="hf_spring_right"><color rgba="0.70 0.72 0.73 1"/></material></visual>
+      <collision name="left_spring_collision"><origin xyz="0 0.30 0.050"/><geometry><cylinder radius="0.016" length="0.085"/></geometry></collision>
+      <collision name="right_spring_collision"><origin xyz="0 -0.30 0.050"/><geometry><cylinder radius="0.016" length="0.085"/></geometry></collision>
+      <xacro:hf_cleaning_box_inertial mass="0.080" sx="0.032" sy="0.632" sz="0.085" xyz="0 0 0.050"/>
+    </link>
+    <joint name="squeegee_spring_pack_joint" type="fixed">
+      <parent link="squeegee_float_carrier_link"/><child link="squeegee_spring_pack_link"/><origin xyz="0 0 0" rpy="0 0 0"/>
+    </joint>
+
+    <link name="squeegee_link">
+      <visual name="aluminum_backing"><origin xyz="0 0 0.015"/><geometry><box size="0.030 0.800 0.055"/></geometry><material name="hf_squeegee_rail"><color rgba="0.58 0.60 0.61 1"/></material></visual>
+      <visual name="front_rubber_blade"><origin xyz="0.025 0 -0.032" rpy="0 -0.16 0"/><geometry><box size="0.010 0.800 0.080"/></geometry><material name="hf_squeegee_rubber"><color rgba="0.035 0.04 0.045 1"/></material></visual>
+      <visual name="rear_rubber_blade"><origin xyz="-0.025 0 -0.032" rpy="0 0.16 0"/><geometry><box size="0.010 0.800 0.080"/></geometry><material name="hf_squeegee_rubber_rear"><color rgba="0.035 0.04 0.045 1"/></material></visual>
+      <collision><origin xyz="0 0 -0.005"/><geometry><box size="0.065 0.800 0.095"/></geometry></collision>
+      <xacro:hf_cleaning_box_inertial mass="0.650" sx="0.065" sy="0.800" sz="0.095" xyz="0 0 -0.005"/>
+    </link>
+    <joint name="squeegee_pitch_joint" type="revolute">
+      <parent link="squeegee_float_carrier_link"/><child link="squeegee_link"/>
+      <origin xyz="0 0 -0.020" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="-0.174533" upper="0.174533" effort="80.0" velocity="0.50"/>
+      <dynamics damping="18.0" friction="1.2"/>
+    </joint>
+    <!-- Damping/friction are represented in URDF joint dynamics above. A
+         force-law spring controller remains an explicit external validation
+         gate; unsupported SDF spring tags are deliberately not emitted. -->
+
+    <link name="suction_nozzle_link">
+      <visual name="nozzle_roof"><origin xyz="0 0 0.010"/><geometry><box size="0.100 0.650 0.025"/></geometry><material name="hf_nozzle"><color rgba="0.075 0.09 0.10 1"/></material></visual>
+      <visual name="nozzle_front_wall"><origin xyz="0.045 0 -0.022" rpy="0 -0.30 0"/><geometry><box size="0.012 0.650 0.070"/></geometry><material name="hf_nozzle_front"><color rgba="0.075 0.09 0.10 1"/></material></visual>
+      <visual name="nozzle_rear_wall"><origin xyz="-0.045 0 -0.022" rpy="0 0.30 0"/><geometry><box size="0.012 0.650 0.070"/></geometry><material name="hf_nozzle_rear"><color rgba="0.075 0.09 0.10 1"/></material></visual>
+      <visual name="suction_throat"><origin xyz="0 0 0.045"/><geometry><cylinder radius="0.035" length="0.060"/></geometry><material name="hf_nozzle_throat"><color rgba="0.04 0.05 0.055 1"/></material></visual>
+      <collision><geometry><box size="0.100 0.650 0.085"/></geometry></collision>
+      <xacro:hf_cleaning_box_inertial mass="0.400" sx="0.100" sy="0.650" sz="0.085"/>
+    </link>
+    <joint name="suction_nozzle_mount_joint" type="fixed">
+      <parent link="squeegee_link"/><child link="suction_nozzle_link"/>
+      <origin xyz="0.040 0 0.010" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Segmented hose geometry reserves a 50 mm ID flow path while keeping a
+         tree topology. A later fluid plugin binds inlet/outlet coupling frames. -->
+    <xacro:macro name="hf_hose_segment" params="name parent xyz rpy length mass">
+      <link name="${name}_link">
+        <visual><origin rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.031" length="${length}"/></geometry><material name="hf_hose"><color rgba="0.035 0.04 0.045 1"/></material></visual>
+        <collision><origin rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.031" length="${length}"/></geometry></collision>
+        <xacro:hf_cleaning_box_inertial mass="${mass}" sx="${length}" sy="0.062" sz="0.062"/>
+      </link>
+      <joint name="${name}_joint" type="fixed"><parent link="${parent}"/><child link="${name}_link"/><origin xyz="${xyz}" rpy="${rpy}"/></joint>
+    </xacro:macro>
+    <xacro:hf_hose_segment name="recovery_hose_lower" parent="suction_nozzle_link" xyz="-0.08 0 0.10" rpy="0 -0.58 0" length="0.22" mass="0.140"/>
+    <xacro:hf_hose_segment name="recovery_hose_middle" parent="recovery_hose_lower_link" xyz="-0.16 0 0.10" rpy="0 -0.70 0" length="0.25" mass="0.160"/>
+    <xacro:hf_hose_segment name="recovery_hose_upper" parent="recovery_hose_middle_link" xyz="-0.17 0 0.14" rpy="0 -0.35 0" length="0.20" mass="0.120"/>
+
+    <link name="recovery_strainer_filter_link">
+      <visual name="transparent_bowl"><origin xyz="0 0 -0.045"/><geometry><cylinder radius="0.060" length="0.090"/></geometry><material name="hf_filter_bowl"><color rgba="0.62 0.76 0.80 0.55"/></material></visual>
+      <visual name="mesh_cartridge"><origin xyz="0 0 -0.045"/><geometry><cylinder radius="0.042" length="0.075"/></geometry><material name="hf_filter_mesh"><color rgba="0.70 0.56 0.20 0.85"/></material></visual>
+      <visual name="filter_head"><origin xyz="0 0 0.015"/><geometry><box size="0.145 0.095 0.040"/></geometry><material name="hf_filter_head"><color rgba="0.08 0.10 0.11 1"/></material></visual>
+      <collision><origin xyz="0 0 -0.025"/><geometry><cylinder radius="0.065" length="0.130"/></geometry></collision>
+      <xacro:hf_cleaning_cylinder_z_inertial mass="0.750" radius="0.065" length="0.130" xyz="0 0 -0.025"/>
+    </link>
+    <joint name="recovery_strainer_filter_mount_joint" type="fixed">
+      <parent link="cleaning_mechanism_mount_link"/><child link="recovery_strainer_filter_link"/>
+      <origin xyz="-0.25 0.20 0.17" rpy="0 0 0"/>
+    </joint>
+
+    <!-- Jabsco PAR-MAX HD4 Q402J-118S-3A: motor, diaphragm head and isolator
+         plate are explicit rigid bodies; aggregate dry mass is 2.500 kg. -->
+    <link name="recovery_pump_motor_link">
+      <visual><origin rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.055" length="0.150"/></geometry><material name="hf_pump_motor"><color rgba="0.10 0.12 0.13 1"/></material></visual>
+      <collision><origin rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.055" length="0.150"/></geometry></collision>
+      <xacro:hf_cleaning_box_inertial mass="1.350" sx="0.150" sy="0.110" sz="0.110"/>
+    </link>
+    <joint name="recovery_pump_motor_mount_joint" type="fixed">
+      <parent link="cleaning_mechanism_mount_link"/><child link="recovery_pump_motor_link"/>
+      <origin xyz="-0.25 -0.16 0.18" rpy="0 0 0"/>
+    </joint>
+
+    <link name="recovery_pump_head_link">
+      <visual name="diaphragm_head"><geometry><cylinder radius="0.072" length="0.065"/></geometry><material name="hf_pump_head"><color rgba="0.035 0.05 0.055 1"/></material></visual>
+      <visual name="inlet_port"><origin xyz="0 0.065 0" rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.017" length="0.055"/></geometry><material name="hf_pump_port"><color rgba="0.08 0.10 0.11 1"/></material></visual>
+      <visual name="outlet_port"><origin xyz="0 -0.065 0" rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.017" length="0.055"/></geometry><material name="hf_pump_port_out"><color rgba="0.08 0.10 0.11 1"/></material></visual>
+      <collision><geometry><cylinder radius="0.072" length="0.065"/></geometry></collision>
+      <xacro:hf_cleaning_cylinder_z_inertial mass="0.950" radius="0.072" length="0.065"/>
+    </link>
+    <joint name="recovery_pump_head_joint" type="fixed">
+      <parent link="recovery_pump_motor_link"/><child link="recovery_pump_head_link"/>
+      <origin xyz="-0.1075 0 0" rpy="0 ${pi/2.0} 0"/>
+    </joint>
+
+    <link name="recovery_pump_isolator_mount_link">
+      <visual name="mount_plate"><geometry><box size="0.225 0.165 0.008"/></geometry><material name="hf_pump_mount"><color rgba="0.36 0.39 0.40 1"/></material></visual>
+      <visual name="left_rubber_isolator"><origin xyz="0 0.060 -0.012"/><geometry><cylinder radius="0.012" length="0.024"/></geometry><material name="hf_isolator"><color rgba="0.03 0.035 0.04 1"/></material></visual>
+      <visual name="right_rubber_isolator"><origin xyz="0 -0.060 -0.012"/><geometry><cylinder radius="0.012" length="0.024"/></geometry><material name="hf_isolator_right"><color rgba="0.03 0.035 0.04 1"/></material></visual>
+      <collision><geometry><box size="0.225 0.165 0.008"/></geometry></collision>
+      <xacro:hf_cleaning_box_inertial mass="0.200" sx="0.225" sy="0.165" sz="0.008"/>
+    </link>
+    <joint name="recovery_pump_isolator_mount_joint" type="fixed">
+      <parent link="recovery_pump_motor_link"/><child link="recovery_pump_isolator_mount_link"/>
+      <origin xyz="0 0 -0.070" rpy="0 0 0"/>
+    </joint>
+
+    <link name="wastewater_delivery_coupling_link">
+      <visual><origin rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.018" length="0.060"/></geometry><material name="hf_quick_coupling"><color rgba="0.38 0.41 0.42 1"/></material></visual>
+      <collision><origin rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.018" length="0.060"/></geometry></collision>
+      <xacro:hf_cleaning_cylinder_y_inertial mass="0.080" radius="0.018" length="0.060"/>
+    </link>
+    <joint name="wastewater_delivery_coupling_joint" type="fixed">
+      <parent link="recovery_pump_head_link"/><child link="wastewater_delivery_coupling_link"/>
+      <origin xyz="0 -0.095 0" rpy="0 0 0"/>
+    </joint>
+  </xacro:macro>
+</robot>

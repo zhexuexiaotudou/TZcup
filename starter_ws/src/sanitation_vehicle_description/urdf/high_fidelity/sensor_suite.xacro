@@ -1,0 +1,209 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!-- Project-authored sensor envelopes based on the frozen public dimensions.
+       Gazebo Harmonic sensor topics deliberately match pre_urdf_contract.yaml. -->
+
+  <xacro:macro name="hf_sensor_box_inertia" params="mass x y z">
+    <inertia ixx="${mass*(y*y+z*z)/12.0}" ixy="0" ixz="0"
+             iyy="${mass*(x*x+z*z)/12.0}" iyz="0"
+             izz="${mass*(x*x+y*y)/12.0}"/>
+  </xacro:macro>
+
+  <xacro:macro name="hf_virtual_optical_link" params="name parent xyz rpy">
+    <link name="${name}">
+      <!-- Optical frames are mathematical datums.  Epsilon inertia avoids a
+           zero-inertia link in strict offline validation. -->
+      <inertial><mass value="0.000001"/><inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/></inertial>
+    </link>
+    <joint name="${name}_joint" type="fixed">
+      <parent link="${parent}"/><child link="${name}"/>
+      <!-- body: +X forward,+Y left,+Z up; optical: +Z forward,+X right,+Y down -->
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="hf_d435" params="name parent xyz rpy topic max_range">
+    <link name="${name}_link">
+      <visual name="${name}_housing_visual">
+        <geometry><box size="0.025 0.090 0.025"/></geometry>
+        <material name="${name}_housing"><color rgba="0.07 0.08 0.09 1"/></material>
+      </visual>
+      <visual name="${name}_left_imager_visual">
+        <origin xyz="0.013 0.025 0" rpy="0 ${pi/2.0} 0"/>
+        <geometry><cylinder radius="0.006" length="0.003"/></geometry>
+        <material name="${name}_lens"><color rgba="0.03 0.12 0.20 1"/></material>
+      </visual>
+      <visual name="${name}_right_imager_visual">
+        <origin xyz="0.013 -0.025 0" rpy="0 ${pi/2.0} 0"/>
+        <geometry><cylinder radius="0.006" length="0.003"/></geometry>
+        <material name="${name}_lens_right"><color rgba="0.03 0.12 0.20 1"/></material>
+      </visual>
+      <collision><geometry><box size="0.025 0.090 0.025"/></geometry></collision>
+      <inertial><mass value="0.074999"/><xacro:hf_sensor_box_inertia mass="0.074999" x="0.025" y="0.090" z="0.025"/></inertial>
+    </link>
+    <joint name="${name}_mount_joint" type="fixed">
+      <parent link="${parent}"/><child link="${name}_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+    <xacro:hf_virtual_optical_link name="${name}_depth_optical_frame" parent="${name}_link"
+                                   xyz="0.020 0 0" rpy="-1.571 0 -1.571"/>
+    <gazebo reference="${name}_link">
+      <sensor name="${name}_d435_rgbd" type="rgbd_camera">
+        <topic>${topic}</topic><update_rate>30</update_rate>
+        <always_on>true</always_on><visualize>false</visualize>
+        <gz_frame_id>${name}_depth_optical_frame</gz_frame_id>
+        <camera>
+          <optical_frame_id>${name}_depth_optical_frame</optical_frame_id>
+          <horizontal_fov>1.518436</horizontal_fov>
+          <image><width>848</width><height>480</height><format>R8G8B8</format></image>
+          <clip><near>0.2</near><far>${max_range}</far></clip>
+          <lens><intrinsics><fx>430.0</fx><fy>430.0</fy><cx>424.0</cx><cy>240.0</cy><s>0</s></intrinsics></lens>
+          <depth_camera><output>depths</output></depth_camera>
+        </camera>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:macro name="hf_fisheye" params="name parent xyz rpy optical_xyz optical_rpy topic">
+    <link name="${name}_link">
+      <visual name="${name}_pcb_visual">
+        <geometry><box size="0.020 0.038 0.038"/></geometry>
+        <material name="${name}_pcb"><color rgba="0.05 0.28 0.18 1"/></material>
+      </visual>
+      <visual name="${name}_lens_visual">
+        <origin xyz="0.014 0 0" rpy="0 ${pi/2.0} 0"/>
+        <geometry><cylinder radius="0.011" length="0.010"/></geometry>
+        <material name="${name}_lens"><color rgba="0.025 0.04 0.07 1"/></material>
+      </visual>
+      <collision><geometry><box size="0.020 0.038 0.038"/></geometry></collision>
+      <inertial><mass value="0.039999"/><xacro:hf_sensor_box_inertia mass="0.039999" x="0.020" y="0.038" z="0.038"/></inertial>
+    </link>
+    <joint name="${name}_mount_joint" type="fixed">
+      <parent link="${parent}"/><child link="${name}_link"/>
+      <origin xyz="${xyz}" rpy="${rpy}"/>
+    </joint>
+    <xacro:hf_virtual_optical_link name="${name}_optical_frame" parent="${name}_link"
+                                   xyz="${optical_xyz}" rpy="${optical_rpy}"/>
+    <gazebo reference="${name}_link">
+      <!-- Gazebo's camera projection is pinhole.  The 150 deg envelope is
+           correct; equidistant Arducam calibration/distortion is applied in ROS. -->
+      <sensor name="${name}_imx291" type="camera">
+        <topic>${topic}</topic><update_rate>30</update_rate>
+        <always_on>true</always_on><visualize>false</visualize>
+        <gz_frame_id>${name}_optical_frame</gz_frame_id>
+        <camera>
+          <optical_frame_id>${name}_optical_frame</optical_frame_id>
+          <horizontal_fov>2.617994</horizontal_fov>
+          <image><width>1920</width><height>1080</height><format>R8G8B8</format></image>
+          <clip><near>0.2</near><far>20.0</far></clip>
+        </camera>
+      </sensor>
+    </gazebo>
+  </xacro:macro>
+
+  <xacro:macro name="hf_sensor_suite" params="mast_parent base_parent wrist_parent">
+    <!-- Hokuyo UTM-30LX: 60 x 60 x 87 mm, 0.37 kg, 270 deg at 40 Hz. -->
+    <link name="lidar_2d_link">
+      <visual name="utm_body"><geometry><box size="0.060 0.060 0.087"/></geometry>
+        <material name="utm_blue"><color rgba="0.10 0.28 0.48 1"/></material></visual>
+      <visual name="utm_window"><origin xyz="0 0 0.025"/><geometry><cylinder radius="0.027" length="0.039"/></geometry>
+        <material name="utm_window_dark"><color rgba="0.02 0.04 0.06 0.92"/></material></visual>
+      <collision><geometry><box size="0.060 0.060 0.087"/></geometry></collision>
+      <inertial><mass value="0.37"/><xacro:hf_sensor_box_inertia mass="0.37" x="0.060" y="0.060" z="0.087"/></inertial>
+    </link>
+    <joint name="lidar_2d_mount_joint" type="fixed"><parent link="${mast_parent}"/><child link="lidar_2d_link"/>
+      <origin xyz="0.380 0 0.395"/></joint>
+    <gazebo reference="lidar_2d_link">
+      <sensor name="utm30lx" type="gpu_lidar">
+        <topic>/sensors/lidar_2d/scan</topic><update_rate>40</update_rate><always_on>true</always_on><visualize>false</visualize>
+        <gz_frame_id>lidar_2d_link</gz_frame_id>
+        <lidar><scan><horizontal><samples>1080</samples><resolution>1</resolution><min_angle>-2.356194</min_angle><max_angle>2.356194</max_angle></horizontal>
+          <vertical><samples>1</samples><resolution>1</resolution><min_angle>0</min_angle><max_angle>0</max_angle></vertical></scan>
+          <range><min>0.1</min><max>30.0</max><resolution>0.001</resolution></range>
+          <noise><type>gaussian</type><mean>0</mean><stddev>0.030</stddev></noise></lidar>
+      </sensor>
+    </gazebo>
+
+    <!-- Livox MID-360 physical envelope and non-repeating scan approximation. -->
+    <link name="lidar_3d_link">
+      <visual name="mid360_body"><geometry><cylinder radius="0.0325" length="0.060"/></geometry>
+        <material name="mid360_gray"><color rgba="0.17 0.19 0.21 1"/></material></visual>
+      <collision><geometry><cylinder radius="0.0325" length="0.060"/></geometry></collision>
+      <inertial><mass value="0.265"/><inertia ixx="0.000103" ixy="0" ixz="0" iyy="0.000103" iyz="0" izz="0.000140"/></inertial>
+    </link>
+    <joint name="lidar_3d_mount_joint" type="fixed"><parent link="${mast_parent}"/><child link="lidar_3d_link"/>
+      <origin xyz="0 0 0.725"/></joint>
+    <gazebo reference="lidar_3d_link">
+      <sensor name="mid360" type="gpu_lidar">
+        <topic>/sensors/lidar_3d/points</topic><update_rate>10</update_rate><always_on>true</always_on><visualize>false</visualize>
+        <gz_frame_id>lidar_3d_link</gz_frame_id>
+        <lidar><scan><horizontal><samples>1800</samples><resolution>1</resolution><min_angle>-${pi}</min_angle><max_angle>${pi}</max_angle></horizontal>
+          <vertical><samples>64</samples><resolution>1</resolution><min_angle>-0.514872</min_angle><max_angle>0.514872</max_angle></vertical></scan>
+          <range><min>0.1</min><max>40.0</max><resolution>0.01</resolution></range>
+          <noise><type>gaussian</type><mean>0</mean><stddev>0.020</stddev></noise></lidar>
+      </sensor>
+    </gazebo>
+
+    <xacro:hf_d435 name="front_rgbd" parent="${mast_parent}" xyz="0.640 0 0.225" rpy="0 0 0"
+                    topic="/sensors/front_rgbd/depth/image_rect_raw" max_range="10.0"/>
+    <xacro:hf_d435 name="wrist_rgbd" parent="${wrist_parent}" xyz="0 0 0.055" rpy="0 0 0"
+                    topic="/sensors/wrist_rgbd/depth/image_rect_raw" max_range="3.0"/>
+
+    <!-- Independent modules: each has its own housing, imager, frame and topic. -->
+    <xacro:hf_fisheye name="rear_left_fisheye" parent="${mast_parent}" xyz="-0.350 0.275 0.200" rpy="0 -0.175 2.705"
+                       optical_xyz="0.022011096607 -0.000604893394 -0.003891751553"
+                       optical_rpy="-1.745999996444 -0.000035461162 -1.570996889205"
+                       topic="/sensors/rear_left_fisheye/image_raw"/>
+    <xacro:hf_fisheye name="rear_right_fisheye" parent="${mast_parent}" xyz="-0.350 -0.275 0.200" rpy="0 -0.175 -2.705"
+                       optical_xyz="0.022011096607 0.000604893394 -0.003891751553"
+                       optical_rpy="-1.745999996444 -0.000035461162 -1.570996889205"
+                       topic="/sensors/rear_right_fisheye/image_raw"/>
+
+    <!-- ZED-F9P receiver mass is represented together with ANN-MB-00 antenna. -->
+    <link name="gnss_antenna_link">
+      <visual><geometry><cylinder radius="0.030" length="0.020"/></geometry>
+        <material name="gnss_white"><color rgba="0.90 0.91 0.90 1"/></material></visual>
+      <visual name="gnss_antenna_stalk"><origin xyz="0 0 -0.0675"/>
+        <geometry><cylinder radius="0.008" length="0.115"/></geometry>
+        <material name="gnss_stalk_black"><color rgba="0.07 0.08 0.09 1"/></material></visual>
+      <collision><geometry><cylinder radius="0.030" length="0.020"/></geometry></collision>
+      <inertial><mass value="0.10"/><inertia ixx="0.000026" ixy="0" ixz="0" iyy="0.000026" iyz="0" izz="0.000045"/></inertial>
+    </link>
+    <joint name="gnss_antenna_mount_joint" type="fixed"><parent link="${mast_parent}"/><child link="gnss_antenna_link"/>
+      <origin xyz="0 0 0.845"/></joint>
+    <gazebo reference="gnss_antenna_link">
+      <sensor name="zed_f9p" type="navsat"><topic>/sensors/gnss/fix</topic><update_rate>10</update_rate>
+        <always_on>true</always_on><gz_frame_id>gnss_antenna_link</gz_frame_id>
+        <!-- Gazebo NavSat horizontal noise is expressed in degrees. 9e-8 deg
+             is approximately 1 cm at the equator, matching the RTK target. -->
+        <navsat><position_sensing><horizontal><noise type="gaussian"><mean>0</mean><stddev>0.00000009</stddev></noise></horizontal>
+          <vertical><noise type="gaussian"><mean>0</mean><stddev>0.02</stddev></noise></vertical></position_sensing></navsat>
+      </sensor>
+    </gazebo>
+
+    <!-- VN-100 Rugged body is located near the vehicle CoG, not on the mast. -->
+    <link name="imu_link">
+      <visual><geometry><box size="0.036 0.033 0.009"/></geometry>
+        <material name="vn100_red"><color rgba="0.62 0.05 0.05 1"/></material></visual>
+      <collision><geometry><box size="0.036 0.033 0.009"/></geometry></collision>
+      <inertial><mass value="0.015"/><xacro:hf_sensor_box_inertia mass="0.015" x="0.036" y="0.033" z="0.009"/></inertial>
+    </link>
+    <joint name="imu_mount_joint" type="fixed"><parent link="${base_parent}"/><child link="imu_link"/>
+      <origin xyz="0 0 0.244"/></joint>
+    <gazebo reference="imu_link">
+      <sensor name="vn100" type="imu"><topic>/sensors/imu/data</topic><update_rate>200</update_rate><always_on>true</always_on>
+        <gz_frame_id>imu_link</gz_frame_id><imu>
+          <angular_velocity>
+            <x><noise type="gaussian"><mean>0</mean><stddev>0.00061</stddev><bias_mean>0</bias_mean><bias_stddev>0.00002</bias_stddev></noise></x>
+            <y><noise type="gaussian"><mean>0</mean><stddev>0.00061</stddev><bias_mean>0</bias_mean><bias_stddev>0.00002</bias_stddev></noise></y>
+            <z><noise type="gaussian"><mean>0</mean><stddev>0.00061</stddev><bias_mean>0</bias_mean><bias_stddev>0.00002</bias_stddev></noise></z>
+          </angular_velocity>
+          <linear_acceleration>
+            <x><noise type="gaussian"><mean>0</mean><stddev>0.04</stddev></noise></x>
+            <y><noise type="gaussian"><mean>0</mean><stddev>0.04</stddev></noise></y>
+            <z><noise type="gaussian"><mean>0</mean><stddev>0.04</stddev></noise></z>
+          </linear_acceleration>
+        </imu></sensor>
+    </gazebo>
+  </xacro:macro>
+</robot>

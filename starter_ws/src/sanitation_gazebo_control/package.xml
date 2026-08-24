@@ -10,6 +10,9 @@
   <depend>rclcpp</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>
+  <depend>gz_sim_vendor</depend>
+  <depend>gz_transport_vendor</depend>
+  <depend>gz_msgs_vendor</depend>
 
   <export>
     <build_type>ament_cmake</build_type>

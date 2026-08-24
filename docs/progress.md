@@ -709,3 +709,12 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_doc
 - 独立小场默认启用 0.48 m / DISCONTINUOUS 优化配置；保留 0.35 m / Dubins 连续旧配置作为显式回退。
 - 遥测升级为 v2 并分离规划清扫带、转接、补扫、当前组件及三类实际轨迹；保留旧字段和 `/coverage/current_path`。
 - Windows 快速门禁 202 项通过；ROS 选定包构建通过，coverage 与 Gazebo visualization 共 34 项 ROS 测试通过。真实多种子 Gazebo 结果以本任务验收报告为准，不用静态测试替代。
+
+# 正式竞赛整车 URDF/CAD（2026-08-25）
+
+- 新增 A300、UR5e、2F-85、八路传感器、UR 控制箱、S100 参考箱、完整清扫/刮吸机构和独立干湿箱的正式多刚体 Xacro。
+- 展开模型为 104 links / 103 joints / 空载 134.252001 kg；`base_footprint` 是唯一无质量虚拟根帧，103 个物理 link 均有正定惯量；22 个非 pending 安装帧均通过 5 mm / 0.02 rad 一致性门。
+- 新增 Gazebo `DynamicPayloadSystem`，实跑确认干垃圾和污水动态质量分别强制限于 1.512 kg 与 9.7064 kg，并同步更新惯量和污水重心。
+- 新增 OpenSCAD 包装源、展开 URDF、工程预览、布局/URDF/运行时分层报告及 17 项确定性测试。
+- Headless Gazebo Harmonic 已观察到全部雷达、相机、GNSS 和 IMU 消息；六个控制器全部 active，底盘、刷盘、机械臂和储运接口均可运行；Bullet Featherstone 下 Robotiq 四个 mimic 联动关节随动。
+- 保持 pending：S100 实物测量、最终 CoG/污水容量、机械臂全空间、清扫接触/柔性和精确遮挡；Gazebo 服务端仍需 SIGTERM 才能结束，不得据此宣称实车或综合竞赛通过。

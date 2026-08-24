@@ -2,16 +2,28 @@
 <package format="3">
   <name>sanitation_vehicle_description</name>
   <version>0.1.0</version>
-  <description>Parameterized sanitation vehicle description based on Linorobot2 macros.</description>
+  <description>Competition sanitation vehicle descriptions, including the formal high-fidelity mobile manipulator.</description>
   <maintainer email="team@example.com">Sanitation Vehicle Team</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
   <exec_depend>xacro</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>joint_state_publisher_gui</exec_depend>
   <exec_depend>rviz2</exec_depend>
   <exec_depend>linorobot2_description</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>joint_state_broadcaster</exec_depend>
+  <exec_depend>joint_trajectory_controller</exec_depend>
+  <exec_depend>diff_drive_controller</exec_depend>
+  <exec_depend>velocity_controllers</exec_depend>
+  <exec_depend>gz_ros2_control</exec_depend>
+  <exec_depend>ros_gz_sim</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>rosgraph_msgs</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
 
   <export>
     <build_type>ament_cmake</build_type>

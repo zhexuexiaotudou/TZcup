@@ -1,5 +1,17 @@
 # 项目技术规范：智慧环卫无人清扫车仿真主线
 
+## 正式竞赛整车 URDF/CAD 边界
+
+`formal_competition_vehicle.urdf.xacro` 是竞赛级名义整车入口，必须保持 A300、UR5e、
+2F-85、全部冻结传感器、清扫/刮吸、独立干湿箱、控制箱和 S100 安装基准的完整多刚体
+结构。展开模型必须通过 `validate_formal_vehicle_urdf.py` 的质量、惯量、活动关节、单树、
+必需帧和静态安装坐标门；干垃圾与污水载荷必须由独立 reserve link 和 Gazebo 动态惯量
+系统更新，不能只改界面计数。
+
+结构门通过不等于测量级数字孪生。S100 实物尺寸、最终 CoG/污水容量、机械臂全空间、
+地面接触、精确遮挡/可见性和实物传感器标定门未通过时必须保持 pending，不得据此改写真实域、
+J6 或综合竞赛状态。详细设计与复现见 `docs/formal-vehicle-urdf-cad.md`。
+
 ## 无精确URDF的缩比研发链边界
 
 `sanitation_campus_scenario`、`sanitation_active_cleaning`、`sanitation_manipulation`和`sanitation_research_demo`构成独立缩比研发链。场景生成器必须把controller可见文件、环境驱动文件和评测真值分开；策略只能收到公开地图、当前障碍和belief observation，评测种子、地污/垃圾真值及行人未来轨迹不得进入策略或抓取控制。离散目标每次只处理一个，只有外部抓取适配返回`verified_in_bin=true`才可清除。
