@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import json
 import re
 from pathlib import Path
@@ -18,6 +19,7 @@ SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 ROS_NAME_RE = re.compile(r"^[a-z][a-z0-9_]*$")
 ALLOWED_LICENSES = {"Apache-2.0", "BSD-3-Clause", "MIT"}
 ALLOWED_JOINT_TYPES = {"fixed", "revolute", "continuous", "prismatic", "floating", "planar"}
+BUDGET_ROOT = ROOT / "config" / "high_fidelity_vehicle"
 
 
 class ContractError(ValueError):
@@ -202,6 +204,42 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
     if policy.get("high_power_loads_require_isolated_vbat_dc_bus") is not True:
         raise ContractError("high-power isolation policy must remain enabled")
 
+    throughput = contract.get("throughput_budget", {})
+    dry = throughput.get("dry_cleaning", {})
+    dry_width = _positive(dry.get("working_width_m"), "dry-cleaning working width")
+    dry_speed = _positive(dry.get("target_speed_m_s"), "dry-cleaning target speed")
+    route_efficiency = _positive(dry.get("minimum_route_efficiency"), "minimum route efficiency")
+    if route_efficiency > 1.0:
+        raise ContractError("minimum route efficiency cannot exceed 1")
+    dry_effective_area = dry_width * dry_speed * 3600.0 * route_efficiency
+    required_area = _positive(
+        contract.get("competition_requirements", {}).get("dry_cleaning_efficiency_min_m2_h"),
+        "required dry-cleaning efficiency",
+    )
+    if dry_effective_area < required_area:
+        raise ContractError("preliminary dry-cleaning throughput does not meet the competition target")
+
+    wet = throughput.get("puddle_recovery", {})
+    squeegee_width = _positive(wet.get("squeegee_width_m"), "squeegee width")
+    pump_flow_l_min = _positive(wet.get("pump_rated_flow_l_min"), "pump rated flow")
+    hydraulic_derating = _positive(wet.get("hydraulic_derating_factor"), "hydraulic derating")
+    recovery_fraction = _positive(wet.get("recovery_fraction_target"), "recovery fraction")
+    if hydraulic_derating > 1.0 or recovery_fraction > 1.0:
+        raise ContractError("hydraulic derating and recovery fractions cannot exceed 1")
+    nominal_depth = _positive(wet.get("nominal_depth_m"), "nominal puddle depth")
+    maximum_depth = _positive(wet.get("maximum_depth_m"), "maximum puddle depth")
+    if maximum_depth < nominal_depth:
+        raise ContractError("maximum puddle depth cannot be below nominal depth")
+    pump_flow_m3_s = pump_flow_l_min / 1000.0 / 60.0
+
+    def wet_speed_limit(depth_m: float) -> float:
+        return pump_flow_m3_s * hydraulic_derating / (
+            depth_m * squeegee_width * recovery_fraction
+        )
+
+    wet_nominal_speed = wet_speed_limit(nominal_depth)
+    wet_max_depth_speed = wet_speed_limit(maximum_depth)
+
     gates = contract.get("layout_gates_during_urdf", [])
     gate_ids = [str(gate.get("id", "")) for gate in gates]
     _unique(gate_ids, "layout gate ids")
@@ -240,9 +278,76 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
         ),
         "sensor_12v_peak_w": round(rail_peaks.get("sensor_12v", 0.0), 6),
         "sensor_24v_peak_w": round(rail_peaks.get("sensor_24v", 0.0), 6),
+        "dry_effective_area_m2_h": round(dry_effective_area, 6),
+        "wet_nominal_depth_speed_limit_m_s": round(wet_nominal_speed, 6),
+        "wet_max_depth_speed_limit_m_s": round(wet_max_depth_speed, 6),
         "pending_layout_gates": gate_ids,
         "claim_boundary": "Ready to begin formal CAD/Xacro; final transforms, inertias, CoG, wastewater capacity, exact S100 envelope and power topology remain fail-closed layout gates.",
     }
+
+
+def validate_budget_csvs(result: dict[str, Any], root: Path = BUDGET_ROOT) -> None:
+    expected_files = {
+        "mass_budget.csv",
+        "power_budget.csv",
+        "capacity_budget.csv",
+        "throughput_budget.csv",
+    }
+    missing = sorted(name for name in expected_files if not (root / name).is_file())
+    if missing:
+        raise ContractError("missing budget CSV files: " + ", ".join(missing))
+
+    def rows(name: str) -> list[dict[str, str]]:
+        with (root / name).open("r", encoding="utf-8", newline="") as stream:
+            return list(csv.DictReader(stream))
+
+    mass = {row["row_id"]: float(row["mass_kg"]) for row in rows("mass_budget.csv")}
+    mass_expectations = {
+        "known_payload": result["known_payload_mass_kg"],
+        "engineering_allowance": result["engineering_allowance_mass_kg"],
+        "fixed_payload": result["fixed_payload_budget_kg"],
+        "worst_case_dry_trash": result["worst_case_dry_trash_mass_kg"],
+        "preliminary_usable_wastewater": result["preliminary_wastewater_usable_l"],
+        "remaining_payload_margin": result["payload_margin_at_preliminary_usable_fill_kg"],
+    }
+    for row_id, expected in mass_expectations.items():
+        if row_id not in mass or abs(mass[row_id] - float(expected)) > 1e-6:
+            raise ContractError(f"mass_budget.csv row {row_id} differs from the contract")
+
+    capacity = {row["capacity_id"]: row for row in rows("capacity_budget.csv")}
+    capacity_expectations = {
+        "dry_bin_usable": 40.0,
+        "wastewater_mass_limited_nominal": result["mass_limited_wastewater_nominal_l"],
+        "wastewater_preliminary_usable": result["preliminary_wastewater_usable_l"],
+        "normal_episode_puddle_cap": result["normal_episode_puddle_cap_l"],
+    }
+    for row_id, expected in capacity_expectations.items():
+        if row_id not in capacity or abs(float(capacity[row_id]["volume_l"]) - float(expected)) > 1e-6:
+            raise ContractError(f"capacity_budget.csv row {row_id} differs from the contract")
+    for pending_id in ("wastewater_cog_limit", "wastewater_installation_limit"):
+        if capacity.get(pending_id, {}).get("status") != "pending_during_urdf_layout":
+            raise ContractError(f"capacity_budget.csv must preserve pending gate {pending_id}")
+
+    power_rows = rows("power_budget.csv")
+    if not power_rows or any(float(row["peak_w"]) < float(row["continuous_w"]) for row in power_rows):
+        raise ContractError("power_budget.csv has invalid continuous/peak values")
+    rail_peak: dict[str, float] = {}
+    for row in power_rows:
+        rail_peak[row["rail"]] = rail_peak.get(row["rail"], 0.0) + float(row["peak_w"])
+    if abs(rail_peak.get("sensor_12v", 0.0) - result["sensor_12v_peak_w"]) > 1e-6:
+        raise ContractError("power_budget.csv 12 V rail differs from the contract")
+    if abs(rail_peak.get("sensor_24v", 0.0) - result["sensor_24v_peak_w"]) > 1e-6:
+        raise ContractError("power_budget.csv 24 V rail differs from the contract")
+
+    throughput_rows = {row["mode"]: row for row in rows("throughput_budget.csv")}
+    throughput_expectations = {
+        "dry_cleaning": ("effective_area_m2_h", result["dry_effective_area_m2_h"]),
+        "wet_nominal_depth": ("speed_limit_m_s", result["wet_nominal_depth_speed_limit_m_s"]),
+        "wet_max_depth": ("speed_limit_m_s", result["wet_max_depth_speed_limit_m_s"]),
+    }
+    for row_id, (field, expected) in throughput_expectations.items():
+        if row_id not in throughput_rows or abs(float(throughput_rows[row_id][field]) - float(expected)) > 1e-6:
+            raise ContractError(f"throughput_budget.csv row {row_id} differs from the contract")
 
 
 def main() -> int:
@@ -251,6 +356,7 @@ def main() -> int:
     parser.add_argument("--expect-report", type=Path)
     args = parser.parse_args()
     result = validate_contract(load_contract(args.contract))
+    validate_budget_csvs(result, args.contract.parent)
     if args.expect_report:
         expected = json.loads(args.expect_report.read_text(encoding="utf-8"))
         if result != expected:

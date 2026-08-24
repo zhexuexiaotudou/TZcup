@@ -1,0 +1,7 @@
+row_id,category,mass_kg,status,source
+known_payload,summary,37.705000,computed,pre_urdf_contract.yaml
+engineering_allowance,summary,40.000000,engineering_ceiling,pre_urdf_contract.yaml
+fixed_payload,summary,77.705000,computed,known_plus_allowance
+worst_case_dry_trash,dynamic_load,1.512000,computed,20_aluminum_cubes_at_2800_kg_m3
+preliminary_usable_wastewater,dynamic_load,9.706400,mass_only_precheck,80_percent_of_mass_limited_nominal
+remaining_payload_margin,summary,2.426600,mass_only_precheck,design_limit_minus_preliminary_loaded_payload

@@ -1,0 +1,9 @@
+load_id,rail,continuous_w,peak_w,status
+ur5e_controller,isolated_vbat_dc_bus,350.0,500.0,engineering_upper_bound
+recovery_pump,isolated_vbat_dc_bus,144.0,144.0,datasheet_max
+three_brush_motors,isolated_vbat_dc_bus,72.0,216.0,datasheet_stall_bound
+cleaning_lift,sensor_12v,6.0,30.0,engineering_upper_bound
+mid360,sensor_24v,6.5,14.0,datasheet
+utm30lx,sensor_12v,8.4,12.0,datasheet
+cameras_and_positioning,sensor_12v,18.0,30.0,engineering_upper_bound
+s100_compute,isolated_vbat_dc_bus,45.0,80.0,provisional_until_exact_sku_measurement
