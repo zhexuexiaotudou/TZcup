@@ -24,7 +24,7 @@ Run a paired-seed comparison after installing the package:
 
 ```bash
 ros2 run sanitation_active_cleaning active_cleaning_demo \
-  --config install/sanitation_active_cleaning/share/sanitation_active_cleaning/config/demo_task.json \
+  --config "$(ros2 pkg prefix sanitation_active_cleaning)/share/sanitation_active_cleaning/config/demo_task.json" \
   --seeds 101,102,103 \
   --output /tmp/active_cleaning_report.json
 ```
@@ -38,7 +38,7 @@ seed splits:
 
 ```bash
 ros2 run sanitation_active_cleaning active_cleaning_train \
-  --config install/sanitation_active_cleaning/share/sanitation_active_cleaning/config/demo_task.json \
+  --config "$(ros2 pkg prefix sanitation_active_cleaning)/share/sanitation_active_cleaning/config/demo_task.json" \
   --train-seeds 100:140 --validation-seeds 200:210 --test-seeds 300:310 \
   --policy-seed 7 --checkpoint /tmp/q_policy.json --report /tmp/q_report.json
 ```
