@@ -12,6 +12,7 @@
 - 24 个必需 frame、8 个清扫机构关节、8 个传感器话题/FOV/频率/量程以及 REP-103/105 坐标约定已冻结；安装坐标故意留到碰撞、机械臂包络和 FOV 联合布局时求解，避免在没有 CAD 的情况下编造外参。
 - 干垃圾舱保持 `45 L`几何容积、`>=40 L`可用容积并与污水舱水密分隔；3 cm 方块继续按纸板、PP、PET、铝密度随机化。
 - 功耗分为 A300 的 12 V/24 V 传感器支路和独立 VBAT DC 母线。UR5e、泵和刷盘电机不得挤占额定仅 120 W 的传感器支路。
+- 方案承诺的四张账表已分别落盘为 [`mass_budget.csv`](../config/high_fidelity_vehicle/mass_budget.csv)、[`power_budget.csv`](../config/high_fidelity_vehicle/power_budget.csv)、[`capacity_budget.csv`](../config/high_fidelity_vehicle/capacity_budget.csv) 和 [`throughput_budget.csv`](../config/high_fidelity_vehicle/throughput_budget.csv)，校验器会拒绝它们与主契约漂移。
 
 仓库不复制厂商网页中的 CAD、图纸或图片。上游 BSD-3-Clause 模型按许可证使用；其他部件只引用公开参数，随后由项目根据尺寸和功能重新建模。这样既保持可追溯，也不把“公开可查看”误写成“允许再分发”。
 
@@ -40,6 +41,8 @@ V_puddle_episode_max = 0.875 * V_wet_usable
 ```
 
 若详细结构超过某项工程额度，校验器会直接压缩可用水量；若固定载荷加最坏垃圾已没有正的水量，则 A300 候选失败，不能靠把质量从 URDF 中删除来通过。
+
+吞吐预表保留AUTO-12的 `1.32 m × 1.0 m/s`几何目标，并要求路线效率至少`0.75`，得到`3564 m²/h`，只比赛题门高`64 m²/h`，因此正式机构和路线损失不能再放宽。Jabsco泵按`15.1 L/min`额定流量、`0.70`液压折减和`95%`回收目标估算：`2 mm`水深限速约`0.116 m/s`，`10 mm`上限水深约`0.023 m/s`；这两个值是首轮控制上界，不是泵/刮条实测结果。
 
 ## 3. 正式 URDF 开始后的六个硬门
 

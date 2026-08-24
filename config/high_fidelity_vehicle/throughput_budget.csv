@@ -1,0 +1,4 @@
+mode,working_width_m,depth_m,speed_limit_m_s,route_or_hydraulic_factor,recovery_fraction,pump_flow_l_min,effective_area_m2_h,status
+dry_cleaning,1.320000,0.000000,1.000000,0.750000,,0.000000,3564.000000,provisional_design_target_from_auto12
+wet_nominal_depth,0.800000,0.002000,0.115899,0.700000,0.950000,15.100000,333.789474,preliminary_flow_bound
+wet_max_depth,0.800000,0.010000,0.023180,0.700000,0.950000,15.100000,66.757895,preliminary_flow_bound

@@ -459,6 +459,21 @@ power_budget:
     sensor_24v_peak_max_w: 120.0
     high_power_loads_require_isolated_vbat_dc_bus: true
 
+throughput_budget:
+  dry_cleaning:
+    working_width_m: 1.32
+    target_speed_m_s: 1.0
+    minimum_route_efficiency: 0.75
+    status: provisional_design_target_from_auto12_to_be_remeasured_with_final_geometry
+  puddle_recovery:
+    squeegee_width_m: 0.8
+    pump_rated_flow_l_min: 15.1
+    hydraulic_derating_factor: 0.7
+    recovery_fraction_target: 0.95
+    nominal_depth_m: 0.002
+    maximum_depth_m: 0.01
+    status: preliminary_flow_bound_to_be_replaced_by_segmented_pump_and_contact_model
+
 layout_gates_during_urdf:
   - id: exact_s100_board_envelope
     owner: user_measurement_plus_datasheet

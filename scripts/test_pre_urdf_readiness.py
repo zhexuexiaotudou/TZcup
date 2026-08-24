@@ -7,7 +7,12 @@ from pathlib import Path
 import pytest
 import yaml
 
-from validate_pre_urdf_readiness import ContractError, load_contract, validate_contract
+from validate_pre_urdf_readiness import (
+    ContractError,
+    load_contract,
+    validate_budget_csvs,
+    validate_contract,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -15,6 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def test_committed_contract_and_report_match() -> None:
     result = validate_contract(load_contract())
+    validate_budget_csvs(result)
     report = json.loads(
         (ROOT / "reports" / "engineering" / "pre_urdf_readiness.json").read_text(encoding="utf-8")
     )
@@ -86,4 +92,11 @@ def test_rejects_sensor_rail_overload() -> None:
     contract["power_budget"]["loads"][-1]["rail"] = "sensor_12v"
     contract["power_budget"]["loads"][-1]["peak_w"] = 100.0
     with pytest.raises(ContractError, match="12 V sensor rail peak budget exceeded"):
+        validate_contract(contract)
+
+
+def test_rejects_dry_throughput_below_competition_target() -> None:
+    contract = copy.deepcopy(load_contract())
+    contract["throughput_budget"]["dry_cleaning"]["minimum_route_efficiency"] = 0.5
+    with pytest.raises(ContractError, match="throughput does not meet"):
         validate_contract(contract)
