@@ -1,0 +1,30 @@
+{
+  "claim_boundary": "Ready to begin formal CAD/Xacro; final transforms, inertias, CoG, wastewater capacity, exact S100 envelope and power topology remain fail-closed layout gates.",
+  "contract_id": "competition_vehicle_pre_urdf_v1",
+  "engineering_allowance_mass_kg": 40.0,
+  "explicit_joint_count": 8,
+  "fixed_payload_budget_kg": 77.705,
+  "formal_urdf_created": false,
+  "known_payload_mass_kg": 37.705,
+  "mass_limited_wastewater_nominal_l": 12.133,
+  "normal_episode_puddle_cap_l": 8.4931,
+  "payload_margin_at_preliminary_usable_fill_kg": 2.4266,
+  "pending_layout_gates": [
+    "exact_s100_board_envelope",
+    "full_inertia_and_cog_scan",
+    "fov_occlusion_solve",
+    "final_wastewater_capacity",
+    "vendor_geometry_rights",
+    "detailed_power_topology"
+  ],
+  "preliminary_wastewater_nominal_l": 12.133,
+  "preliminary_wastewater_usable_l": 9.7064,
+  "required_frame_count": 24,
+  "selected_component_count": 18,
+  "sensor_12v_peak_w": 72.0,
+  "sensor_24v_peak_w": 14.0,
+  "sensor_contract_count": 8,
+  "source_repository_count": 5,
+  "status": "READY_FOR_URDF_IMPLEMENTATION_WITH_LAYOUT_GATES",
+  "worst_case_dry_trash_mass_kg": 1.512
+}

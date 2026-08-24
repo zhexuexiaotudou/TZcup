@@ -92,3 +92,12 @@ Codex 必须记录最终 commit。
 - 禁止从商业清扫车产品页面直接抓取模型；
 - 未明确许可的网格不进入仓库；
 - 第一阶段优先使用自建 primitive，避免版权和离线加载问题。
+
+## 7. 正式高保真整车输入锁
+
+正式A300/UR5e/2F-85与传感器输入已在
+[`repos/high_fidelity_vehicle.repos`](repos/high_fidelity_vehicle.repos)锁到不可变
+commit，完整角色、型号、数据表、质量、frame、joint和许可证边界见
+[`config/high_fidelity_vehicle/pre_urdf_contract.yaml`](config/high_fidelity_vehicle/pre_urdf_contract.yaml)。
+厂商CAD只有在下载物自带明确再分发许可时才能进入Git；否则由项目依据公开尺寸
+重建，不把可下载误当作开源。

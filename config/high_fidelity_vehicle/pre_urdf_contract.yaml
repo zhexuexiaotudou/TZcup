@@ -1,0 +1,489 @@
+schema_version: 1
+contract_id: competition_vehicle_pre_urdf_v1
+verified_at_utc: "2026-08-25T08:00:00Z"
+scope:
+  formal_profile: high_fidelity_competition_vehicle
+  ros_distribution: jazzy
+  gazebo_release: harmonic
+  creates_formal_urdf: false
+  purpose: Freeze traceable inputs and fail-closed gates before detailed CAD/Xacro work.
+
+competition_requirements:
+  mapped_area_min_m2: 20000.0
+  dry_bin_usable_min_l: 40.0
+  cleaning_width_min_m: 0.6
+  dry_cleaning_efficiency_min_m2_h: 3500.0
+  puddle_depth_max_m: 0.01
+  puddle_recovery_project_target: 0.95
+  water_mass_balance_relative_error_max: 0.01
+
+source_repositories:
+  - id: clearpath_common
+    url: https://github.com/clearpathrobotics/clearpath_common.git
+    selected_branch: jazzy
+    commit: b0f6d920422ad302372a1c65e31d61648da884ed
+    license: BSD-3-Clause
+    roles: [a300_description, a300_control, robotiq_integration_reference]
+  - id: clearpath_simulator
+    url: https://github.com/clearpathrobotics/clearpath_simulator.git
+    selected_branch: jazzy
+    commit: ee098ad6f67b4e35d77841ed6f004b8f86cd77e4
+    license: BSD-3-Clause
+    roles: [a300_gazebo_harmonic]
+  - id: universal_robots_description
+    url: https://github.com/UniversalRobots/Universal_Robots_ROS2_Description.git
+    selected_branch: jazzy
+    commit: 39242984dc8d1fff9584c922c17c69c58df3591d
+    license: BSD-3-Clause
+    roles: [ur5e_description]
+  - id: robotiq_ros
+    url: https://github.com/robotiq/ros.git
+    selected_branch: main
+    commit: 3ab3befccaa10468f80803ba687105c9d224d567
+    license: BSD-3-Clause
+    roles: [robotiq_2f_85_description, robotiq_driver_reference]
+  - id: robotnik_sensors
+    url: https://github.com/RobotnikAutomation/robotnik_sensors.git
+    selected_branch: jazzy-devel
+    commit: 11852f4f14d6e0a561117396187f7674ed33ab2b
+    license: BSD-3-Clause
+    roles: [utm_30lx_description, mid_360_description, d435_description, ublox_description, vectornav_description]
+
+required_source_roles:
+  - a300_description
+  - a300_gazebo_harmonic
+  - ur5e_description
+  - robotiq_2f_85_description
+  - utm_30lx_description
+  - mid_360_description
+  - d435_description
+  - ublox_description
+  - vectornav_description
+
+component_selections:
+  - id: mobile_base
+    role: base
+    model: Clearpath Husky A300 40Ah
+    source_class: upstream_open_description
+    description_source: clearpath_common
+    datasheet_url: https://docs.clearpathrobotics.com/docs_robots/outdoor_robots/husky/a300/user_manual_husky/
+    mass_kg: 78.5
+    mass_accounting: base_excluded_from_payload
+    geometry_status: upstream_mesh_and_xacro_locked
+  - id: arm
+    role: manipulator
+    model: Universal Robots UR5e
+    source_class: upstream_open_description
+    description_source: universal_robots_description
+    datasheet_url: https://www.universal-robots.com/products/ur5-robot/
+    mass_kg: 20.6
+    mass_accounting: payload_known
+    geometry_status: upstream_mesh_and_xacro_locked
+  - id: arm_controller
+    role: manipulator_controller
+    model: UR e-Series standard control box
+    source_class: project_authored_from_public_datasheet
+    datasheet_url: https://www.universal-robots.com/media/1807465/ur5e-rgb-fact-sheet-landscape-a4.pdf
+    mass_kg: 12.0
+    mass_accounting: payload_vendor_nominal
+    geometry_status: project_geometry_required
+  - id: gripper
+    role: gripper
+    model: Robotiq 2F-85
+    source_class: upstream_open_description
+    description_source: robotiq_ros
+    datasheet_url: https://robotiq.com/products/2f85-140-adaptive-robot-gripper
+    mass_kg: 0.9
+    mass_accounting: payload_vendor_nominal
+    geometry_status: upstream_xacro_locked
+  - id: lidar_2d
+    role: lidar_2d
+    model: Hokuyo UTM-30LX
+    source_class: upstream_open_description
+    description_source: robotnik_sensors
+    datasheet_url: https://www.hokuyo-aut.jp/search/single.php?serial=169
+    mass_kg: 0.37
+    mass_accounting: payload_known
+    geometry_status: upstream_xacro_locked
+  - id: lidar_3d
+    role: lidar_3d
+    model: Livox MID-360
+    source_class: upstream_open_description
+    description_source: robotnik_sensors
+    datasheet_url: https://www.livoxtech.com/mid-360/specs
+    mass_kg: 0.265
+    mass_accounting: payload_known
+    geometry_status: upstream_xacro_locked
+  - id: front_rgbd
+    role: front_rgbd
+    model: Intel RealSense D435
+    source_class: upstream_open_description
+    description_source: robotnik_sensors
+    datasheet_url: https://www.intelrealsense.com/wp-content/uploads/2022/05/Intel-RealSense-D400-Series-Datasheet-April-2022.pdf
+    mass_kg: 0.075
+    mass_accounting: payload_known
+    geometry_status: upstream_xacro_locked
+  - id: wrist_rgbd
+    role: wrist_rgbd
+    model: Intel RealSense D435
+    source_class: upstream_open_description
+    description_source: robotnik_sensors
+    datasheet_url: https://www.intelrealsense.com/wp-content/uploads/2022/05/Intel-RealSense-D400-Series-Datasheet-April-2022.pdf
+    mass_kg: 0.075
+    mass_accounting: payload_known
+    geometry_status: upstream_xacro_locked
+  - id: rear_left_fisheye
+    role: rear_left_fisheye
+    model: Arducam B0202 IMX291 UVC plus M27195H15 lens
+    source_class: project_authored_from_public_datasheet
+    datasheet_url: https://docs.arducam.com/UVC-Camera/USB2-UVC-Camera-Kit/Specs-and-Selection-Guide/
+    mass_kg: 0.04
+    mass_accounting: payload_engineering_upper_bound
+    geometry_status: project_geometry_required
+  - id: rear_right_fisheye
+    role: rear_right_fisheye
+    model: Arducam B0202 IMX291 UVC plus M27195H15 lens
+    source_class: project_authored_from_public_datasheet
+    datasheet_url: https://docs.arducam.com/UVC-Camera/USB2-UVC-Camera-Kit/Specs-and-Selection-Guide/
+    mass_kg: 0.04
+    mass_accounting: payload_engineering_upper_bound
+    geometry_status: project_geometry_required
+  - id: gnss
+    role: gnss
+    model: u-blox ZED-F9P plus ANN-MB-00 antenna
+    source_class: project_authored_from_public_datasheet
+    description_source: robotnik_sensors
+    datasheet_url: https://www.u-blox.com/en/product/zed-f9p-module
+    mass_kg: 0.1
+    mass_accounting: payload_engineering_upper_bound
+    geometry_status: project_enclosure_and_antenna_geometry_required
+  - id: imu
+    role: imu
+    model: VectorNav VN-100 Rugged
+    source_class: upstream_open_description
+    description_source: robotnik_sensors
+    datasheet_url: https://www.vectornav.com/products/detail/vn-100
+    mass_kg: 0.015
+    mass_accounting: payload_known
+    geometry_status: upstream_xacro_locked
+  - id: side_brush_motors
+    role: side_brush_actuation
+    model: 3 x Pololu 70:1 Metal Gearmotor 37Dx70L 24V with 64 CPR encoder, item 4694
+    source_class: project_authored_from_public_datasheet
+    datasheet_url: https://www.pololu.com/product/4694/specs
+    mass_kg: 0.615
+    mass_accounting: payload_known_aggregate
+    geometry_status: vendor_step_reference_project_xacro_required
+  - id: cleaning_lift
+    role: cleaning_lift
+    model: Actuonix P16-100-256-12-P
+    source_class: project_authored_from_public_datasheet
+    datasheet_url: https://www.actuonix.com/p16-100-256-12-p
+    mass_kg: 0.11
+    mass_accounting: payload_known
+    geometry_status: vendor_step_reference_project_xacro_required
+  - id: recovery_pump
+    role: wastewater_recovery
+    model: Jabsco PAR-MAX HD4 Q402J-118S-3A 24V
+    source_class: project_authored_from_public_datasheet
+    datasheet_url: https://www.xylem.com/siteassets/brand/jabsco/resources/technical-brochure/q402j-118s-3a---parmax-hd4-datasheet.pdf
+    mass_kg: 2.5
+    mass_accounting: payload_known
+    geometry_status: project_geometry_required
+  - id: cleaning_mechanism
+    role: cleaning_mechanism
+    model: project-owned dual-side-brush plus central roller plus floating squeegee assembly
+    source_class: project_authored_geometry
+    datasheet_url: docs/high-fidelity-competition-vehicle-plan.md
+    mass_kg: null
+    mass_accounting: covered_by_engineering_allowance
+    geometry_status: detailed_cad_required_during_urdf
+  - id: dry_wet_cabinet
+    role: dry_wet_storage
+    model: project-owned watertight split cabinet
+    source_class: project_authored_geometry
+    datasheet_url: docs/high-fidelity-competition-vehicle-plan.md
+    mass_kg: null
+    mass_accounting: covered_by_engineering_allowance
+    geometry_status: detailed_cad_required_during_urdf
+  - id: onboard_compute
+    role: compute
+    model: RDK S100 / Journey 6 user-owned board
+    source_class: board_target_only
+    datasheet_url: https://developer.d-robotics.cc/rdk_doc/en/RDK_S100/
+    mass_kg: null
+    mass_accounting: covered_by_engineering_allowance
+    geometry_status: exact_sku_envelope_requires_user_board_measurement
+
+required_component_roles:
+  - base
+  - manipulator
+  - manipulator_controller
+  - gripper
+  - lidar_2d
+  - lidar_3d
+  - front_rgbd
+  - wrist_rgbd
+  - rear_left_fisheye
+  - rear_right_fisheye
+  - gnss
+  - imu
+  - side_brush_actuation
+  - cleaning_lift
+  - wastewater_recovery
+  - cleaning_mechanism
+  - dry_wet_storage
+  - compute
+
+sensor_contracts:
+  - id: utm30lx
+    frame: lidar_2d_link
+    topic: /sensors/lidar_2d/scan
+    update_rate_hz: 40.0
+    range_min_m: 0.1
+    range_max_m: 30.0
+    horizontal_fov_deg: 270.0
+    vertical_fov_deg: 0.0
+    dimensions_m: [0.06, 0.06, 0.087]
+  - id: mid360
+    frame: lidar_3d_link
+    topic: /sensors/lidar_3d/points
+    update_rate_hz: 10.0
+    range_min_m: 0.1
+    range_max_m: 40.0
+    horizontal_fov_deg: 360.0
+    vertical_fov_deg: 59.0
+    dimensions_m: [0.065, 0.065, 0.06]
+  - id: front_d435_depth
+    frame: front_rgbd_depth_optical_frame
+    topic: /sensors/front_rgbd/depth/image_rect_raw
+    update_rate_hz: 30.0
+    range_min_m: 0.2
+    range_max_m: 10.0
+    horizontal_fov_deg: 87.0
+    vertical_fov_deg: 58.0
+    dimensions_m: [0.09, 0.025, 0.025]
+  - id: wrist_d435_depth
+    frame: wrist_rgbd_depth_optical_frame
+    topic: /sensors/wrist_rgbd/depth/image_rect_raw
+    update_rate_hz: 30.0
+    range_min_m: 0.2
+    range_max_m: 3.0
+    horizontal_fov_deg: 87.0
+    vertical_fov_deg: 58.0
+    dimensions_m: [0.09, 0.025, 0.025]
+  - id: rear_left_fisheye
+    frame: rear_left_fisheye_optical_frame
+    topic: /sensors/rear_left_fisheye/image_raw
+    update_rate_hz: 30.0
+    range_min_m: 0.2
+    range_max_m: 20.0
+    horizontal_fov_deg: 150.0
+    vertical_fov_deg: 129.0
+    dimensions_m: [0.038, 0.038, 0.02]
+    distortion_model: equidistant
+  - id: rear_right_fisheye
+    frame: rear_right_fisheye_optical_frame
+    topic: /sensors/rear_right_fisheye/image_raw
+    update_rate_hz: 30.0
+    range_min_m: 0.2
+    range_max_m: 20.0
+    horizontal_fov_deg: 150.0
+    vertical_fov_deg: 129.0
+    dimensions_m: [0.038, 0.038, 0.02]
+    distortion_model: equidistant
+  - id: gnss
+    frame: gnss_antenna_link
+    topic: /sensors/gnss/fix
+    update_rate_hz: 10.0
+    range_min_m: 0.0
+    range_max_m: 1.0
+    horizontal_fov_deg: 360.0
+    vertical_fov_deg: 180.0
+    dimensions_m: [0.06, 0.06, 0.02]
+  - id: imu
+    frame: imu_link
+    topic: /sensors/imu/data
+    update_rate_hz: 200.0
+    range_min_m: 0.0
+    range_max_m: 1.0
+    horizontal_fov_deg: 360.0
+    vertical_fov_deg: 180.0
+    dimensions_m: [0.036, 0.033, 0.009]
+
+frame_contract:
+  required_frames:
+    - base_footprint
+    - base_link
+    - payload_deck_link
+    - sensor_mast_link
+    - lidar_2d_link
+    - lidar_3d_link
+    - front_rgbd_link
+    - front_rgbd_depth_optical_frame
+    - rear_left_fisheye_link
+    - rear_left_fisheye_optical_frame
+    - rear_right_fisheye_link
+    - rear_right_fisheye_optical_frame
+    - gnss_antenna_link
+    - imu_link
+    - arm_mount_link
+    - wrist_rgbd_link
+    - wrist_rgbd_depth_optical_frame
+    - dry_bin_link
+    - wastewater_tank_link
+    - left_side_brush_link
+    - right_side_brush_link
+    - central_roller_link
+    - squeegee_link
+    - suction_nozzle_link
+  transform_policy:
+    status: positions_intentionally_unset_until_collision_and_fov_layout_solve
+    units: SI
+    optical_frame_convention: REP-103
+    base_frame_convention: REP-105
+
+joint_contract:
+  - name: left_side_brush_joint
+    type: continuous
+    actuator: Pololu-4694
+    command_interface: velocity
+  - name: right_side_brush_joint
+    type: continuous
+    actuator: Pololu-4694
+    command_interface: velocity
+  - name: central_roller_joint
+    type: continuous
+    actuator: Pololu-4694
+    command_interface: velocity
+  - name: cleaning_lift_joint
+    type: prismatic
+    actuator: Actuonix-P16-100-256-12-P
+    command_interface: position
+    lower_m: 0.0
+    upper_m: 0.1
+  - name: squeegee_pitch_joint
+    type: revolute
+    actuator: passive_spring_damper
+    command_interface: none
+    lower_rad: -0.174533
+    upper_rad: 0.174533
+  - name: squeegee_float_joint
+    type: prismatic
+    actuator: passive_spring_damper
+    command_interface: none
+    lower_m: -0.015
+    upper_m: 0.015
+  - name: dry_bin_lid_joint
+    type: revolute
+    actuator: passive_latch
+    command_interface: none
+    lower_rad: 0.0
+    upper_rad: 1.570796
+  - name: wastewater_lid_joint
+    type: revolute
+    actuator: passive_latch
+    command_interface: none
+    lower_rad: 0.0
+    upper_rad: 1.570796
+
+mass_capacity_budget:
+  a300_payload_limit_kg: 101.5
+  payload_design_factor: 0.9
+  payload_design_limit_kg: 91.35
+  known_payload_items:
+    arm_ur5e: 20.6
+    arm_control_box: 12.0
+    gripper_2f85: 0.9
+    lidar_utm30lx: 0.37
+    lidar_mid360: 0.265
+    front_and_wrist_d435: 0.15
+    two_fisheye_modules: 0.08
+    gnss_receiver_and_antenna: 0.1
+    imu_vn100: 0.015
+    three_brush_gearmotors: 0.615
+    cleaning_lift: 0.11
+    recovery_pump: 2.5
+  engineering_allowances:
+    s100_enclosure_and_io: 2.0
+    split_bin_structure: 9.0
+    brushes_roller_squeegee_hoses: 10.0
+    arm_pedestal_and_structural_frame: 8.0
+    wiring_fuses_and_dc_converters: 4.0
+    filters_valves_and_strainer: 3.0
+    sensor_mast_and_mounts: 4.0
+  dry_trash:
+    cube_count_max: 20
+    cube_edge_m: 0.03
+    material_density_kg_m3:
+      cardboard: [300.0, 700.0]
+      pp: [890.0, 920.0]
+      pet: [1330.0, 1450.0]
+      aluminum: [2600.0, 2800.0]
+  dry_bin:
+    geometric_volume_l: 45.0
+    usable_volume_l: 40.0
+    separated_from_wastewater: true
+  wastewater:
+    density_kg_l: 1.0
+    nominal_design_cap_l: 20.0
+    usable_fraction: 0.8
+    episode_fraction_of_usable: 0.875
+    cog_limit_l: null
+    installation_space_limit_l: null
+    final_capacity_policy: Minimum of mass, CoG, installation-space and 20 L limits; null layout limits remain formal URDF gates.
+
+power_budget:
+  base_user_rails:
+    sensor_12v:
+      voltage_v: 12.0
+      current_limit_a: 10.0
+    sensor_24v:
+      voltage_v: 24.0
+      current_limit_a: 5.0
+    high_current_vbat:
+      voltage_v: null
+      current_limit_a: 40.0
+      note: Exact A300 battery voltage and approved converter topology must be frozen from the selected platform manual before wiring design.
+  loads:
+    - {id: ur5e_controller, rail: isolated_vbat_dc_bus, continuous_w: 350.0, peak_w: 500.0, status: engineering_upper_bound}
+    - {id: recovery_pump, rail: isolated_vbat_dc_bus, continuous_w: 144.0, peak_w: 144.0, status: datasheet_max}
+    - {id: three_brush_motors, rail: isolated_vbat_dc_bus, continuous_w: 72.0, peak_w: 216.0, status: datasheet_stall_bound}
+    - {id: cleaning_lift, rail: sensor_12v, continuous_w: 6.0, peak_w: 30.0, status: engineering_upper_bound}
+    - {id: mid360, rail: sensor_24v, continuous_w: 6.5, peak_w: 14.0, status: datasheet}
+    - {id: utm30lx, rail: sensor_12v, continuous_w: 8.4, peak_w: 12.0, status: datasheet}
+    - {id: cameras_and_positioning, rail: sensor_12v, continuous_w: 18.0, peak_w: 30.0, status: engineering_upper_bound}
+    - {id: s100_compute, rail: isolated_vbat_dc_bus, continuous_w: 45.0, peak_w: 80.0, status: provisional_until_exact_sku_measurement}
+  rail_policy:
+    sensor_12v_peak_max_w: 120.0
+    sensor_24v_peak_max_w: 120.0
+    high_power_loads_require_isolated_vbat_dc_bus: true
+
+layout_gates_during_urdf:
+  - id: exact_s100_board_envelope
+    owner: user_measurement_plus_datasheet
+    pass_condition: Exact owned board SKU, enclosure, connectors, mass and mounting holes recorded.
+  - id: full_inertia_and_cog_scan
+    owner: cad_and_simulation
+    pass_condition: All component inertias and arm/tank extrema remain inside the A300 stability envelope.
+  - id: fov_occlusion_solve
+    owner: cad_and_sensor_simulation
+    pass_condition: Exact transforms pass self-occlusion, blind-zone and 3 cm target visibility maps.
+  - id: final_wastewater_capacity
+    owner: cad_and_mass_solver
+    pass_condition: CoG and installation-space limits are non-null and capacity is recomputed without exceeding payload.
+  - id: vendor_geometry_rights
+    owner: license_audit
+    pass_condition: Only openly redistributable upstream meshes or project-authored geometry derived from public dimensions enter Git.
+  - id: detailed_power_topology
+    owner: electrical_design
+    pass_condition: Exact VBAT voltage, converters, fuses, wire gauges, continuous and peak currents pass.
+
+readiness_policy:
+  ready_status: READY_FOR_URDF_IMPLEMENTATION_WITH_LAYOUT_GATES
+  forbidden_claims:
+    - final_vehicle_cog_passed
+    - final_wastewater_capacity_frozen
+    - exact_sensor_mounts_frozen
+    - s100_physical_integration_passed
+    - gazebo_high_fidelity_vehicle_executed

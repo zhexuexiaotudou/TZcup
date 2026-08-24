@@ -1,0 +1,21 @@
+repositories:
+  clearpath_common:
+    type: git
+    url: https://github.com/clearpathrobotics/clearpath_common.git
+    version: b0f6d920422ad302372a1c65e31d61648da884ed
+  clearpath_simulator:
+    type: git
+    url: https://github.com/clearpathrobotics/clearpath_simulator.git
+    version: ee098ad6f67b4e35d77841ed6f004b8f86cd77e4
+  universal_robots_description:
+    type: git
+    url: https://github.com/UniversalRobots/Universal_Robots_ROS2_Description.git
+    version: 39242984dc8d1fff9584c922c17c69c58df3591d
+  robotiq_ros:
+    type: git
+    url: https://github.com/robotiq/ros.git
+    version: 3ab3befccaa10468f80803ba687105c9d224d567
+  robotnik_sensors:
+    type: git
+    url: https://github.com/RobotnikAutomation/robotnik_sensors.git
+    version: 11852f4f14d6e0a561117396187f7674ed33ab2b
