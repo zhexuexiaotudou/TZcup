@@ -1,0 +1,162 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <!--
+    Offline, redistributable primitive model of a UR5e and Robotiq 2F-85.
+    Kinematic dimensions follow the public UR5e nominal chain; geometry is
+    project-authored and intentionally does not copy vendor meshes.
+  -->
+
+  <xacro:macro name="hf_arm_box_inertia" params="mass x y z">
+    <inertia ixx="${mass*(y*y+z*z)/12.0}" ixy="0" ixz="0"
+             iyy="${mass*(x*x+z*z)/12.0}" iyz="0"
+             izz="${mass*(x*x+y*y)/12.0}"/>
+  </xacro:macro>
+
+  <xacro:macro name="hf_gripper_bar" params="name mass length width height color">
+    <link name="${name}">
+      <visual><origin xyz="${length/2.0} 0 0"/><geometry><box size="${length} ${width} ${height}"/></geometry>
+        <material name="${name}_material"><color rgba="${color}"/></material></visual>
+      <collision><origin xyz="${length/2.0} 0 0"/><geometry><box size="${length} ${width} ${height}"/></geometry></collision>
+      <inertial><origin xyz="${length/2.0} 0 0"/><mass value="${mass}"/>
+        <xacro:hf_arm_box_inertia mass="${mass}" x="${length}" y="${width}" z="${height}"/></inertial>
+    </link>
+  </xacro:macro>
+
+  <xacro:macro name="hf_manipulator_stack" params="parent">
+    <!-- Fixed pedestal datum.  UR5e component masses sum to exactly 20.6 kg. -->
+    <link name="ur5e_base_link">
+      <visual name="base_column"><origin xyz="0 0 0.0445"/><geometry><cylinder radius="0.095" length="0.089"/></geometry>
+        <material name="ur_dark"><color rgba="0.12 0.14 0.16 1"/></material></visual>
+      <collision><origin xyz="0 0 0.0445"/><geometry><cylinder radius="0.095" length="0.089"/></geometry></collision>
+      <inertial><origin xyz="0 0 0.0445"/><mass value="3.6061"/>
+        <inertia ixx="0.01052" ixy="0" ixz="0" iyy="0.01052" iyz="0" izz="0.01627"/></inertial>
+    </link>
+    <joint name="ur5e_mount_joint" type="fixed"><parent link="${parent}"/><child link="ur5e_base_link"/><origin xyz="0 0 0.015"/></joint>
+
+    <link name="ur5e_shoulder_link">
+      <visual><origin xyz="0 0 0.03675"/><geometry><cylinder radius="0.088" length="0.0735"/></geometry>
+        <material name="ur_shoulder"><color rgba="0.72 0.74 0.76 1"/></material></visual>
+      <collision><origin xyz="0 0 0.03675"/><geometry><cylinder radius="0.088" length="0.0735"/></geometry></collision>
+      <inertial><origin xyz="0 0 0.03675"/><mass value="3.7"/>
+        <inertia ixx="0.00958" ixy="0" ixz="0" iyy="0.00958" iyz="0" izz="0.01433"/></inertial>
+    </link>
+    <joint name="shoulder_pan_joint" type="revolute">
+      <parent link="ur5e_base_link"/><child link="ur5e_shoulder_link"/><origin xyz="0 0 0.089"/><axis xyz="0 0 1"/>
+      <limit lower="-${2*pi}" upper="${2*pi}" effort="150" velocity="3.14"/><dynamics damping="0.10" friction="0.05"/>
+    </joint>
+
+    <link name="ur5e_upper_arm_link">
+      <visual name="upper_arm_tube"><origin xyz="0.2125 0 0" rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.067" length="0.425"/></geometry>
+        <material name="ur_blue"><color rgba="0.08 0.30 0.55 1"/></material></visual>
+      <visual name="upper_arm_end"><geometry><cylinder radius="0.082" length="0.090"/></geometry>
+        <material name="ur_upper_end"><color rgba="0.70 0.72 0.74 1"/></material></visual>
+      <collision><origin xyz="0.2125 0 0" rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.067" length="0.425"/></geometry></collision>
+      <inertial><origin xyz="0.2125 0 0"/><mass value="8.393"/>
+        <inertia ixx="0.032" ixy="0" ixz="0" iyy="0.139" iyz="0" izz="0.139"/></inertial>
+    </link>
+    <joint name="shoulder_lift_joint" type="revolute">
+      <parent link="ur5e_shoulder_link"/><child link="ur5e_upper_arm_link"/><origin xyz="0 0 0.0735"/><axis xyz="0 1 0"/>
+      <limit lower="-${2*pi}" upper="${2*pi}" effort="150" velocity="3.14"/><dynamics damping="0.10" friction="0.05"/>
+    </joint>
+
+    <link name="ur5e_forearm_link">
+      <visual name="forearm_tube"><origin xyz="0.1961 0 0" rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.060" length="0.3922"/></geometry>
+        <material name="ur_forearm_blue"><color rgba="0.08 0.30 0.55 1"/></material></visual>
+      <visual name="elbow_housing"><geometry><cylinder radius="0.075" length="0.085"/></geometry>
+        <material name="ur_elbow"><color rgba="0.70 0.72 0.74 1"/></material></visual>
+      <collision><origin xyz="0.1961 0 0" rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.060" length="0.3922"/></geometry></collision>
+      <inertial><origin xyz="0.1961 0 0"/><mass value="2.275"/>
+        <inertia ixx="0.009" ixy="0" ixz="0" iyy="0.033" iyz="0" izz="0.033"/></inertial>
+    </link>
+    <joint name="elbow_joint" type="revolute">
+      <parent link="ur5e_upper_arm_link"/><child link="ur5e_forearm_link"/><origin xyz="0.425 0 0"/><axis xyz="0 1 0"/>
+      <limit lower="-${2*pi}" upper="${2*pi}" effort="150" velocity="3.14"/><dynamics damping="0.08" friction="0.04"/>
+    </joint>
+
+    <link name="ur5e_wrist_1_link">
+      <visual><origin xyz="0 0 0.06665"/><geometry><cylinder radius="0.057" length="0.1333"/></geometry>
+        <material name="ur_wrist1"><color rgba="0.70 0.72 0.74 1"/></material></visual>
+      <collision><origin xyz="0 0 0.06665"/><geometry><cylinder radius="0.057" length="0.1333"/></geometry></collision>
+      <inertial><origin xyz="0 0 0.06665"/><mass value="1.219"/><inertia ixx="0.00279" ixy="0" ixz="0" iyy="0.00279" iyz="0" izz="0.00198"/></inertial>
+    </link>
+    <joint name="wrist_1_joint" type="revolute">
+      <parent link="ur5e_forearm_link"/><child link="ur5e_wrist_1_link"/><origin xyz="0.3922 0 0"/><axis xyz="0 1 0"/>
+      <limit lower="-${2*pi}" upper="${2*pi}" effort="28" velocity="3.14"/><dynamics damping="0.05" friction="0.02"/>
+    </joint>
+
+    <link name="ur5e_wrist_2_link">
+      <visual><origin xyz="0 0 0.04985"/><geometry><cylinder radius="0.052" length="0.0997"/></geometry>
+        <material name="ur_wrist2"><color rgba="0.10 0.31 0.55 1"/></material></visual>
+      <collision><origin xyz="0 0 0.04985"/><geometry><cylinder radius="0.052" length="0.0997"/></geometry></collision>
+      <inertial><origin xyz="0 0 0.04985"/><mass value="1.219"/><inertia ixx="0.00184" ixy="0" ixz="0" iyy="0.00184" iyz="0" izz="0.00165"/></inertial>
+    </link>
+    <joint name="wrist_2_joint" type="revolute">
+      <parent link="ur5e_wrist_1_link"/><child link="ur5e_wrist_2_link"/><origin xyz="0 0 0.1333"/><axis xyz="0 0 1"/>
+      <limit lower="-${2*pi}" upper="${2*pi}" effort="28" velocity="3.14"/><dynamics damping="0.05" friction="0.02"/>
+    </joint>
+
+    <link name="ur5e_wrist_3_link">
+      <visual><origin xyz="0 0 0.0498"/><geometry><cylinder radius="0.047" length="0.0996"/></geometry>
+        <material name="ur_wrist3"><color rgba="0.70 0.72 0.74 1"/></material></visual>
+      <collision><origin xyz="0 0 0.0498"/><geometry><cylinder radius="0.047" length="0.0996"/></geometry></collision>
+      <inertial><origin xyz="0 0 0.0498"/><mass value="0.1879"/><inertia ixx="0.000282" ixy="0" ixz="0" iyy="0.000282" iyz="0" izz="0.000207"/></inertial>
+    </link>
+    <joint name="wrist_3_joint" type="revolute">
+      <parent link="ur5e_wrist_2_link"/><child link="ur5e_wrist_3_link"/><origin xyz="0 0 0.0997"/><axis xyz="0 1 0"/>
+      <limit lower="-${2*pi}" upper="${2*pi}" effort="28" velocity="3.14"/><dynamics damping="0.05" friction="0.02"/>
+    </joint>
+
+    <link name="tool0">
+      <visual><origin xyz="0 0 0.006"/><geometry><cylinder radius="0.040" length="0.012"/></geometry>
+        <material name="tool_flange"><color rgba="0.25 0.27 0.29 1"/></material></visual>
+      <collision><origin xyz="0 0 0.006"/><geometry><cylinder radius="0.040" length="0.012"/></geometry></collision>
+      <inertial><mass value="0.000001"/><inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/></inertial>
+    </link>
+    <joint name="tool0_joint" type="fixed"><parent link="ur5e_wrist_3_link"/><child link="tool0"/><origin xyz="0 0 0.0996"/></joint>
+
+    <!-- Robotiq 2F-85: explicit palm, four knuckles, four finger bodies and pads.
+         robotiq_85_left_knuckle_joint is the only commanded joint; all other
+         revolute joints mimic it to preserve one-DOF parallel closure. -->
+    <link name="robotiq_85_base_link">
+      <visual><origin xyz="0.040 0 0" rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.075" length="0.080"/></geometry>
+        <material name="rq_palm"><color rgba="0.12 0.14 0.16 1"/></material></visual>
+      <collision><origin xyz="0.040 0 0" rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.075" length="0.080"/></geometry></collision>
+      <inertial><origin xyz="0.040 0 0"/><mass value="0.50"/><inertia ixx="0.00141" ixy="0" ixz="0" iyy="0.00167" iyz="0" izz="0.00141"/></inertial>
+    </link>
+    <joint name="robotiq_85_mount_joint" type="fixed"><parent link="tool0"/><child link="robotiq_85_base_link"/><origin xyz="0 0 0" rpy="0 ${pi/2.0} 0"/></joint>
+
+    <xacro:hf_gripper_bar name="robotiq_85_left_outer_knuckle_link" mass="0.05" length="0.055" width="0.022" height="0.030" color="0.72 0.73 0.74 1"/>
+    <joint name="robotiq_85_left_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_left_outer_knuckle_link"/>
+      <origin xyz="0.065 0.050 0"/><axis xyz="0 0 1"/><limit lower="0" upper="0.80285" effort="100" velocity="2.0"/><dynamics damping="0.03" friction="0.02"/></joint>
+    <xacro:hf_gripper_bar name="robotiq_85_left_outer_finger_link" mass="0.07" length="0.085" width="0.020" height="0.028" color="0.15 0.17 0.19 1"/>
+    <joint name="robotiq_85_left_outer_finger_joint" type="fixed"><parent link="robotiq_85_left_outer_knuckle_link"/><child link="robotiq_85_left_outer_finger_link"/><origin xyz="0.055 0 0"/></joint>
+
+    <xacro:hf_gripper_bar name="robotiq_85_right_outer_knuckle_link" mass="0.05" length="0.055" width="0.022" height="0.030" color="0.72 0.73 0.74 1"/>
+    <joint name="robotiq_85_right_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_right_outer_knuckle_link"/>
+      <origin xyz="0.065 -0.050 0"/><axis xyz="0 0 1"/><limit lower="-0.80285" upper="0" effort="100" velocity="2.0"/><mimic joint="robotiq_85_left_knuckle_joint" multiplier="-1"/></joint>
+    <xacro:hf_gripper_bar name="robotiq_85_right_outer_finger_link" mass="0.07" length="0.085" width="0.020" height="0.028" color="0.15 0.17 0.19 1"/>
+    <joint name="robotiq_85_right_outer_finger_joint" type="fixed"><parent link="robotiq_85_right_outer_knuckle_link"/><child link="robotiq_85_right_outer_finger_link"/><origin xyz="0.055 0 0"/></joint>
+
+    <xacro:hf_gripper_bar name="robotiq_85_left_inner_knuckle_link" mass="0.03" length="0.047" width="0.018" height="0.025" color="0.65 0.67 0.69 1"/>
+    <joint name="robotiq_85_left_inner_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_left_inner_knuckle_link"/>
+      <origin xyz="0.045 0.033 0"/><axis xyz="0 0 1"/><limit lower="-0.80285" upper="0" effort="100" velocity="2.0"/><mimic joint="robotiq_85_left_knuckle_joint" multiplier="-1"/></joint>
+    <xacro:hf_gripper_bar name="robotiq_85_left_inner_finger_link" mass="0.04" length="0.073" width="0.018" height="0.024" color="0.15 0.17 0.19 1"/>
+    <joint name="robotiq_85_left_inner_finger_joint" type="fixed"><parent link="robotiq_85_left_inner_knuckle_link"/><child link="robotiq_85_left_inner_finger_link"/><origin xyz="0.047 0 0"/></joint>
+
+    <xacro:hf_gripper_bar name="robotiq_85_right_inner_knuckle_link" mass="0.03" length="0.047" width="0.018" height="0.025" color="0.65 0.67 0.69 1"/>
+    <joint name="robotiq_85_right_inner_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_right_inner_knuckle_link"/>
+      <origin xyz="0.045 -0.033 0"/><axis xyz="0 0 1"/><limit lower="0" upper="0.80285" effort="100" velocity="2.0"/><mimic joint="robotiq_85_left_knuckle_joint" multiplier="1"/></joint>
+    <xacro:hf_gripper_bar name="robotiq_85_right_inner_finger_link" mass="0.04" length="0.073" width="0.018" height="0.024" color="0.15 0.17 0.19 1"/>
+    <joint name="robotiq_85_right_inner_finger_joint" type="fixed"><parent link="robotiq_85_right_inner_knuckle_link"/><child link="robotiq_85_right_inner_finger_link"/><origin xyz="0.047 0 0"/></joint>
+
+    <link name="robotiq_85_left_pad_link"><visual><geometry><box size="0.030 0.010 0.040"/></geometry><material name="left_pad"><color rgba="0.03 0.03 0.03 1"/></material></visual>
+      <collision><geometry><box size="0.030 0.010 0.040"/></geometry></collision><inertial><mass value="0.01"/><xacro:hf_arm_box_inertia mass="0.01" x="0.030" y="0.010" z="0.040"/></inertial></link>
+    <joint name="robotiq_85_left_pad_joint" type="fixed"><parent link="robotiq_85_left_outer_finger_link"/><child link="robotiq_85_left_pad_link"/><origin xyz="0.080 -0.010 0"/></joint>
+    <link name="robotiq_85_right_pad_link"><visual><geometry><box size="0.030 0.010 0.040"/></geometry><material name="right_pad"><color rgba="0.03 0.03 0.03 1"/></material></visual>
+      <collision><geometry><box size="0.030 0.010 0.040"/></geometry></collision><inertial><mass value="0.01"/><xacro:hf_arm_box_inertia mass="0.01" x="0.030" y="0.010" z="0.040"/></inertial></link>
+    <joint name="robotiq_85_right_pad_joint" type="fixed"><parent link="robotiq_85_right_outer_finger_link"/><child link="robotiq_85_right_pad_link"/><origin xyz="0.080 0.010 0"/></joint>
+
+    <gazebo reference="robotiq_85_left_pad_link"><mu1>1.20</mu1><mu2>1.20</mu2><kp>500000</kp><kd>50</kd></gazebo>
+    <gazebo reference="robotiq_85_right_pad_link"><mu1>1.20</mu1><mu2>1.20</mu2><kp>500000</kp><kd>50</kd></gazebo>
+  </xacro:macro>
+</robot>

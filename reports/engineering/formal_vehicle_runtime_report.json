@@ -1,0 +1,70 @@
+{
+  "report_id": "tzcup_formal_vehicle_headless_runtime_v1",
+  "status": "FORMAL_GAZEBO_CONTROL_AND_SENSOR_RUNTIME_PASSED_EXTERNAL_FIDELITY_GATES_PENDING",
+  "environment": {
+    "distribution": "TZcup-Ubuntu-24.04",
+    "ros": "Jazzy",
+    "gazebo": "Harmonic gz-sim8",
+    "mode": "headless",
+    "physics_engine": "gz-physics-bullet-featherstone-plugin"
+  },
+  "passed_checks": {
+    "xacro_expansion_and_check_urdf": true,
+    "gazebo_entity_spawn": true,
+    "robot_state_publisher_initialized": true,
+    "dynamic_payload_plugin_loaded": true,
+    "dry_payload_clamp_kg": 1.512,
+    "wastewater_payload_clamp_kg": 9.7064,
+    "ros_gz_sensor_bridge_created": true,
+    "lidar_2d_message_observed": true,
+    "mid360_pointcloud_message_observed": true,
+    "front_rgbd_color_and_depth_observed": true,
+    "wrist_rgbd_color_observed": true,
+    "left_fisheye_image_observed": true,
+    "right_fisheye_image_observed": true,
+    "gnss_message_observed": true,
+    "imu_message_observed": true,
+    "gz_ros2_control_loaded": true,
+    "all_six_controllers_active": true,
+    "safe_stowed_cleaning_start": true,
+    "base_ground_truth_motion_observed": true,
+    "brush_velocity_response_observed": true,
+    "arm_and_gripper_driver_joint_response_observed": true,
+    "full_robotiq_mimic_linkage_response_observed": true
+  },
+  "observed_interfaces": {
+    "lidar_2d_frame": "lidar_2d_link",
+    "mid360_pointcloud_frame": "lidar_3d_link",
+    "front_rgb_resolution": [848, 480],
+    "fisheye_width_px": 1920,
+    "gnss_frame": "gnss_antenna_link",
+    "imu_frame": "imu_link",
+    "active_controllers": [
+      "joint_state_broadcaster",
+      "base_controller",
+      "arm_controller",
+      "cleaning_controller",
+      "storage_controller",
+      "brush_controller"
+    ],
+    "base_forward_command_mps": 0.25,
+    "base_ground_truth_forward_delta_m": 0.344,
+    "brush_velocity_command_rad_s": [10.0, -10.0, 15.0],
+    "arm_driver_joint_targets_rad": {
+      "shoulder_pan_joint": 0.1,
+      "robotiq_85_left_knuckle_joint": 0.2
+    },
+    "gnss_world_origin": {
+      "latitude_deg": 39.9042,
+      "longitude_deg": 116.4074,
+      "elevation_m": 43.5
+    }
+  },
+  "pending_or_blocked_checks": {
+    "gazebo_sigint_shutdown": "gz_server_required_sigterm_after_five_second_sigint_timeout",
+    "sensor_ray_occlusion_acceptance": "messages_observed_but_scene_level_visibility_scan_not_run",
+    "cleaning_ground_contact": "not_run",
+    "arm_full_sweep_and_self_collision": "not_run"
+  },
+  "claim_boundary": "The formal vehicle spawns headlessly with Bullet Featherstone; sensor, payload, drivetrain, full Robotiq mimic linkage, cleaning, storage and brush controllers run. This is not acceptance of cleaning contact quality, arm swept volume, or final sensor occlusion."
+}

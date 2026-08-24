@@ -49,6 +49,16 @@ def require_project_files() -> None:
         ROOT / "repos" / "high_fidelity_vehicle.repos",
         REPORTS_ROOT / "engineering" / "pre_urdf_readiness.json",
         ROOT / "scripts" / "validate_pre_urdf_readiness.py",
+        ROOT / "config" / "high_fidelity_vehicle" / "formal_vehicle_layout.yaml",
+        SOURCE_ROOT / "sanitation_vehicle_description" / "urdf" / "formal_competition_vehicle.urdf.xacro",
+        SOURCE_ROOT / "sanitation_vehicle_description" / "cad" / "formal_vehicle" / "formal_vehicle_layout.scad",
+        REPORTS_ROOT / "engineering" / "formal_competition_vehicle.urdf",
+        REPORTS_ROOT / "engineering" / "formal_vehicle_layout_report.json",
+        REPORTS_ROOT / "engineering" / "formal_vehicle_urdf_report.json",
+        REPORTS_ROOT / "engineering" / "formal_vehicle_runtime_report.json",
+        REPORTS_ROOT / "engineering" / "formal_vehicle_preview.png",
+        ROOT / "scripts" / "validate_formal_vehicle_urdf.py",
+        ROOT / "scripts" / "render_formal_vehicle_preview.py",
     )
     missing = [str(path.relative_to(ROOT)) for path in required if not path.is_file()]
     if missing:
@@ -282,6 +292,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_human_visualization_gate.py",
         ROOT / "scripts" / "test_gazebo_scene_contract.py",
         ROOT / "scripts" / "test_pre_urdf_readiness.py",
+        ROOT / "scripts" / "test_formal_vehicle_urdf.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])
     if result != pytest.ExitCode.OK:

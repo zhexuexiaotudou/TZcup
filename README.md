@@ -92,7 +92,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 - 人类可读的园区道路、路缘、人行道、绿化、积水、垃圾、落叶和静态/动态障碍 Gazebo 场景；
 - SLAM、AMCL、混合定位、Nav2、keepout/speed filter、碰撞监控和急停；
 - 全覆盖规划、任务几何、覆盖率/定位/安全指标与 rosbag 回放审计；
-- 五类清扫目标链；另有无精确URDF的多长宽比园区、belief-only主动清扫/RL、3 cm方块投箱占位闭环，以及已完成[实施前输入锁](docs/pre-urdf-readiness.md)但尚未制作正式URDF的竞赛级高保真整车，均不具实车证据权威；
+- 五类清扫目标链；另有多长宽比园区、belief-only主动清扫/RL、3 cm方块投箱占位闭环，以及已完成[正式 URDF/CAD 名义整车](docs/formal-vehicle-urdf-cad.md)的竞赛级高保真链；后者已通过结构/惯量/安装坐标、Gazebo 传感器出数和主控制链运行门，但尚未通过实物标定、清扫接触质量、全空间扫掠和实车证据门；
 - APP/API、语音入口和受限任务 DSL；
 - RViz 调试图层与 Gazebo 三维物理界面；
 - 分阶段验收、紧凑证据、SBOM、许可清单和发布打包工具。

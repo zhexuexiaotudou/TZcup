@@ -1,0 +1,70 @@
+{
+  "approximate_fov_passed_sensors": [
+    "utm30lx",
+    "mid360",
+    "front_d435_depth",
+    "rear_left_fisheye",
+    "rear_right_fisheye",
+    "gnss",
+    "imu"
+  ],
+  "approximate_fov_pending_sensors": [
+    "wrist_d435_depth"
+  ],
+  "claim_boundary": "Numeric initial layout and deterministic budgets pass. Expanded URDF inertials/names/limits must pass separately; final CoG, wastewater capacity, mesh swept volumes, exact occlusion, ground contact and Gazebo sensor visibility remain fail-closed.",
+  "counts": {
+    "approximate_fov_passed": 7,
+    "approximate_fov_pending": 1,
+    "component_envelopes": 8,
+    "installation_frames": 24,
+    "sensor_layouts": 8
+  },
+  "dry_bin_usable_l": 40.0,
+  "effective_cleaning_width_m": 1.32,
+  "layout_id": "tzcup_formal_vehicle_layout_v1",
+  "passed_deterministic_checks": [
+    "pre_urdf_contract_and_four_budget_csvs",
+    "required_installation_frames_have_numeric_initial_poses",
+    "declared_component_envelopes_fit_transport_envelope",
+    "dry_bin_geometry_and_usable_volume_at_least_40_l",
+    "mass_installation_and_design_caps_bound_preliminary_wastewater_fill",
+    "payload_limit_at_preliminary_usable_wastewater_fill",
+    "effective_cleaning_width_at_least_0_6_m",
+    "declared_arm_stowed_and_operating_envelopes_are_bounded",
+    "static_sensor_layout_approximate_fov_clearance"
+  ],
+  "payload": {
+    "at_preliminary_usable_fill_kg": 88.9234,
+    "design_limit_kg": 91.35,
+    "remaining_margin_kg": 2.4266
+  },
+  "pending_external_gates": [
+    "exact_s100_board_envelope",
+    "full_inertia_and_cog_scan",
+    "fov_occlusion_solve",
+    "final_wastewater_capacity",
+    "detailed_power_topology",
+    "arm_exact_swept_volume",
+    "cleaning_ground_contact",
+    "gazebo_sensor_ray_and_visibility_scan"
+  ],
+  "preliminary_wastewater": {
+    "cog_limit_l": null,
+    "final_capacity_frozen": false,
+    "installation_limit_l": 14.0,
+    "mass_limit_l": 12.133,
+    "nominal_before_usable_fraction_l": 12.133,
+    "usable_l": 9.7064
+  },
+  "robot_name": "tzcup_formal_sanitation_vehicle",
+  "status": "LAYOUT_CONTRACT_VALID_URDF_AND_SIMULATION_GATES_PENDING",
+  "transport_envelope_m": {
+    "height": 1.4,
+    "length": 1.16,
+    "width": 1.35
+  },
+  "urdf_validation": {
+    "evaluated": false,
+    "passed": false
+  }
+}
