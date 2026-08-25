@@ -43,6 +43,9 @@ def _expanded_fixture(tmp_path: Path, *, mutate: str = "") -> Path:
     for virtual_frame in layout["validation_policy"]["inertial_exempt_virtual_frames"]:
         if virtual_frame not in links:
             links.append(virtual_frame)
+    for installation_frame in layout["installation_frames"]:
+        if installation_frame not in links:
+            links.append(installation_frame)
     required_joint_specs = list(contract["joint_contract"])
     joint_children = {item["name"].replace("_joint", "_link") for item in required_joint_specs}
     # The contract's dry/wastewater lid child frames are implementation details, so add them.
@@ -162,9 +165,9 @@ def test_committed_expanded_urdf_report_is_deterministic() -> None:
         )
     )
     assert result == report
-    assert result["urdf_validation"]["link_count"] == 115
-    assert result["urdf_validation"]["joint_count"] == 114
-    assert result["urdf_validation"]["static_frame_pose_consistency"]["checked_count"] == 22
+    assert result["urdf_validation"]["link_count"] == 122
+    assert result["urdf_validation"]["joint_count"] == 121
+    assert result["urdf_validation"]["static_frame_pose_consistency"]["checked_count"] == 29
 
 
 def test_runtime_report_is_evidence_backed_and_fail_closed() -> None:
@@ -190,7 +193,7 @@ def test_minimal_expanded_urdf_fixture_passes_deterministic_checks(tmp_path: Pat
     assert result["urdf_validation"]["passed"] is True
     assert result["urdf_validation"]["all_physical_links_have_positive_mass_and_positive_definite_physical_inertia"] is True
     assert result["urdf_validation"]["massless_virtual_frames"] == ["base_footprint", "ur5e_base_link"]
-    assert result["urdf_validation"]["static_frame_pose_consistency"]["checked_count"] == 22
+    assert result["urdf_validation"]["static_frame_pose_consistency"]["checked_count"] == 29
     assert result["status"] == "FORMAL_URDF_DETERMINISTIC_CHECKS_PASSED_EXTERNAL_GATES_PENDING"
     assert result["pending_external_gates"]
 
@@ -266,7 +269,7 @@ def test_rejects_inverted_joint_limit(tmp_path: Path) -> None:
 def test_rejects_static_frame_position_drift(tmp_path: Path) -> None:
     urdf = _expanded_fixture(tmp_path)
     raw = urdf.read_text(encoding="utf-8").replace(
-        'xyz="0.25 0.0 0.8301"', 'xyz="0.27 0.0 0.8301"', 1
+        'xyz="-0.02 0.0 1.1021"', 'xyz="0.00 0.0 1.1021"', 1
     )
     urdf.write_text(raw, encoding="utf-8")
     with pytest.raises(FormalVehicleValidationError, match="installation frame lidar_2d_link differs"):
@@ -275,9 +278,9 @@ def test_rejects_static_frame_position_drift(tmp_path: Path) -> None:
 
 def test_rejects_static_frame_rotation_drift(tmp_path: Path) -> None:
     urdf = _expanded_fixture(tmp_path)
-    marker = 'xyz="0.25 0.0 0.8301" rpy="0.0 0.0 0.0"'
+    marker = 'xyz="-0.02 0.0 1.1021" rpy="0.0 0.0 0.0"'
     raw = urdf.read_text(encoding="utf-8").replace(
-        marker, 'xyz="0.25 0.0 0.8301" rpy="0.0 0.0 0.10"', 1
+        marker, 'xyz="-0.02 0.0 1.1021" rpy="0.0 0.0 0.10"', 1
     )
     assert raw != urdf.read_text(encoding="utf-8")
     urdf.write_text(raw, encoding="utf-8")

@@ -95,24 +95,23 @@
       <origin xyz="0 0 0.204"/>
     </joint>
 
-    <!-- Structural mast is intentionally a separate physical link so its
-         flexibility and sensor payload can be refined without changing base inertia. -->
+    <!-- Bolted twin-column sensor tower.  Sensor-specific shelves are separate
+         physical links in sensor_suite.xacro, so every load path is visible
+         and no sensor is represented as floating on an anonymous crossbar. -->
     <link name="sensor_mast_link">
       <visual name="machined_sensor_mast_visual">
         <geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/sensor_mast.stl"/></geometry>
-        <material name="mast_black"><color rgba="0.06 0.07 0.08 1"/></material>
+        <material name="mast_anodized_aluminum"><color rgba="0.30 0.33 0.34 1"/></material>
       </visual>
-      <collision name="mast_column_collision"><origin xyz="0 0 0.425"/><geometry><box size="0.060 0.060 0.850"/></geometry></collision>
-      <collision name="mast_crossbar_collision">
-        <origin xyz="0 0 0.815"/>
-        <geometry><box size="0.090 0.300 0.055"/></geometry>
-      </collision>
-      <collision name="mast_gnss_stanchion_collision"><origin xyz="-0.100 0 0.895"/><geometry><box size="0.040 0.040 0.130"/></geometry></collision>
-      <collision name="mast_gusset_collision"><origin xyz="0 0 0.060"/><geometry><box size="0.170 0.120 0.120"/></geometry></collision>
+      <collision name="mast_left_column_collision"><origin xyz="0 -0.050 0.396"/><geometry><box size="0.030 0.030 0.760"/></geometry></collision>
+      <collision name="mast_right_column_collision"><origin xyz="0 0.050 0.396"/><geometry><box size="0.030 0.030 0.760"/></geometry></collision>
+      <collision name="mast_service_spine_collision"><origin xyz="-0.022 0 0.375"/><geometry><box size="0.036 0.062 0.690"/></geometry></collision>
+      <collision name="mast_pedestal_collision"><origin xyz="0 0 0.008"/><geometry><box size="0.190 0.150 0.016"/></geometry></collision>
+      <collision name="mast_head_plate_collision"><origin xyz="0 0 0.778"/><geometry><box size="0.150 0.120 0.018"/></geometry></collision>
       <inertial>
-        <origin xyz="0 0 0.425"/>
-        <mass value="1.0"/>
-        <xacro:hf_box_inertia mass="1.0" x="0.060" y="0.060" z="0.850"/>
+        <origin xyz="0 0 0.390"/>
+        <mass value="1.45"/>
+        <xacro:hf_box_inertia mass="1.45" x="0.150" y="0.150" z="0.780"/>
       </inertial>
     </link>
     <joint name="sensor_mast_joint" type="fixed">
@@ -125,8 +124,10 @@
     <link name="arm_mount_link">
       <visual><geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/arm_mount_adapter.stl"/></geometry>
         <material name="arm_mount_gray"><color rgba="0.32 0.34 0.36 1"/></material></visual>
-      <collision><origin xyz="0 0 0.013"/><geometry><cylinder radius="0.120" length="0.056"/></geometry></collision>
-      <inertial><origin xyz="0 0 0.013"/><mass value="2.8"/><inertia ixx="0.010811" ixy="0" ixz="0" iyy="0.010811" iyz="0" izz="0.020160"/></inertial>
+      <collision name="arm_backing_plate_collision"><origin xyz="0 0 -0.044"/><geometry><box size="0.280 0.220 0.012"/></geometry></collision>
+      <collision name="arm_pedestal_collision"><origin xyz="0 0 -0.018"/><geometry><box size="0.180 0.180 0.040"/></geometry></collision>
+      <collision name="arm_adapter_collision"><origin xyz="0 0 0.013"/><geometry><cylinder radius="0.120" length="0.056"/></geometry></collision>
+      <inertial><origin xyz="0 0 -0.005"/><mass value="6.5"/><inertia ixx="0.035100" ixy="0" ixz="0" iyy="0.035100" iyz="0" izz="0.048100"/></inertial>
     </link>
     <joint name="arm_mount_joint" type="fixed">
       <parent link="payload_deck_link"/><child link="arm_mount_link"/>

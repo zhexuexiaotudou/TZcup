@@ -16,7 +16,7 @@
     "approximate_fov_passed": 7,
     "approximate_fov_pending": 1,
     "component_envelopes": 8,
-    "installation_frames": 24,
+    "installation_frames": 31,
     "sensor_layouts": 8
   },
   "dry_bin_usable_l": 40.0,

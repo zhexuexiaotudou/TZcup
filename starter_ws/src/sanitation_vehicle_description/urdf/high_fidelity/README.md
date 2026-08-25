@@ -33,13 +33,13 @@ user's eventual board dimensions or board mass.
 `sensor_suite.xacro` exports
 `hf_sensor_suite(mast_parent, base_parent, wrist_parent)`. For the formal
 assembly these arguments are `sensor_mast_link`, `base_link`, and `tool0`.
-The macro provides separate physical links, joints, inertias and Gazebo sensor
+The macro provides separate physical mount links, device links, joints, inertias and Gazebo sensor
 blocks for the following devices. UTM-30LX, D435, MID-360, ANN-MB and VN100
 external visuals use pinned redistributable meshes; the fish-eye housing and
 mount are project-generated CAD because the exact camera SKU remains pending.
 
 - Hokuyo UTM-30LX: 270 degrees, 0.1-30 m, 40 Hz;
-- Livox MID-360 approximation: 360 x 59 degrees, 0.1-40 m, 10 Hz;
+- Livox MID-360 approximation: 360 degrees horizontal and -7 to +52 degrees vertical, 0.1-40 m, 10 Hz;
 - front and wrist Intel D435 depth cameras: 87 x 58 degrees at 30 Hz;
 - two independent Arducam B0202 fisheye cameras: 150 x 129 degree physical
   envelope, independent frames and topics at 30 Hz;
@@ -47,11 +47,12 @@ mount are project-generated CAD because the exact camera SKU remains pending.
 - VN-100 IMU at 200 Hz.
 
 Gazebo's camera sensor uses a pinhole projection for each fisheye image. The
-150-degree visibility envelope is simulated, while the real equidistant lens
-calibration and distortion are applied downstream in ROS. MID-360 is represented
+150-degree visibility envelope is simulated; a real equidistant calibration and
+distortion stage is not yet present and remains an explicit fidelity boundary. MID-360 is represented
 by a dense raster GPU lidar; its real non-repeating Livox scan pattern remains a
-sensor-plugin calibration task. Exact sensor transforms remain subject to the
-self-occlusion and 3 cm target-visibility gate.
+sensor-plugin calibration task. The tower is a bolted twin-column load path with
+independent UTM cantilever, MID-360 four-isolator top plate and side-lower ANN-MB
+ground plane. Exact mesh ray occlusion remains subject to the 3 cm target-visibility gate.
 
 ## Manipulator and gripper module
 
@@ -76,3 +77,6 @@ single commanded closure joint. The right outer knuckle and both inner knuckles
 use URDF `mimic` relations. This keeps the gripper one-DOF while retaining
 separate contact geometry. Final full-space self-collision, vendor calibration
 offsets, effort tuning and grasp-contact tuning remain formal simulation gates.
+The formal controller configuration uses a six-joint `arm_controller` and an
+independent one-joint `gripper_controller`; both reject partial goals and enforce
+explicit path and terminal tolerances.

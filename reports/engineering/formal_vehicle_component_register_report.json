@@ -1,0 +1,29 @@
+{
+  "register_id": "tzcup_formal_vehicle_component_register_v1",
+  "status": "COMPONENT_REGISTER_AND_MECHANICAL_LOAD_PATHS_VALID",
+  "sensor_installation_count": 8,
+  "mechanical_subassembly_count": 9,
+  "checked_sensor_installations": [
+    "hokuyo_utm30lx",
+    "livox_mid360",
+    "ublox_ann_mb",
+    "intel_d435_front",
+    "rear_left_fisheye",
+    "rear_right_fisheye",
+    "vectornav_vn100",
+    "intel_d435_wrist"
+  ],
+  "checked_mechanical_subassemblies": [
+    "sensor_tower",
+    "manipulator",
+    "gripper",
+    "dry_storage",
+    "wastewater_storage",
+    "side_brushes",
+    "central_roller",
+    "recovery_squeegee",
+    "compute_enclosure"
+  ],
+  "top_protrusion_name": "modular_sensor_tower",
+  "claim_boundary": "The register freezes the selected public-reference component, parent/child mounting chain and nominal installation datum. It does not claim proprietary internals, manufacturing tolerances, cable-flex life or certification."
+}

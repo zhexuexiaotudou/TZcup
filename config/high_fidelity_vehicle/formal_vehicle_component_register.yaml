@@ -1,0 +1,149 @@
+schema_version: 1
+register_id: tzcup_formal_vehicle_component_register_v1
+coordinate_reference: base_footprint
+claim_boundary: >-
+  The register freezes the selected public-reference component, parent/child
+  mounting chain and nominal installation datum. It does not claim proprietary
+  internals, manufacturing tolerances, cable-flex life or certification.
+
+sensor_installations:
+  - id: hokuyo_utm30lx
+    role: 2d_obstacle_and_localization_lidar
+    model: Hokuyo UTM-30LX
+    parent_link: sensor_mast_link
+    mount_link: lidar_2d_mount_link
+    sensor_link: lidar_2d_link
+    connection: bolted_front_cantilever_with_vibration_pad_and_side_clamps
+    xyz_m: [-0.020, 0.000, 1.1021]
+    visible: true
+    topic: /sensors/lidar_2d/scan
+  - id: livox_mid360
+    role: 3d_obstacle_and_mapping_lidar
+    model: Livox MID-360
+    parent_link: sensor_mast_link
+    mount_link: lidar_3d_mount_link
+    sensor_link: lidar_3d_link
+    connection: four_isolator_standoffs_on_circular_top_plate
+    xyz_m: [-0.135, 0.000, 1.2731]
+    visible: true
+    topic: /sensors/lidar_3d/points
+  - id: ublox_ann_mb
+    role: gnss_antenna
+    model: u-blox ANN-MB-00
+    parent_link: sensor_mast_link
+    mount_link: gnss_mount_link
+    sensor_link: gnss_antenna_link
+    connection: lateral_sky_view_boom_with_ground_plane_and_four_fasteners
+    xyz_m: [-0.190, 0.160, 1.1801]
+    visible: true
+    topic: /sensors/gnss/fix
+  - id: intel_d435_front
+    role: forward_rgbd_perception
+    model: Intel RealSense D435
+    parent_link: base_link
+    mount_link: front_rgbd_mount_link
+    sensor_link: front_rgbd_link
+    connection: recessed_bezel_glare_hood_and_four_fasteners_to_front_subframe
+    xyz_m: [0.569951, 0.000, 0.613404]
+    visible: true
+    topic: /sensors/front_rgbd/depth/image_rect_raw
+  - id: rear_left_fisheye
+    role: rear_left_obstacle_camera
+    model: Arducam IMX291-class rugged fisheye module
+    parent_link: base_link
+    mount_link: rear_left_fisheye_mount_link
+    sensor_link: rear_left_fisheye_link
+    connection: sealed_wedge_pod_to_rear_body_subframe
+    xyz_m: [-0.565, 0.280, 0.6001]
+    visible: true
+    topic: /sensors/rear_left_fisheye/image_raw
+  - id: rear_right_fisheye
+    role: rear_right_obstacle_camera
+    model: Arducam IMX291-class rugged fisheye module
+    parent_link: base_link
+    mount_link: rear_right_fisheye_mount_link
+    sensor_link: rear_right_fisheye_link
+    connection: sealed_wedge_pod_to_rear_body_subframe
+    xyz_m: [-0.565, -0.280, 0.6001]
+    visible: true
+    topic: /sensors/rear_right_fisheye/image_raw
+  - id: vectornav_vn100
+    role: inertial_measurement
+    model: VectorNav VN-100 Rugged
+    parent_link: base_link
+    mount_link: imu_mount_tray_link
+    sensor_link: imu_link
+    connection: internal_horizontal_tray_with_four_elastomer_isolators
+    xyz_m: [0.000, 0.000, 0.4091]
+    visible: false
+    service_visibility: bodywork_visible_false
+    topic: /sensors/imu/data
+  - id: intel_d435_wrist
+    role: grasp_rgbd_perception
+    model: Intel RealSense D435
+    parent_link: tool0
+    mount_link: wrist_rgbd_link
+    sensor_link: wrist_rgbd_link
+    connection: machined_side_bracket_on_ur_tool_flange
+    xyz_m: [0.115, 0.000, 0.025]
+    visible: true
+    topic: /sensors/wrist_rgbd/depth/image_rect_raw
+
+mechanical_subassemblies:
+  - id: sensor_tower
+    parent_link: payload_deck_link
+    root_link: sensor_mast_link
+    connection: 190x150x16_mm_bolted_base_twin_30x30_mm_columns_three_cross_ties_and_gussets
+    purpose: carries_utm_mid360_and_gnss_without_shared_floating_crossbar
+  - id: manipulator
+    model: Universal Robots UR5e
+    parent_link: arm_mount_link
+    root_link: ur5e_base_link
+    connection: reinforced_payload_deck_to_six_bolt_adapter
+    driven_joints: [shoulder_pan_joint, shoulder_lift_joint, elbow_joint, wrist_1_joint, wrist_2_joint, wrist_3_joint]
+    controller: arm_controller
+  - id: gripper
+    model: Robotiq 2F-85
+    parent_link: tool0
+    root_link: ur_to_robotiq_adapter_link
+    connection: ur_tool_flange_adapter_to_robotiq_base
+    driven_joints: [robotiq_85_left_knuckle_joint]
+    controller: gripper_controller
+  - id: dry_storage
+    parent_link: payload_deck_link
+    root_link: dry_bin_link
+    connection: single_layer_40_l_bin_on_payload_deck
+  - id: wastewater_storage
+    parent_link: payload_deck_link
+    root_link: wastewater_tank_link
+    connection: dedicated_wet_tank_on_payload_deck
+  - id: side_brushes
+    parent_link: cleaning_lift_carriage_link
+    root_links: [left_side_brush_motor_stator_link, right_side_brush_motor_stator_link]
+    connection: lift_carriage_to_outboard_motor_and_brush_shafts
+  - id: central_roller
+    parent_link: cleaning_lift_carriage_link
+    root_link: central_roller_link
+    connection: cassette_motor_gearbox_shaft_and_opposite_bearing
+  - id: recovery_squeegee
+    parent_link: cleaning_lift_carriage_link
+    root_link: squeegee_link
+    connection: pitch_and_float_joints_to_suction_nozzle
+  - id: compute_enclosure
+    role: Journey_6_S100_compute_protective_envelope
+    parent_link: payload_deck_link
+    root_link: s100_compute_enclosure_link
+    connection: bolted_230x180_mm_mounting_plate
+    sku_status: exact_board_envelope_pending
+
+external_identity:
+  top_protrusion_name: modular_sensor_tower
+  top_protrusion_parts:
+    - bolted_pedestal
+    - twin_structural_columns
+    - central_cable_service_spine
+    - utm30lx_front_shelf
+    - mid360_isolated_top_plate
+    - gnss_lateral_sky_view_boom
+  amber_roof_parts: low_profile_warning_beacons
+  explicit_non_sensors: [corner_beacons, emergency_stop, work_lights, tail_lights]

@@ -232,10 +232,16 @@ def bodywork_parts() -> dict[str, Mesh]:
         (0.515, -0.250, 0.070, 0.335, 0.085),
     ], exponent=3.6)
     parts["sensor_pylon_fairing.stl"] = lofted_body([
-        (-0.205, 0.0, 0.090, 0.690, 0.070),
-        (-0.135, 0.0, 0.075, 0.820, 0.210),
-        (-0.075, 0.0, 0.060, 0.755, 0.120),
+        (-0.225, 0.0, 0.075, 0.765, 0.155),
+        (-0.180, 0.0, 0.080, 0.780, 0.170),
+        (-0.080, 0.0, 0.080, 0.780, 0.170),
+        (-0.040, 0.0, 0.070, 0.755, 0.145),
     ], exponent=3.2, samples=32)
+    parts["sensor_pylon_service_hatch.stl"] = extruded_polygon_xz(
+        [(-0.205, 0.665), (-0.065, 0.665), (-0.060, 0.855), (-0.200, 0.865)],
+        -0.083,
+        0.006,
+    )
 
     # Wheel arches and continuous side skirts.
     for name, x, y in (

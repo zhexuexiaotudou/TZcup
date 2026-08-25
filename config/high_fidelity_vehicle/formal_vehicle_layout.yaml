@@ -17,15 +17,22 @@ installation_frames:
   payload_deck_link: {xyz_m: [0.000, 0.000, 0.3691], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   arm_mount_link: {xyz_m: [0.100, -0.200, 0.4341], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   sensor_mast_link: {xyz_m: [-0.135, 0.000, 0.3891], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  lidar_2d_link: {xyz_m: [0.250, 0.000, 0.8301], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  lidar_3d_link: {xyz_m: [-0.135, 0.000, 1.2341], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  front_rgbd_link: {xyz_m: [0.570, 0.000, 0.6141], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  front_rgbd_depth_optical_frame: {xyz_m: [0.570, 0.000, 0.6141], rpy_rad: [-1.571, 0.000, -1.571], pending: false}
+  lidar_2d_mount_link: {xyz_m: [-0.075, 0.000, 1.0241], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  lidar_2d_link: {xyz_m: [-0.020, 0.000, 1.1021], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  lidar_3d_mount_link: {xyz_m: [-0.135, 0.000, 1.1791], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  lidar_3d_link: {xyz_m: [-0.135, 0.000, 1.2731], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  front_rgbd_mount_link: {xyz_m: [0.565, 0.000, 0.6141], rpy_rad: [0.000, 0.139626, 0.000], pending: false}
+  front_rgbd_link: {xyz_m: [0.569951, 0.000, 0.613404], rpy_rad: [0.000, 0.139626, 0.000], pending: false}
+  front_rgbd_depth_optical_frame: {xyz_m: [0.569951, 0.000, 0.613404], rpy_rad: [-1.710422, 0.000, -1.570796], pending: false}
+  rear_left_fisheye_mount_link: {xyz_m: [-0.565, 0.280, 0.6001], rpy_rad: [0.000, -0.175, 2.705], pending: false}
   rear_left_fisheye_link: {xyz_m: [-0.565, 0.280, 0.6001], rpy_rad: [0.000, -0.175, 2.705], pending: false}
   rear_left_fisheye_optical_frame: {xyz_m: [-0.585, 0.290, 0.6001], rpy_rad: [-1.571, 0.000, 1.134], pending: false}
+  rear_right_fisheye_mount_link: {xyz_m: [-0.565, -0.280, 0.6001], rpy_rad: [0.000, -0.175, -2.705], pending: false}
   rear_right_fisheye_link: {xyz_m: [-0.565, -0.280, 0.6001], rpy_rad: [0.000, -0.175, -2.705], pending: false}
   rear_right_fisheye_optical_frame: {xyz_m: [-0.585, -0.290, 0.6001], rpy_rad: [-1.571, 0.000, 2.007], pending: false}
-  gnss_antenna_link: {xyz_m: [-0.235, 0.000, 1.3541], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  gnss_mount_link: {xyz_m: [-0.170, -0.020, 1.1541], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  gnss_antenna_link: {xyz_m: [-0.190, 0.160, 1.1801], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  imu_mount_tray_link: {xyz_m: [0.000, 0.000, 0.3901], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   imu_link: {xyz_m: [0.000, 0.000, 0.4091], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   dry_bin_link: {xyz_m: [-0.205, 0.160, 0.5691], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   wastewater_tank_link: {xyz_m: [-0.205, -0.245, 0.5041], rpy_rad: [0.000, 0.000, 0.000], pending: false}
@@ -42,7 +49,7 @@ component_envelopes:
   payload_frame: {min_xyz_m: [-0.455, -0.330, 0.372], max_xyz_m: [0.455, 0.330, 0.455], pending: false}
   dry_bin: {min_xyz_m: [-0.475, -0.048, 0.450], max_xyz_m: [0.065, 0.368, 0.730], pending: false}
   wastewater_tank: {min_xyz_m: [-0.400, -0.390, 0.430], max_xyz_m: [-0.010, -0.100, 0.620], pending: false}
-  sensor_mast: {min_xyz_m: [-0.275, -0.150, 0.400], max_xyz_m: [-0.075, 0.150, 1.390], pending: false}
+  sensor_mast: {min_xyz_m: [-0.285, -0.160, 0.389], max_xyz_m: [0.070, 0.250, 1.310], pending: false}
   arm_stowed: {min_xyz_m: [-0.170, -0.460, 0.440], max_xyz_m: [0.500, 0.125, 1.390], pending: true, pending_reason: exact_mesh_swept_volume_scan}
   front_sensor_bar: {min_xyz_m: [0.210, -0.165, 0.570], max_xyz_m: [0.610, 0.165, 0.890], pending: false}
   cleaning_head_stowed: {min_xyz_m: [-0.515, -0.660, 0.045], max_xyz_m: [0.600, 0.660, 0.185], pending: true, pending_reason: brush_compliance_and_ground_contact_scan}
@@ -103,12 +110,12 @@ arm_envelopes:
   payload_at_full_reach_kg: 5.000
 
 sensor_layout:
-  - {id: utm30lx, frame: lidar_2d_link, xyz_m: [0.245, 0.000, 0.7841], forward_xyz: [1.000, 0.000, 0.000], approximate_clear_fraction: 0.90, minimum_clear_fraction: 0.85, pending: false}
-  - {id: mid360, frame: lidar_3d_link, xyz_m: [-0.135, 0.000, 1.1141], forward_xyz: [1.000, 0.000, 0.000], approximate_clear_fraction: 0.94, minimum_clear_fraction: 0.90, pending: false}
-  - {id: front_d435_depth, frame: front_rgbd_depth_optical_frame, xyz_m: [0.505, 0.000, 0.6141], forward_xyz: [1.000, 0.000, 0.000], approximate_clear_fraction: 0.99, minimum_clear_fraction: 0.95, pending: false}
-  - {id: rear_left_fisheye, frame: rear_left_fisheye_optical_frame, xyz_m: [-0.505, 0.285, 0.5891], forward_xyz: [-0.906, 0.423, -0.087], approximate_clear_fraction: 0.97, minimum_clear_fraction: 0.90, pending: false}
-  - {id: rear_right_fisheye, frame: rear_right_fisheye_optical_frame, xyz_m: [-0.505, -0.285, 0.5891], forward_xyz: [-0.906, -0.423, -0.087], approximate_clear_fraction: 0.97, minimum_clear_fraction: 0.90, pending: false}
-  - {id: gnss, frame: gnss_antenna_link, xyz_m: [-0.135, 0.000, 1.2341], forward_xyz: [0.000, 0.000, 1.000], approximate_clear_fraction: 0.98, minimum_clear_fraction: 0.95, pending: false}
+  - {id: utm30lx, frame: lidar_2d_link, xyz_m: [-0.020, 0.000, 1.1021], forward_xyz: [1.000, 0.000, 0.000], approximate_clear_fraction: 0.92, minimum_clear_fraction: 0.85, pending: false}
+  - {id: mid360, frame: lidar_3d_link, xyz_m: [-0.135, 0.000, 1.2731], forward_xyz: [1.000, 0.000, 0.000], approximate_clear_fraction: 0.96, minimum_clear_fraction: 0.90, pending: false}
+  - {id: front_d435_depth, frame: front_rgbd_depth_optical_frame, xyz_m: [0.569951, 0.000, 0.613404], forward_xyz: [0.990, 0.000, -0.139], approximate_clear_fraction: 0.99, minimum_clear_fraction: 0.95, pending: false}
+  - {id: rear_left_fisheye, frame: rear_left_fisheye_optical_frame, xyz_m: [-0.585, 0.290, 0.6001], forward_xyz: [-0.906, 0.423, -0.087], approximate_clear_fraction: 0.97, minimum_clear_fraction: 0.90, pending: false}
+  - {id: rear_right_fisheye, frame: rear_right_fisheye_optical_frame, xyz_m: [-0.585, -0.290, 0.6001], forward_xyz: [-0.906, -0.423, -0.087], approximate_clear_fraction: 0.97, minimum_clear_fraction: 0.90, pending: false}
+  - {id: gnss, frame: gnss_antenna_link, xyz_m: [-0.190, 0.160, 1.1801], forward_xyz: [0.000, 0.000, 1.000], approximate_clear_fraction: 0.98, minimum_clear_fraction: 0.95, pending: false}
   - {id: imu, frame: imu_link, xyz_m: [0.000, 0.000, 0.4091], forward_xyz: [1.000, 0.000, 0.000], approximate_clear_fraction: 1.00, minimum_clear_fraction: 1.00, pending: false}
   - {id: wrist_d435_depth, frame: wrist_rgbd_depth_optical_frame, xyz_m: [0.000, 0.000, 0.055], forward_xyz: [0.000, 0.000, 1.000], approximate_clear_fraction: null, minimum_clear_fraction: 0.95, pending: true, pending_reason: dynamic_arm_pose_occlusion_scan}
 

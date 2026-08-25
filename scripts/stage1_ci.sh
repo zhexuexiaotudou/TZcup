@@ -13,6 +13,7 @@ fi
 
 mkdir -p "$WS" "$OUT"
 export SANITATION_WS="$WS"
+export TZCUP_ROOT="$PACK_ROOT"
 export PIP_BREAK_SYSTEM_PACKAGES=1
 export ROSDEP_SKIP_KEYS=micro_ros_agent
 
@@ -54,6 +55,15 @@ record_command() {
 
 record_command bash "$PACK_ROOT/scripts/install_starter.sh" | tee "$OUT/commands.log"
 bash "$PACK_ROOT/scripts/install_starter.sh" 2>&1 | tee "$OUT/install_starter.log"
+
+# Several package tests intentionally load repository-level audit helpers and
+# checked-in configuration. Expose those read-only trees at the same relative
+# locations inside this disposable workspace so Stage 1 remains portable.
+ln -s "$PACK_ROOT/scripts" "$WS/scripts"
+ln -s "$PACK_ROOT/artifacts" "$WS/artifacts"
+mkdir "$WS/starter_ws"
+ln -s "$PACK_ROOT/starter_ws/src" "$WS/starter_ws/src"
+touch "$WS/starter_ws/COLCON_IGNORE"
 
 record_command bash "$PACK_ROOT/scripts/import_upstream.sh" | tee -a "$OUT/commands.log"
 bash "$PACK_ROOT/scripts/import_upstream.sh" 2>&1 | tee "$OUT/import_upstream.log"
