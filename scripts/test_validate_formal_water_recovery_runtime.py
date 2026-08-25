@@ -1,3 +1,4 @@
+import ast
 from pathlib import Path
 
 
@@ -100,3 +101,55 @@ def test_runtime_acceptance_contains_required_positive_and_negative_gates() -> N
         "nozzle_covered_all_24_water_columns",
     ):
         assert gate in runner
+
+
+def test_runtime_physics_waits_on_sim_time_not_fixed_wall_duration() -> None:
+    path = ROOT / "scripts/validate_formal_water_recovery_runtime.py"
+    source = path.read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    functions = {
+        node.name: ast.get_source_segment(source, node) or ""
+        for node in tree.body
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef))
+    }
+    assert "def wait_for_sim_condition" in source
+    assert "simulation clock stalled" in source
+    assert "SIM_CLOCK_STALL_WALL_S = 45.0" in source
+    assert "NORMAL_PASS_TIMEOUT_SIM_S = 90.0" in source
+    assert "FULL_TANK_TIMEOUT_SIM_S = 30.0" in source
+    for name in ("reset_episode", "reverse_to_water_start", "run_normal", "run_full"):
+        assert "time.monotonic" not in functions[name]
+        assert "wait_for_sim_condition" in functions[name] or "advance_sim_time" in functions[name]
+
+
+def test_reset_and_full_tank_wait_for_real_plugin_state() -> None:
+    source = (ROOT / "scripts/validate_formal_water_recovery_runtime.py").read_text(
+        encoding="utf-8"
+    )
+    tree = ast.parse(source)
+    functions = {
+        node.name: ast.get_source_segment(source, node) or ""
+        for node in tree.body
+        if isinstance(node, ast.FunctionDef)
+    }
+    reset = functions["reset_episode"]
+    assert "for _ in range(10)" not in reset
+    assert 'node.status["ground_volume_l"]' in reset
+    assert 'node.status["tank_mass_kg"]' in reset
+    assert "callback=lambda: node.publish_reset(ground_l, tank_kg)" in reset
+
+    full = functions["run_full"]
+    assert 'bool(node.status["tank_full"])' in full
+    assert "FULL_TANK_TIMEOUT_SIM_S" in full
+    assert '"tank_mass_clamped_to_capacity"' in full
+    assert "TANK_CAPACITY_KG) <= 1e-5" in full
+
+
+def test_normal_thresholds_are_not_relaxed_for_low_real_time_factor() -> None:
+    source = (ROOT / "scripts/validate_formal_water_recovery_runtime.py").read_text(
+        encoding="utf-8"
+    )
+    assert "recovery_rate >= 0.95" in source
+    assert "len(covered_columns) == 24" in source
+    assert "mass_error <= 0.01" in source
+    assert "recovered / initial_ground >= 0.955" in source

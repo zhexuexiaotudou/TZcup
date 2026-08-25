@@ -23,6 +23,50 @@ from sensor_msgs.msg import JointState
 from formal_vehicle_mobility_metrics import WHEEL_JOINTS, evaluate_motion, quaternion_yaw
 
 MODEL_NAME = "tzcup_formal_sanitation_vehicle"
+DEFAULT_CLOCK_STALL_TIMEOUT_S = 20.0
+DEFAULT_PHASE_HARD_TIMEOUT_S = 600.0
+
+
+class SimulationClockProgressWatchdog:
+    """Fail on a stalled simulation clock while tolerating a low real-time factor."""
+
+    def __init__(
+        self,
+        initial_sim_ns: int,
+        initial_wall_s: float,
+        stall_timeout_s: float,
+        hard_timeout_s: float,
+    ) -> None:
+        if stall_timeout_s <= 0.0:
+            raise ValueError("clock stall timeout must be positive")
+        if hard_timeout_s <= 0.0:
+            raise ValueError("phase hard timeout must be positive")
+        if hard_timeout_s <= stall_timeout_s:
+            raise ValueError("phase hard timeout must exceed clock stall timeout")
+        self.initial_wall_s = initial_wall_s
+        self.last_progress_wall_s = initial_wall_s
+        self.last_sim_ns = initial_sim_ns
+        self.stall_timeout_s = stall_timeout_s
+        self.hard_timeout_s = hard_timeout_s
+
+    def observe(self, sim_ns: int, wall_s: float) -> None:
+        wall_elapsed = wall_s - self.initial_wall_s
+        if wall_elapsed >= self.hard_timeout_s:
+            raise TimeoutError(
+                f"mobility phase exceeded the {self.hard_timeout_s:.1f} s hard wall limit"
+            )
+        if sim_ns < self.last_sim_ns:
+            raise TimeoutError("simulation clock moved backwards during mobility command")
+        if sim_ns > self.last_sim_ns:
+            self.last_sim_ns = sim_ns
+            self.last_progress_wall_s = wall_s
+            return
+        stalled_for = wall_s - self.last_progress_wall_s
+        if stalled_for >= self.stall_timeout_s:
+            raise TimeoutError(
+                "simulation clock made no progress for "
+                f"{stalled_for:.1f} s during mobility command"
+            )
 
 
 def _protobuf_scalar(block: str, field: str, default: float = 0.0) -> float:
@@ -130,22 +174,44 @@ class MobilityProbe(Node):
         command.twist.linear.x = speed
         self.command.publish(command)
 
-    def spin_for(self, duration: float, speed: float, rate_hz: float = 20.0) -> dict[str, Any]:
+    def spin_for(
+        self,
+        duration: float,
+        speed: float,
+        rate_hz: float = 20.0,
+        clock_stall_timeout_s: float = DEFAULT_CLOCK_STALL_TIMEOUT_S,
+        hard_wall_timeout_s: float = DEFAULT_PHASE_HARD_TIMEOUT_S,
+    ) -> dict[str, Any]:
+        if duration < 0.0:
+            raise ValueError("simulated duration cannot be negative")
+        if rate_hz <= 0.0:
+            raise ValueError("command publication rate must be positive")
         wall_start = time.monotonic()
-        wall_deadline = wall_start + max(30.0, duration * 15.0)
         sim_start = self.get_clock().now().nanoseconds
+        watchdog = SimulationClockProgressWatchdog(
+            sim_start,
+            wall_start,
+            clock_stall_timeout_s,
+            hard_wall_timeout_s,
+        )
         period = 1.0 / rate_hz
         simulated = 0.0
         while simulated < duration:
-            if time.monotonic() >= wall_deadline:
-                raise TimeoutError(f"simulation clock did not advance {duration} s during mobility command")
+            watchdog.observe(self.get_clock().now().nanoseconds, time.monotonic())
             self.publish_velocity(speed)
             rclpy.spin_once(self, timeout_sec=period)
-            simulated = (self.get_clock().now().nanoseconds - sim_start) / 1e9
+            sim_now = self.get_clock().now().nanoseconds
+            wall_now = time.monotonic()
+            watchdog.observe(sim_now, wall_now)
+            simulated = (sim_now - sim_start) / 1e9
+        measured_wall_s = time.monotonic() - wall_start
         return {
             "requested_simulated_s": duration,
             "measured_simulated_s": simulated,
-            "measured_wall_s": time.monotonic() - wall_start,
+            "measured_wall_s": measured_wall_s,
+            "observed_realtime_factor": simulated / measured_wall_s if measured_wall_s > 0.0 else None,
+            "clock_stall_timeout_s": clock_stall_timeout_s,
+            "hard_wall_timeout_s": hard_wall_timeout_s,
             "use_sim_time": bool(self.get_parameter("use_sim_time").value),
         }
 
@@ -183,16 +249,38 @@ def _wait_for_ready(node: MobilityProbe, timeout: float) -> str:
     )
 
 
-def run(output: Path, timeout: float, forward_speed: float, forward_duration: float) -> dict[str, Any]:
+def run(
+    output: Path,
+    timeout: float,
+    forward_speed: float,
+    forward_duration: float,
+    clock_stall_timeout: float = DEFAULT_CLOCK_STALL_TIMEOUT_S,
+    phase_hard_timeout: float = DEFAULT_PHASE_HARD_TIMEOUT_S,
+) -> dict[str, Any]:
     rclpy.init()
     node = MobilityProbe()
     try:
         controller_state = _wait_for_ready(node, timeout)
-        settle_timing = node.spin_for(1.0, 0.0)
+        settle_timing = node.spin_for(
+            1.0,
+            0.0,
+            clock_stall_timeout_s=clock_stall_timeout,
+            hard_wall_timeout_s=phase_hard_timeout,
+        )
         ground_start, odom_start, wheels_start = node.snapshot()
-        forward_timing = node.spin_for(forward_duration, forward_speed)
+        forward_timing = node.spin_for(
+            forward_duration,
+            forward_speed,
+            clock_stall_timeout_s=clock_stall_timeout,
+            hard_wall_timeout_s=phase_hard_timeout,
+        )
         ground_forward, odom_forward, wheels_forward = node.snapshot()
-        stopped_timing = node.spin_for(3.0, 0.0)
+        stopped_timing = node.spin_for(
+            3.0,
+            0.0,
+            clock_stall_timeout_s=clock_stall_timeout,
+            hard_wall_timeout_s=phase_hard_timeout,
+        )
         ground_stopped, odom_stopped, wheels_stopped = node.snapshot()
         raw = {
             "controller_state": controller_state,
@@ -259,8 +347,27 @@ def main() -> None:
     parser.add_argument("--timeout", type=float, default=120.0)
     parser.add_argument("--forward-speed", type=float, default=0.25)
     parser.add_argument("--forward-duration", type=float, default=4.0)
+    parser.add_argument(
+        "--clock-stall-timeout",
+        type=float,
+        default=DEFAULT_CLOCK_STALL_TIMEOUT_S,
+        help="Fail when /clock makes no progress for this many wall seconds.",
+    )
+    parser.add_argument(
+        "--phase-hard-timeout",
+        type=float,
+        default=DEFAULT_PHASE_HARD_TIMEOUT_S,
+        help="Absolute wall-time ceiling for each simulated-time phase.",
+    )
     args = parser.parse_args()
-    run(args.output, args.timeout, args.forward_speed, args.forward_duration)
+    run(
+        args.output,
+        args.timeout,
+        args.forward_speed,
+        args.forward_duration,
+        args.clock_stall_timeout,
+        args.phase_hard_timeout,
+    )
 
 
 if __name__ == "__main__":

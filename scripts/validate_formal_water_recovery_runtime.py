@@ -21,6 +21,11 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 ROOT = "/model/tzcup_formal_sanitation_vehicle/water_recovery"
 PUMP_LIMIT_L_MIN = 15.1 * 0.70
 TANK_CAPACITY_KG = 9.7064
+SIM_CLOCK_STALL_WALL_S = 45.0
+NORMAL_PASS_TIMEOUT_SIM_S = 90.0
+NORMAL_PASS_HARD_WALL_S = 2_400.0
+FULL_TANK_TIMEOUT_SIM_S = 30.0
+FULL_TANK_HARD_WALL_S = 900.0
 
 
 class Probe(Node):
@@ -114,12 +119,86 @@ class Probe(Node):
         self.drive.publish(TwistStamped())
 
 
-def cycle(node: Probe, duration_s: float, callback=None) -> None:
+def cycle_wall(node: Probe, duration_s: float, callback=None) -> None:
+    """Brief wall-time cycling for startup/shutdown only, never acceptance physics."""
     deadline = time.monotonic() + duration_s
     while time.monotonic() < deadline:
         if callback is not None:
             callback()
         rclpy.spin_once(node, timeout_sec=0.05)
+
+
+def wait_for_sim_condition(
+    node: Probe,
+    predicate,
+    *,
+    label: str,
+    timeout_sim_s: float,
+    hard_wall_s: float,
+    callback=None,
+) -> None:
+    """Wait on simulation progress, using wall time only to detect a dead clock."""
+    wall_started = time.monotonic()
+    last_progress_wall = wall_started
+    sim_started: float | None = None
+    last_sim: float | None = None
+    while True:
+        if callback is not None:
+            callback()
+        rclpy.spin_once(node, timeout_sec=0.05)
+        if predicate():
+            return
+
+        now = time.monotonic()
+        current_sim = node.sim_time_s
+        if current_sim is not None:
+            if sim_started is None:
+                sim_started = current_sim
+            if last_sim is None or current_sim > last_sim + 1e-9:
+                last_sim = current_sim
+                last_progress_wall = now
+            if current_sim - sim_started >= timeout_sim_s:
+                raise RuntimeError(
+                    f"{label} did not complete within {timeout_sim_s:.1f} simulated seconds: "
+                    f"{node.status}"
+                )
+        if now - last_progress_wall >= SIM_CLOCK_STALL_WALL_S:
+            raise RuntimeError(
+                f"simulation clock stalled for {SIM_CLOCK_STALL_WALL_S:.1f} wall seconds "
+                f"while waiting for {label}: {node.status}"
+            )
+        if now - wall_started >= hard_wall_s:
+            raise RuntimeError(
+                f"{label} exceeded the {hard_wall_s:.1f} wall-second safety limit: "
+                f"{node.status}"
+            )
+
+
+def advance_sim_time(
+    node: Probe,
+    duration_sim_s: float,
+    *,
+    label: str,
+    hard_wall_s: float,
+    callback=None,
+) -> None:
+    phase_start: list[float | None] = [None]
+
+    def elapsed() -> bool:
+        if node.sim_time_s is None:
+            return False
+        if phase_start[0] is None:
+            phase_start[0] = node.sim_time_s
+        return node.sim_time_s - phase_start[0] >= duration_sim_s
+
+    wait_for_sim_condition(
+        node,
+        elapsed,
+        label=label,
+        timeout_sim_s=duration_sim_s + 1.0,
+        hard_wall_s=hard_wall_s,
+        callback=callback,
+    )
 
 
 def wait_ready(node: Probe, timeout_s: float = 30.0) -> None:
@@ -139,10 +218,22 @@ def wait_ready(node: Probe, timeout_s: float = 30.0) -> None:
 
 
 def reset_episode(node: Probe, ground_l: float, tank_kg: float) -> dict[str, object]:
-    for _ in range(10):
-        node.publish_reset(ground_l, tank_kg)
-        rclpy.spin_once(node, timeout_sec=0.08)
-    cycle(node, 0.5)
+    def reset_applied() -> bool:
+        if node.status is None:
+            return False
+        return (
+            abs(float(node.status["ground_volume_l"]) - ground_l) <= 1e-5
+            and abs(float(node.status["tank_mass_kg"]) - tank_kg) <= 1e-5
+        )
+
+    wait_for_sim_condition(
+        node,
+        reset_applied,
+        label="water and tank reset acknowledgement",
+        timeout_sim_s=15.0,
+        hard_wall_s=360.0,
+        callback=lambda: node.publish_reset(ground_l, tank_kg),
+    )
     if node.status is None:
         raise RuntimeError("missing status after reset")
     status = dict(node.status)
@@ -161,62 +252,56 @@ def lower_until_geometry_ready(node: Probe, timeout_sim_s: float = 60.0) -> None
         node.publish_cleaning_pose()
         node.command(brushes=False, pump=False, speed=0.0)
         rclpy.spin_once(node, timeout_sec=0.08)
-    start_sim = node.sim_time_s
-    wall_safety_deadline = time.monotonic() + 180.0
-    while time.monotonic() < wall_safety_deadline:
-        node.command(brushes=False, pump=False, speed=0.0)
-        rclpy.spin_once(node, timeout_sec=0.05)
-        if node.status is not None and bool(node.status["squeegee_ready"]) and bool(
-            node.status["nozzle_ready"]
-        ):
-            return
-        if (
-            start_sim is not None
-            and node.sim_time_s is not None
-            and node.sim_time_s - start_sim > timeout_sim_s
-        ):
-            break
-    raise RuntimeError(f"cleaning geometry never reached its ground envelope: {node.status}")
+    wait_for_sim_condition(
+        node,
+        lambda: node.status is not None
+        and bool(node.status["squeegee_ready"])
+        and bool(node.status["nozzle_ready"]),
+        label="cleaning geometry ground envelope",
+        timeout_sim_s=timeout_sim_s,
+        hard_wall_s=1_200.0,
+        callback=lambda: node.command(brushes=False, pump=False, speed=0.0),
+    )
 
 
 def wait_for_applied_mass(node: Probe, target_kg: float, timeout_sim_s: float = 5.0) -> None:
-    start_sim = node.sim_time_s
-    wall_deadline = time.monotonic() + 30.0
-    while time.monotonic() < wall_deadline:
-        rclpy.spin_once(node, timeout_sec=0.05)
-        if node.applied_mass is not None and abs(node.applied_mass - target_kg) <= 1e-5:
-            return
-        if (
-            start_sim is not None
-            and node.sim_time_s is not None
-            and node.sim_time_s - start_sim > timeout_sim_s
-        ):
-            return
+    wait_for_sim_condition(
+        node,
+        lambda: node.applied_mass is not None
+        and abs(node.applied_mass - target_kg) <= 1e-5,
+        label="dynamic payload applied-mass acknowledgement",
+        timeout_sim_s=timeout_sim_s,
+        hard_wall_s=300.0,
+    )
 
 
 def reverse_to_water_start(node: Probe, timeout_sim_s: float = 12.0) -> dict[str, float]:
     """Pre-position the raised machine ahead of the immutable water footprint."""
-    start_sim = node.sim_time_s
     start_x = node.odom.pose.pose.position.x if node.odom is not None else math.nan
-    wall_safety_deadline = time.monotonic() + 90.0
-    while time.monotonic() < wall_safety_deadline:
+
+    def reverse_command() -> None:
         node.publish_cleaning_pose(lift_m=0.10)
-        node.command(
-            brushes=False, pump=False, speed=-0.05, enabled=False
-        )
-        rclpy.spin_once(node, timeout_sec=0.05)
-        if node.status is not None and float(node.status["nozzle_world_x"]) <= -0.62:
-            break
-        if (
-            start_sim is not None
-            and node.sim_time_s is not None
-            and node.sim_time_s - start_sim > timeout_sim_s
-        ):
-            raise RuntimeError(f"failed to reverse ahead of water patch: {node.status}")
+        node.command(brushes=False, pump=False, speed=-0.05, enabled=False)
+
+    wait_for_sim_condition(
+        node,
+        lambda: node.status is not None
+        and float(node.status["nozzle_world_x"]) <= -0.62,
+        label="raised reverse pre-position",
+        timeout_sim_s=timeout_sim_s,
+        hard_wall_s=300.0,
+        callback=reverse_command,
+    )
     node.command(brushes=False, pump=False, speed=0.0, enabled=False)
-    cycle(node, 0.5, lambda: node.command(
-        brushes=False, pump=False, speed=0.0, enabled=False
-    ))
+    advance_sim_time(
+        node,
+        0.5,
+        label="raised reverse stop settling",
+        hard_wall_s=90.0,
+        callback=lambda: node.command(
+            brushes=False, pump=False, speed=0.0, enabled=False
+        ),
+    )
     end_x = node.odom.pose.pose.position.x if node.odom is not None else math.nan
     return {
         "base_start_x_m": start_x,
@@ -231,11 +316,23 @@ def run_normal(node: Probe) -> dict[str, object]:
     initial_ground = float(initial["ground_volume_l"])
 
     # Negative gate 1: enabled water model without brush or pump.
-    cycle(node, 2.0, lambda: node.command(brushes=False, pump=False, speed=0.0))
+    advance_sim_time(
+        node,
+        2.0,
+        label="disabled-system negative gate",
+        hard_wall_s=120.0,
+        callback=lambda: node.command(brushes=False, pump=False, speed=0.0),
+    )
     disabled_status = dict(node.status or {})
 
     # Negative gate 2: pump alone cannot recover water.
-    cycle(node, 2.0, lambda: node.command(brushes=False, pump=True, speed=0.0))
+    advance_sim_time(
+        node,
+        2.0,
+        label="pump-without-brush negative gate",
+        hard_wall_s=120.0,
+        callback=lambda: node.command(brushes=False, pump=True, speed=0.0),
+    )
     pump_only_status = dict(node.status or {})
 
     # The first water strip is behind the initial nozzle pose.  With cleaning
@@ -251,32 +348,41 @@ def run_normal(node: Probe) -> dict[str, object]:
     node.status_samples.clear()
     start_odom = node.odom.pose.pose.position if node.odom is not None else None
     start_sim_time = node.sim_time_s
-    wall_safety_deadline = time.monotonic() + 240.0
-    while time.monotonic() < wall_safety_deadline:
+    def normal_pass_complete() -> bool:
+        if node.status is None:
+            return False
+        recovered = float(node.status["recovered_volume_l"])
+        nozzle_x = float(node.status["nozzle_world_x"])
+        return recovered / initial_ground >= 0.955 and nozzle_x >= 1.87
+
+    def normal_pass_command() -> None:
         node.publish_cleaning_pose()
         # 0.05 m/s through a 2 mm x 0.6 m layer requires 3.60 L/min,
         # remaining below the derated 10.57 L/min pump limit with enough
         # dwell time to drain each finite strip instead of skipping its edge.
         node.command(brushes=True, pump=True, speed=0.05)
-        rclpy.spin_once(node, timeout_sec=0.05)
-        if node.status is not None:
-            recovered = float(node.status["recovered_volume_l"])
-            nozzle_x = float(node.status["nozzle_world_x"])
-            if recovered / initial_ground >= 0.955 and nozzle_x >= 1.87:
-                break
-            if (
-                start_sim_time is not None
-                and node.sim_time_s is not None
-                and node.sim_time_s - start_sim_time > 60.0
-            ):
-                break
+
+    wait_for_sim_condition(
+        node,
+        normal_pass_complete,
+        label="24-column normal recovery pass",
+        timeout_sim_s=NORMAL_PASS_TIMEOUT_SIM_S,
+        hard_wall_s=NORMAL_PASS_HARD_WALL_S,
+        callback=normal_pass_command,
+    )
     node.stop()
-    cycle(node, 1.0, node.stop)
+    advance_sim_time(
+        node,
+        1.0,
+        label="normal-pass stop settling",
+        hard_wall_s=90.0,
+        callback=node.stop,
+    )
     final = dict(node.status or {})
 
     final_ground = float(final["ground_volume_l"])
     final_tank = float(final["tank_mass_kg"])
-    wait_for_applied_mass(node, final_tank)
+    wait_for_applied_mass(node, final_tank, timeout_sim_s=10.0)
     removed_l = initial_ground - final_ground
     tank_gain_kg = final_tank - float(initial["tank_mass_kg"])
     mass_error = abs(removed_l - tank_gain_kg) / max(removed_l, 1e-12)
@@ -390,19 +496,31 @@ def run_full(node: Probe) -> dict[str, object]:
     initial = reset_episode(node, 0.40, initial_tank)
     lower_until_geometry_ready(node)
     node.status_samples.clear()
-    deadline = time.monotonic() + 20.0
-    while time.monotonic() < deadline:
+
+    def full_tank_command() -> None:
         node.publish_cleaning_pose()
         node.command(brushes=True, pump=True, speed=0.065)
-        rclpy.spin_once(node, timeout_sec=0.05)
-        if node.status is not None and bool(node.status["tank_full"]):
-            break
+
+    wait_for_sim_condition(
+        node,
+        lambda: node.status is not None and bool(node.status["tank_full"]),
+        label="real wastewater tank-full state",
+        timeout_sim_s=FULL_TANK_TIMEOUT_SIM_S,
+        hard_wall_s=FULL_TANK_HARD_WALL_S,
+        callback=full_tank_command,
+    )
     at_full = dict(node.status or {})
     ground_at_full = float(at_full["ground_volume_l"])
     tank_at_full = float(at_full["tank_mass_kg"])
-    cycle(node, 2.0, lambda: node.command(brushes=True, pump=True, speed=0.0))
+    advance_sim_time(
+        node,
+        2.0,
+        label="post-full fail-closed observation",
+        hard_wall_s=120.0,
+        callback=lambda: node.command(brushes=True, pump=True, speed=0.0),
+    )
     terminal = dict(node.status or {})
-    wait_for_applied_mass(node, float(terminal["tank_mass_kg"]))
+    wait_for_applied_mass(node, float(terminal["tank_mass_kg"]), timeout_sim_s=10.0)
     node.stop()
 
     removed_l = float(initial["ground_volume_l"]) - ground_at_full
@@ -464,7 +582,7 @@ def main() -> int:
         }
     finally:
         node.stop()
-        cycle(node, 0.2)
+        cycle_wall(node, 0.2)
         node.destroy_node()
         rclpy.shutdown()
     result["schema_version"] = 1
