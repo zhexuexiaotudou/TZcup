@@ -299,7 +299,7 @@ class DynamicPayloadSystem final:
   private: double waterCapacityKg{9.7064};
   private: const double drySizeX{0.485};
   private: const double drySizeY{0.355};
-  private: const double drySizeZ{0.232};
+  private: const double drySizeZ{0.233};
   private: const double waterSizeX{0.350};
   private: const double waterSizeY{0.250};
   private: const double waterDensity{1000.0};

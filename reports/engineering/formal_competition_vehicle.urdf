@@ -2470,7 +2470,10 @@
   <joint name="squeegee_float_joint" type="prismatic">
     <parent link="cleaning_lift_carriage_link"/>
     <child link="squeegee_float_carrier_link"/>
-    <origin rpy="0 0 0" xyz="-0.445 0 -0.011"/>
+    <!-- The carrier datum puts the rubber blade on the ground plane at the
+           nominal lowered lift position; the prismatic axis then supplies its
+           measured +/-15 mm compliance instead of leaving the blade floating. -->
+    <origin rpy="0 0 0" xyz="-0.445 0 -0.051"/>
     <axis xyz="0 0 1"/>
     <limit effort="250.0" lower="-0.015" upper="0.015" velocity="0.10"/>
     <dynamics damping="45.0" friction="4.0"/>
@@ -2574,7 +2577,9 @@
   <joint name="suction_nozzle_mount_joint" type="fixed">
     <parent link="squeegee_link"/>
     <child link="suction_nozzle_link"/>
-    <origin rpy="0 0 0" xyz="0.040 0 0.010"/>
+    <!-- The intake box bottom retains a nominal 4-6 mm gap while the rubber
+           squeegee blade is grounded; the intake itself must not scrape. -->
+    <origin rpy="0 0 0" xyz="0.040 0 -0.005"/>
   </joint>
   <gazebo reference="suction_nozzle_link">
     <sensor name="suction_nozzle_ground_contact" type="contact">
@@ -3165,9 +3170,31 @@
         <color rgba="0.20 0.48 0.32 1"/>
       </material>
     </visual>
-    <collision name="dry_deposit_chute_collision">
+    <!-- The chute is a gravity passage, not a solid block.  Four thin wall
+           collisions retain a 109 x 84 mm clear bore for the 30 mm cube and
+           leave both ends open. -->
+    <collision name="dry_deposit_chute_front_wall_collision">
+      <origin xyz="0.0585 0 0"/>
       <geometry>
-        <box size="0.125 0.100 0.350"/>
+        <box size="0.008 0.100 0.350"/>
+      </geometry>
+    </collision>
+    <collision name="dry_deposit_chute_rear_wall_collision">
+      <origin xyz="-0.0585 0 0"/>
+      <geometry>
+        <box size="0.008 0.100 0.350"/>
+      </geometry>
+    </collision>
+    <collision name="dry_deposit_chute_left_wall_collision">
+      <origin xyz="0 0.046 0"/>
+      <geometry>
+        <box size="0.109 0.008 0.350"/>
+      </geometry>
+    </collision>
+    <collision name="dry_deposit_chute_right_wall_collision">
+      <origin xyz="0 -0.046 0"/>
+      <geometry>
+        <box size="0.109 0.008 0.350"/>
       </geometry>
     </collision>
     <inertial>
@@ -3212,8 +3239,11 @@
       <topic>/storage/dry_deposit/contact</topic>
       <update_rate>50</update_rate>
       <always_on>true</always_on>
+      <!-- Fixed-joint reduction merges the chute into the actuated lid and
+             prefixes the final SDF collision.  Reference that physics name so
+             the acceptance contact topic contains real samples. -->
       <contact>
-        <collision>dry_deposit_chute_collision</collision>
+        <collision>dry_bin_lid_link_fixed_joint_lump__dry_deposit_chute_front_wall_collision_collision_8</collision>
       </contact>
     </sensor>
   </gazebo>
@@ -3246,7 +3276,7 @@
   <link name="dry_bin_payload_reserve_link">
     <visual name="forty_litre_usable_envelope">
       <geometry>
-        <box size="0.485 0.355 0.232"/>
+        <box size="0.485 0.355 0.233"/>
       </geometry>
       <material name="hf_dry_payload">
         <color rgba="0.65 0.48 0.18 0.16"/>
@@ -3255,7 +3285,7 @@
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <mass value="0.001"/>
-      <inertia ixx="1.4987416666666668e-05" ixy="0" ixz="0" iyy="2.4087416666666666e-05" iyz="0" izz="3.0104166666666665e-05"/>
+      <inertia ixx="1.5026166666666667e-05" ixy="0" ixz="0" iyy="2.4126166666666666e-05" iyz="0" izz="3.0104166666666665e-05"/>
     </inertial>
   </link>
   <joint name="dry_bin_payload_reserve_joint" type="fixed">
@@ -3864,10 +3894,12 @@
         <box size="0.47 0.65 0.20"/>
       </geometry>
     </collision>
+    <!-- Keep the aft face ahead of the dry-bin front panel.  The former
+           490 mm box entered the certified dry usable envelope by 2.5 mm. -->
     <collision name="power_cowl_collision">
-      <origin xyz="0.28 0.235 0.535"/>
+      <origin xyz="0.290 0.235 0.535"/>
       <geometry>
-        <box size="0.49 0.29 0.48"/>
+        <box size="0.470 0.29 0.48"/>
       </geometry>
     </collision>
     <collision name="compute_cowl_collision">
@@ -3876,10 +3908,13 @@
         <box size="0.39 0.19 0.22"/>
       </geometry>
     </collision>
+    <!-- The arm bay is a forward body tray; the payload deck and dedicated
+           arm adapter carry the manipulator.  Its collision therefore ends at
+           x=0.055 m and cannot become a hidden shelf through either tank. -->
     <collision name="arm_bay_floor_collision">
-      <origin xyz="0.17 -0.20 0.33"/>
+      <origin xyz="0.2575 -0.20 0.33"/>
       <geometry>
-        <box size="0.58 0.40 0.10"/>
+        <box size="0.405 0.40 0.10"/>
       </geometry>
     </collision>
     <inertial>
@@ -3929,22 +3964,42 @@
         <box size="0.045 0.70 0.52"/>
       </geometry>
     </collision>
+    <!-- Thin moulded outer panels sit beyond the independent tank boards.
+           Their inner faces retain 3.5 mm (dry) and 4 mm (wet) installation
+           gaps instead of duplicating the internal walls with overlapping
+           45 mm collision solids. -->
     <collision name="rear_shell_left_wall_collision">
       <origin xyz="-0.285 0.365 0.495"/>
       <geometry>
-        <box size="0.53 0.045 0.52"/>
+        <box size="0.53 0.020 0.52"/>
       </geometry>
     </collision>
     <collision name="rear_shell_right_wall_collision">
-      <origin xyz="-0.285 -0.365 0.495"/>
+      <origin xyz="-0.285 -0.388 0.495"/>
       <geometry>
-        <box size="0.53 0.045 0.52"/>
+        <box size="0.53 0.020 0.52"/>
       </geometry>
     </collision>
-    <collision name="rear_shell_lower_collision">
-      <origin xyz="-0.285 0 0.350"/>
+    <!-- The moulded lower return is a perimeter frame, not a solid shelf.
+           Keep its three load-bearing outer rails outside the dry / wet tank
+           clear volumes so the robot chute remains a continuous gravity path
+           to the real dry-bin floor. -->
+    <collision name="rear_shell_lower_left_skirt_collision">
+      <origin xyz="-0.285 0.365 0.275"/>
       <geometry>
-        <box size="0.53 0.68 0.23"/>
+        <box size="0.53 0.020 0.080"/>
+      </geometry>
+    </collision>
+    <collision name="rear_shell_lower_right_skirt_collision">
+      <origin xyz="-0.285 -0.388 0.275"/>
+      <geometry>
+        <box size="0.53 0.020 0.080"/>
+      </geometry>
+    </collision>
+    <collision name="rear_shell_lower_rear_rail_collision">
+      <origin xyz="-0.540 0 0.275"/>
+      <geometry>
+        <box size="0.045 0.70 0.080"/>
       </geometry>
     </collision>
     <collision name="rear_shell_roof_left_collision">
@@ -4508,13 +4563,30 @@
   </ros2_control>
   <gazebo>
     <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
-      <parameters>/mnt/f/Project/TZcup-formal-functional-layout-v2/.formal_build/install/sanitation_vehicle_description/share/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml</parameters>
+      <parameters>package://sanitation_vehicle_description/config/formal_vehicle_controllers.yaml</parameters>
     </plugin>
     <plugin filename="libDynamicPayloadSystem.so" name="sanitation_gazebo_control::DynamicPayloadSystem">
       <dry_topic>/model/tzcup_formal_sanitation_vehicle/payload/dry_mass_kg</dry_topic>
       <wastewater_topic>/model/tzcup_formal_sanitation_vehicle/payload/wastewater_mass_kg</wastewater_topic>
       <dry_capacity_kg>1.512</dry_capacity_kg>
       <wastewater_capacity_kg>9.7064</wastewater_capacity_kg>
+    </plugin>
+    <plugin filename="libWaterRecoverySystem.so" name="sanitation_gazebo_control::WaterRecoverySystem">
+      <pump_rated_flow_l_min>15.1</pump_rated_flow_l_min>
+      <hydraulic_derating>0.70</hydraulic_derating>
+      <tank_capacity_kg>9.7064</tank_capacity_kg>
+      <initial_tank_mass_kg>0.0</initial_tank_mass_kg>
+      <initial_ground_volume_l>2.88</initial_ground_volume_l>
+      <water_density_kg_l>1.0</water_density_kg_l>
+      <patch_min_x>-0.60</patch_min_x>
+      <patch_max_x>1.80</patch_max_x>
+      <patch_min_y>-0.30</patch_min_y>
+      <patch_max_y>0.30</patch_max_y>
+      <cell_size_m>0.10</cell_size_m>
+      <nozzle_length_m>0.14</nozzle_length_m>
+      <nozzle_width_m>0.65</nozzle_width_m>
+      <maximum_squeegee_clearance_m>0.012</maximum_squeegee_clearance_m>
+      <maximum_intake_clearance_m>0.012</maximum_intake_clearance_m>
     </plugin>
   </gazebo>
 </robot>

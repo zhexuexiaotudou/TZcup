@@ -33,7 +33,7 @@ def test_structural_baseline_removes_both_seed_reserves_once() -> None:
 def test_water_and_dry_boxes_match_current_xacro_envelopes() -> None:
     assert "const double drySizeX{0.485}" in SOURCE
     assert "const double drySizeY{0.355}" in SOURCE
-    assert "const double drySizeZ{0.232}" in SOURCE
+    assert "const double drySizeZ{0.233}" in SOURCE
     assert "const double waterSizeX{0.350}" in SOURCE
     assert "const double waterSizeY{0.250}" in SOURCE
     assert "_mass / (this->waterDensity * this->waterSizeX * this->waterSizeY)" in SOURCE

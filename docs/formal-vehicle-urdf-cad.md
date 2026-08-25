@@ -65,6 +65,28 @@ py -3 scripts/render_formal_vehicle_preview.py
 
 ## 构建与验证
 
+提交到 `reports/engineering/` 的正式 URDF 是启用仿真插件的确定性快照，必须在已 source
+ROS 的 WSL 环境中由唯一入口同步生成；不要手工编辑 URDF 或四份派生报告：
+
+```bash
+source /opt/ros/jazzy/setup.bash
+python3 scripts/generate_formal_vehicle_snapshot.py
+```
+
+生成器从仓库根目录用相对 Xacro 路径展开 `use_sim:=true`，并通过
+`controller_config_path:=package://sanitation_vehicle_description/config/formal_vehicle_controllers.yaml`
+消除 ament 安装前缀造成的机器绝对路径。布局、URDF、产品外观、部件台账报告和
+`formal_vehicle_snapshot_manifest.json` 只有在全部确定性门通过后才一并替换。manifest
+记录权威 Xacro/配置/校验器的 SHA-256 以及五个提交产物的 SHA-256；Windows fast CI
+仅执行以下纯 Python 一致性检查，不需要安装 ROS 或 Xacro：
+
+```powershell
+py -3 scripts/generate_formal_vehicle_snapshot.py --check
+```
+
+临时展开、调试无仿真插件的模型仍可使用下列 `use_sim:=false` 命令，但该文件不是正式
+提交快照，也不能用来更新工程报告：
+
 ```bash
 source /opt/ros/jazzy/setup.bash
 colcon build --packages-select sanitation_vehicle_description sanitation_gazebo_control

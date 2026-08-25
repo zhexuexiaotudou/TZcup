@@ -1,32 +1,4 @@
 {
-  "register_id": "tzcup_formal_vehicle_component_register_v2",
-  "status": "COMPONENT_REGISTER_AND_MECHANICAL_LOAD_PATHS_VALID",
-  "sensor_installation_count": 8,
-  "mechanical_subassembly_count": 11,
-  "functional_position_count": 35,
-  "checked_sensor_installations": [
-    "hokuyo_utm30lx",
-    "livox_mid360",
-    "ublox_ann_mb",
-    "intel_d435_front",
-    "rear_left_fisheye",
-    "rear_right_fisheye",
-    "vectornav_vn100",
-    "intel_d435_wrist"
-  ],
-  "checked_mechanical_subassemblies": [
-    "sensor_tower",
-    "manipulator",
-    "gripper",
-    "dry_storage",
-    "wastewater_storage",
-    "side_brushes",
-    "central_roller",
-    "recovery_squeegee",
-    "compute_enclosure",
-    "robot_deposition_port",
-    "wastewater_recovery_drive"
-  ],
   "checked_functional_positions": [
     "mobility",
     "mapping_3d",
@@ -64,6 +36,34 @@
     "front_contact_safety",
     "rear_contact_safety"
   ],
-  "top_protrusion_name": "modular_sensor_tower",
-  "claim_boundary": "The register freezes the selected public-reference component, parent/child mounting chain and nominal installation datum. It does not claim proprietary internals, manufacturing tolerances, cable-flex life or certification."
+  "checked_mechanical_subassemblies": [
+    "sensor_tower",
+    "manipulator",
+    "gripper",
+    "dry_storage",
+    "wastewater_storage",
+    "side_brushes",
+    "central_roller",
+    "recovery_squeegee",
+    "compute_enclosure",
+    "robot_deposition_port",
+    "wastewater_recovery_drive"
+  ],
+  "checked_sensor_installations": [
+    "hokuyo_utm30lx",
+    "livox_mid360",
+    "ublox_ann_mb",
+    "intel_d435_front",
+    "rear_left_fisheye",
+    "rear_right_fisheye",
+    "vectornav_vn100",
+    "intel_d435_wrist"
+  ],
+  "claim_boundary": "The register freezes the selected public-reference component, parent/child mounting chain and nominal installation datum. It does not claim proprietary internals, manufacturing tolerances, cable-flex life or certification.",
+  "functional_position_count": 35,
+  "mechanical_subassembly_count": 11,
+  "register_id": "tzcup_formal_vehicle_component_register_v2",
+  "sensor_installation_count": 8,
+  "status": "COMPONENT_REGISTER_AND_MECHANICAL_LOAD_PATHS_VALID",
+  "top_protrusion_name": "modular_sensor_tower"
 }

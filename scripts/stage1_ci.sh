@@ -72,8 +72,124 @@ mkdir "$WS/starter_ws"
 ln -s "$PACK_ROOT/starter_ws/src" "$WS/starter_ws/src"
 touch "$WS/starter_ws/COLCON_IGNORE"
 
-record_command bash "$PACK_ROOT/scripts/import_upstream.sh" | tee -a "$OUT/commands.log"
+export UPSTREAM_PATCH_REPORT="$OUT/opennav_coverage_patch_status.json"
+record_command env "UPSTREAM_PATCH_REPORT=$UPSTREAM_PATCH_REPORT" \
+  bash "$PACK_ROOT/scripts/import_upstream.sh" | tee -a "$OUT/commands.log"
 bash "$PACK_ROOT/scripts/import_upstream.sh" 2>&1 | tee "$OUT/import_upstream.log"
+
+verify_opennav_patch_state() {
+  python3 - "$WS/src/opennav_coverage" "$UPSTREAM_PATCH_REPORT" "$PACK_ROOT" <<'PY'
+import hashlib
+import json
+import subprocess
+import sys
+from pathlib import Path
+
+repo = Path(sys.argv[1])
+report_path = Path(sys.argv[2])
+pack_root = Path(sys.argv[3])
+report = json.loads(report_path.read_text(encoding="utf-8"))
+patch_path = pack_root / report["patch_path"]
+
+patched_commit = subprocess.check_output(
+    ["git", "-C", str(repo), "rev-parse", "HEAD"], text=True
+).strip()
+patched_tree = subprocess.check_output(
+    ["git", "-C", str(repo), "rev-parse", "HEAD^{tree}"], text=True
+).strip()
+base_commit = subprocess.check_output(
+    ["git", "-C", str(repo), "rev-parse", "HEAD^"], text=True
+).strip()
+status = subprocess.check_output(
+    ["git", "-C", str(repo), "status", "--porcelain=v1"], text=True
+).splitlines()
+diff = subprocess.check_output(
+    [
+        "git", "-C", str(repo), "diff", "--binary", "--no-ext-diff",
+        f"{report['base_commit']}..{report['patched_commit']}",
+    ]
+)
+diff_sha256 = hashlib.sha256(diff).hexdigest()
+patch_sha256 = hashlib.sha256(patch_path.read_bytes()).hexdigest()
+base_tree = subprocess.check_output(
+    ["git", "-C", str(repo), "rev-parse", f"{report['base_commit']}^{{tree}}"], text=True
+).strip()
+patched_files = subprocess.check_output(
+    [
+        "git", "-C", str(repo), "diff", "--name-only",
+        f"{report['base_commit']}..{report['patched_commit']}",
+    ],
+    text=True,
+).splitlines()
+metadata_values = subprocess.check_output(
+    [
+        "git", "-C", str(repo), "show", "-s",
+        "--format=%an%x00%ae%x00%aI%x00%cn%x00%ce%x00%cI%x00%B",
+        report["patched_commit"],
+    ]
+).decode("utf-8").rstrip("\n").split("\x00")
+actual_metadata = dict(
+    zip(
+        ("name", "email", "author_date", "committer_name", "committer_email", "committer_date", "message"),
+        metadata_values,
+        strict=True,
+    )
+)
+expected_metadata = {
+    "name": report["commit_metadata"]["name"],
+    "email": report["commit_metadata"]["email"],
+    "author_date": report["commit_metadata"]["author_date"],
+    "committer_name": report["commit_metadata"]["name"],
+    "committer_email": report["commit_metadata"]["email"],
+    "committer_date": report["commit_metadata"]["committer_date"],
+    "message": report["commit_metadata"]["message"],
+}
+
+errors = []
+if report.get("repository") != "opennav_coverage":
+    errors.append(f"unexpected repository: {report.get('repository')!r}")
+if base_commit != report["base_commit"]:
+    errors.append(f"patched commit parent changed: {base_commit}")
+if base_tree != report["base_tree"]:
+    errors.append(f"base tree changed: {base_tree}")
+if patched_commit != report["patched_commit"]:
+    errors.append(f"patched commit changed: {patched_commit}")
+if patched_tree != report["patched_tree"]:
+    errors.append(f"patched tree changed: {patched_tree}")
+if patch_sha256 != report["patch_sha256"]:
+    errors.append(f"patch file changed: {patch_sha256}")
+if status != report["status_porcelain"]:
+    errors.append(f"status changed: {status!r}")
+if diff_sha256 != report["patched_diff_sha256"]:
+    errors.append(f"patched diff changed: {diff_sha256}")
+if status:
+    errors.append(f"patched checkout is dirty: {status!r}")
+if report["status_porcelain"] != []:
+    errors.append(f"report does not record clean status: {report['status_porcelain']!r}")
+if report["working_tree_clean"] is not True:
+    errors.append("patched checkout must explicitly report working_tree_clean=true")
+if patched_files != ["opennav_coverage/test/test_path.cpp"]:
+    errors.append(f"actual patched files changed: {patched_files!r}")
+if report["patched_files"] != patched_files:
+    errors.append(f"unexpected patched files: {report['patched_files']!r}")
+if actual_metadata != expected_metadata:
+    errors.append(f"patched commit metadata changed: {actual_metadata!r}")
+if errors:
+    raise SystemExit("; ".join(errors))
+
+print(
+    "opennav_coverage "
+    f"base_commit={base_commit} "
+    f"patch_sha256={report['patch_sha256']} "
+    f"patched_commit={patched_commit} "
+    f"patched_tree={patched_tree} "
+    f"patched_diff_sha256={diff_sha256} "
+    "working_tree_clean=true patch_state_verified=true"
+)
+PY
+}
+
+verify_opennav_patch_state | tee "$OUT/opennav_coverage_patch_state_before.txt"
 
 {
   for repository in linorobot2 opennav_coverage; do
@@ -104,6 +220,8 @@ done
   done
 } | tee "$OUT/third_party_status_after.txt"
 
+verify_opennav_patch_state | tee "$OUT/opennav_coverage_patch_state_after.txt"
+
 set +u
 source /opt/ros/jazzy/setup.bash
 source "$WS/install/setup.bash"
@@ -123,6 +241,9 @@ from pathlib import Path
 
 out = Path(os.environ["STAGE1_OUT"])
 ws = Path(os.environ["STAGE1_WS"])
+patch_report = json.loads(
+    (out / "opennav_coverage_patch_status.json").read_text(encoding="utf-8")
+)
 
 repositories = {}
 for name in ("linorobot2", "opennav_coverage"):
@@ -137,6 +258,10 @@ for name in ("linorobot2", "opennav_coverage"):
             ).strip()
         ),
     }
+    if name == "opennav_coverage":
+        repositories[name]["patch"] = patch_report
+        repositories[name]["patch_state_verified_before"] = True
+        repositories[name]["patch_state_verified_after"] = True
 
 summary = {
     "schema_version": 1,

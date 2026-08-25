@@ -224,9 +224,9 @@
     </joint>
 
     <link name="dry_bin_payload_reserve_link">
-      <visual name="forty_litre_usable_envelope"><geometry><box size="0.485 0.355 0.232"/></geometry><material name="hf_dry_payload"><color rgba="0.65 0.48 0.18 0.16"/></material></visual>
+      <visual name="forty_litre_usable_envelope"><geometry><box size="0.485 0.355 0.233"/></geometry><material name="hf_dry_payload"><color rgba="0.65 0.48 0.18 0.16"/></material></visual>
       <!-- No collision: physically grasped 3 cm cubes supply shape and contact. -->
-      <xacro:hf_storage_box_inertial mass="${dry_payload_mass}" sx="0.485" sy="0.355" sz="0.232"/>
+      <xacro:hf_storage_box_inertial mass="${dry_payload_mass}" sx="0.485" sy="0.355" sz="0.233"/>
     </link>
     <joint name="dry_bin_payload_reserve_joint" type="fixed">
       <parent link="dry_bin_link"/><child link="dry_bin_payload_reserve_link"/>

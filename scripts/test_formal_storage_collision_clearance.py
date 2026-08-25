@@ -291,7 +291,7 @@ def _centered_box(link_name: str, size: tuple[float, float, float], z_offset: fl
 
 def test_dry_usable_volume_and_gravity_path_are_free_of_bodywork_collision() -> None:
     dry_usable = _visual_box("dry_bin_payload_reserve_link", "forty_litre_usable_envelope")
-    assert math.prod(dry_usable.size) * 1000.0 >= 39.9
+    assert math.prod(dry_usable.size) * 1000.0 >= 40.0
     assert _bodywork_intrusions(dry_usable) == []
 
     front = _collision("dry_deposit_chute_front_wall_collision").aabb

@@ -39,8 +39,8 @@ installation_frames:
   left_side_brush_link: {xyz_m: [0.385, 0.545, 0.0741], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   right_side_brush_link: {xyz_m: [0.385, -0.545, 0.0741], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   central_roller_link: {xyz_m: [0.155, 0.000, 0.0691], rpy_rad: [0.000, 1.571, 0.000], pending: false}
-  squeegee_link: {xyz_m: [-0.445, 0.000, 0.0541], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  suction_nozzle_link: {xyz_m: [-0.405, 0.000, 0.0641], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  squeegee_link: {xyz_m: [-0.445, 0.000, 0.0141], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  suction_nozzle_link: {xyz_m: [-0.405, 0.000, 0.0091], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   wrist_rgbd_link: {xyz_m: [0.000, 0.000, 0.055], rpy_rad: [0.000, 0.000, 0.000], pending: true, pending_reason: final_tool_flange_collision_scan}
   wrist_rgbd_depth_optical_frame: {xyz_m: [0.000, 0.000, 0.070], rpy_rad: [-1.571, 0.000, -1.571], pending: true, pending_reason: final_tool_flange_collision_scan}
 
