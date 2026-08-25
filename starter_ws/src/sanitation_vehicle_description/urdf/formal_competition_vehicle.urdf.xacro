@@ -47,12 +47,14 @@
         <wastewater_topic>/model/tzcup_formal_sanitation_vehicle/payload/wastewater_mass_kg</wastewater_topic>
         <dry_capacity_kg>1.512</dry_capacity_kg>
         <wastewater_capacity_kg>9.7064</wastewater_capacity_kg>
+        <initial_dry_mass_kg>$(arg dry_load_mass_kg)</initial_dry_mass_kg>
+        <initial_wastewater_mass_kg>$(arg wastewater_load_mass_kg)</initial_wastewater_mass_kg>
       </plugin>
       <plugin filename="libWaterRecoverySystem.so" name="sanitation_gazebo_control::WaterRecoverySystem">
         <pump_rated_flow_l_min>15.1</pump_rated_flow_l_min>
         <hydraulic_derating>0.70</hydraulic_derating>
         <tank_capacity_kg>9.7064</tank_capacity_kg>
-        <initial_tank_mass_kg>0.0</initial_tank_mass_kg>
+        <initial_tank_mass_kg>$(arg wastewater_load_mass_kg)</initial_tank_mass_kg>
         <initial_ground_volume_l>2.88</initial_ground_volume_l>
         <water_density_kg_l>1.0</water_density_kg_l>
         <patch_min_x>-0.60</patch_min_x><patch_max_x>1.80</patch_max_x>

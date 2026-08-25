@@ -115,6 +115,8 @@ class WaterRecoverySystem final:
     this->ReadDouble(_sdf, "hydraulic_derating", this->hydraulicDerating);
     this->ReadDouble(_sdf, "tank_capacity_kg", this->tankCapacityKg);
     this->ReadDouble(_sdf, "initial_tank_mass_kg", this->tankMassKg);
+    this->tankMassKg = std::clamp(
+        this->tankMassKg, 0.0, this->tankCapacityKg);
     this->ReadDouble(_sdf, "initial_ground_volume_l", this->initialGroundVolumeL);
     this->ReadDouble(_sdf, "water_density_kg_l", this->waterDensityKgL);
     this->ReadDouble(_sdf, "patch_min_x", this->patchMinX);

@@ -76,10 +76,10 @@
     <xacro:property name="wet_inner_z" value="0.160"/>
     <xacro:property name="wet_center_y" value="-0.245"/>
     <xacro:property name="panel_t" value="0.004"/>
-    <xacro:property name="dry_payload_mass" value="${max(float(dry_load_mass_kg), 0.001)}"/>
-    <xacro:property name="water_payload_mass" value="${max(float(wastewater_load_mass_kg), 0.001)}"/>
+    <xacro:property name="dry_payload_mass" value="${max(min(float(dry_load_mass_kg), 1.512), 0.001)}"/>
+    <xacro:property name="water_payload_mass" value="${max(min(float(wastewater_load_mass_kg), 9.7064), 0.001)}"/>
     <xacro:property name="water_fill_height"
-                    value="${min(water_payload_mass / (1000.0 * wet_inner_x * wet_inner_y), 0.009706 / (wet_inner_x * wet_inner_y))}"/>
+                    value="${water_payload_mass / (1000.0 * wet_inner_x * wet_inner_y)}"/>
 
     <link name="storage_system_mount_link">
       <xacro:hf_storage_visual mesh="storage_mount_tray.stl"

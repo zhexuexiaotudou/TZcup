@@ -95,6 +95,16 @@ class DynamicPayloadSystem final:
       this->dryCapacityKg = _sdf->Get<double>("dry_capacity_kg");
     if (_sdf->HasElement("wastewater_capacity_kg"))
       this->waterCapacityKg = _sdf->Get<double>("wastewater_capacity_kg");
+    double initialDryMassKg = 0.0;
+    double initialWaterMassKg = 0.0;
+    if (_sdf->HasElement("initial_dry_mass_kg"))
+      initialDryMassKg = _sdf->Get<double>("initial_dry_mass_kg");
+    if (_sdf->HasElement("initial_wastewater_mass_kg"))
+      initialWaterMassKg = _sdf->Get<double>("initial_wastewater_mass_kg");
+    initialDryMassKg = std::clamp(initialDryMassKg, 0.0, this->dryCapacityKg);
+    initialWaterMassKg = std::clamp(initialWaterMassKg, 0.0, this->waterCapacityKg);
+    this->dryMassKg.store(initialDryMassKg);
+    this->waterMassKg.store(initialWaterMassKg);
 
     if (this->baseEntity == gz::sim::kNullEntity)
       return;
@@ -117,13 +127,15 @@ class DynamicPayloadSystem final:
       return;
 
     this->structuralInertial = baseInertial->Data();
+    const double drySeedMassKg = std::max(initialDryMassKg, this->minimumMassKg);
+    const double waterSeedMassKg = std::max(initialWaterMassKg, this->minimumMassKg);
     const auto initialDry = BoxInertial(
-        this->minimumMassKg,
+        drySeedMassKg,
         this->drySizeX, this->drySizeY, this->drySizeZ,
         this->dryFrameInBase);
-    const double initialWaterHeight = this->WaterHeight(this->minimumMassKg);
+    const double initialWaterHeight = this->WaterHeight(waterSeedMassKg);
     const auto initialWater = BoxInertial(
-        this->minimumMassKg,
+        waterSeedMassKg,
         this->waterSizeX, this->waterSizeY, initialWaterHeight,
         this->waterFrameInBase * gz::math::Pose3d(
             0.0, 0.0, initialWaterHeight * 0.5, 0.0, 0.0, 0.0));
@@ -131,7 +143,8 @@ class DynamicPayloadSystem final:
     this->structuralInertial -= initialWater;
 
     const double expectedStructuralMass =
-        baseInertial->Data().MassMatrix().Mass() - 2.0 * this->minimumMassKg;
+        baseInertial->Data().MassMatrix().Mass() -
+        drySeedMassKg - waterSeedMassKg;
     if (!this->structuralInertial.MassMatrix().IsValid() ||
         std::abs(this->structuralInertial.MassMatrix().Mass() -
             expectedStructuralMass) > this->massToleranceKg)

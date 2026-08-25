@@ -17,6 +17,7 @@ import re
 import shutil
 import subprocess
 import tempfile
+import xml.etree.ElementTree as ET
 from importlib.metadata import PackageNotFoundError, version
 from pathlib import Path
 from typing import Any, Iterable
@@ -100,6 +101,13 @@ def authoritative_source_paths(root: Path = ROOT) -> tuple[Path, ...]:
         path.relative_to(root)
         for path in (urdf_root / "high_fidelity").glob("*.xacro")
     ]
+    mesh_assets = [
+        path.relative_to(root)
+        for path in (
+            root / "starter_ws/src/sanitation_vehicle_description/meshes"
+        ).rglob("*")
+        if path.is_file() and path.suffix.lower() in {".dae", ".png", ".stl"}
+    ]
     explicit = [
         ENTRYPOINT,
         CONTROLLER_CONFIG,
@@ -121,7 +129,12 @@ def authoritative_source_paths(root: Path = ROOT) -> tuple[Path, ...]:
         Path("scripts/validate_formal_vehicle_component_register.py"),
         Path("scripts/formal_vehicle_mesh_manifest.py"),
     ]
-    return tuple(sorted(set(explicit + high_fidelity_xacros), key=lambda item: item.as_posix()))
+    return tuple(
+        sorted(
+            set(explicit + high_fidelity_xacros + mesh_assets),
+            key=lambda item: item.as_posix(),
+        )
+    )
 
 
 def _json_bytes(payload: dict[str, Any]) -> bytes:
@@ -136,15 +149,35 @@ def _validate_expanded_urdf_paths(raw: str, root: Path) -> str:
         raise SnapshotError(
             "use_sim:=true expansion must contain exactly one canonical controller parameter URI"
         )
-    forbidden = (
-        root.resolve().as_posix(),
-        str(root.resolve()),
-        "/mnt/",
-        "/home/",
-    )
-    leaked = [value for value in forbidden if value and value in raw]
-    if leaked or re.search(r"(?<![A-Za-z0-9_])[A-Za-z]:[\\/]", raw):
-        raise SnapshotError("expanded URDF contains a machine-specific absolute path")
+    try:
+        document = ET.fromstring(raw)
+    except ET.ParseError as exc:
+        raise SnapshotError(f"expanded URDF is not valid XML: {exc}") from exc
+
+    def is_absolute_filesystem_reference(value: str) -> bool:
+        candidate = value.strip()
+        return bool(
+            candidate.startswith("/")
+            or candidate.startswith("\\\\")
+            or re.match(r"^[A-Za-z]:[\\/]", candidate)
+            or candidate.lower().startswith("file:")
+        )
+
+    for element in document.iter():
+        local_tag = element.tag.rsplit("}", 1)[-1]
+        for attribute, value in element.attrib.items():
+            if is_absolute_filesystem_reference(value):
+                raise SnapshotError(
+                    "expanded URDF contains an absolute filesystem reference "
+                    f"in {local_tag}@{attribute}"
+                )
+        text = (element.text or "").strip()
+        topic_like = local_tag == "topic" or local_tag.endswith("_topic")
+        if text and not topic_like and is_absolute_filesystem_reference(text):
+            raise SnapshotError(
+                "expanded URDF contains an absolute filesystem reference "
+                f"in <{local_tag}>"
+            )
     return raw
 
 

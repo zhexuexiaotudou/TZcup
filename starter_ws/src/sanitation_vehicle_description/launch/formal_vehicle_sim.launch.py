@@ -20,6 +20,8 @@ def generate_launch_description() -> LaunchDescription:
     use_sim_time = LaunchConfiguration("use_sim_time")
     physics_engine = LaunchConfiguration("physics_engine")
     bodywork_visible = LaunchConfiguration("bodywork_visible")
+    dry_load_mass_kg = LaunchConfiguration("dry_load_mass_kg")
+    wastewater_load_mass_kg = LaunchConfiguration("wastewater_load_mass_kg")
     water_evaluation_interfaces = LaunchConfiguration("water_evaluation_interfaces")
     world = LaunchConfiguration("world")
     model = PathJoinSubstitution(
@@ -32,7 +34,9 @@ def generate_launch_description() -> LaunchDescription:
     robot_description = ParameterValue(
         Command([
             "xacro ", model,
-            " use_sim:=true dry_load_mass_kg:=0.0 wastewater_load_mass_kg:=0.0 bodywork_visible:=",
+            " use_sim:=true dry_load_mass_kg:=", dry_load_mass_kg,
+            " wastewater_load_mass_kg:=", wastewater_load_mass_kg,
+            " bodywork_visible:=",
             bodywork_visible,
         ]),
         value_type=str,
@@ -86,6 +90,8 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument("start_controllers", default_value="true"),
             DeclareLaunchArgument("use_sim_time", default_value="true"),
             DeclareLaunchArgument("bodywork_visible", default_value="true"),
+            DeclareLaunchArgument("dry_load_mass_kg", default_value="0.0"),
+            DeclareLaunchArgument("wastewater_load_mass_kg", default_value="0.0"),
             DeclareLaunchArgument(
                 "water_evaluation_interfaces",
                 default_value="false",

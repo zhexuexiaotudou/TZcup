@@ -37,6 +37,14 @@ def test_authoritative_inventory_covers_all_formal_xacros_and_contracts() -> Non
     assert Path("config/high_fidelity_vehicle/formal_vehicle_layout.yaml") in sources
     assert Path("config/high_fidelity_vehicle/formal_vehicle_component_register.yaml") in sources
     assert Path("scripts/generate_formal_vehicle_snapshot.py") in sources
+    mesh_root = ROOT / "starter_ws/src/sanitation_vehicle_description/meshes"
+    expected_meshes = {
+        path.relative_to(ROOT)
+        for path in mesh_root.rglob("*")
+        if path.is_file() and path.suffix.lower() in {".dae", ".png", ".stl"}
+    }
+    assert expected_meshes
+    assert expected_meshes <= sources
 
 
 def test_inventory_digest_detects_source_or_output_mutation(tmp_path: Path) -> None:
@@ -65,6 +73,38 @@ def test_path_gate_rejects_machine_specific_controller_path(path: str) -> None:
     raw = f"<robot><gazebo><plugin><parameters>{path}</parameters></plugin></gazebo></robot>"
     with pytest.raises(SnapshotError, match="canonical controller parameter URI"):
         _validate_expanded_urdf_paths(raw, ROOT)
+
+
+@pytest.mark.parametrize(
+    "path",
+    [
+        "/tmp/foreign.stl",
+        "/opt/foreign.stl",
+        "file:///tmp/foreign.stl",
+        r"C:\work\foreign.stl",
+        r"\\server\share\foreign.stl",
+    ],
+)
+def test_path_gate_rejects_absolute_mesh_reference(path: str) -> None:
+    raw = (
+        '<robot><gazebo><plugin filename="gz_ros2_control-system">'
+        f"<parameters>{CANONICAL_CONTROLLER_URI}</parameters>"
+        "</plugin></gazebo><link name=\"base\"><visual><geometry>"
+        f'<mesh filename="{path}"/>'
+        "</geometry></visual></link></robot>"
+    )
+    with pytest.raises(SnapshotError, match="absolute filesystem reference"):
+        _validate_expanded_urdf_paths(raw, ROOT)
+
+
+def test_path_gate_allows_absolute_ros_topics() -> None:
+    raw = (
+        '<robot><gazebo><plugin filename="gz_ros2_control-system">'
+        f"<parameters>{CANONICAL_CONTROLLER_URI}</parameters>"
+        "</plugin><sensor><topic>/sensors/lidar/scan</topic></sensor>"
+        "</gazebo></robot>"
+    )
+    assert "/sensors/lidar/scan" in _validate_expanded_urdf_paths(raw, ROOT)
 
 
 def test_generation_fails_closed_without_xacro(monkeypatch: pytest.MonkeyPatch) -> None:

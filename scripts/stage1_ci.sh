@@ -191,6 +191,19 @@ PY
 
 verify_opennav_patch_state | tee "$OUT/opennav_coverage_patch_state_before.txt"
 
+audit_locked_repository() {
+  local repository="$1"
+  local phase="$2"
+  python3 "$PACK_ROOT/scripts/audit_locked_repository.py" \
+    --root "$WS/src/$repository" \
+    --lock-file "$PACK_ROOT/repos/locked_revisions.json" \
+    --repository "$repository" \
+    --output "$OUT/${repository}_state_${phase}.json"
+}
+
+audit_locked_repository linorobot2 before \
+  | tee "$OUT/linorobot2_state_before.txt"
+
 {
   for repository in linorobot2 opennav_coverage; do
     repo="$WS/src/$repository"
@@ -220,6 +233,8 @@ done
   done
 } | tee "$OUT/third_party_status_after.txt"
 
+audit_locked_repository linorobot2 after \
+  | tee "$OUT/linorobot2_state_after.txt"
 verify_opennav_patch_state | tee "$OUT/opennav_coverage_patch_state_after.txt"
 
 set +u
@@ -244,6 +259,14 @@ ws = Path(os.environ["STAGE1_WS"])
 patch_report = json.loads(
     (out / "opennav_coverage_patch_status.json").read_text(encoding="utf-8")
 )
+linorobot_before = json.loads(
+    (out / "linorobot2_state_before.json").read_text(encoding="utf-8")
+)
+linorobot_after = json.loads(
+    (out / "linorobot2_state_after.json").read_text(encoding="utf-8")
+)
+if not linorobot_before.get("verified") or not linorobot_after.get("verified"):
+    raise SystemExit("linorobot2 locked-repository audit did not pass twice")
 
 repositories = {}
 for name in ("linorobot2", "opennav_coverage"):
@@ -262,6 +285,11 @@ for name in ("linorobot2", "opennav_coverage"):
         repositories[name]["patch"] = patch_report
         repositories[name]["patch_state_verified_before"] = True
         repositories[name]["patch_state_verified_after"] = True
+    else:
+        repositories[name]["locked_state_before"] = linorobot_before
+        repositories[name]["locked_state_after"] = linorobot_after
+        repositories[name]["state_verified_before"] = True
+        repositories[name]["state_verified_after"] = True
 
 summary = {
     "schema_version": 1,
