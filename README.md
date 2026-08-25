@@ -77,7 +77,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 | 范围 | 状态 | 说明 |
 |---|---|---|
 | 软件工程与发布 | 已完成 | `AUTO-16=PASS`，源码、配置、测试、文档和发布工具齐全 |
-| 基础仿真与自主导航 | 已通过机器门 | 车辆、场景、定位、Nav2、覆盖规划、安全控制和回放链已验证 |
+| 基础仿真、导航与正式车机构 | 已通过机器门 | 车辆、定位、Nav2、覆盖、安全和回放已验证；正式车同一次全新构建通过前进/停车、单 PET 方块抓投、2.88 L 守恒回收和 9.7064 kg 满箱闭锁，但不等于园区综合任务完成 |
 | 调试可视化 | 可用 | Gazebo 显示物理场景，RViz 显示目标、障碍、区域、路径、车辆和系统状态 |
 | 学习感知 | 阻断 | AUTO-05 数据门通过，但三次跨世界模型 screening 未达到冻结阈值 |
 | 综合竞赛矩阵 | 未通过 | 受 AUTO-08 学习感知与定点清扫依赖阻断，正式综合任务未启动 |
@@ -92,7 +92,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 - 人类可读的园区道路、路缘、人行道、绿化、积水、垃圾、落叶和静态/动态障碍 Gazebo 场景；
 - SLAM、AMCL、混合定位、Nav2、keepout/speed filter、碰撞监控和急停；
 - 全覆盖规划、任务几何、覆盖率/定位/安全指标与 rosbag 回放审计；
-- 五类清扫目标链；另有多长宽比园区、belief-only主动清扫/RL、3 cm方块投箱占位闭环，以及已完成[正式 URDF/CAD 名义整车](docs/formal-vehicle-urdf-cad.md)的竞赛级高保真链；后者采用锁定许可的 A300/UR5e/2F-85/传感器 mesh、项目参数化清扫/分仓 CAD 和完整产品车身，[部件与连接台账](docs/formal-vehicle-component-architecture.md)把 35 个移动、感知、抓取、投放、清扫、回收、配电和安全功能位置绑定到实体 link、关节、控制器与话题；产品/检修 profile 与投放口细节采用七视角 Gazebo Ogre2 验收，UR5e/2F-85 以及 10 个清扫/存储/回收活动关节已通过实测运动门，但尚未通过实物标定、液体守恒回收、清扫接触质量、MoveIt 全空间扫掠和实车证据门；
+- 五类清扫目标链；另有多长宽比园区、belief-only主动清扫/RL、3 cm方块投箱占位闭环，以及已完成[正式 URDF/CAD 名义整车](docs/formal-vehicle-urdf-cad.md)的竞赛级高保真链；后者采用锁定许可的 A300/UR5e/2F-85/传感器 mesh、项目参数化清扫/分仓 CAD 和完整产品车身，[部件与连接台账](docs/formal-vehicle-component-architecture.md)把 35 个移动、感知、抓取、投放、清扫、回收、配电和安全功能位置绑定到实体 link、关节、控制器与话题；产品/检修 profile 与投放口细节采用七视角 Gazebo Ogre2 验收，UR5e/2F-85、10 个清扫/存储/回收活动关节，以及正式车前进、单方块实体抓投、L1 积水守恒回收和满箱闭锁均已通过专用运行门，但尚未通过实物标定、随机多目标 MoveIt 生产任务、清扫连续接触质量、园区综合闭环和实车证据门；
 - APP/API、语音入口和受限任务 DSL；
 - RViz 调试图层与 Gazebo 三维物理界面；
 - 分阶段验收、紧凑证据、SBOM、许可清单和发布打包工具。

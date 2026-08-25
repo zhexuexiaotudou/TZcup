@@ -104,14 +104,18 @@ python scripts/validate_formal_vehicle_component_register.py --urdf /tmp/formal_
 其中 10 个清扫/存储/回收活动关节已通过 `reports/engineering/formal_function_positions_runtime_report.json`
 的控制器到关节实测：升降、刮条俯仰/浮动、干箱盖、投放闸门、污水箱盖、双侧刷、
 中央滚刷和回收泵均有实际响应。该证据只证明机构和控制链，不把污水流量或垃圾转移
-效果误写成已通过。
+效果误写成已通过。后续专用联合门已经进一步验证这些基础效果：同一全新构建中的
+正式车前进/停车、PET 方块双指接触抓取与实体落箱、2.88 L 有限积水 24/24 列守恒回收、
+9.7064 kg 满箱闭锁全部通过；机器可复现入口为
+`scripts/run_integrated_functional_acceptance.sh`，紧凑摘要为
+`reports/engineering/integrated_basic_functional_acceptance_summary.json`。
 
 ## 尚未通过的高保真门
 
 - S100 实际 SKU 的板框、孔位、连接器和质量仍需对用户自有板实测；
 - 最终整车重心扫描和由重心确定的污水最终容量尚未冻结；
 - UR5e 六轴和夹爪主关节已完成控制器轨迹门；MoveIt 全工作空间扫掠、自碰撞和生产投箱轨迹尚未运行；
-- 刷毛、刮条地面接触、软管柔性、污水自由液面仍需 Gazebo 调参与验证；
+- L1 有限 2.5D 水层已通过刮条/吸口几何门、守恒回收和满箱闭锁；刷毛连续接触力、软管柔性、污水自由液面和飞溅仍需后续增强；
 - MID-360/VN100/GNSS 外壳是开源 ROS 近似而非厂家计量 CAD；MID-360 扫描为密集栅格近似，鱼眼在 Gazebo 中仍是 pinhole 近似，等距畸变节点尚未实现；
 - 清扫电机、升降器和泵已建外壳、法兰、轴、接口与运动链，回收泵转子已由独立连续关节驱动；但不声称隐藏绕组、齿轮或泵膜片达到制造级精确；
 - 精确视场遮挡和全部 Gazebo 传感器可见性扫描尚未完成。
