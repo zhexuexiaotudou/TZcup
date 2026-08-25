@@ -145,6 +145,32 @@ def ring(major_radius: float, minor_radius: float, center: Vec3 = (0, 0, 0),
     return m.translated(center)
 
 
+def rectangular_frustum_shell(bottom: tuple[float, float], top: tuple[float, float],
+                              height: float, wall: float) -> Mesh:
+    """Open rectangular hopper with sloped walls and a real through aperture."""
+    m = Mesh()
+    bx, by = bottom[0] * 0.5, bottom[1] * 0.5
+    tx, ty = top[0] * 0.5, top[1] * 0.5
+    z0, z1 = -height * 0.5, height * 0.5
+    outer_bottom = [(-bx, -by, z0), (bx, -by, z0), (bx, by, z0), (-bx, by, z0)]
+    outer_top = [(-tx, -ty, z1), (tx, -ty, z1), (tx, ty, z1), (-tx, ty, z1)]
+    ibx, iby = bx - wall, by - wall
+    itx, ity = tx - wall, ty - wall
+    inner_bottom = [(-ibx, -iby, z0), (ibx, -iby, z0), (ibx, iby, z0), (-ibx, iby, z0)]
+    inner_top = [(-itx, -ity, z1), (itx, -ity, z1), (itx, ity, z1), (-itx, ity, z1)]
+    for i in range(4):
+        j = (i + 1) % 4
+        m.tri(outer_bottom[i], outer_bottom[j], outer_top[j])
+        m.tri(outer_bottom[i], outer_top[j], outer_top[i])
+        m.tri(inner_bottom[i], inner_top[j], inner_bottom[j])
+        m.tri(inner_bottom[i], inner_top[i], inner_top[j])
+        m.tri(outer_top[i], outer_top[j], inner_top[j])
+        m.tri(outer_top[i], inner_top[j], inner_top[i])
+        m.tri(outer_bottom[i], inner_bottom[j], outer_bottom[j])
+        m.tri(outer_bottom[i], inner_bottom[i], inner_bottom[j])
+    return m
+
+
 def sweep_tube(points: Sequence[Vec3], radius: float, segments: int = 10) -> Mesh:
     m = Mesh()
     rings: list[list[Vec3]] = []
@@ -485,6 +511,24 @@ def pump_head() -> Mesh:
     return m
 
 
+def pump_rotor() -> Mesh:
+    m = cylinder(0.020, 0.018)
+    for a in range(0, 360, 60):
+        r = math.radians(a)
+        m.extend(cylinder(0.012, 0.016, (0.026 * math.cos(r), 0.026 * math.sin(r), 0)))
+    m.extend(cylinder(0.006, 0.040))
+    return m
+
+
+def inline_flow_sensor() -> Mesh:
+    m = box((0.070, 0.050, 0.045))
+    m.extend(cylinder(0.016, 0.105, axis="y"))
+    m.extend(box((0.030, 0.026, 0.028), (0, 0, 0.035)))
+    m.extend(cylinder(0.004, 0.055, (0.024, 0, 0), axis="y"))
+    m.extend(cylinder(0.004, 0.055, (-0.024, 0, 0), axis="y"))
+    return m
+
+
 def pump_mount() -> Mesh:
     m = box((0.225, 0.165, 0.008))
     for x in (-0.080, 0.080):
@@ -522,12 +566,69 @@ def bin_floor(size: Vec3) -> Mesh:
 
 
 def dry_lid() -> Mesh:
-    m = box((0.508, 0.391, 0.010), (0.254, 0, 0))
+    # Four panels leave a 150 x 130 mm robot-deposition aperture in the lid.
+    m = box((0.508, 0.105, 0.010), (0.254, 0.143, 0))
+    m.extend(box((0.508, 0.105, 0.010), (0.254, -0.143, 0)))
+    m.extend(box((0.179, 0.181, 0.010), (0.0895, 0, 0)))
+    m.extend(box((0.179, 0.181, 0.010), (0.4185, 0, 0)))
     m.extend(box((0.120, 0.025, 0.025), (0.300, 0, 0.035)))
     m.extend(box((0.496, 0.012, 0.012), (0.254, 0.184, -0.007)))
     m.extend(box((0.496, 0.012, 0.012), (0.254, -0.184, -0.007)))
     for x in (0.05, 0.20, 0.35, 0.48):
         m.extend(box((0.010, 0.350, 0.012), (x, 0, 0.008)))
+    return m
+
+
+def dry_deposit_hopper() -> Mesh:
+    m = rectangular_frustum_shell((0.115, 0.095), (0.190, 0.165), 0.080, 0.006)
+    for x in (-0.082, 0.082):
+        for y in (-0.069, 0.069):
+            m.extend(cylinder(0.004, 0.015, (x, y, -0.047)))
+    return m
+
+
+def dry_deposit_gate() -> Mesh:
+    m = box((0.184, 0.158, 0.008), (0.092, 0, 0))
+    m.extend(box((0.020, 0.120, 0.020), (0.172, 0, 0.014)))
+    m.extend(cylinder(0.006, 0.170, (0.004, 0, 0), axis="y"))
+    return m
+
+
+def dry_deposit_chute() -> Mesh:
+    m = rectangular_frustum_shell((0.130, 0.105), (0.105, 0.085), 0.350, 0.004)
+    m.extend(box((0.018, 0.115, 0.355), (0.060, 0, -0.002)))
+    return m
+
+
+def power_distribution_box() -> Mesh:
+    m = box((0.180, 0.115, 0.060))
+    m.extend(box((0.190, 0.125, 0.008), (0, 0, 0.034)))
+    for i in range(5):
+        m.extend(box((0.018, 0.012, 0.010), (-0.060 + 0.030 * i, -0.052, 0.034)))
+    for x in (-0.050, 0.050):
+        m.extend(cylinder(0.008, 0.018, (x, 0.063, 0), axis="y"))
+    for y in (-0.035, 0, 0.035):
+        m.extend(cylinder(0.007, 0.016, (0.092, y, -0.006), axis="x"))
+    return m
+
+
+def isolated_dc_dc_module() -> Mesh:
+    m = box((0.135, 0.095, 0.042))
+    for i in range(9):
+        m.extend(box((0.004, 0.075, 0.012), (-0.052 + 0.013 * i, 0, 0.026)))
+    for y in (-0.030, 0.030):
+        m.extend(cylinder(0.009, 0.016, (0.070, y, 0), axis="x"))
+    for x in (-0.050, 0.050):
+        for y in (-0.030, 0.030):
+            m.extend(cylinder(0.0035, 0.008, (x, y, -0.025)))
+    return m
+
+
+def safety_relay() -> Mesh:
+    m = box((0.105, 0.075, 0.055))
+    m.extend(cylinder(0.018, 0.010, (0, 0, 0.032)))
+    for x in (-0.032, 0.032):
+        m.extend(cylinder(0.006, 0.014, (x, 0.040, 0), axis="y"))
     return m
 
 
@@ -601,6 +702,7 @@ def main() -> None:
     out = package / "meshes" / "project"
     cleaning = out / "cleaning"
     storage = out / "storage"
+    platform = package / "meshes" / "generated" / "platform"
     cleaning_parts: dict[str, Mesh] = {
         "pololu_37d_motor_body.stl": motor_body(),
         "pololu_37d_gearbox.stl": gearbox(),
@@ -629,6 +731,8 @@ def main() -> None:
         "strainer_filter_head.stl": filter_head(),
         "jabsco_pump_motor.stl": pump_motor(),
         "jabsco_pump_head.stl": pump_head(),
+        "jabsco_pump_rotor.stl": pump_rotor(),
+        "inline_flow_sensor.stl": inline_flow_sensor(),
         "pump_isolator_mount.stl": pump_mount(),
         "quick_coupling.stl": coupling(),
     }
@@ -639,6 +743,9 @@ def main() -> None:
         "dry_bin_rear_panel.stl": panel_with_ribs((0.004, 0.383, 0.248)),
         "dry_bin_side_panel.stl": panel_with_ribs((0.500, 0.004, 0.248)),
         "dry_bin_lid.stl": dry_lid(),
+        "dry_deposit_hopper.stl": dry_deposit_hopper(),
+        "dry_deposit_gate.stl": dry_deposit_gate(),
+        "dry_deposit_chute.stl": dry_deposit_chute(),
         "dry_bin_latch.stl": latch(),
         "dry_bin_level_sensor.stl": level_sensor(),
         "wastewater_tank_floor.stl": bin_floor((0.358, 0.258, 0.008)),
@@ -652,11 +759,18 @@ def main() -> None:
         "dry_wet_partition.stl": partition(),
         "wastewater_inlet_coupling.stl": inlet_coupling(),
     }
+    platform_parts: dict[str, Mesh] = {
+        "power_distribution_box.stl": power_distribution_box(),
+        "isolated_dc_dc_module.stl": isolated_dc_dc_module(),
+        "safety_relay.stl": safety_relay(),
+    }
     for name, mesh in cleaning_parts.items():
         write_binary_stl(cleaning / name, mesh)
     for name, mesh in storage_parts.items():
         write_binary_stl(storage / name, mesh)
-    print(f"generated {len(cleaning_parts) + len(storage_parts)} meshes in {out}")
+    for name, mesh in platform_parts.items():
+        write_binary_stl(platform / name, mesh)
+    print(f"generated {len(cleaning_parts) + len(storage_parts) + len(platform_parts)} meshes in {out} and {platform}")
 
 
 if __name__ == "__main__":

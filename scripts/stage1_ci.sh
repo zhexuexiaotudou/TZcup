@@ -17,7 +17,14 @@ export TZCUP_ROOT="$PACK_ROOT"
 export PIP_BREAK_SYSTEM_PACKAGES=1
 export ROSDEP_SKIP_KEYS=micro_ros_agent
 
-apt-get -o Acquire::Retries=5 update 2>&1 | tee "$OUT/apt_update.log"
+if [[ "$(id -u)" -eq 0 ]]; then
+  APT_GET=(apt-get)
+else
+  # Keep Git checkouts owned by the invoking developer while using the
+  # conventional passwordless sudo boundary only for package metadata.
+  APT_GET=(sudo -n apt-get)
+fi
+"${APT_GET[@]}" -o Acquire::Retries=5 update 2>&1 | tee "$OUT/apt_update.log"
 
 rosdep_update_ok=false
 for attempt in 1 2 3; do

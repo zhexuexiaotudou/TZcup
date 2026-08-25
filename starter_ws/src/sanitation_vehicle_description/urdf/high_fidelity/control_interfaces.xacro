@@ -55,10 +55,12 @@
       <xacro:hf_velocity_joint name="left_side_brush_joint" max_velocity="31.416" max_effort="12.0"/>
       <xacro:hf_velocity_joint name="right_side_brush_joint" max_velocity="31.416" max_effort="12.0"/>
       <xacro:hf_velocity_joint name="central_roller_joint" max_velocity="52.36" max_effort="20.0"/>
+      <xacro:hf_velocity_joint name="recovery_pump_joint" max_velocity="62.832" max_effort="18.0"/>
       <xacro:hf_position_joint name="cleaning_lift_joint" lower="0.0" upper="0.1" velocity="0.05" effort="1000.0" initial_position="0.1"/>
       <xacro:hf_position_joint name="squeegee_pitch_joint" lower="-0.2" upper="0.2" velocity="0.3" effort="120.0"/>
       <xacro:hf_position_joint name="squeegee_float_joint" lower="0.0" upper="0.035" velocity="0.08" effort="250.0" initial_position="0.035"/>
       <xacro:hf_position_joint name="dry_bin_lid_joint" lower="0.0" upper="1.75" velocity="0.5" effort="60.0"/>
+      <xacro:hf_position_joint name="dry_deposit_gate_joint" lower="0.0" upper="1.75" velocity="0.8" effort="22.0"/>
       <xacro:hf_position_joint name="wastewater_lid_joint" lower="0.0" upper="1.57" velocity="0.5" effort="45.0"/>
     </ros2_control>
   </xacro:macro>

@@ -15,6 +15,8 @@ controller_manager:
       type: joint_trajectory_controller/JointTrajectoryController
     brush_controller:
       type: velocity_controllers/JointGroupVelocityController
+    recovery_controller:
+      type: velocity_controllers/JointGroupVelocityController
 
 base_controller:
   ros__parameters:
@@ -76,11 +78,16 @@ cleaning_controller:
 
 storage_controller:
   ros__parameters:
-    joints: [dry_bin_lid_joint, wastewater_lid_joint]
+    joints: [dry_bin_lid_joint, dry_deposit_gate_joint, wastewater_lid_joint]
     command_interfaces: [position]
     state_interfaces: [position, velocity]
 
 brush_controller:
   ros__parameters:
     joints: [left_side_brush_joint, right_side_brush_joint, central_roller_joint]
+    interface_name: velocity
+
+recovery_controller:
+  ros__parameters:
+    joints: [recovery_pump_joint]
     interface_name: velocity

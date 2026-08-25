@@ -1,8 +1,8 @@
 {
   "status": "FORMAL_PRODUCT_BODYWORK_DESIGN_GATE_PASSED",
   "bodywork_link_count": 10,
-  "bodywork_mesh_visual_count": 42,
-  "opaque_material_color_count": 22,
+  "bodywork_mesh_visual_count": 43,
+  "opaque_material_color_count": 23,
   "service_panel_count": 4,
   "palette": {
     "warm_white": true,

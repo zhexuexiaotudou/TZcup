@@ -178,6 +178,42 @@
       <origin xyz="0 0 0"/>
     </joint>
 
+    <!-- Explicit protected power path: A300 battery/VBAT enters a fused PDU,
+         an isolated converter supplies sensors/compute, and the safety relay
+         removes cleaning/manipulator enable independently of software. -->
+    <link name="power_distribution_box_link">
+      <visual><geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/power_distribution_box.stl"/></geometry>
+        <material name="pdu_red"><color rgba="0.45 0.055 0.045 1"/></material></visual>
+      <collision><geometry><box size="0.190 0.125 0.068"/></geometry></collision>
+      <inertial><mass value="0.700"/><xacro:hf_box_inertia mass="0.700" x="0.190" y="0.125" z="0.068"/></inertial>
+    </link>
+    <joint name="power_distribution_box_mount_joint" type="fixed">
+      <parent link="payload_deck_link"/><child link="power_distribution_box_link"/>
+      <origin xyz="0.330 0.025 0.075"/>
+    </joint>
+
+    <link name="isolated_dc_dc_module_link">
+      <visual><geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/isolated_dc_dc_module.stl"/></geometry>
+        <material name="dc_dc_blue"><color rgba="0.055 0.22 0.36 1"/></material></visual>
+      <collision><geometry><box size="0.140 0.100 0.055"/></geometry></collision>
+      <inertial><mass value="0.400"/><xacro:hf_box_inertia mass="0.400" x="0.140" y="0.100" z="0.055"/></inertial>
+    </link>
+    <joint name="isolated_dc_dc_mount_joint" type="fixed">
+      <parent link="payload_deck_link"/><child link="isolated_dc_dc_module_link"/>
+      <origin xyz="0.345 -0.105 0.070"/>
+    </joint>
+
+    <link name="safety_relay_link">
+      <visual><geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/safety_relay.stl"/></geometry>
+        <material name="safety_relay_yellow"><color rgba="0.92 0.58 0.035 1"/></material></visual>
+      <collision><geometry><box size="0.110 0.080 0.065"/></geometry></collision>
+      <inertial><mass value="0.250"/><xacro:hf_box_inertia mass="0.250" x="0.110" y="0.080" z="0.065"/></inertial>
+    </link>
+    <joint name="safety_relay_mount_joint" type="fixed">
+      <parent link="payload_deck_link"/><child link="safety_relay_link"/>
+      <origin xyz="0.220 -0.080 0.075"/>
+    </joint>
+
     <!-- Current Clearpath A300 wheelbase and tyre-centre track. -->
     <xacro:hf_a300_wheel name="front_left"  side="left"  x="0.256"  y="0.283"/>
     <xacro:hf_a300_wheel name="front_right" side="right" x="0.256"  y="-0.283"/>

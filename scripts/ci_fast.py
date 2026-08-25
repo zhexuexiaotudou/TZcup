@@ -56,6 +56,7 @@ def require_project_files() -> None:
         REPORTS_ROOT / "engineering" / "formal_vehicle_layout_report.json",
         REPORTS_ROOT / "engineering" / "formal_vehicle_urdf_report.json",
         REPORTS_ROOT / "engineering" / "formal_vehicle_runtime_report.json",
+        REPORTS_ROOT / "engineering" / "formal_function_positions_runtime_report.json",
         REPORTS_ROOT / "engineering" / "formal_vehicle_preview.png",
         ROOT / "scripts" / "validate_formal_vehicle_urdf.py",
         ROOT / "scripts" / "validate_formal_vehicle_visual_fidelity.py",
