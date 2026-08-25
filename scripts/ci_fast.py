@@ -58,6 +58,8 @@ def require_project_files() -> None:
         REPORTS_ROOT / "engineering" / "formal_vehicle_runtime_report.json",
         REPORTS_ROOT / "engineering" / "formal_vehicle_preview.png",
         ROOT / "scripts" / "validate_formal_vehicle_urdf.py",
+        ROOT / "scripts" / "validate_formal_vehicle_visual_fidelity.py",
+        ROOT / "scripts" / "formal_vehicle_mesh_manifest.py",
         ROOT / "scripts" / "render_formal_vehicle_preview.py",
     )
     missing = [str(path.relative_to(ROOT)) for path in required if not path.is_file()]
@@ -293,6 +295,7 @@ def run_ros_independent_tests() -> None:
         ROOT / "scripts" / "test_gazebo_scene_contract.py",
         ROOT / "scripts" / "test_pre_urdf_readiness.py",
         ROOT / "scripts" / "test_formal_vehicle_urdf.py",
+        ROOT / "scripts" / "test_formal_vehicle_visual_fidelity.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])
     if result != pytest.ExitCode.OK:

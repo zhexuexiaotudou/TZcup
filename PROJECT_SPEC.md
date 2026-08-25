@@ -5,7 +5,8 @@
 `formal_competition_vehicle.urdf.xacro` 是竞赛级名义整车入口，必须保持 A300、UR5e、
 2F-85、全部冻结传感器、清扫/刮吸、独立干湿箱、控制箱和 S100 安装基准的完整多刚体
 结构。展开模型必须通过 `validate_formal_vehicle_urdf.py` 的质量、惯量、活动关节、单树、
-必需帧和静态安装坐标门；干垃圾与污水载荷必须由独立 reserve link 和 Gazebo 动态惯量
+必需帧和静态安装坐标门，并通过 `validate_formal_vehicle_visual_fidelity.py` 的自包含 mesh、
+关键外露部件非 primitive 和资产存在性门；干垃圾与污水载荷必须由独立 reserve link 和 Gazebo 动态惯量
 系统更新，不能只改界面计数。
 
 结构门通过不等于测量级数字孪生。S100 实物尺寸、最终 CoG/污水容量、机械臂全空间、
@@ -302,7 +303,8 @@ J6 节点只承担推理和必要预处理，保持与仿真/主控解耦：
 
 ## 4. 车辆模型原则
 
-- 优先使用参数化 primitive 完成清晰、实时、离线可复现的工业车辆外观，不依赖在线网格；
+- 碰撞与惯性几何优先使用参数化 primitive 保证实时和稳定；正式工业车辆外观必须采用
+  许可证明确且锁定版本的上游网格，或由项目可维护参数化 CAD 生成的离线 mesh；
 - 底盘默认使用 4WD skid-steer，真实底盘若为 Ackermann，再新增并行车型；
 - 清扫宽度默认 0.65 m；
 - 尘箱几何容积 0.04 m³，即 40 L；

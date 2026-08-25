@@ -18,8 +18,11 @@ base_controller:
   ros__parameters:
     left_wheel_names: [front_left_wheel_joint, rear_left_wheel_joint]
     right_wheel_names: [front_right_wheel_joint, rear_right_wheel_joint]
-    wheel_separation: 0.584
-    wheel_radius: 0.186
+    # Controller-effective A300 geometry from the current Clearpath model.
+    # The visual/collision tyre mesh has a 0.1651 m physical radius; the
+    # controller uses the documented 0.1625 m effective rolling radius.
+    wheel_separation: 0.566
+    wheel_radius: 0.1625
     wheels_per_side: 2
     publish_rate: 50.0
     position_feedback: true

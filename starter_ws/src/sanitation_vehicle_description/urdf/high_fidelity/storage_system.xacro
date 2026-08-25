@@ -12,6 +12,18 @@
 -->
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
 
+  <xacro:property name="hf_storage_mesh_root"
+                  value="package://sanitation_vehicle_description/meshes/project/storage"/>
+
+  <xacro:macro name="hf_storage_visual"
+               params="mesh material rgba origin_xyz:='0 0 0' origin_rpy:='0 0 0'">
+    <visual>
+      <origin xyz="${origin_xyz}" rpy="${origin_rpy}"/>
+      <geometry><mesh filename="${hf_storage_mesh_root}/${mesh}"/></geometry>
+      <material name="${material}"><color rgba="${rgba}"/></material>
+    </visual>
+  </xacro:macro>
+
   <xacro:macro name="hf_storage_box_inertial" params="mass sx sy sz xyz:='0 0 0'">
     <inertial>
       <origin xyz="${xyz}" rpy="0 0 0"/>
@@ -35,12 +47,9 @@
   </xacro:macro>
 
   <xacro:macro name="hf_storage_panel"
-               params="name parent xyz size mass material rgba collision:='true'">
+               params="name parent xyz size mass material rgba mesh collision:='true'">
     <link name="${name}_link">
-      <visual name="${name}_visual">
-        <geometry><box size="${size}"/></geometry>
-        <material name="${material}"><color rgba="${rgba}"/></material>
-      </visual>
+      <xacro:hf_storage_visual mesh="${mesh}" material="${material}" rgba="${rgba}"/>
       <xacro:if value="${collision}">
         <collision name="${name}_collision"><geometry><box size="${size}"/></geometry></collision>
       </xacro:if>
@@ -73,9 +82,8 @@
                     value="${min(water_payload_mass / (1000.0 * wet_inner_x * wet_inner_y), 0.009706 / (wet_inner_x * wet_inner_y))}"/>
 
     <link name="storage_system_mount_link">
-      <visual name="mount_tray"><geometry><box size="0.570 0.620 0.012"/></geometry><material name="hf_storage_mount"><color rgba="0.18 0.21 0.22 1"/></material></visual>
-      <visual name="front_cross_rail"><origin xyz="0.265 0 -0.022"/><geometry><box size="0.040 0.620 0.055"/></geometry><material name="hf_storage_rail"><color rgba="0.28 0.31 0.32 1"/></material></visual>
-      <visual name="rear_cross_rail"><origin xyz="-0.265 0 -0.022"/><geometry><box size="0.040 0.620 0.055"/></geometry><material name="hf_storage_rail_rear"><color rgba="0.28 0.31 0.32 1"/></material></visual>
+      <xacro:hf_storage_visual mesh="storage_mount_tray.stl"
+        material="hf_storage_mount" rgba="0.18 0.21 0.22 1"/>
       <collision><geometry><box size="0.570 0.620 0.012"/></geometry></collision>
       <xacro:hf_storage_box_inertial mass="0.900" sx="0.570" sy="0.620" sz="0.012"/>
     </link>
@@ -86,7 +94,8 @@
 
     <!-- Dry compartment: every structural board is an independent replaceable link. -->
     <link name="dry_bin_link">
-      <visual name="dry_floor"><origin xyz="0 0 -0.124"/><geometry><box size="0.508 0.383 0.008"/></geometry><material name="hf_dry_floor"><color rgba="0.12 0.38 0.24 1"/></material></visual>
+      <xacro:hf_storage_visual mesh="dry_bin_floor.stl"
+        material="hf_dry_floor" rgba="0.12 0.38 0.24 1" origin_xyz="0 0 -0.124"/>
       <collision name="dry_floor_collision"><origin xyz="0 0 -0.124"/><geometry><box size="0.508 0.383 0.008"/></geometry></collision>
       <xacro:hf_storage_box_inertial mass="0.750" sx="0.508" sy="0.383" sz="0.008" xyz="0 0 -0.124"/>
     </link>
@@ -97,21 +106,20 @@
 
     <xacro:hf_storage_panel name="dry_bin_front_panel" parent="dry_bin_link"
       xyz="0.252 0 0" size="0.004 0.383 0.248" mass="0.600"
-      material="hf_dry_panel_front" rgba="0.14 0.43 0.27 1"/>
+      material="hf_dry_panel_front" rgba="0.14 0.43 0.27 1" mesh="dry_bin_front_panel.stl"/>
     <xacro:hf_storage_panel name="dry_bin_rear_panel" parent="dry_bin_link"
       xyz="-0.252 0 0" size="0.004 0.383 0.248" mass="0.600"
-      material="hf_dry_panel_rear" rgba="0.14 0.43 0.27 1"/>
+      material="hf_dry_panel_rear" rgba="0.14 0.43 0.27 1" mesh="dry_bin_rear_panel.stl"/>
     <xacro:hf_storage_panel name="dry_bin_left_panel" parent="dry_bin_link"
       xyz="0 0.1895 0" size="0.500 0.004 0.248" mass="0.600"
-      material="hf_dry_panel_left" rgba="0.14 0.43 0.27 1"/>
+      material="hf_dry_panel_left" rgba="0.14 0.43 0.27 1" mesh="dry_bin_side_panel.stl"/>
     <xacro:hf_storage_panel name="dry_bin_right_panel" parent="dry_bin_link"
       xyz="0 -0.1895 0" size="0.500 0.004 0.248" mass="0.600"
-      material="hf_dry_panel_right" rgba="0.14 0.43 0.27 1"/>
+      material="hf_dry_panel_right" rgba="0.14 0.43 0.27 1" mesh="dry_bin_side_panel.stl"/>
 
     <link name="dry_bin_lid_link">
-      <visual name="lid_skin"><origin xyz="0.254 0 0"/><geometry><box size="0.508 0.391 0.010"/></geometry><material name="hf_dry_lid"><color rgba="0.055 0.12 0.085 1"/></material></visual>
-      <visual name="lid_handle"><origin xyz="0.300 0 0.035"/><geometry><box size="0.120 0.025 0.025"/></geometry><material name="hf_dry_handle"><color rgba="0.08 0.09 0.10 1"/></material></visual>
-      <visual name="lid_gasket"><origin xyz="0.254 0 -0.007"/><geometry><box size="0.496 0.379 0.004"/></geometry><material name="hf_dry_gasket"><color rgba="0.03 0.035 0.04 1"/></material></visual>
+      <xacro:hf_storage_visual mesh="dry_bin_lid.stl"
+        material="hf_dry_lid" rgba="0.055 0.12 0.085 1"/>
       <collision><origin xyz="0.254 0 0"/><geometry><box size="0.508 0.391 0.010"/></geometry></collision>
       <xacro:hf_storage_box_inertial mass="0.750" sx="0.508" sy="0.391" sz="0.010" xyz="0.254 0 0"/>
     </link>
@@ -124,7 +132,8 @@
     </joint>
 
     <link name="dry_bin_latch_link">
-      <visual><geometry><box size="0.035 0.050 0.020"/></geometry><material name="hf_latch"><color rgba="0.62 0.65 0.66 1"/></material></visual>
+      <xacro:hf_storage_visual mesh="dry_bin_latch.stl"
+        material="hf_latch" rgba="0.62 0.65 0.66 1"/>
       <collision><geometry><box size="0.035 0.050 0.020"/></geometry></collision>
       <xacro:hf_storage_box_inertial mass="0.080" sx="0.035" sy="0.050" sz="0.020"/>
     </link>
@@ -144,9 +153,8 @@
     </joint>
 
     <link name="dry_bin_level_sensor_link">
-      <visual name="ultrasonic_body"><geometry><box size="0.040 0.055 0.022"/></geometry><material name="hf_level_sensor"><color rgba="0.06 0.16 0.28 1"/></material></visual>
-      <visual name="left_transducer"><origin xyz="0 0.014 -0.015"/><geometry><cylinder radius="0.008" length="0.010"/></geometry><material name="hf_transducer"><color rgba="0.70 0.72 0.73 1"/></material></visual>
-      <visual name="right_transducer"><origin xyz="0 -0.014 -0.015"/><geometry><cylinder radius="0.008" length="0.010"/></geometry><material name="hf_transducer_right"><color rgba="0.70 0.72 0.73 1"/></material></visual>
+      <xacro:hf_storage_visual mesh="dry_bin_level_sensor.stl"
+        material="hf_level_sensor" rgba="0.06 0.16 0.28 1"/>
       <collision><geometry><box size="0.040 0.055 0.022"/></geometry></collision>
       <xacro:hf_storage_box_inertial mass="0.045" sx="0.040" sy="0.055" sz="0.022"/>
     </link>
@@ -158,7 +166,8 @@
     <!-- Wet compartment: completely separate sealed tank with its own floor,
          five boards (including anti-slosh baffle), lid, probes and vent. -->
     <link name="wastewater_tank_link">
-      <visual name="wet_floor"><origin xyz="0 0 -0.084"/><geometry><box size="0.358 0.258 0.008"/></geometry><material name="hf_wet_floor"><color rgba="0.10 0.25 0.35 1"/></material></visual>
+      <xacro:hf_storage_visual mesh="wastewater_tank_floor.stl"
+        material="hf_wet_floor" rgba="0.10 0.25 0.35 1" origin_xyz="0 0 -0.084"/>
       <collision name="wet_floor_collision"><origin xyz="0 0 -0.084"/><geometry><box size="0.358 0.258 0.008"/></geometry></collision>
       <xacro:hf_storage_box_inertial mass="0.550" sx="0.358" sy="0.258" sz="0.008" xyz="0 0 -0.084"/>
     </link>
@@ -169,20 +178,20 @@
 
     <xacro:hf_storage_panel name="wastewater_front_panel" parent="wastewater_tank_link"
       xyz="0.177 0 0" size="0.004 0.258 0.168" mass="0.400"
-      material="hf_wet_panel_front" rgba="0.11 0.31 0.43 1"/>
+      material="hf_wet_panel_front" rgba="0.11 0.31 0.43 1" mesh="wastewater_front_panel.stl"/>
     <xacro:hf_storage_panel name="wastewater_rear_panel" parent="wastewater_tank_link"
       xyz="-0.177 0 0" size="0.004 0.258 0.168" mass="0.400"
-      material="hf_wet_panel_rear" rgba="0.11 0.31 0.43 1"/>
+      material="hf_wet_panel_rear" rgba="0.11 0.31 0.43 1" mesh="wastewater_rear_panel.stl"/>
     <xacro:hf_storage_panel name="wastewater_left_panel" parent="wastewater_tank_link"
       xyz="0 0.127 0" size="0.350 0.004 0.168" mass="0.400"
-      material="hf_wet_panel_left" rgba="0.11 0.31 0.43 1"/>
+      material="hf_wet_panel_left" rgba="0.11 0.31 0.43 1" mesh="wastewater_side_panel.stl"/>
     <xacro:hf_storage_panel name="wastewater_right_panel" parent="wastewater_tank_link"
       xyz="0 -0.127 0" size="0.350 0.004 0.168" mass="0.400"
-      material="hf_wet_panel_right" rgba="0.11 0.31 0.43 1"/>
+      material="hf_wet_panel_right" rgba="0.11 0.31 0.43 1" mesh="wastewater_side_panel.stl"/>
 
     <link name="wastewater_baffle_link">
-      <visual name="baffle_lower"><origin xyz="0 0 -0.045"/><geometry><box size="0.004 0.230 0.060"/></geometry><material name="hf_baffle"><color rgba="0.22 0.42 0.52 0.9"/></material></visual>
-      <visual name="baffle_upper"><origin xyz="0 0 0.055"/><geometry><box size="0.004 0.230 0.045"/></geometry><material name="hf_baffle_upper"><color rgba="0.22 0.42 0.52 0.9"/></material></visual>
+      <xacro:hf_storage_visual mesh="wastewater_baffle.stl"
+        material="hf_baffle" rgba="0.22 0.42 0.52 0.9"/>
       <collision name="baffle_lower_collision"><origin xyz="0 0 -0.045"/><geometry><box size="0.004 0.230 0.060"/></geometry></collision>
       <collision name="baffle_upper_collision"><origin xyz="0 0 0.055"/><geometry><box size="0.004 0.230 0.045"/></geometry></collision>
       <xacro:hf_storage_box_inertial mass="0.250" sx="0.004" sy="0.230" sz="0.125"/>
@@ -193,9 +202,8 @@
     </joint>
 
     <link name="wastewater_lid_link">
-      <visual name="lid_skin"><origin xyz="0.179 0 0"/><geometry><box size="0.358 0.266 0.010"/></geometry><material name="hf_wet_lid"><color rgba="0.045 0.10 0.15 1"/></material></visual>
-      <visual name="service_cap"><origin xyz="0.210 0 0.024"/><geometry><cylinder radius="0.046" length="0.028"/></geometry><material name="hf_service_cap"><color rgba="0.14 0.35 0.45 1"/></material></visual>
-      <visual name="lid_gasket"><origin xyz="0.179 0 -0.007"/><geometry><box size="0.346 0.254 0.004"/></geometry><material name="hf_wet_gasket"><color rgba="0.025 0.03 0.035 1"/></material></visual>
+      <xacro:hf_storage_visual mesh="wastewater_lid.stl"
+        material="hf_wet_lid" rgba="0.045 0.10 0.15 1"/>
       <collision><origin xyz="0.179 0 0"/><geometry><box size="0.358 0.266 0.010"/></geometry></collision>
       <xacro:hf_storage_box_inertial mass="0.450" sx="0.358" sy="0.266" sz="0.010" xyz="0.179 0 0"/>
     </link>
@@ -223,8 +231,8 @@
 
     <xacro:macro name="hf_level_probe" params="name x y z color">
       <link name="${name}_link">
-        <visual name="probe_body"><geometry><cylinder radius="0.007" length="0.075"/></geometry><material name="${name}_material"><color rgba="${color}"/></material></visual>
-        <visual name="connector"><origin xyz="0 0 0.045"/><geometry><cylinder radius="0.011" length="0.015"/></geometry><material name="${name}_connector_material"><color rgba="0.08 0.09 0.10 1"/></material></visual>
+        <xacro:hf_storage_visual mesh="level_probe.stl"
+          material="${name}_material" rgba="${color}"/>
         <collision><geometry><cylinder radius="0.011" length="0.090"/></geometry></collision>
         <xacro:hf_storage_cylinder_z_inertial mass="0.040" radius="0.011" length="0.090"/>
       </link>
@@ -237,8 +245,8 @@
     <xacro:hf_level_probe name="wastewater_high_level_sensor" x="0.13" y="-0.08" z="0.035" color="0.95 0.55 0.08 1"/>
 
     <link name="wastewater_vent_filter_link">
-      <visual name="vent_body"><geometry><cylinder radius="0.020" length="0.045"/></geometry><material name="hf_vent"><color rgba="0.65 0.68 0.69 1"/></material></visual>
-      <visual name="activated_carbon"><origin xyz="0 0 0.020"/><geometry><cylinder radius="0.015" length="0.020"/></geometry><material name="hf_carbon"><color rgba="0.04 0.045 0.05 1"/></material></visual>
+      <xacro:hf_storage_visual mesh="wastewater_vent_filter.stl"
+        material="hf_vent" rgba="0.65 0.68 0.69 1"/>
       <collision><geometry><cylinder radius="0.020" length="0.045"/></geometry></collision>
       <xacro:hf_storage_cylinder_z_inertial mass="0.080" radius="0.020" length="0.045"/>
     </link>
@@ -250,8 +258,8 @@
     <!-- A dedicated firewall/partition prevents dry trash from contacting the
          tank or plumbing, while leaving a service/thermal air gap. -->
     <link name="dry_wet_storage_partition_link">
-      <visual name="partition_board"><geometry><box size="0.520 0.012 0.280"/></geometry><material name="hf_partition"><color rgba="0.75 0.77 0.78 1"/></material></visual>
-      <visual name="lower_seal"><origin xyz="0 0 -0.130"/><geometry><box size="0.520 0.020 0.020"/></geometry><material name="hf_partition_seal"><color rgba="0.025 0.03 0.035 1"/></material></visual>
+      <xacro:hf_storage_visual mesh="dry_wet_partition.stl"
+        material="hf_partition" rgba="0.75 0.77 0.78 1"/>
       <collision><geometry><box size="0.520 0.012 0.280"/></geometry></collision>
       <xacro:hf_storage_box_inertial mass="0.350" sx="0.520" sy="0.012" sz="0.280"/>
     </link>
@@ -261,8 +269,8 @@
     </joint>
 
     <link name="wastewater_inlet_coupling_link">
-      <visual name="bulkhead_union"><origin rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.020" length="0.065"/></geometry><material name="hf_tank_coupling"><color rgba="0.40 0.43 0.44 1"/></material></visual>
-      <visual name="check_valve"><origin xyz="0 0.045 0" rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.026" length="0.045"/></geometry><material name="hf_check_valve"><color rgba="0.10 0.13 0.14 1"/></material></visual>
+      <xacro:hf_storage_visual mesh="wastewater_inlet_coupling.stl"
+        material="hf_tank_coupling" rgba="0.40 0.43 0.44 1"/>
       <collision><origin rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.026" length="0.105"/></geometry></collision>
       <xacro:hf_storage_box_inertial mass="0.120" sx="0.052" sy="0.105" sz="0.052"/>
     </link>

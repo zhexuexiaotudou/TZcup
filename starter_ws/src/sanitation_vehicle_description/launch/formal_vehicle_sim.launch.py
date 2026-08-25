@@ -1,7 +1,11 @@
 """Spawn the formal vehicle in a dedicated Gazebo Harmonic validation world."""
 
+import os
+from pathlib import Path
+
+from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, TimerAction
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, SetEnvironmentVariable, TimerAction
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import Command, LaunchConfiguration, PathJoinSubstitution
@@ -26,20 +30,34 @@ def generate_launch_description() -> LaunchDescription:
         Command(["xacro ", model, " use_sim:=true dry_load_mass_kg:=0.0 wastewater_load_mass_kg:=0.0"]),
         value_type=str,
     )
+    # sdformat rewrites package:// URIs to model:// URIs. Gazebo therefore
+    # needs the parent of the installed package share directory on its resource
+    # path so every vendored and project-generated mesh resolves offline.
+    package_share_parent = str(Path(get_package_share_directory("sanitation_vehicle_description")).parent)
+    existing_resource_path = os.environ.get("GZ_SIM_RESOURCE_PATH", "")
+    resource_path = os.pathsep.join(
+        item for item in (package_share_parent, existing_resource_path) if item
+    )
 
-    controller_spawners = [
-        Node(
-            package="controller_manager",
-            executable="spawner",
-            arguments=[name, "--controller-manager", "/controller_manager"],
-            output="screen",
-            condition=IfCondition(start_controllers),
-        )
-        for name in ("joint_state_broadcaster", "base_controller", "arm_controller", "cleaning_controller", "storage_controller", "brush_controller")
-    ]
+    controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=[
+            "joint_state_broadcaster", "base_controller", "arm_controller",
+            "cleaning_controller", "storage_controller", "brush_controller",
+            "--controller-manager", "/controller_manager",
+            "--controller-manager-timeout", "30",
+            "--service-call-timeout", "30",
+            "--switch-timeout", "30",
+            "--activate-as-group",
+        ],
+        output="screen",
+        condition=IfCondition(start_controllers),
+    )
 
     return LaunchDescription(
         [
+            SetEnvironmentVariable("GZ_SIM_RESOURCE_PATH", resource_path),
             DeclareLaunchArgument("gui", default_value="true"),
             DeclareLaunchArgument("start_controllers", default_value="true"),
             DeclareLaunchArgument("use_sim_time", default_value="true"),
@@ -104,6 +122,6 @@ def generate_launch_description() -> LaunchDescription:
                 ],
                 output="screen",
             ),
-            TimerAction(period=6.0, actions=controller_spawners),
+            TimerAction(period=6.0, actions=[controller_spawner]),
         ]
     )

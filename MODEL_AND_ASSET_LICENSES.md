@@ -8,11 +8,12 @@ AUTO-04 与 AUTO-05 证据中的 ONNX 模型由本项目脚本在自建 Gazebo
 
 ## Gazebo 与车辆资产
 
-仓库中的车辆 URDF/Xacro、机械臂、障碍物、垃圾物体、材质、地图与世界均由
-项目内参数化代码或文本资源构建，没有提交 Gazebo Fuel 模型、外部 mesh、
-照片、音视频或其他来源不明的二进制资产。这些资源随所属
-`sanitation_vehicle_description`、`sanitation_worlds`、`sanitation_navigation`
-包按 Apache-2.0 交付。
+正式整车的 A300、UR5e、Robotiq 2F-85 和部分传感器外壳采用已锁定版本、允许
+再分发的上游 mesh；每个来源的 commit、用途、限制和许可证登记在
+`starter_ws/src/sanitation_vehicle_description/meshes/vendor/SOURCES.yaml`，许可证
+原文随各自目录保留。项目自建的清扫、回收、分仓、安装支架和防护外壳 mesh
+由 `cad/formal_vehicle/` 或 `scripts/generate_*mesh*.py` 中的参数化源生成并按
+Apache-2.0 交付。Gazebo Fuel、网页图片、照片、音视频或来源不明资产不进入仓库。
 
 ## 外部依赖
 
@@ -28,8 +29,9 @@ AUTO-04 与 AUTO-05 证据中的 ONNX 模型由本项目脚本在自建 Gazebo
 - D-Robotics OpenExplorer 3.7.0 的 2.85 GB 官方包不进入 Git 或最终 ZIP，
   仅记录官方来源、版本和 SHA；使用时需遵守厂商 SDK 条款。
 
-当前清单中的未知许可证数量为 0。若未来加入外部模型、mesh、纹理、字体或
-数据集，必须先登记来源、版本、许可证和 SHA，才能进入发布包。
+当前清单中的未知许可证数量为 0。外部 mesh 不能因被复制进 Apache-2.0 包而被
+重新许可；其原许可证继续生效。若未来加入外部模型、mesh、纹理、字体或数据集，
+必须先登记来源、版本、许可证和 SHA，才能进入发布包。
 
 ## 高保真整车的厂商数据表边界
 

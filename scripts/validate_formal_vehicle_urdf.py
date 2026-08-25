@@ -290,8 +290,14 @@ def validate_layout(
         raise FormalVehicleValidationError("every physical formal URDF link must retain an inertial")
     inertial_exempt = [str(item) for item in policy.get("inertial_exempt_virtual_frames", [])]
     _unique(inertial_exempt, "inertial-exempt virtual frames")
-    if inertial_exempt != [robot["root_frame"]]:
-        raise FormalVehicleValidationError("only the virtual root frame may be exempt from inertial data")
+    allowed_virtual_frames = {robot["root_frame"], "ur5e_base_link"}
+    if not inertial_exempt or inertial_exempt[0] != robot["root_frame"]:
+        raise FormalVehicleValidationError("the REP-105 virtual root must be the first inertial exemption")
+    unexpected_virtual_frames = sorted(set(inertial_exempt) - allowed_virtual_frames)
+    if unexpected_virtual_frames:
+        raise FormalVehicleValidationError(
+            "unapproved inertial-exempt virtual frames: " + ", ".join(unexpected_virtual_frames)
+        )
 
     passed_checks = [
         "pre_urdf_contract_and_four_budget_csvs",
