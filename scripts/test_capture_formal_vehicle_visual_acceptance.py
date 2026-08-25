@@ -30,19 +30,19 @@ def test_frame_metrics_distinguish_visible_and_black_images() -> None:
     assert frame_metrics(black)["near_black_fraction"] == 1.0
 
 
-def test_product_and_service_profiles_have_six_real_gazebo_frames() -> None:
+def test_product_and_service_profiles_have_seven_real_gazebo_frames() -> None:
     for directory, profile in (
         ("formal_vehicle_visual_acceptance", "product"),
         ("formal_vehicle_service_visual_acceptance", "service"),
     ):
         root = ROOT / "reports" / "engineering" / directory
         manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
-        assert manifest["status"] == "GAZEBO_OGRE2_SIX_CAMERA_CAPTURE_PASSED"
+        assert manifest["status"] == "GAZEBO_OGRE2_SEVEN_CAMERA_CAPTURE_PASSED"
         assert manifest["bodywork_profile"] == profile
-        assert manifest["camera_count"] == 6
+        assert manifest["camera_count"] == 7
         assert set(manifest["frames"]) == {
             "front_left", "rear_right", "top_cleaning", "sensor_tower_detail",
-            "front_sensor_detail", "arm_mount_detail",
+            "front_sensor_detail", "arm_mount_detail", "dry_deposition_detail",
         }
         for frame in manifest["frames"].values():
             assert (root / frame["path"]).is_file()
