@@ -713,8 +713,10 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_doc
 # 正式竞赛整车 URDF/CAD（2026-08-25）
 
 - 新增 A300、UR5e、2F-85、八路传感器、UR 控制箱、S100 参考箱、完整清扫/刮吸机构和独立干湿箱的正式多刚体 Xacro。
-- 展开模型为 104 links / 103 joints / 空载 134.252001 kg；`base_footprint` 是唯一无质量虚拟根帧，103 个物理 link 均有正定惯量；22 个非 pending 安装帧均通过 5 mm / 0.02 rad 一致性门。
+- V2 将原 primitive 外观基线升级为开源官方网格与项目参数化 CAD：A300/UR5e/2F-85/主要传感器采用锁定许可 mesh，清扫/回收/分仓生成 47 个机构 STL，鱼眼、支架、控制柜和安装件由项目生成；共 100 个 mesh visual，51 个关键外露 link 全部通过非 primitive 门。
+- 展开模型为 105 links / 104 joints / 空载 135.283866 kg；`base_footprint` 与 UR 官方数学基准 `ur5e_base_link` 为无质量虚拟帧，其余 103 个物理 link 均有正定惯量；22 个非 pending 安装帧均通过 5 mm / 0.02 rad 一致性门。
 - 新增 Gazebo `DynamicPayloadSystem`，实跑确认干垃圾和污水动态质量分别强制限于 1.512 kg 与 9.7064 kg，并同步更新惯量和污水重心。
-- 新增 OpenSCAD 包装源、展开 URDF、工程预览、布局/URDF/运行时分层报告及 17 项确定性测试。
-- Headless Gazebo Harmonic 已观察到全部雷达、相机、GNSS 和 IMU 消息；六个控制器全部 active，底盘、刷盘、机械臂和储运接口均可运行；Bullet Featherstone 下 Robotiq 四个 mimic 联动关节随动。
-- 保持 pending：S100 实物测量、最终 CoG/污水容量、机械臂全空间、清扫接触/柔性和精确遮挡；Gazebo 服务端仍需 SIGTERM 才能结束，不得据此宣称实车或综合竞赛通过。
+- 新增 OpenSCAD 包装源、可重复 CAD 生成器、104 资产 SHA-256 清单、mesh-aware 工程预览、布局/URDF/视觉/运行时分层报告及 20 项确定性测试。
+- Headless Gazebo Harmonic 已观察到全部雷达、相机、GNSS 和 IMU 消息；100 个 mesh visual 无资源加载失败，六个控制器分组启动后全部 active；底盘累计 4 s 的 0.25 m/s 指令产生 0.537127 m 地面真值位移，刷盘、机械臂、夹爪完整 mimic 链和储运接口均有运行响应。
+- 同一提交候选的 Windows 快速门为 332/332；Stage 1 两轮均为 629 tests、0 errors、0 failures（51 项按上游 cppcheck 策略跳过）；Stage 2 回归收到 12/12 类必需话题，5 s 地面位移 1.200000 m。
+- 保持 pending：S100 实物测量、最终 CoG/污水容量、机械臂全空间、清扫接触/柔性和精确遮挡；Gazebo 服务端仍需针对任务 PID 强制结束，不得据此宣称实车或综合竞赛通过。

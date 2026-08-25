@@ -74,11 +74,12 @@
     "all_physical_links_have_positive_mass_and_positive_definite_physical_inertia": true,
     "all_required_frames_joints_and_sensors_present": true,
     "evaluated": true,
-    "joint_count": 103,
+    "joint_count": 104,
     "joint_limits_and_tree_topology_valid": true,
-    "link_count": 104,
+    "link_count": 105,
     "massless_virtual_frames": [
-      "base_footprint"
+      "base_footprint",
+      "ur5e_base_link"
     ],
     "passed": true,
     "path": "reports/engineering/formal_competition_vehicle.urdf",
@@ -118,6 +119,6 @@
       "rotation_tolerance_rad": 0.02
     },
     "symbolic_placeholders_absent": true,
-    "total_empty_vehicle_mass_kg": 134.252001
+    "total_empty_vehicle_mass_kg": 135.283866
   }
 }

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Render a deterministic engineering preview from an expanded primitive URDF."""
+"""Render a deterministic engineering preview from an expanded mesh URDF."""
 
 from __future__ import annotations
 
@@ -13,12 +13,14 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
+import trimesh
 from mpl_toolkits.mplot3d.art3d import Poly3DCollection
 
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_URDF = ROOT / "reports" / "engineering" / "formal_competition_vehicle.urdf"
 DEFAULT_OUTPUT = ROOT / "reports" / "engineering" / "formal_vehicle_preview.png"
+PACKAGE_ROOT = ROOT / "starter_ws" / "src" / "sanitation_vehicle_description"
 
 
 def numbers(raw: str | None, default: tuple[float, ...]) -> np.ndarray:
@@ -91,6 +93,22 @@ def material_rgba(visual: ET.Element) -> tuple[float, float, float, float]:
     return rgba[0], rgba[1], rgba[2], max(rgba[3], 0.18)
 
 
+def mesh_faces(node: ET.Element, max_faces: int = 2400) -> list[np.ndarray]:
+    filename = node.attrib["filename"]
+    prefix = "package://sanitation_vehicle_description/"
+    if not filename.startswith(prefix):
+        raise ValueError(f"preview only accepts self-contained package meshes: {filename}")
+    path = PACKAGE_ROOT / filename[len(prefix):]
+    loaded = trimesh.load(path, force="scene")
+    mesh = loaded.to_geometry()
+    scale = numbers(node.attrib.get("scale"), (1.0, 1.0, 1.0))
+    vertices = np.asarray(mesh.vertices, dtype=float) * scale
+    faces = np.asarray(mesh.faces, dtype=int)
+    if len(faces) > max_faces:
+        faces = faces[:: max(1, math.ceil(len(faces) / max_faces))]
+    return [vertices[index] for index in faces]
+
+
 def link_transforms(root: ET.Element) -> dict[str, np.ndarray]:
     children: dict[str, list[tuple[str, np.ndarray]]] = {}
     child_names: set[str] = set()
@@ -132,12 +150,15 @@ def render(urdf_path: Path, output_path: Path) -> None:
             box = geometry.find("box")
             cylinder = geometry.find("cylinder")
             sphere = geometry.find("sphere")
+            mesh = geometry.find("mesh")
             if box is not None:
                 faces = box_faces(numbers(box.attrib["size"], (1.0, 1.0, 1.0)))
             elif cylinder is not None:
                 faces = cylinder_faces(float(cylinder.attrib["radius"]), float(cylinder.attrib["length"]))
             elif sphere is not None:
                 faces = sphere_faces(float(sphere.attrib["radius"]))
+            elif mesh is not None:
+                faces = mesh_faces(mesh)
             else:
                 continue
             world_faces = [apply(link_pose @ visual_pose, face) for face in faces]
@@ -147,7 +168,7 @@ def render(urdf_path: Path, output_path: Path) -> None:
     figure = plt.figure(figsize=(12, 9), facecolor="#f5f6f7")
     axis = figure.add_subplot(111, projection="3d", facecolor="#f5f6f7")
     for faces, rgba in collections:
-        axis.add_collection3d(Poly3DCollection(faces, facecolors=[rgba], edgecolors="#30363d", linewidths=0.12))
+        axis.add_collection3d(Poly3DCollection(faces, facecolors=[rgba], edgecolors="none", linewidths=0.0))
     points = np.vstack(all_points)
     lower, upper = points.min(axis=0), points.max(axis=0)
     centre = (lower + upper) * 0.5

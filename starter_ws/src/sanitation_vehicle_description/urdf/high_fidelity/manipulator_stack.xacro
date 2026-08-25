@@ -1,162 +1,122 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
   <!--
-    Offline, redistributable primitive model of a UR5e and Robotiq 2F-85.
-    Kinematic dimensions follow the public UR5e nominal chain; geometry is
-    project-authored and intentionally does not copy vendor meshes.
+    UR5e + Robotiq 2F-85 nominal assembly adapted from the official BSD-3-Clause
+    descriptions pinned in meshes/vendor/SOURCES.yaml. Visuals use the vendor
+    DAE meshes and collisions use matching low-detail STL meshes.
   -->
-
-  <xacro:macro name="hf_arm_box_inertia" params="mass x y z">
-    <inertia ixx="${mass*(y*y+z*z)/12.0}" ixy="0" ixz="0"
-             iyy="${mass*(x*x+z*z)/12.0}" iyz="0"
-             izz="${mass*(x*x+y*y)/12.0}"/>
+  <xacro:macro name="hf_epsilon_inertia" params="mass:=0.000001">
+    <inertial><mass value="${mass}"/><inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/></inertial>
   </xacro:macro>
 
-  <xacro:macro name="hf_gripper_bar" params="name mass length width height color">
-    <link name="${name}">
-      <visual><origin xyz="${length/2.0} 0 0"/><geometry><box size="${length} ${width} ${height}"/></geometry>
-        <material name="${name}_material"><color rgba="${color}"/></material></visual>
-      <collision><origin xyz="${length/2.0} 0 0"/><geometry><box size="${length} ${width} ${height}"/></geometry></collision>
-      <inertial><origin xyz="${length/2.0} 0 0"/><mass value="${mass}"/>
-        <xacro:hf_arm_box_inertia mass="${mass}" x="${length}" y="${width}" z="${height}"/></inertial>
-    </link>
+  <!-- Keep helper macros at document scope. Defining this macro while
+       expanding hf_manipulator_stack works in current xacro, but leaks a
+       global definition as a side effect and is unsafe if the assembly is
+       instantiated more than once. -->
+  <xacro:macro name="hf_2f85_part" params="name mesh mass cog ixx iyy izz ixz:=0">
+    <link name="${name}"><visual><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/robotiq_2f85/visual/${mesh}.dae"/></geometry></visual><collision><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/robotiq_2f85/collision/${mesh}.stl"/></geometry></collision><inertial><origin xyz="${cog}"/><mass value="${mass}"/><inertia ixx="${ixx}" ixy="0" ixz="${ixz}" iyy="${iyy}" iyz="0" izz="${izz}"/></inertial></link>
   </xacro:macro>
 
   <xacro:macro name="hf_manipulator_stack" params="parent">
-    <!-- Fixed pedestal datum.  UR5e component masses sum to exactly 20.6 kg. -->
-    <link name="ur5e_base_link">
-      <visual name="base_column"><origin xyz="0 0 0.0445"/><geometry><cylinder radius="0.095" length="0.089"/></geometry>
-        <material name="ur_dark"><color rgba="0.12 0.14 0.16 1"/></material></visual>
-      <collision><origin xyz="0 0 0.0445"/><geometry><cylinder radius="0.095" length="0.089"/></geometry></collision>
-      <inertial><origin xyz="0 0 0.0445"/><mass value="3.6061"/>
-        <inertia ixx="0.01052" ixy="0" ixz="0" iyy="0.01052" iyz="0" izz="0.01627"/></inertial>
-    </link>
+    <!-- Official nominal kinematic frames. The base allocation is adjusted so
+         the seven physical UR links retain the published 20.6 kg total. -->
+    <link name="ur5e_base_link"/>
     <joint name="ur5e_mount_joint" type="fixed"><parent link="${parent}"/><child link="ur5e_base_link"/><origin xyz="0 0 0.015"/></joint>
 
-    <link name="ur5e_shoulder_link">
-      <visual><origin xyz="0 0 0.03675"/><geometry><cylinder radius="0.088" length="0.0735"/></geometry>
-        <material name="ur_shoulder"><color rgba="0.72 0.74 0.76 1"/></material></visual>
-      <collision><origin xyz="0 0 0.03675"/><geometry><cylinder radius="0.088" length="0.0735"/></geometry></collision>
-      <inertial><origin xyz="0 0 0.03675"/><mass value="3.7"/>
-        <inertia ixx="0.00958" ixy="0" ixz="0" iyy="0.00958" iyz="0" izz="0.01433"/></inertial>
+    <!-- The official UR description separates the REP-103 base frame from the
+         controller-facing inertial frame with a pi rotation. The mesh itself
+         has the opposite pi rotation, so its net orientation relative to the
+         mounting frame is unchanged while all arm joints use the correct UR
+         controller axes. Do not collapse these two transforms. -->
+    <link name="ur5e_base_link_inertia">
+      <visual><origin rpy="0 0 ${pi}"/><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/visual/base.dae"/></geometry></visual>
+      <collision><origin rpy="0 0 ${pi}"/><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/collision/base.stl"/></geometry></collision>
+      <inertial><mass value="2.9"/><inertia ixx="0.0032625" ixy="0" ixz="0" iyy="0.0032625" iyz="0" izz="0.00522"/></inertial>
     </link>
-    <joint name="shoulder_pan_joint" type="revolute">
-      <parent link="ur5e_base_link"/><child link="ur5e_shoulder_link"/><origin xyz="0 0 0.089"/><axis xyz="0 0 1"/>
-      <limit lower="-${2*pi}" upper="${2*pi}" effort="150" velocity="3.14"/><dynamics damping="0.10" friction="0.05"/>
-    </joint>
+    <joint name="ur5e_base_link_inertia_joint" type="fixed"><parent link="ur5e_base_link"/><child link="ur5e_base_link_inertia"/><origin rpy="0 0 ${pi}"/></joint>
+
+    <link name="ur5e_shoulder_link">
+      <visual><origin rpy="0 0 ${pi}"/><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/visual/shoulder.dae"/></geometry></visual>
+      <collision><origin rpy="0 0 ${pi}"/><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/collision/shoulder.stl"/></geometry></collision>
+      <inertial><origin xyz="0 -0.00193 -0.02561" rpy="${pi/2.0} 0 0"/><mass value="3.761"/><inertia ixx="0.00700210" ixy="0.00000073" ixz="-0.00001053" iyy="0.00648091" iyz="0.00049994" izz="0.00657286"/></inertial>
+    </link>
+    <joint name="shoulder_pan_joint" type="revolute"><parent link="ur5e_base_link_inertia"/><child link="ur5e_shoulder_link"/><origin xyz="0 0 0.1625"/><axis xyz="0 0 1"/><limit lower="-${2*pi}" upper="${2*pi}" effort="150" velocity="3.14"/><dynamics damping="0.10" friction="0.05"/></joint>
 
     <link name="ur5e_upper_arm_link">
-      <visual name="upper_arm_tube"><origin xyz="0.2125 0 0" rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.067" length="0.425"/></geometry>
-        <material name="ur_blue"><color rgba="0.08 0.30 0.55 1"/></material></visual>
-      <visual name="upper_arm_end"><geometry><cylinder radius="0.082" length="0.090"/></geometry>
-        <material name="ur_upper_end"><color rgba="0.70 0.72 0.74 1"/></material></visual>
-      <collision><origin xyz="0.2125 0 0" rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.067" length="0.425"/></geometry></collision>
-      <inertial><origin xyz="0.2125 0 0"/><mass value="8.393"/>
-        <inertia ixx="0.032" ixy="0" ixz="0" iyy="0.139" iyz="0" izz="0.139"/></inertial>
+      <visual><origin xyz="0 0 0.138" rpy="${pi/2.0} 0 ${-pi/2.0}"/><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/visual/upperarm.dae"/></geometry></visual>
+      <collision><origin xyz="0 0 0.138" rpy="${pi/2.0} 0 ${-pi/2.0}"/><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/collision/upperarm.stl"/></geometry></collision>
+      <inertial><origin xyz="-0.2125 0 0.11336"/><mass value="8.058"/><inertia ixx="0.01505885" ixy="-0.00005400" ixz="0.00000563" iyy="0.33388086" iyz="-0.00000181" izz="0.33247207"/></inertial>
     </link>
-    <joint name="shoulder_lift_joint" type="revolute">
-      <parent link="ur5e_shoulder_link"/><child link="ur5e_upper_arm_link"/><origin xyz="0 0 0.0735"/><axis xyz="0 1 0"/>
-      <limit lower="-${2*pi}" upper="${2*pi}" effort="150" velocity="3.14"/><dynamics damping="0.10" friction="0.05"/>
-    </joint>
+    <joint name="shoulder_lift_joint" type="revolute"><parent link="ur5e_shoulder_link"/><child link="ur5e_upper_arm_link"/><origin rpy="${pi/2.0} 0 0"/><axis xyz="0 0 1"/><limit lower="-${2*pi}" upper="${2*pi}" effort="150" velocity="3.14"/><dynamics damping="0.10" friction="0.05"/></joint>
 
     <link name="ur5e_forearm_link">
-      <visual name="forearm_tube"><origin xyz="0.1961 0 0" rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.060" length="0.3922"/></geometry>
-        <material name="ur_forearm_blue"><color rgba="0.08 0.30 0.55 1"/></material></visual>
-      <visual name="elbow_housing"><geometry><cylinder radius="0.075" length="0.085"/></geometry>
-        <material name="ur_elbow"><color rgba="0.70 0.72 0.74 1"/></material></visual>
-      <collision><origin xyz="0.1961 0 0" rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.060" length="0.3922"/></geometry></collision>
-      <inertial><origin xyz="0.1961 0 0"/><mass value="2.275"/>
-        <inertia ixx="0.009" ixy="0" ixz="0" iyy="0.033" iyz="0" izz="0.033"/></inertial>
+      <visual><origin xyz="0 0 0.007" rpy="${pi/2.0} 0 ${-pi/2.0}"/><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/visual/forearm.dae"/></geometry></visual>
+      <collision><origin xyz="0 0 0.007" rpy="${pi/2.0} 0 ${-pi/2.0}"/><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/collision/forearm.stl"/></geometry></collision>
+      <inertial><origin xyz="-0.2422 0 0.0265"/><mass value="2.846"/><inertia ixx="0.00399632" ixy="-0.00001365" ixz="0.00137272" iyy="0.07879254" iyz="-0.00000660" izz="0.07848510"/></inertial>
     </link>
-    <joint name="elbow_joint" type="revolute">
-      <parent link="ur5e_upper_arm_link"/><child link="ur5e_forearm_link"/><origin xyz="0.425 0 0"/><axis xyz="0 1 0"/>
-      <limit lower="-${2*pi}" upper="${2*pi}" effort="150" velocity="3.14"/><dynamics damping="0.08" friction="0.04"/>
-    </joint>
+    <joint name="elbow_joint" type="revolute"><parent link="ur5e_upper_arm_link"/><child link="ur5e_forearm_link"/><origin xyz="-0.425 0 0"/><axis xyz="0 0 1"/><limit lower="-${pi}" upper="${pi}" effort="150" velocity="3.14"/><dynamics damping="0.08" friction="0.04"/></joint>
 
     <link name="ur5e_wrist_1_link">
-      <visual><origin xyz="0 0 0.06665"/><geometry><cylinder radius="0.057" length="0.1333"/></geometry>
-        <material name="ur_wrist1"><color rgba="0.70 0.72 0.74 1"/></material></visual>
-      <collision><origin xyz="0 0 0.06665"/><geometry><cylinder radius="0.057" length="0.1333"/></geometry></collision>
-      <inertial><origin xyz="0 0 0.06665"/><mass value="1.219"/><inertia ixx="0.00279" ixy="0" ixz="0" iyy="0.00279" iyz="0" izz="0.00198"/></inertial>
+      <visual><origin xyz="0 0 -0.127" rpy="${pi/2.0} 0 0"/><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/visual/wrist1.dae"/></geometry></visual>
+      <collision><origin xyz="0 0 -0.127" rpy="${pi/2.0} 0 0"/><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/collision/wrist1.stl"/></geometry></collision>
+      <inertial><origin xyz="0 -0.01634 -0.0018" rpy="${pi/2.0} 0 0"/><mass value="1.37"/><inertia ixx="0.00165491" ixy="-0.00000282" ixz="-0.00000438" iyy="0.00135962" iyz="0.00010157" izz="0.00126279"/></inertial>
     </link>
-    <joint name="wrist_1_joint" type="revolute">
-      <parent link="ur5e_forearm_link"/><child link="ur5e_wrist_1_link"/><origin xyz="0.3922 0 0"/><axis xyz="0 1 0"/>
-      <limit lower="-${2*pi}" upper="${2*pi}" effort="28" velocity="3.14"/><dynamics damping="0.05" friction="0.02"/>
-    </joint>
+    <joint name="wrist_1_joint" type="revolute"><parent link="ur5e_forearm_link"/><child link="ur5e_wrist_1_link"/><origin xyz="-0.3922 0 0.1333"/><axis xyz="0 0 1"/><limit lower="-${2*pi}" upper="${2*pi}" effort="28" velocity="3.14"/><dynamics damping="0.05" friction="0.02"/></joint>
 
     <link name="ur5e_wrist_2_link">
-      <visual><origin xyz="0 0 0.04985"/><geometry><cylinder radius="0.052" length="0.0997"/></geometry>
-        <material name="ur_wrist2"><color rgba="0.10 0.31 0.55 1"/></material></visual>
-      <collision><origin xyz="0 0 0.04985"/><geometry><cylinder radius="0.052" length="0.0997"/></geometry></collision>
-      <inertial><origin xyz="0 0 0.04985"/><mass value="1.219"/><inertia ixx="0.00184" ixy="0" ixz="0" iyy="0.00184" iyz="0" izz="0.00165"/></inertial>
+      <visual><origin xyz="0 0 -0.0997"/><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/visual/wrist2.dae"/></geometry></visual>
+      <collision><origin xyz="0 0 -0.0997"/><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/collision/wrist2.stl"/></geometry></collision>
+      <inertial><origin xyz="0 0.01634 -0.0018" rpy="${-pi/2.0} 0 0"/><mass value="1.3"/><inertia ixx="0.00135617" ixy="-0.00000274" ixz="0.00000444" iyy="0.00127827" iyz="-0.00005048" izz="0.00096614"/></inertial>
     </link>
-    <joint name="wrist_2_joint" type="revolute">
-      <parent link="ur5e_wrist_1_link"/><child link="ur5e_wrist_2_link"/><origin xyz="0 0 0.1333"/><axis xyz="0 0 1"/>
-      <limit lower="-${2*pi}" upper="${2*pi}" effort="28" velocity="3.14"/><dynamics damping="0.05" friction="0.02"/>
-    </joint>
+    <joint name="wrist_2_joint" type="revolute"><parent link="ur5e_wrist_1_link"/><child link="ur5e_wrist_2_link"/><origin xyz="0 -0.0997 0" rpy="${pi/2.0} 0 0"/><axis xyz="0 0 1"/><limit lower="-${2*pi}" upper="${2*pi}" effort="28" velocity="3.14"/><dynamics damping="0.05" friction="0.02"/></joint>
 
     <link name="ur5e_wrist_3_link">
-      <visual><origin xyz="0 0 0.0498"/><geometry><cylinder radius="0.047" length="0.0996"/></geometry>
-        <material name="ur_wrist3"><color rgba="0.70 0.72 0.74 1"/></material></visual>
-      <collision><origin xyz="0 0 0.0498"/><geometry><cylinder radius="0.047" length="0.0996"/></geometry></collision>
-      <inertial><origin xyz="0 0 0.0498"/><mass value="0.1879"/><inertia ixx="0.000282" ixy="0" ixz="0" iyy="0.000282" iyz="0" izz="0.000207"/></inertial>
+      <visual><origin xyz="0 -0.0005 -0.0989" rpy="${pi/2.0} 0 0"/><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/visual/wrist3.dae"/></geometry></visual>
+      <collision><origin xyz="0 -0.0005 -0.0989" rpy="${pi/2.0} 0 0"/><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/collision/wrist3.stl"/></geometry></collision>
+      <inertial><origin xyz="0 0 -0.001159"/><mass value="0.365"/><inertia ixx="0.00018694" ixy="0.00000006" ixz="-0.00000017" iyy="0.00018908" iyz="-0.00000092" izz="0.00025756"/></inertial>
     </link>
-    <joint name="wrist_3_joint" type="revolute">
-      <parent link="ur5e_wrist_2_link"/><child link="ur5e_wrist_3_link"/><origin xyz="0 0 0.0997"/><axis xyz="0 1 0"/>
-      <limit lower="-${2*pi}" upper="${2*pi}" effort="28" velocity="3.14"/><dynamics damping="0.05" friction="0.02"/>
-    </joint>
+    <joint name="wrist_3_joint" type="revolute"><parent link="ur5e_wrist_2_link"/><child link="ur5e_wrist_3_link"/><origin xyz="0 0.0996 0" rpy="${pi/2.0} ${pi} ${pi}"/><axis xyz="0 0 1"/><limit lower="-${2*pi}" upper="${2*pi}" effort="28" velocity="3.14"/><dynamics damping="0.05" friction="0.02"/></joint>
 
-    <link name="tool0">
-      <visual><origin xyz="0 0 0.006"/><geometry><cylinder radius="0.040" length="0.012"/></geometry>
-        <material name="tool_flange"><color rgba="0.25 0.27 0.29 1"/></material></visual>
-      <collision><origin xyz="0 0 0.006"/><geometry><cylinder radius="0.040" length="0.012"/></geometry></collision>
-      <inertial><mass value="0.000001"/><inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/></inertial>
+    <link name="flange"><xacro:hf_epsilon_inertia/></link>
+    <joint name="ur5e_wrist_3_flange_joint" type="fixed"><parent link="ur5e_wrist_3_link"/><child link="flange"/><origin rpy="0 ${-pi/2.0} ${-pi/2.0}"/></joint>
+    <link name="tool0"><xacro:hf_epsilon_inertia/></link>
+    <joint name="tool0_joint" type="fixed"><parent link="flange"/><child link="tool0"/><origin rpy="${pi/2.0} 0 ${pi/2.0}"/></joint>
+
+    <link name="ur_to_robotiq_adapter_link">
+      <visual><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/robotiq_2f85/visual/ur_to_robotiq_adapter.dae"/></geometry></visual>
+      <collision><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/robotiq_2f85/collision/ur_to_robotiq_adapter.stl"/></geometry></collision>
+      <inertial><mass value="0.01"/><inertia ixx="0.000044" ixy="0" ixz="0" iyy="0.000027" iyz="0" izz="0.000027"/></inertial>
     </link>
-    <joint name="tool0_joint" type="fixed"><parent link="ur5e_wrist_3_link"/><child link="tool0"/><origin xyz="0 0 0.0996"/></joint>
+    <joint name="ur_to_robotiq_adapter_joint" type="fixed"><parent link="tool0"/><child link="ur_to_robotiq_adapter_link"/></joint>
 
-    <!-- Robotiq 2F-85: explicit palm, four knuckles, four finger bodies and pads.
-         robotiq_85_left_knuckle_joint is the only commanded joint; all other
-         revolute joints mimic it to preserve one-DOF parallel closure. -->
     <link name="robotiq_85_base_link">
-      <visual><origin xyz="0.040 0 0" rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.075" length="0.080"/></geometry>
-        <material name="rq_palm"><color rgba="0.12 0.14 0.16 1"/></material></visual>
-      <collision><origin xyz="0.040 0 0" rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.075" length="0.080"/></geometry></collision>
-      <inertial><origin xyz="0.040 0 0"/><mass value="0.50"/><inertia ixx="0.00141" ixy="0" ixz="0" iyy="0.00167" iyz="0" izz="0.00141"/></inertial>
+      <visual><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/robotiq_2f85/visual/robotiq_base.dae"/></geometry></visual>
+      <collision><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/robotiq_2f85/collision/robotiq_base.stl"/></geometry></collision>
+      <inertial><origin xyz="0 0.00002274 0.03232288"/><mass value="0.66320197"/><inertia ixx="0.00051617816" ixy="0.00000002936" ixz="0" iyy="0.00058802208" iyz="-0.00000032296" izz="0.00039462776"/></inertial>
     </link>
-    <joint name="robotiq_85_mount_joint" type="fixed"><parent link="tool0"/><child link="robotiq_85_base_link"/><origin xyz="0 0 0" rpy="0 ${pi/2.0} 0"/></joint>
+    <joint name="robotiq_85_mount_joint" type="fixed"><parent link="ur_to_robotiq_adapter_link"/><child link="robotiq_85_base_link"/><origin xyz="0 0 0.011"/></joint>
 
-    <xacro:hf_gripper_bar name="robotiq_85_left_outer_knuckle_link" mass="0.05" length="0.055" width="0.022" height="0.030" color="0.72 0.73 0.74 1"/>
-    <joint name="robotiq_85_left_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_left_outer_knuckle_link"/>
-      <origin xyz="0.065 0.050 0"/><axis xyz="0 0 1"/><limit lower="0" upper="0.80285" effort="100" velocity="2.0"/><dynamics damping="0.03" friction="0.02"/></joint>
-    <xacro:hf_gripper_bar name="robotiq_85_left_outer_finger_link" mass="0.07" length="0.085" width="0.020" height="0.028" color="0.15 0.17 0.19 1"/>
-    <joint name="robotiq_85_left_outer_finger_joint" type="fixed"><parent link="robotiq_85_left_outer_knuckle_link"/><child link="robotiq_85_left_outer_finger_link"/><origin xyz="0.055 0 0"/></joint>
+    <xacro:hf_2f85_part name="robotiq_85_left_knuckle_link" mesh="left_knuckle" mass="0.01384773208" cog="0.01213197 0.0002 -0.00058647" ixx="0.00000035232" iyy="0.00000231944" izz="0.00000223136" ixz="0.00000011744"/>
+    <joint name="robotiq_85_left_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_left_knuckle_link"/><origin xyz="0.03060114 0 0.05490452"/><axis xyz="0 -1 0"/><limit lower="0" upper="0.8" velocity="0.5" effort="50"/><dynamics damping="0.03" friction="0.02"/></joint>
+    <xacro:hf_2f85_part name="robotiq_85_right_knuckle_link" mesh="right_knuckle" mass="0.01384773208" cog="-0.01213197 0.0002 -0.00058647" ixx="0.00000035232" iyy="0.00000231944" izz="0.00000223136" ixz="-0.00000011744"/>
+    <joint name="robotiq_85_right_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_right_knuckle_link"/><origin xyz="-0.03060114 0 0.05490452"/><axis xyz="0 -1 0"/><limit lower="-0.8" upper="0" velocity="0.5" effort="50"/><mimic joint="robotiq_85_left_knuckle_joint" multiplier="-1"/></joint>
 
-    <xacro:hf_gripper_bar name="robotiq_85_right_outer_knuckle_link" mass="0.05" length="0.055" width="0.022" height="0.030" color="0.72 0.73 0.74 1"/>
-    <joint name="robotiq_85_right_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_right_outer_knuckle_link"/>
-      <origin xyz="0.065 -0.050 0"/><axis xyz="0 0 1"/><limit lower="-0.80285" upper="0" effort="100" velocity="2.0"/><mimic joint="robotiq_85_left_knuckle_joint" multiplier="-1"/></joint>
-    <xacro:hf_gripper_bar name="robotiq_85_right_outer_finger_link" mass="0.07" length="0.085" width="0.020" height="0.028" color="0.15 0.17 0.19 1"/>
-    <joint name="robotiq_85_right_outer_finger_joint" type="fixed"><parent link="robotiq_85_right_outer_knuckle_link"/><child link="robotiq_85_right_outer_finger_link"/><origin xyz="0.055 0 0"/></joint>
+    <xacro:hf_2f85_part name="robotiq_85_left_finger_link" mesh="left_finger" mass="0.04260376752" cog="0.00346899 -0.00079447 0.01867121" ixx="0.00001385792" iyy="0.00001183208" izz="0.00000519672" ixz="-0.00000217264"/>
+    <joint name="robotiq_85_left_finger_joint" type="fixed"><parent link="robotiq_85_left_knuckle_link"/><child link="robotiq_85_left_finger_link"/><origin xyz="0.03152616 0 -0.00376347"/></joint>
+    <xacro:hf_2f85_part name="robotiq_85_right_finger_link" mesh="right_finger" mass="0.04260376752" cog="-0.00346899 -0.00000553 0.01867121" ixx="0.00001385792" iyy="0.00001183208" izz="0.00000519672" ixz="0.00000217264"/>
+    <joint name="robotiq_85_right_finger_joint" type="fixed"><parent link="robotiq_85_right_knuckle_link"/><child link="robotiq_85_right_finger_link"/><origin xyz="-0.03152616 0 -0.00376347"/></joint>
 
-    <xacro:hf_gripper_bar name="robotiq_85_left_inner_knuckle_link" mass="0.03" length="0.047" width="0.018" height="0.025" color="0.65 0.67 0.69 1"/>
-    <joint name="robotiq_85_left_inner_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_left_inner_knuckle_link"/>
-      <origin xyz="0.045 0.033 0"/><axis xyz="0 0 1"/><limit lower="-0.80285" upper="0" effort="100" velocity="2.0"/><mimic joint="robotiq_85_left_knuckle_joint" multiplier="-1"/></joint>
-    <xacro:hf_gripper_bar name="robotiq_85_left_inner_finger_link" mass="0.04" length="0.073" width="0.018" height="0.024" color="0.15 0.17 0.19 1"/>
-    <joint name="robotiq_85_left_inner_finger_joint" type="fixed"><parent link="robotiq_85_left_inner_knuckle_link"/><child link="robotiq_85_left_inner_finger_link"/><origin xyz="0.047 0 0"/></joint>
+    <xacro:hf_2f85_part name="robotiq_85_left_inner_knuckle_link" mesh="left_inner_knuckle" mass="0.02969376448" cog="0.01897699 0.00015001 0.02247101" ixx="0.00000957136" iyy="0.00000869056" izz="0.00000819144" ixz="-0.00000393424"/>
+    <joint name="robotiq_85_left_inner_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_left_inner_knuckle_link"/><origin xyz="0.0127 0 0.06142"/><axis xyz="0 -1 0"/><limit lower="0" upper="0.8" velocity="0.5" effort="50"/><mimic joint="robotiq_85_left_knuckle_joint"/></joint>
+    <xacro:hf_2f85_part name="robotiq_85_right_inner_knuckle_link" mesh="right_inner_knuckle" mass="0.02969376448" cog="-0.01926824 0.00005001 0.02222178" ixx="0.00000942456" iyy="0.00000869056" izz="0.00000833824" ixz="0.0000039636"/>
+    <joint name="robotiq_85_right_inner_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_right_inner_knuckle_link"/><origin xyz="-0.0127 0 0.06142"/><axis xyz="0 -1 0"/><limit lower="-0.8" upper="0" velocity="0.5" effort="50"/><mimic joint="robotiq_85_left_knuckle_joint" multiplier="-1"/></joint>
 
-    <xacro:hf_gripper_bar name="robotiq_85_right_inner_knuckle_link" mass="0.03" length="0.047" width="0.018" height="0.025" color="0.65 0.67 0.69 1"/>
-    <joint name="robotiq_85_right_inner_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_right_inner_knuckle_link"/>
-      <origin xyz="0.045 -0.033 0"/><axis xyz="0 0 1"/><limit lower="0" upper="0.80285" effort="100" velocity="2.0"/><mimic joint="robotiq_85_left_knuckle_joint" multiplier="1"/></joint>
-    <xacro:hf_gripper_bar name="robotiq_85_right_inner_finger_link" mass="0.04" length="0.073" width="0.018" height="0.024" color="0.15 0.17 0.19 1"/>
-    <joint name="robotiq_85_right_inner_finger_joint" type="fixed"><parent link="robotiq_85_right_inner_knuckle_link"/><child link="robotiq_85_right_inner_finger_link"/><origin xyz="0.047 0 0"/></joint>
+    <xacro:hf_2f85_part name="robotiq_85_left_finger_tip_link" mesh="left_finger_tip" mass="0.04268588744" cog="-0.01456706 -0.0008 0.01649701" ixx="0.00001048152" iyy="0.00001197888" izz="0.00000422784" ixz="0.0000035232"/>
+    <joint name="robotiq_85_left_finger_tip_joint" type="revolute"><parent link="robotiq_85_left_finger_link"/><child link="robotiq_85_left_finger_tip_link"/><origin xyz="0.00563134 0 0.04718515"/><axis xyz="0 -1 0"/><limit lower="-0.8" upper="0" velocity="0.5" effort="50"/><mimic joint="robotiq_85_left_knuckle_joint" multiplier="-1"/></joint>
+    <xacro:hf_2f85_part name="robotiq_85_right_finger_tip_link" mesh="right_finger_tip" mass="0.04268588744" cog="0.01456706 0.00005 0.01649701" ixx="0.00001048152" iyy="0.00001197888" izz="0.00000422784" ixz="-0.0000035232"/>
+    <joint name="robotiq_85_right_finger_tip_joint" type="revolute"><parent link="robotiq_85_right_finger_link"/><child link="robotiq_85_right_finger_tip_link"/><origin xyz="-0.00563134 0 0.04718515"/><axis xyz="0 -1 0"/><limit lower="0" upper="0.8" velocity="0.5" effort="50"/><mimic joint="robotiq_85_left_knuckle_joint"/></joint>
 
-    <link name="robotiq_85_left_pad_link"><visual><geometry><box size="0.030 0.010 0.040"/></geometry><material name="left_pad"><color rgba="0.03 0.03 0.03 1"/></material></visual>
-      <collision><geometry><box size="0.030 0.010 0.040"/></geometry></collision><inertial><mass value="0.01"/><xacro:hf_arm_box_inertia mass="0.01" x="0.030" y="0.010" z="0.040"/></inertial></link>
-    <joint name="robotiq_85_left_pad_joint" type="fixed"><parent link="robotiq_85_left_outer_finger_link"/><child link="robotiq_85_left_pad_link"/><origin xyz="0.080 -0.010 0"/></joint>
-    <link name="robotiq_85_right_pad_link"><visual><geometry><box size="0.030 0.010 0.040"/></geometry><material name="right_pad"><color rgba="0.03 0.03 0.03 1"/></material></visual>
-      <collision><geometry><box size="0.030 0.010 0.040"/></geometry></collision><inertial><mass value="0.01"/><xacro:hf_arm_box_inertia mass="0.01" x="0.030" y="0.010" z="0.040"/></inertial></link>
-    <joint name="robotiq_85_right_pad_joint" type="fixed"><parent link="robotiq_85_right_outer_finger_link"/><child link="robotiq_85_right_pad_link"/><origin xyz="0.080 0.010 0"/></joint>
-
-    <gazebo reference="robotiq_85_left_pad_link"><mu1>1.20</mu1><mu2>1.20</mu2><kp>500000</kp><kd>50</kd></gazebo>
-    <gazebo reference="robotiq_85_right_pad_link"><mu1>1.20</mu1><mu2>1.20</mu2><kp>500000</kp><kd>50</kd></gazebo>
+    <gazebo reference="robotiq_85_left_finger_tip_link"><mu1>1.20</mu1><mu2>1.20</mu2><kp>500000</kp><kd>50</kd></gazebo>
+    <gazebo reference="robotiq_85_right_finger_tip_link"><mu1>1.20</mu1><mu2>1.20</mu2><kp>500000</kp><kd>50</kd></gazebo>
   </xacro:macro>
 </robot>

@@ -1,5 +1,5 @@
 {
-  "report_id": "tzcup_formal_vehicle_headless_runtime_v1",
+  "report_id": "tzcup_formal_vehicle_headless_runtime_v2",
   "status": "FORMAL_GAZEBO_CONTROL_AND_SENSOR_RUNTIME_PASSED_EXTERNAL_FIDELITY_GATES_PENDING",
   "environment": {
     "distribution": "TZcup-Ubuntu-24.04",
@@ -10,6 +10,8 @@
   },
   "passed_checks": {
     "xacro_expansion_and_check_urdf": true,
+    "visual_mesh_fidelity_gate": true,
+    "all_mesh_resources_resolved": true,
     "gazebo_entity_spawn": true,
     "robot_state_publisher_initialized": true,
     "dynamic_payload_plugin_loaded": true,
@@ -26,6 +28,7 @@
     "imu_message_observed": true,
     "gz_ros2_control_loaded": true,
     "all_six_controllers_active": true,
+    "controller_group_startup_verified": true,
     "safe_stowed_cleaning_start": true,
     "base_ground_truth_motion_observed": true,
     "brush_velocity_response_observed": true,
@@ -47,12 +50,27 @@
       "storage_controller",
       "brush_controller"
     ],
+    "mesh_visual_count": 100,
+    "primitive_visual_count": 2,
+    "required_external_mesh_links_passed": 51,
     "base_forward_command_mps": 0.25,
-    "base_ground_truth_forward_delta_m": 0.344,
+    "base_command_duration_s": 4.0,
+    "base_ground_truth_forward_delta_m": 0.537127,
     "brush_velocity_command_rad_s": [10.0, -10.0, 15.0],
+    "brush_velocity_observed_rad_s": [10.0, -10.0, 15.0],
     "arm_driver_joint_targets_rad": {
       "shoulder_pan_joint": 0.1,
       "robotiq_85_left_knuckle_joint": 0.2
+    },
+    "arm_driver_joint_observed_rad": {
+      "shoulder_pan_joint": 0.09999994,
+      "robotiq_85_left_knuckle_joint": 0.19999404
+    },
+    "robotiq_fingertip_runtime_m": {
+      "closed_left": [0.755201, 0.277755, 0.511897],
+      "closed_right": [0.871401, 0.289414, 0.511897],
+      "open_left": [0.746532, 0.270337, 0.511897],
+      "open_right": [0.881371, 0.283865, 0.511897]
     },
     "gnss_world_origin": {
       "latitude_deg": 39.9042,
@@ -61,10 +79,10 @@
     }
   },
   "pending_or_blocked_checks": {
-    "gazebo_sigint_shutdown": "gz_server_required_sigterm_after_five_second_sigint_timeout",
+    "gazebo_sigint_shutdown": "gz_server_required_targeted_sigkill_after_five_second_sigterm_timeout",
     "sensor_ray_occlusion_acceptance": "messages_observed_but_scene_level_visibility_scan_not_run",
     "cleaning_ground_contact": "not_run",
     "arm_full_sweep_and_self_collision": "not_run"
   },
-  "claim_boundary": "The formal vehicle spawns headlessly with Bullet Featherstone; sensor, payload, drivetrain, full Robotiq mimic linkage, cleaning, storage and brush controllers run. This is not acceptance of cleaning contact quality, arm swept volume, or final sensor occlusion."
+  "claim_boundary": "The mesh-based formal vehicle spawns headlessly with Bullet Featherstone; all referenced visual meshes resolve, sensor, payload, drivetrain, full Robotiq mimic linkage, cleaning, storage and brush controllers run. This is not acceptance of cleaning contact quality, arm swept volume, or final sensor occlusion."
 }

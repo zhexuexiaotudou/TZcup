@@ -47,10 +47,10 @@
       <xacro:hf_position_joint name="shoulder_pan_joint" lower="${-2*pi}" upper="${2*pi}" velocity="3.14" effort="150.0"/>
       <xacro:hf_position_joint name="shoulder_lift_joint" lower="${-2*pi}" upper="${2*pi}" velocity="3.14" effort="150.0"/>
       <xacro:hf_position_joint name="elbow_joint" lower="${-pi}" upper="${pi}" velocity="3.14" effort="150.0"/>
-      <xacro:hf_position_joint name="wrist_1_joint" lower="${-2*pi}" upper="${2*pi}" velocity="6.28" effort="28.0"/>
-      <xacro:hf_position_joint name="wrist_2_joint" lower="${-2*pi}" upper="${2*pi}" velocity="6.28" effort="28.0"/>
-      <xacro:hf_position_joint name="wrist_3_joint" lower="${-2*pi}" upper="${2*pi}" velocity="6.28" effort="28.0"/>
-      <xacro:hf_position_joint name="robotiq_85_left_knuckle_joint" lower="0.0" upper="0.8" velocity="2.0" effort="100.0"/>
+      <xacro:hf_position_joint name="wrist_1_joint" lower="${-2*pi}" upper="${2*pi}" velocity="3.14" effort="28.0"/>
+      <xacro:hf_position_joint name="wrist_2_joint" lower="${-2*pi}" upper="${2*pi}" velocity="3.14" effort="28.0"/>
+      <xacro:hf_position_joint name="wrist_3_joint" lower="${-2*pi}" upper="${2*pi}" velocity="3.14" effort="28.0"/>
+      <xacro:hf_position_joint name="robotiq_85_left_knuckle_joint" lower="0.0" upper="0.8" velocity="0.5" effort="50.0"/>
 
       <xacro:hf_velocity_joint name="left_side_brush_joint" max_velocity="31.416" max_effort="12.0"/>
       <xacro:hf_velocity_joint name="right_side_brush_joint" max_velocity="31.416" max_effort="12.0"/>

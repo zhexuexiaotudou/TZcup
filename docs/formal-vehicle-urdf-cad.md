@@ -16,9 +16,11 @@
 | 干垃圾 | 45 L 几何容积、40 L 可用容积独立干箱及料位传感器 |
 | 计算与控制 | UR e-Series 12 kg 控制箱、S100 参考外壳与独立板卡基准 |
 
-103 个物理 link 都有质量和正定惯量；`base_footprint` 是唯一无质量的 REP-105 虚拟根帧。
-103 个 joint 形成单根树，活动关节有轴、力矩、速度和范围。碰撞体采用稳定的凸基本体，外观几何由项目自有 Xacro 与 OpenSCAD 参数化
-源描述，避免依赖不可再分发的厂商网格。
+103 个物理 link 都有质量和正定惯量；`base_footprint` 与 UR 官方坐标链中的
+`ur5e_base_link` 是无质量数学帧。104 个 joint 形成单根树，活动关节有轴、力矩、
+速度和范围。碰撞体采用稳定的简化几何；外观采用锁定 commit 且允许再分发的
+A300/UR5e/2F-85/传感器 mesh，以及项目参数化生成的清扫、干湿分仓和安装件 CAD。
+上游来源、许可证和 104 项 SHA-256 清单位于 `meshes/`。
 
 ## CAD 与安装坐标
 
@@ -60,27 +62,34 @@ xacro starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehi
   use_sim:=false -o /tmp/formal_vehicle.urdf
 check_urdf /tmp/formal_vehicle.urdf
 python scripts/validate_formal_vehicle_urdf.py --urdf /tmp/formal_vehicle.urdf
+python scripts/validate_formal_vehicle_visual_fidelity.py --urdf /tmp/formal_vehicle.urdf
 ```
 
-空载确定性结果为 104 links、103 joints、134.252001 kg（其中两个动态载荷保留 link
+空载确定性结果为 105 links、104 joints、135.283866 kg（其中两个动态载荷保留 link
 各含 0.001 kg 数值稳定质量）。装入 1.512 kg 干垃圾和 9.7064 kg 污水后为
-145.468401 kg。动态插件已在 Gazebo Harmonic 中加载并验证上下限
+146.502266 kg。视觉门要求 51 个关键外露 link 全部使用 mesh；当前展开结果有
+100 个 mesh visual，仅两个透明载荷状态体保留 primitive。动态插件已在 Gazebo Harmonic 中加载并验证上下限
 确认话题；完整 ros2_control 运行需要环境安装 `gz_ros2_control`。
 
 `reports/engineering/formal_vehicle_runtime_report.json` 记录本次无界面运行证据：2D/3D
 雷达、前/腕 RGB-D、双鱼眼、GNSS、IMU 和动态载荷桥接均已观察到真实消息；六个控制器
-全部 active，底盘 0.25 m/s 指令产生 0.344 m 地面真值位移，刷盘、机械臂主关节和夹爪
+通过单次分组启动全部 active，100 个 mesh visual 在 Gazebo 中均无资源丢失；底盘累计 4 s 的
+0.25 m/s 指令产生 0.537127 m 地面真值位移，刷盘、机械臂主关节和夹爪
 驱动关节均有实测响应。正式启动器使用 Gazebo 官方 mimic 示例要求的 Bullet Featherstone
-引擎，四个夹爪联动关节均观察到对应响应。Gazebo 服务端仍在 SIGINT 后需要 SIGTERM
-才退出，因此干净停机仍明确标为未通过。
+引擎，四个夹爪联动关节及左右指尖位置变化均观察到对应响应。Gazebo 服务端在 SIGINT、
+SIGTERM 后仍需对本次任务的精确 PID 执行 SIGKILL，因此干净停机仍明确标为未通过。
+此外，项目通用 Stage 1 两轮均为 629 tests、0 errors、0 failures，Stage 2 兼容回归收到
+12/12 类必需话题并在 5 s 内产生 1.200000 m 位移；它验证旧运行链未回归，不替代上述
+正式 mesh 整车的专用 Gazebo 证据。
 
 ## 尚未通过的高保真门
 
 - S100 实际 SKU 的板框、孔位、连接器和质量仍需对用户自有板实测；
 - 最终整车重心扫描和由重心确定的污水最终容量尚未冻结；
-- UR5e/夹爪精确网格全关节扫掠、自碰撞和投箱轨迹尚未运行；
+- UR5e/夹爪官方网格的全关节扫掠、自碰撞和投箱轨迹尚未运行；
 - 刷毛、刮条地面接触、软管柔性、污水自由液面仍需 Gazebo 调参与验证；
-- MID-360 当前为密集栅格扫描近似，鱼眼镜头畸变由标定层处理；
+- MID-360/VN100/GNSS 外壳是开源 ROS 近似而非厂家计量 CAD；MID-360 扫描为密集栅格近似，鱼眼镜头畸变由标定层处理；
+- 清扫电机、升降器和泵已建外壳、法兰、轴、接口与运动链，但不声称隐藏绕组、齿轮或泵膜片达到制造级精确；
 - 精确视场遮挡和全部 Gazebo 传感器可见性扫描尚未完成。
 
 因此本交付是可构建、可校验、可继续做动力学闭环的正式名义整车，不宣称已经达到

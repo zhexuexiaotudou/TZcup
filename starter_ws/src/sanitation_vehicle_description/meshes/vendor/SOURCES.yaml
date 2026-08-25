@@ -1,0 +1,32 @@
+schema_version: 1
+policy:
+  purpose: "Reproducible, redistributable visual and collision geometry for the formal vehicle digital twin"
+  note: "Vendor meshes preserve their upstream licenses. Presence in this Apache-2.0 ROS package does not relicense them."
+sources:
+  - id: clearpath_a300
+    upstream: https://github.com/clearpathrobotics/clearpath_common.git
+    revision: b0f6d920422ad302372a1c65e31d61648da884ed
+    license: BSD-3-Clause
+    license_file: clearpath_a300/LICENSE
+    role: "A300 chassis shell, livery, status lights, top plate, bumper, drivetrain and wheel visuals"
+  - id: universal_robots
+    upstream: https://github.com/UniversalRobots/Universal_Robots_ROS2_Description.git
+    revision: 39242984dc8d1fff9584c922c17c69c58df3591d
+    license: BSD-3-Clause
+    license_file: universal_robots/LICENSE
+    role: "UR5e visual and collision geometry"
+  - id: robotiq_2f85
+    upstream: https://github.com/robotiq/ros.git
+    revision: 3ab3befccaa10468f80803ba687105c9d224d567
+    license: BSD-3-Clause
+    license_file: robotiq_2f85/LICENSE
+    role: "Robotiq 2F-85 adapter, gripper visual and collision geometry"
+  - id: robotnik_sensors
+    upstream: https://github.com/RobotnikAutomation/robotnik_sensors.git
+    revision: 11852f4f14d6e0a561117396187f7674ed33ab2b
+    license: BSD-3-Clause
+    license_file: robotnik_sensors/LICENSE
+    role: "Redistributable sensor housing visuals"
+    limitations:
+      - "MID-360 is an open ROS asset approximation, not manufacturer metrology CAD."
+      - "VN100 and GNSS files model external housings only."

@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://ros.org/wiki/xacro">
   <!--
-    Project-authored collision/visual model of the Clearpath Husky A300 40 Ah.
-    No vendor mesh is redistributed.  The 0.990 x 0.698 x 0.372 m envelope and
-    78.5 kg curb mass are frozen by pre_urdf_contract.yaml.  The wheelbase and
-    track below are layout values and must be rechecked against a dimensioned
-    A300 drawing before fabrication.
+    Clearpath Husky A300 40 Ah nominal model.  Visible chassis, livery, status
+    lights, top plate and tyres are the BSD-3-Clause Clearpath meshes pinned in
+    meshes/vendor/SOURCES.yaml.  Primitive geometry remains only for collision
+    and inertia.  Physical tyre radius follows the official description mesh;
+    the controller uses the separately published 0.1625 m effective radius.
   -->
 
   <xacro:macro name="hf_box_inertia" params="mass x y z">
@@ -14,26 +14,21 @@
              izz="${mass * (x*x + y*y) / 12.0}"/>
   </xacro:macro>
 
-  <xacro:macro name="hf_a300_wheel" params="name x y">
+  <xacro:macro name="hf_a300_wheel" params="name side x y">
     <link name="${name}_wheel_link">
       <visual name="${name}_tire_visual">
-        <origin rpy="${pi/2.0} 0 0"/>
-        <geometry><cylinder radius="0.186" length="0.114"/></geometry>
+        <origin rpy="0 0 ${pi if side == 'right' else 0}"/>
+        <geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/wheels/outdoor_${side}.stl"/></geometry>
         <material name="${name}_tire"><color rgba="0.035 0.040 0.045 1"/></material>
-      </visual>
-      <visual name="${name}_hub_visual">
-        <origin rpy="${pi/2.0} 0 0"/>
-        <geometry><cylinder radius="0.078" length="0.118"/></geometry>
-        <material name="${name}_hub"><color rgba="0.28 0.31 0.33 1"/></material>
       </visual>
       <collision name="${name}_wheel_collision">
         <origin rpy="${pi/2.0} 0 0"/>
-        <geometry><cylinder radius="0.186" length="0.114"/></geometry>
+        <geometry><cylinder radius="0.1651" length="0.1143"/></geometry>
       </collision>
       <inertial>
-        <mass value="3.0"/>
-        <inertia ixx="0.029196" ixy="0" ixz="0"
-                 iyy="0.051894" iyz="0" izz="0.029196"/>
+        <mass value="2.5"/>
+        <inertia ixx="0.024420" ixy="0" ixz="0"
+                 iyy="0.034073" iyz="0" izz="0.024420"/>
       </inertial>
     </link>
     <joint name="${name}_wheel_joint" type="continuous">
@@ -57,41 +52,37 @@
     <link name="base_footprint"/>
 
     <link name="base_link">
-      <visual name="lower_frame_visual">
-        <origin xyz="0 0 0.055"/>
-        <geometry><box size="0.990 0.584 0.262"/></geometry>
-        <material name="a300_yellow"><color rgba="0.94 0.65 0.05 1"/></material>
+      <visual name="a300_chassis_visual">
+        <geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/chassis.dae"/></geometry>
       </visual>
-      <visual name="front_bumper_visual">
-        <origin xyz="0.476 0 0.035"/>
-        <geometry><box size="0.038 0.698 0.145"/></geometry>
-        <material name="a300_bumper"><color rgba="0.08 0.09 0.10 1"/></material>
+      <visual name="a300_livery_visual">
+        <geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/livery.dae"/></geometry>
       </visual>
-      <visual name="rear_bumper_visual">
-        <origin xyz="-0.476 0 0.035"/>
-        <geometry><box size="0.038 0.698 0.145"/></geometry>
-        <material name="a300_bumper_rear"><color rgba="0.08 0.09 0.10 1"/></material>
+      <visual name="a300_status_lights_visual">
+        <geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/status_lights.dae"/></geometry>
       </visual>
       <collision name="base_collision">
-        <origin xyz="0 0 0.055"/>
-        <geometry><box size="0.990 0.584 0.262"/></geometry>
+        <origin xyz="0 0 0.11478"/>
+        <geometry><box size="0.860 0.378 0.22956"/></geometry>
       </collision>
       <inertial>
-        <origin xyz="-0.035 0 0.045"/>
-        <mass value="61.499"/>
-        <xacro:hf_box_inertia mass="61.499" x="0.990" y="0.584" z="0.262"/>
+        <origin xyz="-0.041 0.003 0.070"/>
+        <!-- Chassis allocation keeps base + four wheels + standard top plate at
+             the published 78.5 kg 40 Ah A300 curb mass. The custom mast remains payload. -->
+        <mass value="64.5"/>
+        <xacro:hf_box_inertia mass="64.5" x="0.860" y="0.378" z="0.22956"/>
       </inertial>
     </link>
     <joint name="base_footprint_joint" type="fixed">
       <parent link="base_footprint"/>
       <child link="base_link"/>
-      <origin xyz="0 0 0.186"/>
+      <origin xyz="0 0 0.1651"/>
     </joint>
 
     <link name="payload_deck_link">
       <visual name="deck_plate_visual">
-        <geometry><box size="0.825 0.555 0.030"/></geometry>
-        <material name="a300_deck"><color rgba="0.18 0.21 0.23 1"/></material>
+        <origin xyz="0 0 -0.204"/>
+        <geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/attachments/top_plate.dae"/></geometry>
       </visual>
       <collision name="deck_plate_collision"><geometry><box size="0.825 0.555 0.030"/></geometry></collision>
       <inertial>
@@ -107,21 +98,16 @@
     <!-- Structural mast is intentionally a separate physical link so its
          flexibility and sensor payload can be refined without changing base inertia. -->
     <link name="sensor_mast_link">
-      <visual name="mast_column_visual">
-        <origin xyz="0 0 0.360"/>
-        <geometry><box size="0.060 0.060 0.720"/></geometry>
+      <visual name="machined_sensor_mast_visual">
+        <geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/sensor_mast.stl"/></geometry>
         <material name="mast_black"><color rgba="0.06 0.07 0.08 1"/></material>
-      </visual>
-      <visual name="mast_crossbar_visual">
-        <origin xyz="0 0 0.700"/>
-        <geometry><box size="0.090 0.480 0.040"/></geometry>
-        <material name="mast_crossbar"><color rgba="0.11 0.13 0.14 1"/></material>
       </visual>
       <collision name="mast_column_collision"><origin xyz="0 0 0.360"/><geometry><box size="0.060 0.060 0.720"/></geometry></collision>
       <collision name="mast_crossbar_collision">
         <origin xyz="0 0 0.700"/>
         <geometry><box size="0.090 0.480 0.040"/></geometry>
       </collision>
+      <collision name="mast_gusset_collision"><origin xyz="0 0 0.060"/><geometry><box size="0.170 0.120 0.120"/></geometry></collision>
       <inertial>
         <origin xyz="0 0 0.360"/>
         <mass value="1.0"/>
@@ -136,9 +122,9 @@
     <!-- Arm mounting datum: centered toward the forward deck to preserve rear
          bin volume.  Final transform remains subject to the CoG/collision gate. -->
     <link name="arm_mount_link">
-      <visual><geometry><cylinder radius="0.120" length="0.030"/></geometry>
+      <visual><geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/arm_mount_adapter.stl"/></geometry>
         <material name="arm_mount_gray"><color rgba="0.32 0.34 0.36 1"/></material></visual>
-      <collision><geometry><cylinder radius="0.120" length="0.030"/></geometry></collision>
+      <collision><origin xyz="0 0 0.013"/><geometry><cylinder radius="0.120" length="0.056"/></geometry></collision>
       <inertial><mass value="0.001"/><inertia ixx="0.000001" ixy="0" ixz="0" iyy="0.000001" iyz="0" izz="0.000001"/></inertial>
     </link>
     <joint name="arm_mount_joint" type="fixed">
@@ -151,13 +137,8 @@
          tangent to, but does not enter, the frozen dry-bin envelope. -->
     <link name="ur5e_control_box_link">
       <visual name="control_box_cabinet">
-        <geometry><box size="0.460 0.254 0.449"/></geometry>
+        <geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/ur5e_control_cabinet.stl"/></geometry>
         <material name="control_box_blue"><color rgba="0.08 0.24 0.42 1"/></material>
-      </visual>
-      <visual name="control_box_front_panel">
-        <origin xyz="0.232 0 0"/>
-        <geometry><box size="0.004 0.220 0.390"/></geometry>
-        <material name="control_box_panel"><color rgba="0.68 0.70 0.71 1"/></material>
       </visual>
       <collision><geometry><box size="0.460 0.254 0.449"/></geometry></collision>
       <inertial><mass value="12.0"/><xacro:hf_box_inertia mass="12.0" x="0.460" y="0.254" z="0.449"/></inertial>
@@ -173,11 +154,9 @@
          allowance is assigned to the enclosure; the board datum carries only
          epsilon mass so no unmeasured board mass is invented. -->
     <link name="s100_compute_enclosure_link">
-      <visual name="s100_enclosure_body"><geometry><box size="0.200 0.150 0.080"/></geometry>
+      <visual name="s100_enclosure_body"><geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/s100_compute_enclosure.stl"/></geometry>
         <material name="s100_enclosure_black"><color rgba="0.07 0.08 0.09 1"/></material></visual>
-      <visual name="s100_mounting_plate"><origin xyz="0 0 -0.045"/><geometry><box size="0.230 0.180 0.010"/></geometry>
-        <material name="s100_plate"><color rgba="0.34 0.36 0.38 1"/></material></visual>
-      <collision><geometry><box size="0.200 0.150 0.080"/></geometry></collision>
+      <collision><geometry><box size="0.205 0.155 0.100"/></geometry></collision>
       <collision name="s100_plate_collision"><origin xyz="0 0 -0.045"/><geometry><box size="0.230 0.180 0.010"/></geometry></collision>
       <inertial><origin xyz="0 0 -0.004"/><mass value="1.999999"/>
         <xacro:hf_box_inertia mass="1.999999" x="0.210" y="0.160" z="0.090"/></inertial>
@@ -187,7 +166,7 @@
       <origin xyz="0.300 -0.270 0.100"/>
     </joint>
     <link name="s100_board_reference_link">
-      <visual name="s100_pending_board_visual"><geometry><box size="0.150 0.100 0.004"/></geometry>
+      <visual name="s100_pending_board_visual"><geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/s100_board_reference.stl"/></geometry>
         <material name="s100_pending_board"><color rgba="0.04 0.42 0.20 0.45"/></material></visual>
       <collision><geometry><box size="0.150 0.100 0.004"/></geometry></collision>
       <inertial><mass value="0.000001"/><inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/></inertial>
@@ -197,12 +176,11 @@
       <origin xyz="0 0 0"/>
     </joint>
 
-    <!-- A300 skid-steer layout.  Wheelbase 0.580 m and 0.584 m tire-centre
-         track are project layout values within the published outer envelope. -->
-    <xacro:hf_a300_wheel name="front_left"  x="0.290"  y="0.292"/>
-    <xacro:hf_a300_wheel name="front_right" x="0.290"  y="-0.292"/>
-    <xacro:hf_a300_wheel name="rear_left"   x="-0.290" y="0.292"/>
-    <xacro:hf_a300_wheel name="rear_right"  x="-0.290" y="-0.292"/>
+    <!-- Current Clearpath A300 wheelbase and tyre-centre track. -->
+    <xacro:hf_a300_wheel name="front_left"  side="left"  x="0.256"  y="0.283"/>
+    <xacro:hf_a300_wheel name="front_right" side="right" x="0.256"  y="-0.283"/>
+    <xacro:hf_a300_wheel name="rear_left"   side="left"  x="-0.256" y="0.283"/>
+    <xacro:hf_a300_wheel name="rear_right"  side="right" x="-0.256" y="-0.283"/>
 
     <gazebo reference="base_link"><selfCollide>false</selfCollide></gazebo>
   </xacro:macro>
