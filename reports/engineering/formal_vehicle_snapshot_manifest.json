@@ -70,8 +70,8 @@
       "size_bytes": 1600
     },
     "scripts/generate_formal_vehicle_snapshot.py": {
-      "sha256": "614d68b2fdb048e1ad84e02cee025f35356e0ef6d0c8346f9fdae2c18472a8c0",
-      "size_bytes": 13823
+      "sha256": "a55522d79c11cac578a0923c3f2c25986a3e23b12518d9a0da36628f9af25bc0",
+      "size_bytes": 14617
     },
     "scripts/validate_formal_vehicle_component_register.py": {
       "sha256": "4361d0a48a818d2dad02b70af9c49e49b2cb907e0390aa9f2dad59ad21435817",
@@ -86,8 +86,8 @@
       "size_bytes": 35878
     },
     "scripts/validate_formal_vehicle_visual_fidelity.py": {
-      "sha256": "88d15e472cd180f2ce61f8c8c7d275f8fce481bd60e8d3172d49e1789127982a",
-      "size_bytes": 6068
+      "sha256": "b6c0b063ab3862a9b39421be3baa5aaf0b4a2ad9e472adfbd5802c9374e85171",
+      "size_bytes": 6798
     },
     "scripts/validate_pre_urdf_readiness.py": {
       "sha256": "d72100cdfa134bdbe6a2fec0a2d6569f92171175715adeaf2418fa893f3e6bbc",
@@ -794,5 +794,5 @@
       "size_bytes": 20344
     }
   },
-  "source_inventory_sha256": "f6d13e96273a29f0e7094413dac70e8897580411e70e0900316e03e2ca79a00f"
+  "source_inventory_sha256": "85c37411ab3c1365fd82e8216b2d01eb5c0c0ef7cdd2106a1ffb340354ffbdf5"
 }

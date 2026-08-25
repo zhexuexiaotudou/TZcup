@@ -163,6 +163,16 @@ def _validate_expanded_urdf_paths(raw: str, root: Path) -> str:
             or candidate.lower().startswith("file:")
         )
 
+    def has_package_uri_traversal(value: str) -> bool:
+        candidate = value.strip()
+        if not candidate.startswith("package://"):
+            return False
+        package_path = candidate[len("package://") :]
+        return bool(
+            "\\" in package_path
+            or any(part in {".", ".."} for part in package_path.split("/"))
+        )
+
     for element in document.iter():
         local_tag = element.tag.rsplit("}", 1)[-1]
         for attribute, value in element.attrib.items():
@@ -171,11 +181,21 @@ def _validate_expanded_urdf_paths(raw: str, root: Path) -> str:
                     "expanded URDF contains an absolute filesystem reference "
                     f"in {local_tag}@{attribute}"
                 )
+            if has_package_uri_traversal(value):
+                raise SnapshotError(
+                    "expanded URDF contains a non-canonical package URI "
+                    f"in {local_tag}@{attribute}"
+                )
         text = (element.text or "").strip()
         topic_like = local_tag == "topic" or local_tag.endswith("_topic")
         if text and not topic_like and is_absolute_filesystem_reference(text):
             raise SnapshotError(
                 "expanded URDF contains an absolute filesystem reference "
+                f"in <{local_tag}>"
+            )
+        if text and has_package_uri_traversal(text):
+            raise SnapshotError(
+                "expanded URDF contains a non-canonical package URI "
                 f"in <{local_tag}>"
             )
     return raw

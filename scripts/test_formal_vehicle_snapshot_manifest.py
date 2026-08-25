@@ -107,6 +107,22 @@ def test_path_gate_allows_absolute_ros_topics() -> None:
     assert "/sensors/lidar/scan" in _validate_expanded_urdf_paths(raw, ROOT)
 
 
+def test_path_gate_rejects_package_uri_parent_traversal() -> None:
+    traversal = (
+        "package://sanitation_vehicle_description/"
+        "../sanitation_gazebo_control/package.xml"
+    )
+    raw = (
+        '<robot><gazebo><plugin filename="gz_ros2_control-system">'
+        f"<parameters>{CANONICAL_CONTROLLER_URI}</parameters>"
+        "</plugin></gazebo><link name=\"base\"><visual><geometry>"
+        f'<mesh filename="{traversal}"/>'
+        "</geometry></visual></link></robot>"
+    )
+    with pytest.raises(SnapshotError, match="non-canonical package URI"):
+        _validate_expanded_urdf_paths(raw, ROOT)
+
+
 def test_generation_fails_closed_without_xacro(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr("generate_formal_vehicle_snapshot.shutil.which", lambda _: None)
     with pytest.raises(SnapshotError, match="xacro is unavailable"):
