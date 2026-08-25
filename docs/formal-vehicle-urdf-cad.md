@@ -88,8 +88,9 @@ python scripts/validate_formal_vehicle_product_design.py --urdf /tmp/formal_vehi
 驱动关节均有实测响应。正式启动器使用 Gazebo 官方 mimic 示例要求的 Bullet Featherstone
 引擎，四个夹爪联动关节及左右指尖位置变化均观察到对应响应。Gazebo 服务端在 SIGINT、
 SIGTERM 后仍需对本次任务的精确 PID 执行 SIGKILL，因此干净停机仍明确标为未通过。
-此外，项目通用 Stage 1 两轮均为 629 tests、0 errors、0 failures，Stage 2 兼容回归收到
-12/12 类必需话题并在 5 s 内产生 1.200000 m 位移；它验证旧运行链未回归，不替代上述
+此外，本次项目通用 Stage 1 为 629 tests、0 errors、0 failures（51 项按上游 cppcheck
+策略跳过），Stage 2 GPU/Ogre2 兼容回归收到 12/12 类必需话题并在 5 s 内产生
+1.191250 m 位移；它验证旧运行链未回归，不替代上述
 正式 mesh 整车的专用 Gazebo 证据。
 
 ## 尚未通过的高保真门
