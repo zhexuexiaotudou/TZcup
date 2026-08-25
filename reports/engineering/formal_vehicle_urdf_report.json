@@ -74,9 +74,9 @@
     "all_physical_links_have_positive_mass_and_positive_definite_physical_inertia": true,
     "all_required_frames_joints_and_sensors_present": true,
     "evaluated": true,
-    "joint_count": 121,
+    "joint_count": 130,
     "joint_limits_and_tree_topology_valid": true,
-    "link_count": 122,
+    "link_count": 131,
     "massless_virtual_frames": [
       "base_footprint",
       "ur5e_base_link"
@@ -126,6 +126,6 @@
       "rotation_tolerance_rad": 0.02
     },
     "symbolic_placeholders_absent": true,
-    "total_empty_vehicle_mass_kg": 156.205866
+    "total_empty_vehicle_mass_kg": 158.680866
   }
 }

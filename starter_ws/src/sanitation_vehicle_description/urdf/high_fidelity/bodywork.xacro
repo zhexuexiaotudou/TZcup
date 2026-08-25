@@ -75,6 +75,16 @@
       <xacro:hf_bodywork_box_inertial mass="3.80" sx="1.11" sy="0.74" sz="0.25" xyz="0 0 0.145"/>
     </link>
     <joint name="bodywork_lower_tub_joint" type="fixed"><parent link="${parent}"/><child link="bodywork_lower_tub_link"/></joint>
+    <gazebo reference="bodywork_lower_tub_link">
+      <sensor name="front_safety_bumper_contact" type="contact">
+        <topic>/safety/front_bumper/contact</topic><update_rate>200</update_rate><always_on>true</always_on>
+        <contact><collision>front_bumper_collision</collision></contact>
+      </sensor>
+      <sensor name="rear_safety_bumper_contact" type="contact">
+        <topic>/safety/rear_bumper/contact</topic><update_rate>200</update_rate><always_on>true</always_on>
+        <contact><collision>rear_bumper_collision</collision></contact>
+      </sensor>
+    </gazebo>
 
     <!-- Warm-white moulded nose and asymmetric equipment fairings.  The arm
          shoulder remains open above the right cowl. -->
@@ -103,7 +113,17 @@
       <xacro:hf_body_visual mesh="rear_bin_outer_shell.stl" material="body_warm_white" rgba="0.86 0.89 0.88 1" visible="${visible}"/>
       <xacro:hf_body_visual mesh="sensor_pylon_fairing.stl" material="sensor_pylon" rgba="0.070 0.085 0.088 1" visible="${visible}"/>
       <xacro:hf_body_visual mesh="sensor_pylon_service_hatch.stl" material="sensor_pylon_hatch" rgba="0.16 0.18 0.19 1" visible="${visible}"/>
-      <collision name="rear_shell_collision"><origin xyz="-0.285 0 0.495"/><geometry><box size="0.53 0.70 0.52"/></geometry></collision>
+      <!-- Panelized collision follows the shell walls and deliberately leaves
+           the robot-deposition aperture open; a solid cabinet-sized box would
+           make a visually open hopper physically unusable. -->
+      <collision name="rear_shell_rear_wall_collision"><origin xyz="-0.540 0 0.495"/><geometry><box size="0.045 0.70 0.52"/></geometry></collision>
+      <collision name="rear_shell_left_wall_collision"><origin xyz="-0.285 0.365 0.495"/><geometry><box size="0.53 0.045 0.52"/></geometry></collision>
+      <collision name="rear_shell_right_wall_collision"><origin xyz="-0.285 -0.365 0.495"/><geometry><box size="0.53 0.045 0.52"/></geometry></collision>
+      <collision name="rear_shell_lower_collision"><origin xyz="-0.285 0 0.350"/><geometry><box size="0.53 0.68 0.23"/></geometry></collision>
+      <collision name="rear_shell_roof_left_collision"><origin xyz="-0.285 0.310 0.735"/><geometry><box size="0.53 0.080 0.055"/></geometry></collision>
+      <collision name="rear_shell_roof_right_collision"><origin xyz="-0.285 -0.255 0.735"/><geometry><box size="0.53 0.180 0.055"/></geometry></collision>
+      <collision name="rear_shell_roof_front_collision"><origin xyz="-0.065 0.135 0.735"/><geometry><box size="0.090 0.270 0.055"/></geometry></collision>
+      <collision name="rear_shell_roof_rear_collision"><origin xyz="-0.500 0.135 0.735"/><geometry><box size="0.080 0.270 0.055"/></geometry></collision>
       <collision name="pylon_fairing_collision"><origin xyz="-0.135 0 0.770"/><geometry><box size="0.13 0.15 0.35"/></geometry></collision>
       <xacro:hf_bodywork_box_inertial mass="3.10" sx="0.55" sy="0.76" sz="0.58" xyz="-0.28 0 0.49"/>
     </link>

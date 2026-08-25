@@ -1,5 +1,5 @@
-schema_version: 1
-register_id: tzcup_formal_vehicle_component_register_v1
+schema_version: 2
+register_id: tzcup_formal_vehicle_component_register_v2
 coordinate_reference: base_footprint
 claim_boundary: >-
   The register freezes the selected public-reference component, parent/child
@@ -135,6 +135,60 @@ mechanical_subassemblies:
     root_link: s100_compute_enclosure_link
     connection: bolted_230x180_mm_mounting_plate
     sku_status: exact_board_envelope_pending
+  - id: robot_deposition_port
+    parent_link: dry_bin_lid_link
+    root_link: dry_deposit_hopper_link
+    connection: aperture_lid_hopper_powered_gate_and_internal_chute
+    driven_joints: [dry_deposit_gate_joint]
+    controller: storage_controller
+  - id: wastewater_recovery_drive
+    model: Jabsco PAR-MAX HD4 Q402J-118S-3A external envelope
+    parent_link: cleaning_mechanism_mount_link
+    root_link: recovery_pump_motor_link
+    connection: four_isolator_mount_motor_head_rotor_flow_sensor_and_delivery_coupling
+    driven_joints: [recovery_pump_joint]
+    controller: recovery_controller
+
+# This is the fail-closed product-function checklist.  A position is complete
+# only when the physical link, load path and every declared actuator/topic are
+# present in the expanded model.  It intentionally includes internally mounted
+# equipment that is not visible in normal product mode.
+functional_positions:
+  - {id: mobility, function: four_wheel_skid_steer_drive_and_odometry, link: base_link, parent_link: base_footprint, xyz_m: [0.000, 0.000, 0.1651], required_joints: [front_left_wheel_joint, front_right_wheel_joint, rear_left_wheel_joint, rear_right_wheel_joint], interface: base_controller, visible: true}
+  - {id: mapping_3d, function: 3d_mapping_and_obstacle_perception, link: lidar_3d_link, parent_link: lidar_3d_mount_link, xyz_m: [-0.135, 0.000, 1.2731], required_topics: [/sensors/lidar_3d/points], visible: true}
+  - {id: localization_2d, function: 2d_scan_localization_and_obstacle_detection, link: lidar_2d_link, parent_link: lidar_2d_mount_link, xyz_m: [-0.020, 0.000, 1.1021], required_topics: [/sensors/lidar_2d/scan], visible: true}
+  - {id: global_position, function: rtk_gnss_position, link: gnss_antenna_link, parent_link: gnss_mount_link, xyz_m: [-0.190, 0.160, 1.1801], required_topics: [/sensors/gnss/fix], visible: true}
+  - {id: inertial_reference, function: body_motion_and_heading_rate, link: imu_link, parent_link: imu_mount_tray_link, xyz_m: [0.000, 0.000, 0.4091], required_topics: [/sensors/imu/data], visible: false}
+  - {id: forward_perception, function: forward_rgbd_litter_and_dirty_area_perception, link: front_rgbd_link, parent_link: front_rgbd_mount_link, xyz_m: [0.569951, 0.000, 0.613404], required_topics: [/sensors/front_rgbd/depth/image_rect_raw], visible: true}
+  - {id: rear_left_perception, function: rear_left_obstacle_view, link: rear_left_fisheye_link, parent_link: rear_left_fisheye_mount_link, xyz_m: [-0.565, 0.280, 0.6001], required_topics: [/sensors/rear_left_fisheye/image_raw], visible: true}
+  - {id: rear_right_perception, function: rear_right_obstacle_view, link: rear_right_fisheye_link, parent_link: rear_right_fisheye_mount_link, xyz_m: [-0.565, -0.280, 0.6001], required_topics: [/sensors/rear_right_fisheye/image_raw], visible: true}
+  - {id: grasp_observation, function: wrist_rgbd_grasp_alignment, link: wrist_rgbd_link, parent_link: tool0, xyz_m: null, required_topics: [/sensors/wrist_rgbd/depth/image_rect_raw], visible: true, dynamic_position: true}
+  - {id: manipulation, function: six_axis_pick_and_place, link: ur5e_base_link_inertia, parent_link: arm_mount_link, xyz_m: [0.100, -0.200, 0.4341], required_joints: [shoulder_pan_joint, shoulder_lift_joint, elbow_joint, wrist_1_joint, wrist_2_joint, wrist_3_joint], interface: arm_controller, visible: true}
+  - {id: grasping, function: 30_mm_cube_grasp, link: robotiq_85_base_link, parent_link: ur_to_robotiq_adapter_link, xyz_m: null, required_joints: [robotiq_85_left_knuckle_joint], interface: gripper_controller, visible: true, dynamic_position: true}
+  - {id: dry_deposition, function: robot_drop_hopper_and_gate, link: dry_deposit_hopper_link, parent_link: dry_bin_lid_link, xyz_m: [-0.205, 0.160, 1.0471], required_joints: [dry_deposit_gate_joint], required_topics: [/storage/dry_deposit/contact], interface: storage_controller, visible: true}
+  - {id: dry_storage, function: separated_40_l_usable_dry_storage, link: dry_bin_link, parent_link: storage_system_mount_link, xyz_m: [-0.205, 0.160, 0.5691], required_joints: [dry_bin_lid_joint], interface: storage_controller, visible: false}
+  - {id: dry_fill_monitor, function: dry_bin_fill_level, link: dry_bin_level_sensor_link, parent_link: dry_bin_link, xyz_m: [-0.365, 0.160, 0.6741], visible: false}
+  - {id: wet_storage, function: separated_wastewater_storage, link: wastewater_tank_link, parent_link: storage_system_mount_link, xyz_m: [-0.205, -0.245, 0.5041], required_joints: [wastewater_lid_joint], interface: storage_controller, visible: false}
+  - {id: wet_fill_monitor, function: wastewater_low_and_high_level, link: wastewater_high_level_sensor_link, parent_link: wastewater_tank_link, xyz_m: [-0.075, -0.325, 0.5391], visible: false}
+  - {id: side_sweeping, function: dual_side_brush_edge_sweeping, link: left_side_brush_link, parent_link: left_side_brush_gearbox_link, xyz_m: [0.385, 0.545, 0.0741], required_joints: [left_side_brush_joint, right_side_brush_joint], interface: brush_controller, visible: true}
+  - {id: main_sweeping, function: central_helical_roller_collection, link: central_roller_link, parent_link: central_roller_drive_gearbox_link, xyz_m: [0.155, 0.000, 0.0691], required_joints: [central_roller_joint], interface: brush_controller, visible: true}
+  - {id: cleaning_head_lift, function: deploy_and_stow_cleaning_head, link: cleaning_lift_carriage_link, parent_link: cleaning_mechanism_mount_link, xyz_m: [0.000, 0.000, 0.0851], required_joints: [cleaning_lift_joint], interface: cleaning_controller, visible: false}
+  - {id: water_gathering, function: floating_squeegee_water_gathering, link: squeegee_link, parent_link: squeegee_float_carrier_link, xyz_m: [-0.445, 0.000, 0.0541], required_joints: [squeegee_float_joint, squeegee_pitch_joint], interface: cleaning_controller, visible: true}
+  - {id: water_intake, function: ground_contact_suction_intake, link: suction_nozzle_link, parent_link: squeegee_link, xyz_m: [-0.405, 0.000, 0.0641], required_topics: [/cleaning/suction_nozzle/contact], visible: true}
+  - {id: water_filtering, function: recoverable_strainer_before_pump, link: recovery_strainer_filter_link, parent_link: cleaning_mechanism_mount_link, xyz_m: [-0.250, 0.200, 0.3351], visible: false}
+  - {id: water_pumping, function: controlled_wastewater_recovery_pump, link: recovery_pump_rotor_link, parent_link: recovery_pump_head_link, xyz_m: [-0.315, -0.160, 0.3451], required_joints: [recovery_pump_joint], interface: recovery_controller, visible: false}
+  - {id: water_flow_monitor, function: delivery_flow_and_blockage_monitor, link: recovery_flow_sensor_link, parent_link: wastewater_delivery_coupling_link, xyz_m: [-0.358, -0.350, 0.3451], visible: false}
+  - {id: compute, function: Journey_6_S100_inference_and_vehicle_compute, link: s100_compute_enclosure_link, parent_link: payload_deck_link, xyz_m: [0.300, -0.270, 0.4691], visible: false, pending_measurement: exact_user_board_sku}
+  - {id: arm_control, function: ur5e_drive_and_safety_control_cabinet, link: ur5e_control_box_link, parent_link: payload_deck_link, xyz_m: [0.296, 0.240, 0.6736], visible: false}
+  - {id: fused_power_distribution, function: fused_vbat_distribution_to_high_power_branches, link: power_distribution_box_link, parent_link: payload_deck_link, xyz_m: [0.330, 0.025, 0.4441], visible: false}
+  - {id: isolated_low_voltage_power, function: isolated_sensor_and_compute_dc_conversion, link: isolated_dc_dc_module_link, parent_link: payload_deck_link, xyz_m: [0.345, -0.105, 0.4391], visible: false}
+  - {id: hardwired_safety_enable, function: emergency_stop_safety_relay_for_motion_and_cleaning_enable, link: safety_relay_link, parent_link: payload_deck_link, xyz_m: [0.220, -0.080, 0.4441], visible: false}
+  - {id: charge_interface, function: protected_external_charge_connector, link: bodywork_trim_link, parent_link: base_link, xyz_m: [0.250, 0.402, 0.4951], visible: true}
+  - {id: wastewater_drain, function: low_point_wastewater_service_drain, link: bodywork_trim_link, parent_link: base_link, xyz_m: [-0.490, -0.305, 0.4801], visible: true}
+  - {id: emergency_stop, function: manual_latching_emergency_stop, link: bodywork_lighting_link, parent_link: base_link, xyz_m: [-0.405, -0.405, 0.8451], visible: true}
+  - {id: warning_and_work_lighting, function: front_work_rear_tail_and_four_corner_warning_lamps, link: bodywork_lighting_link, parent_link: base_link, xyz_m: [0.000, 0.000, 0.7151], visible: true}
+  - {id: front_contact_safety, function: low_speed_front_bumper_collision_stop, link: bodywork_lower_tub_link, parent_link: base_link, xyz_m: [0.555, 0.000, 0.2701], required_topics: [/safety/front_bumper/contact], visible: true}
+  - {id: rear_contact_safety, function: low_speed_reverse_bumper_collision_stop, link: bodywork_lower_tub_link, parent_link: base_link, xyz_m: [-0.555, 0.000, 0.2701], required_topics: [/safety/rear_bumper/contact], visible: true}
 
 external_identity:
   top_protrusion_name: modular_sensor_tower

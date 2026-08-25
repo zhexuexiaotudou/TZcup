@@ -165,8 +165,8 @@ def test_committed_expanded_urdf_report_is_deterministic() -> None:
         )
     )
     assert result == report
-    assert result["urdf_validation"]["link_count"] == 122
-    assert result["urdf_validation"]["joint_count"] == 121
+    assert result["urdf_validation"]["link_count"] == 131
+    assert result["urdf_validation"]["joint_count"] == 130
     assert result["urdf_validation"]["static_frame_pose_consistency"]["checked_count"] == 29
 
 

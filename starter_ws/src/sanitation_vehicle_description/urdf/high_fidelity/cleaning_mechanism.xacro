@@ -342,13 +342,19 @@
     <link name="suction_nozzle_link">
       <xacro:hf_clean_visual mesh="suction_nozzle.stl"
         material="hf_nozzle" rgba="0.075 0.09 0.10 1"/>
-      <collision><geometry><box size="0.100 0.650 0.085"/></geometry></collision>
+      <collision name="suction_nozzle_link_collision"><geometry><box size="0.100 0.650 0.085"/></geometry></collision>
       <xacro:hf_cleaning_box_inertial mass="0.400" sx="0.100" sy="0.650" sz="0.085"/>
     </link>
     <joint name="suction_nozzle_mount_joint" type="fixed">
       <parent link="squeegee_link"/><child link="suction_nozzle_link"/>
       <origin xyz="0.040 0 0.010" rpy="0 0 0"/>
     </joint>
+    <gazebo reference="suction_nozzle_link">
+      <sensor name="suction_nozzle_ground_contact" type="contact">
+        <topic>/cleaning/suction_nozzle/contact</topic><update_rate>100</update_rate><always_on>true</always_on>
+        <contact><collision>suction_nozzle_link_collision</collision></contact>
+      </sensor>
+    </gazebo>
 
     <!-- Segmented hose geometry reserves a 50 mm ID flow path.  The three
          centres follow one continuous rising route from the rear nozzle into
@@ -403,6 +409,23 @@
       <origin xyz="-0.1075 0 0" rpy="0 ${pi/2.0} 0"/>
     </joint>
 
+    <!-- The externally observable motor/diaphragm drive is no longer a fixed
+         decorative pump.  This rotor joint is the controlled shaft datum used
+         by the recovery controller and hydraulic accounting layer. -->
+    <link name="recovery_pump_rotor_link">
+      <xacro:hf_clean_visual mesh="jabsco_pump_rotor.stl"
+        material="hf_pump_rotor" rgba="0.58 0.61 0.62 1"/>
+      <collision><geometry><cylinder radius="0.035" length="0.018"/></geometry></collision>
+      <xacro:hf_cleaning_cylinder_z_inertial mass="0.120" radius="0.035" length="0.018"/>
+    </link>
+    <joint name="recovery_pump_joint" type="continuous">
+      <parent link="recovery_pump_head_link"/><child link="recovery_pump_rotor_link"/>
+      <origin xyz="0 0 0.043" rpy="0 0 0"/>
+      <axis xyz="0 0 1"/>
+      <limit effort="18.0" velocity="62.832"/>
+      <dynamics damping="0.025" friction="0.015"/>
+    </joint>
+
     <link name="recovery_pump_isolator_mount_link">
       <xacro:hf_clean_visual mesh="pump_isolator_mount.stl"
         material="hf_pump_mount" rgba="0.36 0.39 0.40 1"/>
@@ -422,6 +445,17 @@
     </link>
     <joint name="wastewater_delivery_coupling_joint" type="fixed">
       <parent link="recovery_pump_head_link"/><child link="wastewater_delivery_coupling_link"/>
+      <origin xyz="0 -0.095 0" rpy="0 0 0"/>
+    </joint>
+
+    <link name="recovery_flow_sensor_link">
+      <xacro:hf_clean_visual mesh="inline_flow_sensor.stl"
+        material="hf_flow_sensor" rgba="0.08 0.28 0.38 1"/>
+      <collision><geometry><box size="0.070 0.105 0.075"/></geometry></collision>
+      <xacro:hf_cleaning_box_inertial mass="0.220" sx="0.070" sy="0.105" sz="0.075"/>
+    </link>
+    <joint name="recovery_flow_sensor_mount_joint" type="fixed">
+      <parent link="wastewater_delivery_coupling_link"/><child link="recovery_flow_sensor_link"/>
       <origin xyz="0 -0.095 0" rpy="0 0 0"/>
     </joint>
   </xacro:macro>

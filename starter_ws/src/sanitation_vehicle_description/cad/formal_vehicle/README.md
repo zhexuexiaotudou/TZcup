@@ -7,7 +7,8 @@ remains the dynamics authority.
 
 `generate_cleaning_storage_meshes.py` is the dependency-free parametric source
 for the first detailed cleaning, recovery and split-bin visual set. It generates
-binary STL files under `meshes/project/{cleaning,storage}` in metre units:
+binary STL files under `meshes/project/{cleaning,storage}` and
+`meshes/generated/platform` in metre units:
 
 ```powershell
 py -3 starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py
@@ -33,6 +34,10 @@ The generated set includes service details absent from the packaging model:
 housings, a curved guard, real helical suspension springs, curved twin squeegee
 blades, a shaped suction nozzle, corrugated hoses, filter and coupling hardware,
 an externally detailed pump assembly, and ribbed dry/wet storage panels.
+It also generates the rotating pump rotor, inline flow-sensor body, open
+robot-deposition hopper/gate/chute, fused power-distribution enclosure,
+isolated DC/DC module and hardwired safety relay used by the functional-position
+register.
 
 Open the file in OpenSCAD and set `$explode` to a non-zero value for an exploded
 packaging view. Exported STL files are visual-only and must not replace the URDF

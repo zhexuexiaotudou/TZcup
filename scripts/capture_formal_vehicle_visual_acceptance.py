@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capture six deterministic Gazebo product/service acceptance camera topics."""
+"""Capture seven deterministic Gazebo product/service acceptance camera topics."""
 
 from __future__ import annotations
 
@@ -25,6 +25,7 @@ TOPICS = {
     "sensor_tower_detail": "/formal_visual/sensor_tower_detail",
     "front_sensor_detail": "/formal_visual/front_sensor_detail",
     "arm_mount_detail": "/formal_visual/arm_mount_detail",
+    "dry_deposition_detail": "/formal_visual/dry_deposition_detail",
 }
 
 FOLDED_ARM_JOINTS = [
@@ -63,6 +64,9 @@ class CaptureNode(Node):
         self.gripper_command = self.create_publisher(
             JointTrajectory, "/gripper_controller/joint_trajectory", 1
         )
+        self.storage_command = self.create_publisher(
+            JointTrajectory, "/storage_controller/joint_trajectory", 1
+        )
         self._camera_subscriptions = []
         for name, topic in TOPICS.items():
             self._camera_subscriptions.append(
@@ -90,6 +94,13 @@ class CaptureNode(Node):
         gripper_point.time_from_start = Duration(sec=2)
         gripper.points = [gripper_point]
         self.gripper_command.publish(gripper)
+        storage = JointTrajectory()
+        storage.joint_names = ["dry_bin_lid_joint", "dry_deposit_gate_joint", "wastewater_lid_joint"]
+        storage_point = JointTrajectoryPoint()
+        storage_point.positions = [0.0, 1.05, 0.0]
+        storage_point.time_from_start = Duration(sec=8)
+        storage.points = [storage_point]
+        self.storage_command.publish(storage)
 
 
 def frame_metrics(pixels: np.ndarray) -> dict[str, float | int]:
@@ -122,6 +133,7 @@ def main() -> int:
         while rclpy.ok() and (
             node.arm_command.get_subscription_count() == 0
             or node.gripper_command.get_subscription_count() == 0
+            or node.storage_command.get_subscription_count() == 0
         ):
             if time.monotonic() >= subscription_deadline:
                 raise SystemExit("arm controller command subscription did not become available")
@@ -164,10 +176,11 @@ def main() -> int:
         }
     manifest = {
         "report_id": "tzcup_formal_vehicle_visual_acceptance_v1",
-        "status": "GAZEBO_OGRE2_SIX_CAMERA_CAPTURE_PASSED",
+        "status": "GAZEBO_OGRE2_SEVEN_CAMERA_CAPTURE_PASSED",
         "render_source": "Gazebo Harmonic Sensors system / Ogre2",
         "bodywork_profile": args.bodywork_profile,
         "arm_pose": "folded_visual_candidate" if not args.no_fold_arm else "uncommanded",
+        "deposition_gate_pose": "open_functional_candidate" if not args.no_fold_arm else "uncommanded",
         "camera_count": len(reports),
         "frames": reports,
         "claim_boundary": (
