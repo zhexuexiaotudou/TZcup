@@ -450,6 +450,10 @@ def test_build_snapshot_rejects_changed_source_hash(tmp_path: Path) -> None:
 def test_runner_has_exact_partition_cleanup_and_four_unique_offsets() -> None:
     runner = Path(__file__).with_name("run_integrated_functional_acceptance.sh").read_text(encoding="utf-8")
     assert runner.index("source /opt/ros/jazzy/setup.bash") < runner.index("set -u")
+    runtime_source = 'source "${runtime_ws}/install/setup.bash"'
+    runtime_source_index = runner.index(runtime_source)
+    assert runner.rfind("set +u", 0, runtime_source_index) >= 0
+    assert runner.index("set -u", runtime_source_index) > runtime_source_index
     assert 'needle = ("GZ_PARTITION=" + sys.argv[1]).encode()' in runner
     assert "signal.SIGINT, signal.SIGTERM, signal.SIGKILL" in runner
     assert 'run_wrapped_scenario "mobility" 0' in runner

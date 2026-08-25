@@ -29,7 +29,9 @@ case "${material}" in
   *) echo "Unsupported cube material: ${material}" >&2; exit 2 ;;
 esac
 
+set +u
 source "${runtime_ws}/install/setup.bash"
+set -u
 
 run_id="${INTEGRATED_ACCEPTANCE_RUN_ID:-$(date -u +%Y%m%dT%H%M%S)_$$_${RANDOM}}"
 run_dir="${evidence_root}/${run_id}"
