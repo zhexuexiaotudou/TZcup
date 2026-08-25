@@ -350,8 +350,10 @@
       <origin xyz="0.040 0 0.010" rpy="0 0 0"/>
     </joint>
 
-    <!-- Segmented hose geometry reserves a 50 mm ID flow path while keeping a
-         tree topology. A later fluid plugin binds inlet/outlet coupling frames. -->
+    <!-- Segmented hose geometry reserves a 50 mm ID flow path.  The three
+         centres follow one continuous rising route from the rear nozzle into
+         the enclosed pump bay; explicit chassis-relative mounts avoid the
+         cumulative transform gap that made the upper segment appear detached. -->
     <xacro:macro name="hf_hose_segment" params="name parent xyz rpy length mass mesh">
       <link name="${name}_link">
         <xacro:hf_clean_visual mesh="${mesh}" material="hf_hose" rgba="0.035 0.04 0.045 1"/>
@@ -360,9 +362,9 @@
       </link>
       <joint name="${name}_joint" type="fixed"><parent link="${parent}"/><child link="${name}_link"/><origin xyz="${xyz}" rpy="${rpy}"/></joint>
     </xacro:macro>
-    <xacro:hf_hose_segment name="recovery_hose_lower" parent="suction_nozzle_link" xyz="-0.08 0 0.10" rpy="0 -0.58 0" length="0.22" mass="0.140" mesh="recovery_hose_220.stl"/>
-    <xacro:hf_hose_segment name="recovery_hose_middle" parent="recovery_hose_lower_link" xyz="-0.16 0 0.10" rpy="0 -0.70 0" length="0.25" mass="0.160" mesh="recovery_hose_250.stl"/>
-    <xacro:hf_hose_segment name="recovery_hose_upper" parent="recovery_hose_middle_link" xyz="-0.17 0 0.14" rpy="0 -0.35 0" length="0.20" mass="0.120" mesh="recovery_hose_200.stl"/>
+    <xacro:hf_hose_segment name="recovery_hose_lower" parent="cleaning_mechanism_mount_link" xyz="-0.470 0 0.100" rpy="0 -0.750 0" length="0.22" mass="0.140" mesh="recovery_hose_220.stl"/>
+    <xacro:hf_hose_segment name="recovery_hose_middle" parent="cleaning_mechanism_mount_link" xyz="-0.320 0 0.280" rpy="0 -0.950 0" length="0.25" mass="0.160" mesh="recovery_hose_250.stl"/>
+    <xacro:hf_hose_segment name="recovery_hose_upper" parent="cleaning_mechanism_mount_link" xyz="-0.202 0 0.471" rpy="0 -1.100 0" length="0.20" mass="0.120" mesh="recovery_hose_200.stl"/>
 
     <link name="recovery_strainer_filter_link">
       <xacro:hf_clean_visual mesh="strainer_filter_bowl.stl"

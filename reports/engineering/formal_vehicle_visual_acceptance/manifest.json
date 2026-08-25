@@ -1,0 +1,47 @@
+{
+  "report_id": "tzcup_formal_vehicle_visual_acceptance_v1",
+  "status": "GAZEBO_OGRE2_THREE_CAMERA_CAPTURE_PASSED",
+  "render_source": "Gazebo Harmonic Sensors system / Ogre2",
+  "bodywork_profile": "product",
+  "arm_pose": "folded_visual_candidate",
+  "camera_count": 3,
+  "frames": {
+    "front_left": {
+      "topic": "/formal_visual/front_left",
+      "encoding": "rgb8",
+      "stamp_sec": 10,
+      "stamp_nanosec": 989000000,
+      "path": "front_left.png",
+      "width": 1600,
+      "height": 1000,
+      "mean_luminance": 202.25079345703125,
+      "luminance_stddev": 56.32889175415039,
+      "near_black_fraction": 2.375e-05
+    },
+    "rear_right": {
+      "topic": "/formal_visual/rear_right",
+      "encoding": "rgb8",
+      "stamp_sec": 10,
+      "stamp_nanosec": 989000000,
+      "path": "rear_right.png",
+      "width": 1600,
+      "height": 1000,
+      "mean_luminance": 199.8242645263672,
+      "luminance_stddev": 54.350948333740234,
+      "near_black_fraction": 0.0
+    },
+    "top_cleaning": {
+      "topic": "/formal_visual/top_cleaning",
+      "encoding": "rgb8",
+      "stamp_sec": 10,
+      "stamp_nanosec": 989000000,
+      "path": "top_cleaning.png",
+      "width": 1600,
+      "height": 1000,
+      "mean_luminance": 206.9603271484375,
+      "luminance_stddev": 47.84111022949219,
+      "near_black_fraction": 0.0
+    }
+  },
+  "claim_boundary": "The images prove that the committed product bodywork renders in Gazebo. They do not replace arm swept-volume, sensor self-occlusion, cleaning-contact or real-vehicle validation."
+}

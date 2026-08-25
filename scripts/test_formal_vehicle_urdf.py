@@ -162,8 +162,8 @@ def test_committed_expanded_urdf_report_is_deterministic() -> None:
         )
     )
     assert result == report
-    assert result["urdf_validation"]["link_count"] == 105
-    assert result["urdf_validation"]["joint_count"] == 104
+    assert result["urdf_validation"]["link_count"] == 115
+    assert result["urdf_validation"]["joint_count"] == 114
     assert result["urdf_validation"]["static_frame_pose_consistency"]["checked_count"] == 22
 
 
@@ -266,7 +266,7 @@ def test_rejects_inverted_joint_limit(tmp_path: Path) -> None:
 def test_rejects_static_frame_position_drift(tmp_path: Path) -> None:
     urdf = _expanded_fixture(tmp_path)
     raw = urdf.read_text(encoding="utf-8").replace(
-        'xyz="0.245 0.0 0.7841"', 'xyz="0.265 0.0 0.7841"', 1
+        'xyz="0.25 0.0 0.8301"', 'xyz="0.27 0.0 0.8301"', 1
     )
     urdf.write_text(raw, encoding="utf-8")
     with pytest.raises(FormalVehicleValidationError, match="installation frame lidar_2d_link differs"):
@@ -275,9 +275,9 @@ def test_rejects_static_frame_position_drift(tmp_path: Path) -> None:
 
 def test_rejects_static_frame_rotation_drift(tmp_path: Path) -> None:
     urdf = _expanded_fixture(tmp_path)
-    marker = 'xyz="0.245 0.0 0.7841" rpy="0.0 0.0 0.0"'
+    marker = 'xyz="0.25 0.0 0.8301" rpy="0.0 0.0 0.0"'
     raw = urdf.read_text(encoding="utf-8").replace(
-        marker, 'xyz="0.245 0.0 0.7841" rpy="0.0 0.0 0.10"', 1
+        marker, 'xyz="0.25 0.0 0.8301" rpy="0.0 0.0 0.10"', 1
     )
     assert raw != urdf.read_text(encoding="utf-8")
     urdf.write_text(raw, encoding="utf-8")

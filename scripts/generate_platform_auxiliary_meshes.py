@@ -62,15 +62,21 @@ def triangular_gusset(length, height, thickness, xyz, flip=False):
 
 def sensor_mast() -> trimesh.Trimesh:
     parts = [
-        rounded_box((0.060, 0.060, 0.720), 0.008, (0, 0, 0.360)),
-        rounded_box((0.090, 0.480, 0.040), 0.010, (0, 0, 0.700)),
+        # Continuous 60 mm extrusion reaches the MID-360 mounting datum; the
+        # previous 720 mm member stopped 125 mm below it and made the sensor
+        # appear to float above the vehicle.
+        rounded_box((0.060, 0.060, 0.850), 0.008, (0, 0, 0.425)),
+        rounded_box((0.090, 0.300, 0.055), 0.012, (0, 0, 0.815)),
         box((0.130, 0.120, 0.010), (0, 0, 0.005)),
+        # Rear offset stanchion and cap support the GNSS antenna at x=-0.10.
+        rounded_box((0.040, 0.040, 0.130), 0.006, (-0.100, 0, 0.895)),
+        rounded_box((0.145, 0.090, 0.018), 0.006, (-0.050, 0, 0.957)),
     ]
     # T-slot relief rails and corner gussets make the extrusion mechanically legible.
     for y in (-0.0275, 0.0275):
-        parts.append(box((0.010, 0.006, 0.680), (0, y, 0.370)))
-    for y in (-0.185, 0.0, 0.185):
-        parts.append(box((0.070, 0.055, 0.008), (0, y, 0.725)))
+        parts.append(box((0.010, 0.006, 0.810), (0, y, 0.425)))
+    for y in (-0.105, 0.0, 0.105):
+        parts.append(box((0.070, 0.050, 0.008), (0, y, 0.845)))
     parts.extend([
         triangular_gusset(0.085, 0.120, 0.012, (0, 0.035, 0.020)),
         triangular_gusset(0.085, 0.120, 0.012, (0, -0.035, 0.020), flip=True),

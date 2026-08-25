@@ -92,7 +92,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 - 人类可读的园区道路、路缘、人行道、绿化、积水、垃圾、落叶和静态/动态障碍 Gazebo 场景；
 - SLAM、AMCL、混合定位、Nav2、keepout/speed filter、碰撞监控和急停；
 - 全覆盖规划、任务几何、覆盖率/定位/安全指标与 rosbag 回放审计；
-- 五类清扫目标链；另有多长宽比园区、belief-only主动清扫/RL、3 cm方块投箱占位闭环，以及已完成[正式 URDF/CAD 名义整车](docs/formal-vehicle-urdf-cad.md)的竞赛级高保真链；后者已从 primitive 外观升级为锁定许可的 A300/UR5e/2F-85/传感器 mesh 与项目参数化清扫/分仓 CAD，并通过结构、惯量、安装坐标和非 primitive 视觉门，但尚未通过实物标定、清扫接触质量、全空间扫掠和实车证据门；
+- 五类清扫目标链；另有多长宽比园区、belief-only主动清扫/RL、3 cm方块投箱占位闭环，以及已完成[正式 URDF/CAD 名义整车](docs/formal-vehicle-urdf-cad.md)的竞赛级高保真链；后者采用锁定许可的 A300/UR5e/2F-85/传感器 mesh、项目参数化清扫/分仓 CAD 和完整产品车身，正常模式显示连续外壳、检修门、工作舱、灯组、保险杠、轮眉与刷盘护罩，检修模式可隐藏外壳；模型已通过结构、惯量、安装坐标、mesh 视觉、产品车身和 Gazebo Ogre2 三视角门，但尚未通过实物标定、清扫接触质量、全空间扫掠和实车证据门；
 - APP/API、语音入口和受限任务 DSL；
 - RViz 调试图层与 Gazebo 三维物理界面；
 - 分阶段验收、紧凑证据、SBOM、许可清单和发布打包工具。

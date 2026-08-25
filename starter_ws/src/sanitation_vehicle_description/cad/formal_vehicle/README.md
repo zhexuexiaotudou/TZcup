@@ -13,6 +13,20 @@ binary STL files under `meshes/project/{cleaning,storage}` in metre units:
 py -3 starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py
 ```
 
+`generate_product_bodywork_meshes.py` is the dependency-free product-exterior
+source. It generates 44 deterministic STL assets for moulded front/rear shells,
+the recessed arm work bay, lower tub, service doors, wheel arches, safety trim,
+lights, bumpers and brush guards:
+
+```powershell
+py -3 starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_product_bodywork_meshes.py
+```
+
+The formal product profile references 42 of those meshes; the two optional belt
+assets remain generated for design comparison but are intentionally not shown
+because they bridged the open arm bay. Primitive geometry remains collision and
+inertia authority only.
+
 The generated set includes service details absent from the packaging model:
 37D motor housings and flanges, gearboxes, keyed shafts, ribbed brush discs,
 48 curved side-brush bundles, a four-start helical central roller, bearing
