@@ -21,7 +21,7 @@
     <!-- Official nominal kinematic frames. The base allocation is adjusted so
          the seven physical UR links retain the published 20.6 kg total. -->
     <link name="ur5e_base_link"/>
-    <joint name="ur5e_mount_joint" type="fixed"><parent link="${parent}"/><child link="ur5e_base_link"/><origin xyz="0 0 0.015"/></joint>
+    <joint name="ur5e_mount_joint" type="fixed"><parent link="${parent}"/><child link="ur5e_base_link"/><origin xyz="0 0 0.045"/></joint>
 
     <!-- The official UR description separates the REP-103 base frame from the
          controller-facing inertial frame with a pi rotation. The mesh itself

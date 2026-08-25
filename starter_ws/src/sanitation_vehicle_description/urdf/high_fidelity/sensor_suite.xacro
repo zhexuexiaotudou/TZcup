@@ -104,8 +104,8 @@
       <collision><origin xyz="0 0 -0.0115"/><geometry><box size="0.060 0.060 0.087"/></geometry></collision>
       <inertial><origin xyz="0 0 -0.0115"/><mass value="0.37"/><xacro:hf_sensor_box_inertia mass="0.37" x="0.060" y="0.060" z="0.087"/></inertial>
     </link>
-    <joint name="lidar_2d_mount_joint" type="fixed"><parent link="${mast_parent}"/><child link="lidar_2d_link"/>
-      <origin xyz="0.380 0 0.395"/></joint>
+    <joint name="lidar_2d_mount_joint" type="fixed"><parent link="${base_parent}"/><child link="lidar_2d_link"/>
+      <origin xyz="0.250 0 0.665"/></joint>
     <gazebo reference="lidar_2d_link">
       <sensor name="utm30lx" type="gpu_lidar">
         <topic>/sensors/lidar_2d/scan</topic><update_rate>40</update_rate><always_on>true</always_on><visualize>false</visualize>
@@ -129,7 +129,7 @@
       <inertial><origin xyz="0 0 -0.0325"/><mass value="0.265"/><inertia ixx="0.000103" ixy="0" ixz="0" iyy="0.000103" iyz="0" izz="0.000140"/></inertial>
     </link>
     <joint name="lidar_3d_mount_joint" type="fixed"><parent link="${mast_parent}"/><child link="lidar_3d_link"/>
-      <origin xyz="0 0 0.725"/></joint>
+      <origin xyz="0 0 0.845"/></joint>
     <gazebo reference="lidar_3d_link">
       <sensor name="mid360" type="gpu_lidar">
         <topic>/sensors/lidar_3d/points</topic><update_rate>10</update_rate><always_on>true</always_on><visualize>false</visualize>
@@ -141,7 +141,7 @@
       </sensor>
     </gazebo>
 
-    <xacro:hf_d435 name="front_rgbd" parent="${mast_parent}" xyz="0.640 0 0.225" rpy="0 0 0"
+    <xacro:hf_d435 name="front_rgbd" parent="${base_parent}" xyz="0.570 0 0.449" rpy="0 0 0"
                     topic="/sensors/front_rgbd/depth/image_rect_raw" max_range="10.0"/>
     <!-- Side bracket position keeps the camera outside the Robotiq base and
          turns its optical +X onto the gripper's +Z approach direction. -->
@@ -149,11 +149,11 @@
                     topic="/sensors/wrist_rgbd/depth/image_rect_raw" max_range="3.0" mount_bracket="true"/>
 
     <!-- Independent modules: each has its own housing, imager, frame and topic. -->
-    <xacro:hf_fisheye name="rear_left_fisheye" parent="${mast_parent}" xyz="-0.350 0.275 0.200" rpy="0 -0.175 2.705"
+    <xacro:hf_fisheye name="rear_left_fisheye" parent="${base_parent}" xyz="-0.565 0.280 0.435" rpy="0 -0.175 2.705"
                        optical_xyz="0.022011096607 -0.000604893394 -0.003891751553"
                        optical_rpy="-1.745999996444 -0.000035461162 -1.570996889205"
                        topic="/sensors/rear_left_fisheye/image_raw"/>
-    <xacro:hf_fisheye name="rear_right_fisheye" parent="${mast_parent}" xyz="-0.350 -0.275 0.200" rpy="0 -0.175 -2.705"
+    <xacro:hf_fisheye name="rear_right_fisheye" parent="${base_parent}" xyz="-0.565 -0.280 0.435" rpy="0 -0.175 -2.705"
                        optical_xyz="0.022011096607 0.000604893394 -0.003891751553"
                        optical_rpy="-1.745999996444 -0.000035461162 -1.570996889205"
                        topic="/sensors/rear_right_fisheye/image_raw"/>
@@ -166,7 +166,7 @@
       <inertial><mass value="0.10"/><inertia ixx="0.000026" ixy="0" ixz="0" iyy="0.000026" iyz="0" izz="0.000045"/></inertial>
     </link>
     <joint name="gnss_antenna_mount_joint" type="fixed"><parent link="${mast_parent}"/><child link="gnss_antenna_link"/>
-      <origin xyz="0 0 0.845"/></joint>
+      <origin xyz="-0.100 0 0.965"/></joint>
     <gazebo reference="gnss_antenna_link">
       <sensor name="zed_f9p" type="navsat"><topic>/sensors/gnss/fix</topic><update_rate>10</update_rate>
         <always_on>true</always_on><gz_frame_id>gnss_antenna_link</gz_frame_id>

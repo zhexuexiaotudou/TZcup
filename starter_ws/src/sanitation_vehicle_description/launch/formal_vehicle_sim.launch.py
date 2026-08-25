@@ -19,15 +19,21 @@ def generate_launch_description() -> LaunchDescription:
     start_controllers = LaunchConfiguration("start_controllers")
     use_sim_time = LaunchConfiguration("use_sim_time")
     physics_engine = LaunchConfiguration("physics_engine")
+    bodywork_visible = LaunchConfiguration("bodywork_visible")
+    world = LaunchConfiguration("world")
     model = PathJoinSubstitution(
         [FindPackageShare("sanitation_vehicle_description"), "urdf", "formal_competition_vehicle.urdf.xacro"]
     )
-    world = PathJoinSubstitution(
+    default_world = PathJoinSubstitution(
         [FindPackageShare("sanitation_vehicle_description"), "worlds", "formal_vehicle_validation.sdf"]
     )
     gz_launch = PathJoinSubstitution([FindPackageShare("ros_gz_sim"), "launch", "gz_sim.launch.py"])
     robot_description = ParameterValue(
-        Command(["xacro ", model, " use_sim:=true dry_load_mass_kg:=0.0 wastewater_load_mass_kg:=0.0"]),
+        Command([
+            "xacro ", model,
+            " use_sim:=true dry_load_mass_kg:=0.0 wastewater_load_mass_kg:=0.0 bodywork_visible:=",
+            bodywork_visible,
+        ]),
         value_type=str,
     )
     # sdformat rewrites package:// URIs to model:// URIs. Gazebo therefore
@@ -61,6 +67,8 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument("gui", default_value="true"),
             DeclareLaunchArgument("start_controllers", default_value="true"),
             DeclareLaunchArgument("use_sim_time", default_value="true"),
+            DeclareLaunchArgument("bodywork_visible", default_value="true"),
+            DeclareLaunchArgument("world", default_value=default_world),
             DeclareLaunchArgument(
                 "physics_engine",
                 default_value="gz-physics-bullet-featherstone-plugin",
@@ -119,6 +127,9 @@ def generate_launch_description() -> LaunchDescription:
                     "/model/tzcup_formal_sanitation_vehicle/payload/dry_mass_kg/applied@std_msgs/msg/Float64[gz.msgs.Double",
                     "/model/tzcup_formal_sanitation_vehicle/payload/wastewater_mass_kg@std_msgs/msg/Float64@gz.msgs.Double",
                     "/model/tzcup_formal_sanitation_vehicle/payload/wastewater_mass_kg/applied@std_msgs/msg/Float64[gz.msgs.Double",
+                    "/formal_visual/front_left@sensor_msgs/msg/Image[gz.msgs.Image",
+                    "/formal_visual/rear_right@sensor_msgs/msg/Image[gz.msgs.Image",
+                    "/formal_visual/top_cleaning@sensor_msgs/msg/Image[gz.msgs.Image",
                 ],
                 output="screen",
             ),

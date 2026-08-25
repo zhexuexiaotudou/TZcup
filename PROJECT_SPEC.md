@@ -6,7 +6,9 @@
 2F-85、全部冻结传感器、清扫/刮吸、独立干湿箱、控制箱和 S100 安装基准的完整多刚体
 结构。展开模型必须通过 `validate_formal_vehicle_urdf.py` 的质量、惯量、活动关节、单树、
 必需帧和静态安装坐标门，并通过 `validate_formal_vehicle_visual_fidelity.py` 的自包含 mesh、
-关键外露部件非 primitive 和资产存在性门；干垃圾与污水载荷必须由独立 reserve link 和 Gazebo 动态惯量
+关键外露部件非 primitive 和资产存在性门以及 `validate_formal_vehicle_product_design.py` 的产品车身门。
+正常产品 profile 必须显示连续封闭外壳、机械臂工作舱、检修门、灯组和安全件；
+`bodywork_visible:=false` 只用于检修教学，不得作为产品外观验收。干垃圾与污水载荷必须由独立 reserve link 和 Gazebo 动态惯量
 系统更新，不能只改界面计数。
 
 结构门通过不等于测量级数字孪生。S100 实物尺寸、最终 CoG/污水容量、机械臂全空间、

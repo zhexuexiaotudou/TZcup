@@ -5,11 +5,13 @@
   <xacro:include filename="high_fidelity/sensor_suite.xacro"/>
   <xacro:include filename="high_fidelity/cleaning_mechanism.xacro"/>
   <xacro:include filename="high_fidelity/storage_system.xacro"/>
+  <xacro:include filename="high_fidelity/bodywork.xacro"/>
   <xacro:include filename="high_fidelity/control_interfaces.xacro"/>
 
   <xacro:arg name="use_sim" default="true"/>
   <xacro:arg name="dry_load_mass_kg" default="0.0"/>
   <xacro:arg name="wastewater_load_mass_kg" default="0.0"/>
+  <xacro:arg name="bodywork_visible" default="true"/>
 
   <!-- The unloaded vehicle is the default. Load-state variants are generated
        by setting the two mass arguments; runtime collection accounting must
@@ -24,6 +26,7 @@
       origin_rpy="0 0 0"
       dry_load_mass_kg="$(arg dry_load_mass_kg)"
       wastewater_load_mass_kg="$(arg wastewater_load_mass_kg)"/>
+  <xacro:hf_product_bodywork parent="base_link" visible="$(arg bodywork_visible)"/>
   <xacro:hf_formal_ros2_control use_sim="$(arg use_sim)"/>
 
   <xacro:if value="$(arg use_sim)">

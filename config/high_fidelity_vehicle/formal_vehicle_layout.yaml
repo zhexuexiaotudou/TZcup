@@ -15,17 +15,17 @@ installation_frames:
   base_footprint: {xyz_m: [0.000, 0.000, 0.000], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   base_link: {xyz_m: [0.000, 0.000, 0.1651], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   payload_deck_link: {xyz_m: [0.000, 0.000, 0.3691], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  arm_mount_link: {xyz_m: [0.035, -0.145, 0.4341], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  arm_mount_link: {xyz_m: [0.100, -0.200, 0.4341], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   sensor_mast_link: {xyz_m: [-0.135, 0.000, 0.3891], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  lidar_2d_link: {xyz_m: [0.245, 0.000, 0.7841], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  lidar_3d_link: {xyz_m: [-0.135, 0.000, 1.1141], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  front_rgbd_link: {xyz_m: [0.505, 0.000, 0.6141], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  front_rgbd_depth_optical_frame: {xyz_m: [0.505, 0.000, 0.6141], rpy_rad: [-1.571, 0.000, -1.571], pending: false}
-  rear_left_fisheye_link: {xyz_m: [-0.485, 0.275, 0.5891], rpy_rad: [0.000, -0.175, 2.705], pending: false}
-  rear_left_fisheye_optical_frame: {xyz_m: [-0.505, 0.285, 0.5891], rpy_rad: [-1.571, 0.000, 1.134], pending: false}
-  rear_right_fisheye_link: {xyz_m: [-0.485, -0.275, 0.5891], rpy_rad: [0.000, -0.175, -2.705], pending: false}
-  rear_right_fisheye_optical_frame: {xyz_m: [-0.505, -0.285, 0.5891], rpy_rad: [-1.571, 0.000, 2.007], pending: false}
-  gnss_antenna_link: {xyz_m: [-0.135, 0.000, 1.2341], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  lidar_2d_link: {xyz_m: [0.250, 0.000, 0.8301], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  lidar_3d_link: {xyz_m: [-0.135, 0.000, 1.2341], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  front_rgbd_link: {xyz_m: [0.570, 0.000, 0.6141], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  front_rgbd_depth_optical_frame: {xyz_m: [0.570, 0.000, 0.6141], rpy_rad: [-1.571, 0.000, -1.571], pending: false}
+  rear_left_fisheye_link: {xyz_m: [-0.565, 0.280, 0.6001], rpy_rad: [0.000, -0.175, 2.705], pending: false}
+  rear_left_fisheye_optical_frame: {xyz_m: [-0.585, 0.290, 0.6001], rpy_rad: [-1.571, 0.000, 1.134], pending: false}
+  rear_right_fisheye_link: {xyz_m: [-0.565, -0.280, 0.6001], rpy_rad: [0.000, -0.175, -2.705], pending: false}
+  rear_right_fisheye_optical_frame: {xyz_m: [-0.585, -0.290, 0.6001], rpy_rad: [-1.571, 0.000, 2.007], pending: false}
+  gnss_antenna_link: {xyz_m: [-0.235, 0.000, 1.3541], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   imu_link: {xyz_m: [0.000, 0.000, 0.4091], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   dry_bin_link: {xyz_m: [-0.205, 0.160, 0.5691], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   wastewater_tank_link: {xyz_m: [-0.205, -0.245, 0.5041], rpy_rad: [0.000, 0.000, 0.000], pending: false}
@@ -42,9 +42,9 @@ component_envelopes:
   payload_frame: {min_xyz_m: [-0.455, -0.330, 0.372], max_xyz_m: [0.455, 0.330, 0.455], pending: false}
   dry_bin: {min_xyz_m: [-0.475, -0.048, 0.450], max_xyz_m: [0.065, 0.368, 0.730], pending: false}
   wastewater_tank: {min_xyz_m: [-0.400, -0.390, 0.430], max_xyz_m: [-0.010, -0.100, 0.620], pending: false}
-  sensor_mast: {min_xyz_m: [-0.175, -0.045, 0.400], max_xyz_m: [-0.095, 0.045, 1.285], pending: false}
-  arm_stowed: {min_xyz_m: [-0.235, -0.405, 0.440], max_xyz_m: [0.435, 0.180, 1.360], pending: true, pending_reason: exact_mesh_swept_volume_scan}
-  front_sensor_bar: {min_xyz_m: [0.470, -0.165, 0.570], max_xyz_m: [0.535, 0.165, 0.850], pending: false}
+  sensor_mast: {min_xyz_m: [-0.275, -0.150, 0.400], max_xyz_m: [-0.075, 0.150, 1.390], pending: false}
+  arm_stowed: {min_xyz_m: [-0.170, -0.460, 0.440], max_xyz_m: [0.500, 0.125, 1.390], pending: true, pending_reason: exact_mesh_swept_volume_scan}
+  front_sensor_bar: {min_xyz_m: [0.210, -0.165, 0.570], max_xyz_m: [0.610, 0.165, 0.890], pending: false}
   cleaning_head_stowed: {min_xyz_m: [-0.515, -0.660, 0.045], max_xyz_m: [0.600, 0.660, 0.185], pending: true, pending_reason: brush_compliance_and_ground_contact_scan}
 
 vehicle_envelopes:

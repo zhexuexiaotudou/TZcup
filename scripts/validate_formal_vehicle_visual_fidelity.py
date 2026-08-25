@@ -33,6 +33,10 @@ REQUIRED_MESH_LINKS = {
     "recovery_strainer_filter_link", "recovery_pump_motor_link", "recovery_pump_head_link",
     "storage_system_mount_link", "dry_bin_link", "dry_bin_lid_link",
     "wastewater_tank_link", "wastewater_lid_link", "dry_wet_storage_partition_link",
+    "bodywork_lower_tub_link", "bodywork_front_cowl_link", "bodywork_rear_shell_link",
+    "bodywork_power_service_door_link", "bodywork_compute_service_door_link",
+    "bodywork_wet_service_door_link", "bodywork_rear_dry_service_door_link",
+    "bodywork_trim_link", "bodywork_lighting_link", "bodywork_brush_guards_link",
 }
 ALLOWED_PRIMITIVE_VISUAL_LINKS = {
     # Transparent state indicators, not claimed mechanical parts.
