@@ -10,12 +10,15 @@ matches the expected machine-readable contract.
 from __future__ import annotations
 
 import argparse
+import ast
 import hashlib
 import json
 import os
 import subprocess
 import sys
 import time
+import xml.etree.ElementTree as ET
+from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable
@@ -37,6 +40,21 @@ INSTALL_PACKAGES = (
     "sanitation_gazebo_control",
     "sanitation_vehicle_description",
     "sanitation_manipulation",
+)
+PACKAGE_SOURCE_DIRS = {
+    "sanitation_vehicle_description": Path(
+        "starter_ws/src/sanitation_vehicle_description"
+    ),
+    "sanitation_manipulation": Path("starter_ws/src/sanitation_manipulation"),
+}
+STRUCTURED_INSTALL_DIRS = {
+    "launch": ("*.py", "python_ast"),
+    "urdf": ("*.xacro", "xml"),
+    "worlds": ("*.sdf", "xml"),
+}
+PLUGIN_BASENAMES = (
+    "libDynamicPayloadSystem.so",
+    "libWaterRecoverySystem.so",
 )
 CRITICAL_SUFFIXES = (
     "src/DynamicPayloadSystem.cc",
@@ -146,6 +164,179 @@ def inventory_digest(value: dict[str, dict[str, Any]]) -> str:
     return sha256_bytes(json.dumps(normalized, sort_keys=True).encode("utf-8"))
 
 
+def json_digest(value: Any) -> str:
+    return sha256_bytes(json.dumps(value, sort_keys=True).encode("utf-8"))
+
+
+def parse_contract_file(path: Path, parser_kind: str) -> None:
+    try:
+        text = path.read_text(encoding="utf-8")
+        if parser_kind == "python_ast":
+            ast.parse(text, filename=str(path))
+        elif parser_kind == "xml":
+            ET.fromstring(text)
+        else:
+            raise AcceptanceError(f"unknown contract parser {parser_kind}: {path}")
+    except (OSError, UnicodeError, SyntaxError, ET.ParseError) as exc:
+        raise AcceptanceError(
+            f"cannot parse {parser_kind} source/install contract file {path}: {exc}"
+        ) from exc
+
+
+def python_install_package_root(runtime_ws: Path, package: str) -> Path:
+    roots: list[Path] = []
+    for site in sorted((runtime_ws / "install" / package / "lib").glob("python*/site-packages")):
+        direct = site / package
+        if direct.is_dir():
+            roots.append(direct)
+        for egg_link in sorted(site.glob("*.egg-link")):
+            try:
+                lines = egg_link.read_text(encoding="utf-8").splitlines()
+            except (OSError, UnicodeError) as exc:
+                raise AcceptanceError(f"cannot read Python egg-link {egg_link}: {exc}") from exc
+            if not lines or not lines[0].strip():
+                raise AcceptanceError(f"empty Python egg-link: {egg_link}")
+            target = Path(lines[0].strip())
+            if not target.is_absolute():
+                target = (egg_link.parent / target).resolve()
+            candidate = target / package
+            if candidate.is_dir():
+                roots.append(candidate)
+    unique = {str(path.resolve()): path for path in roots}
+    if len(unique) != 1:
+        raise AcceptanceError(
+            f"{package} must resolve to exactly one installed Python package, found {len(unique)}"
+        )
+    return next(iter(unique.values()))
+
+
+def source_install_contract(repo_root: Path, runtime_ws: Path) -> dict[str, dict[str, Any]]:
+    """Hash and parse every installed launch/Xacro/world/Python package file."""
+
+    rows: dict[str, dict[str, Any]] = {}
+    category_counts: Counter[str] = Counter()
+    for package, relative_source in PACKAGE_SOURCE_DIRS.items():
+        source_package = repo_root / relative_source
+        install_share = runtime_ws / "install" / package / "share" / package
+        for subdir, (pattern, parser_kind) in STRUCTURED_INSTALL_DIRS.items():
+            source_dir = source_package / subdir
+            for source in sorted(source_dir.rglob(pattern)):
+                if not source.is_file():
+                    continue
+                relative = source.relative_to(source_package)
+                installed = install_share / relative
+                if not installed.is_file():
+                    raise AcceptanceError(
+                        f"installed {subdir} file is missing for {source}: {installed}"
+                    )
+                parse_contract_file(source, parser_kind)
+                parse_contract_file(installed, parser_kind)
+                source_hash = sha256_file(source)
+                installed_hash = sha256_file(installed)
+                if source_hash != installed_hash:
+                    raise AcceptanceError(
+                        f"installed {subdir} file is stale for {source}: {installed}"
+                    )
+                key = f"{package}:{relative.as_posix()}"
+                rows[key] = {
+                    "category": subdir,
+                    "parser": parser_kind,
+                    "source": source.relative_to(repo_root).as_posix(),
+                    "installed": installed.relative_to(runtime_ws).as_posix(),
+                    "sha256": source_hash,
+                }
+                category_counts[subdir] += 1
+
+        if package == "sanitation_manipulation":
+            source_modules = source_package / package
+            installed_modules = python_install_package_root(runtime_ws, package)
+            for source in sorted(source_modules.rglob("*.py")):
+                if not source.is_file() or any(part in IGNORED_PARTS for part in source.parts):
+                    continue
+                relative_module = source.relative_to(source_modules)
+                installed = installed_modules / relative_module
+                if not installed.is_file():
+                    raise AcceptanceError(
+                        f"installed Python module is missing for {source}: {installed}"
+                    )
+                parse_contract_file(source, "python_ast")
+                parse_contract_file(installed, "python_ast")
+                source_hash = sha256_file(source)
+                installed_hash = sha256_file(installed)
+                if source_hash != installed_hash:
+                    raise AcceptanceError(
+                        f"installed Python module is stale for {source}: {installed}"
+                    )
+                key = f"{package}:python/{relative_module.as_posix()}"
+                rows[key] = {
+                    "category": "python_module",
+                    "parser": "python_ast",
+                    "source": source.relative_to(repo_root).as_posix(),
+                    "installed": str(installed),
+                    "sha256": source_hash,
+                }
+                category_counts["python_module"] += 1
+
+    required_categories = {"launch", "urdf", "worlds", "python_module"}
+    missing = sorted(required_categories - set(category_counts))
+    if missing:
+        raise AcceptanceError(f"source/install contract categories are empty: {missing}")
+    return rows
+
+
+def package_build_markers(runtime_ws: Path, started_ns: int) -> dict[str, dict[str, Any]]:
+    rows: dict[str, dict[str, Any]] = {}
+    for package in INSTALL_PACKAGES:
+        marker = runtime_ws / "build" / package / "colcon_build.rc"
+        if not marker.is_file():
+            raise AcceptanceError(f"fresh build marker is missing for {package}: {marker}")
+        stat = marker.stat()
+        if stat.st_mtime_ns <= started_ns:
+            raise AcceptanceError(
+                f"{package} colcon build marker does not postdate the declared build start"
+            )
+        rows[package] = {
+            "path": marker.relative_to(runtime_ws).as_posix(),
+            "sha256": sha256_file(marker),
+            "mtime_epoch_ns": stat.st_mtime_ns,
+        }
+    return rows
+
+
+def plugin_rows(installed: dict[str, dict[str, Any]], started_ns: int) -> dict[str, dict[str, Any]]:
+    matches: dict[str, list[tuple[str, dict[str, Any]]]] = {
+        basename: [] for basename in PLUGIN_BASENAMES
+    }
+    for name, row in installed.items():
+        basename = Path(name).name
+        if basename in matches:
+            matches[basename].append((name, row))
+    invalid = {name: len(rows) for name, rows in matches.items() if len(rows) != 1}
+    if invalid:
+        raise AcceptanceError(
+            f"compiled Gazebo plugins must appear exactly once each: {invalid}"
+        )
+    result: dict[str, dict[str, Any]] = {}
+    for basename, entries in matches.items():
+        name, row = entries[0]
+        if int(row["mtime_epoch_ns"]) <= started_ns:
+            raise AcceptanceError(f"compiled Gazebo plugin predates fresh build: {basename}")
+        result[basename] = {"path": name, **row}
+    return result
+
+
+def require_runtime_versions(runtime: Any) -> None:
+    if not isinstance(runtime, dict):
+        raise AcceptanceError("runtime version record is missing")
+    missing = [
+        field
+        for field in ("ros_distro", "ros_base_package", "gazebo")
+        if not isinstance(runtime.get(field), str) or not runtime[field].strip()
+    ]
+    if missing:
+        raise AcceptanceError(f"runtime ROS/Gazebo versions are missing: {missing}")
+
+
 def git_snapshot(repo_root: Path) -> dict[str, Any]:
     head = run_text(["git", "rev-parse", "HEAD"], repo_root)
     tree = run_text(["git", "rev-parse", "HEAD^{tree}"], repo_root)
@@ -210,14 +401,11 @@ def create_build_manifest(args: argparse.Namespace) -> int:
         raise AcceptanceError("build start must be a positive time before manifest capture")
     sources = inventory(repo_root, SOURCE_ROOTS)
     installed = inventory(runtime_ws, install_entries(runtime_ws))
-    # Compiled plugin timestamps are the minimum useful evidence that this was
-    # not merely an old install tree relabelled with a new manifest.
-    plugin_suffixes = ("libDynamicPayloadSystem.so", "libWaterRecoverySystem.so")
-    plugin_rows = [row for name, row in installed.items() if name.endswith(plugin_suffixes)]
-    if len(plugin_rows) != len(plugin_suffixes):
-        raise AcceptanceError("fresh install is missing DynamicPayload or WaterRecovery plugin")
-    if any(row["mtime_epoch_ns"] < started_ns for row in plugin_rows):
-        raise AcceptanceError("compiled Gazebo plugins predate the declared fresh build")
+    markers = package_build_markers(runtime_ws, started_ns)
+    plugins = plugin_rows(installed, started_ns)
+    source_install = source_install_contract(repo_root, runtime_ws)
+    runtime = runtime_versions(repo_root)
+    require_runtime_versions(runtime)
     manifest = {
         "schema_version": 1,
         "kind": "tzcup_integrated_acceptance_build_snapshot",
@@ -232,7 +420,12 @@ def create_build_manifest(args: argparse.Namespace) -> int:
         "source_inventory_sha256": inventory_digest(sources),
         "installed_inventory": installed,
         "installed_inventory_sha256": inventory_digest(installed),
-        "runtime": runtime_versions(repo_root),
+        "package_build_markers": markers,
+        "package_build_markers_sha256": json_digest(markers),
+        "compiled_plugins": plugins,
+        "source_install_contract": source_install,
+        "source_install_contract_sha256": json_digest(source_install),
+        "runtime": runtime,
     }
     write_json(args.output, manifest)
     return 0
@@ -248,6 +441,14 @@ def validate_build_snapshot(
         raise AcceptanceError("build manifest belongs to a different repository path")
     if Path(str(manifest.get("runtime_ws"))).resolve() != runtime_ws.resolve():
         raise AcceptanceError("build manifest belongs to a different runtime workspace")
+    try:
+        started_ns = int(manifest["build_started_epoch_ns"])
+        recorded_ns = int(manifest["recorded_epoch_ns"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise AcceptanceError("build manifest timestamps are missing or invalid") from exc
+    if started_ns <= 0 or recorded_ns <= started_ns:
+        raise AcceptanceError("build manifest timestamps are not ordered")
+    require_runtime_versions(manifest.get("runtime"))
     current_git = git_snapshot(repo_root)
     for field in ("commit", "tree", "dirty", "dirty_diff_sha256"):
         if current_git[field] != manifest.get("git", {}).get(field):
@@ -258,6 +459,15 @@ def validate_build_snapshot(
     current_installed = inventory(runtime_ws, install_entries(runtime_ws))
     if inventory_digest(current_installed) != manifest.get("installed_inventory_sha256"):
         raise AcceptanceError("installed runtime hash changed after build snapshot")
+    current_markers = package_build_markers(runtime_ws, started_ns)
+    if json_digest(current_markers) != manifest.get("package_build_markers_sha256"):
+        raise AcceptanceError("colcon package build markers changed after build snapshot")
+    current_plugins = plugin_rows(current_installed, started_ns)
+    if current_plugins != manifest.get("compiled_plugins"):
+        raise AcceptanceError("compiled Gazebo plugin inventory changed after build snapshot")
+    current_source_install = source_install_contract(repo_root, runtime_ws)
+    if json_digest(current_source_install) != manifest.get("source_install_contract_sha256"):
+        raise AcceptanceError("source/install file contract changed after build snapshot")
     return manifest
 
 
@@ -299,6 +509,8 @@ def record_scenario(args: argparse.Namespace) -> int:
         raise AcceptanceError("scenario predates run")
     if args.finished_epoch_ns < args.started_epoch_ns:
         raise AcceptanceError("scenario finish predates start")
+    if not 0 <= args.ros_domain_id <= 232:
+        raise AcceptanceError("ROS_DOMAIN_ID must be in the DDS-supported range 0..232")
     scenarios[args.name] = {
         "started_epoch_ns": args.started_epoch_ns,
         "started_utc": utc_iso(args.started_epoch_ns),
@@ -433,8 +645,27 @@ def aggregate(args: argparse.Namespace) -> int:
         raise AcceptanceError(f"scenario set mismatch; missing={missing}, extra={extra}")
     domains = [int(rows[name]["ros_domain_id"]) for name in SCENARIOS]
     partitions = [str(rows[name]["gz_partition"]) for name in SCENARIOS]
+    invalid_domains = [domain for domain in domains if not 0 <= domain <= 232]
+    if invalid_domains:
+        raise AcceptanceError(f"ROS domains must be in 0..232: {invalid_domains}")
     if len(set(domains)) != len(domains) or len(set(partitions)) != len(partitions):
         raise AcceptanceError("ROS domains and Gazebo partitions must be unique per scenario")
+    previous_finish = int(context["started_epoch_ns"])
+    for name in SCENARIOS:
+        try:
+            scenario_start = int(rows[name]["started_epoch_ns"])
+            scenario_finish = int(rows[name]["finished_epoch_ns"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise AcceptanceError(f"{name} scenario timestamps are missing or invalid") from exc
+        if scenario_start < previous_finish:
+            raise AcceptanceError(
+                f"{name} overlaps or is out of order with the previous scenario"
+            )
+        if scenario_finish < scenario_start:
+            raise AcceptanceError(f"{name} finish predates its start")
+        if scenario_finish > finished_ns:
+            raise AcceptanceError(f"{name} finished after the integrated run finished")
+        previous_finish = scenario_finish
     results = {name: validate_result(name, rows[name]) for name in SCENARIOS}
     manifest = {
         "schema_version": 1,
