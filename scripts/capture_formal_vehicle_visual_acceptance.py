@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Capture the three deterministic Gazebo product-acceptance camera topics."""
+"""Capture six deterministic Gazebo product/service acceptance camera topics."""
 
 from __future__ import annotations
 
@@ -22,6 +22,9 @@ TOPICS = {
     "front_left": "/formal_visual/front_left",
     "rear_right": "/formal_visual/rear_right",
     "top_cleaning": "/formal_visual/top_cleaning",
+    "sensor_tower_detail": "/formal_visual/sensor_tower_detail",
+    "front_sensor_detail": "/formal_visual/front_sensor_detail",
+    "arm_mount_detail": "/formal_visual/arm_mount_detail",
 }
 
 FOLDED_ARM_JOINTS = [
@@ -31,9 +34,8 @@ FOLDED_ARM_JOINTS = [
     "wrist_1_joint",
     "wrist_2_joint",
     "wrist_3_joint",
-    "robotiq_85_left_knuckle_joint",
 ]
-FOLDED_ARM_POSITIONS = [-0.55, -1.75, 1.95, -1.78, -1.55, 0.25, 0.20]
+FOLDED_ARM_POSITIONS = [-0.55, -1.75, 1.95, -1.78, -1.55, 0.25]
 
 
 def decode(message: Image) -> np.ndarray:
@@ -58,6 +60,9 @@ class CaptureNode(Node):
         self.arm_command = self.create_publisher(
             JointTrajectory, "/arm_controller/joint_trajectory", 1
         )
+        self.gripper_command = self.create_publisher(
+            JointTrajectory, "/gripper_controller/joint_trajectory", 1
+        )
         self._camera_subscriptions = []
         for name, topic in TOPICS.items():
             self._camera_subscriptions.append(
@@ -78,6 +83,13 @@ class CaptureNode(Node):
         point.time_from_start = Duration(sec=2)
         trajectory.points = [point]
         self.arm_command.publish(trajectory)
+        gripper = JointTrajectory()
+        gripper.joint_names = ["robotiq_85_left_knuckle_joint"]
+        gripper_point = JointTrajectoryPoint()
+        gripper_point.positions = [0.20]
+        gripper_point.time_from_start = Duration(sec=2)
+        gripper.points = [gripper_point]
+        self.gripper_command.publish(gripper)
 
 
 def frame_metrics(pixels: np.ndarray) -> dict[str, float | int]:
@@ -99,6 +111,7 @@ def main() -> int:
     parser.add_argument("--timeout", type=float, default=60.0)
     parser.add_argument("--settle-seconds", type=float, default=18.0)
     parser.add_argument("--no-fold-arm", action="store_true")
+    parser.add_argument("--bodywork-profile", choices=("product", "service"), default="product")
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=True)
 
@@ -106,7 +119,10 @@ def main() -> int:
     node = CaptureNode()
     if not args.no_fold_arm:
         subscription_deadline = time.monotonic() + min(args.timeout, 20.0)
-        while rclpy.ok() and node.arm_command.get_subscription_count() == 0:
+        while rclpy.ok() and (
+            node.arm_command.get_subscription_count() == 0
+            or node.gripper_command.get_subscription_count() == 0
+        ):
             if time.monotonic() >= subscription_deadline:
                 raise SystemExit("arm controller command subscription did not become available")
             rclpy.spin_once(node, timeout_sec=0.25)
@@ -148,14 +164,14 @@ def main() -> int:
         }
     manifest = {
         "report_id": "tzcup_formal_vehicle_visual_acceptance_v1",
-        "status": "GAZEBO_OGRE2_THREE_CAMERA_CAPTURE_PASSED",
+        "status": "GAZEBO_OGRE2_SIX_CAMERA_CAPTURE_PASSED",
         "render_source": "Gazebo Harmonic Sensors system / Ogre2",
-        "bodywork_profile": "product",
+        "bodywork_profile": args.bodywork_profile,
         "arm_pose": "folded_visual_candidate" if not args.no_fold_arm else "uncommanded",
         "camera_count": len(reports),
         "frames": reports,
         "claim_boundary": (
-            "The images prove that the committed product bodywork renders in Gazebo. "
+            f"The images prove that the committed {args.bodywork_profile} profile renders in Gazebo. "
             "They do not replace arm swept-volume, sensor self-occlusion, cleaning-contact or real-vehicle validation."
         ),
     }

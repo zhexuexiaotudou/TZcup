@@ -298,6 +298,8 @@ def run_ros_independent_tests() -> None:
           ROOT / "scripts" / "test_formal_vehicle_visual_fidelity.py",
           ROOT / "scripts" / "test_formal_vehicle_product_design.py",
           ROOT / "scripts" / "test_capture_formal_vehicle_visual_acceptance.py",
+          ROOT / "scripts" / "test_formal_vehicle_component_register.py",
+          ROOT / "scripts" / "test_formal_manipulator_control_contract.py",
     )
     result = pytest.main(["-q", *(str(path) for path in test_paths)])
     if result != pytest.ExitCode.OK:

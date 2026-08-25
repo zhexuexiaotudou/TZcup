@@ -49,7 +49,7 @@ def generate_launch_description() -> LaunchDescription:
         package="controller_manager",
         executable="spawner",
         arguments=[
-            "joint_state_broadcaster", "base_controller", "arm_controller",
+            "joint_state_broadcaster", "base_controller", "arm_controller", "gripper_controller",
             "cleaning_controller", "storage_controller", "brush_controller",
             "--controller-manager", "/controller_manager",
             "--controller-manager-timeout", "30",
@@ -130,6 +130,9 @@ def generate_launch_description() -> LaunchDescription:
                     "/formal_visual/front_left@sensor_msgs/msg/Image[gz.msgs.Image",
                     "/formal_visual/rear_right@sensor_msgs/msg/Image[gz.msgs.Image",
                     "/formal_visual/top_cleaning@sensor_msgs/msg/Image[gz.msgs.Image",
+                    "/formal_visual/sensor_tower_detail@sensor_msgs/msg/Image[gz.msgs.Image",
+                    "/formal_visual/front_sensor_detail@sensor_msgs/msg/Image[gz.msgs.Image",
+                    "/formal_visual/arm_mount_detail@sensor_msgs/msg/Image[gz.msgs.Image",
                 ],
                 output="screen",
             ),

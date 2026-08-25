@@ -16,7 +16,7 @@
     "approximate_fov_passed": 7,
     "approximate_fov_pending": 1,
     "component_envelopes": 8,
-    "installation_frames": 24,
+    "installation_frames": 31,
     "sensor_layouts": 8
   },
   "dry_bin_usable_l": 40.0,
@@ -74,9 +74,9 @@
     "all_physical_links_have_positive_mass_and_positive_definite_physical_inertia": true,
     "all_required_frames_joints_and_sensors_present": true,
     "evaluated": true,
-    "joint_count": 114,
+    "joint_count": 121,
     "joint_limits_and_tree_topology_valid": true,
-    "link_count": 115,
+    "link_count": 122,
     "massless_virtual_frames": [
       "base_footprint",
       "ur5e_base_link"
@@ -85,22 +85,29 @@
     "path": "reports/engineering/formal_competition_vehicle.urdf",
     "sensor_frame_count": 8,
     "static_frame_pose_consistency": {
-      "checked_count": 22,
+      "checked_count": 29,
       "checked_frames": [
         "base_footprint",
         "base_link",
         "payload_deck_link",
         "arm_mount_link",
         "sensor_mast_link",
+        "lidar_2d_mount_link",
         "lidar_2d_link",
+        "lidar_3d_mount_link",
         "lidar_3d_link",
+        "front_rgbd_mount_link",
         "front_rgbd_link",
         "front_rgbd_depth_optical_frame",
+        "rear_left_fisheye_mount_link",
         "rear_left_fisheye_link",
         "rear_left_fisheye_optical_frame",
+        "rear_right_fisheye_mount_link",
         "rear_right_fisheye_link",
         "rear_right_fisheye_optical_frame",
+        "gnss_mount_link",
         "gnss_antenna_link",
+        "imu_mount_tray_link",
         "imu_link",
         "dry_bin_link",
         "wastewater_tank_link",
@@ -119,6 +126,6 @@
       "rotation_tolerance_rad": 0.02
     },
     "symbolic_placeholders_absent": true,
-    "total_empty_vehicle_mass_kg": 150.462866
+    "total_empty_vehicle_mass_kg": 156.205866
   }
 }
