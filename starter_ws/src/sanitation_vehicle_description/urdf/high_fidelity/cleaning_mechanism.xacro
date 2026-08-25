@@ -303,7 +303,10 @@
     </link>
     <joint name="squeegee_float_joint" type="prismatic">
       <parent link="cleaning_lift_carriage_link"/><child link="squeegee_float_carrier_link"/>
-      <origin xyz="-0.445 0 -0.011" rpy="0 0 0"/>
+      <!-- The carrier datum puts the rubber blade on the ground plane at the
+           nominal lowered lift position; the prismatic axis then supplies its
+           measured +/-15 mm compliance instead of leaving the blade floating. -->
+      <origin xyz="-0.445 0 -0.051" rpy="0 0 0"/>
       <axis xyz="0 0 1"/>
       <limit lower="-0.015" upper="0.015" effort="250.0" velocity="0.10"/>
       <dynamics damping="45.0" friction="4.0"/>
@@ -347,7 +350,9 @@
     </link>
     <joint name="suction_nozzle_mount_joint" type="fixed">
       <parent link="squeegee_link"/><child link="suction_nozzle_link"/>
-      <origin xyz="0.040 0 0.010" rpy="0 0 0"/>
+      <!-- The intake box bottom retains a nominal 4-6 mm gap while the rubber
+           squeegee blade is grounded; the intake itself must not scrape. -->
+      <origin xyz="0.040 0 -0.005" rpy="0 0 0"/>
     </joint>
     <gazebo reference="suction_nozzle_link">
       <sensor name="suction_nozzle_ground_contact" type="contact">

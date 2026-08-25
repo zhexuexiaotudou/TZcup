@@ -170,7 +170,21 @@
     <link name="dry_deposit_chute_link">
       <xacro:hf_storage_visual mesh="dry_deposit_chute.stl"
         material="hf_deposit_chute" rgba="0.20 0.48 0.32 1"/>
-      <collision name="dry_deposit_chute_collision"><geometry><box size="0.125 0.100 0.350"/></geometry></collision>
+      <!-- The chute is a gravity passage, not a solid block.  Four thin wall
+           collisions retain a 109 x 84 mm clear bore for the 30 mm cube and
+           leave both ends open. -->
+      <collision name="dry_deposit_chute_front_wall_collision">
+        <origin xyz="0.0585 0 0"/><geometry><box size="0.008 0.100 0.350"/></geometry>
+      </collision>
+      <collision name="dry_deposit_chute_rear_wall_collision">
+        <origin xyz="-0.0585 0 0"/><geometry><box size="0.008 0.100 0.350"/></geometry>
+      </collision>
+      <collision name="dry_deposit_chute_left_wall_collision">
+        <origin xyz="0 0.046 0"/><geometry><box size="0.109 0.008 0.350"/></geometry>
+      </collision>
+      <collision name="dry_deposit_chute_right_wall_collision">
+        <origin xyz="0 -0.046 0"/><geometry><box size="0.109 0.008 0.350"/></geometry>
+      </collision>
       <xacro:hf_storage_box_inertial mass="0.320" sx="0.130" sy="0.105" sz="0.350"/>
     </link>
     <joint name="dry_deposit_chute_mount_joint" type="fixed">
@@ -191,7 +205,10 @@
     <gazebo reference="dry_deposit_chute_link">
       <sensor name="dry_deposit_contact" type="contact">
         <topic>/storage/dry_deposit/contact</topic><update_rate>50</update_rate><always_on>true</always_on>
-        <contact><collision>dry_deposit_chute_collision</collision></contact>
+        <!-- Fixed-joint reduction merges the chute into the actuated lid and
+             prefixes the final SDF collision.  Reference that physics name so
+             the acceptance contact topic contains real samples. -->
+        <contact><collision>dry_bin_lid_link_fixed_joint_lump__dry_deposit_chute_front_wall_collision_collision_8</collision></contact>
       </sensor>
     </gazebo>
 

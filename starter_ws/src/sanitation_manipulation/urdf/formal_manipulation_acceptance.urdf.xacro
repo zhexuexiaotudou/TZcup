@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="tzcup_formal_sanitation_vehicle">
+  <!-- Reuse the production formal vehicle verbatim.  This wrapper adds only
+       Gazebo acceptance instrumentation and the physics attachment used to
+       model a grasp after both fingers have made contact with the cube. -->
+  <xacro:include filename="$(find sanitation_vehicle_description)/urdf/formal_competition_vehicle.urdf.xacro"/>
+
+  <gazebo reference="robotiq_85_left_finger_tip_link">
+    <sensor name="left_finger_tip_contact" type="contact">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <topic>/manipulation/gripper/left_contact</topic>
+      <contact>
+        <collision>robotiq_85_left_finger_tip_link_collision</collision>
+      </contact>
+    </sensor>
+  </gazebo>
+  <gazebo reference="robotiq_85_right_finger_tip_link">
+    <sensor name="right_finger_tip_contact" type="contact">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <topic>/manipulation/gripper/right_contact</topic>
+      <contact>
+        <collision>robotiq_85_right_finger_tip_link_collision</collision>
+      </contact>
+    </sensor>
+  </gazebo>
+
+  <!-- Preserve the bolted bin assembly as its own physics link in this
+       evaluator wrapper.  Without this, Bullet flattens every fixed storage
+       collision into one base compound and reports the first child (deck)
+       instead of the real supporting dry-floor child. -->
+  <gazebo reference="dry_bin_mount_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+  </gazebo>
+
+  <!-- Dedicated evaluator load sensor on the real 8 mm dry-bin floor. -->
+  <gazebo reference="dry_bin_link">
+    <sensor name="dry_bin_floor_contact" type="contact">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <topic>/storage/dry_bin/floor_contact</topic>
+      <contact>
+        <collision>dry_bin_link_fixed_joint_lump__dry_floor_collision_collision</collision>
+      </contact>
+    </sensor>
+  </gazebo>
+
+  <gazebo>
+    <plugin filename="gz-sim-detachable-joint-system"
+            name="gz::sim::systems::DetachableJoint">
+      <!-- URDF-to-SDF fixed-joint reduction merges the Robotiq base into the
+           final UR wrist body.  The wrist body is therefore the stable
+           physics parent, while contact is still measured at both fingertip
+           links before the attachment command is permitted. -->
+      <parent_link>ur5e_wrist_3_link</parent_link>
+      <child_model>material_cube</child_model>
+      <child_link>cube_link</child_link>
+      <detach_topic>/manipulation/grasp/detach</detach_topic>
+      <attach_topic>/manipulation/grasp/attach</attach_topic>
+      <output_topic>/manipulation/grasp/state</output_topic>
+    </plugin>
+  </gazebo>
+</robot>

@@ -57,6 +57,19 @@ target_link_libraries(DynamicPayloadSystem
 install(TARGETS DynamicPayloadSystem
   LIBRARY DESTINATION lib
 )
+
+add_library(WaterRecoverySystem SHARED
+  src/WaterRecoverySystem.cc
+)
+target_link_libraries(WaterRecoverySystem
+  gz-sim8::gz-sim8
+  gz-transport13::gz-transport13
+  gz-msgs10::gz-msgs10
+)
+
+install(TARGETS WaterRecoverySystem
+  LIBRARY DESTINATION lib
+)
 install(DIRECTORY config
   DESTINATION share/${PROJECT_NAME}
 )

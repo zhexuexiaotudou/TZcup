@@ -99,9 +99,14 @@
       <xacro:hf_body_visual mesh="arm_bay_front_sill.stl" material="arm_bay_sill" rgba="0.075 0.090 0.092 1" visible="${visible}"/>
       <xacro:hf_body_visual mesh="arm_bay_rear_sill.stl" material="arm_bay_sill" rgba="0.075 0.090 0.092 1" visible="${visible}"/>
       <collision name="nose_collision"><origin xyz="0.32 0 0.280"/><geometry><box size="0.47 0.65 0.20"/></geometry></collision>
-      <collision name="power_cowl_collision"><origin xyz="0.28 0.235 0.535"/><geometry><box size="0.49 0.29 0.48"/></geometry></collision>
+      <!-- Keep the aft face ahead of the dry-bin front panel.  The former
+           490 mm box entered the certified dry usable envelope by 2.5 mm. -->
+      <collision name="power_cowl_collision"><origin xyz="0.290 0.235 0.535"/><geometry><box size="0.470 0.29 0.48"/></geometry></collision>
       <collision name="compute_cowl_collision"><origin xyz="0.31 -0.285 0.365"/><geometry><box size="0.39 0.19 0.22"/></geometry></collision>
-      <collision name="arm_bay_floor_collision"><origin xyz="0.17 -0.20 0.33"/><geometry><box size="0.58 0.40 0.10"/></geometry></collision>
+      <!-- The arm bay is a forward body tray; the payload deck and dedicated
+           arm adapter carry the manipulator.  Its collision therefore ends at
+           x=0.055 m and cannot become a hidden shelf through either tank. -->
+      <collision name="arm_bay_floor_collision"><origin xyz="0.2575 -0.20 0.33"/><geometry><box size="0.405 0.40 0.10"/></geometry></collision>
       <xacro:hf_bodywork_box_inertial mass="3.40" sx="0.58" sy="0.72" sz="0.55" xyz="0.26 0.06 0.43"/>
     </link>
     <joint name="bodywork_front_cowl_joint" type="fixed"><parent link="${parent}"/><child link="bodywork_front_cowl_link"/></joint>
@@ -117,9 +122,19 @@
            the robot-deposition aperture open; a solid cabinet-sized box would
            make a visually open hopper physically unusable. -->
       <collision name="rear_shell_rear_wall_collision"><origin xyz="-0.540 0 0.495"/><geometry><box size="0.045 0.70 0.52"/></geometry></collision>
-      <collision name="rear_shell_left_wall_collision"><origin xyz="-0.285 0.365 0.495"/><geometry><box size="0.53 0.045 0.52"/></geometry></collision>
-      <collision name="rear_shell_right_wall_collision"><origin xyz="-0.285 -0.365 0.495"/><geometry><box size="0.53 0.045 0.52"/></geometry></collision>
-      <collision name="rear_shell_lower_collision"><origin xyz="-0.285 0 0.350"/><geometry><box size="0.53 0.68 0.23"/></geometry></collision>
+      <!-- Thin moulded outer panels sit beyond the independent tank boards.
+           Their inner faces retain 3.5 mm (dry) and 4 mm (wet) installation
+           gaps instead of duplicating the internal walls with overlapping
+           45 mm collision solids. -->
+      <collision name="rear_shell_left_wall_collision"><origin xyz="-0.285 0.365 0.495"/><geometry><box size="0.53 0.020 0.52"/></geometry></collision>
+      <collision name="rear_shell_right_wall_collision"><origin xyz="-0.285 -0.388 0.495"/><geometry><box size="0.53 0.020 0.52"/></geometry></collision>
+      <!-- The moulded lower return is a perimeter frame, not a solid shelf.
+           Keep its three load-bearing outer rails outside the dry / wet tank
+           clear volumes so the robot chute remains a continuous gravity path
+           to the real dry-bin floor. -->
+      <collision name="rear_shell_lower_left_skirt_collision"><origin xyz="-0.285 0.365 0.275"/><geometry><box size="0.53 0.020 0.080"/></geometry></collision>
+      <collision name="rear_shell_lower_right_skirt_collision"><origin xyz="-0.285 -0.388 0.275"/><geometry><box size="0.53 0.020 0.080"/></geometry></collision>
+      <collision name="rear_shell_lower_rear_rail_collision"><origin xyz="-0.540 0 0.275"/><geometry><box size="0.045 0.70 0.080"/></geometry></collision>
       <collision name="rear_shell_roof_left_collision"><origin xyz="-0.285 0.310 0.735"/><geometry><box size="0.53 0.080 0.055"/></geometry></collision>
       <collision name="rear_shell_roof_right_collision"><origin xyz="-0.285 -0.255 0.735"/><geometry><box size="0.53 0.180 0.055"/></geometry></collision>
       <collision name="rear_shell_roof_front_collision"><origin xyz="-0.065 0.135 0.735"/><geometry><box size="0.090 0.270 0.055"/></geometry></collision>

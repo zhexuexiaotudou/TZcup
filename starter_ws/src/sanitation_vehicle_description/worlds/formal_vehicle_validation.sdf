@@ -39,5 +39,254 @@
           <material><ambient>0.55 0.57 0.58 1</ambient><diffuse>0.72 0.74 0.75 1</diffuse></material></visual>
       </link>
     </model>
+    <!-- Finite 2.5-D water layer used by WaterRecoverySystem.  The plugin owns
+         its per-cell volume state; this translucent patch is the corresponding
+         physical validation footprint, not a target that is deleted on hit. -->
+    <model name="formal_recoverable_water_patch">
+      <static>true</static>
+      <pose>0.60 0 0.001 0 0 0</pose>
+      <link name="water_layer">
+        <visual name="water_strip_00">
+          <pose>-1.15 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_01">
+          <pose>-1.05 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_02">
+          <pose>-0.95 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_03">
+          <pose>-0.85 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_04">
+          <pose>-0.75 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_05">
+          <pose>-0.65 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_06">
+          <pose>-0.55 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_07">
+          <pose>-0.45 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_08">
+          <pose>-0.35 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_09">
+          <pose>-0.25 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_10">
+          <pose>-0.15 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_11">
+          <pose>-0.05 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_12">
+          <pose>0.05 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_13">
+          <pose>0.15 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_14">
+          <pose>0.25 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_15">
+          <pose>0.35 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_16">
+          <pose>0.45 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_17">
+          <pose>0.55 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_18">
+          <pose>0.65 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_19">
+          <pose>0.75 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_20">
+          <pose>0.85 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_21">
+          <pose>0.95 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_22">
+          <pose>1.05 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+        <visual name="water_strip_23">
+          <pose>1.15 0 0 0 0 0</pose>
+          <geometry><box><size>0.10 0.60 0.002</size></box></geometry>
+          <material>
+            <ambient>0.03 0.20 0.34 0.55</ambient>
+            <diffuse>0.04 0.38 0.64 0.55</diffuse>
+            <specular>0.45 0.70 0.85 0.60</specular>
+          </material>
+          <transparency>0.45</transparency>
+        </visual>
+      </link>
+    </model>
   </world>
 </sdf>

@@ -20,6 +20,7 @@ def generate_launch_description() -> LaunchDescription:
     use_sim_time = LaunchConfiguration("use_sim_time")
     physics_engine = LaunchConfiguration("physics_engine")
     bodywork_visible = LaunchConfiguration("bodywork_visible")
+    water_evaluation_interfaces = LaunchConfiguration("water_evaluation_interfaces")
     world = LaunchConfiguration("world")
     model = PathJoinSubstitution(
         [FindPackageShare("sanitation_vehicle_description"), "urdf", "formal_competition_vehicle.urdf.xacro"]
@@ -61,6 +62,23 @@ def generate_launch_description() -> LaunchDescription:
         condition=IfCondition(start_controllers),
     )
 
+    # Ground-water truth and episode reset commands belong to the evaluator,
+    # not the product ROS graph.  They are opt-in so the deployed launch cannot
+    # spoof water removal or mass-conservation acceptance through ROS topics.
+    water_evaluation_bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        arguments=[
+            "/model/tzcup_formal_sanitation_vehicle/water_recovery/command/reset_ground_volume_l@std_msgs/msg/Float64]gz.msgs.Double",
+            "/model/tzcup_formal_sanitation_vehicle/water_recovery/command/reset_tank_mass_kg@std_msgs/msg/Float64]gz.msgs.Double",
+            "/model/tzcup_formal_sanitation_vehicle/water_recovery/ground_volume_l@std_msgs/msg/Float64[gz.msgs.Double",
+            "/model/tzcup_formal_sanitation_vehicle/water_recovery/mass_balance_error_fraction@std_msgs/msg/Float64[gz.msgs.Double",
+            "/model/tzcup_formal_sanitation_vehicle/water_recovery/status_json@std_msgs/msg/String[gz.msgs.StringMsg",
+        ],
+        output="screen",
+        condition=IfCondition(water_evaluation_interfaces),
+    )
+
     return LaunchDescription(
         [
             SetEnvironmentVariable("GZ_SIM_RESOURCE_PATH", resource_path),
@@ -68,6 +86,11 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument("start_controllers", default_value="true"),
             DeclareLaunchArgument("use_sim_time", default_value="true"),
             DeclareLaunchArgument("bodywork_visible", default_value="true"),
+            DeclareLaunchArgument(
+                "water_evaluation_interfaces",
+                default_value="false",
+                description="Opt-in evaluator-only water truth/reset ROS bridge.",
+            ),
             DeclareLaunchArgument("world", default_value=default_world),
             DeclareLaunchArgument(
                 "physics_engine",
@@ -123,10 +146,18 @@ def generate_launch_description() -> LaunchDescription:
                     "/sensors/rear_left_fisheye/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
                     "/sensors/rear_right_fisheye/image_raw@sensor_msgs/msg/Image[gz.msgs.Image",
                     "/sensors/rear_right_fisheye/camera_info@sensor_msgs/msg/CameraInfo[gz.msgs.CameraInfo",
-                    "/model/tzcup_formal_sanitation_vehicle/payload/dry_mass_kg@std_msgs/msg/Float64@gz.msgs.Double",
-                    "/model/tzcup_formal_sanitation_vehicle/payload/dry_mass_kg/applied@std_msgs/msg/Float64[gz.msgs.Double",
-                    "/model/tzcup_formal_sanitation_vehicle/payload/wastewater_mass_kg@std_msgs/msg/Float64@gz.msgs.Double",
+                    # Payload mass is owned by physical simulation.  Dry cubes
+                    # remain rigid bodies in the bin, while WaterRecoverySystem
+                    # publishes wastewater mass directly over Gazebo Transport
+                    # to DynamicPayloadSystem.  Neither mass may be writable
+                    # from the product ROS graph.
                     "/model/tzcup_formal_sanitation_vehicle/payload/wastewater_mass_kg/applied@std_msgs/msg/Float64[gz.msgs.Double",
+                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/command/enable@std_msgs/msg/Bool]gz.msgs.Boolean",
+                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/tank_mass_kg@std_msgs/msg/Float64[gz.msgs.Double",
+                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/tank_level_fraction@std_msgs/msg/Float64[gz.msgs.Double",
+                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/flow_l_min@std_msgs/msg/Float64[gz.msgs.Double",
+                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/recovered_volume_l@std_msgs/msg/Float64[gz.msgs.Double",
+                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/tank_full@std_msgs/msg/Bool[gz.msgs.Boolean",
                     "/cleaning/suction_nozzle/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
                     "/storage/dry_deposit/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
                     "/safety/front_bumper/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
@@ -141,6 +172,7 @@ def generate_launch_description() -> LaunchDescription:
                 ],
                 output="screen",
             ),
+            water_evaluation_bridge,
             TimerAction(period=6.0, actions=[controller_spawner]),
         ]
     )

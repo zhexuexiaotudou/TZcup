@@ -40,6 +40,21 @@
         <dry_capacity_kg>1.512</dry_capacity_kg>
         <wastewater_capacity_kg>9.7064</wastewater_capacity_kg>
       </plugin>
+      <plugin filename="libWaterRecoverySystem.so" name="sanitation_gazebo_control::WaterRecoverySystem">
+        <pump_rated_flow_l_min>15.1</pump_rated_flow_l_min>
+        <hydraulic_derating>0.70</hydraulic_derating>
+        <tank_capacity_kg>9.7064</tank_capacity_kg>
+        <initial_tank_mass_kg>0.0</initial_tank_mass_kg>
+        <initial_ground_volume_l>2.88</initial_ground_volume_l>
+        <water_density_kg_l>1.0</water_density_kg_l>
+        <patch_min_x>-0.60</patch_min_x><patch_max_x>1.80</patch_max_x>
+        <patch_min_y>-0.30</patch_min_y><patch_max_y>0.30</patch_max_y>
+        <cell_size_m>0.10</cell_size_m>
+        <nozzle_length_m>0.14</nozzle_length_m>
+        <nozzle_width_m>0.65</nozzle_width_m>
+        <maximum_squeegee_clearance_m>0.012</maximum_squeegee_clearance_m>
+        <maximum_intake_clearance_m>0.012</maximum_intake_clearance_m>
+      </plugin>
     </gazebo>
   </xacro:if>
 </robot>
