@@ -24,6 +24,11 @@ from pathlib import Path, PurePosixPath
 from typing import Any, Iterable, Mapping, Sequence
 
 from validate_formal_windows_cold_gate_evidence import EvidenceError, validate_evidence
+from formal_native_linux_cold_start_evidence import (
+    BOUND_REPORT_ID as NATIVE_LINUX_COLD_START_REPORT_ID,
+    NativeEvidenceError,
+    validate_bound as validate_native_linux_cold_start,
+)
 
 
 FINAL_RUNTIME_PACKAGES: tuple[str, ...] = (
@@ -161,6 +166,24 @@ class ClosureError(RuntimeError):
 def _windows_cold_start_evidence_identity(runtime_ws: Path) -> dict[str, Any]:
     path = runtime_ws / WINDOWS_COLD_START_EVIDENCE
     _assert_regular(path, "bound Windows cold-start evidence")
+    raw_payload = _read_json(path)
+    if raw_payload.get("report_id") == NATIVE_LINUX_COLD_START_REPORT_ID:
+        try:
+            payload = validate_native_linux_cold_start(path, runtime_ws)
+        except NativeEvidenceError as exc:
+            raise ClosureError(
+                f"invalid bound native-Linux cold-start evidence: {exc}"
+            ) from exc
+        return {
+            "bound": True,
+            "mode": "native_linux_not_wsl",
+            "path": WINDOWS_COLD_START_EVIDENCE.as_posix(),
+            "sha256": _sha256(path),
+            "report_id": payload["report_id"],
+            "recorded_epoch_ns": payload["recorded_epoch_ns"],
+            "kernel_osrelease": payload["kernel_osrelease"],
+            "source": payload["source"],
+        }
     try:
         payload = validate_evidence(path, enforce_freshness=False)
     except EvidenceError as exc:
