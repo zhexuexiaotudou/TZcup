@@ -29,6 +29,21 @@ def test_fisheye_camera_info_is_single_writer_and_matches_nominal_sdf_lens() -> 
     assert abs(expected_focal - 788.4862232182) < 1e-9
 
 
+def test_fisheye_image_bridge_rewrites_scoped_gazebo_frames_to_optical_frames() -> None:
+    rows = yaml.safe_load(
+        (
+            ROOT
+            / "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml"
+        ).read_text(encoding="utf-8")
+    )
+    by_topic = {row["ros_topic_name"]: row for row in rows}
+    for side in ("left", "right"):
+        topic = f"/sensors/rear_{side}_fisheye/image_raw"
+        assert by_topic[topic]["frame_id"] == (
+            f"rear_{side}_fisheye_optical_frame"
+        )
+
+
 def test_equisolid_taylor_contract_is_below_5e_10_at_fov_edge() -> None:
     theta = math.radians(150.0) / 2.0
     coefficients = (-1 / 24, 1 / 1920, -1 / 322560, 1 / 92897280)

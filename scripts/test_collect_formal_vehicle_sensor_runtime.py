@@ -157,6 +157,8 @@ def test_collector_bounds_and_retires_high_bandwidth_subscriptions():
     assert "HistoryPolicy.KEEP_LAST" in source
     assert "depth=1" in source
     assert "ReliabilityPolicy.BEST_EFFORT" in source
+    assert "ReliabilityPolicy.RELIABLE" in source
+    assert "RELIABLE_FRAGMENTED_TOPICS" in source
     assert "controller_plane_ready" in source
     assert "node.start_topic_subscriptions()" in source
     assert "node.retire_ready_subscriptions()" in source
@@ -194,11 +196,22 @@ def test_high_bandwidth_and_visual_bridges_are_bounded_and_isolated_from_control
     assert high_bandwidth_config.count("lazy: true") == 21
     assert high_bandwidth_config.count("subscriber_queue: 1") == 21
     assert high_bandwidth_config.count("publisher_queue: 1") == 21
-    assert high_bandwidth_config.count("qos_profile: SENSOR_DATA") == 21
+    assert high_bandwidth_config.count("qos_profile: SENSOR_DATA") == 18
+    assert high_bandwidth_config.count("qos_profile: SYSTEM_DEFAULT") == 3
     assert len(rows) == 21
     assert len({row["ros_topic_name"] for row in rows}) == len(rows)
     assert all(row["direction"] == "GZ_TO_ROS" for row in rows)
     assert all(row["ros_topic_name"].startswith("/sensors/") for row in rows)
+    reliable_topics = {
+        row["ros_topic_name"]
+        for row in rows
+        if row["qos_profile"] == "SYSTEM_DEFAULT"
+    }
+    assert reliable_topics == {
+        "/sensors/lidar_3d/points",
+        "/sensors/rear_left_fisheye/image_raw",
+        "/sensors/rear_right_fisheye/image_raw",
+    }
     assert 'package="ros_gz_image"' in source
     assert 'executable="image_bridge"' in source
     assert "arguments=visual_image_topics" in source

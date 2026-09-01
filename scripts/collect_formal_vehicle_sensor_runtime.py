@@ -76,6 +76,14 @@ TOPICS: dict[str, type] = {
     "/formal_vehicle/encoders/a300/joint_states": JointState,
     "/odom/unfiltered": Odometry,
 }
+
+RELIABLE_FRAGMENTED_TOPICS = frozenset(
+    {
+        "/sensors/lidar_3d/points",
+        "/sensors/rear_left_fisheye/image_raw",
+        "/sensors/rear_right_fisheye/image_raw",
+    }
+)
 if set(TOPICS) != set(STREAM_CONTRACTS):
     raise RuntimeError("runtime ROS types and dependency-free sensor contracts differ")
 CAMERA_INFO_TOPICS = {
@@ -164,6 +172,17 @@ class Probe(Node):
             reliability=ReliabilityPolicy.BEST_EFFORT,
             durability=DurabilityPolicy.VOLATILE,
         )
+        # These three samples are 3.7--6.2 MB each.  BEST_EFFORT loses DDS
+        # fragments on the otherwise isolated loopback transport, which makes
+        # source timestamps appear sparse even though Gazebo publishes at the
+        # configured rate.  Reliable KEEP_LAST(1) preserves the newest complete
+        # sample without allowing an unbounded queue.
+        self._fragmented_sensor_qos = QoSProfile(
+            history=HistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=ReliabilityPolicy.RELIABLE,
+            durability=DurabilityPolicy.VOLATILE,
+        )
         self._topic_subscriptions: dict[str, Any] = {}
         description_qos = QoSProfile(
             depth=1,
@@ -188,7 +207,11 @@ class Probe(Node):
                 message_type,
                 topic,
                 lambda message, name=topic: self._sample(name, message),
-                self._sensor_qos,
+                (
+                    self._fragmented_sensor_qos
+                    if topic in RELIABLE_FRAGMENTED_TOPICS
+                    else self._sensor_qos
+                ),
             )
 
     def _topic_ready(self, topic: str) -> bool:

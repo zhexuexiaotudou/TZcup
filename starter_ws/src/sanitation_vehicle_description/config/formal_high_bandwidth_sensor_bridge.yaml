@@ -1,9 +1,12 @@
 # Product high-bandwidth Gazebo -> ROS interfaces.
 #
 # Keep the physical source rates and resolutions in the URDF.  These bridges
-# subscribe lazily and use one-deep sensor-data queues so an absent or slow ROS
-# consumer cannot turn raw images / point clouds into an unbounded host-commit
-# load.  Control-plane bridges intentionally remain in the launch file.
+# subscribe lazily and use one-deep queues so an absent or slow ROS consumer
+# cannot turn raw images / point clouds into an unbounded host-commit load.
+# The two 1920x1080 fisheyes and organized Mid360 cloud use reliable transport:
+# their multi-megabyte CycloneDDS samples otherwise lose fragments even on the
+# pinned loopback data plane.  All other streams retain sensor-data QoS.
+# Control-plane bridges intentionally remain in the launch file.
 
 - ros_topic_name: /sensors/lidar_2d/scan/points
   gz_topic_name: /sensors/lidar_2d/scan/points
@@ -30,7 +33,7 @@
   ros_type_name: sensor_msgs/msg/PointCloud2
   gz_type_name: gz.msgs.PointCloudPacked
   direction: GZ_TO_ROS
-  qos_profile: SENSOR_DATA
+  qos_profile: SYSTEM_DEFAULT
   subscriber_queue: 1
   publisher_queue: 1
   lazy: true
@@ -199,8 +202,9 @@
   gz_topic_name: /sensors/rear_left_fisheye/image_raw
   ros_type_name: sensor_msgs/msg/Image
   gz_type_name: gz.msgs.Image
+  frame_id: rear_left_fisheye_optical_frame
   direction: GZ_TO_ROS
-  qos_profile: SENSOR_DATA
+  qos_profile: SYSTEM_DEFAULT
   subscriber_queue: 1
   publisher_queue: 1
   lazy: true
@@ -209,8 +213,9 @@
   gz_topic_name: /sensors/rear_right_fisheye/image_raw
   ros_type_name: sensor_msgs/msg/Image
   gz_type_name: gz.msgs.Image
+  frame_id: rear_right_fisheye_optical_frame
   direction: GZ_TO_ROS
-  qos_profile: SENSOR_DATA
+  qos_profile: SYSTEM_DEFAULT
   subscriber_queue: 1
   publisher_queue: 1
   lazy: true
