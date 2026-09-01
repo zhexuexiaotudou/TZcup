@@ -945,6 +945,40 @@ def _joint_hold_evidence(
     return evidence
 
 
+def _inhibit_transition_joint_reference(
+    node: Probe,
+    *,
+    phase_start: float,
+) -> tuple[dict[str, float], dict[str, float | int | str]]:
+    """Bind a delayed interlock to the last joint sample before permit revocation."""
+
+    inhibited_stamps = [
+        stamp
+        for stamp, permitted in node.permit_samples
+        if stamp >= phase_start and not permitted
+    ]
+    if not inhibited_stamps:
+        raise RuntimeError("no actuator-permit revocation observed in delayed interlock phase")
+    transition_stamp = min(inhibited_stamps)
+    candidates = [
+        (stamp, positions)
+        for stamp, positions in node.joint_samples
+        if phase_start <= stamp <= transition_stamp
+    ]
+    if not candidates:
+        raise RuntimeError(
+            "no joint state observed before actuator-permit revocation in delayed "
+            "interlock phase"
+        )
+    reference_stamp, reference_positions = max(candidates, key=lambda sample: sample[0])
+    return dict(reference_positions), {
+        "mode": "last_joint_sample_before_actuator_permit_revocation",
+        "phase_start_to_permit_revocation_sec": transition_stamp - phase_start,
+        "joint_sample_to_permit_revocation_sec": transition_stamp - reference_stamp,
+        "joint_count": len(reference_positions),
+    }
+
+
 def _run_hard_interlock_phase(
     node: Probe,
     *,
@@ -991,6 +1025,23 @@ def _run_hard_interlock_phase(
         safety_inputs_permit_actuators=False,
     )
 
+    if send_heartbeat:
+        hold_reference_joints = pre_trigger_joints
+        hold_reference_evidence = {
+            "mode": "phase_start_input_edge",
+            "phase_start_to_permit_revocation_sec": 0.0,
+            "joint_sample_to_permit_revocation_sec": 0.0,
+            "joint_count": len(hold_reference_joints),
+        }
+    else:
+        # A missing heartbeat is still safe during the configured freshness
+        # interval.  Motion in that grace period is permitted, so measure hold
+        # displacement from the actual actuator-permit revocation rather than
+        # from the earlier instant when heartbeat publication stopped.
+        hold_reference_joints, hold_reference_evidence = (
+            _inhibit_transition_joint_reference(node, phase_start=phase_start)
+        )
+
     states = node.controller_states(
         timeout_sec,
         collision=collision,
@@ -1012,7 +1063,7 @@ def _run_hard_interlock_phase(
         node,
         phase_start,
         settle_sec,
-        reference_positions=pre_trigger_joints,
+        reference_positions=hold_reference_joints,
     )
 
     managed = SWITCHED_CONTROLLERS | HELD_CONTROLLERS
@@ -1032,6 +1083,8 @@ def _run_hard_interlock_phase(
         },
         "position_goal_motion_from_start": measured_motion,
         "pre_trigger_joint_positions": pre_trigger_joints,
+        "hold_reference_joint_positions": hold_reference_joints,
+        "hold_reference_evidence": hold_reference_evidence,
         "position_goal_result_statuses": position_goal_statuses,
         "inhibited_joint_hold_evidence": hold_evidence,
         "safety_status_evidence": status_evidence,

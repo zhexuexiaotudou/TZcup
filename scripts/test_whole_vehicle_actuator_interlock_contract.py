@@ -334,7 +334,12 @@ def test_each_hard_interlock_proves_all_four_goals_moved_canceled_and_held():
         '"all_held_joints_stable_after_cancel"',
     ):
         assert evidence in phase
-    assert "reference_positions=pre_trigger_joints" in phase
+    assert "_inhibit_transition_joint_reference" in phase
+    assert "if send_heartbeat:" in phase
+    assert "reference_positions=hold_reference_joints" in phase
+    assert '"hold_reference_joint_positions"' in phase
+    assert '"hold_reference_evidence"' in phase
+    assert '"mode": "last_joint_sample_before_actuator_permit_revocation"' in source
     assert '"max_abs_from_trigger"' in source
     assert "reference_positions=pre_estop_joints" in source
     for joint, threshold in (
