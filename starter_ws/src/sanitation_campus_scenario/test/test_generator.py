@@ -7,11 +7,19 @@ import pytest
 
 from sanitation_campus_scenario.cli import main as cli_main
 from sanitation_campus_scenario.generator import (
+    CUBE_MATERIAL_DENSITY_KG_M3,
+    DIRT_CELL_COLUMNS,
+    DIRT_CELL_ROWS,
+    DUST_VISUAL_COUNT,
     EVALUATOR_NAMESPACE,
     GenerationError,
+    LEAF_VISUAL_COUNT,
+    PUDDLE_VISUAL_COUNT,
     generate_episode,
     load_config,
+    render_sdf,
     split_index,
+    validate_config,
 )
 from sanitation_campus_scenario.io import write_episode
 from sanitation_campus_scenario.motion import interpolate_loop, load_schedule
@@ -60,6 +68,11 @@ def test_episode_contract_and_truth_separation(profile, dimensions):
     assert manifest["field"]["physical_boundary_walls"] is False
     assert manifest["counts"]["discrete_cubes"] == 20
     assert manifest["cube_contract"]["edge_m"] == 0.03
+    assert manifest["cube_contract"]["grasp_clearance_m"] == 2.10
+    assert manifest["cube_contract"]["grasp_reach_radius_m"] == 1.10
+    assert manifest["cube_contract"]["clearance_semantics"] == (
+        "whole_vehicle_side_pick_parking_envelope"
+    )
     assert "discrete_cubes" not in manifest
     assert manifest["map_id"] == "train-map-000"
     assert manifest["episode_id"] == "train-map-000-mission-000"
@@ -70,6 +83,38 @@ def test_episode_contract_and_truth_separation(profile, dimensions):
     assert all(cube["edge_m"] == 0.03 for cube in truth["discrete_cubes"])
     evaluator = json.loads(files["evaluator/episode_manifest.json"])
     assert evaluator["truth_boundary"]["evaluator_namespace"] == EVALUATOR_NAMESPACE
+
+
+def test_generated_world_supports_formal_vehicle_sensor_systems_and_gnss_origin():
+    sdf = render_sdf(
+        "formal",
+        {"width_m": 200.0, "height_m": 100.0},
+        [],
+        [],
+        [],
+        [],
+        False,
+    )
+    world = ET.fromstring(sdf).find("world")
+    assert world is not None
+    plugins = {
+        plugin.attrib["filename"]: plugin.attrib["name"]
+        for plugin in world.findall("plugin")
+    }
+    assert plugins["gz-sim-sensors-system"] == "gz::sim::systems::Sensors"
+    assert plugins["gz-sim-imu-system"] == "gz::sim::systems::Imu"
+    assert plugins["gz-sim-navsat-system"] == "gz::sim::systems::NavSat"
+    sensors = world.find("plugin[@filename='gz-sim-sensors-system']")
+    assert sensors is not None
+    assert sensors.findtext("render_engine") == "ogre2"
+    spherical = world.find("spherical_coordinates")
+    assert spherical is not None
+    assert spherical.findtext("surface_model") == "EARTH_WGS84"
+    assert spherical.findtext("world_frame_orientation") == "ENU"
+    assert float(spherical.findtext("latitude_deg")) == pytest.approx(39.9042)
+    assert float(spherical.findtext("longitude_deg")) == pytest.approx(116.4074)
+    assert float(spherical.findtext("elevation")) == pytest.approx(43.5)
+    assert float(spherical.findtext("heading_deg")) == 0.0
 
 
 def test_cube_clearance_from_assets_and_other_cubes():
@@ -86,6 +131,43 @@ def test_cube_clearance_from_assets_and_other_cubes():
             assert ((x - ax) ** 2 + (y - ay) ** 2) ** 0.5 >= clearance + radius + 0.015 - 1e-6
     points = [(c["pose"]["x_m"], c["pose"]["y_m"]) for c in cubes]
     assert len(points) == len(set(points))
+
+
+def test_parking_clearance_and_arm_reach_are_distinct_contracts():
+    config = load_config(CONFIG)
+    assert config["episode"]["grasp_clearance_m"] > config["episode"]["grasp_reach_radius_m"]
+
+    broken = copy.deepcopy(config)
+    broken["episode"]["grasp_clearance_m"] = broken["episode"]["grasp_reach_radius_m"]
+    with pytest.raises(GenerationError, match="whole-vehicle parking clearance"):
+        validate_config(broken)
+
+
+def test_cube_material_mass_and_sdf_inertia_are_physical_and_deterministic():
+    config = load_config(CONFIG)
+    files = generate_episode(config, "formal", "train", 0, 0)
+    truth = json.loads(files["evaluator/ground_truth.json"])
+    world = ET.fromstring(files["public/world.sdf"])
+    materials = set()
+    for cube in truth["discrete_cubes"]:
+        material = cube["material"]
+        materials.add(material)
+        density = CUBE_MATERIAL_DENSITY_KG_M3[material]
+        expected_mass = density * cube["edge_m"] ** 3
+        assert cube["density_kg_m3"] == density
+        assert cube["mass_kg"] == pytest.approx(expected_mass, abs=1e-9)
+        model = world.find(f".//model[@name='{cube['object_id']}']")
+        assert model is not None
+        mass = float(model.findtext("link/inertial/mass"))
+        assert mass == pytest.approx(expected_mass, abs=1e-9)
+        expected_inertia = expected_mass * cube["edge_m"] ** 2 / 6.0
+        for axis in ("ixx", "iyy", "izz"):
+            assert float(model.findtext(f"link/inertial/inertia/{axis}")) == pytest.approx(
+                expected_inertia, abs=1e-9
+            )
+        for cross in ("ixy", "ixz", "iyz"):
+            assert float(model.findtext(f"link/inertial/inertia/{cross}")) == 0.0
+    assert materials == set(CUBE_MATERIAL_DENSITY_KG_M3)
 
 
 def test_same_map_reuses_layout_while_mission_randomization_changes():
@@ -128,6 +210,15 @@ def test_fail_closed_validation_rejects_unsafe_configuration():
         generate_episode(config, "research", "hidden", 12, 0)
     with pytest.raises(GenerationError, match="mission_index out of range"):
         generate_episode(config, "research", "hidden", 0, 100)
+    with pytest.raises(GenerationError, match="episode ID mission width"):
+        generate_episode(
+            config,
+            "research",
+            "train",
+            0,
+            0,
+            episode_id_mission_width=4,
+        )
     unknown_key = copy.deepcopy(config)
     unknown_key["episode"]["unreviewed_randomization"] = True
     with pytest.raises(GenerationError, match="unexpected"):
@@ -267,6 +358,55 @@ def test_dirt_area_is_fixed_and_rotated_rectangles_are_mutually_exclusive():
             assert ((lx - rx) ** 2 + (ly - ry) ** 2) ** 0.5 >= lr + rr + spacing - 1e-6
 
 
+def test_dirt_visuals_are_deterministic_procedural_and_not_monolithic_patches():
+    files = generate_episode(load_config(CONFIG), "formal", "train", 2, 37)
+    truth = json.loads(files["evaluator/ground_truth.json"])
+    public = json.loads(files["public/episode_manifest.json"])
+    world = ET.fromstring(files["public/world.sdf"])
+
+    assert {tuple(patch["size_m"]) for patch in truth["dirt_patches"]} == {
+        (0.5, 2.0),
+        (0.8, 1.25),
+        (1.0, 1.0),
+        (1.25, 0.8),
+        (2.0, 0.5),
+    }
+
+    expected_total = 0
+    expected_counts = {
+        "leaf": LEAF_VISUAL_COUNT,
+        "dust": DUST_VISUAL_COUNT,
+        "puddle": PUDDLE_VISUAL_COUNT,
+    }
+    for patch in truth["dirt_patches"]:
+        model = world.find(f".//model[@name='{patch['object_id']}']")
+        assert model is not None
+        visuals = model.findall("link/visual")
+        expected_total += DIRT_CELL_COLUMNS * DIRT_CELL_ROWS
+        assert len(visuals) == expected_counts[patch["kind"]]
+        assert len({visual.get("name") for visual in visuals}) == len(visuals)
+        assert len({visual.findtext("material/diffuse") for visual in visuals}) >= 4
+        if patch["kind"] == "leaf":
+            assert all((visual.get("name") or "").startswith("leaf_") for visual in visuals)
+            assert all(visual.find("geometry/polyline") is not None for visual in visuals)
+        elif patch["kind"] == "dust":
+            assert all((visual.get("name") or "").startswith("dust_mottle_") for visual in visuals)
+            assert all(visual.find("geometry/box") is not None for visual in visuals)
+        else:
+            assert all((visual.get("name") or "").startswith("puddle_lobe_") for visual in visuals)
+            assert all(visual.find("geometry/cylinder") is not None for visual in visuals)
+        assert model.findall("link/collision") == []
+
+    contract = truth["dirt_cell_contract"]
+    assert contract["total_cell_count"] == expected_total
+    assert contract["cell_area_m2"] * expected_total == pytest.approx(
+        truth["dirt_union_area_m2"], abs=1e-9
+    )
+    assert contract["product_ros_truth_exported"] is False
+    assert public["dirt_contract"]["visual_representation"] == "deterministic_procedural_realistic_v2"
+    assert public["dirt_contract"]["visual_assets_redistributable"] is True
+
+
 def test_nonbaseline_world_uses_derived_dimensions_for_ground_geofence_and_start():
     files = generate_episode(load_config(CONFIG), "formal", "train", 1, 9, include_proxy=True)
     manifest = json.loads(files["public/episode_manifest.json"])
@@ -281,6 +421,12 @@ def test_nonbaseline_world_uses_derived_dimensions_for_ground_geofence_and_start
     ]
     start = manifest["vehicle_start_pose_map"]
     assert start == {"x_m": -field["width_m"] / 2.0 + 2.0, "y_m": 0.0, "yaw_rad": 0.0}
+    assert manifest["vehicle_start_pose_source_world"] == start
+    assert manifest["vehicle_start_pose_localization_map"] == {
+        "x_m": 0.0,
+        "y_m": 0.0,
+        "yaw_rad": 0.0,
+    }
     root = ET.fromstring(files["public/world.sdf"])
     plane_size = root.findtext(".//model[@name='ground_plane']/link/visual/geometry/plane/size")
     assert tuple(float(value) for value in plane_size.split()) == pytest.approx(

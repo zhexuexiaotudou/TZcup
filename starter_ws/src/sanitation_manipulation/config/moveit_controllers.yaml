@@ -5,9 +5,15 @@ moveit_simple_controller_manager:
     type: FollowJointTrajectory
     action_ns: follow_joint_trajectory
     default: true
-    joints: [arm_base_joint, arm_shoulder_joint, arm_elbow_joint, arm_wrist_joint]
+    joints:
+      - shoulder_pan_joint
+      - shoulder_lift_joint
+      - elbow_joint
+      - wrist_1_joint
+      - wrist_2_joint
+      - wrist_3_joint
   gripper_controller:
-    type: GripperCommand
-    action_ns: gripper_cmd
+    type: FollowJointTrajectory
+    action_ns: follow_joint_trajectory
     default: true
-    joints: [left_finger_joint, right_finger_joint]
+    joints: [robotiq_85_left_knuckle_joint]

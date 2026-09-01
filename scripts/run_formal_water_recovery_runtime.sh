@@ -1,11 +1,16 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-source /opt/ros/jazzy/setup.bash
-
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-runtime_ws="${FORMAL_VEHICLE_RUNTIME_WS:-${repo_root}/.water_recovery_build}"
+source "${repo_root}/scripts/run_formal_runtime_isolation.sh"
+runtime_ws="${FORMAL_VEHICLE_RUNTIME_WS:-${repo_root}/.work/final_frozen_runtime/install}"
+runtime_closure_manifest="${FORMAL_FINAL_RUNTIME_CLOSURE_MANIFEST:-$(dirname "${runtime_ws}")/final_runtime_closure_manifest.json}"
 output_dir="${FORMAL_WATER_OUTPUT_DIR:-${repo_root}/artifacts/formal_water_recovery}"
+formal_output="${FORMAL_WATER_FINAL_ARTIFACT:-${repo_root}/artifacts/formal_water_recovery_acceptance.json}"
+runtime_binding="${FORMAL_WATER_RUNTIME_BINDING:-${formal_output}.runtime_binding.json}"
+session="${FORMAL_ACCEPTANCE_SESSION:-${repo_root}/artifacts/formal_final_acceptance_session.json}"
+snapshot="${FORMAL_VEHICLE_SNAPSHOT_MANIFEST:-${repo_root}/reports/engineering/formal_vehicle_snapshot_manifest.json}"
+launch_settle_s="${FORMAL_WATER_LAUNCH_SETTLE_S:-0}"
 scenario="all"
 
 while [[ $# -gt 0 ]]; do
@@ -25,46 +30,145 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ "${scenario}" != "normal" && "${scenario}" != "full" && "${scenario}" != "all" ]]; then
-  echo "--scenario must be normal, full, or all" >&2
+if [[ "${scenario}" != "normal" && "${scenario}" != "full" && "${scenario}" != "diagnostic" && "${scenario}" != "all" ]]; then
+  echo "--scenario must be normal, full, diagnostic, or all" >&2
   exit 2
 fi
-if [[ ! -f "${runtime_ws}/install/setup.bash" ]]; then
-  echo "Missing built ROS workspace: ${runtime_ws}/install/setup.bash" >&2
+
+# An all-scenarios invocation is the only mode that may publish the canonical
+# water-recovery acceptance.  Retire any earlier canonical result before ROS
+# setup or any other preflight so a failed fresh attempt can never leave an
+# older PASS looking current.  The raw scenario directory remains immutable
+# evidence and is still rejected below rather than overwritten.
+if [[ "${scenario}" == "all" ]]; then
+  for retained in "${formal_output}" "${runtime_binding}"; do
+    if [[ -e "${retained}" || -L "${retained}" ]]; then
+      superseded="${retained}.superseded.$(date -u +%Y%m%dT%H%M%SZ).$$"
+      [[ ! -e "${superseded}" && ! -L "${superseded}" ]] || {
+        echo "Refusing to overwrite retained superseded water-recovery evidence: ${superseded}" >&2
+        exit 2
+      }
+      mv -- "${retained}" "${superseded}"
+    fi
+  done
+fi
+
+# Treat the final report and its frozen-runtime binding as one evidence unit.
+# If targeted teardown fails, leaving the binding at its canonical path would
+# make it look as though a later report could still be attached to this
+# contaminated Gazebo session.  The other final-runtime runners quarantine
+# both files, so retain that fail-closed contract here as well.
+formal_runtime_register_evidence_paths "${formal_output}" "${runtime_binding}"
+if [[ -f "${runtime_ws}/install/setup.bash" ]]; then
+  runtime_setup="${runtime_ws}/install/setup.bash"
+elif [[ -f "${runtime_ws}/setup.bash" ]]; then
+  runtime_setup="${runtime_ws}/setup.bash"
+else
+  echo "Missing built ROS workspace setup under: ${runtime_ws}" >&2
   exit 2
 fi
-source "${runtime_ws}/install/setup.bash"
+
+if [[ "${scenario}" == "all" ]]; then
+  [[ -f "${runtime_closure_manifest}" ]] || {
+    echo "Missing frozen final runtime closure: ${runtime_closure_manifest}" >&2
+    exit 2
+  }
+  [[ -f "${session}" ]] || {
+    echo "Missing running formal acceptance session: ${session}" >&2
+    exit 2
+  }
+  python3 "${repo_root}/scripts/generate_formal_vehicle_snapshot.py" \
+    --check --output "${snapshot}"
+  python3 "${repo_root}/scripts/formal_runtime_gate_binding.py" \
+    --repository-root "${repo_root}" --install-root "${runtime_ws}" \
+    --closure-manifest "${runtime_closure_manifest}" --session "${session}" \
+    --snapshot "${snapshot}" --output "${runtime_binding}"
+fi
+
+source /opt/ros/jazzy/setup.bash
+source "${runtime_setup}"
 set -u
 
-export ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-176}"
-mkdir -p "${output_dir}"
+vehicle_xacro="$(ros2 pkg prefix --share sanitation_vehicle_description)/urdf/formal_competition_vehicle.urdf.xacro"
+
+export ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-96}"
+formal_runtime_configure "${ROS_DOMAIN_ID}"
+if [[ "${scenario}" == "all" && ( -e "${output_dir}" || -e "${formal_output}" ) ]]; then
+  echo "Refusing stale water-recovery evidence; use fresh raw and formal output paths" >&2
+  exit 2
+fi
+mkdir -p "$(dirname "${output_dir}")" "$(dirname "${formal_output}")"
+[[ -d "${output_dir}" ]] || mkdir "${output_dir}"
 
 launch_pid=""
+active_partition=""
 cleanup_launch() {
+  local cleanup_status=0
   if [[ -n "${launch_pid}" ]]; then
-    kill -INT -- "-${launch_pid}" 2>/dev/null || true
-    sleep 1
-    kill -TERM -- "-${launch_pid}" 2>/dev/null || true
-    wait "${launch_pid}" 2>/dev/null || true
+    formal_runtime_kill_group "${launch_pid}" || cleanup_status=1
     launch_pid=""
   fi
+  formal_runtime_stop_memory_watchdog || cleanup_status=1
+  if [[ -n "${active_partition}" ]]; then
+    formal_runtime_cleanup_partition "${active_partition}" || cleanup_status=1
+    active_partition=""
+  fi
+  return "${cleanup_status}"
 }
-trap cleanup_launch EXIT INT TERM
+formal_runtime_install_traps cleanup_launch
 
 run_scenario() {
   local selected="$1"
+  local expected_stable_marker_count=1
+  for stale in "${output_dir}/water_${selected}.json" "${output_dir}/water_${selected}_launch.log" "${output_dir}/water_${selected}_launch_audit.json" "${output_dir}/water_${selected}_probe.log" "${output_dir}/water_${selected}_safety_preflight.json" "${output_dir}/water_${selected}_safety_preflight.log" "${output_dir}/water_${selected}_side_brush_sdf_surface.json" "${output_dir}/water_${selected}_side_brush_sdf_surface.log" "${output_dir}/water_${selected}_preoperational_readiness.json" "${output_dir}/water_${selected}_preoperational_readiness.log" "${output_dir}/water_${selected}_memory_watchdog.json" "${output_dir}/water_${selected}_memory_watchdog.log" "${output_dir}/water_${selected}_windows_memory_preflight.json" "${output_dir}/water_${selected}_windows_memory_preflight.log"; do
+    [[ ! -e "${stale}" ]] || { echo "Refusing stale scenario evidence: ${stale}" >&2; return 2; }
+  done
   export GZ_PARTITION="tzcup_formal_water_${selected}_${ROS_DOMAIN_ID}_$$"
-  setsid ros2 launch sanitation_vehicle_description formal_vehicle_sim.launch.py \
-    gui:=false bodywork_visible:=true start_controllers:=true \
-    water_evaluation_interfaces:=true \
+  active_partition="${GZ_PARTITION}"
+  python3 "${repo_root}/scripts/validate_formal_side_brush_sdf_surface.py" \
+    --vehicle-xacro "${vehicle_xacro}" \
+    --output "${output_dir}/water_${selected}_side_brush_sdf_surface.json" \
+    >"${output_dir}/water_${selected}_side_brush_sdf_surface.log" 2>&1
+  formal_runtime_memory_preflight \
+    "${output_dir}/water_${selected}_windows_memory_preflight"
+  "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_vehicle_description formal_vehicle_sim.launch.py \
+    gui:=false bodywork_visible:=true high_bandwidth_sensor_runtime:=false \
+    start_controllers:=true \
+    enable_safety_manager:=true simulation_initial_estop_active:=true \
+    start_simulation_safety_inputs:=true start_power_system_simulators:=true \
+    water_evaluation_interfaces:=true squeegee_evaluation_interfaces:=true \
     >"${output_dir}/water_${selected}_launch.log" 2>&1 &
   launch_pid=$!
+  formal_runtime_start_memory_watchdog "${launch_pid}" \
+    "${output_dir}/water_${selected}_memory_watchdog"
 
+  sleep "${launch_settle_s}"
+  python3 "${repo_root}/scripts/check_formal_water_preoperational_readiness.py" \
+    --output "${output_dir}/water_${selected}_preoperational_readiness.json" \
+    >"${output_dir}/water_${selected}_preoperational_readiness.log" 2>&1
+  python3 "${repo_root}/scripts/collect_formal_water_safety_preflight.py" \
+    --stable-duration-s 5.0 \
+    --output "${output_dir}/water_${selected}_safety_preflight.json" \
+    >"${output_dir}/water_${selected}_safety_preflight.log" 2>&1
+  validator_args=(
+    --scenario "${selected}"
+    --output "${output_dir}/water_${selected}.json"
+  )
+  if [[ "${scenario}" == "all" ]]; then
+    validator_args+=(
+      --snapshot "${snapshot}"
+      --session "${session}"
+      --runtime-binding "${runtime_binding}"
+    )
+  fi
   python3 "${repo_root}/scripts/validate_formal_water_recovery_runtime.py" \
-    --scenario "${selected}" \
-    --output "${output_dir}/water_${selected}.json" \
+    "${validator_args[@]}" \
     >"${output_dir}/water_${selected}_probe.log" 2>&1
   cleanup_launch
+  python3 "${repo_root}/scripts/audit_formal_water_launch_log.py" \
+    --log "${output_dir}/water_${selected}_launch.log" \
+    --expected-stable-marker-count "${expected_stable_marker_count}" \
+    --output "${output_dir}/water_${selected}_launch_audit.json"
 }
 
 if [[ "${scenario}" == "normal" || "${scenario}" == "all" ]]; then
@@ -73,9 +177,33 @@ fi
 if [[ "${scenario}" == "full" || "${scenario}" == "all" ]]; then
   run_scenario full
 fi
+if [[ "${scenario}" == "diagnostic" ]]; then
+  run_scenario diagnostic
+fi
 if [[ "${scenario}" == "all" ]]; then
+  typed_diag="${FORMAL_WATER_TYPED_DIAG_JSON:?set FORMAL_WATER_TYPED_DIAG_JSON}"
+  typed_trace="${FORMAL_WATER_TYPED_RAW_TRACE:?set FORMAL_WATER_TYPED_RAW_TRACE}"
+  typed_runner="${FORMAL_WATER_TYPED_RUNNER:?set FORMAL_WATER_TYPED_RUNNER}"
+  typed_collector="${FORMAL_WATER_TYPED_COLLECTOR:?set FORMAL_WATER_TYPED_COLLECTOR}"
+  critical_manifest="${FORMAL_WATER_CRITICAL_SOURCE_MANIFEST:?set FORMAL_WATER_CRITICAL_SOURCE_MANIFEST}"
+  typed_source_digest="${FORMAL_WATER_TYPED_SUBCLOSURE_SHA256:?set FORMAL_WATER_TYPED_SUBCLOSURE_SHA256}"
+  combined="${output_dir}/water_recovery_acceptance.json"
   python3 "${repo_root}/scripts/finalize_formal_water_recovery_acceptance.py" \
     --normal "${output_dir}/water_normal.json" \
     --full "${output_dir}/water_full.json" \
-    --output "${output_dir}/water_recovery_acceptance.json"
+    --normal-side-brush-surface "${output_dir}/water_normal_side_brush_sdf_surface.json" \
+    --full-side-brush-surface "${output_dir}/water_full_side_brush_sdf_surface.json" \
+    --typed-diag "${typed_diag}" \
+    --typed-raw-trace "${typed_trace}" \
+    --typed-runner "${typed_runner}" \
+    --typed-collector "${typed_collector}" \
+    --critical-source-manifest "${critical_manifest}" \
+    --typed-cleaning-telemetry-source-sha256 "${typed_source_digest}" \
+    --runtime-binding "${runtime_binding}" \
+    --output "${combined}"
+  pending="${formal_output}.pending.$$"
+  [[ ! -e "${pending}" ]] || { echo "Refusing stale publish path: ${pending}" >&2; exit 2; }
+  cp -- "${combined}" "${pending}"
+  mv -- "${pending}" "${formal_output}"
+  echo "Published formal water-recovery acceptance: ${formal_output}"
 fi

@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "report_id": "tzcup_native_cadquery_serial_export_contract_audit_v1",
+  "status": "STATIC_SERIAL_EXPORT_CONTRACT_VALID_NATIVE_EXPORT_BLOCKED",
+  "contract_structurally_valid": true,
+  "source_batch_count": 8,
+  "provenance_only_batch_count": 4,
+  "component_addressable_batch_count": 4,
+  "component_addressable_count": 105,
+  "component_ids_unique": true,
+  "pending_batch_contract_count": 8,
+  "source_digest_bindings_valid": true,
+  "minimum_free_physical_memory_mib": 4096,
+  "execution": "strictly_serial",
+  "formal_export_ready": false,
+  "native_cad_delivery_accepted": false,
+  "cadquery_imported": false,
+  "source_modules_loaded": false,
+  "batches": [
+    {
+      "batch_id": "first",
+      "role": "provenance_only",
+      "component_count": 0,
+      "static_integrity_valid": true,
+      "errors": []
+    },
+    {
+      "batch_id": "second",
+      "role": "provenance_only",
+      "component_count": 0,
+      "static_integrity_valid": true,
+      "errors": []
+    },
+    {
+      "batch_id": "third",
+      "role": "provenance_only",
+      "component_count": 0,
+      "static_integrity_valid": true,
+      "errors": []
+    },
+    {
+      "batch_id": "fourth",
+      "role": "provenance_only",
+      "component_count": 0,
+      "static_integrity_valid": true,
+      "errors": []
+    },
+    {
+      "batch_id": "fifth_bodywork_per_part",
+      "role": "component_addressable",
+      "component_count": 47,
+      "static_integrity_valid": true,
+      "errors": []
+    },
+    {
+      "batch_id": "sixth_cleaning_per_part",
+      "role": "component_addressable",
+      "component_count": 23,
+      "static_integrity_valid": true,
+      "errors": []
+    },
+    {
+      "batch_id": "seventh_storage_service_per_part",
+      "role": "component_addressable",
+      "component_count": 34,
+      "static_integrity_valid": true,
+      "errors": []
+    },
+    {
+      "batch_id": "eighth_power_distribution_single_part",
+      "role": "component_addressable",
+      "component_count": 1,
+      "static_integrity_valid": true,
+      "errors": []
+    }
+  ],
+  "errors": [],
+  "blockers": [
+    "SERIAL_EXPORT_CONTRACT_PENDING_RELEASE",
+    "SOURCE_BATCH_CONTRACTS_PENDING_RELEASE",
+    "CADQUERY_ROUNDTRIP_AND_MEMORY_PREFLIGHT_NOT_EXECUTED"
+  ]
+}

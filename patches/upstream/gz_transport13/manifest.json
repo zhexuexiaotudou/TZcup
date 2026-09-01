@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "component": "gz-transport13",
+  "upstream_repository": "https://github.com/gazebosim/gz-transport.git",
+  "upstream_tag": "gz-transport13_13.5.0",
+  "upstream_commit": "7232d0b163b08f79dd390ad9913d6ea72efaf209",
+  "upstream_tree": "73e9468888768b343bb13fced4cc4a42869012ad",
+  "upstream_node_shared_sha256": "c9172eb3b5f5478a7e3d96af2fd6cf8ca086ac699216d786d63cef6e593131c9",
+  "patched_node_shared_sha256": "bcd6b5c76d6cd95319c02cb5eac89ff4fc4299523ec5fef930e1ca7adfcb3061",
+  "patch": "0001-publish-retry-current-frame-on-eintr.patch",
+  "patch_sha256": "35faeeb291981aa7cd93f065ff8c736b96c04ad54dd01aa51b7821bef52075d3",
+  "eintr_retry_limit": 3,
+  "license": "Apache-2.0"
+}

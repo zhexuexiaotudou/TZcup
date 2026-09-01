@@ -4,6 +4,8 @@ coverage_server:
     action_server_result_timeout: 30.0
     coordinates_in_cartesian_frame: true
     robot_width: 0.72
+    # Legacy/demo default only.  Formal A300 launch materializes the 1.32 m
+    # declared effective width from formal_motion_cleaning_profile.yaml.
     operation_width: 0.65
     min_turning_radius: 0.40
     linear_curv_change: 200.0

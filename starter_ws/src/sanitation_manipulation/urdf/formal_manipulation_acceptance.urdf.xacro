@@ -47,18 +47,16 @@
   </gazebo>
 
   <gazebo>
-    <plugin filename="gz-sim-detachable-joint-system"
-            name="gz::sim::systems::DetachableJoint">
-      <!-- URDF-to-SDF fixed-joint reduction merges the Robotiq base into the
-           final UR wrist body.  The wrist body is therefore the stable
-           physics parent, while contact is still measured at both fingertip
-           links before the attachment command is permitted. -->
+    <!-- Simulator collision identities stop here.  Only an identity-free
+         dual-contact Boolean is bridged to the product grasp executor. -->
+    <plugin filename="libGripperContactGateSystem.so"
+            name="sanitation_gazebo_control::GripperContactGateSystem">
+      <output_topic>/manipulation/gripper/dual_contact</output_topic>
       <parent_link>ur5e_wrist_3_link</parent_link>
-      <child_model>material_cube</child_model>
-      <child_link>cube_link</child_link>
-      <detach_topic>/manipulation/grasp/detach</detach_topic>
       <attach_topic>/manipulation/grasp/attach</attach_topic>
-      <output_topic>/manipulation/grasp/state</output_topic>
+      <detach_topic>/manipulation/grasp/detach</detach_topic>
+      <state_topic>/manipulation/grasp/state</state_topic>
+      <maximum_contact_age_sec>0.15</maximum_contact_age_sec>
     </plugin>
   </gazebo>
 </robot>

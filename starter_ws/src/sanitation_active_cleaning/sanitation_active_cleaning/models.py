@@ -75,12 +75,15 @@ class TaskLayout:
     """Evaluation-harness task truth, deliberately absent from observations."""
 
     ground_dirt_regions: tuple[tuple[float, float, float], ...] = ()
+    ground_dirt_polygons: tuple[Polygon2D, ...] = ()
     discrete_targets: tuple[tuple[str, float, float], ...] = ()
     pedestrians: tuple[tuple[float, float, float], ...] = ()
 
     def validate(self) -> None:
         if any(radius <= 0.0 for _, _, radius in self.ground_dirt_regions):
             raise ValueError("explicit ground dirt radii must be positive")
+        if any(len(polygon) < 3 for polygon in self.ground_dirt_polygons):
+            raise ValueError("explicit ground dirt polygons need at least three points")
         identifiers = [target_id for target_id, _, _ in self.discrete_targets]
         if any(not target_id for target_id in identifiers) or len(set(identifiers)) != len(identifiers):
             raise ValueError("explicit target identifiers must be non-empty and unique")

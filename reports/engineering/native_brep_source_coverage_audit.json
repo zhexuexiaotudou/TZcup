@@ -1,0 +1,3588 @@
+{
+  "report_id": "tzcup_native_brep_source_coverage_audit_v1",
+  "audit_mode": "static_json_python_crosswalk_only",
+  "execution_prohibited": [
+    "CadQuery",
+    "FreeCAD",
+    "WSL",
+    "Gazebo",
+    "Docker",
+    "STEP/FCStd export",
+    "mesh conversion"
+  ],
+  "manifest_path": "config/high_fidelity_vehicle/native_brep_reconstruction_manifest.json",
+  "manifest_status_preserved": "pending_native_brep_reconstruction",
+  "project_part_count": 105,
+  "supplier_excluded_count": 21,
+  "batches": [
+    {
+      "id": "first",
+      "contract_path": "config/high_fidelity_vehicle/native_brep_first_batch_contract.json",
+      "source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_first_batch.py",
+      "source_manifest_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_first_batch_source_manifest.json",
+      "contract_status": "design_input_pending_native_export",
+      "contract_entry_kind": "work_package_or_named_part",
+      "work_package_ids": [
+        "arm_pedestal_adapter",
+        "sensor_tower",
+        "cleaning_head_brackets",
+        "storage_frame"
+      ],
+      "per_part_ids": [],
+      "all_named_builders_present": true,
+      "source_integrity": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_first_batch.py",
+          "matches": true
+        },
+        {
+          "path": "config/high_fidelity_vehicle/native_brep_first_batch_contract.json",
+          "matches": true
+        }
+      ],
+      "source_integrity_passed": true,
+      "explicit_source_meshes": [
+        "generated/platform/arm_mount_adapter.stl",
+        "generated/platform/sensor_mast.stl",
+        "project/cleaning/cleaning_lift_carriage.stl",
+        "project/cleaning/cleaning_mount_frame.stl",
+        "project/storage/storage_mount_tray.stl"
+      ]
+    },
+    {
+      "id": "second",
+      "contract_path": "config/high_fidelity_vehicle/native_brep_cleaning_recovery_second_batch_contract.json",
+      "source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_recovery_second_batch.py",
+      "source_manifest_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_recovery_second_batch_source_manifest.json",
+      "contract_status": "design_input_pending_native_export",
+      "contract_entry_kind": "work_package_or_named_part",
+      "work_package_ids": [
+        "side_brush_drive",
+        "central_roller",
+        "squeegee_backing",
+        "suction_nozzle",
+        "quick_coupling",
+        "dry_deposit_gate_chute",
+        "wastewater_tank_pan_baffles"
+      ],
+      "per_part_ids": [],
+      "all_named_builders_present": true,
+      "source_integrity": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_recovery_second_batch.py",
+          "matches": true
+        },
+        {
+          "path": "config/high_fidelity_vehicle/native_brep_cleaning_recovery_second_batch_contract.json",
+          "matches": true
+        }
+      ],
+      "source_integrity_passed": true,
+      "explicit_source_meshes": [
+        "project/cleaning/central_roller.stl",
+        "project/cleaning/quick_coupling.stl",
+        "project/cleaning/side_brush_disk.stl",
+        "project/cleaning/side_brush_rotor_shaft.stl",
+        "project/cleaning/squeegee_backing.stl",
+        "project/cleaning/suction_nozzle.stl",
+        "project/storage/dry_deposit_chute.stl",
+        "project/storage/dry_deposit_gate.stl",
+        "project/storage/wastewater_baffle.stl",
+        "project/storage/wastewater_inlet_coupling.stl",
+        "project/storage/wastewater_tank_floor.stl"
+      ]
+    },
+    {
+      "id": "third",
+      "contract_path": "config/high_fidelity_vehicle/native_brep_storage_service_third_batch_contract.json",
+      "source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_third_batch.py",
+      "source_manifest_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_third_batch_source_manifest.json",
+      "contract_status": "design_input_pending_native_export",
+      "contract_entry_kind": "work_package_or_named_part",
+      "work_package_ids": [
+        "dry_bin_shell_lid_ribs",
+        "wastewater_lid_vent_inlet",
+        "dry_bin_latch_and_toggle_triplet",
+        "level_sensor_and_probe_mounts",
+        "wastewater_drain_service_train",
+        "charge_port_interface"
+      ],
+      "per_part_ids": [],
+      "all_named_builders_present": true,
+      "source_integrity": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_third_batch.py",
+          "matches": true
+        },
+        {
+          "path": "config/high_fidelity_vehicle/native_brep_storage_service_third_batch_contract.json",
+          "matches": true
+        }
+      ],
+      "source_integrity_passed": true,
+      "explicit_source_meshes": []
+    },
+    {
+      "id": "fourth",
+      "contract_path": "config/high_fidelity_vehicle/native_brep_body_sensor_power_fourth_batch_contract.json",
+      "source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_body_sensor_power_fourth_batch.py",
+      "source_manifest_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_body_sensor_power_fourth_batch_source_manifest.json",
+      "contract_status": "design_input_pending_native_export",
+      "contract_entry_kind": "work_package_or_named_part",
+      "work_package_ids": [
+        "bodywork_access_set",
+        "sensor_mast_and_installation_brackets",
+        "compute_and_control_cabinet_mounting",
+        "power_distribution_mounting_enclosures"
+      ],
+      "per_part_ids": [],
+      "all_named_builders_present": true,
+      "source_integrity": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_body_sensor_power_fourth_batch.py",
+          "matches": true
+        },
+        {
+          "path": "config/high_fidelity_vehicle/native_brep_body_sensor_power_fourth_batch_contract.json",
+          "matches": true
+        }
+      ],
+      "source_integrity_passed": true,
+      "explicit_source_meshes": []
+    },
+    {
+      "id": "fifth_bodywork_per_part",
+      "contract_path": "config/high_fidelity_vehicle/native_brep_bodywork_fifth_batch_contract.json",
+      "source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_bodywork_fifth_batch.py",
+      "source_manifest_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_bodywork_fifth_batch_source_manifest.json",
+      "contract_status": "design_input_pending_native_export",
+      "contract_entry_kind": "per_part",
+      "work_package_ids": [],
+      "per_part_ids": [
+        "bodywork_arm_bay_floor",
+        "bodywork_arm_bay_front_sill",
+        "bodywork_arm_bay_inner_sill",
+        "bodywork_arm_bay_outer_sill",
+        "bodywork_arm_bay_rear_sill",
+        "bodywork_arm_turret_shoulder",
+        "bodywork_belt_line_left",
+        "bodywork_belt_line_right",
+        "bodywork_charge_port_trim",
+        "bodywork_compute_service_door",
+        "bodywork_corner_beacons",
+        "bodywork_drain_coupling_trim",
+        "bodywork_emergency_stop_trim",
+        "bodywork_front_brand_badge",
+        "bodywork_front_bumper",
+        "bodywork_front_center_nose",
+        "bodywork_front_green_apron",
+        "bodywork_front_left_power_cowl",
+        "bodywork_front_right_compute_cowl",
+        "bodywork_front_sensor_band",
+        "bodywork_front_work_light_left",
+        "bodywork_front_work_light_right",
+        "bodywork_left_side_brush_motor_guard",
+        "bodywork_lower_tub_left",
+        "bodywork_lower_tub_right",
+        "bodywork_power_service_door",
+        "bodywork_rear_bin_outer_shell",
+        "bodywork_rear_bumper",
+        "bodywork_rear_dry_service_door",
+        "bodywork_rear_sensor_band",
+        "bodywork_rear_squeegee_valance",
+        "bodywork_rear_tail_light_left",
+        "bodywork_rear_tail_light_right",
+        "bodywork_right_side_brush_motor_guard",
+        "bodywork_sanitation_green_accent",
+        "bodywork_sensor_pylon_fairing",
+        "bodywork_sensor_pylon_service_hatch",
+        "bodywork_service_door_hinge_barrel",
+        "bodywork_service_door_rotary_latch",
+        "bodywork_side_skirt_left",
+        "bodywork_side_skirt_right",
+        "bodywork_tow_eyes",
+        "bodywork_wet_service_door",
+        "bodywork_wheel_arch_front_left",
+        "bodywork_wheel_arch_front_right",
+        "bodywork_wheel_arch_rear_left",
+        "bodywork_wheel_arch_rear_right"
+      ],
+      "all_named_builders_present": true,
+      "source_integrity": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_bodywork_fifth_batch.py",
+          "matches": true
+        },
+        {
+          "path": "config/high_fidelity_vehicle/native_brep_bodywork_fifth_batch_contract.json",
+          "matches": true
+        }
+      ],
+      "source_integrity_passed": true,
+      "explicit_source_meshes": [
+        "project/bodywork/arm_bay_floor.stl",
+        "project/bodywork/arm_bay_front_sill.stl",
+        "project/bodywork/arm_bay_inner_sill.stl",
+        "project/bodywork/arm_bay_outer_sill.stl",
+        "project/bodywork/arm_bay_rear_sill.stl",
+        "project/bodywork/arm_turret_shoulder.stl",
+        "project/bodywork/belt_line_left.stl",
+        "project/bodywork/belt_line_right.stl",
+        "project/bodywork/charge_port.stl",
+        "project/bodywork/compute_service_door.stl",
+        "project/bodywork/corner_beacons.stl",
+        "project/bodywork/drain_coupling.stl",
+        "project/bodywork/emergency_stop.stl",
+        "project/bodywork/front_brand_badge.stl",
+        "project/bodywork/front_bumper.stl",
+        "project/bodywork/front_center_nose.stl",
+        "project/bodywork/front_green_apron.stl",
+        "project/bodywork/front_left_power_cowl.stl",
+        "project/bodywork/front_right_compute_cowl.stl",
+        "project/bodywork/front_sensor_band.stl",
+        "project/bodywork/front_work_light_left.stl",
+        "project/bodywork/front_work_light_right.stl",
+        "project/bodywork/left_side_brush_motor_guard.stl",
+        "project/bodywork/lower_tub_left.stl",
+        "project/bodywork/lower_tub_right.stl",
+        "project/bodywork/power_service_door.stl",
+        "project/bodywork/rear_bin_outer_shell.stl",
+        "project/bodywork/rear_bumper.stl",
+        "project/bodywork/rear_dry_service_door.stl",
+        "project/bodywork/rear_sensor_band.stl",
+        "project/bodywork/rear_squeegee_valance.stl",
+        "project/bodywork/rear_tail_light_left.stl",
+        "project/bodywork/rear_tail_light_right.stl",
+        "project/bodywork/right_side_brush_motor_guard.stl",
+        "project/bodywork/sanitation_green_accent.stl",
+        "project/bodywork/sensor_pylon_fairing.stl",
+        "project/bodywork/sensor_pylon_service_hatch.stl",
+        "project/bodywork/service_door_hinge_barrel.stl",
+        "project/bodywork/service_door_rotary_latch.stl",
+        "project/bodywork/side_skirt_left.stl",
+        "project/bodywork/side_skirt_right.stl",
+        "project/bodywork/tow_eyes.stl",
+        "project/bodywork/wet_service_door.stl",
+        "project/bodywork/wheel_arch_front_left.stl",
+        "project/bodywork/wheel_arch_front_right.stl",
+        "project/bodywork/wheel_arch_rear_left.stl",
+        "project/bodywork/wheel_arch_rear_right.stl"
+      ]
+    },
+    {
+      "id": "sixth_cleaning_per_part",
+      "contract_path": "config/high_fidelity_vehicle/native_brep_cleaning_mechanisms_sixth_batch_contract.json",
+      "source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_mechanisms_sixth_batch.py",
+      "source_manifest_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_mechanisms_sixth_batch_source_manifest.json",
+      "contract_status": "design_input_pending_native_export",
+      "contract_entry_kind": "work_package_or_named_part",
+      "work_package_ids": [
+        "cleaning_central_roller",
+        "cleaning_central_roller_bearing",
+        "cleaning_central_roller_guard",
+        "cleaning_cleaning_lift_carriage",
+        "cleaning_cleaning_mount_frame",
+        "cleaning_inline_flow_sensor_mount",
+        "cleaning_lift_guide_column",
+        "cleaning_lift_linkage",
+        "cleaning_pump_isolator_mount",
+        "cleaning_quick_coupling",
+        "cleaning_recovery_hose_200",
+        "cleaning_recovery_hose_220",
+        "cleaning_recovery_hose_250",
+        "cleaning_side_brush_bristles",
+        "cleaning_side_brush_disk",
+        "cleaning_side_brush_rotor_shaft",
+        "cleaning_squeegee_backing",
+        "cleaning_squeegee_blades",
+        "cleaning_squeegee_float_carrier",
+        "cleaning_squeegee_springs",
+        "cleaning_strainer_filter_bowl",
+        "cleaning_strainer_filter_head",
+        "cleaning_suction_nozzle"
+      ],
+      "per_part_ids": [],
+      "all_named_builders_present": true,
+      "source_integrity": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_mechanisms_sixth_batch.py",
+          "matches": true
+        },
+        {
+          "path": "config/high_fidelity_vehicle/native_brep_cleaning_mechanisms_sixth_batch_contract.json",
+          "matches": true
+        }
+      ],
+      "source_integrity_passed": true,
+      "explicit_source_meshes": [
+        "project/cleaning/central_roller.stl",
+        "project/cleaning/central_roller_bearing.stl",
+        "project/cleaning/central_roller_guard.stl",
+        "project/cleaning/cleaning_lift_carriage.stl",
+        "project/cleaning/cleaning_mount_frame.stl",
+        "project/cleaning/inline_flow_sensor.stl",
+        "project/cleaning/lift_guide_column.stl",
+        "project/cleaning/lift_linkage.stl",
+        "project/cleaning/pump_isolator_mount.stl",
+        "project/cleaning/quick_coupling.stl",
+        "project/cleaning/recovery_hose_200.stl",
+        "project/cleaning/recovery_hose_220.stl",
+        "project/cleaning/recovery_hose_250.stl",
+        "project/cleaning/side_brush_bristles.stl",
+        "project/cleaning/side_brush_disk.stl",
+        "project/cleaning/side_brush_rotor_shaft.stl",
+        "project/cleaning/squeegee_backing.stl",
+        "project/cleaning/squeegee_blades.stl",
+        "project/cleaning/squeegee_float_carrier.stl",
+        "project/cleaning/squeegee_springs.stl",
+        "project/cleaning/strainer_filter_bowl.stl",
+        "project/cleaning/strainer_filter_head.stl",
+        "project/cleaning/suction_nozzle.stl"
+      ]
+    },
+    {
+      "id": "seventh_storage_service_per_part",
+      "contract_path": "config/high_fidelity_vehicle/native_brep_storage_service_seventh_batch_contract.json",
+      "source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_seventh_batch.py",
+      "source_manifest_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_seventh_batch_source_manifest.json",
+      "contract_status": "design_input_pending_native_export",
+      "contract_entry_kind": "per_part_mapping",
+      "work_package_ids": [],
+      "per_part_ids": [
+        "storage_storage_mount_tray",
+        "storage_dry_bin_floor",
+        "storage_dry_bin_front_panel",
+        "storage_dry_bin_latch",
+        "storage_dry_bin_level_sensor_mount",
+        "storage_dry_bin_lid",
+        "storage_dry_bin_rear_panel",
+        "storage_dry_bin_side_panel",
+        "storage_dry_deposit_chute",
+        "storage_dry_deposit_gate",
+        "storage_dry_deposit_hopper",
+        "storage_dry_wet_partition",
+        "storage_level_probe",
+        "storage_toggle_latch_base",
+        "storage_toggle_latch_handle",
+        "storage_toggle_latch_keeper",
+        "storage_wastewater_baffle",
+        "storage_wastewater_front_panel",
+        "storage_wastewater_inlet_coupling",
+        "storage_wastewater_lid",
+        "storage_wastewater_rear_panel",
+        "storage_wastewater_side_panel",
+        "storage_wastewater_tank_floor",
+        "storage_wastewater_vent_filter",
+        "charge_connector_lock",
+        "charge_port_door",
+        "charge_port_housing",
+        "charge_receptacle",
+        "wastewater_drain_actuator_mount",
+        "wastewater_drain_coupling",
+        "wastewater_drain_pipe",
+        "wastewater_drain_service_cap",
+        "wastewater_drain_valve_ball",
+        "wastewater_drain_valve_body"
+      ],
+      "all_named_builders_present": true,
+      "source_integrity": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_seventh_batch.py",
+          "matches": true
+        },
+        {
+          "path": "config/high_fidelity_vehicle/native_brep_storage_service_seventh_batch_contract.json",
+          "matches": true
+        }
+      ],
+      "source_integrity_passed": true,
+      "explicit_source_meshes": [
+        "project/service/charge_connector_lock.stl",
+        "project/service/charge_port_door.stl",
+        "project/service/charge_port_housing.stl",
+        "project/service/charge_receptacle.stl",
+        "project/service/wastewater_drain_actuator.stl",
+        "project/service/wastewater_drain_coupling.stl",
+        "project/service/wastewater_drain_pipe.stl",
+        "project/service/wastewater_drain_service_cap.stl",
+        "project/service/wastewater_drain_valve_ball.stl",
+        "project/service/wastewater_drain_valve_body.stl",
+        "project/storage/dry_bin_floor.stl",
+        "project/storage/dry_bin_front_panel.stl",
+        "project/storage/dry_bin_latch.stl",
+        "project/storage/dry_bin_level_sensor.stl",
+        "project/storage/dry_bin_lid.stl",
+        "project/storage/dry_bin_rear_panel.stl",
+        "project/storage/dry_bin_side_panel.stl",
+        "project/storage/dry_deposit_chute.stl",
+        "project/storage/dry_deposit_gate.stl",
+        "project/storage/dry_deposit_hopper.stl",
+        "project/storage/dry_wet_partition.stl",
+        "project/storage/level_probe.stl",
+        "project/storage/storage_mount_tray.stl",
+        "project/storage/storage_toggle_latch_base.stl",
+        "project/storage/storage_toggle_latch_handle.stl",
+        "project/storage/storage_toggle_latch_keeper.stl",
+        "project/storage/wastewater_baffle.stl",
+        "project/storage/wastewater_front_panel.stl",
+        "project/storage/wastewater_inlet_coupling.stl",
+        "project/storage/wastewater_lid.stl",
+        "project/storage/wastewater_rear_panel.stl",
+        "project/storage/wastewater_side_panel.stl",
+        "project/storage/wastewater_tank_floor.stl",
+        "project/storage/wastewater_vent_filter.stl"
+      ]
+    },
+    {
+      "id": "eighth_power_distribution_single_part",
+      "contract_path": "config/high_fidelity_vehicle/native_brep_power_distribution_eighth_batch_contract.json",
+      "source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_power_distribution_eighth_batch.py",
+      "source_manifest_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_power_distribution_eighth_batch_source_manifest.json",
+      "contract_status": "design_input_pending_native_export",
+      "contract_entry_kind": "single_part",
+      "work_package_ids": [],
+      "per_part_ids": [
+        "power_distribution_box"
+      ],
+      "all_named_builders_present": true,
+      "source_integrity": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_power_distribution_eighth_batch.py",
+          "matches": true
+        },
+        {
+          "path": "config/high_fidelity_vehicle/native_brep_power_distribution_eighth_batch_contract.json",
+          "matches": true
+        }
+      ],
+      "source_integrity_passed": true,
+      "explicit_source_meshes": [
+        "generated/platform/power_distribution_box.stl"
+      ]
+    }
+  ],
+  "rows": [
+    {
+      "manifest_part_id": "bodywork_arm_bay_floor",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/arm_bay_floor.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_arm_bay_front_sill",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/arm_bay_front_sill.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_arm_bay_inner_sill",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/arm_bay_inner_sill.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_arm_bay_outer_sill",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/arm_bay_outer_sill.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_arm_bay_rear_sill",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/arm_bay_rear_sill.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_arm_turret_shoulder",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/arm_turret_shoulder.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_belt_line_left",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/belt_line_left.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_belt_line_right",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/belt_line_right.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_charge_port_trim",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/charge_port.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_compute_service_door",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/compute_service_door.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_corner_beacons",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/corner_beacons.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_drain_coupling_trim",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/drain_coupling.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_emergency_stop_trim",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/emergency_stop.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_front_brand_badge",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/front_brand_badge.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_front_bumper",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/front_bumper.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_front_center_nose",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/front_center_nose.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_front_green_apron",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/front_green_apron.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_front_left_power_cowl",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/front_left_power_cowl.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_front_right_compute_cowl",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/front_right_compute_cowl.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_front_sensor_band",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/front_sensor_band.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_front_work_light_left",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/front_work_light_left.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_front_work_light_right",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/front_work_light_right.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_left_side_brush_motor_guard",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/left_side_brush_motor_guard.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_lower_tub_left",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/lower_tub_left.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_lower_tub_right",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/lower_tub_right.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_power_service_door",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/power_service_door.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_rear_bin_outer_shell",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/rear_bin_outer_shell.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_rear_bumper",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/rear_bumper.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_rear_dry_service_door",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/rear_dry_service_door.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_rear_sensor_band",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/rear_sensor_band.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_rear_squeegee_valance",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/rear_squeegee_valance.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_rear_tail_light_left",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/rear_tail_light_left.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_rear_tail_light_right",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/rear_tail_light_right.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_right_side_brush_motor_guard",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/right_side_brush_motor_guard.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_sanitation_green_accent",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/sanitation_green_accent.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_sensor_pylon_fairing",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/sensor_pylon_fairing.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_sensor_pylon_service_hatch",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/sensor_pylon_service_hatch.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_service_door_hinge_barrel",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/service_door_hinge_barrel.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_service_door_rotary_latch",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/service_door_rotary_latch.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_side_skirt_left",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/side_skirt_left.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_side_skirt_right",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/side_skirt_right.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_tow_eyes",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/tow_eyes.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_wet_service_door",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/wet_service_door.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_wheel_arch_front_left",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/wheel_arch_front_left.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_wheel_arch_front_right",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/wheel_arch_front_right.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_wheel_arch_rear_left",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/wheel_arch_rear_left.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "bodywork_wheel_arch_rear_right",
+      "profile": "bodywork",
+      "source_generator": "product_bodywork",
+      "source_mesh": "project/bodywork/wheel_arch_rear_right.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "fifth_bodywork_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "bodywork_access_set"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_central_roller",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/central_roller.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "second",
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_central_roller_bearing",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/central_roller_bearing.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_central_roller_guard",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/central_roller_guard.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_cleaning_lift_carriage",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/cleaning_lift_carriage.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "first",
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_cleaning_mount_frame",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/cleaning_mount_frame.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "first",
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_inline_flow_sensor_mount",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/inline_flow_sensor.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_lift_guide_column",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/lift_guide_column.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_lift_linkage",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/lift_linkage.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_pump_isolator_mount",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/pump_isolator_mount.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_quick_coupling",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/quick_coupling.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "second",
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_recovery_hose_200",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/recovery_hose_200.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_recovery_hose_220",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/recovery_hose_220.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_recovery_hose_250",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/recovery_hose_250.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_side_brush_bristles",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/side_brush_bristles.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_side_brush_disk",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/side_brush_disk.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "second",
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_side_brush_rotor_shaft",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/side_brush_rotor_shaft.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "second",
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_squeegee_backing",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/squeegee_backing.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "second",
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_squeegee_blades",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/squeegee_blades.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_squeegee_float_carrier",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/squeegee_float_carrier.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_squeegee_springs",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/squeegee_springs.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_strainer_filter_bowl",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/strainer_filter_bowl.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_strainer_filter_head",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/strainer_filter_head.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "cleaning_suction_nozzle",
+      "profile": "cleaning",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/cleaning/suction_nozzle.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "second",
+        "sixth_cleaning_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "cleaning_head_brackets"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "side_brush_drive"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "central_roller"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "squeegee_backing"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "suction_nozzle"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "quick_coupling"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_storage_mount_tray",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/storage_mount_tray.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "first",
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_dry_bin_floor",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/dry_bin_floor.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_dry_bin_front_panel",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/dry_bin_front_panel.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_dry_bin_latch",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/dry_bin_latch.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_dry_bin_level_sensor_mount",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/dry_bin_level_sensor.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_dry_bin_lid",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/dry_bin_lid.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_dry_bin_rear_panel",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/dry_bin_rear_panel.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_dry_bin_side_panel",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/dry_bin_side_panel.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_dry_deposit_chute",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/dry_deposit_chute.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "second",
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_dry_deposit_gate",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/dry_deposit_gate.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "second",
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_dry_deposit_hopper",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/dry_deposit_hopper.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_dry_wet_partition",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/dry_wet_partition.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_level_probe",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/level_probe.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_toggle_latch_base",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/storage_toggle_latch_base.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_toggle_latch_handle",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/storage_toggle_latch_handle.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_toggle_latch_keeper",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/storage_toggle_latch_keeper.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_wastewater_baffle",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/wastewater_baffle.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "second",
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_wastewater_front_panel",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/wastewater_front_panel.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_wastewater_inlet_coupling",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/wastewater_inlet_coupling.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "second",
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_wastewater_lid",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/wastewater_lid.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_wastewater_rear_panel",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/wastewater_rear_panel.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_wastewater_side_panel",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/wastewater_side_panel.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_wastewater_tank_floor",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/wastewater_tank_floor.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "second",
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "storage_wastewater_vent_filter",
+      "profile": "storage",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "project/storage/wastewater_vent_filter.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "first",
+          "work_package_id": "storage_frame"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "dry_deposit_gate_chute"
+        },
+        {
+          "batch_id": "second",
+          "work_package_id": "wastewater_tank_pan_baffles"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_shell_lid_ribs"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_lid_vent_inlet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "dry_bin_latch_and_toggle_triplet"
+        },
+        {
+          "batch_id": "third",
+          "work_package_id": "level_sensor_and_probe_mounts"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "power_distribution_box",
+      "profile": "power_distribution",
+      "source_generator": "cleaning_storage",
+      "source_mesh": "generated/platform/power_distribution_box.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "eighth_power_distribution_single_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "fourth",
+          "work_package_id": "power_distribution_mounting_enclosures"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "charge_connector_lock",
+      "profile": "charge_interface",
+      "source_generator": "power_service_hardware",
+      "source_mesh": "project/service/charge_connector_lock.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "third",
+          "work_package_id": "charge_port_interface"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "charge_port_door",
+      "profile": "charge_interface",
+      "source_generator": "power_service_hardware",
+      "source_mesh": "project/service/charge_port_door.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "third",
+          "work_package_id": "charge_port_interface"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "charge_port_housing",
+      "profile": "charge_interface",
+      "source_generator": "power_service_hardware",
+      "source_mesh": "project/service/charge_port_housing.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "third",
+          "work_package_id": "charge_port_interface"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "charge_receptacle",
+      "profile": "charge_interface",
+      "source_generator": "power_service_hardware",
+      "source_mesh": "project/service/charge_receptacle.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "third",
+          "work_package_id": "charge_port_interface"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "wastewater_drain_actuator_mount",
+      "profile": "wastewater_drain",
+      "source_generator": "power_service_hardware",
+      "source_mesh": "project/service/wastewater_drain_actuator.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_drain_service_train"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "wastewater_drain_coupling",
+      "profile": "wastewater_drain",
+      "source_generator": "power_service_hardware",
+      "source_mesh": "project/service/wastewater_drain_coupling.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_drain_service_train"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "wastewater_drain_pipe",
+      "profile": "wastewater_drain",
+      "source_generator": "power_service_hardware",
+      "source_mesh": "project/service/wastewater_drain_pipe.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_drain_service_train"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "wastewater_drain_service_cap",
+      "profile": "wastewater_drain",
+      "source_generator": "power_service_hardware",
+      "source_mesh": "project/service/wastewater_drain_service_cap.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_drain_service_train"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "wastewater_drain_valve_ball",
+      "profile": "wastewater_drain",
+      "source_generator": "power_service_hardware",
+      "source_mesh": "project/service/wastewater_drain_valve_ball.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_drain_service_train"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": "wastewater_drain_valve_body",
+      "profile": "wastewater_drain",
+      "source_generator": "power_service_hardware",
+      "source_mesh": "project/service/wastewater_drain_valve_body.stl",
+      "manifest_status": "pending_native_brep_reconstruction",
+      "coverage_category": "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE",
+      "exact_source_batches": [
+        "seventh_storage_service_per_part"
+      ],
+      "high_level_related_work_packages": [
+        {
+          "batch_id": "third",
+          "work_package_id": "wastewater_drain_service_train"
+        }
+      ],
+      "reason": "A batch contract names this manifest source mesh exactly; source identity and the named parametric builders are checked separately."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/cleaning/actuonix_p16_body.stl",
+      "source_generator": "cleaning_storage",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Purchased Actuonix actuator reference envelope; obtain supplier-native CAD or controlled interface data instead of recreating it as project B-rep."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/cleaning/actuonix_p16_clevis.stl",
+      "source_generator": "cleaning_storage",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Purchased Actuonix actuator reference envelope; obtain supplier-native CAD or controlled interface data instead of recreating it as project B-rep."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/cleaning/actuonix_p16_rod.stl",
+      "source_generator": "cleaning_storage",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Purchased Actuonix actuator reference envelope; obtain supplier-native CAD or controlled interface data instead of recreating it as project B-rep."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/cleaning/jabsco_pump_head.stl",
+      "source_generator": "cleaning_storage",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Purchased Jabsco pump visual envelope; supplier CAD and fluid-interface verification remain required."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/cleaning/jabsco_pump_motor.stl",
+      "source_generator": "cleaning_storage",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Purchased Jabsco pump visual envelope; supplier CAD and fluid-interface verification remain required."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/cleaning/jabsco_pump_rotor.stl",
+      "source_generator": "cleaning_storage",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Purchased Jabsco pump visual envelope; do not infer internal pump geometry from a display mesh."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/cleaning/pololu_37d_encoder_cap.stl",
+      "source_generator": "cleaning_storage",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Purchased Pololu gearmotor reference envelope; request supplier-native CAD or controlled interface data."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/cleaning/pololu_37d_gearbox.stl",
+      "source_generator": "cleaning_storage",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Purchased Pololu gearmotor reference envelope; request supplier-native CAD or controlled interface data."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/cleaning/pololu_37d_motor_body.stl",
+      "source_generator": "cleaning_storage",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Purchased Pololu gearmotor reference envelope; request supplier-native CAD or controlled interface data."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/storage/dry_deposit_xw540_actuator.stl",
+      "source_generator": "cleaning_storage",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Purchased Dynamixel XW540 actuator reference envelope; retain supplier ownership boundary."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/storage/dry_deposit_xw540_horn.stl",
+      "source_generator": "cleaning_storage",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Purchased Dynamixel XW540 horn reference envelope; retain supplier ownership boundary."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "generated/platform/isolated_dc_dc_module.stl",
+      "source_generator": "cleaning_storage",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "External DC/DC module visual envelope; supplier datasheet, thermal and EMC evidence are required before native CAD use."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "generated/platform/safety_relay.stl",
+      "source_generator": "cleaning_storage",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "External safety relay visual envelope; supplier CAD and safety approval are required before native CAD use."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/service/a300_battery_bms.stl",
+      "source_generator": "power_service_hardware",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "A300 BMS reference visual; this is not project-authored manufacturing geometry."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/service/a300_battery_pack.stl",
+      "source_generator": "power_service_hardware",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "A300 battery reference visual; this is not project-authored manufacturing geometry."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/service/emergency_stop_housing.stl",
+      "source_generator": "power_service_hardware",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Safety E-stop component visual; supplier-qualified geometry and certification are required."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/service/emergency_stop_plunger.stl",
+      "source_generator": "power_service_hardware",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Safety E-stop component visual; supplier-qualified geometry and certification are required."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/service/main_contactor_armature.stl",
+      "source_generator": "power_service_hardware",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Purchased traction contactor visual; do not reverse engineer its moving internals from mesh geometry."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/service/main_contactor_housing.stl",
+      "source_generator": "power_service_hardware",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Purchased traction contactor visual; obtain supplier-native CAD and ratings separately."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/service/main_power_isolator_handle.stl",
+      "source_generator": "power_service_hardware",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Purchased lockable isolator visual; obtain supplier-native CAD and rating data separately."
+    },
+    {
+      "manifest_part_id": null,
+      "supplier_excluded_source_mesh": "project/service/main_power_isolator_housing.stl",
+      "source_generator": "power_service_hardware",
+      "coverage_category": "SUPPLIER_EXCLUDED",
+      "authoritative_exclusion_status": "excluded_non_project_authored_vendor_reference",
+      "reason": "Purchased lockable isolator visual; obtain supplier-native CAD and rating data separately."
+    }
+  ],
+  "contract_exact_meshes_outside_reconstruction_manifest": [
+    "generated/platform/arm_mount_adapter.stl",
+    "generated/platform/sensor_mast.stl"
+  ],
+  "counts_by_category": {
+    "COMPLETELY_UNCOVERED": 0,
+    "EXPLICIT_PARAMETRIC_SOURCE_COVERAGE": 105,
+    "HIGH_LEVEL_COMPONENT_RELATED_UNPROVEN": 0,
+    "SUPPLIER_EXCLUDED": 21
+  },
+  "status": "STATIC_INDIVIDUAL_COVERAGE_CLOSED",
+  "runtime_accepted": false,
+  "native_cad_delivery_accepted": false,
+  "boundary": "Exact source-mesh mention is the only positive per-part coverage proof. Work-package/profile relations are retained only as unproven hints and cannot close a manifest part or authorize native export."
+}

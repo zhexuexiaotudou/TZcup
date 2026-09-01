@@ -22,12 +22,13 @@ setup(
     zip_safe=True,
     maintainer="Sanitation Vehicle Team",
     maintainer_email="team@example.com",
-    description="Safe grasp planning, URDF-independent cube demo, bin state, and recovery.",
+    description="Truth-free grasp planning, formal physical execution, bin verification, and recovery.",
     license="Apache-2.0",
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
             "active_cleaning_grasp_adapter = sanitation_manipulation.active_cleaning_adapter:main",
+            "formal_physical_grasp_executor = sanitation_manipulation.formal_grasp_executor:main",
             "placeholder_cube_demo = sanitation_manipulation.placeholder_demo:main",
         ],
     },

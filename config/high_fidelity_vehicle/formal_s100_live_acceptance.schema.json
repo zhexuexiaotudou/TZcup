@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tzcup.local/schema/formal-s100-live-acceptance-v1.json",
+  "title": "RDK S100 live product runtime acceptance",
+  "type": "object",
+  "required": ["schema_version", "report_id", "status", "passed", "source_binding", "acceptance_session_binding", "runtime_closure_binding", "raw_evidence", "checks", "blockers", "claim_boundary"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "report_id": {"const": "tzcup_formal_rdk_s100_live_product_runtime_v1"},
+    "status": {"enum": ["FORMAL_RDK_S100_LIVE_PRODUCT_RUNTIME_PASSED", "FORMAL_RDK_S100_LIVE_PRODUCT_RUNTIME_BLOCKED"]},
+    "passed": {"type": "boolean"},
+    "source_binding": {
+      "type": "object",
+      "required": ["snapshot_manifest_sha256", "source_inventory_sha256"],
+      "properties": {
+        "snapshot_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "source_inventory_sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "acceptance_session_binding": {"$ref": "#/$defs/acceptanceSessionBinding"},
+    "runtime_closure_binding": {"$ref": "#/$defs/runtimeClosureBinding"},
+    "raw_evidence": {
+      "type": "object",
+      "required": ["path", "sha256", "collector_report_id", "collector_status"],
+      "properties": {
+        "path": {"type": "string"},
+        "sha256": {"$ref": "#/$defs/sha256"},
+        "collector_report_id": {"type": ["string", "null"]},
+        "collector_status": {"type": ["string", "null"]}
+      },
+      "additionalProperties": false
+    },
+    "checks": {
+      "type": "object",
+      "required": ["hardware_identity", "system_image", "model_hashes", "ros_graph", "actual_backend_and_inference", "sustained_resources_and_thermal", "truth_boundary", "snapshot_binding", "acceptance_session_binding", "runtime_closure_binding"],
+      "properties": {
+        "hardware_identity": {"type": "boolean"},
+        "system_image": {"type": "boolean"},
+        "model_hashes": {"type": "boolean"},
+        "ros_graph": {"type": "boolean"},
+        "actual_backend_and_inference": {"type": "boolean"},
+        "sustained_resources_and_thermal": {"type": "boolean"},
+        "truth_boundary": {"type": "boolean"},
+        "snapshot_binding": {"type": "boolean"},
+        "acceptance_session_binding": {"type": "boolean"},
+        "runtime_closure_binding": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    },
+    "blockers": {"type": "array", "items": {"type": "string"}},
+    "claim_boundary": {"type": "string", "minLength": 1}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"passed": {"const": true}}},
+      "then": {
+        "properties": {
+          "status": {"const": "FORMAL_RDK_S100_LIVE_PRODUCT_RUNTIME_PASSED"},
+          "blockers": {"maxItems": 0},
+          "checks": {
+            "properties": {
+              "hardware_identity": {"const": true},
+              "system_image": {"const": true},
+              "model_hashes": {"const": true},
+              "ros_graph": {"const": true},
+              "actual_backend_and_inference": {"const": true},
+              "sustained_resources_and_thermal": {"const": true},
+              "truth_boundary": {"const": true},
+              "snapshot_binding": {"const": true},
+              "acceptance_session_binding": {"const": true},
+              "runtime_closure_binding": {"const": true}
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {"properties": {"passed": {"const": false}}},
+      "then": {
+        "properties": {
+          "status": {"const": "FORMAL_RDK_S100_LIVE_PRODUCT_RUNTIME_BLOCKED"},
+          "blockers": {"minItems": 1}
+        }
+      }
+    }
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "sourceBinding": {
+      "type": "object",
+      "required": ["snapshot_manifest_sha256", "source_inventory_sha256"],
+      "properties": {
+        "snapshot_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "source_inventory_sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "acceptanceSessionBinding": {
+      "type": "object",
+      "required": ["session_manifest_sha256", "session_started_epoch_ns", "session_status_at_collection", "snapshot"],
+      "properties": {
+        "session_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "session_started_epoch_ns": {"type": "integer", "minimum": 1},
+        "session_status_at_collection": {"const": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING"},
+        "snapshot": {"$ref": "#/$defs/sourceBinding"}
+      },
+      "additionalProperties": false
+    },
+    "runtimeClosureBinding": {
+      "type": "object",
+      "required": ["runtime_closure_manifest_sha256", "runtime_closure_sha256"],
+      "properties": {
+        "runtime_closure_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "runtime_closure_sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

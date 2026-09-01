@@ -1,4 +1,4 @@
-from sanitation_safety.velocity_gate import VelocityGateState
+from sanitation_safety.velocity_gate_core import VelocityGateState
 
 
 def test_emergency_stop_has_priority():

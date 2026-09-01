@@ -17,7 +17,7 @@
     <link name="${name}"><visual><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/robotiq_2f85/visual/${mesh}.dae"/></geometry></visual><collision><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/robotiq_2f85/collision/${mesh}.stl"/></geometry></collision><inertial><origin xyz="${cog}"/><mass value="${mass}"/><inertia ixx="${ixx}" ixy="0" ixz="${ixz}" iyy="${iyy}" iyz="0" izz="${izz}"/></inertial></link>
   </xacro:macro>
 
-  <xacro:macro name="hf_manipulator_stack" params="parent">
+  <xacro:macro name="hf_manipulator_stack" params="parent use_sim:=true">
     <!-- Official nominal kinematic frames. The base allocation is adjusted so
          the seven physical UR links retain the published 20.6 kg total. -->
     <link name="ur5e_base_link"/>
@@ -99,7 +99,7 @@
     <xacro:hf_2f85_part name="robotiq_85_left_knuckle_link" mesh="left_knuckle" mass="0.01384773208" cog="0.01213197 0.0002 -0.00058647" ixx="0.00000035232" iyy="0.00000231944" izz="0.00000223136" ixz="0.00000011744"/>
     <joint name="robotiq_85_left_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_left_knuckle_link"/><origin xyz="0.03060114 0 0.05490452"/><axis xyz="0 -1 0"/><limit lower="0" upper="0.8" velocity="0.5" effort="50"/><dynamics damping="0.03" friction="0.02"/></joint>
     <xacro:hf_2f85_part name="robotiq_85_right_knuckle_link" mesh="right_knuckle" mass="0.01384773208" cog="-0.01213197 0.0002 -0.00058647" ixx="0.00000035232" iyy="0.00000231944" izz="0.00000223136" ixz="-0.00000011744"/>
-    <joint name="robotiq_85_right_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_right_knuckle_link"/><origin xyz="-0.03060114 0 0.05490452"/><axis xyz="0 -1 0"/><limit lower="-0.8" upper="0" velocity="0.5" effort="50"/><mimic joint="robotiq_85_left_knuckle_joint" multiplier="-1"/></joint>
+    <joint name="robotiq_85_right_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_right_knuckle_link"/><origin xyz="-0.03060114 0 0.05490452"/><axis xyz="0 -1 0"/><limit lower="-0.8" upper="0" velocity="0.5" effort="50"/><xacro:unless value="${use_sim}"><mimic joint="robotiq_85_left_knuckle_joint" multiplier="-1"/></xacro:unless></joint>
 
     <xacro:hf_2f85_part name="robotiq_85_left_finger_link" mesh="left_finger" mass="0.04260376752" cog="0.00346899 -0.00079447 0.01867121" ixx="0.00001385792" iyy="0.00001183208" izz="0.00000519672" ixz="-0.00000217264"/>
     <joint name="robotiq_85_left_finger_joint" type="fixed"><parent link="robotiq_85_left_knuckle_link"/><child link="robotiq_85_left_finger_link"/><origin xyz="0.03152616 0 -0.00376347"/></joint>
@@ -107,14 +107,14 @@
     <joint name="robotiq_85_right_finger_joint" type="fixed"><parent link="robotiq_85_right_knuckle_link"/><child link="robotiq_85_right_finger_link"/><origin xyz="-0.03152616 0 -0.00376347"/></joint>
 
     <xacro:hf_2f85_part name="robotiq_85_left_inner_knuckle_link" mesh="left_inner_knuckle" mass="0.02969376448" cog="0.01897699 0.00015001 0.02247101" ixx="0.00000957136" iyy="0.00000869056" izz="0.00000819144" ixz="-0.00000393424"/>
-    <joint name="robotiq_85_left_inner_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_left_inner_knuckle_link"/><origin xyz="0.0127 0 0.06142"/><axis xyz="0 -1 0"/><limit lower="0" upper="0.8" velocity="0.5" effort="50"/><mimic joint="robotiq_85_left_knuckle_joint"/></joint>
+    <joint name="robotiq_85_left_inner_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_left_inner_knuckle_link"/><origin xyz="0.0127 0 0.06142"/><axis xyz="0 -1 0"/><limit lower="0" upper="0.8" velocity="0.5" effort="50"/><xacro:unless value="${use_sim}"><mimic joint="robotiq_85_left_knuckle_joint"/></xacro:unless></joint>
     <xacro:hf_2f85_part name="robotiq_85_right_inner_knuckle_link" mesh="right_inner_knuckle" mass="0.02969376448" cog="-0.01926824 0.00005001 0.02222178" ixx="0.00000942456" iyy="0.00000869056" izz="0.00000833824" ixz="0.0000039636"/>
-    <joint name="robotiq_85_right_inner_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_right_inner_knuckle_link"/><origin xyz="-0.0127 0 0.06142"/><axis xyz="0 -1 0"/><limit lower="-0.8" upper="0" velocity="0.5" effort="50"/><mimic joint="robotiq_85_left_knuckle_joint" multiplier="-1"/></joint>
+    <joint name="robotiq_85_right_inner_knuckle_joint" type="revolute"><parent link="robotiq_85_base_link"/><child link="robotiq_85_right_inner_knuckle_link"/><origin xyz="-0.0127 0 0.06142"/><axis xyz="0 -1 0"/><limit lower="-0.8" upper="0" velocity="0.5" effort="50"/><xacro:unless value="${use_sim}"><mimic joint="robotiq_85_left_knuckle_joint" multiplier="-1"/></xacro:unless></joint>
 
     <xacro:hf_2f85_part name="robotiq_85_left_finger_tip_link" mesh="left_finger_tip" mass="0.04268588744" cog="-0.01456706 -0.0008 0.01649701" ixx="0.00001048152" iyy="0.00001197888" izz="0.00000422784" ixz="0.0000035232"/>
-    <joint name="robotiq_85_left_finger_tip_joint" type="revolute"><parent link="robotiq_85_left_finger_link"/><child link="robotiq_85_left_finger_tip_link"/><origin xyz="0.00563134 0 0.04718515"/><axis xyz="0 -1 0"/><limit lower="-0.8" upper="0" velocity="0.5" effort="50"/><mimic joint="robotiq_85_left_knuckle_joint" multiplier="-1"/></joint>
+    <joint name="robotiq_85_left_finger_tip_joint" type="revolute"><parent link="robotiq_85_left_finger_link"/><child link="robotiq_85_left_finger_tip_link"/><origin xyz="0.00563134 0 0.04718515"/><axis xyz="0 -1 0"/><limit lower="-0.8" upper="0" velocity="0.5" effort="50"/><xacro:unless value="${use_sim}"><mimic joint="robotiq_85_left_knuckle_joint" multiplier="-1"/></xacro:unless></joint>
     <xacro:hf_2f85_part name="robotiq_85_right_finger_tip_link" mesh="right_finger_tip" mass="0.04268588744" cog="0.01456706 0.00005 0.01649701" ixx="0.00001048152" iyy="0.00001197888" izz="0.00000422784" ixz="-0.0000035232"/>
-    <joint name="robotiq_85_right_finger_tip_joint" type="revolute"><parent link="robotiq_85_right_finger_link"/><child link="robotiq_85_right_finger_tip_link"/><origin xyz="-0.00563134 0 0.04718515"/><axis xyz="0 -1 0"/><limit lower="0" upper="0.8" velocity="0.5" effort="50"/><mimic joint="robotiq_85_left_knuckle_joint"/></joint>
+    <joint name="robotiq_85_right_finger_tip_joint" type="revolute"><parent link="robotiq_85_right_finger_link"/><child link="robotiq_85_right_finger_tip_link"/><origin xyz="-0.00563134 0 0.04718515"/><axis xyz="0 -1 0"/><limit lower="0" upper="0.8" velocity="0.5" effort="50"/><xacro:unless value="${use_sim}"><mimic joint="robotiq_85_left_knuckle_joint"/></xacro:unless></joint>
 
     <gazebo reference="robotiq_85_left_finger_tip_link"><mu1>1.20</mu1><mu2>1.20</mu2><kp>500000</kp><kd>50</kd></gazebo>
     <gazebo reference="robotiq_85_right_finger_tip_link"><mu1>1.20</mu1><mu2>1.20</mu2><kp>500000</kp><kd>50</kd></gazebo>

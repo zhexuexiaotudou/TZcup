@@ -1,0 +1,50 @@
+schema_version: 1
+contract_id: formal_pc_random_scene_perception_acceptance_v1
+# Three episodes are a bring-up smoke only.  Formal PC/Gazebo product
+# evidence must cover every frozen validation map with a sufficiently sized
+# fresh matrix; it is still neither S100 nor real-vehicle evidence.
+minimum_episode_count: 30
+statistical_scope:
+  tier: formal_pc_gazebo_validation_matrix
+  required_split: val
+  required_validation_map_indices: [0, 1, 2, 3, 4, 5, 6, 7]
+  minimum_unique_validation_map_count: 8
+  minimum_episodes_per_validation_map: 3
+  smoke_episode_count: 3
+  smoke_eligible_for_final_product_evidence: false
+  statistical_generalization_claimed: false
+staged_scene:
+  # Existing randomized episode entities are placed in a fixed-vehicle
+  # acceptance ROI. The vehicle is never teleported, preserving odom/TF truth.
+  settle_time_s: 3.0
+  # Map localization can become coherent after camera/map topics have already
+  # appeared, especially under concurrent formal Gazebo jobs.  This remains a
+  # bounded latest-TF readiness gate; stale transforms are never accepted.
+  pose_pair_timeout_s: 30.0
+  fixed_start_localization_error_m_max: 0.50
+  sample_time_s: 90.0
+metrics:
+  cube_box_iou_match: 0.50
+  cube_precision_min: 0.80
+  cube_recall_min: 0.80
+  cube_f1_min: 0.80
+  false_positives_per_evaluated_frame_max: 0.20
+  ground_dirt_iou_min: 0.65
+  ground_dirt_recall_min: 0.85
+  map_projection_rmse_m_max: 0.20
+  map_projection_p95_m_max: 0.35
+runtime:
+  depth_rgb_skew_s_max: 0.50
+  required_rgb_topics: 4
+  required_depth_topics: 2
+  required_camera_info_topics: 4
+  tf_success_ratio_min: 0.95
+  tf_max_age_s: 0.50
+truth_boundary:
+  evaluator_namespace_prefix: /evaluation/
+  publish_truth_to_ros: false
+  product_truth_input_allowed: false
+  synthetic_offline_image_eligible: false
+claim_boundary:
+  s100_board_accepted: false
+  real_vehicle_accepted: false

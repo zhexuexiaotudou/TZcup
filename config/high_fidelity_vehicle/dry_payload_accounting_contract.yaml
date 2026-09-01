@@ -1,0 +1,33 @@
+schema_version: 1
+contract_id: tzcup_dry_payload_accounting_v1
+purpose: >-
+  Make dry-garbage mass accounting mutually exclusive so material represented
+  by independent Gazebo rigid bodies is never also injected as a lumped
+  vehicle inertia payload.
+modes:
+  physical_resident:
+    selected_for: formal_20_cube_pick_place
+    retained_entity_representation: independent_gazebo_rigid_bodies
+    material_mass_authority: physical_link_inertial_mass
+    vehicle_load_transfer: rigid_body_contact_to_rear_dry_bin
+    dynamic_payload_aggregate_dry_mass_kg: 0.0
+    reject_nonzero_aggregate_dry_input: true
+    required_dry_bin_telemetry:
+      - dry_accounting_mode
+      - resident_load_path
+      - resident_rigid_body_count
+      - resident_rigid_body_mass_kg
+  aggregate:
+    selected_for: legacy_nonphysical_bulk_load_only
+    retained_entity_representation: none
+    material_mass_authority: dynamic_payload_aggregate_dry_mass
+    dynamic_payload_aggregate_dry_mass_kg: bounded_0_to_1.512
+    forbid_independent_rigid_bodies_in_dry_bin: true
+mutual_exclusivity:
+  exactly_one_mode_required: true
+  physical_resident_forbids_nonzero_aggregate_dry_mass: true
+  aggregate_forbids_physical_resident_dry_bodies: true
+runtime_acceptance_boundary: >-
+  Static evidence proves only source-level selection and telemetry contracts.
+  Fresh Gazebo evidence must still show retained bodies, bin contact, and the
+  reported resident mass/count during a real episode.

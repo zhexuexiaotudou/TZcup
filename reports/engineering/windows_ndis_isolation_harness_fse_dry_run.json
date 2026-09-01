@@ -1,0 +1,139 @@
+{
+  "schema_version": 1,
+  "report_kind": "windows_ndis_isolation_harness",
+  "captured_at_utc": "2026-08-31T07:18:38.6672939Z",
+  "mode": "dry_run",
+  "execute_requested": false,
+  "selected_target": "FSE",
+  "exact_target_catalog": {
+    "Tailscale": {
+      "target": "Tailscale",
+      "adapter_names": [
+        "Tailscale"
+      ],
+      "service_names": [
+        "Tailscale"
+      ]
+    },
+    "FSE": {
+      "target": "FSE",
+      "adapter_names": [
+        "vEthernet (FSE HostVnic)",
+        "vSwitch (FSE Switch)"
+      ],
+      "service_names": []
+    }
+  },
+  "default_route_interface_indexes": 20,
+  "protections": {
+    "protected_adapter_names": [
+      "WLAN"
+    ],
+    "protected_interface_descriptions": [
+      "Intel(R) Wi-Fi 6E AX211 160MHz",
+      "Realtek Gaming 2.5GbE Family Controller"
+    ],
+    "default_route_rejected": true
+  },
+  "before": {
+    "memory": {
+      "captured_at_utc": "2026-08-31T07:18:38.4406412Z",
+      "pool_nonpaged_bytes": 23404208128,
+      "pool_nonpaged_gib": 21.8,
+      "pool_paged_bytes": 854188032,
+      "available_bytes": 1316212736,
+      "committed_bytes": 36947771392
+    },
+    "adapters": [
+      {
+        "name": "vEthernet (FSE HostVnic)",
+        "interface_description": "Hyper-V Virtual Ethernet Container Adapter",
+        "interface_index": 44,
+        "status": "Up",
+        "admin_status": "Up",
+        "mac_address": "00-15-5D-A0-5F-29",
+        "link_speed": "10 Gbps"
+      },
+      {
+        "name": "vSwitch (FSE Switch)",
+        "interface_description": "Hyper-V Virtual Switch Extension Adapter",
+        "interface_index": 40,
+        "status": "Up",
+        "admin_status": "Up",
+        "mac_address": null,
+        "link_speed": "10 Gbps"
+      }
+    ],
+    "services": []
+  },
+  "after_isolation": {
+    "memory": {
+      "captured_at_utc": "2026-08-31T07:18:38.4406412Z",
+      "pool_nonpaged_bytes": 23404208128,
+      "pool_nonpaged_gib": 21.8,
+      "pool_paged_bytes": 854188032,
+      "available_bytes": 1316212736,
+      "committed_bytes": 36947771392
+    },
+    "adapters": [
+      {
+        "name": "vEthernet (FSE HostVnic)",
+        "interface_description": "Hyper-V Virtual Ethernet Container Adapter",
+        "interface_index": 44,
+        "status": "Up",
+        "admin_status": "Up",
+        "mac_address": "00-15-5D-A0-5F-29",
+        "link_speed": "10 Gbps"
+      },
+      {
+        "name": "vSwitch (FSE Switch)",
+        "interface_description": "Hyper-V Virtual Switch Extension Adapter",
+        "interface_index": 40,
+        "status": "Up",
+        "admin_status": "Up",
+        "mac_address": null,
+        "link_speed": "10 Gbps"
+      }
+    ],
+    "services": []
+  },
+  "after_restore": {
+    "memory": {
+      "captured_at_utc": "2026-08-31T07:18:38.6670534Z",
+      "pool_nonpaged_bytes": 23404326912,
+      "pool_nonpaged_gib": 21.8,
+      "pool_paged_bytes": 854425600,
+      "available_bytes": 1308758016,
+      "committed_bytes": 36950740992
+    },
+    "adapters": [
+      {
+        "name": "vEthernet (FSE HostVnic)",
+        "interface_description": "Hyper-V Virtual Ethernet Container Adapter",
+        "interface_index": 44,
+        "status": "Up",
+        "admin_status": "Up",
+        "mac_address": "00-15-5D-A0-5F-29",
+        "link_speed": "10 Gbps"
+      },
+      {
+        "name": "vSwitch (FSE Switch)",
+        "interface_description": "Hyper-V Virtual Switch Extension Adapter",
+        "interface_index": 40,
+        "status": "Up",
+        "admin_status": "Up",
+        "mac_address": null,
+        "link_speed": "10 Gbps"
+      }
+    ],
+    "services": []
+  },
+  "applied_actions": [],
+  "recovery": {
+    "attempted": false,
+    "commands": [],
+    "errors": [],
+    "success": true
+  },
+  "errors": []
+}

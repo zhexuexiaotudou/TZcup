@@ -1,0 +1,379 @@
+{
+  "schema_version": 1,
+  "document_id": "tzcup_native_brep_first_batch_parametric_contract_v1",
+  "status": "design_input_pending_native_export",
+  "claim_boundary": "Static design-input contract only. It records source-bound reconstruction parameters for four project-authored load-path/interface work packages. It creates no native CAD, FCStd, STEP/STP, manufacturing drawing, material release, structural calculation, supplier interface approval, measured mass, or as-built inertia evidence. A visual mesh primitive, URDF collision primitive, or fixed joint is never a manufacturing-hole, thread, flange, torque, weld, or GD&T specification.",
+  "prohibited_methods": [
+    "mesh_to_step_conversion",
+    "faceted_or_tessellated_step_export",
+    "mesh_import_as_native_brep_substitute",
+    "placeholder_fcstd_or_step_artifact",
+    "treating_visual_fastener_envelopes_as_released_holes"
+  ],
+  "coordinate_system": {
+    "units": "m_and_rad",
+    "root_frame": "base_footprint",
+    "local_part_rule": "Rebuild each item in the stated part-local datum. Assemble it using the listed URDF parent/child transform; do not recover part placement from STL vertices or use collision primitives as feature geometry.",
+    "sources": [
+      {
+        "path": "config/high_fidelity_vehicle/formal_vehicle_layout.yaml",
+        "locator": "installation_frames and root_frame",
+        "role": "base_footprint installation-coordinate authority"
+      },
+      {
+        "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+        "locator": "assembly macro invocations lines 30-45",
+        "role": "top-level parent-link authority"
+      }
+    ]
+  },
+  "items": [
+    {
+      "id": "arm_pedestal_adapter",
+      "status": "design_input_pending_native_export",
+      "scope": "Project-authored A300 deck backing plate, reinforced pedestal, six-datum UR5e adapter and gussets. The UR5e itself and its OEM mating drawing remain vendor-controlled dependencies.",
+      "evidence_sources": [
+        {"path": "scripts/generate_platform_auxiliary_meshes.py", "locator": "arm_mount() lines 237-254", "role": "part-local visual dimensions"},
+        {"path": "config/high_fidelity_vehicle/formal_vehicle_layout.yaml", "locator": "installation_frames.arm_mount_link", "role": "base_footprint installation coordinate"},
+        {"path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/a300_platform.xacro", "locator": "arm_mount_link and arm_mount_joint lines 227-238", "role": "URDF assembly, collision and inertial allocation"},
+        {"path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/manipulator_stack.xacro", "locator": "ur5e_mount_joint line 24", "role": "dependent UR5e mating transform"},
+        {"path": "config/high_fidelity_vehicle/manufacturing_bom.csv", "locator": "arm_pedestal_adapter row", "role": "mass-budget reference"}
+      ],
+      "source_meshes": [
+        {
+          "generator": {
+            "path": "scripts/generate_platform_auxiliary_meshes.py",
+            "locator": "arm_mount() lines 237-254",
+            "role": "project visual parameter source"
+          },
+          "source_asset": "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/arm_mount_adapter.stl",
+          "source_definition": "arm_mount_adapter.stl from arm_mount()",
+          "status": "visual_or_simulation_dimension_input_not_native_brep"
+        }
+      ],
+      "dimension_contract": {
+        "authoritative_inputs": [
+          {"feature": "deck_backing_plate", "size_m": [0.280, 0.220, 0.012], "part_local_center_m": [0.000, 0.000, -0.044]},
+          {"feature": "reinforced_pedestal", "size_m": [0.180, 0.180, 0.040], "part_local_center_m": [0.000, 0.000, -0.018]},
+          {"feature": "adapter_outer_flange_envelope", "radius_m": 0.120, "source_cylinder_length_m": 0.030, "part_local_center_m": [0.000, 0.000, 0.000]},
+          {"feature": "adapter_inner_hub_envelope", "radius_m": 0.076, "source_cylinder_length_m": 0.046, "part_local_center_m": [0.000, 0.000, 0.018]},
+          {"feature": "four_gusset_envelopes", "count": 4, "length_m": 0.050, "height_m": 0.050, "thickness_m": 0.010, "part_local_anchor_m": [0.000, 0.000, -0.038]},
+          {"feature": "six_visual_fastener_envelopes", "count": 6, "bolt_circle_diameter_m": 0.192, "source_cylinder_diameter_m": 0.018, "source_cylinder_height_m": 0.008, "part_local_z_m": 0.019}
+        ],
+        "pending_native_export_inputs": [
+          "controlled_A300_payload_deck_hole_pattern_and_allowable_load",
+          "controlled_UR5e_base_flange_hole_pattern_dowelling_and_mating_surface",
+          "released_fastener_size_grade_finish_torque_preload_and_joint_stackup",
+          "released_plate_thickness_tolerances_radii_weld_or_bolted_gusset_decision_and_GDT"
+        ],
+        "boundary": "The 18 mm visual cylinders on the 192 mm circle are fastener envelopes only. They are not holes, threads, counterbores, or an OEM UR5e flange definition."
+      },
+      "coordinate_contract": {
+        "authoritative_inputs": [
+          {"part_local_datum": "arm_mount_link", "base_footprint_xyz_m": [0.100, -0.200, 0.4341], "rpy_rad": [0.000, 0.000, 0.000], "layout_source": "formal_vehicle_layout.yaml installation_frames.arm_mount_link"},
+          {"joint": "arm_mount_joint", "parent_link": "payload_deck_link", "child_link": "arm_mount_link", "parent_relative_xyz_m": [0.100, -0.200, 0.065], "rpy_rad": [0.000, 0.000, 0.000]},
+          {"joint": "ur5e_mount_joint", "parent_link": "arm_mount_link", "child_link": "ur5e_base_link", "part_local_xyz_m": [0.000, 0.000, 0.045], "rpy_rad": [0.000, 0.000, 0.000]}
+        ],
+        "pending_native_export_inputs": ["controlled_deck_datums", "UR5e_mating_datum_orientation", "arm_swept_volume_and_CoG_gate_result"],
+        "boundary": "The listed transforms preserve simulation assembly placement only; they are not a released tolerance stack or installation survey."
+      },
+      "interface_contract": {
+        "authoritative_inputs": [
+          {"interface": "deck_to_backing_plate", "parent": "payload_deck_link", "geometry_envelope_m": [0.280, 0.220, 0.012], "hole_pattern_status": "pending_controlled_A300_interface"},
+          {"interface": "pedestal_to_UR5e", "flange_outer_radius_m": 0.120, "six_datum_bolt_circle_diameter_m": 0.192, "mating_interface_status": "pending_controlled_UR5e_OEM_drawing"}
+        ],
+        "pending_native_export_inputs": ["A300_hole_coordinates", "UR5e_thread_or_clearance_size", "dowel_strategy", "fastener_and_preload_calculation"],
+        "boundary": "No output may label the six visual datums as a finished UR5e bolt pattern until the OEM interface is controlled."
+      },
+      "material_boundary": {
+        "authoritative_inputs": [
+          {"candidate_families": ["aluminum_alloy_plate_or_extrusion", "corrosion_protected_structural_steel"], "source": "mechanical_manufacturing_preparation_draft.yaml materials.structural_project_load_paths"}
+        ],
+        "pending_native_export_inputs": ["material_grade_certificate", "corrosion_and_galvanic_pairing_review", "fatigue_and_dynamic_load_basis", "supplier_DFM"],
+        "boundary": "Candidate families are not a selected material, heat treatment, coating, weld procedure, or corrosion release."
+      },
+      "mass_inertia_contract": {
+        "authoritative_inputs": [
+          {"simulation_link": "arm_mount_link", "mass_kg": 6.500, "CoM_part_local_m": [0.000, 0.000, -0.005], "inertia_kg_m2": {"ixx": 0.035100, "iyy": 0.035100, "izz": 0.048100}, "source": "a300_platform.xacro lines 227-237"},
+          {"bom_row": "arm_pedestal_adapter", "nominal_mass_kg": 6.500, "mass_basis": "nominal_expanded_urdf_reference_only", "source": "manufacturing_bom.csv"}
+        ],
+        "pending_native_export_inputs": ["native_CAD_density_rollup", "selected_materials_and_fasteners", "physical_weighing", "measured_CoM_and_inertia_or_validated_calculation"],
+        "boundary": "The 6.5 kg URDF/BOM allocation is a target-source reference, not an as-built mass or structural certification."
+      },
+      "dependencies": [
+        "A300 payload-deck controlled interface",
+        "UR5e controlled base-flange interface",
+        "arm dynamic load, overturning stability and continuous swept-volume review",
+        "fastener calculation and structural FEA",
+        "native B-rep feature model with no mesh import"
+      ],
+      "planned_native_export": {
+        "native_source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/structure/arm_pedestal_adapter.FCStd",
+        "step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/structure/arm_pedestal_adapter.step",
+        "must_not_exist_yet": true,
+        "export_preconditions": ["all_pending_interface_inputs_released", "native_parametric_feature_model_reviewed", "material_mass_and_inertia_inputs_reconciled", "non_faceted_STEP_preflight_passed"]
+      }
+    },
+    {
+      "id": "sensor_tower",
+      "status": "design_input_pending_native_export",
+      "scope": "Project-authored twin-column sensor tower: deck pedestal, columns, service spine, three cross-ties, head plate, gussets and four base fastener datums. Sensor-specific shelves and purchased sensors remain dependent assemblies.",
+      "evidence_sources": [
+        {"path": "scripts/generate_platform_auxiliary_meshes.py", "locator": "sensor_mast() lines 63-84", "role": "part-local visual dimensions"},
+        {"path": "config/high_fidelity_vehicle/formal_vehicle_layout.yaml", "locator": "installation_frames.sensor_mast_link and sensor_layout", "role": "base_footprint installation and sensor coordinates"},
+        {"path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/a300_platform.xacro", "locator": "sensor_mast_link and sensor_mast_joint lines 200-223", "role": "tower assembly, collision and inertial allocation"},
+        {"path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro", "locator": "hf_sensor_suite mast-parent mount joints", "role": "dependent sensor mount transforms"},
+        {"path": "config/high_fidelity_vehicle/manufacturing_bom.csv", "locator": "sensor_tower row", "role": "mass-budget reference"}
+      ],
+      "source_meshes": [
+        {
+          "generator": {
+            "path": "scripts/generate_platform_auxiliary_meshes.py",
+            "locator": "sensor_mast() lines 63-84",
+            "role": "project visual parameter source"
+          },
+          "source_asset": "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/sensor_mast.stl",
+          "source_definition": "sensor_mast.stl from sensor_mast()",
+          "status": "visual_or_simulation_dimension_input_not_native_brep"
+        }
+      ],
+      "dimension_contract": {
+        "authoritative_inputs": [
+          {"feature": "base_pedestal", "size_m": [0.190, 0.150, 0.016], "part_local_center_m": [0.000, 0.000, 0.008]},
+          {"feature": "twin_columns", "count": 2, "size_m": [0.030, 0.030, 0.760], "part_local_centres_m": [[0.000, -0.050, 0.396], [0.000, 0.050, 0.396]]},
+          {"feature": "service_spine", "size_m": [0.036, 0.062, 0.690], "part_local_center_m": [-0.022, 0.000, 0.375]},
+          {"feature": "head_plate", "size_m": [0.150, 0.120, 0.018], "part_local_center_m": [0.000, 0.000, 0.778]},
+          {"feature": "cross_ties", "count": 3, "size_m": [0.040, 0.130, 0.018], "part_local_z_m": [0.115, 0.365, 0.615]},
+          {"feature": "base_visual_fastener_envelopes", "count": 4, "part_local_xy_m": [[-0.070, -0.052], [-0.070, 0.052], [0.070, -0.052], [0.070, 0.052]], "source_cylinder_diameter_m": 0.012, "source_cylinder_height_m": 0.010, "part_local_z_m": 0.021},
+          {"feature": "gussets", "count": 2, "length_m": 0.080, "height_m": 0.105, "thickness_m": 0.010, "part_local_anchors_m": [[0.000, 0.055, 0.018], [0.000, -0.055, 0.018]]}
+        ],
+        "pending_native_export_inputs": ["released_base_hole_thread_clearance_and_counterbore_definition", "column_and_cross_tie_joint_design", "mast_deflection_fatigue_and_vibration_load_cases", "sensor_mount_specific_hole_patterns"],
+        "boundary": "The four 12 mm visual cylinders define fastener-datum locations only. Draft M8 language is a candidate, and neither it nor the visual cylinders releases a drilled-hole size."
+      },
+      "coordinate_contract": {
+        "authoritative_inputs": [
+          {"part_local_datum": "sensor_mast_link", "base_footprint_xyz_m": [0.420, 0.000, 0.3891], "rpy_rad": [0.000, 0.000, 0.000], "layout_source": "formal_vehicle_layout.yaml installation_frames.sensor_mast_link"},
+          {"joint": "sensor_mast_joint", "parent_link": "payload_deck_link", "child_link": "sensor_mast_link", "parent_relative_xyz_m": [0.420, 0.000, 0.020], "rpy_rad": [0.000, 0.000, 0.000]},
+          {"interface_datums_part_local_m": {"lidar_2d_mount": [0.060, 0.000, 0.695], "lidar_3d_mount": [0.000, 0.000, 0.790], "zed_f9p_receiver_enclosure": [-0.060, -0.095, 0.585], "gnss_mount": [-0.035, -0.020, 0.765]}}
+        ],
+        "pending_native_export_inputs": ["deck_datum_control", "sensor_alignment_tolerance_budget", "mast_deflection_compensation_or_acceptance_limit"],
+        "boundary": "Sensor link poses are integration datums for native assembly; they do not replace individual supplier drawings or calibration results."
+      },
+      "interface_contract": {
+        "authoritative_inputs": [
+          {"interface": "tower_to_payload_deck", "base_envelope_m": [0.190, 0.150, 0.016], "fastener_datum_count": 4, "fastener_thread_status": "candidate_M8_pending_interface_confirmation"},
+          {"interface": "UTM30LX_support", "mast_local_xyz_m": [0.060, 0.000, 0.695], "sensor_relative_xyz_m": [0.055, 0.000, 0.078]},
+          {"interface": "MID360_support", "mast_local_xyz_m": [0.000, 0.000, 0.790], "sensor_relative_xyz_m": [0.000, 0.000, 0.094], "published_mount_reference": "four_M3_points_on_48x36_mm_rectangle"},
+          {"interface": "GNSS_support", "mast_local_xyz_m": [-0.035, -0.020, 0.765], "antenna_relative_xyz_m": [-0.020, 0.180, 0.026]},
+          {"interface": "ZED_F9P_service_tray", "mast_local_xyz_m": [-0.060, -0.095, 0.585], "module_relative_xyz_m": [0.000, 0.000, 0.006]}
+        ],
+        "pending_native_export_inputs": ["tower_base_hole_and_deck_pattern", "purchased_sensor_supplier_mounting_drawings", "vibration_isolator_selection", "cable_gland_and_grounding_definition"],
+        "boundary": "The tower exports only after each project-to-supplier mating interface is controlled; appearance cues in any sensor mesh cannot supply its hole pattern."
+      },
+      "material_boundary": {
+        "authoritative_inputs": [
+          {"candidate_families": ["aluminum_alloy_plate_or_extrusion", "corrosion_protected_structural_steel", "stainless_steel"], "source": "mechanical_manufacturing_preparation_draft.yaml materials and sensor_and_compute_mounting"}
+        ],
+        "pending_native_export_inputs": ["selected_alloy_or_steel_grade", "finish_and_galvanic_pairing", "vibration_and_fatigue_basis", "EMC_grounding_thermal_and_harness_review"],
+        "boundary": "The anodized-looking mesh material and candidate families do not release alloy, temper, wall thickness, coating, or fastener material."
+      },
+      "mass_inertia_contract": {
+        "authoritative_inputs": [
+          {"simulation_link": "sensor_mast_link", "mass_kg": 1.450, "CoM_part_local_m": [0.000, 0.000, 0.390], "inertia_box_size_m": [0.150, 0.150, 0.780], "source": "a300_platform.xacro lines 200-223"},
+          {"bom_row": "sensor_tower", "nominal_mass_kg": 1.450, "mass_basis": "nominal_expanded_urdf_reference_only", "source": "manufacturing_bom.csv"}
+        ],
+        "pending_native_export_inputs": ["native_CAD_mass_properties", "purchased_sensor_and_harness_mass_allocation", "physical_weighing", "measured_or_validated_CoM_and_inertia"],
+        "boundary": "The 1.45 kg link allocation is only the current tower model target; it excludes an as-built proof and does not certify deflection."
+      },
+      "dependencies": [
+        "A300 payload-deck controlled interface",
+        "UTM-30LX, MID-360, GNSS and ZED-F9P controlled mounting data",
+        "vibration, fatigue, deflection and camera/lidar alignment review",
+        "harness routing, grounding and service-access design",
+        "native B-rep feature model with no mesh import"
+      ],
+      "planned_native_export": {
+        "native_source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/structure/sensor_tower.FCStd",
+        "step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/structure/sensor_tower.step",
+        "must_not_exist_yet": true,
+        "export_preconditions": ["base_and_sensor_interfaces_released", "deflection_vibration_and_harness_reviews_closed", "native_parametric_feature_model_reviewed", "non_faceted_STEP_preflight_passed"]
+      }
+    },
+    {
+      "id": "cleaning_head_brackets",
+      "status": "design_input_pending_native_export",
+      "scope": "Project-authored cleaning-mount frame, four guide-column bracket interfaces, lift carriage and two moving guide slider plates. Purchased actuator, motors, bearings and recovery hardware are dependencies rather than reconstructed as project B-rep geometry.",
+      "evidence_sources": [
+        {"path": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py", "locator": "cleaning_mount_frame(), guide_column(), lift_carriage(), lift_linkage() lines 354-411", "role": "part-local visual dimensions"},
+        {"path": "config/high_fidelity_vehicle/formal_vehicle_layout.yaml", "locator": "installation_frames.base_link and cleaning_geometry", "role": "base_footprint reference and lift travel"},
+        {"path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/cleaning_mechanism.xacro", "locator": "high_fidelity_cleaning_mechanism lines 185-315", "role": "guide, carriage, actuator, motion and inertial allocation"},
+        {"path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro", "locator": "high_fidelity_cleaning_mechanism invocation line 39", "role": "top-level parent-link authority"},
+        {"path": "config/high_fidelity_vehicle/manufacturing_bom.csv", "locator": "cleaning_recovery_system_nominal row", "role": "integrated mass-budget boundary"}
+      ],
+      "source_meshes": [
+        {
+          "generator": {
+            "path": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py",
+            "locator": "cleaning_mount_frame(), guide_column(), lift_carriage(), lift_linkage() lines 354-411",
+            "role": "project visual parameter source"
+          },
+          "source_asset": "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/cleaning_mount_frame.stl",
+          "source_definition": "cleaning_parts:cleaning_mount_frame.stl",
+          "status": "visual_or_simulation_dimension_input_not_native_brep"
+        },
+        {
+          "generator": {
+            "path": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py",
+            "locator": "guide_column(), lift_carriage(), lift_linkage() lines 364-411",
+            "role": "project visual parameter source"
+          },
+          "source_asset": "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/cleaning_lift_carriage.stl",
+          "source_definition": "cleaning_parts:cleaning_lift_carriage.stl and related guide/slider meshes",
+          "status": "visual_or_simulation_dimension_input_not_native_brep"
+        }
+      ],
+      "dimension_contract": {
+        "authoritative_inputs": [
+          {"feature": "cleaning_mount_main_rail", "size_m": [0.340, 0.055, 0.045]},
+          {"feature": "mount_side_brackets", "count": 2, "part_local_y_m": [-0.275, 0.275], "rail_size_m": [0.260, 0.018, 0.100], "end_block_size_m": [0.050, 0.055, 0.070], "end_block_local_x_m": -0.130},
+          {"feature": "side_bracket_visual_fastener_envelopes", "count": 4, "part_local_x_m": [-0.090, 0.090], "part_local_y_m": [-0.275, 0.275], "part_local_z_m": 0.055, "source_cylinder_diameter_m": 0.014, "source_cylinder_length_m": 0.022},
+          {"feature": "guide_columns", "count": 4, "nominal_radius_m": 0.010, "nominal_length_m": 0.180, "guide_centres_part_local_m": [[0.180, 0.250, -0.025], [0.180, -0.250, -0.025], [-0.180, 0.250, -0.025], [-0.180, -0.250, -0.025]]},
+          {"feature": "lift_carriage", "nominal_size_m": [0.460, 0.620, 0.018], "bearing_boss_centres_m": [[-0.180, -0.250, 0.000], [-0.180, 0.250, 0.000], [0.180, -0.250, 0.000], [0.180, 0.250, 0.000]], "source_boss_diameter_m": 0.032},
+          {"feature": "moving_slider_plates", "count": 2, "raw_mesh_size_m": [0.220, 0.018, 0.025], "URDF_x_scale": 1.6363636363636365, "mounted_y_m": [-0.250, 0.250], "raw_end_boss_centres_x_m": [-0.110, 0.110]}
+        ],
+        "pending_native_export_inputs": ["base_link_chassis_attachment_pattern", "guide_and_bearing_supplier_selection_and_fit", "actuator_clevis_pin_and_bracket_drawings", "released_threads_clearances_tolerances_and_guarding"],
+        "boundary": "Guide, boss and visual-cylinder envelopes express simulation/visual geometry and kinematic centres. They are not released linear-bearing bores, clevis-pin diameters, threads, or chassis hole sizes."
+      },
+      "coordinate_contract": {
+        "authoritative_inputs": [
+          {"mount_parent": "base_link", "mount_joint": "cleaning_mechanism_mount_joint", "mount_relative_xyz_m": [0.000, 0.000, 0.000], "rpy_rad": [0.000, 0.000, 0.000], "base_footprint_base_link_xyz_m": [0.000, 0.000, 0.1651]},
+          {"joint": "cleaning_lift_joint", "parent_link": "cleaning_mechanism_mount_link", "child_link": "cleaning_lift_carriage_link", "zero_xyz_m": [0.000, 0.000, 0.045], "axis": [0.000, 0.000, -1.000], "travel_m": [0.000, 0.100]},
+          {"fixed_interface": "lift_actuator_body", "part_local_xyz_m": [0.000, 0.180, 0.020]},
+          {"moving_interface": "lift_actuator_rod", "carriage_local_xyz_m": [0.000, 0.180, 0.010], "clevis_relative_xyz_m": [0.000, 0.000, 0.105]}
+        ],
+        "pending_native_export_inputs": ["chassis_datum_and_attachment_pattern", "guide_parallelism_and_squareness_tolerances", "carriage_alignment_and_work_pose_measurement"],
+        "boundary": "The q=0/q=0.100 m simulation poses are assembly inputs; no native model may call either a verified ground-contact or production alignment result."
+      },
+      "interface_contract": {
+        "authoritative_inputs": [
+          {"interface": "chassis_to_cleaning_mount", "parent_link": "base_link", "mount_frame_main_rail_m": [0.340, 0.055, 0.045], "hole_pattern_status": "pending_chassis_interface"},
+          {"interface": "four_guide_axes", "centres_m": [[0.180, 0.250], [0.180, -0.250], [-0.180, 0.250], [-0.180, -0.250]], "source": "cleaning_mechanism.xacro guide macro and lift_carriage mesh"},
+          {"interface": "lift_actuator", "body_mount_m": [0.000, 0.180, 0.020], "rod_mount_m": [0.000, 0.180, 0.010], "stroke_m": 0.100, "supplier_interface_status": "pending_Actuonix_and_clevis_controlled_data"}
+        ],
+        "pending_native_export_inputs": ["chassis_hole_pattern", "linear_bearing_and_guide_fit", "P16_clevis_pin_and_mounting_pattern", "brush_roller_squeegee_load_case_and_guarding"],
+        "boundary": "The visual guide columns and lift linkage cannot define purchased bearing fits or actuator mounting holes."
+      },
+      "material_boundary": {
+        "authoritative_inputs": [
+          {"candidate_families": ["aluminum_alloy_plate_or_extrusion", "corrosion_protected_structural_steel", "stainless_steel_for_wet_exposure_interfaces"], "source": "mechanical_manufacturing_preparation_draft.yaml structural_project_load_paths and wet_waste_and_recovery_path"}
+        ],
+        "pending_native_export_inputs": ["material_grade_and_finish", "chemical_cleaner_exposure_definition", "fatigue_and_vibration_load_basis", "wear_bushing_and_bearing_materials"],
+        "boundary": "No material or coating is selected by the grey/green mesh colours or URDF collision boxes."
+      },
+      "mass_inertia_contract": {
+        "authoritative_inputs": [
+          {"simulation_allocations_kg": {"cleaning_mechanism_mount": 0.650, "four_guide_columns_total": 0.440, "lift_carriage": 0.750, "two_slider_plates_total": 0.440}, "source": "cleaning_mechanism.xacro lines 185-315"},
+          {"bom_row": "cleaning_recovery_system_nominal", "nominal_mass_kg": 11.125, "scope": "integrated_cleaning_system_not_part_mass", "source": "manufacturing_bom.csv"}
+        ],
+        "pending_native_export_inputs": ["bracket_only_native_CAD_mass_rollup", "selected_guides_bearings_actuator_and_fastener_masses", "physical_weighing", "validated_CoM_and_inertia"],
+        "boundary": "The listed allocations are not a released bracket mass or inertia; the 11.125 kg BOM row includes equipment outside this work package."
+      },
+      "dependencies": [
+        "base-link/chassis controlled mounting interface",
+        "linear-guide, bearing and Actuonix controlled interface data",
+        "brush, roller, squeegee and recovery-hose load/clearance package",
+        "dynamic alignment, guarding and corrosion review",
+        "native B-rep feature model with no mesh import"
+      ],
+      "planned_native_export": {
+        "native_source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/cleaning/cleaning_head_brackets.FCStd",
+        "step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/cleaning/cleaning_head_brackets.step",
+        "must_not_exist_yet": true,
+        "export_preconditions": ["chassis_and_supplier_interfaces_released", "guide_alignment_and_load_cases_reviewed", "native_parametric_feature_model_reviewed", "non_faceted_STEP_preflight_passed"]
+      }
+    },
+    {
+      "id": "storage_frame",
+      "status": "design_input_pending_native_export",
+      "scope": "Project-authored payload-deck storage mount tray/frame: tray plate, two longitudinal rails, two transverse rails and six fastener datums. Dry bin, wastewater tank, latches and fluid hardware remain dependent assemblies.",
+      "evidence_sources": [
+        {"path": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py", "locator": "storage_mount() lines 575-584", "role": "part-local visual dimensions"},
+        {"path": "config/high_fidelity_vehicle/formal_vehicle_layout.yaml", "locator": "installation_frames.payload_deck_link and storage", "role": "base_footprint reference and storage capacities"},
+        {"path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/storage_system.xacro", "locator": "high_fidelity_storage_system lines 68-104 and 320-322", "role": "tray, bin and tank transforms and inertial allocation"},
+        {"path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro", "locator": "high_fidelity_storage_system invocation lines 40-45", "role": "top-level parent-link authority"},
+        {"path": "config/high_fidelity_vehicle/manufacturing_bom.csv", "locator": "storage_waste_system_nominal row", "role": "integrated mass-budget boundary"}
+      ],
+      "source_meshes": [
+        {
+          "generator": {
+            "path": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py",
+            "locator": "storage_mount() lines 575-584",
+            "role": "project visual parameter source"
+          },
+          "source_asset": "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/storage_mount_tray.stl",
+          "source_definition": "storage_parts:storage_mount_tray.stl",
+          "status": "visual_or_simulation_dimension_input_not_native_brep"
+        }
+      ],
+      "dimension_contract": {
+        "authoritative_inputs": [
+          {"feature": "storage_mount_tray", "size_m": [0.570, 0.620, 0.012], "part_local_center_m": [0.000, 0.000, 0.000]},
+          {"feature": "longitudinal_rails", "count": 2, "size_m": [0.040, 0.620, 0.055], "part_local_centres_m": [[-0.265, 0.000, -0.022], [0.265, 0.000, -0.022]]},
+          {"feature": "transverse_rails", "count": 2, "size_m": [0.520, 0.026, 0.035], "part_local_centres_m": [[0.000, -0.285, -0.018], [0.000, 0.285, -0.018]]},
+          {"feature": "six_visual_fastener_envelopes", "count": 6, "part_local_xy_m": [[-0.240, -0.275], [-0.240, 0.275], [0.000, -0.275], [0.000, 0.275], [0.240, -0.275], [0.240, 0.275]], "source_cylinder_diameter_m": 0.010, "source_cylinder_height_m": 0.018, "part_local_z_m": 0.000},
+          {"feature": "dry_bin_usable_internal_volume", "dimensions_m": [0.500, 0.375, 0.240], "usable_volume_l": 40.000},
+          {"feature": "wastewater_tank_internal_volume", "dimensions_m": [0.350, 0.250, 0.160], "final_usable_capacity_l": 8.300}
+        ],
+        "pending_native_export_inputs": ["payload_deck_hole_pattern_and_allowable_load", "bin_and_tank_mating-hole_patterns", "released_fastener_threads_and_service_access_clearances", "wet_load_and_slamming_load_cases"],
+        "boundary": "The six 10 mm visual cylinders establish positions only. They are not released tray holes or fasteners, and container capacities do not determine frame strength."
+      },
+      "coordinate_contract": {
+        "authoritative_inputs": [
+          {"part_local_datum": "storage_system_mount_link", "parent_link": "payload_deck_link", "parent_relative_xyz_m": [0.000, 0.000, 0.000], "rpy_rad": [0.000, 0.000, 0.000], "base_footprint_xyz_m": [0.000, 0.000, 0.3691]},
+          {"dependent_mount": "dry_bin_mount_joint", "storage_frame_local_xyz_m": [-0.205, 0.160, 0.200], "rpy_rad": [0.000, 0.000, 0.000]},
+          {"dependent_mount": "wastewater_tank_mount_joint", "storage_frame_local_xyz_m": [-0.205, -0.245, 0.135], "rpy_rad": [0.000, 0.000, 0.000]},
+          {"dependent_mount": "dry_wet_storage_partition_joint", "storage_frame_local_xyz_m": [-0.205, -0.055, 0.200], "rpy_rad": [0.000, 0.000, 0.000]}
+        ],
+        "pending_native_export_inputs": ["payload_deck_datum_and_flatness", "container_service_clearance_stackup", "loaded_CoG_and_slosh_position_cases"],
+        "boundary": "The zero transform from payload deck to the frame preserves the current URDF package location only; it is not a survey or a deck-flatness specification."
+      },
+      "interface_contract": {
+        "authoritative_inputs": [
+          {"interface": "payload_deck_to_storage_frame", "tray_envelope_m": [0.570, 0.620, 0.012], "fastener_datum_count": 6, "hole_pattern_status": "pending_controlled_A300_payload_deck"},
+          {"interface": "dry_bin_support", "storage_frame_local_xyz_m": [-0.205, 0.160, 0.200], "dry_bin_internal_dimensions_m": [0.500, 0.375, 0.240]},
+          {"interface": "wastewater_tank_support", "storage_frame_local_xyz_m": [-0.205, -0.245, 0.135], "wet_internal_dimensions_m": [0.350, 0.250, 0.160], "final_usable_capacity_l": 8.300}
+        ],
+        "pending_native_export_inputs": ["deck_hole_pattern", "dry_bin_and_tank_mating_patterns", "drain_hose_and_lid_service_clearance", "sealing_and_corrosion_definition"],
+        "boundary": "The frame must not claim a liquid seal, vessel pressure rating, or tank mounting pattern from the tray mesh or URDF fixed joints."
+      },
+      "material_boundary": {
+        "authoritative_inputs": [
+          {"candidate_families": ["aluminum_alloy_plate_or_extrusion", "corrosion_protected_structural_steel", "chemical_compatible_isolation_or_seal_materials_where_required"], "source": "mechanical_manufacturing_preparation_draft.yaml structural_project_load_paths and wet_waste_and_recovery_path"}
+        ],
+        "pending_native_export_inputs": ["material_grade_and_finish", "fluid_and_cleaner_compatibility", "galvanic_pairing", "wet_load_vibration_and_slamming_basis"],
+        "boundary": "No material, coating, drain seal, or tank wall is released by the tray mesh or storage collision boxes."
+      },
+      "mass_inertia_contract": {
+        "authoritative_inputs": [
+          {"simulation_link": "storage_system_mount_link", "mass_kg": 0.900, "inertia_box_size_m": [0.570, 0.620, 0.012], "source": "storage_system.xacro lines 84-93"},
+          {"bom_row": "storage_waste_system_nominal", "nominal_mass_kg": 10.362001, "scope": "integrated_storage_system_not_frame_mass", "source": "manufacturing_bom.csv"}
+        ],
+        "pending_native_export_inputs": ["frame_only_native_CAD_mass_rollup", "dry_bin_tank_hardware_and_fastener_masses", "full_and_empty_load_case_weighing", "validated_CoM_and_inertia"],
+        "boundary": "The 0.9 kg mount-link allocation is a simulation target only; the BOM mass includes bins, tanks and other storage hardware and cannot be used as frame mass."
+      },
+      "dependencies": [
+        "A300 payload-deck controlled interface",
+        "dry-bin and wastewater-tank controlled mating interfaces",
+        "wet load, slosh, vibration and vehicle-CoG review",
+        "drain, lid and service-clearance package",
+        "native B-rep feature model with no mesh import"
+      ],
+      "planned_native_export": {
+        "native_source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/storage/storage_frame.FCStd",
+        "step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/storage/storage_frame.step",
+        "must_not_exist_yet": true,
+        "export_preconditions": ["deck_and_container_interfaces_released", "wet_load_and_service_clearance_reviews_closed", "native_parametric_feature_model_reviewed", "non_faceted_STEP_preflight_passed"]
+      }
+    }
+  ]
+}

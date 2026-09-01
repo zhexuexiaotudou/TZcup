@@ -4,8 +4,9 @@ coverage_server:
     action_server_result_timeout: 30.0
     coordinates_in_cartesian_frame: true
     robot_width: 0.72
-    # The coverage server only produces swaths for this profile. Runtime
-    # connectors are rebuilt as rotate/translate/rotate semantic components.
+    # Legacy/demo template only.  Formal A300 launch replaces this value with
+    # the 1.32 m declaration from formal_motion_cleaning_profile.yaml before
+    # coverage execution; runtime connectors remain rotate/translate/rotate.
     operation_width: 0.52
     min_turning_radius: 0.40
     linear_curv_change: 200.0

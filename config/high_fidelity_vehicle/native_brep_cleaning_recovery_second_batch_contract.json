@@ -1,0 +1,89 @@
+{
+  "schema_version": 1,
+  "document_id": "tzcup_native_brep_cleaning_recovery_second_batch_parametric_contract_v1",
+  "status": "design_input_pending_native_export",
+  "claim_boundary": "Static, project-authored design inputs only. This contract supports an independent CadQuery feature rebuild of listed cleaning and recovery components. It creates no FCStd/STEP, manufacturing drawing, material release, supplier approval, tolerance specification, pressure proof, fluid-path certification, mass-property proof, or as-built evidence. No shape is recovered from an STL.",
+  "prohibited_methods": ["mesh_to_step_conversion", "faceted_or_tessellated_step_export", "mesh_import_as_native_brep_substitute", "placeholder_fcstd_or_step_artifact", "inferring_holes_threads_or_material_from_visual_meshes"],
+  "coordinate_system": {
+    "units": "m_and_rad",
+    "root_frame": "base_footprint",
+    "local_part_rule": "Construct in the stated local datum, then assemble through the cited Xacro transform. Do not use mesh vertices or URDF collision primitives as manufacturing features.",
+    "sources": [
+      {"path": "config/high_fidelity_vehicle/formal_vehicle_layout.yaml", "locator": "installation_frames, storage, cleaning_geometry", "role": "installation and envelope authority"},
+      {"path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/cleaning_mechanism.xacro", "locator": "side brush, central roller, squeegee, nozzle and coupling links", "role": "cleaning assembly authority"},
+      {"path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/storage_system.xacro", "locator": "deposit gate/chute and wastewater tank links", "role": "storage assembly authority"}
+    ]
+  },
+  "items": [
+    {
+      "id": "side_brush_drive", "status": "design_input_pending_native_export",
+      "scope": "Project-authored side-brush disk and rotor shaft, instantiated symmetrically for left/right mechanisms. Bristle bundles remain a flexible runtime model, not a manufacturing B-rep in this batch.",
+      "evidence_sources": ["generate_cleaning_storage_meshes.py: shaft(), side_brush_disk()", "cleaning_mechanism.xacro: hf_side_brush_assembly", "formal_vehicle_layout.yaml: left/right_side_brush_link", "manufacturing_bom.csv: cleaning_recovery_system_nominal"],
+      "source_meshes": ["meshes/project/cleaning/side_brush_rotor_shaft.stl", "meshes/project/cleaning/side_brush_disk.stl"],
+      "installation": {"left_base_footprint_xyz_m": [0.385, 0.545, 0.183], "right_base_footprint_xyz_m": [0.385, -0.545, 0.183], "disk_relative_xyz_m": [0.0, 0.0, -0.052]},
+      "geometry": {"disk": {"radius_m": 0.072, "thickness_m": 0.012, "hub_radius_m": 0.020, "hub_height_m": 0.028, "hub_z_m": 0.014, "rib_size_m": [0.050, 0.008, 0.008], "rib_centre_m": [0.043, 0.0, 0.008]}, "rotor_shaft": {"upper_radius_m": 0.006, "upper_length_m": 0.028, "upper_z_m": 0.014, "lower_radius_m": 0.004, "lower_length_m": 0.046, "lower_z_m": -0.023}},
+      "pending_manufacturing_inputs": ["motor_output_interface", "disk_retention_feature", "shaft_material_and_heat_treatment", "bristle_retention", "all_holes_threads_tolerances_and_balance"],
+      "planned_native_export": {"authoritative_editable_source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_recovery_second_batch.py", "optional_future_fcstd_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/cleaning/side_brush_drive.FCStd", "step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/cleaning/side_brush_drive.step", "assembly_step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/cleaning_recovery_second_batch.step", "must_not_exist_yet": true, "export_preconditions": ["motor_interface_released", "balance_and_guarding_reviewed", "native_parametric_feature_model_reviewed", "non_faceted_STEP_preflight_passed"]}
+    },
+    {
+      "id": "central_roller", "status": "design_input_pending_native_export",
+      "scope": "Rigid central roller core, shaft and end hubs. The six helical elastomer bars are an explicitly non-manufacturing flexible runtime/sweep representation.",
+      "evidence_sources": ["generate_cleaning_storage_meshes.py: central_roller()", "cleaning_mechanism.xacro: central_roller_link", "formal_vehicle_layout.yaml: central_roller_link and central_roller_width_m", "manufacturing_bom.csv: cleaning_recovery_system_nominal"],
+      "source_meshes": ["meshes/project/cleaning/central_roller.stl"],
+      "installation": {"base_footprint_xyz_m": [0.155, 0.0, 0.200], "rpy_rad": [0.0, 1.571, 0.0], "axis": "y"},
+      "geometry": {"core": {"radius_m": 0.060, "length_m": 0.620}, "shaft": {"radius_m": 0.010, "length_m": 0.680}, "end_hubs": {"radius_m": 0.066, "thickness_m": 0.018, "centres_y_m": [-0.315, 0.315]}, "runtime_bristle_model": {"count": 6, "bar_diameter_m": 0.012, "sweep_radius_m": 0.100, "status": "flexible_runtime_model_not_manufacturing_brep"}},
+      "pending_manufacturing_inputs": ["bearing_and_motor_interfaces", "core_material_and_surface", "bristle_bar_material_and_attachment", "dynamic_balance", "all_holes_threads_tolerances_and_guarding"],
+      "planned_native_export": {"authoritative_editable_source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_recovery_second_batch.py", "optional_future_fcstd_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/cleaning/central_roller.FCStd", "step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/cleaning/central_roller.step", "assembly_step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/cleaning_recovery_second_batch.step", "must_not_exist_yet": true, "export_preconditions": ["bearing_motor_and_bristle_interfaces_released", "balance_and_guarding_reviewed", "native_parametric_feature_model_reviewed", "non_faceted_STEP_preflight_passed"]}
+    },
+    {
+      "id": "squeegee_backing", "status": "design_input_pending_native_export",
+      "scope": "Project-authored squeegee backing rail and five mounting-pad envelopes; rubber blades, spring force law and fasteners are outside manufacturing release.",
+      "evidence_sources": ["generate_cleaning_storage_meshes.py: squeegee_backing()", "cleaning_mechanism.xacro: squeegee_link and squeegee_pitch_joint", "formal_vehicle_layout.yaml: squeegee_link and squeegee_width_m", "manufacturing_bom.csv: squeegee_suction_hoses"],
+      "source_meshes": ["meshes/project/cleaning/squeegee_backing.stl"],
+      "installation": {"base_footprint_xyz_m": [-0.445, 0.0, 0.1525], "width_m": 0.800, "pitch_axis": "y"},
+      "geometry": {"rail_size_m": [0.032, 0.800, 0.055], "rail_centre_m": [0.0, 0.0, 0.015], "mounting_pad_centres_y_m": [-0.360, -0.180, 0.0, 0.180, 0.360], "mounting_pad_radius_m": 0.004, "mounting_pad_length_m": 0.040, "mounting_pad_x_m": 0.0, "mounting_pad_z_m": 0.040},
+      "pending_manufacturing_inputs": ["blade_clamp_and_replaceability", "spring_carrier_interface", "rail_material_and_corrosion_finish", "all_holes_threads_tolerances_and_ground-contact_wear_spec"],
+      "planned_native_export": {"authoritative_editable_source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_recovery_second_batch.py", "optional_future_fcstd_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/cleaning/squeegee_backing.FCStd", "step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/cleaning/squeegee_backing.step", "assembly_step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/cleaning_recovery_second_batch.step", "must_not_exist_yet": true, "export_preconditions": ["blade_and_carrier_interfaces_released", "wear_and_compliance_reviewed", "native_parametric_feature_model_reviewed", "non_faceted_STEP_preflight_passed"]}
+    },
+    {
+      "id": "suction_nozzle", "status": "design_input_pending_native_export",
+      "scope": "Project-authored suction-nozzle housing envelope and outlet boss; fluid passage, seal and hose interface are pending controlled design inputs.",
+      "evidence_sources": ["generate_cleaning_storage_meshes.py: suction_nozzle()", "cleaning_mechanism.xacro: suction_nozzle_link", "formal_vehicle_layout.yaml: suction_nozzle_link", "manufacturing_bom.csv: squeegee_suction_hoses"],
+      "source_meshes": ["meshes/project/cleaning/suction_nozzle.stl"],
+      "installation": {"base_footprint_xyz_m": [-0.405, 0.0, 0.1475], "squeegee_relative_xyz_m": [0.040, 0.0, -0.005], "collision_envelope_m": [0.100, 0.650, 0.085]},
+      "geometry": {"top_rail_size_m": [0.100, 0.650, 0.025], "top_rail_centre_m": [0.0, 0.0, 0.010], "side_wall_size_m": [0.014, 0.650, 0.070], "side_wall_centres_x_m": [-0.045, 0.045], "side_wall_z_m": -0.022, "outlet_radius_m": 0.035, "outlet_height_m": 0.060, "outlet_centre_m": [0.040, 0.0, 0.050]},
+      "pending_manufacturing_inputs": ["fluid_bore_and_pressure_drop", "hose_and_seal_interface", "chemical_compatible_material", "all_holes_threads_tolerances_and_scrape_clearance"],
+      "planned_native_export": {"authoritative_editable_source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_recovery_second_batch.py", "optional_future_fcstd_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/cleaning/suction_nozzle.FCStd", "step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/cleaning/suction_nozzle.step", "assembly_step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/cleaning_recovery_second_batch.step", "must_not_exist_yet": true, "export_preconditions": ["fluid_and_hose_interfaces_released", "clearance_and_cleanability_reviewed", "native_parametric_feature_model_reviewed", "non_faceted_STEP_preflight_passed"]}
+    },
+    {
+      "id": "quick_coupling", "status": "design_input_pending_native_export",
+      "scope": "Project-authored observable quick-coupling outer envelope only; no internal valve, thread, seal groove or supplier mating interface is asserted.",
+      "evidence_sources": ["generate_cleaning_storage_meshes.py: coupling()", "cleaning_mechanism.xacro: wastewater_delivery_coupling_link", "storage_system.xacro: wastewater_inlet_coupling_link", "manufacturing_bom.csv: recovery_filter and charge_and_drain"],
+      "source_meshes": ["meshes/project/cleaning/quick_coupling.stl", "meshes/project/storage/wastewater_inlet_coupling.stl"],
+      "installation": {"cleaning_parent": "recovery_pump_head_link", "cleaning_relative_xyz_m": [0.0, -0.095, 0.0], "axis": "y"},
+      "geometry": {"body_radius_m": 0.018, "body_length_m": 0.060, "collar_radius_m": 0.020, "collar_length_m": 0.005, "collar_y_m": -0.022, "tail_radius_m": 0.020, "tail_length_m": 0.065, "tail_y_m": 0.045},
+      "pending_manufacturing_inputs": ["supplier_standard_and_mating_half", "internal_bore_valve_and_seal", "pressure_temperature_and_chemical_rating", "all_threads_holes_tolerances_and_material"],
+      "planned_native_export": {"authoritative_editable_source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_recovery_second_batch.py", "optional_future_fcstd_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/recovery/quick_coupling.FCStd", "step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/recovery/quick_coupling.step", "assembly_step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/cleaning_recovery_second_batch.step", "must_not_exist_yet": true, "export_preconditions": ["supplier_interface_released", "pressure_and_material_reviews_closed", "native_parametric_feature_model_reviewed", "non_faceted_STEP_preflight_passed"]}
+    },
+    {
+      "id": "dry_deposit_gate_chute", "status": "design_input_pending_native_export",
+      "scope": "Project-authored deposit gate, hinge envelope and open-walled gravity chute. Actuator and horn are excluded vendor/interface dependencies.",
+      "evidence_sources": ["generate_cleaning_storage_meshes.py: dry_deposit_gate(), dry_deposit_chute()", "storage_system.xacro: dry_deposit_gate_link and dry_deposit_chute_link", "formal_vehicle_layout.yaml: dry_bin_link and dry-bin volume", "manufacturing_bom.csv: dry_bin"],
+      "source_meshes": ["meshes/project/storage/dry_deposit_gate.stl", "meshes/project/storage/dry_deposit_chute.stl"],
+      "installation": {"parent_link": "dry_deposit_hopper_link", "gate_hinge_xyz_m": [-0.095, 0.0, 0.044], "chute_relative_xyz_m": [0.0, 0.0, -0.180], "axis": "y"},
+      "geometry": {"gate": {"plate_size_m": [0.184, 0.158, 0.008], "plate_centre_m": [0.092, 0.0, 0.0], "stiffener_size_m": [0.020, 0.120, 0.020], "stiffener_centre_m": [0.172, 0.0, 0.014], "hinge_radius_m": 0.006, "hinge_length_m": 0.170, "hinge_centre_m": [0.004, 0.0, 0.0]}, "chute": {"x_wall_size_m": [0.008, 0.100, 0.350], "y_wall_size_m": [0.109, 0.008, 0.350], "wall_centres_x_m": [-0.0585, 0.0585], "wall_centres_y_m": [-0.046, 0.046], "wall_centre_z_m": 0.0, "clear_bore_m": [0.109, 0.084]}},
+      "pending_manufacturing_inputs": ["hinge_bearing_and_actuator_interface", "gate_seal_and_object_clearance", "wall_thickness_and_material", "all_holes_threads_tolerances_and_latch_safety"],
+      "planned_native_export": {"authoritative_editable_source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_recovery_second_batch.py", "optional_future_fcstd_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/storage/dry_deposit_gate_chute.FCStd", "step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/storage/dry_deposit_gate_chute.step", "assembly_step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/cleaning_recovery_second_batch.step", "must_not_exist_yet": true, "export_preconditions": ["gate_actuator_and_hinge_interfaces_released", "object_drop_and_service_reviewed", "native_parametric_feature_model_reviewed", "non_faceted_STEP_preflight_passed"]}
+    },
+    {
+      "id": "wastewater_tank_pan_baffles", "status": "design_input_pending_native_export",
+      "scope": "Project-authored wastewater tank floor/pan, four wall envelopes and anti-slosh baffle. Lid, drain, vent, inlet and all liquid sealing details remain pending dependencies.",
+      "evidence_sources": ["generate_cleaning_storage_meshes.py: bin_floor(), wastewater_baffle", "storage_system.xacro: wastewater_tank_link and wastewater_baffle_link", "formal_vehicle_layout.yaml: wastewater_tank and final_usable_capacity_l", "manufacturing_bom.csv: wastewater_tank"],
+      "source_meshes": ["meshes/project/storage/wastewater_tank_floor.stl", "meshes/project/storage/wastewater_baffle.stl"],
+      "installation": {"base_footprint_xyz_m": [-0.205, -0.245, 0.5041], "internal_dimensions_m": [0.350, 0.250, 0.160], "final_usable_capacity_l": 8.300},
+      "geometry": {"floor_size_m": [0.358, 0.258, 0.008], "floor_centre_m": [0.0, 0.0, -0.084], "end_wall_size_m": [0.004, 0.258, 0.168], "end_wall_centres_x_m": [-0.177, 0.177], "side_wall_size_m": [0.350, 0.004, 0.168], "side_wall_centres_y_m": [-0.127, 0.127], "baffle_size_m": [0.004, 0.230, 0.125], "baffle_centre_m": [0.0, 0.0, 0.0]},
+      "pending_manufacturing_inputs": ["tank_wall_and_weld_or_bond_design", "lid_drain_vent_and_inlet_interfaces", "sealing_pressure_and_chemical_compatibility", "sloshing_loads", "all_holes_threads_tolerances_and_material"],
+      "planned_native_export": {"authoritative_editable_source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_recovery_second_batch.py", "optional_future_fcstd_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/storage/wastewater_tank_pan_baffles.FCStd", "step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/storage/wastewater_tank_pan_baffles.step", "assembly_step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/cleaning_recovery_second_batch.step", "must_not_exist_yet": true, "export_preconditions": ["fluid_interfaces_and_sealing_definition_released", "pressure_slosh_and_vehicle_cog_reviews_closed", "native_parametric_feature_model_reviewed", "non_faceted_STEP_preflight_passed"]}
+    }
+  ]
+}

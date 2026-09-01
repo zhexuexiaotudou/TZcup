@@ -71,7 +71,7 @@
       <pose>2.55 2.05 1.32 0 0.20 -2.46</pose>
       <link name="camera_link">
         <sensor name="front_left" type="camera">
-          <always_on>true</always_on><update_rate>3</update_rate><topic>/formal_visual/front_left</topic>
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/front_left</topic>
           <camera><horizontal_fov>0.88</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.1</near><far>20</far></clip></camera>
         </sensor>
       </link>
@@ -81,7 +81,7 @@
       <pose>-2.50 -2.00 1.32 0 0.20 0.69</pose>
       <link name="camera_link">
         <sensor name="rear_right" type="camera">
-          <always_on>true</always_on><update_rate>3</update_rate><topic>/formal_visual/rear_right</topic>
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/rear_right</topic>
           <camera><horizontal_fov>0.88</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.1</near><far>20</far></clip></camera>
         </sensor>
       </link>
@@ -91,38 +91,38 @@
       <pose>0 0 3.20 0 1.570796 0</pose>
       <link name="camera_link">
         <sensor name="top_cleaning" type="camera">
-          <always_on>true</always_on><update_rate>3</update_rate><topic>/formal_visual/top_cleaning</topic>
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/top_cleaning</topic>
           <camera><horizontal_fov>0.75</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.1</near><far>20</far></clip></camera>
         </sensor>
       </link>
     </model>
     <model name="sensor_tower_detail_camera">
       <static>true</static>
-      <pose>1.45 1.30 1.46 0 0.10 -2.42</pose>
+      <pose>1.45 1.30 1.46 0 0.143704 -2.240829</pose>
       <link name="camera_link">
         <sensor name="sensor_tower_detail" type="camera">
-          <always_on>true</always_on><update_rate>3</update_rate><topic>/formal_visual/sensor_tower_detail</topic>
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/sensor_tower_detail</topic>
           <camera><horizontal_fov>0.55</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.1</near><far>20</far></clip></camera>
         </sensor>
       </link>
     </model>
     <model name="front_sensor_detail_camera">
       <static>true</static>
-      <pose>1.60 0 0.76 0 0.06 3.141593</pose>
+      <pose>1.60 0 0.76 0 0.142661 3.141593</pose>
       <link name="camera_link">
         <sensor name="front_sensor_detail" type="camera">
-          <always_on>true</always_on><update_rate>3</update_rate><topic>/formal_visual/front_sensor_detail</topic>
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/front_sensor_detail</topic>
           <camera><horizontal_fov>0.52</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.1</near><far>20</far></clip></camera>
         </sensor>
       </link>
     </model>
     <model name="arm_mount_detail_camera">
       <static>true</static>
-      <pose>1.45 -1.45 1.32 0 0.12 2.36</pose>
+      <pose>1.45 -1.45 1.32 0 0.310000 2.394637</pose>
       <link name="camera_link">
         <sensor name="arm_mount_detail" type="camera">
-          <always_on>true</always_on><update_rate>3</update_rate><topic>/formal_visual/arm_mount_detail</topic>
-          <camera><horizontal_fov>0.66</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.1</near><far>20</far></clip></camera>
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/arm_mount_detail</topic>
+          <camera><horizontal_fov>0.80</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.1</near><far>20</far></clip></camera>
         </sensor>
       </link>
     </model>
@@ -131,8 +131,134 @@
       <pose>-0.205 1.25 1.28 0 0.22 -1.5708</pose>
       <link name="camera_link">
         <sensor name="dry_deposition_detail" type="camera">
-          <always_on>true</always_on><update_rate>3</update_rate><topic>/formal_visual/dry_deposition_detail</topic>
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/dry_deposition_detail</topic>
           <camera><horizontal_fov>0.52</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.1</near><far>20</far></clip></camera>
+        </sensor>
+      </link>
+    </model>
+
+    <!-- The following four views close the previous visual blind spots.  In
+         product mode they prove the installed covers and external service
+         interfaces.  With bodywork_visible:=false the same calibrated cameras
+         expose the cleaning drive, rear safety/drain hardware, power/compute
+         bay, and separated dry/wet storage and recovery plumbing. -->
+    <model name="cleaning_head_detail_camera">
+      <static>true</static>
+      <pose>1.35 1.15 0.35 0 0.12 -2.436</pose>
+      <link name="camera_link">
+        <sensor name="cleaning_head_detail" type="camera">
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/cleaning_head_detail</topic>
+          <camera><horizontal_fov>0.70</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.08</near><far>20</far></clip></camera>
+        </sensor>
+      </link>
+    </model>
+    <model name="rear_service_detail_camera">
+      <static>true</static>
+      <pose>-1.45 0 0.65 0 0.10 0</pose>
+      <link name="camera_link">
+        <sensor name="rear_service_detail" type="camera">
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/rear_service_detail</topic>
+          <camera><horizontal_fov>0.66</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.08</near><far>20</far></clip></camera>
+        </sensor>
+      </link>
+    </model>
+    <model name="power_compute_detail_camera">
+      <static>true</static>
+      <pose>1.35 -1.25 0.95 0 0.130680 2.214297</pose>
+      <link name="camera_link">
+        <sensor name="power_compute_detail" type="camera">
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/power_compute_detail</topic>
+          <camera><horizontal_fov>0.62</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.08</near><far>20</far></clip></camera>
+        </sensor>
+      </link>
+    </model>
+    <model name="storage_recovery_detail_camera">
+      <static>true</static>
+      <pose>-1.35 -1.15 0.90 0 0.15 0.705</pose>
+      <link name="camera_link">
+        <sensor name="storage_recovery_detail" type="camera">
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/storage_recovery_detail</topic>
+          <camera><horizontal_fov>0.62</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.08</near><far>20</far></clip></camera>
+        </sensor>
+      </link>
+    </model>
+    <model name="rear_left_sensor_detail_camera">
+      <static>true</static>
+      <pose>-1.35 1.15 0.95 0 0.289 -0.836</pose>
+      <link name="camera_link">
+        <sensor name="rear_left_sensor_detail" type="camera">
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/rear_left_sensor_detail</topic>
+          <camera><horizontal_fov>0.48</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.08</near><far>20</far></clip></camera>
+        </sensor>
+      </link>
+    </model>
+    <model name="rear_right_sensor_detail_camera">
+      <static>true</static>
+      <pose>-1.35 -1.15 0.95 0 0.289 0.836</pose>
+      <link name="camera_link">
+        <sensor name="rear_right_sensor_detail" type="camera">
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/rear_right_sensor_detail</topic>
+          <camera><horizontal_fov>0.48</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.08</near><far>20</far></clip></camera>
+        </sensor>
+      </link>
+    </model>
+    <model name="drivetrain_detail_camera">
+      <static>true</static>
+      <pose>1.15 -1.00 0.30 0 0.084 2.505</pose>
+      <link name="camera_link">
+        <sensor name="drivetrain_detail" type="camera">
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/drivetrain_detail</topic>
+          <camera><horizontal_fov>0.60</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.08</near><far>20</far></clip></camera>
+        </sensor>
+      </link>
+    </model>
+    <model name="inertial_power_detail_camera">
+      <static>true</static>
+      <pose>1.15 1.10 0.52 0 0.0696 -2.3784</pose>
+      <link name="camera_link">
+        <sensor name="inertial_power_detail" type="camera">
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/inertial_power_detail</topic>
+          <camera><horizontal_fov>0.52</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.08</near><far>20</far></clip></camera>
+        </sensor>
+      </link>
+    </model>
+    <model name="dry_deposition_internal_camera">
+      <static>true</static>
+      <pose>-1.20 0.75 1.30 0 0.203 -0.623</pose>
+      <link name="camera_link">
+        <sensor name="dry_deposition_internal" type="camera">
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/dry_deposition_internal</topic>
+          <camera><horizontal_fov>0.58</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.08</near><far>20</far></clip></camera>
+        </sensor>
+      </link>
+    </model>
+    <model name="power_safety_internal_camera">
+      <static>true</static>
+      <pose>1.15 -1.00 0.80 0 0.269 2.380</pose>
+      <link name="camera_link">
+        <sensor name="power_safety_internal" type="camera">
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/power_safety_internal</topic>
+          <camera><horizontal_fov>0.72</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.08</near><far>20</far></clip></camera>
+        </sensor>
+      </link>
+    </model>
+    <model name="charge_interface_detail_camera">
+      <static>true</static>
+      <pose>0.50 1.20 0.70 0 0.240 -1.874</pose>
+      <link name="camera_link">
+        <sensor name="charge_interface_detail" type="camera">
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/charge_interface_detail</topic>
+          <camera><horizontal_fov>0.50</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.08</near><far>20</far></clip></camera>
+        </sensor>
+      </link>
+    </model>
+    <model name="drain_interface_detail_camera">
+      <static>true</static>
+      <pose>-1.20 -1.00 0.75 0 0.247 0.775</pose>
+      <link name="camera_link">
+        <sensor name="drain_interface_detail" type="camera">
+          <always_on>true</always_on><update_rate>0.2</update_rate><topic>/formal_visual/drain_interface_detail</topic>
+          <camera><horizontal_fov>0.54</horizontal_fov><image><width>1600</width><height>1000</height><format>R8G8B8</format></image><clip><near>0.08</near><far>20</far></clip></camera>
         </sensor>
       </link>
     </model>

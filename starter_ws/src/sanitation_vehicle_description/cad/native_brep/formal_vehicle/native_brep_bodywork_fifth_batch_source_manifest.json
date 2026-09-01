@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "manifest_id": "tzcup_native_brep_bodywork_fifth_batch_per_part_source_manifest_v1",
+  "status": "design_input_pending_native_export",
+  "claim_boundary": "Static source-integrity evidence only. SHA-256 binds the editable per-part CadQuery source to its 47-part design-input contract; it does not assert CadQuery execution, native export, FCStd/STEP creation, manufacturing release, material/tolerance/sealing/thermal/EMC closure or vehicle readiness.",
+  "source_files": [{"path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_bodywork_fifth_batch.py", "sha256": "8dfbcd277876a5435f2a9aaf7c2a136a4372e2fe1ab80643ef85d67b13c19ea6", "role": "authoritative_editable_per_part_parametric_cadquery_brep_source"}],
+  "design_inputs": [{"path": "config/high_fidelity_vehicle/native_brep_bodywork_fifth_batch_contract.json", "sha256": "adcb4e0697afbd55813af6086efdec677722baea748b3f3c80d6046ce77706df", "role": "machine_readable_47_part_geometry_and_pending_release_contract"}],
+  "prohibited_methods": ["mesh_to_step_conversion", "faceted_or_tessellated_step_export", "mesh_import_as_native_brep_substitute", "placeholder_fcstd_or_step_artifact"],
+  "verification": {"algorithm": "sha256", "command": "Get-FileHash -Algorithm SHA256 <each listed path>", "update_rule": "Update this manifest in the same reviewed change whenever its source or contract changes. Matching hashes never authorize CadQuery import or export."}
+}

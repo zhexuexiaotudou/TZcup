@@ -1,0 +1,184 @@
+{
+  "claim_boundary": "World preparation only. It proves neither Gazebo Transport nor ROS stream delivery; the formal 12-stream runtime collector remains required.",
+  "controller_runtime_binding": {
+    "controller_config_relative_to_install": "share/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml",
+    "controller_config_sha256": "cdbf6538c2f3de726f307345475a498545016c3447ee995c38cc645a8f0b04bd",
+    "plugin_filename": "gz_ros2_control-system",
+    "plugin_name": "gz_ros2_control::GazeboSimROS2ControlPlugin",
+    "portable_source_uri": "package://sanitation_vehicle_description/config/formal_vehicle_controllers.yaml",
+    "resolved_controller_config": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/install/share/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml",
+    "runtime_install_root": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/install"
+  },
+  "diagnostic_sensor_filter": null,
+  "diagnostic_skip_attachment_restoration": false,
+  "formal_eligible": true,
+  "model_initial_pose": "0 0 0.005 0 0 0",
+  "model_name": "tzcup_formal_sanitation_vehicle",
+  "output_world": "/mnt/f/Project/TZcup-integrated-functional-acceptance/reports/engineering/formal_vehicle_runtime_report.preembedded_sensor_world.sdf",
+  "output_world_sha256": "051c6406781252efd6a7afd275896581b3d9c05ad402fd40403f82fd8a733799",
+  "passed": true,
+  "report_id": "tzcup_formal_preembedded_sensor_world_v1",
+  "sensor_count": 22,
+  "sensors_restored_to_urdf_reference_links": [
+    {
+      "attachment_status": "restored_urdf_reference_link",
+      "converted_link": "central_roller_link",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "central_roller_link",
+      "sensor": "central_roller_ground_contact"
+    },
+    {
+      "attachment_status": "restored_reconstructed_fixed_reference_link",
+      "converted_link": "base_footprint",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "charge_receptacle_link",
+      "sensor": "charge_receptacle_contact_sensor"
+    },
+    {
+      "attachment_status": "restored_reconstructed_fixed_reference_link",
+      "converted_link": "dry_bin_lid_link",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "dry_deposit_chute_link",
+      "sensor": "dry_deposit_contact"
+    },
+    {
+      "attachment_status": "restored_reconstructed_fixed_reference_link",
+      "converted_link": "base_footprint",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "front_rgbd_link",
+      "sensor": "front_rgbd_d435_infra1"
+    },
+    {
+      "attachment_status": "restored_urdf_reference_link",
+      "converted_link": "base_footprint",
+      "local_pose": "0 -0.050 0 0 0 0",
+      "restored_link": "front_rgbd_link",
+      "sensor": "front_rgbd_d435_infra2"
+    },
+    {
+      "attachment_status": "restored_urdf_reference_link",
+      "converted_link": "base_footprint",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "front_rgbd_link",
+      "sensor": "front_rgbd_d435_rgbd"
+    },
+    {
+      "attachment_status": "restored_reconstructed_fixed_reference_link",
+      "converted_link": "base_footprint",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "bodywork_lower_tub_link",
+      "sensor": "front_safety_bumper_contact"
+    },
+    {
+      "attachment_status": "restored_urdf_reference_link",
+      "converted_link": "left_side_brush_link",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "left_side_brush_link",
+      "sensor": "left_side_brush_ground_contact"
+    },
+    {
+      "attachment_status": "restored_reconstructed_fixed_reference_link",
+      "converted_link": "base_footprint",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "lidar_3d_link",
+      "sensor": "mid360"
+    },
+    {
+      "attachment_status": "restored_reconstructed_fixed_reference_link",
+      "converted_link": "base_footprint",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "rear_left_fisheye_link",
+      "sensor": "rear_left_fisheye_imx291"
+    },
+    {
+      "attachment_status": "restored_reconstructed_fixed_reference_link",
+      "converted_link": "base_footprint",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "rear_right_fisheye_link",
+      "sensor": "rear_right_fisheye_imx291"
+    },
+    {
+      "attachment_status": "restored_urdf_reference_link",
+      "converted_link": "base_footprint",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "bodywork_lower_tub_link",
+      "sensor": "rear_safety_bumper_contact"
+    },
+    {
+      "attachment_status": "restored_urdf_reference_link",
+      "converted_link": "right_side_brush_link",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "right_side_brush_link",
+      "sensor": "right_side_brush_ground_contact"
+    },
+    {
+      "attachment_status": "restored_urdf_reference_link",
+      "converted_link": "squeegee_link",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "squeegee_link",
+      "sensor": "squeegee_blade_ground_contact"
+    },
+    {
+      "attachment_status": "restored_reconstructed_fixed_reference_link",
+      "converted_link": "squeegee_link",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "suction_nozzle_link",
+      "sensor": "suction_nozzle_ground_contact"
+    },
+    {
+      "attachment_status": "restored_reconstructed_fixed_reference_link",
+      "converted_link": "base_footprint",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "lidar_2d_link",
+      "sensor": "utm30lx"
+    },
+    {
+      "attachment_status": "restored_reconstructed_fixed_reference_link",
+      "converted_link": "base_footprint",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "imu_link",
+      "sensor": "vn100"
+    },
+    {
+      "attachment_status": "restored_reconstructed_fixed_reference_link",
+      "converted_link": "base_footprint",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "wastewater_drain_coupling_link",
+      "sensor": "wastewater_drain_coupling_contact_sensor"
+    },
+    {
+      "attachment_status": "restored_reconstructed_fixed_reference_link",
+      "converted_link": "ur5e_wrist_3_link",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "wrist_rgbd_link",
+      "sensor": "wrist_rgbd_d435_infra1"
+    },
+    {
+      "attachment_status": "restored_urdf_reference_link",
+      "converted_link": "ur5e_wrist_3_link",
+      "local_pose": "0 -0.050 0 0 0 0",
+      "restored_link": "wrist_rgbd_link",
+      "sensor": "wrist_rgbd_d435_infra2"
+    },
+    {
+      "attachment_status": "restored_urdf_reference_link",
+      "converted_link": "ur5e_wrist_3_link",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "wrist_rgbd_link",
+      "sensor": "wrist_rgbd_d435_rgbd"
+    },
+    {
+      "attachment_status": "restored_reconstructed_fixed_reference_link",
+      "converted_link": "base_footprint",
+      "local_pose": "0 0 0 0 0 0",
+      "restored_link": "gnss_antenna_link",
+      "sensor": "zed_f9p"
+    }
+  ],
+  "source_world": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/install/share/sanitation_vehicle_description/worlds/formal_vehicle_validation.sdf",
+  "source_world_sha256": "8c779677b8a9c665155c0a0f186ca57d7b6667ab935ee7b0f0d8e92d9e36259a",
+  "spawn_mode": "preembedded_before_gazebo_sensors_system",
+  "status": "FORMAL_PREEMBEDDED_SENSOR_WORLD_READY",
+  "vehicle_urdf": "/mnt/f/Project/TZcup-integrated-functional-acceptance/reports/engineering/formal_competition_vehicle.urdf",
+  "vehicle_urdf_sha256": "b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2"
+}

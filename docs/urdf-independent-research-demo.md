@@ -47,7 +47,7 @@ ros2 run sanitation_manipulation placeholder_cube_demo
 ## 明确不声明
 
 - 没有真实URDF、动力学、传感器插件、MoveIt 2、IK、自碰撞、夹爪力/开度或手眼标定；
-- 没有运行DOSOD或EdgeSAM权重，S100 profile当前会因DOSOD移植和外部产物缺失而fail-closed；
+- 没有运行DOSOD或EdgeSAM权重；虽然锁定上游已有两者的S100参考链，本项目仍因外部模型、正式话题适配和实板运行证据缺失而fail-closed；
 - belief传感器、圆形地污栅格和近距方块点云仍是软件模拟，未证明零样本感知精度；
 - 新园区尚未接入真实SLAM、固图定位、Nav2和首次建图流程；
 - 未执行8,400任务、阶段A 10,000/500/1,000预算或正式200 m×100 m综合矩阵；

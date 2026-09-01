@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "report_id": "formal_rl_multimap_v5_fail_closed",
+  "status": "BLOCKED",
+  "hidden_gate_passed": false,
+  "claim_boundary": "Belief-only pure-Python planning over formal generator v0.3.0 maps. Product perception, Gazebo dynamics and Nav2 execution were not used.",
+  "degenerate_wait_diagnosis": {
+    "root_cause": "environment reward applied -0.01 times long formal-map trajectory distance while WAIT remained available with Q=0; a frozen greedy checkpoint therefore preferred WAIT forever",
+    "fix": "mask WAIT whenever a productive belief action exists, retry another masked action when the selected trajectory makes no progress, and train from public belief deltas plus executed path cost",
+    "checkpoint_wait_action_mask": "only_when_no_productive_belief_action_or_all_blocked",
+    "post_fix_result": "direct Q-value WAIT selection is eliminated; geometric all-actions-blocked fail-safe waits remain and are reported separately"
+  },
+  "scenario_contract": {
+    "generator_version": "0.3.0",
+    "field_area_m2": 20000.0,
+    "aspect_ratios": [1.5, 2.0, 2.5],
+    "static_assets_per_map": 120,
+    "dirt_patches_per_mission": 18,
+    "discrete_cubes_per_mission": 20,
+    "pedestrians_per_mission": 8,
+    "cube_parking_clearance_m": 2.10,
+    "cube_grasp_reach_radius_m": 1.10
+  },
+  "sample_selection": {
+    "train": ["train-map-000-mission-000", "train-map-000-mission-001", "train-map-001-mission-000", "train-map-001-mission-001"],
+    "validation": ["val-map-000-mission-000", "val-map-001-mission-000"],
+    "hidden": ["hidden-map-000-mission-000", "hidden-map-001-mission-000"],
+    "selection_policy": "fixed explicit indices supplied before the run; no post-result episode filtering",
+    "maps_and_mission_seeds_disjoint_across_splits": true
+  },
+  "run_configuration": {
+    "planning_resolution_m": 2.0,
+    "product_map_resolution_m": 0.5,
+    "max_steps_per_episode": 240,
+    "epochs": 1,
+    "policy_seed": 7,
+    "observation_threshold": 0.95,
+    "ground_clear_threshold": 0.95,
+    "discrete_clear_threshold": 0.95,
+    "return_distance_included": false,
+    "time_energy_scored": false
+  },
+  "training": {
+    "episode_count": 4,
+    "map_count": 2,
+    "q_state_count": 11,
+    "truth_used_for_control": false,
+    "product_perception_used": false,
+    "episodes": [
+      {"id": "train-map-000-mission-000", "observed_ratio": 0.1972142383, "task_distance_m": 566.1472485, "runtime_s": 52.819067, "completed": false},
+      {"id": "train-map-000-mission-001", "observed_ratio": 0.1969931461, "task_distance_m": 497.0664678, "runtime_s": 53.721520, "completed": false},
+      {"id": "train-map-001-mission-000", "observed_ratio": 0.0052036199, "task_distance_m": 4.1974273, "runtime_s": 60.864925, "completed": false},
+      {"id": "train-map-001-mission-001", "observed_ratio": 0.0052036199, "task_distance_m": 4.1974273, "runtime_s": 57.594487, "completed": false}
+    ]
+  },
+  "evaluation": {
+    "validation": [
+      {"id": "val-map-000-mission-000", "observed_ratio": 0.0274218926, "ground_clear_ratio_of_observed": 1.0, "discrete_clear_ratio_of_observed": 1.0, "task_distance_m": 54.5911423, "collisions": 0, "invalid_actions": 0, "complete_full_coverage_baseline_valid": false, "complete_full_coverage_path_ratio": null, "diagnostic_ratio_to_incomplete_baseline": 1.1077111774, "formal_success": false},
+      {"id": "val-map-001-mission-000", "observed_ratio": 0.0166552590, "ground_clear_ratio_of_observed": 1.0, "discrete_clear_ratio_of_observed": 1.0, "task_distance_m": 24.1954948, "collisions": 0, "invalid_actions": 0, "complete_full_coverage_baseline_valid": false, "complete_full_coverage_path_ratio": null, "diagnostic_ratio_to_incomplete_baseline": 0.1807204587, "formal_success": false}
+    ],
+    "hidden": [
+      {"id": "hidden-map-000-mission-000", "observed_ratio": 0.2099067081, "ground_clear_ratio_of_observed": 0.5, "discrete_clear_ratio_of_observed": 1.0, "task_distance_m": 467.0184458, "collisions": 0, "invalid_actions": 0, "complete_full_coverage_baseline_valid": false, "complete_full_coverage_path_ratio": null, "diagnostic_ratio_to_incomplete_baseline": 3.9243861924, "formal_success": false},
+      {"id": "hidden-map-001-mission-000", "observed_ratio": 0.0052237111, "ground_clear_ratio_of_observed": 1.0, "discrete_clear_ratio_of_observed": 1.0, "task_distance_m": 4.1974273, "collisions": 0, "invalid_actions": 0, "complete_full_coverage_baseline_valid": false, "complete_full_coverage_path_ratio": null, "diagnostic_ratio_to_incomplete_baseline": 0.8305138799, "formal_success": false}
+    ],
+    "success_rate": {"validation": 0.0, "hidden": 0.0}
+  },
+  "blockers": [
+    "hidden observation ratios are below 0.95 and neither hidden mission completed",
+    "the 240-step full-coverage baselines also failed, so no valid complete-traversal path ratio exists",
+    "map-001 direct trajectory candidates collapse to geometric fail-safe waits near the fixed start",
+    "planning uses a 2.0 m downsampled belief grid",
+    "product perception, Gazebo pedestrian timing and Nav2 execution remain untested"
+  ],
+  "evidence": {
+    "root": ".work/formal_rl_multimap_v5_evidence/formal_planning",
+    "training_report_sha256": "184bd246b8173a9cf229c7837be55abf804f8a498c54d279040527068dc0694b",
+    "baseline_report_sha256": "288f683149a34dfbc974a4a8a90080e580fc40ede9b5861c09200a126b58e70e",
+    "validation_report_sha256": "cb9bb25f2c13ac1ea9ad94d34dfb2221665bde117938ef2caaf01279ab868540",
+    "q_policy_sha256": "dc3e242d2f97874ca7cb23f247a1cef6556dfb07db28862955285f1d4b5338b4"
+  }
+}

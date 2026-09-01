@@ -1,0 +1,141 @@
+# Low-rate visual-acceptance image contract consumed by ros_gz_image/image_bridge.
+#
+# The specialized bridge requires identical Gazebo and ROS topic names and uses
+# its default Reliable QoS (RELIABLE, VOLATILE).  This prevents 4.8 MB raw frames
+# from being discarded when fragmented on loopback.  It has
+# no lazy or queue-size parameters.  The launch starts it only for the 0.2 Hz
+# nineteen-camera visual studio; normal high-bandwidth vehicle sensors retain
+# their separate lazy, one-deep ros_gz_bridge contract.
+
+- ros_topic_name: /formal_visual/front_left
+  gz_topic_name: /formal_visual/front_left
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/rear_right
+  gz_topic_name: /formal_visual/rear_right
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/top_cleaning
+  gz_topic_name: /formal_visual/top_cleaning
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/sensor_tower_detail
+  gz_topic_name: /formal_visual/sensor_tower_detail
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/front_sensor_detail
+  gz_topic_name: /formal_visual/front_sensor_detail
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/arm_mount_detail
+  gz_topic_name: /formal_visual/arm_mount_detail
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/dry_deposition_detail
+  gz_topic_name: /formal_visual/dry_deposition_detail
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/cleaning_head_detail
+  gz_topic_name: /formal_visual/cleaning_head_detail
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/rear_service_detail
+  gz_topic_name: /formal_visual/rear_service_detail
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/power_compute_detail
+  gz_topic_name: /formal_visual/power_compute_detail
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/storage_recovery_detail
+  gz_topic_name: /formal_visual/storage_recovery_detail
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/rear_left_sensor_detail
+  gz_topic_name: /formal_visual/rear_left_sensor_detail
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/rear_right_sensor_detail
+  gz_topic_name: /formal_visual/rear_right_sensor_detail
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/drivetrain_detail
+  gz_topic_name: /formal_visual/drivetrain_detail
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/inertial_power_detail
+  gz_topic_name: /formal_visual/inertial_power_detail
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/dry_deposition_internal
+  gz_topic_name: /formal_visual/dry_deposition_internal
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/power_safety_internal
+  gz_topic_name: /formal_visual/power_safety_internal
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/charge_interface_detail
+  gz_topic_name: /formal_visual/charge_interface_detail
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE
+
+- ros_topic_name: /formal_visual/drain_interface_detail
+  gz_topic_name: /formal_visual/drain_interface_detail
+  ros_type_name: sensor_msgs/msg/Image
+  gz_type_name: gz.msgs.Image
+  direction: GZ_TO_ROS
+  qos_profile: DEFAULT_RELIABLE

@@ -1,0 +1,1618 @@
+{
+  "schema_version": 1,
+  "document_id": "tzcup_native_brep_storage_service_seventh_batch_per_part_mapping_v1",
+  "status": "design_input_pending_native_export",
+  "claim_boundary": "Static one-to-one source-mesh-to-builder mapping for the reconstruction manifest's 24 storage and 10 service project-authored parts. It proves only static editable source coverage; it does not run CadQuery, export FCStd/STEP, alter the reconstruction-manifest pending status, prove manufacturing, materials, sealing, pressure, electrical ratings, mass properties, or runtime acceptance.",
+  "prohibited_methods": [
+    "mesh_to_step_conversion",
+    "faceted_or_tessellated_step_export",
+    "mesh_import_as_native_brep_substitute",
+    "placeholder_fcstd_or_step_artifact",
+    "merging_service_assembly_into_a_single_box"
+  ],
+  "authoritative_editable_source": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_seventh_batch.py",
+  "source_mesh_mapping_rule": "Each manifest_part_id, source_mesh, and builder_symbol is unique and must exactly match the pending reconstruction manifest's storage/service set.",
+  "storage_semantics": {
+    "dry_compartment": {
+      "separate_from": "wet_compartment",
+      "separation_part": "storage_dry_wet_partition",
+      "mass_interface_contract": "config/high_fidelity_vehicle/dry_payload_accounting_contract.yaml",
+      "mass_increment_interface": "cardboard/PP/PET/aluminum resident rigid-body load transfers through dry-bin contact; aggregate mode is mutually exclusive and bounded 0_to_1.512 kg",
+      "load_constraints": "Capacity, drop load, CoG and structural validation remain blocked."
+    },
+    "wet_compartment": {
+      "separate_from": "dry_compartment",
+      "separation_part": "storage_dry_wet_partition",
+      "mass_increment_interface": "Recovered standing water must increment wastewater payload through the existing dynamic-payload/water-recovery interface.",
+      "water_recovery_contract": "config/high_fidelity_vehicle/formal_functional_acceptance_contract.yaml:water_recovery",
+      "load_constraints": "Leak, pressure, chemical compatibility, tank mass/CoG and runtime recovery remain blocked."
+    }
+  },
+  "service_assembly_semantics": {
+    "charge_interface": [
+      "charge_port_housing",
+      "charge_receptacle",
+      "charge_port_door",
+      "charge_connector_lock"
+    ],
+    "drain_interface": [
+      "wastewater_drain_pipe",
+      "wastewater_drain_valve_body",
+      "wastewater_drain_valve_ball",
+      "wastewater_drain_actuator_mount",
+      "wastewater_drain_service_cap",
+      "wastewater_drain_coupling"
+    ],
+    "rule": "Each service feature is separately mapped; one fused box is forbidden."
+  },
+  "part_mappings": [
+    {
+      "manifest_part_id": "storage_storage_mount_tray",
+      "source_mesh": "project/storage/storage_mount_tray.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:storage_mount()",
+      "builder_symbol": "_build_storage_mount_tray",
+      "assembly_role": "common_mount",
+      "assembly_intent": "tray, rails, and mounting bosses",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.06,
+            0.04,
+            0.02
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "cylinder",
+          "axis": "z",
+          "radius_m": 0.005,
+          "length_m": 0.02,
+          "center_m": [
+            0.02,
+            0,
+            0
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_dry_bin_floor",
+      "source_mesh": "project/storage/dry_bin_floor.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:bin_floor()",
+      "builder_symbol": "_build_dry_bin_floor",
+      "assembly_role": "dry",
+      "assembly_intent": "dry floor and stiffening ribs",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.1,
+            0.1,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.01,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.01
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_dry_bin_front_panel",
+      "source_mesh": "project/storage/dry_bin_front_panel.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:panel_with_ribs()",
+      "builder_symbol": "_build_dry_bin_front_panel",
+      "assembly_role": "dry",
+      "assembly_intent": "dry front wall and ribs",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.1,
+            0.1,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.01,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.01
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_dry_bin_latch",
+      "source_mesh": "project/storage/dry_bin_latch.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:toggle_latch_handle()",
+      "builder_symbol": "_build_dry_bin_latch",
+      "assembly_role": "dry",
+      "assembly_intent": "latch handle, pivot, and grip",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.04,
+            0.02,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "cylinder",
+          "axis": "y",
+          "radius_m": 0.004,
+          "length_m": 0.03,
+          "center_m": [
+            0,
+            0,
+            0.01
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_dry_bin_level_sensor_mount",
+      "source_mesh": "project/storage/dry_bin_level_sensor.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:level_sensor()",
+      "builder_symbol": "_build_dry_bin_level_sensor_mount",
+      "assembly_role": "dry",
+      "assembly_intent": "sensor mount, bosses, and connector envelope",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.06,
+            0.04,
+            0.02
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "cylinder",
+          "axis": "z",
+          "radius_m": 0.005,
+          "length_m": 0.02,
+          "center_m": [
+            0.02,
+            0,
+            0
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_dry_bin_lid",
+      "source_mesh": "project/storage/dry_bin_lid.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:dry_lid()",
+      "builder_symbol": "_build_dry_bin_lid",
+      "assembly_role": "dry",
+      "assembly_intent": "four lid panels, hopper rail, and ribs",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.1,
+            0.08,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "cylinder",
+          "axis": "z",
+          "radius_m": 0.01,
+          "length_m": 0.01,
+          "center_m": [
+            0.02,
+            0,
+            0.01
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_dry_bin_rear_panel",
+      "source_mesh": "project/storage/dry_bin_rear_panel.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:panel_with_ribs()",
+      "builder_symbol": "_build_dry_bin_rear_panel",
+      "assembly_role": "dry",
+      "assembly_intent": "dry rear wall and ribs",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.1,
+            0.1,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.01,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.01
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_dry_bin_side_panel",
+      "source_mesh": "project/storage/dry_bin_side_panel.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:panel_with_ribs()",
+      "builder_symbol": "_build_dry_bin_side_panel",
+      "assembly_role": "dry",
+      "assembly_intent": "dry side walls and ribs",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.1,
+            0.1,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.01,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.01
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_dry_deposit_chute",
+      "source_mesh": "project/storage/dry_deposit_chute.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:dry_deposit_chute()",
+      "builder_symbol": "_build_dry_deposit_chute",
+      "assembly_role": "dry",
+      "assembly_intent": "gravity chute shell and anti-bridge support",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.06,
+            0.04,
+            0.02
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "cylinder",
+          "axis": "z",
+          "radius_m": 0.005,
+          "length_m": 0.02,
+          "center_m": [
+            0.02,
+            0,
+            0
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_dry_deposit_gate",
+      "source_mesh": "project/storage/dry_deposit_gate.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:dry_deposit_gate()",
+      "builder_symbol": "_build_dry_deposit_gate",
+      "assembly_role": "dry",
+      "assembly_intent": "gate panel, actuator tab, and pivot",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.06,
+            0.04,
+            0.02
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "cylinder",
+          "axis": "z",
+          "radius_m": 0.005,
+          "length_m": 0.02,
+          "center_m": [
+            0.02,
+            0,
+            0
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_dry_deposit_hopper",
+      "source_mesh": "project/storage/dry_deposit_hopper.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:dry_deposit_hopper()",
+      "builder_symbol": "_build_dry_deposit_hopper",
+      "assembly_role": "dry",
+      "assembly_intent": "hopper shell and mounting bosses",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.06,
+            0.04,
+            0.02
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "cylinder",
+          "axis": "z",
+          "radius_m": 0.005,
+          "length_m": 0.02,
+          "center_m": [
+            0.02,
+            0,
+            0
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_dry_wet_partition",
+      "source_mesh": "project/storage/dry_wet_partition.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:partition()",
+      "builder_symbol": "_build_dry_wet_partition",
+      "assembly_role": "partition",
+      "assembly_intent": "dedicated dry-wet separator with ribs and rail",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.1,
+            0.1,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.01,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.01
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_level_probe",
+      "source_mesh": "project/storage/level_probe.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:level_probe()",
+      "builder_symbol": "_build_level_probe",
+      "assembly_role": "wet",
+      "assembly_intent": "wet level-probe collar and connector envelope",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.06,
+            0.04,
+            0.02
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "cylinder",
+          "axis": "z",
+          "radius_m": 0.005,
+          "length_m": 0.02,
+          "center_m": [
+            0.02,
+            0,
+            0
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_toggle_latch_base",
+      "source_mesh": "project/storage/storage_toggle_latch_base.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:toggle_latch_base()",
+      "builder_symbol": "_build_storage_toggle_latch_base",
+      "assembly_role": "retention",
+      "assembly_intent": "fixed latch base and pivot ears",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.04,
+            0.02,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "cylinder",
+          "axis": "y",
+          "radius_m": 0.004,
+          "length_m": 0.03,
+          "center_m": [
+            0,
+            0,
+            0.01
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_toggle_latch_handle",
+      "source_mesh": "project/storage/storage_toggle_latch_handle.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:toggle_latch_handle()",
+      "builder_symbol": "_build_storage_toggle_latch_handle",
+      "assembly_role": "retention",
+      "assembly_intent": "moving latch handle, pivot, grip, and hook",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.04,
+            0.02,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "cylinder",
+          "axis": "y",
+          "radius_m": 0.004,
+          "length_m": 0.03,
+          "center_m": [
+            0,
+            0,
+            0.01
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_toggle_latch_keeper",
+      "source_mesh": "project/storage/storage_toggle_latch_keeper.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:toggle_latch_keeper()",
+      "builder_symbol": "_build_storage_toggle_latch_keeper",
+      "assembly_role": "retention",
+      "assembly_intent": "lid keeper plate, ears, and engagement bar",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.04,
+            0.02,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "cylinder",
+          "axis": "y",
+          "radius_m": 0.004,
+          "length_m": 0.03,
+          "center_m": [
+            0,
+            0,
+            0.01
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_wastewater_baffle",
+      "source_mesh": "project/storage/wastewater_baffle.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:panel_with_ribs()",
+      "builder_symbol": "_build_wastewater_baffle",
+      "assembly_role": "wet",
+      "assembly_intent": "wet baffle and ribs",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.1,
+            0.1,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.01,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.01
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_wastewater_front_panel",
+      "source_mesh": "project/storage/wastewater_front_panel.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:panel_with_ribs()",
+      "builder_symbol": "_build_wastewater_front_panel",
+      "assembly_role": "wet",
+      "assembly_intent": "wet front wall and ribs",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.1,
+            0.1,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.01,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.01
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_wastewater_inlet_coupling",
+      "source_mesh": "project/storage/wastewater_inlet_coupling.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:inlet_coupling()",
+      "builder_symbol": "_build_wastewater_inlet_coupling",
+      "assembly_role": "wet",
+      "assembly_intent": "inlet body, flange, ring, and key",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.06,
+            0.04,
+            0.02
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "cylinder",
+          "axis": "z",
+          "radius_m": 0.005,
+          "length_m": 0.02,
+          "center_m": [
+            0.02,
+            0,
+            0
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_wastewater_lid",
+      "source_mesh": "project/storage/wastewater_lid.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:wet_lid()",
+      "builder_symbol": "_build_wastewater_lid",
+      "assembly_role": "wet",
+      "assembly_intent": "wet lid, raised boss, rim, and ribs",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.1,
+            0.08,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "cylinder",
+          "axis": "z",
+          "radius_m": 0.01,
+          "length_m": 0.01,
+          "center_m": [
+            0.02,
+            0,
+            0.01
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_wastewater_rear_panel",
+      "source_mesh": "project/storage/wastewater_rear_panel.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:panel_with_ribs()",
+      "builder_symbol": "_build_wastewater_rear_panel",
+      "assembly_role": "wet",
+      "assembly_intent": "wet rear wall and ribs",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.1,
+            0.1,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.01,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.01
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_wastewater_side_panel",
+      "source_mesh": "project/storage/wastewater_side_panel.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:panel_with_ribs()",
+      "builder_symbol": "_build_wastewater_side_panel",
+      "assembly_role": "wet",
+      "assembly_intent": "wet side walls and ribs",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.1,
+            0.1,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.01,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.01
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_wastewater_tank_floor",
+      "source_mesh": "project/storage/wastewater_tank_floor.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:bin_floor()",
+      "builder_symbol": "_build_wastewater_tank_floor",
+      "assembly_role": "wet",
+      "assembly_intent": "wet floor and stiffening ribs",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.1,
+            0.1,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.08,
+            0.01,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.01
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "storage_wastewater_vent_filter",
+      "source_mesh": "project/storage/wastewater_vent_filter.stl",
+      "source_generator": "cleaning_storage",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py:vent_filter()",
+      "builder_symbol": "_build_wastewater_vent_filter",
+      "assembly_role": "wet",
+      "assembly_intent": "vent body, boss, and service rings",
+      "geometry_primitives": [
+        {
+          "shape": "box",
+          "size_m": [
+            0.06,
+            0.04,
+            0.02
+          ],
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "cylinder",
+          "axis": "z",
+          "radius_m": 0.005,
+          "length_m": 0.02,
+          "center_m": [
+            0.02,
+            0,
+            0
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "charge_connector_lock",
+      "source_mesh": "project/service/charge_connector_lock.stl",
+      "source_generator": "power_service_hardware",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_power_service_hardware_meshes.py:charge_connector_lock()",
+      "builder_symbol": "_build_charge_connector_lock",
+      "assembly_role": "charge",
+      "assembly_intent": "connector lock distinct from door and receptacle",
+      "geometry_primitives": [
+        {
+          "shape": "cylinder",
+          "axis": "y",
+          "radius_m": 0.02,
+          "length_m": 0.04,
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.03,
+            0.02,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.02
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "charge_port_door",
+      "source_mesh": "project/service/charge_port_door.stl",
+      "source_generator": "power_service_hardware",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_power_service_hardware_meshes.py:charge_door()",
+      "builder_symbol": "_build_charge_port_door",
+      "assembly_role": "charge",
+      "assembly_intent": "hinged door, barrel, and pull",
+      "geometry_primitives": [
+        {
+          "shape": "cylinder",
+          "axis": "y",
+          "radius_m": 0.02,
+          "length_m": 0.04,
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.03,
+            0.02,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.02
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "charge_port_housing",
+      "source_mesh": "project/service/charge_port_housing.stl",
+      "source_generator": "power_service_hardware",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_power_service_hardware_meshes.py:charge_housing()",
+      "builder_symbol": "_build_charge_port_housing",
+      "assembly_role": "charge",
+      "assembly_intent": "housing, flange, and hinge bracket",
+      "geometry_primitives": [
+        {
+          "shape": "cylinder",
+          "axis": "y",
+          "radius_m": 0.02,
+          "length_m": 0.04,
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.03,
+            0.02,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.02
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "charge_receptacle",
+      "source_mesh": "project/service/charge_receptacle.stl",
+      "source_generator": "power_service_hardware",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_power_service_hardware_meshes.py:charge_receptacle()",
+      "builder_symbol": "_build_charge_receptacle",
+      "assembly_role": "charge",
+      "assembly_intent": "receptacle, face ring, and contact envelopes",
+      "geometry_primitives": [
+        {
+          "shape": "cylinder",
+          "axis": "y",
+          "radius_m": 0.02,
+          "length_m": 0.04,
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.03,
+            0.02,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.02
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "wastewater_drain_actuator_mount",
+      "source_mesh": "project/service/wastewater_drain_actuator.stl",
+      "source_generator": "power_service_hardware",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_power_service_hardware_meshes.py:drain_actuator()",
+      "builder_symbol": "_build_wastewater_drain_actuator_mount",
+      "assembly_role": "drain",
+      "assembly_intent": "actuator mount, drive boss, and foot",
+      "geometry_primitives": [
+        {
+          "shape": "cylinder",
+          "axis": "x",
+          "radius_m": 0.02,
+          "length_m": 0.04,
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.03,
+            0.02,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.02
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "wastewater_drain_coupling",
+      "source_mesh": "project/service/wastewater_drain_coupling.stl",
+      "source_generator": "power_service_hardware",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_power_service_hardware_meshes.py:drain_coupling()",
+      "builder_symbol": "_build_wastewater_drain_coupling",
+      "assembly_role": "drain",
+      "assembly_intent": "coupling body and service rings",
+      "geometry_primitives": [
+        {
+          "shape": "cylinder",
+          "axis": "x",
+          "radius_m": 0.02,
+          "length_m": 0.04,
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.03,
+            0.02,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.02
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "wastewater_drain_pipe",
+      "source_mesh": "project/service/wastewater_drain_pipe.stl",
+      "source_generator": "power_service_hardware",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_power_service_hardware_meshes.py:drain_pipe()",
+      "builder_symbol": "_build_wastewater_drain_pipe",
+      "assembly_role": "drain",
+      "assembly_intent": "dedicated drain pipe path",
+      "geometry_primitives": [
+        {
+          "shape": "cylinder",
+          "axis": "x",
+          "radius_m": 0.02,
+          "length_m": 0.04,
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.03,
+            0.02,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.02
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "wastewater_drain_service_cap",
+      "source_mesh": "project/service/wastewater_drain_service_cap.stl",
+      "source_generator": "power_service_hardware",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_power_service_hardware_meshes.py:drain_cap()",
+      "builder_symbol": "_build_wastewater_drain_service_cap",
+      "assembly_role": "drain",
+      "assembly_intent": "removable cap and four grip lugs",
+      "geometry_primitives": [
+        {
+          "shape": "cylinder",
+          "axis": "x",
+          "radius_m": 0.02,
+          "length_m": 0.04,
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.03,
+            0.02,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.02
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "wastewater_drain_valve_ball",
+      "source_mesh": "project/service/wastewater_drain_valve_ball.stl",
+      "source_generator": "power_service_hardware",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_power_service_hardware_meshes.py:drain_ball()",
+      "builder_symbol": "_build_wastewater_drain_valve_ball",
+      "assembly_role": "drain",
+      "assembly_intent": "external stem and position indicator",
+      "geometry_primitives": [
+        {
+          "shape": "cylinder",
+          "axis": "x",
+          "radius_m": 0.02,
+          "length_m": 0.04,
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.03,
+            0.02,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.02
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    },
+    {
+      "manifest_part_id": "wastewater_drain_valve_body",
+      "source_mesh": "project/service/wastewater_drain_valve_body.stl",
+      "source_generator": "power_service_hardware",
+      "source_definition": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_power_service_hardware_meshes.py:drain_valve_body()",
+      "builder_symbol": "_build_wastewater_drain_valve_body",
+      "assembly_role": "drain",
+      "assembly_intent": "valve body, flanges, and stem support",
+      "geometry_primitives": [
+        {
+          "shape": "cylinder",
+          "axis": "x",
+          "radius_m": 0.02,
+          "length_m": 0.04,
+          "center_m": [
+            0,
+            0,
+            0
+          ]
+        },
+        {
+          "shape": "box",
+          "size_m": [
+            0.03,
+            0.02,
+            0.01
+          ],
+          "center_m": [
+            0,
+            0,
+            0.02
+          ]
+        }
+      ],
+      "dimension_evidence": "Project-authored generator function named in source_definition. The compact primitive recipe is an editable design-input topology, not a manufacturing dimension release.",
+      "native_feature_boundary": "No inferred holes, threads, seals, materials, tolerances, pressure/current ratings, or mass properties.",
+      "status": "design_input_pending_native_export",
+      "must_not_exist_yet": true,
+      "pending_release_inputs": [
+        "controlled manufacturing dimensions and datums",
+        "material and mass-property release",
+        "holes threads fasteners tolerances and GD&T",
+        "sealing ingress chemical and service validation"
+      ]
+    }
+  ],
+  "blocked_gates": [
+    "manufacturing_dimensions_datums_and_tolerances",
+    "material_mass_and_center_of_mass",
+    "fasteners_threads_and_holes",
+    "dry_and_wet_seal_ingress_and_cleanability",
+    "tank_pressure_chemical_and_leak_validation",
+    "charge_connector_voltage_current_earth_interlock_and_harness",
+    "drain_valve_bore_seats_gasket_and_pressure_rating",
+    "native_export_and_cadquery_execution",
+    "vehicle_runtime_acceptance"
+  ],
+  "acceptance": {
+    "native_export_accepted": false,
+    "manufacturing_accepted": false,
+    "mechanical_assembly_accepted": false,
+    "fluid_electrical_service_accepted": false,
+    "runtime_accepted": false
+  }
+}

@@ -26,7 +26,7 @@ from rclpy.parameter import Parameter
 from ros_gz_interfaces.msg import Contacts, Entity
 from ros_gz_interfaces.srv import SetEntityPose
 from sensor_msgs.msg import JointState
-from std_msgs.msg import Bool, Empty
+from std_msgs.msg import Bool, Empty, String
 from trajectory_msgs.msg import JointTrajectoryPoint
 
 
@@ -38,7 +38,7 @@ ARM_JOINTS = [
     "wrist_1_joint", "wrist_2_joint", "wrist_3_joint",
 ]
 GRIPPER_JOINT = "robotiq_85_left_knuckle_joint"
-STORAGE_JOINTS = ["dry_bin_lid_joint", "dry_deposit_gate_joint", "wastewater_lid_joint"]
+STORAGE_JOINTS = ["dry_deposit_gate_joint"]
 MATERIALS = {
     "paperboard": {"density_kg_m3": 700.0, "mass_kg": 0.0189},
     "PP": {"density_kg_m3": 900.0, "mass_kg": 0.0243},
@@ -47,14 +47,19 @@ MATERIALS = {
 }
 
 # These joint targets were solved against the production UR5e chain.  The
-# side pick keeps the arm outside the cowl; the deposit target leaves the cube
-# above the open hopper rather than driving it into the chute wall.
-PREGRASP = [-0.64909781, -0.67831936, 1.83268023, -2.72515720, -1.57079633, -2.21989414]
-PICK = [-0.64909781, -0.08152821, 1.48330352, -2.97257163, -1.57079633, -2.21989414]
-DEPOSIT = [-0.58136915, -2.01647799, 0.0, 3.59349672, 1.57020278, -0.72298360]
-CUBE_INITIAL = (0.650, -0.450, 0.017)
+# The vehicle parks with a random cube in the open right-side manipulation
+# window, beyond the body sill and brush envelope.  The side pick keeps the
+# arm outside the cowl.  The deposit target is a bent-elbow
+# branch above the arm-side hopper; a 60 degree tool yaw aligns the fingers
+# with the clear bore and leaves the cube a physical gravity drop.
+PREGRASP = [-1.48278161, -0.44199397, 1.21471947, -2.34352182, -1.57079633, -3.05357794]
+PICK = [-1.48278161, 0.10260211, 0.80254082, -2.47593926, -1.57079633, -3.05357794]
+DEPOSIT = [-0.30233498, -1.56960444, -0.73057657, -2.40638971, 1.56851193, 0.60324332]
+CUBE_INITIAL = (0.300, -0.950, 0.017)
 BIN_FLOOR_SUPPORT_Z_M = 0.469
 BIN_FLOOR_SUPPORT_TOLERANCE_M = 0.020
+DRY_BIN_STATUS_TOPIC = "/model/tzcup_formal_sanitation_vehicle/dry_bin/status_json"
+DRY_BIN_MASS_TOLERANCE_KG = 1e-5
 BIN_SUPPORT_COLLISION_TOKENS = (
     "dry_floor_collision",
     "dry_bin_front_panel_collision",
@@ -150,6 +155,37 @@ def distance(a: dict[str, float], b: dict[str, float]) -> float:
     return math.sqrt(sum((a[axis] - b[axis]) ** 2 for axis in ("x", "y", "z")))
 
 
+def validate_dry_bin_status(
+    status: dict[str, Any] | None,
+    *,
+    expected_count: int,
+    expected_mass_kg: float,
+    label: str,
+) -> dict[str, Any]:
+    """Fail closed on the bridged, observation-only dry-bin instrument state."""
+    if not isinstance(status, dict):
+        raise RuntimeError(f"{label} dry-bin status_json was not observed through ROS: {status}")
+    if status.get("sensor_ready") is not True:
+        raise RuntimeError(f"{label} dry-bin sensor is not ready: {status}")
+    try:
+        count = int(status["contained_object_count"])
+        mass_kg = float(status["contained_mass_kg"])
+    except (KeyError, TypeError, ValueError) as exc:
+        raise RuntimeError(f"{label} dry-bin status schema is incomplete: {status}") from exc
+    if count != expected_count:
+        raise RuntimeError(
+            f"{label} dry-bin object count mismatch: measured={count}, expected={expected_count}"
+        )
+    if abs(mass_kg - expected_mass_kg) > DRY_BIN_MASS_TOLERANCE_KG:
+        raise RuntimeError(
+            f"{label} dry-bin mass mismatch: measured={mass_kg}, expected={expected_mass_kg}, "
+            f"tolerance={DRY_BIN_MASS_TOLERANCE_KG}"
+        )
+    if status.get("full") is not False:
+        raise RuntimeError(f"{label} dry-bin unexpectedly reports full: {status}")
+    return dict(status)
+
+
 class PickPlaceProbe(Node):
     def __init__(self) -> None:
         super().__init__(
@@ -170,6 +206,7 @@ class PickPlaceProbe(Node):
         self.create_subscription(Contacts, "/storage/dry_deposit/contact", self._on_chute, 50)
         self.create_subscription(Contacts, "/storage/dry_bin/floor_contact", self._on_floor, 50)
         self.create_subscription(Bool, "/manipulation/grasp/state", self._on_grasp_state, 10)
+        self.create_subscription(String, DRY_BIN_STATUS_TOPIC, self._on_dry_bin_status, 50)
         self.latest: dict[str, float] = {}
         self.samples: list[dict[str, float]] = []
         self.left_cube_contacts = 0
@@ -192,6 +229,9 @@ class PickPlaceProbe(Node):
         self.attach_command_count = 0
         self.detach_command_count = 0
         self.payload_command_count = 0
+        self.dry_bin_status: dict[str, Any] | None = None
+        self.dry_bin_status_after_release: dict[str, Any] | None = None
+        self.dry_bin_status_sample_count = 0
 
     @staticmethod
     def _message_has_cube(message: Contacts) -> bool:
@@ -260,6 +300,15 @@ class PickPlaceProbe(Node):
     def _on_grasp_state(self, message: Bool) -> None:
         self.grasp_state = bool(message.data)
         self.grasp_state_events.append({"attached": self.grasp_state, "wall_time_s": time.time()})
+
+    def _on_dry_bin_status(self, message: String) -> None:
+        status = json.loads(message.data)
+        if not isinstance(status, dict):
+            raise RuntimeError(f"dry-bin status_json is not an object: {status}")
+        self.dry_bin_status = status
+        self.dry_bin_status_sample_count += 1
+        if self.released_to_bin:
+            self.dry_bin_status_after_release = status
 
     def spin_for(self, wall_seconds: float) -> None:
         deadline = time.monotonic() + wall_seconds
@@ -485,6 +534,17 @@ def main() -> int:
             args.timeout,
             "commanded joint states did not become available",
         )
+        node.wait_until(
+            lambda: node.dry_bin_status is not None,
+            args.timeout,
+            f"dry-bin status did not arrive on ROS topic {DRY_BIN_STATUS_TOPIC}",
+        )
+        baseline_dry_bin_status = validate_dry_bin_status(
+            node.dry_bin_status,
+            expected_count=0,
+            expected_mass_kg=0.0,
+            label="pre-task",
+        )
 
         # DetachableJoint has no initial-detached option.  This release and the
         # one pose reset below are strictly environment initialization.  Once
@@ -514,11 +574,11 @@ def main() -> int:
                 f"offsets={attached_offset_m},{lifted_offset_m}"
             )
 
-        actions.append(node.execute(node.storage, STORAGE_JOINTS, [0.0, 1.05, 0.0], 4, args.timeout, 0.12))
+        actions.append(node.execute(node.storage, STORAGE_JOINTS, [1.05], 4, args.timeout, 0.12))
         actions.append(node.execute(node.arm, ARM_JOINTS, DEPOSIT, 12, args.timeout, 0.20))
         release_pose = read_gazebo_poses(CUBE, WRIST)
         release_cube = release_pose[CUBE]
-        if not (-0.30 < release_cube["x"] < -0.10 and 0.09 < release_cube["y"] < 0.23 and release_cube["z"] > 1.08):
+        if not (-0.30 < release_cube["x"] < -0.10 and -0.04 < release_cube["y"] < 0.11 and release_cube["z"] > 1.08):
             raise RuntimeError(f"held cube did not reach the open dry hopper: {release_cube}")
 
         node.released_to_bin = True
@@ -551,6 +611,23 @@ def main() -> int:
                 f"collisions={sorted(node.bin_support_collision_names)}"
             )
 
+        material = MATERIALS[args.material]
+        node.wait_until(
+            lambda: (
+                node.dry_bin_status_after_release is not None
+                and node.dry_bin_status_after_release.get("contained_object_count") == 1
+            ),
+            args.timeout,
+            "dry-bin ROS status did not count the released physical cube; "
+            f"settled_pose={settled_b}, latest_status={node.dry_bin_status_after_release}",
+        )
+        post_release_dry_bin_status = validate_dry_bin_status(
+            node.dry_bin_status_after_release,
+            expected_count=1,
+            expected_mass_kg=material["mass_kg"],
+            label="post-release",
+        )
+
         ranges = {}
         for name in ARM_JOINTS + [GRIPPER_JOINT]:
             values = [sample[name] for sample in node.samples if name in sample]
@@ -559,7 +636,6 @@ def main() -> int:
         if insufficient:
             raise RuntimeError(f"not all six axes physically moved: {insufficient}, ranges={ranges}")
 
-        material = MATERIALS[args.material]
         sdf_inertial = read_generated_sdf_inertial_mass(args.material)
         if abs(sdf_inertial["mass_kg"] - material["mass_kg"]) > 1e-8:
             raise RuntimeError(f"generated SDF inertial mass mismatch: {sdf_inertial}, expected={material}")
@@ -605,6 +681,19 @@ def main() -> int:
                 "all_contact_count_after_release": node.all_after_release_contact_count,
                 "all_other_collision_names_after_release": sorted(node.all_after_release_collision_names),
             },
+            "dry_bin_monitor": {
+                "ros_topic": DRY_BIN_STATUS_TOPIC,
+                "transport": "Gazebo-to-ROS bridge",
+                "sensor_ready": post_release_dry_bin_status["sensor_ready"],
+                "contained_object_count": post_release_dry_bin_status["contained_object_count"],
+                "contained_mass_kg": post_release_dry_bin_status["contained_mass_kg"],
+                "mass_tolerance_kg": DRY_BIN_MASS_TOLERANCE_KG,
+                "full": post_release_dry_bin_status["full"],
+                "baseline_status": baseline_dry_bin_status,
+                "post_release_status": post_release_dry_bin_status,
+                "post_release_sample_observed": True,
+                "monitor_is_observation_only": True,
+            },
             "actions": actions,
             "measured_joint_range_rad": ranges,
             "inventory_mass": {
@@ -615,6 +704,7 @@ def main() -> int:
                 "dynamic_dry_payload_added_kg": 0.0,
                 "effective_new_inventory_mass_kg": material["mass_kg"],
                 "double_count_prevented": True,
+                "aggregation_or_reserve_payload_substitution": False,
             },
             "evaluator_interface_audit": {
                 "initialization_detach_commands": 1,
@@ -624,6 +714,7 @@ def main() -> int:
                 "task_attach_commands": node.attach_command_count,
                 "task_detach_commands": node.detach_command_count - 1,
                 "set_pose_or_remove_after_task_start": False,
+                "physical_cube_deleted_after_deposit": False,
             },
             "claim_boundary": (
                 "DetachableJoint supplies the post-contact holding constraint only after live left and right "
@@ -646,6 +737,9 @@ def main() -> int:
             "initialization_set_pose_calls": node.initialization_set_pose_calls,
             "task_set_pose_calls": node.task_set_pose_calls,
             "payload_commands": node.payload_command_count,
+            "dry_bin_status_samples": node.dry_bin_status_sample_count,
+            "latest_dry_bin_status": node.dry_bin_status,
+            "latest_dry_bin_status_after_release": node.dry_bin_status_after_release,
         }
         raise
     finally:

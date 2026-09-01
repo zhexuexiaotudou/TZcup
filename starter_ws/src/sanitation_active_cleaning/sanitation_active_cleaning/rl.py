@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 import json
+import math
 import random
 from pathlib import Path
 from typing import Any, Sequence
 
 from .environment import ActiveCleaningEnv, TrajectoryAction
 from .models import AgentObservation, RoleSeeds, TaskConfig, derive_role_seed
-from .policies import _SafeTrajectoryMixin, cell_center
+from .policies import FullCoveragePolicy, _SafeTrajectoryMixin, cell_center
 
 
 ACTION_TARGET = "target"
@@ -79,6 +80,7 @@ class QLearningPolicy(_SafeTrajectoryMixin):
             self._policy_seed ^ int(episode_seed)
         )
         self._rng.seed(derive_role_seed(independent_episode_seed, "policy_rng"))
+        self._reset_inspection_route()
 
     def _row(self, state: tuple[int, ...]) -> dict[str, float]:
         return self.q_table.setdefault(
@@ -102,8 +104,13 @@ class QLearningPolicy(_SafeTrajectoryMixin):
             )
         ):
             actions.append(ACTION_FRONTIER)
-        actions.append(ACTION_WAIT)
-        return tuple(actions)
+        # WAIT is a last-resort safety action, not a peer of productive
+        # actions.  With the old always-on mask, long formal-map trajectories
+        # received a negative distance reward while WAIT stayed exactly zero;
+        # a restored greedy checkpoint therefore selected WAIT forever.
+        # Excluding it whenever any belief-only service action exists keeps a
+        # stale/partially-trained table moving without granting hidden truth.
+        return tuple(actions) if actions else (ACTION_WAIT,)
 
     def choose_action(self, observation: AgentObservation, *, explore: bool) -> str:
         actions = self.available_actions(observation)
@@ -111,6 +118,20 @@ class QLearningPolicy(_SafeTrajectoryMixin):
             return self._rng.choice(actions)
         row = self._row(belief_state(observation))
         return max(actions, key=lambda action: (row[action], -ALL_ACTIONS.index(action)))
+
+    @staticmethod
+    def _makes_progress(
+        observation: AgentObservation, action: TrajectoryAction
+    ) -> bool:
+        if action.grasp_target_ids:
+            return True
+        if not action.points:
+            return False
+        final = action.points[-1]
+        return math.hypot(
+            final.x - observation.pose.x,
+            final.y - observation.pose.y,
+        ) > 1.0e-6
 
     def action_trajectory(self, observation: AgentObservation, action: str) -> TrajectoryAction:
         if action == ACTION_TARGET:
@@ -123,33 +144,36 @@ class QLearningPolicy(_SafeTrajectoryMixin):
                 if not target.cleared
                 and target.attempts < self.config.max_grasp_attempts
             ]
-            result = self._try_goals(observation, goals, clean=False)
+            result = self._try_goals(
+                observation,
+                goals,
+                clean=False,
+                allow_hybrid=False,
+            )
             if result is not None:
                 return result
-            reorientation = self._reorientation_arc(observation)
-            return reorientation if reorientation is not None else self._wait(observation)
+            # Let act_with_label try another masked high-level action.  A
+            # reorientation arc mislabeled as TARGET repeatedly earned only
+            # distance cost around an unreachable litter item and starved the
+            # frontier sweep.
+            return self._wait(observation)
         if action == ACTION_DIRT:
             goals = [
                 cell_center(observation, index)
                 for index, amount in enumerate(observation.belief.known_ground_dirt)
                 if amount > 0.0
             ]
-            result = self._try_goals(observation, goals, clean=True)
+            result = self._try_goals(
+                observation,
+                goals,
+                clean=True,
+                allow_hybrid=False,
+            )
             if result is not None:
                 return result
-            reorientation = self._reorientation_arc(observation)
-            return reorientation if reorientation is not None else self._wait(observation)
+            return self._wait(observation)
         if action == ACTION_FRONTIER:
-            goals = [
-                cell_center(observation, index)
-                for index, (free, observed) in enumerate(
-                    zip(observation.belief.traversable, observation.belief.observed)
-                )
-                if free and not observed
-            ]
-            # Prefer nearby frontier cells; the safe trajectory helper filters
-            # current pedestrian circles as static obstacles.
-            result = self._try_goals(observation, goals, clean=False)
+            result = self._inspection_action(observation, allow_hybrid=False)
             if result is not None:
                 return result
             reorientation = self._reorientation_arc(observation)
@@ -165,8 +189,23 @@ class QLearningPolicy(_SafeTrajectoryMixin):
         explore: bool,
     ) -> tuple[tuple[int, ...], str, TrajectoryAction]:
         state = belief_state(observation)
-        action = self.choose_action(observation, explore=explore)
-        return state, action, self.action_trajectory(observation, action)
+        selected = self.choose_action(observation, explore=explore)
+        available = self.available_actions(observation)
+        row = self._row(state)
+        ordered = [selected, *sorted(
+            (action for action in available if action != selected),
+            key=lambda action: (-row[action], ALL_ACTIONS.index(action)),
+        )]
+        for label in ordered:
+            trajectory = self.action_trajectory(observation, label)
+            if label == ACTION_WAIT or self._makes_progress(observation, trajectory):
+                return state, label, trajectory
+        # Every masked service action was geometrically blocked.  Preserve the
+        # selected semantic label with a zero-motion trajectory: the product
+        # adapter may still satisfy TARGET through its physical side-grasp
+        # window, while training can penalize the no-progress result.  WAIT is
+        # never selected by Q while a productive belief action exists.
+        return state, selected, self.action_trajectory(observation, ACTION_WAIT)
 
     def act(self, observation: AgentObservation) -> TrajectoryAction:
         return self.act_with_label(observation, explore=False)[2]
@@ -204,6 +243,7 @@ class QLearningPolicy(_SafeTrajectoryMixin):
             "epsilon": self.epsilon,
             "policy_seed": self._policy_seed,
             "truth_access_used": False,
+            "wait_action_mask": "only_when_no_productive_belief_action_or_all_blocked",
             "q_table": self.q_table,
         }
 
@@ -222,6 +262,12 @@ class QLearningPolicy(_SafeTrajectoryMixin):
             raise ValueError("invalid or truth-contaminated Q-learning checkpoint")
         if tuple(data.get("actions", ())) != ALL_ACTIONS:
             raise ValueError("checkpoint action schema mismatch")
+        mask = data.get("wait_action_mask")
+        if mask not in {
+            None,
+            "only_when_no_productive_belief_action_or_all_blocked",
+        }:
+            raise ValueError("checkpoint wait-action mask mismatch")
         policy = cls(
             config,
             learning_rate=float(data["learning_rate"]),
@@ -234,6 +280,70 @@ class QLearningPolicy(_SafeTrajectoryMixin):
             for state, row in data["q_table"].items()
         }
         return policy
+
+
+class CoverageBackstoppedQLearningPolicy:
+    """Belief-only Q decisions with deterministic exploration completion.
+
+    Tabular Q-learning decides whether an already observed target or dirt area
+    should be serviced.  When it selects frontier exploration, the action is
+    supplied by the fixed full-coverage sweep.  This is the project's declared
+    dual mode: RL remains the task-priority policy, while the systematic mode
+    prevents a sparse/coarsely binned Q table from abandoning unseen space.
+    Neither branch receives evaluator truth.
+    """
+
+    name = "q_learning_with_systematic_coverage_backstop"
+    evaluation_only = False
+
+    def __init__(
+        self,
+        config: TaskConfig,
+        *,
+        q_table: dict[str, dict[str, float]] | None = None,
+        seed: int = 0,
+    ):
+        self.q_policy = QLearningPolicy(config, epsilon=0.0, seed=seed)
+        if q_table is not None:
+            self.q_policy.q_table = q_table
+        self.coverage_policy = FullCoveragePolicy(config)
+        self.last_mode = "q_frontier"
+        self._last_observed_ratio: float | None = None
+        self._stagnant_steps = 0
+        self._coverage_activated = False
+
+    def reset(self, *, episode_seed: int | None = None) -> None:
+        self.q_policy.reset(episode_seed=episode_seed)
+        self.coverage_policy.reset(episode_seed=episode_seed)
+        self.last_mode = "q_frontier"
+        self._last_observed_ratio = None
+        self._stagnant_steps = 0
+        self._coverage_activated = False
+
+    def act(self, observation: AgentObservation) -> TrajectoryAction:
+        if self._last_observed_ratio is not None:
+            # Tiny incremental ray-cast changes do not justify keeping the
+            # learned frontier mode indefinitely.  Require at least 0.2% of
+            # the traversable belief grid per high-level action; otherwise
+            # count the action toward the deterministic completion backstop.
+            if observation.observed_ratio > self._last_observed_ratio + 0.01:
+                self._stagnant_steps = 0
+            else:
+                self._stagnant_steps += 1
+        self._last_observed_ratio = observation.observed_ratio
+        if self._stagnant_steps >= 6:
+            self._coverage_activated = True
+
+        if not self._coverage_activated:
+            _, label, action = self.q_policy.act_with_label(
+                observation,
+                explore=False,
+            )
+            if self.q_policy._makes_progress(observation, action):
+                self.last_mode = f"q_{label}"
+                return action
+        self.last_mode = "systematic_coverage_backstop"
+        return self.coverage_policy.act(observation)
 
 
 @dataclass(frozen=True)

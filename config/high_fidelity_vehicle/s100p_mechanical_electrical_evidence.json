@@ -1,0 +1,176 @@
+{
+  "schema_version": 1,
+  "record_id": "tzcup_s100p_mechanical_electrical_evidence_v1",
+  "status": "BLOCKED_MECHANICAL_ELECTRICAL_INTEGRATION",
+  "claim_boundary": "Static evidence contract only. It does not modify the URDF, connect to a board, authorize power-on, download CAD, establish a harness design, or prove mechanical, thermal, electrical, EMC, ingress, manufacturing or runtime acceptance.",
+  "open_source_only_policy": {
+    "required": true,
+    "restricted_step_directory_url": "https://archive.d-robotics.cc/downloads/hardware/rdk_s100/rdk_s100/",
+    "restricted_step_directory_observation": "The public directory lists an approximately 69 MB official STEP asset, but its product introduction states Confidential, Proprietary and All rights reserved.",
+    "restricted_step_action": "DO_NOT_DOWNLOAD_DO_NOT_COMMIT_DO_NOT_DERIVE_DO_NOT_DECLARE_REUSABLE",
+    "reason": "Official availability does not establish an open-source or redistributable license."
+  },
+  "sources": [
+    {
+      "id": "official_rdk_s100_hardware_introduction",
+      "url": "https://d-robotics.github.io/rdk_doc/rdk_s/Quick_start/hardware_introduction/rdk_s100/",
+      "evidence_level": "OFFICIAL_PRIMARY_PUBLIC_DOCUMENTATION",
+      "accessed_as": "public_documentation_reference_only",
+      "reuse_status": "FACTS_MAY_BE_RECORDED_NO_CAD_ASSET_ACQUIRED"
+    },
+    {
+      "id": "official_rdk_s100_archive_directory",
+      "url": "https://archive.d-robotics.cc/downloads/hardware/rdk_s100/rdk_s100/",
+      "evidence_level": "OFFICIAL_PRIMARY_PUBLIC_DIRECTORY",
+      "accessed_as": "directory_metadata_reference_only",
+      "reuse_status": "RESTRICTED_STEP_NOT_ACQUIRED"
+    },
+    {
+      "id": "local_read_only_board_identity",
+      "path": "artifacts/s100p_hardware_bringup/g0_20260831T001506Z_6226f4c5/G0/g0_read_only_inventory.json",
+      "evidence_level": "LOCAL_READ_ONLY_IDENTITY_ARTIFACT",
+      "accessed_as": "retained_artifact_only_no_new_board_contact",
+      "reuse_status": "IDENTITY_ONLY_NOT_MECHANICAL_OR_POWER_MEASUREMENT"
+    }
+  ],
+  "evidence_items": [
+    {
+      "id": "board_model",
+      "value": "KS1P75Y",
+      "source_id": "official_rdk_s100_hardware_introduction",
+      "evidence_level": "OFFICIAL_PRIMARY_PUBLIC_DOCUMENTATION",
+      "can_freeze_urdf": false,
+      "urdf_disposition": "NOT_A_GEOMETRIC_OR_INTERFACE_DATUM"
+    },
+    {
+      "id": "soc",
+      "value": "S100P",
+      "source_id": "official_rdk_s100_hardware_introduction",
+      "evidence_level": "OFFICIAL_PRIMARY_PUBLIC_DOCUMENTATION",
+      "can_freeze_urdf": false,
+      "urdf_disposition": "NOT_A_GEOMETRIC_OR_INTERFACE_DATUM"
+    },
+    {
+      "id": "cpu_frequency",
+      "value": 2.0,
+      "unit": "GHz",
+      "source_id": "official_rdk_s100_hardware_introduction",
+      "evidence_level": "OFFICIAL_PRIMARY_PUBLIC_DOCUMENTATION",
+      "can_freeze_urdf": false,
+      "urdf_disposition": "NOT_A_GEOMETRIC_OR_INTERFACE_DATUM"
+    },
+    {
+      "id": "memory_capacity",
+      "value": 24,
+      "unit": "GB",
+      "source_id": "official_rdk_s100_hardware_introduction",
+      "evidence_level": "OFFICIAL_PRIMARY_PUBLIC_DOCUMENTATION",
+      "can_freeze_urdf": false,
+      "urdf_disposition": "NOT_A_GEOMETRIC_OR_INTERFACE_DATUM"
+    },
+    {
+      "id": "ai_compute",
+      "value": 128,
+      "unit": "TOPS",
+      "source_id": "official_rdk_s100_hardware_introduction",
+      "evidence_level": "OFFICIAL_PRIMARY_PUBLIC_DOCUMENTATION",
+      "can_freeze_urdf": false,
+      "urdf_disposition": "NOT_A_GEOMETRIC_OR_INTERFACE_DATUM"
+    },
+    {
+      "id": "acrylic_enclosure_nominal_dimensions",
+      "value": [120, 121, 51],
+      "unit": "mm",
+      "scope": "development_board_with_acrylic_enclosure_nominal_external_size",
+      "source_id": "official_rdk_s100_hardware_introduction",
+      "evidence_level": "OFFICIAL_PRIMARY_PUBLIC_DOCUMENTATION",
+      "can_freeze_urdf": false,
+      "urdf_disposition": "NOT_THE_BARE_BOARD_DIMENSION_AND_NOT_A_MOUNTING_DATUM; retain the existing provisional board reference until owned-board measurement",
+      "blocked_by": ["bare_board_boundary", "mounting_hole_pattern", "connector_keepout", "heatsink_fan_envelope"]
+    },
+    {
+      "id": "dc_input_voltage_range",
+      "value": [12, 20],
+      "unit": "VDC",
+      "source_id": "official_rdk_s100_hardware_introduction",
+      "evidence_level": "OFFICIAL_PRIMARY_PUBLIC_DOCUMENTATION",
+      "can_freeze_urdf": false,
+      "urdf_disposition": "ELECTRICAL_REQUIREMENT_ONLY_NOT_URDF_GEOMETRY",
+      "power_design_disposition": "INPUT_REQUIREMENT_ONLY_PENDING_HARNESS_AND_PROTECTION_DESIGN"
+    },
+    {
+      "id": "j1_rated_input",
+      "value": [20, 10],
+      "unit": ["VDC", "A"],
+      "source_id": "official_rdk_s100_hardware_introduction",
+      "evidence_level": "OFFICIAL_PRIMARY_PUBLIC_DOCUMENTATION",
+      "can_freeze_urdf": false,
+      "urdf_disposition": "ELECTRICAL_REQUIREMENT_ONLY_NOT_URDF_GEOMETRY",
+      "power_design_disposition": "PENDING_CONNECTOR_PINOUT_POLARITY_WIRE_GAUGE_FUSE_AND_TRANSIENT_ANALYSIS"
+    },
+    {
+      "id": "typical_input_power",
+      "value": [12, 5.5, 70],
+      "unit": ["VDC", "A", "W"],
+      "source_id": "official_rdk_s100_hardware_introduction",
+      "evidence_level": "OFFICIAL_PRIMARY_PUBLIC_DOCUMENTATION",
+      "can_freeze_urdf": false,
+      "urdf_disposition": "NOT_A_GEOMETRIC_OR_INTERFACE_DATUM",
+      "power_design_disposition": "NOMINAL_DATASHEET_INPUT_NOT_AS_BUILT_MEASUREMENT"
+    },
+    {
+      "id": "maximum_input_power",
+      "value": [20, 7.5, 150],
+      "unit": ["VDC", "A", "W"],
+      "source_id": "official_rdk_s100_hardware_introduction",
+      "evidence_level": "OFFICIAL_PRIMARY_PUBLIC_DOCUMENTATION",
+      "can_freeze_urdf": false,
+      "urdf_disposition": "NOT_A_GEOMETRIC_OR_INTERFACE_DATUM",
+      "power_design_disposition": "DATASHEET_LIMIT_NOT_A_VALIDATED_A300_OR_DC_DC_LOAD_CASE"
+    },
+    {
+      "id": "operating_temperature_range",
+      "value": [0, 45],
+      "unit": "degC",
+      "source_id": "official_rdk_s100_hardware_introduction",
+      "evidence_level": "OFFICIAL_PRIMARY_PUBLIC_DOCUMENTATION",
+      "can_freeze_urdf": false,
+      "urdf_disposition": "THERMAL_REQUIREMENT_ONLY_NOT_URDF_GEOMETRY",
+      "power_design_disposition": "PENDING_ENCLOSURE_THERMAL_DESIGN_AND_MEASURED_DERATING"
+    },
+    {
+      "id": "connector_model_table",
+      "value": "Official documentation publishes a connector-model table.",
+      "source_id": "official_rdk_s100_hardware_introduction",
+      "evidence_level": "OFFICIAL_PRIMARY_PUBLIC_DOCUMENTATION",
+      "can_freeze_urdf": false,
+      "urdf_disposition": "MODEL_NAMES_ALONE_DO_NOT_PROVE_COORDINATES_OR_KEEP_OUTS",
+      "blocked_by": ["connector_coordinates", "connector_keepout", "j1_pinout_and_polarity", "cable_bend_and_service_space"]
+    },
+    {
+      "id": "local_board_identity",
+      "value": "D-Robotics RDK S100P V1P0",
+      "source_id": "local_read_only_board_identity",
+      "evidence_level": "LOCAL_READ_ONLY_IDENTITY_ARTIFACT",
+      "can_freeze_urdf": false,
+      "urdf_disposition": "CONFIRMS_CONNECTED_PLATFORM_IDENTITY_ONLY_NOT_MEASURED_PHYSICAL_GEOMETRY_OR_POWER"
+    }
+  ],
+  "blocked_gates": [
+    "exact_owned_board_dimensions_and_boundary",
+    "mounting_hole_pattern_and_datums",
+    "board_mass_and_center_of_mass",
+    "connector_coordinates_keepouts_and_cable_service_space",
+    "heatsink_fan_and_airflow_envelope",
+    "j1_pinout_polarity_and_real_harness",
+    "dc_dc_fuse_wire_gauge_grounding_and_transient_protection",
+    "enclosure_thermal_derating_and_temperature_measurement",
+    "installed_power_on_and_runtime_validation"
+  ],
+  "acceptance": {
+    "urdf_update_authorized": false,
+    "mechanical_installation_accepted": false,
+    "electrical_installation_accepted": false,
+    "runtime_accepted": false
+  }
+}

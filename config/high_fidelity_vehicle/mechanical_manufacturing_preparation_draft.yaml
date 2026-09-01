@@ -1,0 +1,283 @@
+schema_version: 1
+document_id: tzcup_formal_vehicle_mechanical_manufacturing_preparation_draft_v1
+status: DRAFT_DESIGN_INPUT_NOT_RELEASED
+ready_for_manufacturing_release: false
+claim_boundary: >-
+  This is a machine-readable design-input and planning draft derived from the
+  nominal URDF, packaging layout, component register and manufacturing BOM.
+  It is not a native CAD model, controlled drawing, GD&T specification,
+  supplier purchase specification, as-built record, qualified process, or
+  manufacturing-release evidence. It must not be used to procure, fabricate,
+  certify, or declare the vehicle ready.
+prohibited_claims:
+  - released_for_fabrication
+  - ready_for_manufacturing
+  - as_built_verified
+  - supplier_approved
+  - inspection_accepted
+source_design_inputs:
+  urdf_xacro:
+    path: starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro
+    role: kinematic_interface_and_nominal_packaging_input_only
+  layout:
+    path: config/high_fidelity_vehicle/formal_vehicle_layout.yaml
+    expected_layout_id: tzcup_formal_vehicle_layout_v1
+    role: nominal_installation_coordinates_and_envelopes_only
+  component_register:
+    path: config/high_fidelity_vehicle/formal_vehicle_component_register.yaml
+    expected_register_id: tzcup_formal_vehicle_component_register_v6
+    role: mounting_chain_and_functional_interface_input_only
+  manufacturing_bom:
+    path: config/high_fidelity_vehicle/manufacturing_bom.csv
+    expected_row_count: 33
+    role: nominal_make_buy_scope_and_mass_allocation_input_only
+  mechanical_release_readiness:
+    path: config/high_fidelity_vehicle/mechanical_release_readiness.yaml
+    expected_status: NOT_READY_FOR_MECHANICAL_MANUFACTURING_RELEASE
+    role: release_boundary_authority
+design_input_scope:
+  included:
+    - material_requirement_drafts
+    - preliminary_fastener_schedule
+    - connection_and_weld_decision_inputs
+    - surface_protection_requirement_drafts
+    - assembly_process_hold_points
+    - inspection_plan_inputs
+    - maintenance_drawing_inputs
+  excluded_until_release:
+    - native_step_or_stp_models
+    - controlled_2d_drawings
+    - gd_and_t_datums_and_tolerances
+    - supplier_selected_part_numbers
+    - torque_or_preload_values
+    - qualified_weld_or_bond_procedures
+    - structural_fea_and_stability_results
+    - ingress_protection_test_results
+    - as_built_measurement_weighing_or_inertia
+audit_outcome:
+  status: PRE_RELEASE_DESIGN_INPUT_DRAFT_COMPLETE_RELEASE_BLOCKED
+  release_evidence_created: false
+  completed_design_input_areas:
+    - material_requirement_drafts
+    - preliminary_fastener_schedule
+    - connection_and_weld_decision_inputs
+    - surface_protection_requirement_drafts
+    - assembly_process_hold_points
+    - inspection_plan_inputs
+    - maintenance_drawing_inputs
+  blocked_until: required_release_hold_points_are_closed_by_controlled_evidence
+materials:
+  release_status: draft_design_input_not_released
+  records:
+    - id: structural_project_load_paths
+      applies_to: [arm_pedestal_adapter, sensor_tower, cleaning_lift, bodywork_and_doors]
+      material_family_candidates: [aluminum_alloy_plate_or_extrusion, corrosion_protected_structural_steel]
+      selection_status: pending_load_cases_supplier_dfm_and_corrosion_review
+      required_properties: [yield_strength_basis, fatigue_basis, galvanic_pairing_review, material_certificate]
+      release_evidence: pending://controlled_material_specification_and_certificate
+    - id: wet_waste_and_recovery_path
+      applies_to: [wastewater_tank, squeegee_suction_hoses, recovery_filter, charge_and_drain]
+      material_family_candidates: [chemical_compatible_polymer, stainless_steel, compatible_elastomer]
+      selection_status: pending_water_chemistry_temperature_and_cleaner_compatibility_review
+      required_properties: [fluid_compatibility, corrosion_resistance, cleanability, seal_compatibility, material_certificate]
+      release_evidence: pending://fluid_contact_material_and_seal_specification
+    - id: exterior_and_service_covers
+      applies_to: [bodywork_and_doors, emergency_lighting_safety, charge_and_drain]
+      material_family_candidates: [uv_stabilized_engineering_polymer, coated_sheet_metal]
+      selection_status: pending_environment_uv_impact_and_service_access_review
+      required_properties: [uv_resistance, impact_resistance, flame_and_smoke_review, finish_adhesion]
+      release_evidence: pending://controlled_bodywork_material_specification
+    - id: sensor_and_compute_mounting
+      applies_to: [sensor_tower, arm_pedestal_adapter, power_distribution]
+      material_family_candidates: [aluminum_alloy, stainless_steel, isolator_elastomer]
+      selection_status: pending_vibration_thermal_and_emc_grounding_review
+      required_properties: [stiffness, vibration_isolation, thermal_path, galvanic_pairing_review]
+      release_evidence: pending://mount_material_and_isolation_stack_specification
+fastener_schedule:
+  release_status: draft_design_input_not_released
+  common_rules:
+    metric_thread_system_only: true
+    final_thread_size_grade_finish_torque_and_preload: pending://controlled_drawings_interface_loads_and_supplier_data
+    do_not_tighten_from_this_draft: true
+  records:
+    - id: sensor_tower_base
+      component_register_subassembly: sensor_tower
+      documented_count_basis: four_base_bolts_from_component_architecture
+      candidate_thread: M8_pending_interface_confirmation
+      candidate_grade_or_material: corrosion_appropriate_grade_pending_environment_review
+      retention_method: pending_vibration_joint_analysis
+      release_torque_or_preload: pending://joint_stackup_and_torque_test
+      verification: pending://controlled_drawing_and_assembly_record
+    - id: arm_pedestal_and_adapter
+      component_register_subassembly: manipulator
+      documented_count_basis: six_bolt_adapter_from_component_architecture
+      candidate_thread: pending_ur_oem_interface_and_pedestal_load_review
+      candidate_grade_or_material: pending_joint_design
+      retention_method: pending_joint_design
+      release_torque_or_preload: pending://ur_interface_controlled_drawing
+      verification: pending://controlled_drawing_and_assembly_record
+    - id: compute_enclosure_mount
+      component_register_subassembly: compute_enclosure
+      documented_count_basis: 230x180_mm_mounting_plate_interface
+      candidate_thread: pending_owned_s100p_enclosure_measurement
+      candidate_grade_or_material: pending_vibration_and_grounding_review
+      retention_method: pending_joint_design
+      release_torque_or_preload: pending://controlled_drawing_and_assembly_record
+      verification: pending://controlled_drawing_and_assembly_record
+    - id: service_door_hinges_and_latches
+      component_register_subassembly: bodywork_service_access
+      documented_count_basis: four_hinges_and_four_independent_latches
+      candidate_thread: pending_hinge_and_latch_supplier_selection
+      candidate_grade_or_material: pending_corrosion_and_cycle_life_review
+      retention_method: pending_service_cycle_and_vibration_review
+      release_torque_or_preload: pending://controlled_drawing_and_assembly_record
+      verification: pending://door_cycle_and_lock_retention_test
+    - id: cleaning_head_and_recovery_mounts
+      component_register_subassembly: cleaning_head_deployment
+      documented_count_basis: lift_guides_actuator_motor_and_squeegee_mount_interfaces
+      candidate_thread: pending_dynamic_load_and_service_access_review
+      candidate_grade_or_material: pending_fluid_and_corrosion_review
+      retention_method: pending_vibration_joint_analysis
+      release_torque_or_preload: pending://controlled_drawing_and_assembly_record
+      verification: pending://dynamic_load_and_service_inspection
+connections_and_welds:
+  release_status: draft_design_input_not_released
+  records:
+    - id: sensor_tower_primary_load_path
+      component_register_subassembly: sensor_tower
+      connection_family: bolted_base_columns_cross_ties_and_gussets
+      weld_or_bond_disposition: pending_decision_between_welded_and_bolted_gussets
+      required_design_inputs: [load_cases, fatigue_spectrum, material_pairing, access_for_tooling]
+      prohibited_substitution: visual_mesh_or_urdf_joint_is_not_connection_evidence
+      release_evidence: pending://joint_detail_drawings_and_qualified_process
+    - id: arm_pedestal_primary_load_path
+      component_register_subassembly: manipulator
+      connection_family: reinforced_payload_deck_to_six_bolt_adapter
+      weld_or_bond_disposition: pending_pedestal_and_backplate_design
+      required_design_inputs: [ur_oem_interface, arm_envelope, dynamic_load_cases, overturning_stability]
+      prohibited_substitution: nominal_link_mass_is_not_structural_analysis
+      release_evidence: pending://step_drawings_fea_and_fastener_calculation
+    - id: wet_storage_and_recovery_path
+      component_register_subassemblies: [wastewater_storage, wastewater_recovery_drive, recovery_squeegee]
+      connection_family: serviceable_fluid_seal_hose_clamp_and_isolator_interfaces
+      weld_or_bond_disposition: no_seal_or_weld_process_selected
+      required_design_inputs: [fluid_compatibility, pressure_vacuum_range, hose_bend_radius, drain_service_access]
+      prohibited_substitution: gazebo_flow_model_is_not_leak_or_pressure_evidence
+      release_evidence: pending://fluid_schematic_joint_spec_and_pressure_test_plan
+    - id: bodywork_and_service_interfaces
+      component_register_subassemblies: [bodywork_service_access, exterior_service_and_contact_safety]
+      connection_family: sealed_panels_hinges_latches_service_fittings_and_contact_bumpers
+      weld_or_bond_disposition: pending_panel_joint_seal_and_hinge_design
+      required_design_inputs: [ingress_target, door_cycle_life, service_clearance, corrosion_pairing]
+      prohibited_substitution: visual_service_door_joint_is_not_sealing_evidence
+      release_evidence: pending://bodywork_joint_and_seal_drawings
+surface_treatment:
+  release_status: draft_design_input_not_released
+  records:
+    - id: exposed_structural_metal
+      applies_to: [arm_pedestal_adapter, sensor_tower, cleaning_lift]
+      candidate_system: corrosion_protection_system_pending_material_and_environment_selection
+      required_inputs: [base_material, coating_compatibility, galvanic_pairing, abrasion_zones, repair_method]
+      acceptance_criteria: pending://controlled_finish_specification
+    - id: wet_and_washdown_interfaces
+      applies_to: [wastewater_tank, squeegee_suction_hoses, recovery_filter, charge_and_drain]
+      candidate_system: chemical_and_water_compatible_finish_pending_fluid_definition
+      required_inputs: [water_chemistry, cleaners, temperature, seal_system, drainage]
+      acceptance_criteria: pending://controlled_finish_and_ingress_specification
+    - id: exterior_polymer_and_painted_panels
+      applies_to: [bodywork_and_doors, emergency_lighting_safety]
+      candidate_system: uv_and_impact_resistant_finish_pending_environment_profile
+      required_inputs: [uv_exposure, color_safety_marking, abrasion, adhesion, repair_method]
+      acceptance_criteria: pending://controlled_finish_specification
+assembly_process:
+  release_status: draft_design_input_not_released
+  precondition_for_any_build: pending://controlled_step_drawings_gdt_materials_and_joint_specs_released
+  work_packages:
+    - id: incoming_and_traceability
+      sequence: 10
+      objective: verify_part_revision_material_certificates_and_purchased_component_identity
+      hold_point: pending://incoming_inspection_plan
+    - id: payload_frame_and_primary_load_paths
+      sequence: 20
+      objective: establish_datum_controlled_base_sensor_tower_and_arm_pedestal_interfaces
+      hold_point: pending://drawing_datums_joint_stackups_and_structural_release
+    - id: wet_dry_storage_and_recovery
+      sequence: 30
+      objective: install_serviceable_storage_recovery_and_drain_interfaces
+      hold_point: pending://fluid_routing_seal_and_pressure_test_requirements
+    - id: cleaning_head
+      sequence: 40
+      objective: install_lift_guides_brushes_squeegee_and_suction_interfaces
+      hold_point: pending://dynamic_alignment_and_guarding_requirements
+    - id: electrical_compute_and_sensor_mounts
+      sequence: 50
+      objective: install_isolation_grounding_and_serviceable_mounting_hardware
+      hold_point: pending://thermal_emc_harness_and_vibration_requirements
+    - id: bodywork_and_service_access
+      sequence: 60
+      objective: install_panels_latches_hinges_service_fittings_and_safety_exterior
+      hold_point: pending://ingress_finish_and_cycle_requirements
+    - id: final_configuration_control
+      sequence: 70
+      objective: capture_as_built_serial_numbers_mass_cog_inertia_and_deviations
+      hold_point: pending://as_built_measurement_and_release_record
+inspection_plan_inputs:
+  release_status: draft_design_input_not_released
+  records:
+    - id: incoming_material_and_purchased_component
+      inspection_type: receiving
+      required_records: [part_revision, supplier_certificate, purchased_component_identity, nonconformance_log]
+      acceptance_criteria: pending://controlled_bom_and_drawings
+    - id: datum_geometry_and_joint_stackup
+      inspection_type: dimensional
+      required_records: [drawing_revision, datum_scheme, measurement_method, measured_results]
+      acceptance_criteria: pending://gdt_and_controlled_drawings
+    - id: fastener_and_connection_control
+      inspection_type: process
+      required_records: [fastener_lot, tool_calibration, torque_or_preload_record, witness_mark_policy]
+      acceptance_criteria: pending://released_fastener_schedule
+    - id: weld_bond_or_seal_process
+      inspection_type: process_and_leak
+      required_records: [qualified_procedure, operator_or_supplier_record, visual_or_ndt_record, leak_or_pressure_record]
+      acceptance_criteria: pending://released_joint_and_test_specification
+    - id: coating_and_surface
+      inspection_type: finish
+      required_records: [surface_prep, coating_batch, thickness_or_finish_measurement, repair_record]
+      acceptance_criteria: pending://released_surface_specification
+    - id: final_as_built
+      inspection_type: configuration_and_mass_properties
+      required_records: [as_built_bom, weighed_mass, cog_measurement, inertia_method, deviation_approval]
+      acceptance_criteria: pending://released_configuration_control_plan
+maintenance_drawing_inputs:
+  release_status: draft_design_input_not_released
+  records:
+    - id: service_doors_and_power_isolation
+      component_register_subassembly: bodywork_service_access
+      required_views: [external_access, hinge_latch_detail, power_isolator_access, lockout_tagout_clearance]
+      release_evidence: pending://maintenance_drawings_and_service_procedure
+    - id: dry_and_wet_storage_service
+      component_register_subassemblies: [dry_storage, wastewater_storage, robot_deposition_port]
+      required_views: [lid_latch_sequence, dry_deposit_path, drain_path, filter_access, spill_containment]
+      release_evidence: pending://maintenance_drawings_and_service_procedure
+    - id: cleaning_head_service
+      component_register_subassemblies: [side_brushes, central_roller, recovery_squeegee, cleaning_head_deployment]
+      required_views: [brush_change, lift_safe_support, squeegee_adjustment, hose_and_filter_access]
+      release_evidence: pending://maintenance_drawings_and_service_procedure
+    - id: sensor_arm_and_compute_service
+      component_register_subassemblies: [sensor_tower, manipulator, wrist_rgbd_installation, compute_enclosure]
+      required_views: [sensor_alignment_reference, arm_safe_stow, compute_enclosure_access, cable_service_loop]
+      release_evidence: pending://maintenance_drawings_and_service_procedure
+required_release_hold_points:
+  - native_step_or_stp_models
+  - controlled_2d_drawings
+  - gdt_datums_and_tolerances
+  - material_specifications_and_certificates
+  - fastener_size_grade_torque_and_preload
+  - qualified_connections_welds_bonds_and_seals
+  - coating_corrosion_and_surface_treatment
+  - approved_assembly_work_instructions
+  - approved_inspection_plan_and_records
+  - as_built_weighing_cog_and_inertia
+  - structural_fea_fatigue_and_stability
+  - ingress_and_waterproofing_test
+  - maintenance_access_drawings

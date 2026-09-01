@@ -18,7 +18,9 @@ Each train map has 200 missions and each validation/hidden map has 100 missions,
 for 8,400 missions total. Missions on the same map share the layout seed while
 dirt, cube, pedestrian and sensor seeds are independent per mission. Cubes are
 single-layer 30 mm objects, at most 20 per mission, and are placed outside the
-configured grasp clearance around fixed assets. Every dirt rectangle has a
+configured whole-vehicle side-pick parking clearance around fixed assets. The
+public cube contract separately publishes `grasp_reach_radius_m`; placement
+clearance must never be reused as an arm reach/success threshold. Every dirt rectangle has a
 fixed area of 1.0 m2; its aspect ratio and yaw vary by mission. Conservative
 rotated bounding circles keep dirt rectangles mutually exclusive, so the
 recorded union area is the actual sum rather than an overlap estimate.

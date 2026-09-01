@@ -87,7 +87,11 @@ class PedestrianDriver(Node):
             request.pose.orientation.w = math.cos(yaw / 2.0)
             self.pending.append(self.client.call_async(request))
         self.publish_status(
-            "ACTIVE", pedestrian_count=len(self.schedule["pedestrians"])
+            "ACTIVE",
+            pedestrian_count=len(self.schedule["pedestrians"]),
+            # Evaluator-only phase evidence. Product nodes do not subscribe to
+            # this environment status and no command is derived from it.
+            schedule_elapsed_s=round(elapsed_s, 6),
         )
 
 

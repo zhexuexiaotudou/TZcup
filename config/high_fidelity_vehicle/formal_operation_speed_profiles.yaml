@@ -1,0 +1,52 @@
+schema_version: 1
+profile_set_id: tzcup_formal_operation_speed_profiles_v1
+units: SI
+
+competition_efficiency_contract:
+  working_width_m: 1.32
+  route_efficiency: 0.75
+  minimum_effective_area_m2_h: 3500.0
+  source_bound_measured_coverage_gate: formal_source_bound_measured_coverage_efficiency
+  static_theory_is_not_acceptance_evidence: true
+
+profiles:
+  mapping_safe:
+    purpose: first_map_localization_and_safety_constrained_transit
+    maximum_linear_speed_m_s: 0.45
+    enabled_for_formal_runtime: true
+    validation_status: CURRENT_SAFETY_CONFIGURATION_ONLY
+    competition_efficiency_eligible: false
+    required_gates:
+      - formal_map_lifecycle_runtime
+      - formal_a300_mobility_runtime
+      - formal_dynamic_obstacle_avoidance
+
+  dry_cleaning_competition_candidate:
+    purpose: dry_cleaning_efficiency_candidate_only
+    target_linear_speed_m_s: 1.0
+    # Exact floor: 3500 / (1.32 * 0.75 * 3600) = 0.9820426487093153 m/s.
+    minimum_theoretical_speed_m_s: 0.9820426487093153
+    # Conservative decimal floor retained for candidate configuration review.
+    conservative_candidate_speed_floor_m_s: 0.982323
+    enabled_for_formal_runtime: false
+    validation_status: PENDING_SOURCE_BOUND_GAZEBO_AND_A300_TRACKING
+    competition_efficiency_eligible: false
+    required_gates:
+      - formal_source_bound_measured_coverage_efficiency
+      - formal_a300_mobility_runtime
+      - formal_ground_dirt_cleaning_runtime
+      - formal_dynamic_obstacle_avoidance
+      - formal_end_to_end_cleaning_mission
+
+  wet_puddle_recovery:
+    purpose: segmented_wet_recovery_speed_limits
+    speed_limits_m_s:
+      nominal_depth_0_002_m: 0.115899
+      maximum_depth_0_010_m: 0.023180
+    enabled_for_formal_runtime: false
+    validation_status: PENDING_SOURCE_BOUND_WATER_RECOVERY_RUNTIME
+    competition_efficiency_eligible: false
+    required_gates:
+      - formal_water_recovery_runtime
+      - formal_source_bound_measured_coverage_efficiency
+      - formal_end_to_end_cleaning_mission

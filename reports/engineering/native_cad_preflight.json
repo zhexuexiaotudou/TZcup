@@ -1,0 +1,128 @@
+{
+  "audit_name": "native_cad_readiness",
+  "audit_scope": {
+    "host": "Windows",
+    "prohibited_execution_backends": [
+      "WSL",
+      "Docker",
+      "Gazebo"
+    ],
+    "read_only": true
+  },
+  "gaps": [
+    {
+      "code": "NATIVE_ASSEMBLY_MANIFEST_DRAFT_NOT_RELEASED",
+      "detail": "A valid component-addressable design-input draft exists, but the required released assembly manifest does not.",
+      "severity": "blocker"
+    },
+    {
+      "code": "NO_NATIVE_CAD_EXPORT_RECEIPT",
+      "severity": "blocker"
+    },
+    {
+      "code": "NO_BREP_STEP_ARTIFACT",
+      "required_evidence": "Export a component-addressable ISO-10303 STEP assembly from the editable sources and retain its manifest.",
+      "severity": "blocker"
+    },
+    {
+      "code": "NO_WINDOWS_BREP_EXPORTER",
+      "required_evidence": "Install and verify a Windows-native B-rep exporter such as FreeCADCmd, then rerun this audit without using WSL or a mesh converter.",
+      "severity": "blocker"
+    },
+    {
+      "code": "LEGACY_STL_VISUAL_GENERATORS_PRESENT",
+      "detail": "Legacy STL generators remain visual/simulation assets and cannot satisfy native CAD; they do not invalidate separately proven native B-rep reconstruction, assembly, STEP, receipt, and exporter evidence.",
+      "severity": "warning"
+    }
+  ],
+  "inventory": {
+    "assembly_manifest": null,
+    "cadquery_parametric_brep_sources": [
+      "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_body_sensor_power_fourth_batch.py",
+      "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_bodywork_fifth_batch.py",
+      "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_mechanisms_sixth_batch.py",
+      "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_recovery_second_batch.py",
+      "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_first_batch.py",
+      "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_power_distribution_eighth_batch.py",
+      "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_seventh_batch.py",
+      "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_third_batch.py"
+    ],
+    "component_addressable_assembly_draft": {
+      "component_count": 105,
+      "path": "config/high_fidelity_vehicle/component_addressable_native_cad_assembly_manifest_draft.json",
+      "status": "STATIC_COMPONENT_ADDRESSABLE_DRAFT_VALID_NATIVE_EXPORT_BLOCKED",
+      "supplier_excluded_count": 21,
+      "valid": true
+    },
+    "editable_native_brep_sources": [
+      "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_body_sensor_power_fourth_batch.py",
+      "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_bodywork_fifth_batch.py",
+      "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_mechanisms_sixth_batch.py",
+      "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_recovery_second_batch.py",
+      "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_first_batch.py",
+      "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_power_distribution_eighth_batch.py",
+      "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_seventh_batch.py",
+      "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_third_batch.py"
+    ],
+    "export_receipt": null,
+    "mesh_asset_count": 193,
+    "openscad_packaging_sources": [
+      "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/formal_vehicle_layout.scad"
+    ],
+    "python_mesh_generators": [
+      "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py",
+      "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_power_service_hardware_meshes.py",
+      "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_product_bodywork_meshes.py"
+    ],
+    "rejected_python_brep_candidates": [],
+    "step_artifacts": [],
+    "validated_non_mesh_step_artifacts": []
+  },
+  "native_cad_definition": {
+    "explicitly_not_accepted": [
+      "STL, OBJ, DAE, glTF, PLY, or 3MF as native CAD",
+      "mesh-to-STEP conversion as editable manufacturing CAD",
+      "a monolithic STEP without component/source provenance",
+      "URDF collision primitives or visual mesh references as manufacturing CAD"
+    ],
+    "required": [
+      "editable project-owned B-rep part/assembly sources",
+      "component-addressable assembly manifest",
+      "ISO-10303 STEP artifact exported from those sources",
+      "available Windows-native B-rep exporter",
+      "export receipt binding source hashes to a non-mesh STEP assembly"
+    ]
+  },
+  "native_editable_step_assembly_ready": false,
+  "next_safe_action": "Create native B-rep sources and an assembly manifest first; then use a Windows-native exporter to generate and validate STEP. Do not convert the existing mesh assets to STEP.",
+  "outcome": "blocked",
+  "schema_version": 1,
+  "toolchain": {
+    "python_brep_modules": {
+      "FreeCAD": false,
+      "OCC": false,
+      "OCP": false,
+      "build123d": false,
+      "cadquery": false
+    },
+    "windows_brep_exporter_available": false,
+    "windows_executables": {
+      "assimp": {
+        "available": false,
+        "path": null
+      },
+      "freecad_cmd": {
+        "available": false,
+        "path": null
+      },
+      "freecad_gui": {
+        "available": false,
+        "path": null
+      },
+      "openscad": {
+        "available": false,
+        "path": null
+      }
+    }
+  }
+}

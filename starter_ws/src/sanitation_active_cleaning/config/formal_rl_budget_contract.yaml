@@ -1,0 +1,46 @@
+schema_version: 1
+contract_id: tzcup_formal_rl_budget_v1
+
+# A task is one immutable (map, mission) input.  An episode is one rollout of
+# that task under one policy seed.  A step is an action decision inside an
+# episode and is only a technical truncation guard, never a task budget.
+semantics:
+  task: immutable_frozen_map_and_mission_seed_input
+  episode: one_policy_rollout_of_one_task
+  step: one_policy_action_decision_inside_an_episode
+  max_steps_is_episode_truncation_guard_not_task_or_episode_budget: true
+
+stage_a_fixed_map:
+  fixed_map_id: stage-a-fixed-formal-map-000
+  task_counts:
+    train: 10000
+    validation: 500
+    hidden: 1000
+  phase_order: [train, validation, freeze_configuration, hidden]
+  hidden_tasks_visible_before_freeze: false
+
+multimap_generalization:
+  map_counts:
+    train: 32
+    validation: 8
+    hidden: 12
+  missions_per_map:
+    train: 200
+    validation: 100
+    hidden: 100
+  task_counts:
+    train: 6400
+    validation: 800
+    hidden: 1200
+  hidden_tasks_visible_before_freeze: false
+
+policy:
+  training_seeds: [7, 17, 29, 43, 61]
+  required_seed_count: 5
+  selection_source: validation_only_before_hidden
+
+execution:
+  max_steps_per_episode: 400
+  max_steps_is_not_a_substitute_for_task_budget: true
+  mode: serial_one_policy_seed_at_a_time
+  smoke_budget_can_pass_formal_acceptance: false

@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "manifest_id": "tzcup_native_brep_cleaning_mechanisms_sixth_batch_cadquery_source_manifest_v1",
+  "status": "design_input_pending_native_export",
+  "claim_boundary": "Static source-integrity input only. Matching hashes bind the editable source and contract but do not assert CadQuery execution, FCStd/STEP creation, assembly receipt, manufacturing release, material, seal, pump curve, tolerance, mass-property, pressure, or vehicle-readiness proof.",
+  "source_files": [
+    {"path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_mechanisms_sixth_batch.py", "sha256": "948b0e35df3444401f89d50aeee7be96efd1e114faff060e56fea514e7c4c221", "role": "authoritative_editable_parametric_cadquery_brep_source"}
+  ],
+  "design_inputs": [
+    {"path": "config/high_fidelity_vehicle/native_brep_cleaning_mechanisms_sixth_batch_contract.json", "sha256": "1582bcf51a4f4b2a2b3fd85c974d2640b76db1317822988afd5117b4e4eb44b7", "role": "machine_readable_per_mesh_geometry_motion_and_pending_release_contract"}
+  ],
+  "prohibited_methods": ["mesh_to_step_conversion", "faceted_or_tessellated_step_export", "mesh_import_as_native_brep_substitute", "placeholder_fcstd_or_step_artifact"],
+  "verification": {"algorithm": "sha256", "command": "Get-FileHash -Algorithm SHA256 <each listed path>", "update_rule": "Update this manifest in the same reviewed change whenever editable source or contract changes. A matching hash cannot authorize CadQuery execution or export."}
+}

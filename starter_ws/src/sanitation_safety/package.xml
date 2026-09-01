@@ -2,14 +2,21 @@
 <package format="3">
   <name>sanitation_safety</name>
   <version>0.1.0</version>
-  <description>High-priority emergency-stop velocity gate.</description>
+  <description>Fail-closed velocity and whole-vehicle actuator safety gateways.</description>
   <maintainer email="team@example.com">Sanitation Vehicle Team</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>action_msgs</exec_depend>
+  <exec_depend>builtin_interfaces</exec_depend>
+  <exec_depend>controller_manager_msgs</exec_depend>
+  <exec_depend>diagnostic_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>rclpy</exec_depend>
+  <exec_depend>ros_gz_interfaces</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
   <exec_depend>std_msgs</exec_depend>
+  <exec_depend>trajectory_msgs</exec_depend>
 
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>

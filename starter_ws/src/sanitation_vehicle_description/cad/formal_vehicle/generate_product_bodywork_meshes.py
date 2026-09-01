@@ -121,6 +121,21 @@ def extruded_polygon_xz(points: Sequence[tuple[float, float]], y_center: float, 
     return mesh
 
 
+def extruded_polygon_yz(points: Sequence[tuple[float, float]], x_center: float, thickness: float) -> Mesh:
+    """Extrude a convex Y-Z service-panel outline along X."""
+    mesh = Mesh()
+    low = [(x_center - thickness * 0.5, y, z) for y, z in points]
+    high = [(x_center + thickness * 0.5, y, z) for y, z in points]
+    for index in range(1, len(points) - 1):
+        mesh.tri(low[0], low[index], low[index + 1])
+        mesh.tri(high[0], high[index + 1], high[index])
+    for index in range(len(points)):
+        nxt = (index + 1) % len(points)
+        mesh.tri(low[index], high[nxt], low[nxt])
+        mesh.tri(low[index], high[index], high[nxt])
+    return mesh
+
+
 def arch_band(center_x: float, y_center: float, *, outer: float = 0.206, inner: float = 0.184) -> Mesh:
     """Top wheel arch with true radial tyre clearance."""
     mesh = Mesh()
@@ -206,12 +221,26 @@ def bodywork_parts() -> dict[str, Mesh]:
         (0.30, -0.250, 0.130, 0.145, 0.125),
         (0.52, -0.235, 0.115, 0.155, 0.105),
     ])
-    parts["front_center_nose.stl"] = lofted_body([
-        (0.08, 0.0, 0.285, 0.285, 0.105),
-        (0.28, 0.0, 0.345, 0.285, 0.115),
-        (0.47, 0.0, 0.355, 0.275, 0.105),
-        (0.555, 0.0, 0.290, 0.255, 0.075),
-    ], exponent=4.2)
+    # The centre nose starts ahead of the manipulator pedestal.  The previous
+    # x=0.08 solid passed through the real UR5e base even though the dark arm
+    # turret made the overlap hard to see in renders.
+    nose = Mesh()
+    for y in (-0.2125, 0.2125):
+        nose.extend(lofted_body([
+            (0.24, y, 0.1225, 0.335, 0.105),
+            (0.32, y, 0.1225, 0.345, 0.115),
+            (0.47, y, 0.1175, 0.355, 0.105),
+            (0.555, y, 0.1125, 0.290, 0.075),
+        ], exponent=4.2))
+    nose.extend(lofted_body([
+        (0.240, 0.0, 0.335, 0.330, 0.100),
+        (0.315, 0.0, 0.335, 0.340, 0.110),
+    ], exponent=4.2))
+    nose.extend(lofted_body([
+        (0.525, 0.0, 0.335, 0.330, 0.095),
+        (0.555, 0.0, 0.255, 0.290, 0.075),
+    ], exponent=4.2))
+    parts["front_center_nose.stl"] = nose
     parts["rear_bin_outer_shell.stl"] = lofted_body([
         (-0.555, 0.0, 0.305, 0.485, 0.245),
         (-0.490, 0.0, 0.380, 0.500, 0.275),
@@ -226,20 +255,20 @@ def bodywork_parts() -> dict[str, Mesh]:
         (0.550, 0.205, 0.120, 0.475, 0.205),
     ], exponent=3.9)
     parts["front_right_compute_cowl.stl"] = lofted_body([
-        (0.110, -0.285, 0.095, 0.360, 0.115),
-        (0.220, -0.290, 0.100, 0.370, 0.125),
-        (0.450, -0.280, 0.100, 0.355, 0.110),
-        (0.515, -0.250, 0.070, 0.335, 0.085),
+        (0.235, -0.405, 0.035, 0.145, 0.055),
+        (0.290, -0.410, 0.040, 0.155, 0.065),
+        (0.450, -0.405, 0.040, 0.150, 0.060),
+        (0.515, -0.395, 0.030, 0.140, 0.050),
     ], exponent=3.6)
-    parts["sensor_pylon_fairing.stl"] = lofted_body([
-        (-0.225, 0.0, 0.075, 0.765, 0.155),
-        (-0.180, 0.0, 0.080, 0.780, 0.170),
-        (-0.080, 0.0, 0.080, 0.780, 0.170),
-        (-0.040, 0.0, 0.070, 0.755, 0.145),
-    ], exponent=3.2, samples=32)
+    pylon = Mesh()
+    pylon.extend(box((0.030, 0.220, 0.350), (0.355, 0.0, 0.775)))
+    pylon.extend(box((0.030, 0.220, 0.295), (0.485, 0.0, 0.7475)))
+    pylon.extend(box((0.100, 0.015, 0.350), (0.420, -0.0775, 0.775)))
+    pylon.extend(box((0.100, 0.015, 0.350), (0.420, 0.0775, 0.775)))
+    parts["sensor_pylon_fairing.stl"] = pylon
     parts["sensor_pylon_service_hatch.stl"] = extruded_polygon_xz(
-        [(-0.205, 0.665), (-0.065, 0.665), (-0.060, 0.855), (-0.200, 0.865)],
-        -0.083,
+        [(0.350, 0.665), (0.490, 0.665), (0.495, 0.855), (0.355, 0.865)],
+        -0.113,
         0.006,
     )
 
@@ -259,21 +288,31 @@ def bodywork_parts() -> dict[str, Mesh]:
     parts["front_bumper.stl"] = rounded_bar_y(0.660, 0.055, 0.070, 0.555, 0.105)
     parts["rear_bumper.stl"] = rounded_bar_y(0.700, 0.060, 0.075, -0.555, 0.105)
 
-    # Flush service panels and the black sensor/character line are independent
-    # parts so they retain realistic seams and material contrast.
+    # Service-door meshes use hinge-local coordinates.  Their closed poses are
+    # unchanged, but URDF can now rotate each physical panel about its actual
+    # vertical hinge instead of treating a globally positioned STL as trim.
     parts["power_service_door.stl"] = extruded_polygon_xz(
-        [(0.055, 0.365), (0.485, 0.365), (0.505, 0.715), (0.095, 0.790)], 0.391, 0.010
+        [(0.000, 0.000), (0.430, 0.000), (0.450, 0.350), (0.040, 0.425)], 0.0, 0.010
     )
     parts["compute_service_door.stl"] = extruded_polygon_xz(
-        [(0.165, 0.275), (0.455, 0.275), (0.470, 0.435), (0.185, 0.455)], -0.391, 0.010
+        [(0.000, 0.000), (0.270, 0.000), (0.270, 0.115), (0.000, 0.120)], 0.0, 0.010
     )
     parts["wet_service_door.stl"] = extruded_polygon_xz(
-        [(-0.430, 0.360), (-0.070, 0.360), (-0.060, 0.620), (-0.420, 0.650)], -0.401, 0.010
+        [(0.000, 0.000), (0.360, 0.000), (0.370, 0.260), (0.010, 0.290)], 0.0, 0.010
     )
-    parts["rear_dry_service_door.stl"] = lofted_body([
-        (-0.568, 0.0, 0.220, 0.500, 0.175),
-        (-0.556, 0.0, 0.220, 0.500, 0.175),
-    ], exponent=4.8, samples=32)
+    parts["rear_dry_service_door.stl"] = extruded_polygon_yz(
+        [(0.000, 0.000), (-0.440, 0.000), (-0.440, 0.350), (0.000, 0.350)],
+        0.0,
+        0.012,
+    )
+    hinge = Mesh()
+    hinge.extend(cylinder(0.008, 0.050, axis="z", segments=24))
+    hinge.extend(box((0.028, 0.004, 0.040), (0.014, 0.0, 0.0)))
+    parts["service_door_hinge_barrel.stl"] = hinge
+    latch = Mesh()
+    latch.extend(box((0.045, 0.018, 0.012)))
+    latch.extend(cylinder(0.010, 0.020, axis="y", segments=24))
+    parts["service_door_rotary_latch.stl"] = latch
     left_belt = extruded_polygon_xz(
         [(-0.500, 0.570), (-0.060, 0.550), (-0.055, 0.595), (-0.490, 0.620)], 0.397, 0.010
     )
@@ -331,20 +370,24 @@ def bodywork_parts() -> dict[str, Mesh]:
     parts["rear_squeegee_valance.stl"] = extruded_polygon_xz(
         [(-0.525, 0.050), (-0.420, 0.050), (-0.405, 0.155), (-0.525, 0.185)], 0.0, 0.780
     )
-    parts["arm_turret_shoulder.stl"] = lofted_body([
-        (-0.015, -0.200, 0.145, 0.305, 0.070),
-        (0.100, -0.200, 0.155, 0.315, 0.080),
-        (0.220, -0.200, 0.125, 0.305, 0.070),
-    ], exponent=4.0, samples=32)
+    # Four shroud panels form a real open turret rather than a solid decorative
+    # volume through the UR base.  The 164 x 164 mm clear aperture gives the
+    # official 151 mm base collision 6.5 mm radial installation clearance.
+    turret = Mesh()
+    turret.extend(box((0.035, 0.280, 0.160), (-0.0025, -0.200, 0.315)))
+    turret.extend(box((0.035, 0.280, 0.160), (0.2025, -0.200, 0.315)))
+    turret.extend(box((0.170, 0.030, 0.160), (0.100, -0.325, 0.315)))
+    turret.extend(box((0.170, 0.030, 0.160), (0.100, -0.075, 0.315)))
+    parts["arm_turret_shoulder.stl"] = turret
 
     # A recessed, U-shaped work bay makes the manipulator read as an integrated
     # machine module.  Its four moulded members deliberately leave the arm's
     # swept top volume open while hiding the raw payload deck and compute box.
-    parts["arm_bay_floor.stl"] = lofted_body([
-        (-0.135, -0.200, 0.190, 0.330, 0.050),
-        (0.080, -0.200, 0.205, 0.335, 0.055),
-        (0.485, -0.200, 0.185, 0.330, 0.050),
-    ], exponent=4.4, samples=36)
+    floor = Mesh()
+    floor.extend(box((0.245, 0.320, 0.110), (0.3625, -0.245, 0.335)))
+    floor.extend(box((0.210, 0.065, 0.110), (0.135, -0.3725, 0.335)))
+    floor.extend(box((0.280, 0.050, 0.110), (0.100, -0.090, 0.335)))
+    parts["arm_bay_floor.stl"] = floor
     parts["arm_bay_outer_sill.stl"] = extruded_polygon_xz(
         [(-0.135, 0.365), (0.485, 0.365), (0.465, 0.465), (-0.115, 0.465)], -0.405, 0.040
     )

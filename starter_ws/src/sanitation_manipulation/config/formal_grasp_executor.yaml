@@ -1,0 +1,42 @@
+formal_physical_grasp_executor:
+  ros__parameters:
+    use_sim_time: true
+    request_topic: /active_cleaning/grasp_request
+    wrist_recheck_topic: /perception/wrist/grasp_recheck
+    result_topic: /active_cleaning/grasp_result
+    status_topic: /manipulation/formal_grasp_status
+    base_motion_inhibit_topic: /manipulation/base_motion_inhibited
+    safety_permit_topic: /safety/actuators_enabled
+    odometry_topic: /odom
+    dual_contact_topic: /manipulation/gripper/dual_contact
+    grasp_state_topic: /manipulation/grasp/state
+    dry_bin_status_topic: /model/tzcup_formal_sanitation_vehicle/dry_bin/observed_status_json
+    attach_topic: /manipulation/grasp/attach
+    detach_topic: /manipulation/grasp/detach
+    base_frame: base_link
+    planning_group: manipulator
+    tool_link: tool0
+    move_group_action: /move_action
+    execute_trajectory_action: /execute_trajectory
+    compute_ik_service: /compute_ik
+    cartesian_path_service: /compute_cartesian_path
+    apply_planning_scene_service: /apply_planning_scene
+    maximum_input_age_sec: 0.50
+    # The 0.24 m radial gate contains the non-overlapping 5 x 4 formal cube
+    # array. Every slot is also bounded by the manifest's 0.85 m arm reach
+    # contract and must still pass live MoveIt IK and collision checks.
+    pick_window_tolerance_m: 0.240
+    maximum_linear_speed_m_s: 0.015
+    maximum_angular_speed_rad_s: 0.025
+    action_timeout_sec: 60.0
+    planning_time_sec: 8.0
+    planning_attempts: 8
+    velocity_scaling: 0.18
+    acceleration_scaling: 0.15
+    cartesian_max_step_m: 0.005
+    minimum_cartesian_fraction: 0.98
+    wrist_recheck_timeout_sec: 5.0
+    wrist_maximum_age_sec: 0.50
+    contact_maximum_age_sec: 0.15
+    bin_settle_timeout_sec: 12.0
+    bin_monitor_startup_timeout_sec: 30.0

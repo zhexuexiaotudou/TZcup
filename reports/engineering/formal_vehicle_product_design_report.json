@@ -1,9 +1,10 @@
 {
   "all_bodywork_links_have_collision_and_positive_inertia": true,
   "all_bodywork_visuals_are_project_owned_meshes": true,
-  "bodywork_link_count": 10,
-  "bodywork_mesh_visual_count": 43,
-  "opaque_material_color_count": 23,
+  "all_service_doors_have_chassis_brackets_limits_and_latches": true,
+  "bodywork_link_count": 18,
+  "bodywork_mesh_visual_count": 42,
+  "opaque_material_color_count": 22,
   "palette": {
     "graphite": true,
     "safety_red": true,
@@ -11,6 +12,8 @@
     "warm_white": true,
     "warning_amber": true
   },
+  "service_hinge_count": 4,
+  "service_latch_count": 4,
   "service_panel_count": 4,
   "status": "FORMAL_PRODUCT_BODYWORK_DESIGN_GATE_PASSED"
 }

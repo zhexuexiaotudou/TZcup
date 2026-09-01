@@ -1,0 +1,18 @@
+pc_open_vocab_product_adapter:
+  ros__parameters:
+    # Override with the absolute prepared artifact directory.  Empty or missing
+    # artifacts cause startup failure; placeholder inference is forbidden.
+    artifact_root: ""
+    # Real Gazebo D435 calibration: positive 3 cm cube at 1.15 m = 0.01364;
+    # paired empty-ground maximum = 0.00144. Full random-scene precision still
+    # gates acceptance; this value is not a model-accuracy waiver.
+    score_threshold: 0.005
+    fallen_leaves_score_threshold: 0.0025
+    dust_or_soil_score_threshold: 0.002
+    puddle_score_threshold: 0.003
+    nms_threshold: 0.65
+    depth_max_age_s: 0.5
+    # Latest complete map->camera TF is accepted only within this simulated-time
+    # age; it is not an unbounded fallback for missing historical TF.
+    tf_max_age_s: 0.75
+    sample_stride: 4

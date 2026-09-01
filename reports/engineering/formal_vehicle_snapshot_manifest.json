@@ -1,26 +1,26 @@
 {
   "kind": "tzcup_formal_vehicle_snapshot_manifest",
-  "output_inventory_sha256": "64e2ff02ec7307c5ad19a70c4c6c0f7fcdc624b76cdb2c040fbf5ae40db76eb7",
+  "output_inventory_sha256": "a8832afc81f6eea6227abd0a5dc6073bb9da2283de8532c05034841243028ba7",
   "outputs": {
     "reports/engineering/formal_competition_vehicle.urdf": {
-      "sha256": "fe6b33b3288d02dd29ebc4414940890911e94593bceff8c2a10d19eea0de09d8",
-      "size_bytes": 169516
+      "sha256": "b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2",
+      "size_bytes": 277540
     },
     "reports/engineering/formal_vehicle_component_register_report.json": {
-      "sha256": "8fa2b65ae0013b61cc57989f67bee5647d2f8720221a2efb1ff11753df930443",
-      "size_bytes": 1923
+      "sha256": "cfdc0c3cd155e207221b99b54c6d4450d4811bf001e0b3314d497e41ed1b76d5",
+      "size_bytes": 11091
     },
     "reports/engineering/formal_vehicle_layout_report.json": {
-      "sha256": "4a8b27bdcd6462f9c17bb36f12e38c5b0f4f0cef0d5a04492e7963155b8347d1",
-      "size_bytes": 2296
+      "sha256": "f770a791c2a74a9499fbe6fcba43f7c2077eed9c7a9659fe3649a7f89d430601",
+      "size_bytes": 3164
     },
     "reports/engineering/formal_vehicle_product_design_report.json": {
-      "sha256": "d3b42e7f7d4ab744e30a8cd67951d3f5bbffa32949e063d2ad92d4fbaf9a1016",
-      "size_bytes": 460
+      "sha256": "e52373fc4cbed3cffd868f8358a3a48c5ae61b3e58a53a0b252726f1dba5282a",
+      "size_bytes": 586
     },
     "reports/engineering/formal_vehicle_urdf_report.json": {
-      "sha256": "d6fae30d03d576da56f1ad209cf4ffb295d6e8991dacd13bfebc1c21deff741f",
-      "size_bytes": 4338
+      "sha256": "24c91c4187b14e9a805c8acef32df2cf1e47948a7c577d3368b39ea994feff9f",
+      "size_bytes": 5647
     }
   },
   "profile": {
@@ -32,6 +32,7 @@
       }
     ],
     "entrypoint": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+    "gripper_linkage_mode": "gazebo_compliant_effort_plugin_no_urdf_mimic",
     "use_sim": true,
     "xacro_version": "2.1.1"
   },
@@ -41,13 +42,17 @@
       "sha256": "eda3709a638361723549b3720360d72d754fcdc91e8a04cbe8fabc5140b220ad",
       "size_bytes": 794
     },
+    "config/high_fidelity_vehicle/encoder_feedback_realism_contract.yaml": {
+      "sha256": "f9e448ff6749de0e4feb1eeac39c1b558aff1f2926ff89e94fc85ed35fa3be2d",
+      "size_bytes": 3807
+    },
     "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml": {
-      "sha256": "bd42135854045a6c00952547d407293db81148c7823d20208b619f67c876cdf4",
-      "size_bytes": 14506
+      "sha256": "e017e66f3dca2f705f04f29a1e8ab84668f687667c552ee62ce619eda9294437",
+      "size_bytes": 68124
     },
     "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": {
-      "sha256": "9dda158cb0a7350cc942a1deca5ca490287215319de555c0bc4957be85eee99c",
-      "size_bytes": 9158
+      "sha256": "4c5804b917f2226fbf730bf492b2b6113c92bd3f00ee408ee8edb9a3dc3222cc",
+      "size_bytes": 13850
     },
     "config/high_fidelity_vehicle/mass_budget.csv": {
       "sha256": "ab5b369091fb4dd7369a069026b796dc4eb0c12c72c584af1f7f40183669b755",
@@ -58,52 +63,84 @@
       "size_bytes": 542
     },
     "config/high_fidelity_vehicle/pre_urdf_contract.yaml": {
-      "sha256": "21bf439cb3f35976cf2cca72968de56c10aa74fb6ca772c185920d2b17d2f663",
-      "size_bytes": 17748
+      "sha256": "e02455fd5b9dc7c46a6300c5155de06759ac8a3d4f6766cd0347f69c33f46132",
+      "size_bytes": 19880
     },
     "config/high_fidelity_vehicle/throughput_budget.csv": {
       "sha256": "4cb98968c8878b533c1dce157fdfbd0997628d33ab88ca12738c59bdba7d500f",
       "size_bytes": 454
+    },
+    "scripts/formal_gripper_linkage_contract.py": {
+      "sha256": "48d764cba71c5be0f0fe1de3360b0a8fadfc0ebf270fe13874842bf979065ccc",
+      "size_bytes": 3288
     },
     "scripts/formal_vehicle_mesh_manifest.py": {
       "sha256": "fad9f05ee826b16b9efb78b6d0f70724d1a3e62b2ad7013eef2f0f301db79951",
       "size_bytes": 1600
     },
     "scripts/generate_formal_vehicle_snapshot.py": {
-      "sha256": "a55522d79c11cac578a0923c3f2c25986a3e23b12518d9a0da36628f9af25bc0",
-      "size_bytes": 14617
+      "sha256": "841123f97883ea13d9aa9351f10d0749c6fbc9810e8359b6068d04b8ca6c2922",
+      "size_bytes": 19267
+    },
+    "scripts/generate_platform_auxiliary_meshes.py": {
+      "sha256": "c7600b5bd042da13522ab802b0c2fc1b921bdbcbbf7f3e286953abb59d07e587",
+      "size_bytes": 18006
+    },
+    "scripts/validate_formal_encoder_feedback_contract.py": {
+      "sha256": "7d5c2f318cb259dc4817f077b4a78d538a9909f080104ee0ffefe271053a626f",
+      "size_bytes": 7166
     },
     "scripts/validate_formal_vehicle_component_register.py": {
-      "sha256": "4361d0a48a818d2dad02b70af9c49e49b2cb907e0390aa9f2dad59ad21435817",
-      "size_bytes": 7979
+      "sha256": "8d388254b5cf8ae73e834963d84f64533f3beb4b6f990086d7432b46053107ba",
+      "size_bytes": 66021
     },
     "scripts/validate_formal_vehicle_product_design.py": {
-      "sha256": "65c8945fbfcadbde16a6df5a777352376fa3d5651bdb6063a1d4641fd3a7be6a",
-      "size_bytes": 6258
+      "sha256": "28403ee6143742657b579b2364de6bbfcfd42a9622f290e7a616c286d0bb0752",
+      "size_bytes": 8768
     },
     "scripts/validate_formal_vehicle_urdf.py": {
-      "sha256": "f44a2fbebe8b8d5e4fc8e9f5ce9f8fef82f49239ece4b5ae813db8afa0fb8e46",
-      "size_bytes": 35878
+      "sha256": "72fb0ecc54e26f87f0887de15cdeee9aff8778ec0a946deeeb1dfc33c146420e",
+      "size_bytes": 42184
     },
     "scripts/validate_formal_vehicle_visual_fidelity.py": {
-      "sha256": "b6c0b063ab3862a9b39421be3baa5aaf0b4a2ad9e472adfbd5802c9374e85171",
-      "size_bytes": 6798
+      "sha256": "09c831b69a90ff3b3e1d508375f16311a57cad005632bfb26d28155f9a0293fb",
+      "size_bytes": 6875
     },
     "scripts/validate_pre_urdf_readiness.py": {
       "sha256": "d72100cdfa134bdbe6a2fec0a2d6569f92171175715adeaf2418fa893f3e6bbc",
       "size_bytes": 20051
     },
+    "starter_ws/src/sanitation_safety/sanitation_safety/formal_auxiliary_system_core.py": {
+      "sha256": "0c9188824b9c08042260b8f2fe4d5fe3eaf6921b4f250140fa02a196c419f0ef",
+      "size_bytes": 8675
+    },
+    "starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py": {
+      "sha256": "c94c21d71aadaa0368ff25fbdb54a0c0485d7bc4dde6cbf2216922165a900e67",
+      "size_bytes": 30339
+    },
+    "starter_ws/src/sanitation_safety/sanitation_safety/whole_vehicle_safety_manager.py": {
+      "sha256": "e129b8c80cd17025f7a8c5fd0983af5ca0731fa885e71c1d15c342a10a8afe5a",
+      "size_bytes": 46026
+    },
+    "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py": {
+      "sha256": "f4ed077479b1bba4a51207a90d7e35adec6a9323efde950e3b4bfc5313153977",
+      "size_bytes": 32067
+    },
     "starter_ws/src/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml": {
-      "sha256": "2a669c29cd5b4e10c9213993e763d83d64d4ff70fa4e58b4ebe547d97439edab",
-      "size_bytes": 3035
+      "sha256": "cdbf6538c2f3de726f307345475a498545016c3447ee995c38cc645a8f0b04bd",
+      "size_bytes": 3012
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/MANIFEST.sha256": {
-      "sha256": "1273b66e4a1b29619fc17917b78c8bf23a24df7d20a9d9fd9d727c484897e1c2",
-      "size_bytes": 17798
+      "sha256": "55747d38a53e6a5fc1362d5fea3d628a2629ba57a55326fef149eb72bb5bd8d4",
+      "size_bytes": 21268
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/README.md": {
       "sha256": "a71c292620c54ad42299257288298b2dd266dd4a55e808ac24064b9c883142b6",
       "size_bytes": 700
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/a300_encoder_cap.stl": {
+      "sha256": "49bc4b3decb108ae56546ebe940a5b3369dc7c90b9037c076fc11a21a45ed8be",
+      "size_bytes": 80284
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/arm_mount_adapter.stl": {
       "sha256": "d1fea7869c3c27e7b625cfd1ea5a2016f8210838e21f36c5366ca67135b13b05",
@@ -138,8 +175,12 @@
       "size_bytes": 54684
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/s100_board_reference.stl": {
-      "sha256": "06e2b31a8c2616ea6887c377db3933f6722dff220f00bc8aed344cf438340f1d",
-      "size_bytes": 7284
+      "sha256": "d2624a71b34b51b927d3fcdd7c2d125b5b7e8af8449d7b6730e9098832160106",
+      "size_bytes": 114484
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/s100_cabinet_roof_mount.stl": {
+      "sha256": "a24902b3b121878da3bd3856c9d4dd4d7319d10bcb1ccb02501f33bdffee0803",
+      "size_bytes": 84484
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/s100_compute_enclosure.stl": {
       "sha256": "edd062c980811dcf75f665c486f4bc267d15282b501e00e6d0a5ff96c8688bd2",
@@ -154,24 +195,36 @@
       "size_bytes": 336884
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/ur5e_control_cabinet.stl": {
-      "sha256": "30101cfad1f4193be6b26b6eec48d7c2eae8423cb2d0fe79e1b13e82760c6a17",
-      "size_bytes": 115284
+      "sha256": "139b78dbb6f1515b048f36baaff4d42815c5ff39b4eaaef0c6bef4746f6d5d3d",
+      "size_bytes": 114084
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/ur5e_control_cabinet_isolation_base.stl": {
+      "sha256": "f84f18af3d65be74186c250ee721c4f4cdb030d98069787f7a2d295ae9cc0099",
+      "size_bytes": 224884
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/utm30lx_mount.stl": {
       "sha256": "b8cb592d3cb152e068ce8aaf2bb3626467b33ce44976e4c87ab52f5b119d913c",
       "size_bytes": 97084
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/zed_f9p_module_reference.stl": {
+      "sha256": "570370326c3ff5e99b5c222ce00a917b84cdeef3ad71126d82fbd88f8b07059d",
+      "size_bytes": 88884
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/zed_f9p_receiver_enclosure.stl": {
+      "sha256": "f7137ebf593ef4bf37094e67324f42d18fdda41aa232c970a69049cf1b47a040",
+      "size_bytes": 100884
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/generated/sensors/rugged_fisheye_module.stl": {
       "sha256": "e0296ca2e07615d437ad8e15b73a5ed94d37ea50ca3a575bdb33a1547745db9e",
       "size_bytes": 50884
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/generated/sensors/wrist_rgbd_side_bracket.stl": {
-      "sha256": "25b2086dc06472f798822c9ce4c7908ec2a1863e915be03db39acc8038cc1332",
-      "size_bytes": 26484
+      "sha256": "6608f6372f1bbc4a25a8cb320cb5898bec79181a6636dc6df971797049a2679f",
+      "size_bytes": 27084
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/arm_bay_floor.stl": {
-      "sha256": "51d8aa00584866d4ba15f8a0cbfa5442d58a6b60c1f5eea3596ed8ff44c121c8",
-      "size_bytes": 10884
+      "sha256": "2ce82244212300265663614f25846d57ea252b6ee879983a34816b2360591733",
+      "size_bytes": 1884
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/arm_bay_front_sill.stl": {
       "sha256": "f5ea1a09b4ed8527cc2daf629597ae89b9732654f5906e66711a18145e1330aa",
@@ -190,8 +243,8 @@
       "size_bytes": 13484
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/arm_turret_shoulder.stl": {
-      "sha256": "0a62e622c94b7a58890e0d9114eea681d6f149e1e78f5cc9030dd47dfd0383c7",
-      "size_bytes": 9684
+      "sha256": "c94b6a8a463d58d1d514f87a5c2e767425697db5e9169fc390a2665929c3c7d5",
+      "size_bytes": 2484
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/belt_line_left.stl": {
       "sha256": "02816c54a076df94404e723cbfbdd695182fe0d858e2dd2618b34c99613a4dca",
@@ -206,7 +259,7 @@
       "size_bytes": 6484
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/compute_service_door.stl": {
-      "sha256": "fa0f2fc3735d4b1d21f09c14372f4287fa0299d1fd1098fa4621cd5f368dff50",
+      "sha256": "25b78182e112e87d10edc8411536225e70d1d3d11295fbb04d06c7b794838b86",
       "size_bytes": 684
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/corner_beacons.stl": {
@@ -230,8 +283,8 @@
       "size_bytes": 13484
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/front_center_nose.stl": {
-      "sha256": "c318224f1057f14501a31ef8418a94c1ec8a6e44455ae565141fbb095f5bc372",
-      "size_bytes": 25684
+      "sha256": "1d1505e1766143d4d2c26efb50af930a3dfce3efddb382a445d64428b5a35763",
+      "size_bytes": 76884
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/front_green_apron.stl": {
       "sha256": "9c93292c7f8a0ed8f3400490e78688190257ec7252cac4ecb6564fd09244cd2e",
@@ -242,7 +295,7 @@
       "size_bytes": 25684
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/front_right_compute_cowl.stl": {
-      "sha256": "5f9a7ca9c69aeea5af68710c39598ad7f724cc8f84c6256b66f404bb85539862",
+      "sha256": "7a4233cee71c6fa51592b42c4c84003049dd6a8a45ec4207fc7b164678faddd8",
       "size_bytes": 25684
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/front_sensor_band.stl": {
@@ -270,7 +323,7 @@
       "size_bytes": 25684
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/power_service_door.stl": {
-      "sha256": "9e6607ca7b6cd366a13526cb4ed763817bd6a87d84a6a390cf3b315525a00fd8",
+      "sha256": "e6a82d35229b00e330d83ae8099b899378411fd8bcfc397fe9a76a9c9cf838d9",
       "size_bytes": 684
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/rear_bin_outer_shell.stl": {
@@ -282,8 +335,8 @@
       "size_bytes": 13484
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/rear_dry_service_door.stl": {
-      "sha256": "dd3941b5352d67d95302d9928d0b3df334b0d8064f76fcb5c871e930351f9aef",
-      "size_bytes": 6484
+      "sha256": "f10f09a21c5c71e97130e2487d560c46b21b461db9476013da55fcaeea2d4898",
+      "size_bytes": 684
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/rear_sensor_band.stl": {
       "sha256": "1129d507c13983d9f9ed4ce7ea4172ce77a7f3ff5c52f2b6521bacf630d11f4c",
@@ -310,12 +363,20 @@
       "size_bytes": 7284
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/sensor_pylon_fairing.stl": {
-      "sha256": "f85a03f9bc4fb3c2d601db20f462a4762b239c6f9853722f82a0c47e5560444c",
-      "size_bytes": 12884
+      "sha256": "f879d66154797a403040787c27220ba0987b06a3fd818e6442b6a794cc643499",
+      "size_bytes": 2484
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/sensor_pylon_service_hatch.stl": {
-      "sha256": "990040a710f246cad6506f34b8f750516252f693c7a85e02e661e61a207fe0b7",
+      "sha256": "03c2eac5bdcbf390d1d1923dd914cd3cc5f0d191403b1cd4a03f181b53e3cdda",
       "size_bytes": 684
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/service_door_hinge_barrel.stl": {
+      "sha256": "f4f769a4918b9f0682baf96baf79ab917edba5581198225e21f386c91ed9cbff",
+      "size_bytes": 5484
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/service_door_rotary_latch.stl": {
+      "sha256": "984f7bf2258ba88e922a2ad6aefbbba39f7817e130625a11a6db3cbde97f1362",
+      "size_bytes": 5484
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/side_skirt_left.stl": {
       "sha256": "8465f85967b80bef3ce0fdf98695b7750623969b8cf58f8fa6009a890258a062",
@@ -330,7 +391,7 @@
       "size_bytes": 144084
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/wet_service_door.stl": {
-      "sha256": "d8a22a7d220e3d240d0ce588c3634519509a92ce3db1980c5ac38c01cc418eae",
+      "sha256": "aaa9962d69c6c0e7f4acb371fbfa8ea381182fbf21d17cada6b2ed85a99329f1",
       "size_bytes": 684
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/wheel_arch_front_left.stl": {
@@ -362,8 +423,8 @@
       "size_bytes": 12884
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/central_roller.stl": {
-      "sha256": "b9387cf7886061564d92924d87db2c98f68faa60f0a215882c581b29c301b6bc",
-      "size_bytes": 348884
+      "sha256": "0f5decb49d28377156b8bdd68dc48929db61376bf5b63eb5e1f494070f78aa00",
+      "size_bytes": 510484
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/central_roller_bearing.stl": {
       "sha256": "7d3c0d92f82a117b9dfa24b00ef2cbd5a44f498fa8421da85cbf6104a02cabc5",
@@ -405,13 +466,17 @@
       "sha256": "f6df0c2eeefe18614e0a9fd8b26e630d97acfce96d00b5b6c1158a0542253244",
       "size_bytes": 26284
     },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/pololu_37d_encoder_cap.stl": {
+      "sha256": "6ba9178797d271d7fd059ead4d18a8d02fda1960986da3a49964636f2c917ad3",
+      "size_bytes": 39684
+    },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/pololu_37d_gearbox.stl": {
       "sha256": "3dfbb3399e79d26b9fc3921b71c63695ae2982edadf05c2c0615fad0e5d07d15",
       "size_bytes": 44884
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/pololu_37d_motor_body.stl": {
-      "sha256": "993f07e47e577a2b23140b2734b46cbfcf04c833887bc74557a0224537c09845",
-      "size_bytes": 45484
+      "sha256": "0db0caa94bb9a34c17c412eb83b5cc02ab77f846dbb2c53b0f08350f403cf94a",
+      "size_bytes": 38484
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/pump_isolator_mount.stl": {
       "sha256": "f09656d3205eef016dae3ef73d486fa017a51a3ed5752270cb151ebd50da20fc",
@@ -473,6 +538,78 @@
       "sha256": "22657db89aa05f0d8ffb47c97b73cd31e9c2dedb1c616cdd4db3b1bf40be08c7",
       "size_bytes": 71884
     },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/a300_battery_bms.stl": {
+      "sha256": "21cfcc5a058ad79ba111ee8b9ec2b749a2e703a9a8995330ae8f1e9d73e4c4c2",
+      "size_bytes": 10884
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/a300_battery_pack.stl": {
+      "sha256": "12d46d0f3ccc2508e46d1f3199788c4db7d9b017763fd04375717f34d1a6d156",
+      "size_bytes": 15084
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/charge_connector_lock.stl": {
+      "sha256": "7ba859bfb784a41ca4b127f1c3d458b1d22c8d876eef9161b3cee2ae9028fe9d",
+      "size_bytes": 684
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/charge_port_door.stl": {
+      "sha256": "a26e4a86f209ab7333ea9257ca358b0a7b6224f0d2cd9c29b85beabc52688c1f",
+      "size_bytes": 10884
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/charge_port_housing.stl": {
+      "sha256": "c66ff4b218fa5c57c3f598b23edb5899f7ab84e30d4e37dba12183962b612be3",
+      "size_bytes": 50284
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/charge_receptacle.stl": {
+      "sha256": "b7df491898e895feda5cb32c7776edc9ca3f87ccfe77ee26194302e2366ccf4c",
+      "size_bytes": 55284
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/emergency_stop_housing.stl": {
+      "sha256": "9e759e031af339aeebde435c18d1e9eab756368b2bc05265f5fbbaa1ba2129ac",
+      "size_bytes": 44684
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/emergency_stop_plunger.stl": {
+      "sha256": "8408ae298a2852391ab76a78003248ccb4fbd1bd6c02b3fa9cd5c753aa67e3af",
+      "size_bytes": 59284
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/main_contactor_armature.stl": {
+      "sha256": "b91fd22a990ba980d9c6344f83aa4490854e94d58ca4bb72b73f17f9c354a7f0",
+      "size_bytes": 6284
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/main_contactor_housing.stl": {
+      "sha256": "59ae57d399650148c07b6f279fac6d9b7088cbbe13331be28ae1bab4ddf03837",
+      "size_bytes": 21084
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/main_power_isolator_handle.stl": {
+      "sha256": "d84ed45233d49a1eb4c95294d664dc0787cbe9237a9684129c7d8a1d6d820a89",
+      "size_bytes": 11684
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/main_power_isolator_housing.stl": {
+      "sha256": "1b95c6b6510ceabe975972363131dc9d9d1f3c719bf9815bcb03a2f3842cefc7",
+      "size_bytes": 18084
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/wastewater_drain_actuator.stl": {
+      "sha256": "d290c049d541cc72bb8744ddd9161cb0b3ade4d55db5f18fd2ed58c49e21f9e1",
+      "size_bytes": 6884
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/wastewater_drain_coupling.stl": {
+      "sha256": "ab7d7422a1256e27bc8c59e6fc808589725fbcf87dd122321226277061308dc2",
+      "size_bytes": 80084
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/wastewater_drain_pipe.stl": {
+      "sha256": "3621a36dddabc28bd1767e44ffdff371cbaf76aa1d17827980de596597c00c65",
+      "size_bytes": 6084
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/wastewater_drain_service_cap.stl": {
+      "sha256": "a22378e74226f73a57abae6e35e575f4678607be7d223da0ff48b3a6e498bed9",
+      "size_bytes": 10484
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/wastewater_drain_valve_ball.stl": {
+      "sha256": "69f647fd9b8c2aa7ee8b02d8d60bc45d92561eea46e6e5f8fedd63438cb5714b",
+      "size_bytes": 5484
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/wastewater_drain_valve_body.stl": {
+      "sha256": "3440d82292561accba3d07340a82effccd7835e27d9e0662f945f3fdaee242b7",
+      "size_bytes": 82284
+    },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_bin_floor.stl": {
       "sha256": "7d8ee5f0c87469dacc04df718c994844a06ef17dedbff6e89059ad557b893195",
       "size_bytes": 2484
@@ -482,15 +619,15 @@
       "size_bytes": 3084
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_bin_latch.stl": {
-      "sha256": "ff621b27d2dc3e071bc95811aef190079b07d69febebbeeb4b49e740a4b2b01d",
-      "size_bytes": 7684
+      "sha256": "e6218039ccf51efa67e980655afdb25142d2d82723dd0a1549835bfd128e5867",
+      "size_bytes": 14084
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_bin_level_sensor.stl": {
       "sha256": "7a6d046e1a3832d4f3d8b88c2ccbde8e293c1b2fea4529546c5627b293178561",
       "size_bytes": 86084
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_bin_lid.stl": {
-      "sha256": "99c255074ee0c549d814d2d4fd97de12745f76bd996aeef4b9f8f259eb6a65a1",
+      "sha256": "e4b79b3ff3dc4ecc2a4aa88750983b924358c8e97f1afcfb646473586329f1dd",
       "size_bytes": 6684
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_bin_rear_panel.stl": {
@@ -513,6 +650,14 @@
       "sha256": "9bc0e644b222c4194a124aa6883879b64f9b268526fb372091cd50f4d5afea49",
       "size_bytes": 27284
     },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_deposit_xw540_actuator.stl": {
+      "sha256": "9f15ca76d75d2874ebc63eca0cf5bac1e408e31d8a30890464e8755acec56a0b",
+      "size_bytes": 43284
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_deposit_xw540_horn.stl": {
+      "sha256": "30368ec284f21d0e3267d1be8b47e09cb388f5f4a76c36ce169f82c6e6508590",
+      "size_bytes": 51284
+    },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_wet_partition.stl": {
       "sha256": "374c24b2acc85cc48c36f6592b92b5e9344f107f76a4ca19c9d32ad825449006",
       "size_bytes": 4284
@@ -524,6 +669,18 @@
     "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/storage_mount_tray.stl": {
       "sha256": "bf173eb77c10c0d708be7591b50d3c67eb543113796e06cf28c0300f3b0dadb1",
       "size_bytes": 41484
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/storage_toggle_latch_base.stl": {
+      "sha256": "ca21be13363d36b765b3a7aab3e2c9f35adc9e12f43e98eeffa92107c59ac674",
+      "size_bytes": 27484
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/storage_toggle_latch_handle.stl": {
+      "sha256": "e6218039ccf51efa67e980655afdb25142d2d82723dd0a1549835bfd128e5867",
+      "size_bytes": 14084
+    },
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/storage_toggle_latch_keeper.stl": {
+      "sha256": "fa200cb089fd72e8c0ba7196a2bc97149837b7e9641649579ce74d85cb540fb7",
+      "size_bytes": 8284
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/wastewater_baffle.stl": {
       "sha256": "b8ed20ce8fba1b31560a03334c0cdf8084b557ca96afd5ac6b156b9990d4c1fc",
@@ -761,38 +918,50 @@
       "sha256": "04e6d4a1ea71a1f10f51d4cb2a376322e1617068faaa776dd29c7cf53bd2ea63",
       "size_bytes": 66177
     },
+    "starter_ws/src/sanitation_vehicle_description/scripts/formal_encoder_feedback_publisher.py": {
+      "sha256": "cd56b8643585f66d4ce0a506b5058a4d93b7e8ff1594150647be67b0ab2c0ddd",
+      "size_bytes": 5224
+    },
+    "starter_ws/src/sanitation_vehicle_description/scripts/formal_encoder_quantization.py": {
+      "sha256": "c2fad2c3e34522228656d623e740bf3937930a153edef878db68d1de7c3bf47c",
+      "size_bytes": 2949
+    },
     "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro": {
-      "sha256": "f70cb53998e28470e74ae45bf2edaae11fd27162cb0ed7aef50fbc4c7b89f4e5",
-      "size_bytes": 3939
+      "sha256": "ecff827bea7c940a0ab69f29be7b1252ad8508c24afd7b921dcb57d6904304b0",
+      "size_bytes": 16562
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/a300_platform.xacro": {
-      "sha256": "7582a18b2908d9c89cc21a094cfade61136c9a448c89f2969e3a44184f18a434",
-      "size_bytes": 12869
+      "sha256": "294a160cd22adf46f25724b7fe96404e184ab5863c841a93fd48215d59c6dad3",
+      "size_bytes": 24083
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/bodywork.xacro": {
-      "sha256": "156f50d28b4a4e523f0815bf76472b24f2a68fd3b4eca280f3268963087dad25",
-      "size_bytes": 16683
+      "sha256": "6abfb3693107cfde990bf273757cb91b28d3f4422640d74e8c16956ebd1a92ea",
+      "size_bytes": 23811
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/cleaning_mechanism.xacro": {
-      "sha256": "6860344f6c89038a905a31ec8317655611986d5ac5ec9c378b982decb4eb666a",
-      "size_bytes": 25319
+      "sha256": "4fe1299e075976603ddf2b6145a278c4f8995c57daddf9d0983875e8df10ddc0",
+      "size_bytes": 33690
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/control_interfaces.xacro": {
-      "sha256": "f113de0a79d6cbf74c22e5d89d90a3422d69cab33043535918732dfef4c86aca",
-      "size_bytes": 4028
+      "sha256": "fe91d0baf473ce6a1bd7620044a1f22c384da3971c12531b620aa65585cc523b",
+      "size_bytes": 8558
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/manipulator_stack.xacro": {
-      "sha256": "477c0eced7919874313fc82dde338ef5a93fc03c10d79e6a2b59d79febccd95d",
-      "size_bytes": 14898
+      "sha256": "6aae26411da455ed5b187c81cf7d06242c9c39036d97b349b05703d212691fd8",
+      "size_bytes": 15152
+    },
+    "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/power_service_hardware.xacro": {
+      "sha256": "1303f16f15c651a663662eef8e3b7ed683bd941bd260bd46fda6f5a21c7e52d4",
+      "size_bytes": 17726
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro": {
-      "sha256": "5fefc161b96a366b92cb20693f53b317f2d206aeecb5da270b373fe01a2c63af",
-      "size_bytes": 20585
+      "sha256": "08f582fb0495647a8d790eac94206f83b73b2e62b195aac6da847c4c5b6e8f11",
+      "size_bytes": 30111
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/storage_system.xacro": {
-      "sha256": "29433e0c730a767f1879f597e2a923fd5ca9ac54a71cc41e31465c2e14e52eab",
-      "size_bytes": 20344
+      "sha256": "f010277b4013b14ffcb6d718b3b4c0f6669621f9c8cd701613857bd18468fe54",
+      "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "85c37411ab3c1365fd82e8216b2d01eb5c0c0ef7cdd2106a1ffb340354ffbdf5"
+  "source_inventory_sha256": "fa7689ddf3ca91870ea67a34045a94276bb90ad43ee2d2cdff785140e8f73823"
 }

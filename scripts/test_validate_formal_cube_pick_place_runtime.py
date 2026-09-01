@@ -3,8 +3,10 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 VALIDATOR = ROOT / "scripts" / "validate_formal_cube_pick_place_runtime.py"
+RUNNER = ROOT / "scripts" / "run_formal_cube_pick_place_runtime.sh"
 LAUNCH = ROOT / "starter_ws" / "src" / "sanitation_manipulation" / "launch" / "formal_cube_pick_place.launch.py"
 WRAPPER = ROOT / "starter_ws" / "src" / "sanitation_manipulation" / "urdf" / "formal_manipulation_acceptance.urdf.xacro"
+CONTACT_GATE = ROOT / "starter_ws" / "src" / "sanitation_gazebo_control" / "src" / "GripperContactGateSystem.cc"
 CHUTE = ROOT / "starter_ws" / "src" / "sanitation_vehicle_description" / "urdf" / "high_fidelity" / "storage_system.xacro"
 BODYWORK = ROOT / "starter_ws" / "src" / "sanitation_vehicle_description" / "urdf" / "high_fidelity" / "bodywork.xacro"
 
@@ -50,6 +52,37 @@ def test_physical_cube_is_not_removed_or_double_counted() -> None:
     assert '"support_contact_count": node.bin_support_contacts' in source
     assert '"bin_floor_support_z_m": BIN_FLOOR_SUPPORT_Z_M' in source
     assert '"delete_entity_calls": 0' in source
+    assert '"physical_cube_deleted_after_deposit": False' in source
+    assert '"aggregation_or_reserve_payload_substitution": False' in source
+
+
+def test_released_pet_cube_is_hard_gated_by_bridged_dry_bin_instrumentation() -> None:
+    source = VALIDATOR.read_text(encoding="utf-8")
+    runner = RUNNER.read_text(encoding="utf-8")
+    topic = "/model/tzcup_formal_sanitation_vehicle/dry_bin/status_json"
+    assert f'DRY_BIN_STATUS_TOPIC = "{topic}"' in source
+    assert "self.create_subscription(String, DRY_BIN_STATUS_TOPIC" in source
+    assert 'status.get("sensor_ready") is not True' in source
+    assert 'status["contained_object_count"]' in source
+    assert 'status["contained_mass_kg"]' in source
+    assert "DRY_BIN_MASS_TOLERANCE_KG = 1e-5" in source
+    assert 'status.get("full") is not False' in source
+    assert 'expected_count=1' in source
+    assert 'expected_mass_kg=material["mass_kg"]' in source
+    assert '"post_release_sample_observed": True' in source
+    assert topic in runner
+    assert "std_msgs/msg/String[gz.msgs.StringMsg" in runner
+    assert "dry_bin_bridge_pid" in runner
+
+
+def test_stale_single_cube_canonical_artifact_is_superseded_before_preflight() -> None:
+    runner = RUNNER.read_text(encoding="utf-8")
+    supersede = 'mv -- "${output}" "${output}.superseded.$(date -u +%Y%m%dT%H%M%SZ).$$"'
+    assert supersede in runner
+    assert runner.index(supersede) < runner.index("source /opt/ros/jazzy/setup.bash")
+    assert runner.index(supersede) < runner.index(
+        'if [[ ! -f "${runtime_ws}/install/setup.bash" ]]; then'
+    )
 
 
 def test_acceptance_wrapper_uses_real_contact_and_detachable_joint() -> None:
@@ -59,9 +92,18 @@ def test_acceptance_wrapper_uses_real_contact_and_detachable_joint() -> None:
     assert "dry_bin_floor_contact" in source
     assert "<preserveFixedJoint>true</preserveFixedJoint>" in source
     assert "<collision>dry_bin_link_fixed_joint_lump__dry_floor_collision_collision</collision>" in source
-    assert "gz::sim::systems::DetachableJoint" in source
+    assert "sanitation_gazebo_control::GripperContactGateSystem" in source
     assert "<parent_link>ur5e_wrist_3_link</parent_link>" in source
-    assert "<child_model>material_cube</child_model>" in source
+    assert "<child_model>material_cube</child_model>" not in source
+    assert "<attach_topic>/manipulation/grasp/attach</attach_topic>" in source
+
+    gate = CONTACT_GATE.read_text(encoding="utf-8")
+    assert "components::DetachableJointInfo" in gate
+    assert "contactedCollision" in gate
+    assert "leftExternal" in gate and "rightExternal" in gate
+    assert '"material_cube"' not in gate and '"object_"' not in gate
+    assert "PublishAttachmentState(true)" in gate
+    assert "RequestRemoveEntity" in gate
 
 
 def test_dry_chute_has_four_walls_and_open_bore() -> None:

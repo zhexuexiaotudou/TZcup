@@ -1,0 +1,74 @@
+schema_version: 1
+contract_id: formal_vehicle_incremental_encoder_feedback_v1
+status: source_integrated_runtime_revalidation_pending
+
+authority:
+  physical_joint_state_source: /joint_states
+  quantized_feedback_writer: /formal_encoder_feedback_publisher
+  source_path: starter_ws/src/sanitation_vehicle_description/scripts/formal_encoder_feedback_publisher.py
+  quantization_core: starter_ws/src/sanitation_vehicle_description/scripts/formal_encoder_quantization.py
+  rule: encoder publisher is read-only and must expose no command interface
+
+a300_wheel_encoders:
+  applies_to:
+    - front_left_wheel_joint
+    - front_right_wheel_joint
+    - rear_left_wheel_joint
+    - rear_right_wheel_joint
+  physical_links:
+    - front_left_encoder_link
+    - front_right_encoder_link
+    - rear_left_encoder_link
+    - rear_right_encoder_link
+  public_source:
+    description_repository: https://github.com/clearpathrobotics/clearpath_common.git
+    description_commit: b0f6d920422ad302372a1c65e31d61648da884ed
+    manual: https://docs.clearpathrobotics.com/docs_robots/outdoor_robots/husky/a300/user_manual_husky/
+    published_encoder_resolution: false
+    published_encoder_package_cad: false
+  simulation_quantizer:
+    counts_per_wheel_revolution: 4096
+    source_class: engineering_simulation_parameter_not_clearpath_specification
+    selection_basis: exceeds_the_public_outdoornav_recommendation_of_500_ticks_per_revolution
+    position_step_rad: 0.0015339807878856412
+  external_hardware_gate:
+    - identify_as_built_encoder_model_and_electrical_interface
+    - measure_counts_per_wheel_revolution_and_polarity
+    - calibrate_left_right_radius_and_track_from_ground_trials
+    - replace_simulation_quantizer_before_hardware_correlated_acceptance
+
+pololu_4694_encoders:
+  applies_to:
+    - left_side_brush_joint
+    - right_side_brush_joint
+    - central_roller_joint
+  physical_links:
+    - left_side_brush_encoder_link
+    - right_side_brush_encoder_link
+    - central_roller_encoder_link
+  manufacturer_source: https://www.pololu.com/product/4694/specs
+  manufacturer_dimension_drawing: https://www.pololu.com/file/0J1704/37d-metal-gearmotors-dimension-diagram.pdf
+  motor_shaft_counts_per_revolution: 64
+  nominal_gear_ratio: 70
+  nominal_output_counts_per_revolution: 4480
+  output_position_step_rad: 0.0014024967203525863
+  counting_convention: all_quadrature_edges_as_published_64_CPR
+  boundary: exact_gear_ratio_tolerance_backlash_polarity_and_cable_pinout_require_as_built_validation
+
+topics:
+  a300_counts: {name: /formal_vehicle/encoders/a300/counts, type: std_msgs/msg/Int64MultiArray, order: [front_left_wheel_joint, front_right_wheel_joint, rear_left_wheel_joint, rear_right_wheel_joint]}
+  a300_joint_states: {name: /formal_vehicle/encoders/a300/joint_states, type: sensor_msgs/msg/JointState, quantity: count_quantized_position_and_count_difference_velocity}
+  cleaning_counts: {name: /formal_vehicle/encoders/cleaning/counts, type: std_msgs/msg/Int64MultiArray, order: [left_side_brush_joint, right_side_brush_joint, central_roller_joint]}
+  cleaning_joint_states: {name: /formal_vehicle/encoders/cleaning/joint_states, type: sensor_msgs/msg/JointState, quantity: count_quantized_position_and_count_difference_velocity}
+
+runtime_rules:
+  source_timestamp: incoming_joint_state_header
+  first_sample_velocity_rad_s: 0.0
+  non_monotonic_timestamp_behavior: reset_baseline_and_publish_zero_velocity
+  missing_joint_behavior: withhold_entire_group_fail_closed
+  effort_field: omitted
+  acceptance_pending:
+    - prove_all_four_a300_count_streams_change_with_forward_reverse_and_turn_commands
+    - prove_three_pololu_streams_change_with_brush_commands
+    - prove_position_values_are_exact_integer_multiples_of_the_configured_step
+    - bind_report_to_final_expanded_urdf_and_acceptance_session

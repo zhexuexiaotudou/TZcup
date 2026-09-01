@@ -57,6 +57,12 @@ SLAM、感知或执行状态。浏览器通过 `/api/v1/state`、`/api/v1/replay
 - AUTO-08 学习感知/定点清扫未通过时，离散垃圾、落叶堆、积水和定点清扫不能进入综合矩阵；
 - 任一必需依赖阻断时 `SIMULATION_COMPETITION_MATRIX_PASS=false`，未执行指标保持 0 或 `null`。
 
+## 正式 PC/Gazebo 随机场景感知统计边界
+
+- DOSOD+EdgeSAM 的正式 PC/Gazebo 随机场景门固定为 30 个新生成且 ID 互异的 `val` episode；必须覆盖冻结 validation split 的全部 8 张地图，且每张地图至少 3 个 mission。runner 按 map round-robin 取样，禁止把 `map-index` 线性增长到 validation split 之外。
+- 3 episode 仅能作为启动、图像链和诊断 smoke；聚合器、功能总合同和正式总编排都必须拒绝把它发布为正式产品感知证据。每个 episode 仍逐项满足检测、分割、地图投影、相机和真值隔离门，不以平均值掩盖单 episode 失败。
+- 该门仅证明冻结版本在 PC 上、真实 Gazebo 相机消息驱动的 validation matrix 中通过；它不声称统计泛化、S100P/Journey 6P 板端执行、实车精度或真实域通过。S100 和实车字段必须继续为 `false`。
+
 ## AUTO-14 J6 工具链边界
 
 - 只允许使用 D-Robotics 官方 OpenExplorer/SDK，并记录包、wheel、编译产物 SHA；
@@ -191,6 +197,13 @@ C0 是生产默认单相机；C1/C2 只用于消融；C3 verification 相机和�
 ## Stage4W 完整任务契约
 
 - 规划、执行与评测必须使用同一份编译后的 mission geometry，包括 outer、headland、keepout、显式 exclusion、world→map 固定障碍、footprint 和安全裕量。
+
+## 正式 RL 预算与隐藏集边界
+
+- 正式主动清扫预算的唯一机器可读来源是 `starter_ws/src/sanitation_active_cleaning/config/formal_rl_budget_contract.yaml`。`task` 是固定 map/mission 输入，`episode` 是一个 policy seed 对一个 task 的完整 rollout，`step` 只是 rollout 内动作决策；`max_steps=400` 是防挂起的单 episode 截断上限，绝不能代替任务或训练 episode 预算。
+- Stage-A 使用同一固定正式场地的独立冻结任务索引：训练/验证/隐藏分别为 `10,000/500/1,000`。隐藏任务只能在训练、验证和配置冻结记录完成之后生成和运行。
+- 跨场地泛化使用独立的 `32×200/8×100/12×100` map/mission 对，即 `6,400/800/1,200` 个任务；不得把每张地图仅跑 mission `0` 的 `32/8/12` rollout 命名为正式训练或泛化。
+- 两套预算均使用冻结的 5 个策略训练 seed，配置与 checkpoint 选择只能依据训练/验证；最终隐藏任务不得反向调参。正式验收报告必须逐 seed 证明完整任务计数及冻结顺序，任一缺失或缩小均 fail-closed。
 - staging 必须经当前全局 costmap、keepout/speed mask、footprint clearance 和 ComputePathToPose 验证；costmap 未覆盖候选点时不得提前规划。
 - Coverage 硬门要求当前统一几何生成的全部组件终态成功。当前几何为 9 swath + 8 turn = 17；历史固定 23 组件口径不适用。
 - 动态障碍服务必须 fail-closed；20 次有效交互均需 set-pose 成功、路径走廊命中、LiDAR 观测、碰撞 0 和任务恢复推进。
@@ -308,7 +321,7 @@ J6 节点只承担推理和必要预处理，保持与仿真/主控解耦：
 - 碰撞与惯性几何优先使用参数化 primitive 保证实时和稳定；正式工业车辆外观必须采用
   许可证明确且锁定版本的上游网格，或由项目可维护参数化 CAD 生成的离线 mesh；
 - 底盘默认使用 4WD skid-steer，真实底盘若为 Ackermann，再新增并行车型；
-- 清扫宽度默认 0.65 m；
+- 正式 A300 清扫宽度以 `config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml` 的 `declared_effective_cleaning_width_m`（当前 `1.32 m`）为唯一来源；`0.65 m`仅适用于历史/演示 profile；
 - 尘箱几何容积 0.04 m³，即 40 L；
 - 保留 `arm_mount_link`，为抓取演示预留安装位；
 - 传感器坐标必须集中配置，不散落硬编码；

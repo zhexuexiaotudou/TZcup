@@ -1,0 +1,52 @@
+{
+  "schema_version": 1,
+  "document_id": "tzcup_native_brep_power_distribution_eighth_batch_single_part_contract_v1",
+  "part_id": "power_distribution_box",
+  "source_mesh": "generated/platform/power_distribution_box.stl",
+  "builder_symbol": "build_power_distribution_box",
+  "status": "design_input_pending_native_export",
+  "claim_boundary": "Static, project-authored enclosure and mounting-interface design input only. The source represents a hollow enclosure, a separately removable cover, a project DIN-rail interface, fuse-holder and terminal-strip support envelopes, and cable-entry boss envelopes. It does not recreate a vendor PDU, fuse, terminal, wire, converter, relay, contactor or isolator, and it creates no FCStd/STEP, drawing, manufacturing, electrical-safety, IP, thermal, EMC, mass-property or as-built evidence.",
+  "prohibited_methods": ["mesh_to_step_conversion", "faceted_or_tessellated_step_export", "mesh_import_as_native_brep_substitute", "reverse_engineering_vendor_electrical_hardware_from_visual_meshes", "inferring_holes_material_tolerance_IP_creepage_or_current_rating_from_visual_geometry", "placeholder_fcstd_or_step_artifact"],
+  "authoritative_inputs": [
+    {"path": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py", "locator": "power_distribution_box(): body 0.180x0.115x0.060 m; cover 0.190x0.125x0.008 m; five 0.018x0.012x0.010 m fuse-interface envelopes; side cable-entry envelopes", "role": "nominal project geometry"},
+    {"path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/a300_platform.xacro", "locator": "power_distribution_box_link collision 0.190x0.125x0.068 m and mount origin [0.330,0.025,0.075]", "role": "packaging and installation authority"},
+    {"path": "config/high_fidelity_vehicle/formal_vehicle_layout.yaml", "locator": "base_footprint installation-frame convention", "role": "coordinate-system authority"},
+    {"path": "config/high_fidelity_vehicle/manufacturing_bom.csv", "locator": "power_distribution make_and_buy, design_required_not_released", "role": "make-buy and non-release boundary"}
+  ],
+  "installation": {"root_frame": "base_footprint", "payload_deck_relative_xyz_m": [0.330, 0.025, 0.075], "rpy_rad": [0.0, 0.0, 0.0]},
+  "geometry": {
+    "outer_size_m": [0.190, 0.125, 0.068],
+    "outer_corner_radius_m": 0.004,
+    "inner_void_size_m": [0.172, 0.107, 0.052],
+    "inner_void_centre_m": [0.0, 0.0, 0.006],
+    "cover_size_m": [0.190, 0.125, 0.008],
+    "cover_centre_m": [0.0, 0.0, 0.034],
+    "cover_corner_radius_m": 0.003,
+    "rail_length_m": 0.140,
+    "rail_width_m": 0.035,
+    "rail_depth_m": 0.012,
+    "rail_lip_m": 0.003,
+    "rail_centre_m": [0.000, 0.012, -0.010],
+    "fuse_holder_interfaces": [
+      {"size_m": [0.018, 0.012, 0.010], "centre_m": [-0.060, -0.052, 0.034], "edge_break_m": 0.001},
+      {"size_m": [0.018, 0.012, 0.010], "centre_m": [-0.030, -0.052, 0.034], "edge_break_m": 0.001},
+      {"size_m": [0.018, 0.012, 0.010], "centre_m": [0.000, -0.052, 0.034], "edge_break_m": 0.001},
+      {"size_m": [0.018, 0.012, 0.010], "centre_m": [0.030, -0.052, 0.034], "edge_break_m": 0.001},
+      {"size_m": [0.018, 0.012, 0.010], "centre_m": [0.060, -0.052, 0.034], "edge_break_m": 0.001}
+    ],
+    "terminal_strip_interfaces": [
+      {"size_m": [0.014, 0.016, 0.014], "centre_m": [0.082, -0.035, -0.006], "edge_break_m": 0.001},
+      {"size_m": [0.014, 0.016, 0.014], "centre_m": [0.082, 0.000, -0.006], "edge_break_m": 0.001},
+      {"size_m": [0.014, 0.016, 0.014], "centre_m": [0.082, 0.035, -0.006], "edge_break_m": 0.001}
+    ],
+    "cable_entry_boss_envelopes": [
+      {"radius_m": 0.008, "length_m": 0.018, "centre_m": [-0.050, 0.063, 0.000], "axis": "y"},
+      {"radius_m": 0.008, "length_m": 0.018, "centre_m": [0.050, 0.063, 0.000], "axis": "y"},
+      {"radius_m": 0.007, "length_m": 0.016, "centre_m": [0.092, -0.035, -0.006], "axis": "x"},
+      {"radius_m": 0.007, "length_m": 0.016, "centre_m": [0.092, 0.000, -0.006], "axis": "x"},
+      {"radius_m": 0.007, "length_m": 0.016, "centre_m": [0.092, 0.035, -0.006], "axis": "x"}
+    ]
+  },
+  "pending_release_inputs": ["all_manufacturing_holes_threads_fasteners_and_deck_pattern", "enclosure_and_cover_material_finish_and_tolerances", "sealing_gasket_IP_and_cable_gland_definition", "supplier_fuse_terminal_DIN_rail_and_wire_interfaces", "rated_current_voltage_protection_coordination_and_short_circuit_analysis", "creepage_clearance_touch_protection_grounding_and_bonding", "thermal_derating_ventilation_fire_containment_and_EMC", "mass_center_of_mass_vibration_and_service_clearance"],
+  "planned_native_export": {"authoritative_editable_source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_power_distribution_eighth_batch.py", "optional_future_fcstd_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/power/power_distribution_box.FCStd", "step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/power/power_distribution_box.step", "must_not_exist_yet": true, "export_preconditions": ["power_topology_and_supplier_interfaces_released", "mechanical_hole_material_tolerance_and_IP_reviews_closed", "electrical_creepage_grounding_thermal_EMC_and_safety_reviews_closed", "native_parametric_feature_model_reviewed", "non_faceted_STEP_preflight_passed"]}
+}

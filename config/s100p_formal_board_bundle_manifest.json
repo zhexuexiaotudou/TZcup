@@ -1,0 +1,59 @@
+{
+  "$schema": "https://tzcup.local/schema/s100p-formal-board-bundle-manifest-v1.json",
+  "schema_version": 1,
+  "bundle_id": "tzcup_s100p_formal_snapshot_bound_board_bundle_v1",
+  "status": "COPYABLE_MANIFEST_ONLY_BLOCKED_DEPLOYMENT",
+  "operation_boundary": "manifest_and_sha_validation_only_no_board_copy_ssh_install_node_start_data_collection_or_model_generation",
+  "copy_boundary": {
+    "manifest_is_copyable": true,
+    "payload_copy_authorized": false,
+    "board_destination_is_a_plan_only": true,
+    "artifact_root": "/opt/tzcup/s100p/artifacts",
+    "overlay_root": "/opt/tzcup/s100p/overlay"
+  },
+  "formal_snapshot": {
+    "path": "reports/engineering/formal_vehicle_snapshot_manifest.json",
+    "sha256": "28e5aa3756e2ce5e3561070add76dea3e2941e46ed495b4ed0e60a140a569ee3",
+    "byte_size": 51874,
+    "source_inventory_sha256": "fa7689ddf3ca91870ea67a34045a94276bb90ad43ee2d2cdff785140e8f73823",
+    "output_inventory_sha256": "a8832afc81f6eea6227abd0a5dc6073bb9da2283de8532c05034841243028ba7",
+    "formal_urdf_sha256": "b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2",
+    "live_source_revalidation_performed": false,
+    "binding_scope": "frozen_formal_snapshot_identity_only_not_a_live_board_or_runtime_acceptance"
+  },
+  "bound_sources": [
+    {"path": "config/dosod_s100p_hbm_compile_contract.json", "byte_size": 5792, "sha256": "1bbbf27f5b86f4b7e87369859dab5428af6f82b21cd63cfabf016b93021765e0", "role": "dosod_hbm_compile_contract"},
+    {"path": "config/s100p_product_artifact_bundle.json", "byte_size": 4157, "sha256": "5fe2ba959d5f80fa881c4124c73ae1dcd82028d43f88b94a869f746ff1c49819", "role": "offline_predeploy_product_bundle"},
+    {"path": "config/s100p_product_board_launch_parameters.json", "byte_size": 1333, "sha256": "a0e30d1c4932c5a0c65043db3f26b94564890f93b14532a2fe41a2257fb4519c", "role": "board_launch_parameter_record"},
+    {"path": "config/s100p_product_overlay_packages.json", "byte_size": 2176, "sha256": "34b497665724860a382988fed876cce2d9a2920366860966b5c9a630d62710ca", "role": "board_overlay_package_contract"},
+    {"path": "starter_ws/src/sanitation_perception/config/open_vocab_s100_profile.yaml", "byte_size": 2812, "sha256": "9b3dc914705c53dad8c0248ed60e8e44d685efc1c80b9320239ec165bbd1edf6", "role": "dosod_edgesam_s100_profile"},
+    {"path": "starter_ws/src/sanitation_perception/launch/formal_s100p_open_vocab.launch.py", "byte_size": 9540, "sha256": "218fb81fcf2d6668a1d6dc57bdb8e258ef72448f9bf46a4728d9e4d57edea5dc", "role": "formal_ros2_launch"},
+    {"path": "starter_ws/src/sanitation_perception/package.xml", "byte_size": 1241, "sha256": "203329c440c63b1d955ba677a1a3c8b8555f8288483327785f1c77c782cd7389", "role": "project_perception_package_manifest"},
+    {"path": "starter_ws/src/sanitation_perception/sanitation_perception/rgb_to_nv12_adapter.py", "byte_size": 5935, "sha256": "e802dd8ac5bc5309ac5e23661672276908b0cd5aeaec21bc7ad275e9ba5a9cdb", "role": "nv12_adapter_source"},
+    {"path": "starter_ws/src/sanitation_perception/sanitation_perception/s100p_product_adapter.py", "byte_size": 31077, "sha256": "08148015337ef7d45010014cafad4f15c17d3f2ddb741f72f2acaaee9ba9891b", "role": "product_adapter_source"},
+    {"path": "starter_ws/src/sanitation_perception/setup.py", "byte_size": 1567, "sha256": "9766b35de72648e7355916f0f98c2bcdc3339648cde0d995bbe9d06db3359eca", "role": "project_perception_entry_points"},
+    {"path": "starter_ws/src/sanitation_perception_interfaces/package.xml", "byte_size": 737, "sha256": "192d6a7db318698d668b9845dadd36541f389b201d1fd009ae6e84c5490d9dc9", "role": "perception_interfaces_package_manifest"}
+  ],
+  "required_board_payload_roles": [
+    {"asset_key": "dosod_hbm", "target_relative_path": "dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm", "required": true, "source_receipt_required": true},
+    {"asset_key": "dosod_vocabulary", "target_relative_path": "dosod/tzcup_offline_vocabulary.json", "required": true, "source_receipt_required": true},
+    {"asset_key": "edgesam_encoder_hbm", "target_relative_path": "edgesam/edgesam_encoder_512.hbm", "required": true, "source_receipt_required": true},
+    {"asset_key": "edgesam_decoder_hbm", "target_relative_path": "edgesam/edgesam_decoder_512.hbm", "required": true, "source_receipt_required": true}
+  ],
+  "deployment_gates": {
+    "project_model_weights_and_hbm_present_and_hashed": false,
+    "board_tzcup_overlay_built_and_verified": false,
+    "board_runtime_dependencies_verified": false,
+    "board_thermal_and_power_measured": false,
+    "board_runtime_evidence_collected": false,
+    "board_runtime_accepted": false
+  },
+  "blocked_reasons": [
+    "project_dosod_hbm_missing_or_unhashed",
+    "required_board_model_payloads_not_all_receipted",
+    "board_tzcup_overlay_unbuilt_or_unverified",
+    "board_runtime_dependencies_unverified",
+    "thermal_and_power_measurement_not_collected",
+    "board_runtime_evidence_not_collected"
+  ]
+}

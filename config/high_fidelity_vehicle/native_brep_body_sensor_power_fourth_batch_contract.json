@@ -1,0 +1,147 @@
+{
+  "schema_version": 1,
+  "document_id": "tzcup_native_brep_body_sensor_power_fourth_batch_parametric_contract_v1",
+  "status": "design_input_pending_native_export",
+  "claim_boundary": "Static project-authored geometry inputs only. The source rebuilds named exterior panels, support envelopes and project mounting enclosures from current generator, Xacro, layout and BOM values. It creates no FCStd/STEP, drawing, released mounting-hole pattern, tolerance, material, sealing, thermal, EMC, mass-property, supplier-CAD or as-built evidence. Vendor sensor, compute-board, power-converter and relay bodies are expressly not rebuilt.",
+  "prohibited_methods": [
+    "mesh_to_step_conversion",
+    "faceted_or_tessellated_step_export",
+    "mesh_import_as_native_brep_substitute",
+    "reverse_engineering_vendor_sensor_or_electronics_bodies_from_visual_meshes",
+    "inferring_holes_threads_material_tolerance_sealing_thermal_or_emc_from_visual_geometry",
+    "placeholder_fcstd_or_step_artifact"
+  ],
+  "coordinate_system": {
+    "units": "m_and_rad",
+    "root_frame": "base_footprint",
+    "local_part_rule": "Each item is constructed in a part-local design datum from explicitly listed dimensions, then only located by cited Xacro/layout transforms. Collision boxes and visual geometry are packaging inputs, never hole or manufacturing-feature evidence.",
+    "sources": [
+      {"path": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_product_bodywork_meshes.py", "role": "nominal project body-panel, door, hinge and latch exterior geometry"},
+      {"path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/bodywork.xacro", "role": "bodywork collision envelopes and four door installation transforms"},
+      {"path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro", "role": "project sensor bracket/tray/boom envelopes and mount transforms"},
+      {"path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/a300_platform.xacro", "role": "mast, S100 roof mount, UR5e isolation base and power mounting envelopes"},
+      {"path": "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py", "role": "nominal PDU/DC-DC/relay visual envelope dimensions used only to size project support enclosures"},
+      {"path": "config/high_fidelity_vehicle/formal_vehicle_layout.yaml", "role": "base_footprint installation frames and compute validation boundary"},
+      {"path": "config/high_fidelity_vehicle/manufacturing_bom.csv", "role": "make-buy boundary and integrated allocation only"}
+    ]
+  },
+  "items": [
+    {
+      "id": "bodywork_access_set",
+      "status": "design_input_pending_native_export",
+      "scope": "Project-authored front nose, split lower tub, roof/side-panel/fender envelope bands, and the four physical service-door panels with hinge and latch exterior envelopes. No door aperture, hinges, latches, fasteners, seals, lighting or supplier component interface is released.",
+      "evidence_sources": [
+        "generate_product_bodywork_meshes.py: bodywork_parts lower_tub_left/right, front_center_nose, wheel_arches, side_skirts, four service doors, hinge and rotary latch",
+        "bodywork.xacro: lower-tub collisions, shell roof collisions and hf_service_door installation macro",
+        "formal_vehicle_layout.yaml: body packaging frame"
+      ],
+      "installation": {
+        "root_frame": "base_footprint",
+        "service_doors": {
+          "power": {"hinge_xyz_m": [0.035, 0.315, 0.220], "axis": "z"},
+          "compute": {"hinge_xyz_m": [0.250, -0.365, 0.300], "axis": "z"},
+          "wet": {"hinge_xyz_m": [-0.195, -0.315, 0.205], "axis": "z"},
+          "rear_dry": {"hinge_xyz_m": [-0.555, 0.220, 0.315], "axis": "z"}
+        }
+      },
+      "geometry": {
+        "box_features": [
+          {"feature": "lower_tub_left_packaging", "size_m": [1.040, 0.235, 0.220], "centre_m": [0.000, 0.245, 0.135]},
+          {"feature": "lower_tub_right_packaging", "size_m": [1.040, 0.235, 0.220], "centre_m": [0.000, -0.245, 0.135]},
+          {"feature": "front_nose_lower_packaging", "size_m": [0.315, 0.425, 0.230], "centre_m": [0.3975, 0.000, 0.123]},
+          {"feature": "front_nose_upper_packaging", "size_m": [0.315, 0.330, 0.200], "centre_m": [0.3975, 0.000, 0.335]},
+          {"feature": "roof_left_panel", "size_m": [0.530, 0.080, 0.055], "centre_m": [-0.285, 0.310, 0.735]},
+          {"feature": "roof_right_panel", "size_m": [0.530, 0.180, 0.055], "centre_m": [-0.285, -0.255, 0.735]},
+          {"feature": "roof_front_panel", "size_m": [0.090, 0.270, 0.055], "centre_m": [-0.065, 0.135, 0.735]},
+          {"feature": "roof_rear_panel", "size_m": [0.080, 0.270, 0.055], "centre_m": [-0.500, 0.135, 0.735]},
+          {"feature": "left_side_panel_envelope", "size_m": [0.980, 0.035, 0.090], "centre_m": [0.000, 0.365, 0.030]},
+          {"feature": "right_side_panel_envelope", "size_m": [0.980, 0.035, 0.090], "centre_m": [0.000, -0.365, 0.030]},
+          {"feature": "power_door_panel", "size_m": [0.450, 0.010, 0.425], "centre_m": [0.225, 0.000, 0.2125]},
+          {"feature": "compute_door_panel", "size_m": [0.270, 0.010, 0.120], "centre_m": [0.135, 0.000, 0.060]},
+          {"feature": "wet_door_panel", "size_m": [0.370, 0.010, 0.290], "centre_m": [0.185, 0.000, 0.145]},
+          {"feature": "rear_dry_door_panel", "size_m": [0.012, 0.440, 0.350], "centre_m": [0.000, -0.220, 0.175]},
+          {"feature": "hinge_leaf_envelope", "size_m": [0.028, 0.004, 0.040], "centre_m": [0.014, 0.000, 0.000]},
+          {"feature": "latch_body_envelope", "size_m": [0.045, 0.018, 0.012], "centre_m": [0.000, 0.000, 0.000]}
+        ],
+        "cylinder_features": [
+          {"feature": "front_left_fender_envelope", "radius_m": 0.185, "length_m": 0.035, "centre_m": [0.256, 0.355, 0.170], "axis": "y"},
+          {"feature": "front_right_fender_envelope", "radius_m": 0.185, "length_m": 0.035, "centre_m": [0.256, -0.355, 0.170], "axis": "y"},
+          {"feature": "rear_left_fender_envelope", "radius_m": 0.185, "length_m": 0.035, "centre_m": [-0.256, 0.355, 0.170], "axis": "y"},
+          {"feature": "rear_right_fender_envelope", "radius_m": 0.185, "length_m": 0.035, "centre_m": [-0.256, -0.355, 0.170], "axis": "y"},
+          {"feature": "hinge_barrel_envelope", "radius_m": 0.008, "length_m": 0.050, "centre_m": [0.000, 0.000, 0.000], "axis": "z"},
+          {"feature": "rotary_latch_envelope", "radius_m": 0.010, "length_m": 0.020, "centre_m": [0.000, 0.000, 0.000], "axis": "y"}
+        ]
+      },
+      "pending_manufacturing_inputs": ["all_panel_mounting_hole_patterns", "door_aperture_and_gap_definition", "hinge_pin_bearing_latch_and_fastener_selection", "seal_drip_path_and_ingress_protection", "material_grade_finish_and_panel_forming", "panel_tolerances_crash_and_vibration_loads"],
+      "planned_native_export": {"authoritative_editable_source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_body_sensor_power_fourth_batch.py", "optional_future_fcstd_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/bodywork/bodywork_access_set.FCStd", "step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/bodywork/bodywork_access_set.step", "must_not_exist_yet": true, "export_preconditions": ["door_interfaces_and_weather_sealing_released", "panel_material_tolerance_and_load_reviews_closed", "native_parametric_feature_model_reviewed", "non_faceted_STEP_preflight_passed"]}
+    },
+    {
+      "id": "sensor_mast_and_installation_brackets",
+      "status": "design_input_pending_native_export",
+      "scope": "Project-authored twin-column mast, UTM shelf/backplate/pad, MID360 isolator plate, front RGBD bezel, paired rear-fisheye pods, GNSS boom/ground-plane support, receiver enclosure and IMU tray. Vendor sensor bodies and their internal/package mounting patterns are excluded.",
+      "evidence_sources": ["a300_platform.xacro: sensor_mast_link", "sensor_suite.xacro: named project installation links", "formal_vehicle_layout.yaml: sensor and installation frames", "manufacturing_bom.csv: sensor_mast_sensor_system_nominal"],
+      "installation": {"mast_base_footprint_xyz_m": [0.420, 0.000, 0.4091], "front_rgbd_mount_xyz_m": [0.565, 0.000, 0.6141], "rear_fisheye_pair_xyz_m": [[-0.565, 0.280, 0.6001], [-0.565, -0.280, 0.6001]], "gnss_mount_xyz_m": [0.385, -0.020, 1.1541], "imu_tray_xyz_m": [0.000, 0.000, 0.3901]},
+      "geometry": {
+        "box_features": [
+          {"feature": "mast_left_column", "size_m": [0.030, 0.030, 0.760], "centre_m": [0.000, -0.050, 0.396]},
+          {"feature": "mast_right_column", "size_m": [0.030, 0.030, 0.760], "centre_m": [0.000, 0.050, 0.396]},
+          {"feature": "mast_service_spine", "size_m": [0.036, 0.062, 0.690], "centre_m": [-0.022, 0.000, 0.375]},
+          {"feature": "mast_pedestal", "size_m": [0.190, 0.150, 0.016], "centre_m": [0.000, 0.000, 0.008]},
+          {"feature": "mast_head_plate", "size_m": [0.150, 0.120, 0.018], "centre_m": [0.000, 0.000, 0.778]},
+          {"feature": "utm_shelf", "size_m": [0.150, 0.120, 0.014], "centre_m": [0.020, 0.000, 0.006]},
+          {"feature": "utm_backplate", "size_m": [0.014, 0.105, 0.090], "centre_m": [-0.048, 0.000, -0.030]},
+          {"feature": "utm_sensor_support_pad", "size_m": [0.100, 0.090, 0.008], "centre_m": [0.055, 0.000, 0.019]},
+          {"feature": "front_rgbd_upper_bezel", "size_m": [0.045, 0.132, 0.008], "centre_m": [0.000, 0.000, 0.030]},
+          {"feature": "front_rgbd_lower_bezel", "size_m": [0.045, 0.132, 0.008], "centre_m": [0.000, 0.000, -0.030]},
+          {"feature": "front_rgbd_side_bezel_pair", "size_m": [0.045, 0.008, 0.052], "centre_m": [0.000, 0.062, 0.000]},
+          {"feature": "rear_fisheye_pod_envelope", "size_m": [0.048, 0.090, 0.084], "centre_m": [0.000, 0.000, 0.000]},
+          {"feature": "gnss_boom", "size_m": [0.100, 0.230, 0.018], "centre_m": [0.000, 0.085, 0.000]},
+          {"feature": "gnss_receiver_enclosure", "size_m": [0.065, 0.060, 0.020], "centre_m": [0.000, 0.000, -0.002]},
+          {"feature": "imu_isolation_tray", "size_m": [0.090, 0.080, 0.022], "centre_m": [0.000, 0.000, 0.008]}
+        ],
+        "cylinder_features": [{"feature": "mid360_isolator_plate", "radius_m": 0.070, "length_m": 0.034, "centre_m": [0.000, 0.000, 0.017], "axis": "z"}, {"feature": "gnss_ground_plane_support", "radius_m": 0.075, "length_m": 0.002, "centre_m": [-0.020, 0.180, 0.010], "axis": "z"}]
+      },
+      "pending_manufacturing_inputs": ["all_mast_and_bracket_hole_patterns", "vendor_sensor_mounting_interfaces", "mast_material_finish_and_galvanic_pairing", "sensor_keepout_load_vibration_and_fatigue", "GNSS_ground_plane_RF_definition", "thermal_sealing_EMC_and_cable_strain_relief"],
+      "planned_native_export": {"authoritative_editable_source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_body_sensor_power_fourth_batch.py", "optional_future_fcstd_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/sensors/sensor_mast_and_installation_brackets.FCStd", "step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/sensors/sensor_mast_and_installation_brackets.step", "must_not_exist_yet": true, "export_preconditions": ["vendor_interfaces_and_sensor_keepouts_released", "RF_thermal_EMC_and_vibration_reviews_closed", "native_parametric_feature_model_reviewed", "non_faceted_STEP_preflight_passed"]}
+    },
+    {
+      "id": "compute_and_control_cabinet_mounting",
+      "status": "design_input_pending_native_export",
+      "scope": "Project-authored UR5e control-cabinet isolation base and clamps plus S100P protective-enclosure and roof-mount support. The UR cabinet and user-owned S100P board remain vendor/owned reference envelopes and are not rebuilt.",
+      "evidence_sources": ["a300_platform.xacro: isolation base, cabinet envelope, S100 roof mount/enclosure", "formal_vehicle_layout.yaml: S100P measurement and thermal pending gates", "manufacturing_bom.csv: power_compute_system_nominal and s100p_compute"],
+      "installation": {"isolation_base_base_footprint_xyz_m": [0.296, 0.240, 0.219], "cabinet_local_xyz_m": [0.000, 0.000, 0.2895], "roof_mount_local_xyz_m": [0.000, 0.000, 0.2245], "s100_enclosure_local_xyz_m": [0.000, 0.000, 0.0769]},
+      "geometry": {
+        "box_features": [
+          {"feature": "control_box_lower_rail_pair", "size_m": [0.340, 0.045, 0.004], "centre_m": [0.000, 0.080, 0.002]},
+          {"feature": "control_box_upper_front_rail", "size_m": [0.050, 0.220, 0.006], "centre_m": [0.170, 0.000, 0.033]},
+          {"feature": "control_box_upper_rear_rail", "size_m": [0.050, 0.220, 0.006], "centre_m": [-0.170, 0.000, 0.033]},
+          {"feature": "control_box_clamp_envelope", "size_m": [0.050, 0.035, 0.041], "centre_m": [0.170, 0.090, 0.0565]},
+          {"feature": "s100_roof_mount_plate", "size_m": [0.230, 0.180, 0.002], "centre_m": [0.000, 0.000, 0.001]},
+          {"feature": "s100_protective_enclosure", "size_m": [0.205, 0.155, 0.100], "centre_m": [0.000, 0.000, 0.000]},
+          {"feature": "s100_enclosure_mounting_plate", "size_m": [0.230, 0.180, 0.010], "centre_m": [0.000, 0.000, -0.045]}
+        ],
+        "cylinder_features": [{"feature": "project_defined_roof_standoff_envelope", "radius_m": 0.008, "length_m": 0.0249, "centre_m": [0.085, 0.065, 0.01345], "axis": "z"}, {"feature": "control_box_isolator_envelope", "radius_m": 0.016, "length_m": 0.030, "centre_m": [0.150, 0.080, 0.020], "axis": "z"}]
+      },
+      "pending_manufacturing_inputs": ["A300_deck_hole_pattern", "UR5e_control_cabinet_factory_mounting_interface", "exact_owned_S100P_board_envelope_and_hole_pattern", "S100P_connector_keepout_and_service_route", "isolation_stiffness_vibration_and_fatigue", "enclosure_material_seal_thermal_EMC_and_IP_definition", "all_holes_threads_tolerances_and_grounding"],
+      "planned_native_export": {"authoritative_editable_source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_body_sensor_power_fourth_batch.py", "optional_future_fcstd_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/compute/compute_and_control_cabinet_mounting.FCStd", "step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/compute/compute_and_control_cabinet_mounting.step", "must_not_exist_yet": true, "export_preconditions": ["owned_S100P_and_UR5e_interfaces_measured", "thermal_EMC_sealing_and_vibration_reviews_closed", "native_parametric_feature_model_reviewed", "non_faceted_STEP_preflight_passed"]}
+    },
+    {
+      "id": "power_distribution_mounting_enclosures",
+      "status": "design_input_pending_native_export",
+      "scope": "Project-authored PDU, isolated DC-DC and safety-relay support/enclosure exterior envelopes sized from current packaging geometry. PDU internals, converter, relay, contactor, isolator, terminals, creepage/clearance and all electrical performance claims remain outside this source.",
+      "evidence_sources": ["generate_cleaning_storage_meshes.py: power_distribution_box, isolated_dc_dc_module, safety_relay nominal envelopes", "a300_platform.xacro: PDU/DC-DC/relay mounting transforms", "manufacturing_bom.csv: power_distribution and power_compute_system_nominal"],
+      "installation": {"pdu_base_footprint_xyz_m": [0.300, 0.120, 0.274], "dc_dc_base_footprint_xyz_m": [0.345, -0.105, 0.274], "safety_relay_base_footprint_xyz_m": [0.220, -0.080, 0.279]},
+      "geometry": {
+        "box_features": [
+          {"feature": "pdu_enclosure_body", "size_m": [0.180, 0.115, 0.060], "centre_m": [0.000, 0.000, 0.000]},
+          {"feature": "pdu_enclosure_lid", "size_m": [0.190, 0.125, 0.008], "centre_m": [0.000, 0.000, 0.034]},
+          {"feature": "dc_dc_support_enclosure", "size_m": [0.135, 0.095, 0.042], "centre_m": [0.000, 0.000, 0.000]},
+          {"feature": "safety_relay_support_enclosure", "size_m": [0.105, 0.075, 0.055], "centre_m": [0.000, 0.000, 0.000]}
+        ],
+        "cylinder_features": [{"feature": "pdu_cable_gland_envelope", "radius_m": 0.008, "length_m": 0.018, "centre_m": [0.050, 0.063, 0.000], "axis": "y"}, {"feature": "dc_dc_side_support_envelope", "radius_m": 0.009, "length_m": 0.016, "centre_m": [0.070, 0.030, 0.000], "axis": "x"}, {"feature": "relay_service_knob_envelope", "radius_m": 0.018, "length_m": 0.010, "centre_m": [0.000, 0.000, 0.032], "axis": "z"}]
+      },
+      "pending_manufacturing_inputs": ["power_topology_and_current_rating", "supplier_PDU_converter_relay_and_terminal_interfaces", "all_holes_threads_and_deck_mounting_pattern", "creepage_clearance_and_touch_protection", "thermal_derating_ventilation_and_fire_containment", "EMC_bonding_shielding_grounding_and_cable_gland_definition", "enclosure_material_IP_rating_tolerances_and_safety_approval"],
+      "planned_native_export": {"authoritative_editable_source_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_body_sensor_power_fourth_batch.py", "optional_future_fcstd_path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/power/power_distribution_mounting_enclosures.FCStd", "step_path": "starter_ws/src/sanitation_vehicle_description/cad/step/formal_vehicle/power/power_distribution_mounting_enclosures.step", "must_not_exist_yet": true, "export_preconditions": ["power_topology_supplier_and_electrical_interfaces_released", "thermal_EMC_IP_and_safety_reviews_closed", "native_parametric_feature_model_reviewed", "non_faceted_STEP_preflight_passed"]}
+    }
+  ]
+}

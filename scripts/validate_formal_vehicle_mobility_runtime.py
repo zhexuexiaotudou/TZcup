@@ -4,27 +4,78 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
-import re
-import shutil
-import subprocess
 import time
 from pathlib import Path
 from typing import Any
 
 import rclpy
 from controller_manager_msgs.srv import ListControllers
-from geometry_msgs.msg import TwistStamped
+from diagnostic_msgs.msg import DiagnosticArray
+from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 from sensor_msgs.msg import JointState
+from std_msgs.msg import Bool, Empty
 
 from formal_vehicle_mobility_metrics import WHEEL_JOINTS, evaluate_motion, quaternion_yaw
+from formal_runtime_gate_binding import load_binding
+from gazebo_ground_truth import read_named_model_pose
 
 MODEL_NAME = "tzcup_formal_sanitation_vehicle"
 DEFAULT_CLOCK_STALL_TIMEOUT_S = 20.0
 DEFAULT_PHASE_HARD_TIMEOUT_S = 600.0
+ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_SNAPSHOT = ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.json"
+DEFAULT_SESSION = ROOT / "artifacts/formal_final_acceptance_session.json"
+
+
+def _source_binding(snapshot_path: Path) -> dict[str, str]:
+    """Extract the immutable vehicle identity from the canonical snapshot."""
+
+    snapshot = json.loads(snapshot_path.read_text(encoding="utf-8"))
+    outputs = snapshot.get("outputs", {})
+    urdf = outputs.get("reports/engineering/formal_competition_vehicle.urdf", {})
+    source_hash = snapshot.get("source_inventory_sha256")
+    urdf_hash = urdf.get("sha256") if isinstance(urdf, dict) else None
+    if not isinstance(source_hash, str) or not source_hash:
+        raise ValueError("snapshot has no source_inventory_sha256")
+    if not isinstance(urdf_hash, str) or not urdf_hash:
+        raise ValueError("snapshot has no expanded URDF sha256")
+    return {
+        "snapshot_manifest_sha256": hashlib.sha256(snapshot_path.read_bytes()).hexdigest(),
+        "source_inventory_sha256": source_hash,
+        "expanded_urdf_sha256": urdf_hash,
+    }
+
+
+def _bound_runtime_evidence(
+    snapshot_path: Path, session_path: Path, binding_path: Path
+) -> tuple[dict[str, str], dict[str, object], dict[str, object]]:
+    """Reject a mobility result that is not from the active frozen final run."""
+
+    source_binding = _source_binding(snapshot_path)
+    session = json.loads(session_path.read_text(encoding="utf-8"))
+    if not isinstance(session, dict) or session.get("status") != "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING":
+        raise ValueError("formal acceptance session must be RUNNING")
+    started_epoch_ns = session.get("started_epoch_ns")
+    if not isinstance(started_epoch_ns, int) or started_epoch_ns <= 0:
+        raise ValueError("formal acceptance session start time is invalid")
+    binding = load_binding(binding_path)
+    bound_session = binding["acceptance_session_binding"]
+    if not isinstance(bound_session, dict):
+        raise ValueError("runtime binding has no acceptance-session binding")
+    if bound_session.get("snapshot") != source_binding:
+        raise ValueError("runtime binding snapshot differs from mobility source binding")
+    if (
+        bound_session.get("session_manifest_sha256")
+        != hashlib.sha256(session_path.read_bytes()).hexdigest()
+        or bound_session.get("session_started_epoch_ns") != started_epoch_ns
+    ):
+        raise ValueError("runtime binding session differs from mobility session")
+    return source_binding, bound_session, binding
 
 
 class SimulationClockProgressWatchdog:
@@ -69,63 +120,12 @@ class SimulationClockProgressWatchdog:
             )
 
 
-def _protobuf_scalar(block: str, field: str, default: float = 0.0) -> float:
-    match = re.search(rf"^\s*{re.escape(field)}:\s*([-+0-9.eE]+)\s*$", block, re.MULTILINE)
-    return float(match.group(1)) if match else default
-
-
-def _named_pose_block(message: str, name: str) -> str:
-    marker = f'name: "{name}"'
-    marker_index = message.find(marker)
-    if marker_index < 0:
-        raise RuntimeError(f"Gazebo pose/info did not contain model {name}")
-    start = message.rfind("pose {", 0, marker_index)
-    if start < 0:
-        raise RuntimeError(f"Gazebo pose/info block for {name} is malformed")
-    depth = 0
-    for index in range(start + len("pose "), len(message)):
-        if message[index] == "{":
-            depth += 1
-        elif message[index] == "}":
-            depth -= 1
-            if depth == 0:
-                return message[start : index + 1]
-    raise RuntimeError(f"Gazebo pose/info block for {name} is unterminated")
-
-
 def read_gazebo_ground_truth() -> dict[str, float]:
     """Read one named model pose directly from Gazebo Transport, preserving names."""
-    executable = shutil.which("gz")
-    if executable is None:
-        vendor = Path("/opt/ros/jazzy/opt/gz_tools_vendor/bin/gz")
-        if vendor.exists():
-            executable = str(vendor)
-    if executable is None:
-        raise RuntimeError("Gazebo CLI not found")
-    result = subprocess.run(
-        [executable, "topic", "-e", "-t", "/world/formal_vehicle_validation/pose/info", "-n", "1"],
-        check=True,
-        capture_output=True,
-        text=True,
-        timeout=10.0,
+    pose = read_named_model_pose(
+        world_name="formal_vehicle_validation", model_name=MODEL_NAME
     )
-    block = _named_pose_block(result.stdout, MODEL_NAME)
-    position_match = re.search(r"position\s*\{(?P<body>.*?)\}", block, re.DOTALL)
-    orientation_match = re.search(r"orientation\s*\{(?P<body>.*?)\}", block, re.DOTALL)
-    if position_match is None or orientation_match is None:
-        raise RuntimeError("Gazebo model pose has no position or orientation")
-    position = position_match.group("body")
-    orientation = orientation_match.group("body")
-    return {
-        "x": _protobuf_scalar(position, "x"),
-        "y": _protobuf_scalar(position, "y"),
-        "yaw": quaternion_yaw(
-            _protobuf_scalar(orientation, "x"),
-            _protobuf_scalar(orientation, "y"),
-            _protobuf_scalar(orientation, "z"),
-            _protobuf_scalar(orientation, "w", 1.0),
-        ),
-    }
+    return {key: pose[key] for key in ("x", "y", "yaw")}
 
 
 class MobilityProbe(Node):
@@ -135,14 +135,42 @@ class MobilityProbe(Node):
             parameter_overrides=[Parameter("use_sim_time", Parameter.Type.BOOL, True)],
             automatically_declare_parameters_from_overrides=True,
         )
-        self.command = self.create_publisher(TwistStamped, "/base_controller/cmd_vel", 10)
-        self.create_subscription(Odometry, "/base_controller/odom", self._odom, 50)
+        self.command = self.create_publisher(Twist, "/cmd_vel_gate", 10)
+        self.main_power = self.create_publisher(
+            Bool, "/formal_vehicle/simulation/command/main_power", 10
+        )
+        self.estop = self.create_publisher(
+            Bool, "/formal_vehicle/simulation/command/emergency_stop", 10
+        )
+        self.estop_reset = self.create_publisher(
+            Bool, "/formal_vehicle/simulation/command/emergency_stop_reset", 10
+        )
+        self.heartbeat = self.create_publisher(Empty, "/safety/control_heartbeat", 10)
+        self.create_subscription(Odometry, "/odom/unfiltered", self._odom, 50)
         self.create_subscription(JointState, "/joint_states", self._joints, 50)
+        self.create_subscription(
+            Bool, "/safety/actuators_enabled", self._actuator_enabled, 20
+        )
+        self.create_subscription(
+            DiagnosticArray, "/safety/status", self._safety_status, 20
+        )
         self.controller_client = self.create_client(ListControllers, "/controller_manager/list_controllers")
         self.latest_odom: dict[str, Any] | None = None
         self.latest_wheels: dict[str, dict[str, float]] | None = None
         self.odom_samples = 0
         self.joint_samples = 0
+        self.actuator_enabled_samples = 0
+        self.latest_safety_status: dict[str, str] = {}
+
+    def _actuator_enabled(self, message: Bool) -> None:
+        if message.data:
+            self.actuator_enabled_samples += 1
+
+    def _safety_status(self, message: DiagnosticArray) -> None:
+        for status in message.status:
+            self.latest_safety_status = {
+                item.key: item.value for item in status.values
+            }
 
     def _odom(self, message: Odometry) -> None:
         pose = message.pose.pose
@@ -169,9 +197,12 @@ class MobilityProbe(Node):
             self.joint_samples += 1
 
     def publish_velocity(self, speed: float) -> None:
-        command = TwistStamped()
-        command.header.stamp = self.get_clock().now().to_msg()
-        command.twist.linear.x = speed
+        self.main_power.publish(Bool(data=True))
+        self.estop.publish(Bool(data=False))
+        self.estop_reset.publish(Bool(data=True))
+        self.heartbeat.publish(Empty())
+        command = Twist()
+        command.linear.x = speed
         self.command.publish(command)
 
     def spin_for(
@@ -229,10 +260,12 @@ def _wait_for_ready(node: MobilityProbe, timeout: float) -> str:
     deadline = time.monotonic() + timeout
     while time.monotonic() < deadline:
         rclpy.spin_once(node, timeout_sec=0.1)
+        node.publish_velocity(0.0)
         ready = (
             node.latest_odom is not None
             and node.latest_wheels is not None
             and node.command.get_subscription_count() >= 1
+            and node.main_power.get_subscription_count() >= 2
             and node.controller_client.wait_for_service(timeout_sec=0.0)
         )
         if ready:
@@ -240,12 +273,23 @@ def _wait_for_ready(node: MobilityProbe, timeout: float) -> str:
             rclpy.spin_until_future_complete(node, future, timeout_sec=5.0)
             if future.done() and future.result() is not None:
                 states = {item.name: item.state for item in future.result().controller}
-                if states.get("base_controller") == "active":
+                if (
+                    states.get("joint_state_broadcaster") == "active"
+                    and node.actuator_enabled_samples > 0
+                ):
                     return "active"
         time.sleep(0.05)
     raise TimeoutError(
-        "timed out waiting for active base controller, ground truth pose, controller odom, "
-        "all four wheel joints and command subscription"
+        "timed out waiting for the safety command chain, enabled A300 plant odometry, "
+        "active joint-state broadcaster and all four wheel joints; "
+        f"odom_seen={node.latest_odom is not None}, "
+        f"wheels_seen={node.latest_wheels is not None}, "
+        f"command_subscriptions={node.command.get_subscription_count()}, "
+        f"main_power_subscriptions={node.main_power.get_subscription_count()}, "
+        f"controller_service={node.controller_client.service_is_ready()}, "
+        f"actuator_enabled_samples={node.actuator_enabled_samples}, "
+        f"odom_samples={node.odom_samples}, joint_samples={node.joint_samples}, "
+        f"safety_status={node.latest_safety_status}"
     )
 
 
@@ -254,13 +298,16 @@ def run(
     timeout: float,
     forward_speed: float,
     forward_duration: float,
+    source_binding: dict[str, str],
+    acceptance_session_binding: dict[str, object],
+    runtime_gate_binding: dict[str, object],
     clock_stall_timeout: float = DEFAULT_CLOCK_STALL_TIMEOUT_S,
     phase_hard_timeout: float = DEFAULT_PHASE_HARD_TIMEOUT_S,
 ) -> dict[str, Any]:
     rclpy.init()
     node = MobilityProbe()
     try:
-        controller_state = _wait_for_ready(node, timeout)
+        joint_state_broadcaster_state = _wait_for_ready(node, timeout)
         settle_timing = node.spin_for(
             1.0,
             0.0,
@@ -283,14 +330,15 @@ def run(
         )
         ground_stopped, odom_stopped, wheels_stopped = node.snapshot()
         raw = {
-            "controller_state": controller_state,
+            "joint_state_broadcaster_state": joint_state_broadcaster_state,
             "command_subscription_count": node.command.get_subscription_count(),
+            "actuator_enabled_sample_count": node.actuator_enabled_samples,
             "ground_truth": {
                 "start": ground_start,
                 "forward_end": ground_forward,
                 "stopped_end": ground_stopped,
             },
-            "controller_odom": {
+            "plant_odom": {
                 "start": odom_start["pose"],
                 "forward_end": odom_forward["pose"],
                 "stopped_end": odom_stopped["pose"],
@@ -306,10 +354,12 @@ def run(
         }
         evaluation = evaluate_motion(raw)
         report = {
-            "report_id": "tzcup_formal_vehicle_mobility_runtime_v1",
-            "status": "FORMAL_VEHICLE_FORWARD_STOP_RUNTIME_PASSED" if evaluation["passed"] else "FORMAL_VEHICLE_FORWARD_STOP_RUNTIME_FAILED",
+            "report_id": "tzcup_formal_a300_drivetrain_runtime_v1",
+            "status": "FORMAL_A300_DRIVETRAIN_FORWARD_STOP_RUNTIME_PASSED" if evaluation["passed"] else "FORMAL_A300_DRIVETRAIN_FORWARD_STOP_RUNTIME_FAILED",
             "command": {
-                "topic": "/base_controller/cmd_vel",
+                "product_input_topic": "/cmd_vel_gate",
+                "safety_output_topic": "/base_controller/cmd_vel",
+                "plant_odometry_topic": "/odom/unfiltered",
                 "forward_speed_mps": forward_speed,
                 "forward_duration_s": forward_duration,
                 "zero_command_duration_s": 3.0,
@@ -320,12 +370,15 @@ def run(
             },
             "sample_counts": {
                 "gazebo_ground_truth_pose": 3,
-                "controller_odometry": node.odom_samples,
+                "plant_odometry": node.odom_samples,
                 "joint_states": node.joint_samples,
             },
+            "source_binding": source_binding,
+            "acceptance_session_binding": acceptance_session_binding,
+            "runtime_gate_binding": runtime_gate_binding,
             "raw_evidence": raw,
             **evaluation,
-            "claim_boundary": "This proves commanded straight-ahead physical motion and stopping in Gazebo using independent world pose, diff-drive odometry, and all four wheel joints; it does not prove path tracking, obstacle avoidance, or real-vehicle braking distance.",
+            "claim_boundary": "This proves commanded straight-ahead physical motion and stopping in Gazebo through the product Twist gate, sole whole-vehicle safety writer, typed A300 adapter, effort plant, independent world pose, raw plant odometry and all four wheel joints. It does not prove path tracking, obstacle avoidance, hardware-correlated traction or real-vehicle braking distance.",
         }
         output.parent.mkdir(parents=True, exist_ok=True)
         output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -344,6 +397,9 @@ def run(
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--snapshot", type=Path, default=DEFAULT_SNAPSHOT)
+    parser.add_argument("--session", type=Path, default=DEFAULT_SESSION)
+    parser.add_argument("--runtime-binding", type=Path, required=True)
     parser.add_argument("--timeout", type=float, default=120.0)
     parser.add_argument("--forward-speed", type=float, default=0.25)
     parser.add_argument("--forward-duration", type=float, default=4.0)
@@ -360,11 +416,17 @@ def main() -> None:
         help="Absolute wall-time ceiling for each simulated-time phase.",
     )
     args = parser.parse_args()
+    source_binding, acceptance_session_binding, runtime_gate_binding = _bound_runtime_evidence(
+        args.snapshot, args.session, args.runtime_binding
+    )
     run(
         args.output,
         args.timeout,
         args.forward_speed,
         args.forward_duration,
+        source_binding,
+        acceptance_session_binding,
+        runtime_gate_binding,
         args.clock_stall_timeout,
         args.phase_hard_timeout,
     )

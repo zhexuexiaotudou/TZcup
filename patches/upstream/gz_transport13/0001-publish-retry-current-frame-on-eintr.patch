@@ -1,0 +1,102 @@
+diff --git a/src/NodeShared.cc b/src/NodeShared.cc
+index 8284c50..587d4d9 100644
+--- a/src/NodeShared.cc
++++ b/src/NodeShared.cc
+@@ -20,6 +20,7 @@
+ #include <zmq.hpp>
+ 
+ #include <chrono>
++#include <cerrno>
+ #include <cstring>
+ #include <iostream>
+ #include <map>
+@@ -47,6 +48,33 @@ using namespace std::chrono_literals;
+ 
+ const char kGzAuthDomain[] = "gz-auth";
+ 
++// A signal may interrupt one individual ZeroMQ send before that frame is
++// accepted. Retrying the complete multipart publication would duplicate the
++// frames already accepted by ZeroMQ and corrupt the stream, so retries must
++// stay scoped to the exact message_t currently being sent.
++constexpr unsigned int kPublishEintrRetryLimit = 3u;
++
++template<typename SendFlagsT>
++static void sendPublishFrameWithEintrRetry(zmq::socket_t &_publisher,
++    zmq::message_t &_frame, const SendFlagsT &_flags)
++{
++  unsigned int retryCount = 0u;
++  while (true)
++  {
++    try
++    {
++      _publisher.send(_frame, _flags);
++      return;
++    }
++    catch (const zmq::error_t &_error)
++    {
++      if (_error.num() != EINTR || retryCount >= kPublishEintrRetryLimit)
++        throw;
++      ++retryCount;
++    }
++  }
++}
++
+ // Enum that encapsulates the possible values for ZeroMQ's setsocketopt
+ // for ZMQ_PLAIN_SERVER. A value of 1 enables
+ // plain authentication server, and a value of 0 disables.
+@@ -384,13 +412,19 @@ bool NodeShared::Publish(
+     std::lock_guard<std::recursive_mutex> lock(this->mutex);
+ 
+ #ifdef GZ_ZMQ_POST_4_3_1
+-    this->dataPtr->publisher->send(msg0, zmq::send_flags::sndmore);
+-    this->dataPtr->publisher->send(msg1, zmq::send_flags::sndmore);
+-    this->dataPtr->publisher->send(msg2, zmq::send_flags::sndmore);
++    sendPublishFrameWithEintrRetry(*this->dataPtr->publisher,
++        msg0, zmq::send_flags::sndmore);
++    sendPublishFrameWithEintrRetry(*this->dataPtr->publisher,
++        msg1, zmq::send_flags::sndmore);
++    sendPublishFrameWithEintrRetry(*this->dataPtr->publisher,
++        msg2, zmq::send_flags::sndmore);
+ #else
+-    this->dataPtr->publisher->send(msg0, ZMQ_SNDMORE);
+-    this->dataPtr->publisher->send(msg1, ZMQ_SNDMORE);
+-    this->dataPtr->publisher->send(msg2, ZMQ_SNDMORE);
++    sendPublishFrameWithEintrRetry(*this->dataPtr->publisher,
++        msg0, ZMQ_SNDMORE);
++    sendPublishFrameWithEintrRetry(*this->dataPtr->publisher,
++        msg1, ZMQ_SNDMORE);
++    sendPublishFrameWithEintrRetry(*this->dataPtr->publisher,
++        msg2, ZMQ_SNDMORE);
+ #endif
+ 
+     if (this->dataPtr->topicStatsEnabled)
+@@ -405,19 +439,23 @@ bool NodeShared::Publish(
+           std::chrono::steady_clock::now().time_since_epoch()).count();
+       zmq::message_t msg4(&meta, sizeof(meta));
+ #ifdef GZ_ZMQ_POST_4_3_1
+-      this->dataPtr->publisher->send(msg3, zmq::send_flags::sndmore);
+-      this->dataPtr->publisher->send(msg4, zmq::send_flags::none);
++      sendPublishFrameWithEintrRetry(*this->dataPtr->publisher,
++          msg3, zmq::send_flags::sndmore);
++      sendPublishFrameWithEintrRetry(*this->dataPtr->publisher,
++          msg4, zmq::send_flags::none);
+ #else
+-      this->dataPtr->publisher->send(msg3, ZMQ_SNDMORE);
+-      this->dataPtr->publisher->send(msg4, 0);
++      sendPublishFrameWithEintrRetry(*this->dataPtr->publisher,
++          msg3, ZMQ_SNDMORE);
++      sendPublishFrameWithEintrRetry(*this->dataPtr->publisher, msg4, 0);
+ #endif
+     }
+     else
+     {
+ #ifdef GZ_ZMQ_POST_4_3_1
+-      this->dataPtr->publisher->send(msg3, zmq::send_flags::none);
++      sendPublishFrameWithEintrRetry(*this->dataPtr->publisher,
++          msg3, zmq::send_flags::none);
+ #else
+-      this->dataPtr->publisher->send(msg3, 0);
++      sendPublishFrameWithEintrRetry(*this->dataPtr->publisher, msg3, 0);
+ #endif
+     }
+   }

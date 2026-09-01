@@ -1,0 +1,71 @@
+{
+  "checks": {
+    "aggregate_double_count_prevented": true,
+    "committed_vehicle_snapshot_current": false,
+    "current_vehicle_8_30kg_wastewater_source_bound": true,
+    "dual_finger_common_body_contact_gates_detachable_joint": true,
+    "final_session_and_current_snapshot_required": true,
+    "four_real_material_masses_five_each": true,
+    "maximum_two_attempts_per_target": true,
+    "physical_bodies_retained_and_mass_stepped": true,
+    "preexisting_canonical_evidence_is_preserved_away": true,
+    "retry_requires_safe_recovery_and_unchanged_payload": true,
+    "scene_spawn_uses_evaluator_only_material_and_color": true,
+    "single_layer_5_by_4_with_clearance": true,
+    "target_conditioned_wrist_ik_moveit_contact_lift_release_chain": true,
+    "twenty_unique_physical_targets": true,
+    "unified_non_symlink_runtime_closure_required": true
+  },
+  "measurements": {
+    "expected_final_physical_mass_kg": 0.7668,
+    "grid_columns": 5,
+    "grid_rows": 4,
+    "material_counts": {
+      "PET": 5,
+      "PP": 5,
+      "aluminum": 5,
+      "paperboard": 5
+    },
+    "maximum_attempts_per_target": 2,
+    "minimum_rotated_envelope_clearance_m": 0.017573593128807144,
+    "target_count": 20
+  },
+  "passed": false,
+  "provenance_boundary": {
+    "live_dosod_edgesam_perception_proven": false,
+    "required_separate_gates": [
+      "formal_random_scene_perception",
+      "formal_single_episode_cleaning_mission"
+    ],
+    "target_request_source": "seeded_manifest_injected_as_truth_free_v2_schema",
+    "wrist_recheck_transport_contract_present": true
+  },
+  "report_id": "tzcup_formal_20_cube_grasp_static_readiness_v1",
+  "runtime_state": {
+    "gazebo_started_by_this_audit": false,
+    "next_gate": "fresh WSL overlay build, then session-bound live 20-cube runtime",
+    "snapshot_error": "authoritative source inventory differs from committed manifest",
+    "twenty_cube_live_result_claimed": false,
+    "wsl_build_executed_by_this_audit": false
+  },
+  "schema_version": 1,
+  "source_contract_passed": true,
+  "source_sha256": {
+    "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": "8babe1be35c7f3afcc98286aa5750bacf50f328321390afb76550da4b318b2ad",
+    "scripts/formal_final_runtime_closure.py": "b8487d194ba4e2a0abf8572e21ab63984a57fb29ffaf3007b052081d778cd5fa",
+    "scripts/generate_formal_vehicle_snapshot.py": "bd443058e09258906ed8df6e9e5fda014582dca9528b02448d1d0a55f389687b",
+    "scripts/prepare_formal_20_cube_grasp_acceptance.py": "b7af2e3c727f5ed84f74de4b6259474db2405a0a07d38f0440c885ff36f8c91e",
+    "scripts/run_formal_20_cube_grasp_acceptance.sh": "587b1bf165b7d3e3ab74a5698da9333f6d056d0315ffbcec257ad0e2bfff8a08",
+    "scripts/run_formal_final_acceptance.py": "b808afb41ffe09de3921195912f1231750abb6d0ead2cfbcebd2f3da5c500fe0",
+    "scripts/validate_formal_20_cube_grasp_runtime.py": "323a6d569e8fa1293f82e3cb558daba3139ad0ede93d9ebc4b1e69fa4db70758",
+    "starter_ws/src/sanitation_gazebo_control/src/DryBinMonitorSystem.cc": "c9d4fbaccc08102b9d78739f4e9f24a2a4affbbcaf085febc6253646330e7a73",
+    "starter_ws/src/sanitation_gazebo_control/src/DynamicPayloadSystem.cc": "e79c54d2f9ba79d17cc3a8f3125a2b96ff93daf1fe100d2b04748c49e363cda1",
+    "starter_ws/src/sanitation_gazebo_control/src/GripperContactGateSystem.cc": "ad39ce541440c891a8cb3f0548423d9ad22c3a6ecccac03723ec3ff4cf4ba62f",
+    "starter_ws/src/sanitation_manipulation/launch/formal_20_cube_pick_place.launch.py": "bde304c8d7109f09bd3a19aa7c27b7b90dd29c7a827f3b0e152d91f3c34e9c4c",
+    "starter_ws/src/sanitation_manipulation/sanitation_manipulation/formal_20_cube_scene.py": "b522a9399d7adaf210c1c4932f623f18e219fbf251197ff409618bd935fb431f",
+    "starter_ws/src/sanitation_manipulation/sanitation_manipulation/formal_grasp_executor.py": "ec88e366d01a59044dc6d800ed4654076b84518cb4ca908758f267907194a735",
+    "starter_ws/src/sanitation_manipulation/urdf/material_cube.urdf.xacro": "9ac79fe0250fb307bb3a8bee02d902e2b10109fb39dd604ba6442b21774a5086",
+    "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro": "b7fc7847f986372a8a6475db6300d9c414a5357ee4b242e8fd50d9aca6271104"
+  },
+  "status": "FORMAL_20_CUBE_STATIC_SOURCE_PASSED_SNAPSHOT_REFRESH_REQUIRED"
+}

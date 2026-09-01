@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<CycloneDDS xmlns="https://cdds.io/config">
+  <Domain Id="any">
+    <General>
+      <!-- Formal Gazebo acceptance is intentionally single-host.  Pinning DDS
+           to loopback prevents WSL link-local adapters from being selected. -->
+      <Interfaces>
+        <NetworkInterface name="lo" multicast="true" />
+      </Interfaces>
+      <AllowMulticast>true</AllowMulticast>
+    </General>
+    <Discovery>
+      <!-- The full formal campus graph launches more than CycloneDDS's
+           default 31 process participants. Keep the capacity explicit and
+           bounded so late Nav2/perception nodes cannot fail at startup. -->
+      <MaxAutoParticipantIndex>120</MaxAutoParticipantIndex>
+    </Discovery>
+  </Domain>
+</CycloneDDS>

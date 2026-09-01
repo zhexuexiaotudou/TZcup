@@ -36,6 +36,7 @@ param(
 )
 
 $ErrorActionPreference = "Stop"
+. (Join-Path $PSScriptRoot "formal_wsl_entry_memory_guard.ps1")
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..")).Path
 $distributions = ((& wsl.exe --list --quiet) -replace "`0", "") |
     ForEach-Object { $_.Trim() } |
@@ -67,6 +68,8 @@ if (-not $OutputDirectory) {
 }
 $resolvedOutput = [System.IO.Path]::GetFullPath($OutputDirectory)
 [System.IO.Directory]::CreateDirectory($resolvedOutput) | Out-Null
+$memoryEvidencePath = Join-Path $resolvedOutput "wsl_entry_memory_preflight.json"
+Invoke-FormalWslEntryMemoryGuard -EvidencePath $memoryEvidencePath
 
 $wslRoot = ConvertTo-WslPath -Path $repoRoot
 if (-not $NoGui) {
@@ -88,6 +91,8 @@ if (-not $NoGui) {
             throw "WSLg recovery shutdown failed with exit code $LASTEXITCODE."
         }
         Start-Sleep -Seconds 5
+        $prepareRecoveryMemoryEvidence = Join-Path $resolvedOutput "wsl_entry_memory_prepare_recovery_preflight.json"
+        Invoke-FormalWslEntryMemoryGuard -EvidencePath $prepareRecoveryMemoryEvidence
         & wsl.exe -d $WslDistribution -u root -- bash $wslgPrepareScript
         $prepareExitCode = $LASTEXITCODE
     }
@@ -159,6 +164,8 @@ if (-not $NoGui) {
     )
 }
 
+$launchMemoryEvidence = Join-Path $resolvedOutput "wsl_entry_memory_launch_preflight.json"
+Invoke-FormalWslEntryMemoryGuard -EvidencePath $launchMemoryEvidence
 $wslExitCode = 1
 $wslgRecoveryAttempted = $false
 while ($true) {
@@ -209,11 +216,15 @@ while ($true) {
         throw "WSLg recovery shutdown failed with exit code $LASTEXITCODE."
     }
     Start-Sleep -Seconds 5
+    $recoveryMemoryEvidence = Join-Path $resolvedOutput "wsl_entry_memory_recovery_preflight.json"
+    Invoke-FormalWslEntryMemoryGuard -EvidencePath $recoveryMemoryEvidence
     & wsl.exe -d $WslDistribution -u root -- bash $wslgPrepareScript
     if ($LASTEXITCODE -ne 0) {
         throw "WSLg recovery preflight failed with exit code $LASTEXITCODE."
     }
     Start-Sleep -Seconds 2
+    $retryLaunchMemoryEvidence = Join-Path $resolvedOutput "wsl_entry_memory_retry_launch_preflight.json"
+    Invoke-FormalWslEntryMemoryGuard -EvidencePath $retryLaunchMemoryEvidence
     $wslgRecoveryAttempted = $true
 }
 if ($wslExitCode -ne 0) {

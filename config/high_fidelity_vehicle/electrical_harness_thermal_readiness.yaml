@@ -1,0 +1,225 @@
+schema_version: 1
+status: NOT_READY_FOR_ELECTRICAL_HARNESS_THERMAL_RELEASE
+ready: false
+claim_boundary: source_budget_traceability_only_not_as_built_electrical_release
+source_contracts:
+  pre_urdf_contract: config/high_fidelity_vehicle/pre_urdf_contract.yaml
+  vehicle_layout: config/high_fidelity_vehicle/formal_vehicle_layout.yaml
+  real_world_readiness: config/high_fidelity_vehicle/real_world_build_readiness.yaml
+power_budget_binding:
+  source_path: config/high_fidelity_vehicle/pre_urdf_contract.yaml
+  source_load_ids: [ur5e_controller, recovery_pump, three_brush_motors, cleaning_lift, mid360, utm30lx, cameras_and_positioning, s100_compute]
+  declared_total_continuous_w: 649.9
+  declared_total_peak_w: 1026.0
+  note: Aggregate source-load arithmetic only; it is not a verified battery, converter, cable, fuse, or thermal limit.
+required_branch_ids: [traction_base_inherited, ur5e_control, s100_compute, sensors_12v, sensors_24v, brush_motors, cleaning_lift, recovery_pump, service_actuators, safety_relay_estop]
+branches:
+  traction_base_inherited:
+    rail: high_current_vbat
+    voltage_v: null
+    voltage_status: UNKNOWN_A300_VBAT
+    continuous_w: null
+    peak_w: null
+    source_load_ids: []
+    upstream_current_limit_a: 40.0
+    upstream_capacity_status: UNKNOWN_VOLTAGE_NOT_READY
+    source_status: inherited_platform_not_budgeted_as_auxiliary_load
+    branch_ready: false
+    fuse_status: NOT_READY
+    wire_gauge_status: NOT_READY
+    connector_status: NOT_READY
+    grounding_bonding_status: NOT_READY
+    emc_status: NOT_READY
+    waterproofing_status: NOT_READY
+    voltage_drop_status: NOT_READY
+    thermal_status: NOT_READY
+    evidence_sources: [config/high_fidelity_vehicle/pre_urdf_contract.yaml]
+  ur5e_control:
+    rail: isolated_vbat_dc_bus
+    voltage_v: null
+    voltage_status: UNKNOWN_A300_VBAT_AND_CONVERTER_TOPOLOGY
+    continuous_w: 350.0
+    peak_w: 500.0
+    source_load_ids: [ur5e_controller]
+    upstream_current_limit_a: 40.0
+    upstream_capacity_status: UNKNOWN_VOLTAGE_NOT_READY
+    source_status: engineering_upper_bound
+    branch_ready: false
+    fuse_status: NOT_READY
+    wire_gauge_status: NOT_READY
+    connector_status: NOT_READY
+    grounding_bonding_status: NOT_READY
+    emc_status: NOT_READY
+    waterproofing_status: NOT_READY
+    voltage_drop_status: NOT_READY
+    thermal_status: NOT_READY
+    evidence_sources: [config/high_fidelity_vehicle/pre_urdf_contract.yaml]
+  s100_compute:
+    rail: isolated_vbat_dc_bus
+    voltage_v: null
+    voltage_status: UNKNOWN_A300_VBAT_AND_CONVERTER_TOPOLOGY
+    continuous_w: 45.0
+    peak_w: 80.0
+    source_load_ids: [s100_compute]
+    upstream_current_limit_a: 40.0
+    upstream_capacity_status: UNKNOWN_VOLTAGE_NOT_READY
+    source_status: provisional_until_exact_sku_measurement
+    branch_ready: false
+    fuse_status: NOT_READY
+    wire_gauge_status: NOT_READY
+    connector_status: NOT_READY_REAL_BOARD_INTERFACE
+    grounding_bonding_status: NOT_READY
+    emc_status: NOT_READY
+    waterproofing_status: NOT_READY
+    voltage_drop_status: NOT_READY
+    thermal_status: NOT_READY_REAL_BOARD_AND_ENCLOSURE_MEASUREMENT
+    evidence_sources: [config/high_fidelity_vehicle/pre_urdf_contract.yaml, config/high_fidelity_vehicle/formal_vehicle_layout.yaml]
+  sensors_12v:
+    rail: sensor_12v
+    voltage_v: 12.0
+    voltage_status: INHERITED_RAIL_LIMIT_ONLY
+    continuous_w: 26.4
+    peak_w: 42.0
+    source_load_ids: [utm30lx, cameras_and_positioning]
+    upstream_current_limit_a: 10.0
+    upstream_capacity_status: SOURCE_RAIL_LIMIT_ONLY
+    source_status: mixed_datasheet_and_engineering_upper_bound
+    branch_ready: false
+    fuse_status: NOT_READY
+    wire_gauge_status: NOT_READY
+    connector_status: NOT_READY
+    grounding_bonding_status: NOT_READY
+    emc_status: NOT_READY
+    waterproofing_status: NOT_READY
+    voltage_drop_status: NOT_READY
+    thermal_status: NOT_READY
+    evidence_sources: [config/high_fidelity_vehicle/pre_urdf_contract.yaml]
+  sensors_24v:
+    rail: sensor_24v
+    voltage_v: 24.0
+    voltage_status: INHERITED_RAIL_LIMIT_ONLY
+    continuous_w: 6.5
+    peak_w: 14.0
+    source_load_ids: [mid360]
+    upstream_current_limit_a: 5.0
+    upstream_capacity_status: SOURCE_RAIL_LIMIT_ONLY
+    source_status: datasheet
+    branch_ready: false
+    fuse_status: NOT_READY
+    wire_gauge_status: NOT_READY
+    connector_status: NOT_READY
+    grounding_bonding_status: NOT_READY
+    emc_status: NOT_READY
+    waterproofing_status: NOT_READY
+    voltage_drop_status: NOT_READY
+    thermal_status: NOT_READY
+    evidence_sources: [config/high_fidelity_vehicle/pre_urdf_contract.yaml]
+  brush_motors:
+    rail: isolated_vbat_dc_bus
+    voltage_v: null
+    voltage_status: UNKNOWN_A300_VBAT_AND_CONVERTER_TOPOLOGY
+    continuous_w: 72.0
+    peak_w: 216.0
+    source_load_ids: [three_brush_motors]
+    upstream_current_limit_a: 40.0
+    upstream_capacity_status: UNKNOWN_VOLTAGE_NOT_READY
+    source_status: datasheet_stall_bound
+    branch_ready: false
+    fuse_status: NOT_READY
+    wire_gauge_status: NOT_READY
+    connector_status: NOT_READY
+    grounding_bonding_status: NOT_READY
+    emc_status: NOT_READY
+    waterproofing_status: NOT_READY
+    voltage_drop_status: NOT_READY
+    thermal_status: NOT_READY
+    evidence_sources: [config/high_fidelity_vehicle/pre_urdf_contract.yaml]
+  cleaning_lift:
+    rail: sensor_12v
+    voltage_v: 12.0
+    voltage_status: INHERITED_RAIL_LIMIT_ONLY
+    continuous_w: 6.0
+    peak_w: 30.0
+    source_load_ids: [cleaning_lift]
+    upstream_current_limit_a: 10.0
+    upstream_capacity_status: SOURCE_RAIL_LIMIT_ONLY
+    source_status: engineering_upper_bound
+    branch_ready: false
+    fuse_status: NOT_READY
+    wire_gauge_status: NOT_READY
+    connector_status: NOT_READY
+    grounding_bonding_status: NOT_READY
+    emc_status: NOT_READY
+    waterproofing_status: NOT_READY
+    voltage_drop_status: NOT_READY
+    thermal_status: NOT_READY
+    evidence_sources: [config/high_fidelity_vehicle/pre_urdf_contract.yaml]
+  recovery_pump:
+    rail: isolated_vbat_dc_bus
+    voltage_v: null
+    voltage_status: UNKNOWN_A300_VBAT_AND_CONVERTER_TOPOLOGY
+    continuous_w: 144.0
+    peak_w: 144.0
+    source_load_ids: [recovery_pump]
+    upstream_current_limit_a: 40.0
+    upstream_capacity_status: UNKNOWN_VOLTAGE_NOT_READY
+    source_status: datasheet_max
+    branch_ready: false
+    fuse_status: NOT_READY
+    wire_gauge_status: NOT_READY
+    connector_status: NOT_READY
+    grounding_bonding_status: NOT_READY
+    emc_status: NOT_READY
+    waterproofing_status: NOT_READY
+    voltage_drop_status: NOT_READY
+    thermal_status: NOT_READY
+    evidence_sources: [config/high_fidelity_vehicle/pre_urdf_contract.yaml]
+  service_actuators:
+    rail: unresolved_service_actuator_supply
+    voltage_v: null
+    voltage_status: UNKNOWN_SERVICE_ACTUATOR_INTERFACE
+    continuous_w: null
+    peak_w: null
+    source_load_ids: []
+    upstream_current_limit_a: null
+    upstream_capacity_status: NOT_READY_NO_FROZEN_INTERFACE
+    source_status: dry_deposit_gate_actuator_not_in_power_budget
+    branch_ready: false
+    fuse_status: NOT_READY
+    wire_gauge_status: NOT_READY
+    connector_status: NOT_READY
+    grounding_bonding_status: NOT_READY
+    emc_status: NOT_READY
+    waterproofing_status: NOT_READY
+    voltage_drop_status: NOT_READY
+    thermal_status: NOT_READY
+    evidence_sources: [config/high_fidelity_vehicle/pre_urdf_contract.yaml]
+  safety_relay_estop:
+    rail: unresolved_safety_power_chain
+    voltage_v: null
+    voltage_status: UNKNOWN_SAFETY_ARCHITECTURE
+    continuous_w: null
+    peak_w: null
+    source_load_ids: []
+    upstream_current_limit_a: null
+    upstream_capacity_status: NOT_READY_NO_FROZEN_SAFETY_CHAIN
+    source_status: no_relay_estop_bom_or_wiring_evidence
+    branch_ready: false
+    fuse_status: NOT_READY
+    wire_gauge_status: NOT_READY
+    connector_status: NOT_READY
+    grounding_bonding_status: NOT_READY
+    emc_status: NOT_READY
+    waterproofing_status: NOT_READY
+    voltage_drop_status: NOT_READY
+    thermal_status: NOT_READY
+    evidence_sources: [config/high_fidelity_vehicle/pre_urdf_contract.yaml]
+blocking_categories:
+  exact_a300_vbat_converter_topology: blocked
+  branch_fuses_wire_gauges_connectors: blocked
+  grounding_emc_bonding: blocked
+  ingress_protection_and_harness_routing: blocked
+  voltage_drop_and_peak_current_measurement: blocked
+  thermal_design_and_validation: blocked
+  s100_exact_interface_and_thermal_measurement: blocked
+  safety_relay_estop_architecture: blocked

@@ -1,0 +1,41 @@
+schema_version: 2
+status: NOT_READY_FOR_MECHANICAL_MANUFACTURING_RELEASE
+ready: false
+nominal_mass_declaration: nominal_model_allocation_not_actual_weighed
+baseline:
+  expanded_urdf_path: reports/engineering/formal_competition_vehicle.urdf
+  expanded_urdf_sha256: b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2
+  expanded_urdf_mass_kg: 160.007583
+  source_snapshot_path: reports/engineering/formal_vehicle_snapshot_manifest.json
+  source_snapshot_sha256: fffb388e1f06616ab5019db00481718d24b5bac1d284c240dd1709173482cd40
+  source_snapshot_state: current_verified_snapshot
+  source_inventory_sha256: 0d106d4e9aae774941856d0d7018bdbcf8c43e83afe00049dc485006943cf03b
+  output_inventory_sha256: a8832afc81f6eea6227abd0a5dc6073bb9da2283de8532c05034841243028ba7
+  bom_path: config/high_fidelity_vehicle/manufacturing_bom.csv
+  bom_sha256: 5de1fb2197870f937c5145bcc96f242adc428a772a14ba8d8779ee1b38294d97
+  bom_rollup_policy: only_baseline_allocated_rows_sum_to_nominal_expanded_urdf_mass
+release_items:
+  step_models: {state: blocked, evidence_path: pending://native_step_or_stp_models}
+  drawings_2d: {state: blocked, evidence_path: pending://released_pdf_dxf_or_dwg_drawings}
+  gdt: {state: blocked, evidence_path: pending://drawing_gdt_and_dimensional_datums}
+  materials: {state: blocked, evidence_path: pending://material_specifications_and_certificates}
+  fasteners: {state: blocked, evidence_path: pending://fastener_schedule_grade_torque_and_preload}
+  joints_welds_or_connections: {state: blocked, evidence_path: pending://joint_weld_bond_and_connection_specification}
+  surface_treatment: {state: blocked, evidence_path: pending://coating_corrosion_and_surface_treatment_specification}
+  assembly_process: {state: blocked, evidence_path: pending://assembly_work_instructions}
+  inspection_and_quality: {state: blocked, evidence_path: pending://inspection_plan_and_acceptance_records}
+  weighing_and_inertia: {state: blocked, evidence_path: pending://as_built_weighing_cog_and_inertia_records}
+  structural_fea: {state: blocked, evidence_path: pending://structural_fea_fatigue_and_stability_report}
+  waterproofing: {state: blocked, evidence_path: pending://ip_sealing_and_water_ingress_test}
+  maintenance_drawings: {state: blocked, evidence_path: pending://maintenance_access_and_service_drawings}
+mass_mitigation:
+  status: design_required_not_credited
+  minimum_margin_kg: 5.0
+  recommended_margin_kg: 10.0
+  conservative_required_reduction_minimum_kg: 4.969583
+  conservative_required_reduction_recommended_kg: 9.969583
+  direct_urdf_mass_edit_is_not_a_credit: true
+platform_reselection:
+  rated_payload_minimum_for_5kg_margin_kg: 107.02
+  rated_payload_minimum_for_10kg_margin_kg: 112.58
+  stability_must_pass_independently: true

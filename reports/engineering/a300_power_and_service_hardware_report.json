@@ -1,0 +1,11 @@
+{
+  "contract_id": "a300_power_charge_and_drain_hardware_preintegration_v1",
+  "status": "A300_POWER_AND_SERVICE_HARDWARE_INTEGRATED_STATIC_VALID",
+  "battery_pack_count": 2,
+  "inferred_pack_mass_kg": 7.5,
+  "explicit_battery_mass_kg": 15.0,
+  "a300_curb_mass_kg": 78.5,
+  "charge_link_count": 4,
+  "drain_link_count": 6,
+  "runtime_integrated": true
+}

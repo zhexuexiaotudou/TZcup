@@ -16,33 +16,44 @@ installation_frames:
   base_link: {xyz_m: [0.000, 0.000, 0.1651], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   payload_deck_link: {xyz_m: [0.000, 0.000, 0.3691], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   arm_mount_link: {xyz_m: [0.100, -0.200, 0.4341], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  sensor_mast_link: {xyz_m: [-0.135, 0.000, 0.3891], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  lidar_2d_mount_link: {xyz_m: [-0.075, 0.000, 1.0241], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  lidar_2d_link: {xyz_m: [-0.020, 0.000, 1.1021], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  lidar_3d_mount_link: {xyz_m: [-0.135, 0.000, 1.1791], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  lidar_3d_link: {xyz_m: [-0.135, 0.000, 1.2731], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  front_rgbd_mount_link: {xyz_m: [0.565, 0.000, 0.6141], rpy_rad: [0.000, 0.139626, 0.000], pending: false}
-  front_rgbd_link: {xyz_m: [0.569951, 0.000, 0.613404], rpy_rad: [0.000, 0.139626, 0.000], pending: false}
-  front_rgbd_depth_optical_frame: {xyz_m: [0.569951, 0.000, 0.613404], rpy_rad: [-1.710422, 0.000, -1.570796], pending: false}
+  sensor_mast_link: {xyz_m: [0.420, 0.000, 0.3891], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  lidar_2d_mount_link: {xyz_m: [0.480, 0.000, 1.0841], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  lidar_2d_link: {xyz_m: [0.535, 0.000, 1.1621], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  lidar_3d_mount_link: {xyz_m: [0.420, 0.000, 1.1791], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  lidar_3d_link: {xyz_m: [0.420, 0.000, 1.2731], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  front_rgbd_mount_link: {xyz_m: [0.565, 0.000, 0.6141], rpy_rad: [0.000, 0.436332313, 0.000], pending: false}
+  front_rgbd_link: {xyz_m: [0.569532, 0.000, 0.611987], rpy_rad: [0.000, 0.436332313, 0.000], pending: false}
+  front_rgbd_depth_optical_frame: {xyz_m: [0.569532, 0.000, 0.611987], rpy_rad: [-2.007129, 0.000, -1.570796], pending: false}
+  front_rgbd_infra1_optical_frame: {xyz_m: [0.569532, 0.000, 0.611987], rpy_rad: [-2.007129, 0.000, -1.570796], pending: false}
+  front_rgbd_infra2_optical_frame: {xyz_m: [0.569532, -0.050, 0.611987], rpy_rad: [-2.007129, 0.000, -1.570796], pending: false}
   rear_left_fisheye_mount_link: {xyz_m: [-0.565, 0.280, 0.6001], rpy_rad: [0.000, -0.175, 2.705], pending: false}
   rear_left_fisheye_link: {xyz_m: [-0.565, 0.280, 0.6001], rpy_rad: [0.000, -0.175, 2.705], pending: false}
-  rear_left_fisheye_optical_frame: {xyz_m: [-0.585, 0.290, 0.6001], rpy_rad: [-1.571, 0.000, 1.134], pending: false}
+  rear_left_fisheye_optical_frame: {xyz_m: [-0.585, 0.290, 0.6001], rpy_rad: [-1.657596, 0.000, 1.134], pending: false}
   rear_right_fisheye_mount_link: {xyz_m: [-0.565, -0.280, 0.6001], rpy_rad: [0.000, -0.175, -2.705], pending: false}
   rear_right_fisheye_link: {xyz_m: [-0.565, -0.280, 0.6001], rpy_rad: [0.000, -0.175, -2.705], pending: false}
-  rear_right_fisheye_optical_frame: {xyz_m: [-0.585, -0.290, 0.6001], rpy_rad: [-1.571, 0.000, 2.007], pending: false}
-  gnss_mount_link: {xyz_m: [-0.170, -0.020, 1.1541], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  gnss_antenna_link: {xyz_m: [-0.190, 0.160, 1.1801], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  rear_right_fisheye_optical_frame: {xyz_m: [-0.585, -0.290, 0.6001], rpy_rad: [-1.657596, 0.000, 2.007185], pending: false}
+  gnss_mount_link: {xyz_m: [0.385, -0.020, 1.1541], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  gnss_antenna_link: {xyz_m: [0.365, 0.160, 1.1801], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  zed_f9p_receiver_enclosure_link: {xyz_m: [0.360, -0.095, 0.9741], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  zed_f9p_module_reference_link: {xyz_m: [0.360, -0.095, 0.9801], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   imu_mount_tray_link: {xyz_m: [0.000, 0.000, 0.3901], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   imu_link: {xyz_m: [0.000, 0.000, 0.4091], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   dry_bin_link: {xyz_m: [-0.205, 0.160, 0.5691], rpy_rad: [0.000, 0.000, 0.000], pending: false}
   wastewater_tank_link: {xyz_m: [-0.205, -0.245, 0.5041], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  left_side_brush_link: {xyz_m: [0.385, 0.545, 0.0741], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  right_side_brush_link: {xyz_m: [0.385, -0.545, 0.0741], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  central_roller_link: {xyz_m: [0.155, 0.000, 0.0691], rpy_rad: [0.000, 1.571, 0.000], pending: false}
-  squeegee_link: {xyz_m: [-0.445, 0.000, 0.0141], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  suction_nozzle_link: {xyz_m: [-0.405, 0.000, 0.0091], rpy_rad: [0.000, 0.000, 0.000], pending: false}
-  wrist_rgbd_link: {xyz_m: [0.000, 0.000, 0.055], rpy_rad: [0.000, 0.000, 0.000], pending: true, pending_reason: final_tool_flange_collision_scan}
-  wrist_rgbd_depth_optical_frame: {xyz_m: [0.000, 0.000, 0.070], rpy_rad: [-1.571, 0.000, -1.571], pending: true, pending_reason: final_tool_flange_collision_scan}
+  left_side_brush_link: {xyz_m: [0.385, 0.545, 0.1830], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  right_side_brush_link: {xyz_m: [0.385, -0.545, 0.1830], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  central_roller_link: {xyz_m: [0.155, 0.000, 0.2000], rpy_rad: [0.000, 1.571, 0.000], pending: false}
+  squeegee_link: {xyz_m: [-0.445, 0.000, 0.1525], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  squeegee_spring_pack_link: {xyz_m: [-0.445, 0.000, 0.1725], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  suction_nozzle_link: {xyz_m: [-0.405, 0.000, 0.1475], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  wrist_rgbd_link: {xyz_m: [0.140, 0.000, 0.025], rpy_rad: [1.571, -1.571, 0.000], coordinate_reference: tool0, pending: false}
+  wrist_rgbd_depth_optical_frame: {xyz_m: [0.140, 0.000, 0.025], rpy_rad: [0.000, 0.000, 0.000], coordinate_reference: tool0, pending: false}
+  wrist_rgbd_infra1_optical_frame: {xyz_m: [0.140, 0.000, 0.025], rpy_rad: [0.000, 0.000, 0.000], coordinate_reference: tool0, pending: false}
+  wrist_rgbd_infra2_optical_frame: {xyz_m: [0.190, 0.000, 0.025], rpy_rad: [0.000, 0.000, 0.000], coordinate_reference: tool0, pending: false}
+  main_power_isolator_housing_link: {xyz_m: [0.270, 0.345, 0.7101], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  main_power_isolator_handle_link: {xyz_m: [0.270, 0.392, 0.7101], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  main_power_contactor_housing_link: {xyz_m: [0.375, 0.245, 0.4651], rpy_rad: [0.000, 0.000, 0.000], pending: false}
+  main_power_contactor_armature_link: {xyz_m: [0.375, 0.245, 0.5171], rpy_rad: [0.000, 0.000, 0.000], pending: false}
 
 component_envelopes:
   base: {min_xyz_m: [-0.495, -0.349, 0.000], max_xyz_m: [0.495, 0.349, 0.372], pending: false}
@@ -50,16 +61,16 @@ component_envelopes:
   dry_bin: {min_xyz_m: [-0.475, -0.048, 0.450], max_xyz_m: [0.065, 0.368, 0.730], pending: false}
   wastewater_tank: {min_xyz_m: [-0.400, -0.390, 0.430], max_xyz_m: [-0.010, -0.100, 0.620], pending: false}
   sensor_mast: {min_xyz_m: [-0.285, -0.160, 0.389], max_xyz_m: [0.070, 0.250, 1.310], pending: false}
-  arm_stowed: {min_xyz_m: [-0.170, -0.460, 0.440], max_xyz_m: [0.500, 0.125, 1.390], pending: true, pending_reason: exact_mesh_swept_volume_scan}
+  arm_stowed: {min_xyz_m: [-0.170, -0.460, 0.440], max_xyz_m: [0.500, 0.125, 1.390], pending: false, validation: exact_mesh_transport_and_task_anchor_scan}
   front_sensor_bar: {min_xyz_m: [0.210, -0.165, 0.570], max_xyz_m: [0.610, 0.165, 0.890], pending: false}
-  cleaning_head_stowed: {min_xyz_m: [-0.515, -0.660, 0.045], max_xyz_m: [0.600, 0.660, 0.185], pending: true, pending_reason: brush_compliance_and_ground_contact_scan}
+  cleaning_head_stowed: {min_xyz_m: [-0.515, -0.660, 0.045], max_xyz_m: [0.600, 0.660, 0.185], pending: false, validation: gazebo_ground_dirt_and_water_contact_runtime}
 
 vehicle_envelopes:
   transport_stowed:
     min_xyz_m: [-0.540, -0.675, 0.000]
     max_xyz_m: [0.620, 0.675, 1.400]
-    pending: true
-    pending_reason: exact_mesh_and_arm_swept_volume_scan
+    pending: false
+    validation: exact_collision_mesh_transport_scan
   arm_operating:
     min_xyz_m: [-1.100, -1.280, 0.000]
     max_xyz_m: [1.300, 1.050, 1.720]
@@ -80,9 +91,11 @@ storage:
     internal_dimensions_m: [0.350, 0.250, 0.160]
     geometric_installation_limit_l: 14.000
     usable_fraction: 0.800
-    cog_limit_l: null
-    final_capacity_pending: true
-    pending_reason: full_vehicle_cog_scan_required
+    final_mass_limit_l: 10.375
+    cog_limit_l: 14.000
+    final_capacity_pending: false
+    final_usable_capacity_l: 8.300
+    validation: final_expanded_urdf_mass_and_four_load_case_cog_scan
 
 cleaning_geometry:
   left_brush_diameter_m: 0.300
@@ -92,15 +105,24 @@ cleaning_geometry:
   effective_working_width_m: 1.320
   required_minimum_width_m: 0.600
   lift_travel_m: 0.100
-  ground_contact_pending: true
-  pending_reason: gazebo_contact_and_compliance_tuning
+  ground_contact_pending: false
+  validation: gazebo_brush_roller_squeegee_and_suction_runtime
+  squeegee_compliance:
+    spring_pack_link: squeegee_spring_pack_link
+    spring_pack_joint: squeegee_spring_pack_joint
+    plugin: libSqueegeeComplianceSystem.so
+    float_stiffness_n_m: 1800.0
+    float_preload_position_m: -0.006
+    nominal_preload_force_n: 10.8
+    pitch_stiffness_nm_rad: 32.0
+    telemetry_prefix: /model/tzcup_formal_sanitation_vehicle/squeegee_compliance
 
 arm_envelopes:
   stowed:
     min_xyz_m: [-0.235, -0.405, 0.440]
     max_xyz_m: [0.435, 0.180, 1.360]
-    pending: true
-    pending_reason: exact_mesh_sweep_not_run
+    pending: false
+    validation: exact_mesh_transport_and_task_anchor_scan
   deployed:
     min_xyz_m: [-1.100, -1.280, 0.120]
     max_xyz_m: [1.300, 1.050, 1.720]
@@ -110,14 +132,73 @@ arm_envelopes:
   payload_at_full_reach_kg: 5.000
 
 sensor_layout:
-  - {id: utm30lx, frame: lidar_2d_link, xyz_m: [-0.020, 0.000, 1.1021], forward_xyz: [1.000, 0.000, 0.000], approximate_clear_fraction: 0.92, minimum_clear_fraction: 0.85, pending: false}
-  - {id: mid360, frame: lidar_3d_link, xyz_m: [-0.135, 0.000, 1.2731], forward_xyz: [1.000, 0.000, 0.000], approximate_clear_fraction: 0.96, minimum_clear_fraction: 0.90, pending: false}
-  - {id: front_d435_depth, frame: front_rgbd_depth_optical_frame, xyz_m: [0.569951, 0.000, 0.613404], forward_xyz: [0.990, 0.000, -0.139], approximate_clear_fraction: 0.99, minimum_clear_fraction: 0.95, pending: false}
-  - {id: rear_left_fisheye, frame: rear_left_fisheye_optical_frame, xyz_m: [-0.585, 0.290, 0.6001], forward_xyz: [-0.906, 0.423, -0.087], approximate_clear_fraction: 0.97, minimum_clear_fraction: 0.90, pending: false}
-  - {id: rear_right_fisheye, frame: rear_right_fisheye_optical_frame, xyz_m: [-0.585, -0.290, 0.6001], forward_xyz: [-0.906, -0.423, -0.087], approximate_clear_fraction: 0.97, minimum_clear_fraction: 0.90, pending: false}
-  - {id: gnss, frame: gnss_antenna_link, xyz_m: [-0.190, 0.160, 1.1801], forward_xyz: [0.000, 0.000, 1.000], approximate_clear_fraction: 0.98, minimum_clear_fraction: 0.95, pending: false}
+  - {id: utm30lx, frame: lidar_2d_link, xyz_m: [0.535, 0.000, 1.1621], forward_xyz: [1.000, 0.000, 0.000], approximate_clear_fraction: 0.898, minimum_clear_fraction: 0.85, pending: false}
+  - {id: mid360, frame: lidar_3d_link, xyz_m: [0.420, 0.000, 1.2731], forward_xyz: [1.000, 0.000, 0.000], approximate_clear_fraction: 0.973, minimum_clear_fraction: 0.90, pending: false}
+  - {id: front_d435_depth, frame: front_rgbd_depth_optical_frame, xyz_m: [0.569532, 0.000, 0.611987], forward_xyz: [0.906308, 0.000, -0.422618], approximate_clear_fraction: 1.000, minimum_clear_fraction: 0.95, pending: false}
+  - {id: rear_left_fisheye, frame: rear_left_fisheye_optical_frame, xyz_m: [-0.585, 0.290, 0.6001], forward_xyz: [-0.906, 0.423, -0.087], approximate_clear_fraction: 0.997, minimum_clear_fraction: 0.90, pending: false}
+  - {id: rear_right_fisheye, frame: rear_right_fisheye_optical_frame, xyz_m: [-0.585, -0.290, 0.6001], forward_xyz: [-0.906, -0.423, -0.087], approximate_clear_fraction: 0.997, minimum_clear_fraction: 0.90, pending: false}
+  - {id: gnss, frame: gnss_antenna_link, xyz_m: [0.365, 0.160, 1.1801], forward_xyz: [0.000, 0.000, 1.000], approximate_clear_fraction: 0.954, minimum_clear_fraction: 0.95, pending: false}
   - {id: imu, frame: imu_link, xyz_m: [0.000, 0.000, 0.4091], forward_xyz: [1.000, 0.000, 0.000], approximate_clear_fraction: 1.00, minimum_clear_fraction: 1.00, pending: false}
-  - {id: wrist_d435_depth, frame: wrist_rgbd_depth_optical_frame, xyz_m: [0.000, 0.000, 0.055], forward_xyz: [0.000, 0.000, 1.000], approximate_clear_fraction: null, minimum_clear_fraction: 0.95, pending: true, pending_reason: dynamic_arm_pose_occlusion_scan}
+  - {id: wrist_d435_depth, frame: wrist_rgbd_depth_optical_frame, coordinate_reference: tool0, xyz_m: [0.140, 0.000, 0.025], forward_xyz: [0.000, 0.000, 1.000], approximate_clear_fraction: 0.966946779, minimum_clear_fraction: 0.95, mount_clearance_contract: rear_plane_dogleg_all_metal_x_le_minus_0.0125_m, pending: false}
+
+camera_stream_topics:
+  front_d435_ir_stereo:
+    baseline_m: 0.050
+    left_frame: front_rgbd_infra1_optical_frame
+    right_frame: front_rgbd_infra2_optical_frame
+    left_image: /sensors/front_rgbd/infra1/image_rect_raw
+    left_camera_info: /sensors/front_rgbd/infra1/image_rect_raw/camera_info
+    right_image: /sensors/front_rgbd/infra2/image_rect_raw
+    right_camera_info: /sensors/front_rgbd/infra2/image_rect_raw/camera_info
+  wrist_d435_ir_stereo:
+    baseline_m: 0.050
+    coordinate_reference: tool0
+    left_frame: wrist_rgbd_infra1_optical_frame
+    right_frame: wrist_rgbd_infra2_optical_frame
+    left_image: /sensors/wrist_rgbd/infra1/image_rect_raw
+    left_camera_info: /sensors/wrist_rgbd/infra1/image_rect_raw/camera_info
+    right_image: /sensors/wrist_rgbd/infra2/image_rect_raw
+    right_camera_info: /sensors/wrist_rgbd/infra2/image_rect_raw/camera_info
+
+encoder_feedback:
+  a300:
+    physical_links: [front_left_encoder_link, front_right_encoder_link, rear_left_encoder_link, rear_right_encoder_link]
+    simulated_counts_per_wheel_revolution: 4096
+    simulated_resolution_source: engineering_parameter_not_published_Clearpath_specification
+    hardware_resolution_pending: true
+  pololu_4694:
+    physical_links: [left_side_brush_encoder_link, right_side_brush_encoder_link, central_roller_encoder_link]
+    motor_shaft_counts_per_revolution: 64
+    nominal_gear_ratio: 70
+    nominal_output_counts_per_revolution: 4480
+    hardware_backlash_polarity_and_ratio_tolerance_pending: true
+
+physical_power_service_layout:
+  mass_redistribution_kg: 0.400
+  source_lumped_pdu_mass_before_kg: 0.700
+  source_lumped_pdu_mass_after_kg: 0.300
+  isolator:
+    housing_link: main_power_isolator_housing_link
+    housing_joint: main_power_isolator_housing_joint
+    handle_link: main_power_isolator_handle_link
+    handle_joint: main_power_isolator_handle_joint
+    measured_state_topic: /formal_vehicle/power/main_isolator_closed
+  contactor:
+    housing_link: main_power_contactor_housing_link
+    housing_joint: main_power_contactor_housing_joint
+    armature_link: main_power_contactor_armature_link
+    armature_joint: main_power_contactor_armature_joint
+    command_topic: /formal_vehicle/power/main_contactor_command
+    measured_state_topic: /formal_vehicle/power/main_contactor_closed
+
+compute_hardware:
+  selected_model: D-Robotics_RDK_S100P_V1P0_user_owned
+  provisional_reference_dimensions_m: [0.121, 0.120, 0.0524]
+  modeled_collision_dimensions_m: [0.121, 0.120, 0.0524]
+  protective_enclosure_internal_clear_dimensions_m: [0.174, 0.124, 0.064]
+  external_envelope_pending: true
+  validation: provisional_RDK_S100_reference_envelope_pending_owned_S100P_measurement
+  unresolved_physical_validation: [exact_external_dimensions, mounting_hole_pattern, board_mass, thermal_rejection, connector_and_cable_service_space, live_power_and_compute_runtime]
 
 validation_policy:
   static_frame_position_tolerance_m: 0.005
@@ -129,17 +210,12 @@ validation_policy:
   forbidden_symbolic_tokens: ["${", "$(", TODO, TBD, PLACEHOLDER, REPLACE_ME]
   required_joint_limits: [revolute, prismatic, continuous]
   approved_pending_gates:
-    - exact_s100_board_envelope
-    - full_inertia_and_cog_scan
-    - fov_occlusion_solve
-    - final_wastewater_capacity
+    - exact_s100p_board_envelope_and_mounting_pattern
+    - s100_mass_thermal_connector_and_live_hardware_validation
     - detailed_power_topology
-    - arm_exact_swept_volume
-    - cleaning_ground_contact
+    - arm_exact_continuous_swept_volume
     - gazebo_sensor_ray_and_visibility_scan
   final_claims_forbidden_while_pending:
-    - final_vehicle_cog_passed
-    - final_wastewater_capacity_frozen
-    - exact_sensor_mounts_frozen
-    - s100_physical_integration_passed
-    - gazebo_high_fidelity_vehicle_executed
+    - s100_mass_thermal_power_and_live_integration_passed
+    - continuous_arm_joint_space_collision_free
+    - real_hardware_calibrated

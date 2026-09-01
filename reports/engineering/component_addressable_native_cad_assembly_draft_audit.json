@@ -1,0 +1,26 @@
+{
+  "report_id": "tzcup_component_addressable_native_cad_assembly_draft_audit_v1",
+  "audit_mode": "static_json_hash_ast_only",
+  "status": "STATIC_COMPONENT_ADDRESSABLE_DRAFT_VALID_NATIVE_EXPORT_BLOCKED",
+  "draft_structurally_valid": true,
+  "component_count": 105,
+  "supplier_excluded_count": 21,
+  "native_cad_assembly_ready": false,
+  "native_cad_delivery_accepted": false,
+  "blockers": [
+    "NO_NATIVE_STEP_OR_FCSTD",
+    "NO_NATIVE_CAD_EXPORT_RECEIPT",
+    "NO_EXECUTED_CADQUERY_ASSEMBLY",
+    "ALL_COMPONENTS_PENDING_NATIVE_EXPORT"
+  ],
+  "gaps": [],
+  "execution_prohibited": [
+    "CadQuery",
+    "FreeCAD",
+    "WSL",
+    "Gazebo",
+    "Docker",
+    "STEP/FCStd export",
+    "mesh conversion"
+  ]
+}

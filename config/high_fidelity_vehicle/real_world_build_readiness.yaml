@@ -1,0 +1,106 @@
+schema_version: 2
+status: NOT_READY_FOR_FABRICATION_OR_REAL_WORLD_ACCEPTANCE
+ready: false
+last_expanded_artifact:
+  path: reports/engineering/formal_competition_vehicle.urdf
+  sha256: b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2
+  links: 196
+  joints: 195
+  mass_kg: 160.007583
+  source_snapshot_state: current_verified_snapshot
+current_snapshot:
+  path: reports/engineering/formal_vehicle_snapshot_manifest.json
+  sha256: fffb388e1f06616ab5019db00481718d24b5bac1d284c240dd1709173482cd40
+  source_inventory_sha256: 0d106d4e9aae774941856d0d7018bdbcf8c43e83afe00049dc485006943cf03b
+  output_inventory_sha256: a8832afc81f6eea6227abd0a5dc6073bb9da2283de8532c05034841243028ba7
+mass_budget:
+  a300_design_load_kg: 91.35
+  a300_base_mass_kg: 78.5
+  maximum_dry_payload_kg: 1.512
+  maximum_wastewater_payload_kg: 8.30
+  dynamic_payload_reserve_each_kg: 0.001
+  dynamic_payload_reserve_state_count: 2
+  expected_physical_replacement_margin_kg: 0.032417
+  expected_conservative_remaining_margin_kg: 0.030417
+  subsystem_mass_breakdown_kg:
+    a300_base_drive: 78.500000
+    arm_gripper_wrist: 40.342576
+    bodywork_service_safety: 12.280004
+    cleaning_recovery: 11.125000
+    storage_waste: 10.362001
+    sensors_mast: 3.948001
+    power_compute: 3.450001
+  subsystem_mass_total_kg: 160.007583
+  manufacturing_margin_targets:
+    minimum_margin_kg: 5.0
+    recommended_margin_kg: 10.0
+    conservative_required_reduction_minimum_kg: 4.969583
+    conservative_required_reduction_recommended_kg: 9.969583
+    mass_credit_policy: no_credit_until_physical_redesign_weighing_and_recomputed_inertia
+    direct_urdf_mass_edit_is_not_a_mitigation: true
+  mitigation:
+    status: design_required_not_credited
+    candidates:
+      - project_authored_arm_pedestal_and_adapter
+      - project_authored_bodywork_shells_and_non_safety_covers
+      - project_authored_storage_frame_and_bin_structure
+      - project_authored_sensor_tower_and_mounts
+      - project_authored_cleaning_head_brackets_and_guards
+  platform_reselection:
+    design_payload_factor: 0.9
+    rated_payload_minimum_for_5kg_margin_kg: 107.02
+    rated_payload_minimum_for_10kg_margin_kg: 112.58
+    dynamic_stability_must_pass_independently: true
+throughput_budget:
+  theoretical_cleaning_m2_h: 3564.0
+  competition_minimum_m2_h: 3500.0
+  expected_margin_m2_h: 64.0
+blocking_categories:
+  geometry_assembly: blocked
+  manufacturable_cad_drawings_tolerances: blocked
+  structural_strength_stability: blocked
+  mass_payload: blocked
+  power_harness_thermal: blocked
+  waterproofing_emc_safety: blocked
+  control_sensor_calibration: blocked
+  gazebo: blocked
+  s100: blocked
+  contest_closed_loop: blocked
+evidence_paths:
+  last_expanded_urdf:
+    path: reports/engineering/formal_competition_vehicle.urdf
+    state: current_snapshot_output
+    sha256: b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2
+  source_snapshot:
+    path: reports/engineering/formal_vehicle_snapshot_manifest.json
+    state: current_verified_snapshot
+    sha256: fffb388e1f06616ab5019db00481718d24b5bac1d284c240dd1709173482cd40
+  component_register:
+    path: reports/engineering/formal_vehicle_component_register_report.json
+    state: current_snapshot_output
+    sha256: cfdc0c3cd155e207221b99b54c6d4450d4811bf001e0b3314d497e41ed1b76d5
+  fov_occlusion:
+    path: reports/engineering/formal_vehicle_fov_occlusion_report.json
+    state: current_static_analysis
+    sha256: aeb24d92fffec95c41e786e0e7ca8426d32c901f8165b398157cab285456de56
+    urdf_sha256: b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2
+    layout_sha256: 4c5804b917f2226fbf730bf492b2b6113c92bd3f00ee408ee8edb9a3dc3222cc
+    validator_path: scripts/validate_formal_fov_occlusion.py
+    validator_sha256: 58d3ad2b9ecf3a41dd442d4f62df78e814db1b205c095d931ece0659aae73afe
+  inertia_swept_volume:
+    path: reports/engineering/formal_vehicle_inertia_and_swept_volume_report.json
+    state: current_static_analysis
+    sha256: e3aecb89c0d7c381a7d1acc8f0ad39525911d770a781e8261c569554a685565f
+    urdf_sha256: b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2
+    layout_sha256: 4c5804b917f2226fbf730bf492b2b6113c92bd3f00ee408ee8edb9a3dc3222cc
+    scanner_path: scripts/scan_formal_vehicle_inertia_and_swept_volume.py
+    scanner_sha256: faa8a67f9b1fe702a2764a423caba0d237445077199d5be4046ae7f975d4f356
+  vehicle_runtime:
+    path: reports/engineering/formal_vehicle_runtime_report.json
+    state: missing
+  gazebo_closed_loop:
+    path: artifacts/formal_end_to_end_cleaning_mission_acceptance.json
+    state: missing
+  s100_live:
+    path: artifacts/formal_s100_live_acceptance.json
+    state: missing

@@ -1,0 +1,752 @@
+schema_version: 1
+contract_id: tzcup_formal_functional_acceptance_contract_v1
+claim_boundary: >-
+  This contract is a fail-closed crosswalk from every registered physical
+  function position to the runtime evidence that proves its intended effect.
+  A valid URDF link, joint or topic alone is not runtime acceptance. Missing
+  evidence remains pending and historical evidence must be rerun after the
+  final source snapshot is frozen.
+
+acceptance_session:
+  path: artifacts/formal_final_acceptance_session.json
+  snapshot_manifest: reports/engineering/formal_vehicle_snapshot_manifest.json
+  accepted_statuses:
+    - FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+    - FORMAL_FINAL_ACCEPTANCE_SESSION_PENDING
+    - FORMAL_FINAL_ACCEPTANCE_SESSION_COMPLETE
+
+evidence_gates:
+  component_register:
+    path: reports/engineering/formal_vehicle_component_register_report.json
+    success_statuses: [COMPONENT_REGISTER_URDF_FK_AND_INTERFACES_VALID]
+    session_bound: true
+    snapshot_urdf_hash_field: urdf_sha256
+  product_visual_acceptance:
+    path: reports/engineering/formal_vehicle_visual_acceptance/manifest.json
+    report_id: tzcup_formal_vehicle_product_visual_acceptance_v4
+    success_statuses: [GAZEBO_OGRE2_PRODUCT_NINETEEN_FUNCTIONAL_VIEW_CAPTURE_PASSED]
+    required_values:
+      passed: true
+      bodywork_profile: product
+      camera_count: 19
+      ground_truth_anti_drift.passed: true
+      ground_truth_anti_drift.world_name: formal_vehicle_visual_acceptance
+      ground_truth_anti_drift.model_name: tzcup_formal_sanitation_vehicle
+      ground_truth_anti_drift.violations: []
+      bodywork_profile_verified_from_robot_description: true
+      renderer_diagnostics.passed: true
+      engineering_visual_crosswalk.passed: true
+      engineering_visual_crosswalk.method: registered_id_crosswalk_plus_commanded_pose_urdf_link_projection
+      engineering_visual_crosswalk.bodywork_profile: product
+      engineering_visual_crosswalk.camera_count: 19
+      engineering_visual_crosswalk.functional_position_count: 38
+      engineering_visual_crosswalk.sensor_installation_count: 9
+      engineering_visual_crosswalk.mechanical_subassembly_count: 18
+      engineering_visual_crosswalk.required_registered_physical_link_count: 110
+      engineering_visual_crosswalk.inspected_physical_link_count: 156
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    required_mapping_keys:
+      frames: &visual_views [front_left, rear_right, top_cleaning, sensor_tower_detail, front_sensor_detail, arm_mount_detail, dry_deposition_detail, cleaning_head_detail, rear_service_detail, power_compute_detail, storage_recovery_detail, rear_left_sensor_detail, rear_right_sensor_detail, drivetrain_detail, inertial_power_detail, dry_deposition_internal, power_safety_internal, charge_interface_detail, drain_interface_detail]
+      profile_evidence_scope: *visual_views
+      view_target_contract: *visual_views
+    required_mapping_item_values: &visual_frame_values
+      frames:
+        width: 1600
+        height: 1000
+        semantic_visibility.passed: true
+        semantic_visibility.method: source_bound_urdf_entity_projection
+    session_bound: true
+    bound_file_mapping: frames
+    snapshot_source_hash_field: source_binding.source_inventory_sha256
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+    required_physical_scope:
+      - complete_product_silhouette_and_bodywork
+      - all_sensor_mounts_and_external_safety_interfaces
+      - manipulator_cleaning_storage_and_recovery_layout
+      - independent_gazebo_ground_truth_anti_drift
+  service_visual_acceptance:
+    path: reports/engineering/formal_vehicle_service_visual_acceptance/manifest.json
+    report_id: tzcup_formal_vehicle_service_visual_acceptance_v4
+    success_statuses: [GAZEBO_OGRE2_SERVICE_NINETEEN_FUNCTIONAL_VIEW_CAPTURE_PASSED]
+    required_values:
+      passed: true
+      bodywork_profile: service
+      camera_count: 19
+      ground_truth_anti_drift.passed: true
+      ground_truth_anti_drift.world_name: formal_vehicle_visual_acceptance
+      ground_truth_anti_drift.model_name: tzcup_formal_sanitation_vehicle
+      ground_truth_anti_drift.violations: []
+      bodywork_profile_verified_from_robot_description: true
+      renderer_diagnostics.passed: true
+      engineering_visual_crosswalk.passed: true
+      engineering_visual_crosswalk.method: registered_id_crosswalk_plus_commanded_pose_urdf_link_projection
+      engineering_visual_crosswalk.bodywork_profile: service
+      engineering_visual_crosswalk.camera_count: 19
+      engineering_visual_crosswalk.functional_position_count: 38
+      engineering_visual_crosswalk.sensor_installation_count: 9
+      engineering_visual_crosswalk.mechanical_subassembly_count: 18
+      engineering_visual_crosswalk.required_registered_physical_link_count: 96
+      engineering_visual_crosswalk.inspected_physical_link_count: 142
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    required_mapping_keys:
+      frames: *visual_views
+      profile_evidence_scope: *visual_views
+      view_target_contract: *visual_views
+    required_mapping_item_values: *visual_frame_values
+    session_bound: true
+    bound_file_mapping: frames
+    snapshot_source_hash_field: source_binding.source_inventory_sha256
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+    required_physical_scope:
+      - exposed_sensor_mounting_and_cable_service_spine
+      - arm_power_compute_and_switchgear_installation
+      - cleaning_drive_storage_plumbing_and_service_interfaces
+      - independent_gazebo_ground_truth_anti_drift
+  sensor_fov_and_occlusion:
+    path: reports/engineering/formal_vehicle_fov_occlusion_report.json
+    success_statuses: [PASSED]
+    session_bound: true
+    snapshot_urdf_hash_field: urdf_sha256
+    current_file_hashes:
+      layout_sha256: config/high_fidelity_vehicle/formal_vehicle_layout.yaml
+      validator_sha256: scripts/validate_formal_fov_occlusion.py
+  inertia_cog_and_swept_volume:
+    path: reports/engineering/formal_vehicle_inertia_and_swept_volume_report.json
+    success_statuses:
+      - FORMAL_INERTIA_COG_AND_COLLISION_MESH_SWEEP_PASSED
+      - PRODUCTION_ANCHORS_PASSED_WITH_RAW_JOINT_SPACE_EXCLUSION_REGIONS
+    session_bound: true
+    snapshot_urdf_hash_field: inputs.expanded_urdf_sha256
+    current_file_hashes:
+      inputs.layout_sha256: config/high_fidelity_vehicle/formal_vehicle_layout.yaml
+      inputs.scanner_sha256: scripts/scan_formal_vehicle_inertia_and_swept_volume.py
+  service_door_runtime:
+    path: artifacts/formal_service_door_runtime.json
+    success_statuses: [FORMAL_BODYWORK_SERVICE_DOOR_RUNTIME_PASSED]
+    session_bound: true
+    snapshot_urdf_hash_field: acceptance_session_binding.snapshot.expanded_urdf_sha256
+    snapshot_source_hash_field: acceptance_session_binding.snapshot.source_inventory_sha256
+    required_values:
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  sensor_runtime:
+    path: reports/engineering/formal_vehicle_runtime_report.json
+    success_statuses: [FORMAL_GAZEBO_CONTROL_AND_SENSOR_RUNTIME_PASSED_EXTERNAL_FIDELITY_GATES_PENDING]
+    session_bound: true
+    snapshot_urdf_hash_field: acceptance_session_binding.snapshot.expanded_urdf_sha256
+    snapshot_source_hash_field: acceptance_session_binding.snapshot.source_inventory_sha256
+    required_physical_scope: [front_d435_ir_stereo_pair, wrist_d435_ir_stereo_pair]
+    required_values:
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  manipulator_trajectory:
+    path: reports/engineering/formal_manipulator_runtime_report.json
+    report_id: tzcup_formal_manipulator_runtime_v2
+    success_statuses: [UR5E_AND_ROBOTIQ_GAZEBO_TRAJECTORY_EXECUTION_PASSED]
+    session_bound: true
+    snapshot_manifest_hash_field: source_binding.snapshot_manifest_sha256
+    snapshot_urdf_hash_field: source_binding.expanded_urdf_sha256
+    snapshot_source_hash_field: source_binding.source_inventory_sha256
+    required_values:
+      acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  cleaning_actuators:
+    path: reports/engineering/formal_function_positions_runtime_report.json
+    report_id: tzcup_formal_function_positions_runtime_v3
+    success_statuses: [FORMAL_CLEANING_STORAGE_SERVICE_AND_RECOVERY_ACTUATORS_PASSED]
+    session_bound: true
+    snapshot_manifest_hash_field: source_binding.snapshot_manifest_sha256
+    snapshot_urdf_hash_field: source_binding.expanded_urdf_sha256
+    snapshot_source_hash_field: source_binding.source_inventory_sha256
+    required_physical_scope: [squeegee_preloaded_spring_compliance]
+    required_values:
+      acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  cleaning_motor_runtime:
+    path: artifacts/formal_cleaning_actuator_motor_runtime.json
+    success_statuses: [FORMAL_CLEANING_ACTUATOR_MOTOR_RUNTIME_PASSED]
+    session_bound: true
+    snapshot_urdf_hash_field: source_binding.expanded_urdf_sha256
+    snapshot_source_hash_field: source_binding.source_inventory_sha256
+    required_values:
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  integrated_basic_physics:
+    path: reports/engineering/integrated_basic_functional_acceptance_summary.json
+    success_statuses: [INTEGRATED_BASIC_FUNCTIONAL_ACCEPTANCE_PASSED]
+    session_bound: true
+    snapshot_urdf_hash_field: source_binding.expanded_urdf_sha256
+    snapshot_source_hash_field: source_binding.source_inventory_sha256
+    required_values:
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  a300_drivetrain_runtime:
+    path: artifacts/formal_a300_drivetrain_runtime.json
+    report_id: tzcup_formal_a300_drivetrain_runtime_v1
+    success_statuses: [FORMAL_A300_DRIVETRAIN_FORWARD_STOP_RUNTIME_PASSED]
+    session_bound: true
+    snapshot_urdf_hash_field: source_binding.expanded_urdf_sha256
+    snapshot_source_hash_field: source_binding.source_inventory_sha256
+    required_values:
+      acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  whole_vehicle_interlock:
+    path: artifacts/formal_vehicle_safety/whole_vehicle_actuator_interlock.json
+    success_statuses: [WHOLE_VEHICLE_ACTUATOR_INTERLOCK_PASSED]
+    session_bound: true
+    snapshot_urdf_hash_field: acceptance_session_binding.snapshot.expanded_urdf_sha256
+    snapshot_source_hash_field: acceptance_session_binding.snapshot.source_inventory_sha256
+    required_values:
+      checks.managed_command_topics_have_single_gateway_writer: true
+      checks.safety_input_topics_have_single_attributed_writer: true
+      checks.status_json_samples_continuous_and_source_attributed: true
+      checks.initial_inhibit_attributed_to_safety_relay_disabled: true
+      checks.all_held_controller_goals_moved_before_collision: true
+      checks.all_held_controller_goals_canceled_on_collision: true
+      checks.held_joints_stable_after_collision: true
+      checks.all_held_controller_goals_moved_before_rear_collision: true
+      checks.all_held_controller_goals_canceled_on_rear_collision: true
+      checks.held_joints_stable_after_rear_collision: true
+      checks.all_held_controller_goals_moved_before_relay_false: true
+      checks.all_held_controller_goals_canceled_on_relay_false: true
+      checks.held_joints_stable_after_relay_false: true
+      checks.all_held_controller_goals_moved_before_heartbeat_timeout: true
+      checks.all_held_controller_goals_canceled_on_heartbeat_timeout: true
+      checks.held_joints_stable_after_heartbeat_timeout: true
+      checks.all_held_controller_goals_moved_before_relock: true
+      checks.all_held_controller_goals_canceled_on_relock: true
+      checks.held_joint_drift_within_threshold: true
+      checks.final_physical_estop_attributed_to_manual_estop: true
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+      emergency_stop_position_goal_statuses: &canceled_position_goal_statuses
+        /arm_controller/follow_joint_trajectory: 5
+        /cleaning_controller/follow_joint_trajectory: 5
+        /gripper_controller/follow_joint_trajectory: 5
+        /storage_controller/follow_joint_trajectory: 5
+    required_mapping_keys:
+      hard_interlock_evidence: &hard_interlock_sources
+        - front_bumper_contact
+        - rear_bumper_contact
+        - safety_relay_false
+        - heartbeat_timeout
+      emergency_stop_position_goal_motion_from_start: &held_position_actions
+        - /arm_controller/follow_joint_trajectory
+        - /cleaning_controller/follow_joint_trajectory
+        - /gripper_controller/follow_joint_trajectory
+        - /storage_controller/follow_joint_trajectory
+      inhibited_joint_hold_evidence: &held_position_joints
+        - shoulder_pan_joint
+        - shoulder_lift_joint
+        - elbow_joint
+        - wrist_1_joint
+        - wrist_2_joint
+        - wrist_3_joint
+        - cleaning_lift_joint
+        - robotiq_85_left_knuckle_joint
+        - dry_deposit_gate_joint
+      hard_interlock_evidence.front_bumper_contact.position_goal_motion_from_start: *held_position_actions
+      hard_interlock_evidence.front_bumper_contact.inhibited_joint_hold_evidence: *held_position_joints
+      hard_interlock_evidence.rear_bumper_contact.position_goal_motion_from_start: *held_position_actions
+      hard_interlock_evidence.rear_bumper_contact.inhibited_joint_hold_evidence: *held_position_joints
+      hard_interlock_evidence.safety_relay_false.position_goal_motion_from_start: *held_position_actions
+      hard_interlock_evidence.safety_relay_false.inhibited_joint_hold_evidence: *held_position_joints
+      hard_interlock_evidence.heartbeat_timeout.position_goal_motion_from_start: *held_position_actions
+      hard_interlock_evidence.heartbeat_timeout.inhibited_joint_hold_evidence: *held_position_joints
+    required_mapping_item_values:
+      hard_interlock_evidence:
+        all_position_controller_goals_moved_before_trigger: true
+        all_position_controller_goals_canceled: true
+        all_held_joints_stable_after_cancel: true
+        position_goal_result_statuses: *canceled_position_goal_statuses
+      emergency_stop_position_goal_motion_from_start: {}
+      inhibited_joint_hold_evidence: {}
+      hard_interlock_evidence.front_bumper_contact.position_goal_motion_from_start: {}
+      hard_interlock_evidence.front_bumper_contact.inhibited_joint_hold_evidence: {}
+      hard_interlock_evidence.rear_bumper_contact.position_goal_motion_from_start: {}
+      hard_interlock_evidence.rear_bumper_contact.inhibited_joint_hold_evidence: {}
+      hard_interlock_evidence.safety_relay_false.position_goal_motion_from_start: {}
+      hard_interlock_evidence.safety_relay_false.inhibited_joint_hold_evidence: {}
+      hard_interlock_evidence.heartbeat_timeout.position_goal_motion_from_start: {}
+      hard_interlock_evidence.heartbeat_timeout.inhibited_joint_hold_evidence: {}
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  auxiliary_power_lighting:
+    path: artifacts/formal_auxiliary_power_lighting_runtime.json
+    success_statuses: [FORMAL_AUXILIARY_POWER_LIGHTING_RUNTIME_PASSED]
+    session_bound: true
+    snapshot_urdf_hash_field: acceptance_session_binding.snapshot.expanded_urdf_sha256
+    snapshot_source_hash_field: acceptance_session_binding.snapshot.source_inventory_sha256
+    required_physical_scope: [main_power_isolator_handle_and_measured_state, main_power_contactor_armature_and_measured_state]
+    required_values:
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  physical_grasp_and_bin:
+    path: artifacts/formal_grasp_executor_runtime.json
+    report_id: tzcup_formal_product_grasp_executor_runtime_v1
+    success_statuses: [FORMAL_PRODUCT_GRASP_AND_DRY_BIN_ACCEPTANCE_PASSED]
+    session_bound: true
+    snapshot_manifest_hash_field: source_binding.snapshot_manifest_sha256
+    snapshot_urdf_hash_field: source_binding.expanded_urdf_sha256
+    snapshot_source_hash_field: source_binding.source_inventory_sha256
+    required_values:
+      passed: true
+      truth_used_for_control: false
+      acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  formal_20_cube_grasp_and_dynamic_mass:
+    path: artifacts/formal_20_cube_grasp_runtime.json
+    success_statuses: [FORMAL_20_CUBE_TARGET_CONDITIONED_GRASP_PASSED]
+    session_bound: true
+    snapshot_urdf_hash_field: source_binding.expanded_urdf_sha256
+    snapshot_source_hash_field: source_binding.source_inventory_sha256
+    required_values:
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  ground_dirt_cleaning:
+    path: artifacts/formal_ground_dirt_cleaning_final_retry/ground_dirt_acceptance.json
+    report_id: tzcup_formal_ground_dirt_physical_cleaning_v1
+    success_statuses: [FORMAL_GROUND_DIRT_PHYSICAL_CLEANING_PASSED]
+    session_bound: true
+    snapshot_urdf_hash_field: acceptance_session_binding.snapshot.expanded_urdf_sha256
+    snapshot_source_hash_field: acceptance_session_binding.snapshot.source_inventory_sha256
+    required_values:
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  water_recovery:
+    path: artifacts/formal_water_recovery_acceptance.json
+    report_id: tzcup_formal_water_recovery_acceptance_v1
+    success_statuses: [FORMAL_WATER_RECOVERY_ACCEPTANCE_PASSED]
+    session_bound: true
+    snapshot_urdf_hash_field: source_binding.expanded_urdf_sha256
+    snapshot_source_hash_field: source_binding.source_inventory_sha256
+    required_values:
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  service_interface_acceptance:
+    path: artifacts/formal_service_interface_acceptance.json
+    success_statuses: [PASS]
+    session_bound: true
+    snapshot_urdf_hash_field: acceptance_session_binding.snapshot.expanded_urdf_sha256
+    snapshot_source_hash_field: acceptance_session_binding.snapshot.source_inventory_sha256
+    required_values:
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  first_map_then_clean:
+    path: artifacts/formal_map_lifecycle_acceptance.json
+    success_statuses: [FORMAL_FIRST_MAP_THEN_SAVED_MAP_CLEANING_PASSED]
+    session_bound: true
+    required_values:
+      schema_version: 1
+      passed: true
+      truth_used_for_control: false
+      checks.quality_gated_map_manifest: true
+      checks.mapping_runtime_passed: true
+      checks.saved_map_cleaning_runtime_passed: true
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  random_scene_perception:
+    path: artifacts/formal_random_scene_perception_acceptance.json
+    report_id: tzcup_formal_random_scene_perception_matrix_v1
+    success_statuses: [FORMAL_DOSOD_EDGESAM_RANDOM_SCENE_ACCEPTANCE_PASSED]
+    session_bound: true
+    required_values:
+      gates.minimum_disjoint_episode_count: true
+      gates.all_episode_reports_well_formed: true
+      gates.formal_validation_episode_identity_present: true
+      gates.formal_validation_split_only: true
+      gates.all_required_validation_maps_covered: true
+      gates.minimum_episodes_per_validation_map: true
+      gates.all_episode_metric_gates_passed: true
+      gates.truth_isolation_passed: true
+      gates.pc_gazebo_camera_evidence_present: true
+      minimum_episode_count: 30
+      duplicate_episode_ids: []
+      episode_identity_errors: []
+      wrong_split_episode_ids: []
+      out_of_scope_validation_map_episode_ids: []
+      input_errors: []
+      truth_isolation.truth_reader: per_episode_evaluator_process_only
+      truth_isolation.truth_published_to_ros: false
+      truth_isolation.truth_used_by_product_control: false
+      truth_isolation.synthetic_offline_image_used: false
+      claim_boundary.pc_product_perception_accepted: true
+      claim_boundary.pc_gazebo_validation_matrix_accepted: true
+      claim_boundary.s100_board_accepted: false
+      claim_boundary.real_vehicle_accepted: false
+      claim_boundary.no_fine_tuning_performed: true
+      claim_boundary.real_world_accuracy_claimed: false
+      statistical_scope.tier: formal_pc_gazebo_validation_matrix
+      statistical_scope.required_split: val
+      statistical_scope.required_validation_map_indices: [0, 1, 2, 3, 4, 5, 6, 7]
+      statistical_scope.minimum_unique_validation_map_count: 8
+      statistical_scope.minimum_episodes_per_validation_map: 3
+      statistical_scope.smoke_episode_count: 3
+      statistical_scope.smoke_eligible_for_final_product_evidence: false
+      statistical_scope.statistical_generalization_claimed: false
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    required_mapping_keys:
+      gates: [minimum_disjoint_episode_count, all_episode_reports_well_formed, formal_validation_episode_identity_present, formal_validation_split_only, all_required_validation_maps_covered, minimum_episodes_per_validation_map, all_episode_metric_gates_passed, truth_isolation_passed, pc_gazebo_camera_evidence_present]
+      truth_isolation: [truth_reader, truth_published_to_ros, truth_used_by_product_control, synthetic_offline_image_used]
+      claim_boundary: [pc_product_perception_accepted, pc_gazebo_validation_matrix_accepted, s100_board_accepted, real_vehicle_accepted, no_fine_tuning_performed, real_world_accuracy_claimed]
+      statistical_scope: [tier, required_split, required_validation_map_indices, minimum_unique_validation_map_count, minimum_episodes_per_validation_map, episode_count_by_validation_map, smoke_episode_count, smoke_eligible_for_final_product_evidence, statistical_generalization_claimed]
+      metrics_summary: [cube_precision_min, cube_recall_min, cube_f1_min, ground_dirt_iou_min, ground_dirt_recall_min, map_projection_rmse_max_m, map_projection_p95_max_m, false_product_track_count]
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  dynamic_obstacle_avoidance:
+    path: artifacts/formal_dynamic_obstacle_avoidance_acceptance.json
+    report_id: tzcup_formal_dynamic_obstacle_avoidance_acceptance_v1
+    success_statuses: [FORMAL_DYNAMIC_OBSTACLE_AVOIDANCE_ACCEPTANCE_PASSED]
+    session_bound: true
+    snapshot_urdf_hash_field: source_binding.expanded_urdf_sha256
+    snapshot_source_hash_field: source_binding.source_inventory_sha256
+    required_values:
+      passed: true
+      checks.saved_map_lifecycle_artifact_valid: true
+      checks.exactly_eight_random_pedestrians_active: true
+      checks.runtime_randomized_pedestrian_environment_recorded: true
+      checks.goal_uses_public_manifest_not_environment_truth: true
+      checks.product_control_truth_free: true
+      checks.evaluator_truth_process_isolated: true
+      checks.no_pedestrian_velocity_estimation: true
+      checks.saved_map_localization_observed: true
+      checks.vehicle_performed_avoidance_detour: true
+      checks.dynamic_interaction_observed: true
+      checks.zero_physical_collisions: true
+      checks.zero_geofence_violations: true
+      metrics.active_pedestrian_count: 8
+      metrics.expected_pedestrian_count: 8
+      metrics.pedestrian_velocity_estimation_used: false
+      metrics.product_control_reads_pedestrian_truth: false
+      metrics.control_truth_topics_subscribed: []
+      metrics.mission_goal_source: public_manifest_fixed_start_transformed_to_saved_map_local_plus_nominal_leg
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+  rl_cross_map_policy:
+    path: reports/engineering/formal_rl_multimap_v7_evaluation.json
+    report_id: tzcup_formal_rl_first_dual_mode_cross_map_acceptance_v1
+    success_statuses: [FORMAL_RL_FIRST_DUAL_MODE_CROSS_MAP_ACCEPTANCE_PASSED]
+    session_bound: true
+    required_values:
+      passed: true
+      truth_used_for_control: false
+      product_perception_claim: false
+      return_distance_included: false
+      policy_output: global_reference_trajectory
+      hidden_gate_passed: true
+      gate_policy: q_learning_with_systematic_coverage_backstop
+      full_map_generalization_contract.required_map_counts.train: 32
+      full_map_generalization_contract.required_map_counts.validation: 8
+      full_map_generalization_contract.required_map_counts.hidden: 12
+      full_map_generalization_contract.actual_distinct_map_counts.train: 32
+      full_map_generalization_contract.actual_distinct_map_counts.validation: 8
+      full_map_generalization_contract.actual_distinct_map_counts.hidden: 12
+      full_map_generalization_contract.full_map_coverage: true
+      full_map_generalization_contract.smoke_subset_accepted_as_generalization: false
+      formal_multimap_budget_contract.task_counts.train: 6400
+      formal_multimap_budget_contract.task_counts.validation: 800
+      formal_multimap_budget_contract.task_counts.hidden: 1200
+      formal_multimap_budget_contract.training_rollout_count: 6400
+      formal_multimap_budget_contract.max_steps_per_episode: 400
+      formal_multimap_budget_contract.max_steps_is_episode_truncation_guard_not_task_or_episode_budget: true
+      formal_multimap_budget_contract.smoke_budget_can_pass_formal_acceptance: false
+      stage_a_fixed_map_budget_contract.fixed_map_id: stage-a-fixed-formal-map-000
+      stage_a_fixed_map_budget_contract.task_counts.train: 10000
+      stage_a_fixed_map_budget_contract.task_counts.validation: 500
+      stage_a_fixed_map_budget_contract.task_counts.hidden: 1000
+      stage_a_fixed_map_budget_contract.hidden_tasks_materialized_after_freeze: true
+      stage_a_fixed_map_budget_contract.smoke_budget_can_pass_formal_acceptance: false
+      scenario_contract.area_m2: 20000
+      scenario_contract.ground_dirt_patches: 18
+      scenario_contract.discrete_cubes: 20
+      scenario_contract.moving_pedestrians: 8
+    required_mapping_keys:
+      full_map_generalization_contract: [required_map_counts, actual_distinct_map_counts, map_indices, fixed_selection, full_map_coverage, smoke_subset_accepted_as_generalization]
+      formal_multimap_budget_contract: [task_counts, training_rollout_count, max_steps_per_episode, max_steps_is_episode_truncation_guard_not_task_or_episode_budget, policy_seeds, policy_seed_runs, configuration_freeze, smoke_budget_can_pass_formal_acceptance]
+      stage_a_fixed_map_budget_contract: [evidence_path, fixed_map_id, task_counts, policy_runs, configuration_freeze, hidden_tasks_materialized_after_freeze, smoke_budget_can_pass_formal_acceptance]
+      scenario_contract: [area_m2, static_assets, ground_dirt_patches, discrete_cubes, moving_pedestrians, planning_resolution_m, sensing_radius_m, sensing_fov_deg, max_steps]
+    required_list_item_values:
+      formal_multimap_budget_contract.policy_seed_runs:
+        training_rollout_count: 6400
+        validation_episode_count: 800
+        hidden_episode_count: 1200
+      stage_a_fixed_map_budget_contract.policy_runs:
+        train_episode_count: 10000
+        validation_episode_count: 500
+        hidden_episode_count: 1000
+      q_with_systematic_coverage_backstop:
+        formal_success: true
+        collisions: 0
+        boundary_violations: 0
+        invalid_actions: 0
+    required_list_item_minimums:
+      q_with_systematic_coverage_backstop:
+        observed_ratio: 0.95
+        ground_clear_ratio: 0.95
+        discrete_clear_ratio: 0.95
+    required_list_item_maximums:
+      q_with_systematic_coverage_backstop:
+        path_ratio_to_full_coverage: 1.0
+    snapshot_urdf_hash_field: acceptance_session_binding.snapshot.expanded_urdf_sha256
+    snapshot_source_hash_field: acceptance_session_binding.snapshot.source_inventory_sha256
+  end_to_end_cleaning_mission:
+    path: artifacts/formal_end_to_end_cleaning_mission_acceptance.json
+    report_id: tzcup_formal_end_to_end_cleaning_mission_v3
+    success_statuses: [FORMAL_END_TO_END_CLEANING_MISSION_PASSED]
+    session_bound: true
+    required_values:
+      passed: true
+      errors: []
+      validated_closed_loop.fixed_start_verified: true
+      validated_closed_loop.first_map_ignored_dirt: true
+      validated_closed_loop.saved_map_hard_restart_verified: true
+      validated_closed_loop.truth_isolated_from_product_control: true
+      validated_closed_loop.observation_coverage_at_least_95_percent: true
+      validated_closed_loop.actual_brushed_area_at_least_95_percent: true
+      validated_closed_loop.all_20_discrete_targets_physically_deposited: true
+      validated_closed_loop.water_recovery_at_least_95_percent: true
+      validated_closed_loop.zero_collisions: true
+      validated_closed_loop.trajectory_output_verified: true
+      validated_closed_loop.task_distance_not_above_full_coverage_baseline: true
+      validated_closed_loop.same_map_full_coverage_efficiency_at_least_3500: true
+      validated_closed_loop.return_distance_excluded_from_efficiency: true
+      validated_closed_loop.return_started_only_after_task_complete: true
+      validated_closed_loop.single_snapshot_single_episode: true
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    required_mapping_keys:
+      validated_closed_loop: [fixed_start_verified, first_map_ignored_dirt, saved_map_hard_restart_verified, truth_isolated_from_product_control, observation_coverage_at_least_95_percent, actual_brushed_area_at_least_95_percent, all_20_discrete_targets_physically_deposited, water_recovery_at_least_95_percent, zero_collisions, trajectory_output_verified, task_distance_not_above_full_coverage_baseline, same_map_full_coverage_efficiency_at_least_3500, return_distance_excluded_from_efficiency, return_started_only_after_task_complete, single_snapshot_single_episode]
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+    snapshot_urdf_hash_field: acceptance_session_binding.snapshot.expanded_urdf_sha256
+    snapshot_source_hash_field: acceptance_session_binding.snapshot.source_inventory_sha256
+  multi_site_product_generalization:
+    path: artifacts/formal_multisite_product_acceptance.json
+    report_id: tzcup_formal_multisite_product_acceptance_v1
+    success_statuses: [FORMAL_MULTISITE_PRODUCT_ACCEPTANCE_PASSED]
+    session_bound: true
+    required_values:
+      passed: true
+      sites_total: 20
+      all_sites_passed: true
+      single_site_e2e_counts_as_generalization: false
+      failures: []
+      split_counts.validation: 8
+      split_counts.hidden: 12
+      runtime_gate_binding.status: FORMAL_RUNTIME_GATE_BOUND
+      runtime_gate_binding.acceptance_session_binding.session_status_at_gate: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+      runtime_gate_binding.acceptance_session_binding.snapshot_current_source_verified: true
+      runtime_gate_binding.runtime_closure_binding.status: FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED
+    required_mapping_keys:
+      split_counts: [validation, hidden]
+    runtime_binding:
+      report_field: runtime_gate_binding
+      sidecar_suffix: .runtime_binding.json
+    snapshot_manifest_hash_field: source_binding.snapshot_manifest_sha256
+    snapshot_source_hash_field: source_binding.source_inventory_sha256
+    required_physical_scope:
+      - serial_validation_8_and_hidden_12_product_closure
+      - actual_dosod_and_edgesam_ros_interfaces_per_site
+      - nav2_dynamic_pedestrians_and_cleaning_actuator_per_site
+      - per_site_frozen_runtime_session_and_snapshot_binding
+      - evaluator_truth_isolated_from_product_control
+  s100_live_runtime:
+    path: artifacts/formal_s100_live_acceptance.json
+    report_id: tzcup_formal_rdk_s100_live_product_runtime_v1
+    success_statuses: [FORMAL_RDK_S100_LIVE_PRODUCT_RUNTIME_PASSED]
+    session_bound: true
+    required_values:
+      passed: true
+      checks.hardware_identity: true
+      checks.system_image: true
+      checks.model_hashes: true
+      checks.ros_graph: true
+      checks.actual_backend_and_inference: true
+      checks.sustained_resources_and_thermal: true
+      checks.truth_boundary: true
+      checks.snapshot_binding: true
+      checks.acceptance_session_binding: true
+      checks.runtime_closure_binding: true
+      blockers: []
+      acceptance_session_binding.session_status_at_collection: FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING
+    required_mapping_keys:
+      source_binding: [snapshot_manifest_sha256, source_inventory_sha256]
+      acceptance_session_binding: [session_manifest_sha256, session_started_epoch_ns, session_status_at_collection, snapshot]
+      acceptance_session_binding.snapshot: [snapshot_manifest_sha256, source_inventory_sha256]
+      runtime_closure_binding: [runtime_closure_manifest_sha256, runtime_closure_sha256]
+      raw_evidence: [path, sha256, collector_report_id, collector_status]
+      checks: [hardware_identity, system_image, model_hashes, ros_graph, actual_backend_and_inference, sustained_resources_and_thermal, truth_boundary, snapshot_binding, acceptance_session_binding, runtime_closure_binding]
+    snapshot_manifest_hash_field: source_binding.snapshot_manifest_sha256
+    snapshot_source_hash_field: source_binding.source_inventory_sha256
+    evidence_origin: external_rdk_s100_live_hardware_only
+    raw_schema: config/high_fidelity_vehicle/formal_s100_live_runtime.schema.json
+    acceptance_schema: config/high_fidelity_vehicle/formal_s100_live_acceptance.schema.json
+    collector: scripts/collect_formal_s100_live_runtime.py
+    offline_validator: scripts/validate_formal_s100_live_runtime.py
+    required_physical_scope:
+      - immutable_rdk_s100_journey6_device_tree_identity
+      - board_system_image_and_runtime_inventory
+      - exact_dosod_vocabulary_and_hbm_hashes
+      - exact_edgesam_encoder_and_decoder_hbm_hashes
+      - live_ros_node_topic_and_type_graph
+      - actual_bpu_or_cpu_backend_corroborated_by_process_maps
+      - measured_frame_rate_and_inference_latency
+      - sustained_memory_temperature_and_process_stability
+      - simulator_and_evaluator_truth_isolation
+
+functional_positions:
+  mobility: [component_register, inertia_cog_and_swept_volume, integrated_basic_physics, a300_drivetrain_runtime, whole_vehicle_interlock]
+  mapping_2d: [component_register, sensor_fov_and_occlusion, sensor_runtime, first_map_then_clean]
+  obstacle_perception_3d: [component_register, sensor_fov_and_occlusion, sensor_runtime, dynamic_obstacle_avoidance]
+  localization_2d: [component_register, sensor_fov_and_occlusion, sensor_runtime, first_map_then_clean]
+  global_position: [component_register, sensor_fov_and_occlusion, sensor_runtime, first_map_then_clean]
+  inertial_reference: [component_register, sensor_fov_and_occlusion, sensor_runtime, first_map_then_clean]
+  forward_perception: [component_register, sensor_fov_and_occlusion, sensor_runtime, random_scene_perception]
+  rear_left_perception: [component_register, sensor_fov_and_occlusion, sensor_runtime, dynamic_obstacle_avoidance]
+  rear_right_perception: [component_register, sensor_fov_and_occlusion, sensor_runtime, dynamic_obstacle_avoidance]
+  grasp_observation: [component_register, sensor_fov_and_occlusion, sensor_runtime, physical_grasp_and_bin, formal_20_cube_grasp_and_dynamic_mass]
+  manipulation: [component_register, inertia_cog_and_swept_volume, manipulator_trajectory, physical_grasp_and_bin, formal_20_cube_grasp_and_dynamic_mass, whole_vehicle_interlock]
+  grasping: [component_register, inertia_cog_and_swept_volume, manipulator_trajectory, physical_grasp_and_bin, formal_20_cube_grasp_and_dynamic_mass]
+  dry_deposition: [component_register, cleaning_actuators, physical_grasp_and_bin, formal_20_cube_grasp_and_dynamic_mass, whole_vehicle_interlock]
+  dry_storage: [component_register, inertia_cog_and_swept_volume, physical_grasp_and_bin, formal_20_cube_grasp_and_dynamic_mass]
+  dry_fill_monitor: [component_register, physical_grasp_and_bin, formal_20_cube_grasp_and_dynamic_mass]
+  wet_storage: [component_register, inertia_cog_and_swept_volume, water_recovery]
+  wet_fill_monitor: [component_register, water_recovery]
+  side_sweeping: [component_register, cleaning_actuators, cleaning_motor_runtime, ground_dirt_cleaning]
+  main_sweeping: [component_register, cleaning_actuators, cleaning_motor_runtime, ground_dirt_cleaning]
+  cleaning_head_lift: [component_register, cleaning_actuators, cleaning_motor_runtime, ground_dirt_cleaning, water_recovery]
+  water_gathering: [component_register, cleaning_actuators, water_recovery]
+  water_intake: [component_register, water_recovery]
+  water_filtering: [component_register, water_recovery]
+  water_pumping: [component_register, cleaning_actuators, cleaning_motor_runtime, water_recovery]
+  water_flow_monitor: [component_register, water_recovery]
+  compute: [component_register, whole_vehicle_interlock, s100_live_runtime]
+  arm_control: [component_register, manipulator_trajectory, whole_vehicle_interlock]
+  fused_power_distribution: [component_register, whole_vehicle_interlock, auxiliary_power_lighting]
+  isolated_low_voltage_power: [component_register, whole_vehicle_interlock, auxiliary_power_lighting]
+  hardwired_safety_enable: [component_register, whole_vehicle_interlock, auxiliary_power_lighting]
+  a300_energy_storage: [component_register, whole_vehicle_interlock, auxiliary_power_lighting]
+  charge_interface: [component_register, whole_vehicle_interlock, auxiliary_power_lighting, service_interface_acceptance]
+  wastewater_drain: [component_register, water_recovery, whole_vehicle_interlock, service_interface_acceptance]
+  emergency_stop: [component_register, whole_vehicle_interlock, auxiliary_power_lighting]
+  bodywork_service_access: [component_register, inertia_cog_and_swept_volume, product_visual_acceptance, service_visual_acceptance, service_door_runtime]
+  warning_and_work_lighting: [component_register, whole_vehicle_interlock, auxiliary_power_lighting]
+  front_contact_safety: [component_register, whole_vehicle_interlock, dynamic_obstacle_avoidance]
+  rear_contact_safety: [component_register, whole_vehicle_interlock, dynamic_obstacle_avoidance]
+
+mission_level_gates:
+  - product_visual_acceptance
+  - service_visual_acceptance
+  - sensor_fov_and_occlusion
+  - inertia_cog_and_swept_volume
+  - first_map_then_clean
+  - random_scene_perception
+  - dynamic_obstacle_avoidance
+  - rl_cross_map_policy
+  - end_to_end_cleaning_mission
+  - multi_site_product_generalization
+  - service_interface_acceptance
+  - s100_live_runtime

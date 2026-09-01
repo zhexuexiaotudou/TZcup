@@ -1,6 +1,7 @@
 import argparse
 import json
 import os
+import shutil
 import time
 from pathlib import Path
 from unittest.mock import patch
@@ -20,8 +21,8 @@ def scenario_result(name: str) -> dict:
     if name == "mobility":
         return {
             **common,
-            "report_id": "tzcup_formal_vehicle_mobility_runtime_v1",
-            "status": "FORMAL_VEHICLE_FORWARD_STOP_RUNTIME_PASSED",
+            "report_id": "tzcup_formal_a300_drivetrain_runtime_v1",
+            "status": "FORMAL_A300_DRIVETRAIN_FORWARD_STOP_RUNTIME_PASSED",
         }
     if name in ("water_normal", "water_full"):
         return {
@@ -47,6 +48,7 @@ def scenario_result(name: str) -> dict:
             "offset_change_m": 0.003,
         },
         "cube": {
+            "mass_kg": 0.03726,
             "present_after_deposit": True,
             "stable_inside_dry_bin": True,
             "settled_sim_duration_s": 4.0,
@@ -60,6 +62,29 @@ def scenario_result(name: str) -> dict:
             "support_contact_span_sim_s": 0.8,
             "persistent_support_observed": True,
         },
+        "dry_bin_monitor": {
+            "sensor_ready": True,
+            "contained_object_count": 1,
+            "contained_mass_kg": 0.03726,
+            "mass_tolerance_kg": 1e-5,
+            "full": False,
+            "post_release_sample_observed": True,
+            "monitor_is_observation_only": True,
+        },
+        "inventory_mass": {
+            "physical_cube_count": 1,
+            "physical_material_mass_kg": 0.03726,
+            "dynamic_dry_payload_command_count": 0,
+            "dynamic_dry_payload_added_kg": 0.0,
+            "double_count_prevented": True,
+            "aggregation_or_reserve_payload_substitution": False,
+        },
+        "evaluator_interface_audit": {
+            "delete_entity_calls": 0,
+            "set_pose_or_remove_after_task_start": False,
+            "physical_cube_deleted_after_deposit": False,
+        },
+        "material": "PET",
     }
 
 
@@ -92,6 +117,25 @@ def complete_context(tmp_path: Path) -> tuple[Path, dict, dict]:
             "runner_log_sha256": acceptance.sha256_file(runner_log),
             "cleanup_remaining_pids": 0,
         }
+    installed_xacro = (
+        tmp_path
+        / "runtime/install/share/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro"
+    )
+    layout = tmp_path / "runtime/install/.colcon_install_layout"
+    layout.parent.mkdir(parents=True, exist_ok=True)
+    layout.write_text("merged\n", encoding="utf-8")
+    surface_path = tmp_path / "side_brush_sdf_surface.json"
+    write_json(surface_path, {
+        "status": "FORMAL_SIDE_BRUSH_EXPANDED_SDF_SURFACE_PASSED",
+        "expanded_sdf_sha256": "7" * 64,
+        "source": {"mode": "xacro_to_gz_sdf", "path": str(installed_xacro)},
+        "runtime_effectiveness": {
+            "dart_effective_from_surface_friction_ode": ["mu", "mu2"],
+            "serialized_but_not_consumed_by_gz_physics_7_dart": [
+                "kp", "kd", "max_vel", "min_depth"
+            ],
+        },
+    })
     context = {
         "schema_version": 1,
         "kind": "tzcup_integrated_acceptance_run_context",
@@ -102,6 +146,19 @@ def complete_context(tmp_path: Path) -> tuple[Path, dict, dict]:
         "build_manifest_sha256": acceptance.sha256_file(build_path),
         "started_epoch_ns": now - 1_000_000_000,
         "started_utc": acceptance.utc_iso(now - 1_000_000_000),
+        "material": "PET",
+        "side_brush_sdf_surface": {
+            "path": str(surface_path),
+            "sha256": acceptance.sha256_file(surface_path),
+            "expanded_sdf_sha256": "7" * 64,
+            "source_xacro": str(installed_xacro),
+            "runtime_effectiveness": {
+                "dart_effective_from_surface_friction_ode": ["mu", "mu2"],
+                "serialized_but_not_consumed_by_gz_physics_7_dart": [
+                    "kp", "kd", "max_vel", "min_depth"
+                ],
+            },
+        },
         "scenarios": rows,
     }
     build = {
@@ -111,6 +168,9 @@ def complete_context(tmp_path: Path) -> tuple[Path, dict, dict]:
         "source_inventory_sha256": "d" * 64,
         "installed_inventory_sha256": "e" * 64,
         "source_inventory": {
+            "starter_ws/src/sanitation_gazebo_control/src/DryBinMonitorSystem.cc": {
+                "sha256": "3" * 64
+            },
             "starter_ws/src/sanitation_gazebo_control/src/WaterRecoverySystem.cc": {
                 "sha256": "f" * 64
             },
@@ -127,13 +187,16 @@ def complete_context(tmp_path: Path) -> tuple[Path, dict, dict]:
             },
             "install/sanitation_gazebo_control/lib/libWaterRecoverySystem.so": {
                 "sha256": "0" * 64
+            },
+            "install/sanitation_gazebo_control/lib/libDryBinMonitorSystem.so": {
+                "sha256": "4" * 64
             }
         },
         "runtime": {
             "ros_distro": "jazzy",
             "ros_base_package": "0.11.0-1noble.20260801.000000",
             "gazebo": "Gazebo Sim, version 8.11.0",
-            "physics_engine": "gz-physics-bullet-featherstone-plugin",
+            "physics_engine": "gz-physics-dartsim-plugin",
         },
     }
     context_path = tmp_path / "context.json"
@@ -160,6 +223,8 @@ def test_complete_fresh_isolated_scenario_set_passes(tmp_path: Path) -> None:
     assert set(report["scenario_results"]) == set(acceptance.SCENARIOS)
     assert any(name.endswith("WaterRecoverySystem.cc") for name in report["critical_file_sha256"])
     assert any(name.endswith("libWaterRecoverySystem.so") for name in report["critical_file_sha256"])
+    assert any(name.endswith("DryBinMonitorSystem.cc") for name in report["critical_file_sha256"])
+    assert any(name.endswith("libDryBinMonitorSystem.so") for name in report["critical_file_sha256"])
     assert any(name.endswith("urdf/high_fidelity/cleaning_mechanism.xacro") for name in report["critical_file_sha256"])
     assert any(name.endswith("urdf/high_fidelity/storage_system.xacro") for name in report["critical_file_sha256"])
     assert len({row["ros_domain_id"] for row in context["scenarios"].values()}) == 4
@@ -201,6 +266,36 @@ def test_child_failure_propagates(tmp_path: Path, mutation: str) -> None:
             acceptance.aggregate(aggregate_args(context_path, tmp_path / "out.json"))
 
 
+def test_failed_attempt_preserves_all_recorded_chain_evidence(tmp_path: Path) -> None:
+    context_path, context, build = complete_context(tmp_path)
+    context["scenarios"]["water_normal"]["exit_code"] = 9
+    write_json(context_path, context)
+    output = tmp_path / "failed-attempt.json"
+    with patch.object(acceptance, "validate_build_snapshot", return_value=build):
+        assert acceptance.aggregate_attempt(aggregate_args(context_path, output)) == 3
+    attempt = json.loads(output.read_text(encoding="utf-8"))
+    assert attempt["passed"] is False
+    assert attempt["status"] == "INTEGRATED_BASIC_FUNCTIONAL_ACCEPTANCE_FAILED"
+    assert set(attempt["scenario_invocations"]) == set(acceptance.SCENARIOS)
+    assert "water_normal exited nonzero" in attempt["failure"]
+
+
+def test_formal_chain_cannot_pass_without_its_fresh_attempt_sidecar(tmp_path: Path) -> None:
+    context_path, context, build = complete_context(tmp_path)
+    context["formal_attempt_binding"] = {
+        "session_path": "session.json",
+        "session_sha256": "a" * 64,
+        "session_started_epoch_ns": 1,
+        "snapshot_path": "snapshot.json",
+        "snapshot_sha256": "b" * 64,
+        "source_build_manifest_sha256": "c" * 64,
+    }
+    write_json(context_path, context)
+    with patch.object(acceptance, "validate_build_snapshot", return_value=build):
+        with pytest.raises(acceptance.AcceptanceError, match="sidecar is missing or changed"):
+            acceptance.aggregate(aggregate_args(context_path, tmp_path / "out.json"))
+
+
 def test_old_result_cannot_be_spliced_into_new_run(tmp_path: Path) -> None:
     context_path, context, build = complete_context(tmp_path)
     for row in context["scenarios"].values():
@@ -224,6 +319,35 @@ def test_manipulation_transport_ack_is_not_the_acceptance_truth(tmp_path: Path) 
     result = json.loads(output.read_text(encoding="utf-8"))["scenario_results"]["manipulation"]
     assert result["grasp_gate"]["state_ack_observed"] is False
     assert result["attachment_constraint_proof"]["constraint_proven_by_rigid_motion_not_ack"] is True
+
+
+@pytest.mark.parametrize("material", sorted(acceptance.MATERIAL_MASS_KG))
+def test_manipulation_material_contract_is_not_pet_hardcoded(
+    tmp_path: Path, material: str
+) -> None:
+    context_path, context, build = complete_context(tmp_path)
+    context["material"] = material
+    result_path = Path(context["scenarios"]["manipulation"]["result"])
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+    mass = acceptance.MATERIAL_MASS_KG[material]
+    result["material"] = material
+    result["cube"]["mass_kg"] = mass
+    result["dry_bin_monitor"]["contained_mass_kg"] = mass
+    result["inventory_mass"]["physical_material_mass_kg"] = mass
+    write_json(result_path, result)
+    context["scenarios"]["manipulation"]["result_sha256"] = acceptance.sha256_file(
+        result_path
+    )
+    write_json(context_path, context)
+    output = tmp_path / "manifest.json"
+    with patch.object(acceptance, "validate_build_snapshot", return_value=build):
+        acceptance.aggregate(aggregate_args(context_path, output))
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["material_contract"] == {
+        "material": material,
+        "cube_edge_m": 0.03,
+        "expected_mass_kg": mass,
+    }
 
 
 @pytest.mark.parametrize(
@@ -253,6 +377,47 @@ def test_manipulation_deposit_physics_fail_closed(
         result["cube"]["settled_sim_duration_s"] = 2.99
     else:
         result["cube"]["settled_pose_m"]["z"] = 0.500
+    write_json(result_path, result)
+    row["result_sha256"] = acceptance.sha256_file(result_path)
+    write_json(context_path, context)
+    with patch.object(acceptance, "validate_build_snapshot", return_value=build):
+        with pytest.raises(acceptance.AcceptanceError, match=message):
+            acceptance.aggregate(aggregate_args(context_path, tmp_path / "out.json"))
+
+
+@pytest.mark.parametrize(
+    ("mutation", "message"),
+    (
+        ("sensor_not_ready", "dry-bin PET inventory telemetry"),
+        ("wrong_count", "dry-bin PET inventory telemetry"),
+        ("wrong_mass", "dry-bin PET inventory telemetry"),
+        ("full", "dry-bin PET inventory telemetry"),
+        ("not_pet", "required 0.03726 kg PET cube"),
+        ("deleted", "deleted, aggregated, substituted"),
+        ("aggregated", "deleted, aggregated, substituted"),
+    ),
+)
+def test_manipulation_dry_bin_inventory_fails_closed(
+    tmp_path: Path, mutation: str, message: str
+) -> None:
+    context_path, context, build = complete_context(tmp_path)
+    row = context["scenarios"]["manipulation"]
+    result_path = Path(row["result"])
+    result = json.loads(result_path.read_text(encoding="utf-8"))
+    if mutation == "sensor_not_ready":
+        result["dry_bin_monitor"]["sensor_ready"] = False
+    elif mutation == "wrong_count":
+        result["dry_bin_monitor"]["contained_object_count"] = 2
+    elif mutation == "wrong_mass":
+        result["dry_bin_monitor"]["contained_mass_kg"] = 0.04
+    elif mutation == "full":
+        result["dry_bin_monitor"]["full"] = True
+    elif mutation == "not_pet":
+        result["material"] = "PP"
+    elif mutation == "deleted":
+        result["evaluator_interface_audit"]["physical_cube_deleted_after_deposit"] = True
+    else:
+        result["inventory_mass"]["aggregation_or_reserve_payload_substitution"] = True
     write_json(result_path, result)
     row["result_sha256"] = acceptance.sha256_file(result_path)
     write_json(context_path, context)
@@ -332,6 +497,11 @@ def test_each_compiled_plugin_must_appear_exactly_once() -> None:
             "size_bytes": 1,
             "mtime_epoch_ns": 12,
         },
+        "install/sanitation_gazebo_control/lib/libDryBinMonitorSystem.so": {
+            "sha256": "3" * 64,
+            "size_bytes": 1,
+            "mtime_epoch_ns": 13,
+        },
     }
     assert set(acceptance.plugin_rows(valid, started_ns)) == set(
         acceptance.PLUGIN_BASENAMES
@@ -399,6 +569,217 @@ def test_source_install_contract_rejects_old_manipulation_install(
         acceptance.source_install_contract(repo, runtime)
 
 
+def test_source_install_contract_supports_one_merged_colcon_prefix(
+    tmp_path: Path,
+) -> None:
+    repo = tmp_path / "repo"
+    runtime = tmp_path / "runtime"
+
+    def materialize(path: Path, text: str) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    materialize(runtime / "install/.colcon_install_layout", "merged\n")
+    materialize(runtime / "install/setup.bash", "# merged\n")
+    for package in acceptance.PACKAGE_SOURCE_DIRS:
+        source_root = repo / acceptance.PACKAGE_SOURCE_DIRS[package]
+        install_root = runtime / "install/share" / package
+        for relative, text in {
+            "launch/formal.launch.py": "value = 1\n",
+            "urdf/formal.xacro": '<robot xmlns:xacro="http://www.ros.org/wiki/xacro"/>\n',
+            "worlds/formal.sdf": '<sdf version="1.10"><world name="formal"/></sdf>\n',
+        }.items():
+            materialize(source_root / relative, text)
+            materialize(install_root / relative, text)
+    source_python = (
+        repo
+        / acceptance.PACKAGE_SOURCE_DIRS["sanitation_manipulation"]
+        / "sanitation_manipulation"
+    )
+    install_python = runtime / "install/lib/python3.12/site-packages/sanitation_manipulation"
+    materialize(source_python / "__init__.py", "VALUE = 1\n")
+    materialize(install_python / "__init__.py", "VALUE = 1\n")
+
+    rows = acceptance.source_install_contract(repo, runtime)
+    assert {row["category"] for row in rows.values()} == {
+        "launch",
+        "urdf",
+        "worlds",
+        "python_module",
+    }
+    assert acceptance.install_entries(runtime) == ["install"]
+
+
+def test_record_and_validate_build_manifest_with_one_merged_prefix(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo = tmp_path / "repo"
+    runtime = tmp_path / "runtime"
+
+    def materialize(path: Path, text: str) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    materialize(repo / "source.txt", "source-bound\n")
+    materialize(runtime / "install/.colcon_install_layout", "merged\n")
+    materialize(runtime / "install/setup.bash", "# merged setup\n")
+    for package in acceptance.PACKAGE_SOURCE_DIRS:
+        source_root = repo / acceptance.PACKAGE_SOURCE_DIRS[package]
+        install_root = runtime / "install/share" / package
+        for relative, text in {
+            "launch/formal.launch.py": "value = 1\n",
+            "urdf/formal.xacro": '<robot xmlns:xacro="http://www.ros.org/wiki/xacro"/>\n',
+            "worlds/formal.sdf": '<sdf version="1.10"><world name="formal"/></sdf>\n',
+        }.items():
+            materialize(source_root / relative, text)
+            materialize(install_root / relative, text)
+    materialize(
+        repo / "starter_ws/src/sanitation_gazebo_control/package.xml",
+        "<package><name>sanitation_gazebo_control</name></package>\n",
+    )
+    source_python = (
+        repo
+        / acceptance.PACKAGE_SOURCE_DIRS["sanitation_manipulation"]
+        / "sanitation_manipulation"
+    )
+    materialize(source_python / "__init__.py", "VALUE = 1\n")
+    materialize(
+        runtime / "install/lib/python3.12/site-packages/sanitation_manipulation/__init__.py",
+        "VALUE = 1\n",
+    )
+    shutil.copytree(repo / "starter_ws/src", runtime / "src")
+    materialize(runtime / acceptance.INSTALL_SYMLINK_REPORT, "")
+    for basename in acceptance.PLUGIN_BASENAMES:
+        materialize(runtime / "install/lib" / basename, f"binary:{basename}\n")
+
+    started_ns = time.time_ns() - 5_000_000_000
+    marker_ns = time.time_ns() - 1_000_000_000
+    for package in acceptance.INSTALL_PACKAGES:
+        marker = runtime / "build" / package / "colcon_build.rc"
+        materialize(marker, "0\n")
+        os.utime(marker, ns=(marker_ns, marker_ns))
+
+    git = {
+        "commit": "a" * 40,
+        "tree": "b" * 40,
+        "dirty": False,
+        "dirty_diff_sha256": "c" * 64,
+        "untracked": [],
+    }
+    versions = {
+        "ros_distro": "jazzy",
+        "ros_base_package": "0.11.0",
+        "gazebo": "Gazebo Sim 8.11.0",
+        "physics_engine": "gz-physics-dartsim-plugin",
+        "python": "3.12.3",
+        "platform": "linux",
+    }
+    monkeypatch.setattr(acceptance, "SOURCE_ROOTS", ("source.txt",))
+    output = tmp_path / "integrated_build_manifest.json"
+    args = argparse.Namespace(
+        repo_root=repo,
+        runtime_ws=runtime,
+        build_started_epoch_ns=started_ns,
+        output=output,
+    )
+    with patch.object(acceptance, "git_snapshot", return_value=git), patch.object(
+        acceptance, "runtime_versions", return_value=versions
+    ):
+        assert acceptance.create_build_manifest(args) == 0
+        manifest = acceptance.validate_build_snapshot(output, repo, runtime)
+
+    assert manifest["installed_inventory"]
+    assert all(name.startswith("install/") for name in manifest["installed_inventory"])
+    assert not any(
+        name.startswith("install/sanitation_vehicle_description/")
+        for name in manifest["installed_inventory"]
+    )
+    assert set(manifest["compiled_plugins"]) == set(acceptance.PLUGIN_BASENAMES)
+    assert manifest["source_install_contract"]
+    assert manifest["frozen_source"]["matches_repository"] is True
+    assert manifest["install_symlink_report"]["size_bytes"] == 0
+
+    materialize(runtime / "install/setup.bash", "# changed after snapshot\n")
+    with patch.object(acceptance, "git_snapshot", return_value=git):
+        with pytest.raises(acceptance.AcceptanceError, match="installed runtime hash"):
+            acceptance.validate_build_snapshot(output, repo, runtime)
+
+
+def test_frozen_source_contract_rejects_runtime_source_drift(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    runtime = tmp_path / "runtime"
+    for package in acceptance.INSTALL_PACKAGES:
+        source = repo / "starter_ws/src" / package / "package.xml"
+        source.parent.mkdir(parents=True, exist_ok=True)
+        source.write_text(package, encoding="utf-8")
+    shutil.copytree(repo / "starter_ws/src", runtime / "src")
+    (runtime / "src/sanitation_manipulation/package.xml").write_text(
+        "changed", encoding="utf-8"
+    )
+    with pytest.raises(acceptance.AcceptanceError, match="frozen runtime src differs"):
+        acceptance.frozen_source_contract(repo, runtime)
+
+
+def test_init_run_binds_side_brush_preflight_to_merged_installed_xacro(
+    tmp_path: Path,
+) -> None:
+    runtime = tmp_path / "runtime"
+
+    def materialize(path: Path, text: str) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+
+    materialize(runtime / "install/.colcon_install_layout", "merged\n")
+    installed_xacro = acceptance.installed_vehicle_xacro(runtime)
+    materialize(installed_xacro, '<robot name="vehicle"/>\n')
+    surface = tmp_path / "side_brush.json"
+    write_json(
+        surface,
+        {
+            "status": "FORMAL_SIDE_BRUSH_EXPANDED_SDF_SURFACE_PASSED",
+            "expanded_sdf_sha256": "7" * 64,
+            "source": {"mode": "xacro_to_gz_sdf", "path": str(installed_xacro)},
+            "runtime_effectiveness": {
+                "dart_effective_from_surface_friction_ode": ["mu", "mu2"]
+            },
+        },
+    )
+    build_manifest = tmp_path / "build.json"
+    write_json(build_manifest, {"placeholder": True})
+    context = tmp_path / "context.json"
+    args = argparse.Namespace(
+        repo_root=tmp_path,
+        runtime_ws=runtime,
+        build_manifest=build_manifest,
+        context=context,
+        run_id="merged-side-brush",
+        started_epoch_ns=2,
+        material="PET",
+        side_brush_surface_audit=surface,
+    )
+    with patch.object(
+        acceptance,
+        "validate_build_snapshot",
+        return_value={"recorded_epoch_ns": 1},
+    ):
+        assert acceptance.init_run(args) == 0
+    saved = json.loads(context.read_text(encoding="utf-8"))
+    assert saved["side_brush_sdf_surface"]["source_xacro"] == str(installed_xacro)
+
+    wrong_surface = json.loads(surface.read_text(encoding="utf-8"))
+    wrong_surface["source"]["path"] = str(tmp_path / "source-tree.xacro")
+    write_json(surface, wrong_surface)
+    context.unlink()
+    with patch.object(
+        acceptance,
+        "validate_build_snapshot",
+        return_value={"recorded_epoch_ns": 1},
+    ):
+        with pytest.raises(acceptance.AcceptanceError, match="frozen installed xacro"):
+            acceptance.init_run(args)
+    assert not context.exists()
+
+
 @pytest.mark.parametrize("field", ("ros_distro", "ros_base_package", "gazebo"))
 def test_missing_ros_or_gazebo_version_fails_closed(field: str) -> None:
     runtime = {
@@ -409,6 +790,31 @@ def test_missing_ros_or_gazebo_version_fails_closed(field: str) -> None:
     runtime[field] = None
     with pytest.raises(acceptance.AcceptanceError, match="versions are missing"):
         acceptance.require_runtime_versions(runtime)
+
+
+def test_git_command_translates_windows_worktree_gitdir_for_wsl(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").write_text(
+        "gitdir: F:/Project/TZcup/.git/worktrees/task\n", encoding="utf-8"
+    )
+    expected = "/mnt/f/Project/TZcup/.git/worktrees/task"
+    with patch.object(acceptance.os.path, "isdir", return_value=True):
+        monkeypatch.setattr(acceptance.os, "name", "posix")
+        command = acceptance.git_command(repo, "rev-parse", "HEAD")
+    assert f"--git-dir={expected}" in command
+    assert f"--work-tree={repo.resolve()}" in command
+    assert command[-2:] == ["rev-parse", "HEAD"]
+
+
+def test_git_command_rejects_missing_declared_worktree_gitdir(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    (repo / ".git").write_text("gitdir: missing-admin-dir\n", encoding="utf-8")
+    with pytest.raises(acceptance.AcceptanceError, match="declared Git worktree directory is missing"):
+        acceptance.git_command(repo, "status")
 
 
 def test_build_snapshot_rejects_changed_source_hash(tmp_path: Path) -> None:
@@ -460,7 +866,21 @@ def test_runner_has_exact_partition_cleanup_and_four_unique_offsets() -> None:
     assert 'run_water_scenario "water_normal" 1' in runner
     assert 'run_water_scenario "water_full" 2' in runner
     assert 'run_wrapped_scenario "manipulation" 3' in runner
+    assert "validate_formal_side_brush_sdf_surface.py" in runner
+    assert "--side-brush-surface-audit" in runner
+    assert "formal_runtime_gate_binding.py" in runner
+    assert 'runtime_binding="${INTEGRATED_ACCEPTANCE_RUNTIME_BINDING:-${contract_summary}.runtime_binding.json}"' in runner
+    assert "start_simulation_safety_inputs:=true" in runner
+    assert "start_power_system_simulators:=true" in runner
+    assert "high_bandwidth_sensor_runtime:=false" in runner
     assert "rm -f --" in runner
+
+    build_preflight = runner.index('"${aggregator}" preflight')
+    side_brush_preflight = runner.index("validate_formal_side_brush_sdf_surface.py")
+    init_run = runner.index('"${aggregator}" init-run')
+    first_scenario = runner.index('run_wrapped_scenario "mobility" 0')
+    assert build_preflight < side_brush_preflight < init_run < first_scenario
+    assert runner.index("formal_runtime_gate_binding.py") < first_scenario
 
 
 def test_runner_refuses_reused_run_directory_and_publishes_manifest_atomically() -> None:
@@ -469,12 +889,29 @@ def test_runner_refuses_reused_run_directory_and_publishes_manifest_atomically()
     assert 'if ! mkdir "${run_dir}" 2>/dev/null; then' in runner
     assert 'mkdir -p "${run_dir}"' not in runner
     assert "Refusing to reuse integrated acceptance run directory" in runner
+    assert "Refusing to overwrite integrated acceptance runtime binding" in runner
+    assert "Refusing to overwrite integrated acceptance contract summary" in runner
+    assert "must resolve to the canonical contract-summary sidecar" in runner
+    assert 'expected_runtime_binding="$(python3 - "${contract_summary}"' in runner
+    assert runner.index("must resolve to the canonical contract-summary sidecar") < runner.index(
+        'mkdir -p "${evidence_root}"'
+    )
     assert 'manifest_tmp="${manifest}.pending.$$"' in runner
     assert '--context "${context}" --output "${manifest_tmp}"' in runner
     assert 'mv -- "${manifest_tmp}" "${manifest}"' in runner
     assert runner.index('--output "${manifest_tmp}"') < runner.index(
         'mv -- "${manifest_tmp}" "${manifest}"'
     )
+    assert '--material "${material}"' in runner
+    assert '--runtime-binding "${runtime_binding}"' in runner
+    assert "publish_integrated_basic_functional_acceptance.py" in runner
+    assert '--manifest "${manifest}" --snapshot-manifest "${snapshot_manifest}"' in runner
+    assert '--session-status "${session_status}" --runtime-closure "${runtime_closure}"' in runner
+    assert '--output "${contract_summary}"' in runner
+    assert '"${aggregator}" aggregate-attempt' in runner
+    assert 'if (( aggregate_exit != 0 )); then' in runner
+    assert 'Integrated acceptance failed attempt retained: ${manifest}' in runner
+    assert runner.index('"${aggregator}" aggregate-attempt') < runner.index('publish_integrated_basic_functional_acceptance.py')
 
 
 def test_runner_exit_trap_cleans_exact_active_partition() -> None:

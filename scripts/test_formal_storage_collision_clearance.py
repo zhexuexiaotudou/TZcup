@@ -119,26 +119,11 @@ def _expanded_robot() -> ET.Element:
         xml = _run_checked([xacro, str(MODEL), "use_sim:=false"])
         return ET.fromstring(xml)
 
-    # The project is developed on Windows with ROS 2 Jazzy in WSL.  Keep the
-    # same test executable from PowerShell instead of accepting a source-only
-    # assertion that never materializes the robot tree.
-    wsl = shutil.which("wsl.exe") if os.name == "nt" and not source_only else None
-    if wsl:
-        drive = MODEL.drive.rstrip(":").lower()
-        assert len(drive) == 1 and MODEL.is_absolute(), f"unsupported Windows path: {MODEL}"
-        linux_path = f"/mnt/{drive}/{MODEL.as_posix()[3:]}"
-        bash = (
-            "set -e; source /opt/ros/jazzy/setup.bash; "
-            f"xacro {shlex.quote(linux_path)} use_sim:=false"
-        )
-        xml = _run_checked([wsl, "bash", "-lc", bash], shell_command=bash)
-        return ET.fromstring(xml)
-
     # GitHub's fast gate is deliberately ROS-independent.  Its versioned
     # materialized URDF supplies the full joint tree, while the current Xacro
     # collision literals are overlaid below.  This keeps the CI gate sensitive
-    # to the bodywork / chute edits under test without installing ROS merely to
-    # evaluate numeric, argument-free geometry.
+    # to the bodywork / chute edits under test without installing ROS or ever
+    # starting WSL behind the Windows cold-start memory gate.
     return _ros_independent_geometry_robot()
 
 
@@ -322,6 +307,11 @@ def test_dry_usable_volume_and_gravity_path_are_free_of_bodywork_collision() -> 
         ),
     )
     assert all(bore.minimum[i] < bore.maximum[i] for i in range(3))
+    required = CUBE_EDGE_M + PASSAGE_SAFETY_MARGIN_M
+    assert bore.size[0] > required and bore.size[1] > required, (
+        f"continuous hopper/chute/lid bore must exceed {required:.3f} m, "
+        f"measured={bore.size[:2]}"
+    )
     assert _bodywork_intrusions(bore) == []
 
     # The chute must land inside the dry usable footprint rather than beside it.
@@ -333,9 +323,9 @@ def test_dry_usable_volume_and_gravity_path_are_free_of_bodywork_collision() -> 
 def test_wastewater_effective_fill_volume_is_free_of_bodywork_collision() -> None:
     # Frozen tank dimensions and competition payload cap from storage_system.xacro
     # / formal_competition_vehicle.urdf.xacro.  The effective volume is the
-    # actual 9.7064 L accepted fill, not the unused 14 L installation envelope.
+    # actual 8.30 L accepted fill, not the unused 14 L installation envelope.
     inner_x, inner_y, inner_z = 0.350, 0.250, 0.160
-    effective_l = 9.7064
+    effective_l = 8.30
     fill_height = effective_l / 1000.0 / (inner_x * inner_y)
     assert fill_height <= inner_z
     wet_effective = _centered_box(

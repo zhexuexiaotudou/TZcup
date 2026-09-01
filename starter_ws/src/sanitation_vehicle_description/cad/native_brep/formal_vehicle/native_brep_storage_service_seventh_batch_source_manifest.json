@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "manifest_id": "tzcup_native_brep_storage_service_seventh_batch_source_manifest_v1",
+  "status": "design_input_pending_native_export",
+  "claim_boundary": "Static source/contract hash binding only. No CadQuery execution, export, manufacturing, or runtime acceptance.",
+  "source_files": [
+    {
+      "path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_seventh_batch.py",
+      "sha256": "1e44a1879efd5a42035a7e063e3d6cfb8a2f570b3aab6438bbaec9d826a0db93",
+      "role": "authoritative_editable_per_part_parametric_cadquery_brep_source"
+    }
+  ],
+  "design_inputs": [
+    {
+      "path": "config/high_fidelity_vehicle/native_brep_storage_service_seventh_batch_contract.json",
+      "sha256": "4a2b8e1f37aa8148fcd2097077cd7230c4c09ea1ceb2f1b1ea3ef96795ad070b",
+      "role": "unique_source_mesh_to_builder_mapping_contract"
+    }
+  ],
+  "prohibited_methods": [
+    "mesh_to_step_conversion",
+    "faceted_or_tessellated_step_export",
+    "mesh_import_as_native_brep_substitute",
+    "placeholder_fcstd_or_step_artifact",
+    "merging_service_assembly_into_a_single_box"
+  ],
+  "verification": {
+    "algorithm": "sha256",
+    "execution_mode": "static_hash_and_ast_only",
+    "update_rule": "Source, contract, and this manifest must update together; matching hashes do not authorize CadQuery execution or native export."
+  }
+}

@@ -1,0 +1,110 @@
+# Product localization ownership:
+#   local_ekf: odom -> base_footprint and /odom
+#   AMCL: lidar-map pose measurement only (tf_broadcast=false in Nav2 config)
+#   navsat_transform: GNSS -> map-referenced odometry measurement
+#   global_ekf: map -> odom and /localization/fused_odom
+# Mapping mode does not start global_ekf because slam_toolbox owns map -> odom.
+local_ekf:
+  ros__parameters:
+    use_sim_time: true
+    frequency: 50.0
+    sensor_timeout: 0.20
+    two_d_mode: true
+    transform_time_offset: 0.0
+    transform_timeout: 0.10
+    print_diagnostics: true
+    publish_tf: true
+    publish_acceleration: true
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: odom
+    odom0: /odom/unfiltered
+    # Wheel odometry supplies planar forward velocity and yaw rate.  Pose is
+    # deliberately not fused, preventing its integrated drift being counted
+    # twice by the EKF.
+    odom0_config: [false, false, false,
+                   false, false, false,
+                   true,  false, false,
+                   false, false, true,
+                   false, false, false]
+    odom0_queue_size: 20
+    odom0_differential: false
+    odom0_relative: false
+    imu0: /imu/data
+    # The VN-100/Gazebo IMU supplies yaw orientation, yaw rate and planar
+    # acceleration. Roll/pitch/z are removed by two_d_mode.
+    imu0_config: [false, false, false,
+                  false, false, true,
+                  false, false, false,
+                  false, false, true,
+                  true,  true,  false]
+    imu0_queue_size: 50
+    imu0_differential: false
+    imu0_relative: false
+    imu0_remove_gravitational_acceleration: true
+
+navsat_transform:
+  ros__parameters:
+    use_sim_time: true
+    frequency: 20.0
+    delay: 0.0
+    magnetic_declination_radians: 0.0
+    yaw_offset: 0.0
+    zero_altitude: true
+    broadcast_utm_transform: false
+    broadcast_cartesian_transform: false
+    publish_filtered_gps: true
+    use_odometry_yaw: false
+    wait_for_datum: false
+
+global_ekf:
+  ros__parameters:
+    use_sim_time: true
+    frequency: 30.0
+    sensor_timeout: 0.35
+    two_d_mode: true
+    # The global filter owns a continuously queryable map -> odom edge.  Its
+    # absolute AMCL/GNSS inputs can be intermittent while the vehicle is
+    # stationary, so publish the process-model prediction at the current ROS
+    # time instead of repeatedly re-stamping the last measurement epoch.
+    predict_to_current_time: true
+    transform_time_offset: 0.0
+    transform_timeout: 0.10
+    print_diagnostics: true
+    publish_tf: true
+    publish_acceleration: false
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_footprint
+    world_frame: map
+    odom0: /odom
+    # Preserve the smooth local velocity estimate without reusing its pose as
+    # a second global measurement.
+    odom0_config: [false, false, false,
+                   false, false, false,
+                   true,  false, false,
+                   false, false, true,
+                   false, false, false]
+    odom0_queue_size: 20
+    pose0: /amcl_pose
+    # AMCL is the lidar-map x/y/yaw measurement. It must not broadcast TF in
+    # this mode; global_ekf is the sole map -> odom owner.
+    pose0_config: [true,  true,  false,
+                   false, false, true,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+    pose0_queue_size: 10
+    pose0_differential: false
+    pose0_relative: false
+    odom1: /odometry/gps
+    # NavSatFix is converted to metric map-frame x/y by navsat_transform.
+    odom1_config: [true,  true,  false,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+    odom1_queue_size: 10
+    odom1_differential: false
+    odom1_relative: false

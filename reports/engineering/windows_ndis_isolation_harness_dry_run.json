@@ -1,0 +1,112 @@
+﻿{
+    "schema_version":  1,
+    "report_kind":  "windows_ndis_isolation_harness",
+    "captured_at_utc":  "2026-08-31T07:26:54.5436077Z",
+    "mode":  "dry_run",
+    "execute_requested":  false,
+    "selected_target":  null,
+    "isolation_wait":  {
+                           "requested_seconds":  15,
+                           "actual_elapsed_seconds":  0,
+                           "sleep_performed":  false
+                       },
+    "exact_target_catalog":  {
+                                 "Tailscale":  {
+                                                   "target":  "Tailscale",
+                                                   "adapter_names":  [
+                                                                         "Tailscale"
+                                                                     ],
+                                                   "service_names":  [
+                                                                         "Tailscale"
+                                                                     ]
+                                               },
+                                 "FSE":  {
+                                             "target":  "FSE",
+                                             "adapter_names":  [
+                                                                   "vEthernet (FSE HostVnic)",
+                                                                   "vSwitch (FSE Switch)"
+                                                               ],
+                                             "service_names":  [
+
+                                                               ]
+                                         }
+                             },
+    "default_route_interface_indexes":  20,
+    "protections":  {
+                        "protected_adapter_names":  [
+                                                        "WLAN"
+                                                    ],
+                        "protected_interface_descriptions":  [
+                                                                 "Intel(R) Wi-Fi 6E AX211 160MHz",
+                                                                 "Realtek Gaming 2.5GbE Family Controller"
+                                                             ],
+                        "default_route_rejected":  true
+                    },
+    "before":  {
+                   "memory":  {
+                                  "captured_at_utc":  "2026-08-31T07:26:54.4991666Z",
+                                  "pool_nonpaged_bytes":  23414325248,
+                                  "pool_nonpaged_gib":  21.81,
+                                  "pool_paged_bytes":  874450944,
+                                  "available_bytes":  1278492672,
+                                  "committed_bytes":  37245050880
+                              },
+                   "adapters":  [
+
+                                ],
+                   "services":  [
+
+                                ]
+               },
+    "after_isolation":  {
+                            "memory":  {
+                                           "captured_at_utc":  "2026-08-31T07:26:54.4991666Z",
+                                           "pool_nonpaged_bytes":  23414325248,
+                                           "pool_nonpaged_gib":  21.81,
+                                           "pool_paged_bytes":  874450944,
+                                           "available_bytes":  1278492672,
+                                           "committed_bytes":  37245050880
+                                       },
+                            "adapters":  [
+
+                                         ],
+                            "services":  [
+
+                                         ]
+                        },
+    "after_restore":  {
+                          "memory":  {
+                                         "captured_at_utc":  "2026-08-31T07:26:54.5299997Z",
+                                         "pool_nonpaged_bytes":  23414423552,
+                                         "pool_nonpaged_gib":  21.81,
+                                         "pool_paged_bytes":  874532864,
+                                         "available_bytes":  1280978944,
+                                         "committed_bytes":  37245067264
+                                     },
+                          "adapters":  [
+
+                                       ],
+                          "services":  [
+
+                                       ]
+                      },
+    "applied_actions":  [
+
+                        ],
+    "recovery":  {
+                     "attempted":  false,
+                     "commands":  [
+
+                                  ],
+                     "errors":  [
+
+                                ],
+                     "state_drift":  [
+
+                                     ],
+                     "success":  true
+                 },
+    "errors":  [
+
+               ]
+}

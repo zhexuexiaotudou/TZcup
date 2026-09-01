@@ -17,8 +17,11 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description() -> LaunchDescription:
     gui = LaunchConfiguration("gui")
     material = LaunchConfiguration("material")
+    cube_name = LaunchConfiguration("cube_name")
     use_sim_time = LaunchConfiguration("use_sim_time")
     physics_engine = LaunchConfiguration("physics_engine")
+    spawn_single_cube = LaunchConfiguration("spawn_single_cube")
+    dry_accounting_mode = LaunchConfiguration("dry_accounting_mode")
     model = PathJoinSubstitution(
         [FindPackageShare("sanitation_manipulation"), "urdf", "formal_manipulation_acceptance.urdf.xacro"]
     )
@@ -30,7 +33,11 @@ def generate_launch_description() -> LaunchDescription:
     )
     gz_launch = PathJoinSubstitution([FindPackageShare("ros_gz_sim"), "launch", "gz_sim.launch.py"])
     robot_description = ParameterValue(
-        Command(["xacro ", model, " use_sim:=true bodywork_visible:=true"]), value_type=str
+        Command([
+            "xacro ", model, " use_sim:=true bodywork_visible:=true",
+            " dry_accounting_mode:=", dry_accounting_mode,
+        ]),
+        value_type=str,
     )
     cube_description = ParameterValue(
         Command(["xacro ", cube, " material:=", material]), value_type=str
@@ -61,6 +68,14 @@ def generate_launch_description() -> LaunchDescription:
             "/world/formal_cube_manipulation/model/tzcup_formal_sanitation_vehicle/link/dry_bin_link/sensor/dry_bin_floor_contact/contact",
             "/storage/dry_bin/floor_contact",
         ),
+        (
+            "/safety/front_bumper/contact",
+            "/formal_vehicle/simulation/raw/front_bumper/contact",
+        ),
+        (
+            "/safety/rear_bumper/contact",
+            "/formal_vehicle/simulation/raw/rear_bumper/contact",
+        ),
     ):
         contact_bridges.append(
             Node(
@@ -72,13 +87,48 @@ def generate_launch_description() -> LaunchDescription:
             )
         )
 
+    active_controller_spawner = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=[
+            "joint_state_broadcaster", "arm_controller",
+            "gripper_controller", "cleaning_controller", "storage_controller",
+            "--controller-manager", "/controller_manager",
+            "--controller-manager-timeout", "40", "--service-call-timeout", "40",
+            "--switch-timeout", "40", "--activate-as-group",
+        ],
+        output="screen",
+    )
+    velocity_controller_loader = Node(
+        package="controller_manager",
+        executable="spawner",
+        arguments=[
+            "brush_controller", "recovery_controller",
+            "--controller-manager", "/controller_manager",
+            "--controller-manager-timeout", "40", "--service-call-timeout", "40",
+            "--switch-timeout", "40", "--inactive",
+        ],
+        output="screen",
+    )
+    safety_manager = Node(
+        package="sanitation_safety",
+        executable="whole_vehicle_safety_manager",
+        parameters=[{"use_sim_time": False}],
+        output="screen",
+    )
+
     return LaunchDescription(
         [
             SetEnvironmentVariable("GZ_SIM_RESOURCE_PATH", resource_path),
             DeclareLaunchArgument("gui", default_value="false"),
             DeclareLaunchArgument("material", default_value="PET"),
+            DeclareLaunchArgument("cube_name", default_value="material_cube"),
             DeclareLaunchArgument("use_sim_time", default_value="true"),
             DeclareLaunchArgument("physics_engine", default_value="gz-physics-bullet-featherstone-plugin"),
+            DeclareLaunchArgument("spawn_single_cube", default_value="true"),
+            DeclareLaunchArgument(
+                "dry_accounting_mode", default_value="physical_resident"
+            ),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(gz_launch),
                 launch_arguments={
@@ -92,16 +142,17 @@ def generate_launch_description() -> LaunchDescription:
             ),
             TimerAction(
                 period=2.0,
+                condition=IfCondition(spawn_single_cube),
                 actions=[
                     Node(
                         package="ros_gz_sim",
                         executable="create",
                         parameters=[{"robot_description": cube_description}],
                         arguments=[
-                            "-param", "robot_description", "-name", "material_cube",
+                            "-param", "robot_description", "-name", cube_name,
                             # Work outside the body envelope so the fingers can
                             # reach the ground cube without hitting a cowl.
-                            "-x", "0.650", "-y", "-0.450", "-z", "0.017",
+                            "-x", "0.300", "-y", "-0.950", "-z", "0.017",
                         ],
                         output="screen",
                     )
@@ -114,6 +165,23 @@ def generate_launch_description() -> LaunchDescription:
                         package="robot_state_publisher",
                         executable="robot_state_publisher",
                         parameters=[{"robot_description": robot_description, "use_sim_time": use_sim_time}],
+                        # The formal publisher below is the single global
+                        # String /robot_description writer.  Keep the state
+                        # publisher's private model parameter out of that
+                        # public product topic, as in formal_vehicle_sim.
+                        remappings=[
+                            (
+                                "robot_description",
+                                "/formal_vehicle/internal/robot_description_from_state_publisher",
+                            )
+                        ],
+                        output="screen",
+                    ),
+                    Node(
+                        package="sanitation_vehicle_description",
+                        executable="formal_robot_description_publisher.py",
+                        name="formal_robot_description_publisher",
+                        parameters=[{"robot_description": robot_description}],
                         output="screen",
                     ),
                     Node(
@@ -140,6 +208,12 @@ def generate_launch_description() -> LaunchDescription:
                 ],
                 output="screen",
             ),
+            Node(
+                package="sanitation_safety",
+                executable="simulation_safety_inputs",
+                parameters=[{"use_sim_time": False, "initial_estop_active": True}],
+                output="screen",
+            ),
             *contact_bridges,
             # DetachableJoint starts attached by design.  Release before any
             # arm motion, then reset the cube pose in the runtime verifier.
@@ -154,19 +228,14 @@ def generate_launch_description() -> LaunchDescription:
             ),
             TimerAction(
                 period=8.0,
-                actions=[
-                    Node(
-                        package="controller_manager",
-                        executable="spawner",
-                        arguments=[
-                            "joint_state_broadcaster", "arm_controller", "gripper_controller", "storage_controller",
-                            "--controller-manager", "/controller_manager",
-                            "--controller-manager-timeout", "40", "--service-call-timeout", "40",
-                            "--switch-timeout", "40", "--activate-as-group",
-                        ],
-                        output="screen",
-                    )
-                ],
+                actions=[active_controller_spawner],
             ),
+            # Controller spawners can remain alive for several seconds after a
+            # successful group switch on a low-real-time-factor Gazebo run.
+            # Start the inactive brush/recovery loaders and the safety manager
+            # from explicit startup deadlines rather than treating process
+            # exit as proof that safety authority exists.
+            TimerAction(period=16.0, actions=[velocity_controller_loader]),
+            TimerAction(period=20.0, actions=[safety_manager]),
         ]
     )

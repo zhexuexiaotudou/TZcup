@@ -6,17 +6,43 @@
     "rear_left_fisheye",
     "rear_right_fisheye",
     "gnss",
-    "imu"
-  ],
-  "approximate_fov_pending_sensors": [
+    "imu",
     "wrist_d435_depth"
   ],
-  "claim_boundary": "Numeric initial layout and deterministic budgets pass. Expanded URDF inertials/names/limits must pass separately; final CoG, wastewater capacity, mesh swept volumes, exact occlusion, ground contact and Gazebo sensor visibility remain fail-closed.",
+  "approximate_fov_pending_sensors": [],
+  "claim_boundary": "Numeric layout, final wastewater capacity and deterministic budgets pass. Expanded URDF, sampled task-anchor collision/CoG, exact occlusion and cleaning-contact reports are separate source-bound gates; continuous arm-space, exact S100P envelope/mounting, mass/thermal/connector/live-hardware integration and rendered sensor visibility remain explicitly fail-closed.",
+  "compute_hardware": {
+    "external_envelope_frozen": false,
+    "modeled_collision_dimensions_m": [
+      0.121,
+      0.12,
+      0.0524
+    ],
+    "protective_enclosure_internal_clear_dimensions_m": [
+      0.174,
+      0.124,
+      0.064
+    ],
+    "provisional_reference_dimensions_m": [
+      0.121,
+      0.12,
+      0.0524
+    ],
+    "selected_model": "D-Robotics_RDK_S100P_V1P0_user_owned",
+    "unresolved_physical_validation": [
+      "exact_external_dimensions",
+      "mounting_hole_pattern",
+      "board_mass",
+      "thermal_rejection",
+      "connector_and_cable_service_space",
+      "live_power_and_compute_runtime"
+    ]
+  },
   "counts": {
-    "approximate_fov_passed": 7,
-    "approximate_fov_pending": 1,
+    "approximate_fov_passed": 8,
+    "approximate_fov_pending": 0,
     "component_envelopes": 8,
-    "installation_frames": 31,
+    "installation_frames": 42,
     "sensor_layouts": 8
   },
   "dry_bin_usable_l": 40.0,
@@ -27,37 +53,36 @@
     "required_installation_frames_have_numeric_initial_poses",
     "declared_component_envelopes_fit_transport_envelope",
     "dry_bin_geometry_and_usable_volume_at_least_40_l",
-    "mass_installation_and_design_caps_bound_preliminary_wastewater_fill",
-    "payload_limit_at_preliminary_usable_wastewater_fill",
+    "mass_installation_design_and_cog_caps_bound_wastewater_fill",
+    "payload_limit_at_final_usable_wastewater_fill",
     "effective_cleaning_width_at_least_0_6_m",
     "declared_arm_stowed_and_operating_envelopes_are_bounded",
-    "static_sensor_layout_approximate_fov_clearance"
+    "static_sensor_layout_approximate_fov_clearance",
+    "rdk_s100_official_external_envelope_fits_project_enclosure"
   ],
   "payload": {
-    "at_preliminary_usable_fill_kg": 88.9234,
+    "at_preliminary_usable_fill_kg": 87.517,
     "design_limit_kg": 91.35,
-    "remaining_margin_kg": 2.4266
+    "remaining_margin_kg": 3.833
   },
   "pending_external_gates": [
-    "exact_s100_board_envelope",
-    "full_inertia_and_cog_scan",
-    "fov_occlusion_solve",
-    "final_wastewater_capacity",
+    "exact_s100p_board_envelope_and_mounting_pattern",
+    "s100_mass_thermal_connector_and_live_hardware_validation",
     "detailed_power_topology",
-    "arm_exact_swept_volume",
-    "cleaning_ground_contact",
+    "arm_exact_continuous_swept_volume",
     "gazebo_sensor_ray_and_visibility_scan"
   ],
   "preliminary_wastewater": {
-    "cog_limit_l": null,
-    "final_capacity_frozen": false,
+    "cog_limit_l": 14.0,
+    "final_capacity_frozen": true,
+    "final_expanded_urdf_mass_limit_l": 10.375,
     "installation_limit_l": 14.0,
-    "mass_limit_l": 12.133,
     "nominal_before_usable_fraction_l": 12.133,
-    "usable_l": 9.7064
+    "preliminary_mass_limit_l": 12.133,
+    "usable_l": 8.3
   },
   "robot_name": "tzcup_formal_sanitation_vehicle",
-  "status": "LAYOUT_CONTRACT_VALID_URDF_AND_SIMULATION_GATES_PENDING",
+  "status": "LAYOUT_CONTRACT_VALID_RESOLVED_ENGINEERING_GATES_WITH_DECLARED_EXTERNAL_PENDING",
   "transport_envelope_m": {
     "height": 1.4,
     "length": 1.16,

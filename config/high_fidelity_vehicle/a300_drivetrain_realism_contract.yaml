@@ -1,0 +1,185 @@
+schema_version: 1
+contract_id: a300_drivetrain_realism_integration_v2
+status: VEHICLE_INTEGRATION_IMPLEMENTED_RUNTIME_REVALIDATION_PENDING
+
+upstream_lock:
+  repository: https://github.com/clearpathrobotics/clearpath_common.git
+  commit: b0f6d920422ad302372a1c65e31d61648da884ed
+  license: BSD-3-Clause
+  source_files:
+    description: clearpath_platform_description/urdf/a300/a300.urdf.xacro
+    motor: clearpath_platform_description/urdf/a300/drivetrain/motor.urdf.xacro
+    beam: clearpath_platform_description/urdf/a300/drivetrain/suspension_beam.urdf.xacro
+    wheel: clearpath_platform_description/urdf/a300/drivetrain/wheels/outdoor.urdf.xacro
+    wheel_chain: clearpath_platform_description/urdf/a300/drivetrain/wheels.urdf.xacro
+    control: clearpath_control/config/a300/control/diff_4wd.yaml
+  public_manual: https://docs.clearpathrobotics.com/docs_robots/outdoor_robots/husky/a300/user_manual_husky/
+
+published_platform_boundaries:
+  source_class: official_public
+  robot_mass_kg: 78.5
+  payload_limit_kg: 101.5
+  wheelbase_m: 0.512
+  nominal_tire_diameter_m: 0.336
+  physical_wheel_radius_from_locked_description_m: 0.1651
+  odometry_control_radius_from_locked_control_m: 0.1625
+  tire_center_track_locked_description_m: 0.562
+  maximum_vehicle_speed_mps: 2.0
+  nominal_bus_voltage_v: 25.6
+  battery_capacity_ah: 40.0
+  battery_energy_wh: 1024.0
+  continuous_current_per_motor_a: 17.0
+  continuous_battery_current_a: 60.0
+  aggregate_motor_output_power_w: 1080.0
+  command_timeout_s: 0.5
+  controller_acceleration_limit_mps2: 2.0
+  controller_deceleration_limit_mps2: 4.0
+  outdoor_wheel_mass_kg_each: 2.5
+  outdoor_wheel_width_m: 0.1143
+  suspension_system_present: false
+  emergency_stop_brake: electrical_resistive
+  published_stopping_distance_m:
+    unloaded_flat: 0.5
+    payload_100kg_flat: 0.7
+    payload_100kg_grade_15deg: 1.0
+
+future_rigid_body_chain:
+  note: The upstream item named suspension_beam is a fixed structural beam; A300 has no suspension system.
+  side_mounts:
+    left:  {xyz_m: [0.0, 0.192, 0.03763], side_sign: 1.0}
+    right: {xyz_m: [0.0, -0.192, 0.03763], side_sign: -1.0}
+  per_side_links:
+    - {role: suspension_spacer, joint_type: fixed, mesh: suspension_spacer.stl, origin_rule: side_mount}
+    - {role: suspension_beam, joint_type: fixed, mesh: suspension_beam.stl, xyz_rule_m: [0.0, side_sign*0.0159, 0.0]}
+  per_wheel_links:
+    front: {beam_motor_xyz_rule_m: [0.256, side_sign*0.0095, -0.0085]}
+    rear:  {beam_motor_xyz_rule_m: [-0.256, side_sign*0.0095, -0.0085]}
+    motor_mount_offset_rule_m: [0.0, side_sign*0.0655, 0.0]
+    motor_joint_type: fixed
+    wheel_joint_type: continuous
+    wheel_axis_xyz: [0.0, 1.0, 0.0]
+    resulting_tire_center_y_abs_m: 0.2829
+  no_compliance_joint_allowed: true
+
+vendored_meshes:
+  - role: motor
+    path: starter_ws/src/sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/motor.stl
+    sha256: 0a447d5095cb323fca92e8ad68632ffff36cf5677a81c610d41aab2893e4c83e
+  - role: suspension_beam
+    path: starter_ws/src/sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/suspension_beam.stl
+    sha256: 1a6697213e1e8ac9de765d528027a41718536729f471ab6f4d38e92ebf6c9aea
+  - role: suspension_spacer
+    path: starter_ws/src/sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/suspension_spacer.stl
+    sha256: cf1ad7153579a53c5e98905ac0011e1b92819bbcaa3efce1968e2bdce04092ca
+  - role: outdoor_left
+    path: starter_ws/src/sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/wheels/outdoor_left.stl
+    sha256: 23d474fc7826e41737b065d5f5d4674c88b910e764634e62b079835e3882bbae
+  - role: outdoor_right
+    path: starter_ws/src/sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/wheels/outdoor_right.stl
+    sha256: bf7b48da8da6338b1c178f31e194f469d05159e2012aef4a063491b258cc7e08
+
+mass_partition:
+  source_class: engineering_allocation_preserving_official_total
+  warning: Clearpath does not publish separate beam, spacer, or motor masses in the locked Xacro. These allocations are not official and require measurement or identified CAD mass properties before hardware-correlated acceptance.
+  published_total_kg: 78.5
+  allocations_kg:
+    chassis_and_internal_structure_excluding_batteries: 35.5
+    two_battery_assemblies: 15.0
+    four_motor_assemblies: 8.0
+    two_fixed_structural_beams: 5.0
+    two_fixed_spacers: 1.0
+    four_outdoor_wheels: 10.0
+    standard_top_plate: 4.0
+  allocation_sum_kg: 78.5
+  residual_unallocated_kg: 0.0
+  final_rule: Before hardware-correlated acceptance, redistribute the provisional fixed-link allocations using measured or CAD-derived evidence while preserving 78.5 kg and without adding mass to the current aggregate chassis.
+
+plant_model:
+  core_header: starter_ws/src/sanitation_gazebo_control/include/sanitation_gazebo_control/A300DrivetrainPlantCore.hh
+  core_source: starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantCore.cc
+  gazebo_candidate_source: starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantSystem.cc
+  typed_command_adapter_source: starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainCommandAdapter.cc
+  test_source: starter_ws/src/sanitation_gazebo_control/test/test_a300_drivetrain_plant_core.cc
+  candidate_compile_project: starter_ws/src/sanitation_gazebo_control/test/a300_drivetrain_candidate/CMakeLists.txt
+  required_effects:
+    - torque_speed_saturation
+    - per_motor_continuous_current_limit
+    - aggregate_battery_current_limit
+    - aggregate_output_power_limit
+    - resistive_brake_response_delay_and_ramp
+    - command_timeout
+    - emergency_stop
+    - any_motor_fault_global_inhibit
+    - invalid_input_fail_safe
+  engineering_parameters_not_official:
+    wheel_side_torque_constant_nm_per_a: 3.5
+    low_speed_torque_limit_nm: 59.5
+    speed_error_gain_nm_per_rad_s: 12.0
+    torque_slew_rate_nm_per_s: 400.0
+    service_brake_torque_limit_nm: 32.0
+    brake_response_delay_s: 0.08
+    brake_ramp_time_s: 0.12
+    drivetrain_efficiency: 0.80
+  integration_boundary:
+    active_in_cmake: true
+    loaded_by_current_vehicle: true
+    current_runtime_behavior_changed: true
+    remaining_requirements:
+      - Correlate engineering parameters against measured coast-down, acceleration, current and stopping tests.
+      - Re-run map, mobility, dynamic-obstacle and whole-vehicle safety acceptance after integration.
+    typed_bridge_plan:
+      ros_input: /base_controller/cmd_vel@geometry_msgs/msg/TwistStamped
+      adapter_output: /model/tzcup_formal_sanitation_vehicle/a300_drivetrain/cmd_vel@geometry_msgs/msg/Twist
+      gazebo_type: gz.msgs.Twist
+      safety_enable_ros: /model/tzcup_formal_sanitation_vehicle/a300_drivetrain/actuator_enable@std_msgs/msg/Bool
+      safety_enable_gazebo_type: gz.msgs.Boolean
+      odometry_gazebo: /model/tzcup_formal_sanitation_vehicle/a300_drivetrain/odom@gz.msgs.Odometry
+      odometry_ros_target: /odom/unfiltered@nav_msgs/msg/Odometry
+    final_single_authority_plan:
+      wheel_effort_writer: A300DrivetrainPlantSystem via gz.sim JointForceCmd
+      diff_drive_controller_retained: false
+      wheel_ros2_control_interfaces: [position_state, velocity_state]
+      plant_raw_odometry_ros_topic: /odom/unfiltered
+      plant_publishes_tf: false
+      selected_odometry_topic: /odom
+      selected_odometry_publisher: /local_ekf
+      odom_to_base_tf_edge: odom->base_footprint
+      odom_to_base_tf_publisher: /local_ekf
+      local_ekf_base_link_frame: base_footprint
+      mapping_map_to_odom_publisher: /slam_toolbox
+      cleaning_map_to_odom_publisher: /global_ekf
+      amcl_tf_broadcast: false
+      legacy_topic_adapter_odometry_relay_present: false
+      forbidden_parallel_writers:
+        - diff_drive_controller wheel velocity command interfaces
+        - base_controller odometry publication
+        - plant odometry TF publication
+        - legacy topic adapter /odom publication
+
+encoder_feedback_boundary:
+  explicit_physical_links: [front_left_encoder_link, front_right_encoder_link, rear_left_encoder_link, rear_right_encoder_link]
+  quantized_topics: [/formal_vehicle/encoders/a300/counts, /formal_vehicle/encoders/a300/joint_states]
+  public_a300_encoder_resolution_available: false
+  simulated_counts_per_wheel_revolution: 4096
+  simulated_resolution_source: engineering_parameter_not_Clearpath_specification
+  hardware_gate: identify_encoder_model_resolution_polarity_and_calibrate_from_as_built_vehicle
+
+offline_acceptance_tests:
+  - published_boundary_and_provenance
+  - exact_mesh_hashes
+  - fixed_no_suspension_link_chain
+  - mass_partition_conservation_and_truth_boundary
+  - overspeed_command_clamp
+  - torque_speed_power_saturation
+  - per_motor_and_battery_current_saturation
+  - drive_torque_slew
+  - timeout_immediate_propulsion_drop_then_delayed_brake
+  - emergency_stop_global_inhibit
+  - motor_fault_global_inhibit
+  - invalid_numeric_input_fail_safe
+  - plant_loaded_exactly_once
+  - sole_wheel_joint_force_writer
+  - typed_safety_command_bridge
+  - raw_odometry_without_tf
+  - local_ekf_selected_odometry_and_tf_authority
+  - no_legacy_base_controller_or_odometry_relay

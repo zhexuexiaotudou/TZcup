@@ -1,5 +1,68 @@
 # 项目推进记录
 
+- 原生 CAD 制造输入仍未放行：per-part release-gap register 对 105 个项目件建立合同来源的未决门索引（64 个去重门，21 个供应商件继续排除），静态预检第 12 检查仅验证其完整性；`native_cad_release_ready` 与 `manufacturing_release_ready` 均为 `false`，不得以 register 替代 STEP/FCStd、export receipt 或受控制造证据。
+
+## 2026-08-31：低内存条件下的并行推进与明确阻塞边界
+
+- 原生 B-rep source-coverage 只读审计现已接入正式整车静态工程预检，作为第 10 个
+  fail-closed 检查；第五至第八批补齐车身 47 件、清扫 23 件、储存/服务 34 件和配电箱
+  1 件后，105/105 个项目件均有唯一 `source_mesh`/builder 静态关联，状态为
+  `STATIC_INDIVIDUAL_COVERAGE_CLOSED`。这只关闭“逐件源码映射”缺口；CadQuery 尚未执行，
+  FCStd/STEP、组件装配、导出回执、制造放行和运行时验收仍未通过。
+- 第 11 个静态检查现已验证 component-addressable assembly 草案：105 个项目件全部绑定
+  `native_source + builder_symbol + contract_path`，21 个供应商件继续要求供应商原生 CAD；
+  草案状态为 `STATIC_COMPONENT_ADDRESSABLE_DRAFT_VALID_NATIVE_EXPORT_BLOCKED`。八份 CadQuery
+  源均通过总原生 CAD 静态识别，但正式清单仍未放行，且没有 STEP、export receipt 或可用的
+  Windows exporter，因此总 outcome 仍为 `blocked`。
+- 四功能正式总编排改为独立链继续执行：前进/制动、抓取投箱、地污清扫、积水回收任一链
+  失败都会写 attempt 证据并继续其余安全链，后续依赖步骤标为 `SKIPPED`，总状态绝不转成
+  PASS；fresh session/snapshot/source-build/runtime-binding 任一缺失都不能验收。针对性回归
+  124 项通过。项目规定的 `ci_fast.py` 当前按设计在 required-files 门因三份 fresh 正式运行
+  报告缺失而停止，未用历史 artifact 补写。
+- 前进/制动、抓取投箱、地面脏污清扫和积水/漏液回收新增统一 fresh-runtime
+  readiness 审计并纳入纯 Python CI。当前四份 session/snapshot/runtime-binding 绑定的
+  正式 Gazebo 报告均缺失，因此该审计为有效 `FORMAL_FOUR_CHAIN_RUNTIME_BLOCKED`；历史
+  artifact 只能参考，不能补成 PASS，也不进入静态制造预检。
+- gz-transport13 晚发现最小验证已在冻结 r45 库上通过 publisher-first 与 subscriber-first 两种顺序：每种均发布 40 条、收到 39 条连续唯一消息，发布端和订阅端都绑定同一份补丁库 `libgz-transport13.so.13`（SHA-256 `714890133aeeb4484ef3be20de96755587917a187dbf8f88f07f72025de1e833`）。因此传感器 12 路零流不能再归因于 transport 晚发现，正式路径继续采用 Sensors system 启动前预嵌入整车 SDF。
+- 新一轮 S100P G0 证据已在本机和板端双端保留，SHA-256 均为 `657d13428f5c575e2405d8795766891c79765e1efe98c7c74eeb1ac1f5516b18`。固定白名单只在隔离子进程 source `/opt/tros/humble/setup.bash`，只读执行 `ros2 pkg list`、`ros2 node list --no-daemon`、`ros2 topic list -t --no-daemon`；证明 TROS/BPU 基线存在，但未发现 TZcup overlay/install、项目模型或产品节点，不构成板端产品部署通过，状态仍为 `NOT_READY_FOR_REAL_ACTUATOR_COMMANDS`。
+- 新冻结 r46 构建在启动 WSL 前由冷启动门以返回码 `86` 拒绝：当时可用提交内存约 11.37 GiB，低于不可调低的 12.5 GiB 门限。随后只读复核显示 Windows 非分页池约 19.98 GiB、约占已提交内存 61%，而 WSL 已关闭、Docker private 为 0；现有证据只能定位到内核/驱动侧总量，不能给任何具体驱动定责。不得复用未建立的 r46，恢复内存后必须使用全新 r47。
+- 阻塞策略改为局部挂起而非全局停工：依赖 Gazebo/WSL 的新 runtime、12 路传感器实跑和 fresh v7 RL 证据暂挂；继续推进 S100P 只读盘点、静态 URDF/CAD/合同检查、失败编排、质量预算和文档同步。数据采集保持暂停，不生成伪 HBM；未经用户明确授权也不停止驱动、服务或发送任何实车执行器命令。
+- 当前 expanded URDF 的纯静态 mesh-ray FOV/遮挡报告已重新生成并绑定 SHA-256 `25073935dd32469ac5e49c1de5764966c22627c150e97248e2bacc27fd5fb062`；UTM-30LX、MID-360、前向 D435、双后鱼眼、GNSS 和腕部 D435 的最低无遮挡比例为 `0.898242368`，全部通过现有静态阈值。`real_world_build_readiness` 配置因此恢复为 `valid=true`，但状态仍正确保持 `NOT_READY_FOR_FABRICATION_OR_REAL_WORLD_ACCEPTANCE`；该报告不替代 Gazebo 12 路出流、运动中自遮挡、实车标定或制造验收。
+- 三类基础动作的正式合同已在低内存条件下收口：A300 前进/停车、20 个 30 mm 随机材料方块抓取投后箱、正常/满箱/滤堵/非法排水/服务排空水回收均强制绑定同一冻结 runtime、RUNNING session、snapshot 与 source hash。抓投增加 evaluator-only 实体质量和产品累计质量闭合；服务排空增加“排出体积对应质量 = 污水箱减质量 = DynamicPayload 减质量”守恒门。该项只证明 runner/validator fail-closed，不是新的 Gazebo 动作通过证据。
+- 正式 RL 多场地合同不再接受原有最小 `2/2/2` 抽样：训练入口和最终编排强制读取冻结场景清单，完整覆盖 `32 train / 8 validation / 12 hidden` 地图；RL 汇总必须交叉核验实际 materialized split，并至少包含全部 20 个 validation/hidden 地图结果。单 hidden 端到端任务继续作为单场门，明确不能替代多场地泛化门。
+- 正式建图、固图复用、同图全覆盖基线和随机场景感知 runner 已统一接入 source-bound preflight：在 source 任何 overlay 前先验证唯一 frozen install、runtime closure、RUNNING session 和当前 snapshot/source hash，并确认项目包全部从该 install 解析；历史 `.work` 或用户目录 overlay fallback 不再允许作为正式运行输入。
+- 新增独立于单场 E2E 的 `8 validation + 12 hidden` 产品闭环串行合同与 live executor。执行器固定一次只运行一个场地，依次 materialize、首次建图/固图、同图基线、单场产品任务、只读接口观察、站点证据转换和最终聚合；聚合器必须收到 20/20 个互不重复场地的 DOSOD、EdgeSAM、Nav2、动态行人和清扫执行器实际接口证据，并绑定同一 runtime/session/snapshot。证据合同使用 `validation`，执行器在场景生成 CLI 边界显式映射为合法 split `val`，对应地图为 `val-map-000..007`；隐藏场为 `hidden-map-000..011`。尚未启动 Gazebo，正式证据文件仍缺失，不能把它写成泛化通过。
+- 多场地产品证据已消除两处确定性接口漂移：PC EdgeSAM 观察链改为产品节点真实发布的 `/perception/ground_dirt/masks`（`sensor_msgs/msg/Image`），Nav2 观察链改为 active-cleaning 实际发送的 `/follow_path`（`nav2_msgs/action/FollowPath`）及其 action status。最终静态编排新增递归接口审计，跨场景生成器、multisite executor、感知合同/发布器、observation bridge、trajectory executor 与 Nav2 controller fail-closed 检查上述三条链；当前静态审计为 `31 steps / 26 gates / failures=[]`，但仍不代表任何 Gazebo 任务已运行。
+- S100P 新增“只准备、不部署”的产品制品清单与验证器，覆盖 DOSOD HBM/词表、EdgeSAM encoder/decoder HBM、类映射、overlay 包、启动参数、`rdk_s100/nash-m` 平台和 SHA-256/大小/目标路径。当前本地检查正确返回 `BLOCKED`：正式 DOSOD HBM 文件、其声明摘要/大小及 runtime manifest 行缺失；验证过程未复制到板端、未安装依赖、未启动 ROS，也未恢复数据采集。
+- 上述低内存改动整合后，纯 Windows 脚本回归为 `965 passed / 10 skipped / 2 deselected / 13 subtests passed`。两项 deselected 是必须读取新 Gazebo 底盘/机械臂运行报告的门；另有两个依赖 ROS `rclpy` 的水安全测试未在纯 Windows 收集，必须在新 r47 ROS 环境执行。测试过程中发现并修复了多场 validation map ID 与生成器不一致，以及 Windows 文件 mtime 与 10 ms 合成会话余量造成的夹具抖动；生产 freshness 规则未放宽。
+- 本轮新增接口/静态编排组合回归为 `61 passed`，PC 感知与 active-cleaning 实际源码合同回归为 `22 passed`，mobility/water 纯 Python 合同回归为 `31 passed`，S100P 准备链回归为 `20 passed / 13 subtests passed`。随后重跑 scripts 全量低内存回归得到 `970 passed / 10 skipped / 2 expected failures / 13 subtests passed`；两项失败精确对应缺失的新 manipulator 和 vehicle Gazebo runtime report，没有第三类回归。水安全 collector 与水系统 preoperational checker 的 ROS 集成仍因 Windows 环境缺少 `rclpy` 未收集，明确保留给 r47；正式 S100P bundle 仍只因 DOSOD HBM 四项缺口返回 `BLOCKED`。
+
+## 2026-08-30：S100P G0 只读实机盘点与传感器预嵌入修复
+
+- 新增 `scripts/collect_s100p_g0_inventory.py`，其命令白名单不含 ROS 发布、CAN/GPIO 写入、`sudo` 或任何执行器控制。真实板端只读采集确认设备为 `D-Robotics RDK S100P V1P0`、`drobot,s100-rdk`、`aarch64`，采集时约 22.3 GB 总内存、19.5 GB 可用；原始证据位于 `artifacts/s100p_hardware_bringup/20260830T1530Z_g0_readonly/G0/board_identity_and_inventory.json`。
+- 当前板端仅枚举到根 USB hub、I2C 和 SPI 控制器，没有 `/dev/video*`、USB/ACM 串口或 `/dev/can*`。因此 G0 只证明 S100P 计算板与 SSH 网络在线；相机、雷达、GNSS、底盘、机械臂、刷盘和泵仍未形成实机接入证据，状态继续为 `NOT_READY_FOR_REAL_ACTUATOR_COMMANDS`。
+- r45 传感器运行在 headless 模式仍有 12 路高带宽流为零，并在 Windows 可提交内存低于 6 GiB 后由 watchdog 正确中止。根因方向转向 Gazebo 动态 UserCommands spawn 与固定关节折叠的传感器挂载：新增 source-bound URDF→SDF 预嵌入生成器，恢复传感器 holder/fixed joint，保持旧 spawn 的 `z=0.005 m` 初态，并让正式 launch 以 `spawn_robot:=false` 在 Sensors system 启动前装入同一整车。静态/XML 合同已通过，新的冻结 runtime 和真实 12 路运行门尚未执行，不能写成传感器通过。
+- 最终编排失败报告现在会持久化实际 `FAILED` 步骤、退出码、blocker、reason、日志和证据路径；不再出现顶层失败但步骤列表只含已通过项的误导状态。RL 多地图正式训练虽然不依赖 Gazebo，但旧 session/snapshot 与 r44 closure 已漂移，必须等待当前源码的新 runtime、snapshot 和 session 后再生成 fresh v7 证据。
+- 正式整车制造质量门只读复核确认：赛题映射未给整车总质量上限，项目以 A300 `101.5 kg` 平地 payload 的 `0.9` 即 `91.35 kg` 作为工程门。`160.007583 kg` 仍只是 stale 展开审计基线；保守满载余量 `0.030417 kg`，距 5 kg 制造余量尚缺经实物验证的 `4.969583 kg`。干湿动态载荷按结构基线一次性替换、不重复计入；候选仅限臂座、非安全壳体、箱架/箱体、传感器塔/支架和清扫支架/护罩，必须完成称重、惯量/CoG、FEA/疲劳、振动、防水和功能验证，不能通过改 URDF 数值获得 credit。
+
+## 2026-08-30：正式传感器门提交内存保护整改（待新运行时实跑）
+
+- 最终验收 v8 的传感器步骤在 Windows 可用提交内存降至约 6 GiB 时被 watchdog 正确中止；Docker private 为 0，未触碰 Docker。复核确认同时 eager 桥接双 D435、双 1080p 鱼眼、MID-360 及未消费点云会产生超过 1 GB/s 的原始搬运量，collector 的有界 Python 元数据不是主泄漏源。
+- 把正式高带宽原始图像/点云从控制平面 bridge 分离到独立 YAML，固定 `GZ_TO_ROS + SENSOR_DATA + lazy + subscriber/publisher queue=1`。十九路视觉验收 topic 也使用独立合同，但运行验证发现 Jazzy `ros_gz_bridge` 不仅没有激活 lazy Gazebo 订阅，改为 eager 后仍不转发实际 1600×1000 图像；因此视觉工作室改用 `ros_gz_image/image_bridge` 的 `sensor_data` QoS，并由默认关闭、仅验收显式开启的开关隔离。该桥没有 lazy/队列参数，不能把旧 YAML 的一深字段继续写成保证；相机固定 0.2 fps 且仍受内存看门狗约束，正式高带宽传感器保持 lazy。传感器的 URDF 分辨率、名义帧率、数量、frame 和验收阈值均未降低。
+- collector 改为先等待控制器和 robot description，再用 best-effort/KEEP_LAST(1) 订阅；每个合同流取得三帧、唯一源时间戳和元数据后立即退订，controller service 超时请求会显式移除。修复 description 订阅误写入传感器字典导致的启动异常，并增加独立运行时的 Windows 预检与 watchdog。
+- 全部正式 Gazebo runner 在总编排模式下不再二次 `setsid`，Gazebo、bridge、采集器和产品节点保持在 watchdog 实际监控的外层 PGID；单独运行时仍创建专用进程组做精确清理。Windows 探针新增 `vmmemWSL` private 观测。新增 Windows 冷启动包装器，在拉起 WSL 前要求至少 12.5 GiB 可用提交内存、Docker private 不超过 4 GiB，并强制 `vmmemWSL=0`；提交内存下限不能调低、Docker 上限不能调高。WSL 中的 Linux 构建脚本必须验证 5 分钟内的已通过证据，复制为 runtime 内只读文件并由 schema v5 closure 逐步绑定，防止绕开包装器或事后替换；随后再执行 10 GiB Windows 二次门、4 GiB Linux 可用内存门和持续 watchdog，构建并发固定不超过 2。正式 runner 和最终编排也不再允许通过环境变量关闭保护，Windows 存储几何测试不再自动启动 WSL。
+- 加固后的正式包装器实测 `r27_cold_gate_attempt_3` 以专用返回码 `86` 在启动 WSL 前拒绝（可用 12,042,526,720 B，要求 13,421,772,800 B），未创建 build log；最新只读 `r27_cold_probe_7` 仍以 `86` 拒绝（可用 12,133,896,192 B）。全过程 Docker 0、`vmmemWSL=0`。旧的 attempt/probe 证据继续保留，不作为当前构建通过证明。
+- 相关组件、编排、隔离与内存针对性测试均已通过（Linux `/proc` 专用用例在 Windows 环境按设计跳过）；最新纯 Windows 复验为感知包 `71 passed`，内存/closure/编排针对性集合 `61 passed / 4 skipped`。完整 ROS 无关快速测试集合得到 `1056 passed / 8 skipped / 11 subtests passed`，仅保留 3 个按设计 fail-closed 的缺口：重新生成当前 source-bound snapshot、传感器运行报告和机械臂运行报告；它们只能由新 WSL 运行时/仿真产生。新冻结 WSL runtime 尚未构建，不能把静态通过写成 Gazebo 通过；完整 `ci_fast.py` 也仍会在这些报告缺失处拒绝。
+- 三个非最终入口 `run_auto16_release.ps1`、`run_frozen_coverage_trial.ps1`、`run_visual_demo.ps1` 也统一接入共享 WSL 入口门：冷启动要求 12.5 GiB 且 `vmmemWSL=0`，已有 WSL 时要求 10 GiB 且 `vmmemWSL>0`，两种状态由探针再次强制、互斥，消除 helper 判定后 VM 状态改变的竞态；两者均限制 Docker private 不超过 4 GiB。AUTO-16 的路径转换和实际仿真、AUTO-17 的首次 prepare、主任务、两条 shutdown/restart prepare 及唯一 retry 都在各自调用前重新采样并使用新证据。最新正式包装器 `r27_cold_gate_attempt_4` 以 `86` 拒绝（可用 11,933,470,720 B），新冷热状态字段完整、未创建 build log、没有启动 WSL；冷热/closure/legacy 入口静态集合 `72 passed / 2 skipped`。
+- 当前源码的只读功能位置审计保存在 `.work/formal_functional_acceptance_current_20260830_1.json`：25 个 canonical gate 中 20 个物理缺失、5 个因旧 session/snapshot 无效而 unbound；38 个功能位置全部 pending，11 个 mission gate 未解决。该结果明确阻止把历史单项通过冒充当前整车闭环，也证明新 r27 必须从 snapshot 和新 session 开始完整重跑，不能从旧传感器失败点续跑。
+- r29 首次正式运行在 `03_visual` 暴露 19 路采集器 RELIABLE 与 bridge BEST_EFFORT 不兼容；采集器已改为 `KEEP_LAST(1) + BEST_EFFORT + VOLATILE`。r30 复验确认 DDS 两端 QoS 已一致，但 Gazebo 侧仍显示视觉 lazy bridge 无订阅；r31 改为 eager 后确认 Gazebo topic 持续发布完整 1600×1000 RGB，通用 bridge 的 Gazebo 订阅、ROS 发布者及匹配订阅者也都存在，却仍没有任何 ROS 图像消息，故下一冻结运行时切换到专用 `ros_gz_image/image_bridge`。共享清理同时修复了总编排模式下 launch PID 不是进程组长时的无界等待，失败后的精确步骤 PGID 可正常收口。
+
+## 2026-08-28：最终验收统一运行闭包
+
+- 最终编排最初为 30 步；2026-08-31 加入独立的 `8 validation + 12 hidden` 多场产品泛化聚合门后现为 31 步。统一 source/install/model 冻结清单覆盖 16 个正式运行包、其 launch/config/URDF/world/mesh/Python 文件、构建标记、12 个 Gazebo C++ 插件、DOSOD/EdgeSAM 模型清单及 ONNX Runtime。
+- 正式运行只接受一个 `colcon --merge-install` 的 copy install；`install/` 内任意符号链接、isolated package prefix、陈旧安装文件或构建标记、插件/模型摘要漂移均 fail-closed。
+- 预检先完整验证闭包；正式执行的 31 个步骤各自在开始前和结束后复验同一清单，runner 失败时也执行结束侧检查。该项只建立静态与编排合同，尚未启动 WSL/Gazebo，也不替代积水 full、感知、端到端、多场泛化或 S100 实板运行门。
+
 ## 2026-08-26：正式整车移动、抓投与积水回收联合物理闭环
 
 - 在最新正式整车上补齐 `DynamicPayloadSystem` 固定关节归并后的质量/惯量/重心更新，以及 L1 `WaterRecoverySystem`：地面水按 24 列、每列 6 单元的有限 2.5D 水层建模，只有侧刷/滚刷、刮条、吸口、泵和未满污水箱同时满足物理门时才允许回收；地面扣减量严格等于污水箱质量增量，9.7064 kg 满箱后立即停止流量和地面扣减。
@@ -225,7 +288,7 @@
 
 ## AUTO-14：官方 J6 工具链就绪、正式编译依赖阻断（2026-07-30）
 
-D-Robotics 官方 OpenExplorer `3.7.0` 的 2.85 GB S100/S600 包已完成 SHA-256 校验，`hbdk4_compiler 4.7.5`、`hmct 2.6.5`、`horizon_tc_ui 3.5.3` 已解析，隔离 CUDA/cuDNN 环境中的 `hb_compile --help` 成功。仓库具备固定 batch/shape、operator/custom-op、500 帧校准集预检、官方配置生成和 HBM fail-closed runtime adapter。AUTO-06 正式模型未产出，故不得执行正式量化/编译；本机无 J6 板卡。`AUTO-14=BLOCKED`，`J6_TOOLCHAIN_PASS=false`、`J6_RUNTIME_PASS=false`；证据位于 `artifacts/autonomous_auto14_20260730_evidence/`。
+D-Robotics 官方 OpenExplorer `3.7.0` 的 2.85 GB S100/S600 包已完成 SHA-256 校验，`hbdk4_compiler 4.7.5`、`hmct 2.6.5`、`horizon_tc_ui 3.5.3` 已解析，隔离 CUDA/cuDNN 环境中的 `hb_compile --help` 成功。仓库具备固定 batch/shape、operator/custom-op、500 帧校准集预检、官方配置生成和 HBM fail-closed runtime adapter。此段是 2026-07-30 历史探测，当时无 J6 板卡且 AUTO-06 正式模型未产出，故 `AUTO-14=BLOCKED`。2026-08-30 真实 S100P 已连接并完成官方参考 BPU smoke，但项目四类 HBM、非空产品输出和 1800 秒正式门仍为 BLOCKED；证据边界见 `artifacts/formal_s100p_board_smoke_20260830.json`。
 
 ## AUTO-05：G3 数据门通过、模型 screening 阻断（2026-07-30）
 
@@ -711,6 +774,31 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File .\scripts\run_stage4_doc
 ```
 
 评审边界：优先修正定位一致性并完整回放覆盖任务；是否进入感知与 J6 阶段由人工评审后另行决定。
+
+## 正式整车低内存静态闭环（2026-08-31）
+
+- 原生 B-rep 参数源码现覆盖全部 105 个项目自研件；21 个供应商件保持显式排除。组件可寻址装配草案完整，但 STEP、真实 CadQuery 装配和 SHA 回执尚未生成。
+- 新增 Windows 原生 CadQuery 严格串行导出合同：8 批来源，前 4 批仅 provenance，后 4 批实际映射 `47+23+34+1=105` 个唯一组件。当前所有合同仍 pending，4096 MiB 物理内存门也未满足，因此 `formal_export_ready=false`；未安装或导入 CadQuery。
+- 串行路径现阻断所有非空 `pending_*`、source/contract SHA 漂移与全文件 STEP faceted/tessellated 标记，并在加载批次源码模块前执行资源门。逐件失败日志保留，只有全体组件及装配 STEP 读回通过后才允许发布回执。
+- S100P 正式 bundle 已绑定当前车辆 snapshot、DOSOD/EdgeSAM 配置、ROS 2 launch、adapter 源及完整运行依赖闭包；四项模型角色与 product bundle/launch 参数逐项一致。当前 DOSOD 项目 HBM、板端 overlay/依赖、热/功耗与运行证据仍缺失，故 `ready_to_deploy=false`，且未执行 SSH、复制、安装、启动或数据采集。
+- 静态工程预检已扩展为 14/14 项并重新生成权威报告；`static_preflight_complete=true` 只表示静态检查执行完整，顶层仍明确保持 `manufacturing_release_ready=false`、`native_export_ready=false`、`deployment_ready=false`。快速 CI 新增 live 报告一致性检查，陈旧的 11/12 项报告不能继续冒充当前证据。
+- 对既有 DOSOD/S100P 输入做了只读盘点：项目 ONNX、四类词表、embedding、checkpoint 和历史工具链发现证据的 SHA/大小均匹配，但没有合规 `calibration_manifest.json`、至少 500 个 `[1,3,640,640]` float32 校准张量或本次 Linux x86_64 compiler identity；项目 DOSOD HBM 仍不存在。数据采集继续保持暂停，旧 350 条 stage5b 记录不得冒充本合同校准集。
+- Windows 正式内存探针新增只读 nonpaged pool 与 `Nbuf/Nnbl/Nnbf` pool-tag 诊断，查询失败会结构化降级且不改变原有 commit/WSL/Docker 门。2026-08-31 现场一次短查询记录 nonpaged 约 21.89 GiB、三项 tag 合计约 18.50 GiB，标记 `suspected_ndis_nonpaged_pool_leak=true`；该信号只用于解释内存门，不构成具体驱动定责，也不会自动停进程、重启网络或启动运行时。
+
+### 低内存阶段继续收口（2026-08-31）
+
+- 前进/制动、物理抓取入箱、地面脏污覆盖、积水回收四条正式链路已改为受限 shell 命令与 Python AST 语义审计；注释、`echo`、死分支、错误顺序或未被 `main` 调用的伪连线不能再满足门禁。当前四条源码连线与整车快照均有效，但四份当前 session 的正式运行报告仍不存在，因此保持 `FORMAL_FOUR_CHAIN_RUNTIME_BLOCKED`，历史报告不得补位。
+- 正式 session 现在在启动时冻结 runtime closure；普通 gate、S100P collector/validator、`--resume-s100` 和多场地直接聚合入口均拒绝 closure A 会话被 closure B 收尾。合并回归为 174 项通过并另有 13 个子用例通过；原 `ci_fast` ROS-independent 清单约 1416/1418 通过，剩余两项只因正式底盘与机械臂运行报告缺失而 fail-closed。
+- Windows 编排器新增只读 `--windows-dry-run`，不调用系统 `bash.exe`、WSL、Gazebo 或 CAD。当前冻结源码和感知 artifact manifest 存在；`build/install/log`、`install/setup.bash`、integrated build manifest、runtime closure、install symlink 清单、已安装 side-brush surface preflight、Windows cold-start manifest 和 ONNX overlay 仍缺失，故不能进入 native preflight 或运行验收。
+- native CAD 静态盘点已纠正为 8 个 manifest-hash 绑定的 CadQuery 参数化 B-rep 源、105 个 component-addressable 草案部件；仍无已发布 assembly manifest、native export receipt、非网格 STEP 和可验证的 Windows exporter，所以制造发布继续阻断。串行导出新增显式 `--resume`、哈希绑定 checkpoint、原子文件替换、逐批 4096 MiB 内存复核和对象释放；这些只是失败恢复能力，不是导出完成证据。
+- S100P 新增统一只读 final-predeploy 门，强制同时消费正式 bundle、DOSOD HBM 合同、完整板端依赖闭包、PC/session/runtime-closure identity，以及 HBM、模型 payload、overlay build、依赖、热/功耗五类真实回执。当前五类回执均未形成，现有 session/runtime binding 也不是同一完整 closure，受控结论保持 `BLOCKED`；本轮未 SSH、复制、安装或启动板端节点。
+- 新增 16 项整车功能 requirement coverage/gap register：UTM-30LX、MID360、前向 D435、双后鱼眼、腕部 D435、ZED-F9P、VN100、轮速、A300、UR5e、2F-85、干箱动态载荷、刷地、刮吸回收、污水箱动态载荷和整车安全联锁均存在模型、控制与正式 runtime gate 声明；但当前 session 的 evidence 为空，16/16 都保持 `MISSING_CURRENT_SESSION_GATE_EVIDENCE`。功能合同权威状态为 `FORMAL_FUNCTIONAL_ACCEPTANCE_PENDING`，38 个功能位置 0 个通过、38 个 pending，且遗留 session 绑定的是旧 source snapshot。
+- Functional aggregate 现在逐一重读并校验全部 21 个 runtime-binding sidecar，严格绑定当前 session 的 snapshot、开始时间和完整 runtime closure；合同漏 gate、额外 gate、历史报告、`skipped` 或仅摘要均不能促成最终完成。当前静态编排审计覆盖 31 steps / 26 gates / 21 runtime-bound，审计本身通过不等于功能运行通过。
+- Windows NDIS 只读诊断记录非分页池约 21.80 GiB；本机没有 PoolMon/RAMMap/VMMap/Process Explorer，NDIS Operational 日志未启用，因而没有 pool-tag 到驱动的直接映射。Tailscale/Wintun、FSE/vmswitch、Realtek 8125 与 Intel AX211 仅能列为 `possible`，iKuuuVPN 为 `unproven`，没有任何候选达到 `likely`。官方资料也未找到可把本机现象直接归因于这些候选的公告；任何适配器或驱动隔离仍需用户明确授权。
+- 已准备但未执行可回滚的 NDIS 隔离 harness：默认 dry-run，只有显式 `-Execute -Target Tailscale|FSE` 才能改变状态；硬拒绝默认路由、WLAN/AX211/RTL8125，隔离最长 60 秒，FSE 逆序恢复，并逐项校验恢复后服务/适配器状态。当前 dry-run `applied_actions=0`、`state_drift=0`。S100P 历史候选网段当前均经物理接口 23 选路，Tailscale/FSE 未被选为该路由接口，但对过滤/二层的影响仍为 `UNKNOWN_NO_PACKET_OR_FILTER_EVIDENCE`。
+- 内存恢复后的正式执行已收紧为单 worker、单 Gazebo、失败立即停止：先 Windows 冷启动资源门与 frozen build，再记录/验证 runtime closure，随后依次 chassis、ground dirt、water recovery、physical grasp；四链各自在启动前重新执行资源门。失败保留未 finalize 的 RUNNING session，禁止并行 CAD 或自动板端执行。受控 Windows dry-run 仍因 build/install/closure hand-off 缺失保持 `BLOCKED`。
+- 本轮仍未启动 WSL、Gazebo、CadQuery 或 FreeCAD，也没有生成/替换任何正式运行时、STEP、FCStd、板端或数据采集证据。
+
 # AUTO-12 自主推进（2026-07-30）
 
 新增 opt-in `auto12_efficiency_v1`，同步 `1.32 m` 展开刷组的物理/清扫/

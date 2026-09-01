@@ -1,0 +1,43 @@
+{
+  "schema_version": 1,
+  "document_id": "tzcup_windows_native_cadquery_serial_export_contract_v1",
+  "status": "design_input_pending_native_export",
+  "claim_boundary": "This contract prepares a Windows-native, CadQuery-only release path. It is not a release authorization. The 105 component-addressable rows are the reconstruction manifest's individually mapped fifth through eighth batches. Earlier batches are checked as source/contract provenance only and are never duplicated into the 105-member assembly.",
+  "formal_export": {
+    "requires_roundtrip_report": "cadquery_minimal_brep_step_roundtrip",
+    "minimum_free_physical_memory_mib": 4096,
+    "execution": "strictly_serial",
+    "prohibited_methods": [
+      "mesh_to_step_conversion",
+      "mesh_import_as_native_brep_substitute",
+      "faceted_or_tessellated_step_export",
+      "WSL",
+      "Docker",
+      "Gazebo"
+    ],
+    "publication_rule": "Do not create the final component-addressable assembly or SHA-256 receipt until every individual build, STEP re-import and B-rep header check has passed. Preserve the individual JSON log for the first failure and stop immediately."
+  },
+  "source_batches": [
+    {"batch_id": "first", "source": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_first_batch.py", "contract": "config/high_fidelity_vehicle/native_brep_first_batch_contract.json", "source_manifest": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_first_batch_source_manifest.json", "static_component_count": 4, "component_export_count": 0, "role": "provenance_only"},
+    {"batch_id": "second", "source": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_recovery_second_batch.py", "contract": "config/high_fidelity_vehicle/native_brep_cleaning_recovery_second_batch_contract.json", "source_manifest": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_recovery_second_batch_source_manifest.json", "static_component_count": 7, "component_export_count": 0, "role": "provenance_only"},
+    {"batch_id": "third", "source": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_third_batch.py", "contract": "config/high_fidelity_vehicle/native_brep_storage_service_third_batch_contract.json", "source_manifest": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_third_batch_source_manifest.json", "static_component_count": 6, "component_export_count": 0, "role": "provenance_only"},
+    {"batch_id": "fourth", "source": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_body_sensor_power_fourth_batch.py", "contract": "config/high_fidelity_vehicle/native_brep_body_sensor_power_fourth_batch_contract.json", "source_manifest": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_body_sensor_power_fourth_batch_source_manifest.json", "static_component_count": 4, "component_export_count": 0, "role": "provenance_only"},
+    {"batch_id": "fifth_bodywork_per_part", "source": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_bodywork_fifth_batch.py", "contract": "config/high_fidelity_vehicle/native_brep_bodywork_fifth_batch_contract.json", "source_manifest": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_bodywork_fifth_batch_source_manifest.json", "static_component_count": 47, "component_export_count": 47, "role": "component_addressable", "adapter": "fifth_part", "requires_native_validator": true},
+    {"batch_id": "sixth_cleaning_per_part", "source": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_mechanisms_sixth_batch.py", "contract": "config/high_fidelity_vehicle/native_brep_cleaning_mechanisms_sixth_batch_contract.json", "source_manifest": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_cleaning_mechanisms_sixth_batch_source_manifest.json", "static_component_count": 23, "component_export_count": 23, "role": "component_addressable", "adapter": "sixth_item", "requires_native_validator": true},
+    {"batch_id": "seventh_storage_service_per_part", "source": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_seventh_batch.py", "contract": "config/high_fidelity_vehicle/native_brep_storage_service_seventh_batch_contract.json", "source_manifest": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_seventh_batch_source_manifest.json", "static_component_count": 34, "component_export_count": 34, "role": "component_addressable", "adapter": "seventh_mapping", "requires_native_validator": true},
+    {"batch_id": "eighth_power_distribution_single_part", "source": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_power_distribution_eighth_batch.py", "contract": "config/high_fidelity_vehicle/native_brep_power_distribution_eighth_batch_contract.json", "source_manifest": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_power_distribution_eighth_batch_source_manifest.json", "static_component_count": 1, "component_export_count": 1, "role": "component_addressable", "adapter": "eighth_power_distribution", "requires_native_validator": true}
+  ],
+  "expected_source_batch_count": 8,
+  "expected_component_addressable_count": 105,
+  "pending_release_gates": [
+    "all source-batch contracts and per-part statuses are native_export_released",
+    "all contract pending-release fields are closed by controlled evidence",
+    "minimal CadQuery B-rep STEP roundtrip has passed on the active locked Windows environment",
+    "each exported STEP re-imports as non-faceted B-rep",
+    "assembly and SHA-256 receipt are generated only after all components pass"
+  ],
+  "preview": {
+    "implemented": false,
+    "reason": "No preview is exposed until its isolated draft-only semantics and non-readiness labelling are reviewed. A formal release invocation is the only executable mode."
+  }
+}

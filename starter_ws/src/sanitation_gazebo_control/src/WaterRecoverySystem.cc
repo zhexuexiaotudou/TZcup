@@ -22,9 +22,12 @@
 #include <gz/sim/components/JointPosition.hh>
 #include <gz/sim/components/JointVelocity.hh>
 #include <gz/sim/components/Name.hh>
+#include <gz/sim/components/Pose.hh>
 #include <gz/sim/components/Transparency.hh>
 #include <gz/sim/components/Visual.hh>
 #include <gz/transport/Node.hh>
+
+#include "sanitation_gazebo_control/WaterRecoveryPoseCore.hh"
 
 namespace sanitation_gazebo_control
 {
@@ -86,6 +89,32 @@ class WaterRecoverySystem final:
     this->squeegeeFloat = model.JointByName(_ecm, "squeegee_float_joint");
     this->squeegeePitch = model.JointByName(_ecm, "squeegee_pitch_joint");
     this->pump = model.JointByName(_ecm, "recovery_pump_joint");
+    this->frontLeftWheel = model.JointByName(_ecm, "front_left_wheel_joint");
+    this->frontRightWheel = model.JointByName(_ecm, "front_right_wheel_joint");
+    this->rearLeftWheel = model.JointByName(_ecm, "rear_left_wheel_joint");
+    this->rearRightWheel = model.JointByName(_ecm, "rear_right_wheel_joint");
+    const auto baseLink = model.LinkByName(_ecm, "base_link");
+    const auto baseFootprint = model.LinkByName(_ecm, "base_footprint");
+    this->basePoseSource = SelectBasePoseSource(
+        baseLink != gz::sim::kNullEntity,
+        baseFootprint != gz::sim::kNullEntity,
+        this->modelEntity != gz::sim::kNullEntity);
+    switch (this->basePoseSource)
+    {
+      case BasePoseSource::kBaseLink:
+        this->basePoseEntity = baseLink;
+        break;
+      case BasePoseSource::kBaseFootprint:
+        this->basePoseEntity = baseFootprint;
+        break;
+      case BasePoseSource::kModelEntity:
+        this->basePoseEntity = this->modelEntity;
+        break;
+      case BasePoseSource::kUnavailable:
+      default:
+        this->basePoseEntity = gz::sim::kNullEntity;
+        break;
+    }
     this->squeegeeLink = model.LinkByName(_ecm, "squeegee_link");
     this->nozzle = model.LinkByName(_ecm, "suction_nozzle_link");
     // URDF fixed-joint reduction may lump the nozzle into squeegee_link.  The
@@ -97,7 +126,8 @@ class WaterRecoverySystem final:
     }
 
     for (const auto entity : {this->leftBrush, this->rightBrush,
-        this->roller, this->pump})
+        this->roller, this->pump, this->frontLeftWheel,
+        this->frontRightWheel, this->rearLeftWheel, this->rearRightWheel})
     {
       if (entity != gz::sim::kNullEntity)
         gz::sim::enableComponent<gz::sim::components::JointVelocity>(
@@ -130,10 +160,28 @@ class WaterRecoverySystem final:
         this->maximumSqueegeeClearanceM);
     this->ReadDouble(_sdf, "maximum_intake_clearance_m",
         this->maximumIntakeClearanceM);
+    this->ReadDouble(_sdf, "minimum_lift_position_m",
+        this->minimumLiftPositionM);
+    this->ReadDouble(_sdf, "filter_trip_pressure_kpa",
+        this->filterTripPressureKpa);
+    this->ReadDouble(_sdf, "filter_clean_pressure_kpa",
+        this->filterCleanPressureKpa);
+    this->ReadDouble(_sdf, "tank_low_probe_fraction",
+        this->tankLowProbeFraction);
+    this->ReadDouble(_sdf, "tank_high_probe_fraction",
+        this->tankHighProbeFraction);
+    this->ReadDouble(_sdf, "sensor_time_constant_s",
+        this->sensorTimeConstantS);
+    this->ReadDouble(_sdf, "service_drain_rate_l_min",
+        this->serviceDrainRateLMin);
+    this->ReadDouble(_sdf, "service_drain_command_timeout_s",
+        this->serviceDrainCommandTimeoutS);
     this->BuildCells(this->initialGroundVolumeL);
     this->FindWaterVisuals(_ecm);
     this->UpdateWaterVisuals(_ecm);
     this->initialTankMassKg = this->tankMassKg;
+    this->sensedTankLevelFraction = this->tankCapacityKg > 0.0
+        ? this->tankMassKg / this->tankCapacityKg : 0.0;
 
     this->node.Subscribe(this->enableTopic,
         &WaterRecoverySystem::OnEnable, this);
@@ -141,6 +189,10 @@ class WaterRecoverySystem final:
         &WaterRecoverySystem::OnResetGround, this);
     this->node.Subscribe(this->resetTankTopic,
         &WaterRecoverySystem::OnResetTank, this);
+    this->node.Subscribe(this->filterBlockageCommandTopic,
+        &WaterRecoverySystem::OnFilterBlockage, this);
+    this->node.Subscribe(this->drainCommandTopic,
+        &WaterRecoverySystem::OnDrainCommand, this);
 
     this->groundPublisher = this->node.Advertise<gz::msgs::Double>(
         this->stateRoot + "/ground_volume_l");
@@ -158,6 +210,28 @@ class WaterRecoverySystem final:
         this->stateRoot + "/tank_full");
     this->statusPublisher = this->node.Advertise<gz::msgs::StringMsg>(
         this->stateRoot + "/status_json");
+    this->sensedFlowPublisher = this->node.Advertise<gz::msgs::Double>(
+        this->stateRoot + "/sensed_flow_l_min");
+    this->sensedLevelPublisher = this->node.Advertise<gz::msgs::Double>(
+        this->stateRoot + "/sensed_tank_level_fraction");
+    this->filterPressurePublisher = this->node.Advertise<gz::msgs::Double>(
+        this->stateRoot + "/filter_differential_pressure_kpa");
+    this->filterBlockagePublisher = this->node.Advertise<gz::msgs::Double>(
+        this->stateRoot + "/filter_blockage_fraction");
+    this->pumpCurrentPublisher = this->node.Advertise<gz::msgs::Double>(
+        this->stateRoot + "/pump_current_a");
+    this->lowProbePublisher = this->node.Advertise<gz::msgs::Boolean>(
+        this->stateRoot + "/tank_low_probe_wet");
+    this->highProbePublisher = this->node.Advertise<gz::msgs::Boolean>(
+        this->stateRoot + "/tank_high_probe_wet");
+    this->filterFaultPublisher = this->node.Advertise<gz::msgs::Boolean>(
+        this->stateRoot + "/filter_protection_active");
+    this->drainOpenPublisher = this->node.Advertise<gz::msgs::Boolean>(
+        this->stateRoot + "/service_drain_open");
+    this->drainPermittedPublisher = this->node.Advertise<gz::msgs::Boolean>(
+        this->stateRoot + "/service_drain_permitted");
+    this->drainedVolumePublisher = this->node.Advertise<gz::msgs::Double>(
+        this->stateRoot + "/service_drained_volume_l");
     this->payloadPublisher = this->node.Advertise<gz::msgs::Double>(
         "/model/tzcup_formal_sanitation_vehicle/payload/wastewater_mass_kg");
     this->PublishPayload();
@@ -172,21 +246,72 @@ class WaterRecoverySystem final:
 
     this->ApplyPendingResets(_ecm);
     const double dt = std::chrono::duration<double>(_info.dt).count();
+    const double simTimeS = std::chrono::duration<double>(_info.simTime).count();
+    const auto drainRevision = this->drainCommandRevision.load();
+    if (drainRevision != this->appliedDrainCommandRevision)
+    {
+      this->lastDrainCommandSimTimeS = simTimeS;
+      this->appliedDrainCommandRevision = drainRevision;
+    }
+    const double drainCommandAgeS = simTimeS - this->lastDrainCommandSimTimeS;
+    this->drainCommandFresh = this->lastDrainCommandSimTimeS >= 0.0 &&
+        drainCommandAgeS >= 0.0 &&
+        drainCommandAgeS <= this->serviceDrainCommandTimeoutS;
+    if (!this->drainCommandFresh)
+      this->serviceDrainRequestedOpen.store(false);
     const double leftVelocity = std::abs(FirstValue(_ecm, this->leftBrush, true));
     const double rightVelocity = std::abs(FirstValue(_ecm, this->rightBrush, true));
     const double rollerVelocity = std::abs(FirstValue(_ecm, this->roller, true));
     const double pumpVelocity = std::abs(FirstValue(_ecm, this->pump, true));
-    const double liftPosition = FirstValue(_ecm, this->lift, false);
-    const double floatPosition = FirstValue(_ecm, this->squeegeeFloat, false);
-    const double pitchPosition = FirstValue(_ecm, this->squeegeePitch, false);
+    this->liftPositionM = FirstValue(_ecm, this->lift, false);
+    this->squeegeeFloatPositionM = FirstValue(
+        _ecm, this->squeegeeFloat, false);
+    this->squeegeePitchPositionRad = FirstValue(
+        _ecm, this->squeegeePitch, false);
+    const double maximumWheelVelocity = std::max({
+        std::abs(FirstValue(_ecm, this->frontLeftWheel, true)),
+        std::abs(FirstValue(_ecm, this->frontRightWheel, true)),
+        std::abs(FirstValue(_ecm, this->rearLeftWheel, true)),
+        std::abs(FirstValue(_ecm, this->rearRightWheel, true))});
+
+    this->serviceDrainPermitted = this->serviceDrainRequestedOpen.load() &&
+        !this->enabled.load() && pumpVelocity < this->minimumPumpRadS &&
+        leftVelocity < this->minimumBrushRadS &&
+        rightVelocity < this->minimumBrushRadS &&
+        rollerVelocity < this->minimumBrushRadS &&
+        maximumWheelVelocity < this->maximumDrainWheelRadS;
+    // Publish and apply the physical valve state, not the raw request.  An
+    // unsafe request therefore remains observable below but cannot make the
+    // outlet appear open or transfer liquid while recovery is active.
+    this->serviceDrainOpen = this->serviceDrainPermitted;
+    if (this->serviceDrainPermitted && this->tankMassKg > 0.0)
+    {
+      const double drainedL = std::min(
+          this->serviceDrainRateLMin / 60.0 * dt,
+          this->tankMassKg / this->waterDensityKgL);
+      this->tankMassKg -= drainedL * this->waterDensityKgL;
+      this->cumulativeServiceDrainedL += drainedL;
+      this->PublishPayload();
+    }
 
     this->brushReady = leftVelocity >= this->minimumBrushRadS &&
         rightVelocity >= this->minimumBrushRadS &&
         rollerVelocity >= this->minimumBrushRadS;
     this->pumpReady = pumpVelocity >= this->minimumPumpRadS;
-    const bool squeegeeJointsReady = liftPosition <= this->maximumLiftPositionM &&
-        std::abs(floatPosition) <= this->maximumFloatTravelM &&
-        std::abs(pitchPosition) <= this->maximumPitchRad;
+    const bool squeegeeJointsReady =
+        this->liftPositionM >= this->minimumLiftPositionM &&
+        std::abs(this->squeegeeFloatPositionM) <= this->maximumFloatTravelM &&
+        std::abs(this->squeegeePitchPositionRad) <= this->maximumPitchRad;
+
+    this->basePoseAvailable = this->basePoseEntity != gz::sim::kNullEntity &&
+        _ecm.Component<gz::sim::components::Pose>(this->basePoseEntity) != nullptr;
+    if (this->basePoseAvailable)
+    {
+      const auto basePose = gz::sim::worldPose(this->basePoseEntity, _ecm);
+      this->baseWorldZM = basePose.Pos().Z();
+      this->baseWorldRollRad = basePose.Rot().Roll();
+      this->baseWorldPitchRad = basePose.Rot().Pitch();
+    }
 
     gz::math::Pose3d nozzlePose;
     if (this->nozzle != gz::sim::kNullEntity)
@@ -216,13 +341,24 @@ class WaterRecoverySystem final:
         this->intakeClearanceM <= this->maximumIntakeClearanceM;
     this->tankFull = this->tankMassKg >= this->tankCapacityKg - 1e-9;
 
+    const double requestedBlockage = std::clamp(
+        this->filterBlockageFraction.load(), 0.0, 1.0);
+    this->filterDifferentialPressureKpa = this->filterCleanPressureKpa +
+        (this->filterTripPressureKpa * 1.25 - this->filterCleanPressureKpa) *
+        requestedBlockage * requestedBlockage;
+    this->filterProtectionActive =
+        this->filterDifferentialPressureKpa >= this->filterTripPressureKpa;
+
     double recoveredThisStepL = 0.0;
     if (this->enabled.load() && this->brushReady && this->squeegeeReady &&
         this->nozzleReady && this->pumpReady && !this->tankFull &&
+        !this->filterProtectionActive &&
+        !this->serviceDrainOpen && this->basePoseAvailable &&
         this->visualLayoutReady)
     {
       const double pumpLimitL = this->pumpRatedFlowLMin /
-          60.0 * this->hydraulicDerating * dt;
+          60.0 * this->hydraulicDerating *
+          std::max(0.0, 1.0 - requestedBlockage * requestedBlockage) * dt;
       const double tankLimitL = (this->tankCapacityKg - this->tankMassKg) /
           this->waterDensityKgL;
       double requestedL = std::min(pumpLimitL, tankLimitL);
@@ -271,6 +407,23 @@ class WaterRecoverySystem final:
 
     this->instantaneousFlowLMin = dt > 0.0
         ? recoveredThisStepL / dt * 60.0 : 0.0;
+    const double sensorAlpha = this->sensorTimeConstantS <= 0.0
+        ? 1.0 : 1.0 - std::exp(-dt / this->sensorTimeConstantS);
+    this->sensedFlowLMin += sensorAlpha *
+        (this->instantaneousFlowLMin - this->sensedFlowLMin);
+    const double trueLevel = this->tankCapacityKg > 0.0
+        ? this->tankMassKg / this->tankCapacityKg : 0.0;
+    this->sensedTankLevelFraction += sensorAlpha *
+        (trueLevel - this->sensedTankLevelFraction);
+    this->tankLowProbeWet = trueLevel >= this->tankLowProbeFraction;
+    this->tankHighProbeWet = trueLevel >= this->tankHighProbeFraction;
+    const double normalizedPumpSpeed = std::clamp(
+        pumpVelocity / this->ratedPumpRadS, 0.0, 1.25);
+    this->pumpCurrentA = this->pumpReady
+        ? this->pumpNoLoadCurrentA * normalizedPumpSpeed +
+            this->pumpHydraulicCurrentA * normalizedPumpSpeed *
+            (0.25 + 0.75 * requestedBlockage)
+        : 0.0;
     this->tankFull = this->tankMassKg >= this->tankCapacityKg - 1e-9;
     this->publishAccumulator += dt;
     if (this->publishAccumulator >= this->publishPeriodS)
@@ -394,6 +547,10 @@ class WaterRecoverySystem final:
           this->requestedTankMassKg.load(), 0.0, this->tankCapacityKg);
       this->initialTankMassKg = this->tankMassKg;
       this->cumulativeRecoveredL = 0.0;
+      this->cumulativeServiceDrainedL = 0.0;
+      this->sensedTankLevelFraction = this->tankCapacityKg > 0.0
+          ? this->tankMassKg / this->tankCapacityKg : 0.0;
+      this->sensedFlowLMin = 0.0;
       this->PublishPayload();
       this->appliedTankResetRevision = tankRevision;
     }
@@ -411,7 +568,8 @@ class WaterRecoverySystem final:
     const double groundL = this->GroundVolumeL();
     const double groundRemovedKg =
         (this->groundReferenceL - groundL) * this->waterDensityKgL;
-    const double tankGainKg = this->tankMassKg - this->initialTankMassKg;
+    const double tankGainKg = this->tankMassKg - this->initialTankMassKg +
+        this->cumulativeServiceDrainedL * this->waterDensityKgL;
     const double balanceError = std::abs(groundRemovedKg) < 1e-9
         ? 0.0 : std::abs(groundRemovedKg - tankGainKg) /
             std::abs(groundRemovedKg);
@@ -422,9 +580,34 @@ class WaterRecoverySystem final:
     this->PublishDouble(this->flowPublisher, this->instantaneousFlowLMin);
     this->PublishDouble(this->recoveredPublisher, this->cumulativeRecoveredL);
     this->PublishDouble(this->balancePublisher, balanceError);
+    this->PublishDouble(this->sensedFlowPublisher, this->sensedFlowLMin);
+    this->PublishDouble(this->sensedLevelPublisher,
+        this->sensedTankLevelFraction);
+    this->PublishDouble(this->filterPressurePublisher,
+        this->filterDifferentialPressureKpa);
+    this->PublishDouble(this->filterBlockagePublisher,
+        std::clamp(this->filterBlockageFraction.load(), 0.0, 1.0));
+    this->PublishDouble(this->pumpCurrentPublisher, this->pumpCurrentA);
+    this->PublishDouble(this->drainedVolumePublisher,
+        this->cumulativeServiceDrainedL);
     gz::msgs::Boolean full;
     full.set_data(this->tankFull);
     this->fullPublisher.Publish(full);
+    gz::msgs::Boolean lowProbe;
+    lowProbe.set_data(this->tankLowProbeWet);
+    this->lowProbePublisher.Publish(lowProbe);
+    gz::msgs::Boolean highProbe;
+    highProbe.set_data(this->tankHighProbeWet);
+    this->highProbePublisher.Publish(highProbe);
+    gz::msgs::Boolean filterFault;
+    filterFault.set_data(this->filterProtectionActive);
+    this->filterFaultPublisher.Publish(filterFault);
+    gz::msgs::Boolean drainOpen;
+    drainOpen.set_data(this->serviceDrainOpen);
+    this->drainOpenPublisher.Publish(drainOpen);
+    gz::msgs::Boolean drainPermitted;
+    drainPermitted.set_data(this->serviceDrainPermitted);
+    this->drainPermittedPublisher.Publish(drainPermitted);
 
     std::ostringstream stream;
     stream << std::boolalpha << std::fixed << std::setprecision(9)
@@ -432,16 +615,56 @@ class WaterRecoverySystem final:
         << ",\"brush_ready\":" << this->brushReady
         << ",\"squeegee_ready\":" << this->squeegeeReady
         << ",\"nozzle_ready\":" << this->nozzleReady
+        << ",\"cleaning_lift_position_m\":" << this->liftPositionM
+        << ",\"squeegee_float_position_m\":"
+        << this->squeegeeFloatPositionM
+        << ",\"squeegee_pitch_position_rad\":"
+        << this->squeegeePitchPositionRad
+        << ",\"base_pose_available\":" << this->basePoseAvailable
+        << ",\"base_pose_source\":\""
+        << BasePoseSourceName(this->basePoseSource) << "\"";
+    if (this->basePoseAvailable)
+    {
+      stream << ",\"base_world_z_m\":" << this->baseWorldZM
+          << ",\"base_world_roll_rad\":" << this->baseWorldRollRad
+          << ",\"base_world_pitch_rad\":" << this->baseWorldPitchRad;
+    }
+    else
+    {
+      stream << ",\"base_world_z_m\":null"
+          << ",\"base_world_roll_rad\":null"
+          << ",\"base_world_pitch_rad\":null";
+    }
+    stream
         << ",\"nozzle_height_m\":" << this->nozzleHeightM
         << ",\"intake_clearance_m\":" << this->intakeClearanceM
         << ",\"squeegee_blade_clearance_m\":" << this->squeegeeClearanceM
         << ",\"nozzle_world_x\":" << this->nozzleWorldX
         << ",\"nozzle_world_y\":" << this->nozzleWorldY
         << ",\"pump_ready\":" << this->pumpReady
+        << ",\"pump_current_a\":" << this->pumpCurrentA
+        << ",\"filter_blockage_fraction\":"
+        << std::clamp(this->filterBlockageFraction.load(), 0.0, 1.0)
+        << ",\"filter_differential_pressure_kpa\":"
+        << this->filterDifferentialPressureKpa
+        << ",\"filter_protection_active\":"
+        << this->filterProtectionActive
+        << ",\"service_drain_requested_open\":"
+        << this->serviceDrainRequestedOpen.load()
+        << ",\"service_drain_open\":" << this->serviceDrainOpen
+        << ",\"service_drain_command_fresh\":" << this->drainCommandFresh
+        << ",\"service_drain_permitted\":" << this->serviceDrainPermitted
+        << ",\"service_drained_volume_l\":"
+        << this->cumulativeServiceDrainedL
         << ",\"tank_full\":" << this->tankFull
+        << ",\"tank_low_probe_wet\":" << this->tankLowProbeWet
+        << ",\"tank_high_probe_wet\":" << this->tankHighProbeWet
         << ",\"ground_volume_l\":" << groundL
         << ",\"tank_mass_kg\":" << this->tankMassKg
         << ",\"flow_l_min\":" << this->instantaneousFlowLMin
+        << ",\"sensed_flow_l_min\":" << this->sensedFlowLMin
+        << ",\"sensed_tank_level_fraction\":"
+        << this->sensedTankLevelFraction
         << ",\"recovered_volume_l\":" << this->cumulativeRecoveredL
         << ",\"visual_remaining_fraction\":"
         << (this->groundReferenceL > 0.0 ? groundL / this->groundReferenceL : 0.0)
@@ -481,6 +704,18 @@ class WaterRecoverySystem final:
     this->tankResetRevision.fetch_add(1);
   }
 
+  private: void OnFilterBlockage(const gz::msgs::Double &_message)
+  {
+    this->filterBlockageFraction.store(
+        std::clamp(_message.data(), 0.0, 1.0));
+  }
+
+  private: void OnDrainCommand(const gz::msgs::Boolean &_message)
+  {
+    this->serviceDrainRequestedOpen.store(_message.data());
+    this->drainCommandRevision.fetch_add(1);
+  }
+
   private: gz::transport::Node node;
   private: gz::transport::Node::Publisher groundPublisher;
   private: gz::transport::Node::Publisher tankPublisher;
@@ -490,6 +725,17 @@ class WaterRecoverySystem final:
   private: gz::transport::Node::Publisher balancePublisher;
   private: gz::transport::Node::Publisher fullPublisher;
   private: gz::transport::Node::Publisher statusPublisher;
+  private: gz::transport::Node::Publisher sensedFlowPublisher;
+  private: gz::transport::Node::Publisher sensedLevelPublisher;
+  private: gz::transport::Node::Publisher filterPressurePublisher;
+  private: gz::transport::Node::Publisher filterBlockagePublisher;
+  private: gz::transport::Node::Publisher pumpCurrentPublisher;
+  private: gz::transport::Node::Publisher lowProbePublisher;
+  private: gz::transport::Node::Publisher highProbePublisher;
+  private: gz::transport::Node::Publisher filterFaultPublisher;
+  private: gz::transport::Node::Publisher drainOpenPublisher;
+  private: gz::transport::Node::Publisher drainPermittedPublisher;
+  private: gz::transport::Node::Publisher drainedVolumePublisher;
   private: gz::transport::Node::Publisher payloadPublisher;
   private: gz::sim::Entity modelEntity{gz::sim::kNullEntity};
   private: gz::sim::Entity leftBrush{gz::sim::kNullEntity};
@@ -499,6 +745,12 @@ class WaterRecoverySystem final:
   private: gz::sim::Entity squeegeeFloat{gz::sim::kNullEntity};
   private: gz::sim::Entity squeegeePitch{gz::sim::kNullEntity};
   private: gz::sim::Entity pump{gz::sim::kNullEntity};
+  private: gz::sim::Entity frontLeftWheel{gz::sim::kNullEntity};
+  private: gz::sim::Entity frontRightWheel{gz::sim::kNullEntity};
+  private: gz::sim::Entity rearLeftWheel{gz::sim::kNullEntity};
+  private: gz::sim::Entity rearRightWheel{gz::sim::kNullEntity};
+  private: gz::sim::Entity basePoseEntity{gz::sim::kNullEntity};
+  private: BasePoseSource basePoseSource{BasePoseSource::kUnavailable};
   private: gz::sim::Entity squeegeeLink{gz::sim::kNullEntity};
   private: gz::sim::Entity nozzle{gz::sim::kNullEntity};
   private: std::vector<Cell> cells;
@@ -508,22 +760,44 @@ class WaterRecoverySystem final:
   private: std::atomic<bool> enabled{false};
   private: std::atomic<double> requestedGroundVolumeL{0.0};
   private: std::atomic<double> requestedTankMassKg{0.0};
+  private: std::atomic<double> filterBlockageFraction{0.0};
+  private: std::atomic<bool> serviceDrainRequestedOpen{false};
+  private: std::atomic<unsigned long> drainCommandRevision{0};
   private: std::atomic<unsigned long> groundResetRevision{0};
   private: std::atomic<unsigned long> tankResetRevision{0};
   private: unsigned long appliedGroundResetRevision{0};
   private: unsigned long appliedTankResetRevision{0};
+  private: unsigned long appliedDrainCommandRevision{0};
   private: bool brushReady{false};
   private: bool squeegeeReady{false};
   private: bool nozzleReady{false};
   private: bool nozzleUsesSqueegeeFrame{false};
   private: bool pumpReady{false};
   private: bool tankFull{false};
+  private: bool tankLowProbeWet{false};
+  private: bool tankHighProbeWet{false};
+  private: bool filterProtectionActive{false};
+  private: bool serviceDrainPermitted{false};
+  private: bool serviceDrainOpen{false};
+  private: bool drainCommandFresh{false};
   private: bool visualLayoutReady{false};
   private: double tankMassKg{0.0};
   private: double initialTankMassKg{0.0};
   private: double groundReferenceL{0.0};
   private: double cumulativeRecoveredL{0.0};
   private: double instantaneousFlowLMin{0.0};
+  private: double sensedFlowLMin{0.0};
+  private: double sensedTankLevelFraction{0.0};
+  private: double filterDifferentialPressureKpa{0.0};
+  private: double pumpCurrentA{0.0};
+  private: double cumulativeServiceDrainedL{0.0};
+  private: double liftPositionM{0.0};
+  private: double squeegeeFloatPositionM{0.0};
+  private: double squeegeePitchPositionRad{0.0};
+  private: double baseWorldZM{0.0};
+  private: double baseWorldRollRad{0.0};
+  private: double baseWorldPitchRad{0.0};
+  private: bool basePoseAvailable{false};
   private: double nozzleHeightM{0.0};
   private: double intakeClearanceM{0.0};
   private: double squeegeeClearanceM{1e9};
@@ -532,7 +806,7 @@ class WaterRecoverySystem final:
   private: double publishAccumulator{0.0};
   private: double pumpRatedFlowLMin{15.1};
   private: double hydraulicDerating{0.70};
-  private: double tankCapacityKg{9.7064};
+  private: double tankCapacityKg{8.30};
   private: double initialGroundVolumeL{2.88};
   private: double waterDensityKgL{1.0};
   private: double patchMinX{-0.60};
@@ -544,9 +818,21 @@ class WaterRecoverySystem final:
   private: double nozzleWidthM{0.65};
   private: double maximumSqueegeeClearanceM{0.012};
   private: double maximumIntakeClearanceM{0.012};
+  private: double filterTripPressureKpa{35.0};
+  private: double filterCleanPressureKpa{2.0};
+  private: double tankLowProbeFraction{0.20};
+  private: double tankHighProbeFraction{0.875};
+  private: double sensorTimeConstantS{0.18};
+  private: double serviceDrainRateLMin{12.0};
+  private: double serviceDrainCommandTimeoutS{0.25};
+  private: double lastDrainCommandSimTimeS{-1.0};
   private: const double minimumBrushRadS{2.0};
   private: const double minimumPumpRadS{10.0};
-  private: const double maximumLiftPositionM{0.04};
+  private: const double maximumDrainWheelRadS{0.10};
+  private: const double ratedPumpRadS{120.0};
+  private: const double pumpNoLoadCurrentA{0.65};
+  private: const double pumpHydraulicCurrentA{3.85};
+  private: double minimumLiftPositionM{0.095};
   private: const double maximumFloatTravelM{0.0151};
   private: const double maximumPitchRad{0.1746};
   private: const double minimumSqueegeeClearanceM{-0.004};
@@ -562,6 +848,10 @@ class WaterRecoverySystem final:
       stateRoot + "/command/reset_ground_volume_l"};
   private: const std::string resetTankTopic{
       stateRoot + "/command/reset_tank_mass_kg"};
+  private: const std::string filterBlockageCommandTopic{
+      stateRoot + "/command/filter_blockage_fraction"};
+  private: const std::string drainCommandTopic{
+      stateRoot + "/command/service_drain_open"};
 };
 }  // namespace sanitation_gazebo_control
 

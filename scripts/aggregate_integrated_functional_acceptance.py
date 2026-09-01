@@ -14,6 +14,7 @@ import ast
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import time
@@ -25,6 +26,12 @@ from typing import Any, Iterable
 
 
 SCENARIOS = ("mobility", "water_normal", "water_full", "manipulation")
+MATERIAL_MASS_KG = {
+    "paperboard": 0.0189,
+    "PP": 0.0243,
+    "PET": 0.03726,
+    "aluminum": 0.0729,
+}
 SOURCE_ROOTS = (
     "scripts/run_formal_vehicle_mobility_runtime.sh",
     "scripts/validate_formal_vehicle_mobility_runtime.py",
@@ -41,6 +48,7 @@ INSTALL_PACKAGES = (
     "sanitation_vehicle_description",
     "sanitation_manipulation",
 )
+INSTALL_SYMLINK_REPORT = Path("INSTALL_SYMLINKS.txt")
 PACKAGE_SOURCE_DIRS = {
     "sanitation_vehicle_description": Path(
         "starter_ws/src/sanitation_vehicle_description"
@@ -54,10 +62,12 @@ STRUCTURED_INSTALL_DIRS = {
 }
 PLUGIN_BASENAMES = (
     "libDynamicPayloadSystem.so",
+    "libDryBinMonitorSystem.so",
     "libWaterRecoverySystem.so",
 )
 CRITICAL_SUFFIXES = (
     "src/DynamicPayloadSystem.cc",
+    "src/DryBinMonitorSystem.cc",
     "src/WaterRecoverySystem.cc",
     "launch/formal_vehicle_sim.launch.py",
     "launch/formal_cube_pick_place.launch.py",
@@ -69,6 +79,7 @@ CRITICAL_SUFFIXES = (
     "urdf/high_fidelity/cleaning_mechanism.xacro",
     "urdf/high_fidelity/storage_system.xacro",
     "lib/libDynamicPayloadSystem.so",
+    "lib/libDryBinMonitorSystem.so",
     "lib/libWaterRecoverySystem.so",
 )
 IGNORED_PARTS = {"__pycache__", ".pytest_cache", ".git"}
@@ -87,11 +98,26 @@ def sha256_bytes(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest()
 
 
+def _advise_drop_cache(stream: Any) -> None:
+    """Release clean file-cache pages after source/install inventory hashing."""
+
+    fadvise = getattr(os, "posix_fadvise", None)
+    dontneed = getattr(os, "POSIX_FADV_DONTNEED", None)
+    if fadvise is None or dontneed is None:
+        return
+    try:
+        fadvise(stream.fileno(), 0, 0, dontneed)
+    except (OSError, ValueError):
+        return
+
+
 def sha256_file(path: Path) -> str:
     digest = hashlib.sha256()
     with path.open("rb") as stream:
         for chunk in iter(lambda: stream.read(1024 * 1024), b""):
             digest.update(chunk)
+        # Only a fully consumed file is eligible for an advisory cache drop.
+        _advise_drop_cache(stream)
     return digest.hexdigest()
 
 
@@ -129,6 +155,43 @@ def optional_text(command: list[str], cwd: Path) -> str | None:
         return None
 
 
+def git_command(repo_root: Path, *args: str) -> list[str]:
+    """Build an exact-root Git command that also works in a Windows worktree from WSL.
+
+    Git worktree administrative files created by Windows contain a ``F:/...``
+    absolute gitdir.  Linux Git otherwise treats that as relative to the WSL
+    checkout and reports a misleading "not a git repository" error.  Resolve
+    only that declared gitdir and always pin the matching work tree; never add a
+    global safe.directory exception or search a broader parent directory.
+    """
+
+    root = repo_root.resolve()
+    command = ["git", "-c", f"safe.directory={root}"]
+    dot_git = root / ".git"
+    if dot_git.is_file():
+        try:
+            marker = dot_git.read_text(encoding="utf-8").strip()
+        except (OSError, UnicodeError) as exc:
+            raise AcceptanceError(f"cannot read Git worktree marker {dot_git}: {exc}") from exc
+        if not marker.lower().startswith("gitdir:"):
+            raise AcceptanceError(f"invalid Git worktree marker: {dot_git}")
+        raw_git_dir = marker.split(":", 1)[1].strip()
+        windows_absolute = re.fullmatch(r"([A-Za-z]):[\\/](.*)", raw_git_dir)
+        if os.name != "nt" and windows_absolute:
+            drive, tail = windows_absolute.groups()
+            git_dir_text = f"/mnt/{drive.lower()}/{tail.replace(chr(92), '/')}"
+        else:
+            git_dir = Path(raw_git_dir)
+            if not git_dir.is_absolute():
+                git_dir = (root / git_dir).resolve()
+            git_dir_text = str(git_dir)
+        if not os.path.isdir(git_dir_text):
+            raise AcceptanceError(f"declared Git worktree directory is missing: {git_dir_text}")
+        command.extend((f"--git-dir={git_dir_text}", f"--work-tree={root}"))
+    command.extend(args)
+    return command
+
+
 def iter_files(root: Path, entries: Iterable[str]) -> Iterable[tuple[str, Path]]:
     for entry in entries:
         candidate = root / entry
@@ -164,6 +227,99 @@ def inventory_digest(value: dict[str, dict[str, Any]]) -> str:
     return sha256_bytes(json.dumps(normalized, sort_keys=True).encode("utf-8"))
 
 
+def regular_tree_inventory(
+    root: Path, base: Path, label: str
+) -> dict[str, dict[str, Any]]:
+    """Inventory one real tree while rejecting links and special entries."""
+
+    if root.is_symlink() or not root.is_dir():
+        raise AcceptanceError(f"{label} must be a real directory: {root}")
+    files: list[Path] = []
+    stack = [root]
+    while stack:
+        directory = stack.pop()
+        for entry in sorted(os.scandir(directory), key=lambda row: row.name):
+            path = Path(entry.path)
+            if entry.is_symlink():
+                raise AcceptanceError(f"{label} contains a symbolic link: {path}")
+            if entry.is_dir(follow_symlinks=False):
+                if entry.name not in IGNORED_PARTS:
+                    stack.append(path)
+            elif entry.is_file(follow_symlinks=False):
+                files.append(path)
+            else:
+                raise AcceptanceError(f"{label} contains a non-regular entry: {path}")
+    rows: dict[str, dict[str, Any]] = {}
+    for path in sorted(files):
+        stat = path.stat()
+        rows[path.relative_to(base).as_posix()] = {
+            "sha256": sha256_file(path),
+            "size_bytes": stat.st_size,
+            "mtime_epoch_ns": stat.st_mtime_ns,
+        }
+    if not rows:
+        raise AcceptanceError(f"empty {label}: {root}")
+    return rows
+
+
+def frozen_source_contract(
+    repo_root: Path, runtime_ws: Path
+) -> dict[str, Any]:
+    repository_source_root = repo_root / "starter_ws/src"
+    frozen_source_root = runtime_ws / "src"
+    repository_rows: dict[str, dict[str, Any]] = {}
+    frozen_rows: dict[str, dict[str, Any]] = {}
+    for package in INSTALL_PACKAGES:
+        repository_rows.update(
+            regular_tree_inventory(
+                repository_source_root / package,
+                repository_source_root,
+                f"repository source package {package}",
+            )
+        )
+        frozen_rows.update(
+            regular_tree_inventory(
+                frozen_source_root / package,
+                frozen_source_root,
+                f"frozen source package {package}",
+            )
+        )
+    repository_digest = inventory_digest(repository_rows)
+    frozen_digest = inventory_digest(frozen_rows)
+    if frozen_digest != repository_digest:
+        raise AcceptanceError(
+            "frozen runtime src differs from repository starter_ws/src"
+        )
+    return {
+        "root": str(frozen_source_root.resolve()),
+        "inventory": frozen_rows,
+        "inventory_sha256": frozen_digest,
+        "repository_inventory_sha256": repository_digest,
+        "matches_repository": True,
+        "symbolic_link_count": 0,
+    }
+
+
+def install_symlink_report_contract(
+    runtime_ws: Path,
+) -> dict[str, Any]:
+    install_root = runtime_ws / "install"
+    # This live scan fails on any symbolic link before the report is trusted.
+    regular_tree_inventory(install_root, install_root, "merged runtime install")
+    report = runtime_ws / INSTALL_SYMLINK_REPORT
+    if report.is_symlink() or not report.is_file():
+        raise AcceptanceError(f"install symlink report must be a regular file: {report}")
+    if report.read_bytes() != b"":
+        raise AcceptanceError("formal install symbolic-link report is not empty")
+    return {
+        "path": INSTALL_SYMLINK_REPORT.as_posix(),
+        "sha256": sha256_file(report),
+        "size_bytes": 0,
+        "live_symbolic_link_count": 0,
+        "report_matches_live_scan": True,
+    }
+
+
 def json_digest(value: Any) -> str:
     return sha256_bytes(json.dumps(value, sort_keys=True).encode("utf-8"))
 
@@ -183,9 +339,29 @@ def parse_contract_file(path: Path, parser_kind: str) -> None:
         ) from exc
 
 
+def install_prefix(runtime_ws: Path, package: str) -> Path:
+    """Return the package prefix for either merged or isolated colcon installs."""
+
+    layout = runtime_ws / "install/.colcon_install_layout"
+    try:
+        merged = layout.read_text(encoding="utf-8").strip() == "merged"
+    except (OSError, UnicodeError):
+        merged = False
+    return runtime_ws / "install" if merged else runtime_ws / "install" / package
+
+
+def installed_vehicle_xacro(runtime_ws: Path) -> Path:
+    """Resolve the frozen vehicle Xacro through the declared colcon layout."""
+
+    return (
+        install_prefix(runtime_ws, "sanitation_vehicle_description")
+        / "share/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro"
+    )
+
+
 def python_install_package_root(runtime_ws: Path, package: str) -> Path:
     roots: list[Path] = []
-    for site in sorted((runtime_ws / "install" / package / "lib").glob("python*/site-packages")):
+    for site in sorted(install_prefix(runtime_ws, package).joinpath("lib").glob("python*/site-packages")):
         direct = site / package
         if direct.is_dir():
             roots.append(direct)
@@ -217,7 +393,7 @@ def source_install_contract(repo_root: Path, runtime_ws: Path) -> dict[str, dict
     category_counts: Counter[str] = Counter()
     for package, relative_source in PACKAGE_SOURCE_DIRS.items():
         source_package = repo_root / relative_source
-        install_share = runtime_ws / "install" / package / "share" / package
+        install_share = install_prefix(runtime_ws, package) / "share" / package
         for subdir, (pattern, parser_kind) in STRUCTURED_INSTALL_DIRS.items():
             source_dir = source_package / subdir
             for source in sorted(source_dir.rglob(pattern)):
@@ -338,16 +514,16 @@ def require_runtime_versions(runtime: Any) -> None:
 
 
 def git_snapshot(repo_root: Path) -> dict[str, Any]:
-    head = run_text(["git", "rev-parse", "HEAD"], repo_root)
-    tree = run_text(["git", "rev-parse", "HEAD^{tree}"], repo_root)
+    head = run_text(git_command(repo_root, "rev-parse", "HEAD"), repo_root)
+    tree = run_text(git_command(repo_root, "rev-parse", "HEAD^{tree}"), repo_root)
     tracked_diff = subprocess.run(
-        ["git", "diff", "--binary", "HEAD", "--", "."],
+        git_command(repo_root, "diff", "--binary", "HEAD", "--", "."),
         cwd=repo_root,
         check=True,
         capture_output=True,
     ).stdout
     untracked_names = run_text(
-        ["git", "ls-files", "--others", "--exclude-standard"], repo_root
+        git_command(repo_root, "ls-files", "--others", "--exclude-standard"), repo_root
     ).splitlines()
     digest = hashlib.sha256()
     digest.update(b"tracked-diff\0")
@@ -379,13 +555,21 @@ def runtime_versions(repo_root: Path) -> dict[str, Any]:
             ["dpkg-query", "-W", "-f=${Version}", "ros-jazzy-ros-base"], repo_root
         ),
         "gazebo": optional_text(["gz", "sim", "--versions"], repo_root),
-        "physics_engine": "gz-physics-bullet-featherstone-plugin",
+        "physics_engine": "gz-physics-dartsim-plugin",
         "python": sys.version.split()[0],
         "platform": sys.platform,
     }
 
 
 def install_entries(runtime_ws: Path) -> list[str]:
+    layout = runtime_ws / "install/.colcon_install_layout"
+    try:
+        if layout.read_text(encoding="utf-8").strip() == "merged":
+            # Inventory the one real merged prefix.  Per-package prefixes are
+            # mutually exclusive with the final-runtime closure contract.
+            return ["install"]
+    except (OSError, UnicodeError):
+        pass
     entries = ["install/setup.bash"]
     for package in INSTALL_PACKAGES:
         entries.append(f"install/{package}")
@@ -400,6 +584,8 @@ def create_build_manifest(args: argparse.Namespace) -> int:
     if started_ns <= 0 or started_ns >= recorded_ns:
         raise AcceptanceError("build start must be a positive time before manifest capture")
     sources = inventory(repo_root, SOURCE_ROOTS)
+    frozen_sources = frozen_source_contract(repo_root, runtime_ws)
+    symlink_report = install_symlink_report_contract(runtime_ws)
     installed = inventory(runtime_ws, install_entries(runtime_ws))
     markers = package_build_markers(runtime_ws, started_ns)
     plugins = plugin_rows(installed, started_ns)
@@ -418,6 +604,10 @@ def create_build_manifest(args: argparse.Namespace) -> int:
         "git": git_snapshot(repo_root),
         "source_inventory": sources,
         "source_inventory_sha256": inventory_digest(sources),
+        "frozen_source": frozen_sources,
+        "frozen_source_sha256": json_digest(frozen_sources),
+        "install_symlink_report": symlink_report,
+        "install_symlink_report_sha256": json_digest(symlink_report),
         "installed_inventory": installed,
         "installed_inventory_sha256": inventory_digest(installed),
         "package_build_markers": markers,
@@ -456,6 +646,14 @@ def validate_build_snapshot(
     current_sources = inventory(repo_root, SOURCE_ROOTS)
     if inventory_digest(current_sources) != manifest.get("source_inventory_sha256"):
         raise AcceptanceError("critical source hash changed after fresh build")
+    current_frozen_sources = frozen_source_contract(repo_root, runtime_ws)
+    if json_digest(current_frozen_sources) != manifest.get("frozen_source_sha256"):
+        raise AcceptanceError("frozen runtime source changed after build snapshot")
+    current_symlink_report = install_symlink_report_contract(runtime_ws)
+    if json_digest(current_symlink_report) != manifest.get(
+        "install_symlink_report_sha256"
+    ):
+        raise AcceptanceError("install symbolic-link report changed after build snapshot")
     current_installed = inventory(runtime_ws, install_entries(runtime_ws))
     if inventory_digest(current_installed) != manifest.get("installed_inventory_sha256"):
         raise AcceptanceError("installed runtime hash changed after build snapshot")
@@ -482,6 +680,10 @@ def init_run(args: argparse.Namespace) -> int:
     started_ns = args.started_epoch_ns
     if started_ns < int(build["recorded_epoch_ns"]):
         raise AcceptanceError("run started before the build snapshot was recorded")
+    surface = validate_side_brush_surface_audit(
+        args.side_brush_surface_audit,
+        installed_vehicle_xacro(args.runtime_ws.resolve()),
+    )
     context = {
         "schema_version": 1,
         "kind": "tzcup_integrated_acceptance_run_context",
@@ -492,8 +694,39 @@ def init_run(args: argparse.Namespace) -> int:
         "build_manifest_sha256": sha256_file(args.build_manifest),
         "started_epoch_ns": started_ns,
         "started_utc": utc_iso(started_ns),
+        "material": args.material,
+        "side_brush_sdf_surface": {
+            "path": str(args.side_brush_surface_audit.resolve()),
+            "sha256": sha256_file(args.side_brush_surface_audit),
+            "expanded_sdf_sha256": surface["expanded_sdf_sha256"],
+            "source_xacro": surface["source"]["path"],
+            "runtime_effectiveness": surface["runtime_effectiveness"],
+        },
         "scenarios": {},
     }
+    session = getattr(args, "session", None)
+    snapshot = getattr(args, "snapshot", None)
+    if (session is None) != (snapshot is None):
+        raise AcceptanceError("session and snapshot must be supplied together")
+    if session is not None and snapshot is not None:
+        session_payload = read_json(session)
+        started = session_payload.get("started_epoch_ns")
+        if (
+            session_payload.get("status") != "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING"
+            or not isinstance(started, int)
+            or started <= 0
+        ):
+            raise AcceptanceError("formal acceptance session is not a fresh RUNNING session")
+        if not snapshot.is_file():
+            raise AcceptanceError("frozen snapshot manifest is missing")
+        context["formal_attempt_binding"] = {
+            "session_path": str(session.resolve()),
+            "session_sha256": sha256_file(session),
+            "session_started_epoch_ns": started,
+            "snapshot_path": str(snapshot.resolve()),
+            "snapshot_sha256": sha256_file(snapshot),
+            "source_build_manifest_sha256": sha256_file(args.build_manifest),
+        }
     write_json(args.context, context)
     return 0
 
@@ -511,7 +744,7 @@ def record_scenario(args: argparse.Namespace) -> int:
         raise AcceptanceError("scenario finish predates start")
     if not 0 <= args.ros_domain_id <= 232:
         raise AcceptanceError("ROS_DOMAIN_ID must be in the DDS-supported range 0..232")
-    scenarios[args.name] = {
+    row = {
         "started_epoch_ns": args.started_epoch_ns,
         "started_utc": utc_iso(args.started_epoch_ns),
         "finished_epoch_ns": args.finished_epoch_ns,
@@ -527,11 +760,58 @@ def record_scenario(args: argparse.Namespace) -> int:
         "runner_log_sha256": sha256_file(args.runner_log) if args.runner_log.is_file() else None,
         "cleanup_remaining_pids": args.cleanup_remaining_pids,
     }
+    required_binding = context.get("formal_attempt_binding")
+    if required_binding is not None:
+        runtime_binding = getattr(args, "runtime_binding", None)
+        if runtime_binding is None or not runtime_binding.is_file():
+            # Do not hide a completed independent scenario merely because its
+            # required sidecar is absent.  Retain the row and let aggregate
+            # fail closed; later independent scenarios can still run.
+            row["attempt_binding_error"] = "fresh runtime-binding sidecar missing"
+        else:
+            sidecar_path = args.result.with_name(args.result.name + ".attempt_binding.json")
+            sidecar = {
+                "schema_version": 1,
+                "kind": "tzcup_integrated_acceptance_scenario_attempt_binding_v1",
+                "scenario": args.name,
+                "recorded_epoch_ns": time.time_ns(),
+                "invocation": {
+                    "started_epoch_ns": args.started_epoch_ns,
+                    "finished_epoch_ns": args.finished_epoch_ns,
+                },
+                "formal_session": required_binding,
+                "runtime_binding": {
+                    "path": str(runtime_binding.resolve()),
+                    "sha256": sha256_file(runtime_binding),
+                },
+            }
+            write_json(sidecar_path, sidecar)
+            row["attempt_binding_path"] = str(sidecar_path.resolve())
+            row["attempt_binding_sha256"] = sha256_file(sidecar_path)
+    scenarios[args.name] = row
     write_json(args.context, context)
     return 0
 
 
-def validate_result(name: str, row: dict[str, Any]) -> dict[str, Any]:
+def validate_result(
+    name: str, row: dict[str, Any], expected_material: str,
+    formal_attempt_binding: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    if formal_attempt_binding is not None:
+        sidecar_path = Path(str(row.get("attempt_binding_path", "")))
+        if not sidecar_path.is_file() or sha256_file(sidecar_path) != row.get("attempt_binding_sha256"):
+            raise AcceptanceError(f"{name} fresh session/snapshot/source sidecar is missing or changed")
+        sidecar = read_json(sidecar_path)
+        if sidecar.get("kind") != "tzcup_integrated_acceptance_scenario_attempt_binding_v1" or sidecar.get("scenario") != name:
+            raise AcceptanceError(f"{name} scenario sidecar identity mismatch")
+        if sidecar.get("formal_session") != formal_attempt_binding:
+            raise AcceptanceError(f"{name} scenario sidecar is not bound to the fresh session/snapshot/source")
+        invocation = sidecar.get("invocation")
+        if not isinstance(invocation, dict) or invocation.get("started_epoch_ns") != row.get("started_epoch_ns") or invocation.get("finished_epoch_ns") != row.get("finished_epoch_ns"):
+            raise AcceptanceError(f"{name} scenario sidecar invocation mismatch")
+        runtime_binding = sidecar.get("runtime_binding")
+        if not isinstance(runtime_binding, dict) or not isinstance(runtime_binding.get("sha256"), str):
+            raise AcceptanceError(f"{name} scenario runtime-binding sidecar is missing")
     if int(row.get("exit_code", -1)) != 0:
         raise AcceptanceError(f"{name} exited nonzero: {row.get('exit_code')}")
     if int(row.get("cleanup_remaining_pids", -1)) != 0:
@@ -561,9 +841,9 @@ def validate_result(name: str, row: dict[str, Any]) -> dict[str, Any]:
     if result.get("passed") is not True:
         raise AcceptanceError(f"{name} lacks explicit passed=true")
     if name == "mobility":
-        if result.get("report_id") != "tzcup_formal_vehicle_mobility_runtime_v1":
+        if result.get("report_id") != "tzcup_formal_a300_drivetrain_runtime_v1":
             raise AcceptanceError("mobility schema/report_id mismatch")
-        expected_status = "FORMAL_VEHICLE_FORWARD_STOP_RUNTIME_PASSED"
+        expected_status = "FORMAL_A300_DRIVETRAIN_FORWARD_STOP_RUNTIME_PASSED"
     elif name in ("water_normal", "water_full"):
         if result.get("schema_version") != 1:
             raise AcceptanceError(f"{name} schema_version mismatch")
@@ -594,6 +874,9 @@ def validate_result(name: str, row: dict[str, Any]) -> dict[str, Any]:
             raise AcceptanceError("manipulation lacks rigid cube/wrist lift evidence")
         cube = result.get("cube", {})
         support = result.get("bin_load_bearing_contact", {})
+        dry_bin = result.get("dry_bin_monitor", {})
+        inventory = result.get("inventory_mass", {})
+        evaluator = result.get("evaluator_interface_audit", {})
         settled_pose = cube.get("settled_pose_m", {})
         try:
             settled_z = float(settled_pose["z"])
@@ -602,6 +885,15 @@ def validate_result(name: str, row: dict[str, Any]) -> dict[str, Any]:
             settled_duration = float(cube["settled_sim_duration_s"])
             support_count = int(support["support_contact_count"])
             support_span = float(support["support_contact_span_sim_s"])
+            dry_bin_count = int(dry_bin["contained_object_count"])
+            dry_bin_mass = float(dry_bin["contained_mass_kg"])
+            dry_bin_tolerance = float(dry_bin["mass_tolerance_kg"])
+            cube_mass = float(cube["mass_kg"])
+            physical_cube_count = int(inventory["physical_cube_count"])
+            physical_material_mass = float(inventory["physical_material_mass_kg"])
+            payload_command_count = int(inventory["dynamic_dry_payload_command_count"])
+            payload_added_mass = float(inventory["dynamic_dry_payload_added_kg"])
+            delete_entity_calls = int(evaluator["delete_entity_calls"])
         except (KeyError, TypeError, ValueError) as exc:
             raise AcceptanceError(f"manipulation physical deposit schema is incomplete: {exc}") from exc
         if cube.get("present_after_deposit") is not True:
@@ -619,10 +911,63 @@ def validate_result(name: str, row: dict[str, Any]) -> dict[str, Any]:
             and bool(support.get("vehicle_collision_names"))
         ):
             raise AcceptanceError("manipulation lacks persistent vehicle-bin load-bearing contact")
+        expected_mass = MATERIAL_MASS_KG[expected_material]
+        if result.get("material") != expected_material or abs(cube_mass - expected_mass) > 1e-8:
+            raise AcceptanceError(
+                "manipulation did not deposit the required "
+                f"{expected_mass:.8g} kg {expected_material} cube"
+            )
+        if not (
+            dry_bin.get("sensor_ready") is True
+            and dry_bin_count == 1
+            and 0.0 < dry_bin_tolerance <= 1e-4
+            and abs(dry_bin_mass - expected_mass) <= dry_bin_tolerance
+            and dry_bin.get("full") is False
+            and dry_bin.get("post_release_sample_observed") is True
+            and dry_bin.get("monitor_is_observation_only") is True
+        ):
+            raise AcceptanceError(
+                "manipulation lacks valid bridged dry-bin "
+                f"{expected_material} inventory telemetry"
+            )
+        if not (
+            physical_cube_count == 1
+            and abs(physical_material_mass - expected_mass) <= 1e-8
+            and payload_command_count == 0
+            and payload_added_mass == 0.0
+            and inventory.get("double_count_prevented") is True
+            and inventory.get("aggregation_or_reserve_payload_substitution") is False
+            and delete_entity_calls == 0
+            and evaluator.get("set_pose_or_remove_after_task_start") is False
+            and evaluator.get("physical_cube_deleted_after_deposit") is False
+        ):
+            raise AcceptanceError("manipulation cube was deleted, aggregated, substituted, or double-counted")
         expected_status = "PHYSICAL_CONTACT_GATED_PICK_LIFT_DEPOSIT_PASSED"
     if result.get("status") != expected_status:
         raise AcceptanceError(f"{name} status mismatch: {result.get('status')}")
     return result
+
+
+def validate_side_brush_surface_audit(
+    path: Path, expected_installed_xacro: Path
+) -> dict[str, Any]:
+    report = read_json(path)
+    if report.get("status") != "FORMAL_SIDE_BRUSH_EXPANDED_SDF_SURFACE_PASSED":
+        raise AcceptanceError("side-brush expanded-SDF surface audit did not pass")
+    source = report.get("source")
+    if not isinstance(source, dict) or source.get("mode") != "xacro_to_gz_sdf":
+        raise AcceptanceError("side-brush surface audit is not bound to xacro expansion")
+    if Path(str(source.get("path", ""))).resolve() != expected_installed_xacro.resolve():
+        raise AcceptanceError("side-brush surface audit did not use frozen installed xacro")
+    expanded_hash = report.get("expanded_sdf_sha256")
+    if not isinstance(expanded_hash, str) or len(expanded_hash) != 64:
+        raise AcceptanceError("side-brush surface audit lacks expanded SDF hash")
+    effectiveness = report.get("runtime_effectiveness")
+    if not isinstance(effectiveness, dict) or effectiveness.get(
+        "dart_effective_from_surface_friction_ode"
+    ) != ["mu", "mu2"]:
+        raise AcceptanceError("side-brush surface audit overstates DART effectiveness")
+    return report
 
 
 def aggregate(args: argparse.Namespace) -> int:
@@ -638,6 +983,20 @@ def aggregate(args: argparse.Namespace) -> int:
     build = validate_build_snapshot(
         build_path, Path(context["repo_root"]), Path(context["runtime_ws"])
     )
+    surface_evidence = context.get("side_brush_sdf_surface")
+    if not isinstance(surface_evidence, dict):
+        raise AcceptanceError("side-brush expanded-SDF surface evidence is missing")
+    surface_path = Path(str(surface_evidence.get("path", "")))
+    if not surface_path.is_file() or sha256_file(surface_path) != surface_evidence.get("sha256"):
+        raise AcceptanceError("side-brush expanded-SDF surface evidence changed during run")
+    surface_report = validate_side_brush_surface_audit(
+        surface_path,
+        installed_vehicle_xacro(Path(context["runtime_ws"])),
+    )
+    if surface_report.get("expanded_sdf_sha256") != surface_evidence.get(
+        "expanded_sdf_sha256"
+    ):
+        raise AcceptanceError("side-brush expanded SDF hash changed during run")
     rows = context.get("scenarios")
     if not isinstance(rows, dict) or set(rows) != set(SCENARIOS):
         missing = sorted(set(SCENARIOS) - set(rows or {}))
@@ -666,7 +1025,25 @@ def aggregate(args: argparse.Namespace) -> int:
         if scenario_finish > finished_ns:
             raise AcceptanceError(f"{name} finished after the integrated run finished")
         previous_finish = scenario_finish
-    results = {name: validate_result(name, rows[name]) for name in SCENARIOS}
+    material = context.get("material")
+    if material not in MATERIAL_MASS_KG:
+        raise AcceptanceError(f"unsupported or missing run material: {material}")
+    formal_attempt_binding = context.get("formal_attempt_binding")
+    if formal_attempt_binding is not None and not isinstance(formal_attempt_binding, dict):
+        raise AcceptanceError("formal attempt binding is invalid")
+    results = {
+        name: validate_result(name, rows[name], str(material), formal_attempt_binding)
+        for name in SCENARIOS
+    }
+    runtime_gate_binding = None
+    runtime_binding_path = getattr(args, "runtime_binding", None)
+    if runtime_binding_path is not None:
+        try:
+            from formal_runtime_gate_binding import RuntimeGateError, load_binding
+
+            runtime_gate_binding = load_binding(Path(runtime_binding_path))
+        except (RuntimeGateError, OSError, ValueError) as exc:
+            raise AcceptanceError(f"runtime gate binding is invalid: {exc}") from exc
     manifest = {
         "schema_version": 1,
         "report_id": "tzcup_integrated_basic_functional_acceptance_v1",
@@ -678,6 +1055,11 @@ def aggregate(args: argparse.Namespace) -> int:
         "finished_epoch_ns": finished_ns,
         "finished_utc": utc_iso(finished_ns),
         "source_bound": True,
+        "material_contract": {
+            "material": material,
+            "cube_edge_m": 0.03,
+            "expected_mass_kg": MATERIAL_MASS_KG[str(material)],
+        },
         "fresh_build": {
             "build_started_epoch_ns": build["build_started_epoch_ns"],
             "recorded_epoch_ns": build["recorded_epoch_ns"],
@@ -694,6 +1076,7 @@ def aggregate(args: argparse.Namespace) -> int:
             if name.endswith(CRITICAL_SUFFIXES)
         },
         "runtime": build["runtime"],
+        "side_brush_sdf_surface": surface_evidence,
         "scenario_invocations": rows,
         "scenario_results": results,
         "claim_boundary": (
@@ -703,9 +1086,37 @@ def aggregate(args: argparse.Namespace) -> int:
             "randomized generalization, or Journey 6 deployment."
         ),
     }
+    if runtime_gate_binding is not None:
+        manifest["runtime_gate_binding"] = runtime_gate_binding
     write_json(args.output, manifest)
     print("INTEGRATED_BASIC_FUNCTIONAL_ACCEPTANCE_PASSED")
     return 0
+
+
+def aggregate_attempt(args: argparse.Namespace) -> int:
+    """Persist a truthful failed-attempt manifest instead of discarding other chains."""
+
+    try:
+        return aggregate(args)
+    except AcceptanceError as exc:
+        context = read_json(args.context)
+        manifest = {
+            "schema_version": 1,
+            "report_id": "tzcup_integrated_basic_functional_acceptance_attempt_v1",
+            "status": "INTEGRATED_BASIC_FUNCTIONAL_ACCEPTANCE_FAILED",
+            "passed": False,
+            "run_id": context.get("run_id"),
+            "started_epoch_ns": context.get("started_epoch_ns"),
+            "finished_epoch_ns": args.finished_epoch_ns,
+            "source_bound": False,
+            "failure": str(exc),
+            "scenario_invocations": context.get("scenarios", {}),
+            "formal_attempt_binding_required": "formal_attempt_binding" in context,
+            "claim_boundary": "Failed-attempt preservation only. This manifest is not a runtime PASS and cannot be published as an acceptance summary.",
+        }
+        write_json(args.output, manifest)
+        print(f"INTEGRATED_ACCEPTANCE_ATTEMPT_FAILED: {exc}", file=sys.stderr)
+        return 3
 
 
 def parser() -> argparse.ArgumentParser:
@@ -732,6 +1143,10 @@ def parser() -> argparse.ArgumentParser:
     initialize.add_argument("--context", type=Path, required=True)
     initialize.add_argument("--run-id", required=True)
     initialize.add_argument("--started-epoch-ns", type=int, required=True)
+    initialize.add_argument("--material", choices=sorted(MATERIAL_MASS_KG), required=True)
+    initialize.add_argument("--session", type=Path)
+    initialize.add_argument("--snapshot", type=Path)
+    initialize.add_argument("--side-brush-surface-audit", type=Path, required=True)
     initialize.set_defaults(func=init_run)
 
     record = commands.add_parser("record-scenario")
@@ -746,13 +1161,21 @@ def parser() -> argparse.ArgumentParser:
     record.add_argument("--launch-log", type=Path, required=True)
     record.add_argument("--runner-log", type=Path, required=True)
     record.add_argument("--cleanup-remaining-pids", type=int, required=True)
+    record.add_argument("--runtime-binding", type=Path)
     record.set_defaults(func=record_scenario)
 
     final = commands.add_parser("aggregate")
     final.add_argument("--context", type=Path, required=True)
     final.add_argument("--output", type=Path, required=True)
     final.add_argument("--finished-epoch-ns", type=int, required=True)
+    final.add_argument("--runtime-binding", type=Path, required=True)
     final.set_defaults(func=aggregate)
+    attempt = commands.add_parser("aggregate-attempt")
+    attempt.add_argument("--context", type=Path, required=True)
+    attempt.add_argument("--output", type=Path, required=True)
+    attempt.add_argument("--finished-epoch-ns", type=int, required=True)
+    attempt.add_argument("--runtime-binding", type=Path, required=True)
+    attempt.set_defaults(func=aggregate_attempt)
     return root
 
 

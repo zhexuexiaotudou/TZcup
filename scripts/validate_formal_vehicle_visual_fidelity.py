@@ -33,6 +33,7 @@ REQUIRED_MESH_LINKS = {
     "central_roller_link", "central_roller_guard_link", "squeegee_link", "suction_nozzle_link",
     "recovery_strainer_filter_link", "recovery_pump_motor_link", "recovery_pump_head_link",
     "storage_system_mount_link", "dry_bin_link", "dry_bin_lid_link",
+    "dry_deposit_gate_actuator_link", "dry_deposit_gate_actuator_horn_link",
     "wastewater_tank_link", "wastewater_lid_link", "dry_wet_storage_partition_link",
     "bodywork_lower_tub_link", "bodywork_front_cowl_link", "bodywork_rear_shell_link",
     "bodywork_power_service_door_link", "bodywork_compute_service_door_link",

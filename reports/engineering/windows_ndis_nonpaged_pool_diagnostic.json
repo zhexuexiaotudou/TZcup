@@ -1,0 +1,692 @@
+{
+  "schema_version": 1,
+  "report_kind": "windows_ndis_nonpaged_pool_read_only_diagnostic",
+  "collected_at_utc": "2026-08-31T07:11:29.9778367Z",
+  "collection_policy": {
+    "read_only": true,
+    "no_service_stop": true,
+    "no_adapter_disable_or_restart": true,
+    "no_registry_change": true,
+    "no_tool_install": true
+  },
+  "system": {
+    "computer": {
+      "Manufacturer": "Micro-Star International Co., Ltd.",
+      "Model": "Vector 17 HX A13VHG",
+      "TotalPhysicalMemory": 31897587712
+    },
+    "operating_system": {
+      "Caption": "Microsoft Windows 11 家庭版 中文版",
+      "Version": "10.0.26200",
+      "BuildNumber": "26200",
+      "LastBootUpTime": "2026-08-30T18:42:52.5+08:00"
+    }
+  },
+  "memory_snapshot": {
+    "pool_nonpaged_bytes": 23405842432,
+    "pool_nonpaged_gib": 21.8,
+    "pool_paged_bytes": 857071616,
+    "committed_bytes": 36493078528,
+    "available_bytes": 1422086144
+  },
+  "pool_tag_evidence": {
+    "status": "unavailable_poolmon_not_installed",
+    "direct_driver_attribution": false,
+    "note": "No PoolMon binary was found on PATH. This diagnostic does not install or run third-party tooling."
+  },
+  "active_network_adapters": [
+    {
+      "name": "以太网",
+      "interface_description": "Realtek Gaming 2.5GbE Family Controller",
+      "status": "Up",
+      "link_speed": "1 Gbps",
+      "mac_address": "D8-43-AE-87-EB-C2",
+      "driver_date": "2022-07-21",
+      "driver_version": "1125.10.720.2022",
+      "ndis_version": "6.89"
+    },
+    {
+      "name": "vEthernet (FSE HostVnic)",
+      "interface_description": "Hyper-V Virtual Ethernet Container Adapter",
+      "status": "Up",
+      "link_speed": "10 Gbps",
+      "mac_address": "00-15-5D-A0-5F-29",
+      "driver_date": null,
+      "driver_version": null,
+      "ndis_version": null
+    },
+    {
+      "name": "WLAN",
+      "interface_description": "Intel(R) Wi-Fi 6E AX211 160MHz",
+      "status": "Up",
+      "link_speed": "400 Mbps",
+      "mac_address": "D4-F3-2D-33-38-76",
+      "driver_date": "2024-04-14",
+      "driver_version": "23.50.0.6",
+      "ndis_version": "6.60"
+    },
+    {
+      "name": "Tailscale",
+      "interface_description": "Tailscale Tunnel",
+      "status": "Up",
+      "link_speed": "100 Gbps",
+      "mac_address": null,
+      "driver_date": "2021-10-13",
+      "driver_version": "0.14.0.0",
+      "ndis_version": "6.83"
+    },
+    {
+      "name": "vSwitch (FSE Switch)",
+      "interface_description": "Hyper-V Virtual Switch Extension Adapter",
+      "status": "Up",
+      "link_speed": "10 Gbps",
+      "mac_address": null,
+      "driver_date": "2006-06-21",
+      "driver_version": "10.0.26100.1",
+      "ndis_version": "6.83"
+    },
+    {
+      "name": "本地连接* 12",
+      "interface_description": "WAN Miniport (Network Monitor)",
+      "status": "Up",
+      "link_speed": "0 bps",
+      "mac_address": null,
+      "driver_date": "2006-06-21",
+      "driver_version": "10.0.26100.1",
+      "ndis_version": "6.30"
+    },
+    {
+      "name": "本地连接* 11",
+      "interface_description": "WAN Miniport (IPv6)",
+      "status": "Up",
+      "link_speed": "0 bps",
+      "mac_address": null,
+      "driver_date": "2006-06-21",
+      "driver_version": "10.0.26100.1",
+      "ndis_version": "6.30"
+    },
+    {
+      "name": "本地连接* 10",
+      "interface_description": "WAN Miniport (IP)",
+      "status": "Up",
+      "link_speed": "0 bps",
+      "mac_address": null,
+      "driver_date": "2006-06-21",
+      "driver_version": "10.0.26100.1",
+      "ndis_version": "6.30"
+    }
+  ],
+  "candidate_assessments": [
+    {
+      "candidate": "ikuuu_vpn",
+      "classification": "unproven",
+      "direct_pool_tag_evidence": false,
+      "reasoning": "No observed active NDIS adapter, driver, PnP, or binding evidence for this candidate; service-only evidence is not enough to attribute nonpaged pool.",
+      "active_adapter_evidence": [],
+      "system_driver_evidence": [],
+      "service_evidence": [
+        {
+          "name": "iKuuuVPNHelperService",
+          "display_name": "iKuuuVPNHelperService",
+          "state": "Running",
+          "start_mode": "Auto",
+          "path": "F:\\Program\\ikuuu_vpn\\app\\iKuuuVPNHelperService.exe"
+        }
+      ],
+      "pnp_network_driver_evidence": [],
+      "binding_evidence": []
+    },
+    {
+      "candidate": "realtek",
+      "classification": "possible",
+      "direct_pool_tag_evidence": false,
+      "reasoning": "Observed active network/kernel evidence, but no pool-tag-to-driver mapping; this is not causal attribution.",
+      "active_adapter_evidence": [
+        {
+          "name": "以太网",
+          "interface_description": "Realtek Gaming 2.5GbE Family Controller",
+          "status": "Up",
+          "link_speed": "1 Gbps",
+          "mac_address": "D8-43-AE-87-EB-C2",
+          "driver_date": "2022-07-21",
+          "driver_version": "1125.10.720.2022",
+          "ndis_version": "6.89"
+        }
+      ],
+      "system_driver_evidence": [
+        {
+          "name": "IntcAzAudAddService",
+          "display_name": "Service for Realtek HD Audio (WDM)",
+          "state": "Running",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\drivers\\RTKVHD64.sys"
+        },
+        {
+          "name": "rt25cx21",
+          "display_name": "Realtek NetAdapter Driver",
+          "state": "Running",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\DriverStore\\FileRepository\\rt25cx21x64.inf_amd64_5dbf0fbd4d302ed5\\rt25cx21x64.sys"
+        },
+        {
+          "name": "RTSPER",
+          "display_name": "Realtek PCIE Card Reader - PER",
+          "state": "Running",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\drivers\\RtsPer.sys"
+        }
+      ],
+      "service_evidence": [
+        {
+          "name": "RtkAudioUniversalService",
+          "display_name": "Realtek Audio Universal Service",
+          "state": "Running",
+          "start_mode": "Auto",
+          "path": "C:\\WINDOWS\\System32\\DriverStore\\FileRepository\\realtekservice.inf_amd64_b8a282b80f383656\\RtkAudUService64.exe"
+        }
+      ],
+      "pnp_network_driver_evidence": [
+        {
+          "device_name": "Realtek Gaming 2.5GbE Family Controller",
+          "manufacturer": "Realtek",
+          "driver_version": "1125.10.720.2022",
+          "driver_date": "2022-07-21T00:00:00.0000000Z",
+          "inf_name": "oem100.inf",
+          "device_id": "PCI\\VEN_10EC&DEV_8125&SUBSYS_13CD1462&REV_05\\01000000684CE00000"
+        }
+      ],
+      "binding_evidence": []
+    },
+    {
+      "candidate": "tailscale",
+      "classification": "possible",
+      "direct_pool_tag_evidence": false,
+      "reasoning": "Observed active network/kernel evidence, but no pool-tag-to-driver mapping; this is not causal attribution.",
+      "active_adapter_evidence": [
+        {
+          "name": "Tailscale",
+          "interface_description": "Tailscale Tunnel",
+          "status": "Up",
+          "link_speed": "100 Gbps",
+          "mac_address": null,
+          "driver_date": "2021-10-13",
+          "driver_version": "0.14.0.0",
+          "ndis_version": "6.83"
+        }
+      ],
+      "system_driver_evidence": [
+        {
+          "name": "wintun",
+          "display_name": "wintun",
+          "state": "Running",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\drivers\\wintun.sys"
+        }
+      ],
+      "service_evidence": [
+        {
+          "name": "Tailscale",
+          "display_name": "Tailscale",
+          "state": "Running",
+          "start_mode": "Auto",
+          "path": "\"C:\\Program Files\\Tailscale\\tailscaled.exe\""
+        }
+      ],
+      "pnp_network_driver_evidence": [
+        {
+          "device_name": "Tailscale Tunnel",
+          "manufacturer": "WireGuard LLC",
+          "driver_version": "0.14.0.0",
+          "driver_date": "2021-10-13T00:00:00.0000000Z",
+          "inf_name": "oem603.inf",
+          "device_id": "SWD\\WINTUN\\{37217669-42DA-4657-A55B-0D995D328250}"
+        }
+      ],
+      "binding_evidence": [
+        {
+          "adapter_name": "Tailscale",
+          "display_name": "Microsoft 网络客户端",
+          "component_id": "ms_msclient",
+          "enabled": true
+        },
+        {
+          "adapter_name": "Tailscale",
+          "display_name": "Microsoft 网络的文件和打印机共享",
+          "component_id": "ms_server",
+          "enabled": true
+        },
+        {
+          "adapter_name": "Tailscale",
+          "display_name": "Microsoft 网络适配器多路传送器协议",
+          "component_id": "ms_implat",
+          "enabled": false
+        },
+        {
+          "adapter_name": "Tailscale",
+          "display_name": "Internet 协议版本 4 (TCP/IPv4)",
+          "component_id": "ms_tcpip",
+          "enabled": true
+        },
+        {
+          "adapter_name": "Tailscale",
+          "display_name": "Microsoft LLDP 协议驱动程序",
+          "component_id": "ms_lldp",
+          "enabled": true
+        },
+        {
+          "adapter_name": "Tailscale",
+          "display_name": "Hyper-V 可扩展的虚拟交换机",
+          "component_id": "vms_pp",
+          "enabled": false
+        },
+        {
+          "adapter_name": "Tailscale",
+          "display_name": "链路层拓扑发现映射器 I/O 驱动程序",
+          "component_id": "ms_lltdio",
+          "enabled": true
+        },
+        {
+          "adapter_name": "Tailscale",
+          "display_name": "链路层拓扑发现响应程序",
+          "component_id": "ms_rspndr",
+          "enabled": true
+        },
+        {
+          "adapter_name": "Tailscale",
+          "display_name": "Internet 协议版本 6 (TCP/IPv6)",
+          "component_id": "ms_tcpip6",
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "candidate": "fse",
+      "classification": "possible",
+      "direct_pool_tag_evidence": false,
+      "reasoning": "Observed active network/kernel evidence, but no pool-tag-to-driver mapping; this is not causal attribution.",
+      "active_adapter_evidence": [
+        {
+          "name": "vEthernet (FSE HostVnic)",
+          "interface_description": "Hyper-V Virtual Ethernet Container Adapter",
+          "status": "Up",
+          "link_speed": "10 Gbps",
+          "mac_address": "00-15-5D-A0-5F-29",
+          "driver_date": null,
+          "driver_version": null,
+          "ndis_version": null
+        },
+        {
+          "name": "vSwitch (FSE Switch)",
+          "interface_description": "Hyper-V Virtual Switch Extension Adapter",
+          "status": "Up",
+          "link_speed": "10 Gbps",
+          "mac_address": null,
+          "driver_date": "2006-06-21",
+          "driver_version": "10.0.26100.1",
+          "ndis_version": "6.83"
+        }
+      ],
+      "system_driver_evidence": [
+        {
+          "name": "bttflt",
+          "display_name": "Microsoft Hyper-V VHDPMEM BTT 筛选器",
+          "state": "Stopped",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\drivers\\bttflt.sys"
+        },
+        {
+          "name": "fse",
+          "display_name": "Flow steering engine",
+          "state": "Running",
+          "start_mode": "Boot",
+          "path": "C:\\WINDOWS\\system32\\drivers\\fse.sys"
+        },
+        {
+          "name": "gencounter",
+          "display_name": "Microsoft Hyper-V 生成计数器",
+          "state": "Stopped",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\drivers\\vmgencounter.sys"
+        },
+        {
+          "name": "s3cap",
+          "display_name": "s3cap",
+          "state": "Stopped",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\drivers\\vms3cap.sys"
+        },
+        {
+          "name": "storflt",
+          "display_name": "Microsoft Hyper-V 存储加速器",
+          "state": "Stopped",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\drivers\\vmstorfl.sys"
+        },
+        {
+          "name": "vmgid",
+          "display_name": "Microsoft Hyper-V 来宾基础结构驱动程序",
+          "state": "Stopped",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\drivers\\vmgid.sys"
+        },
+        {
+          "name": "vmsmp",
+          "display_name": "vmsmp",
+          "state": "Running",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\drivers\\vmswitch.sys"
+        },
+        {
+          "name": "VMSNPXY",
+          "display_name": "VmSwitch NIC Proxy Driver",
+          "state": "Running",
+          "start_mode": "Boot",
+          "path": "C:\\WINDOWS\\system32\\drivers\\VmsProxyHNic.sys"
+        },
+        {
+          "name": "VMSP",
+          "display_name": "VmSwitch Protocol Driver",
+          "state": "Running",
+          "start_mode": "Auto",
+          "path": "C:\\WINDOWS\\system32\\drivers\\vmswitch.sys"
+        },
+        {
+          "name": "VmsProxy",
+          "display_name": "VmSwitch Proxy Driver",
+          "state": "Running",
+          "start_mode": "Boot",
+          "path": "C:\\WINDOWS\\system32\\drivers\\VmsProxy.sys"
+        },
+        {
+          "name": "VMSVSF",
+          "display_name": "VmSwitch Extensibility Filter",
+          "state": "Stopped",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\drivers\\vmswitch.sys"
+        },
+        {
+          "name": "VMSVSP",
+          "display_name": "VmSwitch Extensibility Protocol",
+          "state": "Stopped",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\drivers\\vmswitch.sys"
+        },
+        {
+          "name": "vpci",
+          "display_name": "Microsoft Hyper-V 虚拟 PCI 总线",
+          "state": "Stopped",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\drivers\\vpci.sys"
+        },
+        {
+          "name": "vpcivsp",
+          "display_name": "Microsoft Hyper-V PCI 服务器",
+          "state": "Running",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\drivers\\vpcivsp.sys"
+        }
+      ],
+      "service_evidence": [
+        {
+          "name": "vmcompute",
+          "display_name": "Hyper-V 主机计算服务",
+          "state": "Running",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\vmcompute.exe"
+        },
+        {
+          "name": "vmicguestinterface",
+          "display_name": "Hyper-V Guest Service Interface",
+          "state": "Stopped",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\svchost.exe -k LocalSystemNetworkRestrictedRedirectionGuard -p"
+        },
+        {
+          "name": "vmicheartbeat",
+          "display_name": "Hyper-V Heartbeat Service",
+          "state": "Stopped",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\svchost.exe -k ICService -p"
+        },
+        {
+          "name": "vmickvpexchange",
+          "display_name": "Hyper-V Data Exchange Service",
+          "state": "Stopped",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\svchost.exe -k LocalSystemNetworkRestrictedRedirectionGuard -p"
+        },
+        {
+          "name": "vmicrdv",
+          "display_name": "Hyper-V 远程桌面虚拟化服务",
+          "state": "Stopped",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\svchost.exe -k ICService -p"
+        },
+        {
+          "name": "vmicshutdown",
+          "display_name": "Hyper-V Guest Shutdown Service",
+          "state": "Stopped",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\svchost.exe -k LocalSystemNetworkRestrictedRedirectionGuard -p"
+        },
+        {
+          "name": "vmictimesync",
+          "display_name": "Hyper-V Time Synchronization Service",
+          "state": "Stopped",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\svchost.exe -k LocalServiceNetworkRestricted -p"
+        },
+        {
+          "name": "vmicvmsession",
+          "display_name": "Hyper-V PowerShell Direct Service",
+          "state": "Stopped",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\svchost.exe -k LocalSystemNetworkRestrictedRedirectionGuard -p"
+        },
+        {
+          "name": "vmicvss",
+          "display_name": "Hyper-V 卷影复制请求程序",
+          "state": "Stopped",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\svchost.exe -k LocalSystemNetworkRestrictedRedirectionGuard -p"
+        }
+      ],
+      "pnp_network_driver_evidence": [
+        {
+          "device_name": "Hyper-V Virtual Switch Extension Adapter",
+          "manufacturer": "Microsoft",
+          "driver_version": "10.0.26100.1",
+          "driver_date": "2006-06-21T00:00:00.0000000Z",
+          "inf_name": "wvms_mp_windows.inf",
+          "device_id": "ROOT\\VMS_VSMP\\0000"
+        }
+      ],
+      "binding_evidence": [
+        {
+          "adapter_name": "本地连接* 3",
+          "display_name": "Hyper-V 可扩展的虚拟交换机",
+          "component_id": "vms_pp",
+          "enabled": false
+        },
+        {
+          "adapter_name": "以太网",
+          "display_name": "Hyper-V 可扩展的虚拟交换机",
+          "component_id": "vms_pp",
+          "enabled": false
+        },
+        {
+          "adapter_name": "vEthernet (FSE HostVnic)",
+          "display_name": "Microsoft 网络的文件和打印机共享",
+          "component_id": "ms_server",
+          "enabled": true
+        },
+        {
+          "adapter_name": "vEthernet (FSE HostVnic)",
+          "display_name": "Microsoft 网络客户端",
+          "component_id": "ms_msclient",
+          "enabled": true
+        },
+        {
+          "adapter_name": "vEthernet (FSE HostVnic)",
+          "display_name": "Hyper-V 可扩展的虚拟交换机",
+          "component_id": "vms_pp",
+          "enabled": false
+        },
+        {
+          "adapter_name": "vEthernet (FSE HostVnic)",
+          "display_name": "Microsoft 网络适配器多路传送器协议",
+          "component_id": "ms_implat",
+          "enabled": false
+        },
+        {
+          "adapter_name": "vEthernet (FSE HostVnic)",
+          "display_name": "Internet 协议版本 4 (TCP/IPv4)",
+          "component_id": "ms_tcpip",
+          "enabled": true
+        },
+        {
+          "adapter_name": "vEthernet (FSE HostVnic)",
+          "display_name": "Microsoft LLDP 协议驱动程序",
+          "component_id": "ms_lldp",
+          "enabled": true
+        },
+        {
+          "adapter_name": "vEthernet (FSE HostVnic)",
+          "display_name": "Internet 协议版本 6 (TCP/IPv6)",
+          "component_id": "ms_tcpip6",
+          "enabled": true
+        },
+        {
+          "adapter_name": "vEthernet (FSE HostVnic)",
+          "display_name": "链路层拓扑发现响应程序",
+          "component_id": "ms_rspndr",
+          "enabled": true
+        },
+        {
+          "adapter_name": "vEthernet (FSE HostVnic)",
+          "display_name": "链路层拓扑发现映射器 I/O 驱动程序",
+          "component_id": "ms_lltdio",
+          "enabled": true
+        },
+        {
+          "adapter_name": "vEthernet (FSE HostVnic)",
+          "display_name": "桥驱动程序",
+          "component_id": "ms_l2bridge",
+          "enabled": true
+        },
+        {
+          "adapter_name": "vEthernet (FSE HostVnic)",
+          "display_name": "嵌套网络虚拟化",
+          "component_id": "ms_l1vhlwf",
+          "enabled": true
+        },
+        {
+          "adapter_name": "vEthernet (FSE HostVnic)",
+          "display_name": "QoS 数据包计划程序",
+          "component_id": "ms_pacer",
+          "enabled": true
+        },
+        {
+          "adapter_name": "WLAN",
+          "display_name": "Hyper-V 可扩展的虚拟交换机",
+          "component_id": "vms_pp",
+          "enabled": false
+        },
+        {
+          "adapter_name": "以太网(内核调试器)",
+          "display_name": "Hyper-V 可扩展的虚拟交换机",
+          "component_id": "vms_pp",
+          "enabled": false
+        },
+        {
+          "adapter_name": "本地连接* 4",
+          "display_name": "Hyper-V 可扩展的虚拟交换机",
+          "component_id": "vms_pp",
+          "enabled": false
+        },
+        {
+          "adapter_name": "Tailscale",
+          "display_name": "Hyper-V 可扩展的虚拟交换机",
+          "component_id": "vms_pp",
+          "enabled": false
+        },
+        {
+          "adapter_name": "vSwitch (FSE Switch)",
+          "display_name": "Microsoft Windows 筛选平台",
+          "component_id": "ms_wfplwf_vswitch",
+          "enabled": false
+        },
+        {
+          "adapter_name": "vSwitch (FSE Switch)",
+          "display_name": "Hyper-V 虚拟交换机扩展协议",
+          "component_id": "vms_vsp",
+          "enabled": true
+        },
+        {
+          "adapter_name": "vSwitch (FSE Switch)",
+          "display_name": "Hyper-V 虚拟交换机扩展筛选器",
+          "component_id": "vms_vsf",
+          "enabled": true
+        }
+      ]
+    },
+    {
+      "candidate": "intel_wlan",
+      "classification": "possible",
+      "direct_pool_tag_evidence": false,
+      "reasoning": "Observed active network/kernel evidence, but no pool-tag-to-driver mapping; this is not causal attribution.",
+      "active_adapter_evidence": [
+        {
+          "name": "WLAN",
+          "interface_description": "Intel(R) Wi-Fi 6E AX211 160MHz",
+          "status": "Up",
+          "link_speed": "400 Mbps",
+          "mac_address": "D4-F3-2D-33-38-76",
+          "driver_date": "2024-04-14",
+          "driver_version": "23.50.0.6",
+          "ndis_version": "6.60"
+        }
+      ],
+      "system_driver_evidence": [
+        {
+          "name": "Netwtw14",
+          "display_name": "___ Intel(R) Wireless 适配器驱动程序（适用于 Windows 10 64 位）",
+          "state": "Running",
+          "start_mode": "Manual",
+          "path": "C:\\WINDOWS\\system32\\DriverStore\\FileRepository\\netwtw6e.inf_amd64_275233d28d23c717\\Netwtw14.sys"
+        }
+      ],
+      "service_evidence": [],
+      "pnp_network_driver_evidence": [
+        {
+          "device_name": "Intel(R) Wi-Fi 6E AX211 160MHz",
+          "manufacturer": "Intel Corporation",
+          "driver_version": "23.50.0.6",
+          "driver_date": "2024-04-14T00:00:00.0000000Z",
+          "inf_name": "oem90.inf",
+          "device_id": "PCI\\VEN_8086&DEV_7A70&SUBSYS_00948086&REV_11\\3&11583659&1&A3"
+        }
+      ],
+      "binding_evidence": []
+    }
+  ],
+  "event_evidence": {
+    "lookback_days": 7,
+    "ndis_operational_log": [
+      {
+        "LogName": "Microsoft-Windows-NDIS/Operational",
+        "IsEnabled": false,
+        "RecordCount": null,
+        "LastWriteTime": null
+      }
+    ],
+    "relevant_system_warning_or_error_events": []
+  },
+  "next_steps_require_user_confirmation": [
+    "Capture two read-only snapshots after the same uptime interval; if PoolMon is available, retain tag counts before attributing any driver.",
+    "If controlled isolation is approved, test non-default overlay components first: Tailscale, then FSE/Hyper-V virtual switching, then iKuuuVPN only if a kernel network component is discovered.",
+    "Keep the default Intel WLAN enabled throughout the initial overlay tests; test WLAN or Realtek only after the overlay results and a vendor-driver review.",
+    "After any approved change, compare nonpaged-pool trend across the same workload and reboot cycle; a single low sample is not proof of cause."
+  ],
+  "collection_errors": []
+}

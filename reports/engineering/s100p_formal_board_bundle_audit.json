@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "report_id": "tzcup_s100p_formal_board_bundle_validation_v1",
+  "operation": "static_manifest_and_sha_validation_only",
+  "status": "BLOCKED",
+  "ready_to_deploy": false,
+  "manifest_copyable": true,
+  "payload_copy_authorized": false,
+  "board_operations_performed": false,
+  "formal_snapshot_live_source_revalidated": false,
+  "checks": {
+    "manifest_parseable": true,
+    "manifest_identity_valid": true,
+    "copy_boundary_fail_closed": true,
+    "snapshot_binding_declared": true,
+    "formal_snapshot_file_matches_declaration": true,
+    "formal_snapshot_content_matches_declaration": true,
+    "bound_source_roles_exact": true,
+    "bound_source_digests_valid": true,
+    "semantic_configuration_parseable": true,
+    "product_bundle_declared_preparation_only": true,
+    "product_bundle_model_role_set_valid": true,
+    "product_bundle_overlay_inventory_digest_matches_contract": true,
+    "dosod_hbm_is_not_claimed_available": true,
+    "dosod_hbm_compile_output_not_produced": true,
+    "overlay_is_not_claimed_built_or_copied": true,
+    "snapshot_identity_present": true,
+    "semantic_bound_sources_readable": true,
+    "required_board_payload_roles_exact": true,
+    "payload_roles_match_product_artifact_bundle": true,
+    "payload_roles_match_launch_parameter_record": true,
+    "launch_binds_each_required_board_payload_role": true,
+    "sanitation_perception_package_xml_parseable": true,
+    "sanitation_perception_exec_dependencies_exact": true,
+    "overlay_runtime_inventory_matches_package_xml": true,
+    "overlay_runtime_dependency_closure_classified": true,
+    "launch_required_base_packages_explicitly_exempted": true,
+    "launch_binds_dosod_edgesam_and_project_adapters": true,
+    "profile_keeps_four_artifact_roles_blocked": true,
+    "ros_package_and_entrypoint_bindings_present": true,
+    "deployment_gates_explicitly_unaccepted": true,
+    "mandatory_blockers_declared": true
+  },
+  "bound_source_results": {
+    "dosod_hbm_compile_contract": {
+      "path": "config/dosod_s100p_hbm_compile_contract.json",
+      "byte_size": 5792,
+      "sha256": "1bbbf27f5b86f4b7e87369859dab5428af6f82b21cd63cfabf016b93021765e0",
+      "valid": true
+    },
+    "offline_predeploy_product_bundle": {
+      "path": "config/s100p_product_artifact_bundle.json",
+      "byte_size": 4157,
+      "sha256": "5fe2ba959d5f80fa881c4124c73ae1dcd82028d43f88b94a869f746ff1c49819",
+      "valid": true
+    },
+    "board_launch_parameter_record": {
+      "path": "config/s100p_product_board_launch_parameters.json",
+      "byte_size": 1333,
+      "sha256": "a0e30d1c4932c5a0c65043db3f26b94564890f93b14532a2fe41a2257fb4519c",
+      "valid": true
+    },
+    "board_overlay_package_contract": {
+      "path": "config/s100p_product_overlay_packages.json",
+      "byte_size": 2176,
+      "sha256": "34b497665724860a382988fed876cce2d9a2920366860966b5c9a630d62710ca",
+      "valid": true
+    },
+    "dosod_edgesam_s100_profile": {
+      "path": "starter_ws/src/sanitation_perception/config/open_vocab_s100_profile.yaml",
+      "byte_size": 2812,
+      "sha256": "9b3dc914705c53dad8c0248ed60e8e44d685efc1c80b9320239ec165bbd1edf6",
+      "valid": true
+    },
+    "formal_ros2_launch": {
+      "path": "starter_ws/src/sanitation_perception/launch/formal_s100p_open_vocab.launch.py",
+      "byte_size": 9540,
+      "sha256": "218fb81fcf2d6668a1d6dc57bdb8e258ef72448f9bf46a4728d9e4d57edea5dc",
+      "valid": true
+    },
+    "project_perception_package_manifest": {
+      "path": "starter_ws/src/sanitation_perception/package.xml",
+      "byte_size": 1241,
+      "sha256": "203329c440c63b1d955ba677a1a3c8b8555f8288483327785f1c77c782cd7389",
+      "valid": true
+    },
+    "nv12_adapter_source": {
+      "path": "starter_ws/src/sanitation_perception/sanitation_perception/rgb_to_nv12_adapter.py",
+      "byte_size": 5935,
+      "sha256": "e802dd8ac5bc5309ac5e23661672276908b0cd5aeaec21bc7ad275e9ba5a9cdb",
+      "valid": true
+    },
+    "product_adapter_source": {
+      "path": "starter_ws/src/sanitation_perception/sanitation_perception/s100p_product_adapter.py",
+      "byte_size": 31077,
+      "sha256": "08148015337ef7d45010014cafad4f15c17d3f2ddb741f72f2acaaee9ba9891b",
+      "valid": true
+    },
+    "project_perception_entry_points": {
+      "path": "starter_ws/src/sanitation_perception/setup.py",
+      "byte_size": 1567,
+      "sha256": "9766b35de72648e7355916f0f98c2bcdc3339648cde0d995bbe9d06db3359eca",
+      "valid": true
+    },
+    "perception_interfaces_package_manifest": {
+      "path": "starter_ws/src/sanitation_perception_interfaces/package.xml",
+      "byte_size": 737,
+      "sha256": "192d6a7db318698d668b9845dadd36541f389b201d1fd009ae6e84c5490d9dc9",
+      "valid": true
+    }
+  },
+  "blockers": [
+    "board_runtime_dependencies_unverified",
+    "board_runtime_evidence_not_collected",
+    "board_tzcup_overlay_unbuilt_or_unverified",
+    "project_dosod_hbm_missing_or_unhashed",
+    "required_board_model_payloads_not_all_receipted",
+    "thermal_and_power_measurement_not_collected"
+  ]
+}

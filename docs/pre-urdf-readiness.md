@@ -68,11 +68,16 @@ py -3 -m pytest -q scripts/test_pre_urdf_readiness.py
 
 校验会拒绝未锁 commit、未知许可证、缺失部件角色、重复 topic/frame、不足40 L的干舱、无污水载荷空间、传感器支路过载和缺失布局门。紧凑结果保存在 [`pre_urdf_readiness.json`](../reports/engineering/pre_urdf_readiness.json)。
 
-## 5. 当前明确未做
+## 5. 2026-08-25 准备包冻结时尚未做（历史）
 
 - 未建立 A300 承载框、机械臂座、箱柜、刷盘、刮吸或泵的正式 Xacro/网格；
 - 未下载或提交厂商 STEP/IGES，未编写 `ros2_control`/Gazebo 插件；
 - 未冻结任何传感器安装外参，未运行碰撞、FOV、重心或稳定性扫描；
 - 未启动新的 Gazebo 高保真车辆仿真，也未改变现有 AUTO 阶段证据状态。
 
-因此本准备包是下一轮 URDF 设计的输入基线，不是完成证明。
+以上列表描述准备包冻结瞬间，不是 2026-08-27 的工程现状。当前正式快照已经建立
+A300 承载、UR5e/2F-85、干湿箱、刷盘/滚刷、弹簧阻尼刮吸、泵、传感器外参、
+物理主隔离器/接触器和 Gazebo/ros2_control 接口；当前数字及仍待运行的门统一见
+[正式整车 URDF/CAD](formal-vehicle-urdf-cad.md)和
+[部件与机械连接架构](formal-vehicle-component-architecture.md)。因此本准备包只作为
+可追溯输入基线，既不能证明当前通过，也不能用其“未做”列表否定后来已经落地的源码。

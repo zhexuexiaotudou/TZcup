@@ -11,6 +11,10 @@ evidence_root="${INTEGRATED_ACCEPTANCE_OUTPUT_DIR:-${repo_root}/artifacts/integr
 domain_base="${INTEGRATED_ACCEPTANCE_DOMAIN_BASE:-180}"
 material="${INTEGRATED_ACCEPTANCE_MATERIAL:-PET}"
 aggregator="${repo_root}/scripts/aggregate_integrated_functional_acceptance.py"
+integrated_session_prefix=()
+if [[ "${FORMAL_ORCHESTRATED_STEP_SESSION:-0}" != "1" ]]; then
+  integrated_session_prefix=(setsid)
+fi
 
 if [[ ! -f "${runtime_ws}/install/setup.bash" ]]; then
   echo "Missing fresh runtime workspace: ${runtime_ws}/install/setup.bash" >&2
@@ -38,9 +42,57 @@ run_dir="${evidence_root}/${run_id}"
 context="${run_dir}/run_context.json"
 manifest="${run_dir}/integrated_acceptance_manifest.json"
 manifest_tmp="${manifest}.pending.$$"
+snapshot_manifest="${INTEGRATED_ACCEPTANCE_SNAPSHOT_MANIFEST:-${repo_root}/reports/engineering/formal_vehicle_snapshot_manifest.json}"
+contract_summary="${INTEGRATED_ACCEPTANCE_CONTRACT_SUMMARY:-${repo_root}/reports/engineering/integrated_basic_functional_acceptance_summary.json}"
+runtime_binding="${INTEGRATED_ACCEPTANCE_RUNTIME_BINDING:-${contract_summary}.runtime_binding.json}"
+session_status="${FORMAL_ACCEPTANCE_SESSION_STATUS:?set FORMAL_ACCEPTANCE_SESSION_STATUS to the running final acceptance session}"
+runtime_closure="${FORMAL_FINAL_RUNTIME_CLOSURE_MANIFEST:?set FORMAL_FINAL_RUNTIME_CLOSURE_MANIFEST to the frozen final runtime closure}"
+side_brush_surface_audit="${run_dir}/side_brush_sdf_surface.json"
+side_brush_surface_log="${run_dir}/side_brush_sdf_surface.log"
+
+# The publisher accepts only the sidecar paired with the canonical fixed-path
+# summary.  Check this before the first Gazebo process so an environment
+# override cannot waste an entire serial acceptance attempt before failing.
+expected_runtime_binding="$(python3 - "${contract_summary}" <<'PY'
+from pathlib import Path
+import sys
+
+summary = Path(sys.argv[1]).resolve()
+print(summary.with_name(summary.name + ".runtime_binding.json"))
+PY
+)"
+actual_runtime_binding="$(python3 - "${runtime_binding}" <<'PY'
+from pathlib import Path
+import sys
+
+print(Path(sys.argv[1]).resolve())
+PY
+)"
+if [[ "${actual_runtime_binding}" != "${expected_runtime_binding}" ]]; then
+  echo "INTEGRATED_ACCEPTANCE_RUNTIME_BINDING must resolve to the canonical contract-summary sidecar" >&2
+  exit 2
+fi
 mkdir -p "${evidence_root}"
 if ! mkdir "${run_dir}" 2>/dev/null; then
   echo "Refusing to reuse integrated acceptance run directory: ${run_dir}" >&2
+  exit 2
+fi
+if [[ ! -f "${snapshot_manifest}" ]]; then
+  echo "Missing frozen vehicle snapshot manifest: ${snapshot_manifest}" >&2
+  exit 2
+fi
+for required in "${session_status}" "${runtime_closure}"; do
+  if [[ ! -f "${required}" ]]; then
+    echo "Missing required formal runtime binding input: ${required}" >&2
+    exit 2
+  fi
+done
+if [[ -e "${runtime_binding}" ]]; then
+  echo "Refusing to overwrite integrated acceptance runtime binding: ${runtime_binding}" >&2
+  exit 2
+fi
+if [[ -e "${contract_summary}" ]]; then
+  echo "Refusing to overwrite integrated acceptance contract summary: ${contract_summary}" >&2
   exit 2
 fi
 
@@ -48,19 +100,38 @@ python3 "${aggregator}" preflight \
   --repo-root "${repo_root}" --runtime-ws "${runtime_ws}" \
   --build-manifest "${build_manifest}"
 
+vehicle_xacro="$(ros2 pkg prefix --share sanitation_vehicle_description)/urdf/formal_competition_vehicle.urdf.xacro"
+python3 "${repo_root}/scripts/validate_formal_side_brush_sdf_surface.py" \
+  --vehicle-xacro "${vehicle_xacro}" \
+  --output "${side_brush_surface_audit}" \
+  >"${side_brush_surface_log}" 2>&1
+
 run_started_ns="$(date +%s%N)"
 python3 "${aggregator}" init-run \
   --repo-root "${repo_root}" --runtime-ws "${runtime_ws}" \
   --build-manifest "${build_manifest}" --context "${context}" \
-  --run-id "${run_id}" --started-epoch-ns "${run_started_ns}"
+  --run-id "${run_id}" --started-epoch-ns "${run_started_ns}" \
+  --material "${material}" \
+  --session "${session_status}" --snapshot "${snapshot_manifest}" \
+  --side-brush-surface-audit "${side_brush_surface_audit}"
+
+# Bind the entire serial scenario set before the first Gazebo process starts.
+python3 "${repo_root}/scripts/formal_runtime_gate_binding.py" \
+  --repository-root "${repo_root}" --install-root "${runtime_ws}/install" \
+  --closure-manifest "${runtime_closure}" --session "${session_status}" \
+  --snapshot "${snapshot_manifest}" --output "${runtime_binding}"
 
 active_group_pid=""
 active_partition=""
 cleanup_active_group() {
   if [[ -n "${active_group_pid}" ]] && kill -0 "${active_group_pid}" 2>/dev/null; then
-    kill -INT -- "-${active_group_pid}" 2>/dev/null || true
+    kill -INT -- "${active_group_pid}" 2>/dev/null || true
     sleep 1
-    kill -TERM -- "-${active_group_pid}" 2>/dev/null || true
+    if (( ${#integrated_session_prefix[@]} )); then
+      kill -TERM -- "-${active_group_pid}" 2>/dev/null || true
+    else
+      kill -TERM -- "${active_group_pid}" 2>/dev/null || true
+    fi
     wait "${active_group_pid}" 2>/dev/null || true
   fi
   active_group_pid=""
@@ -136,7 +207,8 @@ record_scenario() {
     --exit-code "${exit_code}" --ros-domain-id "${domain}" \
     --gz-partition "${partition}" --result "${result}" \
     --launch-log "${launch_log}" --runner-log "${runner_log}" \
-    --cleanup-remaining-pids "${remaining}"
+    --cleanup-remaining-pids "${remaining}" \
+    --runtime-binding "${runtime_binding}"
 }
 
 run_wrapped_scenario() {
@@ -152,13 +224,15 @@ run_wrapped_scenario() {
   started_ns="$(date +%s%N)"
   set +e
   if [[ "${name}" == "mobility" ]]; then
-    setsid env ROS_DOMAIN_ID="${domain}" GZ_PARTITION="${partition}" \
+    "${integrated_session_prefix[@]}" env ROS_DOMAIN_ID="${domain}" GZ_PARTITION="${partition}" \
+      FORMAL_ORCHESTRATED_STEP_SESSION=1 \
       FORMAL_VEHICLE_RUNTIME_WS="${runtime_ws}" \
       FORMAL_VEHICLE_MOBILITY_OUTPUT="${result}" \
       FORMAL_VEHICLE_MOBILITY_LOG="${launch_log}" \
       bash "${child_runner}" >"${runner_log}" 2>&1 &
   else
-    setsid env ROS_DOMAIN_ID="${domain}" GZ_PARTITION="${partition}" \
+    "${integrated_session_prefix[@]}" env ROS_DOMAIN_ID="${domain}" GZ_PARTITION="${partition}" \
+      FORMAL_ORCHESTRATED_STEP_SESSION=1 \
       FORMAL_MANIPULATION_RUNTIME_WS="${runtime_ws}" \
       FORMAL_MANIPULATION_OUTPUT="${result}" \
       FORMAL_MANIPULATION_LOG="${launch_log}" \
@@ -189,9 +263,12 @@ run_water_scenario() {
   active_partition="${partition}"
   started_ns="$(date +%s%N)"
   env ROS_DOMAIN_ID="${domain}" GZ_PARTITION="${partition}" \
-    setsid ros2 launch sanitation_vehicle_description formal_vehicle_sim.launch.py \
+    "${integrated_session_prefix[@]}" ros2 launch sanitation_vehicle_description formal_vehicle_sim.launch.py \
       gui:=false bodywork_visible:=true start_controllers:=true \
-      water_evaluation_interfaces:=true >"${launch_log}" 2>&1 &
+      enable_safety_manager:=true simulation_initial_estop_active:=true \
+      start_simulation_safety_inputs:=true start_power_system_simulators:=true \
+      high_bandwidth_sensor_runtime:=false water_evaluation_interfaces:=true \
+      >"${launch_log}" 2>&1 &
   active_group_pid=$!
   set +e
   env ROS_DOMAIN_ID="${domain}" GZ_PARTITION="${partition}" \
@@ -215,8 +292,24 @@ run_water_scenario "water_full" 2 "full"
 run_wrapped_scenario "manipulation" 3 "${repo_root}/scripts/run_formal_cube_pick_place_runtime.sh"
 
 run_finished_ns="$(date +%s%N)"
-python3 "${aggregator}" aggregate \
+# Aggregate every recorded scenario into a durable attempt manifest even when
+# one isolated chain failed.  Only a zero exit can publish the canonical PASS
+# summary; a failed-attempt manifest remains inside this unique run directory.
+set +e
+python3 "${aggregator}" aggregate-attempt \
   --context "${context}" --output "${manifest_tmp}" \
-  --finished-epoch-ns "${run_finished_ns}"
+  --finished-epoch-ns "${run_finished_ns}" --runtime-binding "${runtime_binding}"
+aggregate_exit=$?
+set -e
 mv -- "${manifest_tmp}" "${manifest}"
+if (( aggregate_exit != 0 )); then
+  echo "Integrated acceptance failed attempt retained: ${manifest}" >&2
+  exit "${aggregate_exit}"
+fi
+python3 "${repo_root}/scripts/publish_integrated_basic_functional_acceptance.py" \
+  --manifest "${manifest}" --snapshot-manifest "${snapshot_manifest}" \
+  --session-status "${session_status}" --runtime-closure "${runtime_closure}" \
+  --runtime-install-root "${runtime_ws}/install" --runtime-binding "${runtime_binding}" \
+  --output "${contract_summary}"
 echo "Integrated acceptance manifest: ${manifest}"
+echo "Integrated acceptance contract summary: ${contract_summary}"

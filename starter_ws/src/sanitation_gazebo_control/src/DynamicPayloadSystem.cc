@@ -4,12 +4,16 @@
 #include <algorithm>
 #include <atomic>
 #include <cmath>
+#include <iomanip>
+#include <sstream>
+#include <stdexcept>
 #include <string>
 
 #include <gz/math/Inertial.hh>
 #include <gz/math/MassMatrix3.hh>
 #include <gz/math/Pose3.hh>
 #include <gz/msgs/double.pb.h>
+#include <gz/msgs/stringmsg.pb.h>
 #include <gz/plugin/Register.hh>
 #include <gz/sim/Entity.hh>
 #include <gz/sim/EntityComponentManager.hh>
@@ -72,6 +76,12 @@ gz::math::Inertiald BoxInertial(
 /// current wastewater payload. A physically retained cube must not also be
 /// sent to the dry payload topic; that interface remains only for aggregate
 /// loads which are not represented by separate rigid bodies.
+///
+/// dry_accounting_mode is deliberately exclusive:
+/// - aggregate: the dry topic describes an otherwise unmodelled bulk load.
+/// - physical_resident: dry objects remain independent rigid bodies inside
+///   the bin; their contact forces are the only vehicle-load path and this
+///   plugin rejects every non-zero aggregate dry input.
 class DynamicPayloadSystem final:
     public gz::sim::System,
     public gz::sim::ISystemConfigure,
@@ -89,6 +99,8 @@ class DynamicPayloadSystem final:
 
     if (_sdf->HasElement("dry_topic"))
       this->dryTopic = _sdf->Get<std::string>("dry_topic");
+    if (_sdf->HasElement("dry_accounting_mode"))
+      this->dryAccountingMode = _sdf->Get<std::string>("dry_accounting_mode");
     if (_sdf->HasElement("wastewater_topic"))
       this->waterTopic = _sdf->Get<std::string>("wastewater_topic");
     if (_sdf->HasElement("dry_capacity_kg"))
@@ -101,7 +113,31 @@ class DynamicPayloadSystem final:
       initialDryMassKg = _sdf->Get<double>("initial_dry_mass_kg");
     if (_sdf->HasElement("initial_wastewater_mass_kg"))
       initialWaterMassKg = _sdf->Get<double>("initial_wastewater_mass_kg");
-    initialDryMassKg = std::clamp(initialDryMassKg, 0.0, this->dryCapacityKg);
+    if (this->dryAccountingMode != "aggregate" &&
+        this->dryAccountingMode != "physical_resident")
+    {
+      throw std::invalid_argument(
+          "dry_accounting_mode must be aggregate or physical_resident");
+    }
+    this->physicalResidentDry =
+        this->dryAccountingMode == "physical_resident";
+    if (this->physicalResidentDry)
+    {
+      // In physical-resident mode a non-zero initial aggregate would add a
+      // second representation of the same deposited bodies.  Refuse rather
+      // than clamp or silently carry it into the composite vehicle inertia.
+      if (std::abs(initialDryMassKg) > this->massToleranceKg)
+      {
+        throw std::invalid_argument(
+            "physical_resident mode requires initial_dry_mass_kg == 0");
+      }
+      initialDryMassKg = 0.0;
+    }
+    else
+    {
+      initialDryMassKg =
+          std::clamp(initialDryMassKg, 0.0, this->dryCapacityKg);
+    }
     initialWaterMassKg = std::clamp(initialWaterMassKg, 0.0, this->waterCapacityKg);
     this->dryMassKg.store(initialDryMassKg);
     this->waterMassKg.store(initialWaterMassKg);
@@ -155,9 +191,13 @@ class DynamicPayloadSystem final:
         this->waterTopic, &DynamicPayloadSystem::OnWaterMass, this);
     this->dryAppliedPublisher =
         this->node.Advertise<gz::msgs::Double>(this->dryTopic + "/applied");
+    this->dryAccountingPublisher =
+        this->node.Advertise<gz::msgs::StringMsg>(
+            this->dryTopic + "/accounting_status_json");
     this->waterAppliedPublisher =
         this->node.Advertise<gz::msgs::Double>(this->waterTopic + "/applied");
     this->configured = true;
+    this->PublishDryAccountingStatus();
   }
 
   public: void PreUpdate(
@@ -198,6 +238,17 @@ class DynamicPayloadSystem final:
 
   private: void OnDryMass(const gz::msgs::Double &_message)
   {
+    if (this->physicalResidentDry)
+    {
+      // The accepted aggregate value is a hard zero in this mode.  Do not
+      // advance the revision or publish an "applied" acknowledgement for a
+      // rejected value: downstream acceptance must not mistake a rejected
+      // duplicate for a dynamic-inertia update.
+      if (std::abs(_message.data()) > this->massToleranceKg)
+        this->dryAggregateInputRejected.store(true);
+      this->PublishDryAccountingStatus();
+      return;
+    }
     this->dryMassKg.store(_message.data());
     this->dryRevision.fetch_add(1);
   }
@@ -286,8 +337,27 @@ class DynamicPayloadSystem final:
     _publisher.Publish(applied);
   }
 
+  private: void PublishDryAccountingStatus()
+  {
+    std::ostringstream stream;
+    stream << std::boolalpha << std::fixed << std::setprecision(9)
+        << "{\"dry_accounting_mode\":\"" << this->dryAccountingMode
+        << "\",\"aggregate_dry_mass_kg\":" << this->dryMassKg.load()
+        << ",\"aggregate_dry_input_rejected\":"
+        << this->dryAggregateInputRejected.load()
+        << ",\"physical_resident_load_path\":\""
+        << (this->physicalResidentDry
+            ? "independent_rigid_bodies_contact"
+            : "not_selected")
+        << "\"}";
+    gz::msgs::StringMsg status;
+    status.set_data(stream.str());
+    this->dryAccountingPublisher.Publish(status);
+  }
+
   private: gz::transport::Node node;
   private: gz::transport::Node::Publisher dryAppliedPublisher;
+  private: gz::transport::Node::Publisher dryAccountingPublisher;
   private: gz::transport::Node::Publisher waterAppliedPublisher;
   private: gz::sim::Entity modelEntity{gz::sim::kNullEntity};
   private: gz::sim::Entity baseEntity{gz::sim::kNullEntity};
@@ -301,15 +371,18 @@ class DynamicPayloadSystem final:
       "/model/tzcup_formal_sanitation_vehicle/payload/dry_mass_kg"};
   private: std::string waterTopic{
       "/model/tzcup_formal_sanitation_vehicle/payload/wastewater_mass_kg"};
+  private: std::string dryAccountingMode{"aggregate"};
+  private: bool physicalResidentDry{false};
   private: std::atomic<double> dryMassKg{0.0};
   private: std::atomic<double> waterMassKg{0.0};
+  private: std::atomic<bool> dryAggregateInputRejected{false};
   private: std::atomic<unsigned long> dryRevision{1};
   private: std::atomic<unsigned long> waterRevision{1};
   private: unsigned long appliedDryRevision{0};
   private: unsigned long appliedWaterRevision{0};
   private: bool configured{false};
   private: double dryCapacityKg{1.512};
-  private: double waterCapacityKg{9.7064};
+  private: double waterCapacityKg{8.30};
   private: const double drySizeX{0.485};
   private: const double drySizeY{0.355};
   private: const double drySizeZ{0.233};

@@ -77,6 +77,20 @@ def test_physical_cube_compatibility_boundary_is_explicit() -> None:
     assert "sent to the dry payload topic" in SOURCE
 
 
+def test_physical_resident_mode_rejects_duplicate_aggregate_dry_mass() -> None:
+    assert 'this->dryAccountingMode != "aggregate"' in SOURCE
+    assert 'this->dryAccountingMode != "physical_resident"' in SOURCE
+    assert "physical_resident mode requires initial_dry_mass_kg == 0" in SOURCE
+    assert "if (this->physicalResidentDry)" in SOURCE
+    assert "this->dryAggregateInputRejected.store(true)" in SOURCE
+    assert '\\"aggregate_dry_input_rejected\\"' in SOURCE
+    assert 'independent_rigid_bodies_contact' in SOURCE
+    assert '<xacro:arg name="dry_accounting_mode" default="physical_resident"/>' in VEHICLE_XACRO
+    assert '<dry_accounting_mode>$(arg dry_accounting_mode)</dry_accounting_mode>' in VEHICLE_XACRO
+    assert 'LaunchConfiguration("dry_accounting_mode")' in LAUNCH_SOURCE
+    assert '"dry_accounting_mode",' in LAUNCH_SOURCE
+
+
 def test_initial_payload_is_clamped_and_shared_by_geometry_and_plugins() -> None:
     assert 'initial_dry_mass_kg>$(arg dry_load_mass_kg)<' in VEHICLE_XACRO
     assert (
@@ -86,7 +100,7 @@ def test_initial_payload_is_clamped_and_shared_by_geometry_and_plugins() -> None
     assert 'initial_tank_mass_kg>$(arg wastewater_load_mass_kg)<' in VEHICLE_XACRO
     assert "max(min(float(dry_load_mass_kg), 1.512), 0.001)" in STORAGE_XACRO
     assert (
-        "max(min(float(wastewater_load_mass_kg), 9.7064), 0.001)"
+        "max(min(float(wastewater_load_mass_kg), 8.30), 0.001)"
         in STORAGE_XACRO
     )
     assert "std::clamp(initialDryMassKg, 0.0, this->dryCapacityKg)" in SOURCE

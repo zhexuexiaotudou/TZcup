@@ -1,0 +1,1006 @@
+{
+  "report_id": "tzcup_formal_requirement_coverage_runtime_gap_audit_v1",
+  "register_id": "tzcup_formal_requirement_coverage_gap_register_v1",
+  "audit_mode": "static_source_and_contract_only",
+  "execution_prohibited": [
+    "WSL",
+    "bash.exe",
+    "Gazebo",
+    "ROS runtime",
+    "CadQuery",
+    "FreeCAD"
+  ],
+  "claim_boundary": "This is a source-only coverage and gap register. Model, control and contract-gate declarations are not runtime acceptance; every formal gate remains blocked until current-session runtime evidence is bound and independently validated.",
+  "acceptance_session": {
+    "path": "artifacts/formal_final_acceptance_session.json",
+    "status": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING",
+    "evidence_key_count": 0
+  },
+  "items": [
+    {
+      "id": "sensor_utm30lx",
+      "family": "sensor",
+      "requirement": "UTM-30LX 2D lidar is modeled, transported and formally runtime-gated.",
+      "documentation": [
+        {
+          "path": "docs/high-fidelity-competition-vehicle-plan.md",
+          "token": "Hokuyo UTM-30LX",
+          "line": 35,
+          "present": true
+        },
+        {
+          "path": "docs/formal-vehicle-component-architecture.md",
+          "token": "Hokuyo UTM-30LX",
+          "line": 16,
+          "present": true
+        }
+      ],
+      "model": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
+          "token": "sensor name=\"utm30lx\"",
+          "line": 219,
+          "present": true
+        }
+      ],
+      "control": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
+          "token": "/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan",
+          "line": 708,
+          "present": true
+        }
+      ],
+      "formal_runtime_gates": [
+        {
+          "gate": "sensor_fov_and_occlusion",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "sensor_runtime",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "first_map_then_clean",
+          "declared_in_contract": true
+        }
+      ],
+      "static_coverage_status": "STATIC_MODEL_CONTROL_GATE_DECLARED",
+      "static_gap_codes": [],
+      "runtime_evidence_status": "MISSING_CURRENT_SESSION_GATE_EVIDENCE",
+      "missing_current_session_gates": [
+        "sensor_fov_and_occlusion",
+        "sensor_runtime",
+        "first_map_then_clean"
+      ],
+      "runtime_accepted": false
+    },
+    {
+      "id": "sensor_mid360",
+      "family": "sensor",
+      "requirement": "MID-360 3D lidar is modeled, bridged and formally runtime-gated.",
+      "documentation": [
+        {
+          "path": "docs/high-fidelity-competition-vehicle-plan.md",
+          "token": "Livox MID-360",
+          "line": 36,
+          "present": true
+        },
+        {
+          "path": "docs/formal-vehicle-component-architecture.md",
+          "token": "Livox MID-360",
+          "line": 17,
+          "present": true
+        }
+      ],
+      "model": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
+          "token": "sensor name=\"mid360\"",
+          "line": 253,
+          "present": true
+        }
+      ],
+      "control": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
+          "token": "/sensors/lidar_3d/points",
+          "line": 28,
+          "present": true
+        }
+      ],
+      "formal_runtime_gates": [
+        {
+          "gate": "sensor_fov_and_occlusion",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "sensor_runtime",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "dynamic_obstacle_avoidance",
+          "declared_in_contract": true
+        }
+      ],
+      "static_coverage_status": "STATIC_MODEL_CONTROL_GATE_DECLARED",
+      "static_gap_codes": [],
+      "runtime_evidence_status": "MISSING_CURRENT_SESSION_GATE_EVIDENCE",
+      "missing_current_session_gates": [
+        "sensor_fov_and_occlusion",
+        "sensor_runtime",
+        "dynamic_obstacle_avoidance"
+      ],
+      "runtime_accepted": false
+    },
+    {
+      "id": "sensor_front_d435",
+      "family": "sensor",
+      "requirement": "Front D435 RGB-D and IR stereo are modeled, bridged and formally runtime-gated.",
+      "documentation": [
+        {
+          "path": "docs/high-fidelity-competition-vehicle-plan.md",
+          "token": "前向RGB-D",
+          "line": 37,
+          "present": true
+        },
+        {
+          "path": "docs/formal-vehicle-component-architecture.md",
+          "token": "前向 Intel D435",
+          "line": 35,
+          "present": true
+        }
+      ],
+      "model": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
+          "token": "name=\"front_rgbd\"",
+          "line": 281,
+          "present": true
+        }
+      ],
+      "control": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
+          "token": "/sensors/front_rgbd/depth/image_rect_raw/image",
+          "line": 38,
+          "present": true
+        }
+      ],
+      "formal_runtime_gates": [
+        {
+          "gate": "sensor_fov_and_occlusion",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "sensor_runtime",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "random_scene_perception",
+          "declared_in_contract": true
+        }
+      ],
+      "static_coverage_status": "STATIC_MODEL_CONTROL_GATE_DECLARED",
+      "static_gap_codes": [],
+      "runtime_evidence_status": "MISSING_CURRENT_SESSION_GATE_EVIDENCE",
+      "missing_current_session_gates": [
+        "sensor_fov_and_occlusion",
+        "sensor_runtime",
+        "random_scene_perception"
+      ],
+      "runtime_accepted": false
+    },
+    {
+      "id": "sensor_rear_fisheye_pair",
+      "family": "sensor",
+      "requirement": "Independent rear-left and rear-right fisheyes are modeled, bridged and formally runtime-gated.",
+      "documentation": [
+        {
+          "path": "docs/high-fidelity-competition-vehicle-plan.md",
+          "token": "侧后鱼眼",
+          "line": 38,
+          "present": true
+        },
+        {
+          "path": "docs/formal-vehicle-component-architecture.md",
+          "token": "左/右后鱼眼",
+          "line": 36,
+          "present": true
+        }
+      ],
+      "model": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
+          "token": "rear_left_fisheye",
+          "line": 298,
+          "present": true
+        },
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
+          "token": "rear_right_fisheye",
+          "line": 311,
+          "present": true
+        }
+      ],
+      "control": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
+          "token": "/sensors/rear_left_fisheye/image_raw",
+          "line": 198,
+          "present": true
+        },
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
+          "token": "/sensors/rear_right_fisheye/image_raw",
+          "line": 208,
+          "present": true
+        }
+      ],
+      "formal_runtime_gates": [
+        {
+          "gate": "sensor_fov_and_occlusion",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "sensor_runtime",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "dynamic_obstacle_avoidance",
+          "declared_in_contract": true
+        }
+      ],
+      "static_coverage_status": "STATIC_MODEL_CONTROL_GATE_DECLARED",
+      "static_gap_codes": [],
+      "runtime_evidence_status": "MISSING_CURRENT_SESSION_GATE_EVIDENCE",
+      "missing_current_session_gates": [
+        "sensor_fov_and_occlusion",
+        "sensor_runtime",
+        "dynamic_obstacle_avoidance"
+      ],
+      "runtime_accepted": false
+    },
+    {
+      "id": "sensor_wrist_d435",
+      "family": "sensor",
+      "requirement": "Wrist D435 RGB-D and IR stereo are modeled on tool0, bridged and formally runtime-gated.",
+      "documentation": [
+        {
+          "path": "docs/high-fidelity-competition-vehicle-plan.md",
+          "token": "末端相机",
+          "line": 39,
+          "present": true
+        },
+        {
+          "path": "docs/formal-vehicle-component-architecture.md",
+          "token": "腕部 Intel D435",
+          "line": 38,
+          "present": true
+        }
+      ],
+      "model": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
+          "token": "name=\"wrist_rgbd\"",
+          "line": 291,
+          "present": true
+        }
+      ],
+      "control": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
+          "token": "/sensors/wrist_rgbd/infra2/image_rect_raw",
+          "line": 178,
+          "present": true
+        }
+      ],
+      "formal_runtime_gates": [
+        {
+          "gate": "sensor_fov_and_occlusion",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "sensor_runtime",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "physical_grasp_and_bin",
+          "declared_in_contract": true
+        }
+      ],
+      "static_coverage_status": "STATIC_MODEL_CONTROL_GATE_DECLARED",
+      "static_gap_codes": [],
+      "runtime_evidence_status": "MISSING_CURRENT_SESSION_GATE_EVIDENCE",
+      "missing_current_session_gates": [
+        "sensor_fov_and_occlusion",
+        "sensor_runtime",
+        "physical_grasp_and_bin"
+      ],
+      "runtime_accepted": false
+    },
+    {
+      "id": "sensor_zed_f9p",
+      "family": "sensor",
+      "requirement": "ZED-F9P GNSS receiver is modeled, published and formally runtime-gated.",
+      "documentation": [
+        {
+          "path": "docs/high-fidelity-competition-vehicle-plan.md",
+          "token": "u-blox ZED-F9P",
+          "line": 42,
+          "present": true
+        },
+        {
+          "path": "docs/formal-vehicle-component-architecture.md",
+          "token": "u-blox ZED-F9P-04B",
+          "line": 19,
+          "present": true
+        }
+      ],
+      "model": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
+          "token": "sensor name=\"zed_f9p\"",
+          "line": 380,
+          "present": true
+        }
+      ],
+      "control": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
+          "token": "/sensors/gnss/fix@sensor_msgs/msg/NavSatFix",
+          "line": 709,
+          "present": true
+        }
+      ],
+      "formal_runtime_gates": [
+        {
+          "gate": "sensor_fov_and_occlusion",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "sensor_runtime",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "first_map_then_clean",
+          "declared_in_contract": true
+        }
+      ],
+      "static_coverage_status": "STATIC_MODEL_CONTROL_GATE_DECLARED",
+      "static_gap_codes": [],
+      "runtime_evidence_status": "MISSING_CURRENT_SESSION_GATE_EVIDENCE",
+      "missing_current_session_gates": [
+        "sensor_fov_and_occlusion",
+        "sensor_runtime",
+        "first_map_then_clean"
+      ],
+      "runtime_accepted": false
+    },
+    {
+      "id": "sensor_vn100",
+      "family": "sensor",
+      "requirement": "VN-100 IMU is modeled, published and formally runtime-gated.",
+      "documentation": [
+        {
+          "path": "docs/high-fidelity-competition-vehicle-plan.md",
+          "token": "VectorNav VN-100 Rugged",
+          "line": 42,
+          "present": true
+        },
+        {
+          "path": "docs/formal-vehicle-component-architecture.md",
+          "token": "VN-100",
+          "line": 37,
+          "present": true
+        }
+      ],
+      "model": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
+          "token": "sensor name=\"vn100\"",
+          "line": 407,
+          "present": true
+        }
+      ],
+      "control": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
+          "token": "/sensors/imu/data@sensor_msgs/msg/Imu",
+          "line": 710,
+          "present": true
+        }
+      ],
+      "formal_runtime_gates": [
+        {
+          "gate": "sensor_fov_and_occlusion",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "sensor_runtime",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "first_map_then_clean",
+          "declared_in_contract": true
+        }
+      ],
+      "static_coverage_status": "STATIC_MODEL_CONTROL_GATE_DECLARED",
+      "static_gap_codes": [],
+      "runtime_evidence_status": "MISSING_CURRENT_SESSION_GATE_EVIDENCE",
+      "missing_current_session_gates": [
+        "sensor_fov_and_occlusion",
+        "sensor_runtime",
+        "first_map_then_clean"
+      ],
+      "runtime_accepted": false
+    },
+    {
+      "id": "sensor_wheel_encoders",
+      "family": "sensor",
+      "requirement": "Four wheel speed observations are tied to physical wheel interfaces and formal runtime gates.",
+      "documentation": [
+        {
+          "path": "docs/high-fidelity-competition-vehicle-plan.md",
+          "token": "轮地接触",
+          "line": 25,
+          "present": true
+        },
+        {
+          "path": "docs/formal-vehicle-component-architecture.md",
+          "token": "四轮和三刷的",
+          "line": 69,
+          "present": true
+        }
+      ],
+      "model": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/control_interfaces.xacro",
+          "token": "front_left_wheel_joint",
+          "line": 55,
+          "present": true
+        }
+      ],
+      "control": [
+        {
+          "path": "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantSystem.cc",
+          "token": "JointVelocity",
+          "line": 31,
+          "present": true
+        },
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
+          "token": "joint_state_broadcaster",
+          "line": 187,
+          "present": true
+        }
+      ],
+      "formal_runtime_gates": [
+        {
+          "gate": "sensor_runtime",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "a300_drivetrain_runtime",
+          "declared_in_contract": true
+        }
+      ],
+      "static_coverage_status": "STATIC_MODEL_CONTROL_GATE_DECLARED",
+      "static_gap_codes": [],
+      "runtime_evidence_status": "MISSING_CURRENT_SESSION_GATE_EVIDENCE",
+      "missing_current_session_gates": [
+        "sensor_runtime",
+        "a300_drivetrain_runtime"
+      ],
+      "runtime_accepted": false
+    },
+    {
+      "id": "a300_chassis",
+      "family": "chassis",
+      "requirement": "A300 four-wheel traction, braking and emergency stop have a physical model, command path and formal runtime gates.",
+      "documentation": [
+        {
+          "path": "docs/high-fidelity-competition-vehicle-plan.md",
+          "token": "Clearpath Husky A300",
+          "line": 34,
+          "present": true
+        },
+        {
+          "path": "docs/formal-vehicle-component-architecture.md",
+          "token": "A300四个驱动电机",
+          "line": 67,
+          "present": true
+        }
+      ],
+      "model": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+          "token": "libA300DrivetrainPlantSystem.so",
+          "line": 71,
+          "present": true
+        }
+      ],
+      "control": [
+        {
+          "path": "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantSystem.cc",
+          "token": "resistive_brake_active",
+          "line": 250,
+          "present": true
+        }
+      ],
+      "formal_runtime_gates": [
+        {
+          "gate": "a300_drivetrain_runtime",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "whole_vehicle_interlock",
+          "declared_in_contract": true
+        }
+      ],
+      "static_coverage_status": "STATIC_MODEL_CONTROL_GATE_DECLARED",
+      "static_gap_codes": [],
+      "runtime_evidence_status": "MISSING_CURRENT_SESSION_GATE_EVIDENCE",
+      "missing_current_session_gates": [
+        "a300_drivetrain_runtime",
+        "whole_vehicle_interlock"
+      ],
+      "runtime_accepted": false
+    },
+    {
+      "id": "ur5e_six_axis_arm",
+      "family": "manipulator",
+      "requirement": "UR5e six-axis arm has physical joint models, an arm controller and formal runtime gates.",
+      "documentation": [
+        {
+          "path": "docs/high-fidelity-competition-vehicle-plan.md",
+          "token": "Universal Robots UR5e",
+          "line": 40,
+          "present": true
+        },
+        {
+          "path": "docs/formal-vehicle-component-architecture.md",
+          "token": "六轴由 `arm_controller` 控制",
+          "line": 57,
+          "present": true
+        }
+      ],
+      "model": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/control_interfaces.xacro",
+          "token": "shoulder_pan_joint",
+          "line": 63,
+          "present": true
+        }
+      ],
+      "control": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml",
+          "token": "arm_controller:",
+          "line": 6,
+          "present": true
+        }
+      ],
+      "formal_runtime_gates": [
+        {
+          "gate": "manipulator_trajectory",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "physical_grasp_and_bin",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "whole_vehicle_interlock",
+          "declared_in_contract": true
+        }
+      ],
+      "static_coverage_status": "STATIC_MODEL_CONTROL_GATE_DECLARED",
+      "static_gap_codes": [],
+      "runtime_evidence_status": "MISSING_CURRENT_SESSION_GATE_EVIDENCE",
+      "missing_current_session_gates": [
+        "manipulator_trajectory",
+        "physical_grasp_and_bin",
+        "whole_vehicle_interlock"
+      ],
+      "runtime_accepted": false
+    },
+    {
+      "id": "robotiq_2f85_gripper",
+      "family": "manipulator",
+      "requirement": "Robotiq 2F-85 has collision/inertial joints, controller path and formal runtime gates.",
+      "documentation": [
+        {
+          "path": "docs/high-fidelity-competition-vehicle-plan.md",
+          "token": "Robotiq 2F-85",
+          "line": 41,
+          "present": true
+        },
+        {
+          "path": "docs/formal-vehicle-component-architecture.md",
+          "token": "夹爪主关节",
+          "line": 57,
+          "present": true
+        }
+      ],
+      "model": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/manipulator_stack.xacro",
+          "token": "robotiq_85_left_knuckle_joint",
+          "line": 100,
+          "present": true
+        }
+      ],
+      "control": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml",
+          "token": "gripper_controller:",
+          "line": 8,
+          "present": true
+        }
+      ],
+      "formal_runtime_gates": [
+        {
+          "gate": "manipulator_trajectory",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "physical_grasp_and_bin",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "formal_20_cube_grasp_and_dynamic_mass",
+          "declared_in_contract": true
+        }
+      ],
+      "static_coverage_status": "STATIC_MODEL_CONTROL_GATE_DECLARED",
+      "static_gap_codes": [],
+      "runtime_evidence_status": "MISSING_CURRENT_SESSION_GATE_EVIDENCE",
+      "missing_current_session_gates": [
+        "manipulator_trajectory",
+        "physical_grasp_and_bin",
+        "formal_20_cube_grasp_and_dynamic_mass"
+      ],
+      "runtime_accepted": false
+    },
+    {
+      "id": "dry_bin_dynamic_payload",
+      "family": "storage",
+      "requirement": "At least 40 L dry storage uses physical cubes, contact containment and exclusive dynamic load accounting.",
+      "documentation": [
+        {
+          "path": "docs/high-fidelity-competition-vehicle-plan.md",
+          "token": "干垃圾舱可用容积 `>=40 L`",
+          "line": 15,
+          "present": true
+        },
+        {
+          "path": "docs/formal-vehicle-component-architecture.md",
+          "token": "干垃圾箱",
+          "line": 90,
+          "present": true
+        }
+      ],
+      "model": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/storage_system.xacro",
+          "token": "dry_bin_link",
+          "line": 96,
+          "present": true
+        },
+        {
+          "path": "starter_ws/src/sanitation_manipulation/urdf/material_cube.urdf.xacro",
+          "token": "cube_collision",
+          "line": 28,
+          "present": true
+        }
+      ],
+      "control": [
+        {
+          "path": "starter_ws/src/sanitation_gazebo_control/src/DryBinMonitorSystem.cc",
+          "token": "physical_contained_mass_kg",
+          "line": 286,
+          "present": true
+        },
+        {
+          "path": "starter_ws/src/sanitation_gazebo_control/src/DynamicPayloadSystem.cc",
+          "token": "physicalResidentDry",
+          "line": 122,
+          "present": true
+        }
+      ],
+      "formal_runtime_gates": [
+        {
+          "gate": "physical_grasp_and_bin",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "formal_20_cube_grasp_and_dynamic_mass",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "whole_vehicle_interlock",
+          "declared_in_contract": true
+        }
+      ],
+      "static_coverage_status": "STATIC_MODEL_CONTROL_GATE_DECLARED",
+      "static_gap_codes": [],
+      "runtime_evidence_status": "MISSING_CURRENT_SESSION_GATE_EVIDENCE",
+      "missing_current_session_gates": [
+        "physical_grasp_and_bin",
+        "formal_20_cube_grasp_and_dynamic_mass",
+        "whole_vehicle_interlock"
+      ],
+      "runtime_accepted": false
+    },
+    {
+      "id": "brush_and_ground_dirt",
+      "family": "cleaning",
+      "requirement": "Side brushes and central roller have modeled joints, motor control and a ground-dirt runtime gate.",
+      "documentation": [
+        {
+          "path": "docs/high-fidelity-competition-vehicle-plan.md",
+          "token": "双侧刷 + 中央滚刷",
+          "line": 45,
+          "present": true
+        },
+        {
+          "path": "docs/formal-vehicle-component-architecture.md",
+          "token": "左右侧刷和中央滚刷",
+          "line": 68,
+          "present": true
+        }
+      ],
+      "model": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/cleaning_mechanism.xacro",
+          "token": "${side}_side_brush_joint",
+          "line": 120,
+          "present": true
+        }
+      ],
+      "control": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml",
+          "token": "brush_controller:",
+          "line": 16,
+          "present": true
+        },
+        {
+          "path": "starter_ws/src/sanitation_gazebo_control/src/GroundDirtCleaningSystem.cc",
+          "token": "cleaned_fraction",
+          "line": 149,
+          "present": true
+        }
+      ],
+      "formal_runtime_gates": [
+        {
+          "gate": "cleaning_actuators",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "cleaning_motor_runtime",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "ground_dirt_cleaning",
+          "declared_in_contract": true
+        }
+      ],
+      "static_coverage_status": "STATIC_MODEL_CONTROL_GATE_DECLARED",
+      "static_gap_codes": [],
+      "runtime_evidence_status": "MISSING_CURRENT_SESSION_GATE_EVIDENCE",
+      "missing_current_session_gates": [
+        "cleaning_actuators",
+        "cleaning_motor_runtime",
+        "ground_dirt_cleaning"
+      ],
+      "runtime_accepted": false
+    },
+    {
+      "id": "squeegee_and_water_recovery",
+      "family": "cleaning",
+      "requirement": "Compliant squeegee, intake and pump are modeled and control-gated before water enters wastewater mass accounting.",
+      "documentation": [
+        {
+          "path": "docs/high-fidelity-competition-vehicle-plan.md",
+          "token": "刮水胶条和负压/水泵链路真正回收到污水箱",
+          "line": 10,
+          "present": true
+        },
+        {
+          "path": "docs/formal-vehicle-component-architecture.md",
+          "token": "浮动刮条",
+          "line": 105,
+          "present": true
+        }
+      ],
+      "model": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/cleaning_mechanism.xacro",
+          "token": "squeegee_float_joint",
+          "line": 427,
+          "present": true
+        }
+      ],
+      "control": [
+        {
+          "path": "starter_ws/src/sanitation_gazebo_control/src/WaterRecoverySystem.cc",
+          "token": "recovery_pump_joint",
+          "line": 91,
+          "present": true
+        },
+        {
+          "path": "starter_ws/src/sanitation_gazebo_control/src/WaterRecoverySystem.cc",
+          "token": "PublishPayload",
+          "line": 237,
+          "present": true
+        }
+      ],
+      "formal_runtime_gates": [
+        {
+          "gate": "cleaning_actuators",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "cleaning_motor_runtime",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "water_recovery",
+          "declared_in_contract": true
+        }
+      ],
+      "static_coverage_status": "STATIC_MODEL_CONTROL_GATE_DECLARED",
+      "static_gap_codes": [],
+      "runtime_evidence_status": "MISSING_CURRENT_SESSION_GATE_EVIDENCE",
+      "missing_current_session_gates": [
+        "cleaning_actuators",
+        "cleaning_motor_runtime",
+        "water_recovery"
+      ],
+      "runtime_accepted": false
+    },
+    {
+      "id": "wastewater_tank_dynamic_load",
+      "family": "storage",
+      "requirement": "Wastewater tank and bounded mass ledger are modeled and formal water-recovery gated.",
+      "documentation": [
+        {
+          "path": "docs/high-fidelity-competition-vehicle-plan.md",
+          "token": "污水舱/回收机构",
+          "line": 46,
+          "present": true
+        },
+        {
+          "path": "docs/formal-vehicle-component-architecture.md",
+          "token": "污水箱入口",
+          "line": 105,
+          "present": true
+        }
+      ],
+      "model": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/storage_system.xacro",
+          "token": "wastewater_tank_link",
+          "line": 314,
+          "present": true
+        }
+      ],
+      "control": [
+        {
+          "path": "starter_ws/src/sanitation_gazebo_control/src/DynamicPayloadSystem.cc",
+          "token": "waterMassKg",
+          "line": 143,
+          "present": true
+        },
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+          "token": "wastewater_capacity_kg",
+          "line": 163,
+          "present": true
+        }
+      ],
+      "formal_runtime_gates": [
+        {
+          "gate": "water_recovery",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "whole_vehicle_interlock",
+          "declared_in_contract": true
+        }
+      ],
+      "static_coverage_status": "STATIC_MODEL_CONTROL_GATE_DECLARED",
+      "static_gap_codes": [],
+      "runtime_evidence_status": "MISSING_CURRENT_SESSION_GATE_EVIDENCE",
+      "missing_current_session_gates": [
+        "water_recovery",
+        "whole_vehicle_interlock"
+      ],
+      "runtime_accepted": false
+    },
+    {
+      "id": "safety_interlocks",
+      "family": "safety",
+      "requirement": "Emergency stop, relay and contact interlocks have physical inputs, a unique control path and formal runtime gates.",
+      "documentation": [
+        {
+          "path": "docs/high-fidelity-competition-vehicle-plan.md",
+          "token": "急停",
+          "line": 72,
+          "present": true
+        },
+        {
+          "path": "docs/formal-vehicle-component-architecture.md",
+          "token": "安全继电器",
+          "line": 122,
+          "present": true
+        }
+      ],
+      "model": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+          "token": "emergency_stop_plunger_joint",
+          "line": 122,
+          "present": true
+        }
+      ],
+      "control": [
+        {
+          "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+          "token": "latched_state_topic",
+          "line": 148,
+          "present": true
+        },
+        {
+          "path": "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantSystem.cc",
+          "token": "OnEmergencyStop",
+          "line": 124,
+          "present": true
+        }
+      ],
+      "formal_runtime_gates": [
+        {
+          "gate": "whole_vehicle_interlock",
+          "declared_in_contract": true
+        },
+        {
+          "gate": "auxiliary_power_lighting",
+          "declared_in_contract": true
+        }
+      ],
+      "static_coverage_status": "STATIC_MODEL_CONTROL_GATE_DECLARED",
+      "static_gap_codes": [],
+      "runtime_evidence_status": "MISSING_CURRENT_SESSION_GATE_EVIDENCE",
+      "missing_current_session_gates": [
+        "whole_vehicle_interlock",
+        "auxiliary_power_lighting"
+      ],
+      "runtime_accepted": false
+    }
+  ],
+  "requirement_count": 16,
+  "static_complete_count": 16,
+  "static_gap_items": [],
+  "runtime_blocked_items": [
+    "sensor_utm30lx",
+    "sensor_mid360",
+    "sensor_front_d435",
+    "sensor_rear_fisheye_pair",
+    "sensor_wrist_d435",
+    "sensor_zed_f9p",
+    "sensor_vn100",
+    "sensor_wheel_encoders",
+    "a300_chassis",
+    "ur5e_six_axis_arm",
+    "robotiq_2f85_gripper",
+    "dry_bin_dynamic_payload",
+    "brush_and_ground_dirt",
+    "squeegee_and_water_recovery",
+    "wastewater_tank_dynamic_load",
+    "safety_interlocks"
+  ],
+  "runtime_accepted": false,
+  "status": "FORMAL_REQUIREMENT_COVERAGE_STATIC_COMPLETE_RUNTIME_BLOCKED"
+}

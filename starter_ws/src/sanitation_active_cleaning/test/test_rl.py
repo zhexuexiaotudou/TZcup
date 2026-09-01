@@ -5,7 +5,14 @@ import pytest
 from sanitation_active_cleaning.environment import ActiveCleaningEnv
 from sanitation_active_cleaning.geometry import validate_ackermann_path
 from sanitation_active_cleaning.models import TaskConfig
-from sanitation_active_cleaning.rl import QLearningPolicy, train_q_policy
+from sanitation_active_cleaning.rl import (
+    ACTION_FRONTIER,
+    ACTION_WAIT,
+    CoverageBackstoppedQLearningPolicy,
+    QLearningPolicy,
+    belief_state,
+    train_q_policy,
+)
 
 
 def training_config():
@@ -87,3 +94,38 @@ def test_episode_exploration_rng_is_independent_of_rollout_order():
         reordered.choose_action(observation, explore=True) for _ in range(8)
     ]
     assert reordered_labels == direct_labels
+
+
+def test_wait_is_masked_while_a_productive_belief_action_exists():
+    task = training_config()
+    observation = ActiveCleaningEnv(task).reset(seed=44)
+    policy = QLearningPolicy(task, epsilon=0.0, seed=7)
+    row = policy._row(belief_state(observation))
+    row[ACTION_WAIT] = 1_000.0
+    row[ACTION_FRONTIER] = -1_000.0
+
+    assert ACTION_FRONTIER in policy.available_actions(observation)
+    assert ACTION_WAIT not in policy.available_actions(observation)
+    state, label, trajectory = policy.act_with_label(observation, explore=False)
+    assert state == belief_state(observation)
+    assert label != ACTION_WAIT
+    assert trajectory.points[-1] != observation.pose
+
+
+def test_dual_mode_activates_systematic_coverage_after_public_belief_stalls():
+    task = training_config()
+    observation = ActiveCleaningEnv(task).reset(seed=44)
+    policy = CoverageBackstoppedQLearningPolicy(task, q_table={}, seed=7)
+    policy.reset(episode_seed=123)
+    policy._last_observed_ratio = observation.observed_ratio
+    policy._stagnant_steps = 6
+
+    action = policy.act(observation)
+
+    assert policy._coverage_activated is True
+    assert policy.last_mode == "systematic_coverage_backstop"
+    valid, reason = validate_ackermann_path(
+        action.points,
+        max_curvature=1.0 / task.min_turn_radius,
+    )
+    assert valid, reason

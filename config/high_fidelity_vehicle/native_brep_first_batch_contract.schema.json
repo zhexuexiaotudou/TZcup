@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tzcup.local/schema/native-brep-first-batch-contract-v1.json",
+  "title": "TZcup native B-rep first-batch parametric contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "document_id",
+    "status",
+    "claim_boundary",
+    "prohibited_methods",
+    "coordinate_system",
+    "items"
+  ],
+  "properties": {
+    "schema_version": {"const": 1},
+    "document_id": {"const": "tzcup_native_brep_first_batch_parametric_contract_v1"},
+    "status": {"const": "design_input_pending_native_export"},
+    "claim_boundary": {"type": "string", "minLength": 1},
+    "prohibited_methods": {
+      "type": "array",
+      "minItems": 4,
+      "items": {"type": "string", "minLength": 1}
+    },
+    "coordinate_system": {"$ref": "#/$defs/coordinateSystem"},
+    "items": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {"$ref": "#/$defs/item"}
+    }
+  },
+  "$defs": {
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "locator", "role"],
+      "properties": {
+        "path": {"type": "string", "minLength": 1},
+        "locator": {"type": "string", "minLength": 1},
+        "role": {"type": "string", "minLength": 1}
+      }
+    },
+    "coordinateSystem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["units", "root_frame", "local_part_rule", "sources"],
+      "properties": {
+        "units": {"const": "m_and_rad"},
+        "root_frame": {"const": "base_footprint"},
+        "local_part_rule": {"type": "string", "minLength": 1},
+        "sources": {"type": "array", "minItems": 2, "items": {"$ref": "#/$defs/source"}}
+      }
+    },
+    "item": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "status",
+        "scope",
+        "evidence_sources",
+        "source_meshes",
+        "dimension_contract",
+        "coordinate_contract",
+        "interface_contract",
+        "material_boundary",
+        "mass_inertia_contract",
+        "dependencies",
+        "planned_native_export"
+      ],
+      "properties": {
+        "id": {"enum": ["arm_pedestal_adapter", "sensor_tower", "cleaning_head_brackets", "storage_frame"]},
+        "status": {"const": "design_input_pending_native_export"},
+        "scope": {"type": "string", "minLength": 1},
+        "evidence_sources": {"type": "array", "minItems": 4, "items": {"$ref": "#/$defs/source"}},
+        "source_meshes": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/sourceMesh"}},
+        "dimension_contract": {"$ref": "#/$defs/contractSection"},
+        "coordinate_contract": {"$ref": "#/$defs/contractSection"},
+        "interface_contract": {"$ref": "#/$defs/contractSection"},
+        "material_boundary": {"$ref": "#/$defs/contractSection"},
+        "mass_inertia_contract": {"$ref": "#/$defs/contractSection"},
+        "dependencies": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "planned_native_export": {"$ref": "#/$defs/plannedExport"}
+      }
+    },
+    "sourceMesh": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["generator", "source_asset", "source_definition", "status"],
+      "properties": {
+        "generator": {"$ref": "#/$defs/source"},
+        "source_asset": {"type": "string", "pattern": "^[a-zA-Z0-9_./-]+\\.stl$"},
+        "source_definition": {"type": "string", "minLength": 1},
+        "status": {"const": "visual_or_simulation_dimension_input_not_native_brep"}
+      }
+    },
+    "contractSection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["authoritative_inputs", "pending_native_export_inputs", "boundary"],
+      "properties": {
+        "authoritative_inputs": {"type": "array", "minItems": 1},
+        "pending_native_export_inputs": {"type": "array", "minItems": 1},
+        "boundary": {"type": "string", "minLength": 1}
+      }
+    },
+    "plannedExport": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["native_source_path", "step_path", "must_not_exist_yet", "export_preconditions"],
+      "properties": {
+        "native_source_path": {"type": "string", "pattern": "\\.FCStd$"},
+        "step_path": {"type": "string", "pattern": "\\.(step|stp)$"},
+        "must_not_exist_yet": {"const": true},
+        "export_preconditions": {"type": "array", "minItems": 3, "items": {"type": "string", "minLength": 1}}
+      }
+    }
+  }
+}

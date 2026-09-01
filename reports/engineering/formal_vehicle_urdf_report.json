@@ -6,17 +6,43 @@
     "rear_left_fisheye",
     "rear_right_fisheye",
     "gnss",
-    "imu"
-  ],
-  "approximate_fov_pending_sensors": [
+    "imu",
     "wrist_d435_depth"
   ],
-  "claim_boundary": "Numeric initial layout and deterministic budgets pass. Expanded URDF inertials/names/limits must pass separately; final CoG, wastewater capacity, mesh swept volumes, exact occlusion, ground contact and Gazebo sensor visibility remain fail-closed.",
+  "approximate_fov_pending_sensors": [],
+  "claim_boundary": "Numeric layout, final wastewater capacity and deterministic budgets pass. Expanded URDF, sampled task-anchor collision/CoG, exact occlusion and cleaning-contact reports are separate source-bound gates; continuous arm-space, exact S100P envelope/mounting, mass/thermal/connector/live-hardware integration and rendered sensor visibility remain explicitly fail-closed.",
+  "compute_hardware": {
+    "external_envelope_frozen": false,
+    "modeled_collision_dimensions_m": [
+      0.121,
+      0.12,
+      0.0524
+    ],
+    "protective_enclosure_internal_clear_dimensions_m": [
+      0.174,
+      0.124,
+      0.064
+    ],
+    "provisional_reference_dimensions_m": [
+      0.121,
+      0.12,
+      0.0524
+    ],
+    "selected_model": "D-Robotics_RDK_S100P_V1P0_user_owned",
+    "unresolved_physical_validation": [
+      "exact_external_dimensions",
+      "mounting_hole_pattern",
+      "board_mass",
+      "thermal_rejection",
+      "connector_and_cable_service_space",
+      "live_power_and_compute_runtime"
+    ]
+  },
   "counts": {
-    "approximate_fov_passed": 7,
-    "approximate_fov_pending": 1,
+    "approximate_fov_passed": 8,
+    "approximate_fov_pending": 0,
     "component_envelopes": 8,
-    "installation_frames": 31,
+    "installation_frames": 42,
     "sensor_layouts": 8
   },
   "dry_bin_usable_l": 40.0,
@@ -27,11 +53,12 @@
     "required_installation_frames_have_numeric_initial_poses",
     "declared_component_envelopes_fit_transport_envelope",
     "dry_bin_geometry_and_usable_volume_at_least_40_l",
-    "mass_installation_and_design_caps_bound_preliminary_wastewater_fill",
-    "payload_limit_at_preliminary_usable_wastewater_fill",
+    "mass_installation_design_and_cog_caps_bound_wastewater_fill",
+    "payload_limit_at_final_usable_wastewater_fill",
     "effective_cleaning_width_at_least_0_6_m",
     "declared_arm_stowed_and_operating_envelopes_are_bounded",
     "static_sensor_layout_approximate_fov_clearance",
+    "rdk_s100_official_external_envelope_fits_project_enclosure",
     "expanded_urdf_xml_and_robot_identity",
     "unique_link_and_joint_names",
     "all_physical_link_mass_and_inertia",
@@ -41,27 +68,25 @@
     "non_pending_static_frame_poses_match_layout"
   ],
   "payload": {
-    "at_preliminary_usable_fill_kg": 88.9234,
+    "at_preliminary_usable_fill_kg": 87.517,
     "design_limit_kg": 91.35,
-    "remaining_margin_kg": 2.4266
+    "remaining_margin_kg": 3.833
   },
   "pending_external_gates": [
-    "exact_s100_board_envelope",
-    "full_inertia_and_cog_scan",
-    "fov_occlusion_solve",
-    "final_wastewater_capacity",
+    "exact_s100p_board_envelope_and_mounting_pattern",
+    "s100_mass_thermal_connector_and_live_hardware_validation",
     "detailed_power_topology",
-    "arm_exact_swept_volume",
-    "cleaning_ground_contact",
+    "arm_exact_continuous_swept_volume",
     "gazebo_sensor_ray_and_visibility_scan"
   ],
   "preliminary_wastewater": {
-    "cog_limit_l": null,
-    "final_capacity_frozen": false,
+    "cog_limit_l": 14.0,
+    "final_capacity_frozen": true,
+    "final_expanded_urdf_mass_limit_l": 10.375,
     "installation_limit_l": 14.0,
-    "mass_limit_l": 12.133,
     "nominal_before_usable_fraction_l": 12.133,
-    "usable_l": 9.7064
+    "preliminary_mass_limit_l": 12.133,
+    "usable_l": 8.3
   },
   "robot_name": "tzcup_formal_sanitation_vehicle",
   "status": "FORMAL_URDF_DETERMINISTIC_CHECKS_PASSED_EXTERNAL_GATES_PENDING",
@@ -74,9 +99,9 @@
     "all_physical_links_have_positive_mass_and_positive_definite_physical_inertia": true,
     "all_required_frames_joints_and_sensors_present": true,
     "evaluated": true,
-    "joint_count": 130,
+    "joint_count": 195,
     "joint_limits_and_tree_topology_valid": true,
-    "link_count": 131,
+    "link_count": 196,
     "massless_virtual_frames": [
       "base_footprint",
       "ur5e_base_link"
@@ -85,7 +110,7 @@
     "path": "reports/engineering/formal_competition_vehicle.urdf",
     "sensor_frame_count": 8,
     "static_frame_pose_consistency": {
-      "checked_count": 29,
+      "checked_count": 42,
       "checked_frames": [
         "base_footprint",
         "base_link",
@@ -99,6 +124,8 @@
         "front_rgbd_mount_link",
         "front_rgbd_link",
         "front_rgbd_depth_optical_frame",
+        "front_rgbd_infra1_optical_frame",
+        "front_rgbd_infra2_optical_frame",
         "rear_left_fisheye_mount_link",
         "rear_left_fisheye_link",
         "rear_left_fisheye_optical_frame",
@@ -107,6 +134,8 @@
         "rear_right_fisheye_optical_frame",
         "gnss_mount_link",
         "gnss_antenna_link",
+        "zed_f9p_receiver_enclosure_link",
+        "zed_f9p_module_reference_link",
         "imu_mount_tray_link",
         "imu_link",
         "dry_bin_link",
@@ -115,17 +144,23 @@
         "right_side_brush_link",
         "central_roller_link",
         "squeegee_link",
-        "suction_nozzle_link"
-      ],
-      "pending_count": 2,
-      "pending_frames": [
+        "squeegee_spring_pack_link",
+        "suction_nozzle_link",
         "wrist_rgbd_link",
-        "wrist_rgbd_depth_optical_frame"
+        "wrist_rgbd_depth_optical_frame",
+        "wrist_rgbd_infra1_optical_frame",
+        "wrist_rgbd_infra2_optical_frame",
+        "main_power_isolator_housing_link",
+        "main_power_isolator_handle_link",
+        "main_power_contactor_housing_link",
+        "main_power_contactor_armature_link"
       ],
+      "pending_count": 0,
+      "pending_frames": [],
       "position_tolerance_m": 0.005,
       "rotation_tolerance_rad": 0.02
     },
     "symbolic_placeholders_absent": true,
-    "total_empty_vehicle_mass_kg": 158.680866
+    "total_empty_vehicle_mass_kg": 160.007583
   }
 }

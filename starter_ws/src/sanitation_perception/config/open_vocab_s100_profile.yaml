@@ -1,16 +1,27 @@
 schema_version: 1
-profile_id: dosod_edgesam_s100_development_v1
+profile_id: dosod_edgesam_s100p_development_v1
 platform: rdk_s100
+soc_identity: journey6p
 development_only: true
 journey6_evidence_allowed: false
 ground_truth_control_allowed: false
+board_first_execution:
+  target_board: RDK S100P
+  target_soc: Journey 6P
+  pc_is_not_a_deployment_prerequisite: true
+  real_board_execution_required_before_deployment_claim: true
+  actuator_control_allowed: false
+  note: >-
+    The connected S100P is the first execution target for deployable inference,
+    ROS graph and BPU telemetry. PC is only a development diagnostic path and
+    cannot substitute for board evidence or authorize actuator control.
 detector:
   name: DOSOD
-  backend: pc_onnx_or_external_s100_port
+  backend: tros_bpu_official
   artifact_relative_path: null
   source_revision_required: true
-  platform_support: unverified_s100_port
-  source_url: https://github.com/D-Robotics-AI-Lab/DOSOD
+  platform_support: official_s100
+  source_url: https://github.com/D-Robotics/hobot_dosod
 segmenter:
   name: EdgeSAM
   backend: tros_bpu_official
@@ -18,9 +29,34 @@ segmenter:
   source_revision_required: true
   platform_support: official_s100
   source_url: https://github.com/D-Robotics/mono_edgesam
+official_example_boundary:
+  official_examples_are_linkage_evidence_only: true
+  project_accuracy_or_board_acceptance_proven: false
+  note: >-
+    Upstream S100 examples establish only that DOSOD and mono_edgesam expose a
+    platform-family integration path. They do not provide this project's camera
+    adapters, prompt vocabulary, HBM hashes, product ROS graph or runtime proof.
+project_board_artifacts:
+  status: blocked_until_four_project_model_roles_are_present_and_hashed
+  required_model_roles:
+    dosod_hbm: dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm
+    dosod_vocabulary: dosod/tzcup_offline_vocabulary.json
+    edgesam_encoder_hbm: edgesam/edgesam_encoder_512.hbm
+    edgesam_decoder_hbm: edgesam/edgesam_decoder_512.hbm
+  note: >-
+    These four project model roles remain absent. EdgeSAM is explicitly the
+    selected 512 variant; an upstream 1024 example is not a substitute.
 runtime_boundary:
   bpu_components: [DOSOD, EdgeSAM]
   arm_cpu_components: [depth_geometry, tf2, tracking, task_state_machine]
-  status: dosod_s100_port_unverified_and_external_artifacts_runtime_required
+  status: board_first_official_examples_link_only_project_artifacts_adapters_and_board_runtime_required
   gazebo_truth_allowed_for_control: false
-  note: This profile records the S100 integration contract and is not a bundled or validated board deployment.
+  note: >-
+    Locked upstream hobot_dosod and mono_edgesam revisions contain S100 build
+    paths and HBM examples. This project still lacks all four required project
+    model roles, formal-camera topic adapters, ai_msgs conversion and board
+    runtime evidence. The project target is RDK S100P / Journey 6P. The
+    internal rdk_s100 and official_s100 tokens remain compatibility identifiers
+    for the upstream platform family; the evidence flag remains false until the
+    formal product nodes and selected EdgeSAM-512 project artifacts run on the
+    connected S100P.

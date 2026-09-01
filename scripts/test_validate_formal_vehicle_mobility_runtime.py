@@ -28,18 +28,20 @@ def _watchdog_type() -> type:
 
 def _evidence() -> dict:
     return {
-        "controller_state": "active",
+        "joint_state_broadcaster_state": "active",
         "command_subscription_count": 1,
+        "actuator_enabled_sample_count": 1,
         "ground_truth": {
             "start": {"x": 0.0, "y": 0.0, "yaw": 0.0},
             "forward_end": {"x": 0.82, "y": 0.01, "yaw": 0.01},
             "stopped_end": {"x": 0.84, "y": 0.01, "yaw": 0.01},
         },
-        "controller_odom": {
+        "plant_odom": {
             "start": {"x": 0.0, "y": 0.0, "yaw": 0.0},
             "forward_end": {"x": 0.80, "y": 0.0, "yaw": 0.0},
             "stopped_end": {"x": 0.82, "y": 0.0, "yaw": 0.0},
             "stopped_linear_velocity_mps": {"x": 0.0, "y": 0.0},
+            "stopped_angular_velocity_rad_s": 0.0,
         },
         "wheel_state": {
             "observed_names": list(WHEEL_JOINTS),
@@ -57,10 +59,10 @@ def test_accepts_consistent_forward_motion_and_stop() -> None:
     assert result["metrics"]["ground_truth_forward_delta_m"] == 0.82
 
 
-def test_rejects_stationary_vehicle_even_when_controller_is_active() -> None:
+def test_rejects_stationary_vehicle_even_when_plant_is_enabled() -> None:
     evidence = _evidence()
     evidence["ground_truth"]["forward_end"]["x"] = 0.0
-    evidence["controller_odom"]["forward_end"]["x"] = 0.0
+    evidence["plant_odom"]["forward_end"]["x"] = 0.0
     evidence["wheel_state"]["forward_end_positions_rad"] = {name: 0.0 for name in WHEEL_JOINTS}
     result = evaluate_motion(evidence)
     assert result["passed"] is False
@@ -69,7 +71,7 @@ def test_rejects_stationary_vehicle_even_when_controller_is_active() -> None:
 
 def test_rejects_odometry_that_disagrees_with_gazebo_truth() -> None:
     evidence = _evidence()
-    evidence["controller_odom"]["forward_end"]["x"] = 1.25
+    evidence["plant_odom"]["forward_end"]["x"] = 1.25
     result = evaluate_motion(evidence)
     assert result["passed"] is False
     assert result["checks"]["odometry_matches_ground_truth"] is False
@@ -78,14 +80,37 @@ def test_rejects_odometry_that_disagrees_with_gazebo_truth() -> None:
 def test_rejects_vehicle_that_keeps_rolling_after_zero_command() -> None:
     evidence = copy.deepcopy(_evidence())
     evidence["ground_truth"]["stopped_end"]["x"] = 1.10
-    evidence["controller_odom"]["stopped_end"]["x"] = 1.05
-    evidence["controller_odom"]["stopped_linear_velocity_mps"]["x"] = 0.12
+    evidence["plant_odom"]["stopped_end"]["x"] = 1.05
+    evidence["plant_odom"]["stopped_linear_velocity_mps"]["x"] = 0.12
     evidence["wheel_state"]["stopped_velocities_rad_s"]["front_left_wheel_joint"] = 1.0
     result = evaluate_motion(evidence)
     assert result["passed"] is False
     assert result["checks"]["vehicle_stopped_after_zero_command"] is False
-    assert result["checks"]["odometry_stopped_after_zero_command"] is False
+    assert result["checks"]["plant_odometry_stopped_after_zero_command"] is False
     assert result["checks"]["wheel_joints_stopped_after_zero_command"] is False
+
+
+def test_rejects_vehicle_that_rotates_after_zero_command() -> None:
+    evidence = copy.deepcopy(_evidence())
+    evidence["ground_truth"]["stopped_end"]["yaw"] = 0.12
+    evidence["plant_odom"]["stopped_end"]["yaw"] = 0.15
+    evidence["plant_odom"]["stopped_angular_velocity_rad_s"] = 0.04
+
+    result = evaluate_motion(evidence)
+
+    assert result["passed"] is False
+    assert result["checks"]["ground_truth_heading_stopped_after_zero_command"] is False
+    assert result["checks"]["plant_odometry_heading_stopped_after_zero_command"] is False
+
+
+def test_accepts_bounded_skid_steer_wheel_odom_coast_after_physical_stop() -> None:
+    evidence = copy.deepcopy(_evidence())
+    evidence["ground_truth"]["stopped_end"]["x"] = 0.86
+    evidence["plant_odom"]["stopped_end"]["x"] = 0.92
+    result = evaluate_motion(evidence)
+    assert result["checks"]["vehicle_stopped_after_zero_command"] is True
+    assert result["checks"]["plant_odometry_stopped_after_zero_command"] is True
+    assert result["metrics"]["stop_coast_disagreement_m"] <= 0.10
 
 
 def test_slow_simulation_with_continuous_clock_progress_does_not_time_out() -> None:

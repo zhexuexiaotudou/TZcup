@@ -1,0 +1,11 @@
+{
+  "contract_id": "a300_drivetrain_realism_integration_v2",
+  "status": "A300_DRIVETRAIN_VEHICLE_INTEGRATION_STATIC_VALID",
+  "upstream_commit": "b0f6d920422ad302372a1c65e31d61648da884ed",
+  "mesh_count": 5,
+  "published_mass_kg": 78.5,
+  "allocated_mass_kg": 78.5,
+  "runtime_integrated": true,
+  "runtime_revalidation_pending": true,
+  "truth_boundary": "unpublished internal motor and fixed-link parameters remain engineering allocations"
+}

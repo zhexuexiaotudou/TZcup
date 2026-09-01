@@ -1,0 +1,113 @@
+schema_version: 1
+contract_id: formal_cleaning_actuator_motor_realism_v1
+status: source_integrated_runtime_runner_ready_acceptance_pending
+authority:
+  physical_joint_writer: gz_ros2_control
+  observer_plugin: sanitation_gazebo_control::CleaningActuatorMotorSystem
+  forbidden_plugin_components: [JointForceCmd, JointVelocityCmd, JointPositionCmd]
+  safety_command_owner: sanitation_safety/whole_vehicle_safety_manager
+  rule: observer_may_measure_and_fault_but_must_never_write_joint_commands
+actuator_order:
+  - left_side_brush
+  - right_side_brush
+  - central_roller
+  - cleaning_lift
+  - recovery_pump
+actuators:
+  pololu_4694:
+    applies_to: [left_side_brush, right_side_brush, central_roller]
+    model: Pololu 70:1 37Dx70L 24V with 64 CPR encoder item 4694
+    source: https://www.pololu.com/product/4694/specs
+    source_class: manufacturer_public
+    nominal_voltage_v: 24.0
+    no_load_speed_rpm: 140.0
+    no_load_current_a: 0.10
+    rated_current_a: 0.75
+    rated_current_basis: manufacturer_general_recommendation_25_percent_or_less_of_stall
+    stall_current_a: 3.0
+    stall_torque_kg_cm: 31.0
+    stall_torque_nm: 3.040473
+    caveat: stall_values_are_manufacturer_extrapolations_not_continuous_ratings
+    encoder:
+      motor_shaft_counts_per_revolution: 64
+      nominal_gear_ratio: 70
+      nominal_output_counts_per_revolution: 4480
+      physical_links: [left_side_brush_encoder_link, right_side_brush_encoder_link, central_roller_encoder_link]
+      quantized_topics: [/formal_vehicle/encoders/cleaning/counts, /formal_vehicle/encoders/cleaning/joint_states]
+      external_gate: exact_ratio_tolerance_backlash_polarity_and_pinout_require_as_built_validation
+  actuonix_p16:
+    applies_to: [cleaning_lift]
+    model: Actuonix P16-100-256-12-P
+    source: https://www.actuonix.com/assets/images/datasheets/ActuonixP16Datasheet.pdf
+    source_class: manufacturer_public
+    nominal_voltage_v: 12.0
+    no_load_speed_m_s: 0.0048
+    rated_current_a: 0.50
+    rated_current_basis: engineering_continuous_limit_below_1A_stall
+    stall_current_a: 1.0
+    maximum_load_n: 300.0
+    maximum_duty_cycle_fraction: 0.20
+    manufacturer_operating_temperature_c: [-10.0, 50.0]
+  jabsco_q402j_118s_3a:
+    applies_to: [recovery_pump]
+    model: Jabsco PAR-MAX HD4 Q402J-118S-3A 24V
+    source: https://www.xylem.com/siteassets/brand/jabsco/resources/technical-brochure/q402j-118s-3a---parmax-hd4-datasheet.pdf
+    source_class: manufacturer_public
+    nominal_voltage_v: 24.0
+    rated_current_a: 6.0
+    rated_current_basis: manufacturer_max_current_at_60psi
+    stall_current_a: 10.0
+    stall_current_basis: manufacturer_required_fuse_boundary
+    thermal_cutout: true
+    duty: intermittent
+    calibrated_rotor_speed_rad_s: 62.832
+    calibrated_rotor_stall_torque_nm: 2.0
+    calibration_caveat: diaphragm_cam_speed_and_torque_are_not_published
+protection:
+  command_timeout_s: 0.25
+  latching_faults: [stall, overtemperature]
+  transient_faults: [command_timeout, invalid_input]
+  reset_rule: actuator_enable_false_and_all_commands_idle_and_all_temperatures_below_reset
+  whole_vehicle_effect: global_fail_closed
+  pause_rule: gazebo_pause_freezes_sim_time_thermal_and_stall_integration
+topics:
+  command_brush: {name: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/command/brush, type: std_msgs/msg/Float64MultiArray, direction: ros_to_gz}
+  command_pump: {name: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/command/pump, type: std_msgs/msg/Float64MultiArray, direction: ros_to_gz}
+  command_lift: {name: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/command/lift_position, type: std_msgs/msg/Float64, direction: ros_to_gz}
+  enable: {name: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/command/enable, type: std_msgs/msg/Bool, direction: ros_to_gz}
+  reset: {name: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/command/reset_faults, type: std_msgs/msg/Bool, direction: ros_to_gz}
+  status: {name: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/status_json, gz_type: gz.msgs.StringMsg, direction: gazebo_only_diagnostic}
+  fault: {name: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/fault_active, type: std_msgs/msg/Bool, direction: gz_to_ros}
+  current: {name: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/motor_current_a, type: std_msgs/msg/Float64MultiArray, direction: gz_to_ros}
+  temperature: {name: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/motor_temperature_c, type: std_msgs/msg/Float64MultiArray, direction: gz_to_ros}
+  output_load: {name: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/estimated_output_load, type: std_msgs/msg/Float64MultiArray, direction: gz_to_ros}
+  total_current: {name: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/total_current_a, type: std_msgs/msg/Float64, direction: gz_to_ros}
+  total_power: {name: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/total_power_w, type: std_msgs/msg/Float64, direction: gz_to_ros}
+runtime_acceptance:
+  artifact: artifacts/formal_cleaning_actuator_motor_runtime.json
+  runner: scripts/run_formal_cleaning_actuator_motor_runtime.sh
+  required_motor_count: 5
+  require_nonzero_current_under_command: true
+  require_tracking_current_below_stall: true
+  require_stall_fault_and_global_inhibit: true
+  require_explicit_idle_cool_reset: true
+  physical_stall_mechanism: cleaning_lift_controller_reference_beyond_0p100m_physical_travel_stop
+  forbid_joint_state_mutation: true
+  require_final_frozen_overlay: true
+  require_snapshot_hash_binding: true
+  status: pending_no_gazebo_run_in_this_change
+thermal_acceptance:
+  core_test: starter_ws/src/sanitation_gazebo_control/test/test_cleaning_actuator_motor_core.cc
+  production_parameters_modified: false
+  required_core_behaviors:
+    - overtemperature_latches_at_production_threshold
+    - hot_reset_rejected
+    - idle_cooling_below_reset_threshold
+    - explicit_reset_clears_latch
+  live_overtemperature_required: false
+  boundary: >-
+    The live gate must not shorten production thermal time constants merely to
+    obtain an overtemperature artifact in a short run. Overtemperature and hot
+    reset rejection are deterministic core-test evidence; the live runtime is
+    limited to normal load, a physical travel-stop stall, whole-vehicle inhibit,
+    idle cooling and explicit reset.

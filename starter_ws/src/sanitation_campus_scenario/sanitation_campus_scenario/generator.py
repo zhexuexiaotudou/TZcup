@@ -14,9 +14,20 @@ import xml.etree.ElementTree as ET
 import yaml
 
 
-GENERATOR_VERSION = "0.1.0"
+GENERATOR_VERSION = "0.4.0"
 EVALUATOR_NAMESPACE = "/evaluation/scenario_ground_truth"
 SPLITS = ("train", "val", "hidden")
+DIRT_CELL_COLUMNS = 10
+DIRT_CELL_ROWS = 10
+LEAF_VISUAL_COUNT = DIRT_CELL_COLUMNS * DIRT_CELL_ROWS
+DUST_VISUAL_COUNT = DIRT_CELL_COLUMNS * DIRT_CELL_ROWS
+PUDDLE_VISUAL_COUNT = DIRT_CELL_COLUMNS * DIRT_CELL_ROWS
+CUBE_MATERIAL_DENSITY_KG_M3 = {
+    "paperboard": 700.0,
+    "PP": 900.0,
+    "PET": 1380.0,
+    "aluminum": 2700.0,
+}
 
 
 class GenerationError(RuntimeError):
@@ -58,6 +69,9 @@ class Cube:
     pose: Pose2D
     edge_m: float
     color_rgba: tuple[float, float, float, float]
+    material: str
+    density_kg_m3: float
+    mass_kg: float
 
 
 @dataclass(frozen=True)
@@ -84,6 +98,113 @@ def _canonical_json(value: Any) -> str:
 
 def _sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _dirt_visual_rng(patch: DirtPatch) -> random.Random:
+    """Return a stable, public-appearance-only RNG for a dirt model."""
+
+    digest = hashlib.sha256(f"dirt-visual-v2:{patch.object_id}".encode("utf-8")).digest()
+    return random.Random(int.from_bytes(digest[:8], "big"))
+
+
+def _set_visual_material(visual: ET.Element, rgba: tuple[float, float, float, float]) -> None:
+    text = " ".join(_fmt(value) for value in rgba)
+    material = ET.SubElement(visual, "material")
+    ET.SubElement(material, "ambient").text = text
+    ET.SubElement(material, "diffuse").text = text
+
+
+def _add_dirt_visuals(link: ET.Element, patch: DirtPatch) -> None:
+    """Render deterministic, redistributable dirt without truth-colour shortcuts.
+
+    Geometry is procedural so formal episodes do not depend on proprietary
+    textures.  The product still receives camera pixels only; patch kind and
+    region truth remain evaluator-private.
+    """
+
+    rng = _dirt_visual_rng(patch)
+    width, height = patch.size_m
+    if patch.kind == "leaf":
+        palette = (
+            (0.24, 0.10, 0.018, 1.0),
+            (0.42, 0.19, 0.025, 1.0),
+            (0.68, 0.34, 0.035, 1.0),
+            (0.78, 0.52, 0.06, 1.0),
+            (0.22, 0.27, 0.035, 1.0),
+        )
+        for index in range(LEAF_VISUAL_COUNT):
+            leaf_length = rng.uniform(0.055, 0.105)
+            leaf_width = leaf_length * rng.uniform(0.28, 0.48)
+            visual = ET.SubElement(link, "visual", {"name": f"leaf_{index:03d}"})
+            ET.SubElement(visual, "pose").text = (
+                f"{_fmt(rng.uniform(-0.47 * width, 0.47 * width))} "
+                f"{_fmt(rng.uniform(-0.47 * height, 0.47 * height))} "
+                f"{_fmt(0.0015 + 0.00035 * (index % 5))} 0 0 {_fmt(rng.uniform(-math.pi, math.pi))}"
+            )
+            geometry = ET.SubElement(visual, "geometry")
+            polyline = ET.SubElement(geometry, "polyline")
+            ET.SubElement(polyline, "height").text = "0.0025"
+            for x, y in (
+                (-0.5 * leaf_length, 0.0),
+                (-0.28 * leaf_length, -0.38 * leaf_width),
+                (0.0, -0.5 * leaf_width),
+                (0.30 * leaf_length, -0.32 * leaf_width),
+                (0.5 * leaf_length, 0.0),
+                (0.30 * leaf_length, 0.32 * leaf_width),
+                (0.0, 0.5 * leaf_width),
+                (-0.28 * leaf_length, 0.38 * leaf_width),
+            ):
+                ET.SubElement(polyline, "point").text = f"{_fmt(x)} {_fmt(y)}"
+            base = palette[rng.randrange(len(palette))]
+            jitter = rng.uniform(0.88, 1.12)
+            _set_visual_material(
+                visual,
+                (min(base[0] * jitter, 1.0), min(base[1] * jitter, 1.0), min(base[2] * jitter, 1.0), 1.0),
+            )
+        return
+
+    if patch.kind == "dust":
+        cell_x = width / DIRT_CELL_COLUMNS
+        cell_y = height / DIRT_CELL_ROWS
+        for iy in range(DIRT_CELL_ROWS):
+            for ix in range(DIRT_CELL_COLUMNS):
+                index = iy * DIRT_CELL_COLUMNS + ix
+                visual = ET.SubElement(link, "visual", {"name": f"dust_mottle_{index:03d}"})
+                local_x = -width / 2.0 + (ix + 0.5) * cell_x
+                local_y = -height / 2.0 + (iy + 0.5) * cell_y
+                ET.SubElement(visual, "pose").text = (
+                    f"{_fmt(local_x)} {_fmt(local_y)} {_fmt(0.001 + 0.00015 * ((ix + 2 * iy) % 3))} 0 0 0"
+                )
+                geometry = ET.SubElement(visual, "geometry")
+                box = ET.SubElement(geometry, "box")
+                ET.SubElement(box, "size").text = f"{_fmt(cell_x * 1.01)} {_fmt(cell_y * 1.01)} 0.002"
+                tone = rng.uniform(0.23, 0.52)
+                warm = rng.uniform(-0.025, 0.035)
+                _set_visual_material(visual, (tone + warm, tone, max(0.0, tone - 0.035), rng.uniform(0.68, 0.9)))
+        return
+
+    if patch.kind == "puddle":
+        for index in range(PUDDLE_VISUAL_COUNT):
+            angle = rng.uniform(0.0, 2.0 * math.pi)
+            radial = math.sqrt(rng.random())
+            local_x = math.cos(angle) * radial * width * 0.46
+            local_y = math.sin(angle) * radial * height * 0.46
+            radius = rng.uniform(0.055, 0.12) * min(width, height)
+            visual = ET.SubElement(link, "visual", {"name": f"puddle_lobe_{index:03d}"})
+            ET.SubElement(visual, "pose").text = f"{_fmt(local_x)} {_fmt(local_y)} 0.001 0 0 0"
+            geometry = ET.SubElement(visual, "geometry")
+            cylinder = ET.SubElement(geometry, "cylinder")
+            ET.SubElement(cylinder, "radius").text = _fmt(radius)
+            ET.SubElement(cylinder, "length").text = "0.0015"
+            blue = rng.uniform(0.16, 0.34)
+            highlight = 0.09 if index % 11 == 0 else 0.0
+            _set_visual_material(
+                visual,
+                (0.035 + highlight, 0.10 + 0.35 * blue + highlight, blue + highlight, rng.uniform(0.48, 0.72)),
+            )
+        return
+
+    raise GenerationError(f"unsupported dirt visual kind: {patch.kind}")
 
 
 def _opaque_id(prefix: str, seed: int, index: int) -> str:
@@ -164,6 +285,7 @@ def validate_config(config: dict[str, Any]) -> None:
             "cube_count",
             "cube_edge_m",
             "grasp_clearance_m",
+            "grasp_reach_radius_m",
             "dirt_patch_count",
             "dirt_patch_area_m2",
             "dirt_spacing_m",
@@ -184,6 +306,15 @@ def validate_config(config: dict[str, Any]) -> None:
         raise GenerationError("episode.dirt_patch_area_m2 must equal 1.0")
     _positive_number(episode.get("dirt_spacing_m"), "episode.dirt_spacing_m")
     _positive_number(episode.get("grasp_clearance_m"), "episode.grasp_clearance_m")
+    reach_radius = _positive_number(
+        episode.get("grasp_reach_radius_m"), "episode.grasp_reach_radius_m"
+    )
+    placement_clearance = float(episode["grasp_clearance_m"])
+    if placement_clearance <= reach_radius:
+        raise GenerationError(
+            "episode.grasp_clearance_m must exceed grasp_reach_radius_m so "
+            "whole-vehicle parking clearance is not confused with arm reach"
+        )
     split = _require_exact_keys(
         config.get("split"), {"master_seed", "train", "val", "hidden"}, "split"
     )
@@ -409,7 +540,20 @@ def generate_cubes(profile: dict[str, Any], episode: dict[str, Any], assets: lis
             existing=existing,
         )
         color = tuple(round(rng.uniform(0.05, 0.95), 6) for _ in range(3)) + (1.0,)
-        cubes.append(Cube(_opaque_id("object", seed, index), Pose2D(x, y, round(rng.uniform(-math.pi, math.pi), 6)), edge, color))
+        material = rng.choice(tuple(CUBE_MATERIAL_DENSITY_KG_M3))
+        density = CUBE_MATERIAL_DENSITY_KG_M3[material]
+        mass = density * edge**3
+        cubes.append(
+            Cube(
+                _opaque_id("object", seed, index),
+                Pose2D(x, y, round(rng.uniform(-math.pi, math.pi), 6)),
+                edge,
+                color,
+                material,
+                density,
+                round(mass, 9),
+            )
+        )
         existing.append((x, y, edge / 2.0))
     return cubes
 
@@ -524,8 +668,29 @@ def render_sdf(profile_name: str, profile: dict[str, Any], assets: list[Asset], 
         ("gz-sim-physics-system", "gz::sim::systems::Physics"),
         ("gz-sim-user-commands-system", "gz::sim::systems::UserCommands"),
         ("gz-sim-scene-broadcaster-system", "gz::sim::systems::SceneBroadcaster"),
+        ("gz-sim-imu-system", "gz::sim::systems::Imu"),
+        ("gz-sim-navsat-system", "gz::sim::systems::NavSat"),
     ):
         ET.SubElement(world, "plugin", {"filename": filename, "name": name})
+    sensors = ET.SubElement(
+        world,
+        "plugin",
+        {
+            "filename": "gz-sim-sensors-system",
+            "name": "gz::sim::systems::Sensors",
+        },
+    )
+    ET.SubElement(sensors, "render_engine").text = "ogre2"
+    spherical = ET.SubElement(world, "spherical_coordinates")
+    for key, value in (
+        ("surface_model", "EARTH_WGS84"),
+        ("world_frame_orientation", "ENU"),
+        ("latitude_deg", "39.9042"),
+        ("longitude_deg", "116.4074"),
+        ("elevation", "43.5"),
+        ("heading_deg", "0"),
+    ):
+        ET.SubElement(spherical, key).text = value
     light = ET.SubElement(world, "light", {"type": "directional", "name": "sun"})
     ET.SubElement(light, "pose").text = "0 0 50 0 0 0"
     ET.SubElement(light, "diffuse").text = "0.9 0.9 0.86 1"
@@ -550,14 +715,7 @@ def render_sdf(profile_name: str, profile: dict[str, Any], assets: list[Asset], 
         ET.SubElement(model, "static").text = "true"
         ET.SubElement(model, "pose").text = f"{_fmt(patch.pose.x_m)} {_fmt(patch.pose.y_m)} 0.002 0 0 {_fmt(patch.pose.yaw_rad)}"
         link = ET.SubElement(model, "link", {"name": "link"})
-        visual = ET.SubElement(link, "visual", {"name": "visual"})
-        geometry = ET.SubElement(visual, "geometry")
-        box = ET.SubElement(geometry, "box")
-        ET.SubElement(box, "size").text = f"{_fmt(patch.size_m[0])} {_fmt(patch.size_m[1])} 0.004"
-        material = ET.SubElement(visual, "material")
-        rgba = " ".join(_fmt(v) for v in patch.color_rgba)
-        ET.SubElement(material, "ambient").text = rgba
-        ET.SubElement(material, "diffuse").text = rgba
+        _add_dirt_visuals(link, patch)
     for cube in cubes:
         asset = Asset(cube.object_id, "bin", cube.pose, (cube.edge_m, cube.edge_m, cube.edge_m))
         model = ET.SubElement(world, "model", {"name": asset.asset_id})
@@ -565,7 +723,13 @@ def render_sdf(profile_name: str, profile: dict[str, Any], assets: list[Asset], 
         ET.SubElement(model, "pose").text = f"{_fmt(cube.pose.x_m)} {_fmt(cube.pose.y_m)} {_fmt(cube.edge_m / 2)} 0 0 {_fmt(cube.pose.yaw_rad)}"
         link = ET.SubElement(model, "link", {"name": "link"})
         inertial = ET.SubElement(link, "inertial")
-        ET.SubElement(inertial, "mass").text = "0.02"
+        ET.SubElement(inertial, "mass").text = _fmt(cube.mass_kg)
+        inertia = ET.SubElement(inertial, "inertia")
+        diagonal = cube.mass_kg * cube.edge_m**2 / 6.0
+        for axis in ("ixx", "iyy", "izz"):
+            ET.SubElement(inertia, axis).text = f"{diagonal:.12g}"
+        for cross in ("ixy", "ixz", "iyz"):
+            ET.SubElement(inertia, cross).text = "0"
         for role in ("collision", "visual"):
             node = ET.SubElement(link, role, {"name": role})
             geometry = ET.SubElement(node, "geometry")
@@ -635,13 +799,45 @@ def generate_episode(
     mission_index: int,
     *,
     include_proxy: bool = False,
+    seed_namespace: str | None = None,
+    seed_mission_index: int | None = None,
+    layout_seed_override: int | None = None,
+    map_id_override: str | None = None,
+    reported_split: str | None = None,
+    reported_mission_index: int | None = None,
+    episode_id_mission_width: int = 3,
 ) -> dict[str, str]:
+    """Generate one standard episode or a separately namespaced frozen task.
+
+    The optional overrides are deliberately narrow: Stage-A uses the exact
+    formal map-0 layout but needs 11,500 independently seeded task instances,
+    whereas the multi-map generator freezes only 200/100/100 missions per
+    split.  The caller cannot alter geometry through these arguments.
+    """
     validate_config(config)
     if profile_name not in config["profiles"]:
         raise GenerationError(f"unknown profile: {profile_name}")
     base_profile = config["profiles"][profile_name]
     episode = config["episode"]
-    seeds = seeds_for(config, split, map_index, mission_index)
+    if seed_namespace is None:
+        seeds = seeds_for(config, split, map_index, mission_index)
+    else:
+        if not seed_namespace or seed_mission_index is None or seed_mission_index < 0:
+            raise GenerationError("namespaced episode requires a non-negative task index")
+        master = int(config["split"]["master_seed"])
+        seeds = EpisodeSeeds(
+            layout=(
+                int(layout_seed_override)
+                if layout_seed_override is not None
+                else _derived_seed(master, seed_namespace, "layout")
+            ),
+            dirt=_derived_seed(master, seed_namespace, seed_mission_index, "dirt"),
+            cubes=_derived_seed(master, seed_namespace, seed_mission_index, "cubes"),
+            pedestrians=_derived_seed(
+                master, seed_namespace, seed_mission_index, "pedestrians"
+            ),
+            sensor=_derived_seed(master, seed_namespace, seed_mission_index, "sensor"),
+        )
     derived_width, derived_height = derive_field_dimensions(
         base_profile, map_index, seeds.layout
     )
@@ -659,8 +855,16 @@ def generate_episode(
     )
     sdf = render_sdf(profile_name, profile, assets, dirt, cubes, pedestrians, include_proxy)
     ET.fromstring(sdf)
-    map_id = f"{split}-map-{map_index:03d}"
-    episode_id = f"{map_id}-mission-{mission_index:03d}"
+    map_id = map_id_override or f"{split}-map-{map_index:03d}"
+    report_split = reported_split or split
+    report_mission_index = (
+        mission_index if reported_mission_index is None else reported_mission_index
+    )
+    if episode_id_mission_width not in {3, 5}:
+        raise GenerationError("episode ID mission width must be 3 or 5")
+    episode_id = (
+        f"{map_id}-mission-{report_mission_index:0{episode_id_mission_width}d}"
+    )
     runtime_schedule = {
         "schema_version": 1,
         "access": "environment_driver_only_not_robot_control",
@@ -688,9 +892,9 @@ def generate_episode(
         "episode_id": episode_id,
         "map_id": map_id,
         "profile": profile_name,
-        "split": split,
+        "split": report_split,
         "map_index": map_index,
-        "mission_index": mission_index,
+        "mission_index": report_mission_index,
         "field": {
             "width_m": profile["width_m"],
             "height_m": profile["height_m"],
@@ -702,15 +906,39 @@ def generate_episode(
             "geofence_polygon_m": _geofence(profile),
         },
         "counts": {"static_assets": len(assets), "dirt_patches": len(dirt), "discrete_cubes": len(cubes), "pedestrians": len(pedestrians)},
-        "cube_contract": {"edge_m": 0.03, "single_layer": True, "maximum_count": 20, "grasp_clearance_m": episode["grasp_clearance_m"]},
+        "cube_contract": {
+            "edge_m": 0.03,
+            "single_layer": True,
+            "maximum_count": 20,
+            "grasp_clearance_m": episode["grasp_clearance_m"],
+            "grasp_reach_radius_m": episode["grasp_reach_radius_m"],
+            "clearance_semantics": "whole_vehicle_side_pick_parking_envelope",
+        },
         "dirt_contract": {
             "patch_area_m2": episode["dirt_patch_area_m2"],
             "total_union_area_m2": dirt_union_area_m2,
             "overlap_policy": "mutually_exclusive_conservative_bounds",
             "shape_randomization": "fixed_area_rectangle_aspect_ratio",
+            "visual_representation": "deterministic_procedural_realistic_v2",
+            "visual_assets_redistributable": True,
+            "visual_counts_by_kind": {
+                "leaf": LEAF_VISUAL_COUNT,
+                "dust": DUST_VISUAL_COUNT,
+                "puddle": PUDDLE_VISUAL_COUNT,
+            },
         },
         "vehicle": {"included": include_proxy, "profile": "proxy_chassis_not_urdf" if include_proxy else None, "urdf_claim": False},
+        # Keep the historical field for consumers that materialize the Gazebo
+        # source world, but make the frame boundary explicit for localization
+        # and evaluator consumers.  The product localization map is reset at
+        # the fixed vehicle start; it is not the Gazebo source-world frame.
         "vehicle_start_pose_map": asdict(start_pose),
+        "vehicle_start_pose_source_world": asdict(start_pose),
+        "vehicle_start_pose_localization_map": {
+            "x_m": 0.0,
+            "y_m": 0.0,
+            "yaw_rad": 0.0,
+        },
         "dynamic_pedestrians_present": bool(pedestrians),
     }
     evaluator_manifest = {
@@ -719,9 +947,9 @@ def generate_episode(
         "episode_id": episode_id,
         "map_id": map_id,
         "profile": profile_name,
-        "split": split,
+        "split": report_split,
         "map_index": map_index,
-        "mission_index": mission_index,
+        "mission_index": report_mission_index,
         "seeds": asdict(seeds),
         "truth_boundary": {"evaluator_namespace": EVALUATOR_NAMESPACE, "control_use_prohibited": True, "truth_file": "evaluator/ground_truth.json"},
         "runtime_environment": {"pedestrian_schedule": "environment/pedestrian_schedule.json", "driver_required_for_motion": bool(pedestrians)},
@@ -734,6 +962,15 @@ def generate_episode(
     }
     truth["dirt_union_area_m2"] = dirt_union_area_m2
     truth["dirt_overlap_policy"] = "mutually_exclusive_conservative_bounds"
+    truth["dirt_cell_contract"] = {
+        "columns_per_patch": DIRT_CELL_COLUMNS,
+        "rows_per_patch": DIRT_CELL_ROWS,
+        "cell_area_m2": episode["dirt_patch_area_m2"]
+        / (DIRT_CELL_COLUMNS * DIRT_CELL_ROWS),
+        "total_cell_count": len(dirt) * DIRT_CELL_COLUMNS * DIRT_CELL_ROWS,
+        "state_owner": "gazebo_evaluator_only",
+        "product_ros_truth_exported": False,
+    }
     return {
         "public/world.sdf": sdf,
         "public/episode_manifest.json": json.dumps(public_manifest, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
@@ -741,3 +978,40 @@ def generate_episode(
         "evaluator/ground_truth.json": json.dumps(truth, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
         "environment/pedestrian_schedule.json": json.dumps(runtime_schedule, ensure_ascii=False, sort_keys=True, indent=2) + "\n",
     }
+
+
+def generate_stage_a_episode(
+    config: dict[str, Any],
+    profile_name: str,
+    phase: str,
+    task_index: int,
+    *,
+    include_proxy: bool = False,
+) -> dict[str, str]:
+    """Generate a Stage-A task on one fixed formal layout with a unique seed.
+
+    Stage-A is intentionally distinct from the 32/8/12 multi-map split.  It
+    shares one layout across train/validation/hidden tasks, while all task
+    randomization uses an immutable phase-qualified seed namespace.
+    """
+    phases = {"train", "validation", "hidden"}
+    if phase not in phases:
+        raise GenerationError(f"unknown Stage-A phase: {phase}")
+    if task_index < 0:
+        raise GenerationError("Stage-A task index must be non-negative")
+    master = int(config["split"]["master_seed"])
+    return generate_episode(
+        config,
+        profile_name,
+        "train",
+        0,
+        0,
+        include_proxy=include_proxy,
+        seed_namespace=f"stage_a_fixed_formal/{phase}",
+        seed_mission_index=task_index,
+        layout_seed_override=_derived_seed(master, "stage_a_fixed_formal", "layout"),
+        map_id_override="stage-a-fixed-formal-map-000",
+        reported_split=f"stage_a_{phase}",
+        reported_mission_index=task_index,
+        episode_id_mission_width=5,
+    )

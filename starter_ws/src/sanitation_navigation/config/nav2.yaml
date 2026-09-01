@@ -9,7 +9,7 @@ amcl:
     alpha3: 0.002
     alpha4: 0.002
     alpha5: 0.001
-    base_frame_id: base_footprint
+    base_frame_id: base_link
     global_frame_id: map
     odom_frame_id: odom
     scan_topic: scan
@@ -39,7 +39,7 @@ bt_navigator:
   ros__parameters:
     use_sim_time: true
     global_frame: map
-    robot_base_frame: base_footprint
+    robot_base_frame: base_link
     odom_topic: /odom
     bt_loop_duration: 10
     default_server_timeout: 20
@@ -70,10 +70,10 @@ controller_server:
       movement_time_allowance: 15.0
     goal_checker:
       plugin: nav2_controller::SimpleGoalChecker
-      # Reach the endpoint tightly before switching to final heading control.
-      # Stateful XY acceptance is necessary for skid-steer in-place rotation:
-      # minute chassis slip must not make position and heading mutually
-      # unattainable after the 8 cm endpoint gate has already passed.
+      # The physical base is the A300 four-wheel skid-steer.  Formal reference
+      # paths are curvature-limited, not physical front-steering commands;
+      # endpoint acceptance therefore remains stateful without relying on an
+      # in-place final rotation.
       stateful: true
       xy_goal_tolerance: 0.08
       yaw_goal_tolerance: 0.35
@@ -95,18 +95,18 @@ controller_server:
       use_cost_regulated_linear_velocity_scaling: true
       regulated_linear_scaling_min_radius: 0.70
       regulated_linear_scaling_min_speed: 0.12
-      use_rotate_to_heading: true
-      allow_reversing: false
+      use_rotate_to_heading: false
+      allow_reversing: true
       rotate_to_heading_min_angle: 0.785
       max_angular_accel: 1.8
       max_robot_pose_search_dist: 10.0
       stateful: true
     # Straight cleaning is deliberately independent from transit / simulator
     # real-time factor. A fixed lookahead damps skid-steer weave at the 8 cm
-    # formal P95 gate while retaining 0.65 m/s physical cruise speed.
+    # formal P95 gate while retaining the formal 0.45 m/s speed ceiling.
     CleanPath:
       plugin: nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController
-      desired_linear_vel: 0.65
+      desired_linear_vel: 0.45
       lookahead_dist: 0.75
       min_lookahead_dist: 0.75
       max_lookahead_dist: 0.75
@@ -122,8 +122,8 @@ controller_server:
       use_cost_regulated_linear_velocity_scaling: true
       regulated_linear_scaling_min_radius: 0.70
       regulated_linear_scaling_min_speed: 0.12
-      use_rotate_to_heading: true
-      allow_reversing: false
+      use_rotate_to_heading: false
+      allow_reversing: true
       rotate_to_heading_min_angle: 0.785
       max_angular_accel: 1.8
       max_robot_pose_search_dist: 10.0
@@ -146,8 +146,8 @@ controller_server:
       use_cost_regulated_linear_velocity_scaling: true
       regulated_linear_scaling_min_radius: 0.70
       regulated_linear_scaling_min_speed: 0.12
-      use_rotate_to_heading: true
-      allow_reversing: false
+      use_rotate_to_heading: false
+      allow_reversing: true
       rotate_to_heading_min_angle: 0.785
       max_angular_accel: 1.8
       max_robot_pose_search_dist: 10.0
@@ -160,7 +160,7 @@ local_costmap:
       update_frequency: 8.0
       publish_frequency: 4.0
       global_frame: odom
-      robot_base_frame: base_footprint
+      robot_base_frame: base_link
       rolling_window: true
       width: 5
       height: 5
@@ -170,7 +170,7 @@ local_costmap:
       obstacle_layer:
         plugin: nav2_costmap_2d::ObstacleLayer
         enabled: true
-        observation_sources: scan
+        observation_sources: scan mid360
         scan:
           topic: /scan
           max_obstacle_height: 2.0
@@ -180,6 +180,15 @@ local_costmap:
           inf_is_valid: true
           raytrace_max_range: 10.0
           obstacle_max_range: 9.0
+        mid360:
+          topic: /sensors/lidar_3d/points
+          min_obstacle_height: 0.10
+          max_obstacle_height: 2.50
+          clearing: true
+          marking: true
+          data_type: PointCloud2
+          obstacle_max_range: 15.0
+          raytrace_max_range: 16.0
       inflation_layer:
         plugin: nav2_costmap_2d::InflationLayer
         cost_scaling_factor: 3.0
@@ -193,7 +202,7 @@ global_costmap:
       update_frequency: 2.0
       publish_frequency: 1.0
       global_frame: map
-      robot_base_frame: base_footprint
+      robot_base_frame: base_link
       footprint: "[[0.40, 0.36], [0.40, -0.36], [-0.40, -0.36], [-0.40, 0.36]]"
       resolution: 0.05
       track_unknown_space: true
@@ -204,7 +213,7 @@ global_costmap:
       obstacle_layer:
         plugin: nav2_costmap_2d::ObstacleLayer
         enabled: true
-        observation_sources: scan
+        observation_sources: scan mid360
         scan:
           topic: /scan
           max_obstacle_height: 2.0
@@ -214,6 +223,15 @@ global_costmap:
           inf_is_valid: true
           raytrace_max_range: 10.0
           obstacle_max_range: 9.0
+        mid360:
+          topic: /sensors/lidar_3d/points
+          min_obstacle_height: 0.10
+          max_obstacle_height: 2.50
+          clearing: true
+          marking: true
+          data_type: PointCloud2
+          obstacle_max_range: 15.0
+          raytrace_max_range: 16.0
       keepout_filter:
         plugin: nav2_costmap_2d::KeepoutFilter
         enabled: true
@@ -282,7 +300,7 @@ behavior_server:
       plugin: nav2_behaviors::Wait
     local_frame: odom
     global_frame: map
-    robot_base_frame: base_footprint
+    robot_base_frame: base_link
     transform_tolerance: 0.2
     simulate_ahead_time: 2.0
     max_rotational_vel: 0.35
@@ -319,7 +337,7 @@ velocity_smoother:
 collision_monitor:
   ros__parameters:
     use_sim_time: true
-    base_frame_id: base_footprint
+    base_frame_id: base_link
     odom_frame_id: odom
     cmd_vel_in_topic: cmd_vel_smoothed
     cmd_vel_out_topic: /cmd_vel_gate
@@ -338,12 +356,18 @@ collision_monitor:
       min_points: 6
       visualize: false
       enabled: true
-    observation_sources: [scan]
+    observation_sources: [scan, mid360]
     scan:
       type: scan
       topic: scan
       min_height: 0.05
       max_height: 2.0
+      enabled: true
+    mid360:
+      type: pointcloud
+      topic: /sensors/lidar_3d/points
+      min_height: 0.10
+      max_height: 2.50
       enabled: true
 
 docking_server:
@@ -356,7 +380,7 @@ docking_server:
     undock_linear_tolerance: 0.05
     undock_angular_tolerance: 0.1
     max_retries: 3
-    base_frame: base_footprint
+    base_frame: base_link
     fixed_frame: odom
     dock_backwards: false
     dock_prestaging_tolerance: 0.5

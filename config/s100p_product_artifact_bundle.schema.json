@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tzcup.local/schema/s100p-product-artifact-bundle-v1.json",
+  "title": "RDK S100P product artifact preparation bundle",
+  "type": "object",
+  "required": ["schema_version", "bundle_id", "status", "operation_boundary", "board_runtime_contract", "path_policy", "assets"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "bundle_id": {"const": "tzcup_s100p_product_artifact_bundle_v1"},
+    "status": {"enum": ["PREPARATION_ONLY_BLOCKED", "PREPARED_NOT_DEPLOYED"]},
+    "operation_boundary": {"const": "prepare_only_no_board_copy_ssh_dependency_install_node_start_or_data_collection"},
+    "board_runtime_contract": {
+      "type": "object",
+      "required": ["platform", "board", "soc", "march"],
+      "properties": {
+        "platform": {"const": "rdk_s100"},
+        "board": {"const": "RDK S100P"},
+        "soc": {"const": "Journey 6P"},
+        "march": {"const": "nash-m"}
+      },
+      "additionalProperties": false
+    },
+    "path_policy": {"type": "object"},
+    "assets": {"type": "object", "minProperties": 8}
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nullableSha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+    "nullableByteSize": {"type": ["integer", "null"], "minimum": 1}
+  }
+}
