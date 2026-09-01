@@ -422,6 +422,11 @@ def test_runtime_runner_uses_the_fail_closed_formal_launch_path():
     assert "timeout 20s ros2 node list --no-daemon --spin-time 3.0" in source
     assert "timeout 20s ros2 service list -t --no-daemon --spin-time 3.0" in source
     assert source.count("--once --no-daemon --spin-time 3.0 --timeout 4") == 2
+    assert "def bounded_ros_probe" not in source
+    assert "bounded_ros_probe()" in source
+    assert "result != 0 && result != 124" in source
+    assert "grep -Eq '^data: (true|false)$'" in source
+    assert "grep -qx 'name:'" in source
     assert "ros2 service type /controller_manager/list_controllers" not in source
     assert "enable_safety_manager:=false" not in source
     assert "simulation_initial_estop_active:=false" in source

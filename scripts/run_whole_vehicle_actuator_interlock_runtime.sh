@@ -49,19 +49,36 @@ formal_runtime_install_traps cleanup
   >"${launch_log}" 2>&1 &
 launch_pid=$!
 
+bounded_ros_probe() {
+  local output="" result=0
+  output="$("$@" 2>/dev/null)" || result=$?
+  # Under proot + CycloneDDS a no-daemon CLI can print its complete bounded
+  # result and then hang during participant shutdown.  Preserve the hard
+  # timeout, but let the caller validate the captured output when timeout(1)
+  # had to terminate only that shutdown path.
+  if (( result != 0 && result != 124 )); then
+    return "${result}"
+  fi
+  printf '%s\n' "${output}"
+}
+
 ready="false"
 for _ in $(seq 1 90); do
   # Every formal step intentionally reuses one bounded ROS domain.  Bypass the
   # long-lived ROS CLI daemon here so discovery cannot be satisfied or delayed
   # by graph cache entries from the previous, already-terminated Gazebo step.
-  if timeout 20s ros2 node list --no-daemon --spin-time 3.0 2>/dev/null \
+  if bounded_ros_probe timeout 20s ros2 node list --no-daemon --spin-time 3.0 \
       | grep -qx '/whole_vehicle_safety_manager' \
-    && timeout 20s ros2 service list -t --no-daemon --spin-time 3.0 2>/dev/null \
+    && bounded_ros_probe timeout 20s ros2 service list -t --no-daemon --spin-time 3.0 \
       | grep -Fxq '/controller_manager/list_controllers [controller_manager_msgs/srv/ListControllers]' \
-    && timeout 20s ros2 topic echo /safety/actuators_enabled std_msgs/msg/Bool \
-      --once --no-daemon --spin-time 3.0 --timeout 4 >/dev/null 2>&1 \
-    && timeout 20s ros2 topic echo /joint_states sensor_msgs/msg/JointState \
-      --once --no-daemon --spin-time 3.0 --timeout 4 >/dev/null 2>&1; then
+    && bounded_ros_probe timeout 20s ros2 topic echo /safety/actuators_enabled \
+      std_msgs/msg/Bool \
+      --once --no-daemon --spin-time 3.0 --timeout 4 \
+      | grep -Eq '^data: (true|false)$' \
+    && bounded_ros_probe timeout 20s ros2 topic echo /joint_states \
+      sensor_msgs/msg/JointState \
+      --once --no-daemon --spin-time 3.0 --timeout 4 \
+      | grep -qx 'name:'; then
     ready="true"
     break
   fi
