@@ -142,6 +142,7 @@ GZ_TRANSPORT13_VENDOR_SOURCE_PATHS: tuple[str, ...] = (
     "patches/upstream/gz_transport13/0001-publish-retry-current-frame-on-eintr.patch",
     "scripts/build_gz_transport13_eintr_vendor.sh",
     "scripts/validate_gz_transport13_eintr_vendor.py",
+    "scripts/formal_dynamic_dependencies.sh",
 )
 GZ_TRANSPORT13_VENDOR_BUILD_REPORT = Path(
     "gz_transport13_eintr_vendor_build_report.json"
