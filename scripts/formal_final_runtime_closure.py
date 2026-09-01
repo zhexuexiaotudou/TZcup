@@ -143,6 +143,7 @@ GZ_TRANSPORT13_VENDOR_SOURCE_PATHS: tuple[str, ...] = (
     "scripts/build_gz_transport13_eintr_vendor.sh",
     "scripts/validate_gz_transport13_eintr_vendor.py",
     "scripts/formal_dynamic_dependencies.sh",
+    "scripts/proot_glibc_compat.c",
 )
 GZ_TRANSPORT13_VENDOR_BUILD_REPORT = Path(
     "gz_transport13_eintr_vendor_build_report.json"
