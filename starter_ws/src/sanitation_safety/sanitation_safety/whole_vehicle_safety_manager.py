@@ -535,6 +535,14 @@ class WholeVehicleSafetyManager(Node):
         # position motion at the actual dangerous input edge.
         with self._controller_lock:
             new_cancel_futures = self._cancel_trajectory_goals()
+        # A CancelGoal response only acknowledges the request; it does not
+        # guarantee that the trajectory controller has already stopped
+        # consuming its active trajectory.  Publish an edge-position command
+        # immediately after dispatching cancellation so the controller topic
+        # preempts the remaining motion instead of waiting for every action
+        # server's cancellation response.  The completion callbacks and the
+        # periodic inhibited loop deliberately repeat these holds.
+        self._publish_trigger_position_holds(trigger_joint_positions)
         for action_name, future in new_cancel_futures.items():
             controller = self._trajectory_hold_controller_by_action[action_name]
             future.add_done_callback(
@@ -549,6 +557,32 @@ class WholeVehicleSafetyManager(Node):
                 )
             )
         self._publish_immediate_stop(trigger_joint_positions)
+
+    def _publish_trigger_position_holds(
+        self, trigger_joint_positions: dict[str, float]
+    ) -> None:
+        """Preempt position motion at the dangerous input edge."""
+
+        for controller, joints in SAFETY_HELD_CONTROLLER_JOINTS.items():
+            fixed_positions = SAFETY_FIXED_SAFE_CONTROLLER_POSITIONS.get(
+                controller, {}
+            )
+            if any(
+                joint not in fixed_positions
+                and joint not in trigger_joint_positions
+                for joint in joints
+            ):
+                continue
+            self._publish_controller_hold(
+                controller,
+                joints,
+                {
+                    joint: fixed_positions.get(
+                        joint, trigger_joint_positions.get(joint, 0.0)
+                    )
+                    for joint in joints
+                },
+            )
 
     def _publish_edge_controller_hold(
         self,

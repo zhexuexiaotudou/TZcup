@@ -351,6 +351,58 @@ def test_unsafe_edge_starts_position_cancels_before_periodic_reconciliation():
         rclpy.shutdown()
 
 
+def test_unsafe_edge_holds_positions_without_waiting_for_cancel_responses():
+    rclpy.init()
+    manager = _new_stopped_manager()
+    try:
+        pending_callbacks = []
+
+        class PendingCancel:
+            def add_done_callback(self, callback):
+                pending_callbacks.append(callback)
+
+        pending = {
+            action: PendingCancel()
+            for action in manager._trajectory_cancel_clients
+        }
+        trigger_positions = {
+            joint: float(index) / 100.0
+            for index, joint in enumerate(
+                joint
+                for controller, joints in SAFETY_HELD_CONTROLLER_JOINTS.items()
+                for joint in joints
+                if joint
+                not in SAFETY_FIXED_SAFE_CONTROLLER_POSITIONS.get(controller, {})
+            )
+        }
+        published = []
+        manager._cancel_trajectory_goals = lambda: pending
+        manager._publish_controller_hold = (
+            lambda controller, joints, positions: published.append(
+                (controller, joints, positions)
+            )
+        )
+        manager._publish_immediate_stop = lambda _positions: None
+
+        manager._stop_on_unsafe_edge(trigger_positions)
+
+        assert len(pending_callbacks) == len(pending)
+        assert {controller for controller, _, _ in published} == set(
+            SAFETY_HELD_CONTROLLER_JOINTS
+        )
+        cleaning_hold = next(
+            positions
+            for controller, _, positions in published
+            if controller == "cleaning_controller"
+        )
+        assert cleaning_hold == {
+            "cleaning_lift_joint": trigger_positions["cleaning_lift_joint"]
+        }
+    finally:
+        manager.destroy_node()
+        rclpy.shutdown()
+
+
 def test_ros_gateway_zeros_velocity_actuators_and_switches_trajectory_controllers():
     rclpy.init()
     harness = Harness()
