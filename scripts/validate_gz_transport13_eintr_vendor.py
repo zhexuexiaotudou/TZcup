@@ -40,7 +40,7 @@ PROTOBUF_RESOLVED_KEYS = {
     "Protobuf_PROTOC_LIBRARY_RELEASE",
     "Protobuf_PROTOC_EXECUTABLE",
 }
-NATIVE_DYNAMIC_LOADER = Path("/lib64/ld-linux-x86-64.so.2")
+NATIVE_DYNAMIC_LOADER = Path("/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2")
 
 
 class ValidationError(RuntimeError):
