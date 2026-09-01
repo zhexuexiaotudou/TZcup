@@ -74,9 +74,10 @@ formal_runtime_configure() {
   export GZ_IP=127.0.0.1
   export IGN_IP=127.0.0.1
   unset GZ_RELAY IGN_RELAY
-  local helper_dir
+  local helper_dir repo_root
   helper_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-  export CYCLONEDDS_URI="file://${helper_dir}/../config/cyclonedds_localhost.xml"
+  repo_root="$(cd -- "${helper_dir}/.." && pwd)"
+  export CYCLONEDDS_URI="file://${repo_root}/config/cyclonedds_localhost.xml"
   FORMAL_RUNTIME_LOCK_FILE="${FORMAL_GAZEBO_LOCK_FILE:-/tmp/tzcup_formal_gazebo.lock}"
   export FORMAL_RUNTIME_LOCK_FILE
   exec 9>"${FORMAL_RUNTIME_LOCK_FILE}"

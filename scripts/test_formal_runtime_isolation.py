@@ -101,6 +101,8 @@ def test_shared_helper_owns_the_complete_isolation_policy() -> None:
         "IGN_IP=127.0.0.1",
         "unset GZ_RELAY IGN_RELAY",
         "cyclonedds_localhost.xml",
+        'repo_root="$(cd -- "${helper_dir}/.." && pwd)"',
+        'CYCLONEDDS_URI="file://${repo_root}/config/cyclonedds_localhost.xml"',
         "FORMAL_GAZEBO_LOCK_FILE:-/tmp/tzcup_formal_gazebo.lock",
         "flock -n 9",
         'FORMAL_RUNTIME_SESSION_PREFIX=(setsid)',
@@ -123,6 +125,7 @@ def test_shared_helper_owns_the_complete_isolation_policy() -> None:
     assert "FORMAL_WINDOWS_MEMORY_GUARD_ENABLED cannot be disabled for formal runtime" in source
     assert 'RMW_IMPLEMENTATION="${RMW_IMPLEMENTATION:-' not in source
     assert 'CYCLONEDDS_URI:-' not in source
+    assert 'CYCLONEDDS_URI="file://${helper_dir}/../config/' not in source
 
 
 def test_formal_vehicle_launch_pins_gazebo_transport_before_simulator_actions() -> None:
