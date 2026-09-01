@@ -56,6 +56,12 @@ class WholeVehicleSafetyManager(Node):
         self._output_lock = threading.RLock()
         self._controller_lock = threading.RLock()
         self._timer_callback_group = MutuallyExclusiveCallbackGroup()
+        # Dangerous input edges must not queue behind the normal command,
+        # joint-state, and heartbeat streams in the node's default mutually
+        # exclusive callback group.  A dedicated worker can therefore start
+        # cancellation and position holds while the normal input worker is
+        # busy draining high-rate telemetry.
+        self._unsafe_input_callback_group = MutuallyExclusiveCallbackGroup()
         self._declare_parameters()
         self._publish_period_sec = self._float_parameter("publish_period_sec")
         self._arm_stowed_tolerance_rad = self._float_parameter(
@@ -205,12 +211,14 @@ class WholeVehicleSafetyManager(Node):
             self._string_parameter("manual_estop_topic"),
             self._on_manual_estop,
             latest_reliable_qos,
+            callback_group=self._unsafe_input_callback_group,
         )
         self.create_subscription(
             Bool,
             self._string_parameter("manipulator_base_inhibit_topic"),
             self._on_manipulator_base_inhibit,
             latest_reliable_qos,
+            callback_group=self._unsafe_input_callback_group,
         )
         self._switch_controller_client = self.create_client(
             SwitchController,
@@ -242,36 +250,42 @@ class WholeVehicleSafetyManager(Node):
             self._string_parameter("front_bumper_topic"),
             self._on_front_bumper,
             latest_sensor_qos,
+            callback_group=self._unsafe_input_callback_group,
         )
         self.create_subscription(
             Contacts,
             self._string_parameter("rear_bumper_topic"),
             self._on_rear_bumper,
             latest_sensor_qos,
+            callback_group=self._unsafe_input_callback_group,
         )
         self.create_subscription(
             Bool,
             self._string_parameter("safety_relay_topic"),
             self._on_safety_relay,
             latest_reliable_qos,
+            callback_group=self._unsafe_input_callback_group,
         )
         self.create_subscription(
             Bool,
             self._string_parameter("bms_fault_topic"),
             self._on_bms_fault,
             latest_reliable_qos,
+            callback_group=self._unsafe_input_callback_group,
         )
         self.create_subscription(
             Bool,
             self._string_parameter("cleaning_motor_fault_topic"),
             self._on_cleaning_motor_fault,
             latest_sensor_qos,
+            callback_group=self._unsafe_input_callback_group,
         )
         self.create_subscription(
             Bool,
             self._string_parameter("traction_permitted_topic"),
             self._on_traction_permitted,
             latest_reliable_qos,
+            callback_group=self._unsafe_input_callback_group,
         )
         self.create_subscription(
             Empty,
@@ -1234,7 +1248,9 @@ class WholeVehicleSafetyManager(Node):
 def main(args=None) -> None:
     rclpy.init(args=args)
     node = WholeVehicleSafetyManager()
-    executor = MultiThreadedExecutor(num_threads=2)
+    # One worker each for ordinary inputs, dangerous input edges, and
+    # controller service responses.  The publish loop has its own thread.
+    executor = MultiThreadedExecutor(num_threads=3)
     executor.add_node(node)
     fatal_error: BaseException | None = None
     try:

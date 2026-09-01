@@ -267,6 +267,27 @@ def test_periodic_status_is_volatile_while_actuator_permit_is_latched():
             manager._actuator_enable_publisher.qos_profile.durability
             is DurabilityPolicy.TRANSIENT_LOCAL
         )
+        critical_topics = {
+            "/emergency_stop",
+            "/manipulation/base_motion_inhibited",
+            "/safety/front_bumper/contact",
+            "/safety/rear_bumper/contact",
+            "/safety/relay_enabled",
+            "/formal_vehicle/power/bms_fault",
+            "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/fault_active",
+            "/formal_vehicle/power/traction_permitted",
+        }
+        critical_subscriptions = {
+            subscription.topic_name: subscription
+            for subscription in manager.subscriptions
+            if subscription.topic_name in critical_topics
+        }
+        assert set(critical_subscriptions) == critical_topics
+        assert all(
+            subscription.callback_group
+            is manager._unsafe_input_callback_group
+            for subscription in critical_subscriptions.values()
+        )
     finally:
         manager.destroy_node()
         rclpy.shutdown()
