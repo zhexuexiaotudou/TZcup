@@ -28,7 +28,12 @@ from std_msgs.msg import Bool, Empty, Float64MultiArray, String
 from trajectory_msgs.msg import JointTrajectory
 
 from sanitation_safety.whole_vehicle_safety_manager import WholeVehicleSafetyManager
-from sanitation_safety.whole_vehicle_safety_core import SafetyReason, SafetyState
+from sanitation_safety.whole_vehicle_safety_core import (
+    SAFETY_FIXED_SAFE_CONTROLLER_POSITIONS,
+    SAFETY_HELD_CONTROLLER_JOINTS,
+    SafetyReason,
+    SafetyState,
+)
 
 
 class Harness(Node):
@@ -264,6 +269,70 @@ def test_periodic_status_is_volatile_while_actuator_permit_is_latched():
         )
     finally:
         manager.destroy_node()
+        rclpy.shutdown()
+
+
+def test_unsafe_edge_starts_position_cancels_before_periodic_reconciliation():
+    rclpy.init()
+    harness = Harness()
+    harness.input_timer.cancel()
+    manager = _new_stopped_manager()
+    executor = MultiThreadedExecutor(num_threads=2)
+    executor.add_node(harness)
+    executor.add_node(manager)
+    thread = threading.Thread(target=executor.spin, daemon=True)
+    thread.start()
+    try:
+        _wait_until(
+            lambda: all(
+                client.service_is_ready()
+                for client in manager._trajectory_cancel_clients.values()
+            )
+        )
+        trigger_positions = {
+            joint: float(index) / 100.0
+            for index, joint in enumerate(
+                joint
+                for controller, joints in SAFETY_HELD_CONTROLLER_JOINTS.items()
+                for joint in joints
+                if joint
+                not in SAFETY_FIXED_SAFE_CONTROLLER_POSITIONS.get(controller, {})
+            )
+        }
+        with manager._state_lock:
+            manager._joint_positions = dict(trigger_positions)
+            manager._unsafe_input_state["manual_estop"] = False
+        with manager._controller_lock:
+            manager._inhibit_cancel_started = False
+            manager._inhibit_cancel_barrier_complete = False
+            manager._cancel_futures = {}
+
+        started_at = time.monotonic()
+        manager._on_manual_estop(Bool(data=True))
+        assert time.monotonic() - started_at <= 0.05
+        assert manager._last_evaluation_monotonic == float("-inf")
+        assert manager._inhibit_cancel_started is True
+        assert set(manager._cancel_futures) == set(
+            manager._trajectory_cancel_clients
+        )
+        assert manager._hold_positions == trigger_positions
+        assert manager._hold_inhibited is True
+        cancel_futures = dict(manager._cancel_futures)
+        assert (
+            manager._publish_position_holds(
+                inhibited=False, joint_positions=trigger_positions
+            )
+            is False
+        )
+        assert manager._cancel_futures == cancel_futures
+        assert manager._hold_positions == trigger_positions
+        _wait_until(lambda: harness.cancel_request_count == 4)
+    finally:
+        executor.shutdown()
+        thread.join(timeout=2.0)
+        assert not thread.is_alive()
+        manager.destroy_node()
+        harness.destroy_node()
         rclpy.shutdown()
 
 

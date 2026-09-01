@@ -930,7 +930,9 @@ def _joint_hold_evidence(
             raise RuntimeError(
                 f"inhibited joint moved away from trigger position: joint={joint}, "
                 f"max_abs_from_reference={max_abs_from_reference}, "
-                f"threshold={threshold}"
+                f"threshold={threshold}, trigger_reference={reference}, "
+                f"first={values[0]}, last={values[-1]}, range={drift}, "
+                f"sample_count={len(values)}"
             )
         evidence[joint] = {
             "trigger_reference": reference,

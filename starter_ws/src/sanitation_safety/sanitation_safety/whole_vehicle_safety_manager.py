@@ -421,8 +421,9 @@ class WholeVehicleSafetyManager(Node):
             unsafe_edge = self._is_new_unsafe_edge(
                 "manual_estop", bool(message.data), SafetyReason.MANUAL_ESTOP
             )
+            trigger_joint_positions = dict(self._joint_positions)
         if unsafe_edge:
-            self._publish_immediate_stop()
+            self._stop_on_unsafe_edge(trigger_joint_positions)
 
     def _on_front_bumper(self, message: Contacts) -> None:
         with self._state_lock:
@@ -432,8 +433,9 @@ class WholeVehicleSafetyManager(Node):
             unsafe_edge = self._is_new_unsafe_edge(
                 "front_bumper", contact, SafetyReason.FRONT_BUMPER_CONTACT
             )
+            trigger_joint_positions = dict(self._joint_positions)
         if unsafe_edge:
-            self._publish_immediate_stop()
+            self._stop_on_unsafe_edge(trigger_joint_positions)
 
     def _on_rear_bumper(self, message: Contacts) -> None:
         with self._state_lock:
@@ -443,8 +445,9 @@ class WholeVehicleSafetyManager(Node):
             unsafe_edge = self._is_new_unsafe_edge(
                 "rear_bumper", contact, SafetyReason.REAR_BUMPER_CONTACT
             )
+            trigger_joint_positions = dict(self._joint_positions)
         if unsafe_edge:
-            self._publish_immediate_stop()
+            self._stop_on_unsafe_edge(trigger_joint_positions)
 
     def _on_safety_relay(self, message: Bool) -> None:
         with self._state_lock:
@@ -455,8 +458,9 @@ class WholeVehicleSafetyManager(Node):
                 not bool(message.data),
                 SafetyReason.SAFETY_RELAY_DISABLED,
             )
+            trigger_joint_positions = dict(self._joint_positions)
         if unsafe_edge:
-            self._publish_immediate_stop()
+            self._stop_on_unsafe_edge(trigger_joint_positions)
 
     def _on_bms_fault(self, message: Bool) -> None:
         with self._state_lock:
@@ -465,8 +469,9 @@ class WholeVehicleSafetyManager(Node):
             unsafe_edge = self._is_new_unsafe_edge(
                 "bms_fault", bool(message.data), SafetyReason.BMS_FAULT_ACTIVE
             )
+            trigger_joint_positions = dict(self._joint_positions)
         if unsafe_edge:
-            self._publish_immediate_stop()
+            self._stop_on_unsafe_edge(trigger_joint_positions)
 
     def _on_cleaning_motor_fault(self, message: Bool) -> None:
         with self._state_lock:
@@ -477,8 +482,9 @@ class WholeVehicleSafetyManager(Node):
                 bool(message.data),
                 SafetyReason.CLEANING_MOTOR_FAULT_ACTIVE,
             )
+            trigger_joint_positions = dict(self._joint_positions)
         if unsafe_edge:
-            self._publish_immediate_stop()
+            self._stop_on_unsafe_edge(trigger_joint_positions)
 
     def _on_traction_permitted(self, message: Bool) -> None:
         with self._state_lock:
@@ -489,8 +495,9 @@ class WholeVehicleSafetyManager(Node):
                 not bool(message.data),
                 SafetyReason.TRACTION_NOT_PERMITTED,
             )
+            trigger_joint_positions = dict(self._joint_positions)
         if unsafe_edge:
-            self._publish_immediate_stop()
+            self._stop_on_unsafe_edge(trigger_joint_positions)
 
     def _on_heartbeat(self, _message: Empty) -> None:
         with self._state_lock:
@@ -515,10 +522,50 @@ class WholeVehicleSafetyManager(Node):
             self._latched_unsafe_reasons.add(reason)
         return new_edge
 
-    def _publish_immediate_stop(self) -> None:
+    def _stop_on_unsafe_edge(
+        self, trigger_joint_positions: dict[str, float]
+    ) -> None:
+        """Start trajectory cancellation before any congested output can delay it."""
+
+        # Do not wait for the periodic 20 Hz reconciliation loop.  In a loaded
+        # graph its output lock can be occupied by reliable status delivery;
+        # initiating the non-blocking cancel requests first bounds continued
+        # position motion at the actual dangerous input edge.
+        with self._controller_lock:
+            self._cancel_trajectory_goals()
+        self._publish_immediate_stop(trigger_joint_positions)
+
+    def _publish_immediate_stop(
+        self, trigger_joint_positions: dict[str, float] | None = None
+    ) -> None:
         """Zero motion immediately on a dangerous edge without heavy work."""
 
         with self._output_lock:
+            if trigger_joint_positions is not None:
+                # The output lock serializes this capture after any already
+                # running permitted publish cycle.  Preserve the dangerous
+                # edge position instead of a later post-cancel position so the
+                # hold command cannot ratchet a moving mechanism onward.
+                self._hold_positions = {
+                    joint: trigger_joint_positions[joint]
+                    for controller, joints in SAFETY_HELD_CONTROLLER_JOINTS.items()
+                    for joint in joints
+                    if joint
+                    not in SAFETY_FIXED_SAFE_CONTROLLER_POSITIONS.get(
+                        controller, {}
+                    )
+                    and joint in trigger_joint_positions
+                }
+                required = {
+                    joint
+                    for controller, joints in SAFETY_HELD_CONTROLLER_JOINTS.items()
+                    for joint in joints
+                    if joint
+                    not in SAFETY_FIXED_SAFE_CONTROLLER_POSITIONS.get(
+                        controller, {}
+                    )
+                }
+                self._hold_inhibited = required <= set(self._hold_positions)
             with self._state_lock:
                 self._immediate_stop_count += 1
             # Revoke the global permit before emitting individual zero
@@ -871,17 +918,29 @@ class WholeVehicleSafetyManager(Node):
         self, *, inhibited: bool, joint_positions: dict[str, float]
     ) -> bool:
         if not inhibited:
-            self._inhibit_cancel_started = False
-            self._inhibit_cancel_barrier_complete = False
-            self._cancel_futures = {}
+            with self._state_lock:
+                unsafe_edge_pending = (
+                    self._consumed_unsafe_generation < self._unsafe_generation
+                )
+            if unsafe_edge_pending:
+                # This permitted decision was evaluated immediately before an
+                # input callback recorded a dangerous edge.  That callback may
+                # already have sent cancel requests; do not erase their futures
+                # from this stale in-flight publish cycle.
+                return False
+            with self._controller_lock:
+                self._inhibit_cancel_started = False
+                self._inhibit_cancel_barrier_complete = False
+                self._cancel_futures = {}
             self._hold_inhibited = False
             self._hold_positions = {}
             return False
         if not self._inhibit_cancel_barrier_complete:
-            self._inhibit_cancel_barrier_complete = (
-                self._inhibit_cancel_started
-                and self._all_trajectory_cancels_succeeded()
-            )
+            with self._controller_lock:
+                self._inhibit_cancel_barrier_complete = (
+                    self._inhibit_cancel_started
+                    and self._all_trajectory_cancels_succeeded()
+                )
             if not self._inhibit_cancel_barrier_complete:
                 return False
         missing = [
@@ -896,7 +955,7 @@ class WholeVehicleSafetyManager(Node):
             return False
         if not self._hold_inhibited:
             self._hold_positions = {
-                joint: joint_positions[joint]
+                joint: self._hold_positions.get(joint, joint_positions[joint])
                 for controller, joints in SAFETY_HELD_CONTROLLER_JOINTS.items()
                 for joint in joints
                 if joint
