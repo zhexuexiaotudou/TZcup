@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from formal_vehicle_sensor_runtime_contract import (  # noqa: E402
     A300_WHEEL_JOINTS,
     FORMAL_SENSOR_GROUPS,
+    SOURCE_FREQUENCY_SAMPLE_TARGETS,
     STREAM_CONTRACTS,
     observed_frequency_hz,
     validate_runtime_contract,
@@ -165,6 +166,17 @@ def test_collector_bounds_and_retires_high_bandwidth_subscriptions():
     assert "self.destroy_subscription(subscription)" in source
     assert "self.controllers.remove_pending_request(future)" in source
     assert "rclpy.try_shutdown()" in source
+    assert "SOURCE_FREQUENCY_SAMPLE_TARGETS.get(topic, 3)" in source
+
+
+def test_imu_cadence_uses_a_stable_bounded_source_timestamp_window():
+    assert SOURCE_FREQUENCY_SAMPLE_TARGETS == {"/sensors/imu/data": 50}
+    source = (ROOT / "scripts/collect_formal_vehicle_sensor_runtime.py").read_text(
+        encoding="utf-8"
+    )
+    assert "len(unique_source_stamps) >= required_source_stamps" in source
+    assert '"observed_source_timestamp_sample_counts"' in source
+    assert '"source_frequency_sample_targets"' in source
 
 
 def test_high_bandwidth_and_visual_bridges_are_bounded_and_isolated_from_controls():

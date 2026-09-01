@@ -27,6 +27,7 @@ from sensor_msgs.msg import CameraInfo, Image, Imu, JointState, LaserScan, NavSa
 from std_msgs.msg import Int64MultiArray, String
 
 from formal_vehicle_sensor_runtime_contract import (
+    SOURCE_FREQUENCY_SAMPLE_TARGETS,
     STREAM_CONTRACTS,
     observed_frequency_hz,
     validate_runtime_contract,
@@ -218,9 +219,16 @@ class Probe(Node):
         if self.samples[topic] < 3 or topic not in self.metadata:
             return False
         contract = STREAM_CONTRACTS[topic]
-        return "nominal_hz" not in contract or observed_frequency_hz(
-            self.source_stamps_ns[topic]
-        ) is not None
+        if "nominal_hz" not in contract:
+            return True
+        required_source_stamps = SOURCE_FREQUENCY_SAMPLE_TARGETS.get(topic, 3)
+        unique_source_stamps = {
+            stamp for stamp in self.source_stamps_ns[topic] if stamp > 0
+        }
+        return (
+            len(unique_source_stamps) >= required_source_stamps
+            and observed_frequency_hz(self.source_stamps_ns[topic]) is not None
+        )
 
     def retire_ready_subscriptions(self) -> tuple[str, ...]:
         retired: list[str] = []
@@ -490,6 +498,15 @@ def collect(
         },
         "sample_counts": node.samples,
         "observed_source_timestamp_hz": observed_hz,
+        "observed_source_timestamp_sample_counts": {
+            topic: len(set(stamps))
+            for topic, stamps in node.source_stamps_ns.items()
+        },
+        "source_frequency_sample_targets": {
+            topic: SOURCE_FREQUENCY_SAMPLE_TARGETS.get(topic, 3)
+            for topic, contract in STREAM_CONTRACTS.items()
+            if "nominal_hz" in contract
+        },
         "observed_interfaces": node.metadata,
         "runtime_sensor_contract": runtime_contract,
         "controller_states": states,

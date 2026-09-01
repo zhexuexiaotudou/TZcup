@@ -115,6 +115,15 @@ STREAM_CONTRACTS: dict[str, dict[str, Any]] = {
     "/odom/unfiltered": {"frame_id": "odom"},
 }
 
+# A three-stamp window is intentionally sufficient for the multi-megabyte
+# image and point-cloud streams so their subscriptions can be retired quickly.
+# The 200 Hz IMU is small, and a longer window avoids judging its source cadence
+# from the executor's transient subscription/startup scheduling.  Fifty stamps
+# span 245 ms of source time at the configured rate while remaining bounded.
+SOURCE_FREQUENCY_SAMPLE_TARGETS: dict[str, int] = {
+    "/sensors/imu/data": 50,
+}
+
 
 def observed_frequency_hz(stamps_ns: list[int] | tuple[int, ...]) -> float | None:
     """Calculate frequency from strictly increasing source timestamps."""
