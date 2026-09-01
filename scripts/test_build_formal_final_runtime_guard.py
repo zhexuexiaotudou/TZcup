@@ -143,6 +143,19 @@ def test_final_builder_freezes_regular_sources_and_rejects_install_links() -> No
     assert "formal final install contains symbolic links" in source
 
 
+def test_final_builder_snapshots_the_installed_proot_compatibility_layer() -> None:
+    source = _source()
+    assert 'proot_compat_source="${repo_root}/scripts/proot_glibc_compat.c"' in source
+    assert 'proot_compat_install="${runtime_ws}/install/lib/libtzcup_proot_glibc_compat.so"' in source
+    assert 'cc -shared -fPIC -O2 -Wall -Wextra' in source
+    assert 'chmod 0555 -- "${proot_compat_pending}"' in source
+    assert 'mv -- "${proot_compat_pending}" "${proot_compat_install}"' in source
+    install_position = source.index('mv -- "${proot_compat_pending}" "${proot_compat_install}"')
+    link_inventory_position = source.index('# Record the exact install-tree link inventory.')
+    build_snapshot_position = source.index('  record-build \\\n')
+    assert install_position < link_inventory_position < build_snapshot_position
+
+
 def test_final_builder_fails_if_colcon_reintroduces_ortools_protobuf() -> None:
     source = _source()
     assert 'expected = {' in source

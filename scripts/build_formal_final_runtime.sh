@@ -46,6 +46,8 @@ frozen_source_root="${runtime_ws}/src"
 install_symlinks_report="${runtime_ws}/INSTALL_SYMLINKS.txt"
 side_brush_surface_preflight="${runtime_ws}/side_brush_sdf_surface_preflight.json"
 integrated_build_manifest="${runtime_ws}/integrated_build_manifest.json"
+proot_compat_source="${repo_root}/scripts/proot_glibc_compat.c"
+proot_compat_install="${runtime_ws}/install/lib/libtzcup_proot_glibc_compat.so"
 windows_preflight_prefix="${runtime_ws}/formal_final_build_windows_memory_preflight"
 windows_cold_gate_bound_json="${runtime_ws}/formal_windows_cold_start_evidence.json"
 linux_preflight_json="${runtime_ws}/formal_final_build_linux_memory_preflight.json"
@@ -269,6 +271,28 @@ if (( build_status != 0 )); then
   echo "formal final runtime build failed: rc=${build_status}" >&2
   exit "${build_status}"
 fi
+
+# The PRoot/glibc compatibility layer is part of the immutable runtime, not a
+# post-build host injection.  Install it before the install-tree inventory and
+# integrated build snapshot so every later closure check sees identical bytes.
+[[ -f "${proot_compat_source}" && ! -L "${proot_compat_source}" ]] || {
+  echo "formal PRoot/glibc compatibility source is missing or not regular" >&2
+  exit 125
+}
+[[ ! -e "${proot_compat_install}" && ! -L "${proot_compat_install}" ]] || {
+  echo "refusing stale formal PRoot/glibc compatibility library" >&2
+  exit 125
+}
+mkdir -p -- "$(dirname -- "${proot_compat_install}")"
+proot_compat_pending="${proot_compat_install}.pending.$$"
+cc -shared -fPIC -O2 -Wall -Wextra \
+  -o "${proot_compat_pending}" "${proot_compat_source}"
+chmod 0555 -- "${proot_compat_pending}"
+mv -- "${proot_compat_pending}" "${proot_compat_install}"
+[[ -f "${proot_compat_install}" && ! -L "${proot_compat_install}" ]] || {
+  echo "formal PRoot/glibc compatibility library was not installed regularly" >&2
+  exit 125
+}
 
 # Every downstream CMake package is configured again by colcon.  Prove that
 # none of those configure steps reintroduced the OR-Tools Protobuf config or
