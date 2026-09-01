@@ -221,6 +221,33 @@ def test_runtime_activation_binds_consumers_to_prefix_library(
     )
 
 
+def test_dynamic_dependencies_uses_loader_only_for_proven_native_proot_bug(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    library = tmp_path / "libexample.so"
+    loader = tmp_path / "ld-linux-x86-64.so.2"
+    library.write_bytes(b"elf")
+    loader.write_bytes(b"loader")
+    calls: list[tuple[str, ...]] = []
+
+    def fake_run(*args: str, cwd=None) -> str:
+        del cwd
+        calls.append(args)
+        if args[0] == "ldd":
+            raise MODULE.ValidationError(
+                "command failed (1): ldd: you do not have read permission"
+            )
+        return "libexample.so => /tmp/libexample.so (0x1234)"
+
+    monkeypatch.setattr(MODULE, "run", fake_run)
+    monkeypatch.setattr(MODULE, "NATIVE_DYNAMIC_LOADER", loader)
+    monkeypatch.setattr(
+        MODULE, "_native_linux_loader_fallback_allowed", lambda path: path == library
+    )
+    assert "libexample.so" in MODULE.dynamic_dependencies(library)
+    assert calls == [("ldd", str(library)), (str(loader), "--list", str(library))]
+
+
 def test_runtime_activation_rejects_system_resolution(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:

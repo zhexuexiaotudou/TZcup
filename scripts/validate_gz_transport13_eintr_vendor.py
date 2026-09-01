@@ -40,6 +40,7 @@ PROTOBUF_RESOLVED_KEYS = {
     "Protobuf_PROTOC_LIBRARY_RELEASE",
     "Protobuf_PROTOC_EXECUTABLE",
 }
+NATIVE_DYNAMIC_LOADER = Path("/lib64/ld-linux-x86-64.so.2")
 
 
 class ValidationError(RuntimeError):
@@ -68,6 +69,37 @@ def run(*args: str, cwd: Path | None = None) -> str:
             f"{result.stderr.strip()[:400]}"
         )
     return result.stdout.strip()
+
+
+def _native_linux_loader_fallback_allowed(path: Path) -> bool:
+    if os.environ.get("FORMAL_NATIVE_LINUX_RUNTIME") != "1" or os.name != "posix":
+        return False
+    try:
+        kernel = Path("/proc/sys/kernel/osrelease").read_text(encoding="utf-8")
+    except (OSError, UnicodeError):
+        return False
+    return (
+        "microsoft" not in kernel.lower()
+        and path.is_file()
+        and not path.is_symlink()
+        and os.access(path, os.R_OK)
+        and NATIVE_DYNAMIC_LOADER.is_file()
+        and not NATIVE_DYNAMIC_LOADER.is_symlink()
+    )
+
+
+def dynamic_dependencies(path: Path) -> str:
+    """Resolve ELF dependencies despite Proot's broken shell faccessat2 probe."""
+
+    try:
+        return run("ldd", str(path))
+    except ValidationError as exc:
+        if (
+            "you do not have read permission" not in str(exc)
+            or not _native_linux_loader_fallback_allowed(path)
+        ):
+            raise
+    return run(str(NATIVE_DYNAMIC_LOADER), "--list", str(path))
 
 
 def load_manifest() -> dict[str, Any]:
@@ -432,7 +464,7 @@ def validate_install(install_prefix: Path) -> dict[str, Any]:
         raise ValidationError("patched library SONAME is not ABI-compatible")
     protobuf_linkage = validate_protobuf_dynamic_linkage(
         dynamic,
-        run("ldd", str(versioned)),
+        dynamic_dependencies(versioned),
         run("nm", "-C", "--defined-only", str(versioned)),
     )
     system_library = Path(
@@ -510,7 +542,7 @@ def validate_runtime_activation(
             raise ValidationError(
                 f"runtime consumer escapes the merged install prefix: {plugin}"
             ) from exc
-        output = run("ldd", str(plugin))
+        output = dynamic_dependencies(plugin)
         matches = re.findall(
             r"^\s*libgz-transport13\.so\.13\s+=>\s+(\S+)\s+\(",
             output,
