@@ -40,8 +40,8 @@ CONTACT_TOPICS = (
     "/cleaning/squeegee/contact",
     "/cleaning/suction_nozzle/contact",
     "/storage/dry_deposit/contact",
-    "/safety/front_bumper/contact",
-    "/safety/rear_bumper/contact",
+    "/formal_vehicle/simulation/raw/front_bumper/contact",
+    "/formal_vehicle/simulation/raw/rear_bumper/contact",
 )
 SQUEEGEE_TOPIC_ROOT = "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance"
 SQUEEGEE_SIGNALS = {

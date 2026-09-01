@@ -42,6 +42,14 @@ def test_function_position_runner_is_frozen_self_contained_and_isolated() -> Non
     assert '"${missing_topics[*]}"' in source
 
 
+def test_function_position_validator_uses_the_remapped_raw_bumper_topics() -> None:
+    source = _runner("validate_formal_function_positions_runtime.py")
+    assert '"/formal_vehicle/simulation/raw/front_bumper/contact"' in source
+    assert '"/formal_vehicle/simulation/raw/rear_bumper/contact"' in source
+    assert '"/safety/front_bumper/contact"' not in source
+    assert '"/safety/rear_bumper/contact"' not in source
+
+
 def test_runtime_validators_emit_bound_snapshot_session_and_closure_identity() -> None:
     for name in (
         "validate_formal_manipulator_runtime.py",
