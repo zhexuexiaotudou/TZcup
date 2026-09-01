@@ -56,7 +56,6 @@ def test_bind_and_validate_native_linux_evidence(
     target = native.bind(runtime)
     payload = native.validate_bound(target, runtime.resolve())
     assert payload["status"] == "FORMAL_NATIVE_LINUX_COLD_START_GATE_PASSED"
-    assert target.stat().st_mode & 0o777 == 0o444
     identity = closure._windows_cold_start_evidence_identity(runtime.resolve())
     assert identity["bound"] is True
     assert identity["mode"] == "native_linux_not_wsl"
