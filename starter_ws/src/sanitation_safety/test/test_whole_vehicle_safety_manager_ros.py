@@ -327,6 +327,21 @@ def test_unsafe_edge_starts_position_cancels_before_periodic_reconciliation():
         assert manager._cancel_futures == cancel_futures
         assert manager._hold_positions == trigger_positions
         _wait_until(lambda: harness.cancel_request_count == 4)
+        _wait_until(
+            lambda: all(
+                harness.hold_outputs[controller]
+                for controller in (
+                    "cleaning_controller",
+                    "arm_controller",
+                    "gripper_controller",
+                    "storage_controller",
+                )
+            )
+        )
+        assert harness.hold_outputs["cleaning_controller"][-1] == (
+            ("cleaning_lift_joint",),
+            (trigger_positions["cleaning_lift_joint"],),
+        )
     finally:
         executor.shutdown()
         thread.join(timeout=2.0)

@@ -222,18 +222,20 @@ class WholeVehicleSafetyManager(Node):
             self._string_parameter("list_controllers_service"),
             callback_group=self._timer_callback_group,
         )
+        trajectory_actions = {
+            self._string_parameter("cleaning_trajectory_action"): "cleaning_controller",
+            self._string_parameter("arm_trajectory_action"): "arm_controller",
+            self._string_parameter("gripper_trajectory_action"): "gripper_controller",
+            self._string_parameter("storage_trajectory_action"): "storage_controller",
+        }
+        self._trajectory_hold_controller_by_action = dict(trajectory_actions)
         self._trajectory_cancel_clients = {
             action_name: self.create_client(
                 CancelGoal,
                 action_name + "/_action/cancel_goal",
                 callback_group=self._timer_callback_group,
             )
-            for action_name in (
-                self._string_parameter("cleaning_trajectory_action"),
-                self._string_parameter("arm_trajectory_action"),
-                self._string_parameter("gripper_trajectory_action"),
-                self._string_parameter("storage_trajectory_action"),
-            )
+            for action_name in trajectory_actions
         }
         self.create_subscription(
             Contacts,
@@ -532,8 +534,53 @@ class WholeVehicleSafetyManager(Node):
         # initiating the non-blocking cancel requests first bounds continued
         # position motion at the actual dangerous input edge.
         with self._controller_lock:
-            self._cancel_trajectory_goals()
+            new_cancel_futures = self._cancel_trajectory_goals()
+        for action_name, future in new_cancel_futures.items():
+            controller = self._trajectory_hold_controller_by_action[action_name]
+            future.add_done_callback(
+                lambda completed,
+                controller=controller,
+                positions=dict(trigger_joint_positions): (
+                    self._publish_edge_controller_hold(
+                        completed,
+                        controller=controller,
+                        trigger_joint_positions=positions,
+                    )
+                )
+            )
         self._publish_immediate_stop(trigger_joint_positions)
+
+    def _publish_edge_controller_hold(
+        self,
+        future,
+        *,
+        controller: str,
+        trigger_joint_positions: dict[str, float],
+    ) -> None:
+        """Hold one controller as soon as its own cancellation is acknowledged."""
+
+        try:
+            if future.result().return_code != CancelGoal.Response.ERROR_NONE:
+                return
+        except BaseException:
+            return
+        joints = SAFETY_HELD_CONTROLLER_JOINTS[controller]
+        fixed_positions = SAFETY_FIXED_SAFE_CONTROLLER_POSITIONS.get(controller, {})
+        if any(
+            joint not in fixed_positions and joint not in trigger_joint_positions
+            for joint in joints
+        ):
+            return
+        self._publish_controller_hold(
+            controller,
+            joints,
+            {
+                joint: fixed_positions.get(
+                    joint, trigger_joint_positions.get(joint, 0.0)
+                )
+                for joint in joints
+            },
+        )
 
     def _publish_immediate_stop(
         self, trigger_joint_positions: dict[str, float] | None = None
@@ -882,9 +929,10 @@ class WholeVehicleSafetyManager(Node):
             )
         )
 
-    def _cancel_trajectory_goals(self) -> None:
+    def _cancel_trajectory_goals(self) -> dict[str, object]:
         request = CancelGoal.Request()
         self._inhibit_cancel_started = True
+        created = {}
         for action_name, client in self._trajectory_cancel_clients.items():
             previous = self._cancel_futures.get(action_name)
             if previous is not None:
@@ -899,7 +947,10 @@ class WholeVehicleSafetyManager(Node):
                 except BaseException:
                     pass
             if client.service_is_ready():
-                self._cancel_futures[action_name] = client.call_async(request)
+                future = client.call_async(request)
+                self._cancel_futures[action_name] = future
+                created[action_name] = future
+        return created
 
     def _all_trajectory_cancels_succeeded(self) -> bool:
         if len(self._cancel_futures) != len(self._trajectory_cancel_clients):
@@ -966,17 +1017,31 @@ class WholeVehicleSafetyManager(Node):
             fixed_positions = SAFETY_FIXED_SAFE_CONTROLLER_POSITIONS.get(
                 controller, {}
             )
-            point = JointTrajectoryPoint()
-            point.positions = [
-                fixed_positions.get(joint, self._hold_positions.get(joint, 0.0))
-                for joint in joints
-            ]
-            point.time_from_start = Duration(nanosec=100_000_000)
-            command = JointTrajectory()
-            command.joint_names = list(joints)
-            command.points = [point]
-            self._hold_publishers[controller].publish(command)
+            self._publish_controller_hold(
+                controller,
+                joints,
+                {
+                    joint: fixed_positions.get(
+                        joint, self._hold_positions.get(joint, 0.0)
+                    )
+                    for joint in joints
+                },
+            )
         return True
+
+    def _publish_controller_hold(
+        self,
+        controller: str,
+        joints: tuple[str, ...],
+        positions: dict[str, float],
+    ) -> None:
+        point = JointTrajectoryPoint()
+        point.positions = [positions[joint] for joint in joints]
+        point.time_from_start = Duration(nanosec=100_000_000)
+        command = JointTrajectory()
+        command.joint_names = list(joints)
+        command.points = [point]
+        self._hold_publishers[controller].publish(command)
 
     def _on_switch_complete(self, future, requested_permit: bool) -> None:
         with self._controller_lock:
