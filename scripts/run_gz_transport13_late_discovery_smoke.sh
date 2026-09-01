@@ -62,7 +62,7 @@ for library in \
   }
 done
 
-for command in cmake sha256sum awk sed grep python3 readlink ldd; do
+for command in cmake sha256sum awk sed grep python3 readlink; do
   command -v "${command}" >/dev/null 2>&1 || {
     echo "required command is unavailable: ${command}" >&2
     exit 2
@@ -160,7 +160,9 @@ binary="${build_dir}/gz_transport13_late_discovery_smoke"
   exit 125
 }
 binary_sha="$(sha256sum "${binary}" | awk '{print $1}')"
-env LD_LIBRARY_PATH="${runtime_library_path}" ldd "${binary}" >"${output_dir}/smoke-binary.ldd.txt"
+env LD_LIBRARY_PATH="${runtime_library_path}" \
+  "${repo_root}/scripts/formal_dynamic_dependencies.sh" "${binary}" \
+  >"${output_dir}/smoke-binary.ldd.txt"
 if grep -Eq '=>[[:space:]]+not found' "${output_dir}/smoke-binary.ldd.txt"; then
   echo "ldd reports an unresolved runtime dependency" >&2
   exit 125

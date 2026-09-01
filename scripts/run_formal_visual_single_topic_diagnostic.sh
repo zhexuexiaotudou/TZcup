@@ -143,7 +143,8 @@ if (( discovery_ready != 1 )); then
 fi
 bridge_executable="$(ros2 pkg prefix ros_gz_image)/lib/ros_gz_image/image_bridge"
 readlink -f "${bridge_executable}" >"${output_root}/image_bridge_executable.txt"
-ldd "${bridge_executable}" >"${output_root}/image_bridge_ldd.txt" 2>&1
+"${repo_root}/scripts/formal_dynamic_dependencies.sh" "${bridge_executable}" \
+  >"${output_root}/image_bridge_ldd.txt" 2>&1
 set +e
 timeout 45 gz topic -e -t "${topic}" -n 1 \
   2>"${output_root}/gz_sample.stderr" \

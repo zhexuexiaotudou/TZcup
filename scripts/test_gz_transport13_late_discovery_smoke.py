@@ -52,7 +52,7 @@ def test_runner_has_closed_runtime_loader_contract_for_audited_vendor_libraries(
     assert "gz_msgs_vendor" in runtime_block
     assert "gz_math_vendor" in runtime_block
     assert "gz_cmake_vendor" not in runtime_block
-    assert 'env LD_LIBRARY_PATH="${runtime_library_path}" ldd' in source
+    assert 'formal_dynamic_dependencies.sh" "${binary}"' in source
     assert "not found" in source
     assert 'assert_ldd_library "libgz-utils2.so.2" "/opt/ros/jazzy/opt/gz_utils_vendor/lib"' in source
     assert 'assert_ldd_library "libgz-msgs10.so.10" "/opt/ros/jazzy/opt/gz_msgs_vendor/lib"' in source
