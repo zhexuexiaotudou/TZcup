@@ -50,14 +50,18 @@ formal_runtime_install_traps cleanup
 launch_pid=$!
 
 ready="false"
-for _ in $(seq 1 45); do
-  if ros2 node list 2>/dev/null | grep -qx '/whole_vehicle_safety_manager' \
-    && ros2 service type /controller_manager/list_controllers 2>/dev/null \
-      | grep -Fxq controller_manager_msgs/srv/ListControllers \
-    && timeout 2s ros2 topic echo /safety/actuators_enabled std_msgs/msg/Bool \
-      --once >/dev/null 2>&1 \
-    && timeout 2s ros2 topic echo /joint_states sensor_msgs/msg/JointState \
-      --once >/dev/null 2>&1; then
+for _ in $(seq 1 90); do
+  # Every formal step intentionally reuses one bounded ROS domain.  Bypass the
+  # long-lived ROS CLI daemon here so discovery cannot be satisfied or delayed
+  # by graph cache entries from the previous, already-terminated Gazebo step.
+  if timeout 4s ros2 node list --no-daemon --spin-time 1.0 2>/dev/null \
+      | grep -qx '/whole_vehicle_safety_manager' \
+    && timeout 4s ros2 service list -t --no-daemon --spin-time 1.0 2>/dev/null \
+      | grep -Fxq '/controller_manager/list_controllers [controller_manager_msgs/srv/ListControllers]' \
+    && timeout 4s ros2 topic echo /safety/actuators_enabled std_msgs/msg/Bool \
+      --once --no-daemon --spin-time 1.0 --timeout 2 >/dev/null 2>&1 \
+    && timeout 4s ros2 topic echo /joint_states sensor_msgs/msg/JointState \
+      --once --no-daemon --spin-time 1.0 --timeout 2 >/dev/null 2>&1; then
     ready="true"
     break
   fi
@@ -68,7 +72,7 @@ for _ in $(seq 1 45); do
   sleep 1
 done
 if [[ "${ready}" != "true" ]]; then
-  echo "Timed out waiting for /whole_vehicle_safety_manager" >&2
+  echo "Timed out waiting for the current no-daemon whole-vehicle safety graph" >&2
   exit 1
 fi
 

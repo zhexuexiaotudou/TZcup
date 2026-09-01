@@ -414,6 +414,10 @@ def test_runtime_runner_uses_the_fail_closed_formal_launch_path():
     assert "FORMAL_ACCEPTANCE_SESSION" in source
     assert "ros2 topic echo /safety/actuators_enabled" in source
     assert "ros2 topic echo /joint_states" in source
+    assert "ros2 node list --no-daemon --spin-time 1.0" in source
+    assert "ros2 service list -t --no-daemon --spin-time 1.0" in source
+    assert source.count("--once --no-daemon --spin-time 1.0 --timeout 2") == 2
+    assert "ros2 service type /controller_manager/list_controllers" not in source
     assert "enable_safety_manager:=false" not in source
     assert "simulation_initial_estop_active:=false" in source
     assert '"${runtime_binding}" "${launch_log}"' in source
