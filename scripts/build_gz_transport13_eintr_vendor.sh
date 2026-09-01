@@ -191,6 +191,7 @@ done
 }
 
 upstream_repository="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["upstream_repository"])' "${manifest}")"
+upstream_tag="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["upstream_tag"])' "${manifest}")"
 upstream_commit="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["upstream_commit"])' "${manifest}")"
 upstream_tree="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["upstream_tree"])' "${manifest}")"
 upstream_node_sha="$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["upstream_node_shared_sha256"])' "${manifest}")"
@@ -204,8 +205,15 @@ actual_patch_sha="$(sha256sum "${patch_file}" | awk '{print $1}')"
 }
 
 if [[ -n "${source_bundle}" ]]; then
-  git clone --no-checkout "${source_bundle}" "${source_dir}"
+  git init "${source_dir}"
   git -C "${source_dir}" bundle verify "${source_bundle}"
+  bundle_ref="refs/tags/${upstream_tag}"
+  git -C "${source_dir}" fetch "${source_bundle}" "${bundle_ref}"
+  [[ "$(git -C "${source_dir}" rev-parse 'FETCH_HEAD^{commit}')" == "${upstream_commit}" ]] || {
+    echo "source bundle tag does not resolve to the pinned upstream commit" >&2
+    exit 3
+  }
+  git -C "${source_dir}" fsck --strict --full
 else
   git clone --filter=blob:none --no-checkout "${upstream_repository}" "${source_dir}"
   git -C "${source_dir}" fetch --depth 1 origin "${upstream_commit}"

@@ -306,8 +306,12 @@ def test_vendor_builder_supports_audited_offline_source_bundle() -> None:
     assert "FORMAL_GZ_TRANSPORT13_SOURCE_BUNDLE must be a regular non-symlink file" in source
     assert "FORMAL_GZ_TRANSPORT13_SOURCE_BUNDLE_SHA256 must be a lowercase SHA-256" in source
     assert "gz-transport source bundle SHA-256 mismatch" in source
-    assert 'git clone --no-checkout "${source_bundle}" "${source_dir}"' in source
+    assert 'git init "${source_dir}"' in source
     assert 'git -C "${source_dir}" bundle verify "${source_bundle}"' in source
+    assert 'bundle_ref="refs/tags/${upstream_tag}"' in source
+    assert 'git -C "${source_dir}" fetch "${source_bundle}" "${bundle_ref}"' in source
+    assert "source bundle tag does not resolve to the pinned upstream commit" in source
+    assert 'git -C "${source_dir}" fsck --strict --full' in source
     assert 'git -C "${source_dir}" checkout --detach "${upstream_commit}"' in source
     assert 'rev-parse HEAD)' in source
     assert "rev-parse 'HEAD^{tree}')" in source
