@@ -36,6 +36,10 @@ def test_function_position_runner_is_frozen_self_contained_and_isolated() -> Non
     assert '--check --output "${snapshot_manifest}"' in source
     assert "formal_runtime_gate_binding.py" in source
     assert '--runtime-binding "${runtime_binding}"' in source
+    assert source.count("ros2 topic list") == 1
+    assert 'topic_snapshot="$(ros2 topic list 2>/dev/null || true)"' in source
+    assert 'grep -Fxq -- "${required_topic}" <<<"${topic_snapshot}"' in source
+    assert '"${missing_topics[*]}"' in source
 
 
 def test_runtime_validators_emit_bound_snapshot_session_and_closure_identity() -> None:

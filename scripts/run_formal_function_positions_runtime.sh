@@ -75,13 +75,24 @@ formal_runtime_install_traps cleanup
   >"${launch_log}" 2>&1 &
 launch_pid=$!
 
+required_topics=(
+  /joint_states
+  /cleaning_controller/joint_trajectory
+  /service_controller/joint_trajectory
+  /cleaning/squeegee/contact
+  /model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_force_n
+)
 ready="false"
+missing_topics=("${required_topics[@]}")
 for _ in $(seq 1 160); do
-  if ros2 topic list 2>/dev/null | grep -Fxq /joint_states && \
-     ros2 topic list 2>/dev/null | grep -Fxq /cleaning_controller/joint_trajectory && \
-     ros2 topic list 2>/dev/null | grep -Fxq /service_controller/joint_trajectory && \
-     ros2 topic list 2>/dev/null | grep -Fxq /cleaning/squeegee/contact && \
-     ros2 topic list 2>/dev/null | grep -Fxq /model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_force_n; then
+  topic_snapshot="$(ros2 topic list 2>/dev/null || true)"
+  missing_topics=()
+  for required_topic in "${required_topics[@]}"; do
+    if ! grep -Fxq -- "${required_topic}" <<<"${topic_snapshot}"; then
+      missing_topics+=("${required_topic}")
+    fi
+  done
+  if ((${#missing_topics[@]} == 0)); then
     ready="true"
     break
   fi
@@ -92,7 +103,8 @@ for _ in $(seq 1 160); do
   sleep 0.25
 done
 if [[ "${ready}" != "true" ]]; then
-  echo "Timed out waiting for cleaning/storage/recovery controllers, squeegee contact and compliance telemetry" >&2
+  printf 'Timed out waiting for cleaning/storage/recovery readiness; missing topics: %s\n' \
+    "${missing_topics[*]}" >&2
   exit 3
 fi
 
