@@ -13,6 +13,8 @@ work_root="${FORMAL_GZ_TRANSPORT13_WORK_ROOT:-${HOME}/.cache/tzcup/gz_transport1
 install_prefix="${FORMAL_GZ_TRANSPORT13_INSTALL_PREFIX:-${HOME}/.local/tzcup/gz_transport13_eintr_13_5_0}"
 report_path=""
 parallel_workers="${FORMAL_GZ_TRANSPORT13_PARALLEL_WORKERS:-2}"
+source_bundle="${FORMAL_GZ_TRANSPORT13_SOURCE_BUNDLE:-}"
+source_bundle_sha256="${FORMAL_GZ_TRANSPORT13_SOURCE_BUNDLE_SHA256:-}"
 
 usage() {
   echo "usage: $0 [--work-root PATH] [--install-prefix PATH] [--report PATH] [--parallel-workers 1|2]" >&2
@@ -68,6 +70,27 @@ done
   echo "refusing root as a build or install path" >&2
   exit 2
 }
+if [[ -n "${source_bundle}" ]]; then
+  [[ "${source_bundle}" = /* ]] || {
+    echo "FORMAL_GZ_TRANSPORT13_SOURCE_BUNDLE must be an absolute path" >&2
+    exit 2
+  }
+  [[ -f "${source_bundle}" && ! -L "${source_bundle}" ]] || {
+    echo "FORMAL_GZ_TRANSPORT13_SOURCE_BUNDLE must be a regular non-symlink file" >&2
+    exit 2
+  }
+  [[ "${source_bundle_sha256}" =~ ^[0-9a-f]{64}$ ]] || {
+    echo "FORMAL_GZ_TRANSPORT13_SOURCE_BUNDLE_SHA256 must be a lowercase SHA-256" >&2
+    exit 2
+  }
+  [[ "$(sha256sum "${source_bundle}" | awk '{print $1}')" == "${source_bundle_sha256}" ]] || {
+    echo "gz-transport source bundle SHA-256 mismatch" >&2
+    exit 3
+  }
+elif [[ -n "${source_bundle_sha256}" ]]; then
+  echo "FORMAL_GZ_TRANSPORT13_SOURCE_BUNDLE_SHA256 requires a source bundle" >&2
+  exit 2
+fi
 
 source_dir="${work_root}/source"
 build_dir="${work_root}/build"
@@ -180,8 +203,13 @@ actual_patch_sha="$(sha256sum "${patch_file}" | awk '{print $1}')"
   exit 3
 }
 
-git clone --filter=blob:none --no-checkout "${upstream_repository}" "${source_dir}"
-git -C "${source_dir}" fetch --depth 1 origin "${upstream_commit}"
+if [[ -n "${source_bundle}" ]]; then
+  git clone --no-checkout "${source_bundle}" "${source_dir}"
+  git -C "${source_dir}" bundle verify "${source_bundle}"
+else
+  git clone --filter=blob:none --no-checkout "${upstream_repository}" "${source_dir}"
+  git -C "${source_dir}" fetch --depth 1 origin "${upstream_commit}"
+fi
 git -C "${source_dir}" checkout --detach "${upstream_commit}"
 [[ "$(git -C "${source_dir}" rev-parse HEAD)" == "${upstream_commit}" ]] || {
   echo "upstream commit mismatch" >&2

@@ -291,3 +291,23 @@ def test_vendor_builder_fails_closed_on_protobuf_identity_drift() -> None:
     assert "system Protobuf header version drifted" in source
     assert "config-mode Protobuf unexpectedly resolved" in source
     assert "CMAKE_IGNORE_PREFIX_PATH does not exclude" in source
+
+
+def test_vendor_builder_supports_audited_offline_source_bundle() -> None:
+    source = (ROOT / "scripts" / "build_gz_transport13_eintr_vendor.sh").read_text(
+        encoding="utf-8"
+    )
+    assert 'source_bundle="${FORMAL_GZ_TRANSPORT13_SOURCE_BUNDLE:-}"' in source
+    assert (
+        'source_bundle_sha256="${FORMAL_GZ_TRANSPORT13_SOURCE_BUNDLE_SHA256:-}"'
+        in source
+    )
+    assert "FORMAL_GZ_TRANSPORT13_SOURCE_BUNDLE must be an absolute path" in source
+    assert "FORMAL_GZ_TRANSPORT13_SOURCE_BUNDLE must be a regular non-symlink file" in source
+    assert "FORMAL_GZ_TRANSPORT13_SOURCE_BUNDLE_SHA256 must be a lowercase SHA-256" in source
+    assert "gz-transport source bundle SHA-256 mismatch" in source
+    assert 'git clone --no-checkout "${source_bundle}" "${source_dir}"' in source
+    assert 'git -C "${source_dir}" bundle verify "${source_bundle}"' in source
+    assert 'git -C "${source_dir}" checkout --detach "${upstream_commit}"' in source
+    assert 'rev-parse HEAD)' in source
+    assert "rev-parse 'HEAD^{tree}')" in source
