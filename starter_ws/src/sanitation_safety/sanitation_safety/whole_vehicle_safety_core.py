@@ -35,6 +35,11 @@ SAFETY_HELD_CONTROLLER_JOINTS = {
     "storage_controller": ("dry_deposit_gate_joint",),
     "service_controller": ("wastewater_drain_valve_joint",),
 }
+# These controllers generate their own measured-state stop trajectory when an
+# action is canceled.  Publishing a JointTrajectory hold at the same edge
+# would preempt that native stop and reintroduce the command/state lag that the
+# deceleration path is designed to remove.
+SAFETY_NATIVE_CANCEL_HOLD_CONTROLLERS = ("cleaning_controller",)
 SAFETY_FIXED_SAFE_CONTROLLER_POSITIONS = {
     "service_controller": {"wastewater_drain_valve_joint": 0.0},
 }

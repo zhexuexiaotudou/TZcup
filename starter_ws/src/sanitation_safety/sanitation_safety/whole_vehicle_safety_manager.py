@@ -26,6 +26,7 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from .whole_vehicle_safety_core import ACTUATOR_CHANNELS
 from .whole_vehicle_safety_core import SAFETY_FIXED_SAFE_CONTROLLER_POSITIONS
 from .whole_vehicle_safety_core import SAFETY_HELD_CONTROLLER_JOINTS
+from .whole_vehicle_safety_core import SAFETY_NATIVE_CANCEL_HOLD_CONTROLLERS
 from .whole_vehicle_safety_core import SAFETY_SWITCHED_CONTROLLERS
 from .whole_vehicle_safety_core import (
     SafeCommand,
@@ -578,6 +579,8 @@ class WholeVehicleSafetyManager(Node):
         """Preempt position motion at the dangerous input edge."""
 
         for controller, joints in SAFETY_HELD_CONTROLLER_JOINTS.items():
+            if controller in SAFETY_NATIVE_CANCEL_HOLD_CONTROLLERS:
+                continue
             fixed_positions = SAFETY_FIXED_SAFE_CONTROLLER_POSITIONS.get(
                 controller, {}
             )
@@ -606,6 +609,9 @@ class WholeVehicleSafetyManager(Node):
         trigger_joint_positions: dict[str, float],
     ) -> None:
         """Hold one controller as soon as its own cancellation is acknowledged."""
+
+        if controller in SAFETY_NATIVE_CANCEL_HOLD_CONTROLLERS:
+            return
 
         try:
             if future.result().return_code != CancelGoal.Response.ERROR_NONE:
@@ -1062,6 +1068,8 @@ class WholeVehicleSafetyManager(Node):
             }
             self._hold_inhibited = True
         for controller, joints in SAFETY_HELD_CONTROLLER_JOINTS.items():
+            if controller in SAFETY_NATIVE_CANCEL_HOLD_CONTROLLERS:
+                continue
             fixed_positions = SAFETY_FIXED_SAFE_CONTROLLER_POSITIONS.get(
                 controller, {}
             )

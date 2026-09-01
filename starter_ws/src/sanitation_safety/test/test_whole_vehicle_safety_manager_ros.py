@@ -31,6 +31,7 @@ from sanitation_safety.whole_vehicle_safety_manager import WholeVehicleSafetyMan
 from sanitation_safety.whole_vehicle_safety_core import (
     SAFETY_FIXED_SAFE_CONTROLLER_POSITIONS,
     SAFETY_HELD_CONTROLLER_JOINTS,
+    SAFETY_NATIVE_CANCEL_HOLD_CONTROLLERS,
     SafetyReason,
     SafetyState,
 )
@@ -351,18 +352,11 @@ def test_unsafe_edge_starts_position_cancels_before_periodic_reconciliation():
         _wait_until(
             lambda: all(
                 harness.hold_outputs[controller]
-                for controller in (
-                    "cleaning_controller",
-                    "arm_controller",
-                    "gripper_controller",
-                    "storage_controller",
-                )
+                for controller in SAFETY_HELD_CONTROLLER_JOINTS
+                if controller not in SAFETY_NATIVE_CANCEL_HOLD_CONTROLLERS
             )
         )
-        assert harness.hold_outputs["cleaning_controller"][-1] == (
-            ("cleaning_lift_joint",),
-            (trigger_positions["cleaning_lift_joint"],),
-        )
+        assert not harness.hold_outputs["cleaning_controller"]
     finally:
         executor.shutdown()
         thread.join(timeout=2.0)
@@ -408,17 +402,10 @@ def test_unsafe_edge_holds_positions_without_waiting_for_cancel_responses():
         manager._stop_on_unsafe_edge(trigger_positions)
 
         assert len(pending_callbacks) == len(pending)
-        assert {controller for controller, _, _ in published} == set(
-            SAFETY_HELD_CONTROLLER_JOINTS
+        assert {controller for controller, _, _ in published} == (
+            set(SAFETY_HELD_CONTROLLER_JOINTS)
+            - set(SAFETY_NATIVE_CANCEL_HOLD_CONTROLLERS)
         )
-        cleaning_hold = next(
-            positions
-            for controller, _, positions in published
-            if controller == "cleaning_controller"
-        )
-        assert cleaning_hold == {
-            "cleaning_lift_joint": trigger_positions["cleaning_lift_joint"]
-        }
     finally:
         manager.destroy_node()
         rclpy.shutdown()
@@ -445,14 +432,21 @@ def test_ros_gateway_zeros_velocity_actuators_and_switches_trajectory_controller
             and not manager._velocity_controllers_active
         )
         _wait_until(lambda: harness.cancel_request_count >= 4)
-        _wait_until(lambda: all(harness.hold_outputs.values()))
-        initial_hold_count = len(harness.hold_outputs["cleaning_controller"])
-        harness.joint_position_values[0] = 0.08
         _wait_until(
-            lambda: len(harness.hold_outputs["cleaning_controller"])
+            lambda: all(
+                harness.hold_outputs[controller]
+                for controller in SAFETY_HELD_CONTROLLER_JOINTS
+                if controller not in SAFETY_NATIVE_CANCEL_HOLD_CONTROLLERS
+            )
+        )
+        assert not harness.hold_outputs["cleaning_controller"]
+        initial_hold_count = len(harness.hold_outputs["arm_controller"])
+        harness.joint_position_values[1] = 0.80
+        _wait_until(
+            lambda: len(harness.hold_outputs["arm_controller"])
             > initial_hold_count
         )
-        assert harness.hold_outputs["cleaning_controller"][-1][1][0] == 0.02
+        assert harness.hold_outputs["arm_controller"][-1][1][0] == 0.1
         assert harness.hold_outputs["service_controller"][-1] == (
             ("wastewater_drain_valve_joint",),
             (0.0,),

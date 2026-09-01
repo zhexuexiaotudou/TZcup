@@ -325,6 +325,15 @@ def test_cleaning_lift_cancel_uses_measured_state_deceleration():
     assert constraints["decelerate_on_cancel"] is True
     assert constraints["cleaning_lift_joint"]["max_deceleration_on_cancel"] == 0.05
 
+    core = (
+        PACKAGE / "sanitation_safety/whole_vehicle_safety_core.py"
+    ).read_text(encoding="utf-8")
+    manager = (
+        PACKAGE / "sanitation_safety/whole_vehicle_safety_manager.py"
+    ).read_text(encoding="utf-8")
+    assert 'SAFETY_NATIVE_CANCEL_HOLD_CONTROLLERS = ("cleaning_controller",)' in core
+    assert manager.count("if controller in SAFETY_NATIVE_CANCEL_HOLD_CONTROLLERS:") >= 3
+
 
 def test_each_hard_interlock_proves_all_four_goals_moved_canceled_and_held():
     source = (ROOT / "scripts/validate_whole_vehicle_actuator_interlock.py").read_text(
