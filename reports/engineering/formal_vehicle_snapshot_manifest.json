@@ -127,8 +127,8 @@
       "size_bytes": 32067
     },
     "starter_ws/src/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml": {
-      "sha256": "cdbf6538c2f3de726f307345475a498545016c3447ee995c38cc645a8f0b04bd",
-      "size_bytes": 3012
+      "sha256": "56e1cfb4fde33c11f4966a783442d805698f2dc966e98cf3e39c4f16bf8c0f8a",
+      "size_bytes": 3431
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/MANIFEST.sha256": {
       "sha256": "55747d38a53e6a5fc1362d5fea3d628a2629ba57a55326fef149eb72bb5bd8d4",
@@ -963,5 +963,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "275416390354878a5db1210ffe4717d63a6967699f53a173ea8eef21b35d5e92"
+  "source_inventory_sha256": "9eb0d6128f4c10240cc4fd9f3ba13245b5c772e377663618f2c1046c7601e70f"
 }
