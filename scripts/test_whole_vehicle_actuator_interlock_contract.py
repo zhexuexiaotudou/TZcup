@@ -325,6 +325,14 @@ def test_cleaning_lift_cancel_uses_measured_state_deceleration():
     assert constraints["decelerate_on_cancel"] is True
     assert constraints["cleaning_lift_joint"]["max_deceleration_on_cancel"] == 0.05
 
+    cleaning_xacro = (
+        ROOT
+        / "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/cleaning_mechanism.xacro"
+    ).read_text(encoding="utf-8")
+    assert '<limit lower="0.0" upper="0.100" effort="300.0" velocity="0.0048"/>' in cleaning_xacro
+    assert '<dynamics damping="80.0" friction="80.0"/>' in cleaning_xacro
+    assert "5.95 kg (58.35 N under gravity)" in cleaning_xacro
+
     core = (
         PACKAGE / "sanitation_safety/whole_vehicle_safety_core.py"
     ).read_text(encoding="utf-8")

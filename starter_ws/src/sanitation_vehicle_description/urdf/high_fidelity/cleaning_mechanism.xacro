@@ -244,7 +244,11 @@
       <!-- Actuonix P16-100-256-12-P: 300 N maximum lifted load and
            4.8 mm/s no-load speed from the public manufacturer sheet. -->
       <limit lower="0.0" upper="0.100" effort="300.0" velocity="0.0048"/>
-      <dynamics damping="80.0" friction="35.0"/>
+      <!-- The moving cleaning subtree is 5.95 kg (58.35 N under gravity).
+           Model the P16 screw actuator's non-backdrivable hold with 80 N of
+           static resistance: above the suspended load, but well below the
+           actuator's 300 N commanded-force envelope. -->
+      <dynamics damping="80.0" friction="80.0"/>
     </joint>
 
     <!-- Actuonix P16 body is chassis-fixed; its rod and clevis ride with the carriage. -->
