@@ -29,10 +29,32 @@ UINT64_MAX = (1 << 64) - 1
 NDIS_NONPAGED_POOL_SUSPECT_FLOOR_BYTES = 2 * 1024**3
 NDIS_TRACKED_POOL_TAG_SUSPECT_FLOOR_BYTES = 1024**3
 NDIS_POOL_TAGS = ("Nbuf", "Nnbl", "Nnbf")
+NATIVE_LINUX_RUNTIME_ENV = "FORMAL_NATIVE_LINUX_RUNTIME"
 
 
 class ProbeError(RuntimeError):
     pass
+
+
+def native_linux_runtime_requested() -> bool:
+    """Allow an explicit native-Linux caller to mark Windows gates N/A."""
+
+    raw = os.environ.get(NATIVE_LINUX_RUNTIME_ENV, "0")
+    if raw not in {"0", "1"}:
+        raise ProbeError(f"{NATIVE_LINUX_RUNTIME_ENV} must be 0 or 1")
+    if raw == "0":
+        return False
+    if not sys.platform.startswith("linux"):
+        raise ProbeError(f"{NATIVE_LINUX_RUNTIME_ENV}=1 requires native Linux")
+    try:
+        kernel_release = Path("/proc/sys/kernel/osrelease").read_text(
+            encoding="utf-8"
+        )
+    except OSError as exc:
+        raise ProbeError("cannot prove the native Linux kernel boundary") from exc
+    if "microsoft" in kernel_release.casefold():
+        raise ProbeError(f"{NATIVE_LINUX_RUNTIME_ENV}=1 is forbidden under WSL")
+    return True
 
 
 def _uint64(payload: dict[str, Any], key: str) -> int:
@@ -677,6 +699,33 @@ def check_start(
     return 0 if passed else 86
 
 
+def record_native_linux_not_applicable(output: Path) -> int:
+    """Record why the Windows-only gate is not applicable on native Linux."""
+
+    atomic_json(
+        output,
+        {
+            "report_id": "tzcup_formal_windows_memory_start_gate_v1",
+            "status": "FORMAL_WINDOWS_MEMORY_START_NOT_APPLICABLE_NATIVE_LINUX",
+            "passed": True,
+            "recorded_epoch_ns": time.time_ns(),
+            "native_linux_runtime": True,
+            "windows_probe_performed": False,
+            "checks": {
+                "explicit_native_linux_runtime_requested": True,
+                "kernel_is_not_wsl": True,
+                "windows_gate_not_applicable": True,
+            },
+            "claim_boundary": (
+                "Windows commit, Docker Desktop, vmmemWSL and NDIS pool data are "
+                "not applicable on this explicitly selected native-Linux runtime; "
+                "the Linux memory floor and exact-process-group watchdog remain required."
+            ),
+        },
+    )
+    return 0
+
+
 def _format_stream_record(sample: dict[str, Any]) -> bytes:
     """Return one complete, ASCII-only watchdog record.
 
@@ -823,6 +872,8 @@ def main() -> int:
         if args.check_start:
             if args.output is None:
                 raise ProbeError("--check-start requires --output")
+            if native_linux_runtime_requested():
+                return record_native_linux_not_applicable(args.output)
             return check_start(args.output)
         if args.interval_s < 0.1:
             raise ProbeError("--interval-s must be at least 0.1")

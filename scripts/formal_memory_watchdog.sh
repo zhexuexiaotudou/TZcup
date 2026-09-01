@@ -57,6 +57,17 @@ case "${FORMAL_WINDOWS_MEMORY_GUARD_ENABLED:-1}" in
   1|true|TRUE|yes|YES) windows_guard_enabled=true ;;
   *) echo "FORMAL_WINDOWS_MEMORY_GUARD_ENABLED must be a boolean" >&2; exit 2 ;;
 esac
+case "${FORMAL_NATIVE_LINUX_RUNTIME:-0}" in
+  0) ;;
+  1)
+    if [[ ! -r /proc/sys/kernel/osrelease ]] || grep -qi microsoft /proc/sys/kernel/osrelease; then
+      echo "FORMAL_NATIVE_LINUX_RUNTIME=1 requires a proven non-WSL Linux kernel" >&2
+      exit 2
+    fi
+    windows_guard_enabled=false
+    ;;
+  *) echo "FORMAL_NATIVE_LINUX_RUNTIME must be 0 or 1" >&2; exit 2 ;;
+esac
 for value in "${min_available_kib}" "${max_swap_used_kib}" "${max_group_rss_kib}"; do
   is_uint "${value}" || { echo "memory watchdog thresholds must be unsigned KiB integers" >&2; exit 2; }
 done
