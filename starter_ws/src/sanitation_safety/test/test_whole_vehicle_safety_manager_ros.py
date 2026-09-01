@@ -529,8 +529,8 @@ def test_input_callbacks_only_mutate_latest_state_until_the_next_publish_cycle()
     publish_calls = []
     immediate_stop_calls = []
     manager._publish = lambda: publish_calls.append(time.monotonic())
-    manager._publish_immediate_stop = lambda: immediate_stop_calls.append(
-        time.monotonic()
+    manager._publish_immediate_stop = (
+        lambda *_args: immediate_stop_calls.append(time.monotonic())
     )
     try:
         for _ in range(200):
@@ -726,7 +726,7 @@ def test_publish_thread_join_timeout_is_fatal():
 def test_short_unsafe_pulse_is_consumed_by_one_periodic_decision():
     rclpy.init()
     manager = _new_stopped_manager()
-    manager._publish_immediate_stop = lambda: None
+    manager._publish_immediate_stop = lambda *_args: None
     try:
         _prime_healthy_inputs(manager)
         with manager._state_lock:
@@ -757,7 +757,7 @@ def test_short_unsafe_pulse_is_consumed_by_one_periodic_decision():
 def test_concurrent_unsafe_then_safe_update_preserves_generation_latch():
     rclpy.init()
     manager = _new_stopped_manager()
-    manager._publish_immediate_stop = lambda: None
+    manager._publish_immediate_stop = lambda *_args: None
     unsafe_written = threading.Event()
     errors = []
 
