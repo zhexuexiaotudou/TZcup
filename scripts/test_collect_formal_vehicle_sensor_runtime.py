@@ -169,8 +169,11 @@ def test_collector_bounds_and_retires_high_bandwidth_subscriptions():
     assert "SOURCE_FREQUENCY_SAMPLE_TARGETS.get(topic, 3)" in source
 
 
-def test_imu_cadence_uses_a_stable_bounded_source_timestamp_window():
-    assert SOURCE_FREQUENCY_SAMPLE_TARGETS == {"/sensors/imu/data": 50}
+def test_transient_sensitive_cadence_uses_stable_bounded_source_timestamp_windows():
+    assert SOURCE_FREQUENCY_SAMPLE_TARGETS == {
+        "/sensors/front_rgbd/depth/image_rect_raw/image": 10,
+        "/sensors/imu/data": 50,
+    }
     source = (ROOT / "scripts/collect_formal_vehicle_sensor_runtime.py").read_text(
         encoding="utf-8"
     )
