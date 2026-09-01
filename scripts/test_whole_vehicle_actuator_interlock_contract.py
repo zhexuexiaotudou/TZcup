@@ -312,6 +312,20 @@ def test_emergency_stop_cancels_live_goals_on_every_held_position_controller():
     assert '"emergency_stop_position_goal_statuses"' in source
 
 
+def test_cleaning_lift_cancel_uses_measured_state_deceleration():
+    controllers = yaml.safe_load(
+        (
+            ROOT
+            / "starter_ws/src/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml"
+        ).read_text(encoding="utf-8")
+    )
+    constraints = controllers["cleaning_controller"]["ros__parameters"][
+        "constraints"
+    ]
+    assert constraints["decelerate_on_cancel"] is True
+    assert constraints["cleaning_lift_joint"]["max_deceleration_on_cancel"] == 0.05
+
+
 def test_each_hard_interlock_proves_all_four_goals_moved_canceled_and_held():
     source = (ROOT / "scripts/validate_whole_vehicle_actuator_interlock.py").read_text(
         encoding="utf-8"

@@ -58,6 +58,14 @@ cleaning_controller:
     joints: [cleaning_lift_joint]
     command_interfaces: [position]
     state_interfaces: [position, velocity]
+    constraints:
+      # The P16 lift is a slow self-locking actuator.  On a safety cancel,
+      # generate the stop from measured position/velocity instead of holding
+      # the trajectory's ahead-of-plant position command.  At the 4.8 mm/s
+      # physical speed limit this 50 mm/s^2 bound stops in about 0.23 mm.
+      decelerate_on_cancel: true
+      cleaning_lift_joint:
+        max_deceleration_on_cancel: 0.05
 
 storage_controller:
   ros__parameters:
