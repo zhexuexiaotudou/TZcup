@@ -41,6 +41,9 @@ MOTOR_NAMES = (
 )
 LIFT_TRAVEL_UPPER_M = 0.100
 STALL_REFERENCE_M = 0.125
+# P16 needs 20.84 s to travel 0.100 m at its 4.8 mm/s physical speed; retain
+# settling time for the hard-stop fault and vehicle inhibit to latch.
+STALL_OBSERVATION_TIMEOUT_S = 30.0
 
 
 def _snapshot_binding(path: Path) -> dict[str, str]:
@@ -281,7 +284,12 @@ def run_live_scenario(node: Collector, startup_timeout_s: float) -> None:
     # The reference exceeds the P16's 0.100 m physical travel. Gazebo's joint
     # limit stops the carriage while the controller continues demanding motion.
     node.publish_lift_reference(STALL_REFERENCE_M, 8.0)
-    if not _spin_phase(node, "physical_travel_stop_stall", 16.0, predicate=_stall_and_inhibit):
+    if not _spin_phase(
+        node,
+        "physical_travel_stop_stall",
+        STALL_OBSERVATION_TIMEOUT_S,
+        predicate=_stall_and_inhibit,
+    ):
         raise TimeoutError("physical lift travel stop did not latch stall and inhibit the vehicle")
 
     # The production thermal constants are retained; this phase demonstrates
