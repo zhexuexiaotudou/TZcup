@@ -55,9 +55,14 @@ def test_live_collector_uses_controller_commands_not_joint_state_mutation():
     assert "predicate=_stall_and_inhibit" in collector
     assert '"fault": bool(status["fault_active"])' in collector
     assert '"lift_reference_m": float(motors[3]["command"])' in collector
+    assert '"motor_lift_command_m": float(motors[3]["command"])' in collector
+    assert '"controller_lift_reference_m"' in collector
     assert '"lift_position_m": float(motors[3]["measured_position"])' in collector
     assert '"physical_travel_stop_stall", 0.25' in collector
     assert "recovery_retract" in collector
+    assert "recovery_reference_arm" in collector
+    assert "_recovery_reference_armed" in collector
+    assert "recovery lift reference was not armed before explicit reset" in collector
     assert "predicate=_lift_retracted_and_idle" in collector
     assert "create_publisher(JointState" not in collector
     assert '"joint_state_mutation_used": False' in collector

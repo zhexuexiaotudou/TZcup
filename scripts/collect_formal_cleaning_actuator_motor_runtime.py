@@ -140,7 +140,11 @@ class Collector(Node):
                 "output_load": [float(row["estimated_output_load"]) for row in motors],
                 "total_current_a": float(status["total_current_a"]),
                 "total_power_w": float(status["total_power_w"]),
+                # The mirror command is the actuator-side reference used by
+                # the physical-stall validator.  It is intentionally separate
+                # from the controller target recorded by _lift_controller_state.
                 "lift_reference_m": float(motors[3]["command"]),
+                "motor_lift_command_m": float(motors[3]["command"]),
                 "lift_position_m": float(motors[3]["measured_position"]),
                 "lift_velocity_m_s": float(motors[3]["measured_speed"]),
             }
@@ -165,7 +169,11 @@ class Collector(Node):
 
     def _lift_controller_state(self, message: JointTrajectoryControllerState) -> None:
         if message.reference.positions:
-            self.latest["lift_reference_m"] = float(message.reference.positions[0])
+            # Keep the native controller target distinct from the motor mirror
+            # command.  During a safety inhibit the mirror correctly holds the
+            # carriage at its measured position, while a retraction may already
+            # be armed in the controller for the eventual reset.
+            self.latest["controller_lift_reference_m"] = float(message.reference.positions[0])
 
     def _safety_status(self, message: DiagnosticArray) -> None:
         for status in message.status:
@@ -267,6 +275,23 @@ def _reset_recovered(node: Collector) -> bool:
     )
 
 
+def _recovery_reference_armed(node: Collector) -> bool:
+    """Confirm a retraction is armed while the fault still blocks motion.
+
+    Safety deliberately holds the motor-side mirror at the measured travel
+    stop until the explicit reset succeeds.  That held mirror command must not
+    be mistaken for the controller target which will take effect afterwards.
+    """
+    return (
+        _stall_and_inhibit(node)
+        and math.isclose(
+            float(node.latest.get("controller_lift_reference_m", math.nan)),
+            RECOVERY_LIFT_TARGET_M,
+            abs_tol=0.002,
+        )
+    )
+
+
 def _lift_retracted_and_idle(node: Collector) -> bool:
     motors = _motors(node)
     currents = node.latest.get("current_a", [])
@@ -349,6 +374,20 @@ def run_live_scenario(node: Collector, startup_timeout_s: float) -> None:
     # idle cooling after stall, not a live overtemperature trip.
     _spin_phase(node, "idle_cooling", 4.0)
 
+    # Arm the inward controller reference *before* clearing the native safety
+    # inhibit.  The safety mirror must remain at the 0.100 m measured stop
+    # while faulted; after reset it will consume this already-confirmed 0.060 m
+    # target instead of briefly re-demanding the travel limit and latching a
+    # second physical stall.
+    node.publish_lift_reference(RECOVERY_LIFT_TARGET_M, 0.5)
+    if not _spin_phase(
+        node,
+        "recovery_reference_arm",
+        6.0,
+        predicate=_recovery_reference_armed,
+    ):
+        raise TimeoutError("recovery lift reference was not armed before explicit reset")
+
     node.phase = "explicit_reset"
     reset_deadline = time.monotonic() + 8.0
     while rclpy.ok() and time.monotonic() < reset_deadline:
@@ -359,9 +398,8 @@ def run_live_scenario(node: Collector, startup_timeout_s: float) -> None:
             break
     if not _reset_recovered(node):
         raise TimeoutError("idle cooled motor fault did not clear after explicit reset")
-    # Clear the beyond-travel reference before claiming a healthy idle state;
-    # otherwise a reset re-enables a 0.125 m demand against the 0.100 m stop.
-    node.publish_lift_reference(RECOVERY_LIFT_TARGET_M, 12.0)
+    # The 0.060 m reference was armed before reset and observed directly from
+    # the controller state.  Do not race reset completion with a new command.
     if not _spin_phase(
         node,
         "recovery_retract",
