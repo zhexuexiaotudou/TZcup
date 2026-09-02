@@ -40,6 +40,11 @@ def test_function_position_runner_is_frozen_self_contained_and_isolated() -> Non
     assert 'topic_snapshot="$(ros2 topic list 2>/dev/null || true)"' in source
     assert 'grep -Fxq -- "${required_topic}" <<<"${topic_snapshot}"' in source
     assert '"${missing_topics[*]}"' in source
+    assert "prepare_formal_preembedded_sensor_world.py" in source
+    assert 'world:="${preembedded_world}" spawn_robot:=false' in source
+    assert '--preembedded-report "${preembedded_report}"' in source
+    assert '--preembedded-world "${preembedded_world}"' in source
+    assert "diagnostic-skip-preembedded-binding" not in source
 
 
 def test_function_position_validator_uses_the_remapped_raw_bumper_topics() -> None:
@@ -48,6 +53,12 @@ def test_function_position_validator_uses_the_remapped_raw_bumper_topics() -> No
     assert '"/formal_vehicle/simulation/raw/rear_bumper/contact"' in source
     assert '"/safety/front_bumper/contact"' not in source
     assert '"/safety/rear_bumper/contact"' not in source
+    assert "spin_until_positions(" in source
+    assert '"ground_position_targets_timeout"' in source
+    assert '"recovery_position_targets_timeout"' in source
+    assert '"passed": not failures' in source
+    assert '"DIAGNOSTIC_UNBOUND_PREEMBEDDED_WORLD"' in source
+    assert '"formal_acceptance_eligible": False' in source
 
 
 def test_runtime_validators_emit_bound_snapshot_session_and_closure_identity() -> None:

@@ -71,6 +71,11 @@ def test_storage_service_joints_are_state_only_not_fake_powered_actuators() -> N
         assert f'<xacro:hf_state_only_joint name="{name}"/>' in source
         assert f'<xacro:hf_position_joint name="{name}"' not in source
     assert root is not None
+    assert (
+        '<xacro:hf_position_joint name="wastewater_drain_valve_joint" '
+        'lower="0.0" upper="${pi/2.0}" velocity="1.2" effort="25.0" '
+        'initial_position="0.00002"/>'
+    ) in source
 
 
 def test_storage_register_binds_latches_presence_sensor_and_existing_drain() -> None:

@@ -147,6 +147,18 @@ def test_squeegee_passive_state_contact_and_live_telemetry_are_bridged() -> None
     )
     assert '<collision name="squeegee_blade_collision">' in cleaning
     assert '<sensor name="squeegee_blade_ground_contact" type="contact">' in cleaning
+    assert (
+        "<collision>squeegee_link_fixed_joint_lump__squeegee_blade_collision_collision</collision>"
+        in cleaning
+    )
+    world = (DESCRIPTION / "worlds/formal_vehicle_validation.sdf").read_text(
+        encoding="utf-8"
+    )
+    contact_system = (
+        '<plugin filename="gz-sim-contact-system" name="gz::sim::systems::Contact"/>'
+    )
+    assert contact_system in world
+    assert world.index(contact_system) < world.index("gz-sim-user-commands-system")
     assert "<topic>/cleaning/squeegee/contact</topic>" in cleaning
     assert '<xacro:hf_state_only_joint name="squeegee_float_joint"/>' in control
     assert '<xacro:hf_state_only_joint name="squeegee_pitch_joint"/>' in control

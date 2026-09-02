@@ -94,7 +94,10 @@
       <!-- 24 V spring-return normally-closed drain actuator.  Charge door,
            charge lock, E-stop plunger and service lids are passive joints and
            intentionally have no ros2_control command interface. -->
-      <xacro:hf_position_joint name="wastewater_drain_valve_joint" lower="0.0" upper="${pi/2.0}" velocity="1.2" effort="25.0"/>
+      <!-- Keep the powered valve just 20 microradians off the exact DART
+           lower stop.  This is far below the closed-state threshold while
+           avoiding a locked unilateral constraint on the opening command. -->
+      <xacro:hf_position_joint name="wastewater_drain_valve_joint" lower="0.0" upper="${pi/2.0}" velocity="1.2" effort="25.0" initial_position="0.00002"/>
       <!-- Passive service hardware is not commandable, but its measured
            position must reach joint_state_broadcaster for physical interlocks. -->
       <xacro:hf_state_only_joint name="charge_port_door_hinge_joint"/>

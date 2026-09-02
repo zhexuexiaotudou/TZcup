@@ -87,11 +87,18 @@ def _bound_files(tmp_path: Path) -> tuple[Path, Path, Path, dict[str, object]]:
 def test_validator_requires_active_session_and_verified_runtime_closure() -> None:
     source = VALIDATOR.read_text(encoding="utf-8")
     assert "from formal_runtime_gate_binding import load_binding" in source
+    assert "from formal_preembedded_sensor_world_binding import" in source
     assert 'parser.add_argument("--session", type=Path, required=True)' in source
     assert 'parser.add_argument("--runtime-binding", type=Path, required=True)' in source
+    assert 'parser.add_argument("--preembedded-report", type=Path)' in source
+    assert 'parser.add_argument("--preembedded-world", type=Path)' in source
+    assert '"--diagnostic-skip-preembedded-binding"' in source
+    assert '"formal acceptance requires --preembedded-report' in source
+    assert '"formal_acceptance_eligible": False' in source
     assert '"acceptance_session_binding": acceptance_session_binding' in source
     assert '"runtime_gate_binding": runtime_gate_binding' in source
     assert '"runtime_identity": runtime_gate_binding["runtime_closure_binding"]' in source
+    assert '"preembedded_world_binding": preembedded_world_binding' in source
 
 
 def test_binding_helper_accepts_exact_identity_and_rejects_drift(tmp_path: Path) -> None:

@@ -19,6 +19,7 @@ from std_msgs.msg import Float64, Float64MultiArray
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 from formal_runtime_gate_binding import load_binding
+from formal_preembedded_sensor_world_binding import validate_preembedded_sensor_world
 from formal_squeegee_compliance_core import (
     SQUEEGEE_SIGNALS as SQUEEGEE_SIGNAL_NAMES,
     evaluate_squeegee_compliance,
@@ -35,6 +36,11 @@ VELOCITY_TARGETS = {
     "right_side_brush_joint": -8.0,
     "central_roller_joint": 12.0,
     "recovery_pump_joint": 20.0,
+}
+POSITION_REACHED_TOLERANCES = {
+    "cleaning_lift_joint": 0.005,
+    "dry_deposit_gate_joint": 0.025,
+    "wastewater_drain_valve_joint": 0.025,
 }
 CONTACT_TOPICS = (
     "/cleaning/squeegee/contact",
@@ -230,14 +236,17 @@ class Probe(Node):
         self.cleaning.publish(self.trajectory(
             ["cleaning_lift_joint"],
             [POSITION_TARGETS["cleaning_lift_joint"]],
+            24,
         ))
         self.storage.publish(self.trajectory(
             ["dry_deposit_gate_joint"],
             [POSITION_TARGETS["dry_deposit_gate_joint"]],
+            4,
         ))
         self.service.publish(self.trajectory(
             ["wastewater_drain_valve_joint"],
             [POSITION_TARGETS["wastewater_drain_valve_joint"]],
+            24,
         ))
         self.brush.publish(Float64MultiArray(data=[8.0, -8.0, 12.0]))
         self.recovery.publish(Float64MultiArray(data=[20.0]))
@@ -247,9 +256,17 @@ class Probe(Node):
         self.recovery.publish(Float64MultiArray(data=[0.0]))
 
     def publish_recovery_pose(self) -> None:
-        self.cleaning.publish(self.trajectory(["cleaning_lift_joint"], [0.000], 2))
-        self.storage.publish(self.trajectory(["dry_deposit_gate_joint"], [0.0], 2))
-        self.service.publish(self.trajectory(["wastewater_drain_valve_joint"], [0.0], 2))
+        self.cleaning.publish(self.trajectory(["cleaning_lift_joint"], [0.000], 24))
+        self.storage.publish(self.trajectory(["dry_deposit_gate_joint"], [0.0], 4))
+        self.service.publish(self.trajectory(["wastewater_drain_valve_joint"], [0.0], 24))
+
+    def positions_reached(self, targets: dict[str, float]) -> bool:
+        return all(
+            self.positions.get(name)
+            and abs(self.positions[name][-1] - target)
+            <= POSITION_REACHED_TOLERANCES[name]
+            for name, target in targets.items()
+        )
 
 
 def spin_for(node: Probe, seconds: float) -> None:
@@ -258,17 +275,74 @@ def spin_for(node: Probe, seconds: float) -> None:
         rclpy.spin_once(node, timeout_sec=0.10)
 
 
+def spin_until_positions(
+    node: Probe, targets: dict[str, float], timeout_seconds: float
+) -> tuple[bool, float]:
+    started = time.monotonic()
+    deadline = started + timeout_seconds
+    while rclpy.ok() and not node.positions_reached(targets) and time.monotonic() < deadline:
+        rclpy.spin_once(node, timeout_sec=0.10)
+    return node.positions_reached(targets), time.monotonic() - started
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--snapshot-manifest", type=Path, required=True)
     parser.add_argument("--session", type=Path, required=True)
     parser.add_argument("--runtime-binding", type=Path, required=True)
+    parser.add_argument("--preembedded-report", type=Path)
+    parser.add_argument("--preembedded-world", type=Path)
+    parser.add_argument("--preembedded-model-pose", default="0 0 0.005 0 0 0")
+    parser.add_argument("--expanded-urdf", type=Path)
+    parser.add_argument("--runtime-install-root", type=Path)
+    parser.add_argument(
+        "--diagnostic-skip-preembedded-binding",
+        action="store_true",
+        help=(
+            "Diagnostic-only: mark the run as unbound when exercising a temporary "
+            "candidate model. Formal acceptance must not use this option."
+        ),
+    )
     parser.add_argument("--timeout", type=float, default=90.0)
     args = parser.parse_args()
     source_binding, acceptance_session_binding, runtime_gate_binding = bound_runtime_evidence(
         args.snapshot_manifest, args.session, args.runtime_binding
     )
+    binding_args = (
+        args.preembedded_report,
+        args.preembedded_world,
+        args.expanded_urdf,
+        args.runtime_install_root,
+    )
+    if args.diagnostic_skip_preembedded_binding:
+        if any(binding_args):
+            raise SystemExit(
+                "diagnostic preembedded binding skip must not be combined with binding artifacts"
+            )
+        preembedded_world_binding = {
+            "status": "DIAGNOSTIC_UNBOUND_PREEMBEDDED_WORLD",
+            "formal_acceptance_eligible": False,
+            "reason": "temporary candidate model differs from frozen snapshot",
+        }
+    else:
+        if not all(binding_args):
+            raise SystemExit(
+                "formal acceptance requires --preembedded-report, --preembedded-world, "
+                "--expanded-urdf and --runtime-install-root"
+            )
+        preembedded_world_binding = validate_preembedded_sensor_world(
+            report_path=args.preembedded_report,
+            world_path=args.preembedded_world,
+            expanded_urdf_path=args.expanded_urdf,
+            acceptance_session={
+                "started_epoch_ns": acceptance_session_binding["session_started_epoch_ns"],
+                "session_manifest_sha256": acceptance_session_binding["session_manifest_sha256"],
+            },
+            snapshot_identity=source_binding,
+            expected_model_pose=args.preembedded_model_pose,
+            expected_runtime_install_root=args.runtime_install_root,
+        )
     rclpy.init()
     node = Probe()
     deadline = time.monotonic() + args.timeout
@@ -291,20 +365,29 @@ def main() -> int:
         )
     node.set_phase("raised_free")
     spin_for(node, 8.0)
-    node.set_phase("grounded_preload")
+    node.set_phase("grounding_transition")
     node.publish_targets()
-    # gz_ros2_control's stable position loop intentionally uses a conservative
-    # 0.1 proportional gain.  Give the 100 mm lift and damped service lids
-    # enough real simulation time to traverse instead of judging a two-second
-    # trajectory by its first few controller cycles.
-    spin_for(node, 32.0)
+    ground_targets_reached, grounding_wall_seconds = spin_until_positions(
+        node, POSITION_TARGETS, 240.0
+    )
+    node.set_phase("grounded_preload")
+    spin_for(node, 12.0 if ground_targets_reached else 4.0)
     node.stop_rotors()
-    node.set_phase("raised_recovery")
+    node.set_phase("recovery_transition")
     node.publish_recovery_pose()
-    spin_for(node, 24.0)
+    recovery_targets = {name: 0.0 for name in POSITION_TARGETS}
+    recovery_targets_reached, recovery_wall_seconds = spin_until_positions(
+        node, recovery_targets, 240.0
+    )
+    node.set_phase("raised_recovery")
+    spin_for(node, 12.0 if recovery_targets_reached else 4.0)
 
     measured: dict[str, dict[str, float | int | bool]] = {}
     failures: list[str] = []
+    if not ground_targets_reached:
+        failures.append("ground_position_targets_timeout")
+    if not recovery_targets_reached:
+        failures.append("recovery_position_targets_timeout")
     for name, target in POSITION_TARGETS.items():
         values = node.positions.get(name, [])
         terminal = values[-1] if values else None
@@ -340,7 +423,13 @@ def main() -> int:
 
     report = {
         "report_id": "tzcup_formal_function_positions_runtime_v3",
-        "status": "FORMAL_CLEANING_STORAGE_SERVICE_AND_RECOVERY_ACTUATORS_PASSED" if not failures else "FAILED",
+        "status": (
+            "DIAGNOSTIC_CLEANING_STORAGE_SERVICE_AND_RECOVERY_ACTUATORS_PASSED"
+            if args.diagnostic_skip_preembedded_binding and not failures
+            else "FORMAL_CLEANING_STORAGE_SERVICE_AND_RECOVERY_ACTUATORS_PASSED"
+            if not failures
+            else "FAILED"
+        ),
         "controller_count": 5,
         "actuated_joint_count": len(measured),
         "passive_measured_joint_count": 2,
@@ -349,12 +438,21 @@ def main() -> int:
         },
         "measured": measured,
         "squeegee_compliance": squeegee,
+        "phase_execution": {
+            "ground_targets_reached": ground_targets_reached,
+            "grounding_wall_seconds": grounding_wall_seconds,
+            "recovery_targets_reached": recovery_targets_reached,
+            "recovery_wall_seconds": recovery_wall_seconds,
+            "position_reached_tolerances": POSITION_REACHED_TOLERANCES,
+        },
         "failures": failures,
+        "passed": not failures,
         "source_binding": source_binding,
         "acceptance_session_binding": acceptance_session_binding,
         "runtime_gate_binding": runtime_gate_binding,
+        "preembedded_world_binding": preembedded_world_binding,
         "runtime_identity": runtime_gate_binding["runtime_closure_binding"],
-        "claim_boundary": "This proves controller-to-joint motion for cleaning, storage, powered wastewater service valve and pump positions plus live two-axis squeegee joint state, blade-ground contact, physical preload effort and post-contact spring recovery. Hydraulic recovery efficiency, brush wear and debris pickup remain separate runtime gates.",
+        "claim_boundary": "This proves controller-to-joint motion for cleaning, storage, powered wastewater service valve and pump positions plus live two-axis squeegee joint state, physical ground engagement from compression and signed preload effort, and post-load spring recovery. Contact transport is reported separately and is never claimed when its stream is empty. Hydraulic recovery efficiency, brush wear and debris pickup remain separate runtime gates.",
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
