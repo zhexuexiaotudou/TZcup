@@ -110,3 +110,24 @@ def test_product_grasp_uses_selected_localization_odometry_not_removed_controlle
     assert "odometry_topic: /odom" in config
     assert "base_controller/odom" not in config
     assert '"base_controller"' not in cube_launch
+
+
+def test_physical_grasp_scene_preserves_the_formal_safety_power_chain():
+    cube_launch = (PACKAGE / "launch" / "formal_cube_pick_place.launch.py").read_text(
+        encoding="utf-8"
+    )
+    # This scene must not start with an unobservable latched E-stop, nor
+    # bypass the whole-vehicle manager with a synthetic permit.  It provides
+    # the same physical feedback and BMS paths used by the formal vehicle.
+    assert '" initial_estop_latched:=false"' in cube_launch
+    assert '"initial_estop_active": False' in cube_launch
+    assert 'executable="a300_bms_simulator"' in cube_launch
+    assert '"a300_40ah_bms.yaml"' in cube_launch
+    assert "/formal_vehicle/power/bms_fault" not in cube_launch
+    assert "/formal_vehicle/power/traction_permitted" not in cube_launch
+    assert 'executable="a300_drivetrain_command_adapter"' in cube_launch
+    assert 'name="a300_drivetrain_bridge"' in cube_launch
+    assert 'name="formal_auxiliary_bridge"' in cube_launch
+    assert 'name="cleaning_actuator_scalar_bridge"' in cube_launch
+    assert 'name="cleaning_actuator_motor_bridge"' in cube_launch
+    assert 'create_publisher(Bool, "/safety/actuators_enabled"' not in cube_launch

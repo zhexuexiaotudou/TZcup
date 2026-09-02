@@ -36,6 +36,11 @@ def generate_launch_description() -> LaunchDescription:
         Command([
             "xacro ", model, " use_sim:=true bodywork_visible:=true",
             " dry_accounting_mode:=", dry_accounting_mode,
+            # The grasp probe explicitly performs the operator reset through
+            # the mechanical E-stop command bridge.  Starting this isolated
+            # scene latched would leave its safety manager permanently
+            # fail-closed before that product command can take effect.
+            " initial_estop_latched:=false",
         ]),
         value_type=str,
     )
@@ -93,6 +98,7 @@ def generate_launch_description() -> LaunchDescription:
         arguments=[
             "joint_state_broadcaster", "arm_controller",
             "gripper_controller", "cleaning_controller", "storage_controller",
+            "service_controller",
             "--controller-manager", "/controller_manager",
             "--controller-manager-timeout", "40", "--service-call-timeout", "40",
             "--switch-timeout", "40", "--activate-as-group",
@@ -114,6 +120,90 @@ def generate_launch_description() -> LaunchDescription:
         package="sanitation_safety",
         executable="whole_vehicle_safety_manager",
         parameters=[{"use_sim_time": False}],
+        output="screen",
+    )
+    # Keep the grasp scene on the same safety path as the formal vehicle.  In
+    # particular, do not synthesize an actuator permit here: these bridges and
+    # simulators provide the BMS, traction, cleaning-fault and mechanical
+    # E-stop inputs that the whole-vehicle safety manager requires.
+    a300_drivetrain_adapter = Node(
+        package="sanitation_gazebo_control",
+        executable="a300_drivetrain_command_adapter",
+        name="a300_drivetrain_command_adapter",
+        parameters=[{"use_sim_time": False}],
+        output="screen",
+    )
+    cleaning_actuator_command_mirror = Node(
+        package="sanitation_gazebo_control",
+        executable="cleaning_actuator_command_mirror",
+        name="cleaning_actuator_command_mirror",
+        parameters=[{"use_sim_time": False}],
+        output="screen",
+    )
+    cleaning_actuator_scalar_bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        name="cleaning_actuator_scalar_bridge",
+        arguments=[
+            "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/command/lift_position@std_msgs/msg/Float64]gz.msgs.Double",
+            "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/command/enable@std_msgs/msg/Bool]gz.msgs.Boolean",
+            "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/command/reset_faults@std_msgs/msg/Bool]gz.msgs.Boolean",
+            "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/fault_active@std_msgs/msg/Bool[gz.msgs.Boolean",
+        ],
+        output="screen",
+    )
+    cleaning_actuator_motor_bridge = Node(
+        package="sanitation_gazebo_control",
+        executable="cleaning_actuator_vector_bridge",
+        name="cleaning_actuator_motor_bridge",
+        output="screen",
+    )
+    a300_drivetrain_bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        name="a300_drivetrain_bridge",
+        arguments=[
+            "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist",
+            "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/actuator_enable@std_msgs/msg/Bool]gz.msgs.Boolean",
+            "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/emergency_stop@std_msgs/msg/Bool[gz.msgs.Boolean",
+        ],
+        remappings=[
+            (
+                "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/emergency_stop",
+                "/emergency_stop",
+            ),
+        ],
+        output="screen",
+    )
+    formal_auxiliary_bridge = Node(
+        package="ros_gz_bridge",
+        executable="parameter_bridge",
+        name="formal_auxiliary_bridge",
+        arguments=[
+            "/formal_vehicle/simulation/command/emergency_stop@std_msgs/msg/Bool]gz.msgs.Boolean",
+            "/formal_vehicle/simulation/command/emergency_stop_reset@std_msgs/msg/Bool]gz.msgs.Boolean",
+            "/formal_vehicle/power/branches/safety/enabled@std_msgs/msg/Bool]gz.msgs.Boolean",
+            "/formal_vehicle/simulation/command/main_power@std_msgs/msg/Bool]gz.msgs.Boolean",
+            "/formal_vehicle/power/main_contactor_command@std_msgs/msg/Bool]gz.msgs.Boolean",
+            "/formal_vehicle/power/main_isolator_closed@std_msgs/msg/Bool[gz.msgs.Boolean",
+            "/formal_vehicle/power/main_contactor_closed@std_msgs/msg/Bool[gz.msgs.Boolean",
+        ],
+        output="screen",
+    )
+    a300_bms = Node(
+        package="sanitation_power_system",
+        executable="a300_bms_simulator",
+        name="a300_bms_simulator",
+        parameters=[
+            PathJoinSubstitution(
+                [
+                    FindPackageShare("sanitation_power_system"),
+                    "config",
+                    "a300_40ah_bms.yaml",
+                ]
+            ),
+            {"use_sim_time": use_sim_time},
+        ],
         output="screen",
     )
 
@@ -208,12 +298,19 @@ def generate_launch_description() -> LaunchDescription:
                 ],
                 output="screen",
             ),
+            a300_drivetrain_bridge,
+            formal_auxiliary_bridge,
+            a300_drivetrain_adapter,
+            cleaning_actuator_command_mirror,
+            cleaning_actuator_scalar_bridge,
+            cleaning_actuator_motor_bridge,
             Node(
                 package="sanitation_safety",
                 executable="simulation_safety_inputs",
-                parameters=[{"use_sim_time": False, "initial_estop_active": True}],
+                parameters=[{"use_sim_time": False, "initial_estop_active": False}],
                 output="screen",
             ),
+            a300_bms,
             *contact_bridges,
             # DetachableJoint starts attached by design.  Release before any
             # arm motion, then reset the cube pose in the runtime verifier.
