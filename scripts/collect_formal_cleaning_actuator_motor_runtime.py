@@ -41,9 +41,11 @@ MOTOR_NAMES = (
 )
 LIFT_TRAVEL_UPPER_M = 0.100
 STALL_REFERENCE_M = 0.125
-# P16 needs 20.84 s to travel 0.100 m at its 4.8 mm/s physical speed; retain
-# settling time for the hard-stop fault and vehicle inhibit to latch.
-STALL_OBSERVATION_TIMEOUT_S = 30.0
+# The loaded P16 travel measured in the formal scene is much slower than its
+# 4.8 mm/s no-load limit.  Keep the physical approach and fault latch separate.
+LIFT_TRAVEL_APPROACH_M = 0.0995
+LIFT_TRAVEL_APPROACH_TIMEOUT_S = 155.0
+STALL_LATCH_TIMEOUT_S = 6.5
 
 
 def _snapshot_binding(path: Path) -> dict[str, str]:
@@ -232,6 +234,10 @@ def _stall_and_inhibit(node: Collector) -> bool:
     )
 
 
+def _near_lift_travel_stop(node: Collector) -> bool:
+    return float(node.latest.get("lift_position_m", math.nan)) >= LIFT_TRAVEL_APPROACH_M
+
+
 def _reset_recovered(node: Collector) -> bool:
     motors = _motors(node)
     return (
@@ -287,7 +293,14 @@ def run_live_scenario(node: Collector, startup_timeout_s: float) -> None:
     if not _spin_phase(
         node,
         "physical_travel_stop_stall",
-        STALL_OBSERVATION_TIMEOUT_S,
+        LIFT_TRAVEL_APPROACH_TIMEOUT_S,
+        predicate=_near_lift_travel_stop,
+    ):
+        raise TimeoutError("physical lift did not reach its travel stop approach")
+    if not _spin_phase(
+        node,
+        "physical_travel_stop_stall",
+        STALL_LATCH_TIMEOUT_S,
         predicate=_stall_and_inhibit,
     ):
         raise TimeoutError("physical lift travel stop did not latch stall and inhibit the vehicle")

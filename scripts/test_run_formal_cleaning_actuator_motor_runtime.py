@@ -46,8 +46,11 @@ def test_live_collector_uses_controller_commands_not_joint_state_mutation():
     assert '"/cleaning_controller/joint_trajectory"' in collector
     assert "STALL_REFERENCE_M = 0.125" in collector
     assert "LIFT_TRAVEL_UPPER_M = 0.100" in collector
-    assert "STALL_OBSERVATION_TIMEOUT_S = 30.0" in collector
-    assert '"physical_travel_stop_stall",\n        STALL_OBSERVATION_TIMEOUT_S' in collector
+    assert "LIFT_TRAVEL_APPROACH_M = 0.0995" in collector
+    assert "LIFT_TRAVEL_APPROACH_TIMEOUT_S = 155.0" in collector
+    assert "STALL_LATCH_TIMEOUT_S = 6.5" in collector
+    assert "predicate=_near_lift_travel_stop" in collector
+    assert "predicate=_stall_and_inhibit" in collector
     assert "create_publisher(JointState" not in collector
     assert '"joint_state_mutation_used": False' in collector
     assert '"live_overtemperature_claimed": False' in collector
