@@ -40,12 +40,22 @@ def update_physics_revision_watchdog(
     last_advance_s: float | None,
     now_s: float,
     timeout_s: float = 0.75,
+    minimum_healthy_revisions: int = 2,
 ) -> tuple[int | None, float | None]:
-    """Start physics liveness timing only after the first healthy revision."""
+    """Start liveness timing only after consecutive startup physics is observable.
+
+    Gazebo may publish one healthy callback while it is still completing the
+    first world-load tick.  A single revision is therefore not enough to
+    distinguish a live physics loop from startup scheduling jitter.  Until the
+    second healthy revision, retain fail-closed startup semantics and let the
+    caller's bounded readiness timeout make the final decision.
+    """
+    if minimum_healthy_revisions < 2:
+        raise ValueError("minimum healthy revisions must be at least two")
     if last_sequence is not None and sequence < last_sequence:
         raise ValueError("cleaning motor physics revision moved backwards")
     if last_sequence is None:
-        if sequence == 0 or physics_stale:
+        if sequence < minimum_healthy_revisions or physics_stale:
             return None, None
         return sequence, now_s
     if sequence > last_sequence:

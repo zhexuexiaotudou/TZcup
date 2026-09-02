@@ -61,7 +61,7 @@ def test_decodes_early_subscription_fail_closed_startup_snapshot() -> None:
     assert all(float(motor["current_a"]) == 0.0 for motor in decoded["motors"])
 
 
-def test_revision_watchdog_starts_only_after_first_healthy_physics_frame() -> None:
+def test_revision_watchdog_starts_only_after_two_healthy_physics_frames() -> None:
     sequence = None
     advanced = None
     for now_s in (0.0, 0.8, 2.0):
@@ -82,21 +82,29 @@ def test_revision_watchdog_starts_only_after_first_healthy_physics_frame() -> No
         last_advance_s=advanced,
         now_s=3.0,
     )
-    assert (sequence, advanced) == (1, 3.0)
-    assert update_physics_revision_watchdog(
-        sequence=1,
+    assert (sequence, advanced) == (None, None)
+    sequence, advanced = update_physics_revision_watchdog(
+        sequence=2,
         physics_stale=False,
         last_sequence=sequence,
         last_advance_s=advanced,
-        now_s=3.749,
-    ) == (1, 3.0)
+        now_s=3.1,
+    )
+    assert (sequence, advanced) == (2, 3.1)
+    assert update_physics_revision_watchdog(
+        sequence=2,
+        physics_stale=False,
+        last_sequence=sequence,
+        last_advance_s=advanced,
+        now_s=3.849,
+    ) == (2, 3.1)
     with pytest.raises(ValueError, match="stalled"):
         update_physics_revision_watchdog(
-            sequence=1,
+            sequence=2,
             physics_stale=False,
             last_sequence=sequence,
             last_advance_s=advanced,
-            now_s=3.75,
+            now_s=3.85,
         )
 
 
