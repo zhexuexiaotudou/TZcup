@@ -1,13 +1,13 @@
 {
   "kind": "tzcup_formal_vehicle_snapshot_manifest",
-  "output_inventory_sha256": "a66004be4b2d38aa7c185c7944fb127fcc70e8085ae849e41e5f5c56eaaa69a3",
+  "output_inventory_sha256": "dcf2ff1e4075aaffcb7015eab7fd7cbd94574a61238d6e6de406a3f14caaf9bb",
   "outputs": {
     "reports/engineering/formal_competition_vehicle.urdf": {
-      "sha256": "58649a9205384352467f517e72b2620d19f7e9c17c5d9ee5ea3500c3a2c218a8",
-      "size_bytes": 278100
+      "sha256": "0b71ffbc91c6754a62332adfa81c8a395608e2f59fe2ae4d821e8cfc117199f9",
+      "size_bytes": 278271
     },
     "reports/engineering/formal_vehicle_component_register_report.json": {
-      "sha256": "95aae923ee89b95faa76edd4c91900ffd088389871621716e8279209e7a85322",
+      "sha256": "084a9b2f1c6a00256db5dbac5f1cae01ba954b888fdfe8e9dcd0ef9aece7f5d2",
       "size_bytes": 11091
     },
     "reports/engineering/formal_vehicle_layout_report.json": {
@@ -939,8 +939,8 @@
       "size_bytes": 23811
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/cleaning_mechanism.xacro": {
-      "sha256": "7539e735c4134b91bf320a529cb876e45f9670a6f4d8e312c25af826312d30ef",
-      "size_bytes": 34252
+      "sha256": "5e233a9ed45008782584fee4fe4c98f08bb35587acd6f93f29819c33ec4412ac",
+      "size_bytes": 34423
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/control_interfaces.xacro": {
       "sha256": "596bfccd1443e482bfaf59bef7cfaf01f20f4bdbd46331de968e487348e8bf86",
@@ -963,5 +963,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "54e76044910a66678a9e2d8b4d3d0d80e3bc5d3cd3b79ed9e1be1db48dc7c66e"
+  "source_inventory_sha256": "0b7b49e36683193396cfbc0152b87c9bfffcea1f70e50cd5a4d0dbd8756e1a15"
 }

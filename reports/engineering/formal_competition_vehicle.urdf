@@ -2731,10 +2731,12 @@
            4.8 mm/s no-load speed from the public manufacturer sheet. -->
     <limit effort="300.0" lower="0.0" upper="0.100" velocity="0.0048"/>
     <!-- The moving cleaning subtree is 5.95 kg (58.35 N under gravity).
-           Model the P16 screw actuator's non-backdrivable hold with 80 N of
-           static resistance: above the suspended load, but well below the
-           actuator's 300 N commanded-force envelope. -->
-    <dynamics damping="80.0" friction="80.0"/>
+           URDF friction is direction-symmetric, so it cannot represent the
+           P16 screw's powered/non-powered one-way hold.  Keep the calibrated
+           80 Ns/m damping and use 60 N breakaway drag: it remains above the
+           suspended load for passive hold while leaving a realistic margin for
+           powered reverse release from the 100 mm physical stop. -->
+    <dynamics damping="80.0" friction="60.0"/>
   </joint>
   <!-- Actuonix P16 body is chassis-fixed; its rod and clevis ride with the carriage. -->
   <link name="cleaning_lift_actuator_body_link">
