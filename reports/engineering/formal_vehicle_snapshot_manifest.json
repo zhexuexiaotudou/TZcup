@@ -39,8 +39,8 @@
   "schema_version": 1,
   "source_inventory": {
     "config/high_fidelity_vehicle/capacity_budget.csv": {
-      "sha256": "eda3709a638361723549b3720360d72d754fcdc91e8a04cbe8fabc5140b220ad",
-      "size_bytes": 794
+      "sha256": "d94f5a6fc5733eac62ebc66892d899083575e590c0d228809b26f2364decdfd3",
+      "size_bytes": 785
     },
     "config/high_fidelity_vehicle/encoder_feedback_realism_contract.yaml": {
       "sha256": "f9e448ff6749de0e4feb1eeac39c1b558aff1f2926ff89e94fc85ed35fa3be2d",
@@ -55,20 +55,20 @@
       "size_bytes": 13850
     },
     "config/high_fidelity_vehicle/mass_budget.csv": {
-      "sha256": "ab5b369091fb4dd7369a069026b796dc4eb0c12c72c584af1f7f40183669b755",
-      "size_bytes": 551
+      "sha256": "1c0debeacb8f9c5f2ae88cffd6c593077b0b99f4b3ce6c4700f64d3de69dcf7e",
+      "size_bytes": 544
     },
     "config/high_fidelity_vehicle/power_budget.csv": {
-      "sha256": "877a8e531338e8c35aaad10b0115d25c15105b1deacfc402e9dfe9eb683b87bf",
-      "size_bytes": 542
+      "sha256": "3449796a2520b09c4ea2950640179a971fca27e1db502031d391a49d90066dbe",
+      "size_bytes": 533
     },
     "config/high_fidelity_vehicle/pre_urdf_contract.yaml": {
       "sha256": "e02455fd5b9dc7c46a6300c5155de06759ac8a3d4f6766cd0347f69c33f46132",
       "size_bytes": 19880
     },
     "config/high_fidelity_vehicle/throughput_budget.csv": {
-      "sha256": "4cb98968c8878b533c1dce157fdfbd0997628d33ab88ca12738c59bdba7d500f",
-      "size_bytes": 454
+      "sha256": "bbd33f9f227118f054c264376dccf59aff19e7ecac971fa004e6aa82c13516bb",
+      "size_bytes": 450
     },
     "scripts/formal_gripper_linkage_contract.py": {
       "sha256": "48d764cba71c5be0f0fe1de3360b0a8fadfc0ebf270fe13874842bf979065ccc",
@@ -131,8 +131,8 @@
       "size_bytes": 3431
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/MANIFEST.sha256": {
-      "sha256": "55747d38a53e6a5fc1362d5fea3d628a2629ba57a55326fef149eb72bb5bd8d4",
-      "size_bytes": 21268
+      "sha256": "0022a0157796ce6e1aba2dfb18cca9e9e2bda44f1bfdc251839d9aa8dd5f87a7",
+      "size_bytes": 21074
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/README.md": {
       "sha256": "a71c292620c54ad42299257288298b2dd266dd4a55e808ac24064b9c883142b6",
@@ -963,5 +963,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "59ae5854ff4620b9598741263f3021b0a75af608742190c6dbbad514ea010e6c"
+  "source_inventory_sha256": "54e76044910a66678a9e2d8b4d3d0d80e3bc5d3cd3b79ed9e1be1db48dc7c66e"
 }
