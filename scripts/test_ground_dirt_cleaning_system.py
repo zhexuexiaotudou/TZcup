@@ -114,6 +114,28 @@ def test_lift_trajectory_and_wait_budget_respect_the_physical_contract():
     assert "point.time_from_start.sec = 3" not in source
 
 
+def test_ground_dirt_motion_uses_the_product_safety_command_chain():
+    source = VALIDATOR.read_text(encoding="utf-8")
+    runner = RUNNER.read_text(encoding="utf-8")
+    for setting in (
+        "enable_safety_manager:=true",
+        "start_simulation_safety_inputs:=true",
+        "start_power_system_simulators:=true",
+        "simulation_initial_estop_active:=false",
+        "high_bandwidth_sensor_runtime:=false",
+        "start_localization:=false",
+    ):
+        assert setting in runner
+    assert 'Twist, "/cmd_vel_gate", 10' in source
+    assert 'Float64MultiArray, "/safety/command/brush", 10' in source
+    assert 'Bool, "/safety/actuators_enabled", 10' not in source
+    assert 'TwistStamped, "/base_controller/cmd_vel", 10' not in source
+    assert 'Empty, "/safety/control_heartbeat", 10' in source
+    assert "self.main_power.publish(Bool(data=True))" in source
+    assert "self.estop.publish(Bool(data=False))" in source
+    assert "self.estop_reset.publish(Bool(data=True))" in source
+
+
 def test_prepared_random_episode_has_one_square_metre_cellized_patch_and_20_litter_bodies(tmp_path):
     episode = tmp_path / "episode"
     subprocess.run(

@@ -13,12 +13,12 @@ import subprocess
 import time
 
 import rclpy
-from geometry_msgs.msg import TwistStamped
+from geometry_msgs.msg import Twist
 from ros_gz_interfaces.msg import Entity
 from ros_gz_interfaces.srv import SetEntityPose
 from rosgraph_msgs.msg import Clock
 from rclpy.node import Node
-from std_msgs.msg import Bool, Float64MultiArray, String
+from std_msgs.msg import Bool, Empty, Float64MultiArray, String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 from formal_cleaning_lift_recovery_core import trajectory_duration_s
@@ -96,11 +96,19 @@ class Probe(Node):
             JointTrajectory, "/cleaning_controller/joint_trajectory", 10
         )
         self.brush = self.create_publisher(
-            Float64MultiArray, "/brush_controller/commands", 10
+            Float64MultiArray, "/safety/command/brush", 10
         )
-        self.drive = self.create_publisher(
-            TwistStamped, "/base_controller/cmd_vel", 10
+        self.drive = self.create_publisher(Twist, "/cmd_vel_gate", 10)
+        self.main_power = self.create_publisher(
+            Bool, "/formal_vehicle/simulation/command/main_power", 10
         )
+        self.estop = self.create_publisher(
+            Bool, "/formal_vehicle/simulation/command/emergency_stop", 10
+        )
+        self.estop_reset = self.create_publisher(
+            Bool, "/formal_vehicle/simulation/command/emergency_stop_reset", 10
+        )
+        self.heartbeat = self.create_publisher(Empty, "/safety/control_heartbeat", 10)
         self.set_pose = self.create_client(SetEntityPose, f"/world/{world}/set_pose")
         self.create_subscription(String, f"{ROOT}/status_json", self._on_status, 50)
         self.create_subscription(Clock, "/clock", self._on_clock, 50)
@@ -129,15 +137,18 @@ class Probe(Node):
         self.cleaning.publish(trajectory)
 
     def command(self, *, enabled: bool, brushes: bool, speed: float) -> None:
+        self.main_power.publish(Bool(data=True))
+        self.estop.publish(Bool(data=False))
+        self.estop_reset.publish(Bool(data=True))
+        self.heartbeat.publish(Empty())
         self.enable.publish(Bool(data=enabled))
         self.brush.publish(
             Float64MultiArray(
                 data=[8.0, -8.0, 12.0] if brushes else [0.0, 0.0, 0.0]
             )
         )
-        twist = TwistStamped()
-        twist.header.stamp = self.get_clock().now().to_msg()
-        twist.twist.linear.x = speed
+        twist = Twist()
+        twist.linear.x = speed
         self.drive.publish(twist)
 
     def stop(self) -> None:

@@ -50,7 +50,9 @@ python3 "${repo_root}/scripts/prepare_formal_ground_dirt_runtime.py" \
 
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_vehicle_description formal_vehicle_sim.launch.py \
   gui:=false bodywork_visible:=true start_controllers:=true \
-  enable_safety_manager:=false \
+  enable_safety_manager:=true start_simulation_safety_inputs:=true \
+  start_power_system_simulators:=true simulation_initial_estop_active:=false \
+  high_bandwidth_sensor_runtime:=false start_localization:=false \
   world:="${output_dir}/episode/public/world.sdf" \
   > "${output_dir}/launch.log" 2>&1 &
 launch_pid=$!
