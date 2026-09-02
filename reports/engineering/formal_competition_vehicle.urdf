@@ -3601,8 +3601,11 @@
       <topic>/cleaning/squeegee/contact</topic>
       <update_rate>100</update_rate>
       <always_on>true</always_on>
+      <!-- sdformat folds the fixed suction-nozzle child into squeegee_link and
+             consequently renames this URDF collision in the generated SDF.
+             Contact sensors bind against that post-conversion SDF name. -->
       <contact>
-        <collision>squeegee_blade_collision</collision>
+        <collision>squeegee_link_fixed_joint_lump__squeegee_blade_collision_collision</collision>
       </contact>
     </sensor>
   </gazebo>
@@ -6828,7 +6831,7 @@
         <param name="max">1.5707963267948966</param>
       </command_interface>
       <state_interface name="position">
-        <param name="initial_value">0.0</param>
+        <param name="initial_value">2e-05</param>
       </state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>

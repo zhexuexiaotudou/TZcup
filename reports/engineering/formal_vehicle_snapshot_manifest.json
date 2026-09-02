@@ -1,13 +1,13 @@
 {
   "kind": "tzcup_formal_vehicle_snapshot_manifest",
-  "output_inventory_sha256": "75b43a6cd934dee28ad92c31734da6233017c11016a729088a995afbcc4fc664",
+  "output_inventory_sha256": "a66004be4b2d38aa7c185c7944fb127fcc70e8085ae849e41e5f5c56eaaa69a3",
   "outputs": {
     "reports/engineering/formal_competition_vehicle.urdf": {
-      "sha256": "71a0fe3a4ced5c2a34e98db89043cfabd9b8622e8b3be5bf51b78ea82e2a7e51",
-      "size_bytes": 277823
+      "sha256": "58649a9205384352467f517e72b2620d19f7e9c17c5d9ee5ea3500c3a2c218a8",
+      "size_bytes": 278100
     },
     "reports/engineering/formal_vehicle_component_register_report.json": {
-      "sha256": "bae0ddd74592c9f043e3e534b598288706d5870bb53a861767300587e8377077",
+      "sha256": "95aae923ee89b95faa76edd4c91900ffd088389871621716e8279209e7a85322",
       "size_bytes": 11091
     },
     "reports/engineering/formal_vehicle_layout_report.json": {
@@ -939,12 +939,12 @@
       "size_bytes": 23811
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/cleaning_mechanism.xacro": {
-      "sha256": "c54af4d78b9b2886b97434189091df15c51f9cfcb8c85e207e0cdf78c75b4657",
-      "size_bytes": 33975
+      "sha256": "7539e735c4134b91bf320a529cb876e45f9670a6f4d8e312c25af826312d30ef",
+      "size_bytes": 34252
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/control_interfaces.xacro": {
-      "sha256": "fe91d0baf473ce6a1bd7620044a1f22c384da3971c12531b620aa65585cc523b",
-      "size_bytes": 8558
+      "sha256": "596bfccd1443e482bfaf59bef7cfaf01f20f4bdbd46331de968e487348e8bf86",
+      "size_bytes": 8813
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/manipulator_stack.xacro": {
       "sha256": "6aae26411da455ed5b187c81cf7d06242c9c39036d97b349b05703d212691fd8",
@@ -963,5 +963,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "280cbc3bbbad9de5c02cfc0794a4b069dc45036ffbc3a321a86c7d3a6c0517e2"
+  "source_inventory_sha256": "59ae5854ff4620b9598741263f3021b0a75af608742190c6dbbad514ea010e6c"
 }
