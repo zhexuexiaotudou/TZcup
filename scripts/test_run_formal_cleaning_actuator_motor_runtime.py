@@ -30,6 +30,11 @@ def test_runner_requires_frozen_overlay_and_runs_real_collector_then_validator()
     assert "enable_safety_manager:=true" in runner
     assert "start_simulation_safety_inputs:=true" in runner
     assert "start_power_system_simulators:=true" in runner
+    assert "check_formal_water_preoperational_readiness.py" in runner
+    assert "collect_formal_water_safety_preflight.py" in runner
+    assert runner.index("collect_formal_water_safety_preflight.py") < runner.index(
+        "collect_formal_cleaning_actuator_motor_runtime.py"
+    )
 
 
 def test_live_collector_uses_controller_commands_not_joint_state_mutation():

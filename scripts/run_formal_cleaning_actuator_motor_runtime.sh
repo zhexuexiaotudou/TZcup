@@ -14,11 +14,13 @@ raw="${FORMAL_CLEANING_MOTOR_RAW_OUTPUT:-${output%.json}.capture.json}"
 launch_log="${FORMAL_CLEANING_MOTOR_LOG:-${repo_root}/artifacts/formal_cleaning_actuator_motor_runtime.launch.log}"
 runtime_binding="${FORMAL_CLEANING_MOTOR_RUNTIME_BINDING:-${output}.runtime_binding.json}"
 session="${FORMAL_ACCEPTANCE_SESSION:-${repo_root}/artifacts/formal_final_acceptance_session.json}"
+preoperational_readiness="${FORMAL_CLEANING_MOTOR_PREOPERATIONAL_READINESS:-${output%.json}.preoperational_readiness.json}"
+safety_preflight="${FORMAL_CLEANING_MOTOR_SAFETY_PREFLIGHT:-${output%.json}.safety_preflight.json}"
 
 # Retire the complete canonical evidence unit before any runtime preflight.
 # A new sidecar may never overwrite a retained binding and make an earlier
 # result appear attached to the active final-acceptance session.
-for retained in "${output}" "${raw}" "${launch_log}" "${runtime_binding}"; do
+for retained in "${output}" "${raw}" "${launch_log}" "${runtime_binding}" "${preoperational_readiness}" "${safety_preflight}"; do
   if [[ -e "${retained}" || -L "${retained}" ]]; then
     superseded="${retained}.superseded.$(date -u +%Y%m%dT%H%M%SZ).$$"
     [[ ! -e "${superseded}" && ! -L "${superseded}" ]] || {
@@ -100,6 +102,13 @@ if [[ "${ready}" != "true" ]]; then
   echo "Timed out waiting for physical cleaning-motor status" >&2
   exit 3
 fi
+
+# Reuse the shared semantic readiness gates: the topic exists before the
+# controllers and safety managers finish their Gazebo startup sequence.
+python3 "${repo_root}/scripts/check_formal_water_preoperational_readiness.py" \
+  --output "${preoperational_readiness}"
+python3 "${repo_root}/scripts/collect_formal_water_safety_preflight.py" \
+  --stable-duration-s 5.0 --timeout-s 240 --output "${safety_preflight}"
 
 python3 "${repo_root}/scripts/collect_formal_cleaning_actuator_motor_runtime.py" \
   --exercise-live --snapshot-manifest "${snapshot_manifest}" --output "${raw}"
