@@ -243,14 +243,19 @@
       <axis xyz="0 0 -1"/>
       <!-- Actuonix P16-100-256-12-P: 300 N maximum lifted load and
            4.8 mm/s no-load speed from the public manufacturer sheet. -->
-      <limit lower="0.0" upper="0.100" effort="300.0" velocity="0.0048"/>
+      <!-- Keep DART's solver bound 20 um beyond the product's 100 mm travel
+           contract.  The ros2_control position interface remains capped at
+           0.100 m, so product commands and all acceptance thresholds retain
+           the P16's 100 mm stroke.  This small reversible clearance prevents
+           DART from locking an outward-driven prismatic joint in its exact
+           unilateral upper-limit constraint, which would otherwise make a
+           legitimate post-fault retraction physically impossible. -->
+      <limit lower="0.0" upper="0.10002" effort="300.0" velocity="0.0048"/>
       <!-- The moving cleaning subtree is 5.95 kg (58.35 N under gravity).
-           URDF friction is direction-symmetric, so it cannot represent the
-           P16 screw's powered/non-powered one-way hold.  Keep the calibrated
-           80 Ns/m damping and use 60 N breakaway drag: it remains above the
-           suspended load for passive hold while leaving a realistic margin for
-           powered reverse release from the 100 mm physical stop. -->
-      <dynamics damping="80.0" friction="60.0"/>
+           Keep the calibrated 80 Ns/m damping and 80 N breakaway drag; URDF
+           friction is direction-symmetric and is not a substitute for the
+           P16 screw's powered/non-powered one-way holding behaviour. -->
+      <dynamics damping="80.0" friction="80.0"/>
     </joint>
 
     <!-- Actuonix P16 body is chassis-fixed; its rod and clevis ride with the carriage. -->

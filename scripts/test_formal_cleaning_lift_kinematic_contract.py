@@ -51,7 +51,9 @@ def test_cleaning_lift_keeps_single_commanded_100_mm_axis() -> None:
     assert _xyz(lift.find("axis").get("xyz")) == pytest.approx((0.0, 0.0, -1.0))
     limit = lift.find("limit")
     assert float(limit.get("lower")) == pytest.approx(0.0)
-    assert float(limit.get("upper")) == pytest.approx(0.100)
+    # The physical solver has a 20 um DART-only release clearance.  The
+    # product/controller stroke remains exactly 100 mm below.
+    assert float(limit.get("upper")) == pytest.approx(0.10002)
     assert float(limit.get("velocity")) == pytest.approx(0.0048)
     assert float(limit.get("effort")) == pytest.approx(300.0)
 
@@ -66,6 +68,9 @@ def test_cleaning_lift_keeps_single_commanded_100_mm_axis() -> None:
     assert commanded[0].get("lower") == "0.0"
     assert commanded[0].get("upper") == "0.100"
     assert commanded[0].get("initial_position") == "0.0"
+    assert float(limit.get("upper")) - float(commanded[0].get("upper")) == pytest.approx(
+        0.00002
+    )
     assert not any("lift_slider" in (element.get("name") or "") for element in control_root.iter())
 
 
@@ -115,11 +120,12 @@ def test_bearing_blocks_follow_full_lift_travel_inside_guide_span() -> None:
         assert centre_z - bearing_length / 2.0 >= guide_low - 1e-9
         assert centre_z + bearing_length / 2.0 <= guide_high + 1e-9
 
-    # Positive command is a 100 mm downward stroke; q=0 is the raised passive
-    # default and q=upper is the ground-tangent working endpoint.
+    # The DART solver may travel 20 um beyond the product stroke before its
+    # hard constraint.  Product q=0.100 is still the ground-tangent endpoint.
     assert (carriage_origin_z + lift_axis_z * upper) - (
         carriage_origin_z + lift_axis_z * lower
-    ) == pytest.approx(-0.100)
+    ) == pytest.approx(-0.10002)
+    assert upper - 0.100 == pytest.approx(0.00002)
 
 
 def test_mesh_slider_plates_preserve_nonprimitive_visual_and_mass_budget() -> None:
