@@ -122,6 +122,7 @@ STREAM_CONTRACTS: dict[str, dict[str, Any]] = {
 # stamps span 300 ms at the configured rate; fifty IMU stamps span 245 ms.
 SOURCE_FREQUENCY_SAMPLE_TARGETS: dict[str, int] = {
     "/sensors/front_rgbd/depth/image_rect_raw/image": 10,
+    "/sensors/wrist_rgbd/depth/image_rect_raw/image": 10,
     "/sensors/imu/data": 50,
 }
 
