@@ -46,6 +46,8 @@ STALL_REFERENCE_M = 0.125
 LIFT_TRAVEL_APPROACH_M = 0.0995
 LIFT_TRAVEL_APPROACH_TIMEOUT_S = 155.0
 STALL_LATCH_TIMEOUT_S = 6.5
+RECOVERY_LIFT_TARGET_M = 0.060
+RECOVERY_LIFT_TIMEOUT_S = 20.0
 
 
 def _snapshot_binding(path: Path) -> dict[str, str]:
@@ -125,7 +127,24 @@ class Collector(Node):
             last_advance_s=self.last_motor_physics_revision_advance_s,
             now_s=now_s,
         )
-        self.latest["status"] = status
+        # The encoded snapshot is the single coherent motor sample.  Do not let
+        # independently bridged scalar/vector topics combine fields from
+        # different physics updates in the evidence record.
+        motors = status["motors"]
+        self.latest.update(
+            {
+                "status": status,
+                "fault": bool(status["fault_active"]),
+                "current_a": [float(row["current_a"]) for row in motors],
+                "temperature_c": [float(row["temperature_c"]) for row in motors],
+                "output_load": [float(row["estimated_output_load"]) for row in motors],
+                "total_current_a": float(status["total_current_a"]),
+                "total_power_w": float(status["total_power_w"]),
+                "lift_reference_m": float(motors[3]["command"]),
+                "lift_position_m": float(motors[3]["measured_position"]),
+                "lift_velocity_m_s": float(motors[3]["measured_speed"]),
+            }
+        )
         self.samples.append(
             {
                 "monotonic_s": time.monotonic(),
@@ -248,6 +267,23 @@ def _reset_recovered(node: Collector) -> bool:
     )
 
 
+def _lift_retracted_and_idle(node: Collector) -> bool:
+    motors = _motors(node)
+    currents = node.latest.get("current_a", [])
+    return (
+        _reset_recovered(node)
+        and len(currents) == len(MOTOR_NAMES)
+        and all(abs(float(current)) <= 1.0e-6 for current in currents)
+        and math.isclose(
+            float(node.latest.get("lift_position_m", math.nan)),
+            RECOVERY_LIFT_TARGET_M,
+            abs_tol=0.002,
+        )
+        and abs(float(node.latest.get("lift_velocity_m_s", math.nan))) <= 0.0003
+        and all(row.get("fault") == "none" for row in motors)
+    )
+
+
 def _bridge_graph(node: Collector) -> dict[str, dict[str, Any]]:
     graph: dict[str, dict[str, Any]] = {}
     for suffix in (
@@ -304,6 +340,10 @@ def run_live_scenario(node: Collector, startup_timeout_s: float) -> None:
         predicate=_stall_and_inhibit,
     ):
         raise TimeoutError("physical lift travel stop did not latch stall and inhibit the vehicle")
+    # Preserve coherent post-stall telemetry in the physical-stop phase.  The
+    # predicate above can observe the first fault update before its callback
+    # has emitted a collector sample.
+    _spin_phase(node, "physical_travel_stop_stall", 0.25)
 
     # The production thermal constants are retained; this phase demonstrates
     # idle cooling after stall, not a live overtemperature trip.
@@ -319,7 +359,17 @@ def run_live_scenario(node: Collector, startup_timeout_s: float) -> None:
             break
     if not _reset_recovered(node):
         raise TimeoutError("idle cooled motor fault did not clear after explicit reset")
-    _spin_phase(node, "recovered_idle", 1.0)
+    # Clear the beyond-travel reference before claiming a healthy idle state;
+    # otherwise a reset re-enables a 0.125 m demand against the 0.100 m stop.
+    node.publish_lift_reference(RECOVERY_LIFT_TARGET_M, 12.0)
+    if not _spin_phase(
+        node,
+        "recovery_retract",
+        RECOVERY_LIFT_TIMEOUT_S,
+        predicate=_lift_retracted_and_idle,
+    ):
+        raise TimeoutError("reset lift did not retract to a healthy idle state")
+    _spin_phase(node, "recovered_idle", 1.0, predicate=_lift_retracted_and_idle)
 
 
 def main() -> int:

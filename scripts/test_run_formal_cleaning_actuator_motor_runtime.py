@@ -49,8 +49,16 @@ def test_live_collector_uses_controller_commands_not_joint_state_mutation():
     assert "LIFT_TRAVEL_APPROACH_M = 0.0995" in collector
     assert "LIFT_TRAVEL_APPROACH_TIMEOUT_S = 155.0" in collector
     assert "STALL_LATCH_TIMEOUT_S = 6.5" in collector
+    assert "RECOVERY_LIFT_TARGET_M = 0.060" in collector
+    assert "RECOVERY_LIFT_TIMEOUT_S = 20.0" in collector
     assert "predicate=_near_lift_travel_stop" in collector
     assert "predicate=_stall_and_inhibit" in collector
+    assert '"fault": bool(status["fault_active"])' in collector
+    assert '"lift_reference_m": float(motors[3]["command"])' in collector
+    assert '"lift_position_m": float(motors[3]["measured_position"])' in collector
+    assert '"physical_travel_stop_stall", 0.25' in collector
+    assert "recovery_retract" in collector
+    assert "predicate=_lift_retracted_and_idle" in collector
     assert "create_publisher(JointState" not in collector
     assert '"joint_state_mutation_used": False' in collector
     assert '"live_overtemperature_claimed": False' in collector
