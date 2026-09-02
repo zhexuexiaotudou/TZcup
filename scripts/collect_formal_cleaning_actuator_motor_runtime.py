@@ -47,7 +47,13 @@ LIFT_TRAVEL_APPROACH_M = 0.0995
 LIFT_TRAVEL_APPROACH_TIMEOUT_S = 155.0
 STALL_LATCH_TIMEOUT_S = 6.5
 RECOVERY_LIFT_TARGET_M = 0.060
-RECOVERY_LIFT_TIMEOUT_S = 20.0
+# This is a wall-clock observation budget, not simulated time.  The complete
+# DART vehicle can run below real time while the loaded P16 is travelling: a
+# real capture needed nearly 20 wall seconds to cover only 29.3 mm after reset
+# at the reported 4.8 mm/s simulation velocity.  Keep 35 seconds so the full
+# 40 mm reset stroke and the final idle sample are observable without relaxing
+# either the physical stop or recovery-position criteria.
+RECOVERY_LIFT_TIMEOUT_S = 35.0
 
 
 def _snapshot_binding(path: Path) -> dict[str, str]:

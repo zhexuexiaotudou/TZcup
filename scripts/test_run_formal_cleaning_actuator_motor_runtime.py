@@ -50,7 +50,8 @@ def test_live_collector_uses_controller_commands_not_joint_state_mutation():
     assert "LIFT_TRAVEL_APPROACH_TIMEOUT_S = 155.0" in collector
     assert "STALL_LATCH_TIMEOUT_S = 6.5" in collector
     assert "RECOVERY_LIFT_TARGET_M = 0.060" in collector
-    assert "RECOVERY_LIFT_TIMEOUT_S = 20.0" in collector
+    assert "RECOVERY_LIFT_TIMEOUT_S = 35.0" in collector
+    assert "wall-clock observation budget, not simulated time" in collector
     assert "predicate=_near_lift_travel_stop" in collector
     assert "predicate=_stall_and_inhibit" in collector
     assert '"fault": bool(status["fault_active"])' in collector
