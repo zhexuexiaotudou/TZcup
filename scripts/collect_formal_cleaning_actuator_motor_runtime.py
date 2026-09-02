@@ -413,7 +413,12 @@ def run_live_scenario(node: Collector, startup_timeout_s: float) -> None:
         predicate=_lift_retracted_and_idle,
     ):
         raise TimeoutError("reset lift did not retract to a healthy idle state")
-    _spin_phase(node, "recovered_idle", 1.0, predicate=_lift_retracted_and_idle)
+    # Do not return on the already-valid cached sample: the formal validator
+    # requires fresh ``recovered_idle`` telemetry that proves the healthy
+    # state persisted after the retraction predicate first became true.
+    _spin_phase(node, "recovered_idle", 1.0)
+    if not _lift_retracted_and_idle(node):
+        raise RuntimeError("reset lift did not remain at a healthy idle state")
 
 
 def main() -> int:

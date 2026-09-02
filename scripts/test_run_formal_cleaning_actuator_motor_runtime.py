@@ -61,6 +61,8 @@ def test_live_collector_uses_controller_commands_not_joint_state_mutation():
     assert '"lift_position_m": float(motors[3]["measured_position"])' in collector
     assert '"physical_travel_stop_stall", 0.25' in collector
     assert "recovery_retract" in collector
+    assert '"recovered_idle", 1.0' in collector
+    assert "fresh ``recovered_idle`` telemetry" in collector
     assert "recovery_reference_arm" in collector
     assert "_recovery_reference_armed" in collector
     assert "recovery lift reference was not armed before explicit reset" in collector
