@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import json
 from pathlib import Path
 import subprocess
@@ -93,6 +94,24 @@ def test_runtime_gate_requires_negative_partial_conservation_and_litter_retentio
     assert 'result["runtime_gate_binding"] = runtime_binding' in source
     assert 'result["acceptance_session_binding"] = acceptance_session_binding' in source
     assert 'result["runtime_closure_binding"] = runtime_binding["runtime_closure_binding"]' in source
+
+
+def test_lift_trajectory_and_wait_budget_respect_the_physical_contract():
+    source = VALIDATOR.read_text(encoding="utf-8")
+    tree = ast.parse(source)
+    constants = {
+        node.targets[0].id: ast.literal_eval(node.value)
+        for node in tree.body
+        if isinstance(node, ast.Assign)
+        and len(node.targets) == 1
+        and isinstance(node.targets[0], ast.Name)
+        and node.targets[0].id
+        in {"CLEANING_LIFT_WORK_READY_M", "CLEANING_LIFT_POSE_TIMEOUT_SIM_S"}
+    }
+    assert constants["CLEANING_LIFT_WORK_READY_M"] == 0.095
+    assert constants["CLEANING_LIFT_POSE_TIMEOUT_SIM_S"] > 0.100 / 0.0048
+    assert "trajectory_duration_s(current_m, lift_m)" in source
+    assert "point.time_from_start.sec = 3" not in source
 
 
 def test_prepared_random_episode_has_one_square_metre_cellized_patch_and_20_litter_bodies(tmp_path):

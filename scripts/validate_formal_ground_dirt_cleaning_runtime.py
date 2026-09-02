@@ -21,6 +21,7 @@ from rclpy.node import Node
 from std_msgs.msg import Bool, Float64MultiArray, String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
+from formal_cleaning_lift_recovery_core import trajectory_duration_s
 from formal_runtime_gate_binding import load_binding
 
 
@@ -31,6 +32,8 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SNAPSHOT = REPOSITORY_ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.json"
 DEFAULT_SESSION = REPOSITORY_ROOT / "artifacts/formal_final_acceptance_session.json"
 REPORT_ID = "tzcup_formal_ground_dirt_physical_cleaning_v1"
+CLEANING_LIFT_WORK_READY_M = 0.095
+CLEANING_LIFT_POSE_TIMEOUT_SIM_S = 45.0
 
 
 def _source_binding(snapshot_path: Path) -> dict[str, str]:
@@ -112,7 +115,14 @@ class Probe(Node):
     def command_pose(self, lift_m: float) -> None:
         point = JointTrajectoryPoint()
         point.positions = [lift_m]
-        point.time_from_start.sec = 3
+        current_m = (
+            float(self.status["lift_position_m"])
+            if self.status is not None and "lift_position_m" in self.status
+            else 0.0
+        )
+        duration_ns = int(round(trajectory_duration_s(current_m, lift_m) * 1_000_000_000))
+        point.time_from_start.sec = duration_ns // 1_000_000_000
+        point.time_from_start.nanosec = duration_ns % 1_000_000_000
         trajectory = JointTrajectory()
         trajectory.joint_names = ["cleaning_lift_joint"]
         trajectory.points = [point]
@@ -231,7 +241,10 @@ def set_work_pose(node: Probe, lift_m: float) -> None:
         node.command(enabled=False, brushes=False, speed=0.0)
         rclpy.spin_once(node, timeout_sec=0.08)
     predicate = (
-        (lambda: node.status is not None and float(node.status["lift_position_m"]) >= 0.08)
+        (
+            lambda: node.status is not None
+            and float(node.status["lift_position_m"]) >= CLEANING_LIFT_WORK_READY_M
+        )
         if lift_m > 0.05
         else (lambda: node.status is not None and float(node.status["lift_position_m"]) <= 0.04)
     )
@@ -239,7 +252,7 @@ def set_work_pose(node: Probe, lift_m: float) -> None:
         node,
         predicate,
         label=f"cleaning lift {lift_m:.3f} m",
-        timeout_sim_s=12.0,
+        timeout_sim_s=CLEANING_LIFT_POSE_TIMEOUT_SIM_S,
         hard_wall_s=360.0,
         callback=lambda: node.command(enabled=False, brushes=False, speed=0.0),
     )
