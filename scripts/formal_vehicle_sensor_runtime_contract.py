@@ -122,7 +122,11 @@ STREAM_CONTRACTS: dict[str, dict[str, Any]] = {
 # stamps span 300 ms at the configured rate; fifty IMU stamps span 245 ms.
 SOURCE_FREQUENCY_SAMPLE_TARGETS: dict[str, int] = {
     "/sensors/front_rgbd/depth/image_rect_raw/image": 10,
-    "/sensors/wrist_rgbd/depth/image_rect_raw/image": 10,
+    # Thirty-two 30 Hz source stamps cover at least one second before a lazy
+    # wrist-D435 bridge subscription is retired.
+    "/sensors/wrist_rgbd/depth/image_rect_raw/image": 32,
+    "/sensors/wrist_rgbd/infra1/image_rect_raw": 32,
+    "/sensors/wrist_rgbd/infra2/image_rect_raw": 32,
     "/sensors/imu/data": 50,
 }
 
