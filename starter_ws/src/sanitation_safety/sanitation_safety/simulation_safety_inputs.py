@@ -8,6 +8,7 @@ import threading
 import time
 
 import rclpy
+from rclpy._rclpy_pybind11 import RCLError
 from rclpy.callback_groups import MutuallyExclusiveCallbackGroup
 from rclpy.event_handler import SubscriptionEventCallbacks
 from rclpy.executors import ExternalShutdownException, MultiThreadedExecutor
@@ -693,6 +694,9 @@ def main(args=None) -> None:
             node._raise_if_safety_publish_failed()
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
+    except RCLError as error:
+        if rclpy.ok(context=node.context):
+            fatal_error = error
     except BaseException as error:
         fatal_error = error
     finally:

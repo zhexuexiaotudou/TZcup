@@ -120,6 +120,24 @@ def test_error_and_missing_stable_marker_fail(tmp_path: Path) -> None:
     assert report["checks"]["zero_unexpected_warning_or_error_lines"] is False
 
 
+def test_shutdown_traceback_and_nonzero_node_exit_remain_fatal(tmp_path: Path) -> None:
+    report = audit(
+        _write(
+            tmp_path,
+            _allowed_lines()
+            + [
+                STABLE_MARKER,
+                "[node-2] Traceback (most recent call last):",
+                "[node-2] rclpy._rclpy_pybind11.RCLError: the given context is not valid",
+                "[ERROR] [node-2]: process has died [pid 42, exit code 1]",
+            ],
+        )
+    )
+    assert report["passed"] is False
+    assert report["checks"]["zero_unexpected_warning_or_error_lines"] is False
+    assert report["checks"]["zero_warning_or_error_at_or_after_stable_window"] is False
+
+
 def test_explicit_diagnostic_stable_marker_is_supported(tmp_path: Path) -> None:
     diagnostic_marker = "[DIAG_STABLE] typed cleaning motor telemetry ready"
     report = audit(

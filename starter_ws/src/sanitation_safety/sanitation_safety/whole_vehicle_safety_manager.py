@@ -9,6 +9,7 @@ import time
 from dataclasses import replace
 
 import rclpy
+from rclpy._rclpy_pybind11 import RCLError
 from action_msgs.srv import CancelGoal
 from builtin_interfaces.msg import Duration
 from controller_manager_msgs.srv import ListControllers, SwitchController
@@ -1267,6 +1268,9 @@ def main(args=None) -> None:
             node._raise_if_publish_failed()
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
+    except RCLError as error:
+        if rclpy.ok(context=node.context):
+            fatal_error = error
     except BaseException as error:
         fatal_error = error
     finally:
