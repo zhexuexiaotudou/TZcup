@@ -28,10 +28,76 @@ def _write(tmp_path: Path, lines: list[str]) -> Path:
     return path
 
 
+def _preembedded_lines() -> list[str]:
+    path = "/tmp/water_normal_preembedded_sensor_world.sdf"
+    sensor_names = (
+        "front_rgbd_d435_infra1",
+        "front_rgbd_d435_infra2",
+        "front_rgbd_d435_rgbd",
+        "mid360",
+        "rear_left_fisheye_imx291",
+        "rear_right_fisheye_imx291",
+        "wrist_rgbd_d435_infra1",
+        "wrist_rgbd_d435_infra2",
+        "wrist_rgbd_d435_rgbd",
+    )
+    return [
+        "[gazebo-1] Warning [Utils.cc:132] "
+        f'[/sdf/model/link/sensor[@name="{name}"]/gz_frame_id:{path}:L1]: '
+        "XML Element[gz_frame_id], child of element[sensor], not defined in SDF"
+        for name in sensor_names
+    ]
+
+
 def test_exact_known_startup_warnings_pass(tmp_path: Path) -> None:
     report = audit(_write(tmp_path, _allowed_lines() + [STABLE_MARKER, "healthy"]))
     assert report["passed"] is True
     assert len(report["rules"]) == len(RULES)
+    assert report["warning_profile"] == "dynamic"
+
+
+def test_exact_preembedded_snapshot_warning_profile_passes(tmp_path: Path) -> None:
+    report = audit(
+        _write(
+            tmp_path,
+            _allowed_lines() + _preembedded_lines() + [STABLE_MARKER, "healthy"],
+        )
+    )
+    assert report["passed"] is True
+    assert report["warning_profile"] == "preembedded_sensor_world"
+    assert len(report["rules"]) == len(RULES) + 9
+
+
+def test_preembedded_profile_missing_repeated_unknown_or_late_warning_fails(
+    tmp_path: Path,
+) -> None:
+    baseline = _allowed_lines() + _preembedded_lines()
+    missing = audit(_write(tmp_path, baseline[:-1] + [STABLE_MARKER]))
+    repeated = audit(_write(tmp_path, baseline + [baseline[-1], STABLE_MARKER]))
+    unknown = audit(
+        _write(
+            tmp_path,
+            baseline
+            + [
+                "[gazebo-1] Warning [Utils.cc:132] "
+                '[/sdf/model/link/sensor[@name="unknown_sensor"]/gz_frame_id:'
+                "/tmp/water_normal_preembedded_sensor_world.sdf:L1]: "
+                "XML Element[gz_frame_id], child of element[sensor], not defined in SDF",
+                STABLE_MARKER,
+            ],
+        )
+    )
+    late = audit(_write(tmp_path, baseline + [STABLE_MARKER, baseline[-1]]))
+
+    assert all(report["passed"] is False for report in (missing, repeated, unknown, late))
+    assert missing["rules"][
+        "sdformat_wrist_rgbd_d435_rgbd_gz_frame_id_extension"
+    ]["passed"] is False
+    assert repeated["rules"][
+        "sdformat_wrist_rgbd_d435_rgbd_gz_frame_id_extension"
+    ]["observed_count"] == 2
+    assert unknown["checks"]["zero_unexpected_warning_or_error_lines"] is False
+    assert late["checks"]["zero_warning_or_error_at_or_after_stable_window"] is False
 
 
 def test_new_repeated_or_runtime_warning_fails(tmp_path: Path) -> None:

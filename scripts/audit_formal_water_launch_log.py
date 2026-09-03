@@ -22,6 +22,9 @@ DIAGNOSTIC_RE = re.compile(
     r"publish_thread_failed|join_fatal",
     re.IGNORECASE,
 )
+PREEMBEDDED_SENSOR_WORLD_PATH_RE = re.compile(
+    r"[._]preembedded_sensor_world\.sdf"
+)
 
 
 @dataclass(frozen=True)
@@ -67,6 +70,76 @@ RULES = (
     ),
 )
 
+# The generated preembedded world retains the same three known warnings above
+# and adds these exact nine sensor declarations.  Keep this list separate from
+# the normal runtime profile: accepting these names on a dynamic launch would
+# hide an unexpected generated-world dependency.
+PREEMBEDDED_SENSOR_WORLD_RULES = (
+    WarningRule(
+        "sdformat_front_rgbd_d435_infra1_gz_frame_id_extension",
+        re.compile(
+            r'sensor\[@name="front_rgbd_d435_infra1"\]/gz_frame_id:.*'
+            r'[._]preembedded_sensor_world\.sdf:.*XML Element\[gz_frame_id\].*not defined in SDF'
+        ),
+    ),
+    WarningRule(
+        "sdformat_front_rgbd_d435_infra2_gz_frame_id_extension",
+        re.compile(
+            r'sensor\[@name="front_rgbd_d435_infra2"\]/gz_frame_id:.*'
+            r'[._]preembedded_sensor_world\.sdf:.*XML Element\[gz_frame_id\].*not defined in SDF'
+        ),
+    ),
+    WarningRule(
+        "sdformat_front_rgbd_d435_rgbd_gz_frame_id_extension",
+        re.compile(
+            r'sensor\[@name="front_rgbd_d435_rgbd"\]/gz_frame_id:.*'
+            r'[._]preembedded_sensor_world\.sdf:.*XML Element\[gz_frame_id\].*not defined in SDF'
+        ),
+    ),
+    WarningRule(
+        "sdformat_mid360_gz_frame_id_extension",
+        re.compile(
+            r'sensor\[@name="mid360"\]/gz_frame_id:.*[._]preembedded_sensor_world\.sdf:.*'
+            r'XML Element\[gz_frame_id\].*not defined in SDF'
+        ),
+    ),
+    WarningRule(
+        "sdformat_rear_left_fisheye_imx291_gz_frame_id_extension",
+        re.compile(
+            r'sensor\[@name="rear_left_fisheye_imx291"\]/gz_frame_id:.*'
+            r'[._]preembedded_sensor_world\.sdf:.*XML Element\[gz_frame_id\].*not defined in SDF'
+        ),
+    ),
+    WarningRule(
+        "sdformat_rear_right_fisheye_imx291_gz_frame_id_extension",
+        re.compile(
+            r'sensor\[@name="rear_right_fisheye_imx291"\]/gz_frame_id:.*'
+            r'[._]preembedded_sensor_world\.sdf:.*XML Element\[gz_frame_id\].*not defined in SDF'
+        ),
+    ),
+    WarningRule(
+        "sdformat_wrist_rgbd_d435_infra1_gz_frame_id_extension",
+        re.compile(
+            r'sensor\[@name="wrist_rgbd_d435_infra1"\]/gz_frame_id:.*'
+            r'[._]preembedded_sensor_world\.sdf:.*XML Element\[gz_frame_id\].*not defined in SDF'
+        ),
+    ),
+    WarningRule(
+        "sdformat_wrist_rgbd_d435_infra2_gz_frame_id_extension",
+        re.compile(
+            r'sensor\[@name="wrist_rgbd_d435_infra2"\]/gz_frame_id:.*'
+            r'[._]preembedded_sensor_world\.sdf:.*XML Element\[gz_frame_id\].*not defined in SDF'
+        ),
+    ),
+    WarningRule(
+        "sdformat_wrist_rgbd_d435_rgbd_gz_frame_id_extension",
+        re.compile(
+            r'sensor\[@name="wrist_rgbd_d435_rgbd"\]/gz_frame_id:.*'
+            r'[._]preembedded_sensor_world\.sdf:.*XML Element\[gz_frame_id\].*not defined in SDF'
+        ),
+    ),
+)
+
 
 def audit(
     log_path: Path,
@@ -78,6 +151,12 @@ def audit(
         raise ValueError("expected_stable_marker_count must be at least 1")
     raw = log_path.read_bytes()
     lines = [ANSI_RE.sub("", line) for line in raw.decode("utf-8", errors="replace").splitlines()]
+    preembedded_sensor_world = any(
+        PREEMBEDDED_SENSOR_WORLD_PATH_RE.search(line) for line in lines
+    )
+    active_rules = RULES + (
+        PREEMBEDDED_SENSOR_WORLD_RULES if preembedded_sensor_world else ()
+    )
     marker_lines = [
         index for index, line in enumerate(lines, start=1) if stable_marker in line
     ]
@@ -86,7 +165,7 @@ def audit(
     # runtime window begins at the final marker, while the exact expected count
     # remains a separate fail-closed check for callers that combine logs.
     marker_line = marker_lines[-1] if marker_lines else None
-    matches: dict[str, list[int]] = {rule.identifier: [] for rule in RULES}
+    matches: dict[str, list[int]] = {rule.identifier: [] for rule in active_rules}
     unexpected: list[dict[str, object]] = []
     runtime_diagnostics: list[dict[str, object]] = []
 
@@ -94,7 +173,7 @@ def audit(
         if not DIAGNOSTIC_RE.search(line):
             continue
         matched = None
-        for rule in RULES:
+        for rule in active_rules:
             if line.startswith(rule.source_prefix) and rule.pattern.search(line):
                 matched = rule
                 break
@@ -123,7 +202,7 @@ def audit(
             "startup_only": True,
             "passed": len(matches[rule.identifier]) == rule.expected_count,
         }
-        for rule in RULES
+        for rule in active_rules
     }
     checks = {
         "expected_stable_window_marker_count": (
@@ -137,11 +216,14 @@ def audit(
     }
     passed = all(checks.values())
     return {
-        "schema_version": 2,
+        "schema_version": 3,
         "status": "FORMAL_WATER_LAUNCH_LOG_AUDIT_PASSED" if passed else "FAILED",
         "passed": passed,
         "log": str(log_path),
         "log_sha256": hashlib.sha256(raw).hexdigest(),
+        "warning_profile": (
+            "preembedded_sensor_world" if preembedded_sensor_world else "dynamic"
+        ),
         "stable_window_marker": stable_marker,
         "expected_stable_window_marker_count": expected_stable_marker_count,
         "stable_window_marker_lines": marker_lines,
