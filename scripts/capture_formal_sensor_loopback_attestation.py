@@ -135,9 +135,9 @@ def attest(
         "GZ_PARTITION": partition,
         "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp",
         "ROS_AUTOMATIC_DISCOVERY_RANGE": "LOCALHOST",
-        "ROS_LOCALHOST_ONLY": "1",
         "CYCLONEDDS_URI": expected_cyclonedds_uri,
     }
+    forbidden_discovery_environment = ("ROS_LOCALHOST_ONLY", "ROS_STATIC_PEERS")
     process_evidence: list[dict[str, Any]] = []
     for row in rows:
         environment = row["environment"]
@@ -149,6 +149,11 @@ def attest(
         relays = {
             name: environment[name]
             for name in ("GZ_RELAY", "IGN_RELAY")
+            if name in environment
+        }
+        inherited_discovery = {
+            name: environment[name]
+            for name in forbidden_discovery_environment
             if name in environment
         }
         if mismatches:
@@ -169,6 +174,15 @@ def attest(
                     "relays": relays,
                 }
             )
+        if inherited_discovery:
+            blockers.append(
+                {
+                    "code": "ROS_DISCOVERY_ENVIRONMENT_PRESENT",
+                    "pid": row["pid"],
+                    "role": row["role"],
+                    "environment": inherited_discovery,
+                }
+            )
         process_evidence.append(
             {
                 "pid": row["pid"],
@@ -176,7 +190,12 @@ def attest(
                 "cmdline": row["cmdline"],
                 "transport_environment": {
                     name: environment.get(name)
-                    for name in (*required_environment, "GZ_RELAY", "IGN_RELAY")
+                    for name in (
+                        *required_environment,
+                        *forbidden_discovery_environment,
+                        "GZ_RELAY",
+                        "IGN_RELAY",
+                    )
                     if name in environment
                 },
             }
@@ -190,6 +209,7 @@ def attest(
         "recorded_epoch_ns": time.time_ns(),
         "gz_partition": partition,
         "expected_transport_environment": required_environment,
+        "ros_discovery_variables_required_absent": list(forbidden_discovery_environment),
         "relay_variables_required_absent": ["GZ_RELAY", "IGN_RELAY"],
         "acceptance_session": {"path": str(session), "sha256": sha256(session)},
         "runtime_closure_manifest": {

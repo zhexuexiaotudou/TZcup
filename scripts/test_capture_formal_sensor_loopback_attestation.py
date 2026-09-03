@@ -24,7 +24,13 @@ def _process(proc: Path, pid: int, cmdline: list[str], environment: dict[str, st
     )
 
 
-def _fixture(tmp_path: Path, *, bridge_ip: str = "127.0.0.1", relay: bool = False):
+def _fixture(
+    tmp_path: Path,
+    *,
+    bridge_ip: str = "127.0.0.1",
+    relay: bool = False,
+    inherited_discovery: dict[str, str] | None = None,
+):
     proc = tmp_path / "proc"
     proc.mkdir()
     session = tmp_path / "session.json"
@@ -39,9 +45,10 @@ def _fixture(tmp_path: Path, *, bridge_ip: str = "127.0.0.1", relay: bool = Fals
         "GZ_PARTITION": partition,
         "RMW_IMPLEMENTATION": "rmw_cyclonedds_cpp",
         "ROS_AUTOMATIC_DISCOVERY_RANGE": "LOCALHOST",
-        "ROS_LOCALHOST_ONLY": "1",
         "CYCLONEDDS_URI": uri,
     }
+    if inherited_discovery:
+        base.update(inherited_discovery)
     _process(proc, 101, ["/usr/bin/ruby", "/opt/gz", "sim", "-r"], base)
     bridge = {**base, "GZ_IP": bridge_ip}
     if relay:
@@ -65,6 +72,10 @@ def test_accepts_live_gazebo_and_bridge_with_exact_loopback_environment(tmp_path
         "gazebo_sim",
         "ros_gz_parameter_bridge",
     }
+    assert result["ros_discovery_variables_required_absent"] == [
+        "ROS_LOCALHOST_ONLY",
+        "ROS_STATIC_PEERS",
+    ]
 
 
 def test_rejects_non_loopback_bridge_or_relay(tmp_path: Path) -> None:
@@ -83,6 +94,32 @@ def test_rejects_non_loopback_bridge_or_relay(tmp_path: Path) -> None:
     assert {row["code"] for row in result["blockers"]} == {
         "LOOPBACK_ENVIRONMENT_MISMATCH",
         "RELAY_ENVIRONMENT_PRESENT",
+    }
+
+
+def test_rejects_inherited_legacy_or_static_ros_discovery(tmp_path: Path) -> None:
+    proc, partition, uri, session, closure = _fixture(
+        tmp_path,
+        inherited_discovery={
+            "ROS_LOCALHOST_ONLY": "1",
+            "ROS_STATIC_PEERS": "192.0.2.10",
+        },
+    )
+    result = MODULE.attest(
+        partition=partition,
+        expected_cyclonedds_uri=uri,
+        session=session,
+        closure_manifest=closure,
+        timeout_s=0,
+        proc_root=proc,
+    )
+    assert result["passed"] is False
+    blockers = [
+        row for row in result["blockers"] if row["code"] == "ROS_DISCOVERY_ENVIRONMENT_PRESENT"
+    ]
+    assert len(blockers) == 2
+    assert {frozenset(row["environment"].items()) for row in blockers} == {
+        frozenset({"ROS_LOCALHOST_ONLY": "1", "ROS_STATIC_PEERS": "192.0.2.10"}.items())
     }
 
 

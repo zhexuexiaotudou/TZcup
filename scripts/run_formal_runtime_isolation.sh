@@ -64,7 +64,7 @@ formal_runtime_configure() {
   # settings into a high-bandwidth Gazebo run.
   export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
   export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
-  export ROS_LOCALHOST_ONLY=1
+  unset ROS_LOCALHOST_ONLY ROS_STATIC_PEERS
   # Gazebo Transport has its own discovery/data plane and does not inherit the
   # CycloneDDS loopback policy below.  High-bandwidth camera/lidar topics must
   # never select the WSL virtual Ethernet adapter: on affected Windows hosts

@@ -96,7 +96,7 @@ def test_shared_helper_owns_the_complete_isolation_policy() -> None:
         "ROS2CLI_DISABLE_DAEMON=1",
         "RMW_IMPLEMENTATION=rmw_cyclonedds_cpp",
         "ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST",
-        "ROS_LOCALHOST_ONLY=1",
+        "unset ROS_LOCALHOST_ONLY ROS_STATIC_PEERS",
         "GZ_IP=127.0.0.1",
         "IGN_IP=127.0.0.1",
         "unset GZ_RELAY IGN_RELAY",
@@ -126,6 +126,28 @@ def test_shared_helper_owns_the_complete_isolation_policy() -> None:
     assert 'RMW_IMPLEMENTATION="${RMW_IMPLEMENTATION:-' not in source
     assert 'CYCLONEDDS_URI:-' not in source
     assert 'CYCLONEDDS_URI="file://${helper_dir}/../config/' not in source
+
+
+def test_shared_helper_replaces_legacy_ros_discovery_environment() -> None:
+    harness = """
+set -euo pipefail
+export ROS_LOCALHOST_ONLY=1
+export ROS_STATIC_PEERS=192.0.2.10
+formal_runtime_configure 81
+[[ "${ROS_AUTOMATIC_DISCOVERY_RANGE}" == "LOCALHOST" ]]
+[[ -z "${ROS_LOCALHOST_ONLY+x}" ]]
+[[ -z "${ROS_STATIC_PEERS+x}" ]]
+"""
+    result = subprocess.run(
+        ["bash"],
+        check=False,
+        capture_output=True,
+        input=(HELPER.read_text(encoding="utf-8").replace("\r", "") + harness).encode(
+            "utf-8"
+        ),
+        timeout=10,
+    )
+    assert result.returncode == 0, result.stderr.decode("utf-8", errors="replace")
 
 
 def test_formal_vehicle_launch_pins_gazebo_transport_before_simulator_actions() -> None:

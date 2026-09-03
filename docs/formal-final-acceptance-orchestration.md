@@ -201,8 +201,8 @@ Docker/其他 WSL 工作负载。pool-tag 查询受系统版本、权限和内�
 
 正式单机运行同时锁死 ROS 2 与 Gazebo Transport 的接口选择：
 `RMW_IMPLEMENTATION=rmw_cyclonedds_cpp`、`ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST`、
-`ROS_LOCALHOST_ONLY=1`、CycloneDDS `lo` 配置、`GZ_IP=127.0.0.1` 和
-`IGN_IP=127.0.0.1` 均不可被调用环境放宽，`GZ_RELAY/IGN_RELAY` 会被清除；主仿真 launch
+CycloneDDS `lo` 配置、`GZ_IP=127.0.0.1` 和 `IGN_IP=127.0.0.1` 均不可被调用环境放宽，
+`ROS_LOCALHOST_ONLY`、`ROS_STATIC_PEERS`、`GZ_RELAY/IGN_RELAY` 会被清除；主仿真 launch
 还会在创建 Gazebo/bridge action 前再次写入 loopback 地址。`GZ_PARTITION` 只负责命名空间
 隔离，不能替代上述网卡绑定。修改此策略后必须重新构建冻结 runtime、记录新 closure，并在
 NDIS 启动门恢复正常后用新 run-root 全量重跑，不能继续使用旧 frozen install。
