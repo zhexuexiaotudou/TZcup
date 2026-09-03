@@ -329,14 +329,42 @@ def build_preembedded_world(
     except ET.ParseError as error:
         raise PreparationError(f"invalid XML while preparing sensor world: {error}") from error
     world = world_tree.getroot().find("world")
+    if world is None:
+        raise PreparationError("expected a world SDF")
+    restored, model = append_preembedded_model(
+        world,
+        converted_root,
+        urdf_root,
+        only_sensors=only_sensors,
+        model_pose=model_pose,
+        restore_attachments=restore_attachments,
+    )
+    return world_tree, restored, model
+
+
+def append_preembedded_model(
+    world: ET.Element,
+    converted_root: ET.Element,
+    urdf_root: ET.Element,
+    *,
+    only_sensors: set[str] | None = None,
+    model_pose: str = "0 0 0.005 0 0 0",
+    restore_attachments: bool = True,
+) -> tuple[list[dict[str, str]], ET.Element]:
+    """Append one source-bound model without starting Gazebo.
+
+    The formal grasp scene needs its vehicle and material cube to exist before
+    Harmonic's Sensors/Contact systems start.  Keep the one-model conversion
+    contract, but permit a second independently converted model in the same
+    world rather than inventing a grasp-only world writer.
+    """
+
     robot_name = (urdf_root.get("name") or "").strip()
     if not robot_name:
         raise PreparationError("expanded URDF robot name is missing")
     models = converted_root.findall("model")
-    if world is None or len(models) != 1:
-        raise PreparationError(
-            "expected a world SDF and exactly one direct converted model SDF"
-        )
+    if len(models) != 1:
+        raise PreparationError("expected exactly one direct converted model SDF")
     model = models[0]
     model_name = (model.get("name") or "").strip()
     if model_name != robot_name:
@@ -344,6 +372,8 @@ def build_preembedded_world(
             "converted model name differs from expanded URDF robot name: "
             f"expected {robot_name!r}, got {model_name!r}"
         )
+    if any(candidate.get("name") == robot_name for candidate in world.findall("model")):
+        raise PreparationError(f"source world already contains model: {robot_name}")
     attachments = sensor_attachment_contract(urdf_root)
     restored = (
         restore_sensor_attachments(model, attachments, urdf_root)
@@ -364,10 +394,8 @@ def build_preembedded_world(
             if sensor.get("name") not in only_sensors:
                 parents[sensor].remove(sensor)
         restored = [row for row in restored if row["sensor"] in only_sensors]
-    if any(candidate.get("name") == robot_name for candidate in world.findall("model")):
-        raise PreparationError("source world already contains the formal vehicle")
     world.append(model)
-    return world_tree, restored, model
+    return restored, model
 
 
 def convert_urdf(gz: str, urdf: Path) -> str:
@@ -424,6 +452,29 @@ def run(args: argparse.Namespace) -> dict[str, object]:
     controller_binding = bind_controller_parameters(
         model, controller_config, runtime_install_root
     )
+    additional_model: dict[str, object] | None = None
+    additional_urdf_arg = getattr(args, "additional_urdf", None)
+    if additional_urdf_arg:
+        additional_urdf = Path(additional_urdf_arg).resolve()
+        if not additional_urdf.is_file():
+            raise PreparationError(f"missing additional model URDF: {additional_urdf}")
+        additional_root = ET.parse(additional_urdf).getroot()
+        additional_restored, additional = append_preembedded_model(
+            world_tree.getroot().find("world"),
+            ET.fromstring(convert_urdf(args.gz, additional_urdf)),
+            additional_root,
+            model_pose=getattr(args, "additional_model_pose", "0 0 0.017 0 0 0"),
+        )
+        additional_model = {
+            "urdf": str(additional_urdf),
+            "urdf_sha256": _sha256(additional_urdf),
+            "model_name": additional.get("name"),
+            "model_initial_pose": _normalized_pose(
+                getattr(args, "additional_model_pose", "0 0 0.017 0 0 0")
+            ),
+            "sensors_restored_to_urdf_reference_links": additional_restored,
+            "sensor_count": len(additional.findall(".//sensor")),
+        }
     ET.indent(world_tree, space="  ")
     _write_atomic(output_world, ET.tostring(world_tree.getroot(), encoding="unicode") + "\n")
     report = {
@@ -453,6 +504,7 @@ def run(args: argparse.Namespace) -> dict[str, object]:
         "model_name": model.get("name"),
         "diagnostic_sensor_filter": sorted(only_sensors) if only_sensors else None,
         "diagnostic_skip_attachment_restoration": diagnostic_raw_layout,
+        "additional_model": additional_model,
     }
     _write_atomic(output_report, json.dumps(report, indent=2, sort_keys=True) + "\n")
     return report
@@ -473,6 +525,14 @@ def parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
         help="Absolute install root verified by the formal runtime closure.",
     )
     parser.add_argument("--gz", default="gz", help="Gazebo CLI used for URDF -> SDF")
+    parser.add_argument(
+        "--additional-urdf",
+        help="Optional second source-bound URDF to embed in the same world.",
+    )
+    parser.add_argument(
+        "--additional-model-pose", default="0 0 0.017 0 0 0",
+        help="Initial pose for --additional-urdf.",
+    )
     parser.add_argument(
         "--only-sensor", action="append", default=[],
         help="Optional source-only diagnostic filter; never use for formal acceptance.",

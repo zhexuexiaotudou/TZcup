@@ -50,6 +50,9 @@ def test_runtime_probe_requires_and_records_fresh_final_runtime_identity():
     assert '"runtime_closure"' in SOURCE
     assert '"active_overlay_matches_runtime_binding": True' in SOURCE
     assert "refusing to overwrite retained grasp runtime report" in SOURCE
+    assert 'parser.add_argument("--preembedded-report", required=True, type=Path)' in SOURCE
+    assert 'parser.add_argument("--preembedded-world", required=True, type=Path)' in SOURCE
+    assert '"preembedded_grasp_world_binding": preembedded_grasp' in SOURCE
 
 
 def test_runner_starts_physics_bridge_and_product_executor_as_separate_surfaces():
@@ -60,13 +63,13 @@ def test_runner_starts_physics_bridge_and_product_executor_as_separate_surfaces(
     assert "validate_formal_grasp_executor_runtime.py" in RUNNER
     assert "FORMAL_GRASP_EXECUTOR_RUNTIME_BINDING" in RUNNER
     assert '${output}.runtime_binding.json' in RUNNER
-    assert 'for retained in "${output}" "${runtime_binding}" "${launch_log}"; do' in RUNNER
+    assert 'for retained in "${output}" "${runtime_binding}" "${launch_log}"' in RUNNER
     assert '[[ -e "${retained}" || -L "${retained}" ]]' in RUNNER
     assert "formal_runtime_gate_binding.py" in RUNNER
     assert "generate_formal_vehicle_snapshot.py" in RUNNER
     assert 'formal_source_bound_verify_overlay "${runtime_ws}"' in RUNNER
     assert '--snapshot "${snapshot}" --session "${session}" --runtime-binding "${runtime_binding}"' in RUNNER
-    assert RUNNER.index('for retained in "${output}" "${runtime_binding}" "${launch_log}"; do') < RUNNER.index(
+    assert RUNNER.index('for retained in "${output}" "${runtime_binding}" "${launch_log}"') < RUNNER.index(
         "source /opt/ros/jazzy/setup.bash"
     )
     assert RUNNER.index("formal_runtime_install_traps cleanup") < RUNNER.index(
@@ -75,3 +78,19 @@ def test_runner_starts_physics_bridge_and_product_executor_as_separate_surfaces(
     assert "whole_vehicle_safety_manager" in Path(
         "starter_ws/src/sanitation_manipulation/launch/formal_cube_pick_place.launch.py"
     ).read_text(encoding="utf-8")
+
+
+def test_grasp_runner_preembeds_both_contact_models_and_archives_them():
+    assert "prepare_formal_preembedded_sensor_world.py" in RUNNER
+    assert '--additional-urdf "${preembedded_cube_urdf}"' in RUNNER
+    assert 'world:="${preembedded_world}"' in RUNNER
+    assert "spawn_vehicle:=false spawn_single_cube:=false" in RUNNER
+    assert '"${preembedded_world}" "${preembedded_report}"' in RUNNER
+    assert '"${preembedded_vehicle_urdf}" "${preembedded_cube_urdf}"' in RUNNER
+    assert '--preembedded-report "${preembedded_report}" --preembedded-world "${preembedded_world}"' in RUNNER
+    launch = Path(
+        "starter_ws/src/sanitation_manipulation/launch/formal_cube_pick_place.launch.py"
+    ).read_text(encoding="utf-8")
+    for argument in ("world", "vehicle_model", "cube_model", "spawn_vehicle"):
+        assert f'DeclareLaunchArgument("{argument}"' in launch
+    assert "condition=IfCondition(spawn_vehicle)" in launch

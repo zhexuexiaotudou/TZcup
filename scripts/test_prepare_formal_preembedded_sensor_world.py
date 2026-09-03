@@ -87,6 +87,42 @@ def test_build_can_make_single_sensor_source_diagnostic(tmp_path: Path):
     assert [sensor.get("name") for sensor in tree.getroot().findall(".//sensor")] == ["scan"]
 
 
+def test_append_preembedded_model_keeps_two_source_bound_contact_models(tmp_path: Path):
+    world = ET.fromstring("<world name='w'><model name='ground'/></world>")
+    vehicle = ET.fromstring("<robot name='vehicle'><link name='base'/>"
+                            "<gazebo reference='base'><sensor name='finger' type='contact'/>"
+                            "</gazebo></robot>")
+    cube = ET.fromstring("<robot name='cube'><link name='cube_link'/>"
+                         "<gazebo reference='cube_link'><sensor name='cube_contact' type='contact'/>"
+                         "</gazebo></robot>")
+    vehicle_sdf = ET.fromstring("<sdf version='1.11'><model name='vehicle'><link name='base'>"
+                                 "<sensor name='finger' type='contact'/></link></model></sdf>")
+    cube_sdf = ET.fromstring("<sdf version='1.11'><model name='cube'><link name='cube_link'>"
+                              "<sensor name='cube_contact' type='contact'/></link></model></sdf>")
+
+    MODULE.append_preembedded_model(world, vehicle_sdf, vehicle, model_pose="0 0 0.005 0 0 0")
+    rows, cube_model = MODULE.append_preembedded_model(
+        world, cube_sdf, cube, model_pose="0.3 -0.95 0.017 0 0 0"
+    )
+
+    assert [model.get("name") for model in world.findall("model")] == ["ground", "vehicle", "cube"]
+    assert cube_model.findtext("pose") == "0.3 -0.95 0.017 0 0 0"
+    assert rows == [{"sensor": "cube_contact", "converted_link": "cube_link",
+                     "restored_link": "cube_link", "local_pose": "0 0 0 0 0 0",
+                     "attachment_status": "restored_urdf_reference_link"}]
+
+
+def test_append_preembedded_model_rejects_duplicate_name():
+    world = ET.fromstring("<world name='w'><model name='cube'/></world>")
+    urdf = ET.fromstring("<robot name='cube'><link name='link'/><gazebo reference='link'>"
+                         "<sensor name='contact' type='contact'/></gazebo></robot>")
+    converted = ET.fromstring("<sdf version='1.11'><model name='cube'><link name='link'>"
+                              "<sensor name='contact' type='contact'/></link></model></sdf>")
+
+    with pytest.raises(MODULE.PreparationError, match="already contains model"):
+        MODULE.append_preembedded_model(world, converted, urdf)
+
+
 def test_build_diagnostic_raw_layout_omits_reconstructed_attachment_joint(tmp_path: Path):
     world = tmp_path / "world.sdf"
     urdf = tmp_path / "vehicle.urdf"
@@ -245,6 +281,50 @@ def test_run_rewrites_package_uri_and_records_controller_binding(tmp_path: Path,
     assert "preexisting_static_asset" in world_text
     assert report["controller_runtime_binding"] == written_report["controller_runtime_binding"]
     assert written_report["controller_runtime_binding"]["controller_config_sha256"] == MODULE._sha256(controller)
+
+
+def test_run_preembeds_additional_contact_model_and_records_binding(tmp_path: Path, monkeypatch):
+    source_world = tmp_path / "world.sdf"
+    vehicle_urdf = tmp_path / "vehicle.urdf"
+    cube_urdf = tmp_path / "cube.urdf"
+    output_world = tmp_path / "prepared.sdf"
+    output_report = tmp_path / "prepared.json"
+    install_root, controller = _runtime_controller_fixture(tmp_path)
+    source_world.write_text("<sdf version='1.11'><world name='w'/></sdf>", encoding="utf-8")
+    vehicle_urdf.write_text(
+        "<robot name='vehicle'><link name='base'/><gazebo reference='base'>"
+        "<sensor name='finger' type='contact'/></gazebo></robot>", encoding="utf-8"
+    )
+    cube_urdf.write_text(
+        "<robot name='cube'><link name='cube_link'/><gazebo reference='cube_link'>"
+        "<sensor name='cube_contact' type='contact'/></gazebo></robot>", encoding="utf-8"
+    )
+    vehicle_sdf = (
+        "<sdf version='1.11'><model name='vehicle'><link name='base'>"
+        "<sensor name='finger' type='contact'/></link><plugin filename='gz_ros2_control-system' "
+        "name='gz_ros2_control::GazeboSimROS2ControlPlugin'><parameters>"
+        f"{MODULE.CANONICAL_CONTROLLER_URI}</parameters></plugin></model></sdf>"
+    )
+    cube_sdf = (
+        "<sdf version='1.11'><model name='cube'><link name='cube_link'>"
+        "<sensor name='cube_contact' type='contact'/></link></model></sdf>"
+    )
+    monkeypatch.setattr(
+        MODULE, "convert_urdf", lambda _gz, urdf: cube_sdf if Path(urdf) == cube_urdf else vehicle_sdf
+    )
+    report = MODULE.run(argparse.Namespace(
+        source_world=str(source_world), vehicle_urdf=str(vehicle_urdf),
+        additional_urdf=str(cube_urdf), additional_model_pose="0.3 -0.95 0.017 0 0 0",
+        output_world=str(output_world), report=str(output_report),
+        controller_config=str(controller), runtime_install_root=str(install_root), gz="gz",
+        only_sensor=[], model_pose="0 0 0.005 0 0 0",
+    ))
+
+    root = ET.parse(output_world).getroot()
+    assert [model.get("name") for model in root.findall("world/model")] == ["vehicle", "cube"]
+    assert root.find("world/model[@name='cube']/link/sensor[@name='cube_contact']") is not None
+    assert report["additional_model"]["urdf_sha256"] == MODULE._sha256(cube_urdf)
+    assert report["additional_model"]["model_initial_pose"] == "0.3 -0.95 0.017 0 0 0"
 
 
 def test_run_marks_raw_layout_diagnostic_as_not_formal(tmp_path: Path, monkeypatch):

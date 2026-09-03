@@ -907,6 +907,23 @@ def _sensor_runtime_auxiliary_paths(context: Context) -> list[Path]:
     ]
 
 
+def _grasp_runtime_auxiliary_paths(context: Context) -> list[Path]:
+    """Keep the contact-bearing grasp world with its final output attempt."""
+
+    contract = _read_contract(context.root)
+    gate = contract["evidence_gates"].get("physical_grasp_and_bin")
+    if not isinstance(gate, dict) or not isinstance(gate.get("path"), str):
+        return []
+    output = context.root / str(gate["path"])
+    base = output.with_suffix("")
+    return [
+        base.with_name(base.name + ".preembedded_grasp_world.sdf"),
+        base.with_name(base.name + ".preembedded_grasp_world.json"),
+        base.with_name(base.name + ".preembedded_vehicle.urdf"),
+        base.with_name(base.name + ".preembedded_cube.urdf"),
+    ]
+
+
 def _runtime_binding_auxiliary_paths(context: Context) -> list[Path]:
     """Return the attempt-bound gate bindings written beside final outputs."""
 
@@ -945,6 +962,7 @@ def _extra_fresh_paths(context: Context) -> list[Path]:
         context.root / "artifacts/formal_same_map_full_coverage_baseline.json",
         *_runtime_binding_auxiliary_paths(context),
         *_sensor_runtime_auxiliary_paths(context),
+        *_grasp_runtime_auxiliary_paths(context),
     ]
 
 
@@ -1685,6 +1703,21 @@ def _step_command(
             grasp_output = gate_output("physical_grasp_and_bin")
             environment["FORMAL_GRASP_EXECUTOR_RUNTIME_BINDING"] = str(
                 grasp_output.with_name(grasp_output.name + ".runtime_binding.json")
+            )
+            grasp_base = grasp_output.with_suffix("")
+            environment.update(
+                FORMAL_GRASP_PREEMBEDDED_WORLD=str(
+                    grasp_base.with_name(grasp_base.name + ".preembedded_grasp_world.sdf")
+                ),
+                FORMAL_GRASP_PREEMBEDDED_REPORT=str(
+                    grasp_base.with_name(grasp_base.name + ".preembedded_grasp_world.json")
+                ),
+                FORMAL_GRASP_PREEMBEDDED_VEHICLE_URDF=str(
+                    grasp_base.with_name(grasp_base.name + ".preembedded_vehicle.urdf")
+                ),
+                FORMAL_GRASP_PREEMBEDDED_CUBE_URDF=str(
+                    grasp_base.with_name(grasp_base.name + ".preembedded_cube.urdf")
+                ),
             )
         else:
             cube_output = gate_output("formal_20_cube_grasp_and_dynamic_mass")

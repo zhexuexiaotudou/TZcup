@@ -1948,6 +1948,26 @@ def test_direct_physical_steps_route_fresh_runtime_bindings(
     )
 
 
+def test_physical_grasp_routes_and_archives_preembedded_contact_evidence() -> None:
+    context = _context()
+    _, environment = orchestration._step_command("physical_grasp", context)
+    output = Path(environment["FORMAL_GRASP_EXECUTOR_OUTPUT"])
+    base = output.with_suffix("")
+    expected = {
+        base.with_name(base.name + ".preembedded_grasp_world.sdf"),
+        base.with_name(base.name + ".preembedded_grasp_world.json"),
+        base.with_name(base.name + ".preembedded_vehicle.urdf"),
+        base.with_name(base.name + ".preembedded_cube.urdf"),
+    }
+    assert {Path(environment[key]) for key in (
+        "FORMAL_GRASP_PREEMBEDDED_WORLD",
+        "FORMAL_GRASP_PREEMBEDDED_REPORT",
+        "FORMAL_GRASP_PREEMBEDDED_VEHICLE_URDF",
+        "FORMAL_GRASP_PREEMBEDDED_CUBE_URDF",
+    )} == expected
+    assert expected <= set(orchestration._grasp_runtime_auxiliary_paths(context))
+
+
 def test_water_step_generates_manifest_then_typed_diagnostic_then_all_scenarios() -> None:
     context = _context()
     command, environment = orchestration._step_command(

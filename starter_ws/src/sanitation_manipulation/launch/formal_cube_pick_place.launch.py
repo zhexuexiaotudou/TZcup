@@ -22,15 +22,19 @@ def generate_launch_description() -> LaunchDescription:
     physics_engine = LaunchConfiguration("physics_engine")
     spawn_single_cube = LaunchConfiguration("spawn_single_cube")
     dry_accounting_mode = LaunchConfiguration("dry_accounting_mode")
-    model = PathJoinSubstitution(
+    default_vehicle_model = PathJoinSubstitution(
         [FindPackageShare("sanitation_manipulation"), "urdf", "formal_manipulation_acceptance.urdf.xacro"]
     )
-    cube = PathJoinSubstitution(
+    default_cube_model = PathJoinSubstitution(
         [FindPackageShare("sanitation_manipulation"), "urdf", "material_cube.urdf.xacro"]
     )
-    world = PathJoinSubstitution(
+    default_world = PathJoinSubstitution(
         [FindPackageShare("sanitation_manipulation"), "worlds", "formal_cube_manipulation.sdf"]
     )
+    world = LaunchConfiguration("world")
+    vehicle_model = LaunchConfiguration("vehicle_model")
+    cube_model = LaunchConfiguration("cube_model")
+    spawn_vehicle = LaunchConfiguration("spawn_vehicle")
     gz_launch = PathJoinSubstitution([FindPackageShare("ros_gz_sim"), "launch", "gz_sim.launch.py"])
     localization_launch = PathJoinSubstitution(
         [
@@ -41,7 +45,7 @@ def generate_launch_description() -> LaunchDescription:
     )
     robot_description = ParameterValue(
         Command([
-            "xacro ", model, " use_sim:=true bodywork_visible:=true",
+            "xacro ", vehicle_model, " use_sim:=true bodywork_visible:=true",
             " dry_accounting_mode:=", dry_accounting_mode,
             # The grasp probe explicitly performs the operator reset through
             # the mechanical E-stop command bridge.  Starting this isolated
@@ -52,7 +56,7 @@ def generate_launch_description() -> LaunchDescription:
         value_type=str,
     )
     cube_description = ParameterValue(
-        Command(["xacro ", cube, " material:=", material]), value_type=str
+        Command(["xacro ", cube_model, " material:=", material]), value_type=str
     )
     share_parent = str(Path(get_package_share_directory("sanitation_vehicle_description")).parent)
     resource_path = os.pathsep.join(
@@ -223,6 +227,10 @@ def generate_launch_description() -> LaunchDescription:
     return LaunchDescription(
         [
             SetEnvironmentVariable("GZ_SIM_RESOURCE_PATH", resource_path),
+            DeclareLaunchArgument("world", default_value=default_world),
+            DeclareLaunchArgument("vehicle_model", default_value=default_vehicle_model),
+            DeclareLaunchArgument("cube_model", default_value=default_cube_model),
+            DeclareLaunchArgument("spawn_vehicle", default_value="true"),
             DeclareLaunchArgument("gui", default_value="false"),
             DeclareLaunchArgument("material", default_value="PET"),
             DeclareLaunchArgument("cube_name", default_value="material_cube"),
@@ -297,6 +305,7 @@ def generate_launch_description() -> LaunchDescription:
                     Node(
                         package="ros_gz_sim",
                         executable="create",
+                        condition=IfCondition(spawn_vehicle),
                         parameters=[{"robot_description": robot_description}],
                         arguments=[
                             "-param", "robot_description", "-name", "tzcup_formal_sanitation_vehicle", "-z", "0.005"

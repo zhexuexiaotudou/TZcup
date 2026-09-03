@@ -9,6 +9,10 @@ runtime_binding="${FORMAL_GRASP_EXECUTOR_RUNTIME_BINDING:-${output}.runtime_bind
 session="${FORMAL_ACCEPTANCE_SESSION:-${repo_root}/artifacts/formal_final_acceptance_session.json}"
 snapshot="${FORMAL_VEHICLE_SNAPSHOT_MANIFEST:-${repo_root}/reports/engineering/formal_vehicle_snapshot_manifest.json}"
 launch_log="${FORMAL_GRASP_EXECUTOR_LOG:-${output%.json}.launch.log}"
+preembedded_world="${FORMAL_GRASP_PREEMBEDDED_WORLD:-${output%.json}.preembedded_grasp_world.sdf}"
+preembedded_report="${FORMAL_GRASP_PREEMBEDDED_REPORT:-${output%.json}.preembedded_grasp_world.json}"
+preembedded_vehicle_urdf="${FORMAL_GRASP_PREEMBEDDED_VEHICLE_URDF:-${output%.json}.preembedded_vehicle.urdf}"
+preembedded_cube_urdf="${FORMAL_GRASP_PREEMBEDDED_CUBE_URDF:-${output%.json}.preembedded_cube.urdf}"
 material="${FORMAL_MANIPULATION_MATERIAL:-PET}"
 cube_name="${FORMAL_MANIPULATION_CUBE_NAME:-material_cube}"
 timeout_s="${FORMAL_MANIPULATION_TIMEOUT_S:-180}"
@@ -18,7 +22,9 @@ startup_wait_s="${FORMAL_MANIPULATION_STARTUP_WAIT_S:-30}"
 # runtime-identity sidecar) looking current.  Rotate both before ROS setup and
 # before any frozen-runtime/session gate so every attempted acceptance starts
 # from an absent canonical output pair.
-for retained in "${output}" "${runtime_binding}" "${launch_log}"; do
+for retained in "${output}" "${runtime_binding}" "${launch_log}" \
+  "${preembedded_world}" "${preembedded_report}" \
+  "${preembedded_vehicle_urdf}" "${preembedded_cube_urdf}"; do
   if [[ -e "${retained}" || -L "${retained}" ]]; then
     superseded="${retained}.superseded.$(date -u +%Y%m%dT%H%M%SZ).$$"
     [[ ! -e "${superseded}" && ! -L "${superseded}" ]] || {
@@ -32,7 +38,9 @@ done
 source /opt/ros/jazzy/setup.bash
 source "${repo_root}/scripts/run_formal_runtime_isolation.sh"
 source "${repo_root}/scripts/formal_source_bound_preflight.sh"
-formal_runtime_register_evidence_paths "${output}" "${runtime_binding}"
+formal_runtime_register_evidence_paths \
+  "${output}" "${runtime_binding}" "${preembedded_world}" "${preembedded_report}" \
+  "${preembedded_vehicle_urdf}" "${preembedded_cube_urdf}"
 
 if [[ ! -f "${runtime_ws}/setup.bash" ]]; then
   echo "Missing frozen ROS runtime overlay: ${runtime_ws}/setup.bash" >&2
@@ -58,6 +66,40 @@ source "${runtime_ws}/setup.bash"
 formal_source_bound_verify_overlay "${runtime_ws}"
 set -u
 
+vehicle_share="$(ros2 pkg prefix --share sanitation_vehicle_description)"
+manipulation_share="$(ros2 pkg prefix --share sanitation_manipulation)"
+expected_vehicle_share="${runtime_ws}/share/sanitation_vehicle_description"
+expected_manipulation_share="${runtime_ws}/share/sanitation_manipulation"
+for package_share in "${vehicle_share}" "${manipulation_share}"; do
+  [[ -d "${package_share}" ]] || {
+    echo "missing frozen runtime package share: ${package_share}" >&2
+    exit 2
+  }
+done
+if [[ "$(cd -- "${vehicle_share}" && pwd -P)" != "$(cd -- "${expected_vehicle_share}" && pwd -P)" ]] || \
+   [[ "$(cd -- "${manipulation_share}" && pwd -P)" != "$(cd -- "${expected_manipulation_share}" && pwd -P)" ]]; then
+  echo "grasp packages resolve outside the frozen runtime install" >&2
+  exit 2
+fi
+vehicle_model="${manipulation_share}/urdf/formal_manipulation_acceptance.urdf.xacro"
+cube_model="${manipulation_share}/urdf/material_cube.urdf.xacro"
+controller_config="${vehicle_share}/config/formal_vehicle_controllers.yaml"
+source_world="${manipulation_share}/worlds/formal_cube_manipulation.sdf"
+for required in "${vehicle_model}" "${cube_model}" "${controller_config}" "${source_world}"; do
+  [[ -f "${required}" ]] || { echo "missing frozen grasp input: ${required}" >&2; exit 2; }
+done
+
+xacro "${vehicle_model}" use_sim:=true bodywork_visible:=true \
+  dry_accounting_mode:=physical_resident initial_estop_latched:=false \
+  >"${preembedded_vehicle_urdf}"
+xacro "${cube_model}" material:="${material}" >"${preembedded_cube_urdf}"
+python3 "${repo_root}/scripts/prepare_formal_preembedded_sensor_world.py" \
+  --source-world "${source_world}" --vehicle-urdf "${preembedded_vehicle_urdf}" \
+  --additional-urdf "${preembedded_cube_urdf}" \
+  --additional-model-pose "0.300 -0.950 0.017 0 0 0" \
+  --controller-config "${controller_config}" --runtime-install-root "${runtime_ws}" \
+  --output-world "${preembedded_world}" --report "${preembedded_report}"
+
 if [[ -n "${FORMAL_MANIPULATION_UNDERLAY:-}" ]]; then
   # This direct final-acceptance runner admits exactly the frozen merged
   # overlay validated above.  An arbitrary developer underlay would make a
@@ -81,6 +123,8 @@ cleanup() {
 formal_runtime_install_traps cleanup
 
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_manipulation formal_cube_pick_place.launch.py \
+  world:="${preembedded_world}" vehicle_model:="${vehicle_model}" cube_model:="${cube_model}" \
+  spawn_vehicle:=false spawn_single_cube:=false \
   gui:=false material:="${material}" cube_name:="${cube_name}" >"${launch_log}" 2>&1 &
 simulation_pid=$!
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 run ros_gz_bridge parameter_bridge \
@@ -101,4 +145,5 @@ gz topic -t /manipulation/grasp/detach -m gz.msgs.Empty -p "" \
 
 python3 "${repo_root}/scripts/validate_formal_grasp_executor_runtime.py" \
   --output "${output}" --startup-wait "${startup_wait_s}" --timeout "${timeout_s}" \
-  --snapshot "${snapshot}" --session "${session}" --runtime-binding "${runtime_binding}"
+  --snapshot "${snapshot}" --session "${session}" --runtime-binding "${runtime_binding}" \
+  --preembedded-report "${preembedded_report}" --preembedded-world "${preembedded_world}"
