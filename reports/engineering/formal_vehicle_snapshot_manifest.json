@@ -115,12 +115,12 @@
       "size_bytes": 8675
     },
     "starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py": {
-      "sha256": "c94c21d71aadaa0368ff25fbdb54a0c0485d7bc4dde6cbf2216922165a900e67",
-      "size_bytes": 30339
+      "sha256": "8ad9c744278d1711b049dc39191776472bbad0e5c0990e6c8e9ff9340f99c98c",
+      "size_bytes": 30487
     },
     "starter_ws/src/sanitation_safety/sanitation_safety/whole_vehicle_safety_manager.py": {
-      "sha256": "e0526e18bd55e922193ce03b6b6c821ab208e7390bca69d644d37b027e7cedf6",
-      "size_bytes": 54428
+      "sha256": "48640360a6e48b1e8bad6a58e94200a0997d81d7031a9b4609af4e88467415c4",
+      "size_bytes": 54576
     },
     "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/generate_cleaning_storage_meshes.py": {
       "sha256": "f4ed077479b1bba4a51207a90d7e35adec6a9323efde950e3b4bfc5313153977",
@@ -919,8 +919,8 @@
       "size_bytes": 66177
     },
     "starter_ws/src/sanitation_vehicle_description/scripts/formal_encoder_feedback_publisher.py": {
-      "sha256": "cd56b8643585f66d4ce0a506b5058a4d93b7e8ff1594150647be67b0ab2c0ddd",
-      "size_bytes": 5224
+      "sha256": "728358f09e945abe379b22f0433be106a152a78eafb4cda078b7f78fc600a748",
+      "size_bytes": 5349
     },
     "starter_ws/src/sanitation_vehicle_description/scripts/formal_encoder_quantization.py": {
       "sha256": "c2fad2c3e34522228656d623e740bf3937930a153edef878db68d1de7c3bf47c",
@@ -963,5 +963,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "bf8416da2cbcb83d546270174af2e2167116c29b9beb38f6812dfe43db1cb72d"
+  "source_inventory_sha256": "f7fc55d2636e4235bfcec12812c985e7fcb6a6588d44f5190e531b99a2421904"
 }
