@@ -298,6 +298,24 @@ printf 'watchdog=%s\\n' "${watchdog_pid}"
     assert prefix.with_suffix(".log").is_file()
 
 
+@pytest.mark.skipif(os.name != "posix", reason="requires native POSIX process groups")
+def test_standalone_source_does_not_require_an_outer_capability_token() -> None:
+    result = subprocess.run(
+        ["bash", "-c", 'source "$1"; printf "standalone-ok\\n"', "bash", str(HELPER)],
+        check=False,
+        capture_output=True,
+        text=True,
+        env={
+            **os.environ,
+            "FORMAL_ORCHESTRATED_STEP_SESSION": "0",
+            "FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN": "",
+        },
+        timeout=10,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "standalone-ok\n"
+
+
 def test_orchestrated_inner_watchdog_fails_closed_when_pgid_and_sid_do_not_match() -> None:
     harness = """
 set -uo pipefail

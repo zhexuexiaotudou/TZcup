@@ -856,6 +856,8 @@ def test_build_snapshot_rejects_changed_source_hash(tmp_path: Path) -> None:
 def test_runner_has_exact_partition_cleanup_and_four_unique_offsets() -> None:
     runner = Path(__file__).with_name("run_integrated_functional_acceptance.sh").read_text(encoding="utf-8")
     assert runner.index("source /opt/ros/jazzy/setup.bash") < runner.index("set -u")
+    isolation_source = 'source "${repo_root}/scripts/run_formal_runtime_isolation.sh"'
+    assert isolation_source in runner
     runtime_source = 'source "${runtime_ws}/install/setup.bash"'
     runtime_source_index = runner.index(runtime_source)
     assert runner.rfind("set +u", 0, runtime_source_index) >= 0
@@ -877,9 +879,9 @@ def test_runner_has_exact_partition_cleanup_and_four_unique_offsets() -> None:
     assert "import secrets; print(secrets.token_hex(32))" in runner
     assert 'FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN="${session_token}"' in runner
     assert "missing outer formal orchestrated session token" in runner
-    assert "formal integrated outer session requires a valid capability token" in runner
 
     build_preflight = runner.index('"${aggregator}" preflight')
+    assert runner.index(isolation_source) < build_preflight
     side_brush_preflight = runner.index("validate_formal_side_brush_sdf_surface.py")
     init_run = runner.index('"${aggregator}" init-run')
     first_scenario = runner.index('run_wrapped_scenario "mobility" 0')

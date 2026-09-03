@@ -681,7 +681,7 @@ def static_audit(root: Path = ROOT) -> dict[str, Any]:
             runner_source = runner.read_text(encoding="utf-8") if runner.is_file() else ""
             lock_strategy = None
             if step.mode == "gazebo":
-                if "run_formal_runtime_isolation.sh" in runner_source:
+                if "formal_runtime_configure" in runner_source:
                     lock_strategy = "runner_internal"
                     if step.requires_outer_gazebo_lock:
                         failures.append(f"duplicate_gazebo_lock_strategy:{step.step_id}")

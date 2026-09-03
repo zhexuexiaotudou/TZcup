@@ -5,6 +5,7 @@ source /opt/ros/jazzy/setup.bash
 set -u
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+source "${repo_root}/scripts/run_formal_runtime_isolation.sh"
 runtime_ws="${INTEGRATED_ACCEPTANCE_RUNTIME_WS:?set INTEGRATED_ACCEPTANCE_RUNTIME_WS to the fresh colcon workspace}"
 build_manifest="${INTEGRATED_ACCEPTANCE_BUILD_MANIFEST:?set INTEGRATED_ACCEPTANCE_BUILD_MANIFEST to a post-build snapshot}"
 evidence_root="${INTEGRATED_ACCEPTANCE_OUTPUT_DIR:-${repo_root}/artifacts/integrated_functional_acceptance}"
@@ -12,12 +13,7 @@ domain_base="${INTEGRATED_ACCEPTANCE_DOMAIN_BASE:-180}"
 material="${INTEGRATED_ACCEPTANCE_MATERIAL:-PET}"
 aggregator="${repo_root}/scripts/aggregate_integrated_functional_acceptance.py"
 integrated_session_prefix=()
-if [[ "${FORMAL_ORCHESTRATED_STEP_SESSION:-0}" == "1" ]]; then
-  [[ "${FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN:-}" =~ ^[0-9a-f]{64}$ ]] || {
-    echo "formal integrated outer session requires a valid capability token" >&2
-    exit 125
-  }
-else
+if [[ "${FORMAL_ORCHESTRATED_STEP_SESSION:-0}" != "1" ]]; then
   integrated_session_prefix=(setsid)
 fi
 
