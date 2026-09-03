@@ -32,6 +32,13 @@ def generate_launch_description() -> LaunchDescription:
         [FindPackageShare("sanitation_manipulation"), "worlds", "formal_cube_manipulation.sdf"]
     )
     gz_launch = PathJoinSubstitution([FindPackageShare("ros_gz_sim"), "launch", "gz_sim.launch.py"])
+    localization_launch = PathJoinSubstitution(
+        [
+            FindPackageShare("sanitation_localization"),
+            "launch",
+            "formal_localization_fusion.launch.py",
+        ]
+    )
     robot_description = ParameterValue(
         Command([
             "xacro ", model, " use_sim:=true bodywork_visible:=true",
@@ -166,11 +173,17 @@ def generate_launch_description() -> LaunchDescription:
             "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist",
             "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/actuator_enable@std_msgs/msg/Bool]gz.msgs.Boolean",
             "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/emergency_stop@std_msgs/msg/Bool[gz.msgs.Boolean",
+            "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry",
+            "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/status@std_msgs/msg/String[gz.msgs.StringMsg",
         ],
         remappings=[
             (
                 "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/emergency_stop",
                 "/emergency_stop",
+            ),
+            (
+                "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/odom",
+                "/odom/unfiltered",
             ),
         ],
         output="screen",
@@ -275,6 +288,13 @@ def generate_launch_description() -> LaunchDescription:
                         output="screen",
                     ),
                     Node(
+                        package="sanitation_vehicle_description",
+                        executable="formal_encoder_feedback_publisher.py",
+                        name="formal_encoder_feedback_publisher",
+                        parameters=[{"use_sim_time": use_sim_time}],
+                        output="screen",
+                    ),
+                    Node(
                         package="ros_gz_sim",
                         executable="create",
                         parameters=[{"robot_description": robot_description}],
@@ -304,6 +324,15 @@ def generate_launch_description() -> LaunchDescription:
             cleaning_actuator_command_mirror,
             cleaning_actuator_scalar_bridge,
             cleaning_actuator_motor_bridge,
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(localization_launch),
+                launch_arguments={
+                    "use_sim_time": use_sim_time,
+                    "start_local_fusion": "true",
+                    "start_navsat_transform": "false",
+                    "start_global_fusion": "false",
+                }.items(),
+            ),
             Node(
                 package="sanitation_safety",
                 executable="simulation_safety_inputs",

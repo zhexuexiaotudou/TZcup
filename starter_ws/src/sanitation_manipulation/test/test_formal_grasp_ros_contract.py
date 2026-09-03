@@ -110,6 +110,24 @@ def test_product_grasp_uses_selected_localization_odometry_not_removed_controlle
     assert "odometry_topic: /odom" in config
     assert "base_controller/odom" not in config
     assert '"base_controller"' not in cube_launch
+    assert 'name="a300_drivetrain_bridge"' in cube_launch
+    assert 'a300_drivetrain/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry' in cube_launch
+    assert 'a300_drivetrain/status@std_msgs/msg/String[gz.msgs.StringMsg' in cube_launch
+    assert '"/odom/unfiltered"' in cube_launch
+    assert 'executable="formal_encoder_feedback_publisher.py"' in cube_launch
+    assert '"formal_localization_fusion.launch.py"' in cube_launch
+    assert '"start_local_fusion": "true"' in cube_launch
+    assert '"start_navsat_transform": "false"' in cube_launch
+    assert '"start_global_fusion": "false"' in cube_launch
+    localization_launch = (
+        PACKAGE.parent
+        / "sanitation_localization"
+        / "launch"
+        / "formal_localization_fusion.launch.py"
+    ).read_text(encoding="utf-8")
+    assert 'name="local_ekf"' in localization_launch
+    assert 'remappings=[("odometry/filtered", "/odom")]' in localization_launch
+    assert '"/localization/fused_odom"' in localization_launch
 
 
 def test_physical_grasp_scene_preserves_the_formal_safety_power_chain():
