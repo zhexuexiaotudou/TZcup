@@ -723,6 +723,17 @@ def generate_launch_description() -> LaunchDescription:
             Node(
                 package="ros_gz_bridge",
                 executable="parameter_bridge",
+                name="formal_vehicle_clock_fallback_bridge",
+                arguments=["/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock"],
+                output="screen",
+                # The typed transport diagnostic intentionally disables the
+                # product bridge, but ros2_control still requires simulation
+                # time.  Keep exactly one /clock bridge in either mode.
+                condition=UnlessCondition(start_product_bridge),
+            ),
+            Node(
+                package="ros_gz_bridge",
+                executable="parameter_bridge",
                 name="formal_vehicle_product_bridge",
                 arguments=[
                     "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",

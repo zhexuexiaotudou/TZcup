@@ -71,7 +71,7 @@ def test_runner_checks_live_types_and_strict_publish_audit() -> None:
     assert "typed_diag.json" in source
 
 
-def test_typed_runner_disables_only_shutdown_unstable_optional_bridges() -> None:
+def test_typed_runner_has_mutually_exclusive_clock_and_bounded_optional_scope() -> None:
     runner = (ROOT / "scripts/run_formal_typed_cleaning_motor_diagnostic.sh").read_text(
         encoding="utf-8"
     )
@@ -93,14 +93,21 @@ def test_typed_runner_disables_only_shutdown_unstable_optional_bridges() -> None
         and node.args
         and isinstance(node.args[0], ast.Constant)
         and node.args[0].value
-        in {"start_product_bridge", "start_cleaning_actuator_scalar_bridge"}
+        in {
+            "start_product_bridge",
+            "start_cleaning_actuator_scalar_bridge",
+            "start_localization",
+        }
     }
     assert names == {
         "start_product_bridge": "true",
         "start_cleaning_actuator_scalar_bridge": "true",
+        "start_localization": "true",
     }
     assert "start_product_bridge:=false" in runner
     assert "start_cleaning_actuator_scalar_bridge:=false" in runner
+    assert "start_localization:=false" in runner
+    assert "use_sim_time:=false" not in runner
     for bridge, switch in (
         ("formal_vehicle_product_bridge", "start_product_bridge"),
         ("cleaning_actuator_scalar_bridge", "start_cleaning_actuator_scalar_bridge"),
@@ -122,6 +129,83 @@ def test_typed_runner_disables_only_shutdown_unstable_optional_bridges() -> None
         assert isinstance(condition, ast.Call)
         assert isinstance(condition.func, ast.Name) and condition.func.id == "IfCondition"
         assert isinstance(condition.args[0], ast.Name) and condition.args[0].id == switch
+
+    localization = next(
+        node
+        for node in ast.walk(launch)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "IncludeLaunchDescription"
+        and node.args
+        and isinstance(node.args[0], ast.Call)
+        and isinstance(node.args[0].func, ast.Name)
+        and node.args[0].func.id == "PythonLaunchDescriptionSource"
+        and node.args[0].args
+        and isinstance(node.args[0].args[0], ast.Name)
+        and node.args[0].args[0].id == "localization_launch"
+    )
+    localization_condition = next(
+        key.value for key in localization.keywords if key.arg == "condition"
+    )
+    assert isinstance(localization_condition, ast.Call)
+    assert (
+        isinstance(localization_condition.func, ast.Name)
+        and localization_condition.func.id == "IfCondition"
+    )
+    assert (
+        isinstance(localization_condition.args[0], ast.Name)
+        and localization_condition.args[0].id == "start_localization"
+    )
+
+    fallback = next(
+        node
+        for node in ast.walk(launch)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "Node"
+        and any(
+            key.arg == "name"
+            and isinstance(key.value, ast.Constant)
+            and key.value.value == "formal_vehicle_clock_fallback_bridge"
+            for key in node.keywords
+        )
+    )
+    fallback_keywords = {key.arg: key.value for key in fallback.keywords}
+    assert ast.literal_eval(fallback_keywords["package"]) == "ros_gz_bridge"
+    assert ast.literal_eval(fallback_keywords["executable"]) == "parameter_bridge"
+    assert ast.literal_eval(fallback_keywords["arguments"]) == [
+        "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock"
+    ]
+    fallback_condition = fallback_keywords["condition"]
+    assert isinstance(fallback_condition, ast.Call)
+    assert (
+        isinstance(fallback_condition.func, ast.Name)
+        and fallback_condition.func.id == "UnlessCondition"
+    )
+    assert (
+        isinstance(fallback_condition.args[0], ast.Name)
+        and fallback_condition.args[0].id == "start_product_bridge"
+    )
+
+    product = next(
+        node
+        for node in ast.walk(launch)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "Node"
+        and any(
+            key.arg == "name"
+            and isinstance(key.value, ast.Constant)
+            and key.value.value == "formal_vehicle_product_bridge"
+            for key in node.keywords
+        )
+    )
+    product_arguments = next(
+        key.value for key in product.keywords if key.arg == "arguments"
+    )
+    assert "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock" in ast.literal_eval(
+        product_arguments
+    )
 
 
 def test_finalize_binds_zero_error_transport_and_input_hashes(tmp_path: Path) -> None:
