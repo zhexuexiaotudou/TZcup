@@ -6,6 +6,12 @@ source /opt/ros/jazzy/setup.bash
 set -u
 
 repo_root="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
+# MoveIt loads this plugin from the system ament index at launch time; the
+# ament_python package itself does not make colcon discover a missing plugin.
+ros2 pkg prefix moveit_simple_controller_manager >/dev/null 2>&1 || {
+  echo "Missing system ROS package moveit_simple_controller_manager; install its rosdep before the formal build" >&2
+  exit 2
+}
 cold_gate_evidence=""
 if grep -qi microsoft /proc/sys/kernel/osrelease 2>/dev/null; then
   cold_gate_evidence="${FORMAL_WINDOWS_COLD_GATE_EVIDENCE:-}"

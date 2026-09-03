@@ -41,6 +41,15 @@ def test_final_builder_has_fresh_host_and_runtime_memory_evidence() -> None:
     assert 'cmp -s -- "${cold_gate_evidence}" "${windows_cold_gate_bound_json}"' in source
 
 
+def test_final_builder_fails_before_creating_a_runtime_when_moveit_controller_plugin_is_missing() -> None:
+    source = _source()
+    assert "ros2 pkg prefix moveit_simple_controller_manager >/dev/null 2>&1" in source
+    assert "Missing system ROS package moveit_simple_controller_manager" in source
+    assert source.index("moveit_simple_controller_manager") < source.index(
+        '[[ ! -e "${runtime_ws}" && ! -L "${runtime_ws}" ]]'
+    )
+
+
 def test_final_builder_requires_a_new_runtime_and_all_final_evidence_paths() -> None:
     source = _source()
     assert '[[ ! -e "${runtime_ws}" && ! -L "${runtime_ws}" ]]' in source
@@ -61,7 +70,7 @@ def test_final_builder_requires_a_new_runtime_and_all_final_evidence_paths() -> 
 def test_final_builder_bounds_both_builds_in_one_exact_setsid_group() -> None:
     source = _source()
     assert 'FORMAL_COLCON_PARALLEL_WORKERS:-1' in source
-    assert '[[ "${parallel_workers}" =~ ^[12]$ ]]' in source
+    assert '[[ "${parallel_workers}" = "1" ]]' in source
     assert 'export CMAKE_BUILD_PARALLEL_LEVEL="${parallel_workers}"' in source
     assert 'export MAKEFLAGS="-j${parallel_workers}"' in source
     assert 'setsid bash -c \'\n' in source

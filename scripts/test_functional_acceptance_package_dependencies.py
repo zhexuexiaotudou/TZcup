@@ -99,6 +99,7 @@ def test_formal_manipulation_launch_and_runner_dependencies_are_explicit() -> No
             "controller_manager",
             "launch",
             "launch_ros",
+            "moveit_simple_controller_manager",
             "rclpy",
             "robot_state_publisher",
             "ros_gz_bridge",
