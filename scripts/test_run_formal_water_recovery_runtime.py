@@ -99,7 +99,12 @@ def test_runner_uses_fresh_isolated_launch_for_both_scenarios() -> None:
     assert 'scenario}" != "normal"' in source
     assert 'scenario}" != "full"' in source
     assert "formal_vehicle_sim.launch.py" in source
+    assert "prepare_formal_preembedded_sensor_world.py" in source
+    assert 'world:="${preembedded_world}" spawn_robot:=false' in source
+    assert "water_${selected}_preembedded_sensor_world.sdf" in source
+    assert "water_${selected}_preembedded_sensor_world.json" in source
     assert "water_evaluation_interfaces:=true" in source
+    assert "squeegee_evaluation_interfaces:=true" in source
     assert '"${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch' in source
     assert "cleanup_launch" in source
     assert "audit_formal_water_launch_log.py" in source
@@ -157,6 +162,27 @@ def test_cleanup_quarantines_runtime_binding_with_canonical_water_evidence() -> 
         encoding="utf-8"
     )
     assert 'formal_runtime_register_evidence_paths "${formal_output}" "${runtime_binding}"' in source
+    assert '"${output_dir}/water_${preembedded_scenario}_preembedded_sensor_world.sdf"' in source
+    assert '"${output_dir}/water_${preembedded_scenario}_preembedded_sensor_world.json"' in source
+
+
+def test_runner_preembeds_the_frozen_vehicle_before_launching_contact_gates() -> None:
+    source = (ROOT / "scripts/run_formal_water_recovery_runtime.sh").read_text(
+        encoding="utf-8"
+    )
+
+    assert 'installed_package_share="$(ros2 pkg prefix --share sanitation_vehicle_description)"' in source
+    assert 'expected_package_share="${runtime_install_root}/share/sanitation_vehicle_description"' in source
+    assert '--source-world "${installed_package_share}/worlds/formal_vehicle_validation.sdf"' in source
+    assert '--vehicle-urdf "${repo_root}/reports/engineering/formal_competition_vehicle.urdf"' in source
+    assert '--controller-config "${installed_package_share}/config/formal_vehicle_controllers.yaml"' in source
+    assert '--runtime-install-root "${runtime_install_root}"' in source
+    assert '--output-world "${preembedded_world}"' in source
+    assert '--report "${preembedded_report}"' in source
+    assert '--model-pose "${preembedded_model_pose}"' in source
+    assert source.index("prepare_formal_preembedded_sensor_world.py") < source.index(
+        'world:="${preembedded_world}" spawn_robot:=false'
+    )
 
 
 def test_aggregate_fails_closed_unless_both_runtime_episodes_pass(tmp_path: Path) -> None:

@@ -11,6 +11,7 @@ runtime_binding="${FORMAL_WATER_RUNTIME_BINDING:-${formal_output}.runtime_bindin
 session="${FORMAL_ACCEPTANCE_SESSION:-${repo_root}/artifacts/formal_final_acceptance_session.json}"
 snapshot="${FORMAL_VEHICLE_SNAPSHOT_MANIFEST:-${repo_root}/reports/engineering/formal_vehicle_snapshot_manifest.json}"
 launch_settle_s="${FORMAL_WATER_LAUNCH_SETTLE_S:-0}"
+preembedded_model_pose="${FORMAL_WATER_PREEMBEDDED_MODEL_POSE:-0 0 0.005 0 0 0}"
 scenario="all"
 
 while [[ $# -gt 0 ]]; do
@@ -59,10 +60,17 @@ fi
 # contaminated Gazebo session.  The other final-runtime runners quarantine
 # both files, so retain that fail-closed contract here as well.
 formal_runtime_register_evidence_paths "${formal_output}" "${runtime_binding}"
+for preembedded_scenario in normal full diagnostic; do
+  formal_runtime_register_evidence_paths \
+    "${output_dir}/water_${preembedded_scenario}_preembedded_sensor_world.sdf" \
+    "${output_dir}/water_${preembedded_scenario}_preembedded_sensor_world.json"
+done
 if [[ -f "${runtime_ws}/install/setup.bash" ]]; then
   runtime_setup="${runtime_ws}/install/setup.bash"
+  runtime_install_root="${runtime_ws}/install"
 elif [[ -f "${runtime_ws}/setup.bash" ]]; then
   runtime_setup="${runtime_ws}/setup.bash"
+  runtime_install_root="${runtime_ws}"
 else
   echo "Missing built ROS workspace setup under: ${runtime_ws}" >&2
   exit 2
@@ -89,7 +97,13 @@ source /opt/ros/jazzy/setup.bash
 source "${runtime_setup}"
 set -u
 
-vehicle_xacro="$(ros2 pkg prefix --share sanitation_vehicle_description)/urdf/formal_competition_vehicle.urdf.xacro"
+installed_package_share="$(ros2 pkg prefix --share sanitation_vehicle_description)"
+expected_package_share="${runtime_install_root}/share/sanitation_vehicle_description"
+if [[ ! -d "${expected_package_share}" ]] || [[ "$(cd "${installed_package_share}" && pwd -P)" != "$(cd "${expected_package_share}" && pwd -P)" ]]; then
+  echo "sanitation_vehicle_description resolved outside frozen runtime: ${installed_package_share}" >&2
+  exit 2
+fi
+vehicle_xacro="${installed_package_share}/urdf/formal_competition_vehicle.urdf.xacro"
 
 export ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-96}"
 formal_runtime_configure "${ROS_DOMAIN_ID}"
@@ -120,7 +134,9 @@ formal_runtime_install_traps cleanup_launch
 run_scenario() {
   local selected="$1"
   local expected_stable_marker_count=1
-  for stale in "${output_dir}/water_${selected}.json" "${output_dir}/water_${selected}_launch.log" "${output_dir}/water_${selected}_launch_audit.json" "${output_dir}/water_${selected}_probe.log" "${output_dir}/water_${selected}_safety_preflight.json" "${output_dir}/water_${selected}_safety_preflight.log" "${output_dir}/water_${selected}_side_brush_sdf_surface.json" "${output_dir}/water_${selected}_side_brush_sdf_surface.log" "${output_dir}/water_${selected}_preoperational_readiness.json" "${output_dir}/water_${selected}_preoperational_readiness.log" "${output_dir}/water_${selected}_memory_watchdog.json" "${output_dir}/water_${selected}_memory_watchdog.log" "${output_dir}/water_${selected}_windows_memory_preflight.json" "${output_dir}/water_${selected}_windows_memory_preflight.log"; do
+  local preembedded_world="${output_dir}/water_${selected}_preembedded_sensor_world.sdf"
+  local preembedded_report="${output_dir}/water_${selected}_preembedded_sensor_world.json"
+  for stale in "${output_dir}/water_${selected}.json" "${output_dir}/water_${selected}_launch.log" "${output_dir}/water_${selected}_launch_audit.json" "${output_dir}/water_${selected}_probe.log" "${output_dir}/water_${selected}_safety_preflight.json" "${output_dir}/water_${selected}_safety_preflight.log" "${output_dir}/water_${selected}_side_brush_sdf_surface.json" "${output_dir}/water_${selected}_side_brush_sdf_surface.log" "${output_dir}/water_${selected}_preoperational_readiness.json" "${output_dir}/water_${selected}_preoperational_readiness.log" "${output_dir}/water_${selected}_memory_watchdog.json" "${output_dir}/water_${selected}_memory_watchdog.log" "${output_dir}/water_${selected}_windows_memory_preflight.json" "${output_dir}/water_${selected}_windows_memory_preflight.log" "${preembedded_world}" "${preembedded_report}"; do
     [[ ! -e "${stale}" ]] || { echo "Refusing stale scenario evidence: ${stale}" >&2; return 2; }
   done
   export GZ_PARTITION="tzcup_formal_water_${selected}_${ROS_DOMAIN_ID}_$$"
@@ -131,7 +147,16 @@ run_scenario() {
     >"${output_dir}/water_${selected}_side_brush_sdf_surface.log" 2>&1
   formal_runtime_memory_preflight \
     "${output_dir}/water_${selected}_windows_memory_preflight"
+  python3 "${repo_root}/scripts/prepare_formal_preembedded_sensor_world.py" \
+    --source-world "${installed_package_share}/worlds/formal_vehicle_validation.sdf" \
+    --vehicle-urdf "${repo_root}/reports/engineering/formal_competition_vehicle.urdf" \
+    --controller-config "${installed_package_share}/config/formal_vehicle_controllers.yaml" \
+    --runtime-install-root "${runtime_install_root}" \
+    --output-world "${preembedded_world}" \
+    --report "${preembedded_report}" \
+    --model-pose "${preembedded_model_pose}"
   "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_vehicle_description formal_vehicle_sim.launch.py \
+    world:="${preembedded_world}" spawn_robot:=false \
     gui:=false bodywork_visible:=true high_bandwidth_sensor_runtime:=false \
     start_controllers:=true \
     enable_safety_manager:=true simulation_initial_estop_active:=true \

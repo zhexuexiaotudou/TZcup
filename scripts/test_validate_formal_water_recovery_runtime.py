@@ -213,6 +213,10 @@ def test_runtime_acceptance_contains_required_positive_and_negative_gates() -> N
     assert "squeegee_evaluation_interfaces:=true" in launch_runner
     assert "FORMAL_WATER_LAUNCH_SETTLE_S" in launch_runner
     assert "high_bandwidth_sensor_runtime:=false" in launch_runner
+    assert "prepare_formal_preembedded_sensor_world.py" in launch_runner
+    assert 'world:="${preembedded_world}" spawn_robot:=false' in launch_runner
+    assert "water_${selected}_preembedded_sensor_world.sdf" in launch_runner
+    assert "water_${selected}_preembedded_sensor_world.json" in launch_runner
     assert "collect_formal_water_safety_preflight.py" in launch_runner
     assert "--stable-duration-s 5.0" in launch_runner
 
