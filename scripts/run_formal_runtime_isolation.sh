@@ -8,6 +8,7 @@ FORMAL_RUNTIME_MEMORY_WATCHDOG_PID=""
 FORMAL_RUNTIME_MEMORY_WATCHDOG_JSON=""
 FORMAL_RUNTIME_MEMORY_WATCHDOG_LOG=""
 FORMAL_RUNTIME_MEMORY_WATCHDOG_RESULT=0
+FORMAL_RUNTIME_MEMORY_WATCHDOG_DELEGATED=0
 FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE=86
 FORMAL_RUNTIME_PGID_READY_ATTEMPTS=100
 FORMAL_RUNTIME_PGID_READY_POLL_S=0.01
@@ -250,6 +251,22 @@ formal_runtime_wait_for_setsid_pgid() {
   return 2
 }
 
+formal_runtime_attest_orchestrated_step_session() {
+  local runner_pid="$$"
+  local pgid sid
+  pgid="$(ps -o pgid= -p "${runner_pid}" 2>/dev/null || true)"
+  sid="$(ps -o sid= -p "${runner_pid}" 2>/dev/null || true)"
+  pgid="${pgid//[[:space:]]/}"
+  sid="${sid//[[:space:]]/}"
+  # An integrated step can launch a child runner inside its already-isolated
+  # outer session.  The child is not the leader, but its PGID/SID must still
+  # name that one dedicated session before it delegates the watchdog.
+  if ! [[ "${pgid}" =~ ^[0-9]+$ && "${sid}" =~ ^[0-9]+$ && "${pgid}" == "${sid}" ]]; then
+    echo "formal orchestrated runner must share one dedicated PGID/SID; pid=${runner_pid} pgid=${pgid:-missing} sid=${sid:-missing}" >&2
+    return 2
+  fi
+}
+
 formal_runtime_start_memory_watchdog() {
   local leader_pid="$1"
   local evidence_prefix="$2"
@@ -273,6 +290,16 @@ formal_runtime_start_memory_watchdog() {
     echo "a formal memory watchdog is already active" >&2
     return 2
   }
+  if [[ "${FORMAL_ORCHESTRATED_STEP_SESSION:-0}" == "1" ]]; then
+    # The final orchestrator owns this exact PGID's watchdog.  Do not create a
+    # nested watchdog for a launch child that correctly shares the outer PGID.
+    if ! formal_runtime_attest_orchestrated_step_session; then
+      FORMAL_RUNTIME_MEMORY_WATCHDOG_RESULT=125
+      return 125
+    fi
+    FORMAL_RUNTIME_MEMORY_WATCHDOG_DELEGATED=1
+    return 0
+  fi
   if pgid="$(formal_runtime_wait_for_setsid_pgid "${leader_pid}")"; then
     :
   else

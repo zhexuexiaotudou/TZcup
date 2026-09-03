@@ -226,6 +226,84 @@ def test_orchestrated_runners_do_not_create_nested_process_groups() -> None:
     assert "timeout --foreground" in service
 
 
+@pytest.mark.skipif(os.name != "posix", reason="requires native POSIX process groups")
+def test_orchestrated_inner_watchdog_delegates_for_subrunner_in_outer_session(
+    tmp_path: Path,
+) -> None:
+    prefix = tmp_path / "subrunner_delegated_watchdog"
+    harness = """
+set -euo pipefail
+source "$1"
+sleep 30 &
+launch_pid=$!
+trap 'kill "${launch_pid}" 2>/dev/null || true; wait "${launch_pid}" 2>/dev/null || true' EXIT
+formal_runtime_start_memory_watchdog "${launch_pid}" "$2"
+[[ "${FORMAL_RUNTIME_MEMORY_WATCHDOG_DELEGATED}" == "1" ]]
+[[ -z "${FORMAL_RUNTIME_MEMORY_WATCHDOG_PID}" ]]
+[[ ! -e "$2.json" && ! -e "$2.log" ]]
+printf 'delegated=%s\\n' "${FORMAL_RUNTIME_MEMORY_WATCHDOG_DELEGATED}"
+"""
+    # The inner shell intentionally shares the outer setsid group's PGID/SID.
+    # Integrated mobility/grasp child runners use this shape.
+    wrapper = 'bash -c "$1" bash "$2" "$3" & child=$!; wait "${child}"'
+    result = subprocess.run(
+        [
+            "setsid",
+            "bash",
+            "-c",
+            wrapper,
+            "bash",
+            harness,
+            str(HELPER),
+            str(prefix),
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+        env={**os.environ, "FORMAL_ORCHESTRATED_STEP_SESSION": "1"},
+        timeout=10,
+    )
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == "delegated=1\n"
+    assert not prefix.with_suffix(".json").exists()
+    assert not prefix.with_suffix(".log").exists()
+
+
+def test_orchestrated_inner_watchdog_fails_closed_when_pgid_and_sid_do_not_match() -> None:
+    harness = """
+set -uo pipefail
+ps() {
+  case "${2:-}" in
+    pgid=) printf ' 700\\n' ;;
+    sid=) printf ' 701\\n' ;;
+    *) return 2 ;;
+  esac
+}
+setsid() { echo 'unexpected nested watchdog' >&2; return 99; }
+formal_runtime_start_memory_watchdog 4242 /tmp/tzcup_unattested_watchdog
+rc=$?
+printf 'rc=%s delegated=%s\\n' "${rc}" "${FORMAL_RUNTIME_MEMORY_WATCHDOG_DELEGATED}"
+exit "${rc}"
+"""
+    result = subprocess.run(
+        ["bash"],
+        check=False,
+        capture_output=True,
+        input=(
+            "export FORMAL_ORCHESTRATED_STEP_SESSION=1\n"
+            + HELPER.read_text(encoding="utf-8")
+            + "\n"
+            + harness
+        ).encode("utf-8"),
+        timeout=10,
+    )
+    assert result.returncode == 125
+    assert result.stdout.decode("utf-8", errors="replace") == "rc=125 delegated=0\n"
+    assert "must share one dedicated PGID/SID" in result.stderr.decode(
+        "utf-8", errors="replace"
+    )
+
+
 def test_all_default_domain_spans_avoid_linux_ephemeral_ports() -> None:
     for name, (base, count) in DEFAULT_DOMAINS.items():
         assert all(linux_safe(base + offset) for offset in range(count)), name
