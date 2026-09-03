@@ -541,6 +541,18 @@ def test_commands_use_one_fresh_episode_map_rl_and_e2e_root() -> None:
     assert orchestration.STEP_SPECS[[row.step_id for row in orchestration.STEP_SPECS].index("multisite_product")].mode == "gazebo"
 
 
+@pytest.mark.parametrize(
+    "step_id",
+    ("first_map", "saved_map_reuse", "same_map_baseline", "perception", "dynamic_obstacle"),
+)
+def test_map_and_perception_steps_receive_the_frozen_runtime_workspace(
+    step_id: str,
+) -> None:
+    context = _context()
+    _, environment = orchestration._step_command(step_id, context)
+    assert environment["FORMAL_VEHICLE_RUNTIME_WS"] == str(context.runtime_ws)
+
+
 def test_final_orchestrator_rejects_reduced_frozen_multimap_scenario(
     tmp_path: Path,
 ) -> None:

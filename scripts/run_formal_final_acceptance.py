@@ -1727,12 +1727,24 @@ def _step_command(
             "--output", context.episode_root,
         ]), environment
     if step_id == "first_map":
-        environment.update(FORMAL_DYNAMIC_EPISODE_ROOT=str(context.episode_root), FORMAL_DYNAMIC_SAVED_MAP_ROOT=str(context.map_root), FORMAL_MAP_RUNTIME_OVERLAY=str(context.overlay))
+        environment.update(
+            FORMAL_VEHICLE_RUNTIME_WS=str(context.runtime_ws),
+            FORMAL_DYNAMIC_EPISODE_ROOT=str(context.episode_root),
+            FORMAL_DYNAMIC_SAVED_MAP_ROOT=str(context.map_root),
+            FORMAL_MAP_RUNTIME_OVERLAY=str(context.overlay),
+        )
         return bash("run_formal_first_map_dynamic_prerequisite.sh"), environment
     if step_id == "saved_map_reuse":
-        environment.update(FORMAL_DYNAMIC_EPISODE_ROOT=str(context.episode_root), FORMAL_DYNAMIC_SAVED_MAP_ROOT=str(context.map_root), FORMAL_MAP_RUNTIME_OVERLAY=str(context.overlay), FORMAL_MAP_LIFECYCLE_OUTPUT=str(gate_output("first_map_then_clean")))
+        environment.update(
+            FORMAL_VEHICLE_RUNTIME_WS=str(context.runtime_ws),
+            FORMAL_DYNAMIC_EPISODE_ROOT=str(context.episode_root),
+            FORMAL_DYNAMIC_SAVED_MAP_ROOT=str(context.map_root),
+            FORMAL_MAP_RUNTIME_OVERLAY=str(context.overlay),
+            FORMAL_MAP_LIFECYCLE_OUTPUT=str(gate_output("first_map_then_clean")),
+        )
         return bash("run_formal_saved_map_cleaning_lifecycle.sh"), environment
     if step_id == "same_map_baseline":
+        environment["FORMAL_VEHICLE_RUNTIME_WS"] = str(context.runtime_ws)
         return bash("run_formal_same_map_full_coverage_baseline.sh") + [
             "--episode-root", str(context.episode_root), "--map-root", str(context.map_root),
             "--session", str(context.session), "--runtime-overlay", str(context.overlay),
@@ -1741,6 +1753,7 @@ def _step_command(
         ], environment
     if step_id == "perception":
         environment.update(
+            FORMAL_VEHICLE_RUNTIME_WS=str(context.runtime_ws),
             FORMAL_CAMPUS_STAGE1_SETUP=str(context.overlay / "setup.bash"),
             FORMAL_CAMPUS_RUNTIME_SETUP=str(context.overlay / "setup.bash"),
             FORMAL_CAMPUS_AGENT_SETUP=str(context.overlay / "setup.bash"),
