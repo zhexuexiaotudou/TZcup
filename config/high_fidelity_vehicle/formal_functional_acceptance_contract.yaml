@@ -360,6 +360,8 @@ evidence_gates:
     runtime_binding:
       report_field: runtime_gate_binding
       sidecar_suffix: .runtime_binding.json
+    preembedded_grasp_binding:
+      report_field: preembedded_grasp_world_binding
   formal_20_cube_grasp_and_dynamic_mass:
     path: artifacts/formal_20_cube_grasp_runtime.json
     success_statuses: [FORMAL_20_CUBE_TARGET_CONDITIONED_GRASP_PASSED]

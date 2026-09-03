@@ -10,6 +10,8 @@ from pathlib import Path
 import pytest
 import yaml
 
+from formal_preembedded_grasp_world_binding import validate_preembedded_grasp_world
+
 import run_formal_final_acceptance as orchestration
 
 
@@ -225,6 +227,11 @@ def test_runtime_gate_requires_current_matching_runtime_binding(
     tmp_path: Path, gate_id: str, report_id: str, status: str
 ) -> None:
     contract = yaml.safe_load(orchestration.CONTRACT.read_text(encoding="utf-8"))
+    # This parametrized case exercises the generic runtime-sidecar validator;
+    # strict preembedded-world validation has dedicated fixture coverage below.
+    contract["evidence_gates"]["physical_grasp_and_bin"].pop(
+        "preembedded_grasp_binding", None
+    )
     contract_path = tmp_path / orchestration.CONTRACT.relative_to(orchestration.ROOT)
     contract_path.parent.mkdir(parents=True, exist_ok=True)
     contract_path.write_text(yaml.safe_dump(contract, sort_keys=False), encoding="utf-8")
@@ -297,6 +304,126 @@ def test_runtime_gate_requires_current_matching_runtime_binding(
     evidence.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(orchestration.OrchestrationError, match="differs from its sidecar"):
         orchestration._validate_gate(context, gate_id, started_ns)
+
+
+def test_final_grasp_gate_revalidates_current_preembedded_auxiliary_hashes(
+    tmp_path: Path,
+) -> None:
+    contract = yaml.safe_load(orchestration.CONTRACT.read_text(encoding="utf-8"))
+    contract_path = tmp_path / orchestration.CONTRACT.relative_to(orchestration.ROOT)
+    contract_path.parent.mkdir(parents=True, exist_ok=True)
+    contract_path.write_text(yaml.safe_dump(contract, sort_keys=False), encoding="utf-8")
+    context = _context(tmp_path)
+    context.snapshot.parent.mkdir(parents=True, exist_ok=True)
+    context.snapshot.write_text(
+        json.dumps(
+            {
+                "source_inventory_sha256": "a" * 64,
+                "outputs": {
+                    "reports/engineering/formal_competition_vehicle.urdf": {
+                        "sha256": "b" * 64
+                    }
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    identity = orchestration._snapshot_identity(context)
+    context.session.parent.mkdir(parents=True, exist_ok=True)
+    context.session.write_text(
+        json.dumps(
+            {
+                "status": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING",
+                "started_epoch_ns": 1,
+                "snapshot": identity,
+            }
+        ),
+        encoding="utf-8",
+    )
+    controller = context.overlay / "share/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml"
+    source_world = context.overlay / "share/sanitation_manipulation/worlds/formal_cube_manipulation.sdf"
+    for path, contents in (
+        (context.overlay / "setup.bash", "# overlay\n"),
+        (controller, "controller_manager: {}\n"),
+        (source_world, "<sdf version='1.11'><world name='formal_cube_manipulation'/></sdf>\n"),
+    ):
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(contents, encoding="utf-8")
+    evidence = context.root / "artifacts/formal_grasp_executor_runtime.json"
+    evidence.parent.mkdir(parents=True, exist_ok=True)
+    base = evidence.with_suffix("")
+    report = base.with_name(base.name + ".preembedded_grasp_world.json")
+    world = base.with_name(base.name + ".preembedded_grasp_world.sdf")
+    vehicle = base.with_name(base.name + ".preembedded_vehicle.urdf")
+    cube = base.with_name(base.name + ".preembedded_cube.urdf")
+    vehicle.write_text("<robot name='tzcup_formal_sanitation_vehicle'/>\n", encoding="utf-8")
+    cube.write_text("<robot name='material_cube'/>\n", encoding="utf-8")
+    world.write_text(
+        "<sdf version='1.11'><world name='formal_cube_manipulation'>"
+        "<model name='tzcup_formal_sanitation_vehicle'><pose>0 0 0.005 0 0 0</pose>"
+        "<plugin filename='gz_ros2_control-system' name='gz_ros2_control::GazeboSimROS2ControlPlugin'><parameters>"
+        f"{controller}</parameters></plugin></model>"
+        "<model name='material_cube'><pose>0.300 -0.950 0.017 0 0 0</pose></model>"
+        "</world></sdf>\n",
+        encoding="utf-8",
+    )
+    report.write_text(
+        json.dumps(
+            {
+                "status": "FORMAL_PREEMBEDDED_SENSOR_WORLD_READY",
+                "passed": True,
+                "formal_eligible": True,
+                "spawn_mode": "preembedded_before_gazebo_sensors_system",
+                "output_world": str(world.resolve()),
+                "output_world_sha256": orchestration._sha256(world),
+                "vehicle_urdf": str(vehicle.resolve()),
+                "vehicle_urdf_sha256": orchestration._sha256(vehicle),
+                "model_name": "tzcup_formal_sanitation_vehicle",
+                "model_initial_pose": "0 0 0.005 0 0 0",
+                "source_world": str(source_world.resolve()),
+                "source_world_sha256": orchestration._sha256(source_world),
+                "controller_runtime_binding": {
+                    "runtime_install_root": str(context.overlay.resolve()),
+                    "resolved_controller_config": str(controller.resolve()),
+                    "controller_config_relative_to_install": "share/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml",
+                    "controller_config_sha256": orchestration._sha256(controller),
+                },
+                "additional_model": {
+                    "urdf": str(cube.resolve()),
+                    "urdf_sha256": orchestration._sha256(cube),
+                    "model_name": "material_cube",
+                    "model_initial_pose": "0.300 -0.950 0.017 0 0 0",
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    binding = validate_preembedded_grasp_world(
+        report_path=report,
+        world_path=world,
+        vehicle_urdf_path=vehicle,
+        cube_urdf_path=cube,
+        source_world_path=source_world,
+        acceptance_session={
+            "started_epoch_ns": 1,
+            "session_manifest_sha256": orchestration._sha256(context.session),
+        },
+        snapshot_identity=identity,
+        expected_runtime_install_root=context.overlay,
+    )
+    row = contract["evidence_gates"]["physical_grasp_and_bin"]
+    payload = {
+        "runtime_gate_binding": {"runtime_closure_binding": {}},
+        "preembedded_grasp_world_binding": binding,
+    }
+    orchestration._validate_preembedded_grasp_evidence(
+        context, row, payload, evidence, 1
+    )
+    cube.write_text("tampered\n", encoding="utf-8")
+    with pytest.raises(orchestration.OrchestrationError, match="digest differs"):
+        orchestration._validate_preembedded_grasp_evidence(
+            context, row, payload, evidence, 1
+        )
 
 
 def _blocked_resume_report(context: orchestration.Context) -> dict[str, object]:

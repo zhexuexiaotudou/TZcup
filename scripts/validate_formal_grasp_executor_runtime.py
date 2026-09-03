@@ -14,7 +14,6 @@ import hashlib
 import json
 import os
 import time
-import xml.etree.ElementTree as ET
 from pathlib import Path
 from typing import Any
 
@@ -25,6 +24,7 @@ from rclpy.node import Node
 from std_msgs.msg import Bool, String
 
 from formal_runtime_gate_binding import load_binding
+from formal_preembedded_grasp_world_binding import validate_preembedded_grasp_world
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -155,48 +155,6 @@ def _bound_runtime_evidence(
     return source_binding, bound_session, runtime_binding, runtime_identity
 
 
-def _preembedded_grasp_binding(
-    report_path: Path, world_path: Path, session_started_epoch_ns: int
-) -> dict[str, object]:
-    """Bind both contact-bearing grasp models to this acceptance attempt."""
-
-    for path, label in ((report_path, "preembedded grasp report"), (world_path, "preembedded grasp world")):
-        if not path.is_file():
-            raise ValueError(f"missing {label}: {path}")
-        if path.stat().st_mtime_ns < session_started_epoch_ns:
-            raise ValueError(f"{label} predates the acceptance session")
-    try:
-        report = json.loads(report_path.read_text(encoding="utf-8"))
-        root = ET.parse(world_path).getroot()
-    except (json.JSONDecodeError, ET.ParseError) as error:
-        raise ValueError(f"invalid preembedded grasp evidence: {error}") from error
-    if (
-        report.get("status") != "FORMAL_PREEMBEDDED_SENSOR_WORLD_READY"
-        or report.get("passed") is not True
-        or report.get("formal_eligible") is not True
-        or Path(str(report.get("output_world", ""))).resolve() != world_path.resolve()
-        or report.get("output_world_sha256") != _sha256(world_path)
-    ):
-        raise ValueError("preembedded grasp report is not a bound formal world")
-    additional = report.get("additional_model")
-    if not isinstance(additional, dict):
-        raise ValueError("preembedded grasp report has no cube model binding")
-    world = root.find("world")
-    names = {model.get("name") for model in world.findall("model")} if world is not None else set()
-    if {"tzcup_formal_sanitation_vehicle", "material_cube"} - names:
-        raise ValueError("preembedded grasp world lacks vehicle or material cube")
-    return {
-        "report": str(report_path.resolve()),
-        "report_sha256": _sha256(report_path),
-        "world": str(world_path.resolve()),
-        "world_sha256": _sha256(world_path),
-        "vehicle_urdf_sha256": report.get("vehicle_urdf_sha256"),
-        "cube_urdf_sha256": additional.get("urdf_sha256"),
-        "model_names": sorted(name for name in names if name in {"tzcup_formal_sanitation_vehicle", "material_cube"}),
-        "spawn_mode": report.get("spawn_mode"),
-    }
-
-
 class Probe(Node):
     def __init__(self) -> None:
         super().__init__("formal_grasp_executor_runtime_probe")
@@ -281,6 +239,9 @@ def main() -> int:
     parser.add_argument("--runtime-binding", required=True, type=Path)
     parser.add_argument("--preembedded-report", required=True, type=Path)
     parser.add_argument("--preembedded-world", required=True, type=Path)
+    parser.add_argument("--preembedded-vehicle-urdf", required=True, type=Path)
+    parser.add_argument("--preembedded-cube-urdf", required=True, type=Path)
+    parser.add_argument("--preembedded-source-world", required=True, type=Path)
     parser.add_argument("--startup-wait", type=float, default=15.0)
     parser.add_argument("--timeout", type=float, default=180.0)
     args = parser.parse_args()
@@ -292,10 +253,26 @@ def main() -> int:
         runtime_gate_binding,
         runtime_identity,
     ) = _bound_runtime_evidence(args.snapshot, args.session, args.runtime_binding)
-    preembedded_grasp = _preembedded_grasp_binding(
-        args.preembedded_report,
-        args.preembedded_world,
-        int(acceptance_session_binding["session_started_epoch_ns"]),
+    runtime_closure = runtime_gate_binding.get("runtime_closure_binding")
+    if not isinstance(runtime_closure, dict):
+        raise ValueError("runtime binding has no runtime closure binding")
+    runtime_install_root = runtime_closure.get("runtime_install_root")
+    if not isinstance(runtime_install_root, str) or not runtime_install_root:
+        raise ValueError("runtime closure has no frozen install root")
+    preembedded_grasp = validate_preembedded_grasp_world(
+        report_path=args.preembedded_report,
+        world_path=args.preembedded_world,
+        vehicle_urdf_path=args.preembedded_vehicle_urdf,
+        cube_urdf_path=args.preembedded_cube_urdf,
+        source_world_path=args.preembedded_source_world,
+        acceptance_session={
+            "started_epoch_ns": acceptance_session_binding["session_started_epoch_ns"],
+            "session_manifest_sha256": acceptance_session_binding[
+                "session_manifest_sha256"
+            ],
+        },
+        snapshot_identity=source_binding,
+        expected_runtime_install_root=Path(runtime_install_root),
     )
     rclpy.init()
     node = Probe()

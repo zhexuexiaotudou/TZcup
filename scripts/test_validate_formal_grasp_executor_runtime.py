@@ -52,6 +52,10 @@ def test_runtime_probe_requires_and_records_fresh_final_runtime_identity():
     assert "refusing to overwrite retained grasp runtime report" in SOURCE
     assert 'parser.add_argument("--preembedded-report", required=True, type=Path)' in SOURCE
     assert 'parser.add_argument("--preembedded-world", required=True, type=Path)' in SOURCE
+    assert 'parser.add_argument("--preembedded-vehicle-urdf", required=True, type=Path)' in SOURCE
+    assert 'parser.add_argument("--preembedded-cube-urdf", required=True, type=Path)' in SOURCE
+    assert 'parser.add_argument("--preembedded-source-world", required=True, type=Path)' in SOURCE
+    assert "validate_preembedded_grasp_world" in SOURCE
     assert '"preembedded_grasp_world_binding": preembedded_grasp' in SOURCE
 
 
@@ -82,6 +86,9 @@ def test_runner_starts_physics_bridge_and_product_executor_as_separate_surfaces(
 
 def test_grasp_runner_preembeds_both_contact_models_and_archives_them():
     assert "prepare_formal_preembedded_sensor_world.py" in RUNNER
+    assert '--preembedded-vehicle-urdf "${preembedded_vehicle_urdf}"' in RUNNER
+    assert '--preembedded-cube-urdf "${preembedded_cube_urdf}"' in RUNNER
+    assert '--preembedded-source-world "${source_world}"' in RUNNER
     assert '--additional-urdf "${preembedded_cube_urdf}"' in RUNNER
     assert 'world:="${preembedded_world}"' in RUNNER
     assert "spawn_vehicle:=false spawn_single_cube:=false" in RUNNER

@@ -35,6 +35,10 @@ from formal_final_runtime_closure import (
     FINAL_RUNTIME_PACKAGES,
     verify_manifest as verify_runtime_closure_manifest,
 )
+from formal_preembedded_grasp_world_binding import (
+    PreembeddedGraspWorldBindingError,
+    validate_preembedded_grasp_world,
+)
 
 try:  # Windows runs the static audit; Linux owns the actual runtime lock.
     import fcntl
@@ -2172,6 +2176,79 @@ def _validate_runtime_binding(
         )
 
 
+def _validate_preembedded_grasp_evidence(
+    context: Context,
+    row: Mapping[str, Any],
+    payload: Mapping[str, Any],
+    evidence_path: Path,
+    session_started_ns: int,
+) -> None:
+    """Re-hash and semantically revalidate the contact world retained by grasp."""
+
+    contract = row.get("preembedded_grasp_binding")
+    expected_contract = {"report_field": "preembedded_grasp_world_binding"}
+    if contract != expected_contract:
+        raise OrchestrationError("physical grasp has an invalid preembedded-world contract")
+    binding = _nested(payload, str(contract["report_field"]))
+    if not isinstance(binding, dict):
+        raise OrchestrationError("physical grasp has no preembedded-world binding")
+
+    base = evidence_path.with_suffix("")
+    expected_paths = {
+        "preembedded_report_path": base.with_name(
+            base.name + ".preembedded_grasp_world.json"
+        ),
+        "preembedded_world_path": base.with_name(
+            base.name + ".preembedded_grasp_world.sdf"
+        ),
+        "vehicle_urdf_path": base.with_name(base.name + ".preembedded_vehicle.urdf"),
+        "cube_urdf_path": base.with_name(base.name + ".preembedded_cube.urdf"),
+    }
+    resolved: dict[str, Path] = {}
+    for field, expected in expected_paths.items():
+        candidate = _repo_regular_file(context.root, expected, f"physical grasp {field}")
+        if candidate != expected.resolve() or binding.get(field) != str(candidate):
+            raise OrchestrationError(f"physical grasp {field} differs from routed auxiliary evidence")
+        if candidate.stat().st_mtime_ns < session_started_ns:
+            raise OrchestrationError(f"physical grasp {field} predates the current session")
+        hash_field = field.removesuffix("_path") + "_sha256"
+        if binding.get(hash_field) != _sha256(candidate):
+            raise OrchestrationError(f"physical grasp {field} digest differs from retained evidence")
+        resolved[field] = candidate
+
+    runtime_binding = payload.get("runtime_gate_binding")
+    if not isinstance(runtime_binding, dict):
+        raise OrchestrationError("physical grasp has no runtime gate binding")
+    closure = runtime_binding.get("runtime_closure_binding")
+    if not isinstance(closure, dict):
+        raise OrchestrationError("physical grasp runtime binding has no closure")
+    session = _read_json(context.session)
+    session_hash = _sha256(context.session)
+    try:
+        verified = validate_preembedded_grasp_world(
+            report_path=resolved["preembedded_report_path"],
+            world_path=resolved["preembedded_world_path"],
+            vehicle_urdf_path=resolved["vehicle_urdf_path"],
+            cube_urdf_path=resolved["cube_urdf_path"],
+            source_world_path=(
+                context.overlay
+                / "share/sanitation_manipulation/worlds/formal_cube_manipulation.sdf"
+            ),
+            acceptance_session={
+                "started_epoch_ns": session_started_ns,
+                "session_manifest_sha256": session_hash,
+            },
+            snapshot_identity=_snapshot_identity(context),
+            expected_runtime_install_root=context.overlay,
+        )
+    except (OSError, ValueError, RuntimeError, PreembeddedGraspWorldBindingError) as error:
+        raise OrchestrationError(f"physical grasp preembedded-world binding is invalid: {error}") from error
+    if session.get("started_epoch_ns") != session_started_ns or not _strict_json_equal(
+        binding, verified
+    ):
+        raise OrchestrationError("physical grasp preembedded-world binding differs from current session evidence")
+
+
 def _validate_typed_water_transport_evidence(
     context: Context,
     payload: Mapping[str, Any],
@@ -2545,6 +2622,12 @@ def _validate_gate(
     _validate_runtime_binding(
         context, gate_id, row, payload, path, session_started_ns
     )
+    if gate_id == "physical_grasp_and_bin" and row.get(
+        "preembedded_grasp_binding"
+    ) is not None:
+        _validate_preembedded_grasp_evidence(
+            context, row, payload, path, session_started_ns
+        )
     surface_hashes = (
         _validate_water_surface_evidence(
             context, payload, session_started_ns, runtime_closure

@@ -88,6 +88,9 @@ source_world="${manipulation_share}/worlds/formal_cube_manipulation.sdf"
 for required in "${vehicle_model}" "${cube_model}" "${controller_config}" "${source_world}"; do
   [[ -f "${required}" ]] || { echo "missing frozen grasp input: ${required}" >&2; exit 2; }
 done
+# The generated source URDFs and preembedded world are retained gate evidence,
+# so their parent must exist before shell redirection starts xacro expansion.
+mkdir -p "$(dirname "${output}")" "$(dirname "${launch_log}")"
 
 xacro "${vehicle_model}" use_sim:=true bodywork_visible:=true \
   dry_accounting_mode:=physical_resident initial_estop_latched:=false \
@@ -111,7 +114,6 @@ fi
 export ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-218}"
 formal_runtime_configure "${ROS_DOMAIN_ID}"
 export GZ_PARTITION="${GZ_PARTITION:-tzcup_formal_product_grasp_${ROS_DOMAIN_ID}_$$}"
-mkdir -p "$(dirname "${output}")" "$(dirname "${launch_log}")"
 
 simulation_pid=""
 bridge_pid=""
@@ -146,4 +148,7 @@ gz topic -t /manipulation/grasp/detach -m gz.msgs.Empty -p "" \
 python3 "${repo_root}/scripts/validate_formal_grasp_executor_runtime.py" \
   --output "${output}" --startup-wait "${startup_wait_s}" --timeout "${timeout_s}" \
   --snapshot "${snapshot}" --session "${session}" --runtime-binding "${runtime_binding}" \
-  --preembedded-report "${preembedded_report}" --preembedded-world "${preembedded_world}"
+  --preembedded-report "${preembedded_report}" --preembedded-world "${preembedded_world}" \
+  --preembedded-vehicle-urdf "${preembedded_vehicle_urdf}" \
+  --preembedded-cube-urdf "${preembedded_cube_urdf}" \
+  --preembedded-source-world "${source_world}"
