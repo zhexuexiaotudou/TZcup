@@ -5,7 +5,7 @@ source /opt/ros/jazzy/setup.bash
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${repo_root}/scripts/run_formal_runtime_isolation.sh"
-runtime_ws="${FORMAL_VEHICLE_RUNTIME_WS:?set FORMAL_VEHICLE_RUNTIME_WS to the fresh merged non-symlink runtime workspace}"
+runtime_ws="${FORMAL_WATER_TYPED_RUNTIME_WS:?set FORMAL_WATER_TYPED_RUNTIME_WS to the fresh merged non-symlink runtime workspace}"
 output_dir="${FORMAL_WATER_TYPED_OUTPUT_DIR:?set FORMAL_WATER_TYPED_OUTPUT_DIR to a fresh output directory}"
 critical_manifest="${FORMAL_WATER_CRITICAL_SOURCE_MANIFEST:?set FORMAL_WATER_CRITICAL_SOURCE_MANIFEST to the fresh runtime/source manifest}"
 duration_s="${FORMAL_WATER_TYPED_DURATION_S:-10}"

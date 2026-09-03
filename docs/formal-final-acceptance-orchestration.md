@@ -170,6 +170,8 @@ session，并把这三者的摘要绑定写入本次报告；已有报告、日�
 validator 会重新核对 sidecar 后才允许发布刷盘、滚刷、升降、排水阀、泵和刮水柔顺性报告。
 水回收 runner 的 `FORMAL_VEHICLE_RUNTIME_WS` 明确指向 closure 记录的 `install/` 根，避免把
 workspace 根误当 install 根而产生无法验证的 binding。
+同一阶段的 typed 电机诊断改用显式 `FORMAL_WATER_TYPED_RUNTIME_WS` 指向其父 workspace，
+以便独立核验 `install/` 与 `INSTALL_SYMLINKS.txt`。
 最终 `validate_formal_functional_acceptance_contract.py` 也会逐一重新读取这 21 个 sidecar，
 要求报告内嵌 binding 与 sidecar 字节语义完全一致，并与当前 session 的 snapshot、开始时间和
 runtime closure 完全一致；仅有历史报告、`skipped` 行、摘要哈希或已通过的单个 validator 都不能

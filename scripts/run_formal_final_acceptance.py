@@ -1630,6 +1630,7 @@ def _step_command(
                 )
             ),
             FORMAL_WATER_TYPED_OUTPUT_DIR=str(typed_output),
+            FORMAL_WATER_TYPED_RUNTIME_WS=str(context.runtime_ws),
             FORMAL_WATER_TYPED_DURATION_S="10",
             FORMAL_WATER_TYPED_DIAG_JSON=str(typed_output / "typed_diag.json"),
             FORMAL_WATER_TYPED_RAW_TRACE=str(typed_output / "raw_frames.jsonl"),

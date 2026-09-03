@@ -1968,6 +1968,7 @@ def test_water_step_generates_manifest_then_typed_diagnostic_then_all_scenarios(
     expected = {
         "FORMAL_WATER_OUTPUT_DIR": str(water_root / "scenarios"),
         "FORMAL_WATER_TYPED_OUTPUT_DIR": str(water_root / "typed_transport"),
+        "FORMAL_WATER_TYPED_RUNTIME_WS": str(context.runtime_ws),
         "FORMAL_WATER_TYPED_DURATION_S": "10",
         "FORMAL_WATER_TYPED_DIAG_JSON": str(
             water_root / "typed_transport/typed_diag.json"

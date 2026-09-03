@@ -42,7 +42,7 @@ def test_runner_requires_fresh_merged_runtime_lock_and_memory_guards() -> None:
     source = (ROOT / "scripts/run_formal_typed_cleaning_motor_diagnostic.sh").read_text(
         encoding="utf-8"
     )
-    assert "FORMAL_VEHICLE_RUNTIME_WS:?" in source
+    assert "FORMAL_WATER_TYPED_RUNTIME_WS:?" in source
     assert "FORMAL_WATER_TYPED_OUTPUT_DIR:?" in source
     assert "FORMAL_WATER_CRITICAL_SOURCE_MANIFEST:?" in source
     assert '[[ ! -e "${output_dir}" ]]' in source
