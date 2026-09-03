@@ -108,12 +108,15 @@ cleanup_launch() {
 formal_runtime_install_traps cleanup_launch
 
 formal_runtime_memory_preflight "${output_dir}/windows_memory_preflight"
+# Passive typed transport only; this does not claim product I/O or scalar fault/safety coverage.
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_vehicle_description formal_vehicle_sim.launch.py \
   gui:=false bodywork_visible:=true high_bandwidth_sensor_runtime:=false \
   start_controllers:=true \
   enable_safety_manager:=true simulation_initial_estop_active:=true \
   start_simulation_safety_inputs:=true start_power_system_simulators:=true \
   water_evaluation_interfaces:=true \
+  start_product_bridge:=false \
+  start_cleaning_actuator_scalar_bridge:=false \
   cleaning_realtime_telemetry_enabled:=true \
   cleaning_status_json_enabled:=true \
   cleaning_status_json_publish_rate_hz:=1.0 \

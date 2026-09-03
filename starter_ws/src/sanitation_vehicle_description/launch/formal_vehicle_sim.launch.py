@@ -62,6 +62,10 @@ def generate_launch_description() -> LaunchDescription:
         ]
     )
     visual_acceptance_runtime = LaunchConfiguration("visual_acceptance_runtime")
+    start_product_bridge = LaunchConfiguration("start_product_bridge")
+    start_cleaning_actuator_scalar_bridge = LaunchConfiguration(
+        "start_cleaning_actuator_scalar_bridge"
+    )
     cleaning_realtime_telemetry_enabled = LaunchConfiguration(
         "cleaning_realtime_telemetry_enabled"
     )
@@ -268,6 +272,7 @@ def generate_launch_description() -> LaunchDescription:
             "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/total_power_w@std_msgs/msg/Float64[gz.msgs.Double",
         ],
         output="screen",
+        condition=IfCondition(start_cleaning_actuator_scalar_bridge),
     )
     cleaning_actuator_motor_bridge = Node(
         package="sanitation_gazebo_control",
@@ -574,6 +579,16 @@ def generate_launch_description() -> LaunchDescription:
                     "for the low-rate visual-acceptance studio."
                 ),
             ),
+            DeclareLaunchArgument(
+                "start_product_bridge",
+                default_value="true",
+                description="Start the default product ROS-Gazebo parameter bridge.",
+            ),
+            DeclareLaunchArgument(
+                "start_cleaning_actuator_scalar_bridge",
+                default_value="true",
+                description="Start scalar cleaning-actuator ROS-Gazebo interfaces.",
+            ),
             DeclareLaunchArgument("dry_load_mass_kg", default_value="0.0"),
             DeclareLaunchArgument(
                 "dry_accounting_mode",
@@ -751,6 +766,7 @@ def generate_launch_description() -> LaunchDescription:
                     "/storage/dry_deposit/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
                 ],
                 output="screen",
+                condition=IfCondition(start_product_bridge),
             ),
             # Raw images and point clouds dwarf the control-plane traffic.  A
             # dedicated lazy bridge preserves every product topic, resolution

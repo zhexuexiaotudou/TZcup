@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import ast
 import hashlib
 import json
 from pathlib import Path
@@ -68,6 +69,59 @@ def test_runner_checks_live_types_and_strict_publish_audit() -> None:
     assert "--finalize" in source
     assert "raw_frames.jsonl" in source
     assert "typed_diag.json" in source
+
+
+def test_typed_runner_disables_only_shutdown_unstable_optional_bridges() -> None:
+    runner = (ROOT / "scripts/run_formal_typed_cleaning_motor_diagnostic.sh").read_text(
+        encoding="utf-8"
+    )
+    launch_path = (
+        ROOT
+        / "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py"
+    )
+    launch = ast.parse(launch_path.read_text(encoding="utf-8"))
+    names = {
+        node.args[0].value: next(
+            value.value.value
+            for value in node.keywords
+            if value.arg == "default_value" and isinstance(value.value, ast.Constant)
+        )
+        for node in ast.walk(launch)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "DeclareLaunchArgument"
+        and node.args
+        and isinstance(node.args[0], ast.Constant)
+        and node.args[0].value
+        in {"start_product_bridge", "start_cleaning_actuator_scalar_bridge"}
+    }
+    assert names == {
+        "start_product_bridge": "true",
+        "start_cleaning_actuator_scalar_bridge": "true",
+    }
+    assert "start_product_bridge:=false" in runner
+    assert "start_cleaning_actuator_scalar_bridge:=false" in runner
+    for bridge, switch in (
+        ("formal_vehicle_product_bridge", "start_product_bridge"),
+        ("cleaning_actuator_scalar_bridge", "start_cleaning_actuator_scalar_bridge"),
+    ):
+        node = next(
+            node
+            for node in ast.walk(launch)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "Node"
+            and any(
+                key.arg == "name"
+                and isinstance(key.value, ast.Constant)
+                and key.value.value == bridge
+                for key in node.keywords
+            )
+        )
+        condition = next(key.value for key in node.keywords if key.arg == "condition")
+        assert isinstance(condition, ast.Call)
+        assert isinstance(condition.func, ast.Name) and condition.func.id == "IfCondition"
+        assert isinstance(condition.args[0], ast.Name) and condition.args[0].id == switch
 
 
 def test_finalize_binds_zero_error_transport_and_input_hashes(tmp_path: Path) -> None:

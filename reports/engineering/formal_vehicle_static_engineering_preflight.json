@@ -55,24 +55,202 @@
     "source_level_only": true
   },
   "formal_mechanical_interface_datums": {
-    "errors": [
-      "validator raised MechanicalDatumValidationError: snapshot hash mismatch for reports/engineering/formal_competition_vehicle.urdf: expected b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2, got 1b09219dca0ba8d80cb23031e9c6aed5d64f588a50ab4ca578e67be0f92ed22d"
-    ],
-    "manufacturing_release": null,
+    "errors": [],
+    "manufacturing_release": false,
     "report": {
-      "errors": [
-        "validator raised MechanicalDatumValidationError: snapshot hash mismatch for reports/engineering/formal_competition_vehicle.urdf: expected b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2, got 1b09219dca0ba8d80cb23031e9c6aed5d64f588a50ab4ca578e67be0f92ed22d"
+      "checked_interfaces": [
+        "chassis_to_charge_receptacle",
+        "chassis_to_cleaning_head",
+        "chassis_top_plate_to_arm_base",
+        "chassis_top_plate_to_dry_bin",
+        "chassis_top_plate_to_sensor_tower",
+        "chassis_top_plate_to_wastewater_tank",
+        "wastewater_tank_to_drain_hose"
       ],
-      "valid": false
+      "claim_boundary": "static_zero_joint_snapshot_crosswalk_only",
+      "coordinate_reference": "base_footprint",
+      "crosswalk_id": "tzcup_formal_mechanical_interface_datums_v1",
+      "datum_count": 16,
+      "interface_count": 7,
+      "manufacturing_release": false,
+      "nominal_joint_configuration": "zero",
+      "observed_datums": {
+        "arm_adapter_mount": {
+          "link": "arm_mount_link",
+          "orientation_error_rad": 0.0,
+          "position_error_m": 0.0,
+          "xyz_m": [
+            0.1,
+            -0.2,
+            0.4341
+          ]
+        },
+        "arm_base_mechanical": {
+          "link": "ur5e_base_link",
+          "orientation_error_rad": 0.0,
+          "position_error_m": 0.0,
+          "xyz_m": [
+            0.1,
+            -0.2,
+            0.4791
+          ]
+        },
+        "arm_control_reference": {
+          "link": "ur5e_base_link_inertia",
+          "orientation_error_rad": 0.0,
+          "position_error_m": 0.0,
+          "xyz_m": [
+            0.1,
+            -0.2,
+            0.4791
+          ]
+        },
+        "base_footprint_root": {
+          "link": "base_footprint",
+          "orientation_error_rad": 0.0,
+          "position_error_m": 0.0,
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.0
+          ]
+        },
+        "charge_housing_origin": {
+          "link": "charge_port_housing_link",
+          "orientation_error_rad": 0.0,
+          "position_error_m": 0.0,
+          "xyz_m": [
+            0.25,
+            0.402,
+            0.4951
+          ]
+        },
+        "charge_receptacle_endpoint": {
+          "link": "charge_receptacle_link",
+          "orientation_error_rad": 0.0,
+          "position_error_m": 0.0,
+          "xyz_m": [
+            0.25,
+            0.402,
+            0.4831
+          ]
+        },
+        "chassis_top_plate": {
+          "link": "payload_deck_link",
+          "orientation_error_rad": 0.0,
+          "position_error_m": 0.0,
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.3691
+          ]
+        },
+        "cleaning_chassis_mount": {
+          "link": "cleaning_mechanism_mount_link",
+          "orientation_error_rad": 0.0,
+          "position_error_m": 0.0,
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.1651
+          ]
+        },
+        "cleaning_head_zero": {
+          "link": "cleaning_lift_carriage_link",
+          "orientation_error_rad": 0.0,
+          "position_error_m": 0.0,
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.2101
+          ]
+        },
+        "cleaning_roller_axis": {
+          "link": "central_roller_link",
+          "orientation_error_rad": 0.0,
+          "position_error_m": 0.0,
+          "xyz_m": [
+            0.155,
+            0.0,
+            0.2
+          ]
+        },
+        "dry_bin_origin": {
+          "link": "dry_bin_link",
+          "orientation_error_rad": 0.0,
+          "position_error_m": 0.0,
+          "xyz_m": [
+            -0.205,
+            0.16,
+            0.5691
+          ]
+        },
+        "sensor_tower_base": {
+          "link": "sensor_mast_link",
+          "orientation_error_rad": 0.0,
+          "position_error_m": 0.0,
+          "xyz_m": [
+            0.42,
+            0.0,
+            0.3891
+          ]
+        },
+        "storage_shared_subframe": {
+          "link": "storage_system_mount_link",
+          "orientation_error_rad": 0.0,
+          "position_error_m": 0.0,
+          "xyz_m": [
+            0.0,
+            0.0,
+            0.3691
+          ]
+        },
+        "wastewater_drain_hose_endpoint": {
+          "link": "wastewater_drain_coupling_link",
+          "orientation_error_rad": 0.0,
+          "position_error_m": 0.0,
+          "xyz_m": [
+            -0.555,
+            -0.305,
+            0.4801
+          ]
+        },
+        "wastewater_drain_valve_origin": {
+          "link": "wastewater_drain_valve_body_link",
+          "orientation_error_rad": 0.0,
+          "position_error_m": 0.0,
+          "xyz_m": [
+            -0.49,
+            -0.305,
+            0.4801
+          ]
+        },
+        "wastewater_tank_origin": {
+          "link": "wastewater_tank_link",
+          "orientation_error_rad": 0.0,
+          "position_error_m": 0.0,
+          "xyz_m": [
+            -0.205,
+            -0.245,
+            0.5041
+          ]
+        }
+      },
+      "source_snapshot_sha256": {
+        "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml": "e017e66f3dca2f705f04f29a1e8ab84668f687667c552ee62ce619eda9294437",
+        "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": "4c5804b917f2226fbf730bf492b2b6113c92bd3f00ee408ee8edb9a3dc3222cc",
+        "reports/engineering/formal_competition_vehicle.urdf": "73edb99d1d1ff93052c6d889b11581d4c35ca7b2a7252b8cc1d8bcf37f7d8d47"
+      },
+      "status": "STATIC_DERIVED_SNAPSHOT_BOUND_NOT_MANUFACTURING_RELEASE"
     },
-    "status": null,
+    "status": "STATIC_DERIVED_SNAPSHOT_BOUND_NOT_MANUFACTURING_RELEASE",
     "summary": {
-      "coordinate_reference": null,
-      "datum_count": null,
-      "interface_count": null,
-      "nominal_joint_configuration": null
+      "coordinate_reference": "base_footprint",
+      "datum_count": 16,
+      "interface_count": 7,
+      "nominal_joint_configuration": "zero"
     },
-    "validator_complete": false
+    "validator_complete": true
   },
   "manufacturing_preparation_draft": {
     "computed": {
@@ -4145,7 +4323,6 @@
   "preflight_name": "formal_vehicle_static_engineering_preflight",
   "s100p_formal_board_bundle": {
     "blocker_codes": [
-      "formal_snapshot_digest_or_size_mismatch",
       "board_runtime_dependencies_unverified",
       "board_runtime_evidence_not_collected",
       "board_tzcup_overlay_unbuilt_or_unverified",
@@ -4162,8 +4339,8 @@
       "deployment_gates_explicitly_unaccepted": true,
       "dosod_hbm_compile_output_not_produced": true,
       "dosod_hbm_is_not_claimed_available": true,
-      "formal_snapshot_content_matches_declaration": false,
-      "formal_snapshot_file_matches_declaration": false,
+      "formal_snapshot_content_matches_declaration": true,
+      "formal_snapshot_file_matches_declaration": true,
       "launch_binds_dosod_edgesam_and_project_adapters": true,
       "launch_binds_each_required_board_payload_role": true,
       "launch_required_base_packages_explicitly_exempted": true,
@@ -4194,7 +4371,6 @@
     "ready_to_deploy": false,
     "report": {
       "blockers": [
-        "formal_snapshot_digest_or_size_mismatch",
         "board_runtime_dependencies_unverified",
         "board_runtime_evidence_not_collected",
         "board_tzcup_overlay_unbuilt_or_unverified",
@@ -4278,8 +4454,8 @@
         "deployment_gates_explicitly_unaccepted": true,
         "dosod_hbm_compile_output_not_produced": true,
         "dosod_hbm_is_not_claimed_available": true,
-        "formal_snapshot_content_matches_declaration": false,
-        "formal_snapshot_file_matches_declaration": false,
+        "formal_snapshot_content_matches_declaration": true,
+        "formal_snapshot_file_matches_declaration": true,
         "launch_binds_dosod_edgesam_and_project_adapters": true,
         "launch_binds_each_required_board_payload_role": true,
         "launch_required_base_packages_explicitly_exempted": true,
@@ -4314,10 +4490,10 @@
       "status": "BLOCKED"
     },
     "status": "BLOCKED",
-    "validator_complete": false
+    "validator_complete": true
   },
   "schema_version": 1,
-  "static_check_completed_count": 12,
+  "static_check_completed_count": 14,
   "static_check_count": 14,
   "static_functional_chain": {
     "blocked_items": [],
@@ -4376,7 +4552,7 @@
             },
             {
               "evidence": {
-                "line": 278,
+                "line": 283,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "a300_drivetrain_bridge"
               },
@@ -4460,7 +4636,7 @@
             },
             {
               "evidence": {
-                "line": 64,
+                "line": 80,
                 "path": "starter_ws/src/sanitation_manipulation/launch/formal_cube_pick_place.launch.py",
                 "token": "dry_deposit_contact"
               },
@@ -4584,7 +4760,7 @@
             },
             {
               "evidence": {
-                "line": 63,
+                "line": 65,
                 "path": "scripts/run_formal_ground_dirt_cleaning_runtime.sh",
                 "token": "ground_dirt/status_json"
               },
@@ -4642,7 +4818,7 @@
             },
             {
               "evidence": {
-                "line": 729,
+                "line": 744,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "water_recovery/tank_mass_kg"
               },
@@ -4650,7 +4826,7 @@
             },
             {
               "evidence": {
-                "line": 164,
+                "line": 192,
                 "path": "scripts/run_formal_water_recovery_runtime.sh",
                 "token": "validate_formal_water_recovery_runtime.py"
               },
@@ -4676,7 +4852,7 @@
             },
             {
               "evidence": {
-                "line": 714,
+                "line": 729,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan"
               },
@@ -4806,7 +4982,7 @@
             },
             {
               "evidence": {
-                "line": 715,
+                "line": 730,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "/sensors/gnss/fix@sensor_msgs/msg/NavSatFix"
               },
@@ -4840,7 +5016,7 @@
             },
             {
               "evidence": {
-                "line": 187,
+                "line": 191,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "joint_state_broadcaster"
               },
@@ -4992,6 +5168,6 @@
     "status": "STATIC_CLOSED",
     "validator_complete": true
   },
-  "static_preflight_complete": false,
-  "status": "STATIC_PREFLIGHT_INVALID"
+  "static_preflight_complete": true,
+  "status": "STATIC_PREFLIGHT_COMPLETE_MANUFACTURING_RELEASE_BLOCKED"
 }

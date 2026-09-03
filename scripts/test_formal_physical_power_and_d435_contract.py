@@ -54,7 +54,7 @@ def test_all_four_ir_images_and_camera_info_topics_are_bridged() -> None:
         launch,
         flags=re.DOTALL,
     )
-    assert "condition=IfCondition(high_bandwidth_sensor_runtime)" in launch
+    assert "condition=IfCondition(high_bandwidth_bridges_enabled)" in launch
     # The separate nineteen-camera visual-acceptance bridge must also remain
     # YAML-driven rather than silently falling back to launch-local topics.
     assert len(visual_bridge) == 19
