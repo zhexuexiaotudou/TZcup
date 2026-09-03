@@ -8,7 +8,6 @@ FORMAL_RUNTIME_MEMORY_WATCHDOG_PID=""
 FORMAL_RUNTIME_MEMORY_WATCHDOG_JSON=""
 FORMAL_RUNTIME_MEMORY_WATCHDOG_LOG=""
 FORMAL_RUNTIME_MEMORY_WATCHDOG_RESULT=0
-FORMAL_RUNTIME_MEMORY_WATCHDOG_DELEGATED=0
 FORMAL_RUNTIME_MEMORY_BREACH_EXIT_CODE=86
 FORMAL_RUNTIME_PGID_READY_ATTEMPTS=100
 FORMAL_RUNTIME_PGID_READY_POLL_S=0.01
@@ -251,20 +250,64 @@ formal_runtime_wait_for_setsid_pgid() {
   return 2
 }
 
-formal_runtime_attest_orchestrated_step_session() {
+formal_runtime_attest_orchestrated_session() {
   local runner_pid="$$"
-  local pgid sid
+  local pgid sid leader_pgid leader_sid token
+  token="${FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN:-}"
+  if ! [[ "${token}" =~ ^[0-9a-f]{64}$ ]]; then
+    echo "formal orchestrated session requires a valid capability token" >&2
+    return 2
+  fi
   pgid="$(ps -o pgid= -p "${runner_pid}" 2>/dev/null || true)"
   sid="$(ps -o sid= -p "${runner_pid}" 2>/dev/null || true)"
   pgid="${pgid//[[:space:]]/}"
   sid="${sid//[[:space:]]/}"
-  # An integrated step can launch a child runner inside its already-isolated
-  # outer session.  The child is not the leader, but its PGID/SID must still
-  # name that one dedicated session before it delegates the watchdog.
+  # An integrated step can launch a child runner inside the final
+  # orchestrator's already-isolated session.  The child is not the leader, so
+  # the watchdog must instead bind to that actual session leader.
   if ! [[ "${pgid}" =~ ^[0-9]+$ && "${sid}" =~ ^[0-9]+$ && "${pgid}" == "${sid}" ]]; then
     echo "formal orchestrated runner must share one dedicated PGID/SID; pid=${runner_pid} pgid=${pgid:-missing} sid=${sid:-missing}" >&2
     return 2
   fi
+  leader_pgid="$(ps -o pgid= -p "${pgid}" 2>/dev/null || true)"
+  leader_sid="$(ps -o sid= -p "${pgid}" 2>/dev/null || true)"
+  leader_pgid="${leader_pgid//[[:space:]]/}"
+  leader_sid="${leader_sid//[[:space:]]/}"
+  if ! [[ "${leader_pgid}" == "${pgid}" && "${leader_sid}" == "${pgid}" ]]; then
+    echo "formal orchestrated session leader is not an exact PGID/SID leader; leader=${pgid} pgid=${leader_pgid:-missing} sid=${leader_sid:-missing}" >&2
+    return 2
+  fi
+  if ! /usr/bin/python3 - "${pgid}" "${token}" <<'PY'
+from pathlib import Path
+import sys
+
+leader, token = sys.argv[1:]
+try:
+    entries = Path(f"/proc/{leader}/environ").read_bytes().split(b"\0")
+except OSError:
+    raise SystemExit(1)
+raise SystemExit(0 if f"FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN={token}".encode() in entries else 1)
+PY
+  then
+    echo "formal orchestrated session leader lacks the matching capability token" >&2
+    return 2
+  fi
+  printf '%s\n' "${pgid}"
+}
+
+formal_runtime_attest_orchestrated_step_session() {
+  local launch_pid="$1"
+  local pgid launch_pgid launch_sid
+  pgid="$(formal_runtime_attest_orchestrated_session)" || return $?
+  launch_pgid="$(ps -o pgid= -p "${launch_pid}" 2>/dev/null || true)"
+  launch_sid="$(ps -o sid= -p "${launch_pid}" 2>/dev/null || true)"
+  launch_pgid="${launch_pgid//[[:space:]]/}"
+  launch_sid="${launch_sid//[[:space:]]/}"
+  if ! [[ "${launch_pgid}" == "${pgid}" && "${launch_sid}" == "${pgid}" ]]; then
+    echo "formal orchestrated launch must share the runner PGID/SID; launch=${launch_pid} pgid=${launch_pgid:-missing} sid=${launch_sid:-missing}" >&2
+    return 2
+  fi
+  printf '%s\n' "${pgid}"
 }
 
 formal_runtime_start_memory_watchdog() {
@@ -291,16 +334,15 @@ formal_runtime_start_memory_watchdog() {
     return 2
   }
   if [[ "${FORMAL_ORCHESTRATED_STEP_SESSION:-0}" == "1" ]]; then
-    # The final orchestrator owns this exact PGID's watchdog.  Do not create a
-    # nested watchdog for a launch child that correctly shares the outer PGID.
-    if ! formal_runtime_attest_orchestrated_step_session; then
+    # The orchestrator's watchdog is the primary guard, while this independent
+    # watchdog protects the same session if that outer process is interrupted.
+    if pgid="$(formal_runtime_attest_orchestrated_step_session "${leader_pid}")"; then
+      leader_pid="${pgid}"
+    else
       FORMAL_RUNTIME_MEMORY_WATCHDOG_RESULT=125
       return 125
     fi
-    FORMAL_RUNTIME_MEMORY_WATCHDOG_DELEGATED=1
-    return 0
-  fi
-  if pgid="$(formal_runtime_wait_for_setsid_pgid "${leader_pid}")"; then
+  elif pgid="$(formal_runtime_wait_for_setsid_pgid "${leader_pid}")"; then
     :
   else
     readiness_status=$?
@@ -437,3 +479,10 @@ formal_runtime_exit_trap() {
   fi
   exit "${status}"
 }
+
+if [[ "${FORMAL_ORCHESTRATED_STEP_SESSION:-0}" == "1" ]]; then
+  if ! formal_runtime_attest_orchestrated_session >/dev/null; then
+    FORMAL_RUNTIME_MEMORY_WATCHDOG_RESULT=125
+    return 125 2>/dev/null || exit 125
+  fi
+fi

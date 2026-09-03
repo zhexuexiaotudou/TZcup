@@ -16,6 +16,7 @@ import json
 import math
 import os
 import re
+import secrets
 import signal
 import shlex
 import shutil
@@ -2011,6 +2012,7 @@ def _run_process(
         # in that group, otherwise a nested `setsid` escapes both RSS accounting
         # and the watchdog's exact-group shutdown.
         child_environment["FORMAL_ORCHESTRATED_STEP_SESSION"] = "1"
+        child_environment["FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN"] = secrets.token_hex(32)
         _run_windows_memory_preflight(child_environment, log_path)
         watchdog_json = log_path.with_name(f"{log_path.stem}.memory_watchdog.json")
         watchdog_log = log_path.with_name(f"{log_path.stem}.memory_watchdog.log")

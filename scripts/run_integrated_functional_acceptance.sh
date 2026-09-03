@@ -12,7 +12,12 @@ domain_base="${INTEGRATED_ACCEPTANCE_DOMAIN_BASE:-180}"
 material="${INTEGRATED_ACCEPTANCE_MATERIAL:-PET}"
 aggregator="${repo_root}/scripts/aggregate_integrated_functional_acceptance.py"
 integrated_session_prefix=()
-if [[ "${FORMAL_ORCHESTRATED_STEP_SESSION:-0}" != "1" ]]; then
+if [[ "${FORMAL_ORCHESTRATED_STEP_SESSION:-0}" == "1" ]]; then
+  [[ "${FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN:-}" =~ ^[0-9a-f]{64}$ ]] || {
+    echo "formal integrated outer session requires a valid capability token" >&2
+    exit 125
+  }
+else
   integrated_session_prefix=(setsid)
 fi
 
@@ -218,14 +223,24 @@ run_wrapped_scenario() {
   local result="${run_dir}/${name}.json"
   local launch_log="${run_dir}/${name}.launch.log"
   local runner_log="${run_dir}/${name}.runner.log"
-  local started_ns finished_ns exit_code remaining
+  local started_ns finished_ns exit_code remaining session_token
   rm -f -- "${result}" "${launch_log}" "${runner_log}"
   active_partition="${partition}"
   started_ns="$(date +%s%N)"
+  if (( ${#integrated_session_prefix[@]} )); then
+    session_token="$(python3 -c 'import secrets; print(secrets.token_hex(32))')"
+  else
+    session_token="${FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN:?missing outer formal orchestrated session token}"
+  fi
+  [[ "${session_token}" =~ ^[0-9a-f]{64}$ ]] || {
+    echo "formal integrated child requires a valid session capability token" >&2
+    return 125
+  }
   set +e
   if [[ "${name}" == "mobility" ]]; then
     "${integrated_session_prefix[@]}" env ROS_DOMAIN_ID="${domain}" GZ_PARTITION="${partition}" \
       FORMAL_ORCHESTRATED_STEP_SESSION=1 \
+      FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN="${session_token}" \
       FORMAL_VEHICLE_RUNTIME_WS="${runtime_ws}" \
       FORMAL_VEHICLE_MOBILITY_OUTPUT="${result}" \
       FORMAL_VEHICLE_MOBILITY_LOG="${launch_log}" \
@@ -233,6 +248,7 @@ run_wrapped_scenario() {
   else
     "${integrated_session_prefix[@]}" env ROS_DOMAIN_ID="${domain}" GZ_PARTITION="${partition}" \
       FORMAL_ORCHESTRATED_STEP_SESSION=1 \
+      FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN="${session_token}" \
       FORMAL_MANIPULATION_RUNTIME_WS="${runtime_ws}" \
       FORMAL_MANIPULATION_OUTPUT="${result}" \
       FORMAL_MANIPULATION_LOG="${launch_log}" \

@@ -874,6 +874,10 @@ def test_runner_has_exact_partition_cleanup_and_four_unique_offsets() -> None:
     assert "start_power_system_simulators:=true" in runner
     assert "high_bandwidth_sensor_runtime:=false" in runner
     assert "rm -f --" in runner
+    assert "import secrets; print(secrets.token_hex(32))" in runner
+    assert 'FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN="${session_token}"' in runner
+    assert "missing outer formal orchestrated session token" in runner
+    assert "formal integrated outer session requires a valid capability token" in runner
 
     build_preflight = runner.index('"${aggregator}" preflight')
     side_brush_preflight = runner.index("validate_formal_side_brush_sdf_surface.py")

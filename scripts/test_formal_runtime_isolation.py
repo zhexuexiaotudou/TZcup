@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import re
 import subprocess
@@ -227,21 +228,38 @@ def test_orchestrated_runners_do_not_create_nested_process_groups() -> None:
 
 
 @pytest.mark.skipif(os.name != "posix", reason="requires native POSIX process groups")
-def test_orchestrated_inner_watchdog_delegates_for_subrunner_in_outer_session(
+def test_orchestrated_inner_watchdog_binds_to_the_outer_session_and_stops(
     tmp_path: Path,
 ) -> None:
-    prefix = tmp_path / "subrunner_delegated_watchdog"
+    prefix = tmp_path / "subrunner_outer_session_watchdog"
     harness = """
 set -euo pipefail
 source "$1"
+runner_pid="$$"
+session_leader="$(ps -o sid= -p "${runner_pid}" | tr -d '[:space:]')"
+[[ "${session_leader}" =~ ^[0-9]+$ && "${session_leader}" != "${runner_pid}" ]]
 sleep 30 &
 launch_pid=$!
-trap 'kill "${launch_pid}" 2>/dev/null || true; wait "${launch_pid}" 2>/dev/null || true' EXIT
+trap 'formal_runtime_stop_memory_watchdog || true; kill "${launch_pid}" 2>/dev/null || true; wait "${launch_pid}" 2>/dev/null || true' EXIT
 formal_runtime_start_memory_watchdog "${launch_pid}" "$2"
-[[ "${FORMAL_RUNTIME_MEMORY_WATCHDOG_DELEGATED}" == "1" ]]
+watchdog_pid="${FORMAL_RUNTIME_MEMORY_WATCHDOG_PID}"
+[[ "${watchdog_pid}" =~ ^[0-9]+$ ]]
+kill -0 "${watchdog_pid}"
+for attempt in {1..100}; do
+  grep -q 'watchdog started' "$2.log" 2>/dev/null && break
+  sleep 0.05
+done
+grep -q 'watchdog started' "$2.log"
+formal_runtime_stop_memory_watchdog
 [[ -z "${FORMAL_RUNTIME_MEMORY_WATCHDOG_PID}" ]]
-[[ ! -e "$2.json" && ! -e "$2.log" ]]
-printf 'delegated=%s\\n' "${FORMAL_RUNTIME_MEMORY_WATCHDOG_DELEGATED}"
+python3 - "$2.json" "${session_leader}" "${runner_pid}" <<'PY'
+import json, sys
+payload = json.load(open(sys.argv[1], encoding="utf-8"))
+assert payload["status"] == "FORMAL_MEMORY_WATCHDOG_STOPPED"
+assert payload["leader_pid"] == payload["target_pgid"] == int(sys.argv[2])
+assert payload["leader_pid"] != int(sys.argv[3])
+PY
+printf 'watchdog=%s\\n' "${watchdog_pid}"
 """
     # The inner shell intentionally shares the outer setsid group's PGID/SID.
     # Integrated mobility/grasp child runners use this shape.
@@ -260,13 +278,24 @@ printf 'delegated=%s\\n' "${FORMAL_RUNTIME_MEMORY_WATCHDOG_DELEGATED}"
         check=False,
         capture_output=True,
         text=True,
-        env={**os.environ, "FORMAL_ORCHESTRATED_STEP_SESSION": "1"},
+        env={
+            **os.environ,
+            "FORMAL_ORCHESTRATED_STEP_SESSION": "1",
+            "FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN": "a" * 64,
+            "FORMAL_WINDOWS_MEMORY_GUARD_ENABLED": "0",
+            "FORMAL_MEMORY_MIN_AVAILABLE_KIB": "0",
+            "FORMAL_MEMORY_MAX_SWAP_USED_KIB": str(2**63 - 1),
+            "FORMAL_MEMORY_MAX_GROUP_RSS_KIB": str(2**63 - 1),
+            "FORMAL_MEMORY_POLL_S": "0.1",
+        },
         timeout=10,
     )
     assert result.returncode == 0, result.stderr
-    assert result.stdout == "delegated=1\n"
-    assert not prefix.with_suffix(".json").exists()
-    assert not prefix.with_suffix(".log").exists()
+    assert result.stdout.startswith("watchdog=")
+    payload = json.loads(prefix.with_suffix(".json").read_text(encoding="utf-8"))
+    assert payload["status"] == "FORMAL_MEMORY_WATCHDOG_STOPPED"
+    assert payload["leader_pid"] == payload["target_pgid"]
+    assert prefix.with_suffix(".log").is_file()
 
 
 def test_orchestrated_inner_watchdog_fails_closed_when_pgid_and_sid_do_not_match() -> None:
@@ -282,7 +311,7 @@ ps() {
 setsid() { echo 'unexpected nested watchdog' >&2; return 99; }
 formal_runtime_start_memory_watchdog 4242 /tmp/tzcup_unattested_watchdog
 rc=$?
-printf 'rc=%s delegated=%s\\n' "${rc}" "${FORMAL_RUNTIME_MEMORY_WATCHDOG_DELEGATED}"
+printf 'rc=%s\\n' "${rc}"
 exit "${rc}"
 """
     result = subprocess.run(
@@ -290,18 +319,103 @@ exit "${rc}"
         check=False,
         capture_output=True,
         input=(
-            "export FORMAL_ORCHESTRATED_STEP_SESSION=1\n"
-            + HELPER.read_text(encoding="utf-8")
+            HELPER.read_text(encoding="utf-8")
             + "\n"
+            + "export FORMAL_ORCHESTRATED_STEP_SESSION=1\n"
+            + "export FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN=" + "a" * 64 + "\n"
             + harness
         ).encode("utf-8"),
         timeout=10,
     )
     assert result.returncode == 125
-    assert result.stdout.decode("utf-8", errors="replace") == "rc=125 delegated=0\n"
+    assert result.stdout.decode("utf-8", errors="replace") == "rc=125\n"
     assert "must share one dedicated PGID/SID" in result.stderr.decode(
         "utf-8", errors="replace"
     )
+
+
+@pytest.mark.skipif(os.name != "posix", reason="requires native POSIX process groups")
+@pytest.mark.parametrize(
+    ("mode", "outer_token", "child_token", "expected"),
+    (
+        ("missing", None, None, "requires a valid capability token"),
+        ("malformed", "a" * 64, "not-a-token", "requires a valid capability token"),
+        ("mismatch", "a" * 64, "b" * 64, "lacks the matching capability token"),
+    ),
+)
+def test_orchestrated_source_rejects_unattested_session(
+    tmp_path: Path,
+    mode: str,
+    outer_token: str | None,
+    child_token: str | None,
+    expected: str,
+) -> None:
+    prefix = tmp_path / mode
+    harness = """
+set -uo pipefail
+source "$1"
+rc=$?
+printf 'rc=%s\\n' "${rc}"
+exit "${rc}"
+"""
+    child_environment = ""
+    if child_token is not None:
+        child_environment = f"FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN={child_token} "
+    wrapper = f'{child_environment}bash -c "$1" bash "$2" "$3" & child=$!; wait "${{child}}"'
+    environment = {
+        **os.environ,
+        "FORMAL_ORCHESTRATED_STEP_SESSION": "1",
+        "FORMAL_WINDOWS_MEMORY_GUARD_ENABLED": "0",
+    }
+    if outer_token is not None:
+        environment["FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN"] = outer_token
+    result = subprocess.run(
+        ["setsid", "bash", "-c", wrapper, "bash", harness, str(HELPER), str(prefix)],
+        check=False,
+        capture_output=True,
+        text=True,
+        env=environment,
+        timeout=10,
+    )
+    assert result.returncode == 125
+    assert result.stdout == "rc=125\n"
+    assert expected in result.stderr
+    assert not prefix.with_suffix(".json").exists()
+    assert not prefix.with_suffix(".log").exists()
+
+
+@pytest.mark.skipif(os.name != "posix", reason="requires native POSIX process groups")
+def test_orchestrated_watchdog_rejects_launch_outside_attested_session(tmp_path: Path) -> None:
+    prefix = tmp_path / "launch_group_mismatch"
+    harness = """
+set -uo pipefail
+source "$1"
+setsid sleep 30 &
+launch_pid=$!
+trap 'kill -TERM -- "-${launch_pid}" 2>/dev/null || kill -TERM "${launch_pid}" 2>/dev/null || true; wait "${launch_pid}" 2>/dev/null || true' EXIT
+formal_runtime_start_memory_watchdog "${launch_pid}" "$2"
+rc=$?
+printf 'rc=%s\\n' "${rc}"
+exit "${rc}"
+"""
+    result = subprocess.run(
+        ["setsid", "bash", "-c", 'bash -c "$1" bash "$2" "$3"', "bash", harness, str(HELPER), str(prefix)],
+        check=False,
+        capture_output=True,
+        text=True,
+        env={
+            **os.environ,
+            "FORMAL_ORCHESTRATED_STEP_SESSION": "1",
+            "FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN": "a" * 64,
+            "FORMAL_WINDOWS_MEMORY_GUARD_ENABLED": "0",
+        },
+        timeout=10,
+    )
+    assert result.returncode == 125
+    assert result.stdout == "rc=125\n"
+    assert "launch must share the runner PGID/SID" in result.stderr
+    assert not prefix.with_suffix(".json").exists()
+    assert not prefix.with_suffix(".log").exists()
 
 
 def test_all_default_domain_spans_avoid_linux_ephemeral_ports() -> None:

@@ -23,6 +23,7 @@ def test_watchdog_marks_child_environment_as_one_outer_step_session() -> None:
         encoding="utf-8"
     )
     assert 'child_environment["FORMAL_ORCHESTRATED_STEP_SESSION"] = "1"' in source
+    assert 'child_environment["FORMAL_ORCHESTRATED_STEP_SESSION_TOKEN"] = secrets.token_hex(32)' in source
     assert "start_new_session=True" in source
     assert "(signal.SIGINT, 8.0)" in source
     assert "(signal.SIGTERM, 5.0)" in source
