@@ -184,6 +184,9 @@ run_scenario() {
       --snapshot "${snapshot}"
       --session "${session}"
       --runtime-binding "${runtime_binding}"
+      --preembedded-report "${preembedded_report}"
+      --preembedded-world "${preembedded_world}"
+      --preembedded-model-pose "${preembedded_model_pose}"
     )
   fi
   python3 "${repo_root}/scripts/validate_formal_water_recovery_runtime.py" \

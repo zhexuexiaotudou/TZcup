@@ -82,7 +82,11 @@ def validate_preembedded_sensor_world(
         raise PreembeddedWorldBindingError("acceptance session start is invalid")
     if report_path.stat().st_mtime_ns < session_started or world_path.stat().st_mtime_ns < session_started:
         raise PreembeddedWorldBindingError("preembedded world evidence predates acceptance session")
-    if report.get("status") != "FORMAL_PREEMBEDDED_SENSOR_WORLD_READY" or report.get("passed") is not True:
+    if (
+        report.get("status") != "FORMAL_PREEMBEDDED_SENSOR_WORLD_READY"
+        or report.get("passed") is not True
+        or report.get("formal_eligible") is not True
+    ):
         raise PreembeddedWorldBindingError("preembedded world report is not ready")
     if report.get("spawn_mode") != "preembedded_before_gazebo_sensors_system":
         raise PreembeddedWorldBindingError("preembedded world report has wrong spawn mode")

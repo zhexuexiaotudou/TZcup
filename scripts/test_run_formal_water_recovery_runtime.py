@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 from pathlib import Path
 
 from finalize_formal_water_recovery_acceptance import (
@@ -9,6 +10,7 @@ from finalize_formal_water_recovery_acceptance import (
     TYPED_DIAG_REQUIRED_CHECKS,
     TYPED_CRITICAL_MANIFEST_REQUIRED_PATHS,
     TYPED_TRANSPORT_AUDIT_REQUIRED_CHECKS,
+    _preembedded_world_binding_valid,
     combine,
 )
 
@@ -182,6 +184,91 @@ def test_runner_preembeds_the_frozen_vehicle_before_launching_contact_gates() ->
     assert '--model-pose "${preembedded_model_pose}"' in source
     assert source.index("prepare_formal_preembedded_sensor_world.py") < source.index(
         'world:="${preembedded_world}" spawn_robot:=false'
+    )
+
+
+def test_formal_water_scenarios_bind_the_preembedded_contact_world() -> None:
+    runner = (ROOT / "scripts/run_formal_water_recovery_runtime.sh").read_text(
+        encoding="utf-8"
+    )
+    validator = (ROOT / "scripts/validate_formal_water_recovery_runtime.py").read_text(
+        encoding="utf-8"
+    )
+
+    assert '--preembedded-report "${preembedded_report}"' in runner
+    assert '--preembedded-world "${preembedded_world}"' in runner
+    assert '--preembedded-model-pose "${preembedded_model_pose}"' in runner
+    assert "from formal_preembedded_sensor_world_binding import validate_preembedded_sensor_world" in validator
+    assert "formal water acceptance requires --preembedded-report" in validator
+    assert 'result["preembedded_sensor_world_binding"] = preembedded_world_binding' in validator
+
+
+def test_finalizer_rejects_tampered_or_wrong_runtime_preembedded_binding(
+    tmp_path: Path,
+) -> None:
+    report = tmp_path / "world.json"
+    world = tmp_path / "world.sdf"
+    source_world = tmp_path / "source.sdf"
+    source_urdf = tmp_path / "vehicle.urdf"
+    controller = tmp_path / "install/share/sanitation_vehicle_description/config/controller.yaml"
+    controller.parent.mkdir(parents=True)
+    for path, content in (
+        (report, "report\n"),
+        (world, "world\n"),
+        (source_world, "source\n"),
+        (source_urdf, "urdf\n"),
+        (controller, "controller\n"),
+    ):
+        path.write_text(content, encoding="utf-8")
+
+    sha = lambda path: hashlib.sha256(path.read_bytes()).hexdigest()
+    source_binding = {
+        "snapshot_manifest_sha256": "a" * 64,
+        "source_inventory_sha256": "b" * 64,
+        "expanded_urdf_sha256": sha(source_urdf),
+    }
+    session = {"session_manifest_sha256": "c" * 64}
+    runtime = {"runtime_closure_binding": {"runtime_install_root": str(tmp_path / "install")}}
+    binding = {
+        "preembedded_report_path": str(report),
+        "preembedded_report_sha256": sha(report),
+        "preembedded_world_path": str(world),
+        "preembedded_world_sha256": sha(world),
+        "source_world_path": str(source_world),
+        "source_world_sha256": sha(source_world),
+        "source_urdf_path": str(source_urdf),
+        "source_urdf_sha256": sha(source_urdf),
+        "controller_config_path": str(controller),
+        "controller_config_sha256": sha(controller),
+        "runtime_install_root": str(tmp_path / "install"),
+        "sensor_count": 1,
+        "model_name": "tzcup_formal_sanitation_vehicle",
+        "spawn_mode": "preembedded_before_gazebo_sensors_system",
+        "acceptance_session_sha256": session["session_manifest_sha256"],
+        "snapshot": source_binding,
+    }
+    assert _preembedded_world_binding_valid(
+        binding,
+        source_binding=source_binding,
+        acceptance_session_binding=session,
+        runtime_binding=runtime,
+    )
+
+    world.write_text("tampered\n", encoding="utf-8")
+    assert not _preembedded_world_binding_valid(
+        binding,
+        source_binding=source_binding,
+        acceptance_session_binding=session,
+        runtime_binding=runtime,
+    )
+
+    binding["preembedded_world_sha256"] = sha(world)
+    binding["runtime_install_root"] = str(tmp_path / "other-install")
+    assert not _preembedded_world_binding_valid(
+        binding,
+        source_binding=source_binding,
+        acceptance_session_binding=session,
+        runtime_binding=runtime,
     )
 
 

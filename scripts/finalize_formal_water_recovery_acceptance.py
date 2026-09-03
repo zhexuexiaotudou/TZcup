@@ -98,6 +98,71 @@ def _sha256(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
+def _regular_file_matches(path_value: object, expected_sha256: object) -> bool:
+    """Return whether a report-owned path is still its recorded regular file."""
+
+    if not isinstance(path_value, str) or not isinstance(expected_sha256, str):
+        return False
+    path = Path(path_value)
+    return (
+        path.is_file()
+        and not path.is_symlink()
+        and _sha256(path) == expected_sha256
+    )
+
+
+def _preembedded_world_binding_valid(
+    binding: object,
+    *,
+    source_binding: dict[str, Any],
+    acceptance_session_binding: dict[str, Any],
+    runtime_binding: dict[str, Any],
+) -> bool:
+    """Recheck the scenario's contact-world identity before publishing water PASS."""
+
+    if not isinstance(binding, dict):
+        return False
+    runtime_closure = runtime_binding.get("runtime_closure_binding")
+    if not isinstance(runtime_closure, dict):
+        return False
+    if (
+        binding.get("spawn_mode") != "preembedded_before_gazebo_sensors_system"
+        or binding.get("model_name") != "tzcup_formal_sanitation_vehicle"
+        or not isinstance(binding.get("sensor_count"), int)
+        or binding["sensor_count"] <= 0
+        or binding.get("snapshot") != source_binding
+        or binding.get("source_urdf_sha256")
+        != source_binding.get("expanded_urdf_sha256")
+        or binding.get("acceptance_session_sha256")
+        != acceptance_session_binding.get("session_manifest_sha256")
+        or binding.get("runtime_install_root")
+        != runtime_closure.get("runtime_install_root")
+    ):
+        return False
+    return all(
+        (
+            _regular_file_matches(
+                binding.get("preembedded_report_path"),
+                binding.get("preembedded_report_sha256"),
+            ),
+            _regular_file_matches(
+                binding.get("preembedded_world_path"),
+                binding.get("preembedded_world_sha256"),
+            ),
+            _regular_file_matches(
+                binding.get("source_world_path"), binding.get("source_world_sha256")
+            ),
+            _regular_file_matches(
+                binding.get("source_urdf_path"), binding.get("source_urdf_sha256")
+            ),
+            _regular_file_matches(
+                binding.get("controller_config_path"),
+                binding.get("controller_config_sha256"),
+            ),
+        )
+    )
+
+
 def _load_jsonl_objects(path: Path) -> list[dict[str, Any]] | None:
     """Read the same strict JSONL shape required by the final orchestrator."""
 
@@ -136,6 +201,7 @@ def combine(
     # without a live formal session.  The CLI used to publish canonical
     # evidence requires --runtime-binding, so it never takes this path.
     runtime_binding_valid = runtime_binding_path is None
+    preembedded_world_bindings_valid = runtime_binding_path is None
     runtime_binding: dict[str, Any] | None = None
     source_binding: dict[str, Any] | None = None
     acceptance_session_binding: dict[str, Any] | None = None
@@ -158,8 +224,23 @@ def combine(
                     and normal.get("runtime_gate_binding") == runtime_binding
                     and full.get("runtime_gate_binding") == runtime_binding
                 )
+                preembedded_world_bindings_valid = (
+                    _preembedded_world_binding_valid(
+                        normal.get("preembedded_sensor_world_binding"),
+                        source_binding=source_binding,
+                        acceptance_session_binding=acceptance_session_binding,
+                        runtime_binding=runtime_binding,
+                    )
+                    and _preembedded_world_binding_valid(
+                        full.get("preembedded_sensor_world_binding"),
+                        source_binding=source_binding,
+                        acceptance_session_binding=acceptance_session_binding,
+                        runtime_binding=runtime_binding,
+                    )
+                )
         except (OSError, ValueError, RuntimeError):
             runtime_binding_valid = False
+            preembedded_world_bindings_valid = False
     scenario_names_valid = (
         normal.get("scenario") == "normal_recovery"
         and full.get("scenario") == "full_tank_fail_closed"
@@ -333,6 +414,7 @@ def combine(
         and side_brush_expanded_sdf_surface_valid
         and typed_transport_valid
         and runtime_binding_valid
+        and preembedded_world_bindings_valid
     )
     return {
         "schema_version": 1,
@@ -350,6 +432,7 @@ def combine(
             "side_brush_expanded_sdf_surface_valid": side_brush_expanded_sdf_surface_valid,
             "typed_transport_evidence_valid": typed_transport_valid,
             "frozen_runtime_session_binding_valid": runtime_binding_valid,
+            "preembedded_sensor_world_bindings_valid": preembedded_world_bindings_valid,
         },
         "summary": {
             "normal_initial_ground_volume_l": normal.get("metrics", {}).get(
@@ -416,6 +499,10 @@ def combine(
                 "expanded_sdf_sha256"
             ),
             "typed_transport": typed_transport,
+            "preembedded_sensor_world_bindings": {
+                "normal": normal.get("preembedded_sensor_world_binding"),
+                "full": full.get("preembedded_sensor_world_binding"),
+            },
             "runtime_binding_json": (
                 str(runtime_binding_path.resolve())
                 if runtime_binding_path is not None and runtime_binding_path.is_file()

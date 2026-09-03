@@ -1,5 +1,7 @@
 import hashlib
 import json
+import os
+import time
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -52,6 +54,7 @@ def _fixture(tmp_path: Path) -> tuple[Path, Path, Path, Path, dict, dict]:
     }
     report.write_text(json.dumps({
         "status": "FORMAL_PREEMBEDDED_SENSOR_WORLD_READY", "passed": True,
+        "formal_eligible": True,
         "spawn_mode": "preembedded_before_gazebo_sensors_system",
         "output_world": str(world.resolve()), "output_world_sha256": _sha256(world),
         "vehicle_urdf": str(urdf.resolve()), "vehicle_urdf_sha256": _sha256(urdf),
@@ -85,7 +88,29 @@ def test_binds_paths_hashes_sensor_count_pose_and_session_snapshot(tmp_path: Pat
     assert binding["snapshot"] == snapshot
 
 
+def test_rejects_preembedded_evidence_that_predates_the_acceptance_session(
+    tmp_path: Path,
+) -> None:
+    report, world, urdf, install_root, acceptance, snapshot = _fixture(tmp_path)
+    acceptance["started_epoch_ns"] = time.time_ns()
+    stale_ns = acceptance["started_epoch_ns"] - 1_000_000
+    os.utime(report, ns=(stale_ns, stale_ns))
+    os.utime(world, ns=(stale_ns, stale_ns))
+
+    with pytest.raises(PreembeddedWorldBindingError, match="predates acceptance session"):
+        validate_preembedded_sensor_world(
+            report_path=report,
+            world_path=world,
+            expanded_urdf_path=urdf,
+            acceptance_session=acceptance,
+            snapshot_identity=snapshot,
+            expected_model_pose="0 0 0.005 0 0 0",
+            expected_runtime_install_root=install_root,
+        )
+
+
 @pytest.mark.parametrize("field,value,error", [
+    ("formal_eligible", False, "not ready"),
     ("sensor_count", 2, "sensor count mismatch"),
     ("spawn_mode", "dynamic", "wrong spawn mode"),
     ("model_initial_pose", "0 0 0 0 0 0", "initial pose"),

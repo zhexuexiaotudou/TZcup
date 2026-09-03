@@ -30,6 +30,7 @@ from formal_cleaning_lift_recovery_core import (
     trajectory_duration_s,
 )
 from formal_water_motor_metrics import central_roller_duty_metrics, side_brush_duty_metrics
+from formal_preembedded_sensor_world_binding import validate_preembedded_sensor_world
 from formal_runtime_gate_binding import load_binding
 
 
@@ -1417,11 +1418,43 @@ def main() -> int:
         type=Path,
         help="Required by the formal all-scenarios runner; omitted only for non-canonical diagnostics.",
     )
+    parser.add_argument("--preembedded-report", type=Path)
+    parser.add_argument("--preembedded-world", type=Path)
+    parser.add_argument("--preembedded-model-pose", default="0 0 0.005 0 0 0")
     args = parser.parse_args()
     runtime_evidence: tuple[dict[str, str], dict[str, object], dict[str, object]] | None = None
     if args.runtime_binding is not None:
         runtime_evidence = _bound_runtime_evidence(
             args.snapshot, args.session, args.runtime_binding
+        )
+    preembedded_world_binding: dict[str, object] | None = None
+    if runtime_evidence is not None:
+        if args.preembedded_report is None or args.preembedded_world is None:
+            raise SystemExit(
+                "formal water acceptance requires --preembedded-report and "
+                "--preembedded-world"
+            )
+        source_binding, acceptance_session_binding, runtime_gate_binding = runtime_evidence
+        runtime_closure_binding = runtime_gate_binding.get("runtime_closure_binding")
+        if not isinstance(runtime_closure_binding, dict):
+            raise ValueError("water runtime binding has no runtime closure binding")
+        runtime_install_root = runtime_closure_binding.get("runtime_install_root")
+        if not isinstance(runtime_install_root, str) or not runtime_install_root:
+            raise ValueError("water runtime closure has no install root")
+        preembedded_world_binding = validate_preembedded_sensor_world(
+            report_path=args.preembedded_report,
+            world_path=args.preembedded_world,
+            expanded_urdf_path=REPOSITORY_ROOT
+            / "reports/engineering/formal_competition_vehicle.urdf",
+            acceptance_session={
+                "started_epoch_ns": acceptance_session_binding["session_started_epoch_ns"],
+                "session_manifest_sha256": acceptance_session_binding[
+                    "session_manifest_sha256"
+                ],
+            },
+            snapshot_identity=source_binding,
+            expected_model_pose=args.preembedded_model_pose,
+            expected_runtime_install_root=Path(runtime_install_root),
         )
     rclpy.init()
     node = Probe()
@@ -1463,6 +1496,7 @@ def main() -> int:
         result["source_binding"] = source_binding
         result["acceptance_session_binding"] = acceptance_session_binding
         result["runtime_gate_binding"] = runtime_gate_binding
+        result["preembedded_sensor_world_binding"] = preembedded_world_binding
     result["status"] = (
         "FORMAL_WATER_RECOVERY_SCENARIO_PASSED"
         if result["passed"]
