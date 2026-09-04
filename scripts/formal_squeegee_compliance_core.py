@@ -7,11 +7,12 @@ import math
 import statistics
 
 
-# The spring's zero-effort reference is -6.6 mm, but the 1.38 kg moving
-# squeegee/nozzle subtree adds about 7.52 mm of gravity deflection at
-# 1800 N/m.  The live free-state check therefore targets the bounded,
-# gravity-loaded equilibrium rather than the unloaded spring reference.
-SQUEEGEE_FLOAT_FREE_EQUILIBRIUM_M = -0.0141
+# The spring's zero-effort reference is -6.92 mm.  At g=9.81 m/s², the 1.38 kg
+# moving squeegee/nozzle subtree adds 7.521 mm at 1800 N/m, so the analytic
+# free equilibrium is -14.441 mm; this evaluator retains -0.01444 m at its
+# established comparison precision.  It is a bounded diagnostic target, not
+# evidence that the physical hard-stop clearance has been measured.
+SQUEEGEE_FLOAT_FREE_EQUILIBRIUM_M = -0.01444
 SQUEEGEE_FLOAT_LIMIT_M = 0.015
 SQUEEGEE_PITCH_LIMIT_RAD = 0.174533
 SQUEEGEE_SIGNALS = (

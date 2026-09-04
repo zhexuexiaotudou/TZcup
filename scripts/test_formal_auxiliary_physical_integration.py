@@ -124,12 +124,12 @@ def test_squeegee_uses_real_preloaded_spring_force_system() -> None:
     )
     cmake = (AUXILIARY / "CMakeLists.txt").read_text(encoding="utf-8")
     assert 'filename="libSqueegeeComplianceSystem.so"' in cleaning
-    assert "<float_preload_reference_m>-0.0066</float_preload_reference_m>" in cleaning
+    assert "<float_preload_reference_m>-0.00692</float_preload_reference_m>" in cleaning
     assert "<float_stiffness_n_per_m>1800.0</float_stiffness_n_per_m>" in cleaning
     assert "<float_max_force_n>120.0</float_max_force_n>" in cleaning
     assert "squeegee_float_joint" in source
     assert "squeegee_pitch_joint" in source
-    assert "floatParameters{1800.0, 45.0, -0.0066, 120.0}" in source
+    assert "floatParameters{1800.0, 45.0, -0.00692, 120.0}" in source
     assert "components::JointForceCmd" in source
     assert "SqueegeeComplianceCore::Effort" in source
     assert "floatForcePublisher" in source

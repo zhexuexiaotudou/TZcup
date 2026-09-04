@@ -234,11 +234,11 @@ def test_new_physical_details_are_bound_to_existing_positions_and_runtime_gates(
     cleaning_mechanism = (
         DESCRIPTION / "urdf/high_fidelity/cleaning_mechanism.xacro"
     ).read_text(encoding="utf-8")
-    assert positions["water_gathering"]["preload_force_n"] == 11.88
-    assert squeegee_compliance["float_preload_position_m"] == -0.0066
-    assert squeegee_compliance["nominal_preload_force_n"] == 11.88
+    assert positions["water_gathering"]["preload_force_n"] == 12.456
+    assert squeegee_compliance["float_preload_position_m"] == -0.00692
+    assert squeegee_compliance["nominal_preload_force_n"] == 12.456
     assert squeegee_compliance["float_stiffness_n_m"] == 1800.0
-    assert "<float_preload_reference_m>-0.0066</float_preload_reference_m>" in cleaning_mechanism
+    assert "<float_preload_reference_m>-0.00692</float_preload_reference_m>" in cleaning_mechanism
     assert "<float_max_force_n>120.0</float_max_force_n>" in cleaning_mechanism
     gates = contract["evidence_gates"]
     assert gates["sensor_runtime"]["required_physical_scope"] == [

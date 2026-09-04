@@ -13,22 +13,22 @@ namespace sanitation_gazebo_auxiliary
 namespace
 {
 
-const ComplianceAxisParameters kFloat{1800.0, 45.0, -0.0066, 120.0};
+const ComplianceAxisParameters kFloat{1800.0, 45.0, -0.00692, 120.0};
 
 TEST(SqueegeeComplianceCore, AppliesSpecifiedGroundPreloadAtZeroDatum)
 {
-  EXPECT_NEAR(SqueegeeComplianceCore::Effort(kFloat, 0.0, 0.0), -11.88, 1e-12);
+  EXPECT_NEAR(SqueegeeComplianceCore::Effort(kFloat, 0.0, 0.0), -12.456, 1e-12);
 }
 
 TEST(SqueegeeComplianceCore, RelaxesAtFreeSpringReference)
 {
-  EXPECT_NEAR(SqueegeeComplianceCore::Effort(kFloat, -0.0066, 0.0), 0.0, 1e-12);
+  EXPECT_NEAR(SqueegeeComplianceCore::Effort(kFloat, -0.00692, 0.0), 0.0, 1e-12);
 }
 
 TEST(SqueegeeComplianceCore, DampingOpposesJointVelocity)
 {
-  EXPECT_NEAR(SqueegeeComplianceCore::Effort(kFloat, -0.0066, 0.1), -4.5, 1e-12);
-  EXPECT_NEAR(SqueegeeComplianceCore::Effort(kFloat, -0.0066, -0.1), 4.5, 1e-12);
+  EXPECT_NEAR(SqueegeeComplianceCore::Effort(kFloat, -0.00692, 0.1), -4.5, 1e-12);
+  EXPECT_NEAR(SqueegeeComplianceCore::Effort(kFloat, -0.00692, -0.1), 4.5, 1e-12);
 }
 
 TEST(SqueegeeComplianceCore, ClampsForceAtBothPhysicalLimits)

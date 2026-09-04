@@ -22,9 +22,9 @@ def _signals(float_position: float, float_force: float) -> dict[str, list[float]
 
 def _passing_evidence():
     phase_signals = {
-        "raised_free": _signals(-0.0141, 13.5),
-        "grounded_preload": _signals(0.0002, -12.24),
-        "raised_recovery": _signals(-0.0139, 13.14),
+        "raised_free": _signals(-0.01444, 13.5),
+        "grounded_preload": _signals(0.0002, -12.816),
+        "raised_recovery": _signals(-0.01424, 13.14),
     }
     phase_joints = {
         phase: {
@@ -48,7 +48,7 @@ def _passing_evidence():
 
 
 def test_accepts_live_three_phase_compliance_loaded_state_and_recovery_chain() -> None:
-    assert SQUEEGEE_FLOAT_FREE_EQUILIBRIUM_M == -0.0141
+    assert SQUEEGEE_FLOAT_FREE_EQUILIBRIUM_M == -0.01444
     report, failures = evaluate_squeegee_compliance(*_passing_evidence())
     assert failures == []
     assert report["passed"] is True
@@ -91,7 +91,7 @@ def test_accepts_compliance_loaded_state_when_direct_contact_transport_is_empty(
 
 def test_rejects_static_joint_and_force_values_that_never_compress_or_recover() -> None:
     phase_signals, phase_joints, phase_contacts = _passing_evidence()
-    phase_signals["grounded_preload"] = _signals(-0.0141, 0.0)
+    phase_signals["grounded_preload"] = _signals(-0.01444, 0.0)
     phase_joints["raised_recovery"].pop("squeegee_float_joint")
     report, failures = evaluate_squeegee_compliance(
         phase_signals, phase_joints, phase_contacts
