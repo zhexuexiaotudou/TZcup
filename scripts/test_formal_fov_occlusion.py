@@ -16,6 +16,7 @@ from validate_formal_fov_occlusion import (
     _inside_fov,
     _stl,
     compact_report,
+    _portable_evidence_path,
     validate,
 )
 
@@ -150,3 +151,8 @@ def test_startup_pose_regression_detects_legacy_zero_arm_occlusion() -> None:
     assert gate["legacy_zero_pose_clear_fraction"] < 0.95
     assert gate["configured_transport_pose_clear_fraction"] >= 0.95
     assert any("ur5e" in name or "robotiq" in name or "wrist_rgbd" in name for name in gate["legacy_zero_pose_occluders"])
+
+def test_default_urdf_evidence_path_is_repository_relative() -> None:
+    assert _portable_evidence_path(ROOT / "reports/engineering/formal_competition_vehicle.urdf") == (
+        "reports/engineering/formal_competition_vehicle.urdf"
+    )

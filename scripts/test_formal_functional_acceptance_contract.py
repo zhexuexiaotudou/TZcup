@@ -16,6 +16,15 @@ from validate_formal_functional_acceptance_contract import (
 )
 
 
+def test_sensor_runtime_gate_declares_current_report_schema() -> None:
+    contract = yaml.safe_load(DEFAULT_CONTRACT.read_text(encoding="utf-8"))
+    sensor = contract["evidence_gates"]["sensor_runtime"]
+    assert sensor["report_id"] == "tzcup_formal_vehicle_headless_runtime_v5"
+    assert sensor["success_statuses"] == [
+        "FORMAL_GAZEBO_CONTROL_AND_SENSOR_RUNTIME_PASSED_EXTERNAL_FIDELITY_GATES_PENDING"
+    ]
+
+
 def test_required_value_comparison_rejects_bool_integer_coercion() -> None:
     assert _strict_json_equal(True, True)
     assert _strict_json_equal([True, {"passed": False}], [True, {"passed": False}])

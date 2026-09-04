@@ -200,48 +200,18 @@ def test_committed_expanded_urdf_report_is_deterministic() -> None:
     assert result["urdf_validation"]["static_frame_pose_consistency"]["checked_count"] == 42
 
 
-def test_runtime_report_is_evidence_backed_and_fail_closed() -> None:
+def test_tracked_runtime_report_remains_fail_closed_until_fresh_acceptance() -> None:
     report = json.loads(
         (ROOT / "reports" / "engineering" / "formal_vehicle_runtime_report.json").read_text(
             encoding="utf-8"
         )
     )
-    assert report["status"] == "FORMAL_GAZEBO_CONTROL_AND_SENSOR_RUNTIME_PASSED_EXTERNAL_FIDELITY_GATES_PENDING"
-    assert all(report["passed_checks"].values())
-    assert report["passed_checks"]["dry_payload_clamp_kg"] == 1.512
-    assert report["passed_checks"]["wastewater_payload_clamp_kg"] == 8.30
-    assert report["report_id"] == "tzcup_formal_vehicle_headless_runtime_v4"
-    assert report["passed_checks"]["a300_plant_loaded_exactly_once"] is True
-    assert report["passed_checks"]["removed_base_controller_absent"] is True
-    assert report["passed_checks"]["raw_plant_odometry_frames_correct"] is True
-    assert report["passed_checks"]["all_camera_info_intrinsics_valid"] is True
-    assert report["controller_states"] == {
-        "arm_controller": "active",
-        "brush_controller": "inactive",
-        "cleaning_controller": "active",
-        "gripper_controller": "active",
-        "joint_state_broadcaster": "active",
-        "recovery_controller": "inactive",
-        "service_controller": "active",
-        "storage_controller": "active",
-    }
-    assert all(count > 0 for count in report["sample_counts"].values())
-    assert {
-        "/sensors/front_rgbd/depth/image_rect_raw/image",
-        "/sensors/front_rgbd/depth/image_rect_raw/depth_image",
-        "/sensors/front_rgbd/depth/image_rect_raw/camera_info",
-        "/sensors/wrist_rgbd/depth/image_rect_raw/image",
-        "/sensors/wrist_rgbd/depth/image_rect_raw/depth_image",
-        "/sensors/wrist_rgbd/depth/image_rect_raw/camera_info",
-        "/sensors/rear_left_fisheye/image_raw",
-        "/sensors/rear_left_fisheye/camera_info",
-        "/sensors/rear_right_fisheye/image_raw",
-        "/sensors/rear_right_fisheye/camera_info",
-    } <= set(report["sample_counts"])
-    expected_hash = hashlib.sha256(
-        (ROOT / "reports/engineering/formal_competition_vehicle.urdf").read_bytes()
-    ).hexdigest()
-    assert report["current_source_reconciliation"]["expanded_urdf_sha256"] == expected_hash
+    assert report["report_id"] == "tzcup_formal_vehicle_headless_runtime_v5"
+    assert report["status"] == "FORMAL_GAZEBO_CONTROL_AND_SENSOR_RUNTIME_BLOCKED"
+    assert report["passed"] is False
+    assert report["session_bound"] is True
+    assert report["runtime_gate_binding"]["status"] == "FORMAL_RUNTIME_GATE_BOUND"
+    assert any(value is False for value in report["passed_checks"].values())
 
 
 def test_minimal_expanded_urdf_fixture_passes_deterministic_checks(tmp_path: Path) -> None:

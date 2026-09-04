@@ -82,7 +82,7 @@ ros2 launch sanitation_bringup gazebo_scene.launch.py
 | 学习感知 | 阻断 | AUTO-05 数据门通过，但三次跨世界模型 screening 未达到冻结阈值 |
 | 综合竞赛矩阵 | 未通过 | 受 AUTO-08 学习感知与定点清扫依赖阻断，正式综合任务未启动 |
 | 真实域 | 外部阻断 | 缺少满足数量、标定和独立真值要求的真实数据集 |
-| J6P/S100P 部署 | 进行中、正式门未通过 | 真实 RDK S100P 已连接，官方 DOSOD/EdgeSAM 参考模型、项目 adapter、RGB→NV12 桥和 BPU smoke 已在板上运行；项目四类 HBM/词表、真实 RGB-D/TF/map 输入、非空产品输出与 1800 秒正式证据仍未通过 |
+| J6P/S100P 部署 | 进行中、正式门未通过 | 历史记录显示真实 RDK S100P 曾连接并运行官方 DOSOD/EdgeSAM 参考模型、项目 adapter、RGB→NV12 桥和 BPU smoke，但当前已核验的可读取 Git refs 中没有该 smoke 原始 JSON，不能作为当前可追溯证据；项目 DOSOD HBM、冻结词表、EdgeSAM encoder/decoder HBM、板端 manifest、真实 RGB-D/TF/map 输入、非空产品输出与 1800 秒正式证据仍未通过 |
 
 权威机器状态见 [`reports/release/FINAL_AUTONOMOUS_STATUS.json`](reports/release/FINAL_AUTONOMOUS_STATUS.json) 和 [`reports/release/FINAL_BLOCKER_REGISTER.json`](reports/release/FINAL_BLOCKER_REGISTER.json)。详细阶段过程、指标和失败边界保存在 [`docs/progress.md`](docs/progress.md)，不在本页重复记录逐步变更。
 

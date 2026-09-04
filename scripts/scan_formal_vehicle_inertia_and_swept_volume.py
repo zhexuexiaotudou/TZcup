@@ -30,6 +30,16 @@ from formal_gripper_linkage_contract import resolve_mimic_relations
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_URDF = ROOT / "reports/engineering/formal_competition_vehicle.urdf"
 DEFAULT_LAYOUT = ROOT / "config/high_fidelity_vehicle/formal_vehicle_layout.yaml"
+
+
+def _portable_evidence_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(ROOT).as_posix()
+    except ValueError:
+        return resolved.as_posix()
+
+
 ARM_JOINTS = (
     "shoulder_pan_joint",
     "shoulder_lift_joint",
@@ -1366,7 +1376,7 @@ def scan(
             "final_payload_within_a300_design_limit": final_payload_budget_pass,
         },
         "inputs": {
-            "expanded_urdf": model.urdf_path.resolve().as_posix(),
+            "expanded_urdf": _portable_evidence_path(model.urdf_path),
             "expanded_urdf_sha256": hashlib.sha256(model.urdf_path.read_bytes()).hexdigest(),
             "layout": layout_path.resolve().relative_to(ROOT).as_posix(),
             "layout_sha256": hashlib.sha256(layout_path.read_bytes()).hexdigest(),

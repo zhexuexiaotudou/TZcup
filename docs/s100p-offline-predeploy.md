@@ -23,7 +23,7 @@ py -3 scripts/validate_s100p_offline_predeploy.py `
   --artifact-root .work/formal_perception_assets
 ```
 
-当前预期为 `BLOCKED`，且是正确的 fail-closed 结果。已验证的本地准备项是：
+当前预期为 `BLOCKED`，且是正确的 fail-closed 结果。已验证的本地准备项如下：
 
 该 validator 的回归测试已纳入 `scripts/ci_fast.py`。CI 只接受它在缺失项目
 DOSOD HBM 时明确返回 `BLOCKED` 并保留 `formal_board_acceptance: false`；不会把
@@ -31,15 +31,17 @@ DOSOD HBM 时明确返回 `BLOCKED` 并保留 `formal_board_acceptance: false`�
 
 | 范围 | 本地审计结果 | 板端含义 |
 | --- | --- | --- |
-| 项目 DOSOD HBM | 阻断：缺文件、SHA-256、字节数及运行时 manifest 行 | 不能传输或启动 |
-| 项目四类词表 | SHA-256/字节数匹配 | 仍未部署 |
-| EdgeSAM-512 encoder/decoder HBM | SHA-256/字节数匹配 | 仍未部署 |
+| 板端 artifact manifest | 阻断：当前 artifact root 中缺失 | 不能证明模型闭包，不能传输或启动 |
+| 项目 DOSOD HBM | 阻断：缺文件、SHA-256 与字节数 | 不能传输或启动 |
+| 项目冻结 DOSOD 词表 | 阻断：当前 artifact root 中缺失 | 不能传输或启动 |
+| EdgeSAM-512 encoder/decoder HBM | 阻断：当前 artifact root 中缺失 | 不能传输或启动 |
 | 类别映射、overlay 清单、启动参数记录 | SHA-256/字节数与路径合同匹配 | 仍未构建/复制 overlay |
 | overlay 源包 | `sanitation_perception_interfaces`、`sanitation_perception` 源目录及 `package.xml` 名称匹配 | 不表示板上有该 overlay |
 | launch 合同 | 四个节点、模型绝对路径参数、RGB-D/CameraInfo/map/TF 输入和产品输出合同静态匹配 | 不表示节点曾启动 |
 
-项目四类 DOSOD HBM 是唯一已确认的**制品闭包**缺口。它不能由官方 COCO-80 DOSOD HBM、
-官方词表、PC ONNX 或旧 smoke 替代。生成前仍先满足
+项目 DOSOD HBM、冻结词表、EdgeSAM encoder/decoder HBM 与板端 artifact manifest 共同构成
+当前**制品闭包**缺口。项目 DOSOD HBM 不能由官方 COCO-80 DOSOD HBM、官方词表、PC ONNX
+或旧 smoke 替代。生成前仍先满足
 `config/dosod_s100p_hbm_compile_contract.json` 的项目 ONNX、冻结词表、校准、官方 recipe 和
 编译器身份合同；生成后的 HBM 还必须拥有真实编译 receipt、Nash parity 和量化回归，才可回填
 bundle 清单。
@@ -78,10 +80,11 @@ EdgeSAM 内部边界是 `ai_msgs/PerceptionTargets`。产品输出固定为：
 同一份清单还显示当时项目 overlay 及项目模型均为 `ABSENT`；设备枚举没有视频、串口或 CAN
 节点。因此 G0 只能说明计算板基线，不能说明当前资源、项目安装或传感器就绪。
 
-`artifacts/formal_s100p_board_smoke_20260830.json` 记录官方参考 DOSOD BPU、RGB→NV12 和五
-节点图的历史 smoke。其自身的 `formal_acceptance=false`，且缺少项目四类 HBM/词表、真实
-RGB-D/TF/map、非空产品输出与 1800 秒稳定性。validator 会将二者显式标为历史参考，绝不接受为
-正式运行门。
+计划曾引用 `artifacts/formal_s100p_board_smoke_20260830.json` 作为官方参考 DOSOD BPU、
+RGB→NV12 和节点图的历史 smoke，但当前已核验的可读取 Git refs 中未找到该文件，也没有现成的
+可校验原件可用。validator 因此把它标记为 `MISSING_OPTIONAL_REFERENCE`、
+`formal_acceptance=false`；缺失的历史参考不会伪装成部署 blocker，也不会被当成当前运行门。
+只有未来取得带来源和 SHA-256 的真实原件后，才允许恢复为可验证历史参考。
 
 G0 的七个历史基础包仅用于确认当时的只读基线；它不必覆盖未来完整 package.xml 依赖闭包。
 完整闭包只能由最终统一硬门要求的 `runtime_dependencies_receipt.json` 证明，不能因 G0 缺少尚未

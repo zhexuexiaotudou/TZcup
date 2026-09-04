@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -110,29 +109,23 @@ def test_expanded_urdf_contains_all_commanded_joints() -> None:
     assert set(commanded) <= names
 
 
-def test_gazebo_runtime_report_proves_measured_arm_and_gripper_motion() -> None:
-    report = json.loads(
-        (ROOT / "reports/engineering/formal_manipulator_runtime_report.json").read_text(
+def test_gazebo_runtime_gate_requires_live_measured_arm_and_gripper_motion() -> None:
+    contract = yaml.safe_load(
+        (ROOT / "config/high_fidelity_vehicle/formal_functional_acceptance_contract.yaml").read_text(
             encoding="utf-8"
         )
     )
-    assert report["status"] == "UR5E_AND_ROBOTIQ_GAZEBO_TRAJECTORY_EXECUTION_PASSED"
-    assert report["physics_engine"] == "gz-physics-dartsim-plugin"
-    assert report["arm"]["accepted"] is True
-    assert report["arm"]["result_error_code"] == 0
-    assert report["gripper"]["accepted"] is True
-    assert report["gripper"]["result_error_code"] == 0
-    assert report["arm"]["terminal_max_error_rad"] < 1.0e-3
-    assert report["gripper"]["terminal_max_error_rad"] < 1.0e-3
-    ranges = report["measured_joint_range_rad"]
-    for joint in (
-        "shoulder_pan_joint",
-        "shoulder_lift_joint",
-        "elbow_joint",
-        "wrist_1_joint",
-        "wrist_2_joint",
-        "wrist_3_joint",
-    ):
-        assert ranges[joint] > 0.08
-    assert ranges["robotiq_85_left_knuckle_joint"] > 0.55
-    assert report["joint_state_sample_count"] > 1000
+    gate = contract["evidence_gates"]["manipulator_trajectory"]
+    assert gate["report_id"] == "tzcup_formal_manipulator_runtime_v2"
+    assert gate["success_statuses"] == [
+        "UR5E_AND_ROBOTIQ_GAZEBO_TRAJECTORY_EXECUTION_PASSED"
+    ]
+    validator = (ROOT / "scripts/validate_formal_manipulator_runtime.py").read_text(
+        encoding="utf-8"
+    )
+    assert "ranges[name] < 0.08" in validator
+    assert "ranges[GRIPPER_JOINT] < 0.55" in validator
+    assert "terminal tracking error exceeds tolerance" in validator
+    assert '"measured_joint_range_rad": ranges' in validator
+    assert '"joint_state_sample_count": len(node.samples)' in validator
+    assert '"runtime_gate_binding": runtime_gate_binding' in validator

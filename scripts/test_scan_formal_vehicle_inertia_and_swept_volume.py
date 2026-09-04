@@ -17,6 +17,12 @@ sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
 
 
+def test_default_urdf_evidence_path_is_repository_relative() -> None:
+    assert MODULE._portable_evidence_path(MODULE.DEFAULT_URDF) == (
+        "reports/engineering/formal_competition_vehicle.urdf"
+    )
+
+
 def _obb(center: tuple[float, float, float]) -> object:
     return MODULE.CollisionObb(
         link="link",

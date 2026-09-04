@@ -84,6 +84,24 @@ def test_rejects_passive_squeegee_exported_as_motor(tmp_path: Path) -> None:
         validate_profile(control_path=path)
 
 
+def test_rejects_cleaning_lift_solver_release_clearance_as_a_commandable_stroke(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "control_interfaces.xacro"
+    source = CONTROL_XACRO.read_text(encoding="utf-8")
+    changed = source.replace(
+        'name="cleaning_lift_joint" lower="0.0" upper="0.100"',
+        'name="cleaning_lift_joint" lower="0.0" upper="0.10002"',
+    )
+    assert changed != source
+    path.write_text(changed, encoding="utf-8")
+    with pytest.raises(
+        FormalMotionCleaningProfileError,
+        match="commandable product stroke",
+    ):
+        validate_profile(control_path=path)
+
+
 def test_rejects_gazebo_arm_start_pose_that_differs_from_transport_contract(tmp_path: Path) -> None:
     path = tmp_path / "control_interfaces.xacro"
     source = CONTROL_XACRO.read_text(encoding="utf-8")

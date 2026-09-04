@@ -288,7 +288,7 @@
 
 ## AUTO-14：官方 J6 工具链就绪、正式编译依赖阻断（2026-07-30）
 
-D-Robotics 官方 OpenExplorer `3.7.0` 的 2.85 GB S100/S600 包已完成 SHA-256 校验，`hbdk4_compiler 4.7.5`、`hmct 2.6.5`、`horizon_tc_ui 3.5.3` 已解析，隔离 CUDA/cuDNN 环境中的 `hb_compile --help` 成功。仓库具备固定 batch/shape、operator/custom-op、500 帧校准集预检、官方配置生成和 HBM fail-closed runtime adapter。此段是 2026-07-30 历史探测，当时无 J6 板卡且 AUTO-06 正式模型未产出，故 `AUTO-14=BLOCKED`。2026-08-30 真实 S100P 已连接并完成官方参考 BPU smoke，但项目四类 HBM、非空产品输出和 1800 秒正式门仍为 BLOCKED；证据边界见 `artifacts/formal_s100p_board_smoke_20260830.json`。
+D-Robotics 官方 OpenExplorer `3.7.0` 的 2.85 GB S100/S600 包已完成 SHA-256 校验，`hbdk4_compiler 4.7.5`、`hmct 2.6.5`、`horizon_tc_ui 3.5.3` 已解析，隔离 CUDA/cuDNN 环境中的 `hb_compile --help` 成功。仓库具备固定 batch/shape、operator/custom-op、500 帧校准集预检、官方配置生成和 HBM fail-closed runtime adapter。此段是 2026-07-30 历史探测，当时无 J6 板卡且 AUTO-06 正式模型未产出，故 `AUTO-14=BLOCKED`。2026-08-30 历史说明称真实 S100P 已连接并完成官方参考 BPU smoke，但当前已核验的可读取 Git refs 中未找到对应原始 JSON，不能作为验收凭据；项目 DOSOD HBM、冻结词表、EdgeSAM encoder/decoder HBM、板端 manifest、非空产品输出和 1800 秒正式门仍为 BLOCKED，当前证据边界见 `docs/s100p-offline-predeploy.md`。
 
 ## AUTO-05：G3 数据门通过、模型 screening 阻断（2026-07-30）
 

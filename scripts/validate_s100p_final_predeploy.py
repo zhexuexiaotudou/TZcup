@@ -60,7 +60,8 @@ REQUIRED_BOARD_STATIC_CHECKS = {
     "mandatory_blockers_declared",
 }
 REQUIRED_OFFLINE_STATIC_CHECKS = {
-    "offline_predeploy_plan_parseable", "operation_boundary_exact", "plan_input_keys_exact",
+    "offline_predeploy_plan_parseable", "operation_boundary_exact", "optional_input_policy_valid",
+    "plan_input_keys_exact",
     "bundle_validator_completed", "overlay_inventory_identity_valid", "overlay_package_sources_valid",
     "overlay_runtime_package_set_valid", "launch_parameter_record_identity_valid",
     "launch_parameter_path_roles_valid", "launch_source_contract_valid", "formal_resource_gate_valid",
@@ -408,6 +409,11 @@ def validate_final_predeploy(
         "board_bundle_static_integrity_valid": isinstance(board_checks, Mapping) and all(board_checks.get(name) is True for name in REQUIRED_BOARD_STATIC_CHECKS),
         "offline_predeploy_audit_completed": offline_report.get("report_id") == "tzcup_s100p_offline_predeploy_validation_v1",
         "offline_predeploy_static_inputs_valid": isinstance(offline_checks, Mapping) and all(offline_checks.get(name) is True for name in REQUIRED_OFFLINE_STATIC_CHECKS),
+        "offline_predeploy_ready": (
+            offline_report.get("ready") is True
+            and isinstance(offline_report.get("blockers"), list)
+            and not offline_report["blockers"]
+        ),
         "dosod_hbm_compile_contract_valid": hbm_contract_valid,
         "mechanical_electrical_fail_closed_contract_valid": mechanical_valid,
         **identity_checks,
@@ -421,6 +427,8 @@ def validate_final_predeploy(
         _append(blockers, "offline_predeploy_audit_failed")
     if not checks["offline_predeploy_static_inputs_valid"]:
         _append(blockers, "offline_predeploy_static_inputs_invalid")
+    if not checks["offline_predeploy_ready"]:
+        _append(blockers, "offline_predeploy_not_ready")
     if not identity_checks["pc_session_runtime_closure_identity_exact"]:
         _append(blockers, "pc_session_runtime_closure_identity_not_ready")
 

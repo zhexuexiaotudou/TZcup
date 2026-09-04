@@ -27,6 +27,17 @@ ROS_NATIVE_SENSOR_TOPICS = {
     "/sensors/rear_right_fisheye/camera_info",
 }
 
+# These three high-bandwidth streams are explicitly bound to the bridge's
+# reliable SYSTEM_DEFAULT profile.  Every other product sensor bridge remains
+# on the bounded SENSOR_DATA profile.
+RELIABLE_HIGH_BANDWIDTH_TOPICS = frozenset(
+    {
+        "/sensors/lidar_3d/points",
+        "/sensors/rear_left_fisheye/image_raw",
+        "/sensors/rear_right_fisheye/image_raw",
+    }
+)
+
 
 class FormalPerceptionContractError(RuntimeError):
     """Raised when the product perception graph violates its frozen boundary."""
@@ -221,7 +232,12 @@ def audit_formal_perception(
             isinstance(row, Mapping)
             and row.get("direction") == "GZ_TO_ROS"
             and row.get("lazy") is True
-            and row.get("qos_profile") == "SENSOR_DATA"
+            and row.get("qos_profile")
+            == (
+                "SYSTEM_DEFAULT"
+                if row.get("ros_topic_name") in RELIABLE_HIGH_BANDWIDTH_TOPICS
+                else "SENSOR_DATA"
+            )
             and type(row.get("subscriber_queue")) is int
             and row.get("subscriber_queue") == 1
             and type(row.get("publisher_queue")) is int

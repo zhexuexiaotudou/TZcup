@@ -1962,13 +1962,13 @@
     "samples_below_ground": 136
   },
   "inputs": {
-    "expanded_urdf": "/mnt/f/Project/TZcup-integrated-functional-acceptance/reports/engineering/formal_competition_vehicle.urdf",
-    "expanded_urdf_sha256": "b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2",
+    "expanded_urdf": "reports/engineering/formal_competition_vehicle.urdf",
+    "expanded_urdf_sha256": "73edb99d1d1ff93052c6d889b11581d4c35ca7b2a7252b8cc1d8bcf37f7d8d47",
     "layout": "config/high_fidelity_vehicle/formal_vehicle_layout.yaml",
     "layout_sha256": "4c5804b917f2226fbf730bf492b2b6113c92bd3f00ee408ee8edb9a3dc3222cc",
     "load_source": "formal Xacro payload reserve links and final capacity clamps",
     "scanner": "scripts/scan_formal_vehicle_inertia_and_swept_volume.py",
-    "scanner_sha256": "faa8a67f9b1fe702a2764a423caba0d237445077199d5be4046ae7f975d4f356",
+    "scanner_sha256": "a1da3d5d4fb7a2e79a0efbb0bfc10028d09e57ea6009df07de49bbf7b1733e0f",
     "support_polygon_source": "final URDF wheel-joint centres"
   },
   "joint_space": {

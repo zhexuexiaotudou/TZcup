@@ -173,7 +173,7 @@ def test_formal_campus_runner_locks_local_dds_and_fails_closed():
     ) < runner.index('source "${campus_setup}"')
     assert 'source "${repo_root}/scripts/run_formal_runtime_isolation.sh"' in runner
     assert 'formal_runtime_configure "${ROS_DOMAIN_ID}"' in runner
-    assert 'ROS_AUTOMATIC_DISCOVERY_RANGE:-LOCALHOST' in isolation
+    assert 'export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST' in isolation
     assert 'simulation_initial_estop_active:=true' in runner
     assert "use 0..101 or 215..231" in isolation
     assert (

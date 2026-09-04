@@ -21,6 +21,21 @@ from typing import Any, Mapping
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_PLAN = ROOT / "config" / "s100p_offline_predeploy_plan.json"
 EXPECTED_BOUNDARY = "no_board_copy_no_ssh_no_node_start_no_data_collection"
+OPTIONAL_INPUTS = {"historical_board_smoke"}
+REQUIRED_READY_CHECKS = (
+    "operation_boundary_exact",
+    "optional_input_policy_valid",
+    "overlay_package_sources_valid",
+    "overlay_runtime_package_set_valid",
+    "launch_parameter_record_identity_valid",
+    "launch_parameter_path_roles_valid",
+    "launch_source_contract_valid",
+    "formal_resource_gate_valid",
+    "future_operator_plan_recorded",
+    "rollback_plan_recorded",
+    "central_acceptance_unchanged",
+    "validator_has_no_board_or_network_implementation",
+)
 EXPECTED_NODES = (
     ("sanitation_perception", "rgb_to_nv12_adapter"),
     ("hobot_dosod", "hobot_dosod"),
@@ -69,6 +84,14 @@ def _relative_path(value: Any) -> str | None:
 def _append(blockers: list[str], value: str) -> None:
     if value not in blockers:
         blockers.append(value)
+
+
+def _offline_ready(
+    bundle_report: Mapping[str, Any], checks: Mapping[str, bool], blockers: list[str]
+) -> bool:
+    return not blockers and bool(bundle_report.get("ready")) and all(
+        checks.get(key, False) for key in REQUIRED_READY_CHECKS
+    )
 
 
 def _parse_meminfo_kib(value: Any, field: str) -> int | None:
@@ -320,6 +343,7 @@ def _validate_historical_smoke(smoke: Mapping[str, Any], checks: dict[str, bool]
     safety = smoke.get("safety")
     nodes = smoke.get("nodes_observed")
     expected_nodes = {"rgb_to_nv12_adapter", "hobot_dosod", "mono_edgesam", "open_vocab_product_adapter"}
+    checks["historical_smoke_reference_available"] = True
     checks["historical_smoke_reference_valid"] = (
         smoke.get("status") == "SMOKE_PASSED_FORMAL_ACCEPTANCE_BLOCKED"
         and smoke.get("formal_acceptance") is False
@@ -333,9 +357,11 @@ def _validate_historical_smoke(smoke: Mapping[str, Any], checks: dict[str, bool]
     if not checks["historical_smoke_reference_valid"]:
         _append(blockers, "historical_board_smoke_invalid_or_overclaimed")
     checks["historical_smoke_remains_nonformal"] = smoke.get("formal_acceptance") is False and bool(smoke.get("formal_blockers"))
+    checks["historical_smoke_does_not_grant_acceptance"] = smoke.get("formal_acceptance") is False
     if not checks["historical_smoke_remains_nonformal"]:
         _append(blockers, "historical_board_smoke_formal_boundary_missing")
     return {
+        "available": True,
         "status": smoke.get("status"),
         "formal_acceptance": smoke.get("formal_acceptance"),
         "formal_blockers": smoke.get("formal_blockers"),
@@ -389,6 +415,12 @@ def validate_offline_predeploy(
         "historical_g0_inventory",
         "historical_board_smoke",
     }
+    optional_inputs = plan.get("optional_inputs")
+    checks["optional_input_policy_valid"] = (
+        isinstance(optional_inputs, list) and set(optional_inputs) == OPTIONAL_INPUTS
+    )
+    if not checks["optional_input_policy_valid"]:
+        _append(blockers, "optional_input_policy_invalid")
     checks["plan_input_keys_exact"] = set(inputs) == expected_inputs
     if not checks["plan_input_keys_exact"]:
         _append(blockers, "plan_input_keys_invalid")
@@ -399,7 +431,7 @@ def validate_offline_predeploy(
             continue
         path = repository_root / relative
         resolved[name] = path
-        if not path.is_file():
+        if not path.is_file() and name not in OPTIONAL_INPUTS:
             _append(blockers, f"plan_input_missing:{name}")
 
     bundle, bundle_error = _load_json(resolved.get("artifact_bundle_manifest", Path(".")))
@@ -412,7 +444,7 @@ def validate_offline_predeploy(
         "overlay": overlay_error,
         "launch_record": launch_record_error,
         "historical_g0": g0_error,
-        "historical_smoke": smoke_error,
+        "historical_smoke": smoke_error if smoke_error != "missing" else None,
     }.items():
         if load_error:
             _append(blockers, f"{name}_{load_error}")
@@ -443,7 +475,32 @@ def validate_offline_predeploy(
     g0_result = _validate_historical_g0(
         g0, overlay_result.get("required_runtime_packages"), checks, blockers
     ) if g0 and not g0_error else {}
-    smoke_result = _validate_historical_smoke(smoke, checks, blockers) if smoke and not smoke_error else {}
+    if smoke and not smoke_error:
+        smoke_result = _validate_historical_smoke(smoke, checks, blockers)
+    elif smoke_error == "missing":
+        checks["historical_smoke_reference_available"] = False
+        checks["historical_smoke_reference_valid"] = False
+        checks["historical_smoke_remains_nonformal"] = False
+        checks["historical_smoke_does_not_grant_acceptance"] = True
+        smoke_result = {
+            "available": False,
+            "status": "MISSING_OPTIONAL_REFERENCE",
+            "formal_acceptance": False,
+            "formal_blockers": ["historical_bpu_smoke_source_not_provided"],
+            "evidence_class": "missing_historical_bpu_smoke_not_current_acceptance",
+        }
+    else:
+        checks["historical_smoke_reference_available"] = False
+        checks["historical_smoke_reference_valid"] = False
+        checks["historical_smoke_remains_nonformal"] = False
+        checks["historical_smoke_does_not_grant_acceptance"] = True
+        smoke_result = {
+            "available": False,
+            "status": "INVALID_OPTIONAL_REFERENCE",
+            "formal_acceptance": False,
+            "formal_blockers": ["historical_bpu_smoke_source_invalid"],
+            "evidence_class": "invalid_historical_bpu_smoke_not_current_acceptance",
+        }
 
     resource_gate = plan.get("formal_resource_gate")
     checks["formal_resource_gate_valid"] = isinstance(resource_gate, Mapping) and (
@@ -471,25 +528,7 @@ def validate_offline_predeploy(
     checks["validator_has_no_board_or_network_implementation"] = _validator_has_no_board_or_network_implementation(source)
     if not checks["validator_has_no_board_or_network_implementation"]:
         _append(blockers, "validator_contains_forbidden_board_or_network_implementation")
-    offline_ready = bool(
-        bundle_report.get("ready")
-        and all(
-            checks.get(key, False)
-            for key in (
-                "operation_boundary_exact",
-                "overlay_package_sources_valid",
-                "overlay_runtime_package_set_valid",
-                "launch_parameter_record_identity_valid",
-                "launch_parameter_path_roles_valid",
-                "launch_source_contract_valid",
-                "formal_resource_gate_valid",
-                "future_operator_plan_recorded",
-                "rollback_plan_recorded",
-                "central_acceptance_unchanged",
-                "validator_has_no_board_or_network_implementation",
-            )
-        )
-    )
+    offline_ready = _offline_ready(bundle_report, checks, blockers)
     return {
         "schema_version": 1,
         "report_id": "tzcup_s100p_offline_predeploy_validation_v1",

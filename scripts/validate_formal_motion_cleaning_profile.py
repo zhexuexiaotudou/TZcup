@@ -34,6 +34,13 @@ CONTROLLERS = ROOT / (
 A300_DRIVETRAIN = ROOT / "config/high_fidelity_vehicle/a300_drivetrain_realism_contract.yaml"
 
 
+# The URDF has a DART-only release clearance past the P16 product stroke.  It
+# is deliberately not commandable: product commands and the ground-tangent
+# work pose remain at exactly 100 mm.
+CLEANING_LIFT_PRODUCT_STROKE_M = 0.100
+CLEANING_LIFT_SOLVER_RELEASE_CLEARANCE_M = 0.00002
+
+
 class FormalMotionCleaningProfileError(RuntimeError):
     """Raised when the profile differs from the project-owned source geometry."""
 
@@ -193,7 +200,21 @@ def _validate_joint_limits(cleaning: ET.Element, storage: ET.Element, control: E
             _same(float(declaration.get("max_effort", "nan")), limits["effort"], f"{control_name} effort")
         else:
             for attribute in ("lower", "upper", "velocity", "effort"):
-                _same(float(declaration.get(attribute, "nan")), limits[attribute], f"{control_name} {attribute}")
+                actual = float(declaration.get(attribute, "nan"))
+                if control_name == "cleaning_lift_joint" and attribute == "upper":
+                    _same(
+                        actual,
+                        CLEANING_LIFT_PRODUCT_STROKE_M,
+                        "cleaning lift commandable product stroke",
+                    )
+                    _same(
+                        limits[attribute],
+                        CLEANING_LIFT_PRODUCT_STROKE_M
+                        + CLEANING_LIFT_SOLVER_RELEASE_CLEARANCE_M,
+                        "cleaning lift DART-only solver release bound",
+                    )
+                    continue
+                _same(actual, limits[attribute], f"{control_name} {attribute}")
             initial = float(declaration.get("initial_position", "0.0"))
             if not limits["lower"] <= initial <= limits["upper"]:
                 raise FormalMotionCleaningProfileError(f"{control_name} initial position is outside URDF limits")
@@ -428,7 +449,13 @@ def validate_profile(
     )
     _same(transport_lift, 0.0, "transport-safe lift position")
     _same(full_down_lift, lift, "full-down/work lift position")
+    _same(lift, CLEANING_LIFT_PRODUCT_STROKE_M, "cleaning lift product work stroke")
     lift_control = _control_call(control, "cleaning_lift_joint")
+    _same(
+        float(lift_control.get("upper", "nan")),
+        lift,
+        "cleaning lift commandable/work position",
+    )
     _same(
         float(lift_control.get("initial_position", "nan")),
         transport_lift,

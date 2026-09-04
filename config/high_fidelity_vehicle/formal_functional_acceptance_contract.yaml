@@ -146,6 +146,7 @@ evidence_gates:
       sidecar_suffix: .runtime_binding.json
   sensor_runtime:
     path: reports/engineering/formal_vehicle_runtime_report.json
+    report_id: tzcup_formal_vehicle_headless_runtime_v5
     success_statuses: [FORMAL_GAZEBO_CONTROL_AND_SENSOR_RUNTIME_PASSED_EXTERNAL_FIDELITY_GATES_PENDING]
     session_bound: true
     snapshot_urdf_hash_field: acceptance_session_binding.snapshot.expanded_urdf_sha256

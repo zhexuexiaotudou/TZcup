@@ -128,10 +128,9 @@ def test_s100_records_official_support_but_reports_project_artifact_blockers():
 
 def test_s100_artifact_provenance_uses_model_source_not_ros_wrapper_revision(tmp_path):
     contract = yaml.safe_load(CONTRACT.read_text(encoding="utf-8"))
-    vocabulary_source = REPOSITORY / ".work/formal_perception_assets/dosod/tzcup_offline_vocabulary.json"
     vocabulary = tmp_path / "dosod/tzcup_offline_vocabulary.json"
     vocabulary.parent.mkdir(parents=True)
-    vocabulary.write_bytes(vocabulary_source.read_bytes())
+    vocabulary.write_text('{"labels": ["bottle"]}\n', encoding="utf-8")
     row = {
         "sha256": __import__("hashlib").sha256(vocabulary.read_bytes()).hexdigest(),
         "byte_size": vocabulary.stat().st_size,
@@ -273,6 +272,31 @@ def test_high_bandwidth_bridge_config_fails_closed(
 ):
     rows = yaml.safe_load(HIGH_BANDWIDTH_CONFIG.read_text(encoding="utf-8"))
     rows[0][field] = invalid_value
+    _write_minimal_sensor_repository(tmp_path, bridge_rows=rows)
+    report = audit_formal_perception(
+        CONTRACT, repository_root=tmp_path, platform="pc", artifact_root=None
+    )
+    assert report["checks"]["formal_high_bandwidth_bridge_config_valid"] is False
+    assert "formal_high_bandwidth_bridge_config_invalid" in report["blockers"]
+
+
+@pytest.mark.parametrize(
+    ("topic", "qos_profile"),
+    (
+        ("/sensors/lidar_3d/points", "SENSOR_DATA"),
+        ("/sensors/front_rgbd/depth/image_rect_raw/image", "SYSTEM_DEFAULT"),
+    ),
+)
+def test_high_bandwidth_bridge_qos_is_exactly_topic_bound(
+    tmp_path: Path, topic: str, qos_profile: str
+):
+    rows = yaml.safe_load(HIGH_BANDWIDTH_CONFIG.read_text(encoding="utf-8"))
+    for row in rows:
+        if row["ros_topic_name"] == topic:
+            row["qos_profile"] = qos_profile
+            break
+    else:
+        pytest.fail(f"missing high-bandwidth topic fixture: {topic}")
     _write_minimal_sensor_repository(tmp_path, bridge_rows=rows)
     report = audit_formal_perception(
         CONTRACT, repository_root=tmp_path, platform="pc", artifact_root=None

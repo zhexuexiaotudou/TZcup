@@ -2,11 +2,11 @@
   "report_id": "tzcup_formal_fov_occlusion_mesh_ray_v1",
   "status": "PASSED",
   "all_minimum_clear_fractions_passed": true,
-  "urdf": "/mnt/f/Project/TZcup-integrated-functional-acceptance/reports/engineering/formal_competition_vehicle.urdf",
-  "urdf_sha256": "b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2",
+  "urdf": "reports/engineering/formal_competition_vehicle.urdf",
+  "urdf_sha256": "73edb99d1d1ff93052c6d889b11581d4c35ca7b2a7252b8cc1d8bcf37f7d8d47",
   "layout_sha256": "4c5804b917f2226fbf730bf492b2b6113c92bd3f00ee408ee8edb9a3dc3222cc",
   "validator": "scripts/validate_formal_fov_occlusion.py",
-  "validator_sha256": "58d3ad2b9ecf3a41dd442d4f62df78e814db1b205c095d931ece0659aae73afe",
+  "validator_sha256": "8eb5f8461ebe8909785b0c1b5defbb04bbda76f3a2f0ea6488a78aab3529c54c",
   "geometry_triangle_count_by_pose": {
     "transport": 971768,
     "pregrasp": 971768,
@@ -1076,9 +1076,9 @@
           "blocked_ray_count": 1531,
           "clear_fraction": 0.142296919,
           "occluder_histogram": {
-            "bodywork_front_cowl_link": 933,
+            "bodywork_front_cowl_link": 932,
             "bodywork_lower_tub_link": 360,
-            "bodywork_compute_service_door_link": 86,
+            "bodywork_compute_service_door_link": 87,
             "bodywork_rear_shell_link": 59,
             "robotiq_85_left_finger_link": 41,
             "bodywork_brush_guards_link": 15,
@@ -1094,7 +1094,7 @@
           "origin_world_m": [
             0.3419367249070473,
             -0.5762895393134965,
-            0.5860454840719478
+            0.5860454840719479
           ]
         },
         "pregrasp": {
@@ -1126,7 +1126,7 @@
           "origin_world_m": [
             0.440000002747491,
             -0.950000001760269,
-            0.16500000253720165
+            0.1650000025372016
           ]
         },
         "deposit": {
@@ -1158,7 +1158,7 @@
           },
           "origin_world_m": [
             -0.09497225094298985,
-            0.12150977997018828,
+            0.12150977997018826,
             1.234801743414959
           ]
         }
@@ -1278,8 +1278,8 @@
         ],
         "measured_forward_xyz": [
           -0.9027003480893813,
-          0.4214461404293689,
-          -0.08669043936039467
+          0.42144614042936884,
+          -0.0866904393603947
         ],
         "direction_error_rad": 1.4325047e-05,
         "direction_tolerance_rad": 0.02,
@@ -1307,10 +1307,10 @@
         ],
         "measured_forward_xyz": [
           -0.9028719477637116,
-          -0.42107839372836875,
-          -0.08669043936039467
+          -0.4210783937283687,
+          -0.0866904393603947
         ],
-        "direction_error_rad": 0.000417930366,
+        "direction_error_rad": 0.000417930367,
         "direction_tolerance_rad": 0.02,
         "passed": true
       },
@@ -1381,9 +1381,9 @@
           0.025
         ],
         "measured_position_m": [
-          0.13999999999999996,
-          1.6479873021779667e-16,
-          0.025000000000000022
+          0.14000000000000007,
+          -1.214306433183765e-17,
+          0.02499999999999991
         ],
         "position_error_m": 0.0,
         "position_tolerance_m": 0.005,
@@ -1393,8 +1393,8 @@
           1.0
         ],
         "measured_forward_xyz": [
-          -5.551115123125783e-17,
-          5.551115123125783e-17,
+          6.4782237369379505e-18,
+          -5.4537320665763287e-17,
           1.0
         ],
         "direction_error_rad": 0.0,

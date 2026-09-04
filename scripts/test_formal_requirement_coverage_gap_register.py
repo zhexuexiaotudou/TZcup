@@ -15,7 +15,10 @@ ROOT = Path(__file__).resolve().parents[1]
 
 
 def test_register_covers_each_requested_family_and_keeps_runtime_blocked() -> None:
-    report = audit(ROOT)
+    report = audit(
+        ROOT,
+        session_relative_path="artifacts/test-fixtures/missing-formal-session.json",
+    )
     ids = {item["id"] for item in report["items"]}
     assert report["report_id"] == REPORT_ID
     assert report["requirement_count"] == 16
@@ -28,7 +31,8 @@ def test_register_covers_each_requested_family_and_keeps_runtime_blocked() -> No
     } == ids
     assert report["static_complete_count"] == 16
     assert report["static_gap_items"] == []
-    assert report["acceptance_session"]["status"] == "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING"
+    assert report["acceptance_session"]["available"] is False
+    assert report["acceptance_session"]["status"] == "MISSING_CURRENT_SESSION"
     assert report["acceptance_session"]["evidence_key_count"] == 0
     assert report["runtime_accepted"] is False
     assert report["runtime_blocked_items"] == [item["id"] for item in report["items"]]

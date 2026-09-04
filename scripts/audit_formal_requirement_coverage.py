@@ -40,15 +40,21 @@ def _gate_declared(contract_text: str, gate: str) -> bool:
     return re.search(rf"(?m)^  {re.escape(gate)}:\s*$", contract_text) is not None
 
 
-def audit(root: Path = ROOT) -> dict[str, object]:
+def audit(
+    root: Path = ROOT,
+    *,
+    session_relative_path: str = SESSION.relative_to(ROOT).as_posix(),
+) -> dict[str, object]:
     root = root.resolve()
     register = json.loads((root / REGISTER.relative_to(ROOT)).read_text(encoding="utf-8"))
     contract_text = (root / CONTRACT.relative_to(ROOT)).read_text(encoding="utf-8")
+    session_available = True
     try:
-        session = json.loads((root / SESSION.relative_to(ROOT)).read_text(encoding="utf-8"))
+        session = json.loads((root / session_relative_path).read_text(encoding="utf-8"))
     except (FileNotFoundError, json.JSONDecodeError):
         session = {}
-    session_status = session.get("status")
+        session_available = False
+    session_status = session.get("status") if session_available else "MISSING_CURRENT_SESSION"
     session_evidence = session.get("evidence")
     session_evidence = session_evidence if isinstance(session_evidence, dict) else {}
     items: list[dict[str, object]] = []
@@ -97,7 +103,12 @@ def audit(root: Path = ROOT) -> dict[str, object]:
         "audit_mode": "static_source_and_contract_only",
         "execution_prohibited": ["WSL", "bash.exe", "Gazebo", "ROS runtime", "CadQuery", "FreeCAD"],
         "claim_boundary": register["claim_boundary"],
-        "acceptance_session": {"path": SESSION.relative_to(ROOT).as_posix(), "status": session_status, "evidence_key_count": len(session_evidence)},
+        "acceptance_session": {
+            "path": Path(session_relative_path).as_posix(),
+            "available": session_available,
+            "status": session_status,
+            "evidence_key_count": len(session_evidence),
+        },
         "items": items,
         "requirement_count": len(items),
         "static_complete_count": len(items) - len(static_gaps),

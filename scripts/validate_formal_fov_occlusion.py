@@ -22,6 +22,16 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_URDF = ROOT / "reports/engineering/formal_competition_vehicle.urdf"
 DEFAULT_LAYOUT = ROOT / "config/high_fidelity_vehicle/formal_vehicle_layout.yaml"
 MESH_ROOT = ROOT / "starter_ws/src/sanitation_vehicle_description/meshes"
+
+
+def _portable_evidence_path(path: Path) -> str:
+    resolved = path.resolve()
+    try:
+        return resolved.relative_to(ROOT).as_posix()
+    except ValueError:
+        return resolved.as_posix()
+
+
 ARM_JOINTS = (
     "shoulder_pan_joint", "shoulder_lift_joint", "elbow_joint",
     "wrist_1_joint", "wrist_2_joint", "wrist_3_joint",
@@ -821,7 +831,7 @@ def validate(urdf_path: Path, layout_path: Path) -> dict:
         "report_id": "tzcup_formal_fov_occlusion_mesh_ray_v1",
         "status": "PASSED" if all_passed else "BLOCKED",
         "all_minimum_clear_fractions_passed": all_passed,
-        "urdf": str(urdf_path),
+        "urdf": _portable_evidence_path(urdf_path),
         "urdf_sha256": hashlib.sha256(urdf_path.read_bytes()).hexdigest(),
         "layout_sha256": hashlib.sha256(layout_path.read_bytes()).hexdigest(),
         "validator": Path(__file__).resolve().relative_to(ROOT).as_posix(),

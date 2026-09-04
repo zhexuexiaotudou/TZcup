@@ -12,6 +12,7 @@
     "historical_g0_inventory": "artifacts/s100p_hardware_bringup/g0_20260831T001506Z_6226f4c5/G0/g0_read_only_inventory.json",
     "historical_board_smoke": "artifacts/formal_s100p_board_smoke_20260830.json"
   },
+  "optional_inputs": ["historical_board_smoke"],
   "formal_resource_gate": {
     "duration_sec": 1800,
     "minimum_available_memory_percent": 5.0,

@@ -26,6 +26,16 @@ def _write(path: Path, payload: object) -> None:
     path.write_text(json.dumps(payload), encoding="utf-8")
 
 
+def _synthetic_offline_report(*, ready: bool, blockers: list[str]) -> dict[str, object]:
+    return {
+        "report_id": "tzcup_s100p_offline_predeploy_validation_v1",
+        "status": "PREDEPLOY_READY_NOT_DEPLOYED" if ready else "BLOCKED",
+        "ready": ready,
+        "checks": {name: True for name in MODULE.REQUIRED_OFFLINE_STATIC_CHECKS},
+        "blockers": blockers,
+    }
+
+
 def _synthetic_receipt(receipt_id: str, binding: dict, closure: dict, **fields: object) -> dict:
     return {
         "schema_version": 1,
@@ -136,8 +146,14 @@ def _complete_synthetic_inputs(tmp_path: Path) -> dict[str, Path]:
     return {"board": board_path, "snapshot": snapshot_path, "session": session_path, "binding": runtime_binding_path, "receipts": receipt_root}
 
 
-def test_real_audit_is_blocked_without_current_session_or_receipts() -> None:
-    report = MODULE.validate_final_predeploy()
+def test_audit_is_blocked_with_explicitly_missing_session_and_receipts(
+    tmp_path: Path,
+) -> None:
+    report = MODULE.validate_final_predeploy(
+        acceptance_session_path=tmp_path / "missing-session.json",
+        runtime_binding_path=tmp_path / "missing-runtime-binding.json",
+        receipt_root=tmp_path / "missing-receipts",
+    )
     assert report["status"] == "BLOCKED"
     assert report["ready_to_deploy"] is False
     assert report["board_interaction_performed"] is False
@@ -146,12 +162,20 @@ def test_real_audit_is_blocked_without_current_session_or_receipts() -> None:
         "acceptance_session_missing",
         "acceptance_session_not_current_running_closure_bound",
     } & set(report["blockers"])
-    assert "dosod_hbm_compile_receipt_missing" in report["blockers"]
+    assert "dosod_hbm_compile_receipt_cannot_bind_runtime_identity" in report["blockers"]
     assert report["checks"]["mechanical_electrical_fail_closed_contract_valid"] is True
+    assert "optional_input_policy_valid" in MODULE.REQUIRED_OFFLINE_STATIC_CHECKS
 
 
-def test_complete_synthetic_receipt_chain_requires_exact_single_identity(tmp_path: Path) -> None:
+def test_complete_synthetic_receipt_chain_requires_exact_single_identity(
+    tmp_path: Path, monkeypatch
+) -> None:
     paths = _complete_synthetic_inputs(tmp_path)
+    monkeypatch.setattr(
+        MODULE.offline_predeploy,
+        "validate_offline_predeploy",
+        lambda *args, **kwargs: _synthetic_offline_report(ready=True, blockers=[]),
+    )
     report = MODULE.validate_final_predeploy(
         board_manifest_path=paths["board"], snapshot_path=paths["snapshot"],
         acceptance_session_path=paths["session"], runtime_binding_path=paths["binding"],
@@ -160,6 +184,29 @@ def test_complete_synthetic_receipt_chain_requires_exact_single_identity(tmp_pat
     assert report["status"] == "PREDEPLOY_READY_NOT_DEPLOYED"
     assert report["ready_to_deploy"] is True
     assert all(report["checks"].values())
+
+
+def test_blocked_offline_audit_cannot_be_bypassed_by_complete_receipts(
+    tmp_path: Path, monkeypatch
+) -> None:
+    paths = _complete_synthetic_inputs(tmp_path)
+    monkeypatch.setattr(
+        MODULE.offline_predeploy,
+        "validate_offline_predeploy",
+        lambda *args, **kwargs: _synthetic_offline_report(
+            ready=False,
+            blockers=["historical_g0_missing"],
+        ),
+    )
+    report = MODULE.validate_final_predeploy(
+        board_manifest_path=paths["board"], snapshot_path=paths["snapshot"],
+        acceptance_session_path=paths["session"], runtime_binding_path=paths["binding"],
+        receipt_root=paths["receipts"],
+    )
+    assert report["status"] == "BLOCKED"
+    assert report["checks"]["offline_predeploy_static_inputs_valid"] is True
+    assert report["checks"]["offline_predeploy_ready"] is False
+    assert "offline_predeploy_not_ready" in report["blockers"]
 
 
 def test_receipt_closure_drift_blocks_the_whole_predeploy_decision(tmp_path: Path) -> None:

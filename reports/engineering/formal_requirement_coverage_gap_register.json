@@ -13,7 +13,8 @@
   "claim_boundary": "This is a source-only coverage and gap register. Model, control and contract-gate declarations are not runtime acceptance; every formal gate remains blocked until current-session runtime evidence is bound and independently validated.",
   "acceptance_session": {
     "path": "artifacts/formal_final_acceptance_session.json",
-    "status": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING",
+    "available": false,
+    "status": "MISSING_CURRENT_SESSION",
     "evidence_key_count": 0
   },
   "items": [
@@ -47,7 +48,7 @@
         {
           "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
           "token": "/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan",
-          "line": 708,
+          "line": 751,
           "present": true
         }
       ],
@@ -105,7 +106,7 @@
         {
           "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
           "token": "/sensors/lidar_3d/points",
-          "line": 28,
+          "line": 31,
           "present": true
         }
       ],
@@ -163,7 +164,7 @@
         {
           "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
           "token": "/sensors/front_rgbd/depth/image_rect_raw/image",
-          "line": 38,
+          "line": 41,
           "present": true
         }
       ],
@@ -227,13 +228,13 @@
         {
           "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
           "token": "/sensors/rear_left_fisheye/image_raw",
-          "line": 198,
+          "line": 201,
           "present": true
         },
         {
           "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
           "token": "/sensors/rear_right_fisheye/image_raw",
-          "line": 208,
+          "line": 212,
           "present": true
         }
       ],
@@ -291,7 +292,7 @@
         {
           "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
           "token": "/sensors/wrist_rgbd/infra2/image_rect_raw",
-          "line": 178,
+          "line": 181,
           "present": true
         }
       ],
@@ -349,7 +350,7 @@
         {
           "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
           "token": "/sensors/gnss/fix@sensor_msgs/msg/NavSatFix",
-          "line": 709,
+          "line": 752,
           "present": true
         }
       ],
@@ -407,7 +408,7 @@
         {
           "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
           "token": "/sensors/imu/data@sensor_msgs/msg/Imu",
-          "line": 710,
+          "line": 753,
           "present": true
         }
       ],
@@ -471,7 +472,7 @@
         {
           "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
           "token": "joint_state_broadcaster",
-          "line": 187,
+          "line": 203,
           "present": true
         }
       ],
@@ -819,7 +820,7 @@
         {
           "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/cleaning_mechanism.xacro",
           "token": "squeegee_float_joint",
-          "line": 427,
+          "line": 438,
           "present": true
         }
       ],
@@ -833,7 +834,7 @@
         {
           "path": "starter_ws/src/sanitation_gazebo_control/src/WaterRecoverySystem.cc",
           "token": "PublishPayload",
-          "line": 237,
+          "line": 233,
           "present": true
         }
       ],
