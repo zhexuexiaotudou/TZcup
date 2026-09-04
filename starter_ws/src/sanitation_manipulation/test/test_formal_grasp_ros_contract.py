@@ -154,6 +154,7 @@ def test_physical_grasp_scene_preserves_the_formal_safety_power_chain():
     assert 'executable="a300_drivetrain_command_adapter"' in cube_launch
     assert 'name="a300_drivetrain_bridge"' in cube_launch
     assert 'name="formal_auxiliary_bridge"' in cube_launch
+    assert '"/emergency_stop@std_msgs/msg/Bool[gz.msgs.Boolean"' in cube_launch
     assert 'name="cleaning_actuator_scalar_bridge"' in cube_launch
     assert 'name="cleaning_actuator_motor_bridge"' in cube_launch
     assert 'create_publisher(Bool, "/safety/actuators_enabled"' not in cube_launch

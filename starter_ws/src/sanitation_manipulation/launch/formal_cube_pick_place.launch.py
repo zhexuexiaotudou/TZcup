@@ -202,6 +202,7 @@ def generate_launch_description() -> LaunchDescription:
             "/formal_vehicle/power/branches/safety/enabled@std_msgs/msg/Bool]gz.msgs.Boolean",
             "/formal_vehicle/simulation/command/main_power@std_msgs/msg/Bool]gz.msgs.Boolean",
             "/formal_vehicle/power/main_contactor_command@std_msgs/msg/Bool]gz.msgs.Boolean",
+            "/emergency_stop@std_msgs/msg/Bool[gz.msgs.Boolean",
             "/formal_vehicle/power/main_isolator_closed@std_msgs/msg/Bool[gz.msgs.Boolean",
             "/formal_vehicle/power/main_contactor_closed@std_msgs/msg/Bool[gz.msgs.Boolean",
         ],
