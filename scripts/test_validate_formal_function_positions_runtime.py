@@ -101,6 +101,13 @@ def test_validator_requires_active_session_and_verified_runtime_closure() -> Non
     assert '"preembedded_world_binding": preembedded_world_binding' in source
 
 
+def test_squeegee_compliance_claim_boundary_does_not_promote_applied_effort_to_contact() -> None:
+    source = VALIDATOR.read_text(encoding="utf-8")
+    assert "model-applied spring-damper effort" in source
+    assert "not a measured joint reaction or direct blade-ground contact" in source
+    assert "water-normal ContactSystem runtime gate" in source
+
+
 def test_binding_helper_accepts_exact_identity_and_rejects_drift(tmp_path: Path) -> None:
     _, bound_runtime_evidence = _binding_helpers()
     snapshot, session, sidecar, binding = _bound_files(tmp_path)

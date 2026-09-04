@@ -1,13 +1,13 @@
 {
   "kind": "tzcup_formal_vehicle_snapshot_manifest",
-  "output_inventory_sha256": "2620ef724b84e23e1c3fda29e4d1489575b3dbe35d1a066c053e36664b8aaf0b",
+  "output_inventory_sha256": "eadc9d3d885b054d21c28dd72a458b7496fd162b5f6f44c54e3535f8cd1485e9",
   "outputs": {
     "reports/engineering/formal_competition_vehicle.urdf": {
-      "sha256": "d1eef66066ff634835ca65fe2217d9ddd4fc4af936c97827cc368a3b43f3b28c",
-      "size_bytes": 278649
+      "sha256": "700be6ce11a0d0c86f506c1bbd89b2a1503855bb83372fe656858d383d04b19b",
+      "size_bytes": 278650
     },
     "reports/engineering/formal_vehicle_component_register_report.json": {
-      "sha256": "b644a91e89973ab98a5cd4d3ac23c7b21d34559965f421a32bce1efc140ca15e",
+      "sha256": "eb4f4225d8272e9b284ad6fc354fd76cd0d39175ba6f5faf55627fc3e19e72ee",
       "size_bytes": 11091
     },
     "reports/engineering/formal_vehicle_layout_report.json": {
@@ -51,12 +51,12 @@
       "size_bytes": 5149
     },
     "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml": {
-      "sha256": "c9ecbce20b0677dab726034859ebaa77d9221b9dbedcddf5044f1b5ce78ded9d",
-      "size_bytes": 68124
+      "sha256": "d2995a21dea8ac398d615af677ed9a3108ec869326c552af3a6e8065a48e3333",
+      "size_bytes": 68125
     },
     "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": {
-      "sha256": "1984160c0b10396c431b05f2cd7c51365f8433d47ba3538f347e77601355534e",
-      "size_bytes": 13851
+      "sha256": "39ed88e52e29252df67a9a60b5efbce719557fccc0a0606b37d8635646fbe355",
+      "size_bytes": 13852
     },
     "config/high_fidelity_vehicle/mass_budget.csv": {
       "sha256": "1c0debeacb8f9c5f2ae88cffd6c593077b0b99f4b3ce6c4700f64d3de69dcf7e",
@@ -943,8 +943,8 @@
       "size_bytes": 23811
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/cleaning_mechanism.xacro": {
-      "sha256": "9af946225426d63d39492fb6129462022468cacbbb3144da0827ea9c802c6ba2",
-      "size_bytes": 34803
+      "sha256": "c71435e17c914ffc0ceb1000724d59cfe0c324e05211b16e70693d0330c778fa",
+      "size_bytes": 34804
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/control_interfaces.xacro": {
       "sha256": "596bfccd1443e482bfaf59bef7cfaf01f20f4bdbd46331de968e487348e8bf86",
@@ -967,5 +967,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "648e991a4a185f4b8e7ffd7fc5e431867e7e5bbcdb48bd533a8d212d8f07345d"
+  "source_inventory_sha256": "e6f27df0f34b3a7c458d582e80cc775f85ed7b042762def62db3234e7736c52e"
 }

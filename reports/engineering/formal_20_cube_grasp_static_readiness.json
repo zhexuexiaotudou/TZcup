@@ -51,7 +51,7 @@
   "schema_version": 1,
   "source_contract_passed": true,
   "source_sha256": {
-    "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": "1984160c0b10396c431b05f2cd7c51365f8433d47ba3538f347e77601355534e",
+    "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": "39ed88e52e29252df67a9a60b5efbce719557fccc0a0606b37d8635646fbe355",
     "scripts/formal_final_runtime_closure.py": "f116a020b4cdbc9bfa90ac783e81b645695da441417291c5669c019f2e774298",
     "scripts/generate_formal_vehicle_snapshot.py": "334069d3c4f51f31edd4e0a9987612c52b1a7b27fa41df868762306c9a18cbf1",
     "scripts/prepare_formal_20_cube_grasp_acceptance.py": "b52a36c10eed8654b28d42a55a95bf8f5a06181fa469c048bc85871c6f09f5b9",

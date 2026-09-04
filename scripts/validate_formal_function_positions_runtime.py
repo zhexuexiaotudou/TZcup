@@ -452,7 +452,7 @@ def main() -> int:
         "runtime_gate_binding": runtime_gate_binding,
         "preembedded_world_binding": preembedded_world_binding,
         "runtime_identity": runtime_gate_binding["runtime_closure_binding"],
-        "claim_boundary": "This proves controller-to-joint motion for cleaning, storage, powered wastewater service valve and pump positions plus live two-axis squeegee joint state, physical ground engagement from compression and signed preload effort, and post-load spring recovery. Contact transport is reported separately and is never claimed when its stream is empty. Hydraulic recovery efficiency, brush wear and debris pickup remain separate runtime gates.",
+        "claim_boundary": "This proves controller-to-joint motion for cleaning, storage, powered wastewater service valve and pump positions plus live two-axis squeegee joint state, model-applied spring-damper effort, kinematic compression and post-load spring recovery. Those squeegee signals are compliance-loaded-state evidence, not a measured joint reaction or direct blade-ground contact. Contact transport is reported separately; direct blade-ground contact remains the water-normal ContactSystem runtime gate. Hydraulic recovery efficiency, brush wear and debris pickup remain separate runtime gates.",
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

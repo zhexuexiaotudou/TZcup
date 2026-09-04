@@ -515,7 +515,7 @@ functional_positions:
     required_passive_joints: [squeegee_float_joint, squeegee_pitch_joint]
     required_topic_contracts: [squeegee_blade_contact, squeegee_float_position, squeegee_float_velocity, squeegee_float_force, squeegee_pitch_position, squeegee_pitch_velocity, squeegee_pitch_torque]
     actuation: passive_spring_damper
-    preload_force_n: 10.8
+    preload_force_n: 11.88
     visible: true
     components:
       - {id: squeegee_preload_spring_pack, link: squeegee_spring_pack_link, parent_link: squeegee_float_carrier_link, joint: squeegee_spring_pack_joint, xyz_m: [-0.445, 0.000, 0.1725], rpy_rad: [0.000, 0.000, 0.000], visible: true}

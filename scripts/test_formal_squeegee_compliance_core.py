@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from formal_squeegee_compliance_core import (
+    SQUEEGEE_FLOAT_FREE_EQUILIBRIUM_M,
     SQUEEGEE_SIGNALS,
     evaluate_squeegee_compliance,
 )
@@ -21,9 +22,9 @@ def _signals(float_position: float, float_force: float) -> dict[str, list[float]
 
 def _passing_evidence():
     phase_signals = {
-        "raised_free": _signals(-0.0135, 13.5),
-        "grounded_preload": _signals(0.0002, -11.16),
-        "raised_recovery": _signals(-0.0133, 13.14),
+        "raised_free": _signals(-0.0141, 13.5),
+        "grounded_preload": _signals(0.0002, -12.24),
+        "raised_recovery": _signals(-0.0139, 13.14),
     }
     phase_joints = {
         phase: {
@@ -46,17 +47,18 @@ def _passing_evidence():
     return phase_signals, phase_joints, phase_contacts
 
 
-def test_accepts_live_three_phase_preload_contact_and_recovery_chain() -> None:
+def test_accepts_live_three_phase_compliance_loaded_state_and_recovery_chain() -> None:
+    assert SQUEEGEE_FLOAT_FREE_EQUILIBRIUM_M == -0.0141
     report, failures = evaluate_squeegee_compliance(*_passing_evidence())
     assert failures == []
     assert report["passed"] is True
     assert report["evidence_level"] == (
-        "LIVE_GAZEBO_JOINT_FORCE_AND_RECOVERY_SEQUENCE"
+        "LIVE_GAZEBO_MODEL_APPLIED_COMPLIANCE_AND_RECOVERY_SEQUENCE"
     )
     assert all(report["checks"].values())
 
 
-def test_reports_missing_contact_transport_without_fabricating_a_collision_pair() -> None:
+def test_reports_unobserved_direct_contact_without_fabricating_a_collision_pair() -> None:
     phase_signals, phase_joints, phase_contacts = _passing_evidence()
     phase_contacts["grounded_preload"]["collision_pairs"] = {
         "front_bumper::collision <-> cone::collision"
@@ -66,11 +68,11 @@ def test_reports_missing_contact_transport_without_fabricating_a_collision_pair(
     )
     assert report["passed"] is True
     assert report["checks"]["grounded_blade_contact_transport_observed"] is False
-    assert report["contact_transport"]["status"] == "UNAVAILABLE_EMPTY_STREAM"
+    assert report["contact_transport"]["status"] == "NOT_OBSERVED"
     assert failures == []
 
 
-def test_accepts_independent_physical_contact_evidence_when_transport_is_empty() -> None:
+def test_accepts_compliance_loaded_state_when_direct_contact_transport_is_empty() -> None:
     phase_signals, phase_joints, phase_contacts = _passing_evidence()
     phase_contacts["grounded_preload"] = {
         "nonempty_messages": 0,
@@ -81,20 +83,22 @@ def test_accepts_independent_physical_contact_evidence_when_transport_is_empty()
     )
     assert failures == []
     assert report["passed"] is True
-    assert report["checks"]["grounded_blade_has_physical_contact"] is True
-    assert report["contact_transport"]["status"] == "UNAVAILABLE_EMPTY_STREAM"
+    assert report["checks"]["compliance_loaded_state_observed"] is True
+    assert report["contact_transport"]["status"] == "NOT_OBSERVED"
+    assert "not a measured joint reaction" in report["contact_transport"]["claim_boundary"]
+    assert "direct blade-ground contact" in report["contact_transport"]["claim_boundary"]
 
 
 def test_rejects_static_joint_and_force_values_that_never_compress_or_recover() -> None:
     phase_signals, phase_joints, phase_contacts = _passing_evidence()
-    phase_signals["grounded_preload"] = _signals(-0.0135, 0.0)
+    phase_signals["grounded_preload"] = _signals(-0.0141, 0.0)
     phase_joints["raised_recovery"].pop("squeegee_float_joint")
     report, failures = evaluate_squeegee_compliance(
         phase_signals, phase_joints, phase_contacts
     )
     assert report["passed"] is False
-    assert "ground_contact_compresses_float_suspension" in failures
-    assert "grounded_preload_is_downward" in failures
+    assert "compliance_loaded_state_compresses_float_suspension" in failures
+    assert "compliance_loaded_state_effort_is_downward" in failures
     assert "squeegee_raised_recovery_joint_state_missing" in failures
 
 

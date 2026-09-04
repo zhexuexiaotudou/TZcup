@@ -1963,9 +1963,9 @@
   },
   "inputs": {
     "expanded_urdf": "reports/engineering/formal_competition_vehicle.urdf",
-    "expanded_urdf_sha256": "d1eef66066ff634835ca65fe2217d9ddd4fc4af936c97827cc368a3b43f3b28c",
+    "expanded_urdf_sha256": "700be6ce11a0d0c86f506c1bbd89b2a1503855bb83372fe656858d383d04b19b",
     "layout": "config/high_fidelity_vehicle/formal_vehicle_layout.yaml",
-    "layout_sha256": "1984160c0b10396c431b05f2cd7c51365f8433d47ba3538f347e77601355534e",
+    "layout_sha256": "39ed88e52e29252df67a9a60b5efbce719557fccc0a0606b37d8635646fbe355",
     "load_source": "formal Xacro payload reserve links and final capacity clamps",
     "scanner": "scripts/scan_formal_vehicle_inertia_and_swept_volume.py",
     "scanner_sha256": "6b1e611094578bd51f190c32f9d085ae479127a1fbb043b0ab5bffc5f8dd6dcf",

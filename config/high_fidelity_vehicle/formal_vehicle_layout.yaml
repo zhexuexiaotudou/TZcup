@@ -112,8 +112,8 @@ cleaning_geometry:
     spring_pack_joint: squeegee_spring_pack_joint
     plugin: libSqueegeeComplianceSystem.so
     float_stiffness_n_m: 1800.0
-    float_preload_position_m: -0.0065
-    nominal_preload_force_n: 11.7
+    float_preload_position_m: -0.0066
+    nominal_preload_force_n: 11.88
     pitch_stiffness_nm_rad: 32.0
     telemetry_prefix: /model/tzcup_formal_sanitation_vehicle/squeegee_compliance
 

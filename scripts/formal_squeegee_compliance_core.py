@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ROS-independent evaluator for live squeegee compliance evidence."""
+"""ROS-independent evaluator for live model-applied squeegee compliance evidence."""
 
 from __future__ import annotations
 
@@ -7,11 +7,11 @@ import math
 import statistics
 
 
-# The spring's zero-effort reference is -6 mm, but the 1.38 kg moving
+# The spring's zero-effort reference is -6.6 mm, but the 1.38 kg moving
 # squeegee/nozzle subtree adds about 7.52 mm of gravity deflection at
 # 1800 N/m.  The live free-state check therefore targets the bounded,
 # gravity-loaded equilibrium rather than the unloaded spring reference.
-SQUEEGEE_FLOAT_FREE_EQUILIBRIUM_M = -0.0135
+SQUEEGEE_FLOAT_FREE_EQUILIBRIUM_M = -0.0141
 SQUEEGEE_FLOAT_LIMIT_M = 0.015
 SQUEEGEE_PITCH_LIMIT_RAD = 0.174533
 SQUEEGEE_SIGNALS = (
@@ -91,14 +91,14 @@ def evaluate_squeegee_compliance(
             "squeegee" in pair.lower() and "ground" in pair.lower()
             for pair in work["contact_pairs"]
         ),
-        # The DART ContactSystem path on the frozen runtime can remain empty
-        # even while the independently published joint reaction is nonzero.
-        # Treat transport as an explicit evidence limitation, not as fabricated
-        # contact data; the physical gate requires compression and reaction.
-        "grounded_blade_has_physical_contact": compression_observed
+        # The plugin publishes the spring-damper effort it applies to Gazebo,
+        # not a measured joint reaction or ContactSystem force.  Compression
+        # plus that signed applied effort is useful live compliance evidence,
+        # but never establishes direct blade-ground contact by itself.
+        "compliance_loaded_state_observed": compression_observed
         and downward_preload_observed,
-        "ground_contact_compresses_float_suspension": compression_observed,
-        "grounded_preload_is_downward": downward_preload_observed,
+        "compliance_loaded_state_compresses_float_suspension": compression_observed,
+        "compliance_loaded_state_effort_is_downward": downward_preload_observed,
         "raised_recovery_returns_to_free_state": free_float is not None
         and recovered_float is not None
         and abs(recovered_float - free_float) <= 0.0035,
@@ -131,7 +131,7 @@ def evaluate_squeegee_compliance(
         if not passed:
             failures.append(name)
     return {
-        "evidence_level": "LIVE_GAZEBO_JOINT_FORCE_AND_RECOVERY_SEQUENCE",
+        "evidence_level": "LIVE_GAZEBO_MODEL_APPLIED_COMPLIANCE_AND_RECOVERY_SEQUENCE",
         "passive_joint_command_interfaces": [],
         "phases": phases,
         "checks": checks,
@@ -142,12 +142,15 @@ def evaluate_squeegee_compliance(
             "status": (
                 "OBSERVED"
                 if checks["grounded_blade_contact_transport_observed"]
-                else "UNAVAILABLE_EMPTY_STREAM"
+                else "NOT_OBSERVED"
             ),
             "claim_boundary": (
-                "No ContactSystem pair is claimed when the stream is empty; "
-                "physical ground engagement is instead evidenced by live "
-                "float compression, signed reaction force and release recovery."
+                "No direct blade-ground ContactSystem pair is claimed unless "
+                "observed here. Model-applied spring-damper effort is not a "
+                "measured joint reaction; it, kinematic compression and release "
+                "recovery are compliance-loaded-state evidence only. The "
+                "water-normal ContactSystem gate separately establishes direct "
+                "blade-ground contact."
             ),
         },
         "passed": all(checks[name] for name in mandatory_checks) and not any(

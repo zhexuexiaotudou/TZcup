@@ -23,7 +23,7 @@ can be built and tested without changing a frozen vehicle or safety release.
 - a real gz-sim8 System plugin which changes the existing named visual
   `sdf::Material::Emissive` values and publishes applied/latch acknowledgements;
 - a two-axis passive squeegee model whose prismatic float and pitch joints are
-  driven by bounded spring-damper effort, including a 10.8 N nominal blade
+  driven by bounded spring-damper effort, including an approximately 11.9 N nominal blade
   preload, live measured position/velocity/effort telemetry, and a dedicated
   blade-ground contact sensor for three-phase free/contact/recovery acceptance;
 - two model-parented front `sdf::LightType::SPOT` sources, two rear red tail

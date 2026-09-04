@@ -52,6 +52,17 @@ RECOVERY_CONTACT_COLLISIONS = {
     "right_side_brush": "right_side_brush_link_collision",
     "central_roller": "central_roller_link_collision",
 }
+SQUEEGEE_COMPLIANCE_TOPIC_ROOT = (
+    "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance"
+)
+SQUEEGEE_COMPLIANCE_TELEMETRY_TOPICS = {
+    "float_position_m": f"{SQUEEGEE_COMPLIANCE_TOPIC_ROOT}/float_position_m",
+    "float_velocity_m_s": f"{SQUEEGEE_COMPLIANCE_TOPIC_ROOT}/float_velocity_m_s",
+    "float_force_n": f"{SQUEEGEE_COMPLIANCE_TOPIC_ROOT}/float_force_n",
+    "pitch_position_rad": f"{SQUEEGEE_COMPLIANCE_TOPIC_ROOT}/pitch_position_rad",
+    "pitch_velocity_rad_s": f"{SQUEEGEE_COMPLIANCE_TOPIC_ROOT}/pitch_velocity_rad_s",
+    "pitch_torque_nm": f"{SQUEEGEE_COMPLIANCE_TOPIC_ROOT}/pitch_torque_nm",
+}
 
 
 def _bound_runtime_evidence(
@@ -123,6 +134,12 @@ class Probe(Node):
         # interval.  A pass therefore cannot substitute commanded velocities
         # or geometric clearance for physical cleaning-pavement contact.
         self.recovery_contact_window: dict[str, dict[str, object]] | None = None
+        # Bounded passive-joint telemetry accompanies the same interval as the
+        # physical contact evidence.  It is diagnostic only: contact remains a
+        # mandatory, independently evaluated normal-recovery check.
+        self.recovery_squeegee_compliance_window: (
+            dict[str, dict[str, object]] | None
+        ) = None
         self.enable = self.create_publisher(Bool, f"{ROOT}/command/enable", 10)
         self.reset_ground = self.create_publisher(
             Float64, f"{ROOT}/command/reset_ground_volume_l", 10
@@ -210,6 +227,15 @@ class Probe(Node):
                     contact_name, message
                 ),
                 100,
+            )
+        for name, topic in SQUEEGEE_COMPLIANCE_TELEMETRY_TOPICS.items():
+            self.create_subscription(
+                Float64,
+                topic,
+                lambda message, signal_name=name: self._on_recovery_squeegee_telemetry(
+                    signal_name, message
+                ),
+                50,
             )
 
     def _on_status(self, message: String) -> None:
@@ -370,10 +396,52 @@ class Probe(Node):
                 )
             )
 
+    def _on_recovery_squeegee_telemetry(
+        self, name: str, message: Float64
+    ) -> None:
+        if self.recovery_squeegee_compliance_window is None:
+            return
+        evidence = self.recovery_squeegee_compliance_window[name]
+        evidence["message_count"] = int(evidence["message_count"]) + 1
+        value = float(message.data)
+        if not math.isfinite(value):
+            evidence["nonfinite_message_count"] = (
+                int(evidence["nonfinite_message_count"]) + 1
+            )
+            return
+        evidence["finite_message_count"] = int(evidence["finite_message_count"]) + 1
+        if evidence["first_sim_time_s"] is None:
+            evidence["first_sim_time_s"] = self.sim_time_s
+        evidence["last_sim_time_s"] = self.sim_time_s
+        evidence["minimum"] = (
+            value
+            if evidence["minimum"] is None
+            else min(float(evidence["minimum"]), value)
+        )
+        evidence["maximum"] = (
+            value
+            if evidence["maximum"] is None
+            else max(float(evidence["maximum"]), value)
+        )
+        evidence["terminal"] = value
+
     def begin_recovery_contact_window(self) -> None:
         self.recovery_contact_window = {
             name: {"messages": 0, "nonempty_messages": 0, "collision_pairs": set()}
             for name in RECOVERY_CONTACT_COLLISIONS
+        }
+        self.recovery_squeegee_compliance_window = {
+            name: {
+                "message_count": 0,
+                "finite_message_count": 0,
+                "nonfinite_message_count": 0,
+                "first_sim_time_s": None,
+                "last_sim_time_s": None,
+                "minimum": None,
+                "maximum": None,
+                "terminal": None,
+            }
+            for name in SQUEEGEE_COMPLIANCE_TELEMETRY_TOPICS
         }
 
     def recovery_ground_contact_evidence(self) -> dict[str, dict[str, object]]:
@@ -395,6 +463,14 @@ class Probe(Node):
                 ),
             }
         return result
+
+    def recovery_squeegee_compliance_evidence(self) -> dict[str, dict[str, object]]:
+        if self.recovery_squeegee_compliance_window is None:
+            raise RuntimeError("recovery squeegee telemetry window was not started")
+        return {
+            name: dict(evidence)
+            for name, evidence in self.recovery_squeegee_compliance_window.items()
+        }
 
     def publish_reset(self, ground_l: float, tank_kg: float) -> None:
         self.enable.publish(Bool(data=False))
@@ -1023,6 +1099,7 @@ def run_normal(node: Probe) -> dict[str, object]:
     side_brush_duty = side_brush_duty_metrics(node.motor_status_samples)
     central_roller_duty = central_roller_duty_metrics(node.motor_status_samples)
     recovery_contacts = node.recovery_ground_contact_evidence()
+    recovery_squeegee_telemetry = node.recovery_squeegee_compliance_evidence()
 
     checks = {
         "finite_initial_ground_water": initial_ground > 0.0,
@@ -1193,6 +1270,7 @@ def run_normal(node: Probe) -> dict[str, object]:
             "side_brush_duty": side_brush_duty,
             "central_roller_duty": central_roller_duty,
             "recovery_ground_contact_evidence": recovery_contacts,
+            "recovery_squeegee_compliance_telemetry": recovery_squeegee_telemetry,
             "safety_handshake_events": list(node.safety_handshake_events),
         },
         "passed": all(checks.values()),

@@ -278,6 +278,38 @@ def test_water_recovery_requires_live_blade_and_brush_ground_contacts() -> None:
         assert f"<collision>{collision}</collision>" in cleaning
 
 
+def test_normal_report_retains_bounded_squeegee_compliance_telemetry() -> None:
+    validator = (ROOT / "scripts/validate_formal_water_recovery_runtime.py").read_text(
+        encoding="utf-8"
+    )
+    for signal in (
+        "float_position_m",
+        "float_velocity_m_s",
+        "float_force_n",
+        "pitch_position_rad",
+        "pitch_velocity_rad_s",
+        "pitch_torque_nm",
+    ):
+        assert (
+            f'"{signal}": f"{{SQUEEGEE_COMPLIANCE_TOPIC_ROOT}}/{signal}"'
+            in validator
+        )
+    for field in (
+        "message_count",
+        "finite_message_count",
+        "nonfinite_message_count",
+        "first_sim_time_s",
+        "last_sim_time_s",
+        "minimum",
+        "maximum",
+        "terminal",
+    ):
+        assert f'"{field}"' in validator
+    assert "def recovery_squeegee_compliance_evidence" in validator
+    assert '"recovery_squeegee_compliance_telemetry"' in validator
+    assert '"squeegee_blade_has_ground_contact_during_recovery"' in validator
+
+
 def test_normal_and_full_pass_paths_never_reset_a_motor_fault() -> None:
     path = ROOT / "scripts/validate_formal_water_recovery_runtime.py"
     tree = ast.parse(path.read_text(encoding="utf-8"))

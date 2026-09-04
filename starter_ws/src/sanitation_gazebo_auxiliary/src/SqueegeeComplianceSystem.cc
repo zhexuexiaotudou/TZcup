@@ -226,7 +226,7 @@ class SqueegeeComplianceSystem final:
   private: gz::sim::Entity floatJoint{gz::sim::kNullEntity};
   private: gz::sim::Entity pitchJoint{gz::sim::kNullEntity};
   private: bool configured{false};
-  private: ComplianceAxisParameters floatParameters{1800.0, 45.0, -0.006, 120.0};
+  private: ComplianceAxisParameters floatParameters{1800.0, 45.0, -0.0066, 120.0};
   private: ComplianceAxisParameters pitchParameters{32.0, 6.0, 0.0, 24.0};
   private: gz::transport::Node node;
   private: gz::transport::Node::Publisher floatPositionPublisher;
