@@ -13,7 +13,9 @@ from validate_formal_fov_occlusion import (
     ARM_POSES,
     SENSORS,
     _aabb,
+    _build_bvh,
     _inside_fov,
+    _nearest,
     _stl,
     compact_report,
     _portable_evidence_path,
@@ -34,6 +36,19 @@ def test_parallel_ray_aabb_is_stable_on_box_face() -> None:
     upper = np.asarray((1.0, 1.0, 1.0))
     assert _aabb(np.asarray((0.0, 0.5, -1.0)), np.asarray((0.0, 0.0, 1.0)), lower, upper, 3.0)
     assert not _aabb(np.asarray((-0.1, 0.5, -1.0)), np.asarray((0.0, 0.0, 1.0)), lower, upper, 3.0)
+
+
+def test_ray_edge_noise_is_conservatively_blocked_but_bounded() -> None:
+    triangles = np.asarray([[(0.0, 0.0, 1.0), (1.0, 0.0, 1.0), (0.0, 1.0, 1.0)]])
+    owners = np.asarray(["bracket"], dtype=object)
+    bvh = _build_bvh(triangles)
+    origin = np.zeros(3)
+
+    for offset in (-5e-10, 5e-10):
+        hit, _ = _nearest(origin, np.asarray((offset, 0.25, 1.0)), 2.0, triangles, owners, bvh, set())
+        assert hit == 0
+    hit, _ = _nearest(origin, np.asarray((-2e-9, 0.25, 1.0)), 2.0, triangles, owners, bvh, set())
+    assert hit is None
 
 
 def test_stl_parser_returns_digest_from_the_same_read(tmp_path: Path) -> None:
@@ -142,6 +157,23 @@ def test_compact_report_preserves_gate_counts_without_raw_target_rows() -> None:
         "visible_count": 1,
     }
     assert "worst_blocked_rays" not in compact["sensor_results"]["sensor"]["all_pose_results"]["p"]
+
+
+def test_compact_report_rounds_machine_precision_only() -> None:
+    report = {
+        "sensor_results": {"sensor": {"required_pose_results": {"p": {}}, "all_pose_results": {"p": {}}, "origin_world_m": [0.12345678901234]}},
+        "functional_zone_coverage": {
+            "front_ground_observation": {"pose_results": {"p": {"targets": []}}},
+            "rear_fisheye_safety_perimeter": {"pose_results": {"p": {"left_targets": [], "right_targets": []}}},
+            "wrist_pregrasp_cube": {"targets": []},
+            "wrist_deposit_aperture": {"targets": []},
+        },
+    }
+    shifted = {
+        **report,
+        "sensor_results": {"sensor": {**report["sensor_results"]["sensor"], "origin_world_m": [0.12345678901235]}},
+    }
+    assert compact_report(report) == compact_report(shifted)
 
 
 def test_startup_pose_regression_detects_legacy_zero_arm_occlusion() -> None:

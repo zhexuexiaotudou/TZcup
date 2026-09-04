@@ -22,6 +22,8 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_URDF = ROOT / "reports/engineering/formal_competition_vehicle.urdf"
 DEFAULT_LAYOUT = ROOT / "config/high_fidelity_vehicle/formal_vehicle_layout.yaml"
 MESH_ROOT = ROOT / "starter_ws/src/sanitation_vehicle_description/meshes"
+RAY_EDGE_TOLERANCE_M = 1e-9
+COMPACT_FLOAT_DECIMALS = 12
 
 
 def _portable_evidence_path(path: Path) -> str:
@@ -355,12 +357,14 @@ def _aabb(origin, direction, lower, upper, maximum):
     """
     near, far = 0.0, maximum
     for axis in range(3):
+        lower_bound = lower[axis] - RAY_EDGE_TOLERANCE_M
+        upper_bound = upper[axis] + RAY_EDGE_TOLERANCE_M
         if abs(direction[axis]) <= 1e-12:
-            if origin[axis] < lower[axis] or origin[axis] > upper[axis]:
+            if origin[axis] < lower_bound or origin[axis] > upper_bound:
                 return False
             continue
-        first = (lower[axis] - origin[axis]) / direction[axis]
-        second = (upper[axis] - origin[axis]) / direction[axis]
+        first = (lower_bound - origin[axis]) / direction[axis]
+        second = (upper_bound - origin[axis]) / direction[axis]
         near = max(near, min(first, second))
         far = min(far, max(first, second))
         if far < near:
@@ -394,7 +398,16 @@ def _nearest(origin, direction, maximum, triangles, owners, bvh, ignored):
         qvec = np.cross(tvec, edge1)
         v = qvec @ direction * inv_det
         distance = np.einsum("ij,ij->i", edge2, qvec) * inv_det
-        valid &= (u >= 0.0) & (v >= 0.0) & (u + v <= 1.0) & (distance > 1e-4) & (distance < best)
+        # Treat sub-nanometre triangle-edge noise as an occlusion.  This is
+        # conservative and prevents a ray shared by two STL triangles from
+        # changing classification between supported floating-point builds.
+        valid &= (
+            (u >= -RAY_EDGE_TOLERANCE_M)
+            & (v >= -RAY_EDGE_TOLERANCE_M)
+            & (u + v <= 1.0 + RAY_EDGE_TOLERANCE_M)
+            & (distance > 1e-4)
+            & (distance < best)
+        )
         if np.any(valid):
             local = np.where(valid, distance, np.inf).argmin()
             best, best_index = float(distance[local]), int(indices[local])
@@ -891,7 +904,18 @@ def compact_report(report: dict) -> dict:
         functional[gate_name]["out_of_fov_count"] = sum(not target["in_fov"] for target in targets)
         functional[gate_name]["occluded_count"] = sum(not target["line_of_sight_clear"] for target in targets)
     compact["report_form"] = "compact_scored_summary"
-    return compact
+    return _round_compact_floats(compact)
+
+
+def _round_compact_floats(value):
+    if isinstance(value, float):
+        rounded = round(value, COMPACT_FLOAT_DECIMALS)
+        return 0.0 if rounded == 0.0 else rounded
+    if isinstance(value, dict):
+        return {key: _round_compact_floats(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [_round_compact_floats(item) for item in value]
+    return value
 
 
 def main() -> int:
