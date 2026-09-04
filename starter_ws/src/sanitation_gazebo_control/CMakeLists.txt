@@ -185,6 +185,20 @@ target_link_libraries(cleaning_actuator_vector_bridge
 install(TARGETS cleaning_actuator_vector_bridge
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
+add_executable(manipulation_sim_bridge
+  src/ManipulationSimBridge.cc
+)
+ament_target_dependencies(manipulation_sim_bridge
+  rclcpp
+  std_msgs
+)
+target_link_libraries(manipulation_sim_bridge
+  gz-transport13::gz-transport13
+  gz-msgs10::gz-msgs10
+)
+install(TARGETS manipulation_sim_bridge
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
 install(DIRECTORY config
   DESTINATION share/${PROJECT_NAME}
 )

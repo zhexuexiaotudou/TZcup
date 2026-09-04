@@ -491,16 +491,9 @@ def generate_launch_description() -> LaunchDescription:
         condition=IfCondition(dry_bin_evaluation_interfaces),
     )
     manipulation_sim_bridge = Node(
-        package="ros_gz_bridge",
-        executable="parameter_bridge",
+        package="sanitation_gazebo_control",
+        executable="manipulation_sim_bridge",
         name="manipulation_sim_bridge",
-        arguments=[
-            "/manipulation/grasp/detach@std_msgs/msg/Empty]gz.msgs.Empty",
-            "/manipulation/grasp/attach@std_msgs/msg/Empty]gz.msgs.Empty",
-            "/manipulation/grasp/state@std_msgs/msg/Bool[gz.msgs.Boolean",
-            "/manipulation/gripper/dual_contact@std_msgs/msg/Bool[gz.msgs.Boolean",
-            "/model/tzcup_formal_sanitation_vehicle/dry_bin/observed_status_json@std_msgs/msg/String[gz.msgs.StringMsg",
-        ],
         output="screen",
         condition=IfCondition(manipulation_sim_interfaces),
     )
