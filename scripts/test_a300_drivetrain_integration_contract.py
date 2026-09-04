@@ -50,6 +50,12 @@ def test_typed_adapter_is_unique_consumer_of_final_safety_command() -> None:
     )
     assert launch.count('executable="a300_drivetrain_command_adapter"') == 1
     assert launch.count('name="a300_drivetrain_bridge"') == 1
+    assert 'start_a300_transport_bridge = LaunchConfiguration(' in launch
+    assert '"start_a300_transport_bridge",\n                default_value="true"' in launch
+    drivetrain_bridge = launch.split('name="a300_drivetrain_bridge"', 1)[1].split(
+        "# This bridge is the only formal ROS writer", 1
+    )[0]
+    assert "condition=IfCondition(start_a300_transport_bridge)" in drivetrain_bridge
     assert '"/odom/unfiltered"' in launch
     assert '"base_controller"' not in launch
 

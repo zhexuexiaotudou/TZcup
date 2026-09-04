@@ -63,6 +63,9 @@ def generate_launch_description() -> LaunchDescription:
     )
     visual_acceptance_runtime = LaunchConfiguration("visual_acceptance_runtime")
     start_product_bridge = LaunchConfiguration("start_product_bridge")
+    start_a300_transport_bridge = LaunchConfiguration(
+        "start_a300_transport_bridge"
+    )
     start_cleaning_actuator_scalar_bridge = LaunchConfiguration(
         "start_cleaning_actuator_scalar_bridge"
     )
@@ -302,6 +305,7 @@ def generate_launch_description() -> LaunchDescription:
             ),
         ],
         output="screen",
+        condition=IfCondition(start_a300_transport_bridge),
     )
     # This bridge is the only formal ROS writer of /emergency_stop. Commands
     # travel ROS -> Gazebo, while applied lighting and the physical latch travel
@@ -583,6 +587,11 @@ def generate_launch_description() -> LaunchDescription:
                 "start_product_bridge",
                 default_value="true",
                 description="Start the default product ROS-Gazebo parameter bridge.",
+            ),
+            DeclareLaunchArgument(
+                "start_a300_transport_bridge",
+                default_value="true",
+                description="Start the default A300 ROS-Gazebo drivetrain bridge.",
             ),
             DeclareLaunchArgument(
                 "start_cleaning_actuator_scalar_bridge",

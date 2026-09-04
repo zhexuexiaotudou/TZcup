@@ -95,21 +95,27 @@ def test_typed_runner_has_mutually_exclusive_clock_and_bounded_optional_scope() 
         and node.args[0].value
         in {
             "start_product_bridge",
+            "start_a300_transport_bridge",
             "start_cleaning_actuator_scalar_bridge",
             "start_localization",
         }
     }
     assert names == {
         "start_product_bridge": "true",
+        "start_a300_transport_bridge": "true",
         "start_cleaning_actuator_scalar_bridge": "true",
         "start_localization": "true",
     }
     assert "start_product_bridge:=false" in runner
+    assert "start_a300_transport_bridge:=false" in runner
     assert "start_cleaning_actuator_scalar_bridge:=false" in runner
     assert "start_localization:=false" in runner
+    assert "water_evaluation_interfaces:=false" in runner
+    assert "water_evaluation_interfaces:=true" not in runner
     assert "use_sim_time:=false" not in runner
     for bridge, switch in (
         ("formal_vehicle_product_bridge", "start_product_bridge"),
+        ("a300_drivetrain_bridge", "start_a300_transport_bridge"),
         ("cleaning_actuator_scalar_bridge", "start_cleaning_actuator_scalar_bridge"),
     ):
         node = next(
@@ -129,6 +135,43 @@ def test_typed_runner_has_mutually_exclusive_clock_and_bounded_optional_scope() 
         assert isinstance(condition, ast.Call)
         assert isinstance(condition.func, ast.Name) and condition.func.id == "IfCondition"
         assert isinstance(condition.args[0], ast.Name) and condition.args[0].id == switch
+
+    water_evaluator = next(
+        node
+        for node in ast.walk(launch)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "Node"
+        and any(
+            key.arg == "name"
+            and isinstance(key.value, ast.Constant)
+            and key.value.value == "water_evaluation_bridge"
+            for key in node.keywords
+        )
+    )
+    water_condition = next(
+        key.value for key in water_evaluator.keywords if key.arg == "condition"
+    )
+    assert isinstance(water_condition, ast.Call)
+    assert isinstance(water_condition.func, ast.Name)
+    assert water_condition.func.id == "IfCondition"
+    assert isinstance(water_condition.args[0], ast.Name)
+    assert water_condition.args[0].id == "water_evaluation_interfaces"
+
+    typed_bridge = next(
+        node
+        for node in ast.walk(launch)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "Node"
+        and any(
+            key.arg == "name"
+            and isinstance(key.value, ast.Constant)
+            and key.value.value == "cleaning_actuator_motor_bridge"
+            for key in node.keywords
+        )
+    )
+    assert all(key.arg != "condition" for key in typed_bridge.keywords)
 
     localization = next(
         node
