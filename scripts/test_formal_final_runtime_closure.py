@@ -13,6 +13,7 @@ import formal_final_runtime_closure as closure
 
 
 _REAL_ROS_GZ_IMAGE_SYSTEM_IDENTITY = closure._ros_gz_image_system_identity
+_REAL_NVIDIA_EGL_RUNTIME_IDENTITY = closure._nvidia_egl_runtime_identity
 
 
 @pytest.fixture(autouse=True)
@@ -47,6 +48,35 @@ def _fake_ros_gz_image_system_identity(tmp_path: Path, monkeypatch):
         closure, "_ros_gz_image_system_identity", lambda: dict(identity)
     )
     return identity
+
+
+@pytest.fixture(autouse=True)
+def _fake_nvidia_egl_runtime_identity(tmp_path: Path, monkeypatch):
+    library = _write(tmp_path / "nvidia/libEGL_nvidia.so.0.1", b"fake-nvidia-egl")
+
+    def identity(runtime_ws: Path) -> dict[str, object]:
+        vendor = (runtime_ws / closure.NVIDIA_EGL_VENDOR_JSON).resolve()
+        return {
+            "status": "NVIDIA_EGL_RUNTIME_BOUND",
+            "bound": True,
+            "vendor_json": {
+                "path": str(vendor),
+                "size_bytes": vendor.stat().st_size,
+                "sha256": closure._sha256(vendor),
+            },
+            "canonical_library": {
+                "path": str(library.resolve()),
+                "size_bytes": library.stat().st_size,
+                "sha256": closure._sha256(library),
+            },
+            "environment": {
+                "__EGL_VENDOR_LIBRARY_FILENAMES": str(vendor),
+                "EGL_PLATFORM": "surfaceless",
+            },
+        }
+
+    monkeypatch.setattr(closure, "_nvidia_egl_runtime_identity", identity)
+    return library
 
 
 def _write(path: Path, value: bytes | str = "x\n") -> Path:
@@ -131,6 +161,15 @@ def _fake_closure(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
                     "wsl_vm_running_when_required": True,
                 },
                 "docker_was_signalled_or_stopped": False,
+            }
+        ),
+    )
+    _write(
+        runtime / closure.NVIDIA_EGL_VENDOR_JSON,
+        json.dumps(
+            {
+                "file_format_version": "1.0.0",
+                "ICD": {"library_path": "libEGL_nvidia.so.0"},
             }
         ),
     )
@@ -408,13 +447,82 @@ def test_system_ros_gz_image_identity_rejects_missing_executable(
         _REAL_ROS_GZ_IMAGE_SYSTEM_IDENTITY()
 
 
+def test_nvidia_egl_runtime_identity_binds_strict_vendor_and_canonical_library(
+    tmp_path: Path, monkeypatch
+) -> None:
+    runtime = tmp_path / "runtime"
+    vendor = _write(
+        runtime / closure.NVIDIA_EGL_VENDOR_JSON,
+        json.dumps(
+            {
+                "file_format_version": "1.0.0",
+                "ICD": {"library_path": "libEGL_nvidia.so.0"},
+            }
+        ),
+    )
+    library = _write(tmp_path / "driver/libEGL_nvidia.so.0.1", b"nvidia-egl")
+    monkeypatch.setattr(closure, "_resolve_nvidia_egl_library", lambda: library)
+
+    identity = _REAL_NVIDIA_EGL_RUNTIME_IDENTITY(runtime)
+
+    assert identity["status"] == "NVIDIA_EGL_RUNTIME_BOUND"
+    assert identity["bound"] is True
+    assert identity["vendor_json"]["path"] == str(vendor.resolve())
+    assert identity["canonical_library"]["path"] == str(library.resolve())
+    assert identity["environment"] == {
+        "__EGL_VENDOR_LIBRARY_FILENAMES": str(vendor.resolve()),
+        "EGL_PLATFORM": "surfaceless",
+    }
+
+
+def test_nvidia_egl_runtime_identity_rejects_noncanonical_vendor_json(
+    tmp_path: Path, monkeypatch
+) -> None:
+    runtime = tmp_path / "runtime"
+    _write(
+        runtime / closure.NVIDIA_EGL_VENDOR_JSON,
+        json.dumps(
+            {
+                "file_format_version": "1.0.0",
+                "ICD": {"library_path": "libEGL_nvidia.so.0"},
+                "extra": True,
+            }
+        ),
+    )
+    library = _write(tmp_path / "driver/libEGL_nvidia.so.0.1", b"nvidia-egl")
+    monkeypatch.setattr(closure, "_resolve_nvidia_egl_library", lambda: library)
+
+    with pytest.raises(closure.ClosureError, match="unexpected schema"):
+        _REAL_NVIDIA_EGL_RUNTIME_IDENTITY(runtime)
+
+
+def test_nvidia_egl_runtime_identity_rejects_empty_canonical_library(
+    tmp_path: Path, monkeypatch
+) -> None:
+    runtime = tmp_path / "runtime"
+    _write(
+        runtime / closure.NVIDIA_EGL_VENDOR_JSON,
+        json.dumps(
+            {
+                "file_format_version": "1.0.0",
+                "ICD": {"library_path": "libEGL_nvidia.so.0"},
+            }
+        ),
+    )
+    library = _write(tmp_path / "driver/libEGL_nvidia.so.0.1", b"")
+    monkeypatch.setattr(closure, "_resolve_nvidia_egl_library", lambda: library)
+
+    with pytest.raises(closure.ClosureError, match="library is empty"):
+        _REAL_NVIDIA_EGL_RUNTIME_IDENTITY(runtime)
+
+
 def test_record_and_verify_complete_non_symlink_merged_closure(tmp_path: Path) -> None:
     repository, runtime, models, onnx, manifest = _fake_closure(tmp_path)
     recorded = closure.record_manifest(repository, runtime, models, onnx, manifest)
-    assert recorded["schema_version"] == 6
+    assert recorded["schema_version"] == 7
     assert (
         recorded["runtime_contract_revision"]
-        == "gripper_effort_mimic_v1"
+        == "gripper_effort_mimic_nvidia_egl_runtime_v1"
     )
     assert recorded["status"] == "FORMAL_FINAL_RUNTIME_CLOSURE_FROZEN"
     assert recorded["closure"]["runtime_packages"] == list(
@@ -429,7 +537,10 @@ def test_record_and_verify_complete_non_symlink_merged_closure(tmp_path: Path) -
     assert recorded["closure"]["gazebo_plugins"]["libDryBinMonitorSystem.so"]["sha256"] == closure._sha256(
         runtime / "install/lib/libDryBinMonitorSystem.so"
     )
-    assert verified["gripper_mimic_implementation"] == "gripper_effort_mimic_v1"
+    assert (
+        verified["gripper_mimic_implementation"]
+        == "gripper_effort_mimic_nvidia_egl_runtime_v1"
+    )
     assert verified["gripper_mimic_plugin_sha256"] == closure._sha256(
         runtime / "install/lib/libGripperMimicEffortSystem.so"
     )
@@ -472,6 +583,14 @@ def test_record_and_verify_complete_non_symlink_merged_closure(tmp_path: Path) -
     assert verified["ros_gz_image_executable_sha256"] == "4" * 64
     assert verified["ros_gz_image_ros_package_version"] == "1.0.22"
     assert verified["ros_gz_image_debian_version"].startswith("1.0.22-")
+    assert verified["nvidia_egl_runtime_bound"] is True
+    nvidia_egl = recorded["closure"]["nvidia_egl_runtime"]
+    assert verified["nvidia_egl_runtime"] == nvidia_egl
+    assert nvidia_egl["status"] == "NVIDIA_EGL_RUNTIME_BOUND"
+    assert nvidia_egl["environment"] == {
+        "__EGL_VENDOR_LIBRARY_FILENAMES": nvidia_egl["vendor_json"]["path"],
+        "EGL_PLATFORM": "surfaceless",
+    }
     assert verified["frozen_source_file_count"] > 0
     assert recorded["closure"]["install_symlink_report"]["size_bytes"] == 0
     recorded_verified = closure.verify_recorded_manifest(

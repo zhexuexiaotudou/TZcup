@@ -197,10 +197,21 @@ def _context(root: Path = ROOT) -> orchestration.Context:
 
 
 def _verified_closure_identity() -> dict[str, object]:
+    context = _context()
     return {
         "status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED",
         "passed": True,
         "typed_cleaning_telemetry_source_sha256": "e" * 64,
+        "nvidia_egl_runtime_bound": True,
+        "nvidia_egl_runtime": {
+            "status": "NVIDIA_EGL_RUNTIME_BOUND",
+            "environment": {
+                "__EGL_VENDOR_LIBRARY_FILENAMES": str(
+                    context.runtime_ws / "egl_vendor.d/10_nvidia.json"
+                ),
+                "EGL_PLATFORM": "surfaceless",
+            },
+        },
     }
 
 
@@ -2020,6 +2031,105 @@ def test_twenty_cube_step_receives_the_unified_closure_manifest() -> None:
     )
 
 
+@pytest.mark.parametrize("step_id", ("sensor", "integrated_basic_physics"))
+def test_execute_step_injects_only_the_bound_frozen_nvidia_egl_environment(
+    tmp_path: Path, monkeypatch, step_id: str
+) -> None:
+    context = _context(tmp_path)
+    monkeypatch.setattr(
+        orchestration,
+        "_read_contract",
+        lambda unused_root: {
+            "evidence_gates": {
+                "sensor_runtime": {"path": "artifacts/sensor.json"},
+                "sensor_fov_and_occlusion": {"path": "artifacts/fov.json"},
+                "integrated_basic_physics": {"path": "artifacts/integrated.json"},
+            }
+        },
+    )
+    context.integrated_build_manifest.parent.mkdir(parents=True, exist_ok=True)
+    context.integrated_build_manifest.write_text(
+        json.dumps({"build_started_epoch_ns": 1}), encoding="utf-8"
+    )
+    closure = _verified_closure_identity()
+    closure["nvidia_egl_runtime"] = {
+        "status": "NVIDIA_EGL_RUNTIME_BOUND",
+        "environment": {
+            "__EGL_VENDOR_LIBRARY_FILENAMES": str(
+                context.runtime_ws / "egl_vendor.d/10_nvidia.json"
+            ),
+            "EGL_PLATFORM": "surfaceless",
+        },
+    }
+
+    _, environment = orchestration._step_command(
+        step_id,
+        context,
+        runtime_closure=closure,
+        execution_environment=True,
+    )
+
+    assert {
+        name: environment[name]
+        for name in ("__EGL_VENDOR_LIBRARY_FILENAMES", "EGL_PLATFORM")
+    } == closure["nvidia_egl_runtime"]["environment"]
+
+
+@pytest.mark.parametrize(
+    "mutate, match",
+    (
+        (lambda closure: closure.pop("nvidia_egl_runtime_bound"), "no bound"),
+        (
+            lambda closure: closure["nvidia_egl_runtime"].update(
+                status="wrong"
+            ),
+            "is not bound",
+        ),
+        (
+            lambda closure: closure["nvidia_egl_runtime"].update(
+                environment={"EGL_PLATFORM": "surfaceless"}
+            ),
+            "does not match",
+        ),
+        (
+            lambda closure: closure["nvidia_egl_runtime"].update(
+                environment={
+                    **closure["nvidia_egl_runtime"]["environment"],
+                    "UNRELATED_EGL_VARIABLE": "not-allowed",
+                }
+            ),
+            "does not match",
+        ),
+    ),
+)
+def test_execute_step_fails_closed_for_incomplete_nvidia_egl_closure(
+    mutate, match: str
+) -> None:
+    context = _context()
+    closure = _verified_closure_identity()
+    mutate(closure)
+
+    with pytest.raises(orchestration.OrchestrationError, match=match):
+        orchestration._step_command(
+            "sensor",
+            context,
+            runtime_closure=closure,
+            execution_environment=True,
+        )
+
+
+def test_command_placeholder_does_not_require_or_inject_nvidia_egl_environment() -> None:
+    context = _context()
+    _, environment = orchestration._step_command(
+        "water_recovery",
+        context,
+        runtime_closure={"typed_cleaning_telemetry_source_sha256": "0" * 64},
+    )
+
+    assert "__EGL_VENDOR_LIBRARY_FILENAMES" not in environment
+    assert "EGL_PLATFORM" not in environment
+
+
 @pytest.mark.parametrize(
     ("step_id", "output_gate", "binding_key"),
     (
@@ -2305,6 +2415,16 @@ def test_runtime_closure_verifier_binds_the_full_context(monkeypatch) -> None:
             "symbolic_link_count": 0,
             "windows_cold_start_evidence_bound": True,
             "windows_cold_start_evidence_sha256": "d" * 64,
+            "nvidia_egl_runtime_bound": True,
+            "nvidia_egl_runtime": {
+                "status": "NVIDIA_EGL_RUNTIME_BOUND",
+                "environment": {
+                    "__EGL_VENDOR_LIBRARY_FILENAMES": str(
+                        context.runtime_ws / "egl_vendor.d/10_nvidia.json"
+                    ),
+                    "EGL_PLATFORM": "surfaceless",
+                },
+            },
         }
 
     monkeypatch.setattr(orchestration, "verify_runtime_closure_manifest", fake_verify)

@@ -69,7 +69,7 @@ GAZEBO_PLUGIN_LIBRARIES: tuple[str, ...] = (
 # constraints.  Name the content contract, not a one-off build-attempt number,
 # so a later clean rebuild keeps the same identity only while these semantics
 # and their byte-level closure remain unchanged.
-FORMAL_RUNTIME_CONTRACT_REVISION = "gripper_effort_mimic_v1"
+FORMAL_RUNTIME_CONTRACT_REVISION = "gripper_effort_mimic_nvidia_egl_runtime_v1"
 GRIPPER_MIMIC_SOURCE_PATHS: tuple[str, ...] = (
     "starter_ws/src/sanitation_vehicle_description/urdf/"
     "formal_competition_vehicle.urdf.xacro",
@@ -159,6 +159,12 @@ GZ_TRANSPORT13_CORE_LIBRARIES: tuple[Path, ...] = (
     Path("lib/libgz-transport13.so.13"),
     Path("lib/libgz-transport13.so.13.5.0"),
 )
+NVIDIA_EGL_VENDOR_JSON = Path("egl_vendor.d/10_nvidia.json")
+NVIDIA_EGL_LIBRARY = "libEGL_nvidia.so.0"
+NVIDIA_EGL_ENVIRONMENT = {
+    "__EGL_VENDOR_LIBRARY_FILENAMES": None,
+    "EGL_PLATFORM": "surfaceless",
+}
 
 
 class ClosureError(RuntimeError):
@@ -840,6 +846,65 @@ def _install_symlink_report_identity(
     }
 
 
+def _resolve_nvidia_egl_library() -> Path:
+    rows = _identity_command(["ldconfig", "-p"], "NVIDIA EGL library cache")
+    candidates: set[Path] = set()
+    for row in rows.splitlines():
+        if not row.lstrip().startswith(f"{NVIDIA_EGL_LIBRARY} ") or "=>" not in row:
+            continue
+        candidates.add(Path(row.rsplit("=>", 1)[1].strip()))
+    if len(candidates) != 1:
+        raise ClosureError(
+            "NVIDIA EGL library cache must resolve exactly one "
+            f"{NVIDIA_EGL_LIBRARY}: {sorted(map(str, candidates))}"
+        )
+    try:
+        return next(iter(candidates)).resolve(strict=True)
+    except OSError as exc:
+        raise ClosureError(f"cannot resolve canonical NVIDIA EGL library: {exc}") from exc
+
+
+def _nvidia_egl_runtime_identity(runtime_ws: Path) -> dict[str, Any]:
+    runtime_root = runtime_ws.resolve()
+    vendor_json = runtime_root / NVIDIA_EGL_VENDOR_JSON
+    _assert_regular(vendor_json, "NVIDIA EGL vendor JSON")
+    if vendor_json.stat().st_size <= 0:
+        raise ClosureError("NVIDIA EGL vendor JSON is empty")
+    try:
+        vendor_path = vendor_json.resolve(strict=True)
+        vendor_path.relative_to(runtime_root)
+    except (OSError, ValueError) as exc:
+        raise ClosureError("NVIDIA EGL vendor JSON escapes runtime workspace") from exc
+    vendor = _read_json(vendor_json)
+    expected_vendor = {
+        "file_format_version": "1.0.0",
+        "ICD": {"library_path": NVIDIA_EGL_LIBRARY},
+    }
+    if vendor != expected_vendor:
+        raise ClosureError("NVIDIA EGL vendor JSON has an unexpected schema or library")
+    library = _resolve_nvidia_egl_library()
+    _assert_regular(library, "canonical NVIDIA EGL library")
+    if library.stat().st_size <= 0:
+        raise ClosureError("canonical NVIDIA EGL library is empty")
+    environment = dict(NVIDIA_EGL_ENVIRONMENT)
+    environment["__EGL_VENDOR_LIBRARY_FILENAMES"] = str(vendor_path)
+    return {
+        "status": "NVIDIA_EGL_RUNTIME_BOUND",
+        "bound": True,
+        "vendor_json": {
+            "path": str(vendor_path),
+            "size_bytes": vendor_json.stat().st_size,
+            "sha256": _sha256(vendor_json),
+        },
+        "canonical_library": {
+            "path": str(library),
+            "size_bytes": library.stat().st_size,
+            "sha256": _sha256(library),
+        },
+        "environment": environment,
+    }
+
+
 def _build_markers(
     runtime_ws: Path, packages: Sequence[str]
 ) -> dict[str, dict[str, Any]]:
@@ -1173,6 +1238,7 @@ def capture_closure(
     )
     windows_cold_start_evidence = _windows_cold_start_evidence_identity(runtime_ws)
     ros_gz_image_system_runtime = _ros_gz_image_system_identity()
+    nvidia_egl_runtime = _nvidia_egl_runtime_identity(runtime_ws)
     return {
         "repository_root": str(repository_root),
         "runtime_ws": str(runtime_ws),
@@ -1217,6 +1283,8 @@ def capture_closure(
         "ros_gz_image_system_runtime_sha256": _json_digest(
             ros_gz_image_system_runtime
         ),
+        "nvidia_egl_runtime": nvidia_egl_runtime,
+        "nvidia_egl_runtime_sha256": _json_digest(nvidia_egl_runtime),
     }
 
 
@@ -1238,7 +1306,7 @@ def record_manifest(
     )
     recorded_ns = time.time_ns()
     manifest = {
-        "schema_version": 6,
+        "schema_version": 7,
         "kind": "tzcup_formal_final_runtime_closure",
         "runtime_contract_revision": FORMAL_RUNTIME_CONTRACT_REVISION,
         "status": "FORMAL_FINAL_RUNTIME_CLOSURE_FROZEN",
@@ -1261,7 +1329,7 @@ def verify_manifest(
     _assert_regular(manifest_path, "final runtime closure manifest")
     manifest = _read_json(manifest_path)
     if (
-        manifest.get("schema_version") != 6
+        manifest.get("schema_version") != 7
         or manifest.get("kind") != "tzcup_formal_final_runtime_closure"
         or manifest.get("status") != "FORMAL_FINAL_RUNTIME_CLOSURE_FROZEN"
     ):
@@ -1376,6 +1444,8 @@ def verify_manifest(
         "ros_gz_image_debian_version": stored[
             "ros_gz_image_system_runtime"
         ]["debian_version"],
+        "nvidia_egl_runtime_bound": stored["nvidia_egl_runtime"]["bound"],
+        "nvidia_egl_runtime": stored["nvidia_egl_runtime"],
     }
 
 

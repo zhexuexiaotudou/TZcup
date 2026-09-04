@@ -1498,11 +1498,42 @@ def _shell_source_command(context: Context, argv: Sequence[str]) -> list[str]:
     return ["bash", "-lc", script]
 
 
+def _bound_nvidia_egl_environment(
+    context: Context, runtime_closure: Mapping[str, Any]
+) -> dict[str, str]:
+    """Return the only EGL environment accepted from a verified closure.
+
+    The final runtime must never inherit a host EGL vendor path.  Keeping this
+    contract here lets preflight reject an incomplete closure without launching
+    a renderer, then gives every real child process the same frozen pair.
+    """
+
+    if runtime_closure.get("nvidia_egl_runtime_bound") is not True:
+        raise OrchestrationError("runtime closure has no bound NVIDIA EGL runtime")
+    nvidia_egl_runtime = runtime_closure.get("nvidia_egl_runtime")
+    if not isinstance(nvidia_egl_runtime, Mapping):
+        raise OrchestrationError("runtime closure has no NVIDIA EGL runtime object")
+    if nvidia_egl_runtime.get("status") != "NVIDIA_EGL_RUNTIME_BOUND":
+        raise OrchestrationError("runtime closure NVIDIA EGL runtime is not bound")
+    expected = {
+        "__EGL_VENDOR_LIBRARY_FILENAMES": str(
+            context.runtime_ws / "egl_vendor.d/10_nvidia.json"
+        ),
+        "EGL_PLATFORM": "surfaceless",
+    }
+    if nvidia_egl_runtime.get("environment") != expected:
+        raise OrchestrationError(
+            "runtime closure NVIDIA EGL environment does not match the frozen runtime"
+        )
+    return expected
+
+
 def _step_command(
     step_id: str,
     context: Context,
     *,
     runtime_closure: Mapping[str, Any] | None = None,
+    execution_environment: bool = False,
 ) -> tuple[list[str], dict[str, str]]:
     root = context.root
     scripts = root / "scripts"
@@ -1522,6 +1553,12 @@ def _step_command(
             context.runtime_closure_manifest
         ),
     }
+    if execution_environment:
+        if runtime_closure is None:
+            raise OrchestrationError(
+                "formal execution requires the verified runtime closure identity"
+            )
+        environment.update(_bound_nvidia_egl_environment(context, runtime_closure))
     bash = lambda name: ["bash", str(scripts / name)]
     python = lambda name, *args: [sys.executable, str(scripts / name), *map(str, args)]
     if step_id == "freeze_snapshot":
@@ -3151,6 +3188,7 @@ def _verify_runtime_closure(context: Context, phase: str) -> dict[str, Any]:
         raise OrchestrationError(
             f"runtime closure has no bound Windows cold-start evidence at {phase}"
         )
+    _bound_nvidia_egl_environment(context, result)
     return {**result, "phase": phase, "verified_epoch_ns": time.time_ns()}
 
 
@@ -3290,6 +3328,7 @@ def execute(context: Context) -> tuple[dict[str, Any], int]:
                     step.step_id,
                     context,
                     runtime_closure=closure_before,
+                    execution_environment=True,
                 )
                 if command and command[0] == "__sequence__":
                     commands = json.loads(command[1])

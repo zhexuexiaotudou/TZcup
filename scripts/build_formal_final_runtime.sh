@@ -49,6 +49,9 @@ vendor_work_root="${runtime_ws}/vendor/gz_transport13_eintr_build"
 vendor_build_report="${runtime_ws}/gz_transport13_eintr_vendor_build_report.json"
 vendor_runtime_report="${runtime_ws}/gz_transport13_eintr_runtime_binding_report.json"
 frozen_source_root="${runtime_ws}/src"
+egl_vendor_source="${repo_root}/scripts/runtime_assets/egl_vendor.d/10_nvidia.json"
+egl_vendor_runtime_dir="${runtime_ws}/egl_vendor.d"
+egl_vendor_runtime_json="${egl_vendor_runtime_dir}/10_nvidia.json"
 install_symlinks_report="${runtime_ws}/INSTALL_SYMLINKS.txt"
 side_brush_surface_preflight="${runtime_ws}/side_brush_sdf_surface_preflight.json"
 integrated_build_manifest="${runtime_ws}/integrated_build_manifest.json"
@@ -67,6 +70,8 @@ for path in \
   "${runtime_ws}/install" \
   "${runtime_ws}/log" \
   "${frozen_source_root}" \
+  "${egl_vendor_runtime_dir}" \
+  "${egl_vendor_runtime_json}" \
   "${install_symlinks_report}" \
   "${runtime_ws}/vendor" \
   "${vendor_build_report}" \
@@ -84,7 +89,21 @@ for path in \
     exit 2
   }
 done
+[[ -f "${egl_vendor_source}" && ! -L "${egl_vendor_source}" && -s "${egl_vendor_source}" ]] || {
+  echo "formal NVIDIA EGL vendor JSON is missing, symbolic, or empty: ${egl_vendor_source}" >&2
+  exit 125
+}
 mkdir -p "${runtime_ws}"
+install -d -m 0755 -- "${egl_vendor_runtime_dir}"
+install -m 0444 -- "${egl_vendor_source}" "${egl_vendor_runtime_json}"
+[[ -f "${egl_vendor_runtime_json}" && ! -L "${egl_vendor_runtime_json}" && -s "${egl_vendor_runtime_json}" ]] || {
+  echo "formal NVIDIA EGL runtime vendor JSON was not installed regularly: ${egl_vendor_runtime_json}" >&2
+  exit 125
+}
+cmp -s -- "${egl_vendor_source}" "${egl_vendor_runtime_json}" || {
+  echo "formal NVIDIA EGL runtime vendor JSON differs from the project asset" >&2
+  exit 125
+}
 if [[ -n "${cold_gate_evidence}" ]]; then
   install -m 0444 -- "${cold_gate_evidence}" "${windows_cold_gate_bound_json}"
   cmp -s -- "${cold_gate_evidence}" "${windows_cold_gate_bound_json}" || {

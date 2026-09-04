@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import re
 import shutil
@@ -65,6 +66,32 @@ def test_final_builder_requires_a_new_runtime_and_all_final_evidence_paths() -> 
     assert '--output "${integrated_build_manifest}"' in source
     assert '[[ -f "${side_brush_surface_preflight}" && ! -L "${side_brush_surface_preflight}" ]]' in source
     assert '[[ -f "${integrated_build_manifest}" && ! -L "${integrated_build_manifest}" ]]' in source
+
+
+def test_final_builder_copies_a_regular_project_nvidia_egl_vendor_json_into_fresh_runtime() -> None:
+    source = _source()
+    vendor_source = ROOT / "scripts/runtime_assets/egl_vendor.d/10_nvidia.json"
+    payload = json.loads(vendor_source.read_text(encoding="utf-8"))
+
+    assert payload == {
+        "file_format_version": "1.0.0",
+        "ICD": {"library_path": "libEGL_nvidia.so.0"},
+    }
+    assert 'egl_vendor_source="${repo_root}/scripts/runtime_assets/egl_vendor.d/10_nvidia.json"' in source
+    assert 'egl_vendor_runtime_dir="${runtime_ws}/egl_vendor.d"' in source
+    assert 'egl_vendor_runtime_json="${egl_vendor_runtime_dir}/10_nvidia.json"' in source
+
+    fresh_paths = source.split("for path in", 1)[1].split("; do", 1)[0]
+    assert '"${egl_vendor_runtime_dir}"' in fresh_paths
+    assert '"${egl_vendor_runtime_json}"' in fresh_paths
+    assert '[[ -f "${egl_vendor_source}" && ! -L "${egl_vendor_source}" && -s "${egl_vendor_source}" ]]' in source
+    assert 'install -d -m 0755 -- "${egl_vendor_runtime_dir}"' in source
+    assert 'install -m 0444 -- "${egl_vendor_source}" "${egl_vendor_runtime_json}"' in source
+    assert '[[ -f "${egl_vendor_runtime_json}" && ! -L "${egl_vendor_runtime_json}" && -s "${egl_vendor_runtime_json}" ]]' in source
+    assert 'cmp -s -- "${egl_vendor_source}" "${egl_vendor_runtime_json}"' in source
+    assert source.index('[[ ! -e "${path}" && ! -L "${path}" ]]') < source.index(
+        'install -m 0444 -- "${egl_vendor_source}" "${egl_vendor_runtime_json}"'
+    )
 
 
 def test_final_builder_bounds_both_builds_in_one_exact_setsid_group() -> None:
