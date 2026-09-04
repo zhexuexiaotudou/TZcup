@@ -131,6 +131,9 @@ formal_runtime_start_memory_watchdog "${launch_pid}" \
 python3 "${repo_root}/scripts/check_formal_water_preoperational_readiness.py" \
   --output "${output_dir}/preoperational_readiness.json" \
   >"${output_dir}/preoperational_readiness.log" 2>&1
+ros2 topic info -v /clock >"${output_dir}/ros_clock_topic_info.txt" 2>&1
+grep -q '^Publisher count: 1$' "${output_dir}/ros_clock_topic_info.txt"
+timeout 10 ros2 topic echo /clock --once >"${output_dir}/ros_clock_sample.txt" 2>&1
 gz topic -i -t "${typed_topic}" >"${output_dir}/gz_typed_topic_info.txt" 2>&1
 ros2 topic info -v "${typed_topic}" >"${output_dir}/ros_typed_topic_info.txt" 2>&1
 

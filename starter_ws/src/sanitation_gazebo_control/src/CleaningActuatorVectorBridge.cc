@@ -5,9 +5,11 @@
 #include <stdexcept>
 #include <string>
 
+#include <gz/msgs/clock.pb.h>
 #include <gz/msgs/double_v.pb.h>
 #include <gz/transport/Node.hh>
 #include <rclcpp/rclcpp.hpp>
+#include <rosgraph_msgs/msg/clock.hpp>
 #include <std_msgs/msg/float64_multi_array.hpp>
 
 #include "sanitation_gazebo_control/CleaningActuatorMotorCore.hh"
@@ -35,6 +37,8 @@ constexpr GazeboToRosEndpoint<
 constexpr GazeboToRosEndpoint<
   std_msgs::msg::Float64MultiArray, gz::msgs::Double_V> kTelemetrySnapshotEndpoint{
   "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/telemetry_snapshot"};
+constexpr GazeboToRosEndpoint<rosgraph_msgs::msg::Clock, gz::msgs::Clock> kClockEndpoint{
+  "/clock"};
 constexpr std::size_t kExpectedMotorCount = 5;
 
 class CleaningActuatorVectorBridge final : public rclcpp::Node
@@ -68,6 +72,8 @@ public:
     telemetry_snapshot_ros_pub_ =
       create_publisher<std_msgs::msg::Float64MultiArray>(
       kTelemetrySnapshotEndpoint.topic, 50);
+    clock_ros_pub_ = create_publisher<rosgraph_msgs::msg::Clock>(
+      kClockEndpoint.topic, rclcpp::ClockQoS());
     if (!gz_node_.Subscribe(
         kMotorCurrentEndpoint.topic,
         &CleaningActuatorVectorBridge::OnCurrent, this) ||
@@ -79,18 +85,39 @@ public:
         &CleaningActuatorVectorBridge::OnLoad, this) ||
       !gz_node_.Subscribe(
         kTelemetrySnapshotEndpoint.topic,
-        &CleaningActuatorVectorBridge::OnTelemetrySnapshot, this))
+        &CleaningActuatorVectorBridge::OnTelemetrySnapshot, this) ||
+      !gz_node_.Subscribe(
+        kClockEndpoint.topic,
+        &CleaningActuatorVectorBridge::OnClock, this))
     {
-      throw std::runtime_error("failed to subscribe to cleaning actuator Gazebo vectors");
+      Stop();
+      throw std::runtime_error("failed to subscribe to formal vehicle Gazebo telemetry");
     }
     observability_timer_ = create_wall_timer(
       std::chrono::seconds(5), [this]() {LogBridgeHealth();});
     RCLCPP_INFO(
       get_logger(),
-      "active GZ->ROS Double_V bridge for %s, %s, %s and %s (motor length=%zu, snapshot length=%zu)",
+      "active native GZ->ROS bridge for %s, %s, %s, %s and %s (motor length=%zu, snapshot length=%zu)",
       kMotorCurrentEndpoint.topic, kMotorTemperatureEndpoint.topic,
-      kMotorOutputLoadEndpoint.topic, kTelemetrySnapshotEndpoint.topic,
+      kMotorOutputLoadEndpoint.topic, kTelemetrySnapshotEndpoint.topic, kClockEndpoint.topic,
       kExpectedMotorCount, kCleaningTelemetryValueCount);
+  }
+
+  ~CleaningActuatorVectorBridge() override
+  {
+    Stop();
+  }
+
+  void Stop()
+  {
+    if (stopping_.exchange(true)) {
+      return;
+    }
+    gz_node_.Unsubscribe(kMotorCurrentEndpoint.topic);
+    gz_node_.Unsubscribe(kMotorTemperatureEndpoint.topic);
+    gz_node_.Unsubscribe(kMotorOutputLoadEndpoint.topic);
+    gz_node_.Unsubscribe(kTelemetrySnapshotEndpoint.topic);
+    gz_node_.Unsubscribe(kClockEndpoint.topic);
   }
 
 private:
@@ -112,6 +139,9 @@ private:
     std::atomic<std::uint64_t> & received_count,
     const std::size_t expected_length)
   {
+    if (stopping_.load()) {
+      return false;
+    }
     ++received_count;
     if (source.data_size() != static_cast<int>(expected_length)) {
       ++invalid_vector_count_;
@@ -157,20 +187,34 @@ private:
       telemetry_snapshot_received_count_, kCleaningTelemetryValueCount);
   }
 
+  void OnClock(const gz::msgs::Clock & message)
+  {
+    if (stopping_.load()) {
+      return;
+    }
+    rosgraph_msgs::msg::Clock target;
+    target.clock.sec = message.sim().sec();
+    target.clock.nanosec = static_cast<std::uint32_t>(message.sim().nsec());
+    clock_ros_pub_->publish(target);
+    ++clock_received_count_;
+  }
+
   void LogBridgeHealth()
   {
     RCLCPP_INFO(
       get_logger(),
-      "GZ->ROS vector bridge health: current=%llu temperature=%llu load=%llu snapshot=%llu malformed=%llu; ROS subscriptions=%zu/%zu/%zu/%zu",
+      "native GZ->ROS bridge health: current=%llu temperature=%llu load=%llu snapshot=%llu clock=%llu malformed=%llu; ROS subscriptions=%zu/%zu/%zu/%zu/%zu",
       static_cast<unsigned long long>(current_received_count_.load()),
       static_cast<unsigned long long>(temperature_received_count_.load()),
       static_cast<unsigned long long>(load_received_count_.load()),
       static_cast<unsigned long long>(telemetry_snapshot_received_count_.load()),
+      static_cast<unsigned long long>(clock_received_count_.load()),
       static_cast<unsigned long long>(invalid_vector_count_.load()),
       current_ros_pub_->get_subscription_count(),
       temperature_ros_pub_->get_subscription_count(),
       load_ros_pub_->get_subscription_count(),
-      telemetry_snapshot_ros_pub_->get_subscription_count());
+      telemetry_snapshot_ros_pub_->get_subscription_count(),
+      clock_ros_pub_->get_subscription_count());
   }
 
   gz::transport::Node gz_node_;
@@ -183,11 +227,14 @@ private:
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr load_ros_pub_;
   rclcpp::Publisher<std_msgs::msg::Float64MultiArray>::SharedPtr
     telemetry_snapshot_ros_pub_;
+  rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_ros_pub_;
   rclcpp::TimerBase::SharedPtr observability_timer_;
+  std::atomic<bool> stopping_{false};
   std::atomic<std::uint64_t> current_received_count_{0};
   std::atomic<std::uint64_t> temperature_received_count_{0};
   std::atomic<std::uint64_t> load_received_count_{0};
   std::atomic<std::uint64_t> telemetry_snapshot_received_count_{0};
+  std::atomic<std::uint64_t> clock_received_count_{0};
   std::atomic<std::uint64_t> invalid_vector_count_{0};
 };
 }  // namespace sanitation_gazebo_control
@@ -195,11 +242,18 @@ private:
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
+  std::shared_ptr<sanitation_gazebo_control::CleaningActuatorVectorBridge> bridge;
   try {
-    rclcpp::spin(
-      std::make_shared<sanitation_gazebo_control::CleaningActuatorVectorBridge>());
+    bridge = std::make_shared<sanitation_gazebo_control::CleaningActuatorVectorBridge>();
+    rclcpp::spin(bridge);
+    bridge->Stop();
+    bridge.reset();
   } catch (const std::exception & error) {
     RCLCPP_FATAL(rclcpp::get_logger("cleaning_actuator_motor_bridge"), "%s", error.what());
+    if (bridge) {
+      bridge->Stop();
+      bridge.reset();
+    }
     rclcpp::shutdown();
     return 1;
   }

@@ -19,6 +19,7 @@ find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(control_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rosgraph_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Core Quick QuickControls2)
@@ -174,6 +175,7 @@ add_executable(cleaning_actuator_vector_bridge
 target_include_directories(cleaning_actuator_vector_bridge PRIVATE include)
 ament_target_dependencies(cleaning_actuator_vector_bridge
   rclcpp
+  rosgraph_msgs
   std_msgs
 )
 target_link_libraries(cleaning_actuator_vector_bridge

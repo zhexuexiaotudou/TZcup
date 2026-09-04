@@ -12,6 +12,7 @@
   <depend>control_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
+  <depend>rosgraph_msgs</depend>
   <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>std_srvs</depend>

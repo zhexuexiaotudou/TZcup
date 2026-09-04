@@ -71,7 +71,7 @@ def test_runner_checks_live_types_and_strict_publish_audit() -> None:
     assert "typed_diag.json" in source
 
 
-def test_typed_runner_has_mutually_exclusive_clock_and_bounded_optional_scope() -> None:
+def test_typed_runner_has_single_native_clock_owner_and_bounded_optional_scope() -> None:
     runner = (ROOT / "scripts/run_formal_typed_cleaning_motor_diagnostic.sh").read_text(
         encoding="utf-8"
     )
@@ -200,7 +200,7 @@ def test_typed_runner_has_mutually_exclusive_clock_and_bounded_optional_scope() 
         and localization_condition.args[0].id == "start_localization"
     )
 
-    fallback = next(
+    fallback = [
         node
         for node in ast.walk(launch)
         if isinstance(node, ast.Call)
@@ -212,23 +212,8 @@ def test_typed_runner_has_mutually_exclusive_clock_and_bounded_optional_scope() 
             and key.value.value == "formal_vehicle_clock_fallback_bridge"
             for key in node.keywords
         )
-    )
-    fallback_keywords = {key.arg: key.value for key in fallback.keywords}
-    assert ast.literal_eval(fallback_keywords["package"]) == "ros_gz_bridge"
-    assert ast.literal_eval(fallback_keywords["executable"]) == "parameter_bridge"
-    assert ast.literal_eval(fallback_keywords["arguments"]) == [
-        "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock"
     ]
-    fallback_condition = fallback_keywords["condition"]
-    assert isinstance(fallback_condition, ast.Call)
-    assert (
-        isinstance(fallback_condition.func, ast.Name)
-        and fallback_condition.func.id == "UnlessCondition"
-    )
-    assert (
-        isinstance(fallback_condition.args[0], ast.Name)
-        and fallback_condition.args[0].id == "start_product_bridge"
-    )
+    assert fallback == []
 
     product = next(
         node
@@ -246,9 +231,20 @@ def test_typed_runner_has_mutually_exclusive_clock_and_bounded_optional_scope() 
     product_arguments = next(
         key.value for key in product.keywords if key.arg == "arguments"
     )
-    assert "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock" in ast.literal_eval(
+    assert "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock" not in ast.literal_eval(
         product_arguments
     )
+    native_source = (
+        ROOT
+        / "starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorVectorBridge.cc"
+    ).read_text(encoding="utf-8")
+    assert 'kClockEndpoint{\n  "/clock"}' in native_source
+    assert "rclcpp::ClockQoS()" in native_source
+    assert "void Stop()" in native_source
+    assert "gz_node_.Unsubscribe(kClockEndpoint.topic)" in native_source
+    assert "ros2 topic info -v /clock" in runner
+    assert "grep -q '^Publisher count: 1$'" in runner
+    assert "ros2 topic echo /clock --once" in runner
 
 
 def test_finalize_binds_zero_error_transport_and_input_hashes(tmp_path: Path) -> None:

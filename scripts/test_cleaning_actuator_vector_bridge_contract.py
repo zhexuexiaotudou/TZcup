@@ -19,6 +19,12 @@ def test_double_vector_topics_use_supported_native_bridge() -> None:
         ROOT
         / "starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorMotorSystem.cc"
     ).read_text(encoding="utf-8")
+    cmake = (
+        ROOT / "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt"
+    ).read_text(encoding="utf-8")
+    package = (
+        ROOT / "starter_ws/src/sanitation_gazebo_control/package.xml"
+    ).read_text(encoding="utf-8")
     assert "gz.msgs.Double_V" not in launch
     assert 'executable="cleaning_actuator_vector_bridge"' in launch
     assert "command/brush" in source
@@ -28,10 +34,21 @@ def test_double_vector_topics_use_supported_native_bridge() -> None:
     assert "estimated_output_load" in source
     assert "telemetry_snapshot" in source
     assert "gz::msgs::Double_V" in source
-    assert source.count("constexpr GazeboToRosEndpoint<") == 4
+    assert source.count("constexpr GazeboToRosEndpoint<") == 5
+    assert "gz/msgs/clock.pb.h" in source
+    assert "rosgraph_msgs/msg/clock.hpp" in source
+    assert "gz::msgs::Clock" in source
+    assert "rclcpp::ClockQoS()" in source
+    assert "message.sim().sec()" in source
+    assert "message.sim().nsec()" in source
+    assert "void Stop()" in source
+    assert source.count("gz_node_.Unsubscribe(") == 5
+    assert "find_package(rosgraph_msgs REQUIRED)" in cmake
+    assert "  rosgraph_msgs\n  std_msgs" in cmake
+    assert "<depend>rosgraph_msgs</depend>" in package
     assert "kExpectedMotorCount = 5" in source
     assert "dropping malformed Gazebo Double_V" in source
-    assert "GZ->ROS vector bridge health" in source
+    assert "native GZ->ROS bridge health" in source
     assert (
         "cleaning_motors/status_json@std_msgs/msg/String" not in launch
     )
