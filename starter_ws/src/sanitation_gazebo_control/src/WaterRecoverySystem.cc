@@ -116,14 +116,10 @@ class WaterRecoverySystem final:
         break;
     }
     this->squeegeeLink = model.LinkByName(_ecm, "squeegee_link");
-    this->nozzle = model.LinkByName(_ecm, "suction_nozzle_link");
-    // URDF fixed-joint reduction may lump the nozzle into squeegee_link.  The
-    // 40 mm nozzle offset is then restored below when computing its envelope.
-    if (this->nozzle == gz::sim::kNullEntity)
-    {
-      this->nozzle = this->squeegeeLink;
-      this->nozzleUsesSqueegeeFrame = true;
-    }
+    // URDF fixed-joint reduction lumps the physical nozzle collision into
+    // squeegee_link.  A preembedded contact sensor may recreate a sensor-only
+    // link with the original nozzle name; never use that holder as geometry.
+    this->nozzle = this->squeegeeLink;
 
     for (const auto entity : {this->leftBrush, this->rightBrush,
         this->roller, this->pump, this->frontLeftWheel,
@@ -316,7 +312,7 @@ class WaterRecoverySystem final:
     gz::math::Pose3d nozzlePose;
     if (this->nozzle != gz::sim::kNullEntity)
       nozzlePose = gz::sim::worldPose(this->nozzle, _ecm);
-    if (this->nozzleUsesSqueegeeFrame)
+    if (this->nozzle != gz::sim::kNullEntity)
       nozzlePose = nozzlePose * gz::math::Pose3d(0.040, 0, -0.005, 0, 0, 0);
     this->nozzleHeightM = nozzlePose.Pos().Z();
     this->nozzleWorldX = nozzlePose.Pos().X();
@@ -771,7 +767,6 @@ class WaterRecoverySystem final:
   private: bool brushReady{false};
   private: bool squeegeeReady{false};
   private: bool nozzleReady{false};
-  private: bool nozzleUsesSqueegeeFrame{false};
   private: bool pumpReady{false};
   private: bool tankFull{false};
   private: bool tankLowProbeWet{false};

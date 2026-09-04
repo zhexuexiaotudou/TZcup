@@ -49,6 +49,9 @@ def test_water_recovery_plugin_is_mass_conserving_and_condition_gated() -> None:
     assert "this->basePoseAvailable &&" in source
     assert "maximumNozzleHeightM" not in source
     assert 'Pose3d(0.040, 0, -0.005, 0, 0, 0)' in source
+    assert "this->nozzle = this->squeegeeLink;" in source
+    assert 'model.LinkByName(_ecm, "suction_nozzle_link")' not in source
+    assert "sensor-only" in source
     cleaning = (
         ROOT
         / "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/cleaning_mechanism.xacro"
