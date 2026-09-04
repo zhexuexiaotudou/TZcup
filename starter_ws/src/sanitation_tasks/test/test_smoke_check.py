@@ -13,8 +13,8 @@ def test_required_topics_cover_motion_sensing_and_transforms():
 
 def test_runtime_probe_uses_simulation_clock_qos():
     source = (ROOT / "sanitation_tasks/runtime_probe.py").read_text(encoding="utf-8")
-    assert "qos_profile_clock," in source
-    assert '"/clock": (Clock, qos_profile_clock)' in source
+    assert "qos_profile_sensor_data," in source
+    assert '"/clock": (Clock, qos_profile_sensor_data)' in source
     assert {"/tf", "/tf_static"} <= REQUIRED_TOPICS
 
 

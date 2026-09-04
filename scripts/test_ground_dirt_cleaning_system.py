@@ -94,8 +94,8 @@ def test_runtime_gate_requires_negative_partial_conservation_and_litter_retentio
     assert 'result["runtime_gate_binding"] = runtime_binding' in source
     assert 'result["acceptance_session_binding"] = acceptance_session_binding' in source
     assert 'result["runtime_closure_binding"] = runtime_binding["runtime_closure_binding"]' in source
-    assert "from rclpy.qos import qos_profile_clock" in source
-    assert 'Clock, "/clock", self._on_clock, qos_profile_clock' in source
+    assert "from rclpy.qos import qos_profile_sensor_data" in source
+    assert 'Clock, "/clock", self._on_clock, qos_profile_sensor_data' in source
 
 
 def test_lift_trajectory_and_wait_budget_respect_the_physical_contract():

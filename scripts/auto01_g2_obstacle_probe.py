@@ -15,7 +15,7 @@ from geometry_msgs.msg import Twist
 from nav2_msgs.msg import CollisionMonitorState
 from nav_msgs.msg import Odometry
 from rosgraph_msgs.msg import Clock
-from rclpy.qos import qos_profile_clock
+from rclpy.qos import qos_profile_sensor_data
 from sensor_msgs.msg import LaserScan
 
 
@@ -105,7 +105,7 @@ class Probe:
                 float(message.clock.sec)
                 + float(message.clock.nanosec) * 1.0e-9,
             ),
-            qos_profile_clock,
+            qos_profile_sensor_data,
         )
         self.node.create_subscription(
             Twist,

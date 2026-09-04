@@ -33,5 +33,5 @@ def test_standard_library_png_encoder_converts_bgr_to_rgb():
 
 def test_clock_subscription_uses_simulation_clock_qos():
     source = (ROOT / "sanitation_hmi/ros_adapter.py").read_text(encoding="utf-8")
-    assert "from rclpy.qos import qos_profile_clock" in source
-    assert "qos_profile_clock," in source
+    assert "from rclpy.qos import qos_profile_sensor_data" in source
+    assert "qos_profile_sensor_data," in source

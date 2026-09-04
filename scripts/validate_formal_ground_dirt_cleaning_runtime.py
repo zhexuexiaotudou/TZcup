@@ -18,7 +18,7 @@ from ros_gz_interfaces.msg import Entity
 from ros_gz_interfaces.srv import SetEntityPose
 from rosgraph_msgs.msg import Clock
 from rclpy.node import Node
-from rclpy.qos import qos_profile_clock
+from rclpy.qos import qos_profile_sensor_data
 from std_msgs.msg import Bool, Empty, Float64MultiArray, String
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
@@ -112,7 +112,9 @@ class Probe(Node):
         self.heartbeat = self.create_publisher(Empty, "/safety/control_heartbeat", 10)
         self.set_pose = self.create_client(SetEntityPose, f"/world/{world}/set_pose")
         self.create_subscription(String, f"{ROOT}/status_json", self._on_status, 50)
-        self.create_subscription(Clock, "/clock", self._on_clock, qos_profile_clock)
+        self.create_subscription(
+            Clock, "/clock", self._on_clock, qos_profile_sensor_data
+        )
 
     def _on_status(self, message: String) -> None:
         self.status = json.loads(message.data)

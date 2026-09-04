@@ -544,5 +544,5 @@ def test_normal_thresholds_are_not_relaxed_for_low_real_time_factor() -> None:
     assert "recovered / initial_ground >= 0.955" in source
     assert 'node.publish_filter_blockage(1.0)' in source
     assert 'node.publish_filter_blockage(0.0)' in source
-    assert "from rclpy.qos import qos_profile_clock" in source
-    assert 'Clock, "/clock", self._on_clock, qos_profile_clock' in source
+    assert "from rclpy.qos import qos_profile_sensor_data" in source
+    assert 'Clock, "/clock", self._on_clock, qos_profile_sensor_data' in source
