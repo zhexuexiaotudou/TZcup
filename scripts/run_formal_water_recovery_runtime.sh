@@ -1,7 +1,18 @@
 #!/usr/bin/env bash
 set -eo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+default_repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+if [[ -n "${FORMAL_WATER_REPOSITORY_ROOT:-}" && "${FORMAL_TASK_ONLY_DIAGNOSTIC:-0}" != "1" ]]; then
+  echo "FORMAL_WATER_REPOSITORY_ROOT is restricted to task-only diagnostics" >&2
+  exit 2
+fi
+repo_root="${FORMAL_WATER_REPOSITORY_ROOT:-${default_repo_root}}"
+[[ -d "${repo_root}" ]] || { echo "Invalid formal water repository root: ${repo_root}" >&2; exit 2; }
+repo_root="$(cd "${repo_root}" && pwd -P)"
+[[ -f "${repo_root}/scripts/run_formal_runtime_isolation.sh" ]] || {
+  echo "Missing formal runtime isolation helper under repository root: ${repo_root}" >&2
+  exit 2
+}
 source "${repo_root}/scripts/run_formal_runtime_isolation.sh"
 runtime_ws="${FORMAL_VEHICLE_RUNTIME_WS:-${repo_root}/.work/final_frozen_runtime/install}"
 runtime_closure_manifest="${FORMAL_FINAL_RUNTIME_CLOSURE_MANIFEST:-$(dirname "${runtime_ws}")/final_runtime_closure_manifest.json}"
@@ -33,6 +44,10 @@ done
 
 if [[ "${scenario}" != "normal" && "${scenario}" != "full" && "${scenario}" != "diagnostic" && "${scenario}" != "all" ]]; then
   echo "--scenario must be normal, full, diagnostic, or all" >&2
+  exit 2
+fi
+if [[ "${scenario}" == "all" && -n "${FORMAL_WATER_REPOSITORY_ROOT:-}" ]]; then
+  echo "Repository-root override is forbidden for formal all-scenarios acceptance" >&2
   exit 2
 fi
 
@@ -131,12 +146,112 @@ cleanup_launch() {
 }
 formal_runtime_install_traps cleanup_launch
 
+formal_water_stop_evaluation_bridges() {
+  local timeline="$1"
+  python3 - "${GZ_PARTITION}" "${timeline}" <<'PY'
+import json
+import os
+from pathlib import Path
+import signal
+import sys
+import time
+
+
+partition, timeline_arg = sys.argv[1:]
+timeline = Path(timeline_arg)
+targets = (
+    "formal_auxiliary_bridge",
+    "formal_squeegee_evaluation_bridge",
+    "formal_brush_contact_evaluation_bridge",
+)
+
+
+def record(event, **fields):
+    entry = {
+        "event": event,
+        "monotonic_s": time.monotonic(),
+        "partition": partition,
+        **fields,
+    }
+    with timeline.open("a", encoding="utf-8") as stream:
+        stream.write(json.dumps(entry, sort_keys=True) + "\n")
+
+
+def read_proc(pid, name):
+    try:
+        return (Path("/proc") / str(pid) / name).read_bytes()
+    except (FileNotFoundError, PermissionError, ProcessLookupError):
+        return None
+
+
+def matching_pids(node_name):
+    matches = []
+    for proc_dir in Path("/proc").iterdir():
+        if not proc_dir.name.isdigit():
+            continue
+        pid = int(proc_dir.name)
+        environ_raw = read_proc(pid, "environ")
+        cmdline_raw = read_proc(pid, "cmdline")
+        if environ_raw is None or cmdline_raw is None:
+            continue
+        environment = environ_raw.split(b"\0")
+        if f"GZ_PARTITION={partition}".encode() not in environment:
+            continue
+        argv = [part.decode("utf-8", "replace") for part in cmdline_raw.split(b"\0") if part]
+        if not argv:
+            continue
+        executable = Path(argv[0])
+        if executable.name != "parameter_bridge" or "ros_gz_bridge" not in executable.parts:
+            continue
+        if f"__node:={node_name}" not in argv:
+            continue
+        matches.append(pid)
+    return matches
+
+
+def process_exit_state(pid):
+    status = read_proc(pid, "stat")
+    if status is None:
+        return "missing"
+    fields = status.decode("utf-8", "replace").split()
+    if len(fields) >= 3 and fields[2] == "Z":
+        return "zombie"
+    return None
+
+
+record("ordered_shutdown_started", targets=list(targets))
+for target in targets:
+    matches = matching_pids(target)
+    if len(matches) != 1:
+        record("target_match_failed", target=target, matches=matches)
+        raise SystemExit(1)
+    pid = matches[0]
+    try:
+        os.kill(pid, signal.SIGINT)
+    except ProcessLookupError:
+        record("target_signal_failed", target=target, pid=pid, reason="process_disappeared")
+        raise SystemExit(1)
+    record("target_sigint_sent", target=target, pid=pid)
+    deadline = time.monotonic() + 8.0
+    while time.monotonic() < deadline:
+        exit_state = process_exit_state(pid)
+        if exit_state is not None:
+            record("target_exited", target=target, pid=pid, exit_state=exit_state)
+            break
+        time.sleep(0.05)
+    else:
+        record("target_exit_timeout", target=target, pid=pid)
+        raise SystemExit(1)
+record("ordered_shutdown_completed")
+PY
+}
+
 run_scenario() {
   local selected="$1"
   local expected_stable_marker_count=1
   local preembedded_world="${output_dir}/water_${selected}_preembedded_sensor_world.sdf"
   local preembedded_report="${output_dir}/water_${selected}_preembedded_sensor_world.json"
-  for stale in "${output_dir}/water_${selected}.json" "${output_dir}/water_${selected}_launch.log" "${output_dir}/water_${selected}_launch_audit.json" "${output_dir}/water_${selected}_probe.log" "${output_dir}/water_${selected}_safety_preflight.json" "${output_dir}/water_${selected}_safety_preflight.log" "${output_dir}/water_${selected}_side_brush_sdf_surface.json" "${output_dir}/water_${selected}_side_brush_sdf_surface.log" "${output_dir}/water_${selected}_preoperational_readiness.json" "${output_dir}/water_${selected}_preoperational_readiness.log" "${output_dir}/water_${selected}_memory_watchdog.json" "${output_dir}/water_${selected}_memory_watchdog.log" "${output_dir}/water_${selected}_windows_memory_preflight.json" "${output_dir}/water_${selected}_windows_memory_preflight.log" "${preembedded_world}" "${preembedded_report}"; do
+  for stale in "${output_dir}/water_${selected}.json" "${output_dir}/water_${selected}_launch.log" "${output_dir}/water_${selected}_launch_audit.json" "${output_dir}/water_${selected}_bridge_shutdown.jsonl" "${output_dir}/water_${selected}_probe.log" "${output_dir}/water_${selected}_safety_preflight.json" "${output_dir}/water_${selected}_safety_preflight.log" "${output_dir}/water_${selected}_side_brush_sdf_surface.json" "${output_dir}/water_${selected}_side_brush_sdf_surface.log" "${output_dir}/water_${selected}_preoperational_readiness.json" "${output_dir}/water_${selected}_preoperational_readiness.log" "${output_dir}/water_${selected}_memory_watchdog.json" "${output_dir}/water_${selected}_memory_watchdog.log" "${output_dir}/water_${selected}_windows_memory_preflight.json" "${output_dir}/water_${selected}_windows_memory_preflight.log" "${preembedded_world}" "${preembedded_report}"; do
     [[ ! -e "${stale}" ]] || { echo "Refusing stale scenario evidence: ${stale}" >&2; return 2; }
   done
   export GZ_PARTITION="tzcup_formal_water_${selected}_${ROS_DOMAIN_ID}_$$"
@@ -192,6 +307,8 @@ run_scenario() {
   python3 "${repo_root}/scripts/validate_formal_water_recovery_runtime.py" \
     "${validator_args[@]}" \
     >"${output_dir}/water_${selected}_probe.log" 2>&1
+  formal_water_stop_evaluation_bridges \
+    "${output_dir}/water_${selected}_bridge_shutdown.jsonl"
   cleanup_launch
   python3 "${repo_root}/scripts/audit_formal_water_launch_log.py" \
     --log "${output_dir}/water_${selected}_launch.log" \

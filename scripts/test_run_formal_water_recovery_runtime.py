@@ -130,6 +130,43 @@ def test_runner_uses_fresh_isolated_launch_for_both_scenarios() -> None:
     assert "FORMAL_ACCEPTANCE_SESSION" in source
 
 
+def test_runner_stops_heavy_evaluation_bridges_in_order_before_launch_cleanup() -> None:
+    source = (ROOT / "scripts/run_formal_water_recovery_runtime.sh").read_text(
+        encoding="utf-8"
+    )
+
+    function_start = source.index("formal_water_stop_evaluation_bridges()")
+    run_scenario_start = source.index("run_scenario()")
+    shutdown = source[function_start:run_scenario_start]
+    assert 'partition, timeline_arg = sys.argv[1:]' in shutdown
+    assert 'Path("/proc").iterdir()' in shutdown
+    assert 'f"GZ_PARTITION={partition}".encode() not in environment' in shutdown
+    assert 'executable.name != "parameter_bridge"' in shutdown
+    assert '"ros_gz_bridge" not in executable.parts' in shutdown
+    assert 'if f"__node:={node_name}" not in argv' in shutdown
+    assert 'if len(matches) != 1:' in shutdown
+    assert 'os.kill(pid, signal.SIGINT)' in shutdown
+    assert 'raise SystemExit(1)' in shutdown
+    assert shutdown.index('"formal_auxiliary_bridge"') < shutdown.index(
+        '"formal_squeegee_evaluation_bridge"'
+    ) < shutdown.index('"formal_brush_contact_evaluation_bridge"')
+
+    validator = source.index(
+        'python3 "${repo_root}/scripts/validate_formal_water_recovery_runtime.py"'
+    )
+    ordered_stop = source.index(
+        "formal_water_stop_evaluation_bridges", run_scenario_start
+    )
+    cleanup = source.index("cleanup_launch", ordered_stop)
+    audit = source.index(
+        'python3 "${repo_root}/scripts/audit_formal_water_launch_log.py"'
+    )
+    assert validator < ordered_stop < cleanup < audit
+    assert "FORMAL_WATER_REPOSITORY_ROOT" in source
+    assert "FORMAL_TASK_ONLY_DIAGNOSTIC" in source
+    assert "Repository-root override is forbidden for formal all-scenarios acceptance" in source
+
+
 def test_all_scenarios_rotation_invalidates_old_canonical_before_preflight() -> None:
     source = (ROOT / "scripts/run_formal_water_recovery_runtime.sh").read_text(
         encoding="utf-8"
