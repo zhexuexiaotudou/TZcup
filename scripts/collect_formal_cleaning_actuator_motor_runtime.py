@@ -45,7 +45,9 @@ STALL_REFERENCE_M = 0.125
 # 4.8 mm/s no-load limit.  Keep the physical approach and fault latch separate.
 LIFT_TRAVEL_APPROACH_M = 0.0995
 LIFT_TRAVEL_APPROACH_TIMEOUT_S = 155.0
-STALL_LATCH_TIMEOUT_S = 6.5
+# The core integrates its unchanged 1.5 s trip in simulation time; DART can
+# run below 0.2 real-time factor, so the collector needs a longer wall budget.
+STALL_LATCH_TIMEOUT_S = 12.0
 RECOVERY_LIFT_TARGET_M = 0.060
 # This is a wall-clock observation budget, not simulated time.  The complete
 # DART vehicle can run below real time while the loaded P16 is travelling: a
