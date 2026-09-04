@@ -2873,7 +2873,10 @@ def _local_gate_digests_from_report(
             digests[gate] = item
     expected_gates = _local_gate_ids(context)
     if set(digests) != expected_gates:
-        raise OrchestrationError("orchestration report does not retain exactly 24 local gate digests")
+        raise OrchestrationError(
+            "orchestration report does not retain exactly "
+            f"{len(expected_gates)} local gate digests"
+        )
     recorded = report.get("local_gate_digests")
     if recorded is not None and not _strict_json_equal(recorded, digests):
         raise OrchestrationError("orchestration report local gate digest index drifted")

@@ -391,6 +391,20 @@ def test_gazebo_panel_renders_live_cleaning_metrics_and_map() -> None:
         assert layer in qml
 
 
+def test_gazebo_panel_resource_uses_a_configured_absolute_source_path() -> None:
+    cmake = read("starter_ws/src/sanitation_gazebo_control/CMakeLists.txt")
+    qrc_template = read(
+        "starter_ws/src/sanitation_gazebo_control/SanitationMissionControl.qrc.in"
+    )
+    assert "${CMAKE_CURRENT_SOURCE_DIR}/SanitationMissionControl.qml" in cmake
+    assert "configure_file(" in cmake
+    assert "${CMAKE_CURRENT_BINARY_DIR}/SanitationMissionControl.qrc" in cmake
+    assert (
+        '<file alias="SanitationMissionControl.qml">'
+        "@SANITATION_MISSION_CONTROL_QML@</file>"
+    ) in qrc_template
+
+
 def test_gazebo_panel_uses_the_documented_semantic_path_palette() -> None:
     qml = read("starter_ws/src/sanitation_gazebo_control/SanitationMissionControl.qml")
     visualizer = read(

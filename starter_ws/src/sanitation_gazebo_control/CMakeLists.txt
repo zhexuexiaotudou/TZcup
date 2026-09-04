@@ -28,7 +28,18 @@ find_package(gz-sim8 REQUIRED)
 find_package(gz-transport13 REQUIRED)
 find_package(gz-msgs10 REQUIRED)
 
-qt5_add_resources(control_resources_RCC SanitationMissionControl.qrc)
+set(SANITATION_MISSION_CONTROL_QML
+  "${CMAKE_CURRENT_SOURCE_DIR}/SanitationMissionControl.qml"
+)
+configure_file(
+  SanitationMissionControl.qrc.in
+  "${CMAKE_CURRENT_BINARY_DIR}/SanitationMissionControl.qrc"
+  @ONLY
+)
+qt5_add_resources(
+  control_resources_RCC
+  "${CMAKE_CURRENT_BINARY_DIR}/SanitationMissionControl.qrc"
+)
 
 add_library(SanitationMissionControl SHARED
   include/SanitationMissionControl.hh
