@@ -236,7 +236,12 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument("material", default_value="PET"),
             DeclareLaunchArgument("cube_name", default_value="material_cube"),
             DeclareLaunchArgument("use_sim_time", default_value="true"),
-            DeclareLaunchArgument("physics_engine", default_value="gz-physics-dartsim-plugin"),
+            DeclareLaunchArgument(
+                "physics_engine",
+                default_value="gz-physics-dartsim-plugin",
+                choices=["gz-physics-dartsim-plugin"],
+                description="Validated whole-vehicle backend; Bullet is rejected for this articulated model.",
+            ),
             DeclareLaunchArgument("spawn_single_cube", default_value="true"),
             DeclareLaunchArgument(
                 "dry_accounting_mode", default_value="physical_resident"

@@ -77,7 +77,7 @@ def test_plant_preserves_dissipative_generalized_effort_sign() -> None:
         "const double gazeboJointForceNm = output.wheel_torque_nm[index];"
         in plant
     )
-    assert "tau * omega <= 0" in plant
+    assert "const double gazeboJointForceNm = -output.wheel_torque_nm[index];" not in plant
 
 
 def test_local_ekf_is_selected_odom_and_odom_tf_authority() -> None:

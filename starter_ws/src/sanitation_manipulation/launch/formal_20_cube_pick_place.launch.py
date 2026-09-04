@@ -72,6 +72,7 @@ def generate_launch_description() -> LaunchDescription:
                 PythonLaunchDescriptionSource(base_launch),
                 launch_arguments={
                     "gui": "false",
+                    "physics_engine": "gz-physics-dartsim-plugin",
                     "spawn_single_cube": "false",
                     # This formal scene retains every deposited cube as an
                     # independent Gazebo rigid body.  Do not permit the

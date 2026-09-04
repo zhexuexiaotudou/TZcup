@@ -284,6 +284,7 @@ def test_20_cube_launch_disables_single_cube_and_spawns_manifest_models():
     assert "condition=IfCondition(spawn_single_cube)" in base_launch
     assert '"dry_accounting_mode", default_value="physical_resident"' in base_launch
     assert '"spawn_single_cube": "false"' in launch
+    assert '"physics_engine": "gz-physics-dartsim-plugin"' in launch
     assert '"dry_accounting_mode": "physical_resident"' in launch
     assert "load_scene_manifest" in launch
     assert '"-name", spec.model_name' in launch

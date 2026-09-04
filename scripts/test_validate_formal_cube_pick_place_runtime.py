@@ -14,7 +14,8 @@ BODYWORK = ROOT / "starter_ws" / "src" / "sanitation_vehicle_description" / "urd
 def test_cube_scene_uses_the_validated_whole_vehicle_physics_backend() -> None:
     launch = LAUNCH.read_text(encoding="utf-8")
     validator = VALIDATOR.read_text(encoding="utf-8")
-    assert 'DeclareLaunchArgument("physics_engine", default_value="gz-physics-dartsim-plugin")' in launch
+    assert 'default_value="gz-physics-dartsim-plugin"' in launch
+    assert 'choices=["gz-physics-dartsim-plugin"]' in launch
     assert '"physics_engine": "gz-physics-dartsim-plugin"' in validator
     assert 'default_value="gz-physics-bullet-featherstone-plugin"' not in launch
 

@@ -169,8 +169,8 @@ public:
     for (std::size_t index = 0; index < kA300WheelCount; ++index) {
       // JointForceCmd and JointVelocity are the effort and velocity of the
       // same generalized coordinate. Preserve the core torque sign so that a
-      // zero-speed command remains dissipative: tau * omega <= 0. An extra
-      // sign inversion turns the speed controller into anti-damping.
+      // settled zero-speed feedback remains dissipative. An extra sign
+      // inversion turns the speed controller into anti-damping.
       const double gazeboJointForceNm = output.wheel_torque_nm[index];
       auto * force =
         ecm.Component<gz::sim::components::JointForceCmd>(this->wheelJoints[index]);
