@@ -23,7 +23,8 @@ DEFAULT_URDF = ROOT / "reports/engineering/formal_competition_vehicle.urdf"
 DEFAULT_LAYOUT = ROOT / "config/high_fidelity_vehicle/formal_vehicle_layout.yaml"
 MESH_ROOT = ROOT / "starter_ws/src/sanitation_vehicle_description/meshes"
 RAY_EDGE_TOLERANCE_M = 1e-9
-COMPACT_FLOAT_DECIMALS = 12
+RAY_HIT_TIE_TOLERANCE_M = 1e-9
+COMPACT_FLOAT_DECIMALS = 11
 
 
 def _portable_evidence_path(path: Path) -> str:
@@ -374,10 +375,11 @@ def _aabb(origin, direction, lower, upper, maximum):
 
 def _nearest(origin, direction, maximum, triangles, owners, bvh, ignored):
     best, best_index = maximum, None
+    candidates = []
     stack = [bvh]
     while stack:
         node = stack.pop()
-        if not _aabb(origin, direction, node.lower, node.upper, best):
+        if not _aabb(origin, direction, node.lower, node.upper, min(maximum, best + RAY_HIT_TIE_TOLERANCE_M)):
             continue
         if node.indices is None:
             stack.extend((node.left, node.right))
@@ -406,11 +408,18 @@ def _nearest(origin, direction, maximum, triangles, owners, bvh, ignored):
             & (v >= -RAY_EDGE_TOLERANCE_M)
             & (u + v <= 1.0 + RAY_EDGE_TOLERANCE_M)
             & (distance > 1e-4)
-            & (distance < best)
+            & (distance < maximum)
+            & (distance <= best + RAY_HIT_TIE_TOLERANCE_M)
         )
         if np.any(valid):
-            local = np.where(valid, distance, np.inf).argmin()
-            best, best_index = float(distance[local]), int(indices[local])
+            for local in np.flatnonzero(valid):
+                candidate_index = int(indices[local])
+                candidate_distance = float(distance[local])
+                candidates.append((candidate_distance, str(owners[candidate_index]), candidate_index))
+                best = min(best, candidate_distance)
+    if candidates:
+        tied = [candidate for candidate in candidates if candidate[0] <= best + RAY_HIT_TIE_TOLERANCE_M]
+        best_index = min(tied, key=lambda candidate: (candidate[1], candidate[2]))[2]
     return best_index, best
 
 

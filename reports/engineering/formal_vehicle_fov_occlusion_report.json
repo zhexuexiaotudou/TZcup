@@ -6,7 +6,7 @@
   "urdf_sha256": "73edb99d1d1ff93052c6d889b11581d4c35ca7b2a7252b8cc1d8bcf37f7d8d47",
   "layout_sha256": "4c5804b917f2226fbf730bf492b2b6113c92bd3f00ee408ee8edb9a3dc3222cc",
   "validator": "scripts/validate_formal_fov_occlusion.py",
-  "validator_sha256": "a08d428b81a37b0c3a559df44de437a5f2898e5f56dfe95c86a50b7ead26cf25",
+  "validator_sha256": "92900a3a79845c7645507129af6ab1cd87664d6e837ed00bd35ab225397d04f2",
   "geometry_triangle_count_by_pose": {
     "transport": 971768,
     "pregrasp": 971768,
@@ -541,9 +541,9 @@
           "clear_fraction": 1.0,
           "occluder_histogram": {},
           "origin_world_m": [
-            0.569531538935,
+            0.56953153894,
             0.0,
-            0.611986908691
+            0.61198690869
           ]
         },
         "pregrasp": {
@@ -554,9 +554,9 @@
           "clear_fraction": 1.0,
           "occluder_histogram": {},
           "origin_world_m": [
-            0.569531538935,
+            0.56953153894,
             0.0,
-            0.611986908691
+            0.61198690869
           ]
         },
         "pick": {
@@ -567,9 +567,9 @@
           "clear_fraction": 1.0,
           "occluder_histogram": {},
           "origin_world_m": [
-            0.569531538935,
+            0.56953153894,
             0.0,
-            0.611986908691
+            0.61198690869
           ]
         },
         "deposit": {
@@ -580,9 +580,9 @@
           "clear_fraction": 1.0,
           "occluder_histogram": {},
           "origin_world_m": [
-            0.569531538935,
+            0.56953153894,
             0.0,
-            0.611986908691
+            0.61198690869
           ]
         }
       },
@@ -595,9 +595,9 @@
           "clear_fraction": 1.0,
           "occluder_histogram": {},
           "origin_world_m": [
-            0.569531538935,
+            0.56953153894,
             0.0,
-            0.611986908691
+            0.61198690869
           ]
         },
         "pregrasp": {
@@ -608,9 +608,9 @@
           "clear_fraction": 1.0,
           "occluder_histogram": {},
           "origin_world_m": [
-            0.569531538935,
+            0.56953153894,
             0.0,
-            0.611986908691
+            0.61198690869
           ]
         },
         "pick": {
@@ -621,9 +621,9 @@
           "clear_fraction": 1.0,
           "occluder_histogram": {},
           "origin_world_m": [
-            0.569531538935,
+            0.56953153894,
             0.0,
-            0.611986908691
+            0.61198690869
           ]
         },
         "deposit": {
@@ -634,9 +634,9 @@
           "clear_fraction": 1.0,
           "occluder_histogram": {},
           "origin_world_m": [
-            0.569531538935,
+            0.56953153894,
             0.0,
-            0.611986908691
+            0.61198690869
           ]
         }
       },
@@ -1062,9 +1062,9 @@
             "robotiq_85_left_finger_tip_link": 12
           },
           "origin_world_m": [
-            0.440000002412,
-            -0.949999997956,
-            0.425000001529
+            0.44000000241,
+            -0.94999999796,
+            0.42500000153
           ]
         }
       },
@@ -1076,9 +1076,9 @@
           "blocked_ray_count": 1531,
           "clear_fraction": 0.142296919,
           "occluder_histogram": {
-            "bodywork_front_cowl_link": 932,
+            "bodywork_front_cowl_link": 927,
             "bodywork_lower_tub_link": 360,
-            "bodywork_compute_service_door_link": 87,
+            "bodywork_compute_service_door_link": 92,
             "bodywork_rear_shell_link": 59,
             "robotiq_85_left_finger_link": 41,
             "bodywork_brush_guards_link": 15,
@@ -1092,9 +1092,9 @@
             "central_roller_motor_stator_link": 2
           },
           "origin_world_m": [
-            0.341936724907,
-            -0.576289539313,
-            0.586045484072
+            0.34193672491,
+            -0.57628953931,
+            0.58604548407
           ]
         },
         "pregrasp": {
@@ -1108,9 +1108,9 @@
             "robotiq_85_left_finger_tip_link": 12
           },
           "origin_world_m": [
-            0.440000002412,
-            -0.949999997956,
-            0.425000001529
+            0.44000000241,
+            -0.94999999796,
+            0.42500000153
           ]
         },
         "pick": {
@@ -1124,9 +1124,9 @@
             "robotiq_85_left_finger_tip_link": 10
           },
           "origin_world_m": [
-            0.440000002747,
+            0.44000000275,
             -0.95000000176,
-            0.165000002537
+            0.16500000254
           ]
         },
         "deposit": {
@@ -1157,9 +1157,9 @@
             "safety_relay_link": 1
           },
           "origin_world_m": [
-            -0.094972250943,
+            -0.09497225094,
             0.12150977997,
-            1.234801743415
+            1.23480174341
           ]
         }
       },
@@ -1236,11 +1236,11 @@
           0.611987
         ],
         "measured_position_m": [
-          0.569531538935,
+          0.56953153894,
           0.0,
-          0.611986908691
+          0.61198690869
         ],
-        "position_error_m": 4.70019e-07,
+        "position_error_m": 4.7002e-07,
         "position_tolerance_m": 0.005,
         "expected_forward_xyz": [
           0.906308,
@@ -1248,11 +1248,11 @@
           -0.422618
         ],
         "measured_forward_xyz": [
-          0.906307787036,
+          0.90630778704,
           0.0,
-          -0.422618261742
+          -0.42261826174
         ],
-        "direction_error_rad": 3.27148e-07,
+        "direction_error_rad": 3.2715e-07,
         "direction_tolerance_rad": 0.02,
         "passed": true
       },
@@ -1277,11 +1277,11 @@
           -0.087
         ],
         "measured_forward_xyz": [
-          -0.902700348089,
-          0.421446140429,
+          -0.90270034809,
+          0.42144614043,
           -0.08669043936
         ],
-        "direction_error_rad": 1.4325047e-05,
+        "direction_error_rad": 1.432505e-05,
         "direction_tolerance_rad": 0.02,
         "passed": true
       },
@@ -1306,11 +1306,11 @@
           -0.087
         ],
         "measured_forward_xyz": [
-          -0.902871947764,
-          -0.421078393728,
+          -0.90287194776,
+          -0.42107839373,
           -0.08669043936
         ],
-        "direction_error_rad": 0.000417930367,
+        "direction_error_rad": 0.00041793037,
         "direction_tolerance_rad": 0.02,
         "passed": true
       },

@@ -82,11 +82,11 @@ evidence_paths:
   fov_occlusion:
     path: reports/engineering/formal_vehicle_fov_occlusion_report.json
     state: current_static_analysis
-    sha256: a7c46b2fbbe85b6380c2677759c7fdc7f523278ecf9c6376617f3b8deaf111f0
+    sha256: 6a9f4a35610af4a3930ce2959459de3c30f592bd5d91599ce7e14be490ff4ab8
     urdf_sha256: 73edb99d1d1ff93052c6d889b11581d4c35ca7b2a7252b8cc1d8bcf37f7d8d47
     layout_sha256: 4c5804b917f2226fbf730bf492b2b6113c92bd3f00ee408ee8edb9a3dc3222cc
     validator_path: scripts/validate_formal_fov_occlusion.py
-    validator_sha256: a08d428b81a37b0c3a559df44de437a5f2898e5f56dfe95c86a50b7ead26cf25
+    validator_sha256: 92900a3a79845c7645507129af6ab1cd87664d6e837ed00bd35ab225397d04f2
   inertia_swept_volume:
     path: reports/engineering/formal_vehicle_inertia_and_swept_volume_report.json
     state: current_static_analysis

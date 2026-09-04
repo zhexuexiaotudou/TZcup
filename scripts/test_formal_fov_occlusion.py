@@ -51,6 +51,24 @@ def test_ray_edge_noise_is_conservatively_blocked_but_bounded() -> None:
     assert hit is None
 
 
+def test_near_equal_hits_use_stable_owner_but_real_nearer_hit_wins() -> None:
+    triangle = np.asarray([(0.0, 0.0, 0.0), (1.0, 0.0, 0.0), (0.0, 1.0, 0.0)])
+    origin = np.asarray((0.25, 0.25, 0.0))
+    direction = np.asarray((0.0, 0.0, 1.0))
+
+    for order in (("zeta", 1.0), ("alpha", 1.0 + 5e-10)), (("alpha", 1.0 + 5e-10), ("zeta", 1.0)):
+        triangles = np.asarray([triangle + (0.0, 0.0, height) for _, height in order])
+        owners = np.asarray([owner for owner, _ in order], dtype=object)
+        hit, distance = _nearest(origin, direction, 2.0, triangles, owners, _build_bvh(triangles), set())
+        assert owners[hit] == "alpha"
+        assert distance == pytest.approx(1.0)
+
+    triangles = np.asarray([triangle + (0.0, 0.0, 1.0), triangle + (0.0, 0.0, 1.0 + 2e-9)])
+    owners = np.asarray(["zeta", "alpha"], dtype=object)
+    hit, _ = _nearest(origin, direction, 2.0, triangles, owners, _build_bvh(triangles), set())
+    assert owners[hit] == "zeta"
+
+
 def test_stl_parser_returns_digest_from_the_same_read(tmp_path: Path) -> None:
     raw = b"""solid one\nfacet normal 0 0 1\nouter loop\nvertex 0 0 0\nvertex 1 0 0\nvertex 0 1 0\nendloop\nendfacet\nendsolid one\n"""
     path = tmp_path / "one_triangle.stl"
