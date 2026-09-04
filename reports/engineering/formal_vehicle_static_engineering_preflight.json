@@ -4552,7 +4552,7 @@
             },
             {
               "evidence": {
-                "line": 287,
+                "line": 290,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "a300_drivetrain_bridge"
               },
@@ -4818,7 +4818,7 @@
             },
             {
               "evidence": {
-                "line": 753,
+                "line": 767,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "water_recovery/tank_mass_kg"
               },
@@ -4852,7 +4852,7 @@
             },
             {
               "evidence": {
-                "line": 738,
+                "line": 752,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan"
               },
@@ -4982,7 +4982,7 @@
             },
             {
               "evidence": {
-                "line": 739,
+                "line": 753,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "/sensors/gnss/fix@sensor_msgs/msg/NavSatFix"
               },
@@ -5016,7 +5016,7 @@
             },
             {
               "evidence": {
-                "line": 194,
+                "line": 197,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "joint_state_broadcaster"
               },

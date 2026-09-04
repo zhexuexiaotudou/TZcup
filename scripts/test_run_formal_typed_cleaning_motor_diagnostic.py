@@ -95,6 +95,7 @@ def test_typed_runner_has_single_native_clock_owner_and_bounded_optional_scope()
         and node.args[0].value
         in {
             "start_product_bridge",
+            "start_product_support_parameter_bridges",
             "start_a300_transport_bridge",
             "start_cleaning_actuator_scalar_bridge",
             "start_localization",
@@ -102,11 +103,13 @@ def test_typed_runner_has_single_native_clock_owner_and_bounded_optional_scope()
     }
     assert names == {
         "start_product_bridge": "true",
+        "start_product_support_parameter_bridges": "true",
         "start_a300_transport_bridge": "true",
         "start_cleaning_actuator_scalar_bridge": "true",
         "start_localization": "true",
     }
     assert "start_product_bridge:=false" in runner
+    assert "start_product_support_parameter_bridges:=false" in runner
     assert "start_a300_transport_bridge:=false" in runner
     assert "start_cleaning_actuator_scalar_bridge:=false" in runner
     assert "start_localization:=false" in runner
@@ -135,6 +138,33 @@ def test_typed_runner_has_single_native_clock_owner_and_bounded_optional_scope()
         assert isinstance(condition, ast.Call)
         assert isinstance(condition.func, ast.Name) and condition.func.id == "IfCondition"
         assert isinstance(condition.args[0], ast.Name) and condition.args[0].id == switch
+
+    for bridge in (
+        "formal_auxiliary_bridge",
+        "charge_receptacle_contact_bridge",
+        "wastewater_drain_contact_bridge",
+        "front_bumper_contact_bridge",
+        "rear_bumper_contact_bridge",
+    ):
+        node = next(
+            node
+            for node in ast.walk(launch)
+            if isinstance(node, ast.Call)
+            and isinstance(node.func, ast.Name)
+            and node.func.id == "Node"
+            and any(
+                key.arg == "name"
+                and isinstance(key.value, ast.Constant)
+                and key.value.value == bridge
+                for key in node.keywords
+            )
+        )
+        condition = next(key.value for key in node.keywords if key.arg == "condition")
+        assert isinstance(condition, ast.Call)
+        assert isinstance(condition.func, ast.Name)
+        assert condition.func.id == "IfCondition"
+        assert isinstance(condition.args[0], ast.Name)
+        assert condition.args[0].id == "start_product_support_parameter_bridges"
 
     water_evaluator = next(
         node

@@ -318,7 +318,6 @@ def generate_launch_description() -> LaunchDescription:
                 package="ros_gz_bridge",
                 executable="parameter_bridge",
                 arguments=[
-                    "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock",
                     "/world/formal_cube_manipulation/pose/info@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V",
                     "/manipulation/grasp/detach@std_msgs/msg/Empty]gz.msgs.Empty",
                     "/manipulation/grasp/attach@std_msgs/msg/Empty]gz.msgs.Empty",

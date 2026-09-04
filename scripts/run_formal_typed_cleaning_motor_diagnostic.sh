@@ -117,6 +117,7 @@ formal_runtime_memory_preflight "${output_dir}/windows_memory_preflight"
   start_simulation_safety_inputs:=true start_power_system_simulators:=true \
   water_evaluation_interfaces:=false \
   start_product_bridge:=false \
+  start_product_support_parameter_bridges:=false \
   start_a300_transport_bridge:=false \
   start_cleaning_actuator_scalar_bridge:=false \
   start_localization:=false \

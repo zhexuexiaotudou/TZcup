@@ -63,6 +63,9 @@ def generate_launch_description() -> LaunchDescription:
     )
     visual_acceptance_runtime = LaunchConfiguration("visual_acceptance_runtime")
     start_product_bridge = LaunchConfiguration("start_product_bridge")
+    start_product_support_parameter_bridges = LaunchConfiguration(
+        "start_product_support_parameter_bridges"
+    )
     start_a300_transport_bridge = LaunchConfiguration(
         "start_a300_transport_bridge"
     )
@@ -334,6 +337,7 @@ def generate_launch_description() -> LaunchDescription:
             "/formal_vehicle/lighting/warning_lights_applied@std_msgs/msg/Bool[gz.msgs.Boolean",
         ],
         output="screen",
+        condition=IfCondition(start_product_support_parameter_bridges),
     )
     service_door_evaluation_bridge = Node(
         package="ros_gz_bridge",
@@ -433,6 +437,7 @@ def generate_launch_description() -> LaunchDescription:
             )
         ],
         output="screen",
+        condition=IfCondition(start_product_support_parameter_bridges),
     )
     wastewater_drain_contact_bridge = Node(
         package="ros_gz_bridge",
@@ -448,6 +453,7 @@ def generate_launch_description() -> LaunchDescription:
             )
         ],
         output="screen",
+        condition=IfCondition(start_product_support_parameter_bridges),
     )
 
     # Ground-water truth and episode reset commands belong to the evaluator,
@@ -588,6 +594,14 @@ def generate_launch_description() -> LaunchDescription:
                 "start_product_bridge",
                 default_value="true",
                 description="Start the default product ROS-Gazebo parameter bridge.",
+            ),
+            DeclareLaunchArgument(
+                "start_product_support_parameter_bridges",
+                default_value="true",
+                description=(
+                    "Start auxiliary, service-contact, and bumper parameter bridges. "
+                    "Bounded native-transport diagnostics may disable them."
+                ),
             ),
             DeclareLaunchArgument(
                 "start_a300_transport_bridge",
@@ -860,6 +874,7 @@ def generate_launch_description() -> LaunchDescription:
                     )
                 ],
                 output="screen",
+                condition=IfCondition(start_product_support_parameter_bridges),
             ),
             Node(
                 package="ros_gz_bridge",
@@ -875,6 +890,7 @@ def generate_launch_description() -> LaunchDescription:
                     )
                 ],
                 output="screen",
+                condition=IfCondition(start_product_support_parameter_bridges),
             ),
             simulation_safety_inputs,
             a300_bms,

@@ -100,6 +100,14 @@ def test_physical_grasp_vehicle_launch_has_one_formal_robot_description_writer()
     assert "formal_robot_description_publisher.py" not in grasp_launch
 
 
+def test_physical_grasp_uses_the_native_bridge_as_sole_clock_writer():
+    cube_launch = (PACKAGE / "launch" / "formal_cube_pick_place.launch.py").read_text(
+        encoding="utf-8"
+    )
+    assert "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock" not in cube_launch
+    assert 'executable="cleaning_actuator_vector_bridge"' in cube_launch
+
+
 def test_product_grasp_uses_selected_localization_odometry_not_removed_controller():
     config = (PACKAGE / "config" / "formal_grasp_executor.yaml").read_text(
         encoding="utf-8"
