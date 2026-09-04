@@ -260,14 +260,16 @@ def test_water_recovery_requires_live_blade_and_brush_ground_contacts() -> None:
     assert "def begin_recovery_contact_window" in validator
     assert "def recovery_ground_contact_evidence" in validator
     assert "ground_contact_observed" in validator
-    for topic in (
-        "/cleaning/squeegee/contact",
-        "/cleaning/left_side_brush/contact",
-        "/cleaning/right_side_brush/contact",
-        "/cleaning/central_roller/contact",
-    ):
+    contact_sources = {
+        "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/squeegee_link/sensor/squeegee_blade_ground_contact/contact": "/cleaning/squeegee/contact",
+        "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/left_side_brush_link/sensor/left_side_brush_ground_contact/contact": "/cleaning/left_side_brush/contact",
+        "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/right_side_brush_link/sensor/right_side_brush_ground_contact/contact": "/cleaning/right_side_brush/contact",
+        "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/central_roller_link/sensor/central_roller_ground_contact/contact": "/cleaning/central_roller/contact",
+    }
+    for source, topic in contact_sources.items():
         assert topic in validator
-        assert f"{topic}@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts" in launch
+        assert f"{source}@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts" in launch
+        assert f'"{source}",\n                "{topic}",' in launch
     for sensor, collision in (
         ("${side}_side_brush_ground_contact", "${side}_side_brush_link_collision"),
         ("central_roller_ground_contact", "central_roller_link_collision"),

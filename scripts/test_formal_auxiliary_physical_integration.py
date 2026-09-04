@@ -164,11 +164,19 @@ def test_squeegee_passive_state_contact_and_live_telemetry_are_bridged() -> None
     assert '<xacro:hf_state_only_joint name="squeegee_pitch_joint"/>' in control
     assert 'hf_position_joint name="squeegee_float_joint"' not in control
     assert 'hf_position_joint name="squeegee_pitch_joint"' not in control
+    squeegee_contact_source = (
+        "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/"
+        "link/squeegee_link/sensor/squeegee_blade_ground_contact/contact"
+    )
     for topic in (
-        "/cleaning/squeegee/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
+        f"{squeegee_contact_source}@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
         "/squeegee_compliance/float_position_m@std_msgs/msg/Float64[gz.msgs.Double",
         "/squeegee_compliance/float_force_n@std_msgs/msg/Float64[gz.msgs.Double",
         "/squeegee_compliance/pitch_position_rad@std_msgs/msg/Float64[gz.msgs.Double",
         "/squeegee_compliance/pitch_torque_nm@std_msgs/msg/Float64[gz.msgs.Double",
     ):
         assert topic in launch
+    assert (
+        f'"{squeegee_contact_source}",\n                "/cleaning/squeegee/contact",'
+        in launch
+    )

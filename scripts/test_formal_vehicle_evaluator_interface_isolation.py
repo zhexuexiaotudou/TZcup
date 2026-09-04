@@ -316,8 +316,12 @@ def test_squeegee_compliance_bridge_is_read_only_opt_in_and_default_off() -> Non
     entries = _arguments(bridge)
     assert len(entries) == 7
     assert all(_direction(entry) == "GZ_TO_ROS" for entry in entries)
+    scoped_contact = (
+        "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/"
+        "link/squeegee_link/sensor/squeegee_blade_ground_contact/contact"
+    )
     assert {_topic(entry) for entry in entries} == {
-        "/cleaning/squeegee/contact",
+        scoped_contact,
         "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_position_m",
         "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_velocity_m_s",
         "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_force_n",
@@ -325,3 +329,24 @@ def test_squeegee_compliance_bridge_is_read_only_opt_in_and_default_off() -> Non
         "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_velocity_rad_s",
         "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_torque_nm",
     }
+    assert _remapping_pairs(bridge) == [(scoped_contact, "/cleaning/squeegee/contact")]
+
+
+def test_brush_contact_bridge_uses_scoped_gz_sources_and_short_ros_contract() -> None:
+    tree = ast.parse(LAUNCH.read_text(encoding="utf-8"), filename=str(LAUNCH))
+    bridge = next(
+        call
+        for call in _bridge_calls(tree)
+        if _constant_string(_keyword(call, "name")) == "formal_brush_contact_evaluation_bridge"
+    )
+    entries = _arguments(bridge)
+    assert len(entries) == 3
+    assert all(_direction(entry) == "GZ_TO_ROS" for entry in entries)
+    root = "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link"
+    expected = {
+        f"{root}/left_side_brush_link/sensor/left_side_brush_ground_contact/contact": "/cleaning/left_side_brush/contact",
+        f"{root}/right_side_brush_link/sensor/right_side_brush_ground_contact/contact": "/cleaning/right_side_brush/contact",
+        f"{root}/central_roller_link/sensor/central_roller_ground_contact/contact": "/cleaning/central_roller/contact",
+    }
+    assert {_topic(entry) for entry in entries} == set(expected)
+    assert _remapping_pairs(bridge) == list(expected.items())

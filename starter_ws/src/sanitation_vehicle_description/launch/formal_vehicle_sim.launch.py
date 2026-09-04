@@ -373,7 +373,13 @@ def generate_launch_description() -> LaunchDescription:
             "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_position_rad@std_msgs/msg/Float64[gz.msgs.Double",
             "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_velocity_rad_s@std_msgs/msg/Float64[gz.msgs.Double",
             "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_torque_nm@std_msgs/msg/Float64[gz.msgs.Double",
-            "/cleaning/squeegee/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
+            "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/squeegee_link/sensor/squeegee_blade_ground_contact/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
+        ],
+        remappings=[
+            (
+                "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/squeegee_link/sensor/squeegee_blade_ground_contact/contact",
+                "/cleaning/squeegee/contact",
+            ),
         ],
         output="screen",
         condition=IfCondition(squeegee_evaluation_interfaces),
@@ -383,9 +389,23 @@ def generate_launch_description() -> LaunchDescription:
         executable="parameter_bridge",
         name="formal_brush_contact_evaluation_bridge",
         arguments=[
-            "/cleaning/left_side_brush/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
-            "/cleaning/right_side_brush/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
-            "/cleaning/central_roller/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
+            "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/left_side_brush_link/sensor/left_side_brush_ground_contact/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
+            "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/right_side_brush_link/sensor/right_side_brush_ground_contact/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
+            "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/central_roller_link/sensor/central_roller_ground_contact/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
+        ],
+        remappings=[
+            (
+                "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/left_side_brush_link/sensor/left_side_brush_ground_contact/contact",
+                "/cleaning/left_side_brush/contact",
+            ),
+            (
+                "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/right_side_brush_link/sensor/right_side_brush_ground_contact/contact",
+                "/cleaning/right_side_brush/contact",
+            ),
+            (
+                "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/central_roller_link/sensor/central_roller_ground_contact/contact",
+                "/cleaning/central_roller/contact",
+            ),
         ],
         output="screen",
         condition=IfCondition(squeegee_evaluation_interfaces),
