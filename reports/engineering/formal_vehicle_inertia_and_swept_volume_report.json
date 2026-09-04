@@ -1968,7 +1968,7 @@
     "layout_sha256": "4c5804b917f2226fbf730bf492b2b6113c92bd3f00ee408ee8edb9a3dc3222cc",
     "load_source": "formal Xacro payload reserve links and final capacity clamps",
     "scanner": "scripts/scan_formal_vehicle_inertia_and_swept_volume.py",
-    "scanner_sha256": "a1da3d5d4fb7a2e79a0efbb0bfc10028d09e57ea6009df07de49bbf7b1733e0f",
+    "scanner_sha256": "6b1e611094578bd51f190c32f9d085ae479127a1fbb043b0ab5bffc5f8dd6dcf",
     "support_polygon_source": "final URDF wheel-joint centres"
   },
   "joint_space": {

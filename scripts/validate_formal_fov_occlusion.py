@@ -904,7 +904,11 @@ def main() -> int:
     report = validate(args.urdf, args.layout)
     output_report = compact_report(report) if args.compact else report
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(json.dumps(output_report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    args.output.write_text(
+        json.dumps(output_report, ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
+        newline="\n",
+    )
     print(json.dumps({"status": report["status"], "sensor_results": {key: value["measured_clear_fraction"] for key, value in report["sensor_results"].items()}}, ensure_ascii=False))
     return 0 if report["all_minimum_clear_fractions_passed"] else 2
 

@@ -6,7 +6,7 @@
   "urdf_sha256": "73edb99d1d1ff93052c6d889b11581d4c35ca7b2a7252b8cc1d8bcf37f7d8d47",
   "layout_sha256": "4c5804b917f2226fbf730bf492b2b6113c92bd3f00ee408ee8edb9a3dc3222cc",
   "validator": "scripts/validate_formal_fov_occlusion.py",
-  "validator_sha256": "8eb5f8461ebe8909785b0c1b5defbb04bbda76f3a2f0ea6488a78aab3529c54c",
+  "validator_sha256": "24dc3a4fdc10ee607e16756633517d41525b7c81fadf920df0c6edf326cb4bba",
   "geometry_triangle_count_by_pose": {
     "transport": 971768,
     "pregrasp": 971768,
