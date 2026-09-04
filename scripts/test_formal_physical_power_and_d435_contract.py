@@ -146,6 +146,12 @@ def test_main_power_requires_measured_joints_and_has_no_state_topic_bypass() -> 
         "contactorPermitted = isolatorClosed && !latched",
         "this->safetyPowerAvailable.load()",
         "contactorPosition >= this->contactorClosedThreshold",
+        "#include <gz/sim/components/JointVelocityReset.hh>",
+        "gz::sim::components::JointVelocityReset(zeroVelocity)",
+        "velocityReset->Data() = zeroVelocity",
+        "this->contactorMaximumForce, 0.08, true",
+        "this->plungerMaximumForce, 0.02, false",
+        "this->isolatorMaximumTorque, 1.2, false",
         "this->Publish(this->isolatorStatePublisher, isolatorClosed)",
         "this->Publish(this->contactorStatePublisher, contactorClosed)",
     ):

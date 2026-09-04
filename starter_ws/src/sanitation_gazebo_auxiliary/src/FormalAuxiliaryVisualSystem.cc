@@ -33,6 +33,7 @@
 #include <gz/sim/components/JointPosition.hh>
 #include <gz/sim/components/JointPositionReset.hh>
 #include <gz/sim/components/JointVelocity.hh>
+#include <gz/sim/components/JointVelocityReset.hh>
 #include <gz/sim/components/Name.hh>
 #include <gz/sim/components/ParentEntity.hh>
 #include <gz/sim/components/Pose.hh>
@@ -358,7 +359,7 @@ class FormalAuxiliaryVisualSystem final:
           commandedPressed ? this->plungerTravel : this->plungerReleasedClearance,
           position->Data().front(), this->plungerTravel,
           this->plungerPositionGain, this->plungerDampingGain,
-          this->plungerMaximumForce, 0.02,
+          this->plungerMaximumForce, 0.02, false,
           std::chrono::duration<double>(_info.dt).count());
     }
     // Loss of joint feedback is an electrical open-circuit equivalent and
@@ -386,7 +387,7 @@ class FormalAuxiliaryVisualSystem final:
           this->isolatorOpenClearance,
           isolatorPosition, this->isolatorTravel,
           this->isolatorPositionGain, this->isolatorDampingGain,
-          this->isolatorMaximumTorque, 1.2,
+          this->isolatorMaximumTorque, 1.2, false,
           std::chrono::duration<double>(_info.dt).count());
     }
     const bool isolatorClosed = isolatorPositionValid &&
@@ -405,7 +406,7 @@ class FormalAuxiliaryVisualSystem final:
           this->contactorOpenClearance,
           contactorPosition, this->contactorTravel,
           this->contactorPositionGain, this->contactorDampingGain,
-          this->contactorMaximumForce, 0.08,
+          this->contactorMaximumForce, 0.08, true,
           std::chrono::duration<double>(_info.dt).count());
     }
     const bool contactorClosed = contactorPermitted &&
@@ -487,6 +488,7 @@ class FormalAuxiliaryVisualSystem final:
       const double _dampingGain,
       const double _maximumForce,
       const double _maximumVelocity,
+      const bool _resetResidualVelocity,
       const double _stepSeconds)
   {
     const double measuredVelocity = this->JointScalar(_ecm, _joint, true);
@@ -519,6 +521,27 @@ class FormalAuxiliaryVisualSystem final:
     else if (component->Data() != command)
     {
       component->Data() = command;
+    }
+    if (_resetResidualVelocity)
+    {
+      // PositionReset alone leaves DART's previous velocity intact.  That
+      // stale velocity can pull the state-only contactor back across its
+      // measured electrical threshold after the bounded position step.  Only
+      // the contactor opts into velocity reset: the emergency-stop plunger
+      // must retain collision-driven motion for physical actuation.
+      const std::vector<double> zeroVelocity{0.0};
+      auto *velocityReset =
+          _ecm.Component<gz::sim::components::JointVelocityReset>(_joint);
+      if (velocityReset == nullptr)
+      {
+        _ecm.CreateComponent(
+            _joint,
+            gz::sim::components::JointVelocityReset(zeroVelocity));
+      }
+      else if (velocityReset->Data() != zeroVelocity)
+      {
+        velocityReset->Data() = zeroVelocity;
+      }
     }
   }
 
