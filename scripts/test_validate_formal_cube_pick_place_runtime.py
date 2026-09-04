@@ -75,6 +75,30 @@ def test_released_pet_cube_is_hard_gated_by_bridged_dry_bin_instrumentation() ->
     assert "dry_bin_bridge_pid" in runner
 
 
+def test_cube_probe_waits_for_real_safety_permit_before_motion() -> None:
+    source = VALIDATOR.read_text(encoding="utf-8")
+    for topic in (
+        "/formal_vehicle/simulation/command/emergency_stop",
+        "/formal_vehicle/simulation/command/emergency_stop_reset",
+        "/formal_vehicle/simulation/command/main_power",
+        "/cmd_vel_gate",
+    ):
+        assert topic in source
+    assert 'SAFETY_PERMIT_TOPIC = "/safety/actuators_enabled"' in source
+    assert "self.create_subscription(Bool, SAFETY_PERMIT_TOPIC" in source
+    assert "lambda: node.safety_permitted" in source
+    assert source.index("lambda: node.safety_permitted") < source.index("node.command_detach(initialization=True)")
+    assert 'self.create_publisher(Bool, "/safety/actuators_enabled"' not in source
+    assert "wrapped.status != GoalStatus.STATUS_SUCCEEDED" in source
+    assert "keepalive: Callable[[], None] | None = None" in source
+    assert "process.communicate(timeout=min(0.05, remaining))" in source
+    assert "except BaseException:" in source
+    assert "if process.poll() is None:" in source
+    assert "rclpy.spin_once(self, timeout_sec=0.0)" in source
+    assert source.count("keepalive=node.pump_operator_controls") == 7
+    assert "keepalive=self.pump_operator_controls" in source
+
+
 def test_stale_single_cube_canonical_artifact_is_superseded_before_preflight() -> None:
     runner = RUNNER.read_text(encoding="utf-8")
     supersede = 'mv -- "${output}" "${output}.superseded.$(date -u +%Y%m%dT%H%M%SZ).$$"'

@@ -12,7 +12,7 @@ import subprocess
 import tempfile
 import time
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 import rclpy
 from ament_index_python.packages import get_package_share_directory
@@ -20,6 +20,7 @@ from action_msgs.msg import GoalStatus
 from builtin_interfaces.msg import Duration
 from control_msgs.action import FollowJointTrajectory
 from control_msgs.msg import JointTolerance
+from geometry_msgs.msg import Twist
 from rclpy.action import ActionClient
 from rclpy.node import Node
 from rclpy.parameter import Parameter
@@ -59,6 +60,7 @@ CUBE_INITIAL = (0.300, -0.950, 0.017)
 BIN_FLOOR_SUPPORT_Z_M = 0.469
 BIN_FLOOR_SUPPORT_TOLERANCE_M = 0.020
 DRY_BIN_STATUS_TOPIC = "/model/tzcup_formal_sanitation_vehicle/dry_bin/status_json"
+SAFETY_PERMIT_TOPIC = "/safety/actuators_enabled"
 DRY_BIN_MASS_TOLERANCE_KG = 1e-5
 BIN_SUPPORT_COLLISION_TOKENS = (
     "dry_floor_collision",
@@ -101,17 +103,45 @@ def _scalar(block: str, field: str, default: float = 0.0) -> float:
     return float(match.group(1)) if match else default
 
 
-def read_gazebo_poses(*names: str) -> dict[str, dict[str, float]]:
-    result = subprocess.run(
-        [_gz_executable(), "topic", "-e", "-t", f"/world/{WORLD}/pose/info", "-n", "1"],
-        check=True,
-        capture_output=True,
+def read_gazebo_poses(
+    *names: str,
+    keepalive: Callable[[], None] | None = None,
+) -> dict[str, dict[str, float]]:
+    command = [_gz_executable(), "topic", "-e", "-t", f"/world/{WORLD}/pose/info", "-n", "1"]
+    process = subprocess.Popen(
+        command,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
         text=True,
-        timeout=10.0,
     )
+    try:
+        if keepalive is not None:
+            keepalive()
+        deadline = time.monotonic() + 10.0
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0.0:
+                process.kill()
+                stdout, stderr = process.communicate()
+                raise subprocess.TimeoutExpired(command, 10.0, output=stdout, stderr=stderr)
+            try:
+                stdout, stderr = process.communicate(timeout=min(0.05, remaining))
+                break
+            except subprocess.TimeoutExpired:
+                if keepalive is not None:
+                    keepalive()
+    except BaseException:
+        if process.poll() is None:
+            process.kill()
+            process.communicate()
+        raise
+    if keepalive is not None:
+        keepalive()
+    if process.returncode:
+        raise subprocess.CalledProcessError(process.returncode, command, stdout, stderr)
     poses: dict[str, dict[str, float]] = {}
     for name in names:
-        block = _pose_block(result.stdout, name)
+        block = _pose_block(stdout, name)
         position_match = re.search(r"position\s*\{(?P<body>.*?)\}", block, re.DOTALL)
         if position_match is None:
             raise RuntimeError(f"pose for {name} has no position")
@@ -196,6 +226,16 @@ class PickPlaceProbe(Node):
         self.arm = ActionClient(self, FollowJointTrajectory, "/arm_controller/follow_joint_trajectory")
         self.gripper = ActionClient(self, FollowJointTrajectory, "/gripper_controller/follow_joint_trajectory")
         self.storage = ActionClient(self, FollowJointTrajectory, "/storage_controller/follow_joint_trajectory")
+        self.estop_command = self.create_publisher(
+            Bool, "/formal_vehicle/simulation/command/emergency_stop", 10
+        )
+        self.estop_reset_command = self.create_publisher(
+            Bool, "/formal_vehicle/simulation/command/emergency_stop_reset", 10
+        )
+        self.main_power_command = self.create_publisher(
+            Bool, "/formal_vehicle/simulation/command/main_power", 10
+        )
+        self.safe_zero_command = self.create_publisher(Twist, "/cmd_vel_gate", 10)
         self.attach = self.create_publisher(Empty, "/manipulation/grasp/attach", 10)
         self.detach = self.create_publisher(Empty, "/manipulation/grasp/detach", 10)
         self.set_pose = self.create_client(SetEntityPose, f"/world/{WORLD}/set_pose")
@@ -206,6 +246,7 @@ class PickPlaceProbe(Node):
         self.create_subscription(Contacts, "/storage/dry_deposit/contact", self._on_chute, 50)
         self.create_subscription(Contacts, "/storage/dry_bin/floor_contact", self._on_floor, 50)
         self.create_subscription(Bool, "/manipulation/grasp/state", self._on_grasp_state, 10)
+        self.create_subscription(Bool, SAFETY_PERMIT_TOPIC, self._on_safety_permit, 10)
         self.create_subscription(String, DRY_BIN_STATUS_TOPIC, self._on_dry_bin_status, 50)
         self.latest: dict[str, float] = {}
         self.samples: list[dict[str, float]] = []
@@ -232,6 +273,26 @@ class PickPlaceProbe(Node):
         self.dry_bin_status: dict[str, Any] | None = None
         self.dry_bin_status_after_release: dict[str, Any] | None = None
         self.dry_bin_status_sample_count = 0
+        self.safety_permitted = False
+        self.safety_permit_event_count = 0
+        self.create_timer(0.05, self._operator_heartbeat)
+
+    def _operator_heartbeat(self) -> None:
+        # These are physical operator controls and a zero vehicle request.  The
+        # whole-vehicle safety manager remains the only permit publisher.
+        self.estop_command.publish(Bool(data=False))
+        self.estop_reset_command.publish(Bool(data=True))
+        self.main_power_command.publish(Bool(data=True))
+        self.safe_zero_command.publish(Twist())
+
+    def pump_operator_controls(self) -> None:
+        """Keep operator inputs fresh while a Gazebo CLI query owns the thread."""
+        self._operator_heartbeat()
+        rclpy.spin_once(self, timeout_sec=0.0)
+
+    def _on_safety_permit(self, message: Bool) -> None:
+        self.safety_permitted = bool(message.data)
+        self.safety_permit_event_count += 1
 
     @staticmethod
     def _message_has_cube(message: Contacts) -> bool:
@@ -344,7 +405,7 @@ class PickPlaceProbe(Node):
 
     def command_attach_after_contact(self) -> dict[str, Any]:
         now = time.monotonic()
-        poses = read_gazebo_poses(CUBE, WRIST)
+        poses = read_gazebo_poses(CUBE, WRIST, keepalive=self.pump_operator_controls)
         cube = poses[CUBE]
         wrist = poses[WRIST]
         horizontal_offset_m = math.hypot(cube["x"] - wrist["x"], cube["y"] - wrist["y"])
@@ -501,6 +562,11 @@ class PickPlaceProbe(Node):
             raise TimeoutError(f"trajectory timed out: {client._action_name}")
         result = wrapped.result
         terminal = {name: self.latest.get(name) for name in joints}
+        if wrapped.status != GoalStatus.STATUS_SUCCEEDED:
+            raise RuntimeError(
+                f"trajectory did not succeed on {client._action_name}: "
+                f"status={wrapped.status}; terminal={terminal}"
+            )
         if result.error_code != FollowJointTrajectory.Result.SUCCESSFUL:
             raise RuntimeError(
                 f"trajectory failed on {client._action_name}: {result.error_code} {result.error_string}; "
@@ -539,6 +605,11 @@ def main() -> int:
             args.timeout,
             f"dry-bin status did not arrive on ROS topic {DRY_BIN_STATUS_TOPIC}",
         )
+        node.wait_until(
+            lambda: node.safety_permitted,
+            args.timeout,
+            f"whole-vehicle actuator permit did not become true on {SAFETY_PERMIT_TOPIC}",
+        )
         baseline_dry_bin_status = validate_dry_bin_status(
             node.dry_bin_status,
             expected_count=0,
@@ -551,21 +622,21 @@ def main() -> int:
         # task_phase_started flips, this verifier exposes no teleport/delete path.
         node.command_detach(initialization=True)
         node.initialize_cube()
-        initial_pose = read_gazebo_poses(CUBE)[CUBE]
+        initial_pose = read_gazebo_poses(CUBE, keepalive=node.pump_operator_controls)[CUBE]
         node.task_phase_started = True
 
         actions = []
         actions.append(node.execute(node.arm, ARM_JOINTS, PREGRASP, 7, args.timeout, 0.10))
         actions.append(node.execute(node.gripper, [GRIPPER_JOINT], [0.0], 3, args.timeout, 0.08))
         actions.append(node.execute(node.arm, ARM_JOINTS, PICK, 7, args.timeout, 0.10))
-        pick_pose = read_gazebo_poses(CUBE, WRIST)
+        pick_pose = read_gazebo_poses(CUBE, WRIST, keepalive=node.pump_operator_controls)
         close_action, grasp_gate = node.close_and_attach(args.timeout)
         actions.append(close_action)
-        attached_pose = read_gazebo_poses(CUBE, WRIST)
+        attached_pose = read_gazebo_poses(CUBE, WRIST, keepalive=node.pump_operator_controls)
         attached_offset_m = distance(attached_pose[CUBE], attached_pose[WRIST])
 
         actions.append(node.execute(node.arm, ARM_JOINTS, PREGRASP, 7, args.timeout, 0.12))
-        lifted_pose = read_gazebo_poses(CUBE, WRIST)
+        lifted_pose = read_gazebo_poses(CUBE, WRIST, keepalive=node.pump_operator_controls)
         lifted_offset_m = distance(lifted_pose[CUBE], lifted_pose[WRIST])
         lift_m = lifted_pose[CUBE]["z"] - attached_pose[CUBE]["z"]
         if lift_m < 0.20 or abs(lifted_offset_m - attached_offset_m) > 0.012:
@@ -576,7 +647,7 @@ def main() -> int:
 
         actions.append(node.execute(node.storage, STORAGE_JOINTS, [1.05], 4, args.timeout, 0.12))
         actions.append(node.execute(node.arm, ARM_JOINTS, DEPOSIT, 12, args.timeout, 0.20))
-        release_pose = read_gazebo_poses(CUBE, WRIST)
+        release_pose = read_gazebo_poses(CUBE, WRIST, keepalive=node.pump_operator_controls)
         release_cube = release_pose[CUBE]
         if not (-0.30 < release_cube["x"] < -0.10 and -0.04 < release_cube["y"] < 0.11 and release_cube["z"] > 1.08):
             raise RuntimeError(f"held cube did not reach the open dry hopper: {release_cube}")
@@ -585,9 +656,9 @@ def main() -> int:
         node.command_detach(initialization=False)
         actions.append(node.execute(node.gripper, [GRIPPER_JOINT], [0.0], 3, args.timeout, 0.50))
         settle_sim_s = node.spin_sim_for(3.0, args.timeout)
-        settled_a = read_gazebo_poses(CUBE)[CUBE]
+        settled_a = read_gazebo_poses(CUBE, keepalive=node.pump_operator_controls)[CUBE]
         stable_window_sim_s = node.spin_sim_for(1.0, args.timeout)
-        settled_b = read_gazebo_poses(CUBE)[CUBE]
+        settled_b = read_gazebo_poses(CUBE, keepalive=node.pump_operator_controls)[CUBE]
         settling_delta_m = distance(settled_a, settled_b)
         total_settled_sim_s = settle_sim_s + stable_window_sim_s
         in_bin = (
@@ -643,6 +714,13 @@ def main() -> int:
             "status": "PHYSICAL_CONTACT_GATED_PICK_LIFT_DEPOSIT_PASSED",
             "passed": True,
             "physics_engine": "gz-physics-bullet-featherstone-plugin",
+            "safety_readiness": {
+                "permit_topic": SAFETY_PERMIT_TOPIC,
+                "permit_observed": node.safety_permitted,
+                "permit_event_count": node.safety_permit_event_count,
+                "operator_controls_only": True,
+                "synthetic_permit_published": False,
+            },
             "cube": {
                 "edge_m": 0.03,
                 **material,
@@ -740,6 +818,8 @@ def main() -> int:
             "dry_bin_status_samples": node.dry_bin_status_sample_count,
             "latest_dry_bin_status": node.dry_bin_status,
             "latest_dry_bin_status_after_release": node.dry_bin_status_after_release,
+            "safety_permitted": node.safety_permitted,
+            "safety_permit_events": node.safety_permit_event_count,
         }
         raise
     finally:
