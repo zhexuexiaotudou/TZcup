@@ -147,8 +147,31 @@ formal_final_build_linux_memory_preflight || {
   exit "${result}"
 }
 
+# Qt's resource compiler probes payloads with statx().  PRoot can translate
+# ordinary open/fstatat calls on the bound workspace while returning ENOENT
+# for that statx call, so the compatibility layer must already be active
+# during the build rather than being installed only after colcon succeeds.
+[[ -f "${proot_compat_source}" && ! -L "${proot_compat_source}" ]] || {
+  echo "formal PRoot/glibc compatibility source is missing or not regular" >&2
+  exit 125
+}
+[[ ! -e "${proot_compat_install}" && ! -L "${proot_compat_install}" ]] || {
+  echo "refusing stale formal PRoot/glibc compatibility library" >&2
+  exit 125
+}
+mkdir -p -- "$(dirname -- "${proot_compat_install}")"
+proot_compat_pending="${proot_compat_install}.pending.$$"
+cc -shared -fPIC -O2 -Wall -Wextra \
+  -o "${proot_compat_pending}" "${proot_compat_source}"
+chmod 0555 -- "${proot_compat_pending}"
+mv -- "${proot_compat_pending}" "${proot_compat_install}"
+[[ -f "${proot_compat_install}" && ! -L "${proot_compat_install}" ]] || {
+  echo "formal PRoot/glibc compatibility library was not installed regularly" >&2
+  exit 125
+}
+
 build_started_epoch_ns="$(date +%s%N)"
-setsid bash -c '
+LD_PRELOAD="${proot_compat_install}${LD_PRELOAD:+:${LD_PRELOAD}}" setsid bash -c '
 set -euo pipefail
 repo_root="$1"
 runtime_ws="$2"
@@ -278,23 +301,9 @@ if (( build_status != 0 )); then
   exit "${build_status}"
 fi
 
-# The PRoot/glibc compatibility layer is part of the immutable runtime, not a
-# post-build host injection.  Install it before the install-tree inventory and
+# The preloaded compatibility layer is part of the immutable runtime, not a
+# post-build host injection.  Recheck it before the install-tree inventory and
 # integrated build snapshot so every later closure check sees identical bytes.
-[[ -f "${proot_compat_source}" && ! -L "${proot_compat_source}" ]] || {
-  echo "formal PRoot/glibc compatibility source is missing or not regular" >&2
-  exit 125
-}
-[[ ! -e "${proot_compat_install}" && ! -L "${proot_compat_install}" ]] || {
-  echo "refusing stale formal PRoot/glibc compatibility library" >&2
-  exit 125
-}
-mkdir -p -- "$(dirname -- "${proot_compat_install}")"
-proot_compat_pending="${proot_compat_install}.pending.$$"
-cc -shared -fPIC -O2 -Wall -Wextra \
-  -o "${proot_compat_pending}" "${proot_compat_source}"
-chmod 0555 -- "${proot_compat_pending}"
-mv -- "${proot_compat_pending}" "${proot_compat_install}"
 [[ -f "${proot_compat_install}" && ! -L "${proot_compat_install}" ]] || {
   echo "formal PRoot/glibc compatibility library was not installed regularly" >&2
   exit 125
