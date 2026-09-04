@@ -170,6 +170,21 @@ def test_final_builder_snapshots_the_installed_proot_compatibility_layer() -> No
     assert install_position < build_position < link_inventory_position < build_snapshot_position
 
 
+def test_native_linux_builder_binds_its_cold_start_evidence_before_build() -> None:
+    source = _source()
+    native_binding = (
+        'if [[ -z "${cold_gate_evidence}" ]]; then\n'
+        '  python3 "${repo_root}/scripts/formal_native_linux_cold_start_evidence.py" \\\n'
+        '    --runtime-ws "${runtime_ws}"\n'
+        "fi"
+    )
+    assert native_binding in source
+    linux_gate_position = source.index("formal_final_build_linux_memory_preflight ||")
+    native_binding_position = source.index(native_binding)
+    build_position = source.index("setsid bash -c")
+    assert linux_gate_position < native_binding_position < build_position
+
+
 def test_final_builder_fails_if_colcon_reintroduces_ortools_protobuf() -> None:
     source = _source()
     assert 'expected = {' in source

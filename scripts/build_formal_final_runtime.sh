@@ -146,6 +146,10 @@ formal_final_build_linux_memory_preflight || {
   fi
   exit "${result}"
 }
+if [[ -z "${cold_gate_evidence}" ]]; then
+  python3 "${repo_root}/scripts/formal_native_linux_cold_start_evidence.py" \
+    --runtime-ws "${runtime_ws}"
+fi
 
 # Qt's resource compiler probes payloads with statx().  PRoot can translate
 # ordinary open/fstatat calls on the bound workspace while returning ENOENT
