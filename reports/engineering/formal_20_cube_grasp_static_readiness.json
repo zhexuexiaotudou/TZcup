@@ -1,7 +1,7 @@
 {
   "checks": {
     "aggregate_double_count_prevented": true,
-    "committed_vehicle_snapshot_current": false,
+    "committed_vehicle_snapshot_current": true,
     "current_vehicle_8_30kg_wastewater_source_bound": true,
     "dual_finger_common_body_contact_gates_detachable_joint": true,
     "final_session_and_current_snapshot_required": true,
@@ -30,7 +30,7 @@
     "minimum_rotated_envelope_clearance_m": 0.017573593128807144,
     "target_count": 20
   },
-  "passed": false,
+  "passed": true,
   "provenance_boundary": {
     "live_dosod_edgesam_perception_proven": false,
     "required_separate_gates": [
@@ -44,28 +44,28 @@
   "runtime_state": {
     "gazebo_started_by_this_audit": false,
     "next_gate": "fresh WSL overlay build, then session-bound live 20-cube runtime",
-    "snapshot_error": "authoritative source inventory differs from committed manifest",
+    "snapshot_error": null,
     "twenty_cube_live_result_claimed": false,
     "wsl_build_executed_by_this_audit": false
   },
   "schema_version": 1,
   "source_contract_passed": true,
   "source_sha256": {
-    "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": "8babe1be35c7f3afcc98286aa5750bacf50f328321390afb76550da4b318b2ad",
-    "scripts/formal_final_runtime_closure.py": "b8487d194ba4e2a0abf8572e21ab63984a57fb29ffaf3007b052081d778cd5fa",
-    "scripts/generate_formal_vehicle_snapshot.py": "bd443058e09258906ed8df6e9e5fda014582dca9528b02448d1d0a55f389687b",
-    "scripts/prepare_formal_20_cube_grasp_acceptance.py": "b7af2e3c727f5ed84f74de4b6259474db2405a0a07d38f0440c885ff36f8c91e",
-    "scripts/run_formal_20_cube_grasp_acceptance.sh": "587b1bf165b7d3e3ab74a5698da9333f6d056d0315ffbcec257ad0e2bfff8a08",
-    "scripts/run_formal_final_acceptance.py": "b808afb41ffe09de3921195912f1231750abb6d0ead2cfbcebd2f3da5c500fe0",
-    "scripts/validate_formal_20_cube_grasp_runtime.py": "323a6d569e8fa1293f82e3cb558daba3139ad0ede93d9ebc4b1e69fa4db70758",
-    "starter_ws/src/sanitation_gazebo_control/src/DryBinMonitorSystem.cc": "c9d4fbaccc08102b9d78739f4e9f24a2a4affbbcaf085febc6253646330e7a73",
-    "starter_ws/src/sanitation_gazebo_control/src/DynamicPayloadSystem.cc": "e79c54d2f9ba79d17cc3a8f3125a2b96ff93daf1fe100d2b04748c49e363cda1",
-    "starter_ws/src/sanitation_gazebo_control/src/GripperContactGateSystem.cc": "ad39ce541440c891a8cb3f0548423d9ad22c3a6ecccac03723ec3ff4cf4ba62f",
-    "starter_ws/src/sanitation_manipulation/launch/formal_20_cube_pick_place.launch.py": "bde304c8d7109f09bd3a19aa7c27b7b90dd29c7a827f3b0e152d91f3c34e9c4c",
-    "starter_ws/src/sanitation_manipulation/sanitation_manipulation/formal_20_cube_scene.py": "b522a9399d7adaf210c1c4932f623f18e219fbf251197ff409618bd935fb431f",
+    "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": "4c5804b917f2226fbf730bf492b2b6113c92bd3f00ee408ee8edb9a3dc3222cc",
+    "scripts/formal_final_runtime_closure.py": "b9f6d6825838194e370550d736e882e30deaa6415a1eec702c70741687607c3e",
+    "scripts/generate_formal_vehicle_snapshot.py": "841123f97883ea13d9aa9351f10d0749c6fbc9810e8359b6068d04b8ca6c2922",
+    "scripts/prepare_formal_20_cube_grasp_acceptance.py": "b52a36c10eed8654b28d42a55a95bf8f5a06181fa469c048bc85871c6f09f5b9",
+    "scripts/run_formal_20_cube_grasp_acceptance.sh": "1720deeb4709910e3cf2b1efd515e90e098e5e27b57a11b9902015602f5e7738",
+    "scripts/run_formal_final_acceptance.py": "ba5de5b3b26d323395e099fd57269e187831acd05a43f33ff5389f9c024e333a",
+    "scripts/validate_formal_20_cube_grasp_runtime.py": "28346faa823377d7964317863450ddcbbd672f7d8dde67f638d928d44f2a0711",
+    "starter_ws/src/sanitation_gazebo_control/src/DryBinMonitorSystem.cc": "fa85cf44c668dabe5b3b8d0c4fc22fa1e1cddc82bfab5f9e15e5093375097a9b",
+    "starter_ws/src/sanitation_gazebo_control/src/DynamicPayloadSystem.cc": "b683fac8938c49118cf95a3e84e70f2564dcbf2428cd09a4384b4ea83b769dd2",
+    "starter_ws/src/sanitation_gazebo_control/src/GripperContactGateSystem.cc": "ba2f82e4e913d7b2e1ea6546c0a55c02a3d74e5238c4b8b2e2fba7dfb68c2340",
+    "starter_ws/src/sanitation_manipulation/launch/formal_20_cube_pick_place.launch.py": "4754ac2fe360cae59c8a543c1f81aac477c4acdbf72e0009630a1403f6bec297",
+    "starter_ws/src/sanitation_manipulation/sanitation_manipulation/formal_20_cube_scene.py": "21f1281b42ae796c65398a62f8ecab723e74e0f137895ce41ffafb83d0e306ed",
     "starter_ws/src/sanitation_manipulation/sanitation_manipulation/formal_grasp_executor.py": "ec88e366d01a59044dc6d800ed4654076b84518cb4ca908758f267907194a735",
     "starter_ws/src/sanitation_manipulation/urdf/material_cube.urdf.xacro": "9ac79fe0250fb307bb3a8bee02d902e2b10109fb39dd604ba6442b21774a5086",
-    "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro": "b7fc7847f986372a8a6475db6300d9c414a5357ee4b242e8fd50d9aca6271104"
+    "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro": "ecff827bea7c940a0ab69f29be7b1252ad8508c24afd7b921dcb57d6904304b0"
   },
-  "status": "FORMAL_20_CUBE_STATIC_SOURCE_PASSED_SNAPSHOT_REFRESH_REQUIRED"
+  "status": "FORMAL_20_CUBE_STATIC_READINESS_PASSED"
 }

@@ -1,7 +1,7 @@
 {
   "aggregate": {
     "parse_error": null,
-    "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\scripts\\run_formal_final_acceptance.py",
+    "path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-formal-water-grasp-preembedded-integration\\scripts\\run_formal_final_acceptance.py",
     "present": true,
     "scheduled_runners": [
       "formal_acceptance_session.py",
@@ -34,7 +34,7 @@
       "validate_formal_functional_acceptance_contract.py",
       "validate_formal_s100_live_runtime.py"
     ],
-    "sha256": "e0c7d501fe1c50830bfb4cab539a134afe0d631e859081f06addbfbee4237f04"
+    "sha256": "ba5de5b3b26d323395e099fd57269e187831acd05a43f33ff5389f9c024e333a"
   },
   "chains": {
     "forward_brake": {
@@ -44,12 +44,12 @@
         ],
         "classification": "MISSING",
         "fresh": false,
-        "report_path": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_a300_drivetrain_runtime.json"
+        "report_path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-formal-water-grasp-preembedded-integration\\artifacts\\formal_a300_drivetrain_runtime.json"
       },
       "source_sha256": {
         "scripts/run_formal_vehicle_mobility_runtime.sh": "8dec94892360108a6d6b4bee423bc69a0fdb5345eb0b47f588e313f8c127cec7",
         "scripts/validate_formal_vehicle_mobility_runtime.py": "7615b82eea553922484512806bfd243ba5f645f43bb71156737620f59442045e",
-        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "d8c003074e1a55826c42bfcb8cd7ab4678229184588c620dac1e79f5fe597e20"
+        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "d3e35644b4e708b72b3d5b502aff4cf23e566d15b0319a16a1b7de60d0d61f78"
       },
       "source_wiring_errors": [],
       "source_wiring_ready": true
@@ -61,12 +61,12 @@
         ],
         "classification": "MISSING",
         "fresh": false,
-        "report_path": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_ground_dirt_cleaning_final_retry\\ground_dirt_acceptance.json"
+        "report_path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-formal-water-grasp-preembedded-integration\\artifacts\\formal_ground_dirt_cleaning_final_retry\\ground_dirt_acceptance.json"
       },
       "source_sha256": {
-        "scripts/run_formal_ground_dirt_cleaning_runtime.sh": "6feadda9ae41ce1f1ecdf629acb8c60a596673da15d60a87b905af5fe99ace73",
-        "scripts/validate_formal_ground_dirt_cleaning_runtime.py": "94af32ebe9771c9ef156f9e928fceefd712406ed7a1cb665576a80a792ba20a9",
-        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "d8c003074e1a55826c42bfcb8cd7ab4678229184588c620dac1e79f5fe597e20"
+        "scripts/run_formal_ground_dirt_cleaning_runtime.sh": "e2c0eb9ad6030e33f7924fde73b01d7799ad1b2e19b940a96c7cbe316195b180",
+        "scripts/validate_formal_ground_dirt_cleaning_runtime.py": "5db085124810ca9192429c2ac49ffadfdb8c64ea3e2ffaa0cbbdb2d5da8f929c",
+        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "d3e35644b4e708b72b3d5b502aff4cf23e566d15b0319a16a1b7de60d0d61f78"
       },
       "source_wiring_errors": [],
       "source_wiring_ready": true
@@ -78,12 +78,12 @@
         ],
         "classification": "MISSING",
         "fresh": false,
-        "report_path": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_grasp_executor_runtime.json"
+        "report_path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-formal-water-grasp-preembedded-integration\\artifacts\\formal_grasp_executor_runtime.json"
       },
       "source_sha256": {
-        "scripts/run_formal_grasp_executor_runtime.sh": "8bad82e874cb948573d74587141d9ea05d108f6b62feedccccb6f7e52b0b736c",
-        "scripts/validate_formal_grasp_executor_runtime.py": "f143f4aaa488239c9574f57a7c2a03840b258e3038a41406b5c259309d5ed2b0",
-        "starter_ws/src/sanitation_manipulation/launch/formal_cube_pick_place.launch.py": "42e4b8f4405d28c4db31cd2f8a439380eb91b7771b81d97eb81c638e8a2ff6be",
+        "scripts/run_formal_grasp_executor_runtime.sh": "74f97d86d51b91f80819acb9f39ccab3b94cf375cad06c71bbf08a489e575510",
+        "scripts/validate_formal_grasp_executor_runtime.py": "f8f7e067c13e7ae2b4bf6ea894c1b91c852a94bf8764372e2326a78d4ad9e30b",
+        "starter_ws/src/sanitation_manipulation/launch/formal_cube_pick_place.launch.py": "0827a6d06f1fbc2a35e2be1795c5b2037ac22865c56927ce0f6c46f06da40e2a",
         "starter_ws/src/sanitation_manipulation/launch/formal_physical_grasp.launch.py": "e561c736b385d4b8ad17517b9035570b86adeac38c555ff8ee7a637756748e8b"
       },
       "source_wiring_errors": [],
@@ -96,12 +96,12 @@
         ],
         "classification": "MISSING",
         "fresh": false,
-        "report_path": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_water_recovery_acceptance.json"
+        "report_path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-formal-water-grasp-preembedded-integration\\artifacts\\formal_water_recovery_acceptance.json"
       },
       "source_sha256": {
-        "scripts/finalize_formal_water_recovery_acceptance.py": "1dfca29b0df6cf5350926c7fa515d0ec01134e7025e7cb2b61137cf9fbc61021",
-        "scripts/run_formal_water_recovery_runtime.sh": "ed09c739d07aa368f4d6ee7d70441348106d6d69d4bd9eb61dbf18186d850a56",
-        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "d8c003074e1a55826c42bfcb8cd7ab4678229184588c620dac1e79f5fe597e20"
+        "scripts/finalize_formal_water_recovery_acceptance.py": "f5a9e672a6951bbe1faf04779900f655bcdafe23779169c5fc1b6bc9eb8d69b1",
+        "scripts/run_formal_water_recovery_runtime.sh": "17f5a995aab6497274d7f837dcc32192819cfbcbfdf5033420647fcdb886e48c",
+        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "d3e35644b4e708b72b3d5b502aff4cf23e566d15b0319a16a1b7de60d0d61f78"
       },
       "source_wiring_errors": [],
       "source_wiring_ready": true
@@ -123,12 +123,12 @@
     "current": true,
     "error": null,
     "identity": {
-      "expanded_urdf_sha256": "b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2",
-      "output_inventory_sha256": "a8832afc81f6eea6227abd0a5dc6073bb9da2283de8532c05034841243028ba7",
-      "snapshot_manifest_sha256": "fffb388e1f06616ab5019db00481718d24b5bac1d284c240dd1709173482cd40",
-      "source_inventory_sha256": "0d106d4e9aae774941856d0d7018bdbcf8c43e83afe00049dc485006943cf03b"
+      "expanded_urdf_sha256": "73edb99d1d1ff93052c6d889b11581d4c35ca7b2a7252b8cc1d8bcf37f7d8d47",
+      "output_inventory_sha256": "32e89ec6d1a5f63c4cdf279cb34bd9755a8e3399fd5bb902367f140bae123ee2",
+      "snapshot_manifest_sha256": "cb76cc99ca9730807dccbc15ea4151abaf398026614f2f403b031851b631a1ed",
+      "source_inventory_sha256": "f7fc55d2636e4235bfcec12812c985e7fcb6a6588d44f5190e531b99a2421904"
     },
-    "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\reports\\engineering\\formal_vehicle_snapshot_manifest.json"
+    "path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-formal-water-grasp-preembedded-integration\\reports\\engineering\\formal_vehicle_snapshot_manifest.json"
   },
   "status": "FORMAL_FOUR_CHAIN_RUNTIME_BLOCKED"
 }

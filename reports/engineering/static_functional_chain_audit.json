@@ -44,7 +44,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
-            "line": 134,
+            "line": 135,
             "token": "add_library(A300DrivetrainPlantSystem SHARED"
           }
         },
@@ -52,7 +52,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
-            "line": 278,
+            "line": 296,
             "token": "a300_drivetrain_bridge"
           }
         },
@@ -102,7 +102,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
-            "line": 148,
+            "line": 149,
             "token": "add_library(GripperMimicEffortSystem SHARED"
           }
         },
@@ -136,7 +136,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_manipulation/launch/formal_cube_pick_place.launch.py",
-            "line": 64,
+            "line": 80,
             "token": "dry_deposit_contact"
           }
         },
@@ -160,7 +160,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
-            "line": 77,
+            "line": 78,
             "token": "add_library(DryBinMonitorSystem SHARED"
           }
         },
@@ -252,7 +252,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
-            "line": 107,
+            "line": 108,
             "token": "add_library(GroundDirtCleaningSystem SHARED"
           }
         },
@@ -260,7 +260,7 @@
           "passed": true,
           "evidence": {
             "path": "scripts/run_formal_ground_dirt_cleaning_runtime.sh",
-            "line": 63,
+            "line": 65,
             "token": "ground_dirt/status_json"
           }
         }
@@ -286,7 +286,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_gazebo_control/src/WaterRecoverySystem.cc",
-            "line": 237,
+            "line": 233,
             "token": "PublishPayload"
           }
         },
@@ -294,7 +294,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_vehicle_description/worlds/formal_vehicle_validation.sdf",
-            "line": 45,
+            "line": 49,
             "token": "formal_recoverable_water_patch"
           }
         },
@@ -310,7 +310,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
-            "line": 63,
+            "line": 64,
             "token": "add_library(WaterRecoverySystem SHARED"
           }
         },
@@ -318,7 +318,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
-            "line": 729,
+            "line": 766,
             "token": "water_recovery/tank_mass_kg"
           }
         },
@@ -326,7 +326,7 @@
           "passed": true,
           "evidence": {
             "path": "scripts/run_formal_water_recovery_runtime.sh",
-            "line": 164,
+            "line": 192,
             "token": "validate_formal_water_recovery_runtime.py"
           }
         }
@@ -352,7 +352,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
-            "line": 714,
+            "line": 751,
             "token": "/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan"
           }
         }
@@ -378,7 +378,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
-            "line": 28,
+            "line": 31,
             "token": "/sensors/lidar_3d/points"
           }
         }
@@ -404,7 +404,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
-            "line": 38,
+            "line": 41,
             "token": "/sensors/front_rgbd/depth/image_rect_raw/image"
           }
         }
@@ -430,7 +430,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
-            "line": 208,
+            "line": 212,
             "token": "/sensors/rear_right_fisheye/image_raw"
           }
         }
@@ -456,7 +456,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
-            "line": 178,
+            "line": 181,
             "token": "/sensors/wrist_rgbd/infra2/image_rect_raw"
           }
         }
@@ -482,7 +482,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
-            "line": 715,
+            "line": 752,
             "token": "/sensors/gnss/fix@sensor_msgs/msg/NavSatFix"
           }
         }
@@ -516,7 +516,7 @@
           "passed": true,
           "evidence": {
             "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
-            "line": 187,
+            "line": 203,
             "token": "joint_state_broadcaster"
           }
         }
