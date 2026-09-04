@@ -12,7 +12,7 @@ baseline:
   source_inventory_sha256: f7fc55d2636e4235bfcec12812c985e7fcb6a6588d44f5190e531b99a2421904
   output_inventory_sha256: 32e89ec6d1a5f63c4cdf279cb34bd9755a8e3399fd5bb902367f140bae123ee2
   bom_path: config/high_fidelity_vehicle/manufacturing_bom.csv
-  bom_sha256: e688074390e83153c21b453f7fdde73ccfb772574876ffb83b5c38454d1ce6c8
+  bom_sha256: 5de1fb2197870f937c5145bcc96f242adc428a772a14ba8d8779ee1b38294d97
   bom_rollup_policy: only_baseline_allocated_rows_sum_to_nominal_expanded_urdf_mass
 release_items:
   step_models: {state: blocked, evidence_path: pending://native_step_or_stp_models}
