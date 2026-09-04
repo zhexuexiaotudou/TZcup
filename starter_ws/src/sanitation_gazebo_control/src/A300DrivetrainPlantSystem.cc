@@ -167,15 +167,11 @@ public:
 
     const auto output = this->plant.Step(input);
     for (std::size_t index = 0; index < kA300WheelCount; ++index) {
-      // Gazebo's revolute-joint effort component is expressed in the
-      // parent-on-child convention, while JointVelocity and the product A300
-      // core use the child-relative-to-parent generalized-coordinate
-      // convention. The two signs are opposite for this four-wheel model.
-      // Keeping that conversion explicit at the simulator boundary is
-      // essential: writing the core torque directly made a positive speed
-      // error accelerate every measured wheel in the negative direction and
-      // injected energy even while the zero-speed brake was active.
-      const double gazeboJointForceNm = -output.wheel_torque_nm[index];
+      // JointForceCmd and JointVelocity are the effort and velocity of the
+      // same generalized coordinate. Preserve the core torque sign so that a
+      // zero-speed command remains dissipative: tau * omega <= 0. An extra
+      // sign inversion turns the speed controller into anti-damping.
+      const double gazeboJointForceNm = output.wheel_torque_nm[index];
       auto * force =
         ecm.Component<gz::sim::components::JointForceCmd>(this->wheelJoints[index]);
       if (force == nullptr) {

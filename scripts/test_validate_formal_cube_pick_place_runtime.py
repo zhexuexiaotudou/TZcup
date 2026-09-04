@@ -11,6 +11,14 @@ CHUTE = ROOT / "starter_ws" / "src" / "sanitation_vehicle_description" / "urdf" 
 BODYWORK = ROOT / "starter_ws" / "src" / "sanitation_vehicle_description" / "urdf" / "high_fidelity" / "bodywork.xacro"
 
 
+def test_cube_scene_uses_the_validated_whole_vehicle_physics_backend() -> None:
+    launch = LAUNCH.read_text(encoding="utf-8")
+    validator = VALIDATOR.read_text(encoding="utf-8")
+    assert 'DeclareLaunchArgument("physics_engine", default_value="gz-physics-dartsim-plugin")' in launch
+    assert '"physics_engine": "gz-physics-dartsim-plugin"' in validator
+    assert 'default_value="gz-physics-bullet-featherstone-plugin"' not in launch
+
+
 def test_product_launch_has_no_payload_or_delete_command_bridge() -> None:
     source = LAUNCH.read_text(encoding="utf-8")
     assert "payload/dry_mass_kg" not in source

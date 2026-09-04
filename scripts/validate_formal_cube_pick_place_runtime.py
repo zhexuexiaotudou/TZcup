@@ -713,7 +713,7 @@ def main() -> int:
         report.update({
             "status": "PHYSICAL_CONTACT_GATED_PICK_LIFT_DEPOSIT_PASSED",
             "passed": True,
-            "physics_engine": "gz-physics-bullet-featherstone-plugin",
+            "physics_engine": "gz-physics-dartsim-plugin",
             "safety_readiness": {
                 "permit_topic": SAFETY_PERMIT_TOPIC,
                 "permit_observed": node.safety_permitted,

@@ -68,15 +68,16 @@ def test_typed_adapter_is_unique_consumer_of_final_safety_command() -> None:
     assert "std::chrono::steady_clock" in adapter
 
 
-def test_plant_converts_core_torque_to_gazebo_joint_force_sign() -> None:
+def test_plant_preserves_dissipative_generalized_effort_sign() -> None:
     plant = (
         ROOT
         / "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantSystem.cc"
     ).read_text(encoding="utf-8")
     assert (
-        "const double gazeboJointForceNm = -output.wheel_torque_nm[index];"
+        "const double gazeboJointForceNm = output.wheel_torque_nm[index];"
         in plant
     )
+    assert "tau * omega <= 0" in plant
 
 
 def test_local_ekf_is_selected_odom_and_odom_tf_authority() -> None:
