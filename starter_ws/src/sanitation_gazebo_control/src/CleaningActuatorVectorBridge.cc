@@ -2,6 +2,7 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <stdexcept>
 #include <string>
 
@@ -118,6 +119,7 @@ public:
     gz_node_.Unsubscribe(kMotorOutputLoadEndpoint.topic);
     gz_node_.Unsubscribe(kTelemetrySnapshotEndpoint.topic);
     gz_node_.Unsubscribe(kClockEndpoint.topic);
+    const std::lock_guard<std::mutex> drain(callback_mutex_);
   }
 
 private:
@@ -139,6 +141,7 @@ private:
     std::atomic<std::uint64_t> & received_count,
     const std::size_t expected_length)
   {
+    const std::lock_guard<std::mutex> lock(callback_mutex_);
     if (stopping_.load()) {
       return false;
     }
@@ -189,6 +192,7 @@ private:
 
   void OnClock(const gz::msgs::Clock & message)
   {
+    const std::lock_guard<std::mutex> lock(callback_mutex_);
     if (stopping_.load()) {
       return;
     }
@@ -229,6 +233,7 @@ private:
     telemetry_snapshot_ros_pub_;
   rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr clock_ros_pub_;
   rclcpp::TimerBase::SharedPtr observability_timer_;
+  std::mutex callback_mutex_;
   std::atomic<bool> stopping_{false};
   std::atomic<std::uint64_t> current_received_count_{0};
   std::atomic<std::uint64_t> temperature_received_count_{0};

@@ -43,6 +43,9 @@ def test_double_vector_topics_use_supported_native_bridge() -> None:
     assert "message.sim().nsec()" in source
     assert "void Stop()" in source
     assert source.count("gz_node_.Unsubscribe(") == 5
+    assert "std::mutex callback_mutex_" in source
+    assert "std::lock_guard<std::mutex> drain(callback_mutex_)" in source
+    assert source.count("std::lock_guard<std::mutex> lock(callback_mutex_)") == 2
     assert "find_package(rosgraph_msgs REQUIRED)" in cmake
     assert "  rosgraph_msgs\n  std_msgs" in cmake
     assert "<depend>rosgraph_msgs</depend>" in package
