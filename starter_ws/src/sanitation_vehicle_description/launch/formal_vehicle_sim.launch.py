@@ -8,6 +8,7 @@ from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
     IncludeLaunchDescription,
+    OpaqueFunction,
     RegisterEventHandler,
     SetEnvironmentVariable,
     TimerAction,
@@ -26,6 +27,11 @@ from launch_ros.actions import Node
 from launch_ros.parameter_descriptions import ParameterValue
 from launch_ros.substitutions import FindPackageShare
 import yaml
+
+
+def _start_actions_unless_shutdown(context, *actions):
+    """Do not let controller-exit events start nodes during launch teardown."""
+    return [] if context.is_shutdown else list(actions)
 
 
 def generate_launch_description() -> LaunchDescription:
@@ -892,18 +898,29 @@ def generate_launch_description() -> LaunchDescription:
                 period=6.0,
                 actions=[legacy_controller_spawner, safe_active_controller_spawner],
                 condition=IfCondition(start_controllers),
+                cancel_on_shutdown=True,
             ),
             RegisterEventHandler(
                 OnProcessExit(
                     target_action=safe_active_controller_spawner,
-                    on_exit=[safe_velocity_controller_loader],
+                    on_exit=[
+                        OpaqueFunction(
+                            function=_start_actions_unless_shutdown,
+                            args=[safe_velocity_controller_loader],
+                        )
+                    ],
                 ),
                 condition=IfCondition(start_controllers),
             ),
             RegisterEventHandler(
                 OnProcessExit(
                     target_action=safe_velocity_controller_loader,
-                    on_exit=[safety_manager, service_drain_safety_manager],
+                    on_exit=[
+                        OpaqueFunction(
+                            function=_start_actions_unless_shutdown,
+                            args=[safety_manager, service_drain_safety_manager],
+                        )
+                    ],
                 ),
                 condition=IfCondition(start_controllers),
             ),

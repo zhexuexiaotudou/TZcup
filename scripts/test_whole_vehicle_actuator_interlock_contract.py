@@ -409,7 +409,13 @@ def test_formal_launch_orders_safe_controller_loading_before_gateway_start():
     assert "target_action=safe_velocity_controller_loader" in launch
     assert 'executable="whole_vehicle_safety_manager"' in launch
     assert 'executable="service_drain_safety_manager"' in launch
-    assert "on_exit=[safety_manager, service_drain_safety_manager]" in launch
+    assert "OpaqueFunction" in launch
+    assert "def _start_actions_unless_shutdown(context, *actions):" in launch
+    assert "return [] if context.is_shutdown else list(actions)" in launch
+    assert "args=[safe_velocity_controller_loader]" in launch
+    assert "args=[safety_manager, service_drain_safety_manager]" in launch
+    assert "on_exit=[safety_manager, service_drain_safety_manager]" not in launch
+    assert "cancel_on_shutdown=True" in launch
     assert "<exec_depend>sanitation_safety</exec_depend>" in package_xml
 
 
