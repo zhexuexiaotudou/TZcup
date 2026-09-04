@@ -230,7 +230,15 @@ def test_new_physical_details_are_bound_to_existing_positions_and_runtime_gates(
     assert positions["water_gathering"]["components"][0]["id"] == "squeegee_preload_spring_pack"
     assert layout["camera_stream_topics"]["front_d435_ir_stereo"]["baseline_m"] == 0.05
     assert layout["physical_power_service_layout"]["mass_redistribution_kg"] == 0.4
-    assert layout["cleaning_geometry"]["squeegee_compliance"]["nominal_preload_force_n"] == 10.8
+    squeegee_compliance = layout["cleaning_geometry"]["squeegee_compliance"]
+    cleaning_mechanism = (
+        DESCRIPTION / "urdf/high_fidelity/cleaning_mechanism.xacro"
+    ).read_text(encoding="utf-8")
+    assert squeegee_compliance["float_preload_position_m"] == -0.0065
+    assert squeegee_compliance["nominal_preload_force_n"] == 11.7
+    assert squeegee_compliance["float_stiffness_n_m"] == 1800.0
+    assert "<float_preload_reference_m>-0.0065</float_preload_reference_m>" in cleaning_mechanism
+    assert "<float_max_force_n>120.0</float_max_force_n>" in cleaning_mechanism
     gates = contract["evidence_gates"]
     assert gates["sensor_runtime"]["required_physical_scope"] == [
         "front_d435_ir_stereo_pair", "wrist_d435_ir_stereo_pair"

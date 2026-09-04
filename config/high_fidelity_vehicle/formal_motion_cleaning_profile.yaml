@@ -111,14 +111,14 @@ mechanism_sweeps:
     center_xy_m: [0.385, 0.545]
     radius_m: 0.150
     collision_thickness_m: 0.026
-    expected_lowest_z_at_work_pose_m: 0.005
-    contact_status: compressed_flexible_bristle_proxy_with_5mm_visual_tip_deflection
+    expected_lowest_z_at_work_pose_m: 0.000
+    contact_status: compressed_flexible_bristle_proxy_ground_tangent
   right_side_brush:
     center_xy_m: [0.385, -0.545]
     radius_m: 0.150
     collision_thickness_m: 0.026
-    expected_lowest_z_at_work_pose_m: 0.005
-    contact_status: compressed_flexible_bristle_proxy_with_5mm_visual_tip_deflection
+    expected_lowest_z_at_work_pose_m: 0.000
+    contact_status: compressed_flexible_bristle_proxy_ground_tangent
   central_roller:
     center_xy_m: [0.155, 0.000]
     radius_m: 0.100

@@ -159,6 +159,7 @@ def authoritative_source_paths(root: Path = ROOT) -> tuple[Path, ...]:
         CONTROLLER_CONFIG,
         Path("config/high_fidelity_vehicle/formal_vehicle_layout.yaml"),
         Path("config/high_fidelity_vehicle/formal_vehicle_component_register.yaml"),
+        Path("config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml"),
         Path("config/high_fidelity_vehicle/encoder_feedback_realism_contract.yaml"),
         Path("config/high_fidelity_vehicle/pre_urdf_contract.yaml"),
         Path("config/high_fidelity_vehicle/capacity_budget.csv"),

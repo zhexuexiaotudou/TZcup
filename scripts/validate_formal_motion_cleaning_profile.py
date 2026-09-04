@@ -488,10 +488,10 @@ def validate_profile(
     _same(bristle_thickness, _number(right["collision_thickness_m"], "right brush thickness"), "right-brush thickness")
     _same(_number(left["expected_lowest_z_at_work_pose_m"], "left brush expected z"), side_lowest_z, "left-brush declared z")
     _same(_number(right["expected_lowest_z_at_work_pose_m"], "right brush expected z"), side_lowest_z, "right-brush declared z")
-    if not ground <= side_lowest_z <= ground + 0.005 + 1e-9:
+    if abs(side_lowest_z - ground) > 1e-9:
         raise FormalMotionCleaningProfileError(
-            "compressed side-brush collision envelope must remain within "
-            f"5 mm of the ground plane, found {side_lowest_z:.9f}"
+            "compressed side-brush collision envelope must remain tangent "
+            f"to the ground plane, found {side_lowest_z:.9f}"
         )
 
     roller_collision = _collision(_named(cleaning, "link", "central_roller_link"))

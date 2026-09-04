@@ -31,13 +31,13 @@ source_snapshot:
   algorithm: sha256
   inputs:
     - path: config/high_fidelity_vehicle/formal_vehicle_layout.yaml
-      sha256: 4c5804b917f2226fbf730bf492b2b6113c92bd3f00ee408ee8edb9a3dc3222cc
+      sha256: 1984160c0b10396c431b05f2cd7c51365f8433d47ba3538f347e77601355534e
       role: nominal_layout_frames
     - path: config/high_fidelity_vehicle/formal_vehicle_component_register.yaml
-      sha256: e017e66f3dca2f705f04f29a1e8ab84668f687667c552ee62ce619eda9294437
+      sha256: c9ecbce20b0677dab726034859ebaa77d9221b9dbedcddf5044f1b5ce78ded9d
       role: component_and_functional_interface_register
     - path: reports/engineering/formal_competition_vehicle.urdf
-      sha256: 73edb99d1d1ff93052c6d889b11581d4c35ca7b2a7252b8cc1d8bcf37f7d8d47
+      sha256: d1eef66066ff634835ca65fe2217d9ddd4fc4af936c97827cc368a3b43f3b28c
       role: expanded_zero_joint_urdf
 
 # Each id/link pair is unique.  A datum may be reused by several interface

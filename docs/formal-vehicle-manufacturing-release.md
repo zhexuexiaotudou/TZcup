@@ -11,10 +11,10 @@ STL 网格、部件台账和 Gazebo 关节模型可复用于制造设计输入�
 [`mechanical_release_readiness.yaml`](../config/high_fidelity_vehicle/mechanical_release_readiness.yaml)。
 其中 7 条 `baseline_allocated` 行仅重现最后展开 URDF 的名义 `160.007583 kg`；采购件参考质量和
 未知实物质量不重复相加。当前冻结数字快照已经逐项复核：展开 URDF 的 SHA-256 为
-`73edb99d1d1ff93052c6d889b11581d4c35ca7b2a7252b8cc1d8bcf37f7d8d47`，快照清单文件自身的
-SHA-256 为 `cb76cc99ca9730807dccbc15ea4151abaf398026614f2f403b031851b631a1ed`，source inventory
-摘要为 `f7fc55d2636e4235bfcec12812c985e7fcb6a6588d44f5190e531b99a2421904`，output inventory
-摘要为 `32e89ec6d1a5f63c4cdf279cb34bd9755a8e3399fd5bb902367f140bae123ee2`。质量声明仍为
+`d1eef66066ff634835ca65fe2217d9ddd4fc4af936c97827cc368a3b43f3b28c`，快照清单文件自身的
+SHA-256 为 `db678bc5c00e2583c3dd014737cf5ac4c63b7e2fafcda094b9737f1630d4d0b2`，source inventory
+摘要为 `648e991a4a185f4b8e7ffd7fc5e431867e7e5bbcdb48bd533a8d212d8f07345d`，output inventory
+摘要为 `2620ef724b84e23e1c3fda29e4d1489575b3dbe35d1a066c053e36664b8aaf0b`。质量声明仍为
 `nominal_model_allocation_not_actual_weighed`。这些绑定只表明名义数字基线未漂移；该数字不是
 实物称重，也不是制造证据。
 

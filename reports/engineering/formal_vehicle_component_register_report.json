@@ -373,5 +373,5 @@
   "status": "COMPONENT_REGISTER_URDF_FK_AND_INTERFACES_VALID",
   "top_protrusion_name": "modular_sensor_tower",
   "topic_contract_count": 87,
-  "urdf_sha256": "73edb99d1d1ff93052c6d889b11581d4c35ca7b2a7252b8cc1d8bcf37f7d8d47"
+  "urdf_sha256": "d1eef66066ff634835ca65fe2217d9ddd4fc4af936c97827cc368a3b43f3b28c"
 }

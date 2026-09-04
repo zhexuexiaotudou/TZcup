@@ -58,7 +58,7 @@ def test_formal_motion_cleaning_profile_matches_source_geometry() -> None:
     }
     assert result["expected_geometry_z_m"] == pytest.approx(
         {
-            "side_brush_lowest": 0.005,
+            "side_brush_lowest": 0.0,
             "central_roller_lowest": 0.0,
             "squeegee_lowest": 0.0,
             "suction_nozzle_lowest": 0.005,

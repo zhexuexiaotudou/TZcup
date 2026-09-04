@@ -28,7 +28,7 @@
   },
   "collision_audit": {
     "all_sampled_configurations_clear": false,
-    "candidate_event_count": 44503,
+    "candidate_event_count": 44501,
     "confirmed_mesh_vertex_inside_box_event_count": 14159,
     "confirmed_penetration_examples": [
       {
@@ -1075,7 +1075,7 @@
         "sample": "halton_00840"
       }
     ],
-    "unique_candidate_pair_count": 2937,
+    "unique_candidate_pair_count": 2934,
     "unique_candidates": [
       {
         "class": "arm_self",
@@ -1963,9 +1963,9 @@
   },
   "inputs": {
     "expanded_urdf": "reports/engineering/formal_competition_vehicle.urdf",
-    "expanded_urdf_sha256": "73edb99d1d1ff93052c6d889b11581d4c35ca7b2a7252b8cc1d8bcf37f7d8d47",
+    "expanded_urdf_sha256": "d1eef66066ff634835ca65fe2217d9ddd4fc4af936c97827cc368a3b43f3b28c",
     "layout": "config/high_fidelity_vehicle/formal_vehicle_layout.yaml",
-    "layout_sha256": "4c5804b917f2226fbf730bf492b2b6113c92bd3f00ee408ee8edb9a3dc3222cc",
+    "layout_sha256": "1984160c0b10396c431b05f2cd7c51365f8433d47ba3538f347e77601355534e",
     "load_source": "formal Xacro payload reserve links and final capacity clamps",
     "scanner": "scripts/scan_formal_vehicle_inertia_and_swept_volume.py",
     "scanner_sha256": "6b1e611094578bd51f190c32f9d085ae479127a1fbb043b0ab5bffc5f8dd6dcf",
@@ -2023,26 +2023,26 @@
   },
   "load_cases": {
     "empty": {
-      "maximum_cog_z_m": 0.437821185,
-      "minimum_cog_z_m": 0.345365877,
+      "maximum_cog_z_m": 0.437775874,
+      "minimum_cog_z_m": 0.345320566,
       "minimum_margin_m": 0.19238366,
       "total_mass_kg": 160.005583273
     },
     "max_combined": {
-      "maximum_cog_z_m": 0.440606367,
-      "minimum_cog_z_m": 0.353493094,
+      "maximum_cog_z_m": 0.440563674,
+      "minimum_cog_z_m": 0.353450401,
       "minimum_margin_m": 0.207904217,
       "total_mass_kg": 169.817583273
     },
     "max_dry": {
-      "maximum_cog_z_m": 0.439017349,
-      "minimum_cog_z_m": 0.347427535,
+      "maximum_cog_z_m": 0.438972462,
+      "minimum_cog_z_m": 0.347382648,
       "minimum_margin_m": 0.194898234,
       "total_mass_kg": 161.517583273
     },
     "max_wastewater": {
-      "maximum_cog_z_m": 0.439483467,
-      "minimum_cog_z_m": 0.351587598,
+      "maximum_cog_z_m": 0.43944039,
+      "minimum_cog_z_m": 0.351544522,
       "minimum_margin_m": 0.205630491,
       "total_mass_kg": 168.305583273
     }
@@ -2129,7 +2129,7 @@
     "cog_xyz_m": [
       0.06361634,
       -0.013057769,
-      0.37844316
+      0.37839785
     ],
     "joint_positions_rad": {
       "elbow_joint": -0.475511464,

@@ -3,8 +3,8 @@
   "status": "PASSED",
   "all_minimum_clear_fractions_passed": true,
   "urdf": "reports/engineering/formal_competition_vehicle.urdf",
-  "urdf_sha256": "73edb99d1d1ff93052c6d889b11581d4c35ca7b2a7252b8cc1d8bcf37f7d8d47",
-  "layout_sha256": "4c5804b917f2226fbf730bf492b2b6113c92bd3f00ee408ee8edb9a3dc3222cc",
+  "urdf_sha256": "d1eef66066ff634835ca65fe2217d9ddd4fc4af936c97827cc368a3b43f3b28c",
+  "layout_sha256": "1984160c0b10396c431b05f2cd7c51365f8433d47ba3538f347e77601355534e",
   "validator": "scripts/validate_formal_fov_occlusion.py",
   "validator_sha256": "92900a3a79845c7645507129af6ab1cd87664d6e837ed00bd35ab225397d04f2",
   "geometry_triangle_count_by_pose": {

@@ -34,7 +34,7 @@
       "validate_formal_functional_acceptance_contract.py",
       "validate_formal_s100_live_runtime.py"
     ],
-    "sha256": "ba5de5b3b26d323395e099fd57269e187831acd05a43f33ff5389f9c024e333a"
+    "sha256": "3115b826cc69f4a7dfb1800c6cfc4f274487f5fb48b4c5d7f86380a97d3bd19b"
   },
   "chains": {
     "forward_brake": {
@@ -49,7 +49,7 @@
       "source_sha256": {
         "scripts/run_formal_vehicle_mobility_runtime.sh": "8dec94892360108a6d6b4bee423bc69a0fdb5345eb0b47f588e313f8c127cec7",
         "scripts/validate_formal_vehicle_mobility_runtime.py": "7615b82eea553922484512806bfd243ba5f645f43bb71156737620f59442045e",
-        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "d3e35644b4e708b72b3d5b502aff4cf23e566d15b0319a16a1b7de60d0d61f78"
+        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "46d08f25a2a55515ee06b57ffbcf5b1933d7a80daffd51b024501b651db9170b"
       },
       "source_wiring_errors": [],
       "source_wiring_ready": true
@@ -66,7 +66,7 @@
       "source_sha256": {
         "scripts/run_formal_ground_dirt_cleaning_runtime.sh": "e2c0eb9ad6030e33f7924fde73b01d7799ad1b2e19b940a96c7cbe316195b180",
         "scripts/validate_formal_ground_dirt_cleaning_runtime.py": "5db085124810ca9192429c2ac49ffadfdb8c64ea3e2ffaa0cbbdb2d5da8f929c",
-        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "d3e35644b4e708b72b3d5b502aff4cf23e566d15b0319a16a1b7de60d0d61f78"
+        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "46d08f25a2a55515ee06b57ffbcf5b1933d7a80daffd51b024501b651db9170b"
       },
       "source_wiring_errors": [],
       "source_wiring_ready": true
@@ -83,7 +83,7 @@
       "source_sha256": {
         "scripts/run_formal_grasp_executor_runtime.sh": "74f97d86d51b91f80819acb9f39ccab3b94cf375cad06c71bbf08a489e575510",
         "scripts/validate_formal_grasp_executor_runtime.py": "f8f7e067c13e7ae2b4bf6ea894c1b91c852a94bf8764372e2326a78d4ad9e30b",
-        "starter_ws/src/sanitation_manipulation/launch/formal_cube_pick_place.launch.py": "0827a6d06f1fbc2a35e2be1795c5b2037ac22865c56927ce0f6c46f06da40e2a",
+        "starter_ws/src/sanitation_manipulation/launch/formal_cube_pick_place.launch.py": "2796b59fc2f1a45581f26ae51b713b0186317c4df54786dede683b670e78782a",
         "starter_ws/src/sanitation_manipulation/launch/formal_physical_grasp.launch.py": "e561c736b385d4b8ad17517b9035570b86adeac38c555ff8ee7a637756748e8b"
       },
       "source_wiring_errors": [],
@@ -101,7 +101,7 @@
       "source_sha256": {
         "scripts/finalize_formal_water_recovery_acceptance.py": "f5a9e672a6951bbe1faf04779900f655bcdafe23779169c5fc1b6bc9eb8d69b1",
         "scripts/run_formal_water_recovery_runtime.sh": "17f5a995aab6497274d7f837dcc32192819cfbcbfdf5033420647fcdb886e48c",
-        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "d3e35644b4e708b72b3d5b502aff4cf23e566d15b0319a16a1b7de60d0d61f78"
+        "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": "46d08f25a2a55515ee06b57ffbcf5b1933d7a80daffd51b024501b651db9170b"
       },
       "source_wiring_errors": [],
       "source_wiring_ready": true
@@ -123,10 +123,10 @@
     "current": true,
     "error": null,
     "identity": {
-      "expanded_urdf_sha256": "73edb99d1d1ff93052c6d889b11581d4c35ca7b2a7252b8cc1d8bcf37f7d8d47",
-      "output_inventory_sha256": "32e89ec6d1a5f63c4cdf279cb34bd9755a8e3399fd5bb902367f140bae123ee2",
-      "snapshot_manifest_sha256": "cb76cc99ca9730807dccbc15ea4151abaf398026614f2f403b031851b631a1ed",
-      "source_inventory_sha256": "f7fc55d2636e4235bfcec12812c985e7fcb6a6588d44f5190e531b99a2421904"
+      "expanded_urdf_sha256": "d1eef66066ff634835ca65fe2217d9ddd4fc4af936c97827cc368a3b43f3b28c",
+      "output_inventory_sha256": "2620ef724b84e23e1c3fda29e4d1489575b3dbe35d1a066c053e36664b8aaf0b",
+      "snapshot_manifest_sha256": "db678bc5c00e2583c3dd014737cf5ac4c63b7e2fafcda094b9737f1630d4d0b2",
+      "source_inventory_sha256": "648e991a4a185f4b8e7ffd7fc5e431867e7e5bbcdb48bd533a8d212d8f07345d"
     },
     "path": "F:\\Project\\TZcup\\.workspace\\worktrees\\TZcup-formal-water-grasp-preembedded-integration\\reports\\engineering\\formal_vehicle_snapshot_manifest.json"
   },

@@ -482,7 +482,7 @@ functional_positions:
     function: dual_side_brush_edge_sweeping
     link: left_side_brush_link
     parent_link: cleaning_lift_carriage_link
-    xyz_m: [0.385, 0.545, 0.1830]
+    xyz_m: [0.385, 0.545, 0.1780]
     rpy_rad: [0.000, 0.000, 0.000]
     required_joints: [left_side_brush_joint, right_side_brush_joint]
     required_topic_contracts: [cleaning_encoder_counts, cleaning_encoder_joint_states]
@@ -490,8 +490,8 @@ functional_positions:
     actuator_links: [left_side_brush_motor_stator_link, right_side_brush_motor_stator_link]
     visible: true
     components:
-      - {id: left_pololu_4694_encoder, link: left_side_brush_encoder_link, parent_link: left_side_brush_motor_stator_link, joint: left_side_brush_encoder_mount_joint, coordinate_reference: cleaning_lift_carriage_link, xyz_m: [0.385, 0.545, 0.0634], rpy_rad: [0.000, 0.000, 0.000], visible: true, dynamic_position: true}
-      - {id: right_pololu_4694_encoder, link: right_side_brush_encoder_link, parent_link: right_side_brush_motor_stator_link, joint: right_side_brush_encoder_mount_joint, coordinate_reference: cleaning_lift_carriage_link, xyz_m: [0.385, -0.545, 0.0634], rpy_rad: [0.000, 0.000, 0.000], visible: true, dynamic_position: true}
+      - {id: left_pololu_4694_encoder, link: left_side_brush_encoder_link, parent_link: left_side_brush_motor_stator_link, joint: left_side_brush_encoder_mount_joint, coordinate_reference: cleaning_lift_carriage_link, xyz_m: [0.385, 0.545, 0.0584], rpy_rad: [0.000, 0.000, 0.000], visible: true, dynamic_position: true}
+      - {id: right_pololu_4694_encoder, link: right_side_brush_encoder_link, parent_link: right_side_brush_motor_stator_link, joint: right_side_brush_encoder_mount_joint, coordinate_reference: cleaning_lift_carriage_link, xyz_m: [0.385, -0.545, 0.0584], rpy_rad: [0.000, 0.000, 0.000], visible: true, dynamic_position: true}
   - id: main_sweeping
     function: central_helical_roller_collection
     link: central_roller_link

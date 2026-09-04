@@ -42,6 +42,7 @@ def test_authoritative_inventory_covers_all_formal_xacros_and_contracts() -> Non
     assert ENTRYPOINT in sources
     assert Path("config/high_fidelity_vehicle/formal_vehicle_layout.yaml") in sources
     assert Path("config/high_fidelity_vehicle/formal_vehicle_component_register.yaml") in sources
+    assert Path("config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml") in sources
     assert Path("scripts/generate_formal_vehicle_snapshot.py") in sources
     assert Path("scripts/formal_gripper_linkage_contract.py") in sources
     mesh_root = ROOT / "starter_ws/src/sanitation_vehicle_description/meshes"

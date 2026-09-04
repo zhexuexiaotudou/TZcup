@@ -29,9 +29,9 @@ The checked source snapshot is SHA-256-bound to:
 
 | Input | SHA-256 |
 | --- | --- |
-| `config/high_fidelity_vehicle/formal_vehicle_layout.yaml` | `4c5804b917f2226fbf730bf492b2b6113c92bd3f00ee408ee8edb9a3dc3222cc` |
-| `config/high_fidelity_vehicle/formal_vehicle_component_register.yaml` | `e017e66f3dca2f705f04f29a1e8ab84668f687667c552ee62ce619eda9294437` |
-| `reports/engineering/formal_competition_vehicle.urdf` | `cdcd078612b4d54196b32d48bacdadecb2c97fc91ee43d1aef1879fefb713c98` |
+| `config/high_fidelity_vehicle/formal_vehicle_layout.yaml` | `1984160c0b10396c431b05f2cd7c51365f8433d47ba3538f347e77601355534e` |
+| `config/high_fidelity_vehicle/formal_vehicle_component_register.yaml` | `c9ecbce20b0677dab726034859ebaa77d9221b9dbedcddf5044f1b5ce78ded9d` |
+| `reports/engineering/formal_competition_vehicle.urdf` | `d1eef66066ff634835ca65fe2217d9ddd4fc4af936c97827cc368a3b43f3b28c` |
 
 Run only the Windows static checks:
 
