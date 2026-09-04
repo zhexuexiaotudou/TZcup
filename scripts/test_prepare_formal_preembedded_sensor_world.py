@@ -19,6 +19,98 @@ sys.modules[SPEC.name] = MODULE
 SPEC.loader.exec_module(MODULE)
 
 
+def _formal_water_contact_fixture() -> tuple[ET.Element, ET.Element]:
+    selectors = {
+        "squeegee_blade_ground_contact": (
+            "squeegee_link",
+            "squeegee_link_fixed_joint_lump__squeegee_blade_collision_collision",
+        ),
+        "left_side_brush_ground_contact": (
+            "left_side_brush_link",
+            "left_side_brush_link_collision",
+        ),
+        "right_side_brush_ground_contact": (
+            "right_side_brush_link",
+            "right_side_brush_link_collision",
+        ),
+        "central_roller_ground_contact": (
+            "central_roller_link",
+            "central_roller_link_collision",
+        ),
+    }
+    links = "".join(f"<link name='{link}'/>" for link, _ in selectors.values())
+    sensors = "".join(
+        f"<gazebo reference='{link}'><sensor name='{sensor}' type='contact'/>"
+        "</gazebo>"
+        for sensor, (link, _) in selectors.items()
+    )
+    urdf = ET.fromstring(f"<robot name='vehicle'>{links}{sensors}</robot>")
+    model_links = "".join(
+        f"<link name='{link}'><collision name='{selector}'/>"
+        f"<sensor name='{sensor}' type='contact'><contact><collision>{selector}</collision>"
+        "</contact></sensor></link>"
+        for sensor, (link, selector) in selectors.items()
+    )
+    converted = ET.fromstring(f"<sdf version='1.11'><model name='vehicle'>{model_links}</model></sdf>")
+    return urdf, converted
+
+
+def test_final_preembedded_world_binds_each_formal_water_contact_sensor() -> None:
+    urdf, converted = _formal_water_contact_fixture()
+    world = ET.fromstring("<world name='w'/>")
+
+    MODULE.append_preembedded_model(world, converted, urdf)
+
+    assert world.find("model[@name='vehicle']") is not None
+
+
+def test_rejects_historical_squeegee_stale_collision_selector() -> None:
+    urdf, converted = _formal_water_contact_fixture()
+    selector = converted.find(
+        ".//link[@name='squeegee_link']/sensor[@name='squeegee_blade_ground_contact']"
+        "/contact/collision"
+    )
+    assert selector is not None
+    selector.text = "squeegee_blade_collision"
+
+    with pytest.raises(MODULE.PreparationError, match="squeegee_blade_ground_contact.*selector"):
+        MODULE.append_preembedded_model(ET.fromstring("<world name='w'/>"), converted, urdf)
+
+
+def test_rejects_empty_formal_contact_selector() -> None:
+    urdf, converted = _formal_water_contact_fixture()
+    selector = converted.find(
+        ".//link[@name='left_side_brush_link']/sensor[@name='left_side_brush_ground_contact']"
+        "/contact/collision"
+    )
+    assert selector is not None
+    selector.text = ""
+
+    with pytest.raises(MODULE.PreparationError, match="left_side_brush_ground_contact.*empty"):
+        MODULE.append_preembedded_model(ET.fromstring("<world name='w'/>"), converted, urdf)
+
+
+def test_rejects_formal_contact_sensor_with_multiple_owners() -> None:
+    urdf, converted = _formal_water_contact_fixture()
+    second_owner = converted.find(".//link[@name='central_roller_link']")
+    assert second_owner is not None
+    second_owner.append(
+        ET.fromstring("<sensor name='right_side_brush_ground_contact' type='contact'/>"))
+
+    with pytest.raises(MODULE.PreparationError, match="right_side_brush_ground_contact.*exactly one owning link"):
+        MODULE.append_preembedded_model(ET.fromstring("<world name='w'/>"), converted, urdf)
+
+
+def test_rejects_formal_contact_selector_matching_multiple_collisions() -> None:
+    urdf, converted = _formal_water_contact_fixture()
+    owner = converted.find(".//link[@name='central_roller_link']")
+    assert owner is not None
+    owner.append(ET.fromstring("<collision name='central_roller_link_collision'/>"))
+
+    with pytest.raises(MODULE.PreparationError, match="central_roller_ground_contact.*exactly one collision"):
+        MODULE.append_preembedded_model(ET.fromstring("<world name='w'/>"), converted, urdf)
+
+
 def test_restores_urdf_sensor_reference_link_and_local_pose():
     urdf = ET.fromstring(
         """<robot name='fixture'>

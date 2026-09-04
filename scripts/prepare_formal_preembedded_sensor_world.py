@@ -37,6 +37,12 @@ FORMAL_CONTROLLER_NAME = "gz_ros2_control::GazeboSimROS2ControlPlugin"
 CONTROLLER_RUNTIME_RELATIVE = Path(
     "share/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml"
 )
+FORMAL_WATER_CONTACT_SENSOR_LINKS = {
+    "squeegee_blade_ground_contact": "squeegee_link",
+    "left_side_brush_ground_contact": "left_side_brush_link",
+    "right_side_brush_ground_contact": "right_side_brush_link",
+    "central_roller_ground_contact": "central_roller_link",
+}
 
 
 def _sha256(path: Path) -> str:
@@ -311,6 +317,58 @@ def restore_sensor_attachments(
     return restored
 
 
+def validate_formal_water_contact_sensor_bindings(
+    model: ET.Element, required_sensor_names: set[str]
+) -> None:
+    """Fail closed unless each selected formal contact sensor binds its own link.
+
+    sdformat may rename collisions while reducing fixed joints.  A contact
+    sensor can survive that conversion while silently retaining the old
+    selector, so inspect the final preembedded model rather than its URDF text.
+    """
+
+    unknown = sorted(required_sensor_names - set(FORMAL_WATER_CONTACT_SENSOR_LINKS))
+    if unknown:
+        raise PreparationError(
+            "unknown formal water contact sensor requirement: " + ", ".join(unknown)
+        )
+    for sensor_name in sorted(required_sensor_names):
+        expected_link = FORMAL_WATER_CONTACT_SENSOR_LINKS[sensor_name]
+        owners = [
+            (link, sensor)
+            for link in model.findall("link")
+            for sensor in link.findall("sensor")
+            if sensor.get("name") == sensor_name
+        ]
+        if len(owners) != 1:
+            raise PreparationError(
+                f"formal contact sensor {sensor_name} must have exactly one owning link, "
+                f"found {len(owners)}"
+            )
+        owner, sensor = owners[0]
+        owner_name = owner.get("name", "")
+        if owner_name != expected_link:
+            raise PreparationError(
+                f"formal contact sensor {sensor_name} must be owned by {expected_link}, "
+                f"found {owner_name or '<unnamed>'}"
+            )
+        selector = (sensor.findtext("contact/collision") or "").strip()
+        if not selector:
+            raise PreparationError(
+                f"formal contact sensor {sensor_name} has an empty collision selector"
+            )
+        matches = [
+            collision
+            for collision in owner.findall("collision")
+            if collision.get("name") == selector
+        ]
+        if len(matches) != 1:
+            raise PreparationError(
+                f"formal contact sensor {sensor_name} selector {selector!r} must match "
+                f"exactly one collision on {expected_link}, found {len(matches)}"
+            )
+
+
 def build_preembedded_world(
     source_world: Path,
     converted_sdf: str,
@@ -394,6 +452,11 @@ def append_preembedded_model(
             if sensor.get("name") not in only_sensors:
                 parents[sensor].remove(sensor)
         restored = [row for row in restored if row["sensor"] in only_sensors]
+    if restore_attachments:
+        required_contact_sensors = set(FORMAL_WATER_CONTACT_SENSOR_LINKS).intersection(attachments)
+        if only_sensors is not None:
+            required_contact_sensors.intersection_update(only_sensors)
+        validate_formal_water_contact_sensor_bindings(model, required_contact_sensors)
     world.append(model)
     return restored, model
 
