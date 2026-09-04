@@ -44,6 +44,27 @@ def test_safety_fault_heartbeat_is_not_throttled_by_low_simulation_rtf():
     assert "const auto output = this->core.Step(input)" in source
 
 
+def test_nonfinite_startup_joint_feedback_cannot_advance_typed_telemetry():
+    source = (
+        ROOT
+        / "starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorMotorSystem.cc"
+    ).read_text(encoding="utf-8")
+    sample_start = source.index(
+        "input.measured_position[index] = FirstValue(ecm, this->joints[index], false);"
+    )
+    sample_end = source.index("const auto output = this->core.Step(input)", sample_start)
+    sample_block = source[sample_start:sample_end]
+
+    assert "std::isfinite(input.measured_position[index])" in sample_block
+    assert "std::isfinite(input.measured_speed[index])" in sample_block
+    assert "if (!jointFeedbackFinite && !this->validPhysicsSampleSeen)" in sample_block
+    assert "return;" in sample_block
+    assert "this->validPhysicsSampleSeen = true;" in sample_block
+    assert source.index("const auto output = this->core.Step(input)", sample_start) < source.index(
+        "this->telemetryGate.Update(output, physicsUpdateWallTimeS)", sample_start
+    )
+
+
 def test_telemetry_snapshot_clock_is_sampled_after_lock_acquisition():
     source = (
         ROOT

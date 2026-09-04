@@ -177,9 +177,22 @@ public:
         this->resetRequested = false;
       }
     }
+    bool jointFeedbackFinite = true;
     for (std::size_t index = 0; index < kCleaningActuatorCount; ++index) {
       input.measured_position[index] = FirstValue(ecm, this->joints[index], false);
       input.measured_speed[index] = FirstValue(ecm, this->joints[index], true);
+      jointFeedbackFinite = jointFeedbackFinite &&
+        std::isfinite(input.measured_position[index]) &&
+        std::isfinite(input.measured_speed[index]);
+    }
+    if (!jointFeedbackFinite && !this->validPhysicsSampleSeen) {
+      // Joint state components exist before gz_ros2_control provides their
+      // first sample.  Keep the finite, fail-closed startup heartbeat until
+      // real feedback is available instead of publishing NaN measurements.
+      return;
+    }
+    if (jointFeedbackFinite) {
+      this->validPhysicsSampleSeen = true;
     }
     const auto output = this->core.Step(input);
     const double physicsUpdateWallTimeS = std::chrono::duration<double>(
@@ -350,6 +363,7 @@ private:
   bool enabled{false};
   bool resetRequested{false};
   bool configured{false};
+  bool validPhysicsSampleSeen{false};
   bool realtimeTelemetryEnabled{true};
   bool statusJsonEnabled{true};
   double busVoltageV{24.0};

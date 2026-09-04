@@ -57,6 +57,10 @@ int main()
     startupVector[2] == 0.0 && startupVector[3] == 1.0 &&
     startupVector[4] == 0.0 && startupVector[5] == 1.0,
     "startup heartbeat must preserve the fail-closed 63-slot header");
+  for (const double value : startupVector) {
+    Require(std::isfinite(value),
+      "startup heartbeat must remain finite before joint feedback exists");
+  }
   for (std::size_t index = 0; index < kCleaningActuatorCount; ++index) {
     const std::size_t modeIndex = kCleaningTelemetryHeaderCount +
       index * kCleaningTelemetryFieldsPerMotor + 10;
