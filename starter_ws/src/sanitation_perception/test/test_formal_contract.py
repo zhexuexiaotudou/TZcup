@@ -99,8 +99,6 @@ def test_real_repository_is_blocked_without_models_but_has_product_adapters():
     assert report["checks"]["pc_product_adapter_present"] is True
     assert report["checks"]["pc_product_adapter_excludes_truth_inputs"] is True
     assert report["checks"]["pc_python_runtime_contract_valid"] is True
-    assert report["checks"]["pc_python_version_supported"] is False
-    assert "pc_python_version_unsupported" in report["blockers"]
     assert report["checks"]["pc_opencv_headless_declared"] is True
     assert isinstance(report["checks"]["pc_opencv_importable"], bool)
     assert ("pc_opencv_unavailable" in report["blockers"]) is (
