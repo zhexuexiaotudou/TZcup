@@ -175,7 +175,7 @@ public:
       // essential: writing the core torque directly made a positive speed
       // error accelerate every measured wheel in the negative direction and
       // injected energy even while the zero-speed brake was active.
-      const double gazeboJointForceNm = output.wheel_torque_nm[index];
+      const double gazeboJointForceNm = -output.wheel_torque_nm[index];
       auto * force =
         ecm.Component<gz::sim::components::JointForceCmd>(this->wheelJoints[index]);
       if (force == nullptr) {
