@@ -13,6 +13,7 @@ SIMPLE_NODES = (
     "starter_ws/src/sanitation_vehicle_description/scripts/formal_robot_description_publisher.py",
     "starter_ws/src/sanitation_vehicle_description/scripts/formal_encoder_feedback_publisher.py",
     "starter_ws/src/sanitation_vehicle_description/scripts/formal_fisheye_camera_info_publisher.py",
+    "starter_ws/src/sanitation_gazebo_control/scripts/cleaning_actuator_command_mirror.py",
 )
 THREADED_MANAGERS = (
     "starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py",

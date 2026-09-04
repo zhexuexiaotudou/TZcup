@@ -94,6 +94,7 @@ class RosAdapter:
     def start(self) -> None:
         import rclpy
         from nav_msgs.msg import OccupancyGrid, Odometry, Path
+        from rclpy.qos import qos_profile_clock
         from rosgraph_msgs.msg import Clock
         from sensor_msgs.msg import Image, LaserScan
         from std_msgs.msg import Bool, Float32, String
@@ -105,7 +106,12 @@ class RosAdapter:
         self.node = node
         self._estop_publisher = node.create_publisher(Bool, "/emergency_stop", 10)
         node.create_timer(1.0, self._check_safety_interface)
-        node.create_subscription(Clock, "/clock", lambda _msg: self.state.touch("clock"), 10)
+        node.create_subscription(
+            Clock,
+            "/clock",
+            lambda _msg: self.state.touch("clock"),
+            qos_profile_clock,
+        )
         node.create_subscription(Odometry, "/odom", self._on_odom, 20)
         node.create_subscription(OccupancyGrid, "/map", self._on_map, 2)
         node.create_subscription(Path, "/coverage/current_path", lambda msg: self._on_path("planned_path", msg), 10)

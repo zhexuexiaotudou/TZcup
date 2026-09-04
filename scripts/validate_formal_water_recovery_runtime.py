@@ -16,6 +16,7 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from rosgraph_msgs.msg import Clock
 from rclpy.node import Node
+from rclpy.qos import qos_profile_clock
 from ros_gz_interfaces.msg import Contacts
 from std_msgs.msg import Bool, Empty, Float64, Float64MultiArray, String
 
@@ -168,7 +169,7 @@ class Probe(Node):
             50,
         )
         self.create_subscription(Odometry, "/odom/unfiltered", self._on_odom, 50)
-        self.create_subscription(Clock, "/clock", self._on_clock, 50)
+        self.create_subscription(Clock, "/clock", self._on_clock, qos_profile_clock)
         self.create_subscription(
             DiagnosticArray, "/safety/status", self._on_safety_status, 100
         )

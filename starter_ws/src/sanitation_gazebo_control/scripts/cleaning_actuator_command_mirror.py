@@ -8,6 +8,7 @@ import time
 
 import rclpy
 from control_msgs.msg import JointTrajectoryControllerState
+from rclpy._rclpy_pybind11 import RCLError
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from sensor_msgs.msg import JointState
@@ -126,9 +127,12 @@ def main(args=None) -> None:
         rclpy.spin(node)
     except (KeyboardInterrupt, ExternalShutdownException):
         pass
+    except RCLError:
+        if rclpy.ok(context=node.context):
+            raise
     finally:
         node.destroy_node()
-        if rclpy.ok():
+        if rclpy.ok(context=node.context):
             rclpy.shutdown()
 
 

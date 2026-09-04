@@ -22,6 +22,13 @@ PROFILE_MODULE = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(PROFILE_MODULE)
 
 
+def test_g2_probe_uses_simulation_clock_qos():
+    source = (ROOT / "scripts/auto01_g2_obstacle_probe.py").read_text(encoding="utf-8")
+    assert "from rclpy.qos import qos_profile_clock" in source
+    assert 'Clock,\n            "/clock",' in source
+    assert "qos_profile_clock," in source
+
+
 def _inputs():
     profile = yaml.safe_load(
         (

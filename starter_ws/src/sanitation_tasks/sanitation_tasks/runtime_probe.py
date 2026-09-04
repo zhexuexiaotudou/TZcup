@@ -11,6 +11,7 @@ from rclpy.qos import (
     DurabilityPolicy,
     QoSProfile,
     ReliabilityPolicy,
+    qos_profile_clock,
     qos_profile_sensor_data,
 )
 from rosgraph_msgs.msg import Clock
@@ -32,7 +33,7 @@ class RuntimeProbe(Node):
             reliability=ReliabilityPolicy.RELIABLE,
         )
         self.specifications = {
-            "/clock": (Clock, regular_qos),
+            "/clock": (Clock, qos_profile_clock),
             "/odom/unfiltered": (Odometry, regular_qos),
             "/odom": (Odometry, regular_qos),
             "/imu/data": (Imu, qos_profile_sensor_data),
