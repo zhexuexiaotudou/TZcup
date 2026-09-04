@@ -33,6 +33,7 @@ class WarningRule:
     pattern: re.Pattern[str]
     source_prefix: str = "[gazebo-1]"
     expected_count: int = 1
+    allowed_counts: tuple[int, ...] | None = None
 
 
 RULES = (
@@ -63,6 +64,11 @@ RULES = (
     WarningRule(
         "controller_statistics_not_initialized",
         re.compile(r"\[controller_manager\]: Component 'formal_vehicle_system' does not have read or write statistics initialized, skipping registration\."),
+    ),
+    WarningRule(
+        "controller_waiting_for_robot_description",
+        re.compile(r"\[controller_manager\]: Waiting for data on 'robot_description' topic to finish initialization"),
+        allowed_counts=(0, 1),
     ),
     WarningRule(
         "controller_update_period_slower_than_simulation",
@@ -197,10 +203,11 @@ def audit(
         rule.identifier: {
             "source_prefix": rule.source_prefix,
             "expected_count": rule.expected_count,
+            "allowed_counts": list(rule.allowed_counts or (rule.expected_count,)),
             "observed_count": len(matches[rule.identifier]),
             "line_numbers": matches[rule.identifier],
             "startup_only": True,
-            "passed": len(matches[rule.identifier]) == rule.expected_count,
+            "passed": len(matches[rule.identifier]) in (rule.allowed_counts or (rule.expected_count,)),
         }
         for rule in active_rules
     }

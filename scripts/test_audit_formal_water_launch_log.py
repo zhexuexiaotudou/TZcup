@@ -5,6 +5,12 @@ from pathlib import Path
 from audit_formal_water_launch_log import RULES, STABLE_MARKER, audit
 
 
+ROBOT_DESCRIPTION_WARNING = (
+    "[gazebo-1] [WARN] [1.35] [controller_manager]: Waiting for data on "
+    "'robot_description' topic to finish initialization"
+)
+
+
 def test_stable_marker_matches_the_fail_closed_inactive_controller_loader() -> None:
     assert STABLE_MARKER == "[spawner_brush_controller]: Loaded recovery_controller"
 
@@ -18,6 +24,7 @@ def _allowed_lines() -> list[str]:
         "[gazebo-1] [WARN] [1.1] [gz_ros_control]: IMU sensor 'vn100' not found in hardware_info, skipping.",
         "[gazebo-1] [WARN] [1.2] [controller_manager.hardware_component.system.formal_vehicle_system]: Executor is not available during hardware component initialization for 'formal_vehicle_system'. Skipping node creation!",
         "[gazebo-1] [WARN] [1.3] [controller_manager]: Component 'formal_vehicle_system' does not have read or write statistics initialized, skipping registration.",
+        ROBOT_DESCRIPTION_WARNING,
         "[gazebo-1] [WARN] [1.4] [gz_ros_control]:  Desired controller update period (0.004 s) is slower than the gazebo simulation period (0.001 s).",
     ]
 
@@ -54,6 +61,36 @@ def test_exact_known_startup_warnings_pass(tmp_path: Path) -> None:
     assert report["passed"] is True
     assert len(report["rules"]) == len(RULES)
     assert report["warning_profile"] == "dynamic"
+
+
+def test_robot_description_warning_is_optional_single_gazebo_startup_only(tmp_path: Path) -> None:
+    allowed = _allowed_lines()
+    single = audit(_write(tmp_path, allowed + [STABLE_MARKER]))
+    zero = audit(
+        _write(tmp_path, [line for line in allowed if line != ROBOT_DESCRIPTION_WARNING] + [STABLE_MARKER])
+    )
+    repeated = audit(_write(tmp_path, allowed + [ROBOT_DESCRIPTION_WARNING, STABLE_MARKER]))
+    late = audit(_write(tmp_path, allowed + [STABLE_MARKER, ROBOT_DESCRIPTION_WARNING]))
+    wrong_source = audit(
+        _write(
+            tmp_path,
+            allowed
+            + [
+                ROBOT_DESCRIPTION_WARNING.replace("[gazebo-1]", "[controller_manager-2]"),
+                STABLE_MARKER,
+            ],
+        )
+    )
+
+    assert single["passed"] is True
+    assert zero["passed"] is True
+    assert single["rules"]["controller_waiting_for_robot_description"]["allowed_counts"] == [0, 1]
+    assert repeated["passed"] is False
+    assert repeated["rules"]["controller_waiting_for_robot_description"]["observed_count"] == 2
+    assert late["passed"] is False
+    assert late["checks"]["zero_warning_or_error_at_or_after_stable_window"] is False
+    assert wrong_source["passed"] is False
+    assert wrong_source["checks"]["zero_unexpected_warning_or_error_lines"] is False
 
 
 def test_exact_preembedded_snapshot_warning_profile_passes(tmp_path: Path) -> None:
