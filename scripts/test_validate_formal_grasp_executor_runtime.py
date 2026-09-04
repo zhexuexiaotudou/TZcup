@@ -7,6 +7,9 @@ SOURCE = (
 RUNNER = Path(__file__).with_name("run_formal_grasp_executor_runtime.sh").read_text(
     encoding="utf-8"
 )
+GRASP_LAUNCH = Path(
+    "starter_ws/src/sanitation_manipulation/launch/formal_cube_pick_place.launch.py"
+).read_text(encoding="utf-8")
 
 
 def test_runtime_probe_has_no_simulator_truth_or_direct_actuator_authority():
@@ -63,7 +66,9 @@ def test_runner_starts_physics_bridge_and_product_executor_as_separate_surfaces(
     assert "formal_cube_pick_place.launch.py" in RUNNER
     assert "FORMAL_MANIPULATION_CUBE_NAME" in RUNNER
     assert "formal_physical_grasp.launch.py" in RUNNER
-    assert "dry_bin/observed_status_json" in RUNNER
+    assert 'executable="manipulation_sim_bridge"' in GRASP_LAUNCH
+    assert "dry_bin/observed_status_json" not in RUNNER
+    assert "bridge_pid" not in RUNNER
     assert "validate_formal_grasp_executor_runtime.py" in RUNNER
     assert "FORMAL_GRASP_EXECUTOR_RUNTIME_BINDING" in RUNNER
     assert '${output}.runtime_binding.json' in RUNNER
@@ -79,9 +84,7 @@ def test_runner_starts_physics_bridge_and_product_executor_as_separate_surfaces(
     assert RUNNER.index("formal_runtime_install_traps cleanup") < RUNNER.index(
         "ros2 launch sanitation_manipulation formal_cube_pick_place.launch.py"
     )
-    assert "whole_vehicle_safety_manager" in Path(
-        "starter_ws/src/sanitation_manipulation/launch/formal_cube_pick_place.launch.py"
-    ).read_text(encoding="utf-8")
+    assert "whole_vehicle_safety_manager" in GRASP_LAUNCH
 
 
 def test_grasp_runner_preembeds_both_contact_models_and_archives_them():

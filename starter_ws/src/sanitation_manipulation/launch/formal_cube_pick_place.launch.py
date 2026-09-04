@@ -317,13 +317,17 @@ def generate_launch_description() -> LaunchDescription:
             Node(
                 package="ros_gz_bridge",
                 executable="parameter_bridge",
+                name="manipulation_pose_service_bridge",
                 arguments=[
                     "/world/formal_cube_manipulation/pose/info@tf2_msgs/msg/TFMessage[gz.msgs.Pose_V",
-                    "/manipulation/grasp/detach@std_msgs/msg/Empty]gz.msgs.Empty",
-                    "/manipulation/grasp/attach@std_msgs/msg/Empty]gz.msgs.Empty",
-                    "/manipulation/grasp/state@std_msgs/msg/Bool[gz.msgs.Boolean",
                     "/world/formal_cube_manipulation/set_pose@ros_gz_interfaces/srv/SetEntityPose",
                 ],
+                output="screen",
+            ),
+            Node(
+                package="sanitation_gazebo_control",
+                executable="manipulation_sim_bridge",
+                name="manipulation_sim_bridge",
                 output="screen",
             ),
             a300_drivetrain_bridge,

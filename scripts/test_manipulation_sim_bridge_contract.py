@@ -16,6 +16,10 @@ def test_manipulation_simulation_endpoints_use_native_bridge() -> None:
     cmake = (
         ROOT / "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt"
     ).read_text(encoding="utf-8")
+    direct_launch = (
+        ROOT
+        / "starter_ws/src/sanitation_manipulation/launch/formal_cube_pick_place.launch.py"
+    ).read_text(encoding="utf-8")
 
     block = launch[
         launch.index("manipulation_sim_bridge = Node(") : launch.index(
@@ -51,3 +55,8 @@ def test_manipulation_simulation_endpoints_use_native_bridge() -> None:
     assert "add_executable(manipulation_sim_bridge" in cmake
     assert "ManipulationSimBridge.cc" in cmake
     assert "manipulation_sim_bridge" in cmake
+    assert 'executable="manipulation_sim_bridge"' in direct_launch
+    assert '"/manipulation/grasp/attach@' not in direct_launch
+    assert '"/manipulation/grasp/detach@' not in direct_launch
+    assert '"/manipulation/grasp/state@' not in direct_launch
+    assert 'name="manipulation_pose_service_bridge"' in direct_launch

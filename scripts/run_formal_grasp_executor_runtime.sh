@@ -116,11 +116,10 @@ formal_runtime_configure "${ROS_DOMAIN_ID}"
 export GZ_PARTITION="${GZ_PARTITION:-tzcup_formal_product_grasp_${ROS_DOMAIN_ID}_$$}"
 
 simulation_pid=""
-bridge_pid=""
 executor_pid=""
 cleanup() {
   formal_runtime_cleanup_groups "${GZ_PARTITION}" \
-    "${executor_pid}" "${bridge_pid}" "${simulation_pid}"
+    "${executor_pid}" "${simulation_pid}"
 }
 formal_runtime_install_traps cleanup
 
@@ -129,11 +128,6 @@ formal_runtime_install_traps cleanup
   spawn_vehicle:=false spawn_single_cube:=false \
   gui:=false material:="${material}" cube_name:="${cube_name}" >"${launch_log}" 2>&1 &
 simulation_pid=$!
-"${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 run ros_gz_bridge parameter_bridge \
-  "/model/tzcup_formal_sanitation_vehicle/dry_bin/observed_status_json@std_msgs/msg/String[gz.msgs.StringMsg" \
-  "/manipulation/gripper/dual_contact@std_msgs/msg/Bool[gz.msgs.Boolean" \
-  >>"${launch_log}" 2>&1 &
-bridge_pid=$!
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch sanitation_manipulation formal_physical_grasp.launch.py \
   >>"${launch_log}" 2>&1 &
 executor_pid=$!

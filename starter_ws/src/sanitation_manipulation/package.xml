@@ -26,6 +26,7 @@
   <exec_depend>sanitation_vehicle_description</exec_depend>
   <exec_depend>sanitation_safety</exec_depend>
   <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>sanitation_gazebo_control</exec_depend>
   <exec_depend>ros_gz_sim</exec_depend>
   <exec_depend>ros_gz_interfaces</exec_depend>
   <exec_depend>rosgraph_msgs</exec_depend>
