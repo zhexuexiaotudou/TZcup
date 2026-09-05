@@ -1,0 +1,48 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>sanitation_formal_campus_integration</name>
+  <version>0.1.0</version>
+  <description>
+    Fail-closed integration between the formal skid-steer vehicle and campus autonomy.
+  </description>
+  <maintainer email="team@example.com">Sanitation Vehicle Team</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>action_msgs</exec_depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>controller_manager</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>nav_msgs</exec_depend>
+  <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>nav2_lifecycle_manager</exec_depend>
+  <exec_depend>nav2_msgs</exec_depend>
+  <exec_depend>opennav_coverage</exec_depend>
+  <exec_depend>opennav_coverage_msgs</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
+  <exec_depend>ros_gz_interfaces</exec_depend>
+  <exec_depend>sanitation_campus_scenario</exec_depend>
+  <exec_depend>sanitation_coverage</exec_depend>
+  <exec_depend>sanitation_navigation</exec_depend>
+  <exec_depend>sanitation_manipulation</exec_depend>
+  <exec_depend>sanitation_localization</exec_depend>
+  <exec_depend>sanitation_safety</exec_depend>
+  <exec_depend>sanitation_gazebo_auxiliary</exec_depend>
+  <exec_depend>sanitation_vehicle_description</exec_depend>
+  <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>slam_toolbox</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
+
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

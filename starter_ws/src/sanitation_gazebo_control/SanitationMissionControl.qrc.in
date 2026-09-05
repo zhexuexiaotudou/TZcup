@@ -1,0 +1,5 @@
+<!DOCTYPE RCC><RCC version="1.0">
+  <qresource prefix="SanitationMissionControl/">
+    <file alias="SanitationMissionControl.qml">@SANITATION_MISSION_CONTROL_QML@</file>
+  </qresource>
+</RCC>

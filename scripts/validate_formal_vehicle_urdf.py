@@ -194,11 +194,16 @@ def validate_layout(
     )
     if abs(install_limit_l - declared_install_limit_l) > 1e-6:
         raise FormalVehicleValidationError("wastewater tank dimensions do not match installation limit")
-    if wet.get("cog_limit_l") is not None:
-        _number(wet["cog_limit_l"], "wastewater CoG limit", positive=True, allow_zero=False)
-    if wet.get("final_capacity_pending") is not True or wet.get("cog_limit_l") is not None:
-        raise FormalVehicleValidationError(
-            "wastewater capacity must remain pending until a full-vehicle CoG scan supplies its limit"
+    capacity_pending = wet.get("final_capacity_pending") is True
+    cog_limit_l = wet.get("cog_limit_l")
+    if capacity_pending:
+        if cog_limit_l is not None or wet.get("final_usable_capacity_l") is not None:
+            raise FormalVehicleValidationError(
+                "pending wastewater capacity cannot declare final CoG or usable limits"
+            )
+    else:
+        cog_limit_l = _number(
+            cog_limit_l, "wastewater CoG limit", positive=True, allow_zero=False
         )
 
     capacity_rows = {
@@ -216,11 +221,43 @@ def validate_layout(
     if wet_usable_fraction > 1.0:
         raise FormalVehicleValidationError("wastewater usable fraction cannot exceed one")
     preliminary_usable_l = preliminary_nominal_l * wet_usable_fraction
+    if capacity_pending:
+        final_nominal_l = preliminary_nominal_l
+        final_usable_l = preliminary_usable_l
+        final_mass_limit_l = mass_limit_l
+    else:
+        final_mass_limit_l = _number(
+            wet.get("final_mass_limit_l"),
+            "final expanded-URDF wastewater mass limit",
+            positive=True,
+            allow_zero=False,
+        )
+        if final_mass_limit_l > mass_limit_l + 1e-9:
+            raise FormalVehicleValidationError(
+                "final expanded-URDF mass limit cannot exceed the preliminary mass budget"
+            )
+        final_nominal_l = min(
+            final_mass_limit_l,
+            design_cap_l,
+            install_limit_l,
+            float(cog_limit_l),
+        )
+        final_usable_l = _number(
+            wet.get("final_usable_capacity_l"),
+            "final wastewater usable capacity",
+            positive=True,
+            allow_zero=False,
+        )
+        expected_final_usable_l = final_nominal_l * wet_usable_fraction
+        if abs(final_usable_l - expected_final_usable_l) > 1e-5:
+            raise FormalVehicleValidationError(
+                "final wastewater capacity does not match installation, mass, design, CoG and usable-fraction limits"
+            )
     fixed_payload_kg = float(mass_rows["fixed_payload"]["mass_kg"])
     dry_trash_kg = float(mass_rows["worst_case_dry_trash"]["mass_kg"])
     design_payload_limit_kg = float(contract["mass_capacity_budget"]["payload_design_limit_kg"])
     water_density_kg_l = float(contract["mass_capacity_budget"]["wastewater"]["density_kg_l"])
-    payload_at_usable_fill_kg = fixed_payload_kg + dry_trash_kg + preliminary_usable_l * water_density_kg_l
+    payload_at_usable_fill_kg = fixed_payload_kg + dry_trash_kg + final_usable_l * water_density_kg_l
     if payload_at_usable_fill_kg > design_payload_limit_kg + 1e-9:
         raise FormalVehicleValidationError("usable wastewater fill exceeds the design payload limit")
 
@@ -245,8 +282,20 @@ def validate_layout(
         raise FormalVehicleValidationError("stowed arm envelope exceeds transport envelope")
     if not _inside(arm_deployed, operating):
         raise FormalVehicleValidationError("deployed arm envelope exceeds operating envelope")
-    if not arm.get("stowed", {}).get("pending") or not arm.get("deployed", {}).get("pending"):
-        raise FormalVehicleValidationError("arm envelopes cannot be final before the exact swept-volume scan")
+    arm_stowed_entry = arm.get("stowed", {})
+    arm_deployed_entry = arm.get("deployed", {})
+    if arm_stowed_entry.get("pending") is not False:
+        raise FormalVehicleValidationError(
+            "stowed arm envelope must be frozen after the exact transport and task-anchor scan"
+        )
+    if arm_stowed_entry.get("validation") != "exact_mesh_transport_and_task_anchor_scan":
+        raise FormalVehicleValidationError(
+            "stowed arm envelope requires the exact mesh transport and task-anchor validation marker"
+        )
+    if arm_deployed_entry.get("pending") is not True or not arm_deployed_entry.get("pending_reason"):
+        raise FormalVehicleValidationError(
+            "deployed arm envelope must remain pending until the continuous joint-space swept-volume scan"
+        )
 
     sensor_contracts = {item["id"]: item for item in contract["sensor_contracts"]}
     sensor_layout = layout.get("sensor_layout", [])
@@ -281,6 +330,40 @@ def validate_layout(
                 raise FormalVehicleValidationError(f"sensor {sensor_id} fails the approximate FOV clearance gate")
             passed_fov.append(sensor_id)
 
+    compute = layout.get("compute_hardware", {})
+    if compute.get("selected_model") != "D-Robotics_RDK_S100P_V1P0_user_owned":
+        raise FormalVehicleValidationError("formal compute model must identify the connected RDK S100P V1P0")
+    reference_compute_size = _vector(
+        compute.get("provisional_reference_dimensions_m"),
+        "compute_hardware.provisional_reference_dimensions_m",
+    )
+    modeled_compute_size = _vector(
+        compute.get("modeled_collision_dimensions_m"),
+        "compute_hardware.modeled_collision_dimensions_m",
+    )
+    if any(abs(actual - expected) > 1e-9 for actual, expected in zip(modeled_compute_size, reference_compute_size)):
+        raise FormalVehicleValidationError("RDK S100P modeled collision differs from its declared provisional reference envelope")
+    enclosure_clear = _vector(
+        compute.get("protective_enclosure_internal_clear_dimensions_m"),
+        "compute_hardware.protective_enclosure_internal_clear_dimensions_m",
+    )
+    if any(clear + 1e-9 < size for clear, size in zip(enclosure_clear, reference_compute_size)):
+        raise FormalVehicleValidationError("RDK S100P provisional envelope does not fit the protective enclosure")
+    if compute.get("external_envelope_pending") is not True:
+        raise FormalVehicleValidationError("RDK S100P external envelope must remain pending until the owned board is measured")
+    if compute.get("validation") != "provisional_RDK_S100_reference_envelope_pending_owned_S100P_measurement":
+        raise FormalVehicleValidationError("RDK S100P envelope lacks the provisional-measurement marker")
+    unresolved_compute = compute.get("unresolved_physical_validation", [])
+    if unresolved_compute != [
+        "exact_external_dimensions",
+        "mounting_hole_pattern",
+        "board_mass",
+        "thermal_rejection",
+        "connector_and_cable_service_space",
+        "live_power_and_compute_runtime",
+    ]:
+        raise FormalVehicleValidationError("RDK S100P unresolved physical validation list is incomplete")
+
     policy = layout.get("validation_policy", {})
     approved_pending = [str(item) for item in policy.get("approved_pending_gates", [])]
     _unique(approved_pending, "approved pending gates")
@@ -304,16 +387,17 @@ def validate_layout(
         "required_installation_frames_have_numeric_initial_poses",
         "declared_component_envelopes_fit_transport_envelope",
         "dry_bin_geometry_and_usable_volume_at_least_40_l",
-        "mass_installation_and_design_caps_bound_preliminary_wastewater_fill",
-        "payload_limit_at_preliminary_usable_wastewater_fill",
+        "mass_installation_design_and_cog_caps_bound_wastewater_fill",
+        "payload_limit_at_final_usable_wastewater_fill",
         "effective_cleaning_width_at_least_0_6_m",
         "declared_arm_stowed_and_operating_envelopes_are_bounded",
         "static_sensor_layout_approximate_fov_clearance",
+        "rdk_s100_official_external_envelope_fits_project_enclosure",
     ]
     return {
         "layout_id": layout["layout_id"],
         "robot_name": robot["name"],
-        "status": "LAYOUT_CONTRACT_VALID_URDF_AND_SIMULATION_GATES_PENDING",
+        "status": "LAYOUT_CONTRACT_VALID_RESOLVED_ENGINEERING_GATES_WITH_DECLARED_EXTERNAL_PENDING",
         "passed_deterministic_checks": passed_checks,
         "urdf_validation": {"evaluated": False, "passed": False},
         "counts": {
@@ -330,12 +414,13 @@ def validate_layout(
         },
         "dry_bin_usable_l": round(dry_usable_l, 6),
         "preliminary_wastewater": {
-            "mass_limit_l": round(mass_limit_l, 6),
+            "preliminary_mass_limit_l": round(mass_limit_l, 6),
+            "final_expanded_urdf_mass_limit_l": round(final_mass_limit_l, 6),
             "installation_limit_l": round(install_limit_l, 6),
-            "cog_limit_l": None,
+            "cog_limit_l": None if capacity_pending else round(float(cog_limit_l), 6),
             "nominal_before_usable_fraction_l": round(preliminary_nominal_l, 6),
-            "usable_l": round(preliminary_usable_l, 6),
-            "final_capacity_frozen": False,
+            "usable_l": round(final_usable_l, 6),
+            "final_capacity_frozen": not capacity_pending,
         },
         "payload": {
             "design_limit_kg": round(design_payload_limit_kg, 6),
@@ -343,13 +428,22 @@ def validate_layout(
             "remaining_margin_kg": round(design_payload_limit_kg - payload_at_usable_fill_kg, 6),
         },
         "effective_cleaning_width_m": round(working_width_m, 6),
+        "compute_hardware": {
+            "selected_model": compute["selected_model"],
+            "provisional_reference_dimensions_m": reference_compute_size,
+            "modeled_collision_dimensions_m": modeled_compute_size,
+            "protective_enclosure_internal_clear_dimensions_m": enclosure_clear,
+            "external_envelope_frozen": False,
+            "unresolved_physical_validation": unresolved_compute,
+        },
         "approximate_fov_passed_sensors": passed_fov,
         "approximate_fov_pending_sensors": pending_fov,
         "pending_external_gates": approved_pending,
         "claim_boundary": (
-            "Numeric initial layout and deterministic budgets pass. Expanded URDF inertials/names/limits "
-            "must pass separately; final CoG, wastewater capacity, mesh swept volumes, exact occlusion, "
-            "ground contact and Gazebo sensor visibility remain fail-closed."
+            "Numeric layout, final wastewater capacity and deterministic budgets pass. Expanded URDF, "
+            "sampled task-anchor collision/CoG, exact occlusion and cleaning-contact reports are separate "
+            "source-bound gates; continuous arm-space, exact S100P envelope/mounting, mass/thermal/connector/live-hardware integration "
+            "and rendered sensor visibility remain explicitly fail-closed."
         ),
     }
 
@@ -471,6 +565,22 @@ def _validate_static_frame_poses(
             _vector(expected["rpy_rad"], f"installation_frames.{name}.rpy_rad")
         )
         actual_position, actual_rotation = poses[name]
+        reference_name = expected.get("coordinate_reference")
+        if reference_name:
+            if reference_name not in poses:
+                # Minimal unit fixtures may intentionally omit the complete
+                # manipulator chain.  Production validation still requires
+                # tool0 through the normal required-link gate; classify the
+                # dependent datum as unresolvable in the reduced fixture.
+                pending.append(name)
+                continue
+            reference_position, reference_rotation = poses[reference_name]
+            reference_transpose = [list(row) for row in zip(*reference_rotation)]
+            actual_position = _rotate(
+                reference_transpose,
+                [actual_position[axis] - reference_position[axis] for axis in range(3)],
+            )
+            actual_rotation = _matmul(reference_transpose, actual_rotation)
         position_error = math.sqrt(
             sum((actual_position[axis] - expected_position[axis]) ** 2 for axis in range(3))
         )
@@ -595,14 +705,25 @@ def validate_expanded_urdf(
     if not urdf_path.is_file():
         raise FormalVehicleValidationError(f"expanded URDF does not exist: {urdf_path}")
     raw = urdf_path.read_text(encoding="utf-8")
-    forbidden = [str(token) for token in layout["validation_policy"]["forbidden_symbolic_tokens"]]
-    found = [token for token in forbidden if token.lower() in raw.lower()]
-    if found:
-        raise FormalVehicleValidationError("expanded URDF contains symbolic placeholder tokens: " + ", ".join(found))
     try:
         root = ET.fromstring(raw)
     except ET.ParseError as exc:
         raise FormalVehicleValidationError(f"expanded URDF is not valid XML: {exc}") from exc
+    # ElementTree discards ordinary XML comments. Scan only active element
+    # text, tails and attribute values so a documented Xacro example in a
+    # comment cannot masquerade as an unexpanded runtime placeholder.
+    active_xml_fragments: list[str] = []
+    for element in root.iter():
+        active_xml_fragments.extend(str(value) for value in element.attrib.values())
+        if element.text:
+            active_xml_fragments.append(element.text)
+        if element.tail:
+            active_xml_fragments.append(element.tail)
+    active_xml = "\n".join(active_xml_fragments).lower()
+    forbidden = [str(token) for token in layout["validation_policy"]["forbidden_symbolic_tokens"]]
+    found = [token for token in forbidden if token.lower() in active_xml]
+    if found:
+        raise FormalVehicleValidationError("expanded URDF contains symbolic placeholder tokens: " + ", ".join(found))
     if root.tag != "robot":
         raise FormalVehicleValidationError("expanded URDF root must be <robot>")
     if root.attrib.get("name") != layout["robot"]["name"]:

@@ -1,0 +1,155 @@
+{
+  "$schema": "https://tzcup.local/schema/dosod-s100p-hbm-compile-contract-v1.json",
+  "schema_version": 1,
+  "contract_id": "tzcup_dosod_s100p_four_class_hbm_compile_v1",
+  "status": "BLOCKED_UNTIL_FROZEN_CALIBRATION_AND_LIVE_COMPILER",
+  "operation_boundary": "preflight_only_no_hbm_claim_board_copy_ssh_node_start_or_data_collection",
+  "model": {
+    "relative_path": "dosod/dosod_mlp3x_s_tzcup_rep.onnx",
+    "byte_size": 45430396,
+    "sha256": "30e4da2516b7a18cc3dbb4b20572e99f07c28a0c08111055a8c14265a992e516",
+    "source_revision": "c50129b5badf6ed7bb85e692ab493d8bdb58da6a",
+    "model_role": "project_four_class_dosod_pc_detector",
+    "ir_version": 6,
+    "opset": 11,
+    "node_count": 327,
+    "inputs": [
+      {"name": "images", "dtype": "FLOAT", "shape": [1, 3, 640, 640]}
+    ],
+    "outputs": [
+      {"name": "scores", "dtype": "FLOAT", "shape": [1, 8400, 4]},
+      {"name": "boxes", "dtype": "FLOAT", "shape": [1, 8400, 4]}
+    ],
+    "forbidden_operator_types": ["NonMaxSuppression"],
+    "custom_operator_domains_allowed": []
+  },
+  "vocabulary": {
+    "relative_path": "dosod/tzcup_offline_vocabulary.json",
+    "byte_size": 188,
+    "sha256": "c5b10ba0e26ee28cdbf5192775e7d2ddb3f5852e515f59a074b38b7ed69d7ffd",
+    "semantic_class_ids": ["litter_cube", "fallen_leaves", "dust_or_soil", "puddle"],
+    "emitted_labels": ["small litter cube", "fallen leaves", "dust patch", "puddle"],
+    "groups": [
+      ["small litter cube", "trash cube", "piece of litter"],
+      ["fallen leaves", "leaf pile"],
+      ["dust patch", "soil patch", "dirty ground"],
+      ["puddle", "wet patch", "standing water"]
+    ]
+  },
+  "reparameterization": {
+    "embedding": {
+      "relative_path": "dosod/tzcup_offline_vocabulary_dosod_mlp3x_s.npy",
+      "byte_size": 8320,
+      "sha256": "f3ce22baa2cacba05d701a3041522c5d3662d7192b86cf8d8aea2ccbed6171a1",
+      "dtype": "float32",
+      "shape": [4, 512]
+    },
+    "checkpoint": {
+      "relative_path": "dosod/dosod_mlp3x_s_rep.pth",
+      "byte_size": 608194709,
+      "sha256": "4fb78da2be9fc91cb3b79cba8ef32ef6f1fcb0d678ebc3f0fa9cd0fabc4f6b2e"
+    }
+  },
+  "upstream": {
+    "repository_revision": "c50129b5badf6ed7bb85e692ab493d8bdb58da6a",
+    "s100_wrapper_revision": "c5b585204cd84585af1830b00da0c66c1383305e",
+    "files": [
+      {
+        "relative_path": "configs/dosod/rep_dosod_mlp3x_s_100e_1x8gpus_obj365v1_goldg_train_lvis_minival.py",
+        "byte_size": 717,
+        "sha256": "7f827487334848a74c387e81dde9b3e1f115f0adf23487e46b64897b86b8f14b"
+      },
+      {
+        "relative_path": "deploy/export_onnx.py",
+        "byte_size": 7959,
+        "sha256": "b7e97403f8828471b28a4dc94e0e4805bd561288f96c0dfa32f0e59b89d9c70b"
+      },
+      {
+        "relative_path": "ai_toolchain/s100/con_DOSOD_S.yaml",
+        "byte_size": 874,
+        "sha256": "5d1248c8e0afb43c5ab2beac41ef67dffe04e7c48b54fb66fbcd357962a574a0"
+      },
+      {
+        "relative_path": "ai_toolchain/s100/gen_calibration_data_s100.py",
+        "byte_size": 1620,
+        "sha256": "f876c3b38effb66d78812db8ccbe0f69b794e08408f23a2ad9e953e3c2724dda"
+      }
+    ]
+  },
+  "preprocessing": {
+    "source_color_space": "RGB",
+    "square_padding": "symmetric_black_zero_short_axis_floor_leading_remainder_trailing",
+    "resize": {"height": 640, "width": 640, "interpolation": "bilinear"},
+    "tensor_dtype": "float32",
+    "tensor_layout": "NCHW",
+    "tensor_shape": [1, 3, 640, 640],
+    "value_scale": 0.003921568627451,
+    "value_range": [0.0, 1.0],
+    "mean": [],
+    "standard_deviation": []
+  },
+  "calibration": {
+    "manifest_name": "calibration_manifest.json",
+    "minimum_sample_count": 500,
+    "sample_suffix": ".npy",
+    "dtype": "float32",
+    "shape": [1, 3, 640, 640],
+    "value_range": [0.0, 1.0],
+    "unique_source_and_tensor_hashes_required": true,
+    "symlinks_forbidden": true,
+    "unregistered_samples_forbidden": true,
+    "evaluation_holdout_overlap_forbidden": true,
+    "collection_status": "PAUSED_NO_NEW_CAPTURE"
+  },
+  "toolchain": {
+    "platform": "linux_x86_64",
+    "oe_version": "3.7.0",
+    "archive_sha256": "de90da5cf58879a0883bb47856232514c3cc30e368d8864911bd05e267229c5b",
+    "required_versions": {
+      "hbdk4_compiler": "4.7.5",
+      "hmct": "2.6.5",
+      "horizon_tc_ui": "3.5.3"
+    },
+    "discovery_report": {
+      "relative_path": "artifacts/autonomous_auto14_20260730_evidence/toolchain_discovery.json",
+      "byte_size": 6367,
+      "sha256": "3f5791e251924e29827c8ce484f65ea0ef076f50e48e38588733401d98a20ec7"
+    },
+    "hb_compile_help": {
+      "relative_path": "artifacts/autonomous_auto14_20260730_evidence/hb_compile_help.txt",
+      "byte_size": 872,
+      "sha256": "6503086b05247385e7a611f717021f8b5d6f2292758ffe802c1fc58440100274"
+    },
+    "live_compiler_identity_required_at_compile_time": true
+  },
+  "compile_recipe": {
+    "march": "nash-m",
+    "input_name": "images",
+    "input_type_train": "rgb",
+    "input_layout_train": "NCHW",
+    "input_shape": "1x3x640x640",
+    "input_batch": 1,
+    "norm_type": "data_scale",
+    "scale_value": 0.003921568627451,
+    "input_layout_rt": "NHWC",
+    "input_type_rt": "nv12",
+    "cal_data_type": "float32",
+    "preprocess_on": false,
+    "calibration_type": "max",
+    "max_percentile": 0.99995,
+    "optimization": "set_all_nodes_int16;",
+    "compile_mode": "latency",
+    "optimize_level": "O2",
+    "jobs_default": 1,
+    "jobs_allowed_range": [1, 32],
+    "output_model_file_prefix": "dosod_mlp3x_s_tzcup_rep-int16"
+  },
+  "output": {
+    "relative_path": "dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm",
+    "status": "HBM_NOT_PRODUCED",
+    "compiler_receipt_required": true,
+    "x86_nash_parity_required": true,
+    "quantized_metric_regression_required": true,
+    "board_runtime_acceptance_required": true
+  }
+}

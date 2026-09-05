@@ -1,0 +1,210 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tzcup.local/schema/formal-s100-live-runtime-v1.json",
+  "title": "RDK S100 live runtime raw evidence",
+  "type": "object",
+  "required": ["schema_version", "report_id", "status", "collection_complete", "hardware", "collector", "truth_boundary", "blockers"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "report_id": {"const": "tzcup_formal_rdk_s100_live_runtime_raw_v1"},
+    "status": {"enum": ["FORMAL_RDK_S100_LIVE_RUNTIME_COLLECTED", "FORMAL_RDK_S100_LIVE_RUNTIME_BLOCKED"]},
+    "collection_complete": {"type": "boolean"},
+    "hardware": {
+      "type": "object",
+      "required": ["attested", "architecture", "device_tree_model", "device_tree_compatible", "blockers"],
+      "properties": {
+        "attested": {"type": "boolean"},
+        "architecture": {"type": "string"},
+        "board": {"type": ["string", "null"]},
+        "soc": {"type": ["string", "null"]},
+        "sku": {"type": ["string", "null"]},
+        "device_tree_model": {"type": "string"},
+        "device_tree_model_sha256": {"$ref": "#/$defs/nullableSha256"},
+        "device_tree_compatible": {"type": "string"},
+        "device_tree_compatible_sha256": {"$ref": "#/$defs/nullableSha256"},
+        "soc_identity_basis": {
+          "type": ["string", "null"],
+          "enum": [
+            "explicit_journey6p_device_tree",
+            "s100p_model_plus_drobot_s100_rdk_compatible",
+            null
+          ]
+        },
+        "blockers": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "collector": {
+      "type": "object",
+      "required": ["script_sha256", "pid"],
+      "properties": {
+        "script_sha256": {"$ref": "#/$defs/sha256"},
+        "pid": {"type": "integer", "minimum": 1}
+      },
+      "additionalProperties": false
+    },
+    "source_binding": {"$ref": "#/$defs/sourceBinding"},
+    "acceptance_session_binding": {"$ref": "#/$defs/acceptanceSessionBinding"},
+    "runtime_closure_binding": {"$ref": "#/$defs/runtimeClosureBinding"},
+    "system_image": {
+      "type": "object",
+      "required": ["os_release", "os_release_sha256", "kernel_release", "kernel_version", "runtime_inventory"],
+      "properties": {
+        "os_release": {"type": "object"},
+        "os_release_sha256": {"$ref": "#/$defs/sha256"},
+        "kernel_release": {"type": "string", "minLength": 1},
+        "kernel_version": {"type": "string", "minLength": 1},
+        "uname": {"type": "object"},
+        "runtime_inventory": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "models": {
+      "type": "array",
+      "minItems": 4,
+      "maxItems": 4,
+      "items": {
+        "type": "object",
+        "required": ["role", "path", "sha256", "byte_size"],
+        "properties": {
+          "role": {"enum": ["dosod_hbm", "dosod_vocabulary", "edgesam_encoder_hbm", "edgesam_decoder_hbm"]},
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"$ref": "#/$defs/sha256"},
+          "byte_size": {"type": "integer", "minimum": 1}
+        },
+        "additionalProperties": false
+      }
+    },
+    "ros_graph": {
+      "type": "object",
+      "required": ["nodes", "topics", "node_info"],
+      "properties": {
+        "nodes": {"type": "array", "items": {"type": "string"}},
+        "topics": {"type": "object", "additionalProperties": {"type": "array", "items": {"type": "string"}}},
+        "node_info": {"type": "object"},
+        "node_list_command": {"type": "object"},
+        "topic_list_command": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "ros_graph_start": {"type": "object"},
+    "inference_telemetry": {
+      "type": "object",
+      "required": ["dosod", "edgesam", "product_output_counts", "product_nonempty_counts"],
+      "properties": {
+        "dosod": {"$ref": "#/$defs/inferenceTelemetry"},
+        "edgesam": {"$ref": "#/$defs/inferenceTelemetry"},
+        "product_output_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}},
+        "product_nonempty_counts": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 0}}
+      },
+      "additionalProperties": false
+    },
+    "sustained_run": {
+      "type": "object",
+      "required": ["duration_sec", "sample_period_sec", "process_restarts", "node_disappearances", "inference_failures"],
+      "properties": {
+        "duration_sec": {"type": "number", "minimum": 0},
+        "sample_period_sec": {"type": "number", "exclusiveMinimum": 0},
+        "process_restarts": {"type": "integer", "minimum": 0},
+        "node_disappearances": {"type": "integer", "minimum": 0},
+        "inference_failures": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "resources": {
+      "type": "object",
+      "required": ["system_memory_total_bytes", "system_memory_available_min_bytes", "perception_rss_peak_bytes", "sample_count"],
+      "properties": {
+        "system_memory_total_bytes": {"type": "integer", "minimum": 0},
+        "system_memory_available_min_bytes": {"type": "integer", "minimum": 0},
+        "perception_rss_peak_bytes": {"type": "integer", "minimum": 0},
+        "sample_count": {"type": "integer", "minimum": 0},
+        "process_inventory_start": {"type": "object"},
+        "process_inventory_end": {"type": "object"}
+      },
+      "additionalProperties": false
+    },
+    "thermal": {
+      "type": "object",
+      "required": ["samples", "peak_celsius", "zones_last_sample"],
+      "properties": {
+        "samples": {"type": "integer", "minimum": 0},
+        "peak_celsius": {"type": ["number", "null"]},
+        "zones_last_sample": {"type": "array", "items": {"type": "object"}}
+      },
+      "additionalProperties": false
+    },
+    "truth_boundary": {
+      "type": "object",
+      "required": ["simulator_or_evaluator_truth_used"],
+      "properties": {"simulator_or_evaluator_truth_used": {"const": false}},
+      "additionalProperties": false
+    },
+    "blockers": {"type": "array", "items": {"type": "string"}}
+  },
+  "allOf": [
+    {
+      "if": {"properties": {"status": {"const": "FORMAL_RDK_S100_LIVE_RUNTIME_COLLECTED"}}},
+      "then": {
+        "properties": {"collection_complete": {"const": true}, "blockers": {"maxItems": 0}},
+        "required": ["source_binding", "acceptance_session_binding", "runtime_closure_binding", "system_image", "models", "ros_graph", "inference_telemetry", "sustained_run", "resources", "thermal"]
+      }
+    },
+    {
+      "if": {"properties": {"status": {"const": "FORMAL_RDK_S100_LIVE_RUNTIME_BLOCKED"}}},
+      "then": {"properties": {"collection_complete": {"const": false}, "blockers": {"minItems": 1}}}
+    }
+  ],
+  "additionalProperties": false,
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "nullableSha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+    "sourceBinding": {
+      "type": "object",
+      "required": ["snapshot_manifest_sha256", "source_inventory_sha256"],
+      "properties": {
+        "snapshot_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "source_inventory_sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "acceptanceSessionBinding": {
+      "type": "object",
+      "required": ["session_manifest_sha256", "session_started_epoch_ns", "session_status_at_collection", "snapshot"],
+      "properties": {
+        "session_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "session_started_epoch_ns": {"type": "integer", "minimum": 1},
+        "session_status_at_collection": {"const": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING"},
+        "snapshot": {"$ref": "#/$defs/sourceBinding"}
+      },
+      "additionalProperties": false
+    },
+    "runtimeClosureBinding": {
+      "type": "object",
+      "required": ["runtime_closure_manifest_sha256", "runtime_closure_sha256"],
+      "properties": {
+        "runtime_closure_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "runtime_closure_sha256": {"$ref": "#/$defs/sha256"}
+      },
+      "additionalProperties": false
+    },
+    "inferenceTelemetry": {
+      "type": "object",
+      "required": ["backend", "model_sha256", "samples", "fps", "latency_ms_p50", "latency_ms_p95", "latency_ms_p99", "latency_ms_max", "runtime_process_maps_backend_match"],
+      "properties": {
+        "backend": {"type": ["string", "null"]},
+        "model_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "model_sha256s": {"type": "array", "items": {"$ref": "#/$defs/sha256"}},
+        "vocabulary_sha256": {"anyOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "samples": {"type": "integer", "minimum": 0},
+        "fps": {"type": "number", "minimum": 0},
+        "latency_ms_p50": {"type": ["number", "null"]},
+        "latency_ms_p95": {"type": ["number", "null"]},
+        "latency_ms_p99": {"type": ["number", "null"]},
+        "latency_ms_max": {"type": ["number", "null"]},
+        "runtime_process_maps_backend_match": {"type": "boolean"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

@@ -62,12 +62,28 @@
       <xacro:hf_clean_visual mesh="pololu_37d_motor_body.stl"
         material="hf_motor_dark" rgba="0.10 0.11 0.12 1"/>
       <collision><geometry><cylinder radius="0.0195" length="0.068"/></geometry></collision>
-      <xacro:hf_cleaning_cylinder_z_inertial mass="0.130" radius="0.0185" length="0.057"/>
+      <!-- The vendor 0.130 kg stator-side allocation is split so the magnetic
+           64 CPR encoder cap is an explicit serviceable child rigid body. -->
+      <xacro:hf_cleaning_cylinder_z_inertial mass="0.115" radius="0.0185" length="0.057"/>
     </link>
     <joint name="${side}_side_brush_motor_mount_joint" type="fixed">
       <parent link="cleaning_lift_carriage_link"/>
       <child link="${side}_side_brush_motor_stator_link"/>
-      <origin xyz="0.385 ${lateral_sign * 0.545} 0.0455" rpy="0 0 0"/>
+      <!-- At the 100 mm downstroke work pose, this installation height
+           puts the conservative bristle-sweep collision tangent to z=0. -->
+      <origin xyz="0.385 ${lateral_sign * 0.545} 0.0244" rpy="0 0 0"/>
+    </joint>
+
+    <link name="${side}_side_brush_encoder_link">
+      <xacro:hf_clean_visual mesh="pololu_37d_encoder_cap.stl"
+        material="hf_pololu_encoder_black" rgba="0.055 0.065 0.070 1"/>
+      <collision><geometry><cylinder radius="0.0195" length="0.011"/></geometry></collision>
+      <xacro:hf_cleaning_cylinder_z_inertial mass="0.015" radius="0.0195" length="0.011"/>
+    </link>
+    <joint name="${side}_side_brush_encoder_mount_joint" type="fixed">
+      <parent link="${side}_side_brush_motor_stator_link"/>
+      <child link="${side}_side_brush_encoder_link"/>
+      <origin xyz="0 0 0.034"/>
     </joint>
 
     <link name="${side}_side_brush_gearbox_link">
@@ -85,9 +101,19 @@
     <link name="${side}_side_brush_link">
       <xacro:hf_clean_visual mesh="side_brush_rotor_shaft.stl"
         material="hf_shaft_steel" rgba="0.62 0.65 0.68 1"/>
+      <!-- Runtime brush/pavement contact belongs to this non-fixed rotating
+           link so sdformat preserves the surface parameters.  The mesh and
+           mass remain on their serviceable fixed children; this collision is
+           expressed in the rotor frame (disk offset -52 mm plus compressed
+           bristle-envelope offset -13 mm). -->
+      <!-- Keep this direct collision unnamed.  sdformat 14.9 binds the URDF
+           gazebo surface extension to the generated
+           ${side}_side_brush_link_collision only in this form.  An explicit
+           collision name is rewritten during fixed-joint lumping and drops
+           the surface parameters from the expanded SDF. -->
       <collision>
-        <origin xyz="0 0 -0.012"/>
-        <geometry><cylinder radius="0.006" length="0.052"/></geometry>
+        <origin xyz="0 0 -0.065"/>
+        <geometry><cylinder radius="0.150" length="0.026"/></geometry>
       </collision>
       <xacro:hf_cleaning_cylinder_z_inertial mass="0.020" radius="0.006" length="0.052" xyz="0 0 -0.012"/>
     </link>
@@ -96,7 +122,9 @@
       <child link="${side}_side_brush_link"/>
       <origin xyz="0 0 -0.014" rpy="0 0 0"/>
       <axis xyz="0 0 1"/>
-      <limit effort="8.0" velocity="20.0"/>
+      <!-- Pololu 4694 public no-load speed is 140 rpm = 14.6608 rad/s;
+           the 3.040 N.m value is its explicitly extrapolated stall torque. -->
+      <limit effort="3.040473" velocity="14.660766"/>
       <dynamics damping="0.01" friction="0.01"/>
     </joint>
 
@@ -104,6 +132,13 @@
       <xacro:hf_clean_visual mesh="side_brush_disk.stl"
         material="hf_brush_disk" rgba="0.045 0.055 0.06 1"/>
       <collision><geometry><cylinder radius="0.072" length="0.012"/></geometry></collision>
+      <!-- Shaft collision is expressed in the disk frame so the non-fixed
+           rotor link has exactly one direct collision; its fixed descendants
+           remain explicit service geometry after sdformat lumping. -->
+      <collision name="rotor_shaft_collision">
+        <origin xyz="0 0 0.040"/>
+        <geometry><cylinder radius="0.006" length="0.052"/></geometry>
+      </collision>
       <xacro:hf_cleaning_cylinder_z_inertial mass="0.230" radius="0.072" length="0.012"/>
     </link>
     <joint name="${side}_side_brush_disk_joint" type="fixed">
@@ -115,11 +150,6 @@
     <link name="${side}_side_brush_bristle_sectors_link">
       <xacro:hf_clean_visual mesh="side_brush_bristles.stl"
         material="hf_bristle_brown" rgba="0.30 0.19 0.065 1"/>
-      <!-- The conservative disk collision represents flexible bristle sweep. -->
-      <collision name="bristle_sweep_collision">
-        <origin xyz="0 0 -0.018"/>
-        <geometry><cylinder radius="0.150" length="0.026"/></geometry>
-      </collision>
       <xacro:hf_cleaning_cylinder_z_inertial mass="0.290" radius="0.125" length="0.026" xyz="0 0 -0.018"/>
     </link>
     <joint name="${side}_side_brush_bristle_sectors_joint" type="fixed">
@@ -127,6 +157,29 @@
       <child link="${side}_side_brush_bristle_sectors_link"/>
       <origin xyz="0 0 0" rpy="0 0 0"/>
     </joint>
+    <!-- A rigid high-friction disk at the unloaded bristle tip numerically
+         locks against pavement in DART, unlike discrete flexible PP bristles.
+         Retain the full swept collision envelope and ground contact, but give
+         the contact its measured-function proxy: low effective sliding
+         friction plus compliant penetration.  The motor observer still trips
+         a real stall if measured joint speed remains below threshold. -->
+    <gazebo reference="${side}_side_brush_link">
+      <mu1>0.08</mu1>
+      <mu2>0.08</mu2>
+      <kp>1500.0</kp>
+      <kd>50.0</kd>
+      <maxVel>0.20</maxVel>
+      <minDepth>0.003</minDepth>
+      <!-- Recovering liquid requires an observed pavement contact, not merely
+           a brush-velocity command.  This sensor binds the direct rotor
+           collision already checked in the expanded-SDF surface audit. -->
+      <sensor name="${side}_side_brush_ground_contact" type="contact">
+        <topic>/cleaning/${side}_side_brush/contact</topic>
+        <update_rate>100</update_rate>
+        <always_on>true</always_on>
+        <contact><collision>${side}_side_brush_link_collision</collision></contact>
+      </sensor>
+    </gazebo>
   </xacro:macro>
 
   <xacro:macro name="high_fidelity_cleaning_mechanism"
@@ -143,7 +196,17 @@
       <origin xyz="${origin_xyz}" rpy="${origin_rpy}"/>
     </joint>
 
-    <!-- Four rigid guide columns constrain the 100 mm cleaning lift. -->
+    <!--
+      Four chassis-fixed guide columns and two carriage-fixed bearing side
+      plates form the physical 100 mm linear-guide load path.  The single
+      cleaning_lift_joint below remains the idealized commanded translation;
+      the bearing plates are rigid parts of its carriage, so they follow that
+      motion without adding a second commanded DOF or an invalid URDF loop.
+
+      The guide centres deliberately match the +/-180 mm x and +/-250 mm y
+      bearing bosses authored into cleaning_lift_carriage.stl.  The previous
+      +/-120 mm guide location did not pass through those bosses.
+    -->
     <xacro:macro name="hf_lift_guide" params="name x y">
       <link name="${name}_link">
         <xacro:hf_clean_visual mesh="lift_guide_column.stl"
@@ -153,13 +216,15 @@
       </link>
       <joint name="${name}_joint" type="fixed">
         <parent link="cleaning_mechanism_mount_link"/><child link="${name}_link"/>
-        <origin xyz="${x} ${y} -0.065" rpy="0 0 0"/>
+        <!-- The 180 mm guide spans every 35 mm bearing boss position from
+             q=0.000 m through q=0.100 m, including both end positions. -->
+        <origin xyz="${x} ${y} -0.025" rpy="0 0 0"/>
       </joint>
     </xacro:macro>
-    <xacro:hf_lift_guide name="cleaning_front_left_guide" x="0.12" y="0.25"/>
-    <xacro:hf_lift_guide name="cleaning_front_right_guide" x="0.12" y="-0.25"/>
-    <xacro:hf_lift_guide name="cleaning_rear_left_guide" x="-0.12" y="0.25"/>
-    <xacro:hf_lift_guide name="cleaning_rear_right_guide" x="-0.12" y="-0.25"/>
+    <xacro:hf_lift_guide name="cleaning_front_left_guide" x="0.18" y="0.25"/>
+    <xacro:hf_lift_guide name="cleaning_front_right_guide" x="0.18" y="-0.25"/>
+    <xacro:hf_lift_guide name="cleaning_rear_left_guide" x="-0.18" y="0.25"/>
+    <xacro:hf_lift_guide name="cleaning_rear_right_guide" x="-0.18" y="-0.25"/>
 
     <link name="cleaning_lift_carriage_link">
       <xacro:hf_clean_visual mesh="cleaning_lift_carriage.stl"
@@ -170,10 +235,27 @@
     <joint name="cleaning_lift_joint" type="prismatic">
       <parent link="cleaning_mechanism_mount_link"/>
       <child link="cleaning_lift_carriage_link"/>
-      <origin xyz="0 0 -0.080" rpy="0 0 0"/>
-      <axis xyz="0 0 1"/>
-      <limit lower="0.0" upper="0.100" effort="1000.0" velocity="0.020"/>
-      <dynamics damping="80.0" friction="35.0"/>
+      <!-- q=0 is the passive, controller-independent transport-safe pose.
+           Positive position drives the carriage downward; q=0.100 m is the
+           ground-tangent work pose.  Therefore an unclaimed controller at its
+           physical zero cannot start with the brush/roller/squeegee in ground. -->
+      <origin xyz="0 0 0.045" rpy="0 0 0"/>
+      <axis xyz="0 0 -1"/>
+      <!-- Actuonix P16-100-256-12-P: 300 N maximum lifted load and
+           4.8 mm/s no-load speed from the public manufacturer sheet. -->
+      <!-- Keep DART's solver bound 20 um beyond the product's 100 mm travel
+           contract.  The ros2_control position interface remains capped at
+           0.100 m, so product commands and all acceptance thresholds retain
+           the P16's 100 mm stroke.  This small reversible clearance prevents
+           DART from locking an outward-driven prismatic joint in its exact
+           unilateral upper-limit constraint, which would otherwise make a
+           legitimate post-fault retraction physically impossible. -->
+      <limit lower="0.0" upper="0.10002" effort="300.0" velocity="0.0048"/>
+      <!-- The moving cleaning subtree is 5.95 kg (58.35 N under gravity).
+           Keep the calibrated 80 Ns/m damping and 80 N breakaway drag; URDF
+           friction is direction-symmetric and is not a substitute for the
+           P16 screw's powered/non-powered one-way holding behaviour. -->
+      <dynamics damping="80.0" friction="80.0"/>
     </joint>
 
     <!-- Actuonix P16 body is chassis-fixed; its rod and clevis ride with the carriage. -->
@@ -210,22 +292,38 @@
       <origin xyz="0 0 0.105" rpy="0 0 0"/>
     </joint>
 
-    <!-- Paired lift links model the physical load path without introducing an
-         unsolvable closed kinematic loop into URDF's tree. -->
-    <xacro:macro name="hf_lift_linkage" params="name y pitch">
+    <!--
+      Each side plate is a real moving member of the linear guide and carries
+      the front and rear bearing bosses already authored into the project mesh.
+      The mesh's +/-110 mm boss pitch is scaled in x to the actual +/-180 mm
+      guide centres.  Physical rail/bearing contact is omitted because the
+      ideal prismatic joint already imposes the same constraint and duplicating
+      it would over-constrain the Gazebo mechanism.  This is an engineering
+      URDF model, not manufacturing CAD of the bearing races and seals.
+    -->
+    <xacro:macro name="hf_lift_slider_plate" params="name y">
       <link name="${name}_link">
-        <xacro:hf_clean_visual mesh="lift_linkage.stl"
-          material="hf_lift_link" rgba="0.42 0.45 0.47 1"/>
-        <collision><geometry><box size="0.250 0.018 0.030"/></geometry></collision>
-        <xacro:hf_cleaning_box_inertial mass="0.220" sx="0.250" sy="0.018" sz="0.030"/>
+        <visual name="bearing_side_plate_mesh">
+          <geometry>
+            <mesh filename="${hf_clean_mesh_root}/lift_linkage.stl"
+                  scale="1.6363636363636365 1 1"/>
+          </geometry>
+          <material name="hf_lift_bearing"><color rgba="0.42 0.45 0.47 1"/></material>
+        </visual>
+        <!-- The collision keeps a central spine clear of the two guide axes;
+             the prismatic constraint represents the bearing contacts. -->
+        <collision name="bearing_side_plate_spine">
+          <geometry><box size="0.320 0.018 0.030"/></geometry>
+        </collision>
+        <xacro:hf_cleaning_box_inertial mass="0.220" sx="0.409091" sy="0.023" sz="0.030"/>
       </link>
       <joint name="${name}_joint" type="fixed">
         <parent link="cleaning_lift_carriage_link"/><child link="${name}_link"/>
-        <origin xyz="0 ${y} 0.055" rpy="0 ${pitch} 0"/>
+        <origin xyz="0 ${y} 0" rpy="0 0 0"/>
       </joint>
     </xacro:macro>
-    <xacro:hf_lift_linkage name="cleaning_left_lift_linkage" y="0.285" pitch="0.36"/>
-    <xacro:hf_lift_linkage name="cleaning_right_lift_linkage" y="-0.285" pitch="-0.36"/>
+    <xacro:hf_lift_slider_plate name="cleaning_left_lift_slider_plate" y="0.25"/>
+    <xacro:hf_lift_slider_plate name="cleaning_right_lift_slider_plate" y="-0.25"/>
 
     <xacro:hf_side_brush_assembly side="left" lateral_sign="1.0"/>
     <xacro:hf_side_brush_assembly side="right" lateral_sign="-1.0"/>
@@ -240,7 +338,8 @@
     </link>
     <joint name="central_roller_left_bearing_mount_joint" type="fixed">
       <parent link="cleaning_lift_carriage_link"/><child link="central_roller_left_bearing_link"/>
-      <origin xyz="0.155 0 -0.016" rpy="0 0 0"/>
+      <!-- The 100 mm bristle sweep is tangent to z=0 at q=0.100 m downstroke. -->
+      <origin xyz="0.155 0 -0.0101" rpy="0 0 0"/>
     </joint>
 
     <link name="central_roller_motor_stator_link">
@@ -248,11 +347,24 @@
         material="hf_central_motor" rgba="0.10 0.11 0.12 1"
         origin_xyz="0 -0.367 0" origin_rpy="${pi/2.0} 0 0"/>
       <collision><origin xyz="0 -0.367 0" rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.0195" length="0.068"/></geometry></collision>
-      <xacro:hf_cleaning_cylinder_y_inertial mass="0.130" radius="0.0185" length="0.057" xyz="0 -0.367 0"/>
+      <xacro:hf_cleaning_cylinder_y_inertial mass="0.115" radius="0.0185" length="0.057" xyz="0 -0.367 0"/>
     </link>
     <joint name="central_roller_motor_mount_joint" type="fixed">
       <parent link="cleaning_lift_carriage_link"/><child link="central_roller_motor_stator_link"/>
-      <origin xyz="0.155 0 -0.016" rpy="0 0 0"/>
+      <origin xyz="0.155 0 -0.0101" rpy="0 0 0"/>
+    </joint>
+
+    <link name="central_roller_encoder_link">
+      <xacro:hf_clean_visual mesh="pololu_37d_encoder_cap.stl"
+        material="hf_central_encoder_black" rgba="0.055 0.065 0.070 1"
+        origin_rpy="${pi/2.0} 0 0"/>
+      <collision><origin rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.0195" length="0.011"/></geometry></collision>
+      <xacro:hf_cleaning_cylinder_y_inertial mass="0.015" radius="0.0195" length="0.011"/>
+    </link>
+    <joint name="central_roller_encoder_mount_joint" type="fixed">
+      <parent link="central_roller_motor_stator_link"/>
+      <child link="central_roller_encoder_link"/>
+      <origin xyz="0 -0.401 0"/>
     </joint>
 
     <link name="central_roller_drive_gearbox_link">
@@ -270,6 +382,13 @@
     <link name="central_roller_link">
       <xacro:hf_clean_visual mesh="central_roller.stl"
         material="hf_roller_core" rgba="0.08 0.22 0.13 1"/>
+      <!-- The visual contains a 60 mm rigid core plus six helical elastomer
+           bars whose 100 mm outer sweep is represented here.  DART cannot
+           consume URDF contact stiffness for flexible bristles, so this
+           rotating collision is an explicitly bounded, low-effective-
+           friction contact proxy rather than a rigid high-friction wheel. -->
+      <!-- Keep the direct collision unnamed so sdformat binds the Gazebo
+           surface extension to central_roller_link_collision. -->
       <collision><origin rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.100" length="0.620"/></geometry></collision>
       <!-- Includes the 0.020 kg rotor/shaft share of the third Pololu motor. -->
       <xacro:hf_cleaning_cylinder_y_inertial mass="1.220" radius="0.085" length="0.620"/>
@@ -278,9 +397,23 @@
       <parent link="central_roller_drive_gearbox_link"/><child link="central_roller_link"/>
       <origin xyz="0 0 0" rpy="0 ${pi/2.0} 0"/>
       <axis xyz="0 1 0"/>
-      <limit effort="10.0" velocity="20.0"/>
+      <limit effort="3.040473" velocity="14.660766"/>
       <dynamics damping="0.015" friction="0.012"/>
     </joint>
+    <gazebo reference="central_roller_link">
+      <mu1>0.08</mu1>
+      <mu2>0.08</mu2>
+      <kp>1500.0</kp>
+      <kd>50.0</kd>
+      <maxVel>0.20</maxVel>
+      <minDepth>0.003</minDepth>
+      <sensor name="central_roller_ground_contact" type="contact">
+        <topic>/cleaning/central_roller/contact</topic>
+        <update_rate>100</update_rate>
+        <always_on>true</always_on>
+        <contact><collision>central_roller_link_collision</collision></contact>
+      </sensor>
+    </gazebo>
 
     <link name="central_roller_guard_link">
       <xacro:hf_clean_visual mesh="central_roller_guard.stl"
@@ -293,8 +426,9 @@
       <origin xyz="0 0 -0.080" rpy="0 0 0"/>
     </joint>
 
-    <!-- Two-axis passive squeegee suspension. The Gazebo joint extensions set
-         actual spring stiffness; URDF dynamics retain fail-safe damping. -->
+    <!-- Two-axis passive squeegee suspension. URDF dynamics retain fail-safe
+         damping; the model-level Gazebo plugin below applies the physical
+         preload and bounded spring laws to these real joints. -->
     <link name="squeegee_float_carrier_link">
       <xacro:hf_clean_visual mesh="squeegee_float_carrier.stl"
         material="hf_squeegee_carrier" rgba="0.23 0.25 0.26 1"/>
@@ -303,7 +437,11 @@
     </link>
     <joint name="squeegee_float_joint" type="prismatic">
       <parent link="cleaning_lift_carriage_link"/><child link="squeegee_float_carrier_link"/>
-      <origin xyz="-0.445 0 -0.011" rpy="0 0 0"/>
+      <!-- At q=0.100 m downstroke and zero float/pitch displacement,
+           the rubber blade collision is tangent to z=0 and the intake retains
+           a 5 mm geometric gap.  The +/-15 mm joint remains compliance travel;
+           this datum is not physical contact-force evidence. -->
+      <origin xyz="-0.445 0 -0.0376" rpy="0 0 0"/>
       <axis xyz="0 0 1"/>
       <limit lower="-0.015" upper="0.015" effort="250.0" velocity="0.10"/>
       <dynamics damping="45.0" friction="4.0"/>
@@ -325,7 +463,7 @@
         material="hf_squeegee_rail" rgba="0.58 0.60 0.61 1"/>
       <xacro:hf_clean_visual mesh="squeegee_blades.stl"
         material="hf_squeegee_rubber" rgba="0.035 0.04 0.045 1"/>
-      <collision><origin xyz="0 0 -0.005"/><geometry><box size="0.065 0.800 0.095"/></geometry></collision>
+      <collision name="squeegee_blade_collision"><origin xyz="0 0 -0.005"/><geometry><box size="0.065 0.800 0.095"/></geometry></collision>
       <xacro:hf_cleaning_box_inertial mass="0.650" sx="0.065" sy="0.800" sz="0.095" xyz="0 0 -0.005"/>
     </link>
     <joint name="squeegee_pitch_joint" type="revolute">
@@ -335,9 +473,35 @@
       <limit lower="-0.174533" upper="0.174533" effort="80.0" velocity="0.50"/>
       <dynamics damping="18.0" friction="1.2"/>
     </joint>
-    <!-- Damping/friction are represented in URDF joint dynamics above. A
-         force-law spring controller remains an explicit external validation
-         gate; unsupported SDF spring tags are deliberately not emitted. -->
+    <!-- Damping/friction are represented in URDF joint dynamics above. -->
+
+    <gazebo>
+      <plugin filename="libSqueegeeComplianceSystem.so"
+              name="sanitation_gazebo_auxiliary::SqueegeeComplianceSystem">
+        <!-- -6.92 mm reference gives 12.456 N nominal preload at the ground-tangent
+             zero pose.  The contact solver supplies the opposing ground load. -->
+        <float_stiffness_n_per_m>1800.0</float_stiffness_n_per_m>
+        <float_damping_ns_per_m>45.0</float_damping_ns_per_m>
+        <float_preload_reference_m>-0.00692</float_preload_reference_m>
+        <float_max_force_n>120.0</float_max_force_n>
+        <pitch_stiffness_nm_per_rad>32.0</pitch_stiffness_nm_per_rad>
+        <pitch_damping_nms_per_rad>6.0</pitch_damping_nms_per_rad>
+        <pitch_reference_rad>0.0</pitch_reference_rad>
+        <pitch_max_torque_nm>24.0</pitch_max_torque_nm>
+        <telemetry_topic_prefix>/model/tzcup_formal_sanitation_vehicle/squeegee_compliance</telemetry_topic_prefix>
+      </plugin>
+    </gazebo>
+    <gazebo reference="squeegee_link">
+      <sensor name="squeegee_blade_ground_contact" type="contact">
+        <topic>/cleaning/squeegee/contact</topic>
+        <update_rate>100</update_rate>
+        <always_on>true</always_on>
+        <!-- sdformat folds the fixed suction-nozzle child into squeegee_link and
+             consequently renames this URDF collision in the generated SDF.
+             Contact sensors bind against that post-conversion SDF name. -->
+        <contact><collision>squeegee_link_fixed_joint_lump__squeegee_blade_collision_collision</collision></contact>
+      </sensor>
+    </gazebo>
 
     <link name="suction_nozzle_link">
       <xacro:hf_clean_visual mesh="suction_nozzle.stl"
@@ -347,7 +511,9 @@
     </link>
     <joint name="suction_nozzle_mount_joint" type="fixed">
       <parent link="squeegee_link"/><child link="suction_nozzle_link"/>
-      <origin xyz="0.040 0 0.010" rpy="0 0 0"/>
+      <!-- The intake box bottom retains a nominal 4-6 mm gap while the rubber
+           squeegee blade is grounded; the intake itself must not scrape. -->
+      <origin xyz="0.040 0 -0.005" rpy="0 0 0"/>
     </joint>
     <gazebo reference="suction_nozzle_link">
       <sensor name="suction_nozzle_ground_contact" type="contact">
@@ -422,7 +588,10 @@
       <parent link="recovery_pump_head_link"/><child link="recovery_pump_rotor_link"/>
       <origin xyz="0 0 0.043" rpy="0 0 0"/>
       <axis xyz="0 0 1"/>
-      <limit effort="18.0" velocity="62.832"/>
+      <!-- Jabsco does not publish the diaphragm cam torque/speed. The 600 rpm
+           and 2 N.m limits are explicit engineering calibration values; the
+           published 6 A operating and 10 A fuse limits live in the motor core. -->
+      <limit effort="2.0" velocity="62.832"/>
       <dynamics damping="0.025" friction="0.015"/>
     </joint>
 

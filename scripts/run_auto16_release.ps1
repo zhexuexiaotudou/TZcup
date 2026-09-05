@@ -8,6 +8,7 @@ param(
 
 $ErrorActionPreference = "Stop"
 $root = (Resolve-Path -LiteralPath (Join-Path $PSScriptRoot "..")).Path
+. (Join-Path $PSScriptRoot "formal_wsl_entry_memory_guard.ps1")
 Push-Location $root
 try {
     switch ($Mode) {
@@ -27,9 +28,17 @@ try {
         }
         "Simulation" {
             Write-Host "Launching ROS 2/Gazebo baseline; close it with Ctrl+C."
+            $memoryEvidenceRoot = Join-Path $root ".work\wsl_entry_memory_guard"
+            $memoryRunId = [DateTime]::UtcNow.ToString("auto16_yyyyMMddTHHmmssfffZ")
+            Invoke-FormalWslEntryMemoryGuard -EvidencePath (
+                Join-Path $memoryEvidenceRoot "$memoryRunId.json"
+            )
             $wslRoot = (& wsl.exe -d TZcup-Ubuntu-24.04 -- `
                 wslpath -a $root).Trim()
             if ($LASTEXITCODE -ne 0) { throw "Cannot translate repository path" }
+            Invoke-FormalWslEntryMemoryGuard -EvidencePath (
+                Join-Path $memoryEvidenceRoot "$memoryRunId.launch.json"
+            )
             & wsl.exe -d TZcup-Ubuntu-24.04 -- bash -lc `
                 "export SANITATION_WS='$wslRoot/starter_ws'; cd '$wslRoot'; bash scripts/run_baseline.sh"
             if ($LASTEXITCODE -ne 0) { throw "baseline simulation failed" }

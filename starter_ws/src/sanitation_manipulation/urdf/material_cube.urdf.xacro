@@ -1,0 +1,50 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="material_cube">
+  <xacro:arg name="material" default="PET"/>
+  <xacro:arg name="color_r" default="-1.0"/>
+  <xacro:arg name="color_g" default="-1.0"/>
+  <xacro:arg name="color_b" default="-1.0"/>
+  <xacro:property name="edge" value="0.030"/>
+  <xacro:property name="volume" value="${edge * edge * edge}"/>
+  <xacro:property name="material_name" value="$(arg material)"/>
+  <xacro:property name="density" value="${700.0 if material_name == 'paperboard' else 900.0 if material_name == 'PP' else 1380.0 if material_name == 'PET' else 2700.0 if material_name == 'aluminum' else 0.0}"/>
+  <xacro:property name="mass" value="${density * volume}"/>
+  <xacro:property name="requested_r" value="${float('$(arg color_r)')}"/>
+  <xacro:property name="requested_g" value="${float('$(arg color_g)')}"/>
+  <xacro:property name="requested_b" value="${float('$(arg color_b)')}"/>
+  <xacro:property name="rgba" value="${str(requested_r) + ' ' + str(requested_g) + ' ' + str(requested_b) + ' 1' if min(requested_r, requested_g, requested_b) &gt;= 0.0 else '0.55 0.36 0.18 1' if material_name == 'paperboard' else '0.18 0.72 0.35 1' if material_name == 'PP' else '0.15 0.50 0.92 1' if material_name == 'PET' else '0.72 0.74 0.77 1'}"/>
+
+  <xacro:if value="${density &lt;= 0.0}">
+    <xacro:property name="invalid_material" value="${1.0 / 0.0}"/>
+  </xacro:if>
+
+  <link name="cube_link">
+    <visual>
+      <geometry><box size="${edge} ${edge} ${edge}"/></geometry>
+      <material name="${material_name}">
+        <color rgba="${rgba}"/>
+      </material>
+    </visual>
+    <collision name="cube_collision">
+      <geometry><box size="${edge} ${edge} ${edge}"/></geometry>
+    </collision>
+    <inertial>
+      <mass value="${mass}"/>
+      <inertia ixx="${mass * edge * edge / 6.0}" ixy="0" ixz="0"
+               iyy="${mass * edge * edge / 6.0}" iyz="0"
+               izz="${mass * edge * edge / 6.0}"/>
+    </inertial>
+  </link>
+  <gazebo reference="cube_link">
+    <mu1>1.0</mu1><mu2>1.0</mu2><kp>500000</kp><kd>50</kd>
+    <sensor name="cube_contact" type="contact">
+      <always_on>true</always_on>
+      <update_rate>100</update_rate>
+      <topic>/manipulation/cube/contact</topic>
+      <!-- sdformat names the canonical-link collision with the fixed-joint
+           lump prefix when converting this URDF.  Contact sensing must use
+           that final SDF name or the sensor silently publishes no samples. -->
+      <contact><collision>cube_link_fixed_joint_lump__cube_collision_collision</collision></contact>
+    </sensor>
+  </gazebo>
+</robot>

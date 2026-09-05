@@ -3,8 +3,6 @@ controller_manager:
     update_rate: 250
     joint_state_broadcaster:
       type: joint_state_broadcaster/JointStateBroadcaster
-    base_controller:
-      type: diff_drive_controller/DiffDriveController
     arm_controller:
       type: joint_trajectory_controller/JointTrajectoryController
     gripper_controller:
@@ -13,26 +11,12 @@ controller_manager:
       type: joint_trajectory_controller/JointTrajectoryController
     storage_controller:
       type: joint_trajectory_controller/JointTrajectoryController
+    service_controller:
+      type: joint_trajectory_controller/JointTrajectoryController
     brush_controller:
       type: velocity_controllers/JointGroupVelocityController
     recovery_controller:
       type: velocity_controllers/JointGroupVelocityController
-
-base_controller:
-  ros__parameters:
-    left_wheel_names: [front_left_wheel_joint, rear_left_wheel_joint]
-    right_wheel_names: [front_right_wheel_joint, rear_right_wheel_joint]
-    # Controller-effective A300 geometry from the current Clearpath model.
-    # The visual/collision tyre mesh has a 0.1651 m physical radius; the
-    # controller uses the documented 0.1625 m effective rolling radius.
-    wheel_separation: 0.566
-    wheel_radius: 0.1625
-    wheels_per_side: 2
-    publish_rate: 50.0
-    position_feedback: true
-    open_loop: false
-    cmd_vel_timeout: 0.5
-    use_stamped_vel: false
 
 arm_controller:
   ros__parameters:
@@ -69,18 +53,38 @@ gripper_controller:
 
 cleaning_controller:
   ros__parameters:
-    joints:
-      - cleaning_lift_joint
-      - squeegee_pitch_joint
-      - squeegee_float_joint
+    # The lift is powered.  Pitch and float are real passive compliance
+    # joints and must not be disguised as position-controlled motors.
+    joints: [cleaning_lift_joint]
     command_interfaces: [position]
     state_interfaces: [position, velocity]
+    constraints:
+      # The P16 lift is a slow self-locking actuator.  On a safety cancel,
+      # generate the stop from measured position/velocity instead of holding
+      # the trajectory's ahead-of-plant position command.  At the 4.8 mm/s
+      # physical speed limit this 50 mm/s^2 bound stops in about 0.23 mm.
+      decelerate_on_cancel: true
+      cleaning_lift_joint:
+        max_deceleration_on_cancel: 0.05
 
 storage_controller:
   ros__parameters:
-    joints: [dry_bin_lid_joint, dry_deposit_gate_joint, wastewater_lid_joint]
+    # The two full-size compartment lids are passive, manually latched service
+    # parts.  Only the robot deposition gate has a product actuator (XW540).
+    joints: [dry_deposit_gate_joint]
     command_interfaces: [position]
     state_interfaces: [position, velocity]
+
+service_controller:
+  ros__parameters:
+    joints: [wastewater_drain_valve_joint]
+    command_interfaces: [position]
+    state_interfaces: [position, velocity]
+    allow_partial_joints_goal: false
+    constraints:
+      stopped_velocity_tolerance: 0.01
+      goal_time: 1.0
+      wastewater_drain_valve_joint: {trajectory: 0.08, goal: 0.02}
 
 brush_controller:
   ros__parameters:

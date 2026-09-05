@@ -165,7 +165,11 @@ def build_active_task(bundle: Bundle) -> tuple[TaskConfig, TaskLayout]:
             "max_steps": 80,
         }
     )
-    return config, TaskLayout(dirt_regions, targets, pedestrians)
+    return config, TaskLayout(
+        ground_dirt_regions=dirt_regions,
+        discrete_targets=targets,
+        pedestrians=pedestrians,
+    )
 
 
 def _ratio(numerator: int, denominator: int) -> float:

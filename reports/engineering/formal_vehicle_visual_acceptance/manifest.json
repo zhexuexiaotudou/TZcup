@@ -1,96 +1,5668 @@
 {
-  "report_id": "tzcup_formal_vehicle_visual_acceptance_v1",
-  "status": "GAZEBO_OGRE2_SEVEN_CAMERA_CAPTURE_PASSED",
-  "render_source": "Gazebo Harmonic Sensors system / Ogre2",
-  "bodywork_profile": "product",
+  "acceptance_session_binding": {
+    "session_manifest": "/mnt/f/Project/TZcup-integrated-functional-acceptance/artifacts/formal_final_acceptance_session.json",
+    "session_manifest_sha256": "10db31cea856811269a47885facf7279e2c92451b4df0f72b8e96373c47532ab",
+    "session_started_epoch_ns": 1788191180699355359,
+    "session_status_at_gate": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING",
+    "snapshot": {
+      "expanded_urdf_sha256": "b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2",
+      "snapshot_manifest_sha256": "fffb388e1f06616ab5019db00481718d24b5bac1d284c240dd1709173482cd40",
+      "source_inventory_sha256": "0d106d4e9aae774941856d0d7018bdbcf8c43e83afe00049dc485006943cf03b"
+    },
+    "snapshot_current_source_verified": true,
+    "snapshot_output_inventory_sha256": "a8832afc81f6eea6227abd0a5dc6073bb9da2283de8532c05034841243028ba7"
+  },
   "arm_pose": "folded_visual_candidate",
+  "bodywork_profile": "product",
+  "bodywork_profile_verified_from_robot_description": true,
+  "bodywork_visual_mesh_count": 52,
+  "camera_acquisition_mode": "sequential_gazebo_trigger",
+  "camera_contract_world": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/formal_final_acceptance/r40_session_20260831T233700Z/visual/formal_vehicle_visual_acceptance.triggered.sdf",
+  "camera_contract_world_sha256": "ae41dee144c66f939d7c120b06151fc4fed6676dbd57a03132aab89e3e3f6a9c",
+  "camera_count": 19,
+  "camera_trigger_attempts": {
+    "arm_mount_detail": [
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 683000000,
+        "accepted_frame_stamp_sec": 10,
+        "completed_monotonic_seconds": 2324.9977023,
+        "elapsed_seconds": 1.0954004129998793,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2325.230193277,
+        "image_topic": "/formal_visual/arm_mount_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/arm_mount_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.050402845999997226
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.291107092999937,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/arm_mount_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/arm_mount_detail/trigger"
+      }
+    ],
+    "charge_interface_detail": [
+      {
+        "completed_monotonic_seconds": 2382.705084849,
+        "elapsed_seconds": 1.0587310579999212,
+        "image_topic": "/formal_visual/charge_interface_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/charge_interface_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.05033770000000004
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.2770299769999838,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/charge_interface_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/charge_interface_detail/trigger"
+      },
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 281000000,
+        "accepted_frame_stamp_sec": 33,
+        "completed_monotonic_seconds": 2386.769648047,
+        "elapsed_seconds": 1.0573563660000218,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2387.010387211,
+        "image_topic": "/formal_visual/charge_interface_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/charge_interface_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.05033770000000004
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.2770299769999838,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/charge_interface_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/charge_interface_detail/trigger"
+      }
+    ],
+    "cleaning_head_detail": [
+      {
+        "completed_monotonic_seconds": 2332.476555154,
+        "elapsed_seconds": 1.0607330420002654,
+        "image_topic": "/formal_visual/cleaning_head_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/cleaning_head_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.05038679500012222
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.263593362999927,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/cleaning_head_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/cleaning_head_detail/trigger"
+      },
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 988000000,
+        "accepted_frame_stamp_sec": 14,
+        "completed_monotonic_seconds": 2336.536595687,
+        "elapsed_seconds": 1.053091762999884,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2336.777879319,
+        "image_topic": "/formal_visual/cleaning_head_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/cleaning_head_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.05038679500012222
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.263593362999927,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/cleaning_head_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/cleaning_head_detail/trigger"
+      }
+    ],
+    "drain_interface_detail": [
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 643000000,
+        "accepted_frame_stamp_sec": 34,
+        "completed_monotonic_seconds": 2390.489375847,
+        "elapsed_seconds": 1.0639996360000623,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2390.752968713,
+        "image_topic": "/formal_visual/drain_interface_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/drain_interface_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.05036170699986542
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.2679681730000993,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/drain_interface_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/drain_interface_detail/trigger"
+      }
+    ],
+    "drivetrain_detail": [
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 160000000,
+        "accepted_frame_stamp_sec": 26,
+        "completed_monotonic_seconds": 2367.466765056,
+        "elapsed_seconds": 1.0639066710000407,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2367.914466468,
+        "image_topic": "/formal_visual/drivetrain_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/drivetrain_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.050391035999837186
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.2780996669998785,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/drivetrain_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/drivetrain_detail/trigger"
+      }
+    ],
+    "dry_deposition_detail": [
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 59000000,
+        "accepted_frame_stamp_sec": 12,
+        "completed_monotonic_seconds": 2328.754914835,
+        "elapsed_seconds": 1.059051017999991,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2329.002348922,
+        "image_topic": "/formal_visual/dry_deposition_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/dry_deposition_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.050327917999766214
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.274319389000084,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/dry_deposition_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/dry_deposition_detail/trigger"
+      }
+    ],
+    "dry_deposition_internal": [
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 972000000,
+        "accepted_frame_stamp_sec": 28,
+        "completed_monotonic_seconds": 2375.191013565,
+        "elapsed_seconds": 1.058309404999818,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2375.434281172,
+        "image_topic": "/formal_visual/dry_deposition_internal",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/dry_deposition_internal",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.05032460100028402
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.271397744999831,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/dry_deposition_internal/trigger"
+        },
+        "trigger_topic": "/formal_visual/dry_deposition_internal/trigger"
+      }
+    ],
+    "front_left": [
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 840000000,
+        "accepted_frame_stamp_sec": 2,
+        "completed_monotonic_seconds": 2303.163122849,
+        "elapsed_seconds": 1.054103101000237,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2303.958791462,
+        "image_topic": "/formal_visual/front_left",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/front_left",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.05044856700033051
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.2580647580002733,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/front_left/trigger"
+        },
+        "trigger_topic": "/formal_visual/front_left/trigger"
+      }
+    ],
+    "front_sensor_detail": [
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 360000000,
+        "accepted_frame_stamp_sec": 9,
+        "completed_monotonic_seconds": 2321.196736099,
+        "elapsed_seconds": 1.063986795999881,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2321.437401852,
+        "image_topic": "/formal_visual/front_sensor_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/front_sensor_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.05034614900023371
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.2683410629997525,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/front_sensor_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/front_sensor_detail/trigger"
+      }
+    ],
+    "inertial_power_detail": [
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 625000000,
+        "accepted_frame_stamp_sec": 27,
+        "completed_monotonic_seconds": 2371.471699429,
+        "elapsed_seconds": 1.11578112899997,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2371.714852576,
+        "image_topic": "/formal_visual/inertial_power_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/inertial_power_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.05038128200021674
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.2618902580002214,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/inertial_power_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/inertial_power_detail/trigger"
+      }
+    ],
+    "power_compute_detail": [
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 684000000,
+        "accepted_frame_stamp_sec": 17,
+        "completed_monotonic_seconds": 2344.121862588,
+        "elapsed_seconds": 1.0602154779999182,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2344.565504178,
+        "image_topic": "/formal_visual/power_compute_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/power_compute_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.05036171700021441
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.2722704759999033,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/power_compute_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/power_compute_detail/trigger"
+      }
+    ],
+    "power_safety_internal": [
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 332000000,
+        "accepted_frame_stamp_sec": 30,
+        "completed_monotonic_seconds": 2378.928097819,
+        "elapsed_seconds": 1.0603462899998704,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2379.155889886,
+        "image_topic": "/formal_visual/power_safety_internal",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/power_safety_internal",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.05034990200010725
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.275644198000009,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/power_safety_internal/trigger"
+        },
+        "trigger_topic": "/formal_visual/power_safety_internal/trigger"
+      }
+    ],
+    "rear_left_sensor_detail": [
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 475000000,
+        "accepted_frame_stamp_sec": 20,
+        "completed_monotonic_seconds": 2351.818233229,
+        "elapsed_seconds": 1.0799312990002363,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2352.046149735,
+        "image_topic": "/formal_visual/rear_left_sensor_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/rear_left_sensor_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.05033320799975627
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.273631911999928,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/rear_left_sensor_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/rear_left_sensor_detail/trigger"
+      }
+    ],
+    "rear_right": [
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 308000000,
+        "accepted_frame_stamp_sec": 4,
+        "completed_monotonic_seconds": 2307.533270819,
+        "elapsed_seconds": 1.1423835190003047,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2307.767872419,
+        "image_topic": "/formal_visual/rear_right",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/rear_right",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.05032761499978733
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.2550089609999304,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/rear_right/trigger"
+        },
+        "trigger_topic": "/formal_visual/rear_right/trigger"
+      }
+    ],
+    "rear_right_sensor_detail": [
+      {
+        "completed_monotonic_seconds": 2355.552681204,
+        "elapsed_seconds": 1.0921063290002166,
+        "image_topic": "/formal_visual/rear_right_sensor_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/rear_right_sensor_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.050488350999785325
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.26937884400013,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/rear_right_sensor_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/rear_right_sensor_detail/trigger"
+      },
+      {
+        "completed_monotonic_seconds": 2359.624484134,
+        "elapsed_seconds": 1.0639346850002767,
+        "image_topic": "/formal_visual/rear_right_sensor_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/rear_right_sensor_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.050488350999785325
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.26937884400013,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/rear_right_sensor_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/rear_right_sensor_detail/trigger"
+      },
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 782000000,
+        "accepted_frame_stamp_sec": 24,
+        "completed_monotonic_seconds": 2363.696741664,
+        "elapsed_seconds": 1.0648206770001707,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2363.961124942,
+        "image_topic": "/formal_visual/rear_right_sensor_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/rear_right_sensor_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.050488350999785325
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.26937884400013,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/rear_right_sensor_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/rear_right_sensor_detail/trigger"
+      }
+    ],
+    "rear_service_detail": [
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 335000000,
+        "accepted_frame_stamp_sec": 16,
+        "completed_monotonic_seconds": 2340.399391192,
+        "elapsed_seconds": 1.1387068889998773,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2340.650717359,
+        "image_topic": "/formal_visual/rear_service_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/rear_service_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.05032053300010375
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.2893100969999978,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/rear_service_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/rear_service_detail/trigger"
+      }
+    ],
+    "sensor_tower_detail": [
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 17000000,
+        "accepted_frame_stamp_sec": 8,
+        "completed_monotonic_seconds": 2317.501389045,
+        "elapsed_seconds": 1.0568391710003198,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2317.72310588,
+        "image_topic": "/formal_visual/sensor_tower_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/sensor_tower_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.05033729900014805
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 2,
+          "ready_wait_seconds": 4.77678865200005,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/sensor_tower_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/sensor_tower_detail/trigger"
+      }
+    ],
+    "storage_recovery_detail": [
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 132000000,
+        "accepted_frame_stamp_sec": 19,
+        "completed_monotonic_seconds": 2348.067590582,
+        "elapsed_seconds": 1.0572363340002084,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2348.295793903,
+        "image_topic": "/formal_visual/storage_recovery_detail",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/storage_recovery_detail",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.05034568800010675
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.260560259000158,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/storage_recovery_detail/trigger"
+        },
+        "trigger_topic": "/formal_visual/storage_recovery_detail/trigger"
+      }
+    ],
+    "top_cleaning": [
+      {
+        "accepted": true,
+        "accepted_frame_stamp_nanosec": 700000000,
+        "accepted_frame_stamp_sec": 5,
+        "completed_monotonic_seconds": 2311.278721568,
+        "elapsed_seconds": 1.059676429999854,
+        "frame_received_after_trigger_completion": true,
+        "frame_received_monotonic_seconds": 2311.495621855,
+        "image_topic": "/formal_visual/top_cleaning",
+        "message_type": "gz.msgs.Boolean",
+        "payload": "data: true",
+        "returncode": 0,
+        "ros_publisher_readiness": {
+          "expected_reliability": "RELIABLE",
+          "image_topic": "/formal_visual/top_cleaning",
+          "probe_count": 1,
+          "publisher_count": 1,
+          "publisher_ready": true,
+          "ready_wait_seconds": 0.050336187000084465
+        },
+        "subscriber_readiness": {
+          "expected_message_type": "gz.msgs.Boolean",
+          "probe_count": 1,
+          "ready_wait_seconds": 2.266310486999828,
+          "subscriber_ready": true,
+          "trigger_topic": "/formal_visual/top_cleaning/trigger"
+        },
+        "trigger_topic": "/formal_visual/top_cleaning/trigger"
+      }
+    ]
+  },
+  "camera_trigger_command_count": 23,
+  "camera_trigger_order": [
+    "front_left",
+    "rear_right",
+    "top_cleaning",
+    "sensor_tower_detail",
+    "front_sensor_detail",
+    "arm_mount_detail",
+    "dry_deposition_detail",
+    "cleaning_head_detail",
+    "rear_service_detail",
+    "power_compute_detail",
+    "storage_recovery_detail",
+    "rear_left_sensor_detail",
+    "rear_right_sensor_detail",
+    "drivetrain_detail",
+    "inertial_power_detail",
+    "dry_deposition_internal",
+    "power_safety_internal",
+    "charge_interface_detail",
+    "drain_interface_detail"
+  ],
+  "claim_boundary": "The images and independent Gazebo pose prove that the source-bound product profile rendered without leaving the calibrated studio pose. They do not replace arm swept-volume, sensor self-occlusion, cleaning-contact or real-vehicle validation.",
   "deposition_gate_pose": "open_functional_candidate",
-  "camera_count": 7,
-  "frames": {
-    "front_left": {
-      "topic": "/formal_visual/front_left",
-      "encoding": "rgb8",
-      "stamp_sec": 0,
-      "stamp_nanosec": 999000000,
-      "path": "front_left.png",
-      "width": 1600,
-      "height": 1000,
-      "mean_luminance": 201.60435485839844,
-      "luminance_stddev": 56.58540344238281,
-      "near_black_fraction": 3.5e-05
+  "engineering_visual_crosswalk": {
+    "bodywork_profile": "product",
+    "camera_count": 19,
+    "functional_position_count": 38,
+    "functional_position_views": {
+      "a300_energy_storage": [
+        "power_safety_internal",
+        "inertial_power_detail"
+      ],
+      "arm_control": [
+        "power_compute_detail"
+      ],
+      "bodywork_service_access": [
+        "front_left",
+        "rear_right",
+        "power_compute_detail",
+        "rear_service_detail",
+        "storage_recovery_detail"
+      ],
+      "charge_interface": [
+        "charge_interface_detail"
+      ],
+      "cleaning_head_lift": [
+        "cleaning_head_detail"
+      ],
+      "compute": [
+        "power_compute_detail"
+      ],
+      "dry_deposition": [
+        "dry_deposition_detail",
+        "dry_deposition_internal"
+      ],
+      "dry_fill_monitor": [
+        "storage_recovery_detail",
+        "dry_deposition_internal"
+      ],
+      "dry_storage": [
+        "storage_recovery_detail",
+        "dry_deposition_internal"
+      ],
+      "emergency_stop": [
+        "rear_right",
+        "rear_service_detail"
+      ],
+      "forward_perception": [
+        "front_sensor_detail"
+      ],
+      "front_contact_safety": [
+        "front_left"
+      ],
+      "fused_power_distribution": [
+        "power_safety_internal"
+      ],
+      "global_position": [
+        "sensor_tower_detail"
+      ],
+      "grasp_observation": [
+        "arm_mount_detail"
+      ],
+      "grasping": [
+        "arm_mount_detail"
+      ],
+      "hardwired_safety_enable": [
+        "power_safety_internal"
+      ],
+      "inertial_reference": [
+        "inertial_power_detail"
+      ],
+      "isolated_low_voltage_power": [
+        "power_safety_internal"
+      ],
+      "localization_2d": [
+        "sensor_tower_detail"
+      ],
+      "main_sweeping": [
+        "cleaning_head_detail",
+        "top_cleaning"
+      ],
+      "manipulation": [
+        "arm_mount_detail"
+      ],
+      "mapping_2d": [
+        "sensor_tower_detail"
+      ],
+      "mobility": [
+        "drivetrain_detail",
+        "front_left",
+        "rear_right"
+      ],
+      "obstacle_perception_3d": [
+        "sensor_tower_detail"
+      ],
+      "rear_contact_safety": [
+        "rear_right"
+      ],
+      "rear_left_perception": [
+        "rear_left_sensor_detail"
+      ],
+      "rear_right_perception": [
+        "rear_right_sensor_detail"
+      ],
+      "side_sweeping": [
+        "cleaning_head_detail",
+        "top_cleaning"
+      ],
+      "warning_and_work_lighting": [
+        "front_left",
+        "rear_right"
+      ],
+      "wastewater_drain": [
+        "drain_interface_detail"
+      ],
+      "water_filtering": [
+        "cleaning_head_detail",
+        "storage_recovery_detail"
+      ],
+      "water_flow_monitor": [
+        "cleaning_head_detail",
+        "rear_service_detail"
+      ],
+      "water_gathering": [
+        "cleaning_head_detail"
+      ],
+      "water_intake": [
+        "cleaning_head_detail"
+      ],
+      "water_pumping": [
+        "cleaning_head_detail",
+        "storage_recovery_detail"
+      ],
+      "wet_fill_monitor": [
+        "storage_recovery_detail",
+        "rear_service_detail"
+      ],
+      "wet_storage": [
+        "storage_recovery_detail",
+        "rear_service_detail"
+      ]
     },
-    "rear_right": {
-      "topic": "/formal_visual/rear_right",
-      "encoding": "rgb8",
-      "stamp_sec": 0,
-      "stamp_nanosec": 999000000,
-      "path": "rear_right.png",
-      "width": 1600,
-      "height": 1000,
-      "mean_luminance": 200.42747497558594,
-      "luminance_stddev": 53.93888473510742,
-      "near_black_fraction": 0.0
+    "inspected_physical_link_count": 156,
+    "item_physical_links": {
+      "functional_positions": {
+        "a300_energy_storage": [
+          "a300_left_battery_pack_link",
+          "a300_right_battery_pack_link",
+          "a300_left_battery_bms_link",
+          "a300_right_battery_bms_link"
+        ],
+        "arm_control": [
+          "ur5e_control_box_link"
+        ],
+        "bodywork_service_access": [
+          "bodywork_power_service_door_hinge_bracket_link",
+          "bodywork_power_service_door_link",
+          "bodywork_power_service_door_latch_link",
+          "bodywork_compute_service_door_hinge_bracket_link",
+          "bodywork_compute_service_door_link",
+          "bodywork_compute_service_door_latch_link",
+          "bodywork_wet_service_door_hinge_bracket_link",
+          "bodywork_wet_service_door_link",
+          "bodywork_wet_service_door_latch_link",
+          "bodywork_rear_dry_service_door_hinge_bracket_link",
+          "bodywork_rear_dry_service_door_link",
+          "bodywork_rear_dry_service_door_latch_link"
+        ],
+        "charge_interface": [
+          "charge_port_housing_link",
+          "charge_receptacle_link",
+          "charge_port_door_link",
+          "charge_connector_lock_link"
+        ],
+        "cleaning_head_lift": [
+          "cleaning_lift_carriage_link"
+        ],
+        "compute": [
+          "s100_compute_enclosure_link"
+        ],
+        "dry_deposition": [
+          "dry_deposit_hopper_link",
+          "dry_deposit_presence_sensor_link"
+        ],
+        "dry_fill_monitor": [
+          "dry_bin_level_sensor_link"
+        ],
+        "dry_storage": [
+          "dry_bin_link",
+          "dry_bin_latch_base_link",
+          "dry_bin_latch_link",
+          "dry_bin_latch_keeper_link"
+        ],
+        "emergency_stop": [
+          "emergency_stop_housing_link",
+          "emergency_stop_plunger_link"
+        ],
+        "forward_perception": [
+          "front_rgbd_link"
+        ],
+        "front_contact_safety": [
+          "bodywork_lower_tub_link"
+        ],
+        "fused_power_distribution": [
+          "power_distribution_box_link",
+          "main_power_isolator_housing_link",
+          "main_power_isolator_handle_link",
+          "main_power_contactor_housing_link",
+          "main_power_contactor_armature_link"
+        ],
+        "global_position": [
+          "gnss_antenna_link",
+          "zed_f9p_receiver_enclosure_link",
+          "zed_f9p_module_reference_link"
+        ],
+        "grasp_observation": [
+          "wrist_rgbd_link",
+          "wrist_rgbd_mount_link"
+        ],
+        "grasping": [
+          "robotiq_85_base_link"
+        ],
+        "hardwired_safety_enable": [
+          "safety_relay_link"
+        ],
+        "inertial_reference": [
+          "imu_link"
+        ],
+        "isolated_low_voltage_power": [
+          "isolated_dc_dc_module_link"
+        ],
+        "localization_2d": [
+          "lidar_2d_link"
+        ],
+        "main_sweeping": [
+          "central_roller_link",
+          "central_roller_encoder_link"
+        ],
+        "manipulation": [
+          "ur5e_base_link_inertia"
+        ],
+        "mapping_2d": [
+          "lidar_2d_link"
+        ],
+        "mobility": [
+          "base_link",
+          "front_left_motor_link",
+          "front_right_motor_link",
+          "rear_left_motor_link",
+          "rear_right_motor_link",
+          "front_left_encoder_link",
+          "front_right_encoder_link",
+          "rear_left_encoder_link",
+          "rear_right_encoder_link",
+          "left_suspension_beam_link",
+          "right_suspension_beam_link",
+          "left_suspension_beam_spacer_link",
+          "right_suspension_beam_spacer_link"
+        ],
+        "obstacle_perception_3d": [
+          "lidar_3d_link"
+        ],
+        "rear_contact_safety": [
+          "bodywork_lower_tub_link"
+        ],
+        "rear_left_perception": [
+          "rear_left_fisheye_link"
+        ],
+        "rear_right_perception": [
+          "rear_right_fisheye_link"
+        ],
+        "side_sweeping": [
+          "left_side_brush_link",
+          "left_side_brush_encoder_link",
+          "right_side_brush_encoder_link"
+        ],
+        "warning_and_work_lighting": [
+          "bodywork_lighting_link"
+        ],
+        "wastewater_drain": [
+          "wastewater_drain_valve_body_link",
+          "wastewater_drain_pipe_link",
+          "wastewater_drain_valve_ball_link",
+          "wastewater_drain_valve_actuator_link",
+          "wastewater_drain_service_cap_link",
+          "wastewater_drain_coupling_link"
+        ],
+        "water_filtering": [
+          "recovery_strainer_filter_link"
+        ],
+        "water_flow_monitor": [
+          "recovery_flow_sensor_link"
+        ],
+        "water_gathering": [
+          "squeegee_link",
+          "squeegee_spring_pack_link"
+        ],
+        "water_intake": [
+          "suction_nozzle_link"
+        ],
+        "water_pumping": [
+          "recovery_pump_rotor_link"
+        ],
+        "wet_fill_monitor": [
+          "wastewater_high_level_sensor_link"
+        ],
+        "wet_storage": [
+          "wastewater_tank_link",
+          "wastewater_lid_latch_base_link",
+          "wastewater_lid_latch_link",
+          "wastewater_lid_latch_keeper_link"
+        ]
+      },
+      "mechanical_subassemblies": {
+        "bodywork_service_access": [
+          "bodywork_power_service_door_hinge_bracket_link",
+          "bodywork_compute_service_door_hinge_bracket_link",
+          "bodywork_wet_service_door_hinge_bracket_link",
+          "bodywork_rear_dry_service_door_hinge_bracket_link"
+        ],
+        "central_roller": [
+          "central_roller_link",
+          "central_roller_motor_stator_link"
+        ],
+        "cleaning_head_deployment": [
+          "cleaning_lift_carriage_link",
+          "cleaning_lift_actuator_body_link"
+        ],
+        "compute_enclosure": [
+          "s100_compute_enclosure_link"
+        ],
+        "dry_storage": [
+          "dry_bin_link"
+        ],
+        "exterior_service_and_contact_safety": [
+          "charge_port_housing_link",
+          "wastewater_drain_valve_body_link",
+          "emergency_stop_housing_link",
+          "bodywork_lighting_link",
+          "bodywork_lower_tub_link"
+        ],
+        "gnss_receiver_installation": [
+          "zed_f9p_receiver_enclosure_link"
+        ],
+        "gripper": [
+          "ur_to_robotiq_adapter_link"
+        ],
+        "low_voltage_power_and_safety": [
+          "power_distribution_box_link",
+          "isolated_dc_dc_module_link",
+          "safety_relay_link",
+          "s100_compute_enclosure_link",
+          "ur5e_control_box_link"
+        ],
+        "manipulator": [
+          "ur5e_base_link_inertia",
+          "ur5e_shoulder_link",
+          "ur5e_upper_arm_link",
+          "ur5e_forearm_link",
+          "ur5e_wrist_1_link",
+          "ur5e_wrist_2_link",
+          "ur5e_wrist_3_link"
+        ],
+        "mobility_base": [
+          "base_link"
+        ],
+        "recovery_squeegee": [
+          "squeegee_link",
+          "squeegee_spring_pack_link"
+        ],
+        "robot_deposition_port": [
+          "dry_deposit_hopper_link",
+          "dry_deposit_gate_actuator_link"
+        ],
+        "sensor_tower": [
+          "sensor_mast_link"
+        ],
+        "side_brushes": [
+          "left_side_brush_motor_stator_link",
+          "right_side_brush_motor_stator_link"
+        ],
+        "wastewater_recovery_drive": [
+          "recovery_pump_motor_link"
+        ],
+        "wastewater_storage": [
+          "wastewater_tank_link"
+        ],
+        "wrist_rgbd_installation": [
+          "wrist_rgbd_mount_link"
+        ]
+      },
+      "sensor_installations": {
+        "hokuyo_utm30lx": [
+          "lidar_2d_mount_link",
+          "lidar_2d_link"
+        ],
+        "intel_d435_front": [
+          "front_rgbd_mount_link",
+          "front_rgbd_link"
+        ],
+        "intel_d435_wrist": [
+          "wrist_rgbd_mount_link",
+          "wrist_rgbd_link"
+        ],
+        "livox_mid360": [
+          "lidar_3d_mount_link",
+          "lidar_3d_link"
+        ],
+        "rear_left_fisheye": [
+          "rear_left_fisheye_mount_link",
+          "rear_left_fisheye_link"
+        ],
+        "rear_right_fisheye": [
+          "rear_right_fisheye_mount_link",
+          "rear_right_fisheye_link"
+        ],
+        "ublox_ann_mb": [
+          "gnss_mount_link",
+          "gnss_antenna_link"
+        ],
+        "ublox_zed_f9p_receiver": [
+          "zed_f9p_receiver_enclosure_link",
+          "zed_f9p_module_reference_link"
+        ],
+        "vectornav_vn100": [
+          "imu_mount_tray_link",
+          "imu_link"
+        ]
+      }
     },
-    "top_cleaning": {
-      "topic": "/formal_visual/top_cleaning",
-      "encoding": "rgb8",
-      "stamp_sec": 0,
-      "stamp_nanosec": 999000000,
-      "path": "top_cleaning.png",
-      "width": 1600,
-      "height": 1000,
-      "mean_luminance": 210.75973510742188,
-      "luminance_stddev": 44.58378219604492,
-      "near_black_fraction": 0.0
+    "link_projection_reports": {
+      "a300_left_battery_bms_link": {
+        "accepted_view": "power_safety_internal",
+        "candidate_views": [
+          "power_safety_internal"
+        ],
+        "horizontal_offset_rad": -0.018175141500111562,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 723,
+        "target_entities": [
+          "a300_left_battery_bms_link"
+        ],
+        "target_xyz_m": [
+          0.045,
+          0.095,
+          0.24009999999999998
+        ],
+        "vertical_offset_rad": -0.07653822830962459
+      },
+      "a300_left_battery_pack_link": {
+        "accepted_view": "power_safety_internal",
+        "candidate_views": [
+          "power_safety_internal"
+        ],
+        "horizontal_offset_rad": 0.032429458086346744,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 653,
+        "target_entities": [
+          "a300_left_battery_pack_link"
+        ],
+        "target_xyz_m": [
+          -0.08,
+          0.095,
+          0.24009999999999998
+        ],
+        "vertical_offset_rad": -0.058911637969972286
+      },
+      "a300_right_battery_bms_link": {
+        "accepted_view": "power_safety_internal",
+        "candidate_views": [
+          "power_safety_internal"
+        ],
+        "horizontal_offset_rad": 0.07055417435116174,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 839,
+        "target_entities": [
+          "a300_right_battery_bms_link"
+        ],
+        "target_xyz_m": [
+          0.045,
+          -0.095,
+          0.24009999999999998
+        ],
+        "vertical_offset_rad": -0.10556102938307886
+      },
+      "a300_right_battery_pack_link": {
+        "accepted_view": "power_safety_internal",
+        "candidate_views": [
+          "power_safety_internal"
+        ],
+        "horizontal_offset_rad": 0.11987248680508433,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 747,
+        "target_entities": [
+          "a300_right_battery_pack_link"
+        ],
+        "target_xyz_m": [
+          -0.08,
+          -0.095,
+          0.24009999999999998
+        ],
+        "vertical_offset_rad": -0.08506356878923398
+      },
+      "base_link": {
+        "accepted_view": "drivetrain_detail",
+        "candidate_views": [
+          "drivetrain_detail"
+        ],
+        "horizontal_offset_rad": -0.07884282816315057,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1215,
+        "target_entities": [
+          "base_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          0.0,
+          0.1651
+        ],
+        "vertical_offset_rad": -0.004564229189916073
+      },
+      "bodywork_compute_service_door_hinge_bracket_link": {
+        "accepted_view": "front_left",
+        "candidate_views": [
+          "front_left"
+        ],
+        "horizontal_offset_rad": 0.13470560344526075,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 104,
+        "target_entities": [
+          "bodywork_compute_service_door_hinge_bracket_link"
+        ],
+        "target_xyz_m": [
+          0.235,
+          -0.441,
+          0.2551
+        ],
+        "vertical_offset_rad": -0.106306651165637
+      },
+      "bodywork_compute_service_door_latch_link": {
+        "accepted_view": "front_left",
+        "candidate_views": [
+          "front_left"
+        ],
+        "horizontal_offset_rad": 0.18573089914803326,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 115,
+        "target_entities": [
+          "bodywork_compute_service_door_latch_link"
+        ],
+        "target_xyz_m": [
+          0.47,
+          -0.441,
+          0.3151
+        ],
+        "vertical_offset_rad": -0.10565441478804889
+      },
+      "bodywork_compute_service_door_link": {
+        "accepted_view": "front_left",
+        "candidate_views": [
+          "front_left"
+        ],
+        "horizontal_offset_rad": 0.13470560344526075,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 104,
+        "target_entities": [
+          "bodywork_compute_service_door_link"
+        ],
+        "target_xyz_m": [
+          0.235,
+          -0.441,
+          0.2551
+        ],
+        "vertical_offset_rad": -0.106306651165637
+      },
+      "bodywork_lighting_link": {
+        "accepted_view": "front_left",
+        "candidate_views": [
+          "front_left",
+          "rear_right"
+        ],
+        "horizontal_offset_rad": -0.004251676327176095,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 110,
+        "target_entities": [
+          "bodywork_lighting_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          0.0,
+          0.1651
+        ],
+        "vertical_offset_rad": -0.13933095021585895
+      },
+      "bodywork_lower_tub_link": {
+        "accepted_view": "front_left",
+        "candidate_views": [
+          "front_left",
+          "rear_right"
+        ],
+        "horizontal_offset_rad": -0.004251676327176095,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 110,
+        "target_entities": [
+          "bodywork_lower_tub_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          0.0,
+          0.1651
+        ],
+        "vertical_offset_rad": -0.13933095021585895
+      },
+      "bodywork_power_service_door_hinge_bracket_link": {
+        "accepted_view": "front_left",
+        "candidate_views": [
+          "front_left"
+        ],
+        "horizontal_offset_rad": -0.09181083870903779,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 138,
+        "target_entities": [
+          "bodywork_power_service_door_hinge_bracket_link"
+        ],
+        "target_xyz_m": [
+          0.055,
+          0.391,
+          0.5301
+        ],
+        "vertical_offset_rad": -0.05887895145095873
+      },
+      "bodywork_power_service_door_latch_link": {
+        "accepted_view": "front_left",
+        "candidate_views": [
+          "front_left"
+        ],
+        "horizontal_offset_rad": -0.013807008830997586,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 176,
+        "target_entities": [
+          "bodywork_power_service_door_latch_link"
+        ],
+        "target_xyz_m": [
+          0.445,
+          0.391,
+          0.7301
+        ],
+        "vertical_offset_rad": -0.01666480998837889
+      },
+      "bodywork_power_service_door_link": {
+        "accepted_view": "front_left",
+        "candidate_views": [
+          "front_left"
+        ],
+        "horizontal_offset_rad": -0.09181083870903779,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 138,
+        "target_entities": [
+          "bodywork_power_service_door_link"
+        ],
+        "target_xyz_m": [
+          0.055,
+          0.391,
+          0.5301
+        ],
+        "vertical_offset_rad": -0.05887895145095873
+      },
+      "bodywork_rear_dry_service_door_hinge_bracket_link": {
+        "accepted_view": "rear_right",
+        "candidate_views": [
+          "rear_right"
+        ],
+        "horizontal_offset_rad": 0.15742759864125663,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 141,
+        "target_entities": [
+          "bodywork_rear_dry_service_door_hinge_bracket_link"
+        ],
+        "target_xyz_m": [
+          -0.562,
+          0.22,
+          0.4901
+        ],
+        "vertical_offset_rad": -0.07801463337097665
+      },
+      "bodywork_rear_dry_service_door_latch_link": {
+        "accepted_view": "rear_right",
+        "candidate_views": [
+          "rear_right"
+        ],
+        "horizontal_offset_rad": 0.06486867220052116,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 176,
+        "target_entities": [
+          "bodywork_rear_dry_service_door_latch_link"
+        ],
+        "target_xyz_m": [
+          -0.562,
+          -0.17,
+          0.6651
+        ],
+        "vertical_offset_rad": -0.04144218276951486
+      },
+      "bodywork_rear_dry_service_door_link": {
+        "accepted_view": "rear_right",
+        "candidate_views": [
+          "rear_right"
+        ],
+        "horizontal_offset_rad": 0.15742759864125663,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 141,
+        "target_entities": [
+          "bodywork_rear_dry_service_door_link"
+        ],
+        "target_xyz_m": [
+          -0.562,
+          0.22,
+          0.4901
+        ],
+        "vertical_offset_rad": -0.07801463337097665
+      },
+      "bodywork_wet_service_door_hinge_bracket_link": {
+        "accepted_view": "rear_right",
+        "candidate_views": [
+          "rear_right"
+        ],
+        "horizontal_offset_rad": -0.03102169907872724,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 177,
+        "target_entities": [
+          "bodywork_wet_service_door_hinge_bracket_link"
+        ],
+        "target_xyz_m": [
+          -0.43,
+          -0.401,
+          0.5251
+        ],
+        "vertical_offset_rad": -0.09517573475772922
+      },
+      "bodywork_wet_service_door_latch_link": {
+        "accepted_view": "rear_right",
+        "candidate_views": [
+          "rear_right"
+        ],
+        "horizontal_offset_rad": -0.09976733124865353,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 151,
+        "target_entities": [
+          "bodywork_wet_service_door_latch_link"
+        ],
+        "target_xyz_m": [
+          -0.09999999999999998,
+          -0.401,
+          0.6651
+        ],
+        "vertical_offset_rad": -0.02443660369810803
+      },
+      "bodywork_wet_service_door_link": {
+        "accepted_view": "rear_right",
+        "candidate_views": [
+          "rear_right"
+        ],
+        "horizontal_offset_rad": -0.03102169907872724,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 177,
+        "target_entities": [
+          "bodywork_wet_service_door_link"
+        ],
+        "target_xyz_m": [
+          -0.43,
+          -0.401,
+          0.5251
+        ],
+        "vertical_offset_rad": -0.09517573475772922
+      },
+      "central_roller_drive_gearbox_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": 0.060397830325228816,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 754,
+        "target_entities": [
+          "central_roller_drive_gearbox_link"
+        ],
+        "target_xyz_m": [
+          0.155,
+          0.0,
+          0.2
+        ],
+        "vertical_offset_rad": 0.029635572567968903
+      },
+      "central_roller_encoder_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": 0.20828787466751902,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 542,
+        "target_entities": [
+          "central_roller_encoder_link"
+        ],
+        "target_xyz_m": [
+          0.155,
+          -0.401,
+          0.2
+        ],
+        "vertical_offset_rad": 0.04184960827106154
+      },
+      "central_roller_guard_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -2.4290019914674472e-05,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 654,
+        "target_entities": [
+          "central_roller_guard_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          0.0,
+          0.1301
+        ],
+        "vertical_offset_rad": -0.003368351623730744
+      },
+      "central_roller_left_bearing_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": 0.060397830325228816,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 754,
+        "target_entities": [
+          "central_roller_left_bearing_link"
+        ],
+        "target_xyz_m": [
+          0.155,
+          0.0,
+          0.2
+        ],
+        "vertical_offset_rad": 0.029635572567968903
+      },
+      "central_roller_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": 0.060397830325228816,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 754,
+        "target_entities": [
+          "central_roller_link"
+        ],
+        "target_xyz_m": [
+          0.155,
+          0.0,
+          0.2
+        ],
+        "vertical_offset_rad": 0.029635572567968903
+      },
+      "central_roller_motor_stator_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": 0.060397830325228816,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 754,
+        "target_entities": [
+          "central_roller_motor_stator_link"
+        ],
+        "target_xyz_m": [
+          0.155,
+          0.0,
+          0.2
+        ],
+        "vertical_offset_rad": 0.029635572567968903
+      },
+      "charge_connector_lock_link": {
+        "accepted_view": "charge_interface_detail",
+        "candidate_views": [
+          "charge_interface_detail"
+        ],
+        "horizontal_offset_rad": 0.02397795342607839,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 5505,
+        "target_entities": [
+          "charge_connector_lock_link"
+        ],
+        "target_xyz_m": [
+          0.272,
+          0.402,
+          0.46509999999999996
+        ],
+        "vertical_offset_rad": -0.0359021668079181
+      },
+      "charge_port_door_link": {
+        "accepted_view": "charge_interface_detail",
+        "candidate_views": [
+          "charge_interface_detail"
+        ],
+        "horizontal_offset_rad": 0.013249441200917235,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 5066,
+        "target_entities": [
+          "charge_port_door_link"
+        ],
+        "target_xyz_m": [
+          0.25,
+          0.36100000000000004,
+          0.4951
+        ],
+        "vertical_offset_rad": 0.01006816559852863
+      },
+      "charge_port_housing_link": {
+        "accepted_view": "charge_interface_detail",
+        "candidate_views": [
+          "charge_interface_detail"
+        ],
+        "horizontal_offset_rad": -0.00038322737640314653,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 5525,
+        "target_entities": [
+          "charge_port_housing_link"
+        ],
+        "target_xyz_m": [
+          0.25,
+          0.402,
+          0.4951
+        ],
+        "vertical_offset_rad": -0.00029010555100569856
+      },
+      "charge_receptacle_link": {
+        "accepted_view": "charge_interface_detail",
+        "candidate_views": [
+          "charge_interface_detail"
+        ],
+        "horizontal_offset_rad": -0.0003819619356059933,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 5488,
+        "target_entities": [
+          "charge_receptacle_link"
+        ],
+        "target_xyz_m": [
+          0.25,
+          0.402,
+          0.4831
+        ],
+        "vertical_offset_rad": -0.01378168559705764
+      },
+      "cleaning_lift_actuator_body_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.08215958169235203,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 749,
+        "target_entities": [
+          "cleaning_lift_actuator_body_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          0.18,
+          0.1851
+        ],
+        "vertical_offset_rad": 0.02079080075955293
+      },
+      "cleaning_lift_carriage_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -2.4420898580755702e-05,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 660,
+        "target_entities": [
+          "cleaning_lift_carriage_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          0.0,
+          0.2101
+        ],
+        "vertical_offset_rad": 0.041275681921799666
+      },
+      "dry_bin_front_panel_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "dry_deposition_internal",
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": 0.04757576814280481,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 705,
+        "target_entities": [
+          "dry_bin_front_panel_link"
+        ],
+        "target_xyz_m": [
+          0.047000000000000014,
+          0.16,
+          0.5690999999999999
+        ],
+        "vertical_offset_rad": -0.021288730973546586
+      },
+      "dry_bin_latch_base_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "dry_deposition_internal",
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": 0.04151160786586889,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 704,
+        "target_entities": [
+          "dry_bin_latch_base_link"
+        ],
+        "target_xyz_m": [
+          0.06500000000000003,
+          0.16,
+          0.6391
+        ],
+        "vertical_offset_rad": 0.015399222019391971
+      },
+      "dry_bin_latch_keeper_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "dry_deposition_internal",
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": 0.04727263649340081,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 716,
+        "target_entities": [
+          "dry_bin_latch_keeper_link"
+        ],
+        "target_xyz_m": [
+          0.049000000000000044,
+          0.16,
+          0.6790999999999999
+        ],
+        "vertical_offset_rad": 0.03512055211625482
+      },
+      "dry_bin_latch_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "dry_deposition_internal",
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": 0.04158504907577882,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 706,
+        "target_entities": [
+          "dry_bin_latch_link"
+        ],
+        "target_xyz_m": [
+          0.06500000000000003,
+          0.16,
+          0.6621
+        ],
+        "vertical_offset_rad": 0.027140439472755556
+      },
+      "dry_bin_left_panel_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "dry_deposition_internal",
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": 0.21047239071711096,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 726,
+        "target_entities": [
+          "dry_bin_left_panel_link"
+        ],
+        "target_xyz_m": [
+          -0.205,
+          0.34950000000000003,
+          0.5690999999999999
+        ],
+        "vertical_offset_rad": -0.02757860302499021
+      },
+      "dry_bin_level_sensor_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "dry_deposition_internal",
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": 0.21898057988870073,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 973,
+        "target_entities": [
+          "dry_bin_level_sensor_link"
+        ],
+        "target_xyz_m": [
+          -0.365,
+          0.16,
+          0.6740999999999999
+        ],
+        "vertical_offset_rad": 0.009662680679354281
+      },
+      "dry_bin_lid_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "dry_deposition_internal",
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": 0.266327645349947,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1044,
+        "target_entities": [
+          "dry_bin_lid_link"
+        ],
+        "target_xyz_m": [
+          -0.45899999999999996,
+          0.16,
+          0.6970999999999999
+        ],
+        "vertical_offset_rad": 0.017943369461032845
+      },
+      "dry_bin_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "dry_deposition_internal",
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": 0.14500514387878677,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 849,
+        "target_entities": [
+          "dry_bin_link"
+        ],
+        "target_xyz_m": [
+          -0.205,
+          0.16,
+          0.5690999999999999
+        ],
+        "vertical_offset_rad": -0.03995708691866843
+      },
+      "dry_bin_rear_panel_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "dry_deposition_internal",
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": 0.2621947549550335,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1016,
+        "target_entities": [
+          "dry_bin_rear_panel_link"
+        ],
+        "target_xyz_m": [
+          -0.45699999999999996,
+          0.16,
+          0.5690999999999999
+        ],
+        "vertical_offset_rad": -0.06312329058523172
+      },
+      "dry_bin_right_panel_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "dry_deposition_internal",
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": 0.06824326696274173,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 995,
+        "target_entities": [
+          "dry_bin_right_panel_link"
+        ],
+        "target_xyz_m": [
+          -0.205,
+          -0.0295,
+          0.5690999999999999
+        ],
+        "vertical_offset_rad": -0.054164821583936915
+      },
+      "dry_deposit_chute_link": {
+        "accepted_view": "dry_deposition_internal",
+        "candidate_views": [
+          "dry_deposition_internal"
+        ],
+        "horizontal_offset_rad": -9.115670342299678e-05,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1803,
+        "target_entities": [
+          "dry_deposit_chute_link"
+        ],
+        "target_xyz_m": [
+          -0.20499999999999996,
+          0.035,
+          0.8671
+        ],
+        "vertical_offset_rad": -0.13662426887088727
+      },
+      "dry_deposit_gate_actuator_horn_link": {
+        "accepted_view": "dry_deposition_internal",
+        "candidate_views": [
+          "dry_deposition_internal"
+        ],
+        "horizontal_offset_rad": 0.02461721220597535,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 2476,
+        "target_entities": [
+          "dry_deposit_gate_actuator_horn_link"
+        ],
+        "target_xyz_m": [
+          -0.29999999999999993,
+          0.137,
+          1.0911
+        ],
+        "vertical_offset_rad": 0.013404960212753001
+      },
+      "dry_deposit_gate_actuator_link": {
+        "accepted_view": "dry_deposition_internal",
+        "candidate_views": [
+          "dry_deposition_internal"
+        ],
+        "horizontal_offset_rad": 0.03919922678065908,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 2513,
+        "target_entities": [
+          "dry_deposit_gate_actuator_link"
+        ],
+        "target_xyz_m": [
+          -0.29999999999999993,
+          0.1565,
+          1.0791
+        ],
+        "vertical_offset_rad": 0.0007373863969225631
+      },
+      "dry_deposit_gate_link": {
+        "accepted_view": "dry_deposition_internal",
+        "candidate_views": [
+          "dry_deposition_internal"
+        ],
+        "horizontal_offset_rad": -0.04757706543618229,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 2230,
+        "target_entities": [
+          "dry_deposit_gate_link"
+        ],
+        "target_xyz_m": [
+          -0.29999999999999993,
+          0.035,
+          1.0911
+        ],
+        "vertical_offset_rad": 0.023016593642720653
+      },
+      "dry_deposit_hopper_link": {
+        "accepted_view": "dry_deposition_internal",
+        "candidate_views": [
+          "dry_deposition_internal"
+        ],
+        "horizontal_offset_rad": -9.38008420295284e-05,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1945,
+        "target_entities": [
+          "dry_deposit_hopper_link"
+        ],
+        "target_xyz_m": [
+          -0.20499999999999996,
+          0.035,
+          1.0471
+        ],
+        "vertical_offset_rad": -0.000547520391704922
+      },
+      "dry_deposit_presence_sensor_link": {
+        "accepted_view": "dry_deposition_internal",
+        "candidate_views": [
+          "dry_deposition_internal"
+        ],
+        "horizontal_offset_rad": 0.038846983602663025,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1749,
+        "target_entities": [
+          "dry_deposit_presence_sensor_link"
+        ],
+        "target_xyz_m": [
+          -0.11699999999999997,
+          0.035,
+          1.0620999999999998
+        ],
+        "vertical_offset_rad": 0.021555247710139235
+      },
+      "emergency_stop_housing_link": {
+        "accepted_view": "rear_right",
+        "candidate_views": [
+          "rear_service_detail",
+          "rear_right"
+        ],
+        "horizontal_offset_rad": -0.03866771089092911,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 185,
+        "target_entities": [
+          "emergency_stop_housing_link"
+        ],
+        "target_xyz_m": [
+          -0.405,
+          -0.405,
+          0.8451000000000001
+        ],
+        "vertical_offset_rad": 0.021423611247660315
+      },
+      "emergency_stop_plunger_link": {
+        "accepted_view": "rear_right",
+        "candidate_views": [
+          "rear_service_detail",
+          "rear_right"
+        ],
+        "horizontal_offset_rad": -0.0385703372123138,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 184,
+        "target_entities": [
+          "emergency_stop_plunger_link"
+        ],
+        "target_xyz_m": [
+          -0.405,
+          -0.405,
+          0.8111
+        ],
+        "vertical_offset_rad": 0.008937542114367493
+      },
+      "front_left_encoder_link": {
+        "accepted_view": "drivetrain_detail",
+        "candidate_views": [
+          "drivetrain_detail",
+          "front_left"
+        ],
+        "horizontal_offset_rad": -0.27864896733395145,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1307,
+        "target_entities": [
+          "front_left_encoder_link"
+        ],
+        "target_xyz_m": [
+          0.256,
+          0.16540000000000002,
+          0.1651
+        ],
+        "vertical_offset_rad": -0.011271207864587353
+      },
+      "front_left_motor_link": {
+        "accepted_view": "drivetrain_detail",
+        "candidate_views": [
+          "drivetrain_detail",
+          "front_left"
+        ],
+        "horizontal_offset_rad": -0.2995751684286665,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1237,
+        "target_entities": [
+          "front_left_motor_link"
+        ],
+        "target_xyz_m": [
+          0.256,
+          0.2174,
+          0.1651
+        ],
+        "vertical_offset_rad": -0.009241663294470816
+      },
+      "front_left_wheel_link": {
+        "accepted_view": "front_left",
+        "candidate_views": [
+          "drivetrain_detail",
+          "front_left"
+        ],
+        "horizontal_offset_rad": -0.02380520321789324,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 136,
+        "target_entities": [
+          "front_left_wheel_link"
+        ],
+        "target_xyz_m": [
+          0.256,
+          0.28290000000000004,
+          0.1651
+        ],
+        "vertical_offset_rad": -0.17960915467467894
+      },
+      "front_rgbd_link": {
+        "accepted_view": "front_sensor_detail",
+        "candidate_views": [
+          "front_sensor_detail"
+        ],
+        "horizontal_offset_rad": -3.428910860436572e-07,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 3494,
+        "target_entities": [
+          "front_rgbd_link"
+        ],
+        "target_xyz_m": [
+          0.5695315389351802,
+          0.0,
+          0.61198690869129
+        ],
+        "vertical_offset_rad": 6.090939411115132e-08
+      },
+      "front_rgbd_mount_link": {
+        "accepted_view": "front_sensor_detail",
+        "candidate_views": [
+          "front_sensor_detail"
+        ],
+        "horizontal_offset_rad": -3.430200034837993e-07,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 3466,
+        "target_entities": [
+          "front_rgbd_mount_link"
+        ],
+        "target_xyz_m": [
+          0.565,
+          0.0,
+          0.6141
+        ],
+        "vertical_offset_rad": 0.0026175740891137087
+      },
+      "front_right_encoder_link": {
+        "accepted_view": "drivetrain_detail",
+        "candidate_views": [
+          "drivetrain_detail"
+        ],
+        "horizontal_offset_rad": -0.11380283610334879,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1879,
+        "target_entities": [
+          "front_right_encoder_link"
+        ],
+        "target_xyz_m": [
+          0.256,
+          -0.16540000000000002,
+          0.1651
+        ],
+        "vertical_offset_rad": -0.02657374884347773
+      },
+      "front_right_motor_link": {
+        "accepted_view": "drivetrain_detail",
+        "candidate_views": [
+          "drivetrain_detail"
+        ],
+        "horizontal_offset_rad": -0.08196680179168943,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1989,
+        "target_entities": [
+          "front_right_motor_link"
+        ],
+        "target_xyz_m": [
+          0.256,
+          -0.2174,
+          0.1651
+        ],
+        "vertical_offset_rad": -0.02943594536731266
+      },
+      "front_right_wheel_link": {
+        "accepted_view": "drivetrain_detail",
+        "candidate_views": [
+          "drivetrain_detail"
+        ],
+        "horizontal_offset_rad": -0.03919392930652633,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 2136,
+        "target_entities": [
+          "front_right_wheel_link"
+        ],
+        "target_xyz_m": [
+          0.256,
+          -0.28290000000000004,
+          0.1651
+        ],
+        "vertical_offset_rad": -0.033258191952105394
+      },
+      "gnss_antenna_link": {
+        "accepted_view": "sensor_tower_detail",
+        "candidate_views": [
+          "sensor_tower_detail"
+        ],
+        "horizontal_offset_rad": -0.08929552041336569,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1325,
+        "target_entities": [
+          "gnss_antenna_link"
+        ],
+        "target_xyz_m": [
+          0.365,
+          0.16,
+          1.1801000000000001
+        ],
+        "vertical_offset_rad": -0.03301687436295368
+      },
+      "gnss_mount_link": {
+        "accepted_view": "sensor_tower_detail",
+        "candidate_views": [
+          "sensor_tower_detail"
+        ],
+        "horizontal_offset_rad": -0.008716594971523479,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1140,
+        "target_entities": [
+          "gnss_mount_link"
+        ],
+        "target_xyz_m": [
+          0.385,
+          -0.02,
+          1.1541000000000001
+        ],
+        "vertical_offset_rad": -0.03474350688814622
+      },
+      "imu_link": {
+        "accepted_view": "inertial_power_detail",
+        "candidate_views": [
+          "inertial_power_detail"
+        ],
+        "horizontal_offset_rad": -1.3023932715944114e-05,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1488,
+        "target_entities": [
+          "imu_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          0.0,
+          0.4091
+        ],
+        "vertical_offset_rad": 2.467243768252967e-05
+      },
+      "imu_mount_tray_link": {
+        "accepted_view": "inertial_power_detail",
+        "candidate_views": [
+          "inertial_power_detail"
+        ],
+        "horizontal_offset_rad": -1.301315397599644e-05,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1485,
+        "target_entities": [
+          "imu_mount_tray_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          0.0,
+          0.3901
+        ],
+        "vertical_offset_rad": -0.011846538585139309
+      },
+      "isolated_dc_dc_module_link": {
+        "accepted_view": "power_safety_internal",
+        "candidate_views": [
+          "power_safety_internal"
+        ],
+        "horizontal_offset_rad": -0.0734801200706485,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1251,
+        "target_entities": [
+          "isolated_dc_dc_module_link"
+        ],
+        "target_xyz_m": [
+          0.345,
+          -0.105,
+          0.4391
+        ],
+        "vertical_offset_rad": -0.0230927681689007
+      },
+      "left_side_brush_bristle_sectors_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.14332583958254888,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1553,
+        "target_entities": [
+          "left_side_brush_bristle_sectors_link"
+        ],
+        "target_xyz_m": [
+          0.385,
+          0.545,
+          0.131
+        ],
+        "vertical_offset_rad": -0.0719429118438078
+      },
+      "left_side_brush_disk_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.14332583958254888,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1553,
+        "target_entities": [
+          "left_side_brush_disk_link"
+        ],
+        "target_xyz_m": [
+          0.385,
+          0.545,
+          0.131
+        ],
+        "vertical_offset_rad": -0.0719429118438078
+      },
+      "left_side_brush_encoder_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.14546321562825396,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1604,
+        "target_entities": [
+          "left_side_brush_encoder_link"
+        ],
+        "target_xyz_m": [
+          0.385,
+          0.545,
+          0.2735
+        ],
+        "vertical_offset_rad": 0.05221971690793745
+      },
+      "left_side_brush_gearbox_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.1443079745182314,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1582,
+        "target_entities": [
+          "left_side_brush_gearbox_link"
+        ],
+        "target_xyz_m": [
+          0.385,
+          0.545,
+          0.197
+        ],
+        "vertical_offset_rad": -0.014943439226392881
+      },
+      "left_side_brush_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.14409852751825494,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1577,
+        "target_entities": [
+          "left_side_brush_link"
+        ],
+        "target_xyz_m": [
+          0.385,
+          0.545,
+          0.183
+        ],
+        "vertical_offset_rad": -0.027121079100877164
+      },
+      "left_side_brush_motor_stator_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.14494751569394207,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1596,
+        "target_entities": [
+          "left_side_brush_motor_stator_link"
+        ],
+        "target_xyz_m": [
+          0.385,
+          0.545,
+          0.23950000000000002
+        ],
+        "vertical_offset_rad": 0.022257399391760926
+      },
+      "left_suspension_beam_link": {
+        "accepted_view": "drivetrain_detail",
+        "candidate_views": [
+          "drivetrain_detail",
+          "front_left"
+        ],
+        "horizontal_offset_rad": -0.17285998162768548,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1017,
+        "target_entities": [
+          "left_suspension_beam_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          0.2079,
+          0.1736
+        ],
+        "vertical_offset_rad": 0.0072091084103745925
+      },
+      "left_suspension_beam_spacer_link": {
+        "accepted_view": "drivetrain_detail",
+        "candidate_views": [
+          "drivetrain_detail",
+          "front_left"
+        ],
+        "horizontal_offset_rad": -0.166252788261076,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1031,
+        "target_entities": [
+          "left_suspension_beam_spacer_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          0.192,
+          0.1736
+        ],
+        "vertical_offset_rad": 0.006766490828135819
+      },
+      "lidar_2d_link": {
+        "accepted_view": "sensor_tower_detail",
+        "candidate_views": [
+          "sensor_tower_detail"
+        ],
+        "horizontal_offset_rad": 0.055807199270114266,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1294,
+        "target_entities": [
+          "lidar_2d_link"
+        ],
+        "target_xyz_m": [
+          0.535,
+          0.0,
+          1.1621
+        ],
+        "vertical_offset_rad": -0.04183026050728181
+      },
+      "lidar_2d_mount_link": {
+        "accepted_view": "sensor_tower_detail",
+        "candidate_views": [
+          "sensor_tower_detail"
+        ],
+        "horizontal_offset_rad": 0.028348954718819562,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1221,
+        "target_entities": [
+          "lidar_2d_mount_link"
+        ],
+        "target_xyz_m": [
+          0.48,
+          0.0,
+          1.0840999999999998
+        ],
+        "vertical_offset_rad": -0.08411853563721643
+      },
+      "lidar_3d_link": {
+        "accepted_view": "sensor_tower_detail",
+        "candidate_views": [
+          "sensor_tower_detail"
+        ],
+        "horizontal_offset_rad": -2.0468307256100795e-07,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1215,
+        "target_entities": [
+          "lidar_3d_link"
+        ],
+        "target_xyz_m": [
+          0.42,
+          0.0,
+          1.2731000000000001
+        ],
+        "vertical_offset_rad": 0.03149086981136989
+      },
+      "lidar_3d_mount_link": {
+        "accepted_view": "sensor_tower_detail",
+        "candidate_views": [
+          "sensor_tower_detail"
+        ],
+        "horizontal_offset_rad": -2.0304463316672244e-07,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1196,
+        "target_entities": [
+          "lidar_3d_mount_link"
+        ],
+        "target_xyz_m": [
+          0.42,
+          0.0,
+          1.1791
+        ],
+        "vertical_offset_rad": -0.024065391922527143
+      },
+      "main_power_contactor_armature_link": {
+        "accepted_view": "power_safety_internal",
+        "candidate_views": [
+          "power_safety_internal"
+        ],
+        "horizontal_offset_rad": -0.24836876361345983,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 885,
+        "target_entities": [
+          "main_power_contactor_armature_link"
+        ],
+        "target_xyz_m": [
+          0.375,
+          0.245,
+          0.5171
+        ],
+        "vertical_offset_rad": 0.07235483073038135
+      },
+      "main_power_contactor_housing_link": {
+        "accepted_view": "power_safety_internal",
+        "candidate_views": [
+          "power_safety_internal"
+        ],
+        "horizontal_offset_rad": -0.24610885865575127,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 873,
+        "target_entities": [
+          "main_power_contactor_housing_link"
+        ],
+        "target_xyz_m": [
+          0.375,
+          0.245,
+          0.46509999999999996
+        ],
+        "vertical_offset_rad": 0.03739367305081861
+      },
+      "main_power_isolator_handle_link": {
+        "accepted_view": "power_safety_internal",
+        "candidate_views": [
+          "power_safety_internal"
+        ],
+        "horizontal_offset_rad": -0.2505063916953864,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 726,
+        "target_entities": [
+          "main_power_isolator_handle_link"
+        ],
+        "target_xyz_m": [
+          0.27,
+          0.39199999999999996,
+          0.7101000000000001
+        ],
+        "vertical_offset_rad": 0.21278294048323973
+      },
+      "main_power_isolator_housing_link": {
+        "accepted_view": "power_safety_internal",
+        "candidate_views": [
+          "power_safety_internal"
+        ],
+        "horizontal_offset_rad": -0.23451174461137433,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 762,
+        "target_entities": [
+          "main_power_isolator_housing_link"
+        ],
+        "target_xyz_m": [
+          0.27,
+          0.345,
+          0.7101000000000001
+        ],
+        "vertical_offset_rad": 0.21162044101747624
+      },
+      "power_distribution_box_link": {
+        "accepted_view": "power_safety_internal",
+        "candidate_views": [
+          "power_safety_internal"
+        ],
+        "horizontal_offset_rad": -0.12975043976442013,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1068,
+        "target_entities": [
+          "power_distribution_box_link"
+        ],
+        "target_xyz_m": [
+          0.33,
+          0.025,
+          0.4441
+        ],
+        "vertical_offset_rad": 0.0019334408116848231
+      },
+      "rear_left_encoder_link": {
+        "accepted_view": "drivetrain_detail",
+        "candidate_views": [
+          "drivetrain_detail",
+          "front_left"
+        ],
+        "horizontal_offset_rad": -0.05536129747070971,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 848,
+        "target_entities": [
+          "rear_left_encoder_link"
+        ],
+        "target_xyz_m": [
+          -0.256,
+          0.16540000000000002,
+          0.1651
+        ],
+        "vertical_offset_rad": 0.010151205048266434
+      },
+      "rear_left_fisheye_link": {
+        "accepted_view": "rear_left_sensor_detail",
+        "candidate_views": [
+          "rear_left_sensor_detail"
+        ],
+        "horizontal_offset_rad": -0.0006828030763919062,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 2972,
+        "target_entities": [
+          "rear_left_fisheye_link"
+        ],
+        "target_xyz_m": [
+          -0.565,
+          0.28,
+          0.6001
+        ],
+        "vertical_offset_rad": -0.0011713991216337973
+      },
+      "rear_left_fisheye_mount_link": {
+        "accepted_view": "rear_left_sensor_detail",
+        "candidate_views": [
+          "rear_left_sensor_detail"
+        ],
+        "horizontal_offset_rad": -0.0006828030763919062,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 2972,
+        "target_entities": [
+          "rear_left_fisheye_mount_link"
+        ],
+        "target_xyz_m": [
+          -0.565,
+          0.28,
+          0.6001
+        ],
+        "vertical_offset_rad": -0.0011713991216337973
+      },
+      "rear_left_motor_link": {
+        "accepted_view": "drivetrain_detail",
+        "candidate_views": [
+          "drivetrain_detail",
+          "front_left"
+        ],
+        "horizontal_offset_rad": -0.07684023871210094,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 818,
+        "target_entities": [
+          "rear_left_motor_link"
+        ],
+        "target_xyz_m": [
+          -0.256,
+          0.2174,
+          0.1651
+        ],
+        "vertical_offset_rad": 0.011377934417196596
+      },
+      "rear_left_wheel_link": {
+        "accepted_view": "drivetrain_detail",
+        "candidate_views": [
+          "drivetrain_detail",
+          "front_left"
+        ],
+        "horizontal_offset_rad": -0.10280631224060763,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 781,
+        "target_entities": [
+          "rear_left_wheel_link"
+        ],
+        "target_xyz_m": [
+          -0.256,
+          0.28290000000000004,
+          0.1651
+        ],
+        "vertical_offset_rad": 0.0128664263632026
+      },
+      "rear_right_encoder_link": {
+        "accepted_view": "drivetrain_detail",
+        "candidate_views": [
+          "drivetrain_detail"
+        ],
+        "horizontal_offset_rad": 0.10055043761958812,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1057,
+        "target_entities": [
+          "rear_right_encoder_link"
+        ],
+        "target_xyz_m": [
+          -0.256,
+          -0.16540000000000002,
+          0.1651
+        ],
+        "vertical_offset_rad": 0.0012625450634583821
+      },
+      "rear_right_fisheye_link": {
+        "accepted_view": "rear_right_sensor_detail",
+        "candidate_views": [
+          "rear_right_sensor_detail"
+        ],
+        "horizontal_offset_rad": 0.0006828030763919062,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 2972,
+        "target_entities": [
+          "rear_right_fisheye_link"
+        ],
+        "target_xyz_m": [
+          -0.565,
+          -0.28,
+          0.6001
+        ],
+        "vertical_offset_rad": -0.0011713991216337973
+      },
+      "rear_right_fisheye_mount_link": {
+        "accepted_view": "rear_right_sensor_detail",
+        "candidate_views": [
+          "rear_right_sensor_detail"
+        ],
+        "horizontal_offset_rad": 0.0006828030763919062,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 2972,
+        "target_entities": [
+          "rear_right_fisheye_mount_link"
+        ],
+        "target_xyz_m": [
+          -0.565,
+          -0.28,
+          0.6001
+        ],
+        "vertical_offset_rad": -0.0011713991216337973
+      },
+      "rear_right_motor_link": {
+        "accepted_view": "drivetrain_detail",
+        "candidate_views": [
+          "drivetrain_detail"
+        ],
+        "horizontal_offset_rad": 0.12823299229873059,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1091,
+        "target_entities": [
+          "rear_right_motor_link"
+        ],
+        "target_xyz_m": [
+          -0.256,
+          -0.2174,
+          0.1651
+        ],
+        "vertical_offset_rad": -0.0003326015322883412
+      },
+      "rear_right_wheel_link": {
+        "accepted_view": "drivetrain_detail",
+        "candidate_views": [
+          "drivetrain_detail"
+        ],
+        "horizontal_offset_rad": 0.16435028124886983,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1134,
+        "target_entities": [
+          "rear_right_wheel_link"
+        ],
+        "target_xyz_m": [
+          -0.256,
+          -0.28290000000000004,
+          0.1651
+        ],
+        "vertical_offset_rad": -0.0024313608283099515
+      },
+      "recovery_flow_sensor_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": 0.0153095313662332,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 405,
+        "target_entities": [
+          "recovery_flow_sensor_link"
+        ],
+        "target_xyz_m": [
+          -0.3575,
+          -0.35,
+          0.34509999999999996
+        ],
+        "vertical_offset_rad": 0.11784380987093815
+      },
+      "recovery_hose_lower_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.1424100411548702,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 450,
+        "target_entities": [
+          "recovery_hose_lower_link"
+        ],
+        "target_xyz_m": [
+          -0.47,
+          0.0,
+          0.2651
+        ],
+        "vertical_offset_rad": 0.0801841854201024
+      },
+      "recovery_hose_middle_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail",
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": -0.10386712523307647,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 507,
+        "target_entities": [
+          "recovery_hose_middle_link"
+        ],
+        "target_xyz_m": [
+          -0.32,
+          0.0,
+          0.44510000000000005
+        ],
+        "vertical_offset_rad": 0.16711416384719155
+      },
+      "recovery_hose_upper_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "cleaning_head_detail",
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": 0.08022049372530328,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 983,
+        "target_entities": [
+          "recovery_hose_upper_link"
+        ],
+        "target_xyz_m": [
+          -0.202,
+          0.0,
+          0.6361
+        ],
+        "vertical_offset_rad": -0.0115250254754757
+      },
+      "recovery_pump_head_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.051527772335120424,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 451,
+        "target_entities": [
+          "recovery_pump_head_link"
+        ],
+        "target_xyz_m": [
+          -0.3575,
+          -0.16,
+          0.34509999999999996
+        ],
+        "vertical_offset_rad": 0.11772020377590013
+      },
+      "recovery_pump_isolator_mount_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.019578763629706356,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 488,
+        "target_entities": [
+          "recovery_pump_isolator_mount_link"
+        ],
+        "target_xyz_m": [
+          -0.25,
+          -0.16,
+          0.27509999999999996
+        ],
+        "vertical_offset_rad": 0.08378814500100863
+      },
+      "recovery_pump_motor_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.01965865121128254,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 489,
+        "target_entities": [
+          "recovery_pump_motor_link"
+        ],
+        "target_xyz_m": [
+          -0.25,
+          -0.16,
+          0.34509999999999996
+        ],
+        "vertical_offset_rad": 0.11762996854575951
+      },
+      "recovery_pump_rotor_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.03908464437687201,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 466,
+        "target_entities": [
+          "recovery_pump_rotor_link"
+        ],
+        "target_xyz_m": [
+          -0.3145,
+          -0.16,
+          0.34509999999999996
+        ],
+        "vertical_offset_rad": 0.1176849469692666
+      },
+      "recovery_strainer_filter_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.17082337264476768,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 604,
+        "target_entities": [
+          "recovery_strainer_filter_link"
+        ],
+        "target_xyz_m": [
+          -0.25,
+          0.2,
+          0.3351
+        ],
+        "vertical_offset_rad": 0.11187596930545463
+      },
+      "right_side_brush_bristle_sectors_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": 0.3453856823786942,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 542,
+        "target_entities": [
+          "right_side_brush_bristle_sectors_link"
+        ],
+        "target_xyz_m": [
+          0.385,
+          -0.545,
+          0.131
+        ],
+        "vertical_offset_rad": 0.001136648406135418
+      },
+      "right_side_brush_disk_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": 0.3453856823786942,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 542,
+        "target_entities": [
+          "right_side_brush_disk_link"
+        ],
+        "target_xyz_m": [
+          0.385,
+          -0.545,
+          0.131
+        ],
+        "vertical_offset_rad": 0.001136648406135418
+      },
+      "right_side_brush_encoder_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": 0.3483525541644401,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 548,
+        "target_entities": [
+          "right_side_brush_encoder_link"
+        ],
+        "target_xyz_m": [
+          0.385,
+          -0.545,
+          0.2735
+        ],
+        "vertical_offset_rad": 0.07830676241125187
+      },
+      "right_side_brush_gearbox_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": 0.34675375963721133,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 546,
+        "target_entities": [
+          "right_side_brush_gearbox_link"
+        ],
+        "target_xyz_m": [
+          0.385,
+          -0.545,
+          0.197
+        ],
+        "vertical_offset_rad": 0.036757975818687394
+      },
+      "right_side_brush_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": 0.3464626930380768,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 545,
+        "target_entities": [
+          "right_side_brush_link"
+        ],
+        "target_xyz_m": [
+          0.385,
+          -0.545,
+          0.183
+        ],
+        "vertical_offset_rad": 0.029181134192884338
+      },
+      "right_side_brush_motor_stator_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": 0.3476402361527838,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 548,
+        "target_entities": [
+          "right_side_brush_motor_stator_link"
+        ],
+        "target_xyz_m": [
+          0.385,
+          -0.545,
+          0.23950000000000002
+        ],
+        "vertical_offset_rad": 0.05981429032360476
+      },
+      "right_suspension_beam_link": {
+        "accepted_view": "drivetrain_detail",
+        "candidate_views": [
+          "drivetrain_detail"
+        ],
+        "horizontal_offset_rad": 0.03329935381177796,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1447,
+        "target_entities": [
+          "right_suspension_beam_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          -0.2079,
+          0.1736
+        ],
+        "vertical_offset_rad": -0.0063229104008389655
+      },
+      "right_suspension_beam_spacer_link": {
+        "accepted_view": "drivetrain_detail",
+        "candidate_views": [
+          "drivetrain_detail"
+        ],
+        "horizontal_offset_rad": 0.024021458612131976,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1428,
+        "target_entities": [
+          "right_suspension_beam_spacer_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          -0.192,
+          0.1736
+        ],
+        "vertical_offset_rad": -0.0057185739709048125
+      },
+      "robotiq_85_base_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": -0.006968838550176774,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 680,
+        "target_entities": [
+          "robotiq_85_base_link"
+        ],
+        "target_xyz_m": [
+          0.47481659471004917,
+          -0.532771818971035,
+          0.5703882743162926
+        ],
+        "vertical_offset_rad": -0.20044658582978922
+      },
+      "robotiq_85_left_finger_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": 0.020943067724288132,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 620,
+        "target_entities": [
+          "robotiq_85_left_finger_link"
+        ],
+        "target_xyz_m": [
+          0.39545642322345637,
+          -0.5185647180411382,
+          0.5443377159311843
+        ],
+        "vertical_offset_rad": -0.19394963224503295
+      },
+      "robotiq_85_left_finger_tip_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": 0.012085482651949609,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 587,
+        "target_entities": [
+          "robotiq_85_left_finger_tip_link"
+        ],
+        "target_xyz_m": [
+          0.3802232669818848,
+          -0.4861057210807602,
+          0.5131525457702867
+        ],
+        "vertical_offset_rad": -0.20077293400771726
+      },
+      "robotiq_85_left_inner_knuckle_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": -0.007753215085880811,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 628,
+        "target_entities": [
+          "robotiq_85_left_inner_knuckle_link"
+        ],
+        "target_xyz_m": [
+          0.4389636397997874,
+          -0.49733996450940815,
+          0.5330672920996784
+        ],
+        "vertical_offset_rad": -0.20542584906591851
+      },
+      "robotiq_85_left_knuckle_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": 0.0033685783592964148,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 629,
+        "target_entities": [
+          "robotiq_85_left_knuckle_link"
+        ],
+        "target_xyz_m": [
+          0.42525909527000066,
+          -0.5083419499080063,
+          0.5404187592627776
+        ],
+        "vertical_offset_rad": -0.20061842133324936
+      },
+      "robotiq_85_right_finger_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": -0.05023592207441025,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 650,
+        "target_entities": [
+          "robotiq_85_right_finger_link"
+        ],
+        "target_xyz_m": [
+          0.5110917154424409,
+          -0.47591123626870946,
+          0.5264998003055127
+        ],
+        "vertical_offset_rad": -0.22114558382781485
+      },
+      "robotiq_85_right_finger_tip_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": -0.05848951803489761,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 615,
+        "target_entities": [
+          "robotiq_85_right_finger_tip_link"
+        ],
+        "target_xyz_m": [
+          0.49754464695014583,
+          -0.4429005173144471,
+          0.4951163693250436
+        ],
+        "vertical_offset_rad": -0.22776789106278095
+      },
+      "robotiq_85_right_inner_knuckle_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": -0.02240304085389476,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 633,
+        "target_entities": [
+          "robotiq_85_right_inner_knuckle_link"
+        ],
+        "target_xyz_m": [
+          0.462066872427473,
+          -0.48778169703692537,
+          0.5285906678050205
+        ],
+        "vertical_offset_rad": -0.2111189367935295
+      },
+      "robotiq_85_right_knuckle_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": -0.03205145564687655,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 641,
+        "target_entities": [
+          "robotiq_85_right_knuckle_link"
+        ],
+        "target_xyz_m": [
+          0.480927225670975,
+          -0.4853109356495108,
+          0.5296321603046497
+        ],
+        "vertical_offset_rad": -0.21438183294728402
+      },
+      "s100_compute_enclosure_link": {
+        "accepted_view": "power_compute_detail",
+        "candidate_views": [
+          "power_compute_detail"
+        ],
+        "horizontal_offset_rad": -0.028127041160619308,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 800,
+        "target_entities": [
+          "s100_compute_enclosure_link"
+        ],
+        "target_xyz_m": [
+          0.296,
+          0.24,
+          0.975
+        ],
+        "vertical_offset_rad": 0.1443822775015401
+      },
+      "safety_relay_link": {
+        "accepted_view": "power_safety_internal",
+        "candidate_views": [
+          "power_safety_internal"
+        ],
+        "horizontal_offset_rad": -0.017754838311527747,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1075,
+        "target_entities": [
+          "safety_relay_link"
+        ],
+        "target_xyz_m": [
+          0.22,
+          -0.08,
+          0.4441
+        ],
+        "vertical_offset_rad": 0.0033261183629556775
+      },
+      "sensor_mast_link": {
+        "accepted_view": "top_cleaning",
+        "candidate_views": [
+          "top_cleaning"
+        ],
+        "horizontal_offset_rad": 0.0,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 225,
+        "target_entities": [
+          "sensor_mast_link"
+        ],
+        "target_xyz_m": [
+          0.42,
+          0.0,
+          0.3891
+        ],
+        "vertical_offset_rad": 0.14832070755262078
+      },
+      "squeegee_float_carrier_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.13542158203558743,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 457,
+        "target_entities": [
+          "squeegee_float_carrier_link"
+        ],
+        "target_xyz_m": [
+          -0.445,
+          0.0,
+          0.17250000000000001
+        ],
+        "vertical_offset_rad": 0.036159840225996207
+      },
+      "squeegee_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.1352705459459007,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 456,
+        "target_entities": [
+          "squeegee_link"
+        ],
+        "target_xyz_m": [
+          -0.445,
+          0.0,
+          0.15250000000000002
+        ],
+        "vertical_offset_rad": 0.026764968296682737
+      },
+      "squeegee_spring_pack_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.13542158203558743,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 457,
+        "target_entities": [
+          "squeegee_spring_pack_link"
+        ],
+        "target_xyz_m": [
+          -0.445,
+          0.0,
+          0.17250000000000001
+        ],
+        "vertical_offset_rad": 0.036159840225996207
+      },
+      "suction_nozzle_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.12497037743023579,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 470,
+        "target_entities": [
+          "suction_nozzle_link"
+        ],
+        "target_xyz_m": [
+          -0.405,
+          0.0,
+          0.14750000000000002
+        ],
+        "vertical_offset_rad": 0.023029385379162347
+      },
+      "ur5e_base_link_inertia": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": 7.347169401927496e-08,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 391,
+        "target_entities": [
+          "ur5e_base_link_inertia"
+        ],
+        "target_xyz_m": [
+          0.1,
+          -0.2,
+          0.47909999999999997
+        ],
+        "vertical_offset_rad": -0.11870235258876279
+      },
+      "ur5e_control_box_link": {
+        "accepted_view": "power_compute_detail",
+        "candidate_views": [
+          "power_compute_detail"
+        ],
+        "horizontal_offset_rad": -0.027528555113770958,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 782,
+        "target_entities": [
+          "ur5e_control_box_link"
+        ],
+        "target_xyz_m": [
+          0.296,
+          0.24,
+          0.6736
+        ],
+        "vertical_offset_rad": -0.01967843649868798
+      },
+      "ur5e_forearm_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": 0.03507631231804812,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 588,
+        "target_entities": [
+          "ur5e_forearm_link"
+        ],
+        "target_xyz_m": [
+          0.22406879723373224,
+          -0.39322570320045747,
+          0.999225168543356
+        ],
+        "vertical_offset_rad": 0.11422744914748309
+      },
+      "ur5e_shoulder_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": 7.533079207206359e-08,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 416,
+        "target_entities": [
+          "ur5e_shoulder_link"
+        ],
+        "target_xyz_m": [
+          0.1,
+          -0.2,
+          0.6416
+        ],
+        "vertical_offset_rad": -0.04326091206159676
+      },
+      "ur5e_upper_arm_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": 7.533079207206359e-08,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 416,
+        "target_entities": [
+          "ur5e_upper_arm_link"
+        ],
+        "target_xyz_m": [
+          0.1,
+          -0.2,
+          0.6416
+        ],
+        "vertical_offset_rad": -0.04326091206159676
+      },
+      "ur5e_wrist_1_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": -0.002192742800230705,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 760,
+        "target_entities": [
+          "ur5e_wrist_1_link"
+        ],
+        "target_xyz_m": [
+          0.483873604653978,
+          -0.5511339820123601,
+          0.717878109692563
+        ],
+        "vertical_offset_rad": -0.11807270024652006
+      },
+      "ur5e_wrist_2_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": 0.00920019625247545,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 784,
+        "target_entities": [
+          "ur5e_wrist_2_link"
+        ],
+        "target_xyz_m": [
+          0.5185764131529658,
+          -0.6051804040359035,
+          0.6416233436202996
+        ],
+        "vertical_offset_rad": -0.1847454430713302
+      },
+      "ur5e_wrist_3_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": -0.005456867421657482,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 689,
+        "target_entities": [
+          "ur5e_wrist_3_link"
+        ],
+        "target_xyz_m": [
+          0.47916883705066476,
+          -0.5399733961474685,
+          0.5774731365436351
+        ],
+        "vertical_offset_rad": -0.19898245893468783
+      },
+      "ur_to_robotiq_adapter_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": -0.005456867421657482,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 689,
+        "target_entities": [
+          "ur_to_robotiq_adapter_link"
+        ],
+        "target_xyz_m": [
+          0.47916883705066476,
+          -0.5399733961474685,
+          0.5774731365436351
+        ],
+        "vertical_offset_rad": -0.19898245893468783
+      },
+      "wastewater_baffle_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": -0.03511528111382734,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1165,
+        "target_entities": [
+          "wastewater_baffle_link"
+        ],
+        "target_xyz_m": [
+          -0.205,
+          -0.245,
+          0.5041
+        ],
+        "vertical_offset_rad": -0.11505379779329088
+      },
+      "wastewater_delivery_coupling_link": {
+        "accepted_view": "cleaning_head_detail",
+        "candidate_views": [
+          "cleaning_head_detail"
+        ],
+        "horizontal_offset_rad": -0.017198055384976367,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 427,
+        "target_entities": [
+          "wastewater_delivery_coupling_link"
+        ],
+        "target_xyz_m": [
+          -0.3575,
+          -0.255,
+          0.34509999999999996
+        ],
+        "vertical_offset_rad": 0.11778372892539363
+      },
+      "wastewater_drain_coupling_link": {
+        "accepted_view": "drain_interface_detail",
+        "candidate_views": [
+          "drain_interface_detail"
+        ],
+        "horizontal_offset_rad": 0.04589225167218724,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 3613,
+        "target_entities": [
+          "wastewater_drain_coupling_link"
+        ],
+        "target_xyz_m": [
+          -0.555,
+          -0.305,
+          0.48009999999999997
+        ],
+        "vertical_offset_rad": -0.03061502861520926
+      },
+      "wastewater_drain_pipe_link": {
+        "accepted_view": "drain_interface_detail",
+        "candidate_views": [
+          "drain_interface_detail"
+        ],
+        "horizontal_offset_rad": -0.05485060309253485,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 2956,
+        "target_entities": [
+          "wastewater_drain_pipe_link"
+        ],
+        "target_xyz_m": [
+          -0.405,
+          -0.305,
+          0.48009999999999997
+        ],
+        "vertical_offset_rad": -0.003624419347138138
+      },
+      "wastewater_drain_service_cap_link": {
+        "accepted_view": "drain_interface_detail",
+        "candidate_views": [
+          "drain_interface_detail"
+        ],
+        "horizontal_offset_rad": 0.024085986885555976,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 3472,
+        "target_entities": [
+          "wastewater_drain_service_cap_link"
+        ],
+        "target_xyz_m": [
+          -0.525,
+          -0.305,
+          0.48009999999999997
+        ],
+        "vertical_offset_rad": -0.024772890348420274
+      },
+      "wastewater_drain_valve_actuator_link": {
+        "accepted_view": "drain_interface_detail",
+        "candidate_views": [
+          "drain_interface_detail"
+        ],
+        "horizontal_offset_rad": -0.00027298128592263967,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 3429,
+        "target_entities": [
+          "wastewater_drain_valve_actuator_link"
+        ],
+        "target_xyz_m": [
+          -0.49000000000000005,
+          -0.305,
+          0.5580999999999999
+        ],
+        "vertical_offset_rad": 0.05620205617077983
+      },
+      "wastewater_drain_valve_ball_link": {
+        "accepted_view": "drain_interface_detail",
+        "candidate_views": [
+          "drain_interface_detail"
+        ],
+        "horizontal_offset_rad": -0.0002679239151877162,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 3313,
+        "target_entities": [
+          "wastewater_drain_valve_ball_link"
+        ],
+        "target_xyz_m": [
+          -0.49000000000000005,
+          -0.305,
+          0.48009999999999997
+        ],
+        "vertical_offset_rad": -0.01825322832614694
+      },
+      "wastewater_drain_valve_body_link": {
+        "accepted_view": "drain_interface_detail",
+        "candidate_views": [
+          "drain_interface_detail"
+        ],
+        "horizontal_offset_rad": -0.0002679239151877162,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 3313,
+        "target_entities": [
+          "wastewater_drain_valve_body_link"
+        ],
+        "target_xyz_m": [
+          -0.49000000000000005,
+          -0.305,
+          0.48009999999999997
+        ],
+        "vertical_offset_rad": -0.01825322832614694
+      },
+      "wastewater_front_panel_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": -0.10208065259237654,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 978,
+        "target_entities": [
+          "wastewater_front_panel_link"
+        ],
+        "target_xyz_m": [
+          -0.027999999999999997,
+          -0.245,
+          0.5041
+        ],
+        "vertical_offset_rad": -0.09354258457207378
+      },
+      "wastewater_high_level_sensor_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": -0.1275928244632438,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1093,
+        "target_entities": [
+          "wastewater_high_level_sensor_link"
+        ],
+        "target_xyz_m": [
+          -0.07499999999999998,
+          -0.325,
+          0.5391
+        ],
+        "vertical_offset_rad": -0.08525368293093115
+      },
+      "wastewater_inlet_coupling_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": 0.08131026501409183,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1169,
+        "target_entities": [
+          "wastewater_inlet_coupling_link"
+        ],
+        "target_xyz_m": [
+          -0.305,
+          -0.1,
+          0.6091
+        ],
+        "vertical_offset_rad": -0.04455169675777204
+      },
+      "wastewater_left_panel_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": 0.027783981414502883,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1052,
+        "target_entities": [
+          "wastewater_left_panel_link"
+        ],
+        "target_xyz_m": [
+          -0.205,
+          -0.118,
+          0.5041
+        ],
+        "vertical_offset_rad": -0.10150133137818403
+      },
+      "wastewater_lid_latch_base_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": -0.10873596052443324,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 974,
+        "target_entities": [
+          "wastewater_lid_latch_base_link"
+        ],
+        "target_xyz_m": [
+          -0.009999999999999981,
+          -0.245,
+          0.5541
+        ],
+        "vertical_offset_rad": -0.06200723523897776
+      },
+      "wastewater_lid_latch_keeper_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": -0.10342784979276795,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 995,
+        "target_entities": [
+          "wastewater_lid_latch_keeper_link"
+        ],
+        "target_xyz_m": [
+          -0.026000000000000023,
+          -0.245,
+          0.5740999999999999
+        ],
+        "vertical_offset_rad": -0.051570858746073284
+      },
+      "wastewater_lid_latch_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": -0.10896243075004182,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 980,
+        "target_entities": [
+          "wastewater_lid_latch_link"
+        ],
+        "target_xyz_m": [
+          -0.009999999999999981,
+          -0.245,
+          0.5771000000000001
+        ],
+        "vertical_offset_rad": -0.04828929732396591
+      },
+      "wastewater_lid_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": 0.04670753629124115,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1442,
+        "target_entities": [
+          "wastewater_lid_link"
+        ],
+        "target_xyz_m": [
+          -0.384,
+          -0.245,
+          0.5921
+        ],
+        "vertical_offset_rad": -0.07879407534825782
+      },
+      "wastewater_low_level_sensor_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": -0.04590373226608746,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 958,
+        "target_entities": [
+          "wastewater_low_level_sensor_link"
+        ],
+        "target_xyz_m": [
+          -0.07499999999999998,
+          -0.16499999999999998,
+          0.46909999999999996
+        ],
+        "vertical_offset_rad": -0.11160871974510281
+      },
+      "wastewater_rear_panel_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": 0.0452624026156213,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1393,
+        "target_entities": [
+          "wastewater_rear_panel_link"
+        ],
+        "target_xyz_m": [
+          -0.382,
+          -0.245,
+          0.5041
+        ],
+        "vertical_offset_rad": -0.14061575781755012
+      },
+      "wastewater_right_panel_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": -0.10487637533682825,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1285,
+        "target_entities": [
+          "wastewater_right_panel_link"
+        ],
+        "target_xyz_m": [
+          -0.205,
+          -0.372,
+          0.5041
+        ],
+        "vertical_offset_rad": -0.13010957057936953
+      },
+      "wastewater_tank_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": -0.03511528111382734,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1165,
+        "target_entities": [
+          "wastewater_tank_link"
+        ],
+        "target_xyz_m": [
+          -0.205,
+          -0.245,
+          0.5041
+        ],
+        "vertical_offset_rad": -0.11505379779329088
+      },
+      "wastewater_vent_filter_link": {
+        "accepted_view": "storage_recovery_detail",
+        "candidate_views": [
+          "storage_recovery_detail"
+        ],
+        "horizontal_offset_rad": 0.02271052471039537,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1380,
+        "target_entities": [
+          "wastewater_vent_filter_link"
+        ],
+        "target_xyz_m": [
+          -0.33499999999999996,
+          -0.245,
+          0.6141
+        ],
+        "vertical_offset_rad": -0.05727655880910237
+      },
+      "wrist_rgbd_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": 0.07134162951109727,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 632,
+        "target_entities": [
+          "wrist_rgbd_link"
+        ],
+        "target_xyz_m": [
+          0.3419367249070473,
+          -0.5762895393134965,
+          0.5860454840719478
+        ],
+        "vertical_offset_rad": -0.17091264562113442
+      },
+      "wrist_rgbd_mount_link": {
+        "accepted_view": "arm_mount_detail",
+        "candidate_views": [
+          "arm_mount_detail"
+        ],
+        "horizontal_offset_rad": 0.07134162951109727,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 632,
+        "target_entities": [
+          "wrist_rgbd_mount_link"
+        ],
+        "target_xyz_m": [
+          0.3419367249070473,
+          -0.5762895393134965,
+          0.5860454840719478
+        ],
+        "vertical_offset_rad": -0.17091264562113442
+      },
+      "zed_f9p_module_reference_link": {
+        "accepted_view": "sensor_tower_detail",
+        "candidate_views": [
+          "sensor_tower_detail"
+        ],
+        "horizontal_offset_rad": 0.006572720035966546,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1006,
+        "target_entities": [
+          "zed_f9p_module_reference_link"
+        ],
+        "target_xyz_m": [
+          0.36,
+          -0.095,
+          0.9801
+        ],
+        "vertical_offset_rad": -0.12101710856621764
+      },
+      "zed_f9p_receiver_enclosure_link": {
+        "accepted_view": "sensor_tower_detail",
+        "candidate_views": [
+          "sensor_tower_detail"
+        ],
+        "horizontal_offset_rad": 0.006569619808526431,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1004,
+        "target_entities": [
+          "zed_f9p_receiver_enclosure_link"
+        ],
+        "target_xyz_m": [
+          0.36,
+          -0.095,
+          0.9741
+        ],
+        "vertical_offset_rad": -0.12417163100360284
+      }
     },
-    "sensor_tower_detail": {
-      "topic": "/formal_visual/sensor_tower_detail",
-      "encoding": "rgb8",
-      "stamp_sec": 0,
-      "stamp_nanosec": 999000000,
-      "path": "sensor_tower_detail.png",
-      "width": 1600,
-      "height": 1000,
-      "mean_luminance": 215.68226623535156,
-      "luminance_stddev": 47.16039276123047,
-      "near_black_fraction": 0.0
+    "mechanical_subassembly_count": 18,
+    "mechanical_subassembly_views": {
+      "bodywork_service_access": [
+        "front_left",
+        "rear_right",
+        "power_compute_detail",
+        "rear_service_detail",
+        "storage_recovery_detail"
+      ],
+      "central_roller": [
+        "cleaning_head_detail",
+        "top_cleaning"
+      ],
+      "cleaning_head_deployment": [
+        "cleaning_head_detail"
+      ],
+      "compute_enclosure": [
+        "power_compute_detail"
+      ],
+      "dry_storage": [
+        "storage_recovery_detail",
+        "dry_deposition_internal"
+      ],
+      "exterior_service_and_contact_safety": [
+        "front_left",
+        "rear_right",
+        "charge_interface_detail",
+        "drain_interface_detail"
+      ],
+      "gnss_receiver_installation": [
+        "sensor_tower_detail"
+      ],
+      "gripper": [
+        "arm_mount_detail"
+      ],
+      "low_voltage_power_and_safety": [
+        "power_safety_internal",
+        "power_compute_detail"
+      ],
+      "manipulator": [
+        "arm_mount_detail"
+      ],
+      "mobility_base": [
+        "drivetrain_detail",
+        "front_left",
+        "rear_right"
+      ],
+      "recovery_squeegee": [
+        "cleaning_head_detail"
+      ],
+      "robot_deposition_port": [
+        "dry_deposition_detail",
+        "dry_deposition_internal"
+      ],
+      "sensor_tower": [
+        "sensor_tower_detail",
+        "top_cleaning"
+      ],
+      "side_brushes": [
+        "cleaning_head_detail",
+        "top_cleaning"
+      ],
+      "wastewater_recovery_drive": [
+        "cleaning_head_detail",
+        "rear_service_detail"
+      ],
+      "wastewater_storage": [
+        "storage_recovery_detail",
+        "rear_service_detail"
+      ],
+      "wrist_rgbd_installation": [
+        "arm_mount_detail"
+      ]
     },
-    "front_sensor_detail": {
-      "topic": "/formal_visual/front_sensor_detail",
-      "encoding": "rgb8",
-      "stamp_sec": 0,
-      "stamp_nanosec": 999000000,
-      "path": "front_sensor_detail.png",
-      "width": 1600,
-      "height": 1000,
-      "mean_luminance": 165.47366333007812,
-      "luminance_stddev": 54.138675689697266,
-      "near_black_fraction": 0.00338875
-    },
-    "arm_mount_detail": {
-      "topic": "/formal_visual/arm_mount_detail",
-      "encoding": "rgb8",
-      "stamp_sec": 0,
-      "stamp_nanosec": 999000000,
-      "path": "arm_mount_detail.png",
-      "width": 1600,
-      "height": 1000,
-      "mean_luminance": 217.80569458007812,
-      "luminance_stddev": 37.63603591918945,
-      "near_black_fraction": 0.0
-    },
-    "dry_deposition_detail": {
-      "topic": "/formal_visual/dry_deposition_detail",
-      "encoding": "rgb8",
-      "stamp_sec": 0,
-      "stamp_nanosec": 999000000,
-      "path": "dry_deposition_detail.png",
-      "width": 1600,
-      "height": 1000,
-      "mean_luminance": 188.35150146484375,
-      "luminance_stddev": 66.91136932373047,
-      "near_black_fraction": 0.0
+    "method": "registered_id_crosswalk_plus_commanded_pose_urdf_link_projection",
+    "passed": true,
+    "required_registered_physical_link_count": 110,
+    "sensor_installation_count": 9,
+    "sensor_installation_views": {
+      "hokuyo_utm30lx": [
+        "sensor_tower_detail"
+      ],
+      "intel_d435_front": [
+        "front_sensor_detail"
+      ],
+      "intel_d435_wrist": [
+        "arm_mount_detail"
+      ],
+      "livox_mid360": [
+        "sensor_tower_detail"
+      ],
+      "rear_left_fisheye": [
+        "rear_left_sensor_detail"
+      ],
+      "rear_right_fisheye": [
+        "rear_right_sensor_detail"
+      ],
+      "ublox_ann_mb": [
+        "sensor_tower_detail"
+      ],
+      "ublox_zed_f9p_receiver": [
+        "sensor_tower_detail"
+      ],
+      "vectornav_vn100": [
+        "inertial_power_detail"
+      ]
     }
   },
-  "claim_boundary": "The images prove that the committed product profile renders in Gazebo. They do not replace arm swept-volume, sensor self-occlusion, cleaning-contact or real-vehicle validation."
+  "finished_epoch_ns": 1788191744638173837,
+  "frames": {
+    "arm_mount_detail": {
+      "encoding": "rgb8",
+      "evidence_scope": "UR5e pedestal, mounting chain, wrist camera and gripper",
+      "height": 1000,
+      "luminance_stddev": 69.47062683105469,
+      "mean_luminance": 178.72265625,
+      "near_black_fraction": 1.25e-05,
+      "path": "arm_mount_detail.png",
+      "png_sha256": "e4b559eaea9d81677fa7db0e297bf54e3fef0844d0fdb0af83ff679661a1594b",
+      "png_size_bytes": 365005,
+      "semantic_visibility": {
+        "horizontal_offset_rad": 7.72358266086056e-08,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 438,
+        "target_entities": [
+          "ur5e_base_link_inertia",
+          "wrist_rgbd_mount_link"
+        ],
+        "target_xyz_m": [
+          0.1,
+          -0.2,
+          0.8
+        ],
+        "vertical_offset_rad": 0.034550703381776536
+      },
+      "stamp_nanosec": 683000000,
+      "stamp_sec": 10,
+      "topic": "/formal_visual/arm_mount_detail",
+      "width": 1600
+    },
+    "charge_interface_detail": {
+      "encoding": "rgb8",
+      "evidence_scope": "charge door, receptacle and connector lock",
+      "height": 1000,
+      "luminance_stddev": 42.288299560546875,
+      "mean_luminance": 91.96219635009766,
+      "near_black_fraction": 0.0,
+      "path": "charge_interface_detail.png",
+      "png_sha256": "c7c21d8b45e6916eda94f327a8888c5ff930cca1a2b55a5ec9f2db94be9fbe4c",
+      "png_size_bytes": 70716,
+      "semantic_visibility": {
+        "horizontal_offset_rad": -0.00038322737640314653,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 5525,
+        "target_entities": [
+          "charge_port_housing_link",
+          "charge_receptacle_link",
+          "charge_port_door_link",
+          "charge_connector_lock_link"
+        ],
+        "target_xyz_m": [
+          0.25,
+          0.402,
+          0.4951
+        ],
+        "vertical_offset_rad": -0.00029010555100569856
+      },
+      "stamp_nanosec": 281000000,
+      "stamp_sec": 33,
+      "topic": "/formal_visual/charge_interface_detail",
+      "width": 1600
+    },
+    "cleaning_head_detail": {
+      "encoding": "rgb8",
+      "evidence_scope": "side brushes, main brush, lift guides and cleaning shrouds",
+      "height": 1000,
+      "luminance_stddev": 74.56867218017578,
+      "mean_luminance": 105.20842742919922,
+      "near_black_fraction": 0.0,
+      "path": "cleaning_head_detail.png",
+      "png_sha256": "f1e12c0ea86a993cd18e32ac185fb89fd4e1d7815241dc44e959ef28c161830a",
+      "png_size_bytes": 291305,
+      "semantic_visibility": {
+        "horizontal_offset_rad": 0.03795422268105004,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 716,
+        "target_entities": [
+          "central_roller_link",
+          "left_side_brush_link",
+          "squeegee_link"
+        ],
+        "target_xyz_m": [
+          0.1,
+          0.0,
+          0.17
+        ],
+        "vertical_offset_rad": 0.014343636908655614
+      },
+      "stamp_nanosec": 988000000,
+      "stamp_sec": 14,
+      "topic": "/formal_visual/cleaning_head_detail",
+      "width": 1600
+    },
+    "drain_interface_detail": {
+      "encoding": "rgb8",
+      "evidence_scope": "drain valve, actuator, cap and hose coupling",
+      "height": 1000,
+      "luminance_stddev": 57.57429122924805,
+      "mean_luminance": 117.87042999267578,
+      "near_black_fraction": 0.0,
+      "path": "drain_interface_detail.png",
+      "png_sha256": "57f69d33dbc942f15c5b67fc2c9b1019e50c8527b447763f86bca77e729c2c90",
+      "png_size_bytes": 137016,
+      "semantic_visibility": {
+        "horizontal_offset_rad": -0.00026920272736917505,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 3346,
+        "target_entities": [
+          "wastewater_drain_valve_body_link",
+          "wastewater_drain_valve_actuator_link",
+          "wastewater_drain_service_cap_link",
+          "wastewater_drain_coupling_link"
+        ],
+        "target_xyz_m": [
+          -0.49,
+          -0.305,
+          0.5001
+        ],
+        "vertical_offset_rad": 0.0005870816581538517
+      },
+      "stamp_nanosec": 643000000,
+      "stamp_sec": 34,
+      "topic": "/formal_visual/drain_interface_detail",
+      "width": 1600
+    },
+    "drivetrain_detail": {
+      "encoding": "rgb8",
+      "evidence_scope": "wheel, wheel arch and chassis-to-drive mechanical interface",
+      "height": 1000,
+      "luminance_stddev": 63.245357513427734,
+      "mean_luminance": 85.96459197998047,
+      "near_black_fraction": 0.0,
+      "path": "drivetrain_detail.png",
+      "png_sha256": "22b0ea5bd04dcde8e669eb8047f8db5c1411f79dabe4c8ca90855688f07e40a8",
+      "png_size_bytes": 277188,
+      "semantic_visibility": {
+        "horizontal_offset_rad": 0.017104588798589435,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1416,
+        "target_entities": [
+          "front_right_motor_link",
+          "rear_right_motor_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          -0.18,
+          0.18
+        ],
+        "vertical_offset_rad": -0.0007700910202607694
+      },
+      "stamp_nanosec": 160000000,
+      "stamp_sec": 26,
+      "topic": "/formal_visual/drivetrain_detail",
+      "width": 1600
+    },
+    "dry_deposition_detail": {
+      "encoding": "rgb8",
+      "evidence_scope": "dry deposition opening, gate and dry-storage interface",
+      "height": 1000,
+      "luminance_stddev": 23.332399368286133,
+      "mean_luminance": 228.98976135253906,
+      "near_black_fraction": 0.0,
+      "path": "dry_deposition_detail.png",
+      "png_sha256": "103c4f17f3ffcca0c83fc833eb4d955157e8a98f4db7eceea21fb297ae8b05bd",
+      "png_size_bytes": 83762,
+      "semantic_visibility": {
+        "horizontal_offset_rad": 3.6092162825889963e-06,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 2474,
+        "target_entities": [
+          "dry_deposit_gate_link"
+        ],
+        "target_xyz_m": [
+          -0.205,
+          0.035,
+          1.0471
+        ],
+        "vertical_offset_rad": 0.030610103069384803
+      },
+      "stamp_nanosec": 59000000,
+      "stamp_sec": 12,
+      "topic": "/formal_visual/dry_deposition_detail",
+      "width": 1600
+    },
+    "dry_deposition_internal": {
+      "encoding": "rgb8",
+      "evidence_scope": "open deposition gate, chute and dry-bin throat",
+      "height": 1000,
+      "luminance_stddev": 60.48756408691406,
+      "mean_luminance": 202.3592071533203,
+      "near_black_fraction": 0.0,
+      "path": "dry_deposition_internal.png",
+      "png_sha256": "838dbe9286648f7335dfd98da361734857aea2ca7f171c38e42049138b7235a8",
+      "png_size_bytes": 140593,
+      "semantic_visibility": {
+        "horizontal_offset_rad": -9.38008420295284e-05,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1945,
+        "target_entities": [
+          "dry_deposit_gate_link",
+          "dry_deposit_chute_link",
+          "dry_bin_link"
+        ],
+        "target_xyz_m": [
+          -0.205,
+          0.035,
+          1.0471
+        ],
+        "vertical_offset_rad": -0.000547520391704922
+      },
+      "stamp_nanosec": 972000000,
+      "stamp_sec": 28,
+      "topic": "/formal_visual/dry_deposition_internal",
+      "width": 1600
+    },
+    "front_left": {
+      "encoding": "rgb8",
+      "evidence_scope": "complete product silhouette, front bumper, lamps and right arm bay",
+      "height": 1000,
+      "luminance_stddev": 58.613468170166016,
+      "mean_luminance": 200.43194580078125,
+      "near_black_fraction": 1.875e-05,
+      "path": "front_left.png",
+      "png_sha256": "445d91ee430f39dc465595f8081f863504f7b81690f547a1ad6a8659e76f4e93",
+      "png_size_bytes": 250794,
+      "semantic_visibility": {
+        "horizontal_offset_rad": -0.004374315548518864,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 119,
+        "target_entities": [
+          "bodywork_lower_tub_link",
+          "bodywork_lighting_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          0.0,
+          0.65
+        ],
+        "vertical_offset_rad": -0.001986671811747901
+      },
+      "stamp_nanosec": 840000000,
+      "stamp_sec": 2,
+      "topic": "/formal_visual/front_left",
+      "width": 1600
+    },
+    "front_sensor_detail": {
+      "encoding": "rgb8",
+      "evidence_scope": "front RGB-D, forward lighting and front contact-safety structure",
+      "height": 1000,
+      "luminance_stddev": 53.80154800415039,
+      "mean_luminance": 159.5137939453125,
+      "near_black_fraction": 0.003408125,
+      "path": "front_sensor_detail.png",
+      "png_sha256": "bb5a5d64841ebde58bd1b814723679ea937b105f39a64362acf4de902318713b",
+      "png_size_bytes": 166147,
+      "semantic_visibility": {
+        "horizontal_offset_rad": -3.4289108721827266e-07,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 3494,
+        "target_entities": [
+          "front_rgbd_link",
+          "bodywork_lighting_link"
+        ],
+        "target_xyz_m": [
+          0.569532,
+          0.0,
+          0.611987
+        ],
+        "vertical_offset_rad": 8.475859977258775e-08
+      },
+      "stamp_nanosec": 360000000,
+      "stamp_sec": 9,
+      "topic": "/formal_visual/front_sensor_detail",
+      "width": 1600
+    },
+    "inertial_power_detail": {
+      "encoding": "rgb8",
+      "evidence_scope": "closed inertial/power service bay and physical access structure",
+      "height": 1000,
+      "luminance_stddev": 53.558692932128906,
+      "mean_luminance": 91.13903045654297,
+      "near_black_fraction": 0.0,
+      "path": "inertial_power_detail.png",
+      "png_sha256": "3f060371b08362196a4f0f13e05998dd951a69511da97df6f0d8b6a50f8c492f",
+      "png_size_bytes": 86632,
+      "semantic_visibility": {
+        "horizontal_offset_rad": -1.3023932715944114e-05,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1488,
+        "target_entities": [
+          "imu_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          0.0,
+          0.4091
+        ],
+        "vertical_offset_rad": 2.467243768252967e-05
+      },
+      "stamp_nanosec": 625000000,
+      "stamp_sec": 27,
+      "topic": "/formal_visual/inertial_power_detail",
+      "width": 1600
+    },
+    "power_compute_detail": {
+      "encoding": "rgb8",
+      "evidence_scope": "closed power/compute bay and external emergency-stop interface",
+      "height": 1000,
+      "luminance_stddev": 67.4624252319336,
+      "mean_luminance": 161.81997680664062,
+      "near_black_fraction": 0.000313125,
+      "path": "power_compute_detail.png",
+      "png_sha256": "bb98d782eec0cc63fa6670c815dbdb72a87c842484e3c4396444561b4ed1f2e5",
+      "png_size_bytes": 299679,
+      "semantic_visibility": {
+        "horizontal_offset_rad": 4.3187416814543095e-07,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 855,
+        "target_entities": [
+          "s100_compute_enclosure_link",
+          "power_distribution_box_link"
+        ],
+        "target_xyz_m": [
+          0.3,
+          0.15,
+          0.72
+        ],
+        "vertical_offset_rad": 4.235848688946383e-07
+      },
+      "stamp_nanosec": 684000000,
+      "stamp_sec": 17,
+      "topic": "/formal_visual/power_compute_detail",
+      "width": 1600
+    },
+    "power_safety_internal": {
+      "encoding": "rgb8",
+      "evidence_scope": "power and hardwired safety installation behind the service skin",
+      "height": 1000,
+      "luminance_stddev": 64.94965362548828,
+      "mean_luminance": 117.1380615234375,
+      "near_black_fraction": 0.000479375,
+      "path": "power_safety_internal.png",
+      "png_sha256": "c532a87a2b65d1c377dc98cc64b7530a7630c41fc54300158e7ab67de4ec8049",
+      "png_size_bytes": 436766,
+      "semantic_visibility": {
+        "horizontal_offset_rad": 0.0005590187128532543,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 873,
+        "target_entities": [
+          "a300_left_battery_pack_link",
+          "a300_left_battery_bms_link",
+          "power_distribution_box_link",
+          "safety_relay_link",
+          "main_power_contactor_housing_link",
+          "isolated_dc_dc_module_link"
+        ],
+        "target_xyz_m": [
+          0.1,
+          0.0,
+          0.4
+        ],
+        "vertical_offset_rad": -0.0001675358894184067
+      },
+      "stamp_nanosec": 332000000,
+      "stamp_sec": 30,
+      "topic": "/formal_visual/power_safety_internal",
+      "width": 1600
+    },
+    "rear_left_sensor_detail": {
+      "encoding": "rgb8",
+      "evidence_scope": "rear-left fisheye housing, optical opening and mechanical bracket",
+      "height": 1000,
+      "luminance_stddev": 52.25599670410156,
+      "mean_luminance": 131.8870849609375,
+      "near_black_fraction": 0.0,
+      "path": "rear_left_sensor_detail.png",
+      "png_sha256": "d7a7eb7e7f8cd604bb1a5fd1c036ecc55ff2c09c97f3ec5ab8f3c24b859a7084",
+      "png_size_bytes": 114148,
+      "semantic_visibility": {
+        "horizontal_offset_rad": -0.0006828030763919062,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 2972,
+        "target_entities": [
+          "rear_left_fisheye_link"
+        ],
+        "target_xyz_m": [
+          -0.565,
+          0.28,
+          0.6001
+        ],
+        "vertical_offset_rad": -0.0011713991216337973
+      },
+      "stamp_nanosec": 475000000,
+      "stamp_sec": 20,
+      "topic": "/formal_visual/rear_left_sensor_detail",
+      "width": 1600
+    },
+    "rear_right": {
+      "encoding": "rgb8",
+      "evidence_scope": "complete rear product silhouette, rear bumper and rear lamps",
+      "height": 1000,
+      "luminance_stddev": 56.086021423339844,
+      "mean_luminance": 198.446533203125,
+      "near_black_fraction": 0.0,
+      "path": "rear_right.png",
+      "png_sha256": "7660dae6d7c2c1aa2519d3c2cb513db13313b82137136c55acd560c496b2d049",
+      "png_size_bytes": 237540,
+      "semantic_visibility": {
+        "horizontal_offset_rad": -0.014935784821990296,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 124,
+        "target_entities": [
+          "bodywork_lower_tub_link",
+          "bodywork_lighting_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          0.0,
+          0.65
+        ],
+        "vertical_offset_rad": -0.006318989994230902
+      },
+      "stamp_nanosec": 308000000,
+      "stamp_sec": 4,
+      "topic": "/formal_visual/rear_right",
+      "width": 1600
+    },
+    "rear_right_sensor_detail": {
+      "encoding": "rgb8",
+      "evidence_scope": "rear-right fisheye housing, optical opening and mechanical bracket",
+      "height": 1000,
+      "luminance_stddev": 54.17400360107422,
+      "mean_luminance": 141.62176513671875,
+      "near_black_fraction": 0.0,
+      "path": "rear_right_sensor_detail.png",
+      "png_sha256": "d8e7774787f746ad82b83145482cd0b5bc5ddc0d6b2cc3054a420bd6e602f5f5",
+      "png_size_bytes": 135768,
+      "semantic_visibility": {
+        "horizontal_offset_rad": 0.0006828030763919062,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 2972,
+        "target_entities": [
+          "rear_right_fisheye_link"
+        ],
+        "target_xyz_m": [
+          -0.565,
+          -0.28,
+          0.6001
+        ],
+        "vertical_offset_rad": -0.0011713991216337973
+      },
+      "stamp_nanosec": 782000000,
+      "stamp_sec": 24,
+      "topic": "/formal_visual/rear_right_sensor_detail",
+      "width": 1600
+    },
+    "rear_service_detail": {
+      "encoding": "rgb8",
+      "evidence_scope": "rear bumper, warning lamps, charge and drain interfaces",
+      "height": 1000,
+      "luminance_stddev": 47.14316940307617,
+      "mean_luminance": 144.71661376953125,
+      "near_black_fraction": 0.0,
+      "path": "rear_service_detail.png",
+      "png_sha256": "0435e913f56b02ab8f01e97dc38498583f3808133280a2e48523b136caeed37e",
+      "png_size_bytes": 46403,
+      "semantic_visibility": {
+        "horizontal_offset_rad": 0.0,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 2523,
+        "target_entities": [
+          "wastewater_tank_link",
+          "bodywork_lower_tub_link"
+        ],
+        "target_xyz_m": [
+          -0.49,
+          0.0,
+          0.55
+        ],
+        "vertical_offset_rad": -0.0037923404570428167
+      },
+      "stamp_nanosec": 335000000,
+      "stamp_sec": 16,
+      "topic": "/formal_visual/rear_service_detail",
+      "width": 1600
+    },
+    "sensor_tower_detail": {
+      "encoding": "rgb8",
+      "evidence_scope": "named sensor tower, UTM-30LX, MID-360 and GNSS antenna",
+      "height": 1000,
+      "luminance_stddev": 60.95791244506836,
+      "mean_luminance": 204.1808624267578,
+      "near_black_fraction": 0.0,
+      "path": "sensor_tower_detail.png",
+      "png_sha256": "8620992e919a56bf10113990e31dbdb41d2f1e1969126b52ba369b439b1f67b3",
+      "png_size_bytes": 111840,
+      "semantic_visibility": {
+        "horizontal_offset_rad": -2.0375429373992133e-07,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 1205,
+        "target_entities": [
+          "lidar_2d_link",
+          "lidar_3d_link",
+          "gnss_antenna_link"
+        ],
+        "target_xyz_m": [
+          0.42,
+          0.0,
+          1.22
+        ],
+        "vertical_offset_rad": -3.19399962406206e-07
+      },
+      "stamp_nanosec": 17000000,
+      "stamp_sec": 8,
+      "topic": "/formal_visual/sensor_tower_detail",
+      "width": 1600
+    },
+    "storage_recovery_detail": {
+      "encoding": "rgb8",
+      "evidence_scope": "closed dry/wet storage bodywork and recovery routing",
+      "height": 1000,
+      "luminance_stddev": 57.29762268066406,
+      "mean_luminance": 163.49160766601562,
+      "near_black_fraction": 0.0,
+      "path": "storage_recovery_detail.png",
+      "png_sha256": "88ec73a9fcf24533328661f4469229e833dce0b9186d5d5a6429fa78a9e58a83",
+      "png_size_bytes": 214124,
+      "semantic_visibility": {
+        "horizontal_offset_rad": 0.06350796621265893,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 999,
+        "target_entities": [
+          "dry_bin_link",
+          "wastewater_tank_link",
+          "recovery_pump_motor_link"
+        ],
+        "target_xyz_m": [
+          -0.205,
+          -0.04,
+          0.55
+        ],
+        "vertical_offset_rad": -0.06649047922195327
+      },
+      "stamp_nanosec": 132000000,
+      "stamp_sec": 19,
+      "topic": "/formal_visual/storage_recovery_detail",
+      "width": 1600
+    },
+    "top_cleaning": {
+      "encoding": "rgb8",
+      "evidence_scope": "roof, sensor tower, arm envelope and cleaning-head layout",
+      "height": 1000,
+      "luminance_stddev": 51.7429084777832,
+      "mean_luminance": 205.40113830566406,
+      "near_black_fraction": 0.0,
+      "path": "top_cleaning.png",
+      "png_sha256": "9bd9b184f27b616e516fafd53f5aa9a3e9e9100b70d519e6500abcbdda03d4eb",
+      "png_size_bytes": 242042,
+      "semantic_visibility": {
+        "horizontal_offset_rad": 0.0,
+        "method": "source_bound_urdf_entity_projection",
+        "minimum_projected_target_pixels": 64,
+        "passed": true,
+        "projected_target_area_px": 232,
+        "target_entities": [
+          "central_roller_link",
+          "left_side_brush_link",
+          "right_side_brush_link"
+        ],
+        "target_xyz_m": [
+          0.0,
+          0.0,
+          0.4
+        ],
+        "vertical_offset_rad": -3.267948965381442e-07
+      },
+      "stamp_nanosec": 700000000,
+      "stamp_sec": 5,
+      "topic": "/formal_visual/top_cleaning",
+      "width": 1600
+    }
+  },
+  "ground_truth_anti_drift": {
+    "final_planar_distance_from_spawn_m": 0.00013118976482310625,
+    "final_pose": {
+      "x": -0.0001311808792833865,
+      "y": 1.526861087167518e-06,
+      "yaw": 4.0758734573975405e-06,
+      "z": -3.7203378168938416e-07
+    },
+    "initial_pose": {
+      "x": -5.975450106577448e-22,
+      "y": 7.728152400549913e-23,
+      "yaw": -9.220178751677324e-22,
+      "z": 0.0049902
+    },
+    "initial_to_final_delta": {
+      "dx_m": -0.0001311808792833865,
+      "dy_m": 1.526861087167518e-06,
+      "dz_m": -0.00499057203378169,
+      "planar_m": 0.00013118976482310625,
+      "yaw_rad": 4.075873457397541e-06
+    },
+    "limits": {
+      "final_z_range_m": [
+        -0.02,
+        0.2
+      ],
+      "max_abs_yaw_rad": 0.05,
+      "max_run_planar_m": 0.05,
+      "max_spawn_planar_m": 0.1
+    },
+    "model_name": "tzcup_formal_sanitation_vehicle",
+    "passed": true,
+    "violations": [],
+    "world_name": "formal_vehicle_visual_acceptance"
+  },
+  "maximum_simultaneously_triggered_cameras": 1,
+  "passed": true,
+  "per_frame_file_binding": "sha256_size_and_dimensions",
+  "profile_evidence_scope": {
+    "arm_mount_detail": "UR5e pedestal, mounting chain, wrist camera and gripper",
+    "charge_interface_detail": "charge door, receptacle and connector lock",
+    "cleaning_head_detail": "side brushes, main brush, lift guides and cleaning shrouds",
+    "drain_interface_detail": "drain valve, actuator, cap and hose coupling",
+    "drivetrain_detail": "wheel, wheel arch and chassis-to-drive mechanical interface",
+    "dry_deposition_detail": "dry deposition opening, gate and dry-storage interface",
+    "dry_deposition_internal": "open deposition gate, chute and dry-bin throat",
+    "front_left": "complete product silhouette, front bumper, lamps and right arm bay",
+    "front_sensor_detail": "front RGB-D, forward lighting and front contact-safety structure",
+    "inertial_power_detail": "closed inertial/power service bay and physical access structure",
+    "power_compute_detail": "closed power/compute bay and external emergency-stop interface",
+    "power_safety_internal": "power and hardwired safety installation behind the service skin",
+    "rear_left_sensor_detail": "rear-left fisheye housing, optical opening and mechanical bracket",
+    "rear_right": "complete rear product silhouette, rear bumper and rear lamps",
+    "rear_right_sensor_detail": "rear-right fisheye housing, optical opening and mechanical bracket",
+    "rear_service_detail": "rear bumper, warning lamps, charge and drain interfaces",
+    "sensor_tower_detail": "named sensor tower, UTM-30LX, MID-360 and GNSS antenna",
+    "storage_recovery_detail": "closed dry/wet storage bodywork and recovery routing",
+    "top_cleaning": "roof, sensor tower, arm envelope and cleaning-head layout"
+  },
+  "render_source": "Gazebo Harmonic Sensors system / Ogre2",
+  "renderer_diagnostics": {
+    "fatal_marker_counts": {},
+    "launch_log": "launch.log",
+    "launch_log_sha256": "3bc2a62fabf87ae38821e45cd63418417fe2de87592ba5bca0ef89b26587142f",
+    "passed": true
+  },
+  "report_id": "tzcup_formal_vehicle_product_visual_acceptance_v4",
+  "required_view_names": [
+    "arm_mount_detail",
+    "charge_interface_detail",
+    "cleaning_head_detail",
+    "drain_interface_detail",
+    "drivetrain_detail",
+    "dry_deposition_detail",
+    "dry_deposition_internal",
+    "front_left",
+    "front_sensor_detail",
+    "inertial_power_detail",
+    "power_compute_detail",
+    "power_safety_internal",
+    "rear_left_sensor_detail",
+    "rear_right",
+    "rear_right_sensor_detail",
+    "rear_service_detail",
+    "sensor_tower_detail",
+    "storage_recovery_detail",
+    "top_cleaning"
+  ],
+  "runtime_closure_binding": {
+    "closure_sha256": "30d6025286a7917e27482db776a96a905e85906a44a31f4f9c15a4acd0aefc38",
+    "frozen_source_file_count": 643,
+    "frozen_source_inventory_sha256": "736a9c4e2e77f392747985939b2d04412137fc77d7780270a3d253e06519ac21",
+    "gazebo_plugin_count": 12,
+    "gripper_mimic_implementation": "gripper_effort_mimic_v1",
+    "gripper_mimic_plugin_sha256": "74664a12408cf281fcc452a260c0a31068f528ab461aa094bfad86440bd725bd",
+    "gz_transport13_core_library_sha256": "714890133aeeb4484ef3be20de96755587917a187dbf8f88f07f72025de1e833",
+    "gz_transport13_protobuf_binding_report_sha256": "6c14d8d676a7a2f4abfd831fd10bb5d9d41a78dde615b2c3366e9ff3e8d1277c",
+    "gz_transport13_protobuf_needed": "libprotobuf.so.32",
+    "gz_transport13_runtime_binding_report_sha256": "4420f86e89382f8152af503dd185db26730f08a579324320b3a2b69e797e3a39",
+    "gz_transport13_runtime_consumer_count": 3,
+    "gz_transport13_vendor_build_report_sha256": "326340a1964ffacc243df8b24cc15ec24bea215185e39ff00a2797d1b55cad9a",
+    "install_file_count": 1278,
+    "install_symlink_report_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "manifest": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/final_runtime_closure_manifest.json",
+    "manifest_sha256": "1dcd205804a39865eab5ac155491e2bb6b3b4d92c5bd22b3841d0e5646d165fc",
+    "passed": true,
+    "perception_artifact_count": 7,
+    "ros_gz_image_debian_version": "1.0.22-1noble.20260615.145009",
+    "ros_gz_image_executable_sha256": "27900ce34bd1c9472e576ae77780b15093f422ed22ae1be3444d684428b70243",
+    "ros_gz_image_resolved_executable_path": "/opt/ros/jazzy/lib/ros_gz_image/image_bridge",
+    "ros_gz_image_ros_package_version": "1.0.22",
+    "ros_gz_image_system_runtime_bound": true,
+    "runtime_install_root": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/install",
+    "runtime_package_count": 16,
+    "side_brush_expanded_sdf_sha256": "c962635d80df67854c9051d39040d153bc743bd2cd656b724f0377de788f6719",
+    "side_brush_installed_xacro": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/install/share/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+    "side_brush_installed_xacro_sha256": "ecff827bea7c940a0ab69f29be7b1252ad8508c24afd7b921dcb57d6904304b0",
+    "side_brush_surface_audit_sha256": "19bb850e2022aef51cee090f2c2e1c15145ebc8e70e194e5d334491f360ef02d",
+    "source_file_count": 1266,
+    "source_install_binding_count": 429,
+    "status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED",
+    "symbolic_link_count": 0,
+    "typed_cleaning_telemetry_source_count": 8,
+    "typed_cleaning_telemetry_source_sha256": "d48924d3a52f566b2c4cdd6497ecfc7b108fa5e3f3580ced683e1c5f1fcb2730",
+    "windows_cold_start_evidence_bound": true,
+    "windows_cold_start_evidence_sha256": "058a1e95b7d183951ff767056e455fd83d3afdd93a430b5d7171bdb80de3530b"
+  },
+  "runtime_gate_binding": {
+    "acceptance_session_binding": {
+      "session_manifest": "/mnt/f/Project/TZcup-integrated-functional-acceptance/artifacts/formal_final_acceptance_session.json",
+      "session_manifest_sha256": "10db31cea856811269a47885facf7279e2c92451b4df0f72b8e96373c47532ab",
+      "session_started_epoch_ns": 1788191180699355359,
+      "session_status_at_gate": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING",
+      "snapshot": {
+        "expanded_urdf_sha256": "b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2",
+        "snapshot_manifest_sha256": "fffb388e1f06616ab5019db00481718d24b5bac1d284c240dd1709173482cd40",
+        "source_inventory_sha256": "0d106d4e9aae774941856d0d7018bdbcf8c43e83afe00049dc485006943cf03b"
+      },
+      "snapshot_current_source_verified": true,
+      "snapshot_output_inventory_sha256": "a8832afc81f6eea6227abd0a5dc6073bb9da2283de8532c05034841243028ba7"
+    },
+    "runtime_closure_binding": {
+      "closure_sha256": "30d6025286a7917e27482db776a96a905e85906a44a31f4f9c15a4acd0aefc38",
+      "frozen_source_file_count": 643,
+      "frozen_source_inventory_sha256": "736a9c4e2e77f392747985939b2d04412137fc77d7780270a3d253e06519ac21",
+      "gazebo_plugin_count": 12,
+      "gripper_mimic_implementation": "gripper_effort_mimic_v1",
+      "gripper_mimic_plugin_sha256": "74664a12408cf281fcc452a260c0a31068f528ab461aa094bfad86440bd725bd",
+      "gz_transport13_core_library_sha256": "714890133aeeb4484ef3be20de96755587917a187dbf8f88f07f72025de1e833",
+      "gz_transport13_protobuf_binding_report_sha256": "6c14d8d676a7a2f4abfd831fd10bb5d9d41a78dde615b2c3366e9ff3e8d1277c",
+      "gz_transport13_protobuf_needed": "libprotobuf.so.32",
+      "gz_transport13_runtime_binding_report_sha256": "4420f86e89382f8152af503dd185db26730f08a579324320b3a2b69e797e3a39",
+      "gz_transport13_runtime_consumer_count": 3,
+      "gz_transport13_vendor_build_report_sha256": "326340a1964ffacc243df8b24cc15ec24bea215185e39ff00a2797d1b55cad9a",
+      "install_file_count": 1278,
+      "install_symlink_report_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "manifest": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/final_runtime_closure_manifest.json",
+      "manifest_sha256": "1dcd205804a39865eab5ac155491e2bb6b3b4d92c5bd22b3841d0e5646d165fc",
+      "passed": true,
+      "perception_artifact_count": 7,
+      "ros_gz_image_debian_version": "1.0.22-1noble.20260615.145009",
+      "ros_gz_image_executable_sha256": "27900ce34bd1c9472e576ae77780b15093f422ed22ae1be3444d684428b70243",
+      "ros_gz_image_resolved_executable_path": "/opt/ros/jazzy/lib/ros_gz_image/image_bridge",
+      "ros_gz_image_ros_package_version": "1.0.22",
+      "ros_gz_image_system_runtime_bound": true,
+      "runtime_install_root": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/install",
+      "runtime_package_count": 16,
+      "side_brush_expanded_sdf_sha256": "c962635d80df67854c9051d39040d153bc743bd2cd656b724f0377de788f6719",
+      "side_brush_installed_xacro": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/install/share/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+      "side_brush_installed_xacro_sha256": "ecff827bea7c940a0ab69f29be7b1252ad8508c24afd7b921dcb57d6904304b0",
+      "side_brush_surface_audit_sha256": "19bb850e2022aef51cee090f2c2e1c15145ebc8e70e194e5d334491f360ef02d",
+      "source_file_count": 1266,
+      "source_install_binding_count": 429,
+      "status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED",
+      "symbolic_link_count": 0,
+      "typed_cleaning_telemetry_source_count": 8,
+      "typed_cleaning_telemetry_source_sha256": "d48924d3a52f566b2c4cdd6497ecfc7b108fa5e3f3580ced683e1c5f1fcb2730",
+      "windows_cold_start_evidence_bound": true,
+      "windows_cold_start_evidence_sha256": "058a1e95b7d183951ff767056e455fd83d3afdd93a430b5d7171bdb80de3530b"
+    },
+    "schema_version": 1,
+    "status": "FORMAL_RUNTIME_GATE_BOUND",
+    "verified_epoch_ns": 1788191605718953441
+  },
+  "schema_version": 4,
+  "source_binding": {
+    "capture_script_sha256": "d84d9e395c38928a4dee868cb37e5536eb180ed33fbae6b6a216f25e2b8429c2",
+    "component_register_sha256": "e017e66f3dca2f705f04f29a1e8ab84668f687667c552ee62ce619eda9294437",
+    "expanded_urdf_sha256": "b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2",
+    "ground_truth_reader_sha256": "a882b2fa08989888a3b9adc9fbd1e39be4b8e035acc133d04a28f523b16e7a50",
+    "snapshot_manifest_path": "reports/engineering/formal_vehicle_snapshot_manifest.json",
+    "snapshot_manifest_sha256": "fffb388e1f06616ab5019db00481718d24b5bac1d284c240dd1709173482cd40",
+    "source_inventory_sha256": "0d106d4e9aae774941856d0d7018bdbcf8c43e83afe00049dc485006943cf03b",
+    "visual_launch_sha256": "f55a116b77a08c687211f7827f81a2ba5d0d9f243083100f83fb2f57d6a6cc2c",
+    "visual_world_sha256": "477f1e18f5d3872d5fa3aa8f62bce5c89a35136d1e07396f23742de187bb1f7b"
+  },
+  "spawned_robot_description_sha256": "bb29d7af13c2b826219c5161dbe30bf9a30bfe3ae46d18c43993edefb3bdf28d",
+  "started_epoch_ns": 1788191609310933236,
+  "status": "GAZEBO_OGRE2_PRODUCT_NINETEEN_FUNCTIONAL_VIEW_CAPTURE_PASSED",
+  "triggered_visual_world_binding": {
+    "camera_contract_sha256": "4c69dedaf02661d501747d3a884bcfa40f4cbd5d17c1ae2b67702e013b5f837e",
+    "camera_count": 19,
+    "passed": true,
+    "report_path": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/formal_final_acceptance/r40_session_20260831T233700Z/visual/triggered_visual_world_report.json",
+    "report_sha256": "b54e09381bf9323088c93a35215158befbd299d649c797028bdd6fa2b96be74d",
+    "source_world": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/install/share/sanitation_vehicle_description/worlds/formal_vehicle_visual_acceptance.sdf",
+    "source_world_sha256": "477f1e18f5d3872d5fa3aa8f62bce5c89a35136d1e07396f23742de187bb1f7b",
+    "trigger_bindings": [
+      {
+        "image_topic": "/formal_visual/front_left",
+        "trigger_topic": "/formal_visual/front_left/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/rear_right",
+        "trigger_topic": "/formal_visual/rear_right/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/top_cleaning",
+        "trigger_topic": "/formal_visual/top_cleaning/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/sensor_tower_detail",
+        "trigger_topic": "/formal_visual/sensor_tower_detail/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/front_sensor_detail",
+        "trigger_topic": "/formal_visual/front_sensor_detail/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/arm_mount_detail",
+        "trigger_topic": "/formal_visual/arm_mount_detail/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/dry_deposition_detail",
+        "trigger_topic": "/formal_visual/dry_deposition_detail/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/cleaning_head_detail",
+        "trigger_topic": "/formal_visual/cleaning_head_detail/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/rear_service_detail",
+        "trigger_topic": "/formal_visual/rear_service_detail/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/power_compute_detail",
+        "trigger_topic": "/formal_visual/power_compute_detail/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/storage_recovery_detail",
+        "trigger_topic": "/formal_visual/storage_recovery_detail/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/rear_left_sensor_detail",
+        "trigger_topic": "/formal_visual/rear_left_sensor_detail/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/rear_right_sensor_detail",
+        "trigger_topic": "/formal_visual/rear_right_sensor_detail/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/drivetrain_detail",
+        "trigger_topic": "/formal_visual/drivetrain_detail/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/inertial_power_detail",
+        "trigger_topic": "/formal_visual/inertial_power_detail/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/dry_deposition_internal",
+        "trigger_topic": "/formal_visual/dry_deposition_internal/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/power_safety_internal",
+        "trigger_topic": "/formal_visual/power_safety_internal/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/charge_interface_detail",
+        "trigger_topic": "/formal_visual/charge_interface_detail/trigger",
+        "uses_default_trigger_topic": true
+      },
+      {
+        "image_topic": "/formal_visual/drain_interface_detail",
+        "trigger_topic": "/formal_visual/drain_interface_detail/trigger",
+        "uses_default_trigger_topic": true
+      }
+    ],
+    "triggered_world": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/formal_final_acceptance/r40_session_20260831T233700Z/visual/formal_vehicle_visual_acceptance.triggered.sdf",
+    "triggered_world_sha256": "ae41dee144c66f939d7c120b06151fc4fed6676dbd57a03132aab89e3e3f6a9c"
+  },
+  "validated_target_entities": {
+    "arm_mount_detail": [
+      "ur5e_base_link_inertia",
+      "wrist_rgbd_mount_link"
+    ],
+    "charge_interface_detail": [
+      "charge_port_housing_link",
+      "charge_receptacle_link",
+      "charge_port_door_link",
+      "charge_connector_lock_link"
+    ],
+    "cleaning_head_detail": [
+      "central_roller_link",
+      "left_side_brush_link",
+      "squeegee_link"
+    ],
+    "drain_interface_detail": [
+      "wastewater_drain_valve_body_link",
+      "wastewater_drain_valve_actuator_link",
+      "wastewater_drain_service_cap_link",
+      "wastewater_drain_coupling_link"
+    ],
+    "drivetrain_detail": [
+      "front_right_motor_link",
+      "rear_right_motor_link"
+    ],
+    "dry_deposition_detail": [
+      "dry_deposit_gate_link"
+    ],
+    "dry_deposition_internal": [
+      "dry_deposit_gate_link",
+      "dry_deposit_chute_link",
+      "dry_bin_link"
+    ],
+    "front_left": [
+      "bodywork_lower_tub_link",
+      "bodywork_lighting_link"
+    ],
+    "front_sensor_detail": [
+      "front_rgbd_link",
+      "bodywork_lighting_link"
+    ],
+    "inertial_power_detail": [
+      "imu_link"
+    ],
+    "power_compute_detail": [
+      "s100_compute_enclosure_link",
+      "power_distribution_box_link"
+    ],
+    "power_safety_internal": [
+      "a300_left_battery_pack_link",
+      "a300_left_battery_bms_link",
+      "power_distribution_box_link",
+      "safety_relay_link",
+      "main_power_contactor_housing_link",
+      "isolated_dc_dc_module_link"
+    ],
+    "rear_left_sensor_detail": [
+      "rear_left_fisheye_link"
+    ],
+    "rear_right": [
+      "bodywork_lower_tub_link",
+      "bodywork_lighting_link"
+    ],
+    "rear_right_sensor_detail": [
+      "rear_right_fisheye_link"
+    ],
+    "rear_service_detail": [
+      "wastewater_tank_link",
+      "bodywork_lower_tub_link"
+    ],
+    "sensor_tower_detail": [
+      "lidar_2d_link",
+      "lidar_3d_link",
+      "gnss_antenna_link"
+    ],
+    "storage_recovery_detail": [
+      "dry_bin_link",
+      "wastewater_tank_link",
+      "recovery_pump_motor_link"
+    ],
+    "top_cleaning": [
+      "central_roller_link",
+      "left_side_brush_link",
+      "right_side_brush_link"
+    ]
+  },
+  "view_target_contract": {
+    "arm_mount_detail": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "ur5e_base_link_inertia",
+        "wrist_rgbd_mount_link"
+      ],
+      "target_xyz_m": [
+        0.1,
+        -0.2,
+        0.8
+      ]
+    },
+    "charge_interface_detail": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "charge_port_housing_link",
+        "charge_receptacle_link",
+        "charge_port_door_link",
+        "charge_connector_lock_link"
+      ],
+      "target_xyz_m": [
+        0.25,
+        0.402,
+        0.4951
+      ]
+    },
+    "cleaning_head_detail": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "central_roller_link",
+        "left_side_brush_link",
+        "squeegee_link"
+      ],
+      "target_xyz_m": [
+        0.1,
+        0.0,
+        0.17
+      ]
+    },
+    "drain_interface_detail": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "wastewater_drain_valve_body_link",
+        "wastewater_drain_valve_actuator_link",
+        "wastewater_drain_service_cap_link",
+        "wastewater_drain_coupling_link"
+      ],
+      "target_xyz_m": [
+        -0.49,
+        -0.305,
+        0.5001
+      ]
+    },
+    "drivetrain_detail": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "front_right_motor_link",
+        "rear_right_motor_link"
+      ],
+      "target_xyz_m": [
+        0.0,
+        -0.18,
+        0.18
+      ]
+    },
+    "dry_deposition_detail": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "dry_deposit_gate_link"
+      ],
+      "target_xyz_m": [
+        -0.205,
+        0.035,
+        1.0471
+      ]
+    },
+    "dry_deposition_internal": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "dry_deposit_gate_link",
+        "dry_deposit_chute_link",
+        "dry_bin_link"
+      ],
+      "target_xyz_m": [
+        -0.205,
+        0.035,
+        1.0471
+      ]
+    },
+    "front_left": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "bodywork_lower_tub_link",
+        "bodywork_lighting_link"
+      ],
+      "target_xyz_m": [
+        0.0,
+        0.0,
+        0.65
+      ]
+    },
+    "front_sensor_detail": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "front_rgbd_link",
+        "bodywork_lighting_link"
+      ],
+      "target_xyz_m": [
+        0.569532,
+        0.0,
+        0.611987
+      ]
+    },
+    "inertial_power_detail": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "imu_link"
+      ],
+      "target_xyz_m": [
+        0.0,
+        0.0,
+        0.4091
+      ]
+    },
+    "power_compute_detail": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "s100_compute_enclosure_link",
+        "power_distribution_box_link"
+      ],
+      "target_xyz_m": [
+        0.3,
+        0.15,
+        0.72
+      ]
+    },
+    "power_safety_internal": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "a300_left_battery_pack_link",
+        "a300_left_battery_bms_link",
+        "power_distribution_box_link",
+        "safety_relay_link",
+        "main_power_contactor_housing_link",
+        "isolated_dc_dc_module_link"
+      ],
+      "target_xyz_m": [
+        0.1,
+        0.0,
+        0.4
+      ]
+    },
+    "rear_left_sensor_detail": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "rear_left_fisheye_link"
+      ],
+      "target_xyz_m": [
+        -0.565,
+        0.28,
+        0.6001
+      ]
+    },
+    "rear_right": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "bodywork_lower_tub_link",
+        "bodywork_lighting_link"
+      ],
+      "target_xyz_m": [
+        0.0,
+        0.0,
+        0.65
+      ]
+    },
+    "rear_right_sensor_detail": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "rear_right_fisheye_link"
+      ],
+      "target_xyz_m": [
+        -0.565,
+        -0.28,
+        0.6001
+      ]
+    },
+    "rear_service_detail": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "wastewater_tank_link",
+        "bodywork_lower_tub_link"
+      ],
+      "target_xyz_m": [
+        -0.49,
+        0.0,
+        0.55
+      ]
+    },
+    "sensor_tower_detail": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "lidar_2d_link",
+        "lidar_3d_link",
+        "gnss_antenna_link"
+      ],
+      "target_xyz_m": [
+        0.42,
+        0.0,
+        1.22
+      ]
+    },
+    "storage_recovery_detail": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "dry_bin_link",
+        "wastewater_tank_link",
+        "recovery_pump_motor_link"
+      ],
+      "target_xyz_m": [
+        -0.205,
+        -0.04,
+        0.55
+      ]
+    },
+    "top_cleaning": {
+      "minimum_projected_target_pixels": 64,
+      "target_entities": [
+        "central_roller_link",
+        "left_side_brush_link",
+        "right_side_brush_link"
+      ],
+      "target_xyz_m": [
+        0.0,
+        0.0,
+        0.4
+      ]
+    }
+  }
 }

@@ -42,6 +42,7 @@ class RuntimeComponent:
 class OpenVocabularyProfile:
     profile_id: str
     platform: str
+    soc_identity: str | None
     detector: RuntimeComponent
     segmenter: RuntimeComponent
     development_only: bool
@@ -112,6 +113,7 @@ def load_open_vocabulary_profile(path: str | Path) -> OpenVocabularyProfile:
     profile = OpenVocabularyProfile(
         profile_id=profile_id,
         platform=platform,
+        soc_identity=(str(raw["soc_identity"]) if raw.get("soc_identity") else None),
         detector=_component(raw.get("detector", {}), "detector"),
         segmenter=_component(raw.get("segmenter", {}), "segmenter"),
         development_only=bool(raw.get("development_only", True)),
@@ -120,8 +122,12 @@ def load_open_vocabulary_profile(path: str | Path) -> OpenVocabularyProfile:
     )
     if profile.ground_truth_control_allowed:
         raise OpenVocabularyContractError("ground truth control must remain disabled")
-    if profile.platform == "rdk_s100" and profile.journey6_evidence_allowed:
-        raise OpenVocabularyContractError("S100 output cannot be Journey 6 evidence")
+    if profile.platform == "rdk_s100" and profile.soc_identity != "journey6p":
+        raise OpenVocabularyContractError("RDK S100P must identify the Journey 6P SoC")
+    if profile.development_only and profile.journey6_evidence_allowed:
+        raise OpenVocabularyContractError(
+            "development-only profile cannot claim Journey 6P board evidence"
+        )
     return profile
 
 

@@ -1,0 +1,276 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+  <xacro:property name="hf_service_mesh_root"
+                  value="package://sanitation_vehicle_description/meshes/project/service"/>
+
+  <xacro:macro name="hf_service_box_inertial" params="mass sx sy sz xyz:='0 0 0'">
+    <inertial><origin xyz="${xyz}"/><mass value="${mass}"/>
+      <inertia ixx="${mass*(sy*sy+sz*sz)/12.0}" ixy="0" ixz="0"
+               iyy="${mass*(sx*sx+sz*sz)/12.0}" iyz="0"
+               izz="${mass*(sx*sx+sy*sy)/12.0}"/></inertial>
+  </xacro:macro>
+
+  <xacro:macro name="hf_a300_battery" params="side y">
+    <link name="a300_${side}_battery_pack_link">
+      <visual><geometry><mesh filename="${hf_service_mesh_root}/a300_battery_pack.stl"/></geometry>
+        <material name="a300_${side}_battery_case"><color rgba="0.10 0.12 0.13 1"/></material></visual>
+      <collision><geometry><box size="0.330 0.135 0.135"/></geometry></collision>
+      <!-- 7.35 + 0.15 kg BMS is an engineering split of the 7.5 kg/pack
+           inference from the official A300 40 Ah versus 80 Ah mass delta. -->
+      <xacro:hf_service_box_inertial mass="7.35" sx="0.330" sy="0.135" sz="0.135"/>
+    </link>
+    <joint name="a300_${side}_battery_pack_joint" type="fixed">
+      <parent link="base_link"/><child link="a300_${side}_battery_pack_link"/>
+      <origin xyz="-0.080 ${y} 0.075"/>
+    </joint>
+    <link name="a300_${side}_battery_bms_link">
+      <visual><geometry><mesh filename="${hf_service_mesh_root}/a300_battery_bms.stl"/></geometry>
+        <material name="a300_${side}_bms_blue"><color rgba="0.045 0.22 0.34 1"/></material></visual>
+      <collision><geometry><box size="0.065 0.105 0.025"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.15" sx="0.065" sy="0.105" sz="0.025"/>
+    </link>
+    <joint name="a300_${side}_battery_bms_joint" type="fixed">
+      <parent link="a300_${side}_battery_pack_link"/><child link="a300_${side}_battery_bms_link"/>
+      <origin xyz="0.125 0 0"/>
+    </joint>
+  </xacro:macro>
+
+  <xacro:macro name="hf_power_and_service_hardware" params="base_parent tank_parent service_acceptance_interfaces:=false">
+    <xacro:hf_a300_battery side="left" y="0.095"/>
+    <xacro:hf_a300_battery side="right" y="-0.095"/>
+
+    <!-- Lockable main battery isolator behind the left power-service door.
+         The red/yellow handle rotates a real shaft through 90 degrees; the
+         auxiliary plugin reads this joint before permitting the downstream
+         normally-open contactor.  These four links receive the 0.400 kg mass
+         split removed from the former lumped PDU load. -->
+    <link name="main_power_isolator_housing_link">
+      <visual><geometry><mesh filename="${hf_service_mesh_root}/main_power_isolator_housing.stl"/></geometry>
+        <material name="main_isolator_yellow"><color rgba="0.95 0.71 0.035 1"/></material></visual>
+      <collision name="main_power_isolator_body_collision"><geometry><box size="0.092 0.050 0.106"/></geometry></collision>
+      <collision name="main_power_isolator_flange_collision"><origin xyz="0 0.031 0"/><geometry><box size="0.106 0.012 0.120"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.100" sx="0.106" sy="0.062" sz="0.120"/>
+    </link>
+    <joint name="main_power_isolator_housing_joint" type="fixed">
+      <parent link="${base_parent}"/><child link="main_power_isolator_housing_link"/>
+      <origin xyz="0.270 0.345 0.545"/>
+    </joint>
+    <link name="main_power_isolator_handle_link">
+      <visual><geometry><mesh filename="${hf_service_mesh_root}/main_power_isolator_handle.stl"/></geometry>
+        <material name="main_isolator_handle_red"><color rgba="0.82 0.025 0.020 1"/></material></visual>
+      <collision name="main_power_isolator_shaft_collision"><origin rpy="${pi/2.0} 0 0"/><geometry><cylinder radius="0.014" length="0.042"/></geometry></collision>
+      <collision name="main_power_isolator_grip_collision"><origin xyz="0 0.027 0.020"/><geometry><box size="0.018 0.018 0.082"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.040" sx="0.040" sy="0.054" sz="0.095" xyz="0 0.020 0.016"/>
+    </link>
+    <joint name="main_power_isolator_handle_joint" type="revolute">
+      <parent link="main_power_isolator_housing_link"/><child link="main_power_isolator_handle_link"/>
+      <origin xyz="0 0.047 0"/><axis xyz="0 1 0"/>
+      <limit lower="0" upper="${pi/2.0}" effort="9.0" velocity="1.2"/>
+      <dynamics damping="1.1" friction="0.65"/>
+    </joint>
+
+    <link name="main_power_contactor_housing_link">
+      <visual><geometry><mesh filename="${hf_service_mesh_root}/main_contactor_housing.stl"/></geometry>
+        <material name="main_contactor_black"><color rgba="0.075 0.085 0.090 1"/></material></visual>
+      <collision><geometry><box size="0.116 0.080 0.092"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.200" sx="0.116" sy="0.080" sz="0.092"/>
+    </link>
+    <joint name="main_power_contactor_housing_joint" type="fixed">
+      <parent link="${base_parent}"/><child link="main_power_contactor_housing_link"/>
+      <origin xyz="0.375 0.245 0.300"/>
+    </joint>
+    <link name="main_power_contactor_armature_link">
+      <visual><geometry><mesh filename="${hf_service_mesh_root}/main_contactor_armature.stl"/></geometry>
+        <material name="main_contactor_armature_copper"><color rgba="0.58 0.27 0.08 1"/></material></visual>
+      <collision><geometry><cylinder radius="0.013" length="0.034"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.060" sx="0.050" sy="0.026" sz="0.044"/>
+    </link>
+    <joint name="main_power_contactor_armature_joint" type="prismatic">
+      <parent link="main_power_contactor_housing_link"/><child link="main_power_contactor_armature_link"/>
+      <origin xyz="0 0 0.052"/><axis xyz="0 0 1"/>
+      <limit lower="0" upper="0.004" effort="35.0" velocity="0.08"/>
+      <dynamics damping="12.0" friction="3.0"/>
+    </joint>
+
+    <!-- Project-authored IP-rated service charge assembly at the published
+         A300 charge-side datum.  Door and lock are passive service joints. -->
+    <link name="charge_port_housing_link">
+      <visual><geometry><mesh filename="${hf_service_mesh_root}/charge_port_housing.stl"/></geometry>
+        <material name="charge_housing_black"><color rgba="0.06 0.08 0.09 1"/></material></visual>
+      <collision><geometry><cylinder radius="0.0375" length="0.020"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.035" sx="0.075" sy="0.020" sz="0.075"/>
+    </link>
+    <joint name="charge_port_housing_joint" type="fixed">
+      <parent link="${base_parent}"/><child link="charge_port_housing_link"/>
+      <origin xyz="0.250 0.402 0.330" rpy="${pi/2.0} 0 0"/>
+    </joint>
+    <link name="charge_receptacle_link">
+      <visual><geometry><mesh filename="${hf_service_mesh_root}/charge_receptacle.stl"/></geometry>
+        <material name="charge_receptacle_blue"><color rgba="0.05 0.20 0.31 1"/></material></visual>
+      <collision name="charge_receptacle_contact_collision"><geometry><cylinder radius="0.029" length="0.025"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.030" sx="0.058" sy="0.025" sz="0.058"/>
+    </link>
+    <joint name="charge_receptacle_joint" type="fixed">
+      <parent link="charge_port_housing_link"/><child link="charge_receptacle_link"/>
+      <origin xyz="0 -0.012 0"/>
+    </joint>
+    <gazebo reference="charge_receptacle_link">
+      <preserveFixedJoint>true</preserveFixedJoint>
+      <sensor name="charge_receptacle_contact_sensor" type="contact">
+        <topic>/formal_vehicle/gazebo/charge_receptacle/contact</topic>
+        <update_rate>50</update_rate><always_on>true</always_on>
+        <contact><collision>charge_receptacle_contact_collision</collision></contact>
+      </sensor>
+    </gazebo>
+    <link name="charge_port_door_link">
+      <visual><origin xyz="0 0 -0.041"/><geometry><mesh filename="${hf_service_mesh_root}/charge_port_door.stl"/></geometry>
+        <material name="charge_door_green"><color rgba="0.04 0.34 0.22 1"/></material></visual>
+      <collision><origin xyz="0 0 -0.041"/><geometry><box size="0.072 0.006 0.072"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.025" sx="0.072" sy="0.006" sz="0.072" xyz="0 0 -0.041"/>
+    </link>
+    <joint name="charge_port_door_hinge_joint" type="revolute">
+      <parent link="charge_port_housing_link"/><child link="charge_port_door_link"/>
+      <origin xyz="0 0 0.041"/><axis xyz="1 0 0"/>
+      <limit lower="0" upper="1.92" effort="3.0" velocity="0.5"/><dynamics damping="0.2" friction="0.12"/>
+    </joint>
+    <link name="charge_connector_lock_link">
+      <visual><geometry><mesh filename="${hf_service_mesh_root}/charge_connector_lock.stl"/></geometry>
+        <material name="charge_lock_metal"><color rgba="0.62 0.65 0.66 1"/></material></visual>
+      <collision><geometry><box size="0.018 0.012 0.012"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.010" sx="0.018" sy="0.012" sz="0.012"/>
+    </link>
+    <joint name="charge_connector_lock_joint" type="prismatic">
+      <parent link="charge_receptacle_link"/><child link="charge_connector_lock_link"/>
+      <origin xyz="0.022 -0.018 0"/><axis xyz="0 0 1"/>
+      <limit lower="0" upper="0.006" effort="8.0" velocity="0.02"/><dynamics damping="1.0" friction="0.5"/>
+    </joint>
+
+    <!-- Mechanically latching mushroom E-stop.  The 6 mm stroke is explicit;
+         the safety node owns the electrical latch and requires manual reset. -->
+    <link name="emergency_stop_housing_link">
+      <visual><geometry><mesh filename="${hf_service_mesh_root}/emergency_stop_housing.stl"/></geometry>
+        <material name="estop_housing_yellow"><color rgba="0.95 0.70 0.03 1"/></material></visual>
+      <collision><geometry><cylinder radius="0.025" length="0.040"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.060" sx="0.050" sy="0.040" sz="0.050"/>
+    </link>
+    <joint name="emergency_stop_housing_joint" type="fixed">
+      <parent link="${base_parent}"/><child link="emergency_stop_housing_link"/>
+      <origin xyz="-0.405 -0.405 0.680" rpy="${pi/2.0} 0 0"/>
+    </joint>
+    <link name="emergency_stop_plunger_link">
+      <visual><geometry><mesh filename="${hf_service_mesh_root}/emergency_stop_plunger.stl"/></geometry>
+        <material name="estop_mushroom_red"><color rgba="0.86 0.015 0.018 1"/></material></visual>
+      <collision><geometry><cylinder radius="0.026" length="0.038"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.030" sx="0.052" sy="0.038" sz="0.052"/>
+    </link>
+    <joint name="emergency_stop_plunger_joint" type="prismatic">
+      <parent link="emergency_stop_housing_link"/><child link="emergency_stop_plunger_link"/>
+      <origin xyz="0 -0.034 0"/><axis xyz="0 1 0"/>
+      <limit lower="0" upper="0.006" effort="20.0" velocity="0.05"/><dynamics damping="4.0" friction="2.0"/>
+    </joint>
+
+    <!-- Complete low-point drain: pipe, valve body, externally observable
+         ball/stem, spring-return actuator, service cap and hose coupling. -->
+    <link name="wastewater_drain_pipe_link">
+      <visual><geometry><mesh filename="${hf_service_mesh_root}/wastewater_drain_pipe.stl"/></geometry>
+        <material name="drain_pipe_black"><color rgba="0.07 0.08 0.085 1"/></material></visual>
+      <collision><origin xyz="-0.0425 0 0" rpy="0 ${pi/2.0} 0"/><geometry><cylinder radius="0.015" length="0.085"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.120" sx="0.085" sy="0.030" sz="0.030" xyz="-0.0425 0 0"/>
+    </link>
+    <joint name="wastewater_drain_pipe_joint" type="fixed">
+      <parent link="${tank_parent}"/><child link="wastewater_drain_pipe_link"/>
+      <origin xyz="-0.200 -0.060 -0.024"/>
+    </joint>
+    <link name="wastewater_drain_valve_body_link">
+      <visual><geometry><mesh filename="${hf_service_mesh_root}/wastewater_drain_valve_body.stl"/></geometry>
+        <material name="drain_valve_brass"><color rgba="0.57 0.39 0.14 1"/></material></visual>
+      <collision><geometry><cylinder radius="0.031" length="0.070"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.280" sx="0.070" sy="0.062" sz="0.062"/>
+    </link>
+    <joint name="wastewater_drain_valve_body_joint" type="fixed">
+      <parent link="wastewater_drain_pipe_link"/><child link="wastewater_drain_valve_body_link"/>
+      <origin xyz="-0.085 0 0"/>
+    </joint>
+    <link name="wastewater_drain_valve_ball_link">
+      <visual><geometry><mesh filename="${hf_service_mesh_root}/wastewater_drain_valve_ball.stl"/></geometry>
+        <material name="drain_indicator_metal"><color rgba="0.66 0.68 0.69 1"/></material></visual>
+      <collision><origin xyz="0 0 0.025"/><geometry><cylinder radius="0.010" length="0.050"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.080" sx="0.055" sy="0.020" sz="0.055"/>
+    </link>
+    <joint name="wastewater_drain_valve_joint" type="revolute">
+      <parent link="wastewater_drain_valve_body_link"/><child link="wastewater_drain_valve_ball_link"/>
+      <axis xyz="1 0 0"/><limit lower="0" upper="${pi/2.0}" effort="25.0" velocity="1.2"/>
+      <dynamics damping="0.8" friction="0.3"/>
+    </joint>
+    <link name="wastewater_drain_valve_actuator_link">
+      <visual><geometry><mesh filename="${hf_service_mesh_root}/wastewater_drain_actuator.stl"/></geometry>
+        <material name="drain_actuator_blue"><color rgba="0.04 0.20 0.34 1"/></material></visual>
+      <collision><geometry><box size="0.095 0.060 0.070"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.320" sx="0.095" sy="0.060" sz="0.070"/>
+    </link>
+    <joint name="wastewater_drain_valve_actuator_mount_joint" type="fixed">
+      <parent link="wastewater_drain_valve_body_link"/><child link="wastewater_drain_valve_actuator_link"/>
+      <origin xyz="0 0 0.078"/>
+    </joint>
+    <link name="wastewater_drain_service_cap_link">
+      <visual><origin xyz="0.030 0 0"/><geometry><mesh filename="${hf_service_mesh_root}/wastewater_drain_service_cap.stl"/></geometry>
+        <material name="drain_cap_black"><color rgba="0.08 0.09 0.10 1"/></material></visual>
+      <collision><origin xyz="0.030 0 0"/><geometry><cylinder radius="0.032" length="0.020"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.040" sx="0.020" sy="0.064" sz="0.064" xyz="0.030 0 0"/>
+    </link>
+    <joint name="wastewater_drain_service_cap_joint" type="revolute">
+      <parent link="wastewater_drain_valve_body_link"/><child link="wastewater_drain_service_cap_link"/>
+      <origin xyz="-0.035 0 0"/><axis xyz="0 1 0"/>
+      <limit lower="0" upper="2.4" effort="4.0" velocity="1.0"/><dynamics damping="0.25" friction="0.18"/>
+    </joint>
+    <link name="wastewater_drain_coupling_link">
+      <visual><geometry><mesh filename="${hf_service_mesh_root}/wastewater_drain_coupling.stl"/></geometry>
+        <material name="drain_coupling_steel"><color rgba="0.52 0.55 0.56 1"/></material></visual>
+      <collision name="wastewater_drain_coupling_contact_collision"><geometry><cylinder radius="0.027" length="0.060"/></geometry></collision>
+      <xacro:hf_service_box_inertial mass="0.060" sx="0.060" sy="0.054" sz="0.054"/>
+    </link>
+    <joint name="wastewater_drain_coupling_joint" type="fixed">
+      <parent link="wastewater_drain_valve_body_link"/><child link="wastewater_drain_coupling_link"/>
+      <origin xyz="-0.065 0 0"/>
+    </joint>
+    <gazebo reference="wastewater_drain_coupling_link">
+      <preserveFixedJoint>true</preserveFixedJoint>
+      <sensor name="wastewater_drain_coupling_contact_sensor" type="contact">
+        <topic>/formal_vehicle/gazebo/wastewater_drain_coupling/contact</topic>
+        <update_rate>50</update_rate><always_on>true</always_on>
+        <contact><collision>wastewater_drain_coupling_contact_collision</collision></contact>
+      </sensor>
+    </gazebo>
+
+    <!-- Evaluation-only manual-service actuators. They are absent from the
+         normal product model and expose commands only under /evaluation. -->
+    <xacro:if value="${service_acceptance_interfaces}">
+      <gazebo>
+        <plugin filename="gz-sim-joint-position-controller-system"
+                name="gz::sim::systems::JointPositionController">
+          <joint_name>charge_port_door_hinge_joint</joint_name>
+          <topic>/formal_vehicle/evaluation/service/charge_door_position_rad</topic>
+          <p_gain>8.0</p_gain><i_gain>0.0</i_gain><d_gain>0.8</d_gain>
+          <cmd_max>3.0</cmd_max><cmd_min>-3.0</cmd_min>
+          <initial_position>0.0</initial_position>
+        </plugin>
+        <plugin filename="gz-sim-joint-position-controller-system"
+                name="gz::sim::systems::JointPositionController">
+          <joint_name>charge_connector_lock_joint</joint_name>
+          <topic>/formal_vehicle/evaluation/service/charge_lock_position_m</topic>
+          <p_gain>350.0</p_gain><i_gain>0.0</i_gain><d_gain>12.0</d_gain>
+          <cmd_max>8.0</cmd_max><cmd_min>-8.0</cmd_min>
+          <initial_position>0.0</initial_position>
+        </plugin>
+        <plugin filename="gz-sim-joint-position-controller-system"
+                name="gz::sim::systems::JointPositionController">
+          <joint_name>wastewater_drain_service_cap_joint</joint_name>
+          <topic>/formal_vehicle/evaluation/service/drain_cap_position_rad</topic>
+          <p_gain>5.0</p_gain><i_gain>0.0</i_gain><d_gain>0.5</d_gain>
+          <cmd_max>4.0</cmd_max><cmd_min>-4.0</cmd_min>
+          <initial_position>0.0</initial_position>
+        </plugin>
+      </gazebo>
+    </xacro:if>
+  </xacro:macro>
+</robot>

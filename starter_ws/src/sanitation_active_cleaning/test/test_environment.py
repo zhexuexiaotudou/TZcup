@@ -148,6 +148,26 @@ def test_explicit_harness_layout_is_effective_but_absent_from_policy_observation
     assert "initial_targets" not in public
 
 
+def test_rotated_rectangle_dirt_shape_is_preserved_as_polygon_truth():
+    token = create_evaluation_token()
+    polygon = ((1.0, 0.25), (3.0, 0.25), (3.0, 0.75), (1.0, 0.75))
+    env = ActiveCleaningEnv(
+        make_config(ground_dirt_count=0, discrete_target_count=0),
+        evaluation_token=token,
+        task_layout=TaskLayout(ground_dirt_polygons=(polygon,)),
+    )
+    observation = env.reset(seed=10)
+    truth = env.evaluation_snapshot(token)
+
+    assert truth.initial_ground_dirt_cells
+    assert all(
+        1.0 <= env.grid.centers[index][0] <= 3.0
+        and 0.25 <= env.grid.centers[index][1] <= 0.75
+        for index in truth.initial_ground_dirt_cells
+    )
+    assert "ground_dirt_polygons" not in asdict(observation)
+
+
 def test_segment_spacing_and_continuous_obstacle_collision_are_fail_closed():
     obstacle = [[1.945, 0.4], [1.955, 0.4], [1.955, 0.6], [1.945, 0.6]]
     token = create_evaluation_token()
@@ -214,6 +234,29 @@ def test_current_pedestrian_is_checked_continuously_and_counts_collision():
     result = env.step(TrajectoryAction(points, clean_ground=False))
     assert result.info["reason"] == "trajectory_intersects_current_pedestrian"
     assert env.evaluation_snapshot(token).collisions == 1
+
+
+def test_pedestrian_dynamics_do_not_advance_into_stationary_vehicle():
+    task = make_config(
+        vehicle_radius=0.1,
+        ground_dirt_count=0,
+        discrete_target_count=0,
+        pedestrian_count=0,
+        sensing_radius=0.2,
+        pedestrian={"radius": 0.12, "step_distance": 0.3},
+    )
+    env = ActiveCleaningEnv(
+        task,
+        task_layout=TaskLayout(pedestrians=((1.0, 0.5, math.pi),)),
+    )
+    observation = env.reset(seed=7)
+    wait = TrajectoryAction((observation.pose,), clean_ground=False)
+
+    first = env.step(wait)
+    assert first.info["accepted"] is True
+    assert first.observation.current_pedestrians[0][0] == pytest.approx(1.0)
+    second = env.step(wait)
+    assert second.info["accepted"] is True
 
 
 def test_grasp_is_one_target_per_action_and_exhaustion_stops_immediately():

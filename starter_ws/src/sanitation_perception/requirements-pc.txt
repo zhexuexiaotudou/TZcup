@@ -1,0 +1,9 @@
+# PC product runtime. ROS 2 itself remains provided by the system installation.
+# Formal target: Ubuntu 24.04 / ROS Jazzy on Python 3.12.  The formal contract
+# admits Python 3.10-3.12 only; do not upgrade these frozen dependencies for
+# Python 3.13, which is rejected by the preflight.
+numpy==1.26.4
+onnxruntime==1.18.1
+# The PC DOSOD and EdgeSAM adapters resize camera rasters and masks with cv2.
+# S100 uses the rosdep-provided system package declared in package.xml instead.
+opencv-python-headless>=4.10,<5

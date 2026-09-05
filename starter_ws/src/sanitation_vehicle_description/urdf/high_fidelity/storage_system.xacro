@@ -4,8 +4,8 @@
 
   Dry-bin clear volume is 0.500 x 0.375 x 0.240 m = 45.0 L, with 40.0 L
   certified usable volume after the keep-out margin. The independent wastewater
-  tank reserves 14.0 L installation volume. Its provisional mass-budget limit
-  remains 9.706 L usable until the full-vehicle CoG gate. Runtime
+  tank reserves 14.0 L installation volume. Its final nominal-model capacity
+  is 8.30 L after the final service-hardware payload and CoG gates. Runtime
   garbage cubes remain physical bodies and therefore contribute their own mass;
   wastewater_load_mass_kg is the reserved water inertial updated by the L1 water
   mass-conservation system. The 1 g lower bound avoids invalid zero-mass URDF.
@@ -76,10 +76,10 @@
     <xacro:property name="wet_inner_z" value="0.160"/>
     <xacro:property name="wet_center_y" value="-0.245"/>
     <xacro:property name="panel_t" value="0.004"/>
-    <xacro:property name="dry_payload_mass" value="${max(float(dry_load_mass_kg), 0.001)}"/>
-    <xacro:property name="water_payload_mass" value="${max(float(wastewater_load_mass_kg), 0.001)}"/>
+    <xacro:property name="dry_payload_mass" value="${max(min(float(dry_load_mass_kg), 1.512), 0.001)}"/>
+    <xacro:property name="water_payload_mass" value="${max(min(float(wastewater_load_mass_kg), 8.30), 0.001)}"/>
     <xacro:property name="water_fill_height"
-                    value="${min(water_payload_mass / (1000.0 * wet_inner_x * wet_inner_y), 0.009706 / (wet_inner_x * wet_inner_y))}"/>
+                    value="${water_payload_mass / (1000.0 * wet_inner_x * wet_inner_y)}"/>
 
     <link name="storage_system_mount_link">
       <xacro:hf_storage_visual mesh="storage_mount_tray.stl"
@@ -120,10 +120,13 @@
     <link name="dry_bin_lid_link">
       <xacro:hf_storage_visual mesh="dry_bin_lid.stl"
         material="hf_dry_lid" rgba="0.055 0.12 0.085 1"/>
-      <collision name="dry_lid_left_collision"><origin xyz="0.254 0.143 0"/><geometry><box size="0.508 0.105 0.010"/></geometry></collision>
-      <collision name="dry_lid_right_collision"><origin xyz="0.254 -0.143 0"/><geometry><box size="0.508 0.105 0.010"/></geometry></collision>
-      <collision name="dry_lid_rear_collision"><origin xyz="0.0895 0 0"/><geometry><box size="0.179 0.181 0.010"/></geometry></collision>
-      <collision name="dry_lid_front_collision"><origin xyz="0.4185 0 0"/><geometry><box size="0.179 0.181 0.010"/></geometry></collision>
+      <!-- Four physical panels leave a 150 x 130 mm aperture centered at
+           y=-0.110 m.  That aperture contains the complete y=-0.125 m chute
+           bore while retaining a 20.5 mm outboard structural rail. -->
+      <collision name="dry_lid_left_collision"><origin xyz="0.254 0.07525 0"/><geometry><box size="0.508 0.2405 0.010"/></geometry></collision>
+      <collision name="dry_lid_right_collision"><origin xyz="0.254 -0.18525 0"/><geometry><box size="0.508 0.0205 0.010"/></geometry></collision>
+      <collision name="dry_lid_rear_collision"><origin xyz="0.0895 -0.110 0"/><geometry><box size="0.179 0.130 0.010"/></geometry></collision>
+      <collision name="dry_lid_front_collision"><origin xyz="0.4185 -0.110 0"/><geometry><box size="0.179 0.130 0.010"/></geometry></collision>
       <xacro:hf_storage_box_inertial mass="0.750" sx="0.508" sy="0.391" sz="0.010" xyz="0.254 0 0"/>
     </link>
     <joint name="dry_bin_lid_joint" type="revolute">
@@ -144,33 +147,79 @@
       <collision name="dry_deposit_hopper_rear"><origin xyz="-0.067 0 0" rpy="0 0.42 0"/><geometry><box size="0.010 0.165 0.092"/></geometry></collision>
       <collision name="dry_deposit_hopper_left"><origin xyz="0 0.057 0" rpy="0.36 0 0"/><geometry><box size="0.120 0.010 0.088"/></geometry></collision>
       <collision name="dry_deposit_hopper_right"><origin xyz="0 -0.057 0" rpy="-0.36 0 0"/><geometry><box size="0.120 0.010 0.088"/></geometry></collision>
-      <xacro:hf_storage_box_inertial mass="0.240" sx="0.190" sy="0.165" sz="0.080"/>
+      <xacro:hf_storage_box_inertial mass="0.150" sx="0.190" sy="0.165" sz="0.080"/>
     </link>
     <joint name="dry_deposit_hopper_mount_joint" type="fixed">
       <parent link="dry_bin_lid_link"/><child link="dry_deposit_hopper_link"/>
-      <!-- Raise the robot port above the product roof.  The long chute below
-           preserves a continuous gravity path to the lid aperture. -->
-      <origin xyz="0.254 0 0.350" rpy="0 0 0"/>
+      <!-- Raise the robot port above the product roof and move it 125 mm
+           toward the arm side.  The dry-bin shell and certified 40 L usable
+           volume do not move; the long chute still terminates inside that
+           compartment while the approach no longer crosses the centre mast. -->
+      <origin xyz="0.254 -0.125 0.350" rpy="0 0 0"/>
     </joint>
 
     <link name="dry_deposit_gate_link">
       <xacro:hf_storage_visual mesh="dry_deposit_gate.stl"
         material="hf_deposit_gate" rgba="0.055 0.075 0.070 1"/>
       <collision><origin xyz="0.092 0 0"/><geometry><box size="0.184 0.158 0.008"/></geometry></collision>
-      <xacro:hf_storage_box_inertial mass="0.180" sx="0.184" sy="0.158" sz="0.020" xyz="0.092 0 0"/>
+      <xacro:hf_storage_box_inertial mass="0.070" sx="0.184" sy="0.158" sz="0.020" xyz="0.092 0 0"/>
     </link>
     <joint name="dry_deposit_gate_joint" type="revolute">
       <parent link="dry_deposit_hopper_link"/><child link="dry_deposit_gate_link"/>
       <origin xyz="-0.095 0 0.044" rpy="0 0 0"/>
       <axis xyz="0 1 0"/>
-      <limit lower="0.0" upper="1.75" effort="22.0" velocity="0.8"/>
+      <limit lower="0.0" upper="1.75" effort="9.5" velocity="0.8"/>
       <dynamics damping="0.7" friction="0.25"/>
+    </joint>
+
+    <!-- ROBOTIS DYNAMIXEL XW540-T260-R waterproof gate actuator. Its public
+         33.5 x 58.5 x 45.9 mm, 0.185 kg envelope is hard-mounted outside the
+         hopper; the coaxial output horn follows the gate. The commanded joint
+         remains the physical gate hinge, so no fake closed kinematic loop is
+         introduced into URDF. -->
+    <link name="dry_deposit_gate_actuator_link">
+      <xacro:hf_storage_visual mesh="dry_deposit_xw540_actuator.stl"
+        material="hf_deposit_actuator" rgba="0.12 0.14 0.15 1"/>
+      <collision><geometry><box size="0.0459 0.0335 0.0585"/></geometry></collision>
+      <xacro:hf_storage_box_inertial mass="0.185" sx="0.0459" sy="0.0335" sz="0.0585"/>
+    </link>
+    <joint name="dry_deposit_gate_actuator_mount_joint" type="fixed">
+      <parent link="dry_deposit_hopper_link"/><child link="dry_deposit_gate_actuator_link"/>
+      <!-- The project CAD puts the XW540 output boss at local
+           (0, -19.5, +12) mm.  Offset the housing so that this physical boss,
+           the gate hinge and the moving horn are exactly coaxial at the
+           closed-gate datum. -->
+      <origin xyz="-0.095 0.1215 0.032" rpy="0 0 0"/>
+    </joint>
+    <link name="dry_deposit_gate_actuator_horn_link">
+      <xacro:hf_storage_visual mesh="dry_deposit_xw540_horn.stl"
+        material="hf_deposit_horn" rgba="0.68 0.70 0.71 1"/>
+      <collision><origin rpy="1.57079632679 0 0"/><geometry><cylinder radius="0.018" length="0.006"/></geometry></collision>
+      <xacro:hf_storage_box_inertial mass="0.015" sx="0.036" sy="0.006" sz="0.036"/>
+    </link>
+    <joint name="dry_deposit_gate_actuator_horn_joint" type="fixed">
+      <parent link="dry_deposit_gate_link"/><child link="dry_deposit_gate_actuator_horn_link"/>
+      <origin xyz="0 0.102 0" rpy="0 0 0"/>
     </joint>
 
     <link name="dry_deposit_chute_link">
       <xacro:hf_storage_visual mesh="dry_deposit_chute.stl"
         material="hf_deposit_chute" rgba="0.20 0.48 0.32 1"/>
-      <collision name="dry_deposit_chute_collision"><geometry><box size="0.125 0.100 0.350"/></geometry></collision>
+      <!-- The chute is a gravity passage, not a solid block.  Four thin wall
+           collisions retain a 109 x 84 mm clear bore for the 30 mm cube and
+           leave both ends open. -->
+      <collision name="dry_deposit_chute_front_wall_collision">
+        <origin xyz="0.0585 0 0"/><geometry><box size="0.008 0.100 0.350"/></geometry>
+      </collision>
+      <collision name="dry_deposit_chute_rear_wall_collision">
+        <origin xyz="-0.0585 0 0"/><geometry><box size="0.008 0.100 0.350"/></geometry>
+      </collision>
+      <collision name="dry_deposit_chute_left_wall_collision">
+        <origin xyz="0 0.046 0"/><geometry><box size="0.109 0.008 0.350"/></geometry>
+      </collision>
+      <collision name="dry_deposit_chute_right_wall_collision">
+        <origin xyz="0 -0.046 0"/><geometry><box size="0.109 0.008 0.350"/></geometry>
+      </collision>
       <xacro:hf_storage_box_inertial mass="0.320" sx="0.130" sy="0.105" sz="0.350"/>
     </link>
     <joint name="dry_deposit_chute_mount_joint" type="fixed">
@@ -191,29 +240,62 @@
     <gazebo reference="dry_deposit_chute_link">
       <sensor name="dry_deposit_contact" type="contact">
         <topic>/storage/dry_deposit/contact</topic><update_rate>50</update_rate><always_on>true</always_on>
-        <contact><collision>dry_deposit_chute_collision</collision></contact>
+        <!-- Fixed-joint reduction merges the chute into the actuated lid and
+             prefixes the final SDF collision.  Reference that physics name so
+             the acceptance contact topic contains real samples. -->
+        <contact><collision>dry_bin_lid_link_fixed_joint_lump__dry_deposit_chute_front_wall_collision_collision_8</collision></contact>
       </sensor>
     </gazebo>
 
-    <link name="dry_bin_latch_link">
-      <xacro:hf_storage_visual mesh="dry_bin_latch.stl"
-        material="hf_latch" rgba="0.62 0.65 0.66 1"/>
-      <collision><geometry><box size="0.035 0.050 0.020"/></geometry></collision>
-      <xacro:hf_storage_box_inertial mass="0.080" sx="0.035" sy="0.050" sz="0.020"/>
+    <!-- Manual over-centre draw latch.  The base, moving hand lever and
+         lid-mounted keeper are separate rigid bodies.  The handle joint is
+         deliberately passive and state-only: opening it represents a human
+         releasing the latch; no electric lid actuator is claimed.  URDF is a
+         tree, so the engaged hook/keeper closed loop is represented by the
+         zero-radian service interlock contract rather than a fake mimic joint. -->
+    <link name="dry_bin_latch_base_link">
+      <xacro:hf_storage_visual mesh="storage_toggle_latch_base.stl"
+        material="hf_latch_base" rgba="0.34 0.37 0.38 1"/>
+      <collision><geometry><box size="0.040 0.052 0.034"/></geometry></collision>
+      <xacro:hf_storage_box_inertial mass="0.045" sx="0.040" sy="0.052" sz="0.034"/>
     </link>
-    <joint name="dry_bin_latch_joint" type="fixed">
-      <parent link="dry_bin_link"/><child link="dry_bin_latch_link"/>
-      <origin xyz="0.270 0 0.112" rpy="0 0 0"/>
+    <joint name="dry_bin_latch_base_joint" type="fixed">
+      <parent link="dry_bin_link"/><child link="dry_bin_latch_base_link"/>
+      <origin xyz="0.270 0 0.070" rpy="0 0 0"/>
+    </joint>
+    <link name="dry_bin_latch_link">
+      <xacro:hf_storage_visual mesh="storage_toggle_latch_handle.stl"
+        material="hf_latch_handle" rgba="0.62 0.65 0.66 1"/>
+      <collision><origin xyz="0.006 0 0.032"/><geometry><box size="0.032 0.042 0.096"/></geometry></collision>
+      <xacro:hf_storage_box_inertial mass="0.055" sx="0.032" sy="0.042" sz="0.096" xyz="0.006 0 0.032"/>
+    </link>
+    <joint name="dry_bin_latch_joint" type="revolute">
+      <parent link="dry_bin_latch_base_link"/><child link="dry_bin_latch_link"/>
+      <origin xyz="0 0 0.023" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="0.0" upper="1.221730476" effort="8.0" velocity="1.0"/>
+      <dynamics damping="0.55" friction="1.50"/>
+    </joint>
+    <link name="dry_bin_latch_keeper_link">
+      <xacro:hf_storage_visual mesh="storage_toggle_latch_keeper.stl"
+        material="hf_latch_keeper" rgba="0.68 0.70 0.71 1"/>
+      <collision><origin xyz="0.004 0 0.008"/><geometry><box size="0.032 0.052 0.028"/></geometry></collision>
+      <xacro:hf_storage_box_inertial mass="0.035" sx="0.032" sy="0.052" sz="0.028" xyz="0.004 0 0.008"/>
+    </link>
+    <joint name="dry_bin_latch_keeper_joint" type="fixed">
+      <parent link="dry_bin_lid_link"/><child link="dry_bin_latch_keeper_link"/>
+      <origin xyz="0.508 0 -0.018" rpy="0 0 0"/>
     </joint>
 
     <link name="dry_bin_payload_reserve_link">
-      <visual name="forty_litre_usable_envelope"><geometry><box size="0.485 0.355 0.232"/></geometry><material name="hf_dry_payload"><color rgba="0.65 0.48 0.18 0.16"/></material></visual>
+      <visual name="forty_litre_usable_envelope"><geometry><box size="0.485 0.355 0.233"/></geometry><material name="hf_dry_payload"><color rgba="0.65 0.48 0.18 0.16"/></material></visual>
       <!-- No collision: physically grasped 3 cm cubes supply shape and contact. -->
-      <xacro:hf_storage_box_inertial mass="${dry_payload_mass}" sx="0.485" sy="0.355" sz="0.232"/>
+      <xacro:hf_storage_box_inertial mass="${dry_payload_mass}" sx="0.485" sy="0.355" sz="0.233"/>
     </link>
     <joint name="dry_bin_payload_reserve_joint" type="fixed">
       <parent link="dry_bin_link"/><child link="dry_bin_payload_reserve_link"/>
-      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <!-- Certified 233 mm usable volume begins on the floor top at -0.120 m. -->
+      <origin xyz="0 0 -0.0035" rpy="0 0 0"/>
     </joint>
 
     <link name="dry_bin_level_sensor_link">
@@ -277,6 +359,43 @@
       <axis xyz="0 1 0"/>
       <limit lower="0.0" upper="1.570796" effort="40.0" velocity="0.50"/>
       <dynamics damping="1.2" friction="0.8"/>
+    </joint>
+
+    <!-- Same passive manual latch architecture as the dry compartment.  The
+         wet tank remains sealed for operation; maintenance first rotates this
+         handle to its released stop and then opens the lid hinge. -->
+    <link name="wastewater_lid_latch_base_link">
+      <xacro:hf_storage_visual mesh="storage_toggle_latch_base.stl"
+        material="hf_wet_latch_base" rgba="0.34 0.37 0.38 1"/>
+      <collision><geometry><box size="0.040 0.052 0.034"/></geometry></collision>
+      <xacro:hf_storage_box_inertial mass="0.045" sx="0.040" sy="0.052" sz="0.034"/>
+    </link>
+    <joint name="wastewater_lid_latch_base_joint" type="fixed">
+      <parent link="wastewater_tank_link"/><child link="wastewater_lid_latch_base_link"/>
+      <origin xyz="0.195 0 0.050" rpy="0 0 0"/>
+    </joint>
+    <link name="wastewater_lid_latch_link">
+      <xacro:hf_storage_visual mesh="storage_toggle_latch_handle.stl"
+        material="hf_wet_latch_handle" rgba="0.62 0.65 0.66 1"/>
+      <collision><origin xyz="0.006 0 0.032"/><geometry><box size="0.032 0.042 0.096"/></geometry></collision>
+      <xacro:hf_storage_box_inertial mass="0.055" sx="0.032" sy="0.042" sz="0.096" xyz="0.006 0 0.032"/>
+    </link>
+    <joint name="wastewater_lid_latch_joint" type="revolute">
+      <parent link="wastewater_lid_latch_base_link"/><child link="wastewater_lid_latch_link"/>
+      <origin xyz="0 0 0.023" rpy="0 0 0"/>
+      <axis xyz="0 1 0"/>
+      <limit lower="0.0" upper="1.221730476" effort="8.0" velocity="1.0"/>
+      <dynamics damping="0.55" friction="1.50"/>
+    </joint>
+    <link name="wastewater_lid_latch_keeper_link">
+      <xacro:hf_storage_visual mesh="storage_toggle_latch_keeper.stl"
+        material="hf_wet_latch_keeper" rgba="0.68 0.70 0.71 1"/>
+      <collision><origin xyz="0.004 0 0.008"/><geometry><box size="0.032 0.052 0.028"/></geometry></collision>
+      <xacro:hf_storage_box_inertial mass="0.035" sx="0.032" sy="0.052" sz="0.028" xyz="0.004 0 0.008"/>
+    </link>
+    <joint name="wastewater_lid_latch_keeper_joint" type="fixed">
+      <parent link="wastewater_lid_link"/><child link="wastewater_lid_latch_keeper_link"/>
+      <origin xyz="0.358 0 -0.018" rpy="0 0 0"/>
     </joint>
 
     <link name="wastewater_payload_reserve_link">

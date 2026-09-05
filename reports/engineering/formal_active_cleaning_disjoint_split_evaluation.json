@@ -1,0 +1,612 @@
+{
+  "blockers": [
+    "sensing_greedy_all_splits_success",
+    "q_learning_all_splits_success",
+    "all_policy_episodes_reached_30_step_compute_cap",
+    "product_perception_not_exercised",
+    "gazebo_and_nav2_not_exercised",
+    "grid_cell_dirt_metric_is_a_discretized_rectangle_approximation",
+    "pedestrian_schedule_reduced_to_stepwise_current_position"
+  ],
+  "claim_boundary": "Pure-Python belief-only planning surrogate over generated formal maps; not product perception, Gazebo dynamics, Nav2 execution, or competition acceptance.",
+  "episodes": [
+    {
+      "baseline_distance": null,
+      "baseline_valid": false,
+      "belief_source": "evaluation_harness_geometric_sensing_surrogate",
+      "boundary_violations": 0,
+      "cleared_observed_discrete_targets": 0,
+      "cleared_observed_ground_dirt_cells": 0,
+      "collisions": 0,
+      "discrete_clear_ratio": 0.0,
+      "distance_gate": true,
+      "episode_id": "train-map-000-mission-000",
+      "formal_success": false,
+      "grasp_verification_mode": "simulated_probability",
+      "ground_clear_ratio": 0.0,
+      "invalid_actions": 0,
+      "map_id": "train-map-000",
+      "observed_discrete_targets": 2,
+      "observed_ground_dirt_cells": 2,
+      "observed_ratio": 0.11998397160684642,
+      "pedestrian_count": 8,
+      "policy": "full_coverage",
+      "product_perception_used": false,
+      "return_distance_included": false,
+      "role_seeds": {
+        "dynamics": 1634132424142784603,
+        "grasp": 9065603235164907540,
+        "layout": 3406224984847403459,
+        "policy": 4511086291168076634
+      },
+      "runtime_s": 5.012956,
+      "seed": 1129999357,
+      "split": "train",
+      "steps": 30,
+      "success": false,
+      "task_distance": 533.0266611137295,
+      "terminated": false,
+      "time_or_energy_scored": false,
+      "truncated": true
+    },
+    {
+      "baseline_distance": 533.0266611137295,
+      "baseline_valid": false,
+      "belief_source": "evaluation_harness_geometric_sensing_surrogate",
+      "boundary_violations": 0,
+      "cleared_observed_discrete_targets": 2,
+      "cleared_observed_ground_dirt_cells": 5,
+      "collisions": 0,
+      "discrete_clear_ratio": 1.0,
+      "distance_gate": false,
+      "episode_id": "train-map-000-mission-000",
+      "formal_success": false,
+      "grasp_verification_mode": "simulated_probability",
+      "ground_clear_ratio": 1.0,
+      "invalid_actions": 0,
+      "map_id": "train-map-000",
+      "observed_discrete_targets": 2,
+      "observed_ground_dirt_cells": 5,
+      "observed_ratio": 0.20527792088843094,
+      "pedestrian_count": 8,
+      "policy": "sensing_greedy",
+      "product_perception_used": false,
+      "return_distance_included": false,
+      "role_seeds": {
+        "dynamics": 1634132424142784603,
+        "grasp": 9065603235164907540,
+        "layout": 3406224984847403459,
+        "policy": 4511086291168076634
+      },
+      "runtime_s": 21.151705,
+      "seed": 1129999357,
+      "split": "train",
+      "steps": 30,
+      "success": false,
+      "task_distance": 708.4572723816171,
+      "terminated": false,
+      "time_or_energy_scored": false,
+      "truncated": true
+    },
+    {
+      "baseline_distance": 533.0266611137295,
+      "baseline_valid": false,
+      "belief_source": "evaluation_harness_geometric_sensing_surrogate",
+      "boundary_violations": 0,
+      "cleared_observed_discrete_targets": 0,
+      "cleared_observed_ground_dirt_cells": 0,
+      "collisions": 0,
+      "discrete_clear_ratio": 1.0,
+      "distance_gate": true,
+      "episode_id": "train-map-000-mission-000",
+      "formal_success": false,
+      "grasp_verification_mode": "simulated_probability",
+      "ground_clear_ratio": 1.0,
+      "invalid_actions": 0,
+      "map_id": "train-map-000",
+      "observed_discrete_targets": 0,
+      "observed_ground_dirt_cells": 0,
+      "observed_ratio": 0.0026332360180891866,
+      "pedestrian_count": 8,
+      "policy": "q_learning",
+      "product_perception_used": false,
+      "return_distance_included": false,
+      "role_seeds": {
+        "dynamics": 1634132424142784603,
+        "grasp": 9065603235164907540,
+        "layout": 3406224984847403459,
+        "policy": 4511086291168076634
+      },
+      "runtime_s": 0.315782,
+      "seed": 1129999357,
+      "split": "train",
+      "steps": 30,
+      "success": false,
+      "task_distance": 0.0,
+      "terminated": false,
+      "time_or_energy_scored": false,
+      "truncated": true
+    },
+    {
+      "baseline_distance": null,
+      "baseline_valid": false,
+      "belief_source": "evaluation_harness_geometric_sensing_surrogate",
+      "boundary_violations": 0,
+      "cleared_observed_discrete_targets": 0,
+      "cleared_observed_ground_dirt_cells": 1,
+      "collisions": 0,
+      "discrete_clear_ratio": 0.0,
+      "distance_gate": true,
+      "episode_id": "val-map-000-mission-000",
+      "formal_success": false,
+      "grasp_verification_mode": "simulated_probability",
+      "ground_clear_ratio": 0.25,
+      "invalid_actions": 0,
+      "map_id": "val-map-000",
+      "observed_discrete_targets": 3,
+      "observed_ground_dirt_cells": 4,
+      "observed_ratio": 0.12805905946637214,
+      "pedestrian_count": 8,
+      "policy": "full_coverage",
+      "product_perception_used": false,
+      "return_distance_included": false,
+      "role_seeds": {
+        "dynamics": 3462282692407078552,
+        "grasp": 3970469732621488733,
+        "layout": 530743412664459312,
+        "policy": 3184534715441861749
+      },
+      "runtime_s": 45.836504,
+      "seed": 1936680795,
+      "split": "val",
+      "steps": 30,
+      "success": false,
+      "task_distance": 783.4138850422958,
+      "terminated": false,
+      "time_or_energy_scored": false,
+      "truncated": true
+    },
+    {
+      "baseline_distance": 783.4138850422958,
+      "baseline_valid": false,
+      "belief_source": "evaluation_harness_geometric_sensing_surrogate",
+      "boundary_violations": 0,
+      "cleared_observed_discrete_targets": 2,
+      "cleared_observed_ground_dirt_cells": 5,
+      "collisions": 0,
+      "discrete_clear_ratio": 0.6666666666666666,
+      "distance_gate": true,
+      "episode_id": "val-map-000-mission-000",
+      "formal_success": false,
+      "grasp_verification_mode": "simulated_probability",
+      "ground_clear_ratio": 0.8333333333333334,
+      "invalid_actions": 0,
+      "map_id": "val-map-000",
+      "observed_discrete_targets": 3,
+      "observed_ground_dirt_cells": 6,
+      "observed_ratio": 0.15724001627623088,
+      "pedestrian_count": 8,
+      "policy": "sensing_greedy",
+      "product_perception_used": false,
+      "return_distance_included": false,
+      "role_seeds": {
+        "dynamics": 3462282692407078552,
+        "grasp": 3970469732621488733,
+        "layout": 530743412664459312,
+        "policy": 3184534715441861749
+      },
+      "runtime_s": 21.18936,
+      "seed": 1936680795,
+      "split": "val",
+      "steps": 30,
+      "success": false,
+      "task_distance": 453.3522740744583,
+      "terminated": false,
+      "time_or_energy_scored": false,
+      "truncated": true
+    },
+    {
+      "baseline_distance": 783.4138850422958,
+      "baseline_valid": false,
+      "belief_source": "evaluation_harness_geometric_sensing_surrogate",
+      "boundary_violations": 0,
+      "cleared_observed_discrete_targets": 0,
+      "cleared_observed_ground_dirt_cells": 0,
+      "collisions": 0,
+      "discrete_clear_ratio": 1.0,
+      "distance_gate": true,
+      "episode_id": "val-map-000-mission-000",
+      "formal_success": false,
+      "grasp_verification_mode": "simulated_probability",
+      "ground_clear_ratio": 1.0,
+      "invalid_actions": 0,
+      "map_id": "val-map-000",
+      "observed_discrete_targets": 0,
+      "observed_ground_dirt_cells": 0,
+      "observed_ratio": 0.0026739522176364586,
+      "pedestrian_count": 8,
+      "policy": "q_learning",
+      "product_perception_used": false,
+      "return_distance_included": false,
+      "role_seeds": {
+        "dynamics": 3462282692407078552,
+        "grasp": 3970469732621488733,
+        "layout": 530743412664459312,
+        "policy": 3184534715441861749
+      },
+      "runtime_s": 0.48386,
+      "seed": 1936680795,
+      "split": "val",
+      "steps": 30,
+      "success": false,
+      "task_distance": 0.0,
+      "terminated": false,
+      "time_or_energy_scored": false,
+      "truncated": true
+    },
+    {
+      "baseline_distance": null,
+      "baseline_valid": false,
+      "belief_source": "evaluation_harness_geometric_sensing_surrogate",
+      "boundary_violations": 0,
+      "cleared_observed_discrete_targets": 0,
+      "cleared_observed_ground_dirt_cells": 0,
+      "collisions": 0,
+      "discrete_clear_ratio": 0.0,
+      "distance_gate": true,
+      "episode_id": "hidden-map-000-mission-000",
+      "formal_success": false,
+      "grasp_verification_mode": "simulated_probability",
+      "ground_clear_ratio": 0.0,
+      "invalid_actions": 0,
+      "map_id": "hidden-map-000",
+      "observed_discrete_targets": 1,
+      "observed_ground_dirt_cells": 2,
+      "observed_ratio": 0.12815500488702353,
+      "pedestrian_count": 8,
+      "policy": "full_coverage",
+      "product_perception_used": false,
+      "return_distance_included": false,
+      "role_seeds": {
+        "dynamics": 2694405045853684520,
+        "grasp": 4847026584172533658,
+        "layout": 469242002915008401,
+        "policy": 8640602626416225689
+      },
+      "runtime_s": 36.980477,
+      "seed": 1248415203,
+      "split": "hidden",
+      "steps": 30,
+      "success": false,
+      "task_distance": 906.2988905707994,
+      "terminated": false,
+      "time_or_energy_scored": false,
+      "truncated": true
+    },
+    {
+      "baseline_distance": 906.2988905707994,
+      "baseline_valid": false,
+      "belief_source": "evaluation_harness_geometric_sensing_surrogate",
+      "boundary_violations": 0,
+      "cleared_observed_discrete_targets": 2,
+      "cleared_observed_ground_dirt_cells": 4,
+      "collisions": 0,
+      "discrete_clear_ratio": 1.0,
+      "distance_gate": true,
+      "episode_id": "hidden-map-000-mission-000",
+      "formal_success": false,
+      "grasp_verification_mode": "simulated_probability",
+      "ground_clear_ratio": 1.0,
+      "invalid_actions": 0,
+      "map_id": "hidden-map-000",
+      "observed_discrete_targets": 2,
+      "observed_ground_dirt_cells": 4,
+      "observed_ratio": 0.27108606910826194,
+      "pedestrian_count": 8,
+      "policy": "sensing_greedy",
+      "product_perception_used": false,
+      "return_distance_included": false,
+      "role_seeds": {
+        "dynamics": 2694405045853684520,
+        "grasp": 4847026584172533658,
+        "layout": 469242002915008401,
+        "policy": 8640602626416225689
+      },
+      "runtime_s": 105.57994,
+      "seed": 1248415203,
+      "split": "hidden",
+      "steps": 30,
+      "success": false,
+      "task_distance": 884.7805840864808,
+      "terminated": false,
+      "time_or_energy_scored": false,
+      "truncated": true
+    },
+    {
+      "baseline_distance": 906.2988905707994,
+      "baseline_valid": false,
+      "belief_source": "evaluation_harness_geometric_sensing_surrogate",
+      "boundary_violations": 0,
+      "cleared_observed_discrete_targets": 0,
+      "cleared_observed_ground_dirt_cells": 0,
+      "collisions": 0,
+      "discrete_clear_ratio": 1.0,
+      "distance_gate": true,
+      "episode_id": "hidden-map-000-mission-000",
+      "formal_success": false,
+      "grasp_verification_mode": "simulated_probability",
+      "ground_clear_ratio": 1.0,
+      "invalid_actions": 0,
+      "map_id": "hidden-map-000",
+      "observed_discrete_targets": 0,
+      "observed_ground_dirt_cells": 0,
+      "observed_ratio": 0.00264474213764158,
+      "pedestrian_count": 8,
+      "policy": "q_learning",
+      "product_perception_used": false,
+      "return_distance_included": false,
+      "role_seeds": {
+        "dynamics": 2694405045853684520,
+        "grasp": 4847026584172533658,
+        "layout": 469242002915008401,
+        "policy": 8640602626416225689
+      },
+      "runtime_s": 0.486444,
+      "seed": 1248415203,
+      "split": "hidden",
+      "steps": 30,
+      "success": false,
+      "task_distance": 0.0,
+      "terminated": false,
+      "time_or_energy_scored": false,
+      "truncated": true
+    }
+  ],
+  "formal_product_ready": false,
+  "harness_assumptions": {
+    "cleaning_width_m": 1.32,
+    "grasp_radius_m": 1.05,
+    "grid_resolution_m": 1.0,
+    "max_steps_per_episode": 30,
+    "minimum_turn_radius_m": 0.75,
+    "pedestrian_step_distance_m_per_policy_step": 0.2,
+    "sensing_fov_rad": 1.50098315671512,
+    "sensing_radius_m": 8.0,
+    "runtime_definition": "policy_loop_wall_clock_excludes_materialization_and_environment_construction",
+    "vehicle_radius_m": 0.9313565375300696
+  },
+  "map_splits": {
+    "hidden": {
+      "counts": {
+        "dirt_patches": 18,
+        "discrete_cubes": 20,
+        "pedestrians": 8,
+        "static_assets": 120
+      },
+      "episode_id": "hidden-map-000-mission-000",
+      "field": {
+        "area_m2": 20000.0,
+        "aspect_ratio": 2.0,
+        "dimension_policy": "per_map_aspect_fixed_area",
+        "geofence_frame": "map",
+        "geofence_polygon_m": [
+          [
+            -100.0,
+            -50.0
+          ],
+          [
+            100.0,
+            -50.0
+          ],
+          [
+            100.0,
+            50.0
+          ],
+          [
+            -100.0,
+            50.0
+          ]
+        ],
+        "height_m": 100.0,
+        "physical_boundary_walls": false,
+        "width_m": 200.0
+      },
+      "file_sha256": {
+        "environment\\pedestrian_schedule.json": "3abfc3a741647edc0f709df844405ee3141a866bf42dd035af1a284bf15ced24",
+        "evaluator\\episode_manifest.json": "d946cc2e2e003c7dbafe77451f5dba909bd6dfec52023ae0e9041e8b9bc29cf0",
+        "evaluator\\ground_truth.json": "2084b1bdc5badd8ddedc10bc9e0e3047ed50eef748fd1eaca5dd07af7cae856f",
+        "public\\episode_manifest.json": "e45603609f12870c04413a0e2fcbe5db1d57ad3aa717ca241f56ca562dbacc2f",
+        "public\\world.sdf": "685a51400bc145c2d497ca33b567b17f734a20ad17c327795606f672b2416052"
+      },
+      "map_id": "hidden-map-000",
+      "role_seeds": {
+        "cubes": 244436640,
+        "dirt": 50595485,
+        "layout": 1306700939,
+        "pedestrians": 1474803259,
+        "sensor": 1248415203
+      },
+      "sample_directory": ".work\\formal_active_cleaning_split_eval\\samples\\hidden\\map-000\\mission-000"
+    },
+    "train": {
+      "counts": {
+        "dirt_patches": 18,
+        "discrete_cubes": 20,
+        "pedestrians": 8,
+        "static_assets": 120
+      },
+      "episode_id": "train-map-000-mission-000",
+      "field": {
+        "area_m2": 20000.0,
+        "aspect_ratio": 2.0,
+        "dimension_policy": "per_map_aspect_fixed_area",
+        "geofence_frame": "map",
+        "geofence_polygon_m": [
+          [
+            -100.0,
+            -50.0
+          ],
+          [
+            100.0,
+            -50.0
+          ],
+          [
+            100.0,
+            50.0
+          ],
+          [
+            -100.0,
+            50.0
+          ]
+        ],
+        "height_m": 100.0,
+        "physical_boundary_walls": false,
+        "width_m": 200.0
+      },
+      "file_sha256": {
+        "environment\\pedestrian_schedule.json": "2415a059351f26106a3c899403ed16136a2cb68c9678325fabc83a134c111595",
+        "evaluator\\episode_manifest.json": "a2e54883a1f814ece6ae78c2fbe512f75793582d4d01932d746ee861311207f8",
+        "evaluator\\ground_truth.json": "4037abeaa121a0e74eabf55a390c9eb1c439988ea04be80df04cbb40a1322287",
+        "public\\episode_manifest.json": "5cf647318f0a67bab5af9a936bdf1408f34414d9019c8c5f923109eceb4ef5c6",
+        "public\\world.sdf": "de174ebc5b50762dc244a83858f9cf5e767b365f4c0c1a8116d31c8584106541"
+      },
+      "map_id": "train-map-000",
+      "role_seeds": {
+        "cubes": 2081830960,
+        "dirt": 823873385,
+        "layout": 1799771669,
+        "pedestrians": 1559464905,
+        "sensor": 1129999357
+      },
+      "sample_directory": ".work\\formal_active_cleaning_split_eval\\samples\\train\\map-000\\mission-000"
+    },
+    "val": {
+      "counts": {
+        "dirt_patches": 18,
+        "discrete_cubes": 20,
+        "pedestrians": 8,
+        "static_assets": 120
+      },
+      "episode_id": "val-map-000-mission-000",
+      "field": {
+        "area_m2": 20000.0,
+        "aspect_ratio": 2.0,
+        "dimension_policy": "per_map_aspect_fixed_area",
+        "geofence_frame": "map",
+        "geofence_polygon_m": [
+          [
+            -100.0,
+            -50.0
+          ],
+          [
+            100.0,
+            -50.0
+          ],
+          [
+            100.0,
+            50.0
+          ],
+          [
+            -100.0,
+            50.0
+          ]
+        ],
+        "height_m": 100.0,
+        "physical_boundary_walls": false,
+        "width_m": 200.0
+      },
+      "file_sha256": {
+        "environment\\pedestrian_schedule.json": "2ea94e856bb54e900eca220232830edb2f96e6470ba3e9944f618aadcdcb8088",
+        "evaluator\\episode_manifest.json": "55e3068cc139f0250ee9e66e55b591d6542300332baf65adb898fae22c612c74",
+        "evaluator\\ground_truth.json": "c00682a8d4c298f396764bdb609435e7ba58e751ae358d145281d652ad076a5c",
+        "public\\episode_manifest.json": "a4eddb6e5c839528dfe575f69e2a41722d62643c53e6f125de9a8d57df588180",
+        "public\\world.sdf": "4b67e4d96c0b051f0e4df763f44624992e22209b37b59e8aacbf3cdb4339b23b"
+      },
+      "map_id": "val-map-000",
+      "role_seeds": {
+        "cubes": 1495700200,
+        "dirt": 709530461,
+        "layout": 594372077,
+        "pedestrians": 50956644,
+        "sensor": 1936680795
+      },
+      "sample_directory": ".work\\formal_active_cleaning_split_eval\\samples\\val\\map-000\\mission-000"
+    }
+  },
+  "product_gates": {
+    "gazebo_sensor_streams_used": false,
+    "nav2_execution_used": false,
+    "product_perception_used": false
+  },
+  "q_checkpoint": {
+    "path": ".work\\formal_active_cleaning_split_eval\\q_policy.json",
+    "sha256": "d8650edaa990ebd6d1f939245f333a8a1862a4233fd98f11daa1178ffb60da6c",
+    "truth_access_used": false
+  },
+  "q_learning_training": {
+    "episodes": [
+      {
+        "epoch": 0,
+        "observed_ratio": 0.03194229778464709,
+        "reward": -0.8868887290622482,
+        "seed": 1129999357,
+        "steps": 30,
+        "task_distance": 98.76263622573775,
+        "terminated": false,
+        "truncated": true
+      }
+    ],
+    "epochs": 1,
+    "q_state_count": 2,
+    "runtime_s": 1.458709,
+    "truth_access_used": false
+  },
+  "report_id": "formal_active_cleaning_disjoint_split_research_eval_v1",
+  "research_gates": {
+    "eight_random_pedestrians_each_episode": true,
+    "one_map_one_mission_each_split_materialized": true,
+    "q_learning_all_splits_success": false,
+    "sensing_greedy_all_splits_success": false,
+    "split_maps_and_role_seeds_disjoint": true
+  },
+  "research_policy_gates_passed": false,
+  "schema_version": 1,
+  "status": "BLOCKED_RESEARCH_ONLY",
+  "summaries": {
+    "full_coverage": {
+      "episodes": 3,
+      "mean_task_distance": 740.9131455756082,
+      "minimum_discrete_clear_ratio": 0.0,
+      "minimum_ground_clear_ratio": 0.0,
+      "minimum_observed_ratio": 0.11998397160684642,
+      "success_rate": 0.0,
+      "total_runtime_s": 87.829937
+    },
+    "q_learning": {
+      "episodes": 3,
+      "mean_task_distance": 0.0,
+      "minimum_discrete_clear_ratio": 1.0,
+      "minimum_ground_clear_ratio": 1.0,
+      "minimum_observed_ratio": 0.0026332360180891866,
+      "success_rate": 0.0,
+      "total_runtime_s": 1.286086
+    },
+    "sensing_greedy": {
+      "episodes": 3,
+      "mean_task_distance": 682.196710180852,
+      "minimum_discrete_clear_ratio": 0.6666666666666666,
+      "minimum_ground_clear_ratio": 0.8333333333333334,
+      "minimum_observed_ratio": 0.15724001627623088,
+      "success_rate": 0.0,
+      "total_runtime_s": 147.92100499999998
+    }
+  },
+  "thresholds": {
+    "discrete_clear_ratio": 0.95,
+    "distance_upper_bound": "same_episode_full_coverage_distance",
+    "ground_clear_ratio": 0.95,
+    "observed_ratio": 0.95,
+    "return_distance_included": false,
+    "time_energy_scored": false
+  }
+}

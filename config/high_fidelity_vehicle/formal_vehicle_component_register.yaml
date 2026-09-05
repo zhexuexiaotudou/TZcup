@@ -1,32 +1,160 @@
-schema_version: 2
-register_id: tzcup_formal_vehicle_component_register_v2
-coordinate_reference: base_footprint
+schema_version: 6
+register_id: tzcup_formal_vehicle_component_register_v6
+coordinate_contract:
+  default_reference: base_footprint
+  nominal_joint_configuration: zero
+  position_tolerance_m: 0.001
+  orientation_tolerance_rad: 0.001
 claim_boundary: >-
   The register freezes the selected public-reference component, parent/child
-  mounting chain and nominal installation datum. It does not claim proprietary
+  mounting chain and nominal zero-joint installation pose. Dynamic equipment
+  uses an explicit local coordinate reference. It does not claim proprietary
   internals, manufacturing tolerances, cable-flex life or certification.
+
+navigation_sensor_semantics:
+  mapping:
+    dimensionality: 2d_occupancy_grid
+    primary_sensor_installation: hokuyo_utm30lx
+    topic_contract: lidar_2d_scan
+    product_pipeline: slam_toolbox_utm_scan
+  obstacle_perception:
+    dimensionality: 3d_pointcloud
+    primary_sensor_installation: livox_mid360
+    topic_contract: lidar_3d_pointcloud
+    product_pipeline: mid360_obstacle_layer
+    mapping_claim: prohibited
+
+topic_contracts:
+  lidar_2d_scan: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_vehicle_product_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_vehicle_product_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc, ros_topic: /sensors/lidar_2d/scan, ros_type: sensor_msgs/msg/LaserScan, gz_type: gz.msgs.LaserScan, sensor_base_topic: /sensors/lidar_2d/scan}
+  lidar_3d_pointcloud: {ros_topic: /sensors/lidar_3d/points, ros_type: sensor_msgs/msg/PointCloud2, gz_type: gz.msgs.PointCloudPacked, sensor_base_topic: /sensors/lidar_3d}
+  gnss_fix: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_vehicle_product_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_vehicle_product_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc, ros_topic: /sensors/gnss/fix, ros_type: sensor_msgs/msg/NavSatFix, gz_type: gz.msgs.NavSat, sensor_base_topic: /sensors/gnss/fix}
+  a300_encoder_counts: {transport: ros_native, direction: publisher, single_writer: true, writer_node: formal_encoder_feedback_publisher, ros_topic: /formal_vehicle/encoders/a300/counts, ros_type: std_msgs/msg/Int64MultiArray, source_path: starter_ws/src/sanitation_vehicle_description/scripts/formal_encoder_feedback_publisher.py}
+  a300_encoder_joint_states: {transport: ros_native, direction: publisher, single_writer: true, writer_node: formal_encoder_feedback_publisher, ros_topic: /formal_vehicle/encoders/a300/joint_states, ros_type: sensor_msgs/msg/JointState, source_path: starter_ws/src/sanitation_vehicle_description/scripts/formal_encoder_feedback_publisher.py}
+  a300_raw_odometry: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: a300_drivetrain_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: a300_drivetrain_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainNativeBridge.cc, ros_topic: /odom/unfiltered, ros_type: nav_msgs/msg/Odometry, gz_type: gz.msgs.Odometry}
+  cleaning_encoder_counts: {transport: ros_native, direction: publisher, single_writer: true, writer_node: formal_encoder_feedback_publisher, ros_topic: /formal_vehicle/encoders/cleaning/counts, ros_type: std_msgs/msg/Int64MultiArray, source_path: starter_ws/src/sanitation_vehicle_description/scripts/formal_encoder_feedback_publisher.py}
+  cleaning_encoder_joint_states: {transport: ros_native, direction: publisher, single_writer: true, writer_node: formal_encoder_feedback_publisher, ros_topic: /formal_vehicle/encoders/cleaning/joint_states, ros_type: sensor_msgs/msg/JointState, source_path: starter_ws/src/sanitation_vehicle_description/scripts/formal_encoder_feedback_publisher.py}
+  imu_data: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_vehicle_product_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_vehicle_product_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc, ros_topic: /sensors/imu/data, ros_type: sensor_msgs/msg/Imu, gz_type: gz.msgs.IMU, sensor_base_topic: /sensors/imu/data}
+  front_rgbd_rgb: {ros_topic: /sensors/front_rgbd/depth/image_rect_raw/image, ros_type: sensor_msgs/msg/Image, gz_type: gz.msgs.Image, sensor_base_topic: /sensors/front_rgbd/depth/image_rect_raw}
+  front_rgbd_depth: {ros_topic: /sensors/front_rgbd/depth/image_rect_raw/depth_image, ros_type: sensor_msgs/msg/Image, gz_type: gz.msgs.Image, sensor_base_topic: /sensors/front_rgbd/depth/image_rect_raw}
+  front_rgbd_camera_info: {ros_topic: /sensors/front_rgbd/depth/image_rect_raw/camera_info, ros_type: sensor_msgs/msg/CameraInfo, gz_type: gz.msgs.CameraInfo, sensor_base_topic: /sensors/front_rgbd/depth/image_rect_raw}
+  front_rgbd_ir_left: {ros_topic: /sensors/front_rgbd/infra1/image_rect_raw, ros_type: sensor_msgs/msg/Image, gz_type: gz.msgs.Image, sensor_base_topic: /sensors/front_rgbd/infra1/image_rect_raw}
+  front_rgbd_ir_left_camera_info: {ros_topic: /sensors/front_rgbd/infra1/image_rect_raw/camera_info, ros_type: sensor_msgs/msg/CameraInfo, gz_type: gz.msgs.CameraInfo, sensor_base_topic: /sensors/front_rgbd/infra1/image_rect_raw}
+  front_rgbd_ir_right: {ros_topic: /sensors/front_rgbd/infra2/image_rect_raw, ros_type: sensor_msgs/msg/Image, gz_type: gz.msgs.Image, sensor_base_topic: /sensors/front_rgbd/infra2/image_rect_raw}
+  front_rgbd_ir_right_camera_info: {ros_topic: /sensors/front_rgbd/infra2/image_rect_raw/camera_info, ros_type: sensor_msgs/msg/CameraInfo, gz_type: gz.msgs.CameraInfo, sensor_base_topic: /sensors/front_rgbd/infra2/image_rect_raw}
+  wrist_rgbd_rgb: {ros_topic: /sensors/wrist_rgbd/depth/image_rect_raw/image, ros_type: sensor_msgs/msg/Image, gz_type: gz.msgs.Image, sensor_base_topic: /sensors/wrist_rgbd/depth/image_rect_raw}
+  wrist_rgbd_depth: {ros_topic: /sensors/wrist_rgbd/depth/image_rect_raw/depth_image, ros_type: sensor_msgs/msg/Image, gz_type: gz.msgs.Image, sensor_base_topic: /sensors/wrist_rgbd/depth/image_rect_raw}
+  wrist_rgbd_camera_info: {ros_topic: /sensors/wrist_rgbd/depth/image_rect_raw/camera_info, ros_type: sensor_msgs/msg/CameraInfo, gz_type: gz.msgs.CameraInfo, sensor_base_topic: /sensors/wrist_rgbd/depth/image_rect_raw}
+  wrist_rgbd_ir_left: {ros_topic: /sensors/wrist_rgbd/infra1/image_rect_raw, ros_type: sensor_msgs/msg/Image, gz_type: gz.msgs.Image, sensor_base_topic: /sensors/wrist_rgbd/infra1/image_rect_raw}
+  wrist_rgbd_ir_left_camera_info: {ros_topic: /sensors/wrist_rgbd/infra1/image_rect_raw/camera_info, ros_type: sensor_msgs/msg/CameraInfo, gz_type: gz.msgs.CameraInfo, sensor_base_topic: /sensors/wrist_rgbd/infra1/image_rect_raw}
+  wrist_rgbd_ir_right: {ros_topic: /sensors/wrist_rgbd/infra2/image_rect_raw, ros_type: sensor_msgs/msg/Image, gz_type: gz.msgs.Image, sensor_base_topic: /sensors/wrist_rgbd/infra2/image_rect_raw}
+  wrist_rgbd_ir_right_camera_info: {ros_topic: /sensors/wrist_rgbd/infra2/image_rect_raw/camera_info, ros_type: sensor_msgs/msg/CameraInfo, gz_type: gz.msgs.CameraInfo, sensor_base_topic: /sensors/wrist_rgbd/infra2/image_rect_raw}
+  rear_left_image: {ros_topic: /sensors/rear_left_fisheye/image_raw, ros_type: sensor_msgs/msg/Image, gz_type: gz.msgs.Image, sensor_base_topic: /sensors/rear_left_fisheye/image_raw}
+  rear_left_camera_info: {transport: ros_native, direction: publisher, single_writer: true, writer_node: formal_fisheye_camera_info_publisher, ros_topic: /sensors/rear_left_fisheye/camera_info, ros_type: sensor_msgs/msg/CameraInfo, source_path: starter_ws/src/sanitation_vehicle_description/scripts/formal_fisheye_camera_info_publisher.py}
+  rear_right_image: {ros_topic: /sensors/rear_right_fisheye/image_raw, ros_type: sensor_msgs/msg/Image, gz_type: gz.msgs.Image, sensor_base_topic: /sensors/rear_right_fisheye/image_raw}
+  rear_right_camera_info: {transport: ros_native, direction: publisher, single_writer: true, writer_node: formal_fisheye_camera_info_publisher, ros_topic: /sensors/rear_right_fisheye/camera_info, ros_type: sensor_msgs/msg/CameraInfo, source_path: starter_ws/src/sanitation_vehicle_description/scripts/formal_fisheye_camera_info_publisher.py}
+  dry_deposit_contact: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_vehicle_product_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_vehicle_product_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc, ros_topic: /storage/dry_deposit/contact, ros_type: ros_gz_interfaces/msg/Contacts, gz_type: gz.msgs.Contacts, sensor_base_topic: /storage/dry_deposit/contact}
+  suction_nozzle_contact: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_vehicle_product_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_vehicle_product_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc, ros_topic: /cleaning/suction_nozzle/contact, ros_type: ros_gz_interfaces/msg/Contacts, gz_type: gz.msgs.Contacts, sensor_base_topic: /cleaning/suction_nozzle/contact}
+  squeegee_blade_contact: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, endpoint_group: squeegee, writer_node: formal_squeegee_evaluation_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_contact_evaluation_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc, ros_topic: /cleaning/squeegee/contact, ros_type: ros_gz_interfaces/msg/Contacts, gz_type: gz.msgs.Contacts, sensor_base_topic: /cleaning/squeegee/contact}
+  squeegee_float_position: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, endpoint_group: squeegee, writer_node: formal_squeegee_evaluation_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_contact_evaluation_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_position_m, ros_type: std_msgs/msg/Float64, gz_type: gz.msgs.Double}
+  squeegee_float_velocity: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, endpoint_group: squeegee, writer_node: formal_squeegee_evaluation_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_contact_evaluation_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_velocity_m_s, ros_type: std_msgs/msg/Float64, gz_type: gz.msgs.Double}
+  squeegee_float_force: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, endpoint_group: squeegee, writer_node: formal_squeegee_evaluation_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_contact_evaluation_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_force_n, ros_type: std_msgs/msg/Float64, gz_type: gz.msgs.Double}
+  squeegee_pitch_position: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, endpoint_group: squeegee, writer_node: formal_squeegee_evaluation_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_contact_evaluation_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_position_rad, ros_type: std_msgs/msg/Float64, gz_type: gz.msgs.Double}
+  squeegee_pitch_velocity: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, endpoint_group: squeegee, writer_node: formal_squeegee_evaluation_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_contact_evaluation_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_velocity_rad_s, ros_type: std_msgs/msg/Float64, gz_type: gz.msgs.Double}
+  squeegee_pitch_torque: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, endpoint_group: squeegee, writer_node: formal_squeegee_evaluation_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_contact_evaluation_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_torque_nm, ros_type: std_msgs/msg/Float64, gz_type: gz.msgs.Double}
+  front_bumper_contact: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, endpoint_group: front_bumper, writer_node: front_bumper_contact_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_contact_evaluation_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc, ros_topic: /formal_vehicle/simulation/raw/front_bumper/contact, ros_type: ros_gz_interfaces/msg/Contacts, gz_type: gz.msgs.Contacts, sensor_base_topic: /safety/front_bumper/contact}
+  rear_bumper_contact: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, endpoint_group: rear_bumper, writer_node: rear_bumper_contact_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_contact_evaluation_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc, ros_topic: /formal_vehicle/simulation/raw/rear_bumper/contact, ros_type: ros_gz_interfaces/msg/Contacts, gz_type: gz.msgs.Contacts, sensor_base_topic: /safety/rear_bumper/contact}
+  left_side_brush_contact: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, endpoint_group: brushes, writer_node: formal_brush_contact_evaluation_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_contact_evaluation_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc, ros_topic: /cleaning/left_side_brush/contact, ros_type: ros_gz_interfaces/msg/Contacts, gz_type: gz.msgs.Contacts}
+  right_side_brush_contact: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, endpoint_group: brushes, writer_node: formal_brush_contact_evaluation_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_contact_evaluation_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc, ros_topic: /cleaning/right_side_brush/contact, ros_type: ros_gz_interfaces/msg/Contacts, gz_type: gz.msgs.Contacts}
+  central_roller_contact: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, endpoint_group: brushes, writer_node: formal_brush_contact_evaluation_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_contact_evaluation_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc, ros_topic: /cleaning/central_roller/contact, ros_type: ros_gz_interfaces/msg/Contacts, gz_type: gz.msgs.Contacts}
+  dry_bin_fill_level: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_vehicle_product_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_vehicle_product_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/dry_bin/fill_level_fraction, ros_type: std_msgs/msg/Float64, gz_type: gz.msgs.Double}
+  wastewater_sensed_level: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_vehicle_product_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_vehicle_product_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/water_recovery/sensed_tank_level_fraction, ros_type: std_msgs/msg/Float64, gz_type: gz.msgs.Double}
+  wastewater_low_probe: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_vehicle_product_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_vehicle_product_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/water_recovery/tank_low_probe_wet, ros_type: std_msgs/msg/Bool, gz_type: gz.msgs.Boolean}
+  wastewater_high_probe: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_vehicle_product_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_vehicle_product_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/water_recovery/tank_high_probe_wet, ros_type: std_msgs/msg/Bool, gz_type: gz.msgs.Boolean}
+  recovery_sensed_flow: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_vehicle_product_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_vehicle_product_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/water_recovery/sensed_flow_l_min, ros_type: std_msgs/msg/Float64, gz_type: gz.msgs.Double}
+  recovery_filter_pressure: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_vehicle_product_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_vehicle_product_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/water_recovery/filter_differential_pressure_kpa, ros_type: std_msgs/msg/Float64, gz_type: gz.msgs.Double}
+  recovery_filter_blockage: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: water_evaluation_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: water_evaluation_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/WaterEvaluationBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/water_recovery/filter_blockage_fraction, ros_type: std_msgs/msg/Float64, gz_type: gz.msgs.Double}
+  recovery_filter_protection: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_vehicle_product_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_vehicle_product_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/water_recovery/filter_protection_active, ros_type: std_msgs/msg/Bool, gz_type: gz.msgs.Boolean}
+  recovery_pump_current: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_vehicle_product_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_vehicle_product_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/water_recovery/pump_current_a, ros_type: std_msgs/msg/Float64, gz_type: gz.msgs.Double}
+  cleaning_motor_status: {transport: gazebo_only_diagnostic, direction: publisher, single_writer: true, writer_system: CleaningActuatorMotorSystem, gz_topic: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/status_json, gz_type: gz.msgs.StringMsg, source_path: starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorMotorSystem.cc}
+  cleaning_motor_fault: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: cleaning_actuator_scalar_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: cleaning_actuator_scalar_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorScalarNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/fault_active, ros_type: std_msgs/msg/Bool, gz_type: gz.msgs.Boolean, safety_effect: global_fail_closed}
+  cleaning_motor_current: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: cleaning_actuator_motor_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: cleaning_actuator_vector_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorVectorBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/motor_current_a, ros_type: std_msgs/msg/Float64MultiArray, gz_type: gz.msgs.Double_V, actuator_order: [left_side_brush, right_side_brush, central_roller, cleaning_lift, recovery_pump]}
+  cleaning_motor_temperature: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: cleaning_actuator_motor_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: cleaning_actuator_vector_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorVectorBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/motor_temperature_c, ros_type: std_msgs/msg/Float64MultiArray, gz_type: gz.msgs.Double_V, actuator_order: [left_side_brush, right_side_brush, central_roller, cleaning_lift, recovery_pump]}
+  cleaning_motor_output_load: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: cleaning_actuator_motor_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: cleaning_actuator_vector_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorVectorBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/estimated_output_load, ros_type: std_msgs/msg/Float64MultiArray, gz_type: gz.msgs.Double_V, actuator_order: [left_side_brush, right_side_brush, central_roller, cleaning_lift, recovery_pump], units: [N_m, N_m, N_m, N, N_m]}
+  cleaning_motor_telemetry_snapshot: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: cleaning_actuator_motor_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: cleaning_actuator_vector_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorVectorBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/telemetry_snapshot, ros_type: std_msgs/msg/Float64MultiArray, gz_type: gz.msgs.Double_V, schema_version: 1, expected_length: 63, actuator_order: [left_side_brush, right_side_brush, central_roller, cleaning_lift, recovery_pump]}
+  wastewater_drain_permitted: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_vehicle_product_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_vehicle_product_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/water_recovery/service_drain_permitted, ros_type: std_msgs/msg/Bool, gz_type: gz.msgs.Boolean}
+  wastewater_drained_volume: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_vehicle_product_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_vehicle_product_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc, ros_topic: /model/tzcup_formal_sanitation_vehicle/water_recovery/service_drained_volume_l, ros_type: std_msgs/msg/Float64, gz_type: gz.msgs.Double}
+  emergency_stop_state: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_auxiliary_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_auxiliary_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalAuxiliaryNativeBridge.cc, ros_topic: /emergency_stop, ros_type: std_msgs/msg/Bool, gz_type: gz.msgs.Boolean}
+  emergency_stop_request: {transport: gazebo_native_bridge, direction: subscription, writer_node: formal_auxiliary_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_auxiliary_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalAuxiliaryNativeBridge.cc, ros_topic: /formal_vehicle/simulation/command/emergency_stop, ros_type: std_msgs/msg/Bool, gz_type: gz.msgs.Boolean}
+  emergency_stop_plunger_command: {transport: gazebo_native_bridge, direction: subscription, writer_node: formal_auxiliary_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_auxiliary_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalAuxiliaryNativeBridge.cc, ros_topic: /formal_vehicle/simulation/command/emergency_stop_plunger_pressed, ros_type: std_msgs/msg/Bool, gz_type: gz.msgs.Boolean}
+  emergency_stop_reset_request: {transport: gazebo_native_bridge, direction: subscription, writer_node: formal_auxiliary_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_auxiliary_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalAuxiliaryNativeBridge.cc, ros_topic: /formal_vehicle/simulation/command/emergency_stop_reset, ros_type: std_msgs/msg/Bool, gz_type: gz.msgs.Boolean}
+  safety_relay_state: {transport: ros_native, ros_topic: /safety/relay_enabled, ros_type: std_msgs/msg/Bool, source_path: starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py}
+  whole_vehicle_safety_status: {transport: ros_native, ros_topic: /safety/status, ros_type: diagnostic_msgs/msg/DiagnosticArray, source_path: starter_ws/src/sanitation_safety/sanitation_safety/whole_vehicle_safety_manager.py}
+  battery_state: {transport: ros_native, direction: publisher, single_writer: true, writer_node: a300_bms_simulator, ros_topic: /formal_vehicle/power/battery_state, ros_type: sensor_msgs/msg/BatteryState, source_path: starter_ws/src/sanitation_power_system/sanitation_power_system/a300_bms_node.py}
+  battery_soc: {transport: ros_native, direction: publisher, single_writer: true, writer_node: a300_bms_simulator, ros_topic: /formal_vehicle/power/battery_soc, ros_type: std_msgs/msg/Float64, source_path: starter_ws/src/sanitation_power_system/sanitation_power_system/a300_bms_node.py}
+  bms_fault: {transport: ros_native, direction: publisher, single_writer: true, writer_node: a300_bms_simulator, ros_topic: /formal_vehicle/power/bms_fault, ros_type: std_msgs/msg/Bool, source_path: starter_ws/src/sanitation_power_system/sanitation_power_system/a300_bms_node.py}
+  bms_status: {transport: ros_native, direction: publisher, single_writer: true, writer_node: a300_bms_simulator, ros_topic: /formal_vehicle/power/bms_status_json, ros_type: std_msgs/msg/String, source_path: starter_ws/src/sanitation_power_system/sanitation_power_system/a300_bms_node.py}
+  traction_permitted: {transport: ros_native, direction: publisher, single_writer: true, writer_node: a300_bms_simulator, ros_topic: /formal_vehicle/power/traction_permitted, ros_type: std_msgs/msg/Bool, source_path: starter_ws/src/sanitation_power_system/sanitation_power_system/a300_bms_node.py}
+  charge_requested: {transport: ros_native, direction: publisher, single_writer: true, writer_node: simulation_safety_inputs, ros_topic: /formal_vehicle/power/charge_requested, ros_type: std_msgs/msg/Bool, source_path: starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py}
+  main_power_requested: {transport: ros_native, direction: publisher, single_writer: true, writer_node: simulation_safety_inputs, ros_topic: /formal_vehicle/power/main_power_requested, ros_type: std_msgs/msg/Bool, source_path: starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py}
+  main_contactor_command: {transport: ros_native, direction: publisher, single_writer: true, writer_node: simulation_safety_inputs, ros_topic: /formal_vehicle/power/main_contactor_command, ros_type: std_msgs/msg/Bool, source_path: starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py}
+  main_isolator_closed: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_auxiliary_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_auxiliary_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalAuxiliaryNativeBridge.cc, ros_topic: /formal_vehicle/power/main_isolator_closed, ros_type: std_msgs/msg/Bool, gz_type: gz.msgs.Boolean}
+  main_contactor_closed: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_auxiliary_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_auxiliary_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalAuxiliaryNativeBridge.cc, ros_topic: /formal_vehicle/power/main_contactor_closed, ros_type: std_msgs/msg/Bool, gz_type: gz.msgs.Boolean}
+  charge_receptacle_contact: {transport: ros_native, direction: subscription, ros_topic: /formal_vehicle/service/raw/charge_plug_contact, ros_type: ros_gz_interfaces/msg/Contacts, source_path: starter_ws/src/sanitation_power_system/sanitation_power_system/charge_interface_manager.py}
+  wastewater_drain_hose_contact: {transport: ros_native, direction: subscription, ros_topic: /formal_vehicle/service/raw/drain_hose_contact, ros_type: ros_gz_interfaces/msg/Contacts, source_path: starter_ws/src/sanitation_safety/sanitation_safety/service_drain_manager.py}
+  charge_receptacle_contact_native_source: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, endpoint_group: charge_receptacle, writer_node: charge_receptacle_contact_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_contact_evaluation_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc, ros_topic: /formal_vehicle/service/raw/charge_plug_contact, ros_type: ros_gz_interfaces/msg/Contacts, gz_type: gz.msgs.Contacts}
+  wastewater_drain_hose_contact_native_source: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, endpoint_group: wastewater_drain, writer_node: wastewater_drain_contact_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_contact_evaluation_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc, ros_topic: /formal_vehicle/service/raw/drain_hose_contact, ros_type: ros_gz_interfaces/msg/Contacts, gz_type: gz.msgs.Contacts}
+  charge_enable: {transport: ros_native, direction: publisher, single_writer: true, writer_node: charge_interface_manager, ros_topic: /formal_vehicle/power/charge_enable, ros_type: std_msgs/msg/Bool, source_path: starter_ws/src/sanitation_power_system/sanitation_power_system/charge_interface_manager.py}
+  charge_connected: {transport: ros_native, direction: publisher, single_writer: true, writer_node: charge_interface_manager, ros_topic: /formal_vehicle/power/charge_connected, ros_type: std_msgs/msg/Bool, source_path: starter_ws/src/sanitation_power_system/sanitation_power_system/charge_interface_manager.py}
+  charge_power_request: {transport: ros_native, direction: publisher, single_writer: true, writer_node: charge_interface_manager, ros_topic: /formal_vehicle/power/charge_request_w, ros_type: std_msgs/msg/Float64, source_path: starter_ws/src/sanitation_power_system/sanitation_power_system/charge_interface_manager.py}
+  charge_status: {transport: ros_native, direction: publisher, single_writer: true, writer_node: charge_interface_manager, ros_topic: /formal_vehicle/power/charge_status_json, ros_type: std_msgs/msg/String, source_path: starter_ws/src/sanitation_power_system/sanitation_power_system/charge_interface_manager.py}
+  load_power_request: {transport: ros_native, direction: publisher, single_writer: true, writer_node: simulation_safety_inputs, ros_topic: /formal_vehicle/power/load_request_w, ros_type: std_msgs/msg/Float64, source_path: starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py}
+  auxiliary_power_status: {transport: ros_native, direction: publisher, single_writer: true, writer_node: simulation_safety_inputs, ros_topic: /formal_vehicle/auxiliary/status_json, ros_type: std_msgs/msg/String, source_path: starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py}
+  safety_power_branch: {transport: ros_native, direction: publisher, single_writer: true, writer_node: simulation_safety_inputs, ros_topic: /formal_vehicle/power/branches/safety/enabled, ros_type: std_msgs/msg/Bool, source_path: starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py}
+  low_voltage_power_branch: {transport: ros_native, direction: publisher, single_writer: true, writer_node: simulation_safety_inputs, ros_topic: /formal_vehicle/power/branches/low_voltage/enabled, ros_type: std_msgs/msg/Bool, source_path: starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py}
+  high_power_branch: {transport: ros_native, direction: publisher, single_writer: true, writer_node: simulation_safety_inputs, ros_topic: /formal_vehicle/power/branches/high_power/enabled, ros_type: std_msgs/msg/Bool, source_path: starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py}
+  work_lights_state: {transport: ros_native, direction: publisher, single_writer: true, writer_node: simulation_safety_inputs, ros_topic: /formal_vehicle/lighting/work_lights_on, ros_type: std_msgs/msg/Bool, source_path: starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py}
+  tail_lights_state: {transport: ros_native, direction: publisher, single_writer: true, writer_node: simulation_safety_inputs, ros_topic: /formal_vehicle/lighting/tail_lights_on, ros_type: std_msgs/msg/Bool, source_path: starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py}
+  warning_lights_state: {transport: ros_native, direction: publisher, single_writer: true, writer_node: simulation_safety_inputs, ros_topic: /formal_vehicle/lighting/warning_lights_on, ros_type: std_msgs/msg/Bool, source_path: starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py}
+  work_lights_applied: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_auxiliary_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_auxiliary_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalAuxiliaryNativeBridge.cc, ros_topic: /formal_vehicle/lighting/work_lights_applied, ros_type: std_msgs/msg/Bool, gz_type: gz.msgs.Boolean}
+  tail_lights_applied: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_auxiliary_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_auxiliary_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalAuxiliaryNativeBridge.cc, ros_topic: /formal_vehicle/lighting/tail_lights_applied, ros_type: std_msgs/msg/Bool, gz_type: gz.msgs.Boolean}
+  warning_lights_applied: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: formal_auxiliary_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: formal_auxiliary_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/FormalAuxiliaryNativeBridge.cc, ros_topic: /formal_vehicle/lighting/warning_lights_applied, ros_type: std_msgs/msg/Bool, gz_type: gz.msgs.Boolean}
 
 sensor_installations:
   - id: hokuyo_utm30lx
-    role: 2d_obstacle_and_localization_lidar
+    role: 2d_occupancy_mapping_localization_and_obstacle_lidar
     model: Hokuyo UTM-30LX
     parent_link: sensor_mast_link
     mount_link: lidar_2d_mount_link
     sensor_link: lidar_2d_link
     connection: bolted_front_cantilever_with_vibration_pad_and_side_clamps
-    xyz_m: [-0.020, 0.000, 1.1021]
+    xyz_m: [0.535, 0.000, 1.1621]
+    rpy_rad: [0.000, 0.000, 0.000]
     visible: true
-    topic: /sensors/lidar_2d/scan
+    topic_contracts: [lidar_2d_scan]
   - id: livox_mid360
-    role: 3d_obstacle_and_mapping_lidar
+    role: 3d_obstacle_perception_lidar
     model: Livox MID-360
     parent_link: sensor_mast_link
     mount_link: lidar_3d_mount_link
     sensor_link: lidar_3d_link
     connection: four_isolator_standoffs_on_circular_top_plate
-    xyz_m: [-0.135, 0.000, 1.2731]
+    xyz_m: [0.420, 0.000, 1.2731]
+    rpy_rad: [0.000, 0.000, 0.000]
     visible: true
-    topic: /sensors/lidar_3d/points
+    topic_contracts: [lidar_3d_pointcloud]
+  - id: ublox_zed_f9p_receiver
+    role: gnss_receiver_electronics
+    model: u-blox ZED-F9P-04B 54-pin LGA in project service enclosure
+    parent_link: sensor_mast_link
+    mount_link: zed_f9p_receiver_enclosure_link
+    sensor_link: zed_f9p_module_reference_link
+    connection: bolted_open_service_tray_with_coax_bulkhead_and_separate_sky_view_antenna_boom
+    xyz_m: [0.360, -0.095, 0.9801]
+    rpy_rad: [0.000, 0.000, 0.000]
+    visible: true
+    topic_contracts: [gnss_fix]
+    public_package_dimensions_m: [0.017, 0.022, 0.0024]
+    receiver_mass_status: unpublished_epsilon_reference_with_conservative_enclosure_allocation
   - id: ublox_ann_mb
     role: gnss_antenna
     model: u-blox ANN-MB-00
@@ -34,9 +162,10 @@ sensor_installations:
     mount_link: gnss_mount_link
     sensor_link: gnss_antenna_link
     connection: lateral_sky_view_boom_with_ground_plane_and_four_fasteners
-    xyz_m: [-0.190, 0.160, 1.1801]
+    xyz_m: [0.365, 0.160, 1.1801]
+    rpy_rad: [0.000, 0.000, 0.000]
     visible: true
-    topic: /sensors/gnss/fix
+    topic_contracts: [gnss_fix]
   - id: intel_d435_front
     role: forward_rgbd_perception
     model: Intel RealSense D435
@@ -44,29 +173,36 @@ sensor_installations:
     mount_link: front_rgbd_mount_link
     sensor_link: front_rgbd_link
     connection: recessed_bezel_glare_hood_and_four_fasteners_to_front_subframe
-    xyz_m: [0.569951, 0.000, 0.613404]
+    xyz_m: [0.569532, 0.000, 0.611987]
+    rpy_rad: [0.000, 0.436332313, 0.000]
     visible: true
-    topic: /sensors/front_rgbd/depth/image_rect_raw
+    topic_contracts: [front_rgbd_rgb, front_rgbd_depth, front_rgbd_camera_info, front_rgbd_ir_left, front_rgbd_ir_left_camera_info, front_rgbd_ir_right, front_rgbd_ir_right_camera_info]
   - id: rear_left_fisheye
     role: rear_left_obstacle_camera
-    model: Arducam IMX291-class rugged fisheye module
+    model: Arducam B0202 IMX291 UVC plus M27195H15 lens
+    simulation_calibration_profile: sdf_equisolid_to_ros_kannala_brandt_taylor_v1
+    hardware_calibration_status: required_before_real_camera_deployment
     parent_link: base_link
     mount_link: rear_left_fisheye_mount_link
     sensor_link: rear_left_fisheye_link
     connection: sealed_wedge_pod_to_rear_body_subframe
     xyz_m: [-0.565, 0.280, 0.6001]
+    rpy_rad: [0.000, -0.175, 2.705]
     visible: true
-    topic: /sensors/rear_left_fisheye/image_raw
+    topic_contracts: [rear_left_image, rear_left_camera_info]
   - id: rear_right_fisheye
     role: rear_right_obstacle_camera
-    model: Arducam IMX291-class rugged fisheye module
+    model: Arducam B0202 IMX291 UVC plus M27195H15 lens
+    simulation_calibration_profile: sdf_equisolid_to_ros_kannala_brandt_taylor_v1
+    hardware_calibration_status: required_before_real_camera_deployment
     parent_link: base_link
     mount_link: rear_right_fisheye_mount_link
     sensor_link: rear_right_fisheye_link
     connection: sealed_wedge_pod_to_rear_body_subframe
     xyz_m: [-0.565, -0.280, 0.6001]
+    rpy_rad: [0.000, -0.175, -2.705]
     visible: true
-    topic: /sensors/rear_right_fisheye/image_raw
+    topic_contracts: [rear_right_image, rear_right_camera_info]
   - id: vectornav_vn100
     role: inertial_measurement
     model: VectorNav VN-100 Rugged
@@ -75,26 +211,56 @@ sensor_installations:
     sensor_link: imu_link
     connection: internal_horizontal_tray_with_four_elastomer_isolators
     xyz_m: [0.000, 0.000, 0.4091]
+    rpy_rad: [0.000, 0.000, 0.000]
     visible: false
     service_visibility: bodywork_visible_false
-    topic: /sensors/imu/data
+    topic_contracts: [imu_data]
   - id: intel_d435_wrist
     role: grasp_rgbd_perception
     model: Intel RealSense D435
     parent_link: tool0
-    mount_link: wrist_rgbd_link
+    mount_link: wrist_rgbd_mount_link
     sensor_link: wrist_rgbd_link
-    connection: machined_side_bracket_on_ur_tool_flange
-    xyz_m: [0.115, 0.000, 0.025]
+    connection: tool_flange_to_machined_side_bracket_then_independently_bolted_d435_housing
+    coordinate_reference: tool0
+    xyz_m: [0.140, 0.000, 0.025]
+    rpy_rad: [1.570796327, -1.570796327, 0.000]
+    dynamic_position: true
     visible: true
-    topic: /sensors/wrist_rgbd/depth/image_rect_raw
+    topic_contracts: [wrist_rgbd_rgb, wrist_rgbd_depth, wrist_rgbd_camera_info, wrist_rgbd_ir_left, wrist_rgbd_ir_left_camera_info, wrist_rgbd_ir_right, wrist_rgbd_ir_right_camera_info]
+
+physical_actuation_interfaces:
+  a300_drivetrain_plant:
+    authority: sanitation_gazebo_control::A300DrivetrainPlantSystem
+    source_path: starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantSystem.cc
+    driven_joints: [front_left_wheel_joint, front_right_wheel_joint, rear_left_wheel_joint, rear_right_wheel_joint]
+    command_input_ros: /base_controller/cmd_vel
+    command_adapter: /a300_drivetrain_command_adapter
+    gazebo_command_type: gz.msgs.Twist
+    physical_command_component: gz.sim.components.JointForceCmd
+    raw_odometry_ros: /odom/unfiltered
+    selected_odometry_publisher: /local_ekf
+    publishes_tf: false
 
 mechanical_subassemblies:
+  - id: mobility_base
+    model: Clearpath Husky A300 40Ah
+    parent_link: base_footprint
+    root_link: base_link
+    connection: fixed_ground_datum_to_a300_chassis_with_four_independent_drive_modules
+    driven_joints: [front_left_wheel_joint, front_right_wheel_joint, rear_left_wheel_joint, rear_right_wheel_joint]
+    actuation_interface: a300_drivetrain_plant
   - id: sensor_tower
     parent_link: payload_deck_link
     root_link: sensor_mast_link
     connection: 190x150x16_mm_bolted_base_twin_30x30_mm_columns_three_cross_ties_and_gussets
     purpose: carries_utm_mid360_and_gnss_without_shared_floating_crossbar
+  - id: gnss_receiver_installation
+    model: u-blox ZED-F9P-04B plus project service enclosure
+    parent_link: sensor_mast_link
+    root_link: zed_f9p_receiver_enclosure_link
+    connection: mast_side_bolted_open_tray_to_explicit_LGA_module_reference_and_remote_ANN_MB_antenna
+    topic_contracts: [gnss_fix]
   - id: manipulator
     model: Universal Robots UR5e
     parent_link: arm_mount_link
@@ -109,86 +275,367 @@ mechanical_subassemblies:
     connection: ur_tool_flange_adapter_to_robotiq_base
     driven_joints: [robotiq_85_left_knuckle_joint]
     controller: gripper_controller
+  - id: wrist_rgbd_installation
+    model: Intel RealSense D435 on project machined side bracket
+    parent_link: tool0
+    root_link: wrist_rgbd_mount_link
+    connection: tool0_to_separate_machined_bracket_then_fixed_camera_housing_and_optical_frame
+    bracket_design: rear_plane_dogleg_all_load_members_behind_camera_x_le_minus_0.0125_m
+    bracket_mass_kg: 0.236709
+    pregrasp_depth_fov_clear_fraction: 0.966946779
+    pregrasp_cube_visible_fraction: 1.0
+    verification: deterministic_full_mesh_ray_no_mount_link_ignore
   - id: dry_storage
-    parent_link: payload_deck_link
+    parent_link: storage_system_mount_link
     root_link: dry_bin_link
-    connection: single_layer_40_l_bin_on_payload_deck
+    connection: single_layer_40_l_bin_hinged_lid_and_manual_over_center_latch_on_shared_storage_subframe
+    passive_joints: [dry_bin_lid_joint, dry_bin_latch_joint]
   - id: wastewater_storage
-    parent_link: payload_deck_link
+    parent_link: storage_system_mount_link
     root_link: wastewater_tank_link
-    connection: dedicated_wet_tank_on_payload_deck
+    connection: dedicated_wet_tank_hinged_lid_manual_over_center_latch_and_service_drain_on_shared_storage_subframe
+    passive_joints: [wastewater_lid_joint, wastewater_lid_latch_joint]
   - id: side_brushes
     parent_link: cleaning_lift_carriage_link
     root_links: [left_side_brush_motor_stator_link, right_side_brush_motor_stator_link]
+    actuator_links: [left_side_brush_motor_stator_link, right_side_brush_motor_stator_link]
     connection: lift_carriage_to_outboard_motor_and_brush_shafts
   - id: central_roller
     parent_link: cleaning_lift_carriage_link
     root_link: central_roller_link
+    actuator_link: central_roller_motor_stator_link
     connection: cassette_motor_gearbox_shaft_and_opposite_bearing
   - id: recovery_squeegee
     parent_link: cleaning_lift_carriage_link
-    root_link: squeegee_link
+    root_links: [squeegee_link, squeegee_spring_pack_link]
     connection: pitch_and_float_joints_to_suction_nozzle
+    passive_joints: [squeegee_float_joint, squeegee_pitch_joint]
+  - id: cleaning_head_deployment
+    parent_link: cleaning_mechanism_mount_link
+    root_link: cleaning_lift_carriage_link
+    actuator_link: cleaning_lift_actuator_body_link
+    connection: twin_guides_linear_actuator_linkage_and_floating_squeegee_pivot
+    driven_joints: [cleaning_lift_joint]
+    passive_joints: [squeegee_float_joint, squeegee_pitch_joint]
+    controller: cleaning_controller
   - id: compute_enclosure
-    role: Journey_6_S100_compute_protective_envelope
+    role: Journey_6P_S100P_compute_protective_envelope
+    selected_compute_model: D-Robotics_RDK_S100P_V1P0_user_owned
+    compute_external_dimensions_m: [0.121, 0.120, 0.0524]
+    compute_external_envelope_source: provisional_RDK_S100_reference_pending_owned_S100P_measurement
     parent_link: payload_deck_link
     root_link: s100_compute_enclosure_link
     connection: bolted_230x180_mm_mounting_plate
-    sku_status: exact_board_envelope_pending
+    sku_status: external_envelope_frozen_mass_thermal_connectors_and_live_board_pending
   - id: robot_deposition_port
     parent_link: dry_bin_lid_link
     root_link: dry_deposit_hopper_link
-    connection: aperture_lid_hopper_powered_gate_and_internal_chute
+    connection: aperture_lid_hopper_powered_gate_internal_chute_and_physical_passage_presence_sensor
+    actuator_model: ROBOTIS_DYNAMIXEL_XW540_T260_R
+    actuator_link: dry_deposit_gate_actuator_link
+    actuator_connection: waterproof_servo_hard_mount_with_coaxial_output_horn
+    actuator_public_specs: {mass_kg: 0.185, dimensions_m: [0.0335, 0.0585, 0.0459], rated_stall_torque_12v_nm: 9.5, ingress_protection: IP68}
     driven_joints: [dry_deposit_gate_joint]
+    required_topic_contracts: [dry_deposit_contact]
     controller: storage_controller
   - id: wastewater_recovery_drive
     model: Jabsco PAR-MAX HD4 Q402J-118S-3A external envelope
     parent_link: cleaning_mechanism_mount_link
     root_link: recovery_pump_motor_link
+    actuator_link: recovery_pump_motor_link
     connection: four_isolator_mount_motor_head_rotor_flow_sensor_and_delivery_coupling
     driven_joints: [recovery_pump_joint]
     controller: recovery_controller
+  - id: low_voltage_power_and_safety
+    parent_link: payload_deck_link
+    root_links: [power_distribution_box_link, isolated_dc_dc_module_link, safety_relay_link, s100_compute_enclosure_link, ur5e_control_box_link]
+    connection: fused_vbat_bus_isolated_dc_conversion_hardwired_relay_and_bolted_compute_cabinets
+    purpose: powers_and_interlocks_compute_sensors_arm_and_cleaning_actuators
+  - id: exterior_service_and_contact_safety
+    parent_link: base_link
+    root_links: [charge_interface_datum_link, wastewater_drain_datum_link, emergency_stop_datum_link, warning_and_work_lighting_datum_link, front_contact_safety_datum_link, rear_contact_safety_datum_link]
+    connection: sealed_body_panels_hard_mounted_service_fittings_lamps_and_contact_bumpers
+    purpose: operator_service_visibility_and_low_speed_collision_stop
+  - id: bodywork_service_access
+    parent_link: base_link
+    root_links: [bodywork_power_service_door_hinge_bracket_link, bodywork_compute_service_door_hinge_bracket_link, bodywork_wet_service_door_hinge_bracket_link, bodywork_rear_dry_service_door_hinge_bracket_link]
+    connection: four_chassis_hinge_brackets_limited_door_hinges_and_independent_rotary_latches
+    passive_joints: [bodywork_power_service_door_hinge_joint, bodywork_power_service_door_latch_joint, bodywork_compute_service_door_hinge_joint, bodywork_compute_service_door_latch_joint, bodywork_wet_service_door_hinge_joint, bodywork_wet_service_door_latch_joint, bodywork_rear_dry_service_door_hinge_joint, bodywork_rear_dry_service_door_latch_joint]
+    service_semantics: zero_latch_angle_locked_unlock_latch_before_door_motion_all_hinges_mechanically_limited
 
-# This is the fail-closed product-function checklist.  A position is complete
-# only when the physical link, load path and every declared actuator/topic are
-# present in the expanded model.  It intentionally includes internally mounted
-# equipment that is not visible in normal product mode.
+# This is the fail-closed product-function checklist. Every nominal pose is
+# checked by URDF FK at zero joint position. Dynamic equipment remains dynamic
+# globally, but its fixed installation pose is checked in the explicit local
+# coordinate reference.
 functional_positions:
-  - {id: mobility, function: four_wheel_skid_steer_drive_and_odometry, link: base_link, parent_link: base_footprint, xyz_m: [0.000, 0.000, 0.1651], required_joints: [front_left_wheel_joint, front_right_wheel_joint, rear_left_wheel_joint, rear_right_wheel_joint], interface: base_controller, visible: true}
-  - {id: mapping_3d, function: 3d_mapping_and_obstacle_perception, link: lidar_3d_link, parent_link: lidar_3d_mount_link, xyz_m: [-0.135, 0.000, 1.2731], required_topics: [/sensors/lidar_3d/points], visible: true}
-  - {id: localization_2d, function: 2d_scan_localization_and_obstacle_detection, link: lidar_2d_link, parent_link: lidar_2d_mount_link, xyz_m: [-0.020, 0.000, 1.1021], required_topics: [/sensors/lidar_2d/scan], visible: true}
-  - {id: global_position, function: rtk_gnss_position, link: gnss_antenna_link, parent_link: gnss_mount_link, xyz_m: [-0.190, 0.160, 1.1801], required_topics: [/sensors/gnss/fix], visible: true}
-  - {id: inertial_reference, function: body_motion_and_heading_rate, link: imu_link, parent_link: imu_mount_tray_link, xyz_m: [0.000, 0.000, 0.4091], required_topics: [/sensors/imu/data], visible: false}
-  - {id: forward_perception, function: forward_rgbd_litter_and_dirty_area_perception, link: front_rgbd_link, parent_link: front_rgbd_mount_link, xyz_m: [0.569951, 0.000, 0.613404], required_topics: [/sensors/front_rgbd/depth/image_rect_raw], visible: true}
-  - {id: rear_left_perception, function: rear_left_obstacle_view, link: rear_left_fisheye_link, parent_link: rear_left_fisheye_mount_link, xyz_m: [-0.565, 0.280, 0.6001], required_topics: [/sensors/rear_left_fisheye/image_raw], visible: true}
-  - {id: rear_right_perception, function: rear_right_obstacle_view, link: rear_right_fisheye_link, parent_link: rear_right_fisheye_mount_link, xyz_m: [-0.565, -0.280, 0.6001], required_topics: [/sensors/rear_right_fisheye/image_raw], visible: true}
-  - {id: grasp_observation, function: wrist_rgbd_grasp_alignment, link: wrist_rgbd_link, parent_link: tool0, xyz_m: null, required_topics: [/sensors/wrist_rgbd/depth/image_rect_raw], visible: true, dynamic_position: true}
-  - {id: manipulation, function: six_axis_pick_and_place, link: ur5e_base_link_inertia, parent_link: arm_mount_link, xyz_m: [0.100, -0.200, 0.4341], required_joints: [shoulder_pan_joint, shoulder_lift_joint, elbow_joint, wrist_1_joint, wrist_2_joint, wrist_3_joint], interface: arm_controller, visible: true}
-  - {id: grasping, function: 30_mm_cube_grasp, link: robotiq_85_base_link, parent_link: ur_to_robotiq_adapter_link, xyz_m: null, required_joints: [robotiq_85_left_knuckle_joint], interface: gripper_controller, visible: true, dynamic_position: true}
-  - {id: dry_deposition, function: robot_drop_hopper_and_gate, link: dry_deposit_hopper_link, parent_link: dry_bin_lid_link, xyz_m: [-0.205, 0.160, 1.0471], required_joints: [dry_deposit_gate_joint], required_topics: [/storage/dry_deposit/contact], interface: storage_controller, visible: true}
-  - {id: dry_storage, function: separated_40_l_usable_dry_storage, link: dry_bin_link, parent_link: storage_system_mount_link, xyz_m: [-0.205, 0.160, 0.5691], required_joints: [dry_bin_lid_joint], interface: storage_controller, visible: false}
-  - {id: dry_fill_monitor, function: dry_bin_fill_level, link: dry_bin_level_sensor_link, parent_link: dry_bin_link, xyz_m: [-0.365, 0.160, 0.6741], visible: false}
-  - {id: wet_storage, function: separated_wastewater_storage, link: wastewater_tank_link, parent_link: storage_system_mount_link, xyz_m: [-0.205, -0.245, 0.5041], required_joints: [wastewater_lid_joint], interface: storage_controller, visible: false}
-  - {id: wet_fill_monitor, function: wastewater_low_and_high_level, link: wastewater_high_level_sensor_link, parent_link: wastewater_tank_link, xyz_m: [-0.075, -0.325, 0.5391], visible: false}
-  - {id: side_sweeping, function: dual_side_brush_edge_sweeping, link: left_side_brush_link, parent_link: left_side_brush_gearbox_link, xyz_m: [0.385, 0.545, 0.0741], required_joints: [left_side_brush_joint, right_side_brush_joint], interface: brush_controller, visible: true}
-  - {id: main_sweeping, function: central_helical_roller_collection, link: central_roller_link, parent_link: central_roller_drive_gearbox_link, xyz_m: [0.155, 0.000, 0.0691], required_joints: [central_roller_joint], interface: brush_controller, visible: true}
-  - {id: cleaning_head_lift, function: deploy_and_stow_cleaning_head, link: cleaning_lift_carriage_link, parent_link: cleaning_mechanism_mount_link, xyz_m: [0.000, 0.000, 0.0851], required_joints: [cleaning_lift_joint], interface: cleaning_controller, visible: false}
-  - {id: water_gathering, function: floating_squeegee_water_gathering, link: squeegee_link, parent_link: squeegee_float_carrier_link, xyz_m: [-0.445, 0.000, 0.0541], required_joints: [squeegee_float_joint, squeegee_pitch_joint], interface: cleaning_controller, visible: true}
-  - {id: water_intake, function: ground_contact_suction_intake, link: suction_nozzle_link, parent_link: squeegee_link, xyz_m: [-0.405, 0.000, 0.0641], required_topics: [/cleaning/suction_nozzle/contact], visible: true}
-  - {id: water_filtering, function: recoverable_strainer_before_pump, link: recovery_strainer_filter_link, parent_link: cleaning_mechanism_mount_link, xyz_m: [-0.250, 0.200, 0.3351], visible: false}
-  - {id: water_pumping, function: controlled_wastewater_recovery_pump, link: recovery_pump_rotor_link, parent_link: recovery_pump_head_link, xyz_m: [-0.315, -0.160, 0.3451], required_joints: [recovery_pump_joint], interface: recovery_controller, visible: false}
-  - {id: water_flow_monitor, function: delivery_flow_and_blockage_monitor, link: recovery_flow_sensor_link, parent_link: wastewater_delivery_coupling_link, xyz_m: [-0.358, -0.350, 0.3451], visible: false}
-  - {id: compute, function: Journey_6_S100_inference_and_vehicle_compute, link: s100_compute_enclosure_link, parent_link: payload_deck_link, xyz_m: [0.300, -0.270, 0.4691], visible: false, pending_measurement: exact_user_board_sku}
-  - {id: arm_control, function: ur5e_drive_and_safety_control_cabinet, link: ur5e_control_box_link, parent_link: payload_deck_link, xyz_m: [0.296, 0.240, 0.6736], visible: false}
-  - {id: fused_power_distribution, function: fused_vbat_distribution_to_high_power_branches, link: power_distribution_box_link, parent_link: payload_deck_link, xyz_m: [0.330, 0.025, 0.4441], visible: false}
-  - {id: isolated_low_voltage_power, function: isolated_sensor_and_compute_dc_conversion, link: isolated_dc_dc_module_link, parent_link: payload_deck_link, xyz_m: [0.345, -0.105, 0.4391], visible: false}
-  - {id: hardwired_safety_enable, function: emergency_stop_safety_relay_for_motion_and_cleaning_enable, link: safety_relay_link, parent_link: payload_deck_link, xyz_m: [0.220, -0.080, 0.4441], visible: false}
-  - {id: charge_interface, function: protected_external_charge_connector, link: bodywork_trim_link, parent_link: base_link, xyz_m: [0.250, 0.402, 0.4951], visible: true}
-  - {id: wastewater_drain, function: low_point_wastewater_service_drain, link: bodywork_trim_link, parent_link: base_link, xyz_m: [-0.490, -0.305, 0.4801], visible: true}
-  - {id: emergency_stop, function: manual_latching_emergency_stop, link: bodywork_lighting_link, parent_link: base_link, xyz_m: [-0.405, -0.405, 0.8451], visible: true}
-  - {id: warning_and_work_lighting, function: front_work_rear_tail_and_four_corner_warning_lamps, link: bodywork_lighting_link, parent_link: base_link, xyz_m: [0.000, 0.000, 0.7151], visible: true}
-  - {id: front_contact_safety, function: low_speed_front_bumper_collision_stop, link: bodywork_lower_tub_link, parent_link: base_link, xyz_m: [0.555, 0.000, 0.2701], required_topics: [/safety/front_bumper/contact], visible: true}
-  - {id: rear_contact_safety, function: low_speed_reverse_bumper_collision_stop, link: bodywork_lower_tub_link, parent_link: base_link, xyz_m: [-0.555, 0.000, 0.2701], required_topics: [/safety/rear_bumper/contact], visible: true}
+  - id: mobility
+    function: four_wheel_skid_steer_drive_and_odometry
+    link: base_link
+    parent_link: base_footprint
+    xyz_m: [0.000, 0.000, 0.1651]
+    rpy_rad: [0.000, 0.000, 0.000]
+    required_joints: [front_left_wheel_joint, front_right_wheel_joint, rear_left_wheel_joint, rear_right_wheel_joint]
+    required_topic_contracts: [a300_encoder_counts, a300_encoder_joint_states, a300_raw_odometry]
+    interface: a300_drivetrain_plant
+    visible: true
+    components:
+      - {id: front_left_a300_motor, link: front_left_motor_link, parent_link: left_suspension_beam_link, joint: front_left_motor_joint, xyz_m: [0.256, 0.2174, 0.1651], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: front_right_a300_motor, link: front_right_motor_link, parent_link: right_suspension_beam_link, joint: front_right_motor_joint, xyz_m: [0.256, -0.2174, 0.1651], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: rear_left_a300_motor, link: rear_left_motor_link, parent_link: left_suspension_beam_link, joint: rear_left_motor_joint, xyz_m: [-0.256, 0.2174, 0.1651], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: rear_right_a300_motor, link: rear_right_motor_link, parent_link: right_suspension_beam_link, joint: rear_right_motor_joint, xyz_m: [-0.256, -0.2174, 0.1651], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: front_left_a300_encoder, link: front_left_encoder_link, parent_link: front_left_motor_link, joint: front_left_encoder_mount_joint, xyz_m: [0.256, 0.1654, 0.1651], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: front_right_a300_encoder, link: front_right_encoder_link, parent_link: front_right_motor_link, joint: front_right_encoder_mount_joint, xyz_m: [0.256, -0.1654, 0.1651], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: rear_left_a300_encoder, link: rear_left_encoder_link, parent_link: rear_left_motor_link, joint: rear_left_encoder_mount_joint, xyz_m: [-0.256, 0.1654, 0.1651], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: rear_right_a300_encoder, link: rear_right_encoder_link, parent_link: rear_right_motor_link, joint: rear_right_encoder_mount_joint, xyz_m: [-0.256, -0.1654, 0.1651], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: left_a300_fixed_beam, link: left_suspension_beam_link, parent_link: left_suspension_beam_spacer_link, joint: left_suspension_beam_joint, xyz_m: [0.000, 0.2079, 0.1736], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: right_a300_fixed_beam, link: right_suspension_beam_link, parent_link: right_suspension_beam_spacer_link, joint: right_suspension_beam_joint, xyz_m: [0.000, -0.2079, 0.1736], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: left_a300_fixed_spacer, link: left_suspension_beam_spacer_link, parent_link: base_link, joint: left_suspension_beam_spacer_joint, xyz_m: [0.000, 0.1920, 0.1736], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: right_a300_fixed_spacer, link: right_suspension_beam_spacer_link, parent_link: base_link, joint: right_suspension_beam_spacer_joint, xyz_m: [0.000, -0.1920, 0.1736], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+  - {id: mapping_2d, function: utm30lx_2d_occupancy_mapping, link: lidar_2d_link, parent_link: lidar_2d_mount_link, xyz_m: [0.535, 0.000, 1.1621], rpy_rad: [0.000, 0.000, 0.000], required_topic_contracts: [lidar_2d_scan], visible: true}
+  - {id: obstacle_perception_3d, function: mid360_3d_obstacle_perception, link: lidar_3d_link, parent_link: lidar_3d_mount_link, xyz_m: [0.420, 0.000, 1.2731], rpy_rad: [0.000, 0.000, 0.000], required_topic_contracts: [lidar_3d_pointcloud], visible: true}
+  - {id: localization_2d, function: 2d_scan_localization_and_obstacle_detection, link: lidar_2d_link, parent_link: lidar_2d_mount_link, xyz_m: [0.535, 0.000, 1.1621], rpy_rad: [0.000, 0.000, 0.000], required_topic_contracts: [lidar_2d_scan], visible: true}
+  - id: global_position
+    function: rtk_gnss_receiver_and_remote_antenna_position
+    link: gnss_antenna_link
+    parent_link: gnss_mount_link
+    xyz_m: [0.365, 0.160, 1.1801]
+    rpy_rad: [0.000, 0.000, 0.000]
+    required_topic_contracts: [gnss_fix]
+    visible: true
+    components:
+      - {id: zed_f9p_receiver_enclosure, link: zed_f9p_receiver_enclosure_link, parent_link: sensor_mast_link, joint: zed_f9p_receiver_enclosure_mount_joint, xyz_m: [0.360, -0.095, 0.9741], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: zed_f9p_receiver_module, link: zed_f9p_module_reference_link, parent_link: zed_f9p_receiver_enclosure_link, joint: zed_f9p_module_reference_joint, xyz_m: [0.360, -0.095, 0.9801], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+  - {id: inertial_reference, function: body_motion_and_heading_rate, link: imu_link, parent_link: imu_mount_tray_link, xyz_m: [0.000, 0.000, 0.4091], rpy_rad: [0.000, 0.000, 0.000], required_topic_contracts: [imu_data], visible: false}
+  - id: forward_perception
+    function: forward_rgbd_litter_and_dirty_area_perception
+    link: front_rgbd_link
+    parent_link: front_rgbd_mount_link
+    xyz_m: [0.569532, 0.000, 0.611987]
+    rpy_rad: [0.000, 0.436332313, 0.000]
+    required_topic_contracts: [front_rgbd_rgb, front_rgbd_depth, front_rgbd_camera_info, front_rgbd_ir_left, front_rgbd_ir_left_camera_info, front_rgbd_ir_right, front_rgbd_ir_right_camera_info]
+    visible: true
+    components:
+      - {id: front_rgbd_ir_left_optical_datum, link: front_rgbd_infra1_optical_frame, parent_link: front_rgbd_link, joint: front_rgbd_infra1_optical_frame_joint, xyz_m: [0.569532, 0.000, 0.611987], rpy_rad: [-2.007129, 0.000, -1.570796], visible: false}
+      - {id: front_rgbd_ir_right_optical_datum, link: front_rgbd_infra2_optical_frame, parent_link: front_rgbd_link, joint: front_rgbd_infra2_optical_frame_joint, xyz_m: [0.569532, -0.050, 0.611987], rpy_rad: [-2.007129, 0.000, -1.570796], visible: false}
+  - {id: rear_left_perception, function: rear_left_obstacle_view, link: rear_left_fisheye_link, parent_link: rear_left_fisheye_mount_link, xyz_m: [-0.565, 0.280, 0.6001], rpy_rad: [0.000, -0.175, 2.705], required_topic_contracts: [rear_left_image, rear_left_camera_info], visible: true}
+  - {id: rear_right_perception, function: rear_right_obstacle_view, link: rear_right_fisheye_link, parent_link: rear_right_fisheye_mount_link, xyz_m: [-0.565, -0.280, 0.6001], rpy_rad: [0.000, -0.175, -2.705], required_topic_contracts: [rear_right_image, rear_right_camera_info], visible: true}
+  - id: grasp_observation
+    function: wrist_rgbd_grasp_alignment
+    link: wrist_rgbd_link
+    parent_link: wrist_rgbd_mount_link
+    coordinate_reference: tool0
+    xyz_m: [0.140, 0.000, 0.025]
+    rpy_rad: [1.570796327, -1.570796327, 0.000]
+    required_topic_contracts: [wrist_rgbd_rgb, wrist_rgbd_depth, wrist_rgbd_camera_info, wrist_rgbd_ir_left, wrist_rgbd_ir_left_camera_info, wrist_rgbd_ir_right, wrist_rgbd_ir_right_camera_info]
+    visible: true
+    dynamic_position: true
+    components:
+      - {id: wrist_rgbd_machined_bracket, link: wrist_rgbd_mount_link, parent_link: tool0, joint: wrist_rgbd_bracket_joint, coordinate_reference: tool0, xyz_m: [0.140, 0.000, 0.025], rpy_rad: [1.570796327, -1.570796327, 0.000], visible: true, dynamic_position: true}
+      - {id: wrist_rgbd_camera_housing, link: wrist_rgbd_link, parent_link: wrist_rgbd_mount_link, joint: wrist_rgbd_mount_joint, coordinate_reference: tool0, xyz_m: [0.140, 0.000, 0.025], rpy_rad: [1.570796327, -1.570796327, 0.000], visible: true, dynamic_position: true}
+      - {id: wrist_rgbd_ir_left_optical_datum, link: wrist_rgbd_infra1_optical_frame, parent_link: wrist_rgbd_link, joint: wrist_rgbd_infra1_optical_frame_joint, coordinate_reference: tool0, xyz_m: [0.140, 0.000, 0.025], rpy_rad: [0.000, 0.000, 0.000], visible: false, dynamic_position: true}
+      - {id: wrist_rgbd_ir_right_optical_datum, link: wrist_rgbd_infra2_optical_frame, parent_link: wrist_rgbd_link, joint: wrist_rgbd_infra2_optical_frame_joint, coordinate_reference: tool0, xyz_m: [0.190, 0.000, 0.025], rpy_rad: [0.000, 0.000, 0.000], visible: false, dynamic_position: true}
+  - {id: manipulation, function: six_axis_pick_and_place, link: ur5e_base_link_inertia, parent_link: arm_mount_link, xyz_m: [0.100, -0.200, 0.4791], rpy_rad: [0.000, 0.000, 3.141592654], required_joints: [shoulder_pan_joint, shoulder_lift_joint, elbow_joint, wrist_1_joint, wrist_2_joint, wrist_3_joint], interface: arm_controller, visible: true}
+  - {id: grasping, function: 30_mm_cube_grasp, link: robotiq_85_base_link, parent_link: ur_to_robotiq_adapter_link, coordinate_reference: ur_to_robotiq_adapter_link, xyz_m: [0.000, 0.000, 0.011], rpy_rad: [0.000, 0.000, 0.000], required_joints: [robotiq_85_left_knuckle_joint], interface: gripper_controller, visible: true, dynamic_position: true}
+  - id: dry_deposition
+    function: robot_drop_hopper_xw540_powered_gate_chute_and_passage_presence_sensor
+    link: dry_deposit_hopper_link
+    parent_link: dry_bin_lid_link
+    xyz_m: [-0.205, 0.035, 1.0471]
+    rpy_rad: [0.000, 0.000, 0.000]
+    required_joints: [dry_deposit_gate_joint]
+    required_topic_contracts: [dry_deposit_contact]
+    interface: storage_controller
+    actuator_link: dry_deposit_gate_actuator_link
+    presence_sensor_link: dry_deposit_presence_sensor_link
+    presence_measurement: physical_chute_contact_event
+    visible: true
+    components:
+      - {id: dry_deposit_presence_sensor, link: dry_deposit_presence_sensor_link, parent_link: dry_deposit_hopper_link, joint: dry_deposit_presence_sensor_joint, coordinate_reference: dry_deposit_hopper_link, xyz_m: [0.088, 0.000, 0.015], rpy_rad: [0.000, 0.000, 0.000], required_topic_contracts: [dry_deposit_contact], visible: true}
+  - id: dry_storage
+    function: separated_40_l_usable_dry_storage_with_manual_over_center_latched_service_lid
+    link: dry_bin_link
+    parent_link: storage_system_mount_link
+    xyz_m: [-0.205, 0.160, 0.5691]
+    rpy_rad: [0.000, 0.000, 0.000]
+    required_passive_joints: [dry_bin_lid_joint, dry_bin_latch_joint]
+    actuation: passive_manual_latch
+    lock_state: lid_zero_rad_and_latch_zero_rad
+    service_sequence: rotate_latch_to_released_stop_then_open_lid
+    visible: false
+    components:
+      - {id: dry_bin_latch_base, link: dry_bin_latch_base_link, parent_link: dry_bin_link, joint: dry_bin_latch_base_joint, xyz_m: [0.065, 0.160, 0.6391], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: dry_bin_latch_handle, link: dry_bin_latch_link, parent_link: dry_bin_latch_base_link, joint: dry_bin_latch_joint, coordinate_reference: dry_bin_latch_base_link, xyz_m: [0.000, 0.000, 0.023], rpy_rad: [0.000, 0.000, 0.000], visible: true, dynamic_position: true}
+      - {id: dry_bin_latch_keeper, link: dry_bin_latch_keeper_link, parent_link: dry_bin_lid_link, joint: dry_bin_latch_keeper_joint, coordinate_reference: dry_bin_lid_link, xyz_m: [0.508, 0.000, -0.018], rpy_rad: [0.000, 0.000, 0.000], visible: true, dynamic_position: true}
+  - {id: dry_fill_monitor, function: dry_bin_fill_level, link: dry_bin_level_sensor_link, parent_link: dry_bin_link, xyz_m: [-0.365, 0.160, 0.6741], rpy_rad: [0.000, 0.000, 0.000], required_topic_contracts: [dry_bin_fill_level], visible: false}
+  - id: wet_storage
+    function: separated_wastewater_storage_with_manual_over_center_latched_service_lid
+    link: wastewater_tank_link
+    parent_link: storage_system_mount_link
+    xyz_m: [-0.205, -0.245, 0.5041]
+    rpy_rad: [0.000, 0.000, 0.000]
+    required_passive_joints: [wastewater_lid_joint, wastewater_lid_latch_joint]
+    actuation: passive_manual_latch
+    lock_state: lid_zero_rad_and_latch_zero_rad
+    service_sequence: rotate_latch_to_released_stop_then_open_lid
+    maintenance_drain_position: wastewater_drain
+    visible: false
+    components:
+      - {id: wastewater_lid_latch_base, link: wastewater_lid_latch_base_link, parent_link: wastewater_tank_link, joint: wastewater_lid_latch_base_joint, xyz_m: [-0.010, -0.245, 0.5541], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: wastewater_lid_latch_handle, link: wastewater_lid_latch_link, parent_link: wastewater_lid_latch_base_link, joint: wastewater_lid_latch_joint, coordinate_reference: wastewater_lid_latch_base_link, xyz_m: [0.000, 0.000, 0.023], rpy_rad: [0.000, 0.000, 0.000], visible: true, dynamic_position: true}
+      - {id: wastewater_lid_latch_keeper, link: wastewater_lid_latch_keeper_link, parent_link: wastewater_lid_link, joint: wastewater_lid_latch_keeper_joint, coordinate_reference: wastewater_lid_link, xyz_m: [0.358, 0.000, -0.018], rpy_rad: [0.000, 0.000, 0.000], visible: true, dynamic_position: true}
+  - {id: wet_fill_monitor, function: wastewater_low_and_high_level, link: wastewater_high_level_sensor_link, parent_link: wastewater_tank_link, xyz_m: [-0.075, -0.325, 0.5391], rpy_rad: [0.000, 0.000, 0.000], required_topic_contracts: [wastewater_sensed_level, wastewater_low_probe, wastewater_high_probe], visible: false}
+  - id: side_sweeping
+    function: dual_side_brush_edge_sweeping
+    link: left_side_brush_link
+    parent_link: cleaning_lift_carriage_link
+    xyz_m: [0.385, 0.545, 0.1780]
+    rpy_rad: [0.000, 0.000, 0.000]
+    required_joints: [left_side_brush_joint, right_side_brush_joint]
+    required_topic_contracts: [cleaning_encoder_counts, cleaning_encoder_joint_states]
+    interface: brush_controller
+    actuator_links: [left_side_brush_motor_stator_link, right_side_brush_motor_stator_link]
+    visible: true
+    components:
+      - {id: left_pololu_4694_encoder, link: left_side_brush_encoder_link, parent_link: left_side_brush_motor_stator_link, joint: left_side_brush_encoder_mount_joint, coordinate_reference: cleaning_lift_carriage_link, xyz_m: [0.385, 0.545, 0.0584], rpy_rad: [0.000, 0.000, 0.000], visible: true, dynamic_position: true}
+      - {id: right_pololu_4694_encoder, link: right_side_brush_encoder_link, parent_link: right_side_brush_motor_stator_link, joint: right_side_brush_encoder_mount_joint, coordinate_reference: cleaning_lift_carriage_link, xyz_m: [0.385, -0.545, 0.0584], rpy_rad: [0.000, 0.000, 0.000], visible: true, dynamic_position: true}
+  - id: main_sweeping
+    function: central_helical_roller_collection
+    link: central_roller_link
+    parent_link: cleaning_lift_carriage_link
+    xyz_m: [0.155, 0.000, 0.2000]
+    rpy_rad: [0.000, 1.570796327, 0.000]
+    required_joints: [central_roller_joint]
+    required_topic_contracts: [cleaning_encoder_counts, cleaning_encoder_joint_states]
+    interface: brush_controller
+    actuator_link: central_roller_motor_stator_link
+    visible: true
+    components:
+      - {id: central_pololu_4694_encoder, link: central_roller_encoder_link, parent_link: central_roller_motor_stator_link, joint: central_roller_encoder_mount_joint, coordinate_reference: cleaning_lift_carriage_link, xyz_m: [0.155, -0.401, -0.0101], rpy_rad: [0.000, 0.000, 0.000], visible: true, dynamic_position: true}
+  - {id: cleaning_head_lift, function: deploy_and_stow_cleaning_head, link: cleaning_lift_carriage_link, parent_link: cleaning_mechanism_mount_link, xyz_m: [0.000, 0.000, 0.2101], rpy_rad: [0.000, 0.000, 0.000], required_joints: [cleaning_lift_joint], interface: cleaning_controller, actuator_link: cleaning_lift_actuator_body_link, visible: false, zero_position: transport_safe_raised, positive_direction: downward, work_position_m: 0.100}
+  - id: water_gathering
+    function: passively_compliant_floating_squeegee_water_gathering
+    link: squeegee_link
+    parent_link: squeegee_float_carrier_link
+    xyz_m: [-0.445, 0.000, 0.1525]
+    rpy_rad: [0.000, 0.000, 0.000]
+    required_passive_joints: [squeegee_float_joint, squeegee_pitch_joint]
+    required_topic_contracts: [squeegee_blade_contact, squeegee_float_position, squeegee_float_velocity, squeegee_float_force, squeegee_pitch_position, squeegee_pitch_velocity, squeegee_pitch_torque]
+    actuation: passive_spring_damper
+    preload_force_n: 12.456
+    visible: true
+    components:
+      - {id: squeegee_preload_spring_pack, link: squeegee_spring_pack_link, parent_link: squeegee_float_carrier_link, joint: squeegee_spring_pack_joint, xyz_m: [-0.445, 0.000, 0.1725], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+  - {id: water_intake, function: ground_contact_suction_intake, link: suction_nozzle_link, parent_link: squeegee_link, xyz_m: [-0.405, 0.000, 0.1475], rpy_rad: [0.000, 0.000, 0.000], required_topic_contracts: [suction_nozzle_contact], visible: true}
+  - {id: water_filtering, function: recoverable_strainer_before_pump, link: recovery_strainer_filter_link, parent_link: cleaning_mechanism_mount_link, xyz_m: [-0.250, 0.200, 0.3351], rpy_rad: [0.000, 0.000, 0.000], required_topic_contracts: [recovery_filter_pressure, recovery_filter_protection], visible: false}
+  - {id: water_pumping, function: controlled_wastewater_recovery_pump, link: recovery_pump_rotor_link, parent_link: cleaning_mechanism_mount_link, xyz_m: [-0.3145, -0.160, 0.3451], rpy_rad: [0.000, 1.570796327, 0.000], required_joints: [recovery_pump_joint], required_topic_contracts: [recovery_pump_current], interface: recovery_controller, actuator_link: recovery_pump_motor_link, visible: false}
+  - {id: water_flow_monitor, function: delivery_flow_and_blockage_monitor, link: recovery_flow_sensor_link, parent_link: wastewater_delivery_coupling_link, xyz_m: [-0.3575, -0.350, 0.3451], rpy_rad: [0.000, 1.570796327, 0.000], required_topic_contracts: [recovery_sensed_flow, recovery_filter_blockage], visible: false}
+  - {id: compute, function: Journey_6P_RDK_S100P_inference_and_vehicle_compute, link: s100_compute_enclosure_link, parent_link: payload_deck_link, xyz_m: [0.296, 0.240, 0.9750], rpy_rad: [0.000, 0.000, 0.000], required_topic_contracts: [low_voltage_power_branch], visible: false, selected_model: D-Robotics_RDK_S100P_V1P0_user_owned, external_envelope_m: [0.121, 0.120, 0.0524], envelope_status: provisional_reference_only, pending_measurement: exact_external_dimensions_mounting_holes_board_mass_thermal_connector_service_and_live_hardware_validation}
+  - {id: arm_control, function: ur5e_drive_and_safety_control_cabinet, link: ur5e_control_box_link, parent_link: payload_deck_link, xyz_m: [0.296, 0.240, 0.6736], rpy_rad: [0.000, 0.000, 0.000], visible: false}
+  - id: fused_power_distribution
+    function: fused_vbat_distribution_to_high_power_branches_with_physical_isolator_and_contactor
+    link: power_distribution_box_link
+    parent_link: payload_deck_link
+    xyz_m: [0.330, 0.025, 0.4441]
+    rpy_rad: [0.000, 0.000, 0.000]
+    required_topic_contracts: [safety_power_branch, low_voltage_power_branch, high_power_branch, main_contactor_command, main_isolator_closed, main_contactor_closed]
+    visible: false
+    components:
+      - {id: main_power_isolator_housing, link: main_power_isolator_housing_link, parent_link: base_link, joint: main_power_isolator_housing_joint, xyz_m: [0.270, 0.345, 0.7101], rpy_rad: [0.000, 0.000, 0.000], visible: false}
+      - {id: main_power_isolator_handle, link: main_power_isolator_handle_link, parent_link: main_power_isolator_housing_link, joint: main_power_isolator_handle_joint, xyz_m: [0.270, 0.392, 0.7101], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: main_power_contactor_housing, link: main_power_contactor_housing_link, parent_link: base_link, joint: main_power_contactor_housing_joint, xyz_m: [0.375, 0.245, 0.4651], rpy_rad: [0.000, 0.000, 0.000], visible: false}
+      - {id: main_power_contactor_armature, link: main_power_contactor_armature_link, parent_link: main_power_contactor_housing_link, joint: main_power_contactor_armature_joint, xyz_m: [0.375, 0.245, 0.5171], rpy_rad: [0.000, 0.000, 0.000], visible: false}
+  - {id: isolated_low_voltage_power, function: isolated_sensor_and_compute_dc_conversion, link: isolated_dc_dc_module_link, parent_link: payload_deck_link, xyz_m: [0.345, -0.105, 0.4391], rpy_rad: [0.000, 0.000, 0.000], required_topic_contracts: [low_voltage_power_branch], visible: false}
+  - {id: hardwired_safety_enable, function: emergency_stop_safety_relay_for_motion_and_cleaning_enable, link: safety_relay_link, parent_link: payload_deck_link, xyz_m: [0.220, -0.080, 0.4441], rpy_rad: [0.000, 0.000, 0.000], required_topic_contracts: [safety_relay_state, whole_vehicle_safety_status], visible: false}
+  - id: a300_energy_storage
+    function: dual_40ah_battery_pack_and_individual_bms_storage
+    link: a300_left_battery_pack_link
+    parent_link: base_link
+    xyz_m: [-0.080, 0.095, 0.2401]
+    rpy_rad: [0.000, 0.000, 0.000]
+    required_topic_contracts: [battery_state, battery_soc, bms_fault, bms_status, traction_permitted]
+    visible: false
+    components:
+      - {id: a300_left_battery_pack, link: a300_left_battery_pack_link, parent_link: base_link, joint: a300_left_battery_pack_joint, xyz_m: [-0.080, 0.095, 0.2401], rpy_rad: [0.000, 0.000, 0.000], visible: false}
+      - {id: a300_right_battery_pack, link: a300_right_battery_pack_link, parent_link: base_link, joint: a300_right_battery_pack_joint, xyz_m: [-0.080, -0.095, 0.2401], rpy_rad: [0.000, 0.000, 0.000], visible: false}
+      - {id: a300_left_battery_bms, link: a300_left_battery_bms_link, parent_link: a300_left_battery_pack_link, joint: a300_left_battery_bms_joint, xyz_m: [0.045, 0.095, 0.2401], rpy_rad: [0.000, 0.000, 0.000], visible: false}
+      - {id: a300_right_battery_bms, link: a300_right_battery_bms_link, parent_link: a300_right_battery_pack_link, joint: a300_right_battery_bms_joint, xyz_m: [0.045, -0.095, 0.2401], rpy_rad: [0.000, 0.000, 0.000], visible: false}
+  - id: charge_interface
+    function: protected_external_charge_door_receptacle_and_lock
+    link: charge_port_housing_link
+    parent_link: base_link
+    xyz_m: [0.250, 0.402, 0.4951]
+    rpy_rad: [1.570796327, 0.000, 0.000]
+    required_topic_contracts: [battery_state, charge_requested, charge_receptacle_contact, charge_enable, charge_connected, charge_power_request, charge_status]
+    required_passive_joints: [charge_port_door_hinge_joint, charge_connector_lock_joint]
+    actuation: passive_service_interlock
+    visible: true
+    components:
+      - {id: charge_port_housing, link: charge_port_housing_link, parent_link: base_link, joint: charge_port_housing_joint, xyz_m: [0.250, 0.402, 0.4951], rpy_rad: [1.570796327, 0.000, 0.000], visible: true}
+      - {id: charge_receptacle, link: charge_receptacle_link, parent_link: charge_port_housing_link, joint: charge_receptacle_joint, xyz_m: [0.250, 0.402, 0.4831], rpy_rad: [1.570796327, 0.000, 0.000], visible: true}
+      - {id: charge_port_door, link: charge_port_door_link, parent_link: charge_port_housing_link, joint: charge_port_door_hinge_joint, xyz_m: [0.250, 0.361, 0.4951], rpy_rad: [1.570796327, 0.000, 0.000], visible: true}
+      - {id: charge_connector_lock, link: charge_connector_lock_link, parent_link: charge_receptacle_link, joint: charge_connector_lock_joint, xyz_m: [0.272, 0.402, 0.4651], rpy_rad: [1.570796327, 0.000, 0.000], visible: true}
+  - id: wastewater_drain
+    function: stationary_interlocked_pipe_ball_valve_actuator_cap_and_coupling
+    link: wastewater_drain_valve_body_link
+    parent_link: wastewater_tank_link
+    xyz_m: [-0.490, -0.305, 0.4801]
+    rpy_rad: [0.000, 0.000, 0.000]
+    required_topic_contracts: [wastewater_drain_permitted, wastewater_drained_volume, wastewater_drain_hose_contact]
+    required_joints: [wastewater_drain_valve_joint]
+    required_passive_joints: [wastewater_drain_service_cap_joint]
+    interface: service_controller
+    actuator_link: wastewater_drain_valve_actuator_link
+    actuation: powered_position_joint
+    passive_actuation: passive_service_interlock
+    visible: true
+    components:
+      - {id: wastewater_drain_pipe, link: wastewater_drain_pipe_link, parent_link: wastewater_tank_link, joint: wastewater_drain_pipe_joint, xyz_m: [-0.405, -0.305, 0.4801], rpy_rad: [0.000, 0.000, 0.000], visible: false}
+      - {id: wastewater_ball_valve_body, link: wastewater_drain_valve_body_link, parent_link: wastewater_drain_pipe_link, joint: wastewater_drain_valve_body_joint, xyz_m: [-0.490, -0.305, 0.4801], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: wastewater_ball_valve_ball, link: wastewater_drain_valve_ball_link, parent_link: wastewater_drain_valve_body_link, joint: wastewater_drain_valve_joint, xyz_m: [-0.490, -0.305, 0.4801], rpy_rad: [0.000, 0.000, 0.000], visible: false}
+      - {id: wastewater_valve_actuator, link: wastewater_drain_valve_actuator_link, parent_link: wastewater_drain_valve_body_link, joint: wastewater_drain_valve_actuator_mount_joint, xyz_m: [-0.490, -0.305, 0.5581], rpy_rad: [0.000, 0.000, 0.000], visible: false}
+      - {id: wastewater_service_cap, link: wastewater_drain_service_cap_link, parent_link: wastewater_drain_valve_body_link, joint: wastewater_drain_service_cap_joint, xyz_m: [-0.525, -0.305, 0.4801], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: wastewater_hose_coupling, link: wastewater_drain_coupling_link, parent_link: wastewater_drain_valve_body_link, joint: wastewater_drain_coupling_joint, xyz_m: [-0.555, -0.305, 0.4801], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+  - id: emergency_stop
+    function: manual_latching_emergency_stop_with_6mm_plunger
+    link: emergency_stop_housing_link
+    parent_link: base_link
+    xyz_m: [-0.405, -0.405, 0.8451]
+    rpy_rad: [1.570796327, 0.000, 0.000]
+    required_topic_contracts: [emergency_stop_state, emergency_stop_request, emergency_stop_plunger_command, emergency_stop_reset_request, whole_vehicle_safety_status]
+    required_passive_joints: [emergency_stop_plunger_joint]
+    actuation: passive_manual_latch
+    plunger_travel_m: 0.006
+    visible: true
+    components:
+      - {id: emergency_stop_housing, link: emergency_stop_housing_link, parent_link: base_link, joint: emergency_stop_housing_joint, xyz_m: [-0.405, -0.405, 0.8451], rpy_rad: [1.570796327, 0.000, 0.000], visible: true}
+      - {id: emergency_stop_6mm_plunger, link: emergency_stop_plunger_link, parent_link: emergency_stop_housing_link, joint: emergency_stop_plunger_joint, xyz_m: [-0.405, -0.405, 0.8111], rpy_rad: [1.570796327, 0.000, 0.000], visible: true, travel_m: 0.006}
+  - id: bodywork_service_access
+    function: four_manually_latched_limited_service_doors
+    link: bodywork_power_service_door_hinge_bracket_link
+    parent_link: base_link
+    xyz_m: [0.055, 0.391, 0.5301]
+    rpy_rad: [0.000, 0.000, 0.000]
+    required_passive_joints: [bodywork_power_service_door_hinge_joint, bodywork_power_service_door_latch_joint, bodywork_compute_service_door_hinge_joint, bodywork_compute_service_door_latch_joint, bodywork_wet_service_door_hinge_joint, bodywork_wet_service_door_latch_joint, bodywork_rear_dry_service_door_hinge_joint, bodywork_rear_dry_service_door_latch_joint]
+    actuation: passive_service_interlock
+    lock_state: all_latches_zero_rad
+    service_sequence: unlock_corresponding_latch_then_open_hinge_within_limit
+    visible: true
+    components:
+      - {id: power_service_door_hinge, link: bodywork_power_service_door_hinge_bracket_link, parent_link: base_link, joint: bodywork_power_service_door_hinge_bracket_joint, xyz_m: [0.055, 0.391, 0.5301], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: power_service_door_panel, link: bodywork_power_service_door_link, parent_link: bodywork_power_service_door_hinge_bracket_link, joint: bodywork_power_service_door_hinge_joint, xyz_m: [0.055, 0.391, 0.5301], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: power_service_door_latch, link: bodywork_power_service_door_latch_link, parent_link: bodywork_power_service_door_link, joint: bodywork_power_service_door_latch_joint, xyz_m: [0.445, 0.391, 0.7301], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: compute_service_door_hinge, link: bodywork_compute_service_door_hinge_bracket_link, parent_link: base_link, joint: bodywork_compute_service_door_hinge_bracket_joint, xyz_m: [0.235, -0.441, 0.2551], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: compute_service_door_panel, link: bodywork_compute_service_door_link, parent_link: bodywork_compute_service_door_hinge_bracket_link, joint: bodywork_compute_service_door_hinge_joint, xyz_m: [0.235, -0.441, 0.2551], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: compute_service_door_latch, link: bodywork_compute_service_door_latch_link, parent_link: bodywork_compute_service_door_link, joint: bodywork_compute_service_door_latch_joint, xyz_m: [0.470, -0.441, 0.3151], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: wet_service_door_hinge, link: bodywork_wet_service_door_hinge_bracket_link, parent_link: base_link, joint: bodywork_wet_service_door_hinge_bracket_joint, xyz_m: [-0.430, -0.401, 0.5251], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: wet_service_door_panel, link: bodywork_wet_service_door_link, parent_link: bodywork_wet_service_door_hinge_bracket_link, joint: bodywork_wet_service_door_hinge_joint, xyz_m: [-0.430, -0.401, 0.5251], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: wet_service_door_latch, link: bodywork_wet_service_door_latch_link, parent_link: bodywork_wet_service_door_link, joint: bodywork_wet_service_door_latch_joint, xyz_m: [-0.100, -0.401, 0.6651], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: rear_dry_service_door_hinge, link: bodywork_rear_dry_service_door_hinge_bracket_link, parent_link: base_link, joint: bodywork_rear_dry_service_door_hinge_bracket_joint, xyz_m: [-0.562, 0.220, 0.4901], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: rear_dry_service_door_panel, link: bodywork_rear_dry_service_door_link, parent_link: bodywork_rear_dry_service_door_hinge_bracket_link, joint: bodywork_rear_dry_service_door_hinge_joint, xyz_m: [-0.562, 0.220, 0.4901], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+      - {id: rear_dry_service_door_latch, link: bodywork_rear_dry_service_door_latch_link, parent_link: bodywork_rear_dry_service_door_link, joint: bodywork_rear_dry_service_door_latch_joint, xyz_m: [-0.562, -0.170, 0.6651], rpy_rad: [0.000, 0.000, 0.000], visible: true}
+  - {id: warning_and_work_lighting, function: front_work_rear_tail_and_four_corner_warning_lamps, link: warning_and_work_lighting_datum_link, physical_link: bodywork_lighting_link, parent_link: base_link, xyz_m: [0.000, 0.000, 0.7151], rpy_rad: [0.000, 0.000, 0.000], required_topic_contracts: [work_lights_state, tail_lights_state, warning_lights_state, work_lights_applied, tail_lights_applied, warning_lights_applied], visible: true}
+  - {id: front_contact_safety, function: low_speed_front_bumper_collision_stop, link: front_contact_safety_datum_link, physical_link: bodywork_lower_tub_link, physical_collision: front_bumper_collision, parent_link: base_link, xyz_m: [0.555, 0.000, 0.2701], rpy_rad: [0.000, 0.000, 0.000], required_topic_contracts: [front_bumper_contact], visible: true}
+  - {id: rear_contact_safety, function: low_speed_reverse_bumper_collision_stop, link: rear_contact_safety_datum_link, physical_link: bodywork_lower_tub_link, physical_collision: rear_bumper_collision, parent_link: base_link, xyz_m: [-0.555, 0.000, 0.2701], rpy_rad: [0.000, 0.000, 0.000], required_topic_contracts: [rear_bumper_contact], visible: true}
 
 external_identity:
   top_protrusion_name: modular_sensor_tower

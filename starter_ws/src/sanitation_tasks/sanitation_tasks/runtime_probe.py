@@ -32,7 +32,7 @@ class RuntimeProbe(Node):
             reliability=ReliabilityPolicy.RELIABLE,
         )
         self.specifications = {
-            "/clock": (Clock, regular_qos),
+            "/clock": (Clock, qos_profile_sensor_data),
             "/odom/unfiltered": (Odometry, regular_qos),
             "/odom": (Odometry, regular_qos),
             "/imu/data": (Imu, qos_profile_sensor_data),

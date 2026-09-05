@@ -1,0 +1,18 @@
+repositories:
+  dosod_pc:
+    type: git
+    url: https://github.com/D-Robotics-AI-Lab/DOSOD.git
+    version: c50129b5badf6ed7bb85e692ab493d8bdb58da6a
+  edgesam_pc:
+    type: git
+    url: https://github.com/chongzhou96/EdgeSAM.git
+    version: d24d99671f41a9c0003061248bded64a481e9059
+  hobot_dosod_s100:
+    type: git
+    url: https://github.com/D-Robotics/hobot_dosod.git
+    version: c5b585204cd84585af1830b00da0c66c1383305e
+  mono_edgesam_s100:
+    type: git
+    url: https://github.com/D-Robotics/mono_edgesam.git
+    version: a24b1cb29ad10cfd86802a3731cf26ba621a406a
+

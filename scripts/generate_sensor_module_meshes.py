@@ -44,18 +44,25 @@ def fisheye_module():
 
 
 def wrist_rgbd_bracket():
-    """Side-mount L bracket with gussets and fastener heads, local to wrist camera."""
+    """Dog-leg side bracket that clears the 2F-85 body, local to the camera.
+
+    Optical +Z maps to bracket-local +X.  All metal stays behind the camera
+    rear plane (local X <= -12.5 mm), then moves outboard and returns to the
+    tool adapter.  This is a conventional rear-plate dog-leg and leaves the
+    complete 87 x 58 degree depth frustum physically open.
+    """
     parts = [
-        box((0.120, 0.008, 0.050), (-0.0575, 0.035, 0)),
-        box((0.055, 0.055, 0.006), (0, 0.010, -0.027)),
-        box((0.008, 0.060, 0.072), (-0.115, 0.005, 0)),
-        box((0.100, 0.006, 0.012), (-0.060, 0.005, -0.020), (0, -0.20, 0)),
+        box((0.006, 0.055, 0.055), (-0.016, 0.010, 0.027)),
+        box((0.008, 0.030, 0.064), (-0.020, 0.004, 0.029)),
+        box((0.008, 0.145, 0.030), (-0.024, 0.070, 0.060)),
+        box((0.008, 0.070, 0.022), (-0.024, 0.140, 0.049)),
+        box((0.040, 0.008, 0.022), (-0.044, 0.124, 0.049)),
     ]
     for x in (-0.018, 0.018):
-        for z in (-0.027, 0.027):
-            parts.append(cylinder(0.0035, 0.004, (x, 0.004, z), (np.pi / 2, 0, 0), 20))
-    for y in (-0.018, 0.018):
-        parts.append(cylinder(0.004, 0.005, (-0.119, y, 0.022), (0, np.pi / 2, 0), 20))
+        for y in (-0.008, 0.028):
+            parts.append(cylinder(0.0035, 0.006, (-0.016, y, 0.027 + x), (0, np.pi / 2, 0), 20))
+    for x in (-0.018, 0.018):
+        parts.append(cylinder(0.004, 0.008, (-0.024, 0.144, 0.049 + x), (np.pi / 2, 0, 0), 20))
     return trimesh.util.concatenate(parts)
 
 

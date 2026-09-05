@@ -1,0 +1,201 @@
+#!/usr/bin/env python3
+"""Validate live Gazebo joint-state evidence for the four body service doors."""
+
+from __future__ import annotations
+
+import argparse
+import json
+import math
+import re
+from pathlib import Path
+from statistics import median
+from typing import Any
+
+
+PASSED_STATUS = "FORMAL_BODYWORK_SERVICE_DOOR_RUNTIME_PASSED"
+FAILED_STATUS = "FORMAL_BODYWORK_SERVICE_DOOR_RUNTIME_FAILED"
+DOORS = {
+    "power": ("bodywork_power_service_door_hinge_joint", "bodywork_power_service_door_latch_joint", 0.0, 1.745329252, 1.2),
+    "compute": ("bodywork_compute_service_door_hinge_joint", "bodywork_compute_service_door_latch_joint", -1.745329252, 0.0, -1.2),
+    "wet": ("bodywork_wet_service_door_hinge_joint", "bodywork_wet_service_door_latch_joint", -1.745329252, 0.0, -1.2),
+    "rear_dry": ("bodywork_rear_dry_service_door_hinge_joint", "bodywork_rear_dry_service_door_latch_joint", -1.745329252, 0.0, -1.2),
+}
+PHASES = (
+    "initial_locked",
+    "locked_open_rejected",
+    "unlocked",
+    "open",
+    "closed_unlocked",
+    "transport_locked",
+    "relock_open_rejected",
+)
+
+
+def _phase_samples(evidence: dict[str, Any], name: str) -> list[dict[str, Any]]:
+    phase = evidence.get("phases", {}).get(name, {})
+    samples = phase.get("joint_state_samples", []) if isinstance(phase, dict) else []
+    return samples if isinstance(samples, list) else []
+
+
+def _final_positions(evidence: dict[str, Any], phase: str) -> dict[str, float]:
+    samples = _phase_samples(evidence, phase)
+    result: dict[str, float] = {}
+    for joint in {item for spec in DOORS.values() for item in spec[:2]}:
+        values = [
+            float(sample["positions_rad"][joint])
+            for sample in samples[-5:]
+            if isinstance(sample, dict)
+            and isinstance(sample.get("positions_rad"), dict)
+            and joint in sample["positions_rad"]
+        ]
+        if values:
+            result[joint] = median(values)
+    return result
+
+
+def _commands_match(evidence: dict[str, Any]) -> bool:
+    phases = evidence.get("phases", {})
+    if not isinstance(phases, dict):
+        return False
+    expected: dict[str, tuple[float, float]] = {
+        "initial_locked": (0.0, 0.0),
+        "locked_open_rejected": (math.nan, 0.0),
+        "unlocked": (0.0, 0.6),
+        "open": (math.nan, 0.6),
+        "closed_unlocked": (0.0, 0.6),
+        "transport_locked": (0.0, 0.0),
+        "relock_open_rejected": (math.nan, 0.0),
+    }
+    for phase_name, (hinge_expected, latch_expected) in expected.items():
+        commands = phases.get(phase_name, {}).get("commanded_targets_rad", {})
+        if not isinstance(commands, dict):
+            return False
+        for door, (_, _, _, _, open_target) in DOORS.items():
+            row = commands.get(door)
+            if not isinstance(row, dict):
+                return False
+            required_hinge = open_target if math.isnan(hinge_expected) else hinge_expected
+            if not math.isclose(float(row.get("hinge", math.nan)), required_hinge, abs_tol=1e-9):
+                return False
+            if not math.isclose(float(row.get("latch", math.nan)), latch_expected, abs_tol=1e-9):
+                return False
+    return True
+
+
+def _timestamps_are_fresh_and_ordered(evidence: dict[str, Any]) -> bool:
+    previous = -1
+    for phase in PHASES:
+        samples = _phase_samples(evidence, phase)
+        timestamps = [
+            sample.get("received_monotonic_ns")
+            for sample in samples
+            if isinstance(sample, dict)
+        ]
+        if (
+            len(timestamps) != len(samples)
+            or len(timestamps) < 5
+            or any(not isinstance(value, int) for value in timestamps)
+            or any(left >= right for left, right in zip(timestamps, timestamps[1:]))
+            or (timestamps and timestamps[0] <= previous)
+        ):
+            return False
+        previous = timestamps[-1]
+    return True
+
+
+def evaluate(evidence: dict[str, Any]) -> dict[str, Any]:
+    sample_counts = {name: len(_phase_samples(evidence, name)) for name in PHASES}
+    finals = {name: _final_positions(evidence, name) for name in PHASES}
+    expected_joints = {item for spec in DOORS.values() for item in spec[:2]}
+
+    samples_complete = all(count >= 5 for count in sample_counts.values()) and all(
+        set(position) == expected_joints for position in finals.values()
+    )
+    within_limits = True
+    for phase in PHASES:
+        for sample in _phase_samples(evidence, phase):
+            positions = sample.get("positions_rad", {}) if isinstance(sample, dict) else {}
+            if set(positions) != expected_joints:
+                within_limits = False
+                continue
+            for hinge, latch, lower, upper, _ in DOORS.values():
+                hinge_value = float(positions[hinge])
+                latch_value = float(positions[latch])
+                if (
+                    not math.isfinite(hinge_value)
+                    or not math.isfinite(latch_value)
+                    or hinge_value < lower - 0.03
+                    or hinge_value > upper + 0.03
+                    or abs(latch_value) > 0.815398163
+                ):
+                    within_limits = False
+
+    def all_closed(phase: str) -> bool:
+        return all(abs(finals.get(phase, {}).get(spec[0], math.inf)) <= 0.08 for spec in DOORS.values())
+
+    def all_locked(phase: str) -> bool:
+        return all(abs(finals.get(phase, {}).get(spec[1], math.inf)) <= 0.08 for spec in DOORS.values())
+
+    def all_unlocked(phase: str) -> bool:
+        return all(abs(finals.get(phase, {}).get(spec[1], 0.0)) >= 0.35 for spec in DOORS.values())
+
+    opened = all(
+        abs(finals.get("open", {}).get(hinge, 0.0)) >= 0.90
+        and (finals["open"][hinge] > 0.0) == (target > 0.0)
+        for hinge, _, _, _, target in DOORS.values()
+    )
+    checks = {
+        "source_bound_to_expanded_urdf": isinstance(evidence.get("source_binding"), dict)
+        and re.fullmatch(r"[0-9a-f]{64}", str(evidence["source_binding"].get("expanded_urdf_sha256", ""))) is not None,
+        "physical_joint_state_authority": evidence.get("evidence_authority")
+        == "GAZEBO_SENSOR_MSGS_JOINT_STATE",
+        "all_phases_have_fresh_complete_samples": samples_complete,
+        "joint_samples_are_strictly_ordered_across_phases": (
+            _timestamps_are_fresh_and_ordered(evidence)
+        ),
+        "command_sequence_unlocks_before_opening": _commands_match(evidence),
+        "all_samples_remain_inside_urdf_limits": within_limits,
+        "initial_transport_state_locked_and_closed": all_closed("initial_locked") and all_locked("initial_locked"),
+        "locked_hinges_reject_open_command": all_closed("locked_open_rejected") and all_locked("locked_open_rejected"),
+        "all_latches_physically_unlock": all_closed("unlocked") and all_unlocked("unlocked"),
+        "all_hinges_physically_open_after_unlock": opened and all_unlocked("open"),
+        "all_hinges_physically_close_before_relock": all_closed("closed_unlocked") and all_unlocked("closed_unlocked"),
+        "transport_state_relocks_at_zero": all_closed("transport_locked") and all_locked("transport_locked"),
+        "relocked_hinges_reject_open_command": all_closed("relock_open_rejected") and all_locked("relock_open_rejected"),
+    }
+    passed = all(checks.values())
+    return {
+        "report_id": "tzcup_formal_service_door_runtime_v1",
+        "status": PASSED_STATUS if passed else FAILED_STATUS,
+        "passed": passed,
+        "checks": checks,
+        "source_binding": evidence.get("source_binding", {}),
+        "evidence_authority": evidence.get("evidence_authority"),
+        "sample_counts": sample_counts,
+        "final_positions_rad": finals,
+        "phases": evidence.get("phases", {}),
+        "claim_boundary": (
+            "This proves bounded-force Gazebo motion of all four physical door hinges and latches, "
+            "including measured unlock-before-open and zero-angle transport relock. It does not "
+            "claim real handle ergonomics, seal compression, fatigue life or certified retention force."
+        ),
+    }
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--input", type=Path, required=True)
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    evidence = json.loads(args.input.read_text(encoding="utf-8"))
+    result = evaluate(evidence)
+    text = json.dumps(result, indent=2, sort_keys=True) + "\n"
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(text, encoding="utf-8")
+    print(text, end="")
+    return 0 if result["passed"] else 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

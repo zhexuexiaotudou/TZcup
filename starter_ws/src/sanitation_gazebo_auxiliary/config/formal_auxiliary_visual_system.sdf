@@ -1,0 +1,44 @@
+<!-- Reference copy of the single block embedded in the formal vehicle. All
+     topics below are Gazebo Transport topics with explicit formal ROS bridges. -->
+<plugin filename="libFormalAuxiliaryVisualSystem.so"
+        name="sanitation_gazebo_auxiliary::FormalAuxiliaryVisualSystem">
+  <warning_frequency_hz>1.0</warning_frequency_hz>
+  <warning_duty_cycle>0.5</warning_duty_cycle>
+  <enable_photometric_lights>true</enable_photometric_lights>
+  <work_light_intensity>1.8</work_light_intensity>
+  <work_light_range_m>12.0</work_light_range_m>
+  <work_spot_inner_angle_rad>0.34</work_spot_inner_angle_rad>
+  <work_spot_outer_angle_rad>0.62</work_spot_outer_angle_rad>
+  <warning_light_intensity>0.55</warning_light_intensity>
+  <warning_light_range_m>2.5</warning_light_range_m>
+  <tail_light_intensity>0.18</tail_light_intensity>
+  <tail_light_range_m>1.5</tail_light_range_m>
+  <initial_estop_latched>true</initial_estop_latched>
+  <plunger_joint_name>emergency_stop_plunger_joint</plunger_joint_name>
+  <plunger_travel_m>0.006</plunger_travel_m>
+  <plunger_pressed_threshold_m>0.005</plunger_pressed_threshold_m>
+  <plunger_position_gain_n_m>1500.0</plunger_position_gain_n_m>
+  <plunger_damping_gain_n_s_m>15.0</plunger_damping_gain_n_s_m>
+  <plunger_maximum_force_n>20.0</plunger_maximum_force_n>
+  <isolator_joint_name>main_power_isolator_handle_joint</isolator_joint_name>
+  <isolator_travel_rad>1.5707963267948966</isolator_travel_rad>
+  <isolator_closed_threshold_rad>1.40</isolator_closed_threshold_rad>
+  <contactor_joint_name>main_power_contactor_armature_joint</contactor_joint_name>
+  <contactor_travel_m>0.004</contactor_travel_m>
+  <contactor_closed_threshold_m>0.0035</contactor_closed_threshold_m>
+  <work_topic>/formal_vehicle/lighting/work_lights_on</work_topic>
+  <tail_topic>/formal_vehicle/lighting/tail_lights_on</tail_topic>
+  <warning_topic>/formal_vehicle/lighting/warning_lights_on</warning_topic>
+  <external_estop_topic>/formal_vehicle/simulation/command/emergency_stop</external_estop_topic>
+  <physical_button_topic>/formal_vehicle/simulation/command/emergency_stop_plunger_pressed</physical_button_topic>
+  <reset_topic>/formal_vehicle/simulation/command/emergency_stop_reset</reset_topic>
+  <safety_power_topic>/formal_vehicle/power/branches/safety/enabled</safety_power_topic>
+  <main_power_request_topic>/formal_vehicle/simulation/command/main_power</main_power_request_topic>
+  <contactor_command_topic>/formal_vehicle/power/main_contactor_command</contactor_command_topic>
+  <isolator_state_topic>/formal_vehicle/power/main_isolator_closed</isolator_state_topic>
+  <contactor_state_topic>/formal_vehicle/power/main_contactor_closed</contactor_state_topic>
+  <latched_state_topic>/emergency_stop</latched_state_topic>
+  <work_applied_topic>/formal_vehicle/lighting/work_lights_applied</work_applied_topic>
+  <tail_applied_topic>/formal_vehicle/lighting/tail_lights_applied</tail_applied_topic>
+  <warning_applied_topic>/formal_vehicle/lighting/warning_lights_applied</warning_applied_topic>
+</plugin>

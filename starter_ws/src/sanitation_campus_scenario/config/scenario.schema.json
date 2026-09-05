@@ -19,11 +19,12 @@
     "episode": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["cube_count", "cube_edge_m", "grasp_clearance_m", "dirt_patch_count", "dirt_patch_area_m2", "dirt_spacing_m", "pedestrian_count"],
+      "required": ["cube_count", "cube_edge_m", "grasp_clearance_m", "grasp_reach_radius_m", "dirt_patch_count", "dirt_patch_area_m2", "dirt_spacing_m", "pedestrian_count"],
       "properties": {
         "cube_count": {"type": "integer", "minimum": 0, "maximum": 20},
         "cube_edge_m": {"const": 0.03},
         "grasp_clearance_m": {"type": "number", "exclusiveMinimum": 0},
+        "grasp_reach_radius_m": {"type": "number", "exclusiveMinimum": 0},
         "dirt_patch_count": {"type": "integer", "minimum": 0},
         "dirt_patch_area_m2": {"const": 1.0},
         "dirt_spacing_m": {"type": "number", "exclusiveMinimum": 0},

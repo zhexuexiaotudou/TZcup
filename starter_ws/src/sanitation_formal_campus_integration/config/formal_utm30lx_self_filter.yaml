@@ -1,0 +1,28 @@
+formal_scan_self_filter:
+  ros__parameters:
+    input_topic: /scan
+    output_topic: /scan/navigation
+    # Expanded-URDF mesh ray audit, transport/pregrasp/pick/deposit invariant:
+    # 110 / 1081 rays hit sensor_mast_link (92) or gnss_mount_link (18).
+    # Limits include one angular sample and 0.10 m range margin over the
+    # maximum audited hit (3 sigma of 0.030 m sensor noise + 0.010 m mount).
+    # Matched samples become NaN, not infinity, so occluded space behind the
+    # vehicle is never invented as observed free space.
+    angular_range_masks_rad:
+      - -2.35619449
+      - -2.15548163
+      - 0.18
+      - 2.07694181
+      - 2.35619449
+      - 0.31
+    mesh_ray_occluded_count: 110
+    mesh_ray_total_count: 1081
+    geometry_source: reports/engineering/formal_vehicle_fov_occlusion_report.json
+    # Gazebo uses +Inf for a physical no-return over the complete 30 m UTM
+    # range. Karto includes a reading equal to its raster threshold in the scan
+    # bounding box, while its occupied-endpoint predicate requires a value
+    # strictly below that threshold. Publishing exactly the sealed 12 m SLAM
+    # threshold therefore expands open free space without a false 12 m ring.
+    normalize_positive_infinity: true
+    expected_sensor_range_max_m: 30.0
+    no_return_replacement_m: 12.0

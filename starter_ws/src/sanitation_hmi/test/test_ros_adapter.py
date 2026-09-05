@@ -1,7 +1,11 @@
 import struct
 import zlib
+from pathlib import Path
 
 from sanitation_hmi.ros_adapter import encode_image_png
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class Image:
@@ -25,3 +29,9 @@ def test_standard_library_png_encoder_converts_bgr_to_rgb():
         offset += length + 12
     raw = zlib.decompress(chunks[b"IDAT"])
     assert raw == bytes([0, 255, 0, 0, 0, 255, 0])
+
+
+def test_clock_subscription_uses_simulation_clock_qos():
+    source = (ROOT / "sanitation_hmi/ros_adapter.py").read_text(encoding="utf-8")
+    assert "from rclpy.qos import qos_profile_sensor_data" in source
+    assert "qos_profile_sensor_data," in source

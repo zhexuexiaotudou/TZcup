@@ -1,0 +1,77 @@
+schema_version: 1
+integration_id: tzcup_formal_campus_integration_v1
+
+vehicle_contract:
+  entity_name: tzcup_formal_sanitation_vehicle
+  # The drivetrain plant emits raw wheel odometry against base_footprint and
+  # local_ekf owns the selected odometry plus odom -> base_footprint TF.
+  base_frame: base_footprint
+  kinematic_model: four_wheel_skid_steer
+  physical_steering_claim: false
+
+motion_profile:
+  repository_relative_path: config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml
+  navigation_footprint_key: transport_stowed
+  cleaning_footprint_key: cleaning_deployed
+  effective_cleaning_width_path: >-
+    mechanism_sweeps.transverse_union.declared_effective_cleaning_width_m
+
+campus_materialization:
+  permitted_file_inputs:
+    - public/episode_manifest.json
+    - public/world.sdf
+    - config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml
+  evaluator_truth_permitted: false
+  dirt_truth_permitted: false
+  occupancy_source: public_world_static_collisions
+  keepout_inflation_source: transport_stowed_footprint_radius_plus_safety_margin
+  coverage_footprint_key: cleaning_deployed
+  maps_share_grid_contract: true
+  vehicle_start_must_be_free: true
+
+command_contract:
+  nav2_controller_topic: /cmd_vel_nav
+  nav2_collision_checked_topic: /cmd_vel_gate
+  formal_safety_manager_input_type: geometry_msgs/msg/Twist
+  formal_controller_topic: /base_controller/cmd_vel
+  formal_controller_type: geometry_msgs/msg/TwistStamped
+  converter_owner: sanitation_safety/whole_vehicle_safety_manager
+
+topic_aliases:
+  /sensors/lidar_2d/scan: /scan
+  /sensors/imu/data: /imu/data
+  /sensors/gnss/fix: /gnss/fix
+  /sensors/front_rgbd/depth/image_rect_raw/image: /camera/color/image_raw
+  /sensors/front_rgbd/depth/image_rect_raw/depth_image: /camera/depth/image_rect_raw
+  /sensors/front_rgbd/depth/image_rect_raw/points: /camera/depth/color/points
+  /sensors/front_rgbd/depth/image_rect_raw/camera_info: /camera/color/camera_info
+
+native_sensor_topics:
+  /sensors/lidar_3d/points: sensor_msgs/msg/PointCloud2
+  /sensors/wrist_rgbd/depth/image_rect_raw/image: sensor_msgs/msg/Image
+  /sensors/wrist_rgbd/depth/image_rect_raw/depth_image: sensor_msgs/msg/Image
+  /sensors/wrist_rgbd/depth/image_rect_raw/points: sensor_msgs/msg/PointCloud2
+  /sensors/rear_left_fisheye/image_raw: sensor_msgs/msg/Image
+  /sensors/rear_right_fisheye/image_raw: sensor_msgs/msg/Image
+
+localization_contract:
+  default_backend: nav2_amcl
+  # Product mapping/localization must never consume the raw UTM scan because
+  # its two fixed mast/antenna self-return sectors are mesh-proven obstacles.
+  map_observation_topic: /scan/navigation
+  selected_odom_topic: /odom
+  selected_odom_source: /local_ekf
+  raw_wheel_odom_source: A300DrivetrainPlantSystem
+  wheel_odom_diagnostic_topic: /odom/unfiltered
+  imu_available_topic: /imu/data
+  gnss_available_topic: /gnss/fix
+  gnss_mapping_consistency_topic: /odometry/gps
+  gnss_used_for_mapping_consistency: true
+  gnss_fused_into_saved_map_backend: true
+  claim: lidar_map_plus_wheel_imu_ekf_with_gnss_consistency_and_saved_map_fusion
+
+spawn_contract:
+  pose_source: public/episode_manifest.json#vehicle_start_pose_map
+  gazebo_service_suffix: /set_pose
+  initialization_only: true
+  post_task_repositioning_permitted: false

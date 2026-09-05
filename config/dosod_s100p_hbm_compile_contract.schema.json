@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://tzcup.local/schema/dosod-s100p-hbm-compile-contract-v1.json",
+  "title": "TZCup four-class DOSOD S100P HBM compile contract",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "contract_id",
+    "status",
+    "operation_boundary",
+    "model",
+    "vocabulary",
+    "reparameterization",
+    "upstream",
+    "preprocessing",
+    "calibration",
+    "toolchain",
+    "compile_recipe",
+    "output"
+  ],
+  "properties": {
+    "$schema": {"const": "https://tzcup.local/schema/dosod-s100p-hbm-compile-contract-v1.json"},
+    "schema_version": {"const": 1},
+    "contract_id": {"const": "tzcup_dosod_s100p_four_class_hbm_compile_v1"},
+    "status": {"const": "BLOCKED_UNTIL_FROZEN_CALIBRATION_AND_LIVE_COMPILER"},
+    "operation_boundary": {"const": "preflight_only_no_hbm_claim_board_copy_ssh_node_start_or_data_collection"},
+    "model": {"type": "object"},
+    "vocabulary": {"type": "object"},
+    "reparameterization": {"type": "object"},
+    "upstream": {"type": "object"},
+    "preprocessing": {"type": "object"},
+    "calibration": {"type": "object"},
+    "toolchain": {"type": "object"},
+    "compile_recipe": {"type": "object"},
+    "output": {"type": "object"}
+  },
+  "additionalProperties": false
+}

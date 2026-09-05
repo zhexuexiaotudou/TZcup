@@ -1,0 +1,1629 @@
+{
+  "report_id": "tzcup_formal_fov_occlusion_mesh_ray_v1",
+  "status": "PASSED",
+  "all_minimum_clear_fractions_passed": true,
+  "urdf": "reports/engineering/formal_competition_vehicle.urdf",
+  "urdf_sha256": "2b399eaba8de34fd55ca663a3b6b49437070c72969f5e22faf2a64a12ba27db8",
+  "layout_sha256": "3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9",
+  "validator": "scripts/validate_formal_fov_occlusion.py",
+  "validator_sha256": "92900a3a79845c7645507129af6ab1cd87664d6e837ed00bd35ab225397d04f2",
+  "geometry_triangle_count_by_pose": {
+    "transport": 971768,
+    "pregrasp": 971768,
+    "pick": 971768,
+    "deposit": 971768
+  },
+  "mesh_file_count": 186,
+  "mesh_hashes": {
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/a300_encoder_cap.stl": "49bc4b3decb108ae56546ebe940a5b3369dc7c90b9037c076fc11a21a45ed8be",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/arm_mount_adapter.stl": "d1fea7869c3c27e7b625cfd1ea5a2016f8210838e21f36c5366ca67135b13b05",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/front_rgbd_mount.stl": "2ca6390b3f4cc32fe1a6f3808fce5f3b9701e7eba8e33c377908b70a8c63b728",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/gnss_mount.stl": "811bb2eb3df400ec11a4057d36ac96901eb03bf6f882c67bdb2e392edd1a232a",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/imu_mount_tray.stl": "55af6404ccd0cbaa5eebd182d92cc245f0f221cf78679ec3ca47b474acad9be7",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/isolated_dc_dc_module.stl": "08fc9d633f3ad2c132413952e709e0391dc2fd138b9ba4110ccd87510fed1356",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/mid360_mount.stl": "a558d1998e01b372c0071bd4a3deb7b9c05b024f67128f7e3a093747620c9221",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/power_distribution_box.stl": "102c3232bde1f27eb49274168eb95256842bd67f04ba97b3a730d81add6d4bb5",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/rear_fisheye_mount.stl": "2e5ad80bca84ed90e2ed8ef92755a1b09b90e2c22b396a2bf1684f82c705d769",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/s100_board_reference.stl": "d2624a71b34b51b927d3fcdd7c2d125b5b7e8af8449d7b6730e9098832160106",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/s100_cabinet_roof_mount.stl": "a24902b3b121878da3bd3856c9d4dd4d7319d10bcb1ccb02501f33bdffee0803",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/s100_compute_enclosure.stl": "edd062c980811dcf75f665c486f4bc267d15282b501e00e6d0a5ff96c8688bd2",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/safety_relay.stl": "89cf5dd4298b0f55bff0f37c0206fbc01744ea5720bdf0e0073b648d5eeba717",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/sensor_mast.stl": "142e5c0b880720042ba686e5d3af557bdd6bf7ae4dd67329b8ac5d6741207b69",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/ur5e_control_cabinet.stl": "139b78dbb6f1515b048f36baaff4d42815c5ff39b4eaaef0c6bef4746f6d5d3d",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/ur5e_control_cabinet_isolation_base.stl": "f84f18af3d65be74186c250ee721c4f4cdb030d98069787f7a2d295ae9cc0099",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/utm30lx_mount.stl": "b8cb592d3cb152e068ce8aaf2bb3626467b33ce44976e4c87ab52f5b119d913c",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/zed_f9p_module_reference.stl": "570370326c3ff5e99b5c222ce00a917b84cdeef3ad71126d82fbd88f8b07059d",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/platform/zed_f9p_receiver_enclosure.stl": "f7137ebf593ef4bf37094e67324f42d18fdda41aa232c970a69049cf1b47a040",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/sensors/rugged_fisheye_module.stl": "e0296ca2e07615d437ad8e15b73a5ed94d37ea50ca3a575bdb33a1547745db9e",
+    "starter_ws/src/sanitation_vehicle_description/meshes/generated/sensors/wrist_rgbd_side_bracket.stl": "6608f6372f1bbc4a25a8cb320cb5898bec79181a6636dc6df971797049a2679f",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/arm_bay_floor.stl": "2ce82244212300265663614f25846d57ea252b6ee879983a34816b2360591733",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/arm_bay_front_sill.stl": "f5ea1a09b4ed8527cc2daf629597ae89b9732654f5906e66711a18145e1330aa",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/arm_bay_inner_sill.stl": "c946e3559d8efc34270c78453c38876bcfabf11ccc2b5fc882c3e2a75d62c3cd",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/arm_bay_outer_sill.stl": "ff15af2e02bab32bbffc89797569771310c64bf864971eae3191ff055bcd0dc6",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/arm_bay_rear_sill.stl": "94d232ab4782cd76c9dd237162a1f93b933114a46e5ee58a40f522f155345582",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/arm_turret_shoulder.stl": "c94b6a8a463d58d1d514f87a5c2e767425697db5e9169fc390a2665929c3c7d5",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/compute_service_door.stl": "25b78182e112e87d10edc8411536225e70d1d3d11295fbb04d06c7b794838b86",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/corner_beacons.stl": "7eb8620d2f677601167e66f7cc4f74c71980206504366262424c2fd6979dc759",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/front_brand_badge.stl": "f07dde7e40aedb6a93d104cfcedb90a93af55d446e41e3d845c92a95eaad1fbd",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/front_bumper.stl": "54d562d0028a0b1c5bf5a5413ef98b3dd8f7a5ac3e037337c7de2cc094815cdf",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/front_center_nose.stl": "1d1505e1766143d4d2c26efb50af930a3dfce3efddb382a445d64428b5a35763",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/front_green_apron.stl": "9c93292c7f8a0ed8f3400490e78688190257ec7252cac4ecb6564fd09244cd2e",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/front_left_power_cowl.stl": "0c60965dbf1ee32281811efe3703cd594b3078929c777a4404bac8511a3e681b",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/front_right_compute_cowl.stl": "7a4233cee71c6fa51592b42c4c84003049dd6a8a45ec4207fc7b164678faddd8",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/front_sensor_band.stl": "7599c7b242cfe79a0f4739a97760b1414f6bc93a0eb1f396768dccc6c1eb368b",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/front_work_light_left.stl": "9d7423ad0785171bfd2e5ad3587987f25ab960e5e1eb05a57936faa0abf48407",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/front_work_light_right.stl": "9a8be25304ec8e6c131f4adbe3b35350ad733cbd546e0faa3a9c1e24575c75e8",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/left_side_brush_motor_guard.stl": "f6777cd91e508206165b8834f5f7f9e5b7a71f43517cf8942c3079c3e7bc4378",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/lower_tub_left.stl": "b3302bf3b154052938d7e7c45e5f2fd502e71df7e7f92d002218addcb2e31d9f",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/lower_tub_right.stl": "82f539dc6d68f60037f71905dea6ffbe1c80cfd21f179cbea220efa6d4048c81",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/power_service_door.stl": "e6a82d35229b00e330d83ae8099b899378411fd8bcfc397fe9a76a9c9cf838d9",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/rear_bin_outer_shell.stl": "c4e5360d8f9386b01f23996a8d81131ecac294799549bb4feac290b4daed4f6c",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/rear_bumper.stl": "63c494e395623984bd3ff7465212b481f3140a33d304466e74e435db29729d83",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/rear_dry_service_door.stl": "f10f09a21c5c71e97130e2487d560c46b21b461db9476013da55fcaeea2d4898",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/rear_sensor_band.stl": "1129d507c13983d9f9ed4ce7ea4172ce77a7f3ff5c52f2b6521bacf630d11f4c",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/rear_squeegee_valance.stl": "13c29befc27ecb1dd6270013915357acaf222b826e5c9f911bad156869333977",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/rear_tail_light_left.stl": "827a190a4f9405b9fe46eea3521d25c2a325c5e8cd48e54a2f691e5c4abb22b5",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/rear_tail_light_right.stl": "a951bc3fe9f7847bb3fde1ba70fc8a878901cbc6d3f2cfdba419729269f35076",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/right_side_brush_motor_guard.stl": "f32017347431ae6479774065179ec1dc4fd177e7c26996abcdb026d94db5fac3",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/sanitation_green_accent.stl": "534da6bc74a3239d334f3b75ec7f61458324229d3590676fe8d3e0547b296dda",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/sensor_pylon_fairing.stl": "f879d66154797a403040787c27220ba0987b06a3fd818e6442b6a794cc643499",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/sensor_pylon_service_hatch.stl": "03c2eac5bdcbf390d1d1923dd914cd3cc5f0d191403b1cd4a03f181b53e3cdda",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/service_door_hinge_barrel.stl": "f4f769a4918b9f0682baf96baf79ab917edba5581198225e21f386c91ed9cbff",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/service_door_rotary_latch.stl": "984f7bf2258ba88e922a2ad6aefbbba39f7817e130625a11a6db3cbde97f1362",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/side_skirt_left.stl": "8465f85967b80bef3ce0fdf98695b7750623969b8cf58f8fa6009a890258a062",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/side_skirt_right.stl": "c4a3218ce05aae786950ed24a4c514eed1c7b1003dcb3322c628d140cbc6b714",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/tow_eyes.stl": "a097e94de7edc254aa549e7fd044cee5aec9c3f320ef20f5b2f1f27aa7907d0c",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/wet_service_door.stl": "aaa9962d69c6c0e7f4acb371fbfa8ea381182fbf21d17cada6b2ed85a99329f1",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/wheel_arch_front_left.stl": "0e82923aa32d1f9cfc4e1e7a16ebc3e687e37551e14c45449df15daae9f3fc6c",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/wheel_arch_front_right.stl": "9a556f1fdfb18bd3b50ea6a9467d4855f36920ac2aa80a58d0a66f817a888abd",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/wheel_arch_rear_left.stl": "e40047913579c449978904e73bd05672d8b79e8c618e3a394e128df09828ce56",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/bodywork/wheel_arch_rear_right.stl": "41fe069739107fe996c7b2c39cdbcef36bd6672a5f6b9adbc62c21a2580f029c",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/actuonix_p16_body.stl": "9c42d447f3bb93e6be492056fced32360d95e660799479c42ad87e1539cb66d7",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/actuonix_p16_clevis.stl": "a992fae98335f7922013784d17198d9d9b6957865cda0a55ea0c293b7977f4bb",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/actuonix_p16_rod.stl": "b4a43976d4bc68e1138cf5da3266ac283d05d9b5199fa3dbe444705da2ccf13f",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/central_roller.stl": "0f5decb49d28377156b8bdd68dc48929db61376bf5b63eb5e1f494070f78aa00",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/central_roller_bearing.stl": "7d3c0d92f82a117b9dfa24b00ef2cbd5a44f498fa8421da85cbf6104a02cabc5",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/central_roller_guard.stl": "d8fd9d41714a3207492d782921f59b5b037ce8cf6a9a3c031a91cab430256f0a",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/cleaning_lift_carriage.stl": "c0981f3028bf9d5bbc548c8c550b07d7b7946ce17f04b75c27d826b6db9ef8d1",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/cleaning_mount_frame.stl": "c9248e3d85c0b33c119aae314c6ca68199a4458bc743e5c5678d22a1920b353e",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/inline_flow_sensor.stl": "1a6030674d1faaaabb7bf218e0e635c921a55598f7b85a78aa9d61448e444c2e",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/jabsco_pump_head.stl": "ecc8f17616af83783846a41dd5ac3471269c6c32b25f10473778e6866339f78d",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/jabsco_pump_motor.stl": "5ee2d4c90c89f2e9f45db65a0f13e424a26863605fe8fcd8dd459bef1d21bd61",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/jabsco_pump_rotor.stl": "cebad0bbabc14017dce8aada379a49de8348be60b9348cff48ca8cb9e7513c5a",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/lift_guide_column.stl": "7ee4dfd3017653d981fbe5ecd6136bcbd01276a32f1d55f948e3ac61b7abd897",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/lift_linkage.stl": "f6df0c2eeefe18614e0a9fd8b26e630d97acfce96d00b5b6c1158a0542253244",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/pololu_37d_encoder_cap.stl": "6ba9178797d271d7fd059ead4d18a8d02fda1960986da3a49964636f2c917ad3",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/pololu_37d_gearbox.stl": "3dfbb3399e79d26b9fc3921b71c63695ae2982edadf05c2c0615fad0e5d07d15",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/pololu_37d_motor_body.stl": "0db0caa94bb9a34c17c412eb83b5cc02ab77f846dbb2c53b0f08350f403cf94a",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/pump_isolator_mount.stl": "f09656d3205eef016dae3ef73d486fa017a51a3ed5752270cb151ebd50da20fc",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/quick_coupling.stl": "1e2e04b407befcb43c4c9c3ed4a3632ca9466e28b86fd50f1c750a1b06f2f19e",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/recovery_hose_200.stl": "337e010d96583e23bce6030f6a97cb89f780538479e14c9c59f9210f2d5f9642",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/recovery_hose_220.stl": "e857b8a838b011d1d46d78d0b54535ff180ffd8058935df74cc4d3a7757faba4",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/recovery_hose_250.stl": "1c26130237334d4ff99b778f30bd794e8b8152dd6c6e1022ceee375318efac30",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/side_brush_bristles.stl": "78e356f132e15b7176746ce0327c95262f073b1ce3b7665609a4629efbdb3f1b",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/side_brush_disk.stl": "14efd6fc12fe6fe39cd886efa213f8c102c35feee9d366e0c2f34af22ed72bf4",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/side_brush_rotor_shaft.stl": "9ebde115f8b6818c53b637c646ed4d24a391bd1886a54cba487b0e7476febdb8",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/squeegee_backing.stl": "a0c6fbaf9d3a9070ec6ea395d5121b5821eec79a6d0a3c319766ba3f98e85db0",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/squeegee_blades.stl": "f7cf9c3fd49972f253070d1459979a6631cc6c7f29fc4f0740ef7f47f2f1e6c2",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/squeegee_float_carrier.stl": "2aff65296283d30ff630aeca761e57c8952e0cdcaef136b32f5aab1ccb827bb3",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/squeegee_springs.stl": "5d933234a0296558c8a03a6ef9eaf36dde9247cf9ae95d673c4615345ef54bc0",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/strainer_filter_bowl.stl": "30f2bc91b04a37fa45600278655d2501f2ec758b02d7f80227b246d276e0e2ba",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/strainer_filter_head.stl": "13ef88f078fb7d5d70cf6e7fa624c1094e28f19b0ee3fc199de88daf1657b57a",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/cleaning/suction_nozzle.stl": "22657db89aa05f0d8ffb47c97b73cd31e9c2dedb1c616cdd4db3b1bf40be08c7",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/a300_battery_bms.stl": "21cfcc5a058ad79ba111ee8b9ec2b749a2e703a9a8995330ae8f1e9d73e4c4c2",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/a300_battery_pack.stl": "12d46d0f3ccc2508e46d1f3199788c4db7d9b017763fd04375717f34d1a6d156",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/charge_connector_lock.stl": "7ba859bfb784a41ca4b127f1c3d458b1d22c8d876eef9161b3cee2ae9028fe9d",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/charge_port_door.stl": "a26e4a86f209ab7333ea9257ca358b0a7b6224f0d2cd9c29b85beabc52688c1f",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/charge_port_housing.stl": "c66ff4b218fa5c57c3f598b23edb5899f7ab84e30d4e37dba12183962b612be3",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/charge_receptacle.stl": "b7df491898e895feda5cb32c7776edc9ca3f87ccfe77ee26194302e2366ccf4c",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/emergency_stop_housing.stl": "9e759e031af339aeebde435c18d1e9eab756368b2bc05265f5fbbaa1ba2129ac",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/emergency_stop_plunger.stl": "8408ae298a2852391ab76a78003248ccb4fbd1bd6c02b3fa9cd5c753aa67e3af",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/main_contactor_armature.stl": "b91fd22a990ba980d9c6344f83aa4490854e94d58ca4bb72b73f17f9c354a7f0",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/main_contactor_housing.stl": "59ae57d399650148c07b6f279fac6d9b7088cbbe13331be28ae1bab4ddf03837",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/main_power_isolator_handle.stl": "d84ed45233d49a1eb4c95294d664dc0787cbe9237a9684129c7d8a1d6d820a89",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/main_power_isolator_housing.stl": "1b95c6b6510ceabe975972363131dc9d9d1f3c719bf9815bcb03a2f3842cefc7",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/wastewater_drain_actuator.stl": "d290c049d541cc72bb8744ddd9161cb0b3ade4d55db5f18fd2ed58c49e21f9e1",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/wastewater_drain_coupling.stl": "ab7d7422a1256e27bc8c59e6fc808589725fbcf87dd122321226277061308dc2",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/wastewater_drain_pipe.stl": "3621a36dddabc28bd1767e44ffdff371cbaf76aa1d17827980de596597c00c65",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/wastewater_drain_service_cap.stl": "a22378e74226f73a57abae6e35e575f4678607be7d223da0ff48b3a6e498bed9",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/wastewater_drain_valve_ball.stl": "69f647fd9b8c2aa7ee8b02d8d60bc45d92561eea46e6e5f8fedd63438cb5714b",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/service/wastewater_drain_valve_body.stl": "3440d82292561accba3d07340a82effccd7835e27d9e0662f945f3fdaee242b7",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_bin_floor.stl": "7d8ee5f0c87469dacc04df718c994844a06ef17dedbff6e89059ad557b893195",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_bin_front_panel.stl": "cdfa210b16fd4d402090e37f27a15df6606fbe929e27a7cb5b5f29db453261e7",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_bin_level_sensor.stl": "7a6d046e1a3832d4f3d8b88c2ccbde8e293c1b2fea4529546c5627b293178561",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_bin_lid.stl": "e4b79b3ff3dc4ecc2a4aa88750983b924358c8e97f1afcfb646473586329f1dd",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_bin_rear_panel.stl": "cdfa210b16fd4d402090e37f27a15df6606fbe929e27a7cb5b5f29db453261e7",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_bin_side_panel.stl": "bb9ea18e52096e351dcbfc63a6f4ed658843eaaef679e4adbf32e1073b07e19b",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_deposit_chute.stl": "7168625eed8ee04717429917a96b29f62318996c48af4981f12ea33bdfb50a6f",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_deposit_gate.stl": "a8c7b27c7f7c4e2bca953d6556241ec98f598ee70602af0ce2404841b39d6906",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_deposit_hopper.stl": "9bc0e644b222c4194a124aa6883879b64f9b268526fb372091cd50f4d5afea49",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_deposit_xw540_actuator.stl": "9f15ca76d75d2874ebc63eca0cf5bac1e408e31d8a30890464e8755acec56a0b",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_deposit_xw540_horn.stl": "30368ec284f21d0e3267d1be8b47e09cb388f5f4a76c36ce169f82c6e6508590",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/dry_wet_partition.stl": "374c24b2acc85cc48c36f6592b92b5e9344f107f76a4ca19c9d32ad825449006",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/level_probe.stl": "ef412170ff4bcd7466404bd317e1ee9440191f1c5cdcaf9aedfa65bc94c395d8",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/storage_mount_tray.stl": "bf173eb77c10c0d708be7591b50d3c67eb543113796e06cf28c0300f3b0dadb1",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/storage_toggle_latch_base.stl": "ca21be13363d36b765b3a7aab3e2c9f35adc9e12f43e98eeffa92107c59ac674",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/storage_toggle_latch_handle.stl": "e6218039ccf51efa67e980655afdb25142d2d82723dd0a1549835bfd128e5867",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/storage_toggle_latch_keeper.stl": "fa200cb089fd72e8c0ba7196a2bc97149837b7e9641649579ce74d85cb540fb7",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/wastewater_baffle.stl": "b8ed20ce8fba1b31560a03334c0cdf8084b557ca96afd5ac6b156b9990d4c1fc",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/wastewater_front_panel.stl": "fb9a8100bde7bc43d71236e22ddc9a518405e8fb57566bf8ec5a664574605277",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/wastewater_inlet_coupling.stl": "cc0fd76eb74f896279f1fd25ad067113abf180e1c02cef3e45150f40e6b001f3",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/wastewater_lid.stl": "1578233afbe941fb59b2f6bbc0f3bf66603ae4d9811b810f06f6ba8f30e27706",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/wastewater_rear_panel.stl": "fb9a8100bde7bc43d71236e22ddc9a518405e8fb57566bf8ec5a664574605277",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/wastewater_side_panel.stl": "315805dafa17570cbc021d8845420f5e471b6f67e7dd347f0c0cf7e083e3bebc",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/wastewater_tank_floor.stl": "29c25177c5c76f333bc44afeef4fe9cac6c6df8d84fff8078044df6d9c57dc43",
+    "starter_ws/src/sanitation_vehicle_description/meshes/project/storage/wastewater_vent_filter.stl": "a58ca4d2c34c254821de51d48ba891036303959ffeb74c97ac4fdde3d94814ff",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/clearpath_a300/attachments/top_plate.dae": "0c901ed0b1ef93a1d2d6f961f4af90a09db156744c1601680b2c4b5feecadf1d",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/clearpath_a300/chassis.dae": "03c32f697dda7d23e56cc384ad09694ef1f41403f949d495774814bd21fa052e",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/motor.stl": "0a447d5095cb323fca92e8ad68632ffff36cf5677a81c610d41aab2893e4c83e",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/suspension_beam.stl": "1a6697213e1e8ac9de765d528027a41718536729f471ab6f4d38e92ebf6c9aea",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/suspension_spacer.stl": "cf1ad7153579a53c5e98905ac0011e1b92819bbcaa3efce1968e2bdce04092ca",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/wheels/outdoor_left.stl": "23d474fc7826e41737b065d5f5d4674c88b910e764634e62b079835e3882bbae",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/wheels/outdoor_right.stl": "bf7b48da8da6338b1c178f31e194f469d05159e2012aef4a063491b258cc7e08",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/clearpath_a300/livery.dae": "6487697db9d4f2407bbc91237981caf48d0ab6a6c4adddb6eae5f4c75b525b4e",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/clearpath_a300/status_lights.dae": "30ec5a73bbd1efee52969dbcf4dd1a6d4ffee4e257aba303ab134135a6cc4563",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/collision/left_finger.stl": "f39a50be121122fc1c53c588a762ad1da8a0f64d39bc6f299cbe9b0597e7257b",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/collision/left_finger_tip.stl": "9d90031cd99106a8be63609f8ff78580638d91cc4167bf66c09198329f2e65cf",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/collision/left_inner_knuckle.stl": "f250a3fea49be4d1bb2383d9980172c59fc44031193ef2293ca540f756f6c1e6",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/collision/left_knuckle.stl": "b7ec787f57a7db5b2b14e64ffbedaac28739e38f14aac8afa8b575bac941feb7",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/collision/right_finger.stl": "1d018fa2f0b50aca5941778d78810b211b1abfc8637c7953451d76d4833ba6f8",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/collision/right_finger_tip.stl": "126f1559f2f7dca62449a6ca926c609fbdaa93ca66df805ff7c069bb206e3d10",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/collision/right_inner_knuckle.stl": "c936d951ede875b91c180bd41d45b22ae23f8a39d9c3e09e29066453a8e863ef",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/collision/right_knuckle.stl": "d151fb38f59748f1e6e627312e2ede96f2c98ba267bf722091665b20c78e7a8d",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/collision/robotiq_base.stl": "ede5cd7d7846c051b88645f33d6bbb5ed9b36bbef404a19a46557639bfab7060",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/collision/ur_to_robotiq_adapter.stl": "e5b4eaba7f75c4071c9c0213281af4798098c971891808d87e948383cd2b9aa9",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/visual/left_finger.dae": "a628d6eee3691ecb95398ffb4a9dd868f409dd7f023c91042fa6f48c1fd261e4",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/visual/left_finger_tip.dae": "6f91b7535e508b3be0d71f787f2f76b95b1a3b52b7830593de88dbafa9f9b282",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/visual/left_inner_knuckle.dae": "489930e1fa9e31863ca10e808cab70f71f5657e57c48d96e1ee44c05ad3a7fba",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/visual/left_knuckle.dae": "74748bb60549f04137088b5acf210abca8f3d60c47978fd6859d52ee3f29237f",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/visual/right_finger.dae": "95fa880274a06f28e8f1ed4b6fb47a8f0753adb47b2346d590a2932b04cab443",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/visual/right_finger_tip.dae": "9de6d3e0bcab48d362bdbe7fdfb9bbd6e02c4f7e69467ecacda1661529574cd5",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/visual/right_inner_knuckle.dae": "4722f4399f6ebfceedbb9bcaf0f41ad1ea676f0d5be2137367eb468f10f119ae",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/visual/right_knuckle.dae": "0385f39dcd9b06379b703ead59d779b70497a693819cf61134a2a742a293df16",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/visual/robotiq_base.dae": "0b5445324cd6b7afe396f023e1fed6a35240a13e5ac92bc91e28ea16d75eae8d",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotiq_2f85/visual/ur_to_robotiq_adapter.dae": "1a8f4a8dee1a8c9773123986c34d7ba52564d06067b3a59eba6660c929dd7628",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotnik_sensors/antenna_ANN_MB.stl": "33f17557af2ab7b200bbfa84dd5d88774a39f75451aee8a7143f093b65783749",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotnik_sensors/hokuyo_utm_30lx.dae": "6dfc8447a4d7161272664420872757d0cc0225c939ed0f65b2d05e24b0966d80",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotnik_sensors/intel_d435_color.dae": "ccab9de94a867e5b356db854b0130f8a6ed53c57270a8a69dd6df749115806fe",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotnik_sensors/livox_mid_360.stl": "727a204231deea2b70fca60ce9a711fd04edd6e0b8d8d20ee900110039b24f3f",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/robotnik_sensors/vectornav_vn100.stl": "48a5ed50cec0620330b68a139b7fe11a090516b30bc1f8babab4e1596da60502",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/collision/base.stl": "9a145e0d46f2130afdf2a2e8825a00a929870c4c3d6d8e4d1adc5f04db3aac1b",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/collision/forearm.stl": "2e7423cab807c34160ec4f770daee5e747d70e777eb01b7beeace2b8c5751816",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/collision/shoulder.stl": "ceb92532177daa77682f5fbd628e01c2137d168f949a7a706ce1dabe9f002387",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/collision/upperarm.stl": "ee893044caf00075cb55b4cf666d1f1311c7979786212a501009f33bee945209",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/collision/wrist1.stl": "f8c9f9337b6fd98c75f052e96de10e14a107ddb6874ba6b904e546f8a4e4f43a",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/collision/wrist2.stl": "2964a63f60ce3e3cf3ad55bcf190d7876d50e373cb64b70a57cea5885eaf3c86",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/collision/wrist3.stl": "83b3666b4ae2badd54af0d2c25a921682ecbc29e849eec646c3ed55fb74c78a3",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/visual/base.dae": "b9e3b9def32a3601409bc93d95ccafbf85653a6de7cc3a8f2d099428d9d39e63",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/visual/forearm.dae": "e5c67e47e01323427ca5d43220bbdedfa5fcbf555d431a5002ffc545d84aacf0",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/visual/shoulder.dae": "36ad4f32d1d31cd99e6c8ec3973d8b7fea1fe174c61a292e5dd6c538c4db275e",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/visual/upperarm.dae": "61e7a96091984514100c54c66260dd19c307b31e64d6dc402cd2db964fde6a21",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/visual/wrist1.dae": "834b49fc5b950b50e24b3a3d6825a1ef38427ab5944102db96ec76fa897d317a",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/visual/wrist2.dae": "918d348a56355fd3dd93421a61a2500a43f321c9a3c4b4ffcb6101ef20c27b07",
+    "starter_ws/src/sanitation_vehicle_description/meshes/vendor/universal_robots/ur5e/visual/wrist3.dae": "04e6d4a1ea71a1f10f51d4cb2a376322e1617068faaa776dd29c7cf53bd2ea63"
+  },
+  "ray_geometry_policy": {
+    "included": "all URDF collision primitives/STL meshes plus STL visual meshes",
+    "collada_visual_policy": "DAE visual surfaces are not triangulated; every physical DAE link is represented by its URDF collision mesh or primitive",
+    "sensor_self_link_policy": "only the emitting sensor housing link is ignored; physical brackets remain occluders",
+    "endpoint_tolerance_m": 0.003
+  },
+  "scan_domains": {
+    "utm30lx": "270deg horizontal, 0.25deg deterministic rays",
+    "mid360": "360deg azimuth x -7..+52deg elevation, 1deg deterministic grid",
+    "cameras": "rectilinear or equiangular fisheye grid over frozen contract FOV",
+    "gnss": "uniform-solid-angle sky above the declared 15deg satellite elevation mask",
+    "arm_poses": {
+      "transport": {
+        "shoulder_pan_joint": -1.0,
+        "shoulder_lift_joint": -1.0,
+        "elbow_joint": 1.8,
+        "wrist_1_joint": -1.5,
+        "wrist_2_joint": -1.55,
+        "wrist_3_joint": 0.25,
+        "robotiq_85_left_knuckle_joint": 0.2
+      },
+      "pregrasp": {
+        "shoulder_pan_joint": -1.48278161,
+        "shoulder_lift_joint": -0.44199397,
+        "elbow_joint": 1.21471947,
+        "wrist_1_joint": -2.34352182,
+        "wrist_2_joint": -1.57079633,
+        "wrist_3_joint": -3.05357794,
+        "robotiq_85_left_knuckle_joint": 0.0
+      },
+      "pick": {
+        "shoulder_pan_joint": -1.48278161,
+        "shoulder_lift_joint": 0.10260211,
+        "elbow_joint": 0.80254082,
+        "wrist_1_joint": -2.47593926,
+        "wrist_2_joint": -1.57079633,
+        "wrist_3_joint": -3.05357794,
+        "robotiq_85_left_knuckle_joint": 0.3
+      },
+      "deposit": {
+        "shoulder_pan_joint": -0.30233498,
+        "shoulder_lift_joint": -1.56960444,
+        "elbow_joint": -0.73057657,
+        "wrist_1_joint": -2.40638971,
+        "wrist_2_joint": 1.56851193,
+        "wrist_3_joint": 0.60324332,
+        "robotiq_85_left_knuckle_joint": 0.3,
+        "dry_deposit_gate_joint": 1.05
+      }
+    }
+  },
+  "sensor_results": {
+    "utm30lx": {
+      "minimum_clear_fraction": 0.85,
+      "measured_clear_fraction": 0.898242368,
+      "passed": true,
+      "required_pose_results": {
+        "transport": {
+          "sensor_id": "utm30lx",
+          "frame": "lidar_2d_link",
+          "ray_count": 1081,
+          "blocked_ray_count": 110,
+          "clear_fraction": 0.898242368,
+          "occluder_histogram": {
+            "sensor_mast_link": 92,
+            "gnss_mount_link": 18
+          },
+          "origin_world_m": [
+            0.535,
+            0.0,
+            1.1621
+          ]
+        },
+        "pregrasp": {
+          "sensor_id": "utm30lx",
+          "frame": "lidar_2d_link",
+          "ray_count": 1081,
+          "blocked_ray_count": 110,
+          "clear_fraction": 0.898242368,
+          "occluder_histogram": {
+            "sensor_mast_link": 92,
+            "gnss_mount_link": 18
+          },
+          "origin_world_m": [
+            0.535,
+            0.0,
+            1.1621
+          ]
+        },
+        "pick": {
+          "sensor_id": "utm30lx",
+          "frame": "lidar_2d_link",
+          "ray_count": 1081,
+          "blocked_ray_count": 110,
+          "clear_fraction": 0.898242368,
+          "occluder_histogram": {
+            "sensor_mast_link": 92,
+            "gnss_mount_link": 18
+          },
+          "origin_world_m": [
+            0.535,
+            0.0,
+            1.1621
+          ]
+        },
+        "deposit": {
+          "sensor_id": "utm30lx",
+          "frame": "lidar_2d_link",
+          "ray_count": 1081,
+          "blocked_ray_count": 110,
+          "clear_fraction": 0.898242368,
+          "occluder_histogram": {
+            "sensor_mast_link": 92,
+            "gnss_mount_link": 18
+          },
+          "origin_world_m": [
+            0.535,
+            0.0,
+            1.1621
+          ]
+        }
+      },
+      "all_pose_results": {
+        "transport": {
+          "sensor_id": "utm30lx",
+          "frame": "lidar_2d_link",
+          "ray_count": 1081,
+          "blocked_ray_count": 110,
+          "clear_fraction": 0.898242368,
+          "occluder_histogram": {
+            "sensor_mast_link": 92,
+            "gnss_mount_link": 18
+          },
+          "origin_world_m": [
+            0.535,
+            0.0,
+            1.1621
+          ]
+        },
+        "pregrasp": {
+          "sensor_id": "utm30lx",
+          "frame": "lidar_2d_link",
+          "ray_count": 1081,
+          "blocked_ray_count": 110,
+          "clear_fraction": 0.898242368,
+          "occluder_histogram": {
+            "sensor_mast_link": 92,
+            "gnss_mount_link": 18
+          },
+          "origin_world_m": [
+            0.535,
+            0.0,
+            1.1621
+          ]
+        },
+        "pick": {
+          "sensor_id": "utm30lx",
+          "frame": "lidar_2d_link",
+          "ray_count": 1081,
+          "blocked_ray_count": 110,
+          "clear_fraction": 0.898242368,
+          "occluder_histogram": {
+            "sensor_mast_link": 92,
+            "gnss_mount_link": 18
+          },
+          "origin_world_m": [
+            0.535,
+            0.0,
+            1.1621
+          ]
+        },
+        "deposit": {
+          "sensor_id": "utm30lx",
+          "frame": "lidar_2d_link",
+          "ray_count": 1081,
+          "blocked_ray_count": 110,
+          "clear_fraction": 0.898242368,
+          "occluder_histogram": {
+            "sensor_mast_link": 92,
+            "gnss_mount_link": 18
+          },
+          "origin_world_m": [
+            0.535,
+            0.0,
+            1.1621
+          ]
+        }
+      },
+      "worst_required_pose": "transport"
+    },
+    "mid360": {
+      "minimum_clear_fraction": 0.9,
+      "measured_clear_fraction": 0.975324074,
+      "passed": true,
+      "required_pose_results": {
+        "transport": {
+          "sensor_id": "mid360",
+          "frame": "lidar_3d_link",
+          "ray_count": 21600,
+          "blocked_ray_count": 0,
+          "clear_fraction": 1.0,
+          "occluder_histogram": {},
+          "origin_world_m": [
+            0.42,
+            0.0,
+            1.2731
+          ]
+        },
+        "pregrasp": {
+          "sensor_id": "mid360",
+          "frame": "lidar_3d_link",
+          "ray_count": 21600,
+          "blocked_ray_count": 0,
+          "clear_fraction": 1.0,
+          "occluder_histogram": {},
+          "origin_world_m": [
+            0.42,
+            0.0,
+            1.2731
+          ]
+        },
+        "pick": {
+          "sensor_id": "mid360",
+          "frame": "lidar_3d_link",
+          "ray_count": 21600,
+          "blocked_ray_count": 0,
+          "clear_fraction": 1.0,
+          "occluder_histogram": {},
+          "origin_world_m": [
+            0.42,
+            0.0,
+            1.2731
+          ]
+        },
+        "deposit": {
+          "sensor_id": "mid360",
+          "frame": "lidar_3d_link",
+          "ray_count": 21600,
+          "blocked_ray_count": 533,
+          "clear_fraction": 0.975324074,
+          "occluder_histogram": {
+            "ur5e_forearm_link": 265,
+            "ur5e_wrist_1_link": 113,
+            "robotiq_85_base_link": 33,
+            "ur5e_wrist_3_link": 28,
+            "wrist_rgbd_link": 28,
+            "wrist_rgbd_mount_link": 26,
+            "ur5e_wrist_2_link": 24,
+            "ur_to_robotiq_adapter_link": 14,
+            "robotiq_85_right_finger_link": 1,
+            "robotiq_85_right_knuckle_link": 1
+          },
+          "origin_world_m": [
+            0.42,
+            0.0,
+            1.2731
+          ]
+        }
+      },
+      "all_pose_results": {
+        "transport": {
+          "sensor_id": "mid360",
+          "frame": "lidar_3d_link",
+          "ray_count": 21600,
+          "blocked_ray_count": 0,
+          "clear_fraction": 1.0,
+          "occluder_histogram": {},
+          "origin_world_m": [
+            0.42,
+            0.0,
+            1.2731
+          ]
+        },
+        "pregrasp": {
+          "sensor_id": "mid360",
+          "frame": "lidar_3d_link",
+          "ray_count": 21600,
+          "blocked_ray_count": 0,
+          "clear_fraction": 1.0,
+          "occluder_histogram": {},
+          "origin_world_m": [
+            0.42,
+            0.0,
+            1.2731
+          ]
+        },
+        "pick": {
+          "sensor_id": "mid360",
+          "frame": "lidar_3d_link",
+          "ray_count": 21600,
+          "blocked_ray_count": 0,
+          "clear_fraction": 1.0,
+          "occluder_histogram": {},
+          "origin_world_m": [
+            0.42,
+            0.0,
+            1.2731
+          ]
+        },
+        "deposit": {
+          "sensor_id": "mid360",
+          "frame": "lidar_3d_link",
+          "ray_count": 21600,
+          "blocked_ray_count": 533,
+          "clear_fraction": 0.975324074,
+          "occluder_histogram": {
+            "ur5e_forearm_link": 265,
+            "ur5e_wrist_1_link": 113,
+            "robotiq_85_base_link": 33,
+            "ur5e_wrist_3_link": 28,
+            "wrist_rgbd_link": 28,
+            "wrist_rgbd_mount_link": 26,
+            "ur5e_wrist_2_link": 24,
+            "ur_to_robotiq_adapter_link": 14,
+            "robotiq_85_right_finger_link": 1,
+            "robotiq_85_right_knuckle_link": 1
+          },
+          "origin_world_m": [
+            0.42,
+            0.0,
+            1.2731
+          ]
+        }
+      },
+      "worst_required_pose": "deposit"
+    },
+    "front_d435_depth": {
+      "minimum_clear_fraction": 0.95,
+      "measured_clear_fraction": 1.0,
+      "passed": true,
+      "required_pose_results": {
+        "transport": {
+          "sensor_id": "front_d435_depth",
+          "frame": "front_rgbd_depth_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 0,
+          "clear_fraction": 1.0,
+          "occluder_histogram": {},
+          "origin_world_m": [
+            0.56953153894,
+            0.0,
+            0.61198690869
+          ]
+        },
+        "pregrasp": {
+          "sensor_id": "front_d435_depth",
+          "frame": "front_rgbd_depth_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 0,
+          "clear_fraction": 1.0,
+          "occluder_histogram": {},
+          "origin_world_m": [
+            0.56953153894,
+            0.0,
+            0.61198690869
+          ]
+        },
+        "pick": {
+          "sensor_id": "front_d435_depth",
+          "frame": "front_rgbd_depth_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 0,
+          "clear_fraction": 1.0,
+          "occluder_histogram": {},
+          "origin_world_m": [
+            0.56953153894,
+            0.0,
+            0.61198690869
+          ]
+        },
+        "deposit": {
+          "sensor_id": "front_d435_depth",
+          "frame": "front_rgbd_depth_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 0,
+          "clear_fraction": 1.0,
+          "occluder_histogram": {},
+          "origin_world_m": [
+            0.56953153894,
+            0.0,
+            0.61198690869
+          ]
+        }
+      },
+      "all_pose_results": {
+        "transport": {
+          "sensor_id": "front_d435_depth",
+          "frame": "front_rgbd_depth_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 0,
+          "clear_fraction": 1.0,
+          "occluder_histogram": {},
+          "origin_world_m": [
+            0.56953153894,
+            0.0,
+            0.61198690869
+          ]
+        },
+        "pregrasp": {
+          "sensor_id": "front_d435_depth",
+          "frame": "front_rgbd_depth_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 0,
+          "clear_fraction": 1.0,
+          "occluder_histogram": {},
+          "origin_world_m": [
+            0.56953153894,
+            0.0,
+            0.61198690869
+          ]
+        },
+        "pick": {
+          "sensor_id": "front_d435_depth",
+          "frame": "front_rgbd_depth_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 0,
+          "clear_fraction": 1.0,
+          "occluder_histogram": {},
+          "origin_world_m": [
+            0.56953153894,
+            0.0,
+            0.61198690869
+          ]
+        },
+        "deposit": {
+          "sensor_id": "front_d435_depth",
+          "frame": "front_rgbd_depth_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 0,
+          "clear_fraction": 1.0,
+          "occluder_histogram": {},
+          "origin_world_m": [
+            0.56953153894,
+            0.0,
+            0.61198690869
+          ]
+        }
+      },
+      "worst_required_pose": "transport"
+    },
+    "rear_left_fisheye": {
+      "minimum_clear_fraction": 0.9,
+      "measured_clear_fraction": 0.996638655,
+      "passed": true,
+      "required_pose_results": {
+        "transport": {
+          "sensor_id": "rear_left_fisheye",
+          "frame": "rear_left_fisheye_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 6,
+          "clear_fraction": 0.996638655,
+          "occluder_histogram": {
+            "rear_left_fisheye_mount_link": 6
+          },
+          "origin_world_m": [
+            -0.585,
+            0.29,
+            0.6001
+          ]
+        },
+        "pregrasp": {
+          "sensor_id": "rear_left_fisheye",
+          "frame": "rear_left_fisheye_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 6,
+          "clear_fraction": 0.996638655,
+          "occluder_histogram": {
+            "rear_left_fisheye_mount_link": 6
+          },
+          "origin_world_m": [
+            -0.585,
+            0.29,
+            0.6001
+          ]
+        },
+        "pick": {
+          "sensor_id": "rear_left_fisheye",
+          "frame": "rear_left_fisheye_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 6,
+          "clear_fraction": 0.996638655,
+          "occluder_histogram": {
+            "rear_left_fisheye_mount_link": 6
+          },
+          "origin_world_m": [
+            -0.585,
+            0.29,
+            0.6001
+          ]
+        },
+        "deposit": {
+          "sensor_id": "rear_left_fisheye",
+          "frame": "rear_left_fisheye_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 6,
+          "clear_fraction": 0.996638655,
+          "occluder_histogram": {
+            "rear_left_fisheye_mount_link": 6
+          },
+          "origin_world_m": [
+            -0.585,
+            0.29,
+            0.6001
+          ]
+        }
+      },
+      "all_pose_results": {
+        "transport": {
+          "sensor_id": "rear_left_fisheye",
+          "frame": "rear_left_fisheye_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 6,
+          "clear_fraction": 0.996638655,
+          "occluder_histogram": {
+            "rear_left_fisheye_mount_link": 6
+          },
+          "origin_world_m": [
+            -0.585,
+            0.29,
+            0.6001
+          ]
+        },
+        "pregrasp": {
+          "sensor_id": "rear_left_fisheye",
+          "frame": "rear_left_fisheye_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 6,
+          "clear_fraction": 0.996638655,
+          "occluder_histogram": {
+            "rear_left_fisheye_mount_link": 6
+          },
+          "origin_world_m": [
+            -0.585,
+            0.29,
+            0.6001
+          ]
+        },
+        "pick": {
+          "sensor_id": "rear_left_fisheye",
+          "frame": "rear_left_fisheye_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 6,
+          "clear_fraction": 0.996638655,
+          "occluder_histogram": {
+            "rear_left_fisheye_mount_link": 6
+          },
+          "origin_world_m": [
+            -0.585,
+            0.29,
+            0.6001
+          ]
+        },
+        "deposit": {
+          "sensor_id": "rear_left_fisheye",
+          "frame": "rear_left_fisheye_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 6,
+          "clear_fraction": 0.996638655,
+          "occluder_histogram": {
+            "rear_left_fisheye_mount_link": 6
+          },
+          "origin_world_m": [
+            -0.585,
+            0.29,
+            0.6001
+          ]
+        }
+      },
+      "worst_required_pose": "transport"
+    },
+    "rear_right_fisheye": {
+      "minimum_clear_fraction": 0.9,
+      "measured_clear_fraction": 0.996638655,
+      "passed": true,
+      "required_pose_results": {
+        "transport": {
+          "sensor_id": "rear_right_fisheye",
+          "frame": "rear_right_fisheye_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 6,
+          "clear_fraction": 0.996638655,
+          "occluder_histogram": {
+            "rear_right_fisheye_mount_link": 6
+          },
+          "origin_world_m": [
+            -0.585,
+            -0.29,
+            0.6001
+          ]
+        },
+        "pregrasp": {
+          "sensor_id": "rear_right_fisheye",
+          "frame": "rear_right_fisheye_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 6,
+          "clear_fraction": 0.996638655,
+          "occluder_histogram": {
+            "rear_right_fisheye_mount_link": 6
+          },
+          "origin_world_m": [
+            -0.585,
+            -0.29,
+            0.6001
+          ]
+        },
+        "pick": {
+          "sensor_id": "rear_right_fisheye",
+          "frame": "rear_right_fisheye_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 6,
+          "clear_fraction": 0.996638655,
+          "occluder_histogram": {
+            "rear_right_fisheye_mount_link": 6
+          },
+          "origin_world_m": [
+            -0.585,
+            -0.29,
+            0.6001
+          ]
+        },
+        "deposit": {
+          "sensor_id": "rear_right_fisheye",
+          "frame": "rear_right_fisheye_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 6,
+          "clear_fraction": 0.996638655,
+          "occluder_histogram": {
+            "rear_right_fisheye_mount_link": 6
+          },
+          "origin_world_m": [
+            -0.585,
+            -0.29,
+            0.6001
+          ]
+        }
+      },
+      "all_pose_results": {
+        "transport": {
+          "sensor_id": "rear_right_fisheye",
+          "frame": "rear_right_fisheye_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 6,
+          "clear_fraction": 0.996638655,
+          "occluder_histogram": {
+            "rear_right_fisheye_mount_link": 6
+          },
+          "origin_world_m": [
+            -0.585,
+            -0.29,
+            0.6001
+          ]
+        },
+        "pregrasp": {
+          "sensor_id": "rear_right_fisheye",
+          "frame": "rear_right_fisheye_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 6,
+          "clear_fraction": 0.996638655,
+          "occluder_histogram": {
+            "rear_right_fisheye_mount_link": 6
+          },
+          "origin_world_m": [
+            -0.585,
+            -0.29,
+            0.6001
+          ]
+        },
+        "pick": {
+          "sensor_id": "rear_right_fisheye",
+          "frame": "rear_right_fisheye_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 6,
+          "clear_fraction": 0.996638655,
+          "occluder_histogram": {
+            "rear_right_fisheye_mount_link": 6
+          },
+          "origin_world_m": [
+            -0.585,
+            -0.29,
+            0.6001
+          ]
+        },
+        "deposit": {
+          "sensor_id": "rear_right_fisheye",
+          "frame": "rear_right_fisheye_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 6,
+          "clear_fraction": 0.996638655,
+          "occluder_histogram": {
+            "rear_right_fisheye_mount_link": 6
+          },
+          "origin_world_m": [
+            -0.585,
+            -0.29,
+            0.6001
+          ]
+        }
+      },
+      "worst_required_pose": "transport"
+    },
+    "gnss": {
+      "minimum_clear_fraction": 0.95,
+      "measured_clear_fraction": 0.956111111,
+      "passed": true,
+      "required_pose_results": {
+        "transport": {
+          "sensor_id": "gnss",
+          "frame": "gnss_antenna_link",
+          "ray_count": 5400,
+          "blocked_ray_count": 172,
+          "clear_fraction": 0.968148148,
+          "occluder_histogram": {
+            "lidar_3d_link": 141,
+            "lidar_3d_mount_link": 31
+          },
+          "origin_world_m": [
+            0.365,
+            0.16,
+            1.1801
+          ]
+        },
+        "pregrasp": {
+          "sensor_id": "gnss",
+          "frame": "gnss_antenna_link",
+          "ray_count": 5400,
+          "blocked_ray_count": 172,
+          "clear_fraction": 0.968148148,
+          "occluder_histogram": {
+            "lidar_3d_link": 141,
+            "lidar_3d_mount_link": 31
+          },
+          "origin_world_m": [
+            0.365,
+            0.16,
+            1.1801
+          ]
+        },
+        "pick": {
+          "sensor_id": "gnss",
+          "frame": "gnss_antenna_link",
+          "ray_count": 5400,
+          "blocked_ray_count": 172,
+          "clear_fraction": 0.968148148,
+          "occluder_histogram": {
+            "lidar_3d_link": 141,
+            "lidar_3d_mount_link": 31
+          },
+          "origin_world_m": [
+            0.365,
+            0.16,
+            1.1801
+          ]
+        },
+        "deposit": {
+          "sensor_id": "gnss",
+          "frame": "gnss_antenna_link",
+          "ray_count": 5400,
+          "blocked_ray_count": 237,
+          "clear_fraction": 0.956111111,
+          "occluder_histogram": {
+            "lidar_3d_link": 141,
+            "ur5e_wrist_1_link": 44,
+            "lidar_3d_mount_link": 31,
+            "ur5e_forearm_link": 14,
+            "ur5e_wrist_2_link": 7
+          },
+          "origin_world_m": [
+            0.365,
+            0.16,
+            1.1801
+          ]
+        }
+      },
+      "all_pose_results": {
+        "transport": {
+          "sensor_id": "gnss",
+          "frame": "gnss_antenna_link",
+          "ray_count": 5400,
+          "blocked_ray_count": 172,
+          "clear_fraction": 0.968148148,
+          "occluder_histogram": {
+            "lidar_3d_link": 141,
+            "lidar_3d_mount_link": 31
+          },
+          "origin_world_m": [
+            0.365,
+            0.16,
+            1.1801
+          ]
+        },
+        "pregrasp": {
+          "sensor_id": "gnss",
+          "frame": "gnss_antenna_link",
+          "ray_count": 5400,
+          "blocked_ray_count": 172,
+          "clear_fraction": 0.968148148,
+          "occluder_histogram": {
+            "lidar_3d_link": 141,
+            "lidar_3d_mount_link": 31
+          },
+          "origin_world_m": [
+            0.365,
+            0.16,
+            1.1801
+          ]
+        },
+        "pick": {
+          "sensor_id": "gnss",
+          "frame": "gnss_antenna_link",
+          "ray_count": 5400,
+          "blocked_ray_count": 172,
+          "clear_fraction": 0.968148148,
+          "occluder_histogram": {
+            "lidar_3d_link": 141,
+            "lidar_3d_mount_link": 31
+          },
+          "origin_world_m": [
+            0.365,
+            0.16,
+            1.1801
+          ]
+        },
+        "deposit": {
+          "sensor_id": "gnss",
+          "frame": "gnss_antenna_link",
+          "ray_count": 5400,
+          "blocked_ray_count": 237,
+          "clear_fraction": 0.956111111,
+          "occluder_histogram": {
+            "lidar_3d_link": 141,
+            "ur5e_wrist_1_link": 44,
+            "lidar_3d_mount_link": 31,
+            "ur5e_forearm_link": 14,
+            "ur5e_wrist_2_link": 7
+          },
+          "origin_world_m": [
+            0.365,
+            0.16,
+            1.1801
+          ]
+        }
+      },
+      "worst_required_pose": "deposit"
+    },
+    "wrist_d435_depth": {
+      "minimum_clear_fraction": 0.95,
+      "measured_clear_fraction": 0.966946779,
+      "passed": true,
+      "required_pose_results": {
+        "pregrasp": {
+          "sensor_id": "wrist_d435_depth",
+          "frame": "wrist_rgbd_depth_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 59,
+          "clear_fraction": 0.966946779,
+          "occluder_histogram": {
+            "robotiq_85_left_finger_link": 47,
+            "robotiq_85_left_finger_tip_link": 12
+          },
+          "origin_world_m": [
+            0.44000000241,
+            -0.94999999796,
+            0.42500000153
+          ]
+        }
+      },
+      "all_pose_results": {
+        "transport": {
+          "sensor_id": "wrist_d435_depth",
+          "frame": "wrist_rgbd_depth_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 1531,
+          "clear_fraction": 0.142296919,
+          "occluder_histogram": {
+            "bodywork_front_cowl_link": 927,
+            "bodywork_lower_tub_link": 360,
+            "bodywork_compute_service_door_link": 92,
+            "bodywork_rear_shell_link": 59,
+            "robotiq_85_left_finger_link": 41,
+            "bodywork_brush_guards_link": 15,
+            "central_roller_encoder_link": 6,
+            "recovery_flow_sensor_link": 6,
+            "bodywork_compute_service_door_hinge_bracket_link": 5,
+            "robotiq_85_left_finger_tip_link": 5,
+            "squeegee_float_carrier_link": 5,
+            "rear_right_wheel_link": 4,
+            "squeegee_link": 4,
+            "central_roller_motor_stator_link": 2
+          },
+          "origin_world_m": [
+            0.34193672491,
+            -0.57628953931,
+            0.58604548407
+          ]
+        },
+        "pregrasp": {
+          "sensor_id": "wrist_d435_depth",
+          "frame": "wrist_rgbd_depth_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 59,
+          "clear_fraction": 0.966946779,
+          "occluder_histogram": {
+            "robotiq_85_left_finger_link": 47,
+            "robotiq_85_left_finger_tip_link": 12
+          },
+          "origin_world_m": [
+            0.44000000241,
+            -0.94999999796,
+            0.42500000153
+          ]
+        },
+        "pick": {
+          "sensor_id": "wrist_d435_depth",
+          "frame": "wrist_rgbd_depth_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 41,
+          "clear_fraction": 0.977030812,
+          "occluder_histogram": {
+            "robotiq_85_left_finger_link": 31,
+            "robotiq_85_left_finger_tip_link": 10
+          },
+          "origin_world_m": [
+            0.44000000275,
+            -0.95000000176,
+            0.16500000254
+          ]
+        },
+        "deposit": {
+          "sensor_id": "wrist_d435_depth",
+          "frame": "wrist_rgbd_depth_optical_frame",
+          "ray_count": 1785,
+          "blocked_ray_count": 1738,
+          "clear_fraction": 0.026330532,
+          "occluder_histogram": {
+            "bodywork_rear_shell_link": 673,
+            "bodywork_front_cowl_link": 446,
+            "dry_deposit_hopper_link": 383,
+            "dry_deposit_presence_sensor_link": 65,
+            "ur5e_upper_arm_link": 39,
+            "robotiq_85_left_finger_link": 31,
+            "dry_deposit_chute_link": 29,
+            "dry_deposit_gate_link": 23,
+            "robotiq_85_left_finger_tip_link": 10,
+            "ur5e_shoulder_link": 9,
+            "base_link": 8,
+            "dry_bin_lid_link": 6,
+            "ur5e_base_link_inertia": 5,
+            "bodywork_power_service_door_hinge_bracket_link": 4,
+            "dry_wet_storage_partition_link": 2,
+            "power_distribution_box_link": 2,
+            "arm_mount_link": 1,
+            "bodywork_power_service_door_link": 1,
+            "safety_relay_link": 1
+          },
+          "origin_world_m": [
+            -0.09497225094,
+            0.12150977997,
+            1.23480174341
+          ]
+        }
+      },
+      "worst_required_pose": "pregrasp"
+    }
+  },
+  "mount_pose_and_direction_audit": {
+    "passed": true,
+    "sensor_frames": {
+      "utm30lx": {
+        "frame": "lidar_2d_link",
+        "coordinate_reference": "base_footprint",
+        "expected_position_m": [
+          0.535,
+          0.0,
+          1.1621
+        ],
+        "measured_position_m": [
+          0.535,
+          0.0,
+          1.1621
+        ],
+        "position_error_m": 0.0,
+        "position_tolerance_m": 0.005,
+        "expected_forward_xyz": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "measured_forward_xyz": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "direction_error_rad": 0.0,
+        "direction_tolerance_rad": 0.02,
+        "passed": true
+      },
+      "mid360": {
+        "frame": "lidar_3d_link",
+        "coordinate_reference": "base_footprint",
+        "expected_position_m": [
+          0.42,
+          0.0,
+          1.2731
+        ],
+        "measured_position_m": [
+          0.42,
+          0.0,
+          1.2731
+        ],
+        "position_error_m": 0.0,
+        "position_tolerance_m": 0.005,
+        "expected_forward_xyz": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "measured_forward_xyz": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "direction_error_rad": 0.0,
+        "direction_tolerance_rad": 0.02,
+        "passed": true
+      },
+      "front_d435_depth": {
+        "frame": "front_rgbd_depth_optical_frame",
+        "coordinate_reference": "base_footprint",
+        "expected_position_m": [
+          0.569532,
+          0.0,
+          0.611987
+        ],
+        "measured_position_m": [
+          0.56953153894,
+          0.0,
+          0.61198690869
+        ],
+        "position_error_m": 4.7002e-07,
+        "position_tolerance_m": 0.005,
+        "expected_forward_xyz": [
+          0.906308,
+          0.0,
+          -0.422618
+        ],
+        "measured_forward_xyz": [
+          0.90630778704,
+          0.0,
+          -0.42261826174
+        ],
+        "direction_error_rad": 3.2715e-07,
+        "direction_tolerance_rad": 0.02,
+        "passed": true
+      },
+      "rear_left_fisheye": {
+        "frame": "rear_left_fisheye_optical_frame",
+        "coordinate_reference": "base_footprint",
+        "expected_position_m": [
+          -0.585,
+          0.29,
+          0.6001
+        ],
+        "measured_position_m": [
+          -0.585,
+          0.29,
+          0.6001
+        ],
+        "position_error_m": 0.0,
+        "position_tolerance_m": 0.005,
+        "expected_forward_xyz": [
+          -0.906,
+          0.423,
+          -0.087
+        ],
+        "measured_forward_xyz": [
+          -0.90270034809,
+          0.42144614043,
+          -0.08669043936
+        ],
+        "direction_error_rad": 1.432505e-05,
+        "direction_tolerance_rad": 0.02,
+        "passed": true
+      },
+      "rear_right_fisheye": {
+        "frame": "rear_right_fisheye_optical_frame",
+        "coordinate_reference": "base_footprint",
+        "expected_position_m": [
+          -0.585,
+          -0.29,
+          0.6001
+        ],
+        "measured_position_m": [
+          -0.585,
+          -0.29,
+          0.6001
+        ],
+        "position_error_m": 0.0,
+        "position_tolerance_m": 0.005,
+        "expected_forward_xyz": [
+          -0.906,
+          -0.423,
+          -0.087
+        ],
+        "measured_forward_xyz": [
+          -0.90287194776,
+          -0.42107839373,
+          -0.08669043936
+        ],
+        "direction_error_rad": 0.00041793037,
+        "direction_tolerance_rad": 0.02,
+        "passed": true
+      },
+      "gnss": {
+        "frame": "gnss_antenna_link",
+        "coordinate_reference": "base_footprint",
+        "expected_position_m": [
+          0.365,
+          0.16,
+          1.1801
+        ],
+        "measured_position_m": [
+          0.365,
+          0.16,
+          1.1801
+        ],
+        "position_error_m": 0.0,
+        "position_tolerance_m": 0.005,
+        "expected_forward_xyz": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "measured_forward_xyz": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "direction_error_rad": 0.0,
+        "direction_tolerance_rad": 0.02,
+        "passed": true
+      },
+      "imu": {
+        "frame": "imu_link",
+        "coordinate_reference": "base_footprint",
+        "expected_position_m": [
+          0.0,
+          0.0,
+          0.4091
+        ],
+        "measured_position_m": [
+          0.0,
+          0.0,
+          0.4091
+        ],
+        "position_error_m": 0.0,
+        "position_tolerance_m": 0.005,
+        "expected_forward_xyz": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "measured_forward_xyz": [
+          1.0,
+          0.0,
+          0.0
+        ],
+        "direction_error_rad": 0.0,
+        "direction_tolerance_rad": 0.02,
+        "passed": true
+      },
+      "wrist_d435_depth": {
+        "frame": "wrist_rgbd_depth_optical_frame",
+        "coordinate_reference": "tool0",
+        "expected_position_m": [
+          0.14,
+          0.0,
+          0.025
+        ],
+        "measured_position_m": [
+          0.14,
+          0.0,
+          0.025
+        ],
+        "position_error_m": 0.0,
+        "position_tolerance_m": 0.005,
+        "expected_forward_xyz": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "measured_forward_xyz": [
+          0.0,
+          0.0,
+          1.0
+        ],
+        "direction_error_rad": 0.0,
+        "direction_tolerance_rad": 0.02,
+        "passed": true
+      }
+    }
+  },
+  "urdf_sensor_parameter_audit": {
+    "passed": true,
+    "sensors": {
+      "utm30lx": {
+        "present": true,
+        "checks": {
+          "type": true,
+          "topic": true,
+          "update_rate": true,
+          "frame": true,
+          "range": true,
+          "horizontal_fov": true,
+          "samples": true
+        },
+        "passed": true
+      },
+      "mid360": {
+        "present": true,
+        "checks": {
+          "type": true,
+          "topic": true,
+          "update_rate": true,
+          "frame": true,
+          "range": true,
+          "horizontal_fov": true,
+          "vertical_fov": true,
+          "samples": true
+        },
+        "passed": true
+      },
+      "front_rgbd_d435_rgbd": {
+        "present": true,
+        "checks": {
+          "type": true,
+          "topic": true,
+          "update_rate": true,
+          "frame": true,
+          "range": true,
+          "horizontal_fov": true,
+          "image": true
+        },
+        "passed": true
+      },
+      "wrist_rgbd_d435_rgbd": {
+        "present": true,
+        "checks": {
+          "type": true,
+          "topic": true,
+          "update_rate": true,
+          "frame": true,
+          "range": true,
+          "horizontal_fov": true,
+          "image": true
+        },
+        "passed": true
+      },
+      "rear_left_fisheye_imx291": {
+        "present": true,
+        "checks": {
+          "type": true,
+          "topic": true,
+          "update_rate": true,
+          "frame": true,
+          "range": true,
+          "horizontal_fov": true,
+          "image": true,
+          "lens_type": true,
+          "scale_to_hfov": true,
+          "cutoff_angle": true
+        },
+        "passed": true
+      },
+      "rear_right_fisheye_imx291": {
+        "present": true,
+        "checks": {
+          "type": true,
+          "topic": true,
+          "update_rate": true,
+          "frame": true,
+          "range": true,
+          "horizontal_fov": true,
+          "image": true,
+          "lens_type": true,
+          "scale_to_hfov": true,
+          "cutoff_angle": true
+        },
+        "passed": true
+      },
+      "zed_f9p": {
+        "present": true,
+        "checks": {
+          "type": true,
+          "topic": true,
+          "update_rate": true,
+          "frame": true
+        },
+        "passed": true
+      },
+      "vn100": {
+        "present": true,
+        "checks": {
+          "type": true,
+          "topic": true,
+          "update_rate": true,
+          "frame": true
+        },
+        "passed": true
+      }
+    }
+  },
+  "startup_arm_pose_visibility_regression": {
+    "legacy_zero_pose_clear_fraction": 0.778151261,
+    "legacy_zero_pose_detected_as_blocked": true,
+    "legacy_zero_pose_occluders": {
+      "ur5e_wrist_2_link": 82,
+      "ur5e_forearm_link": 56,
+      "ur5e_wrist_1_link": 53,
+      "wrist_rgbd_link": 50,
+      "wrist_rgbd_mount_link": 46,
+      "ur5e_wrist_3_link": 34,
+      "robotiq_85_base_link": 31,
+      "robotiq_85_left_finger_link": 21,
+      "robotiq_85_left_finger_tip_link": 9,
+      "ur_to_robotiq_adapter_link": 8,
+      "robotiq_85_right_finger_tip_link": 3,
+      "robotiq_85_left_inner_knuckle_link": 2,
+      "robotiq_85_right_inner_knuckle_link": 1
+    },
+    "configured_transport_pose_clear_fraction": 1.0,
+    "configured_transport_pose_passed": true,
+    "passed": true
+  },
+  "functional_zone_coverage": {
+    "front_ground_observation": {
+      "required_for_acceptance": true,
+      "minimum_visible_fraction": 0.9,
+      "passed": true,
+      "pose_results": {
+        "transport": {
+          "visible_fraction": 1.0,
+          "target_count": 72,
+          "visible_count": 72
+        },
+        "pregrasp": {
+          "visible_fraction": 1.0,
+          "target_count": 72,
+          "visible_count": 72
+        },
+        "pick": {
+          "visible_fraction": 1.0,
+          "target_count": 72,
+          "visible_count": 72
+        },
+        "deposit": {
+          "visible_fraction": 1.0,
+          "target_count": 72,
+          "visible_count": 72
+        }
+      }
+    },
+    "rear_fisheye_safety_perimeter": {
+      "required_for_acceptance": true,
+      "minimum_combined_visible_fraction": 0.95,
+      "passed": true,
+      "pose_results": {
+        "transport": {
+          "combined_visible_fraction": 1.0,
+          "target_count": 57,
+          "left_visible_count": 39,
+          "right_visible_count": 39
+        },
+        "pregrasp": {
+          "combined_visible_fraction": 1.0,
+          "target_count": 57,
+          "left_visible_count": 39,
+          "right_visible_count": 39
+        },
+        "pick": {
+          "combined_visible_fraction": 1.0,
+          "target_count": 57,
+          "left_visible_count": 39,
+          "right_visible_count": 39
+        },
+        "deposit": {
+          "combined_visible_fraction": 1.0,
+          "target_count": 57,
+          "left_visible_count": 39,
+          "right_visible_count": 39
+        }
+      }
+    },
+    "wrist_pregrasp_cube": {
+      "required_for_acceptance": true,
+      "minimum_visible_fraction": 0.95,
+      "measured_visible_fraction": 1.0,
+      "passed": true,
+      "target_count": 9,
+      "visible_count": 9,
+      "out_of_fov_count": 0,
+      "occluded_count": 0
+    },
+    "wrist_deposit_aperture": {
+      "required_for_acceptance": false,
+      "minimum_visible_fraction": 0.8,
+      "measured_visible_fraction": 0.32,
+      "passed": false,
+      "target_count": 25,
+      "visible_count": 8,
+      "out_of_fov_count": 2,
+      "occluded_count": 17
+    }
+  },
+  "layout_updates_allowed": {
+    "utm30lx": 0.898242368,
+    "mid360": 0.975324074,
+    "front_d435_depth": 1.0,
+    "rear_left_fisheye": 0.996638655,
+    "rear_right_fisheye": 0.996638655,
+    "gnss": 0.956111111,
+    "wrist_d435_depth": 0.966946779
+  },
+  "claim_boundary": "Deterministic mesh-ray self-occlusion, mount/FOV parameter and declared work-zone audit against the expanded URDF. It does not replace Gazebo rendered/range-message visibility, lens distortion calibration, satellite multipath modelling or real installation calibration.",
+  "report_form": "compact_scored_summary"
+}

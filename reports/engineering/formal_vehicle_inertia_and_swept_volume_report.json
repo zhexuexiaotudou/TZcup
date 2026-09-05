@@ -1,0 +1,2147 @@
+{
+  "checks": {
+    "all_raw_joint_samples_above_ground": false,
+    "arm_exact_continuous_swept_volume": false,
+    "arm_sampled_collision_envelope_complete": true,
+    "arm_sampled_self_and_vehicle_collision_clear": false,
+    "collision_geometry_only_no_visual_fallback": true,
+    "every_physical_inertial_used": true,
+    "final_payload_within_a300_design_limit": true,
+    "full_inertia_and_cog_scan": true,
+    "minimum_static_margin_met": true,
+    "raw_joint_space_exclusion_regions_detected": true,
+    "static_sensor_structure_clear": true,
+    "transport_and_task_anchors_above_ground": true,
+    "transport_and_task_anchors_collision_clear": true,
+    "wastewater_cog_limit_resolved": true
+  },
+  "claim_boundary": {
+    "not_proved": [
+      "continuous unsampled joint-space extrema between samples",
+      "triangle-level clearance for conservative OBB candidates outside production anchors",
+      "MoveIt collision-free reachability or online collision avoidance",
+      "dynamic tip-over during braking, turning, slopes or liquid slosh",
+      "tyre compliance/contact-patch migration",
+      "manufacturing tolerances and real weighed component CoGs"
+    ],
+    "passed": "All final-URDF inertial masses/CoGs and collision geometry were scanned at the reported deterministic joint samples. Transport, pregrasp, pick and deposit are exact-refined clear for open, half-closed and closed gripper states; raw collision regions remain planner exclusions."
+  },
+  "collision_audit": {
+    "all_sampled_configurations_clear": false,
+    "candidate_event_count": 44501,
+    "confirmed_mesh_vertex_inside_box_event_count": 14159,
+    "confirmed_penetration_examples": [
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.02899545368213341,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "front_rgbd_upper_bezel",
+        "right_link": "front_rgbd_mount_link",
+        "sample": "zero",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 9
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.018536854700299532,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "front_rgbd_lower_bezel",
+        "right_link": "front_rgbd_mount_link",
+        "sample": "zero",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 10
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.03169429764833498,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "front_rgbd_link",
+        "sample": "zero",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 46
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.015601312667131384,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "dry_wet_storage_partition_link",
+        "sample": "zero",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 1
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.028995453682133354,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "front_rgbd_upper_bezel",
+        "right_link": "front_rgbd_mount_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 9
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.018536854700299685,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "front_rgbd_lower_bezel",
+        "right_link": "front_rgbd_mount_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 10
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.031694297648334924,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "front_rgbd_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 46
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.015601312667131495,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "dry_wet_storage_partition_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 1
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.020900003576278692,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_base_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 42
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.04390000357627871,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_base_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 85
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.019764881920366933,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_knuckle_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 18
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.042764881920366926,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_knuckle_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 42
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.019790349508174182,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_knuckle_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 16
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.042790349508174175,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_knuckle_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 42
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.052929709221124666,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_finger_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 142
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.07592970922112466,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_finger_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 198
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.05292970922112464,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_finger_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 142
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.07076415107565465,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_finger_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 198
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.05770901065414208,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_inner_knuckle_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 111
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.08070901065414207,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_inner_knuckle_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 181
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.057708791520647784,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_inner_knuckle_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 105
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.0807087915206478,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_inner_knuckle_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 179
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.09373119548827993,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_finger_tip_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 114
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.10909528132201907,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_finger_tip_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 114
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.06671843248782883,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_finger_tip_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 114
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.07771843248782881,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_finger_tip_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_00",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 114
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.028995453682133465,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "front_rgbd_upper_bezel",
+        "right_link": "front_rgbd_mount_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 9
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.018536854700299685,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "front_rgbd_lower_bezel",
+        "right_link": "front_rgbd_mount_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 10
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.031694297648335035,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "front_rgbd_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 46
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.015601312667131384,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "dry_wet_storage_partition_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 1
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.020900003576278636,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_base_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 42
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.04390000357627863,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_base_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 85
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.019055510279018834,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_knuckle_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 38
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.019055510279018834,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_knuckle_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 35
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.03519276554684635,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_finger_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 90
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.05819276554684634,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_finger_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 155
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.01917065067310353,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_finger_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 22
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.009192765546846351,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_finger_link",
+        "right_collision": "collision_0",
+        "right_link": "dry_bin_latch_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 38
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.03017065067310351,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_finger_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 142
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.04173809177398677,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_inner_knuckle_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 111
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.06473809177398676,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_inner_knuckle_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 181
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.041738091773986796,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_inner_knuckle_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 105
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.01005691441297521,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_inner_knuckle_link",
+        "right_collision": "collision_0",
+        "right_link": "dry_bin_latch_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 25
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.06473809177398679,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_inner_knuckle_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 179
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.08024554075355525,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_finger_tip_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 114
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.10324554075355524,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_finger_tip_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 114
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.024300005415306303,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_finger_tip_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 72
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.01435020049959431,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_finger_tip_link",
+        "right_collision": "collision_0",
+        "right_link": "dry_bin_latch_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 17
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.03530000541530626,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_finger_tip_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "limit_corner_01",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 114
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.028995453682133354,
+        "exact_mesh_triangles_intersecting_vehicle_box": 0,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "front_rgbd_upper_bezel",
+        "right_link": "front_rgbd_mount_link",
+        "sample": "limit_corner_02",
+        "unique_arm_mesh_vertices_strictly_inside_vehicle_box": 9
+      }
+    ],
+    "excluded_pair_policy": {
+      "arm_links_at_joint_graph_distance_le_2": 60,
+      "bodywork_sensor_storage_cleaning_pairs_allowlisted": 0,
+      "dedicated_mounting_pairs": [
+        [
+          "arm_mount_link",
+          "ur5e_base_link_inertia"
+        ]
+      ]
+    },
+    "interpretation": "An overlap is conservative because cylinders, spheres and STL collision meshes are bounded by oriented boxes. Required-anchor STL-versus-box candidates are resolved by an exact triangle-box SAT test; exact-disproved broad-phase candidates do not block that anchor. All other candidates remain fail-closed and block a collision-free claim.",
+    "material_overlap_tolerance_m": 0.002,
+    "maximum_conservative_obb_penetration_m": 0.303735057,
+    "method": "fail-closed collision-geometry OBB SAT broad phase",
+    "required_anchor_blocking_counts": {
+      "deposit": 0,
+      "pick": 0,
+      "pregrasp": 0,
+      "transport": 0
+    },
+    "required_anchor_candidate_counts": {
+      "deposit": 6,
+      "pick": 6,
+      "pregrasp": 6,
+      "transport": 6
+    },
+    "required_anchor_confirmed_penetration_counts": {
+      "deposit": 0,
+      "pick": 0,
+      "pregrasp": 0,
+      "transport": 0
+    },
+    "required_anchor_exact_disproved_candidate_counts": {
+      "deposit": 10,
+      "pick": 10,
+      "pregrasp": 10,
+      "transport": 12
+    },
+    "required_anchors_clear": true,
+    "sample_count": 1113,
+    "samples_with_candidates": 1113,
+    "top_candidates": [
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.303735057,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "halton_00491"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.283481255,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "halton_00233"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.278155253,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00426"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.26984452,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00373"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.261195335,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "halton_00491"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.255539393,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00686"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.249593197,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00333"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.241752306,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample": "halton_00233"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.24171683,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "halton_00042"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.240612847,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00430"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.240221577,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00720"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.239927448,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00873"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.239195951,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00529"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.237049206,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00462"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.236696053,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00498"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.236336749,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00543"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.236068921,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00862"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.235673684,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "halton_00809"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.235540535,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00153"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.234695741,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00340"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.234099062,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "right_lower_tub_collision",
+        "right_link": "bodywork_lower_tub_link",
+        "sample": "halton_00808"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.233539617,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "storage_system_mount_link",
+        "sample": "halton_00551"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.232805873,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00664"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.23226338,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00214"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.232180188,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "halton_00040"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.231716316,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00943"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.231693231,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00088"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.231642391,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "nose_outer_lobe_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "halton_00238"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.231588267,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00079"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.231576087,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00801"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.231009255,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00072"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.230787378,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00448"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.230735309,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00489"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.230696122,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00592"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.230609466,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00975"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.230573113,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00511"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.230550774,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00799"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.230522371,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00246"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.230425681,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00192"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.230268029,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00543"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.230052847,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00430"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.229981717,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00894"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.229931105,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00367"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.229782698,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "nose_outer_lobe_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample": "halton_00846"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.229661577,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00720"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.229513848,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00673"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.22914515,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00718"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.229086762,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00880"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.229059235,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample": "halton_00822"
+      },
+      {
+        "class": "arm_vehicle",
+        "conservative_obb_penetration_m": 0.229027616,
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample": "halton_00840"
+      }
+    ],
+    "unique_candidate_pair_count": 2934,
+    "unique_candidates": [
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_wrist_3_link",
+        "right_collision": "wrist_rgbd_bracket_adapter_flange_collision",
+        "right_link": "wrist_rgbd_mount_link",
+        "sample_hit_count": 1113
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_wrist_3_link",
+        "right_collision": "wrist_rgbd_bracket_flange_bridge_collision",
+        "right_link": "wrist_rgbd_mount_link",
+        "sample_hit_count": 1113
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "dry_wet_storage_partition_link",
+        "sample_hit_count": 420
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "wastewater_lid_link",
+        "sample_hit_count": 396
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "wastewater_front_panel_collision",
+        "right_link": "wastewater_front_panel_link",
+        "sample_hit_count": 391
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "dry_bin_right_panel_collision",
+        "right_link": "dry_bin_right_panel_link",
+        "sample_hit_count": 372
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_finger_link",
+        "right_collision": "collision_0",
+        "right_link": "robotiq_85_right_inner_knuckle_link",
+        "sample_hit_count": 371
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_inner_knuckle_link",
+        "right_collision": "collision_0",
+        "right_link": "robotiq_85_right_finger_tip_link",
+        "sample_hit_count": 371
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_finger_link",
+        "right_collision": "collision_0",
+        "right_link": "robotiq_85_left_inner_knuckle_link",
+        "sample_hit_count": 371
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_inner_knuckle_link",
+        "right_collision": "collision_0",
+        "right_link": "robotiq_85_left_finger_tip_link",
+        "sample_hit_count": 371
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "wastewater_lid_latch_link",
+        "sample_hit_count": 343
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "right_lower_tub_collision",
+        "right_link": "bodywork_lower_tub_link",
+        "sample_hit_count": 331
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample_hit_count": 328
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "dry_bin_front_panel_collision",
+        "right_link": "dry_bin_front_panel_link",
+        "sample_hit_count": 316
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample_hit_count": 301
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "arm_adapter_collision",
+        "right_link": "arm_mount_link",
+        "sample_hit_count": 298
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "storage_system_mount_link",
+        "sample_hit_count": 294
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "right_lower_tub_collision",
+        "right_link": "bodywork_lower_tub_link",
+        "sample_hit_count": 290
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "dry_lid_right_collision",
+        "right_link": "dry_bin_lid_link",
+        "sample_hit_count": 283
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "arm_turret_rear_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 274
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "arm_turret_front_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 271
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "wastewater_lid_latch_keeper_link",
+        "sample_hit_count": 260
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "dry_lid_front_collision",
+        "right_link": "dry_bin_lid_link",
+        "sample_hit_count": 255
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "central_roller_link",
+        "sample_hit_count": 249
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "deck_plate_collision",
+        "right_link": "payload_deck_link",
+        "sample_hit_count": 246
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "cleaning_lift_carriage_link",
+        "sample_hit_count": 243
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "base_collision",
+        "right_link": "base_link",
+        "sample_hit_count": 231
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "arm_backing_plate_collision",
+        "right_link": "arm_mount_link",
+        "sample_hit_count": 223
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_wrist_3_link",
+        "sample_hit_count": 219
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "arm_bay_floor_inner_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 219
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "nose_rear_bridge_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 213
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "arm_pedestal_collision",
+        "right_link": "arm_mount_link",
+        "sample_hit_count": 210
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "robotiq_85_base_link",
+        "sample_hit_count": 207
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "storage_system_mount_link",
+        "sample_hit_count": 204
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "wrist_rgbd_bracket_outboard_rail_collision",
+        "right_link": "wrist_rgbd_mount_link",
+        "sample_hit_count": 201
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "front_right_wheel_collision",
+        "right_link": "front_right_wheel_link",
+        "sample_hit_count": 198
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "arm_turret_outer_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 197
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "rear_shell_right_wall_collision",
+        "right_link": "bodywork_rear_shell_link",
+        "sample_hit_count": 197
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "arm_bay_floor_front_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 196
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "ur_to_robotiq_adapter_link",
+        "sample_hit_count": 194
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "arm_turret_inner_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 194
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "cleaning_mechanism_mount_link",
+        "sample_hit_count": 191
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "nose_outer_lobe_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 184
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "wastewater_left_panel_collision",
+        "right_link": "wastewater_left_panel_link",
+        "sample_hit_count": 182
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_wrist_2_link",
+        "sample_hit_count": 175
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "cleaning_lift_carriage_link",
+        "sample_hit_count": 175
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "arm_bay_floor_outer_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 167
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_shoulder_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_wrist_1_link",
+        "sample_hit_count": 166
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "a300_right_battery_pack_link",
+        "sample_hit_count": 164
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "central_roller_link",
+        "sample_hit_count": 164
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "wastewater_lid_latch_base_link",
+        "sample_hit_count": 159
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "wrist_rgbd_bracket_camera_standoff_collision",
+        "right_link": "wrist_rgbd_mount_link",
+        "sample_hit_count": 157
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "right_suspension_beam_link",
+        "sample_hit_count": 152
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "wrist_rgbd_bracket_camera_plate_collision",
+        "right_link": "wrist_rgbd_mount_link",
+        "sample_hit_count": 150
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 149
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "central_roller_guard_link",
+        "sample_hit_count": 144
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 139
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "wrist_rgbd_bracket_adapter_flange_collision",
+        "right_link": "wrist_rgbd_mount_link",
+        "sample_hit_count": 137
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "mast_service_spine_collision",
+        "right_link": "sensor_mast_link",
+        "sample_hit_count": 137
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "wastewater_high_level_sensor_link",
+        "sample_hit_count": 134
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "wrist_rgbd_link",
+        "sample_hit_count": 133
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "wet_floor_collision",
+        "right_link": "wastewater_tank_link",
+        "sample_hit_count": 133
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "bearing_side_plate_spine",
+        "right_link": "cleaning_right_lift_slider_plate_link",
+        "sample_hit_count": 132
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "mast_left_column_collision",
+        "right_link": "sensor_mast_link",
+        "sample_hit_count": 129
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "cleaning_mechanism_mount_link",
+        "sample_hit_count": 126
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample_hit_count": 123
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "nose_rear_bridge_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 122
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "nose_outer_lobe_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 120
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_base_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 118
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample_hit_count": 118
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_base_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample_hit_count": 108
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_inner_knuckle_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 107
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "robotiq_85_left_finger_link",
+        "sample_hit_count": 106
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_finger_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 106
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_finger_tip_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 106
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "robotiq_85_right_finger_link",
+        "sample_hit_count": 105
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_inner_knuckle_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 105
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "robotiq_85_left_inner_knuckle_link",
+        "sample_hit_count": 104
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_finger_tip_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 104
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_knuckle_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 102
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_finger_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 102
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_finger_tip_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample_hit_count": 102
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "a300_right_battery_bms_link",
+        "sample_hit_count": 102
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_finger_tip_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample_hit_count": 101
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_inner_knuckle_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample_hit_count": 101
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "rear_shell_roof_right_collision",
+        "right_link": "bodywork_rear_shell_link",
+        "sample_hit_count": 101
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "robotiq_85_left_knuckle_link",
+        "sample_hit_count": 100
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_knuckle_link",
+        "right_collision": "power_cowl_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 100
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_wrist_3_link",
+        "sample_hit_count": 99
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "robotiq_85_right_inner_knuckle_link",
+        "sample_hit_count": 98
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "wrist_rgbd_bracket_flange_bridge_collision",
+        "right_link": "wrist_rgbd_mount_link",
+        "sample_hit_count": 98
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "arm_adapter_collision",
+        "right_link": "arm_mount_link",
+        "sample_hit_count": 98
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_left_finger_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample_hit_count": 97
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_inner_knuckle_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample_hit_count": 97
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "arm_bay_floor_front_collision",
+        "right_link": "bodywork_front_cowl_link",
+        "sample_hit_count": 97
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_base_link_inertia",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_forearm_link",
+        "sample_hit_count": 95
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "robotiq_85_right_finger_link",
+        "right_collision": "collision_0",
+        "right_link": "ur5e_control_box_link",
+        "sample_hit_count": 94
+      },
+      {
+        "class": "arm_self",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_forearm_link",
+        "right_collision": "collision_0",
+        "right_link": "robotiq_85_right_knuckle_link",
+        "sample_hit_count": 93
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "front_right_wheel_collision",
+        "right_link": "front_right_wheel_link",
+        "sample_hit_count": 93
+      },
+      {
+        "class": "arm_vehicle",
+        "left_collision": "collision_0",
+        "left_link": "ur5e_upper_arm_link",
+        "right_collision": "collision_0",
+        "right_link": "a300_right_battery_pack_link",
+        "sample_hit_count": 91
+      }
+    ]
+  },
+  "envelopes": {
+    "arm_reachable_sampled_collision_union": {
+      "max_xyz_m": [
+        1.138393,
+        0.765823,
+        1.777764
+      ],
+      "min_xyz_m": [
+        -0.940901,
+        -1.210411,
+        -0.463656
+      ],
+      "size_xyz_m": [
+        2.079295,
+        1.976235,
+        2.241421
+      ]
+    },
+    "arm_transport_collision": {
+      "max_xyz_m": [
+        0.570597,
+        -0.049787,
+        1.058887
+      ],
+      "min_xyz_m": [
+        0.024521,
+        -0.675122,
+        0.456726
+      ],
+      "size_xyz_m": [
+        0.546076,
+        0.625335,
+        0.602161
+      ]
+    },
+    "vehicle_arm_operating_collision_union": {
+      "max_xyz_m": [
+        1.138393,
+        0.765823,
+        1.777764
+      ],
+      "min_xyz_m": [
+        -0.940901,
+        -1.210411,
+        -0.463656
+      ],
+      "size_xyz_m": [
+        2.079295,
+        1.976235,
+        2.241421
+      ]
+    },
+    "vehicle_transport_collision": {
+      "max_xyz_m": [
+        0.599761,
+        0.695,
+        1.2706
+      ],
+      "min_xyz_m": [
+        -0.603335,
+        -0.695,
+        0.0
+      ],
+      "size_xyz_m": [
+        1.203096,
+        1.39,
+        1.2706
+      ]
+    }
+  },
+  "ground_plane_audit": {
+    "material_penetration_tolerance_m": 0.002,
+    "minimum_arm_collision_z_m": -0.463656072,
+    "plane_z_m": 0.0,
+    "required_anchor_minimum_z_m": {
+      "deposit": 0.479099904,
+      "pick": 0.029654462,
+      "pregrasp": 0.289654461,
+      "transport": 0.459272398
+    },
+    "samples_below_ground": 136
+  },
+  "inputs": {
+    "expanded_urdf": "reports/engineering/formal_competition_vehicle.urdf",
+    "expanded_urdf_sha256": "2b399eaba8de34fd55ca663a3b6b49437070c72969f5e22faf2a64a12ba27db8",
+    "layout": "config/high_fidelity_vehicle/formal_vehicle_layout.yaml",
+    "layout_sha256": "3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9",
+    "load_source": "formal Xacro payload reserve links and final capacity clamps",
+    "scanner": "scripts/scan_formal_vehicle_inertia_and_swept_volume.py",
+    "scanner_sha256": "6b1e611094578bd51f190c32f9d085ae479127a1fbb043b0ab5bffc5f8dd6dcf",
+    "support_polygon_source": "final URDF wheel-joint centres"
+  },
+  "joint_space": {
+    "arm_joints": [
+      "shoulder_pan_joint",
+      "shoulder_lift_joint",
+      "elbow_joint",
+      "wrist_1_joint",
+      "wrist_2_joint",
+      "wrist_3_joint"
+    ],
+    "limits_rad": {
+      "elbow_joint": [
+        -3.141592653589793,
+        3.141592653589793
+      ],
+      "shoulder_lift_joint": [
+        -6.283185307179586,
+        6.283185307179586
+      ],
+      "shoulder_pan_joint": [
+        -6.283185307179586,
+        6.283185307179586
+      ],
+      "wrist_1_joint": [
+        -6.283185307179586,
+        6.283185307179586
+      ],
+      "wrist_2_joint": [
+        -6.283185307179586,
+        6.283185307179586
+      ],
+      "wrist_3_joint": [
+        -6.283185307179586,
+        6.283185307179586
+      ]
+    },
+    "sampling": "transport + zero + task anchors + 64 limit corners + one-axis limits + Halton",
+    "task_anchor_names": [
+      "deposit",
+      "pick",
+      "pregrasp"
+    ],
+    "transport_pose_rad": {
+      "elbow_joint": 1.8,
+      "shoulder_lift_joint": -1.0,
+      "shoulder_pan_joint": -1.0,
+      "wrist_1_joint": -1.5,
+      "wrist_2_joint": -1.55,
+      "wrist_3_joint": 0.25
+    }
+  },
+  "load_cases": {
+    "empty": {
+      "maximum_cog_z_m": 0.437775874,
+      "minimum_cog_z_m": 0.345320566,
+      "minimum_margin_m": 0.19238366,
+      "total_mass_kg": 160.005583273
+    },
+    "max_combined": {
+      "maximum_cog_z_m": 0.440563674,
+      "minimum_cog_z_m": 0.353450401,
+      "minimum_margin_m": 0.207904217,
+      "total_mass_kg": 169.817583273
+    },
+    "max_dry": {
+      "maximum_cog_z_m": 0.438972462,
+      "minimum_cog_z_m": 0.347382648,
+      "minimum_margin_m": 0.194898234,
+      "total_mass_kg": 161.517583273
+    },
+    "max_wastewater": {
+      "maximum_cog_z_m": 0.43944039,
+      "minimum_cog_z_m": 0.351544522,
+      "minimum_margin_m": 0.205630491,
+      "total_mass_kg": 168.305583273
+    }
+  },
+  "minimum_required_static_margin_m": 0.03,
+  "passed": true,
+  "payload_budget": {
+    "a300_curb_mass_kg": 78.5,
+    "a300_payload_design_limit_kg": 91.35,
+    "a300_rated_payload_kg": 101.5,
+    "configured_wastewater_capacity_kg": 8.3,
+    "final_empty_vehicle_mass_kg": 160.005583273,
+    "final_fixed_payload_mass_kg": 81.505583273,
+    "maximum_combined_payload_kg": 91.317583273,
+    "maximum_dry_trash_mass_kg": 1.512,
+    "remaining_design_margin_kg": 0.032416727,
+    "remaining_rated_payload_margin_kg": 10.182416727
+  },
+  "report_id": "tzcup_formal_vehicle_inertia_collision_sweep_v1",
+  "scan_scale": {
+    "arm_pose_count": 1113,
+    "cog_evaluation_count": 4452,
+    "collision_element_count": 258,
+    "collision_mesh_count": 25,
+    "collision_mesh_vertex_references": 614910,
+    "halton_requested": 1024,
+    "inertial_link_count": 194,
+    "link_count": 196,
+    "load_case_count": 4,
+    "visual_element_count_ignored": 216,
+    "visual_fallback_count": 0
+  },
+  "schema_version": 1,
+  "static_sensor_structure_audit": {
+    "interface_candidate_counts": {
+      "compute_vs_control_cabinet": 0,
+      "utm_vs_mid360": 0,
+      "utm_vs_pylon_fairing": 0
+    },
+    "interface_candidates": {
+      "compute_vs_control_cabinet": [],
+      "utm_vs_mid360": [],
+      "utm_vs_pylon_fairing": []
+    },
+    "interpretation": "Zero conservative OBB candidates proves separation for the final UTM, MID-360, pylon-fairing and roof-mounted compute/control-cabinet interfaces.",
+    "material_overlap_tolerance_m": 0.002,
+    "maximum_pylon_fairing_z_m": 1.1151,
+    "minimum_required_scan_plane_clearance_m": 0.04,
+    "passed": true,
+    "utm_measurement_plane_z_m": 1.1621,
+    "utm_plane_above_fairing_clearance_m": 0.047
+  },
+  "status": "PRODUCTION_ANCHORS_PASSED_WITH_RAW_JOINT_SPACE_EXCLUSION_REGIONS",
+  "support_polygon_xy_m": [
+    [
+      -0.256,
+      -0.2829
+    ],
+    [
+      0.256,
+      -0.2829
+    ],
+    [
+      0.256,
+      0.2829
+    ],
+    [
+      -0.256,
+      0.2829
+    ]
+  ],
+  "wastewater_capacity": {
+    "cog_limit_l": 14.0,
+    "configured_usable_capacity_l": 8.3,
+    "design_cap_l": 20.0,
+    "final_usable_capacity_l": 8.3,
+    "installation_limit_l": 14.0,
+    "mass_limit_l": 10.415520908699953,
+    "minimum_margin_at_installation_limit_m": 0.208030788,
+    "theoretical_usable_capacity_l": 8.332417,
+    "usable_fraction": 0.8
+  },
+  "worst_case": {
+    "cog_xyz_m": [
+      0.06361634,
+      -0.013057769,
+      0.37839785
+    ],
+    "joint_positions_rad": {
+      "elbow_joint": -0.475511464,
+      "shoulder_lift_joint": -5.835001993,
+      "shoulder_pan_joint": -0.134990309,
+      "wrist_1_joint": -2.169413003,
+      "wrist_2_joint": 4.876431572,
+      "wrist_3_joint": -6.111591717
+    },
+    "load_case": "empty",
+    "sample": "halton_00702",
+    "static_margin_m": 0.19238366,
+    "total_mass_kg": 160.005583273
+  }
+}

@@ -22,7 +22,35 @@
     </joint>
   </xacro:macro>
 
-  <xacro:macro name="hf_d435" params="name parent xyz rpy topic max_range mount_bracket:=false">
+  <xacro:macro name="hf_d435" params="name parent xyz rpy topic ir_left_topic ir_right_topic max_range mount_bracket:=false runtime_enabled:=true">
+    <xacro:if value="${mount_bracket}">
+      <link name="${name}_mount_link">
+        <visual name="${name}_machined_side_bracket_visual">
+          <geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/sensors/wrist_rgbd_side_bracket.stl"/></geometry>
+          <material name="${name}_bracket"><color rgba="0.25 0.27 0.28 1"/></material>
+        </visual>
+        <!-- The optical axis is local +X.  Every load-carrying bracket member
+             therefore stays behind the D435 rear plane (x <= -12.5 mm),
+             rather than crossing the emitted depth frustum. -->
+        <collision name="${name}_bracket_camera_plate_collision"><origin xyz="-0.016 0.010 0.027"/><geometry><box size="0.006 0.055 0.055"/></geometry></collision>
+        <collision name="${name}_bracket_camera_standoff_collision"><origin xyz="-0.020 0.004 0.029"/><geometry><box size="0.008 0.030 0.064"/></geometry></collision>
+        <collision name="${name}_bracket_outboard_rail_collision"><origin xyz="-0.024 0.070 0.060"/><geometry><box size="0.008 0.145 0.030"/></geometry></collision>
+        <collision name="${name}_bracket_adapter_flange_collision"><origin xyz="-0.024 0.140 0.049"/><geometry><box size="0.008 0.070 0.022"/></geometry></collision>
+        <collision name="${name}_bracket_flange_bridge_collision"><origin xyz="-0.044 0.124 0.049"/><geometry><box size="0.040 0.008 0.022"/></geometry></collision>
+        <!-- 236.709 g project-machined aluminium bracket, separated from the
+             public 75 g D435 housing so their load path and replacement datum
+             are independently inspectable. -->
+        <inertial>
+          <origin xyz="-0.024 0.06018820 0.04530774"/>
+          <mass value="0.236709"/>
+          <xacro:hf_sensor_box_inertia mass="0.236709" x="0.070" y="0.145" z="0.064"/>
+        </inertial>
+      </link>
+      <joint name="${name}_bracket_joint" type="fixed">
+        <parent link="${parent}"/><child link="${name}_mount_link"/>
+        <origin xyz="${xyz}" rpy="${rpy}"/>
+      </joint>
+    </xacro:if>
     <link name="${name}_link">
       <visual name="${name}_housing_visual">
         <!-- Robotnik's D435 datum is the left IR/depth imager.  Preserve its
@@ -30,25 +58,41 @@
         <origin xyz="0.0149 -0.0175 0" rpy="${pi/2.0} 0 ${pi/2.0}"/>
         <geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/robotnik_sensors/intel_d435_color.dae"/></geometry>
       </visual>
-      <xacro:if value="${mount_bracket}">
-        <visual name="${name}_machined_side_bracket_visual">
-          <geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/sensors/wrist_rgbd_side_bracket.stl"/></geometry>
-          <material name="${name}_bracket"><color rgba="0.25 0.27 0.28 1"/></material>
-        </visual>
-      </xacro:if>
       <collision>
         <origin xyz="0 -0.0175 0"/>
         <geometry><box size="0.02505 0.090 0.025"/></geometry>
       </collision>
-      <inertial><origin xyz="0 -0.0175 0"/><mass value="0.074999"/><xacro:hf_sensor_box_inertia mass="0.074999" x="0.02505" y="0.090" z="0.025"/></inertial>
+      <!-- Two additional optical datums below carry 1 microgram each so the
+           strict URDF checker can retain them as links.  Remove the same two
+           micrograms from the public 75 g housing allocation: adding the
+           complete stereo frame tree therefore changes neither D435 nor
+           whole-vehicle mass. -->
+      <inertial><origin xyz="0 -0.0175 0"/><mass value="0.074998"/><xacro:hf_sensor_box_inertia mass="0.074998" x="0.02505" y="0.090" z="0.025"/></inertial>
     </link>
-    <joint name="${name}_mount_joint" type="fixed">
-      <parent link="${parent}"/><child link="${name}_link"/>
-      <origin xyz="${xyz}" rpy="${rpy}"/>
-    </joint>
+    <xacro:if value="${mount_bracket}">
+      <joint name="${name}_mount_joint" type="fixed">
+        <parent link="${name}_mount_link"/><child link="${name}_link"/>
+        <origin xyz="0 0 0" rpy="0 0 0"/>
+      </joint>
+    </xacro:if>
+    <xacro:unless value="${mount_bracket}">
+      <joint name="${name}_mount_joint" type="fixed">
+        <parent link="${parent}"/><child link="${name}_link"/>
+        <origin xyz="${xyz}" rpy="${rpy}"/>
+      </joint>
+    </xacro:unless>
     <xacro:hf_virtual_optical_link name="${name}_depth_optical_frame" parent="${name}_link"
                                    xyz="0 0 0" rpy="-${pi/2.0} 0 -${pi/2.0}"/>
-    <gazebo reference="${name}_link">
+    <!-- D435 depth is derived from its real stereo pair.  The housing datum is
+         the left IR imager and the right imager is 50 mm to camera-right
+         (body-frame -Y).  Keep both optical datums explicit even though the
+         existing RGBD sensor continues to publish registered color/depth. -->
+    <xacro:hf_virtual_optical_link name="${name}_infra1_optical_frame" parent="${name}_link"
+                                   xyz="0 0 0" rpy="-${pi/2.0} 0 -${pi/2.0}"/>
+    <xacro:hf_virtual_optical_link name="${name}_infra2_optical_frame" parent="${name}_link"
+                                   xyz="0 -0.050 0" rpy="-${pi/2.0} 0 -${pi/2.0}"/>
+    <xacro:if value="${runtime_enabled}">
+      <gazebo reference="${name}_link">
       <sensor name="${name}_d435_rgbd" type="rgbd_camera">
         <topic>${topic}</topic><update_rate>30</update_rate>
         <always_on>true</always_on><visualize>false</visualize>
@@ -65,10 +109,39 @@
           <depth_camera><output>depths</output></depth_camera>
         </camera>
       </sensor>
-    </gazebo>
+      <sensor name="${name}_d435_infra1" type="camera">
+        <pose>0 0 0 0 0 0</pose>
+        <topic>${ir_left_topic}</topic><update_rate>30</update_rate>
+        <always_on>true</always_on><visualize>false</visualize>
+        <gz_frame_id>${name}_infra1_optical_frame</gz_frame_id>
+        <camera>
+          <optical_frame_id>${name}_infra1_optical_frame</optical_frame_id>
+          <camera_info_topic>${ir_left_topic}/camera_info</camera_info_topic>
+          <horizontal_fov>1.518436</horizontal_fov>
+          <image><width>848</width><height>480</height><format>L_INT8</format></image>
+          <clip><near>0.2</near><far>${max_range}</far></clip>
+          <lens><intrinsics><fx>447.2</fx><fy>433.0</fy><cx>424.0</cx><cy>240.0</cy><s>0</s></intrinsics></lens>
+        </camera>
+      </sensor>
+      <sensor name="${name}_d435_infra2" type="camera">
+        <pose>0 -0.050 0 0 0 0</pose>
+        <topic>${ir_right_topic}</topic><update_rate>30</update_rate>
+        <always_on>true</always_on><visualize>false</visualize>
+        <gz_frame_id>${name}_infra2_optical_frame</gz_frame_id>
+        <camera>
+          <optical_frame_id>${name}_infra2_optical_frame</optical_frame_id>
+          <camera_info_topic>${ir_right_topic}/camera_info</camera_info_topic>
+          <horizontal_fov>1.518436</horizontal_fov>
+          <image><width>848</width><height>480</height><format>L_INT8</format></image>
+          <clip><near>0.2</near><far>${max_range}</far></clip>
+          <lens><intrinsics><fx>447.2</fx><fy>433.0</fy><cx>424.0</cx><cy>240.0</cy><s>0</s></intrinsics></lens>
+        </camera>
+      </sensor>
+      </gazebo>
+    </xacro:if>
   </xacro:macro>
 
-  <xacro:macro name="hf_fisheye" params="name parent xyz rpy optical_xyz optical_rpy topic">
+  <xacro:macro name="hf_fisheye" params="name parent xyz rpy optical_xyz optical_rpy topic runtime_enabled:=true">
     <link name="${name}_link">
       <visual name="${name}_rugged_housing_visual">
         <geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/sensors/rugged_fisheye_module.stl"/></geometry>
@@ -83,10 +156,18 @@
     </joint>
     <xacro:hf_virtual_optical_link name="${name}_optical_frame" parent="${name}_link"
                                    xyz="${optical_xyz}" rpy="${optical_rpy}"/>
-    <gazebo reference="${name}_link">
-      <!-- Gazebo's camera projection is pinhole.  The 150 deg envelope is
-           correct; equidistant Arducam calibration/distortion is applied in ROS. -->
-      <sensor name="${name}_imx291" type="camera">
+    <xacro:if value="${runtime_enabled}">
+      <gazebo reference="${name}_link">
+      <!-- Nominal simulation lens, not a serial-number camera calibration.
+           SDFormat renders an equisolid-angle projection
+             r = 2 f sin(theta / 2)
+           while formal_fisheye_camera_info_publisher.py publishes the same
+           mapping through ROS's equidistant (Kannala-Brandt) polynomial.  Its
+           non-zero coefficients are the theta^9 Taylor representation
+           of this exact SDF mapping.  The public M27195H15 source freezes only
+           the 150 x 129 degree lens envelope; an as-built calibration remains
+           mandatory before real-camera deployment. -->
+      <sensor name="${name}_imx291" type="wideanglecamera">
         <topic>${topic}</topic><update_rate>30</update_rate>
         <always_on>true</always_on><visualize>false</visualize>
         <gz_frame_id>${name}_optical_frame</gz_frame_id>
@@ -95,12 +176,19 @@
           <horizontal_fov>2.617994</horizontal_fov>
           <image><width>1920</width><height>1080</height><format>R8G8B8</format></image>
           <clip><near>0.2</near><far>20.0</far></clip>
+          <lens>
+            <type>equisolid_angle</type>
+            <scale_to_hfov>true</scale_to_hfov>
+            <cutoff_angle>1.570796327</cutoff_angle>
+            <env_texture_size>1024</env_texture_size>
+          </lens>
         </camera>
       </sensor>
-    </gazebo>
+      </gazebo>
+    </xacro:if>
   </xacro:macro>
 
-  <xacro:macro name="hf_sensor_suite" params="mast_parent base_parent wrist_parent">
+  <xacro:macro name="hf_sensor_suite" params="mast_parent base_parent wrist_parent high_bandwidth_runtime:=true">
     <!-- Every fixed sensor is connected through a named, physical mounting
          link.  This makes the installation hierarchy inspectable in TF/URDF
          and keeps the visible vendor housing separate from project-owned CAD. -->
@@ -115,7 +203,10 @@
       <inertial><mass value="0.42"/><xacro:hf_sensor_box_inertia mass="0.42" x="0.150" y="0.120" z="0.110"/></inertial>
     </link>
     <joint name="lidar_2d_bracket_joint" type="fixed"><parent link="${mast_parent}"/><child link="lidar_2d_mount_link"/>
-      <origin xyz="0.060 0 0.635"/></joint>
+      <!-- Keep the 270 degree measurement plane above the moulded mast
+           fairing.  The 47 mm vertical clearance prevents the rear edge of
+           the physical fairing from masking both side sectors. -->
+      <origin xyz="0.060 0 0.695"/></joint>
     <link name="lidar_2d_link">
       <visual name="utm30lx_mesh"><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/robotnik_sensors/hokuyo_utm_30lx.dae"/></geometry>
         <material name="utm30lx_blue"><color rgba="0.08 0.29 0.44 1"/></material></visual>
@@ -157,9 +248,13 @@
     </link>
     <joint name="lidar_3d_mount_joint" type="fixed"><parent link="lidar_3d_mount_link"/><child link="lidar_3d_link"/>
       <origin xyz="0 0 0.094"/></joint>
-    <gazebo reference="lidar_3d_link">
+    <xacro:if value="${high_bandwidth_runtime}">
+      <gazebo reference="lidar_3d_link">
       <sensor name="mid360" type="gpu_lidar">
-        <topic>/sensors/lidar_3d/points</topic><update_rate>10</update_rate><always_on>true</always_on><visualize>false</visualize>
+        <!-- Gazebo publishes LaserScan on this base topic and PointCloudPacked
+             on its /points child.  Keep the base free of the /points suffix so
+             the ROS PointCloud2 contract is exactly /sensors/lidar_3d/points. -->
+        <topic>/sensors/lidar_3d</topic><update_rate>10</update_rate><always_on>true</always_on><visualize>false</visualize>
         <gz_frame_id>lidar_3d_link</gz_frame_id>
         <lidar><scan><horizontal><samples>1800</samples><resolution>1</resolution><min_angle>-${pi}</min_angle><max_angle>${pi}</max_angle></horizontal>
           <!-- MID-360 published vertical field of view: -7 to +52 degrees. -->
@@ -167,7 +262,8 @@
           <range><min>0.1</min><max>40.0</max><resolution>0.01</resolution></range>
           <noise><type>gaussian</type><mean>0</mean><stddev>0.020</stddev></noise></lidar>
       </sensor>
-    </gazebo>
+      </gazebo>
+    </xacro:if>
 
     <link name="front_rgbd_mount_link">
       <visual name="front_rgbd_bezel_visual"><geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/front_rgbd_mount.stl"/></geometry>
@@ -179,13 +275,24 @@
       <inertial><mass value="0.18"/><xacro:hf_sensor_box_inertia mass="0.18" x="0.045" y="0.132" z="0.067"/></inertial>
     </link>
     <joint name="front_rgbd_bracket_joint" type="fixed"><parent link="${base_parent}"/><child link="front_rgbd_mount_link"/>
-      <origin xyz="0.565 0 0.449" rpy="0 0.139626 0"/></joint>
+      <!-- A 25 degree depression covers the ground from just ahead of the
+           front bumper through the long-range litter perception corridor. -->
+      <origin xyz="0.565 0 0.449" rpy="0 0.436332313 0"/></joint>
     <xacro:hf_d435 name="front_rgbd" parent="front_rgbd_mount_link" xyz="0.005 0 0" rpy="0 0 0"
-                    topic="/sensors/front_rgbd/depth/image_rect_raw" max_range="10.0"/>
+                    topic="/sensors/front_rgbd/depth/image_rect_raw"
+                    ir_left_topic="/sensors/front_rgbd/infra1/image_rect_raw"
+                    ir_right_topic="/sensors/front_rgbd/infra2/image_rect_raw" max_range="10.0"
+                    runtime_enabled="${high_bandwidth_runtime}"/>
     <!-- Side bracket position keeps the camera outside the Robotiq base and
          turns its optical +X onto the gripper's +Z approach direction. -->
-    <xacro:hf_d435 name="wrist_rgbd" parent="${wrist_parent}" xyz="0.115 0 0.025" rpy="0 -${pi/2.0} 0"
-                    topic="/sensors/wrist_rgbd/depth/image_rect_raw" max_range="3.0" mount_bracket="true"/>
+    <!-- Roll the housing 90 degrees about its unchanged optical axis.  The
+         narrower 58 degree image dimension now faces the inboard brush, while
+         optical +Z still follows tool +Z onto the grasp window. -->
+    <xacro:hf_d435 name="wrist_rgbd" parent="${wrist_parent}" xyz="0.140 0 0.025" rpy="${pi/2.0} -${pi/2.0} 0"
+                    topic="/sensors/wrist_rgbd/depth/image_rect_raw"
+                    ir_left_topic="/sensors/wrist_rgbd/infra1/image_rect_raw"
+                    ir_right_topic="/sensors/wrist_rgbd/infra2/image_rect_raw" max_range="3.0" mount_bracket="true"
+                    runtime_enabled="${high_bandwidth_runtime}"/>
 
     <!-- Independent modules: each has its own housing, imager, frame and topic. -->
     <link name="rear_left_fisheye_mount_link">
@@ -198,8 +305,9 @@
     <joint name="rear_left_fisheye_bracket_joint" type="fixed"><parent link="${base_parent}"/><child link="rear_left_fisheye_mount_link"/><origin xyz="-0.565 0.280 0.435" rpy="0 -0.175 2.705"/></joint>
     <xacro:hf_fisheye name="rear_left_fisheye" parent="rear_left_fisheye_mount_link" xyz="0 0 0" rpy="0 0 0"
                        optical_xyz="0.022011096607 -0.000604893394 -0.003891751553"
-                       optical_rpy="-1.745999996444 -0.000035461162 -1.570996889205"
-                       topic="/sensors/rear_left_fisheye/image_raw"/>
+                       optical_rpy="-1.832595714594 -0.000035461162 -1.570996889205"
+                       topic="/sensors/rear_left_fisheye/image_raw"
+                       runtime_enabled="${high_bandwidth_runtime}"/>
     <link name="rear_right_fisheye_mount_link">
       <visual><geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/rear_fisheye_mount.stl"/></geometry><material name="rear_camera_pod_right"><color rgba="0.055 0.070 0.073 1"/></material></visual>
       <collision name="rear_right_pod_back"><origin xyz="-0.018 0 0"/><geometry><box size="0.020 0.090 0.084"/></geometry></collision>
@@ -210,8 +318,46 @@
     <joint name="rear_right_fisheye_bracket_joint" type="fixed"><parent link="${base_parent}"/><child link="rear_right_fisheye_mount_link"/><origin xyz="-0.565 -0.280 0.435" rpy="0 -0.175 -2.705"/></joint>
     <xacro:hf_fisheye name="rear_right_fisheye" parent="rear_right_fisheye_mount_link" xyz="0 0 0" rpy="0 0 0"
                        optical_xyz="0.022011096607 0.000604893394 -0.003891751553"
-                       optical_rpy="-1.745999996444 -0.000035461162 -1.570996889205"
-                       topic="/sensors/rear_right_fisheye/image_raw"/>
+                       optical_rpy="-1.832595714594 -0.000035461162 -1.570996889205"
+                       topic="/sensors/rear_right_fisheye/image_raw"
+                       runtime_enabled="${high_bandwidth_runtime}"/>
+
+    <!-- The GNSS installation is split into its real functional parts.  The
+         ZED-F9P-04B LGA receiver sits in a serviceable mast-side enclosure;
+         the ANN-MB antenna remains on a separate sky-view boom.  Gazebo's
+         NavSat measurement datum stays at the antenna phase-centre link. -->
+    <link name="zed_f9p_receiver_enclosure_link">
+      <visual name="zed_f9p_receiver_enclosure_visual">
+        <geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/zed_f9p_receiver_enclosure.stl"/></geometry>
+        <material name="zed_f9p_receiver_tray"><color rgba="0.26 0.29 0.30 1"/></material>
+      </visual>
+      <collision name="zed_f9p_receiver_enclosure_collision">
+        <origin xyz="0 0 -0.002"/><geometry><box size="0.065 0.060 0.020"/></geometry>
+      </collision>
+      <!-- The receiver hardware is split from the existing 0.240 kg GNSS
+           mounting allocation, so this detail does not add fictitious mass. -->
+      <inertial><origin xyz="0 0 -0.002"/><mass value="0.034999"/><xacro:hf_sensor_box_inertia mass="0.034999" x="0.065" y="0.060" z="0.020"/></inertial>
+    </link>
+    <joint name="zed_f9p_receiver_enclosure_mount_joint" type="fixed">
+      <parent link="${mast_parent}"/><child link="zed_f9p_receiver_enclosure_link"/>
+      <origin xyz="-0.060 -0.095 0.585"/>
+    </joint>
+    <link name="zed_f9p_module_reference_link">
+      <visual name="zed_f9p_module_reference_visual">
+        <geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/zed_f9p_module_reference.stl"/></geometry>
+        <material name="zed_f9p_module_shield"><color rgba="0.72 0.74 0.70 1"/></material>
+      </visual>
+      <collision name="zed_f9p_official_package_collision"><geometry><box size="0.017 0.022 0.0024"/></geometry></collision>
+      <!-- u-blox does not publish a module mass in the selected public product
+           material.  Epsilon mass preserves the explicit rigid body without
+           inventing a hardware-correlated number; enclosure mass remains the
+           conservative engineering allocation above. -->
+      <inertial><mass value="0.000001"/><inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/></inertial>
+    </link>
+    <joint name="zed_f9p_module_reference_joint" type="fixed">
+      <parent link="zed_f9p_receiver_enclosure_link"/><child link="zed_f9p_module_reference_link"/>
+      <origin xyz="0 0 0.006"/>
+    </joint>
 
     <!-- ANN-MB GNSS antenna sits on a dedicated side boom so the MID-360 has
          an unobstructed 360-degree crown and the antenna retains sky view. -->
@@ -219,7 +365,7 @@
       <visual><geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/gnss_mount.stl"/></geometry><material name="gnss_mount_silver"><color rgba="0.45 0.49 0.50 1"/></material></visual>
       <collision name="gnss_boom_collision"><origin xyz="0 0.085 0"/><geometry><box size="0.100 0.230 0.018"/></geometry></collision>
       <collision name="gnss_ground_plane_collision"><origin xyz="-0.020 0.180 0.010"/><geometry><cylinder radius="0.075" length="0.002"/></geometry></collision>
-      <inertial><origin xyz="0 0.085 0"/><mass value="0.24"/><xacro:hf_sensor_box_inertia mass="0.24" x="0.100" y="0.230" z="0.073"/></inertial>
+      <inertial><origin xyz="0 0.085 0"/><mass value="0.205"/><xacro:hf_sensor_box_inertia mass="0.205" x="0.100" y="0.230" z="0.073"/></inertial>
     </link>
     <joint name="gnss_bracket_joint" type="fixed"><parent link="${mast_parent}"/><child link="gnss_mount_link"/><origin xyz="-0.035 -0.020 0.765"/></joint>
     <link name="gnss_antenna_link">

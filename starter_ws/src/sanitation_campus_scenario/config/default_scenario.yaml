@@ -19,7 +19,11 @@ profiles:
 episode:
   cube_count: 20
   cube_edge_m: 0.03
-  grasp_clearance_m: 0.75
+  # Placement clearance includes the ~1.0 m side-pick offset, the formal
+  # vehicle's conservative ~0.93 m parking radius and a bounded pose margin.
+  # It is deliberately not the arm reach threshold used by the policy.
+  grasp_clearance_m: 2.10
+  grasp_reach_radius_m: 1.10
   dirt_patch_count: 18
   dirt_patch_area_m2: 1.0
   dirt_spacing_m: 0.25

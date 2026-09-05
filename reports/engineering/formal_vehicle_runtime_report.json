@@ -1,88 +1,698 @@
 {
-  "report_id": "tzcup_formal_vehicle_headless_runtime_v2",
-  "status": "FORMAL_GAZEBO_CONTROL_AND_SENSOR_RUNTIME_PASSED_EXTERNAL_FIDELITY_GATES_PENDING",
-  "environment": {
-    "distribution": "TZcup-Ubuntu-24.04",
-    "ros": "Jazzy",
-    "gazebo": "Harmonic gz-sim8",
-    "mode": "headless",
-    "physics_engine": "gz-physics-bullet-featherstone-plugin"
+  "acceptance_session_binding": {
+    "fov_report_path": "reports/engineering/formal_vehicle_fov_occlusion_report.json",
+    "fov_report_sha256": "35e1ecaaa13f45e4347fabff5ac64e571f5b389ed341eb780b4a469f2e607d36",
+    "session_manifest_path": "/mnt/f/Project/TZcup-integrated-functional-acceptance/artifacts/formal_final_acceptance_session.json",
+    "session_manifest_sha256": "10db31cea856811269a47885facf7279e2c92451b4df0f72b8e96373c47532ab",
+    "session_started_epoch_ns": 1788191180699355359,
+    "snapshot": {
+      "expanded_urdf_sha256": "b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2",
+      "snapshot_manifest_sha256": "fffb388e1f06616ab5019db00481718d24b5bac1d284c240dd1709173482cd40",
+      "source_inventory_sha256": "0d106d4e9aae774941856d0d7018bdbcf8c43e83afe00049dc485006943cf03b"
+    },
+    "status_at_gate_start": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING"
   },
-  "passed_checks": {
-    "xacro_expansion_and_check_urdf": true,
-    "visual_mesh_fidelity_gate": true,
-    "all_mesh_resources_resolved": true,
-    "gazebo_entity_spawn": true,
-    "robot_state_publisher_initialized": true,
-    "dynamic_payload_plugin_loaded": true,
-    "dry_payload_clamp_kg": 1.512,
-    "wastewater_payload_clamp_kg": 9.7064,
-    "ros_gz_sensor_bridge_created": true,
-    "lidar_2d_message_observed": true,
-    "mid360_pointcloud_message_observed": true,
-    "front_rgbd_color_and_depth_observed": true,
-    "wrist_rgbd_color_observed": true,
-    "left_fisheye_image_observed": true,
-    "right_fisheye_image_observed": true,
-    "gnss_message_observed": true,
-    "imu_message_observed": true,
-    "gz_ros2_control_loaded": true,
-    "all_six_controllers_active": true,
-    "controller_group_startup_verified": true,
-    "safe_stowed_cleaning_start": true,
-    "base_ground_truth_motion_observed": true,
-    "brush_velocity_response_observed": true,
-    "arm_and_gripper_driver_joint_response_observed": true,
-    "full_robotiq_mimic_linkage_response_observed": true
+  "claim_boundary": "Fresh session-bound headless Gazebo evidence for exact runtime sensor frames, source-timestamp cadence, UTM scan limits, nonempty MID360 points, camera intrinsics, finite GNSS/IMU, A300 four-wheel encoder feedback, safe controller states and raw plant odometry. The bound deterministic mesh-ray report proves configured FOV and mount occlusion; rendered target visibility, physical lens calibration, GNSS multipath, motion, grasp, cleaning contact and hardware deployment remain separate.",
+  "controller_states": {
+    "arm_controller": "active",
+    "brush_controller": "inactive",
+    "cleaning_controller": "active",
+    "gripper_controller": "active",
+    "joint_state_broadcaster": "active",
+    "recovery_controller": "inactive",
+    "service_controller": "active",
+    "storage_controller": "active"
+  },
+  "current_source_reconciliation": {
+    "drivetrain": "A300DrivetrainPlantSystem",
+    "expanded_urdf_path": "reports/engineering/formal_competition_vehicle.urdf",
+    "expanded_urdf_sha256": "b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2",
+    "live_robot_description_sha256": "32360bc60f8b032cba178d2a939333870e82ad93aff7c220b47f9607aec4aa4a",
+    "live_wastewater_capacity_values_kg": [
+      8.3
+    ],
+    "odometry_topic": "/odom/unfiltered",
+    "wastewater_capacity_kg": 8.3
   },
   "observed_interfaces": {
-    "lidar_2d_frame": "lidar_2d_link",
-    "mid360_pointcloud_frame": "lidar_3d_link",
-    "front_rgb_resolution": [848, 480],
-    "fisheye_width_px": 1920,
-    "gnss_frame": "gnss_antenna_link",
-    "imu_frame": "imu_link",
-    "active_controllers": [
-      "joint_state_broadcaster",
-      "base_controller",
-      "arm_controller",
-      "cleaning_controller",
-      "storage_controller",
-      "brush_controller"
-    ],
-    "mesh_visual_count": 100,
-    "primitive_visual_count": 2,
-    "required_external_mesh_links_passed": 51,
-    "base_forward_command_mps": 0.25,
-    "base_command_duration_s": 4.0,
-    "base_ground_truth_forward_delta_m": 0.537127,
-    "brush_velocity_command_rad_s": [10.0, -10.0, 15.0],
-    "brush_velocity_observed_rad_s": [10.0, -10.0, 15.0],
-    "arm_driver_joint_targets_rad": {
-      "shoulder_pan_joint": 0.1,
-      "robotiq_85_left_knuckle_joint": 0.2
+    "/formal_vehicle/encoders/a300/counts": {
+      "counts": [
+        0,
+        0,
+        0,
+        0
+      ],
+      "data_length": 4,
+      "frame_id": "",
+      "layout_label": "joint_order:front_left_wheel_joint,front_right_wheel_joint,rear_left_wheel_joint,rear_right_wheel_joint"
     },
-    "arm_driver_joint_observed_rad": {
-      "shoulder_pan_joint": 0.09999994,
-      "robotiq_85_left_knuckle_joint": 0.19999404
+    "/formal_vehicle/encoders/a300/joint_states": {
+      "finite_position_velocity": true,
+      "frame_id": "base_link",
+      "joint_names": [
+        "front_left_wheel_joint",
+        "front_right_wheel_joint",
+        "rear_left_wheel_joint",
+        "rear_right_wheel_joint"
+      ],
+      "position": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "velocity": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
     },
-    "robotiq_fingertip_runtime_m": {
-      "closed_left": [0.755201, 0.277755, 0.511897],
-      "closed_right": [0.871401, 0.289414, 0.511897],
-      "open_left": [0.746532, 0.270337, 0.511897],
-      "open_right": [0.881371, 0.283865, 0.511897]
+    "/odom/unfiltered": {
+      "child_frame_id": "base_footprint",
+      "frame_id": "odom"
     },
-    "gnss_world_origin": {
-      "latitude_deg": 39.9042,
-      "longitude_deg": 116.4074,
-      "elevation_m": 43.5
+    "/sensors/front_rgbd/depth/image_rect_raw/camera_info": {
+      "cx": 424.0,
+      "cy": 240.0,
+      "d": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "distortion_model": "plumb_bob",
+      "frame_id": "front_rgbd_depth_optical_frame",
+      "fx": 447.2,
+      "fy": 433.0,
+      "height": 480,
+      "width": 848
+    },
+    "/sensors/front_rgbd/infra1/image_rect_raw/camera_info": {
+      "cx": 424.0,
+      "cy": 240.0,
+      "d": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "distortion_model": "plumb_bob",
+      "frame_id": "front_rgbd_infra1_optical_frame",
+      "fx": 447.2,
+      "fy": 433.0,
+      "height": 480,
+      "width": 848
+    },
+    "/sensors/front_rgbd/infra2/image_rect_raw/camera_info": {
+      "cx": 424.0,
+      "cy": 240.0,
+      "d": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "distortion_model": "plumb_bob",
+      "frame_id": "front_rgbd_infra2_optical_frame",
+      "fx": 447.2,
+      "fy": 433.0,
+      "height": 480,
+      "width": 848
+    },
+    "/sensors/gnss/fix": {
+      "altitude": 44.68088398716245,
+      "frame_id": "gnss_antenna_link",
+      "latitude": 39.904201308494876,
+      "longitude": 116.40740422897878
+    },
+    "/sensors/imu/data": {
+      "finite_measurement": true,
+      "frame_id": "imu_link"
+    },
+    "/sensors/rear_left_fisheye/camera_info": {
+      "cx": 960.0,
+      "cy": 540.0,
+      "d": [
+        -0.041666666666666664,
+        0.0005208333333333333,
+        -3.1001984126984127e-06,
+        1.076457782186949e-08
+      ],
+      "distortion_model": "equidistant",
+      "frame_id": "rear_left_fisheye_optical_frame",
+      "fx": 788.4862232181991,
+      "fy": 788.4862232181991,
+      "height": 1080,
+      "width": 1920
+    },
+    "/sensors/rear_right_fisheye/camera_info": {
+      "cx": 960.0,
+      "cy": 540.0,
+      "d": [
+        -0.041666666666666664,
+        0.0005208333333333333,
+        -3.1001984126984127e-06,
+        1.076457782186949e-08
+      ],
+      "distortion_model": "equidistant",
+      "frame_id": "rear_right_fisheye_optical_frame",
+      "fx": 788.4862232181991,
+      "fy": 788.4862232181991,
+      "height": 1080,
+      "width": 1920
+    },
+    "/sensors/wrist_rgbd/depth/image_rect_raw/camera_info": {
+      "cx": 424.0,
+      "cy": 240.0,
+      "d": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "distortion_model": "plumb_bob",
+      "frame_id": "wrist_rgbd_depth_optical_frame",
+      "fx": 447.2,
+      "fy": 433.0,
+      "height": 480,
+      "width": 848
+    },
+    "/sensors/wrist_rgbd/infra1/image_rect_raw/camera_info": {
+      "cx": 424.0,
+      "cy": 240.0,
+      "d": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "distortion_model": "plumb_bob",
+      "frame_id": "wrist_rgbd_infra1_optical_frame",
+      "fx": 447.2,
+      "fy": 433.0,
+      "height": 480,
+      "width": 848
+    },
+    "/sensors/wrist_rgbd/infra2/image_rect_raw/camera_info": {
+      "cx": 424.0,
+      "cy": 240.0,
+      "d": [
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "distortion_model": "plumb_bob",
+      "frame_id": "wrist_rgbd_infra2_optical_frame",
+      "fx": 447.2,
+      "fy": 433.0,
+      "height": 480,
+      "width": 848
     }
   },
-  "pending_or_blocked_checks": {
-    "gazebo_sigint_shutdown": "gz_server_required_targeted_sigkill_after_five_second_sigterm_timeout",
-    "sensor_ray_occlusion_acceptance": "messages_observed_but_scene_level_visibility_scan_not_run",
-    "cleaning_ground_contact": "not_run",
-    "arm_full_sweep_and_self_collision": "not_run"
+  "observed_source_timestamp_hz": {
+    "/formal_vehicle/encoders/a300/counts": null,
+    "/formal_vehicle/encoders/a300/joint_states": 250.0,
+    "/odom/unfiltered": 50.0,
+    "/sensors/front_rgbd/depth/image_rect_raw/camera_info": 54.054054054054056,
+    "/sensors/front_rgbd/depth/image_rect_raw/depth_image": null,
+    "/sensors/front_rgbd/depth/image_rect_raw/image": null,
+    "/sensors/front_rgbd/infra1/image_rect_raw": null,
+    "/sensors/front_rgbd/infra1/image_rect_raw/camera_info": 54.054054054054056,
+    "/sensors/front_rgbd/infra2/image_rect_raw": null,
+    "/sensors/front_rgbd/infra2/image_rect_raw/camera_info": 54.054054054054056,
+    "/sensors/gnss/fix": 10.0,
+    "/sensors/imu/data": 200.0,
+    "/sensors/lidar_2d/scan": null,
+    "/sensors/lidar_3d/points": null,
+    "/sensors/rear_left_fisheye/camera_info": 9.992027261527754,
+    "/sensors/rear_left_fisheye/image_raw": null,
+    "/sensors/rear_right_fisheye/camera_info": 9.992027261527754,
+    "/sensors/rear_right_fisheye/image_raw": null,
+    "/sensors/wrist_rgbd/depth/image_rect_raw/camera_info": 54.054054054054056,
+    "/sensors/wrist_rgbd/depth/image_rect_raw/depth_image": null,
+    "/sensors/wrist_rgbd/depth/image_rect_raw/image": null,
+    "/sensors/wrist_rgbd/infra1/image_rect_raw": null,
+    "/sensors/wrist_rgbd/infra1/image_rect_raw/camera_info": 54.054054054054056,
+    "/sensors/wrist_rgbd/infra2/image_rect_raw": null,
+    "/sensors/wrist_rgbd/infra2/image_rect_raw/camera_info": 54.054054054054056
   },
-  "claim_boundary": "The mesh-based formal vehicle spawns headlessly with Bullet Featherstone; all referenced visual meshes resolve, sensor, payload, drivetrain, full Robotiq mimic linkage, cleaning, storage and brush controllers run. This is not acceptance of cleaning contact quality, arm swept volume, or final sensor occlusion."
+  "passed": false,
+  "passed_checks": {
+    "a300_four_wheel_encoder_feedback_structured_and_finite": true,
+    "a300_plant_loaded_exactly_once": true,
+    "all_camera_info_intrinsics_valid": true,
+    "all_eight_formal_sensor_groups_observed": false,
+    "all_image_and_camera_info_dimensions_exact": false,
+    "all_required_streams_observed": false,
+    "all_sensor_frames_exact": false,
+    "all_sensor_subscriptions_retired_after_bounded_evidence": false,
+    "controller_plane_ready_before_sensor_subscriptions": true,
+    "dry_payload_clamp_kg": 1.512,
+    "fisheye_camera_info_matches_nominal_equisolid_gazebo_projection": true,
+    "formal_acceptance_session_running_and_snapshot_bound": true,
+    "fov_occlusion_report_passed_and_bound_to_current_urdf": true,
+    "gnss_runtime_measurement_finite": true,
+    "imu_runtime_measurement_finite": true,
+    "mid360_runtime_pointcloud_nonempty": false,
+    "preembedded_sensor_world_bound_to_session_snapshot_and_source_urdf": true,
+    "raw_plant_odometry_frames_correct": true,
+    "removed_base_controller_absent": true,
+    "required_controllers_safe": true,
+    "robot_description_observed": true,
+    "runtime_source_timestamp_rates_at_least_half_nominal": false,
+    "utm30lx_runtime_range_and_270deg_scan_exact": false,
+    "wastewater_capacity_is_8_30_kg": true,
+    "wastewater_payload_clamp_kg": 8.3
+  },
+  "preembedded_sensor_world_binding": {
+    "acceptance_session_sha256": "10db31cea856811269a47885facf7279e2c92451b4df0f72b8e96373c47532ab",
+    "controller_config_path": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/install/share/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml",
+    "controller_config_sha256": "cdbf6538c2f3de726f307345475a498545016c3447ee995c38cc645a8f0b04bd",
+    "model_initial_pose": "0 0 0.005 0 0 0",
+    "model_name": "tzcup_formal_sanitation_vehicle",
+    "preembedded_report_path": "/mnt/f/Project/TZcup-integrated-functional-acceptance/reports/engineering/formal_vehicle_runtime_report.preembedded_sensor_world.json",
+    "preembedded_report_sha256": "2015cbd0ae17fda2c9d27ee18b5ef94757fe12b15c0c6d59646712a1d095c1f5",
+    "preembedded_world_path": "/mnt/f/Project/TZcup-integrated-functional-acceptance/reports/engineering/formal_vehicle_runtime_report.preembedded_sensor_world.sdf",
+    "preembedded_world_sha256": "051c6406781252efd6a7afd275896581b3d9c05ad402fd40403f82fd8a733799",
+    "runtime_install_root": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/install",
+    "sensor_count": 22,
+    "snapshot": {
+      "expanded_urdf_sha256": "b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2",
+      "snapshot_manifest_sha256": "fffb388e1f06616ab5019db00481718d24b5bac1d284c240dd1709173482cd40",
+      "source_inventory_sha256": "0d106d4e9aae774941856d0d7018bdbcf8c43e83afe00049dc485006943cf03b"
+    },
+    "source_urdf_path": "/mnt/f/Project/TZcup-integrated-functional-acceptance/reports/engineering/formal_competition_vehicle.urdf",
+    "source_urdf_sha256": "b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2",
+    "source_world_path": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/install/share/sanitation_vehicle_description/worlds/formal_vehicle_validation.sdf",
+    "source_world_sha256": "8c779677b8a9c665155c0a0f186ca57d7b6667ab935ee7b0f0d8e92d9e36259a",
+    "spawn_mode": "preembedded_before_gazebo_sensors_system"
+  },
+  "report_id": "tzcup_formal_vehicle_headless_runtime_v5",
+  "runtime_closure_binding": {
+    "closure_sha256": "30d6025286a7917e27482db776a96a905e85906a44a31f4f9c15a4acd0aefc38",
+    "frozen_source_file_count": 643,
+    "frozen_source_inventory_sha256": "736a9c4e2e77f392747985939b2d04412137fc77d7780270a3d253e06519ac21",
+    "gazebo_plugin_count": 12,
+    "gripper_mimic_implementation": "gripper_effort_mimic_v1",
+    "gripper_mimic_plugin_sha256": "74664a12408cf281fcc452a260c0a31068f528ab461aa094bfad86440bd725bd",
+    "gz_transport13_core_library_sha256": "714890133aeeb4484ef3be20de96755587917a187dbf8f88f07f72025de1e833",
+    "gz_transport13_protobuf_binding_report_sha256": "6c14d8d676a7a2f4abfd831fd10bb5d9d41a78dde615b2c3366e9ff3e8d1277c",
+    "gz_transport13_protobuf_needed": "libprotobuf.so.32",
+    "gz_transport13_runtime_binding_report_sha256": "4420f86e89382f8152af503dd185db26730f08a579324320b3a2b69e797e3a39",
+    "gz_transport13_runtime_consumer_count": 3,
+    "gz_transport13_vendor_build_report_sha256": "326340a1964ffacc243df8b24cc15ec24bea215185e39ff00a2797d1b55cad9a",
+    "install_file_count": 1278,
+    "install_symlink_report_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "manifest": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/final_runtime_closure_manifest.json",
+    "manifest_sha256": "1dcd205804a39865eab5ac155491e2bb6b3b4d92c5bd22b3841d0e5646d165fc",
+    "passed": true,
+    "perception_artifact_count": 7,
+    "ros_gz_image_debian_version": "1.0.22-1noble.20260615.145009",
+    "ros_gz_image_executable_sha256": "27900ce34bd1c9472e576ae77780b15093f422ed22ae1be3444d684428b70243",
+    "ros_gz_image_resolved_executable_path": "/opt/ros/jazzy/lib/ros_gz_image/image_bridge",
+    "ros_gz_image_ros_package_version": "1.0.22",
+    "ros_gz_image_system_runtime_bound": true,
+    "runtime_install_root": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/install",
+    "runtime_package_count": 16,
+    "side_brush_expanded_sdf_sha256": "c962635d80df67854c9051d39040d153bc743bd2cd656b724f0377de788f6719",
+    "side_brush_installed_xacro": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/install/share/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+    "side_brush_installed_xacro_sha256": "ecff827bea7c940a0ab69f29be7b1252ad8508c24afd7b921dcb57d6904304b0",
+    "side_brush_surface_audit_sha256": "19bb850e2022aef51cee090f2c2e1c15145ebc8e70e194e5d334491f360ef02d",
+    "source_file_count": 1266,
+    "source_install_binding_count": 429,
+    "status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED",
+    "symbolic_link_count": 0,
+    "typed_cleaning_telemetry_source_count": 8,
+    "typed_cleaning_telemetry_source_sha256": "d48924d3a52f566b2c4cdd6497ecfc7b108fa5e3f3580ced683e1c5f1fcb2730",
+    "windows_cold_start_evidence_bound": true,
+    "windows_cold_start_evidence_sha256": "058a1e95b7d183951ff767056e455fd83d3afdd93a430b5d7171bdb80de3530b"
+  },
+  "runtime_gate_binding": {
+    "acceptance_session_binding": {
+      "session_manifest": "/mnt/f/Project/TZcup-integrated-functional-acceptance/artifacts/formal_final_acceptance_session.json",
+      "session_manifest_sha256": "10db31cea856811269a47885facf7279e2c92451b4df0f72b8e96373c47532ab",
+      "session_started_epoch_ns": 1788191180699355359,
+      "session_status_at_gate": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING",
+      "snapshot": {
+        "expanded_urdf_sha256": "b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2",
+        "snapshot_manifest_sha256": "fffb388e1f06616ab5019db00481718d24b5bac1d284c240dd1709173482cd40",
+        "source_inventory_sha256": "0d106d4e9aae774941856d0d7018bdbcf8c43e83afe00049dc485006943cf03b"
+      },
+      "snapshot_current_source_verified": true,
+      "snapshot_output_inventory_sha256": "a8832afc81f6eea6227abd0a5dc6073bb9da2283de8532c05034841243028ba7"
+    },
+    "runtime_closure_binding": {
+      "closure_sha256": "30d6025286a7917e27482db776a96a905e85906a44a31f4f9c15a4acd0aefc38",
+      "frozen_source_file_count": 643,
+      "frozen_source_inventory_sha256": "736a9c4e2e77f392747985939b2d04412137fc77d7780270a3d253e06519ac21",
+      "gazebo_plugin_count": 12,
+      "gripper_mimic_implementation": "gripper_effort_mimic_v1",
+      "gripper_mimic_plugin_sha256": "74664a12408cf281fcc452a260c0a31068f528ab461aa094bfad86440bd725bd",
+      "gz_transport13_core_library_sha256": "714890133aeeb4484ef3be20de96755587917a187dbf8f88f07f72025de1e833",
+      "gz_transport13_protobuf_binding_report_sha256": "6c14d8d676a7a2f4abfd831fd10bb5d9d41a78dde615b2c3366e9ff3e8d1277c",
+      "gz_transport13_protobuf_needed": "libprotobuf.so.32",
+      "gz_transport13_runtime_binding_report_sha256": "4420f86e89382f8152af503dd185db26730f08a579324320b3a2b69e797e3a39",
+      "gz_transport13_runtime_consumer_count": 3,
+      "gz_transport13_vendor_build_report_sha256": "326340a1964ffacc243df8b24cc15ec24bea215185e39ff00a2797d1b55cad9a",
+      "install_file_count": 1278,
+      "install_symlink_report_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "manifest": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/final_runtime_closure_manifest.json",
+      "manifest_sha256": "1dcd205804a39865eab5ac155491e2bb6b3b4d92c5bd22b3841d0e5646d165fc",
+      "passed": true,
+      "perception_artifact_count": 7,
+      "ros_gz_image_debian_version": "1.0.22-1noble.20260615.145009",
+      "ros_gz_image_executable_sha256": "27900ce34bd1c9472e576ae77780b15093f422ed22ae1be3444d684428b70243",
+      "ros_gz_image_resolved_executable_path": "/opt/ros/jazzy/lib/ros_gz_image/image_bridge",
+      "ros_gz_image_ros_package_version": "1.0.22",
+      "ros_gz_image_system_runtime_bound": true,
+      "runtime_install_root": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/install",
+      "runtime_package_count": 16,
+      "side_brush_expanded_sdf_sha256": "c962635d80df67854c9051d39040d153bc743bd2cd656b724f0377de788f6719",
+      "side_brush_installed_xacro": "/mnt/f/Project/TZcup-integrated-functional-acceptance/.work/final_frozen_runtime_r40_timeout_boundary_20260831_231231/install/share/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+      "side_brush_installed_xacro_sha256": "ecff827bea7c940a0ab69f29be7b1252ad8508c24afd7b921dcb57d6904304b0",
+      "side_brush_surface_audit_sha256": "19bb850e2022aef51cee090f2c2e1c15145ebc8e70e194e5d334491f360ef02d",
+      "source_file_count": 1266,
+      "source_install_binding_count": 429,
+      "status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED",
+      "symbolic_link_count": 0,
+      "typed_cleaning_telemetry_source_count": 8,
+      "typed_cleaning_telemetry_source_sha256": "d48924d3a52f566b2c4cdd6497ecfc7b108fa5e3f3580ced683e1c5f1fcb2730",
+      "windows_cold_start_evidence_bound": true,
+      "windows_cold_start_evidence_sha256": "058a1e95b7d183951ff767056e455fd83d3afdd93a430b5d7171bdb80de3530b"
+    },
+    "schema_version": 1,
+    "status": "FORMAL_RUNTIME_GATE_BOUND",
+    "verified_epoch_ns": 1788192381820900378
+  },
+  "runtime_sensor_contract": {
+    "dimension_errors": {
+      "/sensors/front_rgbd/depth/image_rect_raw/depth_image": {
+        "expected": [
+          848,
+          480
+        ],
+        "observed": [
+          null,
+          null
+        ]
+      },
+      "/sensors/front_rgbd/depth/image_rect_raw/image": {
+        "expected": [
+          848,
+          480
+        ],
+        "observed": [
+          null,
+          null
+        ]
+      },
+      "/sensors/front_rgbd/infra1/image_rect_raw": {
+        "expected": [
+          848,
+          480
+        ],
+        "observed": [
+          null,
+          null
+        ]
+      },
+      "/sensors/front_rgbd/infra2/image_rect_raw": {
+        "expected": [
+          848,
+          480
+        ],
+        "observed": [
+          null,
+          null
+        ]
+      },
+      "/sensors/rear_left_fisheye/image_raw": {
+        "expected": [
+          1920,
+          1080
+        ],
+        "observed": [
+          null,
+          null
+        ]
+      },
+      "/sensors/rear_right_fisheye/image_raw": {
+        "expected": [
+          1920,
+          1080
+        ],
+        "observed": [
+          null,
+          null
+        ]
+      },
+      "/sensors/wrist_rgbd/depth/image_rect_raw/depth_image": {
+        "expected": [
+          848,
+          480
+        ],
+        "observed": [
+          null,
+          null
+        ]
+      },
+      "/sensors/wrist_rgbd/depth/image_rect_raw/image": {
+        "expected": [
+          848,
+          480
+        ],
+        "observed": [
+          null,
+          null
+        ]
+      },
+      "/sensors/wrist_rgbd/infra1/image_rect_raw": {
+        "expected": [
+          848,
+          480
+        ],
+        "observed": [
+          null,
+          null
+        ]
+      },
+      "/sensors/wrist_rgbd/infra2/image_rect_raw": {
+        "expected": [
+          848,
+          480
+        ],
+        "observed": [
+          null,
+          null
+        ]
+      }
+    },
+    "formal_sensor_group_observation": {
+      "front_d435": {
+        "/sensors/front_rgbd/depth/image_rect_raw/image": 0,
+        "/sensors/front_rgbd/infra1/image_rect_raw": 0,
+        "/sensors/front_rgbd/infra2/image_rect_raw": 0
+      },
+      "imu": {
+        "/sensors/imu/data": 3
+      },
+      "mid360_3d_lidar": {
+        "/sensors/lidar_3d/points": 0
+      },
+      "rear_left_fisheye": {
+        "/sensors/rear_left_fisheye/image_raw": 0
+      },
+      "rear_right_fisheye": {
+        "/sensors/rear_right_fisheye/image_raw": 0
+      },
+      "utm30lx_2d_lidar": {
+        "/sensors/lidar_2d/scan": 0
+      },
+      "wrist_d435": {
+        "/sensors/wrist_rgbd/depth/image_rect_raw/image": 0,
+        "/sensors/wrist_rgbd/infra1/image_rect_raw": 0,
+        "/sensors/wrist_rgbd/infra2/image_rect_raw": 0
+      },
+      "zed_f9p_gnss": {
+        "/sensors/gnss/fix": 3
+      }
+    },
+    "frame_errors": {
+      "/sensors/front_rgbd/depth/image_rect_raw/depth_image": {
+        "expected": "front_rgbd_depth_optical_frame",
+        "observed": null
+      },
+      "/sensors/front_rgbd/depth/image_rect_raw/image": {
+        "expected": "front_rgbd_depth_optical_frame",
+        "observed": null
+      },
+      "/sensors/front_rgbd/infra1/image_rect_raw": {
+        "expected": "front_rgbd_infra1_optical_frame",
+        "observed": null
+      },
+      "/sensors/front_rgbd/infra2/image_rect_raw": {
+        "expected": "front_rgbd_infra2_optical_frame",
+        "observed": null
+      },
+      "/sensors/lidar_2d/scan": {
+        "expected": "lidar_2d_link",
+        "observed": null
+      },
+      "/sensors/lidar_3d/points": {
+        "expected": "lidar_3d_link",
+        "observed": null
+      },
+      "/sensors/rear_left_fisheye/image_raw": {
+        "expected": "rear_left_fisheye_optical_frame",
+        "observed": null
+      },
+      "/sensors/rear_right_fisheye/image_raw": {
+        "expected": "rear_right_fisheye_optical_frame",
+        "observed": null
+      },
+      "/sensors/wrist_rgbd/depth/image_rect_raw/depth_image": {
+        "expected": "wrist_rgbd_depth_optical_frame",
+        "observed": null
+      },
+      "/sensors/wrist_rgbd/depth/image_rect_raw/image": {
+        "expected": "wrist_rgbd_depth_optical_frame",
+        "observed": null
+      },
+      "/sensors/wrist_rgbd/infra1/image_rect_raw": {
+        "expected": "wrist_rgbd_infra1_optical_frame",
+        "observed": null
+      },
+      "/sensors/wrist_rgbd/infra2/image_rect_raw": {
+        "expected": "wrist_rgbd_infra2_optical_frame",
+        "observed": null
+      }
+    },
+    "frequency_errors": {
+      "/sensors/front_rgbd/depth/image_rect_raw/depth_image": {
+        "minimum_observed_hz": 15.0,
+        "nominal_hz": 30.0,
+        "observed_hz": null
+      },
+      "/sensors/front_rgbd/depth/image_rect_raw/image": {
+        "minimum_observed_hz": 15.0,
+        "nominal_hz": 30.0,
+        "observed_hz": null
+      },
+      "/sensors/front_rgbd/infra1/image_rect_raw": {
+        "minimum_observed_hz": 15.0,
+        "nominal_hz": 30.0,
+        "observed_hz": null
+      },
+      "/sensors/front_rgbd/infra2/image_rect_raw": {
+        "minimum_observed_hz": 15.0,
+        "nominal_hz": 30.0,
+        "observed_hz": null
+      },
+      "/sensors/lidar_2d/scan": {
+        "minimum_observed_hz": 20.0,
+        "nominal_hz": 40.0,
+        "observed_hz": null
+      },
+      "/sensors/lidar_3d/points": {
+        "minimum_observed_hz": 5.0,
+        "nominal_hz": 10.0,
+        "observed_hz": null
+      },
+      "/sensors/rear_left_fisheye/image_raw": {
+        "minimum_observed_hz": 15.0,
+        "nominal_hz": 30.0,
+        "observed_hz": null
+      },
+      "/sensors/rear_right_fisheye/image_raw": {
+        "minimum_observed_hz": 15.0,
+        "nominal_hz": 30.0,
+        "observed_hz": null
+      },
+      "/sensors/wrist_rgbd/depth/image_rect_raw/depth_image": {
+        "minimum_observed_hz": 15.0,
+        "nominal_hz": 30.0,
+        "observed_hz": null
+      },
+      "/sensors/wrist_rgbd/depth/image_rect_raw/image": {
+        "minimum_observed_hz": 15.0,
+        "nominal_hz": 30.0,
+        "observed_hz": null
+      },
+      "/sensors/wrist_rgbd/infra1/image_rect_raw": {
+        "minimum_observed_hz": 15.0,
+        "nominal_hz": 30.0,
+        "observed_hz": null
+      },
+      "/sensors/wrist_rgbd/infra2/image_rect_raw": {
+        "minimum_observed_hz": 15.0,
+        "nominal_hz": 30.0,
+        "observed_hz": null
+      }
+    },
+    "missing_topics": [
+      "/sensors/front_rgbd/depth/image_rect_raw/depth_image",
+      "/sensors/front_rgbd/depth/image_rect_raw/image",
+      "/sensors/front_rgbd/infra1/image_rect_raw",
+      "/sensors/front_rgbd/infra2/image_rect_raw",
+      "/sensors/lidar_2d/scan",
+      "/sensors/lidar_3d/points",
+      "/sensors/rear_left_fisheye/image_raw",
+      "/sensors/rear_right_fisheye/image_raw",
+      "/sensors/wrist_rgbd/depth/image_rect_raw/depth_image",
+      "/sensors/wrist_rgbd/depth/image_rect_raw/image",
+      "/sensors/wrist_rgbd/infra1/image_rect_raw",
+      "/sensors/wrist_rgbd/infra2/image_rect_raw"
+    ],
+    "passed": false,
+    "passed_checks": {
+      "a300_four_wheel_encoder_feedback_structured_and_finite": true,
+      "all_eight_formal_sensor_groups_observed": false,
+      "all_image_and_camera_info_dimensions_exact": false,
+      "all_required_streams_observed": false,
+      "all_sensor_frames_exact": false,
+      "gnss_runtime_measurement_finite": true,
+      "imu_runtime_measurement_finite": true,
+      "mid360_runtime_pointcloud_nonempty": false,
+      "raw_plant_odometry_frames_correct": true,
+      "runtime_source_timestamp_rates_at_least_half_nominal": false,
+      "utm30lx_runtime_range_and_270deg_scan_exact": false
+    }
+  },
+  "sample_counts": {
+    "/formal_vehicle/encoders/a300/counts": 3,
+    "/formal_vehicle/encoders/a300/joint_states": 3,
+    "/odom/unfiltered": 3,
+    "/sensors/front_rgbd/depth/image_rect_raw/camera_info": 3,
+    "/sensors/front_rgbd/depth/image_rect_raw/depth_image": 0,
+    "/sensors/front_rgbd/depth/image_rect_raw/image": 0,
+    "/sensors/front_rgbd/infra1/image_rect_raw": 0,
+    "/sensors/front_rgbd/infra1/image_rect_raw/camera_info": 3,
+    "/sensors/front_rgbd/infra2/image_rect_raw": 0,
+    "/sensors/front_rgbd/infra2/image_rect_raw/camera_info": 3,
+    "/sensors/gnss/fix": 3,
+    "/sensors/imu/data": 3,
+    "/sensors/lidar_2d/scan": 0,
+    "/sensors/lidar_3d/points": 0,
+    "/sensors/rear_left_fisheye/camera_info": 3,
+    "/sensors/rear_left_fisheye/image_raw": 0,
+    "/sensors/rear_right_fisheye/camera_info": 3,
+    "/sensors/rear_right_fisheye/image_raw": 0,
+    "/sensors/wrist_rgbd/depth/image_rect_raw/camera_info": 3,
+    "/sensors/wrist_rgbd/depth/image_rect_raw/depth_image": 0,
+    "/sensors/wrist_rgbd/depth/image_rect_raw/image": 0,
+    "/sensors/wrist_rgbd/infra1/image_rect_raw": 0,
+    "/sensors/wrist_rgbd/infra1/image_rect_raw/camera_info": 3,
+    "/sensors/wrist_rgbd/infra2/image_rect_raw": 0,
+    "/sensors/wrist_rgbd/infra2/image_rect_raw/camera_info": 3
+  },
+  "session_bound": true,
+  "status": "FORMAL_GAZEBO_CONTROL_AND_SENSOR_RUNTIME_BLOCKED"
 }

@@ -1,0 +1,224 @@
+schema_version: 1
+contract_id: formal_dosod_edgesam_perception_v1
+hardware_identity:
+  board: RDK S100P
+  soc: Journey 6P
+  same_project_platform: true
+  board_first_execution: true
+  pc_is_not_a_board_deployment_prerequisite: true
+claim_boundary:
+  production_control_truth_allowed: false
+  evaluator_topics_allowed: false
+  legacy_stage5_model_eligible: false
+  note: >-
+    This is an executable integration and readiness contract. It does not
+    bundle weights, provide an inference implementation, or claim PC/S100P
+    acceptance.
+
+sensor_inputs:
+  front_rgbd:
+    role: primary_discovery_and_map_projection
+    rgb_topic: /sensors/front_rgbd/depth/image_rect_raw/image
+    depth_topic: /sensors/front_rgbd/depth/image_rect_raw/depth_image
+    camera_info_topic: /sensors/front_rgbd/depth/image_rect_raw/camera_info
+    optical_frame: front_rgbd_depth_optical_frame
+  wrist_rgbd:
+    role: near_field_grasp_confirmation_only
+    rgb_topic: /sensors/wrist_rgbd/depth/image_rect_raw/image
+    depth_topic: /sensors/wrist_rgbd/depth/image_rect_raw/depth_image
+    camera_info_topic: /sensors/wrist_rgbd/depth/image_rect_raw/camera_info
+    optical_frame: wrist_rgbd_depth_optical_frame
+  rear_left_fisheye:
+    role: rear_situational_2d_detection_only
+    rgb_topic: /sensors/rear_left_fisheye/image_raw
+    camera_info_topic: /sensors/rear_left_fisheye/camera_info
+    optical_frame: rear_left_fisheye_optical_frame
+  rear_right_fisheye:
+    role: rear_situational_2d_detection_only
+    rgb_topic: /sensors/rear_right_fisheye/image_raw
+    camera_info_topic: /sensors/rear_right_fisheye/camera_info
+    optical_frame: rear_right_fisheye_optical_frame
+
+camera_schedule:
+  front_rgbd: {mode: continuous_primary, target_rate_hz: 2.0}
+  wrist_rgbd: {mode: grasp_state_triggered, target_rate_hz: 2.0}
+  rear_left_fisheye: {mode: round_robin_situational, target_rate_hz: 1.0}
+  rear_right_fisheye: {mode: round_robin_situational, target_rate_hz: 1.0}
+  note: >-
+    These are initial compute budgets, not measured PC/S100 throughput. Lidar
+    collision avoidance remains independent of visual semantic scheduling.
+
+inference_graph:
+  discrete_litter:
+    classes: [litter_cube]
+    stages: [dosod_box, edgesam_box_prompt_mask, rgbd_geometry, map_projection]
+    physical_contract: random_colour_0.03_m_cube_material_class_not_visually_observable
+    material_class_inference_allowed: false
+  ground_dirt:
+    classes: [fallen_leaves, dust_or_soil, puddle]
+    stages: [dosod_region_box, edgesam_box_prompt_mask, rgbd_ground_projection]
+    edge_sam_discovery_claim: false
+    note: EdgeSAM is box-prompted and cannot independently discover dirty regions.
+  frozen_prompt_vocabulary:
+    litter_cube: [small litter cube, trash cube, piece of litter]
+    fallen_leaves: [fallen leaves, leaf pile]
+    dust_or_soil: [dust patch, soil patch, dirty ground]
+    puddle: [puddle, wet patch, standing water]
+    note: >-
+      DOSOD text embeddings and reparameterized weights must be regenerated
+      from this project vocabulary. The upstream COCO-80 example is runtime
+      reference evidence only and is not a formal project artifact.
+
+product_outputs:
+  detections_2d: /perception/garbage/detections_2d
+  masks: /perception/ground_dirt/masks
+  unified_targets: /perception/garbage/targets
+  wrist_grasp_recheck: /perception/wrist/grasp_recheck
+  diagnostics: /perception/open_vocab/diagnostics
+  detector_boxes_for_edgesam: /perception/open_vocab/dosod_boxes
+product_output_types:
+  /perception/garbage/detections_2d: vision_msgs/msg/Detection2DArray
+  /perception/ground_dirt/masks: sensor_msgs/msg/Image
+  /perception/garbage/targets: sanitation_perception_interfaces/msg/GarbageTargetArray
+  /perception/wrist/grasp_recheck: std_msgs/msg/String
+  /perception/open_vocab/diagnostics: diagnostic_msgs/msg/DiagnosticArray
+  /perception/open_vocab/dosod_boxes: vision_msgs/msg/Detection2DArray
+ground_dirt_mask_semantics:
+  frame_id: map
+  encodings: [mono8, 8UC1]
+  dimensions: exact_public_occupancy_grid
+  row_order: occupancy_grid_row_major_from_map_origin
+  values:
+    0: unobserved
+    1: observed_clean
+    2_to_255: dirty_confidence
+  fail_closed_note: >-
+    A raw camera-frame EdgeSAM mask is not a product planning observation. The
+    PC/S100 adapter must combine RGB-D geometry and public-map projection and
+    emit this trinary raster; otherwise the active-cleaning bridge rejects it.
+
+s100_internal_contract:
+  detector_package: hobot_dosod
+  detector_output_type: ai_msgs/msg/PerceptionTargets
+  segmenter_package: mono_edgesam
+  segmenter_input_type: ai_msgs/msg/PerceptionTargets
+  image_transport: sensor_msgs/msg/Image_non_shared_memory_first
+  product_adapter_required: true
+
+s100p_board_first_contract:
+  execution_target: real_connected_rdk_s100p
+  pc_is_not_a_deployment_prerequisite: true
+  board_evidence_required_before_deployment_claim: true
+  real_actuator_control_allowed: false
+  board_preflight_launch:
+    launch_file: formal_perception_preflight.launch.py
+    required_platform_argument: rdk_s100
+    preflight_only: true
+  note: >-
+    Board-first permits direct S100P package, BPU, ROS graph and telemetry
+    checks after source/session/snapshot freeze. It does not turn PC/Gazebo
+    evidence into board evidence and does not authorize real actuator commands.
+
+s100p_product_adapter_graph_contract:
+  status: blocked_until_project_artifacts_adapter_and_live_board_graph_exist
+  official_examples_are_linkage_evidence_only: true
+  selected_edgesam_variant: edgesam_512
+  required_nodes: [hobot_dosod, mono_edgesam, open_vocab_product_adapter]
+  required_internal_ai_msgs_edge:
+    from_node: hobot_dosod
+    to_node: mono_edgesam
+    message_type: ai_msgs/msg/PerceptionTargets
+  required_product_outputs:
+    - /perception/garbage/detections_2d
+    - /perception/ground_dirt/masks
+    - /perception/garbage/targets
+    - /perception/wrist/grasp_recheck
+    - /perception/open_vocab/diagnostics
+    - /perception/open_vocab/dosod_boxes
+  required_model_roles:
+    dosod_hbm: dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm
+    dosod_vocabulary: dosod/tzcup_offline_vocabulary.json
+    edgesam_encoder_hbm: edgesam/edgesam_encoder_512.hbm
+    edgesam_decoder_hbm: edgesam/edgesam_decoder_512.hbm
+  note: >-
+    All four project model roles are currently blocked. Existing upstream
+    DOSOD/mono_edgesam examples are source-linkage evidence only, not a project
+    adapter graph, project HBM artifact, model hash, inference telemetry or
+    S100P acceptance result.
+
+consumer_contracts:
+  discrete_target_consumer:
+    repository_relative_path: starter_ws/src/sanitation_spot_cleaning/sanitation_spot_cleaning/node.py
+    required_topic: /perception/garbage/targets
+  area_target_planner_consumer:
+    repository_relative_path: >-
+      starter_ws/src/sanitation_active_cleaning/sanitation_active_cleaning/formal_observation_bridge.py
+    required_topic: /perception/ground_dirt/masks
+
+platforms:
+  pc:
+    python_runtime:
+      formal_environment: ubuntu_24_04_ros_jazzy
+      minimum_inclusive: [3, 10]
+      maximum_exclusive: [3, 13]
+    status: project_pc_onnx_and_product_adapter_available_accuracy_not_accepted
+    product_adapter: pc_open_vocab_adapter
+    product_adapter_executable: pc_open_vocab_product_adapter
+    license_boundary:
+      dosod: GPL-3.0
+      edgesam: NTU-S-Lab-1.0_noncommercial_research_only
+      note: EdgeSAM cannot be carried into a commercial product without separate permission.
+    components:
+      dosod:
+        source_url: https://github.com/D-Robotics-AI-Lab/DOSOD
+        revision: c50129b5badf6ed7bb85e692ab493d8bdb58da6a
+        license: GPL-3.0
+        runtime_adapter: dosod_ros_adapter
+        artifacts:
+          - dosod/dosod_mlp3x_s_tzcup_rep.onnx
+          - dosod/tzcup_offline_vocabulary.json
+      edgesam:
+        source_url: https://github.com/chongzhou96/EdgeSAM
+        revision: d24d99671f41a9c0003061248bded64a481e9059
+        license: NTU-S-Lab-1.0
+        runtime_adapter: edgesam_ros_adapter
+        artifacts:
+          - edgesam/edge_sam_3x_encoder.onnx
+          - edgesam/edge_sam_3x_decoder.onnx
+  rdk_s100:
+    status: board_first_official_examples_link_only_project_integration_and_board_runtime_missing
+    components:
+      dosod:
+        source_url: https://github.com/D-Robotics/hobot_dosod
+        revision: c5b585204cd84585af1830b00da0c66c1383305e
+        license: Apache-2.0
+        runtime_adapter: hobot_dosod
+        runtime_executable: hobot_dosod
+        official_platform_support: rdk_s100
+        artifacts:
+          - dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm
+          - dosod/tzcup_offline_vocabulary.json
+        artifact_source_revisions:
+          dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm: c50129b5badf6ed7bb85e692ab493d8bdb58da6a
+          dosod/tzcup_offline_vocabulary.json: c50129b5badf6ed7bb85e692ab493d8bdb58da6a
+        upstream_coco80_reference_only:
+          artifact: config/s100/dosod_mlp3x_l_rep-int16.hbm
+          byte_size: 47567008
+          sha256: 46c50d559d8ec4d7a43b756743ed2ad02f5d8f39aa2b8b3021e449c4d320a6f4
+      edgesam:
+        source_url: https://github.com/D-Robotics/mono_edgesam
+        revision: a24b1cb29ad10cfd86802a3731cf26ba621a406a
+        license: Apache-2.0
+        runtime_adapter: mono_edgesam
+        runtime_executable: mono_edgesam
+        official_platform_support: rdk_s100
+        artifacts:
+          - edgesam/edgesam_encoder_512.hbm
+          - edgesam/edgesam_decoder_512.hbm
+        artifact_source_revisions:
+          edgesam/edgesam_encoder_512.hbm: d24d99671f41a9c0003061248bded64a481e9059
+          edgesam/edgesam_decoder_512.hbm: d24d99671f41a9c0003061248bded64a481e9059
+
+artifact_manifest:
+  relative_path: artifact_manifest.json
+  required_fields: [sha256, byte_size, source_revision, model_role]

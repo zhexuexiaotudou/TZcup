@@ -1,0 +1,188 @@
+schema_version: 1
+crosswalk_id: tzcup_formal_mechanical_interface_datums_v1
+status: STATIC_DERIVED_SNAPSHOT_BOUND_NOT_MANUFACTURING_RELEASE
+
+# This file is a nominal, zero-joint URDF crosswalk only.  It freezes neither
+# manufacturing dimensions nor a machining/drawing datum system.
+coordinate_contract:
+  root_frame: base_footprint
+  nominal_joint_configuration: zero
+  pose_encoding: urdf_origin_xyz_m_rpy_rad
+  static_position_tolerance_m: 0.001
+  static_orientation_tolerance_rad: 0.001
+  coordinate_semantics: >-
+    Poses are the existing expanded-URDF link frames expressed from
+    base_footprint. No independent datum-axis convention is introduced here.
+
+manufacturing_release:
+  released: false
+  status: NOT_A_MANUFACTURING_RELEASE
+  excluded_claims:
+    - manufacturing_tolerances
+    - bolt_torque_or_preload
+    - material_strength_or_fatigue
+    - machining_or_hole_pattern_release
+    - real_hardware_fit_or_service_clearance
+    - collision_or_cog_or_dynamic_contact_acceptance
+
+# The validator fails closed when any of these source bytes change.  These are
+# the exact files from which every pose/interface entry below was derived.
+source_snapshot:
+  algorithm: sha256
+  inputs:
+    - path: config/high_fidelity_vehicle/formal_vehicle_layout.yaml
+      sha256: 3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9
+      role: nominal_layout_frames
+    - path: config/high_fidelity_vehicle/formal_vehicle_component_register.yaml
+      sha256: 688b72f49b7bd06ba6adc3d080c190f04f613b76ed05cbb69bf7a55580cff61a
+      role: component_and_functional_interface_register
+    - path: reports/engineering/formal_competition_vehicle.urdf
+      sha256: 2b399eaba8de34fd55ca663a3b6b49437070c72969f5e22faf2a64a12ba27db8
+      role: expanded_zero_joint_urdf
+
+# Each id/link pair is unique.  A datum may be reused by several interface
+# chains but is declared only once, avoiding competing nominal coordinates.
+datum_catalog:
+  - datum_id: base_footprint_root
+    link: base_footprint
+    expected_root_pose: {xyz_m: [0.000000, 0.000000, 0.000000], rpy_rad: [0.000000, 0.000000, 0.000000]}
+    layout_installation_frame: base_footprint
+  - datum_id: chassis_top_plate
+    link: payload_deck_link
+    expected_root_pose: {xyz_m: [0.000000, 0.000000, 0.369100], rpy_rad: [0.000000, 0.000000, 0.000000]}
+    layout_installation_frame: payload_deck_link
+  - datum_id: arm_adapter_mount
+    link: arm_mount_link
+    expected_root_pose: {xyz_m: [0.100000, -0.200000, 0.434100], rpy_rad: [0.000000, 0.000000, 0.000000]}
+    layout_installation_frame: arm_mount_link
+  - datum_id: arm_base_mechanical
+    link: ur5e_base_link
+    expected_root_pose: {xyz_m: [0.100000, -0.200000, 0.479100], rpy_rad: [0.000000, 0.000000, 0.000000]}
+  - datum_id: arm_control_reference
+    link: ur5e_base_link_inertia
+    expected_root_pose: {xyz_m: [0.100000, -0.200000, 0.479100], rpy_rad: [0.000000, 0.000000, 3.141592654]}
+    functional_position: manipulation
+  - datum_id: sensor_tower_base
+    link: sensor_mast_link
+    expected_root_pose: {xyz_m: [0.420000, 0.000000, 0.389100], rpy_rad: [0.000000, 0.000000, 0.000000]}
+    layout_installation_frame: sensor_mast_link
+  - datum_id: cleaning_chassis_mount
+    link: cleaning_mechanism_mount_link
+    expected_root_pose: {xyz_m: [0.000000, 0.000000, 0.165100], rpy_rad: [0.000000, 0.000000, 0.000000]}
+  - datum_id: cleaning_head_zero
+    link: cleaning_lift_carriage_link
+    expected_root_pose: {xyz_m: [0.000000, 0.000000, 0.210100], rpy_rad: [0.000000, 0.000000, 0.000000]}
+    functional_position: cleaning_head_lift
+  - datum_id: cleaning_roller_axis
+    link: central_roller_link
+    expected_root_pose: {xyz_m: [0.155000, 0.000000, 0.200000], rpy_rad: [0.000000, 1.570796327, 0.000000]}
+    layout_installation_frame: central_roller_link
+    functional_position: main_sweeping
+  - datum_id: storage_shared_subframe
+    link: storage_system_mount_link
+    expected_root_pose: {xyz_m: [0.000000, 0.000000, 0.369100], rpy_rad: [0.000000, 0.000000, 0.000000]}
+  - datum_id: dry_bin_origin
+    link: dry_bin_link
+    expected_root_pose: {xyz_m: [-0.205000, 0.160000, 0.569100], rpy_rad: [0.000000, 0.000000, 0.000000]}
+    layout_installation_frame: dry_bin_link
+    functional_position: dry_storage
+  - datum_id: wastewater_tank_origin
+    link: wastewater_tank_link
+    expected_root_pose: {xyz_m: [-0.205000, -0.245000, 0.504100], rpy_rad: [0.000000, 0.000000, 0.000000]}
+    layout_installation_frame: wastewater_tank_link
+    functional_position: wet_storage
+  - datum_id: charge_housing_origin
+    link: charge_port_housing_link
+    expected_root_pose: {xyz_m: [0.250000, 0.402000, 0.495100], rpy_rad: [1.570796327, 0.000000, 0.000000]}
+    functional_position: charge_interface
+  - datum_id: charge_receptacle_endpoint
+    link: charge_receptacle_link
+    expected_root_pose: {xyz_m: [0.250000, 0.402000, 0.483100], rpy_rad: [1.570796327, 0.000000, 0.000000]}
+    functional_component: {owner_position: charge_interface, component_id: charge_receptacle}
+  - datum_id: wastewater_drain_valve_origin
+    link: wastewater_drain_valve_body_link
+    expected_root_pose: {xyz_m: [-0.490000, -0.305000, 0.480100], rpy_rad: [0.000000, 0.000000, 0.000000]}
+    functional_position: wastewater_drain
+  - datum_id: wastewater_drain_hose_endpoint
+    link: wastewater_drain_coupling_link
+    expected_root_pose: {xyz_m: [-0.555000, -0.305000, 0.480100], rpy_rad: [0.000000, 0.000000, 0.000000]}
+    functional_component: {owner_position: wastewater_drain, component_id: wastewater_hose_coupling}
+
+interface_crosswalk:
+  - interface_id: chassis_top_plate_to_arm_base
+    datum_chain: [chassis_top_plate, arm_adapter_mount, arm_base_mechanical, arm_control_reference]
+    mechanical_subassembly:
+      id: manipulator
+      expected: {parent_link: arm_mount_link, root_link: ur5e_base_link, controller: arm_controller, connection: reinforced_payload_deck_to_six_bolt_adapter}
+    functional_position:
+      id: manipulation
+      expected: {parent_link: arm_mount_link, link: ur5e_base_link_inertia, interface: arm_controller}
+    urdf_joints:
+      - {name: payload_deck_joint, parent_link: base_link, child_link: payload_deck_link}
+      - {name: arm_mount_joint, parent_link: payload_deck_link, child_link: arm_mount_link}
+      - {name: ur5e_mount_joint, parent_link: arm_mount_link, child_link: ur5e_base_link}
+      - {name: ur5e_base_link_inertia_joint, parent_link: ur5e_base_link, child_link: ur5e_base_link_inertia}
+  - interface_id: chassis_top_plate_to_sensor_tower
+    datum_chain: [chassis_top_plate, sensor_tower_base]
+    mechanical_subassembly:
+      id: sensor_tower
+      expected: {parent_link: payload_deck_link, root_link: sensor_mast_link, connection: 190x150x16_mm_bolted_base_twin_30x30_mm_columns_three_cross_ties_and_gussets}
+    urdf_joints:
+      - {name: sensor_mast_joint, parent_link: payload_deck_link, child_link: sensor_mast_link}
+  - interface_id: chassis_to_cleaning_head
+    datum_chain: [base_footprint_root, cleaning_chassis_mount, cleaning_head_zero, cleaning_roller_axis]
+    mechanical_subassembly:
+      id: cleaning_head_deployment
+      expected: {parent_link: cleaning_mechanism_mount_link, root_link: cleaning_lift_carriage_link, controller: cleaning_controller, actuator_link: cleaning_lift_actuator_body_link}
+    functional_position:
+      id: cleaning_head_lift
+      expected: {parent_link: cleaning_mechanism_mount_link, link: cleaning_lift_carriage_link, interface: cleaning_controller, zero_position: transport_safe_raised, work_position_m: 0.100}
+    urdf_joints:
+      - {name: cleaning_mechanism_mount_joint, parent_link: base_link, child_link: cleaning_mechanism_mount_link}
+      - {name: cleaning_lift_joint, parent_link: cleaning_mechanism_mount_link, child_link: cleaning_lift_carriage_link}
+      - {name: central_roller_joint, parent_link: central_roller_drive_gearbox_link, child_link: central_roller_link}
+  - interface_id: chassis_top_plate_to_dry_bin
+    datum_chain: [chassis_top_plate, storage_shared_subframe, dry_bin_origin]
+    mechanical_subassembly:
+      id: dry_storage
+      expected: {parent_link: storage_system_mount_link, root_link: dry_bin_link}
+    functional_position:
+      id: dry_storage
+      expected: {parent_link: storage_system_mount_link, link: dry_bin_link, actuation: passive_manual_latch}
+    urdf_joints:
+      - {name: storage_system_mount_joint, parent_link: payload_deck_link, child_link: storage_system_mount_link}
+      - {name: dry_bin_mount_joint, parent_link: storage_system_mount_link, child_link: dry_bin_link}
+  - interface_id: chassis_top_plate_to_wastewater_tank
+    datum_chain: [chassis_top_plate, storage_shared_subframe, wastewater_tank_origin]
+    mechanical_subassembly:
+      id: wastewater_storage
+      expected: {parent_link: storage_system_mount_link, root_link: wastewater_tank_link}
+    functional_position:
+      id: wet_storage
+      expected: {parent_link: storage_system_mount_link, link: wastewater_tank_link, actuation: passive_manual_latch, maintenance_drain_position: wastewater_drain}
+    urdf_joints:
+      - {name: storage_system_mount_joint, parent_link: payload_deck_link, child_link: storage_system_mount_link}
+      - {name: wastewater_tank_mount_joint, parent_link: storage_system_mount_link, child_link: wastewater_tank_link}
+  - interface_id: chassis_to_charge_receptacle
+    datum_chain: [base_footprint_root, charge_housing_origin, charge_receptacle_endpoint]
+    mechanical_subassembly:
+      id: exterior_service_and_contact_safety
+      expected: {parent_link: base_link, root_links_contains: charge_interface_datum_link}
+    functional_position:
+      id: charge_interface
+      expected: {parent_link: base_link, link: charge_port_housing_link, actuation: passive_service_interlock, required_topic_contracts_contains: charge_receptacle_contact}
+    urdf_joints:
+      - {name: charge_port_housing_joint, parent_link: base_link, child_link: charge_port_housing_link}
+      - {name: charge_receptacle_joint, parent_link: charge_port_housing_link, child_link: charge_receptacle_link}
+  - interface_id: wastewater_tank_to_drain_hose
+    datum_chain: [wastewater_tank_origin, wastewater_drain_valve_origin, wastewater_drain_hose_endpoint]
+    mechanical_subassembly:
+      id: exterior_service_and_contact_safety
+      expected: {parent_link: base_link, root_links_contains: wastewater_drain_datum_link}
+    functional_position:
+      id: wastewater_drain
+      expected: {parent_link: wastewater_tank_link, link: wastewater_drain_valve_body_link, interface: service_controller, actuator_link: wastewater_drain_valve_actuator_link, required_topic_contracts_contains: wastewater_drain_hose_contact}
+    urdf_joints:
+      - {name: wastewater_drain_pipe_joint, parent_link: wastewater_tank_link, child_link: wastewater_drain_pipe_link}
+      - {name: wastewater_drain_valve_body_joint, parent_link: wastewater_drain_pipe_link, child_link: wastewater_drain_valve_body_link}
+      - {name: wastewater_drain_coupling_joint, parent_link: wastewater_drain_valve_body_link, child_link: wastewater_drain_coupling_link}

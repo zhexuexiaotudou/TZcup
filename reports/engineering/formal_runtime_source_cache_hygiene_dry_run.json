@@ -1,0 +1,460 @@
+﻿{
+    "schema_version":  1,
+    "generated_at_utc":  "2026-08-31T11:16:40.6959749Z",
+    "status":  "FORMAL_RUNTIME_SOURCE_CACHE_HYGIENE_DRY_RUN_READY",
+    "mode":  "dry_run",
+    "execute_requested":  false,
+    "fixed_repository_root":  "F:\\Project\\TZcup-integrated-functional-acceptance",
+    "fixed_source_root":  "F:\\Project\\TZcup-integrated-functional-acceptance\\starter_ws\\src",
+    "deletion_scope":  {
+                           "allowed_directory_names":  [
+                                                           "__pycache__",
+                                                           ".pytest_cache"
+                                                       ],
+                           "allowed_file_rule":  "orphan .pyc outside __pycache__",
+                           "reparse_points_refused":  true,
+                           "tracked_paths_refused":  true,
+                           "out_of_root_paths_refused":  true
+                       },
+    "candidate_count":  85,
+    "planned_deletions":  [
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_active_cleaning/__pycache__",
+                                  "size_bytes":  1959
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_campus_scenario/__pycache__",
+                                  "size_bytes":  1303
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_coverage/__pycache__",
+                                  "size_bytes":  1298
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_dataset/__pycache__",
+                                  "size_bytes":  1102
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_debug_visualization/__pycache__",
+                                  "size_bytes":  1341
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_formal_campus_integration/__pycache__",
+                                  "size_bytes":  1933
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_gazebo_visualization/__pycache__",
+                                  "size_bytes":  1027
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_gnss_sim/__pycache__",
+                                  "size_bytes":  1272
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_ground_truth/__pycache__",
+                                  "size_bytes":  1154
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_hmi/__pycache__",
+                                  "size_bytes":  1263
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_learning/__pycache__",
+                                  "size_bytes":  2226
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_localization/__pycache__",
+                                  "size_bytes":  1220
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_manipulation/.pytest_cache",
+                                  "size_bytes":  1896
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_manipulation/__pycache__",
+                                  "size_bytes":  1711
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_perception/.pytest_cache",
+                                  "size_bytes":  1776
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_perception/__pycache__",
+                                  "size_bytes":  1739
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_power_system/__pycache__",
+                                  "size_bytes":  1113
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_product_demo_integration/__pycache__",
+                                  "size_bytes":  1183
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_research_demo/__pycache__",
+                                  "size_bytes":  976
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_safety/__pycache__",
+                                  "size_bytes":  1259
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_service_acceptance/__pycache__",
+                                  "size_bytes":  1301
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_spot_cleaning/__pycache__",
+                                  "size_bytes":  1402
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_tasks/__pycache__",
+                                  "size_bytes":  2816
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_active_cleaning/launch/__pycache__",
+                                  "size_bytes":  2876
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_active_cleaning/sanitation_active_cleaning/__pycache__",
+                                  "size_bytes":  536670
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_active_cleaning/test/__pycache__",
+                                  "size_bytes":  149071
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_bringup/launch/__pycache__",
+                                  "size_bytes":  27254
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_campus_scenario/sanitation_campus_scenario/__pycache__",
+                                  "size_bytes":  155172
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_campus_scenario/test/__pycache__",
+                                  "size_bytes":  132997
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_coverage/launch/__pycache__",
+                                  "size_bytes":  1773
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_coverage/sanitation_coverage/__pycache__",
+                                  "size_bytes":  219756
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_coverage/test/__pycache__",
+                                  "size_bytes":  40503
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_dataset/sanitation_dataset/__pycache__",
+                                  "size_bytes":  35736
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_dataset/test/__pycache__",
+                                  "size_bytes":  2607
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_debug_visualization/launch/__pycache__",
+                                  "size_bytes":  3629
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_debug_visualization/sanitation_debug_visualization/__pycache__",
+                                  "size_bytes":  34815
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_debug_visualization/test/__pycache__",
+                                  "size_bytes":  9437
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_formal_campus_integration/launch/__pycache__",
+                                  "size_bytes":  29908
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_formal_campus_integration/sanitation_formal_campus_integration/__pycache__",
+                                  "size_bytes":  205470
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_formal_campus_integration/test/__pycache__",
+                                  "size_bytes":  89201
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_gazebo_control/scripts/__pycache__",
+                                  "size_bytes":  10754
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_gazebo_visualization/sanitation_gazebo_visualization/__pycache__",
+                                  "size_bytes":  63412
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_gazebo_visualization/test/__pycache__",
+                                  "size_bytes":  2221
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_gnss_sim/launch/__pycache__",
+                                  "size_bytes":  1307
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_gnss_sim/sanitation_gnss_sim/__pycache__",
+                                  "size_bytes":  17824
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_gnss_sim/test/__pycache__",
+                                  "size_bytes":  5623
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_ground_truth/sanitation_ground_truth/__pycache__",
+                                  "size_bytes":  15155
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_ground_truth/test/__pycache__",
+                                  "size_bytes":  905
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_hmi/launch/__pycache__",
+                                  "size_bytes":  4522
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_hmi/sanitation_hmi/__pycache__",
+                                  "size_bytes":  115906
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_hmi/test/__pycache__",
+                                  "size_bytes":  21840
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_learning/sanitation_learning/__pycache__",
+                                  "size_bytes":  415670
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_learning/test/__pycache__",
+                                  "size_bytes":  47999
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_localization/launch/__pycache__",
+                                  "size_bytes":  2250
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_localization/sanitation_localization/__pycache__",
+                                  "size_bytes":  16587
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_localization/test/__pycache__",
+                                  "size_bytes":  26019
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_manipulation/launch/__pycache__",
+                                  "size_bytes":  19181
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_manipulation/sanitation_manipulation/__pycache__",
+                                  "size_bytes":  204997
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_manipulation/test/__pycache__",
+                                  "size_bytes":  105919
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_navigation/launch/__pycache__",
+                                  "size_bytes":  9042
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_navigation/scripts/__pycache__",
+                                  "size_bytes":  14510
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_perception/launch/__pycache__",
+                                  "size_bytes":  11448
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_perception/sanitation_perception/__pycache__",
+                                  "size_bytes":  378285
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_perception/test/__pycache__",
+                                  "size_bytes":  202578
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_power_system/sanitation_power_system/__pycache__",
+                                  "size_bytes":  41567
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_power_system/test/__pycache__",
+                                  "size_bytes":  13999
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_product_demo_integration/launch/__pycache__",
+                                  "size_bytes":  5475
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_product_demo_integration/sanitation_product_demo_integration/__pycache__",
+                                  "size_bytes":  7373
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_product_demo_integration/test/__pycache__",
+                                  "size_bytes":  3855
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_research_demo/sanitation_research_demo/__pycache__",
+                                  "size_bytes":  21055
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_research_demo/test/__pycache__",
+                                  "size_bytes":  3150
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_safety/sanitation_safety/__pycache__",
+                                  "size_bytes":  161067
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_safety/test/__pycache__",
+                                  "size_bytes":  111657
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_scan_refiner/launch/__pycache__",
+                                  "size_bytes":  2246
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_service_acceptance/launch/__pycache__",
+                                  "size_bytes":  3489
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_service_acceptance/sanitation_service_acceptance/__pycache__",
+                                  "size_bytes":  30802
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_service_acceptance/test/__pycache__",
+                                  "size_bytes":  6732
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_spot_cleaning/sanitation_spot_cleaning/__pycache__",
+                                  "size_bytes":  184844
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_spot_cleaning/test/__pycache__",
+                                  "size_bytes":  47825
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_tasks/sanitation_tasks/__pycache__",
+                                  "size_bytes":  338124
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_tasks/test/__pycache__",
+                                  "size_bytes":  35940
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_vehicle_description/launch/__pycache__",
+                                  "size_bytes":  34135
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_vehicle_description/scripts/__pycache__",
+                                  "size_bytes":  26139
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_vehicle_description/cad/formal_vehicle/__pycache__",
+                                  "size_bytes":  107235
+                              },
+                              {
+                                  "kind":  "cache_directory",
+                                  "relative_path":  "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/__pycache__",
+                                  "size_bytes":  220491
+                              }
+                          ],
+    "git_tracked_check":  {
+                              "completed":  true,
+                              "tracked_conflicts":  [
+
+                                                    ]
+                          },
+    "deleted_manifest":  [
+
+                         ],
+    "deletion_performed":  false,
+    "errors":  [
+
+               ]
+}

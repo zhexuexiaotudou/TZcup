@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>sanitation_product_demo_integration</name>
+  <version>0.1.0</version>
+  <description>Top-level product demo integration for perception, active planning, manipulation, safety, Nav2, and the formal vehicle.</description>
+  <maintainer email="team@example.com">Sanitation Vehicle Team</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>sanitation_active_cleaning</exec_depend>
+  <exec_depend>sanitation_formal_campus_integration</exec_depend>
+  <exec_depend>sanitation_manipulation</exec_depend>
+  <exec_depend>sanitation_perception</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export><build_type>ament_python</build_type></export>
+</package>

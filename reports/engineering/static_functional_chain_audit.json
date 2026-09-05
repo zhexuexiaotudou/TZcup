@@ -1,0 +1,664 @@
+{
+  "report_id": "tzcup_formal_vehicle_static_functional_chain_audit_v1",
+  "audit_mode": "static_source_only",
+  "execution_prohibited": [
+    "WSL",
+    "Gazebo",
+    "Docker",
+    "ROS runtime",
+    "data collection"
+  ],
+  "status": "STATIC_CLOSED",
+  "status_scope": "core_13_item_legacy_static_functional_chain_only",
+  "items": [
+    {
+      "id": "mobility_forward_and_brake",
+      "requirement": "A ROS velocity command reaches all four wheel effort joints and zero/E-stop has a physical stop path.",
+      "status": "STATIC_CLOSED",
+      "checks": [
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+            "line": 71,
+            "token": "filename=\"libA300DrivetrainPlantSystem.so\""
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+            "line": 77,
+            "token": "<command_topic>"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantSystem.cc",
+            "line": 250,
+            "token": "resistive_brake_active"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
+            "line": 135,
+            "token": "add_library(A300DrivetrainPlantSystem SHARED"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
+            "line": 296,
+            "token": "a300_drivetrain_bridge"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "scripts/formal_vehicle_mobility_metrics.py",
+            "line": 83,
+            "token": "vehicle_stopped_after_zero_command"
+          }
+        }
+      ],
+      "blocked_reason": null,
+      "physical_semantics": "Four physical wheel joints receive the effort-plant command; braking is an explicit plant state rather than a controller-only label.",
+      "placeholder_indicators": []
+    },
+    {
+      "id": "six_axis_arm_and_gripper",
+      "requirement": "Six commanded UR5e joints and one physical Robotiq actuator are controller-backed and launched with the cube scenario.",
+      "status": "STATIC_CLOSED",
+      "checks": [
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/control_interfaces.xacro",
+            "line": 63,
+            "token": "shoulder_pan_joint"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml",
+            "line": 8,
+            "token": "gripper_controller:"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+            "line": 94,
+            "token": "libGripperMimicEffortSystem.so"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
+            "line": 149,
+            "token": "add_library(GripperMimicEffortSystem SHARED"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_manipulation/launch/formal_cube_pick_place.launch.py",
+            "line": 32,
+            "token": "formal_cube_manipulation"
+          }
+        }
+      ],
+      "blocked_reason": null,
+      "physical_semantics": "Six arm position interfaces plus one gripper actuator drive named URDF joints; the passive finger linkage has a dedicated Gazebo effort system.",
+      "placeholder_indicators": []
+    },
+    {
+      "id": "cube_pick_and_rear_dry_bin_containment",
+      "requirement": "A material-specific 30 mm rigid cube launch and finger/deposition/floor contact bridges reach the physical dry-bin monitor.",
+      "status": "STATIC_CLOSED",
+      "checks": [
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_manipulation/urdf/material_cube.urdf.xacro",
+            "line": 7,
+            "token": "name=\"edge\" value=\"0.030\""
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_manipulation/launch/formal_cube_pick_place.launch.py",
+            "line": 80,
+            "token": "dry_deposit_contact"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/storage_system.xacro",
+            "line": 102,
+            "token": "dry_bin_mount_joint"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_gazebo_control/src/DryBinMonitorSystem.cc",
+            "line": 286,
+            "token": "physical_contained_mass_kg"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
+            "line": 78,
+            "token": "add_library(DryBinMonitorSystem SHARED"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "scripts/run_formal_cube_pick_place_runtime.sh",
+            "line": 51,
+            "token": "validate_formal_cube_pick_place_runtime.py"
+          }
+        }
+      ],
+      "blocked_reason": null,
+      "physical_semantics": "The cube carries density-derived inertial mass and collision geometry; monitor evidence is tied to deposit and bin-floor contacts, not a symbolic counter.",
+      "placeholder_indicators": []
+    },
+    {
+      "id": "dry_garbage_increases_vehicle_mass",
+      "requirement": "A newly contained physical cube must remain an independent rigid body, transfer its load through the rear-bin contact path, and never also enter the aggregate dry inertia ledger.",
+      "status": "STATIC_CLOSED",
+      "checks": [
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_gazebo_control/src/DryBinMonitorSystem.cc",
+            "line": 287,
+            "token": "resident_rigid_body_mass_kg"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_gazebo_control/src/DynamicPayloadSystem.cc",
+            "line": 248,
+            "token": "dryAggregateInputRejected"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+            "line": 19,
+            "token": "dry_accounting_mode"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_manipulation/launch/formal_20_cube_pick_place.launch.py",
+            "line": 79,
+            "token": "dry_accounting_mode"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "config/high_fidelity_vehicle/dry_payload_accounting_contract.yaml",
+            "line": 27,
+            "token": "exactly_one_mode_required"
+          }
+        }
+      ],
+      "blocked_reason": null,
+      "physical_semantics": "Physical-resident dry payloads remain separate rigid bodies and the aggregate inertia path rejects a simultaneous dry-mass input.",
+      "placeholder_indicators": []
+    },
+    {
+      "id": "ground_dirt_coverage",
+      "requirement": "A lowered rotating brush sweeps a source-owned dirt grid and publishes a measurable coverage state through its dedicated runtime validator.",
+      "status": "STATIC_CLOSED",
+      "checks": [
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+            "line": 193,
+            "token": "libGroundDirtCleaningSystem.so"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_gazebo_control/src/GroundDirtCleaningSystem.cc",
+            "line": 149,
+            "token": "cleaned_fraction"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
+            "line": 108,
+            "token": "add_library(GroundDirtCleaningSystem SHARED"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "scripts/run_formal_ground_dirt_cleaning_runtime.sh",
+            "line": 65,
+            "token": "ground_dirt/status_json"
+          }
+        }
+      ],
+      "blocked_reason": null,
+      "physical_semantics": "Ground-dirt state is derived from the lowered, rotating side brushes and central roller rather than a controller command alone.",
+      "placeholder_indicators": []
+    },
+    {
+      "id": "brush_squeegee_water_to_wastewater_tank",
+      "requirement": "Side brushes, central roller, lift, compliant squeegee and pump joint states gate recoverable-water transfer into the wastewater tank mass ledger.",
+      "status": "STATIC_CLOSED",
+      "checks": [
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro",
+            "line": 219,
+            "token": "libWaterRecoverySystem.so"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_gazebo_control/src/WaterRecoverySystem.cc",
+            "line": 233,
+            "token": "PublishPayload"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/worlds/formal_vehicle_validation.sdf",
+            "line": 49,
+            "token": "formal_recoverable_water_patch"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_gazebo_control/src/DynamicPayloadSystem.cc",
+            "line": 143,
+            "token": "waterMassKg"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
+            "line": 64,
+            "token": "add_library(WaterRecoverySystem SHARED"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
+            "line": 766,
+            "token": "water_recovery/tank_mass_kg"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "scripts/run_formal_water_recovery_runtime.sh",
+            "line": 192,
+            "token": "validate_formal_water_recovery_runtime.py"
+          }
+        }
+      ],
+      "blocked_reason": null,
+      "physical_semantics": "The modeled water patch is gated by physical cleaning-joint state and publishes recovered tank mass into the composite payload path.",
+      "placeholder_indicators": []
+    },
+    {
+      "id": "sensor_single_line_lidar",
+      "requirement": "single_line_lidar has a concrete model definition and a declared transport/control observation path.",
+      "status": "STATIC_CLOSED",
+      "checks": [
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
+            "line": 198,
+            "token": "utm30lx"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
+            "line": 751,
+            "token": "/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan"
+          }
+        }
+      ],
+      "blocked_reason": null,
+      "physical_semantics": "A named Gazebo/URDF sensor or measured wheel-state interface is bound to a declared observation transport; this does not prove data is emitted at runtime.",
+      "placeholder_indicators": []
+    },
+    {
+      "id": "sensor_mid360",
+      "requirement": "mid360 has a concrete model definition and a declared transport/control observation path.",
+      "status": "STATIC_CLOSED",
+      "checks": [
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
+            "line": 253,
+            "token": "sensor name=\"mid360\""
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
+            "line": 31,
+            "token": "/sensors/lidar_3d/points"
+          }
+        }
+      ],
+      "blocked_reason": null,
+      "physical_semantics": "A named Gazebo/URDF sensor or measured wheel-state interface is bound to a declared observation transport; this does not prove data is emitted at runtime.",
+      "placeholder_indicators": []
+    },
+    {
+      "id": "sensor_front_rgbd",
+      "requirement": "front_rgbd has a concrete model definition and a declared transport/control observation path.",
+      "status": "STATIC_CLOSED",
+      "checks": [
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
+            "line": 281,
+            "token": "name=\"front_rgbd\""
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
+            "line": 41,
+            "token": "/sensors/front_rgbd/depth/image_rect_raw/image"
+          }
+        }
+      ],
+      "blocked_reason": null,
+      "physical_semantics": "A named Gazebo/URDF sensor or measured wheel-state interface is bound to a declared observation transport; this does not prove data is emitted at runtime.",
+      "placeholder_indicators": []
+    },
+    {
+      "id": "sensor_rear_fisheyes",
+      "requirement": "rear_fisheyes has a concrete model definition and a declared transport/control observation path.",
+      "status": "STATIC_CLOSED",
+      "checks": [
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
+            "line": 298,
+            "token": "rear_left_fisheye"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
+            "line": 212,
+            "token": "/sensors/rear_right_fisheye/image_raw"
+          }
+        }
+      ],
+      "blocked_reason": null,
+      "physical_semantics": "A named Gazebo/URDF sensor or measured wheel-state interface is bound to a declared observation transport; this does not prove data is emitted at runtime.",
+      "placeholder_indicators": []
+    },
+    {
+      "id": "sensor_end_effector_stereo",
+      "requirement": "end_effector_stereo has a concrete model definition and a declared transport/control observation path.",
+      "status": "STATIC_CLOSED",
+      "checks": [
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
+            "line": 291,
+            "token": "name=\"wrist_rgbd\""
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/config/formal_high_bandwidth_sensor_bridge.yaml",
+            "line": 181,
+            "token": "/sensors/wrist_rgbd/infra2/image_rect_raw"
+          }
+        }
+      ],
+      "blocked_reason": null,
+      "physical_semantics": "A named Gazebo/URDF sensor or measured wheel-state interface is bound to a declared observation transport; this does not prove data is emitted at runtime.",
+      "placeholder_indicators": []
+    },
+    {
+      "id": "sensor_gnss",
+      "requirement": "gnss has a concrete model definition and a declared transport/control observation path.",
+      "status": "STATIC_CLOSED",
+      "checks": [
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/sensor_suite.xacro",
+            "line": 380,
+            "token": "sensor name=\"zed_f9p\""
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
+            "line": 752,
+            "token": "/sensors/gnss/fix@sensor_msgs/msg/NavSatFix"
+          }
+        }
+      ],
+      "blocked_reason": null,
+      "physical_semantics": "A named Gazebo/URDF sensor or measured wheel-state interface is bound to a declared observation transport; this does not prove data is emitted at runtime.",
+      "placeholder_indicators": []
+    },
+    {
+      "id": "sensor_wheel_speed",
+      "requirement": "wheel_speed has a concrete model definition and a declared transport/control observation path.",
+      "status": "STATIC_CLOSED",
+      "checks": [
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/control_interfaces.xacro",
+            "line": 55,
+            "token": "front_left_wheel_joint"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantSystem.cc",
+            "line": 31,
+            "token": "JointVelocity"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
+            "line": 203,
+            "token": "joint_state_broadcaster"
+          }
+        }
+      ],
+      "blocked_reason": null,
+      "physical_semantics": "A named Gazebo/URDF sensor or measured wheel-state interface is bound to a declared observation transport; this does not prove data is emitted at runtime.",
+      "placeholder_indicators": []
+    }
+  ],
+  "blocked_items": [],
+  "required_item_count": 13,
+  "static_closed_count": 13,
+  "supplemental_items": [
+    {
+      "id": "s100p_installation_and_low_voltage_power",
+      "requirement": "S100P compute has a collision-bearing mount/enclosure and an explicitly declared isolated low-voltage power branch, without treating a provisional board envelope as completed hardware integration.",
+      "status": "BLOCKED",
+      "checks": [
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/a300_platform.xacro",
+            "line": 309,
+            "token": "name=\"s100_cabinet_roof_mount_joint\""
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/a300_platform.xacro",
+            "line": 339,
+            "token": "Explicit protected power path"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml",
+            "line": 107,
+            "token": "low_voltage_power_branch"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_perception/launch/formal_s100p_open_vocab.launch.py",
+            "line": 170,
+            "token": "open_vocab_product_adapter"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "config/high_fidelity_vehicle/s100p_mechanical_electrical_evidence.json",
+            "line": 4,
+            "token": "BLOCKED_MECHANICAL_ELECTRICAL_INTEGRATION"
+          }
+        }
+      ],
+      "blocked_reason": "The validated S100P mechanical/electrical evidence contract remains BLOCKED: board boundary/hole datums, mass/CoM, connector coordinates/keepouts, thermal airflow, J1 pinout/polarity, real harness/protection and installed power-on/runtime are unresolved. No static source can promote this to installed-and-powered hardware acceptance.",
+      "physical_semantics": "Mount plate, enclosure, collision volumes, PDU and isolated DC/DC are modeled; the board datum is an epsilon-mass provisional envelope, not measured S100P CAD or a verified electrical installation.",
+      "placeholder_indicators": [
+        "prior RDK S100 121 x 120 x 52.4 mm envelope only as a provisional collision placeholder",
+        "external_envelope_frozen_mass_thermal_connectors_and_live_board_pending"
+      ]
+    },
+    {
+      "id": "obstacle_avoidance_chain",
+      "requirement": "Navigation consumes UTM scan and MID-360 point cloud in costmaps/collision monitor and gates the resulting command before the drivetrain interface.",
+      "status": "STATIC_CLOSED",
+      "checks": [
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_navigation/config/nav2.yaml",
+            "line": 173,
+            "token": "observation_sources: scan mid360"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_navigation/launch/navigation.launch.py",
+            "line": 227,
+            "token": "package='nav2_collision_monitor'"
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "starter_ws/src/sanitation_safety/sanitation_safety/velocity_gate.py",
+            "line": 15,
+            "token": "\"/cmd_vel_gate\""
+          }
+        },
+        {
+          "passed": true,
+          "evidence": {
+            "path": "scripts/audit_formal_dynamic_obstacle_readiness.py",
+            "line": 183,
+            "token": "utm_and_mid360_feed_collision_monitor"
+          }
+        }
+      ],
+      "blocked_reason": null,
+      "physical_semantics": "The source-level path contains obstacle observations, collision-monitor command gating and emergency-stop gating; response timing, false negatives and collision-free motion remain runtime evidence.",
+      "placeholder_indicators": []
+    }
+  ],
+  "s100p_mechanical_electrical_evidence": {
+    "path": "config/high_fidelity_vehicle/s100p_mechanical_electrical_evidence.json",
+    "validator": "validate_s100p_mechanical_electrical_evidence.py",
+    "validator_complete": true,
+    "status": "BLOCKED_MECHANICAL_ELECTRICAL_INTEGRATION",
+    "acceptance": {
+      "urdf_update_authorized": false,
+      "mechanical_installation_accepted": false,
+      "electrical_installation_accepted": false,
+      "runtime_accepted": false
+    },
+    "blocked_gates": [
+      "exact_owned_board_dimensions_and_boundary",
+      "mounting_hole_pattern_and_datums",
+      "board_mass_and_center_of_mass",
+      "connector_coordinates_keepouts_and_cable_service_space",
+      "heatsink_fan_and_airflow_envelope",
+      "j1_pinout_polarity_and_real_harness",
+      "dc_dc_fuse_wire_gauge_grounding_and_transient_protection",
+      "enclosure_thermal_derating_and_temperature_measurement",
+      "installed_power_on_and_runtime_validation"
+    ],
+    "error": null
+  },
+  "supplemental_blocked_items": [
+    "s100p_installation_and_low_voltage_power"
+  ],
+  "expanded_required_item_count": 15,
+  "expanded_static_closed_count": 14,
+  "expanded_scope_status": "BLOCKED",
+  "expanded_scope_runtime_accepted": false,
+  "expanded_scope_boundary": "Expanded scope includes provisional S100P installation/power and static obstacle-avoidance topology; it remains source-only and never accepts runtime behavior.",
+  "runtime_accepted": false,
+  "fresh_gazebo_runtime_required": true,
+  "runtime_boundary": "STATIC_CLOSED proves source-level continuity only; every actuator, sensor and mass effect still requires fresh Gazebo runtime evidence."
+}

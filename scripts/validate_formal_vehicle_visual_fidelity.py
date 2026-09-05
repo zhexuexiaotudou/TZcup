@@ -5,11 +5,12 @@ from __future__ import annotations
 
 import argparse
 import xml.etree.ElementTree as ET
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE_ROOT = ROOT / "starter_ws" / "src" / "sanitation_vehicle_description"
+MESH_ROOT = (PACKAGE_ROOT / "meshes").resolve()
 DEFAULT_URDF = ROOT / "reports" / "engineering" / "formal_competition_vehicle.urdf"
 
 # These links define the recognisable vehicle rather than transparent payload
@@ -32,6 +33,7 @@ REQUIRED_MESH_LINKS = {
     "central_roller_link", "central_roller_guard_link", "squeegee_link", "suction_nozzle_link",
     "recovery_strainer_filter_link", "recovery_pump_motor_link", "recovery_pump_head_link",
     "storage_system_mount_link", "dry_bin_link", "dry_bin_lid_link",
+    "dry_deposit_gate_actuator_link", "dry_deposit_gate_actuator_horn_link",
     "wastewater_tank_link", "wastewater_lid_link", "dry_wet_storage_partition_link",
     "bodywork_lower_tub_link", "bodywork_front_cowl_link", "bodywork_rear_shell_link",
     "bodywork_power_service_door_link", "bodywork_compute_service_door_link",
@@ -53,7 +55,24 @@ def _resolve_mesh(filename: str) -> Path:
     prefix = "package://sanitation_vehicle_description/"
     if not filename.startswith(prefix):
         raise VisualFidelityError(f"mesh is not self-contained in the ROS package: {filename}")
-    return PACKAGE_ROOT / filename[len(prefix):]
+    relative_text = filename[len(prefix):]
+    relative = PurePosixPath(relative_text)
+    if (
+        "\\" in relative_text
+        or relative.is_absolute()
+        or any(part in {".", ".."} for part in relative.parts)
+    ):
+        raise VisualFidelityError(f"mesh URI is not canonical: {filename}")
+    path = (PACKAGE_ROOT / Path(*relative.parts)).resolve()
+    try:
+        path.relative_to(MESH_ROOT)
+    except ValueError as exc:
+        raise VisualFidelityError(
+            f"mesh escapes the package mesh root: {filename}"
+        ) from exc
+    if path.suffix.lower() not in {".dae", ".png", ".stl"}:
+        raise VisualFidelityError(f"unsupported mesh asset extension: {filename}")
+    return path
 
 
 def validate_visual_fidelity(urdf_path: Path = DEFAULT_URDF) -> dict[str, object]:

@@ -5,20 +5,42 @@
   <xacro:include filename="high_fidelity/sensor_suite.xacro"/>
   <xacro:include filename="high_fidelity/cleaning_mechanism.xacro"/>
   <xacro:include filename="high_fidelity/storage_system.xacro"/>
+  <xacro:include filename="high_fidelity/power_service_hardware.xacro"/>
   <xacro:include filename="high_fidelity/bodywork.xacro"/>
   <xacro:include filename="high_fidelity/control_interfaces.xacro"/>
 
   <xacro:arg name="use_sim" default="true"/>
+  <xacro:arg name="controller_config_path" default=""/>
   <xacro:arg name="dry_load_mass_kg" default="0.0"/>
+  <!-- Mutually exclusive dry-load ledgers.  Formal grasp scenes select
+       physical_resident: deposited cubes remain independent rigid bodies and
+       transfer their load through bin contact.  Legacy, non-physical bulk
+       scenarios must explicitly select aggregate before using dry_load_mass_kg. -->
+  <xacro:arg name="dry_accounting_mode" default="physical_resident"/>
   <xacro:arg name="wastewater_load_mass_kg" default="0.0"/>
   <xacro:arg name="bodywork_visible" default="true"/>
+  <xacro:arg name="high_bandwidth_sensor_runtime" default="true"/>
+  <xacro:arg name="service_acceptance_interfaces" default="false"/>
+  <xacro:arg name="initial_estop_latched" default="true"/>
+  <xacro:arg name="a300_drivetrain_plant_runtime" default="true"/>
+  <xacro:arg name="cleaning_realtime_telemetry_enabled" default="true"/>
+  <xacro:arg name="cleaning_status_json_enabled" default="true"/>
+  <xacro:arg name="cleaning_status_json_publish_rate_hz" default="20.0"/>
 
   <!-- The unloaded vehicle is the default. Load-state variants are generated
        by setting the two mass arguments; runtime collection accounting must
-       never exceed 1.512 kg dry and 9.7064 kg wastewater per episode. -->
+       never exceed 1.512 kg dry and 8.30 kg wastewater per episode.  The
+       wastewater limit is recomputed from the final expanded-URDF empty mass
+       so the combined payload remains below the 91.35 kg design limit. -->
   <xacro:hf_a300_platform/>
-  <xacro:hf_manipulator_stack parent="arm_mount_link"/>
-  <xacro:hf_sensor_suite mast_parent="sensor_mast_link" base_parent="base_link" wrist_parent="tool0"/>
+  <!-- In Gazebo, the project-owned compliant effort plugin is the only
+       physical authority for the five passive 2F-85 linkage joints.  Keep
+       URDF mimic metadata only in the non-simulation / planning description;
+       otherwise gz_ros2_control also creates mimic write paths and duplicates
+       that authority. -->
+  <xacro:hf_manipulator_stack parent="arm_mount_link" use_sim="$(arg use_sim)"/>
+  <xacro:hf_sensor_suite mast_parent="sensor_mast_link" base_parent="base_link" wrist_parent="tool0"
+                         high_bandwidth_runtime="$(arg high_bandwidth_sensor_runtime)"/>
   <xacro:high_fidelity_cleaning_mechanism parent="base_link" origin_xyz="0 0 0" origin_rpy="0 0 0"/>
   <xacro:high_fidelity_storage_system
       parent="payload_deck_link"
@@ -26,19 +48,201 @@
       origin_rpy="0 0 0"
       dry_load_mass_kg="$(arg dry_load_mass_kg)"
       wastewater_load_mass_kg="$(arg wastewater_load_mass_kg)"/>
+  <xacro:hf_power_and_service_hardware
+      base_parent="base_link"
+      tank_parent="wastewater_tank_link"
+      service_acceptance_interfaces="$(arg service_acceptance_interfaces)"/>
   <xacro:hf_product_bodywork parent="base_link" visible="$(arg bodywork_visible)"/>
   <xacro:hf_formal_ros2_control use_sim="$(arg use_sim)"/>
 
   <xacro:if value="$(arg use_sim)">
     <gazebo>
-      <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
-        <parameters>$(find sanitation_vehicle_description)/config/formal_vehicle_controllers.yaml</parameters>
+      <xacro:if value="${'$(arg controller_config_path)' != ''}">
+        <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+          <parameters>$(arg controller_config_path)</parameters>
+        </plugin>
+      </xacro:if>
+      <xacro:unless value="${'$(arg controller_config_path)' != ''}">
+        <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
+          <parameters>$(find sanitation_vehicle_description)/config/formal_vehicle_controllers.yaml</parameters>
+        </plugin>
+      </xacro:unless>
+      <xacro:if value="$(arg a300_drivetrain_plant_runtime)">
+        <plugin filename="libA300DrivetrainPlantSystem.so"
+                name="sanitation_gazebo_control::A300DrivetrainPlantSystem">
+        <wheel_joint_0>front_left_wheel_joint</wheel_joint_0>
+        <wheel_joint_1>front_right_wheel_joint</wheel_joint_1>
+        <wheel_joint_2>rear_left_wheel_joint</wheel_joint_2>
+        <wheel_joint_3>rear_right_wheel_joint</wheel_joint_3>
+        <command_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/cmd_vel</command_topic>
+        <actuator_enable_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/actuator_enable</actuator_enable_topic>
+        <emergency_stop_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/emergency_stop</emergency_stop_topic>
+        <motor_fault_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/motor_fault</motor_fault_topic>
+        <bus_voltage_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/bus_voltage_v</bus_voltage_topic>
+        <status_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/status</status_topic>
+        <odometry_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/odom</odometry_topic>
+        <odometry_frame_id>odom</odometry_frame_id>
+        <odometry_child_frame_id>base_footprint</odometry_child_frame_id>
+        </plugin>
+      </xacro:if>
+      <!-- DART intentionally backs the stable whole-vehicle runtime, but it
+           does not implement SDF mimic constraints.  Keep the public Robotiq
+           controller on the single real actuator joint and reproduce the
+           five passive mechanical linkages with bounded compliant efforts.
+           The follower joints have no ros2_control command interfaces, so
+           this plugin remains their sole effort writer. -->
+      <plugin filename="libGripperMimicEffortSystem.so"
+              name="sanitation_gazebo_control::GripperMimicEffortSystem">
+        <master_joint>robotiq_85_left_knuckle_joint</master_joint>
+        <position_gain_nm_rad>4.0</position_gain_nm_rad>
+        <velocity_gain_nm_s_rad>0.03</velocity_gain_nm_s_rad>
+        <maximum_effort_nm>12.0</maximum_effort_nm>
       </plugin>
+      <!-- Sole physical auxiliary system: the named 6 mm plunger is both
+           animated and measured here; its fail-closed latch is bridged
+           one-way to the unique ROS /emergency_stop state topic. -->
+      <plugin filename="libFormalAuxiliaryVisualSystem.so"
+              name="sanitation_gazebo_auxiliary::FormalAuxiliaryVisualSystem">
+        <warning_frequency_hz>1.0</warning_frequency_hz>
+        <warning_duty_cycle>0.5</warning_duty_cycle>
+        <!-- Gazebo Harmonic's Sensors RenderUtil records entity 0 for the
+             helper visual of dynamically commanded lights, flooding the
+             renderer.  Keep product lamp geometry and dynamic emissive state
+             active; defer scene-illuminance LightCmd until upstream fixes it. -->
+        <enable_photometric_lights>false</enable_photometric_lights>
+        <work_light_intensity>1.8</work_light_intensity>
+        <work_light_range_m>12.0</work_light_range_m>
+        <work_spot_inner_angle_rad>0.34</work_spot_inner_angle_rad>
+        <work_spot_outer_angle_rad>0.62</work_spot_outer_angle_rad>
+        <warning_light_intensity>0.55</warning_light_intensity>
+        <warning_light_range_m>2.5</warning_light_range_m>
+        <tail_light_intensity>0.18</tail_light_intensity>
+        <tail_light_range_m>1.5</tail_light_range_m>
+        <initial_estop_latched>$(arg initial_estop_latched)</initial_estop_latched>
+        <plunger_joint_name>emergency_stop_plunger_joint</plunger_joint_name>
+        <plunger_travel_m>0.006</plunger_travel_m>
+        <plunger_pressed_threshold_m>0.005</plunger_pressed_threshold_m>
+        <plunger_released_clearance_m>0.00002</plunger_released_clearance_m>
+        <plunger_position_gain_n_m>1500.0</plunger_position_gain_n_m>
+        <plunger_damping_gain_n_s_m>15.0</plunger_damping_gain_n_s_m>
+        <plunger_maximum_force_n>20.0</plunger_maximum_force_n>
+        <isolator_joint_name>main_power_isolator_handle_joint</isolator_joint_name>
+        <isolator_travel_rad>1.5707963267948966</isolator_travel_rad>
+        <isolator_closed_threshold_rad>1.40</isolator_closed_threshold_rad>
+        <isolator_open_clearance_rad>0.002</isolator_open_clearance_rad>
+        <contactor_joint_name>main_power_contactor_armature_joint</contactor_joint_name>
+        <contactor_travel_m>0.004</contactor_travel_m>
+        <contactor_closed_threshold_m>0.0035</contactor_closed_threshold_m>
+        <contactor_open_clearance_m>0.00002</contactor_open_clearance_m>
+        <work_topic>/formal_vehicle/lighting/work_lights_on</work_topic>
+        <tail_topic>/formal_vehicle/lighting/tail_lights_on</tail_topic>
+        <warning_topic>/formal_vehicle/lighting/warning_lights_on</warning_topic>
+        <external_estop_topic>/formal_vehicle/simulation/command/emergency_stop</external_estop_topic>
+        <physical_button_topic>/formal_vehicle/simulation/command/emergency_stop_plunger_pressed</physical_button_topic>
+        <reset_topic>/formal_vehicle/simulation/command/emergency_stop_reset</reset_topic>
+        <safety_power_topic>/formal_vehicle/power/branches/safety/enabled</safety_power_topic>
+        <main_power_request_topic>/formal_vehicle/simulation/command/main_power</main_power_request_topic>
+        <contactor_command_topic>/formal_vehicle/power/main_contactor_command</contactor_command_topic>
+        <isolator_state_topic>/formal_vehicle/power/main_isolator_closed</isolator_state_topic>
+        <contactor_state_topic>/formal_vehicle/power/main_contactor_closed</contactor_state_topic>
+        <latched_state_topic>/emergency_stop</latched_state_topic>
+        <work_applied_topic>/formal_vehicle/lighting/work_lights_applied</work_applied_topic>
+        <tail_applied_topic>/formal_vehicle/lighting/tail_lights_applied</tail_applied_topic>
+        <warning_applied_topic>/formal_vehicle/lighting/warning_lights_applied</warning_applied_topic>
+      </plugin>
+      <!-- Evaluation-only manual-service drive. It applies bounded forces to
+           the real passive hinge/latch joints and enforces measured-latch
+           interlocking; no ros2_control command interface is invented. -->
+      <plugin filename="libServiceDoorSystem.so"
+              name="sanitation_gazebo_auxiliary::ServiceDoorSystem"/>
       <plugin filename="libDynamicPayloadSystem.so" name="sanitation_gazebo_control::DynamicPayloadSystem">
         <dry_topic>/model/tzcup_formal_sanitation_vehicle/payload/dry_mass_kg</dry_topic>
+        <dry_accounting_mode>$(arg dry_accounting_mode)</dry_accounting_mode>
         <wastewater_topic>/model/tzcup_formal_sanitation_vehicle/payload/wastewater_mass_kg</wastewater_topic>
         <dry_capacity_kg>1.512</dry_capacity_kg>
-        <wastewater_capacity_kg>9.7064</wastewater_capacity_kg>
+        <wastewater_capacity_kg>8.30</wastewater_capacity_kg>
+        <initial_dry_mass_kg>$(arg dry_load_mass_kg)</initial_dry_mass_kg>
+        <initial_wastewater_mass_kg>$(arg wastewater_load_mass_kg)</initial_wastewater_mass_kg>
+      </plugin>
+      <plugin filename="libDryBinMonitorSystem.so" name="sanitation_gazebo_control::DryBinMonitorSystem">
+        <dry_accounting_mode>$(arg dry_accounting_mode)</dry_accounting_mode>
+        <usable_size_x_m>0.485</usable_size_x_m>
+        <usable_size_y_m>0.355</usable_size_y_m>
+        <usable_size_z_m>0.233</usable_size_z_m>
+        <cube_edge_m>0.030</cube_edge_m>
+        <!-- A retained rigid body may settle a few millimetres into the real
+             floor collision under the physics solver.  This tolerance applies
+             only to the monitor's bottom plane; side and top limits stay exact. -->
+        <bottom_contact_tolerance_m>0.005</bottom_contact_tolerance_m>
+        <mass_capacity_kg>1.512</mass_capacity_kg>
+        <!-- Only aggregate mode may carry this pre-existing bulk load.  In
+             physical_resident mode both plugins fail closed unless it is 0,
+             leaving the retained rigid bodies as the sole dry-load ledger. -->
+        <initial_aggregate_mass_kg>$(arg dry_load_mass_kg)</initial_aggregate_mass_kg>
+        <level_full_fraction>0.95</level_full_fraction>
+        <publish_rate_hz>10.0</publish_rate_hz>
+        <!-- URDF fixed-joint reduction may lump dry_bin_link into base_link;
+             retain the independently FK-validated bin center as fallback. -->
+        <bin_center_model_x_m>-0.205</bin_center_model_x_m>
+        <bin_center_model_y_m>0.160</bin_center_model_y_m>
+        <!-- The 233 mm certified usable envelope starts at the physical
+             floor top (dry-bin link z=-0.120 m), so its centre is 3.5 mm
+             below the structural dry_bin_link origin. -->
+        <bin_center_model_z_m>0.5656</bin_center_model_z_m>
+      </plugin>
+      <plugin filename="libGroundDirtCleaningSystem.so" name="sanitation_gazebo_control::GroundDirtCleaningSystem">
+        <!-- Evaluation truth stays on Gazebo Transport. Product ROS receives
+             neither the dirt grid nor a write/reset interface. Cleaning is
+             derived from physical joint state and world-space brush poses. -->
+        <enabled_by_default>true</enabled_by_default>
+        <cell_area_m2>0.01</cell_area_m2>
+        <sweep_sample_spacing_m>0.05</sweep_sample_spacing_m>
+        <minimum_rotation_rad_s>2.0</minimum_rotation_rad_s>
+        <minimum_lift_position_m>0.095</minimum_lift_position_m>
+        <side_brush_radius_m>0.15</side_brush_radius_m>
+        <side_brush_link_to_ground_m>0.083</side_brush_link_to_ground_m>
+        <roller_radius_m>0.10</roller_radius_m>
+        <roller_width_m>0.62</roller_width_m>
+        <maximum_contact_clearance_m>0.015</maximum_contact_clearance_m>
+        <publish_rate_hz>20.0</publish_rate_hz>
+      </plugin>
+      <!-- Read-only electrical / thermal observer. gz_ros2_control retains
+           sole command authority for all five joints; the motor system never
+           writes a joint command component and feeds protection faults back
+           into the whole-vehicle safety gateway. -->
+      <plugin filename="libCleaningActuatorMotorSystem.so"
+              name="sanitation_gazebo_control::CleaningActuatorMotorSystem">
+        <realtime_telemetry_enabled>$(arg cleaning_realtime_telemetry_enabled)</realtime_telemetry_enabled>
+        <status_json_enabled>$(arg cleaning_status_json_enabled)</status_json_enabled>
+        <status_json_publish_rate_hz>$(arg cleaning_status_json_publish_rate_hz)</status_json_publish_rate_hz>
+      </plugin>
+      <plugin filename="libWaterRecoverySystem.so" name="sanitation_gazebo_control::WaterRecoverySystem">
+        <minimum_lift_position_m>0.095</minimum_lift_position_m>
+        <pump_rated_flow_l_min>15.1</pump_rated_flow_l_min>
+        <hydraulic_derating>0.70</hydraulic_derating>
+        <tank_capacity_kg>8.30</tank_capacity_kg>
+        <initial_tank_mass_kg>$(arg wastewater_load_mass_kg)</initial_tank_mass_kg>
+        <initial_ground_volume_l>2.88</initial_ground_volume_l>
+        <water_density_kg_l>1.0</water_density_kg_l>
+        <patch_min_x>-0.60</patch_min_x><patch_max_x>1.80</patch_max_x>
+        <patch_min_y>-0.30</patch_min_y><patch_max_y>0.30</patch_max_y>
+        <cell_size_m>0.10</cell_size_m>
+        <nozzle_length_m>0.14</nozzle_length_m>
+        <nozzle_width_m>0.65</nozzle_width_m>
+        <maximum_squeegee_clearance_m>0.012</maximum_squeegee_clearance_m>
+        <maximum_intake_clearance_m>0.012</maximum_intake_clearance_m>
+        <!-- Deterministic hydraulic sensor and protection model.  The pressure
+             trip stops recovery while leaving the physical pump shaft state
+             observable, matching a clogged-strainer protection relay. -->
+        <filter_clean_pressure_kpa>2.0</filter_clean_pressure_kpa>
+        <filter_trip_pressure_kpa>35.0</filter_trip_pressure_kpa>
+        <tank_low_probe_fraction>0.20</tank_low_probe_fraction>
+        <tank_high_probe_fraction>0.875</tank_high_probe_fraction>
+        <sensor_time_constant_s>0.18</sensor_time_constant_s>
+        <!-- Simplified service operation allowed by the scheme: opening the
+             physical low-point outlet drains into an external service vessel;
+             internal CFD and splash are intentionally out of scope. -->
+        <service_drain_rate_l_min>12.0</service_drain_rate_l_min>
       </plugin>
     </gazebo>
   </xacro:if>

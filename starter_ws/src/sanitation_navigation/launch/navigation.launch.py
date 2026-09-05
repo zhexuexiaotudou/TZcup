@@ -177,6 +177,7 @@ def generate_launch_description():
             DeclareLaunchArgument('initial_pose_y', default_value='0.0'),
             DeclareLaunchArgument('initial_pose_yaw', default_value='0.0'),
             DeclareLaunchArgument('localization_backend', default_value='amcl'),
+            DeclareLaunchArgument('start_velocity_gate', default_value='true'),
             DeclareLaunchArgument(
                 'slam_params_file', default_value=default_slam_localization_params
             ),
@@ -247,6 +248,7 @@ def generate_launch_description():
                 executable='velocity_gate',
                 name='velocity_gate',
                 output='screen',
+                condition=IfCondition(LaunchConfiguration('start_velocity_gate')),
                 parameters=[{
                     'use_sim_time': use_sim_time,
                     'profile_name': LaunchConfiguration('operational_profile'),

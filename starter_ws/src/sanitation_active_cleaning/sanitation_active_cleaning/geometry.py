@@ -151,7 +151,11 @@ def validate_ackermann_path(
             continue
         chord_yaw = math.atan2(current.y - previous.y, current.x - previous.x)
         midpoint_yaw = wrap_angle(previous.yaw + 0.5 * dyaw)
-        if abs(wrap_angle(chord_yaw - midpoint_yaw)) > heading_tolerance:
+        heading_error = abs(wrap_angle(chord_yaw - midpoint_yaw))
+        reverse_heading_error = abs(
+            wrap_angle(chord_yaw - midpoint_yaw - math.pi)
+        )
+        if min(heading_error, reverse_heading_error) > heading_tolerance:
             return False, "body_lateral_motion_forbidden"
         if abs(dyaw) / ds > max_curvature * 1.05 + EPSILON:
             return False, "curvature_limit_exceeded"
@@ -242,6 +246,27 @@ def ackermann_path_to_point(
     if not paths:
         raise ValueError("goal lies inside both minimum-turn circles")
     return min(paths, key=polyline_length)
+
+
+def curvature_limited_reference_path_for_skid_steer(
+    start: Pose2D,
+    goal: Point2D,
+    *,
+    min_turn_radius: float,
+    spacing: float,
+) -> tuple[Pose2D, ...]:
+    """Build a curvature-limited reference path for the A300 skid-steer base.
+
+    The retained Ackermann-named helper is a compatibility implementation
+    detail.  This wrapper emits only a map-frame reference path: it neither
+    models nor commands physical steering joints.
+    """
+    return ackermann_path_to_point(
+        start,
+        goal,
+        min_turn_radius=min_turn_radius,
+        spacing=spacing,
+    )
 
 
 def cells_within_path(

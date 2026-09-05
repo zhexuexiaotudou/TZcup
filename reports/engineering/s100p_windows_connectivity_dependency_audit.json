@@ -1,0 +1,87 @@
+{
+  "report_id": "tzcup_s100p_windows_connectivity_dependency_audit_v1",
+  "audit_mode": "windows_read_only_no_network_transmission",
+  "execution_prohibited": [
+    "SSH",
+    "ping",
+    "port scan",
+    "socket connection",
+    "packet transmission",
+    "board command execution"
+  ],
+  "historical_board_inventory": {
+    "path": "artifacts/s100p_hardware_bringup/20260830T1530Z_g0_readonly/G0/board_identity_and_inventory.json",
+    "candidate_endpoint_count": 2,
+    "candidate_hostname_count": 1,
+    "endpoint_values_redacted": true
+  },
+  "project_connectivity_declaration": "NO_BOARD_HOST_OR_SSH_ROUTE_DECLARED_IN_LOCAL_PREDEPLOY_CONTRACTS",
+  "ssh_configuration": {
+    "config": {
+      "present": false,
+      "matching_host_blocks": 0,
+      "relevant_aliases_declared": false
+    },
+    "known_hosts": {
+      "present": true,
+      "plaintext_relevant_endpoint_entries": 2,
+      "plaintext_relevant_hostname_entries": 0,
+      "hashed_relevant_entry_state": "UNKNOWN"
+    },
+    "private_keys_read": false,
+    "credentials_exposed": false
+  },
+  "candidate_routes": [
+    {
+      "route_state": "ROUTE_PRESENT",
+      "interface_index": 23,
+      "destination_prefix": "192.168.127.0/24",
+      "next_hop_is_on_link": true,
+      "candidate_subnet": "192.168.127.0/24",
+      "neighbor_state": "STALE",
+      "endpoint_redacted": true
+    },
+    {
+      "route_state": "ROUTE_PRESENT",
+      "interface_index": 23,
+      "destination_prefix": "192.168.137.0/24",
+      "next_hop_is_on_link": true,
+      "candidate_subnet": "192.168.137.0/24",
+      "neighbor_state": "STALE",
+      "endpoint_redacted": true
+    }
+  ],
+  "isolation_products": {
+    "tailscale": {
+      "adapters": [
+        {
+          "name": "Tailscale",
+          "status": "Up",
+          "interface_index": 19
+        }
+      ],
+      "selected_for_candidate_route": false,
+      "effect_on_board_connectivity": "UNKNOWN_NO_PACKET_OR_FILTER_EVIDENCE"
+    },
+    "fse": {
+      "adapters": [
+        {
+          "name": "vEthernet (FSE HostVnic)",
+          "status": "Up",
+          "interface_index": 44
+        },
+        {
+          "name": "vSwitch (FSE Switch)",
+          "status": "Up",
+          "interface_index": 40
+        }
+      ],
+      "selected_for_candidate_route": false,
+      "effect_on_board_connectivity": "UNKNOWN_NO_PACKET_OR_FILTER_EVIDENCE"
+    }
+  },
+  "conclusion": "Current route selection may indicate a direct Ethernet path, but stale ARP entries and routing metadata do not prove board reachability. Tailscale/FSE isolation impact remains UNKNOWN without prohibited packet, filter, or board-side evidence.",
+  "status": "S100P_WINDOWS_CONNECTIVITY_DEPENDENCIES_OBSERVED_NOT_CONNECTED",
+  "runtime_connectivity_verified": false,
+  "host_os": "Windows"
+}

@@ -10,4 +10,13 @@ install(
   PATTERN "*.pyc" EXCLUDE
 )
 
+install(
+  PROGRAMS
+    scripts/formal_encoder_feedback_publisher.py
+    scripts/formal_encoder_quantization.py
+    scripts/formal_fisheye_camera_info_publisher.py
+    scripts/formal_robot_description_publisher.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 ament_package()

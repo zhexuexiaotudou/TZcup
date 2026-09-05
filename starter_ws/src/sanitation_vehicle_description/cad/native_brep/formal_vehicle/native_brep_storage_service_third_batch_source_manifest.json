@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "manifest_id": "tzcup_native_brep_storage_service_third_batch_cadquery_source_manifest_v1",
+  "status": "design_input_pending_native_export",
+  "claim_boundary": "Static source-integrity input only. This manifest binds the editable CadQuery source and parameter contract by SHA-256. It does not assert CadQuery execution, FCStd/STEP creation, manufacturing release, supplier interface release, material selection, hole/thread/seal definition, tolerance, pressure rating, mass-property proof, or vehicle readiness.",
+  "source_files": [
+    {
+      "path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_storage_service_third_batch.py",
+      "sha256": "5812b28d20dd34f12911cf5a8892590ec8f6e5f58b2a52815aa8015e4e2616c3",
+      "role": "authoritative_editable_parametric_cadquery_brep_source"
+    }
+  ],
+  "design_inputs": [
+    {
+      "path": "config/high_fidelity_vehicle/native_brep_storage_service_third_batch_contract.json",
+      "sha256": "ad7cf9c4347baf82efda753dcbd429f70b8f81a7fd51e9916837ccaa0b004004",
+      "role": "machine_readable_geometry_interface_dependency_and_pending_release_contract"
+    }
+  ],
+  "prohibited_methods": [
+    "mesh_to_step_conversion",
+    "faceted_or_tessellated_step_export",
+    "mesh_import_as_native_brep_substitute",
+    "placeholder_fcstd_or_step_artifact"
+  ],
+  "verification": {
+    "algorithm": "sha256",
+    "command": "Get-FileHash -Algorithm SHA256 <each listed path>",
+    "update_rule": "Update this manifest in the same reviewed change whenever its editable source or contract input changes. A matching hash does not authorize CadQuery execution or native export."
+  }
+}

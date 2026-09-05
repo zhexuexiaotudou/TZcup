@@ -1,0 +1,141 @@
+{
+  "schema_version": 1,
+  "report_kind": "windows_ndis_nonpaged_pool_source_research",
+  "researched_on": "2026-08-31",
+  "scope": {
+    "local_snapshot": "reports/engineering/windows_ndis_nonpaged_pool_diagnostic.json",
+    "os_build": "10.0.26200",
+    "examined_terms": [
+      "Nbuf",
+      "Nnbl",
+      "Nnbf",
+      "Wintun 0.14",
+      "Tailscale",
+      "FSE",
+      "vmswitch",
+      "Realtek RTL8125",
+      "Intel Wi-Fi 6E AX211"
+    ],
+    "research_boundary": "Web research only. No downloads, installations, driver changes, service changes, adapter changes, registry changes, or WSL execution were performed."
+  },
+  "official_evidence": [
+    {
+      "subject": "Pool-tag attribution method",
+      "finding": "Microsoft documents PoolMon plus pooltag.txt Mapped_Driver output as the method for associating a growing tag with a component or driver. A total nonpaged-pool counter alone is not such attribution.",
+      "source": "https://learn.microsoft.com/en-us/windows-hardware/drivers/debugger/using-poolmon-to-find-a-kernel-mode-memory-leak",
+      "source_type": "Microsoft Learn",
+      "relevance": "direct methodology",
+      "date_accessed": "2026-08-31"
+    },
+    {
+      "subject": "Nnbf",
+      "finding": "Microsoft's !ndiskd.nbpool example shows Nnbf allocated by NETIO!NetioInitializeNetBufferListLibrary. It establishes a NETIO NB-pool example, not a leak, a driver owner, or an attribution to the local NIC/VPN stack.",
+      "source": "https://learn.microsoft.com/en-us/windows-hardware/drivers/debuggercmds/-ndiskd-nbpool",
+      "source_type": "Microsoft Learn",
+      "relevance": "direct tag semantics for Nnbf only",
+      "date_accessed": "2026-08-31"
+    },
+    {
+      "subject": "Intel AX211 Windows 11 25H2 support",
+      "finding": "Intel lists AX211 in package 24.60.0 and states that Wi-Fi packages from 23.170.0 onward were validated for Windows 11 25H2. The local 23.50.0.6 driver predates that validation statement. Intel does not state that this package fixes a nonpaged-pool leak.",
+      "source": "https://www.intel.com/content/www/us/en/download/19351/intel-wireless-wi-fi-drivers-for-windows-10-and-windows-11.html",
+      "source_type": "Intel official download page",
+      "relevance": "version/support compatibility only",
+      "date_accessed": "2026-08-31"
+    },
+    {
+      "subject": "Tailscale current Windows maintenance stream",
+      "finding": "Tailscale's official changelog contains current Windows releases and Windows fixes, but the reviewed entries do not name a Wintun 0.14 nonpaged-pool leak or a remediation version for it.",
+      "source": "https://tailscale.com/changelog",
+      "source_type": "Tailscale official changelog",
+      "relevance": "maintenance context only",
+      "date_accessed": "2026-08-31"
+    },
+    {
+      "subject": "Local MSI model hardware context",
+      "finding": "MSI documents the Vector 17 HX A13V line as Windows 11 with up-to-2.5G LAN and Wi-Fi 6E. This corroborates the device family, but is not a driver release note or a leak acknowledgement.",
+      "source": "https://www.msi.com/Laptop/Vector-17-HX-A13VX/Specification",
+      "source_type": "MSI official specification",
+      "relevance": "hardware context only",
+      "date_accessed": "2026-08-31"
+    }
+  ],
+  "related_but_not_officially_confirmed": [
+    {
+      "subject": "Windows 11 build 26200.x and high nonpaged pool",
+      "finding": "A user-filed issue in Microsoft's WSL repository reports 21-23 GiB/hour nonpaged-pool growth on 26200.8655, with PoolMon attribution to NtFC in ntfs.sys during WSL2 VHDX I/O. The issue is closed as not planned and contains no Microsoft acknowledgement, fix, or linkage to this computer. Its tag and alleged component differ from Nbuf/Nnbl/Nnbf and from the local network candidates.",
+      "source": "https://github.com/microsoft/WSL/issues/40804",
+      "source_type": "Microsoft-hosted issue tracker; user report",
+      "relevance": "strong symptom/build similarity, no causal proof",
+      "date_accessed": "2026-08-31"
+    },
+    {
+      "subject": "Mirrored networking and nonpaged pool",
+      "finding": "A user-filed WSL issue reports a netio.sys nonpaged-pool leak in mirrored networking on build 22631.4112. It is a different Windows build and has no verified relationship to the local 26200 snapshot.",
+      "source": "https://github.com/microsoft/WSL/issues/12006",
+      "source_type": "Microsoft-hosted issue tracker; user report",
+      "relevance": "same broad subsystem, different build and no confirmation",
+      "date_accessed": "2026-08-31"
+    },
+    {
+      "subject": "Wintun buffer lifetime",
+      "finding": "The WireGuard Wintun project documents that consumers must release received packets and that sends release their packet buffer. This explains why Wintun is technically memory-relevant, but it does not document a Windows 11 26200 or Wintun 0.14 kernel nonpaged-pool leak.",
+      "source": "https://github.com/WireGuard/wintun",
+      "source_type": "WireGuard-maintained source mirror",
+      "relevance": "API behavior only",
+      "date_accessed": "2026-08-31"
+    }
+  ],
+  "no_matching_official_evidence_found": [
+    {
+      "subject": "Windows 11 build 26200 release health",
+      "finding": "No Microsoft Learn Release Health known-issue or resolved-issue entry located that names a 26200 nonpaged-pool leak, Nbuf/Nnbl/Nnbf, Wintun, FSE, vmswitch, RTL8125, or AX211 as the requested fix target. Search absence is not proof that no private or future fix exists.",
+      "sources_checked": [
+        "https://learn.microsoft.com/en-us/windows/release-health/",
+        "https://learn.microsoft.com/en-us/windows/release-health/resolved-issues-windows-11-25h2"
+      ],
+      "date_accessed": "2026-08-31"
+    },
+    {
+      "subject": "Nbuf and Nnbl tag ownership",
+      "finding": "No Microsoft primary documentation found that maps Nbuf or Nnbl to the local Tailscale, FSE/vmswitch, Realtek, Intel AX211, or iKuuuVPN drivers. Do not infer ownership from a tag's NDIS-like spelling.",
+      "date_accessed": "2026-08-31"
+    },
+    {
+      "subject": "Tailscale/Wintun 0.14 remediation",
+      "finding": "No official Tailscale or WireGuard release note located that identifies Wintun 0.14.0.0 as causing this nonpaged-pool pattern or names a fixed version.",
+      "date_accessed": "2026-08-31"
+    },
+    {
+      "subject": "Hyper-V FSE/vmswitch remediation",
+      "finding": "No Microsoft official advisory or release note located that identifies FSE/vmswitch as the source of a 26200 nonpaged-pool leak or provides a fix version for this pattern.",
+      "date_accessed": "2026-08-31"
+    },
+    {
+      "subject": "Realtek RTL8125 remediation",
+      "finding": "No Realtek or MSI official release note located that identifies RTL8125 or the local 1125.10.720.2022 driver as causing this nonpaged-pool pattern or names a corrected driver version.",
+      "date_accessed": "2026-08-31"
+    },
+    {
+      "subject": "Intel AX211 nonpaged-pool remediation",
+      "finding": "No Intel release note located that identifies AX211 or the local 23.50.0.6 driver as causing this nonpaged-pool pattern or names a corrected version. The available evidence is support validation, not a leak fix.",
+      "date_accessed": "2026-08-31"
+    }
+  ],
+  "conservative_interpretation": {
+    "likely": [],
+    "possible": [
+      "The local Tailscale/Wintun, FSE/vmswitch, Realtek RTL8125, and AX211 candidates remain possible only because the earlier local report observed active stack components; web research did not raise any of them to likely.",
+      "A WSL2/NTFS VHDX path is worth testing only after tag evidence is collected, because a public 26200.x symptom report implicates NtFC/ntfs.sys rather than NDIS."
+    ],
+    "unproven": [
+      "iKuuuVPN remains unproven: its running helper service is not primary evidence of an NDIS kernel allocation path.",
+      "No local tag capture exists, and no cited source establishes a specific root cause for this machine."
+    ]
+  },
+  "next_read_only_evidence": [
+    "Obtain PoolMon/WDK only with separate approval, then collect repeated nonpaged tag snapshots and Mapped_Driver output; do not assign drivers before that evidence.",
+    "If a dominant tag is NtFC, collect a separate read-only WSL/Hyper-V usage inventory before touching network adapters.",
+    "If Nnbf, Nbuf, or Nnbl dominates, capture debugger/PoolMon mapping evidence before treating NETIO or an attached miniport/filter as the owner."
+  ]
+}

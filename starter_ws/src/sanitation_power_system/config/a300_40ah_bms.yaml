@@ -1,0 +1,20 @@
+a300_bms_simulator:
+  ros__parameters:
+    use_sim_time: true
+    publish_period_sec: 0.05
+    initial_soc: 0.80
+    initial_temperature_c: 25.0
+    nominal_voltage_v: 25.6
+    design_capacity_ah: 40.0
+    design_energy_wh: 1024.0
+    continuous_discharge_current_a: 60.0
+    circuit_breaker_current_a: 100.0
+    maximum_supported_charge_power_w: 650.0
+    maximum_supported_charge_current_a: 23.5
+    charging_minimum_temperature_c: 0.0
+    charging_maximum_temperature_c: 40.0
+    # The A300 manual does not publish a full open-circuit voltage curve or
+    # pack resistance. These calibratable engineering values are not official.
+    engineering_empty_voltage_v: 22.4
+    engineering_full_voltage_v: 29.2
+    engineering_internal_resistance_ohm: 0.025

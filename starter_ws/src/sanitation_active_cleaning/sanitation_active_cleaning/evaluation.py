@@ -6,8 +6,8 @@ import math
 import statistics
 from typing import Any, Callable, Sequence
 
-from .environment import ActiveCleaningEnv, create_evaluation_token
-from .models import EvaluationSnapshot, RoleSeeds, TaskConfig
+from .environment import ActiveCleaningEnv, GraspVerifier, create_evaluation_token
+from .models import EvaluationSnapshot, RoleSeeds, TaskConfig, TaskLayout
 from .policies import FullCoveragePolicy, OraclePolicy, SensingGreedyPolicy, TrajectoryPolicy
 
 
@@ -94,12 +94,16 @@ def run_episode(
     seed: int,
     policy: TrajectoryPolicy,
     baseline_distance: float | None,
+    task_layout: TaskLayout | None = None,
+    grasp_verifier: GraspVerifier | None = None,
 ) -> dict[str, Any]:
     token = create_evaluation_token()
     env = ActiveCleaningEnv(
         config,
         evaluation_token=token,
         max_task_distance=baseline_distance,
+        task_layout=task_layout,
+        grasp_verifier=grasp_verifier,
     )
     observation = env.reset(seed=seed)
     policy.reset(episode_seed=RoleSeeds.from_master(seed).policy)

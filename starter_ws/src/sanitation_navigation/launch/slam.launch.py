@@ -33,6 +33,7 @@ def generate_launch_description():
         [
             DeclareLaunchArgument('use_sim_time', default_value='true'),
             DeclareLaunchArgument('rviz', default_value='false'),
+            DeclareLaunchArgument('start_velocity_gate', default_value='true'),
             DeclareLaunchArgument('params_file', default_value=slam_params),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(slam_launch),
@@ -46,6 +47,7 @@ def generate_launch_description():
                 executable='velocity_gate',
                 name='mapping_velocity_gate',
                 output='screen',
+                condition=IfCondition(LaunchConfiguration('start_velocity_gate')),
                 parameters=[{
                     'use_sim_time': LaunchConfiguration('use_sim_time'),
                     'profile_name': 'precision_mapping',

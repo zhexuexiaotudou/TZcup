@@ -17,6 +17,7 @@ ROOT = Path(__file__).resolve().parents[1]
 def test_s100_profile_is_development_only_and_fail_closed_without_artifacts():
     profile = load_open_vocabulary_profile(ROOT / "config" / "open_vocab_s100_profile.yaml")
     assert profile.platform == "rdk_s100"
+    assert profile.soc_identity == "journey6p"
     assert profile.development_only
     assert not profile.journey6_evidence_allowed
     readiness = check_runtime_readiness(
@@ -27,7 +28,7 @@ def test_s100_profile_is_development_only_and_fail_closed_without_artifacts():
     )
     assert not readiness.ready
     assert "rdk_s100_runtime" in readiness.missing
-    assert "detector_s100_platform_support" in readiness.missing
+    assert "detector_s100_platform_support" not in readiness.missing
     assert "detector_artifact_contract" in readiness.missing
     assert "segmenter_artifact_contract" in readiness.missing
 

@@ -4,8 +4,8 @@
     Clearpath Husky A300 40 Ah nominal model.  Visible chassis, livery, status
     lights, top plate and tyres are the BSD-3-Clause Clearpath meshes pinned in
     meshes/vendor/SOURCES.yaml.  Primitive geometry remains only for collision
-    and inertia.  Physical tyre radius follows the official description mesh;
-    the controller uses the separately published 0.1625 m effective radius.
+    and inertia.  Physical tyre radius is the official-description 0.1651 m;
+    the effort plant keeps the locked upstream control radius of 0.1625 m.
   -->
 
   <xacro:macro name="hf_box_inertia" params="mass x y z">
@@ -14,7 +14,7 @@
              izz="${mass * (x*x + y*y) / 12.0}"/>
   </xacro:macro>
 
-  <xacro:macro name="hf_a300_wheel" params="name side x y">
+  <xacro:macro name="hf_a300_wheel" params="name side parent offset_y">
     <link name="${name}_wheel_link">
       <visual name="${name}_tire_visual">
         <origin rpy="0 0 ${pi if side == 'right' else 0}"/>
@@ -32,9 +32,9 @@
       </inertial>
     </link>
     <joint name="${name}_wheel_joint" type="continuous">
-      <parent link="base_link"/>
+      <parent link="${parent}"/>
       <child link="${name}_wheel_link"/>
-      <origin xyz="${x} ${y} 0.0"/>
+      <origin xyz="0 ${offset_y} 0"/>
       <axis xyz="0 1 0"/>
       <limit effort="250" velocity="12.2"/>
       <dynamics damping="0.15" friction="0.05"/>
@@ -44,6 +44,103 @@
       <kp>1000000</kp><kd>100</kd>
       <minDepth>0.001</minDepth><maxVel>0.1</maxVel>
     </gazebo>
+  </xacro:macro>
+
+  <!--
+    Pinned Clearpath A300 drivetrain load path.  The public upstream calls
+    these parts a suspension beam and spacer, but both joints are fixed: this
+    model therefore makes no unsupported suspension-compliance claim.  Masses
+    are engineering allocations inside the published 78.5 kg 40 Ah curb mass.
+  -->
+  <xacro:macro name="hf_a300_drivetrain_side" params="side sign">
+    <link name="${side}_suspension_beam_spacer_link">
+      <visual name="${side}_suspension_spacer_visual">
+        <origin rpy="0 0 ${pi if side == 'right' else 0}"/>
+        <geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/suspension_spacer.stl"/></geometry>
+        <material name="${side}_spacer_dark"><color rgba="0.12 0.13 0.14 1"/></material>
+      </visual>
+      <collision><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/suspension_spacer.stl"/></geometry></collision>
+      <inertial><mass value="0.5"/><xacro:hf_box_inertia mass="0.5" x="0.090" y="0.055" z="0.045"/></inertial>
+    </link>
+    <joint name="${side}_suspension_beam_spacer_joint" type="fixed">
+      <parent link="base_link"/><child link="${side}_suspension_beam_spacer_link"/>
+      <!-- z differs from upstream only because this project keeps base_link at
+           the wheel centre (REP-105 footprint is 0.1651 m below it). -->
+      <origin xyz="0 ${sign * 0.192} 0.0085"/>
+    </joint>
+
+    <link name="${side}_suspension_beam_link">
+      <visual name="${side}_suspension_beam_visual">
+        <origin rpy="0 0 ${pi if side == 'right' else 0}"/>
+        <geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/suspension_beam.stl"/></geometry>
+        <material name="${side}_beam_dark"><color rgba="0.10 0.11 0.12 1"/></material>
+      </visual>
+      <collision><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/suspension_beam.stl"/></geometry></collision>
+      <inertial><mass value="2.5"/><xacro:hf_box_inertia mass="2.5" x="0.610" y="0.080" z="0.075"/></inertial>
+    </link>
+    <joint name="${side}_suspension_beam_joint" type="fixed">
+      <parent link="${side}_suspension_beam_spacer_link"/><child link="${side}_suspension_beam_link"/>
+      <origin xyz="0 ${sign * 0.0159} 0"/>
+    </joint>
+
+    <xacro:hf_a300_motor name="front_${side}" side="${side}" parent="${side}_suspension_beam_link" x="0.256" y="${sign * 0.0095}" z="-0.0085" wheel_offset_y="${sign * 0.0655}"/>
+    <xacro:hf_a300_motor name="rear_${side}" side="${side}" parent="${side}_suspension_beam_link" x="-0.256" y="${sign * 0.0095}" z="-0.0085" wheel_offset_y="${sign * 0.0655}"/>
+  </xacro:macro>
+
+  <xacro:macro name="hf_a300_motor" params="name side parent x y z wheel_offset_y">
+    <link name="${name}_motor_link">
+      <visual name="${name}_motor_visual">
+        <origin rpy="0 0 ${pi if side == 'left' else 0}"/>
+        <geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/motor.stl"/></geometry>
+        <material name="${name}_motor_dark"><color rgba="0.09 0.10 0.11 1"/></material>
+      </visual>
+      <collision><geometry><mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/motor.stl"/></geometry></collision>
+      <!-- 0.080 kg is split to the explicit encoder end-cap child below;
+           the 2.0 kg engineering allocation per drive module is conserved. -->
+      <inertial><mass value="1.92"/><xacro:hf_box_inertia mass="1.92" x="0.185" y="0.120" z="0.110"/></inertial>
+    </link>
+    <joint name="${name}_motor_joint" type="fixed">
+      <parent link="${parent}"/><child link="${name}_motor_link"/>
+      <origin xyz="${x} ${y} ${z}"/>
+    </joint>
+    <link name="${name}_encoder_link">
+      <visual name="${name}_encoder_visual">
+        <origin rpy="${-pi/2.0 if side == 'left' else pi/2.0} 0 0"/>
+        <geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/a300_encoder_cap.stl"/></geometry>
+        <material name="${name}_encoder_black"><color rgba="0.045 0.055 0.060 1"/></material>
+      </visual>
+      <collision name="${name}_encoder_cap_collision">
+        <origin rpy="${pi/2.0} 0 0"/>
+        <geometry><cylinder radius="0.030" length="0.028"/></geometry>
+      </collision>
+      <inertial>
+        <mass value="0.080"/>
+        <inertia ixx="0.000023227" ixy="0" ixz="0"
+                 iyy="0.000036000" iyz="0" izz="0.000023227"/>
+      </inertial>
+    </link>
+    <joint name="${name}_encoder_mount_joint" type="fixed">
+      <parent link="${name}_motor_link"/><child link="${name}_encoder_link"/>
+      <!-- The encoder is on the inboard end, opposite the wheel output.  Its
+           public A300 package dimensions are unavailable, so this visible cap
+           is an explicitly marked engineering integration reference. -->
+      <origin xyz="0 ${-0.052 if side == 'left' else 0.052} 0"/>
+    </joint>
+    <xacro:hf_a300_wheel name="${name}" side="${side}" parent="${name}_motor_link" offset_y="${wheel_offset_y}"/>
+  </xacro:macro>
+
+  <xacro:macro name="hf_control_box_isolator_collision" params="name x y">
+    <collision name="${name}_collision">
+      <origin xyz="${x} ${y} 0.017"/>
+      <geometry><cylinder radius="0.018" length="0.026"/></geometry>
+    </collision>
+  </xacro:macro>
+
+  <xacro:macro name="hf_s100_standoff_collision" params="name x y">
+    <collision name="${name}_collision">
+      <origin xyz="${x} ${y} 0.01445"/>
+      <geometry><cylinder radius="0.0075" length="0.0249"/></geometry>
+    </collision>
   </xacro:macro>
 
   <xacro:macro name="hf_a300_platform" params="">
@@ -69,8 +166,10 @@
         <origin xyz="-0.041 0.003 0.070"/>
         <!-- Chassis allocation keeps base + four wheels + standard top plate at
              the published 78.5 kg 40 Ah A300 curb mass. The custom mast remains payload. -->
-        <mass value="64.5"/>
-        <xacro:hf_box_inertia mass="64.5" x="0.860" y="0.378" z="0.22956"/>
+        <!-- 35.5 kg chassis/internal structure excludes the now-explicit
+             15 kg batteries, 8 kg motors, 5 kg beams and 1 kg spacers. -->
+        <mass value="35.5"/>
+        <xacro:hf_box_inertia mass="35.5" x="0.860" y="0.378" z="0.22956"/>
       </inertial>
     </link>
     <joint name="base_footprint_joint" type="fixed">
@@ -116,7 +215,11 @@
     </link>
     <joint name="sensor_mast_joint" type="fixed">
       <parent link="payload_deck_link"/><child link="sensor_mast_link"/>
-      <origin xyz="-0.135 0 0.020"/>
+      <!-- Front-centre mounting keeps the complete mast outside the certified
+           arm-to-hopper capsule while remaining on the chassis/cowl support
+           polygon.  The 190 x 150 mm base clears the adjacent control cabinet
+           by 38 mm and stays inside the product body footprint. -->
+      <origin xyz="0.420 0 0.020"/>
     </joint>
 
     <!-- Arm mounting datum: centered toward the forward deck to preserve rear
@@ -134,6 +237,36 @@
       <origin xyz="0.100 -0.200 0.065"/>
     </joint>
 
+    <!-- Project-designed deck rails, four elastomer feet and four cabinet
+         clamps close the former 60.5 mm air gap.  Their footprint is an
+         integration choice, not a claimed UR factory mounting-hole pattern.
+         The former aggregate 12 kg control-box mass is conserved across this
+         base and the cabinet link. -->
+    <link name="ur5e_control_box_isolation_base_link">
+      <visual name="ur5e_control_box_isolation_base_visual">
+        <geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/ur5e_control_cabinet_isolation_base.stl"/></geometry>
+        <material name="control_box_mount_zinc"><color rgba="0.32 0.35 0.36 1"/></material>
+      </visual>
+      <collision name="control_box_lower_left_rail_collision"><origin xyz="0 0.080 0.002"/><geometry><box size="0.340 0.045 0.004"/></geometry></collision>
+      <collision name="control_box_lower_right_rail_collision"><origin xyz="0 -0.080 0.002"/><geometry><box size="0.340 0.045 0.004"/></geometry></collision>
+      <collision name="control_box_upper_front_rail_collision"><origin xyz="0.170 0 0.033"/><geometry><box size="0.050 0.220 0.006"/></geometry></collision>
+      <collision name="control_box_upper_rear_rail_collision"><origin xyz="-0.170 0 0.033"/><geometry><box size="0.050 0.220 0.006"/></geometry></collision>
+      <xacro:hf_control_box_isolator_collision name="control_box_front_left_isolator" x="0.150" y="0.080"/>
+      <xacro:hf_control_box_isolator_collision name="control_box_front_right_isolator" x="0.150" y="-0.080"/>
+      <xacro:hf_control_box_isolator_collision name="control_box_rear_left_isolator" x="-0.150" y="0.080"/>
+      <xacro:hf_control_box_isolator_collision name="control_box_rear_right_isolator" x="-0.150" y="-0.080"/>
+      <collision name="control_box_front_left_clamp_collision"><origin xyz="0.170 0.090 0.0565"/><geometry><box size="0.050 0.035 0.041"/></geometry></collision>
+      <collision name="control_box_front_right_clamp_collision"><origin xyz="0.170 -0.090 0.0565"/><geometry><box size="0.050 0.035 0.041"/></geometry></collision>
+      <collision name="control_box_rear_left_clamp_collision"><origin xyz="-0.170 0.090 0.0565"/><geometry><box size="0.050 0.035 0.041"/></geometry></collision>
+      <collision name="control_box_rear_right_clamp_collision"><origin xyz="-0.170 -0.090 0.0565"/><geometry><box size="0.050 0.035 0.041"/></geometry></collision>
+      <inertial><origin xyz="0 0 0.035"/><mass value="0.680"/><xacro:hf_box_inertia mass="0.680" x="0.390" y="0.230" z="0.077"/></inertial>
+    </link>
+    <joint name="ur5e_control_box_isolation_base_joint" type="fixed">
+      <parent link="payload_deck_link"/><child link="ur5e_control_box_isolation_base_link"/>
+      <!-- The base frame starts exactly at the deck collision top. -->
+      <origin xyz="0.296 0.240 0.015"/>
+    </joint>
+
     <!-- UR e-Series standard control box.  The public cabinet envelope is
          oriented with its shallow axis across the vehicle.  Its rear face is
          tangent to, but does not enter, the frozen dry-bin envelope. -->
@@ -143,34 +276,59 @@
         <material name="control_box_blue"><color rgba="0.08 0.24 0.42 1"/></material>
       </visual>
       <collision><geometry><box size="0.460 0.254 0.449"/></geometry></collision>
-      <inertial><mass value="12.0"/><xacro:hf_box_inertia mass="12.0" x="0.460" y="0.254" z="0.449"/></inertial>
+      <inertial><mass value="11.320"/><xacro:hf_box_inertia mass="11.320" x="0.460" y="0.254" z="0.449"/></inertial>
     </link>
     <joint name="ur5e_control_box_mount_joint" type="fixed">
-      <parent link="payload_deck_link"/><child link="ur5e_control_box_link"/>
-      <origin xyz="0.296 0.240 0.3045"/>
+      <parent link="ur5e_control_box_isolation_base_link"/><child link="ur5e_control_box_link"/>
+      <!-- Cabinet body bottom and clamp tops meet at base-local z=0.077 m. -->
+      <origin xyz="0 0 0.2895"/>
     </joint>
 
-    <!-- S100/Journey 6 integration remains SKU-pending.  This is a public-
-         reference 200 x 150 x 80 mm protective envelope plus mounting plate,
-         not a claim about the user's eventual board dimensions.  The 2 kg
-         allowance is assigned to the enclosure; the board datum carries only
-         epsilon mass so no unmeasured board mass is invented. -->
+    <!-- Journey 6P is represented by the connected RDK S100P V1P0 compute
+         assembly.  Until the owned board is measured, its child reference uses
+         the prior RDK S100 121 x 120 x 52.4 mm envelope only as a provisional
+         collision placeholder.  The surrounding sealed
+         enclosure and mounting plate are project-authored.  The frozen 2 kg
+         integration allowance remains on the enclosure; the child datum has
+         epsilon mass because the official board mass is not published. -->
+    <!-- A ventilated project mounting plate is bolted to the cabinet roof.
+         Four project-defined stand-offs bridge the remaining 24.9 mm; their
+         pattern is not claimed as an undocumented S100P board-hole pattern.
+         The frozen 2 kg compute integration allowance is conserved across the
+         roof mount, enclosure and epsilon-mass external-envelope datum. -->
+    <link name="s100_cabinet_roof_mount_link">
+      <visual name="s100_cabinet_roof_mount_visual"><geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/s100_cabinet_roof_mount.stl"/></geometry>
+        <material name="s100_mount_aluminium"><color rgba="0.52 0.55 0.56 1"/></material></visual>
+      <collision name="s100_roof_plate_collision"><origin xyz="0 0 0.001"/><geometry><box size="0.230 0.180 0.002"/></geometry></collision>
+      <xacro:hf_s100_standoff_collision name="s100_front_left_standoff" x="0.085" y="0.065"/>
+      <xacro:hf_s100_standoff_collision name="s100_front_right_standoff" x="0.085" y="-0.065"/>
+      <xacro:hf_s100_standoff_collision name="s100_rear_left_standoff" x="-0.085" y="0.065"/>
+      <xacro:hf_s100_standoff_collision name="s100_rear_right_standoff" x="-0.085" y="-0.065"/>
+      <inertial><origin xyz="0 0 0.006"/><mass value="0.280"/><xacro:hf_box_inertia mass="0.280" x="0.230" y="0.180" z="0.0269"/></inertial>
+    </link>
+    <joint name="s100_cabinet_roof_mount_joint" type="fixed">
+      <parent link="ur5e_control_box_link"/><child link="s100_cabinet_roof_mount_link"/>
+      <!-- Cabinet collision top is +0.2245 m in the cabinet frame. -->
+      <origin xyz="0 0 0.2245"/>
+    </joint>
+
     <link name="s100_compute_enclosure_link">
       <visual name="s100_enclosure_body"><geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/s100_compute_enclosure.stl"/></geometry>
         <material name="s100_enclosure_black"><color rgba="0.07 0.08 0.09 1"/></material></visual>
       <collision><geometry><box size="0.205 0.155 0.100"/></geometry></collision>
       <collision name="s100_plate_collision"><origin xyz="0 0 -0.045"/><geometry><box size="0.230 0.180 0.010"/></geometry></collision>
-      <inertial><origin xyz="0 0 -0.004"/><mass value="1.999999"/>
-        <xacro:hf_box_inertia mass="1.999999" x="0.210" y="0.160" z="0.090"/></inertial>
+      <inertial><origin xyz="0 0 -0.004"/><mass value="1.719999"/>
+        <xacro:hf_box_inertia mass="1.719999" x="0.210" y="0.160" z="0.090"/></inertial>
     </link>
     <joint name="s100_compute_enclosure_mount_joint" type="fixed">
-      <parent link="payload_deck_link"/><child link="s100_compute_enclosure_link"/>
-      <origin xyz="0.300 -0.270 0.100"/>
+      <parent link="s100_cabinet_roof_mount_link"/><child link="s100_compute_enclosure_link"/>
+      <!-- Enclosure mounting-plate underside contacts all four stand-offs. -->
+      <origin xyz="0 0 0.0769"/>
     </joint>
     <link name="s100_board_reference_link">
-      <visual name="s100_pending_board_visual"><geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/s100_board_reference.stl"/></geometry>
-        <material name="s100_pending_board"><color rgba="0.04 0.42 0.20 0.45"/></material></visual>
-      <collision><geometry><box size="0.150 0.100 0.004"/></geometry></collision>
+      <visual name="s100_external_reference_visual"><geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/s100_board_reference.stl"/></geometry>
+        <material name="s100_reference_graphite"><color rgba="0.12 0.14 0.15 1"/></material></visual>
+      <collision name="s100_official_external_envelope_collision"><geometry><box size="0.121 0.120 0.0524"/></geometry></collision>
       <inertial><mass value="0.000001"/><inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/></inertial>
     </link>
     <joint name="s100_board_reference_joint" type="fixed">
@@ -185,7 +343,11 @@
       <visual><geometry><mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/power_distribution_box.stl"/></geometry>
         <material name="pdu_red"><color rgba="0.45 0.055 0.045 1"/></material></visual>
       <collision><geometry><box size="0.190 0.125 0.068"/></geometry></collision>
-      <inertial><mass value="0.700"/><xacro:hf_box_inertia mass="0.700" x="0.190" y="0.125" z="0.068"/></inertial>
+      <!-- The former 0.700 kg lump included the upstream isolation and
+           contactor hardware.  Those parts are now articulated explicitly in
+           power_service_hardware.xacro, so 0.400 kg is transferred out of
+           this link while the total electrical-system mass stays unchanged. -->
+      <inertial><mass value="0.300"/><xacro:hf_box_inertia mass="0.300" x="0.190" y="0.125" z="0.068"/></inertial>
     </link>
     <joint name="power_distribution_box_mount_joint" type="fixed">
       <parent link="payload_deck_link"/><child link="power_distribution_box_link"/>
@@ -214,11 +376,9 @@
       <origin xyz="0.220 -0.080 0.075"/>
     </joint>
 
-    <!-- Current Clearpath A300 wheelbase and tyre-centre track. -->
-    <xacro:hf_a300_wheel name="front_left"  side="left"  x="0.256"  y="0.283"/>
-    <xacro:hf_a300_wheel name="front_right" side="right" x="0.256"  y="-0.283"/>
-    <xacro:hf_a300_wheel name="rear_left"   side="left"  x="-0.256" y="0.283"/>
-    <xacro:hf_a300_wheel name="rear_right"  side="right" x="-0.256" y="-0.283"/>
+    <!-- Current Clearpath A300 fixed beam/spacer/motor/wheel load paths. -->
+    <xacro:hf_a300_drivetrain_side side="left" sign="1"/>
+    <xacro:hf_a300_drivetrain_side side="right" sign="-1"/>
 
     <gazebo reference="base_link"><selfCollide>false</selfCollide></gazebo>
   </xacro:macro>

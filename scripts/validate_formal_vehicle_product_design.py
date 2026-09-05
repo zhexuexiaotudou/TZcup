@@ -26,6 +26,14 @@ REQUIRED_LINKS = {
     "bodywork_compute_service_door_link",
     "bodywork_wet_service_door_link",
     "bodywork_rear_dry_service_door_link",
+    "bodywork_power_service_door_hinge_bracket_link",
+    "bodywork_power_service_door_latch_link",
+    "bodywork_compute_service_door_hinge_bracket_link",
+    "bodywork_compute_service_door_latch_link",
+    "bodywork_wet_service_door_hinge_bracket_link",
+    "bodywork_wet_service_door_latch_link",
+    "bodywork_rear_dry_service_door_hinge_bracket_link",
+    "bodywork_rear_dry_service_door_latch_link",
     "bodywork_trim_link",
     "bodywork_lighting_link",
     "bodywork_brush_guards_link",
@@ -42,11 +50,14 @@ REQUIRED_MESH_NAMES = {
     "compute_service_door.stl",
     "wet_service_door.stl",
     "rear_dry_service_door.stl",
+    "service_door_hinge_barrel.stl",
+    "service_door_rotary_latch.stl",
     "front_work_light_left.stl",
     "front_green_apron.stl",
     "rear_tail_light_right.stl",
     "corner_beacons.stl",
-    "emergency_stop.stl",
+    # The E-stop is no longer decorative bodywork.  Its housing and moving
+    # plunger are enforced by the power/service-hardware validator.
     "left_side_brush_motor_guard.stl",
     "right_side_brush_motor_guard.stl",
 }
@@ -69,6 +80,7 @@ def _rgba(visual: ET.Element) -> tuple[float, float, float, float] | None:
 def validate_product_design(path: Path = DEFAULT_URDF) -> dict[str, object]:
     root = ET.parse(path).getroot()
     links = {link.attrib["name"]: link for link in root.findall("link")}
+    joints = {joint.attrib["name"]: joint for joint in root.findall("joint")}
     missing_links = sorted(REQUIRED_LINKS - links.keys())
     if missing_links:
         raise ProductDesignError("required product body links missing: " + ", ".join(missing_links))
@@ -110,6 +122,38 @@ def validate_product_design(path: Path = DEFAULT_URDF) -> dict[str, object]:
     if len(colors) < 9:
         raise ProductDesignError(f"only {len(colors)} opaque bodywork colors; expected a deliberate material hierarchy")
 
+    service_door_prefixes = (
+        "bodywork_power_service_door",
+        "bodywork_compute_service_door",
+        "bodywork_wet_service_door",
+        "bodywork_rear_dry_service_door",
+    )
+    for prefix in service_door_prefixes:
+        bracket_joint = joints.get(f"{prefix}_hinge_bracket_joint")
+        hinge_joint = joints.get(f"{prefix}_hinge_joint")
+        latch_joint = joints.get(f"{prefix}_latch_joint")
+        if bracket_joint is None or bracket_joint.attrib.get("type") != "fixed":
+            raise ProductDesignError(f"{prefix} lacks a fixed chassis hinge bracket")
+        if hinge_joint is None or hinge_joint.attrib.get("type") != "revolute":
+            raise ProductDesignError(f"{prefix} lacks a physical revolute hinge")
+        if latch_joint is None or latch_joint.attrib.get("type") != "revolute":
+            raise ProductDesignError(f"{prefix} lacks an independent rotary latch")
+        hinge_axis = hinge_joint.find("axis")
+        hinge_limit = hinge_joint.find("limit")
+        latch_limit = latch_joint.find("limit")
+        if hinge_axis is None or hinge_axis.attrib.get("xyz") != "0 0 1":
+            raise ProductDesignError(f"{prefix} hinge must use a vertical axis")
+        if hinge_limit is None or (
+            float(hinge_limit.attrib["upper"])
+            - float(hinge_limit.attrib["lower"])
+            < 1.70
+        ):
+            raise ProductDesignError(f"{prefix} hinge lacks a usable mechanical limit")
+        if latch_limit is None or not (
+            float(latch_limit.attrib["lower"]) < 0.0 < float(latch_limit.attrib["upper"])
+        ):
+            raise ProductDesignError(f"{prefix} latch lacks a locked zero detent range")
+
     has_warm_white = any(r > 0.75 and g > 0.75 and b > 0.75 for r, g, b, _ in colors)
     has_graphite = any(r < 0.10 and g < 0.11 and b < 0.12 for r, g, b, _ in colors)
     has_green = any(g > 0.30 and g > r * 3.0 and g > b * 1.25 for r, g, b, _ in colors)
@@ -132,6 +176,9 @@ def validate_product_design(path: Path = DEFAULT_URDF) -> dict[str, object]:
         "bodywork_mesh_visual_count": len(mesh_names),
         "opaque_material_color_count": len(colors),
         "service_panel_count": 4,
+        "service_hinge_count": 4,
+        "service_latch_count": 4,
+        "all_service_doors_have_chassis_brackets_limits_and_latches": True,
         "palette": palette,
         "all_bodywork_links_have_collision_and_positive_inertia": True,
         "all_bodywork_visuals_are_project_owned_meshes": True,

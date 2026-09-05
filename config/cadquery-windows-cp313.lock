@@ -1,0 +1,50 @@
+# Generated on 2026-08-31 from PyPI metadata and a clean-resolution probe:
+# py -3.13 -m pip install --dry-run --ignore-installed --only-binary=:all: cadquery==2.8.0
+# Target: CPython 3.13, Windows amd64. This lock deliberately has one exact
+# artifact hash per package and must be used with pip --require-hashes.
+--index-url https://pypi.org/simple
+--only-binary=:all:
+aiohappyeyeballs==2.7.1 --hash=sha256:9243213661e29250eb41368e5daa826fc017156c3b8a11440826b2e3ed376472
+aiohttp==3.14.3 --hash=sha256:dff9461ec275f22135650d5ba4b4931a11f3958df7dfbb8db630000d4dee0883
+aiosignal==1.4.0 --hash=sha256:053243f8b92b990551949e63930a839ff0cf0b0ebbe0597b0f3fb19e1a0fe82e
+attrs==26.1.0 --hash=sha256:c647aa4a12dfbad9333ca4e71fe62ddc36f4e63b2d260a37a8b83d2f043ac309
+cadquery==2.8.0 --hash=sha256:0acaddf36415551c26c3f8237907980ba86c277e211c32398121c839f719c81f
+cadquery-ocp==7.9.3.1.1 --hash=sha256:425e8e5ebe351bb3dd5b1e01023737566acd28da191d3b9071e24e1b2dd14dae
+cadquery-ocp-proxy==7.9.3.1.1 --hash=sha256:ca4164ec4b54956d9fc3e68c67d555b5486cb963c2f71e18df005ba16b921c91
+casadi==3.8.0 --hash=sha256:8630f9c68c7d05b49b538f05cc4f0873f0eaac720153c324f3dd00fc222b4d79
+contourpy==1.3.3 --hash=sha256:1cadd8b8969f060ba45ed7c1b714fe69185812ab43bd6b86a9123fe8f99c3263
+cycler==0.12.1 --hash=sha256:85cef7cff222d8644161529808465972e51340599459b8ac3ccbac5a854e0d30
+ezdxf==1.4.4 --hash=sha256:207eed544417464ffaf2570880d58a792ecd2534c9c2dede45e895f3200b77e6
+fonttools==4.63.0 --hash=sha256:ba04cb5891d4c0c21b6da95eda8d7b090021508a294fff33464fc7d241e0856b
+frozenlist==1.8.0 --hash=sha256:878be833caa6a3821caf85eb39c5ba92d28e85df26d57afb06b35b2efd937231
+idna==3.19 --hash=sha256:815e7be7a7806d54abb586dc943addc79e8b2ee16915059658cbeff4b1b43bf4
+kiwisolver==1.5.1 --hash=sha256:dc23390afe9f4ef9ac3bcc72a03a56eebbde03f4c571a32cb38f859cff9a6524
+llvmlite==0.49.0 --hash=sha256:a1b414dc6b164738ec39dd8987cea73829057b7dd92fc6d91b52838385fc1dd2
+matplotlib==3.11.1 --hash=sha256:68408341f2312836fbbdf6b3c78047f65b2d8752f5fd221c3e72d348f5b34f8b
+more-itertools==11.1.0 --hash=sha256:4b65538ae22f6fed0ce4874efd317463a7489796a0939fa66824dd542125a192
+msgpack==1.2.2 --hash=sha256:b07c03f0da7e5279170df7745ddc732d526c8a198208936ec1a95c11ed2b2d5f
+multidict==6.7.1 --hash=sha256:960c83bf01a95b12b08fd54324a4eb1d5b52c88932b5cba5d6e712bb3ed12eb5
+multimethod==1.12 --hash=sha256:fd0c473c43558908d97cc06e4d68e8f69202f167db46f7b4e4058893e7dbdf60
+nlopt==2.11.0 --hash=sha256:581c3c57c932a725b4df401c2550a02bafb2f52782201acde69d4415aed29640
+numba==0.67.0 --hash=sha256:b68ad5125fe245339cc8dcc036081fc1ea482c5063387b9612a76ccd83dc91cd
+numpy==2.5.2 --hash=sha256:85aaccb24182c25df891ad0ec333585967e115269d5f1b17f2c9ae005bc96657
+packaging==26.3 --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
+pillow==12.3.0 --hash=sha256:1cca606cd25738df4ed873d5ad46bbdb3d83b5cbca291f6b4ff13a4df6b0bbe8
+propcache==0.5.2 --hash=sha256:dfed59d0a5aeb01e242e66ff0300bc4a265a7c05f612d30016f0b60b1017d757
+pyparsing==3.3.2 --hash=sha256:850ba148bd908d7e2411587e247a1e4f0327839c40e2e5e6d05a007ecc69911d
+python-dateutil==2.9.0.post0 --hash=sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427
+PyYAML==6.0.3 --hash=sha256:79005a0d97d5ddabfeeea4cf676af11e647e41d81c9a7722a193022accdb6b7c
+runtype==0.5.3 --hash=sha256:ea8cc6828217ebfda5c159dce969e832efd865a09d6ad1fc993f5bf5e1a627ee
+scipy==1.18.1 --hash=sha256:559ed65f60c1af5a03f3912605a1b5114f522c7c32fb23c3376ae8f03219fe28
+six==1.17.0 --hash=sha256:4721f391ed90541fddacab5acf947aa0d3dc7d27b2e1e8eda2be8970586c3274
+trame==3.13.2 --hash=sha256:23e87a65a6ea9241ce1060e9cd01426e48b3b8b72cd9f3cb974fc398649280b6
+trame-client==3.13.6 --hash=sha256:b4acf325d037a3d118c00a89ebbb32418dea9064844cc23e45c9deddea0628a4
+trame-common==1.2.7 --hash=sha256:14d50c651505c41f9144261b67bc0c7b3524bf72893d56ad544e255cfa1c1ba1
+trame-components==2.5.0 --hash=sha256:897a6c0ebcc72d95a461bde28d2c2e37c4bc4922013ad07df3a65e64d4884672
+trame-server==3.14.0 --hash=sha256:3519e99fdb962d0ecf29f0e8f969c84280ba0ef71d2cafe84a97e8b31d8052bd
+trame-vtk==2.11.16 --hash=sha256:2b5eadaf152d1cc59604f1a5e7cabab933a79bb4f889cf15eecec8db0cc8721d
+trame-vuetify==3.2.5 --hash=sha256:533470daa6f4d233f2eeb7434a312062bc30fb1b2d8cb341a5d9934ff7880303
+typing_extensions==4.16.0 --hash=sha256:481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8
+vtk==9.6.2 --hash=sha256:4e9ad047a2b658550d5099dc808b26e331a9c94c3226c28453873035b8b48b41
+wslink==2.5.7 --hash=sha256:47d729f654d1ee0bb42b6f05b068c48d5fdacd3216e827c1e80ea09eca0fe287
+yarl==1.24.5 --hash=sha256:2dbe06fc16bc91502bca713704022182e5729861ae00277c3a23354b40929740

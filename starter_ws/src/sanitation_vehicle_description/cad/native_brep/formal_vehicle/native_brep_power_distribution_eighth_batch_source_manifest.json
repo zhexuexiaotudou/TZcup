@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "manifest_id": "tzcup_native_brep_power_distribution_eighth_batch_single_part_source_manifest_v1",
+  "status": "design_input_pending_native_export",
+  "claim_boundary": "Static source-integrity evidence only. This manifest binds the editable one-part CadQuery source and its contract by SHA-256. It does not assert CadQuery execution, FCStd/STEP creation, power-system release, IP/thermal/EMC approval, electrical safety, manufacture or vehicle readiness.",
+  "source_files": [{"path": "starter_ws/src/sanitation_vehicle_description/cad/native_brep/formal_vehicle/native_brep_power_distribution_eighth_batch.py", "sha256": "7fef4ec1ff849e166f93dacb95d6e32777484a08554fda21b6de9b03d01f18e3", "role": "authoritative_editable_single_part_parametric_cadquery_brep_source"}],
+  "design_inputs": [{"path": "config/high_fidelity_vehicle/native_brep_power_distribution_eighth_batch_contract.json", "sha256": "687f24c11c01b48db237ea5a4d83566231cf6297c51b825916ca7d63c105e9ce", "role": "machine_readable_power_distribution_geometry_interface_and_pending_release_contract"}],
+  "prohibited_methods": ["mesh_to_step_conversion", "faceted_or_tessellated_step_export", "mesh_import_as_native_brep_substitute", "placeholder_fcstd_or_step_artifact"],
+  "verification": {"algorithm": "sha256", "command": "Get-FileHash -Algorithm SHA256 <each listed path>", "update_rule": "Update this manifest in the same reviewed change whenever its source or contract changes. Matching hashes never authorize CadQuery import or native export."}
+}

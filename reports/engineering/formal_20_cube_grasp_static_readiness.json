@@ -1,0 +1,71 @@
+{
+  "checks": {
+    "aggregate_double_count_prevented": true,
+    "committed_vehicle_snapshot_current": true,
+    "current_vehicle_8_30kg_wastewater_source_bound": true,
+    "dual_finger_common_body_contact_gates_detachable_joint": true,
+    "final_session_and_current_snapshot_required": true,
+    "four_real_material_masses_five_each": true,
+    "maximum_two_attempts_per_target": true,
+    "physical_bodies_retained_and_mass_stepped": true,
+    "preexisting_canonical_evidence_is_preserved_away": true,
+    "retry_requires_safe_recovery_and_unchanged_payload": true,
+    "scene_spawn_uses_evaluator_only_material_and_color": true,
+    "single_layer_5_by_4_with_clearance": true,
+    "target_conditioned_wrist_ik_moveit_contact_lift_release_chain": true,
+    "twenty_unique_physical_targets": true,
+    "unified_non_symlink_runtime_closure_required": true
+  },
+  "measurements": {
+    "expected_final_physical_mass_kg": 0.7668,
+    "grid_columns": 5,
+    "grid_rows": 4,
+    "material_counts": {
+      "PET": 5,
+      "PP": 5,
+      "aluminum": 5,
+      "paperboard": 5
+    },
+    "maximum_attempts_per_target": 2,
+    "minimum_rotated_envelope_clearance_m": 0.017573593128807144,
+    "target_count": 20
+  },
+  "passed": true,
+  "provenance_boundary": {
+    "live_dosod_edgesam_perception_proven": false,
+    "required_separate_gates": [
+      "formal_random_scene_perception",
+      "formal_single_episode_cleaning_mission"
+    ],
+    "target_request_source": "seeded_manifest_injected_as_truth_free_v2_schema",
+    "wrist_recheck_transport_contract_present": true
+  },
+  "report_id": "tzcup_formal_20_cube_grasp_static_readiness_v1",
+  "runtime_state": {
+    "gazebo_started_by_this_audit": false,
+    "next_gate": "fresh WSL overlay build, then session-bound live 20-cube runtime",
+    "snapshot_error": null,
+    "twenty_cube_live_result_claimed": false,
+    "wsl_build_executed_by_this_audit": false
+  },
+  "schema_version": 1,
+  "source_contract_passed": true,
+  "source_sha256": {
+    "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": "3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9",
+    "scripts/formal_final_runtime_closure.py": "f116a020b4cdbc9bfa90ac783e81b645695da441417291c5669c019f2e774298",
+    "scripts/generate_formal_vehicle_snapshot.py": "334069d3c4f51f31edd4e0a9987612c52b1a7b27fa41df868762306c9a18cbf1",
+    "scripts/prepare_formal_20_cube_grasp_acceptance.py": "b52a36c10eed8654b28d42a55a95bf8f5a06181fa469c048bc85871c6f09f5b9",
+    "scripts/run_formal_20_cube_grasp_acceptance.sh": "1720deeb4709910e3cf2b1efd515e90e098e5e27b57a11b9902015602f5e7738",
+    "scripts/run_formal_final_acceptance.py": "3115b826cc69f4a7dfb1800c6cfc4f274487f5fb48b4c5d7f86380a97d3bd19b",
+    "scripts/validate_formal_20_cube_grasp_runtime.py": "28346faa823377d7964317863450ddcbbd672f7d8dde67f638d928d44f2a0711",
+    "starter_ws/src/sanitation_gazebo_control/src/DryBinMonitorSystem.cc": "fa85cf44c668dabe5b3b8d0c4fc22fa1e1cddc82bfab5f9e15e5093375097a9b",
+    "starter_ws/src/sanitation_gazebo_control/src/DynamicPayloadSystem.cc": "b683fac8938c49118cf95a3e84e70f2564dcbf2428cd09a4384b4ea83b769dd2",
+    "starter_ws/src/sanitation_gazebo_control/src/GripperContactGateSystem.cc": "ba2f82e4e913d7b2e1ea6546c0a55c02a3d74e5238c4b8b2e2fba7dfb68c2340",
+    "starter_ws/src/sanitation_manipulation/launch/formal_20_cube_pick_place.launch.py": "02a76c8adb8e37209ee58f129cc5e58d82e0bf6946fc325bf353d1124fa6c5ee",
+    "starter_ws/src/sanitation_manipulation/sanitation_manipulation/formal_20_cube_scene.py": "21f1281b42ae796c65398a62f8ecab723e74e0f137895ce41ffafb83d0e306ed",
+    "starter_ws/src/sanitation_manipulation/sanitation_manipulation/formal_grasp_executor.py": "ec88e366d01a59044dc6d800ed4654076b84518cb4ca908758f267907194a735",
+    "starter_ws/src/sanitation_manipulation/urdf/material_cube.urdf.xacro": "9ac79fe0250fb307bb3a8bee02d902e2b10109fb39dd604ba6442b21774a5086",
+    "starter_ws/src/sanitation_vehicle_description/urdf/formal_competition_vehicle.urdf.xacro": "ecff827bea7c940a0ab69f29be7b1252ad8508c24afd7b921dcb57d6904304b0"
+  },
+  "status": "FORMAL_20_CUBE_STATIC_READINESS_PASSED"
+}

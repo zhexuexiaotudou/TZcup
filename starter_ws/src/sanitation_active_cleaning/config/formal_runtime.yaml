@@ -1,0 +1,77 @@
+formal_active_cleaning_observation_bridge:
+  ros__parameters:
+    mask_topic: /perception/ground_dirt/masks
+    targets_topic: /perception/garbage/targets
+    belief_topic: /active_cleaning/ground_dirt_belief
+    filtered_targets_topic: /active_cleaning/garbage_targets
+    ready_topic: /active_cleaning/observation_ready
+    status_topic: /active_cleaning/observation_status
+    min_target_confidence: 0.50
+    max_observation_age_sec: 1.50
+    # The product mask is already projected into the public occupancy grid.
+    # mono8/8UC1 row zero is grid y=0; 0=unobserved, 1=observed clean,
+    # 2..255=dirty confidence. Camera masks that have not completed RGB-D
+    # projection are rejected.
+
+formal_active_cleaning_trajectory_executor:
+  ros__parameters:
+    path_topic: /active_cleaning/trajectory
+    cancel_topic: /active_cleaning/cancel
+    safety_permit_topic: /safety/actuators_enabled
+    follow_path_action: /follow_path
+    status_topic: /active_cleaning/executor_status
+    max_segment_length: 0.50
+    max_path_length: 10000.0
+    max_pose_count: 100000
+    max_safety_age_sec: 0.50
+    controller_id: FollowPath
+    goal_checker_id: general_goal_checker
+
+formal_active_cleaning_policy_planner:
+  ros__parameters:
+    belief_topic: /active_cleaning/ground_dirt_belief
+    targets_topic: /active_cleaning/garbage_targets
+    ready_topic: /active_cleaning/observation_ready
+    executor_status_topic: /active_cleaning/executor_status
+    grasp_result_topic: /active_cleaning/grasp_result
+    path_topic: /active_cleaning/trajectory
+    grasp_request_topic: /active_cleaning/grasp_request
+    cleaning_request_topic: /active_cleaning/cleaning_requested
+    mission_complete_topic: /active_cleaning/mission_complete
+    status_topic: /active_cleaning/planner_status
+    odometry_topic: /odom
+    map_frame: map
+    base_frame: base_link
+    planning_resolution_m: 1.0
+    sensing_radius_m: 10.0
+    sensing_fov_rad: 1.518436449
+    episode_seed: 7
+    maximum_input_age_sec: 1.50
+    planning_period_sec: 0.50
+    # Exact same-map FullCoverage evaluation distance. Product launch must
+    # override this; zero deliberately fails closed.
+    maximum_task_distance_m: 0.0
+
+formal_active_cleaning_cleaning_coordinator:
+  ros__parameters:
+    request_topic: /active_cleaning/cleaning_requested
+    safety_permit_topic: /safety/actuators_enabled
+    brush_command_topic: /safety/command/brush
+    pump_command_topic: /safety/command/pump
+    cleaning_trajectory_topic: /cleaning_controller/joint_trajectory
+    water_enable_topic: /model/tzcup_formal_sanitation_vehicle/water_recovery/command/enable
+    status_topic: /active_cleaning/cleaning_status
+    request_timeout_sec: 1.0
+    safety_timeout_sec: 0.5
+    joint_state_timeout_sec: 0.5
+    joint_states_topic: /joint_states
+    lift_joint_name: cleaning_lift_joint
+    work_lift_m: 0.100
+    transport_lift_m: 0.000
+    lift_tolerance_m: 0.001
+    left_brush_rad_s: 8.0
+    right_brush_rad_s: -8.0
+    roller_rad_s: 12.0
+    pump_rad_s: 20.0
+    publish_period_sec: 0.10
+    trajectory_republish_sec: 1.0

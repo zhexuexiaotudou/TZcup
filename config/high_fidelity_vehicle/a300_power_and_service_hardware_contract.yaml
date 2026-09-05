@@ -1,0 +1,162 @@
+schema_version: 1
+contract_id: a300_power_charge_and_drain_hardware_preintegration_v1
+status: RUNTIME_INTEGRATED_PENDING_FULL_ACCEPTANCE
+
+truth_boundary:
+  official_manual: https://docs.clearpathrobotics.com/docs_robots/outdoor_robots/husky/a300/user_manual_husky/
+  official_public_facts:
+    battery_chemistry: LiFePO4
+    nominal_voltage_v: 25.6
+    capacity_40ah_wh: 1024.0
+    capacity_40ah_pack_count: 2
+    a300_40ah_vehicle_mass_kg: 78.5
+    a300_80ah_vehicle_mass_kg: 93.5
+  derived_not_published_single_pack_mass:
+    method: The 80 Ah vehicle adds two packs relative to the two-pack 40 Ah vehicle; divide the official 15 kg whole-vehicle mass difference by two.
+    vehicle_mass_difference_kg: 15.0
+    additional_pack_count: 2
+    inferred_mass_per_pack_kg: 7.5
+    inferred_two_pack_mass_kg: 15.0
+    source_class: official_whole_vehicle_difference_engineering_inference
+  forbidden_claims:
+    - clearpath_publishes_7_5kg_single_pack_mass
+    - clearpath_publishes_internal_bms_mass
+    - project_charge_door_is_official_a300_geometry
+    - project_wastewater_valve_is_an_a300_component
+
+a300_curb_mass_transfer:
+  published_total_kg: 78.5
+  prior_aggregate_chassis_and_battery_kg: 50.5
+  explicit_two_battery_assemblies_kg: 15.0
+  revised_chassis_and_internal_structure_excluding_batteries_kg: 35.5
+  unchanged_allocations_kg:
+    four_motor_assemblies: 8.0
+    two_fixed_structural_beams: 5.0
+    two_fixed_spacers: 1.0
+    four_outdoor_wheels: 10.0
+    standard_top_plate: 4.0
+  recomputed_total_kg: 78.5
+  double_counting_forbidden: true
+
+battery_and_bms_design:
+  geometry_source_class: project_authored_internal_layout_pending_hardware_measurement
+  coordinate_reference: base_link
+  assemblies:
+    - id: left_pack
+      pack_link: a300_left_battery_pack_link
+      pack_joint: a300_left_battery_pack_joint
+      pack_joint_type: fixed
+      xyz_m: [-0.080, 0.095, 0.075]
+      rpy_rad: [0.0, 0.0, 0.0]
+      envelope_m: [0.330, 0.135, 0.135]
+      pack_cells_case_mass_kg: 7.35
+      bms_link: a300_left_battery_bms_link
+      bms_joint: a300_left_battery_bms_joint
+      bms_joint_type: fixed
+      bms_xyz_in_pack_m: [0.125, 0.0, 0.0]
+      bms_envelope_m: [0.065, 0.105, 0.025]
+      bms_mass_kg: 0.15
+      assembly_mass_kg: 7.5
+    - id: right_pack
+      pack_link: a300_right_battery_pack_link
+      pack_joint: a300_right_battery_pack_joint
+      pack_joint_type: fixed
+      xyz_m: [-0.080, -0.095, 0.075]
+      rpy_rad: [0.0, 0.0, 0.0]
+      envelope_m: [0.330, 0.135, 0.135]
+      pack_cells_case_mass_kg: 7.35
+      bms_link: a300_right_battery_bms_link
+      bms_joint: a300_right_battery_bms_joint
+      bms_joint_type: fixed
+      bms_xyz_in_pack_m: [0.125, 0.0, 0.0]
+      bms_envelope_m: [0.065, 0.105, 0.025]
+      bms_mass_kg: 0.15
+      assembly_mass_kg: 7.5
+  bms_mass_source_class: engineering_suballocation_inside_inferred_pack_mass
+  electrical_topology_status: two_pack_interconnect_and_internal_bms_topology_not_publicly_frozen
+  proposed_interfaces:
+    - {topic: /formal_vehicle/power/battery_soc, type: std_msgs/msg/Float64, existing: true}
+    - {topic: /formal_vehicle/power/charge_connected, type: std_msgs/msg/Bool, existing: true}
+    - {topic: /formal_vehicle/power/pack_voltage_v, type: std_msgs/msg/Float64MultiArray, existing: false}
+    - {topic: /formal_vehicle/power/pack_current_a, type: std_msgs/msg/Float64MultiArray, existing: false}
+    - {topic: /formal_vehicle/power/pack_temperature_c, type: std_msgs/msg/Float64MultiArray, existing: false}
+    - {topic: /formal_vehicle/power/bms_fault, type: std_msgs/msg/Bool, existing: false}
+    - {topic: /formal_vehicle/power/traction_permitted, type: std_msgs/msg/Bool, existing: false}
+  fail_safe_rules:
+    - invalid_or_stale_pack_telemetry_inhibits_charge_and_traction
+    - either_pack_fault_inhibits_complete_traction_system
+    - charge_connected_inhibits_traction
+    - overtemperature_overcurrent_or_undervoltage_latches_fault_until_safe_reset
+
+charge_interface_design:
+  source_class: project_authored_service_mechanism_at_existing_a300_datum
+  parent_link: base_link
+  datum_xyz_m: [0.250, 0.402, 0.330]
+  datum_rpy_rad: [1.570796327, 0.0, 0.0]
+  links:
+    - {name: charge_port_housing_link, parent: base_link, joint: charge_port_housing_joint, joint_type: fixed, mass_kg: 0.035, envelope_m: [0.075, 0.075, 0.020]}
+    - {name: charge_port_door_link, parent: charge_port_housing_link, joint: charge_port_door_hinge_joint, joint_type: revolute, axis_xyz: [1.0, 0.0, 0.0], lower_rad: 0.0, upper_rad: 1.92, mass_kg: 0.025, envelope_m: [0.072, 0.006, 0.072]}
+    - {name: charge_receptacle_link, parent: charge_port_housing_link, joint: charge_receptacle_joint, joint_type: fixed, mass_kg: 0.030, envelope_m: [0.058, 0.025, 0.058]}
+    - {name: charge_connector_lock_link, parent: charge_receptacle_link, joint: charge_connector_lock_joint, joint_type: prismatic, axis_xyz: [0.0, 0.0, 1.0], lower_m: 0.0, upper_m: 0.006, mass_kg: 0.010, envelope_m: [0.018, 0.012, 0.012]}
+  assembly_mass_kg: 0.100
+  mass_source_class: engineering_partition_transferred_from_existing_bodywork_trim_aggregate
+  door_actuation: passive_manual_detent
+  connector_lock_actuation: passive_spring_latch_released_by_service_action
+  required_contacts:
+    - charge_plug_receptacle_contact
+    - charge_lock_fully_engaged
+    - charge_door_open
+  implemented_interfaces:
+    - {topic: /formal_vehicle/service/raw/charge_plug_contact, type: ros_gz_interfaces/msg/Contacts, direction: subscription}
+    - {topic: /joint_states, type: sensor_msgs/msg/JointState, direction: subscription, joints: [charge_port_door_hinge_joint, charge_connector_lock_joint]}
+    - {topic: /formal_vehicle/power/charge_enable, type: std_msgs/msg/Bool, direction: publisher}
+    - {topic: /formal_vehicle/power/charge_connected, type: std_msgs/msg/Bool, direction: publisher}
+    - {topic: /formal_vehicle/power/charge_request_w, type: std_msgs/msg/Float64, direction: publisher}
+  permit_rule: charge_enable requires open charge door, plug contact, engaged lock, stationary vehicle, traction inhibited, valid BMS telemetry and no BMS fault.
+
+wastewater_drain_valve_design:
+  source_class: project_authored_custom_cleaning_payload_not_a300_equipment
+  parent_link: wastewater_tank_link
+  external_datum_in_base_link:
+    xyz_m: [-0.490, -0.305, 0.315]
+    rpy_rad: [0.0, 1.570796327, 0.0]
+  valve_body_xyz_in_tank_m: [-0.285, -0.060, -0.024]
+  links:
+    - {name: wastewater_drain_pipe_link, parent: wastewater_tank_link, joint: wastewater_drain_pipe_joint, joint_type: fixed, mass_kg: 0.120}
+    - {name: wastewater_drain_valve_body_link, parent: wastewater_drain_pipe_link, joint: wastewater_drain_valve_body_joint, joint_type: fixed, mass_kg: 0.280}
+    - {name: wastewater_drain_valve_ball_link, parent: wastewater_drain_valve_body_link, joint: wastewater_drain_valve_joint, joint_type: revolute, axis_xyz: [1.0, 0.0, 0.0], lower_rad: 0.0, upper_rad: 1.570796327, mass_kg: 0.080}
+    - {name: wastewater_drain_valve_actuator_link, parent: wastewater_drain_valve_body_link, joint: wastewater_drain_valve_actuator_mount_joint, joint_type: fixed, mass_kg: 0.320}
+    - {name: wastewater_drain_service_cap_link, parent: wastewater_drain_valve_body_link, joint: wastewater_drain_service_cap_joint, joint_type: revolute, axis_xyz: [0.0, 1.0, 0.0], lower_rad: 0.0, upper_rad: 2.4, mass_kg: 0.040}
+    - {name: wastewater_drain_coupling_link, parent: wastewater_drain_valve_body_link, joint: wastewater_drain_coupling_joint, joint_type: fixed, mass_kg: 0.060}
+  assembly_mass_kg: 0.900
+  mass_source_class: engineering_allocation_within_existing_filters_valves_and_strainer_payload_allowance
+  actuation: 24V_spring_return_normally_closed_engineering_candidate
+  command_interface: position
+  commanded_joint: wastewater_drain_valve_joint
+  fail_safe_position_rad: 0.0
+  fully_open_position_rad: 1.570796327
+  implemented_interfaces:
+    - {topic: /formal_vehicle/service/raw/drain_hose_contact, type: ros_gz_interfaces/msg/Contacts, direction: subscription}
+    - {topic: /joint_states, type: sensor_msgs/msg/JointState, direction: subscription, joints: [wastewater_drain_service_cap_joint, wastewater_drain_valve_joint]}
+    - {topic: /model/tzcup_formal_sanitation_vehicle/water_recovery/service_drain_permitted, type: std_msgs/msg/Bool, existing: true}
+    - {topic: /model/tzcup_formal_sanitation_vehicle/water_recovery/service_drained_volume_l, type: std_msgs/msg/Float64, existing: true}
+  permit_rule: valve opening requires stationary vehicle, cleaning disabled, recovery pump stopped, service drain permit, open cap, connected hose and valid tank level.
+  hydraulic_model_boundary: Initial model uses valve-angle-dependent orifice flow and exact water mass balance; no CFD claim.
+
+future_tests:
+  - two_batteries_and_two_bms_links_exist_with_fixed_joints
+  - inferred_pack_mass_is_labeled_and_two_pack_total_is_15kg
+  - a300_curb_mass_remains_exactly_78_5kg_without_double_counting
+  - battery_envelopes_are_inside_chassis_and_do_not_overlap
+  - invalid_or_stale_bms_telemetry_inhibits_charge_and_traction
+  - either_pack_fault_latches_whole_drivetrain_inhibit
+  - charge_door_must_be_open_and_lock_prismatic_limits_match_contract
+  - charge_enable_requires_contact_lock_stationary_and_traction_inhibit
+  - charge_connected_blocks_drive_command
+  - drain_valve_has_physical_body_ball_actuator_cap_and_coupling
+  - drain_valve_spring_returns_closed_on_timeout_power_loss_or_safety_revoke
+  - moving_vehicle_or_active_cleaning_cannot_open_drain_valve
+  - drain_flow_is_zero_when_closed_or_hose_absent
+  - drained_volume_and_tank_mass_change_close_within_one_percent
+  - new_links_replace_existing_aggregate_mass_instead_of_adding_mass
+  - integrated_vehicle_references_physical_power_and_service_hardware

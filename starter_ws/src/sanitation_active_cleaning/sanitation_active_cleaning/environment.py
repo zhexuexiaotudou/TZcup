@@ -106,13 +106,29 @@ class GridModel:
             for row in range(self.height)
             for column in range(self.width)
         )
+        # Formal campuses contain more than one hundred static assets.  Testing
+        # every grid centre against every polygon made a 200 m x 100 m map
+        # needlessly quadratic.  The expanded AABB is an exact rejection test:
+        # a polygon outside it cannot be within one vehicle radius of the point.
+        obstacle_bounds = tuple(
+            (
+                min(point[0] for point in obstacle) - config.vehicle_radius,
+                min(point[1] for point in obstacle) - config.vehicle_radius,
+                max(point[0] for point in obstacle) + config.vehicle_radius,
+                max(point[1] for point in obstacle) + config.vehicle_radius,
+                obstacle,
+            )
+            for obstacle in config.static_obstacles
+        )
         self.traversable = tuple(
             point_in_polygon(center, config.geofence)
             and distance_to_polygon_boundary(center, config.geofence)
             >= config.vehicle_radius
             and all(
                 distance_to_polygon(center, obstacle) > config.vehicle_radius
-                for obstacle in config.static_obstacles
+                for minimum_x, minimum_y, maximum_x, maximum_y, obstacle in obstacle_bounds
+                if minimum_x <= center[0] <= maximum_x
+                and minimum_y <= center[1] <= maximum_y
             )
             for center in self.centers
         )
@@ -121,8 +137,23 @@ class GridModel:
         self.free_indices = tuple(
             index for index, free in enumerate(self.traversable) if free
         )
+        self._free_index_set = frozenset(self.free_indices)
 
     def nearest_index(self, point: Point2D) -> int:
+        column = min(
+            self.width - 1,
+            max(0, int(math.floor((point[0] - self.origin[0]) / self.resolution))),
+        )
+        row = min(
+            self.height - 1,
+            max(0, int(math.floor((point[1] - self.origin[1]) / self.resolution))),
+        )
+        direct = row * self.width + column
+        # Dirt and litter are generated on traversable cell centres, so this
+        # constant-time path serves the overwhelmingly common product case.
+        # Retain the exact global fallback for arbitrary external coordinates.
+        if direct in self._free_index_set:
+            return direct
         return min(
             self.free_indices,
             key=lambda index: distance(self.centers[index], point),
@@ -269,7 +300,22 @@ class ActiveCleaningEnv:
                 if self.grid.traversable[index]
                 and distance((x, y), self.grid.centers[index]) <= radius
             }
-            if self._task_layout.ground_dirt_regions and not dirty:
+            dirty.update(
+                index
+                for polygon in self._task_layout.ground_dirt_polygons
+                for index in self.grid.indices_in_aabb(
+                    min(point[0] for point in polygon),
+                    min(point[1] for point in polygon),
+                    max(point[0] for point in polygon),
+                    max(point[1] for point in polygon),
+                )
+                if self.grid.traversable[index]
+                and point_in_polygon(self.grid.centers[index], polygon)
+            )
+            if (
+                self._task_layout.ground_dirt_regions
+                or self._task_layout.ground_dirt_polygons
+            ) and not dirty:
                 raise ValueError("explicit ground dirt does not intersect a traversable cell")
             return dirty
         dirty: set[int] = set()
@@ -532,7 +578,20 @@ class ActiveCleaningEnv:
                 pedestrian.x + step * math.cos(pedestrian.yaw),
                 pedestrian.y + step * math.sin(pedestrian.yaw),
             )
-            if self._point_is_free(proposal, include_pedestrians=False):
+            # Dynamic actors must not be advanced into the robot after an
+            # otherwise valid action.  The old update checked the geofence and
+            # static assets only; a pedestrian could therefore enter the
+            # stationary vehicle footprint between decisions and make the
+            # next trajectory invalid at its mandatory start point.  Treat
+            # the live chassis as an obstacle for pedestrian motion.
+            clears_vehicle = distance(
+                proposal,
+                (self._pose.x, self._pose.y),
+            ) > self.config.vehicle_radius + self.config.pedestrian.radius
+            if clears_vehicle and self._point_is_free(
+                proposal,
+                include_pedestrians=False,
+            ):
                 pedestrian.x, pedestrian.y = proposal
             else:
                 pedestrian.yaw = wrap_angle(pedestrian.yaw + math.pi)

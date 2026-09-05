@@ -8,8 +8,8 @@
     Clearpath Husky A300 40 Ah nominal model.  Visible chassis, livery, status
     lights, top plate and tyres are the BSD-3-Clause Clearpath meshes pinned in
     meshes/vendor/SOURCES.yaml.  Primitive geometry remains only for collision
-    and inertia.  Physical tyre radius follows the official description mesh;
-    the controller uses the separately published 0.1625 m effective radius.
+    and inertia.  Physical tyre radius is the official-description 0.1651 m;
+    the effort plant keeps the locked upstream control radius of 0.1625 m.
   -->
   <!-- Project-authored sensor envelopes based on the frozen public dimensions.
        Gazebo Harmonic sensor topics deliberately match pre_urdf_contract.yaml. -->
@@ -42,8 +42,10 @@
       <origin xyz="-0.041 0.003 0.070"/>
       <!-- Chassis allocation keeps base + four wheels + standard top plate at
              the published 78.5 kg 40 Ah A300 curb mass. The custom mast remains payload. -->
-      <mass value="64.5"/>
-      <inertia ixx="1.0512521406" ixy="0" ixz="0" iyy="4.2586006406" iyz="0" izz="4.7433515"/>
+      <!-- 35.5 kg chassis/internal structure excludes the now-explicit
+             15 kg batteries, 8 kg motors, 5 kg beams and 1 kg spacers. -->
+      <mass value="35.5"/>
+      <inertia ixx="0.5785961394" ixy="0" ixz="0" iyy="2.343880972733333" iyz="0" izz="2.610681833333333"/>
     </inertial>
   </link>
   <joint name="base_footprint_joint" type="fixed">
@@ -124,7 +126,11 @@
   <joint name="sensor_mast_joint" type="fixed">
     <parent link="payload_deck_link"/>
     <child link="sensor_mast_link"/>
-    <origin xyz="-0.135 0 0.020"/>
+    <!-- Front-centre mounting keeps the complete mast outside the certified
+           arm-to-hopper capsule while remaining on the chassis/cowl support
+           polygon.  The 190 x 150 mm base clears the adjacent control cabinet
+           by 38 mm and stays inside the product body footprint. -->
+    <origin xyz="0.420 0 0.020"/>
   </joint>
   <!-- Arm mounting datum: centered toward the forward deck to preserve rear
          bin volume.  Final transform remains subject to the CoG/collision gate. -->
@@ -166,6 +172,104 @@
     <child link="arm_mount_link"/>
     <origin xyz="0.100 -0.200 0.065"/>
   </joint>
+  <!-- Project-designed deck rails, four elastomer feet and four cabinet
+         clamps close the former 60.5 mm air gap.  Their footprint is an
+         integration choice, not a claimed UR factory mounting-hole pattern.
+         The former aggregate 12 kg control-box mass is conserved across this
+         base and the cabinet link. -->
+  <link name="ur5e_control_box_isolation_base_link">
+    <visual name="ur5e_control_box_isolation_base_visual">
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/ur5e_control_cabinet_isolation_base.stl"/>
+      </geometry>
+      <material name="control_box_mount_zinc">
+        <color rgba="0.32 0.35 0.36 1"/>
+      </material>
+    </visual>
+    <collision name="control_box_lower_left_rail_collision">
+      <origin xyz="0 0.080 0.002"/>
+      <geometry>
+        <box size="0.340 0.045 0.004"/>
+      </geometry>
+    </collision>
+    <collision name="control_box_lower_right_rail_collision">
+      <origin xyz="0 -0.080 0.002"/>
+      <geometry>
+        <box size="0.340 0.045 0.004"/>
+      </geometry>
+    </collision>
+    <collision name="control_box_upper_front_rail_collision">
+      <origin xyz="0.170 0 0.033"/>
+      <geometry>
+        <box size="0.050 0.220 0.006"/>
+      </geometry>
+    </collision>
+    <collision name="control_box_upper_rear_rail_collision">
+      <origin xyz="-0.170 0 0.033"/>
+      <geometry>
+        <box size="0.050 0.220 0.006"/>
+      </geometry>
+    </collision>
+    <collision name="control_box_front_left_isolator_collision">
+      <origin xyz="0.15 0.08 0.017"/>
+      <geometry>
+        <cylinder length="0.026" radius="0.018"/>
+      </geometry>
+    </collision>
+    <collision name="control_box_front_right_isolator_collision">
+      <origin xyz="0.15 -0.08 0.017"/>
+      <geometry>
+        <cylinder length="0.026" radius="0.018"/>
+      </geometry>
+    </collision>
+    <collision name="control_box_rear_left_isolator_collision">
+      <origin xyz="-0.15 0.08 0.017"/>
+      <geometry>
+        <cylinder length="0.026" radius="0.018"/>
+      </geometry>
+    </collision>
+    <collision name="control_box_rear_right_isolator_collision">
+      <origin xyz="-0.15 -0.08 0.017"/>
+      <geometry>
+        <cylinder length="0.026" radius="0.018"/>
+      </geometry>
+    </collision>
+    <collision name="control_box_front_left_clamp_collision">
+      <origin xyz="0.170 0.090 0.0565"/>
+      <geometry>
+        <box size="0.050 0.035 0.041"/>
+      </geometry>
+    </collision>
+    <collision name="control_box_front_right_clamp_collision">
+      <origin xyz="0.170 -0.090 0.0565"/>
+      <geometry>
+        <box size="0.050 0.035 0.041"/>
+      </geometry>
+    </collision>
+    <collision name="control_box_rear_left_clamp_collision">
+      <origin xyz="-0.170 0.090 0.0565"/>
+      <geometry>
+        <box size="0.050 0.035 0.041"/>
+      </geometry>
+    </collision>
+    <collision name="control_box_rear_right_clamp_collision">
+      <origin xyz="-0.170 -0.090 0.0565"/>
+      <geometry>
+        <box size="0.050 0.035 0.041"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0.035"/>
+      <mass value="0.680"/>
+      <inertia ixx="0.003333643333333334" ixy="0" ixz="0" iyy="0.008954976666666668" iyz="0" izz="0.01161666666666667"/>
+    </inertial>
+  </link>
+  <joint name="ur5e_control_box_isolation_base_joint" type="fixed">
+    <parent link="payload_deck_link"/>
+    <child link="ur5e_control_box_isolation_base_link"/>
+    <!-- The base frame starts exactly at the deck collision top. -->
+    <origin xyz="0.296 0.240 0.015"/>
+  </joint>
   <!-- UR e-Series standard control box.  The public cabinet envelope is
          oriented with its shallow axis across the vehicle.  Its rear face is
          tangent to, but does not enter, the frozen dry-bin envelope. -->
@@ -184,20 +288,79 @@
       </geometry>
     </collision>
     <inertial>
-      <mass value="12.0"/>
-      <inertia ixx="0.266117" ixy="0" ixz="0" iyy="0.4132010000000001" iyz="0" izz="0.27611600000000003"/>
+      <mass value="11.320"/>
+      <inertia ixx="0.25103703666666666" ixy="0" ixz="0" iyy="0.3897862766666667" iyz="0" izz="0.26046942666666667"/>
     </inertial>
   </link>
   <joint name="ur5e_control_box_mount_joint" type="fixed">
-    <parent link="payload_deck_link"/>
+    <parent link="ur5e_control_box_isolation_base_link"/>
     <child link="ur5e_control_box_link"/>
-    <origin xyz="0.296 0.240 0.3045"/>
+    <!-- Cabinet body bottom and clamp tops meet at base-local z=0.077 m. -->
+    <origin xyz="0 0 0.2895"/>
   </joint>
-  <!-- S100/Journey 6 integration remains SKU-pending.  This is a public-
-         reference 200 x 150 x 80 mm protective envelope plus mounting plate,
-         not a claim about the user's eventual board dimensions.  The 2 kg
-         allowance is assigned to the enclosure; the board datum carries only
-         epsilon mass so no unmeasured board mass is invented. -->
+  <!-- Journey 6P is represented by the connected RDK S100P V1P0 compute
+         assembly.  Until the owned board is measured, its child reference uses
+         the prior RDK S100 121 x 120 x 52.4 mm envelope only as a provisional
+         collision placeholder.  The surrounding sealed
+         enclosure and mounting plate are project-authored.  The frozen 2 kg
+         integration allowance remains on the enclosure; the child datum has
+         epsilon mass because the official board mass is not published. -->
+  <!-- A ventilated project mounting plate is bolted to the cabinet roof.
+         Four project-defined stand-offs bridge the remaining 24.9 mm; their
+         pattern is not claimed as an undocumented S100P board-hole pattern.
+         The frozen 2 kg compute integration allowance is conserved across the
+         roof mount, enclosure and epsilon-mass external-envelope datum. -->
+  <link name="s100_cabinet_roof_mount_link">
+    <visual name="s100_cabinet_roof_mount_visual">
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/s100_cabinet_roof_mount.stl"/>
+      </geometry>
+      <material name="s100_mount_aluminium">
+        <color rgba="0.52 0.55 0.56 1"/>
+      </material>
+    </visual>
+    <collision name="s100_roof_plate_collision">
+      <origin xyz="0 0 0.001"/>
+      <geometry>
+        <box size="0.230 0.180 0.002"/>
+      </geometry>
+    </collision>
+    <collision name="s100_front_left_standoff_collision">
+      <origin xyz="0.085 0.065 0.01445"/>
+      <geometry>
+        <cylinder length="0.0249" radius="0.0075"/>
+      </geometry>
+    </collision>
+    <collision name="s100_front_right_standoff_collision">
+      <origin xyz="0.085 -0.065 0.01445"/>
+      <geometry>
+        <cylinder length="0.0249" radius="0.0075"/>
+      </geometry>
+    </collision>
+    <collision name="s100_rear_left_standoff_collision">
+      <origin xyz="-0.085 0.065 0.01445"/>
+      <geometry>
+        <cylinder length="0.0249" radius="0.0075"/>
+      </geometry>
+    </collision>
+    <collision name="s100_rear_right_standoff_collision">
+      <origin xyz="-0.085 -0.065 0.01445"/>
+      <geometry>
+        <cylinder length="0.0249" radius="0.0075"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0.006"/>
+      <mass value="0.280"/>
+      <inertia ixx="0.0007728842333333334" ixy="0" ixz="0" iyy="0.0012512175666666667" iyz="0" izz="0.0019903333333333335"/>
+    </inertial>
+  </link>
+  <joint name="s100_cabinet_roof_mount_joint" type="fixed">
+    <parent link="ur5e_control_box_link"/>
+    <child link="s100_cabinet_roof_mount_link"/>
+    <!-- Cabinet collision top is +0.2245 m in the cabinet frame. -->
+    <origin xyz="0 0 0.2245"/>
+  </joint>
   <link name="s100_compute_enclosure_link">
     <visual name="s100_enclosure_body">
       <geometry>
@@ -220,27 +383,28 @@
     </collision>
     <inertial>
       <origin xyz="0 0 -0.004"/>
-      <mass value="1.999999"/>
-      <inertia ixx="0.005616663858333333" ixy="0" ixz="0" iyy="0.00869999565" iyz="0" izz="0.011616660858333334"/>
+      <mass value="1.719999"/>
+      <inertia ixx="0.004830330525" ixy="0" ixz="0" iyy="0.00748199565" iyz="0" izz="0.009990327525"/>
     </inertial>
   </link>
   <joint name="s100_compute_enclosure_mount_joint" type="fixed">
-    <parent link="payload_deck_link"/>
+    <parent link="s100_cabinet_roof_mount_link"/>
     <child link="s100_compute_enclosure_link"/>
-    <origin xyz="0.300 -0.270 0.100"/>
+    <!-- Enclosure mounting-plate underside contacts all four stand-offs. -->
+    <origin xyz="0 0 0.0769"/>
   </joint>
   <link name="s100_board_reference_link">
-    <visual name="s100_pending_board_visual">
+    <visual name="s100_external_reference_visual">
       <geometry>
         <mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/s100_board_reference.stl"/>
       </geometry>
-      <material name="s100_pending_board">
-        <color rgba="0.04 0.42 0.20 0.45"/>
+      <material name="s100_reference_graphite">
+        <color rgba="0.12 0.14 0.15 1"/>
       </material>
     </visual>
-    <collision>
+    <collision name="s100_official_external_envelope_collision">
       <geometry>
-        <box size="0.150 0.100 0.004"/>
+        <box size="0.121 0.120 0.0524"/>
       </geometry>
     </collision>
     <inertial>
@@ -270,9 +434,13 @@
         <box size="0.190 0.125 0.068"/>
       </geometry>
     </collision>
+    <!-- The former 0.700 kg lump included the upstream isolation and
+           contactor hardware.  Those parts are now articulated explicitly in
+           power_service_hardware.xacro, so 0.400 kg is transferred out of
+           this link while the total electrical-system mass stays unchanged. -->
     <inertial>
-      <mass value="0.700"/>
-      <inertia ixx="0.0011811916666666666" ixy="0" ixz="0" iyy="0.0023755666666666667" iyz="0" izz="0.0030172916666666664"/>
+      <mass value="0.300"/>
+      <inertia ixx="0.000506225" ixy="0" ixz="0" iyy="0.0010181" iyz="0" izz="0.001293125"/>
     </inertial>
   </link>
   <joint name="power_distribution_box_mount_joint" type="fixed">
@@ -328,6 +496,114 @@
     <child link="safety_relay_link"/>
     <origin xyz="0.220 -0.080 0.075"/>
   </joint>
+  <link name="left_suspension_beam_spacer_link">
+    <visual name="left_suspension_spacer_visual">
+      <origin rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/suspension_spacer.stl"/>
+      </geometry>
+      <material name="left_spacer_dark">
+        <color rgba="0.12 0.13 0.14 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/suspension_spacer.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.5"/>
+      <inertia ixx="0.00021041666666666667" ixy="0" ixz="0" iyy="0.00042187499999999994" iyz="0" izz="0.0004635416666666666"/>
+    </inertial>
+  </link>
+  <joint name="left_suspension_beam_spacer_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="left_suspension_beam_spacer_link"/>
+    <!-- z differs from upstream only because this project keeps base_link at
+           the wheel centre (REP-105 footprint is 0.1651 m below it). -->
+    <origin xyz="0 0.192 0.0085"/>
+  </joint>
+  <link name="left_suspension_beam_link">
+    <visual name="left_suspension_beam_visual">
+      <origin rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/suspension_beam.stl"/>
+      </geometry>
+      <material name="left_beam_dark">
+        <color rgba="0.10 0.11 0.12 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/suspension_beam.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="2.5"/>
+      <inertia ixx="0.0025052083333333337" ixy="0" ixz="0" iyy="0.07869270833333332" iyz="0" izz="0.07885416666666667"/>
+    </inertial>
+  </link>
+  <joint name="left_suspension_beam_joint" type="fixed">
+    <parent link="left_suspension_beam_spacer_link"/>
+    <child link="left_suspension_beam_link"/>
+    <origin xyz="0 0.0159 0"/>
+  </joint>
+  <link name="front_left_motor_link">
+    <visual name="front_left_motor_visual">
+      <origin rpy="0 0 3.141592653589793"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/motor.stl"/>
+      </geometry>
+      <material name="front_left_motor_dark">
+        <color rgba="0.09 0.10 0.11 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/motor.stl"/>
+      </geometry>
+    </collision>
+    <!-- 0.080 kg is split to the explicit encoder end-cap child below;
+           the 2.0 kg engineering allocation per drive module is conserved. -->
+    <inertial>
+      <mass value="1.92"/>
+      <inertia ixx="0.00424" ixy="0" ixz="0" iyy="0.007411999999999999" iyz="0" izz="0.00778"/>
+    </inertial>
+  </link>
+  <joint name="front_left_motor_joint" type="fixed">
+    <parent link="left_suspension_beam_link"/>
+    <child link="front_left_motor_link"/>
+    <origin xyz="0.256 0.0095 -0.0085"/>
+  </joint>
+  <link name="front_left_encoder_link">
+    <visual name="front_left_encoder_visual">
+      <origin rpy="-1.5707963267948966 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/a300_encoder_cap.stl"/>
+      </geometry>
+      <material name="front_left_encoder_black">
+        <color rgba="0.045 0.055 0.060 1"/>
+      </material>
+    </visual>
+    <collision name="front_left_encoder_cap_collision">
+      <origin rpy="1.5707963267948966 0 0"/>
+      <geometry>
+        <cylinder length="0.028" radius="0.030"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.080"/>
+      <inertia ixx="0.000023227" ixy="0" ixz="0" iyy="0.000036000" iyz="0" izz="0.000023227"/>
+    </inertial>
+  </link>
+  <joint name="front_left_encoder_mount_joint" type="fixed">
+    <parent link="front_left_motor_link"/>
+    <child link="front_left_encoder_link"/>
+    <!-- The encoder is on the inboard end, opposite the wheel output.  Its
+           public A300 package dimensions are unavailable, so this visible cap
+           is an explicitly marked engineering integration reference. -->
+    <origin xyz="0 -0.052 0"/>
+  </joint>
   <link name="front_left_wheel_link">
     <visual name="front_left_tire_visual">
       <origin rpy="0 0 0"/>
@@ -350,9 +626,9 @@
     </inertial>
   </link>
   <joint name="front_left_wheel_joint" type="continuous">
-    <parent link="base_link"/>
+    <parent link="front_left_motor_link"/>
     <child link="front_left_wheel_link"/>
-    <origin xyz="0.256 0.283 0.0"/>
+    <origin xyz="0 0.0655 0"/>
     <axis xyz="0 1 0"/>
     <limit effort="250" velocity="12.2"/>
     <dynamics damping="0.15" friction="0.05"/>
@@ -365,43 +641,62 @@
     <minDepth>0.001</minDepth>
     <maxVel>0.1</maxVel>
   </gazebo>
-  <link name="front_right_wheel_link">
-    <visual name="front_right_tire_visual">
+  <link name="rear_left_motor_link">
+    <visual name="rear_left_motor_visual">
       <origin rpy="0 0 3.141592653589793"/>
       <geometry>
-        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/wheels/outdoor_right.stl"/>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/motor.stl"/>
       </geometry>
-      <material name="front_right_tire">
-        <color rgba="0.035 0.040 0.045 1"/>
+      <material name="rear_left_motor_dark">
+        <color rgba="0.09 0.10 0.11 1"/>
       </material>
     </visual>
-    <collision name="front_right_wheel_collision">
+    <collision>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/motor.stl"/>
+      </geometry>
+    </collision>
+    <!-- 0.080 kg is split to the explicit encoder end-cap child below;
+           the 2.0 kg engineering allocation per drive module is conserved. -->
+    <inertial>
+      <mass value="1.92"/>
+      <inertia ixx="0.00424" ixy="0" ixz="0" iyy="0.007411999999999999" iyz="0" izz="0.00778"/>
+    </inertial>
+  </link>
+  <joint name="rear_left_motor_joint" type="fixed">
+    <parent link="left_suspension_beam_link"/>
+    <child link="rear_left_motor_link"/>
+    <origin xyz="-0.256 0.0095 -0.0085"/>
+  </joint>
+  <link name="rear_left_encoder_link">
+    <visual name="rear_left_encoder_visual">
+      <origin rpy="-1.5707963267948966 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/a300_encoder_cap.stl"/>
+      </geometry>
+      <material name="rear_left_encoder_black">
+        <color rgba="0.045 0.055 0.060 1"/>
+      </material>
+    </visual>
+    <collision name="rear_left_encoder_cap_collision">
       <origin rpy="1.5707963267948966 0 0"/>
       <geometry>
-        <cylinder length="0.1143" radius="0.1651"/>
+        <cylinder length="0.028" radius="0.030"/>
       </geometry>
     </collision>
     <inertial>
-      <mass value="2.5"/>
-      <inertia ixx="0.024420" ixy="0" ixz="0" iyy="0.034073" iyz="0" izz="0.024420"/>
+      <mass value="0.080"/>
+      <inertia ixx="0.000023227" ixy="0" ixz="0" iyy="0.000036000" iyz="0" izz="0.000023227"/>
     </inertial>
   </link>
-  <joint name="front_right_wheel_joint" type="continuous">
-    <parent link="base_link"/>
-    <child link="front_right_wheel_link"/>
-    <origin xyz="0.256 -0.283 0.0"/>
-    <axis xyz="0 1 0"/>
-    <limit effort="250" velocity="12.2"/>
-    <dynamics damping="0.15" friction="0.05"/>
+  <joint name="rear_left_encoder_mount_joint" type="fixed">
+    <parent link="rear_left_motor_link"/>
+    <child link="rear_left_encoder_link"/>
+    <!-- The encoder is on the inboard end, opposite the wheel output.  Its
+           public A300 package dimensions are unavailable, so this visible cap
+           is an explicitly marked engineering integration reference. -->
+    <origin xyz="0 -0.052 0"/>
   </joint>
-  <gazebo reference="front_right_wheel_link">
-    <mu1>0.9</mu1>
-    <mu2>0.72</mu2>
-    <kp>1000000</kp>
-    <kd>100</kd>
-    <minDepth>0.001</minDepth>
-    <maxVel>0.1</maxVel>
-  </gazebo>
   <link name="rear_left_wheel_link">
     <visual name="rear_left_tire_visual">
       <origin rpy="0 0 0"/>
@@ -424,9 +719,9 @@
     </inertial>
   </link>
   <joint name="rear_left_wheel_joint" type="continuous">
-    <parent link="base_link"/>
+    <parent link="rear_left_motor_link"/>
     <child link="rear_left_wheel_link"/>
-    <origin xyz="-0.256 0.283 0.0"/>
+    <origin xyz="0 0.0655 0"/>
     <axis xyz="0 1 0"/>
     <limit effort="250" velocity="12.2"/>
     <dynamics damping="0.15" friction="0.05"/>
@@ -439,6 +734,207 @@
     <minDepth>0.001</minDepth>
     <maxVel>0.1</maxVel>
   </gazebo>
+  <link name="right_suspension_beam_spacer_link">
+    <visual name="right_suspension_spacer_visual">
+      <origin rpy="0 0 3.141592653589793"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/suspension_spacer.stl"/>
+      </geometry>
+      <material name="right_spacer_dark">
+        <color rgba="0.12 0.13 0.14 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/suspension_spacer.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.5"/>
+      <inertia ixx="0.00021041666666666667" ixy="0" ixz="0" iyy="0.00042187499999999994" iyz="0" izz="0.0004635416666666666"/>
+    </inertial>
+  </link>
+  <joint name="right_suspension_beam_spacer_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="right_suspension_beam_spacer_link"/>
+    <!-- z differs from upstream only because this project keeps base_link at
+           the wheel centre (REP-105 footprint is 0.1651 m below it). -->
+    <origin xyz="0 -0.192 0.0085"/>
+  </joint>
+  <link name="right_suspension_beam_link">
+    <visual name="right_suspension_beam_visual">
+      <origin rpy="0 0 3.141592653589793"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/suspension_beam.stl"/>
+      </geometry>
+      <material name="right_beam_dark">
+        <color rgba="0.10 0.11 0.12 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/suspension_beam.stl"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="2.5"/>
+      <inertia ixx="0.0025052083333333337" ixy="0" ixz="0" iyy="0.07869270833333332" iyz="0" izz="0.07885416666666667"/>
+    </inertial>
+  </link>
+  <joint name="right_suspension_beam_joint" type="fixed">
+    <parent link="right_suspension_beam_spacer_link"/>
+    <child link="right_suspension_beam_link"/>
+    <origin xyz="0 -0.0159 0"/>
+  </joint>
+  <link name="front_right_motor_link">
+    <visual name="front_right_motor_visual">
+      <origin rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/motor.stl"/>
+      </geometry>
+      <material name="front_right_motor_dark">
+        <color rgba="0.09 0.10 0.11 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/motor.stl"/>
+      </geometry>
+    </collision>
+    <!-- 0.080 kg is split to the explicit encoder end-cap child below;
+           the 2.0 kg engineering allocation per drive module is conserved. -->
+    <inertial>
+      <mass value="1.92"/>
+      <inertia ixx="0.00424" ixy="0" ixz="0" iyy="0.007411999999999999" iyz="0" izz="0.00778"/>
+    </inertial>
+  </link>
+  <joint name="front_right_motor_joint" type="fixed">
+    <parent link="right_suspension_beam_link"/>
+    <child link="front_right_motor_link"/>
+    <origin xyz="0.256 -0.0095 -0.0085"/>
+  </joint>
+  <link name="front_right_encoder_link">
+    <visual name="front_right_encoder_visual">
+      <origin rpy="1.5707963267948966 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/a300_encoder_cap.stl"/>
+      </geometry>
+      <material name="front_right_encoder_black">
+        <color rgba="0.045 0.055 0.060 1"/>
+      </material>
+    </visual>
+    <collision name="front_right_encoder_cap_collision">
+      <origin rpy="1.5707963267948966 0 0"/>
+      <geometry>
+        <cylinder length="0.028" radius="0.030"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.080"/>
+      <inertia ixx="0.000023227" ixy="0" ixz="0" iyy="0.000036000" iyz="0" izz="0.000023227"/>
+    </inertial>
+  </link>
+  <joint name="front_right_encoder_mount_joint" type="fixed">
+    <parent link="front_right_motor_link"/>
+    <child link="front_right_encoder_link"/>
+    <!-- The encoder is on the inboard end, opposite the wheel output.  Its
+           public A300 package dimensions are unavailable, so this visible cap
+           is an explicitly marked engineering integration reference. -->
+    <origin xyz="0 0.052 0"/>
+  </joint>
+  <link name="front_right_wheel_link">
+    <visual name="front_right_tire_visual">
+      <origin rpy="0 0 3.141592653589793"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/wheels/outdoor_right.stl"/>
+      </geometry>
+      <material name="front_right_tire">
+        <color rgba="0.035 0.040 0.045 1"/>
+      </material>
+    </visual>
+    <collision name="front_right_wheel_collision">
+      <origin rpy="1.5707963267948966 0 0"/>
+      <geometry>
+        <cylinder length="0.1143" radius="0.1651"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="2.5"/>
+      <inertia ixx="0.024420" ixy="0" ixz="0" iyy="0.034073" iyz="0" izz="0.024420"/>
+    </inertial>
+  </link>
+  <joint name="front_right_wheel_joint" type="continuous">
+    <parent link="front_right_motor_link"/>
+    <child link="front_right_wheel_link"/>
+    <origin xyz="0 -0.0655 0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="250" velocity="12.2"/>
+    <dynamics damping="0.15" friction="0.05"/>
+  </joint>
+  <gazebo reference="front_right_wheel_link">
+    <mu1>0.9</mu1>
+    <mu2>0.72</mu2>
+    <kp>1000000</kp>
+    <kd>100</kd>
+    <minDepth>0.001</minDepth>
+    <maxVel>0.1</maxVel>
+  </gazebo>
+  <link name="rear_right_motor_link">
+    <visual name="rear_right_motor_visual">
+      <origin rpy="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/motor.stl"/>
+      </geometry>
+      <material name="rear_right_motor_dark">
+        <color rgba="0.09 0.10 0.11 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/vendor/clearpath_a300/drivetrain/motor.stl"/>
+      </geometry>
+    </collision>
+    <!-- 0.080 kg is split to the explicit encoder end-cap child below;
+           the 2.0 kg engineering allocation per drive module is conserved. -->
+    <inertial>
+      <mass value="1.92"/>
+      <inertia ixx="0.00424" ixy="0" ixz="0" iyy="0.007411999999999999" iyz="0" izz="0.00778"/>
+    </inertial>
+  </link>
+  <joint name="rear_right_motor_joint" type="fixed">
+    <parent link="right_suspension_beam_link"/>
+    <child link="rear_right_motor_link"/>
+    <origin xyz="-0.256 -0.0095 -0.0085"/>
+  </joint>
+  <link name="rear_right_encoder_link">
+    <visual name="rear_right_encoder_visual">
+      <origin rpy="1.5707963267948966 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/a300_encoder_cap.stl"/>
+      </geometry>
+      <material name="rear_right_encoder_black">
+        <color rgba="0.045 0.055 0.060 1"/>
+      </material>
+    </visual>
+    <collision name="rear_right_encoder_cap_collision">
+      <origin rpy="1.5707963267948966 0 0"/>
+      <geometry>
+        <cylinder length="0.028" radius="0.030"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <mass value="0.080"/>
+      <inertia ixx="0.000023227" ixy="0" ixz="0" iyy="0.000036000" iyz="0" izz="0.000023227"/>
+    </inertial>
+  </link>
+  <joint name="rear_right_encoder_mount_joint" type="fixed">
+    <parent link="rear_right_motor_link"/>
+    <child link="rear_right_encoder_link"/>
+    <!-- The encoder is on the inboard end, opposite the wheel output.  Its
+           public A300 package dimensions are unavailable, so this visible cap
+           is an explicitly marked engineering integration reference. -->
+    <origin xyz="0 0.052 0"/>
+  </joint>
   <link name="rear_right_wheel_link">
     <visual name="rear_right_tire_visual">
       <origin rpy="0 0 3.141592653589793"/>
@@ -461,9 +957,9 @@
     </inertial>
   </link>
   <joint name="rear_right_wheel_joint" type="continuous">
-    <parent link="base_link"/>
+    <parent link="rear_right_motor_link"/>
     <child link="rear_right_wheel_link"/>
-    <origin xyz="-0.256 -0.283 0.0"/>
+    <origin xyz="0 -0.0655 0"/>
     <axis xyz="0 1 0"/>
     <limit effort="250" velocity="12.2"/>
     <dynamics damping="0.15" friction="0.05"/>
@@ -789,7 +1285,6 @@
     <origin xyz="-0.03060114 0 0.05490452"/>
     <axis xyz="0 -1 0"/>
     <limit effort="50" lower="-0.8" upper="0" velocity="0.5"/>
-    <mimic joint="robotiq_85_left_knuckle_joint" multiplier="-1"/>
   </joint>
   <link name="robotiq_85_left_finger_link">
     <visual>
@@ -858,7 +1353,6 @@
     <origin xyz="0.0127 0 0.06142"/>
     <axis xyz="0 -1 0"/>
     <limit effort="50" lower="0" upper="0.8" velocity="0.5"/>
-    <mimic joint="robotiq_85_left_knuckle_joint"/>
   </joint>
   <link name="robotiq_85_right_inner_knuckle_link">
     <visual>
@@ -883,7 +1377,6 @@
     <origin xyz="-0.0127 0 0.06142"/>
     <axis xyz="0 -1 0"/>
     <limit effort="50" lower="-0.8" upper="0" velocity="0.5"/>
-    <mimic joint="robotiq_85_left_knuckle_joint" multiplier="-1"/>
   </joint>
   <link name="robotiq_85_left_finger_tip_link">
     <visual>
@@ -908,7 +1401,6 @@
     <origin xyz="0.00563134 0 0.04718515"/>
     <axis xyz="0 -1 0"/>
     <limit effort="50" lower="-0.8" upper="0" velocity="0.5"/>
-    <mimic joint="robotiq_85_left_knuckle_joint" multiplier="-1"/>
   </joint>
   <link name="robotiq_85_right_finger_tip_link">
     <visual>
@@ -933,7 +1425,6 @@
     <origin xyz="-0.00563134 0 0.04718515"/>
     <axis xyz="0 -1 0"/>
     <limit effort="50" lower="0" upper="0.8" velocity="0.5"/>
-    <mimic joint="robotiq_85_left_knuckle_joint"/>
   </joint>
   <gazebo reference="robotiq_85_left_finger_tip_link">
     <mu1>1.20</mu1>
@@ -986,7 +1477,10 @@
   <joint name="lidar_2d_bracket_joint" type="fixed">
     <parent link="sensor_mast_link"/>
     <child link="lidar_2d_mount_link"/>
-    <origin xyz="0.060 0 0.635"/>
+    <!-- Keep the 270 degree measurement plane above the moulded mast
+           fairing.  The 47 mm vertical clearance prevents the rear edge of
+           the physical fairing from masking both side sectors. -->
+    <origin xyz="0.060 0 0.695"/>
   </joint>
   <link name="lidar_2d_link">
     <visual name="utm30lx_mesh">
@@ -1107,7 +1601,10 @@
   </joint>
   <gazebo reference="lidar_3d_link">
     <sensor name="mid360" type="gpu_lidar">
-      <topic>/sensors/lidar_3d/points</topic>
+      <!-- Gazebo publishes LaserScan on this base topic and PointCloudPacked
+             on its /points child.  Keep the base free of the /points suffix so
+             the ROS PointCloud2 contract is exactly /sensors/lidar_3d/points. -->
+      <topic>/sensors/lidar_3d</topic>
       <update_rate>10</update_rate>
       <always_on>true</always_on>
       <visualize>false</visualize>
@@ -1182,7 +1679,9 @@
   <joint name="front_rgbd_bracket_joint" type="fixed">
     <parent link="base_link"/>
     <child link="front_rgbd_mount_link"/>
-    <origin rpy="0 0.139626 0" xyz="0.565 0 0.449"/>
+    <!-- A 25 degree depression covers the ground from just ahead of the
+           front bumper through the long-range litter perception corridor. -->
+    <origin rpy="0 0.436332313 0" xyz="0.565 0 0.449"/>
   </joint>
   <link name="front_rgbd_link">
     <visual name="front_rgbd_housing_visual">
@@ -1199,10 +1698,15 @@
         <box size="0.02505 0.090 0.025"/>
       </geometry>
     </collision>
+    <!-- Two additional optical datums below carry 1 microgram each so the
+           strict URDF checker can retain them as links.  Remove the same two
+           micrograms from the public 75 g housing allocation: adding the
+           complete stereo frame tree therefore changes neither D435 nor
+           whole-vehicle mass. -->
     <inertial>
       <origin xyz="0 -0.0175 0"/>
-      <mass value="0.074999"/>
-      <inertia ixx="5.453052291666666e-05" ixy="0" ixz="0" iyy="7.828036249791667e-06" iyz="0" izz="5.454616333312499e-05"/>
+      <mass value="0.074998"/>
+      <inertia ixx="5.452979583333333e-05" ixy="0" ixz="0" iyy="7.827931874583334e-06" iyz="0" izz="5.454543604124999e-05"/>
     </inertial>
   </link>
   <joint name="front_rgbd_mount_joint" type="fixed">
@@ -1223,6 +1727,34 @@
     <child link="front_rgbd_depth_optical_frame"/>
     <!-- body: +X forward,+Y left,+Z up; optical: +Z forward,+X right,+Y down -->
     <origin rpy="-1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0"/>
+  </joint>
+  <link name="front_rgbd_infra1_optical_frame">
+    <!-- Optical frames are mathematical datums.  Epsilon inertia avoids a
+           zero-inertia link in strict offline validation. -->
+    <inertial>
+      <mass value="0.000001"/>
+      <inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/>
+    </inertial>
+  </link>
+  <joint name="front_rgbd_infra1_optical_frame_joint" type="fixed">
+    <parent link="front_rgbd_link"/>
+    <child link="front_rgbd_infra1_optical_frame"/>
+    <!-- body: +X forward,+Y left,+Z up; optical: +Z forward,+X right,+Y down -->
+    <origin rpy="-1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0"/>
+  </joint>
+  <link name="front_rgbd_infra2_optical_frame">
+    <!-- Optical frames are mathematical datums.  Epsilon inertia avoids a
+           zero-inertia link in strict offline validation. -->
+    <inertial>
+      <mass value="0.000001"/>
+      <inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/>
+    </inertial>
+  </link>
+  <joint name="front_rgbd_infra2_optical_frame_joint" type="fixed">
+    <parent link="front_rgbd_link"/>
+    <child link="front_rgbd_infra2_optical_frame"/>
+    <!-- body: +X forward,+Y left,+Z up; optical: +Z forward,+X right,+Y down -->
+    <origin rpy="-1.5707963267948966 0 -1.5707963267948966" xyz="0 -0.050 0"/>
   </joint>
   <gazebo reference="front_rgbd_link">
     <sensor name="front_rgbd_d435_rgbd" type="rgbd_camera">
@@ -1260,7 +1792,125 @@
         </depth_camera>
       </camera>
     </sensor>
+    <sensor name="front_rgbd_d435_infra1" type="camera">
+      <pose>0 0 0 0 0 0</pose>
+      <topic>/sensors/front_rgbd/infra1/image_rect_raw</topic>
+      <update_rate>30</update_rate>
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <gz_frame_id>front_rgbd_infra1_optical_frame</gz_frame_id>
+      <camera>
+        <optical_frame_id>front_rgbd_infra1_optical_frame</optical_frame_id>
+        <camera_info_topic>/sensors/front_rgbd/infra1/image_rect_raw/camera_info</camera_info_topic>
+        <horizontal_fov>1.518436</horizontal_fov>
+        <image>
+          <width>848</width>
+          <height>480</height>
+          <format>L_INT8</format>
+        </image>
+        <clip>
+          <near>0.2</near>
+          <far>10.0</far>
+        </clip>
+        <lens>
+          <intrinsics>
+            <fx>447.2</fx>
+            <fy>433.0</fy>
+            <cx>424.0</cx>
+            <cy>240.0</cy>
+            <s>0</s>
+          </intrinsics>
+        </lens>
+      </camera>
+    </sensor>
+    <sensor name="front_rgbd_d435_infra2" type="camera">
+      <pose>0 -0.050 0 0 0 0</pose>
+      <topic>/sensors/front_rgbd/infra2/image_rect_raw</topic>
+      <update_rate>30</update_rate>
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <gz_frame_id>front_rgbd_infra2_optical_frame</gz_frame_id>
+      <camera>
+        <optical_frame_id>front_rgbd_infra2_optical_frame</optical_frame_id>
+        <camera_info_topic>/sensors/front_rgbd/infra2/image_rect_raw/camera_info</camera_info_topic>
+        <horizontal_fov>1.518436</horizontal_fov>
+        <image>
+          <width>848</width>
+          <height>480</height>
+          <format>L_INT8</format>
+        </image>
+        <clip>
+          <near>0.2</near>
+          <far>10.0</far>
+        </clip>
+        <lens>
+          <intrinsics>
+            <fx>447.2</fx>
+            <fy>433.0</fy>
+            <cx>424.0</cx>
+            <cy>240.0</cy>
+            <s>0</s>
+          </intrinsics>
+        </lens>
+      </camera>
+    </sensor>
   </gazebo>
+  <link name="wrist_rgbd_mount_link">
+    <visual name="wrist_rgbd_machined_side_bracket_visual">
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/generated/sensors/wrist_rgbd_side_bracket.stl"/>
+      </geometry>
+      <material name="wrist_rgbd_bracket">
+        <color rgba="0.25 0.27 0.28 1"/>
+      </material>
+    </visual>
+    <!-- The optical axis is local +X.  Every load-carrying bracket member
+             therefore stays behind the D435 rear plane (x <= -12.5 mm),
+             rather than crossing the emitted depth frustum. -->
+    <collision name="wrist_rgbd_bracket_camera_plate_collision">
+      <origin xyz="-0.016 0.010 0.027"/>
+      <geometry>
+        <box size="0.006 0.055 0.055"/>
+      </geometry>
+    </collision>
+    <collision name="wrist_rgbd_bracket_camera_standoff_collision">
+      <origin xyz="-0.020 0.004 0.029"/>
+      <geometry>
+        <box size="0.008 0.030 0.064"/>
+      </geometry>
+    </collision>
+    <collision name="wrist_rgbd_bracket_outboard_rail_collision">
+      <origin xyz="-0.024 0.070 0.060"/>
+      <geometry>
+        <box size="0.008 0.145 0.030"/>
+      </geometry>
+    </collision>
+    <collision name="wrist_rgbd_bracket_adapter_flange_collision">
+      <origin xyz="-0.024 0.140 0.049"/>
+      <geometry>
+        <box size="0.008 0.070 0.022"/>
+      </geometry>
+    </collision>
+    <collision name="wrist_rgbd_bracket_flange_bridge_collision">
+      <origin xyz="-0.044 0.124 0.049"/>
+      <geometry>
+        <box size="0.040 0.008 0.022"/>
+      </geometry>
+    </collision>
+    <!-- 236.709 g project-machined aluminium bracket, separated from the
+             public 75 g D435 housing so their load path and replacement datum
+             are independently inspectable. -->
+    <inertial>
+      <origin xyz="-0.024 0.06018820 0.04530774"/>
+      <mass value="0.236709"/>
+      <inertia ixx="0.00049553056575" ixy="0" ixz="0" iyy="0.000177452847" iyz="0" izz="0.00051139006875"/>
+    </inertial>
+  </link>
+  <joint name="wrist_rgbd_bracket_joint" type="fixed">
+    <parent link="tool0"/>
+    <child link="wrist_rgbd_mount_link"/>
+    <origin rpy="1.5707963267948966 -1.5707963267948966 0" xyz="0.140 0 0.025"/>
+  </joint>
   <link name="wrist_rgbd_link">
     <visual name="wrist_rgbd_housing_visual">
       <!-- Robotnik's D435 datum is the left IR/depth imager.  Preserve its
@@ -1270,30 +1920,27 @@
         <mesh filename="package://sanitation_vehicle_description/meshes/vendor/robotnik_sensors/intel_d435_color.dae"/>
       </geometry>
     </visual>
-    <visual name="wrist_rgbd_machined_side_bracket_visual">
-      <geometry>
-        <mesh filename="package://sanitation_vehicle_description/meshes/generated/sensors/wrist_rgbd_side_bracket.stl"/>
-      </geometry>
-      <material name="wrist_rgbd_bracket">
-        <color rgba="0.25 0.27 0.28 1"/>
-      </material>
-    </visual>
     <collision>
       <origin xyz="0 -0.0175 0"/>
       <geometry>
         <box size="0.02505 0.090 0.025"/>
       </geometry>
     </collision>
+    <!-- Two additional optical datums below carry 1 microgram each so the
+           strict URDF checker can retain them as links.  Remove the same two
+           micrograms from the public 75 g housing allocation: adding the
+           complete stereo frame tree therefore changes neither D435 nor
+           whole-vehicle mass. -->
     <inertial>
       <origin xyz="0 -0.0175 0"/>
-      <mass value="0.074999"/>
-      <inertia ixx="5.453052291666666e-05" ixy="0" ixz="0" iyy="7.828036249791667e-06" iyz="0" izz="5.454616333312499e-05"/>
+      <mass value="0.074998"/>
+      <inertia ixx="5.452979583333333e-05" ixy="0" ixz="0" iyy="7.827931874583334e-06" iyz="0" izz="5.454543604124999e-05"/>
     </inertial>
   </link>
   <joint name="wrist_rgbd_mount_joint" type="fixed">
-    <parent link="tool0"/>
+    <parent link="wrist_rgbd_mount_link"/>
     <child link="wrist_rgbd_link"/>
-    <origin rpy="0 -1.5707963267948966 0" xyz="0.115 0 0.025"/>
+    <origin rpy="0 0 0" xyz="0 0 0"/>
   </joint>
   <link name="wrist_rgbd_depth_optical_frame">
     <!-- Optical frames are mathematical datums.  Epsilon inertia avoids a
@@ -1308,6 +1955,34 @@
     <child link="wrist_rgbd_depth_optical_frame"/>
     <!-- body: +X forward,+Y left,+Z up; optical: +Z forward,+X right,+Y down -->
     <origin rpy="-1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0"/>
+  </joint>
+  <link name="wrist_rgbd_infra1_optical_frame">
+    <!-- Optical frames are mathematical datums.  Epsilon inertia avoids a
+           zero-inertia link in strict offline validation. -->
+    <inertial>
+      <mass value="0.000001"/>
+      <inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/>
+    </inertial>
+  </link>
+  <joint name="wrist_rgbd_infra1_optical_frame_joint" type="fixed">
+    <parent link="wrist_rgbd_link"/>
+    <child link="wrist_rgbd_infra1_optical_frame"/>
+    <!-- body: +X forward,+Y left,+Z up; optical: +Z forward,+X right,+Y down -->
+    <origin rpy="-1.5707963267948966 0 -1.5707963267948966" xyz="0 0 0"/>
+  </joint>
+  <link name="wrist_rgbd_infra2_optical_frame">
+    <!-- Optical frames are mathematical datums.  Epsilon inertia avoids a
+           zero-inertia link in strict offline validation. -->
+    <inertial>
+      <mass value="0.000001"/>
+      <inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/>
+    </inertial>
+  </link>
+  <joint name="wrist_rgbd_infra2_optical_frame_joint" type="fixed">
+    <parent link="wrist_rgbd_link"/>
+    <child link="wrist_rgbd_infra2_optical_frame"/>
+    <!-- body: +X forward,+Y left,+Z up; optical: +Z forward,+X right,+Y down -->
+    <origin rpy="-1.5707963267948966 0 -1.5707963267948966" xyz="0 -0.050 0"/>
   </joint>
   <gazebo reference="wrist_rgbd_link">
     <sensor name="wrist_rgbd_d435_rgbd" type="rgbd_camera">
@@ -1343,6 +2018,68 @@
         <depth_camera>
           <output>depths</output>
         </depth_camera>
+      </camera>
+    </sensor>
+    <sensor name="wrist_rgbd_d435_infra1" type="camera">
+      <pose>0 0 0 0 0 0</pose>
+      <topic>/sensors/wrist_rgbd/infra1/image_rect_raw</topic>
+      <update_rate>30</update_rate>
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <gz_frame_id>wrist_rgbd_infra1_optical_frame</gz_frame_id>
+      <camera>
+        <optical_frame_id>wrist_rgbd_infra1_optical_frame</optical_frame_id>
+        <camera_info_topic>/sensors/wrist_rgbd/infra1/image_rect_raw/camera_info</camera_info_topic>
+        <horizontal_fov>1.518436</horizontal_fov>
+        <image>
+          <width>848</width>
+          <height>480</height>
+          <format>L_INT8</format>
+        </image>
+        <clip>
+          <near>0.2</near>
+          <far>3.0</far>
+        </clip>
+        <lens>
+          <intrinsics>
+            <fx>447.2</fx>
+            <fy>433.0</fy>
+            <cx>424.0</cx>
+            <cy>240.0</cy>
+            <s>0</s>
+          </intrinsics>
+        </lens>
+      </camera>
+    </sensor>
+    <sensor name="wrist_rgbd_d435_infra2" type="camera">
+      <pose>0 -0.050 0 0 0 0</pose>
+      <topic>/sensors/wrist_rgbd/infra2/image_rect_raw</topic>
+      <update_rate>30</update_rate>
+      <always_on>true</always_on>
+      <visualize>false</visualize>
+      <gz_frame_id>wrist_rgbd_infra2_optical_frame</gz_frame_id>
+      <camera>
+        <optical_frame_id>wrist_rgbd_infra2_optical_frame</optical_frame_id>
+        <camera_info_topic>/sensors/wrist_rgbd/infra2/image_rect_raw/camera_info</camera_info_topic>
+        <horizontal_fov>1.518436</horizontal_fov>
+        <image>
+          <width>848</width>
+          <height>480</height>
+          <format>L_INT8</format>
+        </image>
+        <clip>
+          <near>0.2</near>
+          <far>3.0</far>
+        </clip>
+        <lens>
+          <intrinsics>
+            <fx>447.2</fx>
+            <fy>433.0</fy>
+            <cx>424.0</cx>
+            <cy>240.0</cy>
+            <s>0</s>
+          </intrinsics>
+        </lens>
       </camera>
     </sensor>
   </gazebo>
@@ -1420,12 +2157,19 @@
     <parent link="rear_left_fisheye_link"/>
     <child link="rear_left_fisheye_optical_frame"/>
     <!-- body: +X forward,+Y left,+Z up; optical: +Z forward,+X right,+Y down -->
-    <origin rpy="-1.745999996444 -0.000035461162 -1.570996889205" xyz="0.022011096607 -0.000604893394 -0.003891751553"/>
+    <origin rpy="-1.832595714594 -0.000035461162 -1.570996889205" xyz="0.022011096607 -0.000604893394 -0.003891751553"/>
   </joint>
   <gazebo reference="rear_left_fisheye_link">
-    <!-- Gazebo's camera projection is pinhole.  The 150 deg envelope is
-           correct; equidistant Arducam calibration/distortion is applied in ROS. -->
-    <sensor name="rear_left_fisheye_imx291" type="camera">
+    <!-- Nominal simulation lens, not a serial-number camera calibration.
+           SDFormat renders an equisolid-angle projection
+             r = 2 f sin(theta / 2)
+           while formal_fisheye_camera_info_publisher.py publishes the same
+           mapping through ROS's equidistant (Kannala-Brandt) polynomial.  Its
+           non-zero coefficients are the theta^9 Taylor representation
+           of this exact SDF mapping.  The public M27195H15 source freezes only
+           the 150 x 129 degree lens envelope; an as-built calibration remains
+           mandatory before real-camera deployment. -->
+    <sensor name="rear_left_fisheye_imx291" type="wideanglecamera">
       <topic>/sensors/rear_left_fisheye/image_raw</topic>
       <update_rate>30</update_rate>
       <always_on>true</always_on>
@@ -1443,6 +2187,12 @@
           <near>0.2</near>
           <far>20.0</far>
         </clip>
+        <lens>
+          <type>equisolid_angle</type>
+          <scale_to_hfov>true</scale_to_hfov>
+          <cutoff_angle>1.570796327</cutoff_angle>
+          <env_texture_size>1024</env_texture_size>
+        </lens>
       </camera>
     </sensor>
   </gazebo>
@@ -1519,12 +2269,19 @@
     <parent link="rear_right_fisheye_link"/>
     <child link="rear_right_fisheye_optical_frame"/>
     <!-- body: +X forward,+Y left,+Z up; optical: +Z forward,+X right,+Y down -->
-    <origin rpy="-1.745999996444 -0.000035461162 -1.570996889205" xyz="0.022011096607 0.000604893394 -0.003891751553"/>
+    <origin rpy="-1.832595714594 -0.000035461162 -1.570996889205" xyz="0.022011096607 0.000604893394 -0.003891751553"/>
   </joint>
   <gazebo reference="rear_right_fisheye_link">
-    <!-- Gazebo's camera projection is pinhole.  The 150 deg envelope is
-           correct; equidistant Arducam calibration/distortion is applied in ROS. -->
-    <sensor name="rear_right_fisheye_imx291" type="camera">
+    <!-- Nominal simulation lens, not a serial-number camera calibration.
+           SDFormat renders an equisolid-angle projection
+             r = 2 f sin(theta / 2)
+           while formal_fisheye_camera_info_publisher.py publishes the same
+           mapping through ROS's equidistant (Kannala-Brandt) polynomial.  Its
+           non-zero coefficients are the theta^9 Taylor representation
+           of this exact SDF mapping.  The public M27195H15 source freezes only
+           the 150 x 129 degree lens envelope; an as-built calibration remains
+           mandatory before real-camera deployment. -->
+    <sensor name="rear_right_fisheye_imx291" type="wideanglecamera">
       <topic>/sensors/rear_right_fisheye/image_raw</topic>
       <update_rate>30</update_rate>
       <always_on>true</always_on>
@@ -1542,9 +2299,75 @@
           <near>0.2</near>
           <far>20.0</far>
         </clip>
+        <lens>
+          <type>equisolid_angle</type>
+          <scale_to_hfov>true</scale_to_hfov>
+          <cutoff_angle>1.570796327</cutoff_angle>
+          <env_texture_size>1024</env_texture_size>
+        </lens>
       </camera>
     </sensor>
   </gazebo>
+  <!-- The GNSS installation is split into its real functional parts.  The
+         ZED-F9P-04B LGA receiver sits in a serviceable mast-side enclosure;
+         the ANN-MB antenna remains on a separate sky-view boom.  Gazebo's
+         NavSat measurement datum stays at the antenna phase-centre link. -->
+  <link name="zed_f9p_receiver_enclosure_link">
+    <visual name="zed_f9p_receiver_enclosure_visual">
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/zed_f9p_receiver_enclosure.stl"/>
+      </geometry>
+      <material name="zed_f9p_receiver_tray">
+        <color rgba="0.26 0.29 0.30 1"/>
+      </material>
+    </visual>
+    <collision name="zed_f9p_receiver_enclosure_collision">
+      <origin xyz="0 0 -0.002"/>
+      <geometry>
+        <box size="0.065 0.060 0.020"/>
+      </geometry>
+    </collision>
+    <!-- The receiver hardware is split from the existing 0.240 kg GNSS
+           mounting allocation, so this detail does not add fictitious mass. -->
+    <inertial>
+      <origin xyz="0 0 -0.002"/>
+      <mass value="0.034999"/>
+      <inertia ixx="1.1666333333333334e-05" ixy="0" ixz="0" iyy="1.348919791666667e-05" iyz="0" izz="2.2822264583333334e-05"/>
+    </inertial>
+  </link>
+  <joint name="zed_f9p_receiver_enclosure_mount_joint" type="fixed">
+    <parent link="sensor_mast_link"/>
+    <child link="zed_f9p_receiver_enclosure_link"/>
+    <origin xyz="-0.060 -0.095 0.585"/>
+  </joint>
+  <link name="zed_f9p_module_reference_link">
+    <visual name="zed_f9p_module_reference_visual">
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/generated/platform/zed_f9p_module_reference.stl"/>
+      </geometry>
+      <material name="zed_f9p_module_shield">
+        <color rgba="0.72 0.74 0.70 1"/>
+      </material>
+    </visual>
+    <collision name="zed_f9p_official_package_collision">
+      <geometry>
+        <box size="0.017 0.022 0.0024"/>
+      </geometry>
+    </collision>
+    <!-- u-blox does not publish a module mass in the selected public product
+           material.  Epsilon mass preserves the explicit rigid body without
+           inventing a hardware-correlated number; enclosure mass remains the
+           conservative engineering allocation above. -->
+    <inertial>
+      <mass value="0.000001"/>
+      <inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/>
+    </inertial>
+  </link>
+  <joint name="zed_f9p_module_reference_joint" type="fixed">
+    <parent link="zed_f9p_receiver_enclosure_link"/>
+    <child link="zed_f9p_module_reference_link"/>
+    <origin xyz="0 0 0.006"/>
+  </joint>
   <!-- ANN-MB GNSS antenna sits on a dedicated side boom so the MID-360 has
          an unobstructed 360-degree crown and the antenna retains sky view. -->
   <link name="gnss_mount_link">
@@ -1570,8 +2393,8 @@
     </collision>
     <inertial>
       <origin xyz="0 0.085 0"/>
-      <mass value="0.24"/>
-      <inertia ixx="0.00116458" ixy="0" ixz="0" iyy="0.00030658000000000004" iyz="0" izz="0.0012580000000000002"/>
+      <mass value="0.205"/>
+      <inertia ixx="0.0009947454166666667" ixy="0" ixz="0" iyy="0.0002618704166666667" iyz="0" izz="0.0010745416666666668"/>
     </inertial>
   </link>
   <joint name="gnss_bracket_joint" type="fixed">
@@ -1786,7 +2609,9 @@
   <joint name="cleaning_front_left_guide_joint" type="fixed">
     <parent link="cleaning_mechanism_mount_link"/>
     <child link="cleaning_front_left_guide_link"/>
-    <origin rpy="0 0 0" xyz="0.12 0.25 -0.065"/>
+    <!-- The 180 mm guide spans every 35 mm bearing boss position from
+             q=0.000 m through q=0.100 m, including both end positions. -->
+    <origin rpy="0 0 0" xyz="0.18 0.25 -0.025"/>
   </joint>
   <link name="cleaning_front_right_guide_link">
     <visual>
@@ -1812,7 +2637,9 @@
   <joint name="cleaning_front_right_guide_joint" type="fixed">
     <parent link="cleaning_mechanism_mount_link"/>
     <child link="cleaning_front_right_guide_link"/>
-    <origin rpy="0 0 0" xyz="0.12 -0.25 -0.065"/>
+    <!-- The 180 mm guide spans every 35 mm bearing boss position from
+             q=0.000 m through q=0.100 m, including both end positions. -->
+    <origin rpy="0 0 0" xyz="0.18 -0.25 -0.025"/>
   </joint>
   <link name="cleaning_rear_left_guide_link">
     <visual>
@@ -1838,7 +2665,9 @@
   <joint name="cleaning_rear_left_guide_joint" type="fixed">
     <parent link="cleaning_mechanism_mount_link"/>
     <child link="cleaning_rear_left_guide_link"/>
-    <origin rpy="0 0 0" xyz="-0.12 0.25 -0.065"/>
+    <!-- The 180 mm guide spans every 35 mm bearing boss position from
+             q=0.000 m through q=0.100 m, including both end positions. -->
+    <origin rpy="0 0 0" xyz="-0.18 0.25 -0.025"/>
   </joint>
   <link name="cleaning_rear_right_guide_link">
     <visual>
@@ -1864,7 +2693,9 @@
   <joint name="cleaning_rear_right_guide_joint" type="fixed">
     <parent link="cleaning_mechanism_mount_link"/>
     <child link="cleaning_rear_right_guide_link"/>
-    <origin rpy="0 0 0" xyz="-0.12 -0.25 -0.065"/>
+    <!-- The 180 mm guide spans every 35 mm bearing boss position from
+             q=0.000 m through q=0.100 m, including both end positions. -->
+    <origin rpy="0 0 0" xyz="-0.18 -0.25 -0.025"/>
   </joint>
   <link name="cleaning_lift_carriage_link">
     <visual>
@@ -1890,10 +2721,27 @@
   <joint name="cleaning_lift_joint" type="prismatic">
     <parent link="cleaning_mechanism_mount_link"/>
     <child link="cleaning_lift_carriage_link"/>
-    <origin rpy="0 0 0" xyz="0 0 -0.080"/>
-    <axis xyz="0 0 1"/>
-    <limit effort="1000.0" lower="0.0" upper="0.100" velocity="0.020"/>
-    <dynamics damping="80.0" friction="35.0"/>
+    <!-- q=0 is the passive, controller-independent transport-safe pose.
+           Positive position drives the carriage downward; q=0.100 m is the
+           ground-tangent work pose.  Therefore an unclaimed controller at its
+           physical zero cannot start with the brush/roller/squeegee in ground. -->
+    <origin rpy="0 0 0" xyz="0 0 0.045"/>
+    <axis xyz="0 0 -1"/>
+    <!-- Actuonix P16-100-256-12-P: 300 N maximum lifted load and
+           4.8 mm/s no-load speed from the public manufacturer sheet. -->
+    <!-- Keep DART's solver bound 20 um beyond the product's 100 mm travel
+           contract.  The ros2_control position interface remains capped at
+           0.100 m, so product commands and all acceptance thresholds retain
+           the P16's 100 mm stroke.  This small reversible clearance prevents
+           DART from locking an outward-driven prismatic joint in its exact
+           unilateral upper-limit constraint, which would otherwise make a
+           legitimate post-fault retraction physically impossible. -->
+    <limit effort="300.0" lower="0.0" upper="0.10002" velocity="0.0048"/>
+    <!-- The moving cleaning subtree is 5.95 kg (58.35 N under gravity).
+           Keep the calibrated 80 Ns/m damping and 80 N breakaway drag; URDF
+           friction is direction-symmetric and is not a substitute for the
+           P16 screw's powered/non-powered one-way holding behaviour. -->
+    <dynamics damping="80.0" friction="80.0"/>
   </joint>
   <!-- Actuonix P16 body is chassis-fixed; its rod and clevis ride with the carriage. -->
   <link name="cleaning_lift_actuator_body_link">
@@ -1976,57 +2824,59 @@
     <child link="cleaning_lift_actuator_clevis_link"/>
     <origin rpy="0 0 0" xyz="0 0 0.105"/>
   </joint>
-  <link name="cleaning_left_lift_linkage_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
+  <link name="cleaning_left_lift_slider_plate_link">
+    <visual name="bearing_side_plate_mesh">
       <geometry>
-        <mesh filename="package://sanitation_vehicle_description/meshes/project/cleaning/lift_linkage.stl"/>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/cleaning/lift_linkage.stl" scale="1.6363636363636365 1 1"/>
       </geometry>
-      <material name="hf_lift_link">
+      <material name="hf_lift_bearing">
         <color rgba="0.42 0.45 0.47 1"/>
       </material>
     </visual>
-    <collision>
+    <!-- The collision keeps a central spine clear of the two guide axes;
+             the prismatic constraint represents the bearing contacts. -->
+    <collision name="bearing_side_plate_spine">
       <geometry>
-        <box size="0.250 0.018 0.030"/>
+        <box size="0.320 0.018 0.030"/>
       </geometry>
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <mass value="0.22"/>
-      <inertia ixx="2.2439999999999995e-05" ixy="0" ixz="0" iyy="0.0011623333333333334" iyz="0" izz="0.0011517733333333334"/>
+      <inertia ixx="2.6198333333333333e-05" ixy="0" ixz="0" iyy="0.0030846831818183338" iyz="0" izz="0.0030778815151516667"/>
     </inertial>
   </link>
-  <joint name="cleaning_left_lift_linkage_joint" type="fixed">
+  <joint name="cleaning_left_lift_slider_plate_joint" type="fixed">
     <parent link="cleaning_lift_carriage_link"/>
-    <child link="cleaning_left_lift_linkage_link"/>
-    <origin rpy="0 0.36 0" xyz="0 0.285 0.055"/>
+    <child link="cleaning_left_lift_slider_plate_link"/>
+    <origin rpy="0 0 0" xyz="0 0.25 0"/>
   </joint>
-  <link name="cleaning_right_lift_linkage_link">
-    <visual>
-      <origin rpy="0 0 0" xyz="0 0 0"/>
+  <link name="cleaning_right_lift_slider_plate_link">
+    <visual name="bearing_side_plate_mesh">
       <geometry>
-        <mesh filename="package://sanitation_vehicle_description/meshes/project/cleaning/lift_linkage.stl"/>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/cleaning/lift_linkage.stl" scale="1.6363636363636365 1 1"/>
       </geometry>
-      <material name="hf_lift_link">
+      <material name="hf_lift_bearing">
         <color rgba="0.42 0.45 0.47 1"/>
       </material>
     </visual>
-    <collision>
+    <!-- The collision keeps a central spine clear of the two guide axes;
+             the prismatic constraint represents the bearing contacts. -->
+    <collision name="bearing_side_plate_spine">
       <geometry>
-        <box size="0.250 0.018 0.030"/>
+        <box size="0.320 0.018 0.030"/>
       </geometry>
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <mass value="0.22"/>
-      <inertia ixx="2.2439999999999995e-05" ixy="0" ixz="0" iyy="0.0011623333333333334" iyz="0" izz="0.0011517733333333334"/>
+      <inertia ixx="2.6198333333333333e-05" ixy="0" ixz="0" iyy="0.0030846831818183338" iyz="0" izz="0.0030778815151516667"/>
     </inertial>
   </link>
-  <joint name="cleaning_right_lift_linkage_joint" type="fixed">
+  <joint name="cleaning_right_lift_slider_plate_joint" type="fixed">
     <parent link="cleaning_lift_carriage_link"/>
-    <child link="cleaning_right_lift_linkage_link"/>
-    <origin rpy="0 -0.36 0" xyz="0 -0.285 0.055"/>
+    <child link="cleaning_right_lift_slider_plate_link"/>
+    <origin rpy="0 0 0" xyz="0 -0.25 0"/>
   </joint>
   <!-- The 37D motor mass is partitioned across stator, gearbox and rotor/shaft;
          their sum is the vendor 0.205 kg per Pololu 4694 assembly. -->
@@ -2047,14 +2897,42 @@
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="0.13"/>
-      <inertia ixx="4.6320625e-05" ixy="0" ixz="0" iyy="4.6320625e-05" iyz="0" izz="2.224625e-05"/>
+      <mass value="0.115"/>
+      <inertia ixx="4.09759375e-05" ixy="0" ixz="0" iyy="4.09759375e-05" iyz="0" izz="1.9679374999999998e-05"/>
     </inertial>
   </link>
   <joint name="left_side_brush_motor_mount_joint" type="fixed">
     <parent link="cleaning_lift_carriage_link"/>
     <child link="left_side_brush_motor_stator_link"/>
-    <origin rpy="0 0 0" xyz="0.385 0.545 0.0455"/>
+    <!-- At the 100 mm downstroke work pose, this installation height
+           puts the conservative bristle-sweep collision tangent to z=0. -->
+    <origin rpy="0 0 0" xyz="0.385 0.545 0.0244"/>
+  </joint>
+  <link name="left_side_brush_encoder_link">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/cleaning/pololu_37d_encoder_cap.stl"/>
+      </geometry>
+      <material name="hf_pololu_encoder_black">
+        <color rgba="0.055 0.065 0.070 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.011" radius="0.0195"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.015"/>
+      <inertia ixx="1.5771874999999999e-06" ixy="0" ixz="0" iyy="1.5771874999999999e-06" iyz="0" izz="2.851875e-06"/>
+    </inertial>
+  </link>
+  <joint name="left_side_brush_encoder_mount_joint" type="fixed">
+    <parent link="left_side_brush_motor_stator_link"/>
+    <child link="left_side_brush_encoder_link"/>
+    <origin xyz="0 0 0.034"/>
   </joint>
   <link name="left_side_brush_gearbox_link">
     <visual>
@@ -2092,10 +2970,20 @@
         <color rgba="0.62 0.65 0.68 1"/>
       </material>
     </visual>
+    <!-- Runtime brush/pavement contact belongs to this non-fixed rotating
+           link so sdformat preserves the surface parameters.  The mesh and
+           mass remain on their serviceable fixed children; this collision is
+           expressed in the rotor frame (disk offset -52 mm plus compressed
+           bristle-envelope offset -13 mm). -->
+    <!-- Keep this direct collision unnamed.  sdformat 14.9 binds the URDF
+           gazebo surface extension to the generated
+           ${side}_side_brush_link_collision only in this form.  An explicit
+           collision name is rewritten during fixed-joint lumping and drops
+           the surface parameters from the expanded SDF. -->
     <collision>
-      <origin xyz="0 0 -0.012"/>
+      <origin xyz="0 0 -0.065"/>
       <geometry>
-        <cylinder length="0.052" radius="0.006"/>
+        <cylinder length="0.026" radius="0.150"/>
       </geometry>
     </collision>
     <inertial>
@@ -2109,7 +2997,9 @@
     <child link="left_side_brush_link"/>
     <origin rpy="0 0 0" xyz="0 0 -0.014"/>
     <axis xyz="0 0 1"/>
-    <limit effort="8.0" velocity="20.0"/>
+    <!-- Pololu 4694 public no-load speed is 140 rpm = 14.6608 rad/s;
+           the 3.040 N.m value is its explicitly extrapolated stall torque. -->
+    <limit effort="3.040473" velocity="14.660766"/>
     <dynamics damping="0.01" friction="0.01"/>
   </joint>
   <link name="left_side_brush_disk_link">
@@ -2125,6 +3015,15 @@
     <collision>
       <geometry>
         <cylinder length="0.012" radius="0.072"/>
+      </geometry>
+    </collision>
+    <!-- Shaft collision is expressed in the disk frame so the non-fixed
+           rotor link has exactly one direct collision; its fixed descendants
+           remain explicit service geometry after sdformat lumping. -->
+    <collision name="rotor_shaft_collision">
+      <origin xyz="0 0 0.040"/>
+      <geometry>
+        <cylinder length="0.052" radius="0.006"/>
       </geometry>
     </collision>
     <inertial>
@@ -2148,13 +3047,6 @@
         <color rgba="0.30 0.19 0.065 1"/>
       </material>
     </visual>
-    <!-- The conservative disk collision represents flexible bristle sweep. -->
-    <collision name="bristle_sweep_collision">
-      <origin xyz="0 0 -0.018"/>
-      <geometry>
-        <cylinder length="0.026" radius="0.150"/>
-      </geometry>
-    </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 -0.018"/>
       <mass value="0.29"/>
@@ -2166,6 +3058,31 @@
     <child link="left_side_brush_bristle_sectors_link"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
   </joint>
+  <!-- A rigid high-friction disk at the unloaded bristle tip numerically
+         locks against pavement in DART, unlike discrete flexible PP bristles.
+         Retain the full swept collision envelope and ground contact, but give
+         the contact its measured-function proxy: low effective sliding
+         friction plus compliant penetration.  The motor observer still trips
+         a real stall if measured joint speed remains below threshold. -->
+  <gazebo reference="left_side_brush_link">
+    <mu1>0.08</mu1>
+    <mu2>0.08</mu2>
+    <kp>1500.0</kp>
+    <kd>50.0</kd>
+    <maxVel>0.20</maxVel>
+    <minDepth>0.003</minDepth>
+    <!-- Recovering liquid requires an observed pavement contact, not merely
+           a brush-velocity command.  This sensor binds the direct rotor
+           collision already checked in the expanded-SDF surface audit. -->
+    <sensor name="left_side_brush_ground_contact" type="contact">
+      <topic>/cleaning/left_side_brush/contact</topic>
+      <update_rate>100</update_rate>
+      <always_on>true</always_on>
+      <contact>
+        <collision>left_side_brush_link_collision</collision>
+      </contact>
+    </sensor>
+  </gazebo>
   <!-- The 37D motor mass is partitioned across stator, gearbox and rotor/shaft;
          their sum is the vendor 0.205 kg per Pololu 4694 assembly. -->
   <link name="right_side_brush_motor_stator_link">
@@ -2185,14 +3102,42 @@
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="0.13"/>
-      <inertia ixx="4.6320625e-05" ixy="0" ixz="0" iyy="4.6320625e-05" iyz="0" izz="2.224625e-05"/>
+      <mass value="0.115"/>
+      <inertia ixx="4.09759375e-05" ixy="0" ixz="0" iyy="4.09759375e-05" iyz="0" izz="1.9679374999999998e-05"/>
     </inertial>
   </link>
   <joint name="right_side_brush_motor_mount_joint" type="fixed">
     <parent link="cleaning_lift_carriage_link"/>
     <child link="right_side_brush_motor_stator_link"/>
-    <origin rpy="0 0 0" xyz="0.385 -0.545 0.0455"/>
+    <!-- At the 100 mm downstroke work pose, this installation height
+           puts the conservative bristle-sweep collision tangent to z=0. -->
+    <origin rpy="0 0 0" xyz="0.385 -0.545 0.0244"/>
+  </joint>
+  <link name="right_side_brush_encoder_link">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/cleaning/pololu_37d_encoder_cap.stl"/>
+      </geometry>
+      <material name="hf_pololu_encoder_black">
+        <color rgba="0.055 0.065 0.070 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.011" radius="0.0195"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.015"/>
+      <inertia ixx="1.5771874999999999e-06" ixy="0" ixz="0" iyy="1.5771874999999999e-06" iyz="0" izz="2.851875e-06"/>
+    </inertial>
+  </link>
+  <joint name="right_side_brush_encoder_mount_joint" type="fixed">
+    <parent link="right_side_brush_motor_stator_link"/>
+    <child link="right_side_brush_encoder_link"/>
+    <origin xyz="0 0 0.034"/>
   </joint>
   <link name="right_side_brush_gearbox_link">
     <visual>
@@ -2230,10 +3175,20 @@
         <color rgba="0.62 0.65 0.68 1"/>
       </material>
     </visual>
+    <!-- Runtime brush/pavement contact belongs to this non-fixed rotating
+           link so sdformat preserves the surface parameters.  The mesh and
+           mass remain on their serviceable fixed children; this collision is
+           expressed in the rotor frame (disk offset -52 mm plus compressed
+           bristle-envelope offset -13 mm). -->
+    <!-- Keep this direct collision unnamed.  sdformat 14.9 binds the URDF
+           gazebo surface extension to the generated
+           ${side}_side_brush_link_collision only in this form.  An explicit
+           collision name is rewritten during fixed-joint lumping and drops
+           the surface parameters from the expanded SDF. -->
     <collision>
-      <origin xyz="0 0 -0.012"/>
+      <origin xyz="0 0 -0.065"/>
       <geometry>
-        <cylinder length="0.052" radius="0.006"/>
+        <cylinder length="0.026" radius="0.150"/>
       </geometry>
     </collision>
     <inertial>
@@ -2247,7 +3202,9 @@
     <child link="right_side_brush_link"/>
     <origin rpy="0 0 0" xyz="0 0 -0.014"/>
     <axis xyz="0 0 1"/>
-    <limit effort="8.0" velocity="20.0"/>
+    <!-- Pololu 4694 public no-load speed is 140 rpm = 14.6608 rad/s;
+           the 3.040 N.m value is its explicitly extrapolated stall torque. -->
+    <limit effort="3.040473" velocity="14.660766"/>
     <dynamics damping="0.01" friction="0.01"/>
   </joint>
   <link name="right_side_brush_disk_link">
@@ -2263,6 +3220,15 @@
     <collision>
       <geometry>
         <cylinder length="0.012" radius="0.072"/>
+      </geometry>
+    </collision>
+    <!-- Shaft collision is expressed in the disk frame so the non-fixed
+           rotor link has exactly one direct collision; its fixed descendants
+           remain explicit service geometry after sdformat lumping. -->
+    <collision name="rotor_shaft_collision">
+      <origin xyz="0 0 0.040"/>
+      <geometry>
+        <cylinder length="0.052" radius="0.006"/>
       </geometry>
     </collision>
     <inertial>
@@ -2286,13 +3252,6 @@
         <color rgba="0.30 0.19 0.065 1"/>
       </material>
     </visual>
-    <!-- The conservative disk collision represents flexible bristle sweep. -->
-    <collision name="bristle_sweep_collision">
-      <origin xyz="0 0 -0.018"/>
-      <geometry>
-        <cylinder length="0.026" radius="0.150"/>
-      </geometry>
-    </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 -0.018"/>
       <mass value="0.29"/>
@@ -2304,6 +3263,31 @@
     <child link="right_side_brush_bristle_sectors_link"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
   </joint>
+  <!-- A rigid high-friction disk at the unloaded bristle tip numerically
+         locks against pavement in DART, unlike discrete flexible PP bristles.
+         Retain the full swept collision envelope and ground contact, but give
+         the contact its measured-function proxy: low effective sliding
+         friction plus compliant penetration.  The motor observer still trips
+         a real stall if measured joint speed remains below threshold. -->
+  <gazebo reference="right_side_brush_link">
+    <mu1>0.08</mu1>
+    <mu2>0.08</mu2>
+    <kp>1500.0</kp>
+    <kd>50.0</kd>
+    <maxVel>0.20</maxVel>
+    <minDepth>0.003</minDepth>
+    <!-- Recovering liquid requires an observed pavement contact, not merely
+           a brush-velocity command.  This sensor binds the direct rotor
+           collision already checked in the expanded-SDF surface audit. -->
+    <sensor name="right_side_brush_ground_contact" type="contact">
+      <topic>/cleaning/right_side_brush/contact</topic>
+      <update_rate>100</update_rate>
+      <always_on>true</always_on>
+      <contact>
+        <collision>right_side_brush_link_collision</collision>
+      </contact>
+    </sensor>
+  </gazebo>
   <!-- Central brush: two bearings, one Pololu drive, shaft/core and six
          independent elastomer-bristle bars. The 0.62 m roller spans the intake. -->
   <link name="central_roller_left_bearing_link">
@@ -2331,7 +3315,8 @@
   <joint name="central_roller_left_bearing_mount_joint" type="fixed">
     <parent link="cleaning_lift_carriage_link"/>
     <child link="central_roller_left_bearing_link"/>
-    <origin rpy="0 0 0" xyz="0.155 0 -0.016"/>
+    <!-- The 100 mm bristle sweep is tangent to z=0 at q=0.100 m downstroke. -->
+    <origin rpy="0 0 0" xyz="0.155 0 -0.0101"/>
   </joint>
   <link name="central_roller_motor_stator_link">
     <visual>
@@ -2351,14 +3336,41 @@
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 -0.367 0"/>
-      <mass value="0.13"/>
-      <inertia ixx="4.6320625e-05" ixy="0" ixz="0" iyy="2.224625e-05" iyz="0" izz="4.6320625e-05"/>
+      <mass value="0.115"/>
+      <inertia ixx="4.09759375e-05" ixy="0" ixz="0" iyy="1.9679374999999998e-05" iyz="0" izz="4.09759375e-05"/>
     </inertial>
   </link>
   <joint name="central_roller_motor_mount_joint" type="fixed">
     <parent link="cleaning_lift_carriage_link"/>
     <child link="central_roller_motor_stator_link"/>
-    <origin rpy="0 0 0" xyz="0.155 0 -0.016"/>
+    <origin rpy="0 0 0" xyz="0.155 0 -0.0101"/>
+  </joint>
+  <link name="central_roller_encoder_link">
+    <visual>
+      <origin rpy="1.5707963267948966 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/cleaning/pololu_37d_encoder_cap.stl"/>
+      </geometry>
+      <material name="hf_central_encoder_black">
+        <color rgba="0.055 0.065 0.070 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="1.5707963267948966 0 0"/>
+      <geometry>
+        <cylinder length="0.011" radius="0.0195"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.015"/>
+      <inertia ixx="1.5771874999999999e-06" ixy="0" ixz="0" iyy="2.851875e-06" iyz="0" izz="1.5771874999999999e-06"/>
+    </inertial>
+  </link>
+  <joint name="central_roller_encoder_mount_joint" type="fixed">
+    <parent link="central_roller_motor_stator_link"/>
+    <child link="central_roller_encoder_link"/>
+    <origin xyz="0 -0.401 0"/>
   </joint>
   <link name="central_roller_drive_gearbox_link">
     <visual>
@@ -2397,6 +3409,13 @@
         <color rgba="0.08 0.22 0.13 1"/>
       </material>
     </visual>
+    <!-- The visual contains a 60 mm rigid core plus six helical elastomer
+           bars whose 100 mm outer sweep is represented here.  DART cannot
+           consume URDF contact stiffness for flexible bristles, so this
+           rotating collision is an explicitly bounded, low-effective-
+           friction contact proxy rather than a rigid high-friction wheel. -->
+    <!-- Keep the direct collision unnamed so sdformat binds the Gazebo
+           surface extension to central_roller_link_collision. -->
     <collision>
       <origin rpy="1.5707963267948966 0 0"/>
       <geometry>
@@ -2414,9 +3433,25 @@
     <child link="central_roller_link"/>
     <origin rpy="0 1.5707963267948966 0" xyz="0 0 0"/>
     <axis xyz="0 1 0"/>
-    <limit effort="10.0" velocity="20.0"/>
+    <limit effort="3.040473" velocity="14.660766"/>
     <dynamics damping="0.015" friction="0.012"/>
   </joint>
+  <gazebo reference="central_roller_link">
+    <mu1>0.08</mu1>
+    <mu2>0.08</mu2>
+    <kp>1500.0</kp>
+    <kd>50.0</kd>
+    <maxVel>0.20</maxVel>
+    <minDepth>0.003</minDepth>
+    <sensor name="central_roller_ground_contact" type="contact">
+      <topic>/cleaning/central_roller/contact</topic>
+      <update_rate>100</update_rate>
+      <always_on>true</always_on>
+      <contact>
+        <collision>central_roller_link_collision</collision>
+      </contact>
+    </sensor>
+  </gazebo>
   <link name="central_roller_guard_link">
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -2444,8 +3479,9 @@
     <child link="central_roller_guard_link"/>
     <origin rpy="0 0 0" xyz="0 0 -0.080"/>
   </joint>
-  <!-- Two-axis passive squeegee suspension. The Gazebo joint extensions set
-         actual spring stiffness; URDF dynamics retain fail-safe damping. -->
+  <!-- Two-axis passive squeegee suspension. URDF dynamics retain fail-safe
+         damping; the model-level Gazebo plugin below applies the physical
+         preload and bounded spring laws to these real joints. -->
   <link name="squeegee_float_carrier_link">
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -2470,7 +3506,11 @@
   <joint name="squeegee_float_joint" type="prismatic">
     <parent link="cleaning_lift_carriage_link"/>
     <child link="squeegee_float_carrier_link"/>
-    <origin rpy="0 0 0" xyz="-0.445 0 -0.011"/>
+    <!-- At q=0.100 m downstroke and zero float/pitch displacement,
+           the rubber blade collision is tangent to z=0 and the intake retains
+           a 5 mm geometric gap.  The +/-15 mm joint remains compliance travel;
+           this datum is not physical contact-force evidence. -->
+    <origin rpy="0 0 0" xyz="-0.445 0 -0.0376"/>
     <axis xyz="0 0 1"/>
     <limit effort="250.0" lower="-0.015" upper="0.015" velocity="0.10"/>
     <dynamics damping="45.0" friction="4.0"/>
@@ -2527,7 +3567,7 @@
         <color rgba="0.035 0.04 0.045 1"/>
       </material>
     </visual>
-    <collision>
+    <collision name="squeegee_blade_collision">
       <origin xyz="0 0 -0.005"/>
       <geometry>
         <box size="0.065 0.800 0.095"/>
@@ -2547,9 +3587,35 @@
     <limit effort="80.0" lower="-0.174533" upper="0.174533" velocity="0.50"/>
     <dynamics damping="18.0" friction="1.2"/>
   </joint>
-  <!-- Damping/friction are represented in URDF joint dynamics above. A
-         force-law spring controller remains an explicit external validation
-         gate; unsupported SDF spring tags are deliberately not emitted. -->
+  <!-- Damping/friction are represented in URDF joint dynamics above. -->
+  <gazebo>
+    <plugin filename="libSqueegeeComplianceSystem.so" name="sanitation_gazebo_auxiliary::SqueegeeComplianceSystem">
+      <!-- -6.92 mm reference gives 12.456 N nominal preload at the ground-tangent
+             zero pose.  The contact solver supplies the opposing ground load. -->
+      <float_stiffness_n_per_m>1800.0</float_stiffness_n_per_m>
+      <float_damping_ns_per_m>45.0</float_damping_ns_per_m>
+      <float_preload_reference_m>-0.00692</float_preload_reference_m>
+      <float_max_force_n>120.0</float_max_force_n>
+      <pitch_stiffness_nm_per_rad>32.0</pitch_stiffness_nm_per_rad>
+      <pitch_damping_nms_per_rad>6.0</pitch_damping_nms_per_rad>
+      <pitch_reference_rad>0.0</pitch_reference_rad>
+      <pitch_max_torque_nm>24.0</pitch_max_torque_nm>
+      <telemetry_topic_prefix>/model/tzcup_formal_sanitation_vehicle/squeegee_compliance</telemetry_topic_prefix>
+    </plugin>
+  </gazebo>
+  <gazebo reference="squeegee_link">
+    <sensor name="squeegee_blade_ground_contact" type="contact">
+      <topic>/cleaning/squeegee/contact</topic>
+      <update_rate>100</update_rate>
+      <always_on>true</always_on>
+      <!-- sdformat folds the fixed suction-nozzle child into squeegee_link and
+             consequently renames this URDF collision in the generated SDF.
+             Contact sensors bind against that post-conversion SDF name. -->
+      <contact>
+        <collision>squeegee_link_fixed_joint_lump__squeegee_blade_collision_collision</collision>
+      </contact>
+    </sensor>
+  </gazebo>
   <link name="suction_nozzle_link">
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
@@ -2574,7 +3640,9 @@
   <joint name="suction_nozzle_mount_joint" type="fixed">
     <parent link="squeegee_link"/>
     <child link="suction_nozzle_link"/>
-    <origin rpy="0 0 0" xyz="0.040 0 0.010"/>
+    <!-- The intake box bottom retains a nominal 4-6 mm gap while the rubber
+           squeegee blade is grounded; the intake itself must not scrape. -->
+    <origin rpy="0 0 0" xyz="0.040 0 -0.005"/>
   </joint>
   <gazebo reference="suction_nozzle_link">
     <sensor name="suction_nozzle_ground_contact" type="contact">
@@ -2787,7 +3855,10 @@
     <child link="recovery_pump_rotor_link"/>
     <origin rpy="0 0 0" xyz="0 0 0.043"/>
     <axis xyz="0 0 1"/>
-    <limit effort="18.0" velocity="62.832"/>
+    <!-- Jabsco does not publish the diaphragm cam torque/speed. The 600 rpm
+           and 2 N.m limits are explicit engineering calibration values; the
+           published 6 A operating and 10 A fuse limits live in the motor core. -->
+    <limit effort="2.0" velocity="62.832"/>
     <dynamics damping="0.025" friction="0.015"/>
   </joint>
   <link name="recovery_pump_isolator_mount_link">
@@ -3037,28 +4108,31 @@
         <color rgba="0.055 0.12 0.085 1"/>
       </material>
     </visual>
+    <!-- Four physical panels leave a 150 x 130 mm aperture centered at
+           y=-0.110 m.  That aperture contains the complete y=-0.125 m chute
+           bore while retaining a 20.5 mm outboard structural rail. -->
     <collision name="dry_lid_left_collision">
-      <origin xyz="0.254 0.143 0"/>
+      <origin xyz="0.254 0.07525 0"/>
       <geometry>
-        <box size="0.508 0.105 0.010"/>
+        <box size="0.508 0.2405 0.010"/>
       </geometry>
     </collision>
     <collision name="dry_lid_right_collision">
-      <origin xyz="0.254 -0.143 0"/>
+      <origin xyz="0.254 -0.18525 0"/>
       <geometry>
-        <box size="0.508 0.105 0.010"/>
+        <box size="0.508 0.0205 0.010"/>
       </geometry>
     </collision>
     <collision name="dry_lid_rear_collision">
-      <origin xyz="0.0895 0 0"/>
+      <origin xyz="0.0895 -0.110 0"/>
       <geometry>
-        <box size="0.179 0.181 0.010"/>
+        <box size="0.179 0.130 0.010"/>
       </geometry>
     </collision>
     <collision name="dry_lid_front_collision">
-      <origin xyz="0.4185 0 0"/>
+      <origin xyz="0.4185 -0.110 0"/>
       <geometry>
-        <box size="0.179 0.181 0.010"/>
+        <box size="0.179 0.130 0.010"/>
       </geometry>
     </collision>
     <inertial>
@@ -3114,16 +4188,18 @@
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="0.24"/>
-      <inertia ixx="0.0006725" ixy="0" ixz="0" iyy="0.0008500000000000001" iyz="0" izz="0.0012665"/>
+      <mass value="0.15"/>
+      <inertia ixx="0.00042031250000000006" ixy="0" ixz="0" iyy="0.00053125" iyz="0" izz="0.0007915625000000001"/>
     </inertial>
   </link>
   <joint name="dry_deposit_hopper_mount_joint" type="fixed">
     <parent link="dry_bin_lid_link"/>
     <child link="dry_deposit_hopper_link"/>
-    <!-- Raise the robot port above the product roof.  The long chute below
-           preserves a continuous gravity path to the lid aperture. -->
-    <origin rpy="0 0 0" xyz="0.254 0 0.350"/>
+    <!-- Raise the robot port above the product roof and move it 125 mm
+           toward the arm side.  The dry-bin shell and certified 40 L usable
+           volume do not move; the long chute still terminates inside that
+           compartment while the approach no longer crosses the centre mast. -->
+    <origin rpy="0 0 0" xyz="0.254 -0.125 0.350"/>
   </joint>
   <link name="dry_deposit_gate_link">
     <visual>
@@ -3143,8 +4219,8 @@
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0.092 0 0"/>
-      <mass value="0.18"/>
-      <inertia ixx="0.00038046" ixy="0" ixz="0" iyy="0.0005138399999999999" iyz="0" izz="0.0008822999999999999"/>
+      <mass value="0.07"/>
+      <inertia ixx="0.0001479566666666667" ixy="0" ixz="0" iyy="0.00019982666666666668" iyz="0" izz="0.00034311666666666667"/>
     </inertial>
   </link>
   <joint name="dry_deposit_gate_joint" type="revolute">
@@ -3152,8 +4228,70 @@
     <child link="dry_deposit_gate_link"/>
     <origin rpy="0 0 0" xyz="-0.095 0 0.044"/>
     <axis xyz="0 1 0"/>
-    <limit effort="22.0" lower="0.0" upper="1.75" velocity="0.8"/>
+    <limit effort="9.5" lower="0.0" upper="1.75" velocity="0.8"/>
     <dynamics damping="0.7" friction="0.25"/>
+  </joint>
+  <!-- ROBOTIS DYNAMIXEL XW540-T260-R waterproof gate actuator. Its public
+         33.5 x 58.5 x 45.9 mm, 0.185 kg envelope is hard-mounted outside the
+         hopper; the coaxial output horn follows the gate. The commanded joint
+         remains the physical gate hinge, so no fake closed kinematic loop is
+         introduced into URDF. -->
+  <link name="dry_deposit_gate_actuator_link">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/storage/dry_deposit_xw540_actuator.stl"/>
+      </geometry>
+      <material name="hf_deposit_actuator">
+        <color rgba="0.12 0.14 0.15 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.0459 0.0335 0.0585"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.185"/>
+      <inertia ixx="7.006104166666668e-05" ixy="0" ixz="0" iyy="8.5239675e-05" iyz="0" izz="4.9781341666666676e-05"/>
+    </inertial>
+  </link>
+  <joint name="dry_deposit_gate_actuator_mount_joint" type="fixed">
+    <parent link="dry_deposit_hopper_link"/>
+    <child link="dry_deposit_gate_actuator_link"/>
+    <!-- The project CAD puts the XW540 output boss at local
+           (0, -19.5, +12) mm.  Offset the housing so that this physical boss,
+           the gate hinge and the moving horn are exactly coaxial at the
+           closed-gate datum. -->
+    <origin rpy="0 0 0" xyz="-0.095 0.1215 0.032"/>
+  </joint>
+  <link name="dry_deposit_gate_actuator_horn_link">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/storage/dry_deposit_xw540_horn.stl"/>
+      </geometry>
+      <material name="hf_deposit_horn">
+        <color rgba="0.68 0.70 0.71 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="1.57079632679 0 0"/>
+      <geometry>
+        <cylinder length="0.006" radius="0.018"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.015"/>
+      <inertia ixx="1.665e-06" ixy="0" ixz="0" iyy="3.2399999999999995e-06" iyz="0" izz="1.665e-06"/>
+    </inertial>
+  </link>
+  <joint name="dry_deposit_gate_actuator_horn_joint" type="fixed">
+    <parent link="dry_deposit_gate_link"/>
+    <child link="dry_deposit_gate_actuator_horn_link"/>
+    <origin rpy="0 0 0" xyz="0 0.102 0"/>
   </joint>
   <link name="dry_deposit_chute_link">
     <visual>
@@ -3165,9 +4303,31 @@
         <color rgba="0.20 0.48 0.32 1"/>
       </material>
     </visual>
-    <collision name="dry_deposit_chute_collision">
+    <!-- The chute is a gravity passage, not a solid block.  Four thin wall
+           collisions retain a 109 x 84 mm clear bore for the 30 mm cube and
+           leave both ends open. -->
+    <collision name="dry_deposit_chute_front_wall_collision">
+      <origin xyz="0.0585 0 0"/>
       <geometry>
-        <box size="0.125 0.100 0.350"/>
+        <box size="0.008 0.100 0.350"/>
+      </geometry>
+    </collision>
+    <collision name="dry_deposit_chute_rear_wall_collision">
+      <origin xyz="-0.0585 0 0"/>
+      <geometry>
+        <box size="0.008 0.100 0.350"/>
+      </geometry>
+    </collision>
+    <collision name="dry_deposit_chute_left_wall_collision">
+      <origin xyz="0 0.046 0"/>
+      <geometry>
+        <box size="0.109 0.008 0.350"/>
+      </geometry>
+    </collision>
+    <collision name="dry_deposit_chute_right_wall_collision">
+      <origin xyz="0 -0.046 0"/>
+      <geometry>
+        <box size="0.109 0.008 0.350"/>
       </geometry>
     </collision>
     <inertial>
@@ -3212,41 +4372,107 @@
       <topic>/storage/dry_deposit/contact</topic>
       <update_rate>50</update_rate>
       <always_on>true</always_on>
+      <!-- Fixed-joint reduction merges the chute into the actuated lid and
+             prefixes the final SDF collision.  Reference that physics name so
+             the acceptance contact topic contains real samples. -->
       <contact>
-        <collision>dry_deposit_chute_collision</collision>
+        <collision>dry_bin_lid_link_fixed_joint_lump__dry_deposit_chute_front_wall_collision_collision_8</collision>
       </contact>
     </sensor>
   </gazebo>
-  <link name="dry_bin_latch_link">
+  <!-- Manual over-centre draw latch.  The base, moving hand lever and
+         lid-mounted keeper are separate rigid bodies.  The handle joint is
+         deliberately passive and state-only: opening it represents a human
+         releasing the latch; no electric lid actuator is claimed.  URDF is a
+         tree, so the engaged hook/keeper closed loop is represented by the
+         zero-radian service interlock contract rather than a fake mimic joint. -->
+  <link name="dry_bin_latch_base_link">
     <visual>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://sanitation_vehicle_description/meshes/project/storage/dry_bin_latch.stl"/>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/storage/storage_toggle_latch_base.stl"/>
       </geometry>
-      <material name="hf_latch">
-        <color rgba="0.62 0.65 0.66 1"/>
+      <material name="hf_latch_base">
+        <color rgba="0.34 0.37 0.38 1"/>
       </material>
     </visual>
     <collision>
       <geometry>
-        <box size="0.035 0.050 0.020"/>
+        <box size="0.040 0.052 0.034"/>
       </geometry>
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
-      <mass value="0.08"/>
-      <inertia ixx="1.9333333333333337e-05" ixy="0" ixz="0" iyy="1.0833333333333335e-05" iyz="0" izz="2.4833333333333342e-05"/>
+      <mass value="0.045"/>
+      <inertia ixx="1.4475e-05" ixy="0" ixz="0" iyy="1.0335e-05" iyz="0" izz="1.6139999999999998e-05"/>
     </inertial>
   </link>
-  <joint name="dry_bin_latch_joint" type="fixed">
+  <joint name="dry_bin_latch_base_joint" type="fixed">
     <parent link="dry_bin_link"/>
+    <child link="dry_bin_latch_base_link"/>
+    <origin rpy="0 0 0" xyz="0.270 0 0.070"/>
+  </joint>
+  <link name="dry_bin_latch_link">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/storage/storage_toggle_latch_handle.stl"/>
+      </geometry>
+      <material name="hf_latch_handle">
+        <color rgba="0.62 0.65 0.66 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.006 0 0.032"/>
+      <geometry>
+        <box size="0.032 0.042 0.096"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.006 0 0.032"/>
+      <mass value="0.055"/>
+      <inertia ixx="5.0325e-05" ixy="0" ixz="0" iyy="4.6933333333333333e-05" iyz="0" izz="1.2778333333333334e-05"/>
+    </inertial>
+  </link>
+  <joint name="dry_bin_latch_joint" type="revolute">
+    <parent link="dry_bin_latch_base_link"/>
     <child link="dry_bin_latch_link"/>
-    <origin rpy="0 0 0" xyz="0.270 0 0.112"/>
+    <origin rpy="0 0 0" xyz="0 0 0.023"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="8.0" lower="0.0" upper="1.221730476" velocity="1.0"/>
+    <dynamics damping="0.55" friction="1.50"/>
+  </joint>
+  <link name="dry_bin_latch_keeper_link">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/storage/storage_toggle_latch_keeper.stl"/>
+      </geometry>
+      <material name="hf_latch_keeper">
+        <color rgba="0.68 0.70 0.71 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.004 0 0.008"/>
+      <geometry>
+        <box size="0.032 0.052 0.028"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.004 0 0.008"/>
+      <mass value="0.035"/>
+      <inertia ixx="1.0173333333333333e-05" ixy="0" ixz="0" iyy="5.273333333333335e-06" iyz="0" izz="1.0873333333333331e-05"/>
+    </inertial>
+  </link>
+  <joint name="dry_bin_latch_keeper_joint" type="fixed">
+    <parent link="dry_bin_lid_link"/>
+    <child link="dry_bin_latch_keeper_link"/>
+    <origin rpy="0 0 0" xyz="0.508 0 -0.018"/>
   </joint>
   <link name="dry_bin_payload_reserve_link">
     <visual name="forty_litre_usable_envelope">
       <geometry>
-        <box size="0.485 0.355 0.232"/>
+        <box size="0.485 0.355 0.233"/>
       </geometry>
       <material name="hf_dry_payload">
         <color rgba="0.65 0.48 0.18 0.16"/>
@@ -3255,13 +4481,14 @@
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0"/>
       <mass value="0.001"/>
-      <inertia ixx="1.4987416666666668e-05" ixy="0" ixz="0" iyy="2.4087416666666666e-05" iyz="0" izz="3.0104166666666665e-05"/>
+      <inertia ixx="1.5026166666666667e-05" ixy="0" ixz="0" iyy="2.4126166666666666e-05" iyz="0" izz="3.0104166666666665e-05"/>
     </inertial>
   </link>
   <joint name="dry_bin_payload_reserve_joint" type="fixed">
     <parent link="dry_bin_link"/>
     <child link="dry_bin_payload_reserve_link"/>
-    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <!-- Certified 233 mm usable volume begins on the floor top at -0.120 m. -->
+    <origin rpy="0 0 0" xyz="0 0 -0.0035"/>
   </joint>
   <link name="dry_bin_level_sensor_link">
     <visual>
@@ -3485,6 +4712,92 @@
     <limit effort="40.0" lower="0.0" upper="1.570796" velocity="0.50"/>
     <dynamics damping="1.2" friction="0.8"/>
   </joint>
+  <!-- Same passive manual latch architecture as the dry compartment.  The
+         wet tank remains sealed for operation; maintenance first rotates this
+         handle to its released stop and then opens the lid hinge. -->
+  <link name="wastewater_lid_latch_base_link">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/storage/storage_toggle_latch_base.stl"/>
+      </geometry>
+      <material name="hf_wet_latch_base">
+        <color rgba="0.34 0.37 0.38 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.040 0.052 0.034"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.045"/>
+      <inertia ixx="1.4475e-05" ixy="0" ixz="0" iyy="1.0335e-05" iyz="0" izz="1.6139999999999998e-05"/>
+    </inertial>
+  </link>
+  <joint name="wastewater_lid_latch_base_joint" type="fixed">
+    <parent link="wastewater_tank_link"/>
+    <child link="wastewater_lid_latch_base_link"/>
+    <origin rpy="0 0 0" xyz="0.195 0 0.050"/>
+  </joint>
+  <link name="wastewater_lid_latch_link">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/storage/storage_toggle_latch_handle.stl"/>
+      </geometry>
+      <material name="hf_wet_latch_handle">
+        <color rgba="0.62 0.65 0.66 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.006 0 0.032"/>
+      <geometry>
+        <box size="0.032 0.042 0.096"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.006 0 0.032"/>
+      <mass value="0.055"/>
+      <inertia ixx="5.0325e-05" ixy="0" ixz="0" iyy="4.6933333333333333e-05" iyz="0" izz="1.2778333333333334e-05"/>
+    </inertial>
+  </link>
+  <joint name="wastewater_lid_latch_joint" type="revolute">
+    <parent link="wastewater_lid_latch_base_link"/>
+    <child link="wastewater_lid_latch_link"/>
+    <origin rpy="0 0 0" xyz="0 0 0.023"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="8.0" lower="0.0" upper="1.221730476" velocity="1.0"/>
+    <dynamics damping="0.55" friction="1.50"/>
+  </joint>
+  <link name="wastewater_lid_latch_keeper_link">
+    <visual>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/storage/storage_toggle_latch_keeper.stl"/>
+      </geometry>
+      <material name="hf_wet_latch_keeper">
+        <color rgba="0.68 0.70 0.71 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.004 0 0.008"/>
+      <geometry>
+        <box size="0.032 0.052 0.028"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0.004 0 0.008"/>
+      <mass value="0.035"/>
+      <inertia ixx="1.0173333333333333e-05" ixy="0" ixz="0" iyy="5.273333333333335e-06" iyz="0" izz="1.0873333333333331e-05"/>
+    </inertial>
+  </link>
+  <joint name="wastewater_lid_latch_keeper_joint" type="fixed">
+    <parent link="wastewater_lid_link"/>
+    <child link="wastewater_lid_latch_keeper_link"/>
+    <origin rpy="0 0 0" xyz="0.358 0 -0.018"/>
+  </joint>
   <link name="wastewater_payload_reserve_link">
     <visual name="water_volume">
       <origin xyz="0 0 5.7142857142857145e-06"/>
@@ -3639,6 +4952,578 @@
     <child link="wastewater_inlet_coupling_link"/>
     <origin rpy="0 0 0" xyz="-0.10 0.145 0.105"/>
   </joint>
+  <link name="a300_left_battery_pack_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/a300_battery_pack.stl"/>
+      </geometry>
+      <material name="a300_left_battery_case">
+        <color rgba="0.10 0.12 0.13 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.330 0.135 0.135"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="7.35"/>
+      <inertia ixx="0.022325625" ixy="0" ixz="0" iyy="0.07786406250000001" iyz="0" izz="0.07786406250000001"/>
+    </inertial>
+  </link>
+  <joint name="a300_left_battery_pack_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="a300_left_battery_pack_link"/>
+    <origin xyz="-0.080 0.095 0.075"/>
+  </joint>
+  <link name="a300_left_battery_bms_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/a300_battery_bms.stl"/>
+      </geometry>
+      <material name="a300_left_bms_blue">
+        <color rgba="0.045 0.22 0.34 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.065 0.105 0.025"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.15"/>
+      <inertia ixx="0.00014562499999999998" ixy="0" ixz="0" iyy="6.0624999999999996e-05" iyz="0" izz="0.000190625"/>
+    </inertial>
+  </link>
+  <joint name="a300_left_battery_bms_joint" type="fixed">
+    <parent link="a300_left_battery_pack_link"/>
+    <child link="a300_left_battery_bms_link"/>
+    <origin xyz="0.125 0 0"/>
+  </joint>
+  <link name="a300_right_battery_pack_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/a300_battery_pack.stl"/>
+      </geometry>
+      <material name="a300_right_battery_case">
+        <color rgba="0.10 0.12 0.13 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.330 0.135 0.135"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="7.35"/>
+      <inertia ixx="0.022325625" ixy="0" ixz="0" iyy="0.07786406250000001" iyz="0" izz="0.07786406250000001"/>
+    </inertial>
+  </link>
+  <joint name="a300_right_battery_pack_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="a300_right_battery_pack_link"/>
+    <origin xyz="-0.080 -0.095 0.075"/>
+  </joint>
+  <link name="a300_right_battery_bms_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/a300_battery_bms.stl"/>
+      </geometry>
+      <material name="a300_right_bms_blue">
+        <color rgba="0.045 0.22 0.34 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.065 0.105 0.025"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.15"/>
+      <inertia ixx="0.00014562499999999998" ixy="0" ixz="0" iyy="6.0624999999999996e-05" iyz="0" izz="0.000190625"/>
+    </inertial>
+  </link>
+  <joint name="a300_right_battery_bms_joint" type="fixed">
+    <parent link="a300_right_battery_pack_link"/>
+    <child link="a300_right_battery_bms_link"/>
+    <origin xyz="0.125 0 0"/>
+  </joint>
+  <!-- Lockable main battery isolator behind the left power-service door.
+         The red/yellow handle rotates a real shaft through 90 degrees; the
+         auxiliary plugin reads this joint before permitting the downstream
+         normally-open contactor.  These four links receive the 0.400 kg mass
+         split removed from the former lumped PDU load. -->
+  <link name="main_power_isolator_housing_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/main_power_isolator_housing.stl"/>
+      </geometry>
+      <material name="main_isolator_yellow">
+        <color rgba="0.95 0.71 0.035 1"/>
+      </material>
+    </visual>
+    <collision name="main_power_isolator_body_collision">
+      <geometry>
+        <box size="0.092 0.050 0.106"/>
+      </geometry>
+    </collision>
+    <collision name="main_power_isolator_flange_collision">
+      <origin xyz="0 0.031 0"/>
+      <geometry>
+        <box size="0.106 0.012 0.120"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.1"/>
+      <inertia ixx="0.00015203333333333333" ixy="0" ixz="0" iyy="0.00021363333333333334" iyz="0" izz="0.00012566666666666667"/>
+    </inertial>
+  </link>
+  <joint name="main_power_isolator_housing_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="main_power_isolator_housing_link"/>
+    <origin xyz="0.270 0.345 0.545"/>
+  </joint>
+  <link name="main_power_isolator_handle_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/main_power_isolator_handle.stl"/>
+      </geometry>
+      <material name="main_isolator_handle_red">
+        <color rgba="0.82 0.025 0.020 1"/>
+      </material>
+    </visual>
+    <collision name="main_power_isolator_shaft_collision">
+      <origin rpy="1.5707963267948966 0 0"/>
+      <geometry>
+        <cylinder length="0.042" radius="0.014"/>
+      </geometry>
+    </collision>
+    <collision name="main_power_isolator_grip_collision">
+      <origin xyz="0 0.027 0.020"/>
+      <geometry>
+        <box size="0.018 0.018 0.082"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0.020 0.016"/>
+      <mass value="0.04"/>
+      <inertia ixx="3.980333333333334e-05" ixy="0" ixz="0" iyy="3.541666666666667e-05" iyz="0" izz="1.5053333333333334e-05"/>
+    </inertial>
+  </link>
+  <joint name="main_power_isolator_handle_joint" type="revolute">
+    <parent link="main_power_isolator_housing_link"/>
+    <child link="main_power_isolator_handle_link"/>
+    <origin xyz="0 0.047 0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="9.0" lower="0" upper="1.5707963267948966" velocity="1.2"/>
+    <dynamics damping="1.1" friction="0.65"/>
+  </joint>
+  <link name="main_power_contactor_housing_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/main_contactor_housing.stl"/>
+      </geometry>
+      <material name="main_contactor_black">
+        <color rgba="0.075 0.085 0.090 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.116 0.080 0.092"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.2"/>
+      <inertia ixx="0.0002477333333333333" ixy="0" ixz="0" iyy="0.0003653333333333334" iyz="0" izz="0.00033093333333333337"/>
+    </inertial>
+  </link>
+  <joint name="main_power_contactor_housing_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="main_power_contactor_housing_link"/>
+    <origin xyz="0.375 0.245 0.300"/>
+  </joint>
+  <link name="main_power_contactor_armature_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/main_contactor_armature.stl"/>
+      </geometry>
+      <material name="main_contactor_armature_copper">
+        <color rgba="0.58 0.27 0.08 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.034" radius="0.013"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.06"/>
+      <inertia ixx="1.3059999999999999e-05" ixy="0" ixz="0" iyy="2.2180000000000004e-05" iyz="0" izz="1.588e-05"/>
+    </inertial>
+  </link>
+  <joint name="main_power_contactor_armature_joint" type="prismatic">
+    <parent link="main_power_contactor_housing_link"/>
+    <child link="main_power_contactor_armature_link"/>
+    <origin xyz="0 0 0.052"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="35.0" lower="0" upper="0.004" velocity="0.08"/>
+    <dynamics damping="12.0" friction="3.0"/>
+  </joint>
+  <!-- Project-authored IP-rated service charge assembly at the published
+         A300 charge-side datum.  Door and lock are passive service joints. -->
+  <link name="charge_port_housing_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/charge_port_housing.stl"/>
+      </geometry>
+      <material name="charge_housing_black">
+        <color rgba="0.06 0.08 0.09 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.020" radius="0.0375"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.035"/>
+      <inertia ixx="1.757291666666667e-05" ixy="0" ixz="0" iyy="3.28125e-05" iyz="0" izz="1.757291666666667e-05"/>
+    </inertial>
+  </link>
+  <joint name="charge_port_housing_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="charge_port_housing_link"/>
+    <origin rpy="1.5707963267948966 0 0" xyz="0.250 0.402 0.330"/>
+  </joint>
+  <link name="charge_receptacle_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/charge_receptacle.stl"/>
+      </geometry>
+      <material name="charge_receptacle_blue">
+        <color rgba="0.05 0.20 0.31 1"/>
+      </material>
+    </visual>
+    <collision name="charge_receptacle_contact_collision">
+      <geometry>
+        <cylinder length="0.025" radius="0.029"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.03"/>
+      <inertia ixx="9.972500000000002e-06" ixy="0" ixz="0" iyy="1.682e-05" iyz="0" izz="9.972500000000002e-06"/>
+    </inertial>
+  </link>
+  <joint name="charge_receptacle_joint" type="fixed">
+    <parent link="charge_port_housing_link"/>
+    <child link="charge_receptacle_link"/>
+    <origin xyz="0 -0.012 0"/>
+  </joint>
+  <gazebo reference="charge_receptacle_link">
+    <preserveFixedJoint>true</preserveFixedJoint>
+    <sensor name="charge_receptacle_contact_sensor" type="contact">
+      <topic>/formal_vehicle/gazebo/charge_receptacle/contact</topic>
+      <update_rate>50</update_rate>
+      <always_on>true</always_on>
+      <contact>
+        <collision>charge_receptacle_contact_collision</collision>
+      </contact>
+    </sensor>
+  </gazebo>
+  <link name="charge_port_door_link">
+    <visual>
+      <origin xyz="0 0 -0.041"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/charge_port_door.stl"/>
+      </geometry>
+      <material name="charge_door_green">
+        <color rgba="0.04 0.34 0.22 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 -0.041"/>
+      <geometry>
+        <box size="0.072 0.006 0.072"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 -0.041"/>
+      <mass value="0.025"/>
+      <inertia ixx="1.0874999999999998e-05" ixy="0" ixz="0" iyy="2.1599999999999996e-05" iyz="0" izz="1.0874999999999998e-05"/>
+    </inertial>
+  </link>
+  <joint name="charge_port_door_hinge_joint" type="revolute">
+    <parent link="charge_port_housing_link"/>
+    <child link="charge_port_door_link"/>
+    <origin xyz="0 0 0.041"/>
+    <axis xyz="1 0 0"/>
+    <limit effort="3.0" lower="0" upper="1.92" velocity="0.5"/>
+    <dynamics damping="0.2" friction="0.12"/>
+  </joint>
+  <link name="charge_connector_lock_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/charge_connector_lock.stl"/>
+      </geometry>
+      <material name="charge_lock_metal">
+        <color rgba="0.62 0.65 0.66 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.018 0.012 0.012"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.01"/>
+      <inertia ixx="2.4e-07" ixy="0" ixz="0" iyy="3.9e-07" iyz="0" izz="3.9e-07"/>
+    </inertial>
+  </link>
+  <joint name="charge_connector_lock_joint" type="prismatic">
+    <parent link="charge_receptacle_link"/>
+    <child link="charge_connector_lock_link"/>
+    <origin xyz="0.022 -0.018 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="8.0" lower="0" upper="0.006" velocity="0.02"/>
+    <dynamics damping="1.0" friction="0.5"/>
+  </joint>
+  <!-- Mechanically latching mushroom E-stop.  The 6 mm stroke is explicit;
+         the safety node owns the electrical latch and requires manual reset. -->
+  <link name="emergency_stop_housing_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/emergency_stop_housing.stl"/>
+      </geometry>
+      <material name="estop_housing_yellow">
+        <color rgba="0.95 0.70 0.03 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.040" radius="0.025"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.06"/>
+      <inertia ixx="2.05e-05" ixy="0" ixz="0" iyy="2.5e-05" iyz="0" izz="2.05e-05"/>
+    </inertial>
+  </link>
+  <joint name="emergency_stop_housing_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="emergency_stop_housing_link"/>
+    <origin rpy="1.5707963267948966 0 0" xyz="-0.405 -0.405 0.680"/>
+  </joint>
+  <link name="emergency_stop_plunger_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/emergency_stop_plunger.stl"/>
+      </geometry>
+      <material name="estop_mushroom_red">
+        <color rgba="0.86 0.015 0.018 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.038" radius="0.026"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.03"/>
+      <inertia ixx="1.0369999999999999e-05" ixy="0" ixz="0" iyy="1.352e-05" iyz="0" izz="1.0369999999999999e-05"/>
+    </inertial>
+  </link>
+  <joint name="emergency_stop_plunger_joint" type="prismatic">
+    <parent link="emergency_stop_housing_link"/>
+    <child link="emergency_stop_plunger_link"/>
+    <origin xyz="0 -0.034 0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="20.0" lower="0" upper="0.006" velocity="0.05"/>
+    <dynamics damping="4.0" friction="2.0"/>
+  </joint>
+  <!-- Complete low-point drain: pipe, valve body, externally observable
+         ball/stem, spring-return actuator, service cap and hose coupling. -->
+  <link name="wastewater_drain_pipe_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/wastewater_drain_pipe.stl"/>
+      </geometry>
+      <material name="drain_pipe_black">
+        <color rgba="0.07 0.08 0.085 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin rpy="0 1.5707963267948966 0" xyz="-0.0425 0 0"/>
+      <geometry>
+        <cylinder length="0.085" radius="0.015"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="-0.0425 0 0"/>
+      <mass value="0.12"/>
+      <inertia ixx="1.8e-05" ixy="0" ixz="0" iyy="8.125000000000001e-05" iyz="0" izz="8.125000000000001e-05"/>
+    </inertial>
+  </link>
+  <joint name="wastewater_drain_pipe_joint" type="fixed">
+    <parent link="wastewater_tank_link"/>
+    <child link="wastewater_drain_pipe_link"/>
+    <origin xyz="-0.200 -0.060 -0.024"/>
+  </joint>
+  <link name="wastewater_drain_valve_body_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/wastewater_drain_valve_body.stl"/>
+      </geometry>
+      <material name="drain_valve_brass">
+        <color rgba="0.57 0.39 0.14 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <cylinder length="0.070" radius="0.031"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.28"/>
+      <inertia ixx="0.00017938666666666666" ixy="0" ixz="0" iyy="0.0002040266666666667" iyz="0" izz="0.0002040266666666667"/>
+    </inertial>
+  </link>
+  <joint name="wastewater_drain_valve_body_joint" type="fixed">
+    <parent link="wastewater_drain_pipe_link"/>
+    <child link="wastewater_drain_valve_body_link"/>
+    <origin xyz="-0.085 0 0"/>
+  </joint>
+  <link name="wastewater_drain_valve_ball_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/wastewater_drain_valve_ball.stl"/>
+      </geometry>
+      <material name="drain_indicator_metal">
+        <color rgba="0.66 0.68 0.69 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0.025"/>
+      <geometry>
+        <cylinder length="0.050" radius="0.010"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.08"/>
+      <inertia ixx="2.2833333333333334e-05" ixy="0" ixz="0" iyy="4.0333333333333336e-05" iyz="0" izz="2.2833333333333334e-05"/>
+    </inertial>
+  </link>
+  <joint name="wastewater_drain_valve_joint" type="revolute">
+    <parent link="wastewater_drain_valve_body_link"/>
+    <child link="wastewater_drain_valve_ball_link"/>
+    <axis xyz="1 0 0"/>
+    <limit effort="25.0" lower="0" upper="1.5707963267948966" velocity="1.2"/>
+    <dynamics damping="0.8" friction="0.3"/>
+  </joint>
+  <link name="wastewater_drain_valve_actuator_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/wastewater_drain_actuator.stl"/>
+      </geometry>
+      <material name="drain_actuator_blue">
+        <color rgba="0.04 0.20 0.34 1"/>
+      </material>
+    </visual>
+    <collision>
+      <geometry>
+        <box size="0.095 0.060 0.070"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.32"/>
+      <inertia ixx="0.00022666666666666668" ixy="0" ixz="0" iyy="0.0003713333333333333" iyz="0" izz="0.0003366666666666667"/>
+    </inertial>
+  </link>
+  <joint name="wastewater_drain_valve_actuator_mount_joint" type="fixed">
+    <parent link="wastewater_drain_valve_body_link"/>
+    <child link="wastewater_drain_valve_actuator_link"/>
+    <origin xyz="0 0 0.078"/>
+  </joint>
+  <link name="wastewater_drain_service_cap_link">
+    <visual>
+      <origin xyz="0.030 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/wastewater_drain_service_cap.stl"/>
+      </geometry>
+      <material name="drain_cap_black">
+        <color rgba="0.08 0.09 0.10 1"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0.030 0 0"/>
+      <geometry>
+        <cylinder length="0.020" radius="0.032"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0.030 0 0"/>
+      <mass value="0.04"/>
+      <inertia ixx="2.7306666666666667e-05" ixy="0" ixz="0" iyy="1.4986666666666668e-05" iyz="0" izz="1.4986666666666668e-05"/>
+    </inertial>
+  </link>
+  <joint name="wastewater_drain_service_cap_joint" type="revolute">
+    <parent link="wastewater_drain_valve_body_link"/>
+    <child link="wastewater_drain_service_cap_link"/>
+    <origin xyz="-0.035 0 0"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="4.0" lower="0" upper="2.4" velocity="1.0"/>
+    <dynamics damping="0.25" friction="0.18"/>
+  </joint>
+  <link name="wastewater_drain_coupling_link">
+    <visual>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/service/wastewater_drain_coupling.stl"/>
+      </geometry>
+      <material name="drain_coupling_steel">
+        <color rgba="0.52 0.55 0.56 1"/>
+      </material>
+    </visual>
+    <collision name="wastewater_drain_coupling_contact_collision">
+      <geometry>
+        <cylinder length="0.060" radius="0.027"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin xyz="0 0 0"/>
+      <mass value="0.06"/>
+      <inertia ixx="2.916e-05" ixy="0" ixz="0" iyy="3.2579999999999996e-05" iyz="0" izz="3.2579999999999996e-05"/>
+    </inertial>
+  </link>
+  <joint name="wastewater_drain_coupling_joint" type="fixed">
+    <parent link="wastewater_drain_valve_body_link"/>
+    <child link="wastewater_drain_coupling_link"/>
+    <origin xyz="-0.065 0 0"/>
+  </joint>
+  <gazebo reference="wastewater_drain_coupling_link">
+    <preserveFixedJoint>true</preserveFixedJoint>
+    <sensor name="wastewater_drain_coupling_contact_sensor" type="contact">
+      <topic>/formal_vehicle/gazebo/wastewater_drain_coupling/contact</topic>
+      <update_rate>50</update_rate>
+      <always_on>true</always_on>
+      <contact>
+        <collision>wastewater_drain_coupling_contact_collision</collision>
+      </contact>
+    </sensor>
+  </gazebo>
   <!-- Lower graphite bath-tub body.  Central underside remains open for the
          roller and rear recovery mechanism, while four radial arch meshes keep
          13 mm visual clearance over the 330.2 mm tyres. -->
@@ -3858,28 +5743,93 @@
         <color rgba="0.075 0.090 0.092 1"/>
       </material>
     </visual>
-    <collision name="nose_collision">
-      <origin xyz="0.32 0 0.280"/>
+    <collision name="nose_outer_lobe_collision">
+      <origin xyz="0.3975 -0.2125 0.280"/>
       <geometry>
-        <box size="0.47 0.65 0.20"/>
+        <box size="0.315 0.245 0.20"/>
       </geometry>
     </collision>
+    <collision name="nose_inner_lobe_collision">
+      <origin xyz="0.3975 0.2125 0.280"/>
+      <geometry>
+        <box size="0.315 0.245 0.20"/>
+      </geometry>
+    </collision>
+    <collision name="nose_rear_bridge_collision">
+      <origin xyz="0.2775 0 0.280"/>
+      <geometry>
+        <box size="0.075 0.67 0.20"/>
+      </geometry>
+    </collision>
+    <collision name="nose_front_bridge_collision">
+      <origin xyz="0.5400 0 0.280"/>
+      <geometry>
+        <box size="0.030 0.67 0.20"/>
+      </geometry>
+    </collision>
+    <!-- Keep the aft face ahead of the dry-bin front panel.  The former
+           490 mm box entered the certified dry usable envelope by 2.5 mm. -->
     <collision name="power_cowl_collision">
-      <origin xyz="0.28 0.235 0.535"/>
+      <origin xyz="0.290 0.235 0.535"/>
       <geometry>
-        <box size="0.49 0.29 0.48"/>
+        <box size="0.470 0.29 0.48"/>
       </geometry>
     </collision>
-    <collision name="compute_cowl_collision">
-      <origin xyz="0.31 -0.285 0.365"/>
+    <!-- The compute enclosure moved to the control-cabinet roof.  This is
+           now a low outboard sill, leaving the arm a real open egress lane. -->
+    <collision name="arm_egress_outer_sill_collision">
+      <origin xyz="0.370 -0.405 0.150"/>
       <geometry>
-        <box size="0.39 0.19 0.22"/>
+        <box size="0.270 0.070 0.120"/>
       </geometry>
     </collision>
-    <collision name="arm_bay_floor_collision">
-      <origin xyz="0.17 -0.20 0.33"/>
+    <!-- Panelized arm bay and turret: the former monolithic floor and cowl
+           boxes occupied the official UR5e base.  These eight real members
+           retain a load-bearing U-shaped tray while leaving a 164 mm clear
+           base aperture around the 151 mm vendor collision mesh. -->
+    <!-- No rear floor rail: that volume is occupied by the independently
+           sealed dry/wet vessels.  The arm backing plate carries the rear
+           load into the deck without entering either certified fill volume. -->
+    <collision name="arm_bay_floor_front_collision">
+      <origin xyz="0.3625 -0.245 0.335"/>
       <geometry>
-        <box size="0.58 0.40 0.10"/>
+        <box size="0.245 0.320 0.110"/>
+      </geometry>
+    </collision>
+    <collision name="arm_bay_floor_outer_collision">
+      <origin xyz="0.135 -0.3725 0.335"/>
+      <geometry>
+        <box size="0.210 0.065 0.110"/>
+      </geometry>
+    </collision>
+    <collision name="arm_bay_floor_inner_collision">
+      <origin xyz="0.100 -0.090 0.335"/>
+      <geometry>
+        <box size="0.280 0.050 0.110"/>
+      </geometry>
+    </collision>
+    <collision name="arm_turret_rear_collision">
+      <origin xyz="-0.0025 -0.200 0.315"/>
+      <geometry>
+        <box size="0.035 0.280 0.160"/>
+      </geometry>
+    </collision>
+    <collision name="arm_turret_front_collision">
+      <origin xyz="0.2025 -0.200 0.315"/>
+      <geometry>
+        <box size="0.035 0.280 0.160"/>
+      </geometry>
+    </collision>
+    <collision name="arm_turret_outer_collision">
+      <origin xyz="0.100 -0.325 0.315"/>
+      <geometry>
+        <box size="0.170 0.030 0.160"/>
+      </geometry>
+    </collision>
+    <collision name="arm_turret_inner_collision">
+      <origin xyz="0.100 -0.075 0.315"/>
+      <geometry>
+        <box size="0.170 0.030 0.160"/>
       </geometry>
     </collision>
     <inertial>
@@ -3929,22 +5879,42 @@
         <box size="0.045 0.70 0.52"/>
       </geometry>
     </collision>
+    <!-- Thin moulded outer panels sit beyond the independent tank boards.
+           Their inner faces retain 3.5 mm (dry) and 4 mm (wet) installation
+           gaps instead of duplicating the internal walls with overlapping
+           45 mm collision solids. -->
     <collision name="rear_shell_left_wall_collision">
       <origin xyz="-0.285 0.365 0.495"/>
       <geometry>
-        <box size="0.53 0.045 0.52"/>
+        <box size="0.53 0.020 0.52"/>
       </geometry>
     </collision>
     <collision name="rear_shell_right_wall_collision">
-      <origin xyz="-0.285 -0.365 0.495"/>
+      <origin xyz="-0.285 -0.388 0.495"/>
       <geometry>
-        <box size="0.53 0.045 0.52"/>
+        <box size="0.53 0.020 0.52"/>
       </geometry>
     </collision>
-    <collision name="rear_shell_lower_collision">
-      <origin xyz="-0.285 0 0.350"/>
+    <!-- The moulded lower return is a perimeter frame, not a solid shelf.
+           Keep its three load-bearing outer rails outside the dry / wet tank
+           clear volumes so the robot chute remains a continuous gravity path
+           to the real dry-bin floor. -->
+    <collision name="rear_shell_lower_left_skirt_collision">
+      <origin xyz="-0.285 0.365 0.275"/>
       <geometry>
-        <box size="0.53 0.68 0.23"/>
+        <box size="0.53 0.020 0.080"/>
+      </geometry>
+    </collision>
+    <collision name="rear_shell_lower_right_skirt_collision">
+      <origin xyz="-0.285 -0.388 0.275"/>
+      <geometry>
+        <box size="0.53 0.020 0.080"/>
+      </geometry>
+    </collision>
+    <collision name="rear_shell_lower_rear_rail_collision">
+      <origin xyz="-0.540 0 0.275"/>
+      <geometry>
+        <box size="0.045 0.70 0.080"/>
       </geometry>
     </collision>
     <collision name="rear_shell_roof_left_collision">
@@ -3971,10 +5941,31 @@
         <box size="0.080 0.270 0.055"/>
       </geometry>
     </collision>
-    <collision name="pylon_fairing_collision">
-      <origin xyz="-0.135 0 0.770"/>
+    <collision name="pylon_fairing_rear_collision">
+      <origin xyz="0.355 0 0.775"/>
       <geometry>
-        <box size="0.13 0.15 0.35"/>
+        <box size="0.030 0.220 0.350"/>
+      </geometry>
+    </collision>
+    <!-- The front shroud stops below the UTM shelf instead of occupying
+           the bracket.  Rear/side panels retain the 1.1151 m fairing top, so
+           the declared 47 mm scan-plane clearance remains conservative. -->
+    <collision name="pylon_fairing_front_collision">
+      <origin xyz="0.485 0 0.7475"/>
+      <geometry>
+        <box size="0.030 0.220 0.295"/>
+      </geometry>
+    </collision>
+    <collision name="pylon_fairing_right_collision">
+      <origin xyz="0.420 -0.0775 0.775"/>
+      <geometry>
+        <box size="0.100 0.015 0.350"/>
+      </geometry>
+    </collision>
+    <collision name="pylon_fairing_left_collision">
+      <origin xyz="0.420 0.0775 0.775"/>
+      <geometry>
+        <box size="0.100 0.015 0.350"/>
       </geometry>
     </collision>
     <inertial>
@@ -3987,6 +5978,48 @@
     <parent link="base_link"/>
     <child link="bodywork_rear_shell_link"/>
   </joint>
+  <link name="bodywork_power_service_door_hinge_bracket_link">
+    <visual name="bodywork_power_service_door_lower_hinge_visual">
+      <origin rpy="0 0 0" xyz="0 0 0.035"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/bodywork/service_door_hinge_barrel.stl"/>
+      </geometry>
+      <material name="bodywork_power_service_door_hinge_zinc">
+        <color rgba="0.32 0.35 0.36 1"/>
+      </material>
+    </visual>
+    <visual name="bodywork_power_service_door_upper_hinge_visual">
+      <origin rpy="0 0 0" xyz="0 0 0.39"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/bodywork/service_door_hinge_barrel.stl"/>
+      </geometry>
+      <material name="bodywork_power_service_door_hinge_zinc_upper">
+        <color rgba="0.32 0.35 0.36 1"/>
+      </material>
+    </visual>
+    <collision name="bodywork_power_service_door_lower_hinge_collision">
+      <origin xyz="0 0 0.035"/>
+      <geometry>
+        <cylinder length="0.050" radius="0.008"/>
+      </geometry>
+    </collision>
+    <collision name="bodywork_power_service_door_upper_hinge_collision">
+      <origin xyz="0 0 0.39"/>
+      <geometry>
+        <cylinder length="0.050" radius="0.008"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0.2125"/>
+      <mass value="0.03"/>
+      <inertia ixx="0.0004525625" ixy="0" ixz="0" iyy="0.00045352249999999994" iyz="0" izz="2.9600000000000005e-06"/>
+    </inertial>
+  </link>
+  <joint name="bodywork_power_service_door_hinge_bracket_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="bodywork_power_service_door_hinge_bracket_link"/>
+    <origin rpy="0 0 0" xyz="0.055 0.391 0.365"/>
+  </joint>
   <link name="bodywork_power_service_door_link">
     <visual name="power_service_door_visual">
       <geometry>
@@ -3997,21 +6030,96 @@
       </material>
     </visual>
     <collision name="bodywork_power_service_door_collision">
-      <origin rpy="0 0 0" xyz="0.28 0.391 0.57"/>
+      <origin rpy="0 0 0" xyz="0.225 0 0.2125"/>
       <geometry>
-        <box size="0.45 0.010 0.43"/>
+        <box size="0.45 0.010 0.425"/>
       </geometry>
     </collision>
     <inertial>
-      <origin rpy="0 0 0" xyz="0.28 0.391 0.57"/>
-      <mass value="0.28"/>
-      <inertia ixx="0.004316666666666667" ixy="0" ixz="0" iyy="0.009039333333333333" iyz="0" izz="0.004727333333333334"/>
+      <origin rpy="0 0 0" xyz="0.225 0 0.2125"/>
+      <mass value="0.225"/>
+      <inertia ixx="0.0033885937499999997" ixy="0" ixz="0" iyy="0.007183593750000001" iyz="0" izz="0.00379875"/>
     </inertial>
   </link>
-  <joint name="bodywork_power_service_door_joint" type="fixed">
-    <parent link="base_link"/>
+  <joint name="bodywork_power_service_door_hinge_joint" type="revolute">
+    <parent link="bodywork_power_service_door_hinge_bracket_link"/>
     <child link="bodywork_power_service_door_link"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="30.0" lower="0.0" upper="1.745329252" velocity="0.5"/>
+    <dynamics damping="2.5" friction="4.0"/>
+  </joint>
+  <link name="bodywork_power_service_door_latch_link">
+    <visual name="bodywork_power_service_door_rotary_latch_visual">
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/bodywork/service_door_rotary_latch.stl"/>
+      </geometry>
+      <material name="bodywork_power_service_door_latch_black">
+        <color rgba="0.055 0.065 0.068 1"/>
+      </material>
+    </visual>
+    <collision name="bodywork_power_service_door_rotary_latch_collision">
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.045 0.020 0.018"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.025"/>
+      <inertia ixx="1.5083333333333336e-06" ixy="0" ixz="0" iyy="4.89375e-06" iyz="0" izz="5.052083333333334e-06"/>
+    </inertial>
+  </link>
+  <joint name="bodywork_power_service_door_latch_joint" type="revolute">
+    <parent link="bodywork_power_service_door_link"/>
+    <child link="bodywork_power_service_door_latch_link"/>
+    <origin rpy="0 0 0" xyz="0.390 0 0.200"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="8.0" lower="-0.785398163" upper="0.785398163" velocity="1.0"/>
+    <dynamics damping="0.8" friction="1.5"/>
+  </joint>
+  <link name="bodywork_compute_service_door_hinge_bracket_link">
+    <visual name="bodywork_compute_service_door_lower_hinge_visual">
+      <origin rpy="0 0 0" xyz="0 0 0.035"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/bodywork/service_door_hinge_barrel.stl"/>
+      </geometry>
+      <material name="bodywork_compute_service_door_hinge_zinc">
+        <color rgba="0.32 0.35 0.36 1"/>
+      </material>
+    </visual>
+    <visual name="bodywork_compute_service_door_upper_hinge_visual">
+      <origin rpy="0 0 0" xyz="0 0 0.08499999999999999"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/bodywork/service_door_hinge_barrel.stl"/>
+      </geometry>
+      <material name="bodywork_compute_service_door_hinge_zinc_upper">
+        <color rgba="0.32 0.35 0.36 1"/>
+      </material>
+    </visual>
+    <collision name="bodywork_compute_service_door_lower_hinge_collision">
+      <origin xyz="0 0 0.035"/>
+      <geometry>
+        <cylinder length="0.050" radius="0.008"/>
+      </geometry>
+    </collision>
+    <collision name="bodywork_compute_service_door_upper_hinge_collision">
+      <origin xyz="0 0 0.08499999999999999"/>
+      <geometry>
+        <cylinder length="0.050" radius="0.008"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0.06"/>
+      <mass value="0.03"/>
+      <inertia ixx="3.7e-05" ixy="0" ixz="0" iyy="3.7959999999999996e-05" iyz="0" izz="2.9600000000000005e-06"/>
+    </inertial>
+  </link>
+  <joint name="bodywork_compute_service_door_hinge_bracket_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="bodywork_compute_service_door_hinge_bracket_link"/>
+    <origin rpy="0 0 0" xyz="0.235 -0.441 0.090"/>
   </joint>
   <link name="bodywork_compute_service_door_link">
     <visual name="compute_service_door_visual">
@@ -4023,21 +6131,96 @@
       </material>
     </visual>
     <collision name="bodywork_compute_service_door_collision">
-      <origin rpy="0 0 0" xyz="0.32 -0.391 0.36"/>
+      <origin rpy="0 0 0" xyz="0.135 0 0.060"/>
       <geometry>
-        <box size="0.31 0.010 0.18"/>
+        <box size="0.27 0.010 0.12"/>
       </geometry>
     </collision>
     <inertial>
-      <origin rpy="0 0 0" xyz="0.32 -0.391 0.36"/>
-      <mass value="0.16"/>
-      <inertia ixx="0.00043333333333333337" ixy="0" ixz="0" iyy="0.0017133333333333334" iyz="0" izz="0.0012826666666666668"/>
+      <origin rpy="0 0 0" xyz="0.135 0 0.060"/>
+      <mass value="0.105"/>
+      <inertia ixx="0.00012687499999999998" ixy="0" ixz="0" iyy="0.0007638749999999999" iyz="0" izz="0.0006387500000000001"/>
     </inertial>
   </link>
-  <joint name="bodywork_compute_service_door_joint" type="fixed">
-    <parent link="base_link"/>
+  <joint name="bodywork_compute_service_door_hinge_joint" type="revolute">
+    <parent link="bodywork_compute_service_door_hinge_bracket_link"/>
     <child link="bodywork_compute_service_door_link"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="30.0" lower="-1.745329252" upper="0.0" velocity="0.5"/>
+    <dynamics damping="2.5" friction="4.0"/>
+  </joint>
+  <link name="bodywork_compute_service_door_latch_link">
+    <visual name="bodywork_compute_service_door_rotary_latch_visual">
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/bodywork/service_door_rotary_latch.stl"/>
+      </geometry>
+      <material name="bodywork_compute_service_door_latch_black">
+        <color rgba="0.055 0.065 0.068 1"/>
+      </material>
+    </visual>
+    <collision name="bodywork_compute_service_door_rotary_latch_collision">
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.045 0.020 0.018"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.025"/>
+      <inertia ixx="1.5083333333333336e-06" ixy="0" ixz="0" iyy="4.89375e-06" iyz="0" izz="5.052083333333334e-06"/>
+    </inertial>
+  </link>
+  <joint name="bodywork_compute_service_door_latch_joint" type="revolute">
+    <parent link="bodywork_compute_service_door_link"/>
+    <child link="bodywork_compute_service_door_latch_link"/>
+    <origin rpy="0 0 0" xyz="0.235 0 0.060"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="8.0" lower="-0.785398163" upper="0.785398163" velocity="1.0"/>
+    <dynamics damping="0.8" friction="1.5"/>
+  </joint>
+  <link name="bodywork_wet_service_door_hinge_bracket_link">
+    <visual name="bodywork_wet_service_door_lower_hinge_visual">
+      <origin rpy="0 0 0" xyz="0 0 0.035"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/bodywork/service_door_hinge_barrel.stl"/>
+      </geometry>
+      <material name="bodywork_wet_service_door_hinge_zinc">
+        <color rgba="0.32 0.35 0.36 1"/>
+      </material>
+    </visual>
+    <visual name="bodywork_wet_service_door_upper_hinge_visual">
+      <origin rpy="0 0 0" xyz="0 0 0.255"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/bodywork/service_door_hinge_barrel.stl"/>
+      </geometry>
+      <material name="bodywork_wet_service_door_hinge_zinc_upper">
+        <color rgba="0.32 0.35 0.36 1"/>
+      </material>
+    </visual>
+    <collision name="bodywork_wet_service_door_lower_hinge_collision">
+      <origin xyz="0 0 0.035"/>
+      <geometry>
+        <cylinder length="0.050" radius="0.008"/>
+      </geometry>
+    </collision>
+    <collision name="bodywork_wet_service_door_upper_hinge_collision">
+      <origin xyz="0 0 0.255"/>
+      <geometry>
+        <cylinder length="0.050" radius="0.008"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0.145"/>
+      <mass value="0.03"/>
+      <inertia ixx="0.00021124999999999996" ixy="0" ixz="0" iyy="0.00021221" iyz="0" izz="2.9600000000000005e-06"/>
+    </inertial>
+  </link>
+  <joint name="bodywork_wet_service_door_hinge_bracket_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="bodywork_wet_service_door_hinge_bracket_link"/>
+    <origin rpy="0 0 0" xyz="-0.430 -0.401 0.360"/>
   </joint>
   <link name="bodywork_wet_service_door_link">
     <visual name="wet_service_door_visual">
@@ -4049,21 +6232,96 @@
       </material>
     </visual>
     <collision name="bodywork_wet_service_door_collision">
-      <origin rpy="0 0 0" xyz="-0.245 -0.401 0.50"/>
+      <origin rpy="0 0 0" xyz="0.185 0 0.145"/>
       <geometry>
         <box size="0.37 0.010 0.29"/>
       </geometry>
     </collision>
     <inertial>
-      <origin rpy="0 0 0" xyz="-0.245 -0.401 0.50"/>
-      <mass value="0.22"/>
-      <inertia ixx="0.0015436666666666665" ixy="0" ixz="0" iyy="0.004051666666666666" iyz="0" izz="0.0025116666666666664"/>
+      <origin rpy="0 0 0" xyz="0.185 0 0.145"/>
+      <mass value="0.165"/>
+      <inertia ixx="0.0011577500000000001" ixy="0" ixz="0" iyy="0.00303875" iyz="0" izz="0.0018837499999999998"/>
     </inertial>
   </link>
-  <joint name="bodywork_wet_service_door_joint" type="fixed">
-    <parent link="base_link"/>
+  <joint name="bodywork_wet_service_door_hinge_joint" type="revolute">
+    <parent link="bodywork_wet_service_door_hinge_bracket_link"/>
     <child link="bodywork_wet_service_door_link"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="30.0" lower="-1.745329252" upper="0.0" velocity="0.5"/>
+    <dynamics damping="2.5" friction="4.0"/>
+  </joint>
+  <link name="bodywork_wet_service_door_latch_link">
+    <visual name="bodywork_wet_service_door_rotary_latch_visual">
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/bodywork/service_door_rotary_latch.stl"/>
+      </geometry>
+      <material name="bodywork_wet_service_door_latch_black">
+        <color rgba="0.055 0.065 0.068 1"/>
+      </material>
+    </visual>
+    <collision name="bodywork_wet_service_door_rotary_latch_collision">
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.045 0.020 0.018"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.025"/>
+      <inertia ixx="1.5083333333333336e-06" ixy="0" ixz="0" iyy="4.89375e-06" iyz="0" izz="5.052083333333334e-06"/>
+    </inertial>
+  </link>
+  <joint name="bodywork_wet_service_door_latch_joint" type="revolute">
+    <parent link="bodywork_wet_service_door_link"/>
+    <child link="bodywork_wet_service_door_latch_link"/>
+    <origin rpy="0 0 0" xyz="0.330 0 0.140"/>
+    <axis xyz="0 1 0"/>
+    <limit effort="8.0" lower="-0.785398163" upper="0.785398163" velocity="1.0"/>
+    <dynamics damping="0.8" friction="1.5"/>
+  </joint>
+  <link name="bodywork_rear_dry_service_door_hinge_bracket_link">
+    <visual name="bodywork_rear_dry_service_door_lower_hinge_visual">
+      <origin rpy="0 0 1.5707963267948966" xyz="0 0 0.035"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/bodywork/service_door_hinge_barrel.stl"/>
+      </geometry>
+      <material name="bodywork_rear_dry_service_door_hinge_zinc">
+        <color rgba="0.32 0.35 0.36 1"/>
+      </material>
+    </visual>
+    <visual name="bodywork_rear_dry_service_door_upper_hinge_visual">
+      <origin rpy="0 0 1.5707963267948966" xyz="0 0 0.31499999999999995"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/bodywork/service_door_hinge_barrel.stl"/>
+      </geometry>
+      <material name="bodywork_rear_dry_service_door_hinge_zinc_upper">
+        <color rgba="0.32 0.35 0.36 1"/>
+      </material>
+    </visual>
+    <collision name="bodywork_rear_dry_service_door_lower_hinge_collision">
+      <origin xyz="0 0 0.035"/>
+      <geometry>
+        <cylinder length="0.050" radius="0.008"/>
+      </geometry>
+    </collision>
+    <collision name="bodywork_rear_dry_service_door_upper_hinge_collision">
+      <origin xyz="0 0 0.31499999999999995"/>
+      <geometry>
+        <cylinder length="0.050" radius="0.008"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0.175"/>
+      <mass value="0.03"/>
+      <inertia ixx="0.00030724999999999996" ixy="0" ixz="0" iyy="0.00030820999999999995" iyz="0" izz="2.9600000000000005e-06"/>
+    </inertial>
+  </link>
+  <joint name="bodywork_rear_dry_service_door_hinge_bracket_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="bodywork_rear_dry_service_door_hinge_bracket_link"/>
+    <origin rpy="0 0 0" xyz="-0.562 0.220 0.325"/>
   </joint>
   <link name="bodywork_rear_dry_service_door_link">
     <visual name="rear_dry_service_door_visual">
@@ -4075,21 +6333,54 @@
       </material>
     </visual>
     <collision name="bodywork_rear_dry_service_door_collision">
-      <origin rpy="0 0 0" xyz="-0.562 0 0.500"/>
+      <origin rpy="0 0 0" xyz="0 -0.220 0.175"/>
       <geometry>
         <box size="0.012 0.44 0.35"/>
       </geometry>
     </collision>
     <inertial>
-      <origin rpy="0 0 0" xyz="-0.562 0 0.500"/>
-      <mass value="0.3"/>
-      <inertia ixx="0.0079025" ixy="0" ixz="0" iyy="0.0030661" iyz="0" izz="0.0048436"/>
+      <origin rpy="0 0 0" xyz="0 -0.220 0.175"/>
+      <mass value="0.245"/>
+      <inertia ixx="0.006453708333333333" ixy="0" ixz="0" iyy="0.0025039816666666665" iyz="0" izz="0.003955606666666667"/>
     </inertial>
   </link>
-  <joint name="bodywork_rear_dry_service_door_joint" type="fixed">
-    <parent link="base_link"/>
+  <joint name="bodywork_rear_dry_service_door_hinge_joint" type="revolute">
+    <parent link="bodywork_rear_dry_service_door_hinge_bracket_link"/>
     <child link="bodywork_rear_dry_service_door_link"/>
     <origin rpy="0 0 0" xyz="0 0 0"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="30.0" lower="-1.745329252" upper="0.0" velocity="0.5"/>
+    <dynamics damping="2.5" friction="4.0"/>
+  </joint>
+  <link name="bodywork_rear_dry_service_door_latch_link">
+    <visual name="bodywork_rear_dry_service_door_rotary_latch_visual">
+      <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
+      <geometry>
+        <mesh filename="package://sanitation_vehicle_description/meshes/project/bodywork/service_door_rotary_latch.stl"/>
+      </geometry>
+      <material name="bodywork_rear_dry_service_door_latch_black">
+        <color rgba="0.055 0.065 0.068 1"/>
+      </material>
+    </visual>
+    <collision name="bodywork_rear_dry_service_door_rotary_latch_collision">
+      <origin rpy="0 0 1.5707963267948966" xyz="0 0 0"/>
+      <geometry>
+        <box size="0.045 0.020 0.018"/>
+      </geometry>
+    </collision>
+    <inertial>
+      <origin rpy="0 0 0" xyz="0 0 0"/>
+      <mass value="0.025"/>
+      <inertia ixx="1.5083333333333336e-06" ixy="0" ixz="0" iyy="4.89375e-06" iyz="0" izz="5.052083333333334e-06"/>
+    </inertial>
+  </link>
+  <joint name="bodywork_rear_dry_service_door_latch_joint" type="revolute">
+    <parent link="bodywork_rear_dry_service_door_link"/>
+    <child link="bodywork_rear_dry_service_door_latch_link"/>
+    <origin rpy="0 0 0" xyz="0 -0.390 0.175"/>
+    <axis xyz="1 0 0"/>
+    <limit effort="8.0" lower="-0.785398163" upper="0.785398163" velocity="1.0"/>
+    <dynamics damping="0.8" friction="1.5"/>
   </joint>
   <!-- Character line, sensor belt and graphics.  These parts are physical
          trim but use no separate collision because they are flush to the shell. -->
@@ -4142,38 +6433,18 @@
         <color rgba="0.46 0.49 0.50 1"/>
       </material>
     </visual>
-    <visual name="charge_port_visual">
+    <!-- Charge and drain visuals/collisions moved to the articulated service
+           hardware assembly; this trim link now carries only body graphics. -->
+    <collision name="front_sensor_band_collision">
+      <origin xyz="0.555 0 0.350"/>
       <geometry>
-        <mesh filename="package://sanitation_vehicle_description/meshes/project/bodywork/charge_port.stl"/>
-      </geometry>
-      <material name="charge_port">
-        <color rgba="0.07 0.14 0.18 1"/>
-      </material>
-    </visual>
-    <visual name="drain_coupling_visual">
-      <geometry>
-        <mesh filename="package://sanitation_vehicle_description/meshes/project/bodywork/drain_coupling.stl"/>
-      </geometry>
-      <material name="drain_metal">
-        <color rgba="0.56 0.59 0.60 1"/>
-      </material>
-    </visual>
-    <collision name="charge_port_collision">
-      <origin rpy="1.5707963267948966 0 0" xyz="0.250 0.402 0.330"/>
-      <geometry>
-        <cylinder length="0.020" radius="0.032"/>
-      </geometry>
-    </collision>
-    <collision name="drain_coupling_collision">
-      <origin rpy="0 1.5707963267948966 0" xyz="-0.490 -0.305 0.315"/>
-      <geometry>
-        <cylinder length="0.065" radius="0.025"/>
+        <box size="0.018 0.500 0.055"/>
       </geometry>
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0.40"/>
-      <mass value="0.42"/>
-      <inertia ixx="0.03299799999999999" ixy="0" ixz="0" iyy="0.05494999999999999" iyz="0" izz="0.06901999999999998"/>
+      <mass value="0.32"/>
+      <inertia ixx="0.02514133333333333" ixy="0" ixz="0" iyy="0.04186666666666666" iyz="0" izz="0.052586666666666664"/>
     </inertial>
   </link>
   <joint name="bodywork_trim_joint" type="fixed">
@@ -4221,29 +6492,88 @@
         <color rgba="1.0 0.45 0.015 0.92"/>
       </material>
     </visual>
-    <visual name="emergency_stop_visual">
+    <!-- E-stop is an articulated latching plunger in power_service_hardware. -->
+    <collision name="front_work_lights_collision">
+      <origin xyz="0.566 0 0.348"/>
       <geometry>
-        <mesh filename="package://sanitation_vehicle_description/meshes/project/bodywork/emergency_stop.stl"/>
-      </geometry>
-      <material name="emergency_red">
-        <color rgba="0.85 0.015 0.018 1"/>
-      </material>
-    </visual>
-    <collision name="emergency_stop_collision">
-      <origin rpy="1.5707963267948966 0 0" xyz="-0.405 -0.405 0.680"/>
-      <geometry>
-        <cylinder length="0.040" radius="0.026"/>
+        <box size="0.012 0.455 0.030"/>
       </geometry>
     </collision>
     <inertial>
       <origin rpy="0 0 0" xyz="0 0 0.55"/>
-      <mass value="0.34"/>
-      <inertia ixx="0.021952666666666665" ixy="0" ixz="0" iyy="0.03972333333333333" iyz="0" izz="0.05587333333333333"/>
+      <mass value="0.25"/>
+      <inertia ixx="0.016141666666666665" ixy="0" ixz="0" iyy="0.029208333333333333" iyz="0" izz="0.041083333333333326"/>
     </inertial>
   </link>
   <joint name="bodywork_lighting_joint" type="fixed">
     <parent link="base_link"/>
     <child link="bodywork_lighting_link"/>
+  </joint>
+  <link name="charge_interface_datum_link">
+    <inertial>
+      <mass value="0.000001"/>
+      <inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/>
+    </inertial>
+  </link>
+  <joint name="charge_interface_datum_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="charge_interface_datum_link"/>
+    <origin rpy="1.5707963267948966 0 0" xyz="0.250 0.402 0.330"/>
+  </joint>
+  <link name="wastewater_drain_datum_link">
+    <inertial>
+      <mass value="0.000001"/>
+      <inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/>
+    </inertial>
+  </link>
+  <joint name="wastewater_drain_datum_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="wastewater_drain_datum_link"/>
+    <origin rpy="0 1.5707963267948966 0" xyz="-0.490 -0.305 0.315"/>
+  </joint>
+  <link name="emergency_stop_datum_link">
+    <inertial>
+      <mass value="0.000001"/>
+      <inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/>
+    </inertial>
+  </link>
+  <joint name="emergency_stop_datum_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="emergency_stop_datum_link"/>
+    <origin rpy="1.5707963267948966 0 0" xyz="-0.405 -0.405 0.680"/>
+  </joint>
+  <link name="warning_and_work_lighting_datum_link">
+    <inertial>
+      <mass value="0.000001"/>
+      <inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/>
+    </inertial>
+  </link>
+  <joint name="warning_and_work_lighting_datum_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="warning_and_work_lighting_datum_link"/>
+    <origin rpy="0 0 0" xyz="0 0 0.550"/>
+  </joint>
+  <link name="front_contact_safety_datum_link">
+    <inertial>
+      <mass value="0.000001"/>
+      <inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/>
+    </inertial>
+  </link>
+  <joint name="front_contact_safety_datum_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="front_contact_safety_datum_link"/>
+    <origin rpy="0 0 0" xyz="0.555 0 0.105"/>
+  </joint>
+  <link name="rear_contact_safety_datum_link">
+    <inertial>
+      <mass value="0.000001"/>
+      <inertia ixx="0.000000001" ixy="0" ixz="0" iyy="0.000000001" iyz="0" izz="0.000000001"/>
+    </inertial>
+  </link>
+  <joint name="rear_contact_safety_datum_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="rear_contact_safety_datum_link"/>
+    <origin rpy="0 0 0" xyz="-0.555 0 0.105"/>
   </joint>
   <!-- Guards cover motor/gear cases only; brush discs and bristles remain
          exposed and animated. -->
@@ -4291,38 +6621,30 @@
       <plugin>gz_ros2_control/GazeboSimSystem</plugin>
     </hardware>
     <joint name="front_left_wheel_joint">
-      <command_interface name="velocity">
-        <param name="min">-12.0</param>
-        <param name="max">12.0</param>
-      </command_interface>
-      <state_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
     <joint name="front_right_wheel_joint">
-      <command_interface name="velocity">
-        <param name="min">-12.0</param>
-        <param name="max">12.0</param>
-      </command_interface>
-      <state_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
     <joint name="rear_left_wheel_joint">
-      <command_interface name="velocity">
-        <param name="min">-12.0</param>
-        <param name="max">12.0</param>
-      </command_interface>
-      <state_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
     <joint name="rear_right_wheel_joint">
-      <command_interface name="velocity">
-        <param name="min">-12.0</param>
-        <param name="max">12.0</param>
-      </command_interface>
-      <state_interface name="position"/>
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
@@ -4332,7 +6654,7 @@
         <param name="max">6.283185307179586</param>
       </command_interface>
       <state_interface name="position">
-        <param name="initial_value">0.0</param>
+        <param name="initial_value">-1.0</param>
       </state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
@@ -4343,7 +6665,7 @@
         <param name="max">6.283185307179586</param>
       </command_interface>
       <state_interface name="position">
-        <param name="initial_value">0.0</param>
+        <param name="initial_value">-1.0</param>
       </state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
@@ -4354,7 +6676,7 @@
         <param name="max">3.141592653589793</param>
       </command_interface>
       <state_interface name="position">
-        <param name="initial_value">0.0</param>
+        <param name="initial_value">1.8</param>
       </state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
@@ -4365,7 +6687,7 @@
         <param name="max">6.283185307179586</param>
       </command_interface>
       <state_interface name="position">
-        <param name="initial_value">0.0</param>
+        <param name="initial_value">-1.5</param>
       </state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
@@ -4376,7 +6698,7 @@
         <param name="max">6.283185307179586</param>
       </command_interface>
       <state_interface name="position">
-        <param name="initial_value">0.0</param>
+        <param name="initial_value">-1.55</param>
       </state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
@@ -4387,7 +6709,7 @@
         <param name="max">6.283185307179586</param>
       </command_interface>
       <state_interface name="position">
-        <param name="initial_value">0.0</param>
+        <param name="initial_value">0.25</param>
       </state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
@@ -4398,15 +6720,50 @@
         <param name="max">0.8</param>
       </command_interface>
       <state_interface name="position">
-        <param name="initial_value">0.0</param>
+        <param name="initial_value">0.2</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="robotiq_85_right_knuckle_joint">
+      <state_interface name="position">
+        <param name="initial_value">-0.2</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="robotiq_85_left_inner_knuckle_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.2</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="robotiq_85_right_inner_knuckle_joint">
+      <state_interface name="position">
+        <param name="initial_value">-0.2</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="robotiq_85_left_finger_tip_joint">
+      <state_interface name="position">
+        <param name="initial_value">-0.2</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="robotiq_85_right_finger_tip_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.2</param>
       </state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
     <joint name="left_side_brush_joint">
       <command_interface name="velocity">
-        <param name="min">-31.416</param>
-        <param name="max">31.416</param>
+        <param name="min">-14.660766</param>
+        <param name="max">14.660766</param>
       </command_interface>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
@@ -4414,8 +6771,8 @@
     </joint>
     <joint name="right_side_brush_joint">
       <command_interface name="velocity">
-        <param name="min">-31.416</param>
-        <param name="max">31.416</param>
+        <param name="min">-14.660766</param>
+        <param name="max">14.660766</param>
       </command_interface>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
@@ -4423,8 +6780,8 @@
     </joint>
     <joint name="central_roller_joint">
       <command_interface name="velocity">
-        <param name="min">-52.36</param>
-        <param name="max">52.36</param>
+        <param name="min">-14.660766</param>
+        <param name="max">14.660766</param>
       </command_interface>
       <state_interface name="position"/>
       <state_interface name="velocity"/>
@@ -4445,38 +6802,19 @@
         <param name="max">0.1</param>
       </command_interface>
       <state_interface name="position">
-        <param name="initial_value">0.1</param>
-      </state_interface>
-      <state_interface name="velocity"/>
-      <state_interface name="effort"/>
-    </joint>
-    <joint name="squeegee_pitch_joint">
-      <command_interface name="position">
-        <param name="min">-0.2</param>
-        <param name="max">0.2</param>
-      </command_interface>
-      <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
     <joint name="squeegee_float_joint">
-      <command_interface name="position">
-        <param name="min">0.0</param>
-        <param name="max">0.035</param>
-      </command_interface>
       <state_interface name="position">
-        <param name="initial_value">0.035</param>
+        <param name="initial_value">0.0</param>
       </state_interface>
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
-    <joint name="dry_bin_lid_joint">
-      <command_interface name="position">
-        <param name="min">0.0</param>
-        <param name="max">1.75</param>
-      </command_interface>
+    <joint name="squeegee_pitch_joint">
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -4494,11 +6832,137 @@
       <state_interface name="velocity"/>
       <state_interface name="effort"/>
     </joint>
-    <joint name="wastewater_lid_joint">
+    <joint name="wastewater_drain_valve_joint">
       <command_interface name="position">
         <param name="min">0.0</param>
-        <param name="max">1.57</param>
+        <param name="max">1.5707963267948966</param>
       </command_interface>
+      <state_interface name="position">
+        <param name="initial_value">2e-05</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="charge_port_door_hinge_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="charge_connector_lock_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="emergency_stop_plunger_joint">
+      <state_interface name="position">
+        <param name="initial_value">2e-05</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="main_power_isolator_handle_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.002</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="main_power_contactor_armature_joint">
+      <state_interface name="position">
+        <param name="initial_value">2e-05</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="wastewater_drain_service_cap_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="dry_bin_lid_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="dry_bin_latch_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="wastewater_lid_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="wastewater_lid_latch_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="bodywork_power_service_door_hinge_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="bodywork_power_service_door_latch_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="bodywork_compute_service_door_hinge_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="bodywork_compute_service_door_latch_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="bodywork_wet_service_door_hinge_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="bodywork_wet_service_door_latch_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="bodywork_rear_dry_service_door_hinge_joint">
+      <state_interface name="position">
+        <param name="initial_value">0.0</param>
+      </state_interface>
+      <state_interface name="velocity"/>
+      <state_interface name="effort"/>
+    </joint>
+    <joint name="bodywork_rear_dry_service_door_latch_joint">
       <state_interface name="position">
         <param name="initial_value">0.0</param>
       </state_interface>
@@ -4508,13 +6972,179 @@
   </ros2_control>
   <gazebo>
     <plugin filename="gz_ros2_control-system" name="gz_ros2_control::GazeboSimROS2ControlPlugin">
-      <parameters>/mnt/f/Project/TZcup-formal-functional-layout-v2/.formal_build/install/sanitation_vehicle_description/share/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml</parameters>
+      <parameters>package://sanitation_vehicle_description/config/formal_vehicle_controllers.yaml</parameters>
     </plugin>
+    <plugin filename="libA300DrivetrainPlantSystem.so" name="sanitation_gazebo_control::A300DrivetrainPlantSystem">
+      <wheel_joint_0>front_left_wheel_joint</wheel_joint_0>
+      <wheel_joint_1>front_right_wheel_joint</wheel_joint_1>
+      <wheel_joint_2>rear_left_wheel_joint</wheel_joint_2>
+      <wheel_joint_3>rear_right_wheel_joint</wheel_joint_3>
+      <command_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/cmd_vel</command_topic>
+      <actuator_enable_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/actuator_enable</actuator_enable_topic>
+      <emergency_stop_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/emergency_stop</emergency_stop_topic>
+      <motor_fault_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/motor_fault</motor_fault_topic>
+      <bus_voltage_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/bus_voltage_v</bus_voltage_topic>
+      <status_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/status</status_topic>
+      <odometry_topic>/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/odom</odometry_topic>
+      <odometry_frame_id>odom</odometry_frame_id>
+      <odometry_child_frame_id>base_footprint</odometry_child_frame_id>
+    </plugin>
+    <!-- DART intentionally backs the stable whole-vehicle runtime, but it
+           does not implement SDF mimic constraints.  Keep the public Robotiq
+           controller on the single real actuator joint and reproduce the
+           five passive mechanical linkages with bounded compliant efforts.
+           The follower joints have no ros2_control command interfaces, so
+           this plugin remains their sole effort writer. -->
+    <plugin filename="libGripperMimicEffortSystem.so" name="sanitation_gazebo_control::GripperMimicEffortSystem">
+      <master_joint>robotiq_85_left_knuckle_joint</master_joint>
+      <position_gain_nm_rad>4.0</position_gain_nm_rad>
+      <velocity_gain_nm_s_rad>0.03</velocity_gain_nm_s_rad>
+      <maximum_effort_nm>12.0</maximum_effort_nm>
+    </plugin>
+    <!-- Sole physical auxiliary system: the named 6 mm plunger is both
+           animated and measured here; its fail-closed latch is bridged
+           one-way to the unique ROS /emergency_stop state topic. -->
+    <plugin filename="libFormalAuxiliaryVisualSystem.so" name="sanitation_gazebo_auxiliary::FormalAuxiliaryVisualSystem">
+      <warning_frequency_hz>1.0</warning_frequency_hz>
+      <warning_duty_cycle>0.5</warning_duty_cycle>
+      <!-- Gazebo Harmonic's Sensors RenderUtil records entity 0 for the
+             helper visual of dynamically commanded lights, flooding the
+             renderer.  Keep product lamp geometry and dynamic emissive state
+             active; defer scene-illuminance LightCmd until upstream fixes it. -->
+      <enable_photometric_lights>false</enable_photometric_lights>
+      <work_light_intensity>1.8</work_light_intensity>
+      <work_light_range_m>12.0</work_light_range_m>
+      <work_spot_inner_angle_rad>0.34</work_spot_inner_angle_rad>
+      <work_spot_outer_angle_rad>0.62</work_spot_outer_angle_rad>
+      <warning_light_intensity>0.55</warning_light_intensity>
+      <warning_light_range_m>2.5</warning_light_range_m>
+      <tail_light_intensity>0.18</tail_light_intensity>
+      <tail_light_range_m>1.5</tail_light_range_m>
+      <initial_estop_latched>true</initial_estop_latched>
+      <plunger_joint_name>emergency_stop_plunger_joint</plunger_joint_name>
+      <plunger_travel_m>0.006</plunger_travel_m>
+      <plunger_pressed_threshold_m>0.005</plunger_pressed_threshold_m>
+      <plunger_released_clearance_m>0.00002</plunger_released_clearance_m>
+      <plunger_position_gain_n_m>1500.0</plunger_position_gain_n_m>
+      <plunger_damping_gain_n_s_m>15.0</plunger_damping_gain_n_s_m>
+      <plunger_maximum_force_n>20.0</plunger_maximum_force_n>
+      <isolator_joint_name>main_power_isolator_handle_joint</isolator_joint_name>
+      <isolator_travel_rad>1.5707963267948966</isolator_travel_rad>
+      <isolator_closed_threshold_rad>1.40</isolator_closed_threshold_rad>
+      <isolator_open_clearance_rad>0.002</isolator_open_clearance_rad>
+      <contactor_joint_name>main_power_contactor_armature_joint</contactor_joint_name>
+      <contactor_travel_m>0.004</contactor_travel_m>
+      <contactor_closed_threshold_m>0.0035</contactor_closed_threshold_m>
+      <contactor_open_clearance_m>0.00002</contactor_open_clearance_m>
+      <work_topic>/formal_vehicle/lighting/work_lights_on</work_topic>
+      <tail_topic>/formal_vehicle/lighting/tail_lights_on</tail_topic>
+      <warning_topic>/formal_vehicle/lighting/warning_lights_on</warning_topic>
+      <external_estop_topic>/formal_vehicle/simulation/command/emergency_stop</external_estop_topic>
+      <physical_button_topic>/formal_vehicle/simulation/command/emergency_stop_plunger_pressed</physical_button_topic>
+      <reset_topic>/formal_vehicle/simulation/command/emergency_stop_reset</reset_topic>
+      <safety_power_topic>/formal_vehicle/power/branches/safety/enabled</safety_power_topic>
+      <main_power_request_topic>/formal_vehicle/simulation/command/main_power</main_power_request_topic>
+      <contactor_command_topic>/formal_vehicle/power/main_contactor_command</contactor_command_topic>
+      <isolator_state_topic>/formal_vehicle/power/main_isolator_closed</isolator_state_topic>
+      <contactor_state_topic>/formal_vehicle/power/main_contactor_closed</contactor_state_topic>
+      <latched_state_topic>/emergency_stop</latched_state_topic>
+      <work_applied_topic>/formal_vehicle/lighting/work_lights_applied</work_applied_topic>
+      <tail_applied_topic>/formal_vehicle/lighting/tail_lights_applied</tail_applied_topic>
+      <warning_applied_topic>/formal_vehicle/lighting/warning_lights_applied</warning_applied_topic>
+    </plugin>
+    <!-- Evaluation-only manual-service drive. It applies bounded forces to
+           the real passive hinge/latch joints and enforces measured-latch
+           interlocking; no ros2_control command interface is invented. -->
+    <plugin filename="libServiceDoorSystem.so" name="sanitation_gazebo_auxiliary::ServiceDoorSystem"/>
     <plugin filename="libDynamicPayloadSystem.so" name="sanitation_gazebo_control::DynamicPayloadSystem">
       <dry_topic>/model/tzcup_formal_sanitation_vehicle/payload/dry_mass_kg</dry_topic>
+      <dry_accounting_mode>physical_resident</dry_accounting_mode>
       <wastewater_topic>/model/tzcup_formal_sanitation_vehicle/payload/wastewater_mass_kg</wastewater_topic>
       <dry_capacity_kg>1.512</dry_capacity_kg>
-      <wastewater_capacity_kg>9.7064</wastewater_capacity_kg>
+      <wastewater_capacity_kg>8.30</wastewater_capacity_kg>
+      <initial_dry_mass_kg>0.0</initial_dry_mass_kg>
+      <initial_wastewater_mass_kg>0.0</initial_wastewater_mass_kg>
+    </plugin>
+    <plugin filename="libDryBinMonitorSystem.so" name="sanitation_gazebo_control::DryBinMonitorSystem">
+      <dry_accounting_mode>physical_resident</dry_accounting_mode>
+      <usable_size_x_m>0.485</usable_size_x_m>
+      <usable_size_y_m>0.355</usable_size_y_m>
+      <usable_size_z_m>0.233</usable_size_z_m>
+      <cube_edge_m>0.030</cube_edge_m>
+      <!-- A retained rigid body may settle a few millimetres into the real
+             floor collision under the physics solver.  This tolerance applies
+             only to the monitor's bottom plane; side and top limits stay exact. -->
+      <bottom_contact_tolerance_m>0.005</bottom_contact_tolerance_m>
+      <mass_capacity_kg>1.512</mass_capacity_kg>
+      <!-- Only aggregate mode may carry this pre-existing bulk load.  In
+             physical_resident mode both plugins fail closed unless it is 0,
+             leaving the retained rigid bodies as the sole dry-load ledger. -->
+      <initial_aggregate_mass_kg>0.0</initial_aggregate_mass_kg>
+      <level_full_fraction>0.95</level_full_fraction>
+      <publish_rate_hz>10.0</publish_rate_hz>
+      <!-- URDF fixed-joint reduction may lump dry_bin_link into base_link;
+             retain the independently FK-validated bin center as fallback. -->
+      <bin_center_model_x_m>-0.205</bin_center_model_x_m>
+      <bin_center_model_y_m>0.160</bin_center_model_y_m>
+      <!-- The 233 mm certified usable envelope starts at the physical
+             floor top (dry-bin link z=-0.120 m), so its centre is 3.5 mm
+             below the structural dry_bin_link origin. -->
+      <bin_center_model_z_m>0.5656</bin_center_model_z_m>
+    </plugin>
+    <plugin filename="libGroundDirtCleaningSystem.so" name="sanitation_gazebo_control::GroundDirtCleaningSystem">
+      <!-- Evaluation truth stays on Gazebo Transport. Product ROS receives
+             neither the dirt grid nor a write/reset interface. Cleaning is
+             derived from physical joint state and world-space brush poses. -->
+      <enabled_by_default>true</enabled_by_default>
+      <cell_area_m2>0.01</cell_area_m2>
+      <sweep_sample_spacing_m>0.05</sweep_sample_spacing_m>
+      <minimum_rotation_rad_s>2.0</minimum_rotation_rad_s>
+      <minimum_lift_position_m>0.095</minimum_lift_position_m>
+      <side_brush_radius_m>0.15</side_brush_radius_m>
+      <side_brush_link_to_ground_m>0.083</side_brush_link_to_ground_m>
+      <roller_radius_m>0.10</roller_radius_m>
+      <roller_width_m>0.62</roller_width_m>
+      <maximum_contact_clearance_m>0.015</maximum_contact_clearance_m>
+      <publish_rate_hz>20.0</publish_rate_hz>
+    </plugin>
+    <!-- Read-only electrical / thermal observer. gz_ros2_control retains
+           sole command authority for all five joints; the motor system never
+           writes a joint command component and feeds protection faults back
+           into the whole-vehicle safety gateway. -->
+    <plugin filename="libCleaningActuatorMotorSystem.so" name="sanitation_gazebo_control::CleaningActuatorMotorSystem">
+      <realtime_telemetry_enabled>true</realtime_telemetry_enabled>
+      <status_json_enabled>true</status_json_enabled>
+      <status_json_publish_rate_hz>20.0</status_json_publish_rate_hz>
+    </plugin>
+    <plugin filename="libWaterRecoverySystem.so" name="sanitation_gazebo_control::WaterRecoverySystem">
+      <minimum_lift_position_m>0.095</minimum_lift_position_m>
+      <pump_rated_flow_l_min>15.1</pump_rated_flow_l_min>
+      <hydraulic_derating>0.70</hydraulic_derating>
+      <tank_capacity_kg>8.30</tank_capacity_kg>
+      <initial_tank_mass_kg>0.0</initial_tank_mass_kg>
+      <initial_ground_volume_l>2.88</initial_ground_volume_l>
+      <water_density_kg_l>1.0</water_density_kg_l>
+      <patch_min_x>-0.60</patch_min_x>
+      <patch_max_x>1.80</patch_max_x>
+      <patch_min_y>-0.30</patch_min_y>
+      <patch_max_y>0.30</patch_max_y>
+      <cell_size_m>0.10</cell_size_m>
+      <nozzle_length_m>0.14</nozzle_length_m>
+      <nozzle_width_m>0.65</nozzle_width_m>
+      <maximum_squeegee_clearance_m>0.012</maximum_squeegee_clearance_m>
+      <maximum_intake_clearance_m>0.012</maximum_intake_clearance_m>
+      <!-- Deterministic hydraulic sensor and protection model.  The pressure
+             trip stops recovery while leaving the physical pump shaft state
+             observable, matching a clogged-strainer protection relay. -->
+      <filter_clean_pressure_kpa>2.0</filter_clean_pressure_kpa>
+      <filter_trip_pressure_kpa>35.0</filter_trip_pressure_kpa>
+      <tank_low_probe_fraction>0.20</tank_low_probe_fraction>
+      <tank_high_probe_fraction>0.875</tank_high_probe_fraction>
+      <sensor_time_constant_s>0.18</sensor_time_constant_s>
+      <!-- Simplified service operation allowed by the scheme: opening the
+             physical low-point outlet drains into an external service vessel;
+             internal CFD and splash are intentionally out of scope. -->
+      <service_drain_rate_l_min>12.0</service_drain_rate_l_min>
     </plugin>
   </gazebo>
 </robot>

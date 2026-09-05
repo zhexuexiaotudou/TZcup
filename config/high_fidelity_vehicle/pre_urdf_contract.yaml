@@ -156,7 +156,7 @@ component_selections:
     datasheet_url: https://www.u-blox.com/en/product/zed-f9p-module
     mass_kg: 0.1
     mass_accounting: payload_engineering_upper_bound
-    geometry_status: project_enclosure_and_antenna_geometry_required
+    geometry_status: explicit_zed_f9p_package_service_enclosure_and_remote_antenna_integrated
   - id: imu
     role: imu
     model: VectorNav VN-100 Rugged
@@ -173,7 +173,7 @@ component_selections:
     datasheet_url: https://www.pololu.com/product/4694/specs
     mass_kg: 0.615
     mass_accounting: payload_known_aggregate
-    geometry_status: vendor_step_reference_project_xacro_required
+    geometry_status: project_xacro_with_separate_motor_gearbox_encoder_cap_and_output_shaft_integrated
   - id: cleaning_lift
     role: cleaning_lift
     model: Actuonix P16-100-256-12-P
@@ -190,6 +190,14 @@ component_selections:
     mass_kg: 2.5
     mass_accounting: payload_known
     geometry_status: project_geometry_required
+  - id: dry_deposit_gate_actuator
+    role: robot_deposition_gate_actuation
+    model: ROBOTIS DYNAMIXEL XW540-T260-R
+    source_class: project_authored_from_official_public_dimensions
+    datasheet_url: https://emanual.robotis.com/docs/en/dxl/x/xw540-t260/
+    mass_kg: 0.185
+    mass_accounting: covered_by_split_bin_engineering_allowance
+    geometry_status: public_envelope_and_mount_interface_project_cad
   - id: cleaning_mechanism
     role: cleaning_mechanism
     model: project-owned dual-side-brush plus central roller plus floating squeegee assembly
@@ -208,7 +216,7 @@ component_selections:
     geometry_status: detailed_cad_required_during_urdf
   - id: onboard_compute
     role: compute
-    model: RDK S100 / Journey 6 user-owned board
+    model: RDK S100P / Journey 6P user-owned board
     source_class: board_target_only
     datasheet_url: https://developer.d-robotics.cc/rdk_doc/en/RDK_S100/
     mass_kg: null
@@ -231,6 +239,7 @@ required_component_roles:
   - side_brush_actuation
   - cleaning_lift
   - wastewater_recovery
+  - robot_deposition_gate_actuation
   - cleaning_mechanism
   - dry_wet_storage
   - compute
@@ -282,6 +291,12 @@ sensor_contracts:
     vertical_fov_deg: 129.0
     dimensions_m: [0.038, 0.038, 0.02]
     distortion_model: equidistant
+    simulation_lens_projection: equisolid_angle
+    simulation_calibration_profile: sdf_equisolid_to_ros_kannala_brandt_taylor_v1
+    nominal_intrinsics_px: {fx: 788.4862232182, fy: 788.4862232182, cx: 960.0, cy: 540.0}
+    nominal_distortion_coefficients: [-0.0416666666667, 0.000520833333333, -0.00000310019841270, 0.0000000107645778219]
+    calibration_source_boundary: mathematically_derived_from_sdf_projection_and_public_150deg_hfov_not_measured_hardware
+    real_camera_calibration_required: true
   - id: rear_right_fisheye
     frame: rear_right_fisheye_optical_frame
     topic: /sensors/rear_right_fisheye/image_raw
@@ -292,6 +307,12 @@ sensor_contracts:
     vertical_fov_deg: 129.0
     dimensions_m: [0.038, 0.038, 0.02]
     distortion_model: equidistant
+    simulation_lens_projection: equisolid_angle
+    simulation_calibration_profile: sdf_equisolid_to_ros_kannala_brandt_taylor_v1
+    nominal_intrinsics_px: {fx: 788.4862232182, fy: 788.4862232182, cx: 960.0, cy: 540.0}
+    nominal_distortion_coefficients: [-0.0416666666667, 0.000520833333333, -0.00000310019841270, 0.0000000107645778219]
+    calibration_source_boundary: mathematically_derived_from_sdf_projection_and_public_150deg_hfov_not_measured_hardware
+    real_camera_calibration_required: true
   - id: gnss
     frame: gnss_antenna_link
     topic: /sensors/gnss/fix
@@ -362,6 +383,9 @@ joint_contract:
     command_interface: position
     lower_m: 0.0
     upper_m: 0.1
+    zero_position: transport_safe_raised
+    positive_direction: downward
+    work_position_m: 0.1
   - name: squeegee_pitch_joint
     type: revolute
     actuator: passive_spring_damper
@@ -380,12 +404,30 @@ joint_contract:
     command_interface: none
     lower_rad: 0.0
     upper_rad: 1.570796
+  - name: dry_bin_latch_joint
+    type: revolute
+    actuator: passive_manual_over_center_latch
+    command_interface: none
+    lower_rad: 0.0
+    upper_rad: 1.221730476
+  - name: dry_deposit_gate_joint
+    type: revolute
+    actuator: ROBOTIS-DYNAMIXEL-XW540-T260-R
+    command_interface: position
+    lower_rad: 0.0
+    upper_rad: 1.75
   - name: wastewater_lid_joint
     type: revolute
     actuator: passive_latch
     command_interface: none
     lower_rad: 0.0
     upper_rad: 1.570796
+  - name: wastewater_lid_latch_joint
+    type: revolute
+    actuator: passive_manual_over_center_latch
+    command_interface: none
+    lower_rad: 0.0
+    upper_rad: 1.221730476
 
 mass_capacity_budget:
   a300_payload_limit_kg: 101.5

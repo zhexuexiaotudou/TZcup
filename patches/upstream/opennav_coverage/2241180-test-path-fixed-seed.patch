@@ -1,0 +1,8 @@
+diff --git a/opennav_coverage/test/test_path.cpp b/opennav_coverage/test/test_path.cpp
+--- a/opennav_coverage/test/test_path.cpp
++++ b/opennav_coverage/test/test_path.cpp
+@@ -115,3 +115,3 @@ TEST(PathTests, TestpathGeneration)
+   // Generate some toy route
+-  f2c::Random rand;
++  f2c::Random rand(42U);
+   auto field = rand.generateRandField(1e5, 5);

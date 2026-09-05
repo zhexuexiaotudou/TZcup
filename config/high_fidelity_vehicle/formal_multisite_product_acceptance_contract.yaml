@@ -1,0 +1,68 @@
+schema_version: 1
+contract_id: tzcup_formal_multisite_product_acceptance_v1
+claim_boundary: >-
+  A single-site end-to-end cleaning mission proves only that one frozen map
+  completed its product loop. Multi-site product generalization is a separate,
+  fail-closed claim and requires one fresh live record for every validation and
+  hidden map below. The static plan is not runtime evidence; only the live
+  executor's fresh, per-site records may support this claim.
+
+execution:
+  mode: serial_one_site_at_a_time
+  max_concurrent_sites: 1
+  static_plan_only: false
+  single_site_e2e_counts_as_generalization: false
+  frozen_mission_index: 0
+
+frozen_splits:
+  validation:
+    map_count: 8
+    map_id_prefix: val-map-
+  hidden:
+    map_count: 12
+    map_id_prefix: hidden-map-
+
+site_evidence:
+  report_id: tzcup_formal_multisite_product_site_evidence_v1
+  success_status: FORMAL_MULTISITE_PRODUCT_SITE_PASSED
+  required_topics:
+    dosod:
+      name: /perception/open_vocab/dosod_boxes
+      type: vision_msgs/msg/Detection2DArray
+      interface_kind: topic
+    edgesam:
+      name: /perception/ground_dirt/masks
+      type: sensor_msgs/msg/Image
+      interface_kind: topic
+    nav2:
+      name: /follow_path
+      type: nav2_msgs/action/FollowPath
+      interface_kind: action
+    dynamic_pedestrians:
+      name: /scenario/environment/pedestrian_driver/status
+      type: std_msgs/msg/String
+      interface_kind: topic
+    cleaning_actuator:
+      name: /model/tzcup_formal_sanitation_vehicle/cleaning_motors/motor_current_a
+      type: std_msgs/msg/Float64MultiArray
+      interface_kind: topic
+  required_site_checks:
+    product_closed_loop_passed: true
+    nav2_goal_succeeded: true
+    dynamic_pedestrian_interaction_observed: true
+    cleaning_actuator_effect_observed: true
+  required_truth_isolation:
+    truth_used_for_product_control: false
+    control_truth_topics_subscribed: []
+    evaluator_truth_process_isolated: true
+
+aggregate:
+  report_id: tzcup_formal_multisite_product_acceptance_v1
+  passed_status: FORMAL_MULTISITE_PRODUCT_ACCEPTANCE_PASSED
+  failed_status: FORMAL_MULTISITE_PRODUCT_ACCEPTANCE_FAILED
+  required_total_sites: 20
+  require_all_sites_pass: true
+  reject_duplicate_map_ids: true
+  reject_duplicate_map_snapshot_hashes: true
+  reject_runtime_session_snapshot_hash_drift: true
+  reject_truth_control: true

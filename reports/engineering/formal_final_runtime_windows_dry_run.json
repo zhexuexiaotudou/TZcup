@@ -1,0 +1,326 @@
+{
+  "checked_at": "2026-08-31T07:21:18.469725+00:00",
+  "claim_boundary": "This Windows dry-run inventories hand-off paths and renders commands only; it does not verify the Linux closure, build, install, or any runtime evidence.",
+  "execution_scope": {
+    "runtime_evidence_created": false,
+    "started_cadquery": false,
+    "started_freecad": false,
+    "started_gazebo": false,
+    "started_wsl": false,
+    "system_bash_exe_invoked": false,
+    "windows_python_read_only": true
+  },
+  "four_chain_runner_order": [
+    {
+      "commands": [
+        [
+          "bash",
+          "F:\\Project\\TZcup-integrated-functional-acceptance\\scripts\\run_formal_vehicle_mobility_runtime.sh"
+        ]
+      ],
+      "environment": {
+        "FORMAL_ACCEPTANCE_SESSION": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_final_acceptance_session.json",
+        "FORMAL_ACCEPTANCE_SESSION_STATUS": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_final_acceptance_session.json",
+        "FORMAL_FINAL_RUNTIME_CLOSURE_MANIFEST": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\final_runtime_closure_manifest.json",
+        "FORMAL_VEHICLE_MOBILITY_OUTPUT": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_a300_drivetrain_runtime.json",
+        "FORMAL_VEHICLE_MOBILITY_RUNTIME_BINDING": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_a300_drivetrain_runtime.json.runtime_binding.json",
+        "FORMAL_VEHICLE_RUNTIME_WS": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime",
+        "FORMAL_VEHICLE_SNAPSHOT_MANIFEST": "F:\\Project\\TZcup-integrated-functional-acceptance\\reports\\engineering\\formal_vehicle_snapshot_manifest.json",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "ROS_DOMAIN_ID": "90",
+        "TZCUP_REPOSITORY_ROOT": "F:\\Project\\TZcup-integrated-functional-acceptance"
+      },
+      "mode": "gazebo",
+      "requires_fresh_resource_gate_before_launch": true,
+      "requires_verified_typed_subclosure": false,
+      "runner": "run_formal_vehicle_mobility_runtime.sh",
+      "sequence_index": 6,
+      "step_id": "chassis",
+      "windows_execution_permitted": false
+    },
+    {
+      "commands": [
+        [
+          "bash",
+          "F:\\Project\\TZcup-integrated-functional-acceptance\\scripts\\run_formal_ground_dirt_cleaning_runtime.sh"
+        ]
+      ],
+      "environment": {
+        "FORMAL_ACCEPTANCE_SESSION": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_final_acceptance_session.json",
+        "FORMAL_ACCEPTANCE_SESSION_STATUS": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_final_acceptance_session.json",
+        "FORMAL_DIRT_OUTPUT_DIR": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_ground_dirt_cleaning_final_retry",
+        "FORMAL_DIRT_RUNTIME_WS": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime",
+        "FORMAL_FINAL_RUNTIME_CLOSURE_MANIFEST": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\final_runtime_closure_manifest.json",
+        "FORMAL_VEHICLE_SNAPSHOT_MANIFEST": "F:\\Project\\TZcup-integrated-functional-acceptance\\reports\\engineering\\formal_vehicle_snapshot_manifest.json",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "ROS_DOMAIN_ID": "90",
+        "TZCUP_REPOSITORY_ROOT": "F:\\Project\\TZcup-integrated-functional-acceptance"
+      },
+      "mode": "gazebo",
+      "requires_fresh_resource_gate_before_launch": true,
+      "requires_verified_typed_subclosure": false,
+      "runner": "run_formal_ground_dirt_cleaning_runtime.sh",
+      "sequence_index": 11,
+      "step_id": "ground_dirt",
+      "windows_execution_permitted": false
+    },
+    {
+      "commands": [
+        [
+          "C:\\Users\\zhexu\\AppData\\Local\\Python\\pythoncore-3.14-64\\python.exe",
+          "F:\\Project\\TZcup-integrated-functional-acceptance\\scripts\\generate_formal_water_critical_source_manifest.py",
+          "--repo",
+          "F:\\Project\\TZcup-integrated-functional-acceptance",
+          "--workspace",
+          "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime",
+          "--output",
+          "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\formal_final_acceptance\\session_20260831T072118Z_24340\\water_recovery\\critical_source_manifest.json"
+        ],
+        [
+          "bash",
+          "F:\\Project\\TZcup-integrated-functional-acceptance\\scripts\\run_formal_typed_cleaning_motor_diagnostic.sh"
+        ],
+        [
+          "bash",
+          "F:\\Project\\TZcup-integrated-functional-acceptance\\scripts\\run_formal_water_recovery_runtime.sh",
+          "--scenario",
+          "all",
+          "--output-dir",
+          "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\formal_final_acceptance\\session_20260831T072118Z_24340\\water_recovery\\scenarios"
+        ]
+      ],
+      "environment": {
+        "FORMAL_ACCEPTANCE_SESSION": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_final_acceptance_session.json",
+        "FORMAL_ACCEPTANCE_SESSION_STATUS": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_final_acceptance_session.json",
+        "FORMAL_FINAL_RUNTIME_CLOSURE_MANIFEST": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\final_runtime_closure_manifest.json",
+        "FORMAL_VEHICLE_RUNTIME_WS": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\install",
+        "FORMAL_VEHICLE_SNAPSHOT_MANIFEST": "F:\\Project\\TZcup-integrated-functional-acceptance\\reports\\engineering\\formal_vehicle_snapshot_manifest.json",
+        "FORMAL_WATER_CRITICAL_SOURCE_MANIFEST": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\formal_final_acceptance\\session_20260831T072118Z_24340\\water_recovery\\critical_source_manifest.json",
+        "FORMAL_WATER_FINAL_ARTIFACT": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_water_recovery_acceptance.json",
+        "FORMAL_WATER_OUTPUT_DIR": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\formal_final_acceptance\\session_20260831T072118Z_24340\\water_recovery\\scenarios",
+        "FORMAL_WATER_RUNTIME_BINDING": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_water_recovery_acceptance.json.runtime_binding.json",
+        "FORMAL_WATER_TYPED_COLLECTOR": "F:\\Project\\TZcup-integrated-functional-acceptance\\scripts\\collect_formal_typed_cleaning_motor_diagnostic.py",
+        "FORMAL_WATER_TYPED_DIAG_JSON": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\formal_final_acceptance\\session_20260831T072118Z_24340\\water_recovery\\typed_transport\\typed_diag.json",
+        "FORMAL_WATER_TYPED_DURATION_S": "10",
+        "FORMAL_WATER_TYPED_OUTPUT_DIR": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\formal_final_acceptance\\session_20260831T072118Z_24340\\water_recovery\\typed_transport",
+        "FORMAL_WATER_TYPED_RAW_TRACE": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\formal_final_acceptance\\session_20260831T072118Z_24340\\water_recovery\\typed_transport\\raw_frames.jsonl",
+        "FORMAL_WATER_TYPED_RUNNER": "F:\\Project\\TZcup-integrated-functional-acceptance\\scripts\\run_formal_typed_cleaning_motor_diagnostic.sh",
+        "FORMAL_WATER_TYPED_SUBCLOSURE_SHA256": "0000000000000000000000000000000000000000000000000000000000000000",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "ROS_DOMAIN_ID": "90",
+        "TZCUP_REPOSITORY_ROOT": "F:\\Project\\TZcup-integrated-functional-acceptance"
+      },
+      "mode": "gazebo",
+      "requires_fresh_resource_gate_before_launch": true,
+      "requires_verified_typed_subclosure": true,
+      "runner": "run_formal_water_recovery_runtime.sh",
+      "sequence_index": 12,
+      "step_id": "water_recovery",
+      "windows_execution_permitted": false
+    },
+    {
+      "commands": [
+        [
+          "bash",
+          "F:\\Project\\TZcup-integrated-functional-acceptance\\scripts\\run_formal_grasp_executor_runtime.sh"
+        ]
+      ],
+      "environment": {
+        "FORMAL_ACCEPTANCE_SESSION": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_final_acceptance_session.json",
+        "FORMAL_ACCEPTANCE_SESSION_STATUS": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_final_acceptance_session.json",
+        "FORMAL_FINAL_RUNTIME_CLOSURE_MANIFEST": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\final_runtime_closure_manifest.json",
+        "FORMAL_GRASP_EXECUTOR_OUTPUT": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_grasp_executor_runtime.json",
+        "FORMAL_GRASP_EXECUTOR_RUNTIME_BINDING": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_grasp_executor_runtime.json.runtime_binding.json",
+        "FORMAL_MANIPULATION_RUNTIME_WS": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\install",
+        "FORMAL_VEHICLE_SNAPSHOT_MANIFEST": "F:\\Project\\TZcup-integrated-functional-acceptance\\reports\\engineering\\formal_vehicle_snapshot_manifest.json",
+        "PYTHONDONTWRITEBYTECODE": "1",
+        "ROS_DOMAIN_ID": "90",
+        "TZCUP_REPOSITORY_ROOT": "F:\\Project\\TZcup-integrated-functional-acceptance"
+      },
+      "mode": "gazebo",
+      "requires_fresh_resource_gate_before_launch": true,
+      "requires_verified_typed_subclosure": false,
+      "runner": "run_formal_grasp_executor_runtime.sh",
+      "sequence_index": 16,
+      "step_id": "physical_grasp",
+      "windows_execution_permitted": false
+    }
+  ],
+  "missing_requirements": [
+    {
+      "category": "build",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\build",
+      "status": "MISSING"
+    },
+    {
+      "category": "install",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\install",
+      "status": "MISSING"
+    },
+    {
+      "category": "build_log_directory",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\log",
+      "status": "MISSING"
+    },
+    {
+      "category": "install_setup",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\install\\setup.bash",
+      "status": "MISSING"
+    },
+    {
+      "category": "integrated_build_manifest",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\integrated_build_manifest.json",
+      "status": "MISSING"
+    },
+    {
+      "category": "closure_manifest",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\final_runtime_closure_manifest.json",
+      "status": "MISSING"
+    },
+    {
+      "category": "install_symlink_manifest",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\INSTALL_SYMLINKS.txt",
+      "status": "MISSING"
+    },
+    {
+      "category": "installed_surface_preflight",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\side_brush_sdf_surface_preflight.json",
+      "status": "MISSING"
+    },
+    {
+      "category": "windows_cold_start_manifest",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\formal_windows_cold_start_evidence.json",
+      "status": "MISSING"
+    },
+    {
+      "category": "onnxruntime_manifest",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\formal_onnx_overlay\\onnxruntime\\__init__.py",
+      "status": "MISSING"
+    }
+  ],
+  "passed": false,
+  "ready_for_native_preflight": false,
+  "ready_for_runtime_execution": false,
+  "report_id": "tzcup_formal_final_runtime_windows_dry_run_v1",
+  "requirements": [
+    {
+      "category": "runtime_workspace",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime",
+      "status": "PRESENT"
+    },
+    {
+      "category": "frozen_source",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\src",
+      "status": "PRESENT"
+    },
+    {
+      "category": "build",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\build",
+      "status": "MISSING"
+    },
+    {
+      "category": "install",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\install",
+      "status": "MISSING"
+    },
+    {
+      "category": "build_log_directory",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\log",
+      "status": "MISSING"
+    },
+    {
+      "category": "install_setup",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\install\\setup.bash",
+      "status": "MISSING"
+    },
+    {
+      "category": "integrated_build_manifest",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\integrated_build_manifest.json",
+      "status": "MISSING"
+    },
+    {
+      "category": "closure_manifest",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\final_runtime_closure_manifest.json",
+      "status": "MISSING"
+    },
+    {
+      "category": "install_symlink_manifest",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\INSTALL_SYMLINKS.txt",
+      "status": "MISSING"
+    },
+    {
+      "category": "installed_surface_preflight",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\side_brush_sdf_surface_preflight.json",
+      "status": "MISSING"
+    },
+    {
+      "category": "windows_cold_start_manifest",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\final_frozen_runtime\\formal_windows_cold_start_evidence.json",
+      "status": "MISSING"
+    },
+    {
+      "category": "perception_artifact_manifest",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\formal_perception_assets\\artifact_manifest.json",
+      "status": "PRESENT"
+    },
+    {
+      "category": "onnxruntime_manifest",
+      "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\.work\\formal_onnx_overlay\\onnxruntime\\__init__.py",
+      "status": "MISSING"
+    }
+  ],
+  "status": "FORMAL_FINAL_RUNTIME_WINDOWS_DRY_RUN_BLOCKED",
+  "strict_memory_recovery_contract": {
+    "four_chain": {
+      "preserve_unfinalized_session_on_failure": true,
+      "stop_on_first_failure": true,
+      "strict_serial_execution": true
+    },
+    "frozen_runtime_must_preexist": true,
+    "native_preflight_and_closure_verification_required_before_execute": true,
+    "parallelism": {
+      "board_execution_automatic": false,
+      "cad_execution_permitted": false,
+      "gazebo_max_parallel_processes": 1
+    },
+    "phase_order": [
+      "windows_cold_memory_gate_and_single_worker_frozen_build",
+      "record_and_verify_frozen_runtime_closure",
+      "chassis",
+      "ground_dirt",
+      "water_recovery",
+      "physical_grasp"
+    ],
+    "resource_gate": {
+      "dry_run_does_not_probe_or_start_a_runtime": true,
+      "heavy_step_ids": [
+        "charge_and_drain",
+        "chassis",
+        "cleaning_motors",
+        "cleaning_positions",
+        "dynamic_obstacle",
+        "first_map",
+        "ground_dirt",
+        "integrated_basic_physics",
+        "manipulator",
+        "multisite_product",
+        "perception",
+        "physical_grasp",
+        "rl_policy",
+        "safety_interlock",
+        "safety_power_lighting",
+        "same_map_baseline",
+        "saved_map_reuse",
+        "sensor",
+        "service_door",
+        "single_episode",
+        "twenty_cubes",
+        "visual",
+        "water_recovery"
+      ],
+      "required_before_each_heavy_phase": true,
+      "windows_probe": "formal_windows_memory_probe.py --check-start"
+    }
+  },
+  "water_command_placeholder_only": true
+}

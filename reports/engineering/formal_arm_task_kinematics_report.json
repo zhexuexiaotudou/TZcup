@@ -1,0 +1,227 @@
+{
+  "anchors": {
+    "deposit": {
+      "branches": [
+        {
+          "collision_clear_all_gripper_states": false,
+          "jacobian_condition_number": 15.957621850070474,
+          "joint_positions_rad": [
+            2.131017578,
+            -1.572010833,
+            0.730632239,
+            -0.735322752,
+            -1.568746605,
+            -0.104984078
+          ],
+          "minimum_jacobian_singular_value": 0.11598396309851913
+        },
+        {
+          "collision_clear_all_gripper_states": true,
+          "jacobian_condition_number": 15.95849996535406,
+          "joint_positions_rad": [
+            -0.30233498,
+            -1.56960444,
+            -0.73057657,
+            -2.40638971,
+            1.56851193,
+            0.60324332
+          ],
+          "minimum_jacobian_singular_value": 0.11597739568664761
+        },
+        {
+          "collision_clear_all_gripper_states": false,
+          "jacobian_condition_number": 15.602854653982885,
+          "joint_positions_rad": [
+            2.131017578,
+            -0.872079775,
+            -0.730632239,
+            0.026010668,
+            -1.568746605,
+            -0.104984078
+          ],
+          "minimum_jacobian_singular_value": 0.1173446713377195
+        },
+        {
+          "collision_clear_all_gripper_states": false,
+          "jacobian_condition_number": 15.603912656294913,
+          "joint_positions_rad": [
+            -0.30233498,
+            -2.26948239,
+            0.73057657,
+            3.115520408,
+            1.56851193,
+            0.60324332
+          ],
+          "minimum_jacobian_singular_value": 0.11733671807819869
+        }
+      ],
+      "collision_clear_ik_branch_count": 1,
+      "selected_collision_clear_all_gripper_states": true,
+      "selected_jacobian_condition_number": 15.958499960855033,
+      "selected_joint_positions_rad": [
+        -0.30233498,
+        -1.56960444,
+        -0.73057657,
+        -2.40638971,
+        1.56851193,
+        0.60324332
+      ],
+      "selected_minimum_jacobian_singular_value": 0.11597739572473628,
+      "tool0_xyz_m": [
+        -0.205,
+        0.034999998,
+        1.26
+      ],
+      "unique_ik_branch_count": 4
+    },
+    "pick": {
+      "branches": [
+        {
+          "collision_clear_all_gripper_states": true,
+          "jacobian_condition_number": 15.367115572981357,
+          "joint_positions_rad": [
+            -1.48278161,
+            0.10260211,
+            0.80254082,
+            -2.47593926,
+            -1.57079633,
+            -3.05357794
+          ],
+          "minimum_jacobian_singular_value": 0.12777757258190567
+        },
+        {
+          "collision_clear_all_gripper_states": false,
+          "jacobian_condition_number": 15.36711557015614,
+          "joint_positions_rad": [
+            2.0039864,
+            3.038990544,
+            -0.80254082,
+            -0.665653395,
+            1.570796323,
+            -2.708402584
+          ],
+          "minimum_jacobian_singular_value": 0.12777757260222075
+        },
+        {
+          "collision_clear_all_gripper_states": false,
+          "jacobian_condition_number": 15.23796321717977,
+          "joint_positions_rad": [
+            2.0039864,
+            2.270506055,
+            0.80254082,
+            -1.502250546,
+            1.570796323,
+            -2.708402584
+          ],
+          "minimum_jacobian_singular_value": 0.12840202584725544
+        },
+        {
+          "collision_clear_all_gripper_states": false,
+          "jacobian_condition_number": 15.237963218849885,
+          "joint_positions_rad": [
+            -1.48278161,
+            0.871086599,
+            -0.80254082,
+            -1.639342109,
+            -1.57079633,
+            -3.05357794
+          ],
+          "minimum_jacobian_singular_value": 0.12840202583467655
+        }
+      ],
+      "collision_clear_ik_branch_count": 1,
+      "selected_collision_clear_all_gripper_states": true,
+      "selected_jacobian_condition_number": 15.367115576137666,
+      "selected_joint_positions_rad": [
+        -1.48278161,
+        0.10260211,
+        0.80254082,
+        -2.47593926,
+        -1.57079633,
+        -3.05357794
+      ],
+      "selected_minimum_jacobian_singular_value": 0.12777757255420247,
+      "tool0_xyz_m": [
+        0.300000003,
+        -0.950000002,
+        0.190000003
+      ],
+      "unique_ik_branch_count": 4
+    },
+    "pregrasp": {
+      "branches": [
+        {
+          "collision_clear_all_gripper_states": true,
+          "jacobian_condition_number": 10.45761925189567,
+          "joint_positions_rad": [
+            -1.48278161,
+            -0.44199397,
+            1.21471947,
+            -2.34352182,
+            -1.57079633,
+            -3.05357794
+          ],
+          "minimum_jacobian_singular_value": 0.18402866014174415
+        },
+        {
+          "collision_clear_all_gripper_states": false,
+          "jacobian_condition_number": 10.194945835344955,
+          "joint_positions_rad": [
+            2.003986401,
+            2.42464288,
+            1.21471947,
+            -2.068566031,
+            1.570796326,
+            -2.708402582
+          ],
+          "minimum_jacobian_singular_value": 0.18671989497080546
+        },
+        {
+          "collision_clear_all_gripper_states": false,
+          "jacobian_condition_number": 10.457619251531865,
+          "joint_positions_rad": [
+            2.003986401,
+            -2.699598683,
+            -1.21471947,
+            -0.798070834,
+            1.570796326,
+            -2.708402582
+          ],
+          "minimum_jacobian_singular_value": 0.18402866014644348
+        },
+        {
+          "collision_clear_all_gripper_states": false,
+          "jacobian_condition_number": 10.194945838465806,
+          "joint_positions_rad": [
+            -1.48278161,
+            0.716949774,
+            -1.21471947,
+            -1.073026624,
+            -1.57079633,
+            -3.05357794
+          ],
+          "minimum_jacobian_singular_value": 0.18671989490391447
+        }
+      ],
+      "collision_clear_ik_branch_count": 1,
+      "selected_collision_clear_all_gripper_states": true,
+      "selected_jacobian_condition_number": 10.457619256086703,
+      "selected_joint_positions_rad": [
+        -1.48278161,
+        -0.44199397,
+        1.21471947,
+        -2.34352182,
+        -1.57079633,
+        -3.05357794
+      ],
+      "selected_minimum_jacobian_singular_value": 0.1840286600702957,
+      "tool0_xyz_m": [
+        0.300000003,
+        -0.949999999,
+        0.450000002
+      ],
+      "unique_ik_branch_count": 4
+    }
+  },
+  "urdf_sha256": "cdcd078612b4d54196b32d48bacdadecb2c97fc91ee43d1aef1879fefb713c98"
+}

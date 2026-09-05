@@ -1,0 +1,69 @@
+{
+  "$schema": "https://tzcup.local/schema/s100p-offline-predeploy-plan-v1.json",
+  "schema_version": 1,
+  "plan_id": "tzcup_s100p_offline_predeploy_v1",
+  "operation_boundary": "no_board_copy_no_ssh_no_node_start_no_data_collection",
+  "scope": "windows_low_memory_offline_predeployment_audit_only",
+  "inputs": {
+    "artifact_bundle_manifest": "config/s100p_product_artifact_bundle.json",
+    "overlay_package_inventory": "config/s100p_product_overlay_packages.json",
+    "board_launch_parameter_record": "config/s100p_product_board_launch_parameters.json",
+    "board_launch_source": "starter_ws/src/sanitation_perception/launch/formal_s100p_open_vocab.launch.py",
+    "historical_g0_inventory": "artifacts/s100p_hardware_bringup/g0_20260831T001506Z_6226f4c5/G0/g0_read_only_inventory.json",
+    "historical_board_smoke": "artifacts/formal_s100p_board_smoke_20260830.json"
+  },
+  "optional_inputs": ["historical_board_smoke"],
+  "formal_resource_gate": {
+    "duration_sec": 1800,
+    "minimum_available_memory_percent": 5.0,
+    "maximum_temperature_c": 85.0,
+    "required_backends": ["bpu"],
+    "minimum_hz": {
+      "dosod": 2.0,
+      "edgesam": 1.0
+    },
+    "maximum_p95_latency_ms": 1000.0,
+    "historical_g0_is_not_a_current_resource_pass": true
+  },
+  "future_operator_plan": [
+    {
+      "sequence": 1,
+      "id": "freeze_and_revalidate",
+      "permission": "future_operator_authorization_required",
+      "description": "Freeze source, artifact manifest, acceptance session and runtime closure; rerun the offline validator before any board change."
+    },
+    {
+      "sequence": 2,
+      "id": "controlled_transfer_and_overlay_activation",
+      "permission": "future_operator_authorization_required",
+      "description": "Only after an approved maintenance window, transfer the verified versioned artifact and overlay roots, record their SHA-256 values, and preserve the prior roots for rollback."
+    },
+    {
+      "sequence": 3,
+      "id": "board_preflight_then_product_launch",
+      "permission": "future_operator_authorization_required",
+      "description": "Recheck real board identity, package closure, model and vocabulary hashes, connected RGB-D/TF/map inputs and resource headroom before launching the product graph."
+    },
+    {
+      "sequence": 4,
+      "id": "formal_collection_and_offline_validation",
+      "permission": "future_operator_authorization_required",
+      "description": "Collect the 1800-second board evidence with no actuator commands, copy raw evidence back to the frozen acceptance worktree, then run the session-bound offline validator."
+    }
+  ],
+  "rollback_plan": {
+    "current_task_board_mutation": false,
+    "current_task_rollback": "not_applicable_no_board_state_changed",
+    "future_operator_sequence": [
+      "Stop only the approved product graph and retain its logs; do not issue actuator commands.",
+      "Restore the recorded prior versioned artifact and overlay roots, then verify their manifest hashes before reuse.",
+      "If identity, package closure, model hash or resource gates disagree, remain G0/G1 read-only and mark formal acceptance blocked."
+    ]
+  },
+  "claim_boundary": {
+    "historical_g0_smoke_is_not_formal_acceptance": true,
+    "prepared_not_deployed_is_not_board_runtime_acceptance": true,
+    "central_acceptance_unchanged": true,
+    "real_actuator_control_allowed": false
+  }
+}

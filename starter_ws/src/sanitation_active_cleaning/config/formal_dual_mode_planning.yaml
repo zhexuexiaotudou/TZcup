@@ -1,0 +1,65 @@
+schema_version: 1
+contract_id: formal_dual_mode_planning_v1
+
+claim_boundary: >-
+  Passing this preflight proves only that the formal map, product-perception,
+  policy, executor and evidence contracts are present and internally
+  consistent. It does not prove closed-loop Gazebo performance or S100 runtime.
+
+modes:
+  traditional:
+    planner: sanitation_coverage
+    executor: nav2_follow_path
+    purpose: per-episode full-coverage distance baseline and fallback
+  reinforcement_learning:
+    planner: sanitation_active_cleaning
+    output: global_reference_trajectory
+    executor: nav2_follow_path
+
+product_inputs:
+  occupancy_map: occupancy.yaml
+  keepout_map: keepout_mask.yaml
+  mission_geometry: mission_geometry.yaml
+  materialization_contract: materialization_contract.yaml
+  discrete_targets_topic: /perception/garbage/targets
+  ground_dirt_masks_topic: /perception/ground_dirt/masks
+  localization_frame: map
+  odometry_topic: /odom
+  forbidden_control_inputs:
+    - /ground_truth
+    - evaluator_truth
+    - evaluation_token
+
+scoring:
+  observation_threshold: 0.95
+  ground_clear_threshold: 0.95
+  discrete_clear_threshold: 0.95
+  objective: minimize_executed_chassis_task_trajectory
+  distance_upper_bound: same_episode_full_coverage_distance
+  return_distance_included: false
+  time_or_energy_scored: false
+
+generalization:
+  field_area_fixed: true
+  field_aspect_ratio_variable: true
+  dirt_random_each_episode: true
+  pedestrians_random_each_episode: true
+  map_ids_disjoint_across_train_validation_test: true
+  mission_seeds_disjoint_across_train_validation_test: true
+
+formal_runtime_sources:
+  observation_bridge: >-
+    starter_ws/src/sanitation_active_cleaning/sanitation_active_cleaning/formal_observation_bridge.py
+  trajectory_executor: >-
+    starter_ws/src/sanitation_active_cleaning/sanitation_active_cleaning/formal_trajectory_executor.py
+  policy_planner: >-
+    starter_ws/src/sanitation_active_cleaning/sanitation_active_cleaning/formal_policy_planner.py
+  traditional_executor: >-
+    starter_ws/src/sanitation_coverage/sanitation_coverage/coverage_probe.py
+
+required_evidence:
+  perception_preflight: formal_perception_pc_audit.json
+  policy_checkpoint: formal_planning/q_policy.json
+  training_report: formal_planning/training_report.json
+  validation_report: formal_planning/validation_report.json
+  baseline_report: formal_planning/baseline_report.json

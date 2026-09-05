@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import hashlib
 import json
 from pathlib import Path
 
@@ -48,8 +49,19 @@ def _expanded_fixture(tmp_path: Path, *, mutate: str = "") -> Path:
             links.append(installation_frame)
     required_joint_specs = list(contract["joint_contract"])
     joint_children = {item["name"].replace("_joint", "_link") for item in required_joint_specs}
-    # The contract's dry/wastewater lid child frames are implementation details, so add them.
-    for child in ("dry_bin_lid_link", "wastewater_lid_link", "cleaning_lift_carriage_link"):
+    # These joint child / parent frames are implementation details, so add them
+    # to the minimal expanded-URDF fixture explicitly.
+    for child in (
+        "dry_bin_lid_link",
+        "wastewater_lid_link",
+        "cleaning_lift_carriage_link",
+        "dry_deposit_hopper_link",
+        "dry_deposit_gate_link",
+        "dry_bin_latch_base_link",
+        "dry_bin_latch_link",
+        "wastewater_lid_latch_base_link",
+        "wastewater_lid_latch_link",
+    ):
         if child not in links:
             links.append(child)
 
@@ -70,7 +82,10 @@ def _expanded_fixture(tmp_path: Path, *, mutate: str = "") -> Path:
         "squeegee_pitch_joint": "squeegee_link",
         "squeegee_float_joint": "suction_nozzle_link",
         "dry_bin_lid_joint": "dry_bin_lid_link",
+        "dry_bin_latch_joint": "dry_bin_latch_link",
+        "dry_deposit_gate_joint": "dry_deposit_gate_link",
         "wastewater_lid_joint": "wastewater_lid_link",
+        "wastewater_lid_latch_joint": "wastewater_lid_latch_link",
     }
     explicit_parents = {
         "left_side_brush_joint": "base_footprint",
@@ -80,7 +95,10 @@ def _expanded_fixture(tmp_path: Path, *, mutate: str = "") -> Path:
         "squeegee_pitch_joint": "base_footprint",
         "squeegee_float_joint": "squeegee_link",
         "dry_bin_lid_joint": "dry_bin_link",
+        "dry_bin_latch_joint": "dry_bin_latch_base_link",
+        "dry_deposit_gate_joint": "dry_deposit_hopper_link",
         "wastewater_lid_joint": "wastewater_tank_link",
+        "wastewater_lid_latch_joint": "wastewater_lid_latch_base_link",
     }
     for name, spec in joint_by_name.items():
         child = explicit_children[name]
@@ -149,11 +167,18 @@ def test_committed_layout_report_is_deterministic_and_fail_closed() -> None:
         (ROOT / "reports" / "engineering" / "formal_vehicle_layout_report.json").read_text(encoding="utf-8")
     )
     assert result == report
-    assert result["status"] == "LAYOUT_CONTRACT_VALID_URDF_AND_SIMULATION_GATES_PENDING"
+    assert result["status"] == (
+        "LAYOUT_CONTRACT_VALID_RESOLVED_ENGINEERING_GATES_WITH_DECLARED_EXTERNAL_PENDING"
+    )
     assert result["dry_bin_usable_l"] >= 40.0
-    assert result["preliminary_wastewater"]["final_capacity_frozen"] is False
-    assert result["preliminary_wastewater"]["cog_limit_l"] is None
-    assert "full_inertia_and_cog_scan" in result["pending_external_gates"]
+    assert result["preliminary_wastewater"]["final_capacity_frozen"] is True
+    assert result["preliminary_wastewater"]["cog_limit_l"] == pytest.approx(14.0)
+    assert result["preliminary_wastewater"]["usable_l"] == pytest.approx(8.30)
+    assert "full_inertia_and_cog_scan" not in result["pending_external_gates"]
+    assert "exact_s100p_board_envelope_and_mounting_pattern" in result["pending_external_gates"]
+    assert result["compute_hardware"]["provisional_reference_dimensions_m"] == [0.121, 0.120, 0.0524]
+    assert result["compute_hardware"]["modeled_collision_dimensions_m"] == [0.121, 0.120, 0.0524]
+    assert result["compute_hardware"]["external_envelope_frozen"] is False
 
 
 def test_committed_expanded_urdf_report_is_deterministic() -> None:
@@ -165,27 +190,28 @@ def test_committed_expanded_urdf_report_is_deterministic() -> None:
         )
     )
     assert result == report
-    assert result["urdf_validation"]["link_count"] == 131
-    assert result["urdf_validation"]["joint_count"] == 130
-    assert result["urdf_validation"]["static_frame_pose_consistency"]["checked_count"] == 29
+    # Keep this exact so adding or dropping a physical subassembly cannot
+    # silently change the frozen product model.  The explicit A300 drivetrain
+    # modules, encoders, S100 mount and service hardware bring the current
+    # expanded vehicle to 196 links.
+    assert result["urdf_validation"]["link_count"] == 196
+    assert result["urdf_validation"]["joint_count"] == 195
+    assert result["urdf_validation"]["total_empty_vehicle_mass_kg"] == pytest.approx(160.007583)
+    assert result["urdf_validation"]["static_frame_pose_consistency"]["checked_count"] == 42
 
 
-def test_runtime_report_is_evidence_backed_and_fail_closed() -> None:
+def test_tracked_runtime_report_remains_fail_closed_until_fresh_acceptance() -> None:
     report = json.loads(
         (ROOT / "reports" / "engineering" / "formal_vehicle_runtime_report.json").read_text(
             encoding="utf-8"
         )
     )
-    assert report["status"] == "FORMAL_GAZEBO_CONTROL_AND_SENSOR_RUNTIME_PASSED_EXTERNAL_FIDELITY_GATES_PENDING"
-    assert all(report["passed_checks"].values())
-    assert report["passed_checks"]["dry_payload_clamp_kg"] == 1.512
-    assert report["passed_checks"]["wastewater_payload_clamp_kg"] == 9.7064
-    assert report["passed_checks"]["all_six_controllers_active"] is True
-    assert report["passed_checks"]["left_fisheye_image_observed"] is True
-    assert report["passed_checks"]["right_fisheye_image_observed"] is True
-    assert report["observed_interfaces"]["base_ground_truth_forward_delta_m"] > 0.3
-    assert "gz_ros2_control_runtime" not in report["pending_or_blocked_checks"]
-    assert report["pending_or_blocked_checks"]["cleaning_ground_contact"] == "not_run"
+    assert report["report_id"] == "tzcup_formal_vehicle_headless_runtime_v5"
+    assert report["status"] == "FORMAL_GAZEBO_CONTROL_AND_SENSOR_RUNTIME_BLOCKED"
+    assert report["passed"] is False
+    assert report["session_bound"] is True
+    assert report["runtime_gate_binding"]["status"] == "FORMAL_RUNTIME_GATE_BOUND"
+    assert any(value is False for value in report["passed_checks"].values())
 
 
 def test_minimal_expanded_urdf_fixture_passes_deterministic_checks(tmp_path: Path) -> None:
@@ -193,7 +219,7 @@ def test_minimal_expanded_urdf_fixture_passes_deterministic_checks(tmp_path: Pat
     assert result["urdf_validation"]["passed"] is True
     assert result["urdf_validation"]["all_physical_links_have_positive_mass_and_positive_definite_physical_inertia"] is True
     assert result["urdf_validation"]["massless_virtual_frames"] == ["base_footprint", "ur5e_base_link"]
-    assert result["urdf_validation"]["static_frame_pose_consistency"]["checked_count"] == 29
+    assert result["urdf_validation"]["static_frame_pose_consistency"]["checked_count"] == 38
     assert result["status"] == "FORMAL_URDF_DETERMINISTIC_CHECKS_PASSED_EXTERNAL_GATES_PENDING"
     assert result["pending_external_gates"]
 
@@ -246,6 +272,23 @@ def test_rejects_symbolic_placeholder_in_expanded_urdf(tmp_path: Path) -> None:
         validate_expanded_urdf(urdf)
 
 
+def test_ignores_symbolic_xacro_examples_inside_xml_comments(tmp_path: Path) -> None:
+    urdf = _expanded_fixture(tmp_path)
+    raw = urdf.read_text(encoding="utf-8")
+    urdf.write_text(
+        raw.replace(
+            "<robot ",
+            "<!-- Documented Xacro example: ${side}_collision -->\n<robot ",
+            1,
+        ),
+        encoding="utf-8",
+    )
+    result = validate_expanded_urdf(urdf)
+    assert result["status"] == (
+        "FORMAL_URDF_DETERMINISTIC_CHECKS_PASSED_EXTERNAL_GATES_PENDING"
+    )
+
+
 def test_rejects_missing_required_joint(tmp_path: Path) -> None:
     urdf = _expanded_fixture(tmp_path)
     raw = urdf.read_text(encoding="utf-8")
@@ -269,7 +312,7 @@ def test_rejects_inverted_joint_limit(tmp_path: Path) -> None:
 def test_rejects_static_frame_position_drift(tmp_path: Path) -> None:
     urdf = _expanded_fixture(tmp_path)
     raw = urdf.read_text(encoding="utf-8").replace(
-        'xyz="-0.02 0.0 1.1021"', 'xyz="0.00 0.0 1.1021"', 1
+        'xyz="0.535 0.0 1.1621"', 'xyz="0.555 0.0 1.1621"', 1
     )
     urdf.write_text(raw, encoding="utf-8")
     with pytest.raises(FormalVehicleValidationError, match="installation frame lidar_2d_link differs"):
@@ -278,9 +321,9 @@ def test_rejects_static_frame_position_drift(tmp_path: Path) -> None:
 
 def test_rejects_static_frame_rotation_drift(tmp_path: Path) -> None:
     urdf = _expanded_fixture(tmp_path)
-    marker = 'xyz="-0.02 0.0 1.1021" rpy="0.0 0.0 0.0"'
+    marker = 'xyz="0.535 0.0 1.1621" rpy="0.0 0.0 0.0"'
     raw = urdf.read_text(encoding="utf-8").replace(
-        marker, 'xyz="-0.02 0.0 1.1021" rpy="0.0 0.0 0.10"', 1
+        marker, 'xyz="0.535 0.0 1.1621" rpy="0.0 0.0 0.10"', 1
     )
     assert raw != urdf.read_text(encoding="utf-8")
     urdf.write_text(raw, encoding="utf-8")
@@ -309,7 +352,7 @@ def test_rejects_false_final_wastewater_capacity_claim(tmp_path: Path) -> None:
         data["storage"]["wastewater_tank"]["final_capacity_pending"] = False
 
     path = _write_layout(tmp_path, mutate)
-    with pytest.raises(FormalVehicleValidationError, match="must remain pending"):
+    with pytest.raises(FormalVehicleValidationError, match="does not match"):
         validate_layout(path)
 
 

@@ -1,0 +1,143 @@
+schema_version: 1
+profile_id: tzcup_formal_motion_cleaning_v1
+units: SI
+base_frame: base_footprint
+
+claim_boundary:
+  source_geometry_status: machine_checked_against_project_urdf
+  physical_ground_contact_status: pending_runtime_contact_and_normal_force_validation
+  exact_transport_mesh_sweep_status: pending
+  exact_arm_swept_volume_status: pending
+  effective_cleaning_width_status: pending_physical_soiling_test
+
+arm_task_poses:
+  joint_names:
+    - shoulder_pan_joint
+    - shoulder_lift_joint
+    - elbow_joint
+    - wrist_1_joint
+    - wrist_2_joint
+    - wrist_3_joint
+  transport_rad: [-1.0, -1.0, 1.8, -1.5, -1.55, 0.25]
+  pregrasp_rad: [-1.48278161, -0.44199397, 1.21471947, -2.34352182, -1.57079633, -3.05357794]
+  pick_rad: [-1.48278161, 0.10260211, 0.80254082, -2.47593926, -1.57079633, -3.05357794]
+  deposit_rad: [-0.30233498, -1.56960444, -0.73057657, -2.40638971, 1.56851193, 0.60324332]
+  deposit_auxiliary_joint_positions:
+    dry_deposit_gate_joint_rad: 1.05
+  cube_pick_window:
+    cube_center_xyz_m: [0.300, -0.950, 0.017]
+    pregrasp_tool0_xyz_m: [0.300, -0.950, 0.450]
+    pick_tool0_xyz_m: [0.300, -0.950, 0.190]
+  dry_hopper_release:
+    tool0_xyz_m: [-0.205, 0.035, 1.260]
+  validation_reports:
+    kinematics: reports/engineering/formal_arm_task_kinematics_report.json
+    inertia_and_collision: reports/engineering/formal_vehicle_inertia_and_swept_volume_report.json
+
+drive:
+  kinematic_model: four_wheel_skid_steer
+  steering_joint_names: []
+  wheel_joint_names:
+    - front_left_wheel_joint
+    - front_right_wheel_joint
+    - rear_left_wheel_joint
+    - rear_right_wheel_joint
+  physical_wheel_radius_m: 0.1651
+  controller_wheel_radius_m: 0.1625
+  geometric_wheel_separation_m: 0.5658
+  controller_wheel_separation_m: 0.562
+  wheelbase_m: 0.512
+  effective_skid_steer_separation_m: null
+  effective_separation_status: pending_load_surface_calibration
+  canonical_planning_kinematic_constraint: curvature_limited_reference_path_for_skid_steer
+  canonical_constraint_claim:
+    physical_steering_claim: false
+    runtime_tracking_status: pending_skid_steer_tracking_validation
+  virtual_ackermann_constraint:
+    compatibility_alias_for: curvature_limited_reference_path_for_skid_steer
+    permitted_as_path_regularizer: true
+    represents_physical_steering: false
+    minimum_turning_radius_status: pending_skid_steer_tracking_validation
+
+motion_footprints:
+  transport_stowed:
+    footprint_xy_m:
+      - [0.620, 0.675]
+      - [0.620, -0.675]
+      - [-0.540, -0.675]
+      - [-0.540, 0.675]
+    source: formal_vehicle_layout.vehicle_envelopes.transport_stowed
+    navigation_allowed: true
+    geometry_status: conservative_envelope_pending_exact_mesh_sweep
+  cleaning_deployed:
+    footprint_xy_m:
+      - [0.620, 0.695]
+      - [0.620, -0.695]
+      - [-0.540, -0.695]
+      - [-0.540, 0.695]
+    source: union_of_transport_envelope_and_side_brush_collision_sweeps
+    navigation_allowed: true
+    geometry_status: urdf_collision_union_contact_validation_pending
+  arm_deployed:
+    footprint_xy_m:
+      - [1.300, 1.050]
+      - [1.300, -1.280]
+      - [-1.100, -1.280]
+      - [-1.100, 1.050]
+    source: formal_vehicle_layout.arm_envelopes.deployed
+    navigation_allowed: false
+    geometry_status: navigation_inhibited_pending_moveit_joint_space_sweep
+
+cleaning_work_pose:
+  lift_coordinate_semantics:
+    zero_position: transport_safe_raised
+    positive_direction: downward
+    transport_joint_position_m: 0.000
+    full_down_work_position_m: 0.100
+    zero_pose_minimum_ground_clearance_m: 0.100
+  joint_positions:
+    cleaning_lift_joint_m: 0.100
+    squeegee_float_joint_m: 0.000
+    squeegee_pitch_joint_rad: 0.000
+  command_interlock:
+    minimum_cleaning_lift_joint_m: 0.100
+    maximum_cleaning_lift_joint_m: 0.100
+    tolerance_m: 0.001
+  expected_ground_plane_z_m: 0.000
+  geometry_only: true
+
+mechanism_sweeps:
+  left_side_brush:
+    center_xy_m: [0.385, 0.545]
+    radius_m: 0.150
+    collision_thickness_m: 0.026
+    expected_lowest_z_at_work_pose_m: 0.000
+    contact_status: compressed_flexible_bristle_proxy_ground_tangent
+  right_side_brush:
+    center_xy_m: [0.385, -0.545]
+    radius_m: 0.150
+    collision_thickness_m: 0.026
+    expected_lowest_z_at_work_pose_m: 0.000
+    contact_status: compressed_flexible_bristle_proxy_ground_tangent
+  central_roller:
+    center_xy_m: [0.155, 0.000]
+    radius_m: 0.100
+    width_m: 0.620
+    expected_lowest_z_at_work_pose_m: 0.000
+    contact_status: low_effective_friction_bristle_sweep_proxy_runtime_motor_validation_required
+  squeegee:
+    center_xy_m: [-0.445, 0.000]
+    collision_size_xyz_m: [0.065, 0.800, 0.095]
+    expected_lowest_z_at_work_pose_m: 0.000
+    contact_status: geometrically_tangent_runtime_contact_pending
+  suction_nozzle:
+    center_xy_m: [-0.405, 0.000]
+    collision_size_xyz_m: [0.100, 0.650, 0.085]
+    expected_lowest_z_at_work_pose_m: 0.005
+    contact_status: geometric_clearance_runtime_contact_pending
+  transverse_union:
+    minimum_y_m: -0.695
+    maximum_y_m: 0.695
+    geometric_sweep_width_m: 1.390
+    declared_effective_cleaning_width_m: 1.320
+    effective_width_is_not_inferred_from_collision: true

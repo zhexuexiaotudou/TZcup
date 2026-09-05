@@ -1,0 +1,94 @@
+{
+  "$schema": "https://tzcup.local/schema/s100p-product-artifact-bundle-v1.json",
+  "schema_version": 1,
+  "bundle_id": "tzcup_s100p_product_artifact_bundle_v1",
+  "status": "PREPARATION_ONLY_BLOCKED",
+  "operation_boundary": "prepare_only_no_board_copy_ssh_dependency_install_node_start_or_data_collection",
+  "board_runtime_contract": {
+    "platform": "rdk_s100",
+    "board": "RDK S100P",
+    "soc": "Journey 6P",
+    "march": "nash-m"
+  },
+  "path_policy": {
+    "source_paths_are_relative": true,
+    "source_path_escape_forbidden": true,
+    "board_artifact_root": "/opt/tzcup/s100p/artifacts",
+    "board_overlay_root": "/opt/tzcup/s100p/overlay",
+    "board_target_paths_are_derived_not_executed": true
+  },
+  "assets": {
+    "board_runtime_manifest": {
+      "source_scope": "artifact_root",
+      "relative_path": "artifact_manifest.json",
+      "target_root": "artifact_root",
+      "target_relative_path": "artifact_manifest.json",
+      "sha256": "6931ad02a621939709f25938e1d7fb50b17faa969cf25662ff2d27fa502ff7f3",
+      "byte_size": 2340
+    },
+    "dosod_hbm": {
+      "source_scope": "artifact_root",
+      "relative_path": "dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm",
+      "target_root": "artifact_root",
+      "target_relative_path": "dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm",
+      "sha256": null,
+      "byte_size": null,
+      "model_role": "project_four_class_dosod_s100p_detector",
+      "source_revision": "c50129b5badf6ed7bb85e692ab493d8bdb58da6a"
+    },
+    "dosod_vocabulary": {
+      "source_scope": "artifact_root",
+      "relative_path": "dosod/tzcup_offline_vocabulary.json",
+      "target_root": "artifact_root",
+      "target_relative_path": "dosod/tzcup_offline_vocabulary.json",
+      "sha256": "c5b10ba0e26ee28cdbf5192775e7d2ddb3f5852e515f59a074b38b7ed69d7ffd",
+      "byte_size": 188,
+      "model_role": "frozen_project_prompt_vocabulary",
+      "source_revision": "c50129b5badf6ed7bb85e692ab493d8bdb58da6a"
+    },
+    "edgesam_encoder_hbm": {
+      "source_scope": "artifact_root",
+      "relative_path": "edgesam/edgesam_encoder_512.hbm",
+      "target_root": "artifact_root",
+      "target_relative_path": "edgesam/edgesam_encoder_512.hbm",
+      "sha256": "82557c8f270f227035aee0246237d743e555b1816c2d7eb2e5694a4fa17fbfef",
+      "byte_size": 12383448,
+      "model_role": "edgesam_512_s100p_image_encoder",
+      "source_revision": "d24d99671f41a9c0003061248bded64a481e9059"
+    },
+    "edgesam_decoder_hbm": {
+      "source_scope": "artifact_root",
+      "relative_path": "edgesam/edgesam_decoder_512.hbm",
+      "target_root": "artifact_root",
+      "target_relative_path": "edgesam/edgesam_decoder_512.hbm",
+      "sha256": "c4f32f9340a9c4f6365599d62588fcce572791840c3b905c939d1d297cd40388",
+      "byte_size": 13844912,
+      "model_role": "edgesam_512_s100p_box_prompt_decoder",
+      "source_revision": "d24d99671f41a9c0003061248bded64a481e9059"
+    },
+    "class_mapping_config": {
+      "source_scope": "repository_root",
+      "relative_path": "starter_ws/src/sanitation_perception/config/formal_open_vocab_perception.yaml",
+      "target_root": "overlay_root",
+      "target_relative_path": "share/sanitation_perception/config/formal_open_vocab_perception.yaml",
+      "sha256": "570e5b929790ec9984e9dfcfecd9d76ccb85bd4e7757223eeaf455ec7bb12967",
+      "byte_size": 9777
+    },
+    "overlay_package_inventory": {
+      "source_scope": "repository_root",
+      "relative_path": "config/s100p_product_overlay_packages.json",
+      "target_root": "overlay_root",
+      "target_relative_path": "share/sanitation_perception/config/s100p_product_overlay_packages.json",
+      "sha256": "34b497665724860a382988fed876cce2d9a2920366860966b5c9a630d62710ca",
+      "byte_size": 2176
+    },
+    "board_launch_parameter_record": {
+      "source_scope": "repository_root",
+      "relative_path": "config/s100p_product_board_launch_parameters.json",
+      "target_root": "overlay_root",
+      "target_relative_path": "share/sanitation_perception/config/s100p_product_board_launch_parameters.json",
+      "sha256": "a0e30d1c4932c5a0c65043db3f26b94564890f93b14532a2fe41a2257fb4519c",
+      "byte_size": 1333
+    }
+  }
+}

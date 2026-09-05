@@ -277,12 +277,33 @@ def panel_with_ribs(size: Vec3, rib_axis: str = "z", rib_count: int = 4) -> Mesh
 
 def motor_body() -> Mesh:
     m = cylinder(0.0185, 0.057)
-    m.extend(cylinder(0.0195, 0.011, (0, 0, 0.034)))
     m.extend(cylinder(0.014, 0.006, (0, 0, -0.0315)))
-    m.extend(box((0.020, 0.012, 0.010), (0, 0.018, 0.022)))
     for a in range(0, 360, 90):
         r = math.radians(a)
         m.extend(cylinder(0.0018, 0.004, (0.015 * math.cos(r), 0.015 * math.sin(r), -0.032)))
+    return m
+
+
+def motor_encoder_cap() -> Mesh:
+    """Separate Pololu 37D magnetic encoder cap and six-pin cable interface.
+
+    The official 37D dimensional drawing exposes a distinct rear encoder cap
+    on the item-4694 motor envelope.  The magnetic IC and PCB stay abstract;
+    only the observable protective cap, mounting bosses, keyed connector and
+    strain relief are represented here.
+    """
+
+    m = cylinder(0.0195, 0.011)
+    m.extend(cylinder(0.0155, 0.004, (0, 0, 0.0075)))
+    m.extend(box((0.020, 0.012, 0.010), (0, 0.018, 0.001)))
+    m.extend(box((0.014, 0.008, 0.006), (0, 0.024, 0.001)))
+    for a in range(0, 360, 90):
+        r = math.radians(a)
+        m.extend(cylinder(
+            0.0018,
+            0.003,
+            (0.015 * math.cos(r), 0.015 * math.sin(r), 0.007),
+        ))
     return m
 
 
@@ -400,14 +421,20 @@ def bearing_housing() -> Mesh:
 
 
 def central_roller() -> Mesh:
+    # The rigid shaft / core ends at 60 mm.  Six 12 mm-diameter helical
+    # elastomer bars extend the observable sweep to exactly 100 mm so the
+    # rendered brush and the bounded Gazebo contact proxy describe the same
+    # external envelope.  Flexural compliance is a runtime-model concern; it
+    # is not implied by this visual mesh.
     m = cylinder(0.060, 0.620, axis="y")
     m.extend(cylinder(0.010, 0.680, axis="y"))
-    for phase in (0, math.pi / 2, math.pi, 3 * math.pi / 2):
+    for phase_index in range(6):
+        phase = phase_index * math.pi / 3.0
         pts = []
         for i in range(101):
             y = -0.300 + 0.600 * i / 100
             a = phase + 4 * math.pi * i / 100
-            pts.append((0.080 * math.cos(a), y, 0.080 * math.sin(a)))
+            pts.append((0.094 * math.cos(a), y, 0.094 * math.sin(a)))
         m.extend(sweep_tube(pts, 0.006, 8))
     for y in (-0.315, 0.315):
         m.extend(cylinder(0.066, 0.018, (0, y, 0), axis="y"))
@@ -566,15 +593,17 @@ def bin_floor(size: Vec3) -> Mesh:
 
 
 def dry_lid() -> Mesh:
-    # Four panels leave a 150 x 130 mm robot-deposition aperture in the lid.
-    m = box((0.508, 0.105, 0.010), (0.254, 0.143, 0))
-    m.extend(box((0.508, 0.105, 0.010), (0.254, -0.143, 0)))
-    m.extend(box((0.179, 0.181, 0.010), (0.0895, 0, 0)))
-    m.extend(box((0.179, 0.181, 0.010), (0.4185, 0, 0)))
-    m.extend(box((0.120, 0.025, 0.025), (0.300, 0, 0.035)))
+    # The robot chute is on the arm side (y=-0.125 m).  The visual CAD and
+    # collision panels use the same offset opening; visual-only cross ribs may
+    # not bridge or cosmetically close the gravity passage.
+    m = box((0.508, 0.2405, 0.010), (0.254, 0.07525, 0))
+    m.extend(box((0.508, 0.0205, 0.010), (0.254, -0.18525, 0)))
+    m.extend(box((0.179, 0.130, 0.010), (0.0895, -0.110, 0)))
+    m.extend(box((0.179, 0.130, 0.010), (0.4185, -0.110, 0)))
+    m.extend(box((0.120, 0.025, 0.025), (0.300, 0.075, 0.035)))
     m.extend(box((0.496, 0.012, 0.012), (0.254, 0.184, -0.007)))
     m.extend(box((0.496, 0.012, 0.012), (0.254, -0.184, -0.007)))
-    for x in (0.05, 0.20, 0.35, 0.48):
+    for x in (0.05, 0.12, 0.39, 0.458):
         m.extend(box((0.010, 0.350, 0.012), (x, 0, 0.008)))
     return m
 
@@ -591,6 +620,40 @@ def dry_deposit_gate() -> Mesh:
     m = box((0.184, 0.158, 0.008), (0.092, 0, 0))
     m.extend(box((0.020, 0.120, 0.020), (0.172, 0, 0.014)))
     m.extend(cylinder(0.006, 0.170, (0.004, 0, 0), axis="y"))
+    return m
+
+
+def dry_deposit_xw540_actuator() -> Mesh:
+    """Observable XW540-T260-R envelope with mount and cable gland.
+
+    The public 33.5 x 58.5 x 45.9 mm envelope is represented in the local
+    x/y/z axes as depth/width/height. Housing ribs, mounting ears, output boss
+    and cable entry make the part identifiable without claiming internal gear
+    or motor geometry.
+    """
+    m = box((0.0459, 0.0335, 0.0585))
+    for z in (-0.021, -0.0105, 0.0, 0.0105, 0.021):
+        m.extend(box((0.0475, 0.0350, 0.0022), (0, 0, z)))
+    for x in (-0.0185, 0.0185):
+        m.extend(box((0.010, 0.050, 0.004), (x, 0, -0.031)))
+        for y in (-0.020, 0.020):
+            m.extend(cylinder(0.0022, 0.005, (x, y, -0.031), axis="z"))
+    m.extend(cylinder(0.0105, 0.0055, (0, -0.0195, 0.012), axis="y"))
+    m.extend(cylinder(0.0060, 0.0090, (0.016, 0.0210, -0.014), axis="y"))
+    return m
+
+
+def dry_deposit_xw540_horn() -> Mesh:
+    m = cylinder(0.018, 0.006, (0, 0, 0), axis="y")
+    m.extend(cylinder(0.006, 0.018, (0, 0, 0), axis="y"))
+    for angle in range(0, 360, 60):
+        a = math.radians(angle)
+        m.extend(cylinder(
+            0.0018,
+            0.007,
+            (0.011 * math.cos(a), 0, 0.011 * math.sin(a)),
+            axis="y",
+        ))
     return m
 
 
@@ -679,10 +742,32 @@ def inlet_coupling() -> Mesh:
     return m
 
 
-def latch() -> Mesh:
-    m = box((0.035, 0.050, 0.010), (0, 0, -0.005))
-    m.extend(box((0.012, 0.035, 0.030), (0.012, 0, 0.008)))
-    m.extend(cylinder(0.004, 0.055, (-0.010, 0, 0), axis="y"))
+def toggle_latch_base() -> Mesh:
+    """Stamped base and pivot ears for a manual over-centre draw latch."""
+    m = box((0.040, 0.052, 0.006), (0, 0, -0.003))
+    for y in (-0.020, 0.020):
+        m.extend(box((0.018, 0.006, 0.028), (0, y, 0.011)))
+        m.extend(cylinder(0.0045, 0.008, (0, y, 0.023), axis="y"))
+    for x in (-0.013, 0.013):
+        m.extend(cylinder(0.0025, 0.008, (x, 0, -0.006)))
+    return m
+
+
+def toggle_latch_handle() -> Mesh:
+    """Moving hand lever; local origin is the physical transverse pivot."""
+    m = box((0.018, 0.036, 0.078), (0.006, 0, 0.032))
+    m.extend(cylinder(0.006, 0.044, (0, 0, 0), axis="y"))
+    m.extend(box((0.032, 0.042, 0.018), (-0.003, 0, 0.073)))
+    m.extend(cylinder(0.004, 0.048, (-0.015, 0, 0.078), axis="y"))
+    return m
+
+
+def toggle_latch_keeper() -> Mesh:
+    """Lid-mounted keeper bar engaged by the closed draw-latch hook."""
+    m = box((0.024, 0.052, 0.006), (0, 0, -0.003))
+    for y in (-0.020, 0.020):
+        m.extend(box((0.010, 0.006, 0.022), (0, y, 0.008)))
+    m.extend(cylinder(0.0045, 0.046, (0.008, 0, 0.019), axis="y"))
     return m
 
 
@@ -705,6 +790,7 @@ def main() -> None:
     platform = package / "meshes" / "generated" / "platform"
     cleaning_parts: dict[str, Mesh] = {
         "pololu_37d_motor_body.stl": motor_body(),
+        "pololu_37d_encoder_cap.stl": motor_encoder_cap(),
         "pololu_37d_gearbox.stl": gearbox(),
         "side_brush_rotor_shaft.stl": shaft(),
         "side_brush_disk.stl": side_brush_disk(),
@@ -745,8 +831,13 @@ def main() -> None:
         "dry_bin_lid.stl": dry_lid(),
         "dry_deposit_hopper.stl": dry_deposit_hopper(),
         "dry_deposit_gate.stl": dry_deposit_gate(),
+        "dry_deposit_xw540_actuator.stl": dry_deposit_xw540_actuator(),
+        "dry_deposit_xw540_horn.stl": dry_deposit_xw540_horn(),
         "dry_deposit_chute.stl": dry_deposit_chute(),
-        "dry_bin_latch.stl": latch(),
+        "dry_bin_latch.stl": toggle_latch_handle(),
+        "storage_toggle_latch_base.stl": toggle_latch_base(),
+        "storage_toggle_latch_handle.stl": toggle_latch_handle(),
+        "storage_toggle_latch_keeper.stl": toggle_latch_keeper(),
         "dry_bin_level_sensor.stl": level_sensor(),
         "wastewater_tank_floor.stl": bin_floor((0.358, 0.258, 0.008)),
         "wastewater_front_panel.stl": panel_with_ribs((0.004, 0.258, 0.168)),

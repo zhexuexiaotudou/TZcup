@@ -1,0 +1,108 @@
+{
+  "blockers": [
+    "acceptance_session_not_current_running_closure_bound",
+    "pc_session_runtime_closure_identity_mismatch_or_legacy_binding",
+    "dosod_hbm_compile_receipt_missing",
+    "model_payload_receipt_missing",
+    "overlay_build_receipt_missing",
+    "runtime_dependencies_receipt_missing",
+    "thermal_power_receipt_missing",
+    "pc_session_runtime_closure_identity_not_ready"
+  ],
+  "board_bundle": {
+    "blockers": [
+      "board_runtime_dependencies_unverified",
+      "board_runtime_evidence_not_collected",
+      "board_tzcup_overlay_unbuilt_or_unverified",
+      "project_dosod_hbm_missing_or_unhashed",
+      "required_board_model_payloads_not_all_receipted",
+      "thermal_and_power_measurement_not_collected"
+    ],
+    "ready_to_deploy": false,
+    "status": "BLOCKED"
+  },
+  "board_interaction_performed": false,
+  "checks": {
+    "acceptance_session_present_and_running": false,
+    "board_bundle_static_audit_completed": true,
+    "board_bundle_static_integrity_valid": true,
+    "dosod_hbm_compile_contract_valid": true,
+    "dosod_hbm_compile_receipt_valid": false,
+    "mechanical_electrical_fail_closed_contract_valid": true,
+    "model_payload_receipt_valid": false,
+    "offline_predeploy_audit_completed": true,
+    "offline_predeploy_static_inputs_valid": true,
+    "overlay_build_receipt_valid": false,
+    "pc_session_runtime_closure_identity_exact": false,
+    "pc_snapshot_matches_board_bundle": true,
+    "runtime_binding_present_and_bound": true,
+    "runtime_dependencies_receipt_valid": false,
+    "thermal_power_receipt_valid": false
+  },
+  "data_collection_performed": false,
+  "dependency_install_performed": false,
+  "dosod_hbm_compile_contract": {
+    "blockers": [],
+    "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\config\\dosod_s100p_hbm_compile_contract.json",
+    "valid": true
+  },
+  "mechanical_electrical_contract": {
+    "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\config\\high_fidelity_vehicle\\s100p_mechanical_electrical_evidence.json",
+    "status": "BLOCKED_MECHANICAL_ELECTRICAL_INTEGRATION",
+    "valid": true
+  },
+  "node_started": false,
+  "offline_predeploy": {
+    "blockers": [
+      "bundle:declared_sha256_missing_or_invalid:dosod_hbm",
+      "bundle:declared_byte_size_missing_or_invalid:dosod_hbm",
+      "bundle:asset_missing:dosod_hbm",
+      "bundle:runtime_manifest_model_row_missing:dosod_hbm"
+    ],
+    "ready": false,
+    "status": "BLOCKED"
+  },
+  "operation_boundary": "local_read_only_audit_no_board_copy_ssh_install_node_start_data_collection_or_receipt_generation",
+  "payload_copy_performed": false,
+  "pc_session_runtime_identity": {
+    "runtime_binding_path": "F:\\Project\\TZcup-integrated-functional-acceptance\\reports\\engineering\\formal_vehicle_runtime_report.json.runtime_binding.json",
+    "session_path": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\formal_final_acceptance_session.json",
+    "snapshot_identity": {
+      "expanded_urdf_sha256": "b162eeca2f95bd604722046aaaaf7a849e1a6843b476b8f98b3b452c1e9af3a2",
+      "snapshot_manifest_sha256": "fffb388e1f06616ab5019db00481718d24b5bac1d284c240dd1709173482cd40",
+      "snapshot_output_inventory_sha256": "a8832afc81f6eea6227abd0a5dc6073bb9da2283de8532c05034841243028ba7",
+      "source_inventory_sha256": "0d106d4e9aae774941856d0d7018bdbcf8c43e83afe00049dc485006943cf03b"
+    },
+    "snapshot_path": "F:\\Project\\TZcup-integrated-functional-acceptance\\reports\\engineering\\formal_vehicle_snapshot_manifest.json"
+  },
+  "ready_to_deploy": false,
+  "receipt_generation_performed": false,
+  "receipt_requirements": {
+    "receipt_root": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\s100p_formal_predeploy_receipts",
+    "receipts": {
+      "dosod_hbm_compile": {
+        "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\s100p_formal_predeploy_receipts\\dosod_hbm_compile_receipt.json",
+        "present": false
+      },
+      "model_payload": {
+        "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\s100p_formal_predeploy_receipts\\model_payload_receipt.json",
+        "present": false
+      },
+      "overlay_build": {
+        "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\s100p_formal_predeploy_receipts\\overlay_build_receipt.json",
+        "present": false
+      },
+      "runtime_dependencies": {
+        "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\s100p_formal_predeploy_receipts\\runtime_dependencies_receipt.json",
+        "present": false
+      },
+      "thermal_power": {
+        "path": "F:\\Project\\TZcup-integrated-functional-acceptance\\artifacts\\s100p_formal_predeploy_receipts\\thermal_power_receipt.json",
+        "present": false
+      }
+    }
+  },
+  "report_id": "tzcup_s100p_final_predeploy_audit_v1",
+  "schema_version": 1,
+  "status": "BLOCKED"
+}
