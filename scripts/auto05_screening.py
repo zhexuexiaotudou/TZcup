@@ -39,6 +39,7 @@ INPUT_WIDTH = 384
 INPUT_HEIGHT = 288
 STRIDE = 4
 SEED = 20260730
+G4_CONTRACT_NAME = "auto05_g4_screening.yaml"
 
 
 def sha256(path: Path) -> str:
@@ -171,6 +172,29 @@ def training_row_weights(rows: list[dict], mode: str) -> list[float]:
                 weight += 1.0
         weights.append(weight)
     return weights
+
+
+def require_split(rows: list[dict], expected: str, purpose: str) -> None:
+    """Reject accidental validation/test reuse before any model selection."""
+    unexpected = sorted({str(row.get("split")) for row in rows} - {expected})
+    if unexpected:
+        raise ValueError(
+            f"{purpose} requires only {expected} rows; found {unexpected}"
+        )
+
+
+def g4_train_only_hard_negative_manifest(rows: list[dict]) -> list[str]:
+    """Return deterministic train-only hard-negative identities, never predictions."""
+    require_split(rows, "train", "G4 hard-negative manifest")
+    selected = []
+    for row in rows:
+        labels = set(
+            int(value)
+            for value in np.unique(np.load(row["semantic"], allow_pickle=False))
+        )
+        if row["negative_only"] or 3 in labels or not labels.intersection({1, 2, 3}):
+            selected.append(str(row["rgb_path"]))
+    return sorted(selected)
 
 
 class G3Dataset(Dataset):
@@ -367,6 +391,45 @@ class DirectDetector(nn.Module):
         return self.heatmap(features), self.offset(features), self.size(features)
 
 
+class G4DirectDetector(nn.Module):
+    """Small stride-four FPN which still emits direct center/offset/size boxes."""
+
+    def __init__(self, width: int = 64, input_channels: int = 6):
+        super().__init__()
+        self.p2 = nn.Sequential(
+            nn.Conv2d(input_channels, width, 5, stride=2, padding=2),
+            nn.BatchNorm2d(width),
+            nn.SiLU(),
+        )
+        self.p3 = nn.Sequential(
+            nn.Conv2d(width, width * 2, 3, stride=2, padding=1),
+            nn.BatchNorm2d(width * 2),
+            nn.SiLU(),
+            nn.Conv2d(width * 2, width * 2, 3, padding=1),
+            nn.SiLU(),
+        )
+        self.lateral = nn.Conv2d(width, width * 2, 1)
+        self.fuse = nn.Sequential(
+            nn.Conv2d(width * 2, width * 2, 3, padding=1), nn.SiLU(),
+            nn.Conv2d(width * 2, width * 2, 3, padding=2, dilation=2), nn.SiLU(),
+        )
+        self.heatmap = nn.Conv2d(width * 2, 3, 1)
+        self.offset = nn.Conv2d(width * 2, 2, 1)
+        self.size = nn.Sequential(nn.Conv2d(width * 2, 2, 1), nn.Softplus())
+        self.quality = nn.Conv2d(width * 2, 1, 1)
+        nn.init.constant_(self.heatmap.bias, -2.19)
+
+    def forward(self, image):
+        import torch.nn.functional as functional
+
+        p2 = self.p2(image)
+        p3 = self.p3(p2)
+        fused = self.fuse(p3 + functional.interpolate(
+            self.lateral(p2), size=p3.shape[-2:], mode="bilinear", align_corners=False
+        ))
+        return self.heatmap(fused), self.offset(fused), self.size(fused), self.quality(fused)
+
+
 class RGBDAreaUNet(nn.Module):
     def __init__(self, width: int = 32, input_channels: int = 4):
         super().__init__()
@@ -413,6 +476,24 @@ class RGBDAreaUNet(nn.Module):
         return self.decode1(torch.cat((first, up_first), dim=1))
 
 
+class RGBDAreaBinaryUNet(RGBDAreaUNet):
+    """One independently parameterized area head; no leaf/puddle sharing."""
+
+    def __init__(self, width: int = 40, input_channels: int = 7):
+        super().__init__(width=width, input_channels=input_channels)
+        self.decode1[-1] = nn.Conv2d(width, 1, 1)
+
+
+class G4IndependentAreaHeads(nn.Module):
+    def __init__(self, width: int = 40, input_channels: int = 7):
+        super().__init__()
+        self.leaf = RGBDAreaBinaryUNet(width=width, input_channels=input_channels)
+        self.puddle = RGBDAreaBinaryUNet(width=width, input_channels=input_channels)
+
+    def forward(self, image):
+        return torch.cat((self.leaf(image), self.puddle(image)), dim=1)
+
+
 def focal_heatmap_loss(logits, target):
     prediction = torch.sigmoid(logits).clamp(1e-5, 1.0 - 1e-5)
     positive = target.eq(1.0).float()
@@ -428,7 +509,46 @@ def focal_heatmap_loss(logits, target):
     return (positive_loss.sum() + negative_loss.sum()) / positive.sum().clamp(min=1.0)
 
 
+def g4_giou_loss(predicted_offset, predicted_size, offset, size, mask):
+    """GIoU on direct-head cells; masked empty frames are finite by construction."""
+    height, width = predicted_offset.shape[-2:]
+    yy, xx = torch.meshgrid(
+        torch.arange(height, device=predicted_offset.device),
+        torch.arange(width, device=predicted_offset.device),
+        indexing="ij",
+    )
+    center = torch.stack((xx, yy), dim=0).float()[None]
+    def corners(delta, extent):
+        middle = center + delta
+        half = extent.clamp(min=1e-6) * 0.5
+        return middle - half, middle + half
+    p0, p1 = corners(predicted_offset, predicted_size)
+    t0, t1 = corners(offset, size)
+    intersection = (torch.minimum(p1, t1) - torch.maximum(p0, t0)).clamp(min=0)
+    inter = intersection[:, 0] * intersection[:, 1]
+    p_area = ((p1 - p0).clamp(min=0)).prod(dim=1)
+    t_area = ((t1 - t0).clamp(min=0)).prod(dim=1)
+    union = p_area + t_area - inter
+    enclosing = (torch.maximum(p1, t1) - torch.minimum(p0, t0)).clamp(min=0)
+    enclosing_area = enclosing.prod(dim=1).clamp(min=1e-6)
+    iou = inter / union.clamp(min=1e-6)
+    giou = iou - (enclosing_area - union) / enclosing_area
+    return ((1.0 - giou) * mask[:, 0]).sum() / mask.sum().clamp(min=1.0)
+
+
+def g4_area_loss(logits, target):
+    """Fixed BCE plus focal-Tversky, separately evaluated for each binary head."""
+    probability = torch.sigmoid(logits)
+    bce = torch.nn.functional.binary_cross_entropy_with_logits(logits, target)
+    tp = (probability * target).sum((0, 2, 3))
+    fp = (probability * (1.0 - target)).sum((0, 2, 3))
+    fn = ((1.0 - probability) * target).sum((0, 2, 3))
+    tversky = (tp + 1.0) / (tp + 0.35 * fp + 0.65 * fn + 1.0)
+    return bce + (1.0 - tversky).pow(1.5).mean()
+
+
 def train_detector(rows: list[dict], device, epochs: int, attempt: int):
+    require_split(rows, "train", "detector training")
     dataset = G3Dataset(rows, "detector", augment=True, attempt=attempt)
     sampler = None
     if attempt >= 3:
@@ -447,9 +567,13 @@ def train_detector(rows: list[dict], device, epochs: int, attempt: int):
         pin_memory=True,
         generator=torch.Generator().manual_seed(SEED),
     )
-    model = DirectDetector(
-        width=64 if attempt >= 3 else 48,
-        input_channels=6 if attempt >= 3 else 3,
+    model = (
+        G4DirectDetector(width=64, input_channels=6)
+        if attempt >= 4
+        else DirectDetector(
+            width=64 if attempt >= 3 else 48,
+            input_channels=6 if attempt >= 3 else 3,
+        )
     ).to(device)
     learning_rate = 5e-4 if attempt >= 2 else 1.5e-3
     optimizer = torch.optim.AdamW(
@@ -467,7 +591,8 @@ def train_detector(rows: list[dict], device, epochs: int, attempt: int):
             image, heatmap = image.to(device), heatmap.to(device)
             offset, size, mask = offset.to(device), size.to(device), mask.to(device)
             optimizer.zero_grad(set_to_none=True)
-            predicted_heatmap, predicted_offset, predicted_size = model(image)
+            outputs = model(image)
+            predicted_heatmap, predicted_offset, predicted_size = outputs[:3]
             denominator = mask.sum().clamp(min=1.0)
             loss = (
                 focal_heatmap_loss(predicted_heatmap, heatmap)
@@ -476,6 +601,14 @@ def train_detector(rows: list[dict], device, epochs: int, attempt: int):
                 * (torch.abs(predicted_size - size) * mask).sum()
                 / denominator
             )
+            if attempt >= 4:
+                quality = outputs[3]
+                quality_target = mask
+                loss = loss + 0.5 * g4_giou_loss(
+                    predicted_offset, predicted_size, offset, size, mask
+                ) + 0.25 * torch.nn.functional.binary_cross_entropy_with_logits(
+                    quality, quality_target
+                )
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5.0)
             optimizer.step()
@@ -493,6 +626,9 @@ def train_detector(rows: list[dict], device, epochs: int, attempt: int):
         "epochs": epochs,
         "curve": curve,
         "augmentation_profile": (
+            "g4_train_only_hard_negative_rebalance_plus_quality_giou"
+            if attempt >= 4
+            else
             "epoch_varying_color_geometry_plus_hard_negative_rebalance"
             if attempt >= 3
             else "epoch_varying_color_geometry_distribution_repair"
@@ -503,6 +639,9 @@ def train_detector(rows: list[dict], device, epochs: int, attempt: int):
         if sampler is not None
         else len(rows),
         "duration_s": time.perf_counter() - started,
+        "g4_train_only_hard_negative_manifest": (
+            g4_train_only_hard_negative_manifest(rows) if attempt >= 4 else None
+        ),
     }
 
 
@@ -531,9 +670,13 @@ def detector_raw_predictions(
                     inputs.transpose(2, 0, 1)[None], dtype=np.float32
                 )
             ).to(device)
-            heatmap, offset, size = model(tensor)
+            outputs = model(tensor)
+            heatmap, offset, size = outputs[:3]
+            scores = torch.sigmoid(heatmap)[0]
+            if attempt >= 4:
+                scores = scores * torch.sigmoid(outputs[3])[0]
             decoded = decode_centernet_outputs(
-                torch.sigmoid(heatmap)[0].cpu().numpy(),
+                scores.cpu().numpy(),
                 offset[0].cpu().numpy(),
                 size[0].cpu().numpy(),
                 stride=STRIDE,
@@ -661,6 +804,7 @@ def detector_metrics(
 
 
 def select_detector_threshold(rows, predictions, truths) -> tuple[float, list[dict]]:
+    require_split(rows, "val", "detector threshold selection")
     candidates = [
         detector_metrics(rows, predictions, truths, threshold)
         for threshold in (
@@ -700,6 +844,7 @@ def select_detector_threshold(rows, predictions, truths) -> tuple[float, list[di
 
 
 def train_area(rows: list[dict], device, epochs: int, attempt: int):
+    require_split(rows, "train", "area training")
     dataset = G3Dataset(rows, "area", augment=True, attempt=attempt)
     sampler = None
     if attempt >= 3:
@@ -718,9 +863,13 @@ def train_area(rows: list[dict], device, epochs: int, attempt: int):
         pin_memory=True,
         generator=torch.Generator().manual_seed(SEED),
     )
-    model = RGBDAreaUNet(
-        width=40 if attempt >= 3 else 32,
-        input_channels=7 if attempt >= 3 else 4,
+    model = (
+        G4IndependentAreaHeads(width=40, input_channels=7)
+        if attempt >= 4
+        else RGBDAreaUNet(
+            width=40 if attempt >= 3 else 32,
+            input_channels=7 if attempt >= 3 else 4,
+        )
     ).to(device)
     learning_rate = 4e-4 if attempt >= 2 else 1e-3
     optimizer = torch.optim.AdamW(
@@ -750,16 +899,19 @@ def train_area(rows: list[dict], device, epochs: int, attempt: int):
             image, target = image.to(device), target.to(device)
             optimizer.zero_grad(set_to_none=True)
             logits = model(image)
-            binary = torch.nn.functional.binary_cross_entropy_with_logits(
-                logits, target, pos_weight=positive_weight.view(1, 2, 1, 1)
-            )
-            probability = torch.sigmoid(logits)
-            intersection = (probability * target).sum((0, 2, 3))
-            denominator = probability.sum((0, 2, 3)) + target.sum((0, 2, 3))
-            dice = 1.0 - (
-                (2.0 * intersection + 1.0) / (denominator + 1.0)
-            ).mean()
-            loss = binary + dice + 0.2 * probability[target == 0].pow(2).mean()
+            if attempt >= 4:
+                loss = g4_area_loss(logits, target)
+            else:
+                binary = torch.nn.functional.binary_cross_entropy_with_logits(
+                    logits, target, pos_weight=positive_weight.view(1, 2, 1, 1)
+                )
+                probability = torch.sigmoid(logits)
+                intersection = (probability * target).sum((0, 2, 3))
+                denominator = probability.sum((0, 2, 3)) + target.sum((0, 2, 3))
+                dice = 1.0 - (
+                    (2.0 * intersection + 1.0) / (denominator + 1.0)
+                ).mean()
+                loss = binary + dice + 0.2 * probability[target == 0].pow(2).mean()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5.0)
             optimizer.step()
@@ -778,6 +930,9 @@ def train_area(rows: list[dict], device, epochs: int, attempt: int):
         "curve": curve,
         "positive_weights": positive_weight.cpu().tolist(),
         "augmentation_profile": (
+            "g4_independent_binary_heads_plus_focal_tversky"
+            if attempt >= 4
+            else
             "epoch_varying_color_geometry_plus_class_rebalance"
             if attempt >= 3
             else "epoch_varying_color_geometry_distribution_repair"
@@ -849,6 +1004,7 @@ def area_metrics(rows, probabilities, thresholds) -> dict:
 
 
 def select_area_thresholds(rows, probabilities):
+    require_split(rows, "val", "area threshold selection")
     traces = {}
     selected = []
     for channel, name in enumerate(AREA_NAMES):
@@ -938,7 +1094,21 @@ def main() -> int:
     parser.add_argument("--attempt", type=int, default=1)
     parser.add_argument("--detector-epochs", type=int, default=45)
     parser.add_argument("--area-epochs", type=int, default=35)
+    parser.add_argument("--g4-contract")
     args = parser.parse_args()
+    if args.attempt >= 4:
+        if not args.g4_contract:
+            parser.error("G4 requires --g4-contract; blind attempt 4 is forbidden")
+        contract = Path(args.g4_contract)
+        required = (
+            "direct_anchor_free_center_offset_bbox",
+            "test_used_for_model_selection: false",
+            "maximum_configs_per_architecture: 1",
+        )
+        if contract.name != G4_CONTRACT_NAME or not contract.is_file() or any(
+            item not in contract.read_text(encoding="utf-8") for item in required
+        ):
+            parser.error("G4 contract is incomplete or permits test-driven selection")
     if args.attempt >= 3:
         INPUT_WIDTH, INPUT_HEIGHT = 512, 384
     random.seed(SEED)
@@ -1094,6 +1264,10 @@ def main() -> int:
         "stage": "AUTO-05",
         "attempt_id": f"AUTO-05-G3-SCREENING-V{args.attempt}",
         "hypothesis": (
+            "pre-registered G4 direct anchor-free FPN with quality/GIoU and "
+            "independent RGB-D area heads; no test-driven selection"
+            if args.attempt >= 4
+            else
             "hard-negative and class-balanced sampling plus 512x384 RGB-D, "
             "edge, and local-contrast inputs can improve precision and "
             "leaf/generalization gates left unresolved by attempt 2"
@@ -1110,6 +1284,7 @@ def main() -> int:
         "selection_policy": {
             "threshold_selected_on": "validation worlds only",
             "test_used_for_model_selection": False,
+            "g4_contract": Path(args.g4_contract).name if args.g4_contract else None,
             "detector_threshold": threshold,
             "area_thresholds": dict(zip(AREA_NAMES, area_thresholds)),
         },
@@ -1122,6 +1297,7 @@ def main() -> int:
         "detector": {
             "architecture": "direct anchor-free center/offset/bbox detector",
             "segmentation_connected_components_used_as_detector": False,
+            "g4_quality_head_used": args.attempt >= 4,
             "input_shape": [
                 1,
                 6 if args.attempt >= 3 else 3,
@@ -1142,7 +1318,11 @@ def main() -> int:
             ),
         },
         "area_segmenter": {
-            "architecture": "RGB-D independent binary leaf/puddle U-Net heads",
+            "architecture": (
+                "G4 independently parameterized RGB-D binary leaf/puddle U-Net heads"
+                if args.attempt >= 4
+                else "RGB-D independent binary leaf/puddle U-Net heads"
+            ),
             "input_shape": [
                 1,
                 7 if args.attempt >= 3 else 4,

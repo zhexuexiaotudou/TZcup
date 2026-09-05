@@ -3,7 +3,12 @@ set -eo pipefail
 set +u
 
 source /opt/ros/jazzy/setup.bash
-source /work/.work/stage1_20260714_154523/install/setup.bash
+if [[ "${AUTO05_G4_RUNTIME_BOUND:-0}" == 1 ]]; then
+  : "${AUTO05_COMBINED_RUNTIME_SETUP:?G4 capture requires a fresh combined runtime setup}"
+  source "${AUTO05_COMBINED_RUNTIME_SETUP}"
+else
+  source /work/.work/stage1_20260714_154523/install/setup.bash
+fi
 set -u
 
 REPO=/repo
@@ -11,15 +16,17 @@ DATA_ROOT="${AUTO05_DATA_ROOT:-/data/g3_screening_native}"
 RUNTIME_WS="${AUTO05_RUNTIME_WS:-/data/runtime_ws}"
 mkdir -p "${DATA_ROOT}/logs" "${DATA_ROOT}/scenes" "${RUNTIME_WS}"
 
-colcon --log-base "${RUNTIME_WS}/log" build \
-  --base-paths "${REPO}/starter_ws/src" \
-  --build-base "${RUNTIME_WS}/build" \
-  --install-base "${RUNTIME_WS}/install" \
-  --packages-up-to sanitation_learning sanitation_vehicle_description \
-  --event-handlers console_cohesion+
-set +u
-source "${RUNTIME_WS}/install/setup.bash"
-set -u
+if [[ "${AUTO05_G4_RUNTIME_BOUND:-0}" != 1 ]]; then
+  colcon --log-base "${RUNTIME_WS}/log" build \
+    --base-paths "${REPO}/starter_ws/src" \
+    --build-base "${RUNTIME_WS}/build" \
+    --install-base "${RUNTIME_WS}/install" \
+    --packages-up-to sanitation_learning sanitation_vehicle_description \
+    --event-handlers console_cohesion+
+  set +u
+  source "${RUNTIME_WS}/install/setup.bash"
+  set -u
+fi
 
 ros2 run sanitation_learning auto05_generate_g3_worlds \
   --registry "${REPO}/starter_ws/src/sanitation_learning/config/asset_registry.yaml" \

@@ -1,0 +1,33 @@
+schema_version: 1
+stage: AUTO-05-G4
+status: preregistered_not_executed
+attempt_family: G4_direct_detector_recovery
+dataset:
+  domain: G3_deployment_aligned_vehicle_camera_gazebo
+  worlds_min: 8
+  split_world_counts: {train: 4, val: 2, test: 2}
+  scenes_min: 120
+  native_frames_min: 1200
+  screening_resolution: [512, 384]
+detector:
+  architecture: direct_anchor_free_center_offset_bbox
+  backbone: lightweight_stride4_fpn
+  quality_head: center_quality_logit
+  regression: l1_offset_size_plus_giou
+  score: sigmoid(class_heatmap) * sigmoid(center_quality)
+  train_only_hard_negatives: true
+  segmentation_connected_components_used_as_detector: false
+area_segmenter:
+  architecture: independently_parameterized_rgbd_binary_leaf_puddle_heads
+  loss: bce_plus_focal_tversky
+selection:
+  validation_worlds_only: true
+  test_used_for_model_selection: false
+  maximum_architecture_attempts: 1
+  maximum_configs_per_architecture: 1
+  frozen_test_runs: 1
+stopping_rule: >-
+  One G4 configuration may run after train-only micro validation. The held-out
+  test split is evaluated once after validation checkpoint and threshold freeze;
+  failure leaves AUTO-05 BLOCKED and does not authorize tuning.
+claim_boundary: offline_native_gazebo_g3_screening_only
