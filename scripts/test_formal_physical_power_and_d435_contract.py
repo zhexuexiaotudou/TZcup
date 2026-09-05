@@ -9,6 +9,9 @@ import yaml
 ROOT = Path(__file__).resolve().parents[1]
 DESCRIPTION = ROOT / "starter_ws/src/sanitation_vehicle_description"
 AUXILIARY = ROOT / "starter_ws/src/sanitation_gazebo_auxiliary"
+NATIVE_AUXILIARY = (
+    ROOT / "starter_ws/src/sanitation_gazebo_control/src/FormalAuxiliaryNativeBridge.cc"
+)
 SAFETY = ROOT / "starter_ws/src/sanitation_safety"
 REGISTER = ROOT / "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml"
 LAYOUT = ROOT / "config/high_fidelity_vehicle/formal_vehicle_layout.yaml"
@@ -165,21 +168,22 @@ def test_main_power_requires_measured_joints_and_has_no_state_topic_bypass() -> 
 
 
 def test_main_power_bridge_separates_commands_from_measured_applied_state() -> None:
-    launch = (DESCRIPTION / "launch/formal_vehicle_sim.launch.py").read_text(
-        encoding="utf-8"
-    )
-    assert launch.count(
-        "/formal_vehicle/simulation/command/main_power@std_msgs/msg/Bool]gz.msgs.Boolean"
-    ) == 1
-    assert launch.count(
-        "/formal_vehicle/power/main_contactor_command@std_msgs/msg/Bool]gz.msgs.Boolean"
-    ) == 1
-    assert launch.count(
-        "/formal_vehicle/power/main_isolator_closed@std_msgs/msg/Bool[gz.msgs.Boolean"
-    ) == 1
-    assert launch.count(
-        "/formal_vehicle/power/main_contactor_closed@std_msgs/msg/Bool[gz.msgs.Boolean"
-    ) == 1
+    native = NATIVE_AUXILIARY.read_text(encoding="utf-8")
+    commands = {
+        "/formal_vehicle/simulation/command/main_power",
+        "/formal_vehicle/power/main_contactor_command",
+    }
+    measured = {
+        "/formal_vehicle/power/main_isolator_closed",
+        "/formal_vehicle/power/main_contactor_closed",
+    }
+    assert all(f'"{topic}"' in native for topic in commands | measured)
+    for topic in commands:
+        declaration = native.index(f'"{topic}"')
+        assert native.rfind("RosToGazeboEndpoint", 0, declaration) >= 0
+    for topic in measured:
+        declaration = native.index(f'"{topic}"')
+        assert native.rfind("GazeboToRosEndpoint", 0, declaration) >= 0
 
 
 def test_new_physical_details_are_bound_to_existing_positions_and_runtime_gates() -> None:
@@ -188,19 +192,18 @@ def test_new_physical_details_are_bound_to_existing_positions_and_runtime_gates(
     contract = yaml.safe_load(CONTRACT.read_text(encoding="utf-8"))
     positions = {item["id"]: item for item in register["functional_positions"]}
     topic_contracts = register["topic_contracts"]
-    assert len(topic_contracts) == 87
+    assert len(topic_contracts) == 93
     assert topic_contracts["warning_lights_applied"] == {
-        "transport": "gazebo_bridge",
+        "transport": "gazebo_native_bridge",
         "direction": "publisher",
         "single_writer": True,
         "writer_node": "formal_auxiliary_bridge",
+        "bridge_package": "sanitation_gazebo_control",
+        "bridge_executable": "formal_auxiliary_native_bridge",
         "ros_topic": "/formal_vehicle/lighting/warning_lights_applied",
         "ros_type": "std_msgs/msg/Bool",
         "gz_type": "gz.msgs.Boolean",
-        "source_path": (
-            "starter_ws/src/sanitation_gazebo_auxiliary/src/"
-            "FormalAuxiliaryVisualSystem.cc"
-        ),
+        "source_path": "starter_ws/src/sanitation_gazebo_control/src/FormalAuxiliaryNativeBridge.cc",
     }
     vehicle_xacro = (DESCRIPTION / "urdf/formal_competition_vehicle.urdf.xacro").read_text(
         encoding="utf-8"

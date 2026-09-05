@@ -1,225 +1,139 @@
-"""Fail-closed contract for product and evaluator Gazebo bridges."""
+"""Fail-closed separation between product telemetry and evaluator truth."""
 
 from __future__ import annotations
 
 import ast
+import re
 from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-LAUNCH = (
-    ROOT
-    / "starter_ws"
-    / "src"
-    / "sanitation_vehicle_description"
-    / "launch"
-    / "formal_vehicle_sim.launch.py"
-)
-WATER_NATIVE_BRIDGE = (
-    ROOT
-    / "starter_ws"
-    / "src"
-    / "sanitation_gazebo_control"
-    / "src"
-    / "WaterEvaluationBridge.cc"
-)
+LAUNCH = ROOT / "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py"
+PRODUCT_NATIVE_BRIDGE = ROOT / "starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc"
+CONTACT_NATIVE_BRIDGE = ROOT / "starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc"
+WATER_NATIVE_BRIDGE = ROOT / "starter_ws/src/sanitation_gazebo_control/src/WaterEvaluationBridge.cc"
 
 
 def _keyword(call: ast.Call, name: str) -> ast.expr | None:
     return next((item.value for item in call.keywords if item.arg == name), None)
 
 
-def _constant_string(node: ast.expr | None) -> str | None:
+def _string(node: ast.expr | None) -> str | None:
     return node.value if isinstance(node, ast.Constant) and isinstance(node.value, str) else None
 
 
-def _bridge_calls(tree: ast.AST) -> list[ast.Call]:
-    calls: list[ast.Call] = []
-    for node in ast.walk(tree):
-        if not isinstance(node, ast.Call) or not isinstance(node.func, ast.Name) or node.func.id != "Node":
-            continue
-        if _constant_string(_keyword(node, "package")) != "ros_gz_bridge":
-            continue
-        if _constant_string(_keyword(node, "executable")) != "parameter_bridge":
-            continue
-        calls.append(node)
-    return calls
-
-
-def _arguments(call: ast.Call) -> list[str]:
-    value = _keyword(call, "arguments")
-    if value is None:
-        # Config-file bridges are audited by their dedicated bridge-contract
-        # validators; this module inspects only literal evaluator arguments.
-        return []
-    assert isinstance(value, (ast.List, ast.Tuple)), "literal parameter_bridge arguments must remain statically auditable"
-    result = [_constant_string(item) for item in value.elts]
-    assert all(item is not None for item in result), "parameter_bridge entries must be literal strings"
-    return [item for item in result if item is not None]
-
-
-def _condition_name(call: ast.Call) -> str | None:
-    condition = _keyword(call, "condition")
-    if not isinstance(condition, ast.Call) or not condition.args:
-        return None
-    launch_configuration = condition.args[0]
-    return launch_configuration.id if isinstance(launch_configuration, ast.Name) else None
-
-
-def _water_evaluator_call(tree: ast.AST) -> ast.Call:
+def _node(tree: ast.AST, name: str) -> ast.Call:
     return next(
         call
         for call in ast.walk(tree)
         if isinstance(call, ast.Call)
         and isinstance(call.func, ast.Name)
         and call.func.id == "Node"
-        and _constant_string(_keyword(call, "package")) == "sanitation_gazebo_control"
-        and _constant_string(_keyword(call, "executable")) == "water_evaluation_bridge"
-        and _constant_string(_keyword(call, "name")) == "water_evaluation_bridge"
+        and _string(_keyword(call, "name")) == name
     )
 
 
-def _load_bridges() -> tuple[ast.Call, ast.Call, ast.Call, list[str], list[str]]:
-    tree = ast.parse(LAUNCH.read_text(encoding="utf-8"), filename=str(LAUNCH))
-    calls = _bridge_calls(tree)
-    product = next(
-        call
-        for call in calls
-        if any("/payload/wastewater_mass_kg/applied@" in item for item in _arguments(call))
-    )
-    water_evaluator = _water_evaluator_call(tree)
-    dry_bin_evaluator = next(call for call in calls if _condition_name(call) == "dry_bin_evaluation_interfaces")
-    return (
-        product,
-        water_evaluator,
-        dry_bin_evaluator,
-        _arguments(product),
-        _arguments(dry_bin_evaluator),
-    )
+def _condition_name(call: ast.Call) -> str | None:
+    condition = _keyword(call, "condition")
+    if not isinstance(condition, ast.Call) or not condition.args:
+        return None
+    value = condition.args[0]
+    return value.id if isinstance(value, ast.Name) else None
 
 
-def _remapping_pairs(call: ast.Call) -> list[tuple[str, str]]:
-    value = _keyword(call, "remappings")
-    if value is None:
-        return []
-    assert isinstance(value, (ast.List, ast.Tuple))
-    pairs: list[tuple[str, str]] = []
-    for item in value.elts:
-        assert isinstance(item, (ast.List, ast.Tuple)) and len(item.elts) == 2
-        source = _constant_string(item.elts[0])
-        destination = _constant_string(item.elts[1])
-        assert source is not None and destination is not None
-        pairs.append((source, destination))
-    return pairs
+def _literal_list(call: ast.Call, name: str) -> list[object]:
+    value = _keyword(call, name)
+    assert isinstance(value, (ast.List, ast.Tuple)), f"{name} must be literal"
+    return ast.literal_eval(value)
 
 
-def _topic(entry: str) -> str:
-    return entry.split("@", 1)[0]
-
-
-def _direction(entry: str) -> str:
-    """Return ROS_TO_GZ, GZ_TO_ROS, or BIDIRECTIONAL."""
-    assert entry.count("@") == 1, f"bridge direction must be explicit and one-way: {entry}"
-    suffix = entry.split("@", 1)[1]
-    if "]" in suffix and "[" not in suffix:
-        return "ROS_TO_GZ"
-    if "[" in suffix and "]" not in suffix:
-        return "GZ_TO_ROS"
-    return "BIDIRECTIONAL"
-
-
-def test_evaluator_bridge_is_explicit_opt_in_and_default_off() -> None:
-    tree = ast.parse(LAUNCH.read_text(encoding="utf-8"), filename=str(LAUNCH))
-    declarations = [
+def _parameter_bridge_entries(tree: ast.AST, condition: str) -> list[str]:
+    call = next(
         call
         for call in ast.walk(tree)
         if isinstance(call, ast.Call)
         and isinstance(call.func, ast.Name)
-        and call.func.id == "DeclareLaunchArgument"
-        and call.args
-        and _constant_string(call.args[0]) == "water_evaluation_interfaces"
-    ]
-    assert len(declarations) == 1
-    assert _constant_string(_keyword(declarations[0], "default_value")) == "false"
-
-    _, evaluator, _, _, _ = _load_bridges()
-    condition = _keyword(evaluator, "condition")
-    assert isinstance(condition, ast.Call)
-    assert isinstance(condition.func, ast.Name) and condition.func.id == "IfCondition"
-    assert len(condition.args) == 1
-    assert isinstance(condition.args[0], ast.Name)
-    assert condition.args[0].id == "water_evaluation_interfaces"
-
-
-def test_dry_bin_evaluator_bridge_is_explicit_opt_in_and_default_off() -> None:
-    tree = ast.parse(LAUNCH.read_text(encoding="utf-8"), filename=str(LAUNCH))
-    declarations = [
-        call
-        for call in ast.walk(tree)
-        if isinstance(call, ast.Call)
-        and isinstance(call.func, ast.Name)
-        and call.func.id == "DeclareLaunchArgument"
-        and call.args
-        and _constant_string(call.args[0]) == "dry_bin_evaluation_interfaces"
-    ]
-    assert len(declarations) == 1
-    assert _constant_string(_keyword(declarations[0], "default_value")) == "false"
-
-    _, _, evaluator, _, _ = _load_bridges()
-    condition = _keyword(evaluator, "condition")
-    assert isinstance(condition, ast.Call)
-    assert isinstance(condition.func, ast.Name) and condition.func.id == "IfCondition"
-    assert len(condition.args) == 1
-    assert isinstance(condition.args[0], ast.Name)
-    assert condition.args[0].id == "dry_bin_evaluation_interfaces"
-
-
-def test_default_product_bridge_has_no_truth_reset_or_entity_mutation() -> None:
-    _, _, _, product_entries, _ = _load_bridges()
-    topics = {_topic(entry) for entry in product_entries}
-
-    forbidden_fragments = (
-        "/command/reset_",
-        "/ground_volume_l",
-        "/mass_balance_error_fraction",
-        "/status_json",
-        "/set_pose",
-        "/set_pose_vector",
-        "/remove",
-        "/create",
+        and call.func.id == "Node"
+        and _string(_keyword(call, "package")) == "ros_gz_bridge"
+        and _string(_keyword(call, "executable")) == "parameter_bridge"
+        and _condition_name(call) == condition
     )
-    assert not {
-        topic for topic in topics if any(fragment in topic for fragment in forbidden_fragments)
+    return [item for item in _literal_list(call, "arguments") if isinstance(item, str)]
+
+
+_ENDPOINT = re.compile(
+    r"constexpr\s+(?P<direction>GazeboToRosEndpoint|RosToGazeboEndpoint)"
+    r"<[\s\S]*?>\s+\w+\s*\{\s*\"(?P<topic>[^\"]+)\"\s*\};"
+)
+_GROUPED_GZ_TO_ROS = re.compile(
+    r"constexpr\s+GroupedGazeboToRosEndpoint<\s*(?P<ros>[\w:]+)\s*,\s*(?P<gz>[\w:]+)\s*>"
+    r"\s+\w+\s*\{\s*\"(?P<group>[^\"]+)\"\s*,\s*\"(?P<topic>[^\"]+)\"\s*\};",
+    re.DOTALL,
+)
+_CPP_TYPES = {
+    "std_msgs::msg::Float64": "std_msgs/msg/Float64",
+    "ros_gz_interfaces::msg::Contacts": "ros_gz_interfaces/msg/Contacts",
+    "gz::msgs::Double": "gz.msgs.Double",
+    "gz::msgs::Contacts": "gz.msgs.Contacts",
+}
+
+
+def _product_endpoints() -> dict[str, str]:
+    return {
+        match["topic"]: "G2R" if match["direction"] == "GazeboToRosEndpoint" else "R2G"
+        for match in _ENDPOINT.finditer(PRODUCT_NATIVE_BRIDGE.read_text(encoding="utf-8"))
     }
 
 
-def test_payload_mass_has_no_ros_write_or_dry_aggregate_interface() -> None:
-    _, _, _, product_entries, _ = _load_bridges()
-    topics = {_topic(entry) for entry in product_entries}
-
-    # Dry waste is represented by the actual cube rigid bodies.  Publishing an
-    # aggregate dry mass would count the same object twice.
-    assert not {topic for topic in topics if "/payload/dry_mass_kg" in topic}
-
-    wastewater_command = "/model/tzcup_formal_sanitation_vehicle/payload/wastewater_mass_kg"
-    assert wastewater_command not in topics
-    wastewater_observation = f"{wastewater_command}/applied"
-    assert wastewater_observation in topics
-    entry = next(item for item in product_entries if _topic(item) == wastewater_observation)
-    assert _direction(entry) == "GZ_TO_ROS"
+def _remaps(call: ast.Call) -> list[tuple[str, str]]:
+    return [tuple(pair) for pair in _literal_list(call, "remappings")]
 
 
-def test_product_commands_are_one_way_and_limited_to_operational_water_enable() -> None:
-    _, _, _, product_entries, _ = _load_bridges()
-    directions = {_topic(entry): _direction(entry) for entry in product_entries}
-    ros_to_gz = {topic for topic, direction in directions.items() if direction == "ROS_TO_GZ"}
-    assert ros_to_gz == {
+def _contact_endpoints(group: str) -> set[tuple[str, str, str]]:
+    return {
+        (match["topic"], _CPP_TYPES[match["ros"]], _CPP_TYPES[match["gz"]])
+        for match in _GROUPED_GZ_TO_ROS.finditer(CONTACT_NATIVE_BRIDGE.read_text(encoding="utf-8"))
+        if match["group"] == group
+    }
+
+
+def test_evaluator_bridges_are_explicit_opt_ins_and_default_off() -> None:
+    tree = ast.parse(LAUNCH.read_text(encoding="utf-8"), filename=str(LAUNCH))
+    for argument in ("water_evaluation_interfaces", "dry_bin_evaluation_interfaces"):
+        declaration = next(
+            call
+            for call in ast.walk(tree)
+            if isinstance(call, ast.Call)
+            and isinstance(call.func, ast.Name)
+            and call.func.id == "DeclareLaunchArgument"
+            and call.args
+            and _string(call.args[0]) == argument
+        )
+        assert _string(_keyword(declaration, "default_value")) == "false"
+
+    assert _condition_name(_node(tree, "water_evaluation_bridge")) == "water_evaluation_interfaces"
+    assert _parameter_bridge_entries(tree, "dry_bin_evaluation_interfaces")
+
+
+def test_default_product_native_bridge_excludes_evaluator_truth_and_entity_mutation() -> None:
+    endpoints = _product_endpoints()
+    forbidden = (
+        "/command/reset_", "/ground_volume_l", "/mass_balance_error_fraction", "/status_json",
+        "/set_pose", "/set_pose_vector", "/remove", "/create", "/payload/dry_mass_kg",
+    )
+    assert not {topic for topic in endpoints if any(token in topic for token in forbidden)}
+    wastewater = "/model/tzcup_formal_sanitation_vehicle/payload/wastewater_mass_kg"
+    assert wastewater not in endpoints
+    assert endpoints[f"{wastewater}/applied"] == "G2R"
+
+
+def test_product_native_bridge_commands_are_one_way_and_limited_to_operational_water() -> None:
+    endpoints = _product_endpoints()
+    assert {topic for topic, direction in endpoints.items() if direction == "R2G"} == {
         "/model/tzcup_formal_sanitation_vehicle/water_recovery/command/enable",
         "/model/tzcup_formal_sanitation_vehicle/water_recovery/command/service_drain_open",
     }
-    assert "BIDIRECTIONAL" not in directions.values()
-
-    readonly_water = {
+    readonly = {
         "/model/tzcup_formal_sanitation_vehicle/water_recovery/tank_mass_kg",
         "/model/tzcup_formal_sanitation_vehicle/water_recovery/tank_level_fraction",
         "/model/tzcup_formal_sanitation_vehicle/water_recovery/flow_l_min",
@@ -239,31 +153,69 @@ def test_product_commands_are_one_way_and_limited_to_operational_water_enable() 
         "/model/tzcup_formal_sanitation_vehicle/dry_bin/full",
         "/model/tzcup_formal_sanitation_vehicle/dry_bin/sensor_ready",
     }
-    assert readonly_water <= directions.keys()
-    assert all(directions[topic] == "GZ_TO_ROS" for topic in readonly_water)
+    assert all(endpoints[topic] == "G2R" for topic in readonly)
 
 
-def test_only_opt_in_evaluator_bridge_contains_water_truth_and_resets() -> None:
-    _, evaluator, _, product_entries, dry_bin_entries = _load_bridges()
-    product_topics = {_topic(entry) for entry in product_entries}
-    dry_bin_topics = {_topic(entry) for entry in dry_bin_entries}
+def test_water_and_dry_bin_evaluator_truth_remain_outside_product_native_bridge() -> None:
+    product = _product_endpoints()
     source = WATER_NATIVE_BRIDGE.read_text(encoding="utf-8")
+    water_root = "/model/tzcup_formal_sanitation_vehicle/water_recovery"
+    truth = {
+        f"{water_root}/command/reset_ground_volume_l", f"{water_root}/command/reset_tank_mass_kg",
+        f"{water_root}/command/filter_blockage_fraction", f"{water_root}/ground_volume_l",
+        f"{water_root}/mass_balance_error_fraction", f"{water_root}/filter_blockage_fraction",
+        f"{water_root}/status_json",
+    }
+    assert all(topic in source for topic in truth)
+    assert truth.isdisjoint(product)
+    dry_entries = _parameter_bridge_entries(
+        ast.parse(LAUNCH.read_text(encoding="utf-8")), "dry_bin_evaluation_interfaces"
+    )
+    assert {entry.split("@", 1)[0] for entry in dry_entries} == {
+        "/model/tzcup_formal_sanitation_vehicle/dry_bin/contained_object_count",
+        "/model/tzcup_formal_sanitation_vehicle/dry_bin/contained_mass_kg",
+        "/model/tzcup_formal_sanitation_vehicle/dry_bin/status_json",
+    }
+    assert all("[" in entry and "]" not in entry.split("@", 1)[1] for entry in dry_entries)
 
-    root = "/model/tzcup_formal_sanitation_vehicle/water_recovery"
-    command_topics = {
-        f"{root}/command/reset_ground_volume_l",
-        f"{root}/command/reset_tank_mass_kg",
-        f"{root}/command/filter_blockage_fraction",
+
+def test_contact_native_instances_preserve_raw_safety_and_opt_in_evaluation_remaps() -> None:
+    tree = ast.parse(LAUNCH.read_text(encoding="utf-8"), filename=str(LAUNCH))
+    source = CONTACT_NATIVE_BRIDGE.read_text(encoding="utf-8")
+    expected = {
+        "formal_squeegee_evaluation_bridge": (
+            "squeegee_evaluation_interfaces", "squeegee",
+            [("/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/squeegee_link/sensor/squeegee_blade_ground_contact/contact", "/cleaning/squeegee/contact")],
+        ),
+        "formal_brush_contact_evaluation_bridge": (
+            "squeegee_evaluation_interfaces", "brushes",
+            [
+                ("/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/left_side_brush_link/sensor/left_side_brush_ground_contact/contact", "/cleaning/left_side_brush/contact"),
+                ("/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/right_side_brush_link/sensor/right_side_brush_ground_contact/contact", "/cleaning/right_side_brush/contact"),
+                ("/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/central_roller_link/sensor/central_roller_ground_contact/contact", "/cleaning/central_roller/contact"),
+            ],
+        ),
+        "front_bumper_contact_bridge": (
+            "start_product_support_parameter_bridges", "front_bumper",
+            [("/safety/front_bumper/contact", "/formal_vehicle/simulation/raw/front_bumper/contact")],
+        ),
+        "rear_bumper_contact_bridge": (
+            "start_product_support_parameter_bridges", "rear_bumper",
+            [("/safety/rear_bumper/contact", "/formal_vehicle/simulation/raw/rear_bumper/contact")],
+        ),
     }
-    telemetry_topics = {
-        f"{root}/ground_volume_l",
-        f"{root}/mass_balance_error_fraction",
-        f"{root}/filter_blockage_fraction",
-        f"{root}/status_json",
-    }
-    assert _constant_string(_keyword(evaluator, "package")) == "sanitation_gazebo_control"
-    assert _constant_string(_keyword(evaluator, "executable")) == "water_evaluation_bridge"
-    assert all(topic in source for topic in command_topics | telemetry_topics)
+    for name, (condition, group, remaps) in expected.items():
+        node = _node(tree, name)
+        assert _string(_keyword(node, "package")) == "sanitation_gazebo_control"
+        assert _string(_keyword(node, "executable")) == "formal_contact_evaluation_native_bridge"
+        assert _condition_name(node) == condition
+        assert _literal_list(node, "parameters") == [{"endpoint_group": group}]
+        assert _remaps(node) == remaps
+        assert f'"{group}"' in source
+
+
+def test_water_evaluator_has_exact_lifecycle_safe_truth_interface() -> None:
+    source = WATER_NATIVE_BRIDGE.read_text(encoding="utf-8")
     assert source.count("create_subscription<std_msgs::msg::Float64>") == 3
     assert source.count("Advertise<gz::msgs::Double>") == 3
     assert source.count("create_publisher<std_msgs::msg::Float64>") == 3
@@ -271,122 +223,84 @@ def test_only_opt_in_evaluator_bridge_contains_water_truth_and_resets() -> None:
     assert source.count("gz_node_.Unsubscribe(") == 4
     assert "std::atomic<bool> stopping_" in source
     assert "std::lock_guard<std::mutex> drain(callback_mutex_)" in source
-    assert (command_topics | telemetry_topics).isdisjoint(product_topics)
-    assert f"{root}/command/service_drain_open" in product_topics
-    assert (command_topics | telemetry_topics).isdisjoint(dry_bin_topics)
 
 
-def test_dry_bin_evaluator_bridge_is_read_only_and_exactly_typed() -> None:
-    _, _, _, product_entries, evaluator_entries = _load_bridges()
-    product_topics = {_topic(entry) for entry in product_entries}
-    entries = {_topic(entry): entry for entry in evaluator_entries}
-    directions = {topic: _direction(entry) for topic, entry in entries.items()}
-
-    root = "/model/tzcup_formal_sanitation_vehicle/dry_bin"
-    expected_types = {
-        f"{root}/contained_object_count": "std_msgs/msg/Int32[gz.msgs.Int32",
-        f"{root}/contained_mass_kg": "std_msgs/msg/Float64[gz.msgs.Double",
-        f"{root}/status_json": "std_msgs/msg/String[gz.msgs.StringMsg",
-    }
-    assert {topic: entry.split("@", 1)[1] for topic, entry in entries.items()} == expected_types
-    assert set(expected_types).isdisjoint(product_topics)
-    water_root = "/model/tzcup_formal_sanitation_vehicle/water_recovery"
-    assert set(expected_types).isdisjoint(
-        {
-            f"{water_root}/command/reset_ground_volume_l",
-            f"{water_root}/command/reset_tank_mass_kg",
-            f"{water_root}/command/filter_blockage_fraction",
-            f"{water_root}/ground_volume_l",
-            f"{water_root}/mass_balance_error_fraction",
-            f"{water_root}/filter_blockage_fraction",
-            f"{water_root}/status_json",
-        }
-    )
-    assert set(directions.values()) == {"GZ_TO_ROS"}
-    assert {
-        f"{root}/fill_level_fraction",
-        f"{root}/full",
-        f"{root}/sensor_ready",
-    } <= product_topics
-
-
-def test_bumper_bridges_are_raw_one_way_inputs_not_product_topic_publishers() -> None:
+def test_dry_bin_evaluator_is_exactly_typed_read_only_and_disjoint_from_product() -> None:
     tree = ast.parse(LAUNCH.read_text(encoding="utf-8"), filename=str(LAUNCH))
-    calls = _bridge_calls(tree)
+    entries = _parameter_bridge_entries(tree, "dry_bin_evaluation_interfaces")
     expected = {
-        "/safety/front_bumper/contact": (
-            "/formal_vehicle/simulation/raw/front_bumper/contact"
-        ),
-        "/safety/rear_bumper/contact": (
-            "/formal_vehicle/simulation/raw/rear_bumper/contact"
-        ),
+        "/model/tzcup_formal_sanitation_vehicle/dry_bin/contained_object_count": "std_msgs/msg/Int32[gz.msgs.Int32",
+        "/model/tzcup_formal_sanitation_vehicle/dry_bin/contained_mass_kg": "std_msgs/msg/Float64[gz.msgs.Double",
+        "/model/tzcup_formal_sanitation_vehicle/dry_bin/status_json": "std_msgs/msg/String[gz.msgs.StringMsg",
     }
-    matched = {}
-    for call in calls:
-        entries = _arguments(call)
-        if len(entries) != 1:
-            continue
-        topic = _topic(entries[0])
-        if topic not in expected:
-            continue
-        assert _direction(entries[0]) == "GZ_TO_ROS"
-        assert _remapping_pairs(call) == [(topic, expected[topic])]
-        matched[topic] = call
-    assert set(matched) == set(expected)
+    assert {entry.split("@", 1)[0]: entry.split("@", 1)[1] for entry in entries} == expected
+    assert all("[" in entry and "]" not in entry.split("@", 1)[1] for entry in entries)
+    product = _product_endpoints()
+    assert set(expected).isdisjoint(product)
+    assert {
+        "/model/tzcup_formal_sanitation_vehicle/dry_bin/fill_level_fraction",
+        "/model/tzcup_formal_sanitation_vehicle/dry_bin/full",
+        "/model/tzcup_formal_sanitation_vehicle/dry_bin/sensor_ready",
+    } <= set(product)
 
 
-def test_squeegee_compliance_bridge_is_read_only_opt_in_and_default_off() -> None:
-    tree = ast.parse(LAUNCH.read_text(encoding="utf-8"), filename=str(LAUNCH))
-    declarations = [
-        call
-        for call in ast.walk(tree)
-        if isinstance(call, ast.Call)
-        and isinstance(call.func, ast.Name)
-        and call.func.id == "DeclareLaunchArgument"
-        and call.args
-        and _constant_string(call.args[0]) == "squeegee_evaluation_interfaces"
-    ]
-    assert len(declarations) == 1
-    assert _constant_string(_keyword(declarations[0], "default_value")) == "false"
-    bridge = next(
-        call
-        for call in _bridge_calls(tree)
-        if _condition_name(call) == "squeegee_evaluation_interfaces"
-    )
-    entries = _arguments(bridge)
-    assert len(entries) == 7
-    assert all(_direction(entry) == "GZ_TO_ROS" for entry in entries)
-    scoped_contact = (
-        "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/"
-        "link/squeegee_link/sensor/squeegee_blade_ground_contact/contact"
-    )
-    assert {_topic(entry) for entry in entries} == {
-        scoped_contact,
-        "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_position_m",
-        "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_velocity_m_s",
-        "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_force_n",
-        "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_position_rad",
-        "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_velocity_rad_s",
-        "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_torque_nm",
+def test_squeegee_native_group_is_exactly_seven_typed_gazebo_to_ros_endpoints() -> None:
+    root = "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance"
+    contact = "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/squeegee_link/sensor/squeegee_blade_ground_contact/contact"
+    expected = {
+        (f"{root}/float_position_m", "std_msgs/msg/Float64", "gz.msgs.Double"),
+        (f"{root}/float_velocity_m_s", "std_msgs/msg/Float64", "gz.msgs.Double"),
+        (f"{root}/float_force_n", "std_msgs/msg/Float64", "gz.msgs.Double"),
+        (f"{root}/pitch_position_rad", "std_msgs/msg/Float64", "gz.msgs.Double"),
+        (f"{root}/pitch_velocity_rad_s", "std_msgs/msg/Float64", "gz.msgs.Double"),
+        (f"{root}/pitch_torque_nm", "std_msgs/msg/Float64", "gz.msgs.Double"),
+        (contact, "ros_gz_interfaces/msg/Contacts", "gz.msgs.Contacts"),
     }
-    assert _remapping_pairs(bridge) == [(scoped_contact, "/cleaning/squeegee/contact")]
-
-
-def test_brush_contact_bridge_uses_scoped_gz_sources_and_short_ros_contract() -> None:
+    assert _contact_endpoints("squeegee") == expected
     tree = ast.parse(LAUNCH.read_text(encoding="utf-8"), filename=str(LAUNCH))
-    bridge = next(
-        call
-        for call in _bridge_calls(tree)
-        if _constant_string(_keyword(call, "name")) == "formal_brush_contact_evaluation_bridge"
+    declaration = next(
+        call for call in ast.walk(tree)
+        if isinstance(call, ast.Call) and isinstance(call.func, ast.Name)
+        and call.func.id == "DeclareLaunchArgument" and call.args
+        and _string(call.args[0]) == "squeegee_evaluation_interfaces"
     )
-    entries = _arguments(bridge)
-    assert len(entries) == 3
-    assert all(_direction(entry) == "GZ_TO_ROS" for entry in entries)
+    assert _string(_keyword(declaration, "default_value")) == "false"
+    node = _node(tree, "formal_squeegee_evaluation_bridge")
+    assert _condition_name(node) == "squeegee_evaluation_interfaces"
+    assert _literal_list(node, "parameters") == [{"endpoint_group": "squeegee"}]
+    assert _remaps(node) == [(contact, "/cleaning/squeegee/contact")]
+
+
+def test_brush_native_group_is_exactly_three_typed_gazebo_to_ros_contacts() -> None:
     root = "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link"
     expected = {
-        f"{root}/left_side_brush_link/sensor/left_side_brush_ground_contact/contact": "/cleaning/left_side_brush/contact",
-        f"{root}/right_side_brush_link/sensor/right_side_brush_ground_contact/contact": "/cleaning/right_side_brush/contact",
-        f"{root}/central_roller_link/sensor/central_roller_ground_contact/contact": "/cleaning/central_roller/contact",
+        (f"{root}/left_side_brush_link/sensor/left_side_brush_ground_contact/contact", "ros_gz_interfaces/msg/Contacts", "gz.msgs.Contacts"),
+        (f"{root}/right_side_brush_link/sensor/right_side_brush_ground_contact/contact", "ros_gz_interfaces/msg/Contacts", "gz.msgs.Contacts"),
+        (f"{root}/central_roller_link/sensor/central_roller_ground_contact/contact", "ros_gz_interfaces/msg/Contacts", "gz.msgs.Contacts"),
     }
-    assert {_topic(entry) for entry in entries} == set(expected)
-    assert _remapping_pairs(bridge) == list(expected.items())
+    assert _contact_endpoints("brushes") == expected
+    tree = ast.parse(LAUNCH.read_text(encoding="utf-8"), filename=str(LAUNCH))
+    node = _node(tree, "formal_brush_contact_evaluation_bridge")
+    assert _condition_name(node) == "squeegee_evaluation_interfaces"
+    assert _literal_list(node, "parameters") == [{"endpoint_group": "brushes"}]
+    assert _remaps(node) == [
+        (f"{root}/left_side_brush_link/sensor/left_side_brush_ground_contact/contact", "/cleaning/left_side_brush/contact"),
+        (f"{root}/right_side_brush_link/sensor/right_side_brush_ground_contact/contact", "/cleaning/right_side_brush/contact"),
+        (f"{root}/central_roller_link/sensor/central_roller_ground_contact/contact", "/cleaning/central_roller/contact"),
+    ]
+
+
+def test_bumper_native_groups_are_exact_one_way_raw_safety_inputs() -> None:
+    expected = {
+        "front_bumper": ("/safety/front_bumper/contact", "/formal_vehicle/simulation/raw/front_bumper/contact"),
+        "rear_bumper": ("/safety/rear_bumper/contact", "/formal_vehicle/simulation/raw/rear_bumper/contact"),
+    }
+    tree = ast.parse(LAUNCH.read_text(encoding="utf-8"), filename=str(LAUNCH))
+    product = _product_endpoints()
+    for group, (source, target) in expected.items():
+        assert _contact_endpoints(group) == {(source, "ros_gz_interfaces/msg/Contacts", "gz.msgs.Contacts")}
+        node = _node(tree, f"{group}_contact_bridge")
+        assert _condition_name(node) == "start_product_support_parameter_bridges"
+        assert _literal_list(node, "parameters") == [{"endpoint_group": group}]
+        assert _remaps(node) == [(source, target)]
+        assert source not in product and target not in product

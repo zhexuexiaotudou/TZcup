@@ -147,6 +147,12 @@ def audit(root: Path = ROOT) -> dict[str, object]:
     ground_dirt = _read(root, "starter_ws/src/sanitation_gazebo_control/src/GroundDirtCleaningSystem.cc")
     water = _read(root, "starter_ws/src/sanitation_gazebo_control/src/WaterRecoverySystem.cc")
     payload = _read(root, "starter_ws/src/sanitation_gazebo_control/src/DynamicPayloadSystem.cc")
+    product_native_bridge = _read(
+        root, "starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc"
+    )
+    contact_native_bridge = _read(
+        root, "starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc"
+    )
     dry_accounting_contract = _read(root, "config/high_fidelity_vehicle/dry_payload_accounting_contract.yaml")
     twenty_cube_launch = _read(root, "starter_ws/src/sanitation_manipulation/launch/formal_20_cube_pick_place.launch.py")
     water_world = _read(root, "starter_ws/src/sanitation_vehicle_description/worlds/formal_vehicle_validation.sdf")
@@ -236,7 +242,25 @@ def audit(root: Path = ROOT) -> dict[str, object]:
                 (_check(water_world, 'model name="formal_recoverable_water_patch"'), water_world, "formal_recoverable_water_patch"),
                 (_check(payload, "waterMassKg", "ApplyCompositeInertial", "waterTopic"), payload, "waterMassKg"),
                 (_check(gazebo_cmake, "add_library(WaterRecoverySystem SHARED", "add_library(DynamicPayloadSystem SHARED"), gazebo_cmake, "add_library(WaterRecoverySystem SHARED"),
-                (_check(sim_launch, "water_recovery/tank_mass_kg", "water_recovery/command/enable"), sim_launch, "water_recovery/tank_mass_kg"),
+                (_check(product_native_bridge,
+                        "GazeboToRosEndpoint<std_msgs::msg::Float64, gz::msgs::Double> kTankMass",
+                        '"/model/tzcup_formal_sanitation_vehicle/water_recovery/tank_mass_kg"',
+                        "RosToGazeboEndpoint<std_msgs::msg::Bool, gz::msgs::Boolean> kEnableCommand",
+                        '"/model/tzcup_formal_sanitation_vehicle/water_recovery/command/enable"'),
+                 product_native_bridge, "kTankMass"),
+                (_check(contact_native_bridge,
+                        "GroupedGazeboToRosEndpoint<std_msgs::msg::Float64, gz::msgs::Double> kSqueegeeFloatPosition",
+                        '"squeegee", "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_position_m"',
+                        "GroupedGazeboToRosEndpoint<ros_gz_interfaces::msg::Contacts, gz::msgs::Contacts>",
+                        '"squeegee", "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/squeegee_link/sensor/squeegee_blade_ground_contact/contact"'),
+                 contact_native_bridge, "kSqueegeeFloatPosition"),
+                (_check(sim_launch,
+                        'name="formal_vehicle_product_bridge"',
+                        'executable="formal_vehicle_product_native_bridge"',
+                        'name="formal_squeegee_evaluation_bridge"',
+                        'executable="formal_contact_evaluation_native_bridge"',
+                        '"endpoint_group": "squeegee"'),
+                 sim_launch, "formal_vehicle_product_native_bridge"),
                 (_check(run_water, "validate_formal_water_recovery_runtime.py", "finalize_formal_water_recovery_acceptance.py"), run_water, "validate_formal_water_recovery_runtime.py"),
             ),
             physical_semantics="The modeled water patch is gated by physical cleaning-joint state and publishes recovered tank mass into the composite payload path.",
@@ -244,23 +268,46 @@ def audit(root: Path = ROOT) -> dict[str, object]:
     ]
 
     sensor_specs = {
-        "single_line_lidar": (sensors, "utm30lx", sim_launch, "/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan"),
-        "mid360": (sensors, "sensor name=\"mid360\"", sensor_bridge, "/sensors/lidar_3d/points"),
-        "front_rgbd": (sensors, "name=\"front_rgbd\"", sensor_bridge, "/sensors/front_rgbd/depth/image_rect_raw/image"),
-        "rear_fisheyes": (sensors, "rear_left_fisheye", sensor_bridge, "/sensors/rear_right_fisheye/image_raw"),
-        "end_effector_stereo": (sensors, "name=\"wrist_rgbd\"", sensor_bridge, "/sensors/wrist_rgbd/infra2/image_rect_raw"),
-        "gnss": (sensors, "sensor name=\"zed_f9p\"", sim_launch, "/sensors/gnss/fix@sensor_msgs/msg/NavSatFix"),
-        "wheel_speed": (control, "front_left_wheel_joint", drivetrain, "JointVelocity"),
+        "single_line_lidar": (sensors, "utm30lx"),
+        "mid360": (sensors, "sensor name=\"mid360\""),
+        "front_rgbd": (sensors, "name=\"front_rgbd\""),
+        "rear_fisheyes": (sensors, "rear_left_fisheye"),
+        "end_effector_stereo": (sensors, "name=\"wrist_rgbd\""),
+        "gnss": (sensors, "sensor name=\"zed_f9p\""),
+        "wheel_speed": (control, "front_left_wheel_joint"),
     }
-    for sensor_id, (definition, definition_token, transport, transport_token) in sensor_specs.items():
-        extra = ()
-        if sensor_id == "wheel_speed":
-            extra = ((_check(sim_launch, "joint_state_broadcaster"), sim_launch, "joint_state_broadcaster"),)
+    sensor_transports = {
+        "single_line_lidar": (
+            (_check(product_native_bridge,
+                    "GazeboToRosEndpoint<sensor_msgs::msg::LaserScan, gz::msgs::LaserScan> kLidarScan",
+                    '"/sensors/lidar_2d/scan"'), product_native_bridge, "kLidarScan"),
+            (_check(sim_launch, 'name="formal_vehicle_product_bridge"',
+                    'executable="formal_vehicle_product_native_bridge"'), sim_launch,
+             "formal_vehicle_product_native_bridge"),
+        ),
+        "mid360": ((_check(sensor_bridge, "/sensors/lidar_3d/points"), sensor_bridge, "/sensors/lidar_3d/points"),),
+        "front_rgbd": ((_check(sensor_bridge, "/sensors/front_rgbd/depth/image_rect_raw/image"), sensor_bridge, "/sensors/front_rgbd/depth/image_rect_raw/image"),),
+        "rear_fisheyes": ((_check(sensor_bridge, "/sensors/rear_right_fisheye/image_raw"), sensor_bridge, "/sensors/rear_right_fisheye/image_raw"),),
+        "end_effector_stereo": ((_check(sensor_bridge, "/sensors/wrist_rgbd/infra2/image_rect_raw"), sensor_bridge, "/sensors/wrist_rgbd/infra2/image_rect_raw"),),
+        "gnss": (
+            (_check(product_native_bridge,
+                    "GazeboToRosEndpoint<sensor_msgs::msg::NavSatFix, gz::msgs::NavSat> kGnssFix",
+                    '"/sensors/gnss/fix"'), product_native_bridge, "kGnssFix"),
+            (_check(sim_launch, 'name="formal_vehicle_product_bridge"',
+                    'executable="formal_vehicle_product_native_bridge"'), sim_launch,
+             "formal_vehicle_product_native_bridge"),
+        ),
+        "wheel_speed": (
+            (_check(drivetrain, "JointVelocity"), drivetrain, "JointVelocity"),
+            (_check(sim_launch, "joint_state_broadcaster"), sim_launch, "joint_state_broadcaster"),
+        ),
+    }
+    for sensor_id, (definition, definition_token) in sensor_specs.items():
         items.append(
             _item(
                 f"sensor_{sensor_id}",
                 f"{sensor_id} has a concrete model definition and a declared transport/control observation path.",
-                ((_check(definition, definition_token), definition, definition_token), (_check(transport, transport_token), transport, transport_token), *extra),
+                ((_check(definition, definition_token), definition, definition_token), *sensor_transports[sensor_id]),
                 physical_semantics="A named Gazebo/URDF sensor or measured wheel-state interface is bound to a declared observation transport; this does not prove data is emitted at runtime.",
             )
         )

@@ -153,6 +153,7 @@ def audit(
     stable_marker: str = STABLE_MARKER,
     expected_stable_marker_count: int = 1,
     required_clean_exit_processes: tuple[str, ...] = (),
+    required_clean_exit_process_counts: dict[str, int] | None = None,
 ) -> dict:
     if expected_stable_marker_count < 1:
         raise ValueError("expected_stable_marker_count must be at least 1")
@@ -212,6 +213,13 @@ def audit(
         }
         for rule in active_rules
     }
+    required_clean_exit_counts = {
+        process: 1 for process in required_clean_exit_processes
+    }
+    for process, expected_count in (required_clean_exit_process_counts or {}).items():
+        if not process or expected_count < 1:
+            raise ValueError("required clean-exit process counts must be positive")
+        required_clean_exit_counts[process] = expected_count
     clean_exit_counts = {
         process: sum(
             bool(
@@ -223,7 +231,7 @@ def audit(
             )
             for line in lines
         )
-        for process in required_clean_exit_processes
+        for process in required_clean_exit_counts
     }
     checks = {
         "expected_stable_window_marker_count": (
@@ -234,8 +242,9 @@ def audit(
         ),
         "zero_unexpected_warning_or_error_lines": not unexpected,
         "zero_warning_or_error_at_or_after_stable_window": not runtime_diagnostics,
-        "required_processes_finished_cleanly_once": all(
-            count == 1 for count in clean_exit_counts.values()
+        "required_processes_finished_cleanly_exactly": all(
+            clean_exit_counts[process] == expected_count
+            for process, expected_count in required_clean_exit_counts.items()
         ),
     }
     passed = all(checks.values())
@@ -256,7 +265,8 @@ def audit(
         "rules": rule_results,
         "unexpected_diagnostics": unexpected,
         "runtime_diagnostics": runtime_diagnostics,
-        "required_clean_exit_processes": list(required_clean_exit_processes),
+        "required_clean_exit_processes": list(required_clean_exit_counts),
+        "required_clean_exit_process_counts": required_clean_exit_counts,
         "clean_exit_counts": clean_exit_counts,
     }
 
@@ -285,12 +295,32 @@ def main() -> int:
         default=[],
         help="Launch executable that must report exactly one clean exit.",
     )
+    parser.add_argument(
+        "--required-clean-exit-process-count",
+        action="append",
+        default=[],
+        metavar="PROCESS=COUNT",
+        help="Launch executable and its exact required clean-exit count.",
+    )
     args = parser.parse_args()
+    required_counts: dict[str, int] = {}
+    for item in args.required_clean_exit_process_count:
+        process, separator, raw_count = item.rpartition("=")
+        if not separator or not process:
+            parser.error("--required-clean-exit-process-count must be PROCESS=COUNT")
+        try:
+            count = int(raw_count)
+        except ValueError:
+            parser.error("--required-clean-exit-process-count COUNT must be an integer")
+        if count < 1:
+            parser.error("--required-clean-exit-process-count COUNT must be positive")
+        required_counts[process] = count
     report = audit(
         args.log,
         stable_marker=args.stable_marker,
         expected_stable_marker_count=args.expected_stable_marker_count,
         required_clean_exit_processes=tuple(args.required_clean_exit_process),
+        required_clean_exit_process_counts=required_counts,
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

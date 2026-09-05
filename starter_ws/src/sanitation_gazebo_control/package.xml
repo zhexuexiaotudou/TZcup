@@ -12,6 +12,8 @@
   <depend>control_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
+  <depend>ros_gz_bridge</depend>
+  <depend>ros_gz_interfaces</depend>
   <depend>rclpy</depend>
   <depend>rosgraph_msgs</depend>
   <depend>sensor_msgs</depend>

@@ -10,6 +10,13 @@ from validate_formal_vehicle_component_register import _python_topic_endpoints
 ROOT = Path(__file__).resolve().parents[1]
 DESCRIPTION = ROOT / "starter_ws/src/sanitation_vehicle_description"
 AUXILIARY = ROOT / "starter_ws/src/sanitation_gazebo_auxiliary"
+NATIVE_AUXILIARY = (
+    ROOT / "starter_ws/src/sanitation_gazebo_control/src/FormalAuxiliaryNativeBridge.cc"
+)
+NATIVE_CONTACT = (
+    ROOT / "starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc"
+)
+NATIVE_A300 = ROOT / "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainNativeBridge.cc"
 SAFETY_INPUTS = (
     ROOT
     / "starter_ws/src/sanitation_safety/sanitation_safety/simulation_safety_inputs.py"
@@ -64,31 +71,30 @@ def test_bridge_has_explicit_command_applied_power_reset_and_unique_state_paths(
     launch = (DESCRIPTION / "launch/formal_vehicle_sim.launch.py").read_text(
         encoding="utf-8"
     )
-    expected = (
-        "/formal_vehicle/lighting/work_lights_on@std_msgs/msg/Bool]gz.msgs.Boolean",
-        "/formal_vehicle/lighting/tail_lights_on@std_msgs/msg/Bool]gz.msgs.Boolean",
-        "/formal_vehicle/lighting/warning_lights_on@std_msgs/msg/Bool]gz.msgs.Boolean",
-        "/formal_vehicle/lighting/work_lights_applied@std_msgs/msg/Bool[gz.msgs.Boolean",
-        "/formal_vehicle/lighting/tail_lights_applied@std_msgs/msg/Bool[gz.msgs.Boolean",
-        "/formal_vehicle/lighting/warning_lights_applied@std_msgs/msg/Bool[gz.msgs.Boolean",
-        "/formal_vehicle/power/branches/safety/enabled@std_msgs/msg/Bool]gz.msgs.Boolean",
-        "/formal_vehicle/simulation/command/emergency_stop@std_msgs/msg/Bool]gz.msgs.Boolean",
-        "/formal_vehicle/simulation/command/emergency_stop_plunger_pressed@std_msgs/msg/Bool]gz.msgs.Boolean",
-        "/formal_vehicle/simulation/command/emergency_stop_reset@std_msgs/msg/Bool]gz.msgs.Boolean",
-        "/emergency_stop@std_msgs/msg/Bool[gz.msgs.Boolean",
+    native = NATIVE_AUXILIARY.read_text(encoding="utf-8")
+    commands = (
+        "/formal_vehicle/lighting/work_lights_on", "/formal_vehicle/lighting/tail_lights_on",
+        "/formal_vehicle/lighting/warning_lights_on", "/formal_vehicle/power/branches/safety/enabled",
+        "/formal_vehicle/simulation/command/emergency_stop",
+        "/formal_vehicle/simulation/command/emergency_stop_plunger_pressed",
+        "/formal_vehicle/simulation/command/emergency_stop_reset",
     )
-    for contract in expected:
-        assert launch.count(contract) == 1
+    applied = (
+        "/formal_vehicle/lighting/work_lights_applied", "/formal_vehicle/lighting/tail_lights_applied",
+        "/formal_vehicle/lighting/warning_lights_applied", "/emergency_stop",
+    )
+    assert all(f'"{topic}"' in native for topic in commands + applied)
+    assert native.count("RosToGazeboEndpoint<std_msgs::msg::Bool, gz::msgs::Boolean>") == 9
+    assert native.count("GazeboToRosEndpoint<std_msgs::msg::Bool, gz::msgs::Boolean>") == 6
     assert 'name="formal_auxiliary_bridge"' in launch
+    assert 'executable="formal_auxiliary_native_bridge"' in launch
     assert "gazebo_auxiliary_lib" in launch
     # Direction matters: the physical latch is the sole Gazebo -> ROS state
     # writer, while the drivetrain receives that state through ROS -> Gazebo.
-    assert launch.count("/emergency_stop@std_msgs/msg/Bool[gz.msgs.Boolean") == 1
-    assert launch.count(
-        "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/emergency_stop"
-        "@std_msgs/msg/Bool]gz.msgs.Boolean"
-    ) == 1
-    assert launch.count('"/emergency_stop",') == 1
+    a300 = NATIVE_A300.read_text(encoding="utf-8")
+    assert '"/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/emergency_stop"' in a300
+    assert "create_subscription<std_msgs::msg::Bool>" in a300
+    assert native.count('"/emergency_stop"') == 1
 
 
 def test_emergency_stop_has_no_native_product_publisher() -> None:
@@ -103,7 +109,7 @@ def test_emergency_stop_has_no_native_product_publisher() -> None:
         ).read_text(encoding="utf-8")
     )
     contract = register["topic_contracts"]["emergency_stop_state"]
-    assert contract["transport"] == "gazebo_bridge"
+    assert contract["transport"] == "gazebo_native_bridge"
     assert contract["direction"] == "publisher"
     assert contract["single_writer"] is True
     assert contract["writer_node"] == "formal_auxiliary_bridge"
@@ -144,9 +150,8 @@ def test_squeegee_passive_state_contact_and_live_telemetry_are_bridged() -> None
     control = (DESCRIPTION / "urdf/high_fidelity/control_interfaces.xacro").read_text(
         encoding="utf-8"
     )
-    launch = (DESCRIPTION / "launch/formal_vehicle_sim.launch.py").read_text(
-        encoding="utf-8"
-    )
+    launch = (DESCRIPTION / "launch/formal_vehicle_sim.launch.py").read_text(encoding="utf-8")
+    native = NATIVE_CONTACT.read_text(encoding="utf-8")
     assert '<collision name="squeegee_blade_collision">' in cleaning
     assert '<sensor name="squeegee_blade_ground_contact" type="contact">' in cleaning
     assert (
@@ -171,15 +176,19 @@ def test_squeegee_passive_state_contact_and_live_telemetry_are_bridged() -> None
         "link/squeegee_link/sensor/squeegee_blade_ground_contact/contact"
     )
     for topic in (
-        f"{squeegee_contact_source}@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
-        "/squeegee_compliance/float_position_m@std_msgs/msg/Float64[gz.msgs.Double",
-        "/squeegee_compliance/float_velocity_m_s@std_msgs/msg/Float64[gz.msgs.Double",
-        "/squeegee_compliance/float_force_n@std_msgs/msg/Float64[gz.msgs.Double",
-        "/squeegee_compliance/pitch_position_rad@std_msgs/msg/Float64[gz.msgs.Double",
-        "/squeegee_compliance/pitch_velocity_rad_s@std_msgs/msg/Float64[gz.msgs.Double",
-        "/squeegee_compliance/pitch_torque_nm@std_msgs/msg/Float64[gz.msgs.Double",
+        squeegee_contact_source,
+        "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_position_m",
+        "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_velocity_m_s",
+        "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_force_n",
+        "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_position_rad",
+        "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_velocity_rad_s",
+        "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_torque_nm",
     ):
-        assert topic in launch
+        assert f'"{topic}"' in native
+    assert 'GroupedGazeboToRosEndpoint' in native
+    assert 'name="formal_squeegee_evaluation_bridge"' in launch
+    assert 'executable="formal_contact_evaluation_native_bridge"' in launch
+    assert '"endpoint_group": "squeegee"' in launch
     assert (
         f'"{squeegee_contact_source}",\n                "/cleaning/squeegee/contact",'
         in launch

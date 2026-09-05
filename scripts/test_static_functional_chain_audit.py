@@ -75,6 +75,36 @@ def test_dry_cube_mass_uses_exclusive_physical_resident_accounting() -> None:
     validate(report)
 
 
+def test_water_squeegee_lidar_and_gnss_use_exact_native_bridge_evidence() -> None:
+    report = audit(ROOT)
+    items = {item["id"]: item for item in report["items"]}
+    expected = {
+        "brush_squeegee_water_to_wastewater_tank": {
+            ("starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc", "kTankMass"),
+            ("starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc", "kSqueegeeFloatPosition"),
+            ("starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py", "formal_vehicle_product_native_bridge"),
+        },
+        "sensor_single_line_lidar": {
+            ("starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc", "kLidarScan"),
+            ("starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py", "formal_vehicle_product_native_bridge"),
+        },
+        "sensor_gnss": {
+            ("starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc", "kGnssFix"),
+            ("starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py", "formal_vehicle_product_native_bridge"),
+        },
+    }
+    for item_id, evidence in expected.items():
+        item = items[item_id]
+        assert item["status"] == "STATIC_CLOSED"
+        observed = {
+            (check["evidence"]["path"], check["evidence"]["token"])
+            for check in item["checks"]
+        }
+        assert evidence <= observed
+        assert all(check["passed"] is True for check in item["checks"])
+        assert all("parameter_bridge" not in check["evidence"]["token"] for check in item["checks"])
+
+
 def test_generator_and_validator_are_machine_readable(tmp_path: Path) -> None:
     output = tmp_path / "static_audit.json"
     subprocess.run(

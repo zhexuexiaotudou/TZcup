@@ -272,17 +272,9 @@ def generate_launch_description() -> LaunchDescription:
         output="screen",
     )
     cleaning_actuator_scalar_bridge = Node(
-        package="ros_gz_bridge",
-        executable="parameter_bridge",
+        package="sanitation_gazebo_control",
+        executable="cleaning_actuator_scalar_native_bridge",
         name="cleaning_actuator_scalar_bridge",
-        arguments=[
-            "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/command/lift_position@std_msgs/msg/Float64]gz.msgs.Double",
-            "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/command/enable@std_msgs/msg/Bool]gz.msgs.Boolean",
-            "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/command/reset_faults@std_msgs/msg/Bool]gz.msgs.Boolean",
-            "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/fault_active@std_msgs/msg/Bool[gz.msgs.Boolean",
-            "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/total_current_a@std_msgs/msg/Float64[gz.msgs.Double",
-            "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/total_power_w@std_msgs/msg/Float64[gz.msgs.Double",
-        ],
         output="screen",
         condition=IfCondition(start_cleaning_actuator_scalar_bridge),
     )
@@ -315,26 +307,9 @@ def generate_launch_description() -> LaunchDescription:
     # Gazebo -> ROS. Keeping command and state topics separate prevents an
     # operator publisher from bypassing the mechanical latch.
     formal_auxiliary_bridge = Node(
-        package="ros_gz_bridge",
-        executable="parameter_bridge",
+        package="sanitation_gazebo_control",
+        executable="formal_auxiliary_native_bridge",
         name="formal_auxiliary_bridge",
-        arguments=[
-            "/formal_vehicle/lighting/work_lights_on@std_msgs/msg/Bool]gz.msgs.Boolean",
-            "/formal_vehicle/lighting/tail_lights_on@std_msgs/msg/Bool]gz.msgs.Boolean",
-            "/formal_vehicle/lighting/warning_lights_on@std_msgs/msg/Bool]gz.msgs.Boolean",
-            "/formal_vehicle/simulation/command/emergency_stop@std_msgs/msg/Bool]gz.msgs.Boolean",
-            "/formal_vehicle/simulation/command/emergency_stop_plunger_pressed@std_msgs/msg/Bool]gz.msgs.Boolean",
-            "/formal_vehicle/simulation/command/emergency_stop_reset@std_msgs/msg/Bool]gz.msgs.Boolean",
-            "/formal_vehicle/power/branches/safety/enabled@std_msgs/msg/Bool]gz.msgs.Boolean",
-            "/formal_vehicle/simulation/command/main_power@std_msgs/msg/Bool]gz.msgs.Boolean",
-            "/formal_vehicle/power/main_contactor_command@std_msgs/msg/Bool]gz.msgs.Boolean",
-            "/emergency_stop@std_msgs/msg/Bool[gz.msgs.Boolean",
-            "/formal_vehicle/power/main_isolator_closed@std_msgs/msg/Bool[gz.msgs.Boolean",
-            "/formal_vehicle/power/main_contactor_closed@std_msgs/msg/Bool[gz.msgs.Boolean",
-            "/formal_vehicle/lighting/work_lights_applied@std_msgs/msg/Bool[gz.msgs.Boolean",
-            "/formal_vehicle/lighting/tail_lights_applied@std_msgs/msg/Bool[gz.msgs.Boolean",
-            "/formal_vehicle/lighting/warning_lights_applied@std_msgs/msg/Bool[gz.msgs.Boolean",
-        ],
         output="screen",
         condition=IfCondition(start_product_support_parameter_bridges),
     )
@@ -356,18 +331,10 @@ def generate_launch_description() -> LaunchDescription:
         condition=IfCondition(service_door_evaluation_interfaces),
     )
     squeegee_evaluation_bridge = Node(
-        package="ros_gz_bridge",
-        executable="parameter_bridge",
+        package="sanitation_gazebo_control",
+        executable="formal_contact_evaluation_native_bridge",
         name="formal_squeegee_evaluation_bridge",
-        arguments=[
-            "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_position_m@std_msgs/msg/Float64[gz.msgs.Double",
-            "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_velocity_m_s@std_msgs/msg/Float64[gz.msgs.Double",
-            "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/float_force_n@std_msgs/msg/Float64[gz.msgs.Double",
-            "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_position_rad@std_msgs/msg/Float64[gz.msgs.Double",
-            "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_velocity_rad_s@std_msgs/msg/Float64[gz.msgs.Double",
-            "/model/tzcup_formal_sanitation_vehicle/squeegee_compliance/pitch_torque_nm@std_msgs/msg/Float64[gz.msgs.Double",
-            "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/squeegee_link/sensor/squeegee_blade_ground_contact/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
-        ],
+        parameters=[{"endpoint_group": "squeegee"}],
         remappings=[
             (
                 "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/squeegee_link/sensor/squeegee_blade_ground_contact/contact",
@@ -378,14 +345,10 @@ def generate_launch_description() -> LaunchDescription:
         condition=IfCondition(squeegee_evaluation_interfaces),
     )
     brush_contact_evaluation_bridge = Node(
-        package="ros_gz_bridge",
-        executable="parameter_bridge",
+        package="sanitation_gazebo_control",
+        executable="formal_contact_evaluation_native_bridge",
         name="formal_brush_contact_evaluation_bridge",
-        arguments=[
-            "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/left_side_brush_link/sensor/left_side_brush_ground_contact/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
-            "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/right_side_brush_link/sensor/right_side_brush_ground_contact/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
-            "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/central_roller_link/sensor/central_roller_ground_contact/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
-        ],
+        parameters=[{"endpoint_group": "brushes"}],
         remappings=[
             (
                 "/world/formal_vehicle_validation/model/tzcup_formal_sanitation_vehicle/link/left_side_brush_link/sensor/left_side_brush_ground_contact/contact",
@@ -443,12 +406,10 @@ def generate_launch_description() -> LaunchDescription:
         condition=IfCondition(start_power_system_simulators),
     )
     charge_receptacle_contact_bridge = Node(
-        package="ros_gz_bridge",
-        executable="parameter_bridge",
+        package="sanitation_gazebo_control",
+        executable="formal_contact_evaluation_native_bridge",
         name="charge_receptacle_contact_bridge",
-        arguments=[
-            "/formal_vehicle/gazebo/charge_receptacle/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts"
-        ],
+        parameters=[{"endpoint_group": "charge_receptacle"}],
         remappings=[
             (
                 "/formal_vehicle/gazebo/charge_receptacle/contact",
@@ -459,12 +420,10 @@ def generate_launch_description() -> LaunchDescription:
         condition=IfCondition(start_product_support_parameter_bridges),
     )
     wastewater_drain_contact_bridge = Node(
-        package="ros_gz_bridge",
-        executable="parameter_bridge",
+        package="sanitation_gazebo_control",
+        executable="formal_contact_evaluation_native_bridge",
         name="wastewater_drain_contact_bridge",
-        arguments=[
-            "/formal_vehicle/gazebo/wastewater_drain_coupling/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts"
-        ],
+        parameters=[{"endpoint_group": "wastewater_drain"}],
         remappings=[
             (
                 "/formal_vehicle/gazebo/wastewater_drain_coupling/contact",
@@ -747,50 +706,15 @@ def generate_launch_description() -> LaunchDescription:
                 output="screen",
                 condition=IfCondition(spawn_robot),
             ),
+            # Payload mass remains owned by physical simulation, and water
+            # service-drain commands remain fail-closed through the safety
+            # manager and plugin watchdog.  The native product bridge exposes
+            # operational telemetry only: evaluator truth/reset interfaces stay
+            # behind their opt-in evaluator launch arguments.
             Node(
-                package="ros_gz_bridge",
-                executable="parameter_bridge",
+                package="sanitation_gazebo_control",
+                executable="formal_vehicle_product_native_bridge",
                 name="formal_vehicle_product_bridge",
-                arguments=[
-                    "/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan[gz.msgs.LaserScan",
-                    "/sensors/gnss/fix@sensor_msgs/msg/NavSatFix[gz.msgs.NavSat",
-                    "/sensors/imu/data@sensor_msgs/msg/Imu[gz.msgs.IMU",
-                    # Payload mass is owned by physical simulation.  Dry cubes
-                    # remain rigid bodies in the bin, while WaterRecoverySystem
-                    # publishes wastewater mass directly over Gazebo Transport
-                    # to DynamicPayloadSystem.  Neither mass may be writable
-                    # from the product ROS graph.
-                    "/model/tzcup_formal_sanitation_vehicle/payload/wastewater_mass_kg/applied@std_msgs/msg/Float64[gz.msgs.Double",
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/command/enable@std_msgs/msg/Bool]gz.msgs.Boolean",
-                    # The physical service valve is a product actuator.  Its
-                    # command is fail-closed by service_drain_safety_manager
-                    # and the plugin watchdog, so it must not depend on the
-                    # evaluator-only reset/truth bridge.
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/command/service_drain_open@std_msgs/msg/Bool]gz.msgs.Boolean",
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/tank_mass_kg@std_msgs/msg/Float64[gz.msgs.Double",
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/tank_level_fraction@std_msgs/msg/Float64[gz.msgs.Double",
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/flow_l_min@std_msgs/msg/Float64[gz.msgs.Double",
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/recovered_volume_l@std_msgs/msg/Float64[gz.msgs.Double",
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/tank_full@std_msgs/msg/Bool[gz.msgs.Boolean",
-                    # Operational instrumentation remains available to the
-                    # product graph; only fault injection and ground truth are
-                    # isolated behind evaluator launch arguments.
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/sensed_flow_l_min@std_msgs/msg/Float64[gz.msgs.Double",
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/sensed_tank_level_fraction@std_msgs/msg/Float64[gz.msgs.Double",
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/filter_differential_pressure_kpa@std_msgs/msg/Float64[gz.msgs.Double",
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/pump_current_a@std_msgs/msg/Float64[gz.msgs.Double",
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/tank_low_probe_wet@std_msgs/msg/Bool[gz.msgs.Boolean",
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/tank_high_probe_wet@std_msgs/msg/Bool[gz.msgs.Boolean",
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/filter_protection_active@std_msgs/msg/Bool[gz.msgs.Boolean",
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/service_drain_open@std_msgs/msg/Bool[gz.msgs.Boolean",
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/service_drain_permitted@std_msgs/msg/Bool[gz.msgs.Boolean",
-                    "/model/tzcup_formal_sanitation_vehicle/water_recovery/service_drained_volume_l@std_msgs/msg/Float64[gz.msgs.Double",
-                    "/model/tzcup_formal_sanitation_vehicle/dry_bin/fill_level_fraction@std_msgs/msg/Float64[gz.msgs.Double",
-                    "/model/tzcup_formal_sanitation_vehicle/dry_bin/full@std_msgs/msg/Bool[gz.msgs.Boolean",
-                    "/model/tzcup_formal_sanitation_vehicle/dry_bin/sensor_ready@std_msgs/msg/Bool[gz.msgs.Boolean",
-                    "/cleaning/suction_nozzle/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
-                    "/storage/dry_deposit/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts",
-                ],
                 output="screen",
                 condition=IfCondition(start_product_bridge),
             ),
@@ -864,12 +788,10 @@ def generate_launch_description() -> LaunchDescription:
             charge_receptacle_contact_bridge,
             wastewater_drain_contact_bridge,
             Node(
-                package="ros_gz_bridge",
-                executable="parameter_bridge",
+                package="sanitation_gazebo_control",
+                executable="formal_contact_evaluation_native_bridge",
                 name="front_bumper_contact_bridge",
-                arguments=[
-                    "/safety/front_bumper/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts"
-                ],
+                parameters=[{"endpoint_group": "front_bumper"}],
                 remappings=[
                     (
                         "/safety/front_bumper/contact",
@@ -880,12 +802,10 @@ def generate_launch_description() -> LaunchDescription:
                 condition=IfCondition(start_product_support_parameter_bridges),
             ),
             Node(
-                package="ros_gz_bridge",
-                executable="parameter_bridge",
+                package="sanitation_gazebo_control",
+                executable="formal_contact_evaluation_native_bridge",
                 name="rear_bumper_contact_bridge",
-                arguments=[
-                    "/safety/rear_bumper/contact@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts"
-                ],
+                parameters=[{"endpoint_group": "rear_bumper"}],
                 remappings=[
                     (
                         "/safety/rear_bumper/contact",

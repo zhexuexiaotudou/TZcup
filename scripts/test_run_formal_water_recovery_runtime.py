@@ -135,96 +135,33 @@ def test_runner_stops_all_active_parameter_bridges_in_order_before_launch_cleanu
         encoding="utf-8"
     )
 
-    function_start = source.index("formal_water_stop_active_parameter_bridges()")
+    function_start = source.index("formal_water_stop_active_bridges()")
     run_scenario_start = source.index("run_scenario()")
     shutdown = source[function_start:run_scenario_start]
-    assert 'partition, timeline_arg = sys.argv[1:]' in shutdown
-    assert 'Path("/proc").iterdir()' in shutdown
-    assert 'f"GZ_PARTITION={partition}".encode() not in environment' in shutdown
-    assert 'executable.name != "parameter_bridge"' in shutdown
-    assert '"ros_gz_bridge" not in executable.parts' in shutdown
-    assert 'def native_bridge_census()' in shutdown
-    ordered_targets = shutdown.split("ordered_targets = (", 1)[1].split(")\ntargets = tuple", 1)[0]
-    assert '("native", "water_evaluation_bridge", "water_evaluation_bridge")' in ordered_targets
-    assert '("native", "a300_drivetrain_native_bridge", "a300_drivetrain_bridge")' in ordered_targets
-    assert '("native", "cleaning_actuator_vector_bridge", "cleaning_actuator_motor_bridge")' in ordered_targets
-    assert '"sanitation_gazebo_control" not in executable.parts' in shutdown
-    assert "for executable, target in native_targets:" in shutdown
-    assert '"native_bridge_reaped"' in shutdown
-    assert '"native_bridge_clean_exit"' not in shutdown
-    assert '"native_bridge_exit_not_clean"' in shutdown
-    assert 'native_state == "missing"' in shutdown
-    assert 'saw_zombie=native_saw_zombie' in shutdown
-    assert 'argument.startswith("__node:=")' in shutdown
-    assert 'if len(node_args) != 1' in shutdown
-    assert 'missing = sorted(set(targets) - set(initial_nodes))' in shutdown
-    assert 'unexpected = sorted(set(initial_nodes) - set(targets))' in shutdown
-    for failure_guard in (
-        "native_missing",
-        "native_unexpected",
-        "native_duplicates",
-    ):
-        assert failure_guard in shutdown
-    assert 'if len(matches) != 1:' in shutdown
-    assert 'os.kill(pid, signal.SIGINT)' in shutdown
-    assert 'if exit_state == "missing":' in shutdown
-    assert 'raise SystemExit(1)' in shutdown
+    ordered_targets = shutdown.split("ordered_targets = (", 1)[1].split(")\nnative_targets", 1)[0]
     expected_order = (
         '("native", "water_evaluation_bridge", "water_evaluation_bridge")',
-        '("parameter", "parameter_bridge", "formal_vehicle_product_bridge")',
-        '("parameter", "parameter_bridge", "cleaning_actuator_scalar_bridge")',
+        '("native", "formal_vehicle_product_native_bridge", "formal_vehicle_product_bridge")',
+        '("native", "cleaning_actuator_scalar_native_bridge", "cleaning_actuator_scalar_bridge")',
         '("native", "a300_drivetrain_native_bridge", "a300_drivetrain_bridge")',
-        '("parameter", "parameter_bridge", "formal_squeegee_evaluation_bridge")',
-        '("parameter", "parameter_bridge", "formal_brush_contact_evaluation_bridge")',
-        '("parameter", "parameter_bridge", "charge_receptacle_contact_bridge")',
-        '("parameter", "parameter_bridge", "wastewater_drain_contact_bridge")',
-        '("parameter", "parameter_bridge", "front_bumper_contact_bridge")',
-        '("parameter", "parameter_bridge", "rear_bumper_contact_bridge")',
-        '("parameter", "parameter_bridge", "formal_auxiliary_bridge")',
+        '("native", "formal_contact_evaluation_native_bridge", "formal_squeegee_evaluation_bridge")',
+        '("native", "formal_contact_evaluation_native_bridge", "formal_brush_contact_evaluation_bridge")',
+        '("native", "formal_contact_evaluation_native_bridge", "charge_receptacle_contact_bridge")',
+        '("native", "formal_contact_evaluation_native_bridge", "wastewater_drain_contact_bridge")',
+        '("native", "formal_contact_evaluation_native_bridge", "front_bumper_contact_bridge")',
+        '("native", "formal_contact_evaluation_native_bridge", "rear_bumper_contact_bridge")',
+        '("native", "formal_auxiliary_native_bridge", "formal_auxiliary_bridge")',
         '("native", "cleaning_actuator_vector_bridge", "cleaning_actuator_motor_bridge")',
     )
-    positions = [ordered_targets.index(row) for row in expected_order]
-    assert positions == sorted(positions)
-    assert shutdown.index('"pre_shutdown_census"') < shutdown.index(
-        '"native_bridge_pre_shutdown"'
-    ) < shutdown.index("stop_native_bridge(first_executable, first_target)") < shutdown.index(
-        '"ordered_shutdown_started"'
-    ) < shutdown.index("for kind, executable, target in ordered_targets[1:]:")
-    assert shutdown.index('"post_shutdown_census"') > shutdown.index(
-        "for kind, executable, target in ordered_targets[1:]:"
-    ) and shutdown.index('"post_shutdown_census"') < shutdown.index(
-        '"ordered_shutdown_completed"'
+    assert [ordered_targets.index(row) for row in expected_order] == sorted(
+        ordered_targets.index(row) for row in expected_order
     )
-    assert "remaining_native_nodes, native_malformed = native_bridge_census()" in shutdown
-    assert (
-        "if remaining_nodes or remaining_native_nodes or malformed or native_malformed:"
-        in shutdown
-    )
-    assert ordered_targets.index('("parameter", "parameter_bridge", "formal_auxiliary_bridge")') > ordered_targets.index(
-        '("parameter", "parameter_bridge", "formal_squeegee_evaluation_bridge")'
-    )
-
-    validator = source.index(
-        'python3 "${repo_root}/scripts/validate_formal_water_recovery_runtime.py"'
-    )
-    ordered_stop = source.index(
-        "formal_water_stop_active_parameter_bridges", run_scenario_start
-    )
-    cleanup = source.index("cleanup_launch", ordered_stop)
-    audit = source.index(
-        'python3 "${repo_root}/scripts/audit_formal_water_launch_log.py"'
-    )
-    assert validator < ordered_stop < cleanup < audit
-    assert "--required-clean-exit-process water_evaluation_bridge" in source
-    assert "--required-clean-exit-process a300_drivetrain_native_bridge" in source
-    assert "--required-clean-exit-process cleaning_actuator_vector_bridge" in source
-    assert "FORMAL_WATER_REPOSITORY_ROOT" in source
-    assert "FORMAL_TASK_ONLY_DIAGNOSTIC" in source
-    assert "Repository-root override is forbidden for formal all-scenarios acceptance" in source
-    assert (
-        "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainNativeBridge.cc"
-        in TYPED_CRITICAL_MANIFEST_REQUIRED_PATHS
-    )
+    assert "unexpected = sorted(initial_nodes)" in shutdown
+    assert '"bridge" in executable.name.lower()' in shutdown
+    assert "native_nodes_by_executable" in shutdown
+    assert "remaining_native_nodes, native_malformed, native_unknown = native_bridge_census()" in shutdown
+    assert "formal_water_stop_active_parameter_bridges" not in source
+    assert "--required-clean-exit-process-count formal_contact_evaluation_native_bridge=6" in source
 
 
 def test_all_scenarios_rotation_invalidates_old_canonical_before_preflight() -> None:

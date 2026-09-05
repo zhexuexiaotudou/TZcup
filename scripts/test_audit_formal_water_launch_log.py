@@ -274,5 +274,33 @@ def test_required_native_bridge_clean_exits_are_exact(tmp_path: Path) -> None:
     }
     assert missing["passed"] is False
     assert repeated["passed"] is False
-    assert missing["checks"]["required_processes_finished_cleanly_once"] is False
-    assert repeated["checks"]["required_processes_finished_cleanly_once"] is False
+    assert missing["checks"]["required_processes_finished_cleanly_exactly"] is False
+    assert repeated["checks"]["required_processes_finished_cleanly_exactly"] is False
+
+
+def test_required_native_bridge_clean_exit_multiplicity_is_exact(tmp_path: Path) -> None:
+    process = "formal_contact_evaluation_native_bridge"
+    clean_lines = [
+        f"[INFO] [{process}-{index}]: process has finished cleanly [pid {200 + index}]"
+        for index in range(1, 7)
+    ]
+    passing = audit(
+        _write(tmp_path, _allowed_lines() + [STABLE_MARKER] + clean_lines),
+        required_clean_exit_process_counts={process: 6},
+    )
+    missing = audit(
+        _write(tmp_path, _allowed_lines() + [STABLE_MARKER] + clean_lines[:-1]),
+        required_clean_exit_process_counts={process: 6},
+    )
+    extra = audit(
+        _write(tmp_path, _allowed_lines() + [STABLE_MARKER] + clean_lines + [clean_lines[0]]),
+        required_clean_exit_process_counts={process: 6},
+    )
+
+    assert passing["passed"] is True
+    assert passing["required_clean_exit_process_counts"] == {process: 6}
+    assert passing["clean_exit_counts"] == {process: 6}
+    assert missing["passed"] is False
+    assert extra["passed"] is False
+    assert missing["checks"]["required_processes_finished_cleanly_exactly"] is False
+    assert extra["checks"]["required_processes_finished_cleanly_exactly"] is False

@@ -117,7 +117,7 @@ def test_native_bridges_are_reaped_before_ordered_parameter_bridges() -> None:
     runner = RUNNER.read_text(encoding="utf-8")
     assert "add_executable(water_evaluation_bridge" in cmake
     assert "install(TARGETS water_evaluation_bridge" in cmake
-    ordered_targets = runner.split("ordered_targets = (", 1)[1].split(")\ntargets = tuple", 1)[0]
+    ordered_targets = runner.split("ordered_targets = (", 1)[1].split(")\nnative_targets", 1)[0]
     assert '("native", "water_evaluation_bridge", "water_evaluation_bridge")' in ordered_targets
     assert '("native", "a300_drivetrain_native_bridge", "a300_drivetrain_bridge")' in ordered_targets
     assert '("native", "cleaning_actuator_vector_bridge", "cleaning_actuator_motor_bridge")' in ordered_targets
@@ -133,7 +133,7 @@ def test_native_bridges_are_reaped_before_ordered_parameter_bridges() -> None:
     assert runner.index("stop_native_bridge(first_executable, first_target)") < runner.index(
         'record("ordered_shutdown_started"'
     )
-    assert "remaining_native_nodes, native_malformed = native_bridge_census()" in runner
+    assert "remaining_native_nodes, native_malformed, native_unknown = native_bridge_census()" in runner
     assert "--required-clean-exit-process water_evaluation_bridge" in runner
     assert "--required-clean-exit-process a300_drivetrain_native_bridge" in runner
     assert "--required-clean-exit-process cleaning_actuator_vector_bridge" in runner

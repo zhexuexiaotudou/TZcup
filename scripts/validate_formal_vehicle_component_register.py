@@ -207,6 +207,19 @@ _CPP_GZ_TO_ROS_ENDPOINT = re.compile(
     r"[A-Za-z0-9_]+\s*\{\s*\"(?P<topic>/[^\"]+)\"\s*\}\s*;",
     re.MULTILINE,
 )
+_CPP_GROUPED_GZ_TO_ROS_ENDPOINT = re.compile(
+    r"constexpr\s+GroupedGazeboToRosEndpoint\s*<\s*"
+    r"(?P<ros>[A-Za-z0-9_:]+)\s*,\s*(?P<gz>[A-Za-z0-9_:]+)\s*>\s*"
+    r"[A-Za-z0-9_]+\s*\{\s*\"(?P<group>[A-Za-z0-9_]+)\"\s*,\s*"
+    r"\"(?P<topic>/[^\"]+)\"\s*\}\s*;",
+    re.MULTILINE,
+)
+_CPP_ROS_TO_GZ_ENDPOINT = re.compile(
+    r"constexpr\s+RosToGazeboEndpoint\s*<\s*"
+    r"(?P<ros>[A-Za-z0-9_:]+)\s*,\s*(?P<gz>[A-Za-z0-9_:]+)\s*>\s*"
+    r"[A-Za-z0-9_]+\s*\{\s*\"(?P<topic>/[^\"]+)\"\s*\}\s*;",
+    re.MULTILINE,
+)
 _CPP_STRING_TOPIC_ROOT = re.compile(
     r"std::string\s+(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\{\s*"
     r'"(?P<topic>/[^"]+)"\s*\}',
@@ -325,10 +338,66 @@ def _launch_node_remappings(
     return results
 
 
-def _cpp_gz_to_ros_endpoints(source: Path) -> list[tuple[str, str, str]]:
-    """Return compiled typed custom endpoints as (topic, ROS type, GZ type)."""
+def _launch_node_parameters(
+    launch_text: str,
+) -> list[tuple[tuple[str, str, str], dict[str, object]]]:
+    """Return literal scalar parameters scoped to their exact launch Node."""
+    results: list[tuple[tuple[str, str, str], dict[str, object]]] = []
+    tree = ast.parse(launch_text)
+    for call in (
+        node for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "Node"
+    ):
+        values: dict[str, str] = {}
+        parameters: dict[str, object] = {}
+        for keyword in call.keywords:
+            if (
+                keyword.arg in {"package", "executable", "name"}
+                and isinstance(keyword.value, ast.Constant)
+                and isinstance(keyword.value.value, str)
+            ):
+                values[keyword.arg] = keyword.value.value
+            elif keyword.arg == "parameters" and isinstance(
+                keyword.value, (ast.List, ast.Tuple)
+            ):
+                for item in keyword.value.elts:
+                    if not isinstance(item, ast.Dict):
+                        continue
+                    for key, value in zip(item.keys, item.values):
+                        if not isinstance(key, ast.Constant) or not isinstance(key.value, str):
+                            continue
+                        try:
+                            parameters[key.value] = ast.literal_eval(value)
+                        except (ValueError, TypeError, SyntaxError):
+                            continue
+        if {"package", "executable", "name"} <= values.keys():
+            results.append(
+                ((values["package"], values["executable"], values["name"]), parameters)
+            )
+    return results
+
+
+def _cpp_gz_to_ros_endpoints(source: Path) -> list[tuple[str | None, str, str, str]]:
+    """Return compiled typed GZ->ROS endpoints as (group, topic, ROS, GZ)."""
+    endpoints: list[tuple[str | None, str, str, str]] = []
+    source_text = source.read_text(encoding="utf-8")
+    for match in _CPP_GZ_TO_ROS_ENDPOINT.finditer(source_text):
+        ros_type = match.group("ros").replace("::", "/")
+        gz_type = match.group("gz").replace("gz::msgs::", "gz.msgs.")
+        endpoints.append((None, match.group("topic"), ros_type, gz_type))
+    for match in _CPP_GROUPED_GZ_TO_ROS_ENDPOINT.finditer(source_text):
+        ros_type = match.group("ros").replace("::", "/")
+        gz_type = match.group("gz").replace("gz::msgs::", "gz.msgs.")
+        endpoints.append((match.group("group"), match.group("topic"), ros_type, gz_type))
+    return endpoints
+
+
+def _cpp_ros_to_gz_endpoints(source: Path) -> list[tuple[str, str, str]]:
+    """Return compiled typed ROS->GZ endpoints as (topic, ROS type, GZ type)."""
     endpoints: list[tuple[str, str, str]] = []
-    for match in _CPP_GZ_TO_ROS_ENDPOINT.finditer(source.read_text(encoding="utf-8")):
+    for match in _CPP_ROS_TO_GZ_ENDPOINT.finditer(source.read_text(encoding="utf-8")):
         ros_type = match.group("ros").replace("::", "/")
         gz_type = match.group("gz").replace("gz::msgs::", "gz.msgs.")
         endpoints.append((match.group("topic"), ros_type, gz_type))
@@ -541,11 +610,15 @@ def validate(
         source.resolve(): _cpp_gz_to_ros_endpoints(source)
         for source in _product_cpp_sources()
     }
+    cpp_ros_to_gz_endpoint_cache = {
+        source.resolve(): _cpp_ros_to_gz_endpoints(source)
+        for source in _product_cpp_sources()
+    }
     cpp_gz_publish_endpoint_cache = {
         source.resolve(): _cpp_gz_publish_endpoints(source)
         for source in _product_cpp_sources()
     }
-    native_runtime_bindings: set[tuple[str, str, str, str]] = set()
+    native_runtime_bindings: set[tuple[str, str, str, str, str | None]] = set()
     for candidate_contract in topic_contracts.values():
         if candidate_contract.get("transport") != "gazebo_native_bridge":
             continue
@@ -554,13 +627,16 @@ def validate(
             candidate_contract.get("bridge_package"),
             candidate_contract.get("bridge_executable"),
             candidate_contract.get("writer_node"),
+            candidate_contract.get("endpoint_group"),
         )
-        if all(isinstance(value, str) and value for value in binding):
+        if all(isinstance(value, str) and value for value in binding[:4]) and (
+            binding[4] is None or isinstance(binding[4], str) and binding[4]
+        ):
             native_runtime_bindings.add(binding)
 
     def resolved_native_publishers(endpoint: tuple[str, str, str]) -> list[str]:
         publishers: list[str] = []
-        for source_path, package, executable, writer_node in sorted(
+        for source_path, package, executable, writer_node, endpoint_group in sorted(
             native_runtime_bindings
         ):
             candidate_source = (ROOT / source_path).resolve()
@@ -572,12 +648,22 @@ def validate(
             ]
             if len(remapping_instances) != 1:
                 continue
+            parameter_instances = [
+                parameters
+                for node, parameters in _launch_node_parameters(launch_text)
+                if node == expected_node
+            ]
+            if len(parameter_instances) != 1:
+                continue
+            if endpoint_group != parameter_instances[0].get("endpoint_group"):
+                continue
             remappings = remapping_instances[0]
             resolved_endpoints = {
                 (remappings.get(local_topic, local_topic), ros_type, gz_type)
-                for local_topic, ros_type, gz_type in cpp_bridge_endpoint_cache.get(
+                for local_group, local_topic, ros_type, gz_type in cpp_bridge_endpoint_cache.get(
                     candidate_source, []
                 )
+                if local_group == endpoint_group
             }
             if endpoint in resolved_endpoints:
                 publishers.append(
@@ -797,43 +883,82 @@ def validate(
                 for node, remappings in launch_node_remappings
                 if node == expected_node
             ]
+            node_parameters = [
+                parameters
+                for node, parameters in _launch_node_parameters(launch_text)
+                if node == expected_node
+            ]
             if len(node_instances) != 1:
                 errors.append(
                     f"native Gazebo bridge contract {contract_id} expected exactly one launch "
                     f"node {expected_node}, found {len(node_instances)}"
                 )
-            source_endpoints = cpp_bridge_endpoint_cache.get(source.resolve(), [])
+            endpoint_group = contract.get("endpoint_group")
+            if endpoint_group is not None and (
+                not isinstance(endpoint_group, str) or not endpoint_group
+            ):
+                errors.append(
+                    f"native Gazebo bridge contract {contract_id} endpoint_group must be a non-empty string"
+                )
+            if len(node_parameters) != 1:
+                errors.append(
+                    f"native Gazebo bridge contract {contract_id} expected exactly one launch parameter set "
+                    f"for {expected_node}, found {len(node_parameters)}"
+                )
+            elif node_parameters[0].get("endpoint_group") != endpoint_group:
+                errors.append(
+                    f"native Gazebo bridge contract {contract_id} launch endpoint_group mismatch: "
+                    f"expected {endpoint_group!r}, found {node_parameters[0].get('endpoint_group')!r}"
+                )
             scoped_remappings = node_remappings[0] if len(node_remappings) == 1 else {}
-            resolved_source_endpoints = [
-                (scoped_remappings.get(local_topic, local_topic), local_ros_type, local_gz_type)
-                for local_topic, local_ros_type, local_gz_type in source_endpoints
-            ]
             endpoint = (topic, ros_type, gz_type)
-            if direction != "publisher":
+            if direction not in {"publisher", "subscription"}:
                 errors.append(
-                    f"native Gazebo bridge contract {contract_id} must declare publisher direction"
+                    f"native Gazebo bridge contract {contract_id} must declare publisher or subscription direction"
                 )
-            if resolved_source_endpoints.count(endpoint) != 1:
+            if direction == "publisher":
+                source_endpoints = cpp_bridge_endpoint_cache.get(source.resolve(), [])
+                resolved_source_endpoints = [
+                    (scoped_remappings.get(local_topic, local_topic), local_ros_type, local_gz_type)
+                    for local_group, local_topic, local_ros_type, local_gz_type in source_endpoints
+                    if local_group == endpoint_group
+                ]
+                if resolved_source_endpoints.count(endpoint) != 1:
+                    errors.append(
+                        f"native Gazebo bridge contract {contract_id} exact GZ->ROS endpoint "
+                        f"missing or duplicated in {source_path}: {endpoint}"
+                    )
+                publishers = resolved_native_publishers(endpoint)
+                expected_publisher = (
+                    f"{source_path}::{package}/{executable}/{writer_node}"
+                )
+                if contract.get("single_writer"):
+                    if publishers != [expected_publisher]:
+                        errors.append(
+                            f"single-writer topic contract {contract_id} expected only "
+                            f"{source_path}, found {publishers}"
+                        )
+                    elif len(node_instances) == 1 and resolved_source_endpoints.count(endpoint) == 1:
+                        validated_single_writer_contracts.add(contract_id)
+            elif endpoint_group is not None:
                 errors.append(
-                    f"native Gazebo bridge contract {contract_id} exact GZ->ROS endpoint "
-                    f"missing or duplicated in {source_path}: {endpoint}"
+                    f"native Gazebo bridge contract {contract_id} endpoint_group is only valid for GZ->ROS publishers"
                 )
-            publishers = resolved_native_publishers(endpoint)
-            expected_publisher = (
-                f"{source_path}::{package}/{executable}/{writer_node}"
-            )
-            if contract.get("single_writer"):
-                if direction != "publisher":
+            else:
+                source_endpoints = cpp_ros_to_gz_endpoint_cache.get(source.resolve(), [])
+                resolved_source_endpoints = [
+                    (scoped_remappings.get(local_topic, local_topic), local_ros_type, local_gz_type)
+                    for local_topic, local_ros_type, local_gz_type in source_endpoints
+                ]
+                if resolved_source_endpoints.count(endpoint) != 1:
+                    errors.append(
+                        f"native Gazebo bridge contract {contract_id} exact ROS->GZ endpoint "
+                        f"missing or duplicated in {source_path}: {endpoint}"
+                    )
+                if contract.get("single_writer"):
                     errors.append(
                         f"single-writer topic contract {contract_id} must declare publisher direction"
                     )
-                if publishers != [expected_publisher]:
-                    errors.append(
-                        f"single-writer topic contract {contract_id} expected only "
-                        f"{source_path}, found {publishers}"
-                    )
-                elif len(node_instances) == 1 and resolved_source_endpoints.count(endpoint) == 1:
-                    validated_single_writer_contracts.add(contract_id)
             validated_topic_contracts.add(contract_id)
             continue
         if transport != "gazebo_bridge":

@@ -20,7 +20,10 @@ find_package(geometry_msgs REQUIRED)
 find_package(control_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(ros_gz_bridge REQUIRED)
+find_package(ros_gz_interfaces REQUIRED)
 find_package(rosgraph_msgs REQUIRED)
+find_package(sensor_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(std_srvs REQUIRED)
 find_package(Qt5 REQUIRED COMPONENTS Core Quick QuickControls2)
@@ -240,6 +243,77 @@ target_link_libraries(manipulation_sim_bridge
   gz-msgs10::gz-msgs10
 )
 install(TARGETS manipulation_sim_bridge
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+add_executable(formal_vehicle_product_native_bridge
+  src/FormalVehicleProductNativeBridge.cc
+)
+target_include_directories(formal_vehicle_product_native_bridge PRIVATE include)
+ament_target_dependencies(formal_vehicle_product_native_bridge
+  rclcpp
+  ros_gz_bridge
+  ros_gz_interfaces
+  sensor_msgs
+  std_msgs
+)
+target_link_libraries(formal_vehicle_product_native_bridge
+  gz-transport13::gz-transport13
+  gz-msgs10::gz-msgs10
+)
+install(TARGETS formal_vehicle_product_native_bridge
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+add_executable(cleaning_actuator_scalar_native_bridge
+  src/CleaningActuatorScalarNativeBridge.cc
+)
+target_include_directories(cleaning_actuator_scalar_native_bridge PRIVATE include)
+ament_target_dependencies(cleaning_actuator_scalar_native_bridge
+  rclcpp
+  ros_gz_bridge
+  std_msgs
+)
+target_link_libraries(cleaning_actuator_scalar_native_bridge
+  gz-transport13::gz-transport13
+  gz-msgs10::gz-msgs10
+)
+install(TARGETS cleaning_actuator_scalar_native_bridge
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+add_executable(formal_auxiliary_native_bridge
+  src/FormalAuxiliaryNativeBridge.cc
+)
+target_include_directories(formal_auxiliary_native_bridge PRIVATE include)
+ament_target_dependencies(formal_auxiliary_native_bridge
+  rclcpp
+  ros_gz_bridge
+  std_msgs
+)
+target_link_libraries(formal_auxiliary_native_bridge
+  gz-transport13::gz-transport13
+  gz-msgs10::gz-msgs10
+)
+install(TARGETS formal_auxiliary_native_bridge
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+add_executable(formal_contact_evaluation_native_bridge
+  src/FormalContactEvaluationNativeBridge.cc
+)
+target_include_directories(formal_contact_evaluation_native_bridge PRIVATE include)
+ament_target_dependencies(formal_contact_evaluation_native_bridge
+  rclcpp
+  ros_gz_bridge
+  ros_gz_interfaces
+  std_msgs
+)
+target_link_libraries(formal_contact_evaluation_native_bridge
+  gz-transport13::gz-transport13
+  gz-msgs10::gz-msgs10
+)
+install(TARGETS formal_contact_evaluation_native_bridge
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 install(DIRECTORY config

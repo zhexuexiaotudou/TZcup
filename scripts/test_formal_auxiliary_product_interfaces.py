@@ -5,6 +5,9 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[1]
 PACKAGE = ROOT / "starter_ws/src/sanitation_safety"
+NATIVE_AUXILIARY = (
+    ROOT / "starter_ws/src/sanitation_gazebo_control/src/FormalAuxiliaryNativeBridge.cc"
+)
 
 
 def test_component_register_contains_every_auxiliary_product_datum():
@@ -66,6 +69,9 @@ def test_formal_launch_exposes_fail_closed_simulation_input_opt_in():
     assert 'default_value="true"' in launch
     assert '"use_sim_time": False' in launch
     assert 'name="formal_auxiliary_bridge"' in launch
-    assert '"/emergency_stop@std_msgs/msg/Bool[gz.msgs.Boolean"' in launch
+    assert 'executable="formal_auxiliary_native_bridge"' in launch
+    source = NATIVE_AUXILIARY.read_text(encoding="utf-8")
+    assert 'GazeboToRosEndpoint<std_msgs::msg::Bool, gz::msgs::Boolean> kEmergencyStop' in source
+    assert '"/emergency_stop"' in source
     assert '"/formal_vehicle/simulation/raw/front_bumper/contact"' in launch
     assert '"/formal_vehicle/simulation/raw/rear_bumper/contact"' in launch

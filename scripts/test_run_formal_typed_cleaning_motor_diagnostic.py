@@ -258,12 +258,16 @@ def test_typed_runner_has_single_native_clock_owner_and_bounded_optional_scope()
             for key in node.keywords
         )
     )
-    product_arguments = next(
-        key.value for key in product.keywords if key.arg == "arguments"
+    product_executable = next(
+        key.value for key in product.keywords if key.arg == "executable"
     )
-    assert "/clock@rosgraph_msgs/msg/Clock[gz.msgs.Clock" not in ast.literal_eval(
-        product_arguments
-    )
+    assert isinstance(product_executable, ast.Constant)
+    assert product_executable.value == "formal_vehicle_product_native_bridge"
+    product_source = (
+        ROOT
+        / "starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc"
+    ).read_text(encoding="utf-8")
+    assert '"/clock"' not in product_source
     native_source = (
         ROOT
         / "starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorVectorBridge.cc"

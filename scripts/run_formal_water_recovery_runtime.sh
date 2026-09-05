@@ -146,7 +146,7 @@ cleanup_launch() {
 }
 formal_runtime_install_traps cleanup_launch
 
-formal_water_stop_active_parameter_bridges() {
+formal_water_stop_active_bridges() {
   local timeline="$1"
   python3 - "${GZ_PARTITION}" "${timeline}" <<'PY'
 import json
@@ -161,24 +161,26 @@ partition, timeline_arg = sys.argv[1:]
 timeline = Path(timeline_arg)
 ordered_targets = (
     ("native", "water_evaluation_bridge", "water_evaluation_bridge"),
-    ("parameter", "parameter_bridge", "formal_vehicle_product_bridge"),
-    ("parameter", "parameter_bridge", "cleaning_actuator_scalar_bridge"),
+    ("native", "formal_vehicle_product_native_bridge", "formal_vehicle_product_bridge"),
+    ("native", "cleaning_actuator_scalar_native_bridge", "cleaning_actuator_scalar_bridge"),
     ("native", "a300_drivetrain_native_bridge", "a300_drivetrain_bridge"),
-    ("parameter", "parameter_bridge", "formal_squeegee_evaluation_bridge"),
-    ("parameter", "parameter_bridge", "formal_brush_contact_evaluation_bridge"),
-    ("parameter", "parameter_bridge", "charge_receptacle_contact_bridge"),
-    ("parameter", "parameter_bridge", "wastewater_drain_contact_bridge"),
-    ("parameter", "parameter_bridge", "front_bumper_contact_bridge"),
-    ("parameter", "parameter_bridge", "rear_bumper_contact_bridge"),
-    ("parameter", "parameter_bridge", "formal_auxiliary_bridge"),
+    ("native", "formal_contact_evaluation_native_bridge", "formal_squeegee_evaluation_bridge"),
+    ("native", "formal_contact_evaluation_native_bridge", "formal_brush_contact_evaluation_bridge"),
+    ("native", "formal_contact_evaluation_native_bridge", "charge_receptacle_contact_bridge"),
+    ("native", "formal_contact_evaluation_native_bridge", "wastewater_drain_contact_bridge"),
+    ("native", "formal_contact_evaluation_native_bridge", "front_bumper_contact_bridge"),
+    ("native", "formal_contact_evaluation_native_bridge", "rear_bumper_contact_bridge"),
+    ("native", "formal_auxiliary_native_bridge", "formal_auxiliary_bridge"),
     # This native bridge is the sole /clock writer.  Keep it alive until every
     # other managed bridge has drained, then prove that it also exits cleanly.
     ("native", "cleaning_actuator_vector_bridge", "cleaning_actuator_motor_bridge"),
 )
-targets = tuple(node for kind, _, node in ordered_targets if kind == "parameter")
 native_targets = tuple(
     (executable, node) for kind, executable, node in ordered_targets if kind == "native"
 )
+native_nodes_by_executable = {}
+for executable, node in native_targets:
+    native_nodes_by_executable.setdefault(executable, set()).add(node)
 
 
 def record(event, **fields):
@@ -228,14 +230,10 @@ def parameter_bridge_census():
     return ({node: sorted(pids) for node, pids in sorted(nodes.items())}, sorted(malformed))
 
 
-def matching_pids(node_name):
-    nodes, _ = parameter_bridge_census()
-    return nodes.get(node_name, [])
-
-
 def native_bridge_census():
     nodes = {}
     malformed = []
+    unknown = []
     for proc_dir in Path("/proc").iterdir():
         if not proc_dir.name.isdigit():
             continue
@@ -251,18 +249,28 @@ def native_bridge_census():
         if not argv:
             continue
         executable = Path(argv[0])
-        expected_node = next(
-            (node for candidate, node in native_targets if candidate == executable.name),
-            None,
-        )
-        if expected_node is None or "sanitation_gazebo_control" not in executable.parts:
+        expected_nodes = native_nodes_by_executable.get(executable.name)
+        if "sanitation_gazebo_control" not in executable.parts:
+            continue
+        if expected_nodes is None:
+            # Water disables manipulation, dry-bin and service-door evaluator
+            # interfaces.  A same-partition control executable whose basename
+            # is a bridge is therefore neither a benign adapter/mirror nor an
+            # accepted water process; retain its identity and fail closed.
+            if "bridge" in executable.name.lower():
+                unknown.append({"pid": pid, "executable": executable.name, "argv": argv})
             continue
         node_args = [argument for argument in argv if argument.startswith("__node:=")]
-        if len(node_args) != 1 or node_args[0] != f"__node:={expected_node}":
+        node_name = node_args[0].removeprefix("__node:=") if len(node_args) == 1 else ""
+        if not node_name or node_name not in expected_nodes:
             malformed.append(pid)
             continue
-        nodes.setdefault(expected_node, []).append(pid)
-    return ({node: sorted(pids) for node, pids in sorted(nodes.items())}, sorted(malformed))
+        nodes.setdefault(node_name, []).append(pid)
+    return (
+        {node: sorted(pids) for node, pids in sorted(nodes.items())},
+        sorted(malformed),
+        sorted(unknown, key=lambda item: (item["executable"], item["pid"])),
+    )
 
 
 def process_exit_state(pid):
@@ -276,9 +284,8 @@ def process_exit_state(pid):
 
 
 initial_nodes, malformed = parameter_bridge_census()
-initial_native_nodes, native_malformed = native_bridge_census()
-missing = sorted(set(targets) - set(initial_nodes))
-unexpected = sorted(set(initial_nodes) - set(targets))
+initial_native_nodes, native_malformed, native_unknown = native_bridge_census()
+unexpected = sorted(initial_nodes)
 duplicates = {node: pids for node, pids in initial_nodes.items() if len(pids) != 1}
 expected_native_nodes = {node for _, node in native_targets}
 native_missing = sorted(expected_native_nodes - set(initial_native_nodes))
@@ -290,7 +297,7 @@ record(
     "pre_shutdown_census",
     nodes=initial_nodes,
     malformed_pids=malformed,
-    missing=missing,
+    expected_nodes=[],
     unexpected=unexpected,
     duplicates=duplicates,
 )
@@ -301,11 +308,12 @@ for executable, target in native_targets:
         target=target,
         pids=initial_native_nodes.get(target, []),
         malformed_pids=native_malformed,
+        unknown_bridge_processes=native_unknown,
     )
 if (
     malformed
     or native_malformed
-    or missing
+    or native_unknown
     or unexpected
     or duplicates
     or native_missing
@@ -360,32 +368,6 @@ def stop_native_bridge(executable, native_target):
         raise SystemExit(1)
 
 
-def stop_parameter_bridge(target):
-    matches = matching_pids(target)
-    if len(matches) != 1:
-        record("target_match_failed", target=target, matches=matches)
-        raise SystemExit(1)
-    pid = matches[0]
-    try:
-        os.kill(pid, signal.SIGINT)
-    except ProcessLookupError:
-        record("target_signal_failed", target=target, pid=pid, reason="process_disappeared")
-        raise SystemExit(1)
-    record("target_sigint_sent", target=target, pid=pid)
-    deadline = time.monotonic() + 8.0
-    saw_zombie = False
-    while time.monotonic() < deadline:
-        exit_state = process_exit_state(pid)
-        if exit_state == "missing":
-            record("target_exited", target=target, pid=pid, saw_zombie=saw_zombie)
-            break
-        saw_zombie = saw_zombie or exit_state == "zombie"
-        time.sleep(0.05)
-    else:
-        record("target_exit_timeout", target=target, pid=pid)
-        raise SystemExit(1)
-
-
 first_kind, first_executable, first_target = ordered_targets[0]
 if first_kind != "native":
     record("shutdown_order_invalid", first_kind=first_kind)
@@ -395,21 +377,20 @@ record("ordered_shutdown_started", targets=[node for _, _, node in ordered_targe
 for kind, executable, target in ordered_targets[1:]:
     if kind == "native":
         stop_native_bridge(executable, target)
-    elif kind == "parameter":
-        stop_parameter_bridge(target)
     else:
         record("shutdown_order_invalid", kind=kind, target=target)
         raise SystemExit(1)
 remaining_nodes, malformed = parameter_bridge_census()
-remaining_native_nodes, native_malformed = native_bridge_census()
+remaining_native_nodes, native_malformed, native_unknown = native_bridge_census()
 record(
     "post_shutdown_census",
     nodes=remaining_nodes,
     native_nodes=remaining_native_nodes,
     malformed_pids=malformed,
     native_malformed_pids=native_malformed,
+    native_unknown_bridge_processes=native_unknown,
 )
-if remaining_nodes or remaining_native_nodes or malformed or native_malformed:
+if remaining_nodes or remaining_native_nodes or malformed or native_malformed or native_unknown:
     record("post_shutdown_census_failed")
     raise SystemExit(1)
 record("ordered_shutdown_completed")
@@ -477,14 +458,18 @@ run_scenario() {
   python3 "${repo_root}/scripts/validate_formal_water_recovery_runtime.py" \
     "${validator_args[@]}" \
     >"${output_dir}/water_${selected}_probe.log" 2>&1
-  formal_water_stop_active_parameter_bridges \
+  formal_water_stop_active_bridges \
     "${output_dir}/water_${selected}_bridge_shutdown.jsonl"
   cleanup_launch
   python3 "${repo_root}/scripts/audit_formal_water_launch_log.py" \
     --log "${output_dir}/water_${selected}_launch.log" \
     --expected-stable-marker-count "${expected_stable_marker_count}" \
     --required-clean-exit-process water_evaluation_bridge \
+    --required-clean-exit-process formal_vehicle_product_native_bridge \
+    --required-clean-exit-process cleaning_actuator_scalar_native_bridge \
     --required-clean-exit-process a300_drivetrain_native_bridge \
+    --required-clean-exit-process-count formal_contact_evaluation_native_bridge=6 \
+    --required-clean-exit-process formal_auxiliary_native_bridge \
     --required-clean-exit-process cleaning_actuator_vector_bridge \
     --output "${output_dir}/water_${selected}_launch_audit.json"
 }

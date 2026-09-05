@@ -27,13 +27,13 @@ def test_committed_component_register_matches_expanded_urdf() -> None:
     assert result["actuator_link_count"] == 7
     assert result["functional_position_count"] == 38
     assert result["functional_component_count"] == 63
-    assert result["topic_contract_count"] == 88
-    assert result["product_topic_contract_count"] == 87
+    assert result["topic_contract_count"] == 93
+    assert result["product_topic_contract_count"] == 92
     assert result["gazebo_only_diagnostic_count"] == 1
     assert result["checked_gazebo_only_diagnostics"] == ["cleaning_motor_status"]
     assert "cleaning_motor_status" not in result["checked_product_topic_contracts"]
     assert len(result["urdf_sha256"]) == 64
-    assert result["single_writer_topic_count"] == 33
+    assert result["single_writer_topic_count"] == 69
     assert "a300_raw_odometry" in result["checked_topic_contracts"]
     assert "lidar_3d_pointcloud" in result["checked_topic_contracts"]
     assert "whole_vehicle_safety_status" in result["checked_topic_contracts"]
@@ -78,16 +78,68 @@ def test_committed_component_register_matches_expanded_urdf() -> None:
         "a300_raw_odometry",
         "cleaning_encoder_counts",
         "cleaning_encoder_joint_states",
+        "central_roller_contact",
+        "charge_receptacle_contact_native_source",
+        "cleaning_motor_fault",
+        "dry_bin_fill_level",
+        "dry_deposit_contact",
+        "emergency_stop_state",
+        "front_bumper_contact",
+        "gnss_fix",
+        "imu_data",
+        "left_side_brush_contact",
+        "lidar_2d_scan",
+        "main_contactor_closed",
+        "main_isolator_closed",
+        "recovery_filter_pressure",
+        "recovery_filter_protection",
+        "recovery_pump_current",
+        "recovery_sensed_flow",
+        "rear_bumper_contact",
+        "right_side_brush_contact",
+        "squeegee_blade_contact",
+        "squeegee_float_force",
+        "squeegee_float_position",
+        "squeegee_float_velocity",
+        "squeegee_pitch_position",
+        "squeegee_pitch_torque",
+        "squeegee_pitch_velocity",
+        "suction_nozzle_contact",
+        "tail_lights_applied",
+        "warning_lights_applied",
+        "wastewater_drain_hose_contact_native_source",
+        "wastewater_drain_permitted",
+        "wastewater_drained_volume",
+        "wastewater_high_probe",
+        "wastewater_low_probe",
+        "wastewater_sensed_level",
+        "work_lights_applied",
     }
     assert result["top_protrusion_name"] == "modular_sensor_tower"
     register = yaml.safe_load(DEFAULT_REGISTER.read_text(encoding="utf-8"))
     assert register["topic_contracts"]["front_bumper_contact"] == {
+        "transport": "gazebo_native_bridge",
+        "direction": "publisher",
+        "single_writer": True,
+        "endpoint_group": "front_bumper",
+        "writer_node": "front_bumper_contact_bridge",
+        "bridge_package": "sanitation_gazebo_control",
+        "bridge_executable": "formal_contact_evaluation_native_bridge",
+        "source_path": "starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc",
         "ros_topic": "/formal_vehicle/simulation/raw/front_bumper/contact",
         "ros_type": "ros_gz_interfaces/msg/Contacts",
         "gz_type": "gz.msgs.Contacts",
         "sensor_base_topic": "/safety/front_bumper/contact",
     }
     assert register["topic_contracts"]["rear_bumper_contact"] == {
+        "transport": "gazebo_native_bridge",
+        "direction": "publisher",
+        "single_writer": True,
+        "endpoint_group": "rear_bumper",
+        "writer_node": "rear_bumper_contact_bridge",
+        "bridge_package": "sanitation_gazebo_control",
+        "bridge_executable": "formal_contact_evaluation_native_bridge",
+        "source_path": "starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc",
         "ros_topic": "/formal_vehicle/simulation/raw/rear_bumper/contact",
         "ros_type": "ros_gz_interfaces/msg/Contacts",
         "gz_type": "gz.msgs.Contacts",

@@ -128,11 +128,11 @@ def test_native_bridge_build_and_shutdown_contracts_are_bound() -> None:
     assert "gz-transport13::gz-transport13" in cmake
     assert "gz-msgs10::gz-msgs10" in cmake
     assert "<depend>nav_msgs</depend>" in package
-    ordered_targets = runner.split("ordered_targets = (", 1)[1].split(")\ntargets = tuple", 1)[0]
+    ordered_targets = runner.split("ordered_targets = (", 1)[1].split(")\nnative_targets", 1)[0]
     assert '("native", "water_evaluation_bridge", "water_evaluation_bridge")' in ordered_targets
     assert '("native", "a300_drivetrain_native_bridge", "a300_drivetrain_bridge")' in ordered_targets
     assert '("parameter", "parameter_bridge", "a300_drivetrain_bridge")' not in ordered_targets
     assert "first_kind, first_executable, first_target = ordered_targets[0]" in runner
     assert "for kind, executable, target in ordered_targets[1:]:" in runner
-    assert "remaining_native_nodes, native_malformed = native_bridge_census()" in runner
+    assert "remaining_native_nodes, native_malformed, native_unknown = native_bridge_census()" in runner
     assert "--required-clean-exit-process a300_drivetrain_native_bridge" in runner
