@@ -9,8 +9,12 @@ def test_runner_launches_real_formal_vehicle_and_runtime_probe() -> None:
     assert "formal_vehicle_sim.launch.py" in source
     assert "validate_formal_vehicle_mobility_runtime.py" in source
     assert "gui:=false" in source
-    assert "--forward-speed 0.25" in source
-    assert "--forward-duration 4.0" in source
+    assert 'FORMAL_VEHICLE_MOBILITY_FORWARD_SPEED_MPS:-0.25' in source
+    assert 'FORMAL_VEHICLE_MOBILITY_FORWARD_DURATION_S:-4.0' in source
+    assert 'FORMAL_VEHICLE_MOBILITY_SAFETY_MAX_LINEAR_VELOCITY:-0.45' in source
+    assert 'FORMAL_VEHICLE_MOBILITY_EXERCISE_ESTOP:-0' in source
+    assert "--exercise-estop" in source
+    assert 'ros2 param set /whole_vehicle_safety_manager max_linear_velocity' in source
     assert '"${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch' in source
     assert "enable_safety_manager:=true" in source
     assert "simulation_initial_estop_active:=false" in source
@@ -34,9 +38,14 @@ def test_probe_reads_named_ground_truth_from_gazebo_transport() -> None:
     assert "read_gazebo_ground_truth()" in source
     assert 'MODEL_NAME = "tzcup_formal_sanitation_vehicle"' in source
     assert 'Twist, "/cmd_vel_gate"' in source
+    assert 'TwistStamped, "/base_controller/cmd_vel"' in source
     assert 'Odometry, "/odom/unfiltered"' in source
     assert 'Bool, "/safety/actuators_enabled"' in source
     assert '"stopped_angular_velocity_rad_s"' in source
     assert "FORMAL_A300_DRIVETRAIN_FORWARD_STOP_RUNTIME_PASSED" in source
     assert "acceptance_session_binding" in source
     assert "runtime_gate_binding" in source
+    assert "evaluate_estop_stop" in source
+    assert 'TwistStamped, "/base_controller/cmd_vel"' in source
+    assert 'Bool, "/emergency_stop"' in source
+    assert "final_command_writer_evidence" in source

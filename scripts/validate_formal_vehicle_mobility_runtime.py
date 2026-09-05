@@ -13,14 +13,19 @@ from typing import Any
 import rclpy
 from controller_manager_msgs.srv import ListControllers
 from diagnostic_msgs.msg import DiagnosticArray
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, TwistStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 from sensor_msgs.msg import JointState
 from std_msgs.msg import Bool, Empty
 
-from formal_vehicle_mobility_metrics import WHEEL_JOINTS, evaluate_motion, quaternion_yaw
+from formal_vehicle_mobility_metrics import (
+    WHEEL_JOINTS,
+    evaluate_estop_stop,
+    evaluate_motion,
+    quaternion_yaw,
+)
 from formal_runtime_gate_binding import load_binding
 from gazebo_ground_truth import read_named_model_pose
 
@@ -149,11 +154,15 @@ class MobilityProbe(Node):
         self.create_subscription(Odometry, "/odom/unfiltered", self._odom, 50)
         self.create_subscription(JointState, "/joint_states", self._joints, 50)
         self.create_subscription(
+            TwistStamped, "/base_controller/cmd_vel", self._final_command, 50
+        )
+        self.create_subscription(
             Bool, "/safety/actuators_enabled", self._actuator_enabled, 20
         )
         self.create_subscription(
             DiagnosticArray, "/safety/status", self._safety_status, 20
         )
+        self.create_subscription(Bool, "/emergency_stop", self._estop_feedback, 20)
         self.controller_client = self.create_client(ListControllers, "/controller_manager/list_controllers")
         self.latest_odom: dict[str, Any] | None = None
         self.latest_wheels: dict[str, dict[str, float]] | None = None
@@ -161,6 +170,9 @@ class MobilityProbe(Node):
         self.joint_samples = 0
         self.actuator_enabled_samples = 0
         self.latest_safety_status: dict[str, str] = {}
+        self.safety_status_trace: list[dict[str, Any]] = []
+        self.estop_feedback_trace: list[dict[str, int | bool]] = []
+        self.final_command_trace: list[dict[str, float | int]] = []
 
     def _actuator_enabled(self, message: Bool) -> None:
         if message.data:
@@ -168,9 +180,20 @@ class MobilityProbe(Node):
 
     def _safety_status(self, message: DiagnosticArray) -> None:
         for status in message.status:
-            self.latest_safety_status = {
+            values = {
                 item.key: item.value for item in status.values
             }
+            self.latest_safety_status = values
+            self.safety_status_trace.append(
+                {"sim_time_ns": self.get_clock().now().nanoseconds, "values": values}
+            )
+        del self.safety_status_trace[:-5000]
+
+    def _estop_feedback(self, message: Bool) -> None:
+        self.estop_feedback_trace.append(
+            {"sim_time_ns": self.get_clock().now().nanoseconds, "active": bool(message.data)}
+        )
+        del self.estop_feedback_trace[:-5000]
 
     def _odom(self, message: Odometry) -> None:
         pose = message.pose.pose
@@ -196,10 +219,22 @@ class MobilityProbe(Node):
             }
             self.joint_samples += 1
 
-    def publish_velocity(self, speed: float) -> None:
+    def _final_command(self, message: TwistStamped) -> None:
+        self.final_command_trace.append(
+            {
+                "sim_time_ns": self.get_clock().now().nanoseconds,
+                "linear_x_mps": float(message.twist.linear.x),
+                "angular_z_rad_s": float(message.twist.angular.z),
+            }
+        )
+        # Retain sufficient trace for a slow 1.0 m/s requalification run
+        # without letting an unexpected long run consume unbounded memory.
+        del self.final_command_trace[:-5000]
+
+    def publish_velocity(self, speed: float, *, estop_active: bool = False) -> None:
         self.main_power.publish(Bool(data=True))
-        self.estop.publish(Bool(data=False))
-        self.estop_reset.publish(Bool(data=True))
+        self.estop.publish(Bool(data=estop_active))
+        self.estop_reset.publish(Bool(data=not estop_active))
         self.heartbeat.publish(Empty())
         command = Twist()
         command.linear.x = speed
@@ -210,6 +245,7 @@ class MobilityProbe(Node):
         duration: float,
         speed: float,
         rate_hz: float = 20.0,
+        estop_active: bool = False,
         clock_stall_timeout_s: float = DEFAULT_CLOCK_STALL_TIMEOUT_S,
         hard_wall_timeout_s: float = DEFAULT_PHASE_HARD_TIMEOUT_S,
     ) -> dict[str, Any]:
@@ -229,7 +265,7 @@ class MobilityProbe(Node):
         simulated = 0.0
         while simulated < duration:
             watchdog.observe(self.get_clock().now().nanoseconds, time.monotonic())
-            self.publish_velocity(speed)
+            self.publish_velocity(speed, estop_active=estop_active)
             rclpy.spin_once(self, timeout_sec=period)
             sim_now = self.get_clock().now().nanoseconds
             wall_now = time.monotonic()
@@ -254,6 +290,19 @@ class MobilityProbe(Node):
             json.loads(json.dumps(self.latest_odom)),
             json.loads(json.dumps(self.latest_wheels)),
         )
+
+    def final_command_writer_evidence(self) -> dict[str, Any]:
+        writers = sorted(
+            f"{item.node_namespace.rstrip('/')}/{item.node_name}".replace("//", "/")
+            for item in self.get_publishers_info_by_topic("/base_controller/cmd_vel")
+        )
+        return {
+            "topic": "/base_controller/cmd_vel",
+            "writers": writers,
+            "expected_sole_writer": "/whole_vehicle_safety_manager",
+            "input_topic": "/cmd_vel_gate",
+            "input_subscription_count": self.command.get_subscription_count(),
+        }
 
 
 def _wait_for_ready(node: MobilityProbe, timeout: float) -> str:
@@ -303,11 +352,14 @@ def run(
     runtime_gate_binding: dict[str, object],
     clock_stall_timeout: float = DEFAULT_CLOCK_STALL_TIMEOUT_S,
     phase_hard_timeout: float = DEFAULT_PHASE_HARD_TIMEOUT_S,
+    safety_max_linear_velocity: float = 0.45,
+    exercise_estop: bool = False,
 ) -> dict[str, Any]:
     rclpy.init()
     node = MobilityProbe()
     try:
         joint_state_broadcaster_state = _wait_for_ready(node, timeout)
+        final_command_writer_evidence = node.final_command_writer_evidence()
         settle_timing = node.spin_for(
             1.0,
             0.0,
@@ -329,6 +381,55 @@ def run(
             hard_wall_timeout_s=phase_hard_timeout,
         )
         ground_stopped, odom_stopped, wheels_stopped = node.snapshot()
+        estop_evaluation: dict[str, Any] = {"checks": {}, "metrics": {}, "passed": True}
+        estop_command: dict[str, Any] = {"exercise_estop": False}
+        if exercise_estop:
+            # Re-accelerate from rest, then assert the physical E-stop while
+            # the requested 1.0 m/s command is still being published.  The
+            # final safety-manager trace is captured independently from the
+            # input gate.
+            estop_trace_start = len(node.final_command_trace)
+            estop_status_start = len(node.safety_status_trace)
+            estop_feedback_start = len(node.estop_feedback_trace)
+            estop_motion_timing = node.spin_for(
+                min(1.0, forward_duration), forward_speed,
+                clock_stall_timeout_s=clock_stall_timeout,
+                hard_wall_timeout_s=phase_hard_timeout,
+            )
+            ground_estop_motion, odom_estop_motion, _ = node.snapshot()
+            estop_trigger_sim_time_ns = node.get_clock().now().nanoseconds
+            estop_timing = node.spin_for(
+                3.0, forward_speed, estop_active=True,
+                clock_stall_timeout_s=clock_stall_timeout,
+                hard_wall_timeout_s=phase_hard_timeout,
+            )
+            ground_estop_stopped, odom_estop_stopped, wheels_estop_stopped = node.snapshot()
+            raw_estop = {
+                "trigger_sim_time_ns": estop_trigger_sim_time_ns,
+                "final_command_trace": node.final_command_trace[estop_trace_start:],
+                "safety_status_trace": node.safety_status_trace[estop_status_start:],
+                "emergency_stop_feedback_trace": node.estop_feedback_trace[estop_feedback_start:],
+                "final_command_writer": final_command_writer_evidence,
+                "ground_truth": {
+                    "motion_start": ground_stopped,
+                    "trigger": ground_estop_motion,
+                    "stopped_end": ground_estop_stopped,
+                },
+                "plant_odom": {
+                    "trigger": odom_estop_motion["pose"],
+                    "stopped_end": odom_estop_stopped["pose"],
+                    "stopped_linear_velocity_mps": odom_estop_stopped["linear_velocity_mps"],
+                },
+                "wheel_state": {
+                    "stopped_velocities_rad_s": wheels_estop_stopped["velocities"],
+                },
+            }
+            estop_command = {
+                "exercise_estop": True,
+                "motion_timing": estop_motion_timing,
+                "timing": estop_timing,
+                "final_command_trace_topic": "/base_controller/cmd_vel",
+            }
         raw = {
             "joint_state_broadcaster_state": joint_state_broadcaster_state,
             "command_subscription_count": node.command.get_subscription_count(),
@@ -352,7 +453,14 @@ def run(
                 "stopped_velocities_rad_s": wheels_stopped["velocities"],
             },
         }
+        if exercise_estop:
+            raw["estop"] = raw_estop
         evaluation = evaluate_motion(raw)
+        if exercise_estop:
+            estop_evaluation = evaluate_estop_stop(raw)
+        evaluation["checks"].update(estop_evaluation["checks"])
+        evaluation["metrics"].update(estop_evaluation["metrics"])
+        evaluation["passed"] = all(evaluation["checks"].values())
         report = {
             "report_id": "tzcup_formal_a300_drivetrain_runtime_v1",
             "status": "FORMAL_A300_DRIVETRAIN_FORWARD_STOP_RUNTIME_PASSED" if evaluation["passed"] else "FORMAL_A300_DRIVETRAIN_FORWARD_STOP_RUNTIME_FAILED",
@@ -362,11 +470,13 @@ def run(
                 "plant_odometry_topic": "/odom/unfiltered",
                 "forward_speed_mps": forward_speed,
                 "forward_duration_s": forward_duration,
+                "safety_max_linear_velocity_mps": safety_max_linear_velocity,
                 "zero_command_duration_s": 3.0,
                 "timing_source": "/clock via rclpy use_sim_time",
                 "settle_timing": settle_timing,
                 "forward_timing": forward_timing,
                 "zero_timing": stopped_timing,
+                "estop": estop_command,
             },
             "sample_counts": {
                 "gazebo_ground_truth_pose": 3,
@@ -403,6 +513,8 @@ def main() -> None:
     parser.add_argument("--timeout", type=float, default=120.0)
     parser.add_argument("--forward-speed", type=float, default=0.25)
     parser.add_argument("--forward-duration", type=float, default=4.0)
+    parser.add_argument("--safety-max-linear-velocity", type=float, default=0.45)
+    parser.add_argument("--exercise-estop", action="store_true")
     parser.add_argument(
         "--clock-stall-timeout",
         type=float,
@@ -429,6 +541,8 @@ def main() -> None:
         runtime_gate_binding,
         args.clock_stall_timeout,
         args.phase_hard_timeout,
+        args.safety_max_linear_velocity,
+        args.exercise_estop,
     )
 
 

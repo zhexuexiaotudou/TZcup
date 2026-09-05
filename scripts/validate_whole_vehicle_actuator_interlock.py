@@ -123,7 +123,7 @@ def _endpoint_fqn(namespace: str, name: str) -> str:
 
 
 class Probe(Node):
-    def __init__(self) -> None:
+    def __init__(self, base_linear_speed: float = 0.20) -> None:
         super().__init__("whole_vehicle_actuator_interlock_acceptance")
         self.brush_samples: list[tuple[float, tuple[float, ...]]] = []
         self.pump_samples: list[tuple[float, tuple[float, ...]]] = []
@@ -132,6 +132,7 @@ class Probe(Node):
         self.joint_samples: list[tuple[float, dict[str, float]]] = []
         self.status_samples: list[tuple[float, dict]] = []
         self.status_parse_errors: list[str] = []
+        self.base_linear_speed = base_linear_speed
         self.latest_joints: dict[str, float] = {}
         self.estop = self.create_publisher(
             Bool, "/formal_vehicle/simulation/command/emergency_stop", 10
@@ -268,7 +269,7 @@ class Probe(Node):
         self.brush_input.publish(Float64MultiArray(data=[8.0, -8.0, 12.0]))
         self.pump_input.publish(Float64MultiArray(data=[20.0]))
         base = Twist()
-        base.linear.x = 0.20
+        base.linear.x = self.base_linear_speed
         base.angular.z = 0.10
         self.base_input.publish(base)
 
@@ -1102,6 +1103,8 @@ def main() -> int:
     parser.add_argument("--snapshot", type=Path, default=DEFAULT_SNAPSHOT)
     parser.add_argument("--session", type=Path, default=DEFAULT_SESSION)
     parser.add_argument("--runtime-binding", type=Path, required=True)
+    parser.add_argument("--safety-max-linear-velocity", type=float, default=0.45)
+    parser.add_argument("--base-linear-speed", type=float, default=0.20)
     args = parser.parse_args()
     if args.phase_duration < MINIMUM_PHASE_DURATION_SEC:
         raise SystemExit(
@@ -1113,7 +1116,9 @@ def main() -> int:
     )
 
     rclpy.init()
-    node = Probe()
+    if args.base_linear_speed <= 0.0 or args.base_linear_speed > args.safety_max_linear_velocity:
+        raise SystemExit("--base-linear-speed must be positive and within the safety cap")
+    node = Probe(args.base_linear_speed)
     try:
         locked_start = node.drive_phase(
             estop=False,
@@ -1147,7 +1152,7 @@ def main() -> int:
         enabled_brush = _settled(node.brush_samples, enabled_start)
         enabled_pump = _settled(node.pump_samples, enabled_start)
         enabled_base = _settled(node.base_samples, enabled_start)
-        if (0.20, 0.10) not in enabled_base:
+        if (args.base_linear_speed, 0.10) not in enabled_base:
             raise RuntimeError("enabled base command was not forwarded")
         if (8.0, -8.0, 12.0) not in enabled_brush:
             raise RuntimeError("enabled brush command was not forwarded")
@@ -1363,6 +1368,8 @@ def main() -> int:
                 "status_json": len(node.status_samples),
             },
             "managed_controllers": sorted(SWITCHED_CONTROLLERS | HELD_CONTROLLERS),
+            "safety_max_linear_velocity_mps": args.safety_max_linear_velocity,
+            "base_command_input_mps": args.base_linear_speed,
             "safety_input_writer_evidence": safety_input_writer_evidence,
             "published_healthy_safety_inputs": {
                 "bms_fault": False,

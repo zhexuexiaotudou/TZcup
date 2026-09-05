@@ -135,6 +135,10 @@ class RuntimeCollector(Node):
         self.smoothed_linear = 0.0
         self.gate_linear = 0.0
         self.base_linear = 0.0
+        self.maximum_nav_linear_mps = 0.0
+        self.maximum_smoothed_linear_mps = 0.0
+        self.maximum_gate_linear_mps = 0.0
+        self.maximum_base_linear_mps = 0.0
         self.monitor_interventions = 0
         self.dynamic_interactions = 0
         self._interaction_latched = False
@@ -201,18 +205,22 @@ class RuntimeCollector(Node):
     def _nav_command(self, message: Twist) -> None:
         self.topic_sample_counts["/cmd_vel_nav"] += 1
         self.nav_linear = abs(float(message.linear.x))
+        self.maximum_nav_linear_mps = max(self.maximum_nav_linear_mps, self.nav_linear)
 
     def _smoothed_command(self, message: Twist) -> None:
         self.topic_sample_counts["/cmd_vel_smoothed"] += 1
         self.smoothed_linear = abs(float(message.linear.x))
+        self.maximum_smoothed_linear_mps = max(self.maximum_smoothed_linear_mps, self.smoothed_linear)
 
     def _gate_command(self, message: Twist) -> None:
         self.topic_sample_counts["/cmd_vel_gate"] += 1
         self.gate_linear = abs(float(message.linear.x))
+        self.maximum_gate_linear_mps = max(self.maximum_gate_linear_mps, self.gate_linear)
 
     def _base_command(self, message: TwistStamped) -> None:
         self.topic_sample_counts["/base_controller/cmd_vel"] += 1
         self.base_linear = abs(float(message.twist.linear.x))
+        self.maximum_base_linear_mps = max(self.maximum_base_linear_mps, self.base_linear)
 
     def _monitor(self, message: CollisionMonitorState) -> None:
         self.topic_sample_counts["/collision_monitor_state"] += 1
@@ -469,6 +477,12 @@ class RuntimeCollector(Node):
             "verified_dynamic_interaction_count": self.dynamic_interactions,
             "dynamic_interaction_candidates": self.interaction_candidates,
             "collision_monitor_intervention_count": self.monitor_interventions,
+            "maximum_command_speeds_mps": {
+                "nav": self.maximum_nav_linear_mps,
+                "smoothed": self.maximum_smoothed_linear_mps,
+                "gate": self.maximum_gate_linear_mps,
+                "base": self.maximum_base_linear_mps,
+            },
             "geofence_violation_count": geofence_violations,
             "odom_pose_sample_count": len(mission_poses),
             "map_pose_sample_count": len(mission_map_poses),
@@ -497,6 +511,8 @@ def main() -> int:
     parser.add_argument("--goal-y", type=float)
     parser.add_argument("--nominal-leg", type=float, default=30.0)
     parser.add_argument("--timeout", type=float, default=240.0)
+    parser.add_argument("--operation-speed-profile", required=True)
+    parser.add_argument("--safety-max-linear-velocity", type=float, required=True)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     mission_contract = load_public_mission_contract(
@@ -524,6 +540,8 @@ def main() -> int:
     value["runtime_world_manifest"] = json.loads(
         args.runtime_world_manifest.read_text(encoding="utf-8")
     )
+    value["operation_speed_profile"] = args.operation_speed_profile
+    value["safety_max_linear_velocity_mps"] = args.safety_max_linear_velocity
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
     return 0 if value["nav2_goal_succeeded"] else 2

@@ -19,6 +19,17 @@ snapshot_manifest="${FORMAL_VEHICLE_SNAPSHOT_MANIFEST:-${repo_root}/reports/engi
 session_status="${FORMAL_ACCEPTANCE_SESSION_STATUS:-${repo_root}/artifacts/formal_final_acceptance_session.json}"
 domain="${ROS_DOMAIN_ID:-73}"
 dynamic_seed="${FORMAL_DYNAMIC_SEED:-$(date +%s%N)}"
+operation_speed_profile="${FORMAL_DYNAMIC_OPERATION_SPEED_PROFILE:-mapping_safe}"
+safety_max_linear_velocity="${FORMAL_DYNAMIC_SAFETY_MAX_LINEAR_VELOCITY:-0.45}"
+if [[ "${safety_max_linear_velocity}" != "0.45" ]]; then
+  [[ "${FORMAL_DRY_SPEED_REQUALIFICATION:-}" == "1" && -n "${FORMAL_DRY_SPEED_REQUALIFICATION_MARKER:-}" && -n "${FORMAL_DRY_SPEED_REQUALIFICATION_ROOT:-}" ]] || {
+    echo "non-default safety cap requires the requalification wrapper opt-in marker" >&2; exit 2;
+  }
+  python3 "${repo_root}/scripts/formal_dry_speed_requalification_token.py" --validate \
+    --profile "${repo_root}/config/high_fidelity_vehicle/formal_dry_speed_requalification.yaml" \
+    --run-root "${FORMAL_DRY_SPEED_REQUALIFICATION_ROOT}" --token "${FORMAL_DRY_SPEED_REQUALIFICATION_MARKER}" \
+    --requested-cap "${safety_max_linear_velocity}"
+fi
 
 export PYTHONPATH="${repo_root}/starter_ws/src/sanitation_formal_campus_integration${PYTHONPATH:+:${PYTHONPATH}}"
 formal_runtime_configure "${domain}"
@@ -169,7 +180,8 @@ runtime_world_manifest="${runtime_root}/cleaning_world_manifest.json"
   episode_manifest:="${episode_root}/public/episode_manifest.json" \
   map_artifact_dir:="${saved_map_root}" \
   pedestrian_schedule:="${runtime_schedule}" \
-  start_pedestrians:=true start_coverage:=false operation_speed_profile:=mapping_safe \
+  start_pedestrians:=true start_coverage:=false operation_speed_profile:="${operation_speed_profile}" \
+  max_linear_velocity:="${safety_max_linear_velocity}" \
   >"${runtime_root}/dynamic.launch.log" 2>&1 &
 launch_pid=$!
 collector_pid=""
@@ -193,6 +205,8 @@ collector_args=(
   --runtime-world-manifest "${runtime_world_manifest}"
   --nominal-leg "${FORMAL_DYNAMIC_NOMINAL_LEG_M:-30.0}"
   --timeout "${FORMAL_DYNAMIC_TIMEOUT_S:-300}"
+  --operation-speed-profile "${operation_speed_profile}"
+  --safety-max-linear-velocity "${safety_max_linear_velocity}"
   --output "${telemetry}"
 )
 if [[ -n "${FORMAL_DYNAMIC_GOAL_X:-}" ]]; then

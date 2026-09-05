@@ -1,5 +1,7 @@
 # 项目推进记录
 
+- 已新增独立 `formal_dry_speed_requalification` 证据车道：只有操作员显式设置 `FORMAL_DRY_SPEED_REQUALIFICATION=1` 才会在隔离、串行的 Gazebo 子门中临时将 safety manager 上限设为 `1.0 m/s`。wrapper 会生成 run-scoped explicit opt-in marker，四个复用 runner 对无 marker 的非默认 cap 直接拒绝；聚合前还会重新核验 session 仍为 RUNNING 且 frozen closure 未漂移。它仅当四份报告同源且同时通过 1.0 m/s 运动/停车、同一时序中 live E-stop 的 final command=0 与 pose/odom/轮速停稳、TTC 干预零碰撞和真实刷盘接触去污时给出 `dry_speed_safety_requalified=true`；产品 `operational_envelopes.yaml` 默认值仍是 `0.45 m/s`，竞赛效率资格仍为 false，尚未产生新的运行证据。报告的 machine-checkable evidence marker 仅供未来速度-enable PR fail-closed 消费，不改最终正式编排，也不授权实机。
+
 - 原生 CAD 制造输入仍未放行：per-part release-gap register 对 105 个项目件建立合同来源的未决门索引（64 个去重门，21 个供应商件继续排除），静态预检第 12 检查仅验证其完整性；`native_cad_release_ready` 与 `manufacturing_release_ready` 均为 `false`，不得以 register 替代 STEP/FCStd、export receipt 或受控制造证据。
 
 - 正式 saved-map 干式清扫上游现显式选择 `dry_cleaning_competition_candidate`：仅 `CleanPath` 与 velocity smoother 请求 `1.0 m/s`，mapping、湿式回收、transit controller 及 collision-monitor/speed-filter 限制保持既有配置；最终 `whole_vehicle_safety_manager` 在完成 1.0 m/s 重新鉴定前仍以 `0.45 m/s` 限幅，因此当前不代表实车速度已放行。该接线不改变未通过的实测效率门；必须先完成同一 source-bound session 的 1.0 m/s mobility/interlock/dynamic/cleaning 安全门，再以有效覆盖并集和实际总时长（含转向、避障、补扫）验证 `>=3500 m²/h`，不得使用静态公式替代。

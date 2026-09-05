@@ -12,6 +12,17 @@ session="${FORMAL_ACCEPTANCE_SESSION:-${repo_root}/artifacts/formal_final_accept
 snapshot="${FORMAL_VEHICLE_SNAPSHOT_MANIFEST:-${repo_root}/reports/engineering/formal_vehicle_snapshot_manifest.json}"
 closure_manifest="${FORMAL_FINAL_RUNTIME_CLOSURE_MANIFEST:-${runtime_ws}/final_runtime_closure_manifest.json}"
 runtime_binding="${output}.runtime_binding.json"
+drive_speed_mps="${FORMAL_DIRT_DRIVE_SPEED_MPS:-0.06}"
+safety_max_linear_velocity="${FORMAL_DIRT_SAFETY_MAX_LINEAR_VELOCITY:-0.45}"
+if [[ "${safety_max_linear_velocity}" != "0.45" ]]; then
+  [[ "${FORMAL_DRY_SPEED_REQUALIFICATION:-}" == "1" && -n "${FORMAL_DRY_SPEED_REQUALIFICATION_MARKER:-}" && -n "${FORMAL_DRY_SPEED_REQUALIFICATION_ROOT:-}" ]] || {
+    echo "non-default safety cap requires the requalification wrapper opt-in marker" >&2; exit 2;
+  }
+  python3 "${repo_root}/scripts/formal_dry_speed_requalification_token.py" --validate \
+    --profile "${repo_root}/config/high_fidelity_vehicle/formal_dry_speed_requalification.yaml" \
+    --run-root "${FORMAL_DRY_SPEED_REQUALIFICATION_ROOT}" --token "${FORMAL_DRY_SPEED_REQUALIFICATION_MARKER}" \
+    --requested-cap "${safety_max_linear_velocity}"
+fi
 formal_runtime_register_evidence_paths "${output_dir}" "${output}" "${runtime_binding}"
 
 if [[ ! -f "${runtime_ws}/install/setup.bash" ]]; then
@@ -71,8 +82,19 @@ cleanup() {
 }
 formal_runtime_install_traps cleanup
 
+if [[ "${safety_max_linear_velocity}" != "0.45" ]]; then
+  for _ in $(seq 1 90); do
+    timeout 10s ros2 param set /whole_vehicle_safety_manager max_linear_velocity "${safety_max_linear_velocity}" && break
+    sleep 1
+  done
+  timeout 10s ros2 param get /whole_vehicle_safety_manager max_linear_velocity | grep -Fq "${safety_max_linear_velocity}" || {
+    echo "requalification safety-cap override was not applied" >&2; exit 3;
+  }
+fi
+
 python3 "${repo_root}/scripts/validate_formal_ground_dirt_cleaning_runtime.py" \
   --setup "${output_dir}/episode/evaluator/runtime_setup.json" \
   --output "${output}" --snapshot "${snapshot}" --session "${session}" \
   --runtime-binding "${runtime_binding}" \
+  --drive-speed "${drive_speed_mps}" --safety-max-linear-velocity "${safety_max_linear_velocity}" \
   > "${output_dir}/probe.log" 2>&1

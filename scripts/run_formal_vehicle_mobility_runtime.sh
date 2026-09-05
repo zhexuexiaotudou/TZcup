@@ -15,6 +15,19 @@ launch_log="${FORMAL_VEHICLE_MOBILITY_LOG:-${output%.json}.launch.log}"
 dry_load_mass_kg="${FORMAL_VEHICLE_DRY_LOAD_MASS_KG:-0.0}"
 wastewater_load_mass_kg="${FORMAL_VEHICLE_WASTEWATER_LOAD_MASS_KG:-0.0}"
 ready_timeout_s="${FORMAL_VEHICLE_MOBILITY_READY_TIMEOUT_S:-150}"
+forward_speed_mps="${FORMAL_VEHICLE_MOBILITY_FORWARD_SPEED_MPS:-0.25}"
+forward_duration_s="${FORMAL_VEHICLE_MOBILITY_FORWARD_DURATION_S:-4.0}"
+safety_max_linear_velocity="${FORMAL_VEHICLE_MOBILITY_SAFETY_MAX_LINEAR_VELOCITY:-0.45}"
+exercise_estop="${FORMAL_VEHICLE_MOBILITY_EXERCISE_ESTOP:-0}"
+if [[ "${safety_max_linear_velocity}" != "0.45" ]]; then
+  [[ "${FORMAL_DRY_SPEED_REQUALIFICATION:-}" == "1" && -n "${FORMAL_DRY_SPEED_REQUALIFICATION_MARKER:-}" && -n "${FORMAL_DRY_SPEED_REQUALIFICATION_ROOT:-}" ]] || {
+    echo "non-default safety cap requires the requalification wrapper opt-in marker" >&2; exit 2;
+  }
+  python3 "${repo_root}/scripts/formal_dry_speed_requalification_token.py" --validate \
+    --profile "${repo_root}/config/high_fidelity_vehicle/formal_dry_speed_requalification.yaml" \
+    --run-root "${FORMAL_DRY_SPEED_REQUALIFICATION_ROOT}" --token "${FORMAL_DRY_SPEED_REQUALIFICATION_MARKER}" \
+    --requested-cap "${safety_max_linear_velocity}"
+fi
 # Retire every canonical output before any setup/preflight work.  A failed
 # fresh run must never leave a prior PASS artifact or its binding appearing
 # current in the active final-acceptance session.
@@ -73,6 +86,26 @@ cleanup() {
 }
 formal_runtime_install_traps cleanup
 
+if [[ "${safety_max_linear_velocity}" != "0.45" ]]; then
+  for _ in $(seq 1 90); do
+    timeout 10s ros2 param set /whole_vehicle_safety_manager max_linear_velocity "${safety_max_linear_velocity}" && break
+    sleep 1
+  done
+  timeout 10s ros2 param get /whole_vehicle_safety_manager max_linear_velocity | grep -Fq "${safety_max_linear_velocity}" || {
+    echo "requalification safety-cap override was not applied" >&2; exit 3;
+  }
+fi
+
+probe_args=()
+if [[ "${exercise_estop}" == "1" ]]; then
+  probe_args+=(--exercise-estop)
+elif [[ "${exercise_estop}" != "0" ]]; then
+  echo "FORMAL_VEHICLE_MOBILITY_EXERCISE_ESTOP must be 0 or 1" >&2
+  exit 2
+fi
+
 python3 "${repo_root}/scripts/validate_formal_vehicle_mobility_runtime.py" \
-  --output "${output}" --timeout "${ready_timeout_s}" --forward-speed 0.25 --forward-duration 4.0 \
-  --snapshot "${snapshot}" --session "${session}" --runtime-binding "${runtime_binding}"
+  --output "${output}" --timeout "${ready_timeout_s}" --forward-speed "${forward_speed_mps}" --forward-duration "${forward_duration_s}" \
+  --safety-max-linear-velocity "${safety_max_linear_velocity}" \
+  --snapshot "${snapshot}" --session "${session}" --runtime-binding "${runtime_binding}" \
+  "${probe_args[@]}"

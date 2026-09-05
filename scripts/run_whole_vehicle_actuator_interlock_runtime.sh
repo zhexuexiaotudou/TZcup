@@ -12,6 +12,17 @@ session="${FORMAL_ACCEPTANCE_SESSION:-${repo_root}/artifacts/formal_final_accept
 snapshot="${FORMAL_VEHICLE_SNAPSHOT_MANIFEST:-${repo_root}/reports/engineering/formal_vehicle_snapshot_manifest.json}"
 closure_manifest="${FORMAL_FINAL_RUNTIME_CLOSURE_MANIFEST:-${runtime_ws}/final_runtime_closure_manifest.json}"
 runtime_binding="${output}.runtime_binding.json"
+safety_max_linear_velocity="${WHOLE_VEHICLE_INTERLOCK_SAFETY_MAX_LINEAR_VELOCITY:-0.45}"
+base_linear_speed="${WHOLE_VEHICLE_INTERLOCK_BASE_LINEAR_SPEED:-0.20}"
+if [[ "${safety_max_linear_velocity}" != "0.45" ]]; then
+  [[ "${FORMAL_DRY_SPEED_REQUALIFICATION:-}" == "1" && -n "${FORMAL_DRY_SPEED_REQUALIFICATION_MARKER:-}" && -n "${FORMAL_DRY_SPEED_REQUALIFICATION_ROOT:-}" ]] || {
+    echo "non-default safety cap requires the requalification wrapper opt-in marker" >&2; exit 2;
+  }
+  python3 "${repo_root}/scripts/formal_dry_speed_requalification_token.py" --validate \
+    --profile "${repo_root}/config/high_fidelity_vehicle/formal_dry_speed_requalification.yaml" \
+    --run-root "${FORMAL_DRY_SPEED_REQUALIFICATION_ROOT}" --token "${FORMAL_DRY_SPEED_REQUALIFICATION_MARKER}" \
+    --requested-cap "${safety_max_linear_velocity}"
+fi
 formal_runtime_register_evidence_paths "${output}" "${runtime_binding}" "${launch_log}"
 
 if [[ ! -f "${runtime_ws}/install/setup.bash" ]]; then
@@ -93,9 +104,18 @@ if [[ "${ready}" != "true" ]]; then
   exit 1
 fi
 
+if [[ "${safety_max_linear_velocity}" != "0.45" ]]; then
+  timeout 10s ros2 param set /whole_vehicle_safety_manager max_linear_velocity "${safety_max_linear_velocity}"
+  timeout 10s ros2 param get /whole_vehicle_safety_manager max_linear_velocity | grep -Fq "${safety_max_linear_velocity}" || {
+    echo "requalification safety-cap override was not applied" >&2; exit 3;
+  }
+fi
+
 python3 "${repo_root}/scripts/validate_whole_vehicle_actuator_interlock.py" \
   --output "${output}" --snapshot "${snapshot}" --session "${session}" \
-  --runtime-binding "${runtime_binding}"
+  --runtime-binding "${runtime_binding}" \
+  --safety-max-linear-velocity "${safety_max_linear_velocity}" \
+  --base-linear-speed "${base_linear_speed}"
 
 launch_state="$(ps -o stat= -p "${launch_pid}" 2>/dev/null || true)"
 if ! kill -0 "${launch_pid}" 2>/dev/null \

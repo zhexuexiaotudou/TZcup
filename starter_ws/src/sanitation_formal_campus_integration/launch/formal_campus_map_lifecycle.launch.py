@@ -262,9 +262,10 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                         "operation_speed_profile_file": LaunchConfiguration(
                             "operation_speed_profile_file"
                         ),
-                        "operation_speed_profile": LaunchConfiguration(
+                "operation_speed_profile": LaunchConfiguration(
                             "operation_speed_profile"
                         ),
+                "max_linear_velocity": LaunchConfiguration("max_linear_velocity"),
                 "base_nav2_params_file": LaunchConfiguration("base_nav2_params_file"),
             }.items(),
         ),
@@ -443,6 +444,14 @@ def generate_launch_description() -> LaunchDescription:
             description=(
                 "Explicit formal runtime profile; cleaning defaults to dry 1.0 m/s, "
                 "while mapping must select mapping_safe."
+            ),
+        ),
+        DeclareLaunchArgument(
+            "max_linear_velocity",
+            default_value="0.45",
+            description=(
+                "Final whole-vehicle cap; retained at 0.45 m/s except for an "
+                "explicit isolated requalification invocation."
             ),
         ),
         DeclareLaunchArgument(
