@@ -22,6 +22,7 @@ def validate() -> dict:
     cleaning = (ROOT / "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/cleaning_mechanism.xacro").read_text(encoding="utf-8")
     interfaces = (ROOT / "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/control_interfaces.xacro").read_text(encoding="utf-8")
     launch = (ROOT / "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py").read_text(encoding="utf-8")
+    scalar_bridge = (ROOT / "starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorScalarNativeBridge.cc").read_text(encoding="utf-8")
     vector_bridge = (ROOT / "starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorVectorBridge.cc").read_text(encoding="utf-8")
     safety = (ROOT / "starter_ws/src/sanitation_safety/sanitation_safety/whole_vehicle_safety_core.py").read_text(encoding="utf-8")
     core_test = (ROOT / "starter_ws/src/sanitation_gazebo_control/test/test_cleaning_actuator_motor_core.cc").read_text(encoding="utf-8")
@@ -68,8 +69,26 @@ def validate() -> dict:
                 token in launch
                 for token in (
                     "cleaning_actuator_command_mirror",
-                    "cleaning_actuator_motor_bridge",
+                    'executable="cleaning_actuator_scalar_native_bridge"',
+                    'name="cleaning_actuator_scalar_bridge"',
+                    'executable="cleaning_actuator_vector_bridge"',
+                    'name="cleaning_actuator_motor_bridge"',
+                )
+            )
+            and "NativeBridgeSupport(\"cleaning_actuator_scalar_native_bridge\")" in scalar_bridge
+            and all(
+                token in scalar_bridge
+                for token in (
+                    "RosToGazeboEndpoint<std_msgs::msg::Float64, gz::msgs::Double>",
+                    "RosToGazeboEndpoint<std_msgs::msg::Bool, gz::msgs::Boolean>",
+                    "GazeboToRosEndpoint<std_msgs::msg::Bool, gz::msgs::Boolean>",
+                    "GazeboToRosEndpoint<std_msgs::msg::Float64, gz::msgs::Double>",
+                    "cleaning_motors/command/lift_position",
+                    "cleaning_motors/command/enable",
+                    "cleaning_motors/command/reset_faults",
                     "cleaning_motors/fault_active",
+                    "cleaning_motors/total_current_a",
+                    "cleaning_motors/total_power_w",
                 )
             )
             and "cleaning_motors/motor_temperature_c" in vector_bridge

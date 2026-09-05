@@ -232,6 +232,10 @@ def test_topic_adapter_contract_covers_formal_sensor_and_legacy_odom_names():
         ROOT
         / "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py"
     ).read_text(encoding="utf-8")
+    product_bridge = (
+        ROOT
+        / "starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc"
+    ).read_text(encoding="utf-8")
     high_bandwidth_bridges = yaml.safe_load(
         (
             ROOT
@@ -246,9 +250,29 @@ def test_topic_adapter_contract_covers_formal_sensor_and_legacy_odom_names():
         *native.keys(),
     ]:
         assert (
-            f'"{topic}@' in formal_launch
+            topic in product_bridge
             or topic in configured_high_bandwidth_topics
         )
+    # Control-plane aliases moved from parameter_bridge into the native
+    # product bridge; the high-bandwidth topics remain governed by the YAML
+    # contract above.
+    assert 'NativeBridgeSupport("formal_vehicle_product_native_bridge")' in product_bridge
+    for ros_type, gazebo_type in (
+        ("sensor_msgs::msg::LaserScan", "gz::msgs::LaserScan"),
+        ("sensor_msgs::msg::NavSatFix", "gz::msgs::NavSat"),
+        ("sensor_msgs::msg::Imu", "gz::msgs::IMU"),
+    ):
+        assert f"GazeboToRosEndpoint<{ros_type}, {gazebo_type}>" in product_bridge
+    product_executable = formal_launch.index(
+        'executable="formal_vehicle_product_native_bridge"'
+    )
+    product_node = formal_launch[
+        formal_launch.rfind("Node(", 0, product_executable) :
+        formal_launch.index("),", product_executable)
+    ]
+    assert 'name="formal_vehicle_product_bridge"' in product_node
+    assert 'package="sanitation_gazebo_control"' in product_node
+    assert 'parameter_bridge' not in product_node
 
     localization = contract["localization_contract"]
     assert localization["default_backend"] == "nav2_amcl"

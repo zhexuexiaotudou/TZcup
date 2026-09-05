@@ -46,9 +46,9 @@
       ],
       "control": [
         {
-          "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
-          "token": "/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan",
-          "line": 751,
+          "path": "starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc",
+          "token": "kLidarScan",
+          "line": 23,
           "present": true
         }
       ],
@@ -348,9 +348,9 @@
       ],
       "control": [
         {
-          "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
-          "token": "/sensors/gnss/fix@sensor_msgs/msg/NavSatFix",
-          "line": 752,
+          "path": "starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc",
+          "token": "kGnssFix",
+          "line": 25,
           "present": true
         }
       ],
@@ -406,9 +406,9 @@
       ],
       "control": [
         {
-          "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
-          "token": "/sensors/imu/data@sensor_msgs/msg/Imu",
-          "line": 753,
+          "path": "starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc",
+          "token": "kImuData",
+          "line": 27,
           "present": true
         }
       ],
@@ -525,7 +525,7 @@
         {
           "path": "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantSystem.cc",
           "token": "resistive_brake_active",
-          "line": 250,
+          "line": 246,
           "present": true
         }
       ],

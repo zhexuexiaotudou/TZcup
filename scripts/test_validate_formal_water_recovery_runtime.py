@@ -110,6 +110,10 @@ def test_formal_vehicle_registers_plugin_world_and_ros_bridges() -> None:
         ROOT
         / "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py"
     ).read_text(encoding="utf-8")
+    product_bridge = (
+        ROOT
+        / "starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc"
+    ).read_text(encoding="utf-8")
     assert "libWaterRecoverySystem.so" in xacro
     assert "<pump_rated_flow_l_min>15.1</pump_rated_flow_l_min>" in xacro
     assert "<hydraulic_derating>0.70</hydraulic_derating>" in xacro
@@ -123,7 +127,10 @@ def test_formal_vehicle_registers_plugin_world_and_ros_bridges() -> None:
         "recovered_volume_l",
         "tank_full",
     ):
-        assert f"water_recovery/{topic}" in launch
+        assert f"water_recovery/{topic}" in product_bridge
+    assert 'NativeBridgeSupport("formal_vehicle_product_native_bridge")' in product_bridge
+    assert 'executable="formal_vehicle_product_native_bridge"' in launch
+    assert 'name="formal_vehicle_product_bridge"' in launch
     assert 'water_evaluation_interfaces = LaunchConfiguration(' in launch
     assert 'DeclareLaunchArgument(\n                "water_evaluation_interfaces"' in launch
     assert 'default_value="false"' in launch
@@ -253,6 +260,23 @@ def test_runtime_acceptance_contains_required_positive_and_negative_gates() -> N
     assert "actuator_permission_enabled_continuous_window" in preflight
 
 
+def test_water_runner_requires_twelve_native_and_zero_parameter_bridges() -> None:
+    runner = (ROOT / "scripts/run_formal_water_recovery_runtime.sh").read_text(
+        encoding="utf-8"
+    )
+    shutdown = runner[
+        runner.index("formal_water_stop_active_bridges()") : runner.index("run_scenario()")
+    ]
+    ordered_targets = shutdown.split("ordered_targets = (", 1)[1].split(
+        ")\nnative_targets", 1
+    )[0]
+    assert ordered_targets.count('(\"native\",') == 12
+    assert "expected_nodes=[]" in shutdown
+    assert "unexpected = sorted(initial_nodes)" in shutdown
+    assert "if (\n    malformed\n    or native_malformed\n    or native_unknown\n    or unexpected" in shutdown
+    assert "formal_water_stop_active_parameter_bridges" not in runner
+
+
 def test_water_recovery_requires_live_blade_and_brush_ground_contacts() -> None:
     validator = (ROOT / "scripts/validate_formal_water_recovery_runtime.py").read_text(
         encoding="utf-8"
@@ -260,6 +284,10 @@ def test_water_recovery_requires_live_blade_and_brush_ground_contacts() -> None:
     launch = (
         ROOT
         / "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py"
+    ).read_text(encoding="utf-8")
+    contact_bridge = (
+        ROOT
+        / "starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc"
     ).read_text(encoding="utf-8")
     cleaning = (
         ROOT
@@ -278,8 +306,10 @@ def test_water_recovery_requires_live_blade_and_brush_ground_contacts() -> None:
     }
     for source, topic in contact_sources.items():
         assert topic in validator
-        assert f"{source}@ros_gz_interfaces/msg/Contacts[gz.msgs.Contacts" in launch
+        assert source in contact_bridge
+        assert "GroupedGazeboToRosEndpoint<ros_gz_interfaces::msg::Contacts, gz::msgs::Contacts>" in contact_bridge
         assert f'"{source}",\n                "{topic}",' in launch
+    assert 'executable="formal_contact_evaluation_native_bridge"' in launch
     for sensor, collision in (
         ("${side}_side_brush_ground_contact", "${side}_side_brush_link_collision"),
         ("central_roller_ground_contact", "central_roller_link_collision"),
