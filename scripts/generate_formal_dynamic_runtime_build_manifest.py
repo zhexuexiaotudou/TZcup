@@ -103,6 +103,7 @@ SOURCE_ONLY_RUNTIME_FILES = (
     "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantCore.cc",
     "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantSystem.cc",
     "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainCommandAdapter.cc",
+    "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainNativeBridge.cc",
     "starter_ws/src/sanitation_gazebo_control/src/WaterRecoverySystem.cc",
     "starter_ws/src/sanitation_safety/setup.py",
     "starter_ws/src/sanitation_power_system/setup.py",

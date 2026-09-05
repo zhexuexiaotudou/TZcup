@@ -34,7 +34,7 @@ source_snapshot:
       sha256: 3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9
       role: nominal_layout_frames
     - path: config/high_fidelity_vehicle/formal_vehicle_component_register.yaml
-      sha256: 83b8586c5ade5065cef9d44445fe4bc44c61adf4f1fd19786bd2ccf5a031b755
+      sha256: 2917c0878f2f440faa8a6d6e7ede751ad8ff49ca487c51accb8bb91ad096d4b4
       role: component_and_functional_interface_register
     - path: reports/engineering/formal_competition_vehicle.urdf
       sha256: 2b399eaba8de34fd55ca663a3b6b49437070c72969f5e22faf2a64a12ba27db8

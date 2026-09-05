@@ -27,13 +27,14 @@ def test_committed_component_register_matches_expanded_urdf() -> None:
     assert result["actuator_link_count"] == 7
     assert result["functional_position_count"] == 38
     assert result["functional_component_count"] == 63
-    assert result["topic_contract_count"] == 87
-    assert result["product_topic_contract_count"] == 86
+    assert result["topic_contract_count"] == 88
+    assert result["product_topic_contract_count"] == 87
     assert result["gazebo_only_diagnostic_count"] == 1
     assert result["checked_gazebo_only_diagnostics"] == ["cleaning_motor_status"]
     assert "cleaning_motor_status" not in result["checked_product_topic_contracts"]
     assert len(result["urdf_sha256"]) == 64
-    assert result["single_writer_topic_count"] == 32
+    assert result["single_writer_topic_count"] == 33
+    assert "a300_raw_odometry" in result["checked_topic_contracts"]
     assert "lidar_3d_pointcloud" in result["checked_topic_contracts"]
     assert "whole_vehicle_safety_status" in result["checked_topic_contracts"]
     assert "warning_lights_state" in result["checked_topic_contracts"]
@@ -74,6 +75,7 @@ def test_committed_component_register_matches_expanded_urdf() -> None:
         "rear_right_camera_info",
         "a300_encoder_counts",
         "a300_encoder_joint_states",
+        "a300_raw_odometry",
         "cleaning_encoder_counts",
         "cleaning_encoder_joint_states",
     }
@@ -193,6 +195,7 @@ def test_committed_component_register_matches_expanded_urdf() -> None:
     assert positions["mobility"]["required_topic_contracts"] == [
         "a300_encoder_counts",
         "a300_encoder_joint_states",
+        "a300_raw_odometry",
     ]
     assemblies = {item["id"]: item for item in register["mechanical_subassemblies"]}
     assert assemblies["dry_storage"]["parent_link"] == "storage_system_mount_link"
@@ -441,6 +444,79 @@ def test_native_gazebo_bridge_type_is_checked_against_compiled_endpoint(
     register = _mutated_register(tmp_path, mutate)
     with pytest.raises(ComponentRegisterError, match="exact GZ->ROS endpoint"):
         validate(register_path=register)
+
+
+def test_a300_native_odometry_contract_is_bound_to_compiled_endpoint(
+    tmp_path: Path,
+) -> None:
+    def mutate(data: dict) -> None:
+        data["topic_contracts"]["a300_raw_odometry"]["gz_type"] = (
+            "gz.msgs.Pose"
+        )
+
+    register = _mutated_register(tmp_path, mutate)
+    with pytest.raises(ComponentRegisterError, match="exact GZ->ROS endpoint"):
+        validate(register_path=register)
+
+
+def test_a300_native_odometry_requires_exact_launch_executable(tmp_path: Path) -> None:
+    def mutate(data: dict) -> None:
+        data["topic_contracts"]["a300_raw_odometry"]["bridge_executable"] = (
+            "parameter_bridge"
+        )
+
+    register = _mutated_register(tmp_path, mutate)
+    with pytest.raises(ComponentRegisterError, match="expected exactly one launch node"):
+        validate(register_path=register)
+
+
+def test_a300_native_odometry_requires_its_scoped_launch_remap(tmp_path: Path) -> None:
+    launch = tmp_path / "formal_vehicle_sim.launch.py"
+    original = DEFAULT_LAUNCH.read_text(encoding="utf-8")
+    mutated = original.replace('"/odom/unfiltered",', '"/odom/wrong",', 1)
+    assert mutated != original
+    launch.write_text(mutated, encoding="utf-8")
+    with pytest.raises(ComponentRegisterError, match="exact GZ->ROS endpoint"):
+        validate(
+            launch_path=launch,
+            bridge_config_paths=DEFAULT_BRIDGE_CONFIGS,
+        )
+
+
+def test_native_single_writer_detects_another_node_remapped_to_same_topic(
+    tmp_path: Path,
+) -> None:
+    launch = tmp_path / "formal_vehicle_sim.launch.py"
+    launch.write_text(
+        DEFAULT_LAUNCH.read_text(encoding="utf-8")
+        + '''
+duplicate_a300_odometry_writer = Node(
+    package="sanitation_gazebo_control",
+    executable="a300_drivetrain_native_bridge",
+    name="duplicate_a300_odometry_writer",
+    remappings=[
+        (
+            "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/odom",
+            "/odom/unfiltered",
+        ),
+    ],
+)
+''',
+        encoding="utf-8",
+    )
+
+    def mutate(data: dict) -> None:
+        duplicate = dict(data["topic_contracts"]["a300_raw_odometry"])
+        duplicate["writer_node"] = "duplicate_a300_odometry_writer"
+        data["topic_contracts"]["duplicate_a300_raw_odometry"] = duplicate
+
+    register = _mutated_register(tmp_path, mutate)
+    with pytest.raises(ComponentRegisterError, match="expected only"):
+        validate(
+            register_path=register,
+            launch_path=launch,
+            bridge_config_paths=DEFAULT_BRIDGE_CONFIGS,
+        )
 
 
 def test_native_gazebo_bridge_requires_exactly_one_launched_writer(

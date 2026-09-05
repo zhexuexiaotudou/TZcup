@@ -112,17 +112,28 @@ def test_launch_uses_native_bridge_without_expanding_product_parameter_bridges()
     assert condition.args[0].id == "water_evaluation_interfaces"
 
 
-def test_native_bridge_is_installed_and_requires_clean_exit_before_ordered_bridges() -> None:
+def test_native_bridges_are_reaped_before_ordered_parameter_bridges() -> None:
     cmake = CMAKE.read_text(encoding="utf-8")
     runner = RUNNER.read_text(encoding="utf-8")
     assert "add_executable(water_evaluation_bridge" in cmake
     assert "install(TARGETS water_evaluation_bridge" in cmake
-    assert 'native_target = "water_evaluation_bridge"' in runner
+    ordered_targets = runner.split("ordered_targets = (", 1)[1].split(")\ntargets = tuple", 1)[0]
+    assert '("native", "water_evaluation_bridge", "water_evaluation_bridge")' in ordered_targets
+    assert '("native", "a300_drivetrain_native_bridge", "a300_drivetrain_bridge")' in ordered_targets
+    assert '("native", "cleaning_actuator_vector_bridge", "cleaning_actuator_motor_bridge")' in ordered_targets
+    assert '("parameter", "parameter_bridge", "a300_drivetrain_bridge")' not in ordered_targets
     assert '"native_bridge_reaped"' in runner
     assert '"native_bridge_clean_exit"' not in runner
     assert '"native_bridge_exit_not_clean"' in runner
     assert 'native_state == "missing"' in runner
     assert 'saw_zombie=native_saw_zombie' in runner
-    assert runner.index("os.kill(native_pid, signal.SIGINT)") < runner.index(
+    assert "first_kind, first_executable, first_target = ordered_targets[0]" in runner
+    assert "stop_native_bridge(first_executable, first_target)" in runner
+    assert "for kind, executable, target in ordered_targets[1:]:" in runner
+    assert runner.index("stop_native_bridge(first_executable, first_target)") < runner.index(
         'record("ordered_shutdown_started"'
-    ) < runner.index("os.kill(pid, signal.SIGINT)")
+    )
+    assert "remaining_native_nodes, native_malformed = native_bridge_census()" in runner
+    assert "--required-clean-exit-process water_evaluation_bridge" in runner
+    assert "--required-clean-exit-process a300_drivetrain_native_bridge" in runner
+    assert "--required-clean-exit-process cleaning_actuator_vector_bridge" in runner

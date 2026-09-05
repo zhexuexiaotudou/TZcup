@@ -8,8 +8,8 @@
 
 当前冻结展开产物记录为 **196 links、195 joints、160.007583 kg**，其 SHA-256 为
 `2b399eaba8de34fd55ca663a3b6b49437070c72969f5e22faf2a64a12ba27db8`。快照的 source inventory
-摘要为 `3e3d75364b2e8af6b688de854e41203b5edd27244b529a34f36840ded03e8bd3`，output inventory 摘要为
-`2373c4f4aac55bf4690c1ce0d163c0cb6fb5be45cef911873473c44ab020c0f3`；只读校验会在任一源或输出
+摘要为 `f5c96ca2a59e5f2cf362f19205c5584456006db9b938aab03659b82d17e372df`，output inventory 摘要为
+`401dded103174b4bcef8e77b7e0ea0f1d092706b11d4765177f7f0928eb6a9fe`；只读校验会在任一源或输出
 漂移时失效。这证明的是当前**数字快照**而非可制造或实物状态，不能据此关闭任何 Gazebo、赛题或实车门。
 
 与该快照相同 URDF/布局哈希绑定的静态 FOV 报告为

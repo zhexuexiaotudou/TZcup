@@ -246,3 +246,33 @@ def test_expected_marker_count_must_be_positive(tmp_path: Path) -> None:
         assert str(error) == "expected_stable_marker_count must be at least 1"
     else:
         raise AssertionError("expected a ValueError for a zero marker count")
+
+
+def test_required_native_bridge_clean_exits_are_exact(tmp_path: Path) -> None:
+    processes = ("water_evaluation_bridge", "a300_drivetrain_native_bridge")
+    clean_lines = [
+        f"[INFO] [{process}-{index}]: process has finished cleanly [pid {100 + index}]"
+        for index, process in enumerate(processes, start=6)
+    ]
+    passing = audit(
+        _write(tmp_path, _allowed_lines() + [STABLE_MARKER] + clean_lines),
+        required_clean_exit_processes=processes,
+    )
+    missing = audit(
+        _write(tmp_path, _allowed_lines() + [STABLE_MARKER, clean_lines[0]]),
+        required_clean_exit_processes=processes,
+    )
+    repeated = audit(
+        _write(tmp_path, _allowed_lines() + [STABLE_MARKER] + clean_lines + [clean_lines[1]]),
+        required_clean_exit_processes=processes,
+    )
+
+    assert passing["passed"] is True
+    assert passing["clean_exit_counts"] == {
+        "water_evaluation_bridge": 1,
+        "a300_drivetrain_native_bridge": 1,
+    }
+    assert missing["passed"] is False
+    assert repeated["passed"] is False
+    assert missing["checks"]["required_processes_finished_cleanly_once"] is False
+    assert repeated["checks"]["required_processes_finished_cleanly_once"] is False

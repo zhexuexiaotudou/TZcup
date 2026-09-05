@@ -152,6 +152,7 @@ def audit(
     *,
     stable_marker: str = STABLE_MARKER,
     expected_stable_marker_count: int = 1,
+    required_clean_exit_processes: tuple[str, ...] = (),
 ) -> dict:
     if expected_stable_marker_count < 1:
         raise ValueError("expected_stable_marker_count must be at least 1")
@@ -211,6 +212,19 @@ def audit(
         }
         for rule in active_rules
     }
+    clean_exit_counts = {
+        process: sum(
+            bool(
+                re.search(
+                    rf"\[INFO\] \[{re.escape(process)}-\d+\]: "
+                    r"process has finished cleanly \[pid \d+\]",
+                    line,
+                )
+            )
+            for line in lines
+        )
+        for process in required_clean_exit_processes
+    }
     checks = {
         "expected_stable_window_marker_count": (
             len(marker_lines) == expected_stable_marker_count
@@ -220,6 +234,9 @@ def audit(
         ),
         "zero_unexpected_warning_or_error_lines": not unexpected,
         "zero_warning_or_error_at_or_after_stable_window": not runtime_diagnostics,
+        "required_processes_finished_cleanly_once": all(
+            count == 1 for count in clean_exit_counts.values()
+        ),
     }
     passed = all(checks.values())
     return {
@@ -239,6 +256,8 @@ def audit(
         "rules": rule_results,
         "unexpected_diagnostics": unexpected,
         "runtime_diagnostics": runtime_diagnostics,
+        "required_clean_exit_processes": list(required_clean_exit_processes),
+        "clean_exit_counts": clean_exit_counts,
     }
 
 
@@ -260,11 +279,18 @@ def main() -> int:
             "occurrence starts the warning-free stable window."
         ),
     )
+    parser.add_argument(
+        "--required-clean-exit-process",
+        action="append",
+        default=[],
+        help="Launch executable that must report exactly one clean exit.",
+    )
     args = parser.parse_args()
     report = audit(
         args.log,
         stable_marker=args.stable_marker,
         expected_stable_marker_count=args.expected_stable_marker_count,
+        required_clean_exit_processes=tuple(args.required_clean_exit_process),
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")

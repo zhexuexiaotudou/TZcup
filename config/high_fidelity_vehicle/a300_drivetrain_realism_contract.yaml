@@ -99,6 +99,8 @@ plant_model:
   core_source: starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantCore.cc
   gazebo_candidate_source: starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantSystem.cc
   typed_command_adapter_source: starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainCommandAdapter.cc
+  typed_transport_bridge_source: starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainNativeBridge.cc
+  transport_bridge_executable: a300_drivetrain_native_bridge
   test_source: starter_ws/src/sanitation_gazebo_control/test/test_a300_drivetrain_plant_core.cc
   candidate_compile_project: starter_ws/src/sanitation_gazebo_control/test/a300_drivetrain_candidate/CMakeLists.txt
   required_effects:

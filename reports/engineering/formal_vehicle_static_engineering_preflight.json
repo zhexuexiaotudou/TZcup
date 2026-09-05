@@ -237,7 +237,7 @@
         }
       },
       "source_snapshot_sha256": {
-        "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml": "83b8586c5ade5065cef9d44445fe4bc44c61adf4f1fd19786bd2ccf5a031b755",
+        "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml": "2917c0878f2f440faa8a6d6e7ede751ad8ff49ca487c51accb8bb91ad096d4b4",
         "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": "3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9",
         "reports/engineering/formal_competition_vehicle.urdf": "2b399eaba8de34fd55ca663a3b6b49437070c72969f5e22faf2a64a12ba27db8"
       },
@@ -4544,7 +4544,7 @@
             },
             {
               "evidence": {
-                "line": 146,
+                "line": 147,
                 "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
                 "token": "add_library(A300DrivetrainPlantSystem SHARED"
               },
@@ -4602,7 +4602,7 @@
             },
             {
               "evidence": {
-                "line": 160,
+                "line": 161,
                 "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
                 "token": "add_library(GripperMimicEffortSystem SHARED"
               },
@@ -4660,7 +4660,7 @@
             },
             {
               "evidence": {
-                "line": 89,
+                "line": 90,
                 "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
                 "token": "add_library(DryBinMonitorSystem SHARED"
               },
@@ -4752,7 +4752,7 @@
             },
             {
               "evidence": {
-                "line": 119,
+                "line": 120,
                 "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
                 "token": "add_library(GroundDirtCleaningSystem SHARED"
               },
@@ -4810,7 +4810,7 @@
             },
             {
               "evidence": {
-                "line": 75,
+                "line": 76,
                 "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
                 "token": "add_library(WaterRecoverySystem SHARED"
               },
@@ -4818,7 +4818,7 @@
             },
             {
               "evidence": {
-                "line": 777,
+                "line": 770,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "water_recovery/tank_mass_kg"
               },
@@ -4826,7 +4826,7 @@
             },
             {
               "evidence": {
-                "line": 413,
+                "line": 477,
                 "path": "scripts/run_formal_water_recovery_runtime.sh",
                 "token": "validate_formal_water_recovery_runtime.py"
               },
@@ -4852,7 +4852,7 @@
             },
             {
               "evidence": {
-                "line": 762,
+                "line": 755,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan"
               },
@@ -4982,7 +4982,7 @@
             },
             {
               "evidence": {
-                "line": 763,
+                "line": 756,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "/sensors/gnss/fix@sensor_msgs/msg/NavSatFix"
               },
@@ -5086,7 +5086,7 @@
             },
             {
               "evidence": {
-                "line": 107,
+                "line": 108,
                 "path": "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml",
                 "token": "low_voltage_power_branch"
               },

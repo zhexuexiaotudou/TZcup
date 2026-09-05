@@ -287,6 +287,44 @@ def _launch_nodes(launch_text: str) -> list[tuple[str, str, str]]:
     return nodes
 
 
+def _launch_node_remappings(
+    launch_text: str,
+) -> list[tuple[tuple[str, str, str], dict[str, str]]]:
+    """Return literal remaps scoped to their exact launch Node."""
+    results: list[tuple[tuple[str, str, str], dict[str, str]]] = []
+    tree = ast.parse(launch_text)
+    for call in (
+        node for node in ast.walk(tree)
+        if isinstance(node, ast.Call)
+        and isinstance(node.func, ast.Name)
+        and node.func.id == "Node"
+    ):
+        values: dict[str, str] = {}
+        remappings: dict[str, str] = {}
+        for keyword in call.keywords:
+            if (
+                keyword.arg in {"package", "executable", "name"}
+                and isinstance(keyword.value, ast.Constant)
+                and isinstance(keyword.value.value, str)
+            ):
+                values[keyword.arg] = keyword.value.value
+            elif keyword.arg == "remappings" and isinstance(
+                keyword.value, (ast.List, ast.Tuple)
+            ):
+                for item in keyword.value.elts:
+                    try:
+                        source, target = ast.literal_eval(item)
+                    except (ValueError, TypeError, SyntaxError):
+                        continue
+                    if isinstance(source, str) and isinstance(target, str):
+                        remappings[source] = target
+        if {"package", "executable", "name"} <= values.keys():
+            results.append(
+                ((values["package"], values["executable"], values["name"]), remappings)
+            )
+    return results
+
+
 def _cpp_gz_to_ros_endpoints(source: Path) -> list[tuple[str, str, str]]:
     """Return compiled typed custom endpoints as (topic, ROS type, GZ type)."""
     endpoints: list[tuple[str, str, str]] = []
@@ -424,6 +462,7 @@ def validate(
         )
     bridge_contracts = _bridge_contracts(launch_text, bridge_config_paths)
     launch_nodes = _launch_nodes(launch_text)
+    launch_node_remappings = _launch_node_remappings(launch_text)
     urdf_sensor_topics = {
         topic.text.strip()
         for topic in root.findall(".//sensor/topic")
@@ -506,6 +545,46 @@ def validate(
         source.resolve(): _cpp_gz_publish_endpoints(source)
         for source in _product_cpp_sources()
     }
+    native_runtime_bindings: set[tuple[str, str, str, str]] = set()
+    for candidate_contract in topic_contracts.values():
+        if candidate_contract.get("transport") != "gazebo_native_bridge":
+            continue
+        binding = (
+            candidate_contract.get("source_path"),
+            candidate_contract.get("bridge_package"),
+            candidate_contract.get("bridge_executable"),
+            candidate_contract.get("writer_node"),
+        )
+        if all(isinstance(value, str) and value for value in binding):
+            native_runtime_bindings.add(binding)
+
+    def resolved_native_publishers(endpoint: tuple[str, str, str]) -> list[str]:
+        publishers: list[str] = []
+        for source_path, package, executable, writer_node in sorted(
+            native_runtime_bindings
+        ):
+            candidate_source = (ROOT / source_path).resolve()
+            expected_node = (package, executable, writer_node)
+            remapping_instances = [
+                remappings
+                for node, remappings in launch_node_remappings
+                if node == expected_node
+            ]
+            if len(remapping_instances) != 1:
+                continue
+            remappings = remapping_instances[0]
+            resolved_endpoints = {
+                (remappings.get(local_topic, local_topic), ros_type, gz_type)
+                for local_topic, ros_type, gz_type in cpp_bridge_endpoint_cache.get(
+                    candidate_source, []
+                )
+            }
+            if endpoint in resolved_endpoints:
+                publishers.append(
+                    f"{source_path}::{package}/{executable}/{writer_node}"
+                )
+        return publishers
+
     for contract_id, contract in topic_contracts.items():
         topic = contract.get("ros_topic")
         ros_type = contract.get("ros_type")
@@ -713,38 +792,47 @@ def validate(
                 continue
             expected_node = (package, executable, writer_node)
             node_instances = [node for node in launch_nodes if node == expected_node]
+            node_remappings = [
+                remappings
+                for node, remappings in launch_node_remappings
+                if node == expected_node
+            ]
             if len(node_instances) != 1:
                 errors.append(
                     f"native Gazebo bridge contract {contract_id} expected exactly one launch "
                     f"node {expected_node}, found {len(node_instances)}"
                 )
-            endpoint = (topic, ros_type, gz_type)
             source_endpoints = cpp_bridge_endpoint_cache.get(source.resolve(), [])
+            scoped_remappings = node_remappings[0] if len(node_remappings) == 1 else {}
+            resolved_source_endpoints = [
+                (scoped_remappings.get(local_topic, local_topic), local_ros_type, local_gz_type)
+                for local_topic, local_ros_type, local_gz_type in source_endpoints
+            ]
+            endpoint = (topic, ros_type, gz_type)
             if direction != "publisher":
                 errors.append(
                     f"native Gazebo bridge contract {contract_id} must declare publisher direction"
                 )
-            if source_endpoints.count(endpoint) != 1:
+            if resolved_source_endpoints.count(endpoint) != 1:
                 errors.append(
                     f"native Gazebo bridge contract {contract_id} exact GZ->ROS endpoint "
                     f"missing or duplicated in {source_path}: {endpoint}"
                 )
-            publishers = sorted(
-                str(candidate.relative_to(ROOT)).replace("\\", "/")
-                for candidate, endpoints in cpp_bridge_endpoint_cache.items()
-                if endpoint in endpoints
+            publishers = resolved_native_publishers(endpoint)
+            expected_publisher = (
+                f"{source_path}::{package}/{executable}/{writer_node}"
             )
             if contract.get("single_writer"):
                 if direction != "publisher":
                     errors.append(
                         f"single-writer topic contract {contract_id} must declare publisher direction"
                     )
-                if publishers != [source_path]:
+                if publishers != [expected_publisher]:
                     errors.append(
                         f"single-writer topic contract {contract_id} expected only "
                         f"{source_path}, found {publishers}"
                     )
-                elif len(node_instances) == 1 and source_endpoints.count(endpoint) == 1:
+                elif len(node_instances) == 1 and resolved_source_endpoints.count(endpoint) == 1:
                     validated_single_writer_contracts.add(contract_id)
             validated_topic_contracts.add(contract_id)
             continue

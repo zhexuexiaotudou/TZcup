@@ -17,6 +17,10 @@ def test_typed_and_gz_transport_patch_sources_are_critical() -> None:
         in CRITICAL_FILES
     )
     assert "patches/upstream/gz_transport13/manifest.json" in CRITICAL_FILES
+    assert (
+        "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainNativeBridge.cc"
+        in CRITICAL_FILES
+    )
 
 
 def test_generate_binds_source_and_regular_copy_install(tmp_path: Path) -> None:

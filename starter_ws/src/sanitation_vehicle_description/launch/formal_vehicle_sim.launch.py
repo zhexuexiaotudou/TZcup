@@ -294,16 +294,9 @@ def generate_launch_description() -> LaunchDescription:
         output="screen",
     )
     a300_drivetrain_bridge = Node(
-        package="ros_gz_bridge",
-        executable="parameter_bridge",
+        package="sanitation_gazebo_control",
+        executable="a300_drivetrain_native_bridge",
         name="a300_drivetrain_bridge",
-        arguments=[
-            "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/cmd_vel@geometry_msgs/msg/Twist]gz.msgs.Twist",
-            "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/actuator_enable@std_msgs/msg/Bool]gz.msgs.Boolean",
-            "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/emergency_stop@std_msgs/msg/Bool]gz.msgs.Boolean",
-            "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/odom@nav_msgs/msg/Odometry[gz.msgs.Odometry",
-            "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/status@std_msgs/msg/String[gz.msgs.StringMsg",
-        ],
         remappings=[
             (
                 "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/emergency_stop",

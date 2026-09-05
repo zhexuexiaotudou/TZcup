@@ -37,6 +37,7 @@ CRITICAL_FILES = (
     "starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorMotorCore.cc",
     "starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorMotorSystem.cc",
     "starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorVectorBridge.cc",
+    "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainNativeBridge.cc",
     "starter_ws/src/sanitation_gazebo_control/src/WaterEvaluationBridge.cc",
     "starter_ws/src/sanitation_gazebo_control/src/WaterRecoverySystem.cc",
     "starter_ws/src/sanitation_safety/sanitation_safety/whole_vehicle_safety_manager.py",
