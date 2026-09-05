@@ -7,6 +7,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "${ROOT}/scripts/run_formal_runtime_isolation.sh"
 source "${ROOT}/scripts/formal_source_bound_preflight.sh"
+OPERATION_SPEED_PROFILE="${FORMAL_OPERATION_SPEED_PROFILE:-dry_cleaning_competition_candidate}"
 EPISODE_ROOT=""
 MAP_ROOT=""
 SESSION=""
@@ -142,6 +143,7 @@ formal_runtime_install_traps cleanup
   mission_mode:=cleaning cleaning_planner:=full_coverage start_coverage:=false \
   gui:=false world:="${OUTPUT}/world.sdf" world_name:="${WORLD_NAME}" episode_manifest:="${EPISODE_MANIFEST}" \
   map_artifact_dir:="${MAP_ROOT}" pedestrian_schedule:="${SCHEDULE}" \
+  operation_speed_profile:="${OPERATION_SPEED_PROFILE}" \
   start_pedestrians:=true >"${OUTPUT}/cleaning.launch.log" 2>&1 &
 LAUNCH_PID=$!; PIDS+=("${LAUNCH_PID}")
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 run ros_gz_bridge parameter_bridge \
@@ -209,6 +211,7 @@ unset 'PIDS[-1]'
 python3 "${ROOT}/scripts/validate_formal_map_lifecycle_runtime.py" \
   --map-root "${MAP_ROOT}" --mapping-runtime "${MAPPING_RUNTIME}" \
   --cleaning-runtime "${OUTPUT}/cleaning_runtime.json" \
+  --runtime-binding "${RUNTIME_BINDING}" \
   --output "${OUTPUT}/lifecycle_acceptance.json"
 bash "${ROOT}/scripts/run_formal_same_map_baseline.sh" \
   --episode-manifest "${EPISODE_MANIFEST}" --map-root "${MAP_ROOT}" \

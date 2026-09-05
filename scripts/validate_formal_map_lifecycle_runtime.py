@@ -18,6 +18,21 @@ from formal_runtime_gate_binding import RuntimeGateError, load_binding
 
 PASS_STATUS = "FORMAL_FIRST_MAP_THEN_SAVED_MAP_CLEANING_PASSED"
 BLOCKED_STATUS = "FORMAL_FIRST_MAP_THEN_SAVED_MAP_CLEANING_BLOCKED"
+ROOT = Path(__file__).resolve().parents[1]
+FORMAL_CAMPUS_PACKAGE = ROOT / "starter_ws/src/sanitation_formal_campus_integration"
+FORMAL_SPEED_PROFILES = (
+    ROOT / "config/high_fidelity_vehicle/formal_operation_speed_profiles.yaml"
+)
+
+if str(FORMAL_CAMPUS_PACKAGE) not in sys.path:
+    sys.path.insert(0, str(FORMAL_CAMPUS_PACKAGE))
+
+from sanitation_formal_campus_integration.saved_map_coverage_core import (
+    DRY_CLEANING_SPEED_PROFILE,
+    MAPPING_SAFE_SPEED_PROFILE,
+    SavedMapCoverageError,
+    load_formal_operation_speed_profile,
+)
 
 
 def _json(path: Path) -> dict:
@@ -105,12 +120,41 @@ def _hashes_valid(root: Path, manifest: dict) -> bool:
     )
 
 
+def _report_matches_speed_profile(report: object, expected_profile: object) -> bool:
+    """Bind a coverage report to the selected, source-owned speed profile."""
+    if not isinstance(report, dict):
+        return False
+    if report.get("operation_speed_profile") != getattr(expected_profile, "name", None):
+        return False
+    speed = report.get("maximum_linear_speed_mps")
+    if isinstance(speed, bool) or not isinstance(speed, (int, float)):
+        return False
+    return math.isclose(
+        float(speed),
+        float(getattr(expected_profile, "maximum_linear_speed_mps", math.nan)),
+        abs_tol=1e-12,
+    )
+
+
 def validate(
-    map_root: Path, mapping_runtime: Path, cleaning_runtime: Path
+    map_root: Path,
+    mapping_runtime: Path,
+    cleaning_runtime: Path,
+    *,
+    speed_profiles_path: Path = FORMAL_SPEED_PROFILES,
 ) -> dict:
     manifest = _json(map_root / "map_lifecycle_manifest.json")
     mapping = _json(mapping_runtime)
     cleaning = _json(cleaning_runtime)
+    try:
+        mapping_speed_profile = load_formal_operation_speed_profile(
+            speed_profiles_path, MAPPING_SAFE_SPEED_PROFILE
+        )
+        dry_cleaning_speed_profile = load_formal_operation_speed_profile(
+            speed_profiles_path, DRY_CLEANING_SPEED_PROFILE
+        )
+    except SavedMapCoverageError:
+        mapping_speed_profile = dry_cleaning_speed_profile = None
     try:
         observed_fraction = float(manifest.get("observed_fraction", 0.0))
         quality_threshold = float(manifest.get("quality_threshold", 0.0))
@@ -145,6 +189,14 @@ def validate(
             and mapping.get("slam_map_observed") is True
             and mapping.get("slam_odom_failures_after_ready") == 0
         ),
+        # Mapping remains governed by the source-owned mapping_safe profile.
+        # Do not inherit the dry cleaning speed into its separate runtime.
+        "mapping_safe_profile_retains_0_45_m_s": (
+            mapping_speed_profile is not None
+            and math.isclose(
+                mapping_speed_profile.maximum_linear_speed_mps, 0.45, abs_tol=1e-12
+            )
+        ),
         "saved_map_cleaning_runtime_passed": (
             cleaning.get("passed") is True
             and cleaning.get("truth_used_for_control") is False
@@ -168,9 +220,10 @@ def validate(
             and cleaning.get("coverage_execution_report", {}).get(
                 "operation_width_m"
             ) == 1.32
-            and cleaning.get("coverage_execution_report", {}).get(
-                "maximum_linear_speed_mps"
-            ) == 0.45
+            and dry_cleaning_speed_profile is not None
+            and _report_matches_speed_profile(
+                cleaning.get("coverage_execution_report"), dry_cleaning_speed_profile
+            )
             and int(cleaning.get("coverage_execution_report", {}).get(
                 "planned_swath_count", 0
             )) > 0
@@ -197,6 +250,18 @@ def validate(
         "checks": checks,
         "blockers": [name for name, value in checks.items() if not value],
         "truth_used_for_control": False,
+        "operation_speed_profiles": {
+            "mapping_safe": (
+                mapping_speed_profile.maximum_linear_speed_mps
+                if mapping_speed_profile is not None
+                else None
+            ),
+            "dry_cleaning": (
+                dry_cleaning_speed_profile.maximum_linear_speed_mps
+                if dry_cleaning_speed_profile is not None
+                else None
+            ),
+        },
         "claim_boundary": (
             "PASS requires a real 200x100 SLAM exploration, >=95% observed "
             "map save and a separate saved-map AMCL cleaning runtime."

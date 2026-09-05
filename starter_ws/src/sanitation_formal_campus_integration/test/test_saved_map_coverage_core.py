@@ -8,11 +8,14 @@ import yaml
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from sanitation_formal_campus_integration.saved_map_coverage_core import (
+    DRY_CLEANING_SPEED_PROFILE,
     FORMAL_MAX_LINEAR_SPEED_MPS,
     FORMAL_OPERATION_WIDTH_M,
+    MAPPING_SAFE_SPEED_PROFILE,
     ProductCoverageTelemetry,
     SavedMapCoverageError,
     coverage_execution_passed,
+    load_formal_operation_speed_profile,
     load_product_mission_geometry,
     validate_execution_parameters,
 )
@@ -30,11 +33,26 @@ def _mission(path: Path) -> Path:
     return path
 
 
-def test_formal_width_and_speed_are_exact_single_source():
-    validate_execution_parameters(1.32, 0.45)
-    for width, speed in ((0.52, 0.45), (1.32, 0.65)):
+def test_formal_width_and_speed_are_exact_single_source(tmp_path):
+    profile_file = tmp_path / "profiles.yaml"
+    profile_file.write_text(yaml.safe_dump({
+        "profiles": {
+            MAPPING_SAFE_SPEED_PROFILE: {"maximum_linear_speed_m_s": 0.45},
+            DRY_CLEANING_SPEED_PROFILE: {
+                "target_linear_speed_m_s": 1.0,
+                "enabled_for_formal_runtime": True,
+                "competition_efficiency_eligible": False,
+            },
+            "wet_puddle_recovery": {},
+        },
+    }), encoding="utf-8")
+    mapping = load_formal_operation_speed_profile(profile_file, MAPPING_SAFE_SPEED_PROFILE)
+    dry = load_formal_operation_speed_profile(profile_file, DRY_CLEANING_SPEED_PROFILE)
+    validate_execution_parameters(1.32, 0.45, mapping)
+    validate_execution_parameters(1.32, 1.0, dry)
+    for width, speed, profile in ((0.52, 0.45, mapping), (1.32, 0.65, dry)):
         with pytest.raises(SavedMapCoverageError):
-            validate_execution_parameters(width, speed)
+            validate_execution_parameters(width, speed, profile)
 
 
 def test_public_mission_requires_20000_m2_and_truth_isolation(tmp_path):
@@ -78,6 +96,7 @@ def test_execution_pass_requires_real_terminal_and_all_swaths():
         "ground_truth_used_for_control": False,
         "operation_width_m": FORMAL_OPERATION_WIDTH_M,
         "maximum_linear_speed_mps": FORMAL_MAX_LINEAR_SPEED_MPS,
+        "operation_speed_profile": MAPPING_SAFE_SPEED_PROFILE,
         "planned_swath_count": 3,
         "completed_swath_count": 3,
     }
@@ -87,6 +106,7 @@ def test_execution_pass_requires_real_terminal_and_all_swaths():
         ("completed_swath_count", 2),
         ("operation_width_m", 0.52),
         ("maximum_linear_speed_mps", 0.65),
+        ("operation_speed_profile", "wet_puddle_recovery"),
     ):
         candidate = json.loads(json.dumps(report))
         candidate[field] = value

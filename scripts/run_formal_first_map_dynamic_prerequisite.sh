@@ -104,7 +104,7 @@ formal_runtime_install_traps cleanup
   episode_manifest:="${episode}/public/episode_manifest.json" \
   map_artifact_dir:="${output}" \
   pedestrian_schedule:="${episode}/environment/pedestrian_schedule.json" \
-  start_pedestrians:=false start_coverage:=false \
+  start_pedestrians:=false start_coverage:=false operation_speed_profile:=mapping_safe \
   >"${output}/mapping.launch.log" 2>&1 &
 launch_pid=$!
 sleep 30

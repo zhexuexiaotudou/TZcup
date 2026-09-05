@@ -5,17 +5,72 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 import math
 from pathlib import Path
-from typing import Sequence
+from typing import Any, Sequence
 
 import yaml
 
 
 FORMAL_OPERATION_WIDTH_M = 1.32
+MAPPING_SAFE_SPEED_PROFILE = "mapping_safe"
+DRY_CLEANING_SPEED_PROFILE = "dry_cleaning_competition_candidate"
+WET_PUDDLE_SPEED_PROFILE = "wet_puddle_recovery"
+
+
+@dataclass(frozen=True)
+class FormalOperationSpeedProfile:
+    """One explicit runtime speed profile, distinct from acceptance status."""
+
+    name: str
+    maximum_linear_speed_mps: float
+
+
 FORMAL_MAX_LINEAR_SPEED_MPS = 0.45
 
 
 class SavedMapCoverageError(RuntimeError):
     """Raised when product coverage evidence is incomplete or inconsistent."""
+
+
+def load_formal_operation_speed_profile(
+    path: str | Path, profile_name: str
+) -> FormalOperationSpeedProfile:
+    """Load the selectable dry/mapping runtime profile without awarding acceptance.
+
+    Wet recovery remains a depth-segmented hydraulic mode, so it deliberately
+    cannot be selected for this dry saved-map coverage executor.
+    """
+    try:
+        document = yaml.safe_load(Path(path).read_text(encoding="utf-8"))
+        profiles = document["profiles"]
+        profile = profiles[profile_name]
+    except (OSError, yaml.YAMLError, KeyError, TypeError) as exc:
+        raise SavedMapCoverageError("formal operation speed profile is missing or invalid") from exc
+    if profile_name == WET_PUDDLE_SPEED_PROFILE:
+        raise SavedMapCoverageError(
+            "wet puddle recovery requires its depth-segmented hydraulic controller"
+        )
+    if profile_name not in {MAPPING_SAFE_SPEED_PROFILE, DRY_CLEANING_SPEED_PROFILE}:
+        raise SavedMapCoverageError("unknown formal operation speed profile")
+    speed_key = (
+        "maximum_linear_speed_m_s"
+        if profile_name == MAPPING_SAFE_SPEED_PROFILE
+        else "target_linear_speed_m_s"
+    )
+    value = profile.get(speed_key) if isinstance(profile, dict) else None
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise SavedMapCoverageError("formal operation speed profile has no numeric speed")
+    speed = float(value)
+    if not math.isfinite(speed) or speed <= 0.0:
+        raise SavedMapCoverageError("formal operation speed profile speed is invalid")
+    expected = 0.45 if profile_name == MAPPING_SAFE_SPEED_PROFILE else 1.0
+    if not math.isclose(speed, expected, abs_tol=1e-12):
+        raise SavedMapCoverageError("formal operation speed profile changed its frozen speed")
+    if profile_name == DRY_CLEANING_SPEED_PROFILE:
+        if profile.get("enabled_for_formal_runtime") is not True:
+            raise SavedMapCoverageError("dry cleaning runtime profile is not enabled")
+        if profile.get("competition_efficiency_eligible") is not False:
+            raise SavedMapCoverageError("dry cleaning profile cannot claim efficiency acceptance")
+    return FormalOperationSpeedProfile(profile_name, speed)
 
 
 def polygon_area(points: Sequence[tuple[float, float]]) -> float:
@@ -71,11 +126,27 @@ def load_product_mission_geometry(path: str | Path) -> tuple[tuple[float, float]
     return polygon
 
 
-def validate_execution_parameters(operation_width_m: float, max_speed_mps: float) -> None:
+def validate_execution_parameters(
+    operation_width_m: float,
+    max_speed_mps: float,
+    speed_profile: FormalOperationSpeedProfile,
+) -> None:
     if not math.isclose(operation_width_m, FORMAL_OPERATION_WIDTH_M, abs_tol=1e-9):
         raise SavedMapCoverageError("formal operation width must be exactly 1.32 m")
-    if not math.isclose(max_speed_mps, FORMAL_MAX_LINEAR_SPEED_MPS, abs_tol=1e-9):
-        raise SavedMapCoverageError("formal maximum linear speed must remain 0.45 m/s")
+    if not math.isclose(
+        max_speed_mps, speed_profile.maximum_linear_speed_mps, abs_tol=1e-9
+    ):
+        raise SavedMapCoverageError("formal maximum linear speed disagrees with profile")
+    expected_speeds = {
+        MAPPING_SAFE_SPEED_PROFILE: FORMAL_MAX_LINEAR_SPEED_MPS,
+        DRY_CLEANING_SPEED_PROFILE: 1.0,
+    }
+    if speed_profile.name not in expected_speeds or not math.isclose(
+        speed_profile.maximum_linear_speed_mps,
+        expected_speeds[speed_profile.name],
+        abs_tol=1e-9,
+    ):
+        raise SavedMapCoverageError("formal execution profile is not an approved dry or mapping profile")
 
 
 @dataclass
@@ -84,6 +155,8 @@ class ProductCoverageTelemetry:
 
     polygon: tuple[tuple[float, float], ...]
     operation_width_m: float = FORMAL_OPERATION_WIDTH_M
+    operation_speed_profile: str = MAPPING_SAFE_SPEED_PROFILE
+    maximum_linear_speed_mps: float = FORMAL_MAX_LINEAR_SPEED_MPS
     raster_resolution_m: float = 0.25
     total_distance_m: float = 0.0
     brush_enabled_distance_m: float = 0.0
@@ -95,8 +168,11 @@ class ProductCoverageTelemetry:
     _covered_cells: set[tuple[int, int]] = field(default_factory=set)
 
     def __post_init__(self) -> None:
+        speed_profile = FormalOperationSpeedProfile(
+            self.operation_speed_profile, self.maximum_linear_speed_mps
+        )
         validate_execution_parameters(
-            self.operation_width_m, FORMAL_MAX_LINEAR_SPEED_MPS
+            self.operation_width_m, self.maximum_linear_speed_mps, speed_profile
         )
         if not 0.0 < self.raster_resolution_m <= 0.25:
             raise SavedMapCoverageError("coverage evidence raster must be <=0.25 m")
@@ -178,6 +254,8 @@ class ProductCoverageTelemetry:
             "estimated_field_cells": self._field_cells,
             "estimated_coverage_fraction": self.estimated_coverage_fraction,
             "coverage_pose_source": "amcl_pose_product_estimate",
+            "operation_speed_profile": self.operation_speed_profile,
+            "maximum_linear_speed_mps": self.maximum_linear_speed_mps,
             "simulator_truth_used": False,
         }
 
@@ -188,7 +266,10 @@ def coverage_execution_passed(report: dict) -> bool:
         and report.get("terminal_state") == "COMPLETED"
         and report.get("ground_truth_used_for_control") is False
         and report.get("operation_width_m") == FORMAL_OPERATION_WIDTH_M
-        and report.get("maximum_linear_speed_mps") == FORMAL_MAX_LINEAR_SPEED_MPS
+        and report.get("operation_speed_profile")
+        in {MAPPING_SAFE_SPEED_PROFILE, DRY_CLEANING_SPEED_PROFILE}
+        and report.get("maximum_linear_speed_mps")
+        in {FORMAL_MAX_LINEAR_SPEED_MPS, 1.0}
         and int(report.get("planned_swath_count", 0)) > 0
         and report.get("completed_swath_count") == report.get("planned_swath_count")
     )

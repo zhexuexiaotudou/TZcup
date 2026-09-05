@@ -86,7 +86,8 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path):
             "terminal_state": "COMPLETED",
             "ground_truth_used_for_control": False,
             "operation_width_m": 1.32,
-            "maximum_linear_speed_mps": 0.45,
+            "operation_speed_profile": "dry_cleaning_competition_candidate",
+            "maximum_linear_speed_mps": 1.0,
             "planned_swath_count": 3,
             "completed_swath_count": 3,
         },
@@ -101,6 +102,30 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path):
     result = MODULE.validate(root, mapping, cleaning)
     assert result["passed"] is True
     assert result["status"] == MODULE.PASS_STATUS
+    assert result["operation_speed_profiles"] == {
+        "mapping_safe": pytest.approx(0.45),
+        "dry_cleaning": pytest.approx(1.0),
+    }
+
+    valid_cleaning = json.loads(cleaning.read_text(encoding="utf-8"))
+    for profile_name, speed in (
+        ("dry_cleaning_competition_candidate", 0.45),
+        ("mapping_safe", 0.45),
+    ):
+        invalid_cleaning = copy.deepcopy(valid_cleaning)
+        invalid_cleaning["coverage_execution_report"].update(
+            {
+                "operation_speed_profile": profile_name,
+                "maximum_linear_speed_mps": speed,
+            }
+        )
+        failed = MODULE.validate(
+            root,
+            mapping,
+            _write(tmp_path / f"cleaning-{profile_name}.json", invalid_cleaning),
+        )
+        assert failed["passed"] is False
+        assert failed["checks"]["saved_map_cleaning_runtime_passed"] is False
 
 
 @pytest.mark.parametrize(
@@ -155,7 +180,9 @@ def test_cleaning_aggregate_fails_closed_without_real_coverage_evidence(
         "coverage_execution_report": {
             "success": True, "terminal_state": "COMPLETED",
             "ground_truth_used_for_control": False,
-            "operation_width_m": 1.32, "maximum_linear_speed_mps": 0.45,
+            "operation_width_m": 1.32,
+            "operation_speed_profile": "dry_cleaning_competition_candidate",
+            "maximum_linear_speed_mps": 1.0,
             "planned_swath_count": 3, "completed_swath_count": 3,
         },
         "trajectory_total_distance_m": 100.0,

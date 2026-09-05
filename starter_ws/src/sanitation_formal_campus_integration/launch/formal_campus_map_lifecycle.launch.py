@@ -23,8 +23,11 @@ from sanitation_formal_campus_integration.map_lifecycle_core import (
     validate_saved_map_artifact,
 )
 from sanitation_formal_campus_integration.saved_map_coverage_core import (
+    DRY_CLEANING_SPEED_PROFILE,
     FORMAL_MAX_LINEAR_SPEED_MPS,
     FORMAL_OPERATION_WIDTH_M,
+    MAPPING_SAFE_SPEED_PROFILE,
+    load_formal_operation_speed_profile,
 )
 import yaml
 
@@ -70,16 +73,29 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
     motion_profile = Path(
         context.perform_substitution(LaunchConfiguration("motion_profile_file"))
     )
-    nav2, cleaning_width = materialize_nav2_config(base_params, motion_profile)
+    speed_profile_file = Path(
+        context.perform_substitution(LaunchConfiguration("operation_speed_profile_file"))
+    )
+    requested_speed_profile = context.perform_substitution(
+        LaunchConfiguration("operation_speed_profile")
+    )
+    if mode == "mapping" and requested_speed_profile != MAPPING_SAFE_SPEED_PROFILE:
+        raise RuntimeError("mapping mode must retain the mapping_safe speed profile")
+    speed_profile = load_formal_operation_speed_profile(
+        speed_profile_file, requested_speed_profile
+    )
+    nav2, cleaning_width = materialize_nav2_config(
+        base_params,
+        motion_profile,
+        clean_path_speed_mps=speed_profile.maximum_linear_speed_mps,
+    )
     if not math.isclose(cleaning_width, FORMAL_OPERATION_WIDTH_M, abs_tol=1e-9):
         raise RuntimeError("formal saved-map cleaning width must be exactly 1.32 m")
     smoother_speed = float(
         nav2["velocity_smoother"]["ros__parameters"]["max_velocity"][0]
     )
-    if not math.isclose(
-        smoother_speed, FORMAL_MAX_LINEAR_SPEED_MPS, abs_tol=1e-9
-    ):
-        raise RuntimeError("formal saved-map maximum linear speed must remain 0.45 m/s")
+    if not math.isclose(smoother_speed, speed_profile.maximum_linear_speed_mps, abs_tol=1e-9):
+        raise RuntimeError("formal saved-map maximum linear speed disagrees with profile")
     # AMCL supplies a lidar-map pose measurement only. The global EKF owns
     # map->odom in cleaning mode, so AMCL must never publish the same TF edge.
     nav2["amcl"]["ros__parameters"]["tf_broadcast"] = False
@@ -242,7 +258,13 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                 "high_bandwidth_sensor_runtime": (
                     "false" if mode == "mapping" else "true"
                 ),
-                "motion_profile_file": LaunchConfiguration("motion_profile_file"),
+                        "motion_profile_file": LaunchConfiguration("motion_profile_file"),
+                        "operation_speed_profile_file": LaunchConfiguration(
+                            "operation_speed_profile_file"
+                        ),
+                        "operation_speed_profile": LaunchConfiguration(
+                            "operation_speed_profile"
+                        ),
                 "base_nav2_params_file": LaunchConfiguration("base_nav2_params_file"),
             }.items(),
         ),
@@ -370,6 +392,7 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
                         ),
                         "operation_width_m": cleaning_width,
                         "maximum_linear_speed_mps": smoother_speed,
+                        "operation_speed_profile": speed_profile.name,
                     }],
                     output="screen",
                 )
@@ -404,6 +427,23 @@ def generate_launch_description() -> LaunchDescription:
                 "high_fidelity_vehicle",
                 "formal_motion_cleaning_profile.yaml",
             ]),
+        ),
+        DeclareLaunchArgument(
+            "operation_speed_profile_file",
+            default_value=PathJoinSubstitution([
+                repository_root,
+                "config",
+                "high_fidelity_vehicle",
+                "formal_operation_speed_profiles.yaml",
+            ]),
+        ),
+        DeclareLaunchArgument(
+            "operation_speed_profile",
+            default_value=DRY_CLEANING_SPEED_PROFILE,
+            description=(
+                "Explicit formal runtime profile; cleaning defaults to dry 1.0 m/s, "
+                "while mapping must select mapping_safe."
+            ),
         ),
         DeclareLaunchArgument(
             "base_nav2_params_file",

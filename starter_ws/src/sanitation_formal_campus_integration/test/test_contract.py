@@ -71,6 +71,19 @@ def test_nav2_costmaps_are_materialized_from_formal_motion_profile():
     assert "0.4,0.36" not in local.lower()
     assert cleaning_width == pytest.approx(1.32)
 
+    dry_config, _ = materialize_nav2_config(
+        BASE_NAV2, MOTION_PROFILE, clean_path_speed_mps=1.0
+    )
+    assert dry_config["controller_server"]["ros__parameters"]["CleanPath"][
+        "desired_linear_vel"
+    ] == pytest.approx(1.0)
+    assert dry_config["velocity_smoother"]["ros__parameters"]["max_velocity"][0] == pytest.approx(1.0)
+    # Transit and recovery controller settings stay at their safety baseline;
+    # only dry CleanPath is selected by the explicit runtime profile.
+    assert dry_config["controller_server"]["ros__parameters"]["FollowPath"][
+        "desired_linear_vel"
+    ] == pytest.approx(0.45)
+
     # The real four-wheel base remains skid-steer.  RPP follows a
     # curvature-limited reference path without inserting an in-place
     # rotate-to-heading manoeuvre or claiming physical steering joints.
@@ -143,6 +156,15 @@ def test_launch_is_parseable_and_keeps_safety_and_controller_ownership_explicit(
     assert 'DeclareLaunchArgument("spawn_y"' in source
     assert 'DeclareLaunchArgument("spawn_yaw"' in source
     assert "ackermann" not in source.lower()
+
+    lifecycle = (PACKAGE / "launch/formal_campus_map_lifecycle.launch.py").read_text(
+        encoding="utf-8"
+    )
+    ast.parse(lifecycle)
+    assert '"operation_speed_profile"' in lifecycle
+    assert "default_value=DRY_CLEANING_SPEED_PROFILE" in lifecycle
+    assert "mapping mode must retain the mapping_safe speed profile" in lifecycle
+    assert "clean_path_speed_mps=speed_profile.maximum_linear_speed_mps" in lifecycle
 
     navigation_launch = (
         ROOT / "starter_ws/src/sanitation_navigation/launch/navigation.launch.py"

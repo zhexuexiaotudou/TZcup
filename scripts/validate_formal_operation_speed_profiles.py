@@ -12,6 +12,7 @@ import argparse
 import json
 import math
 from pathlib import Path
+import sys
 from typing import Any
 
 import yaml
@@ -23,6 +24,18 @@ NAV2 = ROOT / "starter_ws/src/sanitation_navigation/config/nav2.yaml"
 FINAL_RUNNER = ROOT / "scripts/run_formal_final_acceptance.py"
 PRODUCT_LAUNCH = ROOT / "starter_ws/src/sanitation_product_demo_integration/launch/product_demo.launch.py"
 MAP_LIFECYCLE_LAUNCH = ROOT / "starter_ws/src/sanitation_formal_campus_integration/launch/formal_campus_map_lifecycle.launch.py"
+CLEANING_RUNNER = ROOT / "scripts/run_formal_saved_map_cleaning_lifecycle.sh"
+MOTION_PROFILE = ROOT / "config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml"
+FORMAL_CAMPUS_PACKAGE = ROOT / "starter_ws/src/sanitation_formal_campus_integration"
+SAFETY_ENVELOPES = ROOT / "starter_ws/src/sanitation_safety/config/operational_envelopes.yaml"
+FORMAL_CAMPUS_LAUNCH = (
+    ROOT / "starter_ws/src/sanitation_formal_campus_integration/launch/formal_campus.launch.py"
+)
+
+if str(FORMAL_CAMPUS_PACKAGE) not in sys.path:
+    sys.path.insert(0, str(FORMAL_CAMPUS_PACKAGE))
+
+from sanitation_formal_campus_integration.contract import materialize_nav2_config
 
 
 class FormalOperationSpeedProfileError(RuntimeError):
@@ -74,6 +87,7 @@ def validate(
     final_runner_path: Path = FINAL_RUNNER,
     product_launch_path: Path = PRODUCT_LAUNCH,
     map_lifecycle_launch_path: Path = MAP_LIFECYCLE_LAUNCH,
+    cleaning_runner_path: Path = CLEANING_RUNNER,
 ) -> dict[str, Any]:
     profiles = _load_yaml(profiles_path)
     if profiles.get("schema_version") != 1:
@@ -117,8 +131,8 @@ def validate(
     conservative_floor = _number(dry.get("conservative_candidate_speed_floor_m_s"), "dry.conservative_candidate_speed_floor_m_s")
     if conservative_floor < theoretical_floor:
         raise FormalOperationSpeedProfileError("conservative dry candidate floor cannot be below the exact theoretical floor")
-    if _boolean(dry.get("enabled_for_formal_runtime"), "dry.enabled_for_formal_runtime"):
-        raise FormalOperationSpeedProfileError("unverified dry candidate cannot be enabled for formal runtime")
+    if _boolean(dry.get("enabled_for_formal_runtime"), "dry.enabled_for_formal_runtime") is not True:
+        raise FormalOperationSpeedProfileError("dry candidate must be enabled for explicit formal runtime selection")
     if _boolean(dry.get("competition_efficiency_eligible"), "dry.competition_efficiency_eligible"):
         raise FormalOperationSpeedProfileError("unverified dry candidate cannot claim competition efficiency")
     if dry.get("validation_status") != "PENDING_SOURCE_BOUND_GAZEBO_AND_A300_TRACKING":
@@ -140,31 +154,94 @@ def validate(
     nav2 = _load_yaml(nav2_path)
     try:
         nav_parameters = nav2["controller_server"]["ros__parameters"]
-        clean_path_speed = _number(nav_parameters["CleanPath"]["desired_linear_vel"], "nav2 CleanPath speed")
-        smoother_speed = _number(nav2["velocity_smoother"]["ros__parameters"]["max_velocity"][0], "nav2 smoother speed")
+        mapping_clean_path_speed = _number(
+            nav_parameters["CleanPath"]["desired_linear_vel"],
+            "mapping Nav2 CleanPath speed",
+        )
+        mapping_smoother_speed = _number(
+            nav2["velocity_smoother"]["ros__parameters"]["max_velocity"][0],
+            "mapping Nav2 smoother speed",
+        )
     except (KeyError, IndexError, TypeError) as exc:
         raise FormalOperationSpeedProfileError("nav2 formal speed slots are missing") from exc
     final_runner = final_runner_path.read_text(encoding="utf-8")
     product_launch = product_launch_path.read_text(encoding="utf-8")
     lifecycle_launch = map_lifecycle_launch_path.read_text(encoding="utf-8")
+    cleaning_runner = cleaning_runner_path.read_text(encoding="utf-8")
+    formal_campus_launch = FORMAL_CAMPUS_LAUNCH.read_text(encoding="utf-8")
+    safety_envelopes = _load_yaml(SAFETY_ENVELOPES)
+    safety_profiles = _mapping(safety_envelopes.get("profiles"), "safety.profiles")
+    safety_coverage = _mapping(
+        safety_profiles.get("localization_coverage"),
+        "safety.localization_coverage",
+    )
+    safety_gate_speed = _number(
+        safety_coverage.get("max_linear_velocity"),
+        "safety localization_coverage max_linear_velocity",
+    )
     runner_uses_formal_e2e = "run_formal_single_episode_cleaning_mission.sh" in final_runner
     e2e_uses_formal_campus = "formal_campus_map_lifecycle.launch.py" in product_launch
-    campus_uses_default_nav2 = '"nav2.yaml"' in lifecycle_launch
-    mapping_speed_active = (
+    campus_selects_dry_profile = (
+        'DeclareLaunchArgument(\n            "operation_speed_profile"' in lifecycle_launch
+        and "default_value=DRY_CLEANING_SPEED_PROFILE" in lifecycle_launch
+        and "clean_path_speed_mps=speed_profile.maximum_linear_speed_mps" in lifecycle_launch
+    )
+    cleaning_runner_selects_dry_profile = (
+        'FORMAL_OPERATION_SPEED_PROFILE:-dry_cleaning_competition_candidate' in cleaning_runner
+        and 'operation_speed_profile:="${operation_speed_profile}"' in cleaning_runner
+    )
+    # The checked-in Nav2 source is intentionally the mapping-safe 0.45 m/s
+    # baseline.  Verify it separately, then exercise the same materializer the
+    # lifecycle launch uses to prove the selected dry profile reaches both of
+    # the runtime speed slots at 1.0 m/s.
+    mapping_speed_retained = math.isclose(
+        mapping_clean_path_speed, mapping_speed, abs_tol=1e-12
+    ) and math.isclose(mapping_smoother_speed, mapping_speed, abs_tol=1e-12)
+    dry_nav2, _ = materialize_nav2_config(
+        nav2_path, MOTION_PROFILE, clean_path_speed_mps=dry_speed
+    )
+    dry_nav_parameters = dry_nav2["controller_server"]["ros__parameters"]
+    dry_clean_path_speed = _number(
+        dry_nav_parameters["CleanPath"]["desired_linear_vel"],
+        "materialized dry Nav2 CleanPath speed",
+    )
+    dry_smoother_speed = _number(
+        dry_nav2["velocity_smoother"]["ros__parameters"]["max_velocity"][0],
+        "materialized dry Nav2 smoother speed",
+    )
+    dry_speed_active = (
         runner_uses_formal_e2e
         and e2e_uses_formal_campus
-        and campus_uses_default_nav2
-        and math.isclose(clean_path_speed, mapping_speed, abs_tol=1e-12)
-        and math.isclose(smoother_speed, mapping_speed, abs_tol=1e-12)
+        and campus_selects_dry_profile
+        and cleaning_runner_selects_dry_profile
+        and mapping_speed_retained
+        and math.isclose(dry_clean_path_speed, dry_speed, abs_tol=1e-12)
+        and math.isclose(dry_smoother_speed, dry_speed, abs_tol=1e-12)
+        and math.isclose(safety_gate_speed, dry_speed, abs_tol=1e-12)
+        and 'DeclareLaunchArgument("max_linear_velocity", default_value="0.45")'
+        not in formal_campus_launch
     )
-    dry_profile_verified = (
-        _boolean(dry.get("enabled_for_formal_runtime"), "dry.enabled_for_formal_runtime")
-        and _boolean(dry.get("competition_efficiency_eligible"), "dry.competition_efficiency_eligible")
-        and dry.get("validation_status") == "PASSED_SOURCE_BOUND_MEASURED_COVERAGE"
+    dry_runtime_enabled = _boolean(
+        dry.get("enabled_for_formal_runtime"), "dry.enabled_for_formal_runtime"
     )
+    dry_profile_verified = _boolean(
+        dry.get("competition_efficiency_eligible"), "dry.competition_efficiency_eligible"
+    ) and dry.get("validation_status") == "PASSED_SOURCE_BOUND_MEASURED_COVERAGE"
     not_ready_reasons: list[str] = []
-    if mapping_speed_active:
-        not_ready_reasons.append("final_runner_still_uses_mapping_safe_0_45_m_s")
+    if not (
+        runner_uses_formal_e2e
+        and e2e_uses_formal_campus
+        and campus_selects_dry_profile
+        and cleaning_runner_selects_dry_profile
+        and mapping_speed_retained
+        and math.isclose(dry_clean_path_speed, dry_speed, abs_tol=1e-12)
+        and math.isclose(dry_smoother_speed, dry_speed, abs_tol=1e-12)
+    ):
+        not_ready_reasons.append("dry_profile_does_not_reach_nav2_runtime")
+    if not dry_speed_active:
+        not_ready_reasons.append(
+            "whole_vehicle_safety_gate_does_not_authorize_dry_profile"
+        )
     if not dry_profile_verified:
         not_ready_reasons.append("dry_candidate_has_no_passed_source_bound_measured_coverage_gate")
     status = (
@@ -179,8 +256,14 @@ def validate(
         "status": status,
         "static_theory_is_not_acceptance_evidence": True,
         "source_bound_measured_coverage_gate": measured_gate,
-        "current_final_runner_uses_mapping_safe_0_45_m_s": mapping_speed_active,
-        "dry_candidate_enabled_for_formal_runtime": dry_profile_verified,
+        "current_final_runner_uses_dry_cleaning_1_0_m_s": dry_speed_active,
+        "mapping_nav2_speed_remains_0_45_m_s": mapping_speed_retained,
+        "materialized_dry_clean_path_speed_m_s": dry_clean_path_speed,
+        "materialized_dry_smoother_speed_m_s": dry_smoother_speed,
+        "final_safety_gate_linear_speed_m_s": safety_gate_speed,
+        "final_safety_gate_allows_dry_cleaning_profile": dry_speed_active,
+        "dry_candidate_enabled_for_formal_runtime": dry_runtime_enabled,
+        "dry_candidate_competition_efficiency_accepted": dry_profile_verified,
         "not_ready_reasons": not_ready_reasons,
         "mapping_theoretical_area_m2_h": mapping_theoretical_area,
         "mapping_effective_area_m2_h": mapping_effective_area,

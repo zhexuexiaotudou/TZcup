@@ -95,6 +95,7 @@ def materialize_nav2_config(
     motion_profile_path: str | Path,
     *,
     navigation_footprint_key: str = "transport_stowed",
+    clean_path_speed_mps: float | None = None,
 ) -> tuple[dict[str, Any], float]:
     """Replace both costmap polygons from the canonical formal motion profile."""
     config = deepcopy(load_yaml_mapping(base_nav2_path))
@@ -106,8 +107,16 @@ def materialize_nav2_config(
     try:
         config["local_costmap"]["local_costmap"]["ros__parameters"]["footprint"] = polygon
         config["global_costmap"]["global_costmap"]["ros__parameters"]["footprint"] = polygon
+        if clean_path_speed_mps is not None:
+            speed = float(clean_path_speed_mps)
+            if not math.isfinite(speed) or speed <= 0.0:
+                raise IntegrationContractError("formal CleanPath speed is invalid")
+            config["controller_server"]["ros__parameters"]["CleanPath"][
+                "desired_linear_vel"
+            ] = speed
+            config["velocity_smoother"]["ros__parameters"]["max_velocity"][0] = speed
     except (KeyError, TypeError) as exc:
-        raise IntegrationContractError("base Nav2 config has no costmap footprint slots") from exc
+        raise IntegrationContractError("base Nav2 config has no formal runtime slots") from exc
     return config, cleaning_width
 
 

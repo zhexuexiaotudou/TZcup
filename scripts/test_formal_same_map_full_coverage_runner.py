@@ -58,6 +58,12 @@ def test_runner_is_one_hard_restart_fullcoverage_process_chain() -> None:
     assert "FORMAL_FINAL_RUNTIME_CLOSURE_MANIFEST" in RUNNER
     assert "FORMAL_BASELINE_RUNTIME_OVERLAY" in RUNNER
     assert "one frozen runtime install" in RUNNER
+    assert 'RUNTIME_BINDING="${OUTPUT}/runtime_gate_binding.json"' in RUNNER
+    lifecycle_validator = RUNNER.index("validate_formal_map_lifecycle_runtime.py")
+    lifecycle_output = RUNNER.index('--output "${OUTPUT}/lifecycle_acceptance.json"')
+    assert '--runtime-binding "${RUNTIME_BINDING}"' in RUNNER[
+        lifecycle_validator:lifecycle_output
+    ]
 
 
 def test_runner_uses_named_evaluator_pose_only_for_metrics() -> None:

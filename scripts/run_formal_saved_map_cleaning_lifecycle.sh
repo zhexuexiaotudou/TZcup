@@ -18,6 +18,7 @@ session="${FORMAL_ACCEPTANCE_SESSION:-${repo_root}/artifacts/formal_final_accept
 snapshot="${FORMAL_VEHICLE_SNAPSHOT_MANIFEST:-${repo_root}/reports/engineering/formal_vehicle_snapshot_manifest.json}"
 runtime_binding="${runtime}/runtime_gate_binding.json"
 cleaning_planner="${FORMAL_CLEANING_PLANNER:-full_coverage}"
+operation_speed_profile="${FORMAL_OPERATION_SPEED_PROFILE:-dry_cleaning_competition_candidate}"
 perception_artifact_root="${FORMAL_PERCEPTION_ARTIFACT_ROOT:-}"
 policy_checkpoint="${FORMAL_POLICY_CHECKPOINT:-}"
 maximum_task_distance_m="${FORMAL_FULL_COVERAGE_DISTANCE_M:-0.0}"
@@ -36,6 +37,10 @@ mkdir "${runtime}"
 
 if [[ "${cleaning_planner}" != "full_coverage" && "${cleaning_planner}" != "rl_dirt_priority" ]]; then
   echo "FORMAL_CLEANING_PLANNER must be full_coverage or rl_dirt_priority" >&2
+  exit 2
+fi
+if [[ "${operation_speed_profile}" != "dry_cleaning_competition_candidate" ]]; then
+  echo "FORMAL_OPERATION_SPEED_PROFILE must be dry_cleaning_competition_candidate for dry cleaning" >&2
   exit 2
 fi
 if [[ "${cleaning_planner}" == "rl_dirt_priority" ]]; then
@@ -159,6 +164,7 @@ if [[ "${cleaning_planner}" == "rl_dirt_priority" ]]; then
     perception_artifact_root:="${perception_artifact_root}"
     policy_checkpoint:="${policy_checkpoint}"
     maximum_task_distance_m:="${maximum_task_distance_m}"
+    operation_speed_profile:="${operation_speed_profile}"
   )
 else
   launch_command=(
@@ -174,6 +180,7 @@ else
     start_pedestrians:=true
     start_coverage:=true
     coverage_evidence_dir:="${runtime}"
+    operation_speed_profile:="${operation_speed_profile}"
   )
 fi
 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" "${launch_command[@]}" >"${runtime}/cleaning.launch.log" 2>&1 &

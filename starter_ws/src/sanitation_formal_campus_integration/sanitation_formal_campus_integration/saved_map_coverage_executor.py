@@ -19,8 +19,10 @@ from rclpy.node import Node
 from std_msgs.msg import Bool, String
 
 from .saved_map_coverage_core import (
+    DRY_CLEANING_SPEED_PROFILE,
     FORMAL_MAX_LINEAR_SPEED_MPS,
     FORMAL_OPERATION_WIDTH_M,
+    FormalOperationSpeedProfile,
     load_product_mission_geometry,
     polygon_area,
     validate_execution_parameters,
@@ -36,6 +38,7 @@ class FormalSavedMapCoverageExecutor(Node):
         self.declare_parameter("output_path", "coverage_execution.json")
         self.declare_parameter("operation_width_m", FORMAL_OPERATION_WIDTH_M)
         self.declare_parameter("maximum_linear_speed_mps", FORMAL_MAX_LINEAR_SPEED_MPS)
+        self.declare_parameter("operation_speed_profile", DRY_CLEANING_SPEED_PROFILE)
         self.declare_parameter("planning_timeout_sec", 300.0)
         self.declare_parameter("component_timeout_margin_sec", 120.0)
         self._state = self.create_publisher(
@@ -174,7 +177,10 @@ class FormalSavedMapCoverageExecutor(Node):
     def execute(self) -> dict:
         width = float(self.get_parameter("operation_width_m").value)
         speed = float(self.get_parameter("maximum_linear_speed_mps").value)
-        validate_execution_parameters(width, speed)
+        speed_profile = FormalOperationSpeedProfile(
+            str(self.get_parameter("operation_speed_profile").value), speed
+        )
+        validate_execution_parameters(width, speed, speed_profile)
         polygon = load_product_mission_geometry(
             str(self.get_parameter("mission_geometry_path").value)
         )
@@ -182,13 +188,16 @@ class FormalSavedMapCoverageExecutor(Node):
         self._publish_state("PLANNING", operation_width_m=width)
         planning = self._plan(polygon)
         if not planning.get("success"):
-            return self._finish(False, "FAILED", planning)
+            return self._finish(False, "FAILED", planning, speed_profile)
         swaths = planning["swaths"]
         results = []
         margin = float(self.get_parameter("component_timeout_margin_sec").value)
         if not math.isfinite(margin) or margin <= 0.0:
             return self._finish(
-                False, "FAILED", {"error": "invalid_component_timeout_margin"}
+                False,
+                "FAILED",
+                {"error": "invalid_component_timeout_margin"},
+                speed_profile,
             )
         maximum_transit_timeout = (
             math.hypot(
@@ -217,7 +226,7 @@ class FormalSavedMapCoverageExecutor(Node):
                     "planned_swath_count": len(swaths),
                     "completed_swath_count": index,
                     "component_results": results,
-                })
+                }, speed_profile)
             path = self._path(start, end)
             follow = FollowPath.Goal()
             follow.path = path
@@ -246,7 +255,7 @@ class FormalSavedMapCoverageExecutor(Node):
                     "planned_swath_count": len(swaths),
                     "completed_swath_count": index,
                     "component_results": results,
-                })
+                }, speed_profile)
         length = sum(math.dist(start, end) for start, end in swaths)
         return self._finish(True, "COMPLETED", {
             "planned_swath_count": len(swaths),
@@ -256,10 +265,20 @@ class FormalSavedMapCoverageExecutor(Node):
                 1.0, length * width / polygon_area(polygon)
             ),
             "component_results": results,
-        })
+        }, speed_profile)
 
-    def _finish(self, success: bool, state: str, details: dict) -> dict:
+    def _finish(
+        self,
+        success: bool,
+        state: str,
+        details: dict,
+        speed_profile: FormalOperationSpeedProfile | None = None,
+    ) -> dict:
         self._set_brush(False)
+        speed_profile = speed_profile or FormalOperationSpeedProfile(
+            str(self.get_parameter("operation_speed_profile").value),
+            float(self.get_parameter("maximum_linear_speed_mps").value),
+        )
         report = {
             "schema_version": 1,
             "success": success,
@@ -267,7 +286,8 @@ class FormalSavedMapCoverageExecutor(Node):
             "ground_truth_used_for_control": False,
             "truth_topics_subscribed": [],
             "operation_width_m": FORMAL_OPERATION_WIDTH_M,
-            "maximum_linear_speed_mps": FORMAL_MAX_LINEAR_SPEED_MPS,
+            "operation_speed_profile": speed_profile.name,
+            "maximum_linear_speed_mps": speed_profile.maximum_linear_speed_mps,
             "brush_disabled_on_exit": True,
             **details,
         }
@@ -283,7 +303,8 @@ class FormalSavedMapCoverageExecutor(Node):
             success=success,
             terminal_state=state,
             operation_width_m=FORMAL_OPERATION_WIDTH_M,
-            maximum_linear_speed_mps=FORMAL_MAX_LINEAR_SPEED_MPS,
+            operation_speed_profile=speed_profile.name,
+            maximum_linear_speed_mps=speed_profile.maximum_linear_speed_mps,
             planned_swath_count=int(report.get("planned_swath_count", 0)),
             completed_swath_count=int(report.get("completed_swath_count", 0)),
             brush_disabled_on_exit=True,

@@ -1,0 +1,38 @@
+{
+  "$schema": "https://tzcup.local/schema/s100p-product-board-launch-parameters-v1.json",
+  "schema_version": 1,
+  "record_id": "tzcup_s100p_product_board_launch_parameters_v1",
+  "operation_boundary": "record_only_no_ssh_copy_install_node_start_or_actuator_command",
+  "launch_file": "starter_ws/src/sanitation_perception/launch/formal_s100p_open_vocab.launch.py",
+  "platform": "rdk_s100",
+  "board": "RDK S100P",
+  "soc": "Journey 6P",
+  "march": "nash-m",
+  "required_absolute_parameters": {
+    "artifact_manifest_path": {
+      "target_root": "artifact_root",
+      "relative_path": "artifact_manifest.json"
+    },
+    "dosod_model_path": {
+      "target_root": "artifact_root",
+      "relative_path": "dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm"
+    },
+    "dosod_vocabulary_path": {
+      "target_root": "artifact_root",
+      "relative_path": "dosod/tzcup_offline_vocabulary.json"
+    },
+    "edgesam_encoder_model_path": {
+      "target_root": "artifact_root",
+      "relative_path": "edgesam/edgesam_encoder_512.hbm"
+    },
+    "edgesam_decoder_model_path": {
+      "target_root": "artifact_root",
+      "relative_path": "edgesam/edgesam_decoder_512.hbm"
+    }
+  },
+  "claim_boundary": {
+    "recorded_parameters_are_not_executed": true,
+    "real_actuator_control_allowed": false,
+    "board_runtime_accepted": false
+  }
+}
