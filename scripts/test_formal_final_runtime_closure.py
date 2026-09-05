@@ -254,6 +254,11 @@ def _fake_closure(tmp_path: Path) -> tuple[Path, Path, Path, Path, Path]:
             / "lib/sanitation_gazebo_control/cleaning_actuator_vector_bridge",
             b"typed-bridge",
         ),
+        _write(
+            install
+            / "lib/sanitation_gazebo_control/water_evaluation_bridge",
+            b"water-evaluation-bridge",
+        ),
     )
     alias = (install / "lib/libgz-transport13.so.13").resolve()
     protobuf_report_path = runtime / closure.GZ_TRANSPORT13_PROTOBUF_BINDING_REPORT
@@ -549,7 +554,7 @@ def test_record_and_verify_complete_non_symlink_merged_closure(tmp_path: Path) -
     assert set(gripper_mimic["installed"]) == set(
         closure.GRIPPER_MIMIC_INSTALL_BINDINGS
     )
-    assert verified["gz_transport13_runtime_consumer_count"] == 3
+    assert verified["gz_transport13_runtime_consumer_count"] == 4
     assert verified["gz_transport13_protobuf_needed"] == "libprotobuf.so.32"
     assert verified["gz_transport13_protobuf_binding_report_sha256"] == closure._sha256(
         runtime / closure.GZ_TRANSPORT13_PROTOBUF_BINDING_REPORT
@@ -851,5 +856,6 @@ def test_final_runtime_builder_materializes_all_preflight_inputs() -> None:
     assert "build_gz_transport13_eintr_vendor.sh" in source
     assert "gz_transport13_eintr_vendor_build_report.json" in source
     assert "gz_transport13_eintr_runtime_binding_report.json" in source
-    assert source.count("--runtime-plugin") == 3
+    assert source.count("--runtime-plugin") == 4
+    assert "water_evaluation_bridge" in source
     assert source.count("--protobuf-binding") == 1

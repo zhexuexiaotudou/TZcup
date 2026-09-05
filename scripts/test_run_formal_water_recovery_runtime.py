@@ -143,16 +143,28 @@ def test_runner_stops_all_active_parameter_bridges_in_order_before_launch_cleanu
     assert 'f"GZ_PARTITION={partition}".encode() not in environment' in shutdown
     assert 'executable.name != "parameter_bridge"' in shutdown
     assert '"ros_gz_bridge" not in executable.parts' in shutdown
+    assert 'def native_water_bridge_census()' in shutdown
+    assert 'executable.name != "water_evaluation_bridge"' in shutdown
+    assert '"sanitation_gazebo_control" not in executable.parts' in shutdown
+    assert 'native_target = "water_evaluation_bridge"' in shutdown
+    assert '"native_bridge_reaped"' in shutdown
+    assert '"native_bridge_clean_exit"' not in shutdown
+    assert '"native_bridge_exit_not_clean"' in shutdown
+    assert 'native_state == "missing"' in shutdown
+    assert 'saw_zombie=native_saw_zombie' in shutdown
     assert 'argument.startswith("__node:=")' in shutdown
     assert 'if len(node_args) != 1' in shutdown
     assert 'missing = sorted(set(targets) - set(initial_nodes))' in shutdown
     assert 'unexpected = sorted(set(initial_nodes) - set(targets))' in shutdown
-    assert 'if malformed or missing or unexpected or duplicates:' in shutdown
+    assert (
+        'if malformed or native_malformed or missing or unexpected or duplicates '
+        'or len(native_pids) != 1:'
+    ) in shutdown
     assert 'if len(matches) != 1:' in shutdown
     assert 'os.kill(pid, signal.SIGINT)' in shutdown
+    assert 'if exit_state == "missing":' in shutdown
     assert 'raise SystemExit(1)' in shutdown
     expected_order = (
-        "water_evaluation_bridge",
         "formal_vehicle_product_bridge",
         "cleaning_actuator_scalar_bridge",
         "a300_drivetrain_bridge",
@@ -166,12 +178,12 @@ def test_runner_stops_all_active_parameter_bridges_in_order_before_launch_cleanu
     )
     positions = [shutdown.index(f'"{node}"') for node in expected_order]
     assert positions == sorted(positions)
+    native_sigint = shutdown.index("os.kill(native_pid, signal.SIGINT)")
+    parameter_bridge_sigint = shutdown.index("os.kill(pid, signal.SIGINT)")
     assert shutdown.index('"pre_shutdown_census"') < shutdown.index(
-        '"ordered_shutdown_started"'
-    ) < shutdown.index("os.kill(pid, signal.SIGINT)")
-    assert shutdown.index('"post_shutdown_census"') > shutdown.index(
-        "os.kill(pid, signal.SIGINT)"
-    ) and shutdown.index('"post_shutdown_census"') < shutdown.index(
+        '"native_bridge_pre_shutdown"'
+    ) < native_sigint < shutdown.index('"ordered_shutdown_started"') < parameter_bridge_sigint
+    assert shutdown.index('"post_shutdown_census"') > parameter_bridge_sigint and shutdown.index('"post_shutdown_census"') < shutdown.index(
         '"ordered_shutdown_completed"'
     )
     assert 'if remaining_nodes or malformed:' in shutdown

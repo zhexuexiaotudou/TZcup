@@ -131,6 +131,7 @@ TYPED_CLEANING_TELEMETRY_SOURCE_PATHS: tuple[str, ...] = (
     "starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorMotorCore.cc",
     "starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorMotorSystem.cc",
     "starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorVectorBridge.cc",
+    "starter_ws/src/sanitation_gazebo_control/src/WaterEvaluationBridge.cc",
     "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
     "config/high_fidelity_vehicle/cleaning_actuator_motor_realism_contract.yaml",
     "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml",

@@ -446,6 +446,7 @@ python3 "${repo_root}/scripts/validate_gz_transport13_eintr_vendor.py" \
   --runtime-plugin "${runtime_ws}/install/lib/libWaterRecoverySystem.so" \
   --runtime-plugin "${runtime_ws}/install/lib/libCleaningActuatorMotorSystem.so" \
   --runtime-plugin "${runtime_ws}/install/lib/sanitation_gazebo_control/cleaning_actuator_vector_bridge" \
+  --runtime-plugin "${runtime_ws}/install/lib/sanitation_gazebo_control/water_evaluation_bridge" \
   --require-active-runtime \
   --output "${vendor_runtime_report}"
 

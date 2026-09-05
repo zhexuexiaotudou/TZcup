@@ -33,7 +33,7 @@ def test_committed_component_register_matches_expanded_urdf() -> None:
     assert result["checked_gazebo_only_diagnostics"] == ["cleaning_motor_status"]
     assert "cleaning_motor_status" not in result["checked_product_topic_contracts"]
     assert len(result["urdf_sha256"]) == 64
-    assert result["single_writer_topic_count"] == 31
+    assert result["single_writer_topic_count"] == 32
     assert "lidar_3d_pointcloud" in result["checked_topic_contracts"]
     assert "whole_vehicle_safety_status" in result["checked_topic_contracts"]
     assert "warning_lights_state" in result["checked_topic_contracts"]
@@ -64,6 +64,7 @@ def test_committed_component_register_matches_expanded_urdf() -> None:
         "cleaning_motor_temperature",
         "cleaning_motor_output_load",
         "cleaning_motor_telemetry_snapshot",
+        "recovery_filter_blockage",
         "safety_power_branch",
         "tail_lights_state",
         "traction_permitted",

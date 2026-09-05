@@ -10,9 +10,9 @@ last_expanded_artifact:
   source_snapshot_state: current_verified_snapshot
 current_snapshot:
   path: reports/engineering/formal_vehicle_snapshot_manifest.json
-  sha256: 2980b0f78a39498bd0b202b232a3aaaf19c87c3e0bb9d5bc0377ed47c08615d0
-  source_inventory_sha256: 61bd5262d19d792e0766b767d555adc371a14a455c13efebc69c9df80d1b08cc
-  output_inventory_sha256: 74b48722bc5cdc4ab4b4bbabf7afb267aeb0c35fc61764304ff97c98628f23f3
+  sha256: 98688a04183947e6584f7129a37bf0490adc4e273ca2eb98c576538e36db9351
+  source_inventory_sha256: 3e3d75364b2e8af6b688de854e41203b5edd27244b529a34f36840ded03e8bd3
+  output_inventory_sha256: 2373c4f4aac55bf4690c1ce0d163c0cb6fb5be45cef911873473c44ab020c0f3
 mass_budget:
   a300_design_load_kg: 91.35
   a300_base_mass_kg: 78.5
@@ -74,11 +74,11 @@ evidence_paths:
   source_snapshot:
     path: reports/engineering/formal_vehicle_snapshot_manifest.json
     state: current_verified_snapshot
-    sha256: 2980b0f78a39498bd0b202b232a3aaaf19c87c3e0bb9d5bc0377ed47c08615d0
+    sha256: 98688a04183947e6584f7129a37bf0490adc4e273ca2eb98c576538e36db9351
   component_register:
     path: reports/engineering/formal_vehicle_component_register_report.json
     state: current_snapshot_output
-    sha256: ce8cc858109f8dcb22283b6bfa82e97031382ad0906c5104e2654c14b944a4b9
+    sha256: 1cc9a84e8d6357a8d95b2fcd862a20da31ce78b541dc006b379058642b9a086c
   fov_occlusion:
     path: reports/engineering/formal_vehicle_fov_occlusion_report.json
     state: current_static_analysis

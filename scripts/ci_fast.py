@@ -143,6 +143,7 @@ def require_project_files() -> None:
         SOURCE_ROOT / "sanitation_gazebo_control" / "src" / "CleaningActuatorMotorCore.cc",
         SOURCE_ROOT / "sanitation_gazebo_control" / "src" / "CleaningActuatorMotorSystem.cc",
         SOURCE_ROOT / "sanitation_gazebo_control" / "src" / "CleaningActuatorVectorBridge.cc",
+        SOURCE_ROOT / "sanitation_gazebo_control" / "src" / "WaterEvaluationBridge.cc",
         SOURCE_ROOT / "sanitation_vehicle_description" / "launch" / "formal_vehicle_sim.launch.py",
         ROOT / "config" / "high_fidelity_vehicle" / "cleaning_actuator_motor_realism_contract.yaml",
         ROOT / "config" / "high_fidelity_vehicle" / "formal_vehicle_component_register.yaml",

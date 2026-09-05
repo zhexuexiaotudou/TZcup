@@ -86,6 +86,7 @@ TYPED_CRITICAL_MANIFEST_REQUIRED_PATHS = {
     "patches/upstream/gz_transport13/manifest.json",
     "starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorMotorSystem.cc",
     "starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorVectorBridge.cc",
+    "starter_ws/src/sanitation_gazebo_control/src/WaterEvaluationBridge.cc",
     "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
 }
 

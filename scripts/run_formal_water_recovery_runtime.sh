@@ -160,7 +160,6 @@ import time
 partition, timeline_arg = sys.argv[1:]
 timeline = Path(timeline_arg)
 targets = (
-    "water_evaluation_bridge",
     "formal_vehicle_product_bridge",
     "cleaning_actuator_scalar_bridge",
     "a300_drivetrain_bridge",
@@ -172,6 +171,7 @@ targets = (
     "rear_bumper_contact_bridge",
     "formal_auxiliary_bridge",
 )
+native_target = "water_evaluation_bridge"
 
 
 def record(event, **fields):
@@ -226,6 +226,34 @@ def matching_pids(node_name):
     return nodes.get(node_name, [])
 
 
+def native_water_bridge_census():
+    matches = []
+    malformed = []
+    for proc_dir in Path("/proc").iterdir():
+        if not proc_dir.name.isdigit():
+            continue
+        pid = int(proc_dir.name)
+        environ_raw = read_proc(pid, "environ")
+        cmdline_raw = read_proc(pid, "cmdline")
+        if environ_raw is None or cmdline_raw is None:
+            continue
+        environment = environ_raw.split(b"\0")
+        if f"GZ_PARTITION={partition}".encode() not in environment:
+            continue
+        argv = [part.decode("utf-8", "replace") for part in cmdline_raw.split(b"\0") if part]
+        if not argv:
+            continue
+        executable = Path(argv[0])
+        if executable.name != "water_evaluation_bridge" or "sanitation_gazebo_control" not in executable.parts:
+            continue
+        node_args = [argument for argument in argv if argument.startswith("__node:=")]
+        if len(node_args) != 1 or node_args[0] != "__node:=water_evaluation_bridge":
+            malformed.append(pid)
+            continue
+        matches.append(pid)
+    return sorted(matches), sorted(malformed)
+
+
 def process_exit_state(pid):
     status = read_proc(pid, "stat")
     if status is None:
@@ -237,6 +265,7 @@ def process_exit_state(pid):
 
 
 initial_nodes, malformed = parameter_bridge_census()
+native_pids, native_malformed = native_water_bridge_census()
 missing = sorted(set(targets) - set(initial_nodes))
 unexpected = sorted(set(initial_nodes) - set(targets))
 duplicates = {node: pids for node, pids in initial_nodes.items() if len(pids) != 1}
@@ -248,8 +277,45 @@ record(
     unexpected=unexpected,
     duplicates=duplicates,
 )
-if malformed or missing or unexpected or duplicates:
+record(
+    "native_bridge_pre_shutdown",
+    target=native_target,
+    pids=native_pids,
+    malformed_pids=native_malformed,
+)
+if malformed or native_malformed or missing or unexpected or duplicates or len(native_pids) != 1:
     record("pre_shutdown_census_failed")
+    raise SystemExit(1)
+
+native_pid = native_pids[0]
+try:
+    os.kill(native_pid, signal.SIGINT)
+except ProcessLookupError:
+    record("native_bridge_signal_failed", target=native_target, pid=native_pid)
+    raise SystemExit(1)
+record("native_bridge_sigint_sent", target=native_target, pid=native_pid)
+native_deadline = time.monotonic() + 8.0
+native_saw_zombie = False
+while time.monotonic() < native_deadline:
+    native_state = process_exit_state(native_pid)
+    if native_state == "missing":
+        record(
+            "native_bridge_reaped",
+            target=native_target,
+            pid=native_pid,
+            saw_zombie=native_saw_zombie,
+        )
+        break
+    native_saw_zombie = native_saw_zombie or native_state == "zombie"
+    time.sleep(0.05)
+else:
+    record(
+        "native_bridge_exit_not_clean",
+        target=native_target,
+        pid=native_pid,
+        exit_state=process_exit_state(native_pid),
+        saw_zombie=native_saw_zombie,
+    )
     raise SystemExit(1)
 
 record("ordered_shutdown_started", targets=list(targets))
@@ -266,11 +332,13 @@ for target in targets:
         raise SystemExit(1)
     record("target_sigint_sent", target=target, pid=pid)
     deadline = time.monotonic() + 8.0
+    saw_zombie = False
     while time.monotonic() < deadline:
         exit_state = process_exit_state(pid)
-        if exit_state is not None:
-            record("target_exited", target=target, pid=pid, exit_state=exit_state)
+        if exit_state == "missing":
+            record("target_exited", target=target, pid=pid, saw_zombie=saw_zombie)
             break
+        saw_zombie = saw_zombie or exit_state == "zombie"
         time.sleep(0.05)
     else:
         record("target_exit_timeout", target=target, pid=pid)

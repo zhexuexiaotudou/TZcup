@@ -15,6 +15,14 @@ LAUNCH = (
     / "launch"
     / "formal_vehicle_sim.launch.py"
 )
+WATER_NATIVE_BRIDGE = (
+    ROOT
+    / "starter_ws"
+    / "src"
+    / "sanitation_gazebo_control"
+    / "src"
+    / "WaterEvaluationBridge.cc"
+)
 
 
 def _keyword(call: ast.Call, name: str) -> ast.expr | None:
@@ -58,7 +66,20 @@ def _condition_name(call: ast.Call) -> str | None:
     return launch_configuration.id if isinstance(launch_configuration, ast.Name) else None
 
 
-def _load_bridges() -> tuple[ast.Call, ast.Call, ast.Call, list[str], list[str], list[str]]:
+def _water_evaluator_call(tree: ast.AST) -> ast.Call:
+    return next(
+        call
+        for call in ast.walk(tree)
+        if isinstance(call, ast.Call)
+        and isinstance(call.func, ast.Name)
+        and call.func.id == "Node"
+        and _constant_string(_keyword(call, "package")) == "sanitation_gazebo_control"
+        and _constant_string(_keyword(call, "executable")) == "water_evaluation_bridge"
+        and _constant_string(_keyword(call, "name")) == "water_evaluation_bridge"
+    )
+
+
+def _load_bridges() -> tuple[ast.Call, ast.Call, ast.Call, list[str], list[str]]:
     tree = ast.parse(LAUNCH.read_text(encoding="utf-8"), filename=str(LAUNCH))
     calls = _bridge_calls(tree)
     product = next(
@@ -66,14 +87,13 @@ def _load_bridges() -> tuple[ast.Call, ast.Call, ast.Call, list[str], list[str],
         for call in calls
         if any("/payload/wastewater_mass_kg/applied@" in item for item in _arguments(call))
     )
-    water_evaluator = next(call for call in calls if _condition_name(call) == "water_evaluation_interfaces")
+    water_evaluator = _water_evaluator_call(tree)
     dry_bin_evaluator = next(call for call in calls if _condition_name(call) == "dry_bin_evaluation_interfaces")
     return (
         product,
         water_evaluator,
         dry_bin_evaluator,
         _arguments(product),
-        _arguments(water_evaluator),
         _arguments(dry_bin_evaluator),
     )
 
@@ -122,7 +142,7 @@ def test_evaluator_bridge_is_explicit_opt_in_and_default_off() -> None:
     assert len(declarations) == 1
     assert _constant_string(_keyword(declarations[0], "default_value")) == "false"
 
-    _, evaluator, _, _, _, _ = _load_bridges()
+    _, evaluator, _, _, _ = _load_bridges()
     condition = _keyword(evaluator, "condition")
     assert isinstance(condition, ast.Call)
     assert isinstance(condition.func, ast.Name) and condition.func.id == "IfCondition"
@@ -145,7 +165,7 @@ def test_dry_bin_evaluator_bridge_is_explicit_opt_in_and_default_off() -> None:
     assert len(declarations) == 1
     assert _constant_string(_keyword(declarations[0], "default_value")) == "false"
 
-    _, _, evaluator, _, _, _ = _load_bridges()
+    _, _, evaluator, _, _ = _load_bridges()
     condition = _keyword(evaluator, "condition")
     assert isinstance(condition, ast.Call)
     assert isinstance(condition.func, ast.Name) and condition.func.id == "IfCondition"
@@ -155,7 +175,7 @@ def test_dry_bin_evaluator_bridge_is_explicit_opt_in_and_default_off() -> None:
 
 
 def test_default_product_bridge_has_no_truth_reset_or_entity_mutation() -> None:
-    _, _, _, product_entries, _, _ = _load_bridges()
+    _, _, _, product_entries, _ = _load_bridges()
     topics = {_topic(entry) for entry in product_entries}
 
     forbidden_fragments = (
@@ -174,7 +194,7 @@ def test_default_product_bridge_has_no_truth_reset_or_entity_mutation() -> None:
 
 
 def test_payload_mass_has_no_ros_write_or_dry_aggregate_interface() -> None:
-    _, _, _, product_entries, _, _ = _load_bridges()
+    _, _, _, product_entries, _ = _load_bridges()
     topics = {_topic(entry) for entry in product_entries}
 
     # Dry waste is represented by the actual cube rigid bodies.  Publishing an
@@ -190,7 +210,7 @@ def test_payload_mass_has_no_ros_write_or_dry_aggregate_interface() -> None:
 
 
 def test_product_commands_are_one_way_and_limited_to_operational_water_enable() -> None:
-    _, _, _, product_entries, _, _ = _load_bridges()
+    _, _, _, product_entries, _ = _load_bridges()
     directions = {_topic(entry): _direction(entry) for entry in product_entries}
     ros_to_gz = {topic for topic, direction in directions.items() if direction == "ROS_TO_GZ"}
     assert ros_to_gz == {
@@ -224,32 +244,41 @@ def test_product_commands_are_one_way_and_limited_to_operational_water_enable() 
 
 
 def test_only_opt_in_evaluator_bridge_contains_water_truth_and_resets() -> None:
-    _, _, _, product_entries, evaluator_entries, dry_bin_entries = _load_bridges()
+    _, evaluator, _, product_entries, dry_bin_entries = _load_bridges()
     product_topics = {_topic(entry) for entry in product_entries}
-    evaluator_directions = {_topic(entry): _direction(entry) for entry in evaluator_entries}
     dry_bin_topics = {_topic(entry) for entry in dry_bin_entries}
+    source = WATER_NATIVE_BRIDGE.read_text(encoding="utf-8")
 
     root = "/model/tzcup_formal_sanitation_vehicle/water_recovery"
-    expected = {
-        f"{root}/command/reset_ground_volume_l": "ROS_TO_GZ",
-        f"{root}/command/reset_tank_mass_kg": "ROS_TO_GZ",
-        f"{root}/command/filter_blockage_fraction": "ROS_TO_GZ",
-        f"{root}/ground_volume_l": "GZ_TO_ROS",
-        f"{root}/mass_balance_error_fraction": "GZ_TO_ROS",
-        f"{root}/filter_blockage_fraction": "GZ_TO_ROS",
-        f"{root}/status_json": "GZ_TO_ROS",
+    command_topics = {
+        f"{root}/command/reset_ground_volume_l",
+        f"{root}/command/reset_tank_mass_kg",
+        f"{root}/command/filter_blockage_fraction",
     }
-    assert evaluator_directions == expected
-    assert set(expected).isdisjoint(product_topics)
+    telemetry_topics = {
+        f"{root}/ground_volume_l",
+        f"{root}/mass_balance_error_fraction",
+        f"{root}/filter_blockage_fraction",
+        f"{root}/status_json",
+    }
+    assert _constant_string(_keyword(evaluator, "package")) == "sanitation_gazebo_control"
+    assert _constant_string(_keyword(evaluator, "executable")) == "water_evaluation_bridge"
+    assert all(topic in source for topic in command_topics | telemetry_topics)
+    assert source.count("create_subscription<std_msgs::msg::Float64>") == 3
+    assert source.count("Advertise<gz::msgs::Double>") == 3
+    assert source.count("create_publisher<std_msgs::msg::Float64>") == 3
+    assert source.count("create_publisher<std_msgs::msg::String>") == 1
+    assert source.count("gz_node_.Unsubscribe(") == 4
+    assert "std::atomic<bool> stopping_" in source
+    assert "std::lock_guard<std::mutex> drain(callback_mutex_)" in source
+    assert (command_topics | telemetry_topics).isdisjoint(product_topics)
     assert f"{root}/command/service_drain_open" in product_topics
-    assert set(expected).isdisjoint(dry_bin_topics)
-    assert "BIDIRECTIONAL" not in evaluator_directions.values()
+    assert (command_topics | telemetry_topics).isdisjoint(dry_bin_topics)
 
 
 def test_dry_bin_evaluator_bridge_is_read_only_and_exactly_typed() -> None:
-    _, _, _, product_entries, water_entries, evaluator_entries = _load_bridges()
+    _, _, _, product_entries, evaluator_entries = _load_bridges()
     product_topics = {_topic(entry) for entry in product_entries}
-    water_topics = {_topic(entry) for entry in water_entries}
     entries = {_topic(entry): entry for entry in evaluator_entries}
     directions = {topic: _direction(entry) for topic, entry in entries.items()}
 
@@ -261,7 +290,18 @@ def test_dry_bin_evaluator_bridge_is_read_only_and_exactly_typed() -> None:
     }
     assert {topic: entry.split("@", 1)[1] for topic, entry in entries.items()} == expected_types
     assert set(expected_types).isdisjoint(product_topics)
-    assert set(expected_types).isdisjoint(water_topics)
+    water_root = "/model/tzcup_formal_sanitation_vehicle/water_recovery"
+    assert set(expected_types).isdisjoint(
+        {
+            f"{water_root}/command/reset_ground_volume_l",
+            f"{water_root}/command/reset_tank_mass_kg",
+            f"{water_root}/command/filter_blockage_fraction",
+            f"{water_root}/ground_volume_l",
+            f"{water_root}/mass_balance_error_fraction",
+            f"{water_root}/filter_blockage_fraction",
+            f"{water_root}/status_json",
+        }
+    )
     assert set(directions.values()) == {"GZ_TO_ROS"}
     assert {
         f"{root}/fill_level_fraction",

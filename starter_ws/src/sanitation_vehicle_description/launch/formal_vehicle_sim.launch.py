@@ -486,18 +486,9 @@ def generate_launch_description() -> LaunchDescription:
     # not the product ROS graph.  They are opt-in so the deployed launch cannot
     # spoof water removal or mass-conservation acceptance through ROS topics.
     water_evaluation_bridge = Node(
-        package="ros_gz_bridge",
-        executable="parameter_bridge",
+        package="sanitation_gazebo_control",
+        executable="water_evaluation_bridge",
         name="water_evaluation_bridge",
-        arguments=[
-            "/model/tzcup_formal_sanitation_vehicle/water_recovery/command/reset_ground_volume_l@std_msgs/msg/Float64]gz.msgs.Double",
-            "/model/tzcup_formal_sanitation_vehicle/water_recovery/command/reset_tank_mass_kg@std_msgs/msg/Float64]gz.msgs.Double",
-            "/model/tzcup_formal_sanitation_vehicle/water_recovery/command/filter_blockage_fraction@std_msgs/msg/Float64]gz.msgs.Double",
-            "/model/tzcup_formal_sanitation_vehicle/water_recovery/ground_volume_l@std_msgs/msg/Float64[gz.msgs.Double",
-            "/model/tzcup_formal_sanitation_vehicle/water_recovery/mass_balance_error_fraction@std_msgs/msg/Float64[gz.msgs.Double",
-            "/model/tzcup_formal_sanitation_vehicle/water_recovery/filter_blockage_fraction@std_msgs/msg/Float64[gz.msgs.Double",
-            "/model/tzcup_formal_sanitation_vehicle/water_recovery/status_json@std_msgs/msg/String[gz.msgs.StringMsg",
-        ],
         output="screen",
         condition=IfCondition(water_evaluation_interfaces),
     )
