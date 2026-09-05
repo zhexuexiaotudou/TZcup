@@ -52,10 +52,11 @@ RECOVERY_LIFT_TARGET_M = 0.060
 # This is a wall-clock observation budget, not simulated time.  The complete
 # DART vehicle can run below real time while the loaded P16 is travelling: a
 # real capture needed nearly 20 wall seconds to cover only 29.3 mm after reset
-# at the reported 4.8 mm/s simulation velocity.  Keep 35 seconds so the full
-# 40 mm reset stroke and the final idle sample are observable without relaxing
-# either the physical stop or recovery-position criteria.
-RECOVERY_LIFT_TIMEOUT_S = 35.0
+# at the reported 4.8 mm/s simulation velocity.  A full-vehicle r044 capture
+# still needed more than 35 wall seconds to enter the unchanged 60 +/- 2 mm
+# recovery band.  Keep 45 seconds so the full 40 mm reset stroke and final
+# idle sample remain observable without relaxing any physical criteria.
+RECOVERY_LIFT_TIMEOUT_S = 45.0
 
 
 def _snapshot_binding(path: Path) -> dict[str, str]:
