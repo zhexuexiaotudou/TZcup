@@ -11,6 +11,9 @@
 *.yml text eol=lf
 *.json text eol=lf
 *.md text eol=lf
+*.cc text eol=lf
+*.hh text eol=lf
+CMakeLists.txt text eol=lf
 *.dae binary
 *.stl binary
 
