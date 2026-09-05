@@ -1,14 +1,14 @@
 {
   "kind": "tzcup_formal_vehicle_snapshot_manifest",
-  "output_inventory_sha256": "74b48722bc5cdc4ab4b4bbabf7afb267aeb0c35fc61764304ff97c98628f23f3",
+  "output_inventory_sha256": "2373c4f4aac55bf4690c1ce0d163c0cb6fb5be45cef911873473c44ab020c0f3",
   "outputs": {
     "reports/engineering/formal_competition_vehicle.urdf": {
       "sha256": "2b399eaba8de34fd55ca663a3b6b49437070c72969f5e22faf2a64a12ba27db8",
       "size_bytes": 278653
     },
     "reports/engineering/formal_vehicle_component_register_report.json": {
-      "sha256": "ce8cc858109f8dcb22283b6bfa82e97031382ad0906c5104e2654c14b944a4b9",
-      "size_bytes": 11091
+      "sha256": "1cc9a84e8d6357a8d95b2fcd862a20da31ce78b541dc006b379058642b9a086c",
+      "size_bytes": 11123
     },
     "reports/engineering/formal_vehicle_layout_report.json": {
       "sha256": "f770a791c2a74a9499fbe6fcba43f7c2077eed9c7a9659fe3649a7f89d430601",
@@ -51,8 +51,8 @@
       "size_bytes": 5149
     },
     "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml": {
-      "sha256": "7939222a201397516e1fde3381719e0f929f9bcf12055afcf72895552b2e796d",
-      "size_bytes": 68126
+      "sha256": "83b8586c5ade5065cef9d44445fe4bc44c61adf4f1fd19786bd2ccf5a031b755",
+      "size_bytes": 68411
     },
     "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": {
       "sha256": "3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9",
@@ -967,5 +967,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "61bd5262d19d792e0766b767d555adc371a14a455c13efebc69c9df80d1b08cc"
+  "source_inventory_sha256": "3e3d75364b2e8af6b688de854e41203b5edd27244b529a34f36840ded03e8bd3"
 }

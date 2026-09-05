@@ -128,14 +128,24 @@ def test_formal_vehicle_registers_plugin_world_and_ros_bridges() -> None:
     assert 'DeclareLaunchArgument(\n                "water_evaluation_interfaces"' in launch
     assert 'default_value="false"' in launch
     assert "condition=IfCondition(water_evaluation_interfaces)" in launch
+    evaluator_source = (
+        ROOT / "starter_ws/src/sanitation_gazebo_control/src/WaterEvaluationBridge.cc"
+    ).read_text(encoding="utf-8")
     for evaluator_topic in (
         "command/reset_ground_volume_l",
         "command/reset_tank_mass_kg",
+        "command/filter_blockage_fraction",
         "ground_volume_l",
         "mass_balance_error_fraction",
+        "filter_blockage_fraction",
         "status_json",
     ):
-        assert launch.count(f"water_recovery/{evaluator_topic}") == 1
+        assert evaluator_source.count(f"water_recovery/{evaluator_topic}") == 1
+    assert evaluator_source.count("Advertise<gz::msgs::Double>") == 3
+    assert evaluator_source.count("create_subscription<std_msgs::msg::Float64>") == 3
+    assert evaluator_source.count("create_publisher<std_msgs::msg::Float64>") == 3
+    assert "create_publisher<std_msgs::msg::String>" in evaluator_source
+    assert "kFilterBlockageTelemetryEndpoint" in evaluator_source
     source = (
         ROOT / "starter_ws/src/sanitation_gazebo_control/src/WaterRecoverySystem.cc"
     ).read_text(encoding="utf-8")

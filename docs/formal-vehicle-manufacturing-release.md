@@ -12,9 +12,9 @@ STL 网格、部件台账和 Gazebo 关节模型可复用于制造设计输入�
 其中 7 条 `baseline_allocated` 行仅重现最后展开 URDF 的名义 `160.007583 kg`；采购件参考质量和
 未知实物质量不重复相加。当前冻结数字快照已经逐项复核：展开 URDF 的 SHA-256 为
 `2b399eaba8de34fd55ca663a3b6b49437070c72969f5e22faf2a64a12ba27db8`，快照清单文件自身的
- SHA-256 为 `2980b0f78a39498bd0b202b232a3aaaf19c87c3e0bb9d5bc0377ed47c08615d0`，source inventory
- 摘要为 `61bd5262d19d792e0766b767d555adc371a14a455c13efebc69c9df80d1b08cc`，output inventory
- 摘要为 `74b48722bc5cdc4ab4b4bbabf7afb267aeb0c35fc61764304ff97c98628f23f3`。质量声明仍为
+ SHA-256 为 `98688a04183947e6584f7129a37bf0490adc4e273ca2eb98c576538e36db9351`，source inventory
+ 摘要为 `3e3d75364b2e8af6b688de854e41203b5edd27244b529a34f36840ded03e8bd3`，output inventory
+ 摘要为 `2373c4f4aac55bf4690c1ce0d163c0cb6fb5be45cef911873473c44ab020c0f3`。质量声明仍为
 `nominal_model_allocation_not_actual_weighed`。这些绑定只表明名义数字基线未漂移；该数字不是
 实物称重，也不是制造证据。
 
