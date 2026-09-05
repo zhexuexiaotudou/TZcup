@@ -25,7 +25,8 @@ ACTIVE_CONTROLLERS = {
     "service_controller",
 }
 INACTIVE_CONTROLLERS = {"brush_controller", "recovery_controller"}
-REQUIRED_NODES = {"/whole_vehicle_safety_manager", "/service_drain_safety_manager"}
+REQUIRED_NODES = {"/whole_vehicle_safety_manager"}
+SERVICE_DRAIN_MANAGER_NODE = "/service_drain_safety_manager"
 TYPED_TOPIC = "/model/tzcup_formal_sanitation_vehicle/cleaning_motors/telemetry_snapshot"
 def controller_contract_checks(states: dict[str, str]) -> dict[str, bool]:
     return {
@@ -91,6 +92,11 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--timeout-s", type=float, default=60.0)
+    parser.add_argument(
+        "--service-drain-manager",
+        choices=("present", "absent"),
+        default="present",
+    )
     args = parser.parse_args()
     rclpy.init()
     node = ReadinessProbe()
@@ -104,9 +110,12 @@ def main() -> int:
             for name, namespace in node.get_node_names_and_namespaces()
         }
         publisher_info = node.get_publishers_info_by_topic(TYPED_TOPIC)
+        manager_present = SERVICE_DRAIN_MANAGER_NODE in node_names
         checks = {
             **controller_contract_checks(node.controller_states),
-            "safety_manager_nodes_present": REQUIRED_NODES <= node_names,
+            "required_safety_manager_nodes_present": REQUIRED_NODES <= node_names,
+            "service_drain_manager_matches_expected_presence": manager_present
+            == (args.service_drain_manager == "present"),
             "typed_snapshot_has_ros_publisher": bool(publisher_info),
             "typed_snapshot_rev_positive_and_non_stale": node.decoded_frame is not None,
             "typed_snapshot_has_zero_decode_errors": not node.decode_errors,
@@ -125,6 +134,8 @@ def main() -> int:
         "controller_state_source": "/controller_manager/list_controllers",
         "controller_service_errors": node.controller_errors,
         "required_nodes": sorted(REQUIRED_NODES),
+        "service_drain_manager_node": SERVICE_DRAIN_MANAGER_NODE,
+        "expected_service_drain_manager_presence": args.service_drain_manager,
         "typed_topic": TYPED_TOPIC,
         "typed_frame": node.decoded_frame,
         "decode_errors": node.decode_errors,

@@ -36,6 +36,7 @@ from formal_runtime_gate_binding import load_binding
 
 
 ROOT = "/model/tzcup_formal_sanitation_vehicle/water_recovery"
+SERVICE_DRAIN_COMMAND_TOPIC = f"{ROOT}/command/service_drain_open"
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_SNAPSHOT = REPOSITORY_ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.json"
 DEFAULT_SESSION = REPOSITORY_ROOT / "artifacts/formal_final_acceptance_session.json"
@@ -151,7 +152,7 @@ class Probe(Node):
             Float64, f"{ROOT}/command/filter_blockage_fraction", 10
         )
         self.service_drain = self.create_publisher(
-            Bool, f"{ROOT}/command/service_drain_open", 10
+            Bool, SERVICE_DRAIN_COMMAND_TOPIC, 10
         )
         self.cleaning = self.create_publisher(
             JointTrajectory, "/cleaning_controller/joint_trajectory", 10
@@ -628,11 +629,20 @@ def wait_ready(node: Probe, timeout_s: float = 120.0) -> None:
             node.service_drain,
             node.motor_fault_reset,
         )
+        drain_command_publishers = node.get_publishers_info_by_topic(
+            SERVICE_DRAIN_COMMAND_TOPIC
+        )
+        exclusive_drain_owner = (
+            len(drain_command_publishers) == 1
+            and drain_command_publishers[0].node_name == node.get_name()
+            and drain_command_publishers[0].node_namespace == node.get_namespace()
+        )
         if (
             node.status is not None
             and node.safety_permit is not None
             and node.actuator_permit is not None
             and all(pub.get_subscription_count() > 0 for pub in publishers)
+            and exclusive_drain_owner
             and all(
                 node.get_publishers_info_by_topic(topic)
                 for topic in (
@@ -654,6 +664,15 @@ def wait_ready(node: Probe, timeout_s: float = 120.0) -> None:
         "service_drain": node.service_drain.get_subscription_count(),
         "motor_fault_reset": node.motor_fault_reset.get_subscription_count(),
     }
+    drain_command_publishers = [
+        {
+            "node_name": endpoint.node_name,
+            "node_namespace": endpoint.node_namespace,
+        }
+        for endpoint in node.get_publishers_info_by_topic(
+            SERVICE_DRAIN_COMMAND_TOPIC
+        )
+    ]
     raise RuntimeError(
         "water recovery topics, safety status or controller subscriptions did not "
         f"become ready: status_seen={node.status is not None}, "
@@ -663,8 +682,34 @@ def wait_ready(node: Probe, timeout_s: float = 120.0) -> None:
         f"squeegee={len(node.get_publishers_info_by_topic('/cleaning/squeegee/contact'))}, "
         f"left={len(node.get_publishers_info_by_topic('/cleaning/left_side_brush/contact'))}, "
         f"right={len(node.get_publishers_info_by_topic('/cleaning/right_side_brush/contact'))}, "
-        f"roller={len(node.get_publishers_info_by_topic('/cleaning/central_roller/contact'))}}}"
+        f"roller={len(node.get_publishers_info_by_topic('/cleaning/central_roller/contact'))}}}, "
+        f"drain_command_publishers={drain_command_publishers}"
     )
+
+
+def service_drain_command_ownership(node: Probe) -> dict[str, object]:
+    publishers = [
+        {
+            "node_name": endpoint.node_name,
+            "node_namespace": endpoint.node_namespace,
+        }
+        for endpoint in node.get_publishers_info_by_topic(
+            SERVICE_DRAIN_COMMAND_TOPIC
+        )
+    ]
+    return {
+        "topic": SERVICE_DRAIN_COMMAND_TOPIC,
+        "expected_owner": {
+            "node_name": node.get_name(),
+            "node_namespace": node.get_namespace(),
+        },
+        "publishers": publishers,
+        "exclusive_evaluator_owner": len(publishers) == 1
+        and publishers[0]["node_name"] == node.get_name()
+        and publishers[0]["node_namespace"] == node.get_namespace(),
+        "scope": "water_plant_and_mass_ledger_only",
+        "complete_service_chain_gate": "service_interface_acceptance",
+    }
 
 
 def reset_episode(node: Probe, ground_l: float, tank_kg: float) -> dict[str, object]:
@@ -1343,17 +1388,34 @@ def run_full(node: Probe) -> dict[str, object]:
     node.publish_service_drain(False)
 
     # The physical low-point service port must reduce both the simulated tank
-    # mass and the vehicle dynamic payload.  Splash / receiving-vessel CFD is
-    # intentionally outside the contest-required recovery model.
-    advance_sim_time(
+    # mass and the vehicle dynamic payload.  First wait for the stopped plant
+    # to satisfy its physical valve interlock, then wait for measured discharge
+    # instead of assuming that actuator deceleration leaves a fixed two-second
+    # request window.  Splash / receiving-vessel CFD remains intentionally
+    # outside the contest-required recovery model.
+    def stationary_service_drain_command() -> None:
+        node.stop()
+        node.publish_service_drain(True)
+
+    wait_for_sim_condition(
         node,
-        2.0,
-        label="wastewater service drain",
-        hard_wall_s=120.0,
-        callback=lambda: (
-            node.stop(),
-            node.publish_service_drain(True),
-        ),
+        lambda: node.status is not None
+        and bool(node.status.get("service_drain_requested_open"))
+        and bool(node.status.get("service_drain_open"))
+        and bool(node.status.get("service_drain_permitted")),
+        label="stationary wastewater service-drain interlock",
+        timeout_sim_s=10.0,
+        hard_wall_s=180.0,
+        callback=stationary_service_drain_command,
+    )
+    wait_for_sim_condition(
+        node,
+        lambda: node.status is not None
+        and float(node.status.get("service_drained_volume_l", 0.0)) >= 0.30,
+        label="measured wastewater service drain volume",
+        timeout_sim_s=10.0,
+        hard_wall_s=180.0,
+        callback=stationary_service_drain_command,
     )
     node.publish_service_drain(False)
     advance_sim_time(
@@ -1539,8 +1601,22 @@ def main() -> int:
         )
     rclpy.init()
     node = Probe()
+    drain_command_ownership: dict[str, object] = {
+        "topic": SERVICE_DRAIN_COMMAND_TOPIC,
+        "publishers": [],
+        "exclusive_evaluator_owner": False,
+        "scope": "water_plant_and_mass_ledger_only",
+        "complete_service_chain_gate": "service_interface_acceptance",
+        "observation": "not_collected_before_failure",
+    }
     try:
         wait_ready(node)
+        drain_command_ownership = service_drain_command_ownership(node)
+        if not drain_command_ownership["exclusive_evaluator_owner"]:
+            raise RuntimeError(
+                "water plant gate requires exactly one evaluator drain command owner: "
+                f"{drain_command_ownership}"
+            )
         if args.scenario == "normal":
             result = run_normal(node)
         elif args.scenario == "full":
@@ -1548,6 +1624,7 @@ def main() -> int:
         else:
             result = run_lift_diagnostic(node)
     except Exception as exc:  # preserve a machine-readable hard failure
+        drain_command_ownership = service_drain_command_ownership(node)
         result = {
             "scenario": args.scenario,
             "passed": False,
@@ -1564,6 +1641,9 @@ def main() -> int:
                 "safety_transition_history": list(node.safety_transition_history),
                 "safety_handshake_events": list(node.safety_handshake_events),
                 "lift_recovery_events": list(node.lift_recovery_events),
+                "service_drain_command_ownership": service_drain_command_ownership(
+                    node
+                ),
             },
         }
     finally:
@@ -1572,6 +1652,7 @@ def main() -> int:
         node.destroy_node()
         rclpy.shutdown()
     result["schema_version"] = 1
+    result["service_drain_command_ownership"] = drain_command_ownership
     if runtime_evidence is not None:
         source_binding, acceptance_session_binding, runtime_gate_binding = runtime_evidence
         result["source_binding"] = source_binding

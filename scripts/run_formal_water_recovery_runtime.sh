@@ -426,6 +426,7 @@ run_scenario() {
     gui:=false bodywork_visible:=true high_bandwidth_sensor_runtime:=false \
     start_controllers:=true \
     enable_safety_manager:=true simulation_initial_estop_active:=true \
+    start_service_drain_safety_manager:=false \
     start_simulation_safety_inputs:=true start_power_system_simulators:=true \
     water_evaluation_interfaces:=true squeegee_evaluation_interfaces:=true \
     >"${output_dir}/water_${selected}_launch.log" 2>&1 &
@@ -435,6 +436,7 @@ run_scenario() {
 
   sleep "${launch_settle_s}"
   python3 "${repo_root}/scripts/check_formal_water_preoperational_readiness.py" \
+    --service-drain-manager absent \
     --output "${output_dir}/water_${selected}_preoperational_readiness.json" \
     >"${output_dir}/water_${selected}_preoperational_readiness.log" 2>&1
   python3 "${repo_root}/scripts/collect_formal_water_safety_preflight.py" \
@@ -455,12 +457,20 @@ run_scenario() {
       --preembedded-model-pose "${preembedded_model_pose}"
     )
   fi
+  local validator_rc=0
+  local bridge_shutdown_rc=0
+  local launch_cleanup_rc=0
+  local launch_audit_rc=0
+  set +e
   python3 "${repo_root}/scripts/validate_formal_water_recovery_runtime.py" \
     "${validator_args[@]}" \
     >"${output_dir}/water_${selected}_probe.log" 2>&1
+  validator_rc=$?
   formal_water_stop_active_bridges \
     "${output_dir}/water_${selected}_bridge_shutdown.jsonl"
+  bridge_shutdown_rc=$?
   cleanup_launch
+  launch_cleanup_rc=$?
   python3 "${repo_root}/scripts/audit_formal_water_launch_log.py" \
     --log "${output_dir}/water_${selected}_launch.log" \
     --expected-stable-marker-count "${expected_stable_marker_count}" \
@@ -472,6 +482,17 @@ run_scenario() {
     --required-clean-exit-process formal_auxiliary_native_bridge \
     --required-clean-exit-process cleaning_actuator_vector_bridge \
     --output "${output_dir}/water_${selected}_launch_audit.json"
+  launch_audit_rc=$?
+  set -e
+  if [[ "${bridge_shutdown_rc}" -ne 0 || "${launch_cleanup_rc}" -ne 0 || "${launch_audit_rc}" -ne 0 ]]; then
+    printf 'scenario=%s validator_rc=%s bridge_shutdown_rc=%s launch_cleanup_rc=%s launch_audit_rc=%s\n' \
+      "${selected}" "${validator_rc}" "${bridge_shutdown_rc}" "${launch_cleanup_rc}" "${launch_audit_rc}" \
+      >>"${output_dir}/water_${selected}_probe.log"
+    return 125
+  fi
+  if [[ "${validator_rc}" -ne 0 ]]; then
+    return "${validator_rc}"
+  fi
 }
 
 if [[ "${scenario}" == "normal" || "${scenario}" == "all" ]]; then

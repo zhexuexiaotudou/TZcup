@@ -107,6 +107,7 @@ def test_runner_uses_fresh_isolated_launch_for_both_scenarios() -> None:
     assert "water_${selected}_preembedded_sensor_world.json" in source
     assert "water_evaluation_interfaces:=true" in source
     assert "squeegee_evaluation_interfaces:=true" in source
+    assert "start_service_drain_safety_manager:=false" in source
     assert '"${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 launch' in source
     assert "cleanup_launch" in source
     assert "audit_formal_water_launch_log.py" in source
@@ -128,6 +129,39 @@ def test_runner_uses_fresh_isolated_launch_for_both_scenarios() -> None:
     assert "formal_runtime_gate_binding.py" in source
     assert "--runtime-binding" in source
     assert "FORMAL_ACCEPTANCE_SESSION" in source
+
+
+def test_water_gate_has_one_low_level_drain_command_owner_and_waits_on_evidence() -> None:
+    runner = (ROOT / "scripts/run_formal_water_recovery_runtime.sh").read_text(
+        encoding="utf-8"
+    )
+    preflight = (
+        ROOT / "scripts/check_formal_water_preoperational_readiness.py"
+    ).read_text(encoding="utf-8")
+    validator = (
+        ROOT / "scripts/validate_formal_water_recovery_runtime.py"
+    ).read_text(encoding="utf-8")
+    launch = (
+        ROOT
+        / "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py"
+    ).read_text(encoding="utf-8")
+
+    assert "start_service_drain_safety_manager:=false" in runner
+    drain_manager_argument = launch[
+        launch.index('DeclareLaunchArgument(\n                "start_service_drain_safety_manager"') :
+    ]
+    assert 'default_value="true"' in drain_manager_argument[:800]
+    assert "condition=IfCondition(start_service_drain_safety_manager)" in launch
+    assert "--service-drain-manager absent" in runner
+    assert 'SERVICE_DRAIN_MANAGER_NODE = "/service_drain_safety_manager"' in preflight
+    assert '"service_drain_manager_matches_expected_presence"' in preflight
+    assert "def service_drain_command_ownership" in validator
+    assert '"exclusive_evaluator_owner"' in validator
+    assert '"complete_service_chain_gate": "service_interface_acceptance"' in validator
+    assert "def stationary_service_drain_command" in validator
+    assert 'label="stationary wastewater service-drain interlock"' in validator
+    assert 'label="measured wastewater service drain volume"' in validator
+    assert 'float(node.status.get("service_drained_volume_l", 0.0)) >= 0.30' in validator
 
 
 def test_runner_stops_all_active_parameter_bridges_in_order_before_launch_cleanup() -> None:
@@ -162,6 +196,13 @@ def test_runner_stops_all_active_parameter_bridges_in_order_before_launch_cleanu
     assert "remaining_native_nodes, native_malformed, native_unknown = native_bridge_census()" in shutdown
     assert "formal_water_stop_active_parameter_bridges" not in source
     assert "--required-clean-exit-process-count formal_contact_evaluation_native_bridge=6" in source
+    scenario_runner = source[run_scenario_start : source.index('if [[ "${scenario}" == "normal"')]
+    assert "set +e" in scenario_runner
+    assert "validator_rc=$?" in scenario_runner
+    assert "bridge_shutdown_rc=$?" in scenario_runner
+    assert "launch_cleanup_rc=$?" in scenario_runner
+    assert "launch_audit_rc=$?" in scenario_runner
+    assert 'return "${validator_rc}"' in scenario_runner
 
 
 def test_all_scenarios_rotation_invalidates_old_canonical_before_preflight() -> None:
