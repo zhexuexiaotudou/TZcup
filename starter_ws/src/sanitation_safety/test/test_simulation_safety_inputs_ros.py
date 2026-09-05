@@ -230,12 +230,14 @@ def test_node_health_inputs_commands_and_product_interface_are_observable():
         )
 
         executor.remove_node(source)
-        time.sleep(0.10)
         before_product_stall = observer.heartbeat_count
         source_count_before_product_stall = source._safety_publish_count
-        time.sleep(0.15)
-        assert source._safety_publish_count >= source_count_before_product_stall + 2
-        assert observer.heartbeat_count >= before_product_stall + 1
+        _wait_until(
+            lambda: source._safety_publish_count
+            >= source_count_before_product_stall + 2
+            and observer.heartbeat_count >= before_product_stall + 1,
+            timeout=2.0,
+        )
         assert source._safety_publish_count >= observer.heartbeat_count
         assert source._safety_publish_thread_error is None
         source._stop_safety_publish_loop()

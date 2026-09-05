@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import re
 import subprocess
 import time
@@ -16,6 +17,14 @@ import run_formal_final_acceptance as orchestration
 
 
 ROOT = Path(__file__).resolve().parents[1]
+
+
+def _mark_current_fixture(started_ns: int, *paths: Path) -> None:
+    """Set deterministic post-session mtimes for PRoot-only test fixtures."""
+    mtime_ns = max(time.time_ns(), started_ns) + 1_000_000_000
+    for path in paths:
+        os.utime(path, ns=(mtime_ns, mtime_ns))
+        assert path.stat().st_mtime_ns >= started_ns
 
 
 def test_watchdog_marks_child_environment_as_one_outer_step_session() -> None:
@@ -303,17 +312,20 @@ def test_runtime_gate_requires_current_matching_runtime_binding(
     if gate_id == "physical_grasp_and_bin":
         payload.update(passed=True, truth_used_for_control=False)
     evidence.write_text(json.dumps(payload), encoding="utf-8")
+    _mark_current_fixture(started_ns, sidecar, evidence)
 
     orchestration._validate_gate(context, gate_id, started_ns)
 
     payload["report_id"] = "tzcup_formal_manipulator_runtime_v1"
     evidence.write_text(json.dumps(payload), encoding="utf-8")
+    _mark_current_fixture(started_ns, evidence)
     with pytest.raises(orchestration.OrchestrationError, match="report_id mismatch"):
         orchestration._validate_gate(context, gate_id, started_ns)
 
     payload["report_id"] = report_id
     payload["runtime_gate_binding"]["runtime_closure_binding"]["closure_sha256"] = "d" * 64
     evidence.write_text(json.dumps(payload), encoding="utf-8")
+    _mark_current_fixture(started_ns, evidence)
     with pytest.raises(orchestration.OrchestrationError, match="differs from its sidecar"):
         orchestration._validate_gate(context, gate_id, started_ns)
 

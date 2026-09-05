@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import os
 import time
 from pathlib import Path
 
@@ -34,6 +35,21 @@ def _snapshot(path: Path) -> None:
     )
 
 
+def _mark_current_fixture(path: Path, session_path: Path) -> None:
+    """Make fixture evidence unambiguously newer than its session.
+
+    PRoot-backed filesystems can coalesce a write immediately after ``start``
+    to the same (or an earlier-looking) mtime.  This helper is intentionally
+    test-only: production freshness checks keep reading filesystem mtimes.
+    """
+    session = json.loads(session_path.read_text(encoding="utf-8"))
+    started_ns = session["started_epoch_ns"]
+    assert isinstance(started_ns, int)
+    mtime_ns = max(time.time_ns(), started_ns) + 1_000_000_000
+    os.utime(path, ns=(mtime_ns, mtime_ns))
+    assert path.stat().st_mtime_ns >= started_ns
+
+
 def test_session_only_binds_fresh_passing_evidence(tmp_path: Path) -> None:
     snapshot = tmp_path / "snapshot.json"
     output = tmp_path / "session.json"
@@ -41,8 +57,8 @@ def test_session_only_binds_fresh_passing_evidence(tmp_path: Path) -> None:
     contract = tmp_path / "contract.yaml"
     _snapshot(snapshot)
     start(snapshot, output)
-    time.sleep(0.002)
     evidence.write_text(json.dumps({"status": "PASS"}), encoding="utf-8")
+    _mark_current_fixture(evidence, output)
     contract.write_text(
         yaml.safe_dump(
             {
@@ -146,11 +162,11 @@ def test_session_rejects_passing_engineering_report_for_another_urdf(tmp_path: P
     contract = tmp_path / "contract.yaml"
     _snapshot(snapshot)
     start(snapshot, output)
-    time.sleep(0.002)
     evidence.write_text(
         json.dumps({"status": "PASS", "inputs": {"expanded_urdf_sha256": "old"}}),
         encoding="utf-8",
     )
+    _mark_current_fixture(evidence, output)
     contract.write_text(
         yaml.safe_dump(
             {
@@ -178,13 +194,13 @@ def test_session_rejects_passing_report_for_another_source_inventory(tmp_path: P
     contract = tmp_path / "contract.yaml"
     _snapshot(snapshot)
     start(snapshot, output)
-    time.sleep(0.002)
     evidence.write_text(
         json.dumps(
             {"status": "PASS", "source_binding": {"source_inventory_sha256": "old"}}
         ),
         encoding="utf-8",
     )
+    _mark_current_fixture(evidence, output)
     contract.write_text(
         yaml.safe_dump(
             {
@@ -236,10 +252,11 @@ def test_session_rejects_replaced_visual_frame(tmp_path: Path) -> None:
     }}}), encoding="utf-8")
     _snapshot(snapshot)
     start(snapshot, output)
-    time.sleep(0.002)
     # Refresh the manifest after the session started, then substitute its PNG.
     manifest.touch()
     frame.write_bytes(b"swapped-png")
+    _mark_current_fixture(manifest, output)
+    _mark_current_fixture(frame, output)
     result = finalize(contract, snapshot, output, tmp_path)
     assert result["status"] == "FORMAL_FINAL_ACCEPTANCE_SESSION_PENDING"
     assert "hash or size mismatch" in result["failures"]["visual"]
@@ -255,13 +272,13 @@ def test_session_rejects_visual_frame_from_before_session(tmp_path: Path) -> Non
     frame.write_bytes(b"old-png")
     _snapshot(snapshot)
     start(snapshot, output)
-    time.sleep(0.002)
     manifest = visual / "manifest.json"
     manifest.write_text(json.dumps({"status": "PASS", "frames": {"shot": {
         "path": "shot.png",
         "png_sha256": hashlib.sha256(frame.read_bytes()).hexdigest(),
         "png_size_bytes": frame.stat().st_size,
     }}}), encoding="utf-8")
+    _mark_current_fixture(manifest, output)
     contract = tmp_path / "contract.yaml"
     contract.write_text(yaml.safe_dump({"evidence_gates": {"visual": {
         "path": "visual/manifest.json", "success_statuses": ["PASS"],
@@ -279,8 +296,8 @@ def test_session_resumes_only_the_exact_missing_s100_pending_state(tmp_path: Pat
     contract = tmp_path / "contract.yaml"
     _snapshot(snapshot)
     start(snapshot, output)
-    time.sleep(0.002)
     evidence.write_text(json.dumps({"status": "PASS"}), encoding="utf-8")
+    _mark_current_fixture(evidence, output)
     contract.write_text(
         yaml.safe_dump(
             {
@@ -305,6 +322,7 @@ def test_session_resumes_only_the_exact_missing_s100_pending_state(tmp_path: Pat
 
     s100 = tmp_path / "s100.json"
     s100.write_text(json.dumps({"status": "PASS"}), encoding="utf-8")
+    _mark_current_fixture(s100, output)
     resumed = finalize(contract, snapshot, output, tmp_path)
     assert resumed["status"] == "FORMAL_FINAL_ACCEPTANCE_SESSION_COMPLETE"
     assert resumed["resumed_epoch_ns"] >= pending["finished_epoch_ns"]
@@ -335,11 +353,11 @@ def test_session_mapping_values_reject_bool_integer_coercion(tmp_path: Path) -> 
     contract = tmp_path / "contract.yaml"
     _snapshot(snapshot)
     start(snapshot, output)
-    time.sleep(0.002)
     evidence.write_text(
         json.dumps({"status": "PASS", "items": {"one": {"passed": 1}}}),
         encoding="utf-8",
     )
+    _mark_current_fixture(evidence, output)
     contract.write_text(
         yaml.safe_dump(
             {
@@ -371,7 +389,6 @@ def test_session_enforces_complete_session_bound_gate_contract(tmp_path: Path) -
     _snapshot(snapshot)
     manifest_hash = hashlib.sha256(snapshot.read_bytes()).hexdigest()
     start(snapshot, output)
-    time.sleep(0.002)
     evidence.write_text(
         json.dumps(
             {
@@ -391,6 +408,7 @@ def test_session_enforces_complete_session_bound_gate_contract(tmp_path: Path) -
         ),
         encoding="utf-8",
     )
+    _mark_current_fixture(evidence, output)
     contract.write_text(
         yaml.safe_dump(
             {
@@ -437,11 +455,11 @@ def test_session_required_values_reject_bool_integer_coercion(tmp_path: Path) ->
     contract = tmp_path / "contract.yaml"
     _snapshot(snapshot)
     start(snapshot, output)
-    time.sleep(0.002)
     evidence.write_text(
         json.dumps({"status": "PASS", "summary": {"passed": 1}}),
         encoding="utf-8",
     )
+    _mark_current_fixture(evidence, output)
     contract.write_text(
         yaml.safe_dump(
             {
@@ -472,11 +490,11 @@ def test_session_rejects_missing_required_mapping_key(tmp_path: Path) -> None:
     contract = tmp_path / "contract.yaml"
     _snapshot(snapshot)
     start(snapshot, output)
-    time.sleep(0.002)
     evidence.write_text(
         json.dumps({"status": "PASS", "items": {"one": {}}}),
         encoding="utf-8",
     )
+    _mark_current_fixture(evidence, output)
     contract.write_text(
         yaml.safe_dump(
             {
@@ -507,11 +525,11 @@ def test_session_rejects_invalid_required_mapping_keys_contract(tmp_path: Path) 
     contract = tmp_path / "contract.yaml"
     _snapshot(snapshot)
     start(snapshot, output)
-    time.sleep(0.002)
     evidence.write_text(
         json.dumps({"status": "PASS", "items": {"one": {}}}),
         encoding="utf-8",
     )
+    _mark_current_fixture(evidence, output)
     contract.write_text(
         yaml.safe_dump(
             {
@@ -544,11 +562,11 @@ def test_session_rejects_wrong_snapshot_manifest_hash(tmp_path: Path) -> None:
     contract = tmp_path / "contract.yaml"
     _snapshot(snapshot)
     start(snapshot, output)
-    time.sleep(0.002)
     evidence.write_text(
         json.dumps({"status": "PASS", "binding": {"manifest_sha256": "old"}}),
         encoding="utf-8",
     )
+    _mark_current_fixture(evidence, output)
     contract.write_text(
         yaml.safe_dump(
             {
@@ -579,11 +597,11 @@ def test_session_rejects_wrong_contract_report_id(tmp_path: Path) -> None:
     contract = tmp_path / "contract.yaml"
     _snapshot(snapshot)
     start(snapshot, output)
-    time.sleep(0.002)
     evidence.write_text(
         json.dumps({"status": "PASS", "report_id": "wrong"}),
         encoding="utf-8",
     )
+    _mark_current_fixture(evidence, output)
     contract.write_text(
         yaml.safe_dump(
             {

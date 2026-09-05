@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 import time
 from pathlib import Path
 
@@ -17,6 +18,14 @@ SPEC.loader.exec_module(AUDIT)
 def _snapshot(path: Path) -> dict[str, str]:
     path.write_text(json.dumps({"source_inventory_sha256": "source", "output_inventory_sha256": "outputs", "outputs": {"reports/engineering/formal_competition_vehicle.urdf": {"sha256": "urdf"}}}), encoding="utf-8")
     return AUDIT.snapshot_identity(path)
+
+
+def _mark_current_fixture(started_ns: int, *paths: Path) -> None:
+    """Set deterministic post-session mtimes for PRoot-only test fixtures."""
+    mtime_ns = max(time.time_ns(), started_ns) + 1_000_000_000
+    for path in paths:
+        os.utime(path, ns=(mtime_ns, mtime_ns))
+        assert path.stat().st_mtime_ns >= started_ns
 
 
 def test_scheduled_runner_parser_ignores_comments_and_unrelated_strings(
@@ -331,7 +340,9 @@ def test_session_bound_report_with_current_hashes_and_sidecar_is_fresh(tmp_path:
     report_path = tmp_path / "mobility.json"
     report = _report(snapshot, gate, session, started_ns)
     report_path.write_text(json.dumps(report), encoding="utf-8")
-    report_path.with_name("mobility.json.runtime_binding.json").write_text(json.dumps(report["runtime_gate_binding"]), encoding="utf-8")
+    sidecar = report_path.with_name("mobility.json.runtime_binding.json")
+    sidecar.write_text(json.dumps(report["runtime_gate_binding"]), encoding="utf-8")
+    _mark_current_fixture(started_ns, sidecar, report_path)
     result = AUDIT.evaluate_fresh_report(report_path=report_path, gate=gate, expected_snapshot=snapshot, session_path=session)
     assert result["fresh"], result["blockers"]
     assert result["classification"] == "FRESH"
