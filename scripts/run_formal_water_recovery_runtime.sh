@@ -146,7 +146,7 @@ cleanup_launch() {
 }
 formal_runtime_install_traps cleanup_launch
 
-formal_water_stop_evaluation_bridges() {
+formal_water_stop_active_parameter_bridges() {
   local timeline="$1"
   python3 - "${GZ_PARTITION}" "${timeline}" <<'PY'
 import json
@@ -160,9 +160,17 @@ import time
 partition, timeline_arg = sys.argv[1:]
 timeline = Path(timeline_arg)
 targets = (
-    "formal_auxiliary_bridge",
+    "water_evaluation_bridge",
+    "formal_vehicle_product_bridge",
+    "cleaning_actuator_scalar_bridge",
+    "a300_drivetrain_bridge",
     "formal_squeegee_evaluation_bridge",
     "formal_brush_contact_evaluation_bridge",
+    "charge_receptacle_contact_bridge",
+    "wastewater_drain_contact_bridge",
+    "front_bumper_contact_bridge",
+    "rear_bumper_contact_bridge",
+    "formal_auxiliary_bridge",
 )
 
 
@@ -184,8 +192,9 @@ def read_proc(pid, name):
         return None
 
 
-def matching_pids(node_name):
-    matches = []
+def parameter_bridge_census():
+    nodes = {}
+    malformed = []
     for proc_dir in Path("/proc").iterdir():
         if not proc_dir.name.isdigit():
             continue
@@ -203,10 +212,18 @@ def matching_pids(node_name):
         executable = Path(argv[0])
         if executable.name != "parameter_bridge" or "ros_gz_bridge" not in executable.parts:
             continue
-        if f"__node:={node_name}" not in argv:
+        node_args = [argument for argument in argv if argument.startswith("__node:=")]
+        if len(node_args) != 1 or not node_args[0].removeprefix("__node:="):
+            malformed.append(pid)
             continue
-        matches.append(pid)
-    return matches
+        node_name = node_args[0].removeprefix("__node:=")
+        nodes.setdefault(node_name, []).append(pid)
+    return ({node: sorted(pids) for node, pids in sorted(nodes.items())}, sorted(malformed))
+
+
+def matching_pids(node_name):
+    nodes, _ = parameter_bridge_census()
+    return nodes.get(node_name, [])
 
 
 def process_exit_state(pid):
@@ -218,6 +235,22 @@ def process_exit_state(pid):
         return "zombie"
     return None
 
+
+initial_nodes, malformed = parameter_bridge_census()
+missing = sorted(set(targets) - set(initial_nodes))
+unexpected = sorted(set(initial_nodes) - set(targets))
+duplicates = {node: pids for node, pids in initial_nodes.items() if len(pids) != 1}
+record(
+    "pre_shutdown_census",
+    nodes=initial_nodes,
+    malformed_pids=malformed,
+    missing=missing,
+    unexpected=unexpected,
+    duplicates=duplicates,
+)
+if malformed or missing or unexpected or duplicates:
+    record("pre_shutdown_census_failed")
+    raise SystemExit(1)
 
 record("ordered_shutdown_started", targets=list(targets))
 for target in targets:
@@ -242,6 +275,11 @@ for target in targets:
     else:
         record("target_exit_timeout", target=target, pid=pid)
         raise SystemExit(1)
+remaining_nodes, malformed = parameter_bridge_census()
+record("post_shutdown_census", nodes=remaining_nodes, malformed_pids=malformed)
+if remaining_nodes or malformed:
+    record("post_shutdown_census_failed")
+    raise SystemExit(1)
 record("ordered_shutdown_completed")
 PY
 }
@@ -307,7 +345,7 @@ run_scenario() {
   python3 "${repo_root}/scripts/validate_formal_water_recovery_runtime.py" \
     "${validator_args[@]}" \
     >"${output_dir}/water_${selected}_probe.log" 2>&1
-  formal_water_stop_evaluation_bridges \
+  formal_water_stop_active_parameter_bridges \
     "${output_dir}/water_${selected}_bridge_shutdown.jsonl"
   cleanup_launch
   python3 "${repo_root}/scripts/audit_formal_water_launch_log.py" \

@@ -130,12 +130,12 @@ def test_runner_uses_fresh_isolated_launch_for_both_scenarios() -> None:
     assert "FORMAL_ACCEPTANCE_SESSION" in source
 
 
-def test_runner_stops_heavy_evaluation_bridges_in_order_before_launch_cleanup() -> None:
+def test_runner_stops_all_active_parameter_bridges_in_order_before_launch_cleanup() -> None:
     source = (ROOT / "scripts/run_formal_water_recovery_runtime.sh").read_text(
         encoding="utf-8"
     )
 
-    function_start = source.index("formal_water_stop_evaluation_bridges()")
+    function_start = source.index("formal_water_stop_active_parameter_bridges()")
     run_scenario_start = source.index("run_scenario()")
     shutdown = source[function_start:run_scenario_start]
     assert 'partition, timeline_arg = sys.argv[1:]' in shutdown
@@ -143,19 +143,47 @@ def test_runner_stops_heavy_evaluation_bridges_in_order_before_launch_cleanup() 
     assert 'f"GZ_PARTITION={partition}".encode() not in environment' in shutdown
     assert 'executable.name != "parameter_bridge"' in shutdown
     assert '"ros_gz_bridge" not in executable.parts' in shutdown
-    assert 'if f"__node:={node_name}" not in argv' in shutdown
+    assert 'argument.startswith("__node:=")' in shutdown
+    assert 'if len(node_args) != 1' in shutdown
+    assert 'missing = sorted(set(targets) - set(initial_nodes))' in shutdown
+    assert 'unexpected = sorted(set(initial_nodes) - set(targets))' in shutdown
+    assert 'if malformed or missing or unexpected or duplicates:' in shutdown
     assert 'if len(matches) != 1:' in shutdown
     assert 'os.kill(pid, signal.SIGINT)' in shutdown
     assert 'raise SystemExit(1)' in shutdown
-    assert shutdown.index('"formal_auxiliary_bridge"') < shutdown.index(
+    expected_order = (
+        "water_evaluation_bridge",
+        "formal_vehicle_product_bridge",
+        "cleaning_actuator_scalar_bridge",
+        "a300_drivetrain_bridge",
+        "formal_squeegee_evaluation_bridge",
+        "formal_brush_contact_evaluation_bridge",
+        "charge_receptacle_contact_bridge",
+        "wastewater_drain_contact_bridge",
+        "front_bumper_contact_bridge",
+        "rear_bumper_contact_bridge",
+        "formal_auxiliary_bridge",
+    )
+    positions = [shutdown.index(f'"{node}"') for node in expected_order]
+    assert positions == sorted(positions)
+    assert shutdown.index('"pre_shutdown_census"') < shutdown.index(
+        '"ordered_shutdown_started"'
+    ) < shutdown.index("os.kill(pid, signal.SIGINT)")
+    assert shutdown.index('"post_shutdown_census"') > shutdown.index(
+        "os.kill(pid, signal.SIGINT)"
+    ) and shutdown.index('"post_shutdown_census"') < shutdown.index(
+        '"ordered_shutdown_completed"'
+    )
+    assert 'if remaining_nodes or malformed:' in shutdown
+    assert shutdown.index('"formal_auxiliary_bridge"') > shutdown.index(
         '"formal_squeegee_evaluation_bridge"'
-    ) < shutdown.index('"formal_brush_contact_evaluation_bridge"')
+    )
 
     validator = source.index(
         'python3 "${repo_root}/scripts/validate_formal_water_recovery_runtime.py"'
     )
     ordered_stop = source.index(
-        "formal_water_stop_evaluation_bridges", run_scenario_start
+        "formal_water_stop_active_parameter_bridges", run_scenario_start
     )
     cleanup = source.index("cleanup_launch", ordered_stop)
     audit = source.index(
