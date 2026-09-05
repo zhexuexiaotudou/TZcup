@@ -144,14 +144,17 @@ def test_saved_map_coverage_is_real_product_action_execution_with_fixed_envelope
     assert "<exec_depend>action_msgs</exec_depend>" in package_manifest
     assert 'coverage_parameters["operation_width"] = cleaning_width' in launch
     assert "formal saved-map cleaning width must be exactly 1.32 m" in launch
-    assert "formal saved-map maximum linear speed must remain 0.45 m/s" in launch
+    assert "formal saved-map maximum linear speed disagrees with profile" in launch
+    assert "default_value=DRY_CLEANING_SPEED_PROFILE" in launch
     assert 'executable="formal-saved-map-coverage-executor"' in launch
     assert '"operation_width_m": cleaning_width' in launch
     assert '"maximum_linear_speed_mps": smoother_speed' in launch
+    assert '"operation_speed_profile": speed_profile.name' in launch
     assert "ComputeCoveragePath" in executor
     assert "NavigateToPose" in executor
     assert "FollowPath" in executor
     assert 'follow.controller_id = "CleanPath"' in executor
+    assert 'self.declare_parameter("operation_speed_profile", DRY_CLEANING_SPEED_PROFILE)' in executor
     assert 'self._set_brush(True)' in executor
     assert 'self._set_brush(False)' in executor
     assert '"terminal_state": state' in executor

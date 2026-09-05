@@ -28,7 +28,10 @@ profiles:
     minimum_theoretical_speed_m_s: 0.9820426487093153
     # Conservative decimal floor retained for candidate configuration review.
     conservative_candidate_speed_floor_m_s: 0.982323
-    enabled_for_formal_runtime: false
+    # Runtime selection only.  This does not turn the 1.0 m/s candidate into
+    # a competition-efficiency pass; the measured source-bound gate remains
+    # mandatory below.
+    enabled_for_formal_runtime: true
     validation_status: PENDING_SOURCE_BOUND_GAZEBO_AND_A300_TRACKING
     competition_efficiency_eligible: false
     required_gates:

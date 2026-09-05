@@ -1,9 +1,15 @@
 """Static contract for the real S100P product launch graph."""
 
+import json
 from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tarfile
 
 
 PACKAGE = Path(__file__).resolve().parents[1]
+REPOSITORY_ROOT = PACKAGE.parents[2]
 LAUNCH = PACKAGE / "launch" / "formal_s100p_open_vocab.launch.py"
 
 
@@ -73,3 +79,65 @@ def test_s100p_adapter_receives_the_frozen_board_artifact_manifest():
     assert 'LaunchConfiguration("artifact_manifest_path")' in source
     assert 'DeclareLaunchArgument(\n                "artifact_manifest_path"' in source
     assert '"artifact_manifest_path": artifact_manifest_path' in source
+
+
+def test_s100p_packaged_board_configs_match_the_authoritative_root_records():
+    for name in (
+        "s100p_product_overlay_packages.json",
+        "s100p_product_board_launch_parameters.json",
+    ):
+        authoritative = REPOSITORY_ROOT / "config" / name
+        packaged = PACKAGE / "config" / name
+        assert json.loads(packaged.read_text(encoding="utf-8")) == json.loads(
+            authoritative.read_text(encoding="utf-8")
+        )
+        assert packaged.read_bytes() == authoritative.read_bytes()
+
+
+def test_s100p_board_configs_survive_sdist_and_install_data(tmp_path: Path):
+    """Exercise the install path that a board overlay receives, not source text."""
+    source = tmp_path / "sanitation_perception"
+    shutil.copytree(PACKAGE, source)
+    dist = tmp_path / "dist"
+    subprocess.run(
+        [sys.executable, "setup.py", "sdist", "--dist-dir", str(dist)],
+        cwd=source,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    archive = dist / "sanitation_perception-0.1.0.tar.gz"
+    with tarfile.open(archive) as bundle:
+        members = set(bundle.getnames())
+        for name in (
+            "s100p_product_overlay_packages.json",
+            "s100p_product_board_launch_parameters.json",
+        ):
+            assert f"sanitation_perception-0.1.0/config/{name}" in members
+        bundle.extractall(tmp_path / "unpacked", filter="data")
+    unpacked = tmp_path / "unpacked" / "sanitation_perception-0.1.0"
+    install_root = tmp_path / "installed"
+    subprocess.run(
+        [
+            sys.executable,
+            "setup.py",
+            "install",
+            "--root",
+            str(install_root),
+            "--prefix",
+            "/usr",
+            "--single-version-externally-managed",
+            "--record",
+            str(tmp_path / "installed-files.txt"),
+        ],
+        cwd=unpacked,
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    installed_config = install_root / "usr" / "share" / "sanitation_perception" / "config"
+    for name in (
+        "s100p_product_overlay_packages.json",
+        "s100p_product_board_launch_parameters.json",
+    ):
+        assert (installed_config / name).read_bytes() == (PACKAGE / "config" / name).read_bytes()

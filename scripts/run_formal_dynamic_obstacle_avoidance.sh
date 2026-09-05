@@ -169,7 +169,7 @@ runtime_world_manifest="${runtime_root}/cleaning_world_manifest.json"
   episode_manifest:="${episode_root}/public/episode_manifest.json" \
   map_artifact_dir:="${saved_map_root}" \
   pedestrian_schedule:="${runtime_schedule}" \
-  start_pedestrians:=true start_coverage:=false \
+  start_pedestrians:=true start_coverage:=false operation_speed_profile:=mapping_safe \
   >"${runtime_root}/dynamic.launch.log" 2>&1 &
 launch_pid=$!
 collector_pid=""

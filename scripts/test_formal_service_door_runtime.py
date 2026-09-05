@@ -129,3 +129,5 @@ def test_runner_collector_and_force_plugin_use_physical_joint_state() -> None:
     assert "--session \"${session}\"" in runner
     assert "def _bound_runtime_evidence(" in collector
     assert "session_manifest_sha256" in collector
+    assert "self.target_publishers" in collector
+    assert "self.publishers =" not in collector

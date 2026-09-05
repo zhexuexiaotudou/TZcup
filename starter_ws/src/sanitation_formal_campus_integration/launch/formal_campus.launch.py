@@ -34,6 +34,10 @@ from sanitation_formal_campus_integration.contract import (
 from sanitation_formal_campus_integration.campus_materializer import (
     materialize_campus_artifacts,
 )
+from sanitation_formal_campus_integration.saved_map_coverage_core import (
+    DRY_CLEANING_SPEED_PROFILE,
+    load_formal_operation_speed_profile,
+)
 import yaml
 
 
@@ -43,6 +47,13 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
     )
     base_nav2 = Path(
         context.perform_substitution(LaunchConfiguration("base_nav2_params_file"))
+    )
+    speed_profile_file = Path(
+        context.perform_substitution(LaunchConfiguration("operation_speed_profile_file"))
+    )
+    speed_profile = load_formal_operation_speed_profile(
+        speed_profile_file,
+        context.perform_substitution(LaunchConfiguration("operation_speed_profile")),
     )
     episode_manifest = Path(
         context.perform_substitution(LaunchConfiguration("episode_manifest"))
@@ -136,7 +147,9 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
             f"{pedestrian_schedule}"
         )
     nav2_config, cleaning_width = materialize_nav2_config(
-        base_nav2, motion_profile
+        base_nav2,
+        motion_profile,
+        clean_path_speed_mps=speed_profile.maximum_linear_speed_mps,
     )
     generated_nav2 = Path(tempfile.gettempdir()) / (
         f"tzcup_formal_campus_nav2_{os.getpid()}.yaml"
@@ -200,6 +213,8 @@ def _runtime_actions(context):  # type: ignore[no-untyped-def]
             msg=[
                 "Formal campus integration uses canonical skid-steer profile ",
                 str(motion_profile),
+                "; operation speed profile: ",
+                speed_profile.name,
                 "; generated Nav2 params: ",
                 str(generated_nav2),
                 "; public-only maps and mission geometry: ",
@@ -496,6 +511,19 @@ def generate_launch_description() -> LaunchDescription:
             DeclareLaunchArgument("spawn_yaw", default_value="nan"),
             DeclareLaunchArgument(
                 "motion_profile_file", default_value=default_motion_profile
+            ),
+            DeclareLaunchArgument(
+                "operation_speed_profile_file",
+                default_value=PathJoinSubstitution([
+                    repository_root,
+                    "config",
+                    "high_fidelity_vehicle",
+                    "formal_operation_speed_profiles.yaml",
+                ]),
+            ),
+            DeclareLaunchArgument(
+                "operation_speed_profile",
+                default_value=DRY_CLEANING_SPEED_PROFILE,
             ),
             DeclareLaunchArgument(
                 "base_nav2_params_file", default_value=default_nav2

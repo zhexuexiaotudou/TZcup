@@ -2,6 +2,8 @@
 
 - 原生 CAD 制造输入仍未放行：per-part release-gap register 对 105 个项目件建立合同来源的未决门索引（64 个去重门，21 个供应商件继续排除），静态预检第 12 检查仅验证其完整性；`native_cad_release_ready` 与 `manufacturing_release_ready` 均为 `false`，不得以 register 替代 STEP/FCStd、export receipt 或受控制造证据。
 
+- 正式 saved-map 干式清扫上游现显式选择 `dry_cleaning_competition_candidate`：仅 `CleanPath` 与 velocity smoother 请求 `1.0 m/s`，mapping、湿式回收、transit controller 及 collision-monitor/speed-filter 限制保持既有配置；最终 `whole_vehicle_safety_manager` 在完成 1.0 m/s 重新鉴定前仍以 `0.45 m/s` 限幅，因此当前不代表实车速度已放行。该接线不改变未通过的实测效率门；必须先完成同一 source-bound session 的 1.0 m/s mobility/interlock/dynamic/cleaning 安全门，再以有效覆盖并集和实际总时长（含转向、避障、补扫）验证 `>=3500 m²/h`，不得使用静态公式替代。
+
 ## 2026-08-31：低内存条件下的并行推进与明确阻塞边界
 
 - 原生 B-rep source-coverage 只读审计现已接入正式整车静态工程预检，作为第 10 个

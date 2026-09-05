@@ -105,6 +105,10 @@ def generate_launch_description() -> LaunchDescription:
                 "episode_seed",
                 description="Seed of the one frozen random cleaning episode",
             ),
+            DeclareLaunchArgument(
+                "operation_speed_profile",
+                default_value="dry_cleaning_competition_candidate",
+            ),
             OpaqueFunction(function=_validate_product_inputs),
             IncludeLaunchDescription(
                 PythonLaunchDescriptionSource(campus_launch),
@@ -118,6 +122,9 @@ def generate_launch_description() -> LaunchDescription:
                     "map_artifact_dir": runtime_root,
                     "mission_mode": "cleaning",
                     "cleaning_planner": "rl_dirt_priority",
+                    "operation_speed_profile": LaunchConfiguration(
+                        "operation_speed_profile"
+                    ),
                     # The active policy and the coverage baseline are mutually
                     # exclusive command owners.  Product mode always disables
                     # the baseline coverage server.

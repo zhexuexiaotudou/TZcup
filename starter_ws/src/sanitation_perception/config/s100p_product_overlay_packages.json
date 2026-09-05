@@ -1,0 +1,77 @@
+{
+  "$schema": "https://tzcup.local/schema/s100p-product-overlay-package-inventory-v1.json",
+  "schema_version": 1,
+  "inventory_id": "tzcup_s100p_product_overlay_packages_v1",
+  "operation_boundary": "preparation_only_no_build_install_or_board_copy",
+  "workspace_relative_path": "starter_ws",
+  "required_setup_relative_path": "install/setup.bash",
+  "packages": [
+    {
+      "name": "sanitation_perception_interfaces",
+      "source_relative_path": "starter_ws/src/sanitation_perception_interfaces",
+      "package_xml_relative_path": "starter_ws/src/sanitation_perception_interfaces/package.xml",
+      "board_overlay_relative_path": "share/sanitation_perception_interfaces/package.xml"
+    },
+    {
+      "name": "sanitation_perception",
+      "source_relative_path": "starter_ws/src/sanitation_perception",
+      "package_xml_relative_path": "starter_ws/src/sanitation_perception/package.xml",
+      "board_overlay_relative_path": "share/sanitation_perception/package.xml"
+    }
+  ],
+  "sanitation_perception_package_xml_exec_dependencies": [
+    "ai_msgs",
+    "cv_bridge",
+    "diagnostic_msgs",
+    "geometry_msgs",
+    "launch",
+    "launch_ros",
+    "nav_msgs",
+    "python3-numpy",
+    "python3-opencv",
+    "python3-pip",
+    "python3-yaml",
+    "rclpy",
+    "ros_gz_interfaces",
+    "sanitation_perception_interfaces",
+    "sensor_msgs",
+    "std_msgs",
+    "tf2_ros",
+    "vision_msgs"
+  ],
+  "overlay_provided_runtime_packages": [
+    "sanitation_perception",
+    "sanitation_perception_interfaces"
+  ],
+  "board_base_runtime_package_exemptions": [
+    "ai_msgs",
+    "cv_bridge",
+    "diagnostic_msgs",
+    "geometry_msgs",
+    "hobot_dosod",
+    "launch",
+    "launch_ros",
+    "mono_edgesam",
+    "nav_msgs",
+    "python3-numpy",
+    "python3-opencv",
+    "python3-pip",
+    "python3-yaml",
+    "rclpy",
+    "ros_gz_interfaces",
+    "sensor_msgs",
+    "std_msgs",
+    "tf2_ros",
+    "vision_msgs"
+  ],
+  "launch_required_board_base_packages": [
+    "hobot_dosod",
+    "mono_edgesam"
+  ],
+  "claim_boundary": {
+    "overlay_built": false,
+    "overlay_copied_to_board": false,
+    "dependencies_installed": false,
+    "board_launch_authorized": false
+  }
+}

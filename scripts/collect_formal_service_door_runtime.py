@@ -84,7 +84,9 @@ def run(
             super().__init__("formal_service_door_runtime_collector")
             self.latest: dict[str, float] = {}
             self.active_samples: list[dict[str, Any]] | None = None
-            self.publishers = {
+            # `Node.publishers` is an rclpy read-only property.  Keep the
+            # evaluator-owned handles under a distinct name.
+            self.target_publishers = {
                 (door, kind): self.create_publisher(
                     Float64,
                     f"/formal_vehicle/evaluation/bodywork_service/{door}/{kind}_target_rad",
@@ -113,8 +115,8 @@ def run(
             deadline = time.monotonic() + duration_s
             while rclpy.ok() and time.monotonic() < deadline:
                 for door, row in targets.items():
-                    self.publishers[(door, "hinge")].publish(Float64(data=row["hinge"]))
-                    self.publishers[(door, "latch")].publish(Float64(data=row["latch"]))
+                    self.target_publishers[(door, "hinge")].publish(Float64(data=row["hinge"]))
+                    self.target_publishers[(door, "latch")].publish(Float64(data=row["latch"]))
                 rclpy.spin_once(self, timeout_sec=0.05)
             samples = self.active_samples
             self.active_samples = None
