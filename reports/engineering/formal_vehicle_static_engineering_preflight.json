@@ -237,7 +237,7 @@
         }
       },
       "source_snapshot_sha256": {
-        "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml": "2917c0878f2f440faa8a6d6e7ede751ad8ff49ca487c51accb8bb91ad096d4b4",
+        "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml": "688b72f49b7bd06ba6adc3d080c190f04f613b76ed05cbb69bf7a55580cff61a",
         "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": "3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9",
         "reports/engineering/formal_competition_vehicle.urdf": "2b399eaba8de34fd55ca663a3b6b49437070c72969f5e22faf2a64a12ba27db8"
       },
@@ -4544,7 +4544,7 @@
             },
             {
               "evidence": {
-                "line": 147,
+                "line": 150,
                 "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
                 "token": "add_library(A300DrivetrainPlantSystem SHARED"
               },
@@ -4552,7 +4552,7 @@
             },
             {
               "evidence": {
-                "line": 296,
+                "line": 288,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
                 "token": "a300_drivetrain_bridge"
               },
@@ -4602,7 +4602,7 @@
             },
             {
               "evidence": {
-                "line": 161,
+                "line": 164,
                 "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
                 "token": "add_library(GripperMimicEffortSystem SHARED"
               },
@@ -4660,7 +4660,7 @@
             },
             {
               "evidence": {
-                "line": 90,
+                "line": 93,
                 "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
                 "token": "add_library(DryBinMonitorSystem SHARED"
               },
@@ -4752,7 +4752,7 @@
             },
             {
               "evidence": {
-                "line": 120,
+                "line": 123,
                 "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
                 "token": "add_library(GroundDirtCleaningSystem SHARED"
               },
@@ -4810,7 +4810,7 @@
             },
             {
               "evidence": {
-                "line": 76,
+                "line": 79,
                 "path": "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt",
                 "token": "add_library(WaterRecoverySystem SHARED"
               },
@@ -4818,15 +4818,31 @@
             },
             {
               "evidence": {
-                "line": 770,
-                "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
-                "token": "water_recovery/tank_mass_kg"
+                "line": 36,
+                "path": "starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc",
+                "token": "kTankMass"
               },
               "passed": true
             },
             {
               "evidence": {
-                "line": 477,
+                "line": 16,
+                "path": "starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc",
+                "token": "kSqueegeeFloatPosition"
+              },
+              "passed": true
+            },
+            {
+              "evidence": {
+                "line": 716,
+                "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
+                "token": "formal_vehicle_product_native_bridge"
+              },
+              "passed": true
+            },
+            {
+              "evidence": {
+                "line": 458,
                 "path": "scripts/run_formal_water_recovery_runtime.sh",
                 "token": "validate_formal_water_recovery_runtime.py"
               },
@@ -4852,9 +4868,17 @@
             },
             {
               "evidence": {
-                "line": 755,
+                "line": 23,
+                "path": "starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc",
+                "token": "kLidarScan"
+              },
+              "passed": true
+            },
+            {
+              "evidence": {
+                "line": 716,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
-                "token": "/sensors/lidar_2d/scan@sensor_msgs/msg/LaserScan"
+                "token": "formal_vehicle_product_native_bridge"
               },
               "passed": true
             }
@@ -4982,9 +5006,17 @@
             },
             {
               "evidence": {
-                "line": 756,
+                "line": 25,
+                "path": "starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc",
+                "token": "kGnssFix"
+              },
+              "passed": true
+            },
+            {
+              "evidence": {
+                "line": 716,
                 "path": "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py",
-                "token": "/sensors/gnss/fix@sensor_msgs/msg/NavSatFix"
+                "token": "formal_vehicle_product_native_bridge"
               },
               "passed": true
             }
@@ -5086,7 +5118,7 @@
             },
             {
               "evidence": {
-                "line": 108,
+                "line": 113,
                 "path": "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml",
                 "token": "low_voltage_power_branch"
               },
