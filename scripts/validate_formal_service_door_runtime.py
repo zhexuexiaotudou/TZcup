@@ -103,6 +103,98 @@ def _timestamps_are_fresh_and_ordered(evidence: dict[str, Any]) -> bool:
     return True
 
 
+def _all_target_publishers_have_bridge_subscribers(evidence: dict[str, Any]) -> bool:
+    for phase in PHASES:
+        row = evidence.get("phases", {}).get(phase, {})
+        counts = row.get("ros_publisher_subscription_counts", {}) if isinstance(row, dict) else {}
+        if not isinstance(counts, dict) or len(counts) != len(DOORS) * 2:
+            return False
+        if any(not isinstance(value, int) or value < 1 for value in counts.values()):
+            return False
+    return True
+
+
+def _plugin_reports_received_targets_and_force_writes(evidence: dict[str, Any]) -> bool:
+    telemetry = evidence.get("plugin_diagnostics", {})
+    records = telemetry.get("records", []) if isinstance(telemetry, dict) else []
+    by_door: dict[str, list[dict[str, Any]]] = {door: [] for door in DOORS}
+    for record in records:
+        if isinstance(record, dict) and record.get("door") in by_door:
+            by_door[record["door"]].append(record)
+    for door in DOORS:
+        door_records = by_door[door]
+        if not door_records:
+            return False
+        required = {
+            "received_hinge_messages", "received_latch_messages",
+            "hinge_force_writes", "latch_force_writes",
+            "postupdate_hinge_force_present", "postupdate_latch_force_present",
+            "postupdate_hinge_force_nm", "postupdate_latch_force_nm",
+        }
+        if any(not required <= set(record) for record in door_records):
+            return False
+        for key in (
+            "received_hinge_messages", "received_latch_messages",
+            "hinge_force_writes", "latch_force_writes",
+        ):
+            try:
+                values = [float(record[key]) for record in door_records]
+            except (TypeError, ValueError):
+                return False
+            if any(value < 0.0 for value in values) or any(
+                left > right for left, right in zip(values, values[1:])
+            ):
+                return False
+        record = door_records[-1]
+        try:
+            latest_counts = [
+                float(record.get(key, 0.0))
+                for key in (
+                    "received_hinge_messages", "received_latch_messages",
+                    "hinge_force_writes", "latch_force_writes",
+                )
+            ]
+        except (TypeError, ValueError):
+            return False
+        if any(value < 1.0 for value in latest_counts):
+            return False
+        # The first and last snapshots can be startup/teardown boundaries.
+        # Require a stable in-between readback; it is still only an ECM
+        # observation, not a claim about the final writer or physics response.
+        try:
+            stable_postupdate_readback = any(
+                float(record["postupdate_hinge_force_present"]) == 1.0
+                and float(record["postupdate_latch_force_present"]) == 1.0
+                and math.isfinite(float(record["postupdate_hinge_force_nm"]))
+                and math.isfinite(float(record["postupdate_latch_force_nm"]))
+                for record in door_records[1:-1]
+            )
+        except (KeyError, TypeError, ValueError):
+            return False
+        if len(door_records) < 3 or not stable_postupdate_readback:
+            return False
+        try:
+            latch_unlocked = any(
+                math.isclose(float(record["effective_latch_rad"]), 0.6, abs_tol=0.02)
+                for record in door_records
+                if "effective_latch_rad" in record
+            )
+            hinge_opened = any(
+                math.isclose(
+                    float(record["effective_hinge_rad"]), DOORS[door][4], abs_tol=0.02
+                )
+                for record in door_records
+                if "effective_hinge_rad" in record
+            )
+        except (TypeError, ValueError):
+            return False
+        if not latch_unlocked:
+            return False
+        if not hinge_opened:
+            return False
+    return True
+
+
 def evaluate(evidence: dict[str, Any]) -> dict[str, Any]:
     sample_counts = {name: len(_phase_samples(evidence, name)) for name in PHASES}
     finals = {name: _final_positions(evidence, name) for name in PHASES}
@@ -154,6 +246,12 @@ def evaluate(evidence: dict[str, Any]) -> dict[str, Any]:
             _timestamps_are_fresh_and_ordered(evidence)
         ),
         "command_sequence_unlocks_before_opening": _commands_match(evidence),
+        "all_target_publishers_have_ros_bridge_subscribers": (
+            _all_target_publishers_have_bridge_subscribers(evidence)
+        ),
+        "plugin_reports_received_targets_and_force_writes": (
+            _plugin_reports_received_targets_and_force_writes(evidence)
+        ),
         "all_samples_remain_inside_urdf_limits": within_limits,
         "initial_transport_state_locked_and_closed": all_closed("initial_locked") and all_locked("initial_locked"),
         "locked_hinges_reject_open_command": all_closed("locked_open_rejected") and all_locked("locked_open_rejected"),
@@ -174,10 +272,13 @@ def evaluate(evidence: dict[str, Any]) -> dict[str, Any]:
         "sample_counts": sample_counts,
         "final_positions_rad": finals,
         "phases": evidence.get("phases", {}),
+        "plugin_diagnostics": evidence.get("plugin_diagnostics", {}),
         "claim_boundary": (
             "This proves bounded-force Gazebo motion of all four physical door hinges and latches, "
             "including measured unlock-before-open and zero-angle transport relock. It does not "
-            "claim real handle ergonomics, seal compression, fatigue life or certified retention force."
+            "claim real handle ergonomics, seal compression, fatigue life or certified retention force. "
+            "Plugin diagnostics only locate message and command-component behavior; they do not "
+            "alone identify the final ECM writer or prove physics consumption."
         ),
     }
 

@@ -4,10 +4,13 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <chrono>
 #include <cmath>
+#include <cstdint>
 #include <functional>
 #include <limits>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <tuple>
 #include <vector>
@@ -36,7 +39,8 @@ namespace sanitation_gazebo_auxiliary
 class ServiceDoorSystem final:
     public gz::sim::System,
     public gz::sim::ISystemConfigure,
-    public gz::sim::ISystemPreUpdate
+    public gz::sim::ISystemPreUpdate,
+    public gz::sim::ISystemPostUpdate
 {
   private: struct Door
   {
@@ -49,6 +53,14 @@ class ServiceDoorSystem final:
     gz::sim::Entity latch{gz::sim::kNullEntity};
     std::atomic<double> requestedHinge{0.0};
     std::atomic<double> requestedLatch{0.0};
+    std::atomic<std::uint64_t> receivedHingeMessages{0};
+    std::atomic<std::uint64_t> receivedLatchMessages{0};
+    std::uint64_t hingeForceWrites{0};
+    std::uint64_t latchForceWrites{0};
+    bool hingeForceCommandPresent{false};
+    bool latchForceCommandPresent{false};
+    double postUpdateHingeForce{std::numeric_limits<double>::quiet_NaN()};
+    double postUpdateLatchForce{std::numeric_limits<double>::quiet_NaN()};
   };
 
   public: void Configure(
@@ -100,13 +112,19 @@ class ServiceDoorSystem final:
           [doorPtr](const gz::msgs::Double &_message)
           {
             if (std::isfinite(_message.data()))
+            {
               doorPtr->requestedHinge.store(_message.data());
+              ++doorPtr->receivedHingeMessages;
+            }
           };
       const std::function<void(const gz::msgs::Double &)> latchCallback =
           [doorPtr](const gz::msgs::Double &_message)
           {
             if (std::isfinite(_message.data()))
+            {
               doorPtr->requestedLatch.store(_message.data());
+              ++doorPtr->receivedLatchMessages;
+            }
           };
       const bool hingeOk = this->node.Subscribe<gz::msgs::Double>(
           prefix + "/hinge_target_rad", hingeCallback);
@@ -135,8 +153,9 @@ class ServiceDoorSystem final:
       if (!std::isfinite(hingePosition) || !std::isfinite(latchPosition))
         continue;
 
+      const double receivedLatch = door->requestedLatch.load();
       const double requestedLatch = std::clamp(
-          door->requestedLatch.load(), -this->latchLimit, this->latchLimit);
+          receivedLatch, -this->latchLimit, this->latchLimit);
       double effectiveLatch = requestedLatch;
       // The rotary tongue cannot relock across an open panel. Keep it clear
       // until the measured hinge, not merely its command, is closed.
@@ -149,15 +168,68 @@ class ServiceDoorSystem final:
       }
       const bool measuredUnlocked =
           std::abs(latchPosition) >= this->unlockThreshold;
+      const double receivedHinge = door->requestedHinge.load();
       const double requestedHinge = std::clamp(
-          door->requestedHinge.load(), door->lower, door->upper);
+          receivedHinge, door->lower, door->upper);
       const double effectiveHinge = measuredUnlocked ? requestedHinge : 0.0;
-      ApplyPd(
+      const double latchForce = ApplyPd(
           _ecm, door->latch, effectiveLatch, latchPosition,
           this->latchGain, this->latchDamping, this->latchMaximumForce);
-      ApplyPd(
+      ++door->latchForceWrites;
+      const double hingeForce = ApplyPd(
           _ecm, door->hinge, effectiveHinge, hingePosition,
           this->hingeGain, this->hingeDamping, this->hingeMaximumForce);
+      ++door->hingeForceWrites;
+      if (_info.simTime >= this->nextDiagnosticTime)
+      {
+        gzmsg << "SERVICE_DOOR_DIAGNOSTIC door=" << door->id
+              << " sim_time_sec="
+              << std::chrono::duration<double>(_info.simTime).count()
+              << " received_hinge_messages="
+              << door->receivedHingeMessages.load()
+              << " received_latch_messages="
+              << door->receivedLatchMessages.load()
+              << " received_hinge_target_rad=" << receivedHinge
+              << " received_latch_target_rad=" << receivedLatch
+              << " requested_hinge_rad=" << requestedHinge
+              << " requested_latch_rad=" << requestedLatch
+              << " effective_hinge_rad=" << effectiveHinge
+              << " effective_latch_rad=" << effectiveLatch
+              << " hinge_position_rad=" << hingePosition
+              << " latch_position_rad=" << latchPosition
+              << " hinge_force_nm=" << hingeForce
+              << " latch_force_nm=" << latchForce
+              << " hinge_force_writes=" << door->hingeForceWrites
+              << " latch_force_writes=" << door->latchForceWrites
+              << " postupdate_hinge_force_present=" << door->hingeForceCommandPresent
+              << " postupdate_latch_force_present=" << door->latchForceCommandPresent
+              << " postupdate_hinge_force_nm=" << door->postUpdateHingeForce
+              << " postupdate_latch_force_nm=" << door->postUpdateLatchForce
+              << std::endl;
+      }
+    }
+    if (_info.simTime >= this->nextDiagnosticTime)
+      this->nextDiagnosticTime = _info.simTime + std::chrono::seconds(1);
+  }
+
+  public: void PostUpdate(
+      const gz::sim::UpdateInfo &,
+      const gz::sim::EntityComponentManager &_ecm) override
+  {
+    if (!this->configured)
+      return;
+    for (const auto &door : this->doors)
+    {
+      const auto *hinge =
+          _ecm.Component<gz::sim::components::JointForceCmd>(door->hinge);
+      const auto *latch =
+          _ecm.Component<gz::sim::components::JointForceCmd>(door->latch);
+      door->hingeForceCommandPresent = hinge != nullptr && !hinge->Data().empty();
+      door->latchForceCommandPresent = latch != nullptr && !latch->Data().empty();
+      door->postUpdateHingeForce = door->hingeForceCommandPresent ?
+          hinge->Data().front() : std::numeric_limits<double>::quiet_NaN();
+      door->postUpdateLatchForce = door->latchForceCommandPresent ?
+          latch->Data().front() : std::numeric_limits<double>::quiet_NaN();
     }
   }
 
@@ -181,7 +253,7 @@ class ServiceDoorSystem final:
         std::isfinite(velocity->Data().front()) ? velocity->Data().front() : 0.0;
   }
 
-  private: static void ApplyPd(
+  private: static double ApplyPd(
       gz::sim::EntityComponentManager &_ecm,
       const gz::sim::Entity _joint,
       const double _target,
@@ -206,11 +278,14 @@ class ServiceDoorSystem final:
           gz::sim::components::JointForceCmd::typeId,
           gz::sim::ComponentState::OneTimeChange);
     }
+    return force;
   }
 
   private: gz::transport::Node node;
   private: std::array<std::unique_ptr<Door>, 4> doors;
   private: bool configured{false};
+  private: std::chrono::steady_clock::duration nextDiagnosticTime{
+      std::chrono::steady_clock::duration::zero()};
   private: double unlockThreshold{0.35};
   private: double serviceLatchAngle{0.60};
   private: double closedTolerance{0.08};
@@ -229,7 +304,8 @@ GZ_ADD_PLUGIN(
     sanitation_gazebo_auxiliary::ServiceDoorSystem,
     gz::sim::System,
     sanitation_gazebo_auxiliary::ServiceDoorSystem::ISystemConfigure,
-    sanitation_gazebo_auxiliary::ServiceDoorSystem::ISystemPreUpdate)
+    sanitation_gazebo_auxiliary::ServiceDoorSystem::ISystemPreUpdate,
+    sanitation_gazebo_auxiliary::ServiceDoorSystem::ISystemPostUpdate)
 
 GZ_ADD_PLUGIN_ALIAS(
     sanitation_gazebo_auxiliary::ServiceDoorSystem,
