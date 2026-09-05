@@ -115,3 +115,98 @@ def evaluate_motion(raw: dict[str, Any]) -> dict[str, Any]:
         "terminal_max_wheel_speed_rad_s": terminal_wheel_speed,
     }
     return {"checks": checks, "metrics": metrics, "passed": all(checks.values())}
+
+
+def evaluate_estop_stop(raw: dict[str, Any]) -> dict[str, Any]:
+    """Score a stop asserted while the vehicle is physically in motion.
+
+    The raw records intentionally contain both the final safety-manager command
+    trace and independent Gazebo/plant/wheel endpoints.  A zero command by
+    itself is never treated as proof that the simulated vehicle stopped.
+    """
+
+    phase = raw["estop"]
+    ground_start = Pose2D(**phase["ground_truth"]["motion_start"])
+    ground_trigger = Pose2D(**phase["ground_truth"]["trigger"])
+    ground_end = Pose2D(**phase["ground_truth"]["stopped_end"])
+    odom_trigger = Pose2D(**phase["plant_odom"]["trigger"])
+    odom_end = Pose2D(**phase["plant_odom"]["stopped_end"])
+    command_trace = phase["final_command_trace"]
+    trigger_ns = int(phase["trigger_sim_time_ns"])
+    motion_commands = [
+        item for item in command_trace if int(item["sim_time_ns"]) < trigger_ns
+    ]
+    settled_commands = [
+        item
+        for item in command_trace
+        if int(item["sim_time_ns"]) >= trigger_ns + 500_000_000
+    ]
+    if not settled_commands:
+        raise ValueError("no final safety-manager samples after E-stop settling")
+    if not motion_commands:
+        raise ValueError("no final safety-manager samples before E-stop")
+
+    travel_before_trigger, _, _ = _projected_delta(ground_start, ground_trigger)
+    braking_distance, braking_lateral, braking_yaw = _projected_delta(
+        ground_trigger, ground_end
+    )
+    odom_braking_distance, _, _ = _projected_delta(odom_trigger, odom_end)
+    terminal_odom_speed = math.hypot(
+        float(phase["plant_odom"]["stopped_linear_velocity_mps"]["x"]),
+        float(phase["plant_odom"]["stopped_linear_velocity_mps"]["y"]),
+    )
+    terminal_wheel_speed = max(
+        abs(float(value))
+        for value in phase["wheel_state"]["stopped_velocities_rad_s"].values()
+    )
+    writer = phase["final_command_writer"]
+    feedback = phase["emergency_stop_feedback_trace"]
+    status_trace = phase["safety_status_trace"]
+    feedback_or_status = any(
+        item.get("active") is True and int(item["sim_time_ns"]) >= trigger_ns
+        for item in feedback
+    ) or any(
+        int(item["sim_time_ns"]) >= trigger_ns
+        and item.get("values", {}).get("manual_estop_active") == "true"
+        for item in status_trace
+    )
+    checks = {
+        "estop_asserted_during_physical_motion": travel_before_trigger >= 0.15,
+        "final_safety_command_reached_one_mps_before_estop": max(
+            abs(float(item["linear_x_mps"])) for item in motion_commands
+        ) >= 0.98,
+        "final_safety_command_has_one_expected_writer_and_input_subscriber": writer.get("writers") == [writer.get("expected_sole_writer")] and int(writer.get("input_subscription_count", 0)) == 1,
+        "estop_feedback_or_manual_estop_status_observed": feedback_or_status,
+        "final_safety_command_zero_after_estop": all(
+            abs(float(item["linear_x_mps"])) <= 1e-4
+            and abs(float(item["angular_z_rad_s"])) <= 1e-4
+            for item in settled_commands
+        ),
+        # This is a Gazebo brake-distance regression bound, not a claim about
+        # hardware-certified braking performance.
+        "gazebo_estop_braking_distance_bounded": 0.0 <= braking_distance <= 0.25
+        and abs(braking_lateral) <= 0.10
+        and abs(braking_yaw) <= 0.10,
+        "plant_odom_estop_braking_matches_ground_truth": abs(
+            odom_braking_distance - braking_distance
+        ) <= 0.12,
+        "physical_vehicle_stopped_after_estop": terminal_odom_speed <= 0.03
+        and terminal_wheel_speed <= 0.30,
+    }
+    metrics = {
+        "estop_motion_before_trigger_m": travel_before_trigger,
+        "gazebo_estop_braking_distance_m": braking_distance,
+        "gazebo_estop_braking_lateral_m": braking_lateral,
+        "gazebo_estop_braking_yaw_rad": braking_yaw,
+        "plant_odom_estop_braking_distance_m": odom_braking_distance,
+        "terminal_plant_odom_speed_after_estop_mps": terminal_odom_speed,
+        "terminal_max_wheel_speed_after_estop_rad_s": terminal_wheel_speed,
+        "final_zero_command_sample_count": len(settled_commands),
+        "pre_estop_final_command_sample_count": len(motion_commands),
+        "pre_estop_max_final_command_mps": max(
+            abs(float(item["linear_x_mps"])) for item in motion_commands
+        ),
+        "estop_feedback_sample_count": len(feedback),
+        "safety_status_sample_count": len(status_trace),
+    }
+    return {"checks": checks, "metrics": metrics, "passed": all(checks.values())}

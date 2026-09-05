@@ -4760,7 +4760,7 @@
             },
             {
               "evidence": {
-                "line": 65,
+                "line": 76,
                 "path": "scripts/run_formal_ground_dirt_cleaning_runtime.sh",
                 "token": "ground_dirt/status_json"
               },

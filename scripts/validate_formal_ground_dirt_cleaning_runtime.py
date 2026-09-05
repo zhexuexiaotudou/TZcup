@@ -284,7 +284,17 @@ def gz_pose_snapshot(world: str, names: list[str]) -> dict[str, bool]:
     return {name: f'name: "{name}"' in result.stdout for name in names}
 
 
-def run(node: Probe, setup: dict[str, object]) -> dict[str, object]:
+def run(
+    node: Probe,
+    setup: dict[str, object],
+    *,
+    drive_speed: float = 0.06,
+    safety_max_linear_velocity: float = 0.45,
+) -> dict[str, object]:
+    if drive_speed <= 0.0 or safety_max_linear_velocity <= 0.0:
+        raise ValueError("drive and safety speeds must be positive")
+    if drive_speed > safety_max_linear_velocity:
+        raise ValueError("ground-dirt drive speed exceeds the safety envelope")
     patch = setup["patch"]
     pose = patch["pose"]
     yaw = float(pose["yaw_rad"])
@@ -315,7 +325,7 @@ def run(node: Probe, setup: dict[str, object]) -> dict[str, object]:
         node,
         5.0,
         "disabled negative gate",
-        lambda: (node.command_pose(0.100), node.command(enabled=False, brushes=True, speed=0.05)),
+        lambda: (node.command_pose(0.100), node.command(enabled=False, brushes=True, speed=drive_speed)),
     )
     disabled = dict(node.status or {})
 
@@ -326,7 +336,7 @@ def run(node: Probe, setup: dict[str, object]) -> dict[str, object]:
         node,
         5.0,
         "raised negative gate",
-        lambda: node.command(enabled=True, brushes=True, speed=0.05),
+        lambda: node.command(enabled=True, brushes=True, speed=drive_speed),
     )
     raised = dict(node.status or {})
 
@@ -337,7 +347,7 @@ def run(node: Probe, setup: dict[str, object]) -> dict[str, object]:
         node,
         5.0,
         "stopped-brush negative gate",
-        lambda: (node.command_pose(0.100), node.command(enabled=True, brushes=False, speed=0.05)),
+        lambda: (node.command_pose(0.100), node.command(enabled=True, brushes=False, speed=drive_speed)),
     )
     stopped = dict(node.status or {})
 
@@ -352,7 +362,7 @@ def run(node: Probe, setup: dict[str, object]) -> dict[str, object]:
         label="physical partial dirt pass",
         timeout_sim_s=35.0,
         hard_wall_s=900.0,
-        callback=lambda: (node.command_pose(0.100), node.command(enabled=True, brushes=True, speed=0.06)),
+        callback=lambda: (node.command_pose(0.100), node.command(enabled=True, brushes=True, speed=drive_speed)),
     )
     node.command(enabled=True, brushes=True, speed=0.0)
     advance(
@@ -369,7 +379,7 @@ def run(node: Probe, setup: dict[str, object]) -> dict[str, object]:
         label="physical 95 percent dirt pass",
         timeout_sim_s=40.0,
         hard_wall_s=1_200.0,
-        callback=lambda: (node.command_pose(0.100), node.command(enabled=True, brushes=True, speed=0.06)),
+        callback=lambda: (node.command_pose(0.100), node.command(enabled=True, brushes=True, speed=drive_speed)),
     )
     node.stop()
     advance(node, 1.0, "final stop", node.stop)
@@ -419,6 +429,8 @@ def run(node: Probe, setup: dict[str, object]) -> dict[str, object]:
         "partial_terminal": partial,
         "final": final,
         "metrics": {
+            "drive_speed_mps": drive_speed,
+            "safety_max_linear_velocity_mps": safety_max_linear_velocity,
             "initial_area_m2": float(final["initial_area_m2"]),
             "partial_cleaned_fraction": float(partial["cleaned_fraction"]),
             "final_cleaned_fraction": float(final["cleaned_fraction"]),
@@ -438,6 +450,8 @@ def main() -> int:
     parser.add_argument("--snapshot", type=Path, default=DEFAULT_SNAPSHOT)
     parser.add_argument("--session", type=Path, default=DEFAULT_SESSION)
     parser.add_argument("--runtime-binding", type=Path, required=True)
+    parser.add_argument("--drive-speed", type=float, default=0.06)
+    parser.add_argument("--safety-max-linear-velocity", type=float, default=0.45)
     args = parser.parse_args()
     setup = json.loads(args.setup.read_text(encoding="utf-8"))
     runtime_binding, acceptance_session_binding = _bound_runtime_evidence(
@@ -447,7 +461,12 @@ def main() -> int:
     node = Probe(str(setup["world_name"]))
     try:
         wait_ready(node)
-        result = run(node, setup)
+        result = run(
+            node,
+            setup,
+            drive_speed=args.drive_speed,
+            safety_max_linear_velocity=args.safety_max_linear_velocity,
+        )
     except Exception as exc:
         result = {
             "schema_version": 1,

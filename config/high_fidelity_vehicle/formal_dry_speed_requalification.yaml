@@ -1,0 +1,20 @@
+schema_version: 1
+profile_id: formal_dry_cleaning_speed_requalification_v1
+purpose: isolated_gazebo_requalification_only
+activation:
+  required_environment: FORMAL_DRY_SPEED_REQUALIFICATION=1
+  automatic_product_enablement: false
+  product_default_whole_vehicle_safety_cap_mps: 0.45
+  test_only_whole_vehicle_safety_cap_mps: 1.0
+dry_cleaning:
+  target_linear_speed_mps: 1.0
+  minimum_observed_command_speed_mps: 0.98
+required_subgates:
+  - mobility_and_braking
+  - estop_or_fault_interlock
+  - dynamic_obstacle_ttc
+  - ground_dirt_contact_cleaning
+result:
+  report_id: tzcup_formal_dry_speed_requalification_v1
+  pass_flag: dry_speed_safety_requalified
+  product_eligibility_flag: competition_efficiency_eligible

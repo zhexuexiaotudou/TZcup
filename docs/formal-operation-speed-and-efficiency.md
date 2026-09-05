@@ -50,3 +50,30 @@ union and the actual total task duration, including turns, obstacle avoidance
 and repair work. The speed contract is a fail-closed audit, not a static
 width-times-speed acceptance calculation. See also the
 [high-fidelity competition vehicle plan](high-fidelity-competition-vehicle-plan.md).
+
+## Isolated 1.0 m/s requalification lane
+
+`config/high_fidelity_vehicle/formal_dry_speed_requalification.yaml` defines an
+evidence-only lane. It is deliberately unavailable unless the operator sets
+`FORMAL_DRY_SPEED_REQUALIFICATION=1` and invokes
+`scripts/run_formal_dry_speed_requalification.sh` in a fresh artifact root.
+The wrapper creates one run-scoped explicit opt-in marker; the four reused
+runners reject every non-default cap without that marker. Before it
+aggregates, it rebuilds the runtime binding, so a session no longer `RUNNING`
+or a changed frozen closure blocks the report.
+The wrapper runs one Gazebo process at a time and reuses the source/session/
+runtime-bound mobility, whole-vehicle interlock, dynamic-obstacle and
+ground-dirt runners. It admits a pass only when all four reports bind to one
+acceptance session and prove commanded 1.0 m/s motion, final physical stop,
+E-stop/fault command suppression, collision-monitor intervention with zero
+collision, and physical brush/ground-dirt contact cleaning.
+
+The launch-only 1.0 m/s value is never written to
+`operational_envelopes.yaml`; its product default remains 0.45 m/s. A passing
+requalification report sets only `dry_speed_safety_requalified=true` and keeps
+`competition_efficiency_eligible=false`. Its machine-checkable
+`requalification_evidence_marker` is evidence-only: a future PR that attempts to
+raise the product cap must fail closed unless it explicitly consumes this
+source-bound report and then passes the separate measured coverage gate. This
+lane neither changes the final formal acceptance scheduler nor authorizes
+hardware operation.
