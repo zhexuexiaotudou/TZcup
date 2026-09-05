@@ -173,6 +173,7 @@ def test_transient_sensitive_cadence_uses_stable_bounded_source_timestamp_window
     assert SOURCE_FREQUENCY_SAMPLE_TARGETS == {
         "/sensors/front_rgbd/depth/image_rect_raw/image": 10,
         "/sensors/wrist_rgbd/depth/image_rect_raw/image": 32,
+        "/sensors/wrist_rgbd/depth/image_rect_raw/depth_image": 32,
         "/sensors/wrist_rgbd/infra1/image_rect_raw": 32,
         "/sensors/wrist_rgbd/infra2/image_rect_raw": 32,
         "/sensors/imu/data": 50,
