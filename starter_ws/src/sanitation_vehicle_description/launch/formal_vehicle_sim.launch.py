@@ -39,6 +39,9 @@ def generate_launch_description() -> LaunchDescription:
     headless_rendering = LaunchConfiguration("headless_rendering")
     start_controllers = LaunchConfiguration("start_controllers")
     enable_safety_manager = LaunchConfiguration("enable_safety_manager")
+    start_service_drain_safety_manager = LaunchConfiguration(
+        "start_service_drain_safety_manager"
+    )
     start_simulation_safety_inputs = LaunchConfiguration(
         "start_simulation_safety_inputs"
     )
@@ -256,6 +259,7 @@ def generate_launch_description() -> LaunchDescription:
         executable="service_drain_safety_manager",
         parameters=[{"use_sim_time": False}],
         output="screen",
+        condition=IfCondition(start_service_drain_safety_manager),
     )
     a300_drivetrain_adapter = Node(
         package="sanitation_gazebo_control",
@@ -493,6 +497,16 @@ def generate_launch_description() -> LaunchDescription:
                 description=(
                     "Fail-closed command ownership for base, cleaning, arm, "
                     "gripper, brush and recovery actuators."
+                ),
+            ),
+            DeclareLaunchArgument(
+                "start_service_drain_safety_manager",
+                default_value="true",
+                description=(
+                    "Start the product service-drain command owner. Disable only "
+                    "for the evaluator-isolated water plant/mass-ledger gate; the "
+                    "separate service-interface gate validates the full physical "
+                    "cap, hose, power and safety-manager chain."
                 ),
             ),
             DeclareLaunchArgument(

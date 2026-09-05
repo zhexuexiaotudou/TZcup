@@ -32,6 +32,7 @@ def generate_launch_description() -> LaunchDescription:
             'gui': 'false',
             'start_controllers': 'true',
             'enable_safety_manager': 'true',
+            'start_service_drain_safety_manager': 'true',
             'start_simulation_safety_inputs': 'true',
             # The service gate requires both nodes explicitly; do not rely on
             # the vehicle launch file coupling their defaults.

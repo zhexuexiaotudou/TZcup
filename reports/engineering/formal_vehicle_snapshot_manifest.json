@@ -167,8 +167,8 @@
       "size_bytes": 3431
     },
     "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": {
-      "sha256": "f4a3ebacfc064bc78b8780649c25cffde53481ccbead9a64d980619857f7a6a9",
-      "size_bytes": 37011
+      "sha256": "30b881fec1bddc6d079c4d04ad5cd638675fb776014c79aa5746e8bac6046948",
+      "size_bytes": 37697
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/MANIFEST.sha256": {
       "sha256": "0022a0157796ce6e1aba2dfb18cca9e9e2bda44f1bfdc251839d9aa8dd5f87a7",
@@ -1003,5 +1003,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "8a7037ec23d6a2d382817de6f8cabb031d293dad64722fd1ad076d07c6765d3c"
+  "source_inventory_sha256": "11123081a300b9c448fa09d7053318fafa4df1ea2f1d6de5d008ce62340521e5"
 }

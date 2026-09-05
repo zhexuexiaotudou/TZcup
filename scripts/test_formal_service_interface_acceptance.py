@@ -101,6 +101,8 @@ def test_runner_executes_every_scenario_with_fresh_vehicle_model() -> None:
 
 def test_acceptance_launch_explicitly_starts_safety_and_a300_power_simulators() -> None:
     source = LAUNCH.read_text(encoding="utf-8")
+    assert "'enable_safety_manager': 'true'" in source
+    assert "'start_service_drain_safety_manager': 'true'" in source
     assert "'start_simulation_safety_inputs': 'true'" in source
     assert "'start_power_system_simulators': 'true'" in source
 

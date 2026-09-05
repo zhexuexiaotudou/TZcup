@@ -1,6 +1,8 @@
 from check_formal_water_preoperational_readiness import (
     ACTIVE_CONTROLLERS,
     INACTIVE_CONTROLLERS,
+    REQUIRED_NODES,
+    SERVICE_DRAIN_MANAGER_NODE,
     controller_contract_checks,
     controller_states_from_response,
 )
@@ -30,3 +32,8 @@ def test_controller_service_response_is_mapped_by_exact_name_and_state() -> None
         "brush_controller": "inactive",
         "joint_state_broadcaster": "active",
     }
+
+
+def test_water_preflight_requires_exclusive_evaluator_drain_ownership() -> None:
+    assert REQUIRED_NODES == {"/whole_vehicle_safety_manager"}
+    assert SERVICE_DRAIN_MANAGER_NODE == "/service_drain_safety_manager"
