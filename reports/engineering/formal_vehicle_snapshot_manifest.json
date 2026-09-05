@@ -1,14 +1,14 @@
 {
   "kind": "tzcup_formal_vehicle_snapshot_manifest",
-  "output_inventory_sha256": "401dded103174b4bcef8e77b7e0ea0f1d092706b11d4765177f7f0928eb6a9fe",
+  "output_inventory_sha256": "199b895465d9215d42aff3e2efad69171d57b96bd2bd844495785af4e88587b6",
   "outputs": {
     "reports/engineering/formal_competition_vehicle.urdf": {
       "sha256": "2b399eaba8de34fd55ca663a3b6b49437070c72969f5e22faf2a64a12ba27db8",
       "size_bytes": 278653
     },
     "reports/engineering/formal_vehicle_component_register_report.json": {
-      "sha256": "691fa31a89a79293f9263dd8a9c7e993b6df6a373615ccdaec5eb6eff434c93d",
-      "size_bytes": 11198
+      "sha256": "b94fdced649abc98076abc478c234d2691b210cb67ad577ee81bfb5857f7a9cd",
+      "size_bytes": 12648
     },
     "reports/engineering/formal_vehicle_layout_report.json": {
       "sha256": "f770a791c2a74a9499fbe6fcba43f7c2077eed9c7a9659fe3649a7f89d430601",
@@ -51,8 +51,8 @@
       "size_bytes": 5149
     },
     "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml": {
-      "sha256": "2917c0878f2f440faa8a6d6e7ede751ad8ff49ca487c51accb8bb91ad096d4b4",
-      "size_bytes": 68836
+      "sha256": "688b72f49b7bd06ba6adc3d080c190f04f613b76ed05cbb69bf7a55580cff61a",
+      "size_bytes": 80395
     },
     "config/high_fidelity_vehicle/formal_vehicle_layout.yaml": {
       "sha256": "3c9c10da558c116bcbedf39a516093ca20c1e3eb590e2bb2d121ebd491cf10a9",
@@ -83,8 +83,8 @@
       "size_bytes": 1600
     },
     "scripts/generate_formal_vehicle_snapshot.py": {
-      "sha256": "e3fe79298f00d2f003640f4f2f2e1961f778cbc87f1c9e8307d9fec556725954",
-      "size_bytes": 19540
+      "sha256": "5522aec96ef8b2dc28bb4528a6b709a7525cc355744bbf8ff94a3239766f34eb",
+      "size_bytes": 20190
     },
     "scripts/generate_platform_auxiliary_meshes.py": {
       "sha256": "c7600b5bd042da13522ab802b0c2fc1b921bdbcbbf7f3e286953abb59d07e587",
@@ -95,8 +95,8 @@
       "size_bytes": 7166
     },
     "scripts/validate_formal_vehicle_component_register.py": {
-      "sha256": "b1e3ac980ea45e62506c4625bd97387708c6663fc4bfaa3744184df76697956d",
-      "size_bytes": 69824
+      "sha256": "40147d30d2cc8d427718157b4f1aa1487cf4c940a59f4360da2d0b452ff03992",
+      "size_bytes": 75969
     },
     "scripts/validate_formal_vehicle_product_design.py": {
       "sha256": "28403ee6143742657b579b2364de6bbfcfd42a9622f290e7a616c286d0bb0752",
@@ -114,9 +114,37 @@
       "sha256": "d72100cdfa134bdbe6a2fec0a2d6569f92171175715adeaf2418fa893f3e6bbc",
       "size_bytes": 20051
     },
+    "starter_ws/src/sanitation_gazebo_control/CMakeLists.txt": {
+      "sha256": "a7c1b2bc00fb80569816871e95492ec31e3270a15339d88d6265608b494c1d00",
+      "size_bytes": 10176
+    },
+    "starter_ws/src/sanitation_gazebo_control/include/sanitation_gazebo_control/NativeBridgeSupport.hh": {
+      "sha256": "b3e494e972214c9e7baac6675e52b9495a3a3707d2c5b6da48d4c1533ad89057",
+      "size_bytes": 2913
+    },
+    "starter_ws/src/sanitation_gazebo_control/package.xml": {
+      "sha256": "97daa992950c02ab43a10d3257c612832e27e64c83f0db6bb90874d5216b31d6",
+      "size_bytes": 1037
+    },
     "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainNativeBridge.cc": {
       "sha256": "ad96718ae9ca1861fbef4ba44f7a9a8f8c2765366f7d080073627e4f49b52575",
       "size_bytes": 7263
+    },
+    "starter_ws/src/sanitation_gazebo_control/src/CleaningActuatorScalarNativeBridge.cc": {
+      "sha256": "6e5444efb888712a62230b8cbe6d24fe269d98ab052134471d948757933977a1",
+      "size_bytes": 5049
+    },
+    "starter_ws/src/sanitation_gazebo_control/src/FormalAuxiliaryNativeBridge.cc": {
+      "sha256": "db6ee4ec9750f6588fc6e1940b6582b4297010212d37b47db60dec3b3efe8880",
+      "size_bytes": 6259
+    },
+    "starter_ws/src/sanitation_gazebo_control/src/FormalContactEvaluationNativeBridge.cc": {
+      "sha256": "cc7499777bc8f0f4cb232838e7ce85706df8265cefedb167acc3e9a51267e725",
+      "size_bytes": 10186
+    },
+    "starter_ws/src/sanitation_gazebo_control/src/FormalVehicleProductNativeBridge.cc": {
+      "sha256": "28a8b54dc50f220e8350a07452e0b1c90231a03ea361a64eff436388cfd2857b",
+      "size_bytes": 14161
     },
     "starter_ws/src/sanitation_safety/sanitation_safety/formal_auxiliary_system_core.py": {
       "sha256": "0c9188824b9c08042260b8f2fe4d5fe3eaf6921b4f250140fa02a196c419f0ef",
@@ -139,8 +167,8 @@
       "size_bytes": 3431
     },
     "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": {
-      "sha256": "78a1b8730be606f7e925eb064f5240ed98e03ad349efb722388e91e4d2e34267",
-      "size_bytes": 44508
+      "sha256": "f4a3ebacfc064bc78b8780649c25cffde53481ccbead9a64d980619857f7a6a9",
+      "size_bytes": 37011
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/MANIFEST.sha256": {
       "sha256": "0022a0157796ce6e1aba2dfb18cca9e9e2bda44f1bfdc251839d9aa8dd5f87a7",
@@ -975,5 +1003,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "f5c96ca2a59e5f2cf362f19205c5584456006db9b938aab03659b82d17e372df"
+  "source_inventory_sha256": "8a7037ec23d6a2d382817de6f8cabb031d293dad64722fd1ad076d07c6765d3c"
 }
