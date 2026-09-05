@@ -3,6 +3,7 @@ from __future__ import annotations
 from copy import deepcopy
 from pathlib import Path
 
+from collect_formal_service_door_runtime import _parse_plugin_diagnostics
 from validate_formal_service_door_runtime import DOORS, FAILED_STATUS, PASSED_STATUS, evaluate
 
 
@@ -27,6 +28,9 @@ def _positions(hinge_scale: float, latch: float):
 def _phase(command, positions, timestamp_offset):
     return {
         "commanded_targets_rad": command,
+        "ros_publisher_subscription_counts": {
+            f"{door}_{kind}": 1 for door in DOORS for kind in ("hinge", "latch")
+        },
         "joint_state_samples": [
             {
                 "received_monotonic_ns": timestamp_offset + index + 1,
@@ -41,6 +45,25 @@ def passing_evidence():
     return {
         "source_binding": {"expanded_urdf_sha256": "a" * 64},
         "evidence_authority": "GAZEBO_SENSOR_MSGS_JOINT_STATE",
+        "plugin_diagnostics": {
+            "records": [
+                {
+                    "door": door,
+                    "received_hinge_messages": float(sample + 1),
+                    "received_latch_messages": float(sample + 1),
+                    "hinge_force_writes": float(sample + 1),
+                    "latch_force_writes": float(sample + 1),
+                    "effective_latch_rad": 0.6,
+                    "effective_hinge_rad": spec[4],
+                    "postupdate_hinge_force_present": 1.0,
+                    "postupdate_latch_force_present": 1.0,
+                    "postupdate_hinge_force_nm": 0.0,
+                    "postupdate_latch_force_nm": 0.0,
+                }
+                for door, spec in DOORS.items()
+                for sample in range(3)
+            ]
+        },
         "phases": {
             "initial_locked": _phase(_targets(False, 0.0), _positions(0.0, 0.0), 0),
             "locked_open_rejected": _phase(_targets(True, 0.0), _positions(0.0, 0.0), 10),
@@ -85,6 +108,78 @@ def test_missing_live_joint_samples_fails_closed() -> None:
     assert not report["checks"]["all_phases_have_fresh_complete_samples"]
 
 
+def test_missing_evaluator_bridge_subscriber_fails_closed() -> None:
+    evidence = passing_evidence()
+    evidence["phases"]["open"]["ros_publisher_subscription_counts"]["power_hinge"] = 0
+    report = evaluate(evidence)
+    assert not report["checks"]["all_target_publishers_have_ros_bridge_subscribers"]
+
+
+def test_missing_plugin_telemetry_fails_closed() -> None:
+    evidence = passing_evidence()
+    evidence["plugin_diagnostics"] = {"records": []}
+    report = evaluate(evidence)
+    assert not report["checks"]["plugin_reports_received_targets_and_force_writes"]
+
+
+def test_incomplete_plugin_postupdate_telemetry_fails_closed() -> None:
+    evidence = passing_evidence()
+    del evidence["plugin_diagnostics"]["records"][0]["postupdate_hinge_force_nm"]
+    report = evaluate(evidence)
+    assert not report["checks"]["plugin_reports_received_targets_and_force_writes"]
+
+
+def test_nonfinite_or_absent_postupdate_readback_fails_closed() -> None:
+    evidence = passing_evidence()
+    for record in evidence["plugin_diagnostics"]["records"]:
+        record["postupdate_hinge_force_present"] = 0.0
+        record["postupdate_latch_force_nm"] = float("nan")
+    report = evaluate(evidence)
+    assert not report["checks"]["plugin_reports_received_targets_and_force_writes"]
+
+
+def test_plugin_telemetry_without_unlock_and_open_coverage_fails_closed() -> None:
+    evidence = passing_evidence()
+    for record in evidence["plugin_diagnostics"]["records"]:
+        record["effective_latch_rad"] = 0.0
+        record["effective_hinge_rad"] = 0.0
+    report = evaluate(evidence)
+    assert not report["checks"]["plugin_reports_received_targets_and_force_writes"]
+
+
+def test_plugin_diagnostic_parser_retains_postupdate_observation(tmp_path: Path) -> None:
+    log = tmp_path / "launch.log"
+    log.write_text(
+        "[Msg] SERVICE_DOOR_DIAGNOSTIC door=power sim_time_sec=1 "
+        "received_hinge_messages=2 received_latch_messages=2 "
+        "hinge_force_writes=3 latch_force_writes=3 "
+        "postupdate_hinge_force_present=1 postupdate_hinge_force_nm=4\n",
+        encoding="utf-8",
+    )
+    parsed = _parse_plugin_diagnostics(log)
+    assert parsed["records"] == [
+        {
+            "door": "power",
+            "sim_time_sec": 1.0,
+            "received_hinge_messages": 2.0,
+            "received_latch_messages": 2.0,
+            "hinge_force_writes": 3.0,
+            "latch_force_writes": 3.0,
+            "postupdate_hinge_force_present": 1.0,
+            "postupdate_hinge_force_nm": 4.0,
+        }
+    ]
+
+
+def test_plugin_diagnostic_parser_rejects_malformed_numeric_field(tmp_path: Path) -> None:
+    log = tmp_path / "launch.log"
+    log.write_text(
+        "SERVICE_DOOR_DIAGNOSTIC door=power hinge_force_nm=not-a-number\n",
+        encoding="utf-8",
+    )
+    assert "invalid_numeric_field" in _parse_plugin_diagnostics(log)["parse_error"]
+
+
 def test_reused_joint_samples_across_phases_fail_freshness_gate() -> None:
     evidence = passing_evidence()
     evidence["phases"]["open"]["joint_state_samples"][0][
@@ -127,7 +222,15 @@ def test_runner_collector_and_force_plugin_use_physical_joint_state() -> None:
     assert "JointPositionReset" not in plugin
     assert "--check --output \"${snapshot}\"" in runner
     assert "--session \"${session}\"" in runner
+    assert "--plugin-diagnostic-log \"${log}\"" in runner
     assert "def _bound_runtime_evidence(" in collector
     assert "session_manifest_sha256" in collector
     assert "self.target_publishers" in collector
+    assert "target_subscription_counts" in collector
+    assert "received_hinge_messages" in plugin
+    assert "effective_hinge_rad" in plugin
+    assert "hinge_force_nm" in plugin
+    assert "PostUpdate" in plugin
+    assert "postupdate_hinge_force_nm" in plugin
+    assert "JointForceCmd" in plugin
     assert "self.publishers =" not in collector

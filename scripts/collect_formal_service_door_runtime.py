@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import time
 from pathlib import Path
 from typing import Any
@@ -18,6 +19,41 @@ ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = ROOT / "artifacts/formal_service_door_runtime.json"
 DEFAULT_SNAPSHOT = ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.json"
 DEFAULT_SESSION = ROOT / "artifacts/formal_final_acceptance_session.json"
+PLUGIN_DIAGNOSTIC_PREFIX = "SERVICE_DOOR_DIAGNOSTIC "
+
+
+def _parse_plugin_diagnostics(path: Path) -> dict[str, Any]:
+    """Retain plugin telemetry from this fresh launch without treating it as motion proof."""
+
+    result: dict[str, Any] = {"launch_log": str(path), "records": []}
+    if not path.is_file():
+        result["parse_error"] = "launch_log_missing"
+        return result
+    numeric_keys = {
+        "sim_time_sec", "received_hinge_messages", "received_latch_messages",
+        "received_hinge_target_rad", "received_latch_target_rad",
+        "requested_hinge_rad", "requested_latch_rad", "effective_hinge_rad",
+        "effective_latch_rad", "hinge_position_rad", "latch_position_rad",
+        "hinge_force_nm", "latch_force_nm", "hinge_force_writes",
+        "latch_force_writes", "postupdate_hinge_force_present",
+        "postupdate_latch_force_present", "postupdate_hinge_force_nm",
+        "postupdate_latch_force_nm",
+    }
+    for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        marker = line.find(PLUGIN_DIAGNOSTIC_PREFIX)
+        if marker < 0:
+            continue
+        fields = dict(re.findall(r"([a-z_]+)=([^\s]+)", line[marker:]))
+        if "door" not in fields:
+            continue
+        record: dict[str, Any] = {"door": fields.pop("door")}
+        try:
+            record.update({key: float(value) for key, value in fields.items() if key in numeric_keys})
+        except ValueError as exc:
+            result["parse_error"] = f"invalid_numeric_field:{exc}"
+            return result
+        result["records"].append(record)
+    return result
 
 
 def _snapshot_binding(path: Path) -> dict[str, str]:
@@ -69,6 +105,7 @@ def run(
     snapshot: Path,
     session: Path,
     runtime_binding: Path,
+    plugin_diagnostic_log: Path,
     startup_timeout_s: float,
     phase_duration_s: float,
 ) -> int:
@@ -97,6 +134,12 @@ def run(
             }
             self.create_subscription(JointState, "/joint_states", self._on_joint_state, 50)
 
+        def target_subscription_counts(self) -> dict[str, int]:
+            return {
+                f"{door}_{kind}": publisher.get_subscription_count()
+                for (door, kind), publisher in sorted(self.target_publishers.items())
+            }
+
         def _on_joint_state(self, message: JointState) -> None:
             positions = dict(zip(message.name, message.position))
             if not expected_joints <= set(positions):
@@ -111,6 +154,12 @@ def run(
                 )
 
         def phase(self, targets: dict[str, dict[str, float]], duration_s: float) -> dict[str, Any]:
+            subscription_counts = self.target_subscription_counts()
+            if not all(subscription_counts.values()):
+                raise RuntimeError(
+                    "service-door evaluator targets lost ROS bridge subscribers: "
+                    + json.dumps(subscription_counts, sort_keys=True)
+                )
             self.active_samples = []
             deadline = time.monotonic() + duration_s
             while rclpy.ok() and time.monotonic() < deadline:
@@ -122,6 +171,7 @@ def run(
             self.active_samples = None
             return {
                 "commanded_targets_rad": targets,
+                "ros_publisher_subscription_counts": subscription_counts,
                 "joint_state_samples": samples,
             }
 
@@ -149,6 +199,23 @@ def run(
             rclpy.spin_once(node, timeout_sec=0.1)
         if set(node.latest) != expected_joints:
             raise TimeoutError("all eight physical service-door joints did not appear on /joint_states")
+        target_subscription_deadline = time.monotonic() + startup_timeout_s
+        target_subscription_counts = node.target_subscription_counts()
+        while (
+            rclpy.ok()
+            and not all(target_subscription_counts.values())
+            and time.monotonic() < target_subscription_deadline
+        ):
+            rclpy.spin_once(node, timeout_sec=0.1)
+            target_subscription_counts = node.target_subscription_counts()
+        if not all(target_subscription_counts.values()):
+            raise TimeoutError(
+                "all service-door evaluator targets need a ROS bridge subscriber: "
+                + json.dumps(target_subscription_counts, sort_keys=True)
+            )
+        raw["target_transport"] = {
+            "ros_publisher_subscription_counts": target_subscription_counts,
+        }
         phases["initial_locked"] = node.phase(targets("closed", 0.0), phase_duration_s)
         phases["locked_open_rejected"] = node.phase(targets("open", 0.0), phase_duration_s)
         phases["unlocked"] = node.phase(targets("closed", 0.6), phase_duration_s)
@@ -163,6 +230,7 @@ def run(
         if rclpy.ok():
             rclpy.shutdown()
 
+    raw["plugin_diagnostics"] = _parse_plugin_diagnostics(plugin_diagnostic_log)
     report = evaluate(raw)
     report["runtime_gate_binding"] = binding
     report["acceptance_session_binding"] = acceptance_session_binding
@@ -181,6 +249,7 @@ def main() -> int:
     parser.add_argument("--snapshot-manifest", type=Path, default=DEFAULT_SNAPSHOT)
     parser.add_argument("--session", type=Path, default=DEFAULT_SESSION)
     parser.add_argument("--runtime-binding", type=Path, required=True)
+    parser.add_argument("--plugin-diagnostic-log", type=Path, required=True)
     parser.add_argument("--startup-timeout", type=float, default=30.0)
     parser.add_argument("--phase-duration", type=float, default=2.5)
     args = parser.parse_args()
@@ -189,6 +258,7 @@ def main() -> int:
         args.snapshot_manifest,
         args.session,
         args.runtime_binding,
+        args.plugin_diagnostic_log,
         args.startup_timeout,
         args.phase_duration,
     )

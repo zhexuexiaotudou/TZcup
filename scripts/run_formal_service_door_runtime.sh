@@ -60,4 +60,5 @@ ros2 topic list 2>/dev/null | grep -Fxq /joint_states || {
 python3 "${repo_root}/scripts/collect_formal_service_door_runtime.py" \
   --output "${output}" \
   --snapshot-manifest "${snapshot}" --session "${session}" \
-  --runtime-binding "${runtime_binding}"
+  --runtime-binding "${runtime_binding}" \
+  --plugin-diagnostic-log "${log}"

@@ -132,7 +132,12 @@ mimic 关节冒充锁紧力；该限制保留为实物锁扣刚度和密封压�
 正式整车启动默认不暴露服务门 evaluator bridge；仅
 `run_formal_service_door_runtime.sh` 显式设置
 `service_door_evaluation_interfaces:=true`，再通过独立 evaluator 话题驱动
-`ServiceDoorSystem` 的有限 PD 力；插件只写真实关节力，不直接重置位姿。采集器从
+`ServiceDoorSystem` 的有限 PD 力；插件只写真实关节力，不直接重置位姿。每个仿真秒
+还会写出 `SERVICE_DOOR_DIAGNOSTIC`，包含 bridge 已送达的目标计数/值、互锁后的有效
+目标、实测位置、力矩、force-write 计数及 `PostUpdate` 对 `JointForceCmd` 的只读回显，供
+failed run 区分消息、互锁与动力学链路。该回显没有 ECM writer identity，且物理引擎可能
+已消费或清零命令；它只能定位下一步，不能单独证明最终写者或物理受力。
+采集器从
 `/joint_states` 记录七阶段原始样本：运输锁止、锁止拒绝开门、解锁、开门、解锁闭门、
 回零锁止和再次拒绝开门。`artifacts/formal_service_door_runtime.json` 只有在四门均按正确
 方向打开至少 0.9 rad、全程未越限、锁舌回零后门轴再次拒动，且证据绑定当前正式
