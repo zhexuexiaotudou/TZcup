@@ -19,8 +19,8 @@ py -3 scripts/validate_s100p_product_artifact_bundle.py `
 
 该命令的默认返回码为非零，直到每个正式文件存在、大小和 SHA-256 匹配，并且运行时
 `artifact_manifest.json` 也含有四个相同的 `rdk_s100` / `nash-m` 行。当前清单故意保持
-`PREPARATION_ONLY_BLOCKED`：现有本地正式运行时清单没有 DOSOD HBM 行，不能用 EdgeSAM
-HBM、ONNX 文件或官方 COCO-80 示例替代。即使未来本地制品齐全，该检查的成功状态也只是
+`PREPARATION_ONLY_BLOCKED`：当前 artifact root 缺少该运行时清单，项目 DOSOD HBM 的文件、
+SHA-256 与大小也尚未形成，不能用 EdgeSAM HBM、ONNX 文件或官方 COCO-80 示例替代。即使未来本地制品齐全，该检查的成功状态也只是
 `PREPARED_NOT_DEPLOYED`，不构成板端运行、实物 I/O 或执行器放行。
 
 项目四类别 DOSOD HBM 生成前还必须通过
