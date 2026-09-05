@@ -143,10 +143,13 @@ def test_runner_stops_all_active_parameter_bridges_in_order_before_launch_cleanu
     assert 'f"GZ_PARTITION={partition}".encode() not in environment' in shutdown
     assert 'executable.name != "parameter_bridge"' in shutdown
     assert '"ros_gz_bridge" not in executable.parts' in shutdown
-    assert 'def native_water_bridge_census()' in shutdown
-    assert 'executable.name != "water_evaluation_bridge"' in shutdown
+    assert 'def native_bridge_census()' in shutdown
+    ordered_targets = shutdown.split("ordered_targets = (", 1)[1].split(")\ntargets = tuple", 1)[0]
+    assert '("native", "water_evaluation_bridge", "water_evaluation_bridge")' in ordered_targets
+    assert '("native", "a300_drivetrain_native_bridge", "a300_drivetrain_bridge")' in ordered_targets
+    assert '("native", "cleaning_actuator_vector_bridge", "cleaning_actuator_motor_bridge")' in ordered_targets
     assert '"sanitation_gazebo_control" not in executable.parts' in shutdown
-    assert 'native_target = "water_evaluation_bridge"' in shutdown
+    assert "for executable, target in native_targets:" in shutdown
     assert '"native_bridge_reaped"' in shutdown
     assert '"native_bridge_clean_exit"' not in shutdown
     assert '"native_bridge_exit_not_clean"' in shutdown
@@ -156,39 +159,49 @@ def test_runner_stops_all_active_parameter_bridges_in_order_before_launch_cleanu
     assert 'if len(node_args) != 1' in shutdown
     assert 'missing = sorted(set(targets) - set(initial_nodes))' in shutdown
     assert 'unexpected = sorted(set(initial_nodes) - set(targets))' in shutdown
-    assert (
-        'if malformed or native_malformed or missing or unexpected or duplicates '
-        'or len(native_pids) != 1:'
-    ) in shutdown
+    for failure_guard in (
+        "native_missing",
+        "native_unexpected",
+        "native_duplicates",
+    ):
+        assert failure_guard in shutdown
     assert 'if len(matches) != 1:' in shutdown
     assert 'os.kill(pid, signal.SIGINT)' in shutdown
     assert 'if exit_state == "missing":' in shutdown
     assert 'raise SystemExit(1)' in shutdown
     expected_order = (
-        "formal_vehicle_product_bridge",
-        "cleaning_actuator_scalar_bridge",
-        "a300_drivetrain_bridge",
-        "formal_squeegee_evaluation_bridge",
-        "formal_brush_contact_evaluation_bridge",
-        "charge_receptacle_contact_bridge",
-        "wastewater_drain_contact_bridge",
-        "front_bumper_contact_bridge",
-        "rear_bumper_contact_bridge",
-        "formal_auxiliary_bridge",
+        '("native", "water_evaluation_bridge", "water_evaluation_bridge")',
+        '("parameter", "parameter_bridge", "formal_vehicle_product_bridge")',
+        '("parameter", "parameter_bridge", "cleaning_actuator_scalar_bridge")',
+        '("native", "a300_drivetrain_native_bridge", "a300_drivetrain_bridge")',
+        '("parameter", "parameter_bridge", "formal_squeegee_evaluation_bridge")',
+        '("parameter", "parameter_bridge", "formal_brush_contact_evaluation_bridge")',
+        '("parameter", "parameter_bridge", "charge_receptacle_contact_bridge")',
+        '("parameter", "parameter_bridge", "wastewater_drain_contact_bridge")',
+        '("parameter", "parameter_bridge", "front_bumper_contact_bridge")',
+        '("parameter", "parameter_bridge", "rear_bumper_contact_bridge")',
+        '("parameter", "parameter_bridge", "formal_auxiliary_bridge")',
+        '("native", "cleaning_actuator_vector_bridge", "cleaning_actuator_motor_bridge")',
     )
-    positions = [shutdown.index(f'"{node}"') for node in expected_order]
+    positions = [ordered_targets.index(row) for row in expected_order]
     assert positions == sorted(positions)
-    native_sigint = shutdown.index("os.kill(native_pid, signal.SIGINT)")
-    parameter_bridge_sigint = shutdown.index("os.kill(pid, signal.SIGINT)")
     assert shutdown.index('"pre_shutdown_census"') < shutdown.index(
         '"native_bridge_pre_shutdown"'
-    ) < native_sigint < shutdown.index('"ordered_shutdown_started"') < parameter_bridge_sigint
-    assert shutdown.index('"post_shutdown_census"') > parameter_bridge_sigint and shutdown.index('"post_shutdown_census"') < shutdown.index(
+    ) < shutdown.index("stop_native_bridge(first_executable, first_target)") < shutdown.index(
+        '"ordered_shutdown_started"'
+    ) < shutdown.index("for kind, executable, target in ordered_targets[1:]:")
+    assert shutdown.index('"post_shutdown_census"') > shutdown.index(
+        "for kind, executable, target in ordered_targets[1:]:"
+    ) and shutdown.index('"post_shutdown_census"') < shutdown.index(
         '"ordered_shutdown_completed"'
     )
-    assert 'if remaining_nodes or malformed:' in shutdown
-    assert shutdown.index('"formal_auxiliary_bridge"') > shutdown.index(
-        '"formal_squeegee_evaluation_bridge"'
+    assert "remaining_native_nodes, native_malformed = native_bridge_census()" in shutdown
+    assert (
+        "if remaining_nodes or remaining_native_nodes or malformed or native_malformed:"
+        in shutdown
+    )
+    assert ordered_targets.index('("parameter", "parameter_bridge", "formal_auxiliary_bridge")') > ordered_targets.index(
+        '("parameter", "parameter_bridge", "formal_squeegee_evaluation_bridge")'
     )
 
     validator = source.index(
@@ -202,9 +215,16 @@ def test_runner_stops_all_active_parameter_bridges_in_order_before_launch_cleanu
         'python3 "${repo_root}/scripts/audit_formal_water_launch_log.py"'
     )
     assert validator < ordered_stop < cleanup < audit
+    assert "--required-clean-exit-process water_evaluation_bridge" in source
+    assert "--required-clean-exit-process a300_drivetrain_native_bridge" in source
+    assert "--required-clean-exit-process cleaning_actuator_vector_bridge" in source
     assert "FORMAL_WATER_REPOSITORY_ROOT" in source
     assert "FORMAL_TASK_ONLY_DIAGNOSTIC" in source
     assert "Repository-root override is forbidden for formal all-scenarios acceptance" in source
+    assert (
+        "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainNativeBridge.cc"
+        in TYPED_CRITICAL_MANIFEST_REQUIRED_PATHS
+    )
 
 
 def test_all_scenarios_rotation_invalidates_old_canonical_before_preflight() -> None:

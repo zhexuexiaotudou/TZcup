@@ -18,6 +18,7 @@ find_package(Protobuf REQUIRED MODULE)
 find_package(ament_cmake REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(control_msgs REQUIRED)
+find_package(nav_msgs REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rosgraph_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
@@ -177,6 +178,23 @@ ament_target_dependencies(a300_drivetrain_command_adapter
   std_msgs
 )
 install(TARGETS a300_drivetrain_command_adapter
+  RUNTIME DESTINATION lib/${PROJECT_NAME}
+)
+
+add_executable(a300_drivetrain_native_bridge
+  src/A300DrivetrainNativeBridge.cc
+)
+ament_target_dependencies(a300_drivetrain_native_bridge
+  geometry_msgs
+  nav_msgs
+  rclcpp
+  std_msgs
+)
+target_link_libraries(a300_drivetrain_native_bridge
+  gz-transport13::gz-transport13
+  gz-msgs10::gz-msgs10
+)
+install(TARGETS a300_drivetrain_native_bridge
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 

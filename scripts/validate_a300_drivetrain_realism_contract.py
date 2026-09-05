@@ -115,6 +115,7 @@ def validate(contract_path: Path = DEFAULT_CONTRACT, root: Path = ROOT) -> dict:
     plant = contract.get("plant_model", {})
     source_paths = [plant.get(key) for key in (
         "core_header", "core_source", "gazebo_candidate_source", "typed_command_adapter_source",
+        "typed_transport_bridge_source",
         "test_source", "candidate_compile_project"
     )]
     if not all(isinstance(path, str) and (root / path).is_file() for path in source_paths):
@@ -128,6 +129,8 @@ def validate(contract_path: Path = DEFAULT_CONTRACT, root: Path = ROOT) -> dict:
     }
     if required_effects != expected_effects:
         errors.append("plant effect contract is incomplete")
+    if plant.get("transport_bridge_executable") != "a300_drivetrain_native_bridge":
+        errors.append("A300 transport bridge executable must remain native and explicit")
     engineering = plant.get("engineering_parameters_not_official", {})
     if not engineering or any(not isinstance(value, (int, float)) for value in engineering.values()):
         errors.append("unpublished motor/brake parameters must be explicit engineering values")
@@ -142,6 +145,7 @@ def validate(contract_path: Path = DEFAULT_CONTRACT, root: Path = ROOT) -> dict:
     for required_cmake_token in (
         "add_library(A300DrivetrainPlantSystem", "src/A300DrivetrainPlantCore.cc",
         "src/A300DrivetrainPlantSystem.cc", "a300_drivetrain_command_adapter",
+        "a300_drivetrain_native_bridge", "find_package(nav_msgs REQUIRED)",
     ):
         if required_cmake_token not in cmake:
             errors.append(f"candidate drivetrain package wiring missing: {required_cmake_token}")
@@ -196,12 +200,19 @@ def validate(contract_path: Path = DEFAULT_CONTRACT, root: Path = ROOT) -> dict:
         errors.append("wheel ros2_control block must not contain command interfaces")
     for required_token in (
         'executable="a300_drivetrain_command_adapter"',
+        'package="sanitation_gazebo_control"',
+        'executable="a300_drivetrain_native_bridge"',
         'name="a300_drivetrain_bridge"',
         '"/odom/unfiltered"',
         '"start_localization"',
     ):
         if required_token not in vehicle_launch:
             errors.append(f"formal vehicle launch wiring missing: {required_token}")
+    drivetrain_bridge = vehicle_launch.split("a300_drivetrain_bridge = Node(", 1)[-1].split(
+        "# This bridge is the only formal ROS writer", 1
+    )[0]
+    if 'executable="parameter_bridge"' in drivetrain_bridge or "arguments=[" in drivetrain_bridge:
+        errors.append("A300 transport must use the dedicated native bridge without parameter routes")
     if '"base_controller"' in vehicle_launch:
         errors.append("formal vehicle launch must not spawn base_controller")
     if "formal_campus_base_controller_spawner" in campus_launch:

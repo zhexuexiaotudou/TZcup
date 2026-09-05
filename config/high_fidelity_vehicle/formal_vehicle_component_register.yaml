@@ -30,6 +30,7 @@ topic_contracts:
   gnss_fix: {ros_topic: /sensors/gnss/fix, ros_type: sensor_msgs/msg/NavSatFix, gz_type: gz.msgs.NavSat, sensor_base_topic: /sensors/gnss/fix}
   a300_encoder_counts: {transport: ros_native, direction: publisher, single_writer: true, writer_node: formal_encoder_feedback_publisher, ros_topic: /formal_vehicle/encoders/a300/counts, ros_type: std_msgs/msg/Int64MultiArray, source_path: starter_ws/src/sanitation_vehicle_description/scripts/formal_encoder_feedback_publisher.py}
   a300_encoder_joint_states: {transport: ros_native, direction: publisher, single_writer: true, writer_node: formal_encoder_feedback_publisher, ros_topic: /formal_vehicle/encoders/a300/joint_states, ros_type: sensor_msgs/msg/JointState, source_path: starter_ws/src/sanitation_vehicle_description/scripts/formal_encoder_feedback_publisher.py}
+  a300_raw_odometry: {transport: gazebo_native_bridge, direction: publisher, single_writer: true, writer_node: a300_drivetrain_bridge, bridge_package: sanitation_gazebo_control, bridge_executable: a300_drivetrain_native_bridge, source_path: starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainNativeBridge.cc, ros_topic: /odom/unfiltered, ros_type: nav_msgs/msg/Odometry, gz_type: gz.msgs.Odometry}
   cleaning_encoder_counts: {transport: ros_native, direction: publisher, single_writer: true, writer_node: formal_encoder_feedback_publisher, ros_topic: /formal_vehicle/encoders/cleaning/counts, ros_type: std_msgs/msg/Int64MultiArray, source_path: starter_ws/src/sanitation_vehicle_description/scripts/formal_encoder_feedback_publisher.py}
   cleaning_encoder_joint_states: {transport: ros_native, direction: publisher, single_writer: true, writer_node: formal_encoder_feedback_publisher, ros_topic: /formal_vehicle/encoders/cleaning/joint_states, ros_type: sensor_msgs/msg/JointState, source_path: starter_ws/src/sanitation_vehicle_description/scripts/formal_encoder_feedback_publisher.py}
   imu_data: {ros_topic: /sensors/imu/data, ros_type: sensor_msgs/msg/Imu, gz_type: gz.msgs.IMU, sensor_base_topic: /sensors/imu/data}
@@ -369,7 +370,7 @@ functional_positions:
     xyz_m: [0.000, 0.000, 0.1651]
     rpy_rad: [0.000, 0.000, 0.000]
     required_joints: [front_left_wheel_joint, front_right_wheel_joint, rear_left_wheel_joint, rear_right_wheel_joint]
-    required_topic_contracts: [a300_encoder_counts, a300_encoder_joint_states]
+    required_topic_contracts: [a300_encoder_counts, a300_encoder_joint_states, a300_raw_odometry]
     interface: a300_drivetrain_plant
     visible: true
     components:

@@ -368,6 +368,10 @@ def test_runtime_reverse_uses_formal_safety_power_and_a300_drivetrain_chain() ->
         ROOT
         / "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainCommandAdapter.cc"
     ).read_text(encoding="utf-8")
+    native_bridge = (
+        ROOT
+        / "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainNativeBridge.cc"
+    ).read_text(encoding="utf-8")
     plant = (
         ROOT
         / "starter_ws/src/sanitation_gazebo_control/src/A300DrivetrainPlantCore.cc"
@@ -396,9 +400,9 @@ def test_runtime_reverse_uses_formal_safety_power_and_a300_drivetrain_chain() ->
     for topic in (
         "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/cmd_vel",
         "/model/tzcup_formal_sanitation_vehicle/a300_drivetrain/actuator_enable",
-    ):
+        ):
         assert topic in adapter
-        assert topic in launch
+        assert topic in native_bridge
     assert 'executable="a300_drivetrain_command_adapter"' in launch
     odom_remap = (
         '(\n                '

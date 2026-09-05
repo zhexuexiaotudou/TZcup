@@ -52,9 +52,13 @@ def test_typed_adapter_is_unique_consumer_of_final_safety_command() -> None:
     assert launch.count('name="a300_drivetrain_bridge"') == 1
     assert 'start_a300_transport_bridge = LaunchConfiguration(' in launch
     assert '"start_a300_transport_bridge",\n                default_value="true"' in launch
-    drivetrain_bridge = launch.split('name="a300_drivetrain_bridge"', 1)[1].split(
+    drivetrain_bridge = launch.split("a300_drivetrain_bridge = Node(", 1)[1].split(
         "# This bridge is the only formal ROS writer", 1
     )[0]
+    assert 'package="sanitation_gazebo_control"' in drivetrain_bridge
+    assert 'executable="a300_drivetrain_native_bridge"' in drivetrain_bridge
+    assert 'executable="parameter_bridge"' not in drivetrain_bridge
+    assert "arguments=[" not in drivetrain_bridge
     assert "condition=IfCondition(start_a300_transport_bridge)" in drivetrain_bridge
     assert '"/odom/unfiltered"' in launch
     assert '"base_controller"' not in launch
@@ -110,7 +114,11 @@ def test_local_ekf_is_selected_odom_and_odom_tf_authority() -> None:
 def test_runtime_packages_declare_drivetrain_and_localization_dependencies() -> None:
     vehicle_manifest = (VEHICLE / "package.xml").read_text(encoding="utf-8")
     campus_manifest = (INTEGRATION / "package.xml").read_text(encoding="utf-8")
+    control_manifest = (
+        ROOT / "starter_ws/src/sanitation_gazebo_control/package.xml"
+    ).read_text(encoding="utf-8")
     assert "<exec_depend>sanitation_gazebo_control</exec_depend>" in vehicle_manifest
     assert "<exec_depend>sanitation_localization</exec_depend>" in vehicle_manifest
     assert "diff_drive_controller" not in vehicle_manifest
     assert "<exec_depend>sanitation_localization</exec_depend>" in campus_manifest
+    assert "<depend>nav_msgs</depend>" in control_manifest

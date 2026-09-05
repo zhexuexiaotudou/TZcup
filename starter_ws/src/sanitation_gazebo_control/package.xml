@@ -10,6 +10,7 @@
   <build_depend>protobuf-dev</build_depend>
   <depend>geometry_msgs</depend>
   <depend>control_msgs</depend>
+  <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclpy</depend>
   <depend>rosgraph_msgs</depend>
