@@ -1,13 +1,13 @@
 {
   "kind": "tzcup_formal_vehicle_snapshot_manifest",
-  "output_inventory_sha256": "199b895465d9215d42aff3e2efad69171d57b96bd2bd844495785af4e88587b6",
+  "output_inventory_sha256": "8e6e520547c0c777fe5c82d7159e1e8592c6cd162c2c92852a53074ee97e8d6e",
   "outputs": {
     "reports/engineering/formal_competition_vehicle.urdf": {
-      "sha256": "2b399eaba8de34fd55ca663a3b6b49437070c72969f5e22faf2a64a12ba27db8",
-      "size_bytes": 278653
+      "sha256": "5cf404fb15d1173fbfab614fd409e7e55a226b13c97d80b816210090a1c54194",
+      "size_bytes": 276968
     },
     "reports/engineering/formal_vehicle_component_register_report.json": {
-      "sha256": "b94fdced649abc98076abc478c234d2691b210cb67ad577ee81bfb5857f7a9cd",
+      "sha256": "ed9a5df5979d62002e06ad0ff1ab261183ed2cf3c2d0d222dc3012ba1a3c962e",
       "size_bytes": 12648
     },
     "reports/engineering/formal_vehicle_layout_report.json": {
@@ -95,8 +95,8 @@
       "size_bytes": 7166
     },
     "scripts/validate_formal_vehicle_component_register.py": {
-      "sha256": "40147d30d2cc8d427718157b4f1aa1487cf4c940a59f4360da2d0b452ff03992",
-      "size_bytes": 75969
+      "sha256": "3595aaf74c27f2f83132c9baa256be61e15b3536e569a13970babe90bfd4f290",
+      "size_bytes": 76051
     },
     "scripts/validate_formal_vehicle_product_design.py": {
       "sha256": "28403ee6143742657b579b2364de6bbfcfd42a9622f290e7a616c286d0bb0752",
@@ -167,8 +167,8 @@
       "size_bytes": 3431
     },
     "starter_ws/src/sanitation_vehicle_description/launch/formal_vehicle_sim.launch.py": {
-      "sha256": "30b881fec1bddc6d079c4d04ad5cd638675fb776014c79aa5746e8bac6046948",
-      "size_bytes": 37697
+      "sha256": "cec55d0e92d6a0e9943295c1563a77470d71d28c5352f25bfde224a50bb3aa76",
+      "size_bytes": 38448
     },
     "starter_ws/src/sanitation_vehicle_description/meshes/MANIFEST.sha256": {
       "sha256": "0022a0157796ce6e1aba2dfb18cca9e9e2bda44f1bfdc251839d9aa8dd5f87a7",
@@ -983,8 +983,8 @@
       "size_bytes": 34807
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/control_interfaces.xacro": {
-      "sha256": "596bfccd1443e482bfaf59bef7cfaf01f20f4bdbd46331de968e487348e8bf86",
-      "size_bytes": 8813
+      "sha256": "5c8b4309530c2486d074591163dc8e2b7d48cbff1081bf0adc2f0882fdc57ee7",
+      "size_bytes": 8357
     },
     "starter_ws/src/sanitation_vehicle_description/urdf/high_fidelity/manipulator_stack.xacro": {
       "sha256": "6aae26411da455ed5b187c81cf7d06242c9c39036d97b349b05703d212691fd8",
@@ -1003,5 +1003,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "11123081a300b9c448fa09d7053318fafa4df1ea2f1d6de5d008ce62340521e5"
+  "source_inventory_sha256": "86059e659b804f4b4b11150d7eb48625afd2fea1d1596b819068413e0ed68949"
 }
