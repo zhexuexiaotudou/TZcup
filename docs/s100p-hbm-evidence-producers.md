@@ -10,14 +10,21 @@ actuator, calibration capture, or receipt-synthesis behavior.
    only success status is `COMPILED_NOT_BOARD_ACCEPTED`.
 2. `scripts/run_dosod_hbm_x86_parity.py` compares an actual runner-produced
    HBM result with ONNX on a frozen, non-calibration holdout.  It requires an
-   explicit approved tolerance and a verified runner output map; unknown raw
-   binary layouts are blocked rather than guessed.
+   absolute, hashed and versioned runner identity, its exact command template,
+   a matching verified input adapter and output map, plus an explicit approved
+   tolerance; unknown raw binary layouts are blocked rather than guessed.
 3. `scripts/validate_dosod_quantized_metric_regression.py` compares retained
-   ONNX and HBM evaluator reports over the same frozen holdout.  A metric pass
-   does not claim board deployment or the 1800-second runtime gate.
+   ONNX and HBM evaluator reports over the same frozen holdout.  It binds the
+   full passed parity record, calibration/holdout digests, runner identity and
+   absolute/hash/version-bound evaluator identity; hand-written metric JSON is
+   insufficient.  A metric pass does not claim board deployment or the
+   1800-second runtime gate.
 
 The required order is compile-contract validator, ONNX/toolchain preflight,
 actual compile receipt, x86 or board-equivalent parity, then metric regression.
+Every producer requires a previously nonexistent, non-symlink evidence root;
+the compiler also rejects a pre-existing or symlinked working directory and
+expected HBM, so an older HBM can never be relabelled as this run's output.
 The four-role payload manifest and all five real board receipts remain required
 by `scripts/validate_s100p_final_predeploy.py`.
 

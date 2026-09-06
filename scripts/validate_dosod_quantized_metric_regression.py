@@ -17,12 +17,14 @@ import time
 from pathlib import Path
 from typing import Any
 
-from hbm_evidence_common import atomic_json, load_object, normal_file, sha256_file
+from hbm_evidence_common import atomic_json, fresh_directory, load_object, normal_file, sha256_file
 
 
 REPORT_ID = "tzcup_dosod_quantized_metric_regression_v1"
 METRICS_REPORT_ID = "tzcup_dosod_perception_validation_metrics_v1"
 THRESHOLDS_REPORT_ID = "tzcup_dosod_quantized_metric_thresholds_v1"
+PARITY_REPORT_ID = "tzcup_dosod_hbm_x86_nash_parity_v1"
+EVALUATOR_IDENTITY_ID = "tzcup_dosod_metric_evaluator_identity_v1"
 CLASS_ORDER = ["litter_cube", "fallen_leaves", "dust_or_soil", "puddle"]
 
 
@@ -63,7 +65,10 @@ def _sources(report: dict[str, Any]) -> set[str]:
     return lowered
 
 
-def _validate_metrics_report(report: dict[str, Any], *, expected_backend: str, hbm_sha: str | None) -> set[str]:
+def _validate_metrics_report(
+    report: dict[str, Any], *, expected_backend: str, hbm_sha: str | None,
+    holdout_manifest_sha256: str, evaluator_identity_sha256: str, evaluator_binding: dict[str, Any], runner_identity_sha256: str | None,
+) -> set[str]:
     if report.get("report_id") != METRICS_REPORT_ID or report.get("status") != "VERIFIED":
         raise ValueError("validation_metrics_report_not_verified")
     execution = report.get("execution")
@@ -71,9 +76,27 @@ def _validate_metrics_report(report: dict[str, Any], *, expected_backend: str, h
         raise ValueError("validation_metrics_backend_mismatch")
     if not isinstance(execution.get("command"), list) or not execution["command"] or execution.get("returncode") != 0:
         raise ValueError("validation_metrics_execution_not_retained")
+    if execution.get("evaluator_identity_sha256") != evaluator_identity_sha256:
+        raise ValueError("validation_metrics_evaluator_identity_mismatch")
+    if execution.get("holdout_manifest_sha256") != holdout_manifest_sha256:
+        raise ValueError("validation_metrics_holdout_manifest_mismatch")
+    if execution["command"][0] != evaluator_binding["absolute_path"]:
+        raise ValueError("validation_metrics_evaluator_path_mismatch")
+    if execution.get("command_template") != evaluator_binding["command_template"]:
+        raise ValueError("validation_metrics_command_template_mismatch")
+    for stream in ("stdout", "stderr"):
+        raw_path = execution.get(f"{stream}_path")
+        if not isinstance(raw_path, str) or not Path(raw_path).is_absolute() or not _digest(execution.get(f"{stream}_sha256")):
+            raise ValueError("validation_metrics_raw_output_identity_missing")
+        candidate = Path(raw_path)
+        normal_file(candidate, f"validation_metrics_{stream}")
+        if sha256_file(candidate) != execution[f"{stream}_sha256"]:
+            raise ValueError(f"validation_metrics_{stream}_identity_mismatch")
     if expected_backend == "hbm":
         if execution.get("hbm_sha256") != hbm_sha:
             raise ValueError("validation_metrics_hbm_identity_mismatch")
+        if execution.get("runner_identity_sha256") != runner_identity_sha256:
+            raise ValueError("validation_metrics_runner_identity_mismatch")
     if report.get("class_order") != CLASS_ORDER:
         raise ValueError("validation_metrics_class_order_mismatch")
     return _sources(report)
@@ -88,6 +111,85 @@ def _calibration_sources(path: Path) -> set[str]:
     if not values or not all(_digest(value) for value in values):
         raise ValueError("calibration_manifest_source_sha_invalid")
     return {str(value).lower() for value in values}
+
+
+def _validate_parity_report(path: Path, *, hbm_sha: str, calibration_sha: str, holdout_sha: str) -> tuple[set[str], str]:
+    parity = load_object(path)
+    if parity.get("report_id") != PARITY_REPORT_ID or parity.get("status") != "PARITY_PASSED":
+        raise ValueError("parity_report_not_passed")
+    if parity.get("hbm", {}).get("sha256") != hbm_sha:
+        raise ValueError("parity_report_hbm_identity_mismatch")
+    if parity.get("calibration_manifest_sha256") != calibration_sha or parity.get("holdout_manifest_sha256") != holdout_sha:
+        raise ValueError("parity_report_dataset_identity_mismatch")
+    runner_sha = parity.get("runner_identity_sha256")
+    if not _digest(runner_sha):
+        raise ValueError("parity_report_runner_identity_missing")
+    records = parity.get("records")
+    if not isinstance(records, list) or not records or not all(isinstance(row, dict) and row.get("pass") is True and _digest(row.get("source_sha256")) for row in records):
+        raise ValueError("parity_report_records_incomplete")
+    sources = {str(row["source_sha256"]).lower() for row in records}
+    if len(sources) != len(records):
+        raise ValueError("parity_report_duplicate_sources")
+    return sources, str(runner_sha)
+
+
+def _validate_evaluator_identity(path: Path) -> tuple[str, dict[str, dict[str, Any]]]:
+    identity = load_object(path)
+    if identity.get("schema_version") != 1 or identity.get("report_id") != EVALUATOR_IDENTITY_ID or identity.get("status") != "VERIFIED":
+        raise ValueError("evaluator_identity_not_verified")
+    backends = identity.get("backends")
+    if not isinstance(backends, dict) or set(backends) != {"onnx", "hbm"}:
+        raise ValueError("evaluator_identity_backend_set_invalid")
+    bindings: dict[str, dict[str, Any]] = {}
+    for backend, row in backends.items():
+        if not isinstance(row, dict) or not isinstance(row.get("absolute_path"), str) or not Path(row["absolute_path"]).is_absolute():
+            raise ValueError(f"evaluator_identity_path_invalid:{backend}")
+        executable = Path(row["absolute_path"])
+        normal_file(executable, f"evaluator_executable:{backend}")
+        if row.get("sha256") != sha256_file(executable) or not isinstance(row.get("version"), str) or not row["version"].strip() or not isinstance(row.get("command_template"), list) or not row["command_template"]:
+            raise ValueError(f"evaluator_identity_binding_invalid:{backend}")
+        bindings[backend] = {"absolute_path": str(executable.resolve()), "command_template": row["command_template"]}
+    return sha256_file(path), bindings
+
+
+def _holdout_sources_and_adapter(path: Path) -> tuple[set[str], dict[str, Any]]:
+    manifest = load_object(path)
+    if manifest.get("schema_version") != 1 or manifest.get("status") != "FROZEN" or not isinstance(manifest.get("records"), list):
+        raise ValueError("metric_holdout_manifest_not_frozen")
+    adapter = manifest.get("hbm_input_adapter")
+    if not isinstance(adapter, dict) or adapter.get("status") != "VERIFIED" or not isinstance(adapter.get("command"), list):
+        raise ValueError("metric_holdout_adapter_unverified")
+    values = {row.get("source_sha256") for row in manifest["records"] if isinstance(row, dict)}
+    if not values or not all(_digest(value) for value in values):
+        raise ValueError("metric_holdout_source_sha_invalid")
+    lowered = {str(value).lower() for value in values}
+    if len(lowered) != len(manifest["records"]):
+        raise ValueError("metric_holdout_duplicate_or_invalid_records")
+    return lowered, adapter
+
+
+def _validate_runner_identity(path: Path, expected_sha: str, holdout_adapter: dict[str, Any]) -> None:
+    """Bind metric acceptance to the runner identity used by passed parity."""
+
+    identity = load_object(path)
+    if sha256_file(path) != expected_sha:
+        raise ValueError("metric_runner_identity_digest_mismatch")
+    if identity.get("schema_version") != 1 or identity.get("report_id") != "tzcup_dosod_hbm_runner_identity_v1" or identity.get("status") != "VERIFIED":
+        raise ValueError("metric_runner_identity_not_verified")
+    runner = identity.get("runner")
+    if not isinstance(runner, dict) or not isinstance(runner.get("absolute_path"), str) or not Path(runner["absolute_path"]).is_absolute():
+        raise ValueError("metric_runner_identity_path_invalid")
+    executable = Path(runner["absolute_path"])
+    normal_file(executable, "metric_runner_executable")
+    if runner.get("sha256") != sha256_file(executable) or not isinstance(runner.get("version"), str) or not runner["version"].strip():
+        raise ValueError("metric_runner_identity_binding_invalid")
+    if identity.get("command_template") != ["{runner}", "--model", "{hbm}", "--input", "{input}", "--output-path", "{output}"]:
+        raise ValueError("metric_runner_identity_command_template_invalid")
+    output_map = identity.get("output_map")
+    if not isinstance(output_map, dict) or set(output_map) != {"scores", "boxes"} or not all(isinstance(value, str) and value.endswith(".npy") for value in output_map.values()):
+        raise ValueError("metric_runner_identity_output_map_invalid")
+    if identity.get("hbm_input_adapter") != holdout_adapter:
+        raise ValueError("metric_runner_identity_adapter_mismatch")
 
 
 def _validate_thresholds(value: dict[str, Any]) -> tuple[dict[str, float], dict[str, float], dict[str, float]]:
@@ -109,14 +211,15 @@ def _validate_thresholds(value: dict[str, Any]) -> tuple[dict[str, float], dict[
 
 def validate_regression(
     *, hbm: Path, compile_receipt_path: Path, calibration_manifest: Path,
+    holdout_manifest: Path, parity_report_path: Path, runner_identity_path: Path, evaluator_identity_path: Path,
     reference_report_path: Path, quantized_report_path: Path,
     thresholds_path: Path, output: Path,
 ) -> dict[str, Any]:
     for path, label in ((hbm, "hbm"), (compile_receipt_path, "compile_receipt"), (calibration_manifest, "calibration_manifest"),
+                        (holdout_manifest, "holdout_manifest"), (parity_report_path, "parity_report"), (runner_identity_path, "runner_identity"), (evaluator_identity_path, "evaluator_identity"),
                         (reference_report_path, "reference_metrics"), (quantized_report_path, "quantized_metrics"), (thresholds_path, "thresholds")):
         normal_file(path, label)
-    if output.exists() and any(output.iterdir()):
-        raise ValueError("evidence_output_must_be_empty")
+    fresh_directory(output, "evidence_output")
     hbm_sha = sha256_file(hbm)
     report: dict[str, Any] = {
         "schema_version": 1, "report_id": REPORT_ID, "status": "BLOCKED",
@@ -126,7 +229,7 @@ def validate_regression(
     }
     try:
         compile_receipt = load_object(compile_receipt_path)
-        if compile_receipt.get("status") != "COMPILED_NOT_BOARD_ACCEPTED" or compile_receipt.get("returncode") != 0:
+        if compile_receipt.get("status") != "COMPILED_NOT_BOARD_ACCEPTED" or compile_receipt.get("returncode") != 0 or compile_receipt.get("output_created_by_this_compile") is not True:
             raise ValueError("compile_receipt_not_successful")
         if compile_receipt.get("output_sha256") != hbm_sha or compile_receipt.get("output_byte_size") != hbm.stat().st_size:
             raise ValueError("compile_receipt_hbm_identity_mismatch")
@@ -134,16 +237,35 @@ def validate_regression(
         quantized = load_object(quantized_report_path)
         thresholds = load_object(thresholds_path)
         calibration_sources = _calibration_sources(calibration_manifest)
-        reference_sources = _validate_metrics_report(reference, expected_backend="onnx", hbm_sha=None)
-        quantized_sources = _validate_metrics_report(quantized, expected_backend="hbm", hbm_sha=hbm_sha)
+        holdout_sha = sha256_file(holdout_manifest)
+        holdout_sources, holdout_adapter = _holdout_sources_and_adapter(holdout_manifest)
+        parity_sources, runner_identity_sha256 = _validate_parity_report(
+            parity_report_path, hbm_sha=hbm_sha, calibration_sha=sha256_file(calibration_manifest), holdout_sha=holdout_sha
+        )
+        _validate_runner_identity(runner_identity_path, runner_identity_sha256, holdout_adapter)
+        evaluator_identity_sha256, evaluator_bindings = _validate_evaluator_identity(evaluator_identity_path)
+        reference_sources = _validate_metrics_report(reference, expected_backend="onnx", hbm_sha=None,
+            holdout_manifest_sha256=holdout_sha, evaluator_identity_sha256=evaluator_identity_sha256,
+            evaluator_binding=evaluator_bindings["onnx"], runner_identity_sha256=None)
+        quantized_sources = _validate_metrics_report(quantized, expected_backend="hbm", hbm_sha=hbm_sha,
+            holdout_manifest_sha256=holdout_sha, evaluator_identity_sha256=evaluator_identity_sha256,
+            evaluator_binding=evaluator_bindings["hbm"], runner_identity_sha256=runner_identity_sha256)
         if reference_sources != quantized_sources:
             raise ValueError("reference_quantized_holdout_identity_mismatch")
+        if reference_sources != parity_sources:
+            raise ValueError("evaluator_parity_holdout_identity_mismatch")
+        if reference_sources != holdout_sources:
+            raise ValueError("evaluator_holdout_coverage_incomplete")
         if reference_sources & calibration_sources:
             raise ValueError("validation_calibration_source_overlap")
         minimum, maximum, max_drop = _validate_thresholds(thresholds)
         report.update({"compile_receipt_sha256": sha256_file(compile_receipt_path),
                        "reference_report_sha256": sha256_file(reference_report_path),
                        "quantized_report_sha256": sha256_file(quantized_report_path),
+                       "parity_report_sha256": sha256_file(parity_report_path),
+                       "holdout_manifest_sha256": holdout_sha,
+                       "evaluator_identity_sha256": evaluator_identity_sha256,
+                       "runner_identity_sha256": runner_identity_sha256,
                        "thresholds_sha256": sha256_file(thresholds_path),
                        "holdout_source_count": len(reference_sources)})
         checks: dict[str, dict[str, Any]] = {}
@@ -176,6 +298,10 @@ def main() -> int:
     parser.add_argument("--hbm", required=True, type=Path)
     parser.add_argument("--compile-receipt", required=True, type=Path)
     parser.add_argument("--calibration-manifest", required=True, type=Path)
+    parser.add_argument("--holdout-manifest", required=True, type=Path)
+    parser.add_argument("--parity-report", required=True, type=Path)
+    parser.add_argument("--runner-identity", required=True, type=Path)
+    parser.add_argument("--evaluator-identity", required=True, type=Path)
     parser.add_argument("--reference-report", required=True, type=Path)
     parser.add_argument("--quantized-report", required=True, type=Path)
     parser.add_argument("--thresholds", required=True, type=Path)
@@ -183,7 +309,9 @@ def main() -> int:
     args = parser.parse_args()
     try:
         report = validate_regression(hbm=args.hbm, compile_receipt_path=args.compile_receipt,
-                                     calibration_manifest=args.calibration_manifest,
+                                     calibration_manifest=args.calibration_manifest, holdout_manifest=args.holdout_manifest,
+                                     parity_report_path=args.parity_report, runner_identity_path=args.runner_identity,
+                                     evaluator_identity_path=args.evaluator_identity,
                                      reference_report_path=args.reference_report,
                                      quantized_report_path=args.quantized_report,
                                      thresholds_path=args.thresholds, output=args.output)

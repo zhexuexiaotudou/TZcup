@@ -35,6 +35,17 @@ def atomic_json(path: Path, value: dict[str, Any]) -> None:
     pending.replace(path)
 
 
+def fresh_directory(path: Path, label: str) -> None:
+    """Create a new evidence root without accepting an old run or link."""
+
+    for ancestor in (path, *path.parents):
+        if ancestor.is_symlink():
+            raise ValueError(f"{label}_symlink_forbidden")
+    if path.exists():
+        raise ValueError(f"{label}_must_not_preexist")
+    path.mkdir(parents=True, exist_ok=False)
+
+
 def normal_file(path: Path, label: str) -> None:
     if path.is_symlink():
         raise ValueError(f"{label}_symlink_forbidden")

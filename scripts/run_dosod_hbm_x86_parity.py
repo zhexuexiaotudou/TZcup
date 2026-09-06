@@ -22,11 +22,13 @@ from typing import Any, Callable
 
 import numpy as np
 
-from hbm_evidence_common import atomic_json, load_object, normal_file, path_under, sha256_file
+from hbm_evidence_common import atomic_json, fresh_directory, load_object, normal_file, path_under, sha256_file
 
 
 REPORT_ID = "tzcup_dosod_hbm_x86_nash_parity_v1"
 OUTPUTS = {"scores", "boxes"}
+RUNNER_IDENTITY_ID = "tzcup_dosod_hbm_runner_identity_v1"
+COMMAND_TEMPLATE = ["{runner}", "--model", "{hbm}", "--input", "{input}", "--output-path", "{output}"]
 
 
 def _digest(value: Any) -> bool:
@@ -60,6 +62,8 @@ def _validate_compile_receipt(path: Path, hbm: Path) -> dict[str, Any]:
         raise ValueError("compile_receipt_id_invalid")
     if receipt.get("status") != "COMPILED_NOT_BOARD_ACCEPTED" or receipt.get("returncode") != 0:
         raise ValueError("compile_receipt_not_successful")
+    if receipt.get("output_created_by_this_compile") is not True:
+        raise ValueError("compile_receipt_does_not_prove_fresh_output")
     if receipt.get("output_sha256") != sha256_file(hbm) or receipt.get("output_byte_size") != hbm.stat().st_size:
         raise ValueError("compile_receipt_hbm_identity_mismatch")
     return receipt
@@ -99,26 +103,51 @@ def _onnx_session(model: Path):
     return ort.InferenceSession(str(model), providers=["CPUExecutionProvider"])
 
 
+def _validate_runner_identity(path: Path, holdout: dict[str, Any]) -> tuple[Path, dict[str, str], str, str]:
+    """Bind the actual executable, adapter and exact command form before use."""
+
+    identity = load_object(path)
+    runner = identity.get("runner")
+    if identity.get("schema_version") != 1 or identity.get("report_id") != RUNNER_IDENTITY_ID or identity.get("status") != "VERIFIED" or not isinstance(runner, dict):
+        raise ValueError("runner_identity_not_verified")
+    executable = runner.get("absolute_path")
+    if not isinstance(executable, str) or not Path(executable).is_absolute():
+        raise ValueError("runner_identity_path_not_absolute")
+    executable_path = Path(executable)
+    normal_file(executable_path, "runner_executable")
+    if runner.get("sha256") != sha256_file(executable_path):
+        raise ValueError("runner_identity_executable_sha_mismatch")
+    if not isinstance(runner.get("version"), str) or not runner["version"].strip():
+        raise ValueError("runner_identity_version_missing")
+    if identity.get("command_template") != COMMAND_TEMPLATE:
+        raise ValueError("runner_identity_command_template_mismatch")
+    output_map = identity.get("output_map")
+    if not isinstance(output_map, dict) or set(output_map) != OUTPUTS or not all(isinstance(value, str) and value.endswith(".npy") for value in output_map.values()):
+        raise ValueError("runner_identity_output_map_invalid")
+    if identity.get("hbm_input_adapter") != holdout.get("hbm_input_adapter"):
+        raise ValueError("runner_identity_adapter_mismatch")
+    return executable_path, {str(key): str(value) for key, value in output_map.items()}, sha256_file(path), runner["version"]
+
+
 def run_parity(
     *, hbm: Path, onnx_model: Path, compile_receipt_path: Path,
     calibration_manifest: Path, holdout_manifest: Path, holdout_root: Path,
-    output_map_path: Path, output: Path, runner: str, atol: float, rtol: float,
+    runner_identity_path: Path, output: Path, atol: float, rtol: float,
     invoke: Callable[..., subprocess.CompletedProcess[str]] = subprocess.run,
 ) -> dict[str, Any]:
     for path, label in ((hbm, "hbm"), (onnx_model, "onnx_model"), (compile_receipt_path, "compile_receipt"),
                         (calibration_manifest, "calibration_manifest"), (holdout_manifest, "holdout_manifest"),
-                        (output_map_path, "hbrt_output_map")):
+                        (runner_identity_path, "runner_identity")):
         normal_file(path, label)
     if atol < 0 or rtol < 0 or not math.isfinite(atol) or not math.isfinite(rtol):
         raise ValueError("parity_tolerance_invalid")
-    if output.exists() and any(output.iterdir()):
-        raise ValueError("evidence_output_must_be_empty")
+    fresh_directory(output, "evidence_output")
     report: dict[str, Any] = {
         "schema_version": 1, "report_id": REPORT_ID, "status": "BLOCKED",
         "claim_boundary": "x86 HBM/ONNX numeric parity only; no S100P board execution or metric acceptance is claimed",
         "hbm": {"path": str(hbm.resolve()), "sha256": sha256_file(hbm), "byte_size": hbm.stat().st_size},
         "onnx": {"path": str(onnx_model.resolve()), "sha256": sha256_file(onnx_model)},
-        "tolerances": {"atol": atol, "rtol": rtol}, "runner": runner,
+        "tolerances": {"atol": atol, "rtol": rtol}, "runner": None,
         "records": [], "blockers": [], "started_epoch_ns": time.time_ns(), "ended_epoch_ns": None,
     }
     try:
@@ -128,13 +157,13 @@ def run_parity(
             raise ValueError("compile_receipt_onnx_identity_mismatch")
         calibration_sources = _load_calibration_sources(calibration_manifest)
         manifest, records = _holdout_records(holdout_manifest, calibration_sources)
+        runner_path, output_map, runner_identity_sha256, runner_version = _validate_runner_identity(runner_identity_path, manifest)
         report["compile_receipt_sha256"] = sha256_file(compile_receipt_path)
         report["holdout_manifest_sha256"] = sha256_file(holdout_manifest)
         report["calibration_manifest_sha256"] = sha256_file(calibration_manifest)
+        report["runner_identity_sha256"] = runner_identity_sha256
+        report["runner"] = {"absolute_path": str(runner_path), "sha256": sha256_file(runner_path), "version": runner_version}
         report["holdout_input_adapter"] = manifest["hbm_input_adapter"]
-        output_map = load_object(output_map_path)
-        if set(output_map) != OUTPUTS or not all(isinstance(value, str) and value.endswith(".npy") for value in output_map.values()):
-            raise ValueError("hbrt_output_map_must_name_scores_and_boxes_npy")
         session = _onnx_session(onnx_model)
         input_meta = session.get_inputs()
         output_names = [item.name for item in session.get_outputs()]
@@ -156,7 +185,7 @@ def run_parity(
                 raise ValueError(f"onnx_output_shape_contract_invalid:{sample_id}")
             sample_dir = output / "samples" / sample_id
             sample_dir.mkdir(parents=True, exist_ok=False)
-            command = [runner, "--model", str(hbm.resolve()), "--input", str(binary_path), "--output-path", str(sample_dir)]
+            command = [str(runner_path), "--model", str(hbm.resolve()), "--input", str(binary_path), "--output-path", str(sample_dir)]
             completed = invoke(command, capture_output=True, text=True, check=False)
             (sample_dir / "runner.stdout.txt").write_text(completed.stdout or "", encoding="utf-8")
             (sample_dir / "runner.stderr.txt").write_text(completed.stderr or "", encoding="utf-8")
@@ -203,17 +232,16 @@ def main() -> int:
     parser.add_argument("--calibration-manifest", required=True, type=Path)
     parser.add_argument("--holdout-manifest", required=True, type=Path)
     parser.add_argument("--holdout-root", required=True, type=Path)
-    parser.add_argument("--hbrt-output-map", required=True, type=Path)
+    parser.add_argument("--runner-identity", required=True, type=Path)
     parser.add_argument("--output", required=True, type=Path)
-    parser.add_argument("--runner", default="hbrt4-run-model")
     parser.add_argument("--atol", required=True, type=float)
     parser.add_argument("--rtol", default=0.0, type=float)
     args = parser.parse_args()
     try:
         report = run_parity(hbm=args.hbm, onnx_model=args.onnx_model, compile_receipt_path=args.compile_receipt,
                             calibration_manifest=args.calibration_manifest, holdout_manifest=args.holdout_manifest,
-                            holdout_root=args.holdout_root, output_map_path=args.hbrt_output_map, output=args.output,
-                            runner=args.runner, atol=args.atol, rtol=args.rtol)
+                            holdout_root=args.holdout_root, runner_identity_path=args.runner_identity, output=args.output,
+                            atol=args.atol, rtol=args.rtol)
     except Exception as exc:
         print(f"x86_parity_blocked:{type(exc).__name__}:{exc}", file=sys.stderr)
         return 2

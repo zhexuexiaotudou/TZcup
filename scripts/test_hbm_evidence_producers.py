@@ -33,7 +33,7 @@ def _write_json(path: Path, value: object) -> None:
 
 
 class CompileProducerTests(unittest.TestCase):
-    def _inputs(self, root: Path) -> tuple[Path, Path, Path, Path, Path]:
+    def _inputs(self, root: Path) -> tuple[Path, Path, Path, Path, Path, Path]:
         try:
             import yaml
         except ImportError as exc:  # this is also a production precondition
@@ -43,21 +43,25 @@ class CompileProducerTests(unittest.TestCase):
         contract = root / "contract.json"
         preflight = root / "preflight.json"
         identity = root / "identity.json"
+        calibration = root / "calibration_manifest.json"
         working = root / "working"
         config = root / "config.yaml"
         _write_json(contract, {"toolchain": {"oe_version": "3.7.0", "required_versions": {"hbdk4_compiler": "4.7.5", "hmct": "2.6.5", "horizon_tc_ui": "3.5.3"}},
-                               "compile_recipe": {"march": "nash-m"}, "output": {"relative_path": "dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm"}, "model": {"sha256": "a" * 64}})
-        _write_json(preflight, {"preflight_pass": True, "compile_config_emitted": True, "compile_executed": False,
-                                "hbm_status": "HBM_NOT_PRODUCED", "calibration": {"manifest_sha256": "b" * 64}})
+                               "compile_recipe": {"march": "nash-m"}, "calibration": {"minimum_sample_count": 1},
+                               "output": {"relative_path": "dosod/dosod_mlp3x_s_tzcup_rep-int16.hbm"}, "model": {"sha256": "a" * 64}})
+        _write_json(calibration, {"schema_version": 1, "status": "FROZEN", "records": [{"source_sha256": "b" * 64}]})
         _write_json(identity, {"identity_verified": True, "oe_version": "3.7.0", "required_versions": {"hbdk4_compiler": "4.7.5", "hmct": "2.6.5", "horizon_tc_ui": "3.5.3"},
                                "hb_compile_executable_sha256": _sha(compiler)})
-        config.write_text(yaml.safe_dump({"model_parameters": {"march": "nash-m", "output_model_file_prefix": "dosod_mlp3x_s_tzcup_rep-int16", "working_dir": str(working)}}), encoding="utf-8")
-        return contract, preflight, config, identity, compiler
+        config.write_text(yaml.safe_dump({"model_parameters": {"march": "nash-m", "onnx_model": str(root / "model.onnx"), "output_model_file_prefix": "dosod_mlp3x_s_tzcup_rep-int16", "working_dir": str(working)}, "calibration_parameters": {"cal_data_dir": str(root)}}), encoding="utf-8")
+        _write_json(preflight, {"preflight_pass": True, "compile_config_emitted": True, "compile_executed": False,
+                                "hbm_status": "HBM_NOT_PRODUCED", "model_sha256": "a" * 64, "model_path": str(root / "model.onnx"),
+                                "compile_config_sha256": _sha(config), "calibration_manifest_sha256": _sha(calibration)})
+        return contract, preflight, config, identity, calibration, compiler
 
     def test_success_requires_real_returncode_and_nonempty_output(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
-            contract, preflight, config, identity, compiler = self._inputs(root)
+            contract, preflight, config, identity, calibration, compiler = self._inputs(root)
 
             def runner(command, **_kwargs):
                 output = root / "working" / "dosod_mlp3x_s_tzcup_rep-int16.hbm"
@@ -67,7 +71,8 @@ class CompileProducerTests(unittest.TestCase):
 
             with mock.patch.object(compile_producer.shutil, "which", return_value=str(compiler)):
                 receipt = compile_producer.execute_compile(contract_path=contract, preflight_path=preflight, config_path=config,
-                                                           identity_path=identity, output=root / "evidence", compiler="fake-hb_compile", runner=runner)
+                                                           identity_path=identity, calibration_manifest_path=calibration,
+                                                           output=root / "evidence", compiler="fake-hb_compile", runner=runner)
             self.assertEqual(receipt["status"], "COMPILED_NOT_BOARD_ACCEPTED")
             self.assertEqual(receipt["returncode"], 0)
             self.assertTrue((root / "evidence" / "dosod_hbm_compile_receipt.json").is_file())
@@ -75,22 +80,85 @@ class CompileProducerTests(unittest.TestCase):
     def test_nonzero_compiler_cannot_pass_even_if_no_exception(self) -> None:
         with tempfile.TemporaryDirectory() as raw:
             root = Path(raw)
-            contract, preflight, config, identity, compiler = self._inputs(root)
+            contract, preflight, config, identity, calibration, compiler = self._inputs(root)
             with mock.patch.object(compile_producer.shutil, "which", return_value=str(compiler)):
                 receipt = compile_producer.execute_compile(
                     contract_path=contract, preflight_path=preflight, config_path=config, identity_path=identity,
-                    output=root / "evidence", compiler="fake-hb_compile",
+                    calibration_manifest_path=calibration, output=root / "evidence", compiler="fake-hb_compile",
                     runner=lambda command, **_kwargs: subprocess.CompletedProcess(command, 7, "", "compiler failed"),
                 )
             self.assertEqual(receipt["status"], "BLOCKED")
             self.assertIn("hb_compile_nonzero_returncode", receipt["blockers"])
 
+    def test_preexisting_hbm_is_rejected_without_a_compile_claim(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            contract, preflight, config, identity, calibration, compiler = self._inputs(root)
+            old_hbm = root / "working" / "dosod_mlp3x_s_tzcup_rep-int16.hbm"
+            old_hbm.parent.mkdir(parents=True)
+            old_hbm.write_bytes(b"old artifact")
+            with mock.patch.object(compile_producer.shutil, "which", return_value=str(compiler)):
+                receipt = compile_producer.execute_compile(
+                    contract_path=contract, preflight_path=preflight, config_path=config,
+                    identity_path=identity, calibration_manifest_path=calibration, output=root / "evidence",
+                    compiler="fake-hb_compile", runner=lambda *_args, **_kwargs: self.fail("compiler must not run"),
+                )
+            self.assertEqual(receipt["status"], "BLOCKED")
+            self.assertIn("expected_hbm_preexisted_before_compile", receipt["blockers"])
+
+    def test_existing_evidence_root_is_rejected(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            contract, preflight, config, identity, calibration, compiler = self._inputs(root)
+            output = root / "evidence"; output.mkdir()
+            with self.assertRaisesRegex(ValueError, "evidence_output_must_not_preexist"):
+                compile_producer.execute_compile(
+                    contract_path=contract, preflight_path=preflight, config_path=config,
+                    identity_path=identity, calibration_manifest_path=calibration, output=output,
+                    compiler=str(compiler), runner=lambda *_args, **_kwargs: self.fail("compiler must not run"),
+                )
+
 
 class MetricRegressionTests(unittest.TestCase):
-    def _metrics(self, *, backend: str, hbm_sha: str | None, source: str) -> dict:
-        execution = {"backend": backend, "command": [backend, "evaluate"], "returncode": 0}
+    def _bindings(self, root: Path, hbm_sha: str, source: str) -> tuple[Path, Path, Path, str, str]:
+        holdout = root / "holdout.json"
+        adapter = {"status": "VERIFIED", "command": ["official-adapter"]}
+        _write_json(holdout, {"schema_version": 1, "status": "FROZEN", "hbm_input_adapter": adapter,
+                              "records": [{"source_sha256": source}]})
+        onnx = root / "onnx-evaluator"; onnx.write_bytes(b"onnx evaluator")
+        hbm = root / "hbm-evaluator"; hbm.write_bytes(b"hbm evaluator")
+        identity = root / "evaluator.json"
+        _write_json(identity, {"schema_version": 1, "report_id": metric_regression.EVALUATOR_IDENTITY_ID, "status": "VERIFIED", "backends": {
+            "onnx": {"absolute_path": str(onnx.resolve()), "sha256": _sha(onnx), "version": "fixture", "command_template": ["onnx"]},
+            "hbm": {"absolute_path": str(hbm.resolve()), "sha256": _sha(hbm), "version": "fixture", "command_template": ["hbm"]},
+        }})
+        identity_sha = _sha(identity)
+        runner = root / "runner"; runner.write_bytes(b"runner")
+        runner_identity = root / "runner_identity.json"
+        _write_json(runner_identity, {"schema_version": 1, "report_id": parity.RUNNER_IDENTITY_ID, "status": "VERIFIED",
+                                      "runner": {"absolute_path": str(runner.resolve()), "sha256": _sha(runner), "version": "fixture"},
+                                      "command_template": parity.COMMAND_TEMPLATE,
+                                      "output_map": {"scores": "scores.npy", "boxes": "boxes.npy"},
+                                      "hbm_input_adapter": adapter})
+        runner_sha = _sha(runner_identity)
+        parity_report = root / "parity.json"
+        _write_json(parity_report, {"report_id": metric_regression.PARITY_REPORT_ID, "status": "PARITY_PASSED", "hbm": {"sha256": hbm_sha},
+                             "calibration_manifest_sha256": None, "holdout_manifest_sha256": _sha(holdout),
+                             "runner_identity_sha256": runner_sha, "records": [{"source_sha256": source, "pass": True}]})
+        return holdout, runner_identity, identity, identity_sha, runner_sha
+
+    def _metrics(self, *, backend: str, evaluator_path: Path, hbm_sha: str | None, source: str, holdout_sha: str, evaluator_sha: str, runner_sha: str) -> dict:
+        stdout = evaluator_path.parent / f"{backend}.stdout.txt"
+        stderr = evaluator_path.parent / f"{backend}.stderr.txt"
+        stdout.write_bytes(f"{backend} stdout".encode("utf-8"))
+        stderr.write_bytes(f"{backend} stderr".encode("utf-8"))
+        execution = {"backend": backend, "command": [str(evaluator_path.resolve()), "evaluate"], "command_template": [backend], "returncode": 0,
+                     "holdout_manifest_sha256": holdout_sha, "evaluator_identity_sha256": evaluator_sha,
+                     "stdout_path": str(stdout.resolve()), "stderr_path": str(stderr.resolve()),
+                     "stdout_sha256": _sha(stdout), "stderr_sha256": _sha(stderr)}
         if hbm_sha:
             execution["hbm_sha256"] = hbm_sha
+            execution["runner_identity_sha256"] = runner_sha
         return {"report_id": metric_regression.METRICS_REPORT_ID, "status": "VERIFIED", "execution": execution,
                 "dataset": {"status": "FROZEN", "dataset_id": "real-holdout-fixture", "source_sha256": [source]},
                 "class_order": metric_regression.CLASS_ORDER,
@@ -103,14 +171,17 @@ class MetricRegressionTests(unittest.TestCase):
             hbm = root / "model.hbm"; hbm.write_bytes(b"unit-test hbm")
             hbm_sha = _sha(hbm)
             calibration = root / "calibration.json"; _write_json(calibration, {"status": "FROZEN", "records": [{"source_sha256": "a" * 64}]})
-            compile_receipt = root / "compile.json"; _write_json(compile_receipt, {"status": "COMPILED_NOT_BOARD_ACCEPTED", "returncode": 0, "output_sha256": hbm_sha, "output_byte_size": hbm.stat().st_size})
-            reference = root / "reference.json"; _write_json(reference, self._metrics(backend="onnx", hbm_sha=None, source="b" * 64))
-            quantized = root / "quantized.json"; _write_json(quantized, self._metrics(backend="hbm", hbm_sha=hbm_sha, source="b" * 64))
+            holdout, runner_identity, identity, identity_sha, runner_sha = self._bindings(root, hbm_sha, "b" * 64)
+            parity = root / "parity.json"
+            parity_value = json.loads(parity.read_text(encoding="utf-8")); parity_value["calibration_manifest_sha256"] = _sha(calibration); _write_json(parity, parity_value)
+            compile_receipt = root / "compile.json"; _write_json(compile_receipt, {"status": "COMPILED_NOT_BOARD_ACCEPTED", "returncode": 0, "output_created_by_this_compile": True, "output_sha256": hbm_sha, "output_byte_size": hbm.stat().st_size})
+            reference = root / "reference.json"; _write_json(reference, self._metrics(backend="onnx", evaluator_path=root / "onnx-evaluator", hbm_sha=None, source="b" * 64, holdout_sha=_sha(holdout), evaluator_sha=identity_sha, runner_sha=runner_sha))
+            quantized = root / "quantized.json"; _write_json(quantized, self._metrics(backend="hbm", evaluator_path=root / "hbm-evaluator", hbm_sha=hbm_sha, source="b" * 64, holdout_sha=_sha(holdout), evaluator_sha=identity_sha, runner_sha=runner_sha))
             thresholds = root / "thresholds.json"; _write_json(thresholds, {"schema_version": 1, "report_id": metric_regression.THRESHOLDS_REPORT_ID,
                                                                             "minimum": {"macro_f1": 0.8}, "maximum": {"negative_fp_per_frame": 0.05},
                                                                             "max_drop": {"classes.litter_cube.f1": 0.02}})
             result = metric_regression.validate_regression(hbm=hbm, compile_receipt_path=compile_receipt,
-                                                            calibration_manifest=calibration, reference_report_path=reference,
+                                                            calibration_manifest=calibration, holdout_manifest=holdout, parity_report_path=parity, runner_identity_path=runner_identity, evaluator_identity_path=identity, reference_report_path=reference,
                                                             quantized_report_path=quantized, thresholds_path=thresholds, output=root / "evidence")
             self.assertEqual(result["status"], "REGRESSION_PASSED")
 
@@ -120,13 +191,38 @@ class MetricRegressionTests(unittest.TestCase):
             hbm = root / "model.hbm"; hbm.write_bytes(b"unit-test hbm")
             hbm_sha = _sha(hbm)
             calibration = root / "calibration.json"; _write_json(calibration, {"status": "FROZEN", "records": [{"source_sha256": "a" * 64}]})
-            compile_receipt = root / "compile.json"; _write_json(compile_receipt, {"status": "COMPILED_NOT_BOARD_ACCEPTED", "returncode": 0, "output_sha256": hbm_sha, "output_byte_size": hbm.stat().st_size})
-            reference = root / "reference.json"; _write_json(reference, self._metrics(backend="onnx", hbm_sha=None, source="a" * 64))
-            quantized = root / "quantized.json"; _write_json(quantized, self._metrics(backend="hbm", hbm_sha=hbm_sha, source="a" * 64))
+            holdout, runner_identity, identity, identity_sha, runner_sha = self._bindings(root, hbm_sha, "a" * 64)
+            parity = root / "parity.json"
+            parity_value = json.loads(parity.read_text(encoding="utf-8")); parity_value["calibration_manifest_sha256"] = _sha(calibration); _write_json(parity, parity_value)
+            compile_receipt = root / "compile.json"; _write_json(compile_receipt, {"status": "COMPILED_NOT_BOARD_ACCEPTED", "returncode": 0, "output_created_by_this_compile": True, "output_sha256": hbm_sha, "output_byte_size": hbm.stat().st_size})
+            reference = root / "reference.json"; _write_json(reference, self._metrics(backend="onnx", evaluator_path=root / "onnx-evaluator", hbm_sha=None, source="a" * 64, holdout_sha=_sha(holdout), evaluator_sha=identity_sha, runner_sha=runner_sha))
+            quantized = root / "quantized.json"; _write_json(quantized, self._metrics(backend="hbm", evaluator_path=root / "hbm-evaluator", hbm_sha=hbm_sha, source="a" * 64, holdout_sha=_sha(holdout), evaluator_sha=identity_sha, runner_sha=runner_sha))
             thresholds = root / "thresholds.json"; _write_json(thresholds, {"schema_version": 1, "report_id": metric_regression.THRESHOLDS_REPORT_ID, "minimum": {"macro_f1": 0.8}})
             result = metric_regression.validate_regression(hbm=hbm, compile_receipt_path=compile_receipt,
-                                                            calibration_manifest=calibration, reference_report_path=reference,
+                                                            calibration_manifest=calibration, holdout_manifest=holdout, parity_report_path=parity, runner_identity_path=runner_identity, evaluator_identity_path=identity, reference_report_path=reference,
                                                             quantized_report_path=quantized, thresholds_path=thresholds, output=root / "evidence")
+            self.assertEqual(result["status"], "BLOCKED")
+            self.assertTrue(any("ValueError" in item for item in result["blockers"]))
+
+    def test_metric_report_without_raw_evaluator_output_identity_is_blocked(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            hbm = root / "model.hbm"; hbm.write_bytes(b"unit-test hbm")
+            hbm_sha = _sha(hbm)
+            calibration = root / "calibration.json"; _write_json(calibration, {"status": "FROZEN", "records": [{"source_sha256": "a" * 64}]})
+            holdout, runner_identity, identity, identity_sha, runner_sha = self._bindings(root, hbm_sha, "b" * 64)
+            parity_path = root / "parity.json"
+            parity_value = json.loads(parity_path.read_text(encoding="utf-8")); parity_value["calibration_manifest_sha256"] = _sha(calibration); _write_json(parity_path, parity_value)
+            compile_receipt = root / "compile.json"; _write_json(compile_receipt, {"status": "COMPILED_NOT_BOARD_ACCEPTED", "returncode": 0, "output_created_by_this_compile": True, "output_sha256": hbm_sha, "output_byte_size": hbm.stat().st_size})
+            reference_value = self._metrics(backend="onnx", evaluator_path=root / "onnx-evaluator", hbm_sha=None, source="b" * 64, holdout_sha=_sha(holdout), evaluator_sha=identity_sha, runner_sha=runner_sha)
+            reference_value["execution"].pop("stdout_sha256")
+            reference = root / "reference.json"; _write_json(reference, reference_value)
+            quantized = root / "quantized.json"; _write_json(quantized, self._metrics(backend="hbm", evaluator_path=root / "hbm-evaluator", hbm_sha=hbm_sha, source="b" * 64, holdout_sha=_sha(holdout), evaluator_sha=identity_sha, runner_sha=runner_sha))
+            thresholds = root / "thresholds.json"; _write_json(thresholds, {"schema_version": 1, "report_id": metric_regression.THRESHOLDS_REPORT_ID, "minimum": {"macro_f1": 0.8}})
+            result = metric_regression.validate_regression(hbm=hbm, compile_receipt_path=compile_receipt,
+                calibration_manifest=calibration, holdout_manifest=holdout, parity_report_path=parity_path, runner_identity_path=runner_identity,
+                evaluator_identity_path=identity, reference_report_path=reference, quantized_report_path=quantized,
+                thresholds_path=thresholds, output=root / "evidence")
             self.assertEqual(result["status"], "BLOCKED")
             self.assertTrue(any("ValueError" in item for item in result["blockers"]))
 
@@ -142,6 +238,22 @@ class ParityManifestTests(unittest.TestCase):
                                                 "onnx_input_npy": "input.npy", "hbm_input_binary": "input.bin"}]})
             with self.assertRaisesRegex(ValueError, "holdout_calibration_source_overlap"):
                 parity._holdout_records(manifest, {"a" * 64})
+
+    def test_runner_identity_requires_exact_adapter_and_executable_hash(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            runner = root / "runner"; runner.write_bytes(b"runner")
+            identity = root / "runner_identity.json"
+            adapter = {"status": "VERIFIED", "command": ["official-adapter"]}
+            _write_json(identity, {"schema_version": 1, "report_id": parity.RUNNER_IDENTITY_ID, "status": "VERIFIED",
+                                   "runner": {"absolute_path": str(runner.resolve()), "sha256": _sha(runner), "version": "fixture"},
+                                   "command_template": parity.COMMAND_TEMPLATE,
+                                   "output_map": {"scores": "scores.npy", "boxes": "boxes.npy"},
+                                   "hbm_input_adapter": adapter})
+            _, output_map, _, _ = parity._validate_runner_identity(identity, {"hbm_input_adapter": adapter})
+            self.assertEqual(output_map["scores"], "scores.npy")
+            with self.assertRaisesRegex(ValueError, "runner_identity_adapter_mismatch"):
+                parity._validate_runner_identity(identity, {"hbm_input_adapter": {"status": "VERIFIED", "command": ["other"]}})
 
 
 if __name__ == "__main__":
