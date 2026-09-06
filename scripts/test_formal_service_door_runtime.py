@@ -383,9 +383,17 @@ def test_runner_writes_primary_failed_report_for_startup_launcher_or_sidecar_fai
     assert "write_runner_failure_report" in runner
     assert '"independent_gazebo_joint_state_sidecar_failed"' in runner
     assert '"gazebo_launcher_exited_before_service_door_collector"' in runner
-    assert '"physical_service_door_joint_states_topic_timeout"' in runner
     assert '"FORMAL_BODYWORK_SERVICE_DOOR_RUNTIME_FAILED"' in runner
     assert "allow_nan=False" in runner
+
+
+def test_runner_proves_gazebo_source_before_ros_bridge_samples() -> None:
+    runner = (ROOT / "scripts/run_formal_service_door_runtime.sh").read_text(encoding="utf-8")
+    sidecar = 'collect_formal_service_door_gz_sidecar.py'
+    collector = 'collect_formal_service_door_runtime.py'
+    assert runner.index(sidecar) < runner.index(collector)
+    assert "ros2 topic list" not in runner
+    assert "physical_service_door_joint_states_topic_timeout" not in runner
 
 
 def test_missing_evaluator_bridge_subscriber_fails_closed() -> None:
@@ -648,7 +656,6 @@ def test_runner_collector_and_force_plugin_use_physical_joint_state() -> None:
     assert "formal_vehicle_sim.launch.py" in runner
     assert "collect_formal_service_door_runtime.py" in runner
     assert "service_door_evaluation_interfaces:=true" in runner
-    assert 'physical_joint_states_topic="/formal/service_door_joint_states"' in runner
     assert 'grep -Fxq /joint_states' not in runner
     assert '"service_door_evaluation_interfaces"' in launch
     assert '"service_door_evaluation_interfaces",\n                default_value="false"' in launch

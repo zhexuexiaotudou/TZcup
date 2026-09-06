@@ -81,19 +81,9 @@ cleanup() {
 }
 formal_runtime_install_traps cleanup
 
-physical_joint_states_topic="/formal/service_door_joint_states"
-for _ in $(seq 1 120); do
-  if ros2 topic list 2>/dev/null | grep -Fxq "${physical_joint_states_topic}"; then
-    break
-  fi
-  sleep 0.25
-done
-if ! ros2 topic list 2>/dev/null | grep -Fxq "${physical_joint_states_topic}"; then
-  echo "Timed out waiting for ${physical_joint_states_topic}" >&2
-  write_runner_failure_report "physical_service_door_joint_states_topic_timeout"
-  exit 3
-fi
-
+# Establish the authoritative Gazebo source before waiting on its ROS bridge.
+# The collector below performs the meaningful bridge-side readiness check: it
+# requires fresh, complete eight-joint samples rather than a DDS graph entry.
 gz_sidecar_args=(
   --partition "${GZ_PARTITION}"
   --launcher-pid "${launch_pid}"
