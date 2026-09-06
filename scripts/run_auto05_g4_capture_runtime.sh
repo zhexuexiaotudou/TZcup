@@ -42,7 +42,7 @@ export AUTO05_RUNTIME_WS="$root/runtime_ws"
 export AUTO05_COMBINED_RUNTIME_SETUP="$runtime_setup"
 bash "$repo/scripts/auto05_capture_all.sh"
 python3 - "$binding" "$root/data/g3_screening_native" "$root/evidence/capture_complete.json" <<'PY'
-import hashlib, json, sys, time
+import hashlib, json, os, sys, time
 binding, data, output = map(__import__("pathlib").Path, sys.argv[1:])
 if output.exists():
     raise SystemExit("refusing to overwrite capture receipt")
@@ -51,9 +51,20 @@ reports = sorted(data.glob("scenes/*/capture_report.json"))
 if not world_generation.is_file() or len(reports) != 120:
     raise SystemExit("G4 capture is incomplete: expected world generation and 120 scene reports")
 sha = lambda p: hashlib.sha256(p.read_bytes()).hexdigest()
+repo = __import__("pathlib").Path(os.environ["AUTO05_REPO_ROOT"]).resolve()
+try:
+    data_identity = data.resolve().relative_to(repo).as_posix()
+except ValueError as exc:
+    raise SystemExit(f"capture data escapes repository identity: {data}") from exc
 output.write_text(json.dumps({
     "schema_version": 1, "status": "AUTO05_G4_CAPTURE_COMPLETE",
-    "runtime_binding_sha256": sha(binding), "raw_data_root": str(data),
+    "runtime_binding_sha256": sha(binding),
+    "data_root_repository_relative": data_identity,
+    "capture_provenance": {
+        "mode": "fresh_native_gazebo_g3_capture",
+        "replay_input_used": False,
+        "synthetic_substitution_used": False,
+    },
     "world_generation_sha256": sha(world_generation),
     "capture_report_count": len(reports),
     "capture_report_sha256": {str(path.relative_to(data)): sha(path) for path in reports},
