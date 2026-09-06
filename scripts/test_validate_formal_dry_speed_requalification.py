@@ -22,6 +22,7 @@ def _reports() -> tuple[dict, dict, dict, dict, dict, dict]:
         "kind": "TZCUP_DRY_SPEED_REQUALIFICATION_RUN_SCOPED_OPT_IN_MARKER",
         "profile_id": "formal_dry_cleaning_speed_requalification_v1",
         "profile_sha256": hashlib.sha256((ROOT / "config/high_fidelity_vehicle/formal_dry_speed_requalification.yaml").read_bytes()).hexdigest(),
+        "qualification_stage_id": "speed_1_00_mps",
         "test_only_whole_vehicle_safety_cap_mps": 1.0,
         "run_root": str(ROOT.resolve()),
         "nonce": "n" * 32,
@@ -31,15 +32,17 @@ def _reports() -> tuple[dict, dict, dict, dict, dict, dict]:
         "acceptance_session_binding": binding,
         "command": {
             "forward_speed_mps": 1.0,
+            "forward_duration_s": 1.0,
             "safety_max_linear_velocity_mps": 1.0,
             "estop": {"exercise_estop": True},
         },
+        "metrics": {"ground_truth_forward_delta_m": 1.0},
         "checks": {name: True for name in (
             "ground_truth_forward_motion", "plant_odometry_forward_motion",
             "vehicle_stopped_after_zero_command", "plant_odometry_stopped_after_zero_command",
             "wheel_joints_stopped_after_zero_command",
             "estop_asserted_during_physical_motion", "final_safety_command_zero_after_estop",
-            "final_safety_command_reached_one_mps_before_estop",
+            "final_safety_command_reached_requested_speed_before_estop",
             "final_safety_command_has_one_expected_writer_and_input_subscriber",
             "estop_feedback_or_manual_estop_status_observed",
             "gazebo_estop_braking_distance_bounded",
@@ -82,9 +85,17 @@ def _reports() -> tuple[dict, dict, dict, dict, dict, dict]:
     return mobility, interlock, dynamic, ground, runtime_binding, token
 
 
+def _predecessor(binding: dict) -> dict:
+    return {
+        "passed": True,
+        "qualification_stage_id": "speed_0_70_mps",
+        "source_binding": binding["acceptance_session_binding"],
+    }
+
+
 def test_requalification_only_passes_all_source_bound_subgates() -> None:
     reports = _reports()
-    result = MODULE.validate(mobility=reports[0], interlock=reports[1], dynamic=reports[2], ground_dirt=reports[3], current_runtime_binding=reports[4], opt_in_token=reports[5], run_root=ROOT)
+    result = MODULE.validate(mobility=reports[0], interlock=reports[1], dynamic=reports[2], ground_dirt=reports[3], current_runtime_binding=reports[4], opt_in_token=reports[5], run_root=ROOT, stage_id="speed_1_00_mps", predecessor=_predecessor(reports[4]))
     assert result["passed"] is True
     assert result["dry_speed_safety_requalified"] is True
     assert result["competition_efficiency_eligible"] is False
@@ -94,16 +105,16 @@ def test_dynamic_collision_or_speed_evidence_cannot_be_skipped() -> None:
     mobility, interlock, dynamic, ground, current, token = _reports()
     dynamic = copy.deepcopy(dynamic)
     dynamic["checks"]["zero_physical_collisions"] = False
-    result = MODULE.validate(mobility=mobility, interlock=interlock, dynamic=dynamic, ground_dirt=ground, current_runtime_binding=current, opt_in_token=token, run_root=ROOT)
+    result = MODULE.validate(mobility=mobility, interlock=interlock, dynamic=dynamic, ground_dirt=ground, current_runtime_binding=current, opt_in_token=token, run_root=ROOT, stage_id="speed_1_00_mps", predecessor=_predecessor(current))
     assert result["passed"] is False
-    assert "dynamic_ttc_intervention_zero_collision_at_one_mps" in result["blockers"]
+    assert "dynamic_ttc_intervention_zero_collision_at_stage_speed" in result["blockers"]
 
 
 def test_mismatched_session_binding_fails_closed() -> None:
     mobility, interlock, dynamic, ground, current, token = _reports()
     ground = copy.deepcopy(ground)
     ground["acceptance_session_binding"]["session_started_epoch_ns"] = 10
-    result = MODULE.validate(mobility=mobility, interlock=interlock, dynamic=dynamic, ground_dirt=ground, current_runtime_binding=current, opt_in_token=token, run_root=ROOT)
+    result = MODULE.validate(mobility=mobility, interlock=interlock, dynamic=dynamic, ground_dirt=ground, current_runtime_binding=current, opt_in_token=token, run_root=ROOT, stage_id="speed_1_00_mps", predecessor=_predecessor(current))
     assert result["passed"] is False
     assert "all_subgates_bind_one_running_session" in result["blockers"]
 
@@ -112,21 +123,32 @@ def test_stale_runtime_recheck_or_token_cannot_authorize_speed() -> None:
     mobility, interlock, dynamic, ground, current, token = _reports()
     current = copy.deepcopy(current)
     current["acceptance_session_binding"]["session_status_at_gate"] = "FORMAL_FINAL_ACCEPTANCE_SESSION_CLOSED"
-    result = MODULE.validate(mobility=mobility, interlock=interlock, dynamic=dynamic, ground_dirt=ground, current_runtime_binding=current, opt_in_token=token, run_root=ROOT)
+    result = MODULE.validate(mobility=mobility, interlock=interlock, dynamic=dynamic, ground_dirt=ground, current_runtime_binding=current, opt_in_token=token, run_root=ROOT, stage_id="speed_1_00_mps", predecessor=_predecessor(current))
     assert result["passed"] is False
     assert "current_session_and_runtime_closure_reverified" in result["blockers"]
 
     _, _, _, _, current, token = _reports()
     token = copy.deepcopy(token)
     token["profile_sha256"] = "0" * 64
-    result = MODULE.validate(mobility=mobility, interlock=interlock, dynamic=dynamic, ground_dirt=ground, current_runtime_binding=current, opt_in_token=token, run_root=ROOT)
+    result = MODULE.validate(mobility=mobility, interlock=interlock, dynamic=dynamic, ground_dirt=ground, current_runtime_binding=current, opt_in_token=token, run_root=ROOT, stage_id="speed_1_00_mps", predecessor=_predecessor(current))
     assert result["passed"] is False
-    assert "run_scoped_explicit_opt_in_marker_binds_profile_and_run" in result["blockers"]
+    assert "run_scoped_explicit_opt_in_marker_binds_profile_stage_and_run" in result["blockers"]
+
+
+def test_higher_stage_requires_the_immediately_preceding_stage() -> None:
+    mobility, interlock, dynamic, ground, current, token = _reports()
+    result = MODULE.validate(
+        mobility=mobility, interlock=interlock, dynamic=dynamic, ground_dirt=ground,
+        current_runtime_binding=current, opt_in_token=token, run_root=ROOT,
+        stage_id="speed_1_00_mps", predecessor=None,
+    )
+    assert result["passed"] is False
+    assert "stage_follows_the_previous_qualified_speed" in result["blockers"]
 
 
 def test_malformed_subgate_evidence_is_never_accepted() -> None:
     try:
-        MODULE.validate(mobility={}, interlock={}, dynamic={}, ground_dirt={}, current_runtime_binding={}, opt_in_token={}, run_root=ROOT)
+        MODULE.validate(mobility={}, interlock={}, dynamic={}, ground_dirt={}, current_runtime_binding={}, opt_in_token={}, run_root=ROOT, stage_id="speed_1_00_mps", predecessor=None)
     except (KeyError, ValueError):
         pass
     else:

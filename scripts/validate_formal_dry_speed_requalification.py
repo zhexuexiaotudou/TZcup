@@ -58,6 +58,16 @@ def _runtime_binding(report: dict[str, Any]) -> dict[str, Any] | None:
     return value if isinstance(value, dict) else None
 
 
+def _stage(profile: dict[str, Any], stage_id: str) -> tuple[int, dict[str, Any]]:
+    stages = profile.get("qualification_stages")
+    if not isinstance(stages, list):
+        raise ValueError("qualification_stages must be a list")
+    for index, item in enumerate(stages):
+        if isinstance(item, dict) and item.get("id") == stage_id:
+            return index, item
+    raise ValueError("requested qualification stage is not declared")
+
+
 def validate(
     *,
     mobility: dict[str, Any],
@@ -67,6 +77,8 @@ def validate(
     current_runtime_binding: dict[str, Any],
     opt_in_token: dict[str, Any],
     run_root: Path,
+    stage_id: str,
+    predecessor: dict[str, Any] | None,
     profile_path: Path = PROFILE,
     envelopes_path: Path = ENVELOPES,
 ) -> dict[str, Any]:
@@ -75,11 +87,11 @@ def validate(
     if not isinstance(profile, dict) or not isinstance(envelopes, dict):
         raise ValueError("profile and envelopes must be mappings")
     activation = profile["activation"]
-    dry = profile["dry_cleaning"]
-    target = _number(dry["target_linear_speed_mps"])
-    observed_minimum = _number(dry["minimum_observed_command_speed_mps"])
+    stage_index, stage = _stage(profile, stage_id)
+    target = _number(stage["target_linear_speed_mps"])
+    observed_minimum = _number(stage["minimum_observed_command_speed_mps"])
     default_cap = _number(activation["product_default_whole_vehicle_safety_cap_mps"])
-    test_cap = _number(activation["test_only_whole_vehicle_safety_cap_mps"])
+    test_maximum = _number(activation["test_only_maximum_whole_vehicle_safety_cap_mps"])
     product_cap = _number(envelopes["profiles"]["localization_coverage"]["max_linear_velocity"])
     bindings = [_binding(report) for report in (mobility, interlock, dynamic, ground_dirt)]
     common_binding = bindings[0]
@@ -92,19 +104,38 @@ def validate(
     interlock_checks = _checks(interlock)
     dynamic_checks = _checks(dynamic)
     dirt_checks = _checks(ground_dirt)
+    previous_stage_id = None
+    if stage_index:
+        stages = profile["qualification_stages"]
+        previous_stage_id = stages[stage_index - 1]["id"]
+    predecessor_passed = (
+        stage_index == 0
+        or (
+            isinstance(predecessor, dict)
+            and predecessor.get("passed") is True
+            and predecessor.get("qualification_stage_id") == previous_stage_id
+            and predecessor.get("source_binding") == common_binding
+        )
+    )
+    mobility_metrics = mobility.get("metrics", {})
+    mobility_command = mobility.get("command", {})
+    mobility_duration = _number(mobility_command.get("forward_duration_s"))
+    observed_mobility_speed = _number(mobility_metrics.get("ground_truth_forward_delta_m")) / mobility_duration
     checks = {
         "profile_requires_explicit_test_opt_in": activation.get("required_environment") == "FORMAL_DRY_SPEED_REQUALIFICATION=1",
         "profile_disables_automatic_product_enablement": activation.get("automatic_product_enablement") is False,
         "product_default_safety_cap_remains_0_45_mps": math.isclose(product_cap, default_cap, abs_tol=1e-12),
+        "stage_is_at_or_below_test_only_maximum": target <= test_maximum,
         "all_subgates_bind_one_running_session": common_binding is not None and all(item == common_binding for item in bindings) and common_binding == current_session,
         "current_session_and_runtime_closure_reverified": current_runtime_binding.get("status") == "FORMAL_RUNTIME_GATE_BOUND" and isinstance(current_session, dict) and current_session.get("session_status_at_gate") == "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING" and all(isinstance(item, dict) and item.get("runtime_closure_binding") == current_closure for item in runtime_bindings),
-        "run_scoped_explicit_opt_in_marker_binds_profile_and_run": opt_in_token.get("kind") == "TZCUP_DRY_SPEED_REQUALIFICATION_RUN_SCOPED_OPT_IN_MARKER" and opt_in_token.get("profile_id") == profile.get("profile_id") and opt_in_token.get("profile_sha256") == hashlib.sha256(profile_path.read_bytes()).hexdigest() and opt_in_token.get("run_root") == str(run_root.resolve()) and math.isclose(_number(opt_in_token.get("test_only_whole_vehicle_safety_cap_mps")), test_cap, abs_tol=1e-12) and isinstance(opt_in_token.get("nonce"), str) and len(opt_in_token["nonce"]) >= 32,
+        "stage_follows_the_previous_qualified_speed": predecessor_passed,
+        "run_scoped_explicit_opt_in_marker_binds_profile_stage_and_run": opt_in_token.get("kind") == "TZCUP_DRY_SPEED_REQUALIFICATION_RUN_SCOPED_OPT_IN_MARKER" and opt_in_token.get("profile_id") == profile.get("profile_id") and opt_in_token.get("profile_sha256") == hashlib.sha256(profile_path.read_bytes()).hexdigest() and opt_in_token.get("qualification_stage_id") == stage_id and opt_in_token.get("run_root") == str(run_root.resolve()) and math.isclose(_number(opt_in_token.get("test_only_whole_vehicle_safety_cap_mps")), target, abs_tol=1e-12) and isinstance(opt_in_token.get("nonce"), str) and len(opt_in_token["nonce"]) >= 32,
         "mobility_report_passed": mobility.get("status") == "FORMAL_A300_DRIVETRAIN_FORWARD_STOP_RUNTIME_PASSED",
-        "mobility_requested_one_mps_and_test_cap": math.isclose(_number(mobility_command.get("forward_speed_mps")), target, abs_tol=1e-12) and math.isclose(_number(mobility_command.get("safety_max_linear_velocity_mps")), test_cap, abs_tol=1e-12),
-        "mobility_physical_braking_and_final_zero": all(_checks(mobility).get(name) is True for name in ("ground_truth_forward_motion", "plant_odometry_forward_motion", "vehicle_stopped_after_zero_command", "plant_odometry_stopped_after_zero_command", "wheel_joints_stopped_after_zero_command", "estop_asserted_during_physical_motion", "final_safety_command_reached_one_mps_before_estop", "final_safety_command_has_one_expected_writer_and_input_subscriber", "estop_feedback_or_manual_estop_status_observed", "final_safety_command_zero_after_estop", "gazebo_estop_braking_distance_bounded", "plant_odom_estop_braking_matches_ground_truth", "physical_vehicle_stopped_after_estop")) and mobility_command.get("estop", {}).get("exercise_estop") is True,
-        "interlock_estop_or_fault_zeroes_outputs": interlock.get("status") == "WHOLE_VEHICLE_ACTUATOR_INTERLOCK_PASSED" and math.isclose(_number(interlock.get("safety_max_linear_velocity_mps")), test_cap, abs_tol=1e-12) and math.isclose(_number(interlock.get("base_command_input_mps")), target, abs_tol=1e-12) and all(interlock_checks.get(name) is True for name in ("relock_base_zero", "relock_velocity_controllers_inactive", "final_physical_estop_attributed_to_manual_estop", "relay_false_zeros_base_brush_and_pump")),
-        "dynamic_ttc_intervention_zero_collision_at_one_mps": dynamic.get("status") == "FORMAL_DYNAMIC_OBSTACLE_AVOIDANCE_ACCEPTANCE_PASSED" and dynamic.get("metrics", {}).get("operation_speed_profile") == "dry_cleaning_competition_candidate" and math.isclose(_number(dynamic.get("metrics", {}).get("safety_max_linear_velocity_mps")), test_cap, abs_tol=1e-12) and _number(dynamic_speeds.get("base")) >= observed_minimum and dynamic_checks.get("collision_monitor_intervened") is True and dynamic_checks.get("zero_physical_collisions") is True,
-        "ground_dirt_contact_cleaning_at_one_mps": ground_dirt.get("status") == "FORMAL_GROUND_DIRT_PHYSICAL_CLEANING_PASSED" and math.isclose(_number(ground_metrics.get("drive_speed_mps")), target, abs_tol=1e-12) and math.isclose(_number(ground_metrics.get("safety_max_linear_velocity_mps")), test_cap, abs_tol=1e-12) and all(dirt_checks.get(name) is True for name in ("physical_sweep_reaches_95_percent", "real_joint_and_world_pose_ready_samples_seen", "all_rigid_litter_models_remain")),
+        "mobility_requested_stage_speed_and_test_cap": math.isclose(_number(mobility_command.get("forward_speed_mps")), target, abs_tol=1e-12) and math.isclose(_number(mobility_command.get("safety_max_linear_velocity_mps")), target, abs_tol=1e-12) and observed_mobility_speed >= observed_minimum,
+        "mobility_physical_braking_and_final_zero": all(_checks(mobility).get(name) is True for name in ("ground_truth_forward_motion", "plant_odometry_forward_motion", "vehicle_stopped_after_zero_command", "plant_odometry_stopped_after_zero_command", "wheel_joints_stopped_after_zero_command", "estop_asserted_during_physical_motion", "final_safety_command_reached_requested_speed_before_estop", "final_safety_command_has_one_expected_writer_and_input_subscriber", "estop_feedback_or_manual_estop_status_observed", "final_safety_command_zero_after_estop", "gazebo_estop_braking_distance_bounded", "plant_odom_estop_braking_matches_ground_truth", "physical_vehicle_stopped_after_estop")) and mobility_command.get("estop", {}).get("exercise_estop") is True,
+        "interlock_estop_or_fault_zeroes_outputs": interlock.get("status") == "WHOLE_VEHICLE_ACTUATOR_INTERLOCK_PASSED" and math.isclose(_number(interlock.get("safety_max_linear_velocity_mps")), target, abs_tol=1e-12) and math.isclose(_number(interlock.get("base_command_input_mps")), target, abs_tol=1e-12) and all(interlock_checks.get(name) is True for name in ("relock_base_zero", "relock_velocity_controllers_inactive", "final_physical_estop_attributed_to_manual_estop", "relay_false_zeros_base_brush_and_pump")),
+        "dynamic_ttc_intervention_zero_collision_at_stage_speed": dynamic.get("status") == "FORMAL_DYNAMIC_OBSTACLE_AVOIDANCE_ACCEPTANCE_PASSED" and dynamic.get("metrics", {}).get("operation_speed_profile") == "dry_cleaning_competition_candidate" and math.isclose(_number(dynamic.get("metrics", {}).get("safety_max_linear_velocity_mps")), target, abs_tol=1e-12) and _number(dynamic_speeds.get("base")) >= observed_minimum and dynamic_checks.get("collision_monitor_intervened") is True and dynamic_checks.get("zero_physical_collisions") is True,
+        "ground_dirt_contact_cleaning_at_stage_speed": ground_dirt.get("status") == "FORMAL_GROUND_DIRT_PHYSICAL_CLEANING_PASSED" and math.isclose(_number(ground_metrics.get("drive_speed_mps")), target, abs_tol=1e-12) and math.isclose(_number(ground_metrics.get("safety_max_linear_velocity_mps")), target, abs_tol=1e-12) and all(dirt_checks.get(name) is True for name in ("physical_sweep_reaches_95_percent", "real_joint_and_world_pose_ready_samples_seen", "all_rigid_litter_models_remain")),
     }
     passed = all(checks.values())
     return {
@@ -113,6 +144,9 @@ def validate(
         "status": PASS_STATUS if passed else BLOCKED_STATUS,
         "passed": passed,
         "dry_speed_safety_requalified": passed,
+        "qualification_stage_id": stage_id,
+        "qualification_target_speed_mps": target,
+        "qualification_observed_mobility_speed_mps": observed_mobility_speed,
         # A requalification is evidence only. The product profile remains
         # intentionally ineligible until the broader measured-efficiency gate.
         "competition_efficiency_eligible": False,
@@ -122,7 +156,7 @@ def validate(
         "requalification_evidence_marker": {
             "kind": "TZCUP_DRY_SPEED_REQUALIFICATION_EVIDENCE_ONLY",
             "run_scoped_opt_in_marker_nonce": opt_in_token.get("nonce"),
-            "future_speed_enablement_must_fail_closed_consume_this_report": True,
+            "future_speed_enablement_must_fail_closed_consume_this_report": stage_index == len(profile["qualification_stages"]) - 1,
             "authorizes_product_default_change": False,
             "authorizes_real_hardware_operation": False,
         },
@@ -138,6 +172,8 @@ def main() -> int:
     parser.add_argument("--ground-dirt", type=Path, required=True)
     parser.add_argument("--current-runtime-binding", type=Path, required=True)
     parser.add_argument("--token", type=Path, required=True)
+    parser.add_argument("--stage", required=True)
+    parser.add_argument("--predecessor", type=Path)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
@@ -145,8 +181,9 @@ def main() -> int:
             mobility=_read(args.mobility), interlock=_read(args.interlock),
             dynamic=_read(args.dynamic), ground_dirt=_read(args.ground_dirt),
             current_runtime_binding=load_binding(args.current_runtime_binding),
-            opt_in_token=_read(args.token),
-            run_root=args.output.parent,
+            opt_in_token=_read(args.token), run_root=args.output.parent,
+            stage_id=args.stage,
+            predecessor=_read(args.predecessor) if args.predecessor else None,
         )
     except (OSError, UnicodeError, ValueError, TypeError, KeyError) as exc:
         result = {

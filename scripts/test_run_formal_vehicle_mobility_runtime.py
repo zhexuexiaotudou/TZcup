@@ -49,3 +49,15 @@ def test_probe_reads_named_ground_truth_from_gazebo_transport() -> None:
     assert 'TwistStamped, "/base_controller/cmd_vel"' in source
     assert 'Bool, "/emergency_stop"' in source
     assert "final_command_writer_evidence" in source
+
+
+def test_speed_qualification_runner_is_serial_and_simulation_only() -> None:
+    root = ROOT / "scripts" / "run_formal_dry_speed_requalification.sh"
+    source = root.read_text(encoding="utf-8")
+    assert "FORMAL_DRY_SPEED_REQUALIFICATION=1" in source
+    assert "qualification_stages" in (ROOT / "config" / "high_fidelity_vehicle" / "formal_dry_speed_requalification.yaml").read_text(encoding="utf-8")
+    stages = ["speed_0_25_mps", "speed_0_45_mps", "speed_0_70_mps", "speed_1_00_mps"]
+    assert all(stage in source for stage in stages)
+    assert source.index(stages[0]) < source.index(stages[1]) < source.index(stages[2]) < source.index(stages[3])
+    assert "--predecessor" in source
+    assert "ros2 launch" not in source
