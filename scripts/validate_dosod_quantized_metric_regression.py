@@ -26,6 +26,7 @@ THRESHOLDS_REPORT_ID = "tzcup_dosod_quantized_metric_thresholds_v1"
 PARITY_REPORT_ID = "tzcup_dosod_hbm_x86_nash_parity_v1"
 EVALUATOR_IDENTITY_ID = "tzcup_dosod_metric_evaluator_identity_v1"
 COMPILE_RECEIPT_ID = "tzcup_s100p_dosod_hbm_compile_receipt_v1"
+EVALUATOR_RECEIPT_ID = "tzcup_dosod_quantized_metric_evaluator_receipt_v1"
 CLASS_ORDER = ["litter_cube", "fallen_leaves", "dust_or_soil", "puddle"]
 
 
@@ -165,6 +166,22 @@ def _validate_compile_receipt(path: Path, *, hbm: Path, calibration_manifest: Pa
     return receipt
 
 
+def _validate_evaluator_receipt(path: Path, *, backend: str, metrics_path: Path, holdout_sha: str) -> None:
+    normal_file(path, "evaluator_receipt")
+    value = load_object(path)
+    if value.get("receipt_id") != EVALUATOR_RECEIPT_ID or value.get("status") != "EVALUATOR_EXECUTED" or value.get("backend") != backend:
+        raise ValueError("evaluator_receipt_not_executed")
+    if value.get("holdout_manifest_sha256") != holdout_sha or value.get("metrics_path") != str(metrics_path.resolve()) or value.get("metrics_sha256") != sha256_file(metrics_path):
+        raise ValueError("evaluator_receipt_metrics_binding_mismatch")
+    for stream in ("stdout", "stderr"):
+        raw = value.get(f"{stream}_path")
+        if not isinstance(raw, str) or not Path(raw).is_absolute() or not _digest(value.get(f"{stream}_sha256")):
+            raise ValueError("evaluator_receipt_raw_output_missing")
+        candidate = Path(raw); normal_file(candidate, f"evaluator_receipt_{stream}")
+        if sha256_file(candidate) != value[f"{stream}_sha256"]:
+            raise ValueError("evaluator_receipt_raw_output_mismatch")
+
+
 def _validate_evaluator_identity(path: Path) -> tuple[str, dict[str, dict[str, Any]]]:
     identity = load_object(path)
     if identity.get("schema_version") != 1 or identity.get("report_id") != EVALUATOR_IDENTITY_ID or identity.get("status") != "VERIFIED":
@@ -255,7 +272,7 @@ def validate_regression(
     *, hbm: Path, compile_receipt_path: Path, calibration_manifest: Path,
     holdout_manifest: Path, parity_report_path: Path, runner_identity_path: Path, evaluator_identity_path: Path,
     reference_report_path: Path, quantized_report_path: Path,
-    thresholds_path: Path, output: Path,
+    thresholds_path: Path, output: Path, reference_evaluator_receipt: Path | None = None, quantized_evaluator_receipt: Path | None = None,
 ) -> dict[str, Any]:
     for path, label in ((hbm, "hbm"), (compile_receipt_path, "compile_receipt"), (calibration_manifest, "calibration_manifest"),
                         (holdout_manifest, "holdout_manifest"), (parity_report_path, "parity_report"), (runner_identity_path, "runner_identity"), (evaluator_identity_path, "evaluator_identity"),
@@ -278,6 +295,10 @@ def validate_regression(
         thresholds = load_object(thresholds_path)
         calibration_sources = _calibration_sources(calibration_manifest)
         holdout_sha = sha256_file(holdout_manifest)
+        if reference_evaluator_receipt is None or quantized_evaluator_receipt is None:
+            raise ValueError("actual_evaluator_receipts_required")
+        _validate_evaluator_receipt(reference_evaluator_receipt, backend="onnx", metrics_path=reference_report_path, holdout_sha=holdout_sha)
+        _validate_evaluator_receipt(quantized_evaluator_receipt, backend="hbm", metrics_path=quantized_report_path, holdout_sha=holdout_sha)
         holdout_sources, holdout_adapter = _holdout_sources_and_adapter(holdout_manifest)
         parity_sources, runner_identity_sha256 = _validate_parity_report(
             parity_report_path, hbm_sha=hbm_sha, calibration_sha=sha256_file(calibration_manifest), holdout_sha=holdout_sha
@@ -342,6 +363,8 @@ def main() -> int:
     parser.add_argument("--parity-report", required=True, type=Path)
     parser.add_argument("--runner-identity", required=True, type=Path)
     parser.add_argument("--evaluator-identity", required=True, type=Path)
+    parser.add_argument("--reference-evaluator-receipt", required=True, type=Path)
+    parser.add_argument("--quantized-evaluator-receipt", required=True, type=Path)
     parser.add_argument("--reference-report", required=True, type=Path)
     parser.add_argument("--quantized-report", required=True, type=Path)
     parser.add_argument("--thresholds", required=True, type=Path)
@@ -352,6 +375,7 @@ def main() -> int:
                                      calibration_manifest=args.calibration_manifest, holdout_manifest=args.holdout_manifest,
                                      parity_report_path=args.parity_report, runner_identity_path=args.runner_identity,
                                      evaluator_identity_path=args.evaluator_identity,
+                                     reference_evaluator_receipt=args.reference_evaluator_receipt, quantized_evaluator_receipt=args.quantized_evaluator_receipt,
                                      reference_report_path=args.reference_report,
                                      quantized_report_path=args.quantized_report,
                                      thresholds_path=args.thresholds, output=args.output)

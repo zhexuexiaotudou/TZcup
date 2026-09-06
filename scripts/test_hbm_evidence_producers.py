@@ -22,6 +22,7 @@ SCRIPTS = Path(__file__).resolve().parent
 sys.path.insert(0, str(SCRIPTS))
 
 import execute_dosod_hbm_compile as compile_producer
+import execute_dosod_quantized_metric_evaluator as metric_producer
 import run_dosod_hbm_x86_parity as parity
 import validate_dosod_quantized_metric_regression as metric_regression
 import validate_dosod_s100p_hbm_compile_contract as compile_contract
@@ -265,6 +266,19 @@ class ParityManifestTests(unittest.TestCase):
                 parity._validate_runner_identity(identity, {"hbm_input_adapter": adapter})
             with self.assertRaisesRegex(ValueError, "runner_identity_adapter_mismatch"):
                 parity._validate_runner_identity(identity, {"hbm_input_adapter": {"status": "VERIFIED", "command": ["other"]}})
+
+
+class MetricProducerTests(unittest.TestCase):
+    def test_unknown_or_unfrozen_evaluator_contract_is_blocked_without_execution(self) -> None:
+        with tempfile.TemporaryDirectory() as raw:
+            root = Path(raw)
+            contract, holdout = root / "contract.json", root / "holdout.json"
+            _write_json(contract, {"schema_version": 1, "status": "DRAFT", "backends": {}})
+            _write_json(holdout, {"schema_version": 1, "status": "FROZEN"})
+            result = metric_producer.execute(contract_path=contract, backend="onnx", holdout_manifest=holdout,
+                                             holdout_root=root, output=root / "evidence")
+            self.assertEqual(result["status"], "BLOCKED")
+            self.assertTrue(any("ValueError" in item for item in result["blockers"]))
 
 
 if __name__ == "__main__":
