@@ -8,6 +8,7 @@
 #include <cmath>
 #include <cstdint>
 #include <functional>
+#include <iostream>
 #include <limits>
 #include <memory>
 #include <ostream>
@@ -15,7 +16,6 @@
 #include <tuple>
 #include <vector>
 
-#include <gz/common/Console.hh>
 #include <gz/msgs/double.pb.h>
 #include <gz/plugin/Register.hh>
 #include <gz/sim/Entity.hh>
@@ -59,8 +59,11 @@ class ServiceDoorSystem final:
     std::uint64_t latchForceWrites{0};
     bool hingeForceCommandPresent{false};
     bool latchForceCommandPresent{false};
-    double postUpdateHingeForce{std::numeric_limits<double>::quiet_NaN()};
-    double postUpdateLatchForce{std::numeric_limits<double>::quiet_NaN()};
+    // A missing command is represented by its companion `*_present=0`, not a
+    // NaN.  Formal telemetry accepts finite values only, including the first
+    // PreUpdate before any PostUpdate observation exists.
+    double postUpdateHingeForce{0.0};
+    double postUpdateLatchForce{0.0};
   };
 
   public: void Configure(
@@ -72,7 +75,11 @@ class ServiceDoorSystem final:
     const gz::sim::Model model(_entity);
     if (!model.Valid(_ecm))
     {
-      gzerr << "ServiceDoorSystem must be attached to a model\n";
+      // Gazebo's gzmsg/gzerr console stream is not guaranteed to be captured
+      // by a ros2 launch redirection.  The formal evaluator retains its
+      // launch stderr, so lifecycle evidence must use this direct stream.
+      std::cerr << "SERVICE_DOOR_LIFECYCLE event=configure_failed"
+                << " reason=model_not_valid" << std::endl;
       return;
     }
     const std::array<std::tuple<const char *, double, double>, 4> specs{{
@@ -94,7 +101,8 @@ class ServiceDoorSystem final:
       if (door->hinge == gz::sim::kNullEntity ||
           door->latch == gz::sim::kNullEntity)
       {
-        gzerr << "ServiceDoorSystem cannot find joints for " << door->id << "\n";
+        std::cerr << "SERVICE_DOOR_LIFECYCLE event=configure_failed"
+                  << " reason=joint_not_found door=" << door->id << std::endl;
         return;
       }
       gz::sim::enableComponent<gz::sim::components::JointPosition>(
@@ -132,12 +140,22 @@ class ServiceDoorSystem final:
           prefix + "/latch_target_rad", latchCallback);
       if (!hingeOk || !latchOk)
       {
-        gzerr << "ServiceDoorSystem failed to subscribe for " << door->id << "\n";
+        std::cerr << "SERVICE_DOOR_LIFECYCLE event=configure_failed"
+                  << " reason=subscription_failed door=" << door->id
+                  << " hinge_subscribed=" << hingeOk
+                  << " latch_subscribed=" << latchOk << std::endl;
         return;
       }
+      std::cerr << "SERVICE_DOOR_LIFECYCLE event=subscription"
+                << " door=" << door->id
+                << " hinge_subscribed=" << hingeOk
+                << " latch_subscribed=" << latchOk << std::endl;
       this->doors[index] = std::move(door);
     }
     this->configured = true;
+    std::cerr << "SERVICE_DOOR_LIFECYCLE event=configured"
+              << " configured=1 doors=" << this->doors.size()
+              << " model_entity=" << _entity << std::endl;
   }
 
   public: void PreUpdate(
@@ -182,7 +200,7 @@ class ServiceDoorSystem final:
       ++door->hingeForceWrites;
       if (_info.simTime >= this->nextDiagnosticTime)
       {
-        gzmsg << "SERVICE_DOOR_DIAGNOSTIC door=" << door->id
+        std::cerr << "SERVICE_DOOR_DIAGNOSTIC door=" << door->id
               << " sim_time_sec="
               << std::chrono::duration<double>(_info.simTime).count()
               << " received_hinge_messages="
@@ -227,9 +245,9 @@ class ServiceDoorSystem final:
       door->hingeForceCommandPresent = hinge != nullptr && !hinge->Data().empty();
       door->latchForceCommandPresent = latch != nullptr && !latch->Data().empty();
       door->postUpdateHingeForce = door->hingeForceCommandPresent ?
-          hinge->Data().front() : std::numeric_limits<double>::quiet_NaN();
+          hinge->Data().front() : 0.0;
       door->postUpdateLatchForce = door->latchForceCommandPresent ?
-          latch->Data().front() : std::numeric_limits<double>::quiet_NaN();
+          latch->Data().front() : 0.0;
     }
   }
 

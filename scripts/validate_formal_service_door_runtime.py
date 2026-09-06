@@ -114,6 +114,36 @@ def _all_target_publishers_have_bridge_subscribers(evidence: dict[str, Any]) -> 
     return True
 
 
+def _plugin_lifecycle_configuration_observed(evidence: dict[str, Any]) -> bool:
+    telemetry = evidence.get("plugin_diagnostics", {})
+    lifecycle = telemetry.get("lifecycle", []) if isinstance(telemetry, dict) else []
+    if not isinstance(lifecycle, list):
+        return False
+    def numeric(record: dict[str, Any], key: str) -> float | None:
+        try:
+            value = float(record.get(key, 0.0))
+        except (TypeError, ValueError):
+            return None
+        return value if math.isfinite(value) else None
+
+    configured = any(
+        isinstance(record, dict)
+        and record.get("event") == "configured"
+        and numeric(record, "configured") == 1.0
+        and numeric(record, "doors") == float(len(DOORS))
+        for record in lifecycle
+    )
+    subscriptions = {
+        record.get("door")
+        for record in lifecycle
+        if isinstance(record, dict)
+        and record.get("event") == "subscription"
+        and numeric(record, "hinge_subscribed") == 1.0
+        and numeric(record, "latch_subscribed") == 1.0
+    }
+    return configured and subscriptions == set(DOORS)
+
+
 def _plugin_reports_received_targets_and_force_writes(evidence: dict[str, Any]) -> bool:
     telemetry = evidence.get("plugin_diagnostics", {})
     records = telemetry.get("records", []) if isinstance(telemetry, dict) else []
@@ -126,25 +156,42 @@ def _plugin_reports_received_targets_and_force_writes(evidence: dict[str, Any]) 
         if not door_records:
             return False
         required = {
-            "received_hinge_messages", "received_latch_messages",
+            "sim_time_sec", "received_hinge_messages", "received_latch_messages",
+            "received_hinge_target_rad", "received_latch_target_rad",
+            "requested_hinge_rad", "requested_latch_rad",
+            "effective_hinge_rad", "effective_latch_rad",
+            "hinge_position_rad", "latch_position_rad",
+            "hinge_force_nm", "latch_force_nm",
             "hinge_force_writes", "latch_force_writes",
             "postupdate_hinge_force_present", "postupdate_latch_force_present",
             "postupdate_hinge_force_nm", "postupdate_latch_force_nm",
         }
         if any(not required <= set(record) for record in door_records):
             return False
+        try:
+            if any(
+                not math.isfinite(float(record[key]))
+                for record in door_records
+                for key in required
+            ):
+                return False
+        except (TypeError, ValueError):
+            return False
         for key in (
-            "received_hinge_messages", "received_latch_messages",
+            "sim_time_sec", "received_hinge_messages", "received_latch_messages",
             "hinge_force_writes", "latch_force_writes",
         ):
             try:
                 values = [float(record[key]) for record in door_records]
             except (TypeError, ValueError):
                 return False
-            if any(value < 0.0 for value in values) or any(
+            if any(not math.isfinite(value) or value < 0.0 for value in values) or any(
                 left > right for left, right in zip(values, values[1:])
             ):
                 return False
+        sim_times = [float(record["sim_time_sec"]) for record in door_records]
+        if any(left >= right for left, right in zip(sim_times, sim_times[1:])):
+            return False
         record = door_records[-1]
         try:
             latest_counts = [
@@ -248,6 +295,9 @@ def evaluate(evidence: dict[str, Any]) -> dict[str, Any]:
         "command_sequence_unlocks_before_opening": _commands_match(evidence),
         "all_target_publishers_have_ros_bridge_subscribers": (
             _all_target_publishers_have_bridge_subscribers(evidence)
+        ),
+        "plugin_lifecycle_configuration_observed": (
+            _plugin_lifecycle_configuration_observed(evidence)
         ),
         "plugin_reports_received_targets_and_force_writes": (
             _plugin_reports_received_targets_and_force_writes(evidence)

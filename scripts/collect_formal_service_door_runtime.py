@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import re
 import time
 from pathlib import Path
@@ -20,12 +21,15 @@ DEFAULT_OUTPUT = ROOT / "artifacts/formal_service_door_runtime.json"
 DEFAULT_SNAPSHOT = ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.json"
 DEFAULT_SESSION = ROOT / "artifacts/formal_final_acceptance_session.json"
 PLUGIN_DIAGNOSTIC_PREFIX = "SERVICE_DOOR_DIAGNOSTIC "
+PLUGIN_LIFECYCLE_PREFIX = "SERVICE_DOOR_LIFECYCLE "
 
 
 def _parse_plugin_diagnostics(path: Path) -> dict[str, Any]:
     """Retain plugin telemetry from this fresh launch without treating it as motion proof."""
 
-    result: dict[str, Any] = {"launch_log": str(path), "records": []}
+    result: dict[str, Any] = {
+        "launch_log": str(path), "lifecycle": [], "records": [],
+    }
     if not path.is_file():
         result["parse_error"] = "launch_log_missing"
         return result
@@ -39,16 +43,70 @@ def _parse_plugin_diagnostics(path: Path) -> dict[str, Any]:
         "postupdate_latch_force_present", "postupdate_hinge_force_nm",
         "postupdate_latch_force_nm",
     }
+    lifecycle_numeric_keys = {
+        "configured", "doors", "model_entity", "hinge_subscribed",
+        "latch_subscribed",
+    }
+
+    def finite_float(key: str, value: str) -> float:
+        parsed = float(value)
+        if not math.isfinite(parsed):
+            raise ValueError(f"{key} is not finite")
+        return parsed
+
+    def parse_fields(text: str) -> dict[str, str]:
+        pairs = re.findall(r"([a-z_]+)=([^\s]+)", text)
+        if len({key for key, _ in pairs}) != len(pairs):
+            raise ValueError("duplicate_field")
+        return dict(pairs)
+
     for line in path.read_text(encoding="utf-8", errors="replace").splitlines():
+        lifecycle_marker = line.find(PLUGIN_LIFECYCLE_PREFIX)
+        if lifecycle_marker >= 0:
+            try:
+                fields = parse_fields(line[lifecycle_marker:])
+            except ValueError as exc:
+                result["parse_error"] = f"invalid_lifecycle_field:{exc}"
+                return result
+            event = fields.pop("event", None)
+            if event is not None:
+                lifecycle: dict[str, Any] = {"event": event}
+                if "door" in fields:
+                    lifecycle["door"] = fields.pop("door")
+                try:
+                    lifecycle.update(
+                        {
+                            key: finite_float(key, value)
+                            for key, value in fields.items()
+                            if key in lifecycle_numeric_keys
+                        }
+                    )
+                except ValueError as exc:
+                    result["parse_error"] = f"invalid_lifecycle_numeric_field:{exc}"
+                    return result
+                if "reason" in fields:
+                    lifecycle["reason"] = fields["reason"]
+                result["lifecycle"].append(lifecycle)
+            continue
         marker = line.find(PLUGIN_DIAGNOSTIC_PREFIX)
         if marker < 0:
             continue
-        fields = dict(re.findall(r"([a-z_]+)=([^\s]+)", line[marker:]))
+        try:
+            fields = parse_fields(line[marker:])
+        except ValueError as exc:
+            result["parse_error"] = f"invalid_field:{exc}"
+            return result
         if "door" not in fields:
             continue
         record: dict[str, Any] = {"door": fields.pop("door")}
         try:
-            record.update({key: float(value) for key, value in fields.items() if key in numeric_keys})
+            record.update(
+                {
+                    key: finite_float(key, value)
+                    for key, value in fields.items()
+                    if key in numeric_keys
+                }
+            )
         except ValueError as exc:
             result["parse_error"] = f"invalid_numeric_field:{exc}"
             return result
