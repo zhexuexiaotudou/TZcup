@@ -4560,7 +4560,7 @@
             },
             {
               "evidence": {
-                "line": 83,
+                "line": 87,
                 "path": "scripts/formal_vehicle_mobility_metrics.py",
                 "token": "vehicle_stopped_after_zero_command"
               },
@@ -4760,7 +4760,7 @@
             },
             {
               "evidence": {
-                "line": 76,
+                "line": 78,
                 "path": "scripts/run_formal_ground_dirt_cleaning_runtime.sh",
                 "token": "ground_dirt/status_json"
               },
