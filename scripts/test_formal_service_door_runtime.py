@@ -18,7 +18,13 @@ from collect_formal_service_door_gz_sidecar import (
     _joint_names_from_model_text,
     _publisher_count_from_topic_info,
 )
-from validate_formal_service_door_runtime import DOORS, FAILED_STATUS, PASSED_STATUS, evaluate
+from validate_formal_service_door_runtime import (
+    DOORS,
+    FAILED_STATUS,
+    PASSED_STATUS,
+    evaluate,
+    report_json,
+)
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -319,6 +325,38 @@ def test_bad_joint_position_type_or_nan_writes_failed_validator_report(tmp_path:
         assert "NaN" not in serialized
         assert report["phases"] == {}
         assert report["plugin_diagnostics"] == {}
+
+
+def test_ignored_nan_metadata_downgrades_final_serializer_cli_and_collector_exit(
+    tmp_path: Path,
+) -> None:
+    evidence = passing_evidence()
+    evidence["source_binding"]["ignored_metadata"] = float("nan")
+    provisional = evaluate(evidence)
+    assert provisional["passed"] is True
+    final_report, serialized = report_json(evidence, provisional)
+    assert final_report["passed"] is False
+    assert final_report["status"] == FAILED_STATUS
+    assert "NaN" not in serialized
+
+    input_path = tmp_path / "evidence.json"
+    output_path = tmp_path / "report.json"
+    input_path.write_text(json.dumps(evidence, allow_nan=True), encoding="utf-8")
+    completed = subprocess.run(
+        [sys.executable, str(ROOT / "scripts/validate_formal_service_door_runtime.py"),
+         "--input", str(input_path), "--output", str(output_path)],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 2
+    assert json.loads(output_path.read_text(encoding="utf-8"))["passed"] is False
+
+    collector = (ROOT / "scripts/collect_formal_service_door_runtime.py").read_text(
+        encoding="utf-8"
+    )
+    assert "final_report, text = report_json(raw, report)" in collector
+    assert 'return 0 if final_report["passed"] else 2' in collector
 
 
 def test_snapshot_manifest_drift_fails_delivery_binding(tmp_path: Path) -> None:

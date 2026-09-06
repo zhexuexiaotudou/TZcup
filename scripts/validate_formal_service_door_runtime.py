@@ -438,14 +438,15 @@ def _json_safe(value: object) -> object:
     return str(value)
 
 
-def report_json(evidence: object, report: dict[str, Any]) -> str:
-    """Serialize a validator result using standard JSON only."""
+def report_json(evidence: object, report: dict[str, Any]) -> tuple[dict[str, Any], str]:
+    """Return the final strict-JSON report and its serialized representation."""
 
     try:
-        return json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n"
+        return report, json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n"
     except (TypeError, ValueError) as exc:
-        return json.dumps(
-            _failed_report(evidence, exc), indent=2, sort_keys=True, allow_nan=False
+        final_report = _failed_report(evidence, exc)
+        return final_report, json.dumps(
+            final_report, indent=2, sort_keys=True, allow_nan=False
         ) + "\n"
 
 
@@ -565,12 +566,12 @@ def main() -> int:
     args = parser.parse_args()
     evidence = json.loads(args.input.read_text(encoding="utf-8"))
     result = evaluate(evidence, args.snapshot_manifest)
-    text = report_json(evidence, result)
+    final_report, text = report_json(evidence, result)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(text, encoding="utf-8")
     print(text, end="")
-    return 0 if result["passed"] else 2
+    return 0 if final_report["passed"] else 2
 
 
 if __name__ == "__main__":

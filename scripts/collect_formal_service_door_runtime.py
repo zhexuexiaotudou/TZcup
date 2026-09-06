@@ -619,10 +619,10 @@ def run(
     if "collector_error" in raw:
         report["collector_error"] = raw["collector_error"]
     output.parent.mkdir(parents=True, exist_ok=True)
-    text = report_json(raw, report)
+    final_report, text = report_json(raw, report)
     output.write_text(text, encoding="utf-8")
     print(text, end="")
-    return 0 if report["passed"] else 2
+    return 0 if final_report["passed"] else 2
 
 
 def main() -> int:
