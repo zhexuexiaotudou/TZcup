@@ -13,6 +13,7 @@ snapshot="${FORMAL_VEHICLE_SNAPSHOT_MANIFEST:-${repo_root}/reports/engineering/f
 install_root="$(dirname "${runtime_setup}")"
 closure_manifest="${FORMAL_FINAL_RUNTIME_CLOSURE_MANIFEST:-$(dirname "${install_root}")/final_runtime_closure_manifest.json}"
 runtime_binding="${output}.runtime_binding.json"
+gz_sidecar="${output}.gz_joint_state_sidecar.json"
 formal_runtime_register_evidence_paths "${output}" "${runtime_binding}"
 if [[ ! -f "${runtime_setup}" ]]; then
   echo "Missing runtime setup: ${runtime_setup}" >&2
@@ -21,7 +22,7 @@ fi
 export ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-79}"
 formal_runtime_configure "${ROS_DOMAIN_ID}"
 export GZ_PARTITION="${GZ_PARTITION:-tzcup_formal_service_door_${ROS_DOMAIN_ID}_$$}"
-if [[ -e "${output}" || -e "${log}" || -e "${runtime_binding}" ]]; then
+if [[ -e "${output}" || -e "${log}" || -e "${runtime_binding}" || -e "${gz_sidecar}" ]]; then
   echo "Refusing stale service-door evidence; move the existing output/log before a fresh run" >&2
   exit 2
 fi
@@ -58,8 +59,32 @@ ros2 topic list 2>/dev/null | grep -Fxq "${physical_joint_states_topic}" || {
   exit 3
 }
 
+gz_sidecar_args=(
+  --partition "${GZ_PARTITION}"
+  --launcher-pid "${launch_pid}"
+  --topic /formal_vehicle/evaluation/bodywork_service/joint_states
+  --output "${gz_sidecar}"
+)
+for joint in \
+  bodywork_power_service_door_hinge_joint bodywork_power_service_door_latch_joint \
+  bodywork_compute_service_door_hinge_joint bodywork_compute_service_door_latch_joint \
+  bodywork_wet_service_door_hinge_joint bodywork_wet_service_door_latch_joint \
+  bodywork_rear_dry_service_door_hinge_joint bodywork_rear_dry_service_door_latch_joint; do
+  gz_sidecar_args+=(--joint "${joint}")
+done
+set +e
+python3 "${repo_root}/scripts/collect_formal_service_door_gz_sidecar.py" "${gz_sidecar_args[@]}"
+gz_sidecar_rc=$?
+set -e
+[[ "${gz_sidecar_rc}" = 0 ]] || echo "Independent Gazebo joint-state sidecar failed" >&2
+kill -0 "${launch_pid}" 2>/dev/null || {
+  echo "Gazebo launcher exited before service-door collector" >&2
+  exit 3
+}
+
 python3 "${repo_root}/scripts/collect_formal_service_door_runtime.py" \
   --output "${output}" \
   --snapshot-manifest "${snapshot}" --session "${session}" \
   --runtime-binding "${runtime_binding}" \
-  --plugin-diagnostic-log "${log}"
+  --plugin-diagnostic-log "${log}" \
+  --gazebo-sidecar "${gz_sidecar}"

@@ -7,9 +7,13 @@ import argparse
 import json
 import math
 import re
+import hashlib
+import xml.etree.ElementTree as ET
 from pathlib import Path
 from statistics import median
 from typing import Any
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 PASSED_STATUS = "FORMAL_BODYWORK_SERVICE_DOOR_RUNTIME_PASSED"
@@ -29,6 +33,149 @@ PHASES = (
     "transport_locked",
     "relock_open_rejected",
 )
+
+
+def _advancing_complete_samples(samples: object, minimum: int = 5) -> bool:
+    if not isinstance(samples, list) or len(samples) < minimum:
+        return False
+    window = samples[-minimum:]
+    expected = {item for spec in DOORS.values() for item in spec[:2]}
+    times: list[int] = []
+    for sample in window:
+        if not isinstance(sample, dict) or set(sample.get("positions_rad", {})) != expected:
+            return False
+        value = sample.get("sim_clock_ns")
+        if not isinstance(value, int):
+            return False
+        times.append(value)
+    return all(left < right for left, right in zip(times, times[1:]))
+
+
+def _phase_delivery_and_timing_valid(evidence: dict[str, Any]) -> bool:
+    limits = evidence.get("urdf_velocity_limits_rad_per_s")
+    contract = evidence.get("phase_timing_contract")
+    if not isinstance(limits, dict) or not isinstance(contract, dict):
+        return False
+    try:
+        minimum = float(contract["minimum_duration_s"])
+        margin = float(contract["settling_margin_s"])
+        fresh = int(contract["minimum_fresh_samples"])
+    except (KeyError, TypeError, ValueError):
+        return False
+    if not math.isfinite(minimum) or minimum <= 0 or not math.isfinite(margin) or margin < 0 or fresh < 5:
+        return False
+    joints = {item for spec in DOORS.values() for item in spec[:2]}
+    if set(limits) != joints:
+        return False
+    manifest_path = ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        output = manifest["outputs"]["reports/engineering/formal_competition_vehicle.urdf"]
+        urdf_path = ROOT / "reports/engineering/formal_competition_vehicle.urdf"
+        if (
+            hashlib.sha256(urdf_path.read_bytes()).hexdigest() != output["sha256"]
+            or evidence.get("source_binding", {}).get("expanded_urdf_sha256") != output["sha256"]
+        ):
+            return False
+        root = ET.fromstring(urdf_path.read_text(encoding="utf-8"))
+        bound_limits = {
+            joint.get("name"): float(joint.find("limit").get("velocity"))
+            for joint in root.findall("joint")
+            if joint.get("name") in joints and joint.find("limit") is not None
+        }
+    except (OSError, KeyError, TypeError, ValueError, ET.ParseError):
+        return False
+    if set(bound_limits) != joints or any(
+        not math.isclose(float(limits[name]), value, abs_tol=1e-12)
+        for name, value in bound_limits.items()
+    ):
+        return False
+    try:
+        if any(not math.isfinite(float(limits[joint])) or float(limits[joint]) <= 0 for joint in joints):
+            return False
+    except (TypeError, ValueError):
+        return False
+    previous = {door: {"hinge": 0.0, "latch": 0.0} for door in DOORS}
+    for name in PHASES:
+        phase = evidence.get("phases", {}).get(name, {})
+        if not isinstance(phase, dict):
+            return False
+        targets = phase.get("commanded_targets_rad")
+        if not isinstance(targets, dict):
+            return False
+        required = 0.0
+        for door, spec in DOORS.items():
+            row = targets.get(door)
+            if not isinstance(row, dict):
+                return False
+            for kind, joint in (("hinge", spec[0]), ("latch", spec[1])):
+                try:
+                    required = max(required, abs(float(row[kind]) - previous[door][kind]) / float(limits[joint]))
+                except (KeyError, TypeError, ValueError):
+                    return False
+        try:
+            requested = float(phase["simulated_duration_requested_s"])
+            start = int(phase["sim_clock_start_ns"])
+            end = int(phase["sim_clock_end_ns"])
+        except (KeyError, TypeError, ValueError):
+            return False
+        if requested + 1e-9 < max(minimum, required + margin) or end - start + 1 < math.ceil(requested * 1e9):
+            return False
+        echo = phase.get("plugin_target_echo")
+        if not isinstance(echo, dict) or set(echo) != set(DOORS):
+            return False
+        for door, row in targets.items():
+            detail = echo.get(door)
+            if not isinstance(detail, dict):
+                return False
+            for kind in ("hinge", "latch"):
+                item = detail.get(kind)
+                if not isinstance(item, dict) or item.get("delivered_after_previous_generation") is not True:
+                    return False
+                try:
+                    if float(item["received_messages"]) <= float(item["previous_received_messages"]):
+                        return False
+                    if not math.isclose(float(item["received_target_rad"]), float(row[kind]), abs_tol=1e-6):
+                        return False
+                except (KeyError, TypeError, ValueError):
+                    return False
+        if not _advancing_complete_samples(phase.get("fresh_complete_samples_after_plugin_echo"), fresh):
+            return False
+        previous = targets
+    ready = evidence.get("target_transport", {}).get("fresh_complete_samples_after_ready")
+    return _advancing_complete_samples(ready, fresh)
+
+
+def _gazebo_sidecar_valid(evidence: dict[str, Any]) -> bool:
+    sidecar = evidence.get("gazebo_joint_state_sidecar")
+    if not isinstance(sidecar, dict) or sidecar.get("status") != "PASSED":
+        return False
+    expected = {item for spec in DOORS.values() for item in spec[:2]}
+    topic = sidecar.get("gazebo_transport_topic")
+    discovered = sidecar.get("discovered_topic")
+    raw_names: list[str] = []
+    for body in re.findall(r"(?ms)^\s*joint\s*\{(.*?)^\s*\}", str(sidecar.get("topic_sample_output", ""))):
+        match = re.search(r'^\s*name:\s*"([^"]+)"\s*$', body, re.MULTILINE)
+        if match is not None:
+            raw_names.append(match.group(1))
+    return (
+        sidecar.get("gz_partition") == evidence.get("gazebo_partition")
+        and isinstance(topic, str) and isinstance(discovered, str)
+        and (discovered == topic or discovered.endswith(topic))
+        and sidecar.get("topic_candidates") == [discovered]
+        and sidecar.get("message_type") == "gz.msgs.Model"
+        and sidecar.get("publisher_count") == 1
+        and set(sidecar.get("observed_joint_names", [])) == expected
+        and len(sidecar.get("observed_joint_names", [])) == len(expected)
+        and raw_names == sidecar.get("observed_joint_names")
+        and isinstance(sidecar.get("launcher_pid"), int) and sidecar.get("launcher_pid") > 0
+        and isinstance(sidecar.get("launcher_liveness_checks"), list)
+        and len(sidecar.get("launcher_liveness_checks")) >= 2
+        and all(value is True for value in sidecar.get("launcher_liveness_checks"))
+        and all(isinstance(sidecar.get(key), str) for key in (
+            "topic_list_output", "topic_info_output", "topic_sample_output"
+        ))
+    )
 
 
 def _phase_samples(evidence: dict[str, Any], name: str) -> list[dict[str, Any]]:
@@ -299,6 +446,10 @@ def evaluate(evidence: dict[str, Any]) -> dict[str, Any]:
         "all_target_publishers_have_ros_bridge_subscribers": (
             _all_target_publishers_have_bridge_subscribers(evidence)
         ),
+        "startup_and_phase_delivery_use_fresh_advancing_simulated_time": (
+            _phase_delivery_and_timing_valid(evidence)
+        ),
+        "independent_gazebo_joint_state_sidecar_is_complete": _gazebo_sidecar_valid(evidence),
         "plugin_lifecycle_configuration_observed": (
             _plugin_lifecycle_configuration_observed(evidence)
         ),
@@ -326,6 +477,7 @@ def evaluate(evidence: dict[str, Any]) -> dict[str, Any]:
         "final_positions_rad": finals,
         "phases": evidence.get("phases", {}),
         "plugin_diagnostics": evidence.get("plugin_diagnostics", {}),
+        "gazebo_joint_state_sidecar": evidence.get("gazebo_joint_state_sidecar", {}),
         "claim_boundary": (
             "This proves bounded-force Gazebo motion of all four physical door hinges and latches, "
             "including measured unlock-before-open and zero-angle transport relock. It does not "
