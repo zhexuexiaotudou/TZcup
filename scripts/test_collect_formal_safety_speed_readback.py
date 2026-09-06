@@ -4,6 +4,8 @@ import json
 import subprocess
 from pathlib import Path
 
+import pytest
+
 import collect_formal_safety_speed_readback as collector
 
 
@@ -104,6 +106,7 @@ def test_collector_owns_successful_ros_capture(monkeypatch, tmp_path: Path) -> N
 
     assert passed
     assert receipt["producer_identity"]["node_name"] == "whole_vehicle_safety_manager"
+    assert receipt["capture_timeout_sec"] == 5.0
     assert receipt["status_capture"]["command"] == [
         "ros2", "topic", "echo", "--once", "--field", "data", "/safety/status_json"
     ]
@@ -163,3 +166,12 @@ def test_collector_rejects_two_publishers_even_with_expected_node(monkeypatch, t
 
     assert not passed
     assert "exactly one" in receipt["error"]
+
+
+@pytest.mark.parametrize("timeout", [0.0, -1.0, float("inf"), 10.0001])
+def test_collector_rejects_invalid_or_unbounded_timeout(timeout: float, tmp_path: Path) -> None:
+    args = _args(tmp_path)
+    args.timeout_sec = timeout
+    with pytest.raises(collector.CaptureError, match="timeout must be"):
+        collector.collect(args)
+    assert not args.output.exists()

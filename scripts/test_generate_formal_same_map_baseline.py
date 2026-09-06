@@ -147,6 +147,7 @@ def _safety_readback(binding: Path, *, state: str, producer: bool = True) -> dic
     }
     readback = {
         "schema_version": 2,
+        "capture_timeout_sec": 5.0,
         "capture_status": "PASSED",
         "runtime_gate_binding_sha256": _sha(binding),
         "runtime_gate_binding": json.loads(binding.read_text(encoding="utf-8")),
@@ -265,6 +266,8 @@ def test_rejects_safety_readback_without_collector_producer_receipt(tmp_path: Pa
         (lambda receipt: receipt["producer_capture"].update({"stdout": _topic_info(publishers=2)}), "exactly one"),
         (lambda receipt: receipt["producer_capture"].update({"stdout": _topic_info(node="impostor")}), "unique whole_vehicle_safety_manager"),
         (lambda receipt: receipt["producer_capture_before"].update({"completed_epoch_ns": receipt["status_capture"]["started_epoch_ns"] + 1}), "execution order"),
+        (lambda receipt: receipt["producer_capture_before"].update({"completed_epoch_ns": receipt["producer_capture_before"]["started_epoch_ns"] + 7_000_000_000}), "exceeds its bounded timeout"),
+        (lambda receipt: receipt["producer_capture"].update({"started_epoch_ns": receipt["producer_capture_before"]["completed_epoch_ns"] + 20_000_000_000, "completed_epoch_ns": receipt["producer_capture_before"]["completed_epoch_ns"] + 20_000_000_001}), "triplet exceeds its bounded timeout"),
     ],
 )
 def test_rejects_forged_or_unordered_retained_ros_receipt(tmp_path: Path, mutation, message: str) -> None:
@@ -293,6 +296,21 @@ def test_accepts_current_revalidated_one_mps_collector_receipt(tmp_path: Path) -
     args.runtime_install = install
     args.expected_safety_cap = 1.0
     assert generate(args)["status"] == PASS_STATUS
+
+
+@pytest.mark.parametrize("timeout", [0.0, -1.0, float("inf"), 10.0001])
+def test_rejects_invalid_or_unbounded_capture_timeout(tmp_path: Path, timeout: float) -> None:
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    receipt = _safety_readback(runtime, state="isolated_same_map_dry_coverage")
+    receipt["capture_timeout_sec"] = timeout
+    args.safety_manager_readback = _json(tmp_path / "safety.json", receipt)
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    with pytest.raises(BaselineError, match="capture timeout is invalid"):
+        generate(args)
 
 
 @pytest.mark.parametrize(

@@ -16,6 +16,7 @@ import yaml
 from collect_formal_safety_speed_readback import (
     CaptureError,
     validate_capture_order,
+    validate_capture_timeout,
     validate_status_capture,
     validate_topic_info_capture,
 )
@@ -198,6 +199,12 @@ def build_report(
             raise BaselineError("safety-manager runtime binding does not match current inputs")
         if safety_readback.get("schema_version") != 2:
             raise BaselineError("safety-manager readback has an unsupported schema")
+        try:
+            capture_timeout_sec = validate_capture_timeout(
+                safety_readback.get("capture_timeout_sec")
+            )
+        except CaptureError as exc:
+            raise BaselineError(f"safety-manager capture timeout is invalid: {exc}") from exc
         if safety_readback.get("capture_status") != "PASSED":
             raise BaselineError("safety-manager readback is not a passing live capture")
         if safety_readback.get("runtime_gate_binding_sha256") != _sha256(runtime_binding):
@@ -221,13 +228,17 @@ def build_report(
             raise BaselineError("safety-manager producer receipt is incomplete or unexpected")
         try:
             before_identity, before_window = validate_topic_info_capture(
-                producer_before, "producer-before"
+                producer_before, "producer-before", capture_timeout_sec
             )
-            captured_status, status_window = validate_status_capture(status_capture)
+            captured_status, status_window = validate_status_capture(
+                status_capture, capture_timeout_sec
+            )
             after_identity, after_window = validate_topic_info_capture(
-                producer_capture, "producer-after"
+                producer_capture, "producer-after", capture_timeout_sec
             )
-            validate_capture_order(before_window, status_window, after_window)
+            validate_capture_order(
+                before_window, status_window, after_window, capture_timeout_sec
+            )
         except CaptureError as exc:
             raise BaselineError(f"safety-manager producer receipt is invalid: {exc}") from exc
         if before_identity != producer or after_identity != producer:

@@ -21,6 +21,13 @@ from typing import Any
 EXPECTED_PRODUCER_NODE = "whole_vehicle_safety_manager"
 STATUS_TOPIC = "/safety/status_json"
 STATUS_MESSAGE_TYPE = "std_msgs/msg/String"
+DEFAULT_CAPTURE_TIMEOUT_SEC = 5.0
+MAX_CAPTURE_TIMEOUT_SEC = 10.0
+# `subprocess.run(timeout=...)` bounds the child, but process creation and the
+# final read of its pipes can add a small amount of wall time.  Keep that
+# allowance explicit and bounded in the retained receipt contract.
+CAPTURE_COMPLETION_GRACE_SEC = 1.0
+TRIPLET_COMPLETION_GRACE_SEC = 2.0
 
 
 class CaptureError(RuntimeError):
@@ -116,7 +123,26 @@ def _producer_identity(topic_info: str) -> dict[str, str]:
     }
 
 
-def _capture_window(capture: Any, label: str) -> tuple[int, int]:
+def validate_capture_timeout(value: Any) -> float:
+    """Return the bounded timeout contract shared by collector and sealer."""
+
+    if isinstance(value, bool) or not isinstance(value, (int, float)):
+        raise CaptureError("capture timeout must be a finite numeric scalar")
+    timeout_sec = float(value)
+    if (
+        not math.isfinite(timeout_sec)
+        or timeout_sec <= 0.0
+        or timeout_sec > MAX_CAPTURE_TIMEOUT_SEC
+    ):
+        raise CaptureError(
+            f"capture timeout must be in (0, {MAX_CAPTURE_TIMEOUT_SEC:g}] seconds"
+        )
+    return timeout_sec
+
+
+def _capture_window(
+    capture: Any, label: str, timeout_sec: float
+) -> tuple[int, int]:
     """Return a complete capture interval, rejecting hand-written summaries."""
 
     if not isinstance(capture, dict):
@@ -132,10 +158,15 @@ def _capture_window(capture: Any, label: str) -> tuple[int, int]:
         or completed < started
     ):
         raise CaptureError(f"{label} capture has no valid timing interval")
+    maximum_duration_ns = int((timeout_sec + CAPTURE_COMPLETION_GRACE_SEC) * 1_000_000_000)
+    if completed - started > maximum_duration_ns:
+        raise CaptureError(f"{label} capture exceeds its bounded timeout window")
     return started, completed
 
 
-def validate_topic_info_capture(capture: Any, label: str) -> tuple[dict[str, str], tuple[int, int]]:
+def validate_topic_info_capture(
+    capture: Any, label: str, timeout_sec: float
+) -> tuple[dict[str, str], tuple[int, int]]:
     """Revalidate one retained, fixed-command ROS topic-info capture."""
 
     if not isinstance(capture, dict):
@@ -147,10 +178,12 @@ def validate_topic_info_capture(capture: Any, label: str) -> tuple[dict[str, str
     stdout = capture.get("stdout")
     if not isinstance(stdout, str) or not stdout.strip():
         raise CaptureError(f"{label} topic-info capture has no retained raw stdout")
-    return _producer_identity(stdout), _capture_window(capture, label)
+    return _producer_identity(stdout), _capture_window(capture, label, timeout_sec)
 
 
-def validate_status_capture(capture: Any) -> tuple[dict[str, Any], tuple[int, int]]:
+def validate_status_capture(
+    capture: Any, timeout_sec: float
+) -> tuple[dict[str, Any], tuple[int, int]]:
     """Revalidate the fixed one-shot status capture and its timing interval."""
 
     if not isinstance(capture, dict):
@@ -170,11 +203,14 @@ def validate_status_capture(capture: Any) -> tuple[dict[str, Any], tuple[int, in
         raise CaptureError("status capture has invalid JSON") from exc
     if not isinstance(status, dict):
         raise CaptureError("status capture JSON must be an object")
-    return status, _capture_window(capture, "status")
+    return status, _capture_window(capture, "status", timeout_sec)
 
 
 def validate_capture_order(
-    producer_before: tuple[int, int], status: tuple[int, int], producer_after: tuple[int, int]
+    producer_before: tuple[int, int],
+    status: tuple[int, int],
+    producer_after: tuple[int, int],
+    timeout_sec: float,
 ) -> None:
     """Require topic ownership before and after the intervening status sample."""
 
@@ -183,6 +219,12 @@ def validate_capture_order(
         <= producer_after[0] <= producer_after[1]
     ):
         raise CaptureError("producer/status captures are not retained in execution order")
+    maximum_triplet_ns = int(
+        (3.0 * (timeout_sec + CAPTURE_COMPLETION_GRACE_SEC) + TRIPLET_COMPLETION_GRACE_SEC)
+        * 1_000_000_000
+    )
+    if producer_after[1] - producer_before[0] > maximum_triplet_ns:
+        raise CaptureError("producer/status capture triplet exceeds its bounded timeout window")
 
 
 def _snapshot_identity(path: Path) -> dict[str, str]:
@@ -236,8 +278,7 @@ def _require_runtime_binding(
 def collect(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
     if args.output.exists():
         raise CaptureError("refusing to overwrite safety-manager readback")
-    if not math.isfinite(args.timeout_sec) or args.timeout_sec <= 0.0:
-        raise CaptureError("timeout must be positive and finite")
+    timeout_sec = validate_capture_timeout(args.timeout_sec)
     receipt: dict[str, Any] = {
         "schema_version": 2,
         "collector": "collect_formal_safety_speed_readback.py",
@@ -248,6 +289,7 @@ def collect(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
             "operation_speed_profile": args.expected_profile,
             "speed_qualification_state": args.expected_state,
         },
+        "capture_timeout_sec": timeout_sec,
     }
     try:
         binding = _require_runtime_binding(
@@ -257,14 +299,14 @@ def collect(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
         receipt["runtime_gate_binding_sha256"] = _sha256(args.runtime_binding)
         receipt["runtime_gate_binding"] = binding
         producer_before = _capture(
-            ["ros2", "topic", "info", STATUS_TOPIC, "--verbose"], args.timeout_sec
+            ["ros2", "topic", "info", STATUS_TOPIC, "--verbose"], timeout_sec
         )
         status_capture = _capture(
             ["ros2", "topic", "echo", "--once", "--field", "data", STATUS_TOPIC],
-            args.timeout_sec,
+            timeout_sec,
         )
         producer_capture = _capture(
-            ["ros2", "topic", "info", STATUS_TOPIC, "--verbose"], args.timeout_sec
+            ["ros2", "topic", "info", STATUS_TOPIC, "--verbose"], timeout_sec
         )
         receipt["producer_capture_before"] = producer_before
         receipt["status_capture"] = status_capture
@@ -274,13 +316,13 @@ def collect(args: argparse.Namespace) -> tuple[dict[str, Any], bool]:
         if producer_capture["returncode"] != 0:
             raise CaptureError("live safety producer identity capture failed")
         before_identity, before_window = validate_topic_info_capture(
-            producer_before, "producer-before"
+            producer_before, "producer-before", timeout_sec
         )
-        status, status_window = validate_status_capture(status_capture)
+        status, status_window = validate_status_capture(status_capture, timeout_sec)
         after_identity, after_window = validate_topic_info_capture(
-            producer_capture, "producer-after"
+            producer_capture, "producer-after", timeout_sec
         )
-        validate_capture_order(before_window, status_window, after_window)
+        validate_capture_order(before_window, status_window, after_window, timeout_sec)
         if before_identity != after_identity:
             raise CaptureError("status producer identity changed across the capture")
         receipt["producer_identity"] = after_identity
@@ -317,7 +359,7 @@ def main() -> int:
     parser.add_argument("--expected-cap", type=float, required=True)
     parser.add_argument("--expected-profile", required=True)
     parser.add_argument("--expected-state", required=True)
-    parser.add_argument("--timeout-sec", type=float, default=5.0)
+    parser.add_argument("--timeout-sec", type=float, default=DEFAULT_CAPTURE_TIMEOUT_SEC)
     args = parser.parse_args()
     try:
         _, passed = collect(args)
