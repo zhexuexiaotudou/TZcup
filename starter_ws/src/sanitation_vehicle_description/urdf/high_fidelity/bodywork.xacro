@@ -77,7 +77,10 @@
       <origin xyz="0 0 0" rpy="0 0 0"/>
       <axis xyz="0 0 1"/>
       <limit lower="${lower}" upper="${upper}" effort="30.0" velocity="0.5"/>
-      <dynamics damping="2.5" friction="4.0"/>
+      <!-- DART treats positive URDF Coulomb friction on these nested service-door
+           joints as a static hard lock.  Keep viscous damping for passive
+           resistance and let the bounded evaluator force drive real motion. -->
+      <dynamics damping="2.5" friction="0.0"/>
     </joint>
 
     <link name="${name}_latch_link">
@@ -98,7 +101,7 @@
       <origin xyz="${latch_xyz}" rpy="0 0 0"/>
       <axis xyz="${latch_axis}"/>
       <limit lower="-0.785398163" upper="0.785398163" effort="8.0" velocity="1.0"/>
-      <dynamics damping="0.8" friction="1.5"/>
+      <dynamics damping="0.8" friction="0.0"/>
     </joint>
   </xacro:macro>
 

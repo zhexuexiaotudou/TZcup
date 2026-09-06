@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 import yaml
 
@@ -46,6 +47,28 @@ def test_four_service_doors_are_limited_latched_mechanisms() -> None:
         assert f'name="{door}"' in bodywork
         assert f'<xacro:hf_state_only_joint name="{door}_hinge_joint"/>' not in control
         assert f'<xacro:hf_state_only_joint name="{door}_latch_joint"/>' not in control
+
+
+def test_service_door_dynamics_retain_damping_without_dart_hard_lock() -> None:
+    root = ET.fromstring(_read(BODYWORK))
+    namespace = "{http://ros.org/wiki/xacro}"
+    macro = next(
+        element
+        for element in root.findall(f"{namespace}macro")
+        if element.attrib.get("name") == "hf_service_door"
+    )
+    joints = {joint.attrib["name"]: joint for joint in macro.findall("joint")}
+
+    hinge = joints["${name}_hinge_joint"]
+    latch = joints["${name}_latch_joint"]
+    assert hinge.find("limit").attrib == {
+        "lower": "${lower}", "upper": "${upper}", "effort": "30.0", "velocity": "0.5"
+    }
+    assert hinge.find("dynamics").attrib == {"damping": "2.5", "friction": "0.0"}
+    assert latch.find("limit").attrib == {
+        "lower": "-0.785398163", "upper": "0.785398163", "effort": "8.0", "velocity": "1.0"
+    }
+    assert latch.find("dynamics").attrib == {"damping": "0.8", "friction": "0.0"}
 
 
 def test_service_doors_use_a_dedicated_gazebo_physical_state_bridge() -> None:

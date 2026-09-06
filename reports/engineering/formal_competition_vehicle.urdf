@@ -6047,7 +6047,10 @@
     <origin rpy="0 0 0" xyz="0 0 0"/>
     <axis xyz="0 0 1"/>
     <limit effort="30.0" lower="0.0" upper="1.745329252" velocity="0.5"/>
-    <dynamics damping="2.5" friction="4.0"/>
+    <!-- DART treats positive URDF Coulomb friction on these nested service-door
+           joints as a static hard lock.  Keep viscous damping for passive
+           resistance and let the bounded evaluator force drive real motion. -->
+    <dynamics damping="2.5" friction="0.0"/>
   </joint>
   <link name="bodywork_power_service_door_latch_link">
     <visual name="bodywork_power_service_door_rotary_latch_visual">
@@ -6077,7 +6080,7 @@
     <origin rpy="0 0 0" xyz="0.390 0 0.200"/>
     <axis xyz="0 1 0"/>
     <limit effort="8.0" lower="-0.785398163" upper="0.785398163" velocity="1.0"/>
-    <dynamics damping="0.8" friction="1.5"/>
+    <dynamics damping="0.8" friction="0.0"/>
   </joint>
   <link name="bodywork_compute_service_door_hinge_bracket_link">
     <visual name="bodywork_compute_service_door_lower_hinge_visual">
@@ -6148,7 +6151,10 @@
     <origin rpy="0 0 0" xyz="0 0 0"/>
     <axis xyz="0 0 1"/>
     <limit effort="30.0" lower="-1.745329252" upper="0.0" velocity="0.5"/>
-    <dynamics damping="2.5" friction="4.0"/>
+    <!-- DART treats positive URDF Coulomb friction on these nested service-door
+           joints as a static hard lock.  Keep viscous damping for passive
+           resistance and let the bounded evaluator force drive real motion. -->
+    <dynamics damping="2.5" friction="0.0"/>
   </joint>
   <link name="bodywork_compute_service_door_latch_link">
     <visual name="bodywork_compute_service_door_rotary_latch_visual">
@@ -6178,7 +6184,7 @@
     <origin rpy="0 0 0" xyz="0.235 0 0.060"/>
     <axis xyz="0 1 0"/>
     <limit effort="8.0" lower="-0.785398163" upper="0.785398163" velocity="1.0"/>
-    <dynamics damping="0.8" friction="1.5"/>
+    <dynamics damping="0.8" friction="0.0"/>
   </joint>
   <link name="bodywork_wet_service_door_hinge_bracket_link">
     <visual name="bodywork_wet_service_door_lower_hinge_visual">
@@ -6249,7 +6255,10 @@
     <origin rpy="0 0 0" xyz="0 0 0"/>
     <axis xyz="0 0 1"/>
     <limit effort="30.0" lower="-1.745329252" upper="0.0" velocity="0.5"/>
-    <dynamics damping="2.5" friction="4.0"/>
+    <!-- DART treats positive URDF Coulomb friction on these nested service-door
+           joints as a static hard lock.  Keep viscous damping for passive
+           resistance and let the bounded evaluator force drive real motion. -->
+    <dynamics damping="2.5" friction="0.0"/>
   </joint>
   <link name="bodywork_wet_service_door_latch_link">
     <visual name="bodywork_wet_service_door_rotary_latch_visual">
@@ -6279,7 +6288,7 @@
     <origin rpy="0 0 0" xyz="0.330 0 0.140"/>
     <axis xyz="0 1 0"/>
     <limit effort="8.0" lower="-0.785398163" upper="0.785398163" velocity="1.0"/>
-    <dynamics damping="0.8" friction="1.5"/>
+    <dynamics damping="0.8" friction="0.0"/>
   </joint>
   <link name="bodywork_rear_dry_service_door_hinge_bracket_link">
     <visual name="bodywork_rear_dry_service_door_lower_hinge_visual">
@@ -6350,7 +6359,10 @@
     <origin rpy="0 0 0" xyz="0 0 0"/>
     <axis xyz="0 0 1"/>
     <limit effort="30.0" lower="-1.745329252" upper="0.0" velocity="0.5"/>
-    <dynamics damping="2.5" friction="4.0"/>
+    <!-- DART treats positive URDF Coulomb friction on these nested service-door
+           joints as a static hard lock.  Keep viscous damping for passive
+           resistance and let the bounded evaluator force drive real motion. -->
+    <dynamics damping="2.5" friction="0.0"/>
   </joint>
   <link name="bodywork_rear_dry_service_door_latch_link">
     <visual name="bodywork_rear_dry_service_door_rotary_latch_visual">
@@ -6380,7 +6392,7 @@
     <origin rpy="0 0 0" xyz="0 -0.390 0.175"/>
     <axis xyz="1 0 0"/>
     <limit effort="8.0" lower="-0.785398163" upper="0.785398163" velocity="1.0"/>
-    <dynamics damping="0.8" friction="1.5"/>
+    <dynamics damping="0.8" friction="0.0"/>
   </joint>
   <!-- Character line, sensor belt and graphics.  These parts are physical
          trim but use no separate collision because they are flush to the shell. -->
