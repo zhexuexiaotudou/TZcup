@@ -15,7 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from formal_runtime_gate_binding import load_binding
-from validate_formal_service_door_runtime import DOORS, evaluate
+from validate_formal_service_door_runtime import DOORS, evaluate, report_json
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -619,8 +619,9 @@ def run(
     if "collector_error" in raw:
         report["collector_error"] = raw["collector_error"]
     output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    print(json.dumps(report, sort_keys=True))
+    text = report_json(raw, report)
+    output.write_text(text, encoding="utf-8")
+    print(text, end="")
     return 0 if report["passed"] else 2
 
 

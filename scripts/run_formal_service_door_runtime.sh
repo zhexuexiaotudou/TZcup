@@ -37,7 +37,9 @@ from pathlib import Path
 
 output, reason, sidecar = Path(sys.argv[1]), sys.argv[2], Path(sys.argv[3])
 try:
-    sidecar_evidence = json.loads(sidecar.read_text(encoding="utf-8"))
+    sidecar_evidence = json.loads(
+        sidecar.read_text(encoding="utf-8"), parse_constant=lambda _value: None
+    )
 except (OSError, UnicodeError, json.JSONDecodeError) as exc:
     sidecar_evidence = {"status": "FAILED", "error": str(exc)}
 report = {
@@ -52,8 +54,11 @@ report = {
     "gazebo_joint_state_sidecar": sidecar_evidence,
     "claim_boundary": "Launcher or independent Gazebo sidecar failure is rejected fail-closed.",
 }
-output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-print(json.dumps(report, sort_keys=True))
+output.write_text(
+    json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n",
+    encoding="utf-8",
+)
+print(json.dumps(report, sort_keys=True, allow_nan=False))
 PY
 }
 
@@ -83,10 +88,11 @@ for _ in $(seq 1 120); do
   fi
   sleep 0.25
 done
-ros2 topic list 2>/dev/null | grep -Fxq "${physical_joint_states_topic}" || {
+if ! ros2 topic list 2>/dev/null | grep -Fxq "${physical_joint_states_topic}"; then
   echo "Timed out waiting for ${physical_joint_states_topic}" >&2
+  write_runner_failure_report "physical_service_door_joint_states_topic_timeout"
   exit 3
-}
+fi
 
 gz_sidecar_args=(
   --partition "${GZ_PARTITION}"

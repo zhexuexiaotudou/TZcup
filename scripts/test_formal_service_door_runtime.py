@@ -306,10 +306,19 @@ def test_bad_joint_position_type_or_nan_writes_failed_validator_report(tmp_path:
             capture_output=True,
             check=False,
         )
-        report = json.loads(output_path.read_text(encoding="utf-8"))
+        serialized = output_path.read_text(encoding="utf-8")
+        report = json.loads(
+            serialized,
+            parse_constant=lambda value: (_ for _ in ()).throw(
+                AssertionError(f"non-standard JSON constant: {value}")
+            ),
+        )
         assert completed.returncode == 2
         assert report["status"] == FAILED_STATUS
         assert report["passed"] is False
+        assert "NaN" not in serialized
+        assert report["phases"] == {}
+        assert report["plugin_diagnostics"] == {}
 
 
 def test_snapshot_manifest_drift_fails_delivery_binding(tmp_path: Path) -> None:
@@ -331,12 +340,14 @@ def test_snapshot_logical_path_cannot_drift_or_escape_repository() -> None:
     ]
 
 
-def test_runner_writes_primary_failed_report_for_launcher_or_sidecar_failure() -> None:
+def test_runner_writes_primary_failed_report_for_startup_launcher_or_sidecar_failure() -> None:
     runner = (ROOT / "scripts/run_formal_service_door_runtime.sh").read_text(encoding="utf-8")
     assert "write_runner_failure_report" in runner
     assert '"independent_gazebo_joint_state_sidecar_failed"' in runner
     assert '"gazebo_launcher_exited_before_service_door_collector"' in runner
+    assert '"physical_service_door_joint_states_topic_timeout"' in runner
     assert '"FORMAL_BODYWORK_SERVICE_DOOR_RUNTIME_FAILED"' in runner
+    assert "allow_nan=False" in runner
 
 
 def test_missing_evaluator_bridge_subscriber_fails_closed() -> None:

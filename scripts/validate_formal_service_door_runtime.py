@@ -411,15 +411,42 @@ def _failed_report(evidence: object, error: Exception) -> dict[str, Any]:
         "passed": False,
         "checks": {"validator_completed": False},
         "validation_error": f"{type(error).__name__}: {error}",
-        "source_binding": value.get("source_binding", {}),
-        "evidence_authority": value.get("evidence_authority"),
+        "source_binding": _json_safe(value.get("source_binding", {})),
+        "evidence_authority": _json_safe(value.get("evidence_authority")),
         "sample_counts": {},
         "final_positions_rad": {},
-        "phases": value.get("phases", {}),
-        "plugin_diagnostics": value.get("plugin_diagnostics", {}),
-        "gazebo_joint_state_sidecar": value.get("gazebo_joint_state_sidecar", {}),
+        # Do not echo malformed raw samples or diagnostics into a report that
+        # must be consumable by strict JSON parsers.
+        "phases": {},
+        "plugin_diagnostics": {},
+        "gazebo_joint_state_sidecar": {},
         "claim_boundary": "Malformed or non-finite runtime evidence is rejected fail-closed.",
     }
+
+
+def _json_safe(value: object) -> object:
+    """Convert diagnostic metadata to JSON values without preserving NaN/Inf."""
+
+    if value is None or isinstance(value, (bool, int, str)):
+        return value
+    if isinstance(value, float):
+        return value if math.isfinite(value) else None
+    if isinstance(value, dict):
+        return {str(key): _json_safe(item) for key, item in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_json_safe(item) for item in value]
+    return str(value)
+
+
+def report_json(evidence: object, report: dict[str, Any]) -> str:
+    """Serialize a validator result using standard JSON only."""
+
+    try:
+        return json.dumps(report, indent=2, sort_keys=True, allow_nan=False) + "\n"
+    except (TypeError, ValueError) as exc:
+        return json.dumps(
+            _failed_report(evidence, exc), indent=2, sort_keys=True, allow_nan=False
+        ) + "\n"
 
 
 def evaluate(
@@ -538,7 +565,7 @@ def main() -> int:
     args = parser.parse_args()
     evidence = json.loads(args.input.read_text(encoding="utf-8"))
     result = evaluate(evidence, args.snapshot_manifest)
-    text = json.dumps(result, indent=2, sort_keys=True) + "\n"
+    text = report_json(evidence, result)
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(text, encoding="utf-8")
