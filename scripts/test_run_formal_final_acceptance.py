@@ -655,10 +655,11 @@ def test_every_gazebo_step_has_one_shared_lock_strategy() -> None:
 
 def test_commands_use_one_fresh_episode_map_rl_and_e2e_root() -> None:
     context = _context()
-    materialize, _ = orchestration._step_command("episode_materialization", context)
+    materialize, materialize_env = orchestration._step_command("episode_materialization", context)
     assert str(context.episode_root) in " ".join(materialize)
     assert "materialize-hidden" in " ".join(materialize)
-    assert "--run-root" in " ".join(materialize)
+    assert "--run-root" not in " ".join(materialize)
+    assert materialize_env["TZCUP_FORMAL_HIDDEN_RUN_ROOT"] == str(context.run_root)
     assert "--freeze-producer" in " ".join(materialize)
 
     first_map, first_env = orchestration._step_command("first_map", context)

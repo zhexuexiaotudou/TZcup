@@ -192,11 +192,17 @@ def _evaluate(episodes: Sequence[FormalEpisode], table: dict[str, dict[str, floa
 
 
 def execute(args: argparse.Namespace) -> dict[str, Any]:
-    from sanitation_campus_scenario.hidden_materializer import commit_hidden_configuration_freeze
+    from sanitation_campus_scenario.hidden_materializer import (
+        commit_hidden_configuration_freeze, require_canonical_formal_inputs,
+        verify_hidden_consumption_records,
+    )
 
     budget = load_formal_rl_budget(args.budget_contract)
     if any(value is None for value in (args.snapshot, args.session, args.hidden_receipt_root)):
         raise ValueError("formal Stage-A training requires --snapshot, --session and --hidden-receipt-root")
+    require_canonical_formal_inputs(
+        snapshot_path=args.snapshot, session_path=args.session, scenario_config=args.scenario_config,
+    )
 
     def prepare(phase: str, freeze_receipt_path: Path | None = None) -> list[FormalEpisode]:
         return [materialize_stage_a_episode(args.scenario_config, args.motion_profile, args.work_root, phase=phase, task_index=index, map_resolution_m=args.map_resolution, planning_resolution_m=args.planning_resolution, max_steps=budget.max_steps_per_episode, snapshot_path=args.snapshot, session_path=args.session, hidden_receipt_root=args.hidden_receipt_root, freeze_receipt_path=freeze_receipt_path) for index in all_stage_a_task_indices(budget, phase)]
@@ -219,12 +225,21 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         frozen_configuration=freeze,
     )
     hidden = prepare("hidden", freeze_receipt)
+    hidden_consumption = verify_hidden_consumption_records(
+        run_root=args.hidden_receipt_root, snapshot_path=args.snapshot, session_path=args.session,
+        scenario_config=args.scenario_config,
+        records=[{
+            "producer": "formal_rl_stage_a_hidden_task",
+            "request": {"profile": "formal", "phase": "stage_a_hidden", "task_index": index},
+            "output": args.work_root / f"stage-a-hidden-task-{index:05d}" / "episode",
+        } for index in all_stage_a_task_indices(budget, "hidden")],
+    )
     for run in runs:
         run["hidden_episode_count"] = len(hidden)
         seed = int(run["policy_seed"])
         run["hidden_rows"] = _evaluate(hidden, trained_tables[seed], seed)
         run["hidden_all_formal_success"] = all(row["formal_success"] for row in run["hidden_rows"])
-    return {"schema_version": 1, "status": "FORMAL_RL_STAGE_A_FIXED_MAP_COMPLETE" if all(run["hidden_all_formal_success"] for run in runs) else "FORMAL_RL_STAGE_A_FIXED_MAP_FAILED", "budget_contract": budget.report(), "fixed_map_id": budget.payload["stage_a_fixed_map"]["fixed_map_id"], "hidden_tasks_materialized_after_freeze": True, "configuration_freeze": freeze, "configuration_freeze_receipt_sha256": hashlib.sha256(freeze_receipt.read_bytes()).hexdigest(), "policy_runs": runs, "started_epoch_ns": started, "finished_epoch_ns": time.time_ns()}
+    return {"schema_version": 1, "status": "FORMAL_RL_STAGE_A_FIXED_MAP_COMPLETE" if all(run["hidden_all_formal_success"] for run in runs) else "FORMAL_RL_STAGE_A_FIXED_MAP_FAILED", "budget_contract": budget.report(), "fixed_map_id": budget.payload["stage_a_fixed_map"]["fixed_map_id"], "hidden_tasks_materialized_after_freeze": True, "configuration_freeze": freeze, "configuration_freeze_receipt_sha256": hashlib.sha256(freeze_receipt.read_bytes()).hexdigest(), "hidden_consumption": hidden_consumption, "policy_runs": runs, "started_epoch_ns": started, "finished_epoch_ns": time.time_ns()}
 
 
 def main(argv: Sequence[str] | None = None) -> int:

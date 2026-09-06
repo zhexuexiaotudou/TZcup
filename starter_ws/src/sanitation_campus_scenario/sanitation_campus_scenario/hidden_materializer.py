@@ -232,6 +232,7 @@ def _consume(
         "producer": producer,
         "request": request,
         "output_root": str(output.resolve()),
+        "configuration_freeze_producer": freeze_producer,
         "configuration_freeze_receipt_sha256": _sha256(freeze_receipt_path),
         **binding,
     })
@@ -361,6 +362,25 @@ def verify_hidden_consumption_records(
             or receipt.get("scenario_config_sha256") != binding["scenario_config_sha256"]
         ):
             raise HiddenMaterializationError("hidden consumption receipt binding or output summary drifted")
+        freeze_producer = receipt.get("configuration_freeze_producer")
+        if not isinstance(freeze_producer, str) or not freeze_producer:
+            raise HiddenMaterializationError("hidden consumption receipt lacks its freeze producer")
+        freeze_path = _ledger_path(
+            run_root=run_root, binding=binding, producer=freeze_producer,
+            request={"phase": "configuration_freeze"}, kind="freeze",
+        )
+        freeze_path = _regular(freeze_path, "retained configuration freeze receipt")
+        freeze = _json_object(freeze_path, "retained configuration freeze receipt")
+        if (
+            receipt.get("configuration_freeze_receipt_sha256") != _sha256(freeze_path)
+            or freeze.get("receipt_id") != "tzcup_hidden_materialization_freeze_receipt_v1"
+            or freeze.get("status") != "HIDDEN_CONFIGURATION_FROZEN"
+            or freeze.get("producer") != freeze_producer
+            or freeze.get("source_binding") != binding["source_binding"]
+            or freeze.get("acceptance_session_binding") != binding["acceptance_session_binding"]
+            or freeze.get("scenario_config_sha256") != binding["scenario_config_sha256"]
+        ):
+            raise HiddenMaterializationError("hidden consumption freeze receipt drifted or was replaced")
         summaries.append({
             "receipt_sha256": _sha256(receipt_path),
             "episode_manifest_sha256": _sha256(manifest),

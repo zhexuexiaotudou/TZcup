@@ -402,6 +402,7 @@ def execute_live(
         "FORMAL_ACCEPTANCE_SESSION": str(session_path),
         "FORMAL_VEHICLE_SNAPSHOT_MANIFEST": str(snapshot_path),
         "TZCUP_REPOSITORY_ROOT": str(ROOT),
+        "TZCUP_FORMAL_HIDDEN_RUN_ROOT": str(work_root),
     })
     for ordinal, site in enumerate(sites):
         generator_split = "val" if site["split"] == "validation" else site["split"]
@@ -440,7 +441,6 @@ def execute_live(
                 "ros2", "run", "sanitation_campus_scenario", "sanitation-campus-scenario",
                 "materialize-hidden", "--config", str(scenario_config),
                 "--snapshot", str(snapshot_path), "--session", str(session_path),
-                "--run-root", str(work_root),
                 "--freeze-producer", "formal_multisite_product_acceptance",
                 "--map-index", str(site["map_index"]),
                 "--mission-index", str(site["mission_index"]), "--output", str(episode_root),

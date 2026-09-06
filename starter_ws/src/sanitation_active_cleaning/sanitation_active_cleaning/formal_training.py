@@ -867,6 +867,10 @@ def main(argv: Sequence[str] | None = None) -> int:
     }
     if any(value is None for value in (args.snapshot, args.session, args.hidden_receipt_root)):
         raise ValueError("formal multi-map training requires --snapshot, --session and --hidden-receipt-root")
+    from sanitation_campus_scenario.hidden_materializer import require_canonical_formal_inputs
+    require_canonical_formal_inputs(
+        snapshot_path=args.snapshot, session_path=args.session, scenario_config=args.scenario_config,
+    )
 
     def prepare(
         split: str, rows: Sequence[tuple[int, int]], freeze_receipt_path: Path | None = None,
@@ -905,7 +909,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         "selection_source": "validation_only_before_hidden",
         "policy_seeds": list(policy_seeds),
     }
-    from sanitation_campus_scenario.hidden_materializer import commit_hidden_configuration_freeze
+    from sanitation_campus_scenario.hidden_materializer import (
+        commit_hidden_configuration_freeze, verify_hidden_consumption_records,
+    )
     freeze_receipt = commit_hidden_configuration_freeze(
         run_root=args.hidden_receipt_root,
         snapshot_path=args.snapshot, session_path=args.session,
@@ -916,6 +922,15 @@ def main(argv: Sequence[str] | None = None) -> int:
     # seed list and checkpoint-selection rule have been recorded.  A formal
     # run does not adapt this configuration from hidden metrics.
     prepared["hidden"] = prepare("hidden", selections["hidden"], freeze_receipt)
+    hidden_consumption = verify_hidden_consumption_records(
+        run_root=args.hidden_receipt_root, snapshot_path=args.snapshot, session_path=args.session,
+        scenario_config=args.scenario_config,
+        records=[{
+            "producer": "formal_hidden_episode",
+            "request": {"profile": "formal", "split": "hidden", "map_index": row[0], "mission_index": row[1]},
+            "output": args.work_root / f"hidden-map-{row[0]:03d}-mission-{row[1]:03d}" / "episode",
+        } for row in selections["hidden"]],
+    )
     for policy_seed in policy_seeds:
         run = train_and_evaluate(
             prepared["train"], prepared["validation"], prepared["hidden"],
@@ -958,6 +973,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             "configuration_freeze_receipt_sha256": hashlib.sha256(
                 freeze_receipt.read_bytes()
             ).hexdigest(),
+            "hidden_consumption": hidden_consumption,
         }
     _write(evidence / "q_policy.json", checkpoint)
     _write(evidence / "training_report.json", training)

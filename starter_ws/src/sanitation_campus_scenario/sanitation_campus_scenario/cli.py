@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 from pathlib import Path
 import sys
 
@@ -29,7 +30,6 @@ def build_parser() -> argparse.ArgumentParser:
     hidden.add_argument("--config", required=True, type=Path)
     hidden.add_argument("--snapshot", required=True, type=Path)
     hidden.add_argument("--session", required=True, type=Path)
-    hidden.add_argument("--run-root", required=True, type=Path)
     hidden.add_argument("--freeze-producer", required=True)
     hidden.add_argument("--map-index", required=True, type=int)
     hidden.add_argument("--mission-index", required=True, type=int)
@@ -60,11 +60,16 @@ def main(argv: list[str] | None = None) -> int:
             require_canonical_formal_inputs(
                 snapshot_path=args.snapshot, session_path=args.session, scenario_config=args.config,
             )
+            run_root_value = os.environ.get("TZCUP_FORMAL_HIDDEN_RUN_ROOT")
+            if not run_root_value:
+                raise GenerationError(
+                    "materialize-hidden is a formal-runner entrypoint and requires its sealed run context"
+                )
             output = materialize_hidden_episode(
                 scenario_config=args.config,
                 snapshot_path=args.snapshot,
                 session_path=args.session,
-                run_root=args.run_root,
+                run_root=Path(run_root_value),
                 output=args.output,
                 map_index=args.map_index,
                 mission_index=args.mission_index,

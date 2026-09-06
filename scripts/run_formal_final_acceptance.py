@@ -1795,11 +1795,11 @@ def _step_command(
         )
         return ["__sequence__", json.dumps([refresh, bash("run_integrated_functional_acceptance.sh")])], environment
     if step_id == "episode_materialization":
+        environment["TZCUP_FORMAL_HIDDEN_RUN_ROOT"] = str(context.run_root)
         return _shell_source_command(context, [
             "ros2", "run", "sanitation_campus_scenario", "sanitation-campus-scenario", "materialize-hidden",
             "--config", root / "starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml",
             "--snapshot", context.snapshot, "--session", context.session,
-            "--run-root", context.run_root,
             "--freeze-producer", "formal_rl_multimap",
             "--map-index", "0", "--mission-index", "0",
             "--output", context.episode_root,

@@ -203,8 +203,9 @@ def test_cli_returns_nonzero_when_hidden_gate_is_blocked(tmp_path, monkeypatch):
         "status": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING", "started_epoch_ns": 1,
         "snapshot": identity,
     }))
-    result = formal_training.main(
-        [
+    with pytest.raises(Exception, match="canonical formal snapshot"):
+        formal_training.main(
+            [
             "--scenario-config", str(scenario),
             "--motion-profile", str(tmp_path / "motion.yaml"),
             "--work-root", str(tmp_path / "work"),
@@ -212,9 +213,8 @@ def test_cli_returns_nonzero_when_hidden_gate_is_blocked(tmp_path, monkeypatch):
             "--snapshot", str(snapshot),
             "--session", str(session),
             "--hidden-receipt-root", str(tmp_path / "receipts"),
-        ]
-    )
-    assert result == 2
+            ]
+        )
 
 
 def test_cli_rejects_a_smaller_explicit_selection_before_materialization(

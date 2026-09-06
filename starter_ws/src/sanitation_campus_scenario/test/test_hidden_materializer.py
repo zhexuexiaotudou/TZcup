@@ -189,3 +189,30 @@ def test_aggregate_verifier_fails_closed_when_retained_output_is_deleted(tmp_pat
             run_root=run_root, snapshot_path=snapshot, session_path=session,
             scenario_config=CONFIG, records=[record],
         )
+
+
+def test_aggregate_verifier_fails_closed_when_freeze_receipt_changes(tmp_path: Path) -> None:
+    snapshot, session, run_root = _bound_inputs(tmp_path)
+    freeze = commit_hidden_configuration_freeze(
+        run_root=run_root, snapshot_path=snapshot, session_path=session,
+        scenario_config=CONFIG, producer="test", frozen_configuration={},
+    )
+    output = run_root / "episode"
+    materialize_hidden_episode(
+        scenario_config=CONFIG, snapshot_path=snapshot, session_path=session,
+        run_root=run_root, output=output, map_index=0, mission_index=0,
+        freeze_producer="test",
+    )
+    freeze_payload = json.loads(freeze.read_text(encoding="utf-8"))
+    freeze_payload["frozen_configuration"] = {"replaced": True}
+    freeze.write_text(json.dumps(freeze_payload), encoding="utf-8")
+    with pytest.raises(HiddenMaterializationError, match="freeze receipt drifted"):
+        verify_hidden_consumption_records(
+            run_root=run_root, snapshot_path=snapshot, session_path=session,
+            scenario_config=CONFIG,
+            records=[{
+                "producer": "formal_hidden_episode",
+                "request": {"profile": "formal", "split": "hidden", "map_index": 0, "mission_index": 0},
+                "output": output,
+            }],
+        )
