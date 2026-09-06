@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import ast
 from copy import deepcopy
+import hashlib
 import json
 from pathlib import Path
+import subprocess
+import sys
 
 from collect_formal_service_door_runtime import (
     _load_joint_velocity_limits,
@@ -60,10 +63,14 @@ def passing_evidence():
     )
     evidence = {
         "source_binding": {
+            "snapshot_manifest_sha256": hashlib.sha256(
+                (ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.json").read_bytes()
+            ).hexdigest(),
             "expanded_urdf_sha256": snapshot["outputs"][
                 "reports/engineering/formal_competition_vehicle.urdf"
             ]["sha256"]
         },
+        "snapshot_manifest": "reports/engineering/formal_vehicle_snapshot_manifest.json",
         "evidence_authority": "GAZEBO_MODEL_JOINT_STATE_BRIDGE",
         "physical_joint_state_topic": "/formal/service_door_joint_states",
         "plugin_diagnostics": {
@@ -264,6 +271,72 @@ Subscribers:
 """
     assert _publisher_count_from_topic_info(fixture) == 1
     assert _publisher_count_from_topic_info(fixture.replace("Subscribers:", "  tcp://172.17.0.3:42514\nSubscribers:")) == 2
+
+
+def test_gazebo8_topic_info_counts_endpoint_rows_and_stops_at_any_section() -> None:
+    # This is the repository's Gazebo Sim 8 topic-info table shape, also used
+    # by test_run_formal_typed_cleaning_motor_diagnostic.py.
+    fixture = """Publishers [Address, Message Type]:
+foo, gz.msgs.Double_V
+Subscribers [Address, Message Type]:
+not-an-endpoint, gz.msgs.Double_V
+"""
+    assert _publisher_count_from_topic_info(fixture) == 1
+    assert _publisher_count_from_topic_info(fixture.replace(
+        "foo, gz.msgs.Double_V", "foo, gz.msgs.Double_V\nbar, gz.msgs.Double_V"
+    )) == 2
+    assert _publisher_count_from_topic_info(fixture.replace(
+        "foo, gz.msgs.Double_V", "not an endpoint"
+    )) == 0
+
+
+def test_bad_joint_position_type_or_nan_writes_failed_validator_report(tmp_path: Path) -> None:
+    for value in ("bad-position", float("nan")):
+        evidence = passing_evidence()
+        evidence["phases"]["open"]["joint_state_samples"][0]["positions_rad"][
+            "bodywork_power_service_door_hinge_joint"
+        ] = value
+        input_path = tmp_path / "evidence.json"
+        output_path = tmp_path / "report.json"
+        input_path.write_text(json.dumps(evidence, allow_nan=True), encoding="utf-8")
+        completed = subprocess.run(
+            [sys.executable, str(ROOT / "scripts/validate_formal_service_door_runtime.py"),
+             "--input", str(input_path), "--output", str(output_path)],
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        report = json.loads(output_path.read_text(encoding="utf-8"))
+        assert completed.returncode == 2
+        assert report["status"] == FAILED_STATUS
+        assert report["passed"] is False
+
+
+def test_snapshot_manifest_drift_fails_delivery_binding(tmp_path: Path) -> None:
+    evidence = passing_evidence()
+    snapshot = ROOT / evidence["snapshot_manifest"]
+    drifted = tmp_path / "reports/engineering/formal_vehicle_snapshot_manifest.json"
+    drifted.parent.mkdir(parents=True)
+    drifted.write_bytes(snapshot.read_bytes())
+    assert not evaluate(evidence, drifted)["checks"][
+        "startup_and_phase_delivery_use_fresh_advancing_simulated_time"
+    ]
+
+
+def test_snapshot_logical_path_cannot_drift_or_escape_repository() -> None:
+    evidence = passing_evidence()
+    evidence["snapshot_manifest"] = "../formal_vehicle_snapshot_manifest.json"
+    assert not evaluate(evidence)["checks"][
+        "startup_and_phase_delivery_use_fresh_advancing_simulated_time"
+    ]
+
+
+def test_runner_writes_primary_failed_report_for_launcher_or_sidecar_failure() -> None:
+    runner = (ROOT / "scripts/run_formal_service_door_runtime.sh").read_text(encoding="utf-8")
+    assert "write_runner_failure_report" in runner
+    assert '"independent_gazebo_joint_state_sidecar_failed"' in runner
+    assert '"gazebo_launcher_exited_before_service_door_collector"' in runner
+    assert '"FORMAL_BODYWORK_SERVICE_DOOR_RUNTIME_FAILED"' in runner
 
 
 def test_missing_evaluator_bridge_subscriber_fails_closed() -> None:

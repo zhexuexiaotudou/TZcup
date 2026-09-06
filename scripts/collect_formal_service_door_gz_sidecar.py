@@ -24,17 +24,27 @@ def _joint_names_from_model_text(text: str) -> list[str]:
 
 
 def _publisher_count_from_topic_info(text: str) -> int:
-    """Count the indented publisher endpoints in `gz topic -i -t` output."""
+    """Count publisher endpoints in legacy and Gazebo Sim 8 topic output."""
 
     count = 0
     in_publishers = False
     for line in text.splitlines():
-        if line.strip() == "Publishers:":
+        stripped = line.strip()
+        if stripped in ("Publishers:", "Publishers [Address, Message Type]:"):
             in_publishers = True
             continue
-        if in_publishers and line and not line.startswith((" ", "\t")):
+        if not in_publishers:
+            continue
+        # Gazebo 8 prints endpoint rows under a different heading and some
+        # versions do not indent them.  A top-level ``Something:`` heading
+        # always ends the publisher table, rather than becoming a publisher.
+        if re.fullmatch(r"[A-Za-z][^:]*:", stripped):
             break
-        if in_publishers and line.strip():
+        # Count endpoint records, not arbitrary non-empty rows.  Legacy
+        # transport uses URI endpoints; Gazebo 8 uses an address,type row.
+        if re.match(r"[A-Za-z][A-Za-z0-9+.-]*://\S+$", stripped) or re.fullmatch(
+            r"[^,\s][^,]*,\s*[^,\s].*", stripped
+        ):
             count += 1
     return count
 

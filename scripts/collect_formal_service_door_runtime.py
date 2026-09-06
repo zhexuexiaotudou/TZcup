@@ -27,6 +27,7 @@ PLUGIN_LIFECYCLE_PREFIX = "SERVICE_DOOR_LIFECYCLE "
 PHYSICAL_JOINT_STATES_TOPIC = "/formal/service_door_joint_states"
 PHYSICAL_JOINT_STATE_AUTHORITY = "GAZEBO_MODEL_JOINT_STATE_BRIDGE"
 EXPANDED_URDF_OUTPUT = "reports/engineering/formal_competition_vehicle.urdf"
+SNAPSHOT_LOGICAL_PATH = "reports/engineering/formal_vehicle_snapshot_manifest.json"
 PLUGIN_ECHO_TOLERANCE_RAD = 1.0e-6
 
 
@@ -530,6 +531,10 @@ def run(
     phases: dict[str, Any] = {}
     raw: dict[str, Any] = {
         "source_binding": source_binding,
+        # The report is portable across host/container boundaries.  Its
+        # logical path is paired with source_binding's manifest hash; the
+        # collector passes the actual resolved path directly to evaluate().
+        "snapshot_manifest": SNAPSHOT_LOGICAL_PATH,
         "evidence_authority": PHYSICAL_JOINT_STATE_AUTHORITY,
         "physical_joint_state_topic": PHYSICAL_JOINT_STATES_TOPIC,
         "urdf_velocity_limits_rad_per_s": velocity_limits,
@@ -607,7 +612,7 @@ def run(
         raw["gazebo_joint_state_sidecar"] = json.loads(gazebo_sidecar.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raw["gazebo_joint_state_sidecar"] = {"status": "FAILED", "error": str(exc)}
-    report = evaluate(raw)
+    report = evaluate(raw, snapshot)
     report["runtime_gate_binding"] = binding
     report["acceptance_session_binding"] = acceptance_session_binding
     report["runtime_closure_binding"] = binding["runtime_closure_binding"]

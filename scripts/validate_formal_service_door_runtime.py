@@ -14,7 +14,7 @@ from statistics import median
 from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
-
+SNAPSHOT_LOGICAL_PATH = "reports/engineering/formal_vehicle_snapshot_manifest.json"
 
 PASSED_STATUS = "FORMAL_BODYWORK_SERVICE_DOOR_RUNTIME_PASSED"
 FAILED_STATUS = "FORMAL_BODYWORK_SERVICE_DOOR_RUNTIME_FAILED"
@@ -51,7 +51,9 @@ def _advancing_complete_samples(samples: object, minimum: int = 5) -> bool:
     return all(left < right for left, right in zip(times, times[1:]))
 
 
-def _phase_delivery_and_timing_valid(evidence: dict[str, Any]) -> bool:
+def _phase_delivery_and_timing_valid(
+    evidence: dict[str, Any], snapshot_manifest: Path | None
+) -> bool:
     limits = evidence.get("urdf_velocity_limits_rad_per_s")
     contract = evidence.get("phase_timing_contract")
     if not isinstance(limits, dict) or not isinstance(contract, dict):
@@ -67,13 +69,23 @@ def _phase_delivery_and_timing_valid(evidence: dict[str, Any]) -> bool:
     joints = {item for spec in DOORS.values() for item in spec[:2]}
     if set(limits) != joints:
         return False
-    manifest_path = ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.json"
+    manifest_value = evidence.get("snapshot_manifest")
+    if (
+        not isinstance(manifest_value, str)
+        or manifest_value != SNAPSHOT_LOGICAL_PATH
+        or Path(manifest_value).is_absolute()
+        or ".." in Path(manifest_value).parts
+    ):
+        return False
+    manifest_path = snapshot_manifest if snapshot_manifest is not None else ROOT / manifest_value
     try:
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         output = manifest["outputs"]["reports/engineering/formal_competition_vehicle.urdf"]
-        urdf_path = ROOT / "reports/engineering/formal_competition_vehicle.urdf"
+        urdf_path = manifest_path.parents[2] / "reports/engineering/formal_competition_vehicle.urdf"
         if (
             hashlib.sha256(urdf_path.read_bytes()).hexdigest() != output["sha256"]
+            or hashlib.sha256(manifest_path.read_bytes()).hexdigest()
+            != evidence.get("source_binding", {}).get("snapshot_manifest_sha256")
             or evidence.get("source_binding", {}).get("expanded_urdf_sha256") != output["sha256"]
         ):
             return False
@@ -389,7 +401,37 @@ def _plugin_reports_received_targets_and_force_writes(evidence: dict[str, Any]) 
     return True
 
 
-def evaluate(evidence: dict[str, Any]) -> dict[str, Any]:
+def _failed_report(evidence: object, error: Exception) -> dict[str, Any]:
+    """Preserve a machine-readable failed report when malformed evidence hits a validator edge."""
+
+    value = evidence if isinstance(evidence, dict) else {}
+    return {
+        "report_id": "tzcup_formal_service_door_runtime_v1",
+        "status": FAILED_STATUS,
+        "passed": False,
+        "checks": {"validator_completed": False},
+        "validation_error": f"{type(error).__name__}: {error}",
+        "source_binding": value.get("source_binding", {}),
+        "evidence_authority": value.get("evidence_authority"),
+        "sample_counts": {},
+        "final_positions_rad": {},
+        "phases": value.get("phases", {}),
+        "plugin_diagnostics": value.get("plugin_diagnostics", {}),
+        "gazebo_joint_state_sidecar": value.get("gazebo_joint_state_sidecar", {}),
+        "claim_boundary": "Malformed or non-finite runtime evidence is rejected fail-closed.",
+    }
+
+
+def evaluate(
+    evidence: dict[str, Any], snapshot_manifest: Path | None = None
+) -> dict[str, Any]:
+    try:
+        return _evaluate(evidence, snapshot_manifest)
+    except (ArithmeticError, KeyError, TypeError, ValueError) as exc:
+        return _failed_report(evidence, exc)
+
+
+def _evaluate(evidence: dict[str, Any], snapshot_manifest: Path | None) -> dict[str, Any]:
     sample_counts = {name: len(_phase_samples(evidence, name)) for name in PHASES}
     finals = {name: _final_positions(evidence, name) for name in PHASES}
     expected_joints = {item for spec in DOORS.values() for item in spec[:2]}
@@ -447,7 +489,7 @@ def evaluate(evidence: dict[str, Any]) -> dict[str, Any]:
             _all_target_publishers_have_bridge_subscribers(evidence)
         ),
         "startup_and_phase_delivery_use_fresh_advancing_simulated_time": (
-            _phase_delivery_and_timing_valid(evidence)
+            _phase_delivery_and_timing_valid(evidence, snapshot_manifest)
         ),
         "independent_gazebo_joint_state_sidecar_is_complete": _gazebo_sidecar_valid(evidence),
         "plugin_lifecycle_configuration_observed": (
@@ -492,9 +534,10 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--input", type=Path, required=True)
     parser.add_argument("--output", type=Path)
+    parser.add_argument("--snapshot-manifest", type=Path)
     args = parser.parse_args()
     evidence = json.loads(args.input.read_text(encoding="utf-8"))
-    result = evaluate(evidence)
+    result = evaluate(evidence, args.snapshot_manifest)
     text = json.dumps(result, indent=2, sort_keys=True) + "\n"
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)

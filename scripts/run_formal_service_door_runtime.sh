@@ -28,6 +28,35 @@ if [[ -e "${output}" || -e "${log}" || -e "${runtime_binding}" || -e "${gz_sidec
 fi
 mkdir -p "$(dirname "${output}")" "$(dirname "${log}")"
 
+write_runner_failure_report() {
+  local reason="$1"
+  python3 - "${output}" "${reason}" "${gz_sidecar}" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+output, reason, sidecar = Path(sys.argv[1]), sys.argv[2], Path(sys.argv[3])
+try:
+    sidecar_evidence = json.loads(sidecar.read_text(encoding="utf-8"))
+except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+    sidecar_evidence = {"status": "FAILED", "error": str(exc)}
+report = {
+    "report_id": "tzcup_formal_service_door_runtime_v1",
+    "status": "FORMAL_BODYWORK_SERVICE_DOOR_RUNTIME_FAILED",
+    "passed": False,
+    "checks": {
+        "runner_completed": False,
+        "independent_gazebo_joint_state_sidecar_is_complete": False,
+    },
+    "runner_failure": reason,
+    "gazebo_joint_state_sidecar": sidecar_evidence,
+    "claim_boundary": "Launcher or independent Gazebo sidecar failure is rejected fail-closed.",
+}
+output.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+print(json.dumps(report, sort_keys=True))
+PY
+}
+
 python3 "${repo_root}/scripts/generate_formal_vehicle_snapshot.py" \
   --check --output "${snapshot}"
 python3 "${repo_root}/scripts/formal_runtime_gate_binding.py" \
@@ -76,11 +105,16 @@ set +e
 python3 "${repo_root}/scripts/collect_formal_service_door_gz_sidecar.py" "${gz_sidecar_args[@]}"
 gz_sidecar_rc=$?
 set -e
-[[ "${gz_sidecar_rc}" = 0 ]] || echo "Independent Gazebo joint-state sidecar failed" >&2
-kill -0 "${launch_pid}" 2>/dev/null || {
-  echo "Gazebo launcher exited before service-door collector" >&2
+if [[ "${gz_sidecar_rc}" != 0 ]]; then
+  echo "Independent Gazebo joint-state sidecar failed" >&2
+  write_runner_failure_report "independent_gazebo_joint_state_sidecar_failed"
   exit 3
-}
+fi
+if ! kill -0 "${launch_pid}" 2>/dev/null; then
+  echo "Gazebo launcher exited before service-door collector" >&2
+  write_runner_failure_report "gazebo_launcher_exited_before_service_door_collector"
+  exit 3
+fi
 
 python3 "${repo_root}/scripts/collect_formal_service_door_runtime.py" \
   --output "${output}" \
