@@ -49,6 +49,14 @@ except ImportError:  # pragma: no cover - exercised by Windows CI import
 
 ROOT = Path(__file__).resolve().parents[1]
 FORMAL_RUN_ROOT_PARENT = ROOT / ".work/formal_final_acceptance"
+SCENARIO_PYTHON_SOURCE = ROOT / "starter_ws/src/sanitation_campus_scenario"
+if str(SCENARIO_PYTHON_SOURCE) not in sys.path:
+    sys.path.insert(0, str(SCENARIO_PYTHON_SOURCE))
+from sanitation_campus_scenario.hidden_materializer import (  # noqa: E402
+    HiddenMaterializationError,
+    commit_formal_hidden_run_context,
+    verify_hidden_consumption_records,
+)
 CONTRACT = ROOT / "config/high_fidelity_vehicle/formal_functional_acceptance_contract.yaml"
 SNAPSHOT = ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.json"
 SESSION = ROOT / "artifacts/formal_final_acceptance_session.json"
@@ -3134,6 +3142,38 @@ def _functional_audit_path(context: Context) -> Path:
     return context.root / FUNCTIONAL_AUDIT.relative_to(ROOT)
 
 
+def _verify_final_hidden_consumption(context: Context) -> list[dict[str, str]]:
+    """Re-open the one final hidden episode before it can feed a formal PASS."""
+
+    # Unit fixtures deliberately use a temporary synthetic repository.  The
+    # executable's ROOT is fixed to this repository, so production never takes
+    # this fixture-only branch.
+    if context.root.resolve() != ROOT.resolve():
+        return []
+    try:
+        return verify_hidden_consumption_records(
+            run_root=context.run_root,
+            snapshot_path=context.snapshot,
+            session_path=context.session,
+            scenario_config=(
+                context.root
+                / "starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml"
+            ),
+            records=[{
+                "producer": "formal_hidden_episode",
+                "request": {
+                    "profile": "formal", "split": "hidden",
+                    "map_index": 0, "mission_index": 0,
+                },
+                "output": context.episode_root,
+            }],
+        )
+    except (HiddenMaterializationError, OSError, ValueError) as exc:
+        raise OrchestrationError(
+            f"final hidden consumption ledger/freeze/output verification failed: {exc}"
+        ) from exc
+
+
 def _run_functional_aggregate(
     context: Context, log_path: Path, *, external_present: bool
 ) -> dict[str, Any]:
@@ -3330,6 +3370,17 @@ def execute(context: Context) -> tuple[dict[str, Any], int]:
             evidence: list[dict[str, Any]] = []
             try:
                 closure_before = _verify_runtime_closure(context, f"before:{step.step_id}")
+                if step.step_id == "episode_materialization" and context.root.resolve() == ROOT.resolve():
+                    step_blocker = "hidden_run_context"
+                    commit_formal_hidden_run_context(
+                        run_root=context.run_root,
+                        snapshot_path=context.snapshot,
+                        session_path=context.session,
+                        scenario_config=(
+                            context.root
+                            / "starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml"
+                        ),
+                    )
                 step_blocker = "command"
                 command, environment = _step_command(
                     step.step_id,
@@ -3361,6 +3412,11 @@ def execute(context: Context) -> tuple[dict[str, Any], int]:
                         wrap_lock=step.requires_outer_gazebo_lock,
                         memory_watchdog=_requires_resource_gate(step),
                         )
+                if step.step_id == "episode_materialization":
+                    step_blocker = "hidden_consumption_after_materialization"
+                    report["final_hidden_consumption_after_materialization"] = (
+                        _verify_final_hidden_consumption(context)
+                    )
                 if step.step_id == "start_session":
                     step_blocker = "session_start"
                     session_payload = _read_json(context.session)
@@ -3554,6 +3610,10 @@ def execute(context: Context) -> tuple[dict[str, Any], int]:
         try:
             aggregate_closure_before = _verify_runtime_closure(
                 context, "before:functional_aggregate"
+            )
+            aggregate_blocker = "hidden_consumption_before_functional_aggregate"
+            report["final_hidden_consumption_before_functional_aggregate"] = (
+                _verify_final_hidden_consumption(context)
             )
             aggregate_blocker = "functional_aggregate"
             functional = _run_functional_aggregate(
@@ -3923,6 +3983,9 @@ def resume_s100(context: Context) -> tuple[dict[str, Any], int]:
             aggregate_started_ns = time.time_ns()
             aggregate_closure_before = _verify_runtime_closure(
                 context, "resume:before:functional_aggregate"
+            )
+            report["final_hidden_consumption_before_functional_aggregate_resume"] = (
+                _verify_final_hidden_consumption(context)
             )
             functional = _run_functional_aggregate(
                 context,

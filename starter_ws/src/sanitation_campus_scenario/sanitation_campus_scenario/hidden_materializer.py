@@ -24,6 +24,8 @@ CANONICAL_SESSION = REPOSITORY_ROOT / "artifacts/formal_final_acceptance_session
 CANONICAL_SCENARIO_CONFIG = (
     REPOSITORY_ROOT / "starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml"
 )
+CANONICAL_FORMAL_RUN_ROOT_PARENT = REPOSITORY_ROOT / ".work" / "formal_final_acceptance"
+FORMAL_RUN_CONTEXT_NAME = "hidden_materialization_context.json"
 
 
 class HiddenMaterializationError(GenerationError):
@@ -82,6 +84,24 @@ def _run_root(path: Path) -> Path:
     if not path.is_dir() or path.is_symlink():
         raise HiddenMaterializationError(f"formal run root must be a regular directory: {path}")
     return path.resolve()
+
+
+def _canonical_formal_run_root(path: Path) -> Path:
+    """Return one existing, non-reparse final-runner root and nothing else."""
+
+    _reject_symlink_ancestors(CANONICAL_FORMAL_RUN_ROOT_PARENT, "formal run-root parent")
+    _reject_symlink_ancestors(path, "formal run root")
+    parent = CANONICAL_FORMAL_RUN_ROOT_PARENT.resolve()
+    if not path.is_absolute() or not path.is_dir() or path.is_symlink():
+        raise HiddenMaterializationError("formal hidden run root must be an existing regular absolute directory")
+    resolved = path.resolve()
+    try:
+        relative = resolved.relative_to(parent)
+    except ValueError as exc:
+        raise HiddenMaterializationError("formal hidden run root is outside the canonical final-runner parent") from exc
+    if not relative.parts or resolved == parent:
+        raise HiddenMaterializationError("formal hidden run root must name one canonical final-runner child")
+    return resolved
 
 
 def _within_run_root(path: Path, run_root: Path, label: str) -> Path:
@@ -159,6 +179,57 @@ def _source_session_binding(
         },
         "scenario_config_sha256": _sha256(scenario_config),
     }
+
+
+def commit_formal_hidden_run_context(
+    *, run_root: Path, snapshot_path: Path, session_path: Path, scenario_config: Path,
+) -> Path:
+    """Seal the public CLI hand-off to this final-runner's current context."""
+
+    require_canonical_formal_inputs(
+        snapshot_path=snapshot_path, session_path=session_path, scenario_config=scenario_config,
+    )
+    root = _canonical_formal_run_root(run_root)
+    binding = _source_session_binding(
+        snapshot_path=snapshot_path, session_path=session_path, scenario_config=scenario_config,
+    )
+    path = root / FORMAL_RUN_CONTEXT_NAME
+    _commit_receipt(path, {
+        "schema_version": 1,
+        "receipt_id": "tzcup_formal_hidden_materialization_context_v1",
+        "status": "FORMAL_HIDDEN_MATERIALIZATION_CONTEXT_READY",
+        "run_root": str(root),
+        **binding,
+    })
+    return path
+
+
+def require_formal_hidden_run_context(
+    *, run_root: Path, snapshot_path: Path, session_path: Path, scenario_config: Path,
+) -> Path:
+    """Refuse an arbitrary environment root or a stale runner hand-off."""
+
+    require_canonical_formal_inputs(
+        snapshot_path=snapshot_path, session_path=session_path, scenario_config=scenario_config,
+    )
+    root = _canonical_formal_run_root(run_root)
+    binding = _source_session_binding(
+        snapshot_path=snapshot_path, session_path=session_path, scenario_config=scenario_config,
+    )
+    context = _json_object(
+        _regular(root / FORMAL_RUN_CONTEXT_NAME, "formal hidden run context"),
+        "formal hidden run context",
+    )
+    if (
+        context.get("receipt_id") != "tzcup_formal_hidden_materialization_context_v1"
+        or context.get("status") != "FORMAL_HIDDEN_MATERIALIZATION_CONTEXT_READY"
+        or context.get("run_root") != str(root)
+        or context.get("source_binding") != binding["source_binding"]
+        or context.get("acceptance_session_binding") != binding["acceptance_session_binding"]
+        or context.get("scenario_config_sha256") != binding["scenario_config_sha256"]
+    ):
+        raise HiddenMaterializationError("formal hidden run context is not bound to the current canonical runner")
+    return root
 
 
 def _commit_receipt(path: Path, payload: dict[str, Any]) -> None:
@@ -291,7 +362,14 @@ def materialize_hidden_episode(
         load_config(scenario_config), "formal", "hidden", map_index, mission_index,
         include_proxy=False,
     )
-    return write_episode(output, files)
+    written = write_episode(output, files)
+    _commit_hidden_output_summary(
+        run_root=run_root, snapshot_path=snapshot_path, session_path=session_path,
+        scenario_config=scenario_config, producer="formal_hidden_episode",
+        request={"profile": "formal", "split": "hidden", "map_index": map_index, "mission_index": mission_index},
+        output=written,
+    )
+    return written
 
 
 def materialize_hidden_stage_a_episode(
@@ -313,7 +391,47 @@ def materialize_hidden_stage_a_episode(
     files = generate_stage_a_episode(
         load_config(scenario_config), "formal", "hidden", task_index, include_proxy=False,
     )
-    return write_episode(output, files)
+    written = write_episode(output, files)
+    _commit_hidden_output_summary(
+        run_root=run_root, snapshot_path=snapshot_path, session_path=session_path,
+        scenario_config=scenario_config, producer="formal_rl_stage_a_hidden_task",
+        request={"profile": "formal", "phase": "stage_a_hidden", "task_index": task_index},
+        output=written,
+    )
+    return written
+
+
+def _commit_hidden_output_summary(
+    *, run_root: Path, snapshot_path: Path, session_path: Path, scenario_config: Path,
+    producer: str, request: dict[str, Any], output: Path,
+) -> Path:
+    """Bind the post-generation manifest once; a changed episode cannot be reused."""
+
+    root = _run_root(run_root)
+    output = _within_run_root(output, root, "hidden materialization output")
+    binding = _source_session_binding(
+        snapshot_path=snapshot_path, session_path=session_path, scenario_config=scenario_config,
+    )
+    consumed = _regular(
+        _ledger_path(run_root=root, binding=binding, producer=producer, request=request, kind="consumed"),
+        "hidden consumption receipt",
+    )
+    manifest = _regular(output / "public" / "episode_manifest.json", "hidden output episode manifest")
+    summary = _ledger_path(
+        run_root=root, binding=binding, producer=producer, request=request, kind="output-summary",
+    )
+    _commit_receipt(summary, {
+        "schema_version": 1,
+        "receipt_id": "tzcup_hidden_materialization_output_summary_v1",
+        "status": "HIDDEN_MATERIALIZATION_OUTPUT_SUMMARIZED",
+        "producer": producer,
+        "request": request,
+        "output_root": str(output),
+        "consumption_receipt_sha256": _sha256(consumed),
+        "episode_manifest_sha256": _sha256(manifest),
+        **binding,
+    })
+    return summary
 
 
 def verify_hidden_consumption_records(
@@ -381,8 +499,28 @@ def verify_hidden_consumption_records(
             or freeze.get("scenario_config_sha256") != binding["scenario_config_sha256"]
         ):
             raise HiddenMaterializationError("hidden consumption freeze receipt drifted or was replaced")
+        summary_path = _regular(
+            _ledger_path(run_root=run_root, binding=binding, producer=producer,
+                         request=request, kind="output-summary"),
+            "hidden output summary receipt",
+        )
+        summary = _json_object(summary_path, "hidden output summary receipt")
+        if (
+            summary.get("receipt_id") != "tzcup_hidden_materialization_output_summary_v1"
+            or summary.get("status") != "HIDDEN_MATERIALIZATION_OUTPUT_SUMMARIZED"
+            or summary.get("producer") != producer
+            or summary.get("request") != request
+            or summary.get("output_root") != str(output)
+            or summary.get("consumption_receipt_sha256") != _sha256(receipt_path)
+            or summary.get("episode_manifest_sha256") != _sha256(manifest)
+            or summary.get("source_binding") != binding["source_binding"]
+            or summary.get("acceptance_session_binding") != binding["acceptance_session_binding"]
+            or summary.get("scenario_config_sha256") != binding["scenario_config_sha256"]
+        ):
+            raise HiddenMaterializationError("hidden output summary drifted, was replaced, or does not bind this manifest")
         summaries.append({
             "receipt_sha256": _sha256(receipt_path),
+            "output_summary_receipt_sha256": _sha256(summary_path),
             "episode_manifest_sha256": _sha256(manifest),
             "output_root": str(output),
         })

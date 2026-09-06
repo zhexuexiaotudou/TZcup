@@ -8,7 +8,10 @@ from pathlib import Path
 import sys
 
 from .generator import GenerationError, generate_episode, load_config, split_index
-from .hidden_materializer import materialize_hidden_episode, require_canonical_formal_inputs
+from .hidden_materializer import (
+    materialize_hidden_episode,
+    require_formal_hidden_run_context,
+)
 from .io import write_episode, write_json_file
 
 
@@ -57,19 +60,20 @@ def main(argv: list[str] | None = None) -> int:
             )
             output = write_episode(args.output, files)
         elif args.command == "materialize-hidden":
-            require_canonical_formal_inputs(
-                snapshot_path=args.snapshot, session_path=args.session, scenario_config=args.config,
-            )
             run_root_value = os.environ.get("TZCUP_FORMAL_HIDDEN_RUN_ROOT")
             if not run_root_value:
                 raise GenerationError(
                     "materialize-hidden is a formal-runner entrypoint and requires its sealed run context"
                 )
+            run_root = require_formal_hidden_run_context(
+                run_root=Path(run_root_value), snapshot_path=args.snapshot,
+                session_path=args.session, scenario_config=args.config,
+            )
             output = materialize_hidden_episode(
                 scenario_config=args.config,
                 snapshot_path=args.snapshot,
                 session_path=args.session,
-                run_root=Path(run_root_value),
+                run_root=run_root,
                 output=args.output,
                 map_index=args.map_index,
                 mission_index=args.mission_index,

@@ -661,6 +661,9 @@ def test_commands_use_one_fresh_episode_map_rl_and_e2e_root() -> None:
     assert "--run-root" not in " ".join(materialize)
     assert materialize_env["TZCUP_FORMAL_HIDDEN_RUN_ROOT"] == str(context.run_root)
     assert "--freeze-producer" in " ".join(materialize)
+    source = (ROOT / "scripts/run_formal_final_acceptance.py").read_text(encoding="utf-8")
+    assert "commit_formal_hidden_run_context(" in source
+    assert source.count("_verify_final_hidden_consumption(context)") >= 2
 
     first_map, first_env = orchestration._step_command("first_map", context)
     assert first_map[-1].endswith("run_formal_first_map_dynamic_prerequisite.sh")

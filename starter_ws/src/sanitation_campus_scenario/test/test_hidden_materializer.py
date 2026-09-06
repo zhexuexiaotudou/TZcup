@@ -9,9 +9,12 @@ import pytest
 from sanitation_campus_scenario import cli, hidden_materializer
 from sanitation_campus_scenario.generator import GenerationError
 from sanitation_campus_scenario.hidden_materializer import (
+    CANONICAL_FORMAL_RUN_ROOT_PARENT,
     HiddenMaterializationError,
+    commit_formal_hidden_run_context,
     commit_hidden_configuration_freeze,
     materialize_hidden_episode,
+    require_formal_hidden_run_context,
     require_canonical_formal_inputs,
     verify_hidden_consumption_records,
 )
@@ -216,3 +219,60 @@ def test_aggregate_verifier_fails_closed_when_freeze_receipt_changes(tmp_path: P
                 "output": output,
             }],
         )
+
+
+def test_aggregate_verifier_fails_closed_when_output_manifest_changes(tmp_path: Path) -> None:
+    snapshot, session, run_root = _bound_inputs(tmp_path)
+    commit_hidden_configuration_freeze(
+        run_root=run_root, snapshot_path=snapshot, session_path=session,
+        scenario_config=CONFIG, producer="test", frozen_configuration={},
+    )
+    output = run_root / "episode"
+    materialize_hidden_episode(
+        scenario_config=CONFIG, snapshot_path=snapshot, session_path=session,
+        run_root=run_root, output=output, map_index=0, mission_index=0,
+        freeze_producer="test",
+    )
+    manifest = output / "public" / "episode_manifest.json"
+    payload = json.loads(manifest.read_text(encoding="utf-8"))
+    payload["episode_id"] = "altered-after-consumption"
+    manifest.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(HiddenMaterializationError, match="output summary"):
+        verify_hidden_consumption_records(
+            run_root=run_root, snapshot_path=snapshot, session_path=session,
+            scenario_config=CONFIG, records=[{
+                "producer": "formal_hidden_episode",
+                "request": {"profile": "formal", "split": "hidden", "map_index": 0, "mission_index": 0},
+                "output": output,
+            }],
+        )
+
+
+def test_formal_context_rejects_an_arbitrary_env_root(tmp_path: Path, monkeypatch) -> None:
+    snapshot, session, _ = _bound_inputs(tmp_path)
+    canonical_parent = tmp_path / ".work" / "formal_final_acceptance"
+    canonical_parent.mkdir(parents=True)
+    monkeypatch.setattr(
+        "sanitation_campus_scenario.hidden_materializer.CANONICAL_FORMAL_RUN_ROOT_PARENT",
+        canonical_parent,
+    )
+    monkeypatch.setattr(
+        "sanitation_campus_scenario.hidden_materializer.CANONICAL_SNAPSHOT", snapshot,
+    )
+    monkeypatch.setattr(
+        "sanitation_campus_scenario.hidden_materializer.CANONICAL_SESSION", session,
+    )
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    with pytest.raises(HiddenMaterializationError, match="outside the canonical"):
+        require_formal_hidden_run_context(
+            run_root=outside, snapshot_path=snapshot, session_path=session, scenario_config=CONFIG,
+        )
+    root = canonical_parent / "current-session"
+    root.mkdir()
+    commit_formal_hidden_run_context(
+        run_root=root, snapshot_path=snapshot, session_path=session, scenario_config=CONFIG,
+    )
+    assert require_formal_hidden_run_context(
+        run_root=root, snapshot_path=snapshot, session_path=session, scenario_config=CONFIG,
+    ) == root.resolve()
