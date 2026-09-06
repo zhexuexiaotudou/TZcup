@@ -7,7 +7,7 @@ from pathlib import Path
 import sys
 
 from .generator import GenerationError, generate_episode, load_config, split_index
-from .hidden_materializer import materialize_hidden_episode
+from .hidden_materializer import materialize_hidden_episode, require_canonical_formal_inputs
 from .io import write_episode, write_json_file
 
 
@@ -29,8 +29,8 @@ def build_parser() -> argparse.ArgumentParser:
     hidden.add_argument("--config", required=True, type=Path)
     hidden.add_argument("--snapshot", required=True, type=Path)
     hidden.add_argument("--session", required=True, type=Path)
-    hidden.add_argument("--consumed-receipt", required=True, type=Path)
-    hidden.add_argument("--freeze-receipt", required=True, type=Path)
+    hidden.add_argument("--run-root", required=True, type=Path)
+    hidden.add_argument("--freeze-producer", required=True)
     hidden.add_argument("--map-index", required=True, type=int)
     hidden.add_argument("--mission-index", required=True, type=int)
     hidden.add_argument("--output", required=True, type=Path)
@@ -57,15 +57,18 @@ def main(argv: list[str] | None = None) -> int:
             )
             output = write_episode(args.output, files)
         elif args.command == "materialize-hidden":
+            require_canonical_formal_inputs(
+                snapshot_path=args.snapshot, session_path=args.session, scenario_config=args.config,
+            )
             output = materialize_hidden_episode(
                 scenario_config=args.config,
                 snapshot_path=args.snapshot,
                 session_path=args.session,
-                receipt_path=args.consumed_receipt,
+                run_root=args.run_root,
                 output=args.output,
                 map_index=args.map_index,
                 mission_index=args.mission_index,
-                freeze_receipt_path=args.freeze_receipt,
+                freeze_producer=args.freeze_producer,
             )
         else:
             output = write_json_file(args.output, split_index(config))

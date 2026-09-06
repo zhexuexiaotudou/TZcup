@@ -76,9 +76,9 @@ def materialize_stage_a_episode(
         materialize_hidden_stage_a_episode(
             scenario_config=Path(scenario_config), snapshot_path=Path(snapshot_path),
             session_path=Path(session_path),
-            receipt_path=Path(hidden_receipt_root) / f"task-{task_index:05d}.json",
+            run_root=Path(hidden_receipt_root),
             output=episode_root, task_index=task_index,
-            freeze_receipt_path=None if freeze_receipt_path is None else Path(freeze_receipt_path),
+            freeze_producer="formal_rl_stage_a",
         )
     else:
         files = generate_stage_a_episode(load_config(scenario_config), "formal", phase, task_index)
@@ -213,7 +213,7 @@ def execute(args: argparse.Namespace) -> dict[str, Any]:
         runs.append({"policy_seed": seed, "q_state_count": len(table), "train_episode_count": len(train), "validation_episode_count": len(validation), "validation_all_formal_success": all(row["formal_success"] for row in validation_rows), "validation_rows": validation_rows})
     freeze = {"frozen_after_validation": True, "selection_source": "validation_only_before_hidden", "policy_seeds": list(budget.policy_seeds), "frozen_epoch_ns": time.time_ns()}
     freeze_receipt = commit_hidden_configuration_freeze(
-        receipt_path=args.hidden_receipt_root / "configuration-freeze.json",
+        run_root=args.hidden_receipt_root,
         snapshot_path=args.snapshot, session_path=args.session,
         scenario_config=args.scenario_config, producer="formal_rl_stage_a",
         frozen_configuration=freeze,

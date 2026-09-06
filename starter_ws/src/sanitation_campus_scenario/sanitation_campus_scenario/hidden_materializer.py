@@ -18,8 +18,29 @@ from .generator import GenerationError, generate_episode, generate_stage_a_episo
 from .io import write_episode
 
 
+REPOSITORY_ROOT = Path(__file__).resolve().parents[4]
+CANONICAL_SNAPSHOT = REPOSITORY_ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.json"
+CANONICAL_SESSION = REPOSITORY_ROOT / "artifacts/formal_final_acceptance_session.json"
+CANONICAL_SCENARIO_CONFIG = (
+    REPOSITORY_ROOT / "starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml"
+)
+
+
 class HiddenMaterializationError(GenerationError):
     """A hidden task could not be safely consumed exactly once."""
+
+
+def require_canonical_formal_inputs(
+    *, snapshot_path: Path, session_path: Path, scenario_config: Path,
+) -> None:
+    """Keep the public hidden entrypoint tied to the formal trust roots."""
+
+    actual = (snapshot_path.resolve(), session_path.resolve(), scenario_config.resolve())
+    expected = (CANONICAL_SNAPSHOT.resolve(), CANONICAL_SESSION.resolve(), CANONICAL_SCENARIO_CONFIG.resolve())
+    if actual != expected:
+        raise HiddenMaterializationError(
+            "public hidden materialization requires canonical formal snapshot, session and scenario config"
+        )
 
 
 def _sha256(path: Path) -> str:
@@ -30,11 +51,62 @@ def _sha256(path: Path) -> str:
     return digest.hexdigest()
 
 
+def _reject_symlink_ancestors(path: Path, label: str) -> None:
+    """Reject a leaf *and every existing ancestor* that is a symlink."""
+
+    candidate = path.absolute()
+    while True:
+        if candidate.is_symlink():
+            raise HiddenMaterializationError(f"{label} must not traverse a symlink: {candidate}")
+        parent = candidate.parent
+        if parent == candidate:
+            return
+        candidate = parent
+
+
 def _regular(path: Path, label: str) -> Path:
+    _reject_symlink_ancestors(path, label)
     resolved = path.resolve()
     if path.is_symlink() or not path.is_file():
         raise HiddenMaterializationError(f"{label} must be a regular file: {path}")
     return resolved
+
+
+def _run_root(path: Path) -> Path:
+    _reject_symlink_ancestors(path, "formal run root")
+    if not path.exists():
+        try:
+            path.mkdir(parents=True, exist_ok=False)
+        except OSError as exc:
+            raise HiddenMaterializationError(f"cannot create canonical formal run root: {path}: {exc}") from exc
+    if not path.is_dir() or path.is_symlink():
+        raise HiddenMaterializationError(f"formal run root must be a regular directory: {path}")
+    return path.resolve()
+
+
+def _within_run_root(path: Path, run_root: Path, label: str) -> Path:
+    _reject_symlink_ancestors(path, label)
+    resolved = path.resolve()
+    try:
+        resolved.relative_to(run_root)
+    except ValueError as exc:
+        raise HiddenMaterializationError(f"{label} must be under the canonical formal run root") from exc
+    return resolved
+
+
+def _ledger_path(
+    *, run_root: Path, binding: dict[str, Any], producer: str,
+    request: dict[str, Any], kind: str,
+) -> Path:
+    """Derive, rather than accept, the durable formal consumption path."""
+
+    identity = json.dumps(
+        {"binding": binding, "producer": producer, "request": request},
+        sort_keys=True, separators=(",", ":"), ensure_ascii=True,
+    ).encode("utf-8")
+    request_id = hashlib.sha256(identity).hexdigest()
+    session_id = binding["acceptance_session_binding"]["session_manifest_sha256"]
+    return run_root / "hidden-consumption-ledger" / session_id / f"{kind}-{request_id}.json"
 
 
 def _json_object(path: Path, label: str) -> dict[str, Any]:
@@ -90,6 +162,7 @@ def _source_session_binding(
 
 
 def _commit_receipt(path: Path, payload: dict[str, Any]) -> None:
+    _reject_symlink_ancestors(path, "hidden consumption receipt")
     if path.exists() or path.is_symlink():
         raise HiddenMaterializationError(
             f"hidden task was already consumed; retained receipt cannot be overwritten: {path}"
@@ -114,10 +187,12 @@ def _commit_receipt(path: Path, payload: dict[str, Any]) -> None:
 
 
 def _consume(
-    *, receipt_path: Path, snapshot_path: Path, session_path: Path,
+    *, run_root: Path, snapshot_path: Path, session_path: Path,
     scenario_config: Path, producer: str, request: dict[str, Any], output: Path,
-    freeze_receipt_path: Path | None = None,
+    freeze_producer: str,
 ) -> None:
+    run_root = _run_root(run_root)
+    output = _within_run_root(output, run_root, "hidden materialization output")
     if output.exists() or output.is_symlink():
         raise HiddenMaterializationError(f"hidden materialization output must be fresh: {output}")
     binding = _source_session_binding(
@@ -125,24 +200,29 @@ def _consume(
         session_path=session_path,
         scenario_config=scenario_config,
     )
-    if freeze_receipt_path is None:
-        raise HiddenMaterializationError("hidden materialization requires an immutable configuration freeze receipt")
-    freeze_binding: dict[str, str] = {}
-    if freeze_receipt_path is not None:
-        freeze_receipt_path = _regular(freeze_receipt_path, "configuration freeze receipt")
-        freeze = _json_object(freeze_receipt_path, "configuration freeze receipt")
-        if (
-            freeze.get("receipt_id") != "tzcup_hidden_materialization_freeze_receipt_v1"
-            or freeze.get("status") != "HIDDEN_CONFIGURATION_FROZEN"
-            or freeze.get("hidden_materialization_allowed") is not True
-            or freeze.get("source_binding") != binding["source_binding"]
-            or freeze.get("acceptance_session_binding") != binding["acceptance_session_binding"]
-            or freeze.get("scenario_config_sha256") != binding["scenario_config_sha256"]
-        ):
-            raise HiddenMaterializationError(
-                "configuration freeze receipt is not bound to the active source/session"
-            )
-        freeze_binding = {"configuration_freeze_receipt_sha256": _sha256(freeze_receipt_path)}
+    freeze_request = {"phase": "configuration_freeze"}
+    freeze_receipt_path = _ledger_path(
+        run_root=run_root, binding=binding, producer=freeze_producer,
+        request=freeze_request, kind="freeze",
+    )
+    freeze_receipt_path = _regular(freeze_receipt_path, "configuration freeze receipt")
+    freeze = _json_object(freeze_receipt_path, "configuration freeze receipt")
+    if (
+        freeze.get("receipt_id") != "tzcup_hidden_materialization_freeze_receipt_v1"
+        or freeze.get("status") != "HIDDEN_CONFIGURATION_FROZEN"
+        or freeze.get("hidden_materialization_allowed") is not True
+        or freeze.get("producer") != freeze_producer
+        or freeze.get("source_binding") != binding["source_binding"]
+        or freeze.get("acceptance_session_binding") != binding["acceptance_session_binding"]
+        or freeze.get("scenario_config_sha256") != binding["scenario_config_sha256"]
+    ):
+        raise HiddenMaterializationError(
+            "configuration freeze receipt is not bound to the active source/session/configuration"
+        )
+    receipt_path = _ledger_path(
+        run_root=run_root, binding=binding, producer=producer,
+        request=request, kind="consumed",
+    )
     _commit_receipt(receipt_path, {
         "schema_version": 1,
         "receipt_id": "tzcup_hidden_materialization_consumed_receipt_v1",
@@ -152,13 +232,13 @@ def _consume(
         "producer": producer,
         "request": request,
         "output_root": str(output.resolve()),
-        **freeze_binding,
+        "configuration_freeze_receipt_sha256": _sha256(freeze_receipt_path),
         **binding,
     })
 
 
 def commit_hidden_configuration_freeze(
-    *, receipt_path: Path, snapshot_path: Path, session_path: Path,
+    *, run_root: Path, snapshot_path: Path, session_path: Path,
     scenario_config: Path, producer: str, frozen_configuration: dict[str, Any],
 ) -> Path:
     """Durably freeze a runner's train/validation decision before hidden use."""
@@ -167,6 +247,11 @@ def commit_hidden_configuration_freeze(
         snapshot_path=snapshot_path,
         session_path=session_path,
         scenario_config=scenario_config,
+    )
+    run_root = _run_root(run_root)
+    receipt_path = _ledger_path(
+        run_root=run_root, binding=binding, producer=producer,
+        request={"phase": "configuration_freeze"}, kind="freeze",
     )
     _commit_receipt(receipt_path, {
         "schema_version": 1,
@@ -183,13 +268,13 @@ def commit_hidden_configuration_freeze(
 
 def materialize_hidden_episode(
     *, scenario_config: Path, snapshot_path: Path, session_path: Path,
-    receipt_path: Path, output: Path, map_index: int, mission_index: int,
-    freeze_receipt_path: Path | None = None,
+    run_root: Path, output: Path, map_index: int, mission_index: int,
+    freeze_producer: str,
 ) -> Path:
     """Consume and generate one standard formal hidden episode exactly once."""
 
     _consume(
-        receipt_path=receipt_path,
+        run_root=run_root,
         snapshot_path=snapshot_path,
         session_path=session_path,
         scenario_config=scenario_config,
@@ -199,7 +284,7 @@ def materialize_hidden_episode(
             "mission_index": mission_index,
         },
         output=output,
-        freeze_receipt_path=freeze_receipt_path,
+        freeze_producer=freeze_producer,
     )
     files = generate_episode(
         load_config(scenario_config), "formal", "hidden", map_index, mission_index,
@@ -210,22 +295,75 @@ def materialize_hidden_episode(
 
 def materialize_hidden_stage_a_episode(
     *, scenario_config: Path, snapshot_path: Path, session_path: Path,
-    receipt_path: Path, output: Path, task_index: int,
-    freeze_receipt_path: Path | None = None,
+    run_root: Path, output: Path, task_index: int, freeze_producer: str,
 ) -> Path:
     """Consume and generate one fixed-map Stage-A hidden task exactly once."""
 
     _consume(
-        receipt_path=receipt_path,
+        run_root=run_root,
         snapshot_path=snapshot_path,
         session_path=session_path,
         scenario_config=scenario_config,
         producer="formal_rl_stage_a_hidden_task",
         request={"profile": "formal", "phase": "stage_a_hidden", "task_index": task_index},
         output=output,
-        freeze_receipt_path=freeze_receipt_path,
+        freeze_producer=freeze_producer,
     )
     files = generate_stage_a_episode(
         load_config(scenario_config), "formal", "hidden", task_index, include_proxy=False,
     )
     return write_episode(output, files)
+
+
+def verify_hidden_consumption_records(
+    *, run_root: Path, snapshot_path: Path, session_path: Path,
+    scenario_config: Path, records: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    """Re-read the retained locks and their generated outputs before PASS.
+
+    A final aggregator uses this rather than trusting a runner's remembered
+    paths.  Missing receipts, a different session/configuration, a changed
+    output location, or a removed manifest are all terminal failures.
+    """
+
+    run_root = _run_root(run_root)
+    binding = _source_session_binding(
+        snapshot_path=snapshot_path, session_path=session_path,
+        scenario_config=scenario_config,
+    )
+    summaries: list[dict[str, str]] = []
+    for record in records:
+        producer = record.get("producer")
+        request = record.get("request")
+        output_value = record.get("output")
+        if not isinstance(producer, str) or not isinstance(request, dict) or not isinstance(output_value, Path):
+            raise HiddenMaterializationError("hidden aggregate record is malformed")
+        output = _within_run_root(output_value, run_root, "hidden aggregate output")
+        if not output.is_dir() or output.is_symlink():
+            raise HiddenMaterializationError(f"hidden aggregate output is absent or non-regular: {output}")
+        manifest = _regular(output / "public" / "episode_manifest.json", "hidden aggregate episode manifest")
+        receipt_path = _ledger_path(
+            run_root=run_root, binding=binding, producer=producer,
+            request=request, kind="consumed",
+        )
+        receipt_path = _regular(receipt_path, "hidden consumption receipt")
+        receipt = _json_object(receipt_path, "hidden consumption receipt")
+        if (
+            receipt.get("receipt_id") != "tzcup_hidden_materialization_consumed_receipt_v1"
+            or receipt.get("status") != "HIDDEN_MATERIALIZATION_CONSUMED"
+            or receipt.get("consumed_before_generation") is not True
+            or receipt.get("retry_permitted") is not False
+            or receipt.get("producer") != producer
+            or receipt.get("request") != request
+            or receipt.get("output_root") != str(output)
+            or receipt.get("source_binding") != binding["source_binding"]
+            or receipt.get("acceptance_session_binding") != binding["acceptance_session_binding"]
+            or receipt.get("scenario_config_sha256") != binding["scenario_config_sha256"]
+        ):
+            raise HiddenMaterializationError("hidden consumption receipt binding or output summary drifted")
+        summaries.append({
+            "receipt_sha256": _sha256(receipt_path),
+            "episode_manifest_sha256": _sha256(manifest),
+            "output_root": str(output),
+        })
+    return summaries

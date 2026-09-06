@@ -396,9 +396,9 @@ def materialize_episode(
         materialize_hidden_episode(
             scenario_config=Path(scenario_config), snapshot_path=Path(snapshot_path),
             session_path=Path(session_path),
-            receipt_path=Path(hidden_receipt_root) / f"map-{map_index:03d}-mission-{mission_index:03d}.json",
+            run_root=Path(hidden_receipt_root),
             output=episode_root, map_index=map_index, mission_index=mission_index,
-            freeze_receipt_path=None if freeze_receipt_path is None else Path(freeze_receipt_path),
+            freeze_producer="formal_rl_multimap",
         )
     else:
         files = generate_episode(
@@ -907,7 +907,7 @@ def main(argv: Sequence[str] | None = None) -> int:
     }
     from sanitation_campus_scenario.hidden_materializer import commit_hidden_configuration_freeze
     freeze_receipt = commit_hidden_configuration_freeze(
-        receipt_path=args.hidden_receipt_root / "configuration-freeze.json",
+        run_root=args.hidden_receipt_root,
         snapshot_path=args.snapshot, session_path=args.session,
         scenario_config=args.scenario_config, producer="formal_rl_multimap",
         frozen_configuration=configuration_freeze,
