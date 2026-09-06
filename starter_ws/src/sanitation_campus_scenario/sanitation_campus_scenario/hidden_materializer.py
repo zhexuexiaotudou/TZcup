@@ -232,6 +232,43 @@ def require_formal_hidden_run_context(
     return root
 
 
+def _retained_formal_hidden_run_context(
+    *, run_root: Path, snapshot_path: Path, session_path: Path, scenario_config: Path,
+) -> tuple[Path, dict[str, Any]]:
+    """Recover a RUNNING receipt binding after finalization rewrites session JSON."""
+
+    root = _canonical_formal_run_root(run_root)
+    snapshot_path = _regular(snapshot_path, "snapshot manifest")
+    session_path = _regular(session_path, "acceptance session")
+    scenario_config = _regular(scenario_config, "scenario config")
+    snapshot = _json_object(snapshot_path, "snapshot manifest")
+    outputs = snapshot.get("outputs")
+    urdf = outputs.get("reports/engineering/formal_competition_vehicle.urdf") if isinstance(outputs, dict) else None
+    source_hash = snapshot.get("source_inventory_sha256")
+    if not isinstance(source_hash, str) or not source_hash or not isinstance(urdf, dict) or not isinstance(urdf.get("sha256"), str):
+        raise HiddenMaterializationError("snapshot manifest lacks frozen source identity")
+    source = {"snapshot_manifest_sha256": _sha256(snapshot_path), "source_inventory_sha256": source_hash, "expanded_urdf_sha256": urdf["sha256"]}
+    session = _json_object(session_path, "acceptance session")
+    started = session.get("started_epoch_ns")
+    if session.get("status") not in {"FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING", "FORMAL_FINAL_ACCEPTANCE_SESSION_PENDING", "FORMAL_FINAL_ACCEPTANCE_SESSION_COMPLETE"} or not isinstance(started, int) or started <= 0 or session.get("snapshot") != source:
+        raise HiddenMaterializationError("retained hidden context is not for the current source-bound acceptance session")
+    context = _json_object(_regular(root / FORMAL_RUN_CONTEXT_NAME, "formal hidden run context"), "formal hidden run context")
+    session_binding = context.get("acceptance_session_binding")
+    binding = {
+        "source_binding": source,
+        "acceptance_session_binding": {
+            "session_manifest_sha256": session_binding.get("session_manifest_sha256") if isinstance(session_binding, dict) else None,
+            "session_started_epoch_ns": started,
+            "session_status_at_consumption": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING",
+        },
+        "scenario_config_sha256": _sha256(scenario_config),
+    }
+    digest = binding["acceptance_session_binding"]["session_manifest_sha256"]
+    if context.get("receipt_id") != "tzcup_formal_hidden_materialization_context_v1" or context.get("status") != "FORMAL_HIDDEN_MATERIALIZATION_CONTEXT_READY" or context.get("run_root") != str(root) or context.get("source_binding") != source or context.get("acceptance_session_binding") != binding["acceptance_session_binding"] or context.get("scenario_config_sha256") != binding["scenario_config_sha256"] or not isinstance(digest, str) or len(digest) != 64:
+        raise HiddenMaterializationError("retained formal hidden run context is not bound to this finalized session")
+    return root, binding
+
+
 def _commit_receipt(path: Path, payload: dict[str, Any]) -> None:
     _reject_symlink_ancestors(path, "hidden consumption receipt")
     if path.exists() or path.is_symlink():
@@ -436,7 +473,7 @@ def _commit_hidden_output_summary(
 
 def verify_hidden_consumption_records(
     *, run_root: Path, snapshot_path: Path, session_path: Path,
-    scenario_config: Path, records: list[dict[str, Any]],
+    scenario_config: Path, records: list[dict[str, Any]], binding: dict[str, Any] | None = None,
 ) -> list[dict[str, str]]:
     """Re-read the retained locks and their generated outputs before PASS.
 
@@ -446,10 +483,11 @@ def verify_hidden_consumption_records(
     """
 
     run_root = _run_root(run_root)
-    binding = _source_session_binding(
-        snapshot_path=snapshot_path, session_path=session_path,
-        scenario_config=scenario_config,
-    )
+    if binding is None:
+        binding = _source_session_binding(
+            snapshot_path=snapshot_path, session_path=session_path,
+            scenario_config=scenario_config,
+        )
     summaries: list[dict[str, str]] = []
     for record in records:
         producer = record.get("producer")
@@ -525,3 +563,19 @@ def verify_hidden_consumption_records(
             "output_root": str(output),
         })
     return summaries
+
+
+def verify_hidden_consumption_records_from_formal_context(
+    *, run_root: Path, snapshot_path: Path, session_path: Path,
+    scenario_config: Path, records: list[dict[str, Any]],
+) -> list[dict[str, str]]:
+    """Revalidate sealed outputs even after the session leaves RUNNING."""
+
+    root, binding = _retained_formal_hidden_run_context(
+        run_root=run_root, snapshot_path=snapshot_path, session_path=session_path,
+        scenario_config=scenario_config,
+    )
+    return verify_hidden_consumption_records(
+        run_root=root, snapshot_path=snapshot_path, session_path=session_path,
+        scenario_config=scenario_config, records=records, binding=binding,
+    )

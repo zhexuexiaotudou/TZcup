@@ -259,6 +259,7 @@ def test_live_executor_contract_is_serial_and_wires_fresh_per_site_paths() -> No
     assert 'generator_split = "val" if site["split"] == "validation"' in source
     assert '"--config", str(scenario_config), "--profile", "formal", "--split", generator_split' in source
     assert '"materialize-hidden"' in source
+    assert "commit_formal_hidden_run_context(" in source
     assert '"hidden-consumption-ledger"' in (ROOT / "starter_ws/src/sanitation_campus_scenario/sanitation_campus_scenario/hidden_materializer.py").read_text(encoding="utf-8")
     assert "verify_hidden_consumption_records(" in source
     assert "sanitation-campus-scenario" in source

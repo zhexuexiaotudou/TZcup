@@ -17,6 +17,7 @@ from sanitation_campus_scenario.hidden_materializer import (
     require_formal_hidden_run_context,
     require_canonical_formal_inputs,
     verify_hidden_consumption_records,
+    verify_hidden_consumption_records_from_formal_context,
 )
 
 
@@ -276,3 +277,29 @@ def test_formal_context_rejects_an_arbitrary_env_root(tmp_path: Path, monkeypatc
     assert require_formal_hidden_run_context(
         run_root=root, snapshot_path=snapshot, session_path=session, scenario_config=CONFIG,
     ) == root.resolve()
+
+
+def test_retained_context_rechecks_output_and_freeze_after_session_finalization(tmp_path: Path, monkeypatch) -> None:
+    snapshot, session, _ = _bound_inputs(tmp_path)
+    parent = tmp_path / ".work" / "formal_final_acceptance"
+    parent.mkdir(parents=True)
+    monkeypatch.setattr(hidden_materializer, "CANONICAL_FORMAL_RUN_ROOT_PARENT", parent)
+    monkeypatch.setattr(hidden_materializer, "CANONICAL_SNAPSHOT", snapshot)
+    monkeypatch.setattr(hidden_materializer, "CANONICAL_SESSION", session)
+    root = parent / "a15"
+    root.mkdir()
+    commit_formal_hidden_run_context(run_root=root, snapshot_path=snapshot, session_path=session, scenario_config=CONFIG)
+    commit_hidden_configuration_freeze(run_root=root, snapshot_path=snapshot, session_path=session, scenario_config=CONFIG, producer="a15", frozen_configuration={})
+    output = root / "site-hidden-00" / "episode"
+    materialize_hidden_episode(scenario_config=CONFIG, snapshot_path=snapshot, session_path=session, run_root=root, output=output, map_index=0, mission_index=0, freeze_producer="a15")
+    payload = json.loads(session.read_text(encoding="utf-8"))
+    payload["status"] = "FORMAL_FINAL_ACCEPTANCE_SESSION_COMPLETE"
+    session.write_text(json.dumps(payload), encoding="utf-8")
+    record = {"producer": "formal_hidden_episode", "request": {"profile": "formal", "split": "hidden", "map_index": 0, "mission_index": 0}, "output": output}
+    assert len(verify_hidden_consumption_records_from_formal_context(run_root=root, snapshot_path=snapshot, session_path=session, scenario_config=CONFIG, records=[record])) == 1
+    freeze = next((root / "hidden-consumption-ledger").rglob("freeze-*.json"))
+    freeze_payload = json.loads(freeze.read_text(encoding="utf-8"))
+    freeze_payload["frozen_configuration"] = {"tampered": True}
+    freeze.write_text(json.dumps(freeze_payload), encoding="utf-8")
+    with pytest.raises(HiddenMaterializationError, match="freeze receipt"):
+        verify_hidden_consumption_records_from_formal_context(run_root=root, snapshot_path=snapshot, session_path=session, scenario_config=CONFIG, records=[record])

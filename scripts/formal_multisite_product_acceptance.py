@@ -25,6 +25,7 @@ from formal_runtime_gate_binding import (
     load_binding,
 )
 from sanitation_campus_scenario.hidden_materializer import (
+    commit_formal_hidden_run_context,
     commit_hidden_configuration_freeze,
     verify_hidden_consumption_records,
 )
@@ -395,6 +396,15 @@ def execute_live(
     _write_atomic(runtime_binding_path, binding)
     evidence_root.mkdir(parents=True)
     work_root.mkdir(parents=True)
+    try:
+        commit_formal_hidden_run_context(
+            run_root=work_root, snapshot_path=snapshot_path,
+            session_path=session_path, scenario_config=scenario_config,
+        )
+    except Exception as exc:
+        raise MultiSiteAcceptanceError(
+            f"cannot seal multi-site hidden runner context: {exc}"
+        ) from exc
     environment = dict(os.environ)
     environment.update({
         "FORMAL_VEHICLE_RUNTIME_WS": str(runtime_ws),

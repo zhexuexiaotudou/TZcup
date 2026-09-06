@@ -55,7 +55,7 @@ if str(SCENARIO_PYTHON_SOURCE) not in sys.path:
 from sanitation_campus_scenario.hidden_materializer import (  # noqa: E402
     HiddenMaterializationError,
     commit_formal_hidden_run_context,
-    verify_hidden_consumption_records,
+    verify_hidden_consumption_records_from_formal_context,
 )
 CONTRACT = ROOT / "config/high_fidelity_vehicle/formal_functional_acceptance_contract.yaml"
 SNAPSHOT = ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.json"
@@ -3151,7 +3151,7 @@ def _verify_final_hidden_consumption(context: Context) -> list[dict[str, str]]:
     if context.root.resolve() != ROOT.resolve():
         return []
     try:
-        return verify_hidden_consumption_records(
+        return verify_hidden_consumption_records_from_formal_context(
             run_root=context.run_root,
             snapshot_path=context.snapshot,
             session_path=context.session,
@@ -3172,6 +3172,36 @@ def _verify_final_hidden_consumption(context: Context) -> list[dict[str, str]]:
         raise OrchestrationError(
             f"final hidden consumption ledger/freeze/output verification failed: {exc}"
         ) from exc
+
+
+def _verify_final_multisite_hidden_consumption(context: Context) -> list[dict[str, str]]:
+    """Enumerate every A15 hidden site from its work root, never its report."""
+
+    if context.root.resolve() != ROOT.resolve():
+        return []
+    work_root = context.run_root / "multisite_product_runtime"
+    records = [{
+        "producer": "formal_hidden_episode",
+        "request": {
+            "profile": "formal", "split": "hidden",
+            "map_index": index, "mission_index": 0,
+        },
+        "output": work_root / f"site-hidden-{index:02d}" / "episode",
+    } for index in range(12)]
+    try:
+        summaries = verify_hidden_consumption_records_from_formal_context(
+            run_root=work_root, snapshot_path=context.snapshot,
+            session_path=context.session,
+            scenario_config=(context.root / "starter_ws/src/sanitation_campus_scenario/config/default_scenario.yaml"),
+            records=records,
+        )
+    except (HiddenMaterializationError, OSError, ValueError) as exc:
+        raise OrchestrationError(
+            f"final A15 hidden ledger/freeze/output verification failed: {exc}"
+        ) from exc
+    if len(summaries) != 12:
+        raise OrchestrationError("final A15 hidden verification did not enumerate all 12 sites")
+    return summaries
 
 
 def _run_functional_aggregate(
@@ -3417,6 +3447,11 @@ def execute(context: Context) -> tuple[dict[str, Any], int]:
                     report["final_hidden_consumption_after_materialization"] = (
                         _verify_final_hidden_consumption(context)
                     )
+                if step.step_id == "multisite_product":
+                    step_blocker = "multisite_hidden_consumption_after_a15"
+                    report["final_multisite_hidden_consumption_after_a15"] = (
+                        _verify_final_multisite_hidden_consumption(context)
+                    )
                 if step.step_id == "start_session":
                     step_blocker = "session_start"
                     session_payload = _read_json(context.session)
@@ -3614,6 +3649,9 @@ def execute(context: Context) -> tuple[dict[str, Any], int]:
             aggregate_blocker = "hidden_consumption_before_functional_aggregate"
             report["final_hidden_consumption_before_functional_aggregate"] = (
                 _verify_final_hidden_consumption(context)
+            )
+            report["final_multisite_hidden_consumption_before_functional_aggregate"] = (
+                _verify_final_multisite_hidden_consumption(context)
             )
             aggregate_blocker = "functional_aggregate"
             functional = _run_functional_aggregate(
@@ -3986,6 +4024,9 @@ def resume_s100(context: Context) -> tuple[dict[str, Any], int]:
             )
             report["final_hidden_consumption_before_functional_aggregate_resume"] = (
                 _verify_final_hidden_consumption(context)
+            )
+            report["final_multisite_hidden_consumption_before_functional_aggregate_resume"] = (
+                _verify_final_multisite_hidden_consumption(context)
             )
             functional = _run_functional_aggregate(
                 context,
