@@ -24,6 +24,7 @@ REQUIRED_SAVED_MAP_SUPPORT_FILES = frozenset({
     "neutral_speed.pgm",
 })
 MAPPING_POSE_SOURCE = "wheel_imu_ekf_lidar_scan_matching_gnss_consistency"
+MAXIMUM_SAVED_MAP_RESOLUTION_M = 0.10
 
 
 class MapLifecycleError(RuntimeError):
@@ -88,6 +89,7 @@ class CampusMapContract:
     map_id: str
     field_area_m2: float
     geofence: tuple[tuple[float, float], ...]
+    source_geofence: tuple[tuple[float, float], ...]
     fixed_start_source: tuple[float, float, float]
 
 
@@ -133,6 +135,26 @@ def _local_point(
     return cosine * dx + sine * dy, -sine * dx + cosine * dy
 
 
+def _polygon_from_manifest(field: dict[str, Any], key: str, frame_id: str) -> tuple[tuple[float, float], ...] | None:
+    value = field.get(key)
+    if value is None:
+        return None
+    if not isinstance(value, dict) or value.get("frame_id") != frame_id:
+        raise MapLifecycleError(f"{key} has an invalid frame")
+    raw = value.get("polygon_m")
+    try:
+        polygon = tuple((float(point[0]), float(point[1])) for point in raw)
+    except (TypeError, ValueError, IndexError) as exc:
+        raise MapLifecycleError(f"{key} has invalid points") from exc
+    if len(polygon) < 3 or not all(math.isfinite(item) for point in polygon for item in point):
+        raise MapLifecycleError(f"{key} has invalid points")
+    return polygon
+
+
+def _same_polygon(left: Sequence[tuple[float, float]], right: Sequence[tuple[float, float]]) -> bool:
+    return len(left) == len(right) and all(math.isclose(ax, bx, abs_tol=1e-6) and math.isclose(ay, by, abs_tol=1e-6) for (ax, ay), (bx, by) in zip(left, right))
+
+
 def load_campus_map_contract(path: str | Path) -> CampusMapContract:
     """Load public mission geometry, never evaluator/world object truth."""
     try:
@@ -142,7 +164,7 @@ def load_campus_map_contract(path: str | Path) -> CampusMapContract:
     if not isinstance(value, dict) or value.get("profile") != "formal":
         raise MapLifecycleError("map lifecycle requires a formal public episode")
     field = value.get("field")
-    start_value = value.get("vehicle_start_pose_map")
+    start_value = value.get("vehicle_start_pose_source_world") or value.get("vehicle_start_pose_map")
     if not isinstance(field, dict) or not isinstance(start_value, dict):
         raise MapLifecycleError("formal field or fixed start is missing")
     if field.get("physical_boundary_walls") is not False:
@@ -154,10 +176,26 @@ def load_campus_map_contract(path: str | Path) -> CampusMapContract:
         source = tuple(
             float(start_value[key]) for key in ("x_m", "y_m", "yaw_rad")
         )
-        source_polygon = tuple(
-            (float(point[0]), float(point[1]))
-            for point in field["geofence_polygon_m"]
-        )
+        source_polygon = _polygon_from_manifest(field, "source_world_geofence", "source_world")
+        if source_polygon is None:
+            if field.get("geofence_frame") not in {"map", "source_world"}:
+                raise MapLifecycleError("legacy geofence frame is invalid")
+            source_polygon = tuple((float(point[0]), float(point[1])) for point in field["geofence_polygon_m"])
+        else:
+            if field.get("geofence_frame") != "source_world":
+                raise MapLifecycleError("explicit source-world geofence has an ambiguous legacy frame")
+            legacy = tuple((float(point[0]), float(point[1])) for point in field.get("geofence_polygon_m", ()))
+            if legacy and not _same_polygon(legacy, source_polygon):
+                raise MapLifecycleError("legacy and source-world geofences disagree")
+            legacy_contract = field.get("legacy_geofence")
+            if (
+                not isinstance(legacy_contract, dict)
+                or legacy_contract.get("field") != "geofence_polygon_m"
+                or legacy_contract.get("frame_id") != "source_world"
+                or not isinstance(legacy_contract.get("deprecation"), str)
+                or not legacy_contract["deprecation"]
+            ):
+                raise MapLifecycleError("legacy geofence deprecation contract is invalid")
     except (KeyError, TypeError, ValueError, IndexError) as exc:
         raise MapLifecycleError("formal field geometry is invalid") from exc
     if len(source_polygon) < 3 or len(source) != 3:
@@ -171,12 +209,18 @@ def load_campus_map_contract(path: str | Path) -> CampusMapContract:
         raise MapLifecycleError("formal baseline field must be exactly 200 x 100 m")
     if abs(area - 20_000.0) > 1e-3 or abs(_polygon_area(source_polygon) - area) > 1e-3:
         raise MapLifecycleError("formal field area must be exactly 20000 m2")
-    local = tuple(_local_point(point, source) for point in source_polygon)
+    expected_local = tuple(_local_point(point, source) for point in source_polygon)
+    local = _polygon_from_manifest(field, "localization_map_geofence", "map")
+    if local is None:
+        local = expected_local
+    elif not _same_polygon(local, expected_local):
+        raise MapLifecycleError("localization geofence must apply the source transform exactly once")
     return CampusMapContract(
         episode_id=str(value.get("episode_id", "")),
         map_id=str(value.get("map_id", "")),
         field_area_m2=area,
         geofence=local,
+        source_geofence=source_polygon,
         fixed_start_source=(source[0], source[1], source[2]),
     )
 
@@ -210,8 +254,15 @@ def assess_grid_observation(
     """Count known SLAM cells whose centers lie inside the configured field."""
     if width <= 0 or height <= 0 or len(data) != width * height:
         raise MapLifecycleError("occupancy grid dimensions do not match its payload")
-    if not math.isfinite(resolution) or resolution <= 0.0 or resolution > 0.10:
-        raise MapLifecycleError("formal SLAM resolution must be in (0, 0.10] m")
+    if (
+        not math.isfinite(resolution)
+        or resolution <= 0.0
+        or resolution > MAXIMUM_SAVED_MAP_RESOLUTION_M
+    ):
+        raise MapLifecycleError(
+            "formal SLAM resolution must be in "
+            f"(0, {MAXIMUM_SAVED_MAP_RESOLUTION_M:.2f}] m"
+        )
     if not 0.0 < threshold <= 1.0:
         raise MapLifecycleError("observation threshold must be in (0, 1]")
     cosine, sine = math.cos(origin_yaw), math.sin(origin_yaw)
@@ -371,6 +422,12 @@ def prepare_public_lifecycle_artifacts(
         "mapping_ignores_dirt": True,
         "fixed_start_local_pose": [0.0, 0.0, 0.0],
         "geofence_area_m2": contract.field_area_m2,
+        "resolution_contract": {
+            "static_materializer": {"value_source": "formal_campus.launch.py:map_resolution", "purpose": "public_world_static_collision_raster"},
+            "lifecycle_support_mask": {"resolution_m": resolution, "value_source": "prepare_public_lifecycle_artifacts(resolution)", "purpose": "public_geofence_support_mask"},
+            "slam_occupancy": {"value_source": "saved_map_metadata", "maximum_accepted_resolution_m": MAXIMUM_SAVED_MAP_RESOLUTION_M, "purpose": "runtime_lidar_slam_occupancy"},
+            "coverage_planning": {"value_source": "ProductCoverageTelemetry(raster_resolution_m)", "purpose": "saved_map_coverage_raster_planning"},
+        },
     }
     materialization_path = output / "materialization_contract.yaml"
     materialization_path.write_text(yaml.safe_dump(materialization, sort_keys=False), encoding="utf-8")

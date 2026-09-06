@@ -71,7 +71,9 @@ localization_contract:
   claim: lidar_map_plus_wheel_imu_ekf_with_gnss_consistency_and_saved_map_fusion
 
 spawn_contract:
-  pose_source: public/episode_manifest.json#vehicle_start_pose_map
+  pose_source: public/episode_manifest.json#vehicle_start_pose_source_world
+  legacy_pose_source: public/episode_manifest.json#vehicle_start_pose_map
+  legacy_pose_semantics: source_world
   gazebo_service_suffix: /set_pose
   initialization_only: true
   post_task_repositioning_permitted: false

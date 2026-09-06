@@ -1,5 +1,6 @@
 import ast
 from copy import deepcopy
+import inspect
 import json
 import math
 from pathlib import Path
@@ -20,6 +21,12 @@ from sanitation_formal_campus_integration.campus_materializer import (  # noqa: 
 )
 from sanitation_formal_campus_integration.contract import (  # noqa: E402
     IntegrationContractError,
+)
+from sanitation_formal_campus_integration.map_lifecycle_core import (  # noqa: E402
+    prepare_public_lifecycle_artifacts,
+)
+from sanitation_formal_campus_integration.saved_map_coverage_core import (  # noqa: E402
+    ProductCoverageTelemetry,
 )
 from sanitation_campus_scenario.generator import (  # noqa: E402
     generate_episode,
@@ -219,6 +226,12 @@ def test_materializes_consistent_public_only_maps_and_formal_mission(tmp_path):
     assert report["formal_cleaning_footprint_radius_m"] == pytest.approx(
         cleaning_radius
     )
+    assert report["resolution_contract"] == {
+        "static_materializer": {"resolution_m": 0.25, "value_source": "materialize_campus_artifacts(resolution)", "purpose": "public_world_static_collision_raster"},
+        "lifecycle_support_mask": {"value_source": "prepare_public_lifecycle_artifacts(resolution)", "purpose": "public_geofence_support_mask"},
+        "slam_occupancy": {"value_source": "saved_map_metadata", "maximum_accepted_resolution_value_source": "map_lifecycle_core.MAXIMUM_SAVED_MAP_RESOLUTION_M", "purpose": "runtime_lidar_slam_occupancy"},
+        "coverage_planning": {"value_source": "ProductCoverageTelemetry(raster_resolution_m)", "purpose": "saved_map_coverage_raster_planning"},
+    }
     # Dirt visuals, a dynamic cube and a driver-moved static walker do not
     # become static occupancy.
     assert _map_value(artifacts.occupancy_map, 2.0, -2.0) == 0
@@ -342,6 +355,48 @@ def test_materializer_rejects_nonformal_profile(tmp_path):
             manifest_path, world_path, MOTION_PROFILE, tmp_path / "rejected"
         )
 
+
+def test_materializer_rejects_ambiguous_or_repeated_geofence_transform(tmp_path):
+    manifest = _manifest()
+    source = manifest["field"]["geofence_polygon_m"]
+    start = manifest["vehicle_start_pose_map"]
+    cosine, sine = math.cos(start["yaw_rad"]), math.sin(start["yaw_rad"])
+    localized = [
+        [
+            cosine * (x - start["x_m"]) + sine * (y - start["y_m"]),
+            -sine * (x - start["x_m"]) + cosine * (y - start["y_m"]),
+        ]
+        for x, y in source
+    ]
+    manifest["field"].update(
+        source_world_geofence={"frame_id": "source_world", "polygon_m": source},
+        localization_map_geofence={"frame_id": "map", "polygon_m": localized},
+        legacy_geofence={"field": "geofence_polygon_m", "frame_id": "source_world", "deprecation": "use explicit fields"},
+        geofence_frame="source_world",
+    )
+    manifest["vehicle_start_pose_source_world"] = start
+    manifest_path, world_path = _write_inputs(tmp_path, manifest)
+    materialize_campus_artifacts(
+        manifest_path, world_path, MOTION_PROFILE, tmp_path / "accepted"
+    )
+
+    manifest["field"]["localization_map_geofence"]["polygon_m"] = source
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(IntegrationContractError, match="exactly once"):
+        materialize_campus_artifacts(
+            manifest_path, world_path, MOTION_PROFILE, tmp_path / "rejected-repeat"
+        )
+
+    manifest["field"].pop("source_world_geofence")
+    manifest["field"].pop("localization_map_geofence")
+    manifest["field"].pop("legacy_geofence")
+    manifest["field"]["geofence_frame"] = "odom"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(IntegrationContractError, match="legacy geofence frame"):
+        materialize_campus_artifacts(
+            manifest_path, world_path, MOTION_PROFILE, tmp_path / "rejected-frame"
+        )
+
 def test_materializer_fails_closed_when_vehicle_start_is_not_usable(tmp_path):
     manifest = _manifest()
     manifest["vehicle_start_pose_map"] = {"x_m": 1.0, "y_m": 0.0, "yaw_rad": 0.0}
@@ -383,3 +438,11 @@ def test_launch_materializes_maps_and_keeps_power_on_estop_latched():
     assert source.count('default_value="true"') >= 4
     assert "main_power=true" in source
     assert "emergency_stop=false" in source
+
+
+def test_resolution_contract_values_are_bound_to_executable_defaults():
+    launch_source = LAUNCH.read_text(encoding="utf-8")
+    assert 'DeclareLaunchArgument("map_resolution", default_value="0.10")' in launch_source
+    assert inspect.signature(materialize_campus_artifacts).parameters["resolution"].default == 0.10
+    assert inspect.signature(prepare_public_lifecycle_artifacts).parameters["resolution"].default == 0.25
+    assert ProductCoverageTelemetry.__dataclass_fields__["raster_resolution_m"].default == 0.25

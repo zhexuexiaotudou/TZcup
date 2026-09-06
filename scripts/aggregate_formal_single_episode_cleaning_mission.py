@@ -60,6 +60,27 @@ def _list(value: Any, label: str) -> list[Any]:
     return value
 
 
+def _source_geofence_polygon(field: dict[str, Any]) -> list[Any]:
+    """Read only the source-world geofence, with strict legacy semantics."""
+
+    source_geofence = field.get("source_world_geofence")
+    if source_geofence is not None:
+        source_geofence = _mapping(
+            source_geofence, "episode.field.source_world_geofence"
+        )
+        if source_geofence.get("frame_id") != "source_world":
+            raise AggregateError("episode source-world geofence frame is invalid")
+        return _list(
+            source_geofence.get("polygon_m"),
+            "episode.field.source_world_geofence.polygon_m",
+        )
+    if field.get("geofence_frame") not in {"map", "source_world"}:
+        raise AggregateError("episode legacy geofence frame is invalid")
+    return _list(
+        field.get("geofence_polygon_m"), "episode.field.geofence_polygon_m"
+    )
+
+
 def _number(row: dict[str, Any], key: str, label: str) -> float:
     if key not in row or isinstance(row[key], bool):
         raise AggregateError(f"{label}.{key} missing")
@@ -476,7 +497,7 @@ def aggregate(raw_path: Path) -> dict[str, Any]:
     width = _number(field, "width_m", "episode.field")
     height = _number(field, "height_m", "episode.field")
     area = _number(field, "area_m2", "episode.field")
-    polygon = _list(field.get("geofence_polygon_m"), "episode.field.geofence_polygon_m")
+    polygon = _source_geofence_polygon(field)
     if episode.get("profile") != "formal" or area < 20000.0:
         raise AggregateError("episode is not a formal >=20000 m2 field")
     if abs(width * height - area) > 1.0e-6 or abs(_polygon_area(polygon) - area) > 1.0e-6:

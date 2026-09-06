@@ -4,6 +4,8 @@ from pathlib import Path
 
 import json
 
+import pytest
+
 from validate_formal_dynamic_obstacle_avoidance import (
     PASSED_STATUS,
     attach_evaluator_dynamic_proximity,
@@ -371,6 +373,7 @@ def test_public_default_goal_uses_start_pose_and_real_geofence(tmp_path: Path) -
                     "yaw_rad": 0.0,
                 },
                 "field": {
+                    "geofence_frame": "map",
                     "geofence_polygon_m": [
                         [-100.0, -50.0],
                         [100.0, -50.0],
@@ -398,6 +401,32 @@ def test_public_default_goal_uses_start_pose_and_real_geofence(tmp_path: Path) -
         manifest, goal_x=10.0, goal_y=2.0
     )
     assert diagnostic["goal_source"] == "explicit_map_goal_diagnostic_only"
+
+
+def test_public_explicit_geofence_rejects_repeated_transform(tmp_path: Path) -> None:
+    manifest = tmp_path / "episode_manifest.json"
+    source = [[-100.0, -50.0], [100.0, -50.0], [100.0, 50.0], [-100.0, 50.0]]
+    manifest.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "episode_id": "mission",
+                "map_id": "map",
+                "vehicle_start_pose_source_world": {"x_m": -98.0, "y_m": 0.0, "yaw_rad": 0.0},
+                "vehicle_start_pose_map": {"x_m": -98.0, "y_m": 0.0, "yaw_rad": 0.0},
+                "field": {
+                    "geofence_frame": "source_world",
+                    "geofence_polygon_m": source,
+                    "source_world_geofence": {"frame_id": "source_world", "polygon_m": source},
+                    "localization_map_geofence": {"frame_id": "map", "polygon_m": source},
+                },
+                "counts": {"pedestrians": 8},
+            }
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(ValueError, match="exactly once"):
+        load_public_mission_contract(manifest)
 
 
 def test_point_in_polygon_includes_boundary_and_rejects_old_wrong_frame() -> None:

@@ -33,3 +33,28 @@ def test_report_contract_never_claims_product_perception():
     assert '"gazebo_sensor_streams_used": False' in source
     assert '"nav2_execution_used": False' in source
     assert '"truth_access_used": False' in source
+
+
+@pytest.mark.parametrize(
+    ("field", "message"),
+    [
+        (
+            {
+                "source_world_geofence": {
+                    "frame_id": "map",
+                    "polygon_m": [[0.0, 0.0]],
+                }
+            },
+            "explicit source-world geofence frame is invalid",
+        ),
+        (
+            {"geofence_frame": "odom", "geofence_polygon_m": [[0.0, 0.0]]},
+            "legacy geofence frame is invalid",
+        ),
+    ],
+)
+def test_source_geofence_contract_rejects_ambiguous_frames(
+    field: dict, message: str
+) -> None:
+    with pytest.raises(ValueError, match=message):
+        MODULE._source_geofence_polygon(field)

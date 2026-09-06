@@ -7,8 +7,54 @@ bin:
   full_threshold_ratio: 1.0
   fill_state_topic: /manipulation/bin_state
 planning_scene:
-  required_collision_objects: [vehicle_body, ground, dust_bin, left_brush, right_brush]
+  # Robot links stay in the MoveIt robot model.  They must never be injected
+  # as CollisionObjects, because doing so would duplicate or falsify URDF
+  # collision geometry in the world.
+  required_robot_links: [base_footprint, base_link, dust_bin_link, left_brush_link, right_brush_link, front_left_wheel_link, front_right_wheel_link, rear_left_wheel_link, rear_right_wheel_link]
+  required_world_objects: [ground]
   reject_unknown_scene_revision: true
+  planning_frame:
+    # Bound to config/formal_vehicle.srdf and checked again from the live
+    # move_group robot_description_semantic parameter before every bootstrap.
+    frame_id: map
+    virtual_joint_name: formal_world_joint
+    child_link: base_footprint
+  # A finite, thick box is required: Gazebo's plane is not a MoveIt collision
+  # object.  The task area is deliberately bounded instead of using an
+  # unphysical infinite plane.  The configured centre, thickness and top
+  # height are cross-checked by the bootstrap before accepting the scene.
+  # Every planning-scene writer uses this prefix and a strictly increasing
+  # numeric suffix.  A blank/foreign/non-incrementing revision is unsafe.
+  scene_revision_prefix: r065_moveit_ground_v1
+  ground:
+    id: ground
+    # MoveIt normalizes world objects to its virtual-joint planning frame.
+    # The formal SRDF planning frame is map, so a base_footprint-local patch
+    # would freeze at its insertion pose and cease to cover a moving vehicle.
+    frame_id: map
+    # Provenance: the public source-world geofence is [-100,100]x[-50,50].
+    # Its sole localization transform uses formal start (-98,0), yielding the
+    # map envelope [-2,198]x[-50,50].  Ten metres on every edge produces this
+    # finite 220 m x 120 m MoveIt ground box, centred at (98,0).
+    source_world_frame_id: source_world
+    source_world_bounds_xy_m: [-100.0, 100.0, -50.0, 50.0]
+    localization_start_xy_yaw: [-98.0, 0.0, 0.0]
+    localization_map_bounds_xy_m: [-2.0, 198.0, -50.0, 50.0]
+    geofence_margin_xy_m: [10.0, 10.0]
+    # REP-105 ground plane. base_link is +0.1651 m above base_footprint;
+    # this top plane remains z=0 in the map-frame formal localization datum.
+    size_m: [220.0, 120.0, 0.50]
+    pose_xyz_m: [98.0, 0.0, -0.25]
+    pose_xyzw: [0.0, 0.0, 0.0, 1.0]
+    top_height_m: 0.0
+    allowed_contact_links: [front_left_wheel_link, front_right_wheel_link, rear_left_wheel_link, rear_right_wheel_link]
+  runtime_gate:
+    # Frozen reachable state.  Its recorded minimum arm collision height is
+    # below the base_footprint plane, and the box bottom must cover it.
+    negative_joint_names: [shoulder_pan_joint, shoulder_lift_joint, elbow_joint, wrist_1_joint, wrist_2_joint, wrist_3_joint]
+    negative_joint_positions: [-4.675573441, 1.324439153, 0.389054834, -1.363406724, -3.526325638, -0.906586137]
+    min_arm_collision_z_m: -0.463656072
+    expected_arm_contact_links: [ur5e_shoulder_link, ur5e_upper_arm_link, ur5e_forearm_link, ur5e_wrist_1_link, ur5e_wrist_2_link, ur5e_wrist_3_link, flange, tool0]
 safety:
   estop_topic: /emergency_stop
   cancel_active_trajectory_on_estop: true

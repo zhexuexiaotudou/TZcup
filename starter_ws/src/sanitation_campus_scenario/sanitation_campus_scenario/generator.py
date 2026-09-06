@@ -464,6 +464,163 @@ def _overlaps_asset(x: float, y: float, radius: float, asset: Asset, margin: flo
     return math.hypot(x - asset.pose.x_m, y - asset.pose.y_m) < asset_radius + radius + margin
 
 
+_GEOMETRY_EPSILON = 1e-9
+
+
+def _point_segment_distance(point: tuple[float, float], start: tuple[float, float], end: tuple[float, float]) -> float:
+    """Return the deterministic Euclidean distance from a point to a segment."""
+    dx, dy = end[0] - start[0], end[1] - start[1]
+    length_squared = dx * dx + dy * dy
+    if length_squared <= _GEOMETRY_EPSILON:
+        return math.hypot(point[0] - start[0], point[1] - start[1])
+    fraction = max(0.0, min(1.0, ((point[0] - start[0]) * dx + (point[1] - start[1]) * dy) / length_squared))
+    return math.hypot(point[0] - (start[0] + fraction * dx), point[1] - (start[1] + fraction * dy))
+
+
+def _point_box_distance(point: tuple[float, float], half_extent: tuple[float, float]) -> float:
+    return math.hypot(max(abs(point[0]) - half_extent[0], 0.0), max(abs(point[1]) - half_extent[1], 0.0))
+
+
+def _segments_intersect(start: tuple[float, float], end: tuple[float, float], left: tuple[float, float], right: tuple[float, float]) -> bool:
+    """Inclusive segment intersection, including tangencies and zero-length cases."""
+    def cross(origin: tuple[float, float], first: tuple[float, float], second: tuple[float, float]) -> float:
+        return (first[0] - origin[0]) * (second[1] - origin[1]) - (first[1] - origin[1]) * (second[0] - origin[0])
+
+    def on_segment(origin: tuple[float, float], point: tuple[float, float], target: tuple[float, float]) -> bool:
+        return abs(cross(origin, target, point)) <= _GEOMETRY_EPSILON and (
+            min(origin[0], target[0]) - _GEOMETRY_EPSILON <= point[0] <= max(origin[0], target[0]) + _GEOMETRY_EPSILON
+            and min(origin[1], target[1]) - _GEOMETRY_EPSILON <= point[1] <= max(origin[1], target[1]) + _GEOMETRY_EPSILON
+        )
+
+    first, second = cross(start, end, left), cross(start, end, right)
+    third, fourth = cross(left, right, start), cross(left, right, end)
+    if ((first > _GEOMETRY_EPSILON and second < -_GEOMETRY_EPSILON) or (first < -_GEOMETRY_EPSILON and second > _GEOMETRY_EPSILON)) and ((third > _GEOMETRY_EPSILON and fourth < -_GEOMETRY_EPSILON) or (third < -_GEOMETRY_EPSILON and fourth > _GEOMETRY_EPSILON)):
+        return True
+    return any((on_segment(start, left, end), on_segment(start, right, end), on_segment(left, start, right), on_segment(left, end, right)))
+
+
+def _segment_box_distance(start: tuple[float, float], end: tuple[float, float], center: tuple[float, float], half_extent: tuple[float, float], yaw_rad: float) -> float:
+    """Exact 2-D distance between a segment and a rotated box footprint."""
+    cosine, sine = math.cos(yaw_rad), math.sin(yaw_rad)
+    def local(point: tuple[float, float]) -> tuple[float, float]:
+        dx, dy = point[0] - center[0], point[1] - center[1]
+        return cosine * dx + sine * dy, -sine * dx + cosine * dy
+
+    local_start, local_end = local(start), local(end)
+    hx, hy = half_extent
+    corners = ((-hx, -hy), (hx, -hy), (hx, hy), (-hx, hy))
+    if _point_box_distance(local_start, half_extent) <= _GEOMETRY_EPSILON or _point_box_distance(local_end, half_extent) <= _GEOMETRY_EPSILON:
+        return 0.0
+    if any(_segments_intersect(local_start, local_end, corners[index], corners[(index + 1) % 4]) for index in range(4)):
+        return 0.0
+    return min(
+        _point_box_distance(local_start, half_extent),
+        _point_box_distance(local_end, half_extent),
+        *(_point_segment_distance(corner, local_start, local_end) for corner in corners),
+    )
+
+
+def segment_clearance_to_asset(start: tuple[float, float], end: tuple[float, float], radius_m: float, asset: Asset, clearance_m: float = 0.0) -> bool:
+    """Return whether a pedestrian capsule is clear of one true SDF collision.
+
+    Boxes retain their yaw; poles and trees use their cylinder collision radius.
+    Tangency is unsafe by contract, so equality returns ``False``.
+    """
+    if radius_m < 0.0 or clearance_m < 0.0:
+        raise GenerationError("segment clearance radii must be non-negative")
+    required = radius_m + clearance_m
+    if asset.kind in {"pole", "tree"}:
+        obstacle_radius = asset.size_m[0] / 2.0 if asset.kind == "pole" else 0.28
+        distance = _point_segment_distance((asset.pose.x_m, asset.pose.y_m), start, end)
+        required += obstacle_radius
+    else:
+        distance = _segment_box_distance(start, end, (asset.pose.x_m, asset.pose.y_m), asset.half_extent, asset.pose.yaw_rad)
+    return distance > required + _GEOMETRY_EPSILON
+
+
+def segment_clearance_to_cube(start: tuple[float, float], end: tuple[float, float], radius_m: float, cube: Cube, clearance_m: float = 0.0) -> bool:
+    if radius_m < 0.0 or clearance_m < 0.0:
+        raise GenerationError("segment clearance radii must be non-negative")
+    distance = _segment_box_distance(start, end, (cube.pose.x_m, cube.pose.y_m), (cube.edge_m / 2.0, cube.edge_m / 2.0), cube.pose.yaw_rad)
+    return distance > radius_m + clearance_m + _GEOMETRY_EPSILON
+
+
+def segment_clearance_to_pedestrian(
+    start: tuple[float, float],
+    end: tuple[float, float],
+    radius_m: float,
+    other_start: tuple[float, float],
+    other_end: tuple[float, float],
+    other_radius_m: float,
+    clearance_m: float = 0.0,
+) -> bool:
+    """Return whether two pedestrian-path capsules are strictly separated.
+
+    This intentionally rejects spatially overlapping paths even if a particular
+    schedule phase happens to avoid an immediate encounter.  The generated
+    schedules loop forever with independently rounded durations, so this
+    conservative geometry rule prevents collisions at any later phase too.
+    """
+    if min(radius_m, other_radius_m, clearance_m) < 0.0:
+        raise GenerationError("segment clearance radii must be non-negative")
+    distance = 0.0 if _segments_intersect(start, end, other_start, other_end) else min(
+        _point_segment_distance(start, other_start, other_end),
+        _point_segment_distance(end, other_start, other_end),
+        _point_segment_distance(other_start, start, end),
+        _point_segment_distance(other_end, start, end),
+    )
+    return distance > radius_m + other_radius_m + clearance_m + _GEOMETRY_EPSILON
+
+
+def pedestrian_paths_clear(
+    pedestrian: Pedestrian, other: Pedestrian, *, clearance_m: float = 0.0
+) -> bool:
+    """Return whether every segment of two looping pedestrian paths is clear."""
+    return all(
+        segment_clearance_to_pedestrian(
+            (x1, y1), (x2, y2), pedestrian.radius_m,
+            (other_x1, other_y1), (other_x2, other_y2), other.radius_m,
+            clearance_m,
+        )
+        for (_, x1, y1), (_, x2, y2) in zip(
+            pedestrian.waypoints, pedestrian.waypoints[1:]
+        )
+        for (_, other_x1, other_y1), (_, other_x2, other_y2) in zip(
+            other.waypoints, other.waypoints[1:]
+        )
+    )
+
+
+def validate_episode_geometry(profile: dict[str, Any], assets: Iterable[Asset], cubes: Iterable[Cube], pedestrians: Iterable[Pedestrian], *, pedestrian_clearance_m: float = 0.75) -> None:
+    """Fail closed unless every pedestrian motion segment clears public collisions.
+
+    This deliberately consumes only collision-bearing static assets and cubes.
+    Dirt, puddles and leaves remain surface semantics, not hard obstacles.
+    """
+    asset_list, cube_list, pedestrian_list = tuple(assets), tuple(cubes), tuple(pedestrians)
+    for pedestrian in pedestrian_list:
+        if pedestrian.radius_m <= 0.0 or pedestrian_clearance_m < 0.0:
+            raise GenerationError("pedestrian geometry contains an invalid radius or clearance")
+        if len(pedestrian.waypoints) < 2:
+            raise GenerationError("pedestrian geometry requires at least two waypoints")
+        for (_, x1, y1), (_, x2, y2) in zip(pedestrian.waypoints, pedestrian.waypoints[1:]):
+            start, end = (x1, y1), (x2, y2)
+            if not _inside(x1, y1, profile["width_m"], profile["height_m"], pedestrian.radius_m + pedestrian_clearance_m) or not _inside(x2, y2, profile["width_m"], profile["height_m"], pedestrian.radius_m + pedestrian_clearance_m):
+                raise GenerationError(f"pedestrian {pedestrian.object_id} leaves the geofence")
+            if any(not segment_clearance_to_asset(start, end, pedestrian.radius_m, asset, pedestrian_clearance_m) for asset in asset_list):
+                raise GenerationError(f"pedestrian {pedestrian.object_id} intersects a static collision")
+            if any(not segment_clearance_to_cube(start, end, pedestrian.radius_m, cube) for cube in cube_list):
+                raise GenerationError(f"pedestrian {pedestrian.object_id} intersects a cube")
+    for index, pedestrian in enumerate(pedestrian_list):
+        if any(
+            not pedestrian_paths_clear(pedestrian, other)
+            for other in pedestrian_list[:index]
+        ):
+            raise GenerationError(
+                f"pedestrian {pedestrian.object_id} intersects another pedestrian path"
+            )
+
+
 def _sample_free_point(
     rng: random.Random,
     width: float,
@@ -595,19 +752,42 @@ def generate_dirt(profile: dict[str, Any], episode: dict[str, Any], assets: list
     return dirt
 
 
-def generate_pedestrians(profile: dict[str, Any], episode: dict[str, Any], assets: list[Asset], seed: int) -> list[Pedestrian]:
+def generate_pedestrians(profile: dict[str, Any], episode: dict[str, Any], assets: list[Asset], cubes: list[Cube], seed: int) -> list[Pedestrian]:
     rng = random.Random(seed)
     pedestrians: list[Pedestrian] = []
     occupied: list[tuple[float, float, float]] = []
     for index in range(episode["pedestrian_count"]):
         radius, height = 0.25, rng.uniform(1.55, 1.90)
-        x1, y1 = _sample_free_point(rng, profile["width_m"], profile["height_m"], assets, radius=radius, clearance=0.75, existing=occupied)
         for _ in range(1000):
-            angle = rng.uniform(-math.pi, math.pi)
-            distance = rng.uniform(8.0, min(25.0, max(8.1, profile["height_m"] * 0.45)))
-            x2, y2 = x1 + math.cos(angle) * distance, y1 + math.sin(angle) * distance
-            if _inside(x2, y2, profile["width_m"], profile["height_m"], 1.0) and not any(_overlaps_asset(x2, y2, radius, a, 0.75) for a in assets):
-                break
+            x1, y1 = _sample_free_point(
+                rng, profile["width_m"], profile["height_m"], assets,
+                radius=radius, clearance=0.75, existing=occupied,
+            )
+            if not all(
+                segment_clearance_to_cube((x1, y1), (x1, y1), radius, cube)
+                for cube in cubes
+            ):
+                continue
+            for _ in range(100):
+                angle = rng.uniform(-math.pi, math.pi)
+                distance = rng.uniform(
+                    8.0, min(25.0, max(8.1, profile["height_m"] * 0.45))
+                )
+                x2, y2 = x1 + math.cos(angle) * distance, y1 + math.sin(angle) * distance
+                candidate = Pedestrian(
+                    "candidate", radius, height, 0.0,
+                    ((0.0, x1, y1), (1.0, x2, y2), (2.0, x1, y1)),
+                )
+                if (
+                    _inside(x2, y2, profile["width_m"], profile["height_m"], radius + 0.75)
+                    and all(segment_clearance_to_asset((x1, y1), (x2, y2), radius, asset, 0.75) for asset in assets)
+                    and all(segment_clearance_to_cube((x1, y1), (x2, y2), radius, cube) for cube in cubes)
+                    and all(pedestrian_paths_clear(candidate, other) for other in pedestrians)
+                ):
+                    break
+            else:
+                continue
+            break
         else:
             raise GenerationError("unable to construct pedestrian trajectory")
         speed = round(rng.uniform(0.45, 1.35), 4)
@@ -778,6 +958,13 @@ def _geofence(profile: dict[str, Any]) -> list[list[float]]:
     return [[-w, -h], [w, -h], [w, h], [-w, h]]
 
 
+def _localize_geofence_point(point: list[float], start: Pose2D) -> tuple[float, float]:
+    """Apply the one permitted source-world -> localization-map transform."""
+    dx, dy = point[0] - start.x_m, point[1] - start.y_m
+    cosine, sine = math.cos(start.yaw_rad), math.sin(start.yaw_rad)
+    return (cosine * dx + sine * dy, -sine * dx + cosine * dy)
+
+
 def _vehicle_start_pose(profile: dict[str, Any]) -> Pose2D:
     return Pose2D(-profile["width_m"] / 2.0 + 2.0, 0.0, 0.0)
 
@@ -851,8 +1038,9 @@ def generate_episode(
     cubes = generate_cubes(profile, episode, sampling_exclusions, seeds.cubes)
     dirt = generate_dirt(profile, episode, sampling_exclusions, seeds.dirt)
     pedestrians = generate_pedestrians(
-        profile, episode, sampling_exclusions, seeds.pedestrians
+        profile, episode, sampling_exclusions, cubes, seeds.pedestrians
     )
+    validate_episode_geometry(profile, assets, cubes, pedestrians)
     sdf = render_sdf(profile_name, profile, assets, dirt, cubes, pedestrians, include_proxy)
     ET.fromstring(sdf)
     map_id = map_id_override or f"{split}-map-{map_index:03d}"
@@ -902,7 +1090,26 @@ def generate_episode(
             "aspect_ratio": profile["width_m"] / profile["height_m"],
             "dimension_policy": "per_map_aspect_fixed_area",
             "physical_boundary_walls": False,
-            "geofence_frame": "map",
+            "source_world_geofence": {
+                "frame_id": "source_world",
+                "polygon_m": _geofence(profile),
+            },
+            "localization_map_geofence": {
+                "frame_id": "map",
+                "polygon_m": [
+                    list(_localize_geofence_point(point, start_pose))
+                    for point in _geofence(profile)
+                ],
+                "transform": "source_world_to_localization_map_at_fixed_start",
+            },
+            "legacy_geofence": {
+                "field": "geofence_polygon_m",
+                "frame_id": "source_world",
+                "deprecation": "use source_world_geofence or localization_map_geofence",
+            },
+            # Legacy machine semantics are fixed: this is source-world data,
+            # never a localization-map polygon despite the historical name.
+            "geofence_frame": "source_world",
             "geofence_polygon_m": _geofence(profile),
         },
         "counts": {"static_assets": len(assets), "dirt_patches": len(dirt), "discrete_cubes": len(cubes), "pedestrians": len(pedestrians)},
@@ -938,6 +1145,14 @@ def generate_episode(
             "x_m": 0.0,
             "y_m": 0.0,
             "yaw_rad": 0.0,
+        },
+        "map_resolution_contract": {
+            # This public bundle does not own product-runtime defaults. Their
+            # executing components record actual values in their own reports.
+            "static_materializer": {"value_source": "formal_campus.launch.py:map_resolution", "purpose": "public_world_static_collision_raster"},
+            "lifecycle_support_mask": {"value_source": "prepare_public_lifecycle_artifacts(resolution)", "purpose": "public_geofence_support_mask"},
+            "slam_occupancy": {"value_source": "saved_map_metadata", "maximum_accepted_resolution_value_source": "map_lifecycle_core.MAXIMUM_SAVED_MAP_RESOLUTION_M", "purpose": "runtime_lidar_slam_occupancy"},
+            "coverage_planning": {"value_source": "ProductCoverageTelemetry(raster_resolution_m)", "purpose": "saved_map_coverage_raster_planning"},
         },
         "dynamic_pedestrians_present": bool(pedestrians),
     }

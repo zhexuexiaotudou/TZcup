@@ -304,7 +304,9 @@ def load_materialized_episode(
         (float(row.get("radius_m", 0.25)) for row in schedule.get("pedestrians", [])),
         default=0.25,
     )
-    start = public["vehicle_start_pose_map"]
+    # This materialized mission remains in source-world coordinates.  Prefer
+    # the explicit coordinate contract; the legacy key is source-world only.
+    start = public.get("vehicle_start_pose_source_world") or public["vehicle_start_pose_map"]
     navigation_radius = float(materialization["formal_navigation_footprint_radius_m"])
     task = TaskConfig.from_mapping(
         {

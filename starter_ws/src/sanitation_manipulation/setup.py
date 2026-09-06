@@ -29,6 +29,8 @@ setup(
         "console_scripts": [
             "active_cleaning_grasp_adapter = sanitation_manipulation.active_cleaning_adapter:main",
             "formal_physical_grasp_executor = sanitation_manipulation.formal_grasp_executor:main",
+            "moveit_planning_scene_bootstrap = sanitation_manipulation.planning_scene_bootstrap:main",
+            "moveit_ground_runtime_gate = sanitation_manipulation.planning_scene_runtime_gate:main",
             "placeholder_cube_demo = sanitation_manipulation.placeholder_demo:main",
         ],
     },

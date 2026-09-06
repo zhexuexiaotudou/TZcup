@@ -33,6 +33,10 @@ from sanitation_formal_campus_integration.saved_map_coverage_core import (
     SavedMapCoverageError,
     load_formal_operation_speed_profile,
 )
+from sanitation_formal_campus_integration.runtime_evidence_core import (
+    COMMAND_CHAIN_RECEIPT_REORDER_TOLERANCE_S,
+    EXPECTED_COMMAND_TOPIC_PUBLISHER,
+)
 
 
 def _json(path: Path) -> dict:
@@ -182,12 +186,34 @@ def validate(
         "mapping_runtime_passed": (
             mapping.get("passed") is True
             and mapping.get("truth_used_for_control") is False
-            and mapping.get("collision_monitor_node_count") == 1
-            and mapping.get("cmd_vel_gate_publisher_count") == 1
+            and mapping.get("collision_monitor_nodes") == ["/collision_monitor"]
+            and mapping.get("cmd_vel_gate_publishers") == ["/collision_monitor"]
+            and mapping.get("base_command_publishers") == [
+                "/whole_vehicle_safety_manager"
+            ]
+            and mapping.get("command_topic_publishers") == {
+                topic: [publisher]
+                for topic, publisher in EXPECTED_COMMAND_TOPIC_PUBLISHER.items()
+            }
+            and mapping.get("command_chain_publishers_attributed") is True
             and mapping.get("odom_tf_publisher_count") == 1
             and float(mapping.get("odom_tf_min_rate_hz", 0.0)) >= 10.0
             and mapping.get("slam_map_observed") is True
             and mapping.get("slam_odom_failures_after_ready") == 0
+            # The 0.10 m lower bound is the pre-existing collector runtime
+            # contract; this validator adds the command-chain attribution and
+            # freshness evidence without changing its physical threshold.
+            and float(mapping.get("odom_displacement_m", 0.0)) >= 0.10
+            and mapping.get("filtered_scan_sample_count", 0) > 0
+            and mapping.get("collision_monitor_state_sample_count", 0) > 0
+            and mapping.get("command_chain_live") is True
+            and mapping.get("command_chain_first_nonzero_ordered") is True
+            and mapping.get("command_chain_receipt_reorder_tolerance_s")
+            == COMMAND_CHAIN_RECEIPT_REORDER_TOLERANCE_S
+            and mapping.get("active_command_chain_window_definition")
+            == "status_after_first_nonzero_base_output_with_base_command_enabled_true"
+            and mapping.get("active_command_chain_safety_sample_count", 0) > 0
+            and mapping.get("active_command_chain_command_timeout_count") == 0
         ),
         # Mapping remains governed by the source-owned mapping_safe profile.
         # Do not inherit the dry cleaning speed into its separate runtime.

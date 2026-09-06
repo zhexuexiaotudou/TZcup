@@ -30,6 +30,31 @@ def test_scenario_bridge_preserves_identity_and_hides_truth_from_task_observatio
     assert "object_" not in serialized_config
 
 
+def test_research_bridge_prefers_explicit_source_world_geofence_and_start(tmp_path):
+    scenario = tmp_path / "episode"
+    write_episode(
+        scenario,
+        generate_episode(load_config(CONFIG), "research", "train", 0, 0, include_proxy=True),
+    )
+    manifest_path = scenario / "public" / "episode_manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    expected_start = dict(manifest["vehicle_start_pose_source_world"])
+    expected_geofence = list(manifest["field"]["source_world_geofence"]["polygon_m"])
+    manifest["vehicle_start_pose_map"] = {"x_m": 999.0, "y_m": 999.0, "yaw_rad": 0.0}
+    manifest["field"]["geofence_polygon_m"] = [[999.0, 999.0]] * 4
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    config, _ = build_active_task(Bundle.load(scenario))
+    assert (config.start.x, config.start.y, config.start.yaw) == pytest.approx(
+        (expected_start["x_m"], expected_start["y_m"], expected_start["yaw_rad"])
+    )
+    assert config.geofence == tuple(tuple(point) for point in expected_geofence)
+
+    manifest["field"]["source_world_geofence"]["frame_id"] = "map"
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+    with pytest.raises(ValueError, match="source-world geofence frame"):
+        build_active_task(Bundle.load(scenario))
+
+
 def test_bundle_rejects_world_hash_mismatch(tmp_path):
     scenario = tmp_path / "episode"
     write_episode(

@@ -145,10 +145,18 @@ def resolve_spawn_pose(
         manifest = json.loads(Path(episode_manifest_path).read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError) as exc:
         raise IntegrationContractError("unable to read public spawn manifest") from exc
-    source = manifest.get("vehicle_start_pose_map")
+    source = manifest.get("vehicle_start_pose_source_world")
+    legacy_source = manifest.get("vehicle_start_pose_map")
+    if source is None:
+        source = legacy_source
     if not isinstance(source, dict):
-        raise IntegrationContractError("episode manifest has no vehicle_start_pose_map")
+        raise IntegrationContractError("episode manifest has no source-world start pose")
     try:
+        if isinstance(legacy_source, dict) and manifest.get("vehicle_start_pose_source_world") is not None:
+            explicit_values = tuple(float(source[key]) for key in ("x_m", "y_m", "yaw_rad"))
+            legacy_values = tuple(float(legacy_source[key]) for key in ("x_m", "y_m", "yaw_rad"))
+            if explicit_values != legacy_values:
+                raise IntegrationContractError("explicit and legacy source-world start poses disagree")
         values = (
             float(source["x_m"]) if spawn_x is None else float(spawn_x),
             float(source["y_m"]) if spawn_y is None else float(spawn_y),

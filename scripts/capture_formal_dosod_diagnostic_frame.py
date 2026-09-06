@@ -82,7 +82,7 @@ def main() -> int:
         if not spin_until(node, lambda: node.info is not None and node.image is not None, 60.0):
             raise RuntimeError("front RGB/CameraInfo unavailable")
         manifest = json.loads(args.episode_manifest.read_text(encoding="utf-8"))
-        start = manifest["vehicle_start_pose_map"]
+        start = manifest.get("vehicle_start_pose_source_world") or manifest["vehicle_start_pose_map"]
         base_x, base_y, yaw = float(start["x_m"]), float(start["y_m"]), float(start["yaw_rad"])
         target_x = base_x + args.distance_m * math.cos(yaw)
         target_y = base_y + args.distance_m * math.sin(yaw)

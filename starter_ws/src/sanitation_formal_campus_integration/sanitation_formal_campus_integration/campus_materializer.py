@@ -207,9 +207,24 @@ def _validated_grid(manifest: dict[str, Any], resolution: float) -> GridSpec:
     if not math.isfinite(resolution) or resolution <= 0 or resolution > 0.5:
         raise IntegrationContractError("map resolution must be in (0, 0.5] metres")
     field = manifest.get("field")
-    if not isinstance(field, dict) or field.get("geofence_frame") != "map":
-        raise IntegrationContractError("public geofence must use the map frame")
-    raw_polygon = field.get("geofence_polygon_m")
+    if not isinstance(field, dict):
+        raise IntegrationContractError("public field is missing")
+    source_geofence = field.get("source_world_geofence")
+    if source_geofence is not None:
+        if not isinstance(source_geofence, dict):
+            raise IntegrationContractError("source-world geofence contract is invalid")
+        if source_geofence.get("frame_id") != "source_world":
+            raise IntegrationContractError("source-world geofence frame is invalid")
+        if field.get("geofence_frame") != "source_world":
+            raise IntegrationContractError("explicit source-world geofence has an ambiguous legacy frame")
+        raw_polygon = source_geofence.get("polygon_m")
+    else:
+        # Migration compatibility: old public bundles use the historical
+        # ``map`` spelling, but the values have always been source-world.
+        # Reject any third interpretation instead of silently guessing.
+        if field.get("geofence_frame") not in {"map", "source_world"}:
+            raise IntegrationContractError("legacy geofence frame is invalid")
+        raw_polygon = field.get("geofence_polygon_m")
     if not isinstance(raw_polygon, list) or len(raw_polygon) != 4:
         raise IntegrationContractError("public geofence must be a four-point rectangle")
     try:
@@ -218,6 +233,59 @@ def _validated_grid(manifest: dict[str, Any], resolution: float) -> GridSpec:
         raise IntegrationContractError("public geofence contains invalid points") from exc
     if not all(math.isfinite(value) for point in polygon for value in point):
         raise IntegrationContractError("public geofence contains non-finite points")
+    legacy_polygon = field.get("geofence_polygon_m")
+    if source_geofence is not None and legacy_polygon is not None:
+        try:
+            normalized_legacy = tuple(
+                (float(point[0]), float(point[1])) for point in legacy_polygon
+            )
+        except (IndexError, TypeError, ValueError) as exc:
+            raise IntegrationContractError("legacy geofence contains invalid points") from exc
+        if normalized_legacy != polygon:
+            raise IntegrationContractError("legacy and source-world geofences disagree")
+        legacy_contract = field.get("legacy_geofence")
+        if (
+            not isinstance(legacy_contract, dict)
+            or legacy_contract.get("field") != "geofence_polygon_m"
+            or legacy_contract.get("frame_id") != "source_world"
+            or not isinstance(legacy_contract.get("deprecation"), str)
+            or not legacy_contract["deprecation"]
+        ):
+            raise IntegrationContractError("legacy geofence deprecation contract is invalid")
+
+    local_geofence = field.get("localization_map_geofence")
+    if local_geofence is not None:
+        if not isinstance(local_geofence, dict) or local_geofence.get("frame_id") != "map":
+            raise IntegrationContractError("localization-map geofence frame is invalid")
+        source_start = manifest.get("vehicle_start_pose_source_world")
+        if not isinstance(source_start, dict):
+            raise IntegrationContractError("explicit geofence requires a source-world start")
+        try:
+            start_x = float(source_start["x_m"])
+            start_y = float(source_start["y_m"])
+            start_yaw = float(source_start["yaw_rad"])
+            local_polygon = tuple(
+                (float(point[0]), float(point[1]))
+                for point in local_geofence.get("polygon_m", ())
+            )
+        except (KeyError, TypeError, ValueError, IndexError) as exc:
+            raise IntegrationContractError("localization-map geofence is invalid") from exc
+        cosine, sine = math.cos(start_yaw), math.sin(start_yaw)
+        expected_local = tuple(
+            (
+                cosine * (x - start_x) + sine * (y - start_y),
+                -sine * (x - start_x) + cosine * (y - start_y),
+            )
+            for x, y in polygon
+        )
+        if len(local_polygon) != len(expected_local) or any(
+            not math.isclose(ax, bx, abs_tol=1e-6)
+            or not math.isclose(ay, by, abs_tol=1e-6)
+            for (ax, ay), (bx, by) in zip(local_polygon, expected_local)
+        ):
+            raise IntegrationContractError(
+                "localization geofence must apply the source transform exactly once"
+            )
     xs = sorted({point[0] for point in polygon})
     ys = sorted({point[1] for point in polygon})
     if len(xs) != 2 or len(ys) != 2 or set(polygon) != {
@@ -389,7 +457,9 @@ def _validate_start_pose(
     manifest: dict[str, Any],
     pose_override: tuple[float, float, float] | None,
 ) -> tuple[float, float, float]:
-    source = manifest.get("vehicle_start_pose_map")
+    source = manifest.get("vehicle_start_pose_source_world")
+    if source is None:
+        source = manifest.get("vehicle_start_pose_map")
     if not isinstance(source, dict):
         raise IntegrationContractError("public manifest has no vehicle_start_pose_map")
     try:
@@ -586,6 +656,12 @@ def materialize_campus_artifacts(
             "resolution_m": spec.resolution,
             "width_cells": spec.width,
             "height_cells": spec.height,
+        },
+        "resolution_contract": {
+            "static_materializer": {"resolution_m": spec.resolution, "value_source": "materialize_campus_artifacts(resolution)", "purpose": "public_world_static_collision_raster"},
+            "lifecycle_support_mask": {"value_source": "prepare_public_lifecycle_artifacts(resolution)", "purpose": "public_geofence_support_mask"},
+            "slam_occupancy": {"value_source": "saved_map_metadata", "maximum_accepted_resolution_value_source": "map_lifecycle_core.MAXIMUM_SAVED_MAP_RESOLUTION_M", "purpose": "runtime_lidar_slam_occupancy"},
+            "coverage_planning": {"value_source": "ProductCoverageTelemetry(raster_resolution_m)", "purpose": "saved_map_coverage_raster_planning"},
         },
         "static_collision_count": len(collisions),
         "formal_navigation_footprint_radius_m": footprint_radius,

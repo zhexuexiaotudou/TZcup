@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <robot name="tzcup_formal_sanitation_vehicle">
+  <!-- The mobile base is localized in map; manipulator remains arm-only. -->
+  <virtual_joint name="formal_world_joint" type="planar" parent_frame="map" child_link="base_footprint"/>
   <group name="manipulator">
     <chain base_link="ur5e_base_link" tip_link="tool0"/>
   </group>

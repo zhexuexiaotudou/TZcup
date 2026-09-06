@@ -16,6 +16,7 @@ from launch_ros.substitutions import FindPackageShare
 def generate_launch_description() -> LaunchDescription:
     package = FindPackageShare("sanitation_manipulation")
     config = PathJoinSubstitution([package, "config", "formal_grasp_executor.yaml"])
+    scene_config = PathJoinSubstitution([package, "config", "bin_and_scene.yaml"])
     moveit_launch = PathJoinSubstitution([package, "launch", "manipulation.launch.py"])
     return LaunchDescription(
         [
@@ -33,9 +34,16 @@ def generate_launch_description() -> LaunchDescription:
             ),
             Node(
                 package="sanitation_manipulation",
+                executable="moveit_planning_scene_bootstrap",
+                name="moveit_planning_scene_bootstrap",
+                parameters=[{"config_file": scene_config, "use_sim_time": True}],
+                output="screen",
+            ),
+            Node(
+                package="sanitation_manipulation",
                 executable="formal_physical_grasp_executor",
                 name="formal_physical_grasp_executor",
-                parameters=[config],
+                parameters=[config, {"planning_scene_config_file": scene_config}],
                 output="screen",
             ),
         ]

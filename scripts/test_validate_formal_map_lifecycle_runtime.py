@@ -7,6 +7,10 @@ import sys
 
 import pytest
 
+from sanitation_formal_campus_integration.runtime_evidence_core import (
+    COMMAND_CHAIN_RECEIPT_REORDER_TOLERANCE_S,
+)
+
 
 SCRIPT = Path(__file__).with_name("validate_formal_map_lifecycle_runtime.py")
 sys.path.insert(0, str(SCRIPT.parent))
@@ -63,10 +67,33 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path):
         "truth_used_for_control": False,
         "collision_monitor_node_count": 1,
         "cmd_vel_gate_publisher_count": 1,
+        "collision_monitor_nodes": ["/collision_monitor"],
+        "cmd_vel_gate_publishers": ["/collision_monitor"],
+        "base_command_publishers": ["/whole_vehicle_safety_manager"],
+        "command_topic_publishers": {
+            "/cmd_vel_nav": ["/controller_server"],
+            "/cmd_vel_smoothed": ["/velocity_smoother"],
+            "/cmd_vel_gate": ["/collision_monitor"],
+            "/base_controller/cmd_vel": ["/whole_vehicle_safety_manager"],
+        },
+        "command_chain_publishers_attributed": True,
         "odom_tf_publisher_count": 1,
         "odom_tf_min_rate_hz": 20.0,
+        "odom_displacement_m": 0.10,
         "slam_map_observed": True,
         "slam_odom_failures_after_ready": 0,
+        "filtered_scan_sample_count": 6,
+        "collision_monitor_state_sample_count": 6,
+        "command_chain_live": True,
+        "command_chain_first_nonzero_ordered": True,
+        "command_chain_receipt_reorder_tolerance_s": (
+            COMMAND_CHAIN_RECEIPT_REORDER_TOLERANCE_S
+        ),
+        "active_command_chain_window_definition": (
+            "status_after_first_nonzero_base_output_with_base_command_enabled_true"
+        ),
+        "active_command_chain_safety_sample_count": 6,
+        "active_command_chain_command_timeout_count": 0,
     })
     cleaning = _write(tmp_path / "cleaning.json", {
         "passed": True,
@@ -106,6 +133,37 @@ def test_validator_passes_only_complete_real_runtime_contract(tmp_path):
         "mapping_safe": pytest.approx(0.45),
         "dry_cleaning": pytest.approx(1.0),
     }
+
+    valid_mapping = json.loads(mapping.read_text(encoding="utf-8"))
+    for field, value in (
+        ("cmd_vel_gate_publishers", ["/other_gate"]),
+        ("base_command_publishers", ["/other_safety"]),
+        ("command_topic_publishers", {
+            "/cmd_vel_nav": ["/stale_test_publisher"],
+            "/cmd_vel_smoothed": ["/velocity_smoother"],
+            "/cmd_vel_gate": ["/collision_monitor"],
+            "/base_controller/cmd_vel": ["/whole_vehicle_safety_manager"],
+        }),
+        ("command_chain_publishers_attributed", False),
+        ("odom_displacement_m", 0.099999),
+        ("filtered_scan_sample_count", 0),
+        ("collision_monitor_state_sample_count", 0),
+        ("command_chain_live", False),
+        ("command_chain_first_nonzero_ordered", False),
+        ("command_chain_receipt_reorder_tolerance_s", 0.249),
+        ("active_command_chain_window_definition", "ambiguous"),
+        ("active_command_chain_safety_sample_count", 0),
+        ("active_command_chain_command_timeout_count", 1),
+    ):
+        invalid_mapping = copy.deepcopy(valid_mapping)
+        invalid_mapping[field] = value
+        failed = MODULE.validate(
+            root,
+            _write(tmp_path / f"mapping-{field}.json", invalid_mapping),
+            cleaning,
+        )
+        assert failed["passed"] is False
+        assert failed["checks"]["mapping_runtime_passed"] is False
 
     valid_cleaning = json.loads(cleaning.read_text(encoding="utf-8"))
     for profile_name, speed in (
@@ -166,8 +224,29 @@ def test_cleaning_aggregate_fails_closed_without_real_coverage_evidence(
     mapping_value = {
         "passed": True, "truth_used_for_control": False,
         "collision_monitor_node_count": 1, "cmd_vel_gate_publisher_count": 1,
+        "collision_monitor_nodes": ["/collision_monitor"],
+        "cmd_vel_gate_publishers": ["/collision_monitor"],
+        "base_command_publishers": ["/whole_vehicle_safety_manager"],
+        "command_topic_publishers": {
+            "/cmd_vel_nav": ["/controller_server"],
+            "/cmd_vel_smoothed": ["/velocity_smoother"],
+            "/cmd_vel_gate": ["/collision_monitor"],
+            "/base_controller/cmd_vel": ["/whole_vehicle_safety_manager"],
+        },
+        "command_chain_publishers_attributed": True,
         "odom_tf_publisher_count": 1, "odom_tf_min_rate_hz": 20.0,
+        "odom_displacement_m": 0.10,
         "slam_map_observed": True, "slam_odom_failures_after_ready": 0,
+        "filtered_scan_sample_count": 6, "collision_monitor_state_sample_count": 6,
+        "command_chain_live": True, "command_chain_first_nonzero_ordered": True,
+        "command_chain_receipt_reorder_tolerance_s": (
+            COMMAND_CHAIN_RECEIPT_REORDER_TOLERANCE_S
+        ),
+        "active_command_chain_window_definition": (
+            "status_after_first_nonzero_base_output_with_base_command_enabled_true"
+        ),
+        "active_command_chain_safety_sample_count": 6,
+        "active_command_chain_command_timeout_count": 0,
     }
     cleaning_value = {
         "passed": True, "truth_used_for_control": False,
@@ -272,6 +351,27 @@ def test_runtime_collectors_preserve_safety_and_hard_restart_contract():
     assert '"odom_displacement_m"' in collector
     assert '"collision_points_inside_transport_max"' in collector
     assert '"command_topic_sample_counts"' in collector
+    assert '"command_topic_publishers"' in collector
+    assert '"command_chain_publishers_attributed"' in collector
+    assert "EXPECTED_COMMAND_TOPIC_PUBLISHER" in collector
+    for topic in (
+        "/cmd_vel_nav",
+        "/cmd_vel_smoothed",
+        "/cmd_vel_gate",
+        "/base_controller/cmd_vel",
+    ):
+        assert topic in collector
+    assert '"command_chain_first_nonzero_received_s"' in collector
+    assert '"command_chain_first_nonzero_ordered"' in collector
+    assert '"active_command_chain_command_timeout_count"' in collector
+    assert '"active_command_chain_window_definition"' in collector
+    assert '"command_chain_receipt_reorder_tolerance_s"' in collector
+    assert "COMMAND_CHAIN_RECEIPT_REORDER_TOLERANCE_S" in collector
+    assert "post_navigation_safety_status_sample_count" not in collector
+    assert "post_navigation_command_timeout_count" not in collector
+    assert "post_command_chain_safety_status_sample_count" not in collector
+    assert "post_command_chain_command_timeout_count" not in collector
+    assert 'get_publishers_info_by_topic("/base_controller/cmd_vel")' in collector
     assert '"/scan/navigation"' in collector
     assert '"filtered_scan_sample_count"' in collector
     assert "qos_profile_sensor_data" in collector

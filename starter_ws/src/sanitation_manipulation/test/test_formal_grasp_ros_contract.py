@@ -39,6 +39,125 @@ def test_executor_uses_movegroup_ik_cartesian_and_planning_scene_not_fixed_pick(
     assert "PICK," not in SOURCE
     assert "self._trajectory(self._arm" not in SOURCE
     assert '"moveit_task_constructor_used": False' in SOURCE
+    assert "for client, reason in action_interfaces:" in SOURCE
+    assert "client.wait_for_server(timeout_sec=5.0)" in SOURCE
+    assert "for client, reason in service_interfaces:" in SOURCE
+    assert "client.wait_for_service(timeout_sec=5.0)" in SOURCE
+
+
+def test_ground_bootstrap_is_a_separate_readback_gate_not_a_perceived_cube_lifecycle():
+    config = (PACKAGE / "config" / "bin_and_scene.yaml").read_text(encoding="utf-8")
+    bootstrap = (PACKAGE / "sanitation_manipulation" / "planning_scene_bootstrap.py").read_text(
+        encoding="utf-8"
+    )
+    launch = (PACKAGE / "launch" / "formal_physical_grasp.launch.py").read_text(encoding="utf-8")
+    assert "required_robot_links:" in config
+    assert "required_world_objects: [ground]" in config
+    assert "required_collision_objects" not in config
+    assert "GetPlanningScene" in bootstrap
+    assert "GetParameters" in bootstrap
+    assert "robot_description_semantic" in bootstrap
+    assert "configured_ground_frame_does_not_match_moveit_planning_frame" in bootstrap
+    assert "validate_scene_readback" in bootstrap
+    assert "required_robot_or_ground_tf_unavailable" in bootstrap
+    assert "scene.world.collision_objects = [self._ground_collision()]" in bootstrap
+    assert "perceived_cube" not in bootstrap
+    assert "moveit_planning_scene_bootstrap" in launch
+    assert "planning_scene_ready_topic" in SOURCE
+    assert "planning_scene_not_ready_or_ground_readback_missing" in SOURCE
+    assert SOURCE.index("self._wait_moveit_interfaces()") < SOURCE.index(
+        'self._moveit_joint(TRANSPORT, "TRANSPORT")'
+    )
+
+
+def test_ground_bootstrap_keeps_waiting_clients_and_tf_runnable_while_tick_is_serialized():
+    bootstrap = (PACKAGE / "sanitation_manipulation" / "planning_scene_bootstrap.py").read_text(
+        encoding="utf-8"
+    )
+    assert "MutuallyExclusiveCallbackGroup, ReentrantCallbackGroup" in bootstrap
+    assert "self._timer_callback_group = MutuallyExclusiveCallbackGroup()" in bootstrap
+    assert "self._service_callback_group = ReentrantCallbackGroup()" in bootstrap
+    assert bootstrap.count("callback_group=self._service_callback_group") == 3
+    assert "callback_group=self._timer_callback_group" in bootstrap
+    # Jazzy's TransformListener owns a distinct ReentrantCallbackGroup for
+    # /tf and /tf_static. The bootstrap pins that structure and keeps the
+    # listener in the single MultiThreadedExecutor instead of adding the node
+    # to a competing internal executor.
+    assert "TransformListener(self._tf_buffer, self, spin_thread=False)" in bootstrap
+    assert "self._tf_listener_group = self._tf_listener.group" in bootstrap
+    assert "isinstance(self._tf_listener_group, ReentrantCallbackGroup)" in bootstrap
+    assert "MultiThreadedExecutor(num_threads=2)" in bootstrap
+
+
+def test_live_ground_runtime_gate_queries_only_and_never_executes_actuators():
+    gate = (PACKAGE / "sanitation_manipulation" / "planning_scene_runtime_gate.py").read_text(
+        encoding="utf-8"
+    )
+    assert "GetPositionIK" in gate and "GetCartesianPath" in gate
+    # Structural test only: actual contacts/revision evidence is Linux-live
+    # runtime work and must never be inferred from this source assertion.
+    assert "GetStateValidity" in gate
+    assert "below_ground_state_not_explicitly_colliding_with_ground" in gate
+    assert "response.contacts" in gate
+    assert "request.contacts" not in gate
+    assert "request.max_contacts" not in gate
+    assert "planning_virtual_joint_missing_from_robot_state" in gate
+    assert "fresh_map_to_base_footprint_tf_unavailable" in gate
+    assert "map_to_base_footprint_tf_stale" in gate
+    assert "planning_virtual_joint_pose_disagrees_with_map_tf" in gate
+    assert "allow_ground_removal_test" in gate
+    assert "removal.is_diff = True" in gate
+    assert "removal.robot_state.is_diff = True" in gate
+    assert "item.operation = CollisionObject.REMOVE" in gate
+    assert "removal.world.collision_objects = [item]" in gate
+    assert "ground_removal_changed_non_ground_world_or_acm" in gate
+    assert "is_diff = False" not in gate
+    assert "planning_scene_revision_did_not_increment" in gate
+    assert '"pregrasp", "pick", "lift", "deposit"' in gate
+    assert "ExecuteTrajectory" not in gate
+    assert "FollowJointTrajectory" not in gate
+    assert "model_name" not in gate
+    assert "entity_name" not in gate
+    assert "SetEntityPose" not in gate
+
+
+def test_live_ground_runtime_gate_reports_known_service_door_warning_without_masking_errors():
+    gate = (PACKAGE / "sanitation_manipulation" / "planning_scene_runtime_gate.py").read_text(
+        encoding="utf-8"
+    )
+    assert "from rcl_interfaces.msg import Log" in gate
+    assert 'Log, "/rosout", self._on_rosout, qos_profile_rosout_default' in gate
+    for joint in (
+        "bodywork_power_service_door_hinge_joint",
+        "bodywork_power_service_door_latch_joint",
+        "bodywork_compute_service_door_hinge_joint",
+        "bodywork_compute_service_door_latch_joint",
+        "bodywork_wet_service_door_hinge_joint",
+        "bodywork_wet_service_door_latch_joint",
+        "bodywork_rear_dry_service_door_hinge_joint",
+        "bodywork_rear_dry_service_door_latch_joint",
+    ):
+        assert joint in gate
+    assert '"observed": self._door_missing_joint_warning_count > 0' in gate
+    assert '"other_moveit_error_summaries"' in gate
+    assert "moveit_error_logged_during_ground_runtime_gate" not in gate
+    assert "_raise_if_moveit_error_logged" not in gate
+    assert 'result["rosout_observation"] = node._rosout_report()' in gate
+    assert '"rosout_observation": self._rosout_report()' in gate
+
+
+def test_cube_scene_diffs_advance_the_bootstrap_revision_instead_of_emptying_it():
+    assert "get_planning_scene_service" in SOURCE
+    assert "next_scene_revision" in SOURCE
+    assert "PlanningSceneComponents.SCENE_SETTINGS" in SOURCE
+    assert "PlanningSceneComponents.WORLD_OBJECT_GEOMETRY" in SOURCE
+    assert "PlanningSceneComponents.ALLOWED_COLLISION_MATRIX" in SOURCE
+    assert "validate_scene_readback" in SOURCE
+    assert "revision_missing" in SOURCE
+    assert "revision_not_monotonic_after_apply" in SOURCE
+    assert "current.scene.name.strip() or None" not in SOURCE
+    assert "scene.name = next_scene_revision" in SOURCE
+    assert 'scene = PlanningScene()' in SOURCE
 
 
 def test_wrist_recheck_contact_attachment_and_bin_increment_are_fail_closed():
@@ -80,6 +199,7 @@ def test_formal_launch_starts_exactly_one_move_group_without_second_control_stac
     assert 'package="moveit_ros_move_group"' in moveit
     assert 'executable="move_group"' in moveit
     assert 'base_link="ur5e_base_link" tip_link="tool0"' in srdf
+    assert 'name="formal_world_joint" type="planar" parent_frame="map" child_link="base_footprint"' in srdf
     assert "shoulder_pan_joint" in (PACKAGE / "config" / "joint_limits.yaml").read_text(
         encoding="utf-8"
     )

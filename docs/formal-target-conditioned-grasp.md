@@ -12,6 +12,48 @@ controller_manager。当前后端明确是 MoveGroup action、`/compute_ik`、
 `/compute_cartesian_path`、`/apply_planning_scene` 和 `/execute_trajectory`，
 没有安装或声称使用 MoveIt Task Constructor。
 
+同一 launch 会并行启动独立 planning-scene bootstrap，而执行器在发出任何命令前
+必须等待其就绪门。bootstrap 从
+`config/bin_and_scene.yaml` 注入有限厚度 `0.50 m`、顶面 `z=0` 的配置化
+`ground` box。它直接位于 MoveIt 的实际 planning frame `map`，不是随车的
+`base_footprint` patch：公开 source-world geofence 是
+`x=[-100,100], y=[-50,50]`，以唯一固定起点 `(-98,0)` 转入 `map` 后为
+`x=[-2,198], y=[-50,50]`；四侧各留 `10 m` 后，ground 的尺寸和中心固定为
+`220 x 120 x 0.50 m` 与 `(98,0,-0.25)`。这条 source bounds → 一次变换 →
+map bounds → margin 的 provenance 写入配置并由纯函数测试四个 geofence 角点，
+禁止把 source-world 中心 `0` 误当 map 中心。`formal_vehicle.srdf` 的
+`formal_world_joint` 是 `map → base_footprint` 的 planar virtual joint；机械臂
+group 仍只含机械臂，不规划或执行底盘。bootstrap 每轮从 live `move_group`
+语义参数读取这个 joint，frame/name/child 任一与配置不符即 fail closed。只在
+allowed-collision matrix 中放行四个轮支撑 link 与地面的正常接触。bootstrap 必须以
+`GetPlanningScene` 回读 scene revision、ground ID/frame/box 尺寸/位姿和该
+wheel-only ACM，未知 revision、TF 缺失或 ground 丢失会先锁存
+`planning_scene_ready=false`；抓取执行器在这一硬门恢复并完成回读前不得发送
+机械臂、夹爪、存储或 planning-scene 命令。持久性 gate 只发送带已知 revision 的
+`is_diff=true + REMOVE ground`，并在恢复后实时比对非 ground world objects 与非
+ground ACM；禁止用空的 full-scene reset 清除 robot state、SRDF 相邻碰撞豁免或
+其他对象。每次 perceived-cube 的 world/
+attached diff 也必须递增已知 revision，并在写入后重新证明 ground 与 ACM
+仍存在。
+
+Linux/MoveIt 运行门使用冻结且处于关节限位内的 `halton_00772` 负态，通过
+`GetStateValidity` 响应 contacts 明确要求 `ground` 与非豁免机械臂 link 接触；ROS 2
+请求本身没有 contacts 开关，MoveIt state-validation capability 在服务端启用并返回该证据；
+正常 pregrasp/pick/lift/deposit 则必须继续通过 collision-aware IK、state
+validity 与 Cartesian 检查。纯 Python 对配置和消息结构的测试不构成这项 live
+证据，本机无 ROS/MoveIt 时该门必须保持 `PENDING`。live gate 还必须从
+`GetPlanningScene.robot_state.multi_dof_joint_state` 回读 `formal_world_joint`，
+并与 fresh `map → base_footprint` TF 的位姿一致；缺失、陈旧或不一致都失败关闭。
+因此 standalone fake-control 若没有定位或明确的静态 `map` TF，不能报告 scene ready。
+
+该 live gate 同时只读订阅 `/rosout`：JSON 会记录八个 bodywork service-door
+hinge/latch joint 的已知 missing-joint warning 是否观察到、计数和去重摘要。这些
+被动物理门铰链/锁扣只允许经 evaluator-only `/formal/service_door_joint_states`
+反馈，绝不补写 shared `/joint_states`，也不因该记录改写 SRDF passive 定义。其他
+MoveIt `ERROR/FATAL` 不会被此分类吞掉，会原样记录在输出中供归因，但日志采集本身不增加
+新的通过条件；无论 warning 是否出现，正常 IK/state-validity/ground-contact 和
+scene-completeness 服务门都仍是硬门。
+
 任务序列为：停车与安全检查、MoveIt 回运输姿态、将感知立方体加入规划场景、目标相关
 预抓、开夹爪、等待腕部 RGB-D 在 `/perception/wrist/grasp_recheck` 复测同一 track、
 更新目标 pose/尺寸、直线接近、双指物理接触后夹持、把目标加入 attached collision

@@ -116,7 +116,7 @@ def materialize_stage_a_episode(
     ]
     pedestrians = tuple(_pedestrian_pose(row) for row in schedule.get("pedestrians", []))
     pedestrian_radius = max((float(row.get("radius_m", 0.25)) for row in schedule.get("pedestrians", [])), default=0.25)
-    start = public["vehicle_start_pose_map"]
+    start = public.get("vehicle_start_pose_source_world") or public["vehicle_start_pose_map"]
     config = TaskConfig.from_mapping({
         "geofence": mission["outer_polygon"],
         "static_obstacles": static_obstacles,

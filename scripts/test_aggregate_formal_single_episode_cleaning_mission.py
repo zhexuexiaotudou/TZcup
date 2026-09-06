@@ -8,7 +8,12 @@ import pytest
 import yaml
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from aggregate_formal_single_episode_cleaning_mission import AggregateError, aggregate, canonical_session_id
+from aggregate_formal_single_episode_cleaning_mission import (
+    AggregateError,
+    _source_geofence_polygon,
+    aggregate,
+    canonical_session_id,
+)
 from collect_formal_single_episode_cleaning_mission import (
     CONTROL_PROHIBITED_TRUTH_TOPICS, REQUIRED_RUNTIME_NODES,
     build_input_binding, sha256_file,
@@ -17,6 +22,31 @@ from generate_formal_same_map_baseline import build_report
 
 MATERIALS = ("paperboard", "PP", "PET", "aluminum")
 MASSES = {"paperboard": 0.0189, "PP": 0.0243, "PET": 0.03726, "aluminum": 0.0729}
+
+
+@pytest.mark.parametrize(
+    ("field", "message"),
+    [
+        (
+            {
+                "source_world_geofence": {
+                    "frame_id": "map",
+                    "polygon_m": [[0.0, 0.0]],
+                }
+            },
+            "source-world geofence frame is invalid",
+        ),
+        (
+            {"geofence_frame": "odom", "geofence_polygon_m": [[0.0, 0.0]]},
+            "legacy geofence frame is invalid",
+        ),
+    ],
+)
+def test_source_geofence_contract_rejects_ambiguous_frames(
+    field: dict, message: str
+) -> None:
+    with pytest.raises(AggregateError, match=message):
+        _source_geofence_polygon(field)
 
 
 def _write(path: Path, value: dict | str) -> Path:
@@ -53,7 +83,8 @@ def build_raw(tmp_path: Path) -> Path:
     world = _write(tmp_path / "episode/public/world.sdf", "<sdf version='1.11'/>\n")
     public = {"schema_version": 1, "episode_id": episode_id, "map_id": map_id,
         "profile": "formal", "field": {"width_m": 200., "height_m": 100.,
-            "area_m2": 20000., "geofence_polygon_m": [[-100,-50],[100,-50],[100,50],[-100,50]]},
+            "area_m2": 20000., "geofence_frame": "map",
+            "geofence_polygon_m": [[-100,-50],[100,-50],[100,50],[-100,50]]},
         "counts": {"discrete_cubes": 20, "pedestrians": 3},
         "cube_contract": {"edge_m": .03},
         "dynamic_pedestrians_present": True,

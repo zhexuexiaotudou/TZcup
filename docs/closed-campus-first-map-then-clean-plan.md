@@ -568,7 +568,7 @@ Contact-GraspNet、GraspGen等通用方法同样偏CUDA；GPD可走CPU点云路�
 
 ### 11.9 首次建图与固图清扫的运行证据门
 
-正式全覆盖分支不再把Coverage server“已启动”当作任务完成。产品侧执行器必须实际提交 `ComputeCoveragePath`，再通过Nav2的 `NavigateToPose` 转场和 `FollowPath`/`CleanPath`逐条执行清扫带；只有action成功终态为 `COMPLETED`、全部清扫带完成且退出时刷盘关闭，才生成成功终态文件。正式速度上限保持 `0.45 m/s`，不得为缩短200 m × 100 m场地运行时间而提高。
+正式全覆盖分支不再把Coverage server“已启动”当作任务完成。产品侧执行器必须实际提交 `ComputeCoveragePath`，再通过Nav2的 `NavigateToPose` 转场和 `FollowPath`/`CleanPath`逐条执行清扫带；只有action成功终态为 `COMPLETED`、全部清扫带完成且退出时刷盘关闭，才生成成功终态文件。首次建图和普通安全配置继续使用 `0.45 m/s` 上限，不得为缩短 `200 m × 100 m` 场地运行时间而提高。`1.0 m/s` 只属于显式 opt-in 的 `dry_cleaning_competition_candidate` 重新鉴定车道；它必须在同一 source-bound 会话中依次通过 mobility、interlock、dynamic-obstacle 和 ground-dirt 四个运行门，再以有效覆盖并集和包含转向、避障、补扫的实际总时长通过 measured-efficiency 门。候选请求不会绕过当前 `0.45 m/s` 最终安全包络，本方案也不授权实机提速。
 
 独立collector只使用产品侧 `/odom`、`/amcl_pose`、刷盘状态和action状态，累计底盘总里程、刷盘开启里程，并以 `1.32 m`实际扫掠宽度在任务多边形内估算覆盖率；不得订阅Gazebo模型位姿、地污真值或评测器真值。聚合验收要求估算覆盖率 `>=95%`、总里程和刷盘里程均大于零、刷盘退出关闭，缺少任一证据均fail-closed。
 

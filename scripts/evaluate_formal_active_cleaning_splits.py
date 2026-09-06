@@ -117,6 +117,22 @@ def _asset_polygon(asset: dict[str, Any]) -> tuple[tuple[float, float], ...]:
     return _rotated_rectangle(x, y, size[0], size[1], yaw)
 
 
+def _source_geofence_polygon(field: dict[str, Any]) -> Any:
+    """Read only the source-world geofence, with strict legacy semantics."""
+
+    source_geofence = field.get("source_world_geofence")
+    if source_geofence is not None:
+        if (
+            not isinstance(source_geofence, dict)
+            or source_geofence.get("frame_id") != "source_world"
+        ):
+            raise ValueError("explicit source-world geofence frame is invalid")
+        return source_geofence["polygon_m"]
+    if field.get("geofence_frame") not in {"map", "source_world"}:
+        raise ValueError("legacy geofence frame is invalid")
+    return field["geofence_polygon_m"]
+
+
 def _task_from_generated(
     split: str,
     directory: Path,
@@ -137,10 +153,11 @@ def _task_from_generated(
     if int(public["counts"]["pedestrians"]) != 8:
         raise ValueError(f"formal sample {split} does not contain 8 pedestrians")
 
-    start = public["vehicle_start_pose_map"]
+    start = public.get("vehicle_start_pose_source_world") or public["vehicle_start_pose_map"]
+    geofence = _source_geofence_polygon(public["field"])
     config = TaskConfig.from_mapping(
         {
-            "geofence": public["field"]["geofence_polygon_m"],
+            "geofence": geofence,
             "static_obstacles": [
                 _asset_polygon(asset) for asset in truth["static_assets"]
             ],
