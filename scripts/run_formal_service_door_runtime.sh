@@ -46,14 +46,15 @@ cleanup() {
 }
 formal_runtime_install_traps cleanup
 
+physical_joint_states_topic="/formal/service_door_joint_states"
 for _ in $(seq 1 120); do
-  if ros2 topic list 2>/dev/null | grep -Fxq /joint_states; then
+  if ros2 topic list 2>/dev/null | grep -Fxq "${physical_joint_states_topic}"; then
     break
   fi
   sleep 0.25
 done
-ros2 topic list 2>/dev/null | grep -Fxq /joint_states || {
-  echo "Timed out waiting for /joint_states" >&2
+ros2 topic list 2>/dev/null | grep -Fxq "${physical_joint_states_topic}" || {
+  echo "Timed out waiting for ${physical_joint_states_topic}" >&2
   exit 3
 }
 

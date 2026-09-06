@@ -21,6 +21,7 @@
   <xacro:arg name="bodywork_visible" default="true"/>
   <xacro:arg name="high_bandwidth_sensor_runtime" default="true"/>
   <xacro:arg name="service_acceptance_interfaces" default="false"/>
+  <xacro:arg name="service_door_evaluation_interfaces" default="false"/>
   <xacro:arg name="initial_estop_latched" default="true"/>
   <xacro:arg name="a300_drivetrain_plant_runtime" default="true"/>
   <xacro:arg name="cleaning_realtime_telemetry_enabled" default="true"/>
@@ -150,6 +151,22 @@
         <tail_applied_topic>/formal_vehicle/lighting/tail_lights_applied</tail_applied_topic>
         <warning_applied_topic>/formal_vehicle/lighting/warning_lights_applied</warning_applied_topic>
       </plugin>
+      <!-- The manual service doors remain outside gz_ros2_control. Publish
+           only their eight physical joints when the evaluator opts in. -->
+      <xacro:if value="$(arg service_door_evaluation_interfaces)">
+        <plugin filename="gz-sim-joint-state-publisher-system"
+                name="gz::sim::systems::JointStatePublisher">
+          <topic>/formal_vehicle/evaluation/bodywork_service/joint_states</topic>
+          <joint_name>bodywork_power_service_door_hinge_joint</joint_name>
+          <joint_name>bodywork_power_service_door_latch_joint</joint_name>
+          <joint_name>bodywork_compute_service_door_hinge_joint</joint_name>
+          <joint_name>bodywork_compute_service_door_latch_joint</joint_name>
+          <joint_name>bodywork_wet_service_door_hinge_joint</joint_name>
+          <joint_name>bodywork_wet_service_door_latch_joint</joint_name>
+          <joint_name>bodywork_rear_dry_service_door_hinge_joint</joint_name>
+          <joint_name>bodywork_rear_dry_service_door_latch_joint</joint_name>
+        </plugin>
+      </xacro:if>
       <!-- Evaluation-only manual-service drive. It applies bounded forces to
            the real passive hinge/latch joints and enforces measured-latch
            interlocking; no ros2_control command interface is invented. -->

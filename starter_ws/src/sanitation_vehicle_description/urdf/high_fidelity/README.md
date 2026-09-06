@@ -172,8 +172,10 @@ their physical joint positions reach `/joint_states` without exposing a command
 interface. The four bodywork service doors follow the same manual-service rule,
 but are intentionally excluded from `gz_ros2_control`: their evaluator-only
 bounded-force plugin must act on DART physical joints rather than state-only
-controller exports. During the opt-in service-door gate, a dedicated Gazebo
-`gz.msgs.Model` bridge publishes their measured state only on
+controller exports. During the opt-in service-door gate, a model-level Gazebo
+`JointStatePublisher` publishes only their eight joints to
+`/formal_vehicle/evaluation/bodywork_service/joint_states` (`gz.msgs.Model`),
+and its dedicated bridge remaps the measured state only to
 `/formal/service_door_joint_states`; it never writes or remaps onto the product
 `/joint_states` topic. Each door has a chassis-fixed hinge bracket, a
 mechanically limited vertical hinge and an independent rotary latch. Zero latch
@@ -197,7 +199,8 @@ the dedicated service-door acceptance runner.
 It rejects hinge opening until the measured latch is beyond the unlock
 threshold and prevents latch relocking until the measured hinge is closed.
 The formal collector accepts only the dedicated
-`/formal/service_door_joint_states` Gazebo physical-state feedback; the plugin
+`/formal/service_door_joint_states` Gazebo physical-state feedback; the model
+publisher and bridge are disabled unless the evaluator opts in, and the plugin
 does not teleport joints or add a production ros2_control command interface.
 
 ## Physical emergency stop and lighting

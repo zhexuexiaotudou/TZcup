@@ -159,6 +159,8 @@ def generate_launch_description() -> LaunchDescription:
             bodywork_visible,
             " high_bandwidth_sensor_runtime:=",
             high_bandwidth_sensor_runtime,
+            " service_door_evaluation_interfaces:=",
+            service_door_evaluation_interfaces,
             " initial_estop_latched:=",
             simulation_initial_estop_active,
             " cleaning_realtime_telemetry_enabled:=",
@@ -342,10 +344,13 @@ def generate_launch_description() -> LaunchDescription:
         executable="parameter_bridge",
         name="formal_service_door_physical_state_bridge",
         arguments=[
-            "/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model",
+            "/formal_vehicle/evaluation/bodywork_service/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model",
         ],
         remappings=[
-            ("/joint_states", "/formal/service_door_joint_states"),
+            (
+                "/formal_vehicle/evaluation/bodywork_service/joint_states",
+                "/formal/service_door_joint_states",
+            ),
         ],
         output="screen",
         condition=IfCondition(service_door_evaluation_interfaces),

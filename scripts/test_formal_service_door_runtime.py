@@ -304,6 +304,8 @@ def test_runner_collector_and_force_plugin_use_physical_joint_state() -> None:
     assert "formal_vehicle_sim.launch.py" in runner
     assert "collect_formal_service_door_runtime.py" in runner
     assert "service_door_evaluation_interfaces:=true" in runner
+    assert 'physical_joint_states_topic="/formal/service_door_joint_states"' in runner
+    assert 'grep -Fxq /joint_states' not in runner
     assert '"service_door_evaluation_interfaces"' in launch
     assert '"service_door_evaluation_interfaces",\n                default_value="false"' in launch
     assert "condition=IfCondition(service_door_evaluation_interfaces)" in launch
@@ -333,5 +335,6 @@ def test_runner_collector_and_force_plugin_use_physical_joint_state() -> None:
     assert "std::cerr" in plugin
     assert "self.publishers =" not in collector
     assert 'name="formal_service_door_physical_state_bridge"' in launch
-    assert '"/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model"' in launch
-    assert '("/joint_states", "/formal/service_door_joint_states")' in launch
+    assert '"/formal_vehicle/evaluation/bodywork_service/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model"' in launch
+    assert '"/formal_vehicle/evaluation/bodywork_service/joint_states",' in launch
+    assert '"/formal/service_door_joint_states",' in launch
