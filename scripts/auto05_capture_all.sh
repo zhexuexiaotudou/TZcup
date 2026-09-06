@@ -3,23 +3,34 @@ set -eo pipefail
 set +u
 
 source /opt/ros/jazzy/setup.bash
-source /work/.work/stage1_20260714_154523/install/setup.bash
+if [[ "${AUTO05_G4_RUNTIME_BOUND:-0}" == 1 ]]; then
+  : "${AUTO05_COMBINED_RUNTIME_SETUP:?G4 capture requires a fresh combined runtime setup}"
+  source "${AUTO05_COMBINED_RUNTIME_SETUP}"
+else
+  source /work/.work/stage1_20260714_154523/install/setup.bash
+fi
 set -u
 
-REPO=/repo
+REPO="${AUTO05_REPO_ROOT:-/repo}"
+[[ -f "${REPO}/scripts/auto05_capture_all.sh" ]] || {
+  echo "AUTO05_REPO_ROOT is not a TZcup checkout: ${REPO}" >&2
+  exit 64
+}
 DATA_ROOT="${AUTO05_DATA_ROOT:-/data/g3_screening_native}"
 RUNTIME_WS="${AUTO05_RUNTIME_WS:-/data/runtime_ws}"
 mkdir -p "${DATA_ROOT}/logs" "${DATA_ROOT}/scenes" "${RUNTIME_WS}"
 
-colcon --log-base "${RUNTIME_WS}/log" build \
-  --base-paths "${REPO}/starter_ws/src" \
-  --build-base "${RUNTIME_WS}/build" \
-  --install-base "${RUNTIME_WS}/install" \
-  --packages-up-to sanitation_learning sanitation_vehicle_description \
-  --event-handlers console_cohesion+
-set +u
-source "${RUNTIME_WS}/install/setup.bash"
-set -u
+if [[ "${AUTO05_G4_RUNTIME_BOUND:-0}" != 1 ]]; then
+  colcon --log-base "${RUNTIME_WS}/log" build \
+    --base-paths "${REPO}/starter_ws/src" \
+    --build-base "${RUNTIME_WS}/build" \
+    --install-base "${RUNTIME_WS}/install" \
+    --packages-up-to sanitation_learning sanitation_vehicle_description \
+    --event-handlers console_cohesion+
+  set +u
+  source "${RUNTIME_WS}/install/setup.bash"
+  set -u
+fi
 
 ros2 run sanitation_learning auto05_generate_g3_worlds \
   --registry "${REPO}/starter_ws/src/sanitation_learning/config/asset_registry.yaml" \
@@ -96,6 +107,21 @@ capture_world() {
     >"${log_root}/spawn_vehicle.log" 2>&1
   sleep 3
 
+  recreate_vehicle() {
+    # A stopped vehicle is not a scene reset: contacts and controller state can
+    # survive a teleport.  Delete the old model and create a new one per scene.
+    gz service -s "/world/${world_id}/remove" \
+      --reqtype gz.msgs.Entity --reptype gz.msgs.Boolean --timeout 5000 \
+      --req 'name: "sanitation_vehicle" type: MODEL' \
+      >"${log_root}/remove_vehicle.log" 2>&1 || return 1
+    sleep 1
+    ros2 run ros_gz_sim create -world "${world_id}" \
+      -file "/tmp/auto05_vehicle_${world_id}.urdf" \
+      -name sanitation_vehicle -x -8 -y 0 -z .18 \
+      >>"${log_root}/spawn_vehicle.log" 2>&1 || return 1
+    sleep 2
+  }
+
   local index seed scene out
   for index in $(seq 0 14); do
     seed=$((seed_start + index))
@@ -108,11 +134,17 @@ capture_world() {
     fi
     mkdir -p "${out}"
     echo "capture ${world_id} ${scene}"
-    # Keep the RGB-D sensor entity alive for the whole world run. Repeatedly
-    # destroying and recreating it can race Ogre2 workspace teardown and crash
-    # gz-sim. Publish zero velocity repeatedly and allow the controller to
-    # settle before teleporting the model; a one-shot publication can be lost
-    # during ROS/Gazebo bridge discovery.
+    recreate_vehicle || {
+      echo "vehicle recreation failed: ${scene}" >&2
+      return 2
+    }
+    python3 - "${out}/vehicle_reset.json" "${world_id}" "${scene}" <<'PY'
+import json, sys, time
+open(sys.argv[1], "w", encoding="utf-8").write(json.dumps({
+  "schema_version": 1, "world_id": sys.argv[2], "scene": sys.argv[3],
+  "vehicle_reset": "gz_remove_then_ros_gz_sim_create", "epoch_ns": time.time_ns(),
+}, indent=2) + "\n")
+PY
     timeout 2 ros2 topic pub -r 20 /cmd_vel geometry_msgs/msg/Twist \
       '{linear: {x: 0.0, y: 0.0, z: 0.0}, angular: {x: 0.0, y: 0.0, z: 0.0}}' \
       >"${out}/stop_vehicle.log" 2>&1 || true

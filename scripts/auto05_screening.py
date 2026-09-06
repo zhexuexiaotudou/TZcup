@@ -11,6 +11,8 @@ import math
 from pathlib import Path
 import platform
 import random
+import re
+import subprocess
 import time
 
 import cv2
@@ -39,6 +41,11 @@ INPUT_WIDTH = 384
 INPUT_HEIGHT = 288
 STRIDE = 4
 SEED = 20260730
+G4_CONTRACT_NAME = "auto05_g4_screening.yaml"
+# Populated only after the checked-in G4 contract has been parsed.  Keeping
+# this separate from CLI arguments makes an accidental per-run override fail
+# closed rather than silently changing the preregistered experiment.
+G4_FROZEN_TRAINING: dict[str, int | float | bool] | None = None
 
 
 def sha256(path: Path) -> str:
@@ -171,6 +178,144 @@ def training_row_weights(rows: list[dict], mode: str) -> list[float]:
                 weight += 1.0
         weights.append(weight)
     return weights
+
+
+def require_split(rows: list[dict], expected: str, purpose: str) -> None:
+    """Reject accidental validation/test reuse before any model selection."""
+    unexpected = sorted({str(row.get("split")) for row in rows} - {expected})
+    if unexpected:
+        raise ValueError(
+            f"{purpose} requires only {expected} rows; found {unexpected}"
+        )
+
+
+def g4_train_only_hard_negative_manifest(rows: list[dict]) -> list[str]:
+    """Return deterministic train-only hard-negative identities, never predictions."""
+    require_split(rows, "train", "G4 hard-negative manifest")
+    selected = []
+    for row in rows:
+        labels = set(
+            int(value)
+            for value in np.unique(np.load(row["semantic"], allow_pickle=False))
+        )
+        if row["negative_only"] or 3 in labels or not labels.intersection({1, 2, 3}):
+            selected.append(str(row["rgb_path"]))
+    return sorted(selected)
+
+
+def g4_detector_training_weights(rows: list[dict]) -> list[float]:
+    """Fixed, train-only hard-negative rebalance declared by the G4 contract."""
+    selected = set(g4_train_only_hard_negative_manifest(rows))
+    return [
+        4.0 if str(row["rgb_path"]) in selected else 1.0
+        for row in rows
+    ]
+
+
+def g4_file_sha256(path: Path) -> str:
+    return sha256(path)
+
+
+def g4_repository_relative(path: Path) -> str:
+    """Stable identity across the read-only `/repo` container mount and host."""
+    try:
+        return path.resolve().relative_to(ROOT.resolve()).as_posix()
+    except ValueError as exc:
+        raise ValueError(f"G4 path escapes its repository identity: {path}") from exc
+
+
+def g4_validate_dataset(data_root: Path, dataset_evidence: Path) -> dict:
+    required = ("g3_dataset_qa.json", "split_manifest.json", "leakage_report.json", "g3_frame_manifest.jsonl")
+    missing = [name for name in required if not (dataset_evidence / name).is_file()]
+    if missing:
+        raise ValueError(f"G4 dataset evidence is incomplete: {missing}")
+    if any((dataset_evidence / name).is_symlink() for name in required):
+        raise ValueError("G4 dataset evidence may not contain symbolic links")
+    qa = json.loads((dataset_evidence / "g3_dataset_qa.json").read_text(encoding="utf-8"))
+    split = json.loads((dataset_evidence / "split_manifest.json").read_text(encoding="utf-8"))
+    leakage = json.loads((dataset_evidence / "leakage_report.json").read_text(encoding="utf-8"))
+    if qa.get("dataset_gate_pass") is not True or split.get("test_used_for_model_selection") is not False:
+        raise ValueError("G4 requires a passed QA gate and frozen test split")
+    if any(value for value in leakage.values()):
+        raise ValueError("G4 rejects non-empty dataset leakage evidence")
+    root = data_root.resolve()
+    rows = load_rows(data_root, dataset_evidence / "g3_frame_manifest.jsonl")
+    if not rows or any(
+        not path.is_file() or path.is_symlink() or root not in path.resolve().parents
+        for row in rows for path in (row["rgb"], row["depth"], row["semantic"], row["instance"])
+    ):
+        raise ValueError("G4 frame manifest is missing files or escapes the bound data root")
+    return {
+        "data_root_repository_relative": g4_repository_relative(root),
+        "files": {name: g4_file_sha256(dataset_evidence / name) for name in required},
+    }
+
+
+def g4_contract_parameters(contract: Path) -> dict[str, int | float | bool]:
+    text = contract.read_text(encoding="utf-8")
+    result: dict[str, int | float | bool] = {}
+    integer_names = ("detector_epochs", "area_epochs", "detector_batch_size", "area_batch_size", "num_workers")
+    float_names = (
+        "detector_learning_rate", "area_learning_rate", "weight_decay",
+        "scheduler_eta_min_fraction", "detector_giou_weight",
+        "detector_quality_weight", "area_tversky_alpha", "area_tversky_beta",
+        "area_tversky_gamma",
+    )
+    for name in integer_names:
+        match = re.search(rf"^\s*{name}:\s*(\d+)\s*$", text, re.MULTILINE)
+        if not match:
+            raise ValueError(f"G4 contract lacks frozen {name}")
+        result[name] = int(match.group(1))
+    for name in float_names:
+        match = re.search(rf"^\s*{name}:\s*([0-9]+(?:\.[0-9]+)?)\s*$", text, re.MULTILINE)
+        if not match:
+            raise ValueError(f"G4 contract lacks frozen {name}")
+        result[name] = float(match.group(1))
+    if not re.search(r"^\s*train_only_hard_negative_manifest:\s*true\s*$", text, re.MULTILINE):
+        raise ValueError("G4 contract must require the train-only hard-negative manifest")
+    result["train_only_hard_negative_manifest"] = True
+    return result
+
+
+def g4_require_runtime_binding(path: Path, implementation_commit: str, contract: Path) -> dict:
+    value = json.loads(path.read_text(encoding="utf-8"))
+    if value.get("status") != "AUTO05_G4_RUNTIME_GATE_BOUND":
+        raise ValueError("G4 runtime binding is not bound")
+    if value.get("git", {}).get("head") != implementation_commit:
+        raise ValueError("G4 implementation commit differs from capture runtime binding")
+    if value.get("contract", {}).get("sha256") != g4_file_sha256(contract):
+        raise ValueError("G4 contract differs from capture runtime binding")
+    formal = value.get("formal_runtime_gate", {})
+    session = formal.get("acceptance_session_binding", {})
+    closure = formal.get("runtime_closure_binding", {})
+    capture = value.get("capture", {})
+    if (
+        formal.get("status") != "FORMAL_RUNTIME_GATE_BOUND"
+        or session.get("session_status_at_gate") != "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING"
+        or closure.get("status") != "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED"
+        or not isinstance(capture.get("single_gazebo_lock"), str)
+        or not capture.get("single_gazebo_lock")
+    ):
+        raise ValueError("G4 runtime binding lacks formal closure/session/lock proof")
+    return value
+
+
+def g4_consume_test_lock(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with path.open("x", encoding="utf-8") as stream:
+            stream.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    except FileExistsError as exc:
+        raise ValueError("G4 frozen test was already consumed") from exc
+
+
+def g4_reserve_attempt_ledger(path: Path, payload: dict) -> None:
+    """Reserve the single preregistered configuration before training starts."""
+    try:
+        with path.open("x", encoding="utf-8") as stream:
+            stream.write(json.dumps(payload, indent=2, sort_keys=True) + "\n")
+    except FileExistsError as exc:
+        raise ValueError("G4 preregistered attempt was already reserved") from exc
 
 
 class G3Dataset(Dataset):
@@ -367,6 +512,45 @@ class DirectDetector(nn.Module):
         return self.heatmap(features), self.offset(features), self.size(features)
 
 
+class G4DirectDetector(nn.Module):
+    """Small stride-four FPN which still emits direct center/offset/size boxes."""
+
+    def __init__(self, width: int = 64, input_channels: int = 6):
+        super().__init__()
+        self.p2 = nn.Sequential(
+            nn.Conv2d(input_channels, width, 5, stride=2, padding=2),
+            nn.BatchNorm2d(width),
+            nn.SiLU(),
+        )
+        self.p3 = nn.Sequential(
+            nn.Conv2d(width, width * 2, 3, stride=2, padding=1),
+            nn.BatchNorm2d(width * 2),
+            nn.SiLU(),
+            nn.Conv2d(width * 2, width * 2, 3, padding=1),
+            nn.SiLU(),
+        )
+        self.lateral = nn.Conv2d(width, width * 2, 1)
+        self.fuse = nn.Sequential(
+            nn.Conv2d(width * 2, width * 2, 3, padding=1), nn.SiLU(),
+            nn.Conv2d(width * 2, width * 2, 3, padding=2, dilation=2), nn.SiLU(),
+        )
+        self.heatmap = nn.Conv2d(width * 2, 3, 1)
+        self.offset = nn.Conv2d(width * 2, 2, 1)
+        self.size = nn.Sequential(nn.Conv2d(width * 2, 2, 1), nn.Softplus())
+        self.quality = nn.Conv2d(width * 2, 1, 1)
+        nn.init.constant_(self.heatmap.bias, -2.19)
+
+    def forward(self, image):
+        import torch.nn.functional as functional
+
+        p2 = self.p2(image)
+        p3 = self.p3(p2)
+        fused = self.fuse(p3 + functional.interpolate(
+            self.lateral(p2), size=p3.shape[-2:], mode="bilinear", align_corners=False
+        ))
+        return self.heatmap(fused), self.offset(fused), self.size(fused), self.quality(fused)
+
+
 class RGBDAreaUNet(nn.Module):
     def __init__(self, width: int = 32, input_channels: int = 4):
         super().__init__()
@@ -413,6 +597,24 @@ class RGBDAreaUNet(nn.Module):
         return self.decode1(torch.cat((first, up_first), dim=1))
 
 
+class RGBDAreaBinaryUNet(RGBDAreaUNet):
+    """One independently parameterized area head; no leaf/puddle sharing."""
+
+    def __init__(self, width: int = 40, input_channels: int = 7):
+        super().__init__(width=width, input_channels=input_channels)
+        self.decode1[-1] = nn.Conv2d(width, 1, 1)
+
+
+class G4IndependentAreaHeads(nn.Module):
+    def __init__(self, width: int = 40, input_channels: int = 7):
+        super().__init__()
+        self.leaf = RGBDAreaBinaryUNet(width=width, input_channels=input_channels)
+        self.puddle = RGBDAreaBinaryUNet(width=width, input_channels=input_channels)
+
+    def forward(self, image):
+        return torch.cat((self.leaf(image), self.puddle(image)), dim=1)
+
+
 def focal_heatmap_loss(logits, target):
     prediction = torch.sigmoid(logits).clamp(1e-5, 1.0 - 1e-5)
     positive = target.eq(1.0).float()
@@ -428,35 +630,89 @@ def focal_heatmap_loss(logits, target):
     return (positive_loss.sum() + negative_loss.sum()) / positive.sum().clamp(min=1.0)
 
 
+def g4_giou_loss(predicted_offset, predicted_size, offset, size, mask):
+    """GIoU on direct-head cells; masked empty frames are finite by construction."""
+    height, width = predicted_offset.shape[-2:]
+    yy, xx = torch.meshgrid(
+        torch.arange(height, device=predicted_offset.device),
+        torch.arange(width, device=predicted_offset.device),
+        indexing="ij",
+    )
+    center = torch.stack((xx, yy), dim=0).float()[None]
+    def corners(delta, extent):
+        middle = center + delta
+        half = extent.clamp(min=1e-6) * 0.5
+        return middle - half, middle + half
+    p0, p1 = corners(predicted_offset, predicted_size)
+    t0, t1 = corners(offset, size)
+    intersection = (torch.minimum(p1, t1) - torch.maximum(p0, t0)).clamp(min=0)
+    inter = intersection[:, 0] * intersection[:, 1]
+    p_area = ((p1 - p0).clamp(min=0)).prod(dim=1)
+    t_area = ((t1 - t0).clamp(min=0)).prod(dim=1)
+    union = p_area + t_area - inter
+    enclosing = (torch.maximum(p1, t1) - torch.minimum(p0, t0)).clamp(min=0)
+    enclosing_area = enclosing.prod(dim=1).clamp(min=1e-6)
+    iou = inter / union.clamp(min=1e-6)
+    giou = iou - (enclosing_area - union) / enclosing_area
+    return ((1.0 - giou) * mask[:, 0]).sum() / mask.sum().clamp(min=1.0)
+
+
+def g4_area_loss(logits, target):
+    """Fixed BCE plus focal-Tversky, separately evaluated for each binary head."""
+    if G4_FROZEN_TRAINING is None:
+        raise ValueError("G4 loss requires a parsed frozen training contract")
+    probability = torch.sigmoid(logits)
+    bce = torch.nn.functional.binary_cross_entropy_with_logits(logits, target)
+    tp = (probability * target).sum((0, 2, 3))
+    fp = (probability * (1.0 - target)).sum((0, 2, 3))
+    fn = ((1.0 - probability) * target).sum((0, 2, 3))
+    tversky = (tp + 1.0) / (
+        tp + G4_FROZEN_TRAINING["area_tversky_alpha"] * fp
+        + G4_FROZEN_TRAINING["area_tversky_beta"] * fn + 1.0
+    )
+    return bce + (1.0 - tversky).pow(G4_FROZEN_TRAINING["area_tversky_gamma"]).mean()
+
+
 def train_detector(rows: list[dict], device, epochs: int, attempt: int):
+    require_split(rows, "train", "detector training")
     dataset = G3Dataset(rows, "detector", augment=True, attempt=attempt)
     sampler = None
     if attempt >= 3:
         sampler = WeightedRandomSampler(
-            training_row_weights(rows, "detector"),
+            g4_detector_training_weights(rows) if attempt >= 4 else training_row_weights(rows, "detector"),
             num_samples=len(rows) * 2,
             replacement=True,
             generator=torch.Generator().manual_seed(SEED + 3),
         )
     loader = DataLoader(
         dataset,
-        batch_size=8,
+        batch_size=(G4_FROZEN_TRAINING["detector_batch_size"] if attempt >= 4 else 8),
         shuffle=sampler is None,
         sampler=sampler,
-        num_workers=2,
+        num_workers=(G4_FROZEN_TRAINING["num_workers"] if attempt >= 4 else 2),
         pin_memory=True,
         generator=torch.Generator().manual_seed(SEED),
     )
-    model = DirectDetector(
-        width=64 if attempt >= 3 else 48,
-        input_channels=6 if attempt >= 3 else 3,
+    model = (
+        G4DirectDetector(width=64, input_channels=6)
+        if attempt >= 4
+        else DirectDetector(
+            width=64 if attempt >= 3 else 48,
+            input_channels=6 if attempt >= 3 else 3,
+        )
     ).to(device)
-    learning_rate = 5e-4 if attempt >= 2 else 1.5e-3
+    learning_rate = (
+        G4_FROZEN_TRAINING["detector_learning_rate"] if attempt >= 4
+        else 5e-4 if attempt >= 2 else 1.5e-3
+    )
     optimizer = torch.optim.AdamW(
-        model.parameters(), lr=learning_rate, weight_decay=1e-5
+        model.parameters(), lr=learning_rate,
+        weight_decay=(G4_FROZEN_TRAINING["weight_decay"] if attempt >= 4 else 1e-5),
     )
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=max(epochs, 1), eta_min=learning_rate * 0.05
+        optimizer, T_max=max(epochs, 1), eta_min=learning_rate * (
+            G4_FROZEN_TRAINING["scheduler_eta_min_fraction"] if attempt >= 4 else 0.05
+        )
     )
     curve, started = [], time.perf_counter()
     for epoch in range(1, epochs + 1):
@@ -467,7 +723,8 @@ def train_detector(rows: list[dict], device, epochs: int, attempt: int):
             image, heatmap = image.to(device), heatmap.to(device)
             offset, size, mask = offset.to(device), size.to(device), mask.to(device)
             optimizer.zero_grad(set_to_none=True)
-            predicted_heatmap, predicted_offset, predicted_size = model(image)
+            outputs = model(image)
+            predicted_heatmap, predicted_offset, predicted_size = outputs[:3]
             denominator = mask.sum().clamp(min=1.0)
             loss = (
                 focal_heatmap_loss(predicted_heatmap, heatmap)
@@ -476,6 +733,14 @@ def train_detector(rows: list[dict], device, epochs: int, attempt: int):
                 * (torch.abs(predicted_size - size) * mask).sum()
                 / denominator
             )
+            if attempt >= 4:
+                quality = outputs[3]
+                quality_target = mask
+                loss = loss + G4_FROZEN_TRAINING["detector_giou_weight"] * g4_giou_loss(
+                    predicted_offset, predicted_size, offset, size, mask
+                ) + G4_FROZEN_TRAINING["detector_quality_weight"] * torch.nn.functional.binary_cross_entropy_with_logits(
+                    quality, quality_target
+                )
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5.0)
             optimizer.step()
@@ -493,6 +758,9 @@ def train_detector(rows: list[dict], device, epochs: int, attempt: int):
         "epochs": epochs,
         "curve": curve,
         "augmentation_profile": (
+            "g4_train_only_hard_negative_rebalance_plus_quality_giou"
+            if attempt >= 4
+            else
             "epoch_varying_color_geometry_plus_hard_negative_rebalance"
             if attempt >= 3
             else "epoch_varying_color_geometry_distribution_repair"
@@ -503,6 +771,9 @@ def train_detector(rows: list[dict], device, epochs: int, attempt: int):
         if sampler is not None
         else len(rows),
         "duration_s": time.perf_counter() - started,
+        "g4_train_only_hard_negative_manifest": (
+            g4_train_only_hard_negative_manifest(rows) if attempt >= 4 else None
+        ),
     }
 
 
@@ -531,9 +802,13 @@ def detector_raw_predictions(
                     inputs.transpose(2, 0, 1)[None], dtype=np.float32
                 )
             ).to(device)
-            heatmap, offset, size = model(tensor)
+            outputs = model(tensor)
+            heatmap, offset, size = outputs[:3]
+            scores = torch.sigmoid(heatmap)[0]
+            if attempt >= 4:
+                scores = scores * torch.sigmoid(outputs[3])[0]
             decoded = decode_centernet_outputs(
-                torch.sigmoid(heatmap)[0].cpu().numpy(),
+                scores.cpu().numpy(),
                 offset[0].cpu().numpy(),
                 size[0].cpu().numpy(),
                 stride=STRIDE,
@@ -661,6 +936,7 @@ def detector_metrics(
 
 
 def select_detector_threshold(rows, predictions, truths) -> tuple[float, list[dict]]:
+    require_split(rows, "val", "detector threshold selection")
     candidates = [
         detector_metrics(rows, predictions, truths, threshold)
         for threshold in (
@@ -700,6 +976,7 @@ def select_detector_threshold(rows, predictions, truths) -> tuple[float, list[di
 
 
 def train_area(rows: list[dict], device, epochs: int, attempt: int):
+    require_split(rows, "train", "area training")
     dataset = G3Dataset(rows, "area", augment=True, attempt=attempt)
     sampler = None
     if attempt >= 3:
@@ -711,28 +988,40 @@ def train_area(rows: list[dict], device, epochs: int, attempt: int):
         )
     loader = DataLoader(
         dataset,
-        batch_size=2 if attempt >= 3 else 4,
+        batch_size=(G4_FROZEN_TRAINING["area_batch_size"] if attempt >= 4 else 2 if attempt >= 3 else 4),
         shuffle=sampler is None,
         sampler=sampler,
-        num_workers=2,
+        num_workers=(G4_FROZEN_TRAINING["num_workers"] if attempt >= 4 else 2),
         pin_memory=True,
         generator=torch.Generator().manual_seed(SEED),
     )
-    model = RGBDAreaUNet(
-        width=40 if attempt >= 3 else 32,
-        input_channels=7 if attempt >= 3 else 4,
+    model = (
+        G4IndependentAreaHeads(width=40, input_channels=7)
+        if attempt >= 4
+        else RGBDAreaUNet(
+            width=40 if attempt >= 3 else 32,
+            input_channels=7 if attempt >= 3 else 4,
+        )
     ).to(device)
-    learning_rate = 4e-4 if attempt >= 2 else 1e-3
+    learning_rate = (
+        G4_FROZEN_TRAINING["area_learning_rate"] if attempt >= 4
+        else 4e-4 if attempt >= 2 else 1e-3
+    )
     optimizer = torch.optim.AdamW(
-        model.parameters(), lr=learning_rate, weight_decay=1e-5
+        model.parameters(), lr=learning_rate,
+        weight_decay=(G4_FROZEN_TRAINING["weight_decay"] if attempt >= 4 else 1e-5),
     )
     scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-        optimizer, T_max=max(epochs, 1), eta_min=learning_rate * 0.05
+        optimizer, T_max=max(epochs, 1), eta_min=learning_rate * (
+            G4_FROZEN_TRAINING["scheduler_eta_min_fraction"] if attempt >= 4 else 0.05
+        )
     )
     positive_counts = torch.zeros(2)
     pixel_count = 0
     for _, target in DataLoader(
-        G3Dataset(rows, "area", augment=False), batch_size=2, num_workers=2
+        G3Dataset(rows, "area", augment=False),
+        batch_size=(G4_FROZEN_TRAINING["area_batch_size"] if attempt >= 4 else 2),
+        num_workers=(G4_FROZEN_TRAINING["num_workers"] if attempt >= 4 else 2),
     ):
         positive_counts += target.sum((0, 2, 3))
         pixel_count += int(target.shape[0] * target.shape[2] * target.shape[3])
@@ -750,16 +1039,19 @@ def train_area(rows: list[dict], device, epochs: int, attempt: int):
             image, target = image.to(device), target.to(device)
             optimizer.zero_grad(set_to_none=True)
             logits = model(image)
-            binary = torch.nn.functional.binary_cross_entropy_with_logits(
-                logits, target, pos_weight=positive_weight.view(1, 2, 1, 1)
-            )
-            probability = torch.sigmoid(logits)
-            intersection = (probability * target).sum((0, 2, 3))
-            denominator = probability.sum((0, 2, 3)) + target.sum((0, 2, 3))
-            dice = 1.0 - (
-                (2.0 * intersection + 1.0) / (denominator + 1.0)
-            ).mean()
-            loss = binary + dice + 0.2 * probability[target == 0].pow(2).mean()
+            if attempt >= 4:
+                loss = g4_area_loss(logits, target)
+            else:
+                binary = torch.nn.functional.binary_cross_entropy_with_logits(
+                    logits, target, pos_weight=positive_weight.view(1, 2, 1, 1)
+                )
+                probability = torch.sigmoid(logits)
+                intersection = (probability * target).sum((0, 2, 3))
+                denominator = probability.sum((0, 2, 3)) + target.sum((0, 2, 3))
+                dice = 1.0 - (
+                    (2.0 * intersection + 1.0) / (denominator + 1.0)
+                ).mean()
+                loss = binary + dice + 0.2 * probability[target == 0].pow(2).mean()
             loss.backward()
             torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=5.0)
             optimizer.step()
@@ -778,6 +1070,9 @@ def train_area(rows: list[dict], device, epochs: int, attempt: int):
         "curve": curve,
         "positive_weights": positive_weight.cpu().tolist(),
         "augmentation_profile": (
+            "g4_independent_binary_heads_plus_focal_tversky"
+            if attempt >= 4
+            else
             "epoch_varying_color_geometry_plus_class_rebalance"
             if attempt >= 3
             else "epoch_varying_color_geometry_distribution_repair"
@@ -849,6 +1144,7 @@ def area_metrics(rows, probabilities, thresholds) -> dict:
 
 
 def select_area_thresholds(rows, probabilities):
+    require_split(rows, "val", "area threshold selection")
     traces = {}
     selected = []
     for channel, name in enumerate(AREA_NAMES):
@@ -929,16 +1225,46 @@ def export_and_compare(model, shape, path: Path) -> dict:
 
 
 def main() -> int:
-    global INPUT_WIDTH, INPUT_HEIGHT
+    global INPUT_WIDTH, INPUT_HEIGHT, G4_FROZEN_TRAINING
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-root", required=True)
     parser.add_argument("--dataset-evidence", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--implementation-commit", required=True)
     parser.add_argument("--attempt", type=int, default=1)
-    parser.add_argument("--detector-epochs", type=int, default=45)
-    parser.add_argument("--area-epochs", type=int, default=35)
+    parser.add_argument("--detector-epochs", type=int)
+    parser.add_argument("--area-epochs", type=int)
+    parser.add_argument("--g4-contract")
+    parser.add_argument("--g4-runtime-binding")
+    parser.add_argument("--g4-attempt-ledger")
+    parser.add_argument("--g4-test-lock")
     args = parser.parse_args()
+    contract = None
+    g4_parameters = None
+    if args.attempt >= 4:
+        if not all((args.g4_contract, args.g4_runtime_binding, args.g4_attempt_ledger, args.g4_test_lock)):
+            parser.error("G4 requires --g4-contract; blind attempt 4 is forbidden")
+        contract = Path(args.g4_contract)
+        required = (
+            "direct_anchor_free_center_offset_bbox",
+            "test_used_for_model_selection: false",
+            "maximum_configs_per_architecture: 1",
+        )
+        if contract.name != G4_CONTRACT_NAME or not contract.is_file() or any(
+            item not in contract.read_text(encoding="utf-8") for item in required
+        ):
+            parser.error("G4 contract is incomplete or permits test-driven selection")
+        g4_parameters = g4_contract_parameters(contract)
+        if args.detector_epochs not in (None, g4_parameters["detector_epochs"]):
+            parser.error("G4 detector epochs are frozen by its contract")
+        if args.area_epochs not in (None, g4_parameters["area_epochs"]):
+            parser.error("G4 area epochs are frozen by its contract")
+        args.detector_epochs = g4_parameters["detector_epochs"]
+        args.area_epochs = g4_parameters["area_epochs"]
+        G4_FROZEN_TRAINING = g4_parameters
+    else:
+        args.detector_epochs = args.detector_epochs or 45
+        args.area_epochs = args.area_epochs or 35
     if args.attempt >= 3:
         INPUT_WIDTH, INPUT_HEIGHT = 512, 384
     random.seed(SEED)
@@ -953,7 +1279,63 @@ def main() -> int:
         Path(args.dataset_evidence),
         Path(args.output),
     )
+    if args.attempt >= 4:
+        work_root = ROOT / ".work" / "auto05-g4"
+        expected_paths = {
+            "data root": work_root / "data" / "g3_screening_native",
+            "dataset evidence": work_root / "evidence" / "dataset",
+            "output": work_root / "evidence" / "screening",
+            "runtime binding": work_root / "evidence" / "runtime_gate_binding.json",
+            "attempt ledger": work_root / "evidence" / "g4_attempt_ledger.json",
+            "test lock": work_root / "evidence" / "g4_test_consumed_lock.json",
+        }
+        actual_paths = {
+            "data root": data_root, "dataset evidence": dataset_evidence,
+            "output": output, "runtime binding": Path(args.g4_runtime_binding),
+            "attempt ledger": Path(args.g4_attempt_ledger),
+            "test lock": Path(args.g4_test_lock),
+        }
+        if output.exists() or any(
+            actual_paths[name].resolve() != expected.resolve()
+            for name, expected in expected_paths.items()
+        ):
+            parser.error("G4 requires fresh, canonical paths below TZcup/.work/auto05-g4")
+        if Path(args.g4_runtime_binding).is_symlink() or contract.is_symlink():
+            parser.error("G4 refuses symbolic-link contract or runtime binding")
+        try:
+            head = subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD"], text=True).strip()
+        except subprocess.CalledProcessError as exc:
+            parser.error(f"cannot resolve G4 implementation commit: {exc}")
+        if args.implementation_commit != head:
+            parser.error("implementation_commit must equal the current Git HEAD")
+        try:
+            g4_runtime_binding = g4_require_runtime_binding(
+                Path(args.g4_runtime_binding), head, contract
+            )
+            g4_dataset_binding = g4_validate_dataset(data_root, dataset_evidence)
+        except (OSError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
+            parser.error(str(exc))
+    else:
+        g4_runtime_binding = None
+        g4_dataset_binding = None
     output.mkdir(parents=True, exist_ok=True)
+    if args.attempt >= 4:
+        tree = subprocess.check_output(
+            ["git", "-C", str(ROOT), "rev-parse", "HEAD^{tree}"], text=True
+        ).strip()
+        g4_reserve_attempt_ledger(
+            Path(args.g4_attempt_ledger),
+            {
+                "schema_version": 1, "status": "G4_ATTEMPT_RESERVED",
+                "implementation_commit": args.implementation_commit,
+                "implementation_tree": tree,
+                "contract_sha256": g4_file_sha256(contract),
+                "dataset_binding": g4_dataset_binding,
+                "runtime_binding_sha256": g4_file_sha256(Path(args.g4_runtime_binding)),
+                "configuration_count": 1,
+                "test_runs_allowed": 1,
+            },
+        )
     rows = load_rows(data_root, dataset_evidence / "g3_frame_manifest.jsonl")
     train_rows = [
         row
@@ -979,6 +1361,20 @@ def main() -> int:
     threshold, detector_calibration = select_detector_threshold(
         val_rows, val_predictions, val_truth
     )
+    if args.attempt >= 4:
+        g4_consume_test_lock(
+            Path(args.g4_test_lock),
+            {
+                "schema_version": 1,
+                "status": "G4_TEST_CONSUMED",
+                "implementation_commit": args.implementation_commit,
+                "contract_sha256": g4_file_sha256(contract),
+                "dataset_binding": g4_dataset_binding,
+                "runtime_binding_sha256": g4_file_sha256(Path(args.g4_runtime_binding)),
+                "attempt_ledger_sha256": g4_file_sha256(Path(args.g4_attempt_ledger)),
+                "output_repository_relative": g4_repository_relative(output),
+            },
+        )
     detector_results = {}
     for name, split_rows in (
         ("in_domain", in_domain_rows),
@@ -1094,6 +1490,10 @@ def main() -> int:
         "stage": "AUTO-05",
         "attempt_id": f"AUTO-05-G3-SCREENING-V{args.attempt}",
         "hypothesis": (
+            "pre-registered G4 direct anchor-free FPN with quality/GIoU and "
+            "independent RGB-D area heads; no test-driven selection"
+            if args.attempt >= 4
+            else
             "hard-negative and class-balanced sampling plus 512x384 RGB-D, "
             "edge, and local-contrast inputs can improve precision and "
             "leaf/generalization gates left unresolved by attempt 2"
@@ -1106,10 +1506,21 @@ def main() -> int:
             else "deployment-aligned G3 world isolation plus direct center detector and RGB-D binary area heads can generalize beyond the micro train set"
         ),
         "implementation_commit": args.implementation_commit,
+        "implementation_tree": (
+            subprocess.check_output(["git", "-C", str(ROOT), "rev-parse", "HEAD^{tree}"], text=True).strip()
+            if args.attempt >= 4 else None
+        ),
         "device": str(device),
         "selection_policy": {
             "threshold_selected_on": "validation worlds only",
             "test_used_for_model_selection": False,
+            "g4_contract": Path(args.g4_contract).name if args.g4_contract else None,
+            "g4_contract_sha256": g4_file_sha256(contract) if contract else None,
+            "g4_frozen_training": g4_parameters,
+            "g4_dataset_binding": g4_dataset_binding,
+            "g4_runtime_binding": g4_runtime_binding,
+            "g4_attempt_ledger_sha256": g4_file_sha256(Path(args.g4_attempt_ledger)) if args.attempt >= 4 else None,
+            "g4_test_lock_sha256": g4_file_sha256(Path(args.g4_test_lock)) if args.attempt >= 4 else None,
             "detector_threshold": threshold,
             "area_thresholds": dict(zip(AREA_NAMES, area_thresholds)),
         },
@@ -1122,6 +1533,7 @@ def main() -> int:
         "detector": {
             "architecture": "direct anchor-free center/offset/bbox detector",
             "segmentation_connected_components_used_as_detector": False,
+            "g4_quality_head_used": args.attempt >= 4,
             "input_shape": [
                 1,
                 6 if args.attempt >= 3 else 3,
@@ -1142,7 +1554,11 @@ def main() -> int:
             ),
         },
         "area_segmenter": {
-            "architecture": "RGB-D independent binary leaf/puddle U-Net heads",
+            "architecture": (
+                "G4 independently parameterized RGB-D binary leaf/puddle U-Net heads"
+                if args.attempt >= 4
+                else "RGB-D independent binary leaf/puddle U-Net heads"
+            ),
             "input_shape": [
                 1,
                 7 if args.attempt >= 3 else 4,
