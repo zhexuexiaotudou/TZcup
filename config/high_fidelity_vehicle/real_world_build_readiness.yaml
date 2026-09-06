@@ -10,8 +10,8 @@ last_expanded_artifact:
   source_snapshot_state: current_verified_snapshot
 current_snapshot:
   path: reports/engineering/formal_vehicle_snapshot_manifest.json
-  sha256: df91ae23eb9a6b52cb3917177e4832468640bf8f281dcbcc8eba088f625f10b3
-  source_inventory_sha256: 86059e659b804f4b4b11150d7eb48625afd2fea1d1596b819068413e0ed68949
+  sha256: 0cd3e625bbebaa17deaa9bf342ae8907f51acd75d736c15a89a85bc00dab7971
+  source_inventory_sha256: 7bf2bd7c4fa2ff571c4b064ebc519914b731f573c04c0f6f0914f1f23b83ef61
   output_inventory_sha256: 8e6e520547c0c777fe5c82d7159e1e8592c6cd162c2c92852a53074ee97e8d6e
 mass_budget:
   a300_design_load_kg: 91.35
@@ -74,7 +74,7 @@ evidence_paths:
   source_snapshot:
     path: reports/engineering/formal_vehicle_snapshot_manifest.json
     state: current_verified_snapshot
-    sha256: df91ae23eb9a6b52cb3917177e4832468640bf8f281dcbcc8eba088f625f10b3
+    sha256: 0cd3e625bbebaa17deaa9bf342ae8907f51acd75d736c15a89a85bc00dab7971
   component_register:
     path: reports/engineering/formal_vehicle_component_register_report.json
     state: current_snapshot_output

@@ -151,7 +151,8 @@ python scripts/validate_formal_vehicle_component_register.py --urdf /tmp/formal_
 96.6946779%，3 cm 方块功能区从 0/9 提升至 9/9；支架仍作为遮挡实体参与射线计算。
 服务门运行证据不能由 URDF 字符串或手工 JSON 关闭：
 `scripts/run_formal_service_door_runtime.sh` 启动车辆后，以有限关节力执行“锁止拒动 →
-解锁开门 → 解锁闭门 → 锁舌回零 → 再次拒动”，采集七阶段 `/joint_states` 原始样本并交由
+解锁开门 → 解锁闭门 → 锁舌回零 → 再次拒动”，采集七阶段
+`/formal/service_door_joint_states` 原始样本并交由
 `validate_formal_service_door_runtime.py` 重算限位、方向、开度和锁止结果。产物
 `artifacts/formal_service_door_runtime.json` 是 session-bound gate，并与惯量/扫掠门及部件台账
 共同约束 `bodywork_service_access`；本轮源码编写不等于该 Gazebo 门已经通过。

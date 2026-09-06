@@ -14,6 +14,7 @@ BODYWORK = DESCRIPTION / "urdf" / "high_fidelity" / "bodywork.xacro"
 SENSORS = DESCRIPTION / "urdf" / "high_fidelity" / "sensor_suite.xacro"
 CONTROL = DESCRIPTION / "urdf" / "high_fidelity" / "control_interfaces.xacro"
 FORMAL_LAUNCH = DESCRIPTION / "launch" / "formal_vehicle_sim.launch.py"
+FORMAL_URDF = DESCRIPTION / "urdf" / "formal_competition_vehicle.urdf.xacro"
 REGISTER = ROOT / "config" / "high_fidelity_vehicle" / "formal_vehicle_component_register.yaml"
 GENERATOR = DESCRIPTION / "cad" / "formal_vehicle" / "generate_product_bodywork_meshes.py"
 
@@ -50,11 +51,32 @@ def test_four_service_doors_are_limited_latched_mechanisms() -> None:
 def test_service_doors_use_a_dedicated_gazebo_physical_state_bridge() -> None:
     control = _read(CONTROL)
     launch = _read(FORMAL_LAUNCH)
+    urdf = _read(FORMAL_URDF)
 
     assert 'name="formal_service_door_physical_state_bridge"' in launch
-    assert '"/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model"' in launch
-    assert '("/joint_states", "/formal/service_door_joint_states")' in launch
+    assert '"/formal_vehicle/evaluation/bodywork_service/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model"' in launch
+    assert '"/formal_vehicle/evaluation/bodywork_service/joint_states",' in launch
+    assert '"/formal/service_door_joint_states",' in launch
     assert "condition=IfCondition(service_door_evaluation_interfaces)" in launch
+    assert 'service_door_evaluation_interfaces:=' in launch
+    assert '<xacro:arg name="service_door_evaluation_interfaces" default="false"/>' in urdf
+    assert '<xacro:if value="$(arg service_door_evaluation_interfaces)">' in urdf
+    assert 'filename="gz-sim-joint-state-publisher-system"' in urdf
+    assert 'name="gz::sim::systems::JointStatePublisher"' in urdf
+    assert '<topic>/formal_vehicle/evaluation/bodywork_service/joint_states</topic>' in urdf
+    publisher = urdf.split('filename="gz-sim-joint-state-publisher-system"', 1)[1]
+    publisher = publisher.split("</plugin>", 1)[0]
+    expected_joint_names = {
+        f"{door}_{joint}" for door in DOORS for joint in ("hinge_joint", "latch_joint")
+    }
+    published_joint_names = {
+        line.split("</joint_name>", 1)[0].split(">", 1)[1]
+        for line in publisher.splitlines()
+        if "<joint_name>" in line
+    }
+    assert published_joint_names == expected_joint_names
+    assert publisher.count("<joint_name>") == 8
+    assert '"/joint_states@sensor_msgs/msg/JointState[gz.msgs.Model"' not in launch
     for joint in (
         "charge_port_door_hinge_joint",
         "charge_connector_lock_joint",

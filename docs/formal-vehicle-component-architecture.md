@@ -127,9 +127,11 @@ mimic 关节冒充锁紧力；该限制保留为实物锁扣刚度和密封压�
 执行器、服务盖和软管接头。四扇车身检修门也不是固定贴片：每扇均有底盘固定铰链座、
 限位转轴和独立旋转锁舌，锁舌零位代表运输锁止，解锁后才允许在约 100° 机械范围内开门。
 充电口、急停和排污盖仍作为只读状态关节进入 `/joint_states`；四扇检修门则刻意不注册到
-`gz_ros2_control`，避免 DART 忽略状态导出关节上的辅助受力。服务门正式验收时，专用
-Gazebo `gz.msgs.Model` 桥只发布 `/formal/service_door_joint_states` 作为物理状态权威，
-不会写入或重映射产品 `/joint_states`，也不虚构电动门执行器。
+`gz_ros2_control`，避免 DART 忽略状态导出关节上的辅助受力。服务门正式验收时，模型级
+Gazebo `JointStatePublisher` 仅在 evaluator 显式开启时，将八个门轴/锁舌发布到
+`/formal_vehicle/evaluation/bodywork_service/joint_states`（`gz.msgs.Model`）；专用桥才把它
+映射为 `/formal/service_door_joint_states` 作为物理状态权威，不会写入或重映射产品
+`/joint_states`，也不虚构电动门执行器。
 机器可读台账对 38 个功能位置和其中明确登记的子部件同时
 检查 link、直接连接 joint、载荷祖先、零位 FK、可见性、控制器和必需话题，缺一项即失败。
 正式整车启动默认不暴露服务门 evaluator bridge；仅
@@ -147,8 +149,8 @@ run 区分消息、互锁与动力学链路。不要把 Gazebo 的 `gzmsg/gzerr`
 所以 r059 不会仅凭该类比改变任何门轴初值。只有 stderr 证据已证明插件回调、有效目标和
 有界 `JointForceCmd` 写入，而仍只剩门轴无法离开硬止挡时，才可在独立变更中加入同量级清隙
 并重新完成完整物理门禁。
-采集器从
-`/joint_states` 记录七阶段原始样本：运输锁止、锁止拒绝开门、解锁、开门、解锁闭门、
+采集器从专用的
+`/formal/service_door_joint_states` 记录七阶段原始样本：运输锁止、锁止拒绝开门、解锁、开门、解锁闭门、
 回零锁止和再次拒绝开门。`artifacts/formal_service_door_runtime.json` 只有在四门均按正确
 方向打开至少 0.9 rad、全程未越限、锁舌回零后门轴再次拒动，且证据绑定当前正式
 snapshot/session 时才关闭 `bodywork_service_access`。
