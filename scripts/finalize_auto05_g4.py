@@ -106,7 +106,10 @@ def main() -> int:
         parser.error("report and runtime binding disagree on implementation tree")
     if selection.get("g4_contract_sha256") != digest(contract) or gate.get("contract", {}).get("sha256") != digest(contract):
         parser.error("report/runtime binding disagree on frozen G4 contract")
-    if lock.get("status") != "G4_TEST_CONSUMED" or lock.get("output") != str(raw.resolve()):
+    if (
+        lock.get("status") != "G4_TEST_CONSUMED"
+        or lock.get("output_repository_relative") != raw.relative_to(repo).as_posix()
+    ):
         parser.error("G4 test lock does not bind this raw output")
     if lock.get("contract_sha256") != digest(contract) or lock.get("implementation_commit") != report.get("implementation_commit"):
         parser.error("G4 test lock identity mismatch")
@@ -120,7 +123,7 @@ def main() -> int:
     ):
         parser.error("G4 attempt ledger does not prove the single preregistered configuration")
     actual_dataset_binding = {
-        "data_root": str((root / "data" / "g3_screening_native").resolve()),
+        "data_root_repository_relative": (root / "data" / "g3_screening_native").relative_to(repo).as_posix(),
         "files": {
             name: digest(dataset / name)
             for name in ("g3_dataset_qa.json", "split_manifest.json", "leakage_report.json", "g3_frame_manifest.jsonl")

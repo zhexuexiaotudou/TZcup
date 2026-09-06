@@ -216,6 +216,14 @@ def g4_file_sha256(path: Path) -> str:
     return sha256(path)
 
 
+def g4_repository_relative(path: Path) -> str:
+    """Stable identity across the read-only `/repo` container mount and host."""
+    try:
+        return path.resolve().relative_to(ROOT.resolve()).as_posix()
+    except ValueError as exc:
+        raise ValueError(f"G4 path escapes its repository identity: {path}") from exc
+
+
 def g4_validate_dataset(data_root: Path, dataset_evidence: Path) -> dict:
     required = ("g3_dataset_qa.json", "split_manifest.json", "leakage_report.json", "g3_frame_manifest.jsonl")
     missing = [name for name in required if not (dataset_evidence / name).is_file()]
@@ -237,7 +245,10 @@ def g4_validate_dataset(data_root: Path, dataset_evidence: Path) -> dict:
         for row in rows for path in (row["rgb"], row["depth"], row["semantic"], row["instance"])
     ):
         raise ValueError("G4 frame manifest is missing files or escapes the bound data root")
-    return {"data_root": str(root), "files": {name: g4_file_sha256(dataset_evidence / name) for name in required}}
+    return {
+        "data_root_repository_relative": g4_repository_relative(root),
+        "files": {name: g4_file_sha256(dataset_evidence / name) for name in required},
+    }
 
 
 def g4_contract_parameters(contract: Path) -> dict[str, int | float | bool]:
@@ -1361,7 +1372,7 @@ def main() -> int:
                 "dataset_binding": g4_dataset_binding,
                 "runtime_binding_sha256": g4_file_sha256(Path(args.g4_runtime_binding)),
                 "attempt_ledger_sha256": g4_file_sha256(Path(args.g4_attempt_ledger)),
-                "output": str(output.resolve()),
+                "output_repository_relative": g4_repository_relative(output),
             },
         )
     detector_results = {}
