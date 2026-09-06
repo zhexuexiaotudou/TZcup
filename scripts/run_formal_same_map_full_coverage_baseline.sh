@@ -233,19 +233,18 @@ timeout 30 ros2 topic echo --once /ground_truth/odom nav_msgs/msg/Odometry \
   -p trajectory_output_path:="${OUTPUT}/coverage_trajectory.csv" \
   >"${OUTPUT}/coverage_probe.log" 2>&1 & PROBE_PID=$!; PIDS+=("${PROBE_PID}")
 for _ in {1..60}; do
-  timeout 5 "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" ros2 topic echo --once --field data \
-    /safety/status_json >"${OUTPUT}/safety_manager_status.raw.json" 2>&1 || true
-  if python3 "${ROOT}/scripts/collect_formal_safety_speed_readback.py" \
-      --raw "${OUTPUT}/safety_manager_status.raw.json" \
-      --output "${OUTPUT}/safety_manager_speed_readback.json" \
+  if "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" python3 "${ROOT}/scripts/collect_formal_safety_speed_readback.py" \
+      --output "${OUTPUT}/safety_manager_speed_readback_attempt_${_}.json" \
+      --runtime-binding "${RUNTIME_BINDING}" \
       --expected-cap "${WHOLE_VEHICLE_SAFETY_CAP}" \
       --expected-profile "${OPERATION_SPEED_PROFILE}" \
       --expected-state "${SPEED_QUALIFICATION_STATE}"; then
+    SAFETY_MANAGER_READBACK="${OUTPUT}/safety_manager_speed_readback_attempt_${_}.json"
     break
   fi
   sleep 1
 done
-[[ -f "${OUTPUT}/safety_manager_speed_readback.json" ]] || {
+[[ -n "${SAFETY_MANAGER_READBACK:-}" ]] || {
   echo "live safety-manager speed readback never reached the required dry-only cap" >&2; exit 4;
 }
 deadline=$((SECONDS + TIMEOUT))
@@ -270,7 +269,8 @@ bash "${ROOT}/scripts/run_formal_same_map_baseline.sh" \
   --cleaning-runtime "${OUTPUT}/cleaning_runtime.json" \
   --lifecycle-acceptance "${OUTPUT}/lifecycle_acceptance.json" \
   --coverage-runtime "${OUTPUT}/coverage_runtime.json" \
-  --safety-manager-readback "${OUTPUT}/safety_manager_speed_readback.json" \
+  --safety-manager-readback "${SAFETY_MANAGER_READBACK}" \
+  --runtime-binding "${RUNTIME_BINDING}" \
   --expected-safety-cap "${WHOLE_VEHICLE_SAFETY_CAP}" \
   --session "${SESSION}" --snapshot "${SNAPSHOT}" --output "${FORMAL_OUTPUT}"
 echo "formal same-map FullCoverage baseline passed: ${FORMAL_OUTPUT}"

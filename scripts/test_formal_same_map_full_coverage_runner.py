@@ -67,6 +67,8 @@ def test_runner_is_one_hard_restart_fullcoverage_process_chain() -> None:
     assert "speed_qualification_state:=\"${SPEED_QUALIFICATION_STATE}\"" in RUNNER
     assert "dry_cleaning_qualification_active" in RUNNER
     assert "collect_formal_safety_speed_readback.py" in RUNNER
+    assert "--runtime-binding \"${RUNTIME_BINDING}\"" in RUNNER
+    assert "safety_manager_status.raw.json" not in RUNNER
     assert "--expected-safety-cap \"${WHOLE_VEHICLE_SAFETY_CAP}\"" in RUNNER
 
 

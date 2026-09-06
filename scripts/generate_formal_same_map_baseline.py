@@ -146,6 +146,7 @@ def build_report(
     session_path: Path,
     snapshot_path: Path,
     safety_manager_readback: Path | None = None,
+    runtime_binding: Path | None = None,
     expected_safety_cap: float = 0.45,
 ) -> dict[str, Any]:
     episode = _json(episode_manifest)
@@ -161,10 +162,55 @@ def build_report(
     snapshot = _snapshot_identity(snapshot_path)
     safety_readback = None
     if safety_manager_readback is not None:
+        if runtime_binding is None:
+            raise BaselineError("safety-manager readback requires its runtime binding")
         safety_readback = _json(safety_manager_readback)
-        if safety_readback.get("schema_version") != 1:
+        bound_runtime = _json(runtime_binding)
+        if (
+            bound_runtime.get("status") != "FORMAL_RUNTIME_GATE_BOUND"
+            or bound_runtime.get("acceptance_session_binding", {}).get(
+                "session_status_at_gate"
+            ) != SESSION_STATUS
+            or bound_runtime.get("runtime_closure_binding", {}).get("status")
+            != "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED"
+        ):
+            raise BaselineError("safety-manager readback runtime binding is not current")
+        if safety_readback.get("schema_version") != 2:
             raise BaselineError("safety-manager readback has an unsupported schema")
+        if safety_readback.get("capture_status") != "PASSED":
+            raise BaselineError("safety-manager readback is not a passing live capture")
+        if safety_readback.get("runtime_gate_binding_sha256") != _sha256(runtime_binding):
+            raise BaselineError("safety-manager readback is bound to another runtime receipt")
+        producer = safety_readback.get("producer_identity")
+        status_capture = safety_readback.get("status_capture")
+        producer_capture = safety_readback.get("producer_capture")
+        if (
+            not isinstance(producer, dict)
+            or producer.get("node_name") != "whole_vehicle_safety_manager"
+            or producer.get("topic") != "/safety/status_json"
+            or not isinstance(status_capture, dict)
+            or status_capture.get("returncode") != 0
+            or status_capture.get("command")
+            != ["ros2", "topic", "echo", "--once", "--field", "data", "/safety/status_json"]
+            or not isinstance(producer_capture, dict)
+            or producer_capture.get("returncode") != 0
+            or producer_capture.get("command")
+            != ["ros2", "topic", "info", "/safety/status_json", "--verbose"]
+        ):
+            raise BaselineError("safety-manager producer receipt is incomplete or unexpected")
+        try:
+            captured_status = json.loads(str(status_capture.get("stdout", "")))
+        except json.JSONDecodeError as exc:
+            raise BaselineError("safety-manager producer receipt has invalid status JSON") from exc
+        if not isinstance(captured_status, dict):
+            raise BaselineError("safety-manager producer receipt status is not an object")
         cap = _strict_number(safety_readback, "effective_max_linear_velocity_mps", "safety_manager_readback")
+        if captured_status.get("effective_max_linear_velocity_mps") != cap:
+            raise BaselineError("safety-manager receipt cap differs from captured status")
+        if captured_status.get("operation_speed_profile") != safety_readback.get("operation_speed_profile"):
+            raise BaselineError("safety-manager receipt profile differs from captured status")
+        if captured_status.get("speed_qualification_state") != safety_readback.get("speed_qualification_state"):
+            raise BaselineError("safety-manager receipt state differs from captured status")
         if not math.isclose(cap, expected_safety_cap, abs_tol=1.0e-12):
             raise BaselineError("safety-manager effective cap differs from runner requirement")
         if expected_safety_cap == 1.0 and safety_readback.get("speed_qualification_state") != "isolated_same_map_dry_coverage":
@@ -301,12 +347,14 @@ def build_report(
     }
     if safety_manager_readback is not None:
         evidence_paths["safety_manager_readback"] = safety_manager_readback
+        evidence_paths["runtime_binding"] = runtime_binding
     session_fresh = {
         "map_manifest", "mission_geometry", "mapping_runtime", "cleaning_runtime",
         "lifecycle_acceptance", "coverage_runtime",
     }
     if safety_manager_readback is not None:
         session_fresh.add("safety_manager_readback")
+        session_fresh.add("runtime_binding")
     evidence = {
         name: _evidence(
             path, started_ns, name, require_session_fresh=name in session_fresh
@@ -365,6 +413,7 @@ def generate(args: argparse.Namespace) -> dict[str, Any]:
         session_path=args.session,
         snapshot_path=args.snapshot,
         safety_manager_readback=getattr(args, "safety_manager_readback", None),
+        runtime_binding=getattr(args, "runtime_binding", None),
         expected_safety_cap=getattr(args, "expected_safety_cap", 0.45),
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -389,6 +438,7 @@ def validate(input_path: Path, session_path: Path, snapshot_path: Path) -> dict[
     }
     if stored.get("safety_manager_speed") is not None:
         required.add("safety_manager_readback")
+        required.add("runtime_binding")
     if set(evidence) != required:
         raise BaselineError("baseline evidence ledger is incomplete or unexpected")
     for name, row in evidence.items():
@@ -412,6 +462,8 @@ def validate(input_path: Path, session_path: Path, snapshot_path: Path) -> dict[
         snapshot_path=snapshot_path,
         safety_manager_readback=(Path(evidence["safety_manager_readback"]["path"])
             if "safety_manager_readback" in evidence else None),
+        runtime_binding=(Path(evidence["runtime_binding"]["path"])
+            if "runtime_binding" in evidence else None),
         expected_safety_cap=_strict_number(stored.get("safety_manager_speed", {}), "effective_max_linear_velocity_mps", "baseline.safety_manager_speed")
             if stored.get("safety_manager_speed") is not None else 0.45,
     )
@@ -430,6 +482,7 @@ def main() -> int:
     ):
         generate_parser.add_argument("--" + name.replace("_", "-"), type=Path, required=True)
     generate_parser.add_argument("--safety-manager-readback", type=Path)
+    generate_parser.add_argument("--runtime-binding", type=Path)
     generate_parser.add_argument("--expected-safety-cap", type=float, default=0.45)
     validate_parser = subparsers.add_parser("validate")
     validate_parser.add_argument("--input", type=Path, required=True)

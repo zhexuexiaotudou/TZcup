@@ -143,15 +143,82 @@ def test_generate_and_revalidate_complete_same_map_baseline(tmp_path: Path) -> N
 
 def test_rejects_one_mps_readback_without_isolated_dry_state(tmp_path: Path) -> None:
     args = _fixture(tmp_path)
+    runtime = _json(tmp_path / "runtime_binding.json", {
+        "status": "FORMAL_RUNTIME_GATE_BOUND",
+        "acceptance_session_binding": {
+            "session_status_at_gate": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING",
+        },
+        "runtime_closure_binding": {"status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED"},
+    })
     readback = _json(tmp_path / "safety.json", {
-        "schema_version": 1,
+        "schema_version": 2,
+        "capture_status": "PASSED",
+        "runtime_gate_binding_sha256": _sha(runtime),
+        "producer_identity": {
+            "node_name": "whole_vehicle_safety_manager",
+            "topic": "/safety/status_json",
+        },
+        "status_capture": {
+            "returncode": 0,
+            "command": ["ros2", "topic", "echo", "--once", "--field", "data", "/safety/status_json"],
+            "stdout": json.dumps({
+                "effective_max_linear_velocity_mps": 1.0,
+                "operation_speed_profile": "dry_cleaning_competition_candidate",
+                "speed_qualification_state": "none",
+            }),
+        },
+        "producer_capture": {
+            "returncode": 0,
+            "command": ["ros2", "topic", "info", "/safety/status_json", "--verbose"],
+        },
         "effective_max_linear_velocity_mps": 1.0,
         "operation_speed_profile": "dry_cleaning_competition_candidate",
         "speed_qualification_state": "none",
     })
     args.safety_manager_readback = readback
+    args.runtime_binding = runtime
     args.expected_safety_cap = 1.0
     with pytest.raises(BaselineError, match="isolated dry-only"):
+        generate(args)
+
+
+def test_rejects_safety_readback_without_collector_producer_receipt(tmp_path: Path) -> None:
+    args = _fixture(tmp_path)
+    runtime = _json(tmp_path / "runtime_binding.json", {
+        "status": "FORMAL_RUNTIME_GATE_BOUND",
+        "acceptance_session_binding": {
+            "session_status_at_gate": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING",
+        },
+        "runtime_closure_binding": {"status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED"},
+    })
+    status = {
+        "effective_max_linear_velocity_mps": 1.0,
+        "operation_speed_profile": "dry_cleaning_competition_candidate",
+        "speed_qualification_state": "isolated_same_map_dry_coverage",
+    }
+    readback = _json(tmp_path / "safety.json", {
+        "schema_version": 2,
+        "capture_status": "PASSED",
+        "runtime_gate_binding_sha256": _sha(runtime),
+        "producer_identity": {
+            "node_name": "whole_vehicle_safety_manager",
+            "topic": "/safety/status_json",
+        },
+        "status_capture": {
+            "returncode": 0,
+            "command": ["ros2", "topic", "echo", "/safety/status_json"],
+            "stdout": json.dumps(status),
+        },
+        "producer_capture": {
+            "returncode": 0,
+            "command": ["ros2", "topic", "info", "/safety/status_json", "--verbose"],
+        },
+        **status,
+    })
+    args.safety_manager_readback = readback
+    args.runtime_binding = runtime
+    args.expected_safety_cap = 1.0
+    with pytest.raises(BaselineError, match="producer receipt"):
         generate(args)
 
 
