@@ -30,7 +30,7 @@ def build_parser() -> argparse.ArgumentParser:
     hidden.add_argument("--snapshot", required=True, type=Path)
     hidden.add_argument("--session", required=True, type=Path)
     hidden.add_argument("--consumed-receipt", required=True, type=Path)
-    hidden.add_argument("--freeze-receipt", type=Path)
+    hidden.add_argument("--freeze-receipt", required=True, type=Path)
     hidden.add_argument("--map-index", required=True, type=int)
     hidden.add_argument("--mission-index", required=True, type=int)
     hidden.add_argument("--output", required=True, type=Path)

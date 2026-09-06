@@ -125,6 +125,8 @@ def _consume(
         session_path=session_path,
         scenario_config=scenario_config,
     )
+    if freeze_receipt_path is None:
+        raise HiddenMaterializationError("hidden materialization requires an immutable configuration freeze receipt")
     freeze_binding: dict[str, str] = {}
     if freeze_receipt_path is not None:
         freeze_receipt_path = _regular(freeze_receipt_path, "configuration freeze receipt")
@@ -135,6 +137,7 @@ def _consume(
             or freeze.get("hidden_materialization_allowed") is not True
             or freeze.get("source_binding") != binding["source_binding"]
             or freeze.get("acceptance_session_binding") != binding["acceptance_session_binding"]
+            or freeze.get("scenario_config_sha256") != binding["scenario_config_sha256"]
         ):
             raise HiddenMaterializationError(
                 "configuration freeze receipt is not bound to the active source/session"

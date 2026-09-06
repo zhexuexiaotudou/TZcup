@@ -222,6 +222,7 @@ def materialize_tasks(
     max_steps: int,
 ) -> list[MaterializedTask]:
     scenario = load_config(scenario_config)
+    raise ValueError("this public split evaluator must not materialize hidden tasks")
     tasks = []
     for split in SPLITS:
         directory = output_root / "samples" / split / "map-000" / "mission-000"
