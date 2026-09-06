@@ -236,6 +236,9 @@ for _ in {1..60}; do
   if "${FORMAL_RUNTIME_SESSION_PREFIX[@]}" python3 "${ROOT}/scripts/collect_formal_safety_speed_readback.py" \
       --output "${OUTPUT}/safety_manager_speed_readback_attempt_${_}.json" \
       --runtime-binding "${RUNTIME_BINDING}" \
+      --snapshot "${SNAPSHOT}" --session "${SESSION}" \
+      --runtime-closure "${RUNTIME_CLOSURE_MANIFEST}" \
+      --runtime-install "${RUNTIME_INSTALL}" \
       --expected-cap "${WHOLE_VEHICLE_SAFETY_CAP}" \
       --expected-profile "${OPERATION_SPEED_PROFILE}" \
       --expected-state "${SPEED_QUALIFICATION_STATE}"; then
@@ -271,6 +274,8 @@ bash "${ROOT}/scripts/run_formal_same_map_baseline.sh" \
   --coverage-runtime "${OUTPUT}/coverage_runtime.json" \
   --safety-manager-readback "${SAFETY_MANAGER_READBACK}" \
   --runtime-binding "${RUNTIME_BINDING}" \
+  --runtime-closure "${RUNTIME_CLOSURE_MANIFEST}" \
+  --runtime-install "${RUNTIME_INSTALL}" \
   --expected-safety-cap "${WHOLE_VEHICLE_SAFETY_CAP}" \
   --session "${SESSION}" --snapshot "${SNAPSHOT}" --output "${FORMAL_OUTPUT}"
 echo "formal same-map FullCoverage baseline passed: ${FORMAL_OUTPUT}"

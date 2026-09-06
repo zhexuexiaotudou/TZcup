@@ -110,6 +110,71 @@ def _fixture(tmp_path: Path) -> argparse.Namespace:
     )
 
 
+def _current_runtime_binding(args: argparse.Namespace) -> tuple[Path, Path, Path]:
+    """Make a complete binding to this fixture's current session and snapshot."""
+    closure = _json(args.output.parent / "runtime_closure.json", {"closure": "current"})
+    install = args.output.parent / "runtime_install"
+    install.mkdir()
+    closure_binding = {
+        "status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED",
+        "manifest_sha256": _sha(closure),
+        "runtime_install_root": str(install.resolve()),
+    }
+    session = json.loads(args.session.read_text(encoding="utf-8"))
+    session["runtime_closure_binding"] = closure_binding
+    _json(args.session, session)
+    binding = _json(args.output.parent / "runtime_binding.json", {
+        "status": "FORMAL_RUNTIME_GATE_BOUND",
+        "acceptance_session_binding": {
+            "session_manifest": str(args.session.resolve()),
+            "session_manifest_sha256": _sha(args.session),
+            "session_started_epoch_ns": session["started_epoch_ns"],
+            "session_status_at_gate": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING",
+            "snapshot": session["snapshot"],
+            "snapshot_current_source_verified": True,
+        },
+        "runtime_closure_binding": closure_binding,
+    })
+    return binding, closure, install
+
+
+def _safety_readback(binding: Path, *, state: str, producer: bool = True) -> dict:
+    status = {
+        "effective_max_linear_velocity_mps": 1.0,
+        "operation_speed_profile": "dry_cleaning_competition_candidate",
+        "speed_qualification_state": state,
+    }
+    readback = {
+        "schema_version": 2,
+        "capture_status": "PASSED",
+        "runtime_gate_binding_sha256": _sha(binding),
+        "runtime_gate_binding": json.loads(binding.read_text(encoding="utf-8")),
+        "producer_identity": {
+            "node_name": "whole_vehicle_safety_manager",
+            "topic": "/safety/status_json",
+            "message_type": "std_msgs/msg/String",
+            "publisher_count": "1",
+        },
+        "producer_capture_before": {
+            "returncode": 0,
+            "command": ["ros2", "topic", "info", "/safety/status_json", "--verbose"],
+        },
+        "status_capture": {
+            "returncode": 0,
+            "command": ["ros2", "topic", "echo", "--once", "--field", "data", "/safety/status_json"],
+            "stdout": json.dumps(status),
+        },
+        "producer_capture": {
+            "returncode": 0,
+            "command": ["ros2", "topic", "info", "/safety/status_json", "--verbose"],
+        },
+        **status,
+    }
+    if not producer:
+        readback.pop("producer_capture_before")
+    return readback
+
+
 def _mutate(path: Path, key: str, value) -> None:
     row = json.loads(path.read_text(encoding="utf-8"))
     row[key] = value
@@ -143,40 +208,12 @@ def test_generate_and_revalidate_complete_same_map_baseline(tmp_path: Path) -> N
 
 def test_rejects_one_mps_readback_without_isolated_dry_state(tmp_path: Path) -> None:
     args = _fixture(tmp_path)
-    runtime = _json(tmp_path / "runtime_binding.json", {
-        "status": "FORMAL_RUNTIME_GATE_BOUND",
-        "acceptance_session_binding": {
-            "session_status_at_gate": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING",
-        },
-        "runtime_closure_binding": {"status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED"},
-    })
-    readback = _json(tmp_path / "safety.json", {
-        "schema_version": 2,
-        "capture_status": "PASSED",
-        "runtime_gate_binding_sha256": _sha(runtime),
-        "producer_identity": {
-            "node_name": "whole_vehicle_safety_manager",
-            "topic": "/safety/status_json",
-        },
-        "status_capture": {
-            "returncode": 0,
-            "command": ["ros2", "topic", "echo", "--once", "--field", "data", "/safety/status_json"],
-            "stdout": json.dumps({
-                "effective_max_linear_velocity_mps": 1.0,
-                "operation_speed_profile": "dry_cleaning_competition_candidate",
-                "speed_qualification_state": "none",
-            }),
-        },
-        "producer_capture": {
-            "returncode": 0,
-            "command": ["ros2", "topic", "info", "/safety/status_json", "--verbose"],
-        },
-        "effective_max_linear_velocity_mps": 1.0,
-        "operation_speed_profile": "dry_cleaning_competition_candidate",
-        "speed_qualification_state": "none",
-    })
+    runtime, closure, install = _current_runtime_binding(args)
+    readback = _json(tmp_path / "safety.json", _safety_readback(runtime, state="none"))
     args.safety_manager_readback = readback
     args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
     args.expected_safety_cap = 1.0
     with pytest.raises(BaselineError, match="isolated dry-only"):
         generate(args)
@@ -184,41 +221,65 @@ def test_rejects_one_mps_readback_without_isolated_dry_state(tmp_path: Path) -> 
 
 def test_rejects_safety_readback_without_collector_producer_receipt(tmp_path: Path) -> None:
     args = _fixture(tmp_path)
-    runtime = _json(tmp_path / "runtime_binding.json", {
-        "status": "FORMAL_RUNTIME_GATE_BOUND",
-        "acceptance_session_binding": {
-            "session_status_at_gate": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING",
-        },
-        "runtime_closure_binding": {"status": "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED"},
-    })
-    status = {
-        "effective_max_linear_velocity_mps": 1.0,
-        "operation_speed_profile": "dry_cleaning_competition_candidate",
-        "speed_qualification_state": "isolated_same_map_dry_coverage",
-    }
-    readback = _json(tmp_path / "safety.json", {
-        "schema_version": 2,
-        "capture_status": "PASSED",
-        "runtime_gate_binding_sha256": _sha(runtime),
-        "producer_identity": {
-            "node_name": "whole_vehicle_safety_manager",
-            "topic": "/safety/status_json",
-        },
-        "status_capture": {
-            "returncode": 0,
-            "command": ["ros2", "topic", "echo", "/safety/status_json"],
-            "stdout": json.dumps(status),
-        },
-        "producer_capture": {
-            "returncode": 0,
-            "command": ["ros2", "topic", "info", "/safety/status_json", "--verbose"],
-        },
-        **status,
-    })
+    runtime, closure, install = _current_runtime_binding(args)
+    readback = _json(
+        tmp_path / "safety.json",
+        _safety_readback(runtime, state="isolated_same_map_dry_coverage", producer=False),
+    )
     args.safety_manager_readback = readback
     args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
     args.expected_safety_cap = 1.0
     with pytest.raises(BaselineError, match="producer receipt"):
+        generate(args)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("session_manifest_sha256", "0" * 64),
+        ("snapshot_current_source_verified", False),
+    ],
+)
+def test_rejects_handwritten_other_session_or_unverified_binding(
+    tmp_path: Path, field: str, value
+) -> None:
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    forged = json.loads(runtime.read_text(encoding="utf-8"))
+    forged["acceptance_session_binding"][field] = value
+    _json(runtime, forged)
+    args.safety_manager_readback = _json(
+        tmp_path / "safety.json",
+        _safety_readback(runtime, state="isolated_same_map_dry_coverage"),
+    )
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    with pytest.raises(BaselineError, match="runtime binding does not match current inputs"):
+        generate(args)
+
+
+def test_rejects_binding_from_another_session(tmp_path: Path) -> None:
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    other_session = tmp_path / "other-session.json"
+    other_session.write_bytes(args.session.read_bytes())
+    forged = json.loads(runtime.read_text(encoding="utf-8"))
+    forged["acceptance_session_binding"]["session_manifest"] = str(other_session.resolve())
+    forged["acceptance_session_binding"]["session_manifest_sha256"] = _sha(other_session)
+    _json(runtime, forged)
+    args.safety_manager_readback = _json(
+        tmp_path / "safety.json",
+        _safety_readback(runtime, state="isolated_same_map_dry_coverage"),
+    )
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    with pytest.raises(BaselineError, match="runtime binding does not match current inputs"):
         generate(args)
 
 

@@ -147,6 +147,8 @@ def build_report(
     snapshot_path: Path,
     safety_manager_readback: Path | None = None,
     runtime_binding: Path | None = None,
+    runtime_closure: Path | None = None,
+    runtime_install: Path | None = None,
     expected_safety_cap: float = 0.45,
 ) -> dict[str, Any]:
     episode = _json(episode_manifest)
@@ -162,32 +164,53 @@ def build_report(
     snapshot = _snapshot_identity(snapshot_path)
     safety_readback = None
     if safety_manager_readback is not None:
-        if runtime_binding is None:
-            raise BaselineError("safety-manager readback requires its runtime binding")
+        if runtime_binding is None or runtime_closure is None or runtime_install is None:
+            raise BaselineError("safety-manager readback requires current runtime binding, closure and install")
         safety_readback = _json(safety_manager_readback)
         bound_runtime = _json(runtime_binding)
+        closure = _json(runtime_closure)
+        bound_session = bound_runtime.get("acceptance_session_binding")
+        bound_closure = bound_runtime.get("runtime_closure_binding")
         if (
             bound_runtime.get("status") != "FORMAL_RUNTIME_GATE_BOUND"
-            or bound_runtime.get("acceptance_session_binding", {}).get(
-                "session_status_at_gate"
-            ) != SESSION_STATUS
-            or bound_runtime.get("runtime_closure_binding", {}).get("status")
+            or not isinstance(bound_session, dict)
+            or not isinstance(bound_closure, dict)
+            or bound_session.get("session_manifest") != str(session_path.resolve())
+            or bound_session.get("session_manifest_sha256") != _sha256(session_path)
+            or bound_session.get("session_started_epoch_ns") != session.get("started_epoch_ns")
+            or bound_session.get("session_status_at_gate") != SESSION_STATUS
+            or bound_session.get("snapshot") != snapshot
+            or bound_session.get("snapshot_current_source_verified") is not True
+            or bound_closure.get("status")
             != "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED"
+            or bound_closure.get("manifest_sha256") != _sha256(runtime_closure)
+            or bound_closure.get("runtime_install_root") != str(runtime_install.resolve())
+            or not runtime_install.is_dir()
+            or session.get("runtime_closure_binding") != bound_closure
         ):
-            raise BaselineError("safety-manager readback runtime binding is not current")
+            raise BaselineError("safety-manager runtime binding does not match current inputs")
         if safety_readback.get("schema_version") != 2:
             raise BaselineError("safety-manager readback has an unsupported schema")
         if safety_readback.get("capture_status") != "PASSED":
             raise BaselineError("safety-manager readback is not a passing live capture")
         if safety_readback.get("runtime_gate_binding_sha256") != _sha256(runtime_binding):
             raise BaselineError("safety-manager readback is bound to another runtime receipt")
+        if safety_readback.get("runtime_gate_binding") != bound_runtime:
+            raise BaselineError("safety-manager readback does not retain the current runtime binding")
         producer = safety_readback.get("producer_identity")
+        producer_before = safety_readback.get("producer_capture_before")
         status_capture = safety_readback.get("status_capture")
         producer_capture = safety_readback.get("producer_capture")
         if (
             not isinstance(producer, dict)
             or producer.get("node_name") != "whole_vehicle_safety_manager"
             or producer.get("topic") != "/safety/status_json"
+            or producer.get("message_type") != "std_msgs/msg/String"
+            or producer.get("publisher_count") != "1"
+            or not isinstance(producer_before, dict)
+            or producer_before.get("returncode") != 0
+            or producer_before.get("command")
+            != ["ros2", "topic", "info", "/safety/status_json", "--verbose"]
             or not isinstance(status_capture, dict)
             or status_capture.get("returncode") != 0
             or status_capture.get("command")
@@ -348,6 +371,7 @@ def build_report(
     if safety_manager_readback is not None:
         evidence_paths["safety_manager_readback"] = safety_manager_readback
         evidence_paths["runtime_binding"] = runtime_binding
+        evidence_paths["runtime_closure"] = runtime_closure
     session_fresh = {
         "map_manifest", "mission_geometry", "mapping_runtime", "cleaning_runtime",
         "lifecycle_acceptance", "coverage_runtime",
@@ -355,6 +379,7 @@ def build_report(
     if safety_manager_readback is not None:
         session_fresh.add("safety_manager_readback")
         session_fresh.add("runtime_binding")
+        session_fresh.add("runtime_closure")
     evidence = {
         name: _evidence(
             path, started_ns, name, require_session_fresh=name in session_fresh
@@ -414,6 +439,8 @@ def generate(args: argparse.Namespace) -> dict[str, Any]:
         snapshot_path=args.snapshot,
         safety_manager_readback=getattr(args, "safety_manager_readback", None),
         runtime_binding=getattr(args, "runtime_binding", None),
+        runtime_closure=getattr(args, "runtime_closure", None),
+        runtime_install=getattr(args, "runtime_install", None),
         expected_safety_cap=getattr(args, "expected_safety_cap", 0.45),
     )
     args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -439,6 +466,7 @@ def validate(input_path: Path, session_path: Path, snapshot_path: Path) -> dict[
     if stored.get("safety_manager_speed") is not None:
         required.add("safety_manager_readback")
         required.add("runtime_binding")
+        required.add("runtime_closure")
     if set(evidence) != required:
         raise BaselineError("baseline evidence ledger is incomplete or unexpected")
     for name, row in evidence.items():
@@ -464,6 +492,11 @@ def validate(input_path: Path, session_path: Path, snapshot_path: Path) -> dict[
             if "safety_manager_readback" in evidence else None),
         runtime_binding=(Path(evidence["runtime_binding"]["path"])
             if "runtime_binding" in evidence else None),
+        runtime_closure=(Path(evidence["runtime_closure"]["path"])
+            if "runtime_closure" in evidence else None),
+        runtime_install=(Path(stored["safety_manager_speed"]["runtime_gate_binding"]
+            ["runtime_closure_binding"]["runtime_install_root"])
+            if stored.get("safety_manager_speed") is not None else None),
         expected_safety_cap=_strict_number(stored.get("safety_manager_speed", {}), "effective_max_linear_velocity_mps", "baseline.safety_manager_speed")
             if stored.get("safety_manager_speed") is not None else 0.45,
     )
@@ -483,6 +516,8 @@ def main() -> int:
         generate_parser.add_argument("--" + name.replace("_", "-"), type=Path, required=True)
     generate_parser.add_argument("--safety-manager-readback", type=Path)
     generate_parser.add_argument("--runtime-binding", type=Path)
+    generate_parser.add_argument("--runtime-closure", type=Path)
+    generate_parser.add_argument("--runtime-install", type=Path)
     generate_parser.add_argument("--expected-safety-cap", type=float, default=0.45)
     validate_parser = subparsers.add_parser("validate")
     validate_parser.add_argument("--input", type=Path, required=True)
