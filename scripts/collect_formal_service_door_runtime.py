@@ -22,6 +22,8 @@ DEFAULT_SNAPSHOT = ROOT / "reports/engineering/formal_vehicle_snapshot_manifest.
 DEFAULT_SESSION = ROOT / "artifacts/formal_final_acceptance_session.json"
 PLUGIN_DIAGNOSTIC_PREFIX = "SERVICE_DOOR_DIAGNOSTIC "
 PLUGIN_LIFECYCLE_PREFIX = "SERVICE_DOOR_LIFECYCLE "
+PHYSICAL_JOINT_STATES_TOPIC = "/formal/service_door_joint_states"
+PHYSICAL_JOINT_STATE_AUTHORITY = "GAZEBO_MODEL_JOINT_STATE_BRIDGE"
 
 
 def _parse_plugin_diagnostics(path: Path) -> dict[str, Any]:
@@ -190,7 +192,9 @@ def run(
                 for door in DOORS
                 for kind in ("hinge", "latch")
             }
-            self.create_subscription(JointState, "/joint_states", self._on_joint_state, 50)
+            self.create_subscription(
+                JointState, PHYSICAL_JOINT_STATES_TOPIC, self._on_joint_state, 50
+            )
 
         def target_subscription_counts(self) -> dict[str, int]:
             return {
@@ -248,7 +252,8 @@ def run(
     phases: dict[str, Any] = {}
     raw: dict[str, Any] = {
         "source_binding": source_binding,
-        "evidence_authority": "GAZEBO_SENSOR_MSGS_JOINT_STATE",
+        "evidence_authority": PHYSICAL_JOINT_STATE_AUTHORITY,
+        "physical_joint_state_topic": PHYSICAL_JOINT_STATES_TOPIC,
         "phases": phases,
     }
     try:
@@ -256,7 +261,10 @@ def run(
         while rclpy.ok() and set(node.latest) != expected_joints and time.monotonic() < deadline:
             rclpy.spin_once(node, timeout_sec=0.1)
         if set(node.latest) != expected_joints:
-            raise TimeoutError("all eight physical service-door joints did not appear on /joint_states")
+            raise TimeoutError(
+                "all eight physical service-door joints did not appear on "
+                + PHYSICAL_JOINT_STATES_TOPIC
+            )
         target_subscription_deadline = time.monotonic() + startup_timeout_s
         target_subscription_counts = node.target_subscription_counts()
         while (

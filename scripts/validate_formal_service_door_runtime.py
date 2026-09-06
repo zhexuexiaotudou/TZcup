@@ -286,8 +286,11 @@ def evaluate(evidence: dict[str, Any]) -> dict[str, Any]:
     checks = {
         "source_bound_to_expanded_urdf": isinstance(evidence.get("source_binding"), dict)
         and re.fullmatch(r"[0-9a-f]{64}", str(evidence["source_binding"].get("expanded_urdf_sha256", ""))) is not None,
-        "physical_joint_state_authority": evidence.get("evidence_authority")
-        == "GAZEBO_SENSOR_MSGS_JOINT_STATE",
+        "physical_joint_state_authority": (
+            evidence.get("evidence_authority") == "GAZEBO_MODEL_JOINT_STATE_BRIDGE"
+            and evidence.get("physical_joint_state_topic")
+            == "/formal/service_door_joint_states"
+        ),
         "all_phases_have_fresh_complete_samples": samples_complete,
         "joint_samples_are_strictly_ordered_across_phases": (
             _timestamps_are_fresh_and_ordered(evidence)
