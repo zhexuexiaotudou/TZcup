@@ -135,6 +135,20 @@ def test_collector_rejects_injected_unscoped_status(monkeypatch, tmp_path: Path)
     assert "--raw" not in collector.__doc__
 
 
+def test_cli_does_not_offer_a_capture_timeout_override(monkeypatch, capsys) -> None:
+    monkeypatch.setattr("sys.argv", [
+        "collector", "--output", "receipt.json", "--runtime-binding", "binding.json",
+        "--snapshot", "snapshot.json", "--session", "session.json",
+        "--runtime-closure", "closure.json", "--runtime-install", "install",
+        "--expected-cap", "1.0", "--expected-profile", "profile",
+        "--expected-state", "state", "--timeout-sec", "10",
+    ])
+    with pytest.raises(SystemExit) as exc:
+        collector.main()
+    assert exc.value.code == 2
+    assert "unrecognized arguments" in capsys.readouterr().err
+
+
 def test_collector_keeps_failed_ros_capture_receipt(monkeypatch, tmp_path: Path) -> None:
     def fake_run(command, **kwargs):
         return subprocess.CompletedProcess(command, 42, stdout="", stderr="graph unavailable")

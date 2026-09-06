@@ -359,7 +359,10 @@ def main() -> int:
     parser.add_argument("--expected-cap", type=float, required=True)
     parser.add_argument("--expected-profile", required=True)
     parser.add_argument("--expected-state", required=True)
-    parser.add_argument("--timeout-sec", type=float, default=DEFAULT_CAPTURE_TIMEOUT_SEC)
+    # This is intentionally not a CLI option.  The formal runner owns one
+    # five-second contract; accepting a longer user-supplied window would make
+    # a receipt that the same-map sealer must reject.
+    parser.set_defaults(timeout_sec=DEFAULT_CAPTURE_TIMEOUT_SEC)
     args = parser.parse_args()
     try:
         _, passed = collect(args)

@@ -15,6 +15,7 @@ import yaml
 
 from collect_formal_safety_speed_readback import (
     CaptureError,
+    DEFAULT_CAPTURE_TIMEOUT_SEC,
     validate_capture_order,
     validate_capture_timeout,
     validate_status_capture,
@@ -205,6 +206,14 @@ def build_report(
             )
         except CaptureError as exc:
             raise BaselineError(f"safety-manager capture timeout is invalid: {exc}") from exc
+        # The formal runner never accepts a caller-selected capture window.  A
+        # bounded value alone is insufficient here: otherwise a hand-written
+        # receipt could expand each fixed ROS query from the runner's five
+        # seconds to ten seconds and still pass its retained timing checks.
+        if capture_timeout_sec != DEFAULT_CAPTURE_TIMEOUT_SEC:
+            raise BaselineError(
+                "safety-manager capture timeout must equal the fixed formal runner contract"
+            )
         if safety_readback.get("capture_status") != "PASSED":
             raise BaselineError("safety-manager readback is not a passing live capture")
         if safety_readback.get("runtime_gate_binding_sha256") != _sha256(runtime_binding):

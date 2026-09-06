@@ -313,6 +313,63 @@ def test_rejects_invalid_or_unbounded_capture_timeout(tmp_path: Path, timeout: f
         generate(args)
 
 
+@pytest.mark.parametrize("timeout", [9.0, 10.0])
+def test_rejects_bounded_but_nondefault_capture_timeout(tmp_path: Path, timeout: float) -> None:
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    receipt = _safety_readback(runtime, state="isolated_same_map_dry_coverage")
+    receipt["capture_timeout_sec"] = timeout
+    args.safety_manager_readback = _json(tmp_path / "safety.json", receipt)
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    with pytest.raises(BaselineError, match="fixed formal runner contract"):
+        generate(args)
+
+
+def test_rejects_nine_second_each_and_twenty_seven_second_triplet_receipt(tmp_path: Path) -> None:
+    """A formerly-valid 9/9/9 receipt cannot widen the formal 5 s contract."""
+
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    receipt = _safety_readback(runtime, state="isolated_same_map_dry_coverage")
+    receipt["capture_timeout_sec"] = 9.0
+    started = receipt["producer_capture_before"]["started_epoch_ns"]
+    second = 1_000_000_000
+    for index, key in enumerate((
+        "producer_capture_before", "status_capture", "producer_capture",
+    )):
+        receipt[key]["started_epoch_ns"] = started + index * 9 * second
+        receipt[key]["completed_epoch_ns"] = started + (index + 1) * 9 * second
+    args.safety_manager_readback = _json(tmp_path / "safety.json", receipt)
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    with pytest.raises(BaselineError, match="fixed formal runner contract"):
+        generate(args)
+
+
+def test_accepts_exact_five_second_capture_boundaries(tmp_path: Path) -> None:
+    args = _fixture(tmp_path)
+    runtime, closure, install = _current_runtime_binding(args)
+    receipt = _safety_readback(runtime, state="isolated_same_map_dry_coverage")
+    started = receipt["producer_capture_before"]["started_epoch_ns"]
+    second = 1_000_000_000
+    for index, key in enumerate((
+        "producer_capture_before", "status_capture", "producer_capture",
+    )):
+        receipt[key]["started_epoch_ns"] = started + index * 5 * second
+        receipt[key]["completed_epoch_ns"] = started + (index + 1) * 5 * second
+    args.safety_manager_readback = _json(tmp_path / "safety.json", receipt)
+    args.runtime_binding = runtime
+    args.runtime_closure = closure
+    args.runtime_install = install
+    args.expected_safety_cap = 1.0
+    assert generate(args)["status"] == PASS_STATUS
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
