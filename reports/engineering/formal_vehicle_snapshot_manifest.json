@@ -47,8 +47,8 @@
       "size_bytes": 3807
     },
     "config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml": {
-      "sha256": "9e4a2b27fc82c523e6b8934447b0ab83bea3251dcd6fd19e58f6ba07a4ae3368",
-      "size_bytes": 5149
+      "sha256": "1e1a4cbcc2aa1125dd76b85c87cf8170453fca402aeaa037c0a5aadfbf24ebb2",
+      "size_bytes": 5181
     },
     "config/high_fidelity_vehicle/formal_vehicle_component_register.yaml": {
       "sha256": "688b72f49b7bd06ba6adc3d080c190f04f613b76ed05cbb69bf7a55580cff61a",
@@ -1003,5 +1003,5 @@
       "size_bytes": 26704
     }
   },
-  "source_inventory_sha256": "82f102b9c6b40e93aeaaf808abd3651279ba5ea879ad16aed11cca55007a446e"
+  "source_inventory_sha256": "e3176b2e70b73d273f3799cb2988b449dc86ddbd1f611e153f7807fe7827bf66"
 }

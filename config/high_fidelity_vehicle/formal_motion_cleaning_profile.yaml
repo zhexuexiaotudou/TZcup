@@ -59,6 +59,8 @@ drive:
     represents_physical_steering: false
     minimum_turning_radius_status: pending_skid_steer_tracking_validation
 
+nav2_footprint_padding_m: 0.01
+
 motion_footprints:
   transport_stowed:
     footprint_xy_m:

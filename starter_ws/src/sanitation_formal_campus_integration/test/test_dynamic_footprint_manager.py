@@ -3,10 +3,20 @@ from pathlib import Path
 from sanitation_formal_campus_integration.dynamic_footprint_core import (
     ARM_JOINTS,
     ARM_STOWED,
+    atomic_write_fresh_json,
+    blocked_runtime_gate_shape,
+    float64_zero_ulp_bound,
+    fresh_nonzero_stamp,
     load_footprints,
+    load_nav2_footprint_padding,
+    load_profile_base_frame,
     normalize_exact_polygon,
+    padded_polygon,
+    padded_rigid_point32_match,
+    point32_coordinate_quantization_bound,
     polygons_exactly_equal,
     profile_decision,
+    rigid_transform_polygon,
     run_with_fail_closed_cleanup,
     select_profile,
 )
@@ -117,6 +127,12 @@ def test_formal_profile_defines_all_runtime_envelopes() -> None:
         [-1.100, -1.280],
         [-1.100, 1.050],
     ]
+    assert load_profile_base_frame(
+        ROOT / "config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml"
+    ) == "base_footprint"
+    assert load_nav2_footprint_padding(
+        ROOT / "config/high_fidelity_vehicle/formal_motion_cleaning_profile.yaml"
+    ) == 0.01
 
 
 def test_exact_polygon_comparison_uses_shared_point32_normalization() -> None:
@@ -128,6 +144,85 @@ def test_exact_polygon_comparison_uses_shared_point32_normalization() -> None:
         [[0.621, 0.675], [0.620, -0.675], [-0.540, -0.675]],
     )
     assert not polygons_exactly_equal(list(reversed(wire_polygon)), yaml_polygon)
+
+
+def test_frame_aware_padded_readback_accepts_translation_rotation_and_float32_rounding() -> None:
+    profile = [[0.620, 0.675], [0.620, -0.675], [-0.540, -0.675], [-0.540, 0.675]]
+    padded = padded_polygon(profile, 0.01)
+    actual = normalize_exact_polygon(rigid_transform_polygon(padded, 12.25, -7.5, 0.73))
+    matched, bound, reason = padded_rigid_point32_match(
+        actual, profile, 0.01, 12.25, -7.5, 0.73
+    )
+    assert matched, reason
+    assert bound > 0.0
+
+
+def test_frame_aware_readback_rejects_just_over_its_own_coordinate_ulp_bound() -> None:
+    profile = [[0.620, 0.675], [0.620, -0.675], [-0.540, -0.675], [-0.540, 0.675]]
+    actual = list(normalize_exact_polygon(padded_polygon(profile, 0.01)))
+    bound = point32_coordinate_quantization_bound(actual[0][0], actual[0][0])
+    actual[0] = (actual[0][0] + 2.0 * bound, actual[0][1])
+    assert not padded_rigid_point32_match(actual, profile, 0.01, 0.0, 0.0, 0.0)[0]
+
+
+def test_frame_aware_padded_readback_rejects_wrong_padding_order_mirror_and_shear() -> None:
+    profile = [[0.620, 0.675], [0.620, -0.675], [-0.540, -0.675], [-0.540, 0.675]]
+    actual = list(rigid_transform_polygon(padded_polygon(profile, 0.01), 1.0, 2.0, 0.0))
+    assert not padded_rigid_point32_match(actual, profile, 0.02, 1.0, 2.0, 0.0)[0]
+    assert not padded_rigid_point32_match(list(reversed(actual)), profile, 0.01, 1.0, 2.0, 0.0)[0]
+    mirrored = [(-x + 2.0, y) for x, y in actual]
+    assert not padded_rigid_point32_match(mirrored, profile, 0.01, 1.0, 2.0, 0.0)[0]
+    sheared = list(actual)
+    sheared[1] = (sheared[1][0] + 0.02, sheared[1][1])
+    assert not padded_rigid_point32_match(sheared, profile, 0.01, 1.0, 2.0, 0.0)[0]
+
+
+def test_published_stamp_requires_nonzero_advancing_nonfuture_ros_time() -> None:
+    assert fresh_nonzero_stamp(101, 100, 101) == (True, "ok")
+    assert fresh_nonzero_stamp(0, 0, 101)[0] is False
+    assert fresh_nonzero_stamp(100, 100, 101)[0] is False
+    assert fresh_nonzero_stamp(102, 100, 101)[0] is False
+    assert fresh_nonzero_stamp(100, 99, 2_100_000_001)[0] is False
+
+
+def test_atomic_json_output_refuses_overwrite_and_symlink(tmp_path) -> None:
+    output = tmp_path / "gate.json"
+    payload = {"result": "BLOCKED", "passed": False}
+    atomic_write_fresh_json(output, payload)
+    assert output.is_file()
+    assert output.read_text(encoding="utf-8").startswith("{")
+    try:
+        atomic_write_fresh_json(output, payload)
+    except RuntimeError as error:
+        assert "fresh path" in str(error)
+    else:  # pragma: no cover - assertion guard
+        raise AssertionError("atomic writer must refuse evidence overwrite")
+    link = tmp_path / "gate-link.json"
+    try:
+        link.symlink_to(output)
+    except OSError:
+        return
+    try:
+        atomic_write_fresh_json(link, payload)
+    except RuntimeError as error:
+        assert "fresh path" in str(error)
+    else:  # pragma: no cover - assertion guard
+        raise AssertionError("atomic writer must refuse a symlink output")
+
+
+def test_pre_ros_failure_has_complete_blocked_diagnostic_shape() -> None:
+    payload = blocked_runtime_gate_shape("constructor failed", ("/local",), ("/global",))
+    assert payload["result"] == "BLOCKED" and payload["passed"] is False
+    assert payload["last_input"]["/local"] == {"receipt": 0, "polygon": None}
+    assert payload["last_published"]["/global"] == {"receipt": 0, "polygon": None}
+    assert payload["last_status"] is None and payload["last_safety"] is None
+    assert payload["receipt_counters"]["status"] == 0
+
+
+def test_planar_frame_equivalence_uses_a_non_arbitrary_float64_ulp_zero_bound() -> None:
+    bound = float64_zero_ulp_bound()
+    assert bound > 0.0
+    assert 0.0 <= bound
 
 
 def test_static_message_contract_and_runtime_gate_are_explicit() -> None:
@@ -162,6 +257,23 @@ def test_static_message_contract_and_runtime_gate_are_explicit() -> None:
     assert "def _only_node" in gate_source
     assert "exclusive_manager_publisher" in gate_source
     assert "polygons_exactly_equal" in gate_source
+    assert "from geometry_msgs.msg import Polygon, PolygonStamped" in gate_source
+    assert "INPUT_TOPICS" in gate_source
+    assert "self._on_input" in gate_source
+    assert "_fresh_frame_aware_readback" in gate_source
+    assert "fresh_nonzero_stamp" in gate_source
+    assert "PUBLISHED_FRAME_BY_TOPIC" in gate_source
+    assert "robot_base_frame" in gate_source
+    assert "profile_base_frame" in gate_source
+    assert "profile_to_robot_base_planar_equivalence" in gate_source
+    assert "PUBLISHED_STAMP_MAX_AGE_NS" in gate_source
+    assert "declared_footprint_padding_m" in gate_source
+    assert "padded_rigid_point32_match" in gate_source
+    assert "point32_quantization_bound_m" in gate_source
+    assert '"result": "BLOCKED"' in gate_source
+    assert '"passed": False' in gate_source
+    assert "atomic_write_fresh_json" in gate_source
+    assert "blocked_runtime_gate_shape" in gate_source
     assert "independent_safety_subscriber" in gate_source
     assert "PolygonStamped" in gate_source
     assert "runtime_test_override:opt_in_manager_subscriber" in gate_source

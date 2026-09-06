@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import yaml
+from yaml.nodes import MappingNode, ScalarNode
 
 
 FORMAL_KINEMATIC_MODEL = "four_wheel_skid_steer"
@@ -32,9 +33,110 @@ def load_yaml_mapping(path: str | Path) -> dict[str, Any]:
     return value
 
 
+def load_formal_motion_profile(path: str | Path) -> dict[str, Any]:
+    """Load the profile only when its one authoritative padding key is unique."""
+    source = Path(path).read_text(encoding="utf-8")
+    document = yaml.compose(source)
+    if not isinstance(document, MappingNode):
+        raise IntegrationContractError(f"expected YAML mapping: {path}")
+    padding_keys = [
+        key.value
+        for key, _ in document.value
+        if isinstance(key, ScalarNode) and key.value == "nav2_footprint_padding_m"
+    ]
+    if len(padding_keys) != 1:
+        raise IntegrationContractError(
+            "formal motion profile must declare exactly one nav2_footprint_padding_m"
+        )
+    value = yaml.safe_load(source)
+    if not isinstance(value, dict):
+        raise IntegrationContractError(f"expected YAML mapping: {path}")
+    return value
+
+
 def footprint_string(points: list[list[float]]) -> str:
     """Return the Nav2 polygon string without changing source precision."""
     return json.dumps(points, separators=(",", ":"))
+
+
+def _finite_number(value: Any, label: str) -> float:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        raise IntegrationContractError(f"{label} is missing or invalid")
+    result = float(value)
+    if not math.isfinite(result):
+        raise IntegrationContractError(f"{label} must be finite")
+    return result
+
+
+def _origin_to_segment_distance(
+    start: tuple[float, float], end: tuple[float, float]
+) -> float:
+    """Return the distance from the vehicle origin to one footprint edge."""
+    dx = end[0] - start[0]
+    dy = end[1] - start[1]
+    length_squared = dx * dx + dy * dy
+    if length_squared <= 0.0:
+        raise IntegrationContractError("navigation footprint has a degenerate edge")
+    projection = -(start[0] * dx + start[1] * dy) / length_squared
+    projection = min(1.0, max(0.0, projection))
+    nearest_x = start[0] + projection * dx
+    nearest_y = start[1] + projection * dy
+    return math.hypot(nearest_x, nearest_y)
+
+
+def _pad_footprint_coordinate(value: float, padding: float) -> float:
+    """Mirror Nav2 padFootprint: expand each nonzero coordinate by its sign."""
+    if value > 0.0:
+        return value + padding
+    if value < 0.0:
+        return value - padding
+    return value
+
+
+def _navigation_inset_radius(profile: dict[str, Any], padding: float) -> float:
+    """Return the largest origin-centred inradius for enabled navigation modes."""
+    footprints = profile.get("motion_footprints")
+    if not isinstance(footprints, dict):
+        raise IntegrationContractError("formal motion footprints are missing or invalid")
+    radii: list[float] = []
+    for name, footprint in footprints.items():
+        if not isinstance(footprint, dict) or footprint.get("navigation_allowed") is not True:
+            continue
+        points = footprint.get("footprint_xy_m")
+        if not isinstance(points, list) or len(points) < 3:
+            raise IntegrationContractError(
+                f"navigation footprint {name!r} is missing or invalid"
+            )
+        normalized: list[tuple[float, float]] = []
+        for index, point in enumerate(points):
+            if not isinstance(point, list) or len(point) != 2:
+                raise IntegrationContractError(
+                    f"navigation footprint {name!r} point {index} is invalid"
+                )
+            normalized.append(
+                (
+                    _pad_footprint_coordinate(
+                        _finite_number(point[0], f"navigation footprint {name!r} x"),
+                        padding,
+                    ),
+                    _pad_footprint_coordinate(
+                        _finite_number(point[1], f"navigation footprint {name!r} y"),
+                        padding,
+                    ),
+                )
+            )
+        radius = min(
+            _origin_to_segment_distance(start, end)
+            for start, end in zip(normalized, normalized[1:] + normalized[:1])
+        )
+        if radius <= 0.0:
+            raise IntegrationContractError(
+                f"navigation footprint {name!r} must enclose the vehicle origin"
+            )
+        radii.append(radius)
+    if not radii:
+        raise IntegrationContractError("formal motion profile has no navigation-enabled footprint")
+    return max(radii)
 
 
 def formal_motion_values(
@@ -42,7 +144,7 @@ def formal_motion_values(
     *,
     navigation_footprint_key: str = "transport_stowed",
 ) -> tuple[list[list[float]], float]:
-    profile = load_yaml_mapping(motion_profile_path)
+    profile = load_formal_motion_profile(motion_profile_path)
     drive = profile.get("drive", {})
     if drive.get("kinematic_model") != FORMAL_KINEMATIC_MODEL:
         raise IntegrationContractError(
@@ -98,6 +200,13 @@ def materialize_nav2_config(
     clean_path_speed_mps: float | None = None,
 ) -> tuple[dict[str, Any], float]:
     """Replace both costmap polygons from the canonical formal motion profile."""
+    profile = load_formal_motion_profile(motion_profile_path)
+    padding = _finite_number(
+        profile.get("nav2_footprint_padding_m"), "Nav2 footprint padding"
+    )
+    if padding < 0.0:
+        raise IntegrationContractError("Nav2 footprint padding must be nonnegative")
+    required_inflation_radius = _navigation_inset_radius(profile, padding)
     config = deepcopy(load_yaml_mapping(base_nav2_path))
     points, cleaning_width = formal_motion_values(
         motion_profile_path,
@@ -105,8 +214,26 @@ def materialize_nav2_config(
     )
     polygon = footprint_string(points)
     try:
-        config["local_costmap"]["local_costmap"]["ros__parameters"]["footprint"] = polygon
-        config["global_costmap"]["global_costmap"]["ros__parameters"]["footprint"] = polygon
+        local_parameters = config["local_costmap"]["local_costmap"]["ros__parameters"]
+        global_parameters = config["global_costmap"]["global_costmap"]["ros__parameters"]
+        local_parameters["footprint"] = polygon
+        global_parameters["footprint"] = polygon
+        local_parameters["footprint_padding"] = padding
+        global_parameters["footprint_padding"] = padding
+        strict_minimum = math.nextafter(required_inflation_radius, math.inf)
+        for name, parameters in (
+            ("local_costmap", local_parameters),
+            ("global_costmap", global_parameters),
+        ):
+            inflation_radius = _finite_number(
+                parameters.get("inflation_layer", {}).get("inflation_radius"),
+                f"{name} inflation_radius",
+            )
+            if inflation_radius < strict_minimum:
+                raise IntegrationContractError(
+                    f"{name} inflation_radius must be strictly greater than "
+                    f"the enabled-footprint inset radius plus padding ({required_inflation_radius})"
+                )
         if clean_path_speed_mps is not None:
             speed = float(clean_path_speed_mps)
             if not math.isfinite(speed) or speed <= 0.0:

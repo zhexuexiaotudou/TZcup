@@ -134,4 +134,18 @@ done
   echo "R065 W1 gate did not emit its required output" >&2
   exit 3
 }
+python3 - "${repo_root}" "${output}" <<'PY'
+import json
+import pathlib
+import sys
+
+repo_root = pathlib.Path(sys.argv[1])
+sys.path.insert(0, str(repo_root / "scripts"))
+from publish_r065_public_modeling_receipt import _w1_passed
+
+path = pathlib.Path(sys.argv[2])
+payload = json.loads(path.read_text(encoding="utf-8"))
+if not isinstance(payload, dict) or not _w1_passed(payload):
+    raise SystemExit("R065 W1 gate output is not the exact PASS schema")
+PY
 echo "R065 W1 dynamic-footprint live gate passed: ${output}"

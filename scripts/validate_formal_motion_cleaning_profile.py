@@ -7,6 +7,7 @@ import argparse
 import json
 import math
 import re
+import sys
 import xml.etree.ElementTree as ET
 from pathlib import Path
 
@@ -32,6 +33,14 @@ CONTROLLERS = ROOT / (
     "starter_ws/src/sanitation_vehicle_description/config/formal_vehicle_controllers.yaml"
 )
 A300_DRIVETRAIN = ROOT / "config/high_fidelity_vehicle/a300_drivetrain_realism_contract.yaml"
+INTEGRATION_PACKAGE_ROOT = ROOT / "starter_ws/src/sanitation_formal_campus_integration"
+if str(INTEGRATION_PACKAGE_ROOT) not in sys.path:
+    sys.path.insert(0, str(INTEGRATION_PACKAGE_ROOT))
+
+from sanitation_formal_campus_integration.contract import (  # noqa: E402
+    IntegrationContractError,
+    load_formal_motion_profile,
+)
 
 
 # The URDF has a DART-only release clearance past the P16 product stroke.  It
@@ -231,7 +240,10 @@ def validate_profile(
     storage_path: Path = STORAGE_XACRO,
     controllers_path: Path = CONTROLLERS,
 ) -> dict:
-    profile = _load_yaml(profile_path)
+    try:
+        profile = load_formal_motion_profile(profile_path)
+    except IntegrationContractError as exc:
+        raise FormalMotionCleaningProfileError(str(exc)) from exc
     layout = _load_yaml(layout_path)
     controllers = _load_yaml(controllers_path)
     cleaning = _root(cleaning_path)
@@ -370,6 +382,13 @@ def validate_profile(
     transport_min = [_number(item, "transport min") for item in layout_transport["min_xyz_m"]]
     transport_max = [_number(item, "transport max") for item in layout_transport["max_xyz_m"]]
     footprints = profile.get("motion_footprints", {})
+    nav2_footprint_padding_m = _number(
+        profile.get("nav2_footprint_padding_m"), "Nav2 footprint padding"
+    )
+    if nav2_footprint_padding_m < 0.0:
+        raise FormalMotionCleaningProfileError(
+            "Nav2 footprint padding must be nonnegative"
+        )
     _assert_polygon(
         footprints["transport_stowed"]["footprint_xy_m"],
         _rectangle(transport_min[0], transport_min[1], transport_max[0], transport_max[1]),
