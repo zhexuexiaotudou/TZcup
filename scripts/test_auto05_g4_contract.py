@@ -11,6 +11,8 @@ CONFIG = ROOT / "starter_ws" / "src" / "sanitation_learning" / "config" / "auto0
 SCREENING = ROOT / "scripts" / "auto05_screening.py"
 CAPTURE = ROOT / "scripts" / "run_auto05_g4_capture_runtime.sh"
 FINALIZER = ROOT / "scripts" / "finalize_auto05_g4.py"
+RUNTIME_GATE = ROOT / "scripts" / "bind_auto05_g4_runtime.py"
+PIPELINE = ROOT / "scripts" / "run_auto05_g4_pipeline.sh"
 
 
 def test_contract_is_single_config_and_validation_only() -> None:
@@ -40,6 +42,8 @@ def test_capture_wrapper_refuses_outside_work_and_stage1_fallback() -> None:
     assert '"$repo/.work"/*' in text
     assert "AUTO05_G4_RUNTIME_BOUND=1" in text
     assert "AUTO05_COMBINED_RUNTIME_SETUP" in text
+    assert "formal_runtime_configure" in text
+    assert "FORMAL_RUNTIME_LOCK_FILE" in text
 
 
 def test_finalizer_is_review_gated_and_cannot_overwrite_history() -> None:
@@ -47,6 +51,22 @@ def test_finalizer_is_review_gated_and_cannot_overwrite_history() -> None:
     assert 'repo / ".work" / "auto05-g4"' in text
     assert '"historical_evidence_overwritten": False' in text
     assert '"auto06_authorized": False' in text
+
+
+def test_pipeline_reuses_formal_runtime_gate_and_one_test_lock() -> None:
+    assert "build_binding" in RUNTIME_GATE.read_text(encoding="utf-8")
+    text = PIPELINE.read_text(encoding="utf-8")
+    assert "run_auto05_g4_capture_runtime.sh" in text
+    assert "auto05_finalize_dataset.py" in text
+    assert "g4_attempt_ledger.json" in text
+    assert "g4_test_consumed_lock.json" in text
+    assert "screening_image.json" in text
+
+
+def test_g4_image_build_executes_real_runtime_parity_test() -> None:
+    text = (ROOT / "scripts" / "build_auto05_g4_screening_image.sh").read_text(encoding="utf-8")
+    assert "test_auto05_g4_torch_runtime.py" in text
+    assert '"runtime_parity_test_passed": True' in text
 
 
 if __name__ == "__main__":
