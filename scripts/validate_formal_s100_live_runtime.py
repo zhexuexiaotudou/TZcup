@@ -46,6 +46,7 @@ def main() -> int:
     parser.add_argument("--snapshot", type=Path, required=True)
     parser.add_argument("--acceptance-session", type=Path, required=True)
     parser.add_argument("--runtime-closure", type=Path, required=True)
+    parser.add_argument("--dosod-admission-bundle", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--raw-schema", type=Path, default=DEFAULT_RAW_SCHEMA)
     parser.add_argument("--final-schema", type=Path, default=DEFAULT_FINAL_SCHEMA)
@@ -64,6 +65,7 @@ def main() -> int:
             args.raw,
             active_session_identity(args.acceptance_session, identity, closure),
             closure,
+            args.dosod_admission_bundle,
         )
         if raw_schema_failures:
             report["passed"] = False

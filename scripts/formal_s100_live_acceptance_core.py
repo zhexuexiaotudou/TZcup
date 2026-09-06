@@ -230,6 +230,7 @@ def validate_raw(
     expected_snapshot: dict[str, str],
     expected_session: dict[str, Any] | None = None,
     expected_runtime_closure: dict[str, str] | None = None,
+    dosod_bundle_root: Path | None = None,
 ) -> list[str]:
     failures: list[str] = []
 
@@ -344,7 +345,7 @@ def validate_raw(
     # consumes their mutually bound digests rather than accepting an HBM hash
     # in isolation.
     dosod_evidence = payload.get("dosod_hbm_evidence")
-    if not isinstance(dosod_evidence, dict) or set(dosod_evidence) != {"compile", "parity", "metric"}:
+    if not isinstance(dosod_evidence, dict) or set(dosod_evidence) != {"compile", "parity", "metric", "full_admission"}:
         fail("DOSOD compile/parity/metric receipt chain is missing")
     else:
         expected_ids = {
@@ -361,6 +362,21 @@ def validate_raw(
                 fail(f"DOSOD {name} receipt path/digest is invalid")
             if row.get("hbm_sha256") != model_hashes.get("dosod_hbm"):
                 fail(f"DOSOD {name} receipt does not bind the collected HBM")
+        full = dosod_evidence.get("full_admission")
+        receipt_fields = {"compile_receipt": "compile", "parity_report": "parity", "metric_report": "metric"}
+        if not isinstance(full, dict) or full.get("hbm_sha256") != model_hashes.get("dosod_hbm") or any(
+            full.get(f"{field}_sha256") != dosod_evidence.get(name, {}).get("sha256")
+            for field, name in receipt_fields.items()
+        ):
+            fail("DOSOD full admission summary is not bound to receipt triad")
+        if dosod_bundle_root is not None:
+            try:
+                from verify_dosod_compile_parity_metric_chain import verify_dosod_compile_parity_metric_chain
+                verified = verify_dosod_compile_parity_metric_chain(dosod_bundle_root, Path(str(next((row.get("path") for row in models if isinstance(row, dict) and row.get("role") == "dosod_hbm"), ""))))
+                if not isinstance(full, dict) or any(full.get(key) != verified.get(key) for key in verified):
+                    fail("DOSOD full admission bundle recheck differs from raw summary")
+            except Exception:
+                fail("DOSOD full admission bundle recheck failed")
 
     graph = payload.get("ros_graph")
     if not isinstance(graph, dict):
@@ -493,8 +509,9 @@ def build_final_report(
     raw_path: Path,
     expected_session: dict[str, Any] | None = None,
     expected_runtime_closure: dict[str, str] | None = None,
+    dosod_bundle_root: Path | None = None,
 ) -> dict[str, Any]:
-    failures = validate_raw(raw, expected_snapshot, expected_session, expected_runtime_closure)
+    failures = validate_raw(raw, expected_snapshot, expected_session, expected_runtime_closure, dosod_bundle_root)
     return {
         "schema_version": 1,
         "report_id": FINAL_REPORT_ID,

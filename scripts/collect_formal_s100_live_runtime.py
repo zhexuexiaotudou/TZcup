@@ -27,6 +27,7 @@ from formal_s100_live_acceptance_core import (
     sha256_path,
     snapshot_identity,
 )
+from verify_dosod_compile_parity_metric_chain import verify_dosod_compile_parity_metric_chain
 
 
 def atomic_json(path: Path, payload: dict[str, Any]) -> None:
@@ -391,6 +392,7 @@ def main() -> int:
     parser.add_argument("--dosod-compile-receipt", type=Path)
     parser.add_argument("--dosod-parity-report", type=Path)
     parser.add_argument("--dosod-metric-report", type=Path)
+    parser.add_argument("--dosod-admission-bundle", type=Path)
     parser.add_argument("--duration-sec", type=float, default=1800.0)
     parser.add_argument("--sample-period-sec", type=float, default=1.0)
     args = parser.parse_args()
@@ -426,8 +428,12 @@ def main() -> int:
         "dosod_compile_receipt": args.dosod_compile_receipt,
         "dosod_parity_report": args.dosod_parity_report,
         "dosod_metric_report": args.dosod_metric_report,
+        "dosod_admission_bundle": args.dosod_admission_bundle,
     }
-    missing = [name for name, path in required_paths.items() if path is None or not path.is_file()]
+    missing = [
+        name for name, path in required_paths.items()
+        if path is None or (not path.is_dir() if name == "dosod_admission_bundle" else not path.is_file())
+    ]
     if missing:
         base["blockers"] = [f"required on-board input missing: {name}" for name in missing]
         atomic_json(args.output, base)
@@ -459,6 +465,9 @@ def main() -> int:
         base["dosod_hbm_evidence"] = collect_dosod_receipt_chain(
             args.dosod_compile_receipt, args.dosod_parity_report,
             args.dosod_metric_report, args.dosod_hbm,
+        )
+        base["dosod_hbm_evidence"]["full_admission"] = verify_dosod_compile_parity_metric_chain(
+            args.dosod_admission_bundle, args.dosod_hbm
         )
         base.update(collect_live(args.duration_sec, args.sample_period_sec))
         base["status"] = RAW_COLLECTED

@@ -78,11 +78,12 @@
     },
     "dosod_hbm_evidence": {
       "type": "object",
-      "required": ["compile", "parity", "metric"],
+      "required": ["compile", "parity", "metric", "full_admission"],
       "properties": {
         "compile": {"$ref": "#/$defs/dosodReceipt"},
         "parity": {"$ref": "#/$defs/dosodReceipt"},
-        "metric": {"$ref": "#/$defs/dosodReceipt"}
+        "metric": {"$ref": "#/$defs/dosodReceipt"},
+        "full_admission": {"$ref": "#/$defs/dosodFullAdmission"}
       },
       "additionalProperties": false
     },
@@ -210,6 +211,18 @@
         "hbm_sha256": {"$ref": "#/$defs/sha256"}
       },
       "additionalProperties": false
+    },
+    "dosodFullAdmission": {
+      "type": "object",
+      "required": ["bundle_path", "bundle_manifest_sha256", "compile_receipt_sha256", "parity_report_sha256", "metric_report_sha256", "hbm_sha256"],
+      "properties": {
+        "bundle_path": {"type": "string", "minLength": 1},
+        "bundle_manifest_sha256": {"$ref": "#/$defs/sha256"},
+        "compile_receipt_sha256": {"$ref": "#/$defs/sha256"},
+        "parity_report_sha256": {"$ref": "#/$defs/sha256"},
+        "metric_report_sha256": {"$ref": "#/$defs/sha256"},
+        "hbm_sha256": {"$ref": "#/$defs/sha256"}
+      }, "additionalProperties": false
     },
     "inferenceTelemetry": {
       "type": "object",
