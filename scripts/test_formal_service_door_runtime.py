@@ -46,15 +46,34 @@ def passing_evidence():
         "source_binding": {"expanded_urdf_sha256": "a" * 64},
         "evidence_authority": "GAZEBO_SENSOR_MSGS_JOINT_STATE",
         "plugin_diagnostics": {
+            "lifecycle": [
+                {
+                    "event": "subscription",
+                    "door": door,
+                    "hinge_subscribed": 1.0,
+                    "latch_subscribed": 1.0,
+                }
+                for door in DOORS
+            ]
+            + [{"event": "configured", "configured": 1.0, "doors": 4.0}],
             "records": [
                 {
                     "door": door,
+                    "sim_time_sec": float(sample + 1),
                     "received_hinge_messages": float(sample + 1),
                     "received_latch_messages": float(sample + 1),
+                    "received_hinge_target_rad": spec[4],
+                    "received_latch_target_rad": 0.6,
+                    "requested_hinge_rad": spec[4],
+                    "requested_latch_rad": 0.6,
                     "hinge_force_writes": float(sample + 1),
                     "latch_force_writes": float(sample + 1),
                     "effective_latch_rad": 0.6,
                     "effective_hinge_rad": spec[4],
+                    "hinge_position_rad": 0.0,
+                    "latch_position_rad": 0.0,
+                    "hinge_force_nm": 0.0,
+                    "latch_force_nm": 0.0,
                     "postupdate_hinge_force_present": 1.0,
                     "postupdate_latch_force_present": 1.0,
                     "postupdate_hinge_force_nm": 0.0,
@@ -122,6 +141,69 @@ def test_missing_plugin_telemetry_fails_closed() -> None:
     assert not report["checks"]["plugin_reports_received_targets_and_force_writes"]
 
 
+def test_missing_plugin_lifecycle_fails_closed() -> None:
+    evidence = passing_evidence()
+    evidence["plugin_diagnostics"]["lifecycle"] = []
+    report = evaluate(evidence)
+    assert not report["checks"]["plugin_lifecycle_configuration_observed"]
+
+
+def test_malformed_plugin_lifecycle_fails_closed() -> None:
+    evidence = passing_evidence()
+    evidence["plugin_diagnostics"]["lifecycle"][0]["hinge_subscribed"] = "not-a-number"
+    report = evaluate(evidence)
+    assert not report["checks"]["plugin_lifecycle_configuration_observed"]
+
+
+def test_nonfinite_plugin_numeric_field_is_rejected(tmp_path: Path) -> None:
+    log = tmp_path / "launch.log"
+    log.write_text(
+        "[gazebo-1] SERVICE_DOOR_DIAGNOSTIC door=power "
+        "hinge_force_nm=nan\n",
+        encoding="utf-8",
+    )
+    assert "invalid_numeric_field" in _parse_plugin_diagnostics(log)["parse_error"]
+
+
+def test_nonfinite_injected_plugin_numeric_fails_closed() -> None:
+    evidence = passing_evidence()
+    evidence["plugin_diagnostics"]["records"][0]["hinge_force_nm"] = float("nan")
+    report = evaluate(evidence)
+    assert not report["checks"]["plugin_reports_received_targets_and_force_writes"]
+
+
+def test_boolean_lifecycle_value_is_rejected(tmp_path: Path) -> None:
+    log = tmp_path / "launch.log"
+    log.write_text(
+        "[gazebo-1] SERVICE_DOOR_LIFECYCLE event=subscription door=power "
+        "hinge_subscribed=true latch_subscribed=true\n",
+        encoding="utf-8",
+    )
+    assert "invalid_lifecycle_numeric_field" in _parse_plugin_diagnostics(log)["parse_error"]
+
+
+def test_duplicate_plugin_field_is_rejected(tmp_path: Path) -> None:
+    log = tmp_path / "launch.log"
+    log.write_text(
+        "SERVICE_DOOR_DIAGNOSTIC door=power sim_time_sec=1 sim_time_sec=2\n",
+        encoding="utf-8",
+    )
+    assert "invalid_field:duplicate_field" == _parse_plugin_diagnostics(log)["parse_error"]
+
+
+def test_plugin_counter_rollback_or_duplicate_timestamp_fails_closed() -> None:
+    evidence = passing_evidence()
+    records = evidence["plugin_diagnostics"]["records"]
+    records[1]["hinge_force_writes"] = 0.0
+    report = evaluate(evidence)
+    assert not report["checks"]["plugin_reports_received_targets_and_force_writes"]
+    evidence = passing_evidence()
+    records = evidence["plugin_diagnostics"]["records"]
+    records[1]["sim_time_sec"] = records[0]["sim_time_sec"]
+    report = evaluate(evidence)
+    assert not report["checks"]["plugin_reports_received_targets_and_force_writes"]
+
+
 def test_incomplete_plugin_postupdate_telemetry_fails_closed() -> None:
     evidence = passing_evidence()
     del evidence["plugin_diagnostics"]["records"][0]["postupdate_hinge_force_nm"]
@@ -150,6 +232,8 @@ def test_plugin_telemetry_without_unlock_and_open_coverage_fails_closed() -> Non
 def test_plugin_diagnostic_parser_retains_postupdate_observation(tmp_path: Path) -> None:
     log = tmp_path / "launch.log"
     log.write_text(
+        "[gazebo-1] [INFO] SERVICE_DOOR_LIFECYCLE event=subscription door=power "
+        "hinge_subscribed=1 latch_subscribed=1\n"
         "[Msg] SERVICE_DOOR_DIAGNOSTIC door=power sim_time_sec=1 "
         "received_hinge_messages=2 received_latch_messages=2 "
         "hinge_force_writes=3 latch_force_writes=3 "
@@ -157,6 +241,14 @@ def test_plugin_diagnostic_parser_retains_postupdate_observation(tmp_path: Path)
         encoding="utf-8",
     )
     parsed = _parse_plugin_diagnostics(log)
+    assert parsed["lifecycle"] == [
+        {
+            "event": "subscription",
+            "door": "power",
+            "hinge_subscribed": 1.0,
+            "latch_subscribed": 1.0,
+        }
+    ]
     assert parsed["records"] == [
         {
             "door": "power",
@@ -233,4 +325,6 @@ def test_runner_collector_and_force_plugin_use_physical_joint_state() -> None:
     assert "PostUpdate" in plugin
     assert "postupdate_hinge_force_nm" in plugin
     assert "JointForceCmd" in plugin
+    assert "SERVICE_DOOR_LIFECYCLE" in plugin
+    assert "std::cerr" in plugin
     assert "self.publishers =" not in collector

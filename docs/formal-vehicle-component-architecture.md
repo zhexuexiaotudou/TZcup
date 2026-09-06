@@ -132,11 +132,18 @@ mimic 关节冒充锁紧力；该限制保留为实物锁扣刚度和密封压�
 正式整车启动默认不暴露服务门 evaluator bridge；仅
 `run_formal_service_door_runtime.sh` 显式设置
 `service_door_evaluation_interfaces:=true`，再通过独立 evaluator 话题驱动
-`ServiceDoorSystem` 的有限 PD 力；插件只写真实关节力，不直接重置位姿。每个仿真秒
-还会写出 `SERVICE_DOOR_DIAGNOSTIC`，包含 bridge 已送达的目标计数/值、互锁后的有效
-目标、实测位置、力矩、force-write 计数及 `PostUpdate` 对 `JointForceCmd` 的只读回显，供
-failed run 区分消息、互锁与动力学链路。该回显没有 ECM writer identity，且物理引擎可能
-已消费或清零命令；它只能定位下一步，不能单独证明最终写者或物理受力。
+`ServiceDoorSystem` 的有限 PD 力；插件只写真实关节力，不直接重置位姿。它先向正式
+launch 的 stderr 写出 `SERVICE_DOOR_LIFECYCLE`（四门订阅与 `Configure` 成功），每个仿真秒
+再写出 `SERVICE_DOOR_DIAGNOSTIC`，包含 bridge 已送达的目标计数/值、互锁后的有效目标、
+实测位置、力矩、force-write 计数及 `PostUpdate` 对 `JointForceCmd` 的只读回显，供 failed
+run 区分消息、互锁与动力学链路。不要把 Gazebo 的 `gzmsg/gzerr` console 当作保留证据通道：
+该通道在 r058 launch 重定向中不可见。该回显没有 ECM writer identity，且物理引擎可能已
+消费或清零命令；它只能定位下一步，不能单独证明最终写者或物理受力。
+当前四个门轴的零位恰好位于其开门方向的单侧硬止挡（power 为下限，另三门为上限），因此
+与现有阀门的 20 µrad DART 初始清隙模式构成一个待验证候选；但锁舌零位并不位于限位端，
+所以 r059 不会仅凭该类比改变任何门轴初值。只有 stderr 证据已证明插件回调、有效目标和
+有界 `JointForceCmd` 写入，而仍只剩门轴无法离开硬止挡时，才可在独立变更中加入同量级清隙
+并重新完成完整物理门禁。
 采集器从
 `/joint_states` 记录七阶段原始样本：运输锁止、锁止拒绝开门、解锁、开门、解锁闭门、
 回零锁止和再次拒绝开门。`artifacts/formal_service_door_runtime.json` 只有在四门均按正确
