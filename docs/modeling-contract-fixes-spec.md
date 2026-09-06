@@ -66,6 +66,8 @@ public manifest 的 `geofence_frame: map`/`geofence_polygon_m` 数值实际位�
 - 为旋转 box 和 cylinder 提供依赖最小、确定性的 2D segment-clearance 检查，并复用现有 bounded sampling。
 - 行人路径必须在整段上避开静态 collision（按行人半径膨胀）和实体 cube；起点、终点及整段使用同一几何语义。
 - 每条新行人路径还必须与全部既有行人的完整 2D segment 保持严格大于两个行人半径之和的中心线间距；当前半径均为 `0.25 m`，所以 exact segment-to-segment distance `<=0.50 m` 必须拒绝。生成器和 validator 必须复用同一语义，并覆盖相交、平行近距、端点近距及恰好阈值四类边界；采用任意相位均安全的保守空间门，不修改既有 `static` SDF、10 Hz driver 或赛题路线。
+- 正式运行前对 crossing 路径做最小调整时，materializer 必须对“已修改 + 未修改”的完整最终集合重新复用同一个 `pedestrian_paths_clear` 几何门；不能只检查本轮候选之间或只依赖生成期 public audit。
+- live 行人互穿证据必须由 evaluator-only sidecar 读取 Gazebo 原生完整 `/world/<world>/pose/info` 的同一帧 8 个具名 walker 和顶层仿真时间戳，并绑定 fresh runtime schedule 的 exact object IDs、半径及 SHA-256；每帧形成完整 28 对实际中心距，`<= radius_i + radius_j` 即违规。不得使用 schedule 插值代替 live truth，也不得依赖 Pose_V→TFMessage bridge：已确认该桥在目标环境丢失 parent/child identity 与时间戳，而 `dynamic_pose/info` 又不包含通过 `SetEntityPose` 移动的 `static=true` walker。
 - dirt/puddle/leaf 是地表语义，不作为行人硬碰撞物；cube 与 dirt 的重叠也不在本次一刀切禁止，避免把合理复合任务错误删掉。
 - 生成失败保持 bounded/fail-closed；不得改 split 数量、seed 派生、public/environment/evaluator 分层、hidden 一次性消费或对象计数。
 - 新增 `validate_episode_geometry` 一类可复用校验入口，并在 SDF 输出前调用。测试覆盖相切、端点、旋转 box、cylinder、反向线段、零长度和不可放置场景。
@@ -106,6 +108,7 @@ public manifest 的 `geofence_frame: map`/`geofence_polygon_m` 数值实际位�
 
 ### ROS/Gazebo/MoveIt 运行证据
 
+- 一个 fresh、public train/val-only R065 session 必须在任何 ROS launch 前绑定 exact merged-main source snapshot、frozen install 与 runtime closure，并在新 run-root 内生成本次 episode；原子 receipt 必须分别校验 W1、W2、W3 和 W5 的真实 report schema、各 gate 独立 binding、运行证据 freshness、public scope 和 `hidden_accessed=false`。任一子门缺失或不匹配时 receipt 保持 blocked，不得以通用 `status=*PASSED`、外部命令字符串或历史文件替代固定生产入口。
 - live ROS graph 证明 local/global footprint 输入端点是 `Polygon` 且 manager publisher 与 costmap subscriber 匹配。
 - transport、cleaning、arm 三次状态切换均从 local/global `/published_footprint` 读回 exact polygon；collision monitor 继续消费 local published footprint。
 - 三次 footprint 切换期间，fresh safety status 均证明独立底盘 inhibit 已被实际采纳；运行门的 endpoint node namespace 与真实 costmap graph 一致。

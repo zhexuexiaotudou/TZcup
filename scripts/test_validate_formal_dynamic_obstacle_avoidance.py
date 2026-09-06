@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+import hashlib
 import json
 
 import pytest
@@ -17,6 +18,12 @@ from validate_formal_dynamic_obstacle_avoidance import (
 
 
 def _telemetry() -> dict:
+    walker_ids = [f"walker_{index}" for index in range(8)]
+    pair_rows = {
+        "|".join(sorted((left, right))): 1.0
+        for index, left in enumerate(walker_ids)
+        for right in walker_ids[index + 1 :]
+    }
     return {
         "vehicle_profile": "formal_transport_stowed",
         "runtime_build_manifest": {
@@ -34,6 +41,13 @@ def _telemetry() -> dict:
                     "scripts/generate_formal_dynamic_runtime_build_manifest.py",
                     "scripts/prepare_formal_dynamic_obstacle_schedule.py",
                     "scripts/prepare_formal_dynamic_runtime_world.py",
+                    "scripts/run_formal_runtime_isolation.sh",
+                    "scripts/formal_source_bound_preflight.sh",
+                    "scripts/run_r065_public_modeling_session.sh",
+                    "scripts/publish_r065_public_modeling_receipt.py",
+                    "scripts/run_r065_w1_dynamic_footprint_live.sh",
+                    "scripts/run_r065_w2_moveit_ground_live.sh",
+                    "scripts/collect_r065_w2_live_grasp_request.py",
                 )
             ],
             "required_plugin_libraries": {"a": True},
@@ -123,6 +137,11 @@ def _telemetry() -> dict:
                 "/formal_dynamic_environment_truth_collector"
             ]
         },
+        "environment_truth_collector": {
+            "walker_peer_gate_passed": True,
+            "walker_center_distance_violation_count": 0,
+            "minimum_walker_center_distance_m_by_pair": pair_rows,
+        },
     }
 
 
@@ -205,6 +224,16 @@ def test_runner_never_bypasses_saved_map_or_writes_direct_base_command() -> None
     assert 'rm -f "${output}" "${telemetry}"' not in source
     assert "pedestrian_schedule:=\"${runtime_schedule}\"" in source
     assert "world:=\"${runtime_world}\"" in source
+    assert "tf2_msgs/msg/TFMessage" not in source
+    assert "/evaluation/formal_dynamic/walker_pose" not in source
+    assert "formal_dynamic_walker_pose_bridge" not in source
+    assert '--pedestrian-schedule "${runtime_schedule}"' in source
+    assert "walker_pose_bridge_pid" not in source
+    validator_source = Path(__file__).with_name(
+        "validate_formal_dynamic_obstacle_avoidance.py"
+    ).read_text(encoding="utf-8")
+    assert "_atomic_write_json(args.output, report)" in validator_source
+    assert "pending.replace(path)" in validator_source
 
 
 def test_runner_uses_one_final_overlay_legal_domain_and_fresh_outputs() -> None:
@@ -490,10 +519,57 @@ def test_evaluator_verifies_pedestrian_proximity_only_after_run(tmp_path: Path) 
         "control_topics_published": [],
         "product_actions_created": [],
     }
+    schedule_hash = hashlib.sha256(schedule.read_bytes()).hexdigest()
+    walker_ids = [f"walker_{index}" for index in range(8)]
+    pairs = {
+        "|".join(sorted((left, right))): 0.5
+        for index, left in enumerate(walker_ids)
+        for right in walker_ids[index + 1 :]
+    }
+    environment.update(
+        {
+            "pedestrian_schedule_sha256": schedule_hash,
+            "pose_source_schedule_bound_walker_ids": walker_ids,
+            "walker_radius_m_by_id": {name: 0.25 for name in walker_ids},
+            "walker_pair_clearance_threshold_m_by_pair": pairs,
+            "minimum_walker_center_distance_m_by_pair": {
+                name: 1.0 for name in pairs
+            },
+            "pose_source_topic": "/world/campus_formal/pose/info",
+            "gazebo_native_pose_topic": "/world/campus_formal/pose/info",
+            "pose_source_native_gazebo_read": True,
+            "evaluator_native_gazebo_topics_read": [
+                "/world/campus_formal/pose/info"
+            ],
+            "pose_source_is_live_gazebo_truth": True,
+            "walker_pose_sampling_sufficient": True,
+            "walker_pose_source_fresh_at_window_end": True,
+            "walker_pose_invalid_frame_count": 0,
+            "walker_pose_stale_frame_count": 0,
+            "native_pose_transport_error_count": 0,
+            "native_pose_transport_timeout_count": 0,
+            "native_pose_transport_timeout_policy": "count_and_fail_closed",
+            "formal_walker_radius_contract_all_0_25_m": True,
+            "formal_walker_pair_threshold_contract_28x_0_50_m": True,
+            "walker_center_distance_violation_count": 0,
+            "walker_center_distance_violations_lte_0_50_m": [],
+            "walker_peer_gate_passed": True,
+        }
+    )
     attach_evaluator_dynamic_proximity(telemetry, schedule, environment)
     assert telemetry["evaluator_verified_dynamic_interaction_count"] == 1
     assert telemetry["minimum_evaluator_pedestrian_clearance_m"] == 0.75
     assert telemetry["evaluator_truth_process_isolated"] is True
+
+    wrong_schedule = json.loads(json.dumps(environment))
+    wrong_schedule["pedestrian_schedule_sha256"] = "0" * 64
+    with pytest.raises(ValueError, match="different pedestrian schedule"):
+        attach_evaluator_dynamic_proximity({}, schedule, wrong_schedule)
+
+    incomplete_pairs = json.loads(json.dumps(environment))
+    incomplete_pairs["minimum_walker_center_distance_m_by_pair"].pop(next(iter(pairs)))
+    with pytest.raises(ValueError, match="pair minima are incomplete"):
+        attach_evaluator_dynamic_proximity({}, schedule, incomplete_pairs)
 
 
 def test_environment_truth_collector_cannot_control_the_product() -> None:

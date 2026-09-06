@@ -6,7 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from prepare_formal_dynamic_obstacle_schedule import materialize_schedule
+from prepare_formal_dynamic_obstacle_schedule import (
+    _require_all_pedestrian_paths_clear,
+    materialize_schedule,
+)
 from generate_formal_dynamic_runtime_build_manifest import (
     REQUIRED_PLUGIN_LIBRARIES,
     SOURCE_INSTALL_BINDINGS,
@@ -148,6 +151,52 @@ def test_different_seed_changes_environment_routes(tmp_path: Path) -> None:
         nominal_leg_m=30.0,
     )
     assert first["pedestrians"][:3] != second["pedestrians"][:3]
+
+
+def _pedestrian_row(
+    object_id: str, points: list[tuple[float, float]], *, radius: float = 0.25
+) -> dict:
+    return {
+        "object_id": object_id,
+        "radius_m": radius,
+        "height_m": 1.7,
+        "speed_mps": 0.7,
+        "waypoints": [
+            [float(index), point[0], point[1]] for index, point in enumerate(points)
+        ],
+    }
+
+
+@pytest.mark.parametrize(
+    ("other_points", "case"),
+    [
+        ([(0.0, -1.0), (0.0, 1.0)], "crossing"),
+        ([(-1.0, 0.49), (1.0, 0.49)], "parallel_close"),
+        ([(1.49, 0.0), (2.0, 0.0)], "endpoint_close"),
+        ([(-1.0, 0.50), (1.0, 0.50)], "exact_threshold"),
+    ],
+)
+def test_complete_peer_path_gate_rejects_lte_half_meter(
+    other_points: list[tuple[float, float]], case: str
+) -> None:
+    rows = [
+        _pedestrian_row("walker_0", [(-1.0, 0.0), (1.0, 0.0)]),
+        _pedestrian_row("walker_1", other_points),
+    ]
+    with pytest.raises(ValueError, match="<= 0.50"):
+        _require_all_pedestrian_paths_clear(rows)
+
+
+def test_seed_one_schedule_keeps_all_complete_peer_paths_clear(tmp_path: Path) -> None:
+    manifest, world, base = _write_inputs(tmp_path)
+    schedule = materialize_schedule(
+        episode_manifest=manifest,
+        public_world=world,
+        base_schedule=base,
+        seed=1,
+        nominal_leg_m=30.0,
+    )
+    _require_all_pedestrian_paths_clear(schedule["pedestrians"])
 
 
 def test_schedule_must_name_the_exact_existing_world_walkers(tmp_path: Path) -> None:

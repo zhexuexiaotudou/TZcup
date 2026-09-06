@@ -21,6 +21,7 @@ from validate_formal_dynamic_obstacle_avoidance import (
     load_public_mission_contract,
     point_in_polygon,
 )
+from sanitation_campus_scenario.generator import Pedestrian, pedestrian_paths_clear
 
 
 def _read_object(path: Path) -> dict[str, Any]:
@@ -99,6 +100,55 @@ def _route_clear(
     return True
 
 
+def _pedestrian_from_schedule(value: dict[str, Any]) -> Pedestrian:
+    """Decode one public driver row for the shared full-segment peer check."""
+
+    try:
+        object_id = str(value["object_id"])
+        radius_m = float(value["radius_m"])
+        height_m = float(value["height_m"])
+        speed_mps = float(value["speed_mps"])
+        waypoints = tuple(
+            (float(row[0]), float(row[1]), float(row[2]))
+            for row in value["waypoints"]
+        )
+    except (KeyError, TypeError, ValueError, IndexError) as exc:
+        raise ValueError("pedestrian schedule contains an invalid geometry row") from exc
+    if not object_id or radius_m <= 0.0 or height_m <= 0.0 or speed_mps <= 0.0:
+        raise ValueError("pedestrian schedule contains an invalid pedestrian")
+    if len(waypoints) < 2:
+        raise ValueError("pedestrian schedule requires at least two waypoints")
+    if not all(
+        math.isfinite(coordinate)
+        for waypoint in waypoints
+        for coordinate in waypoint
+    ):
+        raise ValueError("pedestrian schedule contains non-finite waypoint coordinates")
+    return Pedestrian(object_id, radius_m, height_m, speed_mps, waypoints)
+
+
+def _require_all_pedestrian_paths_clear(rows: list[dict[str, Any]]) -> None:
+    """Fail closed on every pair's complete looping route, including endpoints.
+
+    ``pedestrian_paths_clear`` is the canonical generator predicate: it checks
+    every segment against every other segment, handles reversed and zero-length
+    segments, and rejects equality at the summed-radius boundary.  Applying it
+    to the entire final schedule makes modified crossings and untouched driver
+    routes obey exactly the same <= 0.50 m safety contract.
+    """
+
+    pedestrians = [_pedestrian_from_schedule(row) for row in rows]
+    identifiers = [pedestrian.object_id for pedestrian in pedestrians]
+    if len(set(identifiers)) != len(identifiers):
+        raise ValueError("pedestrian schedule object IDs must be unique")
+    for index, pedestrian in enumerate(pedestrians):
+        for other in pedestrians[:index]:
+            if not pedestrian_paths_clear(pedestrian, other):
+                raise ValueError(
+                    "pedestrian schedule has a <= 0.50 m complete-path peer clearance"
+                )
+
+
 def materialize_schedule(
     *,
     episode_manifest: Path,
@@ -147,6 +197,13 @@ def materialize_schedule(
     fractions = [0.20 + 0.60 * index / 80.0 for index in range(81)]
     rng.shuffle(fractions)
     selected: list[tuple[float, float, float]] = []
+    selected_pedestrians: list[Pedestrian] = []
+    # The first crossing_count rows are replaced.  Their old paths are not
+    # relevant to the final schedule; all remaining rows are checked now and
+    # the entire final schedule is checked again after materialization.
+    unchanged_pedestrians = [
+        _pedestrian_from_schedule(row) for row in pedestrians[crossing_count:]
+    ]
     for fraction in fractions:
         center = (start_x + fraction * dx, start_y + fraction * dy)
         half_span = rng.uniform(3.5, 5.5)
@@ -167,9 +224,29 @@ def materialize_schedule(
             pedestrian_radius_m=radius,
         ):
             continue
-        if any(math.hypot(center[0] - x, center[1] - y) < 4.0 for x, y, _ in selected):
+        if any(
+            math.hypot(center[0] - x, center[1] - y) < 4.0
+            for x, y, _ in selected
+        ):
+            continue
+        candidate = Pedestrian(
+            str(pedestrians[len(selected)]["object_id"]),
+            radius,
+            float(pedestrians[len(selected)].get("height_m", 0.0)),
+            1.0,
+            (
+                (0.0, first[0], first[1]),
+                (1.0, second[0], second[1]),
+                (2.0, first[0], first[1]),
+            ),
+        )
+        if any(
+            not pedestrian_paths_clear(candidate, other)
+            for other in (*selected_pedestrians, *unchanged_pedestrians)
+        ):
             continue
         selected.append((center[0], center[1], half_span))
+        selected_pedestrians.append(candidate)
         if len(selected) == crossing_count:
             break
     if len(selected) != crossing_count:
@@ -198,6 +275,12 @@ def materialize_schedule(
             [round(2.0 * duration, 4), round(first[0], 6), round(first[1], 6)],
         ]
         crossing_ids.append(str(pedestrian["object_id"]))
+
+    # Do not trust only the newly picked lines: unchanged schedule rows may
+    # already be invalid, and rounded output waypoints are the actual driver
+    # input.  This is deliberately after mutation so it checks that exact
+    # output rather than unrounded candidate coordinates.
+    _require_all_pedestrian_paths_clear(pedestrians)
 
     mission_digest = hashlib.sha256(
         json.dumps(mission, sort_keys=True, separators=(",", ":")).encode("utf-8")

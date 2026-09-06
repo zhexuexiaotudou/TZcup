@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +19,13 @@ BLOCKED_STATUS = "FORMAL_DYNAMIC_OBSTACLE_AVOIDANCE_ACCEPTANCE_BLOCKED"
 CONTROL_PROHIBITED_TRUTH_TOPICS = (
     "/scenario/environment/pedestrian_driver/status",
 )
+
+
+def _atomic_write_json(path: Path, value: dict[str, Any]) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    pending = path.with_suffix(path.suffix + f".pending.{os.getpid()}")
+    pending.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    pending.replace(path)
 
 
 def _trajectory(value: Any, label: str) -> list[tuple[float, float]]:
@@ -284,6 +292,93 @@ def attach_evaluator_dynamic_proximity(
     pedestrians = schedule.get("pedestrians")
     if not isinstance(pedestrians, list) or len(pedestrians) != 8:
         raise ValueError("formal dynamic acceptance requires eight scheduled pedestrians")
+    schedule_sha256 = hashlib.sha256(pedestrian_schedule.read_bytes()).hexdigest()
+    if environment_telemetry.get("pedestrian_schedule_sha256") != schedule_sha256:
+        raise ValueError("environment telemetry selects a different pedestrian schedule")
+    expected_radii: dict[str, float] = {}
+    for pedestrian in pedestrians:
+        if not isinstance(pedestrian, dict):
+            raise ValueError("pedestrian schedule row is invalid")
+        object_id = pedestrian.get("object_id")
+        radius = pedestrian.get("radius_m")
+        if (
+            not isinstance(object_id, str)
+            or not object_id
+            or isinstance(radius, bool)
+            or not isinstance(radius, (int, float))
+            or not math.isfinite(float(radius))
+            or float(radius) <= 0.0
+            or object_id in expected_radii
+        ):
+            raise ValueError("pedestrian schedule identities/radii are invalid")
+        expected_radii[object_id] = float(radius)
+    expected_pairs = {
+        "|".join(sorted((left, right))): expected_radii[left] + expected_radii[right]
+        for index, left in enumerate(expected_radii)
+        for right in tuple(expected_radii)[index + 1 :]
+    }
+    observed_ids = environment_telemetry.get(
+        "pose_source_schedule_bound_walker_ids"
+    )
+    observed_radii = environment_telemetry.get("walker_radius_m_by_id")
+    observed_thresholds = environment_telemetry.get(
+        "walker_pair_clearance_threshold_m_by_pair"
+    )
+    observed_minima = environment_telemetry.get(
+        "minimum_walker_center_distance_m_by_pair"
+    )
+    if observed_ids != list(expected_radii):
+        raise ValueError("live walker identities differ from the runtime schedule")
+    if observed_radii != expected_radii:
+        raise ValueError("live walker radii differ from the runtime schedule")
+    if not isinstance(observed_thresholds, dict) or set(observed_thresholds) != set(expected_pairs):
+        raise ValueError("live walker pair thresholds are incomplete")
+    if not all(
+        isinstance(observed_thresholds[pair], (int, float))
+        and math.isclose(float(observed_thresholds[pair]), threshold, abs_tol=1e-9)
+        and math.isclose(threshold, 0.50, abs_tol=1e-9)
+        for pair, threshold in expected_pairs.items()
+    ):
+        raise ValueError("live walker pair thresholds do not match schedule radii")
+    if not isinstance(observed_minima, dict) or set(observed_minima) != set(expected_pairs):
+        raise ValueError("live walker pair minima are incomplete")
+    if not all(
+        isinstance(observed_minima[pair], (int, float))
+        and math.isfinite(float(observed_minima[pair]))
+        and float(observed_minima[pair]) > expected_pairs[pair]
+        for pair in expected_pairs
+    ):
+        raise ValueError("live walkers violated their pairwise radius clearance")
+    world_name = schedule.get("world_name")
+    expected_native_pose_topic = (
+        f"/world/{world_name}/pose/info"
+        if isinstance(world_name, str) and world_name
+        else None
+    )
+    if not (
+        expected_native_pose_topic is not None
+        and environment_telemetry.get("pose_source_topic") == expected_native_pose_topic
+        and environment_telemetry.get("gazebo_native_pose_topic")
+        == expected_native_pose_topic
+        and environment_telemetry.get("pose_source_native_gazebo_read") is True
+        and environment_telemetry.get("evaluator_native_gazebo_topics_read")
+        == [expected_native_pose_topic]
+        and environment_telemetry.get("pose_source_is_live_gazebo_truth") is True
+        and environment_telemetry.get("walker_pose_sampling_sufficient") is True
+        and environment_telemetry.get("walker_pose_source_fresh_at_window_end") is True
+        and environment_telemetry.get("walker_pose_invalid_frame_count") == 0
+        and environment_telemetry.get("walker_pose_stale_frame_count") == 0
+        and environment_telemetry.get("native_pose_transport_error_count") == 0
+        and environment_telemetry.get("native_pose_transport_timeout_count") == 0
+        and environment_telemetry.get("native_pose_transport_timeout_policy")
+        == "count_and_fail_closed"
+        and environment_telemetry.get("formal_walker_radius_contract_all_0_25_m") is True
+        and environment_telemetry.get("formal_walker_pair_threshold_contract_28x_0_50_m") is True
+        and environment_telemetry.get("walker_center_distance_violation_count") == 0
+        and environment_telemetry.get("walker_center_distance_violations_lte_0_50_m") == []
+        and environment_telemetry.get("walker_peer_gate_passed") is True
+    ):
+        raise ValueError("live walker peer gate is incomplete or untrusted")
     verified = 0
     minimum_clearance = math.inf
     annotated: list[dict[str, Any]] = []
@@ -354,6 +449,7 @@ def attach_evaluator_dynamic_proximity(
     )
     telemetry["collision_count"] = environment_telemetry.get("collision_count")
     telemetry["environment_truth_collector"] = environment_telemetry
+    telemetry["pedestrian_schedule_sha256"] = schedule_sha256
     product_counts = telemetry.setdefault("topic_sample_counts", {})
     environment_counts = environment_telemetry.get("topic_sample_counts", {})
     if isinstance(product_counts, dict) and isinstance(environment_counts, dict):
@@ -431,6 +527,13 @@ def evaluate(
             "scripts/generate_formal_dynamic_runtime_build_manifest.py",
             "scripts/prepare_formal_dynamic_obstacle_schedule.py",
             "scripts/prepare_formal_dynamic_runtime_world.py",
+            "scripts/run_formal_runtime_isolation.sh",
+            "scripts/formal_source_bound_preflight.sh",
+            "scripts/run_r065_public_modeling_session.sh",
+            "scripts/publish_r065_public_modeling_receipt.py",
+            "scripts/run_r065_w1_dynamic_footprint_live.sh",
+            "scripts/run_r065_w2_moveit_ground_live.sh",
+            "scripts/collect_r065_w2_live_grasp_request.py",
         }.issubset(source_only_files),
         "cleaning_world_preserved_and_contact_instrumented": isinstance(
             runtime_world, dict
@@ -482,6 +585,21 @@ def evaluate(
                 "/formal_dynamic_environment_truth_collector"
             ]
         },
+        "live_walker_pair_clearance_verified": isinstance(
+            telemetry.get("environment_truth_collector"), dict
+        )
+        and telemetry["environment_truth_collector"].get("walker_peer_gate_passed")
+        is True
+        and telemetry["environment_truth_collector"].get(
+            "walker_center_distance_violation_count"
+        )
+        == 0
+        and len(
+            telemetry["environment_truth_collector"].get(
+                "minimum_walker_center_distance_m_by_pair", {}
+            )
+        )
+        == 28,
         "evaluator_truth_process_isolated": telemetry.get(
             "evaluator_truth_process_isolated"
         )
@@ -711,11 +829,7 @@ def main() -> int:
     if closure_error:
         report["blockers"].insert(0, f"runtime_closure_preflight: {closure_error}")
     report["saved_map_lifecycle_evidence"] = saved_map_evidence
-    args.output.parent.mkdir(parents=True, exist_ok=True)
-    args.output.write_text(
-        json.dumps(report, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
-    )
+    _atomic_write_json(args.output, report)
     print(args.output)
     return 0 if report["passed"] else 2
 

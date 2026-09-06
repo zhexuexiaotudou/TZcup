@@ -141,6 +141,9 @@ def test_static_message_contract_and_runtime_gate_are_explicit() -> None:
     launch_source = (package / "launch/formal_campus.launch.py").read_text(
         encoding="utf-8"
     )
+    lifecycle_source = (
+        package / "launch/formal_campus_map_lifecycle.launch.py"
+    ).read_text(encoding="utf-8")
     safety_source = (
         package.parent
         / "sanitation_safety/sanitation_safety/whole_vehicle_safety_manager.py"
@@ -186,3 +189,6 @@ def test_static_message_contract_and_runtime_gate_are_explicit() -> None:
     assert 'default_value="false"' in launch_source
     assert '"enable_runtime_test_override": ParameterValue(' in launch_source
     assert "value_type=bool" in launch_source
+    assert '"enable_dynamic_footprint_runtime_test_override"' in lifecycle_source
+    assert 'default_value="false"' in lifecycle_source
+    assert lifecycle_source.count("enable_dynamic_footprint_runtime_test_override") >= 3
