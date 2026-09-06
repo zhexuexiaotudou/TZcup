@@ -452,27 +452,95 @@ def _w5_mapping_evidence_row(
     return row
 
 
+def _w1_padding_contract(payload: dict[str, Any]) -> bool:
+    declared = payload.get("declared_footprint_padding_m")
+    live = payload.get("live_footprint_padding_m")
+    bound = payload.get("footprint_padding_quantization_bound_m")
+    if (
+        not _finite_number(declared)
+        or float(declared) != 0.01
+        or not isinstance(live, dict)
+        or set(live) != {"/local_costmap/footprint", "/global_costmap/footprint"}
+        or not _finite_number(bound)
+        or float(bound) < 0.0
+        or payload.get("footprint_padding_m") != live
+    ):
+        return False
+    return all(
+        _finite_number(value) and float(value) >= 0.0
+        and abs(float(value) - float(declared)) <= float(bound)
+        for value in live.values()
+    ) and abs(
+        float(live["/local_costmap/footprint"])
+        - float(live["/global_costmap/footprint"])
+    ) <= float(bound)
+
+
+def _w1_profile_base_contract(payload: dict[str, Any]) -> bool:
+    evidence = payload.get("profile_to_robot_base_planar_equivalence")
+    if payload.get("profile_base_frame") != "base_footprint" or not isinstance(evidence, dict):
+        return False
+    if set(evidence) != {"/local_costmap/footprint", "/global_costmap/footprint"}:
+        return False
+    return all(
+        isinstance(row, dict)
+        and row.get("profile_base_frame") == "base_footprint"
+        and row.get("robot_base_frame") == "base_link"
+        and _finite_number(row.get("translation_x_m"))
+        and _finite_number(row.get("translation_y_m"))
+        and _finite_number(row.get("translation_z_m"))
+        and _finite_number(row.get("yaw_rad"))
+        and _finite_number(row.get("planar_zero_ulp_bound_m"))
+        and _finite_number(row.get("planar_zero_ulp_bound_rad"))
+        and float(row["planar_zero_ulp_bound_m"]) > 0.0
+        and float(row["planar_zero_ulp_bound_rad"]) > 0.0
+        and abs(float(row["translation_x_m"])) <= float(row["planar_zero_ulp_bound_m"])
+        and abs(float(row["translation_y_m"])) <= float(row["planar_zero_ulp_bound_m"])
+        and abs(float(row["yaw_rad"])) <= float(row["planar_zero_ulp_bound_rad"])
+        for row in evidence.values()
+    )
+
+
+def _w1_passed(payload: dict[str, Any]) -> bool:
+    """Single W1 acceptance schema reused by the live runner and receipt."""
+    return (
+        payload.get("result") == "PASS"
+        and payload.get("passed") is True
+        and payload.get("runtime_only") is True
+        and payload.get("input_type") == "geometry_msgs/msg/Polygon"
+        and payload.get("published_type") == "geometry_msgs/msg/PolygonStamped"
+        and payload.get("profiles_read_back")
+        == ["transport_stowed", "cleaning_deployed", "arm_deployed"]
+        and payload.get("base_motion_inhibit_independent_safety_subscriber") is True
+        and payload.get("safety_status_fresh_per_override") is True
+        and payload.get("safety_manager_state") == "BASE_COMMAND_STOPPED"
+        and payload.get("safety_manager_reason") == "manipulator_base_inhibit"
+        and payload.get("test_override_preserves_base_inhibit") is True
+        and payload.get("test_override_never_authorizes_motion") is True
+        and payload.get("fresh_readback_required_per_override") is True
+        and payload.get("raw_input_exact_per_override") is True
+        and payload.get("published_frame_by_topic")
+        == {
+            "/local_costmap/published_footprint": "odom",
+            "/global_costmap/published_footprint": "map",
+        }
+        and payload.get("published_readback_contract")
+        == "ordered_frame_aware_padded_rigid_point32"
+        and _finite_number(payload.get("point32_quantization_bound_m"))
+        and float(payload["point32_quantization_bound_m"]) > 0.0
+        and payload.get("published_stamp_max_age_sec") == 2.0
+        and _w1_padding_contract(payload)
+        and _w1_profile_base_contract(payload)
+    )
+
+
 def _child_passed(
     name: str, payload: dict[str, Any], *, runtime_schedule_sha256: str | None = None,
     walker_ids: list[str] | None = None, walker_radii: dict[str, float] | None = None,
     world_name: str | None = None,
 ) -> bool:
     if name == "w1":
-        return (
-            payload.get("result") == "PASS"
-            and payload.get("runtime_only") is True
-            and payload.get("input_type") == "geometry_msgs/msg/Polygon"
-            and payload.get("published_type") == "geometry_msgs/msg/PolygonStamped"
-            and payload.get("profiles_read_back")
-            == ["transport_stowed", "cleaning_deployed", "arm_deployed"]
-            and payload.get("base_motion_inhibit_independent_safety_subscriber") is True
-            and payload.get("safety_status_fresh_per_override") is True
-            and payload.get("safety_manager_state") == "BASE_COMMAND_STOPPED"
-            and payload.get("safety_manager_reason") == "manipulator_base_inhibit"
-            and payload.get("test_override_preserves_base_inhibit") is True
-            and payload.get("test_override_never_authorizes_motion") is True
-            and payload.get("fresh_readback_required_per_override") is True
-        )
+        return _w1_passed(payload)
     if name == "w2":
         return _w2_passed(payload)
     if name == "w3_public_audit":

@@ -1,5 +1,6 @@
 import ast
 import json
+import math
 from pathlib import Path
 import sys
 
@@ -13,6 +14,7 @@ sys.path.insert(0, str(PACKAGE))
 
 from sanitation_formal_campus_integration.contract import (  # noqa: E402
     IntegrationContractError,
+    _navigation_inset_radius,
     materialize_nav2_config,
     resolve_spawn_pose,
 )
@@ -68,6 +70,12 @@ def test_nav2_costmaps_are_materialized_from_formal_motion_profile():
     global_ = config["global_costmap"]["global_costmap"]["ros__parameters"]["footprint"]
     assert local == expected
     assert global_ == expected
+    local_parameters = config["local_costmap"]["local_costmap"]["ros__parameters"]
+    global_parameters = config["global_costmap"]["global_costmap"]["ros__parameters"]
+    assert local_parameters["footprint_padding"] == pytest.approx(0.01)
+    assert global_parameters["footprint_padding"] == pytest.approx(0.01)
+    assert local_parameters["inflation_layer"]["inflation_radius"] == pytest.approx(0.56)
+    assert global_parameters["inflation_layer"]["inflation_radius"] == pytest.approx(0.56)
     assert "0.4,0.36" not in local.lower()
     assert cleaning_width == pytest.approx(1.32)
 
@@ -112,6 +120,93 @@ def test_materializer_rejects_ackermann_or_legacy_small_footprint(tmp_path):
     bad.write_text(yaml.safe_dump(profile), encoding="utf-8")
     with pytest.raises(IntegrationContractError, match="legacy small footprint"):
         materialize_nav2_config(BASE_NAV2, bad)
+
+
+@pytest.mark.parametrize(
+    ("padding", "message"),
+    [(None, "exactly one"), (float("nan"), "must be finite"), (-0.01, "nonnegative")],
+)
+def test_materializer_rejects_missing_nonfinite_or_negative_footprint_padding(
+    tmp_path, padding, message
+):
+    profile = yaml.safe_load(MOTION_PROFILE.read_text(encoding="utf-8"))
+    if padding is None:
+        profile.pop("nav2_footprint_padding_m")
+    else:
+        profile["nav2_footprint_padding_m"] = padding
+    bad = tmp_path / "bad-padding-profile.yaml"
+    bad.write_text(yaml.safe_dump(profile), encoding="utf-8")
+    with pytest.raises(IntegrationContractError, match=message):
+        materialize_nav2_config(BASE_NAV2, bad)
+
+
+def test_materializer_rejects_duplicate_top_level_footprint_padding(tmp_path):
+    source = MOTION_PROFILE.read_text(encoding="utf-8")
+    duplicate = source.replace(
+        "nav2_footprint_padding_m: 0.01",
+        "nav2_footprint_padding_m: 0.01\nnav2_footprint_padding_m: 0.02",
+        1,
+    )
+    path = tmp_path / "duplicate-padding-profile.yaml"
+    path.write_text(duplicate, encoding="utf-8")
+    with pytest.raises(IntegrationContractError, match="exactly one nav2_footprint_padding_m"):
+        materialize_nav2_config(BASE_NAV2, path)
+
+
+def test_materializer_rejects_costmap_inflation_at_or_below_enabled_inset_boundary(tmp_path):
+    profile = yaml.safe_load(MOTION_PROFILE.read_text(encoding="utf-8"))
+    # The disabled arm has a 1.05 m inradius and must not make the 0.56 m
+    # navigation costmaps fail.  Only navigation_allowed footprints contribute.
+    assert profile["motion_footprints"]["arm_deployed"]["navigation_allowed"] is False
+    base = yaml.safe_load(BASE_NAV2.read_text(encoding="utf-8"))
+    local = base["local_costmap"]["local_costmap"]["ros__parameters"]
+    global_ = base["global_costmap"]["global_costmap"]["ros__parameters"]
+    local["inflation_layer"]["inflation_radius"] = 0.55
+    global_["inflation_layer"]["inflation_radius"] = 0.56
+    boundary = tmp_path / "boundary-nav2.yaml"
+    boundary.write_text(yaml.safe_dump(base), encoding="utf-8")
+    with pytest.raises(IntegrationContractError, match="local_costmap inflation_radius"):
+        materialize_nav2_config(boundary, MOTION_PROFILE)
+
+    local["inflation_layer"]["inflation_radius"] = 0.56
+    global_["inflation_layer"]["inflation_radius"] = 0.55
+    inconsistent = tmp_path / "inconsistent-nav2.yaml"
+    inconsistent.write_text(yaml.safe_dump(base), encoding="utf-8")
+    with pytest.raises(IntegrationContractError, match="global_costmap inflation_radius"):
+        materialize_nav2_config(inconsistent, MOTION_PROFILE)
+
+    global_["inflation_layer"]["inflation_radius"] = 0.56
+    accepted = tmp_path / "accepted-nav2.yaml"
+    accepted.write_text(yaml.safe_dump(base), encoding="utf-8")
+    config, _ = materialize_nav2_config(accepted, MOTION_PROFILE)
+    assert config["local_costmap"]["local_costmap"]["ros__parameters"]["inflation_layer"][
+        "inflation_radius"
+    ] == pytest.approx(0.56)
+
+
+def test_navigation_inset_radius_uses_nav2_sign_padded_vertices_not_plain_addition():
+    profile = yaml.safe_load(MOTION_PROFILE.read_text(encoding="utf-8"))
+    for footprint in profile["motion_footprints"].values():
+        footprint["navigation_allowed"] = False
+    profile["motion_footprints"]["transport_stowed"].update(
+        {
+            "navigation_allowed": True,
+            "footprint_xy_m": [
+                [0.40, 0.20],
+                [-0.20, 0.40],
+                [-0.40, -0.20],
+                [0.20, -0.40],
+            ],
+        }
+    )
+    original = _navigation_inset_radius(profile, 0.0)
+    padded = _navigation_inset_radius(profile, 0.01)
+    # For the rotated diamond, Nav2's per-coordinate sign expansion produces
+    # the edge (0.41, 0.21) -> (-0.21, 0.41), whose origin distance is not
+    # the original inradius plus 0.01.
+    expected = 0.2122 / math.hypot(0.20, 0.62)
+    assert padded == pytest.approx(expected)
+    assert padded != pytest.approx(original + 0.01)
 
 
 def test_spawn_pose_defaults_to_public_manifest_and_allows_explicit_override(tmp_path):

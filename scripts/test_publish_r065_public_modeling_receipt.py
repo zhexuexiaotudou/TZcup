@@ -38,6 +38,55 @@ def _w2() -> dict:
     }
 
 
+def _w1() -> dict:
+    live_padding = {
+        "/local_costmap/footprint": 0.009999999776482582,
+        "/global_costmap/footprint": 0.009999999776482582,
+    }
+    return {
+        "result": "PASS", "passed": True, "runtime_only": True,
+        "input_type": "geometry_msgs/msg/Polygon",
+        "published_type": "geometry_msgs/msg/PolygonStamped",
+        "profiles_read_back": ["transport_stowed", "cleaning_deployed", "arm_deployed"],
+        "base_motion_inhibit_independent_safety_subscriber": True,
+        "safety_status_fresh_per_override": True,
+        "safety_manager_state": "BASE_COMMAND_STOPPED",
+        "safety_manager_reason": "manipulator_base_inhibit",
+        "test_override_preserves_base_inhibit": True,
+        "test_override_never_authorizes_motion": True,
+        "fresh_readback_required_per_override": True,
+        "raw_input_exact_per_override": True,
+        "published_frame_by_topic": {
+            "/local_costmap/published_footprint": "odom",
+            "/global_costmap/published_footprint": "map",
+        },
+        "footprint_padding_m": live_padding,
+        "declared_footprint_padding_m": 0.01,
+        "live_footprint_padding_m": live_padding,
+        "footprint_padding_quantization_bound_m": 1.862645149230957e-09,
+        "point32_quantization_bound_m": 1e-6,
+        "published_readback_contract": "ordered_frame_aware_padded_rigid_point32",
+        "published_stamp_max_age_sec": 2.0,
+        "profile_base_frame": "base_footprint",
+        "profile_to_robot_base_planar_equivalence": {
+            "/local_costmap/footprint": {
+                "profile_base_frame": "base_footprint", "robot_base_frame": "base_link",
+                "translation_x_m": 0.0, "translation_y_m": 0.0,
+                "translation_z_m": 0.1651, "yaw_rad": 0.0,
+                "planar_zero_ulp_bound_m": 1e-323,
+                "planar_zero_ulp_bound_rad": 1e-323,
+            },
+            "/global_costmap/footprint": {
+                "profile_base_frame": "base_footprint", "robot_base_frame": "base_link",
+                "translation_x_m": 0.0, "translation_y_m": 0.0,
+                "translation_z_m": 0.1651, "yaw_rad": 0.0,
+                "planar_zero_ulp_bound_m": 1e-323,
+                "planar_zero_ulp_bound_rad": 1e-323,
+            },
+        },
+    }
+
+
 def _w2_request() -> dict:
     return {
         "schema_version": 2,
@@ -130,11 +179,47 @@ def test_regular_in_rejects_escape_and_symlink(tmp_path):
 
 def test_child_pass_requires_real_w2_w3_and_w5_contracts():
     assert not MODULE._child_passed("w1", {"result": "PASS"})
+    assert MODULE._child_passed("w1", _w1())
     assert not MODULE._child_passed("w2", {"passed": True, "runtime_gate": "wrong"})
     assert not MODULE._child_passed("w3_public_audit", {"scope": "hidden"})
     assert not MODULE._child_passed("w5", {"status": "FORMAL_FIRST_MAP_THEN_SAVED_MAP_CLEANING_PASSED", "passed": True})
     assert MODULE._child_passed("w2", _w2())
     assert MODULE._child_passed("w3_live_dynamic", _w3("a" * 64), runtime_schedule_sha256="a" * 64, walker_ids=WALKER_IDS, walker_radii=WALKER_RADII, world_name="campus_formal")
+
+
+@pytest.mark.parametrize(
+    ("key", "replacement"),
+    [
+        ("passed", False),
+        ("raw_input_exact_per_override", False),
+        ("published_frame_by_topic", {}),
+        ("declared_footprint_padding_m", 0.02),
+        ("live_footprint_padding_m", {}),
+        ("point32_quantization_bound_m", 0.0),
+        ("published_readback_contract", "base_coordinates_exact"),
+        ("profile_base_frame", "base_link"),
+    ],
+)
+def test_w1_receipt_rejects_each_new_frame_aware_contract_field(key, replacement):
+    payload = _w1()
+    payload[key] = replacement
+    assert not MODULE._child_passed("w1", payload)
+
+
+@pytest.mark.parametrize(
+    ("field", "replacement"),
+    [
+        ("translation_x_m", 1e-6),
+        ("translation_y_m", -1e-6),
+        ("yaw_rad", 1e-6),
+        ("planar_zero_ulp_bound_m", float("inf")),
+        ("planar_zero_ulp_bound_rad", 0.0),
+    ],
+)
+def test_w1_receipt_rejects_unverifiable_profile_to_robot_planar_evidence(field, replacement):
+    payload = _w1()
+    payload["profile_to_robot_base_planar_equivalence"]["/local_costmap/footprint"][field] = replacement
+    assert not MODULE._w1_passed(payload)
 
 
 @pytest.mark.parametrize(
@@ -216,7 +301,7 @@ def test_publish_binds_fresh_w5_mapping_and_snapshot_identity(tmp_path, monkeypa
     })
     mapping = _write(run / "mapping.json", _mapping())
     payloads = {
-        "w1": {"result": "PASS", "runtime_only": True, "input_type": "geometry_msgs/msg/Polygon", "published_type": "geometry_msgs/msg/PolygonStamped", "profiles_read_back": ["transport_stowed", "cleaning_deployed", "arm_deployed"], "base_motion_inhibit_independent_safety_subscriber": True, "safety_status_fresh_per_override": True, "safety_manager_state": "BASE_COMMAND_STOPPED", "safety_manager_reason": "manipulator_base_inhibit", "test_override_preserves_base_inhibit": True, "test_override_never_authorizes_motion": True, "fresh_readback_required_per_override": True},
+        "w1": _w1(),
         "w2": _w2(),
         "w3_public_audit": {"scope": "public_train_val_only", "hidden_accessed": False, "map_count": 40, "episode_count": 800, "pedestrian_path_count": 6400, "pedestrian_pair_count": 22400, "pedestrian_static_collision_path_count": 0, "pedestrian_cube_collision_path_count": 0, "pedestrian_pair_violation_count": 0},
         "w3_live_dynamic": _w3(hashlib.sha256(runtime_schedule.read_bytes()).hexdigest()), "w5": _w5(mapping),

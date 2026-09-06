@@ -1,5 +1,11 @@
 # 项目推进记录
 
+## 2026-09-07：R066 frame-aware footprint readback（本地验证完成，fresh merged runtime 未运行）
+
+- R065 fresh public session 的首个 W1 override 因旧 gate 把 base-frame raw polygon 与 Nav2 在 `odom`/`map` 中发布的 padded polygon 直接逐坐标比较而 fail closed；W2/W3/W5 未运行，失败证据、cleanup 和零 survivor 证据均保留。随后明确标记为 `NON_FORMAL_DIAGNOSTIC` 的 v5 只读采样闭合：local/global raw input 均为 `1.16 x 1.35 m`，published 均为 `1.18 x 1.37 m`，两 costmap 的 `footprint_padding` 均约 `0.01 m`、inflation radius 均为 `0.55 m`；inhibit Bool 全窗 `2770/2770` 为 true。该诊断没有形成正式 PASS，不能补写 R065 验收。
+- R066 的最小修复将 `0.01 m` padding 提升为 formal profile 的唯一显式合同并同值物化到两 costmap；base local/global inflation 最小提升为 `0.56 m`，且静态门只用 `navigation_allowed: true` profile 的 padding 后内切半径验证严格余量，不把禁止导航的 `arm_deployed` 纳入后扩大到约 `1.06 m`。
+- 新 W1 gate 将分别证明每个 nonce 的 fresh Point32 raw input 精确采纳，以及 local=`odom`、global=`map` 的 published polygon 与 padding 后 profile 在 float32 ULP 推导误差界内保持点序、方向和二维刚体同构；错 frame/stamp/padding、旧消息、重排、镜像、剪切或超界均 fail closed。profile `base_frame=base_footprint` 与 live Nav2 `robot_base_frame=base_link` 还须由同 stamp TF 显式证明平面等价并记录（当前 URDF 预期仅有 `z=0.1651 m` 固定偏移）。失败也须原子写 `passed=false` 的 BLOCKED JSON，保留最后 input/published/status/safety、receipt counters、padding、误差界和原因；runner 只接受精确 PASS schema。本地最终 `ci_fast` 为 `1699 passed, 15 skipped, 13 subtests passed`；合并后仍须先在 fresh source/runtime/closure 中做 NON_FORMAL live W1 算法核验，再以另一 fresh 正式 session 重跑 W1/W2/W3/W5，二者均不能由纯单元测试替代。
+
 ## 2026-09-07：R065 public-only 运行证据封装（代码收口中，fresh merged runtime 未运行）
 
 - 动态路径 materializer 对 crossing 调整后的完整 walker 集合复用生成器同一 `pedestrian_paths_clear` 全路径门，防止修改后的路径重新与未修改路径相交；live evaluator 以本次 schedule 的 ID、半径和摘要为准，从 Gazebo 原生完整 `/world/<world>/pose/info` 同一帧读取 8 个 walker、仿真时间戳和 28 对实际距离。目标租卡诊断证明 Pose_V→TFMessage bridge 会丢失实体 identity/时间戳，且 `dynamic_pose/info` 不含 `static=true` walker，因此正式证据禁止依赖该桥或用 schedule 插值冒充 live truth。

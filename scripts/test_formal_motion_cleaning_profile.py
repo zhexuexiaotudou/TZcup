@@ -152,6 +152,43 @@ def test_rejects_virtual_ackermann_as_physical_steering(tmp_path: Path) -> None:
         validate_profile(profile_path=path)
 
 
+@pytest.mark.parametrize(
+    ("padding", "message"),
+    [(None, "exactly one"), (float("nan"), "must be finite"), (-0.01, "nonnegative")],
+)
+def test_rejects_missing_nonfinite_or_negative_nav2_footprint_padding(
+    tmp_path: Path, padding: float | None, message: str
+) -> None:
+    def mutate(data) -> None:
+        if padding is None:
+            data.pop("nav2_footprint_padding_m")
+        else:
+            data["nav2_footprint_padding_m"] = padding
+
+    path = _mutated_profile(tmp_path, mutate)
+    with pytest.raises(FormalMotionCleaningProfileError, match=message):
+        validate_profile(profile_path=path)
+
+
+def test_profile_declares_the_single_explicit_nav2_footprint_padding() -> None:
+    assert PROFILE.read_text(encoding="utf-8").count("nav2_footprint_padding_m:") == 1
+    profile = yaml.safe_load(PROFILE.read_text(encoding="utf-8"))
+    assert profile["nav2_footprint_padding_m"] == pytest.approx(0.01)
+
+
+def test_rejects_duplicate_top_level_nav2_footprint_padding(tmp_path: Path) -> None:
+    source = PROFILE.read_text(encoding="utf-8")
+    duplicate = source.replace(
+        "nav2_footprint_padding_m: 0.01",
+        "nav2_footprint_padding_m: 0.01\nnav2_footprint_padding_m: 0.02",
+        1,
+    )
+    path = tmp_path / "duplicate-padding-profile.yaml"
+    path.write_text(duplicate, encoding="utf-8")
+    with pytest.raises(FormalMotionCleaningProfileError, match="exactly one nav2_footprint_padding_m"):
+        validate_profile(profile_path=path)
+
+
 def test_rejects_noncanonical_skid_steer_reference_constraint(tmp_path: Path) -> None:
     path = _mutated_profile(
         tmp_path,

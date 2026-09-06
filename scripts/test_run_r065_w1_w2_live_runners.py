@@ -63,6 +63,10 @@ def test_w1_is_fixed_source_bound_map_lifecycle_live_gate() -> None:
     assert 'ros2 run sanitation_formal_campus_integration' in source
     assert 'formal-dynamic-footprint-runtime-gate' in source
     assert '--output "${output}"' in source
+    assert "exact PASS schema" in source
+    assert 'sys.path.insert(0, str(repo_root / "scripts"))' in source
+    assert "from publish_r065_public_modeling_receipt import _w1_passed" in source
+    assert "not _w1_passed(payload)" in source
     assert 'formal_runtime_cleanup_groups "${GZ_PARTITION}" "${launch_pid}"' in source
     assert 'cleanup_evidence' in source
     assert 'R065 W1 refuses an inherited Gazebo partition' in source

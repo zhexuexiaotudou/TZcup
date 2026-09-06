@@ -1,4 +1,10 @@
-# R065 建模合同修复 Spec
+# R065 建模合同修复 Spec（含 R066 W1 运行语义纠正）
+
+> 2026-09-07 R066 addendum：R065 的消息类型、测试 override 和安全联锁修复保持有效；
+> fresh R065 W1 运行及 NON_FORMAL diagnostic-v5 证明，原验收把 base-frame 原始
+> footprint 与 Nav2 在 `odom`/`map` 中发布的“padding 后、随机器人刚体变换”的 polygon
+> 直接逐坐标比较，数学语义错误。R066 只修正该运行合同并显式冻结既有安全 padding，
+> 不缩小 footprint、不放宽 collision safety，也不改变车辆或清扫技术路线。
 
 ## 1. 目标与治理
 
@@ -37,6 +43,10 @@ public manifest 的 `geofence_frame: map`/`geofence_polygon_m` 数值实际位�
 
 首次建图 launch 显式设置 `high_bandwidth_sensor_runtime=false`，但生成的 Nav2 collision monitor 仍保留 `scan + mid360` 两个 observation sources 且启用 `mid360`。r064 真实 ROS 图只有约 `6 Hz` 的 `/scan/navigation`，`/sensors/lidar_3d/points` publisher 为 `0`；因此 collision monitor 收到 `/cmd_vel_nav=0.45 m/s` 后没有形成 `/cmd_vel_gate`，whole-vehicle safety manager 最终以 `command_timeout` 保持 `BASE_COMMAND_STOPPED`，覆盖只达到 `1.24145%`。这是正式首次建图链的确定性配置/运行合同错误，不是降低碰撞安全阈值的理由。
 
+### MC-07：Nav2 published footprint 的 frame、padding 与 Point32 量化语义未建模
+
+fresh R065 public session 在第一个 `transport_stowed` override 对旧 exact readback fail closed；随后只读、明确标记 `NON_FORMAL_DIAGNOSTIC` 的 v5 现场采样证明：local/global input footprint 都是 `1.16 x 1.35 m` 的冻结 raw profile，而 local/global `published_footprint` 分别在 `odom`/`map` frame 中为 `1.18 x 1.37 m`；两 costmap 的实际 `footprint_padding` 均约为 `0.01 m`，inflation radius 均为 `0.55 m`。因此旧门失败不是 DDS 类型回归，而是把 raw base-frame polygon 与 padding 后、经 TF 变换的 Point32 polygon 直接逐坐标比较。同期 `base_motion_inhibited` 采样 `2770/2770` 为 true，正式 safety status 仍须逐 nonce fresh 验证；该诊断没有生成正式 PASS，不能替代 fresh R066 runtime gate。
+
 ## 3. 实现范围
 
 ### W1：修复动态 footprint 输入
@@ -45,8 +55,10 @@ public manifest 的 `geofence_frame: map`/`geofence_polygon_m` 数值实际位�
 - 保留 `/formal_vehicle/navigation/footprint_status`，状态必须报告所选 profile、是否允许导航和触发原因。
 - 不改变三个冻结 polygon 数值，不扩大或缩小物理声明。
 - 增加可复用的 exact-polygon 比较/规范化逻辑，避免 local/global 和测试各自实现不同精度规则。
-- 增加静态合同测试和 ROS 运行门：manager publisher 与 costmap subscriber 类型必须匹配；依次验证 transport、cleaning、arm 状态后，local/global `/published_footprint` 必须分别等于冻结 polygon。运行门不得向生产共享 `/joint_states` 注入伪造状态；若使用测试覆盖接口，该接口必须由默认关闭的显式 launch 参数启用、只影响 footprint 选择、在 base motion inhibited 且无执行器命令的隔离验收中运行，并在状态 reason/evidence 中明确标为 test override。机械臂展开时独立 base-motion inhibit 仍是硬门，动态 footprint 不是其替代品。
+- formal motion profile 必须唯一显式声明 `nav2_footprint_padding_m: 0.01`；该值须有限且非负，并由 materializer 同值写入 local/global costmap，不能依赖 Nav2 默认值。base Nav2 的两处 inflation radius 固定由 `0.55 m` 最小提升为 `0.56 m`；materializer 只对 `navigation_allowed: true` 的 profile 计算 padding 后内切半径，并要求两 costmap inflation 都严格大于其中最大值。不得把 `arm_deployed`（`navigation_allowed: false`）纳入计算后把全局 inflation 抬到约 `1.06 m`。
+- 增加静态合同测试和 ROS 运行门：manager publisher 与 costmap subscriber 类型必须匹配；每个 nonce 都必须从 local/global 输入 topic 收到 fresh、Point32 量化后的 raw profile，且点序完全一致。local/global `/published_footprint` 必须分别在 `odom`/`map` frame 中带 fresh、非零 stamp，并与声明 padding 后的 profile 保持点序、方向不变的二维刚体同构；不得再与 base-frame 坐标直接比较，也不得使用任意 epsilon。允许误差只能由相应坐标幅值的 IEEE-754 float32 ULP 推导；错 padding、旧消息、重排、镜像、剪切或超过该界均 fail closed。profile 的 `base_frame=base_footprint` 与 live Nav2 `robot_base_frame=base_link` 不得静默混用；gate 必须通过同一时刻 TF 显式证明两者平面 `x/y/yaw` 等价（当前 URDF 预期只存在 `z=0.1651 m` 固定偏移）并记录证据，不等价或 TF 缺失即 fail closed。运行门不得向生产共享 `/joint_states` 注入伪造状态；若使用测试覆盖接口，该接口必须由默认关闭的显式 launch 参数启用、只影响 footprint 选择、在 base motion inhibited 且无执行器命令的隔离验收中运行，并在状态 reason/evidence 中明确标为 test override。机械臂展开时独立 base-motion inhibit 仍是硬门，动态 footprint 不是其替代品。
 - 运行门不能只凭 safety manager 出现在订阅端点就声称底盘已锁止；每次 override 都必须读取 fresh `/safety/status_json`，证明 `whole_vehicle_safety_manager` 的发布序号前进、状态为生产定义的 base-stopped 状态、原因包含 `manipulator_base_inhibit` 且 publish thread 健康。ROS endpoint 的 node name 与 namespace 必须同时按真实 Nav2 图校验。
+- 运行门无论成功或失败都必须以原子替换写一份权威 JSON。失败状态只能是 `passed=false` 的 BLOCKED 诊断，并包含最后的 input/published/status/safety 快照、各 receipt counter、声明 padding、逐比较 ULP 界和 primary reason；异常退出不得只留下 traceback。runner 只接受精确 PASS schema，存在 JSON 或任意以 PASSED 结尾的字符串都不足以通过。
 
 ### W2：建立 MoveIt planning-scene bootstrap
 
@@ -110,7 +122,8 @@ public manifest 的 `geofence_frame: map`/`geofence_polygon_m` 数值实际位�
 
 - 一个 fresh、public train/val-only R065 session 必须在任何 ROS launch 前绑定 exact merged-main source snapshot、frozen install 与 runtime closure，并在新 run-root 内生成本次 episode；原子 receipt 必须分别校验 W1、W2、W3 和 W5 的真实 report schema、各 gate 独立 binding、运行证据 freshness、public scope 和 `hidden_accessed=false`。任一子门缺失或不匹配时 receipt 保持 blocked，不得以通用 `status=*PASSED`、外部命令字符串或历史文件替代固定生产入口。
 - live ROS graph 证明 local/global footprint 输入端点是 `Polygon` 且 manager publisher 与 costmap subscriber 匹配。
-- transport、cleaning、arm 三次状态切换均从 local/global `/published_footprint` 读回 exact polygon；collision monitor 继续消费 local published footprint。
+- transport、cleaning、arm 三次状态切换均先从 local/global input 读回 fresh raw profile，再从 local/global `/published_footprint` 证明正确 frame、fresh stamp、声明 padding 和 ULP-bounded rigid congruence；collision monitor 继续消费 local published footprint。
+- 在正式 public session 前，必须先用合并后 fresh source/runtime/closure 做一次明确标记为 `NON_FORMAL_DIAGNOSTIC` 的 live W1 算法核验，证明 Python TF + Point32 ULP 推导界能接受真实正确输出并保留错误样本拒绝能力；纯单元测试不得直接跳到正式重试，该诊断本身也不得生成正式 PASS。
 - 三次 footprint 切换期间，fresh safety status 均证明独立底盘 inhibit 已被实际采纳；运行门的 endpoint node namespace 与真实 costmap graph 一致。
 - MoveIt planning scene 回读 ground；低于地面的可达 robot state 被拒绝且碰撞 contacts 明确归因到 `ground`，正常抓取路径通过，失败时无执行器命令绕过。
 - 至少一个公开 formal train/val episode 在 Gazebo 中证明行人运动不穿静态碰撞体或其他行人，且动态避障证据仍能形成。
