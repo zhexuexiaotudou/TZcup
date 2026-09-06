@@ -251,6 +251,21 @@ def g4_validate_dataset(data_root: Path, dataset_evidence: Path) -> dict:
     }
 
 
+def g4_cross_host_binding(path: Path | None) -> dict | None:
+    if path is None:
+        return None
+    value = json.loads(path.read_text(encoding="utf-8"))
+    binding = {
+        "handoff_receipt_sha256": value.get("handoff_receipt_sha256"),
+        "inventory_sha256": value.get("inventory_sha256"),
+    }
+    if value.get("status") != "AUTO05_G4_CROSS_HOST_IMPORTED" or not all(
+        isinstance(item, str) and len(item) == 64 for item in binding.values()
+    ):
+        raise ValueError("G4 cross-host import marker is incomplete")
+    return binding
+
+
 def g4_contract_parameters(contract: Path) -> dict[str, int | float | bool]:
     text = contract.read_text(encoding="utf-8")
     result: dict[str, int | float | bool] = {}
@@ -283,7 +298,11 @@ def g4_require_runtime_binding(path: Path, implementation_commit: str, contract:
         raise ValueError("G4 runtime binding is not bound")
     if value.get("git", {}).get("head") != implementation_commit:
         raise ValueError("G4 implementation commit differs from capture runtime binding")
-    if value.get("contract", {}).get("sha256") != g4_file_sha256(contract):
+    if (
+        value.get("contract", {}).get("repository_relative")
+        != "starter_ws/src/sanitation_learning/config/auto05_g4_screening.yaml"
+        or value.get("contract", {}).get("sha256") != g4_file_sha256(contract)
+    ):
         raise ValueError("G4 contract differs from capture runtime binding")
     formal = value.get("formal_runtime_gate", {})
     session = formal.get("acceptance_session_binding", {})
@@ -293,6 +312,7 @@ def g4_require_runtime_binding(path: Path, implementation_commit: str, contract:
         formal.get("status") != "FORMAL_RUNTIME_GATE_BOUND"
         or session.get("session_status_at_gate") != "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING"
         or closure.get("status") != "FORMAL_FINAL_RUNTIME_CLOSURE_VERIFIED"
+        or capture.get("data_root_repository_relative") != ".work/auto05-g4/data/g3_screening_native"
         or not isinstance(capture.get("single_gazebo_lock"), str)
         or not capture.get("single_gazebo_lock")
     ):
@@ -1238,6 +1258,7 @@ def main() -> int:
     parser.add_argument("--g4-runtime-binding")
     parser.add_argument("--g4-attempt-ledger")
     parser.add_argument("--g4-test-lock")
+    parser.add_argument("--g4-cross-host-import")
     args = parser.parse_args()
     contract = None
     g4_parameters = None
@@ -1313,11 +1334,17 @@ def main() -> int:
                 Path(args.g4_runtime_binding), head, contract
             )
             g4_dataset_binding = g4_validate_dataset(data_root, dataset_evidence)
+            cross_host_binding = g4_cross_host_binding(
+                Path(args.g4_cross_host_import) if args.g4_cross_host_import else None
+            )
+            if cross_host_binding:
+                g4_dataset_binding["cross_host_import"] = cross_host_binding
         except (OSError, UnicodeError, ValueError, json.JSONDecodeError) as exc:
             parser.error(str(exc))
     else:
         g4_runtime_binding = None
         g4_dataset_binding = None
+        cross_host_binding = None
     output.mkdir(parents=True, exist_ok=True)
     if args.attempt >= 4:
         tree = subprocess.check_output(

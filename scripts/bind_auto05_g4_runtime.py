@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 from pathlib import Path
 
@@ -18,6 +19,25 @@ def digest(path: Path) -> str:
 
 def git(repository: Path, *args: str) -> str:
     return subprocess.check_output(["git", "-C", str(repository), *args], text=True).strip()
+
+
+def repository_relative(path: Path, repository: Path) -> str:
+    """Serialize a portable identity, never a machine-specific data path."""
+    try:
+        return path.resolve().relative_to(repository).as_posix()
+    except ValueError as exc:
+        raise ValueError(f"G4 path escapes repository identity: {path}") from exc
+
+
+def portable_evidence(value: object) -> object:
+    """Keep hashes/statuses while preventing source-host paths becoming identity."""
+    if isinstance(value, dict):
+        return {key: portable_evidence(item) for key, item in value.items()}
+    if isinstance(value, list):
+        return [portable_evidence(item) for item in value]
+    if isinstance(value, str) and (value.startswith("/") or re.match(r"^[A-Za-z]:[\\/]", value)):
+        return "<host-local-path-redacted>"
+    return value
 
 
 def main() -> int:
@@ -61,14 +81,17 @@ def main() -> int:
     payload = {
         "schema_version": 1,
         "status": "AUTO05_G4_RUNTIME_GATE_BOUND",
-        "formal_runtime_gate": binding,
+        "formal_runtime_gate": portable_evidence(binding),
         "git": {"head": git(repository, "rev-parse", "HEAD"), "tree": git(repository, "rev-parse", "HEAD^{tree}")},
-        "contract": {"path": str(args.contract.resolve()), "sha256": digest(args.contract)},
+        "contract": {
+            "repository_relative": repository_relative(args.contract, repository),
+            "sha256": digest(args.contract),
+        },
         "capture": {
-            "data_root": str(args.data_root.resolve()),
+            "data_root_repository_relative": repository_relative(args.data_root, repository),
             "ros_domain_id": args.ros_domain_id,
             "gz_partition": args.gz_partition,
-            "single_gazebo_lock": str(args.gazebo_lock),
+            "single_gazebo_lock": "source-local-formal-gazebo-lock",
         },
     }
     args.output.parent.mkdir(parents=True, exist_ok=True)

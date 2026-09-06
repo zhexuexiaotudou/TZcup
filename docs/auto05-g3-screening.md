@@ -13,18 +13,25 @@ direct anchor-free center/offset/bbox head 输出，增加轻量 FPN、quality �
 world 选择；test 只可运行一次。任何失败继续保持 `AUTO-05=BLOCKED`。
 
 G4 G3 重采只能通过 `scripts/run_auto05_g4_capture_runtime.sh` 从 fresh combined
-runtime 运行。其数据、runtime、image context 和 evidence 必须置于远端
-`/root/autodl-tmp/tzcup-runtime/src/TZcup/.work/auto05-g4/`，不得复用 historical Stage1/Docker capture overlay，
-也不得与其它 Gazebo 链并行。wrapper 在启动 Gazebo 前复用正式 runtime gate：它
+runtime 运行。AutoDL 容器没有嵌套 Docker 权限时，只允许它做这一步原生 G3
+采集；不得复用 historical Stage1/Docker capture overlay，也不得与其它 Gazebo 链并行。wrapper 在启动 Gazebo 前复用正式 runtime gate：它
 校验当前 HEAD/tree、canonical snapshot、verify-recorded closure 与同一个 RUNNING
 session，并登记 ROS domain/GZ partition；共享 formal Gazebo lock 拒绝并行世界。
 每个 G3 scene 都实际 `gz remove` 旧 vehicle 后再 `ros_gz_sim create` 新 vehicle，
 并保留 `vehicle_reset.json`，不把“停车/teleport”叙述成隔离重置。
 
-统一入口是 `scripts/run_auto05_g4_pipeline.sh`。它依序执行 gate-bound capture、
-dataset QA、唯一冻结 G4 screening、review-gated finalizer；QA/split/leakage、
-contract、runtime binding、test-consumed lock 与 ONNX 文件内容会交叉绑定。该入口
-的任何非零结果均不得提升 AUTO-06/07/08。
+同机且有 Docker 的环境仍可由 `scripts/run_auto05_g4_pipeline.sh` 依序执行
+gate-bound capture、dataset QA、唯一冻结 G4 screening、review-gated finalizer。
+AutoDL 与 OCI 环境分离时，先在 AutoDL 执行以下 `export`；归档以仓库相对逻辑
+身份记录全部普通文件 SHA-256、归档 SHA-256、精确 source HEAD/tree、runtime
+binding、verified closure 和 RUNNING session。再在同一 HEAD/tree、干净且已有
+同源、结构合法 image receipt 的 OCI 环境执行 `import`，它拒绝覆盖、链接/特殊文件、篡改、
+source/session/closure 不匹配和 replay/synthetic 替换。最后以
+`AUTO05_G4_IMPORTED_HANDOFF=1` 调用 pipeline；这条路径只做 QA/screening/finalize，
+不会重跑采集；实际 OCI image ID 的 Docker inspect 仍在后续 pipeline 入口执行。QA/split/leakage、contract、runtime binding、test-consumed lock 与
+ONNX 文件内容仍会交叉绑定。任何非零结果均不得提升 AUTO-06/07/08。
+交接脚本只支持原生 Linux/WSL checkout；Windows 宿主必须进入项目 WSL/Linux
+checkout 后再运行，不能通过 NTFS junction/reparse fallback 导入。
 
 第一次长采集在第 20 个 scene 暴露车辆跨 scene 继承速度/姿态的问题：该 scene 碰撞扰动后只完成 8/10 帧。首轮 19 个完成 scene、失败 scene 和日志独立保留；采集器已改为每个 scene 先删除并重新生成车辆，再执行随机化和同步捕获。修复不降低 10/10 帧或相邻位移门，正式 G3 数据从空目录重采。
 
@@ -46,8 +53,16 @@ contract、runtime binding、test-consumed lock 与 ONNX 文件内容会交叉�
 ## 复现
 
 ```bash
-# On the rental host, after a fresh final combined runtime, session and image
-# receipt have been prepared under TZcup/.work/auto05-g4 (see the two scripts).
-bash scripts/build_auto05_g4_screening_image.sh
-bash scripts/run_auto05_g4_pipeline.sh
+# AutoDL: after a fresh final combined runtime/session has completed native G3.
+python3 scripts/auto05_g4_cross_host_handoff.py export \
+  --repo "$PWD" --archive /root/autodl-tmp/auto05-g4-native-g3.tar.gz
+
+# Clean same-source OCI checkout: build the receipt outside the import root.
+AUTO05_G4_IMAGE_ROOT="$PWD/.work/auto05-g4-image" \
+  bash scripts/build_auto05_g4_screening_image.sh
+python3 scripts/auto05_g4_cross_host_handoff.py import \
+  --repo "$PWD" --archive /transfer/auto05-g4-native-g3.tar.gz \
+  --receipt /transfer/auto05-g4-native-g3.tar.gz.receipt.json \
+  --oci-receipt "$PWD/.work/auto05-g4-image/evidence/screening_image.json"
+AUTO05_G4_IMPORTED_HANDOFF=1 bash scripts/run_auto05_g4_pipeline.sh
 ```

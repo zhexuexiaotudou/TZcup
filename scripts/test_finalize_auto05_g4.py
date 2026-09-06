@@ -56,8 +56,8 @@ def test_finalizer_accepts_container_safe_repository_relative_binding(tmp_path: 
     implementation = {"head": "a" * 40, "tree": "b" * 40}
     runtime = {
         "status": "AUTO05_G4_RUNTIME_GATE_BOUND", "git": implementation,
-        "contract": {"sha256": sha256(contract)},
-        "capture": {"single_gazebo_lock": "/tmp/tzcup_formal_gazebo.lock"},
+        "contract": {"repository_relative": "starter_ws/src/sanitation_learning/config/auto05_g4_screening.yaml", "sha256": sha256(contract)},
+        "capture": {"data_root_repository_relative": ".work/auto05-g4/data/g3_screening_native", "single_gazebo_lock": "/tmp/tzcup_formal_gazebo.lock"},
         "formal_runtime_gate": {
             "status": "FORMAL_RUNTIME_GATE_BOUND",
             "acceptance_session_binding": {"session_status_at_gate": "FORMAL_FINAL_ACCEPTANCE_SESSION_RUNNING"},
@@ -67,7 +67,8 @@ def test_finalizer_accepts_container_safe_repository_relative_binding(tmp_path: 
     runtime_path = evidence / "runtime_gate_binding.json"
     write_json(runtime_path, runtime)
     write_json(evidence / "capture_complete.json", {
-        "status": "AUTO05_G4_CAPTURE_COMPLETE", "raw_data_root": str(data.resolve()),
+        "status": "AUTO05_G4_CAPTURE_COMPLETE", "data_root_repository_relative": ".work/auto05-g4/data/g3_screening_native",
+        "capture_provenance": {"mode": "fresh_native_gazebo_g3_capture", "replay_input_used": False, "synthetic_substitution_used": False},
         "runtime_binding_sha256": sha256(runtime_path),
     })
     ledger_path = evidence / "g4_attempt_ledger.json"

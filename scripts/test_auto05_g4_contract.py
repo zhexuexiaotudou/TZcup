@@ -13,6 +13,7 @@ CAPTURE = ROOT / "scripts" / "run_auto05_g4_capture_runtime.sh"
 FINALIZER = ROOT / "scripts" / "finalize_auto05_g4.py"
 RUNTIME_GATE = ROOT / "scripts" / "bind_auto05_g4_runtime.py"
 PIPELINE = ROOT / "scripts" / "run_auto05_g4_pipeline.sh"
+HANDOFF = ROOT / "scripts" / "auto05_g4_cross_host_handoff.py"
 
 
 def test_contract_is_single_config_and_validation_only() -> None:
@@ -35,6 +36,7 @@ def test_screening_rejects_blind_g4_and_test_selection() -> None:
     assert 'require_split(rows, "train", "detector training")' in text
     assert "G4DirectDetector" in text and "g4_giou_loss" in text
     assert "G4IndependentAreaHeads" in text
+    assert "data_root_repository_relative" in text
 
 
 def test_capture_wrapper_refuses_outside_work_and_stage1_fallback() -> None:
@@ -44,6 +46,13 @@ def test_capture_wrapper_refuses_outside_work_and_stage1_fallback() -> None:
     assert "AUTO05_COMBINED_RUNTIME_SETUP" in text
     assert "formal_runtime_configure" in text
     assert "FORMAL_RUNTIME_LOCK_FILE" in text
+
+
+def test_runtime_binding_uses_portable_data_identity() -> None:
+    text = RUNTIME_GATE.read_text(encoding="utf-8")
+    assert "portable_evidence" in text
+    assert '"source-local-formal-gazebo-lock"' in text
+    assert "data_root_repository_relative" in text
 
 
 def test_finalizer_is_review_gated_and_cannot_overwrite_history() -> None:
@@ -61,12 +70,37 @@ def test_pipeline_reuses_formal_runtime_gate_and_one_test_lock() -> None:
     assert "g4_attempt_ledger.json" in text
     assert "g4_test_consumed_lock.json" in text
     assert "screening_image.json" in text
+    assert "AUTO05_G4_IMPORTED_HANDOFF" in text
+    assert "verify-import" in text
+    assert text.count("verify-import") >= 3
+    assert "--g4-cross-host-import" in text
+    assert "--cross-host-import" in text
+
+
+def test_cross_host_handoff_is_hash_bound_and_rejects_unsafe_imports() -> None:
+    text = HANDOFF.read_text(encoding="utf-8")
+    for required in (
+        '"AUTO05_G4_CROSS_HOST_G3_HANDOFF"',
+        '"AUTO05_G4_CROSS_HOST_IMPORTED"',
+        "data_root_repository_relative",
+        "runtime_closure_status",
+        "session_status_at_capture",
+        "handoff rejects link or special file",
+        "refusing to overwrite existing AUTO-05 G4 work root",
+        "synthetic_substitution_used",
+        "MAX_ARCHIVE_MEMBERS",
+        "MAX_ARCHIVE_BYTES",
+        "inventory_sha256",
+        "safe_member",
+    ):
+        assert required in text
 
 
 def test_g4_image_build_executes_real_runtime_parity_test() -> None:
     text = (ROOT / "scripts" / "build_auto05_g4_screening_image.sh").read_text(encoding="utf-8")
     assert "test_auto05_g4_torch_runtime.py" in text
     assert '"runtime_parity_test_passed": True' in text
+    assert "AUTO05_G4_IMAGE_ROOT" in text
 
 
 if __name__ == "__main__":

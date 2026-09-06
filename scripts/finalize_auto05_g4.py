@@ -38,6 +38,7 @@ def main() -> int:
     parser.add_argument("--capture-receipt", required=True)
     parser.add_argument("--attempt-ledger", required=True)
     parser.add_argument("--test-lock", required=True)
+    parser.add_argument("--cross-host-import")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
     repo = Path(args.repo).resolve()
@@ -52,6 +53,9 @@ def main() -> int:
     if contract != (repo / "starter_ws/src/sanitation_learning/config/auto05_g4_screening.yaml").resolve():
         parser.error("G4 requires the checked-in frozen contract")
     report_path = raw / "auto05_screening_report.json"
+    cross_host_import = Path(args.cross_host_import).resolve() if args.cross_host_import else None
+    if cross_host_import and (not under(cross_host_import, root) or not cross_host_import.is_file() or cross_host_import.is_symlink()):
+        parser.error("G4 cross-host import marker is not admissible")
     required = [
         report_path, raw / "auto05_direct_detector.onnx",
         raw / "auto05_rgbd_area_segmenter.onnx", raw / "environment.json", capture_receipt, attempt_ledger,
@@ -96,7 +100,15 @@ def main() -> int:
         or not gate.get("capture", {}).get("single_gazebo_lock")
     ):
         parser.error("G4 finalizer requires formal closure/session/single-lock proof")
-    if capture.get("status") != "AUTO05_G4_CAPTURE_COMPLETE" or capture.get("raw_data_root") != str((root / "data" / "g3_screening_native").resolve()):
+    expected_data_root = (root / "data" / "g3_screening_native").relative_to(repo).as_posix()
+    provenance = capture.get("capture_provenance", {})
+    if (
+        capture.get("status") != "AUTO05_G4_CAPTURE_COMPLETE"
+        or capture.get("data_root_repository_relative") != expected_data_root
+        or provenance.get("mode") != "fresh_native_gazebo_g3_capture"
+        or provenance.get("replay_input_used") is not False
+        or provenance.get("synthetic_substitution_used") is not False
+    ):
         parser.error("G4 capture receipt is not bound to this raw data root")
     if capture.get("runtime_binding_sha256") != digest(runtime_binding):
         parser.error("G4 capture receipt does not bind the formal runtime gate")
@@ -134,6 +146,20 @@ def main() -> int:
         parser.error("G4 report/test lock does not bind the finalized dataset evidence")
     if ledger.get("dataset_binding") != actual_dataset_binding:
         parser.error("G4 attempt ledger does not bind the finalized dataset evidence")
+    if cross_host_import:
+        marker = read_object(cross_host_import)
+        import_binding = {
+            "handoff_receipt_sha256": marker.get("handoff_receipt_sha256"),
+            "inventory_sha256": marker.get("inventory_sha256"),
+        }
+        if (
+            marker.get("status") != "AUTO05_G4_CROSS_HOST_IMPORTED"
+            or not all(isinstance(value, str) and len(value) == 64 for value in import_binding.values())
+            or selection.get("g4_dataset_binding", {}).get("cross_host_import") != import_binding
+            or lock.get("dataset_binding", {}).get("cross_host_import") != import_binding
+            or ledger.get("dataset_binding", {}).get("cross_host_import") != import_binding
+        ):
+            parser.error("G4 finalizer cross-host import binding mismatch")
     runtime_digest = digest(runtime_binding)
     if selection.get("g4_runtime_binding", {}).get("git") != gate.get("git"):
         parser.error("G4 report does not preserve its formal runtime binding")
@@ -165,6 +191,7 @@ def main() -> int:
             "capture_receipt_sha256": digest(capture_receipt),
             "attempt_ledger_sha256": digest(attempt_ledger),
             "test_lock_sha256": digest(test_lock),
+            "cross_host_import": import_binding if cross_host_import else None,
             "detector_onnx_sha256": report["detector"]["onnx"]["sha256"],
             "area_onnx_sha256": report["area_segmenter"]["onnx"]["sha256"],
         },
